@@ -10,6 +10,7 @@ import {
   buildAuthorizedEmpiricalLoadProfile,
 } from './engineering-loads/authorized-empirical-load-execution.js';
 import { authorizedEmpiricalRuntimeStore } from './engineering-loads/authorized-empirical-runtime-store.js';
+import { empiricalLoadCalcScenarioStore } from './engineering-loads/empirical-load-calc-scenario-store.js';
 
 /**
  * Holds canonical support sites and route partitions for the active dataset and
@@ -206,9 +207,17 @@ export class EngineeringModelStore {
     const site = findSupportSiteByEntityId(this.#supportSiteModel, entity.entityId);
     if (!site) return entity;
     const distribution = engineeringSupportLoadStore.getDistribution();
+    
+    const scenarioExecution = empiricalLoadCalcScenarioStore.getExecution();
+    const scenarioCoreResult = scenarioExecution?.coreResult || null;
+
     const loadCases = (distribution?.loadCases || []).map((loadCase) => {
       const result = loadCase.supportResults.find((row) => row.supportSiteId === site.siteId);
       const ledgers = loadCase.contributionLedger.filter((row) => row.allocations.some((allocation) => allocation.siteId === site.siteId));
+      
+      const scenarioCaseResult = scenarioCoreResult?.loadCases?.find((lc) => lc.loadCaseId === loadCase.loadCaseId);
+      const scenarioSupportResult = scenarioCaseResult?.supportResults?.find((row) => row.supportSiteId === site.siteId);
+
       return {
         loadCaseId: loadCase.loadCaseId,
         supportSiteId: site.siteId,
@@ -217,6 +226,9 @@ export class EngineeringModelStore {
         contributorIds: result?.contributorIds || [],
         formulasAndSources: ledgers.map((row) => ({ contributionId: row.contributionId, formula: row.formula, source: row.source })),
         excludedInputs: loadCase.excludedInputs,
+        anchorDecomposition: scenarioSupportResult?.anchorDecomposition ?? null,
+        contactState: scenarioSupportResult?.contactState ?? null,
+        restraintId: scenarioSupportResult?.restraintId ?? null,
       };
     });
     const authorizedExecution = authorizedEmpiricalRuntimeStore.getExecution() || engineeringSupportLoadStore.getAuthorizedExecution();

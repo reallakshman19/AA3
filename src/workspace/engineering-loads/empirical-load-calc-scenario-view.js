@@ -275,12 +275,14 @@ function resultCase(row, investigation, selectedEntityId) {
   if (row.status === 'BLOCKED') {
     return `<article class="engineering-subcard"><h4>${escapeHtml(row.loadCaseId)} — blocked</h4>${blockerList(row.blockers || [])}</article>`;
   }
+  const hasAnchor = (row.supportResults || []).some((r) => r.anchorDecomposition);
   return `<article class="engineering-subcard" data-result-load-case="${escapeHtml(row.loadCaseId)}">
     <div class="engineering-card__header"><h4>${escapeHtml(row.loadCaseId)}</h4><span class="status-badge">${escapeHtml(row.status)}</span></div>
     <div class="table-scroll"><table class="engineering-table">
-      <thead><tr><th>Support</th><th>Restraint</th><th>State</th><th>FX</th><th>FY</th><th>FZ</th><th>MX</th><th>MY</th><th>MZ</th><th>3D</th></tr></thead>
+      <thead><tr><th>Support</th><th>Restraint</th><th>State</th><th>FX</th><th>FY</th><th>FZ</th><th>MX</th><th>MY</th><th>MZ</th><th class="proj-loads-header" title="Projected load on restraint basis — vertical axis">Fv (N)</th><th class="proj-loads-header" title="Projected load on restraint basis — guide axis">Fl·Guide (N)</th><th class="proj-loads-header" title="Projected load on restraint basis — lineStop axis">Fa·LineStop (N)</th><th>3D</th></tr></thead>
       <tbody>${(row.supportResults || []).map((result) => resultRow(result, investigation, selectedEntityId)).join('')}</tbody>
     </table></div>
+    ${hasAnchor ? '<p class="engineering-note proj-loads-note">Fv = rest axis · Fl = guide axis · Fa = lineStop axis — from anchorDecomposition per restraint basis vectors</p>' : ''}
   </article>`;
 }
 
@@ -292,11 +294,16 @@ function resultRow(row, investigation, selectedEntityId) {
   const inspect = target?.navigationEntityId
     ? `<button type="button" class="table-link" data-non-fea-investigation-entity-id="${escapeHtml(target.navigationEntityId)}">Inspect 3D</button>`
     : 'Unavailable';
+  const anchor = row.anchorDecomposition?.componentsN || null;
   return `<tr data-result-restraint-id="${escapeHtml(row.restraintId)}" data-viewport-selected="${selected}"${selected ? ' class="engineering-table__row--selected"' : ''}>
     <td>${escapeHtml(row.supportSiteId)}</td><td>${escapeHtml(row.restraintId)}</td>
     <td>${escapeHtml(row.contactState)}</td>
     <td>${number(force.x)}</td><td>${number(force.y)}</td><td>${number(force.z)}</td>
-    <td>${number(moment.x)}</td><td>${number(moment.y)}</td><td>${number(moment.z)}</td><td>${inspect}</td>
+    <td>${number(moment.x)}</td><td>${number(moment.y)}</td><td>${number(moment.z)}</td>
+    <td class="proj-load${anchor ? '' : ' proj-load--none'}">${anchor ? number(anchor.rest) : '—'}</td>
+    <td class="proj-load${anchor ? '' : ' proj-load--none'}">${anchor ? number(anchor.guide) : '—'}</td>
+    <td class="proj-load${anchor ? '' : ' proj-load--none'}">${anchor ? number(anchor.lineStop) : '—'}</td>
+    <td>${inspect}</td>
   </tr>`;
 }
 

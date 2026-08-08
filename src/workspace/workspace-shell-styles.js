@@ -240,5 +240,34 @@ export function advancedShellStyles() {
       .load-calc-sidebar, .load-calc-inspector { flex: none; border: none; border-bottom: 1px solid var(--border-color); }
       .load-calc-table-wrap { overflow: visible; }
     }
+
+    /* Support Load Results in Properties Panel */
+    .support-load-results { margin-top: 12px; }
+    .support-load-results h3 { font-size: 12px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.1em; color: var(--accent-blue); margin: 0 0 8px; }
+    .support-load-case { margin-bottom: 12px; padding: 10px; border: 1px solid var(--border-color); border-radius: 6px; background: var(--bg-card); }
+    .support-load-case__header { display: flex; align-items: center; gap: 8px; margin-bottom: 8px; }
+    .support-load-case__header strong { font-size: 11px; color: var(--text-muted); }
+    .support-load-dl { display: grid; grid-template-columns: 1fr auto; gap: 4px 12px; margin: 0 0 8px; }
+    .support-load-dl dt { font-size: 11px; color: var(--text-muted); }
+    .support-load-dl dd { font-family: 'JetBrains Mono', monospace; font-size: 12px; font-weight: 700; color: var(--accent-gold); margin: 0; text-align: right; }
+    .support-load-basis summary { font-size: 11px; color: var(--accent-blue); cursor: pointer; user-select: none; padding: 2px 0; }
+    .support-load-basis__dl { display: grid; grid-template-columns: auto 1fr; gap: 3px 8px; margin: 6px 0 0; }
+    .support-load-basis__dl dt { font-size: 10px; color: var(--text-muted); }
+    .support-load-basis__dl dd { font-family: 'JetBrains Mono', monospace; font-size: 10px; color: #94a3b8; margin: 0; overflow-wrap: anywhere; }
+    /* Projected loads columns in Results table */
+    .proj-loads-header { background: rgba(251,191,36,0.07) !important; color: var(--accent-gold) !important; }
+    .proj-load { color: var(--accent-gold); font-weight: 700; }
+    .proj-load--none { color: var(--text-muted); font-weight: normal; }
+    /* Verify & Run pane */
+    .verify-run-pane { max-width: 560px; margin: 24px auto; padding: 0 12px; }
+    .verify-run-pane h2 { font-size: 16px; font-weight: 800; color: #f8fafc; margin: 0 0 4px; }
+    .verify-checklist { list-style: none; margin: 16px 0; padding: 0; display: flex; flex-direction: column; gap: 8px; }
+    .verify-checklist li { display: flex; align-items: center; gap: 10px; padding: 10px 14px; border-radius: 8px; background: var(--bg-card); border: 1px solid var(--border-color); font-size: 13px; }
+    .verify-checklist li[data-status="ok"] { border-color: rgba(34,197,94,0.3); }
+    .verify-checklist li[data-status="fail"] { border-color: rgba(239,68,68,0.3); }
+    .verify-checklist li span { margin-left: auto; font-size: 11px; color: var(--text-muted); font-family: 'JetBrains Mono', monospace; }
+    .verify-run-btn { display: block; width: 100%; margin-top: 20px; padding: 14px; border: none; border-radius: 8px; background: linear-gradient(135deg, #0284c7, #0ea5e9); color: #fff; font-size: 15px; font-weight: 800; cursor: pointer; box-shadow: 0 0 24px rgba(14,165,233,0.3); transition: box-shadow 0.2s; }
+    .verify-run-btn:hover { box-shadow: 0 0 36px rgba(14,165,233,0.5); }
+    .verify-run-btn:disabled { opacity: 0.4; cursor: not-allowed; box-shadow: none; }
   `;
 }

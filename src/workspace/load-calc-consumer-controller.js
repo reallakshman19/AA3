@@ -27,7 +27,7 @@ export class LoadCalcConsumerController {
     this.eventBus = eventBus;
     this.context = consumerController?.getContext() || null;
     this.reviewModel = buildReviewModel(this.context);
-    this.activeTab = 'loads';
+    this.activeTab = 'verify';
     this.message = '';
     this.unsubscribers = [];
     this.renderRevision = 0;
@@ -126,15 +126,21 @@ export class LoadCalcConsumerController {
       this.eventBus.publish(EMPIRICAL_LOAD_CALC_SCENARIO_EVENTS.CALCULATE_REQUESTED, {});
       return;
     }
-    if (event.target.closest('[data-engineering-load-calculate]')) {
-      const authorization = engineeringModelStore.getEmpiricalAuthorizationState();
-      if (!authorization.calculationEligible) {
-        this.message = availabilityMessage(authorization);
+    if (event.target.closest('[data-load-calc-run]')) {
+      const snap = empiricalLoadCalcScenarioStore.getSnapshot();
+      const authState = engineeringModelStore.getEmpiricalAuthorizationState();
+      
+      if (snap?.calculationEligible) {
+        this.message = 'Executing the current common-seal-bound empirical method…';
+        this.eventBus.publish(EMPIRICAL_LOAD_CALC_SCENARIO_EVENTS.CALCULATE_REQUESTED, {});
+      } else if (authState?.calculationEligible) {
+        this.message = 'Executing current authorized empirical package against the common seal…';
+        this.eventBus.publish(ENGINEERING_MODEL_EVENTS.CALCULATE_REQUESTED, { source: 'load-calc' });
+      } else {
+        this.message = snap?.reasonCode || 'Not ready — check Verify & Run tab';
         this.render();
-        return;
       }
-      this.message = 'Executing current authorized empirical package against the common seal…';
-      this.eventBus.publish(ENGINEERING_MODEL_EVENTS.CALCULATE_REQUESTED, { source: 'load-calc' });
+      return;
     }
   }
 
@@ -181,7 +187,9 @@ export class LoadCalcConsumerController {
         overlaySnapshot: empiricalResultOverlayStore.getSnapshot(),
         selectedEntityId: this.context?.selectedEntityId || null,
       };
-      if (EMPIRICAL_SCENARIO_VIEW_TABS.has(tab)) {
+      if (tab === 'verify' || !tab) {
+        if (revision === this.renderRevision) this.renderVerifyPane(pane, empiricalState);
+      } else if (EMPIRICAL_SCENARIO_VIEW_TABS.has(tab)) {
         const scenarioView = await import('./engineering-loads/empirical-load-calc-scenario-view.js');
         if (revision !== this.renderRevision) return;
         if (tab === 'overview') scenarioView.renderEmpiricalScenarioOverview(pane, empiricalState);
@@ -255,6 +263,43 @@ export class LoadCalcConsumerController {
     } catch (error) {
       if (revision === this.renderRevision) pane.textContent = error instanceof Error ? error.message : String(error);
     }
+  }
+
+  renderVerifyPane(container, state) {
+    const authState = engineeringModelStore.getEmpiricalAuthorizationState();
+    const commonState = nonFeaCommonInputStore.getSnapshot();
+    const scenarioState = empiricalLoadCalcScenarioStore.getSnapshot();
+
+    const datasetOk = authState?.reasonCode !== 'NO_ACTIVE_DATASET';
+    const projectDataOk = authState?.reasonCode !== 'PROJECT_DATA_CHANGED';
+    const masterDataOk = authState?.reasonCode !== 'MASTER_DATA_CHANGED';
+    const sealOk = commonState?.commonInput && !commonState?.staleness?.stale;
+    const authOk = scenarioState?.calculationEligible || authState?.calculationEligible;
+
+    const datasetLabel = datasetOk ? 'Available' : 'Missing or changed';
+    const projectDataLabel = projectDataOk ? 'Current' : 'Changed';
+    const masterDataLabel = masterDataOk ? 'Current' : 'Changed';
+    const sealLabel = sealOk ? 'Current' : 'Stale or missing';
+    const authLabel = authOk ? 'Eligible' : 'Not eligible';
+
+    const escapeHtml = (val) => String(val ?? '').replace(/[&<>'"]/g, (char) => ({
+      '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;'
+    })[char]);
+
+    container.innerHTML = `
+      <div class="verify-run-pane">
+        <h2>Pre-run readiness</h2>
+        <p class="engineering-note">All gates must pass before calculation.</p>
+        <ul class="verify-checklist">
+          <li data-status="${datasetOk ? 'ok' : 'fail'}">${datasetOk ? '✅' : '❌'} Dataset loaded <span>${escapeHtml(datasetLabel)}</span></li>
+          <li data-status="${projectDataOk ? 'ok' : 'fail'}">${projectDataOk ? '✅' : '❌'} Project data <span>${escapeHtml(projectDataLabel)}</span></li>
+          <li data-status="${masterDataOk ? 'ok' : 'fail'}">${masterDataOk ? '✅' : '❌'} Master data <span>${escapeHtml(masterDataLabel)}</span></li>
+          <li data-status="${sealOk ? 'ok' : 'fail'}">${sealOk ? '✅' : '❌'} Common seal <span>${escapeHtml(sealLabel)}</span></li>
+          <li data-status="${authOk ? 'ok' : 'fail'}">${authOk ? '✅' : '❌'} Authorization <span>${escapeHtml(authLabel)}</span></li>
+        </ul>
+        <p class="engineering-note">Results will publish Fv / Fl(guide) / Fa(lineStop) per restraint.</p>
+      </div>
+    `;
   }
 
   getReviewModel() {

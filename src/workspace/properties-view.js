@@ -38,6 +38,11 @@ export function renderPropertiesContent(
 
   fragment.append(buildPropertyInspector(documentRef, entityObj, sharedSupportPresenter, null));
 
+  const supportLoads = entityObj.properties?.engineeringSupportLoads;
+  if (supportLoads && supportLoads.loadCases?.some((lc) => lc.anchorDecomposition)) {
+    fragment.append(renderSupportLoadSection(documentRef, supportLoads));
+  }
+
   fragment.append(renderAnalysisCapabilities(documentRef, capabilities, analysisSession));
   fragment.append(renderAnalysisSession(documentRef, analysisSession));
   fragment.append(renderAnalysis(documentRef, analysisState));
@@ -125,4 +130,78 @@ function analysisStatusText(state) {
   if (state.status === 'completed') return `${state.analysisType} completed · ${state.result.status}`;
   if (state.status === 'failed') return `${state.analysisType} failed`;
   return 'No analysis has been run for this selection.';
+}
+
+function renderSupportLoadSection(documentRef, supportLoads) {
+  const section = documentRef.createElement('section');
+  section.className = 'support-load-results';
+  
+  const heading = documentRef.createElement('h3');
+  heading.textContent = 'Support Loads';
+  section.append(heading);
+
+  for (const lc of supportLoads.loadCases) {
+    if (!lc.anchorDecomposition) continue;
+    const article = documentRef.createElement('article');
+    article.className = 'support-load-case';
+
+    // Header: load case + contact state badge
+    const header = documentRef.createElement('div');
+    header.className = 'support-load-case__header';
+    const caseLabel = documentRef.createElement('strong');
+    caseLabel.textContent = lc.loadCaseId;
+    const contactBadge = documentRef.createElement('span');
+    contactBadge.className = 'status-badge';
+    contactBadge.textContent = lc.contactState || 'UNKNOWN';
+    header.append(caseLabel, contactBadge);
+    article.append(header);
+
+    // Projected loads dl
+    const anchor = lc.anchorDecomposition;
+    const dl = documentRef.createElement('dl');
+    dl.className = 'support-load-dl';
+    function addRow(label, value, unit) {
+      const dt = documentRef.createElement('dt');
+      dt.textContent = label;
+      const dd = documentRef.createElement('dd');
+      dd.textContent = Number.isFinite(value) 
+        ? `${Number(value).toLocaleString(undefined, { maximumFractionDigits: 1 })} ${unit}`
+        : '—';
+      dl.append(dt, dd);
+    }
+    addRow('Fv — vertical (rest)', anchor.componentsN?.rest, 'N');
+    addRow('Fl — guide (lateral)', anchor.componentsN?.guide, 'N');
+    addRow('Fa — lineStop (axial)', anchor.componentsN?.lineStop, 'N');
+    article.append(dl);
+
+    // Basis accordion <details>
+    const details = documentRef.createElement('details');
+    details.className = 'support-load-basis';
+    const summary = documentRef.createElement('summary');
+    summary.textContent = 'Calculation basis ›';
+    details.append(summary);
+
+    const basisDl = documentRef.createElement('dl');
+    basisDl.className = 'support-load-basis__dl';
+    function addBasisRow(label, value) {
+      const dt = documentRef.createElement('dt');
+      dt.textContent = label;
+      const dd = documentRef.createElement('dd');
+      dd.textContent = Array.isArray(value) 
+        ? `[${value.map((v) => Number.isFinite(v) ? v.toFixed(4) : '—').join(', ')}]`
+        : String(value ?? '—');
+      basisDl.append(dt, dd);
+    }
+    addBasisRow('Labels', anchor.labels?.join(' · '));
+    addBasisRow('lineStop axis', anchor.basis?.lineStop);
+    addBasisRow('rest axis', anchor.basis?.transverse1);
+    addBasisRow('guide axis', anchor.basis?.transverse2);
+    addBasisRow('Method', supportLoads.method);
+    addBasisRow('Freshness', supportLoads.freshness?.status);
+    details.append(basisDl);
+    article.append(details);
+
+    section.append(article);
+  }
+  return section;
 }

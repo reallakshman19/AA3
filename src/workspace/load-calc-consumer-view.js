@@ -59,15 +59,28 @@ function headerMarkup(state) {
 
   const sealStatus = commonSeal === 'CURRENT' ? 'ok' : (commonSeal === 'NOT_SEALED' ? 'warn' : 'fail');
   const authSt = authorization.state || 'NOT_CONFIGURED';
-  const authStatus = (authSt === 'EXECUTED_CURRENT' || authSt === 'AUTHORIZED_CURRENT') ? 'ok' : (authSt.includes('AWAITING') ? 'warn' : 'fail');
+  const authStatus = (authSt === 'EXECUTED_CURRENT' || authSt === 'AUTHORIZED_CURRENT') ? 'ok' : (authSt.includes('AWAITING') || authSt === 'DRAFT_READY' ? 'warn' : 'fail');
   const resultStatus = freshness === 'CURRENT' ? 'ok' : (freshness === 'NOT_CALCULATED' ? 'warn' : 'fail');
+
+  // Human-readable pill labels
+  const SEAL_LABELS = { CURRENT: 'Sealed ✓', STALE: 'Seal stale ⚠', NOT_SEALED: 'Not sealed' };
+  const AUTH_LABELS = {
+    EXECUTED_CURRENT: 'Authorized ✓', AUTHORIZED_CURRENT: 'Authorized ✓',
+    DRAFT_READY: 'Ready to authorize', DRAFT_BLOCKED: 'Scenario blocked',
+    AUTHORIZED_STALE: 'Stale — re-authorize', EXECUTED_STALE: 'Results stale',
+    NOT_CONFIGURED: 'No scenario', AWAITING_AUTHORIZATION: 'Awaiting auth',
+  };
+  const RESULT_LABELS = { CURRENT: 'Results ready ✓', NOT_CALCULATED: 'Not run yet', STALE: 'Results stale' };
+  const sealLabel  = SEAL_LABELS[commonSeal]   || commonSeal;
+  const authLabel  = AUTH_LABELS[authSt]        || authSt;
+  const resultLabel = RESULT_LABELS[freshness]  || freshness;
 
   return `<header class="empirical-load-calc__header">
     <div><span class="panel-eyebrow">${escapeHtml(activeMethod)}</span><h1>Empirical Support Loads</h1></div>
     <div class="empirical-load-calc__facts">
-      <span data-pill-status="${sealStatus}">Input seal: ${escapeHtml(commonSeal)}</span>
-      <span data-pill-status="${authStatus}">Authorization: ${escapeHtml(authSt)}</span>
-      <span data-pill-status="${resultStatus}">Result: ${escapeHtml(freshness)}</span>
+      <span data-pill-status="${sealStatus}">${escapeHtml(sealLabel)}</span>
+      <span data-pill-status="${authStatus}">${escapeHtml(authLabel)}</span>
+      <span data-pill-status="${resultStatus}">${escapeHtml(resultLabel)}</span>
     </div>
     <nav class="empirical-load-calc__tabs" aria-label="Load calculation views">
       <button type="button" class="${state.activeTab === 'verify' || !state.activeTab ? 'is-active' : ''}" data-load-calc-tab="verify" title="Pre-run readiness checklist">★ Verify &amp; Run</button>

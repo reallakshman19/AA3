@@ -315,16 +315,38 @@ export class LoadCalcConsumerController {
     const commonState = nonFeaCommonInputStore.getSnapshot();
     const scenarioState = empiricalLoadCalcScenarioStore.getSnapshot();
     const profile = projectDataStore.getProfile();
-  
+
+    // P0: Auto-apply physical constants silently — only when field is currently null
+    // These are universal constants that require no project decision
+    const AUTO_CONSTANTS = [
+      { path: 'loadCalculation.gravityMPerS2',        value: 9.80665,                           evidence: { source: 'ISO 80000-3 standard gravity' },         approved: true },
+      { path: 'loadCalculation.loadFactor',            value: 1.0,                               evidence: { source: 'Unfactored operating weight default' },    approved: true },
+      { path: 'loadCalculation.equilibriumTolerances', value: { forceN: 1e-8, momentNmm: 1e-5 }, evidence: { source: 'Production benchmark standard (14 scripts)' }, approved: true },
+    ];
+    AUTO_CONSTANTS.forEach(({ path, value, evidence, approved }) => {
+      const [group, key] = path.split('.');
+      if (profile?.[group]?.[key]?.value === null) {
+        try { projectDataStore.update(path, value, evidence, approved); } catch { /* already set or invalid */ }
+      }
+    });
+    // Re-read profile after auto-apply
+    const freshProfile = projectDataStore.getProfile();
+
     // Gate statuses
     const datasetOk  = authState?.reasonCode !== 'NO_ACTIVE_DATASET' && authState?.reasonCode !== null;
     const sealOk     = !!(commonState?.commonInput && !commonState?.staleness?.stale);
     const authOk     = !!(scenarioState?.calculationEligible || authState?.calculationEligible);
-  
-    // Loads field audit — read current values from profile
-    const lc = profile?.loadCalculation || {};
-    const su = profile?.sourcesAndUnits || {};
-  
+
+    // Human-readable status detail (P0: no raw enum codes shown to users)
+    const sealDetail = sealOk ? 'Inputs sealed ✓' :
+      (commonState?.commonInput ? 'Seal is stale — changes were made after sealing' : 'Inputs not yet sealed — click to seal now');
+    const authDetail = authOk ? 'Calculation eligible ✓' :
+      (sealOk ? 'Sealed but not authorized — click to authorize' : 'Seal inputs first, then authorize');
+
+    // Loads field audit — read current values from fresh profile
+    const lc = freshProfile?.loadCalculation || {};
+    const su = freshProfile?.sourcesAndUnits || {};
+
     function fieldVal(group, key) {
       const entry = (group === 'lc' ? lc : su)[key];
       return entry?.value ?? null;
@@ -397,8 +419,8 @@ export class LoadCalcConsumerController {
                   ? '<button class="verify-gate__action verify-gate__action--primary" data-apply-load-defaults>Apply 4 defaults</button>'
                   : (!loadsOk ? '<button class="verify-gate__action verify-gate__action--secondary" data-goto-tab="masters">→ Open Masters</button>' : '')
               )}
-              ${gate(sealOk, 'Common seal', sealOk ? 'Inputs sealed' : 'NOT_SEALED', sealBtn)}
-              ${gate(authOk, 'Authorization', authOk ? 'Calculation eligible' : 'AWAITING_AUTHORIZATION', authNote)}
+              ${gate(sealOk, 'Common seal', sealDetail, sealBtn)}
+              ${gate(authOk, 'Authorization', authDetail, authNote)}
             </ul>
             <p class="engineering-note">Results publish Fv / Fl(guide) / Fa(lineStop) per restraint after calculation.</p>
           </div>

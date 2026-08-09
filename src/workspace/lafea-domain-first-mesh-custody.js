@@ -1,6 +1,6 @@
 /** Pure custody classifier for governed v2 analysis-mesh evidence. */
 import { validateLafeaAnalysisMeshEvidenceV2 } from './lafea-analysis-mesh-evidence-v2.js';
-import { validateLafeaShellMidsurfaceEvidence } from './lafea-shell-midsurface-contract.js';
+import { validateLafeaAnyShellMidsurfaceEvidence } from './lafea-shell-midsurface-dispatch.js';
 
 export const LAFEA_DOMAIN_FIRST_MESH_CUSTODY_SCHEMA = 'lafea-domain-first-mesh-custody/v1';
 
@@ -61,7 +61,7 @@ function shellParentReasons(stage, evidence) {
   const retained = stage.retainedShellMidsurfaceEvidence;
   if (!retained) return ['ANALYSIS_MESH_V2_SHELL_MIDSURFACE_PARENT_ABSENT'];
   let parent;
-  try { parent = validateLafeaShellMidsurfaceEvidence(retained); } catch (error) {
+  try { parent = validateLafeaAnyShellMidsurfaceEvidence(retained); } catch (error) {
     return [error.code ?? 'ANALYSIS_MESH_V2_SHELL_MIDSURFACE_PARENT_INVALID'];
   }
   if (parent.stageId !== stage.stageId) reasons.push('ANALYSIS_MESH_V2_SHELL_STAGE_PARENT_STALE');

@@ -27,13 +27,25 @@ const SORT_IDS = Object.freeze([
   'SERVICE_ASC',
   'READINESS_ASC',
 ]);
+const DEFAULT_PROVIDERS = Object.freeze({
+  getLine: getLfeaPreflightPhase1LineRecord,
+  getCell: getLfeaPreflightPhase1Cell,
+  getComponent: getLfeaPreflightPhase1ComponentRecord,
+});
 
+/**
+ * Create one indexed viewport. Providers are a data-access seam, not a second
+ * authority layer: the default providers read the production review source,
+ * while qualification may inject lazy read-only providers over the same frozen
+ * line/component indexes without importing fixtures into production code.
+ */
 export function createLfeaPreflightPhase1Viewport(source, options = {}) {
   if (!source || source.blocked || !source.lineIndex || !source.componentIndex) {
     throw viewportError('E_P06_VIEW_SOURCE_REQUIRED', 'A non-blocked Phase-1 indexed review source is required.');
   }
   const state = {
     source,
+    providers: requireProviders(options.providers ?? DEFAULT_PROVIDERS),
     viewportHeight: positive(options.viewportHeight ?? 420, 'viewportHeight'),
     viewportWidth: positive(options.viewportWidth ?? 900, 'viewportWidth'),
     rowHeight: positive(options.rowHeight ?? 32, 'rowHeight'),
@@ -173,12 +185,13 @@ export function getLfeaPreflightPhase1ViewportModel(viewport) {
     scrollOffset: state.scrollLeft,
     overscan: state.columnOverscan,
   });
+  const visibleRowTargetIds = rows.slice(rowWindow.start, rowWindow.end);
   const visibleColumnOrdinals = Object.freeze(columns.slice(columnWindow.start, columnWindow.end));
   const visibleColumns = Object.freeze(visibleColumnOrdinals.map((ordinal) => LFEA_PREFLIGHT_COLUMN_SCHEMA[ordinal]));
-  const visibleRows = Object.freeze(rows.slice(rowWindow.start, rowWindow.end).map((targetId, localIndex) => {
+  const visibleRows = Object.freeze(visibleRowTargetIds.map((targetId, localIndex) => {
     const line = requireLine(state, targetId);
-    const cells = Object.freeze(visibleColumnOrdinals.map((fieldOrdinal) => getLfeaPreflightPhase1Cell(
-      state.source,
+    const cells = Object.freeze(visibleColumnOrdinals.map((fieldOrdinal) => requireCell(
+      state,
       targetId,
       fieldOrdinal,
     )));
@@ -193,19 +206,14 @@ export function getLfeaPreflightPhase1ViewportModel(viewport) {
       bore: line.bore,
       itemCount: line.itemCount,
       readiness: lineReadiness(line),
-      resolutionStatus: line.resolution.status,
+      resolutionStatus: line.resolution?.status ?? line.resolutionStatus ?? lineReadiness(line),
       cells,
       selected: state.selection?.targetId === targetId,
       expanded: state.expandedLineTargetId === targetId,
     });
   }));
   const componentViewport = componentModel(state);
-  const selection = state.selection === null ? null : Object.freeze({
-    ...state.selection,
-    fieldId: LFEA_PREFLIGHT_ENGINEERING_FIELDS[state.selection.fieldOrdinal],
-    visible: rows.includes(state.selection.targetId)
-      && columns.includes(state.selection.fieldOrdinal),
-  });
+  const selection = selectionModel(state, rows, columns, visibleRowTargetIds, visibleColumnOrdinals);
   const queueCounts = Object.freeze({ ...state.source.lineIndex.queueCounts });
   const facetCounts = Object.freeze({
     service: countLfeaPreflightPhase1Facet(state.source.lineIndex, 'service', state.filter),
@@ -296,8 +304,10 @@ function componentModel(state) {
     state.componentViewportRows,
   );
   const rows = Object.freeze(viewport.targetIds.map((targetId) => {
-    const component = getLfeaPreflightPhase1ComponentRecord(state.source, targetId);
-    if (component === null) throw viewportError('E_P06_COMPONENT_RECORD_MISSING', `Missing component record: ${targetId}`);
+    const component = state.providers.getComponent(state.source, targetId);
+    if (component === null || component === undefined) {
+      throw viewportError('E_P06_COMPONENT_RECORD_MISSING', `Missing component record: ${targetId}`);
+    }
     return Object.freeze(component);
   }));
   return Object.freeze({
@@ -308,7 +318,24 @@ function componentModel(state) {
   });
 }
 
+function selectionModel(state, rows, columns, visibleRowTargetIds, visibleColumnOrdinals) {
+  if (state.selection === null) return null;
+  const inFilteredSet = rows.includes(state.selection.targetId);
+  const inPreset = columns.includes(state.selection.fieldOrdinal);
+  const inViewport = visibleRowTargetIds.includes(state.selection.targetId)
+    && visibleColumnOrdinals.includes(state.selection.fieldOrdinal);
+  return Object.freeze({
+    ...state.selection,
+    fieldId: LFEA_PREFLIGHT_ENGINEERING_FIELDS[state.selection.fieldOrdinal],
+    inFilteredSet,
+    inPreset,
+    inViewport,
+    visible: inViewport,
+  });
+}
+
 function lineReadiness(line) {
+  if (typeof line.readiness === 'string' && line.readiness) return line.readiness;
   const priorities = [
     'BLOCKED_CONFLICT',
     'BLOCKED_AMBIGUOUS',
@@ -319,7 +346,7 @@ function lineReadiness(line) {
     'RESOLVED_EXACT',
     'NOT_APPLICABLE',
   ];
-  const statuses = new Set(line.cells.map((cell) => cell.statusText));
+  const statuses = new Set((line.cells ?? []).map((cell) => cell.statusText));
   return priorities.find((value) => statuses.has(value)) ?? 'NOT_APPLICABLE';
 }
 
@@ -355,7 +382,8 @@ function ensureSelectionInView(state, rowIndex, columnIndex, rowCount, columnCou
 
 function reconcileSelection(state) {
   if (state.selection === null) return;
-  if (getLfeaPreflightPhase1LineRecord(state.source, state.selection.targetId) === null) state.selection = null;
+  const line = state.providers.getLine(state.source, state.selection.targetId);
+  if (line === null || line === undefined) state.selection = null;
 }
 
 function clampScroll(state, rowCount, columnCount) {
@@ -370,9 +398,40 @@ function presetOrdinals(state) {
 }
 
 function requireLine(state, targetId) {
-  const line = getLfeaPreflightPhase1LineRecord(state.source, targetId);
-  if (line === null) throw viewportError('E_P06_TARGET_UNKNOWN', `Unknown Phase-1 line target: ${targetId}`);
+  const line = state.providers.getLine(state.source, targetId);
+  if (line === null || line === undefined) {
+    throw viewportError('E_P06_TARGET_UNKNOWN', `Unknown Phase-1 line target: ${targetId}`);
+  }
+  if (String(line.targetId) !== String(targetId)) {
+    throw viewportError('E_P06_PROVIDER_IDENTITY_STALE', `Phase-1 line provider returned stale identity for ${targetId}.`);
+  }
   return line;
+}
+
+function requireCell(state, targetId, fieldOrdinal) {
+  const cell = state.providers.getCell(state.source, targetId, fieldOrdinal);
+  if (cell === null || cell === undefined) {
+    throw viewportError('E_P06_CELL_RECORD_MISSING', `Missing Phase-1 cell ${targetId}/${fieldOrdinal}.`);
+  }
+  if (cell.fieldOrdinal !== fieldOrdinal
+    || cell.fieldId !== LFEA_PREFLIGHT_ENGINEERING_FIELDS[fieldOrdinal]) {
+    throw viewportError('E_P06_PROVIDER_IDENTITY_STALE', `Phase-1 cell provider returned stale identity for ${targetId}/${fieldOrdinal}.`);
+  }
+  return cell;
+}
+
+function requireProviders(value) {
+  if (!value || typeof value !== 'object' || Array.isArray(value)
+    || typeof value.getLine !== 'function'
+    || typeof value.getCell !== 'function'
+    || typeof value.getComponent !== 'function') {
+    throw viewportError('E_P06_VIEW_PROVIDER_INVALID', 'Phase-1 viewport providers must expose getLine/getCell/getComponent functions.');
+  }
+  return Object.freeze({
+    getLine: value.getLine,
+    getCell: value.getCell,
+    getComponent: value.getComponent,
+  });
 }
 
 function requireFieldOrdinal(value) {
@@ -392,7 +451,9 @@ function normalizePreset(value) {
 
 function freezeFilter(value) {
   const combine = String(value?.combine ?? 'AND').trim().toUpperCase();
-  if (!['AND', 'OR'].includes(combine)) throw viewportError('E_P06_FILTER_MODE_INVALID', `Unknown filter combine mode: ${combine}`);
+  if (!['AND', 'OR'].includes(combine)) {
+    throw viewportError('E_P06_FILTER_MODE_INVALID', `Unknown filter combine mode: ${combine}`);
+  }
   const clauses = Object.freeze((value?.clauses ?? []).map((clause) => Object.freeze({
     ...(clause.facetId === undefined ? {} : { facetId: String(clause.facetId) }),
     ...(clause.queueId === undefined ? {} : { queueId: String(clause.queueId).toUpperCase() }),
@@ -404,23 +465,31 @@ function freezeFilter(value) {
 
 function positive(value, field) {
   const number = Number(value);
-  if (!Number.isFinite(number) || number <= 0) throw viewportError('E_P06_VIEWPORT_RANGE', `${field} must be positive.`);
+  if (!Number.isFinite(number) || number <= 0) {
+    throw viewportError('E_P06_VIEWPORT_RANGE', `${field} must be positive.`);
+  }
   return number;
 }
 
 function nonnegative(value, field) {
   const number = Number(value);
-  if (!Number.isFinite(number) || number < 0) throw viewportError('E_P06_VIEWPORT_RANGE', `${field} must be non-negative.`);
+  if (!Number.isFinite(number) || number < 0) {
+    throw viewportError('E_P06_VIEWPORT_RANGE', `${field} must be non-negative.`);
+  }
   return number;
 }
 
 function positiveInteger(value, field) {
-  if (!Number.isSafeInteger(value) || value <= 0) throw viewportError('E_P06_VIEWPORT_RANGE', `${field} must be a positive integer.`);
+  if (!Number.isSafeInteger(value) || value <= 0) {
+    throw viewportError('E_P06_VIEWPORT_RANGE', `${field} must be a positive integer.`);
+  }
   return value;
 }
 
 function signedInteger(value, field) {
-  if (!Number.isSafeInteger(value)) throw viewportError('E_P06_VIEWPORT_RANGE', `${field} must be an integer.`);
+  if (!Number.isSafeInteger(value)) {
+    throw viewportError('E_P06_VIEWPORT_RANGE', `${field} must be an integer.`);
+  }
   return value;
 }
 

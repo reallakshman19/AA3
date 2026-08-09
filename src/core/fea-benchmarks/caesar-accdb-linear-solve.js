@@ -124,6 +124,7 @@ export function solveCaesarAccdbLinearBenchmark(benchmarkPackage) {
         'The explicit Bourdon job mode is supplied by the benchmark profile because CAESAR existing-job settings are absent from ACCDB exports.',
         'Translation-and-rotation mode applies closed-end axial pressure strain to non-bend spans and one MEC-21 equation (2.25) bend-level free field sampled at all discretized bend stations.',
         'Bend stiffness uses the qualified B31.3/B31J factor calculator and true tangent-to-tangent arc components.',
+        'B31.3 flexibility stiffness uses the cold/reference elastic modulus Ec (ACCDB MODULUS); HOT_MOD1/Eh is not selected by thermal-case presence.',
         'Reducer stiffness, gravity and thermal loads use the governed ten-cylinder midpoint-sampling candidate.',
         'Topology-qualified TYPE=3 welding tees use unreduced B31J directional end springs; branch legs connect at the run surface through a rigid offset.',
       ],
@@ -135,7 +136,7 @@ function solveCase(benchmarkPackage, caseRecord, solveProfile) {
   const caseMode = requireSupportedCase(caseRecord);
   const modelInput = benchmarkPackage.model;
   const sourceRows = sortedElements(modelInput.tables.INPUT_BASIC_ELEMENT_DATA.rows);
-  const material = buildMaterial(sourceRows, caseMode, solveProfile, benchmarkPackage);
+  const material = buildMaterial(sourceRows, solveProfile, benchmarkPackage);
   const sectionRegistry = createSectionRegistry(benchmarkPackage);
   const sourceSections = new Map(sourceRows.map((row) => [
     String(row.ELEMENTID),
@@ -1171,16 +1172,17 @@ function sourceResultElementId(row) {
     + `|${String(row.ELEMENT_NAME ?? '').trim()}`;
 }
 
-function buildMaterial(sourceRows, caseMode, solveProfile, benchmarkPackage) {
-  const elasticValues = uniqueNumbers(sourceRows.map((row) => Number(caseMode.thermal ? row.HOT_MOD1 : row.MODULUS)));
+function buildMaterial(sourceRows, solveProfile, benchmarkPackage) {
+  // CAESAR II flexibility analysis for B31.3 uses the cold/reference elastic
+  // modulus Ec. HOT_MOD1 (Eh) is retained as source custody but must not be
+  // selected merely because a physical case contains temperature loading.
+  const elasticValues = uniqueNumbers(sourceRows.map((row) => Number(row.MODULUS)));
   const poissonValues = uniqueNumbers(sourceRows.map((row) => Number(row.POISSONS)));
   const densityValues = uniqueNumbers(sourceRows.map((row) => density(row.PIPE_DENSITY)));
   if (elasticValues.length !== 1 || poissonValues.length !== 1 || densityValues.length !== 1) {
     throw new TypeError('The current ACCDB linear solve requires one material state per selected case.');
   }
-  const evaluationTemperature = caseMode.thermal
-    ? Math.max(...sourceRows.map((row) => Number(row.TEMP_EXP_C1) + CELSIUS_TO_KELVIN))
-    : benchmarkPackage.model.installationTemperatureK;
+  const evaluationTemperature = benchmarkPackage.model.installationTemperatureK;
   const elasticModulus = elasticValues[0] * KPA_TO_PA;
   const poissonRatio = poissonValues[0];
   const point = {
@@ -1201,7 +1203,7 @@ function buildMaterial(sourceRows, caseMode, solveProfile, benchmarkPackage) {
   return resolveLinearFeaMaterialState({
     table,
     request: {
-      materialStateId: `ACCDB-MAT-${caseMode.thermal ? 'HOT1' : 'AMBIENT'}`,
+      materialStateId: 'ACCDB-MAT-COLD-EC',
       materialId: table.materialId,
       evaluationTemperature,
     },

@@ -1,0 +1,239 @@
+name: m047-bm4nl-i029-smooth90-ab
+
+on:
+  push:
+    branches:
+      - agent/m047-qualified-shear-draft
+    paths:
+      - '.github/workflows/m047-bm4nl-i029-smooth90-ab.yml'
+      - 'scripts/lfea-m047-apply-smooth90-candidate.mjs'
+      - 'scripts/lfea-m047-smooth90-candidate-check.mjs'
+      - 'scripts/lfea-m047-apply-plain-frame-timoshenko-candidate.mjs'
+      - 'scripts/lfea-m047-plain-frame-timoshenko-candidate-check.mjs'
+      - 'scripts/lfea-m047-benchmark-ab.mjs'
+      - 'scripts/lfea-m047-target-node-evidence.mjs'
+      - 'scripts/lfea-m047-provision-ace.ps1'
+      - 'scripts/lfea-caesar-accdb-export.ps1'
+      - 'benchmarks/LFEA/CAESAR_ACCDB/m047/M047-I029.request.json'
+      - 'agent/status/status978.txt'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  ab:
+    runs-on: windows-2022
+    timeout-minutes: 50
+    steps:
+      - name: Checkout I029 orchestration exact head
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.sha }}
+          fetch-depth: 0
+
+      - name: Prove orchestration boundary
+        shell: pwsh
+        run: |
+          if ((git rev-parse HEAD).Trim() -ne '${{ github.sha }}') { throw 'I029 orchestration checkout drifted.' }
+          if (git status --porcelain) { throw 'I029 orchestration checkout is dirty.' }
+          New-Item -ItemType Directory -Path 'artifacts/m047/I029' -Force | Out-Null
+
+      - name: Use Node.js 22
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Checkout frozen source matrix
+        uses: actions/checkout@v4
+        with:
+          repository: reallaksh19/Advanced_Analysis
+          ref: 882d59a99c3a03847d20bec34770ba57ff479d91
+          path: frozen-source
+          fetch-depth: 1
+
+      - name: Checkout frozen plus smooth source
+        uses: actions/checkout@v4
+        with:
+          repository: reallaksh19/Advanced_Analysis
+          ref: 882d59a99c3a03847d20bec34770ba57ff479d91
+          path: smooth-source
+          fetch-depth: 1
+
+      - name: Checkout I015 parent source
+        uses: actions/checkout@v4
+        with:
+          repository: reallaksh19/Advanced_Analysis
+          ref: 882d59a99c3a03847d20bec34770ba57ff479d91
+          path: i015-source
+          fetch-depth: 1
+
+      - name: Checkout I015 plus smooth source
+        uses: actions/checkout@v4
+        with:
+          repository: reallaksh19/Advanced_Analysis
+          ref: 882d59a99c3a03847d20bec34770ba57ff479d91
+          path: i015-smooth-source
+          fetch-depth: 1
+
+      - name: Prove frozen source custody and qualify core mechanics
+        shell: pwsh
+        run: |
+          foreach ($dir in @('frozen-source','smooth-source','i015-source','i015-smooth-source')) {
+            if ((git -C $dir rev-parse HEAD).Trim() -ne '882d59a99c3a03847d20bec34770ba57ff479d91') { throw "$dir baseline drifted." }
+            if (git -C $dir status --porcelain) { throw "$dir baseline checkout dirty." }
+          }
+          node frozen-source/scripts/lfea-b3.1-frame-element-check.mjs
+          node frozen-source/scripts/lfea-b3.2-piping-component-check.mjs
+          node frozen-source/scripts/lfea-b3.3-solver-check.mjs
+          node frozen-source/scripts/lfea-b3.4-recovery-check.mjs
+
+      - name: Checkout pinned Common BM4 source
+        uses: actions/checkout@v4
+        with:
+          repository: reallaksh19/Common
+          ref: 1728651c94504b497aae4041578b1095fd8e292e
+          path: common-source
+          fetch-depth: 1
+
+      - name: Expand and verify locked BM4_NL ACCDB
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $root = Join-Path $env:RUNNER_TEMP 'm047-i029-bm4nl'
+          if (Test-Path -LiteralPath $root) { Remove-Item -LiteralPath $root -Recurse -Force }
+          New-Item -ItemType Directory -Path $root | Out-Null
+          Expand-Archive -LiteralPath 'common-source/LFEA/BM4/BM4_NL.zip' -DestinationPath $root -Force
+          $files = @(Get-ChildItem -LiteralPath $root -Recurse -File -Filter '*.accdb')
+          if ($files.Count -ne 1) { throw "Expected one ACCDB; found $($files.Count)." }
+          $sha = (Get-FileHash -LiteralPath $files[0].FullName -Algorithm SHA256).Hash.ToLowerInvariant()
+          if ($sha -ne '85d39463296e569da811d8572e2eff680b858097f76fdf0f47d1755f0b161c21') { throw "Locked ACCDB mismatch: $sha" }
+          "BM4NL_ACCDB=$($files[0].FullName)" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
+          [ordered]@{schema='lfea-m047-i029-source/v1';orchestrationHead='${{ github.sha }}';baselineCommit='882d59a99c3a03847d20bec34770ba57ff479d91';commonCommit='1728651c94504b497aae4041578b1095fd8e292e';accdbSha256=$sha} | ConvertTo-Json | Set-Content 'artifacts/m047/I029/source.json' -Encoding utf8
+
+      - name: Provision Microsoft 365 Access Runtime
+        shell: powershell
+        run: .\scripts\lfea-m047-provision-ace.ps1 -OutputPath 'artifacts/m047/I029/ace.json'
+
+      - name: Bind portable exporter to all runtime source trees
+        shell: pwsh
+        run: |
+          foreach ($dir in @('frozen-source','smooth-source','i015-source','i015-smooth-source')) {
+            Copy-Item -LiteralPath 'scripts/lfea-caesar-accdb-export.ps1' -Destination "$dir/scripts/lfea-caesar-accdb-export.ps1" -Force
+          }
+
+      - name: Prove locked bend population is exactly twelve 90-degree bends
+        shell: powershell
+        run: |
+          .\scripts\lfea-caesar-accdb-export.ps1 -AccdbPath "$env:BM4NL_ACCDB" -TablesCsv 'INPUT_BASIC_ELEMENT_DATA,INPUT_BENDS' | Set-Content 'artifacts/m047/I029/bends.raw.json' -Encoding utf8
+          $raw = Get-Content 'artifacts/m047/I029/bends.raw.json' -Raw | ConvertFrom-Json
+          $rows = @($raw.tables.INPUT_BASIC_ELEMENT_DATA.rows)
+          $bendRows = @($rows | Where-Object { [double]$_.BEND_PTR -gt 0 })
+          if ($bendRows.Count -ne 12) { throw "Expected 12 bend sources; found $($bendRows.Count)." }
+          $inventory = @()
+          foreach ($row in $bendRows) {
+            $outgoing = @($rows | Where-Object { [string]$_.FROM_NODE -eq [string]$row.TO_NODE })
+            if ($outgoing.Count -ne 1) { throw "Bend source $($row.ELEMENTID) does not have one outgoing source." }
+            $a = @([double]$row.DELTA_X,[double]$row.DELTA_Y,[double]$row.DELTA_Z)
+            $b = @([double]$outgoing[0].DELTA_X,[double]$outgoing[0].DELTA_Y,[double]$outgoing[0].DELTA_Z)
+            $dot = $a[0]*$b[0]+$a[1]*$b[1]+$a[2]*$b[2]
+            $na = [math]::Sqrt($a[0]*$a[0]+$a[1]*$a[1]+$a[2]*$a[2])
+            $nb = [math]::Sqrt($b[0]*$b[0]+$b[1]*$b[1]+$b[2]*$b[2])
+            $angle = [math]::Acos([math]::Max(-1,[math]::Min(1,$dot/($na*$nb))))*180/[math]::PI
+            if ([math]::Abs($angle-90) -gt 1e-9) { throw "Bend source $($row.ELEMENTID) angle=$angle is not 90 deg." }
+            $inventory += [ordered]@{sourceElementId=[string]$row.ELEMENTID;bendPtr=[int]$row.BEND_PTR;angleDegrees=$angle}
+          }
+          $inventory | ConvertTo-Json -Depth 4 | Set-Content 'artifacts/m047/I029/bend-inventory.json' -Encoding utf8
+
+      - name: Apply isolated runtime candidates
+        shell: pwsh
+        run: |
+          node scripts/lfea-m047-apply-smooth90-candidate.mjs --source smooth-source/src/core/fea-benchmarks/caesar-accdb-linear-solve.js --manifest artifacts/m047/I029/frozen-smooth.manifest.json
+          node scripts/lfea-m047-smooth90-candidate-check.mjs --source smooth-source/src/core/fea-benchmarks/caesar-accdb-linear-solve.js
+
+          node scripts/lfea-m047-apply-plain-frame-timoshenko-candidate.mjs --source i015-source/src/core/fea-benchmarks/caesar-accdb-linear-solve.js --manifest artifacts/m047/I029/i015.manifest.json
+          node scripts/lfea-m047-plain-frame-timoshenko-candidate-check.mjs --source i015-source/src/core/fea-benchmarks/caesar-accdb-linear-solve.js
+
+          node scripts/lfea-m047-apply-plain-frame-timoshenko-candidate.mjs --source i015-smooth-source/src/core/fea-benchmarks/caesar-accdb-linear-solve.js --manifest artifacts/m047/I029/i015-parent.manifest.json
+          node scripts/lfea-m047-apply-smooth90-candidate.mjs --source i015-smooth-source/src/core/fea-benchmarks/caesar-accdb-linear-solve.js --manifest artifacts/m047/I029/i015-smooth.manifest.json
+          node scripts/lfea-m047-plain-frame-timoshenko-candidate-check.mjs --source i015-smooth-source/src/core/fea-benchmarks/caesar-accdb-linear-solve.js
+          node scripts/lfea-m047-smooth90-candidate-check.mjs --source i015-smooth-source/src/core/fea-benchmarks/caesar-accdb-linear-solve.js
+
+          node --check smooth-source/src/core/fea-benchmarks/caesar-accdb-linear-solve.js
+          node --check i015-source/src/core/fea-benchmarks/caesar-accdb-linear-solve.js
+          node --check i015-smooth-source/src/core/fea-benchmarks/caesar-accdb-linear-solve.js
+
+      - name: Run four locked-ACCDB system columns
+        shell: pwsh
+        run: |
+          $ErrorActionPreference='Stop'
+          $columns = @(
+            @{name='frozen';dir='frozen-source'},
+            @{name='smooth';dir='smooth-source'},
+            @{name='i015';dir='i015-source'},
+            @{name='i015-smooth';dir='i015-smooth-source'}
+          )
+          foreach ($c in $columns) {
+            node "$($c.dir)/scripts/lfea-caesar-accdb-benchmark.mjs" `
+              --accdb "$env:BM4NL_ACCDB" `
+              --profile "$($c.dir)/benchmarks/LFEA/CAESAR_ACCDB/bm4nl-l19-l20-linear-solve.profile.json" `
+              --solve-linear true `
+              --actual-out "artifacts/m047/I029/$($c.name).actual.json" `
+              --summary-out "artifacts/m047/I029/$($c.name).summary.md" `
+              --out "artifacts/m047/I029/$($c.name).benchmark.json"
+          }
+
+      - name: Compare isolated and composed smooth-90 deltas
+        shell: pwsh
+        run: |
+          node scripts/lfea-m047-benchmark-ab.mjs --baseline artifacts/m047/I029/frozen.benchmark.json --candidate artifacts/m047/I029/smooth.benchmark.json --manifest artifacts/m047/I029/frozen-smooth.manifest.json --out artifacts/m047/I029/frozen-smooth.ab.json
+          node scripts/lfea-m047-benchmark-ab.mjs --baseline artifacts/m047/I029/i015.benchmark.json --candidate artifacts/m047/I029/i015-smooth.benchmark.json --manifest artifacts/m047/I029/i015-smooth.manifest.json --out artifacts/m047/I029/i015-smooth.ab.json
+          node scripts/lfea-m047-target-node-evidence.mjs --benchmark artifacts/m047/I029/smooth.benchmark.json --actual artifacts/m047/I029/smooth.actual.json --out artifacts/m047/I029/smooth.targets.json
+          node scripts/lfea-m047-target-node-evidence.mjs --benchmark artifacts/m047/I029/i015-smooth.benchmark.json --actual artifacts/m047/I029/i015-smooth.actual.json --out artifacts/m047/I029/i015-smooth.targets.json
+
+      - name: Govern I029 result and summarize
+        shell: pwsh
+        run: |
+          $ErrorActionPreference='Stop'
+          $a = Get-Content 'artifacts/m047/I029/frozen-smooth.ab.json' -Raw | ConvertFrom-Json
+          $b = Get-Content 'artifacts/m047/I029/i015-smooth.ab.json' -Raw | ConvertFrom-Json
+          if ($a.cases.L19.before.restraint.failingComponentCount -ne 1 -or $a.cases.L19.before.displacementRotation.failingComponentCount -ne 74 -or $a.cases.L19.before.sourceEndAction.failingComponentCount -ne 20) { throw 'Frozen L19 baseline drifted.' }
+          if ($a.cases.L20.before.restraint.failingComponentCount -ne 5 -or $a.cases.L20.before.displacementRotation.failingComponentCount -ne 72 -or $a.cases.L20.before.sourceEndAction.failingComponentCount -ne 137) { throw 'Frozen L20 baseline drifted.' }
+          if ($b.cases.L19.before.restraint.failingComponentCount -ne 0 -or $b.cases.L19.before.displacementRotation.failingComponentCount -ne 66 -or $b.cases.L19.before.sourceEndAction.failingComponentCount -ne 23) { throw 'I015 parent L19 drifted.' }
+          foreach ($p in @('smooth.actual.json','i015-smooth.actual.json')) {
+            $actual=Get-Content "artifacts/m047/I029/$p" -Raw | ConvertFrom-Json
+            foreach ($caseId in @('L19','L20')) { if ($actual.mechanics.cases.$caseId.bendPointerCount -ne 12) { throw "$p $caseId bend coverage drifted." } }
+          }
+          foreach ($p in @('smooth.targets.json','i015-smooth.targets.json')) {
+            $targets=Get-Content "artifacts/m047/I029/$p" -Raw | ConvertFrom-Json
+            foreach ($t in $targets.targets) {
+              if ([math]::Abs([double]$t.balance.actionSumResidual) -gt 0.1) { throw "$p action-sum custody failed $($t.caseId)/$($t.nodeId)." }
+              if ([math]::Abs([double]$t.balance.equilibriumResidual) -gt 0.1) { throw "$p equilibrium custody failed $($t.caseId)/$($t.nodeId)." }
+            }
+          }
+          Add-Content $env:GITHUB_STEP_SUMMARY '# M047 I029 B31J smooth-90 A/B'
+          Add-Content $env:GITHUB_STEP_SUMMARY '- Mechanics delta: only `smooth90FlexibilityCorrection false -> true` (1.65/h -> 1.3/h) on the locked all-90-degree bend population.'
+          foreach ($label in @('frozen-smooth','i015-smooth')) {
+            $x=Get-Content "artifacts/m047/I029/$label.ab.json" -Raw | ConvertFrom-Json
+            Add-Content $env:GITHUB_STEP_SUMMARY "## $label ($($x.semanticHash))"
+            foreach ($caseId in @('L19','L20')) {
+              $c=$x.cases.$caseId
+              Add-Content $env:GITHUB_STEP_SUMMARY "- $caseId restraints: $($c.before.restraint.failingComponentCount) -> $($c.after.restraint.failingComponentCount); RMS $($c.before.restraint.rmsNormalizedError) -> $($c.after.restraint.rmsNormalizedError)"
+              Add-Content $env:GITHUB_STEP_SUMMARY "- $caseId disp/rot: $($c.before.displacementRotation.failingComponentCount) -> $($c.after.displacementRotation.failingComponentCount); RMS $($c.before.displacementRotation.rmsNormalizedError) -> $($c.after.displacementRotation.rmsNormalizedError)"
+              Add-Content $env:GITHUB_STEP_SUMMARY "- $caseId source actions: $($c.before.sourceEndAction.failingComponentCount) -> $($c.after.sourceEndAction.failingComponentCount); RMS $($c.before.sourceEndAction.rmsNormalizedError) -> $($c.after.sourceEndAction.rmsNormalizedError)"
+            }
+          }
+          $node=$a.tracked.L19_20090_FY
+          Add-Content $env:GITHUB_STEP_SUMMARY "- Frozen L19 node20090 FY relative error: $($node.before.relativeError) -> $($node.after.relativeError)"
+          $node2=$b.tracked.L19_20090_FY
+          Add-Content $env:GITHUB_STEP_SUMMARY "- I015-composed L19 node20090 FY relative error: $($node2.before.relativeError) -> $($node2.after.relativeError)"
+          if (git status --porcelain -- 'src/core' 'benchmarks/LFEA/CAESAR_ACCDB/bm4nl-l19-l20-linear-solve.profile.json') { throw 'I029 orchestration branch must contain no production mechanics/profile edit.' }
+
+      - name: Retain I029 evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: m047-i029-smooth90-ab-${{ github.sha }}
+          path: artifacts/m047/I029/**
+          if-no-files-found: error
+          retention-days: 90

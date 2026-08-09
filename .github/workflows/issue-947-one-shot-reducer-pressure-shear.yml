@@ -11,7 +11,7 @@ permissions:
 
 jobs:
   apply:
-    if: "${{ github.event.head_commit.message == 'chore(issue947): inspect reducer pressure authority payload' }}"
+    if: "${{ github.event.head_commit.message == 'chore(issue947): retry qualified reducer pressure and shear authority' }}"
     runs-on: ubuntu-latest
     timeout-minutes: 15
     steps:
@@ -25,7 +25,7 @@ jobs:
         with:
           node-version: 22
 
-      - name: Repair generator quoting from failed dry-run
+      - name: Repair generator findings from dry-runs
         shell: python
         run: |
           from pathlib import Path
@@ -33,26 +33,18 @@ jobs:
           text = path.read_text()
           text = text.replace('`uniform Timoshenko condensed stiffness[${index}]`', "'uniform Timoshenko condensed stiffness[' + index + ']'")
           text = text.replace('`uniform pressure vector[${index}]`', "'uniform pressure vector[' + index + ']'")
+          text = text.replace(
+            'const uniformFreeAction = directTimoshenko.map((_unused, row) => {',
+            'const uniformFreeAction = new Array(12).fill(0).map((_unused, row) => {',
+          )
+          text = text.replace(
+            'const taperedFreeAction = pressureAuthority.condensed.localStiffness.map((_unused, row) => {',
+            'const taperedFreeAction = new Array(12).fill(0).map((_unused, row) => {',
+          )
           path.write_text(text)
 
       - name: Apply deterministic reducer authority patch
         run: node scripts/lfea-issue947-apply-reducer-pressure-shear.mjs
-
-      - name: Instrument pressure authority without changing gate
-        shell: python
-        run: |
-          from pathlib import Path
-          path = Path('scripts/lfea-b3.23-reducer-condensation-check.mjs')
-          text = path.read_text()
-          text = text.replace(
-            "const uniformFree = new Array(12).fill(0);",
-            "console.log('uniform pressure authority', JSON.stringify(pressureUniform.pressure));\nconsole.log('uniform authority keys', Object.keys(pressureUniform));\nconst uniformFree = new Array(12).fill(0);",
-          )
-          text = text.replace(
-            "assert.ok(Math.max(...uniformFreeAction.map(Math.abs)) < 1e-4, 'uniform reducer pressure free-growth action');",
-            "const uniformFreeMax = Math.max(...uniformFreeAction.map(Math.abs));\nconsole.log('uniform pressure free-growth residual N', uniformFreeMax);\nassert.ok(uniformFreeMax < 1e-4, 'uniform reducer pressure free-growth action');",
-          )
-          path.write_text(text)
 
       - name: Run reducer condensation qualification
         run: node scripts/lfea-b3.23-reducer-condensation-check.mjs

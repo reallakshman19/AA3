@@ -1,0 +1,36 @@
+{
+  "schema": "lfea-caesar-accdb-iteration-request/v1",
+  "issueId": "M047",
+  "iterationId": "M047-I026",
+  "classification": "AUTHORITY_ONLY_NO_MECHANICS_CANDIDATE",
+  "expectedSourceAccdbSha256": "85d39463296e569da811d8572e2eff680b858097f76fdf0f47d1755f0b161c21",
+  "baseCommitSha": "882d59a99c3a03847d20bec34770ba57ff479d91",
+  "parentAcceptedIteration": "M047-I015",
+  "supportingIterations": ["M047-I019", "M047-I020", "M047-I024", "M047-I025"],
+  "orchestrationBaseHeadSha": "ff7261e0bb2f15c5f142d607c9a11b77b9167082",
+  "question": "What source-authoritative transverse-shear/shear-area formulation does CAESAR II 14 use for isotropic metallic straight-pipe flexibility, and how should it compose with independently owned bend, B31J tee, and reducer mechanics?",
+  "constraints": [
+    "No solver or profile mechanics change in I026.",
+    "No new numeric kappa or effective shear area may be selected by fitting BM4_NL reactions, displacements, source actions, node20090, node20250, node20390, or source44.",
+    "Vendor documentation and primary mechanics literature are admissible; secondary summaries are not authority for promotion.",
+    "A primary mechanics formula such as Cowper is not evidence that CAESAR implements that formula unless CAESAR applicability is independently established.",
+    "Absence from searched documentation is not proof that CAESAR omits transverse shear; unresolved implementation authority fails closed."
+  ],
+  "requiredAuthorityFields": [
+    "whether isotropic metallic pipe includes transverse shear deformation in the static piping stiffness path",
+    "definition of shear modulus used for isotropic materials",
+    "effective shear area or shear-correction coefficient",
+    "dependence on section geometry and Poisson ratio",
+    "relationship, if any, to bend flexibility corrections",
+    "relationship, if any, to B31J tee rotational flexibility",
+    "relationship, if any, to condensed reducer internal beam mechanics"
+  ],
+  "acceptanceRule": "I026 may authorize a later numeric/formulation candidate only if the CAESAR-compatible metallic-pipe shear law is pinned to vendor or equivalent implementation authority with unambiguous applicability. Otherwise I026 closes as an accepted authority-boundary finding and no numeric candidate is authorized.",
+  "changedPaths": [
+    "benchmarks/LFEA/CAESAR_ACCDB/m047/M047-I026.request.json",
+    "benchmarks/LFEA/CAESAR_ACCDB/m047/M047-I026.authority.json",
+    "agent/status/status978.txt"
+  ],
+  "verdict": "PENDING_AUTHORITY_REVIEW",
+  "decisionReason": "Collect and classify primary/vendor evidence without changing mechanics."
+}

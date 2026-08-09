@@ -81,9 +81,20 @@ for (const governedTab of ['enrichment', 'method-basis', 'seal-export']) {
 }
 assert.match(loadCalcViewSource, /Load Evaluation/u);
 assert.doesNotMatch(loadCalcViewSource, /Legacy Load Evaluation/u);
-assert.match(loadCalcViewSource, /Empirical scenario:/u);
-assert.match(loadCalcViewSource, /Calculation state/u);
-assert.match(loadCalcViewSource, /Calculate — Authorized Gravity/u);
+assert.match(loadCalcViewSource, /state\.empiricalScenarioState/u,
+  'Load Calc must continue to consume the governed empirical scenario state.');
+assert.match(loadCalcViewSource, /snap\?\.calculationEligible/u,
+  'The single run action must honor empirical scenario eligibility.');
+assert.match(loadCalcViewSource, /authState\?\.calculationEligible/u,
+  'The single run action must retain the authorized gravity fallback.');
+assert.match(loadCalcViewSource, /data-pill-status=/u,
+  'Load Calc must retain visible governed status pills.');
+assert.match(loadCalcViewSource, /Verify &amp; Run/u,
+  'Load Calc must retain the pre-run verification entry point.');
+assert.match(loadCalcViewSource, /data-load-calc-run/u,
+  'Load Calc must expose one governed run control.');
+assert.match(loadCalcViewSource, /Run Load Calc — Gravity/u,
+  'The governed run control must identify the authorized gravity fallback.');
 
 const loadCalcControllerSource = await readFile(path.join(root, 'src/workspace/load-calc-consumer-controller.js'), 'utf8');
 for (const requiredView of [

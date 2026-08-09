@@ -134,7 +134,7 @@ jobs:
             --package .work/bm4nl-canonical-package.json `
             --out .work/bm4nl-b31j-smooth90-authority.json
 
-      - name: Validate Bend Axial Shape mode against curved-arc closed form
+      - name: Validate ordinary curved-arc axial-mode convergence (CAESAR operator remains blocked)
         shell: pwsh
         run: |
           node scripts/lfea-issue947-bend-axial-shape-audit.mjs `

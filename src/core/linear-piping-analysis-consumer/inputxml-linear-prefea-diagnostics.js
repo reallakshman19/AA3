@@ -21,12 +21,13 @@ import {
 } from './inputxml-linear-prefea-contract.js';
 import { collectFindings } from './inputxml-linear-prefea-findings.js';
 
-export function diagnoseInputXmlLinearPreFea(request, options = {}) {
+export function diagnoseInputXmlLinearPreFea(request, options) {
+  const resolvedOptions = options === undefined ? {} : options;
   const accepted = validateInputXmlLinearPreFeaRequest(
     request,
-    options.validateSourceRequest ?? validateLinearPipingInputXmlAnalysisRequest,
+    resolvedOptions.validateSourceRequest ?? validateLinearPipingInputXmlAnalysisRequest,
   );
-  const parse = options.parseSource ?? parseInputXmlModelHealthSource;
+  const parse = resolvedOptions.parseSource ?? parseInputXmlModelHealthSource;
   const sourceBundle = requireInputXmlModelHealthSource(parse(
     accepted.inputXmlSource.content,
     parseOptions(accepted),
@@ -34,19 +35,19 @@ export function diagnoseInputXmlLinearPreFea(request, options = {}) {
   const sourceSemanticHash = computeInputXmlModelHealthSourceSemanticHash(sourceBundle);
   const sourceEvidenceHash = computeInputXmlModelHealthSourceEvidenceHash(sourceBundle);
 
-  const topology = (options.diagnoseTopology ?? diagnoseInputXmlModelHealthTopology)(
+  const topology = (resolvedOptions.diagnoseTopology ?? diagnoseInputXmlModelHealthTopology)(
     sourceBundle,
-    options.topologyOptions ?? {},
+    resolvedOptions.topologyOptions ?? {},
   );
-  const proximity = (options.diagnoseProximity ?? diagnoseInputXmlModelHealthProximity)(
+  const proximity = (resolvedOptions.diagnoseProximity ?? diagnoseInputXmlModelHealthProximity)(
     sourceBundle,
-    options.proximityOptions ?? {},
+    resolvedOptions.proximityOptions ?? {},
   );
-  const representability = (options.diagnoseRepresentability ?? diagnoseInputXmlLinearModelHealth)(
+  const representability = (resolvedOptions.diagnoseRepresentability ?? diagnoseInputXmlLinearModelHealth)(
     sourceBundle,
-    { ...(options.representabilityOptions ?? {}), analysisProfileId: accepted.requestedProfileId },
+    { ...(resolvedOptions.representabilityOptions ?? {}), analysisProfileId: accepted.requestedProfileId },
   );
-  const engineeringSanity = (options.diagnoseEngineeringSanity
+  const engineeringSanity = (resolvedOptions.diagnoseEngineeringSanity
     ?? diagnoseInputXmlLinearPreFeaEngineeringSanity)(sourceBundle);
   const findings = collectFindings({
     sourceBundle, topology, proximity, representability, engineeringSanity,

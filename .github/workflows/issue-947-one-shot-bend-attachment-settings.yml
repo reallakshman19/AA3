@@ -1,5 +1,5 @@
 name: Issue 947 one-shot bend attachment settings custody
-# Rerun to bind Version-14 B31J smooth-90 code authority with attachment custody.
+# Idempotent rerun after Version-14 B31J smooth-90 authority was bound in the benchmark profile.
 
 on:
   push:
@@ -37,7 +37,7 @@ jobs:
           set -euo pipefail
           git add benchmarks/LFEA/CAESAR_ACCDB/bm4nl-caesar-settings.authority.json scripts/lfea-issue947-caesar-settings-custody-check.mjs
           if git diff --cached --quiet; then
-            echo 'Expected bend attachment custody patch produced no diff.' >&2
+            echo 'Expected bend attachment/B31J custody patch produced no diff.' >&2
             exit 1
           fi
           git config user.name 'github-actions[bot]'

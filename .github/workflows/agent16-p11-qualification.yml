@@ -1,10 +1,14 @@
-name: agent16-p11-p12-qualification
+name: agent16-p11-p12-p13-qualification
 
 on:
   pull_request:
     paths:
       - 'scripts/advanced-shell-contract-check.mjs'
       - 'test/lfea-prefea-gateway.test.js'
+      - 'src/core/linear-piping-analysis-consumer/inputxml-feature-inventory.js'
+      - 'src/core/linear-piping-analysis-consumer/inputxml-feature-inventory-restraints.js'
+      - 'src/core/linear-piping-analysis-consumer/inputxml-linear-prefea-diagnostics.js'
+      - 'src/core/linear-piping-analysis-consumer/inputxml-linear-prefea-findings.js'
       - '.github/workflows/agent16-p11-qualification.yml'
 
 permissions:
@@ -38,24 +42,109 @@ jobs:
           while IFS= read -r changed; do
             case "$changed" in
               scripts/advanced-shell-contract-check.mjs|test/lfea-prefea-gateway.test.js|.github/workflows/agent16-p11-qualification.yml) ;;
-              *) echo "Forbidden changed path for stacked P-11/P-12 qualification: $changed" >&2; exit 1 ;;
+              src/core/linear-piping-analysis-consumer/inputxml-feature-inventory.js) ;;
+              src/core/linear-piping-analysis-consumer/inputxml-feature-inventory-restraints.js) ;;
+              src/core/linear-piping-analysis-consumer/inputxml-linear-prefea-diagnostics.js) ;;
+              src/core/linear-piping-analysis-consumer/inputxml-linear-prefea-findings.js) ;;
+              *) echo "Forbidden changed path for stacked P-11/P-12/P-13 qualification: $changed" >&2; exit 1 ;;
             esac
           done < /tmp/agent16-stack-paths.txt
-          test -z "$(git diff --name-only "${{ github.event.pull_request.base.sha }}" "${{ github.event.pull_request.head.sha }}" -- 'src/core/**')"
+          git diff --name-only "${{ github.event.pull_request.base.sha }}" "${{ github.event.pull_request.head.sha }}" -- 'src/core/**' > /tmp/agent16-core-paths.txt
+          while IFS= read -r changed; do
+            case "$changed" in
+              src/core/linear-piping-analysis-consumer/inputxml-feature-inventory.js) ;;
+              src/core/linear-piping-analysis-consumer/inputxml-feature-inventory-restraints.js) ;;
+              src/core/linear-piping-analysis-consumer/inputxml-linear-prefea-diagnostics.js) ;;
+              src/core/linear-piping-analysis-consumer/inputxml-linear-prefea-findings.js) ;;
+              *) echo "Forbidden numerical/core path for P-13: $changed" >&2; exit 1 ;;
+            esac
+          done < /tmp/agent16-core-paths.txt
 
       - name: Install dependencies
         run: npm ci
 
       - name: P-11 governed shell contract
+        id: p11
+        continue-on-error: true
         run: node scripts/advanced-shell-contract-check.mjs
 
       - name: P-12 focused pre-FEA gateway public export contract
+        id: p12
+        continue-on-error: true
         run: node --test --test-name-pattern='PF-22 every public InputXML solve path requires authorization' test/lfea-prefea-gateway.test.js
 
       - name: Full pre-FEA gateway suite diagnostic
         id: gateway_suite
         continue-on-error: true
         run: node --test test/lfea-prefea-gateway.test.js
+
+      - name: P-13 anti-drift modularity contract
+        id: p13_antidrift
+        continue-on-error: true
+        run: node scripts/linear-piping-analysis-consumer-anti-drift-check.mjs
+
+      - name: P-13 parent-vs-head authority equivalence
+        id: p13_equivalence
+        continue-on-error: true
+        shell: bash
+        run: |
+          set -euo pipefail
+          parent_sha='61953e11bea2677fcee5f119adf9d00f79ecdc2e'
+          rm -rf /tmp/p13-parent /tmp/p13-parent-evidence /tmp/p13-head-evidence
+          git worktree add --detach /tmp/p13-parent "$parent_sha"
+          ln -s "$GITHUB_WORKSPACE/node_modules" /tmp/p13-parent/node_modules
+
+          cat > /tmp/p13-model-health.mjs <<'EOF'
+          import { pathToFileURL } from 'node:url';
+          import path from 'node:path';
+
+          const root = path.resolve(process.argv[2]);
+          const sourceBinding = await import(pathToFileURL(path.join(
+            root,
+            'src/core/linear-piping-analysis-consumer/inputxml-source-binding.js',
+          )));
+          const modelHealth = await import(pathToFileURL(path.join(
+            root,
+            'src/core/linear-piping-analysis-consumer/inputxml-linear-model-health.js',
+          )));
+          const xml = `<PIPINGMODEL JOBNAME="P13_EQUIVALENCE">
+            <PIPINGELEMENT FROM_NODE="10" TO_NODE="20" DELTA_X="1000" DELTA_Y="0" DELTA_Z="0"
+              DIAMETER="100" WALL_THICK="5" MATERIAL_NAME="A106-B" PRESSURE1="1" TEMP_EXP_C1="50">
+              <RESTRAINT NODE="10" TYPE="1" XCOSINE="1" YCOSINE="0" ZCOSINE="0"/>
+            </PIPINGELEMENT>
+          </PIPINGMODEL>`;
+          const source = sourceBinding.parseInputXmlModelHealthSource(xml, {
+            unit: 'mm',
+            source: 'P13_EQUIVALENCE',
+            componentOrigins: {},
+            restraintTypeCodeMap: { 1: 'ANCHOR' },
+            restraintTypeMutation: { enabled: false, rows: [] },
+            bendRadiusTolerance: 0.001,
+            fileName: 'p13-equivalence.xml',
+          });
+          const report = modelHealth.diagnoseInputXmlLinearModelHealth(source);
+          process.stdout.write(JSON.stringify(report));
+          EOF
+
+          node /tmp/p13-model-health.mjs /tmp/p13-parent > /tmp/p13-parent-model-health.json
+          node /tmp/p13-model-health.mjs "$GITHUB_WORKSPACE" > /tmp/p13-head-model-health.json
+          cmp /tmp/p13-parent-model-health.json /tmp/p13-head-model-health.json
+
+          PREFEA_EVIDENCE_DIR=/tmp/p13-parent-evidence \
+            node /tmp/p13-parent/scripts/lfea-prefea-qualification.mjs
+          PREFEA_EVIDENCE_DIR=/tmp/p13-head-evidence \
+            node scripts/lfea-prefea-qualification.mjs
+
+          for artifact in \
+            prefea-diagnostics.json \
+            prefea-preparation.json \
+            solve-authorization.json \
+            prefea-findings.csv \
+            prefea-capabilities.csv \
+            prefea-negative-controls.json
+          do
+            cmp "/tmp/p13-parent-evidence/$artifact" "/tmp/p13-head-evidence/$artifact"
+          done
 
       - name: Required 1 — strict syntax
         id: syntax
@@ -92,13 +181,21 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
+          printf '%-42s %s\n' 'P-11 governed shell contract' '${{ steps.p11.outcome }}'
+          printf '%-42s %s\n' 'P-12 focused gateway contract' '${{ steps.p12.outcome }}'
           printf '%-42s %s\n' 'full gateway suite (diagnostic)' '${{ steps.gateway_suite.outcome }}'
+          printf '%-42s %s\n' 'P-13 anti-drift modularity' '${{ steps.p13_antidrift.outcome }}'
+          printf '%-42s %s\n' 'P-13 parent/head authority equivalence' '${{ steps.p13_equivalence.outcome }}'
           printf '%-42s %s\n' 'npm run syntax:strict' '${{ steps.syntax.outcome }}'
           printf '%-42s %s\n' 'node scripts/import-check.mjs' '${{ steps.imports.outcome }}'
           printf '%-42s %s\n' 'node scripts/run-enrichment-ui-phase0-checks.mjs' '${{ steps.enrichment.outcome }}'
           printf '%-42s %s\n' 'node scripts/linear-piping-workspace-integration-check.mjs' '${{ steps.workspace.outcome }}'
           printf '%-42s %s\n' 'node scripts/ui-invariant-check.mjs' '${{ steps.ui.outcome }}'
           printf '%-42s %s\n' 'npx vite build' '${{ steps.build.outcome }}'
+          test '${{ steps.p11.outcome }}' = success
+          test '${{ steps.p12.outcome }}' = success
+          test '${{ steps.p13_antidrift.outcome }}' = success
+          test '${{ steps.p13_equivalence.outcome }}' = success
           test '${{ steps.syntax.outcome }}' = success
           test '${{ steps.imports.outcome }}' = success
           test '${{ steps.enrichment.outcome }}' = success

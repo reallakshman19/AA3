@@ -79,9 +79,17 @@ assert.ok(analyticalVm.configuration.modes.every((row) => row.enabled === false)
 
 const capabilities = lafeaMeshCapabilities('LAFEA.3');
 assert.equal(capabilities.retainedAuthorizedMesh, true);
-assert.equal(capabilities.automaticMeshProducerQualified, false);
+// LAFEA.3 has a bound, qualified automatic producer (see
+// scripts/lafea-mesh-producer-binding-check.mjs). Local refinement does not.
+assert.equal(capabilities.automaticMeshProducerQualified, true);
+assert.equal(capabilities.manualRefinementQualified, false);
 assert.deepEqual(capabilities.allowedElementFamilies, ['T3', 'T6', 'Q8']);
 assert.equal(lafeaMeshCapabilities('LAFEA.1').applicable, false);
+// The shell stages remain without a qualified producer.
+for (const stageId of ['LAFEA.4', 'LAFEA.5']) {
+  assert.equal(lafeaMeshCapabilities(stageId).automaticMeshProducerQualified, false, stageId);
+  assert.equal(lafeaMeshCapabilities(stageId).generationExecutionAuthorized, false, stageId);
+}
 
 const intentInput = {
   schema: LAFEA_MESH_GENERATION_INTENT_SCHEMA,
@@ -100,13 +108,26 @@ const intentInput = {
   maximumEstimatedDofs: 60000,
   refinementEntityIds: ['B', 'A'],
 };
+// LAFEA.3/T3 is inside the bound producer's scope, so the intent is executable.
 const intent = createLafeaMeshGenerationIntent(intentInput);
-assert.equal(intent.status, 'UNEXECUTABLE_INTENT');
-assert.equal(intent.executionAuthorized, false);
-assert.equal(intent.producesMesh, false);
-assert.equal(intent.producerRef, null);
+assert.equal(intent.status, 'EXECUTABLE_INTENT');
+assert.equal(intent.executionAuthorized, true);
+assert.equal(intent.producesMesh, true);
+assert.ok(intent.producerRef?.startsWith('LAFEA_CORE_MESHER/'));
 assert.deepEqual(intent.refinementEntityIds, ['A', 'B']);
 assert.equal(intent.semanticHash, createLafeaMeshGenerationIntent(intentInput).semanticHash);
+
+// A stage with no bound producer keeps reporting an unexecutable intent.
+const shellIntent = createLafeaMeshGenerationIntent({
+  ...intentInput,
+  stageId: 'LAFEA.4',
+  elementFamily: 'CST_DKT_TRI3_THIN_SHELL_V1',
+});
+assert.equal(shellIntent.status, 'UNEXECUTABLE_INTENT');
+assert.equal(shellIntent.executionAuthorized, false);
+assert.equal(shellIntent.producesMesh, false);
+assert.equal(shellIntent.producerRef, null);
+assert.equal(shellIntent.reason, 'QUALIFIED_MESH_PRODUCER_NOT_AVAILABLE');
 
 const refinement = createLafeaMeshRefinementCommand({
   schema: LAFEA_MESH_REFINEMENT_COMMAND_SCHEMA,
@@ -172,8 +193,9 @@ for (const path of [
 console.log(JSON.stringify({
   check: 'lafea-ui-guided-discretization', status: 'PASS',
   canonicalOrchestratorAuthorizationConsumed: true,
-  automaticMeshExecutionAuthorized: false,
-  manualRefinementAuthorized: false,
+  automaticMeshExecutionAuthorized: capabilities.generationExecutionAuthorized,
+  automaticMeshExecutionAuthorizedStages: ['LAFEA.3'],
+  manualRefinementAuthorized: capabilities.manualRefinementQualified,
   releaseQualified: false,
 }));
 

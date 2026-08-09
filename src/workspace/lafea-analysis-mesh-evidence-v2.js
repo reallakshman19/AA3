@@ -99,7 +99,10 @@ function validateAuthority(value, expected) {
     sourceHash: sha256(value.sourceHash, 'SOURCE_HASH'),
     analysisDomainHash: sha256(value.analysisDomainHash, 'ANALYSIS_DOMAIN_HASH'),
     analysisGeometryHash: sha256(value.analysisGeometryHash, 'ANALYSIS_GEOMETRY_HASH'),
-    meshProfileHash: sha256(value.meshProfileHash, 'MESH_PROFILE_HASH'),
+    // A canonical mesh profile hashes with the profile contract's own digest
+    // (`fnv1a64:...`), not SHA-256 — matching the v1 authority record, which
+    // also carries this field as free text.
+    meshProfileHash: text(value.meshProfileHash, 'MESH_PROFILE_HASH'),
     meshHash: sha256(value.meshHash, 'MESH_HASH'),
     capabilityHash: sha256(value.capabilityHash, 'CAPABILITY_HASH'),
     qualificationHash: sha256(value.qualificationHash, 'QUALIFICATION_HASH'),

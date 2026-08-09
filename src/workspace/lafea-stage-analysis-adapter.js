@@ -2,6 +2,11 @@
 import { requireLafeaLifecycleProfileForStage } from './lafea-lifecycle-profiles.js';
 import { requireLafeaPreparationProfile } from './lafea-preparation-profile.js';
 import { requireLafeaStageRegistryEntry } from './lafea-stage-registry.js';
+import {
+  LAFEA_MESH_PRODUCER_LOCAL_REFINEMENT_AUTHORIZED,
+  lafeaMeshProducerBound,
+  lafeaMeshProducerRefFor,
+} from './lafea-mesh-producer-registry.js';
 
 export const LAFEA_STAGE_ANALYSIS_ADAPTER_SCHEMA = 'lafea-stage-analysis-adapter/v1';
 
@@ -45,9 +50,10 @@ export function requireLafeaStageAnalysisAdapter(stageId) {
       allowedElementFamilies: [...mesh.families],
       sourceNodePath: mesh.nodePath,
       sourceElementPath: mesh.elementPath,
-      qualifiedProducerId: null,
-      generationAuthorized: false,
-      refinementAuthorized: false,
+      qualifiedProducerId: meshApplicable ? lafeaMeshProducerRefFor(stageId) : null,
+      generationAuthorized: meshApplicable && lafeaMeshProducerBound(stageId),
+      refinementAuthorized: meshApplicable && lafeaMeshProducerBound(stageId)
+        && LAFEA_MESH_PRODUCER_LOCAL_REFINEMENT_AUTHORIZED,
     },
     execution: {
       adapterId: supported ? `ENGINE:${registry.enginePackage}` : null,

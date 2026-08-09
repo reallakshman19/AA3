@@ -77,6 +77,15 @@ export function createLafeaWorkbenchOrchestratorApi(context) {
       buildLafeaPreparationRequestV2FromStage(c.readStageState(stageId), caseIds),
     buildDomainMeshGenerationIntent: (configuration, stageId = activeStageId()) =>
       buildLafeaMeshGenerationIntentV2FromStage(c.readStageState(stageId), configuration),
+    bindAnalysisMeshProfile: c.bindAnalysisMeshProfile,
+    planAnalysisMesh: c.planAnalysisMesh,
+    generateAnalysisMesh: c.generateAnalysisMesh,
+    selectRetainedAnalysisMeshProfile: (stageId = activeStageId()) =>
+      c.meshGeneration.selectMeshProfile(stageId),
+    selectRetainedAnalysisMeshEvidenceV2: (stageId = activeStageId()) =>
+      c.meshGeneration.selectEvidence(stageId),
+    selectAnalysisMeshPlan: (stageId = activeStageId()) =>
+      c.meshGeneration.selectPlan(stageId),
     buildOrchestrationProjection: (stageId = activeStageId()) =>
       c.deriveStage(stageId).orchestration,
     subscribe: c.subscribe,

@@ -1,5 +1,7 @@
 /** DOM renderer for the truthful Discretization surface. */
 import { renderMeshQualityPanel } from './lafea-mesh-quality-panel.js';
+import { button, node, region } from './lafea-discretization-dom.js';
+import { generationSection } from './lafea-discretization-generation-panel.js';
 
 export function renderLafeaDiscretizationPanel(root, model, handlers = {}) {
   if (!root?.ownerDocument) throw new TypeError('LAFEA_DISCRETIZATION_PANEL_ROOT_REQUIRED');
@@ -14,6 +16,7 @@ export function renderLafeaDiscretizationPanel(root, model, handlers = {}) {
 
   host.append(
     configurationSection(doc, model),
+    generationSection(doc, model, handlers),
     previewSection(doc, model),
     evidenceSection(doc, model, handlers),
     actionsSection(doc, model, handlers),
@@ -75,14 +78,6 @@ function previewSection(doc, model) {
   const status = node(doc, 'p', 'lafea-discretization__status', model.preview.status);
   status.dataset.role = 'lafea-discretization-preview-status';
   section.append(status);
-  if (!model.preview.producerQualified) {
-    section.append(node(
-      doc,
-      'p',
-      null,
-      'No qualified automatic mesh producer is connected. Proposed topology, quality forecasts, runtime estimates, and configuration hashes are intentionally not manufactured.',
-    ));
-  }
   if (model.preview.retainedElementCount > 0) {
     section.append(node(
       doc,
@@ -216,23 +211,5 @@ function evidenceFacts(value) {
   ];
 }
 
-function region(doc, title, role) {
-  const section = node(doc, 'section', 'lafea-discretization__section');
-  section.dataset.discretizationSection = role;
-  section.append(node(doc, 'h3', null, title));
-  return section;
-}
 
-function button(doc, text, handler) {
-  const value = node(doc, 'button', null, text);
-  value.type = 'button';
-  value.addEventListener('click', handler);
-  return value;
-}
 
-function node(doc, tag, className = null, text = undefined) {
-  const value = doc.createElement(tag);
-  if (className) value.className = className;
-  if (text !== undefined) value.textContent = text;
-  return value;
-}

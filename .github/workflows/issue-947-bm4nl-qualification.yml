@@ -119,6 +119,13 @@ jobs:
             --package-out .work/bm4nl-canonical-package.json `
             --expected-source-sha256 85d39463296e569da811d8572e2eff680b858097f76fdf0f47d1755f0b161c21
 
+      - name: Validate B31.3 Ec material-state custody
+        shell: pwsh
+        run: |
+          node scripts/lfea-issue947-bm4nl-modulus-custody-audit.mjs `
+            --package .work/bm4nl-canonical-package.json `
+            --out .work/bm4nl-b31-material-custody.json
+
       - name: Run real BM4_NL L19/L20 qualification
         shell: pwsh
         run: |
@@ -154,6 +161,7 @@ jobs:
           if-no-files-found: warn
           path: |
             .work/bm4nl-caesar-settings-custody.json
+            .work/bm4nl-b31-material-custody.json
             .work/bm4nl-canonical-package.json
             .work/bm4nl-bourdon-mode-diagnostics.json
             .work/bm4nl-actual.json

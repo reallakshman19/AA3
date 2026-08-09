@@ -11,20 +11,26 @@ import {
  *
  * The legacy constrained-Delaunay path only refines the boundary ring. This
  * layer adds true interior corner vertices before the final Lawson pass. A
- * regular, canonically ordered seed lattice is derived from the declared
- * target element length; every accepted seed is inserted into the containing
+ * staggered triangular seed lattice is derived from the declared target
+ * element length; every accepted seed is inserted into the containing
  * triangle or split into the two triangles that own an interior edge, then
  * the complete triangulation is restored to constrained Delaunay form with
  * the original boundary edges held fixed.
+ *
+ * A triangular lattice is used deliberately: neighbouring seed distances are
+ * approximately the requested element length in all three principal lattice
+ * directions. This avoids the square-grid phase resonance that can create
+ * arbitrarily acute Delaunay transition triangles when independently sized
+ * boundary subdivisions happen to align with Cartesian interior rows.
  *
  * This is intentionally P1-5 only. Hole loops remain an explicit rejection
  * until their constrained edges can be recovered and classified without
  * introducing a hidden seam.
  */
-export const LAFEA_INTERIOR_REFINEMENT_REVISION = 'LAFEA.10.STEINER-GRID.V2';
+export const LAFEA_INTERIOR_REFINEMENT_REVISION = 'LAFEA.10.STEINER-TRI.V1';
 
 const EPS = 1e-12;
-const GRID_SPACING_FACTOR = 1 / Math.SQRT2;
+const TRIANGULAR_ROW_HEIGHT_FACTOR = Math.sqrt(3) / 2;
 const BOUNDARY_CLEARANCE_FACTOR = 0.18;
 const POINT_CLEARANCE_FACTOR = 0.12;
 
@@ -82,11 +88,14 @@ export function triangulateRefinedRegionAsIndexTriples(topology, regionId, optio
 }
 
 /**
- * Seed spacing is target/sqrt(2), so a square lattice cell diagonal is no
- * larger than the requested target before boundary effects. The lattice uses
- * equal subdivisions of the region bounding box and excludes the boundary
- * rows/columns; candidates are returned in x/y total order independent of
- * object or map insertion order.
+ * Build a deterministic staggered triangular/equilateral lattice.
+ *
+ * Horizontal neighbour spacing is `targetSize`; adjacent rows are separated
+ * by `sqrt(3)/2 * targetSize` and shifted by half a target. Hence the three
+ * nearest-neighbour directions all have length `targetSize`. Candidate rows
+ * and points are generated from the bounding-box minimum and returned in a
+ * total y/x order; polygon and clearance tests later remove points outside or
+ * too close to the actual boundary.
  */
 export function interiorSeedPoints(ringCorners, targetSize) {
   const polygon = ringCorners.map((corner) => corner.point ?? corner);
@@ -97,19 +106,21 @@ export function interiorSeedPoints(ringCorners, targetSize) {
   const width = maxX - minX; const height = maxY - minY;
   if (!(width > 0) || !(height > 0)) return Object.freeze([]);
 
-  const requestedSpacing = targetSize * GRID_SPACING_FACTOR;
-  const nx = Math.max(1, Math.ceil(width / requestedSpacing));
-  const ny = Math.max(1, Math.ceil(height / requestedSpacing));
-  const dx = width / nx; const dy = height / ny;
+  const rowHeight = targetSize * TRIANGULAR_ROW_HEIGHT_FACTOR;
   const candidates = [];
-  for (let ix = 1; ix < nx; ix += 1) {
-    const x = minX + ix * dx;
-    for (let iy = 1; iy < ny; iy += 1) {
-      const point = { x, y: minY + iy * dy };
+  for (let row = 1; ; row += 1) {
+    const y = minY + row * rowHeight;
+    if (!(y < maxY - scaledEps({ x: minX, y }, { x: maxX, y: maxY }))) break;
+    const xOffset = row % 2 === 1 ? targetSize / 2 : 0;
+    for (let column = 0; ; column += 1) {
+      const x = minX + xOffset + column * targetSize;
+      if (!(x < maxX - scaledEps({ x, y }, { x: maxX, y: maxY }))) break;
+      if (x <= minX + scaledEps({ x, y }, { x: minX, y: minY })) continue;
+      const point = { x, y };
       if (pointInPolygonStrict(point, polygon)) candidates.push(point);
     }
   }
-  candidates.sort((left, right) => left.x - right.x || left.y - right.y);
+  candidates.sort((left, right) => left.y - right.y || left.x - right.x);
   return Object.freeze(candidates.map((point) => Object.freeze(point)));
 }
 

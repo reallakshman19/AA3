@@ -60,18 +60,34 @@ jobs:
             -ArgumentList '/configure', (Join-Path $odt 'access-runtime.xml') -PassThru -Wait
           if ($install.ExitCode -ne 0) { throw "Access Runtime install failed: $($install.ExitCode)" }
 
+      - name: Permit empty diagnostic accumulator collections
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $path = 'scripts/lfea-issue947-b31j-smooth90-setting-custody.ps1'
+          $text = Get-Content -LiteralPath $path -Raw
+          $old1 = '[Parameter(Mandatory = $true)][System.Collections.Generic.List[object]]$ValueHits,'
+          $new1 = '[Parameter(Mandatory = $true)][AllowEmptyCollection()][System.Collections.Generic.List[object]]$ValueHits,'
+          $old2 = '[Parameter(Mandatory = $true)][System.Collections.Generic.List[object]]$Smooth90Rows'
+          $new2 = '[Parameter(Mandatory = $true)][AllowEmptyCollection()][System.Collections.Generic.List[object]]$Smooth90Rows'
+          if (($text.Split($old1).Count - 1) -ne 1) { throw 'ValueHits diagnostic patch site drift.' }
+          if (($text.Split($old2).Count - 1) -ne 1) { throw 'Smooth90Rows diagnostic patch site drift.' }
+          $text = $text.Replace($old1, $new1).Replace($old2, $new2)
+          Set-Content -LiteralPath $path -Value $text -Encoding utf8
+
       - name: Enumerate ACCDB source/version/configuration custody
         shell: pwsh
         run: |
-          $ErrorActionPreference = 'Continue'
+          $ErrorActionPreference = 'Stop'
           ./scripts/lfea-issue947-b31j-smooth90-setting-custody.ps1 `
             -AccdbPath "$env:BM4_ACCDB" `
             -ZipPath "$env:BM4_ZIP" `
             -OutPath '.work/issue947-b31j-smooth90-setting-custody.json' `
             *> '.work/issue947-b31j-smooth90-setting-custody.log'
-          $status = $LASTEXITCODE
           Get-Content -LiteralPath '.work/issue947-b31j-smooth90-setting-custody.log'
-          if ($status -ne 0) { exit $status }
+          if (-not (Test-Path -LiteralPath '.work/issue947-b31j-smooth90-setting-custody.json')) {
+            throw 'Custody audit did not emit required JSON evidence.'
+          }
 
       - name: Upload source-custody evidence
         if: always()

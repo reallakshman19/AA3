@@ -1,5 +1,6 @@
-/** Domain-first LAFEA.3 analysis-mesh evidence contract. No lifecycle registration or generation. */
+/** Domain-first analysis-mesh evidence contract for mesh-applicable LAFEA stages. */
 import {
+  LAFEA_ANALYSIS_MESH_FEA_STAGES,
   LAFEA_ANALYSIS_MESH_SCHEMA,
   canonicalLafeaAnalysisMesh,
   canonicalLafeaAnalysisMeshProfile,
@@ -26,26 +27,28 @@ const AUTHORITY_KEYS = Object.freeze([
 
 export function createLafeaAnalysisMeshEvidenceV2(value) {
   exact(value, INTAKE_KEYS, 'LAFEA_ANALYSIS_MESH_V2_INTAKE_KEYS_INVALID');
-  if (value.schema !== LAFEA_ANALYSIS_MESH_INTAKE_V2_SCHEMA || value.stageId !== 'LAFEA.3') {
-    fail('LAFEA_ANALYSIS_MESH_V2_SCHEMA_OR_STAGE_INVALID');
+  if (value.schema !== LAFEA_ANALYSIS_MESH_INTAKE_V2_SCHEMA) {
+    fail('LAFEA_ANALYSIS_MESH_V2_SCHEMA_INVALID');
   }
+  const stageId = stage(value.stageId);
   const meshProfile = canonicalLafeaAnalysisMeshProfile(value.meshProfile);
   const mesh = canonicalLafeaAnalysisMesh(value.mesh);
   if (mesh.schema !== LAFEA_ANALYSIS_MESH_SCHEMA) fail('LAFEA_ANALYSIS_MESH_V2_MESH_SCHEMA_INVALID');
-  requireLafeaAnalysisMeshElementFamily('LAFEA.3', meshProfile, mesh.elements);
+  requireLafeaAnalysisMeshElementFamily(stageId, meshProfile, mesh.elements);
   const meshHash = lafeaAnalysisMeshContentHash(mesh);
   const sourceHash = sha256(value.sourceHash, 'SOURCE_HASH');
   const analysisDomainHash = sha256(value.analysisDomainHash, 'ANALYSIS_DOMAIN_HASH');
   const analysisGeometryHash = sha256(value.analysisGeometryHash, 'ANALYSIS_GEOMETRY_HASH');
   const authority = validateAuthority(value.authority, {
+    stageId,
     sourceHash, analysisDomainHash, analysisGeometryHash,
     meshProfileHash: meshProfile.semanticHash, meshHash,
   });
-  const quality = qualifyLafeaAnalysisMesh('LAFEA.3', mesh, meshProfile);
+  const quality = qualifyLafeaAnalysisMesh(stageId, mesh, meshProfile);
   const blocked = quality.worstStatus === 'BLOCK';
   const core = {
     schema: LAFEA_ANALYSIS_MESH_EVIDENCE_V2_SCHEMA,
-    stageId: 'LAFEA.3',
+    stageId,
     sourceHash, analysisDomainHash, analysisGeometryHash,
     meshProfile, mesh, authority, meshHash,
     meshProfileHash: meshProfile.semanticHash,
@@ -84,24 +87,21 @@ export function validateLafeaAnalysisMeshEvidenceV2(value) {
 
 function validateAuthority(value, expected) {
   exact(value, AUTHORITY_KEYS, 'LAFEA_ANALYSIS_MESH_V2_AUTHORITY_KEYS_INVALID');
+  const stageId = stage(value.stageId);
   if (value.schema !== LAFEA_ANALYSIS_MESH_AUTHORITY_V2_SCHEMA
-    || value.stageId !== 'LAFEA.3'
     || value.authorityRole !== LAFEA_ANALYSIS_MESH_AUTHORITY_V2_ROLE
     || value.status !== 'ACCEPTED_BY_STAGE_CONTRACT') {
     fail('LAFEA_ANALYSIS_MESH_V2_AUTHORITY_INVALID');
   }
   const canonical = freeze({
     schema: LAFEA_ANALYSIS_MESH_AUTHORITY_V2_SCHEMA,
-    stageId: 'LAFEA.3',
+    stageId,
     authorityRole: LAFEA_ANALYSIS_MESH_AUTHORITY_V2_ROLE,
     status: 'ACCEPTED_BY_STAGE_CONTRACT',
     producerRef: text(value.producerRef, 'PRODUCER_REF'),
     sourceHash: sha256(value.sourceHash, 'SOURCE_HASH'),
     analysisDomainHash: sha256(value.analysisDomainHash, 'ANALYSIS_DOMAIN_HASH'),
     analysisGeometryHash: sha256(value.analysisGeometryHash, 'ANALYSIS_GEOMETRY_HASH'),
-    // A canonical mesh profile hashes with the profile contract's own digest
-    // (`fnv1a64:...`), not SHA-256 — matching the v1 authority record, which
-    // also carries this field as free text.
     meshProfileHash: text(value.meshProfileHash, 'MESH_PROFILE_HASH'),
     meshHash: sha256(value.meshHash, 'MESH_HASH'),
     capabilityHash: sha256(value.capabilityHash, 'CAPABILITY_HASH'),
@@ -114,6 +114,12 @@ function validateAuthority(value, expected) {
   return canonical;
 }
 
+function stage(value) {
+  if (!LAFEA_ANALYSIS_MESH_FEA_STAGES.includes(value)) {
+    fail('LAFEA_ANALYSIS_MESH_V2_STAGE_INVALID');
+  }
+  return value;
+}
 function exact(value, keys, code) { if (!value || typeof value !== 'object' || Array.isArray(value) || JSON.stringify(Object.keys(value).sort()) !== JSON.stringify([...keys].sort())) fail(code); }
 function text(value, field) { if (typeof value !== 'string' || !value.trim()) fail(`LAFEA_ANALYSIS_MESH_V2_${field}_INVALID`); return value.trim(); }
 function sha256(value, field) { const out = text(value, field); if (!/^sha256:[0-9a-f]{64}$/u.test(out)) fail(`LAFEA_ANALYSIS_MESH_V2_${field}_INVALID`); return out; }

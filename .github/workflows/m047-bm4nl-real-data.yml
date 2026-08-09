@@ -20,7 +20,7 @@ permissions:
 jobs:
   qualify-i004:
     runs-on: windows-2022
-    timeout-minutes: 30
+    timeout-minutes: 45
 
     steps:
       - name: Checkout Advanced Analysis exact head
@@ -98,6 +98,73 @@ jobs:
           "BM4NL_ACCDB=$($accdb[0].FullName)" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
           "zip_sha256=$zipSha256" | Out-File -FilePath $env:GITHUB_OUTPUT -Encoding utf8 -Append
           "accdb_sha256=$accdbSha256" | Out-File -FilePath $env:GITHUB_OUTPUT -Encoding utf8 -Append
+
+      - name: Provision Microsoft 365 Access Runtime
+        id: ace
+        shell: powershell
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $odtRoot = Join-Path $env:RUNNER_TEMP 'm047-odt'
+          New-Item -ItemType Directory -Path $odtRoot -Force | Out-Null
+
+          # Resolve the current Office Deployment Tool only from Microsoft's
+          # official Download Center rather than pinning a stale ODT binary.
+          $confirmationUri = 'https://www.microsoft.com/en-us/download/confirmation.aspx?id=49117'
+          $confirmation = (Invoke-WebRequest -UseBasicParsing -Uri $confirmationUri).Content
+          $matches = [regex]::Matches(
+            $confirmation,
+            'https://download\.microsoft\.com/download/[^"''<> ]+/officedeploymenttool_[0-9-]+\.exe',
+            [System.Text.RegularExpressions.RegexOptions]::IgnoreCase
+          )
+          $odtUris = @($matches | ForEach-Object { $_.Value } | Sort-Object -Unique)
+          if ($odtUris.Count -lt 1) {
+            throw 'Could not resolve the Office Deployment Tool from the official Microsoft Download Center.'
+          }
+          $odtUri = $odtUris[0]
+          $odtBootstrap = Join-Path $odtRoot 'officedeploymenttool.exe'
+          Invoke-WebRequest -UseBasicParsing -Uri $odtUri -OutFile $odtBootstrap
+          $odtBootstrapSha256 = (Get-FileHash -LiteralPath $odtBootstrap -Algorithm SHA256).Hash.ToLowerInvariant()
+
+          $extract = Start-Process -FilePath $odtBootstrap -ArgumentList @('/quiet', "/extract:$odtRoot") -Wait -PassThru
+          if ($extract.ExitCode -ne 0) {
+            throw "Office Deployment Tool extraction failed with exit code $($extract.ExitCode)."
+          }
+          $setup = Join-Path $odtRoot 'setup.exe'
+          if (-not (Test-Path -LiteralPath $setup)) {
+            throw 'Office Deployment Tool extraction did not produce setup.exe.'
+          }
+
+          $configuration = Join-Path $odtRoot 'access-runtime.xml'
+          @'
+          <Configuration>
+            <Add OfficeClientEdition="64" Channel="Current">
+              <Product ID="AccessRuntimeRetail">
+                <Language ID="en-us" />
+              </Product>
+            </Add>
+            <Updates Enabled="FALSE" />
+            <Display Level="None" AcceptEULA="TRUE" />
+          </Configuration>
+          '@ | Set-Content -LiteralPath $configuration -Encoding ascii
+
+          $install = Start-Process -FilePath $setup -ArgumentList @('/configure', $configuration) -Wait -PassThru
+          if ($install.ExitCode -ne 0) {
+            throw "Microsoft 365 Access Runtime deployment failed with exit code $($install.ExitCode)."
+          }
+
+          [ordered]@{
+            schema = 'lfea-m047-ace-provisioning/v1'
+            deploymentAuthority = 'MICROSOFT_OFFICE_DEPLOYMENT_TOOL'
+            accessRuntimeProductId = 'AccessRuntimeRetail'
+            architecture = 'x64'
+            channel = 'Current'
+            language = 'en-us'
+            odtConfirmationUri = $confirmationUri
+            odtDownloadUri = $odtUri
+            odtBootstrapSha256 = $odtBootstrapSha256
+            odtSetupVersion = (Get-Item -LiteralPath $setup).VersionInfo.FileVersion
+            deploymentExitCode = $install.ExitCode
+          } | ConvertTo-Json -Depth 6 | Set-Content -LiteralPath 'artifacts/m047/ace-provisioning.json' -Encoding utf8
 
       - name: Probe Microsoft ACE OLE DB provider
         shell: powershell

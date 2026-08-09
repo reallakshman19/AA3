@@ -25,6 +25,7 @@ on:
       - 'scripts/lafea-shell-hole-ladder-check.mjs'
       - 'scripts/lafea-shell-curved-cylinder-check.mjs'
       - 'scripts/lafea-shell-curved-hole-check.mjs'
+      - 'scripts/lafea-curved-hole-quality-probe.mjs'
       - 'scripts/lafea-shell-periodic-cylinder-check.mjs'
       - 'scripts/lafea-mesh-dof-policy-check.mjs'
       - 'scripts/lafea-meshing-system-check.mjs'
@@ -94,18 +95,26 @@ jobs:
       - name: Qualify cylindrical curved shell meshing and custody route
         run: node scripts/lafea-shell-curved-cylinder-check.mjs
 
+      - name: Diagnose curved-hole target ladder
+        shell: bash
+        run: |
+          set -o pipefail
+          node scripts/lafea-curved-hole-quality-probe.mjs 2>&1 | tee curved-hole-quality.log
+
       - name: Qualify non-wrapping cylindrical curved holes
         shell: bash
         run: |
           set -o pipefail
           node scripts/lafea-shell-curved-hole-check.mjs 2>&1 | tee curved-hole-diagnostic.log
 
-      - name: Upload curved-hole diagnostic log
+      - name: Upload curved-hole diagnostic logs
         if: always()
         uses: actions/upload-artifact@v4
         with:
           name: lafea-curved-hole-diagnostic
-          path: curved-hole-diagnostic.log
+          path: |
+            curved-hole-quality.log
+            curved-hole-diagnostic.log
           if-no-files-found: error
 
       - name: Qualify full-cylinder periodic seam meshing and custody route

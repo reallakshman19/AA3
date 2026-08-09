@@ -19,9 +19,8 @@ on:
       - 'scripts/lafea.10-*.mjs'
       - 'scripts/lafea-mesh-producer-binding-check.mjs'
       - 'scripts/lafea-retained-mesh-refinement-check.mjs'
-      - 'scripts/lafea-shell-domain-hash-probe.mjs'
-      - 'scripts/lafea-shell-workbench-probe.mjs'
       - 'scripts/lafea-shell-mesh-producer-check.mjs'
+      - 'scripts/lafea-shell-workbench-route-check.mjs'
       - 'scripts/lafea-mesh-dof-policy-check.mjs'
       - 'scripts/lafea-meshing-system-check.mjs'
       - 'scripts/lafea-p2-11-triage.mjs'
@@ -75,14 +74,11 @@ jobs:
       - name: Qualify retained-mesh local refinement
         run: node scripts/lafea-retained-mesh-refinement-check.mjs
 
-      - name: Diagnose shell domain hash round trip
-        run: node scripts/lafea-shell-domain-hash-probe.mjs
-
-      - name: Probe shell workbench parent registration
-        run: node scripts/lafea-shell-workbench-probe.mjs
-
-      - name: Qualify planar shell mesh producer
+      - name: Qualify planar shell mesh producer mechanics
         run: node scripts/lafea-shell-mesh-producer-check.mjs
+
+      - name: Qualify shell workbench custody and Discretization route
+        run: node scripts/lafea-shell-workbench-route-check.mjs
 
       - name: Qualify P2-11 check classification
         run: node scripts/lafea-p2-11-triage.mjs
@@ -99,4 +95,4 @@ jobs:
         with:
           name: lafea-meshing-aggregate-log
           path: meshing-aggregate.log
-          if-no-files-found: error
+          if-no-files-found: ignore

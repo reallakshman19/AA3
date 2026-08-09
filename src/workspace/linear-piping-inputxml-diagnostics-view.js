@@ -1,3 +1,6 @@
+import { createLfeaTopologyReviewFromDiagnostics } from './lfea-topology-review-from-prefea.js';
+import { renderLfeaTopologyReview } from './lfea-topology-review-view.js';
+
 export const LINEAR_PIPING_INPUTXML_DIAGNOSTICS_VIEW_SCHEMA = 'linear-piping-inputxml-diagnostics-view/v1';
 
 /**
@@ -28,6 +31,13 @@ export function renderLinearPipingInputXmlDiagnostics(documentRef, root, preFlig
     topologySection(documentRef, diagnostics),
     representabilitySection(documentRef, diagnostics),
   );
+  if (diagnostics.sourceAuthority) {
+    const topologyReview = createLfeaTopologyReviewFromDiagnostics(diagnostics);
+    renderLfeaTopologyReview(documentRef, shell, topologyReview);
+    shell.dataset.topologyReviewSemanticHash = topologyReview.semanticHash;
+    shell.dataset.topologyReviewFindingCount = String(topologyReview.summary.findingCount);
+    shell.dataset.topologyMutationApplied = 'false';
+  }
   root.append(shell);
   return shell;
 }

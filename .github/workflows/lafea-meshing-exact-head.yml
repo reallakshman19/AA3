@@ -1,4 +1,4 @@
-# P2-8 planar shell qualification is a permanent part of this exact-head gate.
+# P2-8 planar shell and P2-9 retained-refinement qualification are permanent exact-head gates.
 name: LAFEA meshing exact-head qualification
 
 on:

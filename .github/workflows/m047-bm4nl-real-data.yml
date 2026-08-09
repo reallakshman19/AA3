@@ -45,6 +45,10 @@ jobs:
         with:
           node-version: '22'
 
+      - name: I005 MEC-21 series-composition diagnostic
+        shell: pwsh
+        run: node scripts/lfea-m047-bourdon-series-composition-check.mjs
+
       - name: Checkout pinned Common BM4 source
         uses: actions/checkout@v4
         with:

@@ -27,11 +27,13 @@
   ],
   "acceptanceRule": "I026 may authorize a later numeric/formulation candidate only if the CAESAR-compatible metallic-pipe shear law is pinned to vendor or equivalent implementation authority with unambiguous applicability. Otherwise I026 closes as an accepted authority-boundary finding and no numeric candidate is authorized.",
   "evidenceRecord": "benchmarks/LFEA/CAESAR_ACCDB/m047/M047-I026.authority.json",
+  "vendorInquiry": "benchmarks/LFEA/CAESAR_ACCDB/m047/M047-I026.hexagon-support-question.md",
   "changedPaths": [
     "benchmarks/LFEA/CAESAR_ACCDB/m047/M047-I026.request.json",
     "benchmarks/LFEA/CAESAR_ACCDB/m047/M047-I026.authority.json",
+    "benchmarks/LFEA/CAESAR_ACCDB/m047/M047-I026.hexagon-support-question.md",
     "agent/status/status978.txt"
   ],
   "verdict": "ACCEPTED_AUTHORITY_BOUNDARY_NO_NUMERIC_CANDIDATE_AUTHORIZED",
-  "decisionReason": "Hexagon documentation confirms that shear modulus participates in a piping stiffness-matrix path and separates the FRP-specific G/E control from ordinary isotropic material properties. The retrieved vendor documentation does not specify an isotropic metallic straight-pipe effective shear area/kappa or prove whether transverse shear is retained in the BM4_NL static element. Cowper 1966 is pinned as primary mechanics literature but is not evidence that CAESAR implements Cowper. I026 therefore fails closed: no new numeric kappa or mechanics candidate is authorized until CAESAR-specific implementation authority is obtained."
+  "decisionReason": "Hexagon documentation confirms that shear modulus participates in a piping stiffness-matrix path and separates the FRP-specific G/E control from ordinary isotropic material properties. The retrieved vendor documentation does not specify an isotropic metallic straight-pipe effective shear area/kappa or prove whether transverse shear is retained in the BM4_NL static element. Cowper 1966 is pinned as primary mechanics literature but is not evidence that CAESAR implements Cowper. I026 therefore fails closed: no new numeric kappa or mechanics candidate is authorized until CAESAR-specific implementation authority is obtained. A precise vendor inquiry is retained so a Hexagon engineering response can directly unlock I027."
 }

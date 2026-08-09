@@ -1,0 +1,160 @@
+name: m047-i011-bourdon-final-axis
+
+on:
+  push:
+    branches:
+      - agent/m047-i007-diagnostics
+    paths:
+      - '.github/workflows/m047-i011-bourdon-final-axis.yml'
+      - 'scripts/lfea-m047-benchmark-ab.mjs'
+      - 'scripts/lfea-m047-apply-bourdon-final-axis-candidate.mjs'
+      - 'scripts/lfea-m047-bourdon-final-axis-candidate-check.mjs'
+      - 'scripts/lfea-m047-provision-ace.ps1'
+      - 'scripts/lfea-caesar-accdb-export.ps1'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  qualify:
+    runs-on: windows-2022
+    timeout-minutes: 30
+    steps:
+      - name: Checkout I011 tooling exact head
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.sha }}
+          fetch-depth: 0
+
+      - name: Prove exact I011 head
+        shell: pwsh
+        run: |
+          if ((git rev-parse HEAD).Trim() -ne '${{ github.sha }}') { throw 'I011 tooling checkout drifted.' }
+          if (git status --porcelain) { throw 'I011 tooling checkout is dirty.' }
+
+      - name: Use Node.js 22
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: Checkout exact original mechanics baseline
+        uses: actions/checkout@v4
+        with:
+          repository: reallaksh19/Advanced_Analysis
+          ref: 882d59a99c3a03847d20bec34770ba57ff479d91
+          path: baseline-source
+          fetch-depth: 1
+
+      - name: Prove and preflight candidate against exact baseline
+        shell: pwsh
+        run: |
+          if ((git -C baseline-source rev-parse HEAD).Trim() -ne '882d59a99c3a03847d20bec34770ba57ff479d91') { throw 'Baseline mechanics drifted.' }
+          Copy-Item -LiteralPath 'baseline-source/src/core/linear-fea-piping-components/bourdon-pressure-expansion.js' -Destination "$env:RUNNER_TEMP/bourdon-preflight.js" -Force
+          node scripts/lfea-m047-apply-bourdon-final-axis-candidate.mjs `
+            --source "$env:RUNNER_TEMP/bourdon-preflight.js" `
+            --manifest "$env:RUNNER_TEMP/bourdon-preflight.manifest.json"
+          node scripts/lfea-m047-bourdon-final-axis-candidate-check.mjs `
+            --module "$env:RUNNER_TEMP/bourdon-preflight.js"
+
+      - name: Checkout pinned Common BM4 source
+        uses: actions/checkout@v4
+        with:
+          repository: reallaksh19/Common
+          ref: 1728651c94504b497aae4041578b1095fd8e292e
+          path: common-source
+          fetch-depth: 1
+
+      - name: Expand and verify locked ACCDB
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $root = Join-Path $env:RUNNER_TEMP 'm047-i011-bm4nl'
+          if (Test-Path -LiteralPath $root) { Remove-Item -LiteralPath $root -Recurse -Force }
+          New-Item -ItemType Directory -Path $root | Out-Null
+          Expand-Archive -LiteralPath 'common-source/LFEA/BM4/BM4_NL.zip' -DestinationPath $root -Force
+          $accdb = @(Get-ChildItem -LiteralPath $root -Recurse -File -Filter '*.accdb')
+          if ($accdb.Count -ne 1) { throw "Expected one ACCDB; found $($accdb.Count)." }
+          $locked = '85d39463296e569da811d8572e2eff680b858097f76fdf0f47d1755f0b161c21'
+          $actual = (Get-FileHash -LiteralPath $accdb[0].FullName -Algorithm SHA256).Hash.ToLowerInvariant()
+          if ($actual -ne $locked) { throw "Locked ACCDB mismatch: $actual" }
+          "BM4NL_ACCDB=$($accdb[0].FullName)" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
+          New-Item -ItemType Directory -Path 'artifacts/m047/I011' -Force | Out-Null
+
+      - name: Provision Access Runtime
+        shell: powershell
+        run: .\scripts\lfea-m047-provision-ace.ps1 -OutputPath 'artifacts/m047/I011/ace-provisioning.json'
+
+      - name: Bind portable read-only ACCDB exporter
+        shell: pwsh
+        run: |
+          Copy-Item -LiteralPath 'scripts/lfea-caesar-accdb-export.ps1' -Destination 'baseline-source/scripts/lfea-caesar-accdb-export.ps1' -Force
+          $status = @(git -C baseline-source status --porcelain)
+          if ($status.Count -ne 1 -or $status[0] -notmatch 'scripts/lfea-caesar-accdb-export\.ps1$') {
+            throw "Baseline portability mutation exceeded exporter boundary: $($status -join '; ')"
+          }
+
+      - name: Run exact baseline
+        shell: pwsh
+        run: |
+          node baseline-source/scripts/lfea-caesar-accdb-benchmark.mjs `
+            --accdb "$env:BM4NL_ACCDB" `
+            --profile baseline-source/benchmarks/LFEA/CAESAR_ACCDB/bm4nl-l19-l20-linear-solve.profile.json `
+            --solve-linear true `
+            --actual-out artifacts/m047/I011/baseline.actual.json `
+            --summary-out artifacts/m047/I011/baseline.summary.md `
+            --out artifacts/m047/I011/baseline.benchmark.json
+
+      - name: Apply only I011 MEC-21 final-axis mechanics delta
+        shell: pwsh
+        run: |
+          node scripts/lfea-m047-apply-bourdon-final-axis-candidate.mjs `
+            --source baseline-source/src/core/linear-fea-piping-components/bourdon-pressure-expansion.js `
+            --manifest artifacts/m047/I011/i011.manifest.json
+          node scripts/lfea-m047-bourdon-final-axis-candidate-check.mjs `
+            --module baseline-source/src/core/linear-fea-piping-components/bourdon-pressure-expansion.js
+          $status = @(git -C baseline-source status --porcelain)
+          $hasExporter = @($status | Where-Object { $_ -match 'scripts/lfea-caesar-accdb-export\.ps1$' }).Count -eq 1
+          $hasBourdon = @($status | Where-Object { $_ -match 'src/core/linear-fea-piping-components/bourdon-pressure-expansion\.js$' }).Count -eq 1
+          if ($status.Count -ne 2 -or -not $hasExporter -or -not $hasBourdon) {
+            throw "I011 mutation exceeded exporter + Bourdon boundary: $($status -join '; ')"
+          }
+
+      - name: Run I011 candidate
+        shell: pwsh
+        run: |
+          node baseline-source/scripts/lfea-caesar-accdb-benchmark.mjs `
+            --accdb "$env:BM4NL_ACCDB" `
+            --profile baseline-source/benchmarks/LFEA/CAESAR_ACCDB/bm4nl-l19-l20-linear-solve.profile.json `
+            --solve-linear true `
+            --actual-out artifacts/m047/I011/candidate.actual.json `
+            --summary-out artifacts/m047/I011/candidate.summary.md `
+            --out artifacts/m047/I011/candidate.benchmark.json
+
+      - name: Governed I011 A/B
+        shell: pwsh
+        run: |
+          node scripts/lfea-m047-benchmark-ab.mjs `
+            --baseline artifacts/m047/I011/baseline.benchmark.json `
+            --candidate artifacts/m047/I011/candidate.benchmark.json `
+            --manifest artifacts/m047/I011/i011.manifest.json `
+            --out artifacts/m047/I011/i011.ab.json
+          $ab = Get-Content -LiteralPath 'artifacts/m047/I011/i011.ab.json' -Raw | ConvertFrom-Json
+          Add-Content -LiteralPath $env:GITHUB_STEP_SUMMARY -Value '# M047 I011 MEC-21 final-axis A/B'
+          foreach ($caseId in @('L19','L20')) {
+            $c = $ab.cases.$caseId
+            Add-Content -LiteralPath $env:GITHUB_STEP_SUMMARY -Value "- ${caseId} restraints: $($c.before.restraint.failingComponentCount) -> $($c.after.restraint.failingComponentCount)"
+            Add-Content -LiteralPath $env:GITHUB_STEP_SUMMARY -Value "- ${caseId} displacement/rotation: $($c.before.displacementRotation.failingComponentCount) -> $($c.after.displacementRotation.failingComponentCount)"
+            Add-Content -LiteralPath $env:GITHUB_STEP_SUMMARY -Value "- ${caseId} source end actions: $($c.before.sourceEndAction.failingComponentCount) -> $($c.after.sourceEndAction.failingComponentCount)"
+          }
+          Add-Content -LiteralPath $env:GITHUB_STEP_SUMMARY -Value "- L19/20090 FY relative error: $($ab.tracked.L19_20090_FY.before.relativeError) -> $($ab.tracked.L19_20090_FY.after.relativeError)"
+          Add-Content -LiteralPath $env:GITHUB_STEP_SUMMARY -Value "- Evidence: ``$($ab.semanticHash)``"
+
+      - name: Retain I011 evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: m047-i011-${{ github.sha }}
+          path: artifacts/m047/I011/**
+          if-no-files-found: error
+          retention-days: 90

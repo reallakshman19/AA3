@@ -25,7 +25,7 @@ function row(caseId, entityKind, entityId, quantity, component, actualValue, ref
     unit,
     actualValue,
     referenceValue,
-    pass,
+    status: pass ? 'PASS' : 'FAIL',
     relativeError: referenceValue === 0
       ? Math.abs(actualValue)
       : Math.abs(actualValue - referenceValue) / Math.max(Math.abs(referenceValue), 1),

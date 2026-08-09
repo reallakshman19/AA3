@@ -1,6 +1,7 @@
 #!/usr/bin/env node
 
 import { spawnSync } from 'node:child_process';
+import { createHash } from 'node:crypto';
 import { existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join, relative, resolve } from 'node:path';
@@ -59,7 +60,7 @@ function main(argv) {
   requireEvidenceToolPathsClean(workspaceBefore, repoRelative(metaPath));
 
   const accdbPath = resolve(input.accdbPath);
-  const accdbSha256 = powershellSha256(accdbPath);
+  const accdbSha256 = fileSha256(accdbPath);
   if (accdbSha256 !== LOCKED_ACCDB_SHA256) {
     throw new Error(
       `ACCDB SHA-256 ${accdbSha256} does not match locked source ${LOCKED_ACCDB_SHA256}.`,
@@ -306,15 +307,8 @@ function runCandidateRegressions(candidateRoot) {
   ));
 }
 
-function powershellSha256(path) {
-  const result = spawnSync('powershell.exe', [
-    '-NoLogo', '-NoProfile', '-NonInteractive', '-Command',
-    `(Get-FileHash -LiteralPath '${path.replaceAll("'", "''")}' -Algorithm SHA256).Hash.ToLowerInvariant()`,
-  ], { cwd: ROOT, encoding: 'utf8' });
-  if (result.error || result.status !== 0) {
-    throw new Error(`Cannot hash ACCDB: ${result.error?.message ?? String(result.stderr).trim()}`);
-  }
-  return String(result.stdout).trim().toLowerCase();
+function fileSha256(path) {
+  return createHash('sha256').update(readFileSync(path)).digest('hex');
 }
 
 function runNode(cwd, args, label) {

@@ -1,0 +1,88 @@
+{
+  "schema": "lfea-caesar-accdb-iteration-request/v1",
+  "issueId": "M047",
+  "iterationId": "M047-I025",
+  "expectedSourceAccdbSha256": "85d39463296e569da811d8572e2eff680b858097f76fdf0f47d1755f0b161c21",
+  "expectedBendPointerCount": 12,
+  "baseCommitSha": "882d59a99c3a03847d20bec34770ba57ff479d91",
+  "parentAcceptedIteration": "M047-I015",
+  "supportingIterations": ["M047-I019", "M047-I020", "M047-I021", "M047-I022", "M047-I023", "M047-I024"],
+  "classification": "FULL_COVERAGE_DIAGNOSTIC_NOT_AUTOMATIC_PROMOTION",
+  "hypothesis": "I021-I024 repeatedly cross node20390/source44 or adjacent thresholds because each changes only one special-component family while neighboring flexible-pipe carriers retain the old base-beam constitutive law. If transverse shear is truly a common flexible-pipe constitutive mechanism, applying the same governed base-beam law simultaneously to every flexible carrier should remove artificial partial-coverage interfaces. Component-owned mechanics remain unchanged so this test isolates coverage coherence from B31J, bend flexibility/pressure-stiffening, and reducer-condensation authority.",
+  "candidateBoundary": {
+    "ordinaryAndTeeFrames": "all FRAME carriers regardless teeModifier",
+    "bendIncomingStraight": "all BEND_INCOMING_STRAIGHT carriers including tee-owned source 36",
+    "bendArcBaseFrame": "all BEND_ARC component base frames consume plainFrameTimoshenkoProfile() before unchanged bend correction",
+    "reducerInternalCylinders": "all ten-cylinder reducer internal beams use Timoshenko stiffness and matching consistent-load phi before unchanged Schur condensation",
+    "rigidElements": "held",
+    "kappaY": 0.53,
+    "kappaZ": 0.53,
+    "kappaAuthority": "COWPER-1966-THIN-ANNULUS-INPUT"
+  },
+  "heldIndependentMechanics": [
+    "B31J directional flexibility factors",
+    "tee rotational spring construction",
+    "tee rigid surface offsets",
+    "bend flexibility correction",
+    "bend pressure-stiffening factor authority",
+    "bend subdivision",
+    "reducer ten-cylinder geometry and midpoint sampling",
+    "reducer Schur condensation equations",
+    "rigid-element mechanics",
+    "Bourdon pressure mechanics",
+    "closed-end pressure strain",
+    "thermal-expansion coefficient authority",
+    "gravity mass authority",
+    "load-case formulas",
+    "tolerances and scale floors",
+    "CAESAR reference rows"
+  ],
+  "mechanicsDelta": "Runtime diagnostic only: accepted I015 common Timoshenko base-beam law is extended coherently to all flexible-pipe carriers, including tee frames, bend incoming straights, bend-arc base frames and reducer internal cylinders, while all independent component corrections and external authorities remain held.",
+  "verdict": "REJECTED",
+  "diagnosticFinding": "PARTIAL_COVERAGE_CONFIRMED_BUT_NOT_SUFFICIENT",
+  "decisionReason": "Exact-head run 31319518458 completed successfully through frozen frame/component/reducer/solver/recovery qualification, full candidate boundary checks, real-ACCDB parent/candidate solves, 12/12 bend and 4/4 reducer custody, unchanged tee authority, and numerical-roundoff equilibrium. Coherent coverage strongly validates part of the I019/I020 diagnosis: L19 node20090 FY improves from accepted-I015 8.5422% to 1.6583%; all six sources9-11 MZ failures resolve below 10%; displacement/rotation failures improve 66 -> 55 with RMSnorm 0.34639 -> 0.18936; source-action failures improve 23 -> 17. However full coverage does not restore the L19 restraint gate. It creates failures at plain-FRAME node20250 FZ (5.9897% -> 10.0206%) and node20390 FZ (9.9613% -> 11.9016%), and the downstream source44 FROM MZ sentinel moves from 7.3679% to 16.3230%. L20 materially worsens: restraint failures 6 -> 10, including new node20030 FX, node20090 FY, node21470 FY and node21640 FX failures; source-action failures 134 -> 206, although source-action RMSnorm improves modestly. Therefore mixed constitutive coverage was a real contributor to the I019 9-11 redistribution, but it is not the sole cause of the remaining system discrepancy. The kappa=0.53 full-coverage candidate is not promotable. The remaining mechanism must be isolated in shear-factor/formulation authority and/or component-specific correction ownership rather than further family-by-family coverage changes.",
+  "executionEvidence": {
+    "orchestrationHeadSha": "26854834bcc50f66c65ed7be3f0bd08007720c94",
+    "workflowRunId": 31319518458,
+    "workflowConclusion": "success",
+    "artifactId": 9039782798,
+    "artifactSha256": "d53cc6b2afff7c2c5e5d24f94c8bc72aaa02f3c5761b5b275373cb60cc06efe9",
+    "semanticHash": "fnv1a64:fe98e6e2e4a9d7d9",
+    "candidateSolverSha256": "8e8456c0ce20ee7762be58615ab0f8a32d9c722c5dbbdf761dd6a967eced29ba",
+    "candidateReducerSha256": "0c138b0bc029e3ff4736f384d5b3f4e5217fe1ae47c551d391db1d3f79356178",
+    "targetActionSumResidualAbsMax": 0,
+    "targetEquilibriumResidualAbsMax": 4.774847184307873e-12
+  },
+  "observedResult": {
+    "L19": {
+      "restraintFailures": "0 -> 2",
+      "restraintRmsNormalizedError": "0.021778551450530564 -> 0.022546445347060042",
+      "node20090FYRelativeError": "0.08542188461083092 -> 0.01658285310425632",
+      "newRestraintFailures": [
+        "node 20250 FZ: 0.0598970305552939 -> 0.10020602902921383",
+        "node 20390 FZ: 0.09961259044390637 -> 0.11901580094956891"
+      ],
+      "displacementRotationFailures": "66 -> 55",
+      "displacementRotationRmsNormalizedError": "0.3463907572374756 -> 0.1893596921550677",
+      "sourceEndActionFailures": "23 -> 17",
+      "sourceEndActionRmsNormalizedError": "0.05303530122813788 -> 0.05314773053994665",
+      "i019Sources9To11Mz": "all six threshold failures resolve; relative errors fall from approximately 11.49-12.65% to approximately 8.49-9.62%",
+      "source44Mz": "FROM MZ 0.0736793715666183 PASS -> 0.1632298517322364 FAIL; TO MZ remains PASS at 0.036815115041600815"
+    },
+    "L20": {
+      "restraintFailures": "6 -> 10",
+      "restraintRmsNormalizedError": "0.03825058747833576 -> 0.04420795790681898",
+      "newRestraintFailures": [
+        "node 20030 FX: 0.04763463221009078 -> 0.10312357828284664",
+        "node 20090 FY: 0.06588185627280962 -> 0.10146094523289957",
+        "node 21470 FY: 0.09838576834011409 -> 0.10530214961049497",
+        "node 21640 FX: 0.07651556636523077 -> 0.10533081327677833"
+      ],
+      "displacementRotationFailures": "90 -> 90",
+      "displacementRotationRmsNormalizedError": "0.2568590341983296 -> 0.25949738942475403",
+      "sourceEndActionFailures": "134 -> 206",
+      "sourceEndActionRmsNormalizedError": "0.1497606159392834 -> 0.1462514561061889"
+    }
+  },
+  "architecturalConclusion": "Full flexible-carrier coverage removes the I019 sources9-11 mixed-boundary failures and substantially improves the L19 displacement field and node20090, proving that partial coverage mattered. Because two plain-FRAME restraint failures and source44 MZ remain/worsen under coherent coverage, the remaining discrepancy cannot be assigned to coverage alone. Further progress must test a source-authoritative shear coefficient/formulation and component correction ownership; do not stack more isolated family cutovers or choose kappa by benchmark fit."
+}

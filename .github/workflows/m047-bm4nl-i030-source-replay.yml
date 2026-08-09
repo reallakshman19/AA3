@@ -1,0 +1,189 @@
+name: m047-bm4nl-i030-source-replay
+
+on:
+  push:
+    branches:
+      - agent/m047-qualified-shear-draft
+    paths:
+      - '.github/workflows/m047-bm4nl-i030-source-replay.yml'
+      - 'scripts/lfea-m047-apply-smooth90-candidate.mjs'
+      - 'scripts/lfea-m047-smooth90-candidate-check.mjs'
+      - 'scripts/lfea-m047-apply-matrix-evidence-instrumentation.mjs'
+      - 'scripts/lfea-m047-i030-source-replay.mjs'
+      - 'scripts/lfea-m047-i030-source-replay-v2.mjs'
+      - 'scripts/lfea-m047-benchmark-ab.mjs'
+      - 'scripts/lfea-m047-provision-ace.ps1'
+      - 'scripts/lfea-caesar-accdb-export.ps1'
+      - 'benchmarks/LFEA/CAESAR_ACCDB/m047/M047-I030.request.json'
+      - 'agent/status/status978.txt'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  actions: read
+
+jobs:
+  replay:
+    runs-on: windows-2022
+    timeout-minutes: 45
+    steps:
+      - name: Checkout I030 exact head
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.sha }}
+          fetch-depth: 0
+
+      - name: Prove orchestration boundary
+        shell: pwsh
+        run: |
+          if ((git rev-parse HEAD).Trim() -ne '${{ github.sha }}') { throw 'I030 orchestration checkout drifted.' }
+          if (git status --porcelain) { throw 'I030 orchestration checkout is dirty.' }
+          New-Item -ItemType Directory -Path 'artifacts/m047/I030' -Force | Out-Null
+
+      - name: Use Node.js 22
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Checkout frozen mechanics source
+        uses: actions/checkout@v4
+        with:
+          repository: reallaksh19/Advanced_Analysis
+          ref: 882d59a99c3a03847d20bec34770ba57ff479d91
+          path: replay-source
+          fetch-depth: 1
+
+      - name: Qualify frozen core
+        shell: pwsh
+        run: |
+          if ((git -C replay-source rev-parse HEAD).Trim() -ne '882d59a99c3a03847d20bec34770ba57ff479d91') { throw 'I030 mechanics baseline drifted.' }
+          if (git -C replay-source status --porcelain) { throw 'I030 mechanics baseline dirty.' }
+          node replay-source/scripts/lfea-b3.1-frame-element-check.mjs
+          node replay-source/scripts/lfea-b3.2-piping-component-check.mjs
+          node replay-source/scripts/lfea-b3.3-solver-check.mjs
+          node replay-source/scripts/lfea-b3.4-recovery-check.mjs
+
+      - name: Checkout pinned Common BM4 source
+        uses: actions/checkout@v4
+        with:
+          repository: reallaksh19/Common
+          ref: 1728651c94504b497aae4041578b1095fd8e292e
+          path: common-source
+          fetch-depth: 1
+
+      - name: Expand and verify locked BM4_NL ACCDB
+        shell: pwsh
+        run: |
+          $ErrorActionPreference='Stop'
+          $root=Join-Path $env:RUNNER_TEMP 'm047-i030-bm4nl'
+          if (Test-Path -LiteralPath $root) { Remove-Item -LiteralPath $root -Recurse -Force }
+          New-Item -ItemType Directory -Path $root | Out-Null
+          Expand-Archive -LiteralPath 'common-source/LFEA/BM4/BM4_NL.zip' -DestinationPath $root -Force
+          $files=@(Get-ChildItem -LiteralPath $root -Recurse -File -Filter '*.accdb')
+          if ($files.Count -ne 1) { throw "Expected one ACCDB; found $($files.Count)." }
+          $sha=(Get-FileHash -LiteralPath $files[0].FullName -Algorithm SHA256).Hash.ToLowerInvariant()
+          if ($sha -ne '85d39463296e569da811d8572e2eff680b858097f76fdf0f47d1755f0b161c21') { throw "Locked ACCDB mismatch: $sha" }
+          "BM4NL_ACCDB=$($files[0].FullName)" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
+
+      - name: Provision Microsoft 365 Access Runtime
+        shell: powershell
+        run: .\scripts\lfea-m047-provision-ace.ps1 -OutputPath 'artifacts/m047/I030/ace.json'
+
+      - name: Bind portable exporter and accepted smooth-90 mechanics
+        shell: pwsh
+        run: |
+          Copy-Item -LiteralPath 'scripts/lfea-caesar-accdb-export.ps1' -Destination 'replay-source/scripts/lfea-caesar-accdb-export.ps1' -Force
+          node scripts/lfea-m047-apply-smooth90-candidate.mjs --source replay-source/src/core/fea-benchmarks/caesar-accdb-linear-solve.js --manifest artifacts/m047/I030/smooth90.manifest.json
+          node scripts/lfea-m047-smooth90-candidate-check.mjs --source replay-source/src/core/fea-benchmarks/caesar-accdb-linear-solve.js
+          node scripts/lfea-m047-apply-matrix-evidence-instrumentation.mjs --source replay-source/src/core/fea-benchmarks/caesar-accdb-linear-solve.js --manifest artifacts/m047/I030/matrix-evidence.manifest.json
+          node --check replay-source/src/core/fea-benchmarks/caesar-accdb-linear-solve.js
+          $status=@(git -C replay-source status --porcelain)
+          $hasExporter=@($status | Where-Object { $_ -match 'scripts/lfea-caesar-accdb-export\.ps1$' }).Count -eq 1
+          $hasSolver=@($status | Where-Object { $_ -match 'src/core/fea-benchmarks/caesar-accdb-linear-solve\.js$' }).Count -eq 1
+          if ($status.Count -ne 2 -or -not $hasExporter -or -not $hasSolver) { throw "I030 runtime mutation exceeded exporter + solver evidence boundary: $($status -join '; ')" }
+
+      - name: Export source rows read-only
+        shell: powershell
+        run: |
+          .\scripts\lfea-caesar-accdb-export.ps1 -AccdbPath "$env:BM4NL_ACCDB" -TablesCsv 'INPUT_BASIC_ELEMENT_DATA' | Set-Content 'artifacts/m047/I030/source.raw.json' -Encoding utf8
+
+      - name: Run accepted smooth-90 mechanics with matrix evidence
+        shell: pwsh
+        run: |
+          node replay-source/scripts/lfea-caesar-accdb-benchmark.mjs `
+            --accdb "$env:BM4NL_ACCDB" `
+            --profile replay-source/benchmarks/LFEA/CAESAR_ACCDB/bm4nl-l19-l20-linear-solve.profile.json `
+            --solve-linear true `
+            --actual-out artifacts/m047/I030/instrumented.actual.json `
+            --summary-out artifacts/m047/I030/instrumented.summary.md `
+            --out artifacts/m047/I030/instrumented.benchmark.json
+
+      - name: Download I029 smooth-90 custody artifact
+        shell: pwsh
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          @'
+          import fs from 'node:fs';
+          const r=await fetch('https://api.github.com/repos/reallaksh19/Advanced_Analysis/actions/artifacts/9040785389/zip',{headers:{Accept:'application/vnd.github+json',Authorization:`Bearer ${process.env.GH_TOKEN}`,'X-GitHub-Api-Version':'2022-11-28'}});
+          if(!r.ok) throw new Error(`I029 artifact download failed: ${r.status} ${await r.text()}`);
+          fs.writeFileSync('artifacts/m047/I030/i029.zip',Buffer.from(await r.arrayBuffer()));
+          '@ | Set-Content 'artifacts/m047/I030/download-i029.mjs' -Encoding utf8
+          node 'artifacts/m047/I030/download-i029.mjs'
+          $digest=(Get-FileHash 'artifacts/m047/I030/i029.zip' -Algorithm SHA256).Hash.ToLowerInvariant()
+          if ($digest -ne '988ab5bd6d36c6e8a67978b7d7c7a9447f5e9a56f817eac879b0dce470f9e5eb') { throw "I029 digest drifted: $digest" }
+          New-Item -ItemType Directory -Path 'artifacts/m047/I030/i029' -Force | Out-Null
+          Expand-Archive 'artifacts/m047/I030/i029.zip' -DestinationPath 'artifacts/m047/I030/i029' -Force
+
+      - name: Prove instrumentation changes no physical result
+        shell: pwsh
+        run: |
+          node scripts/lfea-m047-benchmark-ab.mjs `
+            --baseline artifacts/m047/I030/i029/smooth.benchmark.json `
+            --candidate artifacts/m047/I030/instrumented.benchmark.json `
+            --manifest artifacts/m047/I030/matrix-evidence.manifest.json `
+            --out artifacts/m047/I030/instrumentation.ab.json
+          $ab=Get-Content 'artifacts/m047/I030/instrumentation.ab.json' -Raw | ConvertFrom-Json
+          foreach ($caseId in @('L19','L20')) {
+            if ([int]$ab.cases.$caseId.actualRowChange.changedActualRowCount -ne 0) { throw "I030 instrumentation changed $caseId physical rows." }
+          }
+
+      - name: Replay compared source components incrementally at CAESAR endpoint DOFs
+        shell: pwsh
+        run: |
+          node scripts/lfea-m047-i030-source-replay-v2.mjs `
+            --raw artifacts/m047/I030/source.raw.json `
+            --benchmark artifacts/m047/I030/instrumented.benchmark.json `
+            --actual artifacts/m047/I030/instrumented.actual.json `
+            --out artifacts/m047/I030/source-replay.json `
+            --summary artifacts/m047/I030/source-replay.summary.md
+          Get-Content 'artifacts/m047/I030/source-replay.summary.md' | Add-Content $env:GITHUB_STEP_SUMMARY
+
+      - name: Govern replay custody
+        shell: pwsh
+        run: |
+          $ErrorActionPreference='Stop'
+          $r=Get-Content 'artifacts/m047/I030/source-replay.json' -Raw | ConvertFrom-Json
+          if ($r.schema -ne 'lfea-m047-i030-source-replay/v2') { throw 'I030 corrected replay schema drifted.' }
+          if ($r.sourceAccdbSha256 -ne '85d39463296e569da811d8572e2eff680b858097f76fdf0f47d1755f0b161c21') { throw 'I030 ACCDB custody failed.' }
+          foreach ($caseId in @('L19','L20')) { if ([int]$r.cases.$caseId.sourceCount -ne 96) { throw "I030 $caseId did not assemble all 96 sources." } }
+          $actual=Get-Content 'artifacts/m047/I030/instrumented.actual.json' -Raw | ConvertFrom-Json
+          foreach ($caseId in @('L19','L20')) { if ([int]$actual.mechanics.cases.$caseId.bendPointerCount -ne 12) { throw "I030 $caseId bend coverage drifted." } }
+          if (git status --porcelain -- 'src/core' 'benchmarks/LFEA/CAESAR_ACCDB/bm4nl-l19-l20-linear-solve.profile.json') { throw 'I030 orchestration branch must contain no production mechanics/profile edit.' }
+
+      - name: Retain I030 evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: m047-i030-source-replay-${{ github.sha }}
+          path: |
+            artifacts/m047/I030/source-replay.json
+            artifacts/m047/I030/source-replay.summary.md
+            artifacts/m047/I030/instrumentation.ab.json
+            artifacts/m047/I030/instrumented.benchmark.json
+            artifacts/m047/I030/instrumented.actual.json
+            artifacts/m047/I030/matrix-evidence.manifest.json
+            artifacts/m047/I030/smooth90.manifest.json
+            artifacts/m047/I030/ace.json
+          if-no-files-found: error
+          retention-days: 90

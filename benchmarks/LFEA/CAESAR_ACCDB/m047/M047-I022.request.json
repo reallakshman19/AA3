@@ -1,0 +1,109 @@
+{
+  "schema": "lfea-caesar-accdb-iteration-request/v1",
+  "issueId": "M047",
+  "iterationId": "M047-I022",
+  "expectedSourceAccdbSha256": "85d39463296e569da811d8572e2eff680b858097f76fdf0f47d1755f0b161c21",
+  "expectedBendPointerCount": 12,
+  "baseCommitSha": "882d59a99c3a03847d20bec34770ba57ff479d91",
+  "parentAcceptedIteration": "M047-I015",
+  "supportingIterations": ["M047-I020", "M047-I021"],
+  "hypothesis": "I021 failed because it changed only the finite incoming straight carriers while holding the connected curved-pipe base beam at Euler-Bernoulli. The B-3.2 bend package already qualifies the bend flexibility correction under a Timoshenko frame profile and proves the correction remains exact under its double-count guard. A coherent bend-family candidate should therefore apply the accepted base-beam shear law to non-tee BEND_INCOMING_STRAIGHT carriers and to the BEND_ARC component base frames together, while leaving the independently owned bend flexibility factor, pressure-stiffening factor authority, subdivision, tee mechanics and reducer mechanics unchanged.",
+  "componentAuthority": {
+    "package": "LFEA-B3.2",
+    "test": "B32-T23",
+    "qualifiedStatement": "The piping bend component consumes the B-3.1 element under Timoshenko; measured bend flexibility correction remains exact and the double-count guard remains accepted.",
+    "flexibilityCorrection": "BENDING_FLEXIBILITY_CORRECTION_V1",
+    "flexibilityOwnership": "BEND bending Y/Z only",
+    "pressureStiffeningAuthorityChanged": false
+  },
+  "candidateBoundary": {
+    "retainedI015": "FRAME && teeModifier===null",
+    "bendIncomingStraight": "BEND_INCOMING_STRAIGHT && teeModifier===null",
+    "bendArc": "compilePipingComponent(BEND) frameElementProfile=plainFrameTimoshenkoProfile()",
+    "held": [
+      "source 36 tee-modified bend incoming straight",
+      "TEE/B31J directional junction mechanics",
+      "REDUCER",
+      "RIGID",
+      "BOURDON",
+      "PRESSURE/BEND FACTOR AUTHORITY",
+      "THERMAL AUTHORITY"
+    ],
+    "kappaY": 0.53,
+    "kappaZ": 0.53,
+    "kappaAuthority": "COWPER-1966-THIN-ANNULUS-INPUT"
+  },
+  "predictedSignature": [
+    "Candidate must start from the exact accepted I015 solver-file SHA.",
+    "All 226 BEND_ARC analysis carriers must be generated from a Timoshenko B-3.1 component base frame while retaining the same B31/B31J factor-set identity, bend subdivision and effective-stiffness correction path.",
+    "All 11 non-tee bend incoming straight carriers must use the same Timoshenko base-beam profile; source 36 incoming straight remains held under tee ownership.",
+    "B3.2 piping-component check and reviewer check must pass, including B32-T23 Timoshenko bend flexibility/double-count proof.",
+    "Locked system A/B must preserve 12/12 bend coverage, identical CAESAR reference rows and target-node action/equilibrium closure.",
+    "Acceptance requires no new L19 restraint failure and no unexplained aggregate L19/L20 regression; improvement at node 20090 alone is insufficient.",
+    "No tolerance, benchmark reference, thermal coefficient or commercial result is fitted."
+  ],
+  "changedPaths": [
+    "scripts/lfea-m047-apply-bend-composite-timoshenko-candidate.mjs",
+    "scripts/lfea-m047-bend-composite-timoshenko-candidate-check.mjs",
+    ".github/workflows/m047-bm4nl-i022-bend-composite-ab.yml"
+  ],
+  "mechanicsDelta": "Runtime bend-family qualification candidate only: accepted I015 ordinary frames plus non-tee bend incoming straights plus BEND_ARC component base frames consume the same governed Timoshenko B-3.1 law. Bend flexibility correction and all other component/load authority remain unchanged.",
+  "harnessHistory": [
+    {
+      "workflowRunId": 31317478785,
+      "orchestrationHeadSha": "bc836de51199d385970a3457ef53b89ba17d8239",
+      "classification": "HARNESS_ONLY",
+      "engineeringSolveReached": false,
+      "componentQualificationReached": true,
+      "componentQualificationConclusion": "PASS",
+      "artifactId": 9039197843,
+      "artifactSha256": "d36d78563ea22d8f619e16d6329cc7940c95fe62bb585e477d187e38beaa0f8f",
+      "cause": "The I015 guard used a global source.includes('0.01') prohibition intended for an old diagnostic grouping threshold, but the frozen production solver legitimately contains bendLengthErrorLimit=0.01. The failed artifact proves the exact accepted I015 candidate SHA bdf4c0e... was materialized. The guard was narrowed to require exactly the legitimate bendLengthErrorLimit occurrence and reject any additional 0.01 occurrence; candidate mechanics were not changed."
+    }
+  ],
+  "verdict": "REJECTED",
+  "decisionReason": "Corrected exact-head run 31317827038 completed the full locked Windows parent/candidate A/B with B3.1/B3.2/B3.3/B3.4 qualification, 12/12 bend coverage, 226 BEND_ARC carriers, 11 non-tee incoming-straight carriers, source-36 tee hold, identical reference custody, and target equilibrium at numerical roundoff. The coherent bend-family cutover improves L19 node 20090 FY from 8.542% to 4.463%, displacement/rotation failures 66 -> 65 with RMSnorm 0.34639 -> 0.31038, and source-action failures 23 -> 22 with RMSnorm 0.05304 -> 0.05245. However it still creates a new L19 restraint failure at node 20390 FZ, worsening the accepted-I015 9.961% error to 10.724%; the I019 9-11 MZ sentinel remains slightly improved while a new source-44 MZ threshold crossing appears on the bend-side I020 boundary. L20 materially regresses: restraints 6 -> 8, restraint RMSnorm 0.03825 -> 0.04161, source-end-action failures 134 -> 175 with RMSnorm 0.14976 -> 0.16579, and displacement/rotation RMSnorm 0.25686 -> 0.27539. Therefore the current model 'Timoshenko base beam + unchanged existing bend flexibility/pressure-stiffening ownership' is not accepted as the CAESAR-compatible bend architecture. The component-level B32-T23 proof remains valid, but system evidence shows additional bend-specific authority or formulation differences must be resolved before promotion. No production bend cutover is authorized.",
+  "executionEvidence": {
+    "orchestrationHeadSha": "c165c67f9e1bf7183c685a0f9479469f7905062e",
+    "workflowRunId": 31317827038,
+    "workflowConclusion": "success",
+    "artifactId": 9039299300,
+    "artifactSha256": "805002af29fe2cf25e12dfa496dbefbc16ee78c368a184d77defb6c396f34ca0",
+    "semanticHash": "fnv1a64:03439cba369b39d2",
+    "candidateSolverSha256": "db2dfa7016006be69739e1dc9f716d8ef66b94fa2139bbc5665f29654ee51f69",
+    "targetEquilibriumResidualAbsMax": 4.774847184307873e-12
+  },
+  "observedResult": {
+    "carrierCustody": {
+      "bendPointerCount": 12,
+      "bendArcCarrierCount": 226,
+      "bendIncomingStraightCarrierCount": 12,
+      "nonTeeIncomingStraightSelectedCount": 11,
+      "teeHeldIncomingStraightSource": "36"
+    },
+    "L19": {
+      "restraintFailures": "0 -> 1",
+      "restraintRmsNormalizedError": "0.021778551450530564 -> 0.02102066811860227",
+      "node20090FYRelativeError": "0.08542188461083092 -> 0.04462791273749254",
+      "newRestraintFailure": "node 20390 FZ: 0.09961259044390637 -> 0.10724073401654763",
+      "displacementRotationFailures": "66 -> 65",
+      "displacementRotationRmsNormalizedError": "0.3463907572374756 -> 0.31038436459853447",
+      "sourceEndActionFailures": "23 -> 22",
+      "sourceEndActionRmsNormalizedError": "0.05303530122813788 -> 0.05245015147702522",
+      "i019Sources9To11Mz": "all six remain failing but each relative error improves slightly",
+      "newBendBoundarySourceActionFailure": "source 44 GLOBAL_END_MOMENT_FROM MZ, relative error 0.10114569087534601"
+    },
+    "L20": {
+      "restraintFailures": "6 -> 8",
+      "restraintRmsNormalizedError": "0.03825058747833576 -> 0.041611688365915195",
+      "newRestraintFailures": [
+        "node 20030 FX, relative error 0.10701287074528781",
+        "node 21470 FY, relative error 0.10040402435586236"
+      ],
+      "displacementRotationFailures": "90 -> 90",
+      "displacementRotationRmsNormalizedError": "0.2568590341983296 -> 0.2753934503213003",
+      "sourceEndActionFailures": "134 -> 175",
+      "sourceEndActionRmsNormalizedError": "0.1497606159392834 -> 0.1657906588050282"
+    }
+  }
+}

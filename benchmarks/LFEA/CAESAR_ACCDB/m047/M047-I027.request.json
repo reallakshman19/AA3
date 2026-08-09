@@ -1,0 +1,33 @@
+{
+  "schema": "lfea-caesar-accdb-iteration-request/v1",
+  "issueId": "M047",
+  "iterationId": "M047-I027",
+  "classification": "FOUNDATIONAL_INPUT_BOUNDARY_AUDIT_NO_MECHANICS_CHANGE",
+  "expectedSourceAccdbSha256": "85d39463296e569da811d8572e2eff680b858097f76fdf0f47d1755f0b161c21",
+  "baseCommitSha": "882d59a99c3a03847d20bec34770ba57ff479d91",
+  "orchestrationBaseHeadSha": "069293d230919954f4a457d4af864e2885a7b006",
+  "motivation": "Reset M047 diagnosis to first-principles accuracy. Before changing any beam law, prove that the locked ACCDB boundary conditions, primitive loads and auxiliary pointers are interpreted exactly. The current solver maps directional restraints to fixed DOFs, declares only gravity as an explicit load primitive, and loads several auxiliary tables that may or may not be active in L19/L20. These assumptions must be checked against the real rows rather than inferred from benchmark response movement.",
+  "questions": [
+    "Do any locked INPUT_RESTRAINTS rows contain explicit finite stiffness, nonzero gap, friction, CNode coupling or skew direction data that contradict the current fixed-DOF bilateral restraint approximation?",
+    "Which INPUT_FORCMNT vectors are nonzero, and are any F1-F9 primitives actually present in exported L19/L20 formulas?",
+    "Which CAESAR output load cases are present in the same ACCDB, and do primitive/basic cases such as W, P1 or T1 exist for direct load separation?",
+    "Are any element auxiliary pointers active for offsets, imposed displacements, uniform loads, wind/wave, hangers, nozzles, expansion joints or other mechanics not consumed by the current solver?",
+    "Do INPUT_BASIC_ELEMENT_DATA deltas agree with INPUT_NODAL_COORDINATES for all 96 source elements?"
+  ],
+  "acceptanceInterpretation": [
+    "No solver/profile mechanics change is permitted in I027.",
+    "Any active finite restraint stiffness, gap, CNode or other omitted boundary mechanic is elevated ahead of constitutive tuning.",
+    "FORCMNT pointers alone do not imply missing L19/L20 loads; the exported load-case formulas must show F-set participation.",
+    "If primitive W/P1/T1 output cases exist, the next diagnostic should use them to isolate load-vector versus stiffness errors before any new constitutive candidate.",
+    "If no such primitive outputs exist, the next diagnostic should replay CAESAR nodal DOFs through the frozen LFEA element matrices and decompose end-action residuals by EA, GJ, EIy/EIz and element load vector.",
+    "No shear coefficient, thermal coefficient, bend factor, tee factor or reducer parameter may be selected from response fitting in I027."
+  ],
+  "changedPaths": [
+    "benchmarks/LFEA/CAESAR_ACCDB/m047/M047-I027.request.json",
+    "scripts/lfea-m047-i027-foundational-audit.mjs",
+    ".github/workflows/m047-bm4nl-i027-foundational-audit.yml",
+    "agent/status/status978.txt"
+  ],
+  "verdict": "PENDING",
+  "decisionReason": "Await exact-head read-only locked-ACCDB foundational audit."
+}

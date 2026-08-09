@@ -1,0 +1,152 @@
+name: m047-bm4nl-i019-source-action-cluster
+
+on:
+  push:
+    branches:
+      - agent/m047-qualified-shear-draft
+    paths:
+      - '.github/workflows/m047-bm4nl-i019-source-action-cluster.yml'
+      - 'scripts/lfea-m047-i019-source-action-cluster.mjs'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  actions: read
+
+jobs:
+  custody:
+    runs-on: windows-2022
+    timeout-minutes: 10
+    steps:
+      - name: Checkout I019 orchestration exact head
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.sha }}
+          fetch-depth: 0
+
+      - name: Prove exact orchestration head and clean checkout
+        shell: pwsh
+        run: |
+          if ((git rev-parse HEAD).Trim() -ne '${{ github.sha }}') { throw 'I019 orchestration checkout drifted.' }
+          if (git status --porcelain) { throw 'I019 orchestration checkout is dirty.' }
+
+      - name: Use Node.js 22
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: Download frozen I014 and I015 parent artifacts
+        shell: pwsh
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          $ErrorActionPreference = 'Stop'
+          New-Item -ItemType Directory -Path 'artifacts/m047/I019/downloads' -Force | Out-Null
+          @'
+          import fs from 'node:fs';
+          const [artifactId, outputPath] = process.argv.slice(2);
+          const response = await fetch(
+            `https://api.github.com/repos/${process.env.GITHUB_REPOSITORY}/actions/artifacts/${artifactId}/zip`,
+            {
+              headers: {
+                Accept: 'application/vnd.github+json',
+                Authorization: `Bearer ${process.env.GH_TOKEN}`,
+                'X-GitHub-Api-Version': '2022-11-28',
+              },
+            },
+          );
+          if (!response.ok) throw new Error(`Artifact ${artifactId} download failed: ${response.status} ${await response.text()}`);
+          fs.writeFileSync(outputPath, Buffer.from(await response.arrayBuffer()));
+          '@ | Set-Content 'artifacts/m047/I019/download-artifact.mjs' -Encoding utf8
+
+          node 'artifacts/m047/I019/download-artifact.mjs' 9035999665 'artifacts/m047/I019/downloads/i014.zip'
+          node 'artifacts/m047/I019/download-artifact.mjs' 9037781388 'artifacts/m047/I019/downloads/i015.zip'
+
+          $i014 = (Get-FileHash 'artifacts/m047/I019/downloads/i014.zip' -Algorithm SHA256).Hash.ToLowerInvariant()
+          $i015 = (Get-FileHash 'artifacts/m047/I019/downloads/i015.zip' -Algorithm SHA256).Hash.ToLowerInvariant()
+          if ($i014 -ne 'e05017cd4907693ab7e558e56320ec088a104a6fa9d82312ae6c57bcd1194860') {
+            throw "I014 artifact digest drifted: $i014"
+          }
+          if ($i015 -ne '6c8d79bcccb19b80ae53fe32d78afefa69871da606166ea5e6e58c2be897fc23') {
+            throw "I015 artifact digest drifted: $i015"
+          }
+
+          New-Item -ItemType Directory -Path 'artifacts/m047/I019/i014' -Force | Out-Null
+          New-Item -ItemType Directory -Path 'artifacts/m047/I019/i015' -Force | Out-Null
+          Expand-Archive 'artifacts/m047/I019/downloads/i014.zip' -DestinationPath 'artifacts/m047/I019/i014' -Force
+          Expand-Archive 'artifacts/m047/I019/downloads/i015.zip' -DestinationPath 'artifacts/m047/I019/i015' -Force
+
+          [ordered]@{
+            schema='lfea-m047-i019-parent-artifacts/v1'
+            i014=[ordered]@{
+              workflowRunId=31306028750
+              artifactId=9035999665
+              sha256=$i014
+              semanticHash='fnv1a64:7ed521d0ee654c46'
+            }
+            i015=[ordered]@{
+              workflowRunId=31312435893
+              artifactId=9037781388
+              sha256=$i015
+              semanticHash='fnv1a64:296422c2764f7b4f'
+            }
+          } | ConvertTo-Json -Depth 5 | Set-Content 'artifacts/m047/I019/parent-artifacts.json' -Encoding utf8
+
+      - name: Analyze carried L19 source 9-11 MZ custody
+        shell: pwsh
+        run: |
+          node scripts/lfea-m047-i019-source-action-cluster.mjs `
+            --baseline-actual artifacts/m047/I019/i015/baseline.actual.json `
+            --candidate-actual artifacts/m047/I019/i015/candidate.actual.json `
+            --candidate-benchmark artifacts/m047/I019/i015/candidate.benchmark.json `
+            --i015-ab artifacts/m047/I019/i015/i015.ab.json `
+            --i014-sweep artifacts/m047/I019/i014/plain-frame-shear-sweep.json `
+            --out artifacts/m047/I019/i019.source-action-cluster.json
+
+      - name: Govern I019 custody findings
+        shell: pwsh
+        run: |
+          $evidence = Get-Content 'artifacts/m047/I019/i019.source-action-cluster.json' -Raw | ConvertFrom-Json
+          if ($evidence.findings.newFailureCount -ne 6) { throw 'I019 new failure count drifted.' }
+          if ($evidence.findings.resolvedFailureCount -ne 3) { throw 'I019 resolved failure count drifted.' }
+
+          $selected = @(
+            $evidence.findings.sourceMechanics.PSObject.Properties |
+              Where-Object { $_.Value.i015CandidateSelected } |
+              ForEach-Object { $_.Name }
+          )
+          if ($selected.Count -ne 1 -or $selected[0] -ne '10') {
+            throw "I019 candidate boundary drifted: $($selected -join ',')"
+          }
+
+          foreach ($interface in $evidence.findings.interfaceContinuity) {
+            if ([math]::Abs([double]$interface.referenceClosureNm) -gt 0.000001) { throw "Reference MZ interface closure drifted at $($interface.nodeId)." }
+            if ([math]::Abs([double]$interface.baselineClosureNm) -gt 0.000001) { throw "Baseline MZ interface closure drifted at $($interface.nodeId)." }
+            if ([math]::Abs([double]$interface.candidateClosureNm) -gt 0.000001) { throw "Candidate MZ interface closure drifted at $($interface.nodeId)." }
+            if ([math]::Abs([double]$interface.candidateDeltaClosureNm) -gt 0.000001) { throw "Candidate MZ delta closure drifted at $($interface.nodeId)." }
+          }
+
+          if ($evidence.parentEvidence.i014.source10.improvedTransverseComponentCount -ne 8) { throw 'I014 source-10 improvement count drifted.' }
+          if ($evidence.parentEvidence.i014.source10.worsenedTransverseComponentCount -ne 0) { throw 'I014 source-10 regression count drifted.' }
+          if ($evidence.interpretation.productionMechanicsChanged) { throw 'I019 must remain evidence-only.' }
+
+          Add-Content $env:GITHUB_STEP_SUMMARY '# M047 I019 source-action custody'
+          Add-Content $env:GITHUB_STEP_SUMMARY "- Evidence: ``$($evidence.semanticHash)``"
+          Add-Content $env:GITHUB_STEP_SUMMARY "- L19 new source-action failures: $($evidence.findings.newFailureCount); resolved: $($evidence.findings.resolvedFailureCount)"
+          Add-Content $env:GITHUB_STEP_SUMMARY '- I015-selected member of sources 9-11: source 10 only'
+          foreach ($interface in $evidence.findings.interfaceContinuity) {
+            Add-Content $env:GITHUB_STEP_SUMMARY "- interface $($interface.nodeId): candidate MZ closure=$($interface.candidateClosureNm) N*m; delta closure=$($interface.candidateDeltaClosureNm) N*m"
+          }
+          Add-Content $env:GITHUB_STEP_SUMMARY "- I014 source 10 fixed-DOF transverse RMS: $($evidence.parentEvidence.i014.source10.baselineTransverseRmsResidual) -> $($evidence.parentEvidence.i014.source10.timoshenkoTransverseRmsResidual)"
+          Add-Content $env:GITHUB_STEP_SUMMARY "- classification: $($evidence.interpretation.classification)"
+
+      - name: Retain I019 evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: m047-i019-source-action-cluster-${{ github.sha }}
+          path: |
+            artifacts/m047/I019/i019.source-action-cluster.json
+            artifacts/m047/I019/parent-artifacts.json
+          if-no-files-found: error
+          retention-days: 90

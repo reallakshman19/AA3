@@ -1,0 +1,194 @@
+name: m047-bm4nl-i017-accdb-authority-inventory
+
+on:
+  push:
+    branches:
+      - agent/m047-qualified-shear-draft
+    paths:
+      - '.github/workflows/m047-bm4nl-i017-accdb-authority-inventory.yml'
+      - 'scripts/lfea-m047-accdb-authority-inventory.ps1'
+      - 'scripts/lfea-caesar-accdb-export.ps1'
+      - 'scripts/lfea-m047-provision-ace.ps1'
+      - 'benchmarks/LFEA/CAESAR_ACCDB/m047/M047-I017.request.json'
+      - 'agent/status/status978.txt'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  inventory:
+    runs-on: windows-2022
+    timeout-minutes: 30
+    steps:
+      - name: Checkout exact I017 orchestration head
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.sha }}
+          fetch-depth: 0
+
+      - name: Prove exact head and clean checkout
+        shell: pwsh
+        run: |
+          if ((git rev-parse HEAD).Trim() -ne '${{ github.sha }}') { throw 'I017 checkout drifted.' }
+          if (git status --porcelain) { throw 'I017 checkout is dirty.' }
+
+      - name: Checkout pinned Common BM4 source
+        uses: actions/checkout@v4
+        with:
+          repository: reallaksh19/Common
+          ref: 1728651c94504b497aae4041578b1095fd8e292e
+          path: common-source
+          fetch-depth: 1
+
+      - name: Expand and verify locked BM4_NL ACCDB
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $root = Join-Path $env:RUNNER_TEMP 'm047-i017-bm4nl'
+          if (Test-Path -LiteralPath $root) { Remove-Item -LiteralPath $root -Recurse -Force }
+          New-Item -ItemType Directory -Path $root | Out-Null
+          Expand-Archive -LiteralPath 'common-source/LFEA/BM4/BM4_NL.zip' -DestinationPath $root -Force
+          $files = @(Get-ChildItem -LiteralPath $root -Recurse -File -Filter '*.accdb')
+          if ($files.Count -ne 1) { throw "Expected one ACCDB; found $($files.Count)." }
+          $sha = (Get-FileHash -LiteralPath $files[0].FullName -Algorithm SHA256).Hash.ToLowerInvariant()
+          $locked = '85d39463296e569da811d8572e2eff680b858097f76fdf0f47d1755f0b161c21'
+          if ($sha -ne $locked) { throw "Locked ACCDB mismatch: $sha" }
+          New-Item -ItemType Directory -Path 'artifacts/m047/I017' -Force | Out-Null
+          "BM4NL_ACCDB=$($files[0].FullName)" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
+          [ordered]@{
+            schema='lfea-m047-i017-source/v1'
+            orchestrationHead='${{ github.sha }}'
+            commonCommit='1728651c94504b497aae4041578b1095fd8e292e'
+            accdbSha256=$sha
+          } | ConvertTo-Json | Set-Content 'artifacts/m047/I017/source.json' -Encoding utf8
+
+      - name: Provision Microsoft 365 Access Runtime
+        shell: powershell
+        run: .\scripts\lfea-m047-provision-ace.ps1 -OutputPath 'artifacts/m047/I017/ace.json'
+
+      - name: Inventory complete ACCDB schema
+        shell: powershell
+        run: |
+          .\scripts\lfea-m047-accdb-authority-inventory.ps1 `
+            -AccdbPath "$env:BM4NL_ACCDB" `
+            -OutputPath 'artifacts/m047/I017/accdb-authority-inventory.json'
+
+      - name: Read input-only authority candidate tables
+        shell: powershell
+        run: |
+          .\scripts\lfea-caesar-accdb-export.ps1 `
+            -AccdbPath "$env:BM4NL_ACCDB" `
+            -TablesCsv 'INPUT_ALLOWABLES,INPUT_BASIC_ELEMENT_DATA,INPUT_CONTROL,INPUT_NOZZLES_API650,INPUT_REDUCERS,INPUT_UNITS' `
+            | Set-Content 'artifacts/m047/I017/input-authority-candidates.raw.json' -Encoding utf8
+
+      - name: Qualify inventory custody and classify authority candidates
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $inventory = Get-Content 'artifacts/m047/I017/accdb-authority-inventory.json' -Raw | ConvertFrom-Json
+          $input = Get-Content 'artifacts/m047/I017/input-authority-candidates.raw.json' -Raw | ConvertFrom-Json
+          $locked = '85d39463296e569da811d8572e2eff680b858097f76fdf0f47d1755f0b161c21'
+          if ($inventory.source.sha256 -ne $locked -or $input.source.sha256 -ne $locked) { throw 'I017 source hash drifted.' }
+          $tableNames = @($inventory.tables | ForEach-Object { $_.name })
+          foreach ($required in @('INPUT_BASIC_ELEMENT_DATA','INPUT_CONTROL','OUTPUT_DISPLACEMENTS','OUTPUT_GLOBAL_ELEMENT_FORCES','OUTPUT_RESTRAINTS_SUMMARY')) {
+            if ($tableNames -notcontains $required) { throw "I017 inventory is missing known table $required." }
+          }
+
+          $keywordMatches = @($inventory.keywordMatches)
+          $thermalMatches = @($keywordMatches | Where-Object { @($_.keywords) -contains 'THERM' -or @($_.keywords) -contains 'ALPHA' -or @($_.keywords) -contains 'COEFF' -or @($_.keywords) -contains 'EXP' })
+          $modulusMatches = @($keywordMatches | Where-Object { @($_.keywords) -contains 'MODULUS' -or @($_.keywords) -contains 'ELASTIC' })
+          $bourdonMatches = @($keywordMatches | Where-Object { @($_.keywords) -contains 'BOURDON' })
+
+          $basicColumns = @($input.tables.INPUT_BASIC_ELEMENT_DATA.columns)
+          $separatePipeAlphaLike = @($basicColumns | Where-Object { $_ -match '(?i)(ALPHA|COEFF|STRAIN|THERM)' })
+          if ($separatePipeAlphaLike.Count -ne 0) { throw "Unexpected separate pipe-element alpha/strain candidate fields appeared: $($separatePipeAlphaLike -join ', ')." }
+          $temperatureColumns = @($basicColumns | Where-Object { $_ -match '^TEMP_EXP_C[1-9]$' })
+          if ($temperatureColumns.Count -ne 9) { throw "Expected nine TEMP_EXP_C temperature-or-expansion fields; found $($temperatureColumns.Count)." }
+
+          $controlRows = @($input.tables.INPUT_CONTROL.rows)
+          if ($controlRows.Count -ne 1) { throw "Expected one INPUT_CONTROL row; found $($controlRows.Count)." }
+          $allowableRows = @($input.tables.INPUT_ALLOWABLES.rows)
+          $api650Rows = @($input.tables.INPUT_NOZZLES_API650.rows)
+          $reducerRows = @($input.tables.INPUT_REDUCERS.rows)
+          $elementRows = @($input.tables.INPUT_BASIC_ELEMENT_DATA.rows)
+          $temperatureC1Values = @($elementRows | ForEach-Object { [double]$_.TEMP_EXP_C1 } | Sort-Object -Unique)
+          if ($temperatureC1Values.Count -ne 1 -or $temperatureC1Values[0] -ne 120) {
+            throw "I017 expected locked TEMP_EXP_C1 operating temperature 120 C; found $($temperatureC1Values -join ', ')."
+          }
+
+          $codeRecords = @($allowableRows | ForEach-Object {
+            [pscustomobject][ordered]@{
+              allowablePointer=$_.ALLOWBL_PTR
+              caseNumber=$_.CASE_NUM
+              pipingCode=$_.PIPING_CODE
+              alphaH=$_.ALPHA_H
+              alphaFab=$_.ALPHA_FAB
+              alphaGw=$_.ALPHA_GW
+              yCoeff=$_.Y_COEFF
+              expansionAllowable=$_.EXP_ALLOW
+            }
+          })
+          $materials = @($elementRows | ForEach-Object {
+            [pscustomobject][ordered]@{
+              materialNumber=$_.MATERIAL_NUM
+              materialName=$_.MATERIAL_NAME
+              temperatureC1=$_.TEMP_EXP_C1
+              modulus=$_.MODULUS
+              hotMod1=$_.HOT_MOD1
+            }
+          } | Sort-Object materialNumber, materialName, temperatureC1, modulus, hotMod1 -Unique)
+          $reducerAlpha = @($reducerRows | ForEach-Object { [pscustomobject][ordered]@{ reducerPointer=$_.RED_PTR; alphaDegrees=$_.ALPHA } })
+
+          $summary = [ordered]@{
+            schema='lfea-m047-i017-authority-summary/v3'
+            sourceAccdbSha256=$inventory.source.sha256
+            caesarVersion=$controlRows[0].VERSION
+            tableCount=$inventory.tableCount
+            keywordMatchCount=$keywordMatches.Count
+            pipeElementThermalExpansionAuthority=[ordered]@{
+              separateDerivedAlphaOrStrainFieldPresent=$false
+              tempExpColumns=$temperatureColumns
+              tempExpC1Interpretation='OPERATING_TEMPERATURE_C_FOR_LOCKED_JOB'
+              tempExpC1Values=$temperatureC1Values
+              materialAndModulusFields=@('MATERIAL_NUM','MATERIAL_NAME','MODULUS','HOT_MOD1','HOT_MOD2','HOT_MOD3','HOT_MOD4','HOT_MOD5','HOT_MOD6','HOT_MOD7','HOT_MOD8','HOT_MOD9')
+              distinctMaterialRecords=$materials
+            }
+            inputAllowableCodeRecords=$codeRecords
+            api650NozzleAuthority=[ordered]@{
+              rowCount=$api650Rows.Count
+              thermalExpansionCoefficientColumnPresent=$true
+              applicableToPipeElements=$false
+            }
+            reducerAuthority=[ordered]@{
+              rowCount=$reducerRows.Count
+              alphaMeaning='REDUCER_TRANSITION_SLOPE_DEGREES'
+              rows=$reducerAlpha
+            }
+            thermalExpansionCandidateColumns=$thermalMatches
+            modulusCandidateColumns=$modulusMatches
+            bourdonCandidateColumns=$bourdonMatches
+            conclusion='LOCKED_ACCDB_TEMP_EXP_C1_IS_120C_AND_NO_SEPARATE_PIPE_MEAN_CTE_OR_DERIVED_THERMAL_STRAIN_FIELD_IS_EXPORTED'
+          }
+          $summary | ConvertTo-Json -Depth 10 | Set-Content 'artifacts/m047/I017/authority-summary.json' -Encoding utf8
+          Add-Content $env:GITHUB_STEP_SUMMARY '# M047 I017 ACCDB authority inventory'
+          Add-Content $env:GITHUB_STEP_SUMMARY "- ACCDB: ``$($inventory.source.sha256)``"
+          Add-Content $env:GITHUB_STEP_SUMMARY "- CAESAR version: $($summary.caesarVersion)"
+          Add-Content $env:GITHUB_STEP_SUMMARY "- tables: $($inventory.tableCount)"
+          Add-Content $env:GITHUB_STEP_SUMMARY "- keyword matches: $($summary.keywordMatchCount)"
+          Add-Content $env:GITHUB_STEP_SUMMARY "- TEMP_EXP_C1 locked interpretation: $($summary.pipeElementThermalExpansionAuthority.tempExpC1Interpretation) = $($temperatureC1Values -join ', ') C"
+          Add-Content $env:GITHUB_STEP_SUMMARY "- separate pipe mean-CTE/derived-strain field exported: $($summary.pipeElementThermalExpansionAuthority.separateDerivedAlphaOrStrainFieldPresent)"
+          Add-Content $env:GITHUB_STEP_SUMMARY "- distinct material records: $($materials.Count)"
+          Add-Content $env:GITHUB_STEP_SUMMARY "- input allowable/code rows: $($codeRecords.Count)"
+          Add-Content $env:GITHUB_STEP_SUMMARY "- API650 nozzle rows: $($api650Rows.Count)"
+          Add-Content $env:GITHUB_STEP_SUMMARY "- reducer alpha rows (geometric slope): $($reducerRows.Count)"
+          Add-Content $env:GITHUB_STEP_SUMMARY "- Bourdon candidate columns: $($bourdonMatches.Count)"
+
+      - name: Retain I017 evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: m047-i017-accdb-authority-${{ github.sha }}
+          path: artifacts/m047/I017/**
+          if-no-files-found: error
+          retention-days: 90

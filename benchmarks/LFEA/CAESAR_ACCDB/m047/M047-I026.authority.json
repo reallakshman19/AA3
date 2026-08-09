@@ -1,0 +1,119 @@
+{
+  "schema": "lfea-m047-shear-authority/v1",
+  "issueId": "M047",
+  "iterationId": "M047-I026",
+  "retrievedUtcDate": "2026-08-09",
+  "targetProduct": "CAESAR II 14.00",
+  "targetModel": "isotropic metallic piping flexibility for BM4_NL / ASME B31.3-2022",
+  "sources": [
+    {
+      "id": "HEXAGON-V14-PRACTICAL-APPLICATIONS-FRP",
+      "authority": "VENDOR",
+      "url": "https://docs.hexagonppm.com/r/en-US/CAESAR-II-Users-Guide/Version-14/336389?contentId=N36nJswCs1KGIWXM0HFxQg",
+      "finding": "Hexagon states that material shear modulus is required to develop the stiffness matrix. The discussion is specifically the orthotropic/FRP model and explains that FRP requires an explicitly supplied shear modulus because it does not follow the isotropic material relationship.",
+      "supports": [
+        "shear modulus participates in a CAESAR piping stiffness-matrix path",
+        "FRP/orthotropic shear-modulus authority is distinct from ordinary isotropic material properties"
+      ],
+      "doesNotEstablish": [
+        "the metallic isotropic straight-pipe transverse-shear interpolation",
+        "a metallic effective shear area",
+        "a metallic shear-correction coefficient kappa",
+        "whether the BM4_NL isotropic pipe element actually retains transverse shear deformation rather than only using G for another stiffness term"
+      ]
+    },
+    {
+      "id": "HEXAGON-V14-ELASTIC-PROPERTIES",
+      "authority": "VENDOR",
+      "url": "https://docs.hexagonppm.com/r/en-US/CAESAR-II-Users-Guide/Version-14/330855",
+      "finding": "The ordinary piping elastic-properties UI exposes cold/hot elastic moduli and Poisson ratio from the material database. It does not document a user-entered metallic-pipe shear correction or effective shear area.",
+      "supports": [
+        "E and Poisson ratio are explicit ordinary material properties"
+      ],
+      "doesNotEstablish": [
+        "the exact isotropic G derivation used internally",
+        "a transverse-shear coefficient or shear-area rule"
+      ]
+    },
+    {
+      "id": "HEXAGON-V14-FRP-QUICK-REFERENCE",
+      "authority": "VENDOR",
+      "url": "https://docs.hexagonppm.com/r/en-US/CAESAR-II-Quick-Reference/Version-14/330454",
+      "finding": "The documented 'Ratio Shear Modulus: Elastic Modulus' configuration belongs to FRP properties, not the ordinary isotropic metallic material controls.",
+      "supports": [
+        "the exposed G/E configuration is FRP-specific"
+      ],
+      "doesNotEstablish": [
+        "a hidden or fixed metallic shear factor",
+        "that metallic transverse shear is absent"
+      ]
+    },
+    {
+      "id": "HEXAGON-V14-MATERIAL-LIST",
+      "authority": "VENDOR",
+      "url": "https://docs.hexagonppm.com/r/en-US/CAESAR-II-Quick-Reference/Version-14/330462",
+      "finding": "Hexagon labels the standard metallic material table as isotropic and lists Elastic Modulus and Poisson ratio; material 20 is the separate orthotropic FRP model.",
+      "supports": [
+        "BM4_NL material 106 belongs to the ordinary material-database path rather than FRP material 20"
+      ],
+      "doesNotEstablish": [
+        "the beam shear-area formulation used by the isotropic pipe element"
+      ]
+    },
+    {
+      "id": "HEXAGON-V14-B31J-METHODS",
+      "authority": "VENDOR",
+      "url": "https://docs.hexagonppm.com/r/en-US/CAESAR-II-Users-Guide/Version-14/1467330",
+      "finding": "Hexagon documents B31J flexibility corrections as rotational stiffness effects; translational stiffness is always rigid within the B31J correction model. The B31J springs are inserted into run/branch stiffness matrices.",
+      "supports": [
+        "B31J tee flexibility is independently owned rotational correction mechanics",
+        "a base-beam transverse-shear law should not be inferred from B31J flexibility factors"
+      ],
+      "doesNotEstablish": [
+        "the base straight-pipe shear coefficient",
+        "the bend base-beam shear formulation"
+      ]
+    },
+    {
+      "id": "COWPER-1966",
+      "authority": "PRIMARY_MECHANICS_LITERATURE",
+      "citation": "G. R. Cowper, The Shear Coefficient in Timoshenko's Beam Theory, Journal of Applied Mechanics, 33(2), 335-340, June 1966",
+      "doi": "10.1115/1.3625046",
+      "url": "https://doi.org/10.1115/1.3625046",
+      "finding": "The primary paper states that Timoshenko beam equations are derived by integration of three-dimensional elasticity and that the derivation yields a new shear-coefficient formula with numerical comparisons.",
+      "supports": [
+        "a mechanics basis exists for section/Poisson-dependent Timoshenko shear coefficients"
+      ],
+      "doesNotEstablish": [
+        "that CAESAR II uses Cowper",
+        "that CAESAR II uses the thin-annulus limit represented by the current experimental kappa=0.53",
+        "the exact CAESAR metallic-pipe effective shear area"
+      ]
+    }
+  ],
+  "negativeEvidenceLimits": [
+    "The vendor documentation search did not expose a metallic-pipe shear-area or kappa setting, but documentation absence is not proof that the solver omits transverse shear.",
+    "The FRP G/E setting cannot be repurposed as metallic-pipe authority.",
+    "Cowper is an admissible mechanics source but cannot be promoted as CAESAR implementation authority without an independent CAESAR linkage."
+  ],
+  "qualifiedFindings": [
+    "CAESAR documentation confirms shear modulus participates in a piping stiffness-matrix path.",
+    "The explicit configurable G/E ratio located in CAESAR II 14 documentation is FRP-specific.",
+    "The ordinary isotropic metallic material path documents E and Poisson ratio but the retrieved vendor documentation does not specify a metallic effective shear area or kappa.",
+    "B31J tee flexibility is a rotational correction layer and does not supply authority for the base-pipe transverse-shear law.",
+    "The current kappa=0.53 remains experimental/mechanism evidence only."
+  ],
+  "unresolvedAuthority": [
+    "Does CAESAR II 14 retain transverse shear deformation in the ordinary isotropic metallic straight-pipe static element?",
+    "If yes, what exact effective shear area / shear coefficient does it use?",
+    "Is the coefficient constant or dependent on pipe geometry and Poisson ratio?",
+    "What is the exact composition rule between that base-beam law and bend flexibility corrections?"
+  ],
+  "nextAdmissibleEvidence": [
+    "Hexagon CAESAR II 14 technical/theory documentation containing the isotropic piping element stiffness equations",
+    "a Hexagon support/engineering statement identifying the metallic pipe shear-deformation and effective-shear-area implementation",
+    "another vendor-authored implementation reference with explicit CAESAR II 14 applicability"
+  ],
+  "verdict": "ACCEPTED_AUTHORITY_BOUNDARY_NO_NUMERIC_CANDIDATE_AUTHORIZED",
+  "decisionReason": "Primary/vendor evidence establishes that shear modulus is relevant and separates FRP and B31J authority, but it does not establish the CAESAR II 14 isotropic metallic-pipe transverse-shear coefficient/effective shear area. I026 therefore fails closed against any new numeric kappa or production mechanics candidate."
+}

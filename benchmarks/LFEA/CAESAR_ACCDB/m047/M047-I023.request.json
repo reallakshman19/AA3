@@ -1,0 +1,80 @@
+{
+  "schema": "lfea-caesar-accdb-iteration-request/v1",
+  "issueId": "M047",
+  "iterationId": "M047-I023",
+  "expectedSourceAccdbSha256": "85d39463296e569da811d8572e2eff680b858097f76fdf0f47d1755f0b161c21",
+  "expectedBendPointerCount": 12,
+  "baseCommitSha": "882d59a99c3a03847d20bec34770ba57ff479d91",
+  "parentAcceptedIteration": "M047-I015",
+  "supportingIterations": ["M047-I019", "M047-I020", "M047-I021", "M047-I022"],
+  "hypothesis": "The five tee-modified straight FRAME sources are ordinary flexible pipe beneath independently owned B31J end-condition flexibility. Because the solver builds the base frame and gravity/initial-load vectors first and then condenses the B31J rotational springs and rigid offsets consistently, the accepted common Timoshenko beam law can be tested under the unchanged tee modifier without changing directional B31J factors. The tee-owned bend incoming straight source 36 remains held so bend and tee family changes are not bundled.",
+  "candidateBoundary": {
+    "retainedI015": "all FRAME with teeModifier===null",
+    "additionalI023": "FRAME with teeModifier!==null",
+    "expectedAdditionalSourceIds": ["9", "12", "13", "17", "18"],
+    "heldTeeBendIncomingStraightSourceId": "36",
+    "teeCondensationOrder": "base stiffness/load vectors -> B31J end-condition condensation -> global transform/offset",
+    "kappaY": 0.53,
+    "kappaZ": 0.53,
+    "kappaAuthority": "COWPER-1966-THIN-ANNULUS-INPUT"
+  },
+  "heldAuthority": [
+    "B31J directional flexibility factors",
+    "tee rotational spring construction",
+    "tee rigid surface offsets",
+    "BEND_INCOMING_STRAIGHT",
+    "BEND_ARC",
+    "REDUCER",
+    "RIGID",
+    "BOURDON",
+    "PRESSURE",
+    "THERMAL AUTHORITY",
+    "TOLERANCES"
+  ],
+  "mechanicsDelta": "Runtime tee-FRAME qualification candidate only: accepted I015 ordinary FRAME mechanics are extended to the five tee-modified FRAME carriers before unchanged B31J end-condition condensation. Source 36 and all bend/reducer mechanics remain held.",
+  "harnessHistory": [
+    {
+      "workflowRunId": 31318277933,
+      "orchestrationHeadSha": "50a85ecc643c1faebab2a263adbfbc373382c3df",
+      "classification": "HARNESS_ONLY",
+      "engineeringSolveReached": true,
+      "artifactId": 9039433312,
+      "artifactSha256": "995a79625be363af703cef04fb38083f7655c2204189fdfa18dc60d8d3bee9cf",
+      "cause": "Both parent/candidate solves and the A/B completed. Final governance sorted tee source IDs lexicographically as strings; the expected set was correct but ordered 12,13,17,18,9 rather than numeric 9,12,13,17,18. The only correction cast sourceElementId to int before Sort-Object. Candidate mechanics were unchanged."
+    }
+  ],
+  "verdict": "REJECTED",
+  "decisionReason": "Corrected exact-head run 31318659758 completed successfully with unchanged candidate mechanics, preserved tee modifier semantic hashes, 12/12 bend coverage and target equilibrium at numerical roundoff. The tee-FRAME extension is strongly favorable locally: L19 node 20090 FY error falls from 8.542% to 2.104%; all six carried I019 sources-9-11 MZ failures resolve; L19 displacement/rotation failures fall 66 -> 48 and L20 displacement/rotation failures 90 -> 83. However isolated promotion violates the M047 no-new-L19-restraint gate: node 20390 FZ moves from the accepted-I015 9.961% error to 10.808%, creating one L19 restraint failure. L19 source-action count improves 23 -> 17 but aggregate source-action RMSnorm slightly worsens; a new source-44 MZ failure appears on the bend-side I020 boundary. L20 restraint count stays 6 but restraint RMS worsens and source-end-action failures rise 134 -> 166 despite improved source-action RMS. Therefore the common base-beam shear hypothesis beneath B31J remains supported locally, but this five-source tee-only system cutover is not accepted as final architecture. The result reinforces node 20390/source44 as cross-family sentinels and shows special-component boundaries must be resolved coherently before broader promotion.",
+  "executionEvidence": {
+    "orchestrationHeadSha": "22546111e92280af7b4d96120cf34c741467a21e",
+    "workflowRunId": 31318659758,
+    "workflowConclusion": "success",
+    "artifactId": 9039552286,
+    "artifactSha256": "d6e3c837d627b2f4d65c41286003399de5465ef023b86fe009229c218539c713",
+    "semanticHash": "fnv1a64:b1efa2fa9b992432",
+    "candidateSolverSha256": "19b0be8a094fedc8f591cd4fd6a8ad7dbf36604f78e38516d73e8912fc57698e",
+    "targetResidualAbsMax": 6.821210263296962e-13
+  },
+  "observedResult": {
+    "L19": {
+      "restraintFailures": "0 -> 1",
+      "restraintRmsNormalizedError": "0.021778551450530564 -> 0.021796331390002813",
+      "node20090FYRelativeError": "0.08542188461083092 -> 0.021041422933332762",
+      "newRestraintFailure": "node 20390 FZ: accepted-I015 ~9.961% -> 10.8075%",
+      "displacementRotationFailures": "66 -> 48",
+      "displacementRotationRmsNormalizedError": "0.3463907572374756 -> 0.21082270778140377",
+      "sourceEndActionFailures": "23 -> 17",
+      "sourceEndActionRmsNormalizedError": "0.05303530122813788 -> 0.05352597948750182",
+      "i019Sources9To11Mz": "all six resolve below the 10% threshold",
+      "newBendSideSentinel": "source 44 GLOBAL_END_MOMENT_FROM MZ fails at ~13.65%"
+    },
+    "L20": {
+      "restraintFailures": "6 -> 6",
+      "restraintRmsNormalizedError": "0.03825058747833576 -> 0.04064740429897782",
+      "displacementRotationFailures": "90 -> 83",
+      "displacementRotationRmsNormalizedError": "0.2568590341983296 -> 0.24046016153194566",
+      "sourceEndActionFailures": "134 -> 166",
+      "sourceEndActionRmsNormalizedError": "0.1497606159392834 -> 0.13820974800031152"
+    }
+  }
+}

@@ -1,0 +1,97 @@
+name: m047-bm4nl-i018-source-authority-survey
+
+on:
+  push:
+    branches:
+      - agent/m047-qualified-shear-draft
+    paths:
+      - '.github/workflows/m047-bm4nl-i018-source-authority-survey.yml'
+      - 'scripts/lfea-m047-i018-source-authority-survey.ps1'
+      - 'benchmarks/LFEA/CAESAR_ACCDB/m047/M047-I018.request.json'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  survey:
+    runs-on: windows-2022
+    timeout-minutes: 15
+    steps:
+      - name: Checkout exact I018 orchestration head
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.sha }}
+          fetch-depth: 0
+
+      - name: Prove exact head and clean checkout
+        shell: pwsh
+        run: |
+          if ((git rev-parse HEAD).Trim() -ne '${{ github.sha }}') { throw 'I018 checkout drifted.' }
+          if (git status --porcelain) { throw 'I018 checkout is dirty.' }
+
+      - name: Checkout pinned Common BM4 source
+        uses: actions/checkout@v4
+        with:
+          repository: reallaksh19/Common
+          ref: 1728651c94504b497aae4041578b1095fd8e292e
+          path: common-source
+          fetch-depth: 1
+
+      - name: Expand pinned archive
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $root = Join-Path $env:RUNNER_TEMP 'm047-i018-bm4nl'
+          if (Test-Path -LiteralPath $root) { Remove-Item -LiteralPath $root -Recurse -Force }
+          New-Item -ItemType Directory -Path $root | Out-Null
+          Expand-Archive -LiteralPath 'common-source/LFEA/BM4/BM4_NL.zip' -DestinationPath $root -Force
+          New-Item -ItemType Directory -Path 'artifacts/m047/I018' -Force | Out-Null
+          "BM4NL_ARCHIVE_ROOT=$root" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
+
+      - name: Survey retained CAESAR source authority
+        shell: powershell
+        run: |
+          .\scripts\lfea-m047-i018-source-authority-survey.ps1 `
+            -ArchiveRoot "$env:BM4NL_ARCHIVE_ROOT" `
+            -OutputPath 'artifacts/m047/I018/source-authority-survey.json'
+
+      - name: Qualify source custody and summarize gate
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $survey = Get-Content 'artifacts/m047/I018/source-authority-survey.json' -Raw | ConvertFrom-Json
+          $locked = '85d39463296e569da811d8572e2eff680b858097f76fdf0f47d1755f0b161c21'
+          if ([int]$survey.accdbFileCount -ne 1) { throw "Expected one ACCDB in pinned archive; found $($survey.accdbFileCount)." }
+          $accdb = @($survey.accdbFiles)[0]
+          if ($accdb.sha256 -ne $locked) { throw "I018 locked ACCDB hash drifted: $($accdb.sha256)." }
+          [ordered]@{
+            schema='lfea-m047-i018-gate-summary/v1'
+            orchestrationHead='${{ github.sha }}'
+            commonCommit='1728651c94504b497aae4041578b1095fd8e292e'
+            sourceAccdbSha256=$accdb.sha256
+            archiveFileCount=[int]$survey.fileCount
+            surveyedTextFileCount=[int]$survey.surveyedTextFileCount
+            matchedTextFileCount=[int]$survey.matchedTextFileCount
+            textMatchCount=[int]$survey.textMatchCount
+            matchedTextFiles=@($survey.matchedTextFiles)
+            surveyConclusion=$survey.conclusion
+            authorityGate=if ([int]$survey.textMatchCount -gt 0) { 'REVIEW_RETAINED_CAESAR_TEXT_EVIDENCE' } else { 'EXTERNAL_MATERIAL_AUTHORITY_REQUIRED' }
+          } | ConvertTo-Json -Depth 6 | Set-Content 'artifacts/m047/I018/gate-summary.json' -Encoding utf8
+          $gate = Get-Content 'artifacts/m047/I018/gate-summary.json' -Raw | ConvertFrom-Json
+          Add-Content $env:GITHUB_STEP_SUMMARY '# M047 I018 source-authority survey'
+          Add-Content $env:GITHUB_STEP_SUMMARY "- exact head: ``$($gate.orchestrationHead)``"
+          Add-Content $env:GITHUB_STEP_SUMMARY "- locked ACCDB: ``$($gate.sourceAccdbSha256)``"
+          Add-Content $env:GITHUB_STEP_SUMMARY "- archive files: $($gate.archiveFileCount)"
+          Add-Content $env:GITHUB_STEP_SUMMARY "- surveyed text files: $($gate.surveyedTextFileCount)"
+          Add-Content $env:GITHUB_STEP_SUMMARY "- matched text files: $($gate.matchedTextFileCount)"
+          Add-Content $env:GITHUB_STEP_SUMMARY "- authority gate: **$($gate.authorityGate)**"
+
+      - name: Retain I018 evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: m047-i018-source-authority-${{ github.sha }}
+          path: artifacts/m047/I018/**
+          if-no-files-found: error
+          retention-days: 90

@@ -1,0 +1,90 @@
+{
+  "schema": "lfea-caesar-accdb-iteration-request/v1",
+  "issueId": "M047",
+  "iterationId": "M047-I029",
+  "classification": "B31J_SMOOTH_90_BOOLEAN_AB_NO_FITTED_COEFFICIENT",
+  "expectedSourceAccdbSha256": "85d39463296e569da811d8572e2eff680b858097f76fdf0f47d1755f0b161c21",
+  "expectedBendPointerCount": 12,
+  "baseCommitSha": "882d59a99c3a03847d20bec34770ba57ff479d91",
+  "parentEvidence": ["M047-I027", "M047-I028"],
+  "authoritySources": [
+    {
+      "publisher": "Hexagon",
+      "document": "CAESAR II Version 14 B31J Methods",
+      "authorityStatement": "B31.3-2022 uses B31J-2017 by default; a smooth 90-degree B31J bend uses a 1.3/h flexibility basis rather than the general 1.65/h basis, with elbow stiffening pressure/modulus applied through the load-case controls.",
+      "url": "https://docs.hexagonppm.com/r/en-US/CAESAR-II-Users-Guide/Version-14/1467330"
+    }
+  ],
+  "mechanicsDelta": {
+    "onlyChange": "smooth90FlexibilityCorrection false -> true",
+    "baselineFlexibilityCoefficient": "1.65/h",
+    "candidateFlexibilityCoefficient": "1.3/h",
+    "bendPopulation": "12/12 locked bends exactly 90 degrees",
+    "fittedParameter": false
+  },
+  "executionEvidence": {
+    "orchestrationHeadSha": "196c22f4fd564ece0fed88d5e8524d2319b0c0c8",
+    "workflowRunId": 31323118729,
+    "workflowConclusion": "success",
+    "artifactId": 9040785389,
+    "artifactSha256": "988ab5bd6d36c6e8a67978b7d7c7a9447f5e9a56f817eac879b0dce470f9e5eb",
+    "frozenSmoothAbSemanticHash": "fnv1a64:1cfa859c87000213",
+    "i015SmoothAbSemanticHash": "fnv1a64:b83dbec69ee41935"
+  },
+  "observedResult": {
+    "primaryFrozenBaselineToSmooth90": {
+      "L19": {
+        "restraintFailures": "1 -> 2",
+        "restraintRmsNormalizedError": "0.02282812034983902 -> 0.019031068658139874",
+        "displacementRotationFailures": "74 -> 67",
+        "displacementRotationRmsNormalizedError": "0.4110814258549527 -> 0.4051529335042694",
+        "sourceEndActionFailures": "20 -> 16",
+        "sourceEndActionRmsNormalizedError": "0.05405019347329451 -> 0.02443325882833765",
+        "sourceEndActionMaximumRelativeError": "0.35928353372588845 -> 0.18374695028337207",
+        "node20090FYRelativeError": "0.1644734588681676 -> 0.1820723768279171",
+        "remainingRestraintFailures": [
+          "node20090 FY: reference -1659.8367919921875 N, candidate -1962.0472218566301 N, 18.20723768279171%",
+          "node21470 FY: reference -656.904296875 N, candidate -749.8520530426422 N, 14.149360357332064%"
+        ]
+      },
+      "L20": {
+        "restraintFailures": "5 -> 1",
+        "restraintRmsNormalizedError": "0.03519015327089941 -> 0.017793443286700898",
+        "displacementRotationFailures": "72 -> 43",
+        "displacementRotationRmsNormalizedError": "0.32718086234123106 -> 0.27916618195286313",
+        "sourceEndActionFailures": "137 -> 31",
+        "sourceEndActionRmsNormalizedError": "0.13575619839326716 -> 0.07998350050956556",
+        "remainingRestraintFailure": "node20030 FX: reference -1498.501953125 N, candidate -1308.6107460912317 N, 12.672069371532424%"
+      }
+    },
+    "secondaryHistoricalI015Composition": {
+      "L19": {
+        "restraintFailures": "0 -> 1",
+        "restraintRmsNormalizedError": "0.021778551450530564 -> 0.011808427422957622",
+        "displacementRotationFailures": "66 -> 47",
+        "sourceEndActionFailures": "23 -> 2",
+        "sourceEndActionRmsNormalizedError": "0.05303530122813788 -> 0.01710789492370934",
+        "node20090FYRelativeError": "0.08542188461083092 -> 0.10347192439599688"
+      },
+      "L20": {
+        "restraintFailures": "6 -> 0",
+        "restraintRmsNormalizedError": "0.03825058747833576 -> 0.019960918702452438",
+        "displacementRotationFailures": "90 -> 50",
+        "sourceEndActionFailures": "134 -> 17",
+        "sourceEndActionRmsNormalizedError": "0.1497606159392834 -> 0.1076121603605683"
+      }
+    },
+    "remainingSmoothOnlyL19SourceActionClusters": [
+      "sources13-17 axial FX chain: approximately 10.19%",
+      "source17 TO MX: 11.74%",
+      "source37 TO / source38 FROM MZ: 14.18%",
+      "source44 FROM MZ: 15.83%",
+      "source4 TO FY: 15.72%",
+      "source4 TO MZ: 18.37%"
+    ]
+  },
+  "verdict": "ACCEPTED_B31J_SMOOTH90_MECHANICS_NOT_SYSTEM_COMPLETE",
+  "decisionReason": "The smooth-90 change is source-authoritative rather than fitted and produces a large, coherent improvement in both displacement and source-end-action fields, especially L20. On the clean frozen baseline it more than halves L19 source-action RMS error and reduces L20 restraint failures 5 -> 1 and source-action failures 137 -> 31. It therefore qualifies as a required B31J bend-mechanics correction for this all-90-degree Version-14/B31J-2017 benchmark. It is not a complete system solution: clean L19 still has node20090 FY and node21470 FY above 10%. The historical I015 composition demonstrates strong interaction but is retained only as secondary evidence; it does not restore transverse shear as the roadmap. The next step is prescribed source-component endpoint replay at CAESAR DOFs to isolate the remaining local formulation/load defects without global redistribution.",
+  "nextIteration": "M047-I030",
+  "nextBoundary": "SOURCE_COMPONENT_PRESCRIBED_DOF_REPLAY_AND_STATIC_CONDENSATION"
+}

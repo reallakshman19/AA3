@@ -1,0 +1,124 @@
+name: m047-bm4nl-i020-mz-boundary-trace
+
+on:
+  push:
+    branches:
+      - agent/m047-qualified-shear-draft
+    paths:
+      - '.github/workflows/m047-bm4nl-i020-mz-boundary-trace.yml'
+      - 'scripts/lfea-m047-i020-mz-boundary-trace.mjs'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  actions: read
+
+jobs:
+  trace:
+    runs-on: windows-2022
+    timeout-minutes: 10
+    steps:
+      - name: Checkout I020 orchestration exact head
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.sha }}
+          fetch-depth: 0
+
+      - name: Prove exact orchestration head and clean checkout
+        shell: pwsh
+        run: |
+          if ((git rev-parse HEAD).Trim() -ne '${{ github.sha }}') { throw 'I020 orchestration checkout drifted.' }
+          if (git status --porcelain) { throw 'I020 orchestration checkout is dirty.' }
+
+      - name: Use Node.js 22
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: Download frozen I015 parent artifact
+        shell: pwsh
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          $ErrorActionPreference = 'Stop'
+          New-Item -ItemType Directory -Path 'artifacts/m047/I020/i015' -Force | Out-Null
+          @'
+          import fs from 'node:fs';
+          const response = await fetch(
+            `https://api.github.com/repos/${process.env.GITHUB_REPOSITORY}/actions/artifacts/9037781388/zip`,
+            {
+              headers: {
+                Accept: 'application/vnd.github+json',
+                Authorization: `Bearer ${process.env.GH_TOKEN}`,
+                'X-GitHub-Api-Version': '2022-11-28',
+              },
+            },
+          );
+          if (!response.ok) throw new Error(`I015 artifact download failed: ${response.status} ${await response.text()}`);
+          fs.writeFileSync(process.argv[2], Buffer.from(await response.arrayBuffer()));
+          '@ | Set-Content 'artifacts/m047/I020/download-artifact.mjs' -Encoding utf8
+
+          node 'artifacts/m047/I020/download-artifact.mjs' 'artifacts/m047/I020/i015.zip'
+          $sha = (Get-FileHash 'artifacts/m047/I020/i015.zip' -Algorithm SHA256).Hash.ToLowerInvariant()
+          if ($sha -ne '6c8d79bcccb19b80ae53fe32d78afefa69871da606166ea5e6e58c2be897fc23') {
+            throw "I015 artifact digest drifted: $sha"
+          }
+          Expand-Archive 'artifacts/m047/I020/i015.zip' -DestinationPath 'artifacts/m047/I020/i015' -Force
+          [ordered]@{
+            schema='lfea-m047-i020-parent-artifact/v1'
+            workflowRunId=31312435893
+            artifactId=9037781388
+            sha256=$sha
+            semanticHash='fnv1a64:296422c2764f7b4f'
+          } | ConvertTo-Json | Set-Content 'artifacts/m047/I020/parent-artifact.json' -Encoding utf8
+
+      - name: Trace MZ redistribution to nearest selected plain frames
+        shell: pwsh
+        run: |
+          node scripts/lfea-m047-i020-mz-boundary-trace.mjs `
+            --baseline-actual artifacts/m047/I020/i015/baseline.actual.json `
+            --candidate-actual artifacts/m047/I020/i015/candidate.actual.json `
+            --i015-ab artifacts/m047/I020/i015/i015.ab.json `
+            --out artifacts/m047/I020/i020.mz-boundary-trace.json
+
+      - name: Govern I020 topology and action custody
+        shell: pwsh
+        run: |
+          $evidence = Get-Content 'artifacts/m047/I020/i020.mz-boundary-trace.json' -Raw | ConvertFrom-Json
+          if ($evidence.interpretation.classification -ne 'I015_PARTIAL_CONSTITUTIVE_BOUNDARY_REDISTRIBUTION') {
+            throw "I020 classification drifted: $($evidence.interpretation.classification)"
+          }
+
+          $selected = @(
+            $evidence.pathResults |
+              ForEach-Object { $_.pathsToNearestI015SelectedSources } |
+              ForEach-Object { [int]$_.selectedSourceId } |
+              Sort-Object -Unique
+          )
+          if (($selected -join ',') -ne '8,14,44') {
+            throw "I020 selected-boundary sources drifted: $($selected -join ',')"
+          }
+
+          foreach ($property in $evidence.nodeBalances.PSObject.Properties) {
+            if ([math]::Abs([double]$property.Value.candidateMinusBaselineMzClosureNm) -gt 0.000001) {
+              throw "I020 MZ delta closure drifted at node $($property.Name)."
+            }
+          }
+          if ($evidence.method.productionMechanicsChanged) { throw 'I020 must remain evidence-only.' }
+
+          Add-Content $env:GITHUB_STEP_SUMMARY '# M047 I020 MZ architectural-boundary trace'
+          Add-Content $env:GITHUB_STEP_SUMMARY "- Evidence: ``$($evidence.semanticHash)``"
+          Add-Content $env:GITHUB_STEP_SUMMARY '- tee-side selected boundaries: source 8 via source 12; source 14 via source 13'
+          Add-Content $env:GITHUB_STEP_SUMMARY '- reducer/bend-side selected boundary: source 44 via sources 42 and 43'
+          Add-Content $env:GITHUB_STEP_SUMMARY "- classification: $($evidence.interpretation.classification)"
+
+      - name: Retain I020 evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: m047-i020-mz-boundary-trace-${{ github.sha }}
+          path: |
+            artifacts/m047/I020/i020.mz-boundary-trace.json
+            artifacts/m047/I020/parent-artifact.json
+          if-no-files-found: error
+          retention-days: 90

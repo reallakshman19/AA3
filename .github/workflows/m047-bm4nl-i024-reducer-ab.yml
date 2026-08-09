@@ -1,0 +1,161 @@
+name: m047-bm4nl-i024-reducer-ab
+
+on:
+  push:
+    branches:
+      - agent/m047-qualified-shear-draft
+    paths:
+      - '.github/workflows/m047-bm4nl-i024-reducer-ab.yml'
+      - 'scripts/lfea-m047-apply-reducer-timoshenko-candidate.mjs'
+      - 'scripts/lfea-m047-reducer-timoshenko-candidate-check.mjs'
+      - 'benchmarks/LFEA/CAESAR_ACCDB/m047/M047-I024.request.json'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  ab:
+    runs-on: windows-2022
+    timeout-minutes: 40
+    steps:
+      - name: Checkout I024 orchestration exact head
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.sha }}
+          fetch-depth: 0
+
+      - name: Prove exact orchestration head and clean checkout
+        shell: pwsh
+        run: |
+          if ((git rev-parse HEAD).Trim() -ne '${{ github.sha }}') { throw 'I024 orchestration checkout drifted.' }
+          if (git status --porcelain) { throw 'I024 orchestration checkout is dirty.' }
+
+      - name: Use Node.js 22
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: Checkout exact frozen mechanics baseline
+        uses: actions/checkout@v4
+        with:
+          repository: reallaksh19/Advanced_Analysis
+          ref: 882d59a99c3a03847d20bec34770ba57ff479d91
+          path: baseline-source
+          fetch-depth: 1
+
+      - name: Qualify frozen frame reducer solver and recovery authority
+        shell: pwsh
+        run: |
+          node baseline-source/scripts/lfea-b3.1-frame-element-check.mjs
+          node baseline-source/scripts/lfea-b3.1-reviewer-check.mjs
+          node baseline-source/scripts/lfea-b3.23-reducer-condensation-check.mjs
+          node baseline-source/scripts/lfea-b3.3-solver-check.mjs
+          node baseline-source/scripts/lfea-b3.4-recovery-check.mjs
+
+      - name: Checkout pinned Common BM4 source
+        uses: actions/checkout@v4
+        with:
+          repository: reallaksh19/Common
+          ref: 1728651c94504b497aae4041578b1095fd8e292e
+          path: common-source
+          fetch-depth: 1
+
+      - name: Expand and verify locked BM4_NL ACCDB
+        shell: pwsh
+        run: |
+          $root = Join-Path $env:RUNNER_TEMP 'm047-i024-bm4nl'
+          if (Test-Path -LiteralPath $root) { Remove-Item -LiteralPath $root -Recurse -Force }
+          New-Item -ItemType Directory -Path $root | Out-Null
+          Expand-Archive -LiteralPath 'common-source/LFEA/BM4/BM4_NL.zip' -DestinationPath $root -Force
+          $files = @(Get-ChildItem -LiteralPath $root -Recurse -File -Filter '*.accdb')
+          if ($files.Count -ne 1) { throw "Expected one ACCDB; found $($files.Count)." }
+          $sha = (Get-FileHash -LiteralPath $files[0].FullName -Algorithm SHA256).Hash.ToLowerInvariant()
+          if ($sha -ne '85d39463296e569da811d8572e2eff680b858097f76fdf0f47d1755f0b161c21') { throw "Locked ACCDB mismatch: $sha" }
+          New-Item -ItemType Directory -Path 'artifacts/m047/I024' -Force | Out-Null
+          "BM4NL_ACCDB=$($files[0].FullName)" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
+
+      - name: Provision Microsoft 365 Access Runtime
+        shell: powershell
+        run: .\scripts\lfea-m047-provision-ace.ps1 -OutputPath 'artifacts/m047/I024/ace.json'
+
+      - name: Bind portable read-only ACCDB exporter
+        shell: pwsh
+        run: Copy-Item -LiteralPath 'scripts/lfea-caesar-accdb-export.ps1' -Destination 'baseline-source/scripts/lfea-caesar-accdb-export.ps1' -Force
+
+      - name: Materialize accepted I015 parent mechanics
+        shell: pwsh
+        run: |
+          node scripts/lfea-m047-apply-plain-frame-timoshenko-candidate.mjs `
+            --source baseline-source/src/core/fea-benchmarks/caesar-accdb-linear-solve.js `
+            --manifest artifacts/m047/I024/i015.manifest.json
+          node scripts/lfea-m047-plain-frame-timoshenko-candidate-check.mjs --source baseline-source/src/core/fea-benchmarks/caesar-accdb-linear-solve.js
+          $manifest = Get-Content 'artifacts/m047/I024/i015.manifest.json' -Raw | ConvertFrom-Json
+          if ($manifest.candidateSha256 -ne 'bdf4c0e5323663bbb42c59492d8fd87ad17a4f3ece62d9aa2b89348df7c93b15') { throw 'Accepted I015 source hash drifted.' }
+
+      - name: Run accepted I015 parent solve
+        shell: pwsh
+        run: |
+          node baseline-source/scripts/lfea-caesar-accdb-benchmark.mjs --accdb "$env:BM4NL_ACCDB" --profile baseline-source/benchmarks/LFEA/CAESAR_ACCDB/bm4nl-l19-l20-linear-solve.profile.json --solve-linear true --actual-out artifacts/m047/I024/i015.actual.json --summary-out artifacts/m047/I024/i015.summary.md --out artifacts/m047/I024/i015.benchmark.json
+          node scripts/lfea-m047-target-node-evidence.mjs --benchmark artifacts/m047/I024/i015.benchmark.json --actual artifacts/m047/I024/i015.actual.json --out artifacts/m047/I024/i015.targets.json
+
+      - name: Apply only I024 reducer internal-beam delta
+        shell: pwsh
+        run: |
+          node scripts/lfea-m047-apply-reducer-timoshenko-candidate.mjs `
+            --source baseline-source/src/core/linear-fea-reducer-condensation/reducer-condensation.js `
+            --manifest artifacts/m047/I024/i024.manifest.json
+          node scripts/lfea-m047-reducer-timoshenko-candidate-check.mjs `
+            --repo-root baseline-source `
+            --source baseline-source/src/core/linear-fea-reducer-condensation/reducer-condensation.js `
+            --manifest artifacts/m047/I024/i024.manifest.json
+          node --check baseline-source/src/core/linear-fea-reducer-condensation/reducer-condensation.js
+
+      - name: Run I024 candidate solve
+        shell: pwsh
+        run: |
+          node baseline-source/scripts/lfea-caesar-accdb-benchmark.mjs --accdb "$env:BM4NL_ACCDB" --profile baseline-source/benchmarks/LFEA/CAESAR_ACCDB/bm4nl-l19-l20-linear-solve.profile.json --solve-linear true --actual-out artifacts/m047/I024/candidate.actual.json --summary-out artifacts/m047/I024/candidate.summary.md --out artifacts/m047/I024/candidate.benchmark.json
+          node scripts/lfea-m047-target-node-evidence.mjs --benchmark artifacts/m047/I024/candidate.benchmark.json --actual artifacts/m047/I024/candidate.actual.json --out artifacts/m047/I024/candidate.targets.json
+
+      - name: Compare I015 parent against I024 candidate
+        shell: pwsh
+        run: node scripts/lfea-m047-benchmark-ab.mjs --baseline artifacts/m047/I024/i015.benchmark.json --candidate artifacts/m047/I024/candidate.benchmark.json --manifest artifacts/m047/I024/i024.manifest.json --out artifacts/m047/I024/i024.ab.json
+
+      - name: Govern I024 reducer and equilibrium custody
+        shell: pwsh
+        run: |
+          $baseActual = Get-Content 'artifacts/m047/I024/i015.actual.json' -Raw | ConvertFrom-Json
+          $candActual = Get-Content 'artifacts/m047/I024/candidate.actual.json' -Raw | ConvertFrom-Json
+          foreach ($caseId in @('L19','L20')) {
+            if ($candActual.mechanics.cases.$caseId.bendPointerCount -ne 12) { throw "I024 $caseId bend coverage drifted." }
+            if ($candActual.mechanics.cases.$caseId.reducerElementCount -ne 4) { throw "I024 $caseId reducer count drifted." }
+            $reducers = @($candActual.mechanics.cases.$caseId.elementLedger | Where-Object { $_.kind -eq 'REDUCER' } | ForEach-Object { [int]$_.sourceElementId } | Sort-Object -Unique)
+            if (($reducers -join ',') -ne '11,16,67,75') { throw "I024 $caseId reducer source custody drifted: $($reducers -join ',')" }
+            $baseTee = @($baseActual.mechanics.cases.$caseId.teeJunctions | ForEach-Object { $_.modifierSemanticHash })
+            $candTee = @($candActual.mechanics.cases.$caseId.teeJunctions | ForEach-Object { $_.modifierSemanticHash })
+            if (($baseTee -join '|') -ne ($candTee -join '|')) { throw "I024 $caseId tee authority changed." }
+          }
+          $targets = Get-Content 'artifacts/m047/I024/candidate.targets.json' -Raw | ConvertFrom-Json
+          foreach ($target in $targets.targets) {
+            if ([math]::Abs([double]$target.balance.actionSumResidual) -gt 0.1) { throw 'I024 action-sum custody exceeded 0.1.' }
+            if ([math]::Abs([double]$target.balance.equilibriumResidual) -gt 0.1) { throw 'I024 equilibrium custody exceeded 0.1.' }
+          }
+          $ab = Get-Content 'artifacts/m047/I024/i024.ab.json' -Raw | ConvertFrom-Json
+          Add-Content $env:GITHUB_STEP_SUMMARY '# M047 I024 reducer system A/B'
+          Add-Content $env:GITHUB_STEP_SUMMARY "- Evidence: ``$($ab.semanticHash)``"
+          Add-Content $env:GITHUB_STEP_SUMMARY '- Candidate: accepted I015 + Timoshenko ten-cylinder reducer stiffness/consistent-load interpolation before unchanged Schur condensation'
+          foreach ($caseId in @('L19','L20')) {
+            $c = $ab.cases.$caseId
+            Add-Content $env:GITHUB_STEP_SUMMARY "- $($caseId) restraints: $($c.before.restraint.failingComponentCount) -> $($c.after.restraint.failingComponentCount); RMSnorm $($c.before.restraint.rmsNormalizedError) -> $($c.after.restraint.rmsNormalizedError)"
+            Add-Content $env:GITHUB_STEP_SUMMARY "- $($caseId) displacement/rotation: $($c.before.displacementRotation.failingComponentCount) -> $($c.after.displacementRotation.failingComponentCount); RMSnorm $($c.before.displacementRotation.rmsNormalizedError) -> $($c.after.displacementRotation.rmsNormalizedError)"
+            Add-Content $env:GITHUB_STEP_SUMMARY "- $($caseId) source actions: $($c.before.sourceEndAction.failingComponentCount) -> $($c.after.sourceEndAction.failingComponentCount); RMSnorm $($c.before.sourceEndAction.rmsNormalizedError) -> $($c.after.sourceEndAction.rmsNormalizedError)"
+          }
+
+      - name: Retain I024 evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: m047-i024-reducer-ab-${{ github.sha }}
+          path: artifacts/m047/I024/**
+          if-no-files-found: error
+          retention-days: 90

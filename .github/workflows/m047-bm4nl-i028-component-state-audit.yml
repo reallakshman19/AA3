@@ -1,0 +1,137 @@
+name: m047-bm4nl-i028-component-state-audit
+
+on:
+  push:
+    branches:
+      - agent/m047-qualified-shear-draft
+    paths:
+      - '.github/workflows/m047-bm4nl-i028-component-state-audit.yml'
+      - 'scripts/lfea-m047-i028-component-state-audit.mjs'
+      - 'scripts/lfea-caesar-accdb-export.ps1'
+      - 'scripts/lfea-m047-provision-ace.ps1'
+      - 'benchmarks/LFEA/CAESAR_ACCDB/m047/M047-I028.request.json'
+      - 'benchmarks/LFEA/CAESAR_ACCDB/m047/M047-I027.caesar-configuration-authority.json'
+      - 'agent/status/status978.txt'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  actions: read
+
+jobs:
+  audit:
+    runs-on: windows-2022
+    timeout-minutes: 30
+    steps:
+      - name: Checkout I028 exact head
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.sha }}
+          fetch-depth: 0
+
+      - name: Prove exact head and clean checkout
+        shell: pwsh
+        run: |
+          if ((git rev-parse HEAD).Trim() -ne '${{ github.sha }}') { throw 'I028 checkout drifted.' }
+          if (git status --porcelain) { throw 'I028 checkout is dirty.' }
+          New-Item -ItemType Directory -Path 'artifacts/m047/I028' -Force | Out-Null
+          git show 882d59a99c3a03847d20bec34770ba57ff479d91:src/core/fea-benchmarks/caesar-accdb-linear-solve.js | Set-Content 'artifacts/m047/I028/frozen-solver.js' -Encoding utf8
+
+      - name: Use Node.js 22
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Checkout pinned Common BM4 source
+        uses: actions/checkout@v4
+        with:
+          repository: reallaksh19/Common
+          ref: 1728651c94504b497aae4041578b1095fd8e292e
+          path: common-source
+          fetch-depth: 1
+
+      - name: Expand and verify locked BM4_NL ACCDB
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $root = Join-Path $env:RUNNER_TEMP 'm047-i028-bm4nl'
+          if (Test-Path -LiteralPath $root) { Remove-Item -LiteralPath $root -Recurse -Force }
+          New-Item -ItemType Directory -Path $root | Out-Null
+          Expand-Archive -LiteralPath 'common-source/LFEA/BM4/BM4_NL.zip' -DestinationPath $root -Force
+          $files = @(Get-ChildItem -LiteralPath $root -Recurse -File -Filter '*.accdb')
+          if ($files.Count -ne 1) { throw "Expected one ACCDB; found $($files.Count)." }
+          $sha = (Get-FileHash -LiteralPath $files[0].FullName -Algorithm SHA256).Hash.ToLowerInvariant()
+          if ($sha -ne '85d39463296e569da811d8572e2eff680b858097f76fdf0f47d1755f0b161c21') { throw "Locked ACCDB mismatch: $sha" }
+          "BM4NL_ACCDB=$($files[0].FullName)" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
+
+      - name: Provision Microsoft 365 Access Runtime
+        shell: powershell
+        run: .\scripts\lfea-m047-provision-ace.ps1 -OutputPath 'artifacts/m047/I028/ace.json'
+
+      - name: Export component and output state read-only
+        shell: powershell
+        run: |
+          .\scripts\lfea-caesar-accdb-export.ps1 `
+            -AccdbPath "$env:BM4NL_ACCDB" `
+            -TablesCsv 'INPUT_BASIC_ELEMENT_DATA,INPUT_BENDS,INPUT_SIFTEES,INPUT_RESTRAINTS,OUTPUT_DISPLACEMENTS,OUTPUT_GLOBAL_ELEMENT_FORCES,OUTPUT_RESTRAINTS_SUMMARY' `
+            | Set-Content 'artifacts/m047/I028/component-state.raw.json' -Encoding utf8
+
+      - name: Download frozen I015 accepted evidence
+        shell: pwsh
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          $ErrorActionPreference = 'Stop'
+          @'
+          import fs from 'node:fs';
+          const response = await fetch(
+            'https://api.github.com/repos/reallaksh19/Advanced_Analysis/actions/artifacts/9037781388/zip',
+            { headers: { Accept:'application/vnd.github+json', Authorization:`Bearer ${process.env.GH_TOKEN}`, 'X-GitHub-Api-Version':'2022-11-28' } },
+          );
+          if (!response.ok) throw new Error(`I015 artifact download failed: ${response.status} ${await response.text()}`);
+          fs.writeFileSync('artifacts/m047/I028/i015.zip', Buffer.from(await response.arrayBuffer()));
+          '@ | Set-Content 'artifacts/m047/I028/download-i015.mjs' -Encoding utf8
+          node 'artifacts/m047/I028/download-i015.mjs'
+          $digest = (Get-FileHash 'artifacts/m047/I028/i015.zip' -Algorithm SHA256).Hash.ToLowerInvariant()
+          if ($digest -ne '6c8d79bcccb19b80ae53fe32d78afefa69871da606166ea5e6e58c2be897fc23') { throw "I015 digest drifted: $digest" }
+          New-Item -ItemType Directory -Path 'artifacts/m047/I028/i015' -Force | Out-Null
+          Expand-Archive 'artifacts/m047/I028/i015.zip' -DestinationPath 'artifacts/m047/I028/i015' -Force
+
+      - name: Run atomic component and load-case state audit
+        shell: pwsh
+        run: |
+          node .\scripts\lfea-m047-i028-component-state-audit.mjs `
+            --raw 'artifacts/m047/I028/component-state.raw.json' `
+            --baseline-benchmark 'artifacts/m047/I028/i015/baseline.benchmark.json' `
+            --solver 'artifacts/m047/I028/frozen-solver.js' `
+            --out 'artifacts/m047/I028/i028.audit.json' `
+            --summary 'artifacts/m047/I028/i028.summary.md'
+          Get-Content 'artifacts/m047/I028/i028.summary.md' | Add-Content $env:GITHUB_STEP_SUMMARY
+
+      - name: Govern I028 evidence boundary
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $a = Get-Content 'artifacts/m047/I028/i028.audit.json' -Raw | ConvertFrom-Json
+          if ($a.sourceAccdbSha256 -ne '85d39463296e569da811d8572e2eff680b858097f76fdf0f47d1755f0b161c21') { throw 'I028 ACCDB custody failed.' }
+          if ($a.sourceElementCount -ne 96) { throw 'I028 source element count drifted.' }
+          if ($a.intersections.activeIntPtrSourceCount -ne 13) { throw "Expected 13 active INT_PTR sources; found $($a.intersections.activeIntPtrSourceCount)." }
+          if ($a.bends.count -ne 12) { throw "Expected 12 bends; found $($a.bends.count)." }
+          if (-not $a.bends.allExactly90Degrees) { throw 'Locked BM4_NL bend-angle population is no longer all 90 degrees.' }
+          if (-not $a.solverObservations.explicitSmooth90False) { throw 'Frozen solver no longer exposes explicit smooth90=false basis.' }
+          if ($a.loadCaseState.sameFormulaComparisons.sustained.restraint.changedComponentCount -le 0) { throw 'L17/L19 same-formula state difference unexpectedly vanished.' }
+          if ($a.loadCaseState.sameFormulaComparisons.operating.restraint.changedComponentCount -le 0) { throw 'L2/L20 same-formula state difference unexpectedly vanished.' }
+          if (git status --porcelain -- 'src/core' 'benchmarks/LFEA/CAESAR_ACCDB/bm4nl-l19-l20-linear-solve.profile.json') { throw 'I028 must not change production mechanics/profile paths.' }
+
+      - name: Retain I028 evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: m047-i028-component-state-audit-${{ github.sha }}
+          path: |
+            artifacts/m047/I028/i028.audit.json
+            artifacts/m047/I028/i028.summary.md
+            artifacts/m047/I028/component-state.raw.json
+            artifacts/m047/I028/ace.json
+          if-no-files-found: error
+          retention-days: 90

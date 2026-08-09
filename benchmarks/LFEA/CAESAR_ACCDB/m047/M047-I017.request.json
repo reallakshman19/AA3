@@ -1,0 +1,109 @@
+{
+  "schema": "lfea-caesar-accdb-iteration-request/v1",
+  "issueId": "M047",
+  "iterationId": "M047-I017",
+  "expectedSourceAccdbSha256": "85d39463296e569da811d8572e2eff680b858097f76fdf0f47d1755f0b161c21",
+  "baseCommitSha": "882d59a99c3a03847d20bec34770ba57ff479d91",
+  "parentAcceptedIteration": "M047-I015",
+  "hypothesis": "The locked ACCDB does not export the CAESAR material-library mean thermal-expansion/derived thermal-strain authority as a separate pipe-element field. A complete read-only table/column inventory plus input-only candidate-table inspection can prove the export boundary without using InputXML or benchmark output fitting.",
+  "authoritySources": [
+    {
+      "publisher": "Hexagon",
+      "document": "CAESAR II User's Guide Version 14 - Elements (Input Export Options)",
+      "authorityStatement": "INPUT_BASIC_ELEMENT_DATA exports TEMP_EXP_C1 through C9 as a thermal-expansion-coefficient-or-temperature input field, plus material and elastic-modulus fields.",
+      "url": "https://docs.hexagonppm.com/r/en-US/CAESAR-II-Users-Guide/Version-14/425675"
+    },
+    {
+      "publisher": "Hexagon",
+      "document": "CAESAR II User's Guide Version 14 - Thermal Expansion",
+      "authorityStatement": "Thermal Expansion is a read-only derived thermal strain corresponding to entered operating temperature when material expansion data are available.",
+      "url": "https://docs.hexagonppm.com/r/en-US/CAESAR-II-Users-Guide/Version-14/343304"
+    },
+    {
+      "publisher": "Hexagon",
+      "document": "CAESAR II User's Guide Version 14 - Thermal Bowing",
+      "authorityStatement": "For B31.1/B31.3, mean thermal expansion is referenced to 70 F / 21 C and CAESAR material-library values are interpolated from code material data.",
+      "url": "https://docs.hexagonppm.com/r/en-US/CAESAR-II-Users-Guide/Version-14/1473851"
+    },
+    {
+      "publisher": "Hexagon",
+      "document": "CAESAR II Code and Edition",
+      "authorityStatement": "Piping Code ID 53 maps to ASME B31.3-2022 with B31J-2017.",
+      "url": "https://docs.hexagonppm.com/r/en-US/CAESAR-II-Users-Guide/15/1501941"
+    },
+    {
+      "publisher": "Hexagon",
+      "document": "CAESAR II User's Guide Version 14 - Reducers (Input Export Options)",
+      "authorityStatement": "INPUT_REDUCERS.ALPHA is reducer transition slope, not thermal expansion.",
+      "url": "https://docs.hexagonppm.com/r/en-US/CAESAR-II-Users-Guide/Version-14/425691"
+    },
+    {
+      "publisher": "Hexagon",
+      "document": "CAESAR II User's Guide Version 14 - Auxiliary Element Data",
+      "authorityStatement": "Alpha:h, Alpha:fab and Alpha:gw are DNV-2017 auxiliary material/code fields, not pipe thermal-expansion coefficients.",
+      "url": "https://docs.hexagonppm.com/r/en-US/CAESAR-II-Users-Guide/Version-14/1471418"
+    },
+    {
+      "publisher": "Hexagon",
+      "document": "CAESAR II User's Guide Version 14 - Material Database Editor",
+      "authorityStatement": "Delivered physical-property authority is read from the supplied material database; user modifications are stored in a secondary UMD database.",
+      "url": "https://docs.hexagonppm.com/r/en-US/CAESAR-II-Users-Guide/Version-14/335533"
+    }
+  ],
+  "predictedSignature": [
+    "Inventory every ACCDB table and column through read-only ACE schema metadata; do not read alternate model formats.",
+    "Confirm the locked ACCDB SHA-256 before inventory.",
+    "Resolve whether TEMP_EXP_C1 is temperature or direct expansion input for this locked job from the actual value rather than from the column name alone.",
+    "Disambiguate unrelated ALPHA/COEFF fields by their owning CAESAR table/mechanic.",
+    "If no separate exported pipe field carries the material-library mean expansion coefficient or resulting thermal strain, require an independently sourced, versioned profile authority rather than a benchmark-fitted constant.",
+    "I009's ~12.23199e-6/K implied coefficient remains diagnostic-only and is not promoted by this inventory."
+  ],
+  "changedPaths": [
+    "scripts/lfea-m047-accdb-authority-inventory.ps1",
+    ".github/workflows/m047-bm4nl-i017-accdb-authority-inventory.yml"
+  ],
+  "mechanicsDelta": "None. Schema/input-authority evidence only; no solver, profile, tolerance, or benchmark-reference changes.",
+  "executionEvidence": {
+    "orchestrationHeadSha": "a2d95f0c6091ff1e89f4537f873096fba4fe04c5",
+    "workflowRunId": 31314526361,
+    "workflowConclusion": "success",
+    "artifactId": 9038363528,
+    "artifactSha256": "027ed777f2fe38909b220e48ba0e9370831c87d7fbb9f86f96fcae8d8998324c"
+  },
+  "observedAuthorityBoundary": {
+    "caesarVersion": "CAESAR II 14.00",
+    "pipingCodeId": 53,
+    "pipingCodeAuthority": "ASME_B31_3_2022",
+    "defaultB31JEditionForCode": "B31J_2017",
+    "accdbTableCount": 40,
+    "schemaKeywordMatchCount": 100,
+    "sourceElementCount": 96,
+    "distinctPipeMaterialRecords": 1,
+    "pipeMaterial": {
+      "materialNumber": 106,
+      "materialName": "A106 Grade B",
+      "tempExpC1Value": 120,
+      "tempExpC1Interpretation": "OPERATING_TEMPERATURE_C_FOR_LOCKED_JOB",
+      "modulusKPa": 203395008,
+      "hotMod1KPa": 203395008
+    },
+    "separatePipeMeanCteOrDerivedThermalStrainFieldPresent": false,
+    "bourdonCandidateColumnCount": 0,
+    "api650NozzleThermalExpansionCoefficient": {
+      "columnPresent": true,
+      "rowCount": 0,
+      "applicableToPipeElements": false
+    },
+    "reducerAlpha": {
+      "rowCount": 4,
+      "meaning": "REDUCER_TRANSITION_SLOPE_DEGREES",
+      "valuesDegrees": [0, 0, 24.450000762939453, 24.450000762939453]
+    },
+    "inputAllowablesAlphaFields": {
+      "meaning": "CODE_SPECIFIC_NON_THERMAL_FIELDS_DNV_WHEN_APPLICABLE",
+      "activeB31_3Values": "INACTIVE_SENTINELS"
+    }
+  },
+  "verdict": "ACCEPTED",
+  "decisionReason": "The exact-head locked-data audit proves the relevant export boundary. For BM4_NL, TEMP_EXP_C1 is 120 C on the A106 Grade B source elements, while the ACCDB contains no separate pipe-element field for CAESAR's material-library mean CTE or the read-only derived thermal strain. The only literal THERM_EXP_COEFF belongs to an empty API-650 nozzle table; INPUT_REDUCERS.ALPHA is geometric reducer slope; INPUT_ALLOWABLES ALPHA fields are code-specific non-thermal fields; no Bourdon column exists. Therefore the reusable solver must obtain the 21->120 C B31.3-2022 A106 Grade B expansion authority from a versioned CAESAR/ASME material authority outside the locked ACCDB and fail closed if that provenance is absent. This finding authorizes no numeric CTE change and does not promote the I009/I010 benchmark-inferred coefficient."
+}

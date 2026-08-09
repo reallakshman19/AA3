@@ -1,0 +1,103 @@
+{
+  "schema": "lfea-caesar-accdb-iteration-request/v1",
+  "issueId": "M047",
+  "iterationId": "M047-I031",
+  "classification": "REDUCER_TEN_CYLINDER_BOURDON_PRESSURE_ELONGATION_AB",
+  "expectedSourceAccdbSha256": "85d39463296e569da811d8572e2eff680b858097f76fdf0f47d1755f0b161c21",
+  "expectedBendPointerCount": 12,
+  "baseCommitSha": "882d59a99c3a03847d20bec34770ba57ff479d91",
+  "acceptedMechanicsParent": "M047-I029 smooth-90 only",
+  "supportingDiagnostic": "M047-I030 corrected prescribed-DOF replay",
+  "hypothesis": "The current reducer path is a local pressure-expansion omission. CAESAR represents a reducer as ten successively changing pipe cylinders, and the saved BM4_NL job has Bourdon translational+rotational pressure effects enabled. The current LFEA ten-cylinder reducer condenser owns gravity and thermal strain but the ACCDB solver sets reducer pressureAxialStrain=0. Apply the same qualified closed-end pressure axial-strain law used by ordinary straight pipe to each of the ten reducer cylinders, sum their free axial extensions, and convert that total free extension through the already-condensed reducer stiffness. No coefficient is fitted.",
+  "authoritySources": [
+    {
+      "publisher": "Hexagon",
+      "document": "CAESAR II Reducer documentation",
+      "authorityStatement": "CAESAR models a concentric reducer as ten successively changing pipe cylinders over the reducer length."
+    },
+    {
+      "publisher": "Hexagon",
+      "document": "CAESAR II Bourdon Pressure Effects / pressure extension documentation",
+      "authorityStatement": "Bourdon pressure effects include axial elongation of straight pipe; the closed-end axial pressure strain is governed by the same material/diameter/wall/pressure/Poisson inputs used by the qualified straight-pipe implementation."
+    }
+  ],
+  "candidateBoundary": {
+    "componentFamily": "REDUCER",
+    "segmentCount": 10,
+    "sectionSampling": "existing REDUCER_SAMPLING_RULE; unchanged",
+    "perSegmentPressureStrain": "epsilon_p=(1-2*nu)*P*Di^2/(E*(Do^2-Di^2))",
+    "totalFreeElongation": "sum(epsilon_p_i * L_i) over the existing ten reducer cylinders",
+    "condensedInitialLoad": "f0_pressure = K_reducer_condensed * d_free, where only reducer J-end local UX equals totalFreeElongation",
+    "activation": "case contains pressure and saved Bourdon mode is not DISABLED",
+    "fittedParameter": false
+  },
+  "heldMechanics": [
+    "B31J smooth-90 1.3/h correction from I029",
+    "Euler-Bernoulli base frame; no shear candidate",
+    "B31J tee factors/topology",
+    "bend pressure stiffening and Bourdon bend rotation",
+    "straight-pipe closed-end pressure strain",
+    "reducer ten-cylinder stiffness/section interpolation/Schur condensation",
+    "reducer gravity and thermal vectors",
+    "rigids",
+    "EC material stiffness authority",
+    "L19/L20 friction=0",
+    "thermal coefficient/profile",
+    "restraints, tolerances and CAESAR reference rows"
+  ],
+  "executionEvidence": {
+    "orchestrationHeadSha": "0abb62cbc198ee59732dbc589e61fcbd33e44d27",
+    "workflowRunId": 31326007220,
+    "workflowConclusion": "success",
+    "artifactId": 9041575081,
+    "artifactSha256": "e959af53106ec58e0f98a6bed25ced9d03c3172afc6fe601488694089f828797",
+    "systemAbSemanticHash": "fnv1a64:141cb5e74dcbde1e",
+    "priorHarnessOnlyFailure": {
+      "workflowRunId": 31324646355,
+      "reason": "Evidence script compared a reducer ledger field that is not exported (initialStrainLoadGlobal), producing undefined-vs-undefined. Parent/candidate solves and A/B were already successful. Run 31326007220 replaced that invalid ledger assertion with nonzero reducer free-translation custody under the separately verified K_condensed*d_free candidate boundary."
+    }
+  },
+  "observedResult": {
+    "L19": {
+      "restraintFailures": "2 -> 2",
+      "displacementRotationFailures": "67 -> 57",
+      "sourceEndActionFailures": "16 -> 5",
+      "sources13to17AxialFx": "all ten FROM/TO failures resolve; max relative error approximately 10.19% -> 4.78%",
+      "node20090FY": "18.2072% -> 18.0759%, remains FAIL",
+      "node21470FY": "14.1494% -> 10.8448%, remains FAIL",
+      "remainingSourceFailureSources": [4, 37, 38, 44],
+      "remainingSourceFailureRows": [
+        "source4 TO FY 15.2887%",
+        "source4 TO MZ 17.8738%",
+        "source37 TO MZ 11.2334%",
+        "source38 FROM MZ 11.2334%",
+        "source44 FROM MZ 15.2823%"
+      ]
+    },
+    "L20": {
+      "restraintFailures": "1 -> 1",
+      "displacementRotationFailures": "43 -> 47",
+      "sourceEndActionFailures": "31 -> 31",
+      "sources13to17AxialFx": "approximately 14.93% -> 14.32%; improved but remains FAIL",
+      "node20030FX": "12.6721% -> 12.3984%, remains FAIL"
+    },
+    "mechanicsCustody": {
+      "reducerCountPerCase": 4,
+      "allReducerPressureAxialStrainsPositive": true,
+      "allReducerFreeTranslationsChanged": true,
+      "changedNonReducerPressureStrainEntries": 0,
+      "bendPointerCountPerCase": 12,
+      "targetActionAndEquilibriumTolerance": "<=0.1 N / 0.1 N*m",
+      "governanceResult": "PASS"
+    }
+  },
+  "verdict": "ACCEPTED_REDUCER_PRESSURE_OWNERSHIP_SYSTEM_INCOMPLETE",
+  "decisionReason": "The exact-head real-ACCDB A/B validates reducer pressure-elongation ownership as a real local omission rather than a fitted response tweak. Adding the existing closed-end pressure strain law through the existing ten-cylinder reducer and Schur boundary resolves the entire L19 sources13-17 axial FX failure chain and cuts L19 source-action failures from 16 to 5 while also improving displacement/rotation failures from 67 to 57. No non-reducer pressure-strain ledger entry changes, 12/12 bend custody is preserved and target equilibrium remains within the locked tolerance. The mechanism does not complete the system: L19 still has node20090 FY and node21470 FY above 10%, and L20 remains incomplete with a small displacement-count regression. Therefore reducer pressure ownership is accepted as component mechanics, but no claim of M047 completion or production cutover is made.",
+  "nextIteration": "M047-I032",
+  "nextBoundary": "L19_REMAINING_BEND_ADJACENT_SOURCE4_37_38_44_LOCAL_FORMULATION_OWNERSHIP",
+  "acceptanceInterpretation": [
+    "Promote the reducer pressure mechanism only if the real-data A/B improves the reducer/adjacent source-action field without breaking global equilibrium or materially degrading accepted smooth-90 fields.",
+    "Do not reject the local mechanism solely because unrelated node20090 remains above 10%; classify component correctness separately from final system completion.",
+    "Reject if the candidate relies on CAESAR target values, fitted pressure strain, changed reducer stiffness sampling, changed thermal strain or weakened tolerances."
+  ]
+}

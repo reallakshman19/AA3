@@ -1,0 +1,65 @@
+{
+  "schema": "lfea-caesar-accdb-iteration-request/v1",
+  "issueId": "M047",
+  "iterationId": "M047-I020",
+  "expectedSourceAccdbSha256": "85d39463296e569da811d8572e2eff680b858097f76fdf0f47d1755f0b161c21",
+  "expectedBendPointerCount": 12,
+  "baseCommitSha": "882d59a99c3a03847d20bec34770ba57ff479d91",
+  "parentAcceptedIteration": "M047-I019",
+  "hypothesis": "The I019 ~3.956 N*m L19 MZ field is an architectural-boundary redistribution between I015-selected ordinary plain FRAME sources and special-component source families intentionally excluded from I015. Tracing candidate-minus-baseline MZ action through the mechanics-ledger source graph should reach selected plain frames through tee-owned spans on one side and through reducer/bend sources on the other, with physical-node action-delta closure retained.",
+  "parentEvidence": [
+    {
+      "iteration": "M047-I015",
+      "workflowRunId": 31312435893,
+      "artifactId": 9037781388,
+      "artifactSha256": "6c8d79bcccb19b80ae53fe32d78afefa69871da606166ea5e6e58c2be897fc23",
+      "semanticHash": "fnv1a64:296422c2764f7b4f"
+    },
+    {
+      "iteration": "M047-I019",
+      "workflowRunId": 31315808938,
+      "artifactId": 9038700084,
+      "artifactSha256": "64621bb1efd0206e9aef50a6d095579a272b39e7b3e97f826a0a51c35f630ddb",
+      "semanticHash": "fnv1a64:73c14de94926027d"
+    }
+  ],
+  "predictedSignature": [
+    "Starting at tee-side outer node 20160 while blocking carried sources 9-11, the nearest I015-selected sources should be source 8 through tee-owned source 12 and source 14 through tee-owned source 13.",
+    "Starting at reducer-side outer node 20230 while blocking carried sources 9-11, the nearest I015-selected source should be source 44 through bend sources 42 and 43.",
+    "Sources 12 and 13 must remain outside I015 because they carry tee junction authority; sources 42 and 43 must remain outside I015 because they contain BEND_INCOMING_STRAIGHT/BEND_ARC analysis carriers.",
+    "Candidate-minus-baseline global MZ action must close at every visited physical interface node to numerical tolerance.",
+    "No production mechanics, profile, tolerance or benchmark target is changed."
+  ],
+  "changedPaths": [
+    "scripts/lfea-m047-i020-mz-boundary-trace.mjs",
+    ".github/workflows/m047-bm4nl-i020-mz-boundary-trace.yml"
+  ],
+  "mechanicsDelta": "None. Evidence-only topological/action-delta trace using the frozen accepted I015 system artifact.",
+  "verdict": "ACCEPTED",
+  "decisionReason": "Corrected exact-head I020 run 31316412324 completed successfully and reproduced evidence semantic hash fnv1a64:6d699c3c99d2e5f5 from the immutable accepted I015 artifact. Tee-side traversal from node 20160 reaches I015-selected source 8 through tee-owned source 12 and selected source 14 through tee-owned source 13. Reducer-side traversal from node 20230 reaches selected source 44 through bend sources 42 and 43, each carrying BEND_INCOMING_STRAIGHT plus BEND_ARC analysis carriers. Candidate-minus-baseline MZ action closes at every governed physical node below 1e-6 N*m. This establishes that the I019 field lies on deliberate partial-constitutive boundaries between ordinary pipe and special-component mechanics. It supports the one-component-family-at-a-time propagation roadmap but authorizes no production component cutover by itself. The first I020 run 31316302338 is classified HARNESS_ONLY: trace generation succeeded, but the final PowerShell guard sorted source IDs lexicographically; changing the guard to numeric sorting was the only correction.",
+  "executionEvidence": {
+    "orchestrationHeadSha": "e9b795fbbd1161ce0a4a7a847d81a9f18086dfeb",
+    "workflowRunId": 31316412324,
+    "workflowConclusion": "success",
+    "artifactId": 9038873020,
+    "artifactSha256": "0acc6b276631c95843e53f5f92ee6b9c2c40b4762a85f139f2ff0a482c32f2d7",
+    "semanticHash": "fnv1a64:6d699c3c99d2e5f5",
+    "priorHarnessOnlyRun": {
+      "workflowRunId": 31316302338,
+      "artifactId": 9038839946,
+      "artifactSha256": "5f1b89e03adde4d88ec0499fc2202f99393f12770f28249139083b896138ae88",
+      "traceStepConclusion": "success",
+      "failure": "PowerShell Sort-Object treated numeric source IDs as strings in the final guard; no engineering evidence changed."
+    }
+  },
+  "observedResult": {
+    "classification": "I015_PARTIAL_CONSTITUTIVE_BOUNDARY_REDISTRIBUTION",
+    "teeSideNearestSelectedPaths": [
+      "20160 -> source 12 (tee-owned FRAME) -> source 8 (I015-selected FRAME)",
+      "20160 -> source 13 (tee-owned FRAME) -> source 14 (I015-selected FRAME)"
+    ],
+    "reducerBendSideNearestSelectedPath": "20230 -> source 42 (BEND_INCOMING_STRAIGHT+BEND_ARC) -> source 43 (BEND_INCOMING_STRAIGHT+BEND_ARC) -> source 44 (I015-selected FRAME)",
+    "governedNodeDeltaClosureToleranceNm": 0.000001,
+    "productionMechanicsChanged": false
+  }
+}

@@ -1,0 +1,50 @@
+{
+  "schema": "lfea-caesar-accdb-iteration-request/v1",
+  "issueId": "M047",
+  "iterationId": "M047-I030",
+  "classification": "SOURCE_COMPONENT_PRESCRIBED_DOF_REPLAY_AND_STATIC_CONDENSATION",
+  "expectedSourceAccdbSha256": "85d39463296e569da811d8572e2eff680b858097f76fdf0f47d1755f0b161c21",
+  "baseCommitSha": "882d59a99c3a03847d20bec34770ba57ff479d91",
+  "acceptedMechanicsParent": "M047-I029 smooth-90 only",
+  "motivation": "Remove global redistribution from the diagnosis. Assemble each source-element descendant stiffness under accepted smooth-90 mechanics, condense internal analysis DOFs to source endpoints, and perturb the solved LFEA source end action to the CAESAR endpoint DOFs. Score only source components that have actual CAESAR end-action references.",
+  "acceptedReplayIdentity": "q_replay = q_LFEA_system + K_condensed * (d_CAESAR - d_LFEA)",
+  "methodologyCorrection": {
+    "supersededFirstPass": "The initial absolute K*d-f replay is retained as workflow-history only and is not used for engineering classification. It incorrectly treated NOT_COMPARED/null source reference rows as numeric zero and was unnecessarily sensitive to absolute load-vector cancellation on very stiff/short spans.",
+    "acceptedV2": "The corrected replay filters to finite CAESAR source-action references with active tolerance metadata and uses the exact incremental linear identity around the solved LFEA state. This preserves the same condensed stiffness sensitivity while cancelling fixed equivalent/initial load vectors. Large replay magnitudes on short/stiff members are treated as sensitivity evidence, not as a coefficient-fitting objective."
+  },
+  "executionEvidence": {
+    "orchestrationHeadSha": "5e2a7095a36e68f3d47a7b1e7e4c87ac34cb246c",
+    "workflowRunId": 31323930749,
+    "workflowConclusion": "success",
+    "artifactId": 9041006891,
+    "artifactSha256": "79ee358c674024f28e4e3f242e8b0258a35afd277e4fdb740c97cc0c9565cb00",
+    "instrumentationPhysicalRowDelta": 0
+  },
+  "observedResult": {
+    "L19": {
+      "sourcesAssembled": 96,
+      "sourcesWithCaesarEndActionReferences": 83,
+      "systemFailingSources": 9,
+      "systemFailingSourcesThatReplayBelow10Percent": 0,
+      "systemFailingSourcesStillAbove10PercentAtCaesarEndpointDofs": 9,
+      "sourceIds": [4,13,14,15,16,17,37,38,44],
+      "classification": "REMAINING_SMOOTH90_L19_SOURCE_FAILURES_ARE_NOT_EXPLAINED_BY_NETWORK_REDISTRIBUTION_ALONE"
+    },
+    "L20": {
+      "sourcesAssembled": 96,
+      "sourcesWithCaesarEndActionReferences": 83,
+      "systemFailingSources": 16,
+      "systemFailingSourcesThatReplayBelow10Percent": 0,
+      "systemFailingSourcesStillAbove10PercentAtCaesarEndpointDofs": 16
+    },
+    "localityClues": [
+      "Sources13-17 form a contiguous axial residual chain containing source16, the reducer.",
+      "The accepted smooth-only element ledger gives closed-end pressure axial strain to adjacent straight sources13-15 and17 but source16 REDUCER reports pressureAxialStrain=0.",
+      "Sources4,37,38,44 remain separate bend-adjacent/local bending-shear sentinels for later ownership analysis."
+    ]
+  },
+  "verdict": "ACCEPTED_LOCALITY_DIAGNOSTIC_REDUCER_PRESSURE_OWNERSHIP_NEXT",
+  "decisionReason": "Under the corrected incremental prescribed-DOF replay, none of the nine remaining smooth-only L19 source failures is converted to a <=10% local match merely by replacing the LFEA endpoint state with the CAESAR endpoint state. The remaining errors therefore require local formulation/load ownership investigation rather than a redistribution-only explanation. The smallest explicit omission is the reducer pressure free-strain path: CAESAR documents reducers as ten changing pipe cylinders and Bourdon pressure effects elongate straight pipe, while the current reducer condenser owns gravity and thermal strain but the ACCDB solver sets reducer pressureAxialStrain to zero. I031 will test only that pressure-expansion ownership through the existing ten-cylinder/Schur boundary; no shear or fitted coefficient is introduced.",
+  "nextIteration": "M047-I031",
+  "nextBoundary": "REDUCER_TEN_CYLINDER_BOURDON_PRESSURE_ELONGATION_AB"
+}

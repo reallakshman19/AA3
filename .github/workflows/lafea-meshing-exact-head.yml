@@ -25,6 +25,7 @@ on:
       - 'scripts/lafea-shell-hole-ladder-check.mjs'
       - 'scripts/lafea-shell-curved-cylinder-check.mjs'
       - 'scripts/lafea-shell-multipatch-seam-check.mjs'
+      - 'scripts/lafea-shell-offset-surface-check.mjs'
       - 'scripts/lafea-mesh-dof-policy-check.mjs'
       - 'scripts/lafea-meshing-system-check.mjs'
       - 'scripts/lafea-p2-11-triage.mjs'
@@ -95,6 +96,9 @@ jobs:
 
       - name: Qualify conforming planar two-patch shell seam
         run: node scripts/lafea-shell-multipatch-seam-check.mjs
+
+      - name: Qualify planar shell reference-surface offset derivation
+        run: node scripts/lafea-shell-offset-surface-check.mjs
 
       - name: Qualify P2-11 check classification
         run: node scripts/lafea-p2-11-triage.mjs

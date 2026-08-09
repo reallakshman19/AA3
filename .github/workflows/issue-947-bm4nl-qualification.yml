@@ -126,12 +126,26 @@ jobs:
             --package .work/bm4nl-canonical-package.json `
             --out .work/bm4nl-b31-material-custody.json
 
+      - name: Validate B31J smooth-90 authority and pinned bend applicability
+        shell: pwsh
+        run: |
+          node scripts/lfea-issue947-bm4nl-b31j-smooth90-authority-audit.mjs `
+            --package .work/bm4nl-canonical-package.json `
+            --out .work/bm4nl-b31j-smooth90-authority.json
+
       - name: Validate Bend Axial Shape mode against curved-arc closed form
         shell: pwsh
         run: |
           node scripts/lfea-issue947-bend-axial-shape-audit.mjs `
             --package .work/bm4nl-canonical-package.json `
             --out .work/bm4nl-bend-axial-shape-audit.json
+
+      - name: Validate bend attachment-percent applicability
+        shell: pwsh
+        run: |
+          node scripts/lfea-issue947-bend-attachment-audit.mjs `
+            --package .work/bm4nl-canonical-package.json `
+            --out .work/bm4nl-bend-attachment-audit.json
 
       - name: Run real BM4_NL L19/L20 qualification
         shell: pwsh
@@ -177,7 +191,9 @@ jobs:
           path: |
             .work/bm4nl-caesar-settings-custody.json
             .work/bm4nl-b31-material-custody.json
+            .work/bm4nl-b31j-smooth90-authority.json
             .work/bm4nl-bend-axial-shape-audit.json
+            .work/bm4nl-bend-attachment-audit.json
             .work/bm4nl-node20390-uz-audit.json
             .work/bm4nl-canonical-package.json
             .work/bm4nl-bourdon-mode-diagnostics.json

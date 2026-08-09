@@ -1,4 +1,5 @@
 name: Issue 947 B31J smooth90 setting custody audit
+# Exact rerun after fail-closed diagnostic collection binding fix.
 
 on:
   push:

@@ -67,11 +67,11 @@ jobs:
       - name: Qualify governed canvas meshing intent
         run: node scripts/lafea-meshing-system-check.mjs
 
-      - name: Qualify P2-11 check classification
-        run: node scripts/lafea-p2-11-triage.mjs
-
       - name: Qualify retained-mesh local refinement
         run: node scripts/lafea-retained-mesh-refinement-check.mjs
+
+      - name: Qualify P2-11 check classification
+        run: node scripts/lafea-p2-11-triage.mjs
 
       - name: Run governed LAFEA meshing gate
         run: npm run check:lafea-meshing

@@ -21,16 +21,16 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: 22
-      - name: Correct diagnostic nodal-load guard
+      - name: Correct diagnostic L19 load-case guard
         shell: python
         run: |
           from pathlib import Path
           path = Path('scripts/lfea-issue947-tee20295-constitutive-audit.mjs')
           text = path.read_text()
-          old = "const forcmnt = pkg.model.tables.INPUT_FORCMNT.rows.filter((row) => [row.NODE, row.NODE_NUM, row.FROM_NODE, row.TO_NODE].some((value) => String(value) === nodeId));"
-          new = "const forcmnt = pkg.model.tables.INPUT_FORCMNT.rows.filter((row) => String(row.NODE_NUM) === nodeId);"
+          old = "const forcmnt = pkg.model.tables.INPUT_FORCMNT.rows.filter((row) => [row.NODE, row.NODE_NUM, row.FROM_NODE, row.TO_NODE].some((value) => String(value) === nodeId));\n  assert.equal(forcmnt.length, 0, `Node ${nodeId} unexpectedly has a concentrated force/moment primitive.`);"
+          new = "assert.equal(pkg.cases.find((entry) => entry.caseId === 'L19')?.formula, 'W+P1', 'L19 must not activate any INPUT_FORCMNT vector.');"
           if text.count(old) != 1:
-            raise SystemExit('expected exactly one diagnostic guard target')
+            raise SystemExit('expected exactly one diagnostic L19 load-case guard target')
           path.write_text(text.replace(old, new))
       - name: Download canonical BM4_NL package
         uses: actions/download-artifact@v4

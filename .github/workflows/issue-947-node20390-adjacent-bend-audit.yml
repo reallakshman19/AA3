@@ -1,4 +1,5 @@
 name: Issue 947 node 20390 adjacent bend audit
+# Rerun after restoring the read-only production mechanics inspector.
 
 on:
   push:

@@ -26,6 +26,10 @@ if (sourceElementIds.length === 0 || new Set(sourceElementIds).size !== sourceEl
 const sourceLabel = sourceElementIds.map((id) => `E${id}`).join('_');
 const pkg = JSON.parse(readFileSync(args.package, 'utf8'));
 requirePinnedPackage(pkg);
+assert.equal(pkg.profile.conventions.restraintReaction, 'CAESAR_FORCE_ON_SUPPORT');
+const caseRecord = pkg.cases.find((entry) => String(entry.caseId) === CASE_ID);
+if (!caseRecord) throw new TypeError(`Pinned package lacks physical case ${CASE_ID}.`);
+const caseHasNodalForcePrimitive = /(^|[+\-])F\d+/u.test(String(caseRecord.formula).replace(/\s+/gu, ''));
 const sourceRows = sourceElementIds.map((id) => requireSourceRow(pkg, id));
 for (const row of sourceRows) {
   if (!(Number(row.BEND_PTR) > 0)) throw new TypeError(`Source E${row.ELEMENTID} is not a bend.`);
@@ -94,7 +98,8 @@ const gates = {
   initialLoadSplitClosure: splitResidual <= 1e-6 ? 'PASS' : 'FAIL',
   actionDecompositionClosure: decompositionClosure <= 1e-6 ? 'PASS' : 'FAIL',
   descendantTopology: chain[0].nodeI === boundaryNodeIds[0] && chain.at(-1).nodeJ === boundaryNodeIds[1] ? 'PASS' : 'FAIL',
-  referenceBoundaryUnrestrained: boundaryCustody.every((entry) => entry.restraintCount === 0) ? 'PASS' : 'FAIL',
+  referenceBoundaryEquilibriumRecoverable: !caseHasNodalForcePrimitive
+    && boundaryCustody.every((entry) => entry.restraintCount === 0 || entry.reportedReactionAvailable) ? 'PASS' : 'FAIL',
   referenceBoundaryOtherIncidentActionsComplete: boundaryCustody.every((entry) => entry.otherIncidentSourceElementIds.length > 0
     && entry.otherIncidentSourceElementIds.length === entry.directReferenceActionElementIds.length) ? 'PASS' : 'FAIL',
 };
@@ -127,7 +132,9 @@ const output = {
   })),
   method: 'EXACT_PRODUCTION_DESCENDANT_K_F_EQ_F_0_ASSEMBLY_PLUS_SCHUR_CONDENSATION_TO_SOURCE_12_DOF_BOUNDARY',
   referenceActionCustody: {
-    rule: 'At each unrestrained source boundary, target bend end action equals the negative sum of every other incident source-element end action. Every other incident source element must have a direct pinned L19 action row.',
+    rule: 'At each source boundary, target end action equals reported CAESAR_FORCE_ON_SUPPORT reaction minus every other incident source-element end action. At an unrestrained boundary the reported reaction term is zero. Restrained-boundary recovery is allowed only when the pinned reaction is present and the physical case has no nodal-force primitive.',
+    caseFormula: caseRecord.formula,
+    caseHasNodalForcePrimitive,
     boundaries: boundaryCustody,
   },
   governingEquations: {
@@ -135,7 +142,7 @@ const output = {
     condensedStiffness: 'K_c = K_bb - K_bi K_ii^-1 K_ib',
     condensedLoad: 'f_c = f_b - K_bi K_ii^-1 f_i',
     sourceRecovery: 'q_c = K_c d_b - f_eq,c - f_0,c',
-    junctionReferenceAction: 'q_target,end = -sum(q_other_incident,end)',
+    junctionReferenceAction: 'q_target,end = Q_pipe_on_support - sum(q_other_incident,end)',
   },
   referenceUsage: 'DIAGNOSTIC_ONLY_NO_PARAMETER_FIT_NO_REFERENCE_MUTATION',
   descendantLedger: chain.map((entry) => ({
@@ -186,7 +193,7 @@ const output = {
     condensedInitialSplitMaxAbsResidual: splitResidual,
   },
   classification,
-  falsificationRule: `No ${sourceLabel} constitutive conclusion is admissible unless exact production descendant condensation reproduces solved descendant boundary actions within 1e-3 N/Nm, both outer source boundaries are unrestrained and fully recoverable from direct neighboring source actions, and zero CAESAR rotations are propagated as +/-0.0001 degree uncertainty rather than replaced.`,
+  falsificationRule: `No ${sourceLabel} constitutive conclusion is admissible unless exact production descendant condensation reproduces solved descendant boundary actions within 1e-3 N/Nm, both outer source boundaries are fully recoverable from direct neighboring source actions plus any pinned CAESAR_FORCE_ON_SUPPORT reaction, the physical case has no nodal-force primitive at a reaction-assisted boundary, and zero CAESAR rotations are propagated as +/-0.0001 degree uncertainty rather than replaced.`,
 };
 
 if (args.out) writeFileSync(args.out, `${JSON.stringify(output, null, 2)}\n`);
@@ -203,9 +210,14 @@ function boundaryReferenceCustody(pkg, targetElementIds, boundaryNodeIds) {
     const directReferenceActionElementIds = other.filter((row) => hasDirectSourceAction(pkg.references[CASE_ID].rows, row))
       .map((row) => String(row.ELEMENTID));
     const restraintCount = restraintRows.filter((row) => String(row.NODE ?? row.NODE_NUM ?? '') === nodeId).length;
+    const reportedReaction = restraintCount > 0
+      ? directReferenceReaction(pkg.references[CASE_ID].rows, nodeId)
+      : new Array(6).fill(0);
     return {
       nodeId,
       restraintCount,
+      reportedReactionAvailable: reportedReaction !== null,
+      reportedReaction,
       otherIncidentSourceElementIds: other.map((row) => String(row.ELEMENTID)),
       directReferenceActionElementIds,
     };
@@ -221,9 +233,23 @@ function inferredReferenceSourceAction(rows, pkg, custody) {
     });
     const sum = new Array(6).fill(0);
     for (const vector of vectors) for (let index = 0; index < 6; index += 1) sum[index] += vector[index];
-    return sum.map((value) => -value);
+    if (boundary.reportedReaction === null) {
+      throw new TypeError(`Boundary node ${boundary.nodeId} is restrained but lacks a complete pinned reaction vector.`);
+    }
+    return boundary.reportedReaction.map((value, index) => value - sum[index]);
   });
   return [...ends[0], ...ends[1]];
+}
+
+function directReferenceReaction(rows, nodeId) {
+  const candidates = rows.filter((entry) => entry.entityKind === 'NODE' && String(entry.entityId) === String(nodeId));
+  const index = new Map(candidates.map((entry) => [`${entry.quantity}:${entry.component}`, Number(entry.value)]));
+  const keys = [
+    ['FORCE', 'UX'], ['FORCE', 'UY'], ['FORCE', 'UZ'],
+    ['MOMENT', 'RX'], ['MOMENT', 'RY'], ['MOMENT', 'RZ'],
+  ];
+  const values = keys.map(([quantity, component]) => index.get(`${quantity}:${component}`));
+  return values.every(Number.isFinite) ? values : null;
 }
 
 function hasDirectSourceAction(rows, row) {

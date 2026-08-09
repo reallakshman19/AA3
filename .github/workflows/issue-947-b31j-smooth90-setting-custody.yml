@@ -1,0 +1,84 @@
+name: Issue 947 B31J smooth90 setting custody audit
+
+on:
+  push:
+    branches:
+      - codex/issue-947-bm4nl-qualification
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  actions: read
+
+jobs:
+  audit:
+    if: "${{ github.event_name == 'workflow_dispatch' || github.event.head_commit.message == 'ci(issue947): run B31J smooth90 setting custody audit' }}"
+    runs-on: windows-latest
+    timeout-minutes: 25
+    steps:
+      - name: Checkout qualification branch
+        uses: actions/checkout@v4
+
+      - name: Materialize pinned BM4_NL source package
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          New-Item -ItemType Directory -Force -Path .work | Out-Null
+          $zip = Join-Path $PWD '.work/BM4_NL.zip'
+          Invoke-WebRequest `
+            -Uri 'https://raw.githubusercontent.com/reallaksh19/Common/1728651c94504b497aae4041578b1095fd8e292e/LFEA/BM4/BM4_NL.zip' `
+            -OutFile $zip
+          Expand-Archive -LiteralPath $zip -DestinationPath .work/BM4_NL -Force
+          $accdb = Resolve-Path '.work/BM4_NL/BM4_NL.ACCDB'
+          $actual = (Get-FileHash -Algorithm SHA256 -LiteralPath $accdb).Hash.ToLowerInvariant()
+          $expected = '85d39463296e569da811d8572e2eff680b858097f76fdf0f47d1755f0b161c21'
+          if ($actual -ne $expected) { throw "ACCDB SHA-256 mismatch: $actual" }
+          "BM4_ACCDB=$accdb" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
+          "BM4_ZIP=$zip" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
+
+      - name: Install Microsoft Access Runtime database engine
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $bootstrap = Join-Path $PWD '.work/officedeploymenttool_19725-20126.exe'
+          $odt = Join-Path $PWD '.work/odt'
+          New-Item -ItemType Directory -Force -Path $odt | Out-Null
+          Invoke-WebRequest `
+            -Uri 'https://download.microsoft.com/download/6c1eeb25-cf8b-41d9-8d0d-cc1dbc032140/officedeploymenttool_19725-20126.exe' `
+            -OutFile $bootstrap
+          $extract = Start-Process -FilePath $bootstrap -ArgumentList '/quiet', "/extract:$odt" -PassThru -Wait
+          if ($extract.ExitCode -ne 0) { throw "ODT extraction failed: $($extract.ExitCode)" }
+          @'
+          <Configuration>
+            <Add OfficeClientEdition="64">
+              <Product ID="AccessRuntimeRetail"><Language ID="en-us" /></Product>
+            </Add>
+            <Display Level="None" AcceptEULA="TRUE" />
+          </Configuration>
+          '@ | Set-Content -LiteralPath (Join-Path $odt 'access-runtime.xml') -Encoding utf8
+          $install = Start-Process -FilePath (Join-Path $odt 'setup.exe') `
+            -ArgumentList '/configure', (Join-Path $odt 'access-runtime.xml') -PassThru -Wait
+          if ($install.ExitCode -ne 0) { throw "Access Runtime install failed: $($install.ExitCode)" }
+
+      - name: Enumerate ACCDB source/version/configuration custody
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Continue'
+          ./scripts/lfea-issue947-b31j-smooth90-setting-custody.ps1 `
+            -AccdbPath "$env:BM4_ACCDB" `
+            -ZipPath "$env:BM4_ZIP" `
+            -OutPath '.work/issue947-b31j-smooth90-setting-custody.json' `
+            *> '.work/issue947-b31j-smooth90-setting-custody.log'
+          $status = $LASTEXITCODE
+          Get-Content -LiteralPath '.work/issue947-b31j-smooth90-setting-custody.log'
+          if ($status -ne 0) { exit $status }
+
+      - name: Upload source-custody evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: issue-947-b31j-smooth90-setting-custody
+          if-no-files-found: error
+          path: |
+            .work/issue947-b31j-smooth90-setting-custody.json
+            .work/issue947-b31j-smooth90-setting-custody.log

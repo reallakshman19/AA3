@@ -3,8 +3,8 @@
  *
  * These sit between the store's publication boundary and the generation state
  * slice: they enforce the route precondition, publish once per action, and
- * turn a producer/recovery rejection into an orchestrator diagnostic rather
- * than an exception escaping into the view.
+ * turn a producer/refinement/recovery rejection into an orchestrator diagnostic
+ * rather than an exception escaping into the view.
  */
 
 export function createLafeaMeshGenerationActions(context) {
@@ -41,6 +41,16 @@ export function createLafeaMeshGenerationActions(context) {
   function generateAnalysisMesh(overrides = {}, stageId = getRetainedState().activeStageId) {
     return attempt(stageId, 'LAFEA_ANALYSIS_MESH_GENERATION_REJECTED',
       () => meshGeneration.generateMesh(readStageState(stageId), overrides));
+  }
+
+  /**
+   * Refine the exact retained v2 parent. The generation-state slice takes the
+   * parent artifact/mesh hashes from custody itself, so the caller supplies
+   * only target IDs and sizing intent and cannot retarget stale evidence.
+   */
+  function refineAnalysisMesh(request = {}, stageId = getRetainedState().activeStageId) {
+    return attempt(stageId, 'LAFEA_RETAINED_MESH_REFINEMENT_REJECTED',
+      () => meshGeneration.refineMesh(readStageState(stageId), request));
   }
 
   /**
@@ -88,8 +98,8 @@ export function createLafeaMeshGenerationActions(context) {
   }
 
   /**
-   * Generation/recovery needs the retained analysis geometry, which only the
-   * domain-first route carries.
+   * Generation/refinement/recovery needs the retained analysis geometry,
+   * which only the domain-first route carries.
    */
   function requireGenerationAuthorized(stageId) {
     if (!rawStage(stageId).domainFirstProfileActive) {
@@ -101,6 +111,7 @@ export function createLafeaMeshGenerationActions(context) {
     bindAnalysisMeshProfile,
     planAnalysisMesh,
     generateAnalysisMesh,
+    refineAnalysisMesh,
     recoverAnalysisMeshEvidenceV2,
   });
 }

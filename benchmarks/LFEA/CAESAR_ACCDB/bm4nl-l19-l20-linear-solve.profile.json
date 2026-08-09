@@ -47,8 +47,8 @@
       "source": "BM4NL_CAESAR_SETTINGS_AUTHORITY_V1:INDIVIDUAL_FILE_OVERRIDE_BOURDON_TRANSLATION_AND_ROTATION"
     },
     "b31jSmooth90FlexibilityCorrection": {
-      "enabled": false,
-      "source": "BM4NL_CAESAR_SETTINGS_AUTHORITY_V1:OVERALL_B31J_DEFAULT_DOES_NOT_RESOLVE_SMOOTH90_NOTE3;FAIL_CLOSED_PENDING_FILE_AUTHORITY"
+      "enabled": true,
+      "source": "CAESAR_II_V14:B31_3_2022+APPLY_B31J_DEFAULT=>B31J_REQUIRED;B31J_SMOOTH_90_BEND=>1_3_OVER_H"
     },
     "directionalB31JTeeFlexibility": true,
     "teeNominalDiameterRelativeTolerance": 0.001,

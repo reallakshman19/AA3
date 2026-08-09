@@ -42,8 +42,8 @@ const SOURCE_HASH = `sha256:${'a'.repeat(64)}`;
 const capability = lafeaCoreMeshProducerCapability();
 const qualification = lafeaCoreMeshProducerQualification();
 assert.equal(capability.producerId, 'LAFEA_CORE_MESHER');
-assert.equal(capability.producerRevision, 'LAFEA.10.T6Q8.V3');
-assert.equal(qualification.qualificationRevision, 'R3');
+assert.equal(capability.producerRevision, 'LAFEA.10.T6Q8.V4');
+assert.equal(qualification.qualificationRevision, 'R4');
 assert.deepEqual(capability.generationModes, ['AUTOMATIC_MESH']);
 assert.equal(capability.supportsLocalRefinement, false);
 assert.equal(qualification.localRefinementAuthorized, false);
@@ -82,6 +82,43 @@ function plate(width, height) {
       line('S3', 'V3', 'V4'), line('S4', 'V4', 'V1'),
     ],
     loops: [{ loopId: 'L_OUTER', role: 'OUTER', segmentIds: ['S1', 'S2', 'S3', 'S4'] }],
+  });
+}
+
+function splitSidePlate() {
+  return createLafeaAnalysisGeometry({
+    schema: 'lafea-analysis-geometry/v1',
+    stageId: 'LAFEA.3', geometryId: 'SPLIT-SIDE-PLATE', coordinateSystemId: 'GLOBAL',
+    lengthUnit: 'mm', orientationPolicy: 'OUTER_CCW_HOLES_CW_V1',
+    vertices: [
+      { vertexId: 'V1', x: 0, y: 0 }, { vertexId: 'VS', x: 73, y: 0 },
+      { vertexId: 'V2', x: 200, y: 0 }, { vertexId: 'V3', x: 200, y: 120 },
+      { vertexId: 'V4', x: 0, y: 120 },
+    ],
+    segments: [
+      line('S1A', 'V1', 'VS'), line('S1B', 'VS', 'V2'), line('S2', 'V2', 'V3'),
+      line('S3', 'V3', 'V4'), line('S4', 'V4', 'V1'),
+    ],
+    loops: [{ loopId: 'L_OUTER', role: 'OUTER', segmentIds: ['S1A', 'S1B', 'S2', 'S3', 'S4'] }],
+  });
+}
+
+function filletedPlate() {
+  return createLafeaAnalysisGeometry({
+    schema: 'lafea-analysis-geometry/v1',
+    stageId: 'LAFEA.3', geometryId: 'FILLETED-PLATE', coordinateSystemId: 'GLOBAL',
+    lengthUnit: 'mm', orientationPolicy: 'OUTER_CCW_HOLES_CW_V1',
+    vertices: [
+      { vertexId: 'V1', x: 0, y: 0 }, { vertexId: 'V2', x: 200, y: 0 },
+      { vertexId: 'VF1', x: 200, y: 100 }, { vertexId: 'VF2', x: 180, y: 120 },
+      { vertexId: 'V4', x: 0, y: 120 },
+    ],
+    segments: [
+      line('S1', 'V1', 'V2'), line('S2', 'V2', 'VF1'),
+      arc('SF', 'VF1', 'VF2', 180, 100, 20, 'CCW'),
+      line('S3', 'VF2', 'V4'), line('S4', 'V4', 'V1'),
+    ],
+    loops: [{ loopId: 'L_OUTER', role: 'OUTER', segmentIds: ['S1', 'S2', 'SF', 'S3', 'S4'] }],
   });
 }
 
@@ -155,7 +192,42 @@ assert.equal(mapped.strategy, 'MAPPED_TRANSFINITE');
 assert.equal(mapped.holeCount, 0);
 assert.ok(mapped.characteristicLengthMax <= 30 + 1e-9);
 
-// --- LMB-04: refined unstructured T6 has true interior vertices -------------
+// --- LMB-04: P1-7 logical side chains preserve feature vertices ------------
+const splitGeometry = splitSidePlate();
+const splitAdapter = buildLafeaMeshTopology(splitGeometry);
+const splitMapped = generateLafeaAnalysisMesh(splitAdapter, {
+  targetElementLength: 30, curvatureToleranceDegrees: 15, elementFamily: 'Q8',
+});
+assert.equal(splitMapped.strategy, 'MAPPED_TRANSFINITE');
+assert.equal(splitMapped.strategyReason, 'FOUR_SIDED_REGION_MAPPED');
+assert.ok(splitMapped.mesh.nodes.some((node) => node.x === 73 && node.y === 0));
+const splitReplay = generateLafeaAnalysisMesh(splitAdapter, {
+  targetElementLength: 30, curvatureToleranceDegrees: 15, elementFamily: 'Q8',
+});
+assert.equal(JSON.stringify(splitReplay.mesh), JSON.stringify(splitMapped.mesh));
+const splitProduced = produceLafeaAnalysisMeshEvidence(
+  stageFor(splitGeometry),
+  lafeaMeshGenerationConfiguration(meshProfileFor('Q8', 30)),
+);
+assert.equal(splitProduced.evidence.qualification, 'PASS');
+assert.equal(splitProduced.evidence.quality.blockingElementIds.length, 0);
+
+// --- LMB-05: P1-7 filleted logical corner remains mapped -------------------
+const filletGeometry = filletedPlate();
+const filletMapped = generateLafeaAnalysisMesh(buildLafeaMeshTopology(filletGeometry), {
+  targetElementLength: 30, curvatureToleranceDegrees: 15, elementFamily: 'Q8',
+});
+assert.equal(filletMapped.strategy, 'MAPPED_TRANSFINITE');
+assert.ok(filletMapped.mesh.nodes.some((node) => node.x === 200 && node.y === 100));
+assert.ok(filletMapped.mesh.nodes.some((node) => node.x === 180 && node.y === 120));
+const filletProduced = produceLafeaAnalysisMeshEvidence(
+  stageFor(filletGeometry),
+  lafeaMeshGenerationConfiguration(meshProfileFor('Q8', 30)),
+);
+assert.equal(filletProduced.evidence.qualification, 'PASS');
+assert.equal(filletProduced.evidence.quality.blockingElementIds.length, 0);
+
+// --- LMB-06: refined unstructured T6 has true interior vertices -------------
 const unstructured = generateLafeaAnalysisMesh(adapter, {
   targetElementLength: 30, curvatureToleranceDegrees: 15, elementFamily: 'T6',
 });
@@ -163,7 +235,7 @@ assert.equal(unstructured.strategy, 'CONSTRAINED_DELAUNAY');
 assert.equal(unstructured.strategyReason, 'UNSTRUCTURED_INTERIOR_REFINEMENT');
 assert.ok(unstructured.interiorPointCount > 0);
 
-// --- LMB-05: partial Q8 remains all-Q8-or-reject ----------------------------
+// --- LMB-07: true five-corner topology remains all-Q8-or-reject ------------
 assert.throws(
   () => generateLafeaAnalysisMesh(buildLafeaMeshTopology(pentagon()), {
     targetElementLength: 200, curvatureToleranceDegrees: 15, elementFamily: 'Q8',
@@ -171,14 +243,14 @@ assert.throws(
   (error) => error?.code === 'LAFEA_MESH_ENGINE_Q8_FULL_RECOMBINATION_REQUIRED',
 );
 
-// --- LMB-06: deterministic replay ------------------------------------------
+// --- LMB-08: deterministic replay ------------------------------------------
 const replay = generateLafeaAnalysisMesh(adapter, {
   targetElementLength: 30, curvatureToleranceDegrees: 15, elementFamily: 'T6',
 });
 assert.equal(JSON.stringify(replay.mesh), JSON.stringify(unstructured.mesh));
 assert.equal(replay.interiorPointCount, unstructured.interiorPointCount);
 
-// --- LMB-07: profile is the generation source of truth ----------------------
+// --- LMB-09: profile is the generation source of truth ----------------------
 const stage = stageFor(geometry);
 const governedProfile = meshProfileFor('Q8', 30);
 assert.throws(
@@ -207,7 +279,7 @@ const custody = buildLafeaDomainFirstMeshCustodyProjection(stage, evidence);
 assert.equal(custody.state, 'CURRENT_PASS');
 assert.equal(custody.runPolicy, 'ALLOW');
 
-// --- LMB-08: v2 envelope independently enforces element family --------------
+// --- LMB-10: v2 envelope independently enforces element family --------------
 assert.throws(
   () => createLafeaMeshProducerOutputV2({
     schema: 'lafea-mesh-producer-output/v2', stageId: planned.plan.stageId,
@@ -221,7 +293,7 @@ assert.throws(
   (error) => error?.code === 'LAFEA_MESH_PRODUCER_OUTPUT_V2_ELEMENT_FAMILY_MISMATCH',
 );
 
-// --- LMB-09: evidence round-trip, tamper and stale custody ------------------
+// --- LMB-11: evidence round-trip, tamper and stale custody ------------------
 const recovery = createLafeaWorkbenchMeshGenerationState(['LAFEA.3']);
 recovery.bindMeshProfile(evidence.meshProfile, 'LAFEA.3');
 assert.equal(recovery.recoverEvidence(evidence, 'LAFEA.3').changed, true);
@@ -237,7 +309,7 @@ const stale = buildLafeaDomainFirstMeshCustodyProjection({
 assert.equal(stale.state, 'STALE');
 assert.equal(stale.usableForAdvance, false);
 
-// --- LMB-10: P1-5 target ladder stays quality-qualified --------------------
+// --- LMB-12: P1-5 target ladder stays quality-qualified --------------------
 const refinementLadder = [60, 30, 15, 8].map((targetElementLength) => {
   const result = produceLafeaAnalysisMeshEvidence(
     stage,
@@ -261,7 +333,7 @@ for (let index = 1; index < refinementLadder.length; index += 1) {
   assert.ok(refinementLadder[index].elementCount > refinementLadder[index - 1].elementCount);
 }
 
-// --- LMB-11: canonical MP2 square-with-circular-hole is meshable ------------
+// --- LMB-13: canonical MP2 square-with-circular-hole is meshable ------------
 const holeGeometry = createLafeaAnalysisGeometry(mp2SquareWithCircularHole());
 const holeAdapter = buildLafeaMeshTopology(holeGeometry);
 assert.equal(holeAdapter.holeLoopIds.length, 1);
@@ -283,7 +355,7 @@ const holeReplay = generateLafeaAnalysisMesh(holeAdapter, {
 });
 assert.equal(JSON.stringify(holeReplay.mesh), JSON.stringify(holeEngine.mesh));
 
-// --- LMB-12: canonical hole reaches evidence CURRENT_PASS -------------------
+// --- LMB-14: canonical hole reaches evidence CURRENT_PASS -------------------
 const holeStage = stageFor(holeGeometry);
 const holeProduced = produceLafeaAnalysisMeshEvidence(
   holeStage,
@@ -296,7 +368,7 @@ const holeCustody = buildLafeaDomainFirstMeshCustodyProjection(holeStage, holePr
 assert.equal(holeCustody.state, 'CURRENT_PASS');
 assert.equal(holeCustody.usableForRun, true);
 
-// --- LMB-13: Q8 hole request never silently degrades to mixed family --------
+// --- LMB-15: Q8 hole request never silently degrades to mixed family --------
 assert.throws(
   () => generateLafeaAnalysisMesh(holeAdapter, {
     targetElementLength: 1.5, curvatureToleranceDegrees: 15, elementFamily: 'Q8',
@@ -304,7 +376,7 @@ assert.throws(
   (error) => error?.code === 'LAFEA_MESH_ENGINE_Q8_FULL_RECOMBINATION_REQUIRED',
 );
 
-// --- LMB-14: Discretization continues to surface governed generation --------
+// --- LMB-16: Discretization continues to surface governed generation --------
 const generatedStage = {
   ...stage,
   retainedAnalysisMeshEvidenceV2: evidence,
@@ -332,7 +404,7 @@ assert.equal(viewModel.actions.canAdvance, true);
 assert.equal(viewModel.evidence.producerRef, LAFEA_MESH_PRODUCER_REF);
 assert.equal(viewModel.configuration.modes.find((row) => row.mode === 'MANUAL_REFINEMENT').enabled, false);
 
-// --- LMB-15: unbound profile remains explicit and fail-closed ---------------
+// --- LMB-17: unbound profile remains explicit and fail-closed ---------------
 const unboundViewModel = buildLafeaDiscretizationViewModel({
   ...stage,
   analysisMeshCustodyProjection: buildLafeaDomainFirstMeshCustodyProjection(stage, null),
@@ -364,4 +436,8 @@ function line(segmentId, startVertexId, endVertexId) {
   return { segmentId, type: 'LINE', startVertexId, endVertexId };
 }
 
-console.log('LAFEA mesh-producer binding check PASS (P0 + P1-5 + P1-6 constrained holes)');
+function arc(segmentId, startVertexId, endVertexId, centerX, centerY, radius, sweep) {
+  return { segmentId, type: 'CIRCULAR_ARC', startVertexId, endVertexId, centerX, centerY, radius, sweep };
+}
+
+console.log('LAFEA mesh-producer binding check PASS (P0 + P1-5 + P1-6 holes + P1-7 logical mapped chains)');

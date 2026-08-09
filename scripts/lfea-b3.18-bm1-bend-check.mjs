@@ -11,7 +11,10 @@ const EXPECTED = Object.freeze({
   'IX-S5': { pressure: 2.15e6, k: 8.805996977364236, ii: 2.656692445746295, io: 2.213910371455246 },
   'IX-S6': { pressure: 2.10e6, k: 8.81810588982693, ii: 2.66113953399073, io: 2.217616278325609 },
 });
-const close = (actual, expected, tolerance = 1e-9) => assert.ok(Math.abs(actual - expected) <= tolerance * Math.max(1, Math.abs(expected)), `${actual} != ${expected}`);
+const close = (actual, expected, tolerance = 1e-9) => assert.ok(
+  Math.abs(actual - expected) <= tolerance * Math.max(1, Math.abs(expected)),
+  `${actual} != ${expected}`,
+);
 
 console.log('\n--- LFEA B-3.18 BM1 real BEND components and directional SIFs ---');
 const result = solveBm1InputXml();
@@ -68,7 +71,7 @@ assert.equal(result.caesarStressComparison.cases.every((row) => row.summary.unma
 assert.equal(result.caesarStressComparison.cases.every((row) => row.summary.unmatchedCompiledElementCount === 0), true);
 assert.equal(result.report.sifCodePoints.length, 8);
 
-console.log('\n--- LFEA B-3.18 MEC-21 pressure free-movement subdivision invariant ---');
+console.log('\n--- LFEA B-3.18 MEC-21 pressure free-movement coordinate qualification ---');
 const mec21 = Object.freeze({
   pressure: 2.3e6,
   innerRadius: 0.049,
@@ -84,7 +87,10 @@ const shellCorrection = (1 - mec21.poissonRatio)
 const curvatureChangeRatio = Math.PI * mec21.pressure * mec21.innerRadius ** 4
   * shellCorrection / (mec21.elasticModulus * mec21.secondMoment);
 const translationScale = curvatureChangeRatio * mec21.bendRadius;
-const expectedQuarterTurn = Object.freeze({
+
+// MEC-21 Eq. (2.25) components are at the bend final point in that station's
+// local a-b-c basis. Verify those scalar component equations independently.
+const expectedQuarterTurnLocalFinal = Object.freeze({
   translationAbc: [
     translationScale * (Math.sin(quarterTurn) - quarterTurn),
     0,
@@ -95,47 +101,75 @@ const expectedQuarterTurn = Object.freeze({
 const directQuarterTurn = deriveMec21BendPressureFreeMovement({ ...mec21, bendAngle: quarterTurn });
 close(directQuarterTurn.curvatureChangeRatio, curvatureChangeRatio, 1e-12);
 close(directQuarterTurn.shellCorrection, shellCorrection, 1e-12);
-vectorClose(directQuarterTurn.translationAbc, expectedQuarterTurn.translationAbc, 1e-12);
-vectorClose(directQuarterTurn.rotationAbc, expectedQuarterTurn.rotationAbc, 1e-12);
+vectorClose(directQuarterTurn.translationAbc, expectedQuarterTurnLocalFinal.translationAbc, 1e-12);
+vectorClose(directQuarterTurn.rotationAbc, expectedQuarterTurnLocalFinal.rotationAbc, 1e-12);
 
 const initialStation = deriveMec21BendPressureFreeState({ ...mec21, bendAngle: 0 });
 vectorClose(initialStation.translationAbc, [0, 0, 0], 1e-15);
 vectorClose(initialStation.rotationAbc, [0, 0, 0], 1e-15);
 close(initialStation.curvatureChangeRatio, curvatureChangeRatio, 1e-12);
+
+// Independent canonical benchmark: a uniform small curvature reduction lambda
+// rotates the tangent perturbation along the arc. Integrating that perturbation
+// in the bend-start basis gives these physical free translations. Transforming
+// Eq. (2.25) from the rotating station basis must reproduce the same field.
 for (const subdivision of [1, 2, 4, 8, 32]) {
-  const stations = Array.from({ length: subdivision + 1 }, (_unused, index) => {
+  const physicalStations = Array.from({ length: subdivision + 1 }, (_unused, index) => {
     const angle = quarterTurn * index / subdivision;
     const state = deriveMec21BendPressureFreeState({ ...mec21, bendAngle: angle });
-    const independent = {
-      translationAbc: [
-        translationScale * (Math.sin(angle) - angle),
-        0,
-        translationScale * (Math.cos(angle) - 1),
-      ],
-      rotationAbc: [0, curvatureChangeRatio * angle, 0],
-    };
-    vectorClose(state.translationAbc, independent.translationAbc, 1e-12);
-    vectorClose(state.rotationAbc, independent.rotationAbc, 1e-12);
-    return state;
+    const localExpected = [
+      translationScale * (Math.sin(angle) - angle),
+      0,
+      translationScale * (Math.cos(angle) - 1),
+    ];
+    vectorClose(state.translationAbc, localExpected, 1e-12);
+    vectorClose(state.rotationAbc, [0, curvatureChangeRatio * angle, 0], 1e-12);
+
+    const axes = quarterBendStationAxes(angle);
+    const physicalTranslation = abcToStartBasis(axes, state.translationAbc);
+    const integratedCurvatureTranslation = [
+      translationScale * (Math.sin(angle) - angle * Math.cos(angle)),
+      0,
+      translationScale * (1 - Math.cos(angle) - angle * Math.sin(angle)),
+    ];
+    vectorClose(physicalTranslation, integratedCurvatureTranslation, 1e-12);
+    const physicalRotation = abcToStartBasis(axes, state.rotationAbc);
+    vectorClose(physicalRotation, [0, curvatureChangeRatio * angle, 0], 1e-12);
+    return { physicalTranslation, physicalRotation };
   });
-  vectorClose(stations.at(-1).translationAbc, expectedQuarterTurn.translationAbc, 1e-12);
-  vectorClose(stations.at(-1).rotationAbc, expectedQuarterTurn.rotationAbc, 1e-12);
+  const expectedPhysicalQuarterTurn = integratedCurvatureField(translationScale, curvatureChangeRatio, quarterTurn);
+  vectorClose(physicalStations.at(-1).physicalTranslation, expectedPhysicalQuarterTurn.translation, 1e-12);
+  vectorClose(physicalStations.at(-1).physicalRotation, expectedPhysicalQuarterTurn.rotation, 1e-12);
 }
 
-// Falsification fixture for the historical BM4 adapter hypothesis: treating each
-// numerical chord as a new physical bend and restarting Eq. (2.25) at zero.
-// MEC-21 rigid-body transfer is applied between chord starts. One chord must
-// reproduce the direct bend result; refining the same physical bend must not
-// change that endpoint, but the restarted construction does.
-const oneChordRestart = composeRestartedMec21QuarterBend(mec21, 1);
-const fourChordRestart = composeRestartedMec21QuarterBend(mec21, 4);
-vectorClose(oneChordRestart.translation, expectedQuarterTurn.translationAbc, 1e-12);
-vectorClose(oneChordRestart.rotation, expectedQuarterTurn.rotationAbc, 1e-12);
-vectorClose(fourChordRestart.rotation, expectedQuarterTurn.rotationAbc, 1e-12);
+// Explicit falsification of I002: interpreting Eq. (2.25) station components in
+// one fixed bend-start basis is not the governing coordinate transformation.
+const expectedPhysicalQuarterTurn = integratedCurvatureField(
+  translationScale,
+  curvatureChangeRatio,
+  quarterTurn,
+);
+const fixedStartBasisQuarterTurn = directQuarterTurn.translationAbc;
+const fixedStartBasisQuarterTurnRelativeError = vectorNorm(subtract3(
+  fixedStartBasisQuarterTurn,
+  expectedPhysicalQuarterTurn.translation,
+)) / vectorNorm(expectedPhysicalQuarterTurn.translation);
+close(fixedStartBasisQuarterTurnRelativeError, Math.SQRT2, 1e-12);
+
+// Historical BM4 adapter falsification: it treated every numerical chord as a
+// new physical bend, restarted Eq. (2.25) at zero, and mapped the segment's
+// local-final component numbers through the segment-start axes. This fixture
+// intentionally reproduces that old construction; it is not the physical
+// whole-bend endpoint defined by the integrated-curvature benchmark above.
+const oneChordRestart = composeHistoricalRestartedMec21QuarterBend(mec21, 1);
+const fourChordRestart = composeHistoricalRestartedMec21QuarterBend(mec21, 4);
+vectorClose(oneChordRestart.translation, expectedQuarterTurnLocalFinal.translationAbc, 1e-12);
+vectorClose(oneChordRestart.rotation, expectedQuarterTurnLocalFinal.rotationAbc, 1e-12);
+vectorClose(fourChordRestart.rotation, expectedQuarterTurnLocalFinal.rotationAbc, 1e-12);
 const restartTranslationError = vectorNorm(subtract3(
   fourChordRestart.translation,
-  expectedQuarterTurn.translationAbc,
-)) / vectorNorm(expectedQuarterTurn.translationAbc);
+  oneChordRestart.translation,
+)) / vectorNorm(oneChordRestart.translation);
 assert.ok(
   restartTranslationError > 1,
   `Restarted MEC-21 chord construction unexpectedly appeared subdivision-invariant: ${restartTranslationError}`,
@@ -157,17 +191,45 @@ console.log(JSON.stringify({
     io: row.authority.pressureCorrectedOutOfPlaneSif,
   })),
   mec21PressureExpansion: {
-    benchmark: 'MEC21_PART_II_EQ_2_25_QUARTER_BEND_CLOSED_FORM',
+    benchmark: 'MEC21_PART_II_EQ_2_25_ROTATING_FINAL_BASIS_VS_INTEGRATED_CURVATURE',
     curvatureChangeRatio,
     subdivisionCounts: [1, 2, 4, 8, 32],
-    cumulativeFieldInvariant: true,
-    restartedChordHypothesis: 'FALSIFIED',
-    restartedFourChordTranslationRelativeError: restartTranslationError,
+    rotatingBasisMatchesIntegratedCurvature: true,
+    fixedStartBasisHypothesis: 'FALSIFIED',
+    fixedStartBasisQuarterTurnRelativeError,
+    historicalRestartedChordHypothesis: 'FALSIFIED',
+    historicalRestartedFourChordTranslationRelativeError: restartTranslationError,
   },
 }, null, 2));
 console.log('LFEA B-3.18 BM1 real BEND components and directional SIFs PASS');
 
-function composeRestartedMec21QuarterBend(input, subdivision) {
+function integratedCurvatureField(scaleValue, curvatureRatio, angle) {
+  return {
+    translation: [
+      scaleValue * (Math.sin(angle) - angle * Math.cos(angle)),
+      0,
+      scaleValue * (1 - Math.cos(angle) - angle * Math.sin(angle)),
+    ],
+    rotation: [0, curvatureRatio * angle, 0],
+  };
+}
+
+function quarterBendStationAxes(angle) {
+  return {
+    aAxis: [Math.cos(angle), 0, Math.sin(angle)],
+    bAxis: [0, 1, 0],
+    cAxis: [-Math.sin(angle), 0, Math.cos(angle)],
+  };
+}
+
+function abcToStartBasis(axes, vector) {
+  return add3(
+    add3(scale3(axes.aAxis, vector[0]), scale3(axes.bAxis, vector[1])),
+    scale3(axes.cAxis, vector[2]),
+  );
+}
+
+function composeHistoricalRestartedMec21QuarterBend(input, subdivision) {
   const bendAngle = Math.PI / 2;
   const segmentAngle = bendAngle / subdivision;
   const rotationAxis = [0, 1, 0];

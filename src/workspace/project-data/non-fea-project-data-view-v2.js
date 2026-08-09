@@ -139,23 +139,59 @@ function fieldMarkup(groupKey, field, entry) {
   // Human-readable evidence summary: show just the source string, not raw JSON
   const evidenceSource = entry.evidence?.source ? String(entry.evidence.source) : (entry.evidence !== null ? '(evidence set)' : '');
   const min = field.numericPolicy === 'SIGNED' ? '' : ' min="0"';
-  const input = field.inputType === 'number'
-    ? `<input type="number"${min} step="any" data-project-value="${escape(path)}" value="${escape(value)}">`
-    : `<textarea rows="${field.inputType === 'text' ? 2 : 5}" data-project-value="${escape(path)}" data-value-type="${escape(field.inputType)}">${escape(value)}</textarea>`;
   const state = entry.value === null ? 'MISSING' : entry.approved ? 'APPROVED' : 'REVIEW';
   // Sublabel: show unit only — no internal path, no numericPolicy
   const sublabel = field.usage && field.usage !== field.label ? field.usage : '';
+
+  // Human-readable value summary for complex types
+  function valueSummary(val, inputType) {
+    if (val === null) return '';
+    if (inputType === 'source') {
+      // Source object: show just the filename from the path
+      const filePath = val?.path || val?.sha256 || '';
+      const fileName = filePath ? filePath.replace(/\\/g, '/').split('/').pop() : '';
+      const sheet = val?.sheet ? ` · ${val.sheet}` : '';
+      return fileName ? `${fileName}${sheet}` : '(source set)';
+    }
+    if (inputType === 'json') {
+      if (Array.isArray(val)) return `[${val.length} item${val.length !== 1 ? 's' : ''}]`;
+      if (val && typeof val === 'object') {
+        const keys = Object.keys(val);
+        // Show first 2 keys as a preview
+        const preview = keys.slice(0, 2).join(', ');
+        return `{${keys.length} key${keys.length !== 1 ? 's' : ''}: ${preview}${keys.length > 2 ? '…' : ''}}`;
+      }
+      return String(val);
+    }
+    return String(val);
+  }
+
+  let inputHtml;
+  if (field.inputType === 'number') {
+    inputHtml = `<input type="number"${min} step="any" data-project-value="${escape(path)}" value="${escape(value)}">`;
+  } else if (field.inputType === 'text') {
+    inputHtml = `<textarea rows="2" data-project-value="${escape(path)}" data-value-type="${escape(field.inputType)}">${escape(value)}</textarea>`;
+  } else {
+    // json or source — wrap with collapsible summary
+    const summary = valueSummary(entry.value, field.inputType);
+    inputHtml = `<div class="phase2-value-cell">
+      <textarea rows="5" data-project-value="${escape(path)}" data-value-type="${escape(field.inputType)}" class="phase2-value-raw">${escape(value)}</textarea>
+      ${summary ? `<span class="phase2-value-summary" title="${escape(value)}">${escape(summary)}</span>` : `<span class="phase2-value-empty">${state === 'MISSING' ? 'Not set — click to edit' : '(set)'}</span>`}
+    </div>`;
+  }
+
   return `<label title="${escape(field.usage)}">
       <strong>${escape(field.label)}</strong>
       ${sublabel ? `<small>${escape(sublabel)}</small>` : ''}
     </label>
-    ${input}
+    ${inputHtml}
     <div class="phase2-evidence-cell">
       <textarea rows="4" data-project-evidence="${escape(path)}" placeholder='{"source":"...","locator":"...","sourceHash":"..."}' class="phase2-evidence-raw">${escape(evidence)}</textarea>
       ${evidenceSource ? `<span class="phase2-evidence-summary" title="${escape(evidence)}">${escape(evidenceSource)}</span>` : '<span class="phase2-evidence-empty">No evidence</span>'}
     </div>
     <label class="phase2-approval" data-state="${state}"><input type="checkbox" data-project-approved="${escape(path)}" ${entry.approved ? 'checked' : ''}><span>${state}</span></label>`;
 }
+
 
 function ownershipMarkup(matrix) {
   return `<details id="non-fea-field-ownership" open class="phase2-group" data-role="non-fea-field-ownership-matrix"><summary><div><span class="eyebrow">FORMAL FIELD REGISTRY</span><strong>Field ownership matrix</strong></div><span>${matrix.rows.length} fields · ${escape(matrix.semanticHash)}</span></summary>
@@ -255,6 +291,15 @@ function styles() {
     .phase2-evidence-summary{font-size:11px;color:#7dd3fc;padding:4px 6px;border:1px solid #1e3a5f;border-radius:4px;background:#0a1f3a;cursor:pointer;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%}
     .phase2-evidence-summary:hover{background:#0f2d52}
     .phase2-evidence-empty{font-size:11px;color:#475569;font-style:italic;padding:4px 6px}
+    /* Value cell for source/json fields: same collapse pattern */
+    .phase2-value-cell{display:flex;flex-direction:column;gap:4px}
+    .phase2-value-raw{font-size:10px;font-family:monospace;display:none}
+    .phase2-value-cell:focus-within .phase2-value-raw{display:block}
+    .phase2-value-summary{font-size:11px;color:#e2e8f0;padding:4px 6px;border:1px solid #334155;border-radius:4px;background:#0d1728;cursor:pointer;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%}
+    .phase2-value-summary:hover{background:#182a45;border-color:#4a6080}
+    .phase2-value-empty{font-size:11px;color:#475569;font-style:italic;padding:4px 6px;border:1px dashed #293548;border-radius:4px;cursor:pointer}
+    .phase2-value-empty:hover{color:#94a3b8;border-color:#475569}
     @media(max-width:1100px){.phase2-summary{grid-template-columns:repeat(2,1fr)}.phase2-layout{grid-template-columns:1fr}.phase2-rail{position:static}.phase2-fields{grid-template-columns:1fr}.phase2-policy{grid-template-columns:1fr}}
   </style>`;
 }
+

@@ -17,15 +17,23 @@ export const LAFEA_MESH_PRODUCER_REGISTRY_SCHEMA = 'lafea-mesh-producer-registry
 export const LAFEA_MESH_PRODUCER_ENGINE_ID = 'LAFEA_CORE_MESHER';
 export const LAFEA_MESH_PRODUCER_ENGINE_REVISION = 'LAFEA.10.T6Q8.V4';
 export const LAFEA_MESH_PRODUCER_QUALIFICATION_ID = 'LAFEA-MESH-Q1';
-export const LAFEA_MESH_PRODUCER_QUALIFICATION_REVISION = 'R4';
+export const LAFEA_MESH_PRODUCER_QUALIFICATION_REVISION = 'R5';
 export const LAFEA_MESH_PRODUCER_GOVERNANCE_REF = 'npm run check:lafea-meshing';
 export const LAFEA_MESH_PRODUCER_QUALITY_POLICY_ID = 'LAFEA_MESH_PROFILE_QUALITY_GATES_V1';
 export const LAFEA_MESH_PRODUCER_REF =
   `${LAFEA_MESH_PRODUCER_ENGINE_ID}/${LAFEA_MESH_PRODUCER_ENGINE_REVISION}/${LAFEA_MESH_PRODUCER_QUALIFICATION_ID}`;
 
-/** Automatic generation only. Local refinement is not implemented or claimed. */
-export const LAFEA_MESH_PRODUCER_GENERATION_MODES = Object.freeze(['AUTOMATIC_MESH']);
-export const LAFEA_MESH_PRODUCER_LOCAL_REFINEMENT_AUTHORIZED = false;
+/**
+ * Automatic generation plus retained-mesh refinement regeneration. The local
+ * refinement implementation is qualified for T3/T6 parents only; Q8 is
+ * rejected by the refinement planner until a conforming quad-local-refinement
+ * rule is independently qualified.
+ */
+export const LAFEA_MESH_PRODUCER_GENERATION_MODES = Object.freeze([
+  'AUTOMATIC_MESH', 'REFINEMENT_REGENERATION',
+]);
+export const LAFEA_MESH_PRODUCER_LOCAL_REFINEMENT_AUTHORIZED = true;
+export const LAFEA_MESH_PRODUCER_LOCAL_REFINEMENT_FAMILIES = Object.freeze(['T3', 'T6']);
 
 /**
  * Ceilings the producer services and the qualification authorizes. A request
@@ -52,6 +60,12 @@ export function lafeaMeshProducerBound(stageId, elementFamily = null) {
 
 export function lafeaMeshProducerElementFamilies(stageId) {
   return [...(BOUND_SCOPES[stageId] ?? [])];
+}
+
+export function lafeaMeshProducerLocalRefinementFamilies(stageId) {
+  return stageId === 'LAFEA.3'
+    ? [...LAFEA_MESH_PRODUCER_LOCAL_REFINEMENT_FAMILIES]
+    : [];
 }
 
 export function lafeaMeshProducerScopes() {

@@ -36,7 +36,8 @@
       "IMPLEMENT_B313_CODE_CASE_178": "YES",
       "IGNORE_B31_1_B31_3_WC_FACTOR": "YES",
       "APPLY_B31J_SIFS_AND_FLEX": "DEFAULT",
-      "ENFORCE_B31J_SIFS_ONLY": false
+      "ENFORCE_B31J_SIFS_ONLY": false,
+      "BEND_LENGTH_ATTACHMENT_PERCENT": 1
     }
   },
   "modelInput": {
@@ -182,9 +183,17 @@
       "setting": "BEND_AXIAL_SHAPE",
       "authority": "OVERALL_SETTING",
       "target": "bend formulation",
-      "status": "RECORDED_REQUIRES_FORMULATION_MAPPING",
+      "status": "BOUND_MODE_PRESENT_AND_CONVERGED",
       "value": "YES",
-      "note": "Potential E36 relevance; no mechanic is accepted until independently mapped and falsified."
+      "note": "Closed-form curved-arc strain-energy audit shows the segmented production bend retains the axial deformation mode with worst relative error 0.031728%, inside the existing 1% convergence gate. This does not claim CAESAR internal interpolation identity."
+    },
+    {
+      "setting": "BEND_LENGTH_ATTACHMENT_PERCENT",
+      "authority": "OVERALL_SETTING",
+      "target": "bend exit analysis geometry",
+      "status": "BOUND_GEOMETRY_TRIGGER_AUDIT_ONLY",
+      "value": 1,
+      "note": "Hexagon Version 14 defines a minimum n-percent-of-radius attachment when the leaving-element To node falls within that distance of the far weld line. BM4_NL source geometry audit determines applicability; no production node relocation is authorized until exact inserted-element geometry semantics are reproduced."
     },
     {
       "setting": "APPLY_B31J_SIFS_AND_FLEX",

@@ -36,6 +36,7 @@ assert.equal(authority.overall.settings.MIN_WALL_MILL_TOLERANCE_PERCENT, 12.5);
 assert.equal(authority.overall.settings.DEFAULT_TRANS_RESTRAINT_STIFF, 1e12);
 assert.equal(authority.overall.settings.DEFAULT_ROT_RESTRAINT_STIFF, 1e12);
 assert.equal(authority.overall.settings.FRICT_STIF, 1e6);
+assert.equal(authority.overall.settings.BEND_LENGTH_ATTACHMENT_PERCENT, 1);
 assert.equal(authority.overall.settings.APPLY_B31J_SIFS_AND_FLEX, 'DEFAULT');
 assert.equal(authority.overall.settings.ENFORCE_B31J_SIFS_ONLY, false);
 
@@ -48,7 +49,8 @@ assert.equal(requiredBindings.get('L20.COEFFICIENT_OF_FRICTION_MU')?.status, 'BO
 assert.equal(requiredBindings.get('DEFAULT_TRANS_RESTRAINT_STIFF')?.status, 'RECORDED_PENDING_SOURCE_UNIT_AUDIT');
 assert.equal(requiredBindings.get('DEFAULT_ROT_RESTRAINT_STIFF')?.status, 'RECORDED_PENDING_SOURCE_UNIT_AUDIT');
 assert.equal(requiredBindings.get('FRICT_STIF')?.status, 'RECORDED_NON_GOVERNING_L19_L20');
-assert.equal(requiredBindings.get('BEND_AXIAL_SHAPE')?.status, 'RECORDED_REQUIRES_FORMULATION_MAPPING');
+assert.equal(requiredBindings.get('BEND_AXIAL_SHAPE')?.status, 'BOUND_MODE_PRESENT_AND_CONVERGED');
+assert.equal(requiredBindings.get('BEND_LENGTH_ATTACHMENT_PERCENT')?.status, 'BOUND_GEOMETRY_TRIGGER_AUDIT_ONLY');
 assert.equal(requiredBindings.get('APPLY_B31J_SIFS_AND_FLEX')?.status, 'DOES_NOT_RESOLVE_SMOOTH90_NOTE3');
 
 const profileEvidence = [];

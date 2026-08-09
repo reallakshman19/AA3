@@ -1,0 +1,49 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "lfea-accdb-benchmark-actual/v1",
+  "title": "LFEA actual results for a CAESAR ACCDB benchmark",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema", "sourceAccdbSha256", "cases"],
+  "properties": {
+    "schema": { "const": "lfea-accdb-benchmark-actual/v1" },
+    "sourceAccdbSha256": {
+      "type": "string",
+      "pattern": "^[a-f0-9]{64}$"
+    },
+    "cases": {
+      "type": "object",
+      "minProperties": 1,
+      "additionalProperties": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["rows"],
+        "properties": {
+          "executionSemanticHash": { "type": ["string", "null"] },
+          "executionEvidenceHash": { "type": ["string", "null"] },
+          "rows": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": ["entityKind", "entityId", "quantity", "component", "value", "unit"],
+              "properties": {
+                "entityKind": { "enum": ["NODE", "ELEMENT"] },
+                "entityId": { "type": "string", "minLength": 1 },
+                "quantity": { "type": "string", "minLength": 1 },
+                "component": { "type": "string", "minLength": 1 },
+                "value": { "type": "number" },
+                "unit": { "type": "string", "minLength": 1 },
+                "required": { "type": "boolean" },
+                "note": { "type": ["string", "null"] }
+              }
+            }
+          }
+        }
+      }
+    },
+    "mechanics": {
+      "type": "object"
+    }
+  }
+}

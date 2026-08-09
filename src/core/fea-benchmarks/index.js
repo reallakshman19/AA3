@@ -25,6 +25,18 @@ export { compareBenchmarkResultRows } from './qualification-comparison.js';
 export { normalizeLinearSolverBenchmarkResult } from './qualification-normalization.js';
 export { runGovernedBenchmarkQualification } from './qualification-pipeline.js';
 export { createBenchmarkQualificationAdapter } from './adapters/generic.js';
+export { CAESAR_ACCDB_ADAPTER_ID, createCaesarAccdbQualificationAdapter } from './adapters/caesar-accdb.js';
+export {
+  CAESAR_ACCDB_PACKAGE_SCHEMA,
+  CAESAR_ACCDB_PROFILE_SCHEMA,
+  CAESAR_BOURDON_PRESSURE_EFFECT_MODES,
+  CAESAR_ACCDB_NODE_SELECTIONS,
+  CAESAR_ACCDB_RESULT_FAMILIES,
+  buildCaesarAccdbBenchmarkPackage,
+  requiredCaesarAccdbTables,
+} from './caesar-accdb-package.js';
+export { convertCaesarValue, normalizeCaesarUnitToken, temperatureToKelvin } from './caesar-accdb-units.js';
+export { solveCaesarAccdbLinearBenchmark } from './caesar-accdb-linear-solve.js';
 export {
   BM4_QUALIFICATION_ADAPTER_ID,
   BM4_QUALIFICATION_CASE_IDS,

@@ -25,9 +25,19 @@ export async function openTopologyEdit(page) {
   return host;
 }
 
-export async function openApplicableSurface(host, surface) {
-  const kind = PANEL_BY_SURFACE[surface];
+export async function openApplicableSurface(host, entry) {
+  const kind = PANEL_BY_SURFACE[entry.surface];
   if (kind) await openPanel(host, kind);
+  if (entry.key === 'display.apply-section' || entry.key === 'display.clear-section') {
+    const section = host.locator(
+      'details[data-panel-kind="display"] .topology-edit-section-controls',
+    );
+    await expect(section).toHaveCount(1);
+    if (!(await section.evaluate((element) => element.open))) {
+      await section.locator(':scope > summary').click();
+    }
+    await expect(section).toHaveAttribute('open', '');
+  }
 }
 
 export async function openPanel(host, kind) {

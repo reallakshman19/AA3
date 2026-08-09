@@ -51,12 +51,14 @@ export function planLafeaShellAnalysisMesh({ midsurfaceEvidence: evidenceValue, 
   requireScope(capability.scopes, stageId);
   requireScope(qualification.authorizedScopes, stageId);
 
+  const triangleQualityRefinementFloor = meshProfile.fields.scaledJacobianBlock;
   const generated2d = generateLafeaAnalysisMesh(
     buildLafeaMeshTopology(toPlanarAnalysisGeometry(midsurfaceEvidence.geometry)),
     {
       targetElementLength: meshProfile.fields.globalTargetSize,
       curvatureToleranceDegrees: 15,
       elementFamily: 'T3',
+      minimumTriangleScaledJacobian: triangleQualityRefinementFloor,
     },
   );
   const mesh = mapPlanarMeshToShell(generated2d.mesh, midsurfaceEvidence.geometry, stageId);
@@ -77,6 +79,7 @@ export function planLafeaShellAnalysisMesh({ midsurfaceEvidence: evidenceValue, 
     meshProfileHash: meshProfile.semanticHash,
     elementFamily: LAFEA_SHELL_ELEMENT,
     targetElementLength: meshProfile.fields.globalTargetSize,
+    triangleQualityRefinementFloor,
     lengthUnit: midsurfaceEvidence.geometry.lengthUnit,
     nodeCount: mesh.nodes.length,
     elementCount: mesh.elements.length,
@@ -226,6 +229,7 @@ function requirePlan(plan, evidence, profile) {
     || plan.analysisGeometryHash !== evidence.analysisGeometryHash
     || plan.meshProfileHash !== profile.semanticHash
     || plan.elementFamily !== LAFEA_SHELL_ELEMENT
+    || plan.triangleQualityRefinementFloor !== profile.fields.scaledJacobianBlock
     || plan.midsurfaceEvidenceHash !== evidence.semanticHash) {
     fail('LAFEA_SHELL_MESH_PLAN_PARENT_MISMATCH');
   }

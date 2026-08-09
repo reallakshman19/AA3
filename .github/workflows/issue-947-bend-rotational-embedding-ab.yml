@@ -1,0 +1,51 @@
+name: Issue 947 bend rotational embedding A-B
+
+on:
+  push:
+    branches:
+      - codex/issue-947-bm4nl-qualification
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  actions: read
+
+jobs:
+  audit:
+    if: "${{ github.event_name == 'workflow_dispatch' || github.event.head_commit.message == 'ci(issue947): audit fixed-k bend rotational embedding' }}"
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Checkout qualification branch
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Download retained qualified canonical BM4_NL package
+        uses: actions/download-artifact@v4
+        with:
+          name: issue-947-bm4nl-qualification
+          path: .work/package
+          github-token: ${{ github.token }}
+          repository: reallaksh19/Advanced_Analysis
+          run-id: 31322888839
+
+      - name: Run fixed-k bend flexibility embedding A-B
+        run: |
+          python scripts/lfea-issue947-bend-rotational-embedding-ab.py \
+            --package .work/package/bm4nl-canonical-package.json \
+            --out .work/bm4nl-bend-rotational-embedding-ab.json
+
+      - name: Verify diagnostic restored production source
+        run: git diff --exit-code -- src/core/fea-benchmarks/caesar-accdb-linear-solve.js
+
+      - name: Upload bend rotational embedding evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: issue-947-bend-rotational-embedding-ab
+          if-no-files-found: error
+          path: .work/bm4nl-bend-rotational-embedding-ab.json

@@ -14,19 +14,25 @@ import {
  * as a true triangulation vertex, and every consecutive hole edge is recovered
  * by deterministic edge flipping before triangles inside the hole are removed.
  * The resulting multiply-connected material domain is refined with a staggered
- * triangular Steiner lattice and a final Lawson pass that treats both outer and
- * hole edges as immutable constraints.
+ * triangular Steiner lattice. Curved-hole boundaries then receive a bounded,
+ * deterministic two-layer material-side front before the final Lawson pass so
+ * fine curvature segmentation cannot transition directly into coarse interior
+ * spacing through low-Jacobian sliver triangles.
  *
  * No artificial bridge/seam is introduced. Boundary midsides remain owned by
  * their analytic source curve through `edgesByCornerPair`, so T6/Q8 upgrade can
  * place a circular-hole midside on the true arc rather than on its chord.
  */
-export const LAFEA_INTERIOR_REFINEMENT_REVISION = 'LAFEA.10.CDT-HOLES-TRI.V1';
+export const LAFEA_INTERIOR_REFINEMENT_REVISION = 'LAFEA.10.CDT-HOLES-TRI.V2';
 
 const EPS = 1e-12;
 const TRIANGULAR_ROW_HEIGHT_FACTOR = Math.sqrt(3) / 2;
 const BOUNDARY_CLEARANCE_FACTOR = 0.18;
 const POINT_CLEARANCE_FACTOR = 0.12;
+const HOLE_FRONT_LAYER_COUNT = 2;
+const HOLE_FRONT_GROWTH = 1.6;
+const HOLE_FRONT_TARGET_CLEARANCE_FACTOR = 0.18;
+const HOLE_FRONT_EDGE_CLEARANCE_FACTOR = 0.45;
 
 /**
  * @param {Readonly<object>} topology Canonical core topology.
@@ -99,7 +105,21 @@ export function triangulateRefinedRegionAsIndexTriples(topology, regionId, optio
     if (insertInteriorPoint(points, triangles, constrainedEdgeKeys, candidate)) interiorPointCount += 1;
   }
 
-  const restored = lawsonFlip(points, triangles, constrainedEdgeKeys);
+  let restored = lawsonFlip(points, triangles, constrainedEdgeKeys);
+  if (holePolygons.length) {
+    const frontTriangles = restored.map((triangle) => [...triangle]);
+    interiorPointCount += insertHoleBoundaryFront(
+      points,
+      frontTriangles,
+      constrainedEdgeKeys,
+      boundaryRings,
+      holePolygons,
+      options.targetSize,
+    );
+    restored = lawsonFlip(points, frontTriangles, constrainedEdgeKeys);
+    verifyHoleBoundaryOwnership(restored, constrainedEdgeKeys, boundaryRings);
+  }
+
   return Object.freeze({
     points: Object.freeze(points.map((point) => Object.freeze(point))),
     triangleTriples: Object.freeze(restored.map((triangle) => Object.freeze([...triangle]))),
@@ -240,6 +260,56 @@ export function recoverConstraintEdge(points, triangles, constrainedEdgeKeys, a,
   );
 }
 
+function insertHoleBoundaryFront(
+  points,
+  triangles,
+  constrainedEdgeKeys,
+  boundaryRings,
+  holePolygons,
+  targetSize,
+) {
+  const outerRing = boundaryRings.find((ring) => ring.role === 'OUTER');
+  const outerPolygon = outerRing.globalIndices.map((index) => points[index]);
+  const holeRings = boundaryRings.filter((ring) => ring.role === 'HOLE');
+  let insertedCount = 0;
+
+  for (let layer = 0; layer < HOLE_FRONT_LAYER_COUNT; layer += 1) {
+    for (const ring of holeRings) {
+      for (let edgeIndex = 0; edgeIndex < ring.globalIndices.length; edgeIndex += 1) {
+        const a = points[ring.globalIndices[edgeIndex]];
+        const b = points[ring.globalIndices[(edgeIndex + 1) % ring.globalIndices.length]];
+        const dx = b.x - a.x;
+        const dy = b.y - a.y;
+        const edgeLength = Math.hypot(dx, dy);
+        if (!(edgeLength > 0)) continue;
+        const offset = holeFrontOffset(edgeLength, layer);
+        const candidate = {
+          x: (a.x + b.x) / 2 + (-dy / edgeLength) * offset,
+          y: (a.y + b.y) / 2 + (dx / edgeLength) * offset,
+        };
+        if (!pointInPolygonStrict(candidate, outerPolygon)) continue;
+        if (holePolygons.some((polygon) => pointInPolygonStrict(candidate, polygon))) continue;
+        const clearance = Math.min(
+          targetSize * HOLE_FRONT_TARGET_CLEARANCE_FACTOR,
+          edgeLength * HOLE_FRONT_EDGE_CLEARANCE_FACTOR * (HOLE_FRONT_GROWTH ** layer),
+        );
+        if (!farEnoughByDistance(candidate, points, clearance)) continue;
+        if (insertInteriorPoint(points, triangles, constrainedEdgeKeys, candidate)) insertedCount += 1;
+      }
+    }
+  }
+  return insertedCount;
+}
+
+function holeFrontOffset(edgeLength, layer) {
+  const baseHeight = edgeLength * TRIANGULAR_ROW_HEIGHT_FACTOR;
+  let offset = 0;
+  for (let index = 0; index <= layer; index += 1) {
+    offset += baseHeight * (HOLE_FRONT_GROWTH ** index);
+  }
+  return offset;
+}
+
 function splitInteriorEdge(points, triangles, key, point) {
   const owners = [];
   for (let triangleIndex = 0; triangleIndex < triangles.length; triangleIndex += 1) {
@@ -307,6 +377,11 @@ function farEnoughFromBoundaries(point, boundaryRings, points, targetSize) {
 
 function farEnoughFromExisting(point, points, targetSize) {
   const clearance = targetSize * POINT_CLEARANCE_FACTOR;
+  return points.every((existing) => Math.hypot(point.x - existing.x, point.y - existing.y)
+    >= clearance - scaledEps(point, existing));
+}
+
+function farEnoughByDistance(point, points, clearance) {
   return points.every((existing) => Math.hypot(point.x - existing.x, point.y - existing.y)
     >= clearance - scaledEps(point, existing));
 }

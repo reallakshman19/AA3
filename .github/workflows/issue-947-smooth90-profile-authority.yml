@@ -10,7 +10,7 @@ permissions:
 
 jobs:
   apply:
-    if: "${{ github.event.head_commit.message == 'chore(issue947): wire smooth90 profile authority' }}"
+    if: "${{ github.event.head_commit.message == 'chore(issue947): retry smooth90 profile authority' }}"
     runs-on: ubuntu-latest
     steps:
       - name: Checkout qualification branch
@@ -26,8 +26,8 @@ jobs:
       - name: Apply deterministic source patch
         run: node scripts/lfea-issue947-apply-smooth90-profile-authority.mjs
 
-      - name: Run existing B31J factor policy regression
-        run: node scripts/lfea-b3.21-b31j-phase2-factor-benchmark-check.mjs
+      - name: Run self-contained smooth-90 factor regression
+        run: node scripts/lfea-issue947-smooth90-factor-check.mjs
 
       - name: Commit authoritative source changes
         shell: bash

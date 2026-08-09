@@ -61,6 +61,49 @@
       "cause": "The I015 guard used a global source.includes('0.01') prohibition intended for an old diagnostic grouping threshold, but the frozen production solver legitimately contains bendLengthErrorLimit=0.01. The failed artifact proves the exact accepted I015 candidate SHA bdf4c0e... was materialized. The guard was narrowed to require exactly the legitimate bendLengthErrorLimit occurrence and reject any additional 0.01 occurrence; candidate mechanics were not changed."
     }
   ],
-  "verdict": "PENDING",
-  "decisionReason": "First run 31317478785 is harness-only and reached no system solve. Await corrected exact-head locked Windows I022 component-check and system A/B evidence with unchanged candidate mechanics."
+  "verdict": "REJECTED",
+  "decisionReason": "Corrected exact-head run 31317827038 completed the full locked Windows parent/candidate A/B with B3.1/B3.2/B3.3/B3.4 qualification, 12/12 bend coverage, 226 BEND_ARC carriers, 11 non-tee incoming-straight carriers, source-36 tee hold, identical reference custody, and target equilibrium at numerical roundoff. The coherent bend-family cutover improves L19 node 20090 FY from 8.542% to 4.463%, displacement/rotation failures 66 -> 65 with RMSnorm 0.34639 -> 0.31038, and source-action failures 23 -> 22 with RMSnorm 0.05304 -> 0.05245. However it still creates a new L19 restraint failure at node 20390 FZ, worsening the accepted-I015 9.961% error to 10.724%; the I019 9-11 MZ sentinel remains slightly improved while a new source-44 MZ threshold crossing appears on the bend-side I020 boundary. L20 materially regresses: restraints 6 -> 8, restraint RMSnorm 0.03825 -> 0.04161, source-end-action failures 134 -> 175 with RMSnorm 0.14976 -> 0.16579, and displacement/rotation RMSnorm 0.25686 -> 0.27539. Therefore the current model 'Timoshenko base beam + unchanged existing bend flexibility/pressure-stiffening ownership' is not accepted as the CAESAR-compatible bend architecture. The component-level B32-T23 proof remains valid, but system evidence shows additional bend-specific authority or formulation differences must be resolved before promotion. No production bend cutover is authorized.",
+  "executionEvidence": {
+    "orchestrationHeadSha": "c165c67f9e1bf7183c685a0f9479469f7905062e",
+    "workflowRunId": 31317827038,
+    "workflowConclusion": "success",
+    "artifactId": 9039299300,
+    "artifactSha256": "805002af29fe2cf25e12dfa496dbefbc16ee78c368a184d77defb6c396f34ca0",
+    "semanticHash": "fnv1a64:03439cba369b39d2",
+    "candidateSolverSha256": "db2dfa7016006be69739e1dc9f716d8ef66b94fa2139bbc5665f29654ee51f69",
+    "targetEquilibriumResidualAbsMax": 4.774847184307873e-12
+  },
+  "observedResult": {
+    "carrierCustody": {
+      "bendPointerCount": 12,
+      "bendArcCarrierCount": 226,
+      "bendIncomingStraightCarrierCount": 12,
+      "nonTeeIncomingStraightSelectedCount": 11,
+      "teeHeldIncomingStraightSource": "36"
+    },
+    "L19": {
+      "restraintFailures": "0 -> 1",
+      "restraintRmsNormalizedError": "0.021778551450530564 -> 0.02102066811860227",
+      "node20090FYRelativeError": "0.08542188461083092 -> 0.04462791273749254",
+      "newRestraintFailure": "node 20390 FZ: 0.09961259044390637 -> 0.10724073401654763",
+      "displacementRotationFailures": "66 -> 65",
+      "displacementRotationRmsNormalizedError": "0.3463907572374756 -> 0.31038436459853447",
+      "sourceEndActionFailures": "23 -> 22",
+      "sourceEndActionRmsNormalizedError": "0.05303530122813788 -> 0.05245015147702522",
+      "i019Sources9To11Mz": "all six remain failing but each relative error improves slightly",
+      "newBendBoundarySourceActionFailure": "source 44 GLOBAL_END_MOMENT_FROM MZ, relative error 0.10114569087534601"
+    },
+    "L20": {
+      "restraintFailures": "6 -> 8",
+      "restraintRmsNormalizedError": "0.03825058747833576 -> 0.041611688365915195",
+      "newRestraintFailures": [
+        "node 20030 FX, relative error 0.10701287074528781",
+        "node 21470 FY, relative error 0.10040402435586236"
+      ],
+      "displacementRotationFailures": "90 -> 90",
+      "displacementRotationRmsNormalizedError": "0.2568590341983296 -> 0.2753934503213003",
+      "sourceEndActionFailures": "134 -> 175",
+      "sourceEndActionRmsNormalizedError": "0.1497606159392834 -> 0.1657906588050282"
+    }
+  }
 }

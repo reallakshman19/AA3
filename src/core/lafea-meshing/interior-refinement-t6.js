@@ -499,7 +499,7 @@ function distancePointToSegment(point, a, b) {
 }
 
 function orient(a, b, c) {
-  return (b.x - a.x) * (c.y - a.y) - (b.y - a.y) * (c.x - b.x);
+  return (b.x - a.x) * (c.y - a.y) - (b.y - a.y) * (c.x - a.x);
 }
 
 function scaledEps(...points) {

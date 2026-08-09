@@ -137,6 +137,14 @@ jobs:
             --summary-out .work/bm4nl-summary.md `
             --out .work/bm4nl-report.json
 
+      - name: Audit node 20390 UZ mechanics and kinematic sensitivity
+        shell: pwsh
+        run: |
+          node scripts/lfea-issue947-node20390-uz-audit.mjs `
+            --package .work/bm4nl-canonical-package.json `
+            --actual .work/bm4nl-actual.json `
+            --out .work/bm4nl-node20390-uz-audit.json
+
       - name: Diagnose L19 Bourdon mode contributions
         continue-on-error: true
         shell: pwsh
@@ -162,6 +170,7 @@ jobs:
           path: |
             .work/bm4nl-caesar-settings-custody.json
             .work/bm4nl-b31-material-custody.json
+            .work/bm4nl-node20390-uz-audit.json
             .work/bm4nl-canonical-package.json
             .work/bm4nl-bourdon-mode-diagnostics.json
             .work/bm4nl-actual.json

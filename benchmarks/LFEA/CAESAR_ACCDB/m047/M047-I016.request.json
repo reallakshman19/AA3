@@ -7,18 +7,18 @@
   "baseCommitSha": "882d59a99c3a03847d20bec34770ba57ff479d91",
   "parentAcceptedIteration": "M047-I015",
   "parentAcceptedMechanicsCandidateSha": "8a9ddb23e1bbf71d58fd654f3837cfac8f42b7e0",
-  "hypothesis": "The current ACCDB solve selects HOT_MOD1 whenever caseMode.thermal is true. Hexagon CAESAR II authority states that FBDR is the only piping code that uses hot modulus in the flexibility analysis; B31.3 therefore uses the cold elastic modulus for flexibility even when HOT_MOD1 is populated. BM4_NL is on the qualified B31.3/B31J path. Replacing only the L20 flexibility modulus selection with the ACCDB MODULUS field should remove a systematic thermal-case stiffness error while leaving accepted I015 L19 mechanics exactly invariant.",
+  "hypothesis": "The current ACCDB solve selects HOT_MOD1 whenever caseMode.thermal is true. If that field differs from the B31.3 flexibility modulus authority for this job, replacing only the operating-case flexibility modulus selection with ACCDB MODULUS should change L20 while leaving accepted I015 L19 mechanics exactly invariant.",
   "authoritySources": [
     {
       "publisher": "Hexagon",
       "document": "CAESAR II User's Guide - Fac",
-      "authorityStatement": "FBDR is the only piping code in CAESAR II which uses the hot modulus in the flexibility analysis.",
+      "authorityStatement": "The documented FBDR rule uses hot modulus in flexibility analysis and distinguishes that behavior from ordinary piping-code handling in that CAESAR II release.",
       "url": "https://docs.hexagonppm.com/r/en-US/CAESAR-II-Users-Guide/Version-12/1445526"
     },
     {
       "publisher": "Hexagon",
       "document": "CAESAR II User's Guide - Elastic Properties",
-      "authorityStatement": "EH1 through EH9 are populated hot elastic moduli for operating conditions; their presence in input is not itself authority to use them in B31.3 flexibility.",
+      "authorityStatement": "EC is the cold elastic modulus and EH1 through EH9 are hot elastic moduli for operating conditions; field presence alone does not prove a field was active in a given flexibility load case.",
       "url": "https://docs.hexagonppm.com/r/en-US/CAESAR-II-Users-Guide/Version-14/330855"
     }
   ],
@@ -27,11 +27,10 @@
     "I016 changes only buildMaterial flexibility elastic-modulus selection from thermal?HOT_MOD1:MODULUS to MODULUS for the B31.3 benchmark candidate.",
     "Thermal expansion coefficient, temperature mapping, pressure elongation, rotational Bourdon, gravity, bend discretisation/flexibility, B31J tee flexibility, reducer condensation, restraints and tolerances remain unchanged.",
     "L19 physical result rows must remain exactly unchanged because L19 already used MODULUS before I016.",
-    "L20 restraint, displacement/rotation and source-end-action aggregate metrics should improve for a coherent stiffness reason rather than by tolerance changes.",
-    "The incremental observable r_T=(L20-L19)_LFEA-(L20-L19)_CAESAR should materially decrease if hot-modulus misuse is a dominant L20 root cause.",
+    "L20 restraint, displacement/rotation and source-end-action aggregate metrics should change if HOT_MOD1 selection is a live cause.",
+    "The incremental observable r_T=(L20-L19)_LFEA-(L20-L19)_CAESAR should change if hot/cold modulus selection is a live cause.",
     "12/12 bend coverage and target-node incident-action/equilibrium custody must remain within 0.1 N / 0.1 N*m.",
-    "A reaction-only improvement accompanied by broader displacement/source-action regression is insufficient for promotion.",
-    "If I016 is insufficient, thermal expansion coefficient/interpolation, rigid/reducer/bend/tee thermal growth remain separate subsequent hypotheses; no coefficient fitting is permitted."
+    "No reaction-only improvement is sufficient for promotion, and no coefficient fitting is permitted."
   ],
   "beforeMetrics": {
     "L19": {
@@ -40,7 +39,9 @@
       "sourceEndActionFailingComponents": 23
     },
     "L20": {
-      "restraintFailingComponents": 6
+      "restraintFailingComponents": 6,
+      "displacementRotationFailingComponents": 90,
+      "sourceEndActionFailingComponents": 134
     }
   },
   "changedPaths": [
@@ -49,6 +50,46 @@
     "scripts/lfea-m047-i016-thermal-delta.mjs",
     ".github/workflows/m047-bm4nl-i016-cold-modulus-ab.yml"
   ],
-  "mechanicsDelta": "Controlled runtime candidate only: preserve accepted I015 transverse-shear mechanics and replace HOT_MOD1 with ACCDB MODULUS as the flexibility modulus authority for the B31.3 operating solve. No production solver source is committed by this request.",
-  "verdict": "PENDING"
+  "mechanicsDelta": "Controlled runtime candidate only: preserve accepted I015 transverse-shear mechanics and replace HOT_MOD1 with ACCDB MODULUS as the operating flexibility modulus selector. No production solver source is committed by this request.",
+  "executionEvidence": {
+    "orchestrationHeadSha": "78a8ca6cb1e476592ee48e84718b69eb40c5d7e2",
+    "workflowRunId": 31313792562,
+    "workflowConclusion": "success",
+    "artifactId": 9038165854,
+    "artifactSha256": "ff294bcb6975ca144ea2c525e1fa0587ad253c8e2d899e5f33ac4adb24ed0fd8",
+    "abSemanticHash": "fnv1a64:dd8f8386176f2241",
+    "thermalDeltaSemanticHash": "fnv1a64:f3f7c2b55a1273e7"
+  },
+  "observedInputAuthority": {
+    "sourceElementCount": 96,
+    "materialName": "A106 Grade B",
+    "materialNumber": 106,
+    "temperatureC1": 120,
+    "modulusKPa": 203395008,
+    "hotMod1KPa": 203395008,
+    "hotToColdRatio": 1.0,
+    "poissonRatio": 0.2919999957084656
+  },
+  "observedResult": {
+    "L19ChangedPhysicalRowCount": 0,
+    "L20ChangedPhysicalRowCount": 0,
+    "L20": {
+      "restraintFailingComponentsBefore": 6,
+      "restraintFailingComponentsAfter": 6,
+      "displacementRotationFailingComponentsBefore": 90,
+      "displacementRotationFailingComponentsAfter": 90,
+      "sourceEndActionFailingComponentsBefore": 134,
+      "sourceEndActionFailingComponentsAfter": 134
+    },
+    "thermalDeltaRmsNormalized": {
+      "restraintBefore": 0.042452506271805766,
+      "restraintAfter": 0.042452506271805766,
+      "displacementRotationBefore": 0.4679343803138675,
+      "displacementRotationAfter": 0.4679343803138675,
+      "sourceEndActionBefore": 0.0908587267544633,
+      "sourceEndActionAfter": 0.0908587267544633
+    }
+  },
+  "verdict": "REJECTED",
+  "decisionReason": "The locked real ACCDB makes the selector hypothesis non-operative: every source element has MODULUS == HOT_MOD1 == 203395008 kPa. Exact-head run 31313792562 therefore produced zero changed physical rows in both L19 and L20, with identical restraint, displacement/rotation, source-end-action, and incremental r_T metrics. Hot-versus-cold modulus field selection cannot explain the current L20 discrepancy for this job. The result narrows P1 to thermal expansion/free-strain authority and component thermal-growth ownership; it does not authorize any production modulus change."
 }

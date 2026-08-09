@@ -23,6 +23,7 @@ import {
   frameTransformationMatrix,
   sealFrameElementProfile,
   thermalInitialStrainVector,
+  transformDisplacementToLocal,
   transformLoadToGlobal,
   transformStiffnessToGlobal,
 } from '../linear-fea-frame-element/index.js';
@@ -43,7 +44,7 @@ import {
 import {
   classifyBranchLegs,
   compilePipingComponent,
-  deriveMec21BendPressureFreeMovement,
+  deriveMec21BendPressureFreeState,
   deriveB31JDirectionalBranchEndModifiers,
   sealPipingComponentProfile,
 } from '../linear-fea-piping-components/index.js';
@@ -119,7 +120,7 @@ export function solveCaesarAccdbLinearBenchmark(benchmarkPackage) {
       limitations: [
         'Restraints are linearized as bilateral fixed DOFs; friction and lift-off are excluded as requested.',
         'The explicit Bourdon job mode is supplied by the benchmark profile because CAESAR existing-job settings are absent from ACCDB exports.',
-        'Translation-and-rotation mode applies closed-end axial pressure strain to non-bend spans and MEC-21 equation (2.25) free movements to declared bend arcs.',
+        'Translation-and-rotation mode applies closed-end axial pressure strain to non-bend spans and one MEC-21 equation (2.25) bend-level free field sampled at all discretized bend stations.',
         'Bend stiffness uses the qualified B31.3/B31J factor calculator and true tangent-to-tangent arc components.',
         'Reducer stiffness, gravity and thermal loads use the governed ten-cylinder midpoint-sampling candidate.',
         'Topology-qualified TYPE=3 welding tees use unreduced B31J directional end springs; branch legs connect at the run surface through a rigid offset.',
@@ -884,6 +885,8 @@ function buildBendDefinitions(input) {
       component.geometry.centre,
       radius,
       pointer,
+      incomingDirection,
+      bendAngle,
     );
     const middleIndex = component.subdivision.elementCount / 2;
     if (!Number.isInteger(middleIndex)) throw new TypeError(`BEND_PTR ${pointer} lacks an exact mid-arc station.`);
@@ -912,10 +915,29 @@ function buildBendDefinitions(input) {
   return definitions.sort((left, right) => left.pointer - right.pointer);
 }
 
-/** Build CAESAR a-b-c axes and angular extent for every discretized bend arc. */
-function buildBourdonSegments(points, centrePoint, bendRadius, pointer) {
+/**
+ * Build one cumulative MEC-21 bend coordinate field over the numerical arc.
+ * Each chord retains its own frame axes for stiffness, but its pressure free
+ * state is sampled from the same physical bend initial point. This prevents
+ * the pressure endpoint from changing when the stiffness mesh is refined.
+ */
+function buildBourdonSegments(points, centrePoint, bendRadius, pointer, incomingDirection, totalBendAngle) {
   const centre = [...centrePoint];
-  return points.slice(0, -1).map((pointI, index) => {
+  const referenceAAxis = unit(incomingDirection, `BEND_PTR ${pointer} reference a-axis`);
+  const referenceCAxis = unit(subtract(centre, points[0]), `BEND_PTR ${pointer} reference c-axis`);
+  const referenceBAxis = unit(
+    cross(referenceCAxis, referenceAAxis),
+    `BEND_PTR ${pointer} reference b-axis`,
+  );
+  const referenceAxes = Object.freeze({
+    aAxis: Object.freeze([...referenceAAxis]),
+    bAxis: Object.freeze([...referenceBAxis]),
+    cAxis: Object.freeze([...referenceCAxis]),
+  });
+  const segments = [];
+  let cumulativeAngle = 0;
+  for (let index = 0; index < points.length - 1; index += 1) {
+    const pointI = points[index];
     const pointJ = points[index + 1];
     const cAxis = unit(subtract(centre, pointI), `BEND_PTR ${pointer} segment ${index} c-axis`);
     const nextCAxis = unit(subtract(centre, pointJ), `BEND_PTR ${pointer} segment ${index} next c-axis`);
@@ -925,8 +947,28 @@ function buildBourdonSegments(points, centrePoint, bendRadius, pointer) {
     const bAxis = unit(cross(cAxis, aAxis), `BEND_PTR ${pointer} segment ${index} b-axis`);
     const bendAngle = Math.acos(clamp(dot(cAxis, nextCAxis), -1, 1));
     if (!(bendAngle > 0)) throw new TypeError(`BEND_PTR ${pointer} segment ${index} has zero arc angle.`);
-    return Object.freeze({ aAxis, bAxis, cAxis, bendAngle, bendRadius });
-  });
+    const startAngle = cumulativeAngle;
+    const rawEndAngle = cumulativeAngle + bendAngle;
+    const endAngle = index === points.length - 2 ? totalBendAngle : rawEndAngle;
+    cumulativeAngle = endAngle;
+    segments.push(Object.freeze({
+      aAxis,
+      bAxis,
+      cAxis,
+      bendAngle,
+      bendRadius,
+      startAngle,
+      endAngle,
+      referenceAxes,
+    }));
+  }
+  const angularError = Math.abs(cumulativeAngle - totalBendAngle);
+  if (angularError > 1e-10 * Math.max(1, totalBendAngle)) {
+    throw new TypeError(
+      `BEND_PTR ${pointer} discretized angle ${cumulativeAngle} does not close declared angle ${totalBendAngle}.`,
+    );
+  }
+  return Object.freeze(segments);
 }
 
 function compileAnalysisModel(input) {
@@ -1390,32 +1432,57 @@ function closedEndPressureAxialStrain(row, elasticModulus) {
     / (elasticModulus * (outerDiameter ** 2 - innerDiameter ** 2));
 }
 
-/** Convert MEC-21 bend free movement into the initial load of one arc frame. */
+/**
+ * Convert one physical bend's cumulative MEC-21 free field into this chord's
+ * initial load. Both chord-end generalized movements are sampled relative to
+ * the physical bend initial point, transformed by the authoritative frame
+ * relation d_local = T d_global, then multiplied by the stiffness actually
+ * assembled for this chord. A free bend therefore has q = K(d-d0) = 0 and its
+ * external free endpoint is independent of numerical subdivision.
+ */
 function buildBourdonBendInitialLoad(input) {
-  const freeMovement = deriveMec21BendPressureFreeMovement({
+  const stateInput = {
     pressure: Number(input.row.PRESSURE1) * KPA_TO_PA,
     innerRadius: input.section.dimensions.innerDiameter / 2,
     bendRadius: input.segment.bendRadius,
     elasticModulus: input.frame.material.elasticModulus,
     secondMoment: input.section.sectionState.secondMomentY,
     poissonRatio: Number(input.row.POISSONS),
-    bendAngle: input.segment.bendAngle,
+  };
+  const startState = deriveMec21BendPressureFreeState({
+    ...stateInput,
+    bendAngle: input.segment.startAngle,
   });
-  const translationGlobal = add(
-    scale(input.segment.aAxis, freeMovement.translationAbc[0]),
-    scale(input.segment.cAxis, freeMovement.translationAbc[2]),
+  const endState = deriveMec21BendPressureFreeState({
+    ...stateInput,
+    bendAngle: input.segment.endAngle,
+  });
+  const startTranslationGlobal = abcVectorToGlobal(input.segment.referenceAxes, startState.translationAbc);
+  const startRotationGlobal = abcVectorToGlobal(input.segment.referenceAxes, startState.rotationAbc);
+  const endTranslationGlobal = abcVectorToGlobal(input.segment.referenceAxes, endState.translationAbc);
+  const endRotationGlobal = abcVectorToGlobal(input.segment.referenceAxes, endState.rotationAbc);
+  const freeDofGlobal = [
+    ...startTranslationGlobal,
+    ...startRotationGlobal,
+    ...endTranslationGlobal,
+    ...endRotationGlobal,
+  ];
+  const freeDofLocal = transformDisplacementToLocal(
+    freeDofGlobal,
+    input.frame.transformation.matrix,
   );
-  const rotationGlobal = scale(input.segment.bAxis, freeMovement.rotationAbc[1]);
-  const translationLocal = projectToLocal(input.frame.localAxes.axes, translationGlobal);
-  const rotationLocal = projectToLocal(input.frame.localAxes.axes, rotationGlobal);
-  const freeDofLocal = zero12();
-  freeDofLocal.splice(6, 3, ...translationLocal);
-  freeDofLocal.splice(9, 3, ...rotationLocal);
   return Object.freeze({
     initialLocal: matrixVector12(input.effectiveLocalStiffness, freeDofLocal),
-    rotationRadians: freeMovement.rotationAbc[1],
-    freeEndTranslationM: translationGlobal,
+    rotationRadians: endState.rotationAbc[1] - startState.rotationAbc[1],
+    freeEndTranslationM: subtract(endTranslationGlobal, startTranslationGlobal),
   });
+}
+
+function abcVectorToGlobal(axes, vector) {
+  return add(
+    add(scale(axes.aAxis, vector[0]), scale(axes.bAxis, vector[1])),
+    scale(axes.cAxis, vector[2]),
+  );
 }
 
 function sectionDimensions(section) {

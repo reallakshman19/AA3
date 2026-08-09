@@ -21,7 +21,7 @@ export class AnalyzeController {
     this.elements = createAnalyzeLayout(this.documentRef);
     const subtitle = this.elements.root.querySelector('.ixa__subtitle');
     if (subtitle) {
-      subtitle.textContent = 'Load a CAESAR II InputXML file to inspect parsed topology, restraint classification, load-time diagnostics, and governed pre-FEA readiness.';
+      subtitle.textContent = 'Standalone developer diagnostics only. Normal engineering work belongs in LFEA → Source → Pre-flight, where source custody, readiness and authorization are sealed together.';
     }
     this.applicationRoot.append(this.elements.root);
     this.wireDropzone();
@@ -137,14 +137,14 @@ function replaceResultantsWithAuthorizationNotice(documentRef, reportRoot) {
   body.className = 'ixa__section-body';
   const notice = documentRef.createElement('p');
   notice.className = 'ixa__dropzone-hint';
-  notice.textContent = `${PREFEA_AUTHORIZATION_REQUIRED}: Raw InputXML execution is disabled. This page is diagnostics-only until a prepared source, sealed authorization, and explicit solver executor are supplied through the governed gateway.`;
+  notice.textContent = `${PREFEA_AUTHORIZATION_REQUIRED}: Standalone InputXML Analyzer execution is disabled. Use the normal LFEA Source → Pre-flight workflow for sealed source custody, governed preparation and authorization; this page remains diagnostics-only and has no solver executor.`;
   body.append(notice);
 
   resultants.replaceChildren(header, body);
 }
 
 function failClosedAnalyzeSolve() {
-  const error = new Error('Raw InputXML analysis requires governed pre-FEA authorization and an explicit executor.');
+  const error = new Error('Standalone InputXML Analyzer has no execution authority. Use governed LFEA Source → Pre-flight and an explicit authorized executor.');
   error.code = PREFEA_AUTHORIZATION_REQUIRED;
   throw error;
 }

@@ -6,6 +6,10 @@ import { canonicalStringify, semanticHash } from '../shared-piping-model/canonic
 import { deepFreeze } from '../shared-piping-model/immutable.js';
 import { buildCaesarAccdbReferenceCase, buildCaesarElementIndex } from './caesar-accdb-reference.js';
 import { temperatureToKelvin } from './caesar-accdb-units.js';
+import {
+  normalizeCaesarConfigurationAuthority,
+  resolveCaesarConfigurationSetting,
+} from './caesar-configuration-authority.js';
 
 export const CAESAR_ACCDB_PROFILE_SCHEMA = 'caesar-accdb-benchmark-profile/v1';
 export const CAESAR_ACCDB_PACKAGE_SCHEMA = 'caesar-accdb-benchmark-package/v1';
@@ -99,20 +103,25 @@ function normalizeProfile(value) {
   const installationTemperatureK = temperatureToKelvin(installation?.value, installation?.unit);
   const conventions = normalizeConventions(value.conventions);
   const equilibriumTolerance = normalizeEquilibriumTolerance(value.equilibriumTolerance);
+  const configurationAuthority = normalizeCaesarConfigurationAuthority(value.configurationAuthority);
+  const caseSelection = normalizeCaseSelection(value.caseSelection);
+  const linearSolve = normalizeLinearSolve(value.linearSolve);
   const profile = {
     schema: CAESAR_ACCDB_PROFILE_SCHEMA,
     profileId: nonempty(value.profileId, 'profileId'),
     benchmarkId: nonempty(value.benchmarkId, 'benchmarkId'),
     installationTemperature: { value: Number(installation.value), unit: nonempty(installation.unit, 'installationTemperature.unit'),
       kelvin: installationTemperatureK },
-    caseSelection: normalizeCaseSelection(value.caseSelection),
+    caseSelection,
     nodeSelection: normalizeNodeSelection(value.nodeSelection),
     resultFamilies,
     conventions,
     equilibriumTolerance,
     tolerances: normalizeTolerances(value.tolerances),
-    linearSolve: normalizeLinearSolve(value.linearSolve),
+    configurationAuthority,
+    linearSolve,
   };
+  validateConfigurationAuthority(profile);
   return deepFreeze(profile);
 }
 
@@ -151,11 +160,68 @@ function normalizeLinearSolve(value) {
       value.reducerCondensation,
       'linearSolve.reducerCondensation',
     ),
+    b31jSmooth90FlexibilityCorrection: normalizeAuthorityDecision(
+      value.b31jSmooth90FlexibilityCorrection,
+      'linearSolve.b31jSmooth90FlexibilityCorrection',
+      'enabled',
+      ['RESOLVED', 'UNRESOLVED'],
+    ),
+    bendPressureStiffening: normalizeAuthorityDecision(
+      value.bendPressureStiffening,
+      'linearSolve.bendPressureStiffening',
+      'pressureSource',
+      ['RESOLVED', 'PROVISIONAL'],
+    ),
+    restraintRepresentation: normalizeAuthorityDecision(
+      value.restraintRepresentation,
+      'linearSolve.restraintRepresentation',
+      'mode',
+      ['RESOLVED', 'PROVISIONAL'],
+    ),
   };
   if (result.teeNominalDiameterRelativeTolerance > 0.01) {
     throw new TypeError('linearSolve.teeNominalDiameterRelativeTolerance must not exceed 0.01.');
   }
   return deepFreeze(result);
+}
+
+function normalizeAuthorityDecision(value, field, valueField, allowedStatuses) {
+  if (!value || typeof value !== 'object' || Array.isArray(value)) {
+    throw new TypeError(`${field} must be an object.`);
+  }
+  const decisionValue = valueField === 'enabled'
+    ? requiredBoolean(value[valueField], `${field}.${valueField}`)
+    : nonempty(value[valueField], `${field}.${valueField}`).toUpperCase();
+  const authorityStatus = nonempty(value.authorityStatus, `${field}.authorityStatus`).toUpperCase();
+  if (!allowedStatuses.includes(authorityStatus)) {
+    throw new TypeError(`${field}.authorityStatus must be one of ${allowedStatuses.join(', ')}.`);
+  }
+  return deepFreeze({
+    [valueField]: decisionValue,
+    authorityStatus,
+    source: nonempty(value.source, `${field}.source`),
+  });
+}
+
+/** Bind solver choices to resolved profile authority without guessing defaults. */
+function validateConfigurationAuthority(profile) {
+  const authority = profile.configurationAuthority;
+  const ambient = resolveCaesarConfigurationSetting(authority, 'AMBIENT_TEMPERATURE', null);
+  const ambientKelvin = temperatureToKelvin(ambient.value.value, ambient.value.unit);
+  if (Math.abs(ambientKelvin - profile.installationTemperature.kelvin) > 1e-9) {
+    throw new TypeError('installationTemperature conflicts with resolved AMBIENT_TEMPERATURE authority.');
+  }
+  if (profile.linearSolve === null) return;
+  const bourdon = resolveCaesarConfigurationSetting(authority, 'BOURDON_PRESSURE', null);
+  if (bourdon.value !== profile.linearSolve.bourdonPressureEffects.mode) {
+    throw new TypeError(
+      `linearSolve Bourdon mode ${profile.linearSolve.bourdonPressureEffects.mode} conflicts with resolved ${String(bourdon.value)}.`,
+    );
+  }
+  const smooth = profile.linearSolve.b31jSmooth90FlexibilityCorrection;
+  if (smooth.authorityStatus === 'UNRESOLVED' && smooth.enabled) {
+    throw new TypeError('An unresolved smooth-90 correction must remain disabled.');
+  }
 }
 
 function normalizeBourdonPressureEffects(value) {

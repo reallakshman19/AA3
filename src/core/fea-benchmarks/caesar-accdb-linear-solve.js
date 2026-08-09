@@ -79,6 +79,7 @@ import {
 } from '../linear-fea-result-recovery/index.js';
 import { semanticHash } from '../shared-piping-model/canonical-json.js';
 import { deepFreeze } from '../shared-piping-model/immutable.js';
+import { resolveCaesarConfigurationSetting } from './caesar-configuration-authority.js';
 
 const PROFILE_SOURCE = 'CAESAR_ACCDB_LINEAR_SOLVE_PROFILE_V1';
 const FACTOR_PROFILE_ID = 'B31_3_2022_B31J_2017';
@@ -119,12 +120,14 @@ export function solveCaesarAccdbLinearBenchmark(benchmarkPackage) {
       profile: solveProfile,
       cases: caseEvidence,
       limitations: [
-        'Restraints are linearized as bilateral fixed DOFs; friction and lift-off are excluded as requested.',
-        'The explicit Bourdon job mode is supplied by the benchmark profile because CAESAR existing-job settings are absent from ACCDB exports.',
+        'Restraints are provisionally linearized as bilateral fixed DOFs; the known finite global stiffness is not substituted without file-specific CAESAR formulation authority.',
+        'The model input retains mu=0.3; L19 and L20 resolve to effective mu=0 through the declared load-case authority, so friction and lift-off are excluded for these cases.',
+        'The explicit Bourdon job mode resolves from the individual-file layer because CAESAR existing-job settings are absent from ACCDB exports.',
         'Translation-and-rotation mode applies closed-end axial pressure strain to non-bend spans and one MEC-21 equation (2.25) bend-level free field sampled at all discretized bend stations.',
-        'Bend stiffness uses the qualified B31.3/B31J factor calculator and true tangent-to-tangent arc components.',
+        'Reducer stiffness, gravity, thermal load and closed-end pressure elongation use the governed ten-cylinder midpoint-sampling candidate.',
+        'Bend stiffness uses the qualified B31.3/B31J factor calculator and true tangent-to-tangent arc components; smooth-90/Note-3 correction remains disabled because its file/case authority is unresolved.',
+        'Bend pressure stiffening provisionally uses P1; P1 equals Pmax in this locked source, but the CAESAR DEFAULT load-case pressure rule remains unresolved.',
         'B31.3 flexibility stiffness uses the cold/reference elastic modulus Ec (ACCDB MODULUS); HOT_MOD1/Eh is not selected by thermal-case presence.',
-        'Reducer stiffness, gravity and thermal loads use the governed ten-cylinder midpoint-sampling candidate.',
         'Topology-qualified TYPE=3 welding tees use unreduced B31J directional end springs; branch legs connect at the run surface through a rigid offset.',
       ],
     },
@@ -133,9 +136,19 @@ export function solveCaesarAccdbLinearBenchmark(benchmarkPackage) {
 
 function solveCase(benchmarkPackage, caseRecord, solveProfile) {
   const caseMode = requireSupportedCase(caseRecord);
+  const effectiveConfiguration = resolveCaseConfiguration(
+    benchmarkPackage.profile.configurationAuthority,
+    caseRecord.caseId,
+  );
+  requireSupportedLinearConfiguration(
+    benchmarkPackage.profile.configurationAuthority,
+    solveProfile,
+    effectiveConfiguration,
+    caseRecord.caseId,
+  );
   const modelInput = benchmarkPackage.model;
   const sourceRows = sortedElements(modelInput.tables.INPUT_BASIC_ELEMENT_DATA.rows);
-  const material = buildMaterial(sourceRows, solveProfile, benchmarkPackage);
+  const material = buildMaterial(sourceRows, solveProfile, benchmarkPackage, effectiveConfiguration);
   const sectionRegistry = createSectionRegistry(benchmarkPackage);
   const sourceSections = new Map(sourceRows.map((row) => [
     String(row.ELEMENTID),
@@ -148,6 +161,7 @@ function solveCase(benchmarkPackage, caseRecord, solveProfile) {
     sourcePositions,
     sourceSections,
     material,
+    solveProfile,
   });
   const teeJunctions = solveProfile.directionalB31JTeeFlexibility
     ? buildTeeJunctions({
@@ -203,6 +217,7 @@ function solveCase(benchmarkPackage, caseRecord, solveProfile) {
     rows: resultRows({ benchmarkPackage, execution, recovered, analysis }),
     evidence: {
       formula: caseRecord.formula,
+      effectiveConfiguration,
       thermalIncluded: caseMode.thermal,
       pressureIncluded: caseMode.pressure,
       executionStatus: execution.status,
@@ -235,6 +250,7 @@ function solveCase(benchmarkPackage, caseRecord, solveProfile) {
         pressureAxialStrain: entry.pressureAxialStrain,
         bourdonRotationRadians: entry.bourdonRotationRadians,
         bourdonFreeEndTranslationM: entry.bourdonFreeEndTranslationM,
+        initialStrainLoadGlobal: entry.recoveryFrame.initialStrainLoadVector.global,
         gravityWeightN: entry.gravityWeightN,
       })),
     },
@@ -569,9 +585,29 @@ function buildReducerElement(input) {
   const authority = compileTenCylinderReducerAuthority(request);
   const transformation = frameTransformationMatrix(axesResult.axes);
   const equivalentLocal = [...authority.condensed.gravityLocalVector];
-  const initialLocal = input.caseMode.thermal
+  const thermalInitialLocal = input.caseMode.thermal
     ? [...authority.condensed.thermalInitialStrainLocalVector]
     : zero12();
+  const reducerPressureEnabled = input.caseMode.pressure
+    && input.solveProfile.bourdonPressureEffects.mode !== 'DISABLED';
+  const reducerPressureFreeElongation = reducerPressureEnabled
+    ? authority.segments.reduce((sum, segment) => sum + segment.length
+      * closedEndPressureAxialStrainForGeometry({
+        outerDiameter: segment.section.outerDiameter,
+        innerDiameter: segment.section.innerDiameter,
+        pressure: Number(input.row.PRESSURE1) * KPA_TO_PA,
+        poissonRatio: Number(input.row.POISSONS),
+        elasticModulus: materialState.elasticModulus,
+        context: `Reducer ${input.row.REDUCER_PTR} segment ${segment.index}`,
+      }), 0)
+    : 0;
+  const reducerPressureAxialStrain = reducerPressureFreeElongation / length;
+  const pressureFreeDofLocal = zero12();
+  pressureFreeDofLocal[6] = reducerPressureFreeElongation;
+  const pressureInitialLocal = reducerPressureEnabled
+    ? matrixVector12(authority.condensed.localStiffness, pressureFreeDofLocal)
+    : zero12();
+  const initialLocal = add(thermalInitialLocal, pressureInitialLocal);
   const equivalentGlobal = transformLoadToGlobal(equivalentLocal, transformation);
   const initialGlobal = transformLoadToGlobal(initialLocal, transformation);
   const effectiveGlobalStiffness = transformStiffnessToGlobal(authority.condensed.localStiffness, transformation);
@@ -600,9 +636,9 @@ function buildReducerElement(input) {
     equivalentGlobal,
     initialLocal,
     initialGlobal,
-    pressureAxialStrain: 0,
+    pressureAxialStrain: reducerPressureAxialStrain,
     bourdonRotationRadians: 0,
-    bourdonFreeEndTranslationM: zero3(),
+    bourdonFreeEndTranslationM: scale(axesResult.axes.x, reducerPressureFreeElongation),
     gravityWeightN: authority.gravity.totalWeight,
   });
 }
@@ -860,7 +896,8 @@ function buildBendDefinitions(input) {
         pressure: Number(row.PRESSURE1) * KPA_TO_PA,
         elasticModulus: input.material.materialState.elasticModulus,
         bendAngleDegrees: bendAngle * 180 / Math.PI,
-        smooth90FlexibilityCorrection: false,
+        smooth90FlexibilityCorrection:
+          input.solveProfile.b31jSmooth90FlexibilityCorrection.enabled,
         sourceEvidence: { sourceId: `ACCDB:BEND:${pointer}`, sourceRevision: input.benchmarkPackage.source.sha256 },
       },
       momentDirectionMapping: MOMENT_DIRECTION_MAPPING,
@@ -1170,10 +1207,13 @@ function sourceResultElementId(row) {
     + `|${String(row.ELEMENT_NAME ?? '').trim()}`;
 }
 
-function buildMaterial(sourceRows, solveProfile, benchmarkPackage) {
+function buildMaterial(sourceRows, solveProfile, benchmarkPackage, effectiveConfiguration) {
   // CAESAR II flexibility analysis for B31.3 uses the cold/reference elastic
   // modulus Ec. HOT_MOD1 (Eh) is retained as source custody but must not be
   // selected merely because a physical case contains temperature loading.
+  if (effectiveConfiguration.flexibilityElasticModulus.value !== 'EC') {
+    throw new TypeError('The current B31.3 flexibility solver requires resolved cold modulus EC.');
+  }
   const elasticValues = uniqueNumbers(sourceRows.map((row) => Number(row.MODULUS)));
   const poissonValues = uniqueNumbers(sourceRows.map((row) => Number(row.POISSONS)));
   const densityValues = uniqueNumbers(sourceRows.map((row) => density(row.PIPE_DENSITY)));
@@ -1432,10 +1472,22 @@ function closedEndPressureAxialStrain(row, elasticModulus) {
   const outerDiameter = Number(row.DIAMETER) * MM_TO_M;
   const wallThickness = Number(row.WALL_THICK) * MM_TO_M;
   const innerDiameter = outerDiameter - 2 * wallThickness;
-  const pressure = Number(row.PRESSURE1) * KPA_TO_PA;
-  const poissonRatio = Number(row.POISSONS);
+  return closedEndPressureAxialStrainForGeometry({
+    outerDiameter,
+    innerDiameter,
+    pressure: Number(row.PRESSURE1) * KPA_TO_PA,
+    poissonRatio: Number(row.POISSONS),
+    elasticModulus,
+    context: `Element ${row.ELEMENTID}`,
+  });
+}
+
+function closedEndPressureAxialStrainForGeometry(input) {
+  const {
+    outerDiameter, innerDiameter, pressure, poissonRatio, elasticModulus, context,
+  } = input;
   if (!(innerDiameter > 0) || !(outerDiameter > innerDiameter) || !(elasticModulus > 0)) {
-    throw new TypeError(`Element ${row.ELEMENTID} cannot resolve closed-end pressure strain.`);
+    throw new TypeError(`${context} cannot resolve closed-end pressure strain.`);
   }
   return (1 - 2 * poissonRatio) * pressure * innerDiameter ** 2
     / (elasticModulus * (outerDiameter ** 2 - innerDiameter ** 2));
@@ -1547,6 +1599,37 @@ function requireSupportedCase(caseRecord) {
   if (caseRecord.formula === 'W+P1') return Object.freeze({ thermal: false, pressure: true });
   if (caseRecord.formula === 'W+T1+P1') return Object.freeze({ thermal: true, pressure: true });
   throw new TypeError(`ACCDB linear solve does not implement physical formula ${caseRecord.formula}.`);
+}
+
+function resolveCaseConfiguration(authority, caseId) {
+  const friction = resolveCaesarConfigurationSetting(
+    authority,
+    'COEFFICIENT_OF_FRICTION_MU',
+    caseId,
+  );
+  const flexibilityElasticModulus = resolveCaesarConfigurationSetting(
+    authority,
+    'FLEXIBILITY_ELASTIC_MODULUS',
+    caseId,
+  );
+  return deepFreeze({ friction, flexibilityElasticModulus });
+}
+
+function requireSupportedLinearConfiguration(authority, solveProfile, effectiveConfiguration, caseId) {
+  const axis = resolveCaesarConfigurationSetting(authority, 'Z_AXIS_UP', null);
+  if (axis.value !== 'NO') throw new TypeError('The current ACCDB solver requires Z_AXIS_UP=NO.');
+  if (effectiveConfiguration.friction.value !== 0) {
+    throw new TypeError(`${caseId} nonlinear friction is outside the current linear benchmark solver.`);
+  }
+  if (effectiveConfiguration.flexibilityElasticModulus.value !== 'EC') {
+    throw new TypeError(`${caseId} flexibility must use cold modulus EC.`);
+  }
+  if (solveProfile.bendPressureStiffening.pressureSource !== 'P1') {
+    throw new TypeError('The current ACCDB solver supports only provisional P1 bend pressure stiffening.');
+  }
+  if (solveProfile.restraintRepresentation.mode !== 'FIXED_DOF') {
+    throw new TypeError('The current ACCDB solver supports only the provisional FIXED_DOF restraint representation.');
+  }
 }
 
 function sortedElements(rows) {

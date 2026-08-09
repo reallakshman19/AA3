@@ -36,6 +36,12 @@ export {
   requiredCaesarAccdbTables,
 } from './caesar-accdb-package.js';
 export { convertCaesarValue, normalizeCaesarUnitToken, temperatureToKelvin } from './caesar-accdb-units.js';
+export {
+  CAESAR_CONFIGURATION_AUTHORITY_SCHEMA,
+  CAESAR_CONFIGURATION_PRECEDENCE,
+  normalizeCaesarConfigurationAuthority,
+  resolveCaesarConfigurationSetting,
+} from './caesar-configuration-authority.js';
 export { solveCaesarAccdbLinearBenchmark } from './caesar-accdb-linear-solve.js';
 export {
   BM4_QUALIFICATION_ADAPTER_ID,

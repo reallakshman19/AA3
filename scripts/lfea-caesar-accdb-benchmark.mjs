@@ -132,6 +132,7 @@ function buildReport(benchmarkPackage, qualification, actual) {
       installationTemperatureK: benchmarkPackage.model.installationTemperatureK,
       inventory: benchmarkPackage.model.inventory,
     },
+    configurationAuthority: benchmarkPackage.profile.configurationAuthority,
     resultFamilies: benchmarkPackage.profile.resultFamilies,
     tolerances: benchmarkPackage.profile.tolerances,
     cases,
@@ -331,14 +332,21 @@ function writeJson(value, path) {
 
 function writeRestraintSummary(report, path) {
   if (report.restraintBasis === null) throw new TypeError('--summary-out requires actual solver results.');
+  const authority = report.configurationAuthority;
+  const caseBoundaries = Object.entries(report.mechanics?.cases ?? {}).map(([caseId, evidence]) => {
+    const friction = evidence.effectiveConfiguration?.friction;
+    return `${caseId} effective mu=${String(friction?.value)} (${String(friction?.level)})`;
+  });
   const lines = [
-    '# BM4_NL L19/L20 restraint, displacement, and global element benchmark basis',
+    `# ${report.benchmarkId} restraint, displacement, and global element benchmark basis`,
     '',
     `- ACCDB: ${report.source.linkedPath}`,
     `- SHA-256: \`${report.source.sha256}\``,
-    `- Installation temperature: ${report.model.installationTemperatureK} K (21 C)`,
+    `- CAESAR version: ${authority.caesarVersion}`,
+    `- Configuration precedence: ${authority.precedence.join(' > ')}`,
+    `- Installation temperature: ${report.model.installationTemperatureK} K`,
     `- Benchmark status: ${report.status}`,
-    '- Boundary: linear bilateral restraints; friction and lift-off excluded.',
+    `- Boundary: provisional bilateral fixed DOFs; ${caseBoundaries.join('; ')}; lift-off excluded.`,
     '- Error criterion: combined 10% profile tolerance; percentages use the declared scale floor for near-zero references.',
     '',
   ];

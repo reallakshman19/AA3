@@ -39,6 +39,92 @@
     "INCIDENT_GLOBAL_FORCE": { "absolute": 0, "relative": 0.1, "scaleFloor": 50 },
     "INCIDENT_GLOBAL_MOMENT": { "absolute": 0, "relative": 0.1, "scaleFloor": 5 }
   },
+  "configurationAuthority": {
+    "schema": "caesar-configuration-authority/v1",
+    "caesarVersion": "14.000",
+    "precedence": [
+      "LOAD_CASE_SETTING",
+      "INDIVIDUAL_FILE_SETTING",
+      "MODEL_INPUT",
+      "OVERALL_GLOBAL_DEFAULT"
+    ],
+    "layers": {
+      "overallGlobalDefault": {
+        "source": "USER_SUPPLIED_CAESAR_14_GLOBAL_SETTINGS_2026-08-09",
+        "settings": {
+          "Z_AXIS_UP": "NO",
+          "USE_PRESSURE_STIFFENING": "DEFAULT",
+          "BEND_AXIAL_SHAPE": "YES",
+          "DEFAULT_TRANS_RESTRAINT_STIFF": { "value": 1000000000000, "unit": "DISPLAYED_CAESAR_UNITS" },
+          "DEFAULT_ROT_RESTRAINT_STIFF": { "value": 1000000000000, "unit": "DISPLAYED_CAESAR_UNITS" },
+          "FRICT_STIF": { "value": 1000000, "unit": "DISPLAYED_CAESAR_UNITS" },
+          "MIN_WALL_MILL_TOLERANCE_PERCENT": 12.5,
+          "AMBIENT_TEMPERATURE": { "value": 70, "unit": "F" },
+          "BOURDON_PRESSURE": "NONE",
+          "COEFFICIENT_OF_FRICTION_MU": 0,
+          "ALL_STRESS_CASES_CORRODED": "NO",
+          "DEFAULT_CODE": "B31.3_2022",
+          "ALLOW_USERS_BEND_SIF": "YES",
+          "LIBERAL_EXPANSION_ALLOWABLE": "YES",
+          "B31_3_SEC_319_2_3C_SAXIAL": "DEFAULT",
+          "B31_3_WELDING_CONTOUR_TEE_IS_B16_9": false,
+          "IMPLEMENT_B313_CODE_CASE_178": "YES",
+          "IGNORE_B31_1_B31_3_WC_FACTOR": "YES",
+          "APPLY_B31J_SIFS_AND_FLEX": "DEFAULT",
+          "ENFORCE_B31J_SIFS_ONLY": false,
+          "CONNECT_GEOMETRY_THRU_CNODES": "YES"
+        }
+      },
+      "modelInput": {
+        "source": "BM4_NL_ACCDB_MODEL_INPUT",
+        "settings": {
+          "COEFFICIENT_OF_FRICTION_MU": 0.3
+        }
+      },
+      "individualFile": {
+        "source": "USER_VERIFIED_BM4_NL_EXISTING_JOB_SETTINGS_2026-08-09",
+        "settings": {
+          "BOURDON_PRESSURE": "TRANSLATION_AND_ROTATION",
+          "AMBIENT_TEMPERATURE": { "value": 21, "unit": "C" }
+        }
+      },
+      "loadCase": {
+        "source": "USER_VERIFIED_BM4_NL_L19_L20_CASE_SETTINGS_2026-08-09",
+        "cases": {
+          "L19": {
+            "COEFFICIENT_OF_FRICTION_MU": 0,
+            "FLEXIBILITY_ELASTIC_MODULUS": "EC"
+          },
+          "L20": {
+            "COEFFICIENT_OF_FRICTION_MU": 0,
+            "FLEXIBILITY_ELASTIC_MODULUS": "EC"
+          }
+        }
+      }
+    },
+    "unresolvedSettings": [
+      {
+        "setting": "B31J_SMOOTH_90_CORRECTION",
+        "caseId": null,
+        "reason": "APPLY_B31J_SIFS_AND_FLEX=DEFAULT does not establish the CAESAR smooth-90/B31J Note-3 choice for this file or load case."
+      },
+      {
+        "setting": "RESTRAINT_FORMULATION",
+        "caseId": null,
+        "reason": "Finite global default stiffness is known, but its exact application to BM4_NL restraints has not been established."
+      },
+      {
+        "setting": "ELBOW_STIFFENING_PRESSURE",
+        "caseId": "L19",
+        "reason": "CAESAR DEFAULT does not establish the load-case elbow pressure source; P1 is retained provisionally."
+      },
+      {
+        "setting": "ELBOW_STIFFENING_PRESSURE",
+        "caseId": "L20",
+        "reason": "CAESAR DEFAULT does not establish the load-case elbow pressure source; P1 is retained provisionally."
+      }
+    ]
+  },
   "linearSolve": {
     "thermalExpansionCoefficientPerKelvin": 0.0000117,
     "gravityAcceleration": 9.80665,
@@ -48,6 +134,21 @@
     },
     "directionalB31JTeeFlexibility": true,
     "teeNominalDiameterRelativeTolerance": 0.001,
-    "reducerCondensation": true
+    "reducerCondensation": true,
+    "b31jSmooth90FlexibilityCorrection": {
+      "enabled": false,
+      "authorityStatus": "UNRESOLVED",
+      "source": "BM4_NL_CONFIGURATION_AUTHORITY:B31J_SMOOTH_90_CORRECTION"
+    },
+    "bendPressureStiffening": {
+      "pressureSource": "P1",
+      "authorityStatus": "PROVISIONAL",
+      "source": "BM4_NL_CONFIGURATION_AUTHORITY:ELBOW_STIFFENING_PRESSURE"
+    },
+    "restraintRepresentation": {
+      "mode": "FIXED_DOF",
+      "authorityStatus": "PROVISIONAL",
+      "source": "BM4_NL_CONFIGURATION_AUTHORITY:RESTRAINT_FORMULATION"
+    }
   }
 }

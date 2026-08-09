@@ -9,6 +9,7 @@ import {
   createLafeaCurvedHoleShellAnalysisDomain,
   createLafeaCurvedHoleShellMidsurfaceEvidence,
   createLafeaCurvedHoleShellMidsurfaceGeometry,
+  curvedHoleShellUvAtPoint3d,
 } from '../src/workspace/lafea-shell-curved-hole-midsurface-contract.js';
 import { LAFEA_SHELL_ELEMENT, planLafeaShellAnalysisMesh } from '../src/workspace/lafea-shell-mesh-producer.js';
 import { qualifyLafeaAnalysisMesh } from '../src/workspace/lafea-analysis-mesh-quality.js';
@@ -17,6 +18,8 @@ const SOURCE_HASH = `sha256:${'c'.repeat(64)}`;
 const R = 100;
 const U = Math.PI * R / 4;
 const ROOT2 = Math.sqrt(0.5);
+const HOLE = Object.freeze({ uMin: -20, uMax: 20, vMin: 45, vMax: 75 });
+const OUTER = Object.freeze({ uMin: -U, uMax: U, vMin: 0, vMax: 120 });
 
 for (const stageId of ['LAFEA.4', 'LAFEA.5']) {
   const parent = parentFor(stageId);
@@ -26,14 +29,27 @@ for (const stageId of ['LAFEA.4', 'LAFEA.5']) {
     try {
       const plan = planLafeaShellAnalysisMesh({ midsurfaceEvidence: parent, meshProfile: profile });
       const quality = qualifyLafeaAnalysisMesh(stageId, plan.mesh, profile);
+      const nodeById = new Map(plan.mesh.nodes.map((node) => [node.nodeId, node]));
       const blocked = quality.elementResults
         .filter((row) => row.worstStatus === 'BLOCK')
-        .map((row) => ({
-          elementId: row.elementId,
-          aspectRatio: row.metrics.find((metric) => metric.metric === 'ASPECT_RATIO')?.value,
-          scaledJacobian: row.metrics.find((metric) => metric.metric === 'SCALED_JACOBIAN')?.value,
-          nodeIds: plan.mesh.elements.find((element) => element.elementId === row.elementId)?.nodeIds,
-        }));
+        .map((row) => {
+          const element = plan.mesh.elements.find((candidate) => candidate.elementId === row.elementId);
+          const nodes = element.nodeIds.map((nodeId) => nodeById.get(nodeId));
+          const uv = nodes.map((node) => curvedHoleShellUvAtPoint3d(parent.geometry, physicalPoint(node)));
+          return {
+            elementId: row.elementId,
+            aspectRatio: row.metrics.find((metric) => metric.metric === 'ASPECT_RATIO')?.value,
+            scaledJacobian3d: row.metrics.find((metric) => metric.metric === 'SCALED_JACOBIAN')?.value,
+            scaledJacobianUv: triangleScaledJacobian2d(uv),
+            nodeIds: element.nodeIds,
+            nodeDetails: nodes.map((node, index) => ({
+              nodeId: node.nodeId,
+              xyz: { x: node.x, y: node.y, z: node.z },
+              uv: uv[index],
+              clearance: clearance(uv[index]),
+            })),
+          };
+        });
       rows.push({
         target,
         nodes: plan.mesh.nodes.length,
@@ -114,4 +130,28 @@ function profileFor(stageId, target) {
     },
   });
 }
+
+function physicalPoint(node) { return { x: node.x, y: node.y, z: node.z }; }
+function triangleScaledJacobian2d(nodes) {
+  return Math.min(...nodes.map((origin, index) => {
+    const first = subtract2(nodes[(index + 1) % 3], origin);
+    const second = subtract2(nodes[(index + 2) % 3], origin);
+    const denominator = norm2(first) * norm2(second);
+    if (!(denominator > 0)) return 0;
+    return Math.abs(first.u * second.v - first.v * second.u) / denominator;
+  }));
+}
+function clearance(point) {
+  return {
+    outer: Math.min(point.u - OUTER.uMin, OUTER.uMax - point.u, point.v - OUTER.vMin, OUTER.vMax - point.v),
+    hole: Math.min(
+      Math.hypot(point.u - clamp(point.u, HOLE.uMin, HOLE.uMax), point.v - clamp(point.v, HOLE.vMin, HOLE.vMax)),
+      Math.abs(point.u - HOLE.uMin), Math.abs(point.u - HOLE.uMax),
+      Math.abs(point.v - HOLE.vMin), Math.abs(point.v - HOLE.vMax),
+    ),
+  };
+}
+function subtract2(left, right) { return { u: left.u - right.u, v: left.v - right.v }; }
+function norm2(value) { return Math.hypot(value.u, value.v); }
+function clamp(value, low, high) { return Math.max(low, Math.min(high, value)); }
 function segment(segmentId, startVertexId, endVertexId) { return { segmentId, startVertexId, endVertexId }; }

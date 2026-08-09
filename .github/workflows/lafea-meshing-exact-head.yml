@@ -24,6 +24,7 @@ on:
       - 'scripts/lafea-shell-hole-mesh-check.mjs'
       - 'scripts/lafea-shell-hole-ladder-check.mjs'
       - 'scripts/lafea-shell-hole-metadata-invariance-probe.mjs'
+      - 'scripts/lafea-shell-hole-blocker-probe.mjs'
       - 'scripts/lafea-mesh-dof-policy-check.mjs'
       - 'scripts/lafea-meshing-system-check.mjs'
       - 'scripts/lafea-p2-11-triage.mjs'
@@ -85,6 +86,16 @@ jobs:
 
       - name: Diagnose shell hole metadata invariance
         run: node scripts/lafea-shell-hole-metadata-invariance-probe.mjs
+
+      - name: Capture shell hole blocker geometry
+        run: node scripts/lafea-shell-hole-blocker-probe.mjs
+
+      - name: Upload shell hole blocker geometry
+        uses: actions/upload-artifact@v4
+        with:
+          name: lafea-shell-hole-blockers
+          path: shell-hole-blockers.json
+          if-no-files-found: error
 
       - name: Qualify planar shell hole robustness ladder
         run: node scripts/lafea-shell-hole-ladder-check.mjs

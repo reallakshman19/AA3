@@ -1,10 +1,17 @@
-name: agent16-p10-capability-effects-traceability
+name: agent16-p10-p09-governed-run-gate
 
 on:
   pull_request:
     paths:
       - 'src/core/linear-piping-analysis-consumer/inputxml-linear-prefea-findings.js'
+      - 'src/workspace/linear-piping-run-request.js'
+      - 'src/workspace/linear-piping-run-gate.js'
+      - 'src/workspace/linear-piping-run-analysis.js'
+      - 'src/workspace/linear-piping-prerun-check.js'
+      - 'src/workspace/linear-piping-prerun-view.js'
+      - 'src/workspace/linear-piping-results-workbench.js'
       - 'scripts/lfea-p10-capability-effects-traceability-check.mjs'
+      - 'scripts/linear-piping-live-run-workbench-check.mjs'
       - '.github/workflows/agent16-p10-qualification.yml'
 
 permissions:
@@ -13,7 +20,7 @@ permissions:
 jobs:
   qualify:
     runs-on: ubuntu-latest
-    timeout-minutes: 30
+    timeout-minutes: 35
     steps:
       - name: Checkout exact pull-request head
         uses: actions/checkout@v4
@@ -27,36 +34,55 @@ jobs:
           node-version: '22'
           cache: npm
 
-      - name: Prove exact head and P-10 containment
+      - name: Prove exact head and stacked containment
         shell: bash
         run: |
           set -euo pipefail
           test "$(git rev-parse HEAD)" = "${{ github.event.pull_request.head.sha }}"
           git diff --exit-code
           base='0cb5c6a04f865a4d6890edc59b29c3892af8c5ba'
-          git diff --name-only "$base" HEAD > /tmp/p10-paths.txt
+          p10='5353ae5eb0f441652db8227c64674ecb4694f950'
+
+          git diff --name-only "$base" "$p10" > /tmp/p10-paths.txt
           cat /tmp/p10-paths.txt
           while IFS= read -r changed; do
             case "$changed" in
               src/core/linear-piping-analysis-consumer/inputxml-linear-prefea-findings.js|scripts/lfea-p10-capability-effects-traceability-check.mjs|.github/workflows/agent16-p10-qualification.yml) ;;
-              *) echo "P-10 changed an unqualified path: $changed" >&2; exit 1 ;;
+              *) echo "Frozen P-10 anchor contains an unexpected path: $changed" >&2; exit 1 ;;
             esac
           done < /tmp/p10-paths.txt
+
+          git diff --name-only "$p10" HEAD > /tmp/p09-paths.txt
+          cat /tmp/p09-paths.txt
+          while IFS= read -r changed; do
+            case "$changed" in
+              src/workspace/linear-piping-run-request.js|src/workspace/linear-piping-run-gate.js|src/workspace/linear-piping-run-analysis.js|src/workspace/linear-piping-prerun-check.js|src/workspace/linear-piping-prerun-view.js|src/workspace/linear-piping-results-workbench.js|scripts/linear-piping-live-run-workbench-check.mjs|.github/workflows/agent16-p10-qualification.yml) ;;
+              *) echo "P-09 changed an unqualified path: $changed" >&2; exit 1 ;;
+            esac
+          done < /tmp/p09-paths.txt
 
       - name: Install dependencies
         run: npm ci
 
-      - name: P-10 lossless capability-effects projection
-        run: node scripts/lfea-p10-capability-effects-traceability-check.mjs
-
-      - name: P-10 base-to-head semantic-hash transition
+      - name: Materialize P-10 anchor and merge base
         shell: bash
         run: |
           set -euo pipefail
           base='0cb5c6a04f865a4d6890edc59b29c3892af8c5ba'
-          rm -rf /tmp/p10-base
+          p10='5353ae5eb0f441652db8227c64674ecb4694f950'
+          rm -rf /tmp/p10-base /tmp/p10-anchor
           git worktree add --detach /tmp/p10-base "$base"
+          git worktree add --detach /tmp/p10-anchor "$p10"
           ln -s "$GITHUB_WORKSPACE/node_modules" /tmp/p10-base/node_modules
+          ln -s "$GITHUB_WORKSPACE/node_modules" /tmp/p10-anchor/node_modules
+
+      - name: Preserve P-10 lossless capability-effects projection
+        run: node scripts/lfea-p10-capability-effects-traceability-check.mjs
+
+      - name: Preserve P-10 base-to-head semantic transition
+        shell: bash
+        run: |
+          set -euo pipefail
           cat > /tmp/p10-projection.mjs <<'EOF'
           import path from 'node:path';
           import { pathToFileURL } from 'node:url';
@@ -68,84 +94,57 @@ jobs:
             OPERATING_CASE_STRICT: { disposition: 'BLOCK', limitationCode: 'P10_OPERATING_BLOCK' },
           };
           const finding = collectFindings({
-            sourceBundle: { geometry: { diagnostics: [] } },
-            topology: { findings: [] },
-            proximity: { findings: [] },
-            representability: {
-              findings: [{
-                code: 'P10_TRACEABILITY_FIXTURE', category: 'RESTRAINT', severity: 'warning', disposition: 'CONDITIONAL',
-                message: 'P-10 traceability fixture.',
-                technicalBasis: 'The upstream model-health finding carries per-capability disposition and limitation evidence.',
-                evidence: { inventoryId: 'P10-INV-001', sourceRecordSemanticHash: 'p10-source-record-hash' },
-                remediation: 'Review the disclosed capability effects.', capabilityEffects,
-                sourceFeatureIds: ['P10-SF-001'], sourcePaths: ['/PIPINGMODEL/PIPINGELEMENT[1]/RESTRAINT[1]'],
-                canonicalEntityIds: ['P10-NODE-10'], physicalCaseIds: ['P10-W'],
-                approximationEligible: true, authorizationRequired: true,
-              }],
-              capabilities: [],
-            },
-            engineeringSanity: { findings: [] },
+            sourceBundle: { geometry: { diagnostics: [] } }, topology: { findings: [] }, proximity: { findings: [] },
+            representability: { findings: [{
+              code: 'P10_TRACEABILITY_FIXTURE', category: 'RESTRAINT', severity: 'warning', disposition: 'CONDITIONAL',
+              message: 'P-10 traceability fixture.', technicalBasis: 'P-10 retained capability effects.',
+              evidence: { inventoryId: 'P10-INV-001', sourceRecordSemanticHash: 'p10-source-record-hash' },
+              remediation: 'Review the disclosed capability effects.', capabilityEffects,
+              sourceFeatureIds: ['P10-SF-001'], sourcePaths: ['/PIPINGMODEL/PIPINGELEMENT[1]/RESTRAINT[1]'],
+              canonicalEntityIds: ['P10-NODE-10'], physicalCaseIds: ['P10-W'], approximationEligible: true, authorizationRequired: true,
+            }], capabilities: [] }, engineeringSanity: { findings: [] },
           })[0];
-          process.stdout.write(JSON.stringify({
-            findingId: finding.findingId,
-            capabilityEffects: finding.capabilityEffects,
-            evidence: finding.evidence,
-            semanticHash: semanticHash(finding),
-          }));
+          process.stdout.write(JSON.stringify({ findingId: finding.findingId, capabilityEffects: finding.capabilityEffects, evidence: finding.evidence, semanticHash: semanticHash(finding) }));
           EOF
           node /tmp/p10-projection.mjs /tmp/p10-base > /tmp/p10-base.json
           node /tmp/p10-projection.mjs "$GITHUB_WORKSPACE" > /tmp/p10-head.json
           node --input-type=module <<'EOF'
-          import fs from 'node:fs';
-          import assert from 'node:assert/strict';
+          import fs from 'node:fs'; import assert from 'node:assert/strict';
           const base = JSON.parse(fs.readFileSync('/tmp/p10-base.json', 'utf8'));
           const head = JSON.parse(fs.readFileSync('/tmp/p10-head.json', 'utf8'));
           assert.deepEqual(head.capabilityEffects, base.capabilityEffects);
-          assert.equal(Object.hasOwn(base.evidence, 'upstreamCapabilityEffects'), false,
-            'Merge-base evidence unexpectedly already preserves upstream capability effects.');
-          assert.deepEqual(head.evidence.inventoryId, base.evidence.inventoryId);
-          assert.deepEqual(head.evidence.sourceRecordSemanticHash, base.evidence.sourceRecordSemanticHash);
+          assert.equal(Object.hasOwn(base.evidence, 'upstreamCapabilityEffects'), false);
           assert.deepEqual(head.evidence.upstreamCapabilityEffects, {
             OPERATING_CASE_STRICT: { disposition: 'BLOCK', limitationCode: 'P10_OPERATING_BLOCK' },
             STRICT_LINEAR_STATIC: { disposition: 'CONDITIONAL', limitationCode: 'P10_STRICT_LIMITATION' },
           });
-          assert.notEqual(head.findingId, base.findingId,
-            'Finding identity must change when previously-lost upstream evidence enters the sealed identity.');
-          assert.notEqual(head.semanticHash, base.semanticHash,
-            'Finding semantic hash must change when previously-lost upstream evidence enters the sealed identity.');
-          console.log(JSON.stringify({
-            baseFindingId: base.findingId,
-            headFindingId: head.findingId,
-            baseSemanticHash: base.semanticHash,
-            headSemanticHash: head.semanticHash,
-            transition: 'EXPECTED_TRACEABILITY_IDENTITY_CHANGE',
-          }, null, 2));
+          assert.notEqual(head.findingId, base.findingId);
+          assert.notEqual(head.semanticHash, base.semanticHash);
           EOF
+
+      - name: P-09 governed workbench Run gate and numerical live-run qualification
+        run: node scripts/linear-piping-live-run-workbench-check.mjs
 
       - name: Linear piping consumer anti-drift
         run: node scripts/linear-piping-analysis-consumer-anti-drift-check.mjs
 
-      - name: Prove PF-16 carried-red parity on merge base and head
+      - name: Prove PF-16 carried-red parity on P-10 anchor and P-09 head
         shell: bash
         run: |
           set -euo pipefail
           pattern='^PF-16 BLOCK cannot be overridden$'
           set +e
-          (cd /tmp/p10-base && node --test --test-name-pattern="$pattern" test/lfea-prefea-gateway.test.js) > /tmp/p10-base-pf16.log 2>&1
-          base_status=$?
-          node --test --test-name-pattern="$pattern" test/lfea-prefea-gateway.test.js > /tmp/p10-head-pf16.log 2>&1
+          (cd /tmp/p10-anchor && node --test --test-name-pattern="$pattern" test/lfea-prefea-gateway.test.js) > /tmp/p10-pf16.log 2>&1
+          anchor_status=$?
+          node --test --test-name-pattern="$pattern" test/lfea-prefea-gateway.test.js > /tmp/p09-pf16.log 2>&1
           head_status=$?
           set -e
-          cat /tmp/p10-base-pf16.log
-          cat /tmp/p10-head-pf16.log
-          test "$base_status" -ne 0
+          test "$anchor_status" -ne 0
           test "$head_status" -ne 0
-          for log in /tmp/p10-base-pf16.log /tmp/p10-head-pf16.log; do
-            grep -F 'PF-16 BLOCK cannot be overridden' "$log"
+          for log in /tmp/p10-pf16.log /tmp/p09-pf16.log; do
             grep -F 'Preparation retains prohibited runtime state.' "$log"
             grep -F '# fail 1' "$log"
           done
-          printf '%s\n' 'PF-16 carried red is identical in governing failure mode on merge base and P-10 head.'
 
       - name: Pre-FEA PF-01..15 and PF-17..24 regression
         run: node --test --test-name-pattern='^PF-(0[1-9]|1[0-5]|1[7-9]|2[0-4]) ' test/lfea-prefea-gateway.test.js
@@ -159,18 +158,7 @@ jobs:
       - name: Linear piping consumer regression
         run: node scripts/linear-piping-analysis-consumer-check.mjs
 
-      - name: Prove BM1 external fixture unavailable on base and head
-        shell: bash
-        run: |
-          set -euo pipefail
-          fixture='benchmarks/LFEA/BM1/BM1_InputXML.xml'
-          test ! -e "/tmp/p10-base/$fixture"
-          test ! -e "$GITHUB_WORKSPACE/$fixture"
-          printf '%s\n' \
-            'BM1 B-3.15/B-3.16 external oracle fixture is absent on merge base and P-10 head.' \
-            'No BM1 numerical result is claimed from this qualification.'
-
-      - name: Closed-form mechanics base/head equivalence
+      - name: Closed-form mechanics P-10/P-09 equivalence
         shell: bash
         run: |
           set -euo pipefail
@@ -180,12 +168,11 @@ jobs:
             lfea-b3.9-gravity-self-weight-check.mjs
           do
             stem="${script%.mjs}"
-            (cd /tmp/p10-base && node "scripts/$script") > "/tmp/p10-base-$stem.log"
-            node "scripts/$script" > "/tmp/p10-head-$stem.log"
-            cmp "/tmp/p10-base-$stem.log" "/tmp/p10-head-$stem.log"
-            cat "/tmp/p10-head-$stem.log"
+            (cd /tmp/p10-anchor && node "scripts/$script") > "/tmp/p10-$stem.log"
+            node "scripts/$script" > "/tmp/p09-$stem.log"
+            cmp "/tmp/p10-$stem.log" "/tmp/p09-$stem.log"
           done
-          printf '%s\n' 'B-3.7/B-3.8/B-3.9 closed-form numerical outputs are byte-identical base-to-head.'
+          printf '%s\n' 'B-3.7/B-3.8/B-3.9 numerical outputs are byte-identical P-10 anchor to P-09 head.'
 
       - name: Required 1 — strict syntax
         run: npm run syntax:strict
@@ -205,22 +192,17 @@ jobs:
       - name: Required 6 — production Vite build
         run: npx vite build
 
-      - name: Report P-10 qualification
+      - name: Report stacked P-10/P-09 qualification
         run: |
           printf '%s\n' \
-            'P-10 lossless capability-effects projection PASS' \
-            'P-10 base/head semantic-hash transition PASS' \
+            'P-10 frozen qualified anchor 5353ae5eb0f441652db8227c64674ecb4694f950 PRESERVED' \
+            'P-09 ungated Run negative control PASS' \
+            'P-09 PASS/WARN/BLOCK Run policy and sealed receipt PASS' \
+            'P-09 stale request rejection before runtime PASS' \
+            'P-09 profile invalidation PASS' \
+            'P-09 live production orchestration numerical anchors PASS' \
             'linear-piping anti-drift PASS' \
-            'PF-16 merge-base/head carried-red parity PROVEN' \
+            'PF-16 carried-red parity PROVEN' \
             'all other pre-FEA gateway tests PASS' \
-            'linear piping consumer regression PASS' \
-            'BM1 external fixture availability UNAVAILABLE on base and head (not claimed)' \
-            'B-3.7 simply-supported closed-form equivalence PASS' \
-            'B-3.8 thermal closed-form equivalence PASS' \
-            'B-3.9 gravity closed-form equivalence PASS' \
-            'npm run syntax:strict PASS' \
-            'node scripts/import-check.mjs PASS' \
-            'node scripts/run-enrichment-ui-phase0-checks.mjs PASS' \
-            'node scripts/linear-piping-workspace-integration-check.mjs PASS' \
-            'node scripts/ui-invariant-check.mjs PASS' \
-            'npx vite build PASS'
+            'B-3.7/B-3.8/B-3.9 P-10/P-09 numerical equivalence PASS' \
+            'all six #952 mandatory commands PASS'

@@ -8,19 +8,27 @@ import {
 
 const LOCKED = '85d39463296e569da811d8572e2eff680b858097f76fdf0f47d1755f0b161c21';
 
-function row(caseId, identity, actualValue, referenceValue, pass) {
-  const [entityKind, entityId, quantity, component] = identity.split(':');
+function row(caseId, entityKind, entityId, quantity, component, actualValue, referenceValue, pass) {
+  const unit = quantity.includes('MOMENT')
+    ? 'N*m'
+    : quantity === 'ROTATION'
+      ? 'rad'
+      : quantity === 'DISPLACEMENT'
+        ? 'm'
+        : 'N';
   return {
     caseId,
     entityKind,
     entityId,
     quantity,
     component,
-    unit: quantity.includes('MOMENT') || quantity === 'ROTATION' ? (quantity === 'ROTATION' ? 'rad' : 'N*m') : (quantity === 'DISPLACEMENT' ? 'm' : 'N'),
+    unit,
     actualValue,
     referenceValue,
     pass,
-    relativeError: referenceValue === 0 ? Math.abs(actualValue) : Math.abs(actualValue - referenceValue) / Math.max(Math.abs(referenceValue), 1),
+    relativeError: referenceValue === 0
+      ? Math.abs(actualValue)
+      : Math.abs(actualValue - referenceValue) / Math.max(Math.abs(referenceValue), 1),
   };
 }
 
@@ -32,9 +40,9 @@ function benchmark(l19Delta = 0, l20Delta = 100) {
       caseId,
       comparison: {
         rows: [
-          row(caseId, 'NODE:20090:FORCE:UY', -1600 + delta, -1600, Math.abs(delta) <= 160),
-          row(caseId, 'NODE:20090:DISPLACEMENT:UX', 0.001 + delta * 1e-6, 0.001, Math.abs(delta) <= 100),
-          row(caseId, 'ELEMENT:INPUT_ELEMENT:4|20030->20090|:GLOBAL_END_FORCE_FROM:FX', 300 + delta, 300, Math.abs(delta) <= 30),
+          row(caseId, 'NODE', '20090', 'FORCE', 'UY', -1600 + delta, -1600, Math.abs(delta) <= 160),
+          row(caseId, 'NODE', '20090', 'DISPLACEMENT', 'UX', 0.001 + delta * 1e-6, 0.001, Math.abs(delta) <= 100),
+          row(caseId, 'ELEMENT', 'INPUT_ELEMENT:4|20030->20090|', 'GLOBAL_END_FORCE_FROM', 'FX', 300 + delta, 300, Math.abs(delta) <= 30),
         ],
       },
     });

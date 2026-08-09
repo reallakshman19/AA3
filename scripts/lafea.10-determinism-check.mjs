@@ -9,9 +9,9 @@
  * repetition), produces byte-identical node/element output.
  *
  * P2-8 extends this permanent determinism surface to the external shell
- * producers. The imported planar and cylindrical shell qualifiers prove their
- * full 3D geometry, quality, custody and stage-scope contracts before this
- * legacy determinism check continues.
+ * producers. The imported planar, cylindrical and conforming multipatch shell
+ * qualifiers prove their full 3D geometry, quality, custody and stage-scope
+ * contracts before this legacy determinism check continues.
  */
 
 import assert from 'node:assert/strict';
@@ -24,6 +24,7 @@ import { canonicalTopology } from '../src/core/lafea-geometry/index.js';
 import { triangulateRegion } from '../src/core/lafea-meshing/index.js';
 import './lafea-shell-mesh-producer-check.mjs';
 import './lafea-shell-curved-cylinder-check.mjs';
+import './lafea-shell-multipatch-seam-check.mjs';
 
 console.log('\n--- LAFEA §10.2 meshing determinism check ---');
 checkCanonicalOrderingPrimitives();

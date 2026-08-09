@@ -27,7 +27,15 @@ import {
   planLafeaShellAnalysisMesh,
   produceLafeaShellAnalysisMesh,
 } from './lafea-shell-mesh-producer.js';
-import { validateLafeaAnyShellMidsurfaceEvidence } from './lafea-shell-midsurface-dispatch.js';
+import {
+  planLafeaMultiPatchShellAnalysisMesh,
+  produceLafeaMultiPatchShellAnalysisMesh,
+} from './lafea-shell-multipatch-mesh-producer.js';
+import {
+  LAFEA_SHELL_SURFACE_KINDS,
+  shellMidsurfaceKind,
+  validateLafeaAnyShellMidsurfaceEvidence,
+} from './lafea-shell-midsurface-dispatch.js';
 
 export function createLafeaWorkbenchMeshGenerationState(stageIds) {
   const profiles = new Map(stageIds.map((stageId) => [stageId, null]));
@@ -47,11 +55,6 @@ export function createLafeaWorkbenchMeshGenerationState(stageIds) {
     });
   }
 
-  /**
-   * Bind the governed mesh profile. Its semantic hash is the binding the
-   * custody layer checks, so rebinding a different profile discards any mesh
-   * generated under the previous one rather than leaving a mismatched pair.
-   */
   function bindMeshProfile(value, stageId) {
     requireStage(stageId);
     const profile = canonicalLafeaAnalysisMeshProfile(value);
@@ -65,10 +68,6 @@ export function createLafeaWorkbenchMeshGenerationState(stageIds) {
     return freeze({ changed: true, meshProfile: profile });
   }
 
-  /**
-   * Bind mesh-independent shell midsurface evidence as the parent of any
-   * LAFEA.4/.5 generated mesh. This never derives a surface from solver facets.
-   */
   function registerShellMidsurface(value, stage) {
     const stageId = stage?.stageId;
     requireStage(stageId);
@@ -89,16 +88,15 @@ export function createLafeaWorkbenchMeshGenerationState(stageIds) {
     return freeze({ changed: true, evidence: retained });
   }
 
-  /** Run the qualified stage producer and describe the result, custody untouched. */
   function planMesh(stage, overrides = {}) {
     const stageId = stage.stageId;
     if (shellMidsurfaces.get(stageId)) {
       requireNoShellOverrides(overrides);
       const profile = requireProfile(stageId);
-      const planned = planLafeaShellAnalysisMesh({
-        midsurfaceEvidence: requireShellMidsurface(stageId),
-        meshProfile: profile,
-      });
+      const parent = requireShellMidsurface(stageId);
+      const planned = shellMidsurfaceKind(parent) === LAFEA_SHELL_SURFACE_KINDS.PLANAR_MULTIPATCH
+        ? planLafeaMultiPatchShellAnalysisMesh({ midsurfaceEvidence: parent, meshProfile: profile })
+        : planLafeaShellAnalysisMesh({ midsurfaceEvidence: parent, meshProfile: profile });
       lastPlan.set(stageId, summarizeShell(planned));
       return freeze({
         configuration: shellConfiguration(profile, planned),
@@ -112,16 +110,15 @@ export function createLafeaWorkbenchMeshGenerationState(stageIds) {
     return freeze({ configuration, planned, summary: lastPlan.get(stageId) });
   }
 
-  /** Generate, validate, and only then retain as the stage's analysis mesh. */
   function generateMesh(stage, overrides = {}) {
     const stageId = stage.stageId;
     if (shellMidsurfaces.get(stageId)) {
       requireNoShellOverrides(overrides);
       const profile = requireProfile(stageId);
-      const produced = produceLafeaShellAnalysisMesh({
-        midsurfaceEvidence: requireShellMidsurface(stageId),
-        meshProfile: profile,
-      });
+      const parent = requireShellMidsurface(stageId);
+      const produced = shellMidsurfaceKind(parent) === LAFEA_SHELL_SURFACE_KINDS.PLANAR_MULTIPATCH
+        ? produceLafeaMultiPatchShellAnalysisMesh({ midsurfaceEvidence: parent, meshProfile: profile })
+        : produceLafeaShellAnalysisMesh({ midsurfaceEvidence: parent, meshProfile: profile });
       const validated = validateLafeaAnalysisMeshEvidenceV2(produced.evidence);
       evidence.set(stageId, validated);
       lastPlan.set(stageId, summarizeShell(produced.plan));
@@ -132,18 +129,9 @@ export function createLafeaWorkbenchMeshGenerationState(stageIds) {
     const validated = validateLafeaAnalysisMeshEvidenceV2(produced.evidence);
     evidence.set(stageId, validated);
     lastPlan.set(stageId, summarize(produced.planned));
-    return freeze({
-      changed: true,
-      evidence: validated,
-      summary: lastPlan.get(stageId),
-    });
+    return freeze({ changed: true, evidence: validated, summary: lastPlan.get(stageId) });
   }
 
-  /**
-   * Refine the exact retained v2 parent. Parent artifact/mesh hashes are taken
-   * from custody here rather than trusted from UI input. Shell local refinement
-   * is deliberately outside the first shell qualification and fails closed.
-   */
   function refineMesh(stage, request = {}) {
     const stageId = stage.stageId;
     requireStage(stageId);
@@ -184,22 +172,12 @@ export function createLafeaWorkbenchMeshGenerationState(stageIds) {
     });
   }
 
-  function validateEvidence(value) {
-    return validateLafeaAnalysisMeshEvidenceV2(value);
-  }
+  function validateEvidence(value) { return validateLafeaAnalysisMeshEvidenceV2(value); }
 
-  /**
-   * Recover a portable v2 evidence artifact after its profile has been rebound
-   * by the orchestrator action. Parent currentness is deliberately not guessed
-   * here; the governed v2 custody projection classifies the retained evidence
-   * as CURRENT_PASS/CURRENT_BLOCK/STALE after publication.
-   */
   function recoverEvidence(value, stageId) {
     requireStage(stageId);
     const validated = validateEvidence(value);
-    if (validated.stageId !== stageId) {
-      fail('LAFEA_ANALYSIS_MESH_V2_RECOVERY_STAGE_MISMATCH');
-    }
+    if (validated.stageId !== stageId) fail('LAFEA_ANALYSIS_MESH_V2_RECOVERY_STAGE_MISMATCH');
     const profile = profiles.get(stageId);
     if (!profile || profile.semanticHash !== validated.meshProfileHash) {
       fail('LAFEA_ANALYSIS_MESH_V2_RECOVERY_PROFILE_NOT_BOUND');
@@ -221,7 +199,6 @@ export function createLafeaWorkbenchMeshGenerationState(stageIds) {
   function exportEvidence(stageId) { return selectEvidence(stageId); }
   function exportShellMidsurface(stageId) { return selectShellMidsurface(stageId); }
 
-  /** Any source/domain/geometry change invalidates descendants; shell parent is source-bound. */
   function invalidate(stageId) {
     requireStage(stageId);
     const changed = Boolean(
@@ -265,7 +242,6 @@ export function createLafeaWorkbenchMeshGenerationState(stageIds) {
   }
 }
 
-/** The plan facts the Discretization surface displays, without the mesh itself. */
 function summarize(planned) {
   return freeze({
     schema: 'lafea-analysis-mesh-plan-summary/v1',
@@ -362,7 +338,9 @@ function requireNoShellOverrides(value) {
 }
 function currentSourceHash(stage) {
   const value = stage?.sourceAuthority?.sourceHash ?? stage?.lifecycle?.source?.sourceHash ?? null;
-  if (!value || !/^sha256:[0-9a-f]{64}$/u.test(value)) fail('LAFEA_SHELL_MIDSURFACE_SOURCE_AUTHORITY_REQUIRED');
+  if (!value || !/^sha256:[0-9a-f]{64}$/u.test(value)) {
+    fail('LAFEA_SHELL_MIDSURFACE_SOURCE_AUTHORITY_REQUIRED');
+  }
   return value;
 }
 function sameEvidence(left, right) {
@@ -370,7 +348,6 @@ function sameEvidence(left, right) {
     && left.artifactHash === right.artifactHash
     && JSON.stringify(left) === JSON.stringify(right);
 }
-
 function fail(code) { const error = new Error(code); error.code = code; throw error; }
 function freeze(value) {
   if (!value || typeof value !== 'object' || Object.isFrozen(value)) return value;

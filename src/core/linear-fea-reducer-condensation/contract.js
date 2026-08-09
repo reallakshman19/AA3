@@ -17,8 +17,6 @@ export const REDUCER_REQUEST_KEYS = Object.freeze([
   'segmentCount',
   'samplingRule',
   'material',
-  'frame',
-  'pressure',
   'gravity',
   'thermal',
   'sourceEvidence',
@@ -31,19 +29,6 @@ export const MATERIAL_KEYS = Object.freeze([
   'shearModulus',
   'massDensity',
   'thermalExpansionCoefficient',
-]);
-export const FRAME_KEYS = Object.freeze([
-  'shearDeformation',
-  'shearCorrectionFactorY',
-  'shearCorrectionFactorZ',
-  'source',
-]);
-export const PRESSURE_KEYS = Object.freeze([
-  'enabled',
-  'pressure',
-  'poissonRatio',
-  'ruleId',
-  'source',
 ]);
 export const GRAVITY_KEYS = Object.freeze([
   'enabled',
@@ -138,19 +123,6 @@ function validateRequestCore(request) {
   requirePositive(request.material.shearModulus, 'request.material.shearModulus');
   requirePositive(request.material.massDensity, 'request.material.massDensity');
   requireFinite(request.material.thermalExpansionCoefficient, 'request.material.thermalExpansionCoefficient');
-  requireExactKeys(request.frame, FRAME_KEYS, 'request.frame');
-  if (typeof request.frame.shearDeformation !== 'boolean') fail('request.frame.shearDeformation must be boolean.', 'REDUCER_CONDENSATION_INPUT_INVALID');
-  requirePositive(request.frame.shearCorrectionFactorY, 'request.frame.shearCorrectionFactorY');
-  requirePositive(request.frame.shearCorrectionFactorZ, 'request.frame.shearCorrectionFactorZ');
-  if (typeof request.frame.source !== 'string' || request.frame.source.trim().length === 0) fail('request.frame.source must be nonempty.', 'REDUCER_CONDENSATION_INPUT_INVALID');
-  requireExactKeys(request.pressure, PRESSURE_KEYS, 'request.pressure');
-  if (typeof request.pressure.enabled !== 'boolean') fail('request.pressure.enabled must be boolean.', 'REDUCER_CONDENSATION_INPUT_INVALID');
-  requireNonnegative(request.pressure.pressure, 'request.pressure.pressure');
-  const poissonRatio = requireFinite(request.pressure.poissonRatio, 'request.pressure.poissonRatio');
-  if (!(poissonRatio > -1 && poissonRatio < 0.5)) fail('request.pressure.poissonRatio must lie in (-1, 0.5).', 'REDUCER_CONDENSATION_INPUT_INVALID');
-  if (request.pressure.ruleId !== 'CLOSED_END_PIPE_AXIAL_STRAIN_V1') fail('request.pressure.ruleId is unsupported.', 'REDUCER_CONDENSATION_INPUT_INVALID');
-  if (typeof request.pressure.source !== 'string' || request.pressure.source.trim().length === 0) fail('request.pressure.source must be nonempty.', 'REDUCER_CONDENSATION_INPUT_INVALID');
-  if (request.pressure.enabled && !(request.pressure.pressure > 0)) fail('request.pressure.pressure must be positive when pressure is enabled.', 'REDUCER_CONDENSATION_INPUT_INVALID');
   requireExactKeys(request.gravity, GRAVITY_KEYS, 'request.gravity');
   if (typeof request.gravity.enabled !== 'boolean') fail('request.gravity.enabled must be boolean.', 'REDUCER_CONDENSATION_INPUT_INVALID');
   requirePositive(request.gravity.acceleration, 'request.gravity.acceleration');

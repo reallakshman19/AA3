@@ -158,19 +158,6 @@ function auditReducer(input) {
       massDensity: material.massDensity,
       thermalExpansionCoefficient: input.benchmarkPackage.profile.linearSolve.thermalExpansionCoefficientPerKelvin,
     },
-    frame: {
-      shearDeformation: true,
-      shearCorrectionFactorY: KAPPA,
-      shearCorrectionFactorZ: KAPPA,
-      source: KAPPA_SOURCE,
-    },
-    pressure: {
-      enabled: true,
-      pressure: common.pressure,
-      poissonRatio: material.poissonRatio,
-      ruleId: 'CLOSED_END_PIPE_AXIAL_STRAIN_V1',
-      source: input.benchmarkPackage.profile.linearSolve.bourdonPressureEffects.source,
-    },
     gravity: common.gravity,
     thermal: {
       installationTemperature: input.benchmarkPackage.model.installationTemperatureK,
@@ -184,21 +171,15 @@ function auditReducer(input) {
     semanticHash: '',
   }));
   compareVector(
-    variants.TIMOSHENKO_WITH_PRESSURE.localStiffness,
+    variants.CURRENT_EB_NO_PRESSURE.localStiffness,
     production.condensed.localStiffness,
-    `E${row.ELEMENTID} production reducer stiffness`,
+    `E${row.ELEMENTID} current reducer stiffness`,
     2e-8,
   );
   compareVector(
-    variants.TIMOSHENKO_WITH_PRESSURE.gravityLocal,
+    variants.CURRENT_EB_NO_PRESSURE.gravityLocal,
     production.condensed.gravityLocalVector,
-    `E${row.ELEMENTID} production reducer gravity`,
-    2e-8,
-  );
-  compareVector(
-    variants.TIMOSHENKO_WITH_PRESSURE.pressureLocal,
-    production.condensed.pressureInitialStrainLocalVector,
-    `E${row.ELEMENTID} production reducer pressure`,
+    `E${row.ELEMENTID} current reducer gravity`,
     2e-8,
   );
 

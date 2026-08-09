@@ -31,19 +31,6 @@ function request(overrides = {}) {
       massDensity: 7850,
       thermalExpansionCoefficient: 12e-6,
     },
-    frame: {
-      shearDeformation: false,
-      shearCorrectionFactorY: 1,
-      shearCorrectionFactorZ: 1,
-      source: 'B-3.23-EULER-BERNOULLI-BASELINE',
-    },
-    pressure: {
-      enabled: false,
-      pressure: 0,
-      poissonRatio: 0.3,
-      ruleId: 'CLOSED_END_PIPE_AXIAL_STRAIN_V1',
-      source: 'B-3.23-PRESSURE-DISABLED-BASELINE',
-    },
     gravity: {
       enabled: true,
       acceleration: 9.80665,
@@ -83,7 +70,6 @@ assert.equal(authority.structuralParticipation.condensedInternalStationCount, 9)
 assert.equal(authority.condensed.localStiffness.length, 144);
 assert.equal(authority.condensed.gravityLocalVector.length, 12);
 assert.equal(authority.condensed.thermalInitialStrainLocalVector.length, 12);
-assert.equal(authority.condensed.pressureInitialStrainLocalVector.length, 12);
 assert.equal(Object.isFrozen(authority), true);
 
 let axialCompliance = 0;
@@ -104,84 +90,6 @@ close(authority.gravity.centroidFromEnd, authority.gravity.firstMomentFromEnd / 
 const thermal = authority.condensed.thermalInitialStrainLocalVector;
 close(thermal[0] + thermal[6], 0, 'thermal axial resultant', 1e-9, 1e-5);
 assert.ok(thermal[0] < 0 && thermal[6] > 0);
-assert.deepEqual(authority.condensed.pressureInitialStrainLocalVector, new Array(12).fill(0));
-
-const pressureRequest = sealReducerCondensationRequest({
-  ...request({
-    reducerId: 'REDUCER-CONDENSATION-PRESSURE-TIMOSHENKO',
-    frame: {
-      shearDeformation: true,
-      shearCorrectionFactorY: 0.5,
-      shearCorrectionFactorZ: 0.5,
-      source: 'INTERGRAPH-CAESAR-II-CAUX-2015-FKX-SHEAR-COEFFICIENT-2',
-    },
-    pressure: {
-      enabled: true,
-      pressure: 5e6,
-      poissonRatio: 0.3,
-      ruleId: 'CLOSED_END_PIPE_AXIAL_STRAIN_V1',
-      source: 'B-3.23-CLOSED-END-PRESSURE-FREE-STRAIN',
-    },
-    gravity: { ...request().gravity, enabled: false },
-    thermal: { installationTemperature: 20, operatingTemperature: 20 },
-  }),
-  semanticHash: '',
-});
-const pressureAuthority = compileTenCylinderReducerAuthority(pressureRequest);
-const pressureUniformRequest = sealReducerCondensationRequest({
-  ...request({
-    reducerId: 'REDUCER-CONDENSATION-PRESSURE-UNIFORM',
-    toSection: { outerDiameter: 0.32385, wallThickness: 0.0127 },
-    frame: { ...pressureRequest.frame },
-    pressure: { ...pressureRequest.pressure },
-    gravity: { ...request().gravity, enabled: false },
-    thermal: { installationTemperature: 20, operatingTemperature: 20 },
-  }),
-  semanticHash: '',
-});
-const pressureUniform = compileTenCylinderReducerAuthority(pressureUniformRequest);
-const pressureUniformProperties = annulus(0.32385, 0.0127);
-const directTimoshenko = frameLocalStiffness({
-  elasticModulus: 200e9,
-  shearModulus: 77e9,
-  area: pressureUniformProperties.area,
-  secondMomentY: pressureUniformProperties.I,
-  secondMomentZ: pressureUniformProperties.I,
-  polarMoment: pressureUniformProperties.J,
-  length: 1.5,
-  shearDeformation: true,
-  shearCorrectionFactorY: 0.5,
-  shearCorrectionFactorZ: 0.5,
-}).matrix;
-for (let index = 0; index < 144; index += 1) {
-  close(pressureUniform.condensed.localStiffness[index], directTimoshenko[index], 'uniform Timoshenko condensed stiffness[' + index + ']', 3e-8, 1e-3);
-}
-const uniformInner = 0.32385 - 2 * 0.0127;
-const uniformPressureStrain = (1 - 2 * 0.3) * 5e6 * uniformInner ** 2
-  / (200e9 * (0.32385 ** 2 - uniformInner ** 2));
-const directPressure = [
-  -200e9 * pressureUniformProperties.area * uniformPressureStrain, 0, 0, 0, 0, 0,
-  200e9 * pressureUniformProperties.area * uniformPressureStrain, 0, 0, 0, 0, 0,
-];
-for (let index = 0; index < 12; index += 1) {
-  close(pressureUniform.condensed.pressureInitialStrainLocalVector[index], directPressure[index], 'uniform pressure vector[' + index + ']', 3e-8, 1e-5);
-}
-const uniformFree = new Array(12).fill(0);
-uniformFree[6] = pressureUniform.pressure.freeGrowth;
-const uniformFreeAction = new Array(12).fill(0).map((_unused, row) => {
-  let sum = 0;
-  for (let column = 0; column < 12; column += 1) sum += directTimoshenko[row * 12 + column] * uniformFree[column];
-  return sum - pressureUniform.condensed.pressureInitialStrainLocalVector[row];
-});
-assert.ok(Math.max(...uniformFreeAction.map(Math.abs)) < 1e-4, 'uniform reducer pressure free-growth action');
-const taperedFree = new Array(12).fill(0);
-taperedFree[6] = pressureAuthority.pressure.freeGrowth;
-const taperedFreeAction = new Array(12).fill(0).map((_unused, row) => {
-  let sum = 0;
-  for (let column = 0; column < 12; column += 1) sum += pressureAuthority.condensed.localStiffness[row * 12 + column] * taperedFree[column];
-  return sum - pressureAuthority.condensed.pressureInitialStrainLocalVector[row];
-});
-assert.ok(Math.max(...taperedFreeAction.map(Math.abs)) < 1e-4, 'tapered reducer pressure free-growth action');
 
 const uniformRequest = sealReducerCondensationRequest({
   ...request({

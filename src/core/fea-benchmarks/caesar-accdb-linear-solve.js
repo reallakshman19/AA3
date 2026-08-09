@@ -543,19 +543,6 @@ function buildReducerElement(input) {
       massDensity: materialState.massDensity,
       thermalExpansionCoefficient: input.solveProfile.thermalExpansionCoefficientPerKelvin,
     },
-    frame: {
-      shearDeformation: true,
-      shearCorrectionFactorY: 0.5,
-      shearCorrectionFactorZ: 0.5,
-      source: 'INTERGRAPH-CAESAR-II-CAUX-2015-FKX-SHEAR-COEFFICIENT-2',
-    },
-    pressure: {
-      enabled: input.caseMode.pressure && input.solveProfile.bourdonPressureEffects.mode !== 'DISABLED',
-      pressure: Number(input.row.PRESSURE1) * KPA_TO_PA,
-      poissonRatio: Number(input.row.POISSONS),
-      ruleId: 'CLOSED_END_PIPE_AXIAL_STRAIN_V1',
-      source: input.solveProfile.bourdonPressureEffects.source,
-    },
     gravity: {
       enabled: true,
       acceleration: input.solveProfile.gravityAcceleration,
@@ -576,13 +563,9 @@ function buildReducerElement(input) {
   const authority = compileTenCylinderReducerAuthority(request);
   const transformation = frameTransformationMatrix(axesResult.axes);
   const equivalentLocal = [...authority.condensed.gravityLocalVector];
-  const thermalInitialLocal = input.caseMode.thermal
+  const initialLocal = input.caseMode.thermal
     ? [...authority.condensed.thermalInitialStrainLocalVector]
     : zero12();
-  const pressureInitialLocal = authority.pressure.enabled
-    ? [...authority.condensed.pressureInitialStrainLocalVector]
-    : zero12();
-  const initialLocal = add(thermalInitialLocal, pressureInitialLocal);
   const equivalentGlobal = transformLoadToGlobal(equivalentLocal, transformation);
   const initialGlobal = transformLoadToGlobal(initialLocal, transformation);
   const effectiveGlobalStiffness = transformStiffnessToGlobal(authority.condensed.localStiffness, transformation);
@@ -611,7 +594,7 @@ function buildReducerElement(input) {
     equivalentGlobal,
     initialLocal,
     initialGlobal,
-    pressureAxialStrain: authority.pressure.enabled ? authority.pressure.meanAxialStrain : 0,
+    pressureAxialStrain: 0,
     bourdonRotationRadians: 0,
     bourdonFreeEndTranslationM: zero3(),
     gravityWeightN: authority.gravity.totalWeight,

@@ -32,6 +32,25 @@ export function createLafeaMeshGenerationActions(context) {
     return freeze({ ...result, stage: publish().stages[stageId] });
   }
 
+  /**
+   * Bind the separately declared shell midsurface parent. This is intentionally
+   * not routed through the LAFEA.3 domain-first geometry state.
+   */
+  function registerShellMidsurfaceEvidence(
+    value,
+    stageId = value?.stageId ?? getRetainedState().activeStageId,
+  ) {
+    try {
+      const result = meshGeneration.registerShellMidsurface(value, readStageState(stageId));
+      clearOrchestratorDiagnostic();
+      return freeze({ ...result, stage: (result.changed ? publish() : deriveState()).stages[stageId] });
+    } catch (error) {
+      failOrchestrator(error, 'LAFEA_SHELL_MIDSURFACE_REGISTRATION_REJECTED');
+      publish();
+      return null;
+    }
+  }
+
   /** Preview only: runs the producer and reports the result, custody untouched. */
   function planAnalysisMesh(overrides = {}, stageId = getRetainedState().activeStageId) {
     return attempt(stageId, 'LAFEA_ANALYSIS_MESH_PLAN_REJECTED',
@@ -54,7 +73,7 @@ export function createLafeaMeshGenerationActions(context) {
   }
 
   /**
-   * Recover portable domain-first evidence through the same trust boundary as
+   * Recover portable governed-v2 evidence through the same trust boundary as
    * generation. The embedded profile is reconstructed first and explicitly
    * rebound so imported evidence never depends on an unrelated prior profile.
    */
@@ -98,17 +117,29 @@ export function createLafeaMeshGenerationActions(context) {
   }
 
   /**
-   * Generation/refinement/recovery needs the retained analysis geometry,
-   * which only the domain-first route carries.
+   * Generation/refinement/recovery needs a governed mesh-independent geometry
+   * parent: domain-first continuum geometry for LAFEA.3, or a declared shell
+   * midsurface for LAFEA.4/.5.
    */
   function requireGenerationAuthorized(stageId) {
-    if (!rawStage(stageId).domainFirstProfileActive) {
-      throw storeError('LAFEA_ANALYSIS_MESH_GENERATION_REQUIRES_DOMAIN_FIRST_PROFILE');
-    }
+    const stage = rawStage(stageId);
+    if (stage.domainFirstProfileActive || stage.shellMidsurfaceProfileActive) return;
+    throw storeError(stageId === 'LAFEA.4' || stageId === 'LAFEA.5'
+      ? 'LAFEA_ANALYSIS_MESH_GENERATION_REQUIRES_SHELL_MIDSURFACE_EVIDENCE'
+      : 'LAFEA_ANALYSIS_MESH_GENERATION_REQUIRES_DOMAIN_FIRST_PROFILE');
+  }
+
+  function deriveState() {
+    return Object.freeze({
+      stages: Object.fromEntries(
+        Object.keys(getRetainedState().stages).map((stageId) => [stageId, deriveStage(stageId)]),
+      ),
+    });
   }
 
   return Object.freeze({
     bindAnalysisMeshProfile,
+    registerShellMidsurfaceEvidence,
     planAnalysisMesh,
     generateAnalysisMesh,
     refineAnalysisMesh,

@@ -7,6 +7,7 @@ on:
     paths:
       - '.github/workflows/m047-bm4nl-i017-accdb-authority-inventory.yml'
       - 'scripts/lfea-m047-accdb-authority-inventory.ps1'
+      - 'scripts/lfea-caesar-accdb-export.ps1'
       - 'scripts/lfea-m047-provision-ace.ps1'
       - 'benchmarks/LFEA/CAESAR_ACCDB/m047/M047-I017.request.json'
       - 'agent/status/status978.txt'
@@ -73,35 +74,105 @@ jobs:
             -AccdbPath "$env:BM4NL_ACCDB" `
             -OutputPath 'artifacts/m047/I017/accdb-authority-inventory.json'
 
-      - name: Qualify inventory custody and summarize authority candidates
+      - name: Read input-only authority candidate tables
+        shell: powershell
+        run: |
+          .\scripts\lfea-caesar-accdb-export.ps1 `
+            -AccdbPath "$env:BM4NL_ACCDB" `
+            -TablesCsv 'INPUT_ALLOWABLES,INPUT_BASIC_ELEMENT_DATA,INPUT_CONTROL,INPUT_NOZZLES_API650,INPUT_REDUCERS,INPUT_UNITS' `
+            | Set-Content 'artifacts/m047/I017/input-authority-candidates.raw.json' -Encoding utf8
+
+      - name: Qualify inventory custody and classify authority candidates
         shell: pwsh
         run: |
           $ErrorActionPreference = 'Stop'
           $inventory = Get-Content 'artifacts/m047/I017/accdb-authority-inventory.json' -Raw | ConvertFrom-Json
+          $input = Get-Content 'artifacts/m047/I017/input-authority-candidates.raw.json' -Raw | ConvertFrom-Json
           $locked = '85d39463296e569da811d8572e2eff680b858097f76fdf0f47d1755f0b161c21'
-          if ($inventory.source.sha256 -ne $locked) { throw 'I017 inventory source hash drifted.' }
+          if ($inventory.source.sha256 -ne $locked -or $input.source.sha256 -ne $locked) { throw 'I017 source hash drifted.' }
           $tableNames = @($inventory.tables | ForEach-Object { $_.name })
           foreach ($required in @('INPUT_BASIC_ELEMENT_DATA','INPUT_CONTROL','OUTPUT_DISPLACEMENTS','OUTPUT_GLOBAL_ELEMENT_FORCES','OUTPUT_RESTRAINTS_SUMMARY')) {
             if ($tableNames -notcontains $required) { throw "I017 inventory is missing known table $required." }
           }
+
           $matches = @($inventory.keywordMatches)
           $thermalMatches = @($matches | Where-Object { @($_.keywords) -contains 'THERM' -or @($_.keywords) -contains 'ALPHA' -or @($_.keywords) -contains 'COEFF' -or @($_.keywords) -contains 'EXP' })
           $modulusMatches = @($matches | Where-Object { @($_.keywords) -contains 'MODULUS' -or @($_.keywords) -contains 'ELASTIC' })
           $bourdonMatches = @($matches | Where-Object { @($_.keywords) -contains 'BOURDON' })
-          [ordered]@{
-            schema='lfea-m047-i017-authority-summary/v1'
+
+          $basicColumns = @($input.tables.INPUT_BASIC_ELEMENT_DATA.columns)
+          $pipeAlphaLike = @($basicColumns | Where-Object { $_ -match '(?i)(ALPHA|COEFF|STRAIN|THERM)' })
+          if ($pipeAlphaLike.Count -ne 0) { throw "Unexpected pipe-element alpha/strain candidate fields appeared: $($pipeAlphaLike -join ', ')." }
+          $temperatureColumns = @($basicColumns | Where-Object { $_ -match '^TEMP_EXP_C[1-9]$' })
+          if ($temperatureColumns.Count -ne 9) { throw "Expected nine TEMP_EXP_C operating-temperature fields; found $($temperatureColumns.Count)." }
+
+          $controlRows = @($input.tables.INPUT_CONTROL.rows)
+          if ($controlRows.Count -ne 1) { throw "Expected one INPUT_CONTROL row; found $($controlRows.Count)." }
+          $allowableRows = @($input.tables.INPUT_ALLOWABLES.rows)
+          $api650Rows = @($input.tables.INPUT_NOZZLES_API650.rows)
+          $reducerRows = @($input.tables.INPUT_REDUCERS.rows)
+          $elementRows = @($input.tables.INPUT_BASIC_ELEMENT_DATA.rows)
+
+          $codeRecords = @($allowableRows | ForEach-Object {
+            [ordered]@{
+              allowablePointer=$_.ALLOWBL_PTR
+              caseNumber=$_.CASE_NUM
+              pipingCode=$_.PIPING_CODE
+              alphaH=$_.ALPHA_H
+              alphaFab=$_.ALPHA_FAB
+              alphaGw=$_.ALPHA_GW
+              yCoeff=$_.Y_COEFF
+              expansionAllowable=$_.EXP_ALLOW
+            }
+          })
+          $materials = @($elementRows | ForEach-Object {
+            [ordered]@{
+              materialNumber=$_.MATERIAL_NUM
+              materialName=$_.MATERIAL_NAME
+              temperatureC1=$_.TEMP_EXP_C1
+              modulus=$_.MODULUS
+              hotMod1=$_.HOT_MOD1
+            }
+          } | ConvertTo-Json -Compress | Sort-Object -Unique | ForEach-Object { $_ | ConvertFrom-Json })
+          $reducerAlpha = @($reducerRows | ForEach-Object { [ordered]@{ reducerPointer=$_.RED_PTR; alphaDegrees=$_.ALPHA } })
+
+          $summary = [ordered]@{
+            schema='lfea-m047-i017-authority-summary/v2'
             sourceAccdbSha256=$inventory.source.sha256
+            caesarVersion=$controlRows[0].VERSION
             tableCount=$inventory.tableCount
             keywordMatchCount=$matches.Count
+            pipeElementThermalExpansionAuthority=[ordered]@{
+              exportedAlphaOrStrainFieldPresent=$false
+              operatingTemperatureColumns=$temperatureColumns
+              materialAndModulusFields=@('MATERIAL_NUM','MATERIAL_NAME','MODULUS','HOT_MOD1','HOT_MOD2','HOT_MOD3','HOT_MOD4','HOT_MOD5','HOT_MOD6','HOT_MOD7','HOT_MOD8','HOT_MOD9')
+              materials=$materials
+            }
+            inputAllowableCodeRecords=$codeRecords
+            api650NozzleAuthority=[ordered]@{
+              rowCount=$api650Rows.Count
+              thermalExpansionCoefficientColumnPresent=$true
+              applicableToPipeElements=$false
+            }
+            reducerAuthority=[ordered]@{
+              rowCount=$reducerRows.Count
+              alphaMeaning='REDUCER_TRANSITION_SLOPE_DEGREES'
+              rows=$reducerAlpha
+            }
             thermalExpansionCandidateColumns=$thermalMatches
             modulusCandidateColumns=$modulusMatches
             bourdonCandidateColumns=$bourdonMatches
-          } | ConvertTo-Json -Depth 8 | Set-Content 'artifacts/m047/I017/authority-summary.json' -Encoding utf8
+            conclusion='LOCKED_ACCDB_EXPORTS_PIPE_OPERATING_TEMPERATURE_MATERIAL_AND_MODULUS_BUT_NOT_PIPE_MEAN_THERMAL_EXPANSION_COEFFICIENT_OR_THERMAL_STRAIN'
+          }
+          $summary | ConvertTo-Json -Depth 10 | Set-Content 'artifacts/m047/I017/authority-summary.json' -Encoding utf8
           Add-Content $env:GITHUB_STEP_SUMMARY '# M047 I017 ACCDB authority inventory'
           Add-Content $env:GITHUB_STEP_SUMMARY "- ACCDB: ``$($inventory.source.sha256)``"
+          Add-Content $env:GITHUB_STEP_SUMMARY "- CAESAR version: $($summary.caesarVersion)"
           Add-Content $env:GITHUB_STEP_SUMMARY "- tables: $($inventory.tableCount)"
-          Add-Content $env:GITHUB_STEP_SUMMARY "- thermal/expansion candidate columns: $($thermalMatches.Count)"
-          Add-Content $env:GITHUB_STEP_SUMMARY "- modulus candidate columns: $($modulusMatches.Count)"
+          Add-Content $env:GITHUB_STEP_SUMMARY "- pipe alpha/thermal-strain field exported: $($summary.pipeElementThermalExpansionAuthority.exportedAlphaOrStrainFieldPresent)"
+          Add-Content $env:GITHUB_STEP_SUMMARY "- input allowable/code rows: $($codeRecords.Count)"
+          Add-Content $env:GITHUB_STEP_SUMMARY "- API650 nozzle rows: $($api650Rows.Count)"
+          Add-Content $env:GITHUB_STEP_SUMMARY "- reducer alpha rows (geometric slope): $($reducerRows.Count)"
           Add-Content $env:GITHUB_STEP_SUMMARY "- Bourdon candidate columns: $($bourdonMatches.Count)"
 
       - name: Retain I017 evidence

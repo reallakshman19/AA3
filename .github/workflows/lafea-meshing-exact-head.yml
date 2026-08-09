@@ -23,6 +23,7 @@ on:
       - 'scripts/lafea-shell-workbench-route-check.mjs'
       - 'scripts/lafea-shell-hole-mesh-check.mjs'
       - 'scripts/lafea-shell-hole-ladder-check.mjs'
+      - 'scripts/lafea-shell-hole-metadata-invariance-probe.mjs'
       - 'scripts/lafea-mesh-dof-policy-check.mjs'
       - 'scripts/lafea-meshing-system-check.mjs'
       - 'scripts/lafea-p2-11-triage.mjs'
@@ -81,6 +82,9 @@ jobs:
 
       - name: Qualify shell workbench custody and Discretization route
         run: node scripts/lafea-shell-workbench-route-check.mjs
+
+      - name: Diagnose shell hole metadata invariance
+        run: node scripts/lafea-shell-hole-metadata-invariance-probe.mjs
 
       - name: Qualify planar shell hole robustness ladder
         run: node scripts/lafea-shell-hole-ladder-check.mjs

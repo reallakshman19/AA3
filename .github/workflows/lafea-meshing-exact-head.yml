@@ -10,13 +10,20 @@ on:
       - 'src/workspace/lafea-discretization*.js'
       - 'src/workspace/lafea-workbench*.js'
       - 'src/workspace/lafea-stage-analysis-adapter.js'
+      - 'src/workspace/lafea-selected-pilot-evidence-handoff.js'
+      - 'src/workspace/lafea-b7d-recovery-render-bridge.js'
       - 'src/workspace/lafea-canvas/**'
       - 'scripts/lafea.10-*.mjs'
       - 'scripts/lafea-mesh-producer-binding-check.mjs'
       - 'scripts/lafea-mesh-dof-policy-check.mjs'
       - 'scripts/lafea-meshing-system-check.mjs'
       - 'scripts/lafea-p2-11-triage.mjs'
-      - 'scripts/lafea-p2-11-handoff-patch-probe.mjs'
+      - 'scripts/lafea-accessory-panel-source-guard.mjs'
+      - 'scripts/lafea-nb-t4b-recovery-render-check.mjs'
+      - 'scripts/lafea-nb-t6e-workbench-display-handoff-check.mjs'
+      - 'scripts/lafea-nonbucket-scope-guard.mjs'
+      - 'scripts/lafea-u2b-editor-store-check.mjs'
+      - '.github/workflows/lafea-nonbucket-stack.yml'
       - 'package.json'
       - '.github/workflows/lafea-meshing-exact-head.yml'
   workflow_dispatch:
@@ -58,25 +65,8 @@ jobs:
       - name: Qualify governed canvas meshing intent
         run: node scripts/lafea-meshing-system-check.mjs
 
-      - name: Probe current selected-pilot result schema
-        run: node scripts/lafea-p2-11-handoff-patch-probe.mjs
-
-      - name: Upload probed handoff source
-        uses: actions/upload-artifact@v4
-        with:
-          name: lafea-selected-pilot-handoff-probe
-          path: patched-selected-pilot-evidence-handoff.js
-          if-no-files-found: error
-
-      - name: Capture P2-11 registered check triage
+      - name: Qualify P2-11 check classification
         run: node scripts/lafea-p2-11-triage.mjs
-
-      - name: Upload P2-11 triage
-        uses: actions/upload-artifact@v4
-        with:
-          name: lafea-p2-11-triage
-          path: lafea-p2-11-triage.json
-          if-no-files-found: error
 
       - name: Run governed LAFEA meshing gate
         run: npm run check:lafea-meshing

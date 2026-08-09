@@ -118,6 +118,18 @@ export function requireLinearPipingInputXmlPreFlight(record) {
       'Native pre-flight intake identity is stale.');
   }
   const diagnostics = requireInputXmlLinearPreFeaDiagnostics(record.diagnostics);
+  requireEqual(
+    diagnostics.sourceAuthority?.sourceSemanticHash,
+    intake.inputXmlSource.semanticHash,
+    'PIPING_INPUTXML_NATIVE_PREFLIGHT_SOURCE_SEMANTIC_STALE',
+    'Native pre-flight diagnostics no longer match the sealed InputXML source semantic identity.',
+  );
+  requireEqual(
+    diagnostics.sourceAuthority?.contentHash,
+    intake.inputXmlSource.contentHash,
+    'PIPING_INPUTXML_NATIVE_PREFLIGHT_SOURCE_CONTENT_STALE',
+    'Native pre-flight diagnostics no longer match the sealed InputXML source content identity.',
+  );
   const preparation = requireInputXmlLinearPreFeaPreparation(record.preparation, diagnostics);
   requireEqual(preparation.requestedProfileId, intake.requestedProfileId,
     'PIPING_INPUTXML_NATIVE_PREFLIGHT_PROFILE_STALE',

@@ -66,7 +66,7 @@ export function shellMidsurfaceFrameAtUvAny(geometry, u, v) {
 
 export function shellMidsurfaceFrameAtPoint3dAny(geometry, point) {
   if (shellMidsurfaceKind(geometry) === LAFEA_SHELL_SURFACE_KINDS.CYLINDRICAL) {
-    return cylindricalShellFrameAtPoint3d(geometry, point);
+    return cylindricalShellFrameAtPoint3d(geometry, physicalPoint(point));
   }
   const planar = validateLafeaShellMidsurfaceGeometry(geometry);
   const offset = subtract(point, planar.origin);
@@ -103,6 +103,13 @@ export function shellMidsurfaceParameterGeometry(value) {
   });
 }
 
+function physicalPoint(value) {
+  if (!value || typeof value !== 'object'
+    || !Number.isFinite(value.x) || !Number.isFinite(value.y) || !Number.isFinite(value.z)) {
+    fail('LAFEA_SHELL_MIDSURFACE_POINT_INVALID');
+  }
+  return { x: value.x, y: value.y, z: value.z };
+}
 function cross(left, right) {
   return {
     x: left.y * right.z - left.z * right.y,

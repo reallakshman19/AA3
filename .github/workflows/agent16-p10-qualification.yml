@@ -1,9 +1,10 @@
-name: agent16-p10-p09-p07-governed-workflow
+name: agent16-p10-p09-p07-p08-governed-workflow
 
 on:
   pull_request:
     paths:
       - 'src/core/linear-piping-analysis-consumer/inputxml-linear-prefea-findings.js'
+      - 'src/analyze/analyze-controller.js'
       - 'src/main.js'
       - 'src/workspace/linear-piping-run-request.js'
       - 'src/workspace/linear-piping-run-gate.js'
@@ -14,11 +15,14 @@ on:
       - 'src/workspace/linear-piping-inputxml-intake.js'
       - 'src/workspace/linear-piping-inputxml-prefea.js'
       - 'src/workspace/linear-piping-inputxml-source-workflow.js'
+      - 'src/workspace/linear-piping-inputxml-diagnostics-view.js'
+      - 'src/workspace/linear-piping-analyzer-integration.js'
       - 'scripts/lfea-p10-capability-effects-traceability-check.mjs'
       - 'scripts/linear-piping-run-gate-check.mjs'
       - 'scripts/linear-piping-live-run-workbench-check.mjs'
       - 'scripts/linear-piping-inputxml-native-intake-check.mjs'
       - 'scripts/linear-piping-inputxml-source-workflow-check.mjs'
+      - 'scripts/linear-piping-inputxml-analyzer-integration-check.mjs'
       - '.github/workflows/agent16-p10-qualification.yml'
 
 permissions:
@@ -50,6 +54,7 @@ jobs:
           base='0cb5c6a04f865a4d6890edc59b29c3892af8c5ba'
           p10='5353ae5eb0f441652db8227c64674ecb4694f950'
           p09='b8232673bc2ff560c1037c1741a6354fe5bcaebe'
+          p07='80fc8ebd0d6dec6164ed6d1cdbea7759bf9509af'
 
           git diff --name-only "$base" "$p10" > /tmp/p10-paths.txt
           while IFS= read -r changed; do
@@ -67,29 +72,33 @@ jobs:
             esac
           done < /tmp/p09-paths.txt
 
-          git diff --name-only "$p09" HEAD > /tmp/p07-paths.txt
-          cat /tmp/p07-paths.txt
+          git diff --name-only "$p09" "$p07" > /tmp/p07-paths.txt
           while IFS= read -r changed; do
             case "$changed" in
               src/main.js|src/workspace/linear-piping-inputxml-intake.js|src/workspace/linear-piping-inputxml-prefea.js|src/workspace/linear-piping-inputxml-source-workflow.js|scripts/linear-piping-inputxml-native-intake-check.mjs|scripts/linear-piping-inputxml-source-workflow-check.mjs|.github/workflows/agent16-p10-qualification.yml) ;;
-              *) echo "P-07 changed an unqualified path: $changed" >&2; exit 1 ;;
+              *) echo "Frozen P-07 anchor contains an unexpected path: $changed" >&2; exit 1 ;;
             esac
           done < /tmp/p07-paths.txt
+
+          git diff --name-only "$p07" HEAD > /tmp/p08-paths.txt
+          cat /tmp/p08-paths.txt
+          while IFS= read -r changed; do
+            case "$changed" in
+              src/analyze/analyze-controller.js|src/main.js|src/workspace/linear-piping-inputxml-source-workflow.js|src/workspace/linear-piping-inputxml-diagnostics-view.js|src/workspace/linear-piping-analyzer-integration.js|scripts/linear-piping-inputxml-analyzer-integration-check.mjs|.github/workflows/agent16-p10-qualification.yml) ;;
+              *) echo "P-08 changed an unqualified path: $changed" >&2; exit 1 ;;
+            esac
+          done < /tmp/p08-paths.txt
 
       - name: Install dependencies
         run: npm ci
 
-      - name: Materialize frozen P-10 P-09 anchors and merge base
+      - name: Materialize frozen P-07 anchor
         shell: bash
         run: |
           set -euo pipefail
-          rm -rf /tmp/p10-base /tmp/p10-anchor /tmp/p09-anchor
-          git worktree add --detach /tmp/p10-base 0cb5c6a04f865a4d6890edc59b29c3892af8c5ba
-          git worktree add --detach /tmp/p10-anchor 5353ae5eb0f441652db8227c64674ecb4694f950
-          git worktree add --detach /tmp/p09-anchor b8232673bc2ff560c1037c1741a6354fe5bcaebe
-          ln -s "$GITHUB_WORKSPACE/node_modules" /tmp/p10-base/node_modules
-          ln -s "$GITHUB_WORKSPACE/node_modules" /tmp/p10-anchor/node_modules
-          ln -s "$GITHUB_WORKSPACE/node_modules" /tmp/p09-anchor/node_modules
+          rm -rf /tmp/p07-anchor
+          git worktree add --detach /tmp/p07-anchor 80fc8ebd0d6dec6164ed6d1cdbea7759bf9509af
+          ln -s "$GITHUB_WORKSPACE/node_modules" /tmp/p07-anchor/node_modules
 
       - name: Preserve P-10 lossless capability-effects projection
         run: node scripts/lfea-p10-capability-effects-traceability-check.mjs
@@ -100,17 +109,20 @@ jobs:
       - name: Preserve P-09 legacy M003 governed BLOCK
         run: node scripts/linear-piping-live-run-workbench-check.mjs
 
-      - name: P-07 native InputXML intake and source-to-preflight contract
+      - name: Preserve P-07 native InputXML intake and source-to-preflight contract
         run: node scripts/linear-piping-inputxml-native-intake-check.mjs
 
-      - name: P-07 visible LFEA native Source and Pre-flight workflow
+      - name: Preserve P-07 visible LFEA native Source and Pre-flight workflow
         run: node scripts/linear-piping-inputxml-source-workflow-check.mjs
 
-      - name: M003 core mechanics P-09 P-07 equivalence
+      - name: P-08 governed diagnostics and standalone Analyzer integration
+        run: node scripts/linear-piping-inputxml-analyzer-integration-check.mjs
+
+      - name: M003 core mechanics P-07 P-08 equivalence
         shell: bash
         run: |
           set -euo pipefail
-          cat > /tmp/p07-m003-core-oracle.mjs <<'EOF'
+          cat > /tmp/p08-m003-core-oracle.mjs <<'EOF'
           import assert from 'node:assert/strict';
           import path from 'node:path';
           import { pathToFileURL } from 'node:url';
@@ -125,27 +137,27 @@ jobs:
           assert.ok(Math.abs(uy + 1000) < 1e-8); assert.ok(Math.abs(rz + 2400) < 1e-8);
           process.stdout.write(JSON.stringify({ status: result.status, semanticHash: result.semanticHash, uy, rz }));
           EOF
-          node /tmp/p07-m003-core-oracle.mjs /tmp/p09-anchor > /tmp/p09-m003.json
-          node /tmp/p07-m003-core-oracle.mjs "$GITHUB_WORKSPACE" > /tmp/p07-m003.json
-          cmp /tmp/p09-m003.json /tmp/p07-m003.json
+          node /tmp/p08-m003-core-oracle.mjs /tmp/p07-anchor > /tmp/p07-m003.json
+          node /tmp/p08-m003-core-oracle.mjs "$GITHUB_WORKSPACE" > /tmp/p08-m003.json
+          cmp /tmp/p07-m003.json /tmp/p08-m003.json
 
       - name: Linear piping consumer anti-drift
         run: node scripts/linear-piping-analysis-consumer-anti-drift-check.mjs
 
-      - name: Prove PF-16 carried-red parity on P-09 anchor and P-07 head
+      - name: Prove PF-16 carried-red parity on P-07 anchor and P-08 head
         shell: bash
         run: |
           set -euo pipefail
           pattern='^PF-16 BLOCK cannot be overridden$'
           set +e
-          (cd /tmp/p09-anchor && node --test --test-name-pattern="$pattern" test/lfea-prefea-gateway.test.js) > /tmp/p09-pf16.log 2>&1
+          (cd /tmp/p07-anchor && node --test --test-name-pattern="$pattern" test/lfea-prefea-gateway.test.js) > /tmp/p07-pf16.log 2>&1
           anchor_status=$?
-          node --test --test-name-pattern="$pattern" test/lfea-prefea-gateway.test.js > /tmp/p07-pf16.log 2>&1
+          node --test --test-name-pattern="$pattern" test/lfea-prefea-gateway.test.js > /tmp/p08-pf16.log 2>&1
           head_status=$?
           set -e
           test "$anchor_status" -ne 0
           test "$head_status" -ne 0
-          for log in /tmp/p09-pf16.log /tmp/p07-pf16.log; do
+          for log in /tmp/p07-pf16.log /tmp/p08-pf16.log; do
             grep -F 'Preparation retains prohibited runtime state.' "$log"
             grep -F '# fail 1' "$log"
           done
@@ -161,15 +173,15 @@ jobs:
       - name: Linear piping consumer regression
         run: node scripts/linear-piping-analysis-consumer-check.mjs
 
-      - name: Closed-form mechanics P-09 P-07 equivalence
+      - name: Closed-form mechanics P-07 P-08 equivalence
         shell: bash
         run: |
           set -euo pipefail
           for script in lfea-b3.7-simply-supported-beam-check.mjs lfea-b3.8-thermal-expansion-check.mjs lfea-b3.9-gravity-self-weight-check.mjs; do
             stem="${script%.mjs}"
-            (cd /tmp/p09-anchor && node "scripts/$script") > "/tmp/p09-$stem.log"
-            node "scripts/$script" > "/tmp/p07-$stem.log"
-            cmp "/tmp/p09-$stem.log" "/tmp/p07-$stem.log"
+            (cd /tmp/p07-anchor && node "scripts/$script") > "/tmp/p07-$stem.log"
+            node "scripts/$script" > "/tmp/p08-$stem.log"
+            cmp "/tmp/p07-$stem.log" "/tmp/p08-$stem.log"
           done
 
       - name: Required 1 — strict syntax
@@ -190,22 +202,19 @@ jobs:
       - name: Required 6 — production Vite build
         run: npx vite build
 
-      - name: Report stacked P-10 P-09 P-07 qualification
+      - name: Report stacked P-10 P-09 P-07 P-08 qualification
         run: |
           printf '%s\n' \
             'P-10 frozen qualified anchor PRESERVED' \
             'P-09 frozen qualified anchor PRESERVED' \
-            'P-07 declared-unit authority PASS' \
-            'P-07 missing-unit explicit mm/in authority PASS' \
-            'P-07 no unit inference negative control PASS' \
-            'P-07 SHA-256 source-byte custody PASS' \
-            'P-07 native source-to-pre-FEA preparation PASS' \
-            'P-07 native pre-flight parent/hash tamper rejection PASS' \
-            'P-07 visible LFEA InputXML Source/Pre-flight workflow PASS' \
-            'P-07 native execution boundary remains explicit and disabled PASS' \
-            'P-09/P-07 M003 core numerical equivalence PASS' \
+            'P-07 frozen qualified anchor PRESERVED' \
+            'P-08 retained receipt diagnostics in normal LFEA workflow PASS' \
+            'P-08 readiness/restraint/topology/representability diagnostics PASS' \
+            'P-08 normal-workflow standalone Analyzer link retirement PASS' \
+            'P-08 standalone Analyzer PREFEA_AUTHORIZATION_REQUIRED fail-closed PASS' \
+            'P-07/P-08 M003 core numerical equivalence PASS' \
             'linear-piping anti-drift PASS' \
             'PF-16 carried-red parity PROVEN' \
             'all other pre-FEA gateway tests PASS' \
-            'B-3.7/B-3.8/B-3.9 P-09/P-07 numerical equivalence PASS' \
+            'B-3.7/B-3.8/B-3.9 P-07/P-08 numerical equivalence PASS' \
             'all six #952 mandatory commands PASS'

@@ -13,8 +13,12 @@ patchAccdbAdapter();
 patchCanonicalCheck();
 console.log('Issue 947 rigid Bourdon production promotion patch applied.');
 
+function readSource(path) {
+  return readFileSync(path, 'utf8').replace(/\r\n/g, '\n');
+}
+
 function patchRigidAuthority() {
-  let source = readFileSync(RIGID_FILE, 'utf8');
+  let source = readSource(RIGID_FILE);
   assert.equal(source.includes('rigidElementBourdonPressureEffect'), false,
     'Rigid Bourdon pressure effect already exists; refuse a second promotion.');
   const anchor = `/**
@@ -67,7 +71,7 @@ export function rigidElementBourdonPressureEffect(authority, input) {
 }
 
 function patchRigidIndex() {
-  let source = readFileSync(RIGID_INDEX, 'utf8');
+  let source = readSource(RIGID_INDEX);
   const anchor = `  compileCaesarRigidElementAuthority,
   rigidElementGravityLocalVector,`;
   assert.equal(count(source, anchor), 1, 'Rigid export anchor drifted.');
@@ -79,7 +83,7 @@ function patchRigidIndex() {
 }
 
 function patchAccdbAdapter() {
-  let source = readFileSync(ACCDB_SOLVE, 'utf8');
+  let source = readSource(ACCDB_SOLVE);
   const importAnchor = `  compileCaesarRigidElementAuthority,
   sealRigidElementRequest,`;
   assert.equal(count(source, importAnchor), 1, 'ACCDB rigid import anchor drifted.');
@@ -120,7 +124,7 @@ function patchAccdbAdapter() {
 }
 
 function patchCanonicalCheck() {
-  let source = readFileSync(RIGID_CHECK, 'utf8');
+  let source = readSource(RIGID_CHECK);
   const importAnchor = `  requireRigidElementAuthority,
   rigidElementGravityLocalVector,`;
   assert.equal(count(source, importAnchor), 1, 'B-3.22 import anchor drifted.');

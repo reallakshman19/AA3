@@ -12,7 +12,12 @@ const authority = readJson(authorityPath);
 assert.equal(authority.schema, 'bm4nl-caesar-settings-authority/v1');
 assert.equal(authority.benchmarkId, 'BM4_NL');
 assert.equal(authority.caesarVersion, '14.000');
-assert.deepEqual(authority.precedence, ['INDIVIDUAL_FILE_SETTING', 'OVERALL_SETTING']);
+assert.deepEqual(authority.precedence, [
+  'LOAD_CASE_SETTING',
+  'INDIVIDUAL_FILE_SETTING',
+  'MODEL_INPUT',
+  'OVERALL_SETTING',
+]);
 
 assert.equal(authority.overall.settings.BOURDON_PRESSURE, 'NONE');
 assert.equal(authority.individualFile.settings.BOURDON_PRESSURE, 'TRANSLATION_AND_ROTATION');
@@ -21,6 +26,11 @@ assert.deepEqual(authority.individualFile.settings.AMBIENT_TEMPERATURE, { value:
 assert.deepEqual(authority.effective.AMBIENT_TEMPERATURE, { value: 21, unit: 'C' });
 assert.equal(authority.overall.settings.Z_AXIS_UP, 'NO');
 assert.equal(authority.overall.settings.COEFFICIENT_OF_FRICTION_MU, 0);
+assert.equal(authority.modelInput.settings.COEFFICIENT_OF_FRICTION_MU, 0.3);
+assert.equal(authority.loadCases.cases.L19.COEFFICIENT_OF_FRICTION_MU, 0);
+assert.equal(authority.loadCases.cases.L20.COEFFICIENT_OF_FRICTION_MU, 0);
+assert.equal(authority.effective.L19.COEFFICIENT_OF_FRICTION_MU, 0);
+assert.equal(authority.effective.L20.COEFFICIENT_OF_FRICTION_MU, 0);
 assert.equal(authority.overall.settings.DEFAULT_CODE, 'B31.3_2022');
 assert.equal(authority.overall.settings.MIN_WALL_MILL_TOLERANCE_PERCENT, 12.5);
 assert.equal(authority.overall.settings.APPLY_B31J_SIFS_AND_FLEX, 'DEFAULT');
@@ -29,6 +39,9 @@ assert.equal(authority.overall.settings.ENFORCE_B31J_SIFS_ONLY, false);
 const requiredBindings = new Map(authority.bindings.map((entry) => [entry.setting, entry]));
 assert.equal(requiredBindings.get('BOURDON_PRESSURE')?.status, 'BOUND');
 assert.equal(requiredBindings.get('AMBIENT_TEMPERATURE')?.status, 'BOUND');
+assert.equal(requiredBindings.get('COEFFICIENT_OF_FRICTION_MU')?.status, 'RECORDED_MODEL_INPUT');
+assert.equal(requiredBindings.get('L19.COEFFICIENT_OF_FRICTION_MU')?.status, 'BOUND_CASE_EFFECTIVE');
+assert.equal(requiredBindings.get('L20.COEFFICIENT_OF_FRICTION_MU')?.status, 'BOUND_CASE_EFFECTIVE');
 assert.equal(requiredBindings.get('DEFAULT_TRANS_RESTRAINT_STIFF')?.status, 'UNRESOLVED_UNIT_AND_APPLICATION');
 assert.equal(requiredBindings.get('DEFAULT_ROT_RESTRAINT_STIFF')?.status, 'UNRESOLVED_UNIT_AND_APPLICATION');
 assert.equal(requiredBindings.get('BEND_AXIAL_SHAPE')?.status, 'RECORDED_REQUIRES_FORMULATION_MAPPING');
@@ -69,6 +82,13 @@ const result = {
   authorityPath,
   precedence: authority.precedence,
   effective: authority.effective,
+  frictionCustody: {
+    overallDefaultMu: authority.overall.settings.COEFFICIENT_OF_FRICTION_MU,
+    modelInputMu: authority.modelInput.settings.COEFFICIENT_OF_FRICTION_MU,
+    L19EffectiveMu: authority.effective.L19.COEFFICIENT_OF_FRICTION_MU,
+    L20EffectiveMu: authority.effective.L20.COEFFICIENT_OF_FRICTION_MU,
+    qualification: 'L19_AND_L20_FRICTIONLESS_BY_CASE_SETTING_NOT_BY_MODEL_INPUT',
+  },
   unresolved: authority.bindings
     .filter((entry) => entry.status.startsWith('UNRESOLVED') || entry.status.includes('REQUIRES_') || entry.status === 'DOES_NOT_RESOLVE_SMOOTH90_NOTE3')
     .map((entry) => ({ setting: entry.setting, status: entry.status })),

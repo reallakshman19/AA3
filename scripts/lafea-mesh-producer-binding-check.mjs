@@ -212,20 +212,22 @@ const splitProduced = produceLafeaAnalysisMeshEvidence(
 assert.equal(splitProduced.evidence.qualification, 'PASS');
 assert.equal(splitProduced.evidence.quality.blockingElementIds.length, 0);
 
-// --- LMB-05: P1-7 filleted logical corner remains mapped -------------------
+// --- LMB-05: a filleted-away corner is not falsely mapped ------------------
 const filletGeometry = filletedPlate();
-const filletMapped = generateLafeaAnalysisMesh(buildLafeaMeshTopology(filletGeometry), {
-  targetElementLength: 30, curvatureToleranceDegrees: 15, elementFamily: 'Q8',
-});
-assert.equal(filletMapped.strategy, 'MAPPED_TRANSFINITE');
-assert.ok(filletMapped.mesh.nodes.some((node) => node.x === 200 && node.y === 100));
-assert.ok(filletMapped.mesh.nodes.some((node) => node.x === 180 && node.y === 120));
-const filletProduced = produceLafeaAnalysisMeshEvidence(
-  stageFor(filletGeometry),
-  lafeaMeshGenerationConfiguration(meshProfileFor('Q8', 30)),
+const filletAdapter = buildLafeaMeshTopology(filletGeometry);
+assert.throws(
+  () => generateLafeaAnalysisMesh(filletAdapter, {
+    targetElementLength: 30, curvatureToleranceDegrees: 15, elementFamily: 'Q8',
+  }),
+  (error) => error?.code === 'LAFEA_MESH_ENGINE_Q8_FULL_RECOMBINATION_REQUIRED',
 );
-assert.equal(filletProduced.evidence.qualification, 'PASS');
-assert.equal(filletProduced.evidence.quality.blockingElementIds.length, 0);
+const filletT6 = produceLafeaAnalysisMeshEvidence(
+  stageFor(filletGeometry),
+  lafeaMeshGenerationConfiguration(meshProfileFor('T6', 15)),
+);
+assert.equal(filletT6.planned.generated.strategy, 'CONSTRAINED_DELAUNAY');
+assert.equal(filletT6.evidence.qualification, 'PASS');
+assert.equal(filletT6.evidence.quality.blockingElementIds.length, 0);
 
 // --- LMB-06: refined unstructured T6 has true interior vertices -------------
 const unstructured = generateLafeaAnalysisMesh(adapter, {
@@ -440,4 +442,4 @@ function arc(segmentId, startVertexId, endVertexId, centerX, centerY, radius, sw
   return { segmentId, type: 'CIRCULAR_ARC', startVertexId, endVertexId, centerX, centerY, radius, sweep };
 }
 
-console.log('LAFEA mesh-producer binding check PASS (P0 + P1-5 + P1-6 holes + P1-7 logical mapped chains)');
+console.log('LAFEA mesh-producer binding check PASS (P0 + P1-5 + P1-6 holes + P1-7 regular logical mapped chains)');

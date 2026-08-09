@@ -1,4 +1,4 @@
-name: agent16-p11-p12-p13-p14-qualification
+name: agent16-p11-p12-p13-p14-p15-qualification
 
 on:
   pull_request:
@@ -20,7 +20,7 @@ permissions:
 jobs:
   qualify:
     runs-on: ubuntu-latest
-    timeout-minutes: 30
+    timeout-minutes: 40
     steps:
       - name: Checkout exact pull-request head
         uses: actions/checkout@v4
@@ -59,7 +59,7 @@ jobs:
               src/core/linear-piping-analysis-consumer/inputxml-linear-solve-preparation.js|src/core/linear-piping-analysis-consumer/inputxml-linear-solve-preparation-contract.js) ;;
               src/core/linear-piping-analysis-consumer/inputxml-linear-stiffness-preflight.js|src/core/linear-piping-analysis-consumer/inputxml-linear-stiffness-preflight-contract.js) ;;
               src/core/linear-piping-analysis-consumer/inputxml-linear-structural-preparation.js|src/core/linear-piping-analysis-consumer/inputxml-linear-structural-preparation-contract.js) ;;
-              *) echo "Forbidden changed path for stacked P-11/P-12/P-13/P-14 qualification: $changed" >&2; exit 1 ;;
+              *) echo "Forbidden changed path for stacked P-11/P-12/P-13/P-14/P-15 qualification: $changed" >&2; exit 1 ;;
             esac
           done < /tmp/agent16-stack-paths.txt
 
@@ -158,6 +158,28 @@ jobs:
       - name: P-14 governed empirical consumer anti-drift
         run: node scripts/authorized-enrichment-consumer-controller-anti-drift-check.mjs
 
+      - name: P-15 delta containment — environment evidence only
+        shell: bash
+        run: |
+          set -euo pipefail
+          p14_sha='b16329720a5e76654fe3492b0f328dd53a8bb4e9'
+          git diff --name-only "$p14_sha" HEAD > /tmp/p15-paths.txt
+          cat /tmp/p15-paths.txt
+          while IFS= read -r changed; do
+            case "$changed" in
+              .github/workflows/agent16-p11-qualification.yml) ;;
+              *) echo "P-15 changed a non-environment path: $changed" >&2; exit 1 ;;
+            esac
+          done < /tmp/p15-paths.txt
+
+      - name: P-15 install package-local Chromium
+        env:
+          PLAYWRIGHT_BROWSERS_PATH: '0'
+        run: npx playwright install --with-deps chromium
+
+      - name: P-15 execute linear piping results workspace e2e
+        run: node scripts/run-playwright.mjs e2e/linear-piping-results-workspace.spec.js
+
       - name: Required 1 — strict syntax
         run: npm run syntax:strict
 
@@ -187,6 +209,8 @@ jobs:
             'P-14 F-001..F-007 containment PASS' \
             'P-14 governed empirical consumer regression PASS' \
             'P-14 active-runtime delta containment PASS' \
+            'P-15 package-local Chromium installation PASS' \
+            'P-15 linear piping results workspace e2e PASS' \
             'npm run syntax:strict PASS' \
             'node scripts/import-check.mjs PASS' \
             'node scripts/run-enrichment-ui-phase0-checks.mjs PASS' \

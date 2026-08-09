@@ -3,6 +3,7 @@ import assert from 'node:assert/strict';
 
 import { BASE_LIMITATIONS } from '../src/core/local-shell/constants.js';
 import { canonicalProfile, PROFILE_KINDS } from '../src/core/lafea-profile-contract/index.js';
+import { buildLafeaDiscretizationViewModel } from '../src/workspace/lafea-discretization-view-model.js';
 import { lafeaMeshCapabilities } from '../src/workspace/lafea-mesh-capabilities.js';
 import { requireLafeaStageAnalysisAdapter } from '../src/workspace/lafea-stage-analysis-adapter.js';
 import {
@@ -20,8 +21,10 @@ import {
   planLafeaShellAnalysisMesh,
   produceLafeaShellAnalysisMesh,
 } from '../src/workspace/lafea-shell-mesh-producer.js';
+import { createLafeaWorkbenchOrchestratorStore } from '../src/workspace/lafea-workbench-orchestrator-store.js';
 
 const SOURCE_HASH = `sha256:${'e'.repeat(64)}`;
+const STALE_SOURCE_HASH = `sha256:${'f'.repeat(64)}`;
 const ROOT2 = Math.sqrt(0.5);
 const geometryTemplate = {
   schema: LAFEA_SHELL_MIDSURFACE_GEOMETRY_SCHEMA,
@@ -51,24 +54,7 @@ assert.ok(BASE_LIMITATIONS.includes('NO_AUTOMATIC_OR_ADAPTIVE_MESHING'));
 
 const rows = [];
 for (const stageId of ['LAFEA.4', 'LAFEA.5']) {
-  const geometry = createLafeaShellMidsurfaceGeometry({ ...geometryTemplate, stageId });
-  const domain = createLafeaShellAnalysisDomain({
-    schema: LAFEA_SHELL_ANALYSIS_DOMAIN_SCHEMA,
-    stageId,
-    domainId: `P2-8-${stageId}-DOMAIN`,
-    sourceHash: SOURCE_HASH,
-    midsurfaceGeometryHash: geometry.semanticHash,
-    lengthUnit: 'mm',
-    topologyClass: LAFEA_SHELL_MIDSURFACE_TOPOLOGY,
-  });
-  const midsurfaceEvidence = createLafeaShellMidsurfaceEvidence({
-    schema: LAFEA_SHELL_MIDSURFACE_INTAKE_SCHEMA,
-    stageId,
-    sourceHash: SOURCE_HASH,
-    analysisDomain: domain,
-    geometry,
-    producerRef: 'P2-8-DECLARED-MIDSURFACE',
-  });
+  const { geometry, domain, midsurfaceEvidence } = shellParent(stageId, SOURCE_HASH);
   const meshProfile = shellProfile(stageId, 30);
   const capabilities = lafeaMeshCapabilities(stageId);
   assert.equal(capabilities.automaticMeshProducerQualified, true, stageId);
@@ -95,23 +81,16 @@ for (const stageId of ['LAFEA.4', 'LAFEA.5']) {
   assert.ok(plan.characteristicLengthMedian <= plan.characteristicLengthMax);
 
   // The global target is a size-field/point-spacing control, not a hard cap on
-  // every Delaunay diagonal. Qualify the sizing response by deterministic mesh
-  // refinement instead: halving the target must increase mesh density and
-  // reduce the median characteristic edge length without changing authority.
+  // every Delaunay diagonal. Qualify deterministic sizing response instead.
   const fineProfile = shellProfile(stageId, 15);
-  const finePlan = planLafeaShellAnalysisMesh({
-    midsurfaceEvidence,
-    meshProfile: fineProfile,
-  });
+  const finePlan = planLafeaShellAnalysisMesh({ midsurfaceEvidence, meshProfile: fineProfile });
   assert.equal(finePlan.resourceDisposition, 'WITHIN_LIMITS');
   assert.equal(finePlan.estimatedDofs, finePlan.nodeCount * 5);
   assert.ok(finePlan.nodeCount > plan.nodeCount);
   assert.ok(finePlan.elementCount > plan.elementCount);
   assert.ok(finePlan.characteristicLengthMedian < plan.characteristicLengthMedian);
 
-  const produced = produceLafeaShellAnalysisMesh({
-    midsurfaceEvidence, meshProfile, plan,
-  });
+  const produced = produceLafeaShellAnalysisMesh({ midsurfaceEvidence, meshProfile, plan });
   const fineProduced = produceLafeaShellAnalysisMesh({
     midsurfaceEvidence, meshProfile: fineProfile, plan: finePlan,
   });
@@ -148,6 +127,80 @@ for (const stageId of ['LAFEA.4', 'LAFEA.5']) {
   assert.equal(replay.evidence.artifactHash, produced.evidence.artifactHash);
   assert.equal(JSON.stringify(replay.evidence.mesh), JSON.stringify(produced.evidence.mesh));
 
+  // Public workbench route: source authority -> shell midsurface parent ->
+  // profile -> plan -> generate -> governed v2 custody -> Discretization.
+  const workbench = createLafeaWorkbenchOrchestratorStore();
+  workbench.selectStage(stageId);
+  workbench.initializeLifecycle(SOURCE_HASH, `P2-8-${stageId}-SOURCE`);
+
+  const beforeParent = buildLafeaDiscretizationViewModel(workbench.getState().stages[stageId]);
+  assert.equal(beforeParent.generation.available, false);
+  assert.equal(
+    beforeParent.generation.unavailableReason,
+    'ANALYSIS_MESH_GENERATION_REQUIRES_SHELL_MIDSURFACE_EVIDENCE',
+  );
+
+  const registered = workbench.registerShellMidsurfaceEvidence(midsurfaceEvidence, stageId);
+  assert.equal(registered?.changed, true);
+  const replayRegistration = workbench.registerShellMidsurfaceEvidence(midsurfaceEvidence, stageId);
+  assert.equal(replayRegistration?.changed, false);
+  assert.equal(
+    workbench.selectRetainedShellMidsurfaceEvidence(stageId)?.semanticHash,
+    midsurfaceEvidence.semanticHash,
+  );
+
+  workbench.bindAnalysisMeshProfile(meshProfile, stageId);
+  const readyVm = buildLafeaDiscretizationViewModel(workbench.getState().stages[stageId]);
+  assert.equal(readyVm.generation.available, true);
+  assert.equal(readyVm.actions.automaticMeshEnabled, true);
+  assert.equal(readyVm.actions.canPlanMesh, true);
+  assert.equal(readyVm.actions.canGenerateMesh, true);
+  assert.equal(readyVm.generation.declaredElementFamily, LAFEA_SHELL_ELEMENT);
+  assert.equal(readyVm.generation.lengthUnit, 'mm');
+
+  const workbenchPlan = workbench.planAnalysisMesh({}, stageId);
+  assert.equal(workbenchPlan?.summary.strategy, 'PLANAR_SHELL_MIDSURFACE_TRIANGULATION');
+  assert.equal(workbenchPlan?.summary.elementFamily, LAFEA_SHELL_ELEMENT);
+  assert.equal(workbenchPlan?.summary.estimatedDofs, workbenchPlan?.summary.nodeCount * 5);
+
+  const workbenchGenerated = workbench.generateAnalysisMesh({}, stageId);
+  assert.equal(workbenchGenerated?.evidence.qualification, 'PASS');
+  const generatedStage = workbench.getState().stages[stageId];
+  assert.equal(generatedStage.analysisMeshCustodyProjection.state, 'CURRENT_PASS');
+  assert.equal(generatedStage.analysisMeshCustodyProjection.usableForRun, true);
+  const generatedVm = buildLafeaDiscretizationViewModel(generatedStage);
+  assert.equal(generatedVm.evidence.present, true);
+  assert.equal(generatedVm.evidence.elementFamily, LAFEA_SHELL_ELEMENT);
+  assert.equal(generatedVm.actions.canAdvance, true);
+  assert.equal(generatedVm.actions.manualRefinementEnabled, false);
+  assert.equal(generatedVm.actions.canRefineMesh, false);
+  const shellRefinementMode = generatedVm.configuration.modes
+    .find((entry) => entry.mode === 'MANUAL_REFINEMENT');
+  assert.equal(shellRefinementMode?.enabled, false);
+  assert.equal(shellRefinementMode?.reason, 'SHELL_LOCAL_REFINEMENT_NOT_QUALIFIED');
+
+  const retainedArtifactHash = workbench
+    .selectRetainedAnalysisMeshEvidenceV2(stageId)?.artifactHash;
+  const refinementRejected = workbench.refineAnalysisMesh({
+    targetType: 'ELEMENT', targetIds: ['E000001'],
+    targetElementLength: 15, lengthUnit: 'mm',
+  }, stageId);
+  assert.equal(refinementRejected, null);
+  assert.equal(
+    workbench.selectRetainedAnalysisMeshEvidenceV2(stageId)?.artifactHash,
+    retainedArtifactHash,
+  );
+  assert.equal(workbench.getState().diagnostics?.[0]?.code, 'LAFEA_SHELL_LOCAL_REFINEMENT_NOT_QUALIFIED');
+
+  // Re-initializing source authority is a source change: shell parent and child
+  // are invalidated rather than silently carried to the new engineering source.
+  workbench.initializeLifecycle(STALE_SOURCE_HASH, `P2-8-${stageId}-SOURCE-CHANGE`);
+  const invalidatedStage = workbench.getState().stages[stageId];
+  assert.equal(invalidatedStage.shellMidsurfaceProfileActive, false);
+  assert.equal(invalidatedStage.retainedShellMidsurfaceEvidence, null);
+  assert.equal(invalidatedStage.retainedAnalysisMeshEvidenceV2, null);
+  workbench.destroy();
+
   rows.push({
     stageId,
     nodeCount: plan.nodeCount,
@@ -162,6 +215,7 @@ for (const stageId of ['LAFEA.4', 'LAFEA.5']) {
     artifactHash: produced.evidence.artifactHash,
     minimumScaledJacobian: produced.evidence.quality.minimumScaledJacobian,
     maximumAspectRatio: produced.evidence.quality.maximumAspectRatio,
+    workbenchRouteQualified: true,
   });
 }
 
@@ -200,6 +254,7 @@ console.log(JSON.stringify({
   status: 'PASS',
   solverInternalMeshingAuthorized: false,
   externalShellProducerQualified: true,
+  publicWorkbenchRouteQualified: true,
   scope: 'PLANAR_SINGLE_PATCH_STRAIGHT_PERIMETER_CST_DKT_TRI3',
   sizingQualification: 'TARGET_HALVING_INCREASES_DENSITY_AND_REDUCES_MEDIAN_CHARACTERISTIC_LENGTH',
   rows,
@@ -209,6 +264,28 @@ console.log(JSON.stringify({
     'SHELL_LOCAL_REFINEMENT',
   ],
 }, null, 2));
+
+function shellParent(stageId, sourceHash) {
+  const geometry = createLafeaShellMidsurfaceGeometry({ ...geometryTemplate, stageId });
+  const domain = createLafeaShellAnalysisDomain({
+    schema: LAFEA_SHELL_ANALYSIS_DOMAIN_SCHEMA,
+    stageId,
+    domainId: `P2-8-${stageId}-DOMAIN`,
+    sourceHash,
+    midsurfaceGeometryHash: geometry.semanticHash,
+    lengthUnit: 'mm',
+    topologyClass: LAFEA_SHELL_MIDSURFACE_TOPOLOGY,
+  });
+  const midsurfaceEvidence = createLafeaShellMidsurfaceEvidence({
+    schema: LAFEA_SHELL_MIDSURFACE_INTAKE_SCHEMA,
+    stageId,
+    sourceHash,
+    analysisDomain: domain,
+    geometry,
+    producerRef: 'P2-8-DECLARED-MIDSURFACE',
+  });
+  return { geometry, domain, midsurfaceEvidence };
+}
 
 function shellProfile(stageId, globalTargetSize) {
   return canonicalProfile(PROFILE_KINDS.MESH, {

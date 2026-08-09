@@ -1,6 +1,7 @@
 #!/usr/bin/env node
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
+import path from 'node:path';
 
 const args = parseArgs(process.argv.slice(2));
 const authorityPath = args.authority
@@ -50,7 +51,8 @@ const result = {
   falsification: 'EC_EQUALS_EH_FOR_PINNED_BM4NL_SO_THIS_SEMANTIC_FIX_HAS_ZERO_STIFFNESS_DELTA',
 };
 
-fs.mkdirSync(new URL('.', `file://${process.cwd()}/${outPath}`).pathname, { recursive: true });
+const outDirectory = path.dirname(outPath);
+if (outDirectory && outDirectory !== '.') fs.mkdirSync(outDirectory, { recursive: true });
 fs.writeFileSync(outPath, `${JSON.stringify(result, null, 2)}\n`);
 console.log(JSON.stringify(result, null, 2));
 
@@ -65,8 +67,8 @@ function parseArgs(tokens) {
   return result;
 }
 
-function readJson(path) {
-  return JSON.parse(fs.readFileSync(path, 'utf8'));
+function readJson(filePath) {
+  return JSON.parse(fs.readFileSync(filePath, 'utf8'));
 }
 
 function uniqueNumbers(values) {

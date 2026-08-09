@@ -11,7 +11,7 @@ const COMPILE_PROFILE_NEEDLE = `    profile: frameProfile(),\n    distributedLoa
 const COMPILE_PROFILE_REPLACEMENT = `    profile: input.profile ?? frameProfile(),\n    distributedLoads: [],`;
 
 const FRAME_PROFILE_NEEDLE = `function frameProfile() {\n  return sealFrameElementProfile({`;
-const FRAME_PROFILE_REPLACEMENT = `function plainFrameTimoshenkoProfile() {\n  return sealFrameElementProfile({\n    schema: 'fea-linear-frame-element-profile/v1',\n    profileId: 'LINEAR-FRAME-ELEMENT-R1-TIMOSHENKO-COWPER-0P53',\n    straightPipeFormulation: 'PIPE_FRAME3D_TIMOSHENKO_V1',\n    shearDeformation: true,\n    shearCorrectionFactorY: { value: 0.53, source: 'COWPER-1966-THIN-ANNULUS-INPUT' },\n    shearCorrectionFactorZ: { value: 0.53, source: 'COWPER-1966-THIN-ANNULUS-INPUT' },\n    releaseRule: 'STATIC_CONDENSATION_V1',\n    thermalStrainApproximation: 'UNIFORM_TEMPERATURE_ALPHA_DELTA_T_V1',\n    releaseSingularityTolerance: { value: 1e-12, source: PROFILE_SOURCE },\n    semanticHash: '',\n  });\n}\n\nfunction frameProfile() {\n  return sealFrameElementProfile({`;
+const FRAME_PROFILE_REPLACEMENT = `function plainFrameTimoshenkoProfile() {\n  return sealFrameElementProfile({\n    schema: 'fea-linear-frame-element-profile/v1',\n    profileId: 'LINEAR-FRAME-ELEMENT-R1',\n    straightPipeFormulation: 'PIPE_FRAME3D_TIMOSHENKO_V1',\n    shearDeformation: true,\n    shearCorrectionFactorY: { value: 0.53, source: 'COWPER-1966-THIN-ANNULUS-INPUT' },\n    shearCorrectionFactorZ: { value: 0.53, source: 'COWPER-1966-THIN-ANNULUS-INPUT' },\n    releaseRule: 'STATIC_CONDENSATION_V1',\n    thermalStrainApproximation: 'UNIFORM_TEMPERATURE_ALPHA_DELTA_T_V1',\n    releaseSingularityTolerance: { value: 1e-12, source: PROFILE_SOURCE },\n    semanticHash: '',\n  });\n}\n\nfunction frameProfile() {\n  return sealFrameElementProfile({`;
 
 function parseArguments(argv) {
   const args = new Map();
@@ -72,6 +72,7 @@ const manifest = {
     selectedKind: 'FRAME',
     teeModifierRequiredNull: true,
     formulation: 'PIPE_FRAME3D_TIMOSHENKO_V1',
+    frameProfileId: 'LINEAR-FRAME-ELEMENT-R1',
     shearCorrectionFactorY: 0.53,
     shearCorrectionFactorZ: 0.53,
     shearCorrectionAuthority: 'COWPER-1966-THIN-ANNULUS-INPUT',

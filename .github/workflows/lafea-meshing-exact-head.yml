@@ -5,6 +5,7 @@ on:
     paths:
       - 'src/core/lafea-meshing/**'
       - 'src/workspace/lafea-mesh-*.js'
+      - 'src/workspace/lafea-retained-mesh-refinement.js'
       - 'src/workspace/lafea-analysis-mesh-*.js'
       - 'src/workspace/lafea-domain-first-mesh-custody.js'
       - 'src/workspace/lafea-discretization*.js'
@@ -15,6 +16,7 @@ on:
       - 'src/workspace/lafea-canvas/**'
       - 'scripts/lafea.10-*.mjs'
       - 'scripts/lafea-mesh-producer-binding-check.mjs'
+      - 'scripts/lafea-retained-mesh-refinement-check.mjs'
       - 'scripts/lafea-mesh-dof-policy-check.mjs'
       - 'scripts/lafea-meshing-system-check.mjs'
       - 'scripts/lafea-p2-11-triage.mjs'
@@ -67,6 +69,9 @@ jobs:
 
       - name: Qualify P2-11 check classification
         run: node scripts/lafea-p2-11-triage.mjs
+
+      - name: Qualify retained-mesh local refinement
+        run: node scripts/lafea-retained-mesh-refinement-check.mjs
 
       - name: Run governed LAFEA meshing gate
         run: npm run check:lafea-meshing

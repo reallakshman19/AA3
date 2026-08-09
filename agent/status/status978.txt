@@ -7,472 +7,429 @@ State: DRAFT / NOT READY TO MERGE
 Supersedes: #977 (historical evidence branch exposed rejected Bourdon source in final diff)
 
 ======================================================================
-1. WHAT THIS PR CONTAINS
+1. CLEAN REVIEW BOUNDARY
 ======================================================================
 
-This is the clean review branch for accepted/qualified M047 work and the
-qualification evidence needed to decide the remaining work.
+#978 is the clean qualification/evidence branch for M047. It deliberately does
+not commit production ACCDB solver mechanics. Runtime candidate patches are
+applied against a frozen mechanics baseline so accepted, rejected and diagnostic
+experiments remain separable.
 
-Included I015 — accepted L19 constitutive mechanism:
-- deterministic plain-FRAME Timoshenko candidate patch,
-- I015 candidate boundary guard,
-- locked BM4_NL Windows system A/B workflow,
-- target-node incident-action/equilibrium custody,
-- baseline/candidate A/B comparator,
-- accepted M047-I015 qualification request/evidence record.
-
-Included I016 — rejected L20 modulus-selector hypothesis:
-- runtime-only B31.3 cold-modulus candidate patch,
-- candidate boundary guard,
-- incremental thermal residual analyzer,
-- locked Windows A/B workflow,
-- rejected M047-I016 evidence record.
-
-Included I017 — accepted ACCDB thermal-authority export boundary:
-- complete read-only ACCDB table/column schema inventory,
-- input-only authority-candidate extraction,
-- locked Windows authority-inventory workflow,
-- accepted M047-I017 evidence record.
-
-Shared qualification infrastructure:
-- portable read-only ACCDB SHA-256 implementation,
-- pinned Microsoft Access Runtime provisioning,
-- this numbered status/roadmap file.
-
-No production ACCDB solver source is changed by this PR. I015/I016 mechanics are
-qualification-time runtime patches against the frozen mechanics baseline.
-
-Not included:
-- rejected I004 cumulative Bourdon production mechanics,
-- unqualified I006 Bourdon candidate mechanics,
-- benchmark-fitted thermal-expansion coefficient mechanics,
-- production-wide tee/bend/reducer shear propagation,
-- any L20 thermal fix not yet proven from source authority.
-
-Historical diagnostic/rejected branches remain intact as evidence; this PR is
-kept deliberately reviewable and must not absorb rejected production history.
-
-Locked qualification custody:
-- ACCDB SHA-256:
+Locked custody:
+- BM4_NL ACCDB SHA-256:
   85d39463296e569da811d8572e2eff680b858097f76fdf0f47d1755f0b161c21
-- Common source commit:
+- pinned Common source commit:
   1728651c94504b497aae4041578b1095fd8e292e
-- Frozen benchmark mechanics baseline:
+- frozen mechanics baseline:
   882d59a99c3a03847d20bec34770ba57ff479d91
-- Accepted I015 mechanics candidate:
+- accepted I015 mechanics candidate:
   8a9ddb23e1bbf71d58fd654f3837cfac8f42b7e0
-- I015 evidence semantic hash:
+- accepted I015 evidence semantic hash:
   fnv1a64:296422c2764f7b4f
 
-Exact evidence runs retained:
-- I015 system A/B:
-  run 31312435893
-  artifact 9037781388
-  artifact sha256 6c8d79bcccb19b80ae53fe32d78afefa69871da606166ea5e6e58c2be897fc23
-- I016 cold-modulus A/B:
-  run 31313792562
-  artifact 9038165854
-  artifact sha256 ff294bcb6975ca144ea2c525e1fa0587ad253c8e2d899e5f33ac4adb24ed0fd8
-  A/B semantic hash fnv1a64:dd8f8386176f2241
-  thermal-delta semantic hash fnv1a64:f3f7c2b55a1273e7
-- I017 ACCDB authority inventory:
-  run 31314526361
-  artifact 9038363528
-  artifact sha256 027ed777f2fe38909b220e48ba0e9370831c87d7fbb9f86f96fcae8d8998324c
+Included qualification work:
+- I015 accepted plain-FRAME Timoshenko A/B and target-node custody;
+- I016 rejected hot/cold modulus-selector A/B;
+- I017 accepted full ACCDB material-authority export-boundary audit;
+- I018 accepted pinned-source-archive authority survey;
+- portable read-only ACCDB hashing/export support;
+- deterministic A/B, thermal-delta and target-node evidence tooling;
+- pinned ACE provisioning and exact-head Windows workflows.
+
+Not included / not promotable:
+- rejected I004 cumulative Bourdon production mechanics;
+- unqualified I006 Bourdon candidate mechanics;
+- I010 benchmark-fitted thermal coefficient as production authority;
+- reducer-wide Timoshenko cutover;
+- production tee/bend/reducer shear propagation;
+- any unproven L20 thermal fix.
 
 ======================================================================
-2. QUALIFIED CONCLUSION SO FAR — L19 TRANSVERSE SHEAR
+2. I015 — ACCEPTED L19 TRANSVERSE-SHEAR MECHANISM
 ======================================================================
 
-The strongest diagnostic remains prescribed-DOF source/element replay:
+Prescribed-DOF replay remains the strongest mechanism evidence:
 
     q = K d_CAESAR - f_equiv - f_initial
 
-For L19 source 4 near node 20090:
-- axial replay is essentially correct (~0.009 N residual),
-- FY/MZ replay remains materially wrong under Euler-Bernoulli,
-- source-4 transverse pressure/initial-strain contribution is zero,
-- therefore the dominant source-4 transverse mismatch is in stiffness response,
+At L19 source 4 / node 20090:
+- axial replay is essentially correct (~0.009 N residual);
+- FY/MZ replay is materially wrong under Euler-Bernoulli;
+- source-4 transverse pressure/initial-strain contribution is zero;
+- therefore the dominant source-4 transverse mismatch is stiffness response,
   not Bourdon or pressure-axial initial strain.
 
-Using the existing governed Timoshenko frame kernel produces the expected
-transverse force/moment coupling change while leaving EA/L and torsional GJ/L
-mechanics invariant.
+The governed Timoshenko frame kernel changes the expected transverse
+force/moment coupling while retaining EA/L and GJ/L behavior.
 
-Population evidence is stronger than the single restraint reaction:
-- 50 ordinary plain FRAME sources,
-- 400/400 L19 local transverse end-action components improve,
-- zero local transverse regressions,
-- zero local axial/torsional drift,
-- L19 transverse RMS residual ~1080.342 -> ~21.787,
+Population evidence:
+- 50 ordinary plain FRAME sources;
+- 400/400 L19 local transverse end-action components improve;
+- zero local transverse regressions;
+- zero local axial/torsional drift;
+- L19 transverse RMS residual ~1080.342 -> ~21.787;
 - L20 transverse RMS residual ~4824.048 -> ~66.350.
 
-Qualified mechanics statement:
+Exact retained I015 run:
+- run 31312435893
+- artifact 9037781388
+- artifact sha256
+  6c8d79bcccb19b80ae53fe32d78afefa69871da606166ea5e6e58c2be897fc23
+
+Locked system A/B, L19:
+- restraint failures 1 -> 0;
+- node 20090 FY ~-1932.836 -> ~-1801.623 N;
+- CAESAR node 20090 FY -1659.837 N;
+- node 20090 error ~16.45% -> ~8.54%;
+- displacement/rotation failures 74 -> 66;
+- failing displacement/rotation nodes 52 -> 45;
+- displacement/rotation normalized RMS ~0.4111 -> ~0.3464;
+- source-end-action normalized RMS ~0.05405 -> ~0.05304;
+- 12/12 bends retained;
+- target-node incident-action/reaction closure remains numerical roundoff.
+
+Carried L19 source-action residual:
+- threshold failures 20 -> 23;
+- six new modest MZ failures cluster around sources 9-11;
+- aggregate source-action RMS still improves;
+- sources 9-11 must remain visible and be resolved by prescribed-DOF/spatial
+  custody analysis, not hidden by tolerances or a global fit.
+
+Accepted mechanics statement:
 
     Missing transverse shear deformation in ordinary flexible-pipe response is
     strongly supported and accepted as the current L19 constitutive correction.
 
 ======================================================================
-3. I015 SYSTEM A/B — ACCEPTED
+3. QUALIFIED MECHANISM IS NOT YET FINAL ARCHITECTURE
 ======================================================================
 
-The exact-head Windows workflow completed successfully from the clean #978
-branch and reproduced the locked-data custody, kernel checks, real ACCDB solve,
-A/B comparison, 12/12 bend inventory and target-node equilibrium evidence.
-
-L19, locked BM4_NL:
-- restraint failures: 1 -> 0,
-- node 20090 FY: ~-1932.836 N -> ~-1801.623 N,
-- CAESAR node 20090 FY: -1659.837 N,
-- node 20090 relative error: ~16.45% -> ~8.54%,
-- displacement/rotation failures: 74 -> 66,
-- displacement/rotation failing nodes: 52 -> 45,
-- displacement/rotation normalized RMS: ~0.4111 -> ~0.3464,
-- source-end-action normalized RMS: ~0.05405 -> ~0.05304,
-- 12/12 bend coverage retained,
-- node 20090 incident-action/reaction closure remains numerical roundoff.
-
-Important carried L19 residual:
-- source-end-action threshold failures move 20 -> 23,
-- six new modest MZ failures cluster around sources 9-11,
-- aggregate source-action RMS still improves slightly,
-- this cluster remains pending and must not be hidden.
-
-L20 after accepted I015 parent mechanics:
-- restraint failures: 6,
-- displacement/rotation failures: 90,
-- source-end-action failures: 134,
-- structural shear correction does not close the thermal case.
-
-The L20 residual is therefore being treated separately as thermal free-strain /
-material-authority and component thermal-growth work, not as a reason to tune
-the shear coefficient.
-
-======================================================================
-4. ARCHITECTURAL INTERPRETATION
-======================================================================
-
-The current experimental selection:
+The I015 selection:
 
     input.kind === 'FRAME' && teeModifier === null
 
-is a controlled A/B boundary, not the intended permanent physical boundary.
+is an experimental A/B boundary, not the permanent physical boundary.
 
-Long-term architecture should be:
+Intended architecture:
 
     governed pipe section/material
-        -> governed base beam constitutive law
-        -> component-owned mechanics
-        -> offsets/transforms
-        -> assembly
-        -> Schur condensation where required
+      -> governed base beam constitutive law
+      -> component-owned mechanics
+      -> offsets/transforms
+      -> assembly
+      -> Schur condensation where required
 
-Transverse shear is a property of flexible pipe beam mechanics. A tee does not
-make adjacent pipe Euler-Bernoulli. A reducer condenser does not remove shear
-flexibility. A bend incoming straight is still straight flexible pipe.
+Transverse shear belongs to flexible pipe beam mechanics. A tee does not make
+adjacent pipe Euler-Bernoulli; a bend incoming straight is still straight pipe;
+a reducer condenser does not remove shear flexibility.
 
-Component-specific mechanics must compose with the common beam law without
-double ownership. Example: if B31J junction flexibility is represented by an
-explicit rotational spring/compliance mechanism, the same flexibility must not
-also be embedded through a second branch weakening factor.
+Component mechanics must compose without double ownership. If a B31J junction
+flexibility is represented by explicit spring/compliance authority, the same
+flexibility must not be embedded again through a second weakening mechanism.
 
-Schur condensation is mathematically neutral:
+For condensed systems:
 
     Kc = Kbb - Kbi Kii^-1 Kib
     fc = fb  - Kbi Kii^-1 fi
 
-It preserves whatever physics was assembled internally, correct or incorrect.
-Therefore reducer internal cylinders must eventually use the qualified base
-beam law before condensation, but only after the complete reducer stiffness +
-load ownership model is independently qualified.
+Schur condensation is neutral: it preserves whatever stiffness/load mechanics
+were assembled internally, whether correct or incorrect. Reducer internal
+cylinders must therefore be qualified together with pressure/thermal load
+ownership before a system cutover.
 
 ======================================================================
-5. SHEAR PARAMETER AUTHORITY
+4. SHEAR PARAMETER AUTHORITY REMAINS OPEN
 ======================================================================
 
-Mechanism identification and exact parameter authority remain separate.
-
-Current I015 candidate uses:
-- PIPE_FRAME3D_TIMOSHENKO_V1,
-- shearDeformation=true,
-- kappa_y = kappa_z = 0.53,
-- source = COWPER-1966-THIN-ANNULUS-INPUT,
+Current I015 candidate:
+- PIPE_FRAME3D_TIMOSHENKO_V1;
+- shearDeformation=true;
+- kappa_y = kappa_z = 0.53;
+- source COWPER-1966-THIN-ANNULUS-INPUT;
 - frozen profileId remains LINEAR-FRAME-ELEMENT-R1.
 
-The 0.53 experiment strongly identified the missing mechanism. Later
-CAESAR-specific authority indicating a commercial pipe shear coefficient of 2
-(mapping naturally to As=A/2 and kappa=0.5 in the kGA convention) must be
-reconciled before any production-wide profile is finalized.
-
-Do not inverse-fit kappa against individual CAESAR output rows. If different
-force/moment rows require inconsistent inverse kappa values, that indicates
-other component/custody mechanics rather than a single tunable global scalar.
+The 0.53 experiment identifies the missing mechanism. Exact CAESAR-specific
+parameter/profile authority is a separate promotion gate. Later CAESAR evidence
+suggesting a commercial pipe shear coefficient of 2 (naturally mapping to
+As=A/2, kappa=0.5 in the kGA convention) must be reconciled from source
+mechanics, not inverse-fit against selected CAESAR result rows.
 
 ======================================================================
-6. L20 THERMAL AUTHORITY FINDINGS
+5. L20 THERMAL AUTHORITY — I009/I010 DIAGNOSTIC HISTORY
 ======================================================================
 
-6.1 I009 / I010 historical diagnostic evidence — useful but not promotable
+Historical I009 straight-pipe prescribed-DOF replay over 55 ordinary FRAME
+sources found a very coherent thermal fingerprint:
+- median multiplier 1.0454694197686063;
+- MAD ~1.3167e-6;
+- gravity-weighted median 1.0454691805152607;
+- current 11.7e-6/K corresponds diagnostically to ~12.23199e-6/K.
 
-Historical I009 straight-pipe prescribed-DOF replay found a highly coherent
-thermal fingerprint over 55 ordinary FRAME sources:
-- median thermal multiplier: 1.0454694197686063,
-- MAD: ~1.3167e-6,
-- gravity-weighted median: 1.0454691805152607,
-- current 11.7e-6/K profile value corresponds diagnostically to about
-  12.23199e-6/K under that multiplier.
-
-This is strong evidence that the current L20 free-strain authority is low, but
-it is derived from CAESAR output response and is therefore NOT an admissible
-material-property source for production.
+This strongly indicates that current L20 free strain is low, but the value is
+derived from CAESAR response and is NOT admissible material authority.
 
 Historical I010 applied that inferred coefficient diagnostically only:
-- L19 stayed invariant,
-- L20 restraint failures improved 5 -> 2,
-- L20 source-end-action failures improved 137 -> 43,
-- L20 displacement/rotation failures worsened 72 -> 80.
+- L19 invariant;
+- historic L20 restraint failures 5 -> 2;
+- source-end-action failures 137 -> 43;
+- displacement/rotation failures 72 -> 80 (worse).
 
-I010 was correctly REJECTED. It proves causal sensitivity; it does not authorize
-a fitted thermal coefficient.
+I010 remains REJECTED as production authority. It proves causal sensitivity but
+does not authorize a fitted coefficient.
 
-6.2 I016 — hot/cold modulus selector hypothesis REJECTED
+======================================================================
+6. I016 — HOT/COLD MODULUS SELECTOR REJECTED
+======================================================================
 
 I016 preserved accepted I015 mechanics and changed only the operating-case
 flexibility modulus selector from HOT_MOD1 to MODULUS.
 
-Locked real ACCDB evidence across all 96 source elements:
-- material: A106 Grade B, material number 106,
-- TEMP_EXP_C1 = 120,
-- MODULUS = 203395008 kPa,
-- HOT_MOD1 = 203395008 kPa,
-- HOT_MOD1 / MODULUS = 1.0.
+Locked ACCDB evidence across all 96 source elements:
+- material 106 / A106 Grade B;
+- TEMP_EXP_C1 = 120;
+- MODULUS = 203395008 kPa;
+- HOT_MOD1 = 203395008 kPa;
+- ratio = 1.0.
 
-Observed system result:
-- L19 changed physical rows: 0,
-- L20 changed physical rows: 0,
-- L20 restraint failures: 6 -> 6,
-- L20 displacement/rotation failures: 90 -> 90,
-- L20 source-end-action failures: 134 -> 134,
-- incremental r_T metrics are exactly unchanged.
+Observed A/B:
+- L19 changed physical rows 0;
+- L20 changed physical rows 0;
+- L20 restraints 6 -> 6;
+- L20 displacement/rotation 90 -> 90;
+- L20 source-end-actions 134 -> 134;
+- incremental r_T metrics unchanged.
 
-Decision:
+Exact retained I016 run:
+- run 31313792562
+- artifact 9038165854
+- artifact sha256
+  ff294bcb6975ca144ea2c525e1fa0587ad253c8e2d899e5f33ac4adb24ed0fd8
+- A/B semantic hash fnv1a64:dd8f8386176f2241
+- thermal-delta semantic hash fnv1a64:f3f7c2b55a1273e7
 
-    I016 REJECTED for this locked job.
-
-The selector is mathematically inactive because the two exported modulus fields
-are equal. Hot-versus-cold field selection cannot explain the current L20
-pattern and no production modulus change is authorized.
-
-6.3 I017 — ACCDB thermal-authority export boundary ACCEPTED
-
-I017 enumerated all 40 ACCDB tables and columns through read-only ACE schema
-metadata, then inspected only relevant INPUT_* authority candidates.
-
-Locked authority evidence:
-- CAESAR version: CAESAR II 14.00,
-- piping code ID: 53,
-- code authority: ASME B31.3-2022,
-- default B31J edition for that code: B31J-2017,
-- source elements: 96,
-- one distinct material record:
-    material number 106,
-    A106 Grade B,
-    TEMP_EXP_C1 = 120,
-    MODULUS = HOT_MOD1 = 203395008 kPa.
-
-Important export-boundary distinction:
-- CAESAR documents TEMP_EXP_C1..C9 as a "thermal expansion coefficient or
-  temperature" input field family,
-- for THIS locked job, the value 120 establishes TEMP_EXP_C1 as operating
-  temperature in degrees C,
-- no separate pipe-element field exports the CAESAR material-library mean CTE
-  or the read-only derived thermal strain.
-
-Misleading candidate fields were independently classified:
-- INPUT_NOZZLES_API650.THERM_EXP_COEFF exists in schema but the table has zero
-  rows and it is API-650 nozzle authority, not pipe material CTE,
-- INPUT_REDUCERS.ALPHA is reducer transition slope in degrees,
-- INPUT_ALLOWABLES ALPHA_H / ALPHA_FAB / ALPHA_GW are code-specific non-thermal
-  fields and are inactive for this B31.3 job,
-- no ACCDB column contains BOURDON.
-
-Decision:
-
-    I017 ACCEPTED as an authority/export-boundary finding.
-
-The reusable solver cannot recover CAESAR's 21 -> 120 C A106 Grade B
-material-library expansion value from a separate ACCDB CTE/strain field because
-that derived authority is not exported here. The profile must therefore carry a
-versioned external material authority and fail closed if its provenance is
-missing.
-
-I017 authorizes NO numeric CTE change. In particular, the I009/I010 inferred
-~12.23199e-6/K value remains diagnostic-only until independently reproduced from
-a source-authoritative material record.
-
-Required provenance for eventual thermal profile authority:
-- CAESAR version/build,
-- supplied material database identity and hash (cmat.bin),
-- user material database / UMD identity and hash or explicit none,
-- material number and name,
-- piping code ID/edition,
-- reference temperature 21 C,
-- target temperature 120 C,
-- interpolation bracket and method,
-- resulting mean CTE and/or derived thermal strain.
+Decision: I016 REJECTED for this locked job. The selector is mathematically
+inactive and cannot explain L20.
 
 ======================================================================
-7. REJECTED / HELD WORK THAT MUST REMAIN REJECTED OR SEPARATE
+7. I017 — ACCDB MATERIAL-AUTHORITY EXPORT BOUNDARY ACCEPTED
+======================================================================
+
+I017 enumerated every table/column through read-only ACE schema metadata and
+inspected only relevant INPUT_* authority candidates.
+
+Exact retained I017 run:
+- run 31314526361
+- artifact 9038363528
+- artifact sha256
+  027ed777f2fe38909b220e48ba0e9370831c87d7fbb9f86f96fcae8d8998324c
+
+Locked findings:
+- CAESAR II 14.00;
+- 40 ACCDB tables;
+- 100 schema keyword matches;
+- piping code ID 53 = ASME B31.3-2022;
+- B31J-2017 code authority;
+- one distinct pipe material record: material 106 A106 Grade B;
+- TEMP_EXP_C1 = 120 C for this job;
+- MODULUS = HOT_MOD1 = 203395008 kPa;
+- no separate pipe-element field for material-library mean CTE or derived
+  thermal strain;
+- no Bourdon column.
+
+Disambiguated fields:
+- TEMP_EXP_C1..C9 are CAESAR coefficient-or-temperature input fields; here 120
+  establishes C1 as operating temperature;
+- INPUT_NOZZLES_API650.THERM_EXP_COEFF is nozzle-specific and has zero rows;
+- INPUT_REDUCERS.ALPHA is geometric reducer transition slope;
+- INPUT_ALLOWABLES ALPHA_* fields are code-specific non-thermal fields and
+  inactive for this B31.3 job.
+
+Decision: I017 ACCEPTED as an authority/export-boundary finding. It authorizes
+no numeric CTE change.
+
+======================================================================
+8. I018 — PINNED SOURCE-ARCHIVE AUTHORITY SURVEY ACCEPTED
+======================================================================
+
+I018 asked whether the pinned BM4_NL source package itself retained a CAESAR
+error-checker, material, input or pipe-properties report that could supply the
+missing alpha independently of benchmark response.
+
+Two early I018 runs failed only in the Windows PowerShell 5.1 relative-path
+helper. Those runs are classified HARNESS_ONLY; exact checkout and source
+custody had already passed and no solver/profile mechanic was involved.
+
+Successful exact-head evidence:
+- head d7819514a0a99626de0c517f87caf39da4a80d19;
+- run 31315153544, success;
+- artifact 9038515324;
+- artifact sha256
+  cfb7edfd58b7a66c781d2a52323021ae91115f1bc38690f9673b3e4900620c20.
+
+Observed pinned archive:
+- archive file count: 1;
+- only member: BM4_NL.ACCDB;
+- byte length: 3575808;
+- member SHA-256 exactly equals the locked issue ACCDB hash;
+- surveyed text files: 0;
+- matched alpha/material text files: 0;
+- CAESAR-generated alpha/material reports: none.
+
+Decision: I018 ACCEPTED as a source-custody finding.
+
+    authorityGate = EXTERNAL_MATERIAL_AUTHORITY_REQUIRED
+
+I017 + I018 close the in-repository search for a source-authoritative numeric
+21 -> 120 C A106 Grade B expansion value. The ACCDB contains operating
+conditions/material identity but no separate derived material-library alpha or
+strain, and the pinned source archive contains no auxiliary CAESAR report.
+
+The thermal property must therefore remain fail-closed until one of these is
+available:
+1. exact CAESAR II 14.00 supplied cmat.bin plus configured UMD identity/hash and
+   material-106 record provenance; or
+2. exact applicable ASME B31.3-2022 Table C-3 source values plus documented
+   CAESAR interpolation to 120 C from the 21 C reference.
+
+Required provenance for any eventual profile value:
+- CAESAR version/build;
+- cmat.bin identity/hash;
+- UMD identity/hash or explicit none;
+- material number/name;
+- piping code ID/edition;
+- reference temperature 21 C;
+- target temperature 120 C;
+- source temperature bracket;
+- interpolation rule;
+- resulting mean CTE and derived strain.
+
+No numeric CTE change is authorized by I018. The I009/I010 ~12.23199e-6/K
+value remains diagnostic-only.
+
+======================================================================
+9. REJECTED / HELD WORK THAT MUST STAY SEPARATE
 ======================================================================
 
 I004 cumulative Bourdon compatible-field candidate:
-- REJECTED on locked ACCDB,
-- caused major restraint/displacement/source-action regressions,
-- retained only as historical evidence.
+- REJECTED on locked ACCDB;
+- major restraint/displacement/source-action regressions;
+- historical evidence only.
 
 I006 / later final-axis Bourdon interpretation:
-- useful geometric diagnostic,
-- not accepted as the L19 correction,
-- must not be bundled into this PR's mechanics.
+- useful geometric diagnostic;
+- not accepted as the L19 correction;
+- must not be bundled into accepted mechanics.
 
-I010 fitted thermal coefficient:
-- REJECTED as production authority,
-- materially changed the L20 pattern and therefore remains useful causal
-  evidence only,
-- must not be copied into the profile without independent material authority.
+I010 thermal coefficient:
+- benchmark-response-derived;
+- REJECTED as production authority despite causal L20 improvements.
 
 I016 hot/cold modulus selector:
-- REJECTED for this job because MODULUS == HOT_MOD1 and the A/B changed zero
-  physical rows.
+- REJECTED; MODULUS == HOT_MOD1 and zero physical rows changed.
 
 Reducer Timoshenko propagation:
-- local injected-displacement evidence suggested missing constitutive terms,
-- whole-model propagation worsened L19 and created a new restraint failure,
-- conclusion is NOT "reducers should be Euler",
-- conclusion is "complete reducer stiffness/load ownership is not yet qualified".
+- local injected-displacement evidence indicates missing constitutive terms;
+- whole-model propagation worsened L19 and created a new restraint failure;
+- conclusion is not that reducers should remain Euler-Bernoulli;
+- conclusion is that complete reducer stiffness/load ownership is not qualified.
 
 ======================================================================
-8. ROADMAP — NEXT WORK
+10. ROADMAP
 ======================================================================
 
-P0 — Clean package custody — COMPLETE
+P0 — package/source/equilibrium custody — COMPLETE
+- clean #978 review boundary;
+- exact-head Windows I015 qualification;
+- locked ACCDB/Common hashes;
+- B3.1/B3.3/B3.4 checks;
+- A/B, 12/12 bends and target-node equilibrium custody.
 
-1. Exact-head I015 Windows workflow passed.
-2. Locked ACCDB hash, pinned Common commit, B3.1/B3.3/B3.4 kernel checks,
-   baseline solve, candidate solve, A/B comparison, 12/12 bend coverage and
-   target-node custody passed.
-3. #978 final diff has remained qualification/evidence-only and contains no
-   rejected Bourdon production source.
+P1 — L20 thermal authority — ACTIVE / EXTERNALLY BLOCKED ON NUMERIC SOURCE
+- I016 eliminated modulus-selector mismatch;
+- I017 proved ACCDB export boundary;
+- I018 proved pinned archive carries no CAESAR alpha/material report;
+- I009/I010 retained as causal diagnostics only.
 
-P1 — L20 thermal authority — ACTIVE
-
-Completed:
-4. I016 eliminated HOT_MOD1-versus-MODULUS selection as a live cause for this
-   locked job.
-5. I017 proved the ACCDB export boundary and pinned CAESAR II 14.00,
-   B31.3-2022, material 106 A106 Grade B, and TEMP_EXP_C1=120 C.
-6. I009/I010 historical replay remains retained as causal evidence only; no
-   benchmark-fitted coefficient is authorized.
-
-Next — I018 source-authoritative material value:
-7. Obtain the exact CAESAR II 14.00 material authority for material 106 / A106
-   Grade B from the supplied cmat.bin plus any active UMD override, including
-   hashes and record provenance; OR obtain the exact applicable ASME B31.3-2022
-   Table C-3 values and reproduce CAESAR's documented interpolation.
-8. Prove the 21 -> 120 C mean expansion / thermal strain numerically from that
-   source authority before changing the profile.
-9. Only after the independent value is known, compare it with the I009
-   ~1.045469 fingerprint as a cross-check, never as the source.
-10. Apply the source-authoritative value on top of accepted I015 mechanics and
-    rerun locked L19/L20. Require L19 numerical invariance and predicted L20
-    free-strain / action movement without tolerance changes.
-11. If material free strain becomes authoritative but significant L20 residuals
-    remain, isolate component thermal-growth ownership one family at a time:
-    - bend arc thermal length,
-    - bend incoming straight thermal length,
-    - rigid thermal growth,
-    - reducer thermal growth and condensed load vector,
-    - tee/branch offsets and thermal growth.
-12. Use the incremental observable
+Next thermal gate:
+1. obtain exact cmat.bin + active UMD provenance for CAESAR II 14.00 material
+   106 A106 Grade B, OR exact ASME B31.3-2022 Table C-3 bracket;
+2. reproduce CAESAR's 21 -> 120 C mean CTE / thermal strain independently;
+3. compare the independent value to the I009 fingerprint only as a cross-check;
+4. apply the authoritative value on top of accepted I015 mechanics;
+5. require L19 numerical invariance and predicted L20 free-strain/action change;
+6. use
 
        r_T = (L20-L19)_LFEA - (L20-L19)_CAESAR
 
-    for localization rather than tuning absolute reactions.
+   for localization, not reaction fitting.
 
-P2 — Complete shear-law propagation by component family
+If authoritative base free strain still leaves L20 residuals, isolate component
+thermal growth one family per iteration:
+- bend incoming straight thermal length;
+- bend arc thermal length;
+- rigid thermal growth;
+- reducer thermal growth + condensed load vector;
+- tee/branch offsets and thermal growth.
 
-13. Bend incoming straight:
-    qualify the common pipe shear law on BEND_INCOMING_STRAIGHT separately,
-    especially source 5 adjacent to node 20090. Do not alter bend arcs in the
-    same iteration.
+P2 — complete transverse-shear propagation
+1. bend incoming straight: qualify common pipe shear law separately, especially
+   source 5 adjacent to node 20090;
+2. bend arc: qualify Timoshenko base beam under bend flexibility/pressure
+   stiffening without double counting;
+3. tee/branch: compose pipe shear with directional B31J junction flexibility
+   and rigid surface offsets under explicit ownership;
+4. reducer: qualify internal flexible cylinders, pressure/thermal loads,
+   offsets, stiffness and load Schur condensation;
+5. one component family per system A/B.
 
-14. Bend arc:
-    separately qualify a Timoshenko base beam under bend flexibility/pressure
-    stiffening and prove there is no double-counting.
+P3 — remaining L19 source-action custody
+- investigate sources 9-11 MZ cluster with prescribed-DOF replay and spatial
+  residual ordering;
+- identify first physical divergence; no global coefficient fitting.
 
-15. Tee/branch:
-    compose common pipe shear mechanics with B31J directional junction
-    flexibility and rigid surface offsets using explicit ownership.
-
-16. Reducer:
-    qualify internal flexible cylinders, pressure/thermal load vectors, offsets,
-    and both stiffness/load Schur condensation before any system cutover.
-
-17. One component family per system A/B. No combined multi-family promotion.
-
-P3 — Remaining L19 source-action custody
-
-18. Investigate the sources 9-11 MZ cluster using prescribed-DOF replay and
-    spatial residual ordering.
-19. Identify the first physical component where end-action response diverges;
-    do not tune global coefficients to absorb local custody errors.
-
-P4 — Final issue #947 closure
-
-20. Freeze final formulation/profile/source authority.
-21. Run locked Windows real-data qualification from exact PR head.
-22. Require:
-    - all targeted L19/L20 restraint components <10%,
-    - issue-required displacement/rotation closure,
-    - no unexplained source-end-action regression,
-    - target-node action sums and equilibrium at numerical tolerance,
-    - 12/12 bend coverage,
-    - no CAESAR target hard-coding,
-    - clean source/ACCDB custody hashes.
-23. Update this file with final metrics.
-24. Only then mark PR #978 ready for review.
+P4 — final issue #947 closure
+- freeze final formulation/profile/source authority;
+- run locked Windows qualification from exact PR head;
+- require every compared L19 restraint <10%;
+- then every compared L20 restraint <10%;
+- materially reduce or individually explain displacement/rotation and global
+  source-end-action errors without tolerance weakening;
+- require incident global element-end sums to balance external load/support
+  reaction within documented numerical tolerance;
+- retain 12/12 bend and directional tee evidence;
+- no benchmark reference values in solver code;
+- no stress, EXP, HYD, friction or lift-off scope;
+- clean source/profile/ACCDB/evidence hashes.
 
 ======================================================================
-9. CURRENT DECISION
+11. CURRENT DECISION
 ======================================================================
 
 PR #978 remains DRAFT / NOT READY TO MERGE.
 
 Accepted:
-- missing transverse shear mechanism in ordinary flexible-pipe response,
-- I015 controlled plain-FRAME Timoshenko qualification experiment,
-- L19 restraint closure at node 20090 and aggregate displacement improvement,
-- exact locked-data/equilibrium/action-custody evidence supporting I015,
-- I017 proof of the ACCDB material-authority export boundary.
+- I015 missing-transverse-shear mechanism for ordinary flexible pipe;
+- L19 node 20090 restraint closure and aggregate displacement improvement;
+- exact action/equilibrium/source custody supporting I015;
+- I017 ACCDB material-authority export boundary;
+- I018 pinned-source-archive authority boundary.
 
 Rejected / not promotable:
-- I004 cumulative Bourdon production mechanics,
-- I006 Bourdon interpretation as the L19 fix,
-- I010 benchmark-fitted thermal coefficient as production authority,
-- I016 hot/cold modulus selector as the L20 cause for this locked job.
+- I004 cumulative Bourdon production mechanics;
+- I006 Bourdon interpretation as the L19 correction;
+- I010 benchmark-fitted thermal coefficient as production authority;
+- I016 hot/cold modulus selector as the L20 cause.
 
-Pending:
-- exact source-authoritative A106 Grade B 21 -> 120 C mean CTE / thermal strain
-  from CAESAR II 14.00 cmat.bin + active UMD provenance or exact B31.3-2022
-  Table C-3 authority,
-- special-component thermal-growth ownership after free-strain authority,
-- exact CAESAR kappa/profile promotion,
-- L19 sources 9-11 MZ cluster,
-- bend incoming straight propagation,
-- bend arc propagation,
-- tee/branch propagation,
-- reducer propagation,
+Pending / blocked:
+- exact source-authoritative A106 Grade B 21 -> 120 C mean CTE / thermal strain;
+- special-component thermal-growth ownership after base free strain is known;
+- exact CAESAR shear-factor/profile promotion;
+- L19 sources 9-11 MZ cluster;
+- bend incoming straight propagation;
+- bend arc propagation;
+- tee/branch propagation;
+- reducer propagation;
 - final full L19/L20 issue #947 closure.
 
-Do not merge until these gates are either completed here or deliberately split
-into separately reviewed work with preserved evidence custody.
+Do not merge until these gates are completed here or deliberately split into
+separately reviewed work with preserved evidence custody.

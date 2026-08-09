@@ -1,0 +1,117 @@
+name: Issue 947 E36 production descendant condensation audit
+
+on:
+  push:
+    branches:
+      - codex/issue-947-bm4nl-qualification
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  actions: read
+
+jobs:
+  audit:
+    if: "${{ github.event_name == 'workflow_dispatch' || github.event.head_commit.message == 'ci(issue947): run E36 production descendant condensation audit' }}"
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Checkout qualification branch
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Download pinned canonical BM4_NL package
+        uses: actions/download-artifact@v4
+        with:
+          name: issue-947-bm4nl-qualification
+          path: .work/package
+          github-token: ${{ github.token }}
+          repository: reallaksh19/Advanced_Analysis
+          run-id: 31314047095
+
+      - name: Expose read-only production mechanics inspection seam
+        shell: bash
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          import hashlib, json
+          path = Path('src/core/fea-benchmarks/caesar-accdb-linear-solve.js')
+          text = path.read_text()
+          before = hashlib.sha256(text.encode()).hexdigest()
+          return_old = """  return {\n    execution,\n    rows: resultRows({ benchmarkPackage, execution, recovered, analysis }),"""
+          return_new = """  return {\n    analysis,\n    execution,\n    rows: resultRows({ benchmarkPackage, execution, recovered, analysis }),"""
+          if text.count(return_old) != 1:
+              raise SystemExit(f'Expected exactly one solveCase return patch site; found {text.count(return_old)}.')
+          text = text.replace(return_old, return_new)
+          anchor = "\nfunction solveCase(benchmarkPackage, caseRecord, solveProfile) {"
+          if text.count(anchor) != 1:
+              raise SystemExit(f'Expected exactly one solveCase anchor; found {text.count(anchor)}.')
+          helper = r'''
+
+/** Diagnostic-only read access to the exact production case construction. */
+export function inspectCaesarAccdbLinearCaseMechanics(benchmarkPackage, caseId) {
+  requireBenchmarkPackage(benchmarkPackage);
+  const solveProfile = benchmarkPackage.profile.linearSolve;
+  if (solveProfile === null) throw new TypeError('The ACCDB profile does not declare linearSolve authorities.');
+  const caseRecord = benchmarkPackage.cases.find((entry) => entry.caseId === caseId);
+  if (!caseRecord) throw new TypeError(`ACCDB benchmark package lacks case ${String(caseId)}.`);
+  const solved = solveCase(benchmarkPackage, caseRecord, solveProfile);
+  return deepFreeze({
+    schema: 'lfea-accdb-linear-case-mechanics-inspection/v1',
+    sourceAccdbSha256: benchmarkPackage.source.sha256,
+    caseId: caseRecord.caseId,
+    formula: caseRecord.formula,
+    executionStatus: solved.execution.status,
+    rows: solved.rows.map((row) => ({ ...row })),
+    elements: solved.analysis.elements.map((entry) => ({
+      elementId: entry.elementId,
+      sourceElementId: entry.sourceElementId,
+      nodeI: entry.nodeI,
+      nodeJ: entry.nodeJ,
+      kind: entry.kind,
+      teeJunctionNodeId: entry.teeJunctionNodeId,
+      globalStiffness: [...entry.contribution.globalStiffness],
+      equivalentLoadGlobal: [...entry.contribution.equivalentLoadGlobal],
+      initialStrainLoadGlobal: [...entry.contribution.initialStrainLoadGlobal],
+      pressureAxialStrain: entry.pressureAxialStrain,
+      bourdonRotationRadians: entry.bourdonRotationRadians,
+      bourdonFreeEndTranslationM: [...entry.bourdonFreeEndTranslationM],
+      gravityWeightN: entry.gravityWeightN,
+    })),
+  });
+}
+'''
+          text = text.replace(anchor, helper + anchor)
+          path.write_text(text)
+          after = hashlib.sha256(text.encode()).hexdigest()
+          Path('.work').mkdir(exist_ok=True)
+          Path('.work/issue947-e36-production-inspection-patch.json').write_text(json.dumps({
+              'schema': 'lfea-issue947-diagnostic-patch/v1',
+              'scope': 'DIAGNOSTIC_ONLY_READ_ONLY_PRODUCTION_MECHANICS_INSPECTION',
+              'productionSourceChanged': False,
+              'reason': 'Expose the exact already-built analysis descendant K, equivalent load and initial-strain vectors plus solved source rows so E36 can be Schur-condensed without copying component mechanics.',
+              'beforeSha256': before,
+              'afterSha256': after,
+          }, indent=2) + '\n')
+          PY
+
+      - name: Run E36 production descendant condensation audit
+        run: |
+          mkdir -p .work/out
+          node scripts/lfea-issue947-e36-production-descendant-condensation-audit.mjs \
+            --package .work/package/bm4nl-canonical-package.json \
+            --out .work/out/issue947-e36-production-descendant-condensation-audit.json
+
+      - name: Upload E36 condensation evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: issue-947-e36-production-descendant-condensation-audit
+          if-no-files-found: error
+          path: |
+            .work/out/issue947-e36-production-descendant-condensation-audit.json
+            .work/issue947-e36-production-inspection-patch.json

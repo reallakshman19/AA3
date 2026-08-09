@@ -46,7 +46,7 @@
     {
       "iterationId": "I002",
       "hypothesis": "Sampling one physical bend-level MEC-21 free field at both ends of every stiffness chord in a single fixed bend-start a-b-c basis correctly represents the cumulative pressure free field while preserving the qualified linear solver and recovery contracts.",
-      "codeOrConfigurationDelta": "ACCDB adapter sampled cumulative bend stations, mapped all MEC-21 a-b-c components through one fixed bend-start basis, transformed the resulting two-end generalized displacement with d_local = T d_global, and formed f0 = K_effective d0. No solver, restraint, tolerance, B31/B31J stiffness, or recovery-sign change.",
+      "codeOrConfigurationDelta": "ACCDB adapter sampled cumulative bend stations, mapped literal MEC-21 a-b-c components through one fixed bend-start basis, transformed the resulting two-end generalized displacement with d_local = T d_global, and formed f0 = K_effective d0. No solver, restraint, tolerance, B31/B31J stiffness, or recovery-sign change.",
       "candidateCommitSha": "36457f3002f04f0cd4c3ac7ce6800654072713e3",
       "beforeMetrics": "I000", "afterMetrics": null, "metricDelta": null,
       "solverResidualAndEquilibriumStatus": "NOT_RUN_AFTER_CANONICAL_BASIS_FALSIFICATION",
@@ -79,12 +79,31 @@
       "codeOrConfigurationDelta": "Kept deriveMec21BendPressureFreeMovement as literal STATION_FINAL_ABC Eq. (2.25). Changed deriveMec21BendPressureFreeState to return the same physical state resolved in BEND_INITIAL_ABC and retain the literal final-local components as qualification evidence. Updated the governed bend check to bind both basis contracts. The ACCDB adapter and linear solver code were not changed in this iteration; their behavior changes only through the corrected cumulative-state contract.",
       "candidateCommitSha": "39729d5a252b8137535374f1b6f368d2bac42c34",
       "supportingCommitShas": ["85db5bb38f8bff0fd7d083c72a374a3637b81b3e", "39729d5a252b8137535374f1b6f368d2bac42c34"],
-      "beforeMetrics": "I000",
-      "afterMetrics": null,
-      "metricDelta": null,
+      "beforeMetrics": "I000", "afterMetrics": null, "metricDelta": null,
       "solverResidualAndEquilibriumStatus": "PENDING_REAL_ACCDB; SOLVER_PROFILE_AND_TOLERANCES_UNCHANGED",
-      "canonicalOrFalsificationEvidence": {"literalMovementBasis": "STATION_FINAL_ABC", "cumulativeStateBasis": "BEND_INITIAL_ABC", "freeStateIdentity": "q_local = K_effective (d_local - d0_local) = 0", "independentStandaloneArithmeticReplay": "PASS", "quarterTurnTranslationInitialAbcM": [0.0000030653788936607233, 0, -0.000001749707012736145], "curvatureChangeRatio": 0.000020114034735306585, "subdivisionCounts": [1,2,4,8,32], "hypothesisResult": "CANONICAL_SUPPORTED_BM4_UNMEASURED"},
+      "canonicalOrFalsificationEvidence": {"literalMovementBasis": "STATION_FINAL_ABC", "cumulativeStateBasis": "BEND_INITIAL_ABC", "freeStateIdentity": "q_local = K_effective (d_local - d0_local) = 0", "independentStandaloneArithmeticReplay": "PASS", "quarterTurnTranslationInitialAbcM": [0.0000030653788936607233,0,-0.000001749707012736145], "curvatureChangeRatio": 0.000020114034735306585, "subdivisionCounts": [1,2,4,8,32], "hypothesisResult": "CANONICAL_SUPPORTED_BM4_UNMEASURED"},
       "disposition": "PENDING_REAL_ACCDB"
+    },
+    {
+      "iterationId": "I006",
+      "hypothesis": "A canonical ACCDB benchmark package can be captured once from the authoritative Windows/ACE extraction and replayed cross-platform without losing source/model identity, so later solver improvements can be measured against exactly the same normalized input.",
+      "codeOrConfigurationDelta": "Added a package capture/replay command that reuses requiredCaesarAccdbTables, buildCaesarAccdbBenchmarkPackage and solveCaesarAccdbLinearBenchmark; validates model and package semantic hashes; permits machine-local relinking without changing identity; requires --package-out on capture and --actual-out on solves; added a tamper-detection check and an L19-only gate profile.",
+      "candidateCommitSha": "525fe2742edf8899c16cc5c936658881aede0038",
+      "supportingCommitShas": ["f91acdca82e9f66d59ae5bd5086a8f7c0118479a", "d3650cffff8930e7810e91d51b6c1e572f077e29", "00e844942992d10afa888ff80e0a3e9768b11c9c", "525fe2742edf8899c16cc5c936658881aede0038"],
+      "beforeMetrics": "I000", "afterMetrics": null, "metricDelta": null,
+      "solverResidualAndEquilibriumStatus": "UNCHANGED_SOLVER_PATH; REAL_PACKAGE_CAPTURE_NOT_AVAILABLE_IN_CONNECTOR_ENVIRONMENT",
+      "canonicalOrFalsificationEvidence": {"syntheticHashReplay": "PASS", "syntheticModelSemanticHash": "fnv1a64:cd266e5e7e6fc242", "syntheticPackageSemanticHash": "fnv1a64:f1c389a398be0c26", "modelTamperDetection": "PASS", "packageTamperDetection": "PASS", "machineLocalRelinkIdentity": "PASS", "l19Profile": "BM4NL-L19-LINEAR-SOLVE-V1", "hypothesisResult": "SUPPORTED_FOR_REPLAY_CONTRACT"},
+      "disposition": "KEEP"
+    },
+    {
+      "iterationId": "I007",
+      "hypothesis": "The repository already contains a serialized canonical BM4_NL package sufficient to rerun I005 without Windows/ACE extraction.",
+      "codeOrConfigurationDelta": "No solver or mechanics change. Searched benchmark and report artifacts for a source-hash-bound package/model table set before attempting to reuse prior output as input.",
+      "candidateCommitSha": "525fe2742edf8899c16cc5c936658881aede0038",
+      "beforeMetrics": "I000", "afterMetrics": null, "metricDelta": null,
+      "solverResidualAndEquilibriumStatus": "BLOCKED_SOURCE_PACKAGE_UNAVAILABLE; PRIOR_ACTUAL_AND_REFERENCE_REPORTS_ARE_NOT_SOLVER_INPUT",
+      "canonicalOrFalsificationEvidence": {"benchmarkDirectoryContainsSerializedPackage": false, "committedArtifactsFound": ["reports/lfea-bm4nl-accdb-linear-actual.json", "reports/lfea-bm4nl-accdb-linear-benchmark.json", "reports/lfea-bm4nl-accdb-reference.json"], "reuseOfOldActualAsNewSolve": "REJECTED", "hypothesisResult": "FALSIFIED"},
+      "disposition": "BLOCKED"
     }
   ]
 }

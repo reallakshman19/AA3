@@ -92,6 +92,7 @@ export function renderLafeaWorkbenchContent(root, state, stage, options) {
     onBindMeshProfile: options.handlers.onBindMeshProfile,
     onPlanMesh: options.handlers.onPlanMesh,
     onGenerateMesh: options.handlers.onGenerateMesh,
+    onRefineMesh: options.handlers.onRefineMesh,
     onFocusElement: (elementId) => {
       options.onMeshFocusChange?.(elementId, true);
       focusLafeaRetainedMeshElement(preview, elementId);

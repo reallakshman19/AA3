@@ -11,6 +11,9 @@ on:
       - 'scripts/lfea-m047-instrument-baseline-replay*.mjs'
       - 'scripts/lfea-m047-thermal-axial-fingerprint*.mjs'
       - 'scripts/lfea-m047-thermal-alpha-ab*.mjs'
+      - 'scripts/lfea-m047-benchmark-ab.mjs'
+      - 'scripts/lfea-m047-apply-bourdon-final-axis-candidate.mjs'
+      - 'scripts/lfea-m047-bourdon-final-axis-candidate-check.mjs'
       - 'scripts/lfea-m047-provision-ace.ps1'
       - 'scripts/lfea-caesar-accdb-export.ps1'
   workflow_dispatch:
@@ -236,46 +239,82 @@ jobs:
             --manifest artifacts/m047/I007/i010-diagnostic-alpha.manifest.json `
             --out artifacts/m047/I007/i010-diagnostic-alpha.ab.json
 
-      - name: Summarize I007 through I010
+      - name: Apply I011 MEC-21 final-axis mechanics candidate
+        shell: pwsh
+        run: |
+          node scripts/lfea-m047-apply-bourdon-final-axis-candidate.mjs `
+            --source baseline-source/src/core/linear-fea-piping-components/bourdon-pressure-expansion.js `
+            --manifest artifacts/m047/I007/i011-bourdon-final-axis.manifest.json
+          node scripts/lfea-m047-bourdon-final-axis-candidate-check.mjs `
+            --module baseline-source/src/core/linear-fea-piping-components/bourdon-pressure-expansion.js
+          $status = @(git -C baseline-source status --porcelain)
+          $required = @(
+            'scripts/lfea-caesar-accdb-export.ps1',
+            'src/core/fea-benchmarks/caesar-accdb-linear-solve.js',
+            'src/core/linear-fea-piping-components/bourdon-pressure-expansion.js'
+          )
+          foreach ($path in $required) {
+            if (@($status | Where-Object { $_ -match [regex]::Escape($path) + '$' }).Count -ne 1) {
+              throw "I011 baseline mutation custody is missing $path: $($status -join '; ')"
+            }
+          }
+          if ($status.Count -ne 3) {
+            throw "I011 baseline mutation exceeded exporter + evidence + Bourdon candidate boundary: $($status -join '; ')"
+          }
+
+      - name: Run I011 MEC-21 final-axis candidate
+        shell: pwsh
+        run: |
+          node baseline-source/scripts/lfea-caesar-accdb-benchmark.mjs `
+            --accdb "$env:BM4NL_ACCDB" `
+            --profile baseline-source/benchmarks/LFEA/CAESAR_ACCDB/bm4nl-l19-l20-linear-solve.profile.json `
+            --solve-linear true `
+            --actual-out artifacts/m047/I007/i011-bourdon-final-axis.actual.json `
+            --summary-out artifacts/m047/I007/i011-bourdon-final-axis.summary.md `
+            --out artifacts/m047/I007/i011-bourdon-final-axis.benchmark.json
+
+      - name: Compare I011 against exact baseline
+        shell: pwsh
+        run: |
+          node scripts/lfea-m047-benchmark-ab.mjs `
+            --baseline artifacts/m047/I007/baseline-benchmark.json `
+            --candidate artifacts/m047/I007/i011-bourdon-final-axis.benchmark.json `
+            --manifest artifacts/m047/I007/i011-bourdon-final-axis.manifest.json `
+            --out artifacts/m047/I007/i011-bourdon-final-axis.ab.json
+
+      - name: Summarize I007 through I011
         shell: pwsh
         run: |
           $residual = Get-Content -LiteralPath 'artifacts/m047/I007/residual-decomposition.json' -Raw | ConvertFrom-Json
           $replay = Get-Content -LiteralPath 'artifacts/m047/I007/element-replay.json' -Raw | ConvertFrom-Json
           $thermal = Get-Content -LiteralPath 'artifacts/m047/I007/thermal-axial-fingerprint.json' -Raw | ConvertFrom-Json
-          $ab = Get-Content -LiteralPath 'artifacts/m047/I007/i010-diagnostic-alpha.ab.json' -Raw | ConvertFrom-Json
+          $alpha = Get-Content -LiteralPath 'artifacts/m047/I007/i010-diagnostic-alpha.ab.json' -Raw | ConvertFrom-Json
+          $bourdon = Get-Content -LiteralPath 'artifacts/m047/I007/i011-bourdon-final-axis.ab.json' -Raw | ConvertFrom-Json
           Add-Content -LiteralPath $env:GITHUB_STEP_SUMMARY -Value '# M047 diagnostic qualification'
           Add-Content -LiteralPath $env:GITHUB_STEP_SUMMARY -Value "- Baseline mechanics: ``882d59a99c3a03847d20bec34770ba57ff479d91``"
           Add-Content -LiteralPath $env:GITHUB_STEP_SUMMARY -Value "- Locked ACCDB: ``$($residual.sourceAccdbSha256)``"
           Add-Content -LiteralPath $env:GITHUB_STEP_SUMMARY -Value "- I007 residual evidence: ``$($residual.semanticHash)``"
           Add-Content -LiteralPath $env:GITHUB_STEP_SUMMARY -Value "- I008 replay evidence: ``$($replay.semanticHash)``"
           Add-Content -LiteralPath $env:GITHUB_STEP_SUMMARY -Value "- I009 thermal fingerprint evidence: ``$($thermal.semanticHash)``"
-          Add-Content -LiteralPath $env:GITHUB_STEP_SUMMARY -Value "- I010 diagnostic A/B evidence: ``$($ab.semanticHash)``"
-          foreach ($family in @('DISPLACEMENT_ROTATION', 'SUPPORT_REACTION', 'SOURCE_END_ACTION')) {
-            $stats = $residual.summaries.families.$family
-            Add-Content -LiteralPath $env:GITHUB_STEP_SUMMARY -Value "- I007 ${family}: max normalized W+P=$($stats.wp.maximumNormalized.normalizedResidual), thermal=$($stats.thermal.maximumNormalized.normalizedResidual)"
-          }
+          Add-Content -LiteralPath $env:GITHUB_STEP_SUMMARY -Value "- I010 diagnostic A/B evidence: ``$($alpha.semanticHash)``"
+          Add-Content -LiteralPath $env:GITHUB_STEP_SUMMARY -Value "- I011 Bourdon-axis A/B evidence: ``$($bourdon.semanticHash)``"
+          Add-Content -LiteralPath $env:GITHUB_STEP_SUMMARY -Value "- I009 diagnostic implied alpha: $($thermal.summary.gravityWeightedMedianImpliedThermalExpansionCoefficientPerKelvin) 1/K; production authority=false"
+          Add-Content -LiteralPath $env:GITHUB_STEP_SUMMARY -Value "- I010 L20 restraint failures: $($alpha.cases.L20.before.restraint.failingComponentCount) -> $($alpha.cases.L20.after.restraint.failingComponentCount)"
+          Add-Content -LiteralPath $env:GITHUB_STEP_SUMMARY -Value "- I010 L20 displacement/rotation failures: $($alpha.cases.L20.before.displacementRotation.failingComponentCount) -> $($alpha.cases.L20.after.displacementRotation.failingComponentCount)"
+          Add-Content -LiteralPath $env:GITHUB_STEP_SUMMARY -Value "- I010 L20 source-end-action failures: $($alpha.cases.L20.before.sourceEndAction.failingComponentCount) -> $($alpha.cases.L20.after.sourceEndAction.failingComponentCount)"
           foreach ($caseId in @('L19', 'L20')) {
-            $case = $replay.cases.$caseId
-            Add-Content -LiteralPath $env:GITHUB_STEP_SUMMARY -Value "- I008 ${caseId} replayed sources: $($case.replayedSourceCount); skipped=$($case.skippedSourceCount)"
-            Add-Content -LiteralPath $env:GITHUB_STEP_SUMMARY -Value "- I008 ${caseId} source 4 max normalized residual: $($case.tracked.source4.maximumNormalizedResidual)"
-            Add-Content -LiteralPath $env:GITHUB_STEP_SUMMARY -Value "- I008 ${caseId} source 5 max normalized residual: $($case.tracked.source5.maximumNormalizedResidual)"
+            $case = $bourdon.cases.$caseId
+            Add-Content -LiteralPath $env:GITHUB_STEP_SUMMARY -Value "- I011 ${caseId} restraints: $($case.before.restraint.failingComponentCount) -> $($case.after.restraint.failingComponentCount)"
+            Add-Content -LiteralPath $env:GITHUB_STEP_SUMMARY -Value "- I011 ${caseId} displacement/rotation: $($case.before.displacementRotation.failingComponentCount) -> $($case.after.displacementRotation.failingComponentCount)"
+            Add-Content -LiteralPath $env:GITHUB_STEP_SUMMARY -Value "- I011 ${caseId} source-end-actions: $($case.before.sourceEndAction.failingComponentCount) -> $($case.after.sourceEndAction.failingComponentCount)"
           }
-          Add-Content -LiteralPath $env:GITHUB_STEP_SUMMARY -Value "- I009 qualified ordinary FRAME sources: $($thermal.qualifiedSourceCount)"
-          Add-Content -LiteralPath $env:GITHUB_STEP_SUMMARY -Value "- I009 median thermal multiplier: $($thermal.summary.medianMultiplier)"
-          Add-Content -LiteralPath $env:GITHUB_STEP_SUMMARY -Value "- I009 multiplier MAD: $($thermal.summary.medianAbsoluteDeviation)"
-          Add-Content -LiteralPath $env:GITHUB_STEP_SUMMARY -Value "- I009 diagnostic implied alpha: $($thermal.summary.medianImpliedThermalExpansionCoefficientPerKelvin) 1/K"
-          Add-Content -LiteralPath $env:GITHUB_STEP_SUMMARY -Value "- I009 source 4 L19 axial replay residual: $($thermal.tracked.source4L19AxialReplay.residualN) N"
-          Add-Content -LiteralPath $env:GITHUB_STEP_SUMMARY -Value "- I010 production authority: **$($ab.productionAuthority)**"
-          Add-Content -LiteralPath $env:GITHUB_STEP_SUMMARY -Value "- I010 L19 numerically unchanged: **$($ab.invariants.l19NumericallyUnchanged)**"
-          Add-Content -LiteralPath $env:GITHUB_STEP_SUMMARY -Value "- I010 L20 restraint failures: $($ab.cases.L20.before.restraint.failingComponentCount) -> $($ab.cases.L20.after.restraint.failingComponentCount)"
-          Add-Content -LiteralPath $env:GITHUB_STEP_SUMMARY -Value "- I010 L20 displacement/rotation failures: $($ab.cases.L20.before.displacementRotation.failingComponentCount) -> $($ab.cases.L20.after.displacementRotation.failingComponentCount)"
-          Add-Content -LiteralPath $env:GITHUB_STEP_SUMMARY -Value "- I010 L20 source-end-action failures: $($ab.cases.L20.before.sourceEndAction.failingComponentCount) -> $($ab.cases.L20.after.sourceEndAction.failingComponentCount)"
+          Add-Content -LiteralPath $env:GITHUB_STEP_SUMMARY -Value "- I011 tracked L19/20090 FY: $($bourdon.tracked.L19_20090_FY.before.relativeError) -> $($bourdon.tracked.L19_20090_FY.after.relativeError)"
 
-      - name: Retain I007-I010 diagnostics
+      - name: Retain I007-I011 diagnostics
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: m047-i007-i010-${{ github.sha }}
+          name: m047-i007-i011-${{ github.sha }}
           path: artifacts/m047/I007/**
           if-no-files-found: error
           retention-days: 90

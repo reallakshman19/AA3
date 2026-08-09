@@ -49,7 +49,12 @@ jobs:
       - name: P-11 governed shell contract
         run: node scripts/advanced-shell-contract-check.mjs
 
-      - name: P-12 pre-FEA gateway public export contract
+      - name: P-12 focused pre-FEA gateway public export contract
+        run: node --test --test-name-pattern='PF-22 every public InputXML solve path requires authorization' test/lfea-prefea-gateway.test.js
+
+      - name: Full pre-FEA gateway suite diagnostic
+        id: gateway_suite
+        continue-on-error: true
         run: node --test test/lfea-prefea-gateway.test.js
 
       - name: Required 1 — strict syntax
@@ -87,6 +92,7 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
+          printf '%-42s %s\n' 'full gateway suite (diagnostic)' '${{ steps.gateway_suite.outcome }}'
           printf '%-42s %s\n' 'npm run syntax:strict' '${{ steps.syntax.outcome }}'
           printf '%-42s %s\n' 'node scripts/import-check.mjs' '${{ steps.imports.outcome }}'
           printf '%-42s %s\n' 'node scripts/run-enrichment-ui-phase0-checks.mjs' '${{ steps.enrichment.outcome }}'

@@ -1,0 +1,46 @@
+name: Issue 947 tee 20295 constitutive audit
+
+on:
+  push:
+    branches:
+      - codex/issue-947-bm4nl-qualification
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  actions: read
+
+jobs:
+  audit:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Checkout qualification branch
+        uses: actions/checkout@v4
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Download canonical BM4_NL package
+        uses: actions/download-artifact@v4
+        with:
+          name: issue-947-bm4nl-qualification
+          path: .work/package
+          github-token: ${{ github.token }}
+          repository: reallaksh19/Advanced_Analysis
+          run-id: 31302834835
+      - name: Run tee 20295 constitutive audit
+        run: |
+          node scripts/lfea-issue947-tee20295-constitutive-audit.mjs \
+            --package .work/package/bm4nl-canonical-package.json \
+            --out .work/issue947-tee20295-constitutive-audit.json
+      - name: Run B31J factor regression
+        run: node scripts/lfea-b3.21-b31j-phase2-factor-benchmark-check.mjs
+        continue-on-error: true
+      - name: Upload tee audit evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: issue-947-tee20295-constitutive-audit
+          if-no-files-found: error
+          path: .work/issue947-tee20295-constitutive-audit.json

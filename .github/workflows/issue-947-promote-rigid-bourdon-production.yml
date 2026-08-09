@@ -168,8 +168,9 @@ jobs:
             src/core/linear-fea-rigid-element/index.js `
             src/core/fea-benchmarks/caesar-accdb-linear-solve.js `
             scripts/lfea-b3.22-rigid-element-authority-check.mjs
-          git diff --cached --quiet
-          if ($LASTEXITCODE -eq 0) { throw 'Promotion produced no governed production diff.' }
+          $staged = @(git diff --cached --name-only)
+          if ($staged.Count -eq 0) { throw 'Promotion produced no governed production diff.' }
+          Write-Host "Governed production files staged: $($staged -join ', ')"
           git commit -m 'fix(issue947): add rigid Bourdon pressure free state'
           git push origin HEAD:codex/issue-947-bm4nl-qualification
 

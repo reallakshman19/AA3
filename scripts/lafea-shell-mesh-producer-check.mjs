@@ -107,7 +107,9 @@ for (const stageId of ['LAFEA.4', 'LAFEA.5']) {
     midsurfaceEvidence, meshProfile: fineProfile, plan: finePlan,
   });
   for (const candidate of [produced, fineProduced]) {
-    assert.equal(candidate.output.lifecycleAuthority, false);
+    for (const field of ['lifecycleAuthority', 'releaseAuthority', 'mergeAuthority']) {
+      assert.equal(Object.hasOwn(candidate.output, field), false, `${stageId}:${field}`);
+    }
     assert.equal(candidate.evidence.stageId, stageId);
     assert.equal(candidate.evidence.qualification, 'PASS');
     assert.equal(candidate.evidence.quality.blockingElementIds.length, 0);

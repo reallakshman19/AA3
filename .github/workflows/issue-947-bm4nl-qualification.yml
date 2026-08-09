@@ -12,7 +12,7 @@ permissions:
 jobs:
   bm4nl:
     runs-on: windows-latest
-    timeout-minutes: 30
+    timeout-minutes: 45
 
     steps:
       - name: Checkout qualification branch
@@ -41,25 +41,66 @@ jobs:
           "BM4_ACCDB=$accdb" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
           Write-Host "BM4_NL.ACCDB SHA-256: $actual"
 
-      - name: Report installed ACE providers
+      - name: Run independent Bourdon mechanics regression
+        shell: pwsh
+        run: node scripts/lfea-issue947-bourdon-subdivision-check.mjs
+
+      - name: Install Microsoft Access Runtime database engine
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $odtBootstrap = Join-Path $PWD '.work/officedeploymenttool_19725-20126.exe'
+          $odtDirectory = Join-Path $PWD '.work/odt'
+          New-Item -ItemType Directory -Force -Path $odtDirectory | Out-Null
+          Invoke-WebRequest `
+            -Uri 'https://download.microsoft.com/download/6c1eeb25-cf8b-41d9-8d0d-cc1dbc032140/officedeploymenttool_19725-20126.exe' `
+            -OutFile $odtBootstrap
+          $extract = Start-Process `
+            -FilePath $odtBootstrap `
+            -ArgumentList '/quiet', "/extract:$odtDirectory" `
+            -PassThru -Wait
+          if ($extract.ExitCode -ne 0) {
+            throw "Office Deployment Tool extraction failed with exit $($extract.ExitCode)."
+          }
+          $setup = Join-Path $odtDirectory 'setup.exe'
+          if (-not (Test-Path $setup)) {
+            throw "Office Deployment Tool did not materialize setup.exe in $odtDirectory."
+          }
+          $configuration = Join-Path $odtDirectory 'access-runtime.xml'
+          @'
+          <Configuration>
+            <Add OfficeClientEdition="64">
+              <Product ID="AccessRuntimeRetail">
+                <Language ID="en-us" />
+              </Product>
+            </Add>
+            <Display Level="None" AcceptEULA="TRUE" />
+          </Configuration>
+          '@ | Set-Content -LiteralPath $configuration -Encoding utf8
+          $install = Start-Process `
+            -FilePath $setup `
+            -ArgumentList '/configure', $configuration `
+            -PassThru -Wait
+          if ($install.ExitCode -ne 0) {
+            throw "Access Runtime installation failed with exit $($install.ExitCode)."
+          }
+
+      - name: Require Microsoft ACE OLE DB provider
         shell: pwsh
         run: |
           $providers = [System.Data.OleDb.OleDbEnumerator]::GetRootEnumerator()
-          $found = $false
+          $names = @()
           while ($providers.Read()) {
             $name = [string]$providers['SOURCES_NAME']
             if ($name -like 'Microsoft.ACE.OLEDB.*') {
-              $found = $true
-              Write-Host "ACE provider: $name"
+              $names += $name
             }
           }
-          if (-not $found) {
-            Write-Warning 'No Microsoft.ACE.OLEDB provider was enumerated; the ACCDB extraction step will fail closed.'
+          $names = $names | Sort-Object -Unique
+          if ($names.Count -eq 0) {
+            throw 'Microsoft Access Runtime installation completed but no Microsoft.ACE.OLEDB provider is visible.'
           }
-
-      - name: Run independent bend mechanics regression
-        shell: pwsh
-        run: node scripts/lfea-b3.18-bm1-bend-check.mjs
+          $names | ForEach-Object { Write-Host "ACE provider: $_" }
 
       - name: Run real BM4_NL L19/L20 qualification
         shell: pwsh

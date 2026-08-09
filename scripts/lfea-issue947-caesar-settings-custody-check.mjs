@@ -51,7 +51,8 @@ assert.equal(requiredBindings.get('DEFAULT_ROT_RESTRAINT_STIFF')?.status, 'RECOR
 assert.equal(requiredBindings.get('FRICT_STIF')?.status, 'RECORDED_NON_GOVERNING_L19_L20');
 assert.equal(requiredBindings.get('BEND_AXIAL_SHAPE')?.status, 'BOUND_MODE_PRESENT_AND_CONVERGED');
 assert.equal(requiredBindings.get('BEND_LENGTH_ATTACHMENT_PERCENT')?.status, 'BOUND_GEOMETRY_TRIGGER_AUDIT_ONLY');
-assert.equal(requiredBindings.get('APPLY_B31J_SIFS_AND_FLEX')?.status, 'DOES_NOT_RESOLVE_SMOOTH90_NOTE3');
+assert.equal(requiredBindings.get('APPLY_B31J_SIFS_AND_FLEX')?.status, 'BOUND_B31J_REQUIRED_BY_CODE');
+assert.equal(requiredBindings.get('B31J_SMOOTH_90_BEND_FLEXIBILITY')?.status, 'BOUND_TRUE');
 
 const profileEvidence = [];
 for (const profilePath of profilePaths) {
@@ -68,11 +69,11 @@ for (const profilePath of profilePaths) {
     /BM4NL_CAESAR_SETTINGS_AUTHORITY_V1.*INDIVIDUAL_FILE_OVERRIDE/u,
     `${profilePath}: Bourdon source must cite settings custody`,
   );
-  assert.equal(profile.linearSolve.b31jSmooth90FlexibilityCorrection.enabled, false);
+  assert.equal(profile.linearSolve.b31jSmooth90FlexibilityCorrection.enabled, true);
   assert.match(
     profile.linearSolve.b31jSmooth90FlexibilityCorrection.source,
-    /BM4NL_CAESAR_SETTINGS_AUTHORITY_V1.*DOES_NOT_RESOLVE_SMOOTH90/u,
-    `${profilePath}: smooth-90 must remain fail-closed because overall B31J DEFAULT is not Note-3 authority`,
+    /CAESAR_II_V14.*B31J_REQUIRED.*SMOOTH_90/u,
+    `${profilePath}: B31.3-2022 with Version-14 B31J Default must bind the B31J smooth-90 1.3/h rule`,
   );
   profileEvidence.push({
     profileId: profile.profileId,

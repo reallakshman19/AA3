@@ -199,9 +199,9 @@
       "setting": "APPLY_B31J_SIFS_AND_FLEX",
       "authority": "OVERALL_SETTING",
       "target": "B31J application",
-      "status": "DOES_NOT_RESOLVE_SMOOTH90_NOTE3",
+      "status": "BOUND_B31J_REQUIRED_BY_CODE",
       "value": "DEFAULT",
-      "note": "This overall setting is insufficient authority for the unresolved smooth-90 Note (3) switch."
+      "note": "CAESAR II Version 14 Default applies B31J SIFs and flexibilities when required by the selected code. B31.3-2022 is a 2020-or-later edition and therefore requires B31J; for smooth 90-degree B31J bends Version 14 uses 1.3/h rather than legacy B31.3 1.65/h."
     },
     {
       "setting": "ENFORCE_B31J_SIFS_ONLY",
@@ -210,6 +210,14 @@
       "status": "RECORDED",
       "value": false,
       "note": "Does not establish smooth-90 Note (3) applicability."
+    },
+    {
+      "setting": "B31J_SMOOTH_90_BEND_FLEXIBILITY",
+      "authority": "CODE_DERIVED_FROM_DEFAULT_CODE_AND_APPLY_B31J_DEFAULT",
+      "target": "profile.linearSolve.b31jSmooth90FlexibilityCorrection.enabled",
+      "status": "BOUND_TRUE",
+      "value": true,
+      "note": "Pinned BM4_NL has smooth non-miter 90-degree bends with no user K-factor override. Version-14 B31J smooth-90 flexibility therefore uses the 1.3/h rule."
     }
   ]
 }

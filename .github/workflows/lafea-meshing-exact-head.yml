@@ -22,6 +22,7 @@ on:
       - 'scripts/lafea-shell-mesh-producer-check.mjs'
       - 'scripts/lafea-shell-workbench-route-check.mjs'
       - 'scripts/lafea-shell-hole-mesh-check.mjs'
+      - 'scripts/lafea-shell-hole-quality-probe.mjs'
       - 'scripts/lafea-mesh-dof-policy-check.mjs'
       - 'scripts/lafea-meshing-system-check.mjs'
       - 'scripts/lafea-p2-11-triage.mjs'
@@ -80,6 +81,9 @@ jobs:
 
       - name: Qualify shell workbench custody and Discretization route
         run: node scripts/lafea-shell-workbench-route-check.mjs
+
+      - name: Diagnose planar shell hole quality
+        run: node scripts/lafea-shell-hole-quality-probe.mjs
 
       - name: Qualify planar shell holes
         run: node scripts/lafea-shell-hole-mesh-check.mjs

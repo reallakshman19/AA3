@@ -102,6 +102,15 @@ jobs:
           }
           $names | ForEach-Object { Write-Host "ACE provider: $_" }
 
+      - name: Capture canonical BM4_NL replay package
+        shell: pwsh
+        run: |
+          node scripts/lfea-caesar-accdb-package-replay.mjs `
+            --accdb "$env:BM4_ACCDB" `
+            --profile benchmarks/LFEA/CAESAR_ACCDB/bm4nl-l19-l20-linear-solve.profile.json `
+            --package-out .work/bm4nl-canonical-package.json `
+            --expected-source-sha256 85d39463296e569da811d8572e2eff680b858097f76fdf0f47d1755f0b161c21
+
       - name: Run real BM4_NL L19/L20 qualification
         shell: pwsh
         run: |
@@ -128,6 +137,7 @@ jobs:
           name: issue-947-bm4nl-qualification
           if-no-files-found: warn
           path: |
+            .work/bm4nl-canonical-package.json
             .work/bm4nl-actual.json
             .work/bm4nl-report.json
             .work/bm4nl-summary.md

@@ -6,8 +6,9 @@
  * view model.
  *
  * Also asserts the negative cases, which are the ones that matter for
- * governance: stages with no bound producer must stay unauthorized, and a
- * mesh that fails the profile's quality gates must not clear the gate.
+ * governance: stages with no bound producer must stay unauthorized, a mesh
+ * that fails the profile's quality gates must not clear the gate, a Q8 request
+ * must not leak partial T6 recombination, and v2 evidence must round-trip.
  */
 import assert from 'node:assert/strict';
 
@@ -32,6 +33,7 @@ import {
   produceLafeaAnalysisMeshEvidence,
 } from '../src/workspace/lafea-mesh-producer-binding.js';
 import {
+  createLafeaMeshProducerOutputV2,
   validateLafeaMeshProducerOutputV2,
 } from '../src/workspace/lafea-mesh-producer-v2-contracts.js';
 import {
@@ -43,6 +45,9 @@ import {
 import {
   buildLafeaDiscretizationViewModel,
 } from '../src/workspace/lafea-discretization-view-model.js';
+import {
+  createLafeaWorkbenchMeshGenerationState,
+} from '../src/workspace/lafea-workbench-mesh-generation-state.js';
 
 const SOURCE_HASH = `sha256:${'a'.repeat(64)}`;
 
@@ -105,6 +110,35 @@ function plate(width, height) {
       { segmentId: 'S4', type: 'LINE', startVertexId: 'V4', endVertexId: 'V1' },
     ],
     loops: [{ loopId: 'L_OUTER', role: 'OUTER', segmentIds: ['S1', 'S2', 'S3', 'S4'] }],
+  });
+}
+
+function pentagon() {
+  return createLafeaAnalysisGeometry({
+    schema: 'lafea-analysis-geometry/v1',
+    stageId: 'LAFEA.3',
+    geometryId: 'PENTAGON',
+    coordinateSystemId: 'GLOBAL',
+    lengthUnit: 'mm',
+    orientationPolicy: 'OUTER_CCW_HOLES_CW_V1',
+    vertices: [
+      { vertexId: 'V1', x: 0, y: 0 },
+      { vertexId: 'V2', x: 100, y: 0 },
+      { vertexId: 'V3', x: 140, y: 60 },
+      { vertexId: 'V4', x: 70, y: 120 },
+      { vertexId: 'V5', x: 0, y: 60 },
+    ],
+    segments: [
+      { segmentId: 'S1', type: 'LINE', startVertexId: 'V1', endVertexId: 'V2' },
+      { segmentId: 'S2', type: 'LINE', startVertexId: 'V2', endVertexId: 'V3' },
+      { segmentId: 'S3', type: 'LINE', startVertexId: 'V3', endVertexId: 'V4' },
+      { segmentId: 'S4', type: 'LINE', startVertexId: 'V4', endVertexId: 'V5' },
+      { segmentId: 'S5', type: 'LINE', startVertexId: 'V5', endVertexId: 'V1' },
+    ],
+    loops: [{
+      loopId: 'L_OUTER', role: 'OUTER',
+      segmentIds: ['S1', 'S2', 'S3', 'S4', 'S5'],
+    }],
   });
 }
 
@@ -180,25 +214,35 @@ const mapped = generateLafeaAnalysisMesh(adapter, {
 assert.equal(mapped.strategy, 'MAPPED_TRANSFINITE');
 assert.ok(mapped.elementCount > 0 && mapped.nodeCount > 0);
 assert.equal(mapped.estimatedDofs, mapped.nodeCount * 2);
-// Mapped meshing places interior nodes, so no element spans the whole plate.
 assert.ok(mapped.characteristicLengthMax <= 30 + 1e-9,
   `mapped characteristic length ${mapped.characteristicLengthMax} must respect the target`);
 
-// A triangular family falls back to the boundary triangulator, and says so.
 const unstructured = generateLafeaAnalysisMesh(adapter, {
   targetElementLength: 30, curvatureToleranceDegrees: 15, elementFamily: 'T6',
 });
 assert.equal(unstructured.strategy, 'CONSTRAINED_DELAUNAY');
 assert.equal(unstructured.strategyReason, 'UNSTRUCTURED_ELEMENT_FAMILY_REQUESTED');
 
-// --- LMB-05: determinism / BYTE_IDENTICAL_CANONICAL_MESH_V1 -----------------
+// --- LMB-05: partial Q8 recombination is rejected truthfully -----------------
+// Five boundary corners produce three triangles. Pair recombination can consume
+// at most two of them, so at least one true T6 remains. A uniform-Q8 request
+// must fail here, before plan/output/evidence can misrepresent that topology.
+const pentagonAdapter = buildLafeaMeshTopology(pentagon());
+assert.throws(
+  () => generateLafeaAnalysisMesh(pentagonAdapter, {
+    targetElementLength: 200, curvatureToleranceDegrees: 15, elementFamily: 'Q8',
+  }),
+  (error) => error?.code === 'LAFEA_MESH_ENGINE_Q8_FULL_RECOMBINATION_REQUIRED',
+);
+
+// --- LMB-06: determinism / BYTE_IDENTICAL_CANONICAL_MESH_V1 -----------------
 const replay = generateLafeaAnalysisMesh(adapter, {
   targetElementLength: 30, curvatureToleranceDegrees: 15, elementFamily: 'Q8',
 });
 assert.equal(JSON.stringify(replay.mesh), JSON.stringify(mapped.mesh),
   'the declared repeatability policy requires a byte-identical replay');
 
-// --- LMB-06: the curvature tolerance is the only curvature control ----------
+// --- LMB-07: the curvature tolerance is the only curvature control ----------
 const arcGeometry = createLafeaAnalysisGeometry({
   schema: 'lafea-analysis-geometry/v1',
   stageId: 'LAFEA.3',
@@ -222,15 +266,13 @@ const arcGeometry = createLafeaAnalysisGeometry({
   loops: [{ loopId: 'L_OUTER', role: 'OUTER', segmentIds: ['S1', 'S2', 'S3'] }],
 });
 const arcAdapter = buildLafeaMeshTopology(arcGeometry);
-// A 90 degree arc at a 30 degree tolerance is exactly 3 quadratic edges; the
-// two 50mm lines at a 40mm target are 2 each. No round-off inflation.
 const arcMesh = generateLafeaAnalysisMesh(arcAdapter, {
   targetElementLength: 40, curvatureToleranceDegrees: 30, elementFamily: 'T6',
 });
 assert.equal(arcMesh.boundarySegmentCount, 7,
   'the declared angular tolerance must be the exact binding curvature control');
 
-// --- LMB-07: full governed chain reaches CURRENT_PASS custody ---------------
+// --- LMB-08: full governed chain reaches CURRENT_PASS custody ---------------
 const stage = stageFor(geometry);
 const configuration = lafeaMeshGenerationConfiguration(meshProfileFor('Q8', 25), {
   targetElementLength: 30,
@@ -266,7 +308,38 @@ assert.equal(custody.usableForAdvance, true);
 assert.equal(custody.runPolicy, 'ALLOW');
 assert.equal(custody.producerRef, LAFEA_MESH_PRODUCER_REF);
 
-// --- LMB-08: evidence is tamper-evident -------------------------------------
+// --- LMB-09: v2 producer envelope independently enforces the family ----------
+assert.throws(
+  () => createLafeaMeshProducerOutputV2({
+    schema: 'lafea-mesh-producer-output/v2',
+    stageId: planned.plan.stageId,
+    intentHash: planned.plan.intentHash,
+    planHash: planned.plan.planHash,
+    capabilityHash: planned.plan.capabilityHash,
+    qualificationHash: planned.plan.qualificationHash,
+    producerId: planned.plan.producerId,
+    producerRevision: planned.plan.producerRevision,
+    sourceHash: planned.plan.sourceHash,
+    analysisDomainHash: planned.plan.analysisDomainHash,
+    analysisGeometryHash: planned.plan.analysisGeometryHash,
+    meshProfileHash: planned.plan.meshProfileHash,
+    elementFamily: 'Q8',
+    mesh: unstructured.mesh,
+  }),
+  (error) => error?.code === 'LAFEA_MESH_PRODUCER_OUTPUT_V2_ELEMENT_FAMILY_MISMATCH',
+);
+
+// --- LMB-10: v2 evidence is exportable/recoverable without mutation ----------
+const recovery = createLafeaWorkbenchMeshGenerationState(['LAFEA.3']);
+recovery.bindMeshProfile(evidence.meshProfile, 'LAFEA.3');
+const recovered = recovery.recoverEvidence(evidence, 'LAFEA.3');
+assert.equal(recovered.changed, true);
+assert.deepEqual(recovery.exportEvidence('LAFEA.3'), evidence);
+assert.deepEqual(recovery.validateEvidence(recovery.exportEvidence('LAFEA.3')), evidence);
+const replayRecovery = recovery.recoverEvidence(evidence, 'LAFEA.3');
+assert.equal(replayRecovery.changed, false, 'exact v2 recovery replay must be idempotent');
+
+// --- LMB-11: evidence is tamper-evident -------------------------------------
 assert.throws(
   () => validateLafeaAnalysisMeshEvidenceV2({
     ...evidence,
@@ -276,7 +349,7 @@ assert.throws(
   'a mutated mesh must not validate',
 );
 
-// --- LMB-09: a stale parent invalidates retained evidence -------------------
+// --- LMB-12: a stale parent invalidates retained evidence -------------------
 const staleCustody = buildLafeaDomainFirstMeshCustodyProjection({
   ...stage,
   sourceAuthority: { stageId: 'LAFEA.3', sourceHash: `sha256:${'b'.repeat(64)}` },
@@ -285,9 +358,7 @@ assert.equal(staleCustody.state, 'STALE');
 assert.equal(staleCustody.usableForAdvance, false);
 assert.ok(staleCustody.staleReasons.includes('ANALYSIS_MESH_V2_SOURCE_PARENT_STALE'));
 
-// --- LMB-10: a mesh that fails its quality gates does not clear the gate ----
-// The boundary triangulator produces slivers on an elongated plate; the
-// profile's own gates must block it rather than the producer excusing itself.
+// --- LMB-13: a mesh that fails its quality gates does not clear the gate ----
 const blockingConfiguration = lafeaMeshGenerationConfiguration(meshProfileFor('T6', 25), {
   targetElementLength: 15,
 });
@@ -300,7 +371,7 @@ assert.equal(blockedCustody.state, 'CURRENT_BLOCK');
 assert.equal(blockedCustody.usableForAdvance, false);
 assert.equal(blockedCustody.advancePolicy, 'DENY');
 
-// --- LMB-11: the discretization view model surfaces generation --------------
+// --- LMB-14: the discretization view model surfaces generation --------------
 const generatedStage = {
   ...stage,
   retainedAnalysisMeshEvidenceV2: evidence,
@@ -346,14 +417,15 @@ const refinement = viewModel.configuration.modes.find((row) => row.mode === 'MAN
 assert.equal(refinement.enabled, false,
   'manual refinement is not qualified and must stay disabled');
 
-// --- LMB-12: without a bound mesh profile, generation is refused ------------
+// --- LMB-15: without a bound profile UI stays in explicit binding state ------
 const unboundViewModel = buildLafeaDiscretizationViewModel({
   ...stage,
   analysisMeshCustodyProjection: buildLafeaDomainFirstMeshCustodyProjection(stage, null),
 });
 assert.equal(unboundViewModel.generation.available, false);
+assert.equal(unboundViewModel.generation.meshProfileBound, false);
 assert.equal(unboundViewModel.generation.unavailableReason,
   'ANALYSIS_MESH_PROFILE_BINDING_REQUIRED');
 assert.equal(unboundViewModel.actions.canGenerateMesh, false);
 
-console.log('LAFEA mesh-producer binding check PASS (LMB-01..LMB-12)');
+console.log('LAFEA mesh-producer binding check PASS (LMB-01..LMB-15)');

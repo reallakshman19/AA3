@@ -13,18 +13,18 @@ import {
  * The outer loop is triangulated first. Every hole-loop corner is then inserted
  * as a true triangulation vertex, and every consecutive hole edge is recovered
  * by deterministic edge flipping before triangles inside the hole are removed.
- * The resulting multiply-connected material domain is refined with a staggered
- * triangular Steiner lattice. Hole boundaries whose local constrained spacing
- * is materially finer than the global interior spacing then receive a bounded,
- * deterministic two-layer material-side transition front before the final
- * Lawson pass. Straight boundaries already discretized near the target size do
- * not receive an unnecessary front.
+ * The material domain is refined with a staggered triangular Steiner lattice.
+ * Finely segmented hole boundaries may receive a bounded material-side grading
+ * front. When the caller declares a triangle scaled-Jacobian floor, any triangle
+ * at or below that floor is repaired deterministically by bisecting its longest
+ * unconstrained edge and restoring constrained Delaunay. Physical boundary
+ * edges are never moved or split by this quality-repair pass.
  *
  * No artificial bridge/seam is introduced. Boundary midsides remain owned by
  * their analytic source curve through `edgesByCornerPair`, so T6/Q8 upgrade can
  * place a circular-hole midside on the true arc rather than on its chord.
  */
-export const LAFEA_INTERIOR_REFINEMENT_REVISION = 'LAFEA.10.CDT-HOLES-TRI.V3';
+export const LAFEA_INTERIOR_REFINEMENT_REVISION = 'LAFEA.10.CDT-HOLES-TRI.V4';
 
 const EPS = 1e-12;
 const TRIANGULAR_ROW_HEIGHT_FACTOR = Math.sqrt(3) / 2;
@@ -38,7 +38,8 @@ const HOLE_FRONT_EDGE_CLEARANCE_FACTOR = 0.45;
 /**
  * @param {Readonly<object>} topology Canonical core topology.
  * @param {string} regionId Region identifier.
- * @param {{targetSize:number,chordErrorLimit:number,minimumSegmentsByCurveId?:Map<string,number>}} options
+ * @param {{targetSize:number,chordErrorLimit:number,
+ *   minimumSegmentsByCurveId?:Map<string,number>,minimumTriangleScaledJacobian?:number}} options
  */
 export function triangulateRefinedRegionAsIndexTriples(topology, regionId, options) {
   const region = topology.regions.find((candidate) => candidate.regionId === regionId);
@@ -46,6 +47,7 @@ export function triangulateRefinedRegionAsIndexTriples(topology, regionId, optio
   if (!(options?.targetSize > 0)) {
     throw new LafeaMeshingError('targetSize must be positive', 'INVALID_TARGET_SIZE');
   }
+  const qualityFloor = optionalScaledJacobianFloor(options.minimumTriangleScaledJacobian);
 
   const curveById = new Map(topology.curves.map((curve) => [curve.curveId, curve]));
   const vertexById = new Map(topology.vertices.map((vertex) => [vertex.vertexId, vertex]));
@@ -119,6 +121,20 @@ export function triangulateRefinedRegionAsIndexTriples(topology, regionId, optio
     );
     restored = lawsonFlip(points, frontTriangles, constrainedEdgeKeys);
     verifyHoleBoundaryOwnership(restored, constrainedEdgeKeys, boundaryRings);
+  }
+
+  if (qualityFloor !== null) {
+    const qualityRepair = refineTriangleQuality(
+      points,
+      restored,
+      constrainedEdgeKeys,
+      qualityFloor,
+    );
+    restored = qualityRepair.triangles;
+    interiorPointCount += qualityRepair.insertedPointCount;
+    if (holePolygons.length) {
+      verifyHoleBoundaryOwnership(restored, constrainedEdgeKeys, boundaryRings);
+    }
   }
 
   return Object.freeze({
@@ -313,6 +329,94 @@ function holeFrontOffset(edgeLength, layer) {
     offset += baseHeight * (HOLE_FRONT_GROWTH ** index);
   }
   return offset;
+}
+
+function refineTriangleQuality(points, triangles, constrainedEdgeKeys, floor) {
+  let working = triangles.map((triangle) => [...triangle]);
+  let insertedPointCount = 0;
+  const maximumInsertions = Math.max(200, working.length * 20);
+
+  for (let iteration = 0; iteration < maximumInsertions; iteration += 1) {
+    const blocked = worstTriangleAtOrBelowFloor(working, points, floor);
+    if (!blocked) return { triangles: working, insertedPointCount };
+
+    const candidateEdges = triangleEdges(blocked.triangle, points)
+      .filter((edge) => !constrainedEdgeKeys.has(edge.key))
+      .sort((left, right) => right.length - left.length || left.key.localeCompare(right.key));
+    let inserted = false;
+    for (const edge of candidateEdges) {
+      const midpoint = {
+        x: (points[edge.a].x + points[edge.b].x) / 2,
+        y: (points[edge.a].y + points[edge.b].y) / 2,
+      };
+      if (exactPointIndex(points, midpoint) >= 0) continue;
+      if (!insertInteriorPoint(points, working, constrainedEdgeKeys, midpoint)) continue;
+      insertedPointCount += 1;
+      working = lawsonFlip(points, working, constrainedEdgeKeys);
+      inserted = true;
+      break;
+    }
+    if (!inserted) {
+      throw new LafeaMeshingError(
+        `Triangle ${blocked.key} cannot be repaired without splitting a constrained boundary`,
+        'QUALITY_REFINEMENT_CONSTRAINED_TRIANGLE',
+      );
+    }
+  }
+  throw new LafeaMeshingError(
+    `Triangle quality refinement exceeded ${maximumInsertions} Steiner insertions`,
+    'QUALITY_REFINEMENT_LIMIT',
+  );
+}
+
+function worstTriangleAtOrBelowFloor(triangles, points, floor) {
+  let worst = null;
+  for (const triangle of triangles) {
+    const scaledJacobian = triangleScaledJacobian2d(triangle, points);
+    if (scaledJacobian > floor + scaledEps(...triangle.map((index) => points[index]))) continue;
+    const key = [...triangle].sort((a, b) => a - b).join(':');
+    if (!worst || scaledJacobian < worst.scaledJacobian - EPS
+      || (Math.abs(scaledJacobian - worst.scaledJacobian) <= EPS && key < worst.key)) {
+      worst = { triangle, scaledJacobian, key };
+    }
+  }
+  return worst;
+}
+
+function triangleScaledJacobian2d(triangle, points) {
+  return Math.min(...triangle.map((originIndex, index) => {
+    const origin = points[originIndex];
+    const first = points[triangle[(index + 1) % 3]];
+    const second = points[triangle[(index + 2) % 3]];
+    const ax = first.x - origin.x; const ay = first.y - origin.y;
+    const bx = second.x - origin.x; const by = second.y - origin.y;
+    const denominator = Math.hypot(ax, ay) * Math.hypot(bx, by);
+    return denominator > 0 ? ((ax * by) - (ay * bx)) / denominator : 0;
+  }));
+}
+
+function triangleEdges(triangle, points) {
+  return [0, 1, 2].map((index) => {
+    const a = triangle[index];
+    const b = triangle[(index + 1) % 3];
+    return {
+      a,
+      b,
+      key: edgeKey(a, b),
+      length: Math.hypot(points[b].x - points[a].x, points[b].y - points[a].y),
+    };
+  });
+}
+
+function optionalScaledJacobianFloor(value) {
+  if (value === undefined || value === null) return null;
+  if (!Number.isFinite(value) || !(value > 0) || !(value < 1)) {
+    throw new LafeaMeshingError(
+      'minimumTriangleScaledJacobian must be finite and strictly between zero and one',
+      'INVALID_TRIANGLE_SCALED_JACOBIAN_FLOOR',
+    );
+  }
+  return value;
 }
 
 function splitInteriorEdge(points, triangles, key, point) {

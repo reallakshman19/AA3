@@ -118,12 +118,14 @@ expectCode('stale benchmark parent', () =>
   }), 'LAFEA_NB_T6C_BENCHMARK_MAPPING_PARENT_STALE');
 const tamperedDeclaration = structuredClone(projection);
 tamperedDeclaration.physicalProblemHash = fixture.hash('TAMPERED');
+deepFreeze(tamperedDeclaration);
 expectCode('tampered declaration', () =>
   executeLafeaLugPinholePhysicalProblemBatch({
     ...executionInput, projection: tamperedDeclaration,
   }), 'LAFEA_NB_T6C_PROJECTION_DECLARATION_TAMPERED');
 const sourceDrift = structuredClone(projection);
 sourceDrift.levels[1].document.nodes[0].x += 1;
+deepFreeze(sourceDrift);
 expectCode('source mesh drift', () =>
   executeLafeaLugPinholePhysicalProblemBatch({
     ...executionInput, projection: sourceDrift,
@@ -183,6 +185,11 @@ function sourceGuards() {
 function expectCode(label, body, code) {
   assert.throws(body, (error) => error?.code === code, label);
   negativeCount += 1;
+}
+function deepFreeze(value) {
+  if (!value || typeof value !== 'object' || Object.isFrozen(value)) return value;
+  Object.values(value).forEach(deepFreeze);
+  return Object.freeze(value);
 }
 function walk(directory) {
   return fs.readdirSync(directory, { withFileTypes: true }).flatMap((entry) => {

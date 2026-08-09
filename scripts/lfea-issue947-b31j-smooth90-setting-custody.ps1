@@ -76,8 +76,8 @@ function Read-TableRows {
     [Parameter(Mandatory = $true)][string]$TableName,
     [Parameter(Mandatory = $true)][string[]]$Columns,
     [Parameter(Mandatory = $true)][bool]$CaptureCandidateRows,
-    [Parameter(Mandatory = $true)][System.Collections.Generic.List[object]]$ValueHits,
-    [Parameter(Mandatory = $true)][System.Collections.Generic.List[object]]$Smooth90Rows
+    [Parameter(Mandatory = $true)][AllowEmptyCollection()][System.Collections.Generic.List[object]]$ValueHits,
+    [Parameter(Mandatory = $true)][AllowEmptyCollection()][System.Collections.Generic.List[object]]$Smooth90Rows
   )
 
   $recordset = New-Object -ComObject ADODB.Recordset
@@ -135,7 +135,7 @@ function Read-TableRows {
 }
 
 function Resolve-Smooth90Disposition {
-  param([Parameter(Mandatory = $true)][object[]]$Rows)
+  param([Parameter(Mandatory = $true)][AllowEmptyCollection()][object[]]$Rows)
   $resolved = [System.Collections.Generic.List[object]]::new()
   foreach ($entry in $Rows) {
     $row = $entry.row

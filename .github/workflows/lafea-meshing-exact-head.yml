@@ -20,6 +20,7 @@ on:
       - 'scripts/lafea-mesh-producer-binding-check.mjs'
       - 'scripts/lafea-retained-mesh-refinement-check.mjs'
       - 'scripts/lafea-shell-domain-hash-probe.mjs'
+      - 'scripts/lafea-shell-workbench-probe.mjs'
       - 'scripts/lafea-shell-mesh-producer-check.mjs'
       - 'scripts/lafea-mesh-dof-policy-check.mjs'
       - 'scripts/lafea-meshing-system-check.mjs'
@@ -76,6 +77,9 @@ jobs:
 
       - name: Diagnose shell domain hash round trip
         run: node scripts/lafea-shell-domain-hash-probe.mjs
+
+      - name: Probe shell workbench parent registration
+        run: node scripts/lafea-shell-workbench-probe.mjs
 
       - name: Qualify planar shell mesh producer
         run: node scripts/lafea-shell-mesh-producer-check.mjs

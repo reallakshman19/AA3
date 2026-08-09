@@ -1,3 +1,4 @@
+import { smoothInteriorPoints } from './mesh-smoothing.js';
 import { LafeaMeshingError } from './errors.js';
 import { discretizeLoop } from './boundary-discretization.js';
 import {
@@ -34,6 +35,8 @@ const HOLE_FRONT_LAYER_COUNT = 2;
 const HOLE_FRONT_GROWTH = 1.6;
 const HOLE_FRONT_TARGET_CLEARANCE_FACTOR = 0.18;
 const HOLE_FRONT_EDGE_CLEARANCE_FACTOR = 0.45;
+/** Fixed round count keeps smoothing deterministic; quality is monotone per round. */
+const SMOOTHING_ROUNDS = 3;
 
 /**
  * @param {Readonly<object>} topology Canonical core topology.
@@ -121,9 +124,28 @@ export function triangulateRefinedRegionAsIndexTriples(topology, regionId, optio
     verifyHoleBoundaryOwnership(restored, constrainedEdgeKeys, boundaryRings);
   }
 
+  // Relax the interior lattice against the boundary discretization, then
+  // restore the Delaunay property for the moved nodes. Boundary nodes are
+  // pinned: they carry the true analytic curve position and moving them would
+  // move the analysis geometry itself.
+  const fixedIndices = new Set();
+  for (const ring of boundaryRings) {
+    for (const index of ring.globalIndices) fixedIndices.add(index);
+  }
+  let smoothedMoveCount = 0;
+  for (let round = 0; round < SMOOTHING_ROUNDS; round += 1) {
+    const working = restored.map((triangle) => [...triangle]);
+    smoothedMoveCount += smoothInteriorPoints(points, working, fixedIndices).movedCount;
+    restored = lawsonFlip(points, working, constrainedEdgeKeys);
+  }
+  if (holePolygons.length) {
+    verifyHoleBoundaryOwnership(restored, constrainedEdgeKeys, boundaryRings);
+  }
+
   return Object.freeze({
     points: Object.freeze(points.map((point) => Object.freeze(point))),
     triangleTriples: Object.freeze(restored.map((triangle) => Object.freeze([...triangle]))),
+    smoothedMoveCount,
     boundaryEdgeKeys: constrainedEdgeKeys,
     ringCorners: outer.ringCorners,
     boundaryRings: Object.freeze(boundaryRings.map((ring) => Object.freeze({

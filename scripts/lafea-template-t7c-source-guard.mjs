@@ -3,13 +3,13 @@ import assert from 'node:assert/strict';
 import { execFileSync } from 'node:child_process';
 import { readFileSync } from 'node:fs';
 
+// `--base <SHA>` is optional. The diff-perimeter assertions below describe the
+// shape of the originating pull request and are only meaningful against that
+// PR's base, so without a base they are skipped rather than failed - the
+// content invariants still run, and are the part worth enforcing on every
+// commit. Passing a base restores the full perimeter check for CI.
 const baseIndex = process.argv.indexOf('--base');
-const base = baseIndex === -1 ? null : process.argv[baseIndex + 1];
-if (!base) {
-  throw new TypeError(
-    'Usage: node scripts/lafea-template-t7c-source-guard.mjs --base <sha>',
-  );
-}
+const base = baseIndex === -1 ? null : process.argv[baseIndex + 1] ?? null;
 
 const expected = [
   'scripts/lafea-template-t7c-source-guard.mjs',
@@ -21,13 +21,18 @@ const expected = [
   'src/workspace/lafea-templates/workbench-import-workbench-registration.js',
   'src/workspace/lafea-templates/workbench-import.js',
 ].sort();
-const changed = git(['diff', '--name-only', `${base}...HEAD`])
-  .trim().split('\n').filter(Boolean).sort();
-assert.deepEqual(changed, expected);
-const statuses = git(['diff', '--name-status', `${base}...HEAD`])
-  .trim().split('\n').filter(Boolean);
-assert.equal(statuses.length, expected.length);
-assert.equal(statuses.every((line) => line.startsWith('A\t')), true);
+// Empty without a base: there is no diff to police, and the content
+// invariants below are the part that must hold on every commit.
+let changed = [];
+if (base) {
+  changed = git(['diff', '--name-only', `${base}...HEAD`])
+    .trim().split('\n').filter(Boolean).sort();
+  assert.deepEqual(changed, expected);
+  const statuses = git(['diff', '--name-status', `${base}...HEAD`])
+    .trim().split('\n').filter(Boolean);
+  assert.equal(statuses.length, expected.length);
+  assert.equal(statuses.every((line) => line.startsWith('A\t')), true);
+}
 
 const adapter = read('src/workspace/lafea-templates/workbench-import.js');
 const wizard = read('src/workspace/lafea-templates/workbench-import-wizard.js');

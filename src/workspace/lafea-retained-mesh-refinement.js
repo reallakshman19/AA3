@@ -1,3 +1,4 @@
+import { smoothInteriorPoints } from '../core/lafea-meshing/mesh-smoothing.js';
 import { edgeKey, lawsonFlip, upgradeToT6 } from '../core/lafea-meshing/constrained-delaunay-t6.js';
 import { insertInteriorPoint } from '../core/lafea-meshing/interior-refinement-t6.js';
 import { canonicalLafeaAnalysisMeshProfile } from './lafea-analysis-mesh-contract.js';
@@ -211,6 +212,9 @@ export function produceLafeaRetainedMeshRefinement(input) {
   return result;
 }
 
+/** Fixed round count keeps the refined child deterministic. */
+const REFINEMENT_SMOOTHING_ROUNDS = 3;
+
 function refineParentMesh(parentMesh, plan) {
   const triangulation = parentTriangulation(parentMesh, plan.elementFamily);
   const points = triangulation.points.map((point) => ({ ...point }));
@@ -230,7 +234,23 @@ function refineParentMesh(parentMesh, plan) {
     if (insertInteriorPoint(points, triangles, constraints, candidate)) localPointCount += 1;
   }
   if (!localPointCount) fail('LAFEA_RETAINED_MESH_REFINEMENT_NO_LOCAL_POINTS_INSERTED');
-  const restored = lawsonFlip(points, triangles, constraints);
+  let restored = lawsonFlip(points, triangles, constraints);
+
+  // Local insertion leaves a size transition between the refined patch and the
+  // surrounding parent elements. Relax it with the same quality-guarded
+  // smoothing the global refinement uses, pinning every node on a constrained
+  // edge so the retained boundary and the parent's own geometry cannot move.
+  const fixedIndices = new Set();
+  for (const key of constraints) {
+    const [left, right] = key.split(':').map(Number);
+    fixedIndices.add(left);
+    fixedIndices.add(right);
+  }
+  for (let round = 0; round < REFINEMENT_SMOOTHING_ROUNDS; round += 1) {
+    const working = restored.map((triangle) => [...triangle]);
+    smoothInteriorPoints(points, working, fixedIndices);
+    restored = lawsonFlip(points, working, constraints);
+  }
   const coreElements = plan.elementFamily === 'T6'
     ? upgradeToT6(points, [], restored, triangulation.boundaryMidpoints)
     : restored.map((triple, elementIndex) => freeze({

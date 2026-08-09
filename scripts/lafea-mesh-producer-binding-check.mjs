@@ -227,11 +227,24 @@ assert.equal(splitProduced.evidence.quality.blockingElementIds.length, 0);
 // --- LMB-05: a filleted-away corner is not falsely mapped ------------------
 const filletGeometry = filletedPlate();
 const filletAdapter = buildLafeaMeshTopology(filletGeometry);
-assert.throws(
-  () => generateLafeaAnalysisMesh(filletAdapter, {
+// Not mappable, so this takes the unstructured path. Recombination cannot pair
+// every triangle here, so uniform Q8 comes from centroid subdivision rather
+// than being rejected — still all-Q8, never a relabelled T6.
+const filletQ8 = generateLafeaAnalysisMesh(filletAdapter, {
+  targetElementLength: 30, curvatureToleranceDegrees: 15, elementFamily: 'Q8',
+});
+assert.equal(filletQ8.strategy, 'QUAD_SUBDIVISION');
+assert.equal(filletQ8.strategyReason, 'UNIFORM_Q8_BY_CENTROID_SUBDIVISION');
+assert.ok(filletQ8.mesh.elements.every((element) => element.elementType === 'Q8'),
+  'centroid subdivision must be all-quad by construction');
+assert.equal(filletQ8.elementCount % 3, 0,
+  'each triangle contributes exactly three quads');
+assert.equal(
+  JSON.stringify(generateLafeaAnalysisMesh(filletAdapter, {
     targetElementLength: 30, curvatureToleranceDegrees: 15, elementFamily: 'Q8',
-  }),
-  (error) => error?.code === 'LAFEA_MESH_ENGINE_Q8_FULL_RECOMBINATION_REQUIRED',
+  }).mesh),
+  JSON.stringify(filletQ8.mesh),
+  'subdivision must replay byte-identically',
 );
 const filletT6 = produceLafeaAnalysisMeshEvidence(
   stageFor(filletGeometry),
@@ -249,13 +262,16 @@ assert.equal(unstructured.strategy, 'CONSTRAINED_DELAUNAY');
 assert.equal(unstructured.strategyReason, 'UNSTRUCTURED_INTERIOR_REFINEMENT');
 assert.ok(unstructured.interiorPointCount > 0);
 
-// --- LMB-07: true five-corner topology remains all-Q8-or-reject ------------
-assert.throws(
-  () => generateLafeaAnalysisMesh(buildLafeaMeshTopology(pentagon()), {
-    targetElementLength: 200, curvatureToleranceDegrees: 15, elementFamily: 'Q8',
-  }),
-  (error) => error?.code === 'LAFEA_MESH_ENGINE_Q8_FULL_RECOMBINATION_REQUIRED',
-);
+// --- LMB-07: true five-corner topology is uniform Q8 by subdivision --------
+// A pentagon cannot be a logical quadrilateral and cannot fully recombine, so
+// it exercises the subdivision path. The uniform-Q8 guarantee is preserved by
+// construction, not by relabelling triangles.
+const pentagonQ8 = generateLafeaAnalysisMesh(buildLafeaMeshTopology(pentagon()), {
+  targetElementLength: 200, curvatureToleranceDegrees: 15, elementFamily: 'Q8',
+});
+assert.equal(pentagonQ8.strategy, 'QUAD_SUBDIVISION');
+assert.ok(pentagonQ8.mesh.elements.every((element) => element.elementType === 'Q8'));
+assert.equal(pentagonQ8.elementCount % 3, 0);
 
 // --- LMB-08: deterministic replay ------------------------------------------
 const replay = generateLafeaAnalysisMesh(adapter, {
@@ -383,12 +399,21 @@ assert.equal(holeCustody.state, 'CURRENT_PASS');
 assert.equal(holeCustody.usableForRun, true);
 
 // --- LMB-15: Q8 hole request never silently degrades to mixed family --------
-assert.throws(
-  () => generateLafeaAnalysisMesh(holeAdapter, {
-    targetElementLength: 1.5, curvatureToleranceDegrees: 15, elementFamily: 'Q8',
-  }),
-  (error) => error?.code === 'LAFEA_MESH_ENGINE_Q8_FULL_RECOMBINATION_REQUIRED',
-);
+// A multiply-connected region is served by subdivision, so Q8 is available
+// here too — but the uniform-family guarantee still holds absolutely, and the
+// curved hole boundary keeps its analytic midside positions rather than being
+// replaced by a finer polyline.
+const holeQ8 = generateLafeaAnalysisMesh(holeAdapter, {
+  targetElementLength: 1.5, curvatureToleranceDegrees: 15, elementFamily: 'Q8',
+});
+assert.equal(holeQ8.strategy, 'QUAD_SUBDIVISION');
+assert.ok(holeQ8.mesh.elements.every((element) => element.elementType === 'Q8'));
+assert.equal(holeQ8.holeCount, 1);
+const onHoleArc = holeQ8.mesh.nodes.filter((node) => Math.abs(
+  Math.hypot(node.x - 5, node.y - 5) - 1,
+) < 1e-9);
+assert.ok(onHoleArc.length > 0,
+  'subdivided nodes on the hole boundary must lie on the true arc, not its chord');
 
 // --- LMB-16: Discretization remains truthful for a retained Q8 mesh --------
 const generatedStage = {

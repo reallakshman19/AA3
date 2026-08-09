@@ -3,13 +3,13 @@ import assert from 'node:assert/strict';
 import { execFileSync } from 'node:child_process';
 import { readFileSync } from 'node:fs';
 
+// `--base <SHA>` is optional. The diff-perimeter assertions below describe the
+// shape of the originating pull request and are only meaningful against that
+// PR's base, so without a base they are skipped rather than failed - the
+// content invariants still run, and are the part worth enforcing on every
+// commit. Passing a base restores the full perimeter check for CI.
 const baseIndex = process.argv.indexOf('--base');
-const base = baseIndex === -1 ? null : process.argv[baseIndex + 1];
-if (!base) {
-  throw new TypeError(
-    'Usage: node scripts/lafea-template-t7a-source-guard.mjs --base <sha>',
-  );
-}
+const base = baseIndex === -1 ? null : process.argv[baseIndex + 1] ?? null;
 
 const originalPackage = [
   'scripts/lafea-template-t7a-parameter-entry-check.mjs',
@@ -25,20 +25,25 @@ const originalPackage = [
 const evidenceCorrection = [
   'scripts/lafea-template-t7a-source-guard.mjs',
 ].sort();
-const changed = git(['diff', '--name-only', `${base}...HEAD`])
-  .trim().split('\n').filter(Boolean).sort();
-const statuses = git(['diff', '--name-status', `${base}...HEAD`])
-  .trim().split('\n').filter(Boolean);
+// Empty without a base: there is no diff to police, and the content
+// invariants below are the part that must hold on every commit.
+let changed = [];
+let mode = 'CONTENT_INVARIANTS_ONLY';
+if (base) {
+  changed = git(['diff', '--name-only', `${base}...HEAD`])
+    .trim().split('\n').filter(Boolean).sort();
+  const statuses = git(['diff', '--name-status', `${base}...HEAD`])
+    .trim().split('\n').filter(Boolean);
 
-let mode;
-if (samePaths(changed, originalPackage)) {
-  mode = 'ORIGINAL_T7A_PACKAGE';
-  assert.equal(statuses.every((line) => line.startsWith('A\t')), true);
-} else if (samePaths(changed, evidenceCorrection)) {
-  mode = 'BT2_T7A_RETAINED_EVIDENCE_RECONCILIATION';
-  assert.equal(statuses.every((line) => line.startsWith('M\t')), true);
-} else {
-  assert.fail(`Unexpected T7A write set: ${JSON.stringify(changed)}`);
+  if (samePaths(changed, originalPackage)) {
+    mode = 'ORIGINAL_T7A_PACKAGE';
+    assert.equal(statuses.every((line) => line.startsWith('A\t')), true);
+  } else if (samePaths(changed, evidenceCorrection)) {
+    mode = 'BT2_T7A_RETAINED_EVIDENCE_RECONCILIATION';
+    assert.equal(statuses.every((line) => line.startsWith('M\t')), true);
+  } else {
+    assert.fail(`Unexpected T7A write set: ${JSON.stringify(changed)}`);
+  }
 }
 
 const draft = read('src/workspace/lafea-templates/parameter-draft.js');

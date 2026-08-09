@@ -1,0 +1,46 @@
+name: Issue 947 one-shot smooth-90 profile authority
+
+on:
+  push:
+    branches:
+      - codex/issue-947-bm4nl-qualification
+
+permissions:
+  contents: write
+
+jobs:
+  apply:
+    if: "${{ github.event.head_commit.message == 'chore(issue947): wire smooth90 profile authority' }}"
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout qualification branch
+        uses: actions/checkout@v4
+        with:
+          ref: codex/issue-947-bm4nl-qualification
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Apply deterministic source patch
+        run: node scripts/lfea-issue947-apply-smooth90-profile-authority.mjs
+
+      - name: Run existing B31J factor policy regression
+        run: node scripts/lfea-b3.21-b31j-phase2-factor-benchmark-check.mjs
+
+      - name: Commit authoritative source changes
+        shell: bash
+        run: |
+          set -euo pipefail
+          git add \
+            src/core/fea-benchmarks/caesar-accdb-package.js \
+            src/core/fea-benchmarks/caesar-accdb-linear-solve.js
+          if git diff --cached --quiet; then
+            echo 'Expected smooth-90 profile authority patch produced no source diff.' >&2
+            exit 1
+          fi
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git commit -m 'fix(lfea): consume profile smooth-90 authority'
+          git push origin HEAD:codex/issue-947-bm4nl-qualification

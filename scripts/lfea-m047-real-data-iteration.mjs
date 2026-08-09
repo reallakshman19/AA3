@@ -12,6 +12,15 @@ const NODE = process.execPath;
 const DEFAULT_PROFILE = 'benchmarks/LFEA/CAESAR_ACCDB/bm4nl-l19-l20-linear-solve.profile.json';
 const DEFAULT_META_DIR = 'benchmarks/LFEA/CAESAR_ACCDB/m047';
 const LOCKED_ACCDB_SHA256 = '85d39463296e569da811d8572e2eff680b858097f76fdf0f47d1755f0b161c21';
+const EVIDENCE_CRITICAL_PATHS = Object.freeze([
+  'scripts/lfea-m047-real-data-iteration.mjs',
+  'scripts/lfea-m047-target-node-evidence.mjs',
+  'scripts/lfea-caesar-accdb-iteration.mjs',
+  'scripts/lfea-m047-decision-guard.mjs',
+  'src/core/fea-benchmarks/caesar-accdb-iteration-evidence.js',
+  'src/core/shared-piping-model/canonical-json.js',
+  'src/core/shared-piping-model/immutable.js',
+]);
 const LEGACY_REGRESSION_CHECKS = Object.freeze([
   'scripts/lfea-b3.2-piping-component-check.mjs',
   'scripts/lfea-b3.2-reviewer-check.mjs',
@@ -47,6 +56,8 @@ function main(argv) {
 
   const workspaceBefore = gitStatus(ROOT);
   const evidenceToolHeadSha = gitAt(ROOT, ['rev-parse', 'HEAD']).trim();
+  requireEvidenceToolPathsClean(workspaceBefore, repoRelative(metaPath));
+
   const accdbPath = resolve(input.accdbPath);
   const accdbSha256 = powershellSha256(accdbPath);
   if (accdbSha256 !== LOCKED_ACCDB_SHA256) {
@@ -140,6 +151,10 @@ function main(argv) {
   ];
   if (input.parentPath !== null) iterationArgs.push('--parent', resolve(input.parentPath));
   const iterationRun = runNode(ROOT, iterationArgs, 'M047 iteration evidence');
+  const decisionGuardRun = runNode(ROOT, [
+    resolve(ROOT, 'scripts/lfea-m047-decision-guard.mjs'),
+    '--evidence', iterationPath,
+  ], 'M047 iteration decision guard');
 
   const workspaceAfter = gitStatus(ROOT);
   const unrelatedFinal = compareUnrelatedWorkspace(workspaceBefore, workspaceAfter, outputDir);
@@ -174,7 +189,10 @@ function main(argv) {
       executionMode: 'DETACHED_TEMPORARY_GIT_WORKTREE',
       worktreeCleanAfterQualification: candidateWorkspaceAfter.length === 0,
     },
-    evidenceToolCommitSha: evidenceToolHeadSha,
+    evidenceTool: {
+      commitSha: evidenceToolHeadSha,
+      criticalPathsCleanAtStart: true,
+    },
     source: {
       accdbPath,
       accdbSha256,
@@ -191,6 +209,7 @@ function main(argv) {
       benchmark: benchmarkRun,
       targetNodeEvidence: targetNodeRun,
       iterationEvidence: iterationRun,
+      decisionGuard: decisionGuardRun,
     },
     workspace: {
       before: workspaceBefore,
@@ -253,6 +272,21 @@ function requireSequentialParent(request, parentPath) {
     throw new TypeError('Parent iteration must carry a semanticHash.');
   }
   return parent;
+}
+
+function requireEvidenceToolPathsClean(workspaceRows, metaPath) {
+  const critical = new Set([...EVIDENCE_CRITICAL_PATHS, metaPath].map(normalizeRepoPath));
+  const dirty = workspaceRows.filter((row) => {
+    const path = normalizeRepoPath(row.path);
+    const originalPath = row.originalPath === undefined ? null : normalizeRepoPath(row.originalPath);
+    return critical.has(path) || (originalPath !== null && critical.has(originalPath));
+  });
+  if (dirty.length > 0) {
+    throw new Error(
+      'M047 evidence-critical paths must match the recorded evidence-tool HEAD; dirty paths: '
+      + dirty.map(formatStatus).join(', '),
+    );
+  }
 }
 
 function runCandidateRegressions(candidateRoot) {
@@ -362,6 +396,12 @@ function readJson(path, label) {
 
 function repoRelative(path) {
   return relative(ROOT, resolve(path)).replaceAll('\\', '/');
+}
+
+function normalizeRepoPath(path) {
+  const text = String(path).replaceAll('\\', '/');
+  if (resolve(text) === resolve(text) && resolve(text).startsWith(ROOT)) return repoRelative(text);
+  return text.replace(/^\.\//u, '');
 }
 
 function repoOrAbsolute(value) {

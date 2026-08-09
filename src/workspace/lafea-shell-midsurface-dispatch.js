@@ -36,15 +36,29 @@ import {
   validateLafeaPeriodicShellMidsurfaceEvidence,
   validateLafeaPeriodicShellMidsurfaceGeometry,
 } from './lafea-shell-periodic-midsurface-contract.js';
+import {
+  LAFEA_SHELL_PERIODIC_HOLE_MIDSURFACE_EVIDENCE_SCHEMA,
+  LAFEA_SHELL_PERIODIC_HOLE_MIDSURFACE_GEOMETRY_SCHEMA,
+  periodicHoleShellFrameAtPoint3d,
+  periodicHoleShellFrameAtUv,
+  periodicHoleShellParameterGeometry,
+  periodicHoleShellPoint3d,
+  validateLafeaPeriodicHoleShellMidsurfaceEvidence,
+  validateLafeaPeriodicHoleShellMidsurfaceGeometry,
+} from './lafea-shell-periodic-hole-midsurface-contract.js';
 
 export const LAFEA_SHELL_SURFACE_KINDS = Object.freeze({
   PLANAR: 'PLANAR',
   CYLINDRICAL: 'CYLINDRICAL',
   CYLINDRICAL_HOLES: 'CYLINDRICAL_HOLES',
   CYLINDRICAL_PERIODIC: 'CYLINDRICAL_PERIODIC',
+  CYLINDRICAL_PERIODIC_HOLE: 'CYLINDRICAL_PERIODIC_HOLE',
 });
 
 export function validateLafeaAnyShellMidsurfaceEvidence(value) {
+  if (value?.schema === LAFEA_SHELL_PERIODIC_HOLE_MIDSURFACE_EVIDENCE_SCHEMA) {
+    return validateLafeaPeriodicHoleShellMidsurfaceEvidence(value);
+  }
   if (value?.schema === LAFEA_SHELL_PERIODIC_MIDSURFACE_EVIDENCE_SCHEMA) {
     return validateLafeaPeriodicShellMidsurfaceEvidence(value);
   }
@@ -62,6 +76,10 @@ export function validateLafeaAnyShellMidsurfaceEvidence(value) {
 
 export function shellMidsurfaceKind(value) {
   const geometry = value?.geometry ?? value;
+  if (geometry?.schema === LAFEA_SHELL_PERIODIC_HOLE_MIDSURFACE_GEOMETRY_SCHEMA) {
+    validateLafeaPeriodicHoleShellMidsurfaceGeometry(geometry);
+    return LAFEA_SHELL_SURFACE_KINDS.CYLINDRICAL_PERIODIC_HOLE;
+  }
   if (geometry?.schema === LAFEA_SHELL_PERIODIC_MIDSURFACE_GEOMETRY_SCHEMA) {
     validateLafeaPeriodicShellMidsurfaceGeometry(geometry);
     return LAFEA_SHELL_SURFACE_KINDS.CYLINDRICAL_PERIODIC;
@@ -83,6 +101,9 @@ export function shellMidsurfaceKind(value) {
 
 export function shellMidsurfacePoint3dAny(geometry, u, v) {
   const kind = shellMidsurfaceKind(geometry);
+  if (kind === LAFEA_SHELL_SURFACE_KINDS.CYLINDRICAL_PERIODIC_HOLE) {
+    return periodicHoleShellPoint3d(geometry, u, v);
+  }
   if (kind === LAFEA_SHELL_SURFACE_KINDS.CYLINDRICAL_PERIODIC) {
     return periodicCylindricalShellPoint3d(geometry, u, v);
   }
@@ -97,6 +118,9 @@ export function shellMidsurfacePoint3dAny(geometry, u, v) {
 
 export function shellMidsurfaceFrameAtUvAny(geometry, u, v) {
   const kind = shellMidsurfaceKind(geometry);
+  if (kind === LAFEA_SHELL_SURFACE_KINDS.CYLINDRICAL_PERIODIC_HOLE) {
+    return periodicHoleShellFrameAtUv(geometry, u, v);
+  }
   if (kind === LAFEA_SHELL_SURFACE_KINDS.CYLINDRICAL_PERIODIC) {
     return periodicCylindricalShellFrameAtUv(geometry, u, v);
   }
@@ -117,6 +141,9 @@ export function shellMidsurfaceFrameAtUvAny(geometry, u, v) {
 
 export function shellMidsurfaceFrameAtPoint3dAny(geometry, point) {
   const kind = shellMidsurfaceKind(geometry);
+  if (kind === LAFEA_SHELL_SURFACE_KINDS.CYLINDRICAL_PERIODIC_HOLE) {
+    return periodicHoleShellFrameAtPoint3d(geometry, physicalPoint(point));
+  }
   if (kind === LAFEA_SHELL_SURFACE_KINDS.CYLINDRICAL_PERIODIC) {
     return periodicCylindricalShellFrameAtPoint3d(geometry, physicalPoint(point));
   }
@@ -138,6 +165,9 @@ export function shellMidsurfaceParameterGeometry(value) {
   const evidence = value?.geometry ? validateLafeaAnyShellMidsurfaceEvidence(value) : null;
   const geometry = evidence?.geometry ?? value;
   const kind = shellMidsurfaceKind(geometry);
+  if (kind === LAFEA_SHELL_SURFACE_KINDS.CYLINDRICAL_PERIODIC_HOLE) {
+    return periodicHoleShellParameterGeometry(geometry);
+  }
   if (kind === LAFEA_SHELL_SURFACE_KINDS.CYLINDRICAL_PERIODIC) {
     return periodicCylindricalShellParameterGeometry(geometry);
   }

@@ -27,6 +27,8 @@ on:
       - 'scripts/lafea-shell-curved-hole-check.mjs'
       - 'scripts/lafea-shell-curved-hole-ladder-check.mjs'
       - 'scripts/lafea-shell-periodic-cylinder-check.mjs'
+      - 'scripts/lafea-shell-periodic-hole-check.mjs'
+      - 'scripts/lafea-shell-periodic-hole-ladder-check.mjs'
       - 'scripts/lafea-mesh-dof-policy-check.mjs'
       - 'scripts/lafea-meshing-system-check.mjs'
       - 'scripts/lafea-p2-11-triage.mjs'
@@ -103,6 +105,12 @@ jobs:
 
       - name: Qualify full-cylinder periodic seam meshing and custody route
         run: node scripts/lafea-shell-periodic-cylinder-check.mjs
+
+      - name: Qualify full-cylinder periodic seam-hole robustness ladder
+        run: node scripts/lafea-shell-periodic-hole-ladder-check.mjs
+
+      - name: Qualify full-cylinder periodic seam-crossing hole
+        run: node scripts/lafea-shell-periodic-hole-check.mjs
 
       - name: Qualify P2-11 check classification
         run: node scripts/lafea-p2-11-triage.mjs

@@ -15,9 +15,9 @@
 export const LAFEA_MESH_PRODUCER_REGISTRY_SCHEMA = 'lafea-mesh-producer-registry/v1';
 
 export const LAFEA_MESH_PRODUCER_ENGINE_ID = 'LAFEA_CORE_MESHER';
-export const LAFEA_MESH_PRODUCER_ENGINE_REVISION = 'LAFEA.10.T6Q8.SHELL.V6';
+export const LAFEA_MESH_PRODUCER_ENGINE_REVISION = 'LAFEA.10.T6Q8.SHELL.V7';
 export const LAFEA_MESH_PRODUCER_QUALIFICATION_ID = 'LAFEA-MESH-Q1';
-export const LAFEA_MESH_PRODUCER_QUALIFICATION_REVISION = 'R7';
+export const LAFEA_MESH_PRODUCER_QUALIFICATION_REVISION = 'R8';
 export const LAFEA_MESH_PRODUCER_GOVERNANCE_REF = 'npm run check:lafea-meshing';
 export const LAFEA_MESH_PRODUCER_QUALITY_POLICY_ID = 'LAFEA_MESH_PROFILE_QUALITY_GATES_V1';
 export const LAFEA_MESH_PRODUCER_REF =
@@ -26,8 +26,9 @@ export const LAFEA_MESH_PRODUCER_REF =
 /**
  * Automatic generation plus retained-mesh refinement regeneration. Local
  * refinement remains qualified only for LAFEA.3 T3/T6 parents. Shell stages
- * have automatic planar-midsurface generation, including qualified non-nested
- * straight-segment holes, but no local refinement claim.
+ * have automatic mesh-independent midsurface generation for the qualified
+ * planar/hole and cylindrical single-patch envelopes, but no shell local
+ * refinement claim.
  */
 export const LAFEA_MESH_PRODUCER_GENERATION_MODES = Object.freeze([
   'AUTOMATIC_MESH', 'REFINEMENT_REGENERATION',

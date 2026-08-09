@@ -1,5 +1,4 @@
 # P2-8 planar shell qualification is a permanent part of this exact-head gate.
-# Exact-head rerun after governed shell-intent scope convergence.
 name: LAFEA meshing exact-head qualification
 
 on:
@@ -20,6 +19,7 @@ on:
       - 'scripts/lafea.10-*.mjs'
       - 'scripts/lafea-mesh-producer-binding-check.mjs'
       - 'scripts/lafea-retained-mesh-refinement-check.mjs'
+      - 'scripts/lafea-shell-domain-hash-probe.mjs'
       - 'scripts/lafea-shell-mesh-producer-check.mjs'
       - 'scripts/lafea-mesh-dof-policy-check.mjs'
       - 'scripts/lafea-meshing-system-check.mjs'
@@ -46,6 +46,7 @@ jobs:
         with:
           ref: ${{ github.event.pull_request.head.sha || github.sha }}
           fetch-depth: 0
+
       - name: Verify exact head
         shell: bash
         run: |
@@ -54,22 +55,33 @@ jobs:
           actual="$(git rev-parse HEAD)"
           test "$actual" = "$expected"
           echo "Candidate head: $actual" >> "$GITHUB_STEP_SUMMARY"
+
       - name: Set up Node
         uses: actions/setup-node@v4
         with:
           node-version: 20
           cache: npm
+
       - name: Install exact dependencies
         run: npm ci
+
       - name: Qualify stage-aware mesh DOF policy
         run: node scripts/lafea-mesh-dof-policy-check.mjs
+
       - name: Qualify governed canvas meshing intent
         run: node scripts/lafea-meshing-system-check.mjs
+
       - name: Qualify retained-mesh local refinement
         run: node scripts/lafea-retained-mesh-refinement-check.mjs
+
+      - name: Diagnose shell domain hash round trip
+        run: node scripts/lafea-shell-domain-hash-probe.mjs
+
       - name: Qualify planar shell mesh producer
         run: node scripts/lafea-shell-mesh-producer-check.mjs
+
       - name: Qualify P2-11 check classification
         run: node scripts/lafea-p2-11-triage.mjs
+
       - name: Run governed LAFEA meshing gate
         run: npm run check:lafea-meshing

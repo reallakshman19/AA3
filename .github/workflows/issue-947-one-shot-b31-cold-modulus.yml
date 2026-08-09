@@ -1,0 +1,45 @@
+name: Issue 947 one-shot B31.3 cold modulus authority
+
+on:
+  push:
+    branches:
+      - codex/issue-947-bm4nl-qualification
+
+permissions:
+  contents: write
+
+jobs:
+  apply:
+    if: "${{ github.event.head_commit.message == 'ci(issue947): apply B31.3 cold modulus authority' }}"
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Checkout qualification branch
+        uses: actions/checkout@v4
+        with:
+          ref: codex/issue-947-bm4nl-qualification
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Apply deterministic cold-modulus patch
+        run: node scripts/lfea-issue947-apply-b31-cold-modulus-authority.mjs
+
+      - name: Syntax-check patched benchmark solver
+        run: node --check src/core/fea-benchmarks/caesar-accdb-linear-solve.js
+
+      - name: Commit B31.3 modulus authority
+        shell: bash
+        run: |
+          set -euo pipefail
+          git add src/core/fea-benchmarks/caesar-accdb-linear-solve.js
+          if git diff --cached --quiet; then
+            echo 'Expected B31.3 cold-modulus patch produced no source diff.' >&2
+            exit 1
+          fi
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git commit -m 'fix(lfea): use B31.3 cold modulus for CAESAR flexibility'
+          git push origin HEAD:codex/issue-947-bm4nl-qualification

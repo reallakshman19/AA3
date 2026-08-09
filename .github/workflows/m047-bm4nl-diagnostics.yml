@@ -1,0 +1,165 @@
+name: m047-bm4nl-diagnostics
+
+on:
+  push:
+    branches:
+      - agent/m047-i007-diagnostics
+    paths:
+      - '.github/workflows/m047-bm4nl-diagnostics.yml'
+      - 'scripts/lfea-m047-residual-decomposition*.mjs'
+      - 'scripts/lfea-m047-provision-ace.ps1'
+      - 'scripts/lfea-caesar-accdb-export.ps1'
+      - 'benchmarks/LFEA/CAESAR_ACCDB/m047/**'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  diagnose:
+    runs-on: windows-2022
+    timeout-minutes: 45
+
+    steps:
+      - name: Checkout diagnostic tooling exact head
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.sha }}
+          fetch-depth: 0
+
+      - name: Prove exact diagnostic head and clean checkout
+        shell: pwsh
+        run: |
+          if ((git rev-parse HEAD).Trim() -ne '${{ github.sha }}') {
+            throw 'Diagnostic workflow did not checkout the triggering commit.'
+          }
+          if (git status --porcelain) {
+            throw 'Diagnostic checkout is dirty before qualification.'
+          }
+
+      - name: Use Node.js 22
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: I007 residual decomposition synthetic qualification
+        shell: pwsh
+        run: node scripts/lfea-m047-residual-decomposition-check.mjs
+
+      - name: Checkout original baseline mechanics
+        uses: actions/checkout@v4
+        with:
+          repository: reallaksh19/Advanced_Analysis
+          ref: 882d59a99c3a03847d20bec34770ba57ff479d91
+          path: baseline-source
+          fetch-depth: 1
+
+      - name: Prove baseline mechanics commit
+        shell: pwsh
+        run: |
+          Push-Location baseline-source
+          try {
+            if ((git rev-parse HEAD).Trim() -ne '882d59a99c3a03847d20bec34770ba57ff479d91') {
+              throw 'Baseline mechanics checkout drifted.'
+            }
+          }
+          finally {
+            Pop-Location
+          }
+
+      - name: Checkout pinned Common BM4 source
+        uses: actions/checkout@v4
+        with:
+          repository: reallaksh19/Common
+          ref: 1728651c94504b497aae4041578b1095fd8e292e
+          path: common-source
+          fetch-depth: 1
+
+      - name: Expand and verify locked BM4_NL ACCDB
+        id: source
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $zip = Join-Path $PWD 'common-source/LFEA/BM4/BM4_NL.zip'
+          $extractRoot = Join-Path $env:RUNNER_TEMP 'm047-bm4nl-i007'
+          if (Test-Path -LiteralPath $extractRoot) {
+            Remove-Item -LiteralPath $extractRoot -Recurse -Force
+          }
+          New-Item -ItemType Directory -Path $extractRoot | Out-Null
+          Expand-Archive -LiteralPath $zip -DestinationPath $extractRoot -Force
+          $accdb = @(Get-ChildItem -LiteralPath $extractRoot -Recurse -File -Filter '*.accdb')
+          if ($accdb.Count -ne 1) {
+            throw "Expected exactly one ACCDB; found $($accdb.Count)."
+          }
+          $locked = '85d39463296e569da811d8572e2eff680b858097f76fdf0f47d1755f0b161c21'
+          $actual = (Get-FileHash -LiteralPath $accdb[0].FullName -Algorithm SHA256).Hash.ToLowerInvariant()
+          if ($actual -ne $locked) {
+            throw "ACCDB SHA-256 $actual does not match locked M047 source $locked."
+          }
+          "BM4NL_ACCDB=$($accdb[0].FullName)" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
+
+      - name: Provision Microsoft 365 Access Runtime
+        shell: powershell
+        run: |
+          New-Item -ItemType Directory -Path 'artifacts/m047/I007' -Force | Out-Null
+          & .\scripts\lfea-m047-provision-ace.ps1 -OutputPath 'artifacts/m047/I007/ace-provisioning.json'
+
+      - name: Probe Microsoft ACE OLE DB provider
+        shell: powershell
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $connection = New-Object -ComObject ADODB.Connection
+          try {
+            $connection.Open("Provider=Microsoft.ACE.OLEDB.12.0;Data Source=$env:BM4NL_ACCDB;Mode=Read;Persist Security Info=False;")
+          }
+          finally {
+            if ($connection.State -ne 0) { $connection.Close() }
+            [void][System.Runtime.InteropServices.Marshal]::ReleaseComObject($connection)
+          }
+
+      - name: Bind baseline to portable read-only ACCDB exporter
+        shell: pwsh
+        run: |
+          Copy-Item -LiteralPath 'scripts/lfea-caesar-accdb-export.ps1' -Destination 'baseline-source/scripts/lfea-caesar-accdb-export.ps1' -Force
+
+      - name: Reproduce original baseline mechanics from locked ACCDB
+        shell: pwsh
+        run: |
+          node baseline-source/scripts/lfea-caesar-accdb-benchmark.mjs `
+            --accdb "$env:BM4NL_ACCDB" `
+            --profile baseline-source/benchmarks/LFEA/CAESAR_ACCDB/bm4nl-l19-l20-linear-solve.profile.json `
+            --solve-linear true `
+            --actual-out artifacts/m047/I007/baseline-actual.json `
+            --summary-out artifacts/m047/I007/baseline-summary.md `
+            --out artifacts/m047/I007/baseline-benchmark.json
+
+      - name: Generate I007 W+P and thermal residual decomposition
+        shell: pwsh
+        run: |
+          node scripts/lfea-m047-residual-decomposition.mjs `
+            --report artifacts/m047/I007/baseline-benchmark.json `
+            --out artifacts/m047/I007/residual-decomposition.json `
+            --summary-out artifacts/m047/I007/residual-decomposition.md
+
+      - name: Summarize I007
+        shell: pwsh
+        run: |
+          $result = Get-Content -LiteralPath 'artifacts/m047/I007/residual-decomposition.json' -Raw | ConvertFrom-Json
+          Add-Content -LiteralPath $env:GITHUB_STEP_SUMMARY -Value '# M047 I007 residual decomposition'
+          Add-Content -LiteralPath $env:GITHUB_STEP_SUMMARY -Value "- Baseline mechanics: ``882d59a99c3a03847d20bec34770ba57ff479d91``"
+          Add-Content -LiteralPath $env:GITHUB_STEP_SUMMARY -Value "- Locked ACCDB: ``$($result.sourceAccdbSha256)``"
+          Add-Content -LiteralPath $env:GITHUB_STEP_SUMMARY -Value "- Comparable physical rows: $($result.rowCount)"
+          Add-Content -LiteralPath $env:GITHUB_STEP_SUMMARY -Value "- Evidence hash: ``$($result.semanticHash)``"
+          foreach ($family in @('DISPLACEMENT_ROTATION', 'SUPPORT_REACTION', 'SOURCE_END_ACTION')) {
+            $stats = $result.summaries.families.$family
+            Add-Content -LiteralPath $env:GITHUB_STEP_SUMMARY -Value "- $family: max normalized W+P=$($stats.wp.maximumNormalized.normalizedResidual), thermal=$($stats.thermal.maximumNormalized.normalizedResidual)"
+          }
+
+      - name: Retain I007 diagnostics
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: m047-i007-${{ github.sha }}
+          path: artifacts/m047/I007/**
+          if-no-files-found: error
+          retention-days: 90

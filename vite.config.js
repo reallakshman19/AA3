@@ -3,6 +3,26 @@ import { fileURLToPath } from 'node:url';
 
 const buildTime = new Date().toISOString();
 
+const PURE_LAFEA_MESHING_WORKSPACE_MODULES = new Set([
+  '/src/workspace/lafea-analysis-mesh-evidence-v2.js',
+  '/src/workspace/lafea-domain-first-mesh-custody.js',
+  '/src/workspace/lafea-mesh-capabilities.js',
+  '/src/workspace/lafea-mesh-dof-policy.js',
+  '/src/workspace/lafea-mesh-geometry-topology-adapter.js',
+  '/src/workspace/lafea-mesh-producer-binding.js',
+  '/src/workspace/lafea-mesh-producer-engine.js',
+  '/src/workspace/lafea-mesh-producer-registry.js',
+  '/src/workspace/lafea-mesh-producer-v2-contracts.js',
+  '/src/workspace/lafea-mesh-refinement-command.js',
+  '/src/workspace/lafea-retained-mesh-refinement.js',
+  '/src/workspace/lafea-shell-curved-hole-midsurface-contract.js',
+  '/src/workspace/lafea-shell-curved-midsurface-contract.js',
+  '/src/workspace/lafea-shell-mesh-producer.js',
+  '/src/workspace/lafea-shell-midsurface-contract.js',
+  '/src/workspace/lafea-shell-midsurface-dispatch.js',
+  '/src/workspace/lafea-shell-periodic-midsurface-contract.js',
+]);
+
 /**
  * Keep manual chunking limited to dependency-oriented or calculation-core
  * domains. Workspace modules remain graph-owned because they contain stores,
@@ -47,6 +67,13 @@ export function manualChunk(id) {
   if (source.includes('/src/calc-workspace/')) return 'calculation-workspaces';
   if (source.includes('/src/vendors/')) return 'vendor-integrations';
   if (source.includes('/src/utils/') || source.includes('/src/mocks/')) return 'application-support';
+  // These exact paths are stateless LAFEA meshing contracts/producers. Keeping
+  // the exception explicit avoids pulling controllers, stores, views, or other
+  // singleton-bearing workspace modules into a forced chunk.
+  if ([...PURE_LAFEA_MESHING_WORKSPACE_MODULES]
+    .some((modulePath) => source.endsWith(modulePath))) {
+    return 'lafea-meshing-contracts';
+  }
   if (source.endsWith('/src/workspace/topology-edit/topology-edit-inline-component-replacement.js')
     || source.endsWith('/src/workspace/topology-edit/topology-edit-junction-relation-command.js')
     || source.endsWith('/src/workspace/topology-edit/topology-edit-engineering-edit-effect.js')) {

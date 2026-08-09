@@ -1,5 +1,6 @@
 import { mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { dirname, resolve } from 'node:path';
+import { fileURLToPath } from 'node:url';
 import { canonicalPrettyStringify } from '../src/core/shared-piping-model/canonical-json.js';
 import { buildCaesarAccdbIterationEvidence } from '../src/core/fea-benchmarks/caesar-accdb-iteration-evidence.js';
 
@@ -145,7 +146,7 @@ function format(value) {
   return number.toExponential(6);
 }
 
-if (process.argv[1] && resolve(process.argv[1]) === import.meta.filename) {
+if (process.argv[1] && resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {
   try {
     const input = parseArguments(process.argv.slice(2));
     const evidence = runCaesarAccdbIteration(input);

@@ -9,112 +9,114 @@ import {
 const DECLARED_MM_XML = fullInputXml({ withUnits: true });
 const NO_UNITS_XML = fullInputXml({ withUnits: false });
 
-const doc = new FakeDocument();
-const panel = doc.createElement('div');
-doc.body.append(panel);
-const controller = new LinearPipingInputXmlSourceWorkflowController(panel, doc).init();
-controller.elements.profileSelect.value = 'STRICT_INPUTXML_LINEAR_STATIC_V1';
-controller.elements.unitSelect.value = 'mm';
+function runChecks() {
+  const doc = new FakeDocument();
+  const panel = doc.createElement('div');
+  doc.body.append(panel);
+  const controller = new LinearPipingInputXmlSourceWorkflowController(panel, doc).init();
+  controller.elements.profileSelect.value = 'STRICT_INPUTXML_LINEAR_STATIC_V1';
+  controller.elements.unitSelect.value = 'mm';
 
-assert.equal(panel.children.length, 1);
-assert.equal(controller.elements.section.dataset.role, 'linear-piping-inputxml-source-workflow');
-assert.match(controller.elements.fileInput.accept, /\.xml/u);
-assert.match(controller.elements.importButton.textContent, /Import CAESAR II InputXML/u);
-assert.equal(controller.elements.section.dataset.nativeExecutionReady, 'false');
-console.log('P07-UI-01 PASS native InputXML is a first-class LFEA Source picker');
+  assert.equal(panel.children.length, 1);
+  assert.equal(controller.elements.section.dataset.role, 'linear-piping-inputxml-source-workflow');
+  assert.match(controller.elements.fileInput.accept, /\.xml/u);
+  assert.match(controller.elements.importButton.textContent, /Import CAESAR II InputXML/u);
+  assert.equal(controller.elements.section.dataset.nativeExecutionReady, 'false');
+  console.log('P07-UI-01 PASS native InputXML is a first-class LFEA Source picker');
 
-let preFlight = controller.loadSource({
-  fileName: 'P07-visible-declared-mm.xml',
-  content: DECLARED_MM_XML,
-});
-let snapshot = controller.getSnapshot();
-assert.notEqual(preFlight.status, 'BLOCK');
-assert.equal(snapshot.sourceUnit, 'mm');
-assert.equal(snapshot.unitDeclared, true);
-assert.equal(snapshot.unitAuthority, 'CAESAR_INPUTXML_DECLARED_LENGTH_UNIT');
-assert.match(snapshot.contentSha256, /^[0-9a-f]{64}$/u);
-assert.equal(snapshot.requestedCaseRole, 'W');
-assert.deepEqual(snapshot.requestedCaseIds, ['IXP-W']);
-assert.ok(snapshot.availableCaseIds.includes('IXP-W'));
-assert.equal(snapshot.nativeExecutionReady, false);
-assert.match(flattenText(controller.elements.summaryRoot), /Execution custody: NOT CONNECTED/u);
-console.log('P07-UI-02 PASS declared source unit, SHA-256 and exact physical-case custody are visible');
+  let preFlight = controller.loadSource({
+    fileName: 'P07-visible-declared-mm.xml',
+    content: DECLARED_MM_XML,
+  });
+  let snapshot = controller.getSnapshot();
+  assert.notEqual(preFlight.status, 'BLOCK');
+  assert.equal(snapshot.sourceUnit, 'mm');
+  assert.equal(snapshot.unitDeclared, true);
+  assert.equal(snapshot.unitAuthority, 'CAESAR_INPUTXML_DECLARED_LENGTH_UNIT');
+  assert.match(snapshot.contentSha256, /^[0-9a-f]{64}$/u);
+  assert.equal(snapshot.requestedCaseRole, 'W');
+  assert.deepEqual(snapshot.requestedCaseIds, ['IXP-W']);
+  assert.ok(snapshot.availableCaseIds.includes('IXP-W'));
+  assert.equal(snapshot.nativeExecutionReady, false);
+  assert.match(flattenText(controller.elements.summaryRoot), /Execution custody: NOT CONNECTED/u);
+  console.log('P07-UI-02 PASS declared source unit, SHA-256 and exact physical-case custody are visible');
 
-if (preFlight.status === 'WARN') {
-  assert.equal(snapshot.preFlightSolveAuthorized, false);
-  preFlight = controller.authorizePreFlight({
-    approverIdentity: 'P07-VISIBLE-QUALIFICATION-ENGINEER',
-    reason: 'Reviewed the complete disclosed native InputXML limitation set.',
+  if (preFlight.status === 'WARN') {
+    assert.equal(snapshot.preFlightSolveAuthorized, false);
+    preFlight = controller.authorizePreFlight({
+      approverIdentity: 'P07-VISIBLE-QUALIFICATION-ENGINEER',
+      reason: 'Reviewed the complete disclosed native InputXML limitation set.',
+    });
+    snapshot = controller.getSnapshot();
+    assert.equal(snapshot.preFlightSolveAuthorized, true);
+    assert.match(snapshot.authorizationSemanticHash, /^fnv1a64:[0-9a-f]{16}$/u);
+  }
+  assert.equal(controller.elements.section.dataset.nativeExecutionReady, 'false');
+  console.log('P07-UI-03 PASS conditional review can seal pre-FEA authority without claiming Run custody');
+
+  const priorReceiptHash = controller.getSnapshot().preFlightSemanticHash;
+  controller.elements.profileSelect.value = 'DISCLOSED_GENERIC_ANALYZER_APPROXIMATION_V1';
+  controller.reprepareForProfileChange();
+  snapshot = controller.getSnapshot();
+  assert.equal(snapshot.requestedProfileId, 'DISCLOSED_GENERIC_ANALYZER_APPROXIMATION_V1');
+  assert.notEqual(snapshot.preFlightSemanticHash, priorReceiptHash);
+  if (snapshot.preFlightStatus === 'WARN') assert.equal(snapshot.preFlightSolveAuthorized, false);
+  console.log('P07-UI-04 PASS profile change regenerates custody and invalidates prior conditional authority');
+
+  const unitRequired = controller.loadSource({
+    fileName: 'P07-visible-no-units.xml',
+    content: NO_UNITS_XML,
   });
   snapshot = controller.getSnapshot();
-  assert.equal(snapshot.preFlightSolveAuthorized, true);
-  assert.match(snapshot.authorizationSemanticHash, /^fnv1a64:[0-9a-f]{16}$/u);
+  assert.equal(unitRequired.status, 'UNIT_AUTHORITY_REQUIRED');
+  assert.equal(snapshot.sourceStatus, 'UNIT_AUTHORITY_REQUIRED');
+  assert.equal(snapshot.sourceUnit, null);
+  assert.equal(controller.elements.unitLabel.hidden, false);
+  assert.equal(controller.elements.unitButton.hidden, false);
+  assert.match(controller.message, /No geometry-magnitude, diameter, filename, or coordinate heuristic is used/u);
+  console.log('P07-UI-05 PASS missing LENGTH declaration fails closed with explicit mm/in controls');
+
+  controller.authorizeUnit('mm');
+  snapshot = controller.getSnapshot();
+  assert.equal(snapshot.sourceUnit, 'mm');
+  assert.equal(snapshot.unitDeclared, false);
+  assert.equal(snapshot.unitAuthority, 'LFEA_ENGINEER_DECLARED_FALLBACK_LENGTH_UNIT');
+  assert.equal(snapshot.nativeExecutionReady, false);
+  console.log('P07-UI-06 PASS explicit fallback unit becomes retained authority and still cannot infer execution readiness');
+
+  controller.clear();
+  snapshot = controller.getSnapshot();
+  assert.equal(snapshot.sourceStatus, 'EMPTY');
+  assert.equal(snapshot.preFlightStatus, 'NOT_PREPARED');
+  assert.equal(snapshot.preFlightSolveAuthorized, false);
+  console.log('P07-UI-07 PASS clear removes retained native source and pre-FEA authority');
+
+  const mainSource = fs.readFileSync('src/main.js', 'utf8');
+  assert.match(mainSource, /mountLinearPipingInputXmlSourceWorkflow/u);
+  assert.match(mainSource, /loadLinearPipingInputXmlSource/u);
+  assert.match(mainSource, /authorizeLinearPipingInputXmlSourceUnit/u);
+  assert.match(mainSource, /authorizeLinearPipingInputXmlPreFlight/u);
+  assert.match(mainSource, /getLinearPipingInputXmlSourceState/u);
+  const workflowSource = fs.readFileSync('src/workspace/linear-piping-inputxml-source-workflow.js', 'utf8');
+  assert.doesNotMatch(workflowSource, /runLinearPipingWorkbenchAnalysis|solveInputXmlLinearAnalysis|compileSolverExecution/u);
+  assert.doesNotMatch(workflowSource, /innerHTML|insertAdjacentHTML|outerHTML/u);
+  assert.doesNotMatch(workflowSource, /Math\.random|randomUUID|localeCompare/u);
+  assert.match(workflowSource, /nativeExecutionReady: false/u);
+  console.log('P07-UI-08 PASS source surface is mounted, safe-DOM, deterministic and has no solver authority');
+
+  controller.destroy();
+  assert.equal(panel.children.length, 0);
+
+  console.log(JSON.stringify({
+    check: 'linear-piping-inputxml-source-workflow',
+    status: 'PASS',
+    normalLfeaInputXmlPicker: true,
+    missingUnitFailsClosed: true,
+    inferredUnits: false,
+    nativeExecutionReady: false,
+    legacyRunRequestFabricated: false,
+  }));
 }
-assert.equal(controller.elements.section.dataset.nativeExecutionReady, 'false');
-console.log('P07-UI-03 PASS conditional review can seal pre-FEA authority without claiming Run custody');
-
-const priorReceiptHash = controller.getSnapshot().preFlightSemanticHash;
-controller.elements.profileSelect.value = 'DISCLOSED_GENERIC_ANALYZER_APPROXIMATION_V1';
-controller.reprepareForProfileChange();
-snapshot = controller.getSnapshot();
-assert.equal(snapshot.requestedProfileId, 'DISCLOSED_GENERIC_ANALYZER_APPROXIMATION_V1');
-assert.notEqual(snapshot.preFlightSemanticHash, priorReceiptHash);
-if (snapshot.preFlightStatus === 'WARN') assert.equal(snapshot.preFlightSolveAuthorized, false);
-console.log('P07-UI-04 PASS profile change regenerates custody and invalidates prior conditional authority');
-
-const unitRequired = controller.loadSource({
-  fileName: 'P07-visible-no-units.xml',
-  content: NO_UNITS_XML,
-});
-snapshot = controller.getSnapshot();
-assert.equal(unitRequired.status, 'UNIT_AUTHORITY_REQUIRED');
-assert.equal(snapshot.sourceStatus, 'UNIT_AUTHORITY_REQUIRED');
-assert.equal(snapshot.sourceUnit, null);
-assert.equal(controller.elements.unitLabel.hidden, false);
-assert.equal(controller.elements.unitButton.hidden, false);
-assert.match(controller.message, /No geometry-magnitude, diameter, filename, or coordinate heuristic is used/u);
-console.log('P07-UI-05 PASS missing LENGTH declaration fails closed with explicit mm/in controls');
-
-controller.authorizeUnit('mm');
-snapshot = controller.getSnapshot();
-assert.equal(snapshot.sourceUnit, 'mm');
-assert.equal(snapshot.unitDeclared, false);
-assert.equal(snapshot.unitAuthority, 'LFEA_ENGINEER_DECLARED_FALLBACK_LENGTH_UNIT');
-assert.equal(snapshot.nativeExecutionReady, false);
-console.log('P07-UI-06 PASS explicit fallback unit becomes retained authority and still cannot infer execution readiness');
-
-controller.clear();
-snapshot = controller.getSnapshot();
-assert.equal(snapshot.sourceStatus, 'EMPTY');
-assert.equal(snapshot.preFlightStatus, 'NOT_PREPARED');
-assert.equal(snapshot.preFlightSolveAuthorized, false);
-console.log('P07-UI-07 PASS clear removes retained native source and pre-FEA authority');
-
-const mainSource = fs.readFileSync('src/main.js', 'utf8');
-assert.match(mainSource, /mountLinearPipingInputXmlSourceWorkflow/u);
-assert.match(mainSource, /loadLinearPipingInputXmlSource/u);
-assert.match(mainSource, /authorizeLinearPipingInputXmlSourceUnit/u);
-assert.match(mainSource, /authorizeLinearPipingInputXmlPreFlight/u);
-assert.match(mainSource, /getLinearPipingInputXmlSourceState/u);
-const workflowSource = fs.readFileSync('src/workspace/linear-piping-inputxml-source-workflow.js', 'utf8');
-assert.doesNotMatch(workflowSource, /runLinearPipingWorkbenchAnalysis|solveInputXmlLinearAnalysis|compileSolverExecution/u);
-assert.doesNotMatch(workflowSource, /innerHTML|insertAdjacentHTML|outerHTML/u);
-assert.doesNotMatch(workflowSource, /Math\.random|randomUUID|localeCompare/u);
-assert.match(workflowSource, /nativeExecutionReady: false/u);
-console.log('P07-UI-08 PASS source surface is mounted, safe-DOM, deterministic and has no solver authority');
-
-controller.destroy();
-assert.equal(panel.children.length, 0);
-
-console.log(JSON.stringify({
-  check: 'linear-piping-inputxml-source-workflow',
-  status: 'PASS',
-  normalLfeaInputXmlPicker: true,
-  missingUnitFailsClosed: true,
-  inferredUnits: false,
-  nativeExecutionReady: false,
-  legacyRunRequestFabricated: false,
-}));
 
 function flattenText(node) {
   return [node.textContent, ...node.children.map(flattenText)].join(' ');
@@ -210,3 +212,5 @@ class FakeElement {
     this.parentNode = null;
   }
 }
+
+runChecks();

@@ -1,0 +1,76 @@
+name: Issue 947 E48 straight-to-arc interface audit
+
+on:
+  push:
+    branches:
+      - codex/issue-947-bm4nl-qualification
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  actions: read
+
+jobs:
+  audit:
+    if: "${{ github.event_name == 'workflow_dispatch' || github.event.head_commit.message == 'ci(issue947): run E48 straight-to-arc interface audit' }}"
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Download authoritative Version-14 BM4_NL replay
+        uses: actions/download-artifact@v4
+        with:
+          name: issue-947-bm4nl-qualification
+          path: .work/package
+          github-token: ${{ github.token }}
+          repository: reallaksh19/Advanced_Analysis
+          run-id: 31324887225
+
+      - name: Download preserved raw ACCDB output custody
+        uses: actions/download-artifact@v4
+        with:
+          name: issue-947-node22130-reference-custody
+          path: .work/raw
+          github-token: ${{ github.token }}
+          repository: reallaksh19/Advanced_Analysis
+          run-id: 31311427176
+
+      - name: Refine bend chord representation without changing mechanics
+        shell: bash
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          p = Path('src/core/fea-benchmarks/caesar-accdb-linear-solve.js')
+          text = p.read_text()
+          old = "bendMaxAngleDegrees: { value: 5, source: PROFILE_SOURCE },"
+          new = "bendMaxAngleDegrees: { value: 0.625, source: PROFILE_SOURCE },"
+          if text.count(old) != 1:
+              raise SystemExit(f'Expected one bend subdivision anchor, found {text.count(old)}')
+          p.write_text(text.replace(old, new))
+          PY
+
+      - name: Transfer raw source state through accepted straight stub and test refined arc
+        run: |
+          mkdir -p .work/out
+          node scripts/lfea-issue947-e48-straight-to-arc-interface-audit.mjs \
+            --package .work/package/bm4nl-canonical-package.json \
+            --raw .work/raw/node22130-raw-export.json \
+            --out .work/out/e48-straight-to-arc-interface.json
+
+      - name: Restore and verify production source
+        shell: bash
+        run: |
+          git checkout -- src/core/fea-benchmarks/caesar-accdb-linear-solve.js
+          git diff --exit-code -- src/core/fea-benchmarks/caesar-accdb-linear-solve.js
+
+      - name: Upload interface evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: issue-947-e48-straight-to-arc-interface-audit
+          if-no-files-found: error
+          path: .work/out/*.json

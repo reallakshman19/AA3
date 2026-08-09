@@ -62,12 +62,13 @@ export function buildLafeaMeshTopology(geometryValue) {
 }
 
 /**
- * The core constrained-Delaunay pass triangulates a simple polygon boundary
- * and rejects a region with holes (`HOLES_NOT_YET_SUPPORTED`). Callers use
- * this to report that limitation up front instead of failing mid-generation.
+ * The retained analysis-geometry contract has already rejected disconnected,
+ * intersecting, outside or nested hole loops before this adapter is called.
+ * The V3 constrained-region producer accepts both hole-free and holed LAFEA.3
+ * topology, so no additional shape-based denial is introduced here.
  */
 export function lafeaMeshTopologySupported(adapter) {
-  return adapter.holeLoopIds.length === 0;
+  return Boolean(adapter?.topology?.regions?.length === 1);
 }
 
 function toCurve(segment) {

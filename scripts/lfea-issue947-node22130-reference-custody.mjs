@@ -5,9 +5,9 @@ import { readFileSync, writeFileSync } from 'node:fs';
 const EXPECTED_SOURCE_SHA256 = '85d39463296e569da811d8572e2eff680b858097f76fdf0f47d1755f0b161c21';
 const TARGET_NODES = Object.freeze(['22125', '22130', '22140']);
 const TARGET_ELEMENTS = Object.freeze([
-  Object.freeze({ elementId: '79', fromNode: '21990', toNode: '22130' }),
+  Object.freeze({ elementId: '79', fromNode: '22125', toNode: '22130' }),
   Object.freeze({ elementId: '80', fromNode: '22130', toNode: '22140' }),
-  Object.freeze({ elementId: '81', fromNode: '22140', toNode: '22150' }),
+  Object.freeze({ elementId: '81', fromNode: '22140', toNode: '22190' }),
 ]);
 const CASES = Object.freeze([
   Object.freeze({ caseId: 'L19', lcaseNumber: 19 }),

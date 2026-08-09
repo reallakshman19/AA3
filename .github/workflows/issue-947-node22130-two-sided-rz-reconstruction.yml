@@ -1,5 +1,5 @@
 name: Issue 947 node 22130 two-sided RZ reconstruction
-# Diagnostic revision: exact E79 adjacency and production Timoshenko rigid-frame profile.
+# Diagnostic revision: exact E79 adjacency plus production Timoshenko rigid-frame profile and rigid Bourdon pressure free state.
 
 on:
   push:
@@ -34,7 +34,7 @@ jobs:
           repository: reallaksh19/Advanced_Analysis
           run-id: 31302834835
 
-      - name: Align standalone E79 evaluator with current production frame profile
+      - name: Align standalone E79 evaluator with current production rigid mechanics
         shell: bash
         run: |
           python - <<'PY'
@@ -42,24 +42,32 @@ jobs:
           import hashlib, json
           path = Path('scripts/lfea-issue947-node22130-two-sided-rz-reconstruction.mjs')
           text = path.read_text()
-          old = """    length,\n    shearDeformation: false,\n  }).matrix;"""
-          new = """    length,\n    shearDeformation: true,\n    shearCorrectionFactorY: 0.5,\n    shearCorrectionFactorZ: 0.5,\n  }).matrix;"""
-          count = text.count(old)
-          if count != 1:
-              raise SystemExit(f'Expected exactly one E79 rigid evaluator patch site, found {count}.')
           before = hashlib.sha256(text.encode()).hexdigest()
-          patched = text.replace(old, new)
-          path.write_text(patched)
-          after = hashlib.sha256(patched.encode()).hexdigest()
+          stiffness_old = """    length,\n    shearDeformation: false,\n  }).matrix;"""
+          stiffness_new = """    length,\n    shearDeformation: true,\n    shearCorrectionFactorY: 0.5,\n    shearCorrectionFactorZ: 0.5,\n  }).matrix;"""
+          stiffness_count = text.count(stiffness_old)
+          if stiffness_count != 1:
+              raise SystemExit(f'Expected exactly one E79 rigid stiffness patch site, found {stiffness_count}.')
+          text = text.replace(stiffness_old, stiffness_new)
+          pressure_old = """  const initialLocal = new Array(12).fill(0);\n  return (globalDof) => recover(stiffness, transformation, globalDof, equivalentLocal, initialLocal);"""
+          pressure_new = """  const bourdonAxialForce = (1 - 2 * Number(row.POISSONS))\n    * Number(row.PRESSURE1) * KPA_TO_PA\n    * Math.PI * physical.innerDiameter ** 2 / 4;\n  const rigidPressureStrain = bourdonAxialForce / (material.elasticModulus * stiffnessSection.area);\n  const initialLocal = thermalInitialStrainVector({\n    elasticModulus: material.elasticModulus,\n    area: stiffnessSection.area,\n    axialStrain: rigidPressureStrain,\n  });\n  return (globalDof) => recover(stiffness, transformation, globalDof, equivalentLocal, initialLocal);"""
+          pressure_count = text.count(pressure_old)
+          if pressure_count != 1:
+              raise SystemExit(f'Expected exactly one E79 rigid pressure patch site, found {pressure_count}.')
+          text = text.replace(pressure_old, pressure_new)
+          path.write_text(text)
+          after = hashlib.sha256(text.encode()).hexdigest()
           Path('.work').mkdir(exist_ok=True)
           Path('.work/issue947-node22130-rigid-evaluator-production-parity-patch.json').write_text(json.dumps({
-              'schema': 'lfea-issue947-diagnostic-patch/v1',
+              'schema': 'lfea-issue947-diagnostic-patch/v2',
               'scope': 'DIAGNOSTIC_ONLY_E79_STANDALONE_EVALUATOR',
-              'reason': 'Current ACCDB production buildRigidElement resolves the 10x-wall rigid section and compiles it through frameProfile(), which is PIPE_FRAME3D_TIMOSHENKO_V1 with kappaY=kappaZ=0.5.',
+              'reason': 'Current ACCDB production compiles the 10x-wall rigid section through PIPE_FRAME3D_TIMOSHENKO_V1 with kappaY=kappaZ=0.5 and applies rigid Bourdon pressure force as equivalent free strain on the rigid stiffness section.',
               'productionSourceChanged': False,
+              'productionMechanicsCommit': '95a80585e92a0a0a057e8f60d10f713c6d7d2638',
               'beforeSha256': before,
               'afterSha256': after,
-              'replacementCount': count,
+              'stiffnessReplacementCount': stiffness_count,
+              'pressureReplacementCount': pressure_count,
           }, indent=2) + '\n')
           PY
 

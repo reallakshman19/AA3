@@ -29,7 +29,10 @@ for (const symbol of TOPOLOGY_EDIT_ICON_SYMBOLS) {
 
 const spriteMarkup = topologyEditIconSpriteMarkup();
 for (const symbolId of requiredSymbolIds) {
-  assert.match(spriteMarkup, new RegExp(`<symbol id="${symbolId}"\\b`));
+  assert.ok(
+    spriteMarkup.includes(`<symbol id="${symbolId}" `),
+    `Production sprite markup must contain exactly declared symbol ${symbolId}.`,
+  );
 }
 
 console.log(`topology-edit-icon-sprite: ${spriteSymbolIds.length}/41 deterministic production symbols.`);

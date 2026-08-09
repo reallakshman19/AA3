@@ -45,7 +45,7 @@ export const LAFEA_MESH_ENGINE_STRATEGIES = Object.freeze([
 /**
  * @param {Readonly<object>} adapter Output of `buildLafeaMeshTopology`.
  * @param {{targetElementLength:number, curvatureToleranceDegrees:number,
- *   elementFamily:string, minimumTriangleScaledJacobian?:number}} configuration
+ *   elementFamily:string}} configuration
  */
 export function generateLafeaAnalysisMesh(adapter, configuration) {
   const family = requireFamily(configuration.elementFamily);
@@ -56,10 +56,6 @@ export function generateLafeaAnalysisMesh(adapter, configuration) {
   );
   if (curvatureDegrees > 180) fail('LAFEA_MESH_ENGINE_CURVATURE_TOLERANCE_DEGREES_INVALID');
   const curvatureRadians = degreesToRadians(curvatureDegrees);
-  const minimumTriangleScaledJacobian = optionalUnitInterval(
-    configuration.minimumTriangleScaledJacobian,
-    'MINIMUM_TRIANGLE_SCALED_JACOBIAN',
-  );
 
   const { topology } = adapter;
   const region = topology.regions.find((row) => row.regionId === LAFEA_MESH_TOPOLOGY_REGION_ID);
@@ -72,7 +68,6 @@ export function generateLafeaAnalysisMesh(adapter, configuration) {
     targetSize,
     chordErrorLimit: chordErrorLimitForRegion(region, topology, curveById, targetSize),
     curvatureRadians,
-    minimumTriangleScaledJacobian,
   };
 
   const mapped = family === 'Q8' && region.holeLoopIds.length === 0
@@ -107,7 +102,6 @@ function unstructuredMesh(topology, region, outerLoop, curveById, vertexById, si
   const refined = triangulateRefinedRegionAsIndexTriples(topology, region.regionId, {
     targetSize: sizing.targetSize,
     chordErrorLimit: sizing.chordErrorLimit,
-    minimumTriangleScaledJacobian: sizing.minimumTriangleScaledJacobian,
     minimumSegmentsByCurveId: minimumSegmentsByRegion(
       region, topology, curveById, vertexById, sizing.curvatureRadians,
     ),
@@ -313,13 +307,6 @@ function requireFamily(value) {
 }
 function requirePositive(value, field) {
   if (typeof value !== 'number' || !Number.isFinite(value) || value <= 0) fail(`LAFEA_MESH_ENGINE_${field}_INVALID`);
-  return value;
-}
-function optionalUnitInterval(value, field) {
-  if (value === undefined || value === null) return null;
-  if (typeof value !== 'number' || !Number.isFinite(value) || !(value > 0) || !(value < 1)) {
-    fail(`LAFEA_MESH_ENGINE_${field}_INVALID`);
-  }
   return value;
 }
 function degreesToRadians(value) { return (value * Math.PI) / 180; }

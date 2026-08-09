@@ -68,7 +68,9 @@ jobs:
           node --check e2e/helpers/topology-edit-icon-qualification.js
           node --check e2e/topology-edit-tool-audit.spec.js
           node --check e2e/topology-edit-tool-icon-manifest.spec.js
+          node --check e2e/topology-edit-tool-icon-custody.spec.js
           node --check e2e/topology-edit-tool-icon-mutation.spec.js
+          node --check e2e/topology-edit-tool-icon-clipping.spec.js
           node --check e2e/topology-edit-tool-icon-reference.spec.js
           node --check e2e/topology-edit-ray-scan.spec.js
           git diff --check
@@ -85,14 +87,84 @@ jobs:
       - name: Execute production icon manifest qualification
         run: |
           set -euo pipefail
+          evidence_dir='reports/qualification/playwright-traces/manifest'
+          rm -rf "$evidence_dir"
+          mkdir -p "$evidence_dir"
+          set +e
           npx playwright test e2e/topology-edit-tool-icon-manifest.spec.js \
-            --project=chromium --workers=1 --retries=0 --reporter=line
+            --project=chromium --workers=1 --retries=0 --reporter=line --trace=on
+          status=$?
+          set -e
+          if [ -d test-results ]; then cp -R test-results/. "$evidence_dir/"; fi
+          if [ "$status" -eq 0 ] && ! find "$evidence_dir" -type f -name 'trace.zip' -print -quit | grep -q .; then
+            echo '::error::Manifest qualification succeeded without a retained Playwright trace.'
+            exit 1
+          fi
+          exit "$status"
+
+      - name: Execute production icon visual custody qualification
+        run: |
+          set -euo pipefail
+          evidence_dir='reports/qualification/playwright-traces/custody'
+          rm -rf "$evidence_dir"
+          mkdir -p "$evidence_dir"
+          set +e
+          npx playwright test e2e/topology-edit-tool-icon-custody.spec.js \
+            --project=chromium --workers=1 --retries=0 --reporter=line --trace=on
+          status=$?
+          set -e
+          if [ -d test-results ]; then cp -R test-results/. "$evidence_dir/"; fi
+          if [ "$status" -eq 0 ] && ! find "$evidence_dir" -type f -name 'trace.zip' -print -quit | grep -q .; then
+            echo '::error::Visual custody qualification succeeded without a retained Playwright trace.'
+            exit 1
+          fi
+          exit "$status"
 
       - name: Execute production icon mutation sanity
         run: |
           set -euo pipefail
+          evidence_dir='reports/qualification/playwright-traces/mutation'
+          rm -rf "$evidence_dir"
+          mkdir -p "$evidence_dir"
+          set +e
           npx playwright test e2e/topology-edit-tool-icon-mutation.spec.js \
-            --project=chromium --workers=1 --retries=0 --reporter=line
+            --project=chromium --workers=1 --retries=0 --reporter=line --trace=on
+          status=$?
+          set -e
+          if [ -d test-results ]; then cp -R test-results/. "$evidence_dir/"; fi
+          if [ "$status" -eq 0 ] && ! find "$evidence_dir" -type f -name 'trace.zip' -print -quit | grep -q .; then
+            echo '::error::Mutation sanity succeeded without a retained Playwright trace.'
+            exit 1
+          fi
+          exit "$status"
+
+      - name: Execute production icon clipping sanity
+        run: |
+          set -euo pipefail
+          evidence_dir='reports/qualification/playwright-traces/presentation-custody'
+          rm -rf "$evidence_dir"
+          mkdir -p "$evidence_dir"
+          set +e
+          npx playwright test e2e/topology-edit-tool-icon-clipping.spec.js \
+            --project=chromium --workers=1 --retries=0 --reporter=line --trace=on
+          status=$?
+          set -e
+          if [ -d test-results ]; then cp -R test-results/. "$evidence_dir/"; fi
+          if [ "$status" -eq 0 ] && ! find "$evidence_dir" -type f -name 'trace.zip' -print -quit | grep -q .; then
+            echo '::error::Presentation/custody sanity succeeded without a retained Playwright trace.'
+            exit 1
+          fi
+          exit "$status"
+
+      - name: Verify retained exact-head Playwright traces
+        run: |
+          set -euo pipefail
+          for suite in manifest custody mutation presentation-custody; do
+            trace_dir="reports/qualification/playwright-traces/$suite"
+            trace_count="$(find "$trace_dir" -type f -name 'trace.zip' | wc -l)"
+            test "$trace_count" -ge 1
+            echo "$suite trace count: $trace_count"
+          done
 
       - name: Execute SVG icon reference defense regression
         run: |
@@ -121,7 +193,13 @@ jobs:
             reports/qualification/topology-edit-tool-audit.json
             reports/qualification/topology-edit-icon-manifest.json
             reports/qualification/topology-edit-icon-manifest.png
+            reports/qualification/topology-edit-icon-custody.json
+            reports/qualification/topology-edit-icon-remount-custody.json
+            reports/qualification/topology-edit-icon-stale-import-custody.json
+            reports/qualification/topology-edit-icon-state-custody.png
             reports/qualification/topology-edit-icon-mutation-sanity.json
+            reports/qualification/topology-edit-icon-clipping-sanity.json
+            reports/qualification/playwright-traces
             playwright-report
             test-results
           if-no-files-found: warn

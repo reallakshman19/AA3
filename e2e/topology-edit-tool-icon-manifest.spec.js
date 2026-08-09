@@ -8,6 +8,7 @@ import {
   expectVisibleIcon,
   identityFromSelector,
   inspectControl,
+  inspectFixedControlCustody,
   installBrokenProbe,
   openApplicableSurface,
   openPanel,
@@ -18,6 +19,8 @@ import {
 const REPORT_DIR = resolve('reports/qualification');
 const REPORT_PATH = resolve(REPORT_DIR, 'topology-edit-icon-manifest.json');
 const SCREENSHOT_PATH = resolve(REPORT_DIR, 'topology-edit-icon-manifest.png');
+const SCREENSHOT_REF = 'reports/qualification/topology-edit-icon-manifest.png';
+const TRACE_REF = 'Playwright trace attachment for topology-edit-tool-icon-manifest.spec.js';
 const HISTORICAL_EXPECTED = Object.freeze({
   'navigation.orbit': 'icon-orbit',
   'navigation.pan': 'icon-pan',
@@ -46,6 +49,17 @@ test('42-control production manifest resolves to visibly rendered SVG icons', as
   await expect(page.locator('svg[data-role="topology-edit-icon-sprite"]')).toHaveCount(1);
   await expect(host.locator('button > svg.topology-edit-control-icon')).toHaveCount(42);
 
+  const custody = await inspectFixedControlCustody(host, TOPOLOGY_EDIT_ICON_MANIFEST);
+  expect(custody.manifestCount).toBe(42);
+  expect(custody.iconBearingControlCount).toBe(42);
+  expect(custody.missingControlCount).toBe(0);
+  expect(custody.duplicateControlCount).toBe(0);
+  expect(custody.duplicateIconChildCount).toBe(0);
+  expect(custody.duplicateBindingKeyCount).toBe(0);
+  expect(custody.missingBindingKeyCount).toBe(0);
+  expect(custody.extraIconBearingControlCount).toBe(0);
+  expect(custody.unmanifestedControls).toEqual([]);
+
   const rows = [];
   for (const entry of TOPOLOGY_EDIT_ICON_MANIFEST) {
     await openApplicableSurface(host, entry);
@@ -59,11 +73,14 @@ test('42-control production manifest resolves to visibly rendered SVG icons', as
     expect(evidence.bindingSymbol, entry.key).toBe(entry.symbolId);
     expect(evidence.actualReference, entry.key).toBe(`#${entry.symbolId}`);
     expect(evidence.targetCount, entry.key).toBe(1);
+    expect(evidence.rawGeometryCount, entry.key).toBeGreaterThan(0);
     expect(evidence.drawableGeometryCount, entry.key).toBeGreaterThan(0);
     expect(evidence.renderedBounds.width, entry.key).toBeGreaterThan(0);
     expect(evidence.renderedBounds.height, entry.key).toBeGreaterThan(0);
-    expect(evidence.useBounds.width, entry.key).toBeGreaterThan(0);
-    expect(evidence.useBounds.height, entry.key).toBeGreaterThan(0);
+    expect(evidence.paintBounds.width, entry.key).toBeGreaterThan(0);
+    expect(evidence.paintBounds.height, entry.key).toBeGreaterThan(0);
+    expect(evidence.computedVisibility.inViewport, entry.key).toBe(true);
+    expect(evidence.computedVisibility.intersectsViewBox, entry.key).toBe(true);
     expect(evidence.computedVisibility.visible, entry.key).toBe(true);
     expect(evidence.referenceStatus, entry.key).toBe('VISUALLY_RENDERED');
     expect(evidence.bindingIdentity, entry.key).toEqual(identityFromSelector(entry.selector));
@@ -77,6 +94,10 @@ test('42-control production manifest resolves to visibly rendered SVG icons', as
       historicalFragmentId: entry.historicalFragmentId,
       ...evidence,
       remountCycle: 0,
+      evidenceRefs: {
+        screenshot: SCREENSHOT_REF,
+        trace: TRACE_REF,
+      },
     });
   }
 
@@ -99,12 +120,24 @@ test('42-control production manifest resolves to visibly rendered SVG icons', as
     VISUALLY_RENDERED: 42,
   });
 
+  const spriteCount = await page.locator('svg[data-role="topology-edit-icon-sprite"]').count();
   await page.screenshot({ path: SCREENSHOT_PATH, fullPage: true });
   writeFileSync(REPORT_PATH, `${JSON.stringify({
+    schema: 'TopologyEditIconManifestQualification.v2',
     candidateSha: candidateSha(testInfo),
+    workflowRunAttempt: process.env.GITHUB_RUN_ATTEMPT ?? null,
     manifestCount: TOPOLOGY_EDIT_ICON_MANIFEST.length,
     aggregate,
-    duplicateSpriteCount: 0,
+    spriteCount,
+    duplicateSpriteCount: Math.max(0, spriteCount - 1),
+    duplicateControlCount: custody.duplicateControlCount,
+    duplicateIconCount: custody.duplicateIconChildCount,
+    extraIconBearingControlCount: custody.extraIconBearingControlCount,
+    custody,
+    evidenceRefs: {
+      screenshot: SCREENSHOT_REF,
+      trace: TRACE_REF,
+    },
     rows,
   }, null, 2)}\n`);
   await testInfo.attach('production-icon-manifest', {
@@ -122,6 +155,7 @@ test('production icon identity survives real UI states and deactivate/reactivate
   const orbit = host.locator('[data-navigation-mode="orbit"]');
   const pan = host.locator('[data-navigation-mode="pan"]');
   const select = host.locator('[data-navigation-mode="select"]');
+  const fit = host.locator('[data-navigation-action="fit"]');
   await orbit.click();
   await expect(orbit).toHaveAttribute('aria-pressed', 'true');
   await expectVisibleIcon(orbit, 'icon-orbit');
@@ -130,6 +164,9 @@ test('production icon identity survives real UI states and deactivate/reactivate
   await expectVisibleIcon(pan, 'icon-pan');
   await select.click();
   await expect(select).toHaveAttribute('aria-pressed', 'true');
+  await expectVisibleIcon(fit, 'icon-fit');
+  await fit.click();
+  await expect(fit).toHaveAttribute('data-navigation-action', 'fit');
 
   const shortcuts = host.locator(
     '.topology-edit-clean-shell__utilities [data-action="toggle-shortcuts"]',

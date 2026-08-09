@@ -17,6 +17,16 @@ import {
   validateLafeaCurvedShellMidsurfaceGeometry,
 } from './lafea-shell-curved-midsurface-contract.js';
 import {
+  LAFEA_SHELL_CURVED_HOLE_MIDSURFACE_EVIDENCE_SCHEMA,
+  LAFEA_SHELL_CURVED_HOLE_MIDSURFACE_GEOMETRY_SCHEMA,
+  curvedHoleShellFrameAtPoint3d,
+  curvedHoleShellFrameAtUv,
+  curvedHoleShellParameterGeometry,
+  curvedHoleShellPoint3d,
+  validateLafeaCurvedHoleShellMidsurfaceEvidence,
+  validateLafeaCurvedHoleShellMidsurfaceGeometry,
+} from './lafea-shell-curved-hole-midsurface-contract.js';
+import {
   LAFEA_SHELL_PERIODIC_MIDSURFACE_EVIDENCE_SCHEMA,
   LAFEA_SHELL_PERIODIC_MIDSURFACE_GEOMETRY_SCHEMA,
   periodicCylindricalShellFrameAtPoint3d,
@@ -30,12 +40,16 @@ import {
 export const LAFEA_SHELL_SURFACE_KINDS = Object.freeze({
   PLANAR: 'PLANAR',
   CYLINDRICAL: 'CYLINDRICAL',
+  CYLINDRICAL_HOLES: 'CYLINDRICAL_HOLES',
   CYLINDRICAL_PERIODIC: 'CYLINDRICAL_PERIODIC',
 });
 
 export function validateLafeaAnyShellMidsurfaceEvidence(value) {
   if (value?.schema === LAFEA_SHELL_PERIODIC_MIDSURFACE_EVIDENCE_SCHEMA) {
     return validateLafeaPeriodicShellMidsurfaceEvidence(value);
+  }
+  if (value?.schema === LAFEA_SHELL_CURVED_HOLE_MIDSURFACE_EVIDENCE_SCHEMA) {
+    return validateLafeaCurvedHoleShellMidsurfaceEvidence(value);
   }
   if (value?.schema === LAFEA_SHELL_CURVED_MIDSURFACE_EVIDENCE_SCHEMA) {
     return validateLafeaCurvedShellMidsurfaceEvidence(value);
@@ -51,6 +65,10 @@ export function shellMidsurfaceKind(value) {
   if (geometry?.schema === LAFEA_SHELL_PERIODIC_MIDSURFACE_GEOMETRY_SCHEMA) {
     validateLafeaPeriodicShellMidsurfaceGeometry(geometry);
     return LAFEA_SHELL_SURFACE_KINDS.CYLINDRICAL_PERIODIC;
+  }
+  if (geometry?.schema === LAFEA_SHELL_CURVED_HOLE_MIDSURFACE_GEOMETRY_SCHEMA) {
+    validateLafeaCurvedHoleShellMidsurfaceGeometry(geometry);
+    return LAFEA_SHELL_SURFACE_KINDS.CYLINDRICAL_HOLES;
   }
   if (geometry?.schema === LAFEA_SHELL_CURVED_MIDSURFACE_GEOMETRY_SCHEMA) {
     validateLafeaCurvedShellMidsurfaceGeometry(geometry);
@@ -68,6 +86,9 @@ export function shellMidsurfacePoint3dAny(geometry, u, v) {
   if (kind === LAFEA_SHELL_SURFACE_KINDS.CYLINDRICAL_PERIODIC) {
     return periodicCylindricalShellPoint3d(geometry, u, v);
   }
+  if (kind === LAFEA_SHELL_SURFACE_KINDS.CYLINDRICAL_HOLES) {
+    return curvedHoleShellPoint3d(geometry, u, v);
+  }
   if (kind === LAFEA_SHELL_SURFACE_KINDS.CYLINDRICAL) {
     return cylindricalShellPoint3d(geometry, u, v);
   }
@@ -78,6 +99,9 @@ export function shellMidsurfaceFrameAtUvAny(geometry, u, v) {
   const kind = shellMidsurfaceKind(geometry);
   if (kind === LAFEA_SHELL_SURFACE_KINDS.CYLINDRICAL_PERIODIC) {
     return periodicCylindricalShellFrameAtUv(geometry, u, v);
+  }
+  if (kind === LAFEA_SHELL_SURFACE_KINDS.CYLINDRICAL_HOLES) {
+    return curvedHoleShellFrameAtUv(geometry, u, v);
   }
   if (kind === LAFEA_SHELL_SURFACE_KINDS.CYLINDRICAL) {
     return cylindricalShellFrameAtUv(geometry, u, v);
@@ -96,6 +120,9 @@ export function shellMidsurfaceFrameAtPoint3dAny(geometry, point) {
   if (kind === LAFEA_SHELL_SURFACE_KINDS.CYLINDRICAL_PERIODIC) {
     return periodicCylindricalShellFrameAtPoint3d(geometry, physicalPoint(point));
   }
+  if (kind === LAFEA_SHELL_SURFACE_KINDS.CYLINDRICAL_HOLES) {
+    return curvedHoleShellFrameAtPoint3d(geometry, physicalPoint(point));
+  }
   if (kind === LAFEA_SHELL_SURFACE_KINDS.CYLINDRICAL) {
     return cylindricalShellFrameAtPoint3d(geometry, physicalPoint(point));
   }
@@ -113,6 +140,9 @@ export function shellMidsurfaceParameterGeometry(value) {
   const kind = shellMidsurfaceKind(geometry);
   if (kind === LAFEA_SHELL_SURFACE_KINDS.CYLINDRICAL_PERIODIC) {
     return periodicCylindricalShellParameterGeometry(geometry);
+  }
+  if (kind === LAFEA_SHELL_SURFACE_KINDS.CYLINDRICAL_HOLES) {
+    return curvedHoleShellParameterGeometry(geometry);
   }
   if (kind === LAFEA_SHELL_SURFACE_KINDS.CYLINDRICAL) {
     return curvedShellParameterGeometry(geometry);

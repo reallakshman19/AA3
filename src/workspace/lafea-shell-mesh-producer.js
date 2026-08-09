@@ -30,6 +30,7 @@ import {
   validateLafeaAnyShellMidsurfaceEvidence,
 } from './lafea-shell-midsurface-dispatch.js';
 import { curvedShellGeometryBounds } from './lafea-shell-curved-midsurface-contract.js';
+import { curvedHoleShellGeometryBounds } from './lafea-shell-curved-hole-midsurface-contract.js';
 import { periodicCylindricalShellGeometryBounds } from './lafea-shell-periodic-midsurface-contract.js';
 
 export const LAFEA_SHELL_MESH_PLAN_SCHEMA = 'lafea-shell-mesh-plan/v1';
@@ -41,6 +42,11 @@ export const LAFEA_SHELL_CURVED_MESH_OUTPUT_SCHEMA = 'lafea-shell-curved-mesh-ou
 export const LAFEA_SHELL_CURVED_MESH_PRODUCER_SCOPE =
   'CYLINDRICAL_SINGLE_RECTANGULAR_PATCH_CST_DKT_TRI3_V1';
 export const LAFEA_SHELL_CURVED_MESH_STRATEGY = 'CYLINDRICAL_SHELL_MIDSURFACE_TRIANGULATION';
+export const LAFEA_SHELL_CURVED_HOLE_MESH_PLAN_SCHEMA = 'lafea-shell-curved-hole-mesh-plan/v1';
+export const LAFEA_SHELL_CURVED_HOLE_MESH_OUTPUT_SCHEMA = 'lafea-shell-curved-hole-mesh-output/v1';
+export const LAFEA_SHELL_CURVED_HOLE_MESH_PRODUCER_SCOPE =
+  'CYLINDRICAL_SINGLE_RECTANGULAR_PATCH_WITH_NON_NESTED_HOLES_CST_DKT_TRI3_V1';
+export const LAFEA_SHELL_CURVED_HOLE_MESH_STRATEGY = 'CYLINDRICAL_SHELL_HOLE_MIDSURFACE_TRIANGULATION';
 export const LAFEA_SHELL_PERIODIC_MESH_PLAN_SCHEMA = 'lafea-shell-periodic-mesh-plan/v1';
 export const LAFEA_SHELL_PERIODIC_MESH_OUTPUT_SCHEMA = 'lafea-shell-periodic-mesh-output/v1';
 export const LAFEA_SHELL_PERIODIC_MESH_PRODUCER_SCOPE =
@@ -57,12 +63,10 @@ export const LAFEA_SHELL_HOLE_MINIMUM_ELEMENTS_ACROSS_LIGAMENT = 2;
  * solver and continues to declare NO_AUTOMATIC_OR_ADAPTIVE_MESHING; this
  * producer executes before canonical shell-model assembly.
  *
- * Planar and non-wrapping cylindrical parents retain their established plan
- * schemas. A full-cylinder periodic parent is meshed in a canonical UV chart,
- * then its u-min/u-max node chains are identified deterministically before the
- * shell mesh enters v2 evidence. The identified seam is therefore an interior
- * topological edge chain, never a duplicate physical boundary or duplicate DOF
- * chain.
+ * Planar, cylindrical-hole-free, cylindrical-hole-bearing and full-cylinder
+ * periodic parents retain separate plan schemas. That avoids changing the
+ * semantic bytes of already-qualified parent/plan contracts when a new scope
+ * is added.
  */
 export function planLafeaShellAnalysisMesh({ midsurfaceEvidence: evidenceValue, meshProfile: profileValue }) {
   const midsurfaceEvidence = validateLafeaAnyShellMidsurfaceEvidence(evidenceValue);
@@ -70,6 +74,9 @@ export function planLafeaShellAnalysisMesh({ midsurfaceEvidence: evidenceValue, 
   const kind = shellMidsurfaceKind(midsurfaceEvidence);
   if (kind === LAFEA_SHELL_SURFACE_KINDS.CYLINDRICAL_PERIODIC) {
     return planPeriodicShellAnalysisMesh(midsurfaceEvidence, meshProfile);
+  }
+  if (kind === LAFEA_SHELL_SURFACE_KINDS.CYLINDRICAL_HOLES) {
+    return planCurvedHoleShellAnalysisMesh(midsurfaceEvidence, meshProfile);
   }
   if (kind === LAFEA_SHELL_SURFACE_KINDS.CYLINDRICAL) {
     return planCurvedShellAnalysisMesh(midsurfaceEvidence, meshProfile);
@@ -83,6 +90,9 @@ export function produceLafeaShellAnalysisMesh(input) {
   const plan = input.plan ?? planLafeaShellAnalysisMesh({ midsurfaceEvidence, meshProfile });
   if (plan.schema === LAFEA_SHELL_PERIODIC_MESH_PLAN_SCHEMA) {
     return producePeriodicShellAnalysisMesh(plan, midsurfaceEvidence, meshProfile);
+  }
+  if (plan.schema === LAFEA_SHELL_CURVED_HOLE_MESH_PLAN_SCHEMA) {
+    return produceCurvedHoleShellAnalysisMesh(plan, midsurfaceEvidence, meshProfile);
   }
   if (plan.schema === LAFEA_SHELL_CURVED_MESH_PLAN_SCHEMA) {
     return produceCurvedShellAnalysisMesh(plan, midsurfaceEvidence, meshProfile);
@@ -231,6 +241,93 @@ function planCurvedShellAnalysisMesh(midsurfaceEvidence, meshProfile) {
   });
 }
 
+function planCurvedHoleShellAnalysisMesh(midsurfaceEvidence, meshProfile) {
+  const stageId = shellStage(midsurfaceEvidence.stageId);
+  requireShellProfile(meshProfile);
+  requireProducerBinding(stageId);
+  const capability = lafeaCoreMeshProducerCapability();
+  const qualification = lafeaCoreMeshProducerQualification();
+  const geometry = midsurfaceEvidence.geometry;
+  const bounds = curvedHoleShellGeometryBounds(geometry);
+  const curvatureTargetElementLength = geometry.surface.radius
+    * (LAFEA_SHELL_CURVED_TARGET_ANGLE_DEGREES * Math.PI / 180);
+  const effectiveTargetElementLength = Math.min(
+    meshProfile.fields.globalTargetSize,
+    curvatureTargetElementLength,
+  );
+  const ligament = shellHoleLigamentQualification(geometry);
+  if (!ligament) fail('LAFEA_SHELL_CURVED_HOLE_LIGAMENT_REQUIRED');
+  if (effectiveTargetElementLength > ligament.maximumQualifiedTargetElementLength + 1e-12) {
+    fail('LAFEA_SHELL_CURVED_HOLE_TARGET_TOO_COARSE_FOR_LIGAMENT');
+  }
+
+  const generated2d = generateLafeaAnalysisMesh(
+    buildLafeaMeshTopology(shellMidsurfaceParameterGeometry(midsurfaceEvidence)),
+    {
+      targetElementLength: effectiveTargetElementLength,
+      curvatureToleranceDegrees: LAFEA_SHELL_CURVED_TARGET_ANGLE_DEGREES,
+      elementFamily: 'T3',
+    },
+  );
+  const mesh = mapParameterMeshToShell(generated2d.mesh, geometry, stageId);
+  const curvedGeometry = curvedFacetQualification(generated2d.mesh, mesh, geometry);
+  if (curvedGeometry.minimumFacetDirectorAlignment
+      < LAFEA_SHELL_CURVED_MINIMUM_FACET_DIRECTOR_ALIGNMENT - 1e-12) {
+    fail('LAFEA_SHELL_CURVED_HOLE_FACET_DIRECTOR_ALIGNMENT_BLOCKED');
+  }
+  const estimatedDofs = estimateLafeaMeshDofs(stageId, mesh.nodes.length);
+  const resourceDisposition = resourceDispositionFor(mesh, estimatedDofs);
+
+  const core = {
+    schema: LAFEA_SHELL_CURVED_HOLE_MESH_PLAN_SCHEMA,
+    stageId,
+    generationMode: 'AUTOMATIC_MESH',
+    strategy: LAFEA_SHELL_CURVED_HOLE_MESH_STRATEGY,
+    scope: LAFEA_SHELL_CURVED_HOLE_MESH_PRODUCER_SCOPE,
+    sourceHash: midsurfaceEvidence.sourceHash,
+    analysisDomainHash: midsurfaceEvidence.analysisDomainHash,
+    analysisGeometryHash: midsurfaceEvidence.analysisGeometryHash,
+    meshProfileHash: meshProfile.semanticHash,
+    elementFamily: LAFEA_SHELL_ELEMENT,
+    requestedTargetElementLength: meshProfile.fields.globalTargetSize,
+    effectiveTargetElementLength,
+    curvatureTargetElementLength,
+    curvatureTargetAngleDegrees: LAFEA_SHELL_CURVED_TARGET_ANGLE_DEGREES,
+    minimumMaterialLigament: ligament.minimumMaterialLigament,
+    maximumQualifiedTargetElementLength: ligament.maximumQualifiedTargetElementLength,
+    minimumElementsAcrossLigament: LAFEA_SHELL_HOLE_MINIMUM_ELEMENTS_ACROSS_LIGAMENT,
+    radius: geometry.surface.radius,
+    angularSpanDegrees: bounds.angularSpanDegrees,
+    axialSpan: bounds.axialSpan,
+    holeCount: geometry.loops.filter((row) => row.role === 'HOLE').length,
+    minimumFacetDirectorAlignment: curvedGeometry.minimumFacetDirectorAlignment,
+    maximumFacetNormalDeviationDegrees: curvedGeometry.maximumFacetNormalDeviationDegrees,
+    requiredMinimumFacetDirectorAlignment: LAFEA_SHELL_CURVED_MINIMUM_FACET_DIRECTOR_ALIGNMENT,
+    lengthUnit: geometry.lengthUnit,
+    nodeCount: mesh.nodes.length,
+    elementCount: mesh.elements.length,
+    estimatedDofs,
+    characteristicLengthMin: generated2d.characteristicLengthMin,
+    characteristicLengthMedian: generated2d.characteristicLengthMedian,
+    characteristicLengthMax: generated2d.characteristicLengthMax,
+    resourceDisposition,
+    capabilityHash: capability.capabilityHash,
+    qualificationHash: qualification.qualificationHash,
+    producerRef: LAFEA_MESH_PRODUCER_REF,
+    producerId: capability.producerId,
+    producerRevision: capability.producerRevision,
+    repeatabilityPolicy: capability.repeatabilityPolicy,
+    midsurfaceEvidenceHash: midsurfaceEvidence.semanticHash,
+  };
+  return freeze({
+    ...core,
+    mesh,
+    planHash: canonicalLafeaSha256({
+      schema: 'lafea-shell-curved-hole-mesh-plan-hash-input/v1', plan: core,
+    }),
+  });
+}
+
 function planPeriodicShellAnalysisMesh(midsurfaceEvidence, meshProfile) {
   const stageId = shellStage(midsurfaceEvidence.stageId);
   requireShellProfile(meshProfile);
@@ -329,6 +426,12 @@ function produceCurvedShellAnalysisMesh(plan, midsurfaceEvidence, meshProfile) {
   requireCurvedPlan(plan, midsurfaceEvidence, meshProfile);
   return produceEvidenceFromPlan(plan, meshProfile, LAFEA_SHELL_CURVED_MESH_OUTPUT_SCHEMA,
     'lafea-shell-curved-mesh-output-hash-input/v1');
+}
+
+function produceCurvedHoleShellAnalysisMesh(plan, midsurfaceEvidence, meshProfile) {
+  requireCurvedHolePlan(plan, midsurfaceEvidence, meshProfile);
+  return produceEvidenceFromPlan(plan, meshProfile, LAFEA_SHELL_CURVED_HOLE_MESH_OUTPUT_SCHEMA,
+    'lafea-shell-curved-hole-mesh-output-hash-input/v1');
 }
 
 function producePeriodicShellAnalysisMesh(plan, midsurfaceEvidence, meshProfile) {
@@ -684,6 +787,24 @@ function requireCurvedPlan(plan, evidence, profile) {
     fail('LAFEA_SHELL_CURVED_MESH_PLAN_PARENT_OR_GEOMETRY_MISMATCH');
   }
   requirePlanHashAndMesh(plan, 'lafea-shell-curved-mesh-plan-hash-input/v1');
+}
+function requireCurvedHolePlan(plan, evidence, profile) {
+  if (!plan || plan.schema !== LAFEA_SHELL_CURVED_HOLE_MESH_PLAN_SCHEMA
+    || plan.stageId !== evidence.stageId
+    || plan.sourceHash !== evidence.sourceHash
+    || plan.analysisDomainHash !== evidence.analysisDomainHash
+    || plan.analysisGeometryHash !== evidence.analysisGeometryHash
+    || plan.meshProfileHash !== profile.semanticHash
+    || plan.elementFamily !== LAFEA_SHELL_ELEMENT
+    || plan.midsurfaceEvidenceHash !== evidence.semanticHash
+    || plan.strategy !== LAFEA_SHELL_CURVED_HOLE_MESH_STRATEGY
+    || !(plan.holeCount > 0)
+    || plan.effectiveTargetElementLength > plan.maximumQualifiedTargetElementLength + 1e-12
+    || plan.minimumElementsAcrossLigament !== LAFEA_SHELL_HOLE_MINIMUM_ELEMENTS_ACROSS_LIGAMENT
+    || plan.minimumFacetDirectorAlignment < plan.requiredMinimumFacetDirectorAlignment - 1e-12) {
+    fail('LAFEA_SHELL_CURVED_HOLE_MESH_PLAN_PARENT_OR_GEOMETRY_MISMATCH');
+  }
+  requirePlanHashAndMesh(plan, 'lafea-shell-curved-hole-mesh-plan-hash-input/v1');
 }
 function requirePeriodicPlan(plan, evidence, profile) {
   if (!plan || plan.schema !== LAFEA_SHELL_PERIODIC_MESH_PLAN_SCHEMA

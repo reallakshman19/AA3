@@ -24,6 +24,7 @@ on:
       - 'scripts/lafea-shell-hole-mesh-check.mjs'
       - 'scripts/lafea-shell-hole-ladder-check.mjs'
       - 'scripts/lafea-shell-curved-cylinder-check.mjs'
+      - 'scripts/lafea-shell-curved-hole-check.mjs'
       - 'scripts/lafea-shell-periodic-cylinder-check.mjs'
       - 'scripts/lafea-mesh-dof-policy-check.mjs'
       - 'scripts/lafea-meshing-system-check.mjs'
@@ -92,6 +93,9 @@ jobs:
 
       - name: Qualify cylindrical curved shell meshing and custody route
         run: node scripts/lafea-shell-curved-cylinder-check.mjs
+
+      - name: Qualify non-wrapping cylindrical curved holes
+        run: node scripts/lafea-shell-curved-hole-check.mjs
 
       - name: Qualify full-cylinder periodic seam meshing and custody route
         run: node scripts/lafea-shell-periodic-cylinder-check.mjs

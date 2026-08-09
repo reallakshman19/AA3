@@ -1,0 +1,333 @@
+PR STATUS — #977
+M047: qualify BM4_NL L19/L20 <10% restraint + displacement closure
+Repository: reallaksh19/Advanced_Analysis
+PR: https://github.com/reallaksh19/Advanced_Analysis/pull/977
+Issue: #947
+Status: DRAFT / NOT READY TO MERGE
+
+======================================================================
+1. PURPOSE OF THIS DRAFT PR
+======================================================================
+
+This PR preserves the M047 qualification work completed so far for the locked
+BM4_NL CAESAR benchmark. It contains the evidence harness, locked-data CI,
+prescribed-DOF/source-action diagnostics, rejected/accepted iteration history,
+and the accepted I015 controlled system A/B that identifies missing transverse
+shear flexibility in ordinary flexible-pipe frame response.
+
+This PR is intentionally a qualification stepping stone. It does NOT claim that
+all L19/L20 mechanics are closed, and it does NOT establish the current
+plain-FRAME selection boundary as the final production architecture.
+
+Locked benchmark identity used by the qualification work:
+- ACCDB: D:\Code3\LFEA\BM4\BM4_NL\BM4_NL.ACCDB
+- ACCDB SHA-256:
+  85d39463296e569da811d8572e2eff680b858097f76fdf0f47d1755f0b161c21
+- Common source commit:
+  1728651c94504b497aae4041578b1095fd8e292e
+- Frozen original benchmark baseline commit:
+  882d59a99c3a03847d20bec34770ba57ff479d91
+- Accepted I015 evidence head before this status commit:
+  eea2fea43756a4c01cfac4767291e0770ca1372c
+
+======================================================================
+2. QUALIFIED / ACCEPTED FINDINGS SO FAR
+======================================================================
+
+A. Diagnostic method
+
+The strongest diagnostic is prescribed-DOF element/source replay:
+
+    q = K d_CAESAR - f_equiv - f_initial
+
+For source elements/substructures, CAESAR endpoint displacement/rotation is
+prescribed and LFEA end actions are recovered using the same source-action
+coordinate/sign conventions as the benchmark. For subdivided components,
+internal artificial DOFs are solved/condensed while the physical source
+endpoints remain prescribed.
+
+This removes the global displacement solution from the causal question and
+asks directly whether the local constitutive/load model maps CAESAR motion to
+CAESAR end action.
+
+B. Source-4 decomposition
+
+For L19 source 4 near node 20090:
+- axial replay is essentially correct (about 0.009 N residual),
+- transverse FY/MZ replay remains materially wrong under Euler-Bernoulli,
+- transverse pressure/initial-strain contribution is zero,
+- therefore the dominant source-4 transverse defect resides in the stiffness
+  response rather than Bourdon or pressure-axial initial strain.
+
+C. Missing transverse shear mechanism
+
+The existing frame kernel already contains a governed Timoshenko formulation.
+Replaying source 4 with transverse shear deformation strongly improves FY/MZ
+while leaving axial/torsional mechanics invariant.
+
+The strongest population evidence is the I014 plain-FRAME replay:
+- 50 ordinary plain FRAME sources,
+- 400/400 L19 local transverse end-action components improve,
+- zero transverse regressions,
+- zero local axial/torsion drift,
+- L19 transverse RMS residual approximately 1080.342 -> 21.787,
+- L20 transverse RMS residual approximately 4824.048 -> 66.350.
+
+This qualifies the MECHANISM conclusion:
+
+    Missing transverse shear deformation in ordinary flexible-pipe response
+    is strongly supported.
+
+D. I015 controlled system A/B
+
+I015 applies the governed Timoshenko pipe-frame formulation only to the
+controlled plain-FRAME/no-tee population so the system experiment changes one
+mechanics family at a time.
+
+L19 result on locked BM4_NL:
+- restraint failures: 1 -> 0,
+- node 20090 FY: approx -1932.836 N -> -1801.623 N,
+- CAESAR node 20090 FY: -1659.837 N,
+- node 20090 relative error: approx 16.45% -> 8.54%,
+- displacement/rotation failures: 74 -> 66,
+- displacement/rotation failing nodes: 52 -> 45,
+- displacement/rotation normalized RMS: approx 0.4111 -> 0.3464,
+- source-action normalized RMS: approx 0.05405 -> 0.05304,
+- 12/12 bend coverage preserved,
+- node 20090 incident-action/reaction closure remains at numerical roundoff.
+
+The L19 restraint gate is therefore closed by this controlled A/B.
+
+E. Evidence discipline retained
+
+- Locked ACCDB hash and Common source commit are verified before real-data runs.
+- Baseline and candidate use identical reference rows.
+- Failure identities are retained, not just aggregate percentages.
+- Reaction recovery and incident source-action closure are checked.
+- Rejected iterations remain preserved and are not rewritten as accepted.
+- No CAESAR target value is hard-coded into production mechanics.
+- One mechanics hypothesis is changed per qualification iteration.
+
+======================================================================
+3. IMPORTANT LIMITATIONS / NOT YET QUALIFIED
+======================================================================
+
+A. The I015 selection boundary is NOT the final architecture
+
+Current controlled experiment boundary:
+
+    plain FRAME && no tee modifier -> Timoshenko
+
+This was useful experimental containment, but transverse shear flexibility is a
+property of flexible pipe mechanics, not the semantic label "plain FRAME".
+
+Long-term target architecture should be:
+
+    governed pipe section/material
+        -> governed base beam law
+        -> component-owned mechanics
+        -> rigid offsets/transforms
+        -> assembly
+        -> Schur condensation where required
+
+Branches/tees, bends, reducer internal cylinders, and other flexible pipe
+subcomponents should consume the common governed beam law unless their theory
+explicitly requires a different base beam. They should add only the component
+physics they own.
+
+No double ownership is allowed. Example: if B31J junction flexibility is owned
+by an explicit rotational spring/compliance mechanism, the same flexibility
+must not also be embedded through another branch multiplier.
+
+B. Exact CAESAR shear-factor authority remains a separate gate
+
+The I013/I014/I015 chain is very strong evidence for NONZERO transverse shear.
+Mechanism identification must remain separate from exact parameter authority.
+
+Later CAESAR-specific authority indicating a commercial pipe shear coefficient
+of 2 (mapping naturally to As=A/2, kappa=0.5 in the kGA convention) must be
+reconciled with the current controlled I015 candidate/evidence before any
+production-wide shear profile is finalized.
+
+Do not inverse-fit kappa against individual CAESAR output rows. Different rows
+requiring inconsistent inverse kappa values is evidence of other custody or
+component-mechanics issues, not a license to tune one global scalar.
+
+C. L19 source-action residual cluster remains
+
+I015 improves aggregate source-action RMS but threshold failures move 20 -> 23.
+A carried cluster appears around sources 9-11 MZ at roughly 11.5-12.7% while
+three previous failures resolve.
+
+This cluster is explicitly pending. It does not invalidate the qualified
+ordinary-pipe shear mechanism, but L19 source-action closure is not complete.
+
+D. L20 is NOT qualified
+
+I015 L20 restraint result:
+- baseline failures: 5,
+- I015 failures: 6.
+
+Key I015 L20 failing restraint components include:
+- 20350 FY: about 23.29%,
+- 20390 FZ: about 11.54%,
+- 20550 FZ: about 23.63%,
+- 22140 FX: about 13.20%,
+- 22310 FZ: about 10.65% (new threshold crossing),
+- 22490 FX: about 10.75%.
+
+The structural shear correction does not solve the thermal case. L20 must be
+investigated through the L20-L19 thermal increment rather than by retuning the
+qualified L19 transverse mechanics.
+
+======================================================================
+4. REJECTED / HELD HYPOTHESES THAT MUST NOT BE REINTRODUCED CASUALLY
+======================================================================
+
+- I004 cumulative Bourdon compatible-field candidate: REJECTED on locked ACCDB.
+  It caused major restraint/displacement/source-action regressions despite some
+  local/equilibrium improvements.
+
+- I006 final-axis Bourdon interpretation: useful geometric diagnostic but not
+  accepted as the next production correction; later A/B did not improve the
+  governing node-20090 result.
+
+- Do not tune Bourdon to repair the now-identified source-4 transverse stiffness
+  mismatch.
+
+- Do not tune a global shear coefficient to force every CAESAR row to agree.
+
+- Do not promote reducer Timoshenko propagation merely from local improvement;
+  previous whole-model reducer propagation worsened L19 and created a new
+  restraint failure. That means the complete reducer stiffness/load ownership
+  model is not yet qualified, not that reducers are inherently Euler beams.
+
+======================================================================
+5. ROADMAP TO READY-FOR-REVIEW
+======================================================================
+
+P0 — PR hygiene / branch custody
+
+1. Rebase or otherwise reconcile this draft branch with current main.
+   The M047 work was rooted at the frozen benchmark baseline while main has
+   advanced independently. Resolve conflicts without altering retained evidence.
+
+2. Review the final PR diff after reconciliation and ensure only M047-related
+   qualification/evidence/mechanics changes remain.
+
+3. Preserve rejected iteration history and exact hashes during any cleanup or
+   split. Do not squash away evidence that is needed to explain ACCEPT/REJECT.
+
+P1 — L20 thermal authority (next active engineering task)
+
+4. Freeze accepted L19 I015 mechanics byte-for-byte while investigating thermal
+   behavior.
+
+5. Build I016 diagnostic thermal replay using CAESAR L20 endpoint DOFs/actions.
+   For each suitable straight source infer the required thermal free strain from:
+
+       q_CAESAR = K_hot d_CAESAR - f_gravity - f_pressure - f_thermal
+
+   and derive the element-wise effective thermal strain / mean expansion.
+
+6. Compare L20-L19 increments, not only absolute L20 outputs, so W+P mechanics
+   are separated from thermal mechanics.
+
+7. Determine which authority is wrong before a production change:
+   - mean/total thermal expansion coefficient,
+   - temperature-dependent expansion law,
+   - hot modulus / HOT_MOD1 usage,
+   - bend arc thermal length,
+   - rigid thermal growth,
+   - reducer thermal growth,
+   - tee/offset thermal growth.
+
+8. Accept a thermal change only if it is supported across the element
+   population and L19 remains numerically invariant.
+
+9. Re-run locked BM4_NL and require L20 restraint + displacement closure without
+   weakening equilibrium or source-action custody.
+
+P2 — Complete L19 component propagation after thermal mechanism is isolated
+
+10. Bend incoming straight:
+    replay/qualify the same governed pipe shear law on BEND_INCOMING_STRAIGHT,
+    especially the source-5 substructure adjacent to node 20090. Do not alter
+    BEND_ARC in the same iteration.
+
+11. Bend arc:
+    qualify a Timoshenko base frame inside the bend formulation separately.
+    Prove it does not double-count bend flexibility/pressure stiffening.
+
+12. Tee/branch:
+    compose common pipe shear mechanics with B31J directional junction
+    flexibility using explicit ownership and coordinate transforms. Do not
+    suppress pipe shear merely because a tee modifier exists.
+
+13. Reducers:
+    qualify each internal flexible cylinder with the governed pipe law, pressure
+    mechanics, offsets, and equivalent load vectors BEFORE Schur condensation.
+    Verify both condensed stiffness and condensed load/initial-strain vectors:
+
+       Kc = Kbb - Kbi Kii^-1 Kib
+       fc = fb  - Kbi Kii^-1 fi
+
+    Condensation is mathematically neutral and will preserve wrong internal
+    physics if wrong internal physics is assembled.
+
+14. Re-run system-level A/B after each component family independently. One
+    hypothesis per iteration; no multi-family cutover.
+
+P3 — Remaining output-custody investigations
+
+15. Investigate the carried L19 sources 9-11 MZ cluster spatially and by
+    prescribed-DOF replay. Identify the first physical component where source
+    action diverges.
+
+16. Preserve/revisit commercial-output displacement/action custody anomalies
+    where standalone production-faithful evaluators cannot be reconciled by a
+    single physically valid kappa.
+
+P4 — Final qualification / PR readiness
+
+17. Freeze the final governed formulation/profile identities and source
+    provenance.
+
+18. Run the locked Windows real-data workflow from the exact PR head.
+
+19. Require, at minimum:
+    - all target L19/L20 restraint components <10%,
+    - required displacement/rotation closure per issue #947,
+    - source end-action acceptance/no unexplained regressions,
+    - equilibrium no worse than accepted baseline and target-node action sums
+      closing at numerical tolerance,
+    - 12/12 bend coverage,
+    - no CAESAR target hard-coding,
+    - clean source/ACCDB custody hashes.
+
+20. Update this status file with final metrics and remaining known limitations.
+
+21. Only then mark PR #977 ready for review.
+
+======================================================================
+6. CURRENT DECISION
+======================================================================
+
+PR #977 remains DRAFT.
+
+Qualified conclusion:
+
+    Missing transverse shear deformation in ordinary flexible-pipe response is
+    established strongly enough to retain as accepted mechanics evidence.
+
+Not yet qualified:
+
+    - final production-wide Timoshenko propagation boundary,
+    - exact CAESAR-specific kappa/profile promotion,
+    - bend/tee/reducer propagation,
+    - carried L19 sources 9-11 MZ residuals,
+    - L20 thermal free-strain/material authority,
+    - final issue #947 L19+L20 closure.
+
+Do not merge until the roadmap gates above are closed or consciously split into
+separate reviewed PRs with preserved evidence custody.

@@ -1,0 +1,66 @@
+{
+  "schema": "lfea-caesar-accdb-iteration-request/v1",
+  "issueId": "M047",
+  "iterationId": "M047-I031",
+  "classification": "REDUCER_TEN_CYLINDER_BOURDON_PRESSURE_ELONGATION_AB",
+  "expectedSourceAccdbSha256": "85d39463296e569da811d8572e2eff680b858097f76fdf0f47d1755f0b161c21",
+  "expectedBendPointerCount": 12,
+  "baseCommitSha": "882d59a99c3a03847d20bec34770ba57ff479d91",
+  "acceptedMechanicsParent": "M047-I029 smooth-90 only",
+  "supportingDiagnostic": "M047-I030 corrected prescribed-DOF replay",
+  "hypothesis": "The current reducer path is a local pressure-expansion omission. CAESAR represents a reducer as ten successively changing pipe cylinders, and the saved BM4_NL job has Bourdon translational+rotational pressure effects enabled. The current LFEA ten-cylinder reducer condenser owns gravity and thermal strain but the ACCDB solver sets reducer pressureAxialStrain=0. Apply the same qualified closed-end pressure axial-strain law used by ordinary straight pipe to each of the ten reducer cylinders, sum their free axial extensions, and convert that total free extension through the already-condensed reducer stiffness. No coefficient is fitted.",
+  "authoritySources": [
+    {
+      "publisher": "Hexagon",
+      "document": "CAESAR II Reducer documentation",
+      "authorityStatement": "CAESAR models a concentric reducer as ten successively changing pipe cylinders over the reducer length."
+    },
+    {
+      "publisher": "Hexagon",
+      "document": "CAESAR II Bourdon Pressure Effects / pressure extension documentation",
+      "authorityStatement": "Bourdon pressure effects include axial elongation of straight pipe; the closed-end axial pressure strain is governed by the same material/diameter/wall/pressure/Poisson inputs used by the qualified straight-pipe implementation."
+    }
+  ],
+  "candidateBoundary": {
+    "componentFamily": "REDUCER",
+    "segmentCount": 10,
+    "sectionSampling": "existing REDUCER_SAMPLING_RULE; unchanged",
+    "perSegmentPressureStrain": "epsilon_p=(1-2*nu)*P*Di^2/(E*(Do^2-Di^2))",
+    "totalFreeElongation": "sum(epsilon_p_i * L_i) over the existing ten reducer cylinders",
+    "condensedInitialLoad": "f0_pressure = K_reducer_condensed * d_free, where only reducer J-end local UX equals totalFreeElongation",
+    "activation": "case contains pressure and saved Bourdon mode is not DISABLED",
+    "fittedParameter": false
+  },
+  "heldMechanics": [
+    "B31J smooth-90 1.3/h correction from I029",
+    "Euler-Bernoulli base frame; no shear candidate",
+    "B31J tee factors/topology",
+    "bend pressure stiffening and Bourdon bend rotation",
+    "straight-pipe closed-end pressure strain",
+    "reducer ten-cylinder stiffness/section interpolation/Schur condensation",
+    "reducer gravity and thermal vectors",
+    "rigids",
+    "EC material stiffness authority",
+    "L19/L20 friction=0",
+    "thermal coefficient/profile",
+    "restraints, tolerances and CAESAR reference rows"
+  ],
+  "predictedSignature": [
+    "All reducer ledger entries change from pressureAxialStrain=0 to a source-derived nonzero average strain when P1 is active; no non-reducer pressure strain formula changes.",
+    "The L19 sources13-17 axial FX chain should move coherently because source16 is the reducer between straight sources15 and17.",
+    "If reducer pressure ownership is the missing local mechanic, source16 and adjacent chain action errors should reduce without requiring a new beam law.",
+    "L19 node20090 FY and bend-adjacent source4/37/38/44 are not expected to be directly solved by this reducer-only change; any movement is reported as network coupling, not a target.",
+    "All six-component equilibrium and 12/12 bend custody must remain exact."
+  ],
+  "acceptanceInterpretation": [
+    "Promote the reducer pressure mechanism only if the real-data A/B improves the reducer/adjacent source-action field without breaking global equilibrium or materially degrading accepted smooth-90 fields.",
+    "Do not reject the local mechanism solely because unrelated node20090 remains above 10%; classify component correctness separately from final system completion.",
+    "Reject if the candidate relies on CAESAR target values, fitted pressure strain, changed reducer stiffness sampling, changed thermal strain or weakened tolerances."
+  ],
+  "beforeMetricsSmoothOnly": {
+    "L19": {"restraintFailures": 2, "displacementRotationFailures": 67, "sourceEndActionFailures": 16},
+    "L20": {"restraintFailures": 1, "displacementRotationFailures": 43, "sourceEndActionFailures": 31}
+  },
+  "verdict": "PENDING",
+  "decisionReason": "Await exact-head real-ACCDB smooth90 parent versus smooth90+reducer-pressure A/B."
+}

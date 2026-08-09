@@ -77,7 +77,7 @@ export const TOPOLOGY_EDIT_ICON_MANIFEST = Object.freeze([
   icon('workspace.clear-selection', '[data-action="clear-selection"]', 'Clear', S.SELECTION_WORKSPACE, 'icon-clear-selection', ['DISABLED', 'ENABLED']),
   icon('workspace.engineering-table', '[data-action="open-engineering-table"]', 'Engineering table', S.SELECTION_WORKSPACE, 'icon-table', ['COLLAPSED', 'EXPANDED']),
   icon('workspace.inspector', '[data-action="toggle-inspector"]', 'Inspector', S.SELECTION_WORKSPACE, 'icon-inspector', ['PRESSED', 'UNPRESSED']),
-  icon('workspace.shortcuts', '[data-action="toggle-shortcuts"]', 'Shortcuts', S.SELECTION_WORKSPACE, 'icon-shortcuts', ['COLLAPSED', 'EXPANDED']),
+  icon('workspace.shortcuts', '.topology-edit-clean-shell__utilities [data-action="toggle-shortcuts"]', 'Shortcuts', S.SELECTION_WORKSPACE, 'icon-shortcuts', ['COLLAPSED', 'EXPANDED']),
   icon('workspace.exit', '[data-action="exit-topology-edit"]', 'Exit 3D Edit', S.SELECTION_WORKSPACE, 'icon-exit'),
 
   icon('command.move-positive-z', '[data-command-action="move-positive-z"]', 'Move +Z 100 mm', S.ENGINEERING_COMMAND, 'icon-move', ['DISABLED', 'ENABLED']),

@@ -143,6 +143,7 @@ function solveCase(benchmarkPackage, caseRecord, solveProfile) {
   const sourcePositions = buildSourcePositions(modelInput.tables.INPUT_NODAL_COORDINATES.rows);
   const bendDefinitions = buildBendDefinitions({
     benchmarkPackage,
+    solveProfile,
     sourceRows,
     sourcePositions,
     sourceSections,

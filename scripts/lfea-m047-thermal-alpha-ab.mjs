@@ -51,10 +51,12 @@ export function compareThermalAlphaAb(baseline, diagnostic, manifest) {
     const before = requireQualificationCase(baseline, caseId);
     const after = requireQualificationCase(diagnostic, caseId);
     const rowDelta = compareRows(before.comparison.rows, after.comparison.rows);
+    const beforeMetrics = failureMetrics(before);
+    const afterMetrics = failureMetrics(after);
     cases[caseId] = Object.freeze({
-      before: failureMetrics(before),
-      after: failureMetrics(after),
-      delta: failureDelta(failureMetrics(before), failureMetrics(after)),
+      before: beforeMetrics,
+      after: afterMetrics,
+      delta: failureDelta(beforeMetrics, afterMetrics),
       actualRowChange: rowDelta,
     });
   }
@@ -112,11 +114,14 @@ function failureMetrics(caseRecord) {
     displacementRotation: rows.filter((row) => row.entityKind === 'NODE' && ['DISPLACEMENT', 'ROTATION'].includes(row.quantity)),
     sourceEndAction: rows.filter((row) => row.entityKind === 'ELEMENT' && row.quantity.startsWith('GLOBAL_END_')),
   };
-  return Object.freeze(Object.fromEntries(Object.entries(families).map(([name, entries]) => [name, Object.freeze({
-    failingComponentCount: entries.filter((row) => row.pass === false).length,
-    failingEntityCount: new Set(entries.filter((row) => row.pass === false).map((row) => `${row.entityKind}:${row.entityId}`)).size,
-    maximumRelativeError: entries.reduce((maximum, row) => Math.max(maximum, Number(row.relativeError ?? 0)), 0),
-  })])));
+  return Object.freeze(Object.fromEntries(Object.entries(families).map(([name, entries]) => {
+    const failures = entries.filter((row) => row.status === 'FAIL');
+    return [name, Object.freeze({
+      failingComponentCount: failures.length,
+      failingEntityCount: new Set(failures.map((row) => `${row.entityKind}:${row.entityId}`)).size,
+      maximumRelativeError: entries.reduce((maximum, row) => Math.max(maximum, Number(row.relativeError ?? 0)), 0),
+    })];
+  })));
 }
 
 function failureDelta(before, after) {

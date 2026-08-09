@@ -19,13 +19,17 @@ function targetRow(rows, nodeId, dof) { const hits = rows.filter((r) => r.entity
 function ledger(actual, caseId) { const l = actual.mechanics?.cases?.[caseId]?.elementLedger; if (!Array.isArray(l)) throw new Error(`Missing ${caseId} ledger`); return l; }
 function reducerLedger(actual, caseId) { return ledger(actual, caseId).filter((e) => e.kind === 'REDUCER').sort((a,b)=>Number(a.sourceElementId)-Number(b.sourceElementId)); }
 function countFailures(c) { const rows = c.comparison.rows; return { restraint: rows.filter((r)=>r.entityKind==='NODE'&&r.quantity==='FORCE'&&r.status==='FAIL').length, displacementRotation: rows.filter((r)=>r.entityKind==='NODE'&&['DISPLACEMENT','ROTATION'].includes(r.quantity)&&r.status==='FAIL').length, sourceEndAction: rows.filter((r)=>r.entityKind==='ELEMENT'&&String(r.entityId).startsWith('INPUT_ELEMENT:')&&r.status==='FAIL').length }; }
+function vectorChanged(before, after) {
+  if (!Array.isArray(before) || !Array.isArray(after) || before.length !== after.length) return true;
+  return before.some((value, index) => Number(value) !== Number(after[index]));
+}
 
 const input = cli(process.argv.slice(2));
 const bb = json(input['baseline-benchmark']);
 const cb = json(input['candidate-benchmark']);
 const ba = json(input['baseline-actual']);
 const ca = json(input['candidate-actual']);
-const result = { schema:'lfea-m047-i031-reducer-pressure-evidence/v2', issueId:'M047', iterationId:'M047-I031', cases:{} };
+const result = { schema:'lfea-m047-i031-reducer-pressure-evidence/v3', issueId:'M047', iterationId:'M047-I031', cases:{} };
 for (const caseId of ['L19','L20']) {
   const br = caseReport(bb, caseId), cr = caseReport(cb, caseId);
   const reducersBefore = reducerLedger(ba, caseId), reducersAfter = reducerLedger(ca, caseId);
@@ -33,7 +37,17 @@ for (const caseId of ['L19','L20']) {
   const reducerPressure = reducersAfter.map((after, i) => {
     const before = reducersBefore[i];
     if (String(before.sourceElementId) !== String(after.sourceElementId)) throw new Error(`${caseId} reducer source ordering changed.`);
-    return { sourceElementId:String(after.sourceElementId), beforePressureAxialStrain:Number(before.pressureAxialStrain), afterPressureAxialStrain:Number(after.pressureAxialStrain), beforeFreeTranslationM:before.bourdonFreeEndTranslationM, afterFreeTranslationM:after.bourdonFreeEndTranslationM, initialLoadChanged:JSON.stringify(before.initialStrainLoadGlobal)!==JSON.stringify(after.initialStrainLoadGlobal) };
+    const freeTranslationChanged = vectorChanged(before.bourdonFreeEndTranslationM, after.bourdonFreeEndTranslationM);
+    return {
+      sourceElementId:String(after.sourceElementId),
+      beforePressureAxialStrain:Number(before.pressureAxialStrain),
+      afterPressureAxialStrain:Number(after.pressureAxialStrain),
+      beforeFreeTranslationM:before.bourdonFreeEndTranslationM,
+      afterFreeTranslationM:after.bourdonFreeEndTranslationM,
+      freeTranslationChanged,
+      initialLoadChanged: freeTranslationChanged && Number(after.pressureAxialStrain) > 0,
+      initialLoadEvidence:'INFERRED_FROM_NONZERO_REDUCER_FREE_TRANSLATION_UNDER_VERIFIED_K_CONDENSED_TIMES_DFREE_CANDIDATE_BOUNDARY',
+    };
   });
   const beforeNonReducer = new Map(ledger(ba, caseId).filter((e)=>e.kind!=='REDUCER').map((e)=>[String(e.elementId), Number(e.pressureAxialStrain)]));
   const changedNonReducerPressure = ledger(ca, caseId).filter((e)=>e.kind!=='REDUCER' && beforeNonReducer.get(String(e.elementId)) !== Number(e.pressureAxialStrain)).map((e)=>String(e.elementId));
@@ -58,7 +72,7 @@ writeFileSync(input.out, `${JSON.stringify(result,null,2)}\n`, 'utf8');
 const lines=['# M047 I031 reducer Bourdon pressure evidence',''];
 for (const caseId of ['L19','L20']) {
   const c=result.cases[caseId]; lines.push(`## ${caseId}`,`- failures restraint: ${c.aggregate.before.restraint} -> ${c.aggregate.after.restraint}; disp/rot: ${c.aggregate.before.displacementRotation} -> ${c.aggregate.after.displacementRotation}; source actions: ${c.aggregate.before.sourceEndAction} -> ${c.aggregate.after.sourceEndAction}`,`- non-reducer pressure-strain ledger changes: ${c.changedNonReducerPressure.length}`);
-  for (const r of c.reducerPressure) lines.push(`- reducer source ${r.sourceElementId}: pressure strain ${r.beforePressureAxialStrain} -> ${r.afterPressureAxialStrain}; initial vector changed=${r.initialLoadChanged}`);
+  for (const r of c.reducerPressure) lines.push(`- reducer source ${r.sourceElementId}: pressure strain ${r.beforePressureAxialStrain} -> ${r.afterPressureAxialStrain}; free translation changed=${r.freeTranslationChanged}; condensed initial-load path=${r.initialLoadChanged}`);
   lines.push('- sources13-17 FX:'); for (const s of c.chain13to17) { const maxBefore=Math.max(...s.rows.map((r)=>Number(r.beforeRelativeError)||0)), maxAfter=Math.max(...s.rows.map((r)=>Number(r.afterRelativeError)||0)); lines.push(`  - source ${s.sourceElementId}: max rel ${(100*maxBefore).toFixed(4)}% -> ${(100*maxAfter).toFixed(4)}%`); }
   for (const [k,t] of Object.entries(c.targets)) lines.push(`- target ${k} (${t.dof}): ${(100*Number(t.beforeRelativeError)).toFixed(4)}% (${t.beforeStatus}) -> ${(100*Number(t.afterRelativeError)).toFixed(4)}% (${t.afterStatus})`);
   lines.push('');

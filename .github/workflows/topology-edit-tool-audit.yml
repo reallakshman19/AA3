@@ -6,6 +6,7 @@ on:
       - '.github/workflows/topology-edit-tool-audit.yml'
       - 'e2e/topology-edit-tool-*.spec.js'
       - 'e2e/topology-edit-ray-*.spec.js'
+      - 'e2e/helpers/topology-edit-icon-qualification.js'
       - 'tests/topology-edit-navigation-pick-fallback.test.mjs'
       - 'tests/topology-edit-icon-*.test.mjs'
       - 'src/workspace/topology-edit-3d-*.js'
@@ -64,6 +65,7 @@ jobs:
           node --check tests/topology-edit-icon-manifest.test.mjs
           node --check tests/topology-edit-icon-sprite.test.mjs
           node --check tests/topology-edit-navigation-pick-fallback.test.mjs
+          node --check e2e/helpers/topology-edit-icon-qualification.js
           node --check e2e/topology-edit-tool-audit.spec.js
           node --check e2e/topology-edit-tool-icon-manifest.spec.js
           node --check e2e/topology-edit-tool-icon-mutation.spec.js

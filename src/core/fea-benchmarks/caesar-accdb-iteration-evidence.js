@@ -62,7 +62,7 @@ export function buildCaesarAccdbIterationEvidence(input) {
   });
   const improvements = parent === null
     ? null
-    : compareMetrics(parent.metrics, current.metrics);
+    : buildImprovementRecord(parent, current);
 
   const profileSemanticHash = semanticHash({
     profileId: report.profileId,
@@ -106,7 +106,7 @@ export function buildCaesarAccdbIterationEvidence(input) {
   return deepFreeze({ ...base, semanticHash: semanticHash(base) });
 }
 
-/** Compare two previously materialized iteration metric records. */
+/** Compare two previously materialized iteration records without rebuilding them. */
 export function compareCaesarAccdbIterationEvidence(parentEvidence, currentEvidence) {
   const parent = requireIterationEvidence(parentEvidence, 'parentEvidence');
   const current = requireIterationEvidence(currentEvidence, 'currentEvidence');
@@ -115,7 +115,7 @@ export function compareCaesarAccdbIterationEvidence(parentEvidence, currentEvide
   if (parent.source.accdbSha256 !== current.source.accdbSha256) {
     throw new TypeError('Iteration ACCDB source hash changed.');
   }
-  return deepFreeze(compareMetrics(parent.metrics, current.metrics));
+  return deepFreeze(buildImprovementRecord(parent, current));
 }
 
 function buildMetrics(report, expectedBendPointerCount) {
@@ -165,7 +165,7 @@ function buildMetrics(report, expectedBendPointerCount) {
         pointers: bendPointers,
       },
       nodalEquilibrium: {
-        status: equilibrium.summary.failedComponentCount === 0 ? 'PASS' : 'FAIL',
+        status: equilibrium.summary.failingComponentCount === 0 ? 'PASS' : 'FAIL',
         maximumAbsoluteForceResidualN: equilibrium.summary.maximumAbsoluteForceResidualN,
         maximumAbsoluteMomentResidualNm: equilibrium.summary.maximumAbsoluteMomentResidualNm,
       },
@@ -175,7 +175,7 @@ function buildMetrics(report, expectedBendPointerCount) {
     };
     if (!bendCoveragePass) invariants.bendCoverage = false;
     if (!executionHashesPresent) invariants.executionHashesPresent = false;
-    if (equilibrium.summary.failedComponentCount !== 0) invariants.nodalEquilibrium = false;
+    if (equilibrium.summary.failingComponentCount !== 0) invariants.nodalEquilibrium = false;
 
     metrics[caseId] = caseMetrics;
     failureIdentities[caseId] = caseFailures;
@@ -268,6 +268,13 @@ function referenceEquilibrium(report, caseId) {
   return report.cases?.find((row) => String(row.caseId) === caseId)?.equilibrium ?? null;
 }
 
+function buildImprovementRecord(parent, current) {
+  return {
+    metrics: compareMetrics(parent.metrics, current.metrics),
+    failures: compareFailureIdentities(parent.failureIdentities, current.failureIdentities),
+  };
+}
+
 function compareMetrics(parent, current) {
   const caseIds = [...new Set([...Object.keys(parent), ...Object.keys(current)])].sort(compareText);
   const cases = {};
@@ -298,6 +305,37 @@ function compareMetrics(parent, current) {
         after.equilibrium.maximumAbsoluteMomentResidualNm - before.equilibrium.maximumAbsoluteMomentResidualNm,
     };
     cases[caseId] = row;
+  }
+  return { cases };
+}
+
+function compareFailureIdentities(parent, current) {
+  const caseIds = [...new Set([...Object.keys(parent), ...Object.keys(current)])].sort(compareText);
+  const cases = {};
+  for (const caseId of caseIds) {
+    const before = parent[caseId];
+    const after = current[caseId];
+    if (!before || !after) throw new TypeError(`Iteration failure case set changed at ${caseId}.`);
+    const families = [...new Set([...Object.keys(before), ...Object.keys(after)])].sort(compareText);
+    const familyRows = {};
+    for (const family of families) {
+      const beforeSet = new Set(before[family] ?? []);
+      const afterSet = new Set(after[family] ?? []);
+      const resolved = [...beforeSet].filter((identity) => !afterSet.has(identity)).sort(compareText);
+      const introduced = [...afterSet].filter((identity) => !beforeSet.has(identity)).sort(compareText);
+      const remaining = [...afterSet].filter((identity) => beforeSet.has(identity)).sort(compareText);
+      familyRows[family] = {
+        beforeCount: beforeSet.size,
+        afterCount: afterSet.size,
+        netDelta: afterSet.size - beforeSet.size,
+        resolvedCount: resolved.length,
+        introducedCount: introduced.length,
+        resolved,
+        introduced,
+        remaining,
+      };
+    }
+    cases[caseId] = familyRows;
   }
   return { cases };
 }

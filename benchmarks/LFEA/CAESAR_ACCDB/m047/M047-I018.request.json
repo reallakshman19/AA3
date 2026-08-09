@@ -1,0 +1,55 @@
+{
+  "schema": "lfea-caesar-accdb-iteration-request/v1",
+  "issueId": "M047",
+  "iterationId": "M047-I018",
+  "expectedSourceAccdbSha256": "85d39463296e569da811d8572e2eff680b858097f76fdf0f47d1755f0b161c21",
+  "parentAcceptedIteration": "M047-I015",
+  "parentAuthorityIteration": "M047-I017",
+  "hypothesis": "The pinned BM4_NL source archive may contain a CAESAR-generated error-checker/input/material report that independently records the A106 Grade B thermal expansion coefficient or derived thermal strain used by CAESAR II 14.00. If it does not, the numerical 21->120 C authority must remain blocked pending exact cmat.bin/active UMD provenance or exact ASME B31.3-2022 Table C-3 source values and interpolation.",
+  "authoritySources": [
+    {
+      "publisher": "Hexagon",
+      "document": "CAESAR II User's Guide - Print Alphas and Pipe Properties",
+      "authorityStatement": "CAESAR II can print thermal expansion coefficients with pipe properties in the error checker, providing a direct job/material authority report when retained.",
+      "url": "https://docs.hexagonppm.com/r/en-US/CAESAR-II-Users-Guide/Version-13/336117"
+    },
+    {
+      "publisher": "Hexagon",
+      "document": "CAESAR II User's Guide Version 14 - Material Database Editor",
+      "authorityStatement": "The Material Database Editor can print the current material record; delivered material data remain in the supplied database and user edits are saved separately.",
+      "url": "https://docs.hexagonppm.com/r/en-US/CAESAR-II-Users-Guide/Version-14/335533"
+    },
+    {
+      "publisher": "Hexagon",
+      "document": "CAESAR II User's Guide - User Material Database Filename",
+      "authorityStatement": "Piping input/analysis reads supplied cmat.bin and applies the configured UMD record in preference when that material is updated there.",
+      "url": "https://docs.hexagonppm.com/r/en-US/CAESAR-II-Users-Guide/15/334990"
+    },
+    {
+      "publisher": "Hexagon",
+      "document": "CAESAR II User's Guide Version 14 - Thermal Bowing",
+      "authorityStatement": "B31.1/B31.3 mean thermal expansion is referenced to 70 F / 21 C and is available/interpolated from CAESAR material-library data.",
+      "url": "https://docs.hexagonppm.com/r/en-US/CAESAR-II-Users-Guide/Version-14/1473851"
+    },
+    {
+      "publisher": "Hexagon",
+      "document": "CAESAR II User's Guide - Exp. Coeff.",
+      "authorityStatement": "The material-database expansion coefficient is the mean coefficient at the reference temperature; Hexagon cites B31.3 Table C-3 as the source basis for carbon steel examples.",
+      "url": "https://docs.hexagonppm.com/r/en-US/CAESAR-II-Users-Guide/Version-13/335548"
+    }
+  ],
+  "predictedSignature": [
+    "Expand the pinned Common BM4_NL source archive and hash/list every member.",
+    "Reconfirm the unique ACCDB SHA-256 equals the locked issue source hash.",
+    "Search only retained text/report files for CAESAR-generated alpha, thermal-expansion, A106/material and pipe-property evidence; do not derive a coefficient from benchmark response rows.",
+    "If a report records the relevant job/material coefficient or thermal strain, retain the report file hash, exact line evidence, CAESAR version/code/material identity and units for independent review before any profile change.",
+    "If no such report exists, record the source-authority gate as externally blocked: require exact CAESAR II 14.00 cmat.bin plus configured UMD identity/hash or exact ASME B31.3-2022 Table C-3 values and documented interpolation.",
+    "The I009 approximately 12.23199e-6/K diagnostic remains a cross-check only and must not be used to fill missing source authority."
+  ],
+  "changedPaths": [
+    "scripts/lfea-m047-i018-source-authority-survey.ps1",
+    ".github/workflows/m047-bm4nl-i018-source-authority-survey.yml"
+  ],
+  "mechanicsDelta": "None. Read-only source-archive authority survey only; no solver, profile, tolerance, or benchmark-reference change.",
+  "verdict": "PENDING"
+}

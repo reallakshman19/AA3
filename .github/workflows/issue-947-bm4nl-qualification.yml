@@ -201,3 +201,15 @@ jobs:
             .work/bm4nl-actual.json
             .work/bm4nl-report.json
             .work/bm4nl-summary.md
+
+      - name: Enforce fail-closed qualification authority
+        if: always()
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $authority = Get-Content 'benchmarks/LFEA/CAESAR_ACCDB/bm4nl-caesar-settings.authority.json' -Raw | ConvertFrom-Json
+          $blocking = @($authority.qualificationBlockers | Where-Object { $_.status -eq 'BLOCKING' })
+          if ($blocking.Count -gt 0) {
+            $ids = ($blocking | ForEach-Object { $_.id }) -join ', '
+            throw "BM4_NL qualification remains fail-closed because blocking CAESAR operators are unresolved: $ids"
+          }

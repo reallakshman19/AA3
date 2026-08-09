@@ -1,0 +1,172 @@
+name: agent16-p10-capability-effects-traceability
+
+on:
+  pull_request:
+    paths:
+      - 'src/core/linear-piping-analysis-consumer/inputxml-linear-prefea-findings.js'
+      - 'scripts/lfea-p10-capability-effects-traceability-check.mjs'
+      - '.github/workflows/agent16-p10-qualification.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  qualify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - name: Checkout exact pull-request head
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+          fetch-depth: 0
+
+      - name: Use Node.js 22
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+
+      - name: Prove exact head and P-10 containment
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$(git rev-parse HEAD)" = "${{ github.event.pull_request.head.sha }}"
+          git diff --exit-code
+          base='0cb5c6a04f865a4d6890edc59b29c3892af8c5ba'
+          git diff --name-only "$base" HEAD > /tmp/p10-paths.txt
+          cat /tmp/p10-paths.txt
+          while IFS= read -r changed; do
+            case "$changed" in
+              src/core/linear-piping-analysis-consumer/inputxml-linear-prefea-findings.js|scripts/lfea-p10-capability-effects-traceability-check.mjs|.github/workflows/agent16-p10-qualification.yml) ;;
+              *) echo "P-10 changed an unqualified path: $changed" >&2; exit 1 ;;
+            esac
+          done < /tmp/p10-paths.txt
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: P-10 lossless capability-effects projection
+        run: node scripts/lfea-p10-capability-effects-traceability-check.mjs
+
+      - name: P-10 base-to-head semantic-hash transition
+        shell: bash
+        run: |
+          set -euo pipefail
+          base='0cb5c6a04f865a4d6890edc59b29c3892af8c5ba'
+          rm -rf /tmp/p10-base
+          git worktree add --detach /tmp/p10-base "$base"
+          cat > /tmp/p10-projection.mjs <<'EOF'
+          import path from 'node:path';
+          import { pathToFileURL } from 'node:url';
+          const root = path.resolve(process.argv[2]);
+          const { collectFindings } = await import(pathToFileURL(path.join(root, 'src/core/linear-piping-analysis-consumer/inputxml-linear-prefea-findings.js')));
+          const { semanticHash } = await import(pathToFileURL(path.join(root, 'src/core/shared-piping-model/canonical-json.js')));
+          const capabilityEffects = {
+            STRICT_LINEAR_STATIC: { disposition: 'CONDITIONAL', limitationCode: 'P10_STRICT_LIMITATION' },
+            OPERATING_CASE_STRICT: { disposition: 'BLOCK', limitationCode: 'P10_OPERATING_BLOCK' },
+          };
+          const finding = collectFindings({
+            sourceBundle: { geometry: { diagnostics: [] } },
+            topology: { findings: [] },
+            proximity: { findings: [] },
+            representability: {
+              findings: [{
+                code: 'P10_TRACEABILITY_FIXTURE', category: 'RESTRAINT', severity: 'warning', disposition: 'CONDITIONAL',
+                message: 'P-10 traceability fixture.',
+                technicalBasis: 'The upstream model-health finding carries per-capability disposition and limitation evidence.',
+                evidence: { inventoryId: 'P10-INV-001', sourceRecordSemanticHash: 'p10-source-record-hash' },
+                remediation: 'Review the disclosed capability effects.', capabilityEffects,
+                sourceFeatureIds: ['P10-SF-001'], sourcePaths: ['/PIPINGMODEL/PIPINGELEMENT[1]/RESTRAINT[1]'],
+                canonicalEntityIds: ['P10-NODE-10'], physicalCaseIds: ['P10-W'],
+                approximationEligible: true, authorizationRequired: true,
+              }],
+              capabilities: [],
+            },
+            engineeringSanity: { findings: [] },
+          })[0];
+          process.stdout.write(JSON.stringify({
+            findingId: finding.findingId,
+            capabilityEffects: finding.capabilityEffects,
+            evidence: finding.evidence,
+            semanticHash: semanticHash(finding),
+          }));
+          EOF
+          node /tmp/p10-projection.mjs /tmp/p10-base > /tmp/p10-base.json
+          node /tmp/p10-projection.mjs "$GITHUB_WORKSPACE" > /tmp/p10-head.json
+          node --input-type=module <<'EOF'
+          import fs from 'node:fs';
+          import assert from 'node:assert/strict';
+          const base = JSON.parse(fs.readFileSync('/tmp/p10-base.json', 'utf8'));
+          const head = JSON.parse(fs.readFileSync('/tmp/p10-head.json', 'utf8'));
+          assert.deepEqual(head.capabilityEffects, base.capabilityEffects);
+          assert.equal(Object.hasOwn(base.evidence, 'upstreamCapabilityEffects'), false,
+            'Merge-base evidence unexpectedly already preserves upstream capability effects.');
+          assert.deepEqual(head.evidence.inventoryId, base.evidence.inventoryId);
+          assert.deepEqual(head.evidence.sourceRecordSemanticHash, base.evidence.sourceRecordSemanticHash);
+          assert.deepEqual(head.evidence.upstreamCapabilityEffects, {
+            OPERATING_CASE_STRICT: { disposition: 'BLOCK', limitationCode: 'P10_OPERATING_BLOCK' },
+            STRICT_LINEAR_STATIC: { disposition: 'CONDITIONAL', limitationCode: 'P10_STRICT_LIMITATION' },
+          });
+          assert.notEqual(head.findingId, base.findingId,
+            'Finding identity must change when previously-lost upstream evidence enters the sealed identity.');
+          assert.notEqual(head.semanticHash, base.semanticHash,
+            'Finding semantic hash must change when previously-lost upstream evidence enters the sealed identity.');
+          console.log(JSON.stringify({
+            baseFindingId: base.findingId,
+            headFindingId: head.findingId,
+            baseSemanticHash: base.semanticHash,
+            headSemanticHash: head.semanticHash,
+            transition: 'EXPECTED_TRACEABILITY_IDENTITY_CHANGE',
+          }, null, 2));
+          EOF
+
+      - name: Linear piping consumer anti-drift
+        run: node scripts/linear-piping-analysis-consumer-anti-drift-check.mjs
+
+      - name: Full pre-FEA gateway regression
+        run: node --test test/lfea-prefea-gateway.test.js
+
+      - name: Linear piping consumer regression
+        run: node scripts/linear-piping-analysis-consumer-check.mjs
+
+      - name: Fixed InputXML numerical benchmark
+        run: node scripts/lfea-b3.15-bm1-inputxml-check.mjs
+
+      - name: InputXML ground-truth benchmark
+        run: node scripts/lfea-b3.16-inputxml-ground-truth-check.mjs
+
+      - name: Required 1 — strict syntax
+        run: npm run syntax:strict
+
+      - name: Required 2 — import graph
+        run: node scripts/import-check.mjs
+
+      - name: Required 3 — enrichment UI phase 0
+        run: node scripts/run-enrichment-ui-phase0-checks.mjs
+
+      - name: Required 4 — linear piping workspace integration
+        run: node scripts/linear-piping-workspace-integration-check.mjs
+
+      - name: Required 5 — UI invariants
+        run: node scripts/ui-invariant-check.mjs
+
+      - name: Required 6 — production Vite build
+        run: npx vite build
+
+      - name: Report P-10 qualification
+        run: |
+          printf '%s\n' \
+            'P-10 lossless capability-effects projection PASS' \
+            'P-10 base/head semantic-hash transition PASS' \
+            'linear-piping anti-drift PASS' \
+            'full pre-FEA gateway regression PASS' \
+            'linear piping consumer regression PASS' \
+            'BM1 InputXML numerical benchmark PASS' \
+            'InputXML ground-truth benchmark PASS' \
+            'npm run syntax:strict PASS' \
+            'node scripts/import-check.mjs PASS' \
+            'node scripts/run-enrichment-ui-phase0-checks.mjs PASS' \
+            'node scripts/linear-piping-workspace-integration-check.mjs PASS' \
+            'node scripts/ui-invariant-check.mjs PASS' \
+            'npx vite build PASS'

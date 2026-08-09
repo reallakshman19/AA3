@@ -11,7 +11,7 @@ permissions:
 
 jobs:
   apply:
-    if: "${{ github.event.head_commit.message == 'chore(issue947): retry reducer pressure and shear authority' }}"
+    if: "${{ github.event.head_commit.message == 'chore(issue947): probe reducer pressure condensation residual' }}"
     runs-on: ubuntu-latest
     timeout-minutes: 15
     steps:
@@ -37,6 +37,22 @@ jobs:
 
       - name: Apply deterministic reducer authority patch
         run: node scripts/lfea-issue947-apply-reducer-pressure-shear.mjs
+
+      - name: Instrument free-pressure residual without changing gate
+        shell: python
+        run: |
+          from pathlib import Path
+          path = Path('scripts/lfea-b3.23-reducer-condensation-check.mjs')
+          text = path.read_text()
+          text = text.replace(
+            "assert.ok(Math.max(...uniformFreeAction.map(Math.abs)) < 1e-4, 'uniform reducer pressure free-growth action');",
+            "const uniformFreeMax = Math.max(...uniformFreeAction.map(Math.abs));\nconsole.log('uniform pressure free-growth residual N', uniformFreeMax);\nassert.ok(uniformFreeMax < 1e-4, 'uniform reducer pressure free-growth action');",
+          )
+          text = text.replace(
+            "assert.ok(Math.max(...taperedFreeAction.map(Math.abs)) < 1e-4, 'tapered reducer pressure free-growth action');",
+            "const taperedFreeMax = Math.max(...taperedFreeAction.map(Math.abs));\nconsole.log('tapered pressure free-growth residual N', taperedFreeMax);\nassert.ok(taperedFreeMax < 1e-4, 'tapered reducer pressure free-growth action');",
+          )
+          path.write_text(text)
 
       - name: Run reducer condensation qualification
         run: node scripts/lfea-b3.23-reducer-condensation-check.mjs

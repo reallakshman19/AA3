@@ -259,7 +259,9 @@ test('P2B-GUARD-01', 'InputXML binding remains provenance and orchestration only
     'src/core/linear-piping-analysis-consumer/inputxml-source-binding.js',
     'utf8',
   );
-  assert.match(sourceText, /inputXmlToCanonicalGeometry/u);
+  assert.match(sourceText, /parseInputXmlModelHealthSource/u);
+  assert.match(sourceText, /parseInputXmlToCanonicalGeometry/u);
+  assert.match(sourceText, /geometry\/adapters\/inputxml-model-health-source\.js/u);
   assert.match(sourceText, /conditionGeometry/u);
   assert.match(sourceText, /compileLinearPipingSourceAnalysisContext/u);
   assert.doesNotMatch(

@@ -52,7 +52,7 @@ export function createLfeaPreflightReviewLedger({ datasetIdentity, reviewerPolic
 
 /**
  * Append one immutable review event. Time, actor and reason are explicit input;
- * this package never reads Date.now(), locale state, randomUUID or Math.random.
+ * this package never reads ambient time, entropy, or locale-dependent ordering.
  */
 export function appendLfeaPreflightReviewEvent(ledger, input) {
   const accepted = requireLfeaPreflightReviewLedger(ledger);

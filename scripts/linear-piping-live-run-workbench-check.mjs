@@ -130,6 +130,42 @@ controller.clear();
 // has no authorization path under either profile.
 controller.elements.profileSelect.value = LINEAR_PIPING_PRERUN_PROFILE_IDS[1];
 const preRun = controller.checkRequest(request);
+if (preRun.status === 'BLOCK') {
+  console.error(JSON.stringify({
+    diagnostic: 'P09_M003_PREFEA_BLOCK',
+    requestedProfileId: preRun.requestedProfileId,
+    runRequestSemanticHash: preRun.runRequestSemanticHash,
+    gateSemanticHash: preRun.gateSemanticHash,
+    requestCases: request.cases.map((entry) => ({
+      caseId: entry.caseId,
+      innerLoadCaseId: entry.inputXmlAnalysisRequest?.sourceAnalysisRequest?.physicalLoadCaseInput?.loadCaseId ?? null,
+      innerAnalysisIdentity: entry.inputXmlAnalysisRequest?.sourceAnalysisRequest?.analysisIdentity ?? null,
+    })),
+    cases: preRun.cases.map((entry) => ({
+      caseId: entry.caseId,
+      status: entry.status,
+      error: entry.error,
+      blockingFindingIds: entry.blockingFindingIds,
+      conditionalFindingIds: entry.conditionalFindingIds,
+      limitations: entry.limitations,
+      diagnosticsId: entry.diagnosticsId,
+      diagnosticsSemanticHash: entry.diagnosticsSemanticHash,
+      preparationId: entry.preparationId,
+      preparationSemanticHash: entry.preparationSemanticHash,
+      sourceBundleSemanticHash: entry.sourceBundleSemanticHash,
+      summary: entry.summary,
+      findings: entry.findings.map((finding) => ({
+        findingId: finding.findingId,
+        code: finding.code,
+        disposition: finding.disposition,
+        category: finding.category,
+        physicalCaseIds: finding.physicalCaseIds,
+        message: finding.message,
+        remediation: finding.remediation,
+      })),
+    })),
+  }, null, 2));
+}
 assert.notEqual(preRun.status, 'BLOCK', 'The live M003 fixture must remain eligible for governed review.');
 assert.match(preRun.gateSemanticHash, /^fnv1a64:[0-9a-f]{16}$/u);
 assert.match(preRun.runRequestSemanticHash, /^fnv1a64:[0-9a-f]{16}$/u);
@@ -208,9 +244,6 @@ assert.equal(
 );
 assert.match(flattenText(controller.elements.resultsRoot), /B31\.3 application results/u);
 
-// Re-check the untampered request, then present a different request to Run.
-// The run-request hash must stop execution at PRE_FEA_RUN_GATE, before the
-// existing production source-authority mismatch could even be reached.
 const staleBase = buildM003LiveRunRequest();
 controller.checkRequest(staleBase);
 if (controller.getPreRunCheck().status === 'WARN') {
@@ -245,8 +278,6 @@ assert.throws(
   (error) => error?.code === 'PIPING_WORKSPACE_RESULT_REQUIRED',
 );
 
-// Changing the requested profile invalidates the retained gate in the visible
-// workbench and disables Run even when the previously sealed receipt was valid.
 controller.checkRequest(staleBase);
 const changedProfile = controller.elements.profileSelect.value === LINEAR_PIPING_PRERUN_PROFILE_IDS[0]
   ? LINEAR_PIPING_PRERUN_PROFILE_IDS[1]

@@ -1,0 +1,97 @@
+name: agent16-p11-qualification
+
+on:
+  pull_request:
+    paths:
+      - 'scripts/advanced-shell-contract-check.mjs'
+      - '.github/workflows/agent16-p11-qualification.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  qualify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - name: Checkout exact pull-request head
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+          fetch-depth: 0
+
+      - name: Use Node.js 22
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+
+      - name: Prove exact-head execution and P-11 containment
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$(git rev-parse HEAD)" = "${{ github.event.pull_request.head.sha }}"
+          git diff --exit-code
+          git diff --name-only "${{ github.event.pull_request.base.sha }}" "${{ github.event.pull_request.head.sha }}" > /tmp/p11-paths.txt
+          cat /tmp/p11-paths.txt
+          while IFS= read -r changed; do
+            case "$changed" in
+              scripts/advanced-shell-contract-check.mjs|.github/workflows/agent16-p11-qualification.yml) ;;
+              *) echo "Forbidden changed path for P-11 qualification: $changed" >&2; exit 1 ;;
+            esac
+          done < /tmp/p11-paths.txt
+          test -z "$(git diff --name-only "${{ github.event.pull_request.base.sha }}" "${{ github.event.pull_request.head.sha }}" -- 'src/core/**')"
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: P-11 governed shell contract
+        run: node scripts/advanced-shell-contract-check.mjs
+
+      - name: Required 1 — strict syntax
+        id: syntax
+        continue-on-error: true
+        run: npm run syntax:strict
+
+      - name: Required 2 — import graph
+        id: imports
+        continue-on-error: true
+        run: node scripts/import-check.mjs
+
+      - name: Required 3 — enrichment UI phase 0
+        id: enrichment
+        continue-on-error: true
+        run: node scripts/run-enrichment-ui-phase0-checks.mjs
+
+      - name: Required 4 — linear piping workspace integration
+        id: workspace
+        continue-on-error: true
+        run: node scripts/linear-piping-workspace-integration-check.mjs
+
+      - name: Required 5 — UI invariants
+        id: ui
+        continue-on-error: true
+        run: node scripts/ui-invariant-check.mjs
+
+      - name: Required 6 — production Vite build
+        id: build
+        continue-on-error: true
+        run: npx vite build
+
+      - name: Report required qualification outcomes
+        if: always()
+        shell: bash
+        run: |
+          set -euo pipefail
+          printf '%-42s %s\n' 'npm run syntax:strict' '${{ steps.syntax.outcome }}'
+          printf '%-42s %s\n' 'node scripts/import-check.mjs' '${{ steps.imports.outcome }}'
+          printf '%-42s %s\n' 'node scripts/run-enrichment-ui-phase0-checks.mjs' '${{ steps.enrichment.outcome }}'
+          printf '%-42s %s\n' 'node scripts/linear-piping-workspace-integration-check.mjs' '${{ steps.workspace.outcome }}'
+          printf '%-42s %s\n' 'node scripts/ui-invariant-check.mjs' '${{ steps.ui.outcome }}'
+          printf '%-42s %s\n' 'npx vite build' '${{ steps.build.outcome }}'
+          test '${{ steps.syntax.outcome }}' = success
+          test '${{ steps.imports.outcome }}' = success
+          test '${{ steps.enrichment.outcome }}' = success
+          test '${{ steps.workspace.outcome }}' = success
+          test '${{ steps.ui.outcome }}' = success
+          test '${{ steps.build.outcome }}' = success

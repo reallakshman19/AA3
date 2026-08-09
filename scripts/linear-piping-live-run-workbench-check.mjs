@@ -4,6 +4,7 @@ import assert from 'node:assert/strict';
 import {
   LinearPipingResultsWorkbenchController,
 } from '../src/workspace/linear-piping-results-workbench.js';
+import { LINEAR_PIPING_PRERUN_PROFILE_IDS } from '../src/workspace/linear-piping-prerun-check.js';
 import { buildM003LiveRunRequest } from './m003-live-run-analysis-fixture.mjs';
 
 class FakeDocument {
@@ -85,15 +86,11 @@ class FakeElement {
     this.parentNode.children = this.parentNode.children.filter((child) => child !== this);
     this.parentNode = null;
   }
-
-  get childElementCount() {
-    return this.children.length;
-  }
 }
 
 class FakeUrlApi {
   createObjectURL() {
-    return 'blob:m003';
+    return 'blob:p09';
   }
 
   revokeObjectURL() {}
@@ -109,112 +106,85 @@ const controller = new LinearPipingResultsWorkbenchController(
 ).init();
 
 assert.equal(controller.elements.runButton.textContent, 'Run Analysis');
-assert.equal(controller.elements.importButton.textContent, 'Import Sealed Result Package');
 assert.equal(controller.getSnapshot().runStatus, 'IDLE');
+assert.equal(controller.elements.runButton.disabled, true, 'Run must be disabled before pre-flight.');
+assert.equal(controller.elements.section.dataset.runAuthorized, 'false');
 
 const request = buildM003LiveRunRequest();
-controller.elements.runFileInput.files = [jsonFile('m003-live-run.json', request)];
-controller.elements.runButton.click();
-assert.equal(controller.elements.runFileInput.clickCount, 1);
-await controller.elements.runFileInput.dispatch('change');
-
-const snapshot = controller.getSnapshot();
-assert.equal(snapshot.status, 'CURRENT');
-assert.equal(snapshot.runStatus, 'SUCCEEDED');
-assert.equal(snapshot.applicationId, request.applicationId);
-// The fixture's reducer component (src/core/linear-fea-piping-components/
-// inline-component.js buildReducerComponent) unconditionally declares a
-// CONDITIONAL approximation for its stepped-section idealization — this is a
-// deliberate, disclosed engineering limitation, not a defect, and it
-// correctly propagates to CONDITIONAL/AUDIT_ONLY_CONDITIONAL at every layer
-// above it. A fixture using a reducer can never legitimately assert
-// ENGINEERING_EXPORT_ALLOWED; asserting that here would mean the test
-// silently accepted a system that lost track of a disclosed approximation.
-assert.equal(snapshot.exportEligibility, 'AUDIT_ONLY_CONDITIONAL');
-assert.equal(controller.elements.auditButton.disabled, false);
-assert.equal(controller.elements.engineeringButton.disabled, true);
-assert.equal(controller.elements.runOutcome.dataset.status, 'SUCCEEDED');
-assert.match(flattenText(controller.elements.runOutcome), /sealed application result/u);
-
-const runResult = controller.getLiveRunResult();
-assert.equal(runResult.runtimeEvidence.sharedAcrossCaseCount, 2);
-assert.ok(runResult.runtimeEvidence.factorizationCacheEntryCount >= 1);
-const highContext = runResult.cases
-  .find((entry) => entry.caseId === 'HIGH')
-  .inputXmlAnalysisContext;
-const highResult = highContext.sourceAnalysisContext.analysisResult;
-// Same reducer-approximation disclosure as exportEligibility above: the
-// per-case analysis result inherits CONDITIONAL from the reducer component's
-// acceptanceState (src/core/linear-piping-analysis-consumer/consumer.js:69-72).
-assert.equal(highResult.status, 'CONDITIONAL');
-assert.ok(Math.abs(reactionAt(highResult, 'RED-001.N0', 'UY') + 1000) < 1e-8);
-assert.ok(Math.abs(reactionAt(highResult, 'RED-001.N0', 'RZ') + 2400) < 1e-8);
-assert.ok(
-  runResult.multicaseApplication.applicationResult.analysisResultSemanticHashes
-    .includes(highResult.semanticHash),
-);
-assert.equal(
-  snapshot.applicationResultSemanticHash,
-  runResult.multicaseApplication.applicationResult.semanticHash,
-);
-assert.match(flattenText(controller.elements.resultsRoot), /B31\.3 application results/u);
-
-const rejected = buildM003LiveRunRequest();
-rejected.cases[0].inputXmlAnalysisRequest.sourceAnalysisRequest.expectedSourceAuthorities
-  .compilerProfileSemanticHash = 'fnv1a64:0000000000000000';
-controller.elements.runFileInput.files = [jsonFile('m003-live-run-blocked.json', rejected)];
-controller.elements.runButton.click();
-await controller.elements.runFileInput.dispatch('change');
-
-const blocked = controller.getSnapshot();
-assert.equal(blocked.status, 'EMPTY');
-assert.equal(blocked.runStatus, 'BLOCKED');
-assert.equal(blocked.runFailure.code, 'PIPING_SOURCE_AUTHORITY_MISMATCH');
-assert.equal(blocked.runFailure.analysisStage, 'CASE:HIGH:INPUTXML_ANALYSIS');
-assert.equal(blocked.applicationId, null);
-assert.equal(blocked.exportEligibility, null);
-assert.equal(controller.getLiveRunResult(), null);
-assert.equal(controller.elements.auditButton.disabled, true);
-assert.equal(controller.elements.engineeringButton.disabled, true);
-assert.equal(controller.elements.runOutcome.dataset.status, 'BLOCKED');
-assert.match(flattenText(controller.elements.runOutcome), /PIPING_SOURCE_AUTHORITY_MISMATCH/u);
-assert.match(flattenText(controller.elements.runOutcome), /CASE:HIGH:INPUTXML_ANALYSIS/u);
 assert.throws(
-  () => controller.createAuditExport(),
-  (error) => error?.code === 'PIPING_WORKSPACE_RESULT_REQUIRED',
+  () => controller.runRequest(request),
+  (error) => error?.code === 'PIPING_RUN_GATE_AUTHORIZATION_REQUIRED'
+    && error?.analysisStage === 'PRE_FEA_RUN_GATE',
+  'The formerly direct M003 run must no longer execute without a gate receipt.',
 );
+assert.equal(controller.getLiveRunResult(), null);
+controller.clear();
+
+controller.elements.profileSelect.value = LINEAR_PIPING_PRERUN_PROFILE_IDS[1];
+const preRun = controller.checkRequest(request);
+assert.equal(preRun.status, 'BLOCK', 'The real M003 source must preserve its governed BLOCK result.');
+assert.equal(preRun.solveAuthorized, false);
+assert.match(preRun.gateSemanticHash, /^fnv1a64:[0-9a-f]{16}$/u);
+assert.match(preRun.runRequestSemanticHash, /^fnv1a64:[0-9a-f]{16}$/u);
+assert.equal(preRun.cases.length, 2);
+assert.ok(preRun.cases.every((entry) => entry.status === 'BLOCK'));
+assert.ok(preRun.cases.every((entry) => entry.authorizationId === null));
+assert.ok(preRun.cases.every((entry) => entry.blockingFindingIds.length > 0));
+assert.ok(preRun.cases.every((entry) => entry.findings.some(
+  (finding) => finding.code === 'MODEL_OPERATING_TEMPERATURE_NOT_DECLARED'
+    && finding.disposition === 'BLOCK',
+)));
+assert.ok(preRun.cases.every((entry) => entry.findings.some(
+  (finding) => finding.code === 'REQUIRED_CAPABILITY_BLOCKED'
+    && finding.message.includes('THERMAL_AUTHORITY'),
+)));
+assert.equal(controller.elements.runButton.disabled, true);
+assert.equal(controller.elements.authorizeButton.hidden, true, 'BLOCK must expose no acceptance control.');
+assert.equal(controller.elements.section.dataset.runAuthorized, 'false');
+assert.match(flattenText(controller.elements.preRunRoot), /Run authorization: NOT READY/u);
+assert.match(flattenText(controller.elements.preRunRoot), /no bypass is available/u);
+assert.match(flattenText(controller.elements.preRunRoot), /MODEL_OPERATING_TEMPERATURE_NOT_DECLARED/u);
+
+assert.throws(
+  () => controller.authorizePreRun(),
+  (error) => error?.code === 'PIPING_RUN_GATE_BLOCK_OVERRIDE_PROHIBITED',
+  'Even a programmatic attempt to authorize BLOCK must fail closed.',
+);
+assert.equal(controller.elements.runButton.disabled, true);
+
+assert.throws(
+  () => controller.runRequest(request),
+  (error) => error?.code === 'PIPING_RUN_GATE_AUTHORIZATION_REQUIRED'
+    && error?.analysisStage === 'PRE_FEA_RUN_GATE',
+  'A retained BLOCK pre-run record must still prohibit execution.',
+);
+assert.equal(controller.getLiveRunResult(), null);
+assert.equal(controller.getSnapshot().status, 'EMPTY');
+
+const priorGateHash = controller.getSnapshot().preRunGateSemanticHash;
+const changedProfile = controller.elements.profileSelect.value === LINEAR_PIPING_PRERUN_PROFILE_IDS[0]
+  ? LINEAR_PIPING_PRERUN_PROFILE_IDS[1]
+  : LINEAR_PIPING_PRERUN_PROFILE_IDS[0];
+controller.elements.profileSelect.value = changedProfile;
+await controller.elements.profileSelect.dispatch('change');
+assert.equal(controller.getPreRunCheck(), null);
+assert.equal(controller.elements.runButton.disabled, true);
+assert.equal(controller.elements.section.dataset.runAuthorized, 'false');
+assert.match(controller.getSnapshot().message, /profile changed/u);
 
 console.log(JSON.stringify({
   check: 'linear-piping-live-run-workbench',
   status: 'PASS',
-  realUiInteraction: true,
-  realOrchestration: true,
-  numericAssertions: {
-    nodeId: 'RED-001.N0',
-    UY: reactionAt(highResult, 'RED-001.N0', 'UY'),
-    RZ: reactionAt(highResult, 'RED-001.N0', 'RZ'),
-    tolerance: 1e-8,
-  },
-  rejectionAssertion: blocked.runFailure,
+  policy: 'BLOCK_HARD_GATE_NO_BYPASS',
+  formerlyExecutableLegacyFixture: 'M003',
+  preRunProfile: LINEAR_PIPING_PRERUN_PROFILE_IDS[1],
+  blockedCaseIds: preRun.cases.map((entry) => entry.caseId),
+  blockingCodes: [...new Set(preRun.cases.flatMap((entry) => entry.findings
+    .filter((finding) => finding.disposition === 'BLOCK')
+    .map((finding) => finding.code)))].sort(),
+  gateSemanticHash: priorGateHash,
+  runtimeCreated: false,
 }));
-
-function reactionAt(result, nodeId, dof) {
-  const entry = result.execution.reactions
-    .find((row) => row.nodeId === nodeId && row.dof === dof);
-  assert.ok(entry, `Missing reaction ${nodeId}:${dof}`);
-  return entry.value;
-}
-
-function jsonFile(name, value) {
-  const content = JSON.stringify(value);
-  return Object.freeze({
-    name,
-    type: 'application/json',
-    async text() {
-      return content;
-    },
-  });
-}
 
 function flattenText(node) {
   return [node.textContent, ...node.children.map(flattenText)].join(' ');

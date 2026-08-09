@@ -11,6 +11,8 @@ import { authorizedEnrichmentConsumerController } from './workspace/enrichment/a
 import { createAuthorizedEnrichmentWorkspaceApi } from './workspace/enrichment/authorized-enrichment-workspace-api.js';
 import { ENGINEERING_MODEL_EVENTS } from './workspace/engineering-model-controller.js';
 import { EventBus } from './workspace/event-bus.js';
+import { retireStandaloneInputXmlAnalyzerEntry } from './workspace/linear-piping-analyzer-integration.js';
+import { mountLinearPipingInputXmlSourceWorkflow } from './workspace/linear-piping-inputxml-source-workflow.js';
 import { mountLinearPipingResultsWorkbench } from './workspace/linear-piping-results-workbench.js';
 import { mountLfeaPreflightUi } from './workspace/lfea-preflight-ui.js';
 import { EVENT_TOPICS } from './workspace/event-topics.js';
@@ -40,10 +42,20 @@ const authorizedEnrichmentApi = createAuthorizedEnrichmentWorkspaceApi({
     });
   },
 });
+// Native InputXML is the normal Source → Pre-flight entry. It is mounted before
+// the legacy governed request Run/Results surface so source custody is visible
+// before any execution controls.
+const linearPipingInputXmlSource = mountLinearPipingInputXmlSourceWorkflow(applicationRoot, {
+  documentRef: applicationRoot.ownerDocument,
+});
 const linearPipingResults = mountLinearPipingResultsWorkbench(applicationRoot, {
   documentRef: applicationRoot.ownerDocument,
   urlApi: applicationRoot.ownerDocument.defaultView?.URL,
 });
+// P-08 removes the standalone diagnostics detour from normal engineering flow.
+// analyze.html remains a fail-closed developer utility; the governed LFEA
+// Source/Pre-flight receipt is the normal diagnostics authority.
+const linearPipingAnalyzerIntegration = retireStandaloneInputXmlAnalyzerEntry(applicationRoot);
 // Read-only source-enrichment review. It reads the shared model and the saved
 // master Line List; it publishes nothing back into either.
 const preflightUi = mountLfeaPreflightUi(applicationRoot, {
@@ -57,6 +69,27 @@ const preflightSubscriptions = [
 const workspace = Object.freeze({
   ...coreWorkspace,
   ...authorizedEnrichmentApi,
+  loadLinearPipingInputXmlSource(input, options) {
+    return linearPipingInputXmlSource.loadSource(input, options);
+  },
+  authorizeLinearPipingInputXmlSourceUnit(unit) {
+    return linearPipingInputXmlSource.authorizeUnit(unit);
+  },
+  authorizeLinearPipingInputXmlPreFlight(approval) {
+    return linearPipingInputXmlSource.authorizePreFlight(approval);
+  },
+  getLinearPipingInputXmlSourceState() {
+    return linearPipingInputXmlSource.getSnapshot();
+  },
+  getLinearPipingInputXmlPreFlight() {
+    return linearPipingInputXmlSource.getPreFlight();
+  },
+  getLinearPipingInputXmlAnalyzerIntegrationPolicy() {
+    return linearPipingAnalyzerIntegration;
+  },
+  clearLinearPipingInputXmlSource() {
+    linearPipingInputXmlSource.clear();
+  },
   importLinearPipingResultPackage(value) {
     return linearPipingResults.loadPackage(value);
   },
@@ -88,6 +121,7 @@ const workspace = Object.freeze({
     preflightSubscriptions.forEach((unsubscribe) => unsubscribe());
     preflightUi.destroy();
     linearPipingResults.destroy();
+    linearPipingInputXmlSource.destroy();
     coreWorkspace.destroy();
   },
 });

@@ -8,6 +8,7 @@ import { renderLinearPipingResultsView } from './linear-piping-results-view.js';
 import { runLinearPipingWorkbenchAnalysis } from './linear-piping-run-analysis.js';
 import {
   LINEAR_PIPING_PRERUN_PROFILE_IDS,
+  authorizeLinearPipingPreRunCheck,
   checkLinearPipingRunRequest,
 } from './linear-piping-prerun-check.js';
 import { renderLinearPipingPreRunView } from './linear-piping-prerun-view.js';
@@ -26,19 +27,16 @@ export const LINEAR_PIPING_WORKSPACE_PACKAGE_KEYS = Object.freeze([
 /**
  * Mounts the current-only piping result surface in the active LFEA view.
  *
- * The controller runs governed pre-FEA diagnostics, imports sealed Phase 4/5
- * records, or delegates a caller-supplied InputXML request to the existing
- * production orchestration. It renders governed outcomes but does not
- * implement model compilation, solving, recovery, interface mechanics, nozzle
- * assessment or code stress.
+ * The controller runs governed pre-FEA diagnostics/preparation/authorization,
+ * imports sealed Phase 4/5 records, or delegates an authorized InputXML request
+ * to the existing production orchestration. It renders governed outcomes but
+ * does not implement model compilation, solving, recovery, interface mechanics,
+ * nozzle assessment or code stress.
  */
 export function mountLinearPipingResultsWorkbench(applicationRoot, options = {}) {
   if (!applicationRoot || typeof applicationRoot.querySelector !== 'function') {
     throw new TypeError('Linear piping results integration requires the application root.');
   }
-  // The LFEA view is the home for the piping run/review surface. The
-  // properties-panel slot is retained only as a fallback so a host that has
-  // not adopted the LFEA root still mounts rather than failing closed.
   const panelContainer = applicationRoot.querySelector(
     '[data-role="linear-piping-consumer-root"]',
   ) ?? applicationRoot.querySelector(
@@ -75,8 +73,9 @@ export class LinearPipingResultsWorkbenchController {
     this.runStatus = 'IDLE';
     this.runFailure = null;
     this.preRunCheck = null;
+    this.preRunRequest = null;
     this.elements = null;
-    this.message = 'Pre-run check or run a caller-supplied InputXML analysis request, or import a sealed result package.';
+    this.message = 'Run Analysis requires a current governed pre-run authorization, or import a sealed result package.';
     this.error = '';
     this.initialized = false;
   }
@@ -87,6 +86,10 @@ export class LinearPipingResultsWorkbenchController {
     this.panelContainer.append(this.elements.section);
     this.elements.preRunButton.addEventListener('click', () => this.elements.preRunFileInput.click());
     this.elements.preRunFileInput.addEventListener('change', () => this.checkSelectedFile());
+    this.elements.profileSelect.addEventListener('change', () => this.invalidatePreRun(
+      'Pre-run authorization invalidated because the requested profile changed.',
+    ));
+    this.elements.authorizeButton.addEventListener('click', () => this.authorizePreRun());
     this.elements.runButton.addEventListener('click', () => this.elements.runFileInput.click());
     this.elements.runFileInput.addEventListener('change', () => this.runSelectedFile());
     this.elements.importButton.addEventListener('click', () => this.elements.fileInput.click());
@@ -143,9 +146,20 @@ export class LinearPipingResultsWorkbenchController {
   }
 
   runRequest(value) {
+    if (!this.preRunCheck?.solveAuthorized || !this.preRunCheck.gate) {
+      const error = new TypeError('Run Analysis requires a current sealed pre-FEA authorization.');
+      error.code = 'PIPING_RUN_GATE_AUTHORIZATION_REQUIRED';
+      error.evidence = this.preRunCheck === null ? null : {
+        status: this.preRunCheck.status,
+        gateSemanticHash: this.preRunCheck.gateSemanticHash,
+      };
+      error.analysisStage = 'PRE_FEA_RUN_GATE';
+      this.blockRun(error, error.analysisStage);
+      throw error;
+    }
     this.beginRun();
     try {
-      const runResult = runLinearPipingWorkbenchAnalysis(value);
+      const runResult = runLinearPipingWorkbenchAnalysis(value, this.preRunCheck.gate);
       const application = runResult.multicaseApplication;
       const presentation = this.loadPackage(workspacePackageFromApplication(application), {
         source: 'RUN',
@@ -156,6 +170,7 @@ export class LinearPipingResultsWorkbenchController {
       this.error = '';
       this.message = [
         `Run Analysis completed for ${presentation.applicationId}.`,
+        `Gate ${this.preRunCheck.gateSemanticHash}.`,
         `Status ${presentation.status}.`,
         `Export ${presentation.exportEligibility}.`,
       ].join(' ');
@@ -173,12 +188,15 @@ export class LinearPipingResultsWorkbenchController {
     this.runStatus = 'IDLE';
     this.runFailure = null;
     this.preRunCheck = null;
+    this.preRunRequest = null;
     this.error = '';
     this.message = 'Linear piping workbench cleared.';
     if (this.elements) {
       this.elements.fileInput.value = '';
       this.elements.runFileInput.value = '';
       this.elements.preRunFileInput.value = '';
+      this.elements.reviewerIdentityInput.value = '';
+      this.elements.reviewReasonInput.value = '';
     }
     this.render();
   }
@@ -190,6 +208,10 @@ export class LinearPipingResultsWorkbenchController {
       runFailure: this.runFailure,
       preRunStatus: this.preRunCheck?.status ?? 'NOT_RUN',
       preRunSolveAuthorized: this.preRunCheck?.solveAuthorized ?? false,
+      preRunGateSemanticHash: this.preRunCheck?.gateSemanticHash ?? null,
+      preRunRequestSemanticHash: this.preRunCheck?.runRequestSemanticHash ?? null,
+      preRunSourceBundleSemanticHashes: this.preRunCheck?.sourceBundleSemanticHashes ?? Object.freeze([]),
+      preRunAuthorizationSemanticHashes: this.preRunCheck?.authorizationSemanticHashes ?? Object.freeze([]),
       applicationId: this.presentation?.applicationId ?? null,
       applicationResultSemanticHash: this.presentation?.applicationResultSemanticHash ?? null,
       presentationSemanticHash: this.presentation?.semanticHash ?? null,
@@ -239,26 +261,63 @@ export class LinearPipingResultsWorkbenchController {
   }
 
   /**
-   * Run governed pre-FEA diagnostics only. No compile, no assembly, no solve.
+   * Run governed pre-FEA diagnostics, preparation and authorization policy.
+   * No solver runtime is created here.
    */
   checkRequest(value) {
     try {
-      this.preRunCheck = checkLinearPipingRunRequest(value, {
+      const retainedRequest = cloneJsonRecord(value);
+      this.preRunCheck = checkLinearPipingRunRequest(retainedRequest, {
         requestedProfileId: this.elements?.profileSelect.value,
       });
+      this.preRunRequest = retainedRequest;
       this.error = '';
-      this.message = [
-        `Pre-run check ${this.preRunCheck.status} for ${this.preRunCheck.applicationId}.`,
-        this.preRunCheck.solveAuthorized
-          ? 'No blocking or conditional finding.'
-          : 'Findings must be resolved before the solve is worth running.',
-      ].join(' ');
+      if (this.preRunCheck.status === 'PASS') {
+        this.message = [
+          `Pre-run gate PASS for ${this.preRunCheck.applicationId}.`,
+          `Automatic PASS authorization sealed as ${this.preRunCheck.gateSemanticHash}.`,
+        ].join(' ');
+      } else if (this.preRunCheck.status === 'WARN') {
+        this.message = [
+          `Pre-run gate WARN for ${this.preRunCheck.applicationId}.`,
+          'Run remains disabled until an engineer explicitly accepts the complete disclosed limitation set.',
+        ].join(' ');
+      } else {
+        this.message = [
+          `Pre-run gate BLOCK for ${this.preRunCheck.applicationId}.`,
+          'Run is disabled and BLOCK has no authorization bypass.',
+        ].join(' ');
+      }
       this.render();
       return this.preRunCheck;
     } catch (error) {
       this.preRunCheck = null;
+      this.preRunRequest = null;
       this.error = errorMessage(error);
       this.message = 'Pre-run check rejected the supplied request.';
+      this.render();
+      throw error;
+    }
+  }
+
+  authorizePreRun() {
+    try {
+      this.preRunCheck = authorizeLinearPipingPreRunCheck(this.preRunCheck, {
+        approverIdentity: this.elements?.reviewerIdentityInput.value ?? '',
+        reason: this.elements?.reviewReasonInput.value ?? '',
+      });
+      this.error = '';
+      this.message = [
+        `Conditional authorization sealed for ${this.preRunCheck.applicationId}.`,
+        `Gate ${this.preRunCheck.gateSemanticHash}.`,
+        `Accepted limitations: ${this.preRunCheck.cases
+          .flatMap((entry) => entry.limitationsAccepted).join(', ') || 'none'}.`,
+      ].join(' ');
+      this.render();
+      return this.preRunCheck;
+    } catch (error) {
+      this.error = errorMessage(error);
+      this.message = 'Conditional authorization was rejected.';
       this.render();
       throw error;
     }
@@ -276,6 +335,7 @@ export class LinearPipingResultsWorkbenchController {
       value = JSON.parse(await file.text());
     } catch (error) {
       this.preRunCheck = null;
+      this.preRunRequest = null;
       this.error = errorMessage(error);
       this.message = 'The supplied pre-run file is not valid JSON.';
       this.render();
@@ -327,6 +387,8 @@ export class LinearPipingResultsWorkbenchController {
     if (!this.elements) return;
     this.elements.status.textContent = this.message;
     const running = this.runStatus === 'RUNNING';
+    const warnPending = this.preRunCheck?.status === 'WARN' && !this.preRunCheck.solveAuthorized;
+    const runAuthorized = Boolean(this.preRunCheck?.solveAuthorized && this.preRunRequest);
     this.elements.error.hidden = !this.error || this.runStatus === 'BLOCKED';
     this.elements.error.textContent = this.error;
     renderRunOutcome(this.documentRef, this.elements.runOutcome, this.runStatus, this.runFailure);
@@ -335,15 +397,21 @@ export class LinearPipingResultsWorkbenchController {
     const hasCurrent = Boolean(this.presentation && this.applicationResult);
     this.elements.preRunButton.disabled = running;
     this.elements.profileSelect.disabled = running;
-    this.elements.runButton.disabled = running;
+    this.elements.reviewerIdentityLabel.hidden = !warnPending;
+    this.elements.reviewReasonLabel.hidden = !warnPending;
+    this.elements.authorizeButton.hidden = !warnPending;
+    this.elements.authorizeButton.disabled = running || !warnPending;
+    this.elements.runButton.disabled = running || !runAuthorized;
     this.elements.importButton.disabled = running;
-    this.elements.clearButton.disabled = running || (!hasCurrent && this.runStatus === 'IDLE');
+    this.elements.clearButton.disabled = running
+      || (!hasCurrent && this.runStatus === 'IDLE' && !this.preRunCheck);
     this.elements.auditButton.disabled = running || !hasCurrent;
     this.elements.engineeringButton.disabled = running || !hasCurrent
       || this.presentation.exportEligibility !== 'ENGINEERING_EXPORT_ALLOWED';
     this.elements.section.dataset.current = hasCurrent ? 'true' : 'false';
     this.elements.section.dataset.runStatus = this.runStatus;
     this.elements.section.dataset.preRunStatus = this.preRunCheck?.status ?? 'NOT_RUN';
+    this.elements.section.dataset.runAuthorized = runAuthorized ? 'true' : 'false';
     this.elements.section.dataset.qualificationStatus = this.presentation?.status ?? 'EMPTY';
     if (hasCurrent) {
       renderLinearPipingResultsView(
@@ -383,6 +451,7 @@ export class LinearPipingResultsWorkbenchController {
     this.runStatus = 'IDLE';
     this.runFailure = null;
     this.preRunCheck = null;
+    this.preRunRequest = null;
     this.error = '';
     this.message = '';
     this.elements?.section.remove();
@@ -393,11 +462,10 @@ export class LinearPipingResultsWorkbenchController {
   beginRun() {
     this.clearCurrentResult();
     this.liveRunResult = null;
-    this.preRunCheck = null;
     this.runStatus = 'RUNNING';
     this.runFailure = null;
     this.error = '';
-    this.message = 'Run Analysis is executing the caller-supplied request.';
+    this.message = `Run Analysis is executing under gate ${this.preRunCheck?.gateSemanticHash ?? 'UNKNOWN'}.`;
     this.render();
   }
 
@@ -408,6 +476,15 @@ export class LinearPipingResultsWorkbenchController {
     this.runFailure = runFailureRecord(error, analysisStage);
     this.message = `Run Analysis blocked at ${this.runFailure.analysisStage}.`;
     this.error = errorMessage(error);
+    this.render();
+  }
+
+  invalidatePreRun(message) {
+    if (this.runStatus === 'RUNNING') return;
+    this.preRunCheck = null;
+    this.preRunRequest = null;
+    this.error = '';
+    this.message = message;
     this.render();
   }
 
@@ -466,13 +543,13 @@ function renderRunOutcome(doc, root, status, failure) {
   heading.textContent = status;
   if (status === 'RUNNING') {
     const detail = doc.createElement('p');
-    detail.textContent = 'The production compile, solve, recovery and application chain is running.';
+    detail.textContent = 'The authorized production compile, solve, recovery and application chain is running.';
     root.replaceChildren(heading, detail);
     return;
   }
   if (status === 'SUCCEEDED') {
     const detail = doc.createElement('p');
-    detail.textContent = 'A sealed application result was produced from the caller-supplied request.';
+    detail.textContent = 'A sealed application result was produced under the retained pre-FEA authorization receipt.';
     root.replaceChildren(heading, detail);
     return;
   }
@@ -534,6 +611,23 @@ function createWorkbenchSection(doc) {
   preRunFileInput.accept = '.json,application/json';
   preRunFileInput.hidden = true;
   preRunFileInput.dataset.role = 'linear-piping-prerun-request-file';
+  const reviewerIdentityLabel = doc.createElement('label');
+  reviewerIdentityLabel.textContent = 'Reviewer ';
+  reviewerIdentityLabel.hidden = true;
+  const reviewerIdentityInput = doc.createElement('input');
+  reviewerIdentityInput.type = 'text';
+  reviewerIdentityInput.dataset.role = 'linear-piping-prerun-reviewer';
+  reviewerIdentityLabel.append(reviewerIdentityInput);
+  const reviewReasonLabel = doc.createElement('label');
+  reviewReasonLabel.textContent = 'Acceptance reason ';
+  reviewReasonLabel.hidden = true;
+  const reviewReasonInput = doc.createElement('input');
+  reviewReasonInput.type = 'text';
+  reviewReasonInput.dataset.role = 'linear-piping-prerun-review-reason';
+  reviewReasonLabel.append(reviewReasonInput);
+  const authorizeButton = button(doc, 'Accept WARN Limitations');
+  authorizeButton.dataset.action = 'authorize-linear-piping-analysis';
+  authorizeButton.hidden = true;
   const runButton = button(doc, 'Run Analysis');
   runButton.dataset.action = 'run-linear-piping-analysis';
   const runFileInput = doc.createElement('input');
@@ -565,6 +659,9 @@ function createWorkbenchSection(doc) {
     profileLabel,
     preRunButton,
     preRunFileInput,
+    reviewerIdentityLabel,
+    reviewReasonLabel,
+    authorizeButton,
     runButton,
     runFileInput,
     importButton,
@@ -603,6 +700,11 @@ function createWorkbenchSection(doc) {
     preRunButton,
     preRunFileInput,
     preRunRoot,
+    reviewerIdentityLabel,
+    reviewerIdentityInput,
+    reviewReasonLabel,
+    reviewReasonInput,
+    authorizeButton,
     runButton,
     runFileInput,
     importButton,
@@ -645,6 +747,10 @@ function downloadRecord(doc, urlApi, record) {
     anchor.remove();
     urlApi.revokeObjectURL(href);
   }
+}
+
+function cloneJsonRecord(value) {
+  return JSON.parse(JSON.stringify(value));
 }
 
 function failPackage(message, code) {

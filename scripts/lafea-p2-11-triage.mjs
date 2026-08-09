@@ -65,20 +65,47 @@ function runStandalone(script) {
   };
 }
 
+/**
+ * These six scripts are deliberately not standalone health checks. They take
+ * an explicit base ref and assert an exact historical PR write set. Their
+ * implementations use three equivalent perimeter idioms, so classify the
+ * semantics rather than one brittle source-code spelling:
+ *
+ * 1. T6A: `allowed` Set + exact row count/path equality;
+ * 2. T6B/T6C/T7C: `changed` deep-equals `expected`;
+ * 3. T7A/T7B: `samePaths(changed, acceptedWriteSet)` with explicit failure
+ *    for every other write set.
+ */
 function classifyContextBound(script) {
   const path = `scripts/${script}`;
   assert.equal(fs.existsSync(path), true, `Missing context-bound P2-11 guard: ${path}`);
   const source = fs.readFileSync(path, 'utf8');
   const requiresBase = source.includes("process.argv.indexOf('--base')")
-    && source.includes('--base <BASE_SHA>');
-  const comparesPrDelta = source.includes('${base}...HEAD');
-  const enforcesExactPerimeter = /assert\.(?:equal|deepEqual)\([\s\S]{0,300}(?:rows\.length|allowed)/u.test(source)
-    && source.includes('allowed');
+    && /--base\s+<[^>]+>/u.test(source);
+  const comparesPrDelta = source.includes('${base}...HEAD')
+    && /['"]diff['"]/u.test(source)
+    && /['"]--name-(?:only|status)['"]/u.test(source);
+  const exactExpectedSet = /assert\.deepEqual\(\s*changed\s*,\s*expected\s*\)/u.test(source);
+  const exactAllowedSet = source.includes('const allowed = new Set(')
+    && /assert\.equal\(\s*rows\.length\s*,\s*allowed\.size/u.test(source)
+    && /assert\.deepEqual\([\s\S]*?\[\.\.\.allowed\]\.sort\(\)/u.test(source);
+  const exactAcceptedAlternatives = /samePaths\(changed\s*,/u.test(source)
+    && /assert\.fail\(`Unexpected T7[AB] write set:/u.test(source);
+  const enforcesExactPerimeter = exactExpectedSet
+    || exactAllowedSet
+    || exactAcceptedAlternatives;
   return {
     script,
     classification: 'CONTEXT_BOUND_EXACT_DIFF_GUARD',
     status: requiresBase && comparesPrDelta && enforcesExactPerimeter
       ? 'CONTEXT_BOUND' : 'INVALID_CLASSIFICATION',
+    evidence: {
+      requiresBase,
+      comparesPrDelta,
+      exactExpectedSet,
+      exactAllowedSet,
+      exactAcceptedAlternatives,
+    },
     reason: 'Requires an explicit base SHA and validates an exact historical PR file perimeter; it is not a clean-main health check.',
   };
 }

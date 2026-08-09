@@ -28,6 +28,19 @@ jobs:
           github-token: ${{ github.token }}
           repository: reallaksh19/Advanced_Analysis
           run-id: 31314047095
+      - name: Align per-bend selector with factor-call row scope
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          path = Path('scripts/lfea-issue947-smooth90-per-bend-sensitivity.mjs')
+          text = path.read_text()
+          old = "input.solveProfile.b31jSmooth90FlexibilityCorrection.enabled || sourceElementId === '${sourceElementId}'"
+          new = "input.solveProfile.b31jSmooth90FlexibilityCorrection.enabled || String(row.ELEMENTID) === '${sourceElementId}'"
+          count = text.count(old)
+          if count != 1:
+              raise SystemExit(f'Expected one per-bend selector patch site; found {count}.')
+          path.write_text(text.replace(old, new))
+          PY
       - name: Run one-bend-at-a-time sensitivity
         run: |
           mkdir -p .work

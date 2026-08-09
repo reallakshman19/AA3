@@ -58,7 +58,10 @@ assert.doesNotMatch(
 assert.match(source['inputxml-source-contract.js'], /linear-piping-inputxml-analysis-request\/v1/u);
 assert.match(source['inputxml-source-contract.js'], /linear-piping-inputxml-analysis-request\/v2/u);
 assert.match(source['inputxml-source-contract.js'], /INPUTXML_INGESTION_V2_KEYS/u);
-assert.doesNotMatch(source['inputxml-source-contract.js'], /inputXmlToCanonicalGeometry|conditionGeometry/u);
+assert.doesNotMatch(
+  source['inputxml-source-contract.js'],
+  /parseInputXmlModelHealthSource|parseInputXmlToCanonicalGeometry|conditionGeometry/u,
+);
 
 const unitContract = source['inputxml-unit-contract.js'];
 assert.match(unitContract, /INPUTXML-LENGTH-TO-METRE-EXACT-R1/u);
@@ -78,7 +81,10 @@ for (const token of [
 ]) assert.match(normalizer, new RegExp(token, 'u'));
 assert.match(normalizer, /PIPING_INPUTXML_UNIT_FIELD_UNCLASSIFIED/u);
 assert.match(normalizer, /INPUTXML_LENGTH_UNIT_NORMALIZED/u);
-assert.doesNotMatch(normalizer, /inputXmlToCanonicalGeometry|conditionGeometry/u);
+assert.doesNotMatch(
+  normalizer,
+  /parseInputXmlModelHealthSource|parseInputXmlToCanonicalGeometry|conditionGeometry/u,
+);
 
 const requestValidation = source['inputxml-request-validation.js'];
 assert.match(requestValidation, /LINEAR_PIPING_INPUTXML_ANALYSIS_REQUEST_V2_SCHEMA/u);
@@ -87,7 +93,9 @@ assert.match(requestValidation, /PIPING_INPUTXML_UNIT_NOT_CANONICAL/u);
 assert.match(requestValidation, /PIPING_INPUTXML_UNIT_NOT_AUTHORIZED/u);
 
 const inputXmlGateway = source['inputxml-source-binding.js'];
-assert.match(inputXmlGateway, /inputXmlToCanonicalGeometry/u);
+assert.match(inputXmlGateway, /parseInputXmlModelHealthSource/u);
+assert.match(inputXmlGateway, /parseInputXmlToCanonicalGeometry/u);
+assert.match(inputXmlGateway, /geometry\/adapters\/inputxml-model-health-source\.js/u);
 assert.match(inputXmlGateway, /normalizeLinearPipingInputXmlGeometry/u);
 assert.match(inputXmlGateway, /conditionGeometry/u);
 assert.match(inputXmlGateway, /compileLinearPipingSourceAnalysisContext/u);
@@ -98,9 +106,14 @@ assert.doesNotMatch(
 );
 
 const adapterImports = files
-  .filter((file) => /inputXmlToCanonicalGeometry/u.test(fs.readFileSync(file, 'utf8')))
+  .filter((file) => /from\s+['"][^'"]*geometry\/adapters\/inputxml-model-health-source\.js['"]/u
+    .test(fs.readFileSync(file, 'utf8')))
   .map((file) => path.basename(file));
-assert.deepEqual(adapterImports, ['inputxml-source-binding.js']);
+assert.deepEqual(
+  adapterImports,
+  ['inputxml-source-binding.js'],
+  'Only the governed InputXML source binding may import the raw model-health adapter.',
+);
 
 const index = source['index.js'];
 for (const token of [

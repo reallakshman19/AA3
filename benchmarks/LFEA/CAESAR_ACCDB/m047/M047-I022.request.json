@@ -48,6 +48,19 @@
     ".github/workflows/m047-bm4nl-i022-bend-composite-ab.yml"
   ],
   "mechanicsDelta": "Runtime bend-family qualification candidate only: accepted I015 ordinary frames plus non-tee bend incoming straights plus BEND_ARC component base frames consume the same governed Timoshenko B-3.1 law. Bend flexibility correction and all other component/load authority remain unchanged.",
+  "harnessHistory": [
+    {
+      "workflowRunId": 31317478785,
+      "orchestrationHeadSha": "bc836de51199d385970a3457ef53b89ba17d8239",
+      "classification": "HARNESS_ONLY",
+      "engineeringSolveReached": false,
+      "componentQualificationReached": true,
+      "componentQualificationConclusion": "PASS",
+      "artifactId": 9039197843,
+      "artifactSha256": "d36d78563ea22d8f619e16d6329cc7940c95fe62bb585e477d187e38beaa0f8f",
+      "cause": "The I015 guard used a global source.includes('0.01') prohibition intended for an old diagnostic grouping threshold, but the frozen production solver legitimately contains bendLengthErrorLimit=0.01. The failed artifact proves the exact accepted I015 candidate SHA bdf4c0e... was materialized. The guard was narrowed to require exactly the legitimate bendLengthErrorLimit occurrence and reject any additional 0.01 occurrence; candidate mechanics were not changed."
+    }
+  ],
   "verdict": "PENDING",
-  "decisionReason": "Await exact-head locked Windows I022 component-check and system A/B evidence."
+  "decisionReason": "First run 31317478785 is harness-only and reached no system solve. Await corrected exact-head locked Windows I022 component-check and system A/B evidence with unchanged candidate mechanics."
 }

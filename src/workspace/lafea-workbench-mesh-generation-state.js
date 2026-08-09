@@ -7,8 +7,8 @@
  * something to classify. It holds no listeners and publishes nothing itself.
  *
  * Custody is only mutated after evidence has been fully built and validated
- * (`NO_CUSTODY_MUTATION_UNTIL_FULL_EVIDENCE_ACCEPTED`): a generation that
- * throws leaves the previously retained mesh exactly as it was.
+ * (`NO_CUSTODY_MUTATION_UNTIL_FULL_EVIDENCE_ACCEPTED`): a generation or
+ * recovery that throws leaves the previously retained mesh exactly as it was.
  */
 import { canonicalLafeaAnalysisMeshProfile } from './lafea-analysis-mesh-contract.js';
 import { validateLafeaAnalysisMeshEvidenceV2 } from './lafea-analysis-mesh-evidence-v2.js';
@@ -74,9 +74,40 @@ export function createLafeaWorkbenchMeshGenerationState(stageIds) {
     });
   }
 
+  function validateEvidence(value) {
+    return validateLafeaAnalysisMeshEvidenceV2(value);
+  }
+
+  /**
+   * Recover a portable v2 evidence artifact after its profile has been rebound
+   * by the orchestrator action. Parent currentness is deliberately not guessed
+   * here; the domain-first custody projection classifies the retained evidence
+   * as CURRENT_PASS/CURRENT_BLOCK/STALE after publication.
+   */
+  function recoverEvidence(value, stageId) {
+    requireStage(stageId);
+    const validated = validateEvidence(value);
+    if (validated.stageId !== stageId) {
+      fail('LAFEA_ANALYSIS_MESH_V2_RECOVERY_STAGE_MISMATCH');
+    }
+    const profile = profiles.get(stageId);
+    if (!profile || profile.semanticHash !== validated.meshProfileHash) {
+      fail('LAFEA_ANALYSIS_MESH_V2_RECOVERY_PROFILE_NOT_BOUND');
+    }
+    const retained = evidence.get(stageId);
+    if (sameEvidence(retained, validated)) {
+      return freeze({ changed: false, evidence: retained, meshProfile: profile });
+    }
+    if (retained) fail('LAFEA_ANALYSIS_MESH_V2_RECOVERY_CONFLICTING_REPLAY');
+    evidence.set(stageId, validated);
+    lastPlan.set(stageId, null);
+    return freeze({ changed: true, evidence: validated, meshProfile: profile });
+  }
+
   function selectEvidence(stageId) { requireStage(stageId); return evidence.get(stageId); }
   function selectMeshProfile(stageId) { requireStage(stageId); return profiles.get(stageId); }
   function selectPlan(stageId) { requireStage(stageId); return lastPlan.get(stageId); }
+  function exportEvidence(stageId) { return selectEvidence(stageId); }
 
   /** Any change to the source, domain or geometry invalidates a generated mesh. */
   function invalidate(stageId) {
@@ -96,6 +127,7 @@ export function createLafeaWorkbenchMeshGenerationState(stageIds) {
 
   return Object.freeze({
     fields, bindMeshProfile, planMesh, generateMesh,
+    validateEvidence, recoverEvidence, exportEvidence,
     selectEvidence, selectMeshProfile, selectPlan, invalidate, clear,
   });
 
@@ -131,6 +163,12 @@ function summarize(planned) {
     qualificationHash: planned.qualificationHash,
     producerRef: planned.producerRef,
   });
+}
+
+function sameEvidence(left, right) {
+  return Boolean(left)
+    && left.artifactHash === right.artifactHash
+    && JSON.stringify(left) === JSON.stringify(right);
 }
 
 function fail(code) { const error = new Error(code); error.code = code; throw error; }

@@ -10,9 +10,12 @@
  * no lifecycle evidence and asserts no authority — see
  * `lafea-mesh-producer-binding.js` for the governed envelope.
  *
- * Two disclosed limitations, surfaced as errors rather than approximated:
+ * Three disclosed limitations, surfaced as errors rather than approximated:
  *   - a region with hole loops is rejected (`HOLES_NOT_YET_SUPPORTED` in the
  *     core constrained-Delaunay pass);
+ *   - an unstructured Q8 request is rejected unless recombination produces
+ *     Q8 for every element; partial T6+Q8 output is never relabelled or passed
+ *     downstream against a uniform-Q8 mesh profile;
  *   - splines are outside the core geometry scope and never reach here.
  */
 import {
@@ -79,6 +82,7 @@ export function generateLafeaAnalysisMesh(adapter, configuration) {
     : null;
   const result = mapped ?? unstructuredMesh(outerLoop, curveById, vertexById, sizing, family);
 
+  requireRequestedFamilySatisfied(result.coreElements, family);
   const mesh = weld(result.coreElements, family);
   return freeze({
     schema: LAFEA_MESH_PRODUCER_ENGINE_SCHEMA,
@@ -107,6 +111,11 @@ export function generateLafeaAnalysisMesh(adapter, configuration) {
  * report WARNING or BLOCK. That is the honest outcome, not a defect in the
  * gates: interior point insertion / Delaunay refinement is follow-up scope in
  * the core mesher. Prefer the mapped strategy where the topology permits.
+ *
+ * Q8 recombination inside the core is deliberately partial and may leave T6
+ * elements. The public producer does not reinterpret that as a successful Q8
+ * mesh: `generateLafeaAnalysisMesh` rejects the request unless every returned
+ * element is actually Q8.
  */
 function unstructuredMesh(outerLoop, curveById, vertexById, sizing, family) {
   const discretized = discretizeLoop(outerLoop, curveById, vertexById, {
@@ -194,6 +203,18 @@ function minimumSegmentsFor(curve, vertexById, curvatureRadians) {
 }
 
 /**
+ * A declared Q8 request is uniform-Q8 authority. The core recombination pass
+ * remains truthful and may return T6 for triangles it cannot pair, but that
+ * mixed result is not allowed to cross this producer boundary as Q8.
+ */
+function requireRequestedFamilySatisfied(coreElements, family) {
+  if (family !== 'Q8') return;
+  if (coreElements.some((element) => element.elementType !== 'Q8')) {
+    fail('LAFEA_MESH_ENGINE_Q8_FULL_RECOMBINATION_REQUIRED');
+  }
+}
+
+/**
  * Weld the per-element physical node positions the core returns into a shared
  * node table. Coordinates for a shared corner or midside are produced by the
  * same expression over the same operands in every element that touches them,
@@ -240,9 +261,9 @@ function weld(coreElements, family) {
 }
 
 /**
- * Q8 recombination is partial by design: unpaired triangles stay T6. The
- * element type therefore follows the actual node count rather than the
- * requested family, so a mixed mesh is reported truthfully.
+ * Preserve the actual element topology from node count. The Q8 producer gate
+ * above prevents partial T6+Q8 recombination from being accepted as a uniform
+ * Q8 request, but this helper still never lies about a core element's shape.
  */
 function elementTypeFor(family, nodeCount) {
   if (family === 'T3') return 'T3';

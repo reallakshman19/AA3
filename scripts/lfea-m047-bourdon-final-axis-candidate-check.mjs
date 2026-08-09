@@ -34,6 +34,9 @@ const close = (actual, expected, label) => assert.ok(
   Math.abs(actual - expected) <= 1e-12 * Math.max(1, Math.abs(expected)),
   `${label}: ${actual} != ${expected}`,
 );
+const zeroVector = (vector, label) => vector.forEach((value, index) => {
+  assert.equal(Math.abs(value), 0, `${label}[${index}] must be numerically zero; got ${value}`);
+});
 
 console.log('\n--- M047 I011 MEC-21 final-axis candidate qualification ---');
 
@@ -64,9 +67,9 @@ console.log('\n--- M047 I011 MEC-21 final-axis candidate qualification ---');
 
 {
   const zero = derive(fixture({ pressure: 0 }));
-  assert.deepEqual(zero.translationAbc, [0, 0, 0]);
-  assert.deepEqual(zero.equationTranslationFinalAbc, [0, 0, 0]);
-  assert.deepEqual(zero.rotationAbc, [0, 0, 0]);
+  zeroVector(zero.translationAbc, 'translationAbc');
+  zeroVector(zero.equationTranslationFinalAbc, 'equationTranslationFinalAbc');
+  zeroVector(zero.rotationAbc, 'rotationAbc');
   process.stdout.write('M047-I011-T02 PASS zero-pressure invariant\n');
 }
 

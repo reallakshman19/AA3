@@ -1,0 +1,67 @@
+name: Issue 947 E48 midbend kinematic audit
+
+on:
+  push:
+    branches:
+      - codex/issue-947-bm4nl-qualification
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  actions: read
+
+jobs:
+  audit:
+    if: "${{ github.event_name == 'workflow_dispatch' || github.event.head_commit.message == 'ci(issue947): run E48 midbend kinematic audit' }}"
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Checkout qualification branch
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Download authoritative Version-14 BM4_NL replay
+        uses: actions/download-artifact@v4
+        with:
+          name: issue-947-bm4nl-qualification
+          path: .work/package
+          github-token: ${{ github.token }}
+          repository: reallaksh19/Advanced_Analysis
+          run-id: 31324887225
+
+      - name: Download preserved raw ACCDB output custody
+        uses: actions/download-artifact@v4
+        with:
+          name: issue-947-node22130-reference-custody
+          path: .work/raw
+          github-token: ${{ github.token }}
+          repository: reallaksh19/Advanced_Analysis
+          run-id: 31311427176
+
+      - name: Build exact current E48 condensation prerequisite
+        run: |
+          mkdir -p .work/out
+          node scripts/lfea-issue947-bend-descendant-condensation-audit.mjs \
+            --package .work/package/bm4nl-canonical-package.json \
+            --source-element 48 \
+            --out .work/out/e48-condensation.json
+
+      - name: Reconstruct E48 intermediate node from exact production descendants
+        run: |
+          node scripts/lfea-issue947-e48-midbend-kinematic-audit.mjs \
+            --package .work/package/bm4nl-canonical-package.json \
+            --raw .work/raw/node22130-raw-export.json \
+            --e48 .work/out/e48-condensation.json \
+            --out .work/out/e48-midbend-kinematic-audit.json
+
+      - name: Upload E48 midpoint evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: issue-947-e48-midbend-kinematic-audit
+          if-no-files-found: error
+          path: .work/out/*.json

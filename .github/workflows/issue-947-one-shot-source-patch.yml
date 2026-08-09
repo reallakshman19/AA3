@@ -10,7 +10,7 @@ permissions:
 
 jobs:
   apply:
-    if: github.event.head_commit.message == 'chore(issue947): apply max bend pressure source authority'
+    if: "${{ github.event.head_commit.message == 'chore(issue947): retry max bend pressure source authority' }}"
     runs-on: ubuntu-latest
     steps:
       - name: Checkout qualification branch

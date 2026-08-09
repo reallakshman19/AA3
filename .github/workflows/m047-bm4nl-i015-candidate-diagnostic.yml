@@ -1,0 +1,112 @@
+name: m047-bm4nl-i015-candidate-diagnostic
+
+on:
+  push:
+    branches:
+      - agent/m047-i015-plain-frame-timoshenko-ab
+    paths:
+      - '.github/workflows/m047-bm4nl-i015-candidate-diagnostic.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  diagnose:
+    runs-on: windows-2022
+    timeout-minutes: 30
+    steps:
+      - name: Checkout orchestration exact head
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.sha }}
+          fetch-depth: 0
+
+      - name: Use Node.js 22
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: Checkout exact clean mechanics baseline
+        uses: actions/checkout@v4
+        with:
+          repository: reallaksh19/Advanced_Analysis
+          ref: 882d59a99c3a03847d20bec34770ba57ff479d91
+          path: baseline-source
+          fetch-depth: 1
+
+      - name: Checkout pinned Common BM4 source
+        uses: actions/checkout@v4
+        with:
+          repository: reallaksh19/Common
+          ref: 1728651c94504b497aae4041578b1095fd8e292e
+          path: common-source
+          fetch-depth: 1
+
+      - name: Expand and verify locked ACCDB
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          New-Item -ItemType Directory -Path 'artifacts/m047/I015-diagnostic' -Force | Out-Null
+          $root = Join-Path $env:RUNNER_TEMP 'm047-i015-diag'
+          New-Item -ItemType Directory -Path $root -Force | Out-Null
+          Expand-Archive -LiteralPath 'common-source/LFEA/BM4/BM4_NL.zip' -DestinationPath $root -Force
+          $files = @(Get-ChildItem -LiteralPath $root -Recurse -File -Filter '*.accdb')
+          if ($files.Count -ne 1) { throw "Expected one ACCDB; found $($files.Count)." }
+          $sha = (Get-FileHash -LiteralPath $files[0].FullName -Algorithm SHA256).Hash.ToLowerInvariant()
+          if ($sha -ne '85d39463296e569da811d8572e2eff680b858097f76fdf0f47d1755f0b161c21') { throw "Locked ACCDB mismatch: $sha" }
+          "BM4NL_ACCDB=$($files[0].FullName)" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
+
+      - name: Provision Microsoft 365 Access Runtime
+        shell: powershell
+        run: .\scripts\lfea-m047-provision-ace.ps1 -OutputPath 'artifacts/m047/I015-diagnostic/ace.json'
+
+      - name: Prepare exact I015 candidate
+        shell: pwsh
+        run: |
+          Copy-Item -LiteralPath 'scripts/lfea-caesar-accdb-export.ps1' -Destination 'baseline-source/scripts/lfea-caesar-accdb-export.ps1' -Force
+          node scripts/lfea-m047-apply-plain-frame-timoshenko-candidate.mjs `
+            --source baseline-source/src/core/fea-benchmarks/caesar-accdb-linear-solve.js `
+            --manifest artifacts/m047/I015-diagnostic/i015.manifest.json
+          node scripts/lfea-m047-plain-frame-timoshenko-candidate-check.mjs `
+            --source baseline-source/src/core/fea-benchmarks/caesar-accdb-linear-solve.js
+          $status = @(git -C baseline-source status --porcelain)
+          $hasExporter = @($status | Where-Object { $_ -match 'scripts/lfea-caesar-accdb-export\.ps1$' }).Count -eq 1
+          $hasSolver = @($status | Where-Object { $_ -match 'src/core/fea-benchmarks/caesar-accdb-linear-solve\.js$' }).Count -eq 1
+          if ($status.Count -ne 2 -or -not $hasExporter -or -not $hasSolver) { throw "Candidate custody violation: $($status -join '; ')" }
+
+      - name: Execute candidate and retain exception
+        shell: pwsh
+        run: |
+          $stdout = 'artifacts/m047/I015-diagnostic/candidate.stdout.txt'
+          $stderr = 'artifacts/m047/I015-diagnostic/candidate.stderr.txt'
+          $args = @(
+            'baseline-source/scripts/lfea-caesar-accdb-benchmark.mjs',
+            '--accdb', $env:BM4NL_ACCDB,
+            '--profile', 'baseline-source/benchmarks/LFEA/CAESAR_ACCDB/bm4nl-l19-l20-linear-solve.profile.json',
+            '--solve-linear', 'true',
+            '--actual-out', 'artifacts/m047/I015-diagnostic/candidate.actual.json',
+            '--out', 'artifacts/m047/I015-diagnostic/candidate.benchmark.json'
+          )
+          $process = Start-Process -FilePath 'node' -ArgumentList $args -Wait -PassThru -NoNewWindow -RedirectStandardOutput $stdout -RedirectStandardError $stderr
+          [ordered]@{
+            schema='lfea-m047-i015-candidate-execution/v1'
+            exitCode=$process.ExitCode
+            baselineCommit='882d59a99c3a03847d20bec34770ba57ff479d91'
+            sourceAccdbSha256='85d39463296e569da811d8572e2eff680b858097f76fdf0f47d1755f0b161c21'
+            candidateManifest='i015.manifest.json'
+          } | ConvertTo-Json | Set-Content 'artifacts/m047/I015-diagnostic/execution.json' -Encoding utf8
+          Write-Host '--- candidate stderr ---'
+          if (Test-Path $stderr) { Get-Content $stderr }
+          Write-Host '--- candidate stdout ---'
+          if (Test-Path $stdout) { Get-Content $stdout }
+          Write-Host "Candidate exit code: $($process.ExitCode)"
+
+      - name: Retain candidate diagnostic evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: m047-i015-candidate-diagnostic-${{ github.sha }}
+          path: artifacts/m047/I015-diagnostic/**
+          if-no-files-found: error
+          retention-days: 90

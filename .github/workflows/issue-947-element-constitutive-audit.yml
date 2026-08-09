@@ -1,0 +1,51 @@
+name: Issue 947 element constitutive audit
+
+on:
+  push:
+    branches:
+      - codex/issue-947-bm4nl-qualification
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  actions: read
+
+jobs:
+  audit:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Checkout qualification branch
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Download pinned canonical BM4_NL package
+        uses: actions/download-artifact@v4
+        with:
+          name: issue-947-bm4nl-qualification
+          path: .work/pinned
+          github-token: ${{ github.token }}
+          repository: reallaksh19/Advanced_Analysis
+          run-id: 31300020859
+
+      - name: Run CAESAR-displacement constitutive residual audit
+        run: |
+          node scripts/lfea-issue947-element-constitutive-audit.mjs \
+            --package .work/pinned/bm4nl-canonical-package.json \
+            --elements 3,4 \
+            --out .work/issue947-element-constitutive-audit.json
+
+      - name: Run independent frame shear closed-form regression
+        run: node scripts/lfea-b3.1-frame-element-check.mjs
+
+      - name: Upload constitutive audit evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: issue-947-element-constitutive-audit
+          if-no-files-found: error
+          path: .work/issue947-element-constitutive-audit.json

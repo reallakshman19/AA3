@@ -79,7 +79,9 @@ export {
 } from './directional-branch-flexibility.js';
 
 export {
+  MEC21_BEND_PRESSURE_CUMULATIVE_FIELD_FORMULATION,
   MEC21_BEND_PRESSURE_EXPANSION_FORMULATION,
+  deriveMec21BendPressureCumulativeField,
   deriveMec21BendPressureFreeMovement,
 } from './bourdon-pressure-expansion.js';
 

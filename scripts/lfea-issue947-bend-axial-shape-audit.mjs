@@ -95,8 +95,8 @@ const worst = bendEntries.reduce((best, entry) =>
   (entry.maxRelativeError > best.maxRelativeError ? entry : best));
 
 const result = {
-  check: 'lfea-issue947-bend-axial-shape-audit',
-  status: 'PASS',
+  check: 'lfea-issue947-ordinary-curved-centreline-axial-mode-audit',
+  status: 'PASS_ORDINARY_CURVED_CENTRELINE_MODE_ONLY',
   sourceSetting: {
     BEND_AXIAL_SHAPE: settings.overall.settings.BEND_AXIAL_SHAPE,
     authority: settings.overall.source,
@@ -107,7 +107,7 @@ const result = {
     b31Correction: 'BENDING_Y_Z_ONLY',
     hiddenKinematicRelations: false,
     disabledAxialShapeCanonicalCompliance: 0,
-    note: 'This audit qualifies presence and convergence of the curved-centreline axial strain-energy mode. It does not claim bitwise identity with CAESAR internal bend shape functions.',
+    note: 'This audit qualifies only ordinary curved-centreline axial strain-energy convergence of the segmented frame chain. It does not qualify CAESAR BEND_AXIAL_SHAPE operator identity, which remains explicitly unmapped.',
   },
   canonicalClosedForm: {
     endTangent: 'R/(EA)*(beta/2 + sin(2*beta)/4)',
@@ -126,9 +126,10 @@ const result = {
   falsification: {
     omittedModeRelativeError: 1,
     existingConvergenceLimit: convergenceTolerance,
-    conclusion: 'BEND_AXIAL_SHAPE_MODE_IS_PRESENT_AND_CONVERGED_IN_SEGMENTED_FRAME_PHYSICS',
+    conclusion: 'ORDINARY_CURVED_CENTRELINE_AXIAL_MODE_IS_PRESENT_AND_CONVERGED_CAESAR_OPERATOR_IDENTITY_UNQUALIFIED',
   },
-  limitation: 'CAESAR_INTERNAL_CURVED_ELEMENT_INTERPOLATION_REMAINS_UNOBSERVED; ONLY_THE_GOVERNING_AXIAL_DEFORMATION_MODE_IS_QUALIFIED_HERE',
+  caesarSettingQualification: 'BLOCKING_CAESAR_BEND_AXIAL_SHAPE_OPERATOR_UNMAPPED',
+  limitation: 'CAESAR_INTERNAL_CURVED_ELEMENT_INTERPOLATION_REMAINS_UNOBSERVED; THIS_AUDIT_IS_NOT_AUTHORITY_FOR_BEND_AXIAL_SHAPE_YES',
 };
 
 fs.mkdirSync('.work', { recursive: true });

@@ -49,7 +49,7 @@ assert.equal(requiredBindings.get('L20.COEFFICIENT_OF_FRICTION_MU')?.status, 'BO
 assert.equal(requiredBindings.get('DEFAULT_TRANS_RESTRAINT_STIFF')?.status, 'RECORDED_PENDING_SOURCE_UNIT_AUDIT');
 assert.equal(requiredBindings.get('DEFAULT_ROT_RESTRAINT_STIFF')?.status, 'RECORDED_PENDING_SOURCE_UNIT_AUDIT');
 assert.equal(requiredBindings.get('FRICT_STIF')?.status, 'RECORDED_NON_GOVERNING_L19_L20');
-assert.equal(requiredBindings.get('BEND_AXIAL_SHAPE')?.status, 'BOUND_MODE_PRESENT_AND_CONVERGED');
+assert.equal(requiredBindings.get('BEND_AXIAL_SHAPE')?.status, 'BLOCKING_CAESAR_BEND_AXIAL_SHAPE_OPERATOR_UNMAPPED');
 assert.equal(requiredBindings.get('BEND_LENGTH_ATTACHMENT_PERCENT')?.status, 'BOUND_GEOMETRY_TRIGGER_AUDIT_ONLY');
 assert.equal(requiredBindings.get('APPLY_B31J_SIFS_AND_FLEX')?.status, 'BOUND_B31J_REQUIRED_BY_CODE');
 assert.equal(requiredBindings.get('B31J_SMOOTH_90_BEND_FLEXIBILITY')?.status, 'BOUND_TRUE');
@@ -69,6 +69,7 @@ for (const profilePath of profilePaths) {
     /BM4NL_CAESAR_SETTINGS_AUTHORITY_V1.*INDIVIDUAL_FILE_OVERRIDE/u,
     `${profilePath}: Bourdon source must cite settings custody`,
   );
+  assert.equal(Object.hasOwn(profile.linearSolve, 'bendAxialShape'), false, `${profilePath}: BEND_AXIAL_SHAPE=YES is not yet mapped to a qualified linearSolve operator and must not be represented as implemented`);
   assert.equal(profile.linearSolve.b31jSmooth90FlexibilityCorrection.enabled, true);
   assert.match(
     profile.linearSolve.b31jSmooth90FlexibilityCorrection.source,
@@ -101,8 +102,9 @@ const result = {
     L20EffectiveMu: authority.effective.L20.COEFFICIENT_OF_FRICTION_MU,
     qualification: 'L19_AND_L20_FRICTIONLESS_BY_CASE_SETTING_NOT_BY_MODEL_INPUT',
   },
+  qualificationBlockers: authority.qualificationBlockers ?? [],
   unresolved: authority.bindings
-    .filter((entry) => entry.status.startsWith('UNRESOLVED') || entry.status.includes('PENDING_') || entry.status.includes('REQUIRES_') || entry.status === 'DOES_NOT_RESOLVE_SMOOTH90_NOTE3')
+    .filter((entry) => entry.status.startsWith('BLOCKING_') || entry.status.startsWith('UNRESOLVED') || entry.status.includes('PENDING_') || entry.status.includes('REQUIRES_') || entry.status === 'DOES_NOT_RESOLVE_SMOOTH90_NOTE3')
     .map((entry) => ({ setting: entry.setting, status: entry.status })),
   profiles: profileEvidence,
 };

@@ -183,9 +183,9 @@
       "setting": "BEND_AXIAL_SHAPE",
       "authority": "OVERALL_SETTING",
       "target": "bend formulation",
-      "status": "BOUND_MODE_PRESENT_AND_CONVERGED",
+      "status": "BLOCKING_CAESAR_BEND_AXIAL_SHAPE_OPERATOR_UNMAPPED",
       "value": "YES",
-      "note": "Closed-form curved-arc strain-energy audit shows the segmented production bend retains the axial deformation mode with worst relative error 0.031728%, inside the existing 1% convergence gate. This does not claim CAESAR internal interpolation identity."
+      "note": "Overall CAESAR setting is YES, but the BM4_NL linearSolve profile does not declare a bendAxialShape operator and the production bend compiler is a chain of corrected straight frame elements. The earlier closed-form curved-arc convergence evidence proves only ordinary curved-beam/segmented-frame convergence; it does not prove identity to CAESAR axial-shape interpolation. Direct L19 raw E48 half-bend action evidence remains unresolved on the near half after 8x angular refinement, while the far half converges inside the unchanged 10% action gate. Independent continuum-arch evidence reproduces the refined ordinary curved-beam limit; public Hexagon documentation establishes the axial-shape displacement mode but does not expose the Version-14 operator equation. No production coefficient or inferred operator is authorized from BM4_NL residual fit. Full qualification remains blocked until an independently specified CAESAR-equivalent operator is implemented and falsified by whole-model L19 replay."
     },
     {
       "setting": "BEND_LENGTH_ATTACHMENT_PERCENT",
@@ -218,6 +218,22 @@
       "status": "BOUND_TRUE",
       "value": true,
       "note": "Pinned BM4_NL has smooth non-miter 90-degree bends with no user K-factor override. Version-14 B31J smooth-90 flexibility therefore uses the 1.3/h rule."
+    }
+  ],
+  "qualificationBlockers": [
+    {
+      "id": "CAESAR_BEND_AXIAL_SHAPE_OPERATOR_UNMAPPED",
+      "setting": "BEND_AXIAL_SHAPE",
+      "effectiveValue": "YES",
+      "status": "BLOCKING",
+      "evidence": {
+        "authoritativeL19ReplayRun": 31324887225,
+        "e48RawHalfBendRun": 31327789378,
+        "e48SubdivisionRun": 31327940476,
+        "e48MidpointKinematicRun": 31327674577,
+        "e48ContinuumArchRun": 31328724212
+      },
+      "falsification": "Do not infer or tune an axial-shape coefficient from E48. Require an independent equation/source, generic benchmark verification, E48 direct raw-action closure at unchanged limits, and whole-model L19 replay with no new failures."
     }
   ]
 }

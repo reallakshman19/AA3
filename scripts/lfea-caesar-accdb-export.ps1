@@ -73,6 +73,24 @@ function Read-DatabaseTable {
   }
 }
 
+function Get-Sha256Hex {
+  param(
+    [Parameter(Mandatory = $true)]
+    [string]$Path
+  )
+
+  $stream = [System.IO.File]::OpenRead($Path)
+  $algorithm = [System.Security.Cryptography.SHA256]::Create()
+  try {
+    $bytes = $algorithm.ComputeHash($stream)
+    return ([System.BitConverter]::ToString($bytes)).Replace('-', '').ToLowerInvariant()
+  }
+  finally {
+    $algorithm.Dispose()
+    $stream.Dispose()
+  }
+}
+
 $resolvedPath = (Resolve-Path -LiteralPath $AccdbPath).Path
 $requestedTables = $TablesCsv.Split(',') |
   ForEach-Object { $_.Trim().ToUpperInvariant() } |
@@ -119,7 +137,7 @@ try {
       fileName = $file.Name
       byteLength = $file.Length
       lastWriteTimeUtc = $file.LastWriteTimeUtc.ToString('o')
-      sha256 = (Get-FileHash -LiteralPath $resolvedPath -Algorithm SHA256).Hash.ToLowerInvariant()
+      sha256 = Get-Sha256Hex -Path $resolvedPath
     }
     provider = 'Microsoft.ACE.OLEDB.12.0'
     tables = $tables

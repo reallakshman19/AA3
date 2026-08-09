@@ -49,7 +49,18 @@ assert.ok(source.includes("straightPipeFormulation: 'PIPE_FRAME3D_EULER_BERNOULL
 assert.ok(source.includes('shearDeformation: false'), 'Euler fallback must remain shear-disabled');
 assert.ok(source.includes('phiXY: 0,'), 'gravity vector formula must be unchanged by I015');
 assert.ok(source.includes('phiXZ: 0,'), 'gravity vector formula must be unchanged by I015');
-assert.ok(!source.includes('0.01'), 'I015 production candidate must not contain the diagnostic 0.01 m grouping threshold');
+
+const legitimatePointZeroOne = 'bendLengthErrorLimit: { value: 0.01, source: PROFILE_SOURCE },';
+assert.equal(
+  source.split(legitimatePointZeroOne).length - 1,
+  1,
+  'the frozen 0.01 bend-length conditioning authority must remain present exactly once',
+);
+assert.equal(
+  source.split('0.01').length - 1,
+  1,
+  'I015 must not introduce any additional 0.01 diagnostic grouping/length threshold',
+);
 assert.ok(!source.includes('12.231989'), 'I015 must not carry the thermal diagnostic coefficient');
 
 process.stdout.write('lfea-m047-plain-frame-timoshenko-candidate-check: PASS\n');

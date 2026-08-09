@@ -78,6 +78,28 @@ jobs:
         continue-on-error: true
         run: node --test test/lfea-prefea-gateway.test.js
 
+      - name: P-13 hidden-default inventory diagnostic
+        shell: bash
+        run: |
+          node --input-type=module <<'EOF'
+          import fs from 'node:fs';
+          import path from 'node:path';
+
+          const root = 'src/core/linear-piping-analysis-consumer';
+          const pattern = /function\s+\w+\s*\([^)]*=/gu;
+          let count = 0;
+          for (const name of fs.readdirSync(root).filter((value) => value.endsWith('.js')).sort()) {
+            const file = path.join(root, name);
+            const text = fs.readFileSync(file, 'utf8');
+            for (const match of text.matchAll(pattern)) {
+              const line = text.slice(0, match.index).split(/\r?\n/u).length;
+              console.log(`${file}:${line}: ${match[0].replace(/\s+/gu, ' ')}`);
+              count += 1;
+            }
+          }
+          console.log(`HIDDEN_DEFAULT_PARAMETER inventory count: ${count}`);
+          EOF
+
       - name: P-13 anti-drift modularity contract
         id: p13_antidrift
         continue-on-error: true

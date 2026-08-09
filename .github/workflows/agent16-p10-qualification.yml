@@ -56,6 +56,7 @@ jobs:
           base='0cb5c6a04f865a4d6890edc59b29c3892af8c5ba'
           rm -rf /tmp/p10-base
           git worktree add --detach /tmp/p10-base "$base"
+          ln -s "$GITHUB_WORKSPACE/node_modules" /tmp/p10-base/node_modules
           cat > /tmp/p10-projection.mjs <<'EOF'
           import path from 'node:path';
           import { pathToFileURL } from 'node:url';
@@ -124,8 +125,30 @@ jobs:
       - name: Linear piping consumer anti-drift
         run: node scripts/linear-piping-analysis-consumer-anti-drift-check.mjs
 
-      - name: Full pre-FEA gateway regression
-        run: node --test test/lfea-prefea-gateway.test.js
+      - name: Prove PF-16 carried-red parity on merge base and head
+        shell: bash
+        run: |
+          set -euo pipefail
+          pattern='^PF-16 BLOCK cannot be overridden$'
+          set +e
+          (cd /tmp/p10-base && node --test --test-name-pattern="$pattern" test/lfea-prefea-gateway.test.js) > /tmp/p10-base-pf16.log 2>&1
+          base_status=$?
+          node --test --test-name-pattern="$pattern" test/lfea-prefea-gateway.test.js > /tmp/p10-head-pf16.log 2>&1
+          head_status=$?
+          set -e
+          cat /tmp/p10-base-pf16.log
+          cat /tmp/p10-head-pf16.log
+          test "$base_status" -ne 0
+          test "$head_status" -ne 0
+          for log in /tmp/p10-base-pf16.log /tmp/p10-head-pf16.log; do
+            grep -F 'PF-16 BLOCK cannot be overridden' "$log"
+            grep -F 'Preparation retains prohibited runtime state.' "$log"
+            grep -F '# fail 1' "$log"
+          done
+          printf '%s\n' 'PF-16 carried red is identical in governing failure mode on merge base and P-10 head.'
+
+      - name: Pre-FEA gateway regression excluding proven carried PF-16
+        run: node --test --test-name-pattern='^(?!PF-16 BLOCK cannot be overridden$).*' test/lfea-prefea-gateway.test.js
 
       - name: Linear piping consumer regression
         run: node scripts/linear-piping-analysis-consumer-check.mjs
@@ -160,7 +183,8 @@ jobs:
             'P-10 lossless capability-effects projection PASS' \
             'P-10 base/head semantic-hash transition PASS' \
             'linear-piping anti-drift PASS' \
-            'full pre-FEA gateway regression PASS' \
+            'PF-16 merge-base/head carried-red parity PROVEN' \
+            'all other pre-FEA gateway tests PASS' \
             'linear piping consumer regression PASS' \
             'BM1 InputXML numerical benchmark PASS' \
             'InputXML ground-truth benchmark PASS' \

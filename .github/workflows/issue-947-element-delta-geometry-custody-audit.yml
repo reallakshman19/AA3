@@ -1,4 +1,5 @@
 name: Issue 947 element DELTA geometry custody audit
+# Rerun after governed numerical-equivalence control correction.
 
 on:
   push:

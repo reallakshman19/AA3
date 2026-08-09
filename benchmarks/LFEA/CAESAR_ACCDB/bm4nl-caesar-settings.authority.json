@@ -3,7 +3,9 @@
   "benchmarkId": "BM4_NL",
   "caesarVersion": "14.000",
   "precedence": [
+    "LOAD_CASE_SETTING",
     "INDIVIDUAL_FILE_SETTING",
+    "MODEL_INPUT",
     "OVERALL_SETTING"
   ],
   "overall": {
@@ -37,6 +39,12 @@
       "ENFORCE_B31J_SIFS_ONLY": false
     }
   },
+  "modelInput": {
+    "source": "USER_CONFIRMED_BM4NL_MODEL_INPUT_2026-08-09",
+    "settings": {
+      "COEFFICIENT_OF_FRICTION_MU": 0.3
+    }
+  },
   "individualFile": {
     "source": "USER_CONFIRMED_BM4NL_INDIVIDUAL_FILE_SETTINGS_2026-08-09",
     "settings": {
@@ -47,6 +55,17 @@
       }
     }
   },
+  "loadCases": {
+    "source": "USER_CONFIRMED_BM4NL_LOAD_CASE_SETTINGS_2026-08-09",
+    "cases": {
+      "L19": {
+        "COEFFICIENT_OF_FRICTION_MU": 0
+      },
+      "L20": {
+        "COEFFICIENT_OF_FRICTION_MU": 0
+      }
+    }
+  },
   "effective": {
     "BOURDON_PRESSURE": "TRANSLATION_AND_ROTATION",
     "AMBIENT_TEMPERATURE": {
@@ -54,8 +73,13 @@
       "unit": "C"
     },
     "Z_AXIS_UP": "NO",
-    "COEFFICIENT_OF_FRICTION_MU": 0,
-    "DEFAULT_CODE": "B31.3_2022"
+    "DEFAULT_CODE": "B31.3_2022",
+    "L19": {
+      "COEFFICIENT_OF_FRICTION_MU": 0
+    },
+    "L20": {
+      "COEFFICIENT_OF_FRICTION_MU": 0
+    }
   },
   "bindings": [
     {
@@ -84,11 +108,27 @@
     },
     {
       "setting": "COEFFICIENT_OF_FRICTION_MU",
-      "authority": "OVERALL_SETTING",
-      "target": "BM4_NL validation scope",
-      "status": "BOUND_SCOPE",
+      "authority": "MODEL_INPUT",
+      "target": "BM4_NL model friction definition",
+      "status": "RECORDED_MODEL_INPUT",
+      "value": 0.3,
+      "note": "The model/input contains mu=0.3. This does not govern L19/L20 because their case-specific effective mu is zero."
+    },
+    {
+      "setting": "L19.COEFFICIENT_OF_FRICTION_MU",
+      "authority": "LOAD_CASE_SETTING",
+      "target": "L19 validation mechanics",
+      "status": "BOUND_CASE_EFFECTIVE",
       "value": 0,
-      "note": "Supports exclusion of frictional tangential force from the present linear qualification; does not qualify nonlinear contact."
+      "note": "L19 is frictionless for validation even though the underlying model input contains mu=0.3. No frictional tangential load may be introduced into the L19 replay."
+    },
+    {
+      "setting": "L20.COEFFICIENT_OF_FRICTION_MU",
+      "authority": "LOAD_CASE_SETTING",
+      "target": "L20 validation mechanics",
+      "status": "BOUND_CASE_EFFECTIVE",
+      "value": 0,
+      "note": "L20 is frictionless for validation even though the underlying model input contains mu=0.3. No frictional tangential load may be introduced into the L20 replay."
     },
     {
       "setting": "DEFAULT_CODE",

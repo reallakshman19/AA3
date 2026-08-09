@@ -7,7 +7,6 @@ on:
       - 'src/workspace/lfea-topology-review-view.js'
       - 'src/workspace/linear-piping-inputxml-diagnostics-view.js'
       - 'src/workspace/lfea-preflight-phase1-component-index.js'
-      - 'scripts/lfea-preflight-phase1-component-parent-repair-check.mjs'
       - 'scripts/lfea-preflight-phase1-virtualization-v3-check.mjs'
       - 'scripts/lfea-topology-review-prefea-integration-check.mjs'
       - '.github/workflows/agent16-p02b-qualification.yml'
@@ -43,7 +42,7 @@ jobs:
           cat /tmp/p02b-paths.txt
           while IFS= read -r changed; do
             case "$changed" in
-              src/workspace/lfea-topology-review-from-prefea.js|src/workspace/lfea-topology-review-view.js|src/workspace/linear-piping-inputxml-diagnostics-view.js|src/workspace/lfea-preflight-phase1-component-index.js|scripts/lfea-preflight-phase1-component-parent-repair-check.mjs|scripts/lfea-preflight-phase1-virtualization-v3-check.mjs|scripts/lfea-topology-review-prefea-integration-check.mjs|.github/workflows/agent16-p02b-qualification.yml) ;;
+              src/workspace/lfea-topology-review-from-prefea.js|src/workspace/lfea-topology-review-view.js|src/workspace/linear-piping-inputxml-diagnostics-view.js|src/workspace/lfea-preflight-phase1-component-index.js|scripts/lfea-preflight-phase1-virtualization-v3-check.mjs|scripts/lfea-topology-review-prefea-integration-check.mjs|.github/workflows/agent16-p02b-qualification.yml) ;;
               *) echo "P-02B qualification stack changed an unqualified path: $changed" >&2; exit 1 ;;
             esac
           done < /tmp/p02b-paths.txt
@@ -80,10 +79,7 @@ jobs:
       - name: Preserve P-06A indexed review core
         run: node scripts/lfea-preflight-phase1-indexed-model-check.mjs
 
-      - name: P-06B stable component-parent repair evidence
-        run: node scripts/lfea-preflight-phase1-component-parent-repair-check.mjs
-
-      - name: P-06B repaired 100k-line / 1m-component virtualization
+      - name: P-06B repaired component-parent identity and 100k-line / 1m-component virtualization
         run: node scripts/lfea-preflight-phase1-virtualization-v3-check.mjs
 
       - name: Preserve P-06C immutable review session
@@ -209,8 +205,7 @@ jobs:
         run: |
           printf '%s\n' \
             'P-10/P-09/P-07/P-08/P-06A preservation PASS' \
-            'P-06B stable component-parent repair PASS' \
-            'P-06B current-contract 100k-line / 1m-component virtualization PASS' \
+            'P-06B repaired component-parent identity + current-contract 100k-line / 1m-component virtualization PASS' \
             'P-06C immutable review session PASS' \
             'P-06C live-surface missing-CSS carried-red parity PROVEN' \
             'P-02A frozen topology review contract PASS' \

@@ -11,6 +11,24 @@ param(
 
 $ErrorActionPreference = 'Stop'
 
+function Get-Sha256LowerHex {
+  param(
+    [Parameter(Mandatory = $true)]
+    [string]$Path
+  )
+
+  $stream = [System.IO.File]::OpenRead($Path)
+  $sha256 = [System.Security.Cryptography.SHA256]::Create()
+  try {
+    $hash = $sha256.ComputeHash($stream)
+    return ([System.BitConverter]::ToString($hash)).Replace('-', '').ToLowerInvariant()
+  }
+  finally {
+    $sha256.Dispose()
+    $stream.Dispose()
+  }
+}
+
 function Convert-DatabaseValue {
   param(
     [Parameter(Mandatory = $false)]
@@ -119,7 +137,7 @@ try {
       fileName = $file.Name
       byteLength = $file.Length
       lastWriteTimeUtc = $file.LastWriteTimeUtc.ToString('o')
-      sha256 = (Get-FileHash -LiteralPath $resolvedPath -Algorithm SHA256).Hash.ToLowerInvariant()
+      sha256 = Get-Sha256LowerHex -Path $resolvedPath
     }
     provider = 'Microsoft.ACE.OLEDB.12.0'
     tables = $tables

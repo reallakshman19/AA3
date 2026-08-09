@@ -1,5 +1,5 @@
 name: Issue 947 node 22130 two-sided RZ reconstruction
-# Diagnostic revision: corrected exact E79 22125->22130 source adjacency.
+# Diagnostic revision: exact E79 adjacency and production Timoshenko rigid-frame profile.
 
 on:
   push:
@@ -34,6 +34,35 @@ jobs:
           repository: reallaksh19/Advanced_Analysis
           run-id: 31302834835
 
+      - name: Align standalone E79 evaluator with current production frame profile
+        shell: bash
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          import hashlib, json
+          path = Path('scripts/lfea-issue947-node22130-two-sided-rz-reconstruction.mjs')
+          text = path.read_text()
+          old = """    length,\n    shearDeformation: false,\n  }).matrix;"""
+          new = """    length,\n    shearDeformation: true,\n    shearCorrectionFactorY: 0.5,\n    shearCorrectionFactorZ: 0.5,\n  }).matrix;"""
+          count = text.count(old)
+          if count != 1:
+              raise SystemExit(f'Expected exactly one E79 rigid evaluator patch site, found {count}.')
+          before = hashlib.sha256(text.encode()).hexdigest()
+          patched = text.replace(old, new)
+          path.write_text(patched)
+          after = hashlib.sha256(patched.encode()).hexdigest()
+          Path('.work').mkdir(exist_ok=True)
+          Path('.work/issue947-node22130-rigid-evaluator-production-parity-patch.json').write_text(json.dumps({
+              'schema': 'lfea-issue947-diagnostic-patch/v1',
+              'scope': 'DIAGNOSTIC_ONLY_E79_STANDALONE_EVALUATOR',
+              'reason': 'Current ACCDB production buildRigidElement resolves the 10x-wall rigid section and compiles it through frameProfile(), which is PIPE_FRAME3D_TIMOSHENKO_V1 with kappaY=kappaZ=0.5.',
+              'productionSourceChanged': False,
+              'beforeSha256': before,
+              'afterSha256': after,
+              'replacementCount': count,
+          }, indent=2) + '\n')
+          PY
+
       - name: Run two-sided node 22130 RZ reconstruction
         shell: bash
         run: |
@@ -56,3 +85,4 @@ jobs:
           path: |
             .work/issue947-node22130-two-sided-rz-reconstruction.json
             .work/issue947-node22130-two-sided-rz-reconstruction.log
+            .work/issue947-node22130-rigid-evaluator-production-parity-patch.json

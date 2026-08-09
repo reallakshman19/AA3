@@ -45,3 +45,5 @@ jobs:
           name: issue-947-e36-production-condensation-audit
           if-no-files-found: error
           path: .work/issue947-e36-production-condensation-audit.json
+
+# Diagnostic rerun after authority/parity repair at eb53eb10977dbdf949d66094ad2247a7ee3a70a4.

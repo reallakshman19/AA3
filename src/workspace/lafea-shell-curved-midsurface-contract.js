@@ -194,15 +194,17 @@ export function validateLafeaCurvedShellMidsurfaceEvidence(value) {
 export function cylindricalShellPoint3d(geometryValue, u, v) {
   const geometry = validateLafeaCurvedShellMidsurfaceGeometry(geometryValue);
   const { axisOrigin, axisDirection, radialDirection, radius } = geometry.surface;
-  const tangentReference = cross(axisDirection, radialDirection);
+  const axis = vectorArray(axisDirection);
+  const radial0 = vectorArray(radialDirection);
+  const tangentReference = cross(axis, radial0);
   const theta = finite(u, 'U') / radius;
   const axial = finite(v, 'V');
   const radial = add(
-    scale(radialDirection, Math.cos(theta)),
+    scale(radial0, Math.cos(theta)),
     scale(tangentReference, Math.sin(theta)),
   );
   return freeze(vectorObject(add(
-    add(vectorArray(axisOrigin), scale(vectorArray(axisDirection), axial)),
+    add(vectorArray(axisOrigin), scale(axis, axial)),
     scale(radial, radius),
   )));
 }

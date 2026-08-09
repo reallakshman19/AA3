@@ -76,6 +76,7 @@ import {
   gatherJointDisplacement12,
   recoverElementEndAction,
 } from '../linear-fea-result-recovery/index.js';
+import { resolveCaesarBendPressureStiffeningPressurePa } from './caesar-bend-pressure-authority.js';
 import { semanticHash } from '../shared-piping-model/canonical-json.js';
 import { deepFreeze } from '../shared-piping-model/immutable.js';
 
@@ -849,7 +850,7 @@ function buildBendDefinitions(input) {
         outerDiameter: section.dimensions.outerDiameter,
         wallThickness: section.dimensions.wallThickness,
         bendRadius: radius,
-        pressure: Number(row.PRESSURE1) * KPA_TO_PA,
+        pressure: resolveCaesarBendPressureStiffeningPressurePa(row),
         elasticModulus: input.material.materialState.elasticModulus,
         bendAngleDegrees: bendAngle * 180 / Math.PI,
         smooth90FlexibilityCorrection: false,

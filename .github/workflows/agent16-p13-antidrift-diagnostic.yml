@@ -19,7 +19,7 @@ jobs:
         with:
           ref: ${{ github.event.pull_request.head.sha }}
 
-      - name: Inventory all anti-drift violations
+      - name: Inventory all file-level anti-drift violations
         shell: bash
         run: |
           node --input-type=module <<'EOF'
@@ -52,11 +52,21 @@ jobs:
             }
           }
           fs.writeFileSync('p13-antidrift-inventory.json', JSON.stringify({ count: violations.length, violations }, null, 2));
-          console.log(JSON.stringify({ count: violations.length, violations }, null, 2));
           EOF
 
-      - name: Upload inventory
+      - name: Capture exact anti-drift failure
+        shell: bash
+        run: |
+          set +e
+          node scripts/linear-piping-analysis-consumer-anti-drift-check.mjs > p13-antidrift-output.txt 2>&1
+          status=$?
+          printf '\nEXIT_STATUS=%s\n' "$status" >> p13-antidrift-output.txt
+          exit 0
+
+      - name: Upload diagnostic evidence
         uses: actions/upload-artifact@v4
         with:
-          name: p13-antidrift-inventory
-          path: p13-antidrift-inventory.json
+          name: p13-antidrift-diagnostic
+          path: |
+            p13-antidrift-inventory.json
+            p13-antidrift-output.txt

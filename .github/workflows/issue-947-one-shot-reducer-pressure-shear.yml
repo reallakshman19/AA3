@@ -11,7 +11,7 @@ permissions:
 
 jobs:
   apply:
-    if: "${{ github.event.head_commit.message == 'chore(issue947): apply reducer pressure and shear authority' }}"
+    if: "${{ github.event.head_commit.message == 'chore(issue947): retry reducer pressure and shear authority' }}"
     runs-on: ubuntu-latest
     timeout-minutes: 15
     steps:
@@ -24,6 +24,16 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: 22
+
+      - name: Repair generator quoting from failed dry-run
+        shell: python
+        run: |
+          from pathlib import Path
+          path = Path('scripts/lfea-issue947-apply-reducer-pressure-shear.mjs')
+          text = path.read_text()
+          text = text.replace('`uniform Timoshenko condensed stiffness[${index}]`', "'uniform Timoshenko condensed stiffness[' + index + ']'")
+          text = text.replace('`uniform pressure vector[${index}]`', "'uniform pressure vector[' + index + ']'")
+          path.write_text(text)
 
       - name: Apply deterministic reducer authority patch
         run: node scripts/lfea-issue947-apply-reducer-pressure-shear.mjs
@@ -65,7 +75,8 @@ jobs:
             src/core/fea-benchmarks/caesar-accdb-linear-solve.js \
             scripts/lfea-b3.23-reducer-condensation-check.mjs \
             scripts/lfea-m028-bm3-fixtures.mjs \
-            scripts/lfea-issue947-reducer-pressure-shear-audit.mjs
+            scripts/lfea-issue947-reducer-pressure-shear-audit.mjs \
+            scripts/lfea-issue947-apply-reducer-pressure-shear.mjs
           if git diff --cached --quiet; then
             echo 'Expected reducer pressure/shear patch produced no source diff.' >&2
             exit 1

@@ -13,15 +13,33 @@
 export const MEC21_BEND_PRESSURE_EXPANSION_FORMULATION =
   'MEC21_PART_II_EQ_2_25_BEND_PRESSURE_FREE_MOVEMENT_V1';
 
-/** Derive one bend arc's pressure-induced free end movement. */
+/** Derive one positive-angle bend arc's pressure-induced free end movement. */
 export function deriveMec21BendPressureFreeMovement(input) {
+  const bendAngle = positive(input?.bendAngle, 'bendAngle');
+  return deriveMec21BendPressureState(input, bendAngle);
+}
+
+/**
+ * Derive the free state at a cumulative station angle measured from one
+ * physical bend's initial point. Unlike the standalone movement helper this
+ * accepts the initial station `bendAngle = 0`, where the free state is zero.
+ *
+ * This exists so a discretized stiffness model can sample one physical
+ * bend-level MEC-21 field at all analysis stations instead of restarting
+ * equation (2.25) independently on every numerical chord.
+ */
+export function deriveMec21BendPressureFreeState(input) {
+  const bendAngle = nonnegative(input?.bendAngle, 'bendAngle');
+  return deriveMec21BendPressureState(input, bendAngle);
+}
+
+function deriveMec21BendPressureState(input, bendAngle) {
   const pressure = nonnegative(input?.pressure, 'pressure');
   const innerRadius = positive(input?.innerRadius, 'innerRadius');
   const bendRadius = positive(input?.bendRadius, 'bendRadius');
   const elasticModulus = positive(input?.elasticModulus, 'elasticModulus');
   const secondMoment = positive(input?.secondMoment, 'secondMoment');
   const poissonRatio = poisson(input?.poissonRatio);
-  const bendAngle = positive(input?.bendAngle, 'bendAngle');
   if (!(bendAngle < Math.PI)) throw new TypeError('bendAngle must be less than pi radians.');
 
   const radiusRatioSquared = (innerRadius / bendRadius) ** 2;

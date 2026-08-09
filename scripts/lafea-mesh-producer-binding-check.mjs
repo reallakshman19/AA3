@@ -8,7 +8,8 @@
  * Also asserts the negative cases, which are the ones that matter for
  * governance: stages with no bound producer must stay unauthorized, a mesh
  * that fails the profile's quality gates must not clear the gate, a Q8 request
- * must not leak partial T6 recombination, and v2 evidence must round-trip.
+ * must not leak partial T6 recombination, profile-hash inputs must not be
+ * overridden after binding, and v2 evidence must round-trip.
  */
 import assert from 'node:assert/strict';
 
@@ -272,11 +273,20 @@ const arcMesh = generateLafeaAnalysisMesh(arcAdapter, {
 assert.equal(arcMesh.boundarySegmentCount, 7,
   'the declared angular tolerance must be the exact binding curvature control');
 
-// --- LMB-08: full governed chain reaches CURRENT_PASS custody ---------------
+// --- LMB-08: bound profile is generation authority and reaches CURRENT_PASS --
 const stage = stageFor(geometry);
-const configuration = lafeaMeshGenerationConfiguration(meshProfileFor('Q8', 25), {
-  targetElementLength: 30,
-});
+const governedProfile = meshProfileFor('Q8', 30);
+assert.throws(
+  () => lafeaMeshGenerationConfiguration(governedProfile, { elementFamily: 'T6' }),
+  (error) => error?.code === 'LAFEA_MESH_GENERATION_PROFILE_ELEMENT_FAMILY_OVERRIDE_MISMATCH',
+);
+assert.throws(
+  () => lafeaMeshGenerationConfiguration(governedProfile, { targetElementLength: 25 }),
+  (error) => error?.code === 'LAFEA_MESH_GENERATION_PROFILE_TARGET_LENGTH_OVERRIDE_MISMATCH',
+);
+const configuration = lafeaMeshGenerationConfiguration(governedProfile);
+assert.equal(configuration.elementFamily, governedProfile.fields.continuumElement);
+assert.equal(configuration.targetElementLength, governedProfile.fields.globalTargetSize);
 const planned = planLafeaAnalysisMesh(stage, configuration);
 assert.equal(planned.plan.schema, 'lafea-mesh-plan/v2');
 assert.equal(planned.plan.engineeringAuthority, false, 'a plan is never authority');
@@ -287,6 +297,8 @@ assert.deepEqual(planned.readiness.reasons, [],
   'a bound producer must not still report REAL_PRODUCER_IMPLEMENTATION_NOT_BOUND');
 assert.equal(planned.intent.executionAuthorized, true);
 assert.equal(planned.intent.producerRef, LAFEA_MESH_PRODUCER_REF);
+assert.equal(planned.intent.elementFamily, governedProfile.fields.continuumElement);
+assert.equal(planned.intent.targetElementLength, governedProfile.fields.globalTargetSize);
 
 const produced = produceLafeaAnalysisMeshEvidence(stage, { ...configuration, planned });
 assert.equal(produced.output.lifecycleAuthority, false, 'output is never lifecycle authority');
@@ -359,9 +371,7 @@ assert.equal(staleCustody.usableForAdvance, false);
 assert.ok(staleCustody.staleReasons.includes('ANALYSIS_MESH_V2_SOURCE_PARENT_STALE'));
 
 // --- LMB-13: a mesh that fails its quality gates does not clear the gate ----
-const blockingConfiguration = lafeaMeshGenerationConfiguration(meshProfileFor('T6', 25), {
-  targetElementLength: 15,
-});
+const blockingConfiguration = lafeaMeshGenerationConfiguration(meshProfileFor('T6', 15));
 const blockingProduced = produceLafeaAnalysisMeshEvidence(stage, blockingConfiguration);
 assert.equal(blockingProduced.evidence.qualification, 'BLOCK');
 const blockedCustody = buildLafeaDomainFirstMeshCustodyProjection(

@@ -853,7 +853,7 @@ function buildBendDefinitions(input) {
         pressure: resolveCaesarBendPressureStiffeningPressurePa(row),
         elasticModulus: input.material.materialState.elasticModulus,
         bendAngleDegrees: bendAngle * 180 / Math.PI,
-        smooth90FlexibilityCorrection: false,
+        smooth90FlexibilityCorrection: input.solveProfile.b31jSmooth90FlexibilityCorrection.enabled,
         sourceEvidence: { sourceId: `ACCDB:BEND:${pointer}`, sourceRevision: input.benchmarkPackage.source.sha256 },
       },
       momentDirectionMapping: MOMENT_DIRECTION_MAPPING,

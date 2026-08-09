@@ -1,4 +1,4 @@
-# P2-8 planar shell and P2-9 retained-refinement qualification are permanent exact-head gates.
+# P2-8 shell and P2-9 retained-refinement qualification are permanent exact-head gates.
 name: LAFEA meshing exact-head qualification
 
 on:
@@ -23,6 +23,7 @@ on:
       - 'scripts/lafea-shell-workbench-route-check.mjs'
       - 'scripts/lafea-shell-hole-mesh-check.mjs'
       - 'scripts/lafea-shell-hole-ladder-check.mjs'
+      - 'scripts/lafea-shell-curved-cylinder-check.mjs'
       - 'scripts/lafea-mesh-dof-policy-check.mjs'
       - 'scripts/lafea-meshing-system-check.mjs'
       - 'scripts/lafea-p2-11-triage.mjs'
@@ -87,6 +88,9 @@ jobs:
 
       - name: Qualify planar shell holes and custody route
         run: node scripts/lafea-shell-hole-mesh-check.mjs
+
+      - name: Qualify cylindrical curved shell meshing and custody route
+        run: node scripts/lafea-shell-curved-cylinder-check.mjs
 
       - name: Qualify P2-11 check classification
         run: node scripts/lafea-p2-11-triage.mjs

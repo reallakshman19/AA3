@@ -7,10 +7,10 @@ import { inputXmlToCanonicalGeometry } from '../src/core/geometry/adapters/input
 import {
   LINEAR_PIPING_INPUTXML_ANALYSIS_REQUEST_SCHEMA,
   requireLinearPipingInputXmlAnalysisResult,
-  runLinearPipingAnalysisFromInputXml,
   runLinearPipingAnalysisFromSourceAuthorities,
   sealLinearPipingInputXmlSource,
 } from '../src/core/linear-piping-analysis-consumer/index.js';
+import { runLinearPipingAnalysisFromInputXml } from '../src/core/linear-piping-analysis-consumer/inputxml-source-binding.js';
 import {
   axisResult,
   compilerInput,

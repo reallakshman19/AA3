@@ -1,0 +1,43 @@
+name: Issue 947 smooth90 per-bend sensitivity audit
+
+on:
+  push:
+    branches:
+      - codex/issue-947-bm4nl-qualification
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  actions: read
+
+jobs:
+  audit:
+    if: "${{ github.event_name == 'workflow_dispatch' || github.event.head_commit.message == 'ci(issue947): run smooth90 per-bend sensitivity audit' }}"
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Download pinned canonical BM4_NL package
+        uses: actions/download-artifact@v4
+        with:
+          name: issue-947-bm4nl-qualification
+          path: .work/package
+          github-token: ${{ github.token }}
+          repository: reallaksh19/Advanced_Analysis
+          run-id: 31314047095
+      - name: Run one-bend-at-a-time sensitivity
+        run: |
+          mkdir -p .work
+          node scripts/lfea-issue947-smooth90-per-bend-sensitivity.mjs \
+            --package .work/package/bm4nl-canonical-package.json \
+            --out .work/issue947-smooth90-per-bend-sensitivity.json
+      - name: Upload per-bend evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: issue-947-smooth90-per-bend-sensitivity
+          if-no-files-found: error
+          path: .work/issue947-smooth90-per-bend-sensitivity.json

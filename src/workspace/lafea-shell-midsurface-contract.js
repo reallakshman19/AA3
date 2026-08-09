@@ -12,10 +12,12 @@ const DOMAIN_KEYS = Object.freeze([
   'schema', 'stageId', 'domainId', 'sourceHash', 'midsurfaceGeometryHash',
   'lengthUnit', 'topologyClass',
 ]);
+const DOMAIN_OUTPUT_KEYS = Object.freeze([...DOMAIN_KEYS, 'semanticHash']);
 const GEOMETRY_KEYS = Object.freeze([
   'schema', 'stageId', 'geometryId', 'lengthUnit', 'origin', 'axisU', 'axisV',
   'orientationPolicy', 'vertices', 'segments', 'loops',
 ]);
+const GEOMETRY_OUTPUT_KEYS = Object.freeze([...GEOMETRY_KEYS, 'semanticHash']);
 const EVIDENCE_KEYS = Object.freeze([
   'schema', 'stageId', 'sourceHash', 'analysisDomain', 'geometry', 'producerRef',
 ]);
@@ -44,9 +46,20 @@ export function createLafeaShellAnalysisDomain(value) {
 }
 
 export function validateLafeaShellAnalysisDomain(value) {
-  const { semanticHash, ...input } = value ?? {};
-  const rebuilt = createLafeaShellAnalysisDomain(input);
-  if (semanticHash !== rebuilt.semanticHash) fail('LAFEA_SHELL_DOMAIN_HASH_INVALID');
+  exact(value, DOMAIN_OUTPUT_KEYS, 'LAFEA_SHELL_DOMAIN_OUTPUT_KEYS_INVALID');
+  const rebuilt = createLafeaShellAnalysisDomain({
+    schema: value.schema,
+    stageId: value.stageId,
+    domainId: value.domainId,
+    sourceHash: value.sourceHash,
+    midsurfaceGeometryHash: value.midsurfaceGeometryHash,
+    lengthUnit: value.lengthUnit,
+    topologyClass: value.topologyClass,
+  });
+  if (value.semanticHash !== rebuilt.semanticHash
+    || JSON.stringify(value) !== JSON.stringify(rebuilt)) {
+    fail('LAFEA_SHELL_DOMAIN_HASH_INVALID');
+  }
   return rebuilt;
 }
 
@@ -144,9 +157,24 @@ export function createLafeaShellMidsurfaceGeometry(value) {
 }
 
 export function validateLafeaShellMidsurfaceGeometry(value) {
-  const { semanticHash, ...input } = value ?? {};
-  const rebuilt = createLafeaShellMidsurfaceGeometry(input);
-  if (semanticHash !== rebuilt.semanticHash) fail('LAFEA_SHELL_MIDSURFACE_GEOMETRY_HASH_INVALID');
+  exact(value, GEOMETRY_OUTPUT_KEYS, 'LAFEA_SHELL_MIDSURFACE_GEOMETRY_OUTPUT_KEYS_INVALID');
+  const rebuilt = createLafeaShellMidsurfaceGeometry({
+    schema: value.schema,
+    stageId: value.stageId,
+    geometryId: value.geometryId,
+    lengthUnit: value.lengthUnit,
+    origin: value.origin,
+    axisU: value.axisU,
+    axisV: value.axisV,
+    orientationPolicy: value.orientationPolicy,
+    vertices: value.vertices,
+    segments: value.segments,
+    loops: value.loops,
+  });
+  if (value.semanticHash !== rebuilt.semanticHash
+    || JSON.stringify(value) !== JSON.stringify(rebuilt)) {
+    fail('LAFEA_SHELL_MIDSURFACE_GEOMETRY_HASH_INVALID');
+  }
   return rebuilt;
 }
 

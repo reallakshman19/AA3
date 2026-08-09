@@ -39,6 +39,43 @@
     ".github/workflows/m047-bm4nl-i021-bend-incoming-straight-ab.yml"
   ],
   "mechanicsDelta": "Runtime qualification candidate only. Retain accepted I015 ordinary plain-FRAME Timoshenko mechanics and add the same governed base-beam law to non-tee BEND_INCOMING_STRAIGHT carriers. BEND_ARC and all other component mechanics remain held.",
-  "verdict": "PENDING",
-  "decisionReason": "Await exact-head locked Windows I021 A/B evidence."
+  "verdict": "REJECTED",
+  "decisionReason": "Exact-head locked Windows run 31316863680 completed successfully and proved the candidate boundary, 12/12 bend custody and target-node equilibrium, but the isolated system cutover does not satisfy M047 promotion gates. It improves L19 node 20090 FY from 8.542% to 5.747% relative error, reduces L19 displacement/rotation RMSnorm from 0.34639 to 0.32300, and reduces L19 source-action failures 23 -> 21 with RMSnorm 0.05304 -> 0.05241. However it creates a new L19 restraint failure at node 20390 FZ (9.961% -> 10.524%), increases L19 displacement failures 66 -> 67, and materially regresses L20: restraints 6 -> 7, displacement/rotation failures 90 -> 92, source-end-action failures 134 -> 171, with all three L20 RMS metrics worsening. The new L19 restraint lies downstream of bend sources 19/20 whose incoming-straight carriers changed while their arcs were intentionally frozen. Equilibrium remains numerical roundoff, so this is a mechanics-boundary result rather than recovery imbalance. The physical proposition that bend incoming straights require the common base-beam law remains plausible, but I021 proves that promoting only this carrier family on top of I015 is not an acceptable system architecture. Any future bend promotion must qualify incoming-straight and curved-pipe ownership coherently while keeping tee/reducer ownership separate.",
+  "executionEvidence": {
+    "orchestrationHeadSha": "3d14ccaa976c3aa935b4c75cacdf82a28f19faac",
+    "workflowRunId": 31316863680,
+    "workflowConclusion": "success",
+    "artifactId": 9039030342,
+    "artifactSha256": "e9ff6a0c4f3976c6f06ad6437d4b944312ff04da3f2f3fea36791223edda635b",
+    "semanticHash": "fnv1a64:ab949a81c7c8dc21",
+    "targetActionSumResidualAbsMax": 0,
+    "targetEquilibriumResidualAbsMax": 2.9558577807620168e-12
+  },
+  "observedResult": {
+    "candidateCarrierCustody": {
+      "bendIncomingStraightCountPerCase": 12,
+      "nonTeeSelectedCountPerCase": 11,
+      "teeHeldSourceElementId": "36",
+      "bendArcsChanged": false
+    },
+    "L19": {
+      "restraintFailures": "0 -> 1",
+      "restraintRmsNormalizedError": "0.021778551450530564 -> 0.020965767725124526",
+      "node20090FYRelativeError": "0.08542188461083092 -> 0.05747085252887415",
+      "newRestraintFailure": "node 20390 FZ: 0.09961259044390637 -> 0.10523663720418305",
+      "displacementRotationFailures": "66 -> 67",
+      "displacementRotationRmsNormalizedError": "0.3463907572374756 -> 0.3229995266584097",
+      "sourceEndActionFailures": "23 -> 21",
+      "sourceEndActionRmsNormalizedError": "0.05303530122813788 -> 0.052413612753106104"
+    },
+    "L20": {
+      "restraintFailures": "6 -> 7",
+      "restraintRmsNormalizedError": "0.03825058747833576 -> 0.040668796200371345",
+      "displacementRotationFailures": "90 -> 92",
+      "displacementRotationRmsNormalizedError": "0.2568590341983296 -> 0.27097455164857737",
+      "sourceEndActionFailures": "134 -> 171",
+      "sourceEndActionRmsNormalizedError": "0.1497606159392834 -> 0.16387639732667633"
+    },
+    "localizedBoundary": "The new L19 node 20390 FZ failure is downstream of source 19 and source 20 bend assemblies, whose BEND_INCOMING_STRAIGHT carriers changed while BEND_ARC carriers remained frozen."
+  }
 }

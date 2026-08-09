@@ -58,8 +58,18 @@ const profile = canonicalProfile(PROFILE_KINDS.MESH, {
   },
 });
 const produced = produceLafeaAnalysisMeshEvidence(stage, lafeaMeshGenerationConfiguration(profile));
+const nodeById = new Map(produced.evidence.mesh.nodes.map((node) => [node.nodeId, node]));
+const blockingRows = produced.evidence.quality.elementResults
+  .filter((row) => row.worstStatus === 'BLOCK')
+  .map((row) => {
+    const element = produced.evidence.mesh.elements.find((candidate) => candidate.elementId === row.elementId);
+    return {
+      ...row,
+      corners: element.nodeIds.slice(0, 4).map((nodeId) => nodeById.get(nodeId)),
+    };
+  });
 const report = {
-  schema: 'lafea-logical-side-diagnostic/v1',
+  schema: 'lafea-logical-side-diagnostic/v2',
   strategy: generated.strategy,
   strategyReason: generated.strategyReason,
   nodeCount: generated.nodeCount,
@@ -69,10 +79,10 @@ const report = {
   characteristicLengthMedian: generated.characteristicLengthMedian,
   characteristicLengthMax: generated.characteristicLengthMax,
   qualification: produced.evidence.qualification,
-  qualityStatus: produced.evidence.quality.status,
   blockingElementIds: produced.evidence.quality.blockingElementIds,
   warningElementIds: produced.evidence.quality.warningElementIds,
-  gates: produced.evidence.quality.gates,
+  gateResults: produced.evidence.quality.gateResults,
+  blockingRows,
 };
 fs.writeFileSync('logical-side-diagnostic.json', `${JSON.stringify(report, null, 2)}\n`);
 console.log(JSON.stringify(report));

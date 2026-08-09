@@ -12,6 +12,7 @@ const baselineOut = mkdtempSync(join(tmpdir(), 'lfea-m047-baseline-'));
 
 const CHECKS = Object.freeze([
   ['I000-I003 retained baseline chain', ['scripts/lfea-m047-materialize-baseline-chain.mjs', '--out-dir', baselineOut]],
+  ['I000 target-node evidence', ['scripts/lfea-m047-target-node-evidence-check.mjs']],
   ['I001 iteration evidence', ['scripts/lfea-caesar-accdb-iteration-evidence-check.mjs']],
   ['I002 MEC-21 equation', ['scripts/lfea-m047-bourdon-mechanics-check.mjs']],
   ['I003 subdivision diagnosis', ['scripts/lfea-m047-bourdon-subdivision-check.mjs']],

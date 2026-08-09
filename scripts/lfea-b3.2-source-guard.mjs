@@ -212,7 +212,7 @@ assert.doesNotMatch(
   'an input must never be skipped silently',
 );
 /* Branch classification reads directions; nominal diameter is retained as evidence only. */
-const classifier = /export function classifyBranchLegs\([\s\S]*?\n\}\n/u.exec(
+const classifier = /export function classifyBranchLegs\([\s\S]*?\r?\n\}\r?\n/u.exec(
   source['src/core/linear-fea-piping-components/branch-component.js'],
 );
 assert.ok(classifier, 'classifyBranchLegs must remain the named classification authority');

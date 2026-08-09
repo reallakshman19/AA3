@@ -33,10 +33,18 @@ jobs:
           run-id: 31302834835
 
       - name: Run MEC21 translation/rotation split
+        shell: bash
         run: |
+          set +e
           node scripts/lfea-issue947-e36-mec21-split-audit.mjs \
             --package .work/package/bm4nl-canonical-package.json \
-            --out .work/issue947-e36-mec21-split-audit.json
+            --out .work/issue947-e36-mec21-split-audit.json \
+            > .work/issue947-e36-mec21-split-stdout.txt \
+            2> .work/issue947-e36-mec21-split-stderr.txt
+          status=$?
+          cat .work/issue947-e36-mec21-split-stdout.txt
+          cat .work/issue947-e36-mec21-split-stderr.txt >&2
+          exit $status
 
       - name: Upload MEC21 split evidence
         if: always()
@@ -44,4 +52,7 @@ jobs:
         with:
           name: issue-947-e36-mec21-split-audit
           if-no-files-found: error
-          path: .work/issue947-e36-mec21-split-audit.json
+          path: |
+            .work/issue947-e36-mec21-split-audit.json
+            .work/issue947-e36-mec21-split-stdout.txt
+            .work/issue947-e36-mec21-split-stderr.txt

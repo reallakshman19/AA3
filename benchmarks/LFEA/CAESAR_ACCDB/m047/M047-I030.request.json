@@ -1,0 +1,41 @@
+{
+  "schema": "lfea-caesar-accdb-iteration-request/v1",
+  "issueId": "M047",
+  "iterationId": "M047-I030",
+  "classification": "SOURCE_COMPONENT_PRESCRIBED_DOF_REPLAY_AND_STATIC_CONDENSATION",
+  "expectedSourceAccdbSha256": "85d39463296e569da811d8572e2eff680b858097f76fdf0f47d1755f0b161c21",
+  "baseCommitSha": "882d59a99c3a03847d20bec34770ba57ff479d91",
+  "acceptedMechanicsParent": "M047-I029 smooth-90 only",
+  "motivation": "Remove global redistribution from the diagnosis. For every one of the 96 CAESAR source elements, assemble the exact LFEA descendant matrices and equivalent/initial load vectors under the accepted B31J smooth-90 mechanics, statically condense all analysis-internal DOFs to the source FROM/TO nodes, prescribe the CAESAR L19/L20 endpoint translations and rotations, and compare the resulting source end actions directly with CAESAR. This classifies each residual as a local component/formulation/load mismatch or a network redistribution effect without changing mechanics.",
+  "governingEquation": "q_b = (K_bb - K_bi K_ii^-1 K_ib) d_b - (f_b - K_bi K_ii^-1 f_i), with f = f_equivalent + f_initial and q in the existing joint-on-element global end-action convention.",
+  "scope": [
+    "all 96 source elements",
+    "all 12 bend composites including incoming straight plus discretized arc",
+    "tee-modified source carriers",
+    "reducers and rigids as their already-condensed analysis carriers",
+    "L19 and L20 CAESAR reference endpoint DOFs"
+  ],
+  "mechanicsFrozen": [
+    "B31J smooth-90 1.3/h correction from I029",
+    "Euler-Bernoulli base frame from frozen baseline; no shear candidate in the primary replay",
+    "B31J tee factors/current tee topology implementation",
+    "bend pressure stiffening as currently implemented",
+    "Bourdon translation+rotation",
+    "closed-end pressure strain",
+    "reducer Schur mechanics",
+    "gravity",
+    "L19/L20 friction=0",
+    "EC stiffness authority",
+    "thermal profile coefficient",
+    "restraints and comparison tolerances"
+  ],
+  "acceptanceInterpretation": [
+    "No production solver/profile mechanics change is permitted; runtime instrumentation may expose already-assembled element matrices and load vectors only.",
+    "If a system-failing source replays below 10% at CAESAR endpoint DOFs, its system error is classified as redistribution/upstream and that source must not be locally tuned.",
+    "If a source remains above 10% in prescribed replay, inspect the smallest owning mechanic for that source: bend factor/pressure/Bourdon, tee coupling/surface offset, reducer condensation, or base-frame/load law as applicable.",
+    "Use the source13-17 axial chain, source4, source37/38 and source44 as sentinels, but compute the replay for all 96 sources to avoid target fitting.",
+    "No benchmark-derived coefficient may be introduced."
+  ],
+  "verdict": "PENDING",
+  "decisionReason": "Await exact-head matrix-instrumented source replay under accepted smooth-90 mechanics."
+}

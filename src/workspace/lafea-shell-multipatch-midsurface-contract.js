@@ -1,14 +1,8 @@
 import { canonicalLafeaSha256 } from './lafea-canonical-sha256.js';
 import {
-  LAFEA_SHELL_ANALYSIS_DOMAIN_SCHEMA,
   LAFEA_SHELL_MIDSURFACE_GEOMETRY_SCHEMA,
-  LAFEA_SHELL_MIDSURFACE_INTAKE_SCHEMA,
   LAFEA_SHELL_MIDSURFACE_ORIENTATION,
-  LAFEA_SHELL_MIDSURFACE_TOPOLOGY,
-  createLafeaShellAnalysisDomain,
-  createLafeaShellMidsurfaceEvidence,
   createLafeaShellMidsurfaceGeometry,
-  validateLafeaShellMidsurfaceGeometry,
 } from './lafea-shell-midsurface-contract.js';
 
 export const LAFEA_SHELL_MULTIPATCH_ANALYSIS_DOMAIN_SCHEMA =
@@ -271,7 +265,13 @@ function canonicalFrame(origin, axisU, axisV, stageId, lengthUnit) {
     ],
     loops: [{ loopId: 'L', role: 'OUTER', segmentIds: ['S1', 'S2', 'S3'] }],
   });
-  return freeze({ origin: probe.origin, axisU: probe.axisU, axisV: probe.axisV });
+  return freeze({
+    stageId,
+    lengthUnit,
+    origin: probe.origin,
+    axisU: probe.axisU,
+    axisV: probe.axisV,
+  });
 }
 
 function canonicalPatch(value, frame) {
@@ -279,9 +279,9 @@ function canonicalPatch(value, frame) {
   const patchId = text(value.patchId, 'LAFEA_SHELL_MULTIPATCH_PATCH_ID_INVALID');
   const geometry = createLafeaShellMidsurfaceGeometry({
     schema: LAFEA_SHELL_MIDSURFACE_GEOMETRY_SCHEMA,
-    stageId: frame.stageId ?? inferStage(value),
+    stageId: frame.stageId,
     geometryId: `MULTIPATCH:${patchId}`,
-    lengthUnit: frame.lengthUnit ?? inferLengthUnit(value),
+    lengthUnit: frame.lengthUnit,
     origin: frame.origin,
     axisU: frame.axisU,
     axisV: frame.axisV,
@@ -395,8 +395,6 @@ function stage(value) {
   if (!STAGES.includes(value)) fail('LAFEA_SHELL_MULTIPATCH_STAGE_INVALID');
   return value;
 }
-function inferStage() { fail('LAFEA_SHELL_MULTIPATCH_INTERNAL_STAGE_MISSING'); }
-function inferLengthUnit() { fail('LAFEA_SHELL_MULTIPATCH_INTERNAL_LENGTH_UNIT_MISSING'); }
 function cross(a, b) {
   return freeze({
     x: canonical(a.y * b.z - a.z * b.y),

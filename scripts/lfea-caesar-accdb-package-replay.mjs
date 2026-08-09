@@ -13,7 +13,10 @@ import { dirname, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import {
   buildCaesarAccdbBenchmarkPackage,
+  createCaesarAccdbQualificationAdapter,
+  normalizeBenchmarkResultRows,
   requiredCaesarAccdbTables,
+  runGovernedBenchmarkQualification,
   solveCaesarAccdbLinearBenchmark,
 } from '../src/core/fea-benchmarks/index.js';
 import {
@@ -109,6 +112,10 @@ export function runCaesarAccdbPackageReplayCommand(argv) {
   if (args.packageInPath === null && args.packageOutPath === null) {
     throw new TypeError('ACCDB capture requires --package-out so the normalized source model remains replayable evidence.');
   }
+  if (args.solveLinear && args.actualPath !== null) {
+    throw new TypeError('--solve-linear true and --actual are mutually exclusive.');
+  }
+
   const benchmarkPackage = captureOrLoadCaesarAccdbPackage(args);
   if (args.expectedSourceSha256 !== null
       && benchmarkPackage.source.sha256 !== args.expectedSourceSha256) {
@@ -125,19 +132,37 @@ export function runCaesarAccdbPackageReplayCommand(argv) {
       throw new TypeError('--solve-linear true requires --actual-out to preserve iteration evidence.');
     }
     writeJson(actual, args.actualOutPath);
+  } else if (args.actualPath !== null) {
+    actual = readJson(args.actualPath, 'actual solver result');
+    if (args.actualOutPath !== null) writeJson(actual, args.actualOutPath);
   } else if (args.actualOutPath !== null) {
-    throw new TypeError('--actual-out requires --solve-linear true.');
+    throw new TypeError('--actual-out requires --solve-linear true or --actual.');
+  }
+
+  const qualification = actual === null ? null : qualifyActual(benchmarkPackage, actual);
+  const measurement = qualification === null
+    ? null
+    : summarizeQualification(benchmarkPackage, actual, qualification);
+  if (args.qualificationOutPath !== null) {
+    if (qualification === null) throw new TypeError('--qualification-out requires --solve-linear true or --actual.');
+    writeJson(qualification, args.qualificationOutPath);
+  }
+  if (args.measurementOutPath !== null) {
+    if (measurement === null) throw new TypeError('--measurement-out requires --solve-linear true or --actual.');
+    writeJson(measurement, args.measurementOutPath);
   }
 
   return Object.freeze({
-    status: 'PASS',
+    status: qualification?.status ?? 'PACKAGE_READY',
     sourceAccdbSha256: benchmarkPackage.source.sha256,
     packageSemanticHash: benchmarkPackage.semanticHash,
     modelSemanticHash: benchmarkPackage.model.semanticHash,
     profileId: benchmarkPackage.profile.profileId,
     caseIds: benchmarkPackage.cases.map((entry) => entry.caseId),
     packageMode: args.packageInPath === null ? 'CAPTURE_FROM_ACCDB' : 'REPLAY_CANONICAL_PACKAGE',
-    solved: actual !== null,
+    solved: args.solveLinear,
+    qualified: qualification !== null,
+    measurementSemanticHash: measurement?.semanticHash ?? null,
     executionSemanticHashes: actual === null
       ? null
       : Object.fromEntries(Object.entries(actual.cases)
@@ -147,6 +172,122 @@ export function runCaesarAccdbPackageReplayCommand(argv) {
       : Object.fromEntries(Object.entries(actual.cases)
           .map(([caseId, entry]) => [caseId, entry.executionEvidenceHash])),
   });
+}
+
+function qualifyActual(benchmarkPackage, actual) {
+  if (actual?.schema !== 'lfea-accdb-benchmark-actual/v1') {
+    throw new TypeError('Actual solver result must use lfea-accdb-benchmark-actual/v1.');
+  }
+  if (actual.sourceAccdbSha256 !== benchmarkPackage.source.sha256) {
+    throw new TypeError('Actual solver result is bound to another ACCDB source hash.');
+  }
+  const adapter = createCaesarAccdbQualificationAdapter(benchmarkPackage);
+  return runGovernedBenchmarkQualification({
+    adapter,
+    source: benchmarkPackage,
+    tolerances: benchmarkPackage.profile.tolerances,
+    optionalQuantities: [],
+    prepare: ({ caseIds, modelInput }) => governedRecord('ACCDB-PREPARATION', {
+      caseIds,
+      modelSemanticHash: modelInput.semanticHash,
+    }),
+    authorize: ({ caseIds, preparation }) => governedRecord('ACCDB-AUTHORIZATION', {
+      preparationSemanticHash: preparation.semanticHash,
+      authorizedPhysicalCaseIds: caseIds,
+      executionBoundary: { authorizationIssued: true },
+    }),
+    solve: ({ caseId }) => requireActualCase(actual, caseId),
+    normalizeSolved: (caseId, solved) => normalizeActualCase(caseId, solved),
+  });
+}
+
+function normalizeActualCase(caseId, value) {
+  const rows = normalizeBenchmarkResultRows(value.rows, caseId);
+  return Object.freeze({
+    rows,
+    exposedQuantities: Object.freeze([...new Set(rows.map((row) => row.quantity))].sort()),
+    executionSemanticHash: value.executionSemanticHash ?? null,
+    executionEvidenceHash: value.executionEvidenceHash ?? null,
+  });
+}
+
+function requireActualCase(actual, caseId) {
+  const value = actual.cases?.[caseId];
+  if (!value || !Array.isArray(value.rows)) {
+    throw new TypeError(`Actual solver result is missing case ${caseId}.`);
+  }
+  return value;
+}
+
+function governedRecord(kind, fields) {
+  const base = { kind, ...fields };
+  return Object.freeze({ ...base, semanticHash: semanticHash(base) });
+}
+
+function summarizeQualification(benchmarkPackage, actual, qualification) {
+  const cases = {};
+  for (const qualifiedCase of qualification.cases) {
+    const caseId = qualifiedCase.caseId;
+    const compared = qualifiedCase.comparison.rows.filter((row) =>
+      row.entityKind === 'NODE'
+      && ['FORCE', 'MOMENT'].includes(row.quantity)
+      && ['PASS', 'FAIL'].includes(row.status));
+    const failures = compared.filter((row) => row.status === 'FAIL');
+    const failedNodeIds = [...new Set(failures.map((row) => row.entityId))].sort(compareText);
+    const failureRows = failures.map(measurementRow).sort(compareMeasurementRows);
+    cases[caseId] = {
+      qualificationStatus: qualifiedCase.status,
+      executionStatus: actual.mechanics?.cases?.[caseId]?.executionStatus ?? null,
+      executionSemanticHash: actual.cases?.[caseId]?.executionSemanticHash ?? null,
+      executionEvidenceHash: actual.cases?.[caseId]?.executionEvidenceHash ?? null,
+      comparedRestraintComponentCount: compared.length,
+      exceedingRestraintCount: failedNodeIds.length,
+      exceedingComponentCount: failures.length,
+      worstFailure: failureRows[0] ?? null,
+      failures: failureRows,
+    };
+  }
+  const base = {
+    schema: 'lfea-bm4nl-iteration-measurement/v1',
+    sourceAccdbSha256: benchmarkPackage.source.sha256,
+    packageSemanticHash: benchmarkPackage.semanticHash,
+    modelSemanticHash: benchmarkPackage.model.semanticHash,
+    profileId: benchmarkPackage.profile.profileId,
+    qualificationStatus: qualification.status,
+    cases,
+  };
+  return Object.freeze({ ...base, semanticHash: semanticHash(base) });
+}
+
+function measurementRow(row) {
+  return {
+    nodeId: row.entityId,
+    quantity: row.quantity,
+    component: row.component,
+    unit: row.unit,
+    referenceValue: row.referenceValue,
+    actualValue: row.actualValue,
+    absoluteError: row.absoluteError,
+    relativeError: row.relativeError,
+    percentError: row.relativeError === null ? null : row.relativeError * 100,
+    scaleFloor: row.tolerance?.scaleFloor ?? null,
+    status: row.status,
+  };
+}
+
+function compareMeasurementRows(left, right) {
+  const leftError = left.relativeError ?? -1;
+  const rightError = right.relativeError ?? -1;
+  if (leftError !== rightError) return rightError - leftError;
+  const nodeOrder = compareText(left.nodeId, right.nodeId);
+  if (nodeOrder !== 0) return nodeOrder;
+  const quantityOrder = compareText(left.quantity, right.quantity);
+  if (quantityOrder !== 0) return quantityOrder;
+  return compareText(left.component, right.component);
+}
+
+function compareText(left, right) {
+  return String(left) < String(right) ? -1 : String(left) > String(right) ? 1 : 0;
 }
 
 function parseArguments(argv) {
@@ -162,7 +303,7 @@ function parseArguments(argv) {
   }
   const known = new Set([
     '--accdb', '--profile', '--package-in', '--package-out', '--expected-source-sha256',
-    '--solve-linear', '--actual-out',
+    '--solve-linear', '--actual', '--actual-out', '--qualification-out', '--measurement-out',
   ]);
   const unknown = [...accepted.keys()].filter((key) => !known.has(key));
   if (unknown.length > 0) throw new TypeError(`Unknown command arguments: ${unknown.join(', ')}.`);
@@ -181,7 +322,10 @@ function parseArguments(argv) {
     packageOutPath: accepted.get('--package-out') ?? null,
     expectedSourceSha256,
     solveLinear: solveLinearText.toLowerCase() === 'true',
+    actualPath: accepted.get('--actual') ?? null,
     actualOutPath: accepted.get('--actual-out') ?? null,
+    qualificationOutPath: accepted.get('--qualification-out') ?? null,
+    measurementOutPath: accepted.get('--measurement-out') ?? null,
   });
 }
 

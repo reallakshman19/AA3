@@ -53,6 +53,7 @@ export async function selectFirstNodeThroughObjectTree(host) {
 }
 
 export async function inspectControl(locator, entry) {
+  await locator.scrollIntoViewIfNeeded();
   return locator.evaluate((control, expected) => {
     const icon = control.querySelector(':scope > svg[data-topology-edit-icon-key]');
     const use = icon?.querySelector(':scope > use');
@@ -63,18 +64,38 @@ export async function inspectControl(locator, entry) {
     const drawableGeometryCount = target?.querySelectorAll(
       'path,rect,circle,ellipse,line,polyline,polygon',
     ).length ?? 0;
-    const rect = icon?.getBoundingClientRect() ?? { width: 0, height: 0 };
+    const rect = icon?.getBoundingClientRect() ?? { width: 0, height: 0, top: 0, left: 0 };
     let bbox = { width: 0, height: 0 };
     try { bbox = use?.getBBox?.() ?? bbox; } catch { /* zero below */ }
+
     let visible = Boolean(icon && use);
-    let node = icon;
-    while (visible && node && node.nodeType === Node.ELEMENT_NODE) {
+    let effectiveOpacity = 1;
+    let hiddenBy = null;
+    for (let node = icon; visible && node && node.nodeType === Node.ELEMENT_NODE; node = node.parentElement) {
       const style = getComputedStyle(node);
+      const opacity = Number(style.opacity);
+      if (Number.isFinite(opacity)) effectiveOpacity *= opacity;
       if (style.display === 'none' || style.visibility === 'hidden'
-          || style.visibility === 'collapse' || Number(style.opacity) <= 0) visible = false;
-      if (node === control) break;
-      node = node.parentElement;
+          || style.visibility === 'collapse' || style.contentVisibility === 'hidden'
+          || effectiveOpacity <= 0) {
+        visible = false;
+        hiddenBy = node === icon ? 'icon' : node === control ? 'control' : node.tagName.toLowerCase();
+      }
     }
+    const inViewport = rect.width > 0 && rect.height > 0
+      && rect.top < innerHeight && rect.left < innerWidth
+      && rect.top + rect.height > 0 && rect.left + rect.width > 0;
+    visible = visible && inViewport;
+
+    const controlStyle = getComputedStyle(control);
+    const color = controlStyle.color;
+    const transparentCurrentColor = /rgba?\([^)]*,\s*0(?:\.0+)?\s*\)$/.test(color)
+      || color === 'transparent';
+    if (transparentCurrentColor) {
+      visible = false;
+      hiddenBy = hiddenBy ?? 'transparent-current-color';
+    }
+
     let referenceStatus = 'RESOLVED';
     if (!use) referenceStatus = 'NO_SVG_ICONS';
     else if (actualReference.endsWith('-broken')) referenceStatus = 'BROKEN';
@@ -89,7 +110,13 @@ export async function inspectControl(locator, entry) {
       drawableGeometryCount,
       renderedBounds: { width: rect.width, height: rect.height },
       useBounds: { width: bbox.width, height: bbox.height },
-      computedVisibility: { visible },
+      computedVisibility: {
+        visible,
+        inViewport,
+        effectiveOpacity,
+        currentColor: color,
+        hiddenBy,
+      },
       state: {
         disabled: Boolean(control.disabled),
         pressed: control.getAttribute('aria-pressed'),

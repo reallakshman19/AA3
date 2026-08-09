@@ -33,6 +33,34 @@ jobs:
           repository: reallaksh19/Advanced_Analysis
           run-id: 31302834835
 
+      - name: Align coordinate index with canonical ACCDB segment schema
+        shell: bash
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          import hashlib, json
+          path = Path('scripts/lfea-issue947-rigid-stiffness-formulation-audit.mjs')
+          text = path.read_text()
+          old = """function coordinateIndex(rows) {\n  const map = new Map();\n  for (const row of rows) {\n    const id = String(row.NODE);\n    map.set(id, [Number(row.X) * MM_TO_M, Number(row.Y) * MM_TO_M, Number(row.Z) * MM_TO_M]);\n  }\n  return map;\n}"""
+          new = """function coordinateIndex(rows) {\n  const map = new Map();\n  for (const row of rows) {\n    setCoordinate(map, row.FROM_NODE, row.FROM_NODE_X, row.FROM_NODE_Y, row.FROM_NODE_Z);\n    setCoordinate(map, row.TO_NODE, row.TO_NODE_X, row.TO_NODE_Y, row.TO_NODE_Z);\n  }\n  return map;\n}\n\nfunction setCoordinate(map, nodeId, x, y, z) {\n  const id = String(nodeId);\n  const point = [Number(x) * MM_TO_M, Number(y) * MM_TO_M, Number(z) * MM_TO_M];\n  const prior = map.get(id);\n  if (prior && prior.some((value, index) => Math.abs(value - point[index]) > 1e-9)) {\n    throw new TypeError(`Coordinate drift for node ${id}.`);\n  }\n  map.set(id, point);\n}"""
+          count = text.count(old)
+          if count != 1:
+              raise SystemExit(f'Expected exactly one coordinate-index patch site, found {count}.')
+          before = hashlib.sha256(text.encode()).hexdigest()
+          patched = text.replace(old, new)
+          path.write_text(patched)
+          Path('.work').mkdir(exist_ok=True)
+          Path('.work/issue947-rigid-stiffness-coordinate-schema-patch.json').write_text(json.dumps({
+              'schema': 'lfea-issue947-diagnostic-patch/v1',
+              'scope': 'DIAGNOSTIC_ONLY_COORDINATE_INDEX',
+              'reason': 'Canonical INPUT_NODAL_COORDINATES stores FROM_NODE/TO_NODE endpoint coordinates per source segment.',
+              'productionSourceChanged': False,
+              'beforeSha256': before,
+              'afterSha256': hashlib.sha256(patched.encode()).hexdigest(),
+              'replacementCount': count,
+          }, indent=2) + '\n')
+          PY
+
       - name: Run all-rigid EB versus current Timoshenko audit
         run: |
           mkdir -p .work
@@ -46,4 +74,6 @@ jobs:
         with:
           name: issue-947-rigid-stiffness-formulation-audit
           if-no-files-found: error
-          path: .work/issue947-rigid-stiffness-formulation-audit.json
+          path: |
+            .work/issue947-rigid-stiffness-formulation-audit.json
+            .work/issue947-rigid-stiffness-coordinate-schema-patch.json

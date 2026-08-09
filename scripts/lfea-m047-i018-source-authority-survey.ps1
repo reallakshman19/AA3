@@ -12,7 +12,11 @@ function Get-Sha256LowerHex {
 
 function Get-RelativePathSafe {
   param([string]$Root, [string]$Path)
-  $rootFull = [System.IO.Path]::GetFullPath($Root).TrimEnd([char[]]@('\\','/'))
+  $separators = [char[]]@(
+    [System.IO.Path]::DirectorySeparatorChar,
+    [System.IO.Path]::AltDirectorySeparatorChar
+  )
+  $rootFull = [System.IO.Path]::GetFullPath($Root).TrimEnd($separators)
   $pathFull = [System.IO.Path]::GetFullPath($Path)
   if ([string]::Equals($rootFull, $pathFull, [System.StringComparison]::OrdinalIgnoreCase)) {
     return '.'
@@ -21,7 +25,10 @@ function Get-RelativePathSafe {
   if (-not $pathFull.StartsWith($prefix, [System.StringComparison]::OrdinalIgnoreCase)) {
     throw "Path $pathFull is outside archive root $rootFull."
   }
-  return $pathFull.Substring($prefix.Length).Replace('\\','/')
+  return $pathFull.Substring($prefix.Length).Replace(
+    [System.IO.Path]::DirectorySeparatorChar,
+    [char]'/'
+  )
 }
 
 $root = (Resolve-Path -LiteralPath $ArchiveRoot).Path

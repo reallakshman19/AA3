@@ -86,9 +86,14 @@ jobs:
       - name: Run node 22130 source-custody audit
         shell: pwsh
         run: |
+          $ErrorActionPreference = 'Continue'
           node scripts/lfea-issue947-node22130-reference-custody.mjs `
             --raw .work/node22130-raw-export.json `
-            --out .work/issue947-node22130-reference-custody.json
+            --out .work/issue947-node22130-reference-custody.json `
+            *> .work/issue947-node22130-reference-custody.log
+          $status = $LASTEXITCODE
+          Get-Content -LiteralPath .work/issue947-node22130-reference-custody.log
+          if ($status -ne 0) { exit $status }
 
       - name: Upload node 22130 custody evidence
         if: always()
@@ -98,4 +103,5 @@ jobs:
           if-no-files-found: error
           path: |
             .work/issue947-node22130-reference-custody.json
+            .work/issue947-node22130-reference-custody.log
             .work/node22130-raw-export.json

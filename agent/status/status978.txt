@@ -80,11 +80,9 @@ I019 exact evidence:
   64621bb1efd0206e9aef50a6d095579a272b39e7b3e97f826a0a51c35f630ddb;
 - semantic hash fnv1a64:73c14de94926027d.
 
-I020 extends the trace to architectural boundaries:
-- tee side: node 20160 -> sources 12/13 -> I015-selected continuations;
-- reducer/bend side: node 20230 -> bend sources 42/43 -> source 44;
-- candidate-minus-baseline MZ action closes below 1e-6 N.m at every governed
-  physical node.
+I020 extends the trace through tee and bend/reducer boundaries and proves
+candidate-minus-baseline MZ closure below 1e-6 N.m at every governed physical
+node.
 
 I020 classification:
 
@@ -97,165 +95,176 @@ Corrected exact evidence:
   0acc6b276631c95843e53f5f92ee6b9c2c40b4762a85f139f2ff0a482c32f2d7;
 - semantic hash fnv1a64:6d699c3c99d2e5f5.
 
-I019/I020 remain mandatory sentinels for every later component experiment.
+I019/I020 remain mandatory sentinels.
 
 ======================================================================
-4. SPECIAL-COMPONENT PARTIAL CUTOVERS — REJECTED FOR PROMOTION
+4. SPECIAL-COMPONENT PARTIAL CUTOVERS — NOT PROMOTABLE
 ======================================================================
 
 I021 — non-tee BEND_INCOMING_STRAIGHT only:
-- node 20090 FY 8.542% -> 5.747%, but node 20390 FZ 9.961% -> 10.524%;
-- L20 materially regresses;
-- equilibrium stays exact.
+- node 20090 FY 8.542% -> 5.747%;
+- node 20390 FZ 9.961% -> 10.524%;
+- L20 materially regresses.
 Decision: REJECT isolated incoming-straight promotion.
-Exact run 31316863680; artifact 9039030342; digest
+Run 31316863680; artifact 9039030342; digest
   e9ff6a0c4f3976c6f06ad6437d4b944312ff04da3f2f3fea36791223edda635b.
 
-I022 — coherent non-tee bend family (incoming straight + BEND_ARC base beam):
-- 11 non-tee incoming straights + all 226 BEND_ARC carriers use Timoshenko;
-- bend factor/flexibility/pressure-stiffening/subdivision authority unchanged;
-- B3.2 component-level Timoshenko bend/double-count proof passes;
-- node 20090 FY 8.542% -> 4.463%, displacement failures 66 -> 65 and source
-  actions 23 -> 22;
-- but node 20390 FZ becomes 10.724%, source44 MZ crosses threshold, and L20
-  worsens to 8 restraint / 175 source-action failures.
-Decision: REJECT current bend composite as final CAESAR-compatible architecture.
+I022 — non-tee bend composite:
+- 11 non-tee incoming straights plus all 226 BEND_ARC base frames use the
+  Timoshenko base beam under unchanged bend factors/corrections;
+- node 20090 FY 8.542% -> 4.463%; displacement failures 66 -> 65;
+  source-action failures 23 -> 22;
+- node 20390 FZ becomes 10.724%; source44 MZ crosses threshold;
+  L20 worsens to 8 restraint / 175 source-action failures.
+Decision: REJECT current bend composite as final architecture.
 Evidence semantic hash fnv1a64:03439cba369b39d2.
 
 I023 — tee-modified straight FRAME only:
 - sources 9,12,13,17,18 added beneath unchanged B31J modifiers;
-- source36 tee/bend incoming straight held;
 - node 20090 FY 8.542% -> 2.104%; L19 displacement failures 66 -> 48;
-  source actions 23 -> 17; all six I019 9-11 MZ threshold rows resolve;
-- but node 20390 FZ becomes 10.808%; L20 source-action count rises 134 -> 166.
+  source actions 23 -> 17; all six I019 9-11 MZ rows resolve;
+- node 20390 FZ becomes 10.808%; L20 source-action count rises 134 -> 166.
 Decision: REJECT isolated tee-FRAME promotion; B31J ownership itself is not rejected.
-Exact evidence: head 22546111e92280af7b4d96120cf34c741467a21e; run
-31318659758; artifact 9039552286; digest
+Exact evidence: run 31318659758; artifact 9039552286; digest
   d6e3c837d627b2f4d65c41286003399de5465ef023b86fe009229c218539c713;
 semantic hash fnv1a64:b1efa2fa9b992432.
 
-I024 — reducer internal Timoshenko + coherent stiffness/load Schur condensation:
-- four real reducer sources remain 11,16,67,75;
-- ten-cylinder geometry and midpoint sampling unchanged;
-- each internal cylinder uses kappa=0.53 Timoshenko stiffness and the same
-  phiXY/phiXZ in its consistent gravity-load interpolation;
-- thermal initial strain remains purely axial;
-- stiffness, gravity and thermal vectors use the same Kii/internal DOFs;
-- dedicated uniform-reducer proof passes for direct full-length Timoshenko
-  stiffness, gravity vector and thermal initial-strain vector equivalence;
-- 12/12 bends, unchanged tee authority and exact target equilibrium retained.
+I024 — reducer internal Timoshenko with coherent stiffness/load Schur ownership:
+- four REDUCER sources remain 11,16,67,75;
+- ten-cylinder geometry/sampling unchanged;
+- internal cylinder stiffness and consistent gravity interpolation use the same
+  Timoshenko phi; thermal initial strain remains axial;
+- stiffness, gravity and thermal vectors condense through the same internal DOFs;
+- uniform 10-cylinder reducer matches one direct full-length Timoshenko element
+  for stiffness, gravity vector and thermal initial-strain vector;
+- 12/12 bends, unchanged tee authority and exact equilibrium retained.
 
-I024 system result relative to accepted I015:
-- L19 restraints 0 -> 1;
-- node 20090 FY 8.5422% -> 8.5226% (nearly neutral);
-- node 20390 FZ 9.9613% -> 10.1006% (new failure);
-- displacement failures 66 -> 64 but RMSnorm 0.346391 -> 0.347918;
-- source-action failures 23 -> 23 and RMSnorm slightly worsens;
-- all six I019 sources9-11 MZ failures remain and worsen slightly;
+System result relative to I015:
+- L19 restraints 0 -> 1; node20390 FZ 9.9613% -> 10.1006%;
+- node20090 FY nearly neutral at 8.5226%;
 - L20 restraints 6 -> 7 with new node21470 FY 10.0244%;
-- L20 source actions 134 -> 137; all aggregate RMS metrics worsen.
+- L20 source actions 134 -> 137.
 
 Decision:
 
-    QUALIFY REDUCER SCHUR OWNERSHIP; REJECT ISOLATED I024 SYSTEM PROMOTION
+    QUALIFY REDUCER SCHUR OWNERSHIP; REJECT ISOLATED I024 PROMOTION
 
-Exact I024 evidence:
-- orchestration head b328a5d2041f9ee9813d1a4805b587a6ca9eadc2;
-- run 31319146826 SUCCESS;
-- artifact 9039677879;
-- digest
+Exact evidence: run 31319146826; artifact 9039677879; digest
   6145a42d7c8fb49f7b8ab607e7883abe9fde98148435c66dc8ace420fa8505e0;
-- A/B semantic hash fnv1a64:545cf6a50b595d0b;
-- candidate reducer SHA
-  0c138b0bc029e3ff4736f384d5b3f4e5217fe1ae47c551d391db1d3f79356178;
+A/B semantic hash fnv1a64:545cf6a50b595d0b.
+
+======================================================================
+5. I025 — FULL FLEXIBLE-PIPE COVERAGE DIAGNOSTIC — COMPLETE
+======================================================================
+
+I025 removed the mixed Euler/Timoshenko flexible-pipe interfaces in one
+controlled diagnostic. Starting from accepted I015, the same kappa=0.53 base
+beam was applied simultaneously to:
+- every FRAME, including tee-modified frames;
+- every BEND_INCOMING_STRAIGHT, including tee-owned source36;
+- every BEND_ARC component base frame;
+- every reducer internal cylinder before the qualified Schur condensation.
+
+Held unchanged:
+- B31J factors, end springs and rigid offsets;
+- bend flexibility correction, pressure stiffening and subdivision;
+- reducer geometry/sampling/Schur equations;
+- rigid, Bourdon, closed-end pressure, thermal and gravity authority;
+- load cases, tolerances and CAESAR reference rows.
+
+Exact I025 evidence:
+- orchestration head 26854834bcc50f66c65ed7be3f0bd08007720c94;
+- run 31319518458 SUCCESS;
+- artifact 9039782798;
+- digest
+  d53cc6b2afff7c2c5e5d24f94c8bc72aaa02f3c5761b5b275373cb60cc06efe9;
+- A/B semantic hash fnv1a64:fe98e6e2e4a9d7d9;
+- candidate solver SHA
+  8e8456c0ce20ee7762be58615ab0f8a32d9c722c5dbbdf761dd6a967eced29ba;
 - target action-sum residual max 0;
-- target equilibrium residual max 6.821e-13.
+- target equilibrium residual max 4.775e-12.
 
-Combined I021-I024 conclusion:
+L19 result:
+- node20090 FY 8.5422% -> 1.6583%;
+- all six I019 sources9-11 MZ failures resolve to ~8.49-9.62%;
+- displacement/rotation failures 66 -> 55;
+- displacement/rotation RMSnorm 0.346391 -> 0.189360;
+- source-action failures 23 -> 17;
+- BUT restraint failures 0 -> 2:
+  - node20250 FZ 5.9897% -> 10.0206%;
+  - node20390 FZ 9.9613% -> 11.9016%;
+- source44 FROM MZ 7.3679% PASS -> 16.3230% FAIL.
 
-    SPECIAL_COMPONENT_PARTIAL_CUTOVERS_ARE_NOT_PROMOTABLE
+L20 result:
+- restraint failures 6 -> 10;
+- new failures include node20030 FX, node20090 FY, node21470 FY and node21640 FX;
+- displacement/rotation failures remain 90 and RMSnorm worsens slightly;
+- source-action failures 134 -> 206, although source-action RMSnorm improves modestly.
 
-The common transverse-shear mechanism is still supported, and reducer
-stiffness/load ownership is now independently qualified. But changing only one
-special-component family moves the connected solved field and repeatedly
-crosses the node20390/source44/restraint boundary. The next test must be a
-coherent all-flexible-carrier coverage diagnostic, not another isolated family.
+Decision:
+
+    PARTIAL_COVERAGE_CONFIRMED_BUT_NOT_SUFFICIENT
+    REJECT KAPPA=0.53 FULL-COVERAGE SYSTEM PROMOTION
+
+Interpretation:
+- mixed constitutive coverage was a real contributor to the I019 9-11 MZ
+  redistribution and the poor node20090/displacement field;
+- because plain-FRAME restraints 20250/20390 and source44 remain or worsen after
+  coherent coverage, the remaining error is not a family-coverage problem alone;
+- further family-by-family cutovers are not justified;
+- the next mechanics variable must be source-authoritative shear-factor /
+  shear-formulation authority and, after that, independently owned special-
+  component corrections. Do not select kappa by benchmark fitting.
 
 ======================================================================
-5. L20 THERMAL AUTHORITY — EXTERNALLY BLOCKED
+6. L20 THERMAL AUTHORITY — EXTERNALLY BLOCKED
 ======================================================================
 
-Historical I009/I010 remain diagnostic only:
-- coherent fitted multiplier ~1.0454694;
-- diagnostic alpha ~12.23199e-6/K from current 11.7e-6/K;
-- fitted I010 improves some L20 actions but benchmark-derived alpha is prohibited.
+Historical fitted alpha evidence remains diagnostic only and is prohibited as
+production authority.
 
-I016 REJECTED as inactive:
-- MODULUS == HOT_MOD1 == 203395008 kPa across all 96 sources;
-- changing selector changes zero physical rows.
+I016 rejected hot/cold modulus selection as inactive because MODULUS == HOT_MOD1
+for all 96 sources.
 
-I017 ACCEPTED ACCDB export boundary:
+I017/I018 establish:
 - CAESAR II 14.00; B31.3-2022 / B31J-2017; material 106 A106 Grade B;
-- TEMP_EXP_C1=120 C;
-- no separately exported material-library mean CTE / derived strain.
-
-I018 ACCEPTED source-archive survey:
-- pinned archive contains BM4_NL.ACCDB only;
-- no auxiliary CAESAR material/alpha report.
+- T1=120 C;
+- no separately exported material-library mean CTE / derived strain;
+- pinned archive contains only BM4_NL.ACCDB and no alpha/material report.
 
 Current thermal gate:
 
     EXTERNAL_MATERIAL_AUTHORITY_REQUIRED
 
-Admissible paths:
+Admissible inputs:
 1. exact CAESAR II 14.00 cmat.bin plus active UMD identity/hash and material-106
    provenance; or
 2. exact applicable ASME B31.3-2022 Table C-3 values plus documented CAESAR
-   interpolation from the 21 C reference to 120 C.
+   interpolation from 21 C to 120 C.
 
 No numeric CTE change is authorized until independent provenance exists.
-Use r_T=(L20-L19)_LFEA-(L20-L19)_CAESAR for localization; do not tune reactions.
 
 ======================================================================
-6. SHEAR-FACTOR AUTHORITY
+7. PRIMARY NEXT MECHANICS GATE — SHEAR-FACTOR / FORMULATION AUTHORITY
 ======================================================================
 
-Current mechanism experiments use kappa_y=kappa_z=0.53 from the Cowper
-thin-annulus formulation. Mechanism identification is accepted; exact
-CAESAR-specific metallic-pipe shear-factor authority remains open.
+Current experiments use kappa_y=kappa_z=0.53 from a Cowper thin-annulus
+experiment. I015 and I025 prove that transverse shear is a material mechanism
+in this benchmark, but I025 proves that the current kappa/full-coverage
+formulation is not sufficient for system promotion.
 
-No commercial kappa is inferred by benchmark fitting. Final production
-promotion still requires a source-authoritative CAESAR-compatible parameter or
-independently justified formulation boundary.
+Next admissible mechanics work must therefore establish, from primary or
+vendor-authoritative evidence:
+- whether CAESAR II uses transverse shear deformation for metallic pipe in this
+  analysis path;
+- the exact shear-area / shear-correction formulation if it does;
+- whether the factor is constant or section/Poisson dependent;
+- how that base-beam shear formulation composes with bend flexibility, B31J tee
+  flexibility and condensed reducers without double counting.
 
-======================================================================
-7. NEXT MECHANICS GATE — COHERENT FULL FLEXIBLE-PIPE COVERAGE
-======================================================================
-
-The next controlled diagnostic will start from accepted I015 and apply the same
-base-beam law coherently to every flexible-pipe carrier in the current model:
-- ordinary FRAME, with or without tee ownership;
-- every BEND_INCOMING_STRAIGHT, including tee-owned source36;
-- every BEND_ARC component base frame;
-- every reducer internal cylinder before the qualified stiffness/load Schur
-  condensation.
-
-Held independent mechanics remain unchanged:
-- B31J tee factors, springs and rigid surface offsets;
-- bend flexibility correction, pressure stiffening and subdivision;
-- reducer ten-cylinder geometry/sampling/condensation equations;
-- rigid elements;
-- Bourdon and closed-end pressure mechanics;
-- thermal-expansion authority and gravity mass authority;
-- tolerances and CAESAR reference rows.
-
-Purpose: determine whether node20390/source44/I019 crossings are caused by
-partial constitutive coverage. This is a diagnostic of common-law ownership,
-not automatic authorization to promote the existing bend/B31J correction
-composition. If full coverage restores the L19 restraint gate while improving
-the connected action field, it supports the partial-boundary hypothesis; if it
-still fails, the remaining discrepancy is in component-specific formulation or
-parameter authority rather than coverage alone.
+Do not inverse-fit kappa to node20090, node20390, source44 or aggregate benchmark
+metrics. Do not introduce a new numeric kappa into a candidate until its source
+and applicability are pinned.
 
 ======================================================================
 8. ROADMAP
@@ -264,23 +273,24 @@ parameter authority rather than coverage alone.
 P0 — package/source/equilibrium custody — COMPLETE.
 
 P1 — L20 thermal authority — ACTIVE / EXTERNALLY BLOCKED.
-Next admissible input: independent cmat.bin/UMD or ASME Table C-3 authority.
 
-P2 — transverse-shear architecture — ACTIVE.
-- I021 incoming-straight-only: rejected.
-- I022 bend-family base-beam: rejected.
-- I023 tee-FRAME-only: rejected.
-- I024 reducer isolated promotion: rejected; reducer Schur ownership qualified.
-- next: coherent full flexible-pipe coverage diagnostic with component-specific
-  correction authorities held.
+P2 — transverse-shear architecture — COVERAGE DIAGNOSTICS COMPLETE.
+- I021 isolated bend incoming straight: rejected.
+- I022 current bend composite: rejected.
+- I023 isolated tee-FRAME extension: rejected.
+- I024 isolated reducer extension: rejected; reducer Schur ownership qualified.
+- I025 coherent all-flexible coverage: partial-coverage hypothesis confirmed,
+  but kappa=0.53 full-coverage promotion rejected.
 
-P3 — L19 source-action redistribution custody — LOCALIZATION COMPLETE.
-I019/I020 remain mandatory sentinels.
+P3 — L19 redistribution custody — LOCALIZATION COMPLETE.
+I019/I020 remain regression sentinels.
 
-P4 — exact CAESAR metallic-pipe shear-factor authority — OPEN.
-No benchmark inverse fitting.
+P4 — exact CAESAR metallic-pipe shear-factor/formulation authority — PRIMARY
+OPEN MECHANICS GATE. No benchmark inverse fitting.
 
-P5 — issue #947 closure:
+P5 — special-component correction ownership — OPEN AFTER P4.
+
+P6 — issue #947 closure:
 - every compared L19 restraint <10%;
 - every compared L20 restraint <10%;
 - materially reduce or individually explain displacement/rotation and source
@@ -297,26 +307,22 @@ P5 — issue #947 closure:
 PR #978 remains DRAFT / NOT READY TO MERGE.
 
 Accepted / qualified evidence:
-- I015 ordinary flexible-pipe transverse-shear mechanism;
-- I017 ACCDB material-authority boundary;
-- I018 pinned-source authority boundary;
-- I019 9-11 MZ redistribution custody;
-- I020 architectural-boundary localization;
-- I024 reducer stiffness/load Schur-condensation ownership mechanism.
+- I015 transverse-shear mechanism in ordinary flexible pipe;
+- I017/I018 thermal-authority boundaries;
+- I019/I020 redistribution localization;
+- I024 reducer stiffness/load Schur ownership mechanism;
+- I025 finding that partial coverage was real but not sufficient.
 
-Rejected / non-promotable system cutovers:
+Rejected / non-promotable system candidates:
 - I004, I006, I010, I016;
-- I021 isolated bend incoming straight;
-- I022 current bend composite;
-- I023 isolated tee-FRAME extension;
-- I024 isolated reducer extension.
+- I021, I022, I023, I024 isolated special-component cutovers;
+- I025 kappa=0.53 coherent full-coverage candidate.
 
-Active next mechanics gate:
-- coherent full flexible-pipe constitutive coverage diagnostic.
+Primary open mechanics gate:
+- source-authoritative CAESAR-compatible transverse-shear factor/formulation.
 
 Externally blocked / open:
 - source-authoritative A106 Grade B 21 -> 120 C thermal expansion;
-- exact CAESAR metallic-pipe shear-factor authority;
 - final special-component correction ownership;
 - final L19/L20 issue #947 closure.
 

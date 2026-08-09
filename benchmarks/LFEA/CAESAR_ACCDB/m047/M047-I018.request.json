@@ -34,7 +34,7 @@
     {
       "publisher": "Hexagon",
       "document": "CAESAR II User's Guide - Exp. Coeff.",
-      "authorityStatement": "The material-database expansion coefficient is the mean coefficient at the reference temperature; Hexagon cites B31.3 Table C-3 as the source basis for carbon steel examples.",
+      "authorityStatement": "The material-database expansion coefficient is the mean coefficient at the reference Temperature; Hexagon cites B31.3 Table C-3 as the source basis for carbon steel examples.",
       "url": "https://docs.hexagonppm.com/r/en-US/CAESAR-II-Users-Guide/Version-13/335548"
     }
   ],
@@ -51,5 +51,41 @@
     ".github/workflows/m047-bm4nl-i018-source-authority-survey.yml"
   ],
   "mechanicsDelta": "None. Read-only source-archive authority survey only; no solver, profile, tolerance, or benchmark-reference change.",
-  "verdict": "PENDING"
+  "executionEvidence": {
+    "successfulOrchestrationHeadSha": "d7819514a0a99626de0c517f87caf39da4a80d19",
+    "workflowRunId": 31315153544,
+    "workflowConclusion": "success",
+    "artifactId": 9038515324,
+    "artifactSha256": "cfb7edfd58b7a66c781d2a52323021ae91115f1bc38690f9673b3e4900620c20",
+    "priorHarnessFailures": [
+      {
+        "workflowRunId": 31314988184,
+        "classification": "HARNESS_ONLY",
+        "reason": "Windows PowerShell 5.1 does not implement System.IO.Path.GetRelativePath."
+      },
+      {
+        "workflowRunId": 31315065132,
+        "classification": "HARNESS_ONLY",
+        "reason": "PowerShell char conversion rejected a two-character backslash literal in the relative-path helper."
+      }
+    ]
+  },
+  "observedSourceArchive": {
+    "commonCommit": "1728651c94504b497aae4041578b1095fd8e292e",
+    "archiveFileCount": 1,
+    "files": [
+      {
+        "path": "BM4_NL.ACCDB",
+        "byteLength": 3575808,
+        "sha256": "85d39463296e569da811d8572e2eff680b858097f76fdf0f47d1755f0b161c21"
+      }
+    ],
+    "surveyedTextFileCount": 0,
+    "matchedTextFileCount": 0,
+    "textMatchCount": 0,
+    "surveyConclusion": "NO_CAESAR_GENERATED_ALPHA_OR_MATERIAL_TEXT_AUTHORITY_FOUND_IN_PINNED_ARCHIVE",
+    "authorityGate": "EXTERNAL_MATERIAL_AUTHORITY_REQUIRED"
+  },
+  "verdict": "ACCEPTED",
+  "decisionReason": "The exact-head source-custody survey proves the pinned Common BM4_NL archive contains only the locked BM4_NL.ACCDB and no retained CAESAR error-checker, input, material-database, alpha, or pipe-properties report. Together with accepted I017, this closes the in-repository authority search: the ACCDB exports the 120 C operating temperature and material identity but not a separate material-library mean CTE/derived thermal strain, and the source archive carries no independent CAESAR-generated report that can supply it. Therefore the numeric 21->120 C A106 Grade B thermal authority remains fail-closed and must come from exact CAESAR II 14.00 cmat.bin plus active UMD provenance, or exact ASME B31.3-2022 Table C-3 source values with documented CAESAR interpolation. No numeric CTE change is authorized, and the I009/I010 benchmark-inferred value remains diagnostic-only."
 }

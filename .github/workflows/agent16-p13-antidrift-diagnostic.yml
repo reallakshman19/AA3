@@ -1,0 +1,64 @@
+name: agent16-p13-antidrift-diagnostic
+
+on:
+  pull_request:
+    paths:
+      - 'src/core/linear-piping-analysis-consumer/**'
+      - 'scripts/linear-piping-analysis-consumer-anti-drift-check.mjs'
+      - '.github/workflows/agent16-p13-antidrift-diagnostic.yml'
+
+permissions:
+  contents: read
+
+actions:
+
+jobs:
+  inventory:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout exact pull-request head
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+
+      - name: Inventory all anti-drift violations
+        shell: bash
+        run: |
+          node --input-type=module <<'EOF'
+          import fs from 'node:fs';
+          import path from 'node:path';
+
+          const root = path.resolve('src/core/linear-piping-analysis-consumer');
+          const forbidden = [
+            ['WORKSPACE_IMPORT', /from\s+['"][^'"]*workspace/u],
+            ['UNCONTROLLED_RAW_IMPORT', /DOMParser|FileReader|parsePcf|readFileSync\([^)]*source/u],
+            ['EMPIRICAL_REACTION', /tributary|percentageOfWeight|reactionFactor|0\.6\s*\*/u],
+            ['INTERFACE_MECHANICS_PREMATURE', /momentAtReference|offsetMoment|nozzleUtilization/u],
+            ['SOLVER_REIMPLEMENTATION', /assembleGlobal|factorizeFree|solveScaled|stiffnessMatrix/u],
+            ['MATERIAL_SECTION_AXIS_REIMPLEMENTATION', /interpolateMaterial|calculateSection|constructLocalAxes/u],
+            ['RANDOM_IDENTITY', /Math\.random|randomUUID/u],
+            ['LOCALE_ORDERING', /localeCompare/u],
+            ['HIDDEN_DEFAULT_PARAMETER', /function\s+\w+\s*\([^)]*=/u],
+          ];
+          const violations = [];
+          for (const name of fs.readdirSync(root).filter((value) => value.endsWith('.js')).sort()) {
+            const file = path.join(root, name);
+            const text = fs.readFileSync(file, 'utf8');
+            const lines = text.split(/\r?\n/u).length;
+            if (lines >= 300) violations.push({ file: name, code: 'PHYSICAL_LINE_LIMIT', lines });
+            for (const [code, pattern] of forbidden) {
+              const match = pattern.exec(text);
+              if (!match) continue;
+              const line = text.slice(0, match.index).split(/\r?\n/u).length;
+              violations.push({ file: name, code, line, match: match[0] });
+            }
+          }
+          fs.writeFileSync('p13-antidrift-inventory.json', JSON.stringify({ count: violations.length, violations }, null, 2));
+          console.log(JSON.stringify({ count: violations.length, violations }, null, 2));
+          EOF
+
+      - name: Upload inventory
+        uses: actions/upload-artifact@v4
+        with:
+          name: p13-antidrift-inventory
+          path: p13-antidrift-inventory.json

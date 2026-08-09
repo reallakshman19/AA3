@@ -95,16 +95,16 @@ jobs:
             if ($tableNames -notcontains $required) { throw "I017 inventory is missing known table $required." }
           }
 
-          $matches = @($inventory.keywordMatches)
-          $thermalMatches = @($matches | Where-Object { @($_.keywords) -contains 'THERM' -or @($_.keywords) -contains 'ALPHA' -or @($_.keywords) -contains 'COEFF' -or @($_.keywords) -contains 'EXP' })
-          $modulusMatches = @($matches | Where-Object { @($_.keywords) -contains 'MODULUS' -or @($_.keywords) -contains 'ELASTIC' })
-          $bourdonMatches = @($matches | Where-Object { @($_.keywords) -contains 'BOURDON' })
+          $keywordMatches = @($inventory.keywordMatches)
+          $thermalMatches = @($keywordMatches | Where-Object { @($_.keywords) -contains 'THERM' -or @($_.keywords) -contains 'ALPHA' -or @($_.keywords) -contains 'COEFF' -or @($_.keywords) -contains 'EXP' })
+          $modulusMatches = @($keywordMatches | Where-Object { @($_.keywords) -contains 'MODULUS' -or @($_.keywords) -contains 'ELASTIC' })
+          $bourdonMatches = @($keywordMatches | Where-Object { @($_.keywords) -contains 'BOURDON' })
 
           $basicColumns = @($input.tables.INPUT_BASIC_ELEMENT_DATA.columns)
-          $pipeAlphaLike = @($basicColumns | Where-Object { $_ -match '(?i)(ALPHA|COEFF|STRAIN|THERM)' })
-          if ($pipeAlphaLike.Count -ne 0) { throw "Unexpected pipe-element alpha/strain candidate fields appeared: $($pipeAlphaLike -join ', ')." }
+          $separatePipeAlphaLike = @($basicColumns | Where-Object { $_ -match '(?i)(ALPHA|COEFF|STRAIN|THERM)' })
+          if ($separatePipeAlphaLike.Count -ne 0) { throw "Unexpected separate pipe-element alpha/strain candidate fields appeared: $($separatePipeAlphaLike -join ', ')." }
           $temperatureColumns = @($basicColumns | Where-Object { $_ -match '^TEMP_EXP_C[1-9]$' })
-          if ($temperatureColumns.Count -ne 9) { throw "Expected nine TEMP_EXP_C operating-temperature fields; found $($temperatureColumns.Count)." }
+          if ($temperatureColumns.Count -ne 9) { throw "Expected nine TEMP_EXP_C temperature-or-expansion fields; found $($temperatureColumns.Count)." }
 
           $controlRows = @($input.tables.INPUT_CONTROL.rows)
           if ($controlRows.Count -ne 1) { throw "Expected one INPUT_CONTROL row; found $($controlRows.Count)." }
@@ -112,9 +112,13 @@ jobs:
           $api650Rows = @($input.tables.INPUT_NOZZLES_API650.rows)
           $reducerRows = @($input.tables.INPUT_REDUCERS.rows)
           $elementRows = @($input.tables.INPUT_BASIC_ELEMENT_DATA.rows)
+          $temperatureC1Values = @($elementRows | ForEach-Object { [double]$_.TEMP_EXP_C1 } | Sort-Object -Unique)
+          if ($temperatureC1Values.Count -ne 1 -or $temperatureC1Values[0] -ne 120) {
+            throw "I017 expected locked TEMP_EXP_C1 operating temperature 120 C; found $($temperatureC1Values -join ', ')."
+          }
 
           $codeRecords = @($allowableRows | ForEach-Object {
-            [ordered]@{
+            [pscustomobject][ordered]@{
               allowablePointer=$_.ALLOWBL_PTR
               caseNumber=$_.CASE_NUM
               pipingCode=$_.PIPING_CODE
@@ -126,27 +130,29 @@ jobs:
             }
           })
           $materials = @($elementRows | ForEach-Object {
-            [ordered]@{
+            [pscustomobject][ordered]@{
               materialNumber=$_.MATERIAL_NUM
               materialName=$_.MATERIAL_NAME
               temperatureC1=$_.TEMP_EXP_C1
               modulus=$_.MODULUS
               hotMod1=$_.HOT_MOD1
             }
-          } | ConvertTo-Json -Compress | Sort-Object -Unique | ForEach-Object { $_ | ConvertFrom-Json })
-          $reducerAlpha = @($reducerRows | ForEach-Object { [ordered]@{ reducerPointer=$_.RED_PTR; alphaDegrees=$_.ALPHA } })
+          } | Sort-Object materialNumber, materialName, temperatureC1, modulus, hotMod1 -Unique)
+          $reducerAlpha = @($reducerRows | ForEach-Object { [pscustomobject][ordered]@{ reducerPointer=$_.RED_PTR; alphaDegrees=$_.ALPHA } })
 
           $summary = [ordered]@{
-            schema='lfea-m047-i017-authority-summary/v2'
+            schema='lfea-m047-i017-authority-summary/v3'
             sourceAccdbSha256=$inventory.source.sha256
             caesarVersion=$controlRows[0].VERSION
             tableCount=$inventory.tableCount
-            keywordMatchCount=$matches.Count
+            keywordMatchCount=$keywordMatches.Count
             pipeElementThermalExpansionAuthority=[ordered]@{
-              exportedAlphaOrStrainFieldPresent=$false
-              operatingTemperatureColumns=$temperatureColumns
+              separateDerivedAlphaOrStrainFieldPresent=$false
+              tempExpColumns=$temperatureColumns
+              tempExpC1Interpretation='OPERATING_TEMPERATURE_C_FOR_LOCKED_JOB'
+              tempExpC1Values=$temperatureC1Values
               materialAndModulusFields=@('MATERIAL_NUM','MATERIAL_NAME','MODULUS','HOT_MOD1','HOT_MOD2','HOT_MOD3','HOT_MOD4','HOT_MOD5','HOT_MOD6','HOT_MOD7','HOT_MOD8','HOT_MOD9')
-              materials=$materials
+              distinctMaterialRecords=$materials
             }
             inputAllowableCodeRecords=$codeRecords
             api650NozzleAuthority=[ordered]@{
@@ -162,14 +168,17 @@ jobs:
             thermalExpansionCandidateColumns=$thermalMatches
             modulusCandidateColumns=$modulusMatches
             bourdonCandidateColumns=$bourdonMatches
-            conclusion='LOCKED_ACCDB_EXPORTS_PIPE_OPERATING_TEMPERATURE_MATERIAL_AND_MODULUS_BUT_NOT_PIPE_MEAN_THERMAL_EXPANSION_COEFFICIENT_OR_THERMAL_STRAIN'
+            conclusion='LOCKED_ACCDB_TEMP_EXP_C1_IS_120C_AND_NO_SEPARATE_PIPE_MEAN_CTE_OR_DERIVED_THERMAL_STRAIN_FIELD_IS_EXPORTED'
           }
           $summary | ConvertTo-Json -Depth 10 | Set-Content 'artifacts/m047/I017/authority-summary.json' -Encoding utf8
           Add-Content $env:GITHUB_STEP_SUMMARY '# M047 I017 ACCDB authority inventory'
           Add-Content $env:GITHUB_STEP_SUMMARY "- ACCDB: ``$($inventory.source.sha256)``"
           Add-Content $env:GITHUB_STEP_SUMMARY "- CAESAR version: $($summary.caesarVersion)"
           Add-Content $env:GITHUB_STEP_SUMMARY "- tables: $($inventory.tableCount)"
-          Add-Content $env:GITHUB_STEP_SUMMARY "- pipe alpha/thermal-strain field exported: $($summary.pipeElementThermalExpansionAuthority.exportedAlphaOrStrainFieldPresent)"
+          Add-Content $env:GITHUB_STEP_SUMMARY "- keyword matches: $($summary.keywordMatchCount)"
+          Add-Content $env:GITHUB_STEP_SUMMARY "- TEMP_EXP_C1 locked interpretation: $($summary.pipeElementThermalExpansionAuthority.tempExpC1Interpretation) = $($temperatureC1Values -join ', ') C"
+          Add-Content $env:GITHUB_STEP_SUMMARY "- separate pipe mean-CTE/derived-strain field exported: $($summary.pipeElementThermalExpansionAuthority.separateDerivedAlphaOrStrainFieldPresent)"
+          Add-Content $env:GITHUB_STEP_SUMMARY "- distinct material records: $($materials.Count)"
           Add-Content $env:GITHUB_STEP_SUMMARY "- input allowable/code rows: $($codeRecords.Count)"
           Add-Content $env:GITHUB_STEP_SUMMARY "- API650 nozzle rows: $($api650Rows.Count)"
           Add-Content $env:GITHUB_STEP_SUMMARY "- reducer alpha rows (geometric slope): $($reducerRows.Count)"

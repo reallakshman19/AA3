@@ -1,0 +1,43 @@
+{
+  "schema": "lfea-caesar-accdb-iteration-request/v1",
+  "issueId": "M047",
+  "iterationId": "M047-I017",
+  "expectedSourceAccdbSha256": "85d39463296e569da811d8572e2eff680b858097f76fdf0f47d1755f0b161c21",
+  "baseCommitSha": "882d59a99c3a03847d20bec34770ba57ff479d91",
+  "parentAcceptedIteration": "M047-I015",
+  "hypothesis": "The locked ACCDB may not export the CAESAR material-library mean thermal-expansion/thermal-strain authority or per-load-case elastic-modulus selection. A complete read-only table/column schema inventory can prove what authority is present or absent without using InputXML or benchmark output fitting.",
+  "authoritySources": [
+    {
+      "publisher": "Hexagon",
+      "document": "CAESAR II User's Guide - Thermal Expansion",
+      "authorityStatement": "Thermal Expansion is a read-only thermal strain corresponding to entered operating temperature when material expansion data are available.",
+      "url": "https://docs.hexagonppm.com/r/en-US/CAESAR-II-Users-Guide/Version-14/343304"
+    },
+    {
+      "publisher": "Hexagon",
+      "document": "CAESAR II User's Guide - Ambient Temperature",
+      "authorityStatement": "Ambient temperature and the hot temperature with interpolated expansion coefficient determine thermal expansion per unit pipe length.",
+      "url": "https://docs.hexagonppm.com/r/en-US/CAESAR-II-Users-Guide/Version-12/336153"
+    },
+    {
+      "publisher": "Hexagon",
+      "document": "CAESAR II User's Guide - Thermal Bowing",
+      "authorityStatement": "For B31.1/B31.3, mean thermal expansion is based on Table C-3 from the 70 F / 21 C reference temperature; CAESAR material-library values are interpolated.",
+      "url": "https://docs.hexagonppm.com/r/en-US/CAESAR-II-Users-Guide/Version-14/1473851"
+    }
+  ],
+  "predictedSignature": [
+    "Inventory every ACCDB table and column through read-only ACE schema metadata; do not read alternate model formats.",
+    "Confirm the locked ACCDB SHA-256 before inventory.",
+    "Search the complete schema for thermal/expansion/alpha/material/modulus/load-case/configuration authority fields.",
+    "If no exported field carries the mean expansion coefficient or resulting thermal strain, record that authority as absent from ACCDB and require an independently sourced, versioned profile authority rather than a benchmark-fitted constant.",
+    "If such fields are present, inspect only those ACCDB fields in a follow-up iteration and bind their provenance before changing mechanics.",
+    "I009's ~12.23199e-6/K implied coefficient remains diagnostic-only and is not promoted by this inventory."
+  ],
+  "changedPaths": [
+    "scripts/lfea-m047-accdb-authority-inventory.ps1",
+    ".github/workflows/m047-bm4nl-i017-accdb-authority-inventory.yml"
+  ],
+  "mechanicsDelta": "None. Schema-only read-only evidence; no solver, profile, tolerance, or benchmark reference changes.",
+  "verdict": "PENDING"
+}

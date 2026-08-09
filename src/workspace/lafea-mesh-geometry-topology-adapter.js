@@ -19,7 +19,7 @@ export const LAFEA_MESH_TOPOLOGY_REGION_ID = 'LAFEA3_ANALYSIS_REGION';
 
 /**
  * @param {Readonly<object>} geometryValue Retained `lafea-analysis-geometry/v1`.
- * @returns {Readonly<{schema:string, regionId:string, topology:object,
+ * @returns {Readonly<{schema:string, stageId:string, regionId:string, topology:object,
  *   analysisGeometryHash:string, lengthUnit:string, holeLoopIds:readonly string[],
  *   segmentIdByCurveId:Readonly<Record<string,string>>}>}
  */
@@ -50,6 +50,7 @@ export function buildLafeaMeshTopology(geometryValue) {
 
   return freeze({
     schema: LAFEA_MESH_TOPOLOGY_ADAPTER_SCHEMA,
+    stageId: geometry.stageId,
     regionId: LAFEA_MESH_TOPOLOGY_REGION_ID,
     topology,
     analysisGeometryHash: geometry.semanticHash,

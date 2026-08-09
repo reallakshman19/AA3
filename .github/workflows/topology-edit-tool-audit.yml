@@ -56,13 +56,21 @@ jobs:
           test "$(git rev-parse HEAD)" = "$TOPOLOGY_EDIT_TARGET_HEAD_SHA"
           node --check src/workspace/topology-edit/topology-edit-navigation-hud-viewport-backend.js
           node --check src/workspace/topology-edit-3d-professional-controller.js
+          node --check src/workspace/viewport-productivity/topology-edit-icon-reference-runtime.js
           node --check tests/topology-edit-navigation-pick-fallback.test.mjs
           node --check e2e/topology-edit-tool-audit.spec.js
+          node --check e2e/topology-edit-tool-icon-reference.spec.js
           node --check e2e/topology-edit-ray-scan.spec.js
           git diff --check
 
       - name: Execute GPU-to-ray fallback unit contract
         run: node tests/topology-edit-navigation-pick-fallback.test.mjs
+
+      - name: Execute SVG icon reference regression
+        run: |
+          set -euo pipefail
+          npx playwright test e2e/topology-edit-tool-icon-reference.spec.js \
+            --project=chromium --workers=1 --retries=0 --reporter=line
 
       - name: Execute full-canvas pick regression
         run: |

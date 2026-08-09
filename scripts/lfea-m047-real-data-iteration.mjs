@@ -39,6 +39,7 @@ function main(argv) {
   const benchmarkPath = resolve(outputDir, 'benchmark.json');
   const actualPath = resolve(outputDir, 'actual.json');
   const benchmarkSummaryPath = resolve(outputDir, 'benchmark-summary.md');
+  const targetNodeEvidencePath = resolve(outputDir, 'target-nodes.json');
   const iterationPath = resolve(outputDir, 'iteration.json');
   const iterationSummaryPath = resolve(outputDir, 'iteration-summary.md');
   const runManifestPath = resolve(outputDir, 'run.json');
@@ -123,6 +124,13 @@ function main(argv) {
     );
   }
 
+  const targetNodeRun = runNode(ROOT, [
+    resolve(ROOT, 'scripts/lfea-m047-target-node-evidence.mjs'),
+    '--benchmark', benchmarkPath,
+    '--actual', actualPath,
+    '--out', targetNodeEvidencePath,
+  ], 'M047 target-node evidence');
+
   const iterationArgs = [
     resolve(ROOT, 'scripts/lfea-caesar-accdb-iteration.mjs'),
     '--report', benchmarkPath,
@@ -142,6 +150,7 @@ function main(argv) {
   }
 
   const evidence = readJson(iterationPath, 'iteration evidence');
+  const targetEvidence = readJson(targetNodeEvidencePath, 'target-node evidence');
   const benchmark = readJson(benchmarkPath, 'benchmark report');
   if (request.iterationId !== 'M047-I000' && evidence.improvements === null) {
     throw new Error(`${request.iterationId} did not record parent-relative improvements.`);
@@ -150,6 +159,9 @@ function main(argv) {
     throw new Error(
       `Materialized parent ${String(evidence.parentIterationId)} does not match ${parentEvidence.iterationId}.`,
     );
+  }
+  if (targetEvidence.sourceAccdbSha256 !== LOCKED_ACCDB_SHA256) {
+    throw new Error('Target-node evidence is not bound to the locked BM4_NL ACCDB.');
   }
 
   const runBase = {
@@ -177,6 +189,7 @@ function main(argv) {
     commands: {
       regressionChecks: regressionRuns,
       benchmark: benchmarkRun,
+      targetNodeEvidence: targetNodeRun,
       iterationEvidence: iterationRun,
     },
     workspace: {
@@ -189,10 +202,12 @@ function main(argv) {
       benchmarkPath: repoRelative(benchmarkPath),
       actualPath: repoRelative(actualPath),
       benchmarkSummaryPath: repoRelative(benchmarkSummaryPath),
+      targetNodeEvidencePath: repoRelative(targetNodeEvidencePath),
       iterationPath: repoRelative(iterationPath),
       iterationSummaryPath: repoRelative(iterationSummaryPath),
     },
     evidenceSemanticHash: evidence.semanticHash,
+    targetNodeEvidenceSemanticHash: targetEvidence.semanticHash,
     benchmarkStatus: benchmark.status,
     improvements: evidence.improvements,
     invariants: evidence.invariants,

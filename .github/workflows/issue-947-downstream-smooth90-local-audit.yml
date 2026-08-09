@@ -1,0 +1,225 @@
+name: Issue 947 downstream smooth90 local bend audits
+
+on:
+  push:
+    branches:
+      - codex/issue-947-bm4nl-qualification
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  actions: read
+
+jobs:
+  audit:
+    if: "${{ github.event_name == 'workflow_dispatch' || github.event.head_commit.message == 'ci(issue947): run downstream smooth90 local audits' }}"
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - source: '48'
+            pointer: '10'
+            upstream: '35'
+            downstream: '49'
+          - source: '85'
+            pointer: '11'
+            upstream: '84'
+            downstream: '86'
+          - source: '88'
+            pointer: '12'
+            upstream: '87'
+            downstream: '89'
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Download pinned canonical BM4_NL package
+        uses: actions/download-artifact@v4
+        with:
+          name: issue-947-bm4nl-qualification
+          path: .work/package
+          github-token: ${{ github.token }}
+          repository: reallaksh19/Advanced_Analysis
+          run-id: 31314047095
+
+      - name: Expose read-only production mechanics inspection seam
+        shell: bash
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          path = Path('src/core/fea-benchmarks/caesar-accdb-linear-solve.js')
+          text = path.read_text()
+          old = "  return {\n    execution,\n    rows: resultRows({ benchmarkPackage, execution, recovered, analysis }),"
+          new = "  return {\n    analysis,\n    execution,\n    rows: resultRows({ benchmarkPackage, execution, recovered, analysis }),"
+          if text.count(old) != 1:
+              raise SystemExit(f'Expected one solveCase return seam; found {text.count(old)}.')
+          text = text.replace(old, new)
+          anchor = "\nfunction solveCase(benchmarkPackage, caseRecord, solveProfile) {"
+          helper = '''\n\n/** Diagnostic-only read access to exact production case construction. */
+export function inspectCaesarAccdbLinearCaseMechanics(benchmarkPackage, caseId) {
+  requireBenchmarkPackage(benchmarkPackage);
+  const solveProfile = benchmarkPackage.profile.linearSolve;
+  if (solveProfile === null) throw new TypeError('The ACCDB profile does not declare linearSolve authorities.');
+  const caseRecord = benchmarkPackage.cases.find((entry) => entry.caseId === caseId);
+  if (!caseRecord) throw new TypeError(`ACCDB benchmark package lacks case ${String(caseId)}.`);
+  const solved = solveCase(benchmarkPackage, caseRecord, solveProfile);
+  return deepFreeze({
+    schema: 'lfea-accdb-linear-case-mechanics-inspection/v1',
+    sourceAccdbSha256: benchmarkPackage.source.sha256,
+    caseId: caseRecord.caseId,
+    formula: caseRecord.formula,
+    executionStatus: solved.execution.status,
+    rows: solved.rows.map((row) => ({ ...row })),
+    elements: solved.analysis.elements.map((entry) => ({
+      elementId: entry.elementId,
+      sourceElementId: entry.sourceElementId,
+      nodeI: entry.nodeI,
+      nodeJ: entry.nodeJ,
+      kind: entry.kind,
+      teeJunctionNodeId: entry.teeJunctionNodeId,
+      globalStiffness: [...entry.contribution.globalStiffness],
+      equivalentLoadGlobal: [...entry.contribution.equivalentLoadGlobal],
+      initialStrainLoadGlobal: [...entry.contribution.initialStrainLoadGlobal],
+      pressureAxialStrain: entry.pressureAxialStrain,
+      bourdonRotationRadians: entry.bourdonRotationRadians,
+      bourdonFreeEndTranslationM: [...entry.bourdonFreeEndTranslationM],
+      gravityWeightN: entry.gravityWeightN,
+    })),
+  });
+}
+'''
+          if text.count(anchor) != 1:
+              raise SystemExit(f'Expected one solveCase anchor; found {text.count(anchor)}.')
+          path.write_text(text.replace(anchor, helper + anchor))
+          PY
+
+      - name: Parameterize production-descendant audit for source bend
+        shell: bash
+        env:
+          TARGET: ${{ matrix.source }}
+          UPSTREAM: ${{ matrix.upstream }}
+          DOWNSTREAM: ${{ matrix.downstream }}
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          import os
+          target = os.environ['TARGET']
+          upstream = os.environ['UPSTREAM']
+          downstream = os.environ['DOWNSTREAM']
+          path = Path('scripts/lfea-issue947-e36-production-descendant-condensation-audit.mjs')
+          text = path.read_text()
+          old = "const SOURCE_ELEMENT_ID = '36';"
+          new = f"const SOURCE_ELEMENT_ID = '{target}';"
+          if text.count(old) != 1:
+              raise SystemExit(f'Expected one source id constant; found {text.count(old)}.')
+          text = text.replace(old, new)
+
+          old = """function sourceAction(rows, row) {\n  const entityId = sourceResultElementId(row);\n  const index = new Map(rows\n    .filter((entry) => entry.entityKind === 'ELEMENT' && entry.entityId === entityId)\n    .map((entry) => [`${entry.quantity}:${entry.component}`, Number(entry.value)]));"""
+          new = """function sourceAction(rows, row) {\n  const requestedEntityId = sourceResultElementId(row);\n  const prefix = `INPUT_ELEMENT:${String(row.ELEMENTID)}|`;\n  const candidateIds = [...new Set(rows\n    .filter((entry) => entry.entityKind === 'ELEMENT' && String(entry.entityId).startsWith(prefix))\n    .map((entry) => String(entry.entityId)))];\n  const entityId = candidateIds.includes(requestedEntityId)\n    ? requestedEntityId\n    : candidateIds.length === 1 ? candidateIds[0] : null;\n  if (entityId === null) throw new TypeError(`Expected one emitted source entity for E${row.ELEMENTID}; found ${JSON.stringify(candidateIds)}.`);\n  const index = new Map(rows\n    .filter((entry) => entry.entityKind === 'ELEMENT' && entry.entityId === entityId)\n    .map((entry) => [`${entry.quantity}:${entry.component}`, Number(entry.value)]));"""
+          if text.count(old) != 1:
+              raise SystemExit(f'Expected one sourceAction identity site; found {text.count(old)}.')
+          text = text.replace(old, new)
+
+          old = "const caesarSourceAction = sourceAction(referenceRows, sourceRow);"
+          new = "const caesarReference = deriveCaesarSimpleBendSourceAction(referenceRows, pkg);\nconst caesarSourceAction = caesarReference.action;"
+          if text.count(old) != 1:
+              raise SystemExit(f'Expected one direct reference lookup; found {text.count(old)}.')
+          text = text.replace(old, new)
+          old = "  referenceUsage: 'DIAGNOSTIC_ONLY_NO_PARAMETER_FIT_NO_REFERENCE_MUTATION',"
+          new = "  referenceUsage: 'DIAGNOSTIC_ONLY_NO_PARAMETER_FIT_NO_REFERENCE_MUTATION',\n  referenceDerivation: caesarReference,"
+          if text.count(old) != 1:
+              raise SystemExit(f'Expected one reference output site; found {text.count(old)}.')
+          text = text.replace(old, new)
+
+          anchor = "function actionScaleVector(reference, tolerances) {"
+          helper = f"""function deriveCaesarSimpleBendSourceAction(rows, pkg) {{\n  const upstream = sourceAction(rows, requireSourceRow(pkg, '{upstream}'));\n  const downstream = sourceAction(rows, requireSourceRow(pkg, '{downstream}'));\n  const from = upstream.slice(6, 12).map((value) => -value);\n  const to = downstream.slice(0, 6).map((value) => -value);\n  return {{\n    rule: 'SOURCE_BEND_END_ACTIONS_FROM_TWO_ELEMENT_JUNCTION_EQUILIBRIUM',\n    source: 'PINNED_L19_ADJACENT_ELEMENT_EQUILIBRIUM_NO_DIRECT_BEND_REFERENCE_ROW',\n    upstreamSourceElementId: '{upstream}',\n    downstreamSourceElementId: '{downstream}',\n    action: [...from, ...to],\n  }};\n}}\n\n"""
+          if text.count(anchor) != 1:
+              raise SystemExit(f'Expected one helper anchor; found {text.count(anchor)}.')
+          text = text.replace(anchor, helper + anchor)
+          old = "const stiffnessAction = multiplyVector(condensed.stiffness, caesarDisplacement);"
+          new = "const stiffnessAction = multiplyFlat12(condensed.stiffness, caesarDisplacement);"
+          if text.count(old) != 1:
+              raise SystemExit(f'Expected one flattened stiffness call; found {text.count(old)}.')
+          path.write_text(text.replace(old, new))
+          PY
+
+      - name: Run baseline source-bend condensation
+        run: |
+          mkdir -p .work/out
+          node scripts/lfea-issue947-e36-production-descendant-condensation-audit.mjs \
+            --package .work/package/bm4nl-canonical-package.json \
+            --out .work/out/bend-${{ matrix.source }}-baseline.json
+
+      - name: Run existing smooth90 1.3-over-h path for source bend
+        shell: bash
+        env:
+          TARGET: ${{ matrix.source }}
+          POINTER: ${{ matrix.pointer }}
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          import json, os, subprocess
+          target = os.environ['TARGET']
+          pointer = os.environ['POINTER']
+          module_path = Path('src/core/fea-benchmarks/caesar-accdb-linear-solve.js')
+          baseline_text = module_path.read_text()
+          old = "        smooth90FlexibilityCorrection: input.solveProfile.b31jSmooth90FlexibilityCorrection.enabled,"
+          new = f"        smooth90FlexibilityCorrection: input.solveProfile.b31jSmooth90FlexibilityCorrection.enabled || pointer === {pointer},"
+          if baseline_text.count(old) != 1:
+              raise SystemExit(f'Expected one smooth90 selection site; found {baseline_text.count(old)}.')
+          module_path.write_text(baseline_text.replace(old, new))
+          try:
+              completed = subprocess.run([
+                  'node', 'scripts/lfea-issue947-e36-production-descendant-condensation-audit.mjs',
+                  '--package', '.work/package/bm4nl-canonical-package.json',
+                  '--out', f'.work/out/bend-{target}-smooth90.json',
+              ], text=True, capture_output=True)
+              if completed.returncode != 0:
+                  raise SystemExit(f'Smooth90 candidate failed for E{target}:\n{completed.stdout}\n{completed.stderr}')
+          finally:
+              module_path.write_text(baseline_text)
+
+          baseline = json.loads(Path(f'.work/out/bend-{target}-baseline.json').read_text())
+          candidate = json.loads(Path(f'.work/out/bend-{target}-smooth90.json').read_text())
+          def metrics(result):
+              inj = result['caesarInjection']
+              return {
+                  'classification': result['classification'],
+                  'productionParityMaxAbs': result['productionParity']['maxAbsResidual'],
+                  'allBoundaryRotationsResolved': result['rotationResolution']['allBoundaryRotationsResolved'],
+                  'maxAbsNormalizedResidual': inj['maxAbsNormalizedResidual'],
+                  'normalizedResidualL2': inj['normalizedResidualL2'],
+                  'governingComponent': inj['governingComponent'],
+                  'residual': inj['residual'],
+                  'normalizedResidual': inj['normalizedResidual'],
+              }
+          b = metrics(baseline)
+          c = metrics(candidate)
+          summary = {
+              'schema': 'lfea-issue947-downstream-smooth90-local-audit/v1',
+              'issue': 947,
+              'caseId': 'L19',
+              'sourceElementId': target,
+              'bendPointer': int(pointer),
+              'purpose': 'LOCAL_PRODUCTION_DESCENDANT_SMOOTH90_AB_NO_PRODUCTION_UPDATE',
+              'baseline': b,
+              'candidate': c,
+              'deltaNormalizedResidualL2': c['normalizedResidualL2'] - b['normalizedResidualL2'],
+              'deltaMaxAbsNormalizedResidual': c['maxAbsNormalizedResidual'] - b['maxAbsNormalizedResidual'],
+              'classification': 'SMOOTH90_LOCALLY_SUPPORTED' if c['allBoundaryRotationsResolved'] and c['productionParityMaxAbs'] <= 1e-3 and c['normalizedResidualL2'] < b['normalizedResidualL2'] else 'SMOOTH90_NOT_LOCALLY_SUPPORTED',
+              'acceptanceBoundary': 'Local improvement identifies CAESAR constitutive consistency only. It does not override exact job-setting custody or whole-model no-regression gates.',
+          }
+          Path(f'.work/out/bend-{target}-summary.json').write_text(json.dumps(summary, indent=2) + '\n')
+          print(json.dumps(summary, indent=2))
+          PY
+
+      - name: Upload local bend evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: issue-947-downstream-smooth90-local-${{ matrix.source }}
+          if-no-files-found: error
+          path: .work/out/bend-${{ matrix.source }}-*.json

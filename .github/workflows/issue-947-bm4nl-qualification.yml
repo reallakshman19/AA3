@@ -45,6 +45,10 @@ jobs:
         shell: pwsh
         run: node scripts/lfea-issue947-bourdon-subdivision-check.mjs
 
+      - name: Run independent bend pressure-stiffening authority regression
+        shell: pwsh
+        run: node scripts/lfea-issue947-bend-pressure-stiffening-check.mjs
+
       - name: Install Microsoft Access Runtime database engine
         shell: pwsh
         run: |

@@ -94,6 +94,50 @@ const CELSIUS_TO_KELVIN = 273.15;
 const POSITION_TOLERANCE_M = 1e-7;
 const CAESAR_WELDING_TEE_TYPE = 3;
 
+/**
+ * Read-only mechanics inspection for qualification diagnostics.
+ *
+ * This intentionally calls the same solveCase path as the benchmark solve and
+ * exposes only matrices/load vectors already sealed in each element's solver
+ * contribution. It does not recompute stiffness, alter assembly, or provide a
+ * second solver path.
+ */
+export function inspectCaesarAccdbLinearCaseMechanics(benchmarkPackage, caseId) {
+  requireBenchmarkPackage(benchmarkPackage);
+  const solveProfile = benchmarkPackage.profile.linearSolve;
+  if (solveProfile === null) throw new TypeError('The ACCDB profile does not declare linearSolve authorities.');
+  const matches = benchmarkPackage.cases.filter((entry) => String(entry.caseId) === String(caseId));
+  if (matches.length !== 1) {
+    throw new TypeError(`ACCDB mechanics inspection requires exactly one case ${String(caseId)}; found ${matches.length}.`);
+  }
+  const solved = solveCase(benchmarkPackage, matches[0], solveProfile);
+  return deepFreeze({
+    schema: 'lfea-accdb-linear-case-mechanics-inspection/v1',
+    sourceAccdbSha256: benchmarkPackage.source.sha256,
+    caseId: String(matches[0].caseId),
+    executionStatus: solved.execution.status,
+    executionSemanticHash: solved.execution.semanticHash,
+    executionEvidenceHash: solved.execution.evidenceHash,
+    rows: solved.rows.map((entry) => ({ ...entry })),
+    elements: solved.analysisElements.map((entry) => ({
+      elementId: entry.elementId,
+      sourceElementId: entry.sourceElementId,
+      nodeI: entry.nodeI,
+      nodeJ: entry.nodeJ,
+      kind: entry.kind,
+      teeJunctionNodeId: entry.teeJunctionNodeId,
+      globalStiffness: [...entry.contribution.globalStiffness],
+      equivalentLoadGlobal: [...entry.contribution.equivalentLoadGlobal],
+      initialStrainLoadGlobal: [...entry.contribution.initialStrainLoadGlobal],
+      effectiveLocalStiffness: [...entry.effectiveLocalStiffness],
+      pressureAxialStrain: entry.pressureAxialStrain,
+      bourdonRotationRadians: entry.bourdonRotationRadians,
+      bourdonFreeEndTranslationM: [...entry.bourdonFreeEndTranslationM],
+      gravityWeightN: entry.gravityWeightN,
+    })),
+  });
+}
+
 /** Solve every selected physical case and emit normalized comparison rows plus mechanics evidence. */
 export function solveCaesarAccdbLinearBenchmark(benchmarkPackage) {
   requireBenchmarkPackage(benchmarkPackage);
@@ -203,6 +247,7 @@ function solveCase(benchmarkPackage, caseRecord, solveProfile) {
   return {
     execution,
     rows: resultRows({ benchmarkPackage, execution, recovered, analysis }),
+    analysisElements: analysis.elements,
     evidence: {
       formula: caseRecord.formula,
       thermalIncluded: caseMode.thermal,

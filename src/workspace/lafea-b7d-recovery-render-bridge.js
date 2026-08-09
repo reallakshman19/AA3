@@ -29,6 +29,9 @@ const QUANTITY_KEYS = Object.freeze({
   SIGMA_Y: 'sigmaY',
   TAU_XY: 'tauXY',
 });
+const COLOR_MAP_ALIASES = Object.freeze({
+  'LAFEA-DEFAULT-DIVERGING': 'COOL_WARM',
+});
 const INTAKE_KEYS = Object.freeze([
   'schema', 'sceneRevision', 'projection', 'executionPackage', 'fieldRequest',
 ]);
@@ -411,7 +414,7 @@ function createRenderPacket(options) {
         source: 'NB_T6D_B7D_FINE_LEVEL_RETAINED_RECOVERY',
         semanticHash: boundsHash,
       },
-      colorMapId: options.fieldRequest.colorMapId,
+      colorMapId: canonicalColorMapId(options.fieldRequest.colorMapId),
     },
     pickMap: {
       schema: 'LafeaPickMap.v1',
@@ -430,6 +433,10 @@ function createRenderPacket(options) {
       producerRef: PRODUCER_REF,
     },
   });
+}
+
+function canonicalColorMapId(value) {
+  return COLOR_MAP_ALIASES[value] ?? value;
 }
 
 function bridgeAuthority() {

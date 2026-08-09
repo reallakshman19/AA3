@@ -137,10 +137,29 @@ const unverifiedTee = calculateB31Factors(request({
     sourceEvidence,
   },
 }));
-assert.equal(unverifiedTee.status, 'BLOCKED');
+assert.equal(unverifiedTee.status, 'QUALIFIED');
 assert.equal(unverifiedTee.componentFactorSet, null);
-assert.deepEqual(unverifiedTee.stressFactorSets, []);
-assert.ok(unverifiedTee.applicability.violations.some((entry) => entry.field === 'fittingQuality'));
+assert.equal(unverifiedTee.stressFactorSets.length, 2);
+assert.equal(unverifiedTee.factors.qualityReduction.applied, false);
+assert.equal(unverifiedTee.factors.qualityReduction.divisor, 1);
+assert.equal(unverifiedTee.applicability.violations.length, 0);
+
+const damagedTee = calculateB31Factors(request({
+  calculationId: 'B31-CALC-TEE-DAMAGED',
+  componentId: 'TEE-B31J-DAMAGED',
+  editionProfileId: 'B31_3_2022_B31J_2017',
+  componentType: 'WELDING_TEE',
+  geometry: {
+    runOuterDiameter: 0.32385,
+    runWallThickness: 0.009525,
+    branchOuterDiameter: 0.2191,
+    branchWallThickness: 0.00818,
+    fittingQuality: 'IMPERFECT_OR_DAMAGED',
+    sourceEvidence,
+  },
+}));
+assert.equal(damagedTee.status, 'BLOCKED');
+assert.ok(damagedTee.applicability.violations.some((entry) => entry.field === 'fittingQuality'));
 
 const reducerRequest = request({
   calculationId: 'B31-CALC-REDUCER-01',

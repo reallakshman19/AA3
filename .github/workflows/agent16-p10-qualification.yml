@@ -147,8 +147,14 @@ jobs:
           done
           printf '%s\n' 'PF-16 carried red is identical in governing failure mode on merge base and P-10 head.'
 
-      - name: Pre-FEA gateway regression excluding proven carried PF-16
-        run: node --test --test-name-pattern='^(?!PF-16 BLOCK cannot be overridden$).*' test/lfea-prefea-gateway.test.js
+      - name: Pre-FEA PF-01..15 and PF-17..24 regression
+        run: node --test --test-name-pattern='^PF-(0[1-9]|1[0-5]|1[7-9]|2[0-4]) ' test/lfea-prefea-gateway.test.js
+
+      - name: Pre-FEA exercise G/H regression
+        run: node --test --test-name-pattern='^Exercise [GH] ' test/lfea-prefea-gateway.test.js
+
+      - name: Pre-FEA runtime-creation regression
+        run: node --test --test-name-pattern='^solver runtime ' test/lfea-prefea-gateway.test.js
 
       - name: Linear piping consumer regression
         run: node scripts/linear-piping-analysis-consumer-check.mjs

@@ -35,7 +35,7 @@ import {
 } from '../src/workspace/lfea-preflight-phase1-review-ledger.js';
 
 const PINNED_TIMESTAMP = '2026-08-02T00:00:00.000Z';
-const EXPECTED_P06A_LARGE_STRUCTURAL_HASH = 'TO_BE_PINNED';
+const EXPECTED_P06A_LARGE_STRUCTURAL_HASH = 'fnv1a64:27bd84d10b3436e3';
 
 assert.deepEqual(LFEA_PREFLIGHT_ENGINEERING_FIELDS, PHASE0_ENGINEERING_FIELDS,
   'P06A production schema must exactly adopt the pinned Phase-0 40-field contract.');
@@ -110,7 +110,7 @@ assert.equal(largeIndex.queueCounts[LFEA_PREFLIGHT_EXCEPTION_QUEUE.PROPOSED], 10
 assert.equal(largeIndex.queueCounts[LFEA_PREFLIGHT_EXCEPTION_QUEUE.DEFERRED], 12);
 console.log(`P06A-PIN largeStructuralHash=${largeIndex.structuralHash}`);
 assert.equal(largeIndex.structuralHash, EXPECTED_P06A_LARGE_STRUCTURAL_HASH,
-  'P06A large structural hash must be pinned after first controlled qualification.');
+  'P06A large structural hash must remain pinned to the controlled qualification digest.');
 console.log('P06A-05 PASS 100k-line / 1m-component index has pinned structural identity and first-class exception queues');
 
 const serviceFacet = countLfeaPreflightPhase1Facet(largeIndex, 'service');

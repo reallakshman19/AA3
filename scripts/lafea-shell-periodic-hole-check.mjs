@@ -239,7 +239,7 @@ function assertCylinderAndHoleEmpty(mesh, geometry, hole) {
     const strictlyInsideHole = u > hole.uMin + 1e-8 && u < hole.uMax - 1e-8
       && v > hole.vMin + 1e-8 && v < hole.vMax - 1e-8;
     assert.equal(strictlyInsideHole, false, `node ${node.nodeId} lies inside physical seam hole`);
-    const frame = periodicHoleShellFrameAtPoint3d(geometry, node);
+    const frame = periodicHoleShellFrameAtPoint3d(geometry, physicalPoint(node));
     close(norm(frame.director), 1, 1e-12);
   }
 }
@@ -340,6 +340,7 @@ function checkAdversarialContracts() {
 function unwrapNear(value, reference, circumference) {
   return value + Math.round((reference - value) / circumference) * circumference;
 }
+function physicalPoint(value) { return { x: value.x, y: value.y, z: value.z }; }
 function subtract(left, right) { return { x: left.x - right.x, y: left.y - right.y, z: left.z - right.z }; }
 function scale(value, factor) { return { x: value.x * factor, y: value.y * factor, z: value.z * factor }; }
 function dot(left, right) { return left.x * right.x + left.y * right.y + left.z * right.z; }

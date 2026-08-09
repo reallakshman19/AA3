@@ -120,7 +120,24 @@ jobs:
       - name: Bind baseline to portable read-only ACCDB exporter
         shell: pwsh
         run: |
-          Copy-Item -LiteralPath 'scripts/lfea-caesar-accdb-export.ps1' -Destination 'baseline-source/scripts/lfea-caesar-accdb-export.ps1' -Force
+          $ErrorActionPreference = 'Stop'
+          $baselineExporter = 'baseline-source/scripts/lfea-caesar-accdb-export.ps1'
+          $portableExporter = 'scripts/lfea-caesar-accdb-export.ps1'
+          $originalSha = (Get-FileHash -LiteralPath $baselineExporter -Algorithm SHA256).Hash.ToLowerInvariant()
+          $portableSha = (Get-FileHash -LiteralPath $portableExporter -Algorithm SHA256).Hash.ToLowerInvariant()
+          Copy-Item -LiteralPath $portableExporter -Destination $baselineExporter -Force
+          $status = @(git -C baseline-source status --porcelain)
+          if ($status.Count -ne 1 -or $status[0] -notmatch 'scripts/lfea-caesar-accdb-export\.ps1$') {
+            throw "Baseline checkout mutation exceeded exporter portability boundary: $($status -join '; ')"
+          }
+          [ordered]@{
+            schema = 'lfea-m047-baseline-exporter-portability/v1'
+            baselineCommit = '882d59a99c3a03847d20bec34770ba57ff479d91'
+            changedPath = 'scripts/lfea-caesar-accdb-export.ps1'
+            originalExporterSha256 = $originalSha
+            portableExporterSha256 = $portableSha
+            mechanicsChanged = $false
+          } | ConvertTo-Json -Depth 4 | Set-Content -LiteralPath 'artifacts/m047/I007/exporter-portability.json' -Encoding utf8
 
       - name: Reproduce original baseline mechanics from locked ACCDB
         shell: pwsh

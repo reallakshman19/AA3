@@ -1,0 +1,185 @@
+name: m047-bm4nl-i031-reducer-bourdon-ab
+
+on:
+  push:
+    branches:
+      - agent/m047-qualified-shear-draft
+    paths:
+      - '.github/workflows/m047-bm4nl-i031-reducer-bourdon-ab.yml'
+      - 'scripts/lfea-m047-apply-smooth90-candidate.mjs'
+      - 'scripts/lfea-m047-smooth90-candidate-check.mjs'
+      - 'scripts/lfea-m047-apply-reducer-bourdon-candidate.mjs'
+      - 'scripts/lfea-m047-reducer-bourdon-candidate-check.mjs'
+      - 'scripts/lfea-m047-i031-reducer-pressure-evidence.mjs'
+      - 'scripts/lfea-m047-benchmark-ab.mjs'
+      - 'scripts/lfea-m047-target-node-evidence.mjs'
+      - 'scripts/lfea-m047-provision-ace.ps1'
+      - 'scripts/lfea-caesar-accdb-export.ps1'
+      - 'benchmarks/LFEA/CAESAR_ACCDB/m047/M047-I031.request.json'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  ab:
+    runs-on: windows-2022
+    timeout-minutes: 45
+    steps:
+      - name: Checkout I031 exact head
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.sha }}
+          fetch-depth: 0
+
+      - name: Prove orchestration boundary
+        shell: pwsh
+        run: |
+          if ((git rev-parse HEAD).Trim() -ne '${{ github.sha }}') { throw 'I031 orchestration checkout drifted.' }
+          if (git status --porcelain) { throw 'I031 orchestration checkout is dirty.' }
+          New-Item -ItemType Directory -Path 'artifacts/m047/I031' -Force | Out-Null
+
+      - name: Use Node.js 22
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Checkout smooth-90 parent source
+        uses: actions/checkout@v4
+        with:
+          repository: reallaksh19/Advanced_Analysis
+          ref: 882d59a99c3a03847d20bec34770ba57ff479d91
+          path: parent-source
+          fetch-depth: 1
+
+      - name: Checkout reducer-pressure candidate source
+        uses: actions/checkout@v4
+        with:
+          repository: reallaksh19/Advanced_Analysis
+          ref: 882d59a99c3a03847d20bec34770ba57ff479d91
+          path: candidate-source
+          fetch-depth: 1
+
+      - name: Prove frozen source custody and qualify core
+        shell: pwsh
+        run: |
+          foreach ($dir in @('parent-source','candidate-source')) {
+            if ((git -C $dir rev-parse HEAD).Trim() -ne '882d59a99c3a03847d20bec34770ba57ff479d91') { throw "$dir baseline drifted." }
+            if (git -C $dir status --porcelain) { throw "$dir baseline checkout dirty." }
+          }
+          node parent-source/scripts/lfea-b3.1-frame-element-check.mjs
+          node parent-source/scripts/lfea-b3.2-piping-component-check.mjs
+          node parent-source/scripts/lfea-b3.3-solver-check.mjs
+          node parent-source/scripts/lfea-b3.4-recovery-check.mjs
+
+      - name: Checkout pinned Common BM4 source
+        uses: actions/checkout@v4
+        with:
+          repository: reallaksh19/Common
+          ref: 1728651c94504b497aae4041578b1095fd8e292e
+          path: common-source
+          fetch-depth: 1
+
+      - name: Expand and verify locked BM4_NL ACCDB
+        shell: pwsh
+        run: |
+          $ErrorActionPreference='Stop'
+          $root=Join-Path $env:RUNNER_TEMP 'm047-i031-bm4nl'
+          if (Test-Path -LiteralPath $root) { Remove-Item -LiteralPath $root -Recurse -Force }
+          New-Item -ItemType Directory -Path $root | Out-Null
+          Expand-Archive -LiteralPath 'common-source/LFEA/BM4/BM4_NL.zip' -DestinationPath $root -Force
+          $files=@(Get-ChildItem -LiteralPath $root -Recurse -File -Filter '*.accdb')
+          if ($files.Count -ne 1) { throw "Expected one ACCDB; found $($files.Count)." }
+          $sha=(Get-FileHash -LiteralPath $files[0].FullName -Algorithm SHA256).Hash.ToLowerInvariant()
+          if ($sha -ne '85d39463296e569da811d8572e2eff680b858097f76fdf0f47d1755f0b161c21') { throw "Locked ACCDB mismatch: $sha" }
+          "BM4NL_ACCDB=$($files[0].FullName)" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
+          [ordered]@{schema='lfea-m047-i031-source/v1';orchestrationHead='${{ github.sha }}';baselineCommit='882d59a99c3a03847d20bec34770ba57ff479d91';commonCommit='1728651c94504b497aae4041578b1095fd8e292e';accdbSha256=$sha} | ConvertTo-Json | Set-Content 'artifacts/m047/I031/source.json' -Encoding utf8
+
+      - name: Provision Microsoft 365 Access Runtime
+        shell: powershell
+        run: .\scripts\lfea-m047-provision-ace.ps1 -OutputPath 'artifacts/m047/I031/ace.json'
+
+      - name: Bind portable exporter and accepted smooth-90 mechanics
+        shell: pwsh
+        run: |
+          foreach ($dir in @('parent-source','candidate-source')) {
+            Copy-Item -LiteralPath 'scripts/lfea-caesar-accdb-export.ps1' -Destination "$dir/scripts/lfea-caesar-accdb-export.ps1" -Force
+            node scripts/lfea-m047-apply-smooth90-candidate.mjs --source "$dir/src/core/fea-benchmarks/caesar-accdb-linear-solve.js" --manifest "artifacts/m047/I031/$dir-smooth90.manifest.json"
+            node scripts/lfea-m047-smooth90-candidate-check.mjs --source "$dir/src/core/fea-benchmarks/caesar-accdb-linear-solve.js"
+          }
+
+      - name: Apply isolated reducer pressure-expansion candidate
+        shell: pwsh
+        run: |
+          node scripts/lfea-m047-apply-reducer-bourdon-candidate.mjs --source candidate-source/src/core/fea-benchmarks/caesar-accdb-linear-solve.js --manifest artifacts/m047/I031/reducer-bourdon.manifest.json
+          node scripts/lfea-m047-reducer-bourdon-candidate-check.mjs --source candidate-source/src/core/fea-benchmarks/caesar-accdb-linear-solve.js
+          node --check candidate-source/src/core/fea-benchmarks/caesar-accdb-linear-solve.js
+          $status=@(git -C candidate-source status --porcelain)
+          $solver=@($status | Where-Object { $_ -match 'src/core/fea-benchmarks/caesar-accdb-linear-solve\.js$' }).Count -eq 1
+          $exporter=@($status | Where-Object { $_ -match 'scripts/lfea-caesar-accdb-export\.ps1$' }).Count -eq 1
+          if ($status.Count -ne 2 -or -not $solver -or -not $exporter) { throw "I031 candidate runtime mutation exceeded solver+exporter boundary: $($status -join '; ')" }
+
+      - name: Run smooth parent and reducer-pressure candidate
+        shell: pwsh
+        run: |
+          $ErrorActionPreference='Stop'
+          foreach ($c in @(@{name='parent';dir='parent-source'},@{name='candidate';dir='candidate-source'})) {
+            node "$($c.dir)/scripts/lfea-caesar-accdb-benchmark.mjs" `
+              --accdb "$env:BM4NL_ACCDB" `
+              --profile "$($c.dir)/benchmarks/LFEA/CAESAR_ACCDB/bm4nl-l19-l20-linear-solve.profile.json" `
+              --solve-linear true `
+              --actual-out "artifacts/m047/I031/$($c.name).actual.json" `
+              --summary-out "artifacts/m047/I031/$($c.name).summary.md" `
+              --out "artifacts/m047/I031/$($c.name).benchmark.json"
+          }
+
+      - name: Compare system and reducer ownership evidence
+        shell: pwsh
+        run: |
+          node scripts/lfea-m047-benchmark-ab.mjs --baseline artifacts/m047/I031/parent.benchmark.json --candidate artifacts/m047/I031/candidate.benchmark.json --manifest artifacts/m047/I031/reducer-bourdon.manifest.json --out artifacts/m047/I031/system.ab.json
+          node scripts/lfea-m047-i031-reducer-pressure-evidence.mjs `
+            --baseline-benchmark artifacts/m047/I031/parent.benchmark.json `
+            --candidate-benchmark artifacts/m047/I031/candidate.benchmark.json `
+            --baseline-actual artifacts/m047/I031/parent.actual.json `
+            --candidate-actual artifacts/m047/I031/candidate.actual.json `
+            --out artifacts/m047/I031/reducer-pressure.evidence.json `
+            --summary artifacts/m047/I031/reducer-pressure.summary.md
+          node scripts/lfea-m047-target-node-evidence.mjs --benchmark artifacts/m047/I031/candidate.benchmark.json --actual artifacts/m047/I031/candidate.actual.json --out artifacts/m047/I031/candidate.targets.json
+          Get-Content 'artifacts/m047/I031/reducer-pressure.summary.md' | Add-Content $env:GITHUB_STEP_SUMMARY
+
+      - name: Govern I031 component-local mechanics and equilibrium
+        shell: pwsh
+        run: |
+          $ErrorActionPreference='Stop'
+          $ab=Get-Content 'artifacts/m047/I031/system.ab.json' -Raw | ConvertFrom-Json
+          if ($ab.cases.L19.before.restraint.failingComponentCount -ne 2 -or $ab.cases.L19.before.displacementRotation.failingComponentCount -ne 67 -or $ab.cases.L19.before.sourceEndAction.failingComponentCount -ne 16) { throw 'I031 smooth-only L19 parent drifted from accepted I029.' }
+          if ($ab.cases.L20.before.restraint.failingComponentCount -ne 1 -or $ab.cases.L20.before.displacementRotation.failingComponentCount -ne 43 -or $ab.cases.L20.before.sourceEndAction.failingComponentCount -ne 31) { throw 'I031 smooth-only L20 parent drifted from accepted I029.' }
+          $e=Get-Content 'artifacts/m047/I031/reducer-pressure.evidence.json' -Raw | ConvertFrom-Json
+          foreach ($caseId in @('L19','L20')) {
+            if (@($e.cases.$caseId.reducerPressure).Count -ne 4) { throw "I031 $caseId expected four reducers." }
+            if (@($e.cases.$caseId.reducerPressure | Where-Object { [double]$_.beforePressureAxialStrain -ne 0 }).Count -ne 0) { throw "I031 $caseId parent reducer pressure strain was not zero." }
+            if (@($e.cases.$caseId.reducerPressure | Where-Object { -not ([double]$_.afterPressureAxialStrain -gt 0) }).Count -ne 0) { throw "I031 $caseId candidate reducer pressure strain is not positive on all reducers." }
+            if (@($e.cases.$caseId.reducerPressure | Where-Object { -not $_.initialLoadChanged }).Count -ne 0) { throw "I031 $caseId reducer pressure initial vector did not change on all reducers." }
+            if (@($e.cases.$caseId.changedNonReducerPressure).Count -ne 0) { throw "I031 changed non-reducer pressure-strain ledger entries." }
+          }
+          $actual=Get-Content 'artifacts/m047/I031/candidate.actual.json' -Raw | ConvertFrom-Json
+          foreach ($caseId in @('L19','L20')) {
+            if ($actual.mechanics.cases.$caseId.bendPointerCount -ne 12) { throw "I031 $caseId bend coverage drifted." }
+            if ($actual.mechanics.cases.$caseId.reducerElementCount -ne 4) { throw "I031 $caseId reducer coverage drifted." }
+          }
+          $targets=Get-Content 'artifacts/m047/I031/candidate.targets.json' -Raw | ConvertFrom-Json
+          foreach ($t in $targets.targets) {
+            if ([math]::Abs([double]$t.balance.actionSumResidual) -gt 0.1) { throw "I031 action-sum custody failed $($t.caseId)/$($t.nodeId)." }
+            if ([math]::Abs([double]$t.balance.equilibriumResidual) -gt 0.1) { throw "I031 equilibrium custody failed $($t.caseId)/$($t.nodeId)." }
+          }
+          Add-Content $env:GITHUB_STEP_SUMMARY "- system semantic hash: $($ab.semanticHash)"
+          if (git status --porcelain -- 'src/core' 'benchmarks/LFEA/CAESAR_ACCDB/bm4nl-l19-l20-linear-solve.profile.json') { throw 'I031 orchestration branch must contain no production mechanics/profile edit.' }
+
+      - name: Retain I031 evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: m047-i031-reducer-bourdon-ab-${{ github.sha }}
+          path: artifacts/m047/I031/**
+          if-no-files-found: error
+          retention-days: 90

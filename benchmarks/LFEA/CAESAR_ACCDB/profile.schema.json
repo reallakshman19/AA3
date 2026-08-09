@@ -119,6 +119,7 @@
         "thermalExpansionCoefficientPerKelvin",
         "gravityAcceleration",
         "bourdonPressureEffects",
+        "b31jSmooth90FlexibilityCorrection",
         "directionalB31JTeeFlexibility",
         "teeNominalDiameterRelativeTolerance",
         "reducerCondensation"
@@ -134,6 +135,15 @@
             "mode": {
               "enum": ["DISABLED", "TRANSLATION_ONLY", "TRANSLATION_AND_ROTATION"]
             },
+            "source": { "type": "string", "minLength": 1 }
+          }
+        },
+        "b31jSmooth90FlexibilityCorrection": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["enabled", "source"],
+          "properties": {
+            "enabled": { "type": "boolean" },
             "source": { "type": "string", "minLength": 1 }
           }
         },

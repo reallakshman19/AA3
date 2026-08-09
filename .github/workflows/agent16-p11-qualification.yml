@@ -4,9 +4,13 @@ on:
   pull_request:
     paths:
       - 'scripts/advanced-shell-contract-check.mjs'
+      - 'scripts/linear-piping-analysis-consumer-anti-drift-check.mjs'
+      - 'scripts/linear-piping-inputxml-source-binding-check.mjs'
+      - 'scripts/linear-piping-inputxml-analysis-context-check.mjs'
       - 'test/lfea-prefea-gateway.test.js'
       - 'src/core/linear-piping-analysis-consumer/**'
       - '.github/workflows/agent16-p11-qualification.yml'
+      - '.github/workflows/agent16-p13-antidrift-diagnostic.yml'
 
 permissions:
   contents: read
@@ -39,6 +43,8 @@ jobs:
           while IFS= read -r changed; do
             case "$changed" in
               scripts/advanced-shell-contract-check.mjs|test/lfea-prefea-gateway.test.js|.github/workflows/agent16-p11-qualification.yml) ;;
+              scripts/linear-piping-analysis-consumer-anti-drift-check.mjs|scripts/linear-piping-inputxml-source-binding-check.mjs|scripts/linear-piping-inputxml-analysis-context-check.mjs) ;;
+              .github/workflows/agent16-p13-antidrift-diagnostic.yml) ;;
               src/core/linear-piping-analysis-consumer/inputxml-feature-inventory.js|src/core/linear-piping-analysis-consumer/inputxml-feature-inventory-restraints.js) ;;
               src/core/linear-piping-analysis-consumer/inputxml-linear-governed-solve.js|src/core/linear-piping-analysis-consumer/inputxml-model-health.js) ;;
               src/core/linear-piping-analysis-consumer/inputxml-linear-model-health.js|src/core/linear-piping-analysis-consumer/inputxml-linear-model-health-contract.js) ;;

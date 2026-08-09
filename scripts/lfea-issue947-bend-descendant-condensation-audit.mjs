@@ -14,32 +14,49 @@ const FORCE_COMPONENTS = Object.freeze(['FX', 'FY', 'FZ']);
 const MOMENT_COMPONENTS = Object.freeze(['MX', 'MY', 'MZ']);
 
 const args = parseArgs(process.argv.slice(2));
-if (!args.package || !args['source-element']) {
-  throw new TypeError('Usage: node scripts/lfea-issue947-bend-descendant-condensation-audit.mjs --package <canonical-package.json> --source-element <id> [--out <json>]');
+if (!args.package || (!args['source-element'] && !args['source-elements'])) {
+  throw new TypeError('Usage: node scripts/lfea-issue947-bend-descendant-condensation-audit.mjs --package <canonical-package.json> (--source-element <id> | --source-elements <id,id,...>) [--out <json>]');
 }
-const sourceElementId = String(args['source-element']);
+const sourceElementIds = args['source-elements']
+  ? String(args['source-elements']).split(',').map((value) => value.trim()).filter(Boolean)
+  : [String(args['source-element'])];
+if (sourceElementIds.length === 0 || new Set(sourceElementIds).size !== sourceElementIds.length) {
+  throw new TypeError('Source-element chain must contain one or more unique source element ids.');
+}
+const sourceLabel = sourceElementIds.map((id) => `E${id}`).join('_');
 const pkg = JSON.parse(readFileSync(args.package, 'utf8'));
 requirePinnedPackage(pkg);
-const sourceRow = requireSourceRow(pkg, sourceElementId);
-if (!(Number(sourceRow.BEND_PTR) > 0)) throw new TypeError(`Source E${sourceElementId} is not a bend.`);
-const boundaryNodeIds = [String(sourceRow.FROM_NODE), String(sourceRow.TO_NODE)];
-const boundaryCustody = boundaryReferenceCustody(pkg, sourceRow);
+const sourceRows = sourceElementIds.map((id) => requireSourceRow(pkg, id));
+for (const row of sourceRows) {
+  if (!(Number(row.BEND_PTR) > 0)) throw new TypeError(`Source E${row.ELEMENTID} is not a bend.`);
+}
+for (let index = 0; index < sourceRows.length - 1; index += 1) {
+  if (String(sourceRows[index].TO_NODE) !== String(sourceRows[index + 1].FROM_NODE)) {
+    throw new TypeError(`Source bend chain is not contiguous between E${sourceRows[index].ELEMENTID} and E${sourceRows[index + 1].ELEMENTID}.`);
+  }
+}
+const boundaryNodeIds = [String(sourceRows[0].FROM_NODE), String(sourceRows.at(-1).TO_NODE)];
+const boundaryCustody = boundaryReferenceCustody(pkg, sourceElementIds, boundaryNodeIds);
 
 const inspection = inspectCaesarAccdbLinearCaseMechanics(pkg, CASE_ID);
 assert.equal(inspection.schema, 'lfea-accdb-linear-case-mechanics-inspection/v1');
 assert.equal(inspection.sourceAccdbSha256, EXPECTED_SOURCE_SHA256);
 assert.equal(inspection.executionStatus, 'QUALIFIED');
-const descendants = inspection.elements.filter((entry) => entry.sourceElementId === sourceElementId);
-if (descendants.length === 0) throw new TypeError(`Production inspection has no descendants for source E${sourceElementId}.`);
+const sourceElementIdSet = new Set(sourceElementIds);
+const descendants = inspection.elements.filter((entry) => sourceElementIdSet.has(String(entry.sourceElementId)));
+if (descendants.length === 0) throw new TypeError(`Production inspection has no descendants for source chain ${sourceLabel}.`);
 const chain = requireOrderedChain(descendants, boundaryNodeIds[0], boundaryNodeIds[1]);
-if (chain.filter((entry) => entry.kind === 'BEND_INCOMING_STRAIGHT').length > 1) {
-  throw new TypeError(`Source E${sourceElementId} has multiple incoming-straight descendants.`);
-}
-if (!chain.some((entry) => entry.kind === 'BEND_ARC')) {
-  throw new TypeError(`Source E${sourceElementId} lacks bend-arc descendants.`);
+for (const sourceElementId of sourceElementIds) {
+  const sourceDescendants = chain.filter((entry) => String(entry.sourceElementId) === sourceElementId);
+  if (sourceDescendants.filter((entry) => entry.kind === 'BEND_INCOMING_STRAIGHT').length > 1) {
+    throw new TypeError(`Source E${sourceElementId} has multiple incoming-straight descendants.`);
+  }
+  if (!sourceDescendants.some((entry) => entry.kind === 'BEND_ARC')) {
+    throw new TypeError(`Source E${sourceElementId} lacks bend-arc descendants.`);
+  }
 }
 if (!chain.every((entry) => ['BEND_INCOMING_STRAIGHT', 'BEND_ARC'].includes(entry.kind))) {
-  throw new TypeError(`Source E${sourceElementId} contains an unexpected descendant kind.`);
+  throw new TypeError(`Source chain ${sourceLabel} contains an unexpected descendant kind.`);
 }
 
 const assembled = assembleChain(chain);
@@ -56,7 +73,7 @@ const productionParityMaxAbs = maxAbs(productionParityResidual);
 const referenceRows = pkg.references?.[CASE_ID]?.rows;
 if (!Array.isArray(referenceRows)) throw new TypeError(`Pinned package lacks ${CASE_ID} reference rows.`);
 const caesarDisplacement = boundaryDisplacement(referenceRows, boundaryNodeIds);
-const caesarSourceAction = inferredReferenceSourceAction(referenceRows, pkg, sourceRow, boundaryCustody);
+const caesarSourceAction = inferredReferenceSourceAction(referenceRows, pkg, boundaryCustody);
 const caesarCondensedAction = recoverBoundaryAction(condensed, caesarDisplacement);
 const caesarResidual = subtract(caesarCondensedAction, caesarSourceAction);
 const scales = actionScaleVector(caesarSourceAction, pkg.profile.tolerances);
@@ -82,26 +99,32 @@ const gates = {
     && entry.otherIncidentSourceElementIds.length === entry.directReferenceActionElementIds.length) ? 'PASS' : 'FAIL',
 };
 if (Object.values(gates).some((status) => status !== 'PASS')) {
-  throw new Error(`E${sourceElementId} condensation prerequisite failed: ${JSON.stringify(gates)}`);
+  throw new Error(`${sourceLabel} condensation prerequisite failed: ${JSON.stringify(gates)}`);
 }
 
 const classification = resolution.admissibleConstitutiveFailure
-  ? `E${sourceElementId}_ADMISSIBLE_PRODUCTION_DESCENDANT_CONSTITUTIVE_MISMATCH`
+  ? `${sourceLabel}_ADMISSIBLE_PRODUCTION_DESCENDANT_CONSTITUTIVE_MISMATCH`
   : absNormalized[governingIndex] <= COMPONENT_LIMIT
-    ? `E${sourceElementId}_PRODUCTION_DESCENDANT_CONSTITUTIVE_RESPONSE_PASSES_CAESAR_INJECTION`
-    : `E${sourceElementId}_RAW_MISMATCH_NON_RESOLVING_DUE_TO_PINNED_ROTATION_OUTPUT_RESOLUTION`;
+    ? `${sourceLabel}_PRODUCTION_DESCENDANT_CONSTITUTIVE_RESPONSE_PASSES_CAESAR_INJECTION`
+    : `${sourceLabel}_RAW_MISMATCH_NON_RESOLVING_DUE_TO_PINNED_ROTATION_OUTPUT_RESOLUTION`;
 
 const output = {
   schema: 'lfea-issue947-bend-descendant-condensation-audit/v1',
   issue: 947,
   caseId: CASE_ID,
   sourceAccdbSha256: EXPECTED_SOURCE_SHA256,
-  sourceElement: {
-    sourceElementId,
+  sourceElement: sourceRows.length === 1 ? {
+    sourceElementId: sourceElementIds[0],
     fromNode: boundaryNodeIds[0],
     toNode: boundaryNodeIds[1],
-    bendPtr: Number(sourceRow.BEND_PTR),
-  },
+    bendPtr: Number(sourceRows[0].BEND_PTR),
+  } : null,
+  sourceElements: sourceRows.map((row) => ({
+    sourceElementId: String(row.ELEMENTID),
+    fromNode: String(row.FROM_NODE),
+    toNode: String(row.TO_NODE),
+    bendPtr: Number(row.BEND_PTR),
+  })),
   method: 'EXACT_PRODUCTION_DESCENDANT_K_F_EQ_F_0_ASSEMBLY_PLUS_SCHUR_CONDENSATION_TO_SOURCE_12_DOF_BOUNDARY',
   referenceActionCustody: {
     rule: 'At each unrestrained source boundary, target bend end action equals the negative sum of every other incident source-element end action. Every other incident source element must have a direct pinned L19 action row.',
@@ -163,22 +186,23 @@ const output = {
     condensedInitialSplitMaxAbsResidual: splitResidual,
   },
   classification,
-  falsificationRule: `No E${sourceElementId} constitutive conclusion is admissible unless exact production descendant condensation reproduces solved descendant boundary actions within 1e-3 N/Nm, both source boundaries are unrestrained and fully recoverable from direct neighboring source actions, and zero CAESAR rotations are propagated as +/-0.0001 degree uncertainty rather than replaced.`,
+  falsificationRule: `No ${sourceLabel} constitutive conclusion is admissible unless exact production descendant condensation reproduces solved descendant boundary actions within 1e-3 N/Nm, both outer source boundaries are unrestrained and fully recoverable from direct neighboring source actions, and zero CAESAR rotations are propagated as +/-0.0001 degree uncertainty rather than replaced.`,
 };
 
 if (args.out) writeFileSync(args.out, `${JSON.stringify(output, null, 2)}\n`);
 console.log(JSON.stringify(output, null, 2));
-console.log(`Issue 947 E${sourceElementId} bend descendant condensation audit: ${classification}`);
+console.log(`Issue 947 ${sourceLabel} bend descendant condensation audit: ${classification}`);
 
-function boundaryReferenceCustody(pkg, targetRow) {
+function boundaryReferenceCustody(pkg, targetElementIds, boundaryNodeIds) {
   const sourceRows = pkg.model.tables.INPUT_BASIC_ELEMENT_DATA.rows;
+  const target = new Set(targetElementIds.map(String));
   const restraintRows = pkg.model.tables.INPUT_RESTRAINTS?.rows ?? [];
-  return [String(targetRow.FROM_NODE), String(targetRow.TO_NODE)].map((nodeId) => {
-    const other = sourceRows.filter((row) => String(row.ELEMENTID) !== String(targetRow.ELEMENTID)
+  return boundaryNodeIds.map((nodeId) => {
+    const other = sourceRows.filter((row) => !target.has(String(row.ELEMENTID))
       && (String(row.FROM_NODE) === nodeId || String(row.TO_NODE) === nodeId));
     const directReferenceActionElementIds = other.filter((row) => hasDirectSourceAction(pkg.references[CASE_ID].rows, row))
       .map((row) => String(row.ELEMENTID));
-    const restraintCount = restraintRows.filter((row) => String(row.NODE ?? '') === nodeId).length;
+    const restraintCount = restraintRows.filter((row) => String(row.NODE ?? row.NODE_NUM ?? '') === nodeId).length;
     return {
       nodeId,
       restraintCount,
@@ -188,8 +212,7 @@ function boundaryReferenceCustody(pkg, targetRow) {
   });
 }
 
-function inferredReferenceSourceAction(rows, pkg, targetRow, custody) {
-  const sourceRows = pkg.model.tables.INPUT_BASIC_ELEMENT_DATA.rows;
+function inferredReferenceSourceAction(rows, pkg, custody) {
   const ends = custody.map((boundary) => {
     const vectors = boundary.otherIncidentSourceElementIds.map((id) => {
       const row = requireSourceRow(pkg, id);

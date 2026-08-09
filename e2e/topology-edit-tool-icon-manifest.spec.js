@@ -157,19 +157,19 @@ test('production icon identity survives real UI states and deactivate/reactivate
   await expect(fitSelection).toBeEnabled();
   await openPanel(host, 'commands');
   await expect(move).toBeEnabled();
-  const baselineHash = await host.getAttribute('data-topology-edit-canonical-hash');
+  const canonicalHashAttribute = 'data-topology-edit-dataset-canonical-hash';
+  const baselineHash = await host.getAttribute(canonicalHashAttribute);
+  expect(baselineHash).toBeTruthy();
   await move.click();
-  await expect.poll(() => host.getAttribute('data-topology-edit-canonical-hash'))
-    .not.toBe(baselineHash);
+  await expect.poll(() => host.getAttribute(canonicalHashAttribute)).not.toBe(baselineHash);
   await expect(undo).toBeEnabled();
   await expectVisibleIcon(undo, 'icon-undo');
   await undo.click();
-  await expect(host).toHaveAttribute('data-topology-edit-canonical-hash', baselineHash);
+  await expect(host).toHaveAttribute(canonicalHashAttribute, baselineHash);
   await expect(redo).toBeEnabled();
   await expectVisibleIcon(redo, 'icon-redo');
   await redo.click();
-  await expect.poll(() => host.getAttribute('data-topology-edit-canonical-hash'))
-    .not.toBe(baselineHash);
+  await expect.poll(() => host.getAttribute(canonicalHashAttribute)).not.toBe(baselineHash);
   await undo.click();
 
   for (let cycle = 1; cycle <= 3; cycle += 1) {

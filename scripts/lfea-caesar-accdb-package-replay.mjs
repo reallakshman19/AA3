@@ -232,19 +232,23 @@ function summarizeQualification(benchmarkPackage, actual, qualification) {
       row.entityKind === 'NODE'
       && ['FORCE', 'MOMENT'].includes(row.quantity)
       && ['PASS', 'FAIL'].includes(row.status));
-    const failures = compared.filter((row) => row.status === 'FAIL');
-    const failedNodeIds = [...new Set(failures.map((row) => row.entityId))].sort(compareText);
-    const failureRows = failures.map(measurementRow).sort(compareMeasurementRows);
+    const componentRows = compared.map(measurementRow);
+    const failures = componentRows.filter((row) => row.status === 'FAIL');
+    const failedNodeIds = [...new Set(failures.map((row) => row.nodeId))].sort(compareText);
+    const rankedComponents = [...componentRows].sort(compareMeasurementErrors);
+    const rankedFailures = [...failures].sort(compareMeasurementErrors);
     cases[caseId] = {
       qualificationStatus: qualifiedCase.status,
       executionStatus: actual.mechanics?.cases?.[caseId]?.executionStatus ?? null,
       executionSemanticHash: actual.cases?.[caseId]?.executionSemanticHash ?? null,
       executionEvidenceHash: actual.cases?.[caseId]?.executionEvidenceHash ?? null,
-      comparedRestraintComponentCount: compared.length,
+      comparedRestraintComponentCount: componentRows.length,
       exceedingRestraintCount: failedNodeIds.length,
       exceedingComponentCount: failures.length,
-      worstFailure: failureRows[0] ?? null,
-      failures: failureRows,
+      worstComponent: rankedComponents[0] ?? null,
+      worstFailure: rankedFailures[0] ?? null,
+      failures: rankedFailures,
+      components: [...componentRows].sort(compareMeasurementIdentity),
     };
   }
   const base = {
@@ -275,10 +279,14 @@ function measurementRow(row) {
   };
 }
 
-function compareMeasurementRows(left, right) {
+function compareMeasurementErrors(left, right) {
   const leftError = left.relativeError ?? -1;
   const rightError = right.relativeError ?? -1;
   if (leftError !== rightError) return rightError - leftError;
+  return compareMeasurementIdentity(left, right);
+}
+
+function compareMeasurementIdentity(left, right) {
   const nodeOrder = compareText(left.nodeId, right.nodeId);
   if (nodeOrder !== 0) return nodeOrder;
   const quantityOrder = compareText(left.quantity, right.quantity);

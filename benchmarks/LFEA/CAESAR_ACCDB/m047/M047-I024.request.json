@@ -1,0 +1,59 @@
+{
+  "schema": "lfea-caesar-accdb-iteration-request/v1",
+  "issueId": "M047",
+  "iterationId": "M047-I024",
+  "expectedSourceAccdbSha256": "85d39463296e569da811d8572e2eff680b858097f76fdf0f47d1755f0b161c21",
+  "expectedBendPointerCount": 12,
+  "baseCommitSha": "882d59a99c3a03847d20bec34770ba57ff479d91",
+  "parentAcceptedIteration": "M047-I015",
+  "supportingIterations": ["M047-I019", "M047-I020", "M047-I021", "M047-I022", "M047-I023"],
+  "hypothesis": "The four REDUCER sources are condensed assemblies whose ten internal pipe cylinders should consume the same flexible-pipe transverse-shear law as accepted I015. The reducer already Schur-condenses stiffness and both gravity/thermal load vectors through the same internal DOFs. A controlled candidate can therefore change only the ten-cylinder base-beam law, pass the resulting shear parameters to the consistent distributed-load vector, and condense stiffness plus loads together without changing reducer geometry, midpoint sampling, thermal strain, gravity authority, or public two-node ownership.",
+  "candidateBoundary": {
+    "retainedI015": "FRAME && teeModifier===null in the ACCDB solver",
+    "additionalI024": "the ten internal cylinders inside compileTenCylinderReducerAuthority",
+    "expectedReducerSourceIds": ["11", "16", "67", "75"],
+    "reducerSegmentCount": 10,
+    "samplingRule": "MIDPOINT_LINEAR_INTERPOLATION_CANDIDATE_V1",
+    "condensationRule": "Kbb-Kbi*Kii^-1*Kib; fb-Kbi*Kii^-1*fi for each load vector",
+    "kappaY": 0.53,
+    "kappaZ": 0.53,
+    "kappaAuthority": "COWPER-1966-THIN-ANNULUS-INPUT"
+  },
+  "loadOwnership": {
+    "stiffness": "each internal cylinder uses PIPE_FRAME3D_TIMOSHENKO_V1 kernel parameters",
+    "gravity": "distributedLoadLocalVector receives the same cylinder phiXY/phiXZ before global reducer condensation",
+    "thermal": "uniform axial initial strain is unchanged and is condensed through the same internal Kii",
+    "publicRecovery": "unchanged two-node condensed REDUCER element"
+  },
+  "heldAuthority": [
+    "reducer ten-cylinder geometry",
+    "reducer midpoint section sampling",
+    "reducer public two-node interface",
+    "BEND_INCOMING_STRAIGHT",
+    "BEND_ARC",
+    "TEE/B31J",
+    "RIGID",
+    "BOURDON",
+    "PRESSURE",
+    "THERMAL EXPANSION AUTHORITY",
+    "GRAVITY MASS AUTHORITY",
+    "TOLERANCES"
+  ],
+  "predictedSignature": [
+    "Candidate must retain the exact accepted I015 solver-file SHA and patch only reducer-condensation.js in the frozen mechanics checkout.",
+    "A uniform ten-cylinder reducer must Schur-condense to the same 12x12 stiffness as one direct full-length Timoshenko frame with the same section/material/kappa.",
+    "For that uniform reducer, condensed gravity and thermal vectors must match the direct full-length consistent-load and thermal initial-strain vectors, proving stiffness/load ownership is coherent.",
+    "The four real reducer source IDs must remain 11,16,67,75 in both L19 and L20, with 12/12 bend and unchanged tee authority custody.",
+    "Locked system A/B must preserve identical CAESAR reference rows and target-node action/equilibrium closure.",
+    "Acceptance requires no new L19 restraint failure and no unexplained aggregate regression; I019 sources 9-11 MZ and I020 bend-side source44/node20390 remain explicit sentinels.",
+    "No benchmark fitting, tolerance change, thermal coefficient change, tee change, bend change, or production solver edit is permitted."
+  ],
+  "changedPaths": [
+    "scripts/lfea-m047-apply-reducer-timoshenko-candidate.mjs",
+    "scripts/lfea-m047-reducer-timoshenko-candidate-check.mjs",
+    ".github/workflows/m047-bm4nl-i024-reducer-ab.yml"
+  ],
+  "mechanicsDelta": "Runtime reducer qualification candidate only: accepted I015 ordinary FRAME mechanics are retained while the reducer ten-cylinder internal beam stiffness and consistent-load interpolation use the same governed Timoshenko shear parameters before the existing stiffness/load Schur condensation.",
+  "verdict": "PENDING",
+  "decisionReason": "Await exact-head locked Windows I024 reducer A/B evidence."
+}

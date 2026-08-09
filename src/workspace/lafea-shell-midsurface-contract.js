@@ -1,3 +1,4 @@
+import { createLafeaAnalysisGeometry } from './lafea-analysis-geometry-contract.js';
 import { canonicalLafeaSha256 } from './lafea-canonical-sha256.js';
 
 export const LAFEA_SHELL_ANALYSIS_DOMAIN_SCHEMA = 'lafea-shell-analysis-domain/v1';
@@ -6,7 +7,11 @@ export const LAFEA_SHELL_MIDSURFACE_EVIDENCE_SCHEMA = 'lafea-shell-midsurface-ev
 export const LAFEA_SHELL_MIDSURFACE_INTAKE_SCHEMA = 'lafea-shell-midsurface-evidence-intake/v1';
 export const LAFEA_SHELL_MIDSURFACE_STAGES = Object.freeze(['LAFEA.4', 'LAFEA.5']);
 export const LAFEA_SHELL_MIDSURFACE_TOPOLOGY = 'PLANAR_SINGLE_PATCH_STRAIGHT_PERIMETER_V1';
+export const LAFEA_SHELL_MIDSURFACE_TOPOLOGY_WITH_HOLES =
+  'PLANAR_SINGLE_PATCH_STRAIGHT_PERIMETER_WITH_HOLES_V2';
 export const LAFEA_SHELL_MIDSURFACE_ORIENTATION = 'OUTER_CCW_RIGHT_HANDED_BASIS_V1';
+export const LAFEA_SHELL_MIDSURFACE_ORIENTATION_WITH_HOLES =
+  'OUTER_CCW_HOLES_CW_RIGHT_HANDED_BASIS_V2';
 
 const DOMAIN_KEYS = Object.freeze([
   'schema', 'stageId', 'domainId', 'sourceHash', 'midsurfaceGeometryHash',
@@ -21,6 +26,10 @@ const GEOMETRY_OUTPUT_KEYS = Object.freeze([...GEOMETRY_KEYS, 'semanticHash']);
 const EVIDENCE_KEYS = Object.freeze([
   'schema', 'stageId', 'sourceHash', 'analysisDomain', 'geometry', 'producerRef',
 ]);
+const TOPOLOGY_CLASSES = Object.freeze([
+  LAFEA_SHELL_MIDSURFACE_TOPOLOGY,
+  LAFEA_SHELL_MIDSURFACE_TOPOLOGY_WITH_HOLES,
+]);
 
 /** Mesh-independent shell analysis-domain authority. */
 export function createLafeaShellAnalysisDomain(value) {
@@ -33,9 +42,7 @@ export function createLafeaShellAnalysisDomain(value) {
     sourceHash: sha256(value.sourceHash, 'SOURCE_HASH'),
     midsurfaceGeometryHash: sha256(value.midsurfaceGeometryHash, 'MIDSURFACE_GEOMETRY_HASH'),
     lengthUnit: text(value.lengthUnit, 'LENGTH_UNIT'),
-    topologyClass: exactText(
-      value.topologyClass, LAFEA_SHELL_MIDSURFACE_TOPOLOGY, 'TOPOLOGY_CLASS',
-    ),
+    topologyClass: member(value.topologyClass, TOPOLOGY_CLASSES, 'TOPOLOGY_CLASS'),
   };
   return freeze({
     ...core,
@@ -66,6 +73,10 @@ export function validateLafeaShellAnalysisDomain(value) {
  * Planar shell patch declared in its own 2D parametric basis. Coordinates are
  * not inferred from an existing facet mesh. `axisU × axisV` defines the shell
  * director used when the generated mesh is compiled into the local-shell model.
+ *
+ * Hole-free V1 evidence remains valid. Hole-bearing V2 geometry is one planar
+ * patch with one OUTER loop plus one-or-more non-nested HOLE loops. All shell
+ * boundary segments remain straight in this qualification slice.
  */
 export function createLafeaShellMidsurfaceGeometry(value) {
   exact(value, GEOMETRY_KEYS, 'LAFEA_SHELL_MIDSURFACE_GEOMETRY_KEYS_INVALID');
@@ -111,24 +122,48 @@ export function createLafeaShellMidsurfaceGeometry(value) {
   unique(segments.map((row) => row.segmentId), 'LAFEA_SHELL_MIDSURFACE_SEGMENT_ID_DUPLICATE');
   const segmentById = new Map(segments.map((row) => [row.segmentId, row]));
 
-  if (!Array.isArray(value.loops) || value.loops.length !== 1) {
-    fail('LAFEA_SHELL_MIDSURFACE_SINGLE_OUTER_LOOP_REQUIRED');
+  if (!Array.isArray(value.loops) || value.loops.length < 1) {
+    fail('LAFEA_SHELL_MIDSURFACE_LOOPS_INVALID');
   }
-  const loop = value.loops[0];
-  exact(loop, ['loopId', 'role', 'segmentIds'], 'LAFEA_SHELL_MIDSURFACE_LOOP_KEYS_INVALID');
-  if (loop.role !== 'OUTER' || !Array.isArray(loop.segmentIds)
-    || loop.segmentIds.length !== segments.length) {
-    fail('LAFEA_SHELL_MIDSURFACE_OUTER_LOOP_INVALID');
-  }
-  const segmentIds = loop.segmentIds.map((id) => text(id, 'LOOP_SEGMENT_ID'));
-  unique(segmentIds, 'LAFEA_SHELL_MIDSURFACE_LOOP_SEGMENT_DUPLICATE');
-  if (segmentIds.some((id) => !segmentById.has(id))) {
-    fail('LAFEA_SHELL_MIDSURFACE_LOOP_SEGMENT_MISSING');
-  }
-  requireClosedLoop(segmentIds, segmentById);
+  const loops = value.loops.map((row) => canonicalLoop(row, segmentById)).sort(loopCompare);
+  unique(loops.map((row) => row.loopId), 'LAFEA_SHELL_MIDSURFACE_LOOP_ID_DUPLICATE');
+  const outer = loops.filter((row) => row.role === 'OUTER');
+  const holes = loops.filter((row) => row.role === 'HOLE');
+  if (outer.length !== 1) fail('LAFEA_SHELL_MIDSURFACE_OUTER_LOOP_COUNT_INVALID');
+
+  const owner = new Map();
   const vertexById = new Map(vertices.map((row) => [row.vertexId, row]));
-  const area2 = signedArea2(segmentIds, segmentById, vertexById);
-  if (!(area2 > 1e-12)) fail('LAFEA_SHELL_MIDSURFACE_OUTER_LOOP_NOT_CCW_OR_DEGENERATE');
+  for (const loop of loops) {
+    requireClosedLoop(loop.segmentIds, segmentById);
+    const area2 = signedArea2(loop.segmentIds, segmentById, vertexById);
+    if (loop.role === 'OUTER' && !(area2 > 1e-12)) {
+      fail('LAFEA_SHELL_MIDSURFACE_OUTER_LOOP_NOT_CCW_OR_DEGENERATE');
+    }
+    if (loop.role === 'HOLE' && !(area2 < -1e-12)) {
+      fail('LAFEA_SHELL_MIDSURFACE_HOLE_ORIENTATION_INVALID');
+    }
+    for (const segmentId of loop.segmentIds) {
+      if (owner.has(segmentId)) fail('LAFEA_SHELL_MIDSURFACE_SEGMENT_MULTI_LOOP');
+      owner.set(segmentId, loop.loopId);
+    }
+  }
+  if (owner.size !== segments.length) fail('LAFEA_SHELL_MIDSURFACE_ORPHAN_SEGMENT');
+
+  const expectedOrientation = holes.length
+    ? LAFEA_SHELL_MIDSURFACE_ORIENTATION_WITH_HOLES
+    : LAFEA_SHELL_MIDSURFACE_ORIENTATION;
+  const orientationPolicy = exactText(
+    value.orientationPolicy, expectedOrientation, 'ORIENTATION_POLICY',
+  );
+
+  validateShellPlanarTopology({
+    stageId,
+    geometryId: value.geometryId,
+    lengthUnit: value.lengthUnit,
+    vertices,
+    segments,
+    loops,
+  });
 
   const core = {
     schema: exactText(value.schema, LAFEA_SHELL_MIDSURFACE_GEOMETRY_SCHEMA, 'GEOMETRY_SCHEMA'),
@@ -138,14 +173,10 @@ export function createLafeaShellMidsurfaceGeometry(value) {
     origin,
     axisU,
     axisV,
-    orientationPolicy: exactText(
-      value.orientationPolicy, LAFEA_SHELL_MIDSURFACE_ORIENTATION, 'ORIENTATION_POLICY',
-    ),
+    orientationPolicy,
     vertices,
     segments,
-    loops: freeze([freeze({
-      loopId: text(loop.loopId, 'LOOP_ID'), role: 'OUTER', segmentIds: freeze(segmentIds),
-    })]),
+    loops,
   };
   return freeze({
     ...core,
@@ -183,10 +214,15 @@ export function createLafeaShellMidsurfaceEvidence(value) {
   const domain = validateOrCreateDomain(value.analysisDomain);
   const stageId = stage(value.stageId);
   const sourceHash = sha256(value.sourceHash, 'SOURCE_HASH');
+  const hasHoles = geometry.loops.some((row) => row.role === 'HOLE');
+  const expectedTopologyClass = hasHoles
+    ? LAFEA_SHELL_MIDSURFACE_TOPOLOGY_WITH_HOLES
+    : LAFEA_SHELL_MIDSURFACE_TOPOLOGY;
   if (geometry.stageId !== stageId || domain.stageId !== stageId
     || domain.sourceHash !== sourceHash
     || domain.midsurfaceGeometryHash !== geometry.semanticHash
-    || domain.lengthUnit !== geometry.lengthUnit) {
+    || domain.lengthUnit !== geometry.lengthUnit
+    || domain.topologyClass !== expectedTopologyClass) {
     fail('LAFEA_SHELL_MIDSURFACE_EVIDENCE_PARENT_MISMATCH');
   }
   const core = {
@@ -201,8 +237,8 @@ export function createLafeaShellMidsurfaceEvidence(value) {
     qualification: 'PASS',
     limitations: freeze([
       'PLANAR_SINGLE_PATCH_ONLY',
-      'STRAIGHT_PERIMETER_SEGMENTS_ONLY',
-      'NO_HOLES',
+      'STRAIGHT_OUTER_AND_HOLE_SEGMENTS_ONLY',
+      'NON_NESTED_HOLES_ONLY',
       'NO_MULTI_PATCH_SEAMS',
       'NO_CURVED_MIDSURFACE',
       'NO_OFFSET_SURFACE_GENERATION',
@@ -254,6 +290,49 @@ function validateOrCreateDomain(value) {
     ? validateLafeaShellAnalysisDomain(value)
     : createLafeaShellAnalysisDomain(value);
 }
+function canonicalLoop(value, segmentById) {
+  exact(value, ['loopId', 'role', 'segmentIds'], 'LAFEA_SHELL_MIDSURFACE_LOOP_KEYS_INVALID');
+  const role = member(value.role, ['OUTER', 'HOLE'], 'LOOP_ROLE');
+  if (!Array.isArray(value.segmentIds) || value.segmentIds.length < 3) {
+    fail('LAFEA_SHELL_MIDSURFACE_LOOP_TOO_SHORT');
+  }
+  const segmentIds = value.segmentIds.map((id) => text(id, 'LOOP_SEGMENT_ID'));
+  unique(segmentIds, 'LAFEA_SHELL_MIDSURFACE_LOOP_SEGMENT_DUPLICATE');
+  if (segmentIds.some((id) => !segmentById.has(id))) {
+    fail('LAFEA_SHELL_MIDSURFACE_LOOP_SEGMENT_MISSING');
+  }
+  return freeze({ loopId: text(value.loopId, 'LOOP_ID'), role, segmentIds: freeze(segmentIds) });
+}
+function validateShellPlanarTopology(value) {
+  try {
+    createLafeaAnalysisGeometry({
+      schema: 'lafea-analysis-geometry/v1',
+      stageId: 'LAFEA.3',
+      geometryId: `${text(value.geometryId, 'GEOMETRY_ID')}:SHELL-TOPOLOGY-CHECK`,
+      coordinateSystemId: 'SHELL_MIDSURFACE_UV',
+      lengthUnit: text(value.lengthUnit, 'LENGTH_UNIT'),
+      orientationPolicy: 'OUTER_CCW_HOLES_CW_V1',
+      vertices: value.vertices.map((row) => ({
+        vertexId: row.vertexId, x: row.u, y: row.v,
+      })),
+      segments: value.segments.map((row) => ({
+        segmentId: row.segmentId,
+        type: 'LINE',
+        startVertexId: row.startVertexId,
+        endVertexId: row.endVertexId,
+      })),
+      loops: value.loops.map((row) => ({
+        loopId: row.loopId, role: row.role, segmentIds: [...row.segmentIds],
+      })),
+    });
+  } catch (error) {
+    const prefix = 'LAFEA_ANALYSIS_GEOMETRY_';
+    const suffix = typeof error?.code === 'string' && error.code.startsWith(prefix)
+      ? error.code.slice(prefix.length)
+      : 'TOPOLOGY_INVALID';
+    fail(`LAFEA_SHELL_MIDSURFACE_${suffix}`);
+  }
+}
 function requireClosedLoop(ids, byId) {
   for (let index = 0; index < ids.length; index += 1) {
     const current = byId.get(ids[index]);
@@ -282,9 +361,14 @@ function dot(a, b) { return a.x * b.x + a.y * b.y + a.z * b.z; }
 function cross(a, b) { return { x: a.y * b.z - a.z * b.y, y: a.z * b.x - a.x * b.z, z: a.x * b.y - a.y * b.x }; }
 function norm(a) { return Math.hypot(a.x, a.y, a.z); }
 function byId(key) { return (a, b) => a[key].localeCompare(b[key]); }
+function loopCompare(a, b) {
+  if (a.role !== b.role) return a.role === 'OUTER' ? -1 : 1;
+  return a.loopId.localeCompare(b.loopId);
+}
 function unique(values, code) { if (new Set(values).size !== values.length) fail(code); }
 function stage(value) { if (!LAFEA_SHELL_MIDSURFACE_STAGES.includes(value)) fail('LAFEA_SHELL_MIDSURFACE_STAGE_INVALID'); return value; }
 function exactText(value, expected, field) { if (value !== expected) fail(`LAFEA_SHELL_MIDSURFACE_${field}_INVALID`); return value; }
+function member(value, allowed, field) { if (!allowed.includes(value)) fail(`LAFEA_SHELL_MIDSURFACE_${field}_INVALID`); return value; }
 function text(value, field) { if (typeof value !== 'string' || !value.trim()) fail(`LAFEA_SHELL_MIDSURFACE_${field}_INVALID`); return value.trim(); }
 function sha256(value, field) { const out = text(value, field); if (!/^sha256:[0-9a-f]{64}$/u.test(out)) fail(`LAFEA_SHELL_MIDSURFACE_${field}_INVALID`); return out; }
 function finite(value, field) { if (!Number.isFinite(value)) fail(`LAFEA_SHELL_MIDSURFACE_${field}_INVALID`); return canonical(value); }

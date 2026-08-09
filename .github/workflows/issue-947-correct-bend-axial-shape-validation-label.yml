@@ -1,0 +1,73 @@
+name: Issue 947 correct bend axial-shape validation label
+
+on:
+  push:
+    branches:
+      - codex/issue-947-bm4nl-qualification
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  correct:
+    if: "${{ github.event_name == 'workflow_dispatch' || github.event.head_commit.message == 'ci(issue947): correct bend axial shape validation label' }}"
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: codex/issue-947-bm4nl-qualification
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Reclassify generic curved-arc evidence without changing mechanics
+        shell: bash
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+
+          audit = Path('scripts/lfea-issue947-bend-axial-shape-audit.mjs')
+          text = audit.read_text()
+          replacements = {
+            "check: 'lfea-issue947-bend-axial-shape-audit',": "check: 'lfea-issue947-ordinary-curved-centreline-axial-mode-audit',",
+            "status: 'PASS',": "status: 'PASS_ORDINARY_CURVED_CENTRELINE_MODE_ONLY',",
+            "note: 'This audit qualifies presence and convergence of the curved-centreline axial strain-energy mode. It does not claim bitwise identity with CAESAR internal bend shape functions.',": "note: 'This audit qualifies only ordinary curved-centreline axial strain-energy convergence of the segmented frame chain. It does not qualify CAESAR BEND_AXIAL_SHAPE operator identity, which remains explicitly unmapped.',",
+            "conclusion: 'BEND_AXIAL_SHAPE_MODE_IS_PRESENT_AND_CONVERGED_IN_SEGMENTED_FRAME_PHYSICS',": "conclusion: 'ORDINARY_CURVED_CENTRELINE_AXIAL_MODE_IS_PRESENT_AND_CONVERGED_CAESAR_OPERATOR_IDENTITY_UNQUALIFIED',",
+            "limitation: 'CAESAR_INTERNAL_CURVED_ELEMENT_INTERPOLATION_REMAINS_UNOBSERVED; ONLY_THE_GOVERNING_AXIAL_DEFORMATION_MODE_IS_QUALIFIED_HERE',": "caesarSettingQualification: 'BLOCKING_CAESAR_BEND_AXIAL_SHAPE_OPERATOR_UNMAPPED',\n  limitation: 'CAESAR_INTERNAL_CURVED_ELEMENT_INTERPOLATION_REMAINS_UNOBSERVED; THIS_AUDIT_IS_NOT_AUTHORITY_FOR_BEND_AXIAL_SHAPE_YES',",
+          }
+          for old, new in replacements.items():
+            if text.count(old) != 1:
+              raise SystemExit(f'Audit anchor count {text.count(old)} for: {old}')
+            text = text.replace(old, new)
+          audit.write_text(text)
+
+          workflow = Path('.github/workflows/issue-947-bm4nl-qualification.yml')
+          text = workflow.read_text()
+          old = '      - name: Validate Bend Axial Shape mode against curved-arc closed form'
+          new = '      - name: Validate ordinary curved-arc axial-mode convergence (CAESAR operator remains blocked)'
+          if text.count(old) != 1:
+            raise SystemExit(f'Workflow label anchor count {text.count(old)}')
+          workflow.write_text(text.replace(old, new))
+          PY
+
+      - name: Run corrected ordinary curved-arc audit
+        shell: bash
+        run: |
+          node --check scripts/lfea-issue947-bend-axial-shape-audit.mjs
+          node scripts/lfea-issue947-caesar-settings-custody-check.mjs
+
+      - name: Commit qualification-language correction
+        shell: bash
+        run: |
+          set -euo pipefail
+          git add scripts/lfea-issue947-bend-axial-shape-audit.mjs .github/workflows/issue-947-bm4nl-qualification.yml
+          if git diff --cached --quiet; then
+            echo 'Expected validation-label correction produced no diff.' >&2
+            exit 1
+          fi
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git commit -m 'fix(issue947): distinguish curved-arc convergence from CAESAR axial shape'
+          git push origin HEAD:codex/issue-947-bm4nl-qualification

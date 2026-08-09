@@ -94,24 +94,15 @@ for (const stageId of ['LAFEA.4', 'LAFEA.5']) {
   assert.ok(plan.characteristicLengthMin <= plan.characteristicLengthMedian);
   assert.ok(plan.characteristicLengthMedian <= plan.characteristicLengthMax);
 
-  // The global target is a size-field/point-spacing control, not a hard cap on
-  // every Delaunay diagonal. Qualify the sizing response by deterministic mesh
-  // refinement instead: halving the target must increase mesh density and
-  // reduce the median characteristic edge length without changing authority.
   const fineProfile = shellProfile(stageId, 15);
-  const finePlan = planLafeaShellAnalysisMesh({
-    midsurfaceEvidence,
-    meshProfile: fineProfile,
-  });
+  const finePlan = planLafeaShellAnalysisMesh({ midsurfaceEvidence, meshProfile: fineProfile });
   assert.equal(finePlan.resourceDisposition, 'WITHIN_LIMITS');
   assert.equal(finePlan.estimatedDofs, finePlan.nodeCount * 5);
   assert.ok(finePlan.nodeCount > plan.nodeCount);
   assert.ok(finePlan.elementCount > plan.elementCount);
   assert.ok(finePlan.characteristicLengthMedian < plan.characteristicLengthMedian);
 
-  const produced = produceLafeaShellAnalysisMesh({
-    midsurfaceEvidence, meshProfile, plan,
-  });
+  const produced = produceLafeaShellAnalysisMesh({ midsurfaceEvidence, meshProfile, plan });
   const fineProduced = produceLafeaShellAnalysisMesh({
     midsurfaceEvidence, meshProfile: fineProfile, plan: finePlan,
   });
@@ -128,7 +119,6 @@ for (const stageId of ['LAFEA.4', 'LAFEA.5']) {
     assert.equal(candidate.evidence.analysisGeometryHash, geometry.semanticHash);
   }
 
-  // Every node lies exactly on the declared tilted midsurface plane.
   for (const node of produced.evidence.mesh.nodes) {
     const dx = node.x - geometry.origin.x;
     const dy = node.y - geometry.origin.y;
@@ -165,8 +155,6 @@ for (const stageId of ['LAFEA.4', 'LAFEA.5']) {
   });
 }
 
-// The same declared patch must yield the same mesh density response in both
-// shell stages; only stage-scoped mesh identity/evidence lineage may differ.
 assert.equal(rows[0].nodeCount, rows[1].nodeCount);
 assert.equal(rows[0].elementCount, rows[1].elementCount);
 assert.equal(rows[0].estimatedDofs, rows[1].estimatedDofs);
@@ -174,7 +162,6 @@ assert.equal(rows[0].fineNodeCount, rows[1].fineNodeCount);
 assert.equal(rows[0].fineElementCount, rows[1].fineElementCount);
 assert.equal(rows[0].fineEstimatedDofs, rows[1].fineEstimatedDofs);
 
-// Fail closed on a non-orthogonal declared basis; never best-fit it.
 assert.throws(
   () => createLafeaShellMidsurfaceGeometry({
     ...geometryTemplate,
@@ -183,16 +170,17 @@ assert.throws(
   (error) => error?.code === 'LAFEA_SHELL_MIDSURFACE_BASIS_NOT_ORTHOGONAL',
 );
 
-// Fail closed on multiple loops/holes in this first shell qualification.
+// More than one OUTER loop remains invalid. Qualified HOLE loops are covered
+// independently by the shell-hole gate and must never be relabelled as OUTER.
 assert.throws(
   () => createLafeaShellMidsurfaceGeometry({
     ...geometryTemplate,
     loops: [
       geometryTemplate.loops[0],
-      { loopId: 'HOLE', role: 'OUTER', segmentIds: ['S1', 'S2', 'S3', 'S4'] },
+      { loopId: 'SECOND_OUTER', role: 'OUTER', segmentIds: ['S1', 'S2', 'S3', 'S4'] },
     ],
   }),
-  (error) => error?.code === 'LAFEA_SHELL_MIDSURFACE_SINGLE_OUTER_LOOP_REQUIRED',
+  (error) => error?.code === 'LAFEA_SHELL_MIDSURFACE_OUTER_LOOP_COUNT_INVALID',
 );
 
 console.log(JSON.stringify({

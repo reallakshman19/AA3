@@ -3,8 +3,8 @@
  *
  * These sit between the store's publication boundary and the generation state
  * slice: they enforce the route precondition, publish once per action, and
- * turn a producer rejection into an orchestrator diagnostic rather than an
- * exception escaping into the view.
+ * turn a producer/recovery rejection into an orchestrator diagnostic rather
+ * than an exception escaping into the view.
  */
 
 export function createLafeaMeshGenerationActions(context) {
@@ -43,6 +43,37 @@ export function createLafeaMeshGenerationActions(context) {
       () => meshGeneration.generateMesh(readStageState(stageId), overrides));
   }
 
+  /**
+   * Recover portable domain-first evidence through the same trust boundary as
+   * generation. The embedded profile is reconstructed first and explicitly
+   * rebound so imported evidence never depends on an unrelated prior profile.
+   */
+  function recoverAnalysisMeshEvidenceV2(
+    value,
+    stageId = value?.stageId ?? getRetainedState().activeStageId,
+  ) {
+    requireGenerationAuthorized(stageId);
+    try {
+      const validated = meshGeneration.validateEvidence(value);
+      if (validated.stageId !== stageId) {
+        throw storeError('LAFEA_ANALYSIS_MESH_V2_RECOVERY_STAGE_MISMATCH');
+      }
+      const binding = bindAnalysisMeshProfile(validated.meshProfile, stageId);
+      if (getRetainedState().status === 'FAILED') return null;
+      const result = meshGeneration.recoverEvidence(validated, stageId);
+      clearOrchestratorDiagnostic();
+      return freeze({
+        ...result,
+        profileChanged: binding.changed,
+        stage: publish().stages[stageId],
+      });
+    } catch (error) {
+      failOrchestrator(error, 'LAFEA_ANALYSIS_MESH_V2_RECOVERY_REJECTED');
+      publish();
+      return null;
+    }
+  }
+
   function attempt(stageId, fallbackCode, action) {
     requireGenerationAuthorized(stageId);
     try {
@@ -57,7 +88,7 @@ export function createLafeaMeshGenerationActions(context) {
   }
 
   /**
-   * Generation needs the retained analysis geometry, which only the
+   * Generation/recovery needs the retained analysis geometry, which only the
    * domain-first route carries.
    */
   function requireGenerationAuthorized(stageId) {
@@ -66,7 +97,12 @@ export function createLafeaMeshGenerationActions(context) {
     }
   }
 
-  return Object.freeze({ bindAnalysisMeshProfile, planAnalysisMesh, generateAnalysisMesh });
+  return Object.freeze({
+    bindAnalysisMeshProfile,
+    planAnalysisMesh,
+    generateAnalysisMesh,
+    recoverAnalysisMeshEvidenceV2,
+  });
 }
 
 function freeze(value) {

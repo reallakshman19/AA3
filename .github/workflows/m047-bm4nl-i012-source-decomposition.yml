@@ -202,7 +202,7 @@ jobs:
               $worst = $source.ranking.largestReplayResiduals[0]
               $initial = $source.ranking.largestImprovementIfInitialOmitted[0]
               $equiv = $source.ranking.largestImprovementIfEquivalentOmitted[0]
-              Add-Content -LiteralPath $env:GITHUB_STEP_SUMMARY -Value "- $caseId source $sourceId: worst $($worst.end)/$($worst.component) residual=$($worst.replayResidual); best omit-initial improvement=$($initial.score); best omit-equivalent improvement=$($equiv.score)"
+              Add-Content -LiteralPath $env:GITHUB_STEP_SUMMARY -Value "- $caseId source $($sourceId): worst $($worst.end)/$($worst.component) residual=$($worst.replayResidual); best omit-initial improvement=$($initial.score); best omit-equivalent improvement=$($equiv.score)"
             }
           }
 

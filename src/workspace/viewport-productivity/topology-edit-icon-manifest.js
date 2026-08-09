@@ -22,6 +22,15 @@ export const TOPOLOGY_EDIT_ICON_SURFACE = Object.freeze({
   DISPLAY: 'DISPLAY',
 });
 
+export const TOPOLOGY_EDIT_ICON_EXCLUDED_AFFORDANCES = Object.freeze([
+  exclusion('orientation-cube-faces', 'Top/Bottom/Front/Back/Left/Right/ISO orientation cube faces', 'Viewport orientation affordance; not a fixed toolbar button.'),
+  exclusion('presentation-info-glyphs', 'Presentation and section policy ⓘ glyphs', 'Informational role=img affordances; not command controls.'),
+  exclusion('shortcuts-close', 'Keyboard shortcuts dialog × close affordance', 'Dialog-local close affordance; intentionally outside the 42 fixed controls.'),
+  exclusion('panel-carets', 'Native details/summary disclosure carets', 'Browser disclosure affordance; not production SVG icon authority.'),
+  exclusion('sidecar-resizer', 'Inspector sidecar resizer grip', 'Pointer/keyboard separator affordance; not a button.'),
+  exclusion('node-nudge-labels', 'Node nudge direction/distance labels', 'Interaction labels retain their specialized presentation; not fixed-shell icon controls.'),
+]);
+
 const HISTORICAL_FRAGMENT_BY_KEY = Object.freeze({
   'navigation.orbit': 'icon-orbit',
   'navigation.pan': 'icon-pan',
@@ -33,6 +42,10 @@ const HISTORICAL_FRAGMENT_BY_KEY = Object.freeze({
 
 const SVG_ICON = TOPOLOGY_EDIT_ICON_DISPOSITION.SVG_ICON;
 const S = TOPOLOGY_EDIT_ICON_SURFACE;
+
+function exclusion(key, description, reason) {
+  return Object.freeze({ key, description, reason });
+}
 
 function icon(key, selector, label, surface, symbolId, stateExpectations = ['DEFAULT']) {
   return Object.freeze({

@@ -8,7 +8,7 @@ on:
       - '.github/workflows/m047-bm4nl-diagnostics.yml'
       - 'scripts/lfea-m047-residual-decomposition*.mjs'
       - 'scripts/lfea-m047-element-replay*.mjs'
-      - 'scripts/lfea-m047-instrument-baseline-replay.mjs'
+      - 'scripts/lfea-m047-instrument-baseline-replay*.mjs'
       - 'scripts/lfea-m047-provision-ace.ps1'
       - 'scripts/lfea-caesar-accdb-export.ps1'
       - 'benchmarks/LFEA/CAESAR_ACCDB/m047/**'
@@ -51,6 +51,10 @@ jobs:
       - name: I008 element replay synthetic qualification
         shell: pwsh
         run: node scripts/lfea-m047-element-replay-check.mjs
+
+      - name: I008 replay instrumentation line-ending qualification
+        shell: pwsh
+        run: node scripts/lfea-m047-instrument-baseline-replay-check.mjs
 
       - name: Checkout original baseline mechanics
         uses: actions/checkout@v4
@@ -152,9 +156,9 @@ jobs:
             --source baseline-source/src/core/fea-benchmarks/caesar-accdb-linear-solve.js `
             --manifest artifacts/m047/I007/replay-instrumentation.json
           $status = @(git -C baseline-source status --porcelain)
-          if ($status.Count -ne 2 `
-              -or -not ($status -match 'scripts/lfea-caesar-accdb-export\.ps1$') `
-              -or -not ($status -match 'src/core/fea-benchmarks/caesar-accdb-linear-solve\.js$')) {
+          $hasExporter = @($status | Where-Object { $_ -match 'scripts/lfea-caesar-accdb-export\.ps1$' }).Count -eq 1
+          $hasLedger = @($status | Where-Object { $_ -match 'src/core/fea-benchmarks/caesar-accdb-linear-solve\.js$' }).Count -eq 1
+          if ($status.Count -ne 2 -or -not $hasExporter -or -not $hasLedger) {
             throw "Baseline checkout mutation exceeded exporter + evidence-instrumentation boundary: $($status -join '; ')"
           }
 
@@ -196,13 +200,13 @@ jobs:
           Add-Content -LiteralPath $env:GITHUB_STEP_SUMMARY -Value "- I008 replay evidence: ``$($replay.semanticHash)``"
           foreach ($family in @('DISPLACEMENT_ROTATION', 'SUPPORT_REACTION', 'SOURCE_END_ACTION')) {
             $stats = $residual.summaries.families.$family
-            Add-Content -LiteralPath $env:GITHUB_STEP_SUMMARY -Value "- I007 $family: max normalized W+P=$($stats.wp.maximumNormalized.normalizedResidual), thermal=$($stats.thermal.maximumNormalized.normalizedResidual)"
+            Add-Content -LiteralPath $env:GITHUB_STEP_SUMMARY -Value "- I007 ${family}: max normalized W+P=$($stats.wp.maximumNormalized.normalizedResidual), thermal=$($stats.thermal.maximumNormalized.normalizedResidual)"
           }
           foreach ($caseId in @('L19', 'L20')) {
             $case = $replay.cases.$caseId
-            Add-Content -LiteralPath $env:GITHUB_STEP_SUMMARY -Value "- I008 $caseId replayed sources: $($case.replayedSourceCount); skipped=$($case.skippedSourceCount)"
-            Add-Content -LiteralPath $env:GITHUB_STEP_SUMMARY -Value "- I008 $caseId source 4 max normalized residual: $($case.tracked.source4.maximumNormalizedResidual)"
-            Add-Content -LiteralPath $env:GITHUB_STEP_SUMMARY -Value "- I008 $caseId source 5 max normalized residual: $($case.tracked.source5.maximumNormalizedResidual)"
+            Add-Content -LiteralPath $env:GITHUB_STEP_SUMMARY -Value "- I008 ${caseId} replayed sources: $($case.replayedSourceCount); skipped=$($case.skippedSourceCount)"
+            Add-Content -LiteralPath $env:GITHUB_STEP_SUMMARY -Value "- I008 ${caseId} source 4 max normalized residual: $($case.tracked.source4.maximumNormalizedResidual)"
+            Add-Content -LiteralPath $env:GITHUB_STEP_SUMMARY -Value "- I008 ${caseId} source 5 max normalized residual: $($case.tracked.source5.maximumNormalizedResidual)"
           }
 
       - name: Retain I007-I008 diagnostics

@@ -115,7 +115,7 @@ function profileBindingControls(doc, generation, handlers) {
     'Element family',
     'lafea-profile-element-family',
     generation.elementFamilies,
-    generation.elementFamilies.includes('Q8') ? 'Q8' : generation.elementFamilies[0],
+    null,
   );
   const target = numberControl(doc, 'Target element length', 'lafea-profile-target-length', '', 0);
   const ratio = numberControl(
@@ -138,6 +138,13 @@ function profileBindingControls(doc, generation, handlers) {
   );
 
   const bind = button(doc, 'Bind mesh profile', () => {
+    const selectedFamily = family.input.value;
+    if (!generation.elementFamilies.includes(selectedFamily)) {
+      family.input.setCustomValidity('Select an authorized element family.');
+      family.input.reportValidity?.();
+      return;
+    }
+    family.input.setCustomValidity('');
     const targetValue = Number(target.input.value);
     if (!(targetValue > 0)) {
       target.input.setCustomValidity('Target element length must be greater than zero.');
@@ -145,7 +152,6 @@ function profileBindingControls(doc, generation, handlers) {
       return;
     }
     target.input.setCustomValidity('');
-    const selectedFamily = family.input.value;
     handlers.onBindMeshProfile?.({
       schema: 'lafea-mesh-profile/v1',
       profileIdentity: `LAFEA3_UI_${selectedFamily}_MESH_PROFILE_V1`,
@@ -184,6 +190,12 @@ function selectControl(doc, labelText, role, values, selected) {
   const label = node(doc, 'label', null, `${labelText} `);
   const input = node(doc, 'select');
   input.dataset.role = role;
+  input.required = true;
+  const placeholder = node(doc, 'option', null, 'Select element family');
+  placeholder.value = '';
+  placeholder.disabled = true;
+  placeholder.selected = !selected;
+  input.append(placeholder);
   for (const value of values) {
     const option = node(doc, 'option', null, value);
     option.value = value;

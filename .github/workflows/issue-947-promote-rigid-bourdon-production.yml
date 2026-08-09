@@ -1,0 +1,175 @@
+name: Issue 947 promote rigid Bourdon production
+
+on:
+  push:
+    branches:
+      - codex/issue-947-bm4nl-qualification
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  actions: read
+
+jobs:
+  promote:
+    if: "${{ github.event_name == 'workflow_dispatch' || github.event.head_commit.message == 'ci(issue947): promote rigid Bourdon production' }}"
+    runs-on: windows-latest
+    timeout-minutes: 30
+    steps:
+      - name: Checkout qualification branch
+        uses: actions/checkout@v4
+        with:
+          ref: codex/issue-947-bm4nl-qualification
+          fetch-depth: 0
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Apply governed production promotion
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          node scripts/lfea-issue947-promote-rigid-bourdon-production.mjs
+          git diff --check
+          git diff -- `
+            src/core/linear-fea-rigid-element/rigid-element.js `
+            src/core/linear-fea-rigid-element/index.js `
+            src/core/fea-benchmarks/caesar-accdb-linear-solve.js `
+            scripts/lfea-b3.22-rigid-element-authority-check.mjs `
+            | Set-Content -LiteralPath .work-rigid-bourdon-production.diff -Encoding utf8
+
+      - name: Run rigid canonical authority regression
+        shell: pwsh
+        run: node scripts/lfea-b3.22-rigid-element-authority-check.mjs
+
+      - name: Download pinned canonical BM4_NL package
+        uses: actions/download-artifact@v4
+        with:
+          name: issue-947-bm4nl-qualification
+          path: .work/package
+          github-token: ${{ github.token }}
+          repository: reallaksh19/Advanced_Analysis
+          run-id: 31302834835
+
+      - name: Run all-rigid source-action falsification audit
+        shell: pwsh
+        run: |
+          node scripts/lfea-issue947-rigid-bourdon-axial-audit.mjs `
+            --package .work/package/bm4nl-canonical-package.json `
+            --out .work/issue947-rigid-bourdon-axial-audit.json
+
+      - name: Materialize pinned BM4_NL ACCDB
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          New-Item -ItemType Directory -Force -Path .work | Out-Null
+          $zip = Join-Path $PWD '.work/BM4_NL.zip'
+          Invoke-WebRequest `
+            -Uri 'https://raw.githubusercontent.com/reallaksh19/Common/1728651c94504b497aae4041578b1095fd8e292e/LFEA/BM4/BM4_NL.zip' `
+            -OutFile $zip
+          Expand-Archive -LiteralPath $zip -DestinationPath .work/BM4_NL -Force
+          $accdb = Resolve-Path '.work/BM4_NL/BM4_NL.ACCDB'
+          $actual = (Get-FileHash -Algorithm SHA256 -LiteralPath $accdb).Hash.ToLowerInvariant()
+          $expected = '85d39463296e569da811d8572e2eff680b858097f76fdf0f47d1755f0b161c21'
+          if ($actual -ne $expected) { throw "ACCDB SHA-256 mismatch: $actual" }
+          "BM4_ACCDB=$accdb" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
+
+      - name: Install Microsoft Access Runtime database engine
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $bootstrap = Join-Path $PWD '.work/officedeploymenttool_19725-20126.exe'
+          $odt = Join-Path $PWD '.work/odt'
+          New-Item -ItemType Directory -Force -Path $odt | Out-Null
+          Invoke-WebRequest `
+            -Uri 'https://download.microsoft.com/download/6c1eeb25-cf8b-41d9-8d0d-cc1dbc032140/officedeploymenttool_19725-20126.exe' `
+            -OutFile $bootstrap
+          $extract = Start-Process -FilePath $bootstrap -ArgumentList '/quiet', "/extract:$odt" -PassThru -Wait
+          if ($extract.ExitCode -ne 0) { throw "ODT extraction failed: $($extract.ExitCode)" }
+          @'
+          <Configuration>
+            <Add OfficeClientEdition="64">
+              <Product ID="AccessRuntimeRetail"><Language ID="en-us" /></Product>
+            </Add>
+            <Display Level="None" AcceptEULA="TRUE" />
+          </Configuration>
+          '@ | Set-Content -LiteralPath (Join-Path $odt 'access-runtime.xml') -Encoding utf8
+          $install = Start-Process -FilePath (Join-Path $odt 'setup.exe') `
+            -ArgumentList '/configure', (Join-Path $odt 'access-runtime.xml') -PassThru -Wait
+          if ($install.ExitCode -ne 0) { throw "Access Runtime install failed: $($install.ExitCode)" }
+
+      - name: Run exact ACCDB production replay
+        shell: pwsh
+        run: |
+          node scripts/lfea-caesar-accdb-benchmark.mjs `
+            --accdb "$env:BM4_ACCDB" `
+            --profile benchmarks/LFEA/CAESAR_ACCDB/bm4nl-l19-l20-linear-solve.profile.json `
+            --solve-linear true `
+            --actual-out .work/issue947-rigid-bourdon-production-actual.json `
+            --summary-out .work/issue947-rigid-bourdon-production-summary.md `
+            --out .work/issue947-rigid-bourdon-production-report.json
+
+      - name: Enforce L19 non-regression and source-action gates
+        shell: pwsh
+        run: |
+          @'
+          import assert from 'node:assert/strict';
+          import { readFileSync, writeFileSync } from 'node:fs';
+          const report = JSON.parse(readFileSync('.work/issue947-rigid-bourdon-production-report.json', 'utf8'));
+          const audit = JSON.parse(readFileSync('.work/issue947-rigid-bourdon-axial-audit.json', 'utf8'));
+          const actual = JSON.parse(readFileSync('.work/issue947-rigid-bourdon-production-actual.json', 'utf8'));
+          const l19 = report.qualification.cases.find((entry) => entry.caseId === 'L19');
+          assert.ok(l19, 'L19 qualification result missing.');
+          assert.equal(audit.classification, 'RIGID_BOURDON_FORCE_ON_10X_WALL_STIFFNESS_SUPPORTED');
+          assert.equal(actual.mechanics.cases.L19.executionStatus, 'QUALIFIED');
+          assert.ok(l19.comparison.counts.failed <= 73,
+            `L19 total failures regressed above accepted pre-candidate count: ${l19.comparison.counts.failed}`);
+          assert.ok(report.restraintBasis.cases.L19.exceedingComponentCount <= 1,
+            `L19 restraint failures regressed: ${report.restraintBasis.cases.L19.exceedingComponentCount}`);
+          const node22130Rz = actual.cases.L19.rows.find((row) => row.entityKind === 'NODE'
+            && row.entityId === '22130' && row.quantity === 'ROTATION' && row.component === 'RZ');
+          if (!node22130Rz) throw new Error('L19 node 22130 RZ actual result missing.');
+          const record = {
+            schema: 'lfea-issue947-rigid-bourdon-production-gate/v1',
+            sourceAccdbSha256: actual.sourceAccdbSha256,
+            rigidAuditClassification: audit.classification,
+            l19ExecutionStatus: actual.mechanics.cases.L19.executionStatus,
+            l19FailedRows: l19.comparison.counts.failed,
+            l19PassedRows: l19.comparison.counts.passed,
+            l19RestraintFailureComponents: report.restraintBasis.cases.L19.exceedingComponentCount,
+            l19Node22130RzRad: node22130Rz.value,
+            status: 'PASS',
+          };
+          writeFileSync('.work/issue947-rigid-bourdon-production-gate.json', `${JSON.stringify(record, null, 2)}\n`);
+          console.log(JSON.stringify(record, null, 2));
+          '@ | node --input-type=module
+
+      - name: Commit qualified production change
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add `
+            src/core/linear-fea-rigid-element/rigid-element.js `
+            src/core/linear-fea-rigid-element/index.js `
+            src/core/fea-benchmarks/caesar-accdb-linear-solve.js `
+            scripts/lfea-b3.22-rigid-element-authority-check.mjs
+          git commit -m 'fix(issue947): add rigid Bourdon pressure free state'
+          git push origin HEAD:codex/issue-947-bm4nl-qualification
+
+      - name: Upload production evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: issue-947-rigid-bourdon-production
+          if-no-files-found: warn
+          path: |
+            .work-rigid-bourdon-production.diff
+            .work/issue947-rigid-bourdon-axial-audit.json
+            .work/issue947-rigid-bourdon-production-actual.json
+            .work/issue947-rigid-bourdon-production-summary.md
+            .work/issue947-rigid-bourdon-production-report.json
+            .work/issue947-rigid-bourdon-production-gate.json

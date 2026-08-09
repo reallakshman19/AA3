@@ -43,10 +43,10 @@ const capability = lafeaCoreMeshProducerCapability();
 const qualification = lafeaCoreMeshProducerQualification();
 assert.equal(capability.producerId, 'LAFEA_CORE_MESHER');
 assert.equal(capability.producerRevision, 'LAFEA.10.T6Q8.V4');
-assert.equal(qualification.qualificationRevision, 'R4');
-assert.deepEqual(capability.generationModes, ['AUTOMATIC_MESH']);
-assert.equal(capability.supportsLocalRefinement, false);
-assert.equal(qualification.localRefinementAuthorized, false);
+assert.equal(qualification.qualificationRevision, 'R5');
+assert.deepEqual(capability.generationModes, ['AUTOMATIC_MESH', 'REFINEMENT_REGENERATION']);
+assert.equal(capability.supportsLocalRefinement, true);
+assert.equal(qualification.localRefinementAuthorized, true);
 assert.equal(qualification.capabilityHash, capability.capabilityHash);
 assert.ok(qualification.governanceRef.includes('check:lafea-meshing'));
 
@@ -63,6 +63,8 @@ for (const stageId of ['LAFEA.4', 'LAFEA.5']) {
   assert.equal(requireLafeaStageAnalysisAdapter(stageId).discretization.qualifiedProducerId, null);
 }
 assert.equal(lafeaMeshCapabilities('LAFEA.3').generationExecutionAuthorized, true);
+assert.equal(lafeaMeshCapabilities('LAFEA.3').manualRefinementQualified, true);
+assert.deepEqual(lafeaMeshCapabilities('LAFEA.3').localRefinementElementFamilies, ['T3', 'T6']);
 assert.equal(
   requireLafeaStageAnalysisAdapter('LAFEA.3').discretization.qualifiedProducerId,
   LAFEA_MESH_PRODUCER_REF,
@@ -404,7 +406,8 @@ assert.equal(viewModel.generation.available, true);
 assert.equal(viewModel.actions.canGenerateMesh, true);
 assert.equal(viewModel.actions.canAdvance, true);
 assert.equal(viewModel.evidence.producerRef, LAFEA_MESH_PRODUCER_REF);
-assert.equal(viewModel.configuration.modes.find((row) => row.mode === 'MANUAL_REFINEMENT').enabled, false);
+assert.equal(viewModel.configuration.modes.find((row) => row.mode === 'MANUAL_REFINEMENT').enabled, true);
+assert.equal(viewModel.actions.manualRefinementEnabled, true);
 
 // --- LMB-17: unbound profile remains explicit and fail-closed ---------------
 const unboundViewModel = buildLafeaDiscretizationViewModel({
@@ -442,4 +445,4 @@ function arc(segmentId, startVertexId, endVertexId, centerX, centerY, radius, sw
   return { segmentId, type: 'CIRCULAR_ARC', startVertexId, endVertexId, centerX, centerY, radius, sweep };
 }
 
-console.log('LAFEA mesh-producer binding check PASS (P0 + P1-5 + P1-6 holes + P1-7 regular logical mapped chains)');
+console.log('LAFEA mesh-producer binding check PASS (P0 + P1-5 + P1-6 holes + P1-7 regular logical mapped chains + P2-9 retained local refinement authority)');

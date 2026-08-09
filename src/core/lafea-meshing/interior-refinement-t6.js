@@ -13,12 +13,12 @@ import {
  * The outer loop is triangulated first. Every hole-loop corner is then inserted
  * as a true triangulation vertex, and every consecutive hole edge is recovered
  * by deterministic edge flipping before triangles inside the hole are removed.
- * A bounded, deterministic two-layer material-side hole front is established
- * before the global staggered triangular Steiner lattice. Giving constrained
- * hole spacing first ownership prevents lattice phase from deciding whether a
- * front point survives and avoids target-dependent low-Jacobian transition
- * slivers. The global lattice then fills the remaining material domain before
- * the final constrained Lawson pass.
+ * The resulting multiply-connected material domain is refined with a staggered
+ * triangular Steiner lattice. Hole boundaries whose local constrained spacing
+ * is materially finer than the global interior spacing then receive a bounded,
+ * deterministic two-layer material-side transition front before the final
+ * Lawson pass. Straight boundaries already discretized near the target size do
+ * not receive an unnecessary front.
  *
  * No artificial bridge/seam is introduced. Boundary midsides remain owned by
  * their analytic source curve through `edgesByCornerPair`, so T6/Q8 upgrade can
@@ -97,31 +97,27 @@ export function triangulateRefinedRegionAsIndexTriples(topology, regionId, optio
     verifyHoleBoundaryOwnership(triangles, constrainedEdgeKeys, boundaryRings);
   }
 
+  const candidates = interiorSeedPoints(outer.ringCorners, options.targetSize);
   let interiorPointCount = 0;
-  let workingTriangles = triangles;
+  for (const candidate of candidates) {
+    if (holePolygons.some((polygon) => pointInPolygonStrict(candidate, polygon))) continue;
+    if (!farEnoughFromBoundaries(candidate, boundaryRings, points, options.targetSize)) continue;
+    if (!farEnoughFromExisting(candidate, points, options.targetSize)) continue;
+    if (insertInteriorPoint(points, triangles, constrainedEdgeKeys, candidate)) interiorPointCount += 1;
+  }
+
+  let restored = lawsonFlip(points, triangles, constrainedEdgeKeys);
   if (holePolygons.length) {
+    const frontTriangles = restored.map((triangle) => [...triangle]);
     interiorPointCount += insertHoleBoundaryFront(
       points,
-      workingTriangles,
+      frontTriangles,
       constrainedEdgeKeys,
       boundaryRings,
       holePolygons,
       options.targetSize,
     );
-    workingTriangles = lawsonFlip(points, workingTriangles, constrainedEdgeKeys);
-    verifyHoleBoundaryOwnership(workingTriangles, constrainedEdgeKeys, boundaryRings);
-  }
-
-  const candidates = interiorSeedPoints(outer.ringCorners, options.targetSize);
-  for (const candidate of candidates) {
-    if (holePolygons.some((polygon) => pointInPolygonStrict(candidate, polygon))) continue;
-    if (!farEnoughFromBoundaries(candidate, boundaryRings, points, options.targetSize)) continue;
-    if (!farEnoughFromExisting(candidate, points, options.targetSize)) continue;
-    if (insertInteriorPoint(points, workingTriangles, constrainedEdgeKeys, candidate)) interiorPointCount += 1;
-  }
-
-  const restored = lawsonFlip(points, workingTriangles, constrainedEdgeKeys);
-  if (holePolygons.length) {
+    restored = lawsonFlip(points, frontTriangles, constrainedEdgeKeys);
     verifyHoleBoundaryOwnership(restored, constrainedEdgeKeys, boundaryRings);
   }
 
@@ -287,6 +283,10 @@ function insertHoleBoundaryFront(
         const dy = b.y - a.y;
         const edgeLength = Math.hypot(dx, dy);
         if (!(edgeLength > 0)) continue;
+        // The front is a grading mechanism, not a universal second lattice.
+        // Activate it only when the global interior spacing exceeds this local
+        // constrained edge by more than the declared front growth ratio.
+        if (!(targetSize / edgeLength > HOLE_FRONT_GROWTH + EPS)) continue;
         const offset = holeFrontOffset(edgeLength, layer);
         const candidate = {
           x: (a.x + b.x) / 2 + (-dy / edgeLength) * offset,
@@ -499,7 +499,7 @@ function distancePointToSegment(point, a, b) {
 }
 
 function orient(a, b, c) {
-  return (b.x - a.x) * (c.y - a.y) - (b.y - a.y) * (c.x - a.x);
+  return (b.x - a.x) * (c.y - a.y) - (b.y - a.y) * (c.x - b.x);
 }
 
 function scaledEps(...points) {

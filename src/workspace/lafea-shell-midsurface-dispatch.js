@@ -16,13 +16,27 @@ import {
   validateLafeaCurvedShellMidsurfaceEvidence,
   validateLafeaCurvedShellMidsurfaceGeometry,
 } from './lafea-shell-curved-midsurface-contract.js';
+import {
+  LAFEA_SHELL_PERIODIC_MIDSURFACE_EVIDENCE_SCHEMA,
+  LAFEA_SHELL_PERIODIC_MIDSURFACE_GEOMETRY_SCHEMA,
+  periodicCylindricalShellFrameAtPoint3d,
+  periodicCylindricalShellFrameAtUv,
+  periodicCylindricalShellParameterGeometry,
+  periodicCylindricalShellPoint3d,
+  validateLafeaPeriodicShellMidsurfaceEvidence,
+  validateLafeaPeriodicShellMidsurfaceGeometry,
+} from './lafea-shell-periodic-midsurface-contract.js';
 
 export const LAFEA_SHELL_SURFACE_KINDS = Object.freeze({
   PLANAR: 'PLANAR',
   CYLINDRICAL: 'CYLINDRICAL',
+  CYLINDRICAL_PERIODIC: 'CYLINDRICAL_PERIODIC',
 });
 
 export function validateLafeaAnyShellMidsurfaceEvidence(value) {
+  if (value?.schema === LAFEA_SHELL_PERIODIC_MIDSURFACE_EVIDENCE_SCHEMA) {
+    return validateLafeaPeriodicShellMidsurfaceEvidence(value);
+  }
   if (value?.schema === LAFEA_SHELL_CURVED_MIDSURFACE_EVIDENCE_SCHEMA) {
     return validateLafeaCurvedShellMidsurfaceEvidence(value);
   }
@@ -34,6 +48,10 @@ export function validateLafeaAnyShellMidsurfaceEvidence(value) {
 
 export function shellMidsurfaceKind(value) {
   const geometry = value?.geometry ?? value;
+  if (geometry?.schema === LAFEA_SHELL_PERIODIC_MIDSURFACE_GEOMETRY_SCHEMA) {
+    validateLafeaPeriodicShellMidsurfaceGeometry(geometry);
+    return LAFEA_SHELL_SURFACE_KINDS.CYLINDRICAL_PERIODIC;
+  }
   if (geometry?.schema === LAFEA_SHELL_CURVED_MIDSURFACE_GEOMETRY_SCHEMA) {
     validateLafeaCurvedShellMidsurfaceGeometry(geometry);
     return LAFEA_SHELL_SURFACE_KINDS.CYLINDRICAL;
@@ -46,13 +64,22 @@ export function shellMidsurfaceKind(value) {
 }
 
 export function shellMidsurfacePoint3dAny(geometry, u, v) {
-  return shellMidsurfaceKind(geometry) === LAFEA_SHELL_SURFACE_KINDS.CYLINDRICAL
-    ? cylindricalShellPoint3d(geometry, u, v)
-    : shellMidsurfacePoint3d(geometry, u, v);
+  const kind = shellMidsurfaceKind(geometry);
+  if (kind === LAFEA_SHELL_SURFACE_KINDS.CYLINDRICAL_PERIODIC) {
+    return periodicCylindricalShellPoint3d(geometry, u, v);
+  }
+  if (kind === LAFEA_SHELL_SURFACE_KINDS.CYLINDRICAL) {
+    return cylindricalShellPoint3d(geometry, u, v);
+  }
+  return shellMidsurfacePoint3d(geometry, u, v);
 }
 
 export function shellMidsurfaceFrameAtUvAny(geometry, u, v) {
-  if (shellMidsurfaceKind(geometry) === LAFEA_SHELL_SURFACE_KINDS.CYLINDRICAL) {
+  const kind = shellMidsurfaceKind(geometry);
+  if (kind === LAFEA_SHELL_SURFACE_KINDS.CYLINDRICAL_PERIODIC) {
+    return periodicCylindricalShellFrameAtUv(geometry, u, v);
+  }
+  if (kind === LAFEA_SHELL_SURFACE_KINDS.CYLINDRICAL) {
     return cylindricalShellFrameAtUv(geometry, u, v);
   }
   const planar = validateLafeaShellMidsurfaceGeometry(geometry);
@@ -65,7 +92,11 @@ export function shellMidsurfaceFrameAtUvAny(geometry, u, v) {
 }
 
 export function shellMidsurfaceFrameAtPoint3dAny(geometry, point) {
-  if (shellMidsurfaceKind(geometry) === LAFEA_SHELL_SURFACE_KINDS.CYLINDRICAL) {
+  const kind = shellMidsurfaceKind(geometry);
+  if (kind === LAFEA_SHELL_SURFACE_KINDS.CYLINDRICAL_PERIODIC) {
+    return periodicCylindricalShellFrameAtPoint3d(geometry, physicalPoint(point));
+  }
+  if (kind === LAFEA_SHELL_SURFACE_KINDS.CYLINDRICAL) {
     return cylindricalShellFrameAtPoint3d(geometry, physicalPoint(point));
   }
   const planar = validateLafeaShellMidsurfaceGeometry(geometry);
@@ -79,7 +110,11 @@ export function shellMidsurfaceFrameAtPoint3dAny(geometry, point) {
 export function shellMidsurfaceParameterGeometry(value) {
   const evidence = value?.geometry ? validateLafeaAnyShellMidsurfaceEvidence(value) : null;
   const geometry = evidence?.geometry ?? value;
-  if (shellMidsurfaceKind(geometry) === LAFEA_SHELL_SURFACE_KINDS.CYLINDRICAL) {
+  const kind = shellMidsurfaceKind(geometry);
+  if (kind === LAFEA_SHELL_SURFACE_KINDS.CYLINDRICAL_PERIODIC) {
+    return periodicCylindricalShellParameterGeometry(geometry);
+  }
+  if (kind === LAFEA_SHELL_SURFACE_KINDS.CYLINDRICAL) {
     return curvedShellParameterGeometry(geometry);
   }
   const planar = validateLafeaShellMidsurfaceGeometry(geometry);

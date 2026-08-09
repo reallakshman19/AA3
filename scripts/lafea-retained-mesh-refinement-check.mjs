@@ -1,10 +1,13 @@
 #!/usr/bin/env node
 import assert from 'node:assert/strict';
+import fs from 'node:fs';
 
 import { canonicalProfile, PROFILE_KINDS } from '../src/core/lafea-profile-contract/index.js';
 import { createLafeaAnalysisGeometry } from '../src/workspace/lafea-analysis-geometry-contract.js';
 import { createLafeaAnalysisGeometryEvidence } from '../src/workspace/lafea-analysis-geometry-evidence.js';
 import { createLafeaContinuumAnalysisDomain } from '../src/workspace/lafea-continuum-analysis-domain.js';
+import { buildLafeaDiscretizationViewModel } from '../src/workspace/lafea-discretization-view-model.js';
+import { buildLafeaDomainFirstMeshCustodyProjection } from '../src/workspace/lafea-domain-first-mesh-custody.js';
 import { lafeaMeshCapabilities } from '../src/workspace/lafea-mesh-capabilities.js';
 import {
   LAFEA_RETAINED_MESH_REFINEMENT_COMMAND_SCHEMA,
@@ -18,6 +21,7 @@ import {
   planLafeaRetainedMeshRefinement,
   produceLafeaRetainedMeshRefinement,
 } from '../src/workspace/lafea-retained-mesh-refinement.js';
+import { createLafeaWorkbenchMeshGenerationState } from '../src/workspace/lafea-workbench-mesh-generation-state.js';
 
 const SOURCE_HASH = `sha256:${'c'.repeat(64)}`;
 const geometry = plate(200, 120);
@@ -83,6 +87,7 @@ const parentLocal = localCornerCount(parent.mesh, target, plan.influenceRadius);
 const childLocal = localCornerCount(refined.evidence.mesh, target, plan.influenceRadius);
 assert.ok(childLocal > parentLocal, `Expected local corner density to increase: ${parentLocal} -> ${childLocal}`);
 
+// Deterministic replay must be byte-identical at mesh/evidence level.
 const replay = produceLafeaRetainedMeshRefinement({
   stage, meshProfile: t6Profile, parentEvidence: parent, command,
 });
@@ -91,6 +96,39 @@ assert.equal(replay.output.outputHash, refined.output.outputHash);
 assert.equal(replay.evidence.meshHash, refined.evidence.meshHash);
 assert.equal(replay.evidence.artifactHash, refined.evidence.artifactHash);
 assert.equal(JSON.stringify(replay.evidence.mesh), JSON.stringify(refined.evidence.mesh));
+
+// Workbench custody replacement is atomic and derives parent hashes internally.
+const custodyState = createLafeaWorkbenchMeshGenerationState(['LAFEA.3']);
+custodyState.bindMeshProfile(t6Profile, 'LAFEA.3');
+custodyState.recoverEvidence(parent, 'LAFEA.3');
+const retainedResult = custodyState.refineMesh(stage, {
+  commandId: 'P2-9-CUSTODY-REFINEMENT',
+  kind: 'TARGET_LENGTH',
+  targetType: 'ELEMENT',
+  targetIds: [targetElementId],
+  targetElementLength: 15,
+  lengthUnit: 'mm',
+  reason: 'P2-9 atomic custody qualification',
+});
+assert.equal(retainedResult.parentEvidence.artifactHash, parent.artifactHash);
+assert.equal(retainedResult.command.parentMeshArtifactHash, parent.artifactHash);
+assert.equal(retainedResult.command.parentMeshHash, parent.meshHash);
+assert.equal(custodyState.selectEvidence('LAFEA.3').artifactHash, retainedResult.evidence.artifactHash);
+assert.equal(custodyState.selectPlan('LAFEA.3').generationMode, 'REFINEMENT_REGENERATION');
+assert.equal(custodyState.selectPlan('LAFEA.3').parentMeshHash, parent.meshHash);
+
+const rejectedState = createLafeaWorkbenchMeshGenerationState(['LAFEA.3']);
+rejectedState.bindMeshProfile(t6Profile, 'LAFEA.3');
+rejectedState.recoverEvidence(parent, 'LAFEA.3');
+assert.throws(
+  () => rejectedState.refineMesh(stage, {
+    commandId: 'P2-9-ATOMIC-REJECTION', kind: 'TARGET_LENGTH', targetType: 'ELEMENT',
+    targetIds: ['E999999'], targetElementLength: 15, lengthUnit: 'mm',
+  }),
+  (error) => error?.code === 'LAFEA_RETAINED_MESH_REFINEMENT_TARGET_ELEMENT_NOT_FOUND',
+);
+assert.equal(rejectedState.selectEvidence('LAFEA.3').artifactHash, parent.artifactHash);
+assert.equal(rejectedState.selectEvidence('LAFEA.3').meshHash, parent.meshHash);
 
 const staleCommand = createLafeaRetainedMeshRefinementCommand({
   schema: LAFEA_RETAINED_MESH_REFINEMENT_COMMAND_SCHEMA,
@@ -130,6 +168,7 @@ assert.throws(
   (error) => error?.code === 'LAFEA_RETAINED_MESH_REFINEMENT_TARGET_RATIO_BELOW_QUALIFIED_LIMIT',
 );
 
+// Q8 remains explicitly outside local-refinement authority.
 const q8Profile = meshProfileFor('Q8', 30);
 const q8Parent = produceLafeaAnalysisMeshEvidence(
   stage,
@@ -147,6 +186,45 @@ assert.throws(
   (error) => error?.code === 'LAFEA_RETAINED_MESH_REFINEMENT_Q8_NOT_QUALIFIED',
 );
 
+// Discretization exposes refinement only for current qualified T3/T6 evidence.
+const refinedStage = stageWithEvidence(
+  stage,
+  t6Profile,
+  refined.evidence,
+  custodyState.selectPlan('LAFEA.3'),
+);
+const refinedView = buildLafeaDiscretizationViewModel(refinedStage);
+assert.equal(refinedView.actions.manualRefinementEnabled, true);
+assert.equal(refinedView.actions.canRefineMesh, true);
+assert.equal(refinedView.evidence.elementFamily, 'T6');
+assert.equal(refinedView.generation.lengthUnit, 'mm');
+assert.deepEqual(refinedView.generation.localRefinementElementFamilies, ['T3', 'T6']);
+assert.equal(
+  refinedView.configuration.modes.find((row) => row.mode === 'MANUAL_REFINEMENT')?.enabled,
+  true,
+);
+
+const q8View = buildLafeaDiscretizationViewModel(stageWithEvidence(stage, q8Profile, q8Parent, null));
+assert.equal(q8View.actions.canRefineMesh, false);
+assert.equal(
+  q8View.configuration.modes.find((row) => row.mode === 'MANUAL_REFINEMENT')?.reason,
+  'Q8_LOCAL_REFINEMENT_NOT_QUALIFIED',
+);
+
+// Source guards prove the visible surface reaches the governed controller/API.
+const generationPanelSource = fs.readFileSync(
+  'src/workspace/lafea-discretization-generation-panel.js', 'utf8',
+);
+const contentSource = fs.readFileSync('src/workspace/lafea-workbench-content.js', 'utf8');
+const controllerSource = fs.readFileSync('src/workspace/lafea-workbench-controller.js', 'utf8');
+const apiSource = fs.readFileSync('src/workspace/lafea-workbench-orchestrator-api.js', 'utf8');
+assert.match(generationPanelSource, /data\.role = 'lafea-refinement-submit'|dataset\.role = 'lafea-refinement-submit'/u);
+assert.match(generationPanelSource, /handlers\.onRefineMesh/u);
+assert.match(generationPanelSource, /Q8 local refinement is not qualified/u);
+assert.match(contentSource, /onRefineMesh: options\.handlers\.onRefineMesh/u);
+assert.match(controllerSource, /onRefineMesh: \(request\) => this\.refineAnalysisMesh\(request\)/u);
+assert.match(apiSource, /refineAnalysisMesh: c\.refineAnalysisMesh/u);
+
 console.log(JSON.stringify({
   schema: 'lafea-retained-mesh-refinement-check/v1',
   status: 'PASS',
@@ -160,6 +238,9 @@ console.log(JSON.stringify({
   targetElementId,
   parentLocalCorners: parentLocal,
   refinedLocalCorners: childLocal,
+  atomicCustodyReplacement: true,
+  atomicRejectionPreservesParent: true,
+  discretizationRouteQualified: true,
   minimumQualifiedLocalTargetRatio: 0.25,
   q8RefinementQualified: false,
 }, null, 2));
@@ -219,6 +300,17 @@ function stageFor(geometryValue) {
     retainedAnalysisGeometryEvidence: geometryEvidence,
     analysisDomainProjection: { state: 'CURRENT_PASS', analysisDomainHash: domain.semanticHash },
     analysisGeometryProjection: { state: 'CURRENT_PASS', analysisGeometryHash: geometryValue.semanticHash },
+  };
+}
+function stageWithEvidence(baseStage, profile, evidence, lastPlan) {
+  const custody = buildLafeaDomainFirstMeshCustodyProjection(baseStage, evidence);
+  return {
+    ...baseStage,
+    retainedAnalysisMeshProfile: profile,
+    analysisMeshProfileHash: profile.semanticHash,
+    retainedAnalysisMeshEvidenceV2: evidence,
+    lastAnalysisMeshPlan: lastPlan,
+    analysisMeshCustodyProjection: custody,
   };
 }
 function nearestElement(mesh, point) {

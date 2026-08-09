@@ -4,9 +4,6 @@ import {
 import {
   TopologyEditCleanShellRuntime,
 } from './viewport-productivity/topology-edit-clean-shell-runtime.js';
-import {
-  TopologyEditIconReferenceRuntime,
-} from './viewport-productivity/topology-edit-icon-reference-runtime.js';
 import './topology-edit-productivity.css';
 
 /** Adds presentation-only productivity behavior without acquiring topology authority. */
@@ -14,7 +11,8 @@ export class TopologyEdit3DViewController extends AuthoringController {
   constructor(eventBus, lifecycleOptions = {}) {
     super(eventBus, lifecycleOptions);
     this.cleanShellRuntime = new TopologyEditCleanShellRuntime(this);
-    this.iconReferenceRuntime = new TopologyEditIconReferenceRuntime();
+    this.iconReferenceRuntime = null;
+    this.iconReferenceRuntimePromise = null;
     this.tableAdapter = null;
     this.tableAdapterPromise = null;
     this.sourceVisualCache = null;
@@ -47,6 +45,19 @@ export class TopologyEdit3DViewController extends AuthoringController {
     return this.tableAdapterPromise;
   }
 
+  mountIconReferenceRuntime() {
+    if (this.iconReferenceRuntime || this.iconReferenceRuntimePromise || !this.hostElement) return;
+    const activationHost = this.hostElement;
+    this.iconReferenceRuntimePromise = import(
+      './viewport-productivity/topology-edit-icon-reference-runtime.js'
+    ).then(({ TopologyEditIconReferenceRuntime }) => {
+      if (!this.hostElement || this.hostElement !== activationHost) return null;
+      const runtime = new TopologyEditIconReferenceRuntime().mount(activationHost);
+      this.iconReferenceRuntime = runtime;
+      return runtime;
+    }).finally(() => { this.iconReferenceRuntimePromise = null; });
+  }
+
   buildShell() {
     super.buildShell();
     const primaryNavigation = this.hostElement?.querySelector(
@@ -60,7 +71,7 @@ export class TopologyEdit3DViewController extends AuthoringController {
     if (!sidecar) throw new Error('TopologyEditProductivityController: sidecar is unavailable.');
     sidecar.tabIndex = -1;
     this.cleanShellRuntime.mount(this.hostElement);
-    this.iconReferenceRuntime.mount(this.hostElement);
+    this.mountIconReferenceRuntime();
   }
 
   deriveVisual(canonical, modelRole) {
@@ -92,7 +103,9 @@ export class TopologyEdit3DViewController extends AuthoringController {
     this.tableAdapter?.destroy();
     this.tableAdapter = null;
     this.tableAdapterPromise = null;
-    this.iconReferenceRuntime.destroy();
+    this.iconReferenceRuntime?.destroy();
+    this.iconReferenceRuntime = null;
+    this.iconReferenceRuntimePromise = null;
     this.cleanShellRuntime.destroy();
     this.sourceVisualCache = null;
     this.sourceVisualCacheDataset = null;

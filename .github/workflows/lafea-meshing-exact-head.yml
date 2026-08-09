@@ -12,6 +12,7 @@ on:
       - 'scripts/lafea.10-*.mjs'
       - 'scripts/lafea-mesh-producer-binding-check.mjs'
       - 'scripts/lafea-mesh-hole-diagnostic.mjs'
+      - 'scripts/lafea-hole-front-probe.mjs'
       - 'package.json'
       - '.github/workflows/lafea-meshing-exact-head.yml'
   workflow_dispatch:
@@ -55,6 +56,16 @@ jobs:
         with:
           name: lafea-hole-diagnostic
           path: hole-diagnostic.json
+          if-no-files-found: error
+
+      - name: Probe hole boundary-front layers
+        run: node scripts/lafea-hole-front-probe.mjs
+
+      - name: Upload hole boundary-front probe
+        uses: actions/upload-artifact@v4
+        with:
+          name: lafea-hole-front-probe
+          path: hole-front-probe.json
           if-no-files-found: error
 
       - name: Run governed LAFEA meshing gate

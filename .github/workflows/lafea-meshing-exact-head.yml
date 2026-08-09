@@ -15,6 +15,7 @@ on:
       - 'scripts/lafea-mesh-producer-binding-check.mjs'
       - 'scripts/lafea-mesh-dof-policy-check.mjs'
       - 'scripts/lafea-meshing-system-check.mjs'
+      - 'scripts/lafea-p2-11-triage.mjs'
       - 'package.json'
       - '.github/workflows/lafea-meshing-exact-head.yml'
   workflow_dispatch:
@@ -55,6 +56,16 @@ jobs:
 
       - name: Qualify governed canvas meshing intent
         run: node scripts/lafea-meshing-system-check.mjs
+
+      - name: Capture P2-11 registered check triage
+        run: node scripts/lafea-p2-11-triage.mjs
+
+      - name: Upload P2-11 triage
+        uses: actions/upload-artifact@v4
+        with:
+          name: lafea-p2-11-triage
+          path: lafea-p2-11-triage.json
+          if-no-files-found: error
 
       - name: Run governed LAFEA meshing gate
         run: npm run check:lafea-meshing

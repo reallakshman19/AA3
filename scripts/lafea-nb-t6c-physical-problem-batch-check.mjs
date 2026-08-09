@@ -60,6 +60,9 @@ assert.equal(executed.status, 'ACCEPTED');
 assert.equal(executed.accepted, true);
 assert.equal(executed.controllerResult.receipt.resultReady, true);
 assert.equal(executed.controllerResult.receipt.convergenceReady, true);
+assert.equal(executed.controllerResult.receipt.pilotConvergence.status, 'PASS');
+assert.ok(executed.controllerResult.receipt.pilotConvergence.relativeChanges.at(-1)
+  < executionInput.convergenceRequest.tolerance);
 assert.equal(executed.controllerResult.receipt.codeReady, false);
 assert.equal(executed.authority.selectedPilotExecution, true);
 assert.equal(executed.authority.generalT7dAuthorized, false);
@@ -71,6 +74,22 @@ assert.equal(
   deterministic.controllerResult.receipt.evidenceHash,
   executed.controllerResult.receipt.evidenceHash,
 );
+
+const strictTolerance = executeLafeaLugPinholePhysicalProblemBatch({
+  ...executionInput,
+  requestId: 'NB-T6C-C2D-LUG-PINHOLE-STRICT-CONVERGENCE',
+  convergenceRequest: {
+    ...executionInput.convergenceRequest,
+    tolerance: 1e-16,
+  },
+});
+assert.equal(strictTolerance.status, 'BLOCKED');
+assert.equal(strictTolerance.accepted, false);
+assert.ok(strictTolerance.controllerResult.diagnostics
+  .includes('PILOT_FINE_LEVEL_CHANGE_EXCEEDS_TOLERANCE'));
+assert.ok(strictTolerance.controllerResult.diagnostics
+  .includes('PILOT_CONVERGENCE_NOT_IMPROVING'));
+negativeCount += 1;
 
 expectCode('invalid feature role', () =>
   createLafeaLugPinholePhysicalProblemProjection({

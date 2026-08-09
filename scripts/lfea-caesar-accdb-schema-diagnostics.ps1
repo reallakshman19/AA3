@@ -33,12 +33,13 @@ try {
 
   $tables = [System.Collections.Generic.List[object]]::new()
   foreach ($tableName in ($tableNames | Sort-Object -Unique)) {
-    if ($tableName -notmatch '^[A-Za-z0-9_]+$') {
-      throw "Unsafe ACCDB table name encountered during schema inventory: $tableName"
+    if ([string]::IsNullOrWhiteSpace($tableName) -or $tableName.Contains([char]0)) {
+      throw 'Invalid ACCDB table name encountered during schema inventory.'
     }
+    $quotedTableName = '[' + $tableName.Replace(']', ']]') + ']'
     $recordset = New-Object -ComObject ADODB.Recordset
     try {
-      $recordset.Open("SELECT * FROM [$tableName] WHERE 1=0", $connection, 0, 1)
+      $recordset.Open("SELECT * FROM $quotedTableName WHERE 1=0", $connection, 0, 1)
       $columns = [System.Collections.Generic.List[string]]::new()
       for ($index = 0; $index -lt $recordset.Fields.Count; $index += 1) {
         $columns.Add([string]$recordset.Fields.Item($index).Name)

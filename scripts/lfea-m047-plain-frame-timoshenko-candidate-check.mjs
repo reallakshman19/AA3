@@ -23,7 +23,6 @@ const source = readFileSync(sourcePath, 'utf8').replace(/\r\n/gu, '\n');
 const requiredOnce = [
   "input.kind === 'FRAME' && teeModifier === null",
   'function plainFrameTimoshenkoProfile() {',
-  "profileId: 'LINEAR-FRAME-ELEMENT-R1-TIMOSHENKO-COWPER-0P53'",
   "straightPipeFormulation: 'PIPE_FRAME3D_TIMOSHENKO_V1'",
   "shearCorrectionFactorY: { value: 0.53, source: 'COWPER-1966-THIN-ANNULUS-INPUT' }",
   "shearCorrectionFactorZ: { value: 0.53, source: 'COWPER-1966-THIN-ANNULUS-INPUT' }",
@@ -33,6 +32,15 @@ for (const token of requiredOnce) {
   assert.equal(source.split(token).length - 1, 1, `expected one I015 token: ${token}`);
 }
 
+assert.equal(
+  source.split("profileId: 'LINEAR-FRAME-ELEMENT-R1'").length - 1,
+  2,
+  'Timoshenko and Euler variants must share the frozen frame profileId',
+);
+assert.ok(
+  !source.includes('LINEAR-FRAME-ELEMENT-R1-TIMOSHENKO-COWPER-0P53'),
+  'I015 must not invent a second frame profileId',
+);
 assert.ok(source.includes("kind: 'BEND_INCOMING_STRAIGHT'"), 'bend incoming straight kind must remain explicit');
 assert.ok(source.includes("kind: 'BEND_ARC'"), 'bend arc kind must remain explicit');
 assert.ok(source.includes("kind: 'RIGID'"), 'rigid kind must remain explicit');

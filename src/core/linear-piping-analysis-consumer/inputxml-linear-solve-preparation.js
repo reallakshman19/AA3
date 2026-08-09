@@ -21,7 +21,8 @@ import {
   sealInputXmlLinearSolvePreparation,
 } from './inputxml-linear-solve-preparation-contract.js';
 
-export function prepareInputXmlLinearSolve(sourceBundle, analysisProfileId, options = {}) {
+export function prepareInputXmlLinearSolve(sourceBundle, analysisProfileId, options) {
+  if (options === undefined) options = {};
   const source = requireInputXmlModelHealthSource(sourceBundle);
   const profile = requireInputXmlLinearSolvePreparationProfile(analysisProfileId);
   const modelHealth = options.modelHealthReport === undefined

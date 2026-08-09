@@ -13,7 +13,8 @@ import {
   uniqueAscii,
 } from './inputxml-linear-prefea-contract.js';
 
-export function prepareInputXmlLinearPreFea(diagnostics, options = {}) {
+export function prepareInputXmlLinearPreFea(diagnostics, options) {
+  if (options === undefined) options = {};
   const accepted = requireInputXmlLinearPreFeaDiagnostics(diagnostics);
   if (accepted.status === 'BLOCK') {
     return sealBlockedPreparation(accepted, accepted.findings, 'DIAGNOSTICS_BLOCKED');
@@ -438,7 +439,8 @@ function classifyPreparationError(code) {
   return 'UNSUPPORTED_FEATURE';
 }
 
-function classifyPreflightCategory(code = '') {
+function classifyPreflightCategory(code) {
+  if (code === undefined) code = '';
   if (/FLOAT|RIGID_BODY|MECHANISM/u.test(code)) return 'MECHANISM';
   if (/CONDITION/u.test(code)) return 'CONDITIONING';
   if (/CONSTRAINT|DOF_COLLISION/u.test(code)) return 'CONSTRAINT';

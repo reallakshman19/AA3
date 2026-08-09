@@ -14,7 +14,8 @@ export function sealInputXmlLinearStructuralPreparation(value) {
   return deepFreeze({ ...draft, semanticHash: semantic, evidenceHash: evidence });
 }
 
-export function requireInputXmlLinearStructuralPreparation(value, expectedSourcePreparation = null) {
+export function requireInputXmlLinearStructuralPreparation(value, expectedSourcePreparation) {
+  if (expectedSourcePreparation === undefined) expectedSourcePreparation = null;
   if (!isPlainRecord(value) || value.schema !== INPUTXML_LINEAR_STRUCTURAL_PREPARATION_SCHEMA) {
     throw new TypeError('InputXML linear structural preparation schema is invalid.');
   }

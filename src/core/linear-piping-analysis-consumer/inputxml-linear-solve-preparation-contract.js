@@ -20,9 +20,11 @@ export function sealInputXmlLinearSolvePreparation(value) {
 
 export function requireInputXmlLinearSolvePreparation(
   value,
-  expectedSourceBundle = null,
-  expectedModelHealthReport = null,
+  expectedSourceBundle,
+  expectedModelHealthReport,
 ) {
+  if (expectedSourceBundle === undefined) expectedSourceBundle = null;
+  if (expectedModelHealthReport === undefined) expectedModelHealthReport = null;
   if (!isPlainRecord(value) || value.schema !== INPUTXML_LINEAR_SOLVE_PREPARATION_SCHEMA) {
     throw new TypeError('InputXML linear solve preparation schema is invalid.');
   }

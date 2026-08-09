@@ -20,7 +20,8 @@ export function sealInputXmlLinearStiffnessPreflight(value) {
   return deepFreeze({ ...draft, semanticHash: semantic, evidenceHash: evidence });
 }
 
-export function requireInputXmlLinearStiffnessPreflight(value, expectedPhysicalPreparation = null) {
+export function requireInputXmlLinearStiffnessPreflight(value, expectedPhysicalPreparation) {
+  if (expectedPhysicalPreparation === undefined) expectedPhysicalPreparation = null;
   if (!isPlainRecord(value) || value.schema !== INPUTXML_LINEAR_STIFFNESS_PREFLIGHT_SCHEMA) {
     throw new TypeError('InputXML linear stiffness preflight schema is invalid.');
   }

@@ -138,7 +138,8 @@ export function requirePreFeaRecord(record, schema, identityProjection, evidence
   return record;
 }
 
-export function foldReadiness(findings, requestedCaseIds = []) {
+export function foldReadiness(findings, requestedCaseIds) {
+  if (requestedCaseIds === undefined) requestedCaseIds = [];
   const rows = [...findings].map(makeFinding).sort((a, b) => compareAscii(a.findingId, b.findingId));
   const blocking = rows.filter((row) => row.disposition === 'BLOCK');
   const conditional = rows.filter((row) => row.disposition === 'CONDITIONAL');
@@ -157,7 +158,9 @@ export function foldReadiness(findings, requestedCaseIds = []) {
   });
 }
 
-export function assertSerializable(value, path = '$', seen = new Set()) {
+export function assertSerializable(value, path, seen) {
+  if (path === undefined) path = '$';
+  if (seen === undefined) seen = new Set();
   if (value === null || value === undefined) return;
   if (typeof value === 'function' || typeof value === 'symbol' || typeof value === 'bigint') {
     fail('PREFEA_RUNTIME_STATE_PROHIBITED', `Non-serializable value at ${path}.`, { path });
@@ -199,7 +202,8 @@ export function uniqueAscii(values) {
     .map(String))].sort(compareAscii);
 }
 
-export function fail(code, message, data = {}) {
+export function fail(code, message, data) {
+  if (data === undefined) data = {};
   throw new InputXmlLinearPreFeaError(message, code, data);
 }
 

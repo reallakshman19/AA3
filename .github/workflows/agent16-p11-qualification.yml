@@ -7,8 +7,22 @@ on:
       - 'test/lfea-prefea-gateway.test.js'
       - 'src/core/linear-piping-analysis-consumer/inputxml-feature-inventory.js'
       - 'src/core/linear-piping-analysis-consumer/inputxml-feature-inventory-restraints.js'
+      - 'src/core/linear-piping-analysis-consumer/inputxml-linear-governed-solve.js'
+      - 'src/core/linear-piping-analysis-consumer/inputxml-linear-model-health-contract.js'
+      - 'src/core/linear-piping-analysis-consumer/inputxml-linear-model-health.js'
+      - 'src/core/linear-piping-analysis-consumer/inputxml-linear-physical-cases-contract.js'
+      - 'src/core/linear-piping-analysis-consumer/inputxml-linear-physical-cases.js'
+      - 'src/core/linear-piping-analysis-consumer/inputxml-linear-prefea-contract.js'
       - 'src/core/linear-piping-analysis-consumer/inputxml-linear-prefea-diagnostics.js'
       - 'src/core/linear-piping-analysis-consumer/inputxml-linear-prefea-findings.js'
+      - 'src/core/linear-piping-analysis-consumer/inputxml-linear-prefea-preparation.js'
+      - 'src/core/linear-piping-analysis-consumer/inputxml-linear-solve-preparation-contract.js'
+      - 'src/core/linear-piping-analysis-consumer/inputxml-linear-solve-preparation.js'
+      - 'src/core/linear-piping-analysis-consumer/inputxml-linear-stiffness-preflight-contract.js'
+      - 'src/core/linear-piping-analysis-consumer/inputxml-linear-stiffness-preflight.js'
+      - 'src/core/linear-piping-analysis-consumer/inputxml-linear-structural-preparation-contract.js'
+      - 'src/core/linear-piping-analysis-consumer/inputxml-linear-structural-preparation.js'
+      - 'src/core/linear-piping-analysis-consumer/inputxml-model-health.js'
       - '.github/workflows/agent16-p11-qualification.yml'
 
 permissions:
@@ -44,8 +58,22 @@ jobs:
               scripts/advanced-shell-contract-check.mjs|test/lfea-prefea-gateway.test.js|.github/workflows/agent16-p11-qualification.yml) ;;
               src/core/linear-piping-analysis-consumer/inputxml-feature-inventory.js) ;;
               src/core/linear-piping-analysis-consumer/inputxml-feature-inventory-restraints.js) ;;
+              src/core/linear-piping-analysis-consumer/inputxml-linear-governed-solve.js) ;;
+              src/core/linear-piping-analysis-consumer/inputxml-linear-model-health-contract.js) ;;
+              src/core/linear-piping-analysis-consumer/inputxml-linear-model-health.js) ;;
+              src/core/linear-piping-analysis-consumer/inputxml-linear-physical-cases-contract.js) ;;
+              src/core/linear-piping-analysis-consumer/inputxml-linear-physical-cases.js) ;;
+              src/core/linear-piping-analysis-consumer/inputxml-linear-prefea-contract.js) ;;
               src/core/linear-piping-analysis-consumer/inputxml-linear-prefea-diagnostics.js) ;;
               src/core/linear-piping-analysis-consumer/inputxml-linear-prefea-findings.js) ;;
+              src/core/linear-piping-analysis-consumer/inputxml-linear-prefea-preparation.js) ;;
+              src/core/linear-piping-analysis-consumer/inputxml-linear-solve-preparation-contract.js) ;;
+              src/core/linear-piping-analysis-consumer/inputxml-linear-solve-preparation.js) ;;
+              src/core/linear-piping-analysis-consumer/inputxml-linear-stiffness-preflight-contract.js) ;;
+              src/core/linear-piping-analysis-consumer/inputxml-linear-stiffness-preflight.js) ;;
+              src/core/linear-piping-analysis-consumer/inputxml-linear-structural-preparation-contract.js) ;;
+              src/core/linear-piping-analysis-consumer/inputxml-linear-structural-preparation.js) ;;
+              src/core/linear-piping-analysis-consumer/inputxml-model-health.js) ;;
               *) echo "Forbidden changed path for stacked P-11/P-12/P-13 qualification: $changed" >&2; exit 1 ;;
             esac
           done < /tmp/agent16-stack-paths.txt
@@ -54,8 +82,22 @@ jobs:
             case "$changed" in
               src/core/linear-piping-analysis-consumer/inputxml-feature-inventory.js) ;;
               src/core/linear-piping-analysis-consumer/inputxml-feature-inventory-restraints.js) ;;
+              src/core/linear-piping-analysis-consumer/inputxml-linear-governed-solve.js) ;;
+              src/core/linear-piping-analysis-consumer/inputxml-linear-model-health-contract.js) ;;
+              src/core/linear-piping-analysis-consumer/inputxml-linear-model-health.js) ;;
+              src/core/linear-piping-analysis-consumer/inputxml-linear-physical-cases-contract.js) ;;
+              src/core/linear-piping-analysis-consumer/inputxml-linear-physical-cases.js) ;;
+              src/core/linear-piping-analysis-consumer/inputxml-linear-prefea-contract.js) ;;
               src/core/linear-piping-analysis-consumer/inputxml-linear-prefea-diagnostics.js) ;;
               src/core/linear-piping-analysis-consumer/inputxml-linear-prefea-findings.js) ;;
+              src/core/linear-piping-analysis-consumer/inputxml-linear-prefea-preparation.js) ;;
+              src/core/linear-piping-analysis-consumer/inputxml-linear-solve-preparation-contract.js) ;;
+              src/core/linear-piping-analysis-consumer/inputxml-linear-solve-preparation.js) ;;
+              src/core/linear-piping-analysis-consumer/inputxml-linear-stiffness-preflight-contract.js) ;;
+              src/core/linear-piping-analysis-consumer/inputxml-linear-stiffness-preflight.js) ;;
+              src/core/linear-piping-analysis-consumer/inputxml-linear-structural-preparation-contract.js) ;;
+              src/core/linear-piping-analysis-consumer/inputxml-linear-structural-preparation.js) ;;
+              src/core/linear-piping-analysis-consumer/inputxml-model-health.js) ;;
               *) echo "Forbidden numerical/core path for P-13: $changed" >&2; exit 1 ;;
             esac
           done < /tmp/agent16-core-paths.txt
@@ -78,7 +120,9 @@ jobs:
         continue-on-error: true
         run: node --test test/lfea-prefea-gateway.test.js
 
-      - name: P-13 hidden-default inventory diagnostic
+      - name: P-13 hidden-default inventory contract
+        id: p13_defaults
+        continue-on-error: true
         shell: bash
         run: |
           node --input-type=module <<'EOF'
@@ -98,6 +142,7 @@ jobs:
             }
           }
           console.log(`HIDDEN_DEFAULT_PARAMETER inventory count: ${count}`);
+          if (count !== 0) process.exitCode = 1;
           EOF
 
       - name: P-13 anti-drift modularity contract
@@ -206,6 +251,7 @@ jobs:
           printf '%-42s %s\n' 'P-11 governed shell contract' '${{ steps.p11.outcome }}'
           printf '%-42s %s\n' 'P-12 focused gateway contract' '${{ steps.p12.outcome }}'
           printf '%-42s %s\n' 'full gateway suite (diagnostic)' '${{ steps.gateway_suite.outcome }}'
+          printf '%-42s %s\n' 'P-13 hidden-default inventory' '${{ steps.p13_defaults.outcome }}'
           printf '%-42s %s\n' 'P-13 anti-drift modularity' '${{ steps.p13_antidrift.outcome }}'
           printf '%-42s %s\n' 'P-13 parent/head authority equivalence' '${{ steps.p13_equivalence.outcome }}'
           printf '%-42s %s\n' 'npm run syntax:strict' '${{ steps.syntax.outcome }}'
@@ -216,6 +262,7 @@ jobs:
           printf '%-42s %s\n' 'npx vite build' '${{ steps.build.outcome }}'
           test '${{ steps.p11.outcome }}' = success
           test '${{ steps.p12.outcome }}' = success
+          test '${{ steps.p13_defaults.outcome }}' = success
           test '${{ steps.p13_antidrift.outcome }}' = success
           test '${{ steps.p13_equivalence.outcome }}' = success
           test '${{ steps.syntax.outcome }}' = success

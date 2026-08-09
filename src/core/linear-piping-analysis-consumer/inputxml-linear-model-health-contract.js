@@ -33,10 +33,13 @@ export function sealInputXmlLinearModelHealth(value) {
 
 export function requireInputXmlLinearModelHealth(
   value,
-  expectedSourceBundle = null,
-  expectedGraphReport = null,
-  expectedProximityReport = null,
+  expectedSourceBundle,
+  expectedGraphReport,
+  expectedProximityReport,
 ) {
+  if (expectedSourceBundle === undefined) expectedSourceBundle = null;
+  if (expectedGraphReport === undefined) expectedGraphReport = null;
+  if (expectedProximityReport === undefined) expectedProximityReport = null;
   if (!isPlainRecord(value) || value.schema !== INPUTXML_LINEAR_MODEL_HEALTH_SCHEMA) {
     throw new TypeError('InputXML linear model-health schema is invalid.');
   }

@@ -17,8 +17,9 @@ import { requireInputXmlLinearStructuralPreparation } from './inputxml-linear-st
 export function compileInputXmlLinearPhysicalCases(
   sourcePreparation,
   structuralPreparation,
-  options = {},
+  options,
 ) {
+  if (options === undefined) options = {};
   const prepared = requireInputXmlLinearSolvePreparation(sourcePreparation);
   const structural = requireInputXmlLinearStructuralPreparation(structuralPreparation, prepared);
   if (prepared.analysisProfileId !== structural.analysisProfileId) {

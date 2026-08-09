@@ -22,7 +22,8 @@ import {
 
 const EFFECT_RANK = Object.freeze({ PASS: 0, CONDITIONAL: 1, BLOCK: 2 });
 
-export function diagnoseInputXmlLinearModelHealth(sourceBundle, options = {}) {
+export function diagnoseInputXmlLinearModelHealth(sourceBundle, options) {
+  if (options === undefined) options = {};
   const accepted = requireInputXmlModelHealthSource(sourceBundle);
   const graph = requireTopologyGraphDiagnostics(
     options.graphReport ?? diagnoseInputXmlTopologyGraph(accepted, options.graph ?? {}),
@@ -402,18 +403,19 @@ function foldCapabilities(findings) {
   }));
 }
 
-function finding({
-  code,
-  category,
-  severity,
-  occurrenceKey,
-  message,
-  entities = {},
-  evidence = {},
-  authority,
-  remediation,
-  capabilityEffects,
-}) {
+function finding(value) {
+  const {
+    code,
+    category,
+    severity,
+    occurrenceKey,
+    message,
+    entities = {},
+    evidence = {},
+    authority,
+    remediation,
+    capabilityEffects,
+  } = value;
   const normalizedEntities = normalizeEntities(entities);
   const findingId = `IMH:${code}:${semanticHash({ code, occurrenceKey, entities: normalizedEntities })}`;
   return Object.freeze({

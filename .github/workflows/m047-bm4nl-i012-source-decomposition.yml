@@ -1,0 +1,216 @@
+name: m047-bm4nl-i012-source-decomposition
+
+on:
+  push:
+    branches:
+      - agent/m047-i012-source-action-decomposition
+    paths:
+      - '.github/workflows/m047-bm4nl-i012-source-decomposition.yml'
+      - 'scripts/lfea-m047-source-action-decomposition*.mjs'
+      - 'scripts/lfea-m047-element-replay.mjs'
+      - 'scripts/lfea-m047-instrument-baseline-replay*.mjs'
+      - 'scripts/lfea-m047-provision-ace.ps1'
+      - 'scripts/lfea-caesar-accdb-export.ps1'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  decompose:
+    runs-on: windows-2022
+    timeout-minutes: 35
+
+    steps:
+      - name: Checkout I012 diagnostic tooling exact head
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.sha }}
+          fetch-depth: 0
+
+      - name: Prove exact diagnostic head and clean checkout
+        shell: pwsh
+        run: |
+          if ((git rev-parse HEAD).Trim() -ne '${{ github.sha }}') {
+            throw 'I012 workflow did not checkout the triggering commit.'
+          }
+          if (git status --porcelain) {
+            throw 'I012 diagnostic checkout is dirty before qualification.'
+          }
+
+      - name: Use Node.js 22
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: I012 synthetic superposition qualification
+        shell: pwsh
+        run: node scripts/lfea-m047-source-action-decomposition-check.mjs
+
+      - name: I008 parent replay regression
+        shell: pwsh
+        run: node scripts/lfea-m047-element-replay-check.mjs
+
+      - name: I008 instrumentation line-ending regression
+        shell: pwsh
+        run: node scripts/lfea-m047-instrument-baseline-replay-check.mjs
+
+      - name: Checkout original baseline mechanics
+        uses: actions/checkout@v4
+        with:
+          repository: reallaksh19/Advanced_Analysis
+          ref: 882d59a99c3a03847d20bec34770ba57ff479d91
+          path: baseline-source
+          fetch-depth: 1
+
+      - name: Prove baseline mechanics commit
+        shell: pwsh
+        run: |
+          if ((git -C baseline-source rev-parse HEAD).Trim() -ne '882d59a99c3a03847d20bec34770ba57ff479d91') {
+            throw 'Baseline mechanics checkout drifted.'
+          }
+
+      - name: Checkout pinned Common BM4 source
+        uses: actions/checkout@v4
+        with:
+          repository: reallaksh19/Common
+          ref: 1728651c94504b497aae4041578b1095fd8e292e
+          path: common-source
+          fetch-depth: 1
+
+      - name: Expand and verify locked BM4_NL ACCDB
+        id: source
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $zip = Join-Path $PWD 'common-source/LFEA/BM4/BM4_NL.zip'
+          $extractRoot = Join-Path $env:RUNNER_TEMP 'm047-bm4nl-i012'
+          if (Test-Path -LiteralPath $extractRoot) {
+            Remove-Item -LiteralPath $extractRoot -Recurse -Force
+          }
+          New-Item -ItemType Directory -Path $extractRoot | Out-Null
+          Expand-Archive -LiteralPath $zip -DestinationPath $extractRoot -Force
+          $accdb = @(Get-ChildItem -LiteralPath $extractRoot -Recurse -File -Filter '*.accdb')
+          if ($accdb.Count -ne 1) {
+            throw "Expected exactly one ACCDB; found $($accdb.Count)."
+          }
+          $locked = '85d39463296e569da811d8572e2eff680b858097f76fdf0f47d1755f0b161c21'
+          $actual = (Get-FileHash -LiteralPath $accdb[0].FullName -Algorithm SHA256).Hash.ToLowerInvariant()
+          if ($actual -ne $locked) {
+            throw "ACCDB SHA-256 $actual does not match locked M047 source $locked."
+          }
+          New-Item -ItemType Directory -Path 'artifacts/m047/I012' -Force | Out-Null
+          [ordered]@{
+            schema = 'lfea-m047-i012-source-provenance/v1'
+            commonRepository = 'reallaksh19/Common'
+            commonCommitSha = '1728651c94504b497aae4041578b1095fd8e292e'
+            zipPath = 'LFEA/BM4/BM4_NL.zip'
+            accdbSha256 = $actual
+          } | ConvertTo-Json -Depth 5 | Set-Content -LiteralPath 'artifacts/m047/I012/source-provenance.json' -Encoding utf8
+          "BM4NL_ACCDB=$($accdb[0].FullName)" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
+
+      - name: Provision Microsoft 365 Access Runtime
+        shell: powershell
+        run: |
+          & .\scripts\lfea-m047-provision-ace.ps1 -OutputPath 'artifacts/m047/I012/ace-provisioning.json'
+
+      - name: Probe Microsoft ACE OLE DB provider
+        shell: powershell
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $connection = New-Object -ComObject ADODB.Connection
+          try {
+            $connection.Open("Provider=Microsoft.ACE.OLEDB.12.0;Data Source=$env:BM4NL_ACCDB;Mode=Read;Persist Security Info=False;")
+          }
+          finally {
+            if ($connection.State -ne 0) { $connection.Close() }
+            [void][System.Runtime.InteropServices.Marshal]::ReleaseComObject($connection)
+          }
+
+      - name: Bind baseline to portable read-only ACCDB exporter
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $baselineExporter = 'baseline-source/scripts/lfea-caesar-accdb-export.ps1'
+          $portableExporter = 'scripts/lfea-caesar-accdb-export.ps1'
+          $originalSha = (Get-FileHash -LiteralPath $baselineExporter -Algorithm SHA256).Hash.ToLowerInvariant()
+          $portableSha = (Get-FileHash -LiteralPath $portableExporter -Algorithm SHA256).Hash.ToLowerInvariant()
+          Copy-Item -LiteralPath $portableExporter -Destination $baselineExporter -Force
+          $status = @(git -C baseline-source status --porcelain)
+          if ($status.Count -ne 1 -or $status[0] -notmatch 'scripts/lfea-caesar-accdb-export\.ps1$') {
+            throw "Baseline checkout mutation exceeded exporter portability boundary: $($status -join '; ')"
+          }
+          [ordered]@{
+            schema = 'lfea-m047-i012-exporter-portability/v1'
+            baselineCommit = '882d59a99c3a03847d20bec34770ba57ff479d91'
+            changedPath = 'scripts/lfea-caesar-accdb-export.ps1'
+            originalExporterSha256 = $originalSha
+            portableExporterSha256 = $portableSha
+            mechanicsChanged = $false
+          } | ConvertTo-Json -Depth 4 | Set-Content -LiteralPath 'artifacts/m047/I012/exporter-portability.json' -Encoding utf8
+
+      - name: Instrument baseline element-contribution evidence
+        shell: pwsh
+        run: |
+          node scripts/lfea-m047-instrument-baseline-replay.mjs `
+            --source baseline-source/src/core/fea-benchmarks/caesar-accdb-linear-solve.js `
+            --manifest artifacts/m047/I012/replay-instrumentation.json
+          $status = @(git -C baseline-source status --porcelain)
+          $hasExporter = @($status | Where-Object { $_ -match 'scripts/lfea-caesar-accdb-export\.ps1$' }).Count -eq 1
+          $hasLedger = @($status | Where-Object { $_ -match 'src/core/fea-benchmarks/caesar-accdb-linear-solve\.js$' }).Count -eq 1
+          if ($status.Count -ne 2 -or -not $hasExporter -or -not $hasLedger) {
+            throw "Baseline mutation exceeded exporter + evidence-instrumentation boundary: $($status -join '; ')"
+          }
+
+      - name: Reproduce exact baseline mechanics from locked ACCDB
+        shell: pwsh
+        run: |
+          node baseline-source/scripts/lfea-caesar-accdb-benchmark.mjs `
+            --accdb "$env:BM4NL_ACCDB" `
+            --profile baseline-source/benchmarks/LFEA/CAESAR_ACCDB/bm4nl-l19-l20-linear-solve.profile.json `
+            --solve-linear true `
+            --actual-out artifacts/m047/I012/baseline-actual.json `
+            --summary-out artifacts/m047/I012/baseline-summary.md `
+            --out artifacts/m047/I012/baseline-benchmark.json
+
+      - name: Reproduce I008 parent element replay
+        shell: pwsh
+        run: |
+          node scripts/lfea-m047-element-replay.mjs `
+            --report artifacts/m047/I012/baseline-benchmark.json `
+            --out artifacts/m047/I012/element-replay.json
+
+      - name: Generate I012 source action decomposition
+        shell: pwsh
+        run: |
+          node scripts/lfea-m047-source-action-decomposition.mjs `
+            --report artifacts/m047/I012/baseline-benchmark.json `
+            --sources 4,5 `
+            --out artifacts/m047/I012/source-action-decomposition.json
+
+      - name: Summarize I012 evidence
+        shell: pwsh
+        run: |
+          $result = Get-Content -LiteralPath 'artifacts/m047/I012/source-action-decomposition.json' -Raw | ConvertFrom-Json
+          Add-Content -LiteralPath $env:GITHUB_STEP_SUMMARY -Value '# M047 I012 source-action decomposition'
+          Add-Content -LiteralPath $env:GITHUB_STEP_SUMMARY -Value "- Baseline mechanics: ``882d59a99c3a03847d20bec34770ba57ff479d91``"
+          Add-Content -LiteralPath $env:GITHUB_STEP_SUMMARY -Value "- Locked ACCDB: ``$($result.sourceAccdbSha256)``"
+          Add-Content -LiteralPath $env:GITHUB_STEP_SUMMARY -Value "- Evidence: ``$($result.semanticHash)``"
+          foreach ($caseId in @('L19','L20')) {
+            foreach ($sourceId in @('4','5')) {
+              $source = $result.cases.$caseId.sources.$sourceId
+              $worst = $source.ranking.largestReplayResiduals[0]
+              $initial = $source.ranking.largestImprovementIfInitialOmitted[0]
+              $equiv = $source.ranking.largestImprovementIfEquivalentOmitted[0]
+              Add-Content -LiteralPath $env:GITHUB_STEP_SUMMARY -Value "- $caseId source $sourceId: worst $($worst.end)/$($worst.component) residual=$($worst.replayResidual); best omit-initial improvement=$($initial.score); best omit-equivalent improvement=$($equiv.score)"
+            }
+          }
+
+      - name: Retain I012 evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: m047-i012-source-action-decomposition-${{ github.sha }}
+          path: artifacts/m047/I012/**
+          if-no-files-found: error
+          retention-days: 90

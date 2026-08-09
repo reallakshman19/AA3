@@ -159,11 +159,33 @@ jobs:
       - name: Linear piping consumer regression
         run: node scripts/linear-piping-analysis-consumer-check.mjs
 
-      - name: Fixed InputXML numerical benchmark
-        run: node scripts/lfea-b3.15-bm1-inputxml-check.mjs
+      - name: Prove BM1 external fixture unavailable on base and head
+        shell: bash
+        run: |
+          set -euo pipefail
+          fixture='benchmarks/LFEA/BM1/BM1_InputXML.xml'
+          test ! -e "/tmp/p10-base/$fixture"
+          test ! -e "$GITHUB_WORKSPACE/$fixture"
+          printf '%s\n' \
+            'BM1 B-3.15/B-3.16 external oracle fixture is absent on merge base and P-10 head.' \
+            'No BM1 numerical result is claimed from this qualification.'
 
-      - name: InputXML ground-truth benchmark
-        run: node scripts/lfea-b3.16-inputxml-ground-truth-check.mjs
+      - name: Closed-form mechanics base/head equivalence
+        shell: bash
+        run: |
+          set -euo pipefail
+          for script in \
+            lfea-b3.7-simply-supported-beam-check.mjs \
+            lfea-b3.8-thermal-expansion-check.mjs \
+            lfea-b3.9-gravity-self-weight-check.mjs
+          do
+            stem="${script%.mjs}"
+            (cd /tmp/p10-base && node "scripts/$script") > "/tmp/p10-base-$stem.log"
+            node "scripts/$script" > "/tmp/p10-head-$stem.log"
+            cmp "/tmp/p10-base-$stem.log" "/tmp/p10-head-$stem.log"
+            cat "/tmp/p10-head-$stem.log"
+          done
+          printf '%s\n' 'B-3.7/B-3.8/B-3.9 closed-form numerical outputs are byte-identical base-to-head.'
 
       - name: Required 1 — strict syntax
         run: npm run syntax:strict
@@ -192,8 +214,10 @@ jobs:
             'PF-16 merge-base/head carried-red parity PROVEN' \
             'all other pre-FEA gateway tests PASS' \
             'linear piping consumer regression PASS' \
-            'BM1 InputXML numerical benchmark PASS' \
-            'InputXML ground-truth benchmark PASS' \
+            'BM1 external fixture availability UNAVAILABLE on base and head (not claimed)' \
+            'B-3.7 simply-supported closed-form equivalence PASS' \
+            'B-3.8 thermal closed-form equivalence PASS' \
+            'B-3.9 gravity closed-form equivalence PASS' \
             'npm run syntax:strict PASS' \
             'node scripts/import-check.mjs PASS' \
             'node scripts/run-enrichment-ui-phase0-checks.mjs PASS' \

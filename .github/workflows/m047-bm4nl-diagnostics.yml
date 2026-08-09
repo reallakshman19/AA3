@@ -9,9 +9,9 @@ on:
       - 'scripts/lfea-m047-residual-decomposition*.mjs'
       - 'scripts/lfea-m047-element-replay*.mjs'
       - 'scripts/lfea-m047-instrument-baseline-replay*.mjs'
+      - 'scripts/lfea-m047-thermal-axial-fingerprint*.mjs'
       - 'scripts/lfea-m047-provision-ace.ps1'
       - 'scripts/lfea-caesar-accdb-export.ps1'
-      - 'benchmarks/LFEA/CAESAR_ACCDB/m047/**'
   workflow_dispatch:
 
 permissions:
@@ -55,6 +55,10 @@ jobs:
       - name: I008 replay instrumentation line-ending qualification
         shell: pwsh
         run: node scripts/lfea-m047-instrument-baseline-replay-check.mjs
+
+      - name: I009 thermal axial fingerprint synthetic qualification
+        shell: pwsh
+        run: node scripts/lfea-m047-thermal-axial-fingerprint-check.mjs
 
       - name: Checkout original baseline mechanics
         uses: actions/checkout@v4
@@ -188,16 +192,26 @@ jobs:
             --report artifacts/m047/I007/baseline-benchmark.json `
             --out artifacts/m047/I007/element-replay.json
 
-      - name: Summarize I007 and I008
+      - name: Generate I009 thermal axial fingerprint
+        shell: pwsh
+        run: |
+          node scripts/lfea-m047-thermal-axial-fingerprint.mjs `
+            --report artifacts/m047/I007/baseline-benchmark.json `
+            --replay artifacts/m047/I007/element-replay.json `
+            --out artifacts/m047/I007/thermal-axial-fingerprint.json
+
+      - name: Summarize I007 through I009
         shell: pwsh
         run: |
           $residual = Get-Content -LiteralPath 'artifacts/m047/I007/residual-decomposition.json' -Raw | ConvertFrom-Json
           $replay = Get-Content -LiteralPath 'artifacts/m047/I007/element-replay.json' -Raw | ConvertFrom-Json
+          $thermal = Get-Content -LiteralPath 'artifacts/m047/I007/thermal-axial-fingerprint.json' -Raw | ConvertFrom-Json
           Add-Content -LiteralPath $env:GITHUB_STEP_SUMMARY -Value '# M047 diagnostic qualification'
           Add-Content -LiteralPath $env:GITHUB_STEP_SUMMARY -Value "- Baseline mechanics: ``882d59a99c3a03847d20bec34770ba57ff479d91``"
           Add-Content -LiteralPath $env:GITHUB_STEP_SUMMARY -Value "- Locked ACCDB: ``$($residual.sourceAccdbSha256)``"
           Add-Content -LiteralPath $env:GITHUB_STEP_SUMMARY -Value "- I007 residual evidence: ``$($residual.semanticHash)``"
           Add-Content -LiteralPath $env:GITHUB_STEP_SUMMARY -Value "- I008 replay evidence: ``$($replay.semanticHash)``"
+          Add-Content -LiteralPath $env:GITHUB_STEP_SUMMARY -Value "- I009 thermal fingerprint evidence: ``$($thermal.semanticHash)``"
           foreach ($family in @('DISPLACEMENT_ROTATION', 'SUPPORT_REACTION', 'SOURCE_END_ACTION')) {
             $stats = $residual.summaries.families.$family
             Add-Content -LiteralPath $env:GITHUB_STEP_SUMMARY -Value "- I007 ${family}: max normalized W+P=$($stats.wp.maximumNormalized.normalizedResidual), thermal=$($stats.thermal.maximumNormalized.normalizedResidual)"
@@ -208,12 +222,17 @@ jobs:
             Add-Content -LiteralPath $env:GITHUB_STEP_SUMMARY -Value "- I008 ${caseId} source 4 max normalized residual: $($case.tracked.source4.maximumNormalizedResidual)"
             Add-Content -LiteralPath $env:GITHUB_STEP_SUMMARY -Value "- I008 ${caseId} source 5 max normalized residual: $($case.tracked.source5.maximumNormalizedResidual)"
           }
+          Add-Content -LiteralPath $env:GITHUB_STEP_SUMMARY -Value "- I009 qualified ordinary FRAME sources: $($thermal.qualifiedSourceCount)"
+          Add-Content -LiteralPath $env:GITHUB_STEP_SUMMARY -Value "- I009 median thermal multiplier: $($thermal.summary.medianMultiplier)"
+          Add-Content -LiteralPath $env:GITHUB_STEP_SUMMARY -Value "- I009 multiplier MAD: $($thermal.summary.medianAbsoluteDeviation)"
+          Add-Content -LiteralPath $env:GITHUB_STEP_SUMMARY -Value "- I009 diagnostic implied alpha: $($thermal.summary.medianImpliedThermalExpansionCoefficientPerKelvin) 1/K"
+          Add-Content -LiteralPath $env:GITHUB_STEP_SUMMARY -Value "- I009 source 4 L19 axial replay residual: $($thermal.tracked.source4L19AxialReplay.residualN) N"
 
-      - name: Retain I007-I008 diagnostics
+      - name: Retain I007-I009 diagnostics
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: m047-i007-i008-${{ github.sha }}
+          name: m047-i007-i009-${{ github.sha }}
           path: artifacts/m047/I007/**
           if-no-files-found: error
           retention-days: 90

@@ -93,15 +93,26 @@ jobs:
           for log in /tmp/p02a-p06b.log /tmp/p02b-p06b.log; do
             grep -F "$expected" "$log"
           done
-          cmp /tmp/p02a-p06b.log /tmp/p02b-p06b.log || {
-            echo 'P-06B raw logs differ by path/runtime context; exact retained export failure was proven in both.'
-          }
 
       - name: Preserve P-06C immutable review session
         run: node scripts/lfea-preflight-phase1-review-session-check.mjs
 
-      - name: Preserve P-06C live review and Trace surface
-        run: node scripts/lfea-preflight-phase1-review-surface-check.mjs
+      - name: Prove P-06C review-surface carried-red parity on P-02A and P-02B
+        shell: bash
+        run: |
+          set -euo pipefail
+          expected="ENOENT: no such file or directory, open 'src/workspace/lfea-preflight-phase1.css'"
+          set +e
+          (cd /tmp/p02a-anchor && node scripts/lfea-preflight-phase1-review-surface-check.mjs) > /tmp/p02a-p06c-ui.log 2>&1
+          anchor_status=$?
+          node scripts/lfea-preflight-phase1-review-surface-check.mjs > /tmp/p02b-p06c-ui.log 2>&1
+          head_status=$?
+          set -e
+          test "$anchor_status" -ne 0
+          test "$head_status" -ne 0
+          for log in /tmp/p02a-p06c-ui.log /tmp/p02b-p06c-ui.log; do
+            grep -F "$expected" "$log"
+          done
 
       - name: Preserve frozen P-02A topology review contract
         shell: bash
@@ -205,8 +216,10 @@ jobs:
       - name: Report P-02B qualification
         run: |
           printf '%s\n' \
-            'P-10/P-09/P-07/P-08/P-06A/P-06C preservation PASS' \
+            'P-10/P-09/P-07/P-08/P-06A preservation PASS' \
             'P-06B virtualization-v2 missing-export carried-red parity PROVEN' \
+            'P-06C immutable review session PASS' \
+            'P-06C live-surface missing-CSS carried-red parity PROVEN' \
             'P-02A frozen topology review contract PASS' \
             'P-02B retained topology/proximity projection PASS' \
             'P-02B source-bundle parent-hash custody PASS' \

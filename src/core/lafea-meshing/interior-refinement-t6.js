@@ -24,11 +24,11 @@ import {
  * their analytic source curve through `edgesByCornerPair`, so T6/Q8 upgrade can
  * place a circular-hole midside on the true arc rather than on its chord.
  */
-export const LAFEA_INTERIOR_REFINEMENT_REVISION = 'LAFEA.10.CDT-HOLES-TRI.V3';
+export const LAFEA_INTERIOR_REFINEMENT_REVISION = 'LAFEA.10.CDT-HOLES-TRI.V4';
 
 const EPS = 1e-12;
 const TRIANGULAR_ROW_HEIGHT_FACTOR = Math.sqrt(3) / 2;
-const BOUNDARY_CLEARANCE_FACTOR = 0.18;
+const BOUNDARY_CLEARANCE_FACTOR = 0.25;
 const POINT_CLEARANCE_FACTOR = 0.12;
 const HOLE_FRONT_LAYER_COUNT = 2;
 const HOLE_FRONT_GROWTH = 1.6;

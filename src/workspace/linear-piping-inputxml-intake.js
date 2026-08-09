@@ -1,14 +1,8 @@
 import {
   DISCLOSED_GENERIC_ANALYZER_APPROXIMATION_PROFILE,
   INPUTXML_LENGTH_UNIT_REGISTRY_ID,
-  INPUTXML_LINEAR_PREFEA_REQUEST_SCHEMA,
   LINEAR_PIPING_INPUTXML_UNIT_PROFILE_SCHEMA,
   STRICT_INPUTXML_LINEAR_STATIC_PROFILE,
-  authorizeInputXmlLinearSolve,
-  diagnoseInputXmlLinearPreFea,
-  prepareInputXmlLinearPreFea,
-  requireInputXmlLinearPreFeaPreparation,
-  requireInputXmlLinearSolveAuthorization,
   requireLinearPipingInputXmlSource,
   requireLinearPipingInputXmlUnitProfile,
   sealLinearPipingInputXmlSource,
@@ -25,13 +19,13 @@ import { semanticHash } from '../core/shared-piping-model/canonical-json.js';
 import { sha256HexText } from '../core/shared-piping-model/sha256.js';
 
 export const LINEAR_PIPING_INPUTXML_INTAKE_SCHEMA = 'linear-piping-inputxml-intake/v1';
-export const LINEAR_PIPING_INPUTXML_PREFLIGHT_SCHEMA = 'linear-piping-inputxml-native-preflight/v1';
 export const LINEAR_PIPING_INPUTXML_INTAKE_PROFILE_IDS = Object.freeze([
   STRICT_INPUTXML_LINEAR_STATIC_PROFILE,
   DISCLOSED_GENERIC_ANALYZER_APPROXIMATION_PROFILE,
 ]);
 export const LINEAR_PIPING_INPUTXML_FALLBACK_UNIT_IDS = Object.freeze(['mm', 'in']);
-export const LINEAR_PIPING_INPUTXML_DEFAULT_CASE_ID = 'W';
+export const LINEAR_PIPING_INPUTXML_DEFAULT_CASE_ROLE = 'W';
+export const LINEAR_PIPING_INPUTXML_DEFAULT_CASE_ID = 'IXP-W';
 export const LINEAR_PIPING_INPUTXML_BEND_TOLERANCE_DEFAULT = Object.freeze({
   value: 1e-6,
   source: 'LFEA_NATIVE_INPUTXML_INTAKE_R1 — visible engineer-reviewable bend-radius tolerance.',
@@ -49,27 +43,8 @@ const INTAKE_KEYS = Object.freeze([
   'requestedCaseIds',
   'semanticHash',
 ]);
-const PREFLIGHT_KEYS = Object.freeze([
-  'schema',
-  'intakeSemanticHash',
-  'status',
-  'solveAuthorized',
-  'sourceSummary',
-  'diagnostics',
-  'preparation',
-  'authorization',
-  'limitationsAccepted',
-  'approverIdentity',
-  'semanticHash',
-]);
 
-/**
- * Inspect exact InputXML bytes without guessing a missing source unit.
- *
- * A supported file declaration is authoritative. If there is no LENGTH
- * declaration, the result is UNIT_AUTHORITY_REQUIRED; callers must supply an
- * explicit fallback unit to `createLinearPipingInputXmlIntake`.
- */
+/** Inspect exact InputXML bytes without guessing a missing source unit. */
 export function inspectLinearPipingInputXmlSource(input) {
   requireFileInput(input);
   const diagnostics = [];
@@ -92,9 +67,8 @@ export function inspectLinearPipingInputXmlSource(input) {
 }
 
 /**
- * Seal one native InputXML intake authority. No solver/runtime state is created.
- * Missing units are accepted only when the engineer supplies an allowed
- * fallback unit. A declared file unit always overrides the fallback.
+ * Seal one native InputXML source/ingestion authority. No pre-FEA preparation,
+ * factorization or solver runtime is created here.
  */
 export function createLinearPipingInputXmlIntake(input, options) {
   if (options === undefined) options = {};
@@ -120,11 +94,7 @@ export function createLinearPipingInputXmlIntake(input, options) {
     mediaType: 'application/xml',
     content: input.content,
   });
-  const unitAuthority = unitAuthorityRecord({
-    inspection,
-    sourceUnit,
-    inputXmlSource,
-  });
+  const unitAuthority = unitAuthorityRecord({ inspection, sourceUnit, inputXmlSource });
   const unitProfile = sealLinearPipingInputXmlUnitProfile({
     schema: LINEAR_PIPING_INPUTXML_UNIT_PROFILE_SCHEMA,
     profileId: `LFEA-NATIVE-INPUTXML-${sourceUnit.toUpperCase()}-TO-M-R1`,
@@ -138,10 +108,6 @@ export function createLinearPipingInputXmlIntake(input, options) {
     },
     semanticHash: '',
   });
-  const componentOrigins = normalizeComponentOrigins(options.componentOrigins);
-  const bendRadiusTolerance = normalizeBendTolerance(options.bendRadiusTolerance);
-  const requestedProfileId = normalizeProfile(options.requestedProfileId);
-  const requestedCaseIds = normalizeCaseIds(options.requestedCaseIds);
   const draft = {
     schema: LINEAR_PIPING_INPUTXML_INTAKE_SCHEMA,
     fileName: input.fileName,
@@ -151,19 +117,19 @@ export function createLinearPipingInputXmlIntake(input, options) {
     ingestionOptions: Object.freeze({
       unit: sourceUnit,
       source: sourceId,
-      componentOrigins,
+      componentOrigins: normalizeComponentOrigins(options.componentOrigins),
       restraintTypeCodeMap: Object.freeze({ ...DEFAULT_RESTRAINT_TYPE_CODE_MAP }),
       restraintTypeMutation: Object.freeze(defaultRestraintTypeMutationConfig()),
       restraintTypeCorrectionProfileId: CAESAR_INPUTXML_RESTRAINT_TYPE_CORRECTION_PROFILE_ID,
-      bendRadiusTolerance,
+      bendRadiusTolerance: normalizeBendTolerance(options.bendRadiusTolerance),
       unitNormalizationProfile: unitProfile,
     }),
     conditioning: Object.freeze({
       requiredAttachmentPoints: Object.freeze([]),
       profile: INPUTXML_LINEAR_IDENTITY_CONDITIONING_PROFILE,
     }),
-    requestedProfileId,
-    requestedCaseIds,
+    requestedProfileId: normalizeProfile(options.requestedProfileId),
+    requestedCaseIds: normalizeCaseIds(options.requestedCaseIds),
     semanticHash: '',
   };
   draft.semanticHash = semanticHash(intakeIdentity(draft));
@@ -201,165 +167,14 @@ export function requireLinearPipingInputXmlIntake(value) {
   return Object.freeze(structuredClone(value));
 }
 
-/**
- * Run the existing production pre-FEA diagnostics/preparation chain directly
- * from the native source intake. The custom validator deliberately validates a
- * source-intake record rather than requiring the old hand-authored downstream
- * `sourceAnalysisRequest`; diagnostics/preparation never consume that object.
- */
-export function prepareLinearPipingInputXmlPreFlight(value, options) {
-  if (options === undefined) options = {};
-  const intake = requireLinearPipingInputXmlIntake(value);
-  const sourceOnlyRequest = sourceOnlyAnalysisRequest(intake);
-  const diagnostics = diagnoseInputXmlLinearPreFea({
-    schema: INPUTXML_LINEAR_PREFEA_REQUEST_SCHEMA,
-    analysisRequest: sourceOnlyRequest,
-    requestedProfileId: intake.requestedProfileId,
-    requestedCaseIds: intake.requestedCaseIds,
-  }, {
-    validateSourceRequest: requireNativeSourceOnlyAnalysisRequest,
-    ...(options.diagnosticsOptions ?? {}),
-  });
-  const preparation = prepareInputXmlLinearPreFea(diagnostics, options.preparationOptions ?? {});
-  const authorization = preparation.status === 'PASS'
-    ? authorizeInputXmlLinearSolve(preparation)
-    : null;
-  return sealNativePreFlight({ intake, diagnostics, preparation, authorization });
-}
-
-export function authorizeLinearPipingInputXmlPreFlight(record, approval) {
-  const accepted = requireLinearPipingInputXmlPreFlight(record);
-  if (accepted.status === 'BLOCK') {
-    failIntake('PIPING_INPUTXML_NATIVE_PREFLIGHT_BLOCK_OVERRIDE_PROHIBITED',
-      'A BLOCK native InputXML pre-flight cannot be authorized.');
-  }
-  if (accepted.solveAuthorized) return accepted;
-  const approverIdentity = requireText(approval?.approverIdentity, 'approval.approverIdentity').trim();
-  const reason = requireText(approval?.reason, 'approval.reason').trim();
-  const preparation = requireInputXmlLinearPreFeaPreparation(accepted.preparation, accepted.diagnostics);
-  const warningFindingIds = uniqueAscii(preparation.findings
-    .filter((finding) => finding.disposition === 'CONDITIONAL')
-    .map((finding) => finding.findingId));
-  const limitationsAccepted = uniqueAscii([
-    ...(preparation.limitations ?? []),
-    ...preparation.findings
-      .filter((finding) => finding.disposition === 'CONDITIONAL')
-      .map((finding) => finding.code),
-  ]);
-  const authorization = authorizeInputXmlLinearSolve(preparation, {
-    authorizationSource: 'LFEA_NATIVE_INPUTXML_REVIEW_V1',
-    authorizationRevision: '1',
-    approverIdentity,
-    reason,
-    limitationsAccepted,
-    authorizedPhysicalCaseIds: preparation.requestedCaseIds,
-    warningFindingIds,
-    invalidationPolicy: 'INVALIDATE_ON_PARENT_IDENTITY_CHANGE',
-    expiration: null,
-  });
-  return sealNativePreFlight({
-    intake: accepted.intake,
-    diagnostics: accepted.diagnostics,
-    preparation,
-    authorization,
-  });
-}
-
-export function requireLinearPipingInputXmlPreFlight(record) {
-  requireRecord(record, 'nativePreFlight');
-  requireExactKeys(record, PREFLIGHT_KEYS, 'nativePreFlight');
-  if (record.schema !== LINEAR_PIPING_INPUTXML_PREFLIGHT_SCHEMA) {
-    failIntake('PIPING_INPUTXML_NATIVE_PREFLIGHT_SCHEMA_INVALID',
-      'Native InputXML pre-flight schema is invalid.');
-  }
-  const intake = requireLinearPipingInputXmlIntake(record.sourceSummary?.intake ?? record.intake);
-  void intake;
-  return record;
-}
-
-function sealNativePreFlight({ intake, diagnostics, preparation, authorization }) {
-  const acceptedPreparation = requireInputXmlLinearPreFeaPreparation(preparation, diagnostics);
-  const acceptedAuthorization = authorization === null
-    ? null
-    : requireInputXmlLinearSolveAuthorization(
-      authorization,
-      acceptedPreparation,
-      acceptedPreparation.requestedCaseIds,
-    );
-  const sourceSummary = Object.freeze({
-    intake,
-    fileName: intake.fileName,
-    contentSha256: intake.contentSha256,
-    sourceSemanticHash: intake.inputXmlSource.semanticHash,
-    sourceContentHash: intake.inputXmlSource.contentHash,
-    unitDeclared: intake.unitAuthority.declared,
-    sourceUnit: intake.unitAuthority.sourceUnit,
-    unitAuthority: intake.unitAuthority.authority,
-    jobName: diagnostics.sourceBundle.jobName,
-    nodeCount: diagnostics.sourceBundle.geometry.nodes.length,
-    elementCount: diagnostics.sourceBundle.geometry.segments.length,
-    requestedCaseIds: intake.requestedCaseIds,
-    availableCaseIds: Object.freeze((acceptedPreparation.physicalPreparation?.physicalCases ?? [])
-      .map((entry) => entry.caseId).sort(compareAscii)),
-    restraintTypeCorrectionProfileId: intake.ingestionOptions.restraintTypeCorrectionProfileId,
-    bendRadiusTolerance: intake.ingestionOptions.bendRadiusTolerance,
-  });
-  const draft = {
-    schema: LINEAR_PIPING_INPUTXML_PREFLIGHT_SCHEMA,
-    intakeSemanticHash: intake.semanticHash,
-    status: acceptedPreparation.status,
-    solveAuthorized: acceptedAuthorization !== null,
-    sourceSummary,
-    diagnostics,
-    preparation: acceptedPreparation,
-    authorization: acceptedAuthorization,
-    limitationsAccepted: Object.freeze([...(acceptedAuthorization?.limitationsAccepted ?? [])]),
-    approverIdentity: acceptedAuthorization?.approverIdentity ?? null,
-    semanticHash: '',
-  };
-  draft.semanticHash = semanticHash(nativePreFlightIdentity(draft));
-  return Object.freeze(draft);
-}
-
-function sourceOnlyAnalysisRequest(intake) {
-  return Object.freeze({
-    schema: 'linear-piping-inputxml-native-source-request/v1',
-    inputXmlSource: intake.inputXmlSource,
-    ingestionOptions: Object.freeze({
-      unit: intake.ingestionOptions.unit,
-      source: intake.ingestionOptions.source,
-      componentOrigins: intake.ingestionOptions.componentOrigins,
-      restraintTypeCodeMap: intake.ingestionOptions.restraintTypeCodeMap,
-      restraintTypeMutation: intake.ingestionOptions.restraintTypeMutation,
-      bendRadiusTolerance: intake.ingestionOptions.bendRadiusTolerance,
-    }),
-    conditioning: intake.conditioning,
-    sourceAnalysisRequest: null,
-  });
-}
-
-function requireNativeSourceOnlyAnalysisRequest(value) {
-  requireRecord(value, 'nativeSourceRequest');
-  if (value.schema !== 'linear-piping-inputxml-native-source-request/v1'
-    || value.sourceAnalysisRequest !== null) {
-    failIntake('PIPING_INPUTXML_NATIVE_SOURCE_REQUEST_INVALID',
-      'Native source-only request is invalid.');
-  }
-  requireLinearPipingInputXmlSource(value.inputXmlSource);
-  normalizeComponentOrigins(value.ingestionOptions?.componentOrigins);
-  normalizeBendTolerance(value.ingestionOptions?.bendRadiusTolerance);
-  return value;
-}
-
 function unitAuthorityRecord({ inspection, sourceUnit, inputXmlSource }) {
   const declared = inspection.unitDeclared && inspection.sourceUnit !== null;
-  const authority = declared
-    ? 'CAESAR_INPUTXML_DECLARED_LENGTH_UNIT'
-    : 'LFEA_ENGINEER_DECLARED_FALLBACK_LENGTH_UNIT';
   return Object.freeze({
     declared,
     sourceUnit,
-    authority,
+    authority: declared
+      ? 'CAESAR_INPUTXML_DECLARED_LENGTH_UNIT'
+      : 'LFEA_ENGINEER_DECLARED_FALLBACK_LENGTH_UNIT',
     revision: declared ? inputXmlSource.contentHash : `ENGINEER-SELECTION-${sourceUnit.toUpperCase()}`,
     evidence: declared
       ? 'The supported <UNITS><LENGTH> declaration in the selected InputXML is authoritative.'
@@ -379,39 +194,6 @@ function intakeIdentity(value) {
     conditioning: value.conditioning,
     requestedProfileId: value.requestedProfileId,
     requestedCaseIds: value.requestedCaseIds,
-  };
-}
-
-function nativePreFlightIdentity(value) {
-  return {
-    schema: value.schema,
-    intakeSemanticHash: value.intakeSemanticHash,
-    status: value.status,
-    solveAuthorized: value.solveAuthorized,
-    sourceSummary: {
-      fileName: value.sourceSummary.fileName,
-      contentSha256: value.sourceSummary.contentSha256,
-      sourceSemanticHash: value.sourceSummary.sourceSemanticHash,
-      sourceContentHash: value.sourceSummary.sourceContentHash,
-      unitDeclared: value.sourceSummary.unitDeclared,
-      sourceUnit: value.sourceSummary.sourceUnit,
-      unitAuthority: value.sourceSummary.unitAuthority,
-      jobName: value.sourceSummary.jobName,
-      nodeCount: value.sourceSummary.nodeCount,
-      elementCount: value.sourceSummary.elementCount,
-      requestedCaseIds: value.sourceSummary.requestedCaseIds,
-      availableCaseIds: value.sourceSummary.availableCaseIds,
-      restraintTypeCorrectionProfileId: value.sourceSummary.restraintTypeCorrectionProfileId,
-      bendRadiusTolerance: value.sourceSummary.bendRadiusTolerance,
-    },
-    diagnosticsSemanticHash: value.diagnostics.semanticHash,
-    diagnosticsEvidenceHash: value.diagnostics.evidenceHash,
-    preparationSemanticHash: value.preparation.semanticHash,
-    preparationEvidenceHash: value.preparation.evidenceHash,
-    authorizationSemanticHash: value.authorization?.semanticHash ?? null,
-    authorizationEvidenceHash: value.authorization?.evidenceHash ?? null,
-    limitationsAccepted: value.limitationsAccepted,
-    approverIdentity: value.approverIdentity,
   };
 }
 

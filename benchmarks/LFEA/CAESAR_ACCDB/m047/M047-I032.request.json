@@ -1,0 +1,64 @@
+{
+  "schema": "lfea-caesar-accdb-iteration-request/v1",
+  "issueId": "M047",
+  "iterationId": "M047-I032",
+  "classification": "SHORT_STRAIGHT_CARRIER_CONSTITUTIVE_COMPOSITION_AB",
+  "expectedSourceAccdbSha256": "85d39463296e569da811d8572e2eff680b858097f76fdf0f47d1755f0b161c21",
+  "baseCommitSha": "882d59a99c3a03847d20bec34770ba57ff479d91",
+  "acceptedMechanicsParent": [
+    "M047-I029 B31J smooth-90 correction",
+    "M047-I031 reducer ten-cylinder Bourdon pressure elongation"
+  ],
+  "supportingDiagnostic": "M047-I030 corrected prescribed-DOF replay",
+  "motivation": "After accepted smooth-90 bend mechanics and reducer pressure ownership, L19 has only five source-end-action failures, all on ordinary straight source elements 4, 37, 38 and 44. I030 shows the source4/37/44 residuals persist when replayed at CAESAR endpoint DOFs, so bend-network redistribution alone cannot explain them. Locked ACCDB geometry also rules out a DELTA/coordinate mismatch on these spans. The remaining spans are unusually short relative to diameter (source4 L/D≈9.62, source37≈5.05, source44≈3.88), while the longer source38 L/D≈18.78 MZ row replays below 10% at CAESAR DOFs. Re-test the previously qualified ordinary-FRAME transverse-shear mechanism only after composing the now-accepted smooth-90 and reducer-pressure mechanics. This is an accuracy diagnostic, not a shear-led roadmap or production cutover.",
+  "atomicGeometryEvidence": {
+    "source4": {"lengthMm": 2625.0, "outerDiameterMm": 273.0, "lengthOverDiameter": 9.615384615384615, "deltaCoordinateMismatchMm": 0.0},
+    "source37": {"lengthMm": 850.0, "outerDiameterMm": 168.3000030517578, "lengthOverDiameter": 5.050504958925027, "deltaCoordinateMismatchMm": 0.0},
+    "source38": {"lengthMm": 3161.0, "outerDiameterMm": 168.3000030517578, "lengthOverDiameter": 18.78193667666119, "deltaCoordinateMismatchMm": 0.0},
+    "source44": {"lengthMm": 850.0, "outerDiameterMm": 219.10000610351562, "lengthOverDiameter": 3.879506966322997, "deltaCoordinateMismatchMm": 0.0}
+  },
+  "candidateBoundary": {
+    "carrierSelection": "input.kind === FRAME && teeModifier === null",
+    "sourceIdSelection": false,
+    "lengthCutoff": false,
+    "formulation": "PIPE_FRAME3D_TIMOSHENKO_V1",
+    "shearCorrectionFactorY": 0.53,
+    "shearCorrectionFactorZ": 0.53,
+    "authorityLabel": "COWPER-1966-THIN-ANNULUS-INPUT",
+    "diagnosticOnly": true,
+    "productionPromotionAuthorized": false,
+    "productionPromotionRequiresIndependentCaesarImplementationAuthority": true
+  },
+  "heldMechanics": [
+    "B31J smooth-90 bend correction 1.3/h from I029",
+    "bend arcs remain on the existing bend component formulation; no Timoshenko cutover on BEND_ARC",
+    "bend incoming straights remain unchanged; no Timoshenko cutover on BEND_INCOMING_STRAIGHT",
+    "B31J tee-modified FRAME carriers remain unchanged",
+    "reducer ten-cylinder stiffness/Schur condensation and I031 pressure free elongation",
+    "straight-pipe closed-end pressure elongation",
+    "MEC-21 bend Bourdon translation+rotation",
+    "gravity and thermal laws",
+    "EC material stiffness authority",
+    "L19/L20 friction=0",
+    "restraints, tolerances and CAESAR references"
+  ],
+  "predictedSignature": [
+    "If the residual is an ordinary straight-span transverse constitutive mismatch, source4 TO FY/MZ, source37 TO MZ and source44 FROM MZ should reduce materially without changing bend/reducer ownership.",
+    "Source38 FROM MZ may resolve through network redistribution because its I030 CAESAR-DOF replay already falls below 10%.",
+    "The accepted reducer sources13-17 axial FX chain must remain below 10% in L19.",
+    "No candidate source IDs or benchmark target values may participate in formulation selection.",
+    "All 12 bend pointers, four reducer ledgers and equilibrium custody must remain unchanged."
+  ],
+  "acceptanceInterpretation": [
+    "Use I032 to decide whether ordinary straight-carrier transverse flexibility remains a real missing mechanism after the component corrections, not to justify a fitted kappa.",
+    "If L19 restraint and remaining source-action closure improve strongly, retain the mechanism finding but keep production promotion fail-closed until the CAESAR metallic-pipe implementation basis is independently pinned.",
+    "If the remaining source rows do not improve or L20 materially degrades, reject this composition and return to local load/recovery/component ownership without further shear tuning.",
+    "No tolerance weakening, target hard-coding, bend/reducer Timoshenko expansion or coefficient sweep is permitted."
+  ],
+  "beforeMetricsI031": {
+    "L19": {"restraintFailures": 2, "displacementRotationFailures": 57, "sourceEndActionFailures": 5},
+    "L20": {"restraintFailures": 1, "displacementRotationFailures": 47, "sourceEndActionFailures": 31}
+  },
+  "verdict": "PENDING",
+  "decisionReason": "Await exact-head real-ACCDB I031 parent versus I031+ordinary-FRAME Timoshenko A/B."
+}

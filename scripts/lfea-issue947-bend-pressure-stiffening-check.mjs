@@ -1,13 +1,13 @@
 #!/usr/bin/env node
 import assert from 'node:assert/strict';
 import {
-  CAESAR_BEND_PRESSURE_STIFFENING_FIELDS,
+  CAESAR_BEND_PMAX_FIELDS,
   resolveCaesarBendPressureStiffeningPressurePa,
 } from '../src/core/fea-benchmarks/caesar-bend-pressure-authority.js';
 
-assert.deepEqual(CAESAR_BEND_PRESSURE_STIFFENING_FIELDS, [
+assert.deepEqual(CAESAR_BEND_PMAX_FIELDS, [
   'PRESSURE1', 'PRESSURE2', 'PRESSURE3', 'PRESSURE4', 'PRESSURE5',
-  'PRESSURE6', 'PRESSURE7', 'PRESSURE8', 'PRESSURE9', 'HYDRO_PRESSURE',
+  'PRESSURE6', 'PRESSURE7', 'PRESSURE8', 'PRESSURE9',
 ]);
 
 const bm4Bend1 = {
@@ -22,7 +22,7 @@ const bm4Bend1 = {
   PRESSURE9: 0,
   HYDRO_PRESSURE: 22035,
 };
-assert.equal(resolveCaesarBendPressureStiffeningPressurePa(bm4Bend1), 22_035_000);
+assert.equal(resolveCaesarBendPressureStiffeningPressurePa(bm4Bend1), 11_600_000);
 assert.equal(resolveCaesarBendPressureStiffeningPressurePa({
   ...bm4Bend1,
   PRESSURE4: 25000,
@@ -30,7 +30,7 @@ assert.equal(resolveCaesarBendPressureStiffeningPressurePa({
 assert.equal(resolveCaesarBendPressureStiffeningPressurePa({
   PRESSURE1: -1.0101,
   PRESSURE2: 0,
-  HYDRO_PRESSURE: -1.0101,
+  HYDRO_PRESSURE: 22035,
 }), 0);
 assert.equal(resolveCaesarBendPressureStiffeningPressurePa({}), 0);
 assert.throws(
@@ -41,9 +41,10 @@ assert.throws(
 console.log(JSON.stringify({
   check: 'lfea-issue947-bend-pressure-stiffening-authority',
   status: 'PASS',
-  pressureFields: CAESAR_BEND_PRESSURE_STIFFENING_FIELDS,
+  pressureFields: CAESAR_BEND_PMAX_FIELDS,
   bm4Bend1Pressure1Pa: 11_600_000,
   bm4Bend1HydroPressurePa: 22_035_000,
-  selectedPressurePa: resolveCaesarBendPressureStiffeningPressurePa(bm4Bend1),
-  selectionRule: 'MAXIMUM_ACTIVE_DECLARED_PRESSURE_ON_ELEMENT',
+  selectedPmaxPa: resolveCaesarBendPressureStiffeningPressurePa(bm4Bend1),
+  hydroParticipatesInPmax: false,
+  selectionRule: 'PMAX_EQUALS_MAX_P1_THROUGH_P9',
 }, null, 2));

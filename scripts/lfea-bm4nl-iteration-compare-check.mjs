@@ -30,7 +30,7 @@ assert.equal(comparison.acceptance.allComparedRestraintComponentsWithinProfileTo
 assert.equal(comparison.cases.L19.components.find((entry) => entry.nodeId === '20090').percentErrorDelta, -12);
 
 assert.throws(
-  () => compareBm4IterationMeasurements(before, { ...after, profileId: 'OTHER' }),
+  () => compareBm4IterationMeasurements(before, resign({ ...withoutHash(after), profileId: 'OTHER' })),
   /different profileId/u,
 );
 
@@ -50,6 +50,7 @@ console.log(JSON.stringify({
   totals: comparison.totals,
   acceptance: comparison.acceptance,
   guards: {
+    measurementHash: 'PASS',
     identityDrift: 'PASS',
     referenceToleranceDrift: 'PASS',
   },
@@ -70,13 +71,21 @@ function measurement(components) {
     failures,
     components,
   };
-  const base = {
+  return resign({
     schema: 'lfea-bm4nl-iteration-measurement/v1',
     ...identity,
     qualificationStatus: caseRecord.qualificationStatus,
     cases: { L19: caseRecord },
-  };
+  });
+}
+
+function resign(base) {
   return Object.freeze({ ...base, semanticHash: semanticHash(base) });
+}
+
+function withoutHash(value) {
+  const { semanticHash: _semanticHash, ...base } = value;
+  return base;
 }
 
 function row(nodeId, quantity, component, referenceValue, actualValue, relativeError, status) {

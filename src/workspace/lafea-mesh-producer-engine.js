@@ -27,6 +27,7 @@ import { logicalFourSideCurveChains } from '../core/lafea-meshing/logical-four-s
 import { recombineToQ8 } from '../core/lafea-meshing/q8-recombination.js';
 import { mappedTransfiniteMesh } from '../core/lafea-meshing/mapped-mitc-mesh.js';
 import { arcSweepAngle, curveLength } from '../core/lafea-geometry/vertex-curve.js';
+import { estimateLafeaMeshDofs } from './lafea-mesh-dof-policy.js';
 import {
   LAFEA_MESH_TOPOLOGY_REGION_ID,
   lafeaMeshTopologySupported,
@@ -36,9 +37,6 @@ export const LAFEA_MESH_PRODUCER_ENGINE_SCHEMA = 'lafea-mesh-producer-engine/v1'
 export const LAFEA_MESH_PRODUCER_ENGINE_ID = 'LAFEA_CORE_MESHER';
 export const LAFEA_MESH_PRODUCER_ENGINE_REVISION = 'LAFEA.10.T6Q8.V4';
 export const LAFEA_MESH_ENGINE_ELEMENT_FAMILIES = Object.freeze(['T3', 'T6', 'Q8']);
-
-/** Planar continuum: two translational degrees of freedom per node. */
-const DOFS_PER_NODE = 2;
 
 export const LAFEA_MESH_ENGINE_STRATEGIES = Object.freeze([
   'MAPPED_TRANSFINITE', 'CONSTRAINED_DELAUNAY',
@@ -91,7 +89,7 @@ export function generateLafeaAnalysisMesh(adapter, configuration) {
     mesh,
     nodeCount: mesh.nodes.length,
     elementCount: mesh.elements.length,
-    estimatedDofs: mesh.nodes.length * DOFS_PER_NODE,
+    estimatedDofs: estimateLafeaMeshDofs(adapter.stageId, mesh.nodes.length),
     boundarySegmentCount: result.boundarySegmentCount,
     holeCount: result.holeCount ?? 0,
     interiorPointCount: result.interiorPointCount ?? 0,

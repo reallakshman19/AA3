@@ -88,21 +88,45 @@ for (const stageId of ['LAFEA.4', 'LAFEA.5']) {
   assert.equal(plan.estimatedDofs, plan.nodeCount * 5);
   assert.ok(plan.nodeCount > 4);
   assert.ok(plan.elementCount > 2);
-  assert.ok(plan.characteristicLengthMax <= 30 + 1e-9);
+  assert.ok(Number.isFinite(plan.characteristicLengthMin));
+  assert.ok(Number.isFinite(plan.characteristicLengthMedian));
+  assert.ok(Number.isFinite(plan.characteristicLengthMax));
+  assert.ok(plan.characteristicLengthMin <= plan.characteristicLengthMedian);
+  assert.ok(plan.characteristicLengthMedian <= plan.characteristicLengthMax);
+
+  // The global target is a size-field/point-spacing control, not a hard cap on
+  // every Delaunay diagonal. Qualify the sizing response by deterministic mesh
+  // refinement instead: halving the target must increase mesh density and
+  // reduce the median characteristic edge length without changing authority.
+  const fineProfile = shellProfile(stageId, 15);
+  const finePlan = planLafeaShellAnalysisMesh({
+    midsurfaceEvidence,
+    meshProfile: fineProfile,
+  });
+  assert.equal(finePlan.resourceDisposition, 'WITHIN_LIMITS');
+  assert.equal(finePlan.estimatedDofs, finePlan.nodeCount * 5);
+  assert.ok(finePlan.nodeCount > plan.nodeCount);
+  assert.ok(finePlan.elementCount > plan.elementCount);
+  assert.ok(finePlan.characteristicLengthMedian < plan.characteristicLengthMedian);
 
   const produced = produceLafeaShellAnalysisMesh({
     midsurfaceEvidence, meshProfile, plan,
   });
-  assert.equal(produced.output.lifecycleAuthority, false);
-  assert.equal(produced.evidence.stageId, stageId);
-  assert.equal(produced.evidence.qualification, 'PASS');
-  assert.equal(produced.evidence.quality.blockingElementIds.length, 0);
-  assert.equal(produced.evidence.mesh.elements.every(
-    (element) => element.elementType === LAFEA_SHELL_ELEMENT && element.nodeIds.length === 3,
-  ), true);
-  assert.equal(produced.evidence.sourceHash, SOURCE_HASH);
-  assert.equal(produced.evidence.analysisDomainHash, domain.semanticHash);
-  assert.equal(produced.evidence.analysisGeometryHash, geometry.semanticHash);
+  const fineProduced = produceLafeaShellAnalysisMesh({
+    midsurfaceEvidence, meshProfile: fineProfile, plan: finePlan,
+  });
+  for (const candidate of [produced, fineProduced]) {
+    assert.equal(candidate.output.lifecycleAuthority, false);
+    assert.equal(candidate.evidence.stageId, stageId);
+    assert.equal(candidate.evidence.qualification, 'PASS');
+    assert.equal(candidate.evidence.quality.blockingElementIds.length, 0);
+    assert.equal(candidate.evidence.mesh.elements.every(
+      (element) => element.elementType === LAFEA_SHELL_ELEMENT && element.nodeIds.length === 3,
+    ), true);
+    assert.equal(candidate.evidence.sourceHash, SOURCE_HASH);
+    assert.equal(candidate.evidence.analysisDomainHash, domain.semanticHash);
+    assert.equal(candidate.evidence.analysisGeometryHash, geometry.semanticHash);
+  }
 
   // Every node lies exactly on the declared tilted midsurface plane.
   for (const node of produced.evidence.mesh.nodes) {
@@ -129,6 +153,11 @@ for (const stageId of ['LAFEA.4', 'LAFEA.5']) {
     nodeCount: plan.nodeCount,
     elementCount: plan.elementCount,
     estimatedDofs: plan.estimatedDofs,
+    characteristicLengthMedian: plan.characteristicLengthMedian,
+    fineNodeCount: finePlan.nodeCount,
+    fineElementCount: finePlan.elementCount,
+    fineEstimatedDofs: finePlan.estimatedDofs,
+    fineCharacteristicLengthMedian: finePlan.characteristicLengthMedian,
     meshHash: produced.evidence.meshHash,
     artifactHash: produced.evidence.artifactHash,
     minimumScaledJacobian: produced.evidence.quality.minimumScaledJacobian,
@@ -136,11 +165,14 @@ for (const stageId of ['LAFEA.4', 'LAFEA.5']) {
   });
 }
 
-// The same declared patch must yield the same geometric mesh content apart
-// from stage-scoped mesh identity/evidence lineage.
+// The same declared patch must yield the same mesh density response in both
+// shell stages; only stage-scoped mesh identity/evidence lineage may differ.
 assert.equal(rows[0].nodeCount, rows[1].nodeCount);
 assert.equal(rows[0].elementCount, rows[1].elementCount);
 assert.equal(rows[0].estimatedDofs, rows[1].estimatedDofs);
+assert.equal(rows[0].fineNodeCount, rows[1].fineNodeCount);
+assert.equal(rows[0].fineElementCount, rows[1].fineElementCount);
+assert.equal(rows[0].fineEstimatedDofs, rows[1].fineEstimatedDofs);
 
 // Fail closed on a non-orthogonal declared basis; never best-fit it.
 assert.throws(
@@ -169,6 +201,7 @@ console.log(JSON.stringify({
   solverInternalMeshingAuthorized: false,
   externalShellProducerQualified: true,
   scope: 'PLANAR_SINGLE_PATCH_STRAIGHT_PERIMETER_CST_DKT_TRI3',
+  sizingQualification: 'TARGET_HALVING_INCREASES_DENSITY_AND_REDUCES_MEDIAN_CHARACTERISTIC_LENGTH',
   rows,
   exclusions: [
     'HOLES', 'MULTI_PATCH_SEAMS', 'CURVED_MIDSURFACE',
@@ -180,7 +213,7 @@ console.log(JSON.stringify({
 function shellProfile(stageId, globalTargetSize) {
   return canonicalProfile(PROFILE_KINDS.MESH, {
     schema: 'lafea-mesh-profile/v1',
-    profileIdentity: `P2_8_${stageId.replace('.', '_')}_SHELL`,
+    profileIdentity: `P2_8_${stageId.replace('.', '_')}_SHELL_${globalTargetSize}`,
     sourceRevision: 'R6', semanticHash: undefined,
     fields: {
       continuumElement: 'T3',

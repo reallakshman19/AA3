@@ -80,13 +80,13 @@ jobs:
               records[name] = {
                 'classification': result['classification'],
                 'productionParityMaxAbs': result['productionParity']['maxAbsResidual'],
-                'allBoundaryRotationsResolved': result['rotationResolution']['allBoundaryRotationsResolved'],
                 'normalizedResidualL2': inj['normalizedResidualL2'],
                 'maxAbsNormalizedResidual': inj['maxAbsNormalizedResidual'],
                 'governingComponent': inj['governingComponent'],
                 'residual': inj['residual'],
                 'normalizedResidual': inj['normalizedResidual'],
-                'decomposition': result.get('decomposition'),
+                'gates': result.get('gates'),
+                'decomposition': result.get('linearActionDecomposition'),
               }
           finally:
             solver.write_text(original)

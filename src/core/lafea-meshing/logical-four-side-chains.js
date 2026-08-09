@@ -8,12 +8,12 @@ import { curveLength } from '../lafea-geometry/vertex-curve.js';
  * allowed to remain inside one logical side, which lets feature/load vertices
  * split a side without destroying mapped-mesh eligibility.
  *
- * When curvature distributes one or more nominal corner turns (for example a
- * line-arc-line fillet), fewer than four hard corners may remain. In that case
- * this recognizer introduces no synthetic geometry: it partitions only at
- * existing declared curve junctions, selecting deterministic length-balanced
- * splits until exactly four side chains exist. More than four hard corners is
- * not a logical quadrilateral and is rejected.
+ * A regular single Coons block requires four non-tangent boundary corners. A
+ * filleted-away corner is therefore not manufactured from a tangent point: at
+ * such a point the two parametric boundary directions are collinear and the
+ * mapped Jacobian is singular by construction. Filleted regions that no longer
+ * retain four hard corners require a later multi-block decomposition and fall
+ * back to the unstructured path here.
  */
 export const LAFEA_LOGICAL_FOUR_SIDE_REVISION = 'LAFEA.10.LOGICAL-4-SIDE.V1';
 
@@ -39,59 +39,19 @@ export function logicalFourSideCurveChains(loop, curveById, vertexById) {
       hardCorners.push(index);
     }
   }
-  if (hardCorners.length > 4) return null;
+  if (hardCorners.length !== 4) return null;
 
-  const curveLengths = curves.map((curve) => curveLength(curve, vertexById));
-  const selectedCorners = new Set(hardCorners.length ? hardCorners : [0]);
-  while (selectedCorners.size < 4) {
-    const split = chooseLengthBalancedSplit(selectedCorners, curveLengths);
-    if (split === null) return null;
-    selectedCorners.add(split);
-  }
-
-  const cornerIndices = [...selectedCorners].sort((left, right) => left - right);
+  const cornerIndices = hardCorners.sort((left, right) => left - right);
   const chains = cornerIndices.map((start, chainIndex) => {
     const end = cornerIndices[(chainIndex + 1) % cornerIndices.length];
     const indices = cyclicCurveIndices(start, end, curves.length);
     return Object.freeze(indices.map((index) => curves[index]));
   });
   if (chains.some((chain) => chain.length === 0)) return null;
+  if (chains.some((chain) => chain.reduce(
+    (sum, curve) => sum + curveLength(curve, vertexById), 0,
+  ) <= 0)) return null;
   return Object.freeze(chains);
-}
-
-function chooseLengthBalancedSplit(selectedCorners, curveLengths) {
-  const ordered = [...selectedCorners].sort((left, right) => left - right);
-  const intervals = ordered.map((start, index) => {
-    const end = ordered[(index + 1) % ordered.length];
-    const indices = cyclicCurveIndices(start, end, curveLengths.length);
-    const totalLength = indices.reduce((sum, curveIndex) => sum + curveLengths[curveIndex], 0);
-    return { start, end, indices, totalLength };
-  }).filter((interval) => interval.indices.length > 1);
-  if (!intervals.length) return null;
-
-  intervals.sort((left, right) => right.totalLength - left.totalLength || left.start - right.start);
-  const interval = intervals[0];
-  const half = interval.totalLength / 2;
-  let cumulative = 0;
-  let best = null;
-  for (let offset = 0; offset < interval.indices.length - 1; offset += 1) {
-    cumulative += curveLengths[interval.indices[offset]];
-    const boundaryIndex = interval.indices[offset + 1];
-    const candidate = {
-      boundaryIndex,
-      imbalance: Math.abs(cumulative - half),
-      sequenceOffset: offset + 1,
-    };
-    if (!best
-      || candidate.imbalance < best.imbalance
-      || (candidate.imbalance === best.imbalance && candidate.sequenceOffset < best.sequenceOffset)
-      || (candidate.imbalance === best.imbalance
-        && candidate.sequenceOffset === best.sequenceOffset
-        && candidate.boundaryIndex < best.boundaryIndex)) {
-      best = candidate;
-    }
-  }
-  return best?.boundaryIndex ?? null;
 }
 
 function cyclicCurveIndices(start, end, count) {

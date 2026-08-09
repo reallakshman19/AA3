@@ -8,14 +8,16 @@ const COMPONENT_LIMIT = 0.1;
 const MM_TO_M = 1e-3;
 
 const args = parseArgs(process.argv.slice(2));
-if (!args.package || !args.e48) {
-  throw new TypeError('Usage: node scripts/lfea-issue947-e48-near-tangent-reference-custody.mjs --package <canonical-package.json> --e48 <e48-condensation.json> [--out <json>]');
+if (!args.package || !args.e48 || !args.actual) {
+  throw new TypeError('Usage: node scripts/lfea-issue947-e48-near-tangent-reference-custody.mjs --package <canonical-package.json> --e48 <e48-condensation.json> --actual <bm4nl-actual.json> [--out <json>]');
 }
 
 const pkg = JSON.parse(readFileSync(args.package, 'utf8'));
 const e48 = JSON.parse(readFileSync(args.e48, 'utf8'));
+const actual = JSON.parse(readFileSync(args.actual, 'utf8'));
 assert.equal(pkg.source.sha256, EXPECTED_SOURCE_SHA256);
 assert.equal(e48.sourceAccdbSha256, EXPECTED_SOURCE_SHA256);
+assert.equal(actual.sourceAccdbSha256, EXPECTED_SOURCE_SHA256);
 assert.equal(e48.caseId, 'L19');
 assert.equal(String(e48.sourceElement.sourceElementId), SOURCE_ELEMENT_ID);
 assert.ok(Array.isArray(e48.diagnosticCondensedStiffnessGlobal12x12));
@@ -50,11 +52,9 @@ const qBaseline = e48.caesarInjection.condensedAction;
 const scales = actionScaleVector(qReference, pkg.profile.tolerances);
 const baseline = comparisonRecord(qBaseline, qReference, scales);
 
-// Hypothesis H1: the commercial node/action at E48 FROM is referenced at the
-// bend near tangent point T, while the production condenser boundary is at the
-// raw source point S. Rigid kinematics give u_T = u_S + theta x r_ST, so the
-// source-point displacement is u_S = u_T - theta x r_ST. The equivalent action
-// about S is M_S = M_T + r_ST x F.
+// H1: commercial E48 FROM kinematics/actions are referenced at the exact bend
+// near tangent T while the production condenser boundary is the raw source
+// point S. For rigid reference transfer u_T = u_S + theta x r_ST.
 const h1Displacement = [...dReference];
 const thetaFrom = dReference.slice(3, 6);
 const thetaCrossR = cross(thetaFrom, rSourceToTangent);
@@ -63,16 +63,18 @@ const h1ReferenceAction = shiftFromEndAction(qReference, rSourceToTangent, +1);
 const h1Action = add(qBaseline, multiplyFlat12(K, subtract(h1Displacement, dReference)));
 const h1 = comparisonRecord(h1Action, h1ReferenceAction, actionScaleVector(h1ReferenceAction, pkg.profile.tolerances));
 
-// Reverse transform is retained as a sign/control falsifier. It is not a
-// production candidate; if only this direction improves, the assumed custody
-// direction above is wrong and no geometry change is authorized.
+// Reverse direction is a sign-control falsifier, never a production candidate.
 const h2Displacement = [...dReference];
 for (let i = 0; i < 3; i += 1) h2Displacement[i] += thetaCrossR[i];
 const h2ReferenceAction = shiftFromEndAction(qReference, rSourceToTangent, -1);
 const h2Action = add(qBaseline, multiplyFlat12(K, subtract(h2Displacement, dReference)));
 const h2 = comparisonRecord(h2Action, h2ReferenceAction, actionScaleVector(h2ReferenceAction, pkg.profile.tolerances));
 
-const observedProductionDelta = productionBoundaryDelta(pkg, e48);
+const actualRows = actual.cases?.L19?.rows;
+if (!Array.isArray(actualRows)) throw new TypeError('Authoritative actual lacks L19 rows.');
+const boundaryNodes = [String(e48.sourceElement.fromNode), String(e48.sourceElement.toNode)];
+const actualBoundary = boundaryDof(actualRows, boundaryNodes);
+const observedProductionDelta = subtract(actualBoundary, dReference);
 const predictedRigidTransferToSource = [
   -thetaCrossR[0], -thetaCrossR[1], -thetaCrossR[2], 0, 0, 0,
 ];
@@ -112,15 +114,17 @@ const output = {
     nearStraightLengthM,
     onePercentRadiusM: attachmentLengthM,
     nearStraightAsPercentRadius: 100 * nearStraightLengthM / radiusM,
-    bendLengthAttachmentScope: 'NOT_INVOKED_BY_THIS_AUDIT; V14 DOCUMENTATION DEFINES THE CONFIGURED ATTACHMENT FOR THE ELEMENT LEAVING THE BEND, SO THIS NEAR-SIDE TEST IS ONLY REFERENCE-POINT CUSTODY.',
+    bendLengthAttachmentScope: 'NOT_INVOKED_BY_THIS AUDIT; V14 DOCUMENTATION DEFINES THE CONFIGURED ATTACHMENT FOR THE ELEMENT LEAVING THE BEND, SO THIS NEAR-SIDE TEST IS ONLY REFERENCE-POINT CUSTODY.',
   },
   kinematicTransfer: {
     equation: 'u_T = u_S + theta x r_ST',
     thetaFromReferenceRad: thetaFrom,
     thetaCrossSourceToTangentM: thetaCrossR,
     predictedTangentToSourceTranslationCorrectionM: predictedRigidTransferToSource.slice(0, 3),
-    observedProductionMinusReferenceFromDof: observedProductionDelta,
-    translationAlignment,
+    authoritativeActualBoundaryDof: actualBoundary,
+    commercialReferenceBoundaryDof: dReference,
+    observedProductionMinusReferenceBoundaryDof: observedProductionDelta,
+    fromTranslationAlignment: translationAlignment,
   },
   baseline,
   tangentReferenceToRawSource: h1,
@@ -133,9 +137,9 @@ const output = {
   },
   classification,
   disposition: h1Passes
-    ? 'This is diagnostic support for a source-node/tangent reference-point interpretation only. A production geometry change still requires an independent CAESAR geometry authority plus whole-model L19 replay with no new failures.'
-    : 'Do not modify production geometry from this hypothesis. Retain the raw source coordinates and continue E48 constitutive/source-boundary investigation.',
-  falsificationRule: 'The reference-point hypothesis is not accepted unless the exact rigid transform, with no fitted distance or scale, closes every E48 source-action component inside the existing 10% gate using the exact production condensed stiffness. The 0.400 mm offset is derived only from pinned source coordinates and BEND_PTR radius.',
+    ? 'Diagnostic support only. A production geometry change still requires independent CAESAR geometry authority plus whole-model L19 replay with no new failures.'
+    : 'Do not modify production geometry from this hypothesis. Retain raw source coordinates and continue E48 constitutive/source-boundary investigation.',
+  falsificationRule: 'The reference-point hypothesis is not accepted unless the exact rigid transform, with no fitted distance or scale, closes every E48 source-action component inside the existing 10% gate using the exact production condensed stiffness. The offset is derived only from pinned source coordinates and BEND_PTR radius.',
 };
 
 if (args.out) writeFileSync(args.out, `${JSON.stringify(output, null, 2)}\n`);
@@ -152,12 +156,8 @@ function sourceCoordinate(pkg, nodeId) {
   const rows = pkg.model.tables.INPUT_NODAL_COORDINATES.rows;
   const candidates = [];
   for (const row of rows) {
-    if (String(row.FROM_NODE) === String(nodeId)) {
-      candidates.push([Number(row.FROM_NODE_X), Number(row.FROM_NODE_Y), Number(row.FROM_NODE_Z)]);
-    }
-    if (String(row.TO_NODE) === String(nodeId)) {
-      candidates.push([Number(row.TO_NODE_X), Number(row.TO_NODE_Y), Number(row.TO_NODE_Z)]);
-    }
+    if (String(row.FROM_NODE) === String(nodeId)) candidates.push([Number(row.FROM_NODE_X), Number(row.FROM_NODE_Y), Number(row.FROM_NODE_Z)]);
+    if (String(row.TO_NODE) === String(nodeId)) candidates.push([Number(row.TO_NODE_X), Number(row.TO_NODE_Y), Number(row.TO_NODE_Z)]);
   }
   if (candidates.length === 0) throw new TypeError(`No coordinate for node ${nodeId}.`);
   const first = candidates[0];
@@ -171,17 +171,6 @@ function shiftFromEndAction(q, r, sign) {
   const momentShift = cross(r, force).map((value) => sign * value);
   for (let i = 0; i < 3; i += 1) result[3 + i] += momentShift[i];
   return result;
-}
-
-function productionBoundaryDelta(pkg, e48) {
-  const actualRows = pkg.__actualRows ?? null;
-  // Canonical packages intentionally do not carry solver actuals. The caller
-  // may therefore omit this witness; when absent, return null rather than
-  // smuggling current benchmark output into the constitutive gate.
-  if (!Array.isArray(actualRows)) return null;
-  const nodes = [String(e48.sourceElement.fromNode), String(e48.sourceElement.toNode)];
-  const actual = boundaryDof(actualRows, nodes);
-  return subtract(actual, e48.caesarInjection.boundaryDisplacement);
 }
 
 function boundaryDof(rows, nodes) {
@@ -234,7 +223,6 @@ function multiplyFlat12(matrix, vector) {
 }
 
 function vectorAlignment(a, b) {
-  if (!Array.isArray(a) || !Array.isArray(b)) return null;
   const na = norm(a), nb = norm(b);
   return {
     observedNormM: na,

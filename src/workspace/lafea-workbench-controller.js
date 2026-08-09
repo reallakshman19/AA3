@@ -67,6 +67,7 @@ export class LafeaWorkbenchController {
       onImportMeshEvidence: (file) => this.loadAnalysisMeshEvidenceFile(file),
       onValidateMeshEvidence: () => this.validateRetainedAnalysisMeshEvidence(),
       onExportMeshEvidence: () => this.downloadAnalysisMeshEvidence(),
+      onBindMeshProfile: (profile) => this.bindAnalysisMeshProfile(profile),
       onPlanMesh: (overrides) => this.planAnalysisMesh(overrides),
       onGenerateMesh: (overrides) => this.generateAnalysisMesh(overrides),
     });

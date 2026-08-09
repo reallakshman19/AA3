@@ -30,7 +30,11 @@ export class TopologyEdit3DViewController extends AuthoringController {
   async activate() {
     await super.activate();
     if (!this.hostElement) return;
-    await this.mountTableAdapter();
+    this.mountIconRuntimes();
+    await Promise.all([
+      this.iconRuntimePromise,
+      this.mountTableAdapter(),
+    ]);
   }
 
   async mountTableAdapter() {
@@ -116,7 +120,6 @@ export class TopologyEdit3DViewController extends AuthoringController {
     if (!sidecar) throw new Error('TopologyEditProductivityController: sidecar is unavailable.');
     sidecar.tabIndex = -1;
     this.cleanShellRuntime.mount(this.hostElement);
-    this.mountIconRuntimes();
   }
 
   deriveVisual(canonical, modelRole) {

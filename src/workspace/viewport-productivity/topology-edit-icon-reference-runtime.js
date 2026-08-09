@@ -39,6 +39,7 @@ export class TopologyEditIconReferenceRuntime {
   destroy() {
     this.observer?.disconnect();
     this.observer = null;
+    if (this.host) clearEvidence(this.host);
     this.host = null;
     this.repairedReferenceCount = 0;
   }
@@ -118,4 +119,12 @@ function publishEvidence(host, evidence) {
   host.dataset.topologyEditIconBrokenReferenceCount = String(evidence.brokenReferenceCount);
   host.dataset.topologyEditIconUnresolvedReferenceCount = String(evidence.unresolvedReferenceCount);
   host.dataset.topologyEditIconReferenceStatus = evidence.status;
+}
+
+function clearEvidence(host) {
+  delete host.dataset.topologyEditIconReferenceCount;
+  delete host.dataset.topologyEditIconRepairedReferenceCount;
+  delete host.dataset.topologyEditIconBrokenReferenceCount;
+  delete host.dataset.topologyEditIconUnresolvedReferenceCount;
+  delete host.dataset.topologyEditIconReferenceStatus;
 }

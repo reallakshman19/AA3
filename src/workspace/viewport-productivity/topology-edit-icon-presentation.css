@@ -1,0 +1,30 @@
+.topology-edit-clean-shell button[data-topology-edit-icon-key] {
+  align-items: center;
+  display: inline-flex;
+  gap: 0.35rem;
+}
+
+.topology-edit-control-icon {
+  block-size: 1em;
+  color: currentColor;
+  flex: 0 0 auto;
+  inline-size: 1em;
+  overflow: visible;
+  pointer-events: none;
+}
+
+/*
+ * The top toolbar has a fixed one-row budget shared by navigation, history,
+ * draft, and workspace controls. Icons must not make navigation overflow on
+ * top of the adjacent history hit targets. Keep the compact treatment scoped
+ * to this row; sidecar command controls retain the full icon/text spacing.
+ */
+.topology-edit-clean-shell > .topology-edit-3d-toolbar button[data-topology-edit-icon-key] {
+  gap: 2px;
+  padding-inline: 5px;
+}
+
+.topology-edit-clean-shell > .topology-edit-3d-toolbar .topology-edit-control-icon {
+  block-size: 0.85em;
+  inline-size: 0.85em;
+}

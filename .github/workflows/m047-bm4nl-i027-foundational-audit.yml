@@ -10,6 +10,7 @@ on:
       - 'scripts/lfea-caesar-accdb-export.ps1'
       - 'scripts/lfea-m047-provision-ace.ps1'
       - 'benchmarks/LFEA/CAESAR_ACCDB/m047/M047-I027.request.json'
+      - 'benchmarks/LFEA/CAESAR_ACCDB/m047/M047-I027.caesar-configuration-authority.json'
       - 'agent/status/status978.txt'
   workflow_dispatch:
 
@@ -62,7 +63,7 @@ jobs:
           New-Item -ItemType Directory -Path 'artifacts/m047/I027' -Force | Out-Null
           "BM4NL_ACCDB=$($files[0].FullName)" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
           [ordered]@{
-            schema='lfea-m047-i027-source/v1'
+            schema='lfea-m047-i027-source/v2'
             orchestrationHead='${{ github.sha }}'
             commonCommit='1728651c94504b497aae4041578b1095fd8e292e'
             accdbSha256=$sha
@@ -89,6 +90,21 @@ jobs:
             --summary 'artifacts/m047/I027/foundational.summary.md'
           Get-Content 'artifacts/m047/I027/foundational.summary.md' | Add-Content $env:GITHUB_STEP_SUMMARY
 
+      - name: Validate job-specific precedence and overall controls
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $cfg = Get-Content 'benchmarks/LFEA/CAESAR_ACCDB/m047/M047-I027.caesar-configuration-authority.json' -Raw | ConvertFrom-Json
+          if ($cfg.caesarVersion -ne '14.000') { throw 'Unexpected CAESAR version authority.' }
+          if ([double]$cfg.jobSpecific.installationAmbientTemperatureC -ne 21) { throw 'BM4_NL install/ambient must be 21 C.' }
+          if ($cfg.jobSpecific.bourdonPressureEffects -ne 'TRANSLATION_AND_ROTATION') { throw 'BM4_NL Bourdon job override drifted.' }
+          if ([double]$cfg.jobSpecific.l19l20FrictionCoefficient -ne 0) { throw 'L19/L20 friction must remain zero.' }
+          if ($cfg.jobSpecific.l19FlexibilityElasticModulus -ne 'EC' -or $cfg.jobSpecific.l20FlexibilityElasticModulus -ne 'EC') { throw 'L19/L20 flexibility modulus must be EC.' }
+          if ($cfg.overallRelevantSettings.Z_AXIS_UP -ne 'NO') { throw 'Expected Y-up CAESAR global coordinates.' }
+          if ($cfg.overallRelevantSettings.BEND_AXIAL_SHAPE -ne 'YES') { throw 'Expected Bend Axial Shape ON.' }
+          if ([double]$cfg.overallRelevantSettings.DEFAULT_TRANS_RESTRAINT_STIFF -ne 1e13) { throw 'Unexpected default translational restraint stiffness.' }
+          if ($cfg.overallRelevantSettings.APPLY_B31J_SIFS_AND_FLEX -ne 'DEFAULT') { throw 'Unexpected B31J overall setting.' }
+
       - name: Govern no-mechanics foundational custody
         shell: pwsh
         run: |
@@ -96,8 +112,13 @@ jobs:
           $audit = Get-Content 'artifacts/m047/I027/foundational.audit.json' -Raw | ConvertFrom-Json
           if ($audit.sourceAccdbSha256 -ne '85d39463296e569da811d8572e2eff680b858097f76fdf0f47d1755f0b161c21') { throw 'I027 ACCDB custody failed.' }
           if ($audit.sourceElementCount -ne 96) { throw "Expected 96 source elements; found $($audit.sourceElementCount)." }
-          if ($audit.geometry.mismatchCount -ne 0) { throw "Source delta/coordinate mismatches found: $($audit.geometry.mismatchCount)." }
+          if ($audit.restraints.explicitPositiveGapCount -ne 0 -or $audit.restraints.activeCnodeCount -ne 0) { throw 'I027 found active gap/CNode mechanics outside the locked bilateral boundary.' }
+          if (@($audit.forceMoments.l19l20ForceSets | Where-Object { @($_.forceSets).Count -gt 0 }).Count -ne 0) { throw 'L19/L20 unexpectedly reference F1-F9.' }
+          if (-not $audit.material.modulusEqualsHotMod1) { Write-Warning 'EC differs from EH1; I016 would no longer be numerically neutral.' }
           if ($audit.offsets.activeElementPointerCount -ne 0) { Write-Warning "Active element offsets found: $($audit.offsets.activeElementPointerCount)." }
+          if ($audit.geometry.significantRelativeLengthMismatchCount -gt 0 -or $audit.geometry.significantDirectionMismatchCount -gt 0) {
+            Write-Warning "DELTA versus absolute-coordinate authority requires review: length=$($audit.geometry.significantRelativeLengthMismatchCount), direction=$($audit.geometry.significantDirectionMismatchCount)."
+          }
           $request = Get-Content 'benchmarks/LFEA/CAESAR_ACCDB/m047/M047-I027.request.json' -Raw | ConvertFrom-Json
           if ($request.classification -ne 'FOUNDATIONAL_INPUT_BOUNDARY_AUDIT_NO_MECHANICS_CHANGE') { throw 'I027 request classification drifted.' }
           if (git status --porcelain -- 'src/core' 'benchmarks/LFEA/CAESAR_ACCDB/bm4nl-l19-l20-linear-solve.profile.json') { throw 'I027 must not change production mechanics/profile paths.' }

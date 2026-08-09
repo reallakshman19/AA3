@@ -7,16 +7,18 @@ const COMPONENT_STATE = new WeakMap();
 
 /**
  * Index stable component identities below already-indexed stable line targets.
- * Component input order is irrelevant: each line bucket is ASCII-sorted by
- * component target ID before compressed adjacency is sealed.
+ * Component input order is irrelevant: a typed source-ordinal permutation is
+ * sorted by parent line ordinal then ASCII component target ID. No transient
+ * per-component object graph is created during the million-component build.
  */
 export function buildLfeaPreflightPhase1ComponentIndex(lineIndex, input) {
   requireInput(input);
   const count = input.targetIdByOrdinal.length;
   const lineCount = lineIndex.targetCount;
-  const rows = new Array(count);
   const componentOrdinalById = new Map();
+  const lineOrdinalBySource = new Uint32Array(count);
   const countByLine = new Uint32Array(lineCount);
+  const order = new Uint32Array(count);
 
   for (let sourceOrdinal = 0; sourceOrdinal < count; sourceOrdinal += 1) {
     const targetId = requireText(input.targetIdByOrdinal[sourceOrdinal], `componentTargetId[${sourceOrdinal}]`);
@@ -28,31 +30,42 @@ export function buildLfeaPreflightPhase1ComponentIndex(lineIndex, input) {
     if (lineOrdinal === null) {
       throw componentIndexError('E_P06_COMPONENT_PARENT_UNKNOWN', `Component ${targetId} references unknown line target ${lineTargetId}.`);
     }
-    rows[sourceOrdinal] = { targetId, lineTargetId, lineOrdinal, sourceOrdinal };
     componentOrdinalById.set(targetId, -1);
+    lineOrdinalBySource[sourceOrdinal] = lineOrdinal;
     countByLine[lineOrdinal] += 1;
+    order[sourceOrdinal] = sourceOrdinal;
   }
 
-  rows.sort((left, right) => left.lineOrdinal - right.lineOrdinal
-    || compareAscii(left.targetId, right.targetId));
+  order.sort((leftSourceOrdinal, rightSourceOrdinal) => {
+    const lineDifference = lineOrdinalBySource[leftSourceOrdinal] - lineOrdinalBySource[rightSourceOrdinal];
+    if (lineDifference !== 0) return lineDifference;
+    return compareAscii(
+      input.targetIdByOrdinal[leftSourceOrdinal],
+      input.targetIdByOrdinal[rightSourceOrdinal],
+    );
+  });
+
   const offsets = new Uint32Array(lineCount + 1);
   for (let lineOrdinal = 0; lineOrdinal < lineCount; lineOrdinal += 1) {
     offsets[lineOrdinal + 1] = offsets[lineOrdinal] + countByLine[lineOrdinal];
   }
   const targetIds = new Array(count);
+  const parentLineTargetIds = new Array(count);
   const sourceOrdinals = new Uint32Array(count);
-  for (let canonicalOrdinal = 0; canonicalOrdinal < rows.length; canonicalOrdinal += 1) {
-    const row = rows[canonicalOrdinal];
-    targetIds[canonicalOrdinal] = row.targetId;
-    sourceOrdinals[canonicalOrdinal] = row.sourceOrdinal;
-    componentOrdinalById.set(row.targetId, canonicalOrdinal);
+  for (let canonicalOrdinal = 0; canonicalOrdinal < count; canonicalOrdinal += 1) {
+    const sourceOrdinal = order[canonicalOrdinal];
+    const targetId = input.targetIdByOrdinal[sourceOrdinal];
+    targetIds[canonicalOrdinal] = targetId;
+    parentLineTargetIds[canonicalOrdinal] = input.parentLineTargetIdByOrdinal[sourceOrdinal];
+    sourceOrdinals[canonicalOrdinal] = sourceOrdinal;
+    componentOrdinalById.set(targetId, canonicalOrdinal);
   }
 
   const structuralHash = semanticHash({
     schema: LFEA_PREFLIGHT_PHASE1_COMPONENT_INDEX_SCHEMA,
     lineIndexStructuralHash: lineIndex.structuralHash,
     targetIds,
-    parentLineTargetIds: rows.map((row) => row.lineTargetId),
+    parentLineTargetIds,
   });
   const store = Object.freeze({
     schema: LFEA_PREFLIGHT_PHASE1_COMPONENT_INDEX_SCHEMA,

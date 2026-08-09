@@ -318,12 +318,18 @@ function checkAdversarialContracts() {
   }), (error) => error?.code === 'LAFEA_SHELL_CURVED_CYLINDER_BASIS_NOT_ORTHOGONAL');
 
   const tooWide = inputGeometry(baseGeometry);
-  tooWide.vertices = tooWide.vertices.map((row) => ({ ...row, u: row.u === U90 ? Math.PI * RADIUS * 1.1 : row.u }));
+  tooWide.vertices = tooWide.vertices.map((row) => (
+    row.vertexId === 'V2' || row.vertexId === 'V3'
+      ? { ...row, u: Math.PI * RADIUS * 1.1 }
+      : row
+  ));
   assert.throws(() => createLafeaCurvedShellMidsurfaceGeometry(tooWide),
     (error) => error?.code === 'LAFEA_SHELL_CURVED_PATCH_ANGLE_EXCEEDS_180_DEGREES');
 
   const diagonal = inputGeometry(baseGeometry);
-  diagonal.vertices[1] = { ...diagonal.vertices[1], v: 10 };
+  diagonal.vertices = diagonal.vertices.map((row) => (
+    row.vertexId === 'V2' ? { ...row, v: 10 } : row
+  ));
   assert.throws(() => createLafeaCurvedShellMidsurfaceGeometry(diagonal),
     (error) => ['LAFEA_SHELL_CURVED_PATCH_NOT_RECTANGULAR', 'LAFEA_SHELL_CURVED_BOUNDARY_NOT_ISO_U_OR_ISO_V'].includes(error?.code));
 

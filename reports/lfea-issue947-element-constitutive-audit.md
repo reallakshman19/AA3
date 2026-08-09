@@ -5,8 +5,9 @@
 - Benchmark: `BM4_NL`
 - Physical case: `L19 = W+P1`
 - Source ACCDB SHA-256: `85d39463296e569da811d8572e2eff680b858097f76fdf0f47d1755f0b161c21`
-- Canonical package source: successful real-ACCDB Actions run `31300020859`
-- Replayed audit: Actions run `31302752324` (`success`)
+- Canonical package source: successful real-ACCDB Actions capture
+- Constitutive audit replay: Actions run `31302752324` (`success`)
+- κ=0.53 canonical-package qualification: Actions run `31303217949` (`success`)
 
 ## Method
 
@@ -22,38 +23,60 @@ No CAESAR result value is used as a solver parameter or update rule.
 
 Elements 3 and 4 are plain 273 mm OD × 18.262599945 mm wall pipe spans. They precede `BEND_PTR 1` and have exact coordinate/declaration lengths, so they avoid the short-span precision ambiguity of the first source span.
 
-The current Euler–Bernoulli element and the repository's already-qualified Cowper thin-annulus Timoshenko element were evaluated against exactly the same CAESAR nodal displacement field, section/material, closed-end pressure strain, gravity load, axes and action convention.
+The original Euler–Bernoulli element and the repository's already-qualified Cowper thin-annulus Timoshenko element were evaluated against exactly the same CAESAR nodal displacement field, section/material, closed-end pressure strain, gravity load, axes and action convention.
 
 | Source element | Span | Euler–Bernoulli normalized residual L2 | Timoshenko κ=0.53 normalized residual L2 | Ratio |
 |---|---|---:|---:|---:|
 | E3 | 20020→20030 | 2.837015900 | 0.133741834 | 0.047141 |
 | E4 | 20030→20090 | 1.366148272 | 0.074900423 | 0.054826 |
 
-The fixed Cowper formulation therefore reduces the constitutive residual by about 95% on both independent adjacent plain-frame witnesses without fitting κ to BM4.
+The fixed Cowper formulation therefore reduced the constitutive residual by about 95% on both independent adjacent plain-frame witnesses without fitting κ to BM4.
 
 For E4, the independently reconstructed physical gravity line weight is 1458.00232083 N/m and total span weight is 3827.25609218 N. CAESAR's E4 vertical end-force resultant is 3827.24139404 N, so the observed in-plane residual is not explained by distributed-weight ownership.
 
-## Independent authority
+## κ=0.53 real-data disposition
 
-The candidate is not a benchmark-derived parameter. The repository already qualifies
+The κ=0.53 ACCDB profile corrected the original dominant L19 restraint miss:
 
-- formulation: `PIPE_FRAME3D_TIMOSHENKO_V1`
-- `shearCorrectionFactorY = 0.53`
-- `shearCorrectionFactorZ = 0.53`
-- source: `COWPER-1966-THIN-ANNULUS-INPUT`
+- node 20090 UY: reference `-1659.836792 N`, candidate `-1638.908067 N`, relative error `1.26%`;
+- L19 displacement/rotation failures reduced from 72 to 55 components;
+- L19 source end-action failures reduced from 20 to 17 components.
 
-in `scripts/lfea-b3.1-frame-element-check.mjs`, including the independent closed-form shear-deflection identity
+It did not fully close L19: node 20390 UZ remained `-30.626309 N` versus `-36.448513 N`. With the locked 50 N force scale floor, that is `11.64%`, so the L19 restraint gate remained open.
 
-`δ = P L^3/(3 E I) + P L/(κ A G)`
+The first remaining source-action failure is E17 (20290→20295), a 0.143 m plain run-pipe span terminating at the 20295 tee junction. The B31J run flexibility factors at this junction floor to 1.0, so E17 carries no active tee rotational spring. Injecting the CAESAR endpoint displacement field isolates the remaining E17 residual to the short-pipe transverse shear/bending constitutive pair rather than tee spring flexibility, gravity ownership, pressure strain, or recovery sign.
 
-and slender-beam convergence back to Euler–Bernoulli.
+## CAESAR-specific thin-wall pipe shear authority
+
+The generic B-3.1 frame package remains qualified with its independent Cowper thin-annulus fixture at κ=0.53. That generic authority is not changed.
+
+For CAESAR parity, the vendor-authored CAESAR II CAUx 2015 training material, `F=KX — How CAESAR II formulates the global stiffness matrix` (© Intergraph 2015), develops the straight-pipe stiffness matrix with a thin-wall pipe shear coefficient of 2 and
+
+`phi = 12 E I / [ G (A / shear) L^2 ]`.
+
+The frozen LFEA Timoshenko kernel uses
+
+`phi = 12 E I / [ G kappa A L^2 ]`.
+
+Therefore the direct authority mapping is
+
+`kappa = 1 / shear = 1 / 2 = 0.5`.
+
+This mapping is regression-tested in `scripts/lfea-issue947-caesar-pipe-shear-authority-check.mjs`. The check contains no BM4 reaction, displacement, or element-action reference value and does not optimize κ.
+
+As a diagnostic cross-check only, not as the authority for the value, E17's injected-CAESAR-displacement normalized residual falls from about 0.1445 at κ=0.53 to about 0.01494 at the independently sourced κ=0.5.
 
 ## Candidate production change
 
-Commit `0729262bcb64f1ae7a839b4dcb999a1cbe6194e5` changes only the ACCDB adapter frame profile from Euler–Bernoulli to the existing qualified Timoshenko formulation with κ=0.53 in both transverse directions.
+Commit `d738f53e63c87d47a4fa844c9b8f65ea8be0cdee` changes only the CAESAR ACCDB adapter profile to
 
-It does **not** change the sparse direct solver, scaling, convergence limits, load-case compilation, restraint model, B31/B31J factor equations, Bourdon equations, reaction convention or result-recovery equation.
+- `PIPE_FRAME3D_TIMOSHENKO_V1`;
+- `shearCorrectionFactorY = 0.5`;
+- `shearCorrectionFactorZ = 0.5`;
+- source `INTERGRAPH-CAESAR-II-CAUX-2015-FKX-SHEAR-COEFFICIENT-2`.
+
+It does **not** change the generic frame kernel or Cowper fixture, sparse direct solver, scaling, convergence limits, load-case compilation, restraint model, B31/B31J factor equations, Bourdon equations, reaction convention or result-recovery equation.
 
 ## Acceptance state
 
-`PENDING_REAL_ACCDB_L19` — the constitutive hypothesis is independently supported, but it is retained only if a fresh solve of the exact pinned ACCDB preserves solver/equilibrium invariants and improves the real L19 comparison without introducing compensating regressions.
+`PENDING_EXACT_HEAD_L19` — the CAESAR-specific shear authority is independently sourced and its algebraic mapping is executable, but the change remains accepted only if the exact-head canonical replay and fresh real-ACCDB solve preserve solver/equilibrium invariants and close the L19 restraint gate without compensating regressions.

@@ -1,0 +1,114 @@
+name: m047-bm4nl-i017-accdb-authority-inventory
+
+on:
+  push:
+    branches:
+      - agent/m047-qualified-shear-draft
+    paths:
+      - '.github/workflows/m047-bm4nl-i017-accdb-authority-inventory.yml'
+      - 'scripts/lfea-m047-accdb-authority-inventory.ps1'
+      - 'scripts/lfea-m047-provision-ace.ps1'
+      - 'benchmarks/LFEA/CAESAR_ACCDB/m047/M047-I017.request.json'
+      - 'agent/status/status978.txt'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  inventory:
+    runs-on: windows-2022
+    timeout-minutes: 30
+    steps:
+      - name: Checkout exact I017 orchestration head
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.sha }}
+          fetch-depth: 0
+
+      - name: Prove exact head and clean checkout
+        shell: pwsh
+        run: |
+          if ((git rev-parse HEAD).Trim() -ne '${{ github.sha }}') { throw 'I017 checkout drifted.' }
+          if (git status --porcelain) { throw 'I017 checkout is dirty.' }
+
+      - name: Checkout pinned Common BM4 source
+        uses: actions/checkout@v4
+        with:
+          repository: reallaksh19/Common
+          ref: 1728651c94504b497aae4041578b1095fd8e292e
+          path: common-source
+          fetch-depth: 1
+
+      - name: Expand and verify locked BM4_NL ACCDB
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $root = Join-Path $env:RUNNER_TEMP 'm047-i017-bm4nl'
+          if (Test-Path -LiteralPath $root) { Remove-Item -LiteralPath $root -Recurse -Force }
+          New-Item -ItemType Directory -Path $root | Out-Null
+          Expand-Archive -LiteralPath 'common-source/LFEA/BM4/BM4_NL.zip' -DestinationPath $root -Force
+          $files = @(Get-ChildItem -LiteralPath $root -Recurse -File -Filter '*.accdb')
+          if ($files.Count -ne 1) { throw "Expected one ACCDB; found $($files.Count)." }
+          $sha = (Get-FileHash -LiteralPath $files[0].FullName -Algorithm SHA256).Hash.ToLowerInvariant()
+          $locked = '85d39463296e569da811d8572e2eff680b858097f76fdf0f47d1755f0b161c21'
+          if ($sha -ne $locked) { throw "Locked ACCDB mismatch: $sha" }
+          New-Item -ItemType Directory -Path 'artifacts/m047/I017' -Force | Out-Null
+          "BM4NL_ACCDB=$($files[0].FullName)" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
+          [ordered]@{
+            schema='lfea-m047-i017-source/v1'
+            orchestrationHead='${{ github.sha }}'
+            commonCommit='1728651c94504b497aae4041578b1095fd8e292e'
+            accdbSha256=$sha
+          } | ConvertTo-Json | Set-Content 'artifacts/m047/I017/source.json' -Encoding utf8
+
+      - name: Provision Microsoft 365 Access Runtime
+        shell: powershell
+        run: .\scripts\lfea-m047-provision-ace.ps1 -OutputPath 'artifacts/m047/I017/ace.json'
+
+      - name: Inventory complete ACCDB schema
+        shell: powershell
+        run: |
+          .\scripts\lfea-m047-accdb-authority-inventory.ps1 `
+            -AccdbPath "$env:BM4NL_ACCDB" `
+            -OutputPath 'artifacts/m047/I017/accdb-authority-inventory.json'
+
+      - name: Qualify inventory custody and summarize authority candidates
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $inventory = Get-Content 'artifacts/m047/I017/accdb-authority-inventory.json' -Raw | ConvertFrom-Json
+          $locked = '85d39463296e569da811d8572e2eff680b858097f76fdf0f47d1755f0b161c21'
+          if ($inventory.source.sha256 -ne $locked) { throw 'I017 inventory source hash drifted.' }
+          $tableNames = @($inventory.tables | ForEach-Object { $_.name })
+          foreach ($required in @('INPUT_BASIC_ELEMENT_DATA','INPUT_CONTROL','OUTPUT_DISPLACEMENTS','OUTPUT_GLOBAL_ELEMENT_FORCES','OUTPUT_RESTRAINTS_SUMMARY')) {
+            if ($tableNames -notcontains $required) { throw "I017 inventory is missing known table $required." }
+          }
+          $matches = @($inventory.keywordMatches)
+          $thermalMatches = @($matches | Where-Object { @($_.keywords) -contains 'THERM' -or @($_.keywords) -contains 'ALPHA' -or @($_.keywords) -contains 'COEFF' -or @($_.keywords) -contains 'EXP' })
+          $modulusMatches = @($matches | Where-Object { @($_.keywords) -contains 'MODULUS' -or @($_.keywords) -contains 'ELASTIC' })
+          $bourdonMatches = @($matches | Where-Object { @($_.keywords) -contains 'BOURDON' })
+          [ordered]@{
+            schema='lfea-m047-i017-authority-summary/v1'
+            sourceAccdbSha256=$inventory.source.sha256
+            tableCount=$inventory.tableCount
+            keywordMatchCount=$matches.Count
+            thermalExpansionCandidateColumns=$thermalMatches
+            modulusCandidateColumns=$modulusMatches
+            bourdonCandidateColumns=$bourdonMatches
+          } | ConvertTo-Json -Depth 8 | Set-Content 'artifacts/m047/I017/authority-summary.json' -Encoding utf8
+          Add-Content $env:GITHUB_STEP_SUMMARY '# M047 I017 ACCDB authority inventory'
+          Add-Content $env:GITHUB_STEP_SUMMARY "- ACCDB: ``$($inventory.source.sha256)``"
+          Add-Content $env:GITHUB_STEP_SUMMARY "- tables: $($inventory.tableCount)"
+          Add-Content $env:GITHUB_STEP_SUMMARY "- thermal/expansion candidate columns: $($thermalMatches.Count)"
+          Add-Content $env:GITHUB_STEP_SUMMARY "- modulus candidate columns: $($modulusMatches.Count)"
+          Add-Content $env:GITHUB_STEP_SUMMARY "- Bourdon candidate columns: $($bourdonMatches.Count)"
+
+      - name: Retain I017 evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: m047-i017-accdb-authority-${{ github.sha }}
+          path: artifacts/m047/I017/**
+          if-no-files-found: error
+          retention-days: 90

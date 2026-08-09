@@ -12,11 +12,13 @@ import { prepareInputXmlLinearSolve } from './inputxml-linear-solve-preparation.
  * `parseInputXmlModelHealthSource()` once, retain that bundle, and pass the
  * same object through diagnostics and later preparation stages.
  */
-export function diagnoseInputXmlModelHealthTopology(sourceBundle, options = {}) {
+export function diagnoseInputXmlModelHealthTopology(sourceBundle, options) {
+  if (options === undefined) options = {};
   return diagnoseInputXmlTopologyGraph(sourceBundle, options);
 }
 
-export function diagnoseInputXmlModelHealthProximity(sourceBundle, options = {}) {
+export function diagnoseInputXmlModelHealthProximity(sourceBundle, options) {
+  if (options === undefined) options = {};
   return diagnoseInputXmlTopologyProximity(sourceBundle, options);
 }
 

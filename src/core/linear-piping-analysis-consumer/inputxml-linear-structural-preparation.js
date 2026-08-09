@@ -24,8 +24,9 @@ export function compileInputXmlLinearStructure(
   sourceBundle,
   modelHealthReport,
   sourcePreparation,
-  options = {},
+  options,
 ) {
+  if (options === undefined) options = {};
   const source = requireInputXmlModelHealthSource(sourceBundle);
   const health = requireInputXmlLinearModelHealth(modelHealthReport, source);
   const prepared = requireInputXmlLinearSolvePreparation(sourcePreparation, source, health);
@@ -205,7 +206,6 @@ export function compileInputXmlLinearStructure(
     }),
   });
 }
-
 
 function projectInputXmlAnalyticalGeometry(prepared) {
   const bindingBySegment = new Map(prepared.segmentBindings

@@ -9,7 +9,8 @@ import { fail, uniqueAscii } from './inputxml-linear-prefea-contract.js';
  * A downstream activation PR must pass the production executor explicitly after
  * this function has validated the complete sealed parent chain.
  */
-export function solveInputXmlLinearAnalysis(preparation, authorization, runtimeOptions = {}) {
+export function solveInputXmlLinearAnalysis(preparation, authorization, runtimeOptions) {
+  if (runtimeOptions === undefined) runtimeOptions = {};
   const acceptedPreparation = requireInputXmlLinearPreFeaPreparation(preparation);
   const requestedCaseIds = uniqueAscii(
     runtimeOptions.requestedCaseIds ?? acceptedPreparation.requestedCaseIds,

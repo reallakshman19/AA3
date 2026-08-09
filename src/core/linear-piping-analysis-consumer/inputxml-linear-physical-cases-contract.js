@@ -24,9 +24,11 @@ export function sealInputXmlLinearPhysicalCasePreparation(value) {
 
 export function requireInputXmlLinearPhysicalCasePreparation(
   value,
-  expectedSourcePreparation = null,
-  expectedStructuralPreparation = null,
+  expectedSourcePreparation,
+  expectedStructuralPreparation,
 ) {
+  if (expectedSourcePreparation === undefined) expectedSourcePreparation = null;
+  if (expectedStructuralPreparation === undefined) expectedStructuralPreparation = null;
   if (!isPlainRecord(value) || value.schema !== INPUTXML_LINEAR_PHYSICAL_CASE_PREPARATION_SCHEMA) {
     throw new TypeError('InputXML physical-case preparation schema is invalid.');
   }

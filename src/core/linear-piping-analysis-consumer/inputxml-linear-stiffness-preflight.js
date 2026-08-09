@@ -12,7 +12,8 @@ import {
   inputXmlStiffnessSolverProfile,
 } from './inputxml-linear-stiffness-profile.js';
 
-export function preflightInputXmlLinearSolve(physicalPreparation, options = {}) {
+export function preflightInputXmlLinearSolve(physicalPreparation, options) {
+  if (options === undefined) options = {};
   const accepted = requireInputXmlLinearPhysicalCasePreparation(physicalPreparation);
   const structural = accepted.structuralPreparation;
   const compilation = structural.compilation;

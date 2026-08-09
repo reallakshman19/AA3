@@ -90,12 +90,12 @@ function variantSource(source, variant) {
     if (!result.includes(anchor)) throw new Error(`Production-audit anchor missing: ${anchor}`);
   }
   if (variant === 'ROTATION_ONLY' || variant === 'NONE') {
-    result = result.replace(translationStart, 'const startTranslationGlobal = zero3();');
-    result = result.replace(translationEnd, 'const endTranslationGlobal = zero3();');
+    result = result.replace(translationStart, 'const startTranslationGlobal = [0, 0, 0];');
+    result = result.replace(translationEnd, 'const endTranslationGlobal = [0, 0, 0];');
   }
   if (variant === 'TRANSLATION_ONLY' || variant === 'NONE') {
-    result = result.replace(rotationStart, 'const startRotationGlobal = zero3();');
-    result = result.replace(rotationEnd, 'const endRotationGlobal = zero3();');
+    result = result.replace(rotationStart, 'const startRotationGlobal = [0, 0, 0];');
+    result = result.replace(rotationEnd, 'const endRotationGlobal = [0, 0, 0];');
   }
   const parityAnchor = "assert.ok(parityMaxAbs <= 2e-3, `E36 condensed parity against production source action failed: ${parityMaxAbs}`);";
   if (!result.includes(parityAnchor)) throw new Error('Production parity assertion anchor missing.');

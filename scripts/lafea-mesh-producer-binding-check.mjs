@@ -1,8 +1,9 @@
 #!/usr/bin/env node
 /**
- * Governed end-to-end qualification for the bound LAFEA.3 analysis-mesh
- * producer: geometry -> intent -> plan -> engine -> output -> evidence ->
- * custody -> Discretization projection.
+ * Governed end-to-end qualification for the bound LAFEA analysis-mesh
+ * producer. LAFEA.3 retains the continuum mechanics coverage below; LAFEA.4
+ * and LAFEA.5 are additionally bound for the explicitly qualified planar
+ * shell-midsurface producer scope.
  */
 import assert from 'node:assert/strict';
 
@@ -37,30 +38,39 @@ import { createLafeaWorkbenchMeshGenerationState } from '../src/workspace/lafea-
 import { mp2SquareWithCircularHole } from './lafea-mp2-domain-geometry-fixtures.mjs';
 
 const SOURCE_HASH = `sha256:${'a'.repeat(64)}`;
+const SHELL_TRI3 = 'CST_DKT_TRI3_THIN_SHELL_V1';
 
 // --- LMB-01: qualification identity and authority boundary ------------------
 const capability = lafeaCoreMeshProducerCapability();
 const qualification = lafeaCoreMeshProducerQualification();
 assert.equal(capability.producerId, 'LAFEA_CORE_MESHER');
-assert.equal(capability.producerRevision, 'LAFEA.10.T6Q8.V4');
-assert.equal(qualification.qualificationRevision, 'R5');
+assert.equal(capability.producerRevision, 'LAFEA.10.T6Q8.SHELL.V5');
+assert.equal(qualification.qualificationRevision, 'R6');
 assert.deepEqual(capability.generationModes, ['AUTOMATIC_MESH', 'REFINEMENT_REGENERATION']);
 assert.equal(capability.supportsLocalRefinement, true);
 assert.equal(qualification.localRefinementAuthorized, true);
 assert.equal(qualification.capabilityHash, capability.capabilityHash);
 assert.ok(qualification.governanceRef.includes('check:lafea-meshing'));
 
-// --- LMB-02: scope remains LAFEA.3 planar continuum only --------------------
+// --- LMB-02: explicit qualified stage/family scope --------------------------
 assert.equal(lafeaMeshProducerBound('LAFEA.3'), true);
-assert.equal(lafeaMeshProducerBound('LAFEA.4'), false);
-assert.equal(lafeaMeshProducerBound('LAFEA.5'), false);
+assert.equal(lafeaMeshProducerBound('LAFEA.4'), true);
+assert.equal(lafeaMeshProducerBound('LAFEA.5'), true);
 assert.equal(lafeaMeshProducerBound('LAFEA.3', 'NOT_A_FAMILY'), false);
 for (const stageId of ['LAFEA.4', 'LAFEA.5']) {
   const capabilities = lafeaMeshCapabilities(stageId);
-  assert.equal(capabilities.automaticMeshProducerQualified, false, stageId);
-  assert.equal(capabilities.generationExecutionAuthorized, false, stageId);
-  assert.ok(capabilities.reasons.includes('QUALIFIED_MESH_PRODUCER_NOT_AVAILABLE'), stageId);
-  assert.equal(requireLafeaStageAnalysisAdapter(stageId).discretization.qualifiedProducerId, null);
+  assert.equal(capabilities.automaticMeshProducerQualified, true, stageId);
+  assert.equal(capabilities.generationExecutionAuthorized, true, stageId);
+  assert.equal(capabilities.manualRefinementQualified, false, stageId);
+  assert.deepEqual(capabilities.localRefinementElementFamilies, [], stageId);
+  assert.deepEqual(capabilities.allowedElementFamilies, [SHELL_TRI3], stageId);
+  assert.ok(capabilities.reasons.includes('QUALIFIED_MESH_PRODUCER_BOUND'), stageId);
+  assert.ok(capabilities.reasons.includes('GOVERNED_REFINEMENT_COMMAND_NOT_AVAILABLE'), stageId);
+  assert.equal(
+    requireLafeaStageAnalysisAdapter(stageId).discretization.qualifiedProducerId,
+    LAFEA_MESH_PRODUCER_REF,
+    stageId,
+  );
 }
 assert.equal(lafeaMeshCapabilities('LAFEA.3').generationExecutionAuthorized, true);
 assert.equal(lafeaMeshCapabilities('LAFEA.3').manualRefinementQualified, true);
@@ -149,7 +159,7 @@ function meshProfileFor(continuumElement, globalTargetSize) {
     sourceRevision: 'R3', semanticHash: undefined,
     fields: {
       continuumElement,
-      shellElement: 'CST_DKT_TRI3_THIN_SHELL_V1',
+      shellElement: SHELL_TRI3,
       globalTargetSize,
       adjacentSizeRatioMax: 1.5,
       aspectRatioWarn: 5, aspectRatioBlock: 10,
@@ -450,4 +460,4 @@ function arc(segmentId, startVertexId, endVertexId, centerX, centerY, radius, sw
   return { segmentId, type: 'CIRCULAR_ARC', startVertexId, endVertexId, centerX, centerY, radius, sweep };
 }
 
-console.log('LAFEA mesh-producer binding check PASS (P0 + P1-5 + P1-6 holes + P1-7 regular logical mapped chains + P2-9 retained local refinement authority)');
+console.log('LAFEA mesh-producer binding check PASS (P0 + P1-5 + P1-6 holes + P1-7 logical mapped chains + P2-8 planar shell automatic generation binding + P2-9 retained local refinement authority)');

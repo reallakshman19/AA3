@@ -6,16 +6,17 @@
  * `a` is tangent toward the far end, `b` is normal to the bend plane, and
  * `c = a x b` points toward the bend centre.
  *
- * CAESAR's Translational + Rotational Bourdon option retains the translational
- * pressure-elongation effect and adds bend opening/rotation. A discretized
- * structural model therefore needs a cumulative physical nodal free field that
- * combines:
- *   1. uniform closed-end pressure axial strain integrated along the bend arc;
- *   2. MEC-21 equation (2.25) bend-opening translation and rotation.
+ * The ACCDB linear-solve contract keeps the two pressure mechanisms separate:
+ * closed-end axial pressure strain is owned by the prismatic-span load path,
+ * while bend arcs receive the MEC-21 opening/rotation field. This module still
+ * exposes the integrated uniform-pressure translation as diagnostic evidence,
+ * but it is NOT added to `translationAbc`; doing so would silently change the
+ * established TRANSLATION_AND_ROTATION load ownership and double count a term
+ * the bend-arc path intentionally suppresses.
  *
- * `deriveMec21BendPressureFreeState` resolves that composite state into the
- * physical bend's INITIAL a-b-c basis. The original equation (2.25) components
- * remain exposed separately for qualification.
+ * `deriveMec21BendPressureFreeState` resolves the cumulative bend-opening state
+ * into the physical bend's INITIAL a-b-c basis. The original equation (2.25)
+ * components remain exposed separately for qualification.
  */
 
 export const MEC21_BEND_PRESSURE_EXPANSION_FORMULATION =
@@ -23,8 +24,7 @@ export const MEC21_BEND_PRESSURE_EXPANSION_FORMULATION =
 
 /**
  * Derive one positive-angle bend arc's MEC-21 equation (2.25) bend-opening
- * movement in the FINAL-STATION local a-b-c basis. This helper intentionally
- * excludes the separate uniform pressure-elongation contribution.
+ * movement in the FINAL-STATION local a-b-c basis.
  */
 export function deriveMec21BendPressureFreeMovement(input) {
   const bendAngle = positive(input?.bendAngle, 'bendAngle');
@@ -36,15 +36,13 @@ export function deriveMec21BendPressureFreeMovement(input) {
 }
 
 /**
- * Derive the composite pressure free state at a cumulative station angle
- * measured from one physical bend's initial point. This accepts
- * `bendAngle = 0`, where the free state is zero.
+ * Derive the cumulative MEC-21 bend-opening state at an angle measured from one
+ * physical bend's initial point. `bendAngle = 0` is accepted and returns zero.
  *
  * `translationAbc` and `rotationAbc` are resolved in the BEND-INITIAL a-b-c
- * basis and represent the CAESAR Translational + Rotational decomposition:
- * uniform pressure elongation plus MEC-21 bend opening. The two contributions
- * and the literal final-local equation (2.25) values are retained separately
- * so qualification can prove there is neither omission nor double counting.
+ * basis and contain bend opening/rotation only. The independently derived
+ * uniform closed-end pressure strain/translation is carried as evidence so a
+ * caller can prove load ownership without implicitly adding it to the bend.
  */
 export function deriveMec21BendPressureFreeState(input) {
   const bendAngle = nonnegative(input?.bendAngle, 'bendAngle');
@@ -81,23 +79,19 @@ export function deriveMec21BendPressureFreeState(input) {
     sine * ra + cosine * rc,
   ]);
 
-  // Uniform pressure strain follows the original centreline tangent. Its
-  // integrated displacement is epsilon_p times the original station position
-  // measured from the bend initial point.
+  // Diagnostic only: uniform closed-end pressure strain integrated along the
+  // original centreline tangent. The ACCDB bend-arc load path does not add this
+  // vector to the MEC-21 opening field in TRANSLATION_AND_ROTATION mode.
   const uniformPressureTranslationInitialAbc = Object.freeze([
     uniformPressureAxialStrain * bendRadius * sine,
     0,
     uniformPressureAxialStrain * bendRadius * (1 - cosine),
   ]);
-  const translationInitialAbc = Object.freeze(
-    bendOpeningTranslationInitialAbc.map((value, index) =>
-      value + uniformPressureTranslationInitialAbc[index]),
-  );
 
   return Object.freeze({
     formulation: bendOpening.formulation,
     basis: 'BEND_INITIAL_ABC',
-    translationAbc: translationInitialAbc,
+    translationAbc: bendOpeningTranslationInitialAbc,
     rotationAbc: bendOpeningRotationInitialAbc,
     uniformPressureAxialStrain,
     uniformPressureTranslationAbc: uniformPressureTranslationInitialAbc,

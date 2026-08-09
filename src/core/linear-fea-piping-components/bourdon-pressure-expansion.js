@@ -16,37 +16,12 @@ export const MEC21_BEND_PRESSURE_EXPANSION_FORMULATION =
 export const MEC21_BEND_PRESSURE_CUMULATIVE_FIELD_FORMULATION =
   'MEC21_PART_II_EQ_2_25_COMPATIBLE_CUMULATIVE_NODAL_FIELD_V1';
 
-const AXIS_TOLERANCE = 1e-9;
-
 /** Derive one bend arc's pressure-induced free end movement. */
 export function deriveMec21BendPressureFreeMovement(input) {
-  const pressure = nonnegative(input?.pressure, 'pressure');
-  const innerRadius = positive(input?.innerRadius, 'innerRadius');
-  const bendRadius = positive(input?.bendRadius, 'bendRadius');
-  const elasticModulus = positive(input?.elasticModulus, 'elasticModulus');
-  const secondMoment = positive(input?.secondMoment, 'secondMoment');
-  const poissonRatio = poisson(input?.poissonRatio);
+  const parameters = pressureExpansionParameters(input);
   const bendAngle = positive(input?.bendAngle, 'bendAngle');
   if (!(bendAngle < Math.PI)) throw new TypeError('bendAngle must be less than pi radians.');
-
-  const radiusRatioSquared = (innerRadius / bendRadius) ** 2;
-  const shellCorrection = (1 - poissonRatio)
-    + 0.75 * (2 - poissonRatio) * radiusRatioSquared;
-  const curvatureChangeRatio = Math.PI * pressure * innerRadius ** 4
-    * shellCorrection / (elasticModulus * secondMoment);
-  const translationScale = curvatureChangeRatio * bendRadius;
-
-  return Object.freeze({
-    formulation: MEC21_BEND_PRESSURE_EXPANSION_FORMULATION,
-    translationAbc: Object.freeze([
-      translationScale * (Math.sin(bendAngle) - bendAngle),
-      0,
-      translationScale * (Math.cos(bendAngle) - 1),
-    ]),
-    rotationAbc: Object.freeze([0, curvatureChangeRatio * bendAngle, 0]),
-    curvatureChangeRatio,
-    shellCorrection,
-  });
+  return movementAtAngle(parameters, bendAngle);
 }
 
 /**
@@ -57,9 +32,14 @@ export function deriveMec21BendPressureFreeMovement(input) {
  * Therefore every discretization station must be sampled in that same system;
  * resetting the Eq. (2.25) I-end movement to zero independently for every
  * sub-element creates an incompatible translation field under subdivision.
+ *
+ * Axis validation tolerances are explicit inputs so this mechanics utility
+ * does not introduce a private numerical policy. The ACCDB solver supplies
+ * them from the governed B-2.4 frame-local-axis profile.
  */
 export function deriveMec21BendPressureCumulativeField(input) {
-  const referenceAxes = requireAbcAxes(input?.referenceAxes);
+  const axisTolerances = requireAxisTolerances(input?.referenceAxisTolerances);
+  const referenceAxes = requireAbcAxes(input?.referenceAxes, axisTolerances);
   const cumulativeAngleI = nonnegative(input?.cumulativeAngleI, 'cumulativeAngleI');
   const cumulativeAngleJ = positive(input?.cumulativeAngleJ, 'cumulativeAngleJ');
   if (!(cumulativeAngleJ < Math.PI)) {
@@ -69,18 +49,9 @@ export function deriveMec21BendPressureCumulativeField(input) {
     throw new TypeError('cumulativeAngleJ must be greater than cumulativeAngleI.');
   }
 
-  const common = {
-    pressure: input?.pressure,
-    innerRadius: input?.innerRadius,
-    bendRadius: input?.bendRadius,
-    elasticModulus: input?.elasticModulus,
-    secondMoment: input?.secondMoment,
-    poissonRatio: input?.poissonRatio,
-  };
-  const atI = cumulativeAngleI === 0
-    ? zeroStationMovement(common)
-    : deriveMec21BendPressureFreeMovement({ ...common, bendAngle: cumulativeAngleI });
-  const atJ = deriveMec21BendPressureFreeMovement({ ...common, bendAngle: cumulativeAngleJ });
+  const parameters = pressureExpansionParameters(input);
+  const atI = movementAtAngle(parameters, cumulativeAngleI);
+  const atJ = movementAtAngle(parameters, cumulativeAngleJ);
   const translationGlobalI = abcTranslationToGlobal(referenceAxes, atI.translationAbc);
   const translationGlobalJ = abcTranslationToGlobal(referenceAxes, atJ.translationAbc);
   const rotationGlobalI = abcRotationToGlobal(referenceAxes, atI.rotationAbc);
@@ -91,6 +62,7 @@ export function deriveMec21BendPressureCumulativeField(input) {
     cumulativeAngleI,
     cumulativeAngleJ,
     referenceAxes,
+    referenceAxisTolerances: axisTolerances,
     translationGlobalI,
     translationGlobalJ,
     rotationGlobalI,
@@ -98,19 +70,42 @@ export function deriveMec21BendPressureCumulativeField(input) {
     incrementalTranslationGlobal: frozenVector(subtract(translationGlobalJ, translationGlobalI)),
     incrementalRotationGlobal: frozenVector(subtract(rotationGlobalJ, rotationGlobalI)),
     incrementalRotationRadians: atJ.rotationAbc[1] - atI.rotationAbc[1],
-    curvatureChangeRatio: atJ.curvatureChangeRatio,
-    shellCorrection: atJ.shellCorrection,
+    curvatureChangeRatio: parameters.curvatureChangeRatio,
+    shellCorrection: parameters.shellCorrection,
   });
 }
 
-function zeroStationMovement(input) {
-  const probe = deriveMec21BendPressureFreeMovement({ ...input, bendAngle: Number.EPSILON });
+function pressureExpansionParameters(input) {
+  const pressure = nonnegative(input?.pressure, 'pressure');
+  const innerRadius = positive(input?.innerRadius, 'innerRadius');
+  const bendRadius = positive(input?.bendRadius, 'bendRadius');
+  const elasticModulus = positive(input?.elasticModulus, 'elasticModulus');
+  const secondMoment = positive(input?.secondMoment, 'secondMoment');
+  const poissonRatio = poisson(input?.poissonRatio);
+  const radiusRatioSquared = (innerRadius / bendRadius) ** 2;
+  const shellCorrection = (1 - poissonRatio)
+    + 0.75 * (2 - poissonRatio) * radiusRatioSquared;
+  const curvatureChangeRatio = Math.PI * pressure * innerRadius ** 4
+    * shellCorrection / (elasticModulus * secondMoment);
+  return Object.freeze({
+    bendRadius,
+    curvatureChangeRatio,
+    shellCorrection,
+  });
+}
+
+function movementAtAngle(parameters, bendAngle) {
+  const translationScale = parameters.curvatureChangeRatio * parameters.bendRadius;
   return Object.freeze({
     formulation: MEC21_BEND_PRESSURE_EXPANSION_FORMULATION,
-    translationAbc: Object.freeze([0, 0, 0]),
-    rotationAbc: Object.freeze([0, 0, 0]),
-    curvatureChangeRatio: probe.curvatureChangeRatio,
-    shellCorrection: probe.shellCorrection,
+    translationAbc: Object.freeze([
+      translationScale * (Math.sin(bendAngle) - bendAngle),
+      0,
+      translationScale * (Math.cos(bendAngle) - 1),
+    ]),
+    rotationAbc: Object.freeze([0, parameters.curvatureChangeRatio * bendAngle, 0]),
+    curvatureChangeRatio: parameters.curvatureChangeRatio,
+    shellCorrection: parameters.shellCorrection,
   });
 }
 
@@ -125,26 +120,40 @@ function abcRotationToGlobal(axes, rotationAbc) {
   return frozenVector(scale(axes.b, rotationAbc[1]));
 }
 
-function requireAbcAxes(value) {
+function requireAbcAxes(value, tolerances) {
   if (!value || typeof value !== 'object' || Array.isArray(value)) {
     throw new TypeError('referenceAxes must be an object containing a, b and c vectors.');
   }
-  const a = unitVector(value.a, 'referenceAxes.a');
-  const b = unitVector(value.b, 'referenceAxes.b');
-  const c = unitVector(value.c, 'referenceAxes.c');
-  if (Math.abs(dot(a, b)) > AXIS_TOLERANCE
-    || Math.abs(dot(a, c)) > AXIS_TOLERANCE
-    || Math.abs(dot(b, c)) > AXIS_TOLERANCE) {
+  const a = unitVector(value.a, 'referenceAxes.a', tolerances.unitVectorTolerance);
+  const b = unitVector(value.b, 'referenceAxes.b', tolerances.unitVectorTolerance);
+  const c = unitVector(value.c, 'referenceAxes.c', tolerances.unitVectorTolerance);
+  if (Math.abs(dot(a, b)) > tolerances.orthogonalityTolerance
+    || Math.abs(dot(a, c)) > tolerances.orthogonalityTolerance
+    || Math.abs(dot(b, c)) > tolerances.orthogonalityTolerance) {
     throw new TypeError('referenceAxes must be mutually orthogonal.');
   }
   const expectedC = cross(a, b);
-  if (norm(subtract(expectedC, c)) > AXIS_TOLERANCE) {
+  if (norm(subtract(expectedC, c)) > tolerances.handednessTolerance) {
     throw new TypeError('referenceAxes must be right-handed with c = a x b.');
   }
   return Object.freeze({ a, b, c });
 }
 
-function unitVector(value, field) {
+function requireAxisTolerances(value) {
+  if (!value || typeof value !== 'object' || Array.isArray(value)) {
+    throw new TypeError('referenceAxisTolerances must be an object.');
+  }
+  return Object.freeze({
+    unitVectorTolerance: positive(value.unitVectorTolerance, 'referenceAxisTolerances.unitVectorTolerance'),
+    orthogonalityTolerance: positive(
+      value.orthogonalityTolerance,
+      'referenceAxisTolerances.orthogonalityTolerance',
+    ),
+    handednessTolerance: positive(value.handednessTolerance, 'referenceAxisTolerances.handednessTolerance'),
+  });
+}
+
+function unitVector(value, field, tolerance) {
   if (!Array.isArray(value) || value.length !== 3) {
     throw new TypeError(`${field} must contain three components.`);
   }
@@ -152,7 +161,7 @@ function unitVector(value, field) {
   if (vector.some((entry) => !Number.isFinite(entry))) {
     throw new TypeError(`${field} must contain finite components.`);
   }
-  if (Math.abs(norm(vector) - 1) > AXIS_TOLERANCE) {
+  if (Math.abs(norm(vector) - 1) > tolerance) {
     throw new TypeError(`${field} must be a unit vector.`);
   }
   return Object.freeze(vector);

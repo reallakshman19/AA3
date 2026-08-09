@@ -41,9 +41,11 @@ const start = deriveMec21BendPressureFreeState({ ...INPUT, bendAngle: 0 });
 assert.equal(start.basis, 'BEND_INITIAL_ABC');
 vectorClose(start.translationAbc, [0, 0, 0]);
 vectorClose(start.rotationAbc, [0, 0, 0]);
+vectorClose(start.uniformPressureTranslationAbc, [0, 0, 0]);
 close(start.uniformPressureAxialStrain, axialStrain);
 
-const expectedEnd = analyticalCompositeState(TOTAL_ANGLE);
+const expectedEnd = analyticalOpeningState(TOTAL_ANGLE);
+const expectedUniformEnd = analyticalUniformPressureTranslation(TOTAL_ANGLE);
 const subdivisionEvidence = [];
 for (const count of COUNTS) {
   const states = Array.from({ length: count + 1 }, (_unused, index) => {
@@ -53,11 +55,14 @@ for (const count of COUNTS) {
   vectorClose(states[0].translationAbc, [0, 0, 0]);
   vectorClose(states.at(-1).translationAbc, expectedEnd.translation);
   vectorClose(states.at(-1).rotationAbc, expectedEnd.rotation);
+  vectorClose(states.at(-1).uniformPressureTranslationAbc, expectedUniformEnd);
   for (let index = 0; index < states.length; index += 1) {
     const angle = TOTAL_ANGLE * index / count;
-    const expected = analyticalCompositeState(angle);
-    vectorClose(states[index].translationAbc, expected.translation);
-    vectorClose(states[index].rotationAbc, expected.rotation);
+    const opening = analyticalOpeningState(angle);
+    vectorClose(states[index].translationAbc, opening.translation);
+    vectorClose(states[index].bendOpeningTranslationAbc, opening.translation);
+    vectorClose(states[index].rotationAbc, opening.rotation);
+    vectorClose(states[index].uniformPressureTranslationAbc, analyticalUniformPressureTranslation(angle));
   }
   subdivisionEvidence.push({
     count,
@@ -78,38 +83,48 @@ assert.ok(
   `Historical per-chord restart unexpectedly appeared subdivision-invariant: ${restartRelativeError}`,
 );
 
+// Load-ownership guard: the cumulative MEC-21 opening is the bend-arc state;
+// the independently computed closed-end pressure translation remains evidence
+// and is intentionally not included in translationAbc.
+assert.ok(norm(expectedUniformEnd) > 0);
+assert.ok(norm(subtract(expectedEnd.translation, add(expectedEnd.translation, expectedUniformEnd))) > 0);
+
 console.log(JSON.stringify({
   check: 'lfea-issue947-bourdon-subdivision',
   status: 'PASS',
   governingEquation: 'MEC21_PART_II_EQ_2_25',
-  compositeField: 'UNIFORM_CLOSED_END_PRESSURE_STRAIN_PLUS_BEND_OPENING',
+  bendArcField: 'MEC21_BEND_OPENING_ONLY',
+  uniformPressureTranslationOwnership: 'SEPARATE_DIAGNOSTIC_NOT_ADDED_TO_BEND_ARC',
   cumulativeBasis: 'BEND_INITIAL_ABC',
   subdivisionCounts: COUNTS,
   curvatureChangeRatio,
   uniformPressureAxialStrain: axialStrain,
-  expectedEnd,
+  expectedOpeningEnd: expectedEnd,
+  expectedUniformPressureTranslationEnd: expectedUniformEnd,
   subdivisionEvidence,
   historicalRestartHypothesis: 'FALSIFIED',
   historicalFourChordTranslationRelativeError: restartRelativeError,
 }, null, 2));
 
-function analyticalCompositeState(angle) {
+function analyticalOpeningState(angle) {
   const sine = Math.sin(angle);
   const cosine = Math.cos(angle);
-  const opening = [
-    translationScale * (sine - angle * cosine),
-    0,
-    translationScale * (1 - cosine - angle * sine),
-  ];
-  const uniform = [
-    axialStrain * INPUT.bendRadius * sine,
-    0,
-    axialStrain * INPUT.bendRadius * (1 - cosine),
-  ];
   return {
-    translation: add(uniform, opening),
+    translation: [
+      translationScale * (sine - angle * cosine),
+      0,
+      translationScale * (1 - cosine - angle * sine),
+    ],
     rotation: [0, curvatureChangeRatio * angle, 0],
   };
+}
+
+function analyticalUniformPressureTranslation(angle) {
+  return [
+    axialStrain * INPUT.bendRadius * Math.sin(angle),
+    0,
+    axialStrain * INPUT.bendRadius * (1 - Math.cos(angle)),
+  ];
 }
 
 function composeHistoricalRestartedOpening(count) {

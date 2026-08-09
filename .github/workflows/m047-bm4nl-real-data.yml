@@ -1,0 +1,168 @@
+name: m047-bm4nl-real-data
+
+on:
+  push:
+    branches:
+      - agent/m047-traceable-fea-qualification
+    paths:
+      - '.github/workflows/m047-bm4nl-real-data.yml'
+      - 'benchmarks/LFEA/CAESAR_ACCDB/m047/**'
+      - 'scripts/lfea-m047-*.mjs'
+      - 'scripts/lfea-caesar-accdb-*.mjs'
+      - 'scripts/lfea-caesar-accdb-export.ps1'
+      - 'src/core/fea-benchmarks/**'
+      - 'src/core/linear-fea-piping-components/**'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  qualify-i004:
+    runs-on: windows-2022
+    timeout-minutes: 30
+
+    steps:
+      - name: Checkout Advanced Analysis exact head
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.sha }}
+          fetch-depth: 0
+
+      - name: Prove exact-head and clean checkout
+        shell: pwsh
+        run: |
+          if ((git rev-parse HEAD).Trim() -ne '${{ github.sha }}') {
+            throw 'Workflow did not checkout the triggering commit.'
+          }
+          if (git status --porcelain) {
+            throw 'Advanced Analysis checkout is dirty before qualification.'
+          }
+
+      - name: Use Node.js 22
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: Checkout pinned Common BM4 source
+        uses: actions/checkout@v4
+        with:
+          repository: reallaksh19/Common
+          ref: 1728651c94504b497aae4041578b1095fd8e292e
+          path: common-source
+          fetch-depth: 1
+
+      - name: Expand and verify locked BM4_NL ACCDB
+        id: source
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $zip = Join-Path $PWD 'common-source/LFEA/BM4/BM4_NL.zip'
+          if (-not (Test-Path -LiteralPath $zip)) {
+            throw "Pinned BM4_NL.zip is missing: $zip"
+          }
+
+          $extractRoot = Join-Path $env:RUNNER_TEMP 'm047-bm4nl'
+          if (Test-Path -LiteralPath $extractRoot) {
+            Remove-Item -LiteralPath $extractRoot -Recurse -Force
+          }
+          New-Item -ItemType Directory -Path $extractRoot | Out-Null
+          Expand-Archive -LiteralPath $zip -DestinationPath $extractRoot -Force
+
+          $accdb = @(Get-ChildItem -LiteralPath $extractRoot -Recurse -File -Filter '*.accdb')
+          if ($accdb.Count -ne 1) {
+            throw "Expected exactly one ACCDB in BM4_NL.zip; found $($accdb.Count)."
+          }
+
+          $zipSha256 = (Get-FileHash -LiteralPath $zip -Algorithm SHA256).Hash.ToLowerInvariant()
+          $accdbSha256 = (Get-FileHash -LiteralPath $accdb[0].FullName -Algorithm SHA256).Hash.ToLowerInvariant()
+          $locked = '85d39463296e569da811d8572e2eff680b858097f76fdf0f47d1755f0b161c21'
+          if ($accdbSha256 -ne $locked) {
+            throw "ACCDB SHA-256 $accdbSha256 does not match locked M047 source $locked."
+          }
+
+          New-Item -ItemType Directory -Path 'artifacts/m047' -Force | Out-Null
+          [ordered]@{
+            schema = 'lfea-m047-source-provenance/v1'
+            commonRepository = 'reallaksh19/Common'
+            commonCommitSha = '1728651c94504b497aae4041578b1095fd8e292e'
+            zipPath = 'LFEA/BM4/BM4_NL.zip'
+            zipGitBlobSha = '86a803ed27ebdbd2836452dc2e874c3458aa204c'
+            zipByteLength = (Get-Item -LiteralPath $zip).Length
+            zipSha256 = $zipSha256
+            accdbFileName = $accdb[0].Name
+            accdbByteLength = $accdb[0].Length
+            accdbSha256 = $accdbSha256
+          } | ConvertTo-Json -Depth 6 | Set-Content -LiteralPath 'artifacts/m047/source-provenance.json' -Encoding utf8
+
+          "BM4NL_ACCDB=$($accdb[0].FullName)" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
+          "zip_sha256=$zipSha256" | Out-File -FilePath $env:GITHUB_OUTPUT -Encoding utf8 -Append
+          "accdb_sha256=$accdbSha256" | Out-File -FilePath $env:GITHUB_OUTPUT -Encoding utf8 -Append
+
+      - name: Probe Microsoft ACE OLE DB provider
+        shell: powershell
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $diagnostic = [ordered]@{
+            schema = 'lfea-m047-ace-probe/v1'
+            runnerOs = $env:RUNNER_OS
+            imageOs = $env:ImageOS
+            imageVersion = $env:ImageVersion
+            provider = 'Microsoft.ACE.OLEDB.12.0'
+            accdbSha256 = '${{ steps.source.outputs.accdb_sha256 }}'
+            opened = $false
+            error = $null
+          }
+          $connection = New-Object -ComObject ADODB.Connection
+          try {
+            $escaped = $env:BM4NL_ACCDB
+            $connection.Open("Provider=Microsoft.ACE.OLEDB.12.0;Data Source=$escaped;Mode=Read;Persist Security Info=False;")
+            $diagnostic.opened = $true
+          }
+          catch {
+            $diagnostic.error = $_.Exception.Message
+            throw
+          }
+          finally {
+            if ($connection.State -ne 0) { $connection.Close() }
+            [void][System.Runtime.InteropServices.Marshal]::ReleaseComObject($connection)
+            $diagnostic | ConvertTo-Json -Depth 6 | Set-Content -LiteralPath 'artifacts/m047/ace-probe.json' -Encoding utf8
+          }
+
+      - name: Materialize retained I000-I003 baseline chain
+        shell: pwsh
+        run: node scripts/lfea-m047-materialize-baseline-chain.mjs --out-dir artifacts/m047
+
+      - name: Run locked real-data I004 iteration
+        shell: pwsh
+        run: |
+          node scripts/lfea-m047-real-data-iteration.mjs `
+            --accdb "$env:BM4NL_ACCDB" `
+            --iteration M047-I004 `
+            --parent artifacts/m047/M047-I003/iteration.json `
+            --out-dir artifacts/m047/M047-I004
+
+      - name: Summarize I004 evidence
+        if: success()
+        shell: pwsh
+        run: |
+          $iteration = Get-Content -LiteralPath 'artifacts/m047/M047-I004/iteration.json' -Raw | ConvertFrom-Json
+          $run = Get-Content -LiteralPath 'artifacts/m047/M047-I004/run.json' -Raw | ConvertFrom-Json
+          Add-Content -LiteralPath $env:GITHUB_STEP_SUMMARY -Value "# M047 I004 BM4_NL qualification"
+          Add-Content -LiteralPath $env:GITHUB_STEP_SUMMARY -Value "- Locked ACCDB SHA-256: ``$($iteration.source.accdbSha256)``"
+          Add-Content -LiteralPath $env:GITHUB_STEP_SUMMARY -Value "- Candidate: ``$($run.mechanicsCandidate.executedCommitSha)``"
+          Add-Content -LiteralPath $env:GITHUB_STEP_SUMMARY -Value "- Verdict: **$($iteration.decision.verdict)**"
+          Add-Content -LiteralPath $env:GITHUB_STEP_SUMMARY -Value "- Evidence hash: ``$($iteration.semanticHash)``"
+          foreach ($caseId in @('L19', 'L20')) {
+            $metrics = $iteration.metrics.$caseId
+            Add-Content -LiteralPath $env:GITHUB_STEP_SUMMARY -Value "- $caseId failures: restraints=$($metrics.restraints.failingComponentCount), displacement=$($metrics.displacement.failingComponentCount), source-end-actions=$($metrics.sourceEndActions.failingComponentCount)"
+          }
+
+      - name: Retain provenance and qualification evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: m047-bm4nl-i004-${{ github.sha }}
+          path: artifacts/m047/**
+          if-no-files-found: error
+          retention-days: 90

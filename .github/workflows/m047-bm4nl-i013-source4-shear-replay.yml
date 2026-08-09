@@ -1,0 +1,125 @@
+name: m047-bm4nl-i013-source4-shear-replay
+
+on:
+  push:
+    branches:
+      - agent/m047-i013-source4-shear-replay
+    paths:
+      - '.github/workflows/m047-bm4nl-i013-source4-shear-replay.yml'
+      - 'scripts/lfea-m047-source4-shear-replay*.mjs'
+      - 'scripts/lfea-m047-instrument-baseline-frame-record.mjs'
+      - 'scripts/lfea-m047-instrument-baseline-replay*.mjs'
+      - 'scripts/lfea-m047-provision-ace.ps1'
+      - 'scripts/lfea-caesar-accdb-export.ps1'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  replay:
+    runs-on: windows-2022
+    timeout-minutes: 35
+    steps:
+      - name: Checkout I013 tooling exact head
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.sha }}
+          fetch-depth: 0
+      - name: Prove exact head and clean checkout
+        shell: pwsh
+        run: |
+          if ((git rev-parse HEAD).Trim() -ne '${{ github.sha }}') { throw 'I013 checkout drifted.' }
+          if (git status --porcelain) { throw 'I013 checkout is dirty.' }
+      - name: Use Node.js 22
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Qualify I013 synthetic shear replay
+        shell: pwsh
+        run: node scripts/lfea-m047-source4-shear-replay-check.mjs
+      - name: Preserve parent diagnostics
+        shell: pwsh
+        run: |
+          node scripts/lfea-m047-element-replay-check.mjs
+          node scripts/lfea-m047-source-action-decomposition-check.mjs
+          node scripts/lfea-b3.1-frame-element-check.mjs
+      - name: Checkout original baseline mechanics
+        uses: actions/checkout@v4
+        with:
+          repository: reallaksh19/Advanced_Analysis
+          ref: 882d59a99c3a03847d20bec34770ba57ff479d91
+          path: baseline-source
+          fetch-depth: 1
+      - name: Checkout pinned Common BM4 source
+        uses: actions/checkout@v4
+        with:
+          repository: reallaksh19/Common
+          ref: 1728651c94504b497aae4041578b1095fd8e292e
+          path: common-source
+          fetch-depth: 1
+      - name: Expand and verify locked ACCDB
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $root = Join-Path $env:RUNNER_TEMP 'm047-i013'
+          New-Item -ItemType Directory -Path $root -Force | Out-Null
+          Expand-Archive -LiteralPath 'common-source/LFEA/BM4/BM4_NL.zip' -DestinationPath $root -Force
+          $files = @(Get-ChildItem -LiteralPath $root -Recurse -File -Filter '*.accdb')
+          if ($files.Count -ne 1) { throw "Expected one ACCDB, found $($files.Count)." }
+          $sha = (Get-FileHash -LiteralPath $files[0].FullName -Algorithm SHA256).Hash.ToLowerInvariant()
+          if ($sha -ne '85d39463296e569da811d8572e2eff680b858097f76fdf0f47d1755f0b161c21') { throw "Locked ACCDB hash mismatch $sha." }
+          New-Item -ItemType Directory -Path 'artifacts/m047/I013' -Force | Out-Null
+          "BM4NL_ACCDB=$($files[0].FullName)" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
+          [ordered]@{schema='lfea-m047-i013-source/v1';commonCommit='1728651c94504b497aae4041578b1095fd8e292e';accdbSha256=$sha} | ConvertTo-Json | Set-Content 'artifacts/m047/I013/source.json' -Encoding utf8
+      - name: Provision Microsoft 365 Access Runtime
+        shell: powershell
+        run: .\scripts\lfea-m047-provision-ace.ps1 -OutputPath 'artifacts/m047/I013/ace.json'
+      - name: Bind portable exporter only
+        shell: pwsh
+        run: |
+          Copy-Item 'scripts/lfea-caesar-accdb-export.ps1' 'baseline-source/scripts/lfea-caesar-accdb-export.ps1' -Force
+          $status = @(git -C baseline-source status --porcelain)
+          if ($status.Count -ne 1 -or $status[0] -notmatch 'scripts/lfea-caesar-accdb-export\.ps1$') { throw "Exporter custody violation: $($status -join '; ')" }
+      - name: Add replay and sealed-frame evidence only
+        shell: pwsh
+        run: |
+          node scripts/lfea-m047-instrument-baseline-replay.mjs --source baseline-source/src/core/fea-benchmarks/caesar-accdb-linear-solve.js --manifest artifacts/m047/I013/replay-instrumentation.json
+          node scripts/lfea-m047-instrument-baseline-frame-record.mjs --source baseline-source/src/core/fea-benchmarks/caesar-accdb-linear-solve.js
+          $status = @(git -C baseline-source status --porcelain)
+          $exporter = @($status | Where-Object { $_ -match 'scripts/lfea-caesar-accdb-export\.ps1$' }).Count -eq 1
+          $ledger = @($status | Where-Object { $_ -match 'src/core/fea-benchmarks/caesar-accdb-linear-solve\.js$' }).Count -eq 1
+          if ($status.Count -ne 2 -or -not $exporter -or -not $ledger) { throw "Evidence custody violation: $($status -join '; ')" }
+      - name: Reproduce original baseline mechanics
+        shell: pwsh
+        run: |
+          node baseline-source/scripts/lfea-caesar-accdb-benchmark.mjs `
+            --accdb "$env:BM4NL_ACCDB" `
+            --profile baseline-source/benchmarks/LFEA/CAESAR_ACCDB/bm4nl-l19-l20-linear-solve.profile.json `
+            --solve-linear true `
+            --actual-out artifacts/m047/I013/baseline-actual.json `
+            --out artifacts/m047/I013/baseline-benchmark.json
+      - name: Run I013 source4 Timoshenko replay
+        shell: pwsh
+        run: |
+          node scripts/lfea-m047-source4-shear-replay.mjs `
+            --report artifacts/m047/I013/baseline-benchmark.json `
+            --out artifacts/m047/I013/source4-shear-replay.json
+      - name: Summarize I013
+        shell: pwsh
+        run: |
+          $r = Get-Content 'artifacts/m047/I013/source4-shear-replay.json' -Raw | ConvertFrom-Json
+          Add-Content $env:GITHUB_STEP_SUMMARY '# M047 I013 source-4 shear replay'
+          Add-Content $env:GITHUB_STEP_SUMMARY "- Evidence: ``$($r.semanticHash)``"
+          foreach ($caseId in @('L19','L20')) {
+            $c = $r.cases.$caseId
+            Add-Content $env:GITHUB_STEP_SUMMARY "- $($caseId): transverse RMS $($c.summary.baselineTransverseRmsResidual) -> $($c.summary.timoshenkoTransverseRmsResidual); max $($c.summary.baselineTransverseMaxAbsResidual) -> $($c.summary.timoshenkoTransverseMaxAbsResidual); phiXY=$($c.frame.diagnostic.phiXY)"
+          }
+      - name: Retain I013 evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: m047-i013-source4-shear-replay-${{ github.sha }}
+          path: artifacts/m047/I013/**
+          if-no-files-found: error
+          retention-days: 90

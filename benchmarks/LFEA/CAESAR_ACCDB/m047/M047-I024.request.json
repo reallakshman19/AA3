@@ -39,21 +39,51 @@
     "GRAVITY MASS AUTHORITY",
     "TOLERANCES"
   ],
-  "predictedSignature": [
-    "Candidate must retain the exact accepted I015 solver-file SHA and patch only reducer-condensation.js in the frozen mechanics checkout.",
-    "A uniform ten-cylinder reducer must Schur-condense to the same 12x12 stiffness as one direct full-length Timoshenko frame with the same section/material/kappa.",
-    "For that uniform reducer, condensed gravity and thermal vectors must match the direct full-length consistent-load and thermal initial-strain vectors, proving stiffness/load ownership is coherent.",
-    "The four real reducer source IDs must remain 11,16,67,75 in both L19 and L20, with 12/12 bend and unchanged tee authority custody.",
-    "Locked system A/B must preserve identical CAESAR reference rows and target-node action/equilibrium closure.",
-    "Acceptance requires no new L19 restraint failure and no unexplained aggregate regression; I019 sources 9-11 MZ and I020 bend-side source44/node20390 remain explicit sentinels.",
-    "No benchmark fitting, tolerance change, thermal coefficient change, tee change, bend change, or production solver edit is permitted."
-  ],
-  "changedPaths": [
-    "scripts/lfea-m047-apply-reducer-timoshenko-candidate.mjs",
-    "scripts/lfea-m047-reducer-timoshenko-candidate-check.mjs",
-    ".github/workflows/m047-bm4nl-i024-reducer-ab.yml"
-  ],
   "mechanicsDelta": "Runtime reducer qualification candidate only: accepted I015 ordinary FRAME mechanics are retained while the reducer ten-cylinder internal beam stiffness and consistent-load interpolation use the same governed Timoshenko shear parameters before the existing stiffness/load Schur condensation.",
-  "verdict": "PENDING",
-  "decisionReason": "Await exact-head locked Windows I024 reducer A/B evidence."
+  "verdict": "REJECTED",
+  "decisionReason": "Exact-head run 31319146826 completed successfully. The dedicated reducer ownership gate passed: the frozen frame/reducer/solver/recovery qualification passed; the I024 uniform ten-cylinder proof established coherent Timoshenko stiffness plus consistent gravity and axial thermal-vector Schur ownership; the real candidate retained exactly four reducer sources 11,16,67,75, 12/12 bends, unchanged tee authority, identical CAESAR references, and target action/equilibrium closure at numerical roundoff. System promotion nevertheless fails the M047 no-new-L19-restraint gate. L19 node 20390 FZ moves from accepted-I015 9.9613% to 10.1006%, creating one restraint failure; node 20090 FY changes only marginally, 8.5422% to 8.5226%. L19 displacement/rotation threshold failures improve 66 -> 64, but RMSnorm slightly worsens; source-action count stays 23 and RMSnorm slightly worsens. The carried I019 sources 9-11 MZ residuals all worsen slightly rather than resolving. L20 creates a new node 21470 FY failure at 10.0244%, restraint failures 6 -> 7, source-action failures 134 -> 137, and all three aggregate RMS metrics worsen. Therefore reducer stiffness/load Schur ownership is mechanically coherent, but an isolated reducer transverse-shear cutover is not accepted as final CAESAR-compatible system architecture. No production reducer cutover is authorized.",
+  "executionEvidence": {
+    "orchestrationHeadSha": "b328a5d2041f9ee9813d1a4805b587a6ca9eadc2",
+    "workflowRunId": 31319146826,
+    "workflowConclusion": "success",
+    "artifactId": 9039677879,
+    "artifactSha256": "6145a42d7c8fb49f7b8ab607e7883abe9fde98148435c66dc8ace420fa8505e0",
+    "semanticHash": "fnv1a64:545cf6a50b595d0b",
+    "originalReducerSha256": "a2b9db93f6beee4376971ce212ece3879c5afb349561a6a796e40c3869936762",
+    "candidateReducerSha256": "0c138b0bc029e3ff4736f384d5b3f4e5217fe1ae47c551d391db1d3f79356178",
+    "targetActionSumResidualAbsMax": 0,
+    "targetEquilibriumResidualAbsMax": 6.821210263296962e-13
+  },
+  "observedResult": {
+    "ownershipQualification": {
+      "uniformTenCylinderTimoshenkoStiffnessEquivalence": "PASS",
+      "uniformConsistentGravityVectorEquivalence": "PASS",
+      "uniformAxialThermalInitialStrainVectorEquivalence": "PASS",
+      "reducerSourceIds": ["11", "16", "67", "75"],
+      "bendPointerCount": 12,
+      "teeAuthorityChanged": false
+    },
+    "L19": {
+      "restraintFailures": "0 -> 1",
+      "restraintRmsNormalizedError": "0.021778551450530564 -> 0.022035954930043403",
+      "node20090FYRelativeError": "0.08542188461083092 -> 0.08522562837311687",
+      "newRestraintFailure": "node 20390 FZ: 0.09961259044390637 -> 0.10100596739458709",
+      "displacementRotationFailures": "66 -> 64",
+      "displacementRotationRmsNormalizedError": "0.3463907572374756 -> 0.34791808578316824",
+      "sourceEndActionFailures": "23 -> 23",
+      "sourceEndActionRmsNormalizedError": "0.05303530122813788 -> 0.05307803187418707",
+      "i019Sources9To11Mz": "all six remain failures and each relative error worsens slightly",
+      "source44Mz": "remains below threshold; FROM MZ 0.0736794 -> 0.0762878, TO MZ 0.0154821 -> 0.0133314"
+    },
+    "L20": {
+      "restraintFailures": "6 -> 7",
+      "restraintRmsNormalizedError": "0.03825058747833576 -> 0.038300604465675014",
+      "newRestraintFailure": "node 21470 FY: 0.09838576834011409 -> 0.1002435784864336",
+      "displacementRotationFailures": "90 -> 90",
+      "displacementRotationRmsNormalizedError": "0.2568590341983296 -> 0.2584673863010444",
+      "sourceEndActionFailures": "134 -> 137",
+      "sourceEndActionRmsNormalizedError": "0.1497606159392834 -> 0.1520997827478979"
+    }
+  },
+  "architecturalConclusion": "Reducer internal-beam stiffness and load-vector Schur ownership is qualified as a coherent implementation mechanism. The system result still exhibits the same partial-constitutive-boundary behavior seen in I021-I023, so the next step must not stack isolated rejected component cutovers. The common flexible-pipe constitutive law and special-component corrections must be qualified as one coherent ownership architecture, with node20390/source44 and I019 sources9-11 retained as sentinels."
 }

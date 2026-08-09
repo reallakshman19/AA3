@@ -116,6 +116,34 @@ jobs:
           path.write_text(text.replace(old, new))
           PY
 
+      - name: Derive missing CAESAR E36 source actions from junction equilibrium
+        shell: bash
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          path = Path('scripts/lfea-issue947-e36-production-descendant-condensation-audit.mjs')
+          text = path.read_text()
+          old = "const caesarSourceAction = sourceAction(referenceRows, sourceRow);"
+          new = "const caesarReference = deriveCaesarE36SourceAction(referenceRows, pkg);\nconst caesarSourceAction = caesarReference.action;"
+          count = text.count(old)
+          if count != 1:
+              raise SystemExit(f'Expected exactly one direct E36 reference lookup; found {count}.')
+          text = text.replace(old, new)
+          output_old = "  referenceUsage: 'DIAGNOSTIC_ONLY_NO_PARAMETER_FIT_NO_REFERENCE_MUTATION',"
+          output_new = "  referenceUsage: 'DIAGNOSTIC_ONLY_NO_PARAMETER_FIT_NO_REFERENCE_MUTATION',\n  referenceDerivation: caesarReference,"
+          count = text.count(output_old)
+          if count != 1:
+              raise SystemExit(f'Expected exactly one referenceUsage output anchor; found {count}.')
+          text = text.replace(output_old, output_new)
+          helper_anchor = "function actionScaleVector(reference, tolerances) {"
+          helper = """function deriveCaesarE36SourceAction(rows, pkg) {\n  const e17 = sourceAction(rows, requireSourceRow(pkg, '17'));\n  const e18 = sourceAction(rows, requireSourceRow(pkg, '18'));\n  const e37 = sourceAction(rows, requireSourceRow(pkg, '37'));\n  const e17To = e17.slice(6, 12);\n  const e18From = e18.slice(0, 6);\n  const e37From = e37.slice(0, 6);\n  const from = e17To.map((value, index) => -(value + e18From[index]));\n  const to = e37From.map((value) => -value);\n  return {\n    rule: 'E36_FROM_EQUALS_NEGATIVE_E17_TO_PLUS_E18_FROM_AT_NODE_20295_AND_E36_TO_EQUALS_NEGATIVE_E37_FROM_AT_NODE_21430',\n    source: 'PINNED_L19_JUNCTION_EQUILIBRIUM_NO_DIRECT_E36_REFERENCE_ROW',\n    node20295: { e17To, e18From, derivedE36From: from },\n    node21430: { e37From, derivedE36To: to },\n    action: [...from, ...to],\n  };\n}\n\n"""
+          count = text.count(helper_anchor)
+          if count != 1:
+              raise SystemExit(f'Expected exactly one actionScaleVector helper anchor; found {count}.')
+          text = text.replace(helper_anchor, helper + helper_anchor)
+          path.write_text(text)
+          PY
+
       - name: Run E36 production descendant condensation audit
         run: |
           mkdir -p .work/out

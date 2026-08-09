@@ -144,6 +144,21 @@ jobs:
           path.write_text(text)
           PY
 
+      - name: Align flattened condensed stiffness decomposition helper
+        shell: bash
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          path = Path('scripts/lfea-issue947-e36-production-descendant-condensation-audit.mjs')
+          text = path.read_text()
+          old = "const stiffnessAction = multiplyVector(condensed.stiffness, caesarDisplacement);"
+          new = "const stiffnessAction = multiplyFlat12(condensed.stiffness, caesarDisplacement);"
+          count = text.count(old)
+          if count != 1:
+              raise SystemExit(f'Expected exactly one flattened stiffness decomposition call; found {count}.')
+          path.write_text(text.replace(old, new))
+          PY
+
       - name: Run E36 production descendant condensation audit
         run: |
           mkdir -p .work/out

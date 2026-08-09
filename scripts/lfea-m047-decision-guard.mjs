@@ -3,6 +3,7 @@
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
+import { fileURLToPath } from 'node:url';
 
 const LOCKED_ACCDB_SHA256 = '85d39463296e569da811d8572e2eff680b858097f76fdf0f47d1755f0b161c21';
 
@@ -128,7 +129,7 @@ function parseArguments(argv) {
   return resolve(argv[1]);
 }
 
-if (process.argv[1] && resolve(process.argv[1]) === resolve(import.meta.filename ?? '')) {
+if (process.argv[1] && resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {
   try {
     const path = parseArguments(process.argv.slice(2));
     const evidence = JSON.parse(readFileSync(path, 'utf8'));

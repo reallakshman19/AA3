@@ -89,6 +89,26 @@ export function getLfeaPreflightPhase1ComponentOrdinal(store, targetId) {
   return ordinal === undefined ? null : ordinal;
 }
 
+/**
+ * Resolve a component's stable parent-line identity from the compressed
+ * adjacency offsets. Parent identity is derived only for requested components;
+ * the index does not retain a second million-entry parent-string array.
+ */
+export function getLfeaPreflightPhase1ComponentParentLineTargetId(store, lineIndex, targetId) {
+  const state = requireStore(store);
+  if (store.lineIndexStructuralHash !== lineIndex.structuralHash) {
+    throw componentIndexError('E_P06_COMPONENT_INDEX_PARENT_STALE', 'Phase-1 component index no longer matches the line index.');
+  }
+  const canonicalOrdinal = state.componentOrdinalById.get(String(targetId));
+  if (canonicalOrdinal === undefined) return null;
+  const lineOrdinal = findParentLineOrdinal(state.offsets, canonicalOrdinal);
+  const lineTargetId = lineIndex.targetIds?.[lineOrdinal] ?? null;
+  if (lineTargetId === null) {
+    throw componentIndexError('E_P06_COMPONENT_PARENT_UNKNOWN', `Component ${String(targetId)} has no indexed parent line identity.`);
+  }
+  return lineTargetId;
+}
+
 export function getLfeaPreflightPhase1ComponentsForLine(store, lineIndex, lineTargetId, start, count) {
   const state = requireStore(store);
   if (store.lineIndexStructuralHash !== lineIndex.structuralHash) {
@@ -121,6 +141,22 @@ export function getLfeaPreflightPhase1ComponentSourceOrdinal(store, targetId) {
   const state = requireStore(store);
   const ordinal = state.componentOrdinalById.get(String(targetId));
   return ordinal === undefined ? null : state.sourceOrdinals[ordinal];
+}
+
+function findParentLineOrdinal(offsets, componentOrdinal) {
+  let low = 0;
+  let high = offsets.length - 2;
+  while (low <= high) {
+    const middle = low + Math.floor((high - low) / 2);
+    if (componentOrdinal < offsets[middle]) {
+      high = middle - 1;
+    } else if (componentOrdinal >= offsets[middle + 1]) {
+      low = middle + 1;
+    } else {
+      return middle;
+    }
+  }
+  throw componentIndexError('E_P06_COMPONENT_PARENT_UNKNOWN', `Canonical component ordinal ${componentOrdinal} has no parent line bucket.`);
 }
 
 function requireInput(value) {

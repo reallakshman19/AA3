@@ -204,11 +204,11 @@ function oneHolePolygon() {
 }
 function twoHolePolygons() {
   return [[
-    { u: -50, v: 40 }, { u: -50, v: 70 },
+    { u: -38, v: 40 }, { u: -38, v: 70 },
     { u: -20, v: 70 }, { u: -20, v: 40 },
   ], [
     { u: 20, v: 40 }, { u: 20, v: 70 },
-    { u: 50, v: 70 }, { u: 50, v: 40 },
+    { u: 38, v: 70 }, { u: 38, v: 40 },
   ]];
 }
 function topologyWithHoles(label, holes) {

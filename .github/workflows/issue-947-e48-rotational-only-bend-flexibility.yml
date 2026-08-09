@@ -1,0 +1,201 @@
+name: Issue 947 E48 rotational-only bend flexibility audit
+
+on:
+  push:
+    branches:
+      - codex/issue-947-bm4nl-qualification
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  actions: read
+
+jobs:
+  audit:
+    if: "${{ github.event_name == 'workflow_dispatch' || github.event.head_commit.message == 'ci(issue947): run E48 rotational-only bend flexibility audit' }}"
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Checkout qualification branch
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Download pinned canonical BM4_NL package
+        uses: actions/download-artifact@v4
+        with:
+          name: issue-947-bm4nl-qualification
+          path: .work/package
+          github-token: ${{ github.token }}
+          repository: reallaksh19/Advanced_Analysis
+          run-id: 31314047095
+
+      - name: Expose read-only exact production mechanics
+        run: python scripts/lfea-issue947-expose-accdb-case-mechanics.py
+
+      - name: Correct diagnostic restraint custody
+        shell: bash
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          path = Path('scripts/lfea-issue947-bend-descendant-condensation-audit.mjs')
+          text = path.read_text()
+          old = "const restraintCount = restraintRows.filter((row) => String(row.NODE ?? '') === nodeId).length;"
+          new = "const restraintCount = restraintRows.filter((row) => String(row.NODE_NUM ?? '') === nodeId).length;"
+          if text.count(old) == 1:
+              path.write_text(text.replace(old, new))
+          elif text.count(new) != 1:
+              raise SystemExit('Unable to establish NODE_NUM restraint custody in bend diagnostic.')
+          PY
+
+      - name: Run current E48 baseline
+        run: |
+          mkdir -p .work/out
+          node scripts/lfea-issue947-bend-descendant-condensation-audit.mjs \
+            --package .work/package/bm4nl-canonical-package.json \
+            --source-element 48 \
+            --out .work/out/e48-current-ei-over-k.json
+
+      - name: Apply Version-14 smooth-90 factor as rotational-only end compliance on E48
+        shell: bash
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          import hashlib, json
+          path = Path('src/core/fea-benchmarks/caesar-accdb-linear-solve.js')
+          text = path.read_text()
+          before = hashlib.sha256(text.encode()).hexdigest()
+
+          # 1) Select the already-qualified Version-14 B31J smooth-90 1.3/h factor for E48 only.
+          old = "        smooth90FlexibilityCorrection: input.solveProfile.b31jSmooth90FlexibilityCorrection.enabled,"
+          new = "        smooth90FlexibilityCorrection: input.solveProfile.b31jSmooth90FlexibilityCorrection.enabled || pointer === 10,"
+          if text.count(old) != 1:
+              raise SystemExit(f'Expected one smooth90 selection site; found {text.count(old)}.')
+          text = text.replace(old, new)
+
+          # 2) On E48 arc chords, retain the physical frame stiffness and pass an exact end-spring declaration.
+          old = """      effectiveLocalStiffness: componentEntry.effectiveLocalStiffness,\n      effectiveGlobalStiffness: componentEntry.effectiveGlobalStiffness,\n      teeModifier: null,"""
+          new = """      effectiveLocalStiffness: sourceElementId === '48'\n        ? componentEntry.frameElement.localStiffness\n        : componentEntry.effectiveLocalStiffness,\n      effectiveGlobalStiffness: sourceElementId === '48'\n        ? componentEntry.frameElement.globalStiffness\n        : componentEntry.effectiveGlobalStiffness,\n      rotationalBendFlexibility: sourceElementId === '48' && (index === 0 || index === bend.component.elements.length - 1)\n        ? {\n            end: index === 0 ? 'I' : 'J',\n            factor: bend.component.flexibility.factor,\n            arcLength: bend.component.geometry.arcLength,\n          }\n        : null,\n      teeModifier: null,"""
+          if text.count(old) != 1:
+              raise SystemExit(f'Expected one bend-arc stiffness site; found {text.count(old)}.')
+          text = text.replace(old, new)
+
+          # 3) Condense RY/RZ spring DOFs together with gravity and initial-strain vectors.
+          old = """  const baseEffectiveLocalStiffness = input.effectiveLocalStiffness ?? frame.localStiffness;\n  const bourdon = input.caseMode.pressure"""
+          new = """  const baseEffectiveLocalStiffness = input.effectiveLocalStiffness ?? frame.localStiffness;\n  const bourdon = input.caseMode.pressure"""
+          if text.count(old) != 1:
+              raise SystemExit(f'Expected one base stiffness anchor; found {text.count(old)}.')
+
+          old2 = """  const baseInitialLocal = bourdon === null\n    ? axialInitialLocal\n    : add(axialInitialLocal, bourdon.initialLocal);\n  const condensed = condenseTeeEndConditions(\n    baseEffectiveLocalStiffness,\n    baseEquivalentLocal,\n    baseInitialLocal,\n    teeModifier,\n  );"""
+          new2 = """  const baseInitialLocal = bourdon === null\n    ? axialInitialLocal\n    : add(axialInitialLocal, bourdon.initialLocal);\n  const bendCondensed = condenseRotationalBendFlexibility(\n    baseEffectiveLocalStiffness,\n    baseEquivalentLocal,\n    baseInitialLocal,\n    frame,\n    input.rotationalBendFlexibility ?? null,\n  );\n  const condensed = condenseTeeEndConditions(\n    bendCondensed.matrix,\n    bendCondensed.equivalentLocal,\n    bendCondensed.initialLocal,\n    teeModifier,\n  );"""
+          if text.count(old2) != 1:
+              raise SystemExit(f'Expected one load-condensation site; found {text.count(old2)}.')
+          text = text.replace(old2, new2)
+
+          anchor = "\nfunction condenseTeeEndConditions(localStiffness, equivalentLocal, initialLocal, teeModifier) {"
+          helper = r'''
+
+function condenseRotationalBendFlexibility(localStiffness, equivalentLocal, initialLocal, frame, declaration) {
+  if (declaration === null) return { matrix: localStiffness, equivalentLocal, initialLocal };
+  const k = Number(declaration.factor);
+  const arcLength = Number(declaration.arcLength);
+  if (!(k > 1) || !(arcLength > 0)) throw new TypeError('Rotational bend flexibility requires k>1 and positive arc length.');
+  const bendingRigidity = frame.material.elasticModulus * frame.section.secondMomentY;
+  const stiffness = 2 * bendingRigidity / ((k - 1) * arcLength);
+  const entries = ['RY', 'RZ'].map((dof) => ({
+    index: elementDofIndex(declaration.end, dof),
+    stiffness,
+  }));
+  const result = condenseEndConditions(
+    localStiffness,
+    [equivalentLocal, initialLocal],
+    entries,
+    frameProfile().releaseSingularityTolerance.value,
+  );
+  return {
+    matrix: result.matrix,
+    equivalentLocal: result.vectors[0],
+    initialLocal: result.vectors[1],
+  };
+}
+'''
+          if text.count(anchor) != 1:
+              raise SystemExit(f'Expected one tee-condensation anchor; found {text.count(anchor)}.')
+          text = text.replace(anchor, helper + anchor)
+          path.write_text(text)
+
+          Path('.work/issue947-e48-rotational-only-source-patch.json').write_text(json.dumps({
+              'schema': 'lfea-issue947-diagnostic-patch/v1',
+              'scope': 'DIAGNOSTIC_ONLY_E48_ROTATIONAL_BEND_FLEXIBILITY',
+              'productionSourceChanged': False,
+              'sourceElementId': '48',
+              'bendPtr': 10,
+              'authorityFactor': 'CAESAR_II_14_00_B31J_SMOOTH_90_1_3_OVER_H',
+              'springComplianceEquation': '1/KI + 1/KJ = (k-1)*Larc/(EI); KI=KJ=2EI/((k-1)Larc)',
+              'springDofs': ['RY','RZ'],
+              'translationAndTorsion': 'PHYSICAL_ARC_STIFFNESS_UNMODIFIED',
+              'beforeSha256': before,
+              'afterSha256': hashlib.sha256(text.encode()).hexdigest(),
+          }, indent=2) + '\n')
+          PY
+
+      - name: Run rotational-only E48 candidate
+        run: |
+          node scripts/lfea-issue947-bend-descendant-condensation-audit.mjs \
+            --package .work/package/bm4nl-canonical-package.json \
+            --source-element 48 \
+            --out .work/out/e48-rotational-only.json
+
+      - name: Classify E48 formulation A-B
+        shell: bash
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          import json
+          out = Path('.work/out')
+          baseline = json.loads((out / 'e48-current-ei-over-k.json').read_text())
+          candidate = json.loads((out / 'e48-rotational-only.json').read_text())
+          def m(value):
+              c = value['caesarInjection']
+              return {
+                  'classification': value['classification'],
+                  'productionParityMaxAbs': value['productionParity']['maxAbsResidual'],
+                  'normalizedResidualL2': c['normalizedResidualL2'],
+                  'maxAbsNormalizedResidual': c['maxAbsNormalizedResidual'],
+                  'governingComponent': c['governingComponent'],
+                  'normalizedResidual': c['normalizedResidual'],
+                  'definitelyFailingComponents': c['rotationResolutionAssessment']['definitelyFailingComponents'],
+              }
+          b, c = m(baseline), m(candidate)
+          summary = {
+              'schema': 'lfea-issue947-e48-rotational-only-bend-flexibility-ab/v1',
+              'issue': 947,
+              'caseId': 'L19',
+              'sourceElementId': '48',
+              'sourceAccdbSha256': '85d39463296e569da811d8572e2eff680b858097f76fdf0f47d1755f0b161c21',
+              'baseline': b,
+              'candidate': c,
+              'deltaNormalizedResidualL2': c['normalizedResidualL2'] - b['normalizedResidualL2'],
+              'deltaMaxAbsNormalizedResidual': c['maxAbsNormalizedResidual'] - b['maxAbsNormalizedResidual'],
+              'classification': 'ROTATIONAL_ONLY_FORMULATION_SUPPORTED_FOR_NEXT_CROSS_BEND_GATE' if c['normalizedResidualL2'] < b['normalizedResidualL2'] else 'ROTATIONAL_ONLY_FORMULATION_FALSIFIED_ON_E48',
+              'falsificationRule': 'Reject if exact candidate production-descendant condensation fails its own parity, or if the full E48 normalized source-action residual vector does not improve versus the current EI/k arc formulation. No spring stiffness is fitted: it is fixed by k, Larc and EI.',
+          }
+          if c['productionParityMaxAbs'] > 1e-3:
+              summary['classification'] = 'ROTATIONAL_ONLY_DIAGNOSTIC_INVALID_PRODUCTION_PARITY_FAILED'
+          (out / 'e48-rotational-only-summary.json').write_text(json.dumps(summary, indent=2) + '\n')
+          print(json.dumps(summary, indent=2))
+          PY
+
+      - name: Upload E48 formulation evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: issue-947-e48-rotational-only-bend-flexibility
+          if-no-files-found: error
+          path: |
+            .work/out/e48-*.json
+            .work/issue947-e48-rotational-only-source-patch.json
+            .work/issue947-accdb-case-mechanics-inspection-patch.json

@@ -13,6 +13,7 @@ const DECLARED_MM_XML = fullInputXml({ withUnits: true });
 const NO_UNITS_GEOMETRY_XML = `<PIPINGMODEL JOBNAME="P07-NO-UNITS">
   <PIPINGELEMENT FROM_NODE="10" TO_NODE="20" DELTA_X="1000" DELTA_Y="0" DELTA_Z="0"/>
 </PIPINGMODEL>`;
+const GOVERNED_WEIGHT_CASE_ID = 'IXP-W';
 
 const results = [];
 
@@ -37,12 +38,12 @@ const declaredIntake = createLinearPipingInputXmlIntake({
 }, {
   fallbackUnit: 'in',
   requestedProfileId: 'STRICT_INPUTXML_LINEAR_STATIC_V1',
-  requestedCaseIds: ['W'],
+  requestedCaseIds: [GOVERNED_WEIGHT_CASE_ID],
 });
 assert.equal(declaredIntake.unitAuthority.declared, true);
 assert.equal(declaredIntake.unitAuthority.sourceUnit, 'mm');
 assert.equal(declaredIntake.ingestionOptions.unit, 'mm');
-assert.equal(declaredIntake.requestedCaseIds[0], 'W');
+assert.equal(declaredIntake.requestedCaseIds[0], GOVERNED_WEIGHT_CASE_ID);
 assert.match(declaredIntake.inputXmlSource.semanticHash, /^fnv1a64:[0-9a-f]{16}$/u);
 assert.match(declaredIntake.contentSha256, /^[0-9a-f]{64}$/u);
 assert.equal(
@@ -56,6 +57,7 @@ results.push({
   statement: 'Declared file unit overrides a supplied fallback and is sealed with source SHA-256 custody.',
   contentSha256: declaredIntake.contentSha256,
   sourceSemanticHash: declaredIntake.inputXmlSource.semanticHash,
+  requestedPhysicalCaseId: GOVERNED_WEIGHT_CASE_ID,
 });
 
 const missingInspection = inspectLinearPipingInputXmlSource({
@@ -110,6 +112,29 @@ results.push({
 });
 
 let preFlight = prepareLinearPipingInputXmlPreFlight(declaredIntake);
+if (preFlight.status === 'BLOCK') {
+  console.error(JSON.stringify({
+    diagnostic: 'P07_NATIVE_PREFLIGHT_BLOCK',
+    requestedCaseIds: preFlight.preparation.requestedCaseIds,
+    availableCaseIds: preFlight.sourceSummary.availableCaseIds,
+    findings: preFlight.preparation.findings
+      .filter((row) => row.disposition === 'BLOCK')
+      .map((row) => ({
+        code: row.code,
+        message: row.message,
+        physicalCaseIds: row.physicalCaseIds,
+        evidence: row.evidence,
+        remediation: row.remediation,
+      })),
+    physicalSummary: preFlight.preparation.physicalPreparation?.summary ?? null,
+    physicalCases: (preFlight.preparation.physicalPreparation?.physicalCases ?? []).map((row) => ({
+      caseId: row.caseId,
+      caseRole: row.caseRole,
+      primitiveIds: row.primitiveIds,
+    })),
+    loadLedger: preFlight.preparation.physicalPreparation?.loadLedger ?? [],
+  }, null, 2));
+}
 assert.notEqual(preFlight.status, 'BLOCK', `Native governed preparation unexpectedly blocked: ${preFlight.preparation.findings
   .filter((row) => row.disposition === 'BLOCK').map((row) => row.code).join(', ')}`);
 assert.equal(preFlight.sourceSummary.fileName, 'P07_declared_mm.xml');
@@ -118,8 +143,8 @@ assert.equal(preFlight.sourceSummary.sourceUnit, 'mm');
 assert.equal(preFlight.sourceSummary.unitDeclared, true);
 assert.equal(preFlight.sourceSummary.nodeCount, 2);
 assert.equal(preFlight.sourceSummary.elementCount, 1);
-assert.ok(preFlight.sourceSummary.availableCaseIds.includes('W'));
-assert.equal(preFlight.preparation.requestedCaseIds.includes('W'), true);
+assert.ok(preFlight.sourceSummary.availableCaseIds.includes(GOVERNED_WEIGHT_CASE_ID));
+assert.equal(preFlight.preparation.requestedCaseIds.includes(GOVERNED_WEIGHT_CASE_ID), true);
 assert.equal(preFlight.preparation.executionBoundary.solverRuntime, 'NOT_CREATED');
 assert.equal(preFlight.preparation.executionBoundary.factorizationHandle, 'NOT_RETAINED');
 if (preFlight.status === 'WARN') {
@@ -131,7 +156,7 @@ if (preFlight.status === 'WARN') {
 }
 assert.equal(preFlight.solveAuthorized, true);
 assert.match(preFlight.authorization.semanticHash, /^fnv1a64:[0-9a-f]{16}$/u);
-assert.equal(preFlight.authorization.authorizedPhysicalCaseIds.includes('W'), true);
+assert.equal(preFlight.authorization.authorizedPhysicalCaseIds.includes(GOVERNED_WEIGHT_CASE_ID), true);
 results.push({
   id: 'P07-INTAKE-06',
   status: 'PASS',
@@ -147,7 +172,7 @@ const repeated = createLinearPipingInputXmlIntake({
 }, {
   fallbackUnit: 'in',
   requestedProfileId: 'STRICT_INPUTXML_LINEAR_STATIC_V1',
-  requestedCaseIds: ['W'],
+  requestedCaseIds: [GOVERNED_WEIGHT_CASE_ID],
 });
 assert.equal(JSON.stringify(repeated), JSON.stringify(declaredIntake));
 results.push({

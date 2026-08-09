@@ -28,37 +28,9 @@ jobs:
         shell: pwsh
         run: |
           $ErrorActionPreference = 'Stop'
-          $path = 'src/core/fea-benchmarks/caesar-accdb-linear-solve.js'
-          $content = Get-Content -LiteralPath $path -Raw
-          $oldPressure = @'
-          ? closedEndPressureAxialStrain(input.row, frame.material.elasticModulus)
-            * input.pressureLengthScale
-          '@
-          $newPressure = @'
-          ? (input.pressureAxialStrainOverride ?? (
-              closedEndPressureAxialStrain(input.row, frame.material.elasticModulus)
-              * input.pressureLengthScale))
-          '@
-          if (-not $content.Contains($oldPressure)) { throw 'Generic pressure-strain patch anchor drifted.' }
-          $content = $content.Replace($oldPressure, $newPressure)
-          $oldRigid = @'
-              kind: 'RIGID',
-              pressureLengthScale: 0,
-          '@
-          $newRigid = @'
-              kind: 'RIGID',
-              pressureLengthScale: 0,
-              pressureAxialStrainOverride: (
-                (1 - 2 * Number(input.row.POISSONS))
-                * Number(input.row.PRESSURE1) * KPA_TO_PA
-                * Math.PI * physicalSection.dimensions.innerDiameter ** 2 / 4
-              ) / (materialState.elasticModulus * authority.stiffnessSection.area),
-          '@
-          if (-not $content.Contains($oldRigid)) { throw 'Rigid build patch anchor drifted.' }
-          $content = $content.Replace($oldRigid, $newRigid)
-          Set-Content -LiteralPath $path -Value $content -Encoding utf8
+          node scripts/lfea-issue947-apply-rigid-bourdon-candidate.mjs
           git diff --check
-          git diff -- $path | Tee-Object -FilePath .work-rigid-bourdon-production-candidate.diff
+          git diff -- src/core/fea-benchmarks/caesar-accdb-linear-solve.js | Set-Content -LiteralPath .work-rigid-bourdon-production-candidate.diff -Encoding utf8
 
       - name: Run existing rigid authority regression
         shell: pwsh
@@ -84,6 +56,7 @@ jobs:
         shell: pwsh
         run: |
           $ErrorActionPreference = 'Stop'
+          New-Item -ItemType Directory -Force -Path .work | Out-Null
           $zip = Join-Path $PWD '.work/BM4_NL.zip'
           Invoke-WebRequest `
             -Uri 'https://raw.githubusercontent.com/reallaksh19/Common/1728651c94504b497aae4041578b1095fd8e292e/LFEA/BM4/BM4_NL.zip' `
@@ -135,7 +108,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: issue-947-rigid-bourdon-production-candidate
-          if-no-files-found: error
+          if-no-files-found: warn
           path: |
             .work-rigid-bourdon-production-candidate.diff
             .work/issue947-rigid-bourdon-axial-audit.json

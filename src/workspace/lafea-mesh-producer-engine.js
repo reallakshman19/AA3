@@ -3,31 +3,29 @@
  * mesher (`src/core/lafea-meshing`) is executed for the LAFEA workbench.
  *
  * Responsibilities, and nothing beyond them: discretize the retained analysis
- * geometry's boundary under a declared target size and curvature tolerance,
- * triangulate it (constrained Delaunay, T6 default), optionally recombine to
- * Q8, then weld the per-element physical node positions the core returns into
- * a canonical `lafea-analysis-mesh/v1` node/element list. This module creates
- * no lifecycle evidence and asserts no authority — see
- * `lafea-mesh-producer-binding.js` for the governed envelope.
+ * geometry under a declared target size and curvature tolerance, triangulate
+ * it with deterministic interior Steiner refinement for the unstructured path,
+ * optionally recombine to Q8, then weld the per-element physical node
+ * positions the core returns into a canonical `lafea-analysis-mesh/v1`
+ * node/element list. This module creates no lifecycle evidence and asserts no
+ * authority — see `lafea-mesh-producer-binding.js` for the governed envelope.
  *
- * Three disclosed limitations, surfaced as errors rather than approximated:
- *   - a region with hole loops is rejected (`HOLES_NOT_YET_SUPPORTED` in the
- *     core constrained-Delaunay pass);
+ * Disclosed limitations, surfaced as errors rather than approximated:
+ *   - P1-5 V2 supports true interior refinement but hole loops remain blocked
+ *     until constrained hole-edge recovery is qualified;
  *   - an unstructured Q8 request is rejected unless recombination produces
  *     Q8 for every element; partial T6+Q8 output is never relabelled or passed
  *     downstream against a uniform-Q8 mesh profile;
  *   - splines are outside the core geometry scope and never reach here.
  */
-import {
-  boundaryEdgeLookup,
-  triangulateRegionAsIndexTriples,
-  upgradeToT6,
-} from '../core/lafea-meshing/constrained-delaunay-t6.js';
+import { upgradeToT6 } from '../core/lafea-meshing/constrained-delaunay-t6.js';
 import {
   curveSegmentCount,
   discretizeCurveIntoQuadraticEdges,
-  discretizeLoop,
 } from '../core/lafea-meshing/boundary-discretization.js';
+import {
+  triangulateRefinedRegionAsIndexTriples,
+} from '../core/lafea-meshing/interior-refinement-t6.js';
 import { recombineToQ8 } from '../core/lafea-meshing/q8-recombination.js';
 import { mappedTransfiniteMesh } from '../core/lafea-meshing/mapped-mitc-mesh.js';
 import { arcSweepAngle } from '../core/lafea-geometry/vertex-curve.js';
@@ -38,7 +36,7 @@ import {
 
 export const LAFEA_MESH_PRODUCER_ENGINE_SCHEMA = 'lafea-mesh-producer-engine/v1';
 export const LAFEA_MESH_PRODUCER_ENGINE_ID = 'LAFEA_CORE_MESHER';
-export const LAFEA_MESH_PRODUCER_ENGINE_REVISION = 'LAFEA.10.T6Q8.V1';
+export const LAFEA_MESH_PRODUCER_ENGINE_REVISION = 'LAFEA.10.T6Q8.V2';
 export const LAFEA_MESH_ENGINE_ELEMENT_FAMILIES = Object.freeze(['T3', 'T6', 'Q8']);
 
 /** Planar continuum: two translational degrees of freedom per node. */
@@ -80,7 +78,9 @@ export function generateLafeaAnalysisMesh(adapter, configuration) {
   const mapped = family === 'Q8'
     ? tryMappedMesh(outerLoop, curveById, vertexById, sizing)
     : null;
-  const result = mapped ?? unstructuredMesh(outerLoop, curveById, vertexById, sizing, family);
+  const result = mapped ?? unstructuredMesh(
+    topology, region, outerLoop, curveById, vertexById, sizing, family,
+  );
 
   requireRequestedFamilySatisfied(result.coreElements, family);
   const mesh = weld(result.coreElements, family);
@@ -96,49 +96,46 @@ export function generateLafeaAnalysisMesh(adapter, configuration) {
     elementCount: mesh.elements.length,
     estimatedDofs: mesh.nodes.length * DOFS_PER_NODE,
     boundarySegmentCount: result.boundarySegmentCount,
+    interiorPointCount: result.interiorPointCount ?? 0,
     ...characteristicLengths(mesh),
   });
 }
 
 /**
- * Unstructured fallback: discretize the boundary ring, ear-clip, Lawson-flip,
- * then upgrade to T6 (optionally recombining pairs into Q8).
+ * Unstructured fallback with true interior corner-node insertion. Boundary
+ * discretization still honors the declared target size and analytic curvature,
+ * but it is no longer the only source of mesh vertices: a deterministic
+ * target-driven Steiner lattice is inserted into the domain, then Lawson
+ * flipping restores constrained-Delaunay connectivity while boundary edges
+ * remain fixed.
  *
- * Disclosed limitation: this pass triangulates the boundary polygon only — it
- * inserts no interior (Steiner) points. On a region that is not close to
- * convex-and-well-proportioned, refining the boundary therefore produces more
- * slivers rather than a better mesh, and the profile's own quality gates will
- * report WARNING or BLOCK. That is the honest outcome, not a defect in the
- * gates: interior point insertion / Delaunay refinement is follow-up scope in
- * the core mesher. Prefer the mapped strategy where the topology permits.
- *
- * Q8 recombination inside the core is deliberately partial and may leave T6
- * elements. The public producer does not reinterpret that as a successful Q8
- * mesh: `generateLafeaAnalysisMesh` rejects the request unless every returned
- * element is actually Q8.
+ * Q8 recombination inside the core remains deliberately partial. The public
+ * producer rejects a Q8 request unless every resulting element is actually Q8.
  */
-function unstructuredMesh(outerLoop, curveById, vertexById, sizing, family) {
-  const discretized = discretizeLoop(outerLoop, curveById, vertexById, {
+function unstructuredMesh(topology, region, outerLoop, curveById, vertexById, sizing, family) {
+  const refined = triangulateRefinedRegionAsIndexTriples(topology, region.regionId, {
     targetSize: sizing.targetSize,
     chordErrorLimit: sizing.chordErrorLimit,
     minimumSegmentsByCurveId: minimumSegmentsByCurveId(
       outerLoop, curveById, vertexById, sizing.curvatureRadians,
     ),
   });
-  const lookup = boundaryEdgeLookup(discretized.edges, discretized.ringCorners);
-  const indexTriples = triangulateRegionAsIndexTriples(discretized.ringCorners);
   const coreElements = family === 'Q8'
-    ? recombineToQ8(indexTriples, discretized.ringCorners, lookup, true)
+    ? recombineToQ8(refined, refined.ringCorners, refined.edgesByCornerPair, true)
     : upgradeToT6(
-      indexTriples.points, discretized.ringCorners, indexTriples.triangleTriples, lookup,
+      refined.points,
+      refined.ringCorners,
+      refined.triangleTriples,
+      refined.edgesByCornerPair,
     );
   return {
     strategy: 'CONSTRAINED_DELAUNAY',
     strategyReason: family === 'Q8'
       ? 'MAPPED_TOPOLOGY_NOT_AVAILABLE'
-      : 'UNSTRUCTURED_ELEMENT_FAMILY_REQUESTED',
+      : 'UNSTRUCTURED_INTERIOR_REFINEMENT',
     coreElements,
-    boundarySegmentCount: discretized.edges.length,
+    boundarySegmentCount: refined.boundarySegmentCount,
+    interiorPointCount: refined.interiorPointCount,
   };
 }
 
@@ -181,6 +178,7 @@ function tryMappedMesh(outerLoop, curveById, vertexById, sizing) {
     strategyReason: 'FOUR_SIDED_REGION_MAPPED',
     coreElements: mapped.elements,
     boundarySegmentCount: 2 * (alongCount + acrossCount),
+    interiorPointCount: mapped.interiorPointCount ?? 0,
   };
 }
 

@@ -35,6 +35,31 @@
     ".github/workflows/m047-bm4nl-i020-mz-boundary-trace.yml"
   ],
   "mechanicsDelta": "None. Evidence-only topological/action-delta trace using the frozen accepted I015 system artifact.",
-  "verdict": "PENDING",
-  "decisionReason": "Await exact-head I020 parent-artifact custody run."
+  "verdict": "ACCEPTED",
+  "decisionReason": "Corrected exact-head I020 run 31316412324 completed successfully and reproduced evidence semantic hash fnv1a64:6d699c3c99d2e5f5 from the immutable accepted I015 artifact. Tee-side traversal from node 20160 reaches I015-selected source 8 through tee-owned source 12 and selected source 14 through tee-owned source 13. Reducer-side traversal from node 20230 reaches selected source 44 through bend sources 42 and 43, each carrying BEND_INCOMING_STRAIGHT plus BEND_ARC analysis carriers. Candidate-minus-baseline MZ action closes at every governed physical node below 1e-6 N*m. This establishes that the I019 field lies on deliberate partial-constitutive boundaries between ordinary pipe and special-component mechanics. It supports the one-component-family-at-a-time propagation roadmap but authorizes no production component cutover by itself. The first I020 run 31316302338 is classified HARNESS_ONLY: trace generation succeeded, but the final PowerShell guard sorted source IDs lexicographically; changing the guard to numeric sorting was the only correction.",
+  "executionEvidence": {
+    "orchestrationHeadSha": "e9b795fbbd1161ce0a4a7a847d81a9f18086dfeb",
+    "workflowRunId": 31316412324,
+    "workflowConclusion": "success",
+    "artifactId": 9038873020,
+    "artifactSha256": "0acc6b276631c95843e53f5f92ee6b9c2c40b4762a85f139f2ff0a482c32f2d7",
+    "semanticHash": "fnv1a64:6d699c3c99d2e5f5",
+    "priorHarnessOnlyRun": {
+      "workflowRunId": 31316302338,
+      "artifactId": 9038839946,
+      "artifactSha256": "5f1b89e03adde4d88ec0499fc2202f99393f12770f28249139083b896138ae88",
+      "traceStepConclusion": "success",
+      "failure": "PowerShell Sort-Object treated numeric source IDs as strings in the final guard; no engineering evidence changed."
+    }
+  },
+  "observedResult": {
+    "classification": "I015_PARTIAL_CONSTITUTIVE_BOUNDARY_REDISTRIBUTION",
+    "teeSideNearestSelectedPaths": [
+      "20160 -> source 12 (tee-owned FRAME) -> source 8 (I015-selected FRAME)",
+      "20160 -> source 13 (tee-owned FRAME) -> source 14 (I015-selected FRAME)"
+    ],
+    "reducerBendSideNearestSelectedPath": "20230 -> source 42 (BEND_INCOMING_STRAIGHT+BEND_ARC) -> source 43 (BEND_INCOMING_STRAIGHT+BEND_ARC) -> source 44 (I015-selected FRAME)",
+    "governedNodeDeltaClosureToleranceNm": 0.000001,
+    "productionMechanicsChanged": false
+  }
 }

@@ -2,6 +2,7 @@
 import assert from 'node:assert/strict';
 
 import { canonicalProfile, PROFILE_KINDS } from '../src/core/lafea-profile-contract/index.js';
+import { qualifyLafeaAnalysisMesh } from '../src/workspace/lafea-analysis-mesh-contract.js';
 import {
   LAFEA_SHELL_ANALYSIS_DOMAIN_SCHEMA,
   LAFEA_SHELL_MIDSURFACE_GEOMETRY_SCHEMA,
@@ -51,11 +52,28 @@ for (const testCase of CASES) {
     assert.equal(plan.estimatedDofs, plan.nodeCount * 5,
       `${testCase.caseId} target ${targetElementLength}: 5 DOF/node`);
 
-    const produced = produceLafeaShellAnalysisMesh({
-      midsurfaceEvidence: parent,
-      meshProfile: profile,
-      plan,
-    });
+    const directQuality = qualifyLafeaAnalysisMesh('LAFEA.4', plan.mesh, profile);
+    assert.notEqual(directQuality.worstStatus, 'BLOCK',
+      `${testCase.caseId} target ${targetElementLength}: direct quality BLOCK; `
+      + `minSJ=${directQuality.minimumScaledJacobian}, maxAR=${directQuality.maximumAspectRatio}, `
+      + `blocking=${directQuality.blockingElementIds.join(',')}`);
+    assert.equal(directQuality.blockingElementIds.length, 0,
+      `${testCase.caseId} target ${targetElementLength}: direct blockers`);
+
+    let produced;
+    try {
+      produced = produceLafeaShellAnalysisMesh({
+        midsurfaceEvidence: parent,
+        meshProfile: profile,
+        plan,
+      });
+    } catch (error) {
+      error.message = `${testCase.caseId} target ${targetElementLength}: ${error.message}; `
+        + `direct minSJ=${directQuality.minimumScaledJacobian}, `
+        + `direct maxAR=${directQuality.maximumAspectRatio}, `
+        + `direct blockers=${directQuality.blockingElementIds.join(',')}`;
+      throw error;
+    }
     assert.equal(produced.evidence.qualification, 'PASS',
       `${testCase.caseId} target ${targetElementLength}: qualification`);
     assert.equal(produced.evidence.quality.blockingElementIds.length, 0,

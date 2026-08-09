@@ -1,4 +1,5 @@
 # P2-8 planar shell qualification is a permanent part of this exact-head gate.
+# Exact-head rerun after governed shell-intent scope convergence.
 name: LAFEA meshing exact-head qualification
 
 on:

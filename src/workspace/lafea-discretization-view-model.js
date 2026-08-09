@@ -36,6 +36,11 @@ export function buildLafeaDiscretizationViewModel(stageValue) {
       meshProfileIdentity: custody.meshProfileIdentity,
     })
     : null;
+  const retainedElementFamily = evidence?.meshProfile?.fields?.continuumElement ?? null;
+  const manualRefinementEnabled = capabilities.manualRefinementQualified === true
+    && evidence?.qualification === 'PASS'
+    && ['CURRENT_PASS', 'CURRENT_WARNING'].includes(custody.state)
+    && capabilities.localRefinementElementFamilies.includes(retainedElementFamily);
 
   return freeze({
     schema: LAFEA_DISCRETIZATION_VIEW_MODEL_SCHEMA,
@@ -49,7 +54,13 @@ export function buildLafeaDiscretizationViewModel(stageValue) {
       declaredMode: profile.meshApplicable
         ? (generation.available ? 'AUTOMATIC_MESH' : 'RETAIN_AUTHORIZED_MESH')
         : null,
-      modes: modeOptions(profile.meshApplicable, capabilities, generation),
+      modes: modeOptions(
+        profile.meshApplicable,
+        capabilities,
+        generation,
+        manualRefinementEnabled,
+        retainedElementFamily,
+      ),
       meshProfileHash: stage.analysisMeshProfileHash ?? null,
       retainedProfileIdentity: custody.meshProfileIdentity,
       retainedProfileHash: custody.meshProfileHash,
@@ -81,6 +92,7 @@ export function buildLafeaDiscretizationViewModel(stageValue) {
       meshHash: custody.meshHash,
       meshProfileIdentity: custody.meshProfileIdentity,
       meshProfileHash: custody.meshProfileHash,
+      elementFamily: retainedElementFamily,
       sourceHash: custody.sourceHash,
       canonicalModelHash: custody.canonicalModelHash,
       analysisGeometryHash: custody.analysisGeometryHash,
@@ -99,6 +111,7 @@ export function buildLafeaDiscretizationViewModel(stageValue) {
       meshHash: null,
       meshProfileIdentity: null,
       meshProfileHash: null,
+      elementFamily: null,
       sourceHash: null,
       canonicalModelHash: null,
       analysisGeometryHash: null,
@@ -125,10 +138,11 @@ export function buildLafeaDiscretizationViewModel(stageValue) {
       canRun: custody.usableForRun === true,
       warningReviewRequired: custody.state === 'CURRENT_WARNING',
       automaticMeshEnabled: generation.available,
-      manualRefinementEnabled: capabilities.manualRefinementQualified === true,
+      manualRefinementEnabled,
       canPlanMesh: generation.available,
       canGenerateMesh: generation.available
         && generation.plan?.resourceDisposition !== 'BLOCK',
+      canRefineMesh: manualRefinementEnabled,
     },
   });
 }
@@ -184,7 +198,13 @@ function requireCustody(value, stageId, evidence) {
   });
 }
 
-function modeOptions(applicable, capabilities, generation) {
+function modeOptions(
+  applicable,
+  capabilities,
+  generation,
+  manualRefinementEnabled,
+  retainedElementFamily,
+) {
   if (!applicable) {
     return LAFEA_DISCRETIZATION_MODES.map((mode) => ({
       mode,
@@ -206,12 +226,25 @@ function modeOptions(applicable, capabilities, generation) {
     },
     {
       mode: 'MANUAL_REFINEMENT',
-      enabled: capabilities.manualRefinementQualified === true,
-      reason: capabilities.manualRefinementQualified === true
+      enabled: manualRefinementEnabled,
+      reason: manualRefinementEnabled
         ? null
-        : 'GOVERNED_REFINEMENT_COMMAND_NOT_AVAILABLE',
+        : refinementUnavailableReason(capabilities, retainedElementFamily),
     },
   ];
+}
+
+function refinementUnavailableReason(capabilities, retainedElementFamily) {
+  if (capabilities.manualRefinementQualified !== true) {
+    return 'GOVERNED_REFINEMENT_COMMAND_NOT_AVAILABLE';
+  }
+  if (!retainedElementFamily) return 'RETAINED_ANALYSIS_MESH_REQUIRED';
+  if (!capabilities.localRefinementElementFamilies.includes(retainedElementFamily)) {
+    return retainedElementFamily === 'Q8'
+      ? 'Q8_LOCAL_REFINEMENT_NOT_QUALIFIED'
+      : 'RETAINED_ELEMENT_FAMILY_NOT_QUALIFIED_FOR_LOCAL_REFINEMENT';
+  }
+  return 'RETAINED_ANALYSIS_MESH_NOT_CURRENT_PASS_OR_WARNING';
 }
 
 /**
@@ -243,10 +276,12 @@ function buildGenerationModel(stage, capabilities) {
     producerRef: producerQualified ? LAFEA_MESH_PRODUCER_REF : null,
     governanceRef: producerQualified ? LAFEA_MESH_PRODUCER_GOVERNANCE_REF : null,
     elementFamilies: lafeaMeshProducerElementFamilies(stage.stageId),
+    localRefinementElementFamilies: [...capabilities.localRefinementElementFamilies],
     meshProfileBound: Boolean(meshProfile),
     meshProfileIdentity: meshProfile?.profileIdentity ?? null,
     targetElementLength: meshProfile?.fields.globalTargetSize ?? null,
     declaredElementFamily: meshProfile?.fields.continuumElement ?? null,
+    lengthUnit: stage.retainedAnalysisGeometryEvidence?.geometry?.lengthUnit ?? null,
     plan: stage.lastAnalysisMeshPlan ?? null,
   };
 }

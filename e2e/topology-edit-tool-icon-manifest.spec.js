@@ -177,6 +177,8 @@ test('production icon identity survives real UI states and deactivate/reactivate
     await expect(host.locator('svg[data-topology-edit-icon-key]')).toHaveCount(42);
     await host.locator('[data-action="exit-topology-edit"]').click();
     await expect(page.locator('svg[data-role="topology-edit-icon-sprite"]')).toHaveCount(0);
+    await expect(host).not.toHaveAttribute('data-topology-edit-icon-presentation-status', /.+/);
+    await expect(host).not.toHaveAttribute('data-topology-edit-icon-reference-status', /.+/);
     const staleProbe = await installBrokenProbe(page);
     await page.waitForTimeout(100);
     await expect(staleProbe).toHaveAttribute('href', '#icon-undo-broken');

@@ -1,4 +1,4 @@
-name: agent16-p11-p12-p13-qualification
+name: agent16-p11-p12-p13-p14-qualification
 
 on:
   pull_request:
@@ -7,10 +7,12 @@ on:
       - 'scripts/linear-piping-analysis-consumer-anti-drift-check.mjs'
       - 'scripts/linear-piping-inputxml-source-binding-check.mjs'
       - 'scripts/linear-piping-inputxml-analysis-context-check.mjs'
+      - 'scripts/master-data-containment-check.mjs'
+      - 'tests/master-data-audit-defects.test.js'
       - 'test/lfea-prefea-gateway.test.js'
       - 'src/core/linear-piping-analysis-consumer/**'
+      - 'src/workspace/master-data-standalone-adapter.js'
       - '.github/workflows/agent16-p11-qualification.yml'
-      - '.github/workflows/agent16-p13-antidrift-diagnostic.yml'
 
 permissions:
   contents: read
@@ -44,7 +46,7 @@ jobs:
             case "$changed" in
               scripts/advanced-shell-contract-check.mjs|test/lfea-prefea-gateway.test.js|.github/workflows/agent16-p11-qualification.yml) ;;
               scripts/linear-piping-analysis-consumer-anti-drift-check.mjs|scripts/linear-piping-inputxml-source-binding-check.mjs|scripts/linear-piping-inputxml-analysis-context-check.mjs) ;;
-              .github/workflows/agent16-p13-antidrift-diagnostic.yml) ;;
+              scripts/master-data-containment-check.mjs|tests/master-data-audit-defects.test.js|src/workspace/master-data-standalone-adapter.js) ;;
               src/core/linear-piping-analysis-consumer/inputxml-feature-inventory.js|src/core/linear-piping-analysis-consumer/inputxml-feature-inventory-restraints.js) ;;
               src/core/linear-piping-analysis-consumer/inputxml-linear-governed-solve.js|src/core/linear-piping-analysis-consumer/inputxml-model-health.js) ;;
               src/core/linear-piping-analysis-consumer/inputxml-linear-model-health.js|src/core/linear-piping-analysis-consumer/inputxml-linear-model-health-contract.js) ;;
@@ -57,7 +59,7 @@ jobs:
               src/core/linear-piping-analysis-consumer/inputxml-linear-solve-preparation.js|src/core/linear-piping-analysis-consumer/inputxml-linear-solve-preparation-contract.js) ;;
               src/core/linear-piping-analysis-consumer/inputxml-linear-stiffness-preflight.js|src/core/linear-piping-analysis-consumer/inputxml-linear-stiffness-preflight-contract.js) ;;
               src/core/linear-piping-analysis-consumer/inputxml-linear-structural-preparation.js|src/core/linear-piping-analysis-consumer/inputxml-linear-structural-preparation-contract.js) ;;
-              *) echo "Forbidden changed path for stacked P-11/P-12/P-13 qualification: $changed" >&2; exit 1 ;;
+              *) echo "Forbidden changed path for stacked P-11/P-12/P-13/P-14 qualification: $changed" >&2; exit 1 ;;
             esac
           done < /tmp/agent16-stack-paths.txt
 
@@ -130,6 +132,32 @@ jobs:
             cmp "/tmp/p13-parent-evidence/$artifact" "/tmp/p13-head-evidence/$artifact"
           done
 
+      - name: P-14 delta containment — no active runtime or physics edit
+        shell: bash
+        run: |
+          set -euo pipefail
+          p13_sha='2c8b029ad8bbfd1a1a9e4d5cae6aeb548abd3d67'
+          git diff --name-only "$p13_sha" HEAD > /tmp/p14-paths.txt
+          cat /tmp/p14-paths.txt
+          while IFS= read -r changed; do
+            case "$changed" in
+              scripts/master-data-containment-check.mjs|tests/master-data-audit-defects.test.js|src/workspace/master-data-standalone-adapter.js|.github/workflows/agent16-p11-qualification.yml) ;;
+              *) echo "P-14 changed an active or unqualified path: $changed" >&2; exit 1 ;;
+            esac
+          done < /tmp/p14-paths.txt
+
+      - name: P-14 F-001 through F-007 containment contract
+        run: node scripts/master-data-containment-check.mjs
+
+      - name: P-14 executable audit tests
+        run: node --test tests/master-data-audit-defects.test.js
+
+      - name: P-14 governed empirical consumer regression
+        run: node scripts/authorized-enrichment-consumer-controller-check.mjs
+
+      - name: P-14 governed empirical consumer anti-drift
+        run: node scripts/authorized-enrichment-consumer-controller-anti-drift-check.mjs
+
       - name: Required 1 — strict syntax
         run: npm run syntax:strict
 
@@ -156,6 +184,9 @@ jobs:
             'P-13 hidden-default inventory PASS' \
             'P-13 anti-drift modularity PASS' \
             'P-13 parent/head authority equivalence PASS' \
+            'P-14 F-001..F-007 containment PASS' \
+            'P-14 governed empirical consumer regression PASS' \
+            'P-14 active-runtime delta containment PASS' \
             'npm run syntax:strict PASS' \
             'node scripts/import-check.mjs PASS' \
             'node scripts/run-enrichment-ui-phase0-checks.mjs PASS' \

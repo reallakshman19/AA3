@@ -32,11 +32,18 @@ export const LAFEA_SHELL_MESH_OUTPUT_SCHEMA = 'lafea-shell-mesh-output/v1';
 export const LAFEA_SHELL_MESH_PRODUCER_SCOPE =
   'PLANAR_SINGLE_PATCH_STRAIGHT_BOUNDARY_WITH_NON_NESTED_HOLES_CST_DKT_TRI3_V2';
 export const LAFEA_SHELL_ELEMENT = 'CST_DKT_TRI3_THIN_SHELL_V1';
+export const LAFEA_SHELL_HOLE_MINIMUM_ELEMENTS_ACROSS_LIGAMENT = 2;
 
 /**
  * Deterministic external shell mesher. The local-shell solver remains a pure
  * solver and continues to declare NO_AUTOMATIC_OR_ADAPTIVE_MESHING; this
  * producer executes before canonical shell-model assembly.
+ *
+ * For a hole-bearing patch, the requested global target must permit at least
+ * two nominal element lengths across the narrowest material ligament between
+ * distinct boundary loops. A coarser request is rejected explicitly before
+ * meshing; the producer never relies on post-generation threshold relaxation
+ * or uncontrolled adaptive repair to rescue an under-resolved ligament.
  */
 export function planLafeaShellAnalysisMesh({ midsurfaceEvidence: evidenceValue, meshProfile: profileValue }) {
   const midsurfaceEvidence = validateLafeaShellMidsurfaceEvidence(evidenceValue);
@@ -51,14 +58,17 @@ export function planLafeaShellAnalysisMesh({ midsurfaceEvidence: evidenceValue, 
   requireScope(capability.scopes, stageId);
   requireScope(qualification.authorizedScopes, stageId);
 
-  const triangleQualityRefinementFloor = meshProfile.fields.scaledJacobianBlock;
+  const ligament = shellHoleLigamentQualification(midsurfaceEvidence.geometry);
+  if (ligament && meshProfile.fields.globalTargetSize > ligament.maximumQualifiedTargetElementLength + 1e-12) {
+    fail('LAFEA_SHELL_HOLE_TARGET_TOO_COARSE_FOR_LIGAMENT');
+  }
+
   const generated2d = generateLafeaAnalysisMesh(
     buildLafeaMeshTopology(toPlanarAnalysisGeometry(midsurfaceEvidence.geometry)),
     {
       targetElementLength: meshProfile.fields.globalTargetSize,
       curvatureToleranceDegrees: 15,
       elementFamily: 'T3',
-      minimumTriangleScaledJacobian: triangleQualityRefinementFloor,
     },
   );
   const mesh = mapPlanarMeshToShell(generated2d.mesh, midsurfaceEvidence.geometry, stageId);
@@ -79,7 +89,9 @@ export function planLafeaShellAnalysisMesh({ midsurfaceEvidence: evidenceValue, 
     meshProfileHash: meshProfile.semanticHash,
     elementFamily: LAFEA_SHELL_ELEMENT,
     targetElementLength: meshProfile.fields.globalTargetSize,
-    triangleQualityRefinementFloor,
+    minimumMaterialLigament: ligament?.minimumMaterialLigament ?? null,
+    maximumQualifiedTargetElementLength: ligament?.maximumQualifiedTargetElementLength ?? null,
+    minimumElementsAcrossLigament: ligament ? LAFEA_SHELL_HOLE_MINIMUM_ELEMENTS_ACROSS_LIGAMENT : null,
     lengthUnit: midsurfaceEvidence.geometry.lengthUnit,
     nodeCount: mesh.nodes.length,
     elementCount: mesh.elements.length,
@@ -209,6 +221,63 @@ function mapPlanarMeshToShell(mesh2d, shellGeometry, stageId) {
   });
 }
 
+function shellHoleLigamentQualification(geometry) {
+  const holeLoops = geometry.loops.filter((loop) => loop.role === 'HOLE');
+  if (!holeLoops.length) return null;
+  const outer = geometry.loops.find((loop) => loop.role === 'OUTER');
+  const vertexById = new Map(geometry.vertices.map((vertex) => [vertex.vertexId, vertex]));
+  const segmentById = new Map(geometry.segments.map((segment) => [segment.segmentId, segment]));
+  const loopRows = [outer, ...holeLoops].map((loop) => ({
+    loopId: loop.loopId,
+    role: loop.role,
+    segments: loop.segmentIds.map((segmentId) => segmentById.get(segmentId)),
+  }));
+  let minimumMaterialLigament = Infinity;
+  for (let leftIndex = 0; leftIndex < loopRows.length; leftIndex += 1) {
+    for (let rightIndex = leftIndex + 1; rightIndex < loopRows.length; rightIndex += 1) {
+      for (const left of loopRows[leftIndex].segments) {
+        for (const right of loopRows[rightIndex].segments) {
+          minimumMaterialLigament = Math.min(
+            minimumMaterialLigament,
+            segmentDistance(left, right, vertexById),
+          );
+        }
+      }
+    }
+  }
+  if (!(minimumMaterialLigament > 0) || !Number.isFinite(minimumMaterialLigament)) {
+    fail('LAFEA_SHELL_HOLE_MATERIAL_LIGAMENT_INVALID');
+  }
+  return freeze({
+    minimumMaterialLigament,
+    maximumQualifiedTargetElementLength:
+      minimumMaterialLigament / LAFEA_SHELL_HOLE_MINIMUM_ELEMENTS_ACROSS_LIGAMENT,
+  });
+}
+
+function segmentDistance(left, right, vertexById) {
+  const a = vertexById.get(left.startVertexId);
+  const b = vertexById.get(left.endVertexId);
+  const c = vertexById.get(right.startVertexId);
+  const d = vertexById.get(right.endVertexId);
+  return Math.min(
+    pointSegmentDistance(a, c, d),
+    pointSegmentDistance(b, c, d),
+    pointSegmentDistance(c, a, b),
+    pointSegmentDistance(d, a, b),
+  );
+}
+
+function pointSegmentDistance(point, start, end) {
+  const dx = end.u - start.u;
+  const dy = end.v - start.v;
+  const lengthSquared = dx * dx + dy * dy;
+  if (!(lengthSquared > 0)) return Math.hypot(point.u - start.u, point.v - start.v);
+  const t = Math.max(0, Math.min(1,
+    ((point.u - start.u) * dx + (point.v - start.v) * dy) / lengthSquared));
+  return Math.hypot(point.u - (start.u + t * dx), point.v - (start.v + t * dy));
+}
+
 function requireShellProfile(profile) {
   if (profile.fields.shellElement !== LAFEA_SHELL_ELEMENT) {
     fail('LAFEA_SHELL_MESH_PROFILE_ELEMENT_FAMILY_INVALID');
@@ -229,7 +298,6 @@ function requirePlan(plan, evidence, profile) {
     || plan.analysisGeometryHash !== evidence.analysisGeometryHash
     || plan.meshProfileHash !== profile.semanticHash
     || plan.elementFamily !== LAFEA_SHELL_ELEMENT
-    || plan.triangleQualityRefinementFloor !== profile.fields.scaledJacobianBlock
     || plan.midsurfaceEvidenceHash !== evidence.semanticHash) {
     fail('LAFEA_SHELL_MESH_PLAN_PARENT_MISMATCH');
   }

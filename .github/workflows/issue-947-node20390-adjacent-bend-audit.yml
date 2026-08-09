@@ -1,5 +1,7 @@
 name: Issue 947 node 20390 adjacent bend audit
-# Rerun after restoring the read-only production mechanics inspector.
+# Downstream E25 is independently recoverable; upstream E20 is retained as a
+# fail-closed witness because its FROM boundary touches bend E19, which has no
+# direct pinned source-action row.
 
 on:
   push:
@@ -34,19 +36,20 @@ jobs:
           repository: reallaksh19/Advanced_Analysis
           run-id: 31321930058
 
-      - name: Condense upstream BEND_PTR 3 / source E20
-        run: |
-          node scripts/lfea-issue947-bend-descendant-condensation-audit.mjs \
-            --package .work/package/bm4nl-canonical-package.json \
-            --source-element 20 \
-            --out .work/node20390-e20-bend-condensation.json
-
       - name: Condense downstream BEND_PTR 4 / source E25
         run: |
           node scripts/lfea-issue947-bend-descendant-condensation-audit.mjs \
             --package .work/package/bm4nl-canonical-package.json \
             --source-element 25 \
             --out .work/node20390-e25-bend-condensation.json
+
+      - name: Confirm upstream E20 single-bend custody remains fail-closed
+        continue-on-error: true
+        run: |
+          node scripts/lfea-issue947-bend-descendant-condensation-audit.mjs \
+            --package .work/package/bm4nl-canonical-package.json \
+            --source-element 20 \
+            --out .work/node20390-e20-bend-condensation.json
 
       - name: Upload adjacent-bend evidence
         if: always()

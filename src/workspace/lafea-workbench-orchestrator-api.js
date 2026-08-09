@@ -7,6 +7,12 @@ import {
 export function createLafeaWorkbenchOrchestratorApi(context) {
   const c = requireContext(context);
   const activeStageId = () => c.getRetainedState().activeStageId;
+  const domainFirst = (stageId = activeStageId()) =>
+    c.readStageState(stageId).domainFirstProfileActive === true;
+  const governedV2 = (stageId = activeStageId()) => {
+    const stage = c.readStageState(stageId);
+    return stage.domainFirstProfileActive === true || stage.shellMidsurfaceProfileActive === true;
+  };
   return Object.freeze({
     selectStage: (stageId) => c.delegate('selectStage', [stageId]),
     importDocument: c.importDocument,
@@ -32,17 +38,27 @@ export function createLafeaWorkbenchOrchestratorApi(context) {
     registerLifecycleArtifact: (...args) => c.delegate('registerLifecycleArtifact', args),
     revalidateLifecycleBinding: (...args) => c.delegate('revalidateLifecycleBinding', args),
     exportLifecycle: c.exportLifecycle,
-    validateLafeaAnalysisMeshEvidence: c.mesh.validateLafeaAnalysisMeshEvidence,
+    validateLafeaAnalysisMeshEvidence: (value) => {
+      const stageId = value?.stageId ?? activeStageId();
+      return governedV2(stageId)
+        ? c.meshGeneration.validateEvidence(value)
+        : c.mesh.validateLafeaAnalysisMeshEvidence(value);
+    },
     registerAnalysisMeshEvidence: c.registerAnalysisMeshEvidence,
-    selectRetainedAnalysisMeshEvidence: c.mesh.selectRetainedAnalysisMeshEvidence,
+    selectRetainedAnalysisMeshEvidence: (stageId = activeStageId()) =>
+      governedV2(stageId)
+        ? c.meshGeneration.selectEvidence(stageId)
+        : c.mesh.selectRetainedAnalysisMeshEvidence(stageId),
     buildAnalysisMeshCustodyProjection: c.mesh.buildAnalysisMeshCustodyProjection,
-    exportAnalysisMeshEvidence: c.mesh.exportAnalysisMeshEvidence,
+    exportAnalysisMeshEvidence: (stageId = activeStageId()) =>
+      governedV2(stageId)
+        ? c.meshGeneration.exportEvidence(stageId)
+        : c.mesh.exportAnalysisMeshEvidence(stageId),
     recoverAnalysisMeshEvidence: (value) => {
       const stageId = value?.stageId ?? activeStageId();
-      if (c.readStageState(stageId).domainFirstProfileActive) {
-        throw apiError('LAFEA_DOMAIN_FIRST_ANALYSIS_MESH_REQUIRES_V2_CUSTODY');
-      }
-      return c.mesh.recoverAnalysisMeshEvidence(value);
+      return governedV2(stageId)
+        ? c.recoverAnalysisMeshEvidenceV2(value, stageId)
+        : c.mesh.recoverAnalysisMeshEvidence(value);
     },
     buildPreparationRequest: (caseIds = [], stageId = activeStageId()) => {
       const stage = c.readStageState(stageId);
@@ -73,13 +89,25 @@ export function createLafeaWorkbenchOrchestratorApi(context) {
       const state = result.changed ? c.publish() : c.deriveState();
       return freeze({ ...result, projection: state.stages[stageId].analysisGeometryProjection });
     },
+    registerShellMidsurfaceEvidence: c.registerShellMidsurfaceEvidence,
+    selectRetainedShellMidsurfaceEvidence: (stageId = activeStageId()) =>
+      c.meshGeneration.selectShellMidsurface(stageId),
+    exportShellMidsurfaceEvidence: (stageId = activeStageId()) =>
+      c.meshGeneration.exportShellMidsurface(stageId),
     buildDomainPreparationRequest: (caseIds = [], stageId = activeStageId()) =>
       buildLafeaPreparationRequestV2FromStage(c.readStageState(stageId), caseIds),
-    buildDomainMeshGenerationIntent: (configuration, stageId = activeStageId()) =>
-      buildLafeaMeshGenerationIntentV2FromStage(c.readStageState(stageId), configuration),
+    buildDomainMeshGenerationIntent: (configuration, stageId = activeStageId()) => {
+      if (!domainFirst(stageId)) throw apiError('LAFEA_DOMAIN_MESH_INTENT_REQUIRES_DOMAIN_FIRST_PROFILE');
+      return buildLafeaMeshGenerationIntentV2FromStage(c.readStageState(stageId), configuration);
+    },
     bindAnalysisMeshProfile: c.bindAnalysisMeshProfile,
     planAnalysisMesh: c.planAnalysisMesh,
     generateAnalysisMesh: c.generateAnalysisMesh,
+    refineAnalysisMesh: c.refineAnalysisMesh,
+    validateLafeaAnalysisMeshEvidenceV2: c.meshGeneration.validateEvidence,
+    exportAnalysisMeshEvidenceV2: (stageId = activeStageId()) =>
+      c.meshGeneration.exportEvidence(stageId),
+    recoverAnalysisMeshEvidenceV2: c.recoverAnalysisMeshEvidenceV2,
     selectRetainedAnalysisMeshProfile: (stageId = activeStageId()) =>
       c.meshGeneration.selectMeshProfile(stageId),
     selectRetainedAnalysisMeshEvidenceV2: (stageId = activeStageId()) =>

@@ -42,11 +42,11 @@ const executionPackage = executeLafeaLugPinholePhysicalProblemBatch({
   requestId: 'NB-T6E-C2D-LUG-PINHOLE-001',
   recoveryProfileHash: fixture.hash('NB-T6E-INTEGRATION-POINT-RECOVERY'),
   convergenceRequest: {
-    quantityId: 'PINHOLE_MAX_RETAINED_VON_MISES',
+    quantityId: 'PLANE_STRESS_SIGMA_Z_INVARIANT',
     units: 'MPa',
-    tolerance: 1e-8,
+    tolerance: 1e-12,
     loadCaseId: 'LC1',
-    component: 'VON_MISES',
+    component: 'SIGMA_Z',
     reducer: 'MAXIMUM_SIGNED',
   },
 });

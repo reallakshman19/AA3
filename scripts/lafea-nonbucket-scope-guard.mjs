@@ -16,6 +16,7 @@ const foundationCompiler = read('../src/core/local-load-foundation/compile.js');
 const screeningProduct = read('../src/core/local-attachment-screening/product-assessment.js');
 const lifecycleStore = read('../src/workspace/lafea-lifecycle-workbench-store.js');
 const orchestrator = read('../src/workspace/lafea-workbench-orchestrator-store.js');
+const orchestratorApi = read('../src/workspace/lafea-workbench-orchestrator-api.js');
 const legacyLifecycleAlias = read('../src/workspace/lafea-lifecycle-workbench-store-core.js');
 const legacyMeshAlias = read('../src/workspace/lafea-analysis-mesh-workbench-store.js');
 const registry = read('../src/workspace/lafea-stage-registry.js');
@@ -120,8 +121,9 @@ assert.match(orchestrator, /CALCULATION_ACCEPTED_BY_STAGE_CONTRACT/u);
 assert.match(orchestrator, /RESULT_READY/u);
 assert.match(orchestrator, /CODE_NOT_READY/u);
 assert.match(orchestrator, /RELEASE_NOT_QUALIFIED/u);
-assert.match(orchestrator, /registerAnalysisMeshEvidence/u);
-assert.match(orchestrator, /recoverAnalysisMeshEvidence/u);
+assert.match(orchestratorApi, /registerAnalysisMeshEvidence/u);
+assert.match(orchestratorApi, /recoverAnalysisMeshEvidence/u);
+assert.match(orchestratorApi, /recoverAnalysisMeshEvidenceV2/u);
 assert.doesNotMatch(orchestrator, /RELEASE_QUALIFIED'\s*:/u);
 
 assert.match(registry, /lafea-stage-registry\/v2/u);
@@ -160,6 +162,7 @@ console.log(JSON.stringify({
   analyticalProductEvidenceIntegrated: true,
   analysisMeshCustodyIntegrated: true,
   canonicalOrchestratorInspected: true,
+  publicOrchestratorApiInspected: true,
   compatibilityAliasesAuthorityFree: true,
   finiteFoundationResultantClosure: true,
   screeningApplicabilityStates: ['PASS', 'ESCALATE', 'BLOCKED'],

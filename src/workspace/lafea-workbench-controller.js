@@ -67,8 +67,10 @@ export class LafeaWorkbenchController {
       onImportMeshEvidence: (file) => this.loadAnalysisMeshEvidenceFile(file),
       onValidateMeshEvidence: () => this.validateRetainedAnalysisMeshEvidence(),
       onExportMeshEvidence: () => this.downloadAnalysisMeshEvidence(),
+      onBindMeshProfile: (profile) => this.bindAnalysisMeshProfile(profile),
       onPlanMesh: (overrides) => this.planAnalysisMesh(overrides),
       onGenerateMesh: (overrides) => this.generateAnalysisMesh(overrides),
+      onRefineMesh: (request) => this.refineAnalysisMesh(request),
     });
     this.benchmarkPanel.render();
     this.unsubscribe = this.store.subscribe((state) => this.view.render(state));
@@ -139,6 +141,7 @@ export class LafeaWorkbenchController {
   /** Preview only: runs the bound producer without touching mesh custody. */
   planAnalysisMesh(o = {}, s = this.getState().activeStageId) { return this.store.planAnalysisMesh(o, s); }
   generateAnalysisMesh(o = {}, s = this.getState().activeStageId) { return this.store.generateAnalysisMesh(o, s); }
+  refineAnalysisMesh(r = {}, s = this.getState().activeStageId) { return this.store.refineAnalysisMesh(r, s); }
   selectRetainedAnalysisMeshEvidenceV2(s = this.getState().activeStageId) { return this.store.selectRetainedAnalysisMeshEvidenceV2(s); }
 
   buildAnalysisMeshCustodyProjection(stageId = this.getState().activeStageId) {

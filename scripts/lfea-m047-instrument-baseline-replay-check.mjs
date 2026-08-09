@@ -1,12 +1,13 @@
 #!/usr/bin/env node
 
 import assert from 'node:assert/strict';
+import { spawnSync } from 'node:child_process';
 import { mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join, resolve } from 'node:path';
-import { spawnSync } from 'node:child_process';
+import { fileURLToPath } from 'node:url';
 
-const ROOT = resolve(new URL('..', import.meta.url).pathname.replace(/^\/([A-Za-z]:)/u, '$1'));
+const ROOT = resolve(fileURLToPath(new URL('..', import.meta.url)));
 const SCRIPT = resolve(ROOT, 'scripts/lfea-m047-instrument-baseline-replay.mjs');
 const fixtureLines = [
   'const evidence = {',

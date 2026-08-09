@@ -24,6 +24,10 @@ import {
   validateLafeaMultiPatchShellMidsurfaceEvidence,
   validateLafeaMultiPatchShellMidsurfaceGeometry,
 } from './lafea-shell-multipatch-midsurface-contract.js';
+import {
+  LAFEA_SHELL_OFFSET_MIDSURFACE_EVIDENCE_SCHEMA,
+  validateLafeaShellOffsetMidsurfaceEvidence,
+} from './lafea-shell-offset-midsurface-contract.js';
 
 export const LAFEA_SHELL_SURFACE_KINDS = Object.freeze({
   PLANAR: 'PLANAR',
@@ -32,6 +36,9 @@ export const LAFEA_SHELL_SURFACE_KINDS = Object.freeze({
 });
 
 export function validateLafeaAnyShellMidsurfaceEvidence(value) {
+  if (value?.schema === LAFEA_SHELL_OFFSET_MIDSURFACE_EVIDENCE_SCHEMA) {
+    return validateLafeaShellOffsetMidsurfaceEvidence(value);
+  }
   if (value?.schema === LAFEA_SHELL_MULTIPATCH_MIDSURFACE_EVIDENCE_SCHEMA) {
     return validateLafeaMultiPatchShellMidsurfaceEvidence(value);
   }
@@ -73,7 +80,6 @@ export function shellMidsurfacePoint3dAny(geometry, u, v) {
 }
 
 export function shellMidsurfaceFrameAtUvAny(geometry, u, v) {
-  void u; void v;
   const kind = shellMidsurfaceKind(geometry);
   if (kind === LAFEA_SHELL_SURFACE_KINDS.CYLINDRICAL) {
     return cylindricalShellFrameAtUv(geometry, u, v);

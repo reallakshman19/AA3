@@ -11,6 +11,7 @@ on:
       - 'src/workspace/linear-piping-prerun-view.js'
       - 'src/workspace/linear-piping-results-workbench.js'
       - 'src/workspace/linear-piping-inputxml-intake.js'
+      - 'src/workspace/linear-piping-inputxml-prefea.js'
       - 'scripts/lfea-p10-capability-effects-traceability-check.mjs'
       - 'scripts/linear-piping-run-gate-check.mjs'
       - 'scripts/linear-piping-live-run-workbench-check.mjs'
@@ -67,7 +68,7 @@ jobs:
           cat /tmp/p07-paths.txt
           while IFS= read -r changed; do
             case "$changed" in
-              src/workspace/linear-piping-inputxml-intake.js|scripts/linear-piping-inputxml-native-intake-check.mjs|.github/workflows/agent16-p10-qualification.yml) ;;
+              src/workspace/linear-piping-inputxml-intake.js|src/workspace/linear-piping-inputxml-prefea.js|scripts/linear-piping-inputxml-native-intake-check.mjs|.github/workflows/agent16-p10-qualification.yml) ;;
               *) echo "P-07 changed an unqualified path: $changed" >&2; exit 1 ;;
             esac
           done < /tmp/p07-paths.txt
@@ -193,6 +194,7 @@ jobs:
             'P-07 no unit inference negative control PASS' \
             'P-07 SHA-256 source-byte custody PASS' \
             'P-07 native source-to-pre-FEA preparation PASS' \
+            'P-07 native pre-flight parent/hash tamper rejection PASS' \
             'P-09/P-07 M003 core numerical equivalence PASS' \
             'linear-piping anti-drift PASS' \
             'PF-16 carried-red parity PROVEN' \

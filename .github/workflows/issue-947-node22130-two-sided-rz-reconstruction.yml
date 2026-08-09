@@ -34,10 +34,17 @@ jobs:
           run-id: 31302834835
 
       - name: Run two-sided node 22130 RZ reconstruction
+        shell: bash
         run: |
+          set +e
+          mkdir -p .work
           node scripts/lfea-issue947-node22130-two-sided-rz-reconstruction.mjs \
             --package .work/package/bm4nl-canonical-package.json \
-            --out .work/issue947-node22130-two-sided-rz-reconstruction.json
+            --out .work/issue947-node22130-two-sided-rz-reconstruction.json \
+            > .work/issue947-node22130-two-sided-rz-reconstruction.log 2>&1
+          status=$?
+          cat .work/issue947-node22130-two-sided-rz-reconstruction.log
+          exit $status
 
       - name: Upload two-sided RZ evidence
         if: always()
@@ -45,4 +52,6 @@ jobs:
         with:
           name: issue-947-node22130-two-sided-rz-reconstruction
           if-no-files-found: error
-          path: .work/issue947-node22130-two-sided-rz-reconstruction.json
+          path: |
+            .work/issue947-node22130-two-sided-rz-reconstruction.json
+            .work/issue947-node22130-two-sided-rz-reconstruction.log

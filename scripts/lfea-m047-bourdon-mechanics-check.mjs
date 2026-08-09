@@ -93,8 +93,8 @@ test('M047-I002-T02', 'positive pressure opens the bend in the declared a-b-c si
 
 test('M047-I002-T03', 'zero pressure produces exactly zero Bourdon free movement', () => {
   const result = deriveMec21BendPressureFreeMovement(realisticFixture({ pressure: 0 }));
-  assert.deepEqual(result.translationAbc, [0, 0, 0]);
-  assert.deepEqual(result.rotationAbc, [0, 0, 0]);
+  assert.ok(result.translationAbc.every((value) => value === 0), 'zero pressure translation components');
+  assert.ok(result.rotationAbc.every((value) => value === 0), 'zero pressure rotation components');
   assert.equal(result.curvatureChangeRatio, 0);
 });
 

@@ -1,0 +1,199 @@
+name: m047-bm4nl-i015-system-ab
+
+on:
+  push:
+    branches:
+      - agent/m047-i015-plain-frame-timoshenko-ab
+    paths:
+      - '.github/workflows/m047-bm4nl-i015-system-ab.yml'
+      - 'scripts/lfea-m047-apply-plain-frame-timoshenko-candidate.mjs'
+      - 'scripts/lfea-m047-plain-frame-timoshenko-candidate-check.mjs'
+      - 'scripts/lfea-m047-benchmark-ab.mjs'
+      - 'scripts/lfea-m047-target-node-evidence.mjs'
+      - 'scripts/lfea-m047-provision-ace.ps1'
+      - 'scripts/lfea-caesar-accdb-export.ps1'
+      - 'benchmarks/LFEA/CAESAR_ACCDB/m047/M047-I015.request.json'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  ab:
+    runs-on: windows-2022
+    timeout-minutes: 40
+    steps:
+      - name: Checkout I015 orchestration exact head
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.sha }}
+          fetch-depth: 0
+
+      - name: Prove exact orchestration head and clean checkout
+        shell: pwsh
+        run: |
+          if ((git rev-parse HEAD).Trim() -ne '${{ github.sha }}') { throw 'I015 orchestration checkout drifted.' }
+          if (git status --porcelain) { throw 'I015 orchestration checkout is dirty.' }
+
+      - name: Use Node.js 22
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: Checkout exact clean mechanics baseline
+        uses: actions/checkout@v4
+        with:
+          repository: reallaksh19/Advanced_Analysis
+          ref: 882d59a99c3a03847d20bec34770ba57ff479d91
+          path: baseline-source
+          fetch-depth: 1
+
+      - name: Prove baseline and preflight I015 patch
+        shell: pwsh
+        run: |
+          if ((git -C baseline-source rev-parse HEAD).Trim() -ne '882d59a99c3a03847d20bec34770ba57ff479d91') { throw 'I015 baseline mechanics drifted.' }
+          $tempSource = Join-Path $env:RUNNER_TEMP 'i015-caesar-accdb-linear-solve.js'
+          Copy-Item -LiteralPath 'baseline-source/src/core/fea-benchmarks/caesar-accdb-linear-solve.js' -Destination $tempSource -Force
+          node scripts/lfea-m047-apply-plain-frame-timoshenko-candidate.mjs `
+            --source $tempSource `
+            --manifest "$env:RUNNER_TEMP/i015-preflight-manifest.json"
+          node scripts/lfea-m047-plain-frame-timoshenko-candidate-check.mjs --source $tempSource
+          node --check $tempSource
+
+      - name: Qualify existing frame kernel authority
+        shell: pwsh
+        run: |
+          node baseline-source/scripts/lfea-b3.1-frame-element-check.mjs
+          node baseline-source/scripts/lfea-b3.1-reviewer-check.mjs
+          node baseline-source/scripts/lfea-b3.3-solver-check.mjs
+          node baseline-source/scripts/lfea-b3.4-recovery-check.mjs
+
+      - name: Checkout pinned Common BM4 source
+        uses: actions/checkout@v4
+        with:
+          repository: reallaksh19/Common
+          ref: 1728651c94504b497aae4041578b1095fd8e292e
+          path: common-source
+          fetch-depth: 1
+
+      - name: Expand and verify locked BM4_NL ACCDB
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $root = Join-Path $env:RUNNER_TEMP 'm047-i015-bm4nl'
+          if (Test-Path -LiteralPath $root) { Remove-Item -LiteralPath $root -Recurse -Force }
+          New-Item -ItemType Directory -Path $root | Out-Null
+          Expand-Archive -LiteralPath 'common-source/LFEA/BM4/BM4_NL.zip' -DestinationPath $root -Force
+          $files = @(Get-ChildItem -LiteralPath $root -Recurse -File -Filter '*.accdb')
+          if ($files.Count -ne 1) { throw "Expected one ACCDB; found $($files.Count)." }
+          $sha = (Get-FileHash -LiteralPath $files[0].FullName -Algorithm SHA256).Hash.ToLowerInvariant()
+          $locked = '85d39463296e569da811d8572e2eff680b858097f76fdf0f47d1755f0b161c21'
+          if ($sha -ne $locked) { throw "Locked ACCDB mismatch: $sha" }
+          New-Item -ItemType Directory -Path 'artifacts/m047/I015' -Force | Out-Null
+          "BM4NL_ACCDB=$($files[0].FullName)" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
+          [ordered]@{
+            schema='lfea-m047-i015-source/v1'
+            commonCommit='1728651c94504b497aae4041578b1095fd8e292e'
+            accdbSha256=$sha
+            baselineCommit='882d59a99c3a03847d20bec34770ba57ff479d91'
+          } | ConvertTo-Json | Set-Content 'artifacts/m047/I015/source.json' -Encoding utf8
+
+      - name: Provision Microsoft 365 Access Runtime
+        shell: powershell
+        run: .\scripts\lfea-m047-provision-ace.ps1 -OutputPath 'artifacts/m047/I015/ace.json'
+
+      - name: Bind portable read-only ACCDB exporter
+        shell: pwsh
+        run: |
+          Copy-Item -LiteralPath 'scripts/lfea-caesar-accdb-export.ps1' -Destination 'baseline-source/scripts/lfea-caesar-accdb-export.ps1' -Force
+          $status = @(git -C baseline-source status --porcelain)
+          if ($status.Count -ne 1 -or $status[0] -notmatch 'scripts/lfea-caesar-accdb-export\.ps1$') {
+            throw "Baseline portability mutation exceeded exporter boundary: $($status -join '; ')"
+          }
+
+      - name: Run exact baseline
+        shell: pwsh
+        run: |
+          node baseline-source/scripts/lfea-caesar-accdb-benchmark.mjs `
+            --accdb "$env:BM4NL_ACCDB" `
+            --profile baseline-source/benchmarks/LFEA/CAESAR_ACCDB/bm4nl-l19-l20-linear-solve.profile.json `
+            --solve-linear true `
+            --actual-out artifacts/m047/I015/baseline.actual.json `
+            --summary-out artifacts/m047/I015/baseline.summary.md `
+            --out artifacts/m047/I015/baseline.benchmark.json
+          node scripts/lfea-m047-target-node-evidence.mjs `
+            --benchmark artifacts/m047/I015/baseline.benchmark.json `
+            --actual artifacts/m047/I015/baseline.actual.json `
+            --out artifacts/m047/I015/baseline.targets.json
+
+      - name: Apply only I015 plain-FRAME Timoshenko delta
+        shell: pwsh
+        run: |
+          node scripts/lfea-m047-apply-plain-frame-timoshenko-candidate.mjs `
+            --source baseline-source/src/core/fea-benchmarks/caesar-accdb-linear-solve.js `
+            --manifest artifacts/m047/I015/i015.manifest.json
+          node scripts/lfea-m047-plain-frame-timoshenko-candidate-check.mjs `
+            --source baseline-source/src/core/fea-benchmarks/caesar-accdb-linear-solve.js
+          node --check baseline-source/src/core/fea-benchmarks/caesar-accdb-linear-solve.js
+          $status = @(git -C baseline-source status --porcelain)
+          $hasExporter = @($status | Where-Object { $_ -match 'scripts/lfea-caesar-accdb-export\.ps1$' }).Count -eq 1
+          $hasSolver = @($status | Where-Object { $_ -match 'src/core/fea-benchmarks/caesar-accdb-linear-solve\.js$' }).Count -eq 1
+          if ($status.Count -ne 2 -or -not $hasExporter -or -not $hasSolver) {
+            throw "I015 mutation exceeded exporter + ACCDB solver boundary: $($status -join '; ')"
+          }
+
+      - name: Run I015 system candidate
+        shell: pwsh
+        run: |
+          node baseline-source/scripts/lfea-caesar-accdb-benchmark.mjs `
+            --accdb "$env:BM4NL_ACCDB" `
+            --profile baseline-source/benchmarks/LFEA/CAESAR_ACCDB/bm4nl-l19-l20-linear-solve.profile.json `
+            --solve-linear true `
+            --actual-out artifacts/m047/I015/candidate.actual.json `
+            --summary-out artifacts/m047/I015/candidate.summary.md `
+            --out artifacts/m047/I015/candidate.benchmark.json
+          node scripts/lfea-m047-target-node-evidence.mjs `
+            --benchmark artifacts/m047/I015/candidate.benchmark.json `
+            --actual artifacts/m047/I015/candidate.actual.json `
+            --out artifacts/m047/I015/candidate.targets.json
+
+      - name: Governed I015 A/B and invariant custody
+        shell: pwsh
+        run: |
+          node scripts/lfea-m047-benchmark-ab.mjs `
+            --baseline artifacts/m047/I015/baseline.benchmark.json `
+            --candidate artifacts/m047/I015/candidate.benchmark.json `
+            --manifest artifacts/m047/I015/i015.manifest.json `
+            --out artifacts/m047/I015/i015.ab.json
+          $baseActual = Get-Content 'artifacts/m047/I015/baseline.actual.json' -Raw | ConvertFrom-Json
+          $candActual = Get-Content 'artifacts/m047/I015/candidate.actual.json' -Raw | ConvertFrom-Json
+          foreach ($caseId in @('L19','L20')) {
+            if ($baseActual.mechanics.cases.$caseId.bendPointerCount -ne 12) { throw "Baseline $caseId bend coverage drifted." }
+            if ($candActual.mechanics.cases.$caseId.bendPointerCount -ne 12) { throw "Candidate $caseId bend coverage drifted." }
+          }
+          $baseTargets = Get-Content 'artifacts/m047/I015/baseline.targets.json' -Raw | ConvertFrom-Json
+          $candTargets = Get-Content 'artifacts/m047/I015/candidate.targets.json' -Raw | ConvertFrom-Json
+          foreach ($target in $candTargets.targets) {
+            if ([math]::Abs([double]$target.balance.actionSumResidual) -gt 0.1) { throw "Candidate action-sum custody exceeded 0.1 at $($target.caseId)/$($target.nodeId)." }
+            if ([math]::Abs([double]$target.balance.equilibriumResidual) -gt 0.1) { throw "Candidate equilibrium custody exceeded 0.1 at $($target.caseId)/$($target.nodeId)." }
+          }
+          $ab = Get-Content 'artifacts/m047/I015/i015.ab.json' -Raw | ConvertFrom-Json
+          Add-Content $env:GITHUB_STEP_SUMMARY '# M047 I015 plain-FRAME Timoshenko system A/B'
+          Add-Content $env:GITHUB_STEP_SUMMARY "- Evidence: ``$($ab.semanticHash)``"
+          foreach ($caseId in @('L19','L20')) {
+            $c = $ab.cases.$caseId
+            Add-Content $env:GITHUB_STEP_SUMMARY "- $($caseId) restraints: $($c.before.restraint.failingComponentCount) -> $($c.after.restraint.failingComponentCount); RMSnorm $($c.before.restraint.rmsNormalizedError) -> $($c.after.restraint.rmsNormalizedError)"
+            Add-Content $env:GITHUB_STEP_SUMMARY "- $($caseId) displacement/rotation: $($c.before.displacementRotation.failingComponentCount) -> $($c.after.displacementRotation.failingComponentCount); RMSnorm $($c.before.displacementRotation.rmsNormalizedError) -> $($c.after.displacementRotation.rmsNormalizedError)"
+            Add-Content $env:GITHUB_STEP_SUMMARY "- $($caseId) source actions: $($c.before.sourceEndAction.failingComponentCount) -> $($c.after.sourceEndAction.failingComponentCount); RMSnorm $($c.before.sourceEndAction.rmsNormalizedError) -> $($c.after.sourceEndAction.rmsNormalizedError)"
+          }
+          $t = $ab.tracked.L19_20090_FY
+          Add-Content $env:GITHUB_STEP_SUMMARY "- L19/20090 FY: $($t.before.actualValue) -> $($t.after.actualValue), ref=$($t.referenceValue), relerr=$($t.before.relativeError) -> $($t.after.relativeError)"
+
+      - name: Retain I015 evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: m047-i015-system-ab-${{ github.sha }}
+          path: artifacts/m047/I015/**
+          if-no-files-found: error
+          retention-days: 90

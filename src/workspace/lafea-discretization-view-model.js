@@ -22,9 +22,9 @@ export function buildLafeaDiscretizationViewModel(stageValue) {
   const stage = requireStage(stageValue);
   const profile = requireLafeaLifecycleProfileForStage(stage.stageId);
   const capabilities = lafeaMeshCapabilities(stage.stageId);
-  // The domain-first route retains v2 evidence from the bound producer; the
-  // legacy route retains v1 evidence the user imported.
-  const evidence = stage.domainFirstProfileActive === true
+  // Governed producer routes retain v2 evidence. Legacy routes retain v1
+  // evidence imported by the user.
+  const evidence = governedV2Route(stage)
     ? stage.retainedAnalysisMeshEvidenceV2 ?? null
     : stage.retainedAnalysisMeshEvidence ?? null;
   const custody = requireCustody(stage.analysisMeshCustodyProjection, stage.stageId, evidence);
@@ -36,7 +36,7 @@ export function buildLafeaDiscretizationViewModel(stageValue) {
       meshProfileIdentity: custody.meshProfileIdentity,
     })
     : null;
-  const retainedElementFamily = evidence?.meshProfile?.fields?.continuumElement ?? null;
+  const retainedElementFamily = retainedFamily(stage.stageId, evidence?.meshProfile ?? null);
   const manualRefinementEnabled = capabilities.manualRefinementQualified === true
     && evidence?.qualification === 'PASS'
     && ['CURRENT_PASS', 'CURRENT_WARNING'].includes(custody.state)
@@ -156,10 +156,8 @@ function requireStage(value) {
 
 /**
  * Two custody projections reach this surface: the legacy v1 one and the
- * domain-first v2 one, which classifies the same thing against different
- * parents and so carries a different, smaller field set. Both are accepted
- * and normalized here, with fields the projection does not carry read from
- * the retained evidence instead of being reported as absent.
+ * governed-v2 one, which classifies continuum or shell children against their
+ * current mesh-independent parents. Both are accepted and normalized here.
  */
 const CUSTODY_SCHEMAS = Object.freeze([
   'lafea-analysis-mesh-custody-projection/v1',
@@ -190,6 +188,7 @@ function requireCustody(value, stageId, evidence) {
     sourceHash: value.sourceHash ?? evidence?.sourceHash ?? null,
     canonicalModelHash: value.canonicalModelHash ?? evidence?.canonicalModelHash ?? null,
     analysisDomainHash: value.analysisDomainHash ?? evidence?.analysisDomainHash ?? null,
+    analysisGeometryHash: value.analysisGeometryHash ?? evidence?.analysisGeometryHash ?? null,
     artifactHash: value.artifactHash ?? evidence?.artifactHash ?? null,
     registrationId: value.registrationId ?? evidence?.registrationId ?? null,
     authorityStatus: value.authorityStatus ?? evidence?.authority?.status ?? null,
@@ -235,6 +234,9 @@ function modeOptions(
 }
 
 function refinementUnavailableReason(capabilities, retainedElementFamily) {
+  if (retainedElementFamily === 'CST_DKT_TRI3_THIN_SHELL_V1') {
+    return 'SHELL_LOCAL_REFINEMENT_NOT_QUALIFIED';
+  }
   if (capabilities.manualRefinementQualified !== true) {
     return 'GOVERNED_REFINEMENT_COMMAND_NOT_AVAILABLE';
   }
@@ -249,25 +251,40 @@ function refinementUnavailableReason(capabilities, retainedElementFamily) {
 
 /**
  * What the Discretization surface needs to offer automatic meshing: whether a
- * producer is qualified for the stage, whether this stage's inputs are ready
- * for it, and the last plan the producer returned.
+ * producer is qualified for the stage, whether this stage's mesh-independent
+ * parent is ready for it, and the last plan the producer returned.
  */
 function buildGenerationModel(stage, capabilities) {
   const producerQualified = capabilities.automaticMeshProducerQualified === true;
   const meshProfile = stage.retainedAnalysisMeshProfile ?? null;
   const domainFirst = stage.domainFirstProfileActive === true;
+  const shellMidsurface = stage.shellMidsurfaceProfileActive === true;
   const geometryCurrent = stage.analysisGeometryProjection?.state === 'CURRENT_PASS'
     && stage.analysisDomainProjection?.state === 'CURRENT_PASS';
+  const shellParent = stage.retainedShellMidsurfaceEvidence ?? null;
+  const sourceHash = stage.sourceAuthority?.sourceHash ?? stage.lifecycle?.source?.sourceHash ?? null;
+  const shellCurrent = shellMidsurface
+    && shellParent?.qualification === 'PASS'
+    && shellParent.stageId === stage.stageId
+    && shellParent.sourceHash === sourceHash;
 
   const unavailableReason = !producerQualified
     ? 'QUALIFIED_MESH_PRODUCER_NOT_AVAILABLE'
-    : !domainFirst
-      ? 'ANALYSIS_MESH_GENERATION_REQUIRES_DOMAIN_FIRST_PROFILE'
-      : !geometryCurrent
-        ? 'ANALYSIS_GEOMETRY_NOT_CURRENT'
-        : !meshProfile
-          ? 'ANALYSIS_MESH_PROFILE_BINDING_REQUIRED'
-          : null;
+    : stage.stageId === 'LAFEA.4' || stage.stageId === 'LAFEA.5'
+      ? !shellMidsurface
+        ? 'ANALYSIS_MESH_GENERATION_REQUIRES_SHELL_MIDSURFACE_EVIDENCE'
+        : !shellCurrent
+          ? 'SHELL_MIDSURFACE_NOT_CURRENT'
+          : !meshProfile
+            ? 'ANALYSIS_MESH_PROFILE_BINDING_REQUIRED'
+            : null
+      : !domainFirst
+        ? 'ANALYSIS_MESH_GENERATION_REQUIRES_DOMAIN_FIRST_PROFILE'
+        : !geometryCurrent
+          ? 'ANALYSIS_GEOMETRY_NOT_CURRENT'
+          : !meshProfile
+            ? 'ANALYSIS_MESH_PROFILE_BINDING_REQUIRED'
+            : null;
 
   return {
     producerQualified,
@@ -280,10 +297,25 @@ function buildGenerationModel(stage, capabilities) {
     meshProfileBound: Boolean(meshProfile),
     meshProfileIdentity: meshProfile?.profileIdentity ?? null,
     targetElementLength: meshProfile?.fields.globalTargetSize ?? null,
-    declaredElementFamily: meshProfile?.fields.continuumElement ?? null,
-    lengthUnit: stage.retainedAnalysisGeometryEvidence?.geometry?.lengthUnit ?? null,
+    declaredElementFamily: declaredFamily(stage.stageId, meshProfile),
+    lengthUnit: shellMidsurface
+      ? shellParent?.geometry?.lengthUnit ?? null
+      : stage.retainedAnalysisGeometryEvidence?.geometry?.lengthUnit ?? null,
     plan: stage.lastAnalysisMeshPlan ?? null,
   };
+}
+
+function governedV2Route(stage) {
+  return stage.domainFirstProfileActive === true || stage.shellMidsurfaceProfileActive === true;
+}
+function declaredFamily(stageId, meshProfile) {
+  if (!meshProfile) return null;
+  return stageId === 'LAFEA.4' || stageId === 'LAFEA.5'
+    ? meshProfile.fields.shellElement ?? null
+    : meshProfile.fields.continuumElement ?? null;
+}
+function retainedFamily(stageId, meshProfile) {
+  return declaredFamily(stageId, meshProfile);
 }
 
 function custodyReasons(custody) {

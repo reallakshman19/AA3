@@ -10,6 +10,7 @@ on:
       - 'scripts/lfea-m047-smooth90-candidate-check.mjs'
       - 'scripts/lfea-m047-apply-matrix-evidence-instrumentation.mjs'
       - 'scripts/lfea-m047-i030-source-replay.mjs'
+      - 'scripts/lfea-m047-i030-source-replay-v2.mjs'
       - 'scripts/lfea-m047-benchmark-ab.mjs'
       - 'scripts/lfea-m047-provision-ace.ps1'
       - 'scripts/lfea-caesar-accdb-export.ps1'
@@ -147,10 +148,10 @@ jobs:
             if ([int]$ab.cases.$caseId.actualRowChange.changedActualRowCount -ne 0) { throw "I030 instrumentation changed $caseId physical rows." }
           }
 
-      - name: Replay all source components at CAESAR endpoint DOFs
+      - name: Replay compared source components incrementally at CAESAR endpoint DOFs
         shell: pwsh
         run: |
-          node scripts/lfea-m047-i030-source-replay.mjs `
+          node scripts/lfea-m047-i030-source-replay-v2.mjs `
             --raw artifacts/m047/I030/source.raw.json `
             --benchmark artifacts/m047/I030/instrumented.benchmark.json `
             --actual artifacts/m047/I030/instrumented.actual.json `
@@ -163,8 +164,9 @@ jobs:
         run: |
           $ErrorActionPreference='Stop'
           $r=Get-Content 'artifacts/m047/I030/source-replay.json' -Raw | ConvertFrom-Json
+          if ($r.schema -ne 'lfea-m047-i030-source-replay/v2') { throw 'I030 corrected replay schema drifted.' }
           if ($r.sourceAccdbSha256 -ne '85d39463296e569da811d8572e2eff680b858097f76fdf0f47d1755f0b161c21') { throw 'I030 ACCDB custody failed.' }
-          foreach ($caseId in @('L19','L20')) { if ([int]$r.cases.$caseId.sourceCount -ne 96) { throw "I030 $caseId did not replay all 96 sources." } }
+          foreach ($caseId in @('L19','L20')) { if ([int]$r.cases.$caseId.sourceCount -ne 96) { throw "I030 $caseId did not assemble all 96 sources." } }
           $actual=Get-Content 'artifacts/m047/I030/instrumented.actual.json' -Raw | ConvertFrom-Json
           foreach ($caseId in @('L19','L20')) { if ([int]$actual.mechanics.cases.$caseId.bendPointerCount -ne 12) { throw "I030 $caseId bend coverage drifted." } }
           if (git status --porcelain -- 'src/core' 'benchmarks/LFEA/CAESAR_ACCDB/bm4nl-l19-l20-linear-solve.profile.json') { throw 'I030 orchestration branch must contain no production mechanics/profile edit.' }
@@ -179,6 +181,7 @@ jobs:
             artifacts/m047/I030/source-replay.summary.md
             artifacts/m047/I030/instrumentation.ab.json
             artifacts/m047/I030/instrumented.benchmark.json
+            artifacts/m047/I030/instrumented.actual.json
             artifacts/m047/I030/matrix-evidence.manifest.json
             artifacts/m047/I030/smooth90.manifest.json
             artifacts/m047/I030/ace.json

@@ -11,6 +11,7 @@ import { authorizedEnrichmentConsumerController } from './workspace/enrichment/a
 import { createAuthorizedEnrichmentWorkspaceApi } from './workspace/enrichment/authorized-enrichment-workspace-api.js';
 import { ENGINEERING_MODEL_EVENTS } from './workspace/engineering-model-controller.js';
 import { EventBus } from './workspace/event-bus.js';
+import { retireStandaloneInputXmlAnalyzerEntry } from './workspace/linear-piping-analyzer-integration.js';
 import { mountLinearPipingInputXmlSourceWorkflow } from './workspace/linear-piping-inputxml-source-workflow.js';
 import { mountLinearPipingResultsWorkbench } from './workspace/linear-piping-results-workbench.js';
 import { mountLfeaPreflightUi } from './workspace/lfea-preflight-ui.js';
@@ -51,6 +52,10 @@ const linearPipingResults = mountLinearPipingResultsWorkbench(applicationRoot, {
   documentRef: applicationRoot.ownerDocument,
   urlApi: applicationRoot.ownerDocument.defaultView?.URL,
 });
+// P-08 removes the standalone diagnostics detour from normal engineering flow.
+// analyze.html remains a fail-closed developer utility; the governed LFEA
+// Source/Pre-flight receipt is the normal diagnostics authority.
+const linearPipingAnalyzerIntegration = retireStandaloneInputXmlAnalyzerEntry(applicationRoot);
 // Read-only source-enrichment review. It reads the shared model and the saved
 // master Line List; it publishes nothing back into either.
 const preflightUi = mountLfeaPreflightUi(applicationRoot, {
@@ -78,6 +83,9 @@ const workspace = Object.freeze({
   },
   getLinearPipingInputXmlPreFlight() {
     return linearPipingInputXmlSource.getPreFlight();
+  },
+  getLinearPipingInputXmlAnalyzerIntegrationPolicy() {
+    return linearPipingAnalyzerIntegration;
   },
   clearLinearPipingInputXmlSource() {
     linearPipingInputXmlSource.clear();

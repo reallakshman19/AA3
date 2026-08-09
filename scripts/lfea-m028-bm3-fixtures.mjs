@@ -277,6 +277,19 @@ function buildReducerDefinitions(geometry, material, source) {
         massDensity: material.materialState.massDensity,
         thermalExpansionCoefficient: material.materialState.thermalExpansionCoefficient,
       },
+      frame: {
+        shearDeformation: false,
+        shearCorrectionFactorY: 1,
+        shearCorrectionFactorZ: 1,
+        source: 'M028-BM3-EULER-BERNOULLI-BASELINE',
+      },
+      pressure: {
+        enabled: false,
+        pressure: 0,
+        poissonRatio: material.materialState.poissonRatio,
+        ruleId: 'CLOSED_END_PIPE_AXIAL_STRAIN_V1',
+        source: 'M028-BM3-PRESSURE-HANDLED-OUTSIDE-REDUCER-CANDIDATE',
+      },
       gravity: {
         enabled: true,
         acceleration: GRAVITY,

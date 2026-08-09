@@ -303,7 +303,7 @@ const directTimoshenko = frameLocalStiffness({
   shearCorrectionFactorZ: 0.5,
 }).matrix;
 for (let index = 0; index < 144; index += 1) {
-  close(pressureUniform.condensed.localStiffness[index], directTimoshenko[index], `uniform Timoshenko condensed stiffness[${index}]`, 3e-8, 1e-3);
+  close(pressureUniform.condensed.localStiffness[index], directTimoshenko[index], 'uniform Timoshenko condensed stiffness[' + index + ']', 3e-8, 1e-3);
 }
 const uniformInner = 0.32385 - 2 * 0.0127;
 const uniformPressureStrain = (1 - 2 * 0.3) * 5e6 * uniformInner ** 2
@@ -313,11 +313,11 @@ const directPressure = [
   200e9 * pressureUniformProperties.area * uniformPressureStrain, 0, 0, 0, 0, 0,
 ];
 for (let index = 0; index < 12; index += 1) {
-  close(pressureUniform.condensed.pressureInitialStrainLocalVector[index], directPressure[index], `uniform pressure vector[${index}]`, 3e-8, 1e-5);
+  close(pressureUniform.condensed.pressureInitialStrainLocalVector[index], directPressure[index], 'uniform pressure vector[' + index + ']', 3e-8, 1e-5);
 }
 const uniformFree = new Array(12).fill(0);
 uniformFree[6] = pressureUniform.pressure.freeGrowth;
-const uniformFreeAction = directTimoshenko.map((_unused, row) => {
+const uniformFreeAction = new Array(12).fill(0).map((_unused, row) => {
   let sum = 0;
   for (let column = 0; column < 12; column += 1) sum += directTimoshenko[row * 12 + column] * uniformFree[column];
   return sum - pressureUniform.condensed.pressureInitialStrainLocalVector[row];
@@ -325,7 +325,7 @@ const uniformFreeAction = directTimoshenko.map((_unused, row) => {
 assert.ok(Math.max(...uniformFreeAction.map(Math.abs)) < 1e-4, 'uniform reducer pressure free-growth action');
 const taperedFree = new Array(12).fill(0);
 taperedFree[6] = pressureAuthority.pressure.freeGrowth;
-const taperedFreeAction = pressureAuthority.condensed.localStiffness.map((_unused, row) => {
+const taperedFreeAction = new Array(12).fill(0).map((_unused, row) => {
   let sum = 0;
   for (let column = 0; column < 12; column += 1) sum += pressureAuthority.condensed.localStiffness[row * 12 + column] * taperedFree[column];
   return sum - pressureAuthority.condensed.pressureInitialStrainLocalVector[row];

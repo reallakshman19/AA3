@@ -170,6 +170,7 @@ export function compileTenCylinderReducerAuthority(request) {
   const K = matrix(globalSize, 0);
   const gravityFull = vector(globalSize);
   const thermalFull = vector(globalSize);
+  const pressureFull = vector(globalSize);
   const directionNorm = Math.hypot(...accepted.gravity.directionLocal);
   const direction = accepted.gravity.directionLocal.map((value) => value / directionNorm);
   const temperatureDifference = accepted.thermal.operatingTemperature - accepted.thermal.installationTemperature;
@@ -177,6 +178,7 @@ export function compileTenCylinderReducerAuthority(request) {
   const segments = [];
   let totalWeight = 0;
   let firstWeightMoment = 0;
+  let pressureFreeGrowth = 0;
 
   for (let index = 0; index < REDUCER_SEGMENT_COUNT; index += 1) {
     // SOURCE STATUS: candidate midpoint sampling pending CAESAR parity extraction.
@@ -193,7 +195,9 @@ export function compileTenCylinderReducerAuthority(request) {
       secondMomentZ: section.secondMomentZ,
       polarMoment: section.polarMoment,
       length: segmentLength,
-      shearDeformation: false,
+      shearDeformation: accepted.frame.shearDeformation,
+      shearCorrectionFactorY: accepted.frame.shearCorrectionFactorY,
+      shearCorrectionFactorZ: accepted.frame.shearCorrectionFactorZ,
     }).matrix;
     addElementMatrix(K, stiffness, index, index + 1);
 
@@ -203,6 +207,21 @@ export function compileTenCylinderReducerAuthority(request) {
       axialStrain,
     });
     addElementVector(thermalFull, thermal, index, index + 1);
+
+    const pressureAxialStrain = accepted.pressure.enabled
+      ? (1 - 2 * accepted.pressure.poissonRatio)
+        * accepted.pressure.pressure
+        * section.innerDiameter ** 2
+        / (accepted.material.elasticModulus
+          * (section.outerDiameter ** 2 - section.innerDiameter ** 2))
+      : 0;
+    const pressure = thermalInitialStrainVector({
+      elasticModulus: accepted.material.elasticModulus,
+      area: section.area,
+      axialStrain: pressureAxialStrain,
+    });
+    addElementVector(pressureFull, pressure, index, index + 1);
+    pressureFreeGrowth += pressureAxialStrain * segmentLength;
 
     const metalLineWeight = accepted.material.massDensity * section.area * accepted.gravity.acceleration;
     const fluidArea = Math.PI * section.innerDiameter ** 2 / 4;
@@ -240,6 +259,7 @@ export function compileTenCylinderReducerAuthority(request) {
       endFraction: (index + 1) / REDUCER_SEGMENT_COUNT,
       length: cleanNumber(segmentLength),
       section,
+      pressureAxialStrain: cleanNumber(pressureAxialStrain),
       lineWeights: {
         metal: cleanNumber(accepted.gravity.enabled ? metalLineWeight : 0),
         fluid: cleanNumber(accepted.gravity.enabled ? fluidLineWeight : 0),
@@ -249,7 +269,7 @@ export function compileTenCylinderReducerAuthority(request) {
     });
   }
 
-  const condensed = condense(K, { gravity: gravityFull, thermal: thermalFull });
+  const condensed = condense(K, { gravity: gravityFull, thermal: thermalFull, pressure: pressureFull });
   return sealReducerCondensationAuthority({
     schema: REDUCER_CONDENSATION_AUTHORITY_SCHEMA,
     reducerId: accepted.reducerId,
@@ -275,12 +295,29 @@ export function compileTenCylinderReducerAuthority(request) {
       localStiffness: condensed.stiffness,
       gravityLocalVector: condensed.loads.gravity,
       thermalInitialStrainLocalVector: condensed.loads.thermal,
+      pressureInitialStrainLocalVector: condensed.loads.pressure,
     },
     gravity: {
       totalWeight: cleanNumber(totalWeight),
       centroidFromEnd: totalWeight === 0 ? cleanNumber(accepted.length / 2) : cleanNumber(firstWeightMoment / totalWeight),
       firstMomentFromEnd: cleanNumber(firstWeightMoment),
       rule: 'TEN_CYLINDER_PHYSICAL_WEIGHT',
+    },
+    frame: {
+      shearDeformation: accepted.frame.shearDeformation,
+      shearCorrectionFactorY: accepted.frame.shearCorrectionFactorY,
+      shearCorrectionFactorZ: accepted.frame.shearCorrectionFactorZ,
+      source: accepted.frame.source,
+      rule: accepted.frame.shearDeformation ? 'TEN_CYLINDER_TIMOSHENKO_FRAME' : 'TEN_CYLINDER_EULER_BERNOULLI_FRAME',
+    },
+    pressure: {
+      enabled: accepted.pressure.enabled,
+      pressure: cleanNumber(accepted.pressure.pressure),
+      poissonRatio: cleanNumber(accepted.pressure.poissonRatio),
+      freeGrowth: cleanNumber(pressureFreeGrowth),
+      meanAxialStrain: cleanNumber(pressureFreeGrowth / accepted.length),
+      ruleId: accepted.pressure.ruleId,
+      source: accepted.pressure.source,
     },
     thermal: {
       temperatureDifference: cleanNumber(temperatureDifference),
@@ -297,6 +334,7 @@ export function compileTenCylinderReducerAuthority(request) {
       'The public Hexagon documentation confirms ten cylinders but not the exact section sampling position.',
       'MIDPOINT_LINEAR_INTERPOLATION_CANDIDATE_V1 is a controlled candidate and not a byte-for-byte CAESAR parity claim.',
       'Eccentricity is represented by the caller-declared element axis; this authority varies section properties along that axis.',
+      'Pressure free strain is evaluated independently on each of the ten pipe cylinders using the declared closed-end pipe axial-strain rule and condensed with the same stiffness partition.',
     ],
     semanticHash: '',
   });

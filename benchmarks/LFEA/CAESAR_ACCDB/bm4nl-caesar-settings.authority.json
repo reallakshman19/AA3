@@ -1,0 +1,158 @@
+{
+  "schema": "bm4nl-caesar-settings-authority/v1",
+  "benchmarkId": "BM4_NL",
+  "caesarVersion": "14.000",
+  "precedence": [
+    "INDIVIDUAL_FILE_SETTING",
+    "OVERALL_SETTING"
+  ],
+  "overall": {
+    "source": "USER_PASTED_CAESAR_V14_OVERALL_SETTINGS_2026-08-09",
+    "settings": {
+      "CONNECT_GEOMETRY_THRU_CNODES": "YES",
+      "Z_AXIS_UP": "NO",
+      "USE_PRESSURE_STIFFENING": "DEFAULT",
+      "BEND_AXIAL_SHAPE": "YES",
+      "DEFAULT_TRANS_RESTRAINT_STIFF": 10000000000000,
+      "DEFAULT_ROT_RESTRAINT_STIFF": 10000000000000,
+      "FRICT_STIF": 10000000,
+      "FRICT_NORM_FORCE_VAR": 0.15,
+      "FRICT_ANGLE_VAR": 15,
+      "FRICT_SLIDE_MULT": 1,
+      "MIN_WALL_MILL_TOLERANCE_PERCENT": 12.5,
+      "DEFAULT_AMBIENT_TEMPERATURE_RAW": 70,
+      "BOURDON_PRESSURE": "NONE",
+      "COEFFICIENT_OF_FRICTION_MU": 0,
+      "INCLUDE_INSULATION_IN_HYDROTEST": "NO",
+      "ALL_STRESS_CASES_CORRODED": "NO",
+      "DEFAULT_CODE": "B31.3_2022",
+      "ALLOW_USERS_BEND_SIF": "YES",
+      "LIBERAL_EXPANSION_ALLOWABLE": "YES",
+      "B31_3_SEC_319_2_3C_SAXIAL": "DEFAULT",
+      "B31_3_WELDING_CONTOUR_TEE_IS_B16_9": false,
+      "PRESSURE_VARIATION_IN_EXP_CASE": "DEFAULT",
+      "IMPLEMENT_B313_CODE_CASE_178": "YES",
+      "IGNORE_B31_1_B31_3_WC_FACTOR": "YES",
+      "APPLY_B31J_SIFS_AND_FLEX": "DEFAULT",
+      "ENFORCE_B31J_SIFS_ONLY": false
+    }
+  },
+  "individualFile": {
+    "source": "USER_CONFIRMED_BM4NL_INDIVIDUAL_FILE_SETTINGS_2026-08-09",
+    "settings": {
+      "BOURDON_PRESSURE": "TRANSLATION_AND_ROTATION",
+      "AMBIENT_TEMPERATURE": {
+        "value": 21,
+        "unit": "C"
+      }
+    }
+  },
+  "effective": {
+    "BOURDON_PRESSURE": "TRANSLATION_AND_ROTATION",
+    "AMBIENT_TEMPERATURE": {
+      "value": 21,
+      "unit": "C"
+    },
+    "Z_AXIS_UP": "NO",
+    "COEFFICIENT_OF_FRICTION_MU": 0,
+    "DEFAULT_CODE": "B31.3_2022"
+  },
+  "bindings": [
+    {
+      "setting": "BOURDON_PRESSURE",
+      "authority": "INDIVIDUAL_FILE_SETTING",
+      "target": "profile.linearSolve.bourdonPressureEffects.mode",
+      "status": "BOUND",
+      "value": "TRANSLATION_AND_ROTATION",
+      "note": "Individual-file setting overrides overall BOURDON_PRESSURE=NONE."
+    },
+    {
+      "setting": "AMBIENT_TEMPERATURE",
+      "authority": "INDIVIDUAL_FILE_SETTING",
+      "target": "profile.installationTemperature",
+      "status": "BOUND",
+      "value": "21 C",
+      "note": "Individual-file setting overrides the overall default ambient value."
+    },
+    {
+      "setting": "Z_AXIS_UP",
+      "authority": "OVERALL_SETTING",
+      "target": "linear static gravity axis",
+      "status": "BOUND_EXISTING",
+      "value": "NO",
+      "note": "Current BM4_NL load primitive uses global -Y gravity; no solver change required."
+    },
+    {
+      "setting": "COEFFICIENT_OF_FRICTION_MU",
+      "authority": "OVERALL_SETTING",
+      "target": "BM4_NL validation scope",
+      "status": "BOUND_SCOPE",
+      "value": 0,
+      "note": "Supports exclusion of frictional tangential force from the present linear qualification; does not qualify nonlinear contact."
+    },
+    {
+      "setting": "DEFAULT_CODE",
+      "authority": "OVERALL_SETTING",
+      "target": "B31 factor profile",
+      "status": "BOUND_EXISTING",
+      "value": "B31.3_2022",
+      "note": "Matches the benchmark B31.3 2022 / B31J factor authority."
+    },
+    {
+      "setting": "MIN_WALL_MILL_TOLERANCE_PERCENT",
+      "authority": "OVERALL_SETTING",
+      "target": "section-property interpretation",
+      "status": "RECORDED_NON_STIFFNESS",
+      "value": 12.5,
+      "note": "Not applied to BM4_NL FE stiffness; ACCDB element mill-tolerance fields are separately audited."
+    },
+    {
+      "setting": "DEFAULT_TRANS_RESTRAINT_STIFF",
+      "authority": "OVERALL_SETTING",
+      "target": "restraint formulation",
+      "status": "UNRESOLVED_UNIT_AND_APPLICATION",
+      "value": 10000000000000,
+      "note": "Recorded for node-20390 investigation. Do not replace exact fixed-DOF validation restraints until units and source-row applicability are established."
+    },
+    {
+      "setting": "DEFAULT_ROT_RESTRAINT_STIFF",
+      "authority": "OVERALL_SETTING",
+      "target": "restraint formulation",
+      "status": "UNRESOLVED_UNIT_AND_APPLICATION",
+      "value": 10000000000000,
+      "note": "Recorded only; no production restraint change is authorized."
+    },
+    {
+      "setting": "USE_PRESSURE_STIFFENING",
+      "authority": "OVERALL_SETTING",
+      "target": "bend pressure stiffening",
+      "status": "RECORDED_DEFAULT_REQUIRES_SEMANTIC_MAPPING",
+      "value": "DEFAULT",
+      "note": "DEFAULT is not converted into a new coefficient without code/profile authority."
+    },
+    {
+      "setting": "BEND_AXIAL_SHAPE",
+      "authority": "OVERALL_SETTING",
+      "target": "bend formulation",
+      "status": "RECORDED_REQUIRES_FORMULATION_MAPPING",
+      "value": "YES",
+      "note": "Potential E36 relevance; no mechanic is accepted until independently mapped and falsified."
+    },
+    {
+      "setting": "APPLY_B31J_SIFS_AND_FLEX",
+      "authority": "OVERALL_SETTING",
+      "target": "B31J application",
+      "status": "DOES_NOT_RESOLVE_SMOOTH90_NOTE3",
+      "value": "DEFAULT",
+      "note": "This overall setting is insufficient authority for the unresolved smooth-90 Note (3) switch."
+    },
+    {
+      "setting": "ENFORCE_B31J_SIFS_ONLY",
+      "authority": "OVERALL_SETTING",
+      "target": "B31J application",
+      "status": "RECORDED",
+      "value": false,
+      "note": "Does not establish smooth-90 Note (3) applicability."
+    }
+  ]
+}

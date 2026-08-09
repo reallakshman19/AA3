@@ -1,7 +1,4 @@
-import {
-  compilePhysicalLoadCase,
-  modelReferenceFromCompilation,
-} from '../linear-fea-load-case/index.js';
+import { modelReferenceFromCompilation } from '../linear-fea-load-case/index.js';
 import { semanticHash } from '../shared-piping-model/canonical-json.js';
 import {
   INPUTXML_LINEAR_PHYSICAL_CASE_PREPARATION_SCHEMA,
@@ -13,6 +10,18 @@ import {
 } from './inputxml-linear-physical-profile.js';
 import { requireInputXmlLinearSolvePreparation } from './inputxml-linear-solve-preparation-contract.js';
 import { requireInputXmlLinearStructuralPreparation } from './inputxml-linear-structural-preparation-contract.js';
+import {
+  caseRecord,
+  compareAscii,
+  gravityPrimitive,
+  indexPrimitiveCases,
+  loadLedgerRow,
+  physicalCaseError,
+  pressurePrimitive,
+  safePhysicalId,
+  thermalPrimitive,
+  uniqueAscii,
+} from './inputxml-linear-physical-case-builders.js';
 
 export function compileInputXmlLinearPhysicalCases(
   sourcePreparation,
@@ -28,20 +37,15 @@ export function compileInputXmlLinearPhysicalCases(
   const gravityDirection = resolveInputXmlGravityDirection(options.gravityDirection);
   const loadCaseProfile = inputXmlLinearPhysicalLoadCaseProfile();
   const modelReference = modelReferenceFromCompilation(structural.compilation);
-  const sourceLoadBySegment = new Map(prepared.loadBindings
-    .map((row) => [row.segmentId, row]));
-  const primitives = {
-    gravity: [],
-    pressure: [],
-    thermal: [],
-  };
+  const sourceLoadBySegment = new Map(prepared.loadBindings.map((row) => [row.segmentId, row]));
+  const primitives = { gravity: [], pressure: [], thermal: [] };
   const ledger = [];
 
   for (const segmentBinding of [...structural.segmentBindings]
     .sort((left, right) => compareAscii(left.segmentId, right.segmentId))) {
     const sourceLoad = sourceLoadBySegment.get(segmentBinding.segmentId) ?? null;
     if (sourceLoad === null) {
-      throw physicalError(
+      throw physicalCaseError(
         'INPUTXML_PHYSICAL_LOAD_BINDING_MISSING',
         `Segment ${segmentBinding.segmentId} has no retained load authority.`,
         { segmentId: segmentBinding.segmentId },
@@ -50,10 +54,9 @@ export function compileInputXmlLinearPhysicalCases(
     const gravity = gravityPrimitive(segmentBinding, sourceLoad.gravity, gravityDirection, prepared);
     primitives.gravity.push(gravity);
     ledger.push(loadLedgerRow({
-      ledgerId: `IXLOAD:GRAVITY:${safe(segmentBinding.segmentId)}`,
+      ledgerId: `IXLOAD:GRAVITY:${safePhysicalId(segmentBinding.segmentId)}`,
       sourceKind: sourceLoad.gravity.sourceAuthority === 'RIGID_ELEMENT_AUTHORITY'
-        ? 'RIGID_TOTAL_WEIGHT'
-        : 'PHYSICAL_LINE_WEIGHT',
+        ? 'RIGID_TOTAL_WEIGHT' : 'PHYSICAL_LINE_WEIGHT',
       sourceFeatureId: sourceLoad.sourceFeatureId,
       segmentId: segmentBinding.segmentId,
       elementId: segmentBinding.elementId,
@@ -73,11 +76,9 @@ export function compileInputXmlLinearPhysicalCases(
       const pressure = pressurePrimitive(segmentBinding, sourceLoad.pressure, prepared);
       primitives.pressure.push(pressure);
       ledger.push(loadLedgerRow({
-        ledgerId: `IXLOAD:PRESSURE:${safe(segmentBinding.segmentId)}`,
-        sourceKind: 'PRESSURE',
-        sourceFeatureId: sourceLoad.sourceFeatureId,
-        segmentId: segmentBinding.segmentId,
-        elementId: segmentBinding.elementId,
+        ledgerId: `IXLOAD:PRESSURE:${safePhysicalId(segmentBinding.segmentId)}`,
+        sourceKind: 'PRESSURE', sourceFeatureId: sourceLoad.sourceFeatureId,
+        segmentId: segmentBinding.segmentId, elementId: segmentBinding.elementId,
         disposition: 'COMPILED_WITH_DECLARED_LIMITATION',
         primitiveIds: [pressure.primitiveId],
         limitationCode: 'GENERIC_APPROX_PRESSURE_CODE_ONLY',
@@ -90,14 +91,10 @@ export function compileInputXmlLinearPhysicalCases(
       }));
     } else {
       ledger.push(loadLedgerRow({
-        ledgerId: `IXLOAD:PRESSURE:${safe(segmentBinding.segmentId)}`,
-        sourceKind: 'PRESSURE',
-        sourceFeatureId: sourceLoad.sourceFeatureId,
-        segmentId: segmentBinding.segmentId,
-        elementId: segmentBinding.elementId,
-        disposition: 'INACTIVE',
-        primitiveIds: [],
-        limitationCode: null,
+        ledgerId: `IXLOAD:PRESSURE:${safePhysicalId(segmentBinding.segmentId)}`,
+        sourceKind: 'PRESSURE', sourceFeatureId: sourceLoad.sourceFeatureId,
+        segmentId: segmentBinding.segmentId, elementId: segmentBinding.elementId,
+        disposition: 'INACTIVE', primitiveIds: [], limitationCode: null,
         evidence: { authoritySemanticHash: sourceLoad.pressure.semanticHash, active: false },
       }));
     }
@@ -106,14 +103,10 @@ export function compileInputXmlLinearPhysicalCases(
       const thermal = thermalPrimitive(segmentBinding, sourceLoad.thermal, prepared);
       primitives.thermal.push(thermal);
       ledger.push(loadLedgerRow({
-        ledgerId: `IXLOAD:THERMAL:${safe(segmentBinding.segmentId)}`,
-        sourceKind: 'UNIFORM_TEMPERATURE',
-        sourceFeatureId: sourceLoad.sourceFeatureId,
-        segmentId: segmentBinding.segmentId,
-        elementId: segmentBinding.elementId,
-        disposition: 'COMPILED',
-        primitiveIds: [thermal.primitiveId],
-        limitationCode: null,
+        ledgerId: `IXLOAD:THERMAL:${safePhysicalId(segmentBinding.segmentId)}`,
+        sourceKind: 'UNIFORM_TEMPERATURE', sourceFeatureId: sourceLoad.sourceFeatureId,
+        segmentId: segmentBinding.segmentId, elementId: segmentBinding.elementId,
+        disposition: 'COMPILED', primitiveIds: [thermal.primitiveId], limitationCode: null,
         evidence: {
           authoritySemanticHash: sourceLoad.thermal.semanticHash,
           operatingTemperature: sourceLoad.thermal.operatingTemperature,
@@ -126,16 +119,11 @@ export function compileInputXmlLinearPhysicalCases(
     } else {
       const disposition = sourceLoad.thermal.status === 'UNRESOLVED' ? 'BLOCKED' : 'INACTIVE';
       ledger.push(loadLedgerRow({
-        ledgerId: `IXLOAD:THERMAL:${safe(segmentBinding.segmentId)}`,
-        sourceKind: 'UNIFORM_TEMPERATURE',
-        sourceFeatureId: sourceLoad.sourceFeatureId,
-        segmentId: segmentBinding.segmentId,
-        elementId: segmentBinding.elementId,
-        disposition,
-        primitiveIds: [],
-        limitationCode: disposition === 'BLOCKED'
-          ? 'THERMAL_EXPANSION_AUTHORITY_UNRESOLVED'
-          : null,
+        ledgerId: `IXLOAD:THERMAL:${safePhysicalId(segmentBinding.segmentId)}`,
+        sourceKind: 'UNIFORM_TEMPERATURE', sourceFeatureId: sourceLoad.sourceFeatureId,
+        segmentId: segmentBinding.segmentId, elementId: segmentBinding.elementId,
+        disposition, primitiveIds: [],
+        limitationCode: disposition === 'BLOCKED' ? 'THERMAL_EXPANSION_AUTHORITY_UNRESOLVED' : null,
         evidence: {
           authoritySemanticHash: sourceLoad.thermal.semanticHash,
           status: sourceLoad.thermal.status,
@@ -145,59 +133,7 @@ export function compileInputXmlLinearPhysicalCases(
     }
   }
 
-  const cases = [];
-  cases.push(caseRecord({
-    structural,
-    loadCaseProfile,
-    modelReference,
-    caseToken: 'W',
-    caseRole: 'WEIGHT_BASE',
-    primitives: primitives.gravity,
-    loadCaseClass: 'WEIGHT',
-    label: 'W',
-    description: 'InputXML self-weight physical case.',
-  }));
-  if (primitives.pressure.length > 0) {
-    cases.push(caseRecord({
-      structural,
-      loadCaseProfile,
-      modelReference,
-      caseToken: 'WP',
-      caseRole: 'WEIGHT_PRESSURE',
-      primitives: [...primitives.gravity, ...primitives.pressure],
-      loadCaseClass: 'MIXED_PHYSICAL',
-      label: 'W+P1',
-      description: 'InputXML self-weight and pressure physical case.',
-    }));
-  }
-  const thermalComplete = primitives.thermal.length === structural.segmentBindings.length;
-  if (thermalComplete) {
-    cases.push(caseRecord({
-      structural,
-      loadCaseProfile,
-      modelReference,
-      caseToken: 'WT',
-      caseRole: 'WEIGHT_TEMPERATURE',
-      primitives: [...primitives.gravity, ...primitives.thermal],
-      loadCaseClass: 'MIXED_PHYSICAL',
-      label: 'W+T1',
-      description: 'InputXML self-weight and uniform-temperature physical case.',
-    }));
-    if (primitives.pressure.length > 0) {
-      cases.push(caseRecord({
-        structural,
-        loadCaseProfile,
-        modelReference,
-        caseToken: 'WPT',
-        caseRole: 'WEIGHT_PRESSURE_TEMPERATURE',
-        primitives: [...primitives.gravity, ...primitives.pressure, ...primitives.thermal],
-        loadCaseClass: 'MIXED_PHYSICAL',
-        label: 'W+P1+T1',
-        description: 'InputXML self-weight, pressure, and uniform-temperature physical case.',
-      }));
-    }
-  }
-
+  const cases = buildCases(structural, loadCaseProfile, modelReference, primitives);
   cases.sort((left, right) => compareAscii(left.caseId, right.caseId));
   const casesByPrimitive = indexPrimitiveCases(cases);
   const finalizedLedger = ledger.map((row) => Object.freeze({
@@ -211,6 +147,7 @@ export function compileInputXmlLinearPhysicalCases(
     ...finalizedLedger.map((row) => row.limitationCode),
     ...cases.flatMap((row) => row.loadCase.limitations.map((item) => item.code)),
   ]);
+  const thermalComplete = primitives.thermal.length === structural.segmentBindings.length;
 
   return sealInputXmlLinearPhysicalCasePreparation({
     schema: INPUTXML_LINEAR_PHYSICAL_CASE_PREPARATION_SCHEMA,
@@ -253,141 +190,31 @@ export function compileInputXmlLinearPhysicalCases(
   });
 }
 
-function gravityPrimitive(binding, authority, direction, prepared) {
-  const magnitude = authority.lineForcePerLength;
-  const intensity = Object.freeze({
-    fx: direction.x * magnitude,
-    fy: direction.y * magnitude,
-    fz: direction.z * magnitude,
-  });
-  return Object.freeze({
-    schema: 'fea-linear-load-primitive/v1',
-    primitiveId: `${binding.elementId}-W`,
-    kind: 'DISTRIBUTED_LOAD',
-    sourceEvidence: sourceEvidence({
-      sourceId: authority.sourceEvidence.sourceId,
-      sourceRevision: prepared.semanticHash,
-      authoritySemanticHash: authority.semanticHash,
-      gravityDirection: direction,
-    }),
-    elementId: binding.elementId,
-    basis: 'GLOBAL',
-    variation: 'UNIFORM',
-    startIntensity: intensity,
-    endIntensity: intensity,
-    units: { distributedForce: 'N/m', length: 'm' },
-  });
-}
-
-function pressurePrimitive(binding, authority, prepared) {
-  return Object.freeze({
-    schema: 'fea-linear-load-primitive/v1',
-    primitiveId: `${binding.elementId}-P1`,
-    kind: 'PRESSURE',
-    sourceEvidence: sourceEvidence({
-      sourceId: authority.sourceEvidence.sourceId,
-      sourceRevision: prepared.semanticHash,
-      authoritySemanticHash: authority.semanticHash,
-    }),
-    elementId: binding.elementId,
-    pressure: authority.pressure,
-    pressureBasis: authority.pressureBasis,
-    authorizedEffects: authority.authorizedEffects,
-  });
-}
-
-function thermalPrimitive(binding, authority, prepared) {
-  return Object.freeze({
-    schema: 'fea-linear-load-primitive/v1',
-    primitiveId: `${binding.elementId}-T1`,
-    kind: 'TEMPERATURE',
-    sourceEvidence: sourceEvidence({
-      sourceId: authority.sourceEvidence.sourceId,
-      sourceRevision: prepared.semanticHash,
-      authoritySemanticHash: authority.semanticHash,
-    }),
-    elementId: binding.elementId,
-    operatingTemperature: authority.operatingTemperature,
-    installationTemperature: authority.installationTemperature,
-    stiffnessEvaluationMaterialStateId: binding.materialStateId,
-    thermalStrainProfileId: 'UNIFORM_TEMPERATURE_ALPHA_DELTA_T_V1',
-  });
-}
-
-function caseRecord({
-  structural,
-  loadCaseProfile,
-  modelReference,
-  caseToken,
-  caseRole,
-  primitives,
-  loadCaseClass,
-  label,
-  description,
-}) {
-  const caseId = `${structural.modelId}-${caseToken}`;
-  const loadCase = compilePhysicalLoadCase({
-    loadCaseId: caseId,
-    loadCaseClass,
-    presentation: { label, description },
-    modelReference,
-    primitives,
-    profile: loadCaseProfile,
-  });
-  return Object.freeze({
-    caseId,
-    caseRole,
-    primitiveIds: Object.freeze(loadCase.primitives.map((row) => row.primitiveId)),
-    loadCase,
-  });
-}
-
-function loadLedgerRow(value) {
-  return Object.freeze({
-    ...value,
-    primitiveIds: Object.freeze(value.primitiveIds),
-    caseIds: Object.freeze([]),
-    evidence: Object.freeze(value.evidence),
-  });
-}
-
-function indexPrimitiveCases(cases) {
-  const index = new Map();
-  for (const row of cases) {
-    for (const primitiveId of row.primitiveIds) {
-      if (!index.has(primitiveId)) index.set(primitiveId, []);
-      index.get(primitiveId).push(row.caseId);
-    }
+function buildCases(structural, loadCaseProfile, modelReference, primitives) {
+  const cases = [caseRecord({
+    structural, loadCaseProfile, modelReference,
+    caseToken: 'W', caseRole: 'WEIGHT_BASE', primitives: primitives.gravity,
+    loadCaseClass: 'WEIGHT', label: 'W', description: 'InputXML self-weight physical case.',
+  })];
+  if (primitives.pressure.length > 0) cases.push(caseRecord({
+    structural, loadCaseProfile, modelReference,
+    caseToken: 'WP', caseRole: 'WEIGHT_PRESSURE', primitives: [...primitives.gravity, ...primitives.pressure],
+    loadCaseClass: 'MIXED_PHYSICAL', label: 'W+P1', description: 'InputXML self-weight and pressure physical case.',
+  }));
+  const thermalComplete = primitives.thermal.length === structural.segmentBindings.length;
+  if (thermalComplete) {
+    cases.push(caseRecord({
+      structural, loadCaseProfile, modelReference,
+      caseToken: 'WT', caseRole: 'WEIGHT_TEMPERATURE', primitives: [...primitives.gravity, ...primitives.thermal],
+      loadCaseClass: 'MIXED_PHYSICAL', label: 'W+T1', description: 'InputXML self-weight and uniform-temperature physical case.',
+    }));
+    if (primitives.pressure.length > 0) cases.push(caseRecord({
+      structural, loadCaseProfile, modelReference,
+      caseToken: 'WPT', caseRole: 'WEIGHT_PRESSURE_TEMPERATURE',
+      primitives: [...primitives.gravity, ...primitives.pressure, ...primitives.thermal],
+      loadCaseClass: 'MIXED_PHYSICAL', label: 'W+P1+T1',
+      description: 'InputXML self-weight, pressure, and uniform-temperature physical case.',
+    }));
   }
-  return index;
-}
-
-function sourceEvidence(value) {
-  return Object.freeze({
-    sourceId: String(value.sourceId),
-    sourceRevision: String(value.sourceRevision),
-    sourceSemanticHash: semanticHash(value),
-  });
-}
-
-function physicalError(code, message, data) {
-  const error = new Error(message);
-  error.name = 'InputXmlLinearPhysicalCasePreparationError';
-  error.code = code;
-  error.data = data;
-  return error;
-}
-
-function safe(value) {
-  return String(value).replace(/[^A-Za-z0-9_.-]/gu, '-');
-}
-
-function uniqueAscii(values) {
-  return [...new Set(values.filter(Boolean).map(String))].sort(compareAscii);
-}
-
-function compareAscii(left, right) {
-  const a = String(left);
-  const b = String(right);
-  return a < b ? -1 : a > b ? 1 : 0;
+  return cases;
 }

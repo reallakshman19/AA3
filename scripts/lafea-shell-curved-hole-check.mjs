@@ -20,6 +20,7 @@ import {
   validateLafeaCurvedHoleShellMidsurfaceEvidence,
 } from '../src/workspace/lafea-shell-curved-hole-midsurface-contract.js';
 import { validateLafeaAnyShellMidsurfaceEvidence } from '../src/workspace/lafea-shell-midsurface-dispatch.js';
+import { qualifyLafeaAnalysisMesh } from '../src/workspace/lafea-analysis-mesh-quality.js';
 import {
   LAFEA_SHELL_CURVED_HOLE_MESH_PLAN_SCHEMA,
   LAFEA_SHELL_CURVED_HOLE_MESH_STRATEGY,
@@ -48,6 +49,9 @@ for (const stageId of ['LAFEA.4', 'LAFEA.5']) {
   assert.equal(validateLafeaCurvedHoleShellMidsurfaceEvidence(parent).semanticHash, parent.semanticHash);
   assert.equal(validateLafeaAnyShellMidsurfaceEvidence(parent).semanticHash, parent.semanticHash);
 
+  // Curvature capping is evaluated before the ligament rule. 60 mm requests
+  // become 26.18 mm on R=100, but that is still too coarse for the 45 mm
+  // minimum material ligament, which requires h<=22.5 mm.
   const coarseProfile = shellProfile(stageId, 60, 'COARSE-REJECT');
   assert.throws(
     () => planLafeaShellAnalysisMesh({ midsurfaceEvidence: parent, meshProfile: coarseProfile }),
@@ -87,13 +91,45 @@ for (const stageId of ['LAFEA.4', 'LAFEA.5']) {
   assert.equal(replay.evidence.artifactHash, result.evidence.artifactHash);
   assert.equal(JSON.stringify(replay.evidence.mesh), JSON.stringify(result.evidence.mesh));
 
-  const fineProfile = shellProfile(stageId, 10, 'FINE');
-  const fine = produceLafeaShellAnalysisMesh({ midsurfaceEvidence: parent, meshProfile: fineProfile });
-  assert.equal(fine.evidence.qualification, 'PASS');
-  assert.equal(fine.evidence.quality.blockingElementIds.length, 0);
-  assert.ok(fine.evidence.mesh.nodes.length > result.evidence.mesh.nodes.length);
-  assert.ok(fine.evidence.mesh.elements.length > result.evidence.mesh.elements.length);
-  assertCylinderAndHole(fine.evidence.mesh, parent.geometry, [oneHolePolygon()]);
+  // Falsification retained permanently: a 10 mm request is a deterministic
+  // lattice-phase resonance at this exact geometry. It has one triangle just
+  // below the unchanged SJ block floor. The producer must refuse evidence;
+  // it must not relax the gate or perform an undisclosed repair.
+  const resonantProfile = shellProfile(stageId, 10, 'RESONANT-REJECT');
+  const resonantPlan = planLafeaShellAnalysisMesh({ midsurfaceEvidence: parent, meshProfile: resonantProfile });
+  const resonantQuality = qualifyLafeaAnalysisMesh(stageId, resonantPlan.mesh, resonantProfile);
+  assert.equal(resonantQuality.worstStatus, 'BLOCK');
+  assert.equal(resonantQuality.blockingElementIds.length, 1);
+  assert.equal(resonantQuality.blockingElementIds[0], 'E000431');
+  const resonantElement = resonantQuality.elementResults.find((row) => row.elementId === 'E000431');
+  const resonantSj = resonantElement.metrics.find((metric) => metric.metric === 'SCALED_JACOBIAN');
+  assert.ok(resonantSj.value < 0.2);
+  assert.ok(resonantSj.value > 0.19);
+  assert.throws(
+    () => produceLafeaShellAnalysisMesh({ midsurfaceEvidence: parent, meshProfile: resonantProfile, plan: resonantPlan }),
+    (error) => error?.code === 'LAFEA_SHELL_MESH_QUALITY_BLOCKED',
+  );
+
+  // Finer meshes recover without any quality-gate change. Both levels are
+  // retained to prove that the 10 mm block is a phase-specific candidate
+  // rejection, not a monotonic curved-surface breakdown.
+  const fine9 = produceLafeaShellAnalysisMesh({
+    midsurfaceEvidence: parent,
+    meshProfile: shellProfile(stageId, 9, 'FINE-9'),
+  });
+  const fine8 = produceLafeaShellAnalysisMesh({
+    midsurfaceEvidence: parent,
+    meshProfile: shellProfile(stageId, 8, 'FINE-8'),
+  });
+  for (const fine of [fine9, fine8]) {
+    assert.equal(fine.evidence.qualification, 'PASS');
+    assert.equal(fine.evidence.quality.blockingElementIds.length, 0);
+    assertCylinderAndHole(fine.evidence.mesh, parent.geometry, [oneHolePolygon()]);
+  }
+  assert.ok(fine9.evidence.mesh.nodes.length > result.evidence.mesh.nodes.length);
+  assert.ok(fine9.evidence.mesh.elements.length > result.evidence.mesh.elements.length);
+  assert.ok(fine8.evidence.mesh.nodes.length > fine9.evidence.mesh.nodes.length);
+  assert.ok(fine8.evidence.mesh.elements.length > fine9.evidence.mesh.elements.length);
 
   const twoParent = curvedHoleParent(stageId, SOURCE_HASH, twoHoles());
   const twoProfile = shellProfile(stageId, 15, 'TWO-HOLE');
@@ -119,8 +155,13 @@ for (const stageId of ['LAFEA.4', 'LAFEA.5']) {
     nodeCount: result.evidence.mesh.nodes.length,
     elementCount: result.evidence.mesh.elements.length,
     estimatedDofs: plan.estimatedDofs,
-    fineNodeCount: fine.evidence.mesh.nodes.length,
-    fineElementCount: fine.evidence.mesh.elements.length,
+    resonantRejectedTarget: 10,
+    resonantBlockingElement: 'E000431',
+    resonantScaledJacobian: resonantSj.value,
+    fine9NodeCount: fine9.evidence.mesh.nodes.length,
+    fine9ElementCount: fine9.evidence.mesh.elements.length,
+    fine8NodeCount: fine8.evidence.mesh.nodes.length,
+    fine8ElementCount: fine8.evidence.mesh.elements.length,
     twoHoleNodeCount: two.evidence.mesh.nodes.length,
     twoHoleElementCount: two.evidence.mesh.elements.length,
     minimumFacetDirectorAlignment: plan.minimumFacetDirectorAlignment,
@@ -141,6 +182,7 @@ console.log(JSON.stringify({
     outerPatch: 'SINGLE_RECTANGULAR_NON_WRAPPING_MAX_180_DEGREES',
     holes: 'STRAIGHT_DISJOINT_NON_NESTED_POLYGONAL_HOLES',
     sizing: 'MIN_CURVATURE_AND_PROFILE_SUBJECT_TO_TWO_ELEMENTS_ACROSS_MIN_LIGAMENT',
+    qualityPolicy: 'BLOCK_IS_FAIL_CLOSED_NO_AUTOREPAIR',
     elementFamily: LAFEA_SHELL_ELEMENT,
   },
   exclusions: [
@@ -190,12 +232,8 @@ function curvedHoleParent(stageId, sourceHash, topology) {
   });
 }
 
-function oneHole() {
-  return topologyWithHoles('ONE', [oneHolePolygon()]);
-}
-function twoHoles() {
-  return topologyWithHoles('TWO', twoHolePolygons());
-}
+function oneHole() { return topologyWithHoles('ONE', [oneHolePolygon()]); }
+function twoHoles() { return topologyWithHoles('TWO', twoHolePolygons()); }
 function oneHolePolygon() {
   return [
     { u: -20, v: 45 }, { u: -20, v: 75 },
@@ -227,7 +265,7 @@ function topologyWithHoles(label, holes) {
     const prefix = `H${holeIndex + 1}`;
     polygon.forEach((point, index) => vertices.push({ vertexId: `${prefix}V${index + 1}`, ...point }));
     const ids = polygon.map((_, index) => `${prefix}V${index + 1}`);
-    const segmentIds = ids.map((id, index) => `${prefix}S${index + 1}`);
+    const segmentIds = ids.map((_, index) => `${prefix}S${index + 1}`);
     ids.forEach((id, index) => segments.push(seg(segmentIds[index], id, ids[(index + 1) % ids.length])));
     loops.push({ loopId: prefix, role: 'HOLE', segmentIds });
   });
@@ -239,17 +277,12 @@ function shellProfile(stageId, target, suffix) {
   return canonicalProfile(PROFILE_KINDS.MESH, {
     schema: 'lafea-mesh-profile/v1',
     profileIdentity: `CURVED_HOLE_${stageId.replace('.', '_')}_${suffix}_${target}`,
-    sourceRevision: 'R9-CANDIDATE',
-    semanticHash: undefined,
+    sourceRevision: 'R9-CANDIDATE', semanticHash: undefined,
     fields: {
-      continuumElement: 'T3',
-      shellElement: LAFEA_SHELL_ELEMENT,
-      globalTargetSize: target,
-      adjacentSizeRatioMax: 1.5,
-      aspectRatioWarn: 5,
-      aspectRatioBlock: 10,
-      scaledJacobianWarn: 0.6,
-      scaledJacobianBlock: 0.2,
+      continuumElement: 'T3', shellElement: LAFEA_SHELL_ELEMENT,
+      globalTargetSize: target, adjacentSizeRatioMax: 1.5,
+      aspectRatioWarn: 5, aspectRatioBlock: 10,
+      scaledJacobianWarn: 0.6, scaledJacobianBlock: 0.2,
       adaptiveLevels: 3,
     },
   });
@@ -310,10 +343,8 @@ function qualifyHoleAdjacentFacetAgainstLocalShell(mesh, geometry, holePolygon) 
     sourceAncestry: ['lafea-shell-curved-hole-check/v1'],
     nodes: shellNodes,
     elements: [{
-      elementId: 'CURVED-HOLE-E1',
-      nodeIds: [...element.nodeIds],
-      materialId: 'MAT', thickness: 2,
-      sourceReference: 'CURVED-HOLE-MESH:E1',
+      elementId: 'CURVED-HOLE-E1', nodeIds: [...element.nodeIds],
+      materialId: 'MAT', thickness: 2, sourceReference: 'CURVED-HOLE-MESH:E1',
     }],
     constraints: [],
     loadCases: [{ loadCaseId: 'LC', nodalLoads: [], pressureLoads: [], sourceReference: 'LC-SRC' }],
@@ -361,12 +392,9 @@ function checkAdversarialContracts() {
   const valid = curvedHoleParent('LAFEA.4', SOURCE_HASH, oneHole());
   const base = inputGeometry(valid.geometry);
 
-  const reversed = inputGeometry(valid.geometry);
-  reversed.loops = reversed.loops.map((loop) => loop.role !== 'HOLE' ? loop : {
-    ...loop,
-    segmentIds: [...loop.segmentIds].reverse().map((segmentId) => segmentId),
-  });
-  assert.throws(() => createLafeaCurvedHoleShellMidsurfaceGeometry(reversed));
+  const reversed = topologyWithHoles('REVERSED', [[...oneHolePolygon()].reverse()]);
+  assert.throws(() => curvedHoleParent('LAFEA.4', SOURCE_HASH, reversed),
+    (error) => error?.code === 'LAFEA_SHELL_CURVED_HOLE_ORIENTATION_INVALID');
 
   const touching = topologyWithHoles('TOUCHING', [[
     { u: -20, v: 0 }, { u: -20, v: 30 }, { u: 20, v: 30 }, { u: 20, v: 0 },
@@ -404,7 +432,11 @@ function checkAdversarialContracts() {
     (error) => error?.code === 'LAFEA_SHELL_CURVED_HOLE_PATCH_ANGLE_EXCEEDS_180_DEGREES');
 
   const badBasis = inputGeometry(valid.geometry);
-  badBasis.surface = { ...badBasis.surface, axisDirection: { x: 1, y: 0, z: 0 }, radialDirection: { x: 1, y: 0, z: 0 } };
+  badBasis.surface = {
+    ...badBasis.surface,
+    axisDirection: { x: 1, y: 0, z: 0 },
+    radialDirection: { x: 1, y: 0, z: 0 },
+  };
   assert.throws(() => createLafeaCurvedHoleShellMidsurfaceGeometry(badBasis),
     (error) => error?.code === 'LAFEA_SHELL_CURVED_HOLE_CYLINDER_BASIS_NOT_ORTHOGONAL');
 
@@ -414,8 +446,7 @@ function checkAdversarialContracts() {
 function inputGeometry(geometry) {
   return {
     schema: LAFEA_SHELL_CURVED_HOLE_MIDSURFACE_GEOMETRY_SCHEMA,
-    stageId: geometry.stageId,
-    geometryId: geometry.geometryId,
+    stageId: geometry.stageId, geometryId: geometry.geometryId,
     lengthUnit: geometry.lengthUnit,
     surface: JSON.parse(JSON.stringify(geometry.surface)),
     orientationPolicy: geometry.orientationPolicy,

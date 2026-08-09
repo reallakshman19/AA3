@@ -1,0 +1,201 @@
+name: agent16-p02b-retained-topology-review
+
+on:
+  pull_request:
+    paths:
+      - 'src/workspace/lfea-topology-review-from-prefea.js'
+      - 'src/workspace/lfea-topology-review-view.js'
+      - 'src/workspace/linear-piping-inputxml-diagnostics-view.js'
+      - 'scripts/lfea-topology-review-prefea-integration-check.mjs'
+      - '.github/workflows/agent16-p02b-qualification.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  qualify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    steps:
+      - name: Checkout exact pull-request head
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+          fetch-depth: 0
+
+      - name: Use Node.js 22
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+
+      - name: Prove exact head and P-02B containment above frozen P-02A
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$(git rev-parse HEAD)" = "${{ github.event.pull_request.head.sha }}"
+          git diff --exit-code
+          p02a='1449ef792a1ee143fb27114f94787ee8f2edd2a2'
+          git diff --name-only "$p02a" HEAD > /tmp/p02b-paths.txt
+          cat /tmp/p02b-paths.txt
+          while IFS= read -r changed; do
+            case "$changed" in
+              src/workspace/lfea-topology-review-from-prefea.js|src/workspace/lfea-topology-review-view.js|src/workspace/linear-piping-inputxml-diagnostics-view.js|scripts/lfea-topology-review-prefea-integration-check.mjs|.github/workflows/agent16-p02b-qualification.yml) ;;
+              *) echo "P-02B changed an unqualified path: $changed" >&2; exit 1 ;;
+            esac
+          done < /tmp/p02b-paths.txt
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Materialize frozen P-02A anchor
+        shell: bash
+        run: |
+          set -euo pipefail
+          rm -rf /tmp/p02a-anchor
+          git worktree add --detach /tmp/p02a-anchor 1449ef792a1ee143fb27114f94787ee8f2edd2a2
+          ln -s "$GITHUB_WORKSPACE/node_modules" /tmp/p02a-anchor/node_modules
+
+      - name: Preserve P-10 traceability
+        run: node scripts/lfea-p10-capability-effects-traceability-check.mjs
+
+      - name: Preserve P-09 sealed Run gate
+        run: node scripts/linear-piping-run-gate-check.mjs
+
+      - name: Preserve P-09 legacy M003 governed BLOCK
+        run: node scripts/linear-piping-live-run-workbench-check.mjs
+
+      - name: Preserve P-07 native InputXML intake
+        run: node scripts/linear-piping-inputxml-native-intake-check.mjs
+
+      - name: Preserve P-07 visible Source and Pre-flight workflow
+        run: node scripts/linear-piping-inputxml-source-workflow-check.mjs
+
+      - name: Preserve P-08 governed Analyzer integration
+        run: node scripts/linear-piping-inputxml-analyzer-integration-check.mjs
+
+      - name: Preserve P-06A indexed review core
+        run: node scripts/lfea-preflight-phase1-indexed-model-check.mjs
+
+      - name: Preserve P-06B 100k/1m indexed virtualization
+        run: node scripts/lfea-preflight-phase1-virtualization-v2-check.mjs
+
+      - name: Preserve P-06C immutable review session
+        run: node scripts/lfea-preflight-phase1-review-session-check.mjs
+
+      - name: Preserve P-06C live review and Trace surface
+        run: node scripts/lfea-preflight-phase1-review-surface-check.mjs
+
+      - name: Preserve frozen P-02A topology review contract
+        shell: bash
+        run: |
+          set -euo pipefail
+          (cd /tmp/p02a-anchor && node scripts/lfea-topology-review-model-check.mjs) > /tmp/p02a-model.log
+          node scripts/lfea-topology-review-model-check.mjs > /tmp/p02b-model.log
+          cmp /tmp/p02a-model.log /tmp/p02b-model.log
+          cat /tmp/p02b-model.log
+
+      - name: P-02B retained pre-FEA topology review integration
+        run: node scripts/lfea-topology-review-prefea-integration-check.mjs
+
+      - name: M003 core mechanics P-02A P-02B equivalence
+        shell: bash
+        run: |
+          set -euo pipefail
+          cat > /tmp/p02b-m003-core-oracle.mjs <<'EOF'
+          import assert from 'node:assert/strict';
+          import path from 'node:path';
+          import { pathToFileURL } from 'node:url';
+          const root = path.resolve(process.argv[2]);
+          const { buildM003LiveRunRequest } = await import(pathToFileURL(path.join(root, 'scripts/m003-live-run-analysis-fixture.mjs')));
+          const { compileLinearPipingInputXmlAnalysisContext } = await import(pathToFileURL(path.join(root, 'src/core/linear-piping-analysis-consumer/index.js')));
+          const high = buildM003LiveRunRequest().cases.find((entry) => entry.caseId === 'HIGH');
+          const context = compileLinearPipingInputXmlAnalysisContext(high.inputXmlAnalysisRequest, { factorizationCache: new Map() });
+          const result = context.sourceAnalysisContext.analysisResult;
+          const reaction = (dof) => result.execution.reactions.find((entry) => entry.nodeId === 'RED-001.N0' && entry.dof === dof)?.value;
+          const uy = reaction('UY');
+          const rz = reaction('RZ');
+          assert.ok(Math.abs(uy + 1000) < 1e-8);
+          assert.ok(Math.abs(rz + 2400) < 1e-8);
+          process.stdout.write(JSON.stringify({ status: result.status, semanticHash: result.semanticHash, uy, rz }));
+          EOF
+          node /tmp/p02b-m003-core-oracle.mjs /tmp/p02a-anchor > /tmp/p02a-m003.json
+          node /tmp/p02b-m003-core-oracle.mjs "$GITHUB_WORKSPACE" > /tmp/p02b-m003.json
+          cmp /tmp/p02a-m003.json /tmp/p02b-m003.json
+          cat /tmp/p02b-m003.json
+
+      - name: Linear piping consumer anti-drift
+        run: node scripts/linear-piping-analysis-consumer-anti-drift-check.mjs
+
+      - name: Prove PF-16 carried-red parity on P-02A anchor and P-02B head
+        shell: bash
+        run: |
+          set -euo pipefail
+          pattern='^PF-16 BLOCK cannot be overridden$'
+          set +e
+          (cd /tmp/p02a-anchor && node --test --test-name-pattern="$pattern" test/lfea-prefea-gateway.test.js) > /tmp/p02a-pf16.log 2>&1
+          anchor_status=$?
+          node --test --test-name-pattern="$pattern" test/lfea-prefea-gateway.test.js > /tmp/p02b-pf16.log 2>&1
+          head_status=$?
+          set -e
+          test "$anchor_status" -ne 0
+          test "$head_status" -ne 0
+          for log in /tmp/p02a-pf16.log /tmp/p02b-pf16.log; do
+            grep -F 'Preparation retains prohibited runtime state.' "$log"
+            grep -F '# fail 1' "$log"
+          done
+
+      - name: Pre-FEA gateway regressions excluding proven PF-16
+        shell: bash
+        run: |
+          set -euo pipefail
+          node --test --test-name-pattern='^PF-(0[1-9]|1[0-5]|1[7-9]|2[0-4]) ' test/lfea-prefea-gateway.test.js
+          node --test --test-name-pattern='^Exercise [GH] ' test/lfea-prefea-gateway.test.js
+          node --test --test-name-pattern='^solver runtime ' test/lfea-prefea-gateway.test.js
+
+      - name: Linear piping consumer regression
+        run: node scripts/linear-piping-analysis-consumer-check.mjs
+
+      - name: Closed-form mechanics P-02A P-02B equivalence
+        shell: bash
+        run: |
+          set -euo pipefail
+          for script in lfea-b3.7-simply-supported-beam-check.mjs lfea-b3.8-thermal-expansion-check.mjs lfea-b3.9-gravity-self-weight-check.mjs; do
+            stem="${script%.mjs}"
+            (cd /tmp/p02a-anchor && node "scripts/$script") > "/tmp/p02a-$stem.log"
+            node "scripts/$script" > "/tmp/p02b-$stem.log"
+            cmp "/tmp/p02a-$stem.log" "/tmp/p02b-$stem.log"
+          done
+
+      - name: Required 1 — strict syntax
+        run: npm run syntax:strict
+
+      - name: Required 2 — import graph
+        run: node scripts/import-check.mjs
+
+      - name: Required 3 — enrichment UI phase 0
+        run: node scripts/run-enrichment-ui-phase0-checks.mjs
+
+      - name: Required 4 — linear piping workspace integration
+        run: node scripts/linear-piping-workspace-integration-check.mjs
+
+      - name: Required 5 — UI invariants
+        run: node scripts/ui-invariant-check.mjs
+
+      - name: Required 6 — production Vite build
+        run: npx vite build
+
+      - name: Report P-02B qualification
+        run: |
+          printf '%s\n' \
+            'P-10/P-09/P-07/P-08/P-06 preservation PASS' \
+            'P-02A frozen topology review contract PASS' \
+            'P-02B retained topology/proximity projection PASS' \
+            'P-02B source-bundle parent-hash custody PASS' \
+            'P-02B explicit mm/in/m distance conversion PASS' \
+            'P-02B no source reparse / no detector rerun PASS' \
+            'P-02B no topology mutation authority PASS' \
+            'P-02A/P-02B numerical equivalence PASS' \
+            'PF-16 carried-red parity PROVEN' \
+            'all other pre-FEA gateway tests PASS' \
+            'all six #952 mandatory commands PASS'

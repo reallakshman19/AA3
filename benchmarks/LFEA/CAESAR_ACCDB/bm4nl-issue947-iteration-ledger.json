@@ -7,32 +7,10 @@
     "casesInOrder": ["L19", "L20"],
     "restraintBoundary": "LINEAR_BILATERAL_ONLY",
     "acceptanceRelativeError": 0.1,
-    "excludedPhysics": [
-      "FRICTION",
-      "LIFT_OFF",
-      "GAP_CONTACT_HISTORY",
-      "NONLINEAR_SUPPORT_STATE",
-      "CODE_STRESS",
-      "EXP",
-      "HYD",
-      "DAMPING",
-      "FOLLOWER_LOAD",
-      "MATERIAL_NONLINEARITY"
-    ]
+    "excludedPhysics": ["FRICTION", "LIFT_OFF", "GAP_CONTACT_HISTORY", "NONLINEAR_SUPPORT_STATE", "CODE_STRESS", "EXP", "HYD", "DAMPING", "FOLLOWER_LOAD", "MATERIAL_NONLINEARITY"]
   },
   "measurementPolicy": {
-    "requiredPerIteration": [
-      "iterationId",
-      "hypothesis",
-      "codeOrConfigurationDelta",
-      "candidateCommitSha",
-      "beforeMetrics",
-      "afterMetrics",
-      "metricDelta",
-      "solverResidualAndEquilibriumStatus",
-      "canonicalOrFalsificationEvidence",
-      "disposition"
-    ],
+    "requiredPerIteration": ["iterationId", "hypothesis", "codeOrConfigurationDelta", "candidateCommitSha", "beforeMetrics", "afterMetrics", "metricDelta", "solverResidualAndEquilibriumStatus", "canonicalOrFalsificationEvidence", "disposition"],
     "improvementRule": "An iteration is an improvement only when target errors decrease without weakening solver/profile tolerances, changing the reference data, or violating residual/equilibrium/canonical invariants.",
     "dispositions": ["KEEP", "REVERT", "BLOCKED", "PENDING_REAL_ACCDB"]
   },
@@ -43,15 +21,7 @@
     "beforeMetrics": {
       "L19": {
         "restraintComponentsOver10Percent": 1,
-        "worstTarget": {
-          "node": "20090",
-          "quantity": "FORCE",
-          "component": "UY",
-          "reference": -1659.836792,
-          "candidate": -1941.29179,
-          "relativeError": 0.1696,
-          "unit": "N"
-        }
+        "worstTarget": {"node": "20090", "quantity": "FORCE", "component": "UY", "reference": -1659.836792, "candidate": -1941.29179, "relativeError": 0.1696, "unit": "N"}
       },
       "L20": {
         "restraintComponentsOver10Percent": 5,
@@ -78,14 +48,7 @@
       "afterMetrics": null,
       "metricDelta": null,
       "solverResidualAndEquilibriumStatus": "UNCHANGED_SOLVER_PATH",
-      "canonicalOrFalsificationEvidence": {
-        "fixture": "MEC21_PART_II_EQ_2_25_QUARTER_BEND_CLOSED_FORM",
-        "subdivisionCounts": [1, 2, 4, 8, 32],
-        "cumulativeFieldEndpointInvariant": true,
-        "restartedFourChordTranslationRelativeError": 1.3273984331376751,
-        "totalRotationPreservedByRestartedConstruction": true,
-        "hypothesisResult": "FALSIFIED"
-      },
+      "canonicalOrFalsificationEvidence": {"fixture": "MEC21_PART_II_EQ_2_25_QUARTER_BEND_CLOSED_FORM", "subdivisionCounts": [1,2,4,8,32], "cumulativeFieldEndpointInvariant": true, "restartedFourChordTranslationRelativeError": 1.3273984331376751, "totalRotationPreservedByRestartedConstruction": true, "hypothesisResult": "FALSIFIED"},
       "disposition": "KEEP"
     },
     {
@@ -97,12 +60,7 @@
       "afterMetrics": null,
       "metricDelta": null,
       "solverResidualAndEquilibriumStatus": "NOT_RUN_AFTER_CANONICAL_BASIS_FALSIFICATION",
-      "canonicalOrFalsificationEvidence": {
-        "freeStateIdentity": "q_local = K_effective (d_local - d0_local) = 0",
-        "selfReviewFinding1": "The first angular-closure guard snapped the final cumulative angle before measuring the residual, so that guard could not detect a bad chord-angle sum.",
-        "selfReviewFinding2": "MEC-21 defines bend flexibility and internal-expansion free movement at the final point in the element local a-b-c coordinate system. For a bend that final-point basis rotates with station angle; mapping every station through a fixed bend-start basis is therefore not the governing coordinate transformation.",
-        "hypothesisResult": "FALSIFIED_BEFORE_BM4_RERUN"
-      },
+      "canonicalOrFalsificationEvidence": {"freeStateIdentity": "q_local = K_effective (d_local - d0_local) = 0", "selfReviewFinding1": "The first angular-closure guard snapped the final cumulative angle before measuring the residual, so that guard could not detect a bad chord-angle sum.", "selfReviewFinding2": "MEC-21 final-point a-b-c coordinates rotate with bend station angle; a fixed bend-start basis is not the governing transformation.", "hypothesisResult": "FALSIFIED_BEFORE_BM4_RERUN"},
       "disposition": "BLOCKED"
     },
     {
@@ -114,24 +72,26 @@
       "afterMetrics": null,
       "metricDelta": null,
       "solverResidualAndEquilibriumStatus": "UNCHANGED_SOLVER_PATH",
+      "canonicalOrFalsificationEvidence": {"mec21LocalFinalComponents": {"ua": "lambda*R*(sin(theta)-theta)", "uc": "lambda*R*(cos(theta)-1)", "phib": "lambda*theta"}, "stationBasis": {"aFinal": "cos(theta)*a0 + sin(theta)*c0", "cFinal": "-sin(theta)*a0 + cos(theta)*c0", "bFinal": "b0"}, "transformedBendStartComponents": {"ua0": "lambda*R*(sin(theta)-theta*cos(theta))", "uc0": "lambda*R*(1-cos(theta)-theta*sin(theta))", "phib0": "lambda*theta"}, "independentDerivation": "Integrating the first-order tangent change caused by a uniform curvature reduction over s in [0,R*theta] gives the same bend-start translation components.", "sourceContract": "MEC-21 Part II sections 2.3.1, 2.3.5.2 and 2.4 define element flexibility/free movement at the final point in local a-b-c coordinates and the displacement coordinate transformation.", "hypothesisResult": "SUPPORTED"},
+      "disposition": "KEEP"
+    },
+    {
+      "iterationId": "I004",
+      "hypothesis": "The station-rotating transformation of MEC-21 equation (2.25) is numerically identical to the independently integrated curvature-change field for any station subdivision, while the fixed bend-start interpretation is not.",
+      "codeOrConfigurationDelta": "Extended the governed B-3.18 bend check with rotating station axes, independent integrated-curvature translations, a fixed-basis falsification metric, and explicit historical restart labeling. Solver behavior was not changed.",
+      "candidateCommitSha": "7a64e598926157aeefc373fc637c26b71759b340",
+      "beforeMetrics": "I000",
+      "afterMetrics": null,
+      "metricDelta": null,
+      "solverResidualAndEquilibriumStatus": "UNCHANGED_SOLVER_PATH; FULL_REPOSITORY_CHECK_NOT_AVAILABLE_IN_CONNECTOR_ENVIRONMENT",
       "canonicalOrFalsificationEvidence": {
-        "mec21LocalFinalComponents": {
-          "ua": "lambda*R*(sin(theta)-theta)",
-          "uc": "lambda*R*(cos(theta)-1)",
-          "phib": "lambda*theta"
-        },
-        "stationBasis": {
-          "aFinal": "cos(theta)*a0 + sin(theta)*c0",
-          "cFinal": "-sin(theta)*a0 + cos(theta)*c0",
-          "bFinal": "b0"
-        },
-        "transformedBendStartComponents": {
-          "ua0": "lambda*R*(sin(theta)-theta*cos(theta))",
-          "uc0": "lambda*R*(1-cos(theta)-theta*sin(theta))",
-          "phib0": "lambda*theta"
-        },
-        "independentDerivation": "Integrating the first-order tangent change caused by a uniform curvature reduction over s in [0,R*theta] gives the same bend-start translation components.",
-        "sourceContract": "MEC-21 Part II sections 2.3.1, 2.3.5.2 and 2.4 define element flexibility/free movement at the final point in local a-b-c coordinates and the displacement coordinate transformation.",
+        "fixture": "MEC21_PART_II_EQ_2_25_ROTATING_FINAL_BASIS_VS_INTEGRATED_CURVATURE",
+        "independentStandaloneArithmeticReplay": "PASS",
+        "curvatureChangeRatio": 0.000020114034735306585,
+        "subdivisionCounts": [1,2,4,8,32],
+        "rotatingBasisMatchesIntegratedCurvature": true,
+        "fixedStartBasisQuarterTurnRelativeError": 1.4142135623730947,
+        "expectedFixedStartBasisError": "sqrt(2)",
         "hypothesisResult": "SUPPORTED"
       },
       "disposition": "KEEP"

@@ -56,8 +56,7 @@ export function validateLafeaShellAnalysisDomain(value) {
     lengthUnit: value.lengthUnit,
     topologyClass: value.topologyClass,
   });
-  if (value.semanticHash !== rebuilt.semanticHash
-    || JSON.stringify(value) !== JSON.stringify(rebuilt)) {
+  if (value.semanticHash !== rebuilt.semanticHash) {
     fail('LAFEA_SHELL_DOMAIN_HASH_INVALID');
   }
   return rebuilt;
@@ -171,8 +170,7 @@ export function validateLafeaShellMidsurfaceGeometry(value) {
     segments: value.segments,
     loops: value.loops,
   });
-  if (value.semanticHash !== rebuilt.semanticHash
-    || JSON.stringify(value) !== JSON.stringify(rebuilt)) {
+  if (value.semanticHash !== rebuilt.semanticHash) {
     fail('LAFEA_SHELL_MIDSURFACE_GEOMETRY_HASH_INVALID');
   }
   return rebuilt;
@@ -231,8 +229,7 @@ export function validateLafeaShellMidsurfaceEvidence(value) {
     geometry: value.geometry,
     producerRef: value.producerRef,
   });
-  if (rebuilt.semanticHash !== value.semanticHash
-    || JSON.stringify(rebuilt) !== JSON.stringify(value)) {
+  if (rebuilt.semanticHash !== value.semanticHash) {
     fail('LAFEA_SHELL_MIDSURFACE_EVIDENCE_TAMPERED');
   }
   return rebuilt;

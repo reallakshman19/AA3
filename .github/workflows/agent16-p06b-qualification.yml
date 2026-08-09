@@ -1,0 +1,186 @@
+name: agent16-p06b-indexed-virtualization
+
+on:
+  pull_request:
+    paths:
+      - 'src/workspace/lfea-preflight-phase1-component-index.js'
+      - 'src/workspace/lfea-preflight-phase1-adapter.js'
+      - 'src/workspace/lfea-preflight-phase1-viewport.js'
+      - 'scripts/lfea-preflight-phase1-virtualization-check.mjs'
+      - 'scripts/lfea-preflight-phase1-virtualization-v2-check.mjs'
+      - '.github/workflows/agent16-p06b-qualification.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  qualify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 50
+    steps:
+      - name: Checkout exact pull-request head
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+          fetch-depth: 0
+
+      - name: Use Node.js 22
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+
+      - name: Prove exact head and P-06B containment above frozen P-06A
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$(git rev-parse HEAD)" = "${{ github.event.pull_request.head.sha }}"
+          git diff --exit-code
+          p06a='fa9c7a8e1bddaf30bcabe8fc0c5ec15aa7d1021f'
+          git diff --name-only "$p06a" HEAD > /tmp/p06b-paths.txt
+          cat /tmp/p06b-paths.txt
+          while IFS= read -r changed; do
+            case "$changed" in
+              src/workspace/lfea-preflight-phase1-component-index.js|src/workspace/lfea-preflight-phase1-adapter.js|src/workspace/lfea-preflight-phase1-viewport.js|scripts/lfea-preflight-phase1-virtualization-check.mjs|scripts/lfea-preflight-phase1-virtualization-v2-check.mjs|.github/workflows/agent16-p06b-qualification.yml) ;;
+              *) echo "P-06B changed an unqualified path: $changed" >&2; exit 1 ;;
+            esac
+          done < /tmp/p06b-paths.txt
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Materialize frozen P-06A anchor
+        shell: bash
+        run: |
+          set -euo pipefail
+          rm -rf /tmp/p06a-anchor
+          git worktree add --detach /tmp/p06a-anchor fa9c7a8e1bddaf30bcabe8fc0c5ec15aa7d1021f
+          ln -s "$GITHUB_WORKSPACE/node_modules" /tmp/p06a-anchor/node_modules
+
+      - name: Preserve P-10 traceability
+        run: node scripts/lfea-p10-capability-effects-traceability-check.mjs
+
+      - name: Preserve P-09 run gate
+        run: node scripts/linear-piping-run-gate-check.mjs
+
+      - name: Preserve P-09 legacy M003 governed BLOCK
+        run: node scripts/linear-piping-live-run-workbench-check.mjs
+
+      - name: Preserve P-07 native InputXML intake
+        run: node scripts/linear-piping-inputxml-native-intake-check.mjs
+
+      - name: Preserve P-07 visible Source and Pre-flight
+        run: node scripts/linear-piping-inputxml-source-workflow-check.mjs
+
+      - name: Preserve P-08 Analyzer integration
+        run: node scripts/linear-piping-inputxml-analyzer-integration-check.mjs
+
+      - name: Preserve frozen P-06A indexed core
+        shell: bash
+        run: |
+          set -euo pipefail
+          (cd /tmp/p06a-anchor && node scripts/lfea-preflight-phase1-indexed-model-check.mjs)
+          node scripts/lfea-preflight-phase1-indexed-model-check.mjs
+
+      - name: P-06B stable component index and 100k/1m virtualization
+        run: node scripts/lfea-preflight-phase1-virtualization-v2-check.mjs
+
+      - name: M003 core mechanics P-06A P-06B equivalence
+        shell: bash
+        run: |
+          set -euo pipefail
+          cat > /tmp/p06b-m003-core-oracle.mjs <<'EOF'
+          import assert from 'node:assert/strict';
+          import path from 'node:path';
+          import { pathToFileURL } from 'node:url';
+          const root = path.resolve(process.argv[2]);
+          const { buildM003LiveRunRequest } = await import(pathToFileURL(path.join(root, 'scripts/m003-live-run-analysis-fixture.mjs')));
+          const { compileLinearPipingInputXmlAnalysisContext } = await import(pathToFileURL(path.join(root, 'src/core/linear-piping-analysis-consumer/index.js')));
+          const high = buildM003LiveRunRequest().cases.find((entry) => entry.caseId === 'HIGH');
+          const context = compileLinearPipingInputXmlAnalysisContext(high.inputXmlAnalysisRequest, { factorizationCache: new Map() });
+          const result = context.sourceAnalysisContext.analysisResult;
+          const reaction = (dof) => result.execution.reactions.find((entry) => entry.nodeId === 'RED-001.N0' && entry.dof === dof)?.value;
+          const uy = reaction('UY'); const rz = reaction('RZ');
+          assert.ok(Math.abs(uy + 1000) < 1e-8); assert.ok(Math.abs(rz + 2400) < 1e-8);
+          process.stdout.write(JSON.stringify({ status: result.status, semanticHash: result.semanticHash, uy, rz }));
+          EOF
+          node /tmp/p06b-m003-core-oracle.mjs /tmp/p06a-anchor > /tmp/p06a-m003.json
+          node /tmp/p06b-m003-core-oracle.mjs "$GITHUB_WORKSPACE" > /tmp/p06b-m003.json
+          cmp /tmp/p06a-m003.json /tmp/p06b-m003.json
+
+      - name: Linear piping consumer anti-drift
+        run: node scripts/linear-piping-analysis-consumer-anti-drift-check.mjs
+
+      - name: Prove PF-16 carried-red parity on P-06A anchor and P-06B head
+        shell: bash
+        run: |
+          set -euo pipefail
+          pattern='^PF-16 BLOCK cannot be overridden$'
+          set +e
+          (cd /tmp/p06a-anchor && node --test --test-name-pattern="$pattern" test/lfea-prefea-gateway.test.js) > /tmp/p06a-pf16.log 2>&1
+          anchor_status=$?
+          node --test --test-name-pattern="$pattern" test/lfea-prefea-gateway.test.js > /tmp/p06b-pf16.log 2>&1
+          head_status=$?
+          set -e
+          test "$anchor_status" -ne 0
+          test "$head_status" -ne 0
+          for log in /tmp/p06a-pf16.log /tmp/p06b-pf16.log; do
+            grep -F 'Preparation retains prohibited runtime state.' "$log"
+            grep -F '# fail 1' "$log"
+          done
+
+      - name: Pre-FEA gateway regressions excluding proven PF-16
+        shell: bash
+        run: |
+          set -euo pipefail
+          node --test --test-name-pattern='^PF-(0[1-9]|1[0-5]|1[7-9]|2[0-4]) ' test/lfea-prefea-gateway.test.js
+          node --test --test-name-pattern='^Exercise [GH] ' test/lfea-prefea-gateway.test.js
+          node --test --test-name-pattern='^solver runtime ' test/lfea-prefea-gateway.test.js
+
+      - name: Linear piping consumer regression
+        run: node scripts/linear-piping-analysis-consumer-check.mjs
+
+      - name: Closed-form mechanics P-06A P-06B equivalence
+        shell: bash
+        run: |
+          set -euo pipefail
+          for script in lfea-b3.7-simply-supported-beam-check.mjs lfea-b3.8-thermal-expansion-check.mjs lfea-b3.9-gravity-self-weight-check.mjs; do
+            stem="${script%.mjs}"
+            (cd /tmp/p06a-anchor && node "scripts/$script") > "/tmp/p06a-$stem.log"
+            node "scripts/$script" > "/tmp/p06b-$stem.log"
+            cmp "/tmp/p06a-$stem.log" "/tmp/p06b-$stem.log"
+          done
+
+      - name: Required 1 — strict syntax
+        run: npm run syntax:strict
+
+      - name: Required 2 — import graph
+        run: node scripts/import-check.mjs
+
+      - name: Required 3 — enrichment UI phase 0
+        run: node scripts/run-enrichment-ui-phase0-checks.mjs
+
+      - name: Required 4 — linear piping workspace integration
+        run: node scripts/linear-piping-workspace-integration-check.mjs
+
+      - name: Required 5 — UI invariants
+        run: node scripts/ui-invariant-check.mjs
+
+      - name: Required 6 — production Vite build
+        run: npx vite build
+
+      - name: Report P-06B qualification
+        run: |
+          printf '%s\n' \
+            'P-10/P-09/P-07/P-08 preservation PASS' \
+            'P-06A frozen anchor and current core PASS' \
+            'P-06B stable component identity/reorder/duplicate controls PASS' \
+            'P-06B 100k-line/1m-component indexed viewport PASS' \
+            'P-06B bounded vertical/horizontal live row/cell counts PASS' \
+            'P-06B field ordinal 39 reachability PASS' \
+            'P-06B indexed queue/facet filtering PASS' \
+            'P-06B stable selection and bounded component expansion PASS' \
+            'P-06A/P-06B numerical equivalence PASS' \
+            'PF-16 carried-red parity PROVEN' \
+            'all other pre-FEA gateway tests PASS' \
+            'all six #952 mandatory commands PASS'

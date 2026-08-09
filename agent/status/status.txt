@@ -1,0 +1,264 @@
+ISSUE 947 / BM4_NL QUALIFICATION STATUS
+======================================
+
+Repository: reallaksh19/Advanced_Analysis
+Branch: codex/issue-947-bm4nl-qualification
+Draft PR: #961
+Status snapshot based on branch head before this file: 88324a65c0215fa044feaa89ea09fc02ec2985b3
+Source model: BM4_NL.ACCDB
+Pinned ACCDB SHA-256: 85d39463296e569da811d8572e2eff680b858097f76fdf0f47d1755f0b161c21
+Primary case: L19 = W+P1
+Secondary case: L20 = W+T1+P1
+
+QUALIFICATION RULE
+------------------
+The governing question is not "what coefficient makes the benchmark pass?". The governing question is:
+
+  At what source element does the constitutive response first stop matching CAESAR, and which exact mechanic produces the observed residual vector?
+
+No benchmark-tuning coefficients, tolerance weakening, solver replacement, reference editing, or reaction fitting are permitted. Every proposed mechanic must have an independent equation/source and a falsification test.
+
+AUTHORITATIVE SOLVER / NUMERICS
+-------------------------------
+Existing solver remains authoritative and unchanged:
+- FEA_SPARSE_DIRECT_CHOLESKY_LDLT_V1
+- DIAGONAL_ENERGY_SCALING_V1
+- normalized residual limit 1e-6
+- warning 1e-4
+- equilibrium relative limit 3e-6
+- energy limit 1e-7
+- existing pivot / conditioning gates remain in force
+
+SCOPE
+-----
+Included for BM4_NL qualification:
+- linear static frame response
+- gravity
+- thermal initial strain where active
+- pressure axial strain
+- bend pressure / Bourdon free field
+- B31 / B31J bend and tee flexibility authorities
+- reducers
+- rigid elements
+- bilateral linear restraints
+- source end actions, nodal kinematics, reactions, equilibrium and energy evidence
+
+Explicitly excluded from the current qualification claim:
+- friction
+- lift-off
+- gaps / contact history
+- nonlinear support state
+- code stress / EXP / HYD
+- damping
+- follower loads
+- material nonlinearity
+
+ACCEPTED MECHANICS / FIXES TO DATE
+----------------------------------
+1. Cumulative MEC-21 bend pressure free field
+   - Historical per-chord restart was independently falsified.
+   - For a four-chord restarted construction, translation relative error was approximately 1.3274 while total rotation was preserved.
+   - Production now samples one cumulative bend-level MEC-21 free field across the numerical bend arc instead of restarting the pressure free state on each chord.
+   - Fixed bend-start interpretation and a candidate uniform axial translation around the bend arc were separately falsified.
+   - Hydro-inclusive pressure for bend stiffening was also tested and rejected.
+
+2. Straight-pipe shear flexibility for the CAESAR ACCDB adapter
+   - First strong local source-action witness was E4 20030->20090 TO MZ.
+   - CAESAR: approximately -1276.473 N.m; prior LFEA: approximately -1523.092 N.m; approximately 19.32% difference.
+   - Injected CAESAR displacements showed a constitutive mismatch independent of the global solve.
+   - Timoshenko pipe shear with vendor-authority shear coefficient 2 maps to repository convention kappa = 0.5.
+   - Generic frame qualification retains its generic authority; the CAESAR ACCDB adapter uses kappaY = kappaZ = 0.5 with explicit source authority.
+   - Canonical and issue-specific gates passed.
+
+3. Bend geometry / load-path custody
+   - Source bend E36 20295->21430 has BEND_PTR=7 and must not be audited as one straight span.
+   - Production tangent-to-tangent geometry and arc gravity were independently reconstructed.
+   - Inferred CAESAR E36 source actions close the independently integrated physical gravity load to millinewton / millinewton-metre scale.
+   - The prior single-straight E36 tee audit is therefore invalid evidence and is quarantined.
+
+4. Validation process documentation
+   - docs/LFEABMValidatio.md records the human qualification procedure: source custody, units, geometry, element constitutive checks, injected-displacement tests, global assembly, solver certification, recovery, comparison floors, falsification records, L19-first workflow, and future evidence-manifest work.
+
+REJECTED / REVERTED HYPOTHESES
+------------------------------
+1. Reducer candidate: Timoshenko kappa=0.5 plus pressure strain
+   - Local injected-displacement residuals improved strongly on E11/E16.
+   - Whole-model exact replay worsened L19 restraint failures from 1 to 2 and total L19 failures from 73 to 81.
+   - New node 21470 UY failure appeared.
+   - Production change was fully reverted.
+   - Lesson: local constitutive improvement is necessary but not sufficient for application qualification.
+
+2. E36 as one straight branch span
+   - Falsified by exact ACCDB BEND_PTR=7 geometry and independent force/moment equilibrium closure.
+
+3. Bend pressure variants
+   - Per-chord MEC-21 restart: falsified.
+   - Fixed bend-start interpretation: falsified.
+   - Uniform axial translation around bend arc: falsified.
+   - Hydro-inclusive bend stiffening pressure: falsified for this application.
+
+LATEST ACCEPTED BM4_NL APPLICATION STATUS
+-----------------------------------------
+Latest accepted pre-reducer-revert production mechanics include cumulative MEC-21 bend pressure effects and straight-pipe Timoshenko shear kappa=0.5.
+
+L19 = W+P1:
+- restraint components compared: 180
+- restraint failures above the 10% comparison gate: 1
+- remaining restraint failure: node 20390 UZ
+  CAESAR approximately -36.4503 N
+  LFEA approximately -30.559 N
+  absolute difference approximately 5.89 N
+  normalized on the 50 N force floor approximately 11.78%
+- node 20090 UY improved to approximately 2.29% error and passes
+- total comparison rows: 2340
+- total failed rows: 73
+- total passed rows: 2267
+- not compared: 4020
+
+Dominant remaining L19 failure categories in that replay:
+- 41 node ROTATION
+- 13 node DISPLACEMENT
+- 9 source GLOBAL_END_MOMENT_FROM
+- 8 source GLOBAL_END_MOMENT_TO
+- 1 NODE FORCE at 20390 UZ
+- 1 NODE INCIDENT_GLOBAL_FORCE
+
+L20 = W+T1+P1:
+- secondary until L19 is understood
+- latest accepted kappa=0.5 replay had 318 failed comparison rows
+
+CURRENT NODE 22130 KINEMATIC-CUSTODY INVESTIGATION
+--------------------------------------------------
+Exact ACCDB custody audit: PASS
+- INPUT_DISPLMNT contains 0 rows.
+- E79 and E80 both have DISP_PTR=0.
+- node 22130 has no INPUT_RESTRAINTS row.
+- node 22140 retains source restraints, so the neighborhood is not being mistaken for an entirely free system.
+- CAESAR OUTPUT_DISPLACEMENTS reports node 22130 RZ exactly 0 deg for both L19 and L20.
+- Classification from the exact-source audit:
+  NO_INPUT_PRESCRIPTION_OR_DIRECT_RESTRAINT_FOUND_AT_NODE_22130
+
+Two-sided E79/E80 action-to-RZ reconstruction: FAIL-CLOSED / PENDING
+- E79 exact topology is 22125->22130 and is a rigid element (RIGID_PTR=19).
+- E80 exact topology is 22130->22140 and is ordinary pipe.
+- Production-parity prerequisite now passes:
+  E79 max standalone-vs-production end-action residual = 5.82e-11
+  E80 max standalone-vs-production end-action residual = 3.64e-12
+- Important architecture finding: current ACCDB production rebuilds the rigid 10x-wall section through the same Timoshenko kappa=0.5 frame profile. A diagnostic Euler-Bernoulli rigid surrogate failed parity by about 20.5 kN and was rejected.
+- With all other CAESAR endpoint DOFs frozen, inferred shared node-22130 RZ values are:
+  E79: 1.609179843e-6 rad
+  E80: 1.625672017e-6 rad
+  mean: 1.617425930e-6 rad
+  absolute difference: 1.649217402e-8 rad
+  relative difference: 1.0196556%
+- Predeclared agreement gate = 1.0%.
+- Therefore adjacentElementInferenceAgreement = FAIL by a narrow margin.
+- Changing only RZ improves both element action residual metrics, but the final classification remains:
+  KINEMATIC_CUSTODY_HYPOTHESIS_NOT_YET_ESTABLISHED
+- No commercial reference row is quarantined yet.
+
+CURRENT E36 STATUS
+------------------
+Independent bend-aware geometry / load equilibrium is accepted.
+The next admissible constitutive gate is still to condense the exact production E36 descendant substructure to the source 12-DOF boundary and inject CAESAR source DOFs. The audit must include:
+- tee surface rigid offset
+- tee rotational spring only on the incoming straight where production applies it
+- incoming straight pressure strain
+- Timoshenko kappa=0.5
+- B31 bend effective stiffness
+- exact bend discretization
+- gravity arc/chord scaling
+- cumulative MEC-21 bend free field
+- static condensation of internal tangent / arc DOFs
+
+PENDING TECHNICAL DECISIONS
+---------------------------
+A. Node 22130
+   1. Explain the remaining 0.0196556 percentage-point miss above the 1.0% two-sided RZ agreement gate without weakening the gate.
+   2. Decompose E79 residuals because its full residual remains dominated by components insensitive to RZ, especially the large FX mismatch under CAESAR exported DOFs.
+   3. Determine whether other CAESAR kinematic output components in the local 22125-22140 neighborhood are rounded, omitted, transformed, or otherwise not direct source-DOF witnesses.
+   4. Only after an independent custody mechanism is established may any OUTPUT_DISPLACEMENTS field be quarantined or reinterpreted.
+
+B. Rigid-element architecture
+   1. Resolve the semantic inconsistency between the dedicated CAESAR rigid-element authority and the ACCDB adapter rebuilding the authority section through PIPE_FRAME3D_TIMOSHENKO_V1.
+   2. Do not change production until an independent rigid canonical benchmark and whole-model before/after replay establish the correct CAESAR mechanic.
+
+C. E36 source-component condensation
+   1. Build a reusable source-component substructure / static-condensation diagnostic that reuses production construction exactly.
+   2. Inject CAESAR source DOFs and compare condensed E36 source end actions against the independently equilibrium-qualified commercial actions.
+   3. Decompose residual into Kd, gravity, straight pressure strain, MEC-21 free field, tee spring, tee rigid offset, and B31 bend stiffness.
+   4. No parameter fitting.
+
+D. Remaining L19 mismatch
+   1. Return to the first still-admissible source-action mismatch after correcting geometry-conditioned diagnostic scans.
+   2. Resolve node 20390 UZ restraint failure mechanistically.
+   3. Re-run complete L19 comparison, residual, equilibrium and energy gates after every accepted production mechanic.
+
+E. L20
+   - Do not use L20 to tune mechanics while L19 remains unresolved.
+   - Evaluate L20 only after L19 is mechanically explained and accepted.
+
+ROADMAP / ORDER OF WORK
+-----------------------
+Gate 1 - Freeze evidence
+- Preserve exact ACCDB SHA, canonical package/profile hashes, solver profile and comparison tolerances.
+- Keep PR draft.
+
+Gate 2 - Complete node 22130 custody
+- Extend two-sided reconstruction beyond a single RZ correction only if an independently justified kinematic-output convention requires it.
+- Maintain the current 1.0% agreement gate; do not relax it to accept the result.
+- Produce a reference-custody disposition: ACCEPT OUTPUT, TRANSFORM/INTERPRET OUTPUT, or QUARANTINE FIELD, with independent proof.
+
+Gate 3 - Resolve rigid-element authority semantics
+- Add an independent rigid benchmark.
+- Compare dedicated rigid authority vs current ACCDB compiled rigid response.
+- If a production change is proposed, require exact source equation/authority, canonical pass, production parity, and L19 whole-model improvement without regressions.
+
+Gate 4 - Implement reusable source-component condenser
+- Prefer exact reuse/factoring of production element construction over copied diagnostic mechanics.
+- Prove any refactor is numerically identical before using it for new mechanics conclusions.
+
+Gate 5 - E36 injected-displacement constitutive audit
+- Condense production descendants to source boundary.
+- Compare against independently equilibrium-qualified E36 actions.
+- Accept or falsify tee/bend/pressure mechanisms component-by-component.
+
+Gate 6 - Resume first-divergence scan
+- Correct geometry-conditioned handling downstream of bends.
+- Identify first source element whose constitutive response fails under CAESAR kinematics.
+- Generate residual-vector decomposition and hypothesis ledger entry.
+
+Gate 7 - Node 20390 restraint closure
+- Explain the remaining L19 reaction difference from local mechanics / compatibility, not by tuning a reaction.
+
+Gate 8 - Full L19 qualification
+Required before draft PR may be considered ready:
+- no unexplained source/reference custody conflicts
+- accepted constitutive mechanisms have independent equations and falsification evidence
+- comparison gates satisfied or each exception explicitly quarantined with source proof
+- solver residual, equilibrium, energy and conditioning gates pass unchanged
+- deterministic replay evidence archived
+
+Gate 9 - L20 qualification
+- Run only after L19 acceptance.
+- Treat thermal mechanics as a new evidence layer, not as a knob to repair L19.
+
+Gate 10 - Durable qualification artifacts
+- Add machine-readable validation manifest binding source SHA, model/profile hash, solver/profile, required tests and comparison gates.
+- Add generated/evolving BM4_NL current-status report separate from stable docs/LFEABMValidatio.md.
+- Add mechanism authority matrix: independent equation/source, production owner, benchmark witness and regression.
+- Add reusable injected-displacement / source-component condensation harness.
+
+DO-NOT-MERGE CONDITIONS
+-----------------------
+Keep PR #961 as DRAFT while any of the following remains true:
+- L19 has unexplained benchmark failures.
+- node 22130 reference custody is unresolved.
+- node 20390 UZ reaction remains unexplained / failing.
+- E36 production-descendant constitutive condensation has not been completed.
+- a proposed production mechanic lacks independent authority and falsification evidence.
+- any solver tolerance, comparison tolerance, source reference, or solver backend would need to be weakened/changed merely to pass BM4_NL.
+
+CURRENT DISPOSITION
+-------------------
+The branch contains meaningful accepted mechanics and substantial qualification infrastructure, but BM4_NL is NOT YET QUALIFIED and PR #961 MUST REMAIN DRAFT.

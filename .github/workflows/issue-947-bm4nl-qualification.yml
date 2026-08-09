@@ -1,0 +1,92 @@
+name: Issue 947 BM4_NL qualification
+
+on:
+  push:
+    branches:
+      - codex/issue-947-bm4nl-qualification
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  bm4nl:
+    runs-on: windows-latest
+    timeout-minutes: 30
+
+    steps:
+      - name: Checkout qualification branch
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Materialize pinned BM4_NL ACCDB
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          New-Item -ItemType Directory -Force -Path .work | Out-Null
+          $zip = Join-Path $PWD '.work/BM4_NL.zip'
+          $url = 'https://raw.githubusercontent.com/reallaksh19/Common/1728651c94504b497aae4041578b1095fd8e292e/LFEA/BM4/BM4_NL.zip'
+          Invoke-WebRequest -Uri $url -OutFile $zip
+          Expand-Archive -LiteralPath $zip -DestinationPath .work/BM4_NL -Force
+          $accdb = Resolve-Path '.work/BM4_NL/BM4_NL.ACCDB'
+          $actual = (Get-FileHash -Algorithm SHA256 -LiteralPath $accdb).Hash.ToLowerInvariant()
+          $expected = '85d39463296e569da811d8572e2eff680b858097f76fdf0f47d1755f0b161c21'
+          if ($actual -ne $expected) {
+            throw "BM4_NL.ACCDB SHA-256 mismatch: expected $expected, got $actual"
+          }
+          "BM4_ACCDB=$accdb" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
+          Write-Host "BM4_NL.ACCDB SHA-256: $actual"
+
+      - name: Report installed ACE providers
+        shell: pwsh
+        run: |
+          $providers = [System.Data.OleDb.OleDbEnumerator]::GetRootEnumerator()
+          $found = $false
+          while ($providers.Read()) {
+            $name = [string]$providers['SOURCES_NAME']
+            if ($name -like 'Microsoft.ACE.OLEDB.*') {
+              $found = $true
+              Write-Host "ACE provider: $name"
+            }
+          }
+          if (-not $found) {
+            Write-Warning 'No Microsoft.ACE.OLEDB provider was enumerated; the ACCDB extraction step will fail closed.'
+          }
+
+      - name: Run independent bend mechanics regression
+        shell: pwsh
+        run: node scripts/lfea-b3.18-bm1-bend-check.mjs
+
+      - name: Run real BM4_NL L19/L20 qualification
+        shell: pwsh
+        run: |
+          node scripts/lfea-caesar-accdb-benchmark.mjs `
+            --accdb "$env:BM4_ACCDB" `
+            --profile benchmarks/LFEA/CAESAR_ACCDB/bm4nl-l19-l20-linear-solve.profile.json `
+            --solve-linear true `
+            --actual-out .work/bm4nl-actual.json `
+            --summary-out .work/bm4nl-summary.md `
+            --out .work/bm4nl-report.json
+
+      - name: Print BM4_NL qualification summary
+        if: always()
+        shell: pwsh
+        run: |
+          if (Test-Path .work/bm4nl-summary.md) {
+            Get-Content .work/bm4nl-summary.md
+          }
+
+      - name: Upload BM4_NL qualification evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: issue-947-bm4nl-qualification
+          if-no-files-found: warn
+          path: |
+            .work/bm4nl-actual.json
+            .work/bm4nl-report.json
+            .work/bm4nl-summary.md

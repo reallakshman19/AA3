@@ -104,8 +104,11 @@ function extractAccdb(accdbPath, tableNames) {
   }
 }
 
-function runCommand(argv) {
+export function runCaesarAccdbPackageReplayCommand(argv) {
   const args = parseArguments(argv);
+  if (args.packageInPath === null && args.packageOutPath === null) {
+    throw new TypeError('ACCDB capture requires --package-out so the normalized source model remains replayable evidence.');
+  }
   const benchmarkPackage = captureOrLoadCaesarAccdbPackage(args);
   if (args.expectedSourceSha256 !== null
       && benchmarkPackage.source.sha256 !== args.expectedSourceSha256) {
@@ -198,7 +201,7 @@ function writeJson(value, path) {
 
 if (resolve(process.argv[1] ?? '') === resolve(SCRIPT_PATH)) {
   try {
-    console.log(canonicalPrettyStringify(runCommand(process.argv.slice(2))));
+    console.log(canonicalPrettyStringify(runCaesarAccdbPackageReplayCommand(process.argv.slice(2))));
   } catch (error) {
     console.error(error?.stack ?? String(error));
     process.exitCode = 1;

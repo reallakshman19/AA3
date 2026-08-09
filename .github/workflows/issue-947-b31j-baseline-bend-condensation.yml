@@ -12,7 +12,7 @@ permissions:
 
 jobs:
   audit:
-    if: "${{ github.event_name == 'workflow_dispatch' || github.event.head_commit.message == 'ci(issue947): audit authoritative B31J bend condensation' }}"
+    if: "${{ github.event_name == 'workflow_dispatch' || github.event.head_commit.message == 'ci(issue947): audit authoritative B31J bend condensation' || github.event.head_commit.message == 'ci(issue947): fix B31J bend condensation artifact upload' }}"
     runs-on: ubuntu-latest
     timeout-minutes: 15
     steps:
@@ -74,4 +74,10 @@ jobs:
         with:
           name: issue-947-b31j-baseline-bend-condensation
           if-no-files-found: error
-          path: .work/b31j-*.json
+          include-hidden-files: true
+          path: |
+            .work/b31j-e19-e20.json
+            .work/b31j-e25.json
+            .work/b31j-e36.json
+            .work/b31j-e48.json
+            .work/b31j-e85.json

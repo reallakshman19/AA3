@@ -10,6 +10,22 @@ export function renderLoadCalcConsumer(documentRef, state) {
   return section;
 }
 
+function runReasonText(snap, authState) {
+  const code = snap?.reasonCode || authState?.reasonCode || '';
+  const MAP = {
+    'EMPIRICAL_SCENARIO_REQUIRED': 'Configure a scenario in the Methods tab',
+    'EMPIRICAL_SCENARIO_BLOCKED':  'Scenario has blockers — check Methods tab',
+    'EMPIRICAL_SCENARIO_NOT_READY': 'Scenario not ready — authorize first',
+    'EMPIRICAL_SCENARIO_AUTHORIZATION_REQUIRED': 'Authorize the scenario first',
+    'EMPIRICAL_SCENARIO_AUTHORIZATION_STALE': 'Authorization is stale — re-authorize',
+    'NO_ACTIVE_DATASET': 'No dataset loaded — import SJSON first',
+    'EMPIRICAL_RUNTIME_ACTIVE_MODEL_MISSING': 'Load a dataset first',
+    'EMPIRICAL_INPUT_NOT_READY': 'Check Verify & Run tab — some inputs are missing',
+    'EMPIRICAL_MODELS_NOT_READY': 'Topology models not ready',
+  };
+  return MAP[code] || (code ? code.replace(/_/g, ' ').toLowerCase() : 'Not ready');
+}
+
 function resolveRunAction(state) {
   const snap = state.empiricalScenarioState;
   const authState = state.authorizationState;
@@ -19,7 +35,7 @@ function resolveRunAction(state) {
   if (authState?.calculationEligible) {
     return { label: 'Run Load Calc — Gravity', eligible: true, reason: 'Execute authorized gravity load calc', action: 'gravity' };
   }
-  return { label: 'Run Load Calc', eligible: false, reason: snap?.reasonCode || 'Not ready — check Verify & Run tab', action: 'none' };
+  return { label: 'Run Load Calc', eligible: false, reason: runReasonText(snap, authState), action: 'none' };
 }
 
 function headerMarkup(state) {
@@ -40,12 +56,18 @@ function headerMarkup(state) {
   const recalculate = authorization.state === 'EXECUTED_CURRENT';
   const disabledReason = authorizationReason(authorization);
   const runAction = resolveRunAction(state);
+
+  const sealStatus = commonSeal === 'CURRENT' ? 'ok' : (commonSeal === 'NOT_SEALED' ? 'warn' : 'fail');
+  const authSt = authorization.state || 'NOT_CONFIGURED';
+  const authStatus = (authSt === 'EXECUTED_CURRENT' || authSt === 'AUTHORIZED_CURRENT') ? 'ok' : (authSt.includes('AWAITING') ? 'warn' : 'fail');
+  const resultStatus = freshness === 'CURRENT' ? 'ok' : (freshness === 'NOT_CALCULATED' ? 'warn' : 'fail');
+
   return `<header class="empirical-load-calc__header">
     <div><span class="panel-eyebrow">${escapeHtml(activeMethod)}</span><h1>Empirical Support Loads</h1></div>
     <div class="empirical-load-calc__facts">
-      <span>Input seal: ${escapeHtml(commonSeal)}</span>
-      <span>Authorization: ${escapeHtml(authorization.state || 'NOT_CONFIGURED')}</span>
-      <span>Result: ${escapeHtml(freshness)}</span>
+      <span data-pill-status="${sealStatus}">Input seal: ${escapeHtml(commonSeal)}</span>
+      <span data-pill-status="${authStatus}">Authorization: ${escapeHtml(authSt)}</span>
+      <span data-pill-status="${resultStatus}">Result: ${escapeHtml(freshness)}</span>
     </div>
     <nav class="empirical-load-calc__tabs" aria-label="Load calculation views">
       <button type="button" class="${state.activeTab === 'verify' || !state.activeTab ? 'is-active' : ''}" data-load-calc-tab="verify" title="Pre-run readiness checklist">★ Verify &amp; Run</button>

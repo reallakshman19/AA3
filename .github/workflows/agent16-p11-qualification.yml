@@ -107,12 +107,10 @@ jobs:
 
       - name: P-11 governed shell contract
         id: p11
-        continue-on-error: true
         run: node scripts/advanced-shell-contract-check.mjs
 
       - name: P-12 focused pre-FEA gateway public export contract
         id: p12
-        continue-on-error: true
         run: node --test --test-name-pattern='PF-22 every public InputXML solve path requires authorization' test/lfea-prefea-gateway.test.js
 
       - name: Full pre-FEA gateway suite diagnostic
@@ -122,7 +120,6 @@ jobs:
 
       - name: P-13 hidden-default inventory contract
         id: p13_defaults
-        continue-on-error: true
         shell: bash
         run: |
           node --input-type=module <<'EOF'
@@ -147,12 +144,10 @@ jobs:
 
       - name: P-13 anti-drift modularity contract
         id: p13_antidrift
-        continue-on-error: true
         run: node scripts/linear-piping-analysis-consumer-anti-drift-check.mjs
 
       - name: P-13 parent-vs-head authority equivalence
         id: p13_equivalence
-        continue-on-error: true
         shell: bash
         run: |
           set -euo pipefail
@@ -215,32 +210,26 @@ jobs:
 
       - name: Required 1 — strict syntax
         id: syntax
-        continue-on-error: true
         run: npm run syntax:strict
 
       - name: Required 2 — import graph
         id: imports
-        continue-on-error: true
         run: node scripts/import-check.mjs
 
       - name: Required 3 — enrichment UI phase 0
         id: enrichment
-        continue-on-error: true
         run: node scripts/run-enrichment-ui-phase0-checks.mjs
 
       - name: Required 4 — linear piping workspace integration
         id: workspace
-        continue-on-error: true
         run: node scripts/linear-piping-workspace-integration-check.mjs
 
       - name: Required 5 — UI invariants
         id: ui
-        continue-on-error: true
         run: node scripts/ui-invariant-check.mjs
 
       - name: Required 6 — production Vite build
         id: build
-        continue-on-error: true
         run: npx vite build
 
       - name: Report required qualification outcomes

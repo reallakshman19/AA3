@@ -1,4 +1,5 @@
 name: Issue 947 one-shot bend attachment settings custody
+# Rerun to bind Version-14 B31J smooth-90 code authority with attachment custody.
 
 on:
   push:
@@ -41,5 +42,5 @@ jobs:
           fi
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
-          git commit -m 'test(issue947): bind bend attachment and axial-shape settings'
+          git commit -m 'test(issue947): bind bend attachment and B31J settings'
           git push origin HEAD:codex/issue-947-bm4nl-qualification

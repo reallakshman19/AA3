@@ -92,6 +92,7 @@ export function createLafeaWorkbenchOrchestratorApi(context) {
     bindAnalysisMeshProfile: c.bindAnalysisMeshProfile,
     planAnalysisMesh: c.planAnalysisMesh,
     generateAnalysisMesh: c.generateAnalysisMesh,
+    refineAnalysisMesh: c.refineAnalysisMesh,
     validateLafeaAnalysisMeshEvidenceV2: c.meshGeneration.validateEvidence,
     exportAnalysisMeshEvidenceV2: (stageId = activeStageId()) =>
       c.meshGeneration.exportEvidence(stageId),

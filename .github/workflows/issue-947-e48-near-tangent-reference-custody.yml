@@ -1,0 +1,72 @@
+name: Issue 947 E48 near-tangent reference custody
+
+on:
+  push:
+    branches:
+      - codex/issue-947-bm4nl-qualification
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  actions: read
+
+jobs:
+  audit:
+    if: "${{ github.event_name == 'workflow_dispatch' || github.event.head_commit.message == 'ci(issue947): run E48 near-tangent custody audit' }}"
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Checkout qualification branch
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Download authoritative Version-14 BM4_NL replay
+        uses: actions/download-artifact@v4
+        with:
+          name: issue-947-bm4nl-qualification
+          path: .work/package
+          github-token: ${{ github.token }}
+          repository: reallaksh19/Advanced_Analysis
+          run-id: 31324887225
+
+      - name: Expose exact condensed E48 stiffness for read-only custody test
+        shell: bash
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          p = Path('scripts/lfea-issue947-bend-descendant-condensation-audit.mjs')
+          text = p.read_text()
+          anchor = "  method: 'EXACT_PRODUCTION_DESCENDANT_K_F_EQ_F_0_ASSEMBLY_PLUS_SCHUR_CONDENSATION_TO_SOURCE_12_DOF_BOUNDARY',"
+          replacement = anchor + "\n  diagnosticCondensedStiffnessGlobal12x12: condensed.stiffness,"
+          if text.count(anchor) != 1:
+              raise SystemExit(f'Expected one condensation evidence anchor; found {text.count(anchor)}.')
+          p.write_text(text.replace(anchor, replacement))
+          PY
+
+      - name: Build current authoritative E48 condensation
+        run: |
+          mkdir -p .work/out
+          node scripts/lfea-issue947-bend-descendant-condensation-audit.mjs \
+            --package .work/package/bm4nl-canonical-package.json \
+            --source-element 48 \
+            --out .work/out/e48-current-with-k.json
+
+      - name: Run exact near-tangent reference-point transform falsification
+        run: |
+          node scripts/lfea-issue947-e48-near-tangent-reference-custody.mjs \
+            --package .work/package/bm4nl-canonical-package.json \
+            --e48 .work/out/e48-current-with-k.json \
+            --actual .work/package/bm4nl-actual.json \
+            --out .work/out/e48-near-tangent-reference-custody.json
+
+      - name: Upload E48 custody evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: issue-947-e48-near-tangent-reference-custody
+          if-no-files-found: error
+          path: .work/out/*.json

@@ -401,7 +401,7 @@ function planPeriodicShellAnalysisMesh(midsurfaceEvidence, meshProfile) {
     resourceDisposition,
     capabilityHash: capability.capabilityHash,
     qualificationHash: qualification.qualificationHash,
-    producerRef: LAFA_MESH_PRODUCER_REF,
+    producerRef: LAFEA_MESH_PRODUCER_REF,
     producerId: capability.producerId,
     producerRevision: capability.producerRevision,
     repeatabilityPolicy: capability.repeatabilityPolicy,

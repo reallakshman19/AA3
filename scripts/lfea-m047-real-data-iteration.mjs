@@ -268,8 +268,13 @@ function requireSequentialParent(request, parentPath) {
   if (parent.source?.accdbSha256 !== LOCKED_ACCDB_SHA256) {
     throw new TypeError('Parent iteration is not bound to the locked BM4_NL ACCDB SHA-256.');
   }
-  if (!/^[a-f0-9]{64}$/u.test(String(parent.semanticHash ?? ''))) {
-    throw new TypeError('Parent iteration must carry a semanticHash.');
+  const recordedSemanticHash = String(parent.semanticHash ?? '');
+  if (!/^fnv1a64:[a-f0-9]{16}$/u.test(recordedSemanticHash)) {
+    throw new TypeError('Parent iteration must carry a canonical fnv1a64 semanticHash.');
+  }
+  const { semanticHash: omittedSemanticHash, ...parentHashBasis } = parent;
+  if (semanticHash(parentHashBasis) !== recordedSemanticHash) {
+    throw new TypeError('Parent iteration semanticHash does not match its canonical evidence content.');
   }
   return parent;
 }

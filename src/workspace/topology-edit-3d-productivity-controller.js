@@ -11,8 +11,9 @@ export class TopologyEdit3DViewController extends AuthoringController {
   constructor(eventBus, lifecycleOptions = {}) {
     super(eventBus, lifecycleOptions);
     this.cleanShellRuntime = new TopologyEditCleanShellRuntime(this);
+    this.iconPresentationRuntime = null;
     this.iconReferenceRuntime = null;
-    this.iconReferenceRuntimePromise = null;
+    this.iconRuntimePromise = null;
     this.tableAdapter = null;
     this.tableAdapterPromise = null;
     this.sourceVisualCache = null;
@@ -45,17 +46,44 @@ export class TopologyEdit3DViewController extends AuthoringController {
     return this.tableAdapterPromise;
   }
 
-  mountIconReferenceRuntime() {
-    if (this.iconReferenceRuntime || this.iconReferenceRuntimePromise || !this.hostElement) return;
+  mountIconRuntimes() {
+    if (this.iconRuntimePromise || this.iconPresentationRuntime
+      || this.iconReferenceRuntime || !this.hostElement) return;
     const activationHost = this.hostElement;
-    this.iconReferenceRuntimePromise = import(
-      './viewport-productivity/topology-edit-icon-reference-runtime.js'
-    ).then(({ TopologyEditIconReferenceRuntime }) => {
+    this.iconRuntimePromise = import(
+      './viewport-productivity/topology-edit-icon-presentation-runtime.js'
+    ).then(({ TopologyEditIconPresentationRuntime }) => {
       if (!this.hostElement || this.hostElement !== activationHost) return null;
-      const runtime = new TopologyEditIconReferenceRuntime().mount(activationHost);
-      this.iconReferenceRuntime = runtime;
-      return runtime;
-    }).finally(() => { this.iconReferenceRuntimePromise = null; });
+      const presentationRuntime = new TopologyEditIconPresentationRuntime().mount(activationHost);
+      if (!this.hostElement || this.hostElement !== activationHost) {
+        presentationRuntime.destroy();
+        return null;
+      }
+      this.iconPresentationRuntime = presentationRuntime;
+      return import(
+        './viewport-productivity/topology-edit-icon-reference-runtime.js'
+      ).then(({ TopologyEditIconReferenceRuntime }) => {
+        if (!this.hostElement || this.hostElement !== activationHost) {
+          presentationRuntime.destroy();
+          if (this.iconPresentationRuntime === presentationRuntime) this.iconPresentationRuntime = null;
+          return null;
+        }
+        const referenceRuntime = new TopologyEditIconReferenceRuntime().mount(activationHost);
+        this.iconReferenceRuntime = referenceRuntime;
+        return referenceRuntime;
+      });
+    }).catch((error) => {
+      this.iconReferenceRuntime?.destroy();
+      this.iconPresentationRuntime?.destroy();
+      this.iconReferenceRuntime = null;
+      this.iconPresentationRuntime = null;
+      if (this.hostElement === activationHost) {
+        activationHost.dataset.topologyEditIconPresentationStatus = 'ERROR';
+        activationHost.dataset.topologyEditIconPresentationError =
+          error instanceof Error ? error.message : String(error);
+      }
+      return null;
+    }).finally(() => { this.iconRuntimePromise = null; });
   }
 
   buildShell() {
@@ -71,7 +99,7 @@ export class TopologyEdit3DViewController extends AuthoringController {
     if (!sidecar) throw new Error('TopologyEditProductivityController: sidecar is unavailable.');
     sidecar.tabIndex = -1;
     this.cleanShellRuntime.mount(this.hostElement);
-    this.mountIconReferenceRuntime();
+    this.mountIconRuntimes();
   }
 
   deriveVisual(canonical, modelRole) {
@@ -104,8 +132,10 @@ export class TopologyEdit3DViewController extends AuthoringController {
     this.tableAdapter = null;
     this.tableAdapterPromise = null;
     this.iconReferenceRuntime?.destroy();
+    this.iconPresentationRuntime?.destroy();
     this.iconReferenceRuntime = null;
-    this.iconReferenceRuntimePromise = null;
+    this.iconPresentationRuntime = null;
+    this.iconRuntimePromise = null;
     this.cleanShellRuntime.destroy();
     this.sourceVisualCache = null;
     this.sourceVisualCacheDataset = null;

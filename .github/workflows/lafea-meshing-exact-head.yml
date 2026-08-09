@@ -9,8 +9,10 @@ on:
       - 'src/workspace/lafea-domain-first-mesh-custody.js'
       - 'src/workspace/lafea-discretization*.js'
       - 'src/workspace/lafea-workbench*.js'
+      - 'src/workspace/lafea-stage-analysis-adapter.js'
       - 'scripts/lafea.10-*.mjs'
       - 'scripts/lafea-mesh-producer-binding-check.mjs'
+      - 'scripts/lafea-mesh-dof-policy-check.mjs'
       - 'package.json'
       - '.github/workflows/lafea-meshing-exact-head.yml'
   workflow_dispatch:
@@ -45,6 +47,9 @@ jobs:
 
       - name: Install exact dependencies
         run: npm ci
+
+      - name: Qualify stage-aware mesh DOF policy
+        run: node scripts/lafea-mesh-dof-policy-check.mjs
 
       - name: Run governed LAFEA meshing gate
         run: npm run check:lafea-meshing

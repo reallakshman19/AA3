@@ -193,7 +193,6 @@ function joinPatchMeshes(geometry, patchRows, stageId) {
   const patchA = patchById.get(seam.patchAId);
   const patchB = patchById.get(seam.patchBId);
   const segmentA = segmentEndpoints(patchA.geometry, seam.segmentAId);
-  const segmentB = segmentEndpoints(patchB.geometry, seam.segmentBId);
   const seamLength = distance2(segmentA.start, segmentA.end);
   const stationsA = nodesOnSegment(patchA.generated.mesh, segmentA.start, segmentA.end);
   const stationsB = nodesOnSegment(patchB.generated.mesh, segmentA.start, segmentA.end);
@@ -448,7 +447,18 @@ function resourceDispositionFor(mesh, estimatedDofs) {
     ? 'BLOCK' : 'WITHIN_LIMITS';
 }
 function codeUnitCompare(left, right) { return left < right ? -1 : left > right ? 1 : 0; }
-function distance2(a, b) { return Math.hypot(b.x - a.x, b.y - a.y); }
+function planarCoordinate(value, primary, secondary) {
+  const result = value[primary] ?? value[secondary];
+  if (!Number.isFinite(result)) fail('LAFEA_SHELL_MULTIPATCH_PLANAR_COORDINATE_INVALID');
+  return result;
+}
+function distance2(a, b) {
+  const ax = planarCoordinate(a, 'x', 'u');
+  const ay = planarCoordinate(a, 'y', 'v');
+  const bx = planarCoordinate(b, 'x', 'u');
+  const by = planarCoordinate(b, 'y', 'v');
+  return Math.hypot(bx - ax, by - ay);
+}
 function distance3(a, b) { return Math.hypot(b.x - a.x, b.y - a.y, b.z - a.z); }
 function subtract3(left, right) { return { x: left.x - right.x, y: left.y - right.y, z: left.z - right.z }; }
 function cross3(left, right) {

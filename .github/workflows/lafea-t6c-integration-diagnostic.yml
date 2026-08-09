@@ -1,0 +1,26 @@
+name: LAFEA T6C integration diagnostic
+
+on:
+  pull_request:
+    paths:
+      - 'scripts/lafea-t6c-integration-diagnostic.mjs'
+      - '.github/workflows/lafea-t6c-integration-diagnostic.yml'
+      - 'src/core/local-continuum/**'
+      - 'src/workspace/lafea-controlled-continuum-*.js'
+
+permissions:
+  contents: read
+
+jobs:
+  diagnose:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      - run: npm ci
+      - run: node scripts/lafea-t6c-integration-diagnostic.mjs

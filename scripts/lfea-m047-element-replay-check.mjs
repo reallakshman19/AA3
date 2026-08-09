@@ -54,9 +54,27 @@ function actionRows(caseId, sourceId, fromNodeId, toNodeId, vector) {
   });
 }
 
+function incidentRows(caseId, nodeId, vector) {
+  return vector.map((value, index) => ({
+    caseId,
+    entityKind: 'NODE',
+    entityId: String(nodeId),
+    quantity: index < 3 ? 'INCIDENT_GLOBAL_FORCE' : 'INCIDENT_GLOBAL_MOMENT',
+    component: DOFS[index],
+    value,
+    unit: index < 3 ? 'N' : 'N*m',
+    required: true,
+    note: null,
+  }));
+}
+
 function expectedSpringActions(k, from, to, seriesFactor = 1) {
   const fromAction = from.map((value, index) => k[index] * seriesFactor * (value - to[index]));
   return [...fromAction, ...fromAction.map((value) => -value)];
+}
+
+function add(left, right) {
+  return left.map((value, index) => value + right[index]);
 }
 
 function syntheticReport() {
@@ -67,14 +85,19 @@ function syntheticReport() {
     const d1 = [0, 0, 0, 0, 0, 0];
     const d2 = [0.001, -0.002, 0.003, -0.004, 0.005, -0.006].map((value) => value * multiplier);
     const d3 = [0.002, 0.001, -0.003, 0.004, -0.002, 0.005].map((value) => value * multiplier);
-    const d5 = [-0.001, 0.003, 0.002, -0.005, 0.004, 0.001].map((value) => value * multiplier);
+    const d4 = [-0.001, 0.003, 0.002, -0.005, 0.004, 0.001].map((value) => value * multiplier);
+    const action4 = expectedSpringActions(stiffnesses, d1, d2);
+    const action5 = expectedSpringActions(stiffnesses, d2, d3, 0.5);
+    const action6 = expectedSpringActions(stiffnesses, d3, d4);
     const referenceRows = [
       ...displacementRows(caseId, '1', d1),
       ...displacementRows(caseId, '2', d2),
       ...displacementRows(caseId, '3', d3),
-      ...displacementRows(caseId, '5', d5),
-      ...actionRows(caseId, '4', '1', '2', expectedSpringActions(stiffnesses, d1, d2)),
-      ...actionRows(caseId, '5', '3', '5', expectedSpringActions(stiffnesses, d3, d5, 0.5)),
+      ...displacementRows(caseId, '4', d4),
+      ...actionRows(caseId, '4', '1', '2', action4),
+      ...actionRows(caseId, '6', '3', '4', action6),
+      ...incidentRows(caseId, '2', add(action4.slice(6, 12), action5.slice(0, 6))),
+      ...incidentRows(caseId, '3', add(action5.slice(6, 12), action6.slice(0, 6))),
     ];
     cases.push({ caseId, referenceRows });
     mechanicsCases[caseId] = {
@@ -84,11 +107,15 @@ function syntheticReport() {
           replayElementContribution: springContribution(stiffnesses),
         },
         {
-          elementId: `${caseId}.E5.A`, sourceElementId: '5', nodeI: '3', nodeJ: '4', kind: 'BEND_ARC',
+          elementId: `${caseId}.E5.A`, sourceElementId: '5', nodeI: '2', nodeJ: '5', kind: 'BEND_ARC',
           replayElementContribution: springContribution(stiffnesses),
         },
         {
-          elementId: `${caseId}.E5.B`, sourceElementId: '5', nodeI: '4', nodeJ: '5', kind: 'BEND_ARC',
+          elementId: `${caseId}.E5.B`, sourceElementId: '5', nodeI: '5', nodeJ: '3', kind: 'BEND_ARC',
+          replayElementContribution: springContribution(stiffnesses),
+        },
+        {
+          elementId: `${caseId}.E6`, sourceElementId: '6', nodeI: '3', nodeJ: '4', kind: 'FRAME',
           replayElementContribution: springContribution(stiffnesses),
         },
       ],
@@ -114,14 +141,20 @@ console.log('\n--- M047 CAESAR endpoint element replay qualification ---');
 {
   const result = buildM047ElementReplay(syntheticReport());
   for (const caseId of ['L19', 'L20']) {
-    assert.equal(result.cases[caseId].replayedSourceCount, 2);
-    assert.equal(result.cases[caseId].skippedSourceCount, 0);
-    assert.ok(result.cases[caseId].tracked.source4.maximumNormalizedResidual < 1e-12);
-    assert.ok(result.cases[caseId].tracked.source5.maximumNormalizedResidual < 1e-12);
-    assert.equal(result.cases[caseId].tracked.source5.internalNodeCount, 1);
+    const value = result.cases[caseId];
+    assert.equal(value.directReferenceSourceCount, 2);
+    assert.equal(value.derivedReferenceSourceCount, 1);
+    assert.equal(value.replayedSourceCount, 3);
+    assert.equal(value.skippedSourceCount, 0);
+    assert.ok(value.tracked.source4.maximumNormalizedResidual < 1e-12);
+    assert.ok(value.tracked.source5.maximumNormalizedResidual < 1e-12);
+    assert.equal(value.tracked.source5.internalNodeCount, 1);
+    assert.equal(value.tracked.source5.referenceAuthority, 'CAESAR_INCIDENT_NODE_ACTION_MINUS_DIRECT_NEIGHBOR_END_ACTIONS');
+    assert.equal(value.tracked.source5.referenceDerivation.FROM.directNeighbors[0].sourceElementId, '4');
+    assert.equal(value.tracked.source5.referenceDerivation.TO.directNeighbors[0].sourceElementId, '6');
   }
   assert.equal(result.method.globalSolverUsed, false);
-  process.stdout.write('M047-I008-T01 PASS single-element and condensed multi-element replay\n');
+  process.stdout.write('M047-I008-T01 PASS direct and incident-derived source replay with static condensation\n');
 }
 
 {
@@ -135,9 +168,23 @@ console.log('\n--- M047 CAESAR endpoint element replay qualification ---');
 
 {
   const input = syntheticReport();
+  input.cases[0].referenceRows = input.cases[0].referenceRows.filter(
+    (row) => !(row.entityKind === 'NODE' && row.entityId === '3' && row.quantity.startsWith('INCIDENT_GLOBAL_')),
+  );
+  const result = buildM047ElementReplay(input);
+  assert.equal(result.cases.L19.tracked.source5, null);
+  const skipped = result.cases.L19.skipped.find((entry) => entry.sourceElementId === '5');
+  assert.ok(skipped);
+  assert.equal(skipped.reason, 'NO_CAESAR_SOURCE_END_ACTION_REFERENCE');
+  assert.match(skipped.detail, /TO node 3 has no complete CAESAR incident-action vector/u);
+  process.stdout.write('M047-I008-T03 PASS incomplete incident authority cannot derive a source action\n');
+}
+
+{
+  const input = syntheticReport();
   input.source.sha256 = '0'.repeat(64);
   assert.throws(() => buildM047ElementReplay(input), /locked ACCDB SHA-256/u);
-  process.stdout.write('M047-I008-T03 PASS source identity fails closed\n');
+  process.stdout.write('M047-I008-T04 PASS source identity fails closed\n');
 }
 
 process.stdout.write('lfea-m047-element-replay-check: PASS\n');

@@ -27,7 +27,7 @@ foreach ($extension in @('.txt','.out','.lis','.lst','.err','.log','.rep','.rpt'
 
 $terms = @('alpha','thermal expansion','expansion coefficient','exp. coeff','a106','grade b','material 106','pipe properties')
 $files = @()
-$matches = @()
+$textMatches = @()
 
 foreach ($file in @(Get-ChildItem -LiteralPath $root -Recurse -File | Sort-Object FullName)) {
   $relative = Get-RelativePathSafe -Root $root -Path $file.FullName
@@ -44,13 +44,12 @@ foreach ($file in @(Get-ChildItem -LiteralPath $root -Recurse -File | Sort-Objec
     $lineNumber = 0
     foreach ($line in @(Get-Content -LiteralPath $file.FullName -ErrorAction Stop)) {
       $lineNumber += 1
-      $lower = [string]$line
-      $lower = $lower.ToLowerInvariant()
+      $lower = ([string]$line).ToLowerInvariant()
       $hitTerms = @($terms | Where-Object { $lower.Contains($_) })
       if ($hitTerms.Count -gt 0) {
         $snippet = ([string]$line).Trim()
         if ($snippet.Length -gt 240) { $snippet = $snippet.Substring(0, 240) }
-        $matches += [pscustomobject][ordered]@{
+        $textMatches += [pscustomobject][ordered]@{
           path = $relative
           line = $lineNumber
           terms = $hitTerms
@@ -64,12 +63,7 @@ foreach ($file in @(Get-ChildItem -LiteralPath $root -Recurse -File | Sort-Objec
 }
 
 $accdb = @($files | Where-Object { $_.extension -ieq '.accdb' })
-$candidateReports = @($files | Where-Object {
-  $_.textSurveyed -and (
-    $_.path -match '(?i)(error|check|report|input|material|alpha|thermal)' -or
-    @($matches | Where-Object { $_.path -eq $_.path }).Count -gt 0
-  )
-})
+$matchedPaths = @($textMatches | ForEach-Object { $_.path } | Sort-Object -Unique)
 
 $result = [ordered]@{
   schema = 'lfea-m047-i018-source-authority-survey/v1'
@@ -81,9 +75,12 @@ $result = [ordered]@{
   accdbFileCount = $accdb.Count
   accdbFiles = $accdb
   searchedTerms = $terms
-  textMatchCount = $matches.Count
-  textMatches = @($matches | Sort-Object path, line)
-  conclusion = if ($matches.Count -gt 0) {
+  surveyedTextFileCount = @($files | Where-Object { $_.textSurveyed }).Count
+  matchedTextFileCount = $matchedPaths.Count
+  matchedTextFiles = $matchedPaths
+  textMatchCount = $textMatches.Count
+  textMatches = @($textMatches | Sort-Object path, line)
+  conclusion = if ($textMatches.Count -gt 0) {
     'ARCHIVE_CONTAINS_TEXT_AUTHORITY_CANDIDATES_REQUIRING_REVIEW'
   } else {
     'NO_CAESAR_GENERATED_ALPHA_OR_MATERIAL_TEXT_AUTHORITY_FOUND_IN_PINNED_ARCHIVE'
@@ -91,4 +88,4 @@ $result = [ordered]@{
 }
 
 $result | ConvertTo-Json -Depth 8 | Set-Content -LiteralPath $out -Encoding utf8
-Write-Host "M047 I018 source survey: files=$($files.Count), accdb=$($accdb.Count), textMatches=$($matches.Count), conclusion=$($result.conclusion)"
+Write-Host "M047 I018 source survey: files=$($files.Count), accdb=$($accdb.Count), textFiles=$($result.surveyedTextFileCount), matches=$($textMatches.Count), conclusion=$($result.conclusion)"

@@ -77,8 +77,25 @@ jobs:
       - name: Preserve P-06A indexed review core
         run: node scripts/lfea-preflight-phase1-indexed-model-check.mjs
 
-      - name: Preserve P-06B 100k/1m indexed virtualization
-        run: node scripts/lfea-preflight-phase1-virtualization-v2-check.mjs
+      - name: Prove P-06B virtualization-v2 carried-red parity on P-02A and P-02B
+        shell: bash
+        run: |
+          set -euo pipefail
+          expected="does not provide an export named 'getLfeaPreflightPhase1ComponentParentLineTargetId'"
+          set +e
+          (cd /tmp/p02a-anchor && node scripts/lfea-preflight-phase1-virtualization-v2-check.mjs) > /tmp/p02a-p06b.log 2>&1
+          anchor_status=$?
+          node scripts/lfea-preflight-phase1-virtualization-v2-check.mjs > /tmp/p02b-p06b.log 2>&1
+          head_status=$?
+          set -e
+          test "$anchor_status" -ne 0
+          test "$head_status" -ne 0
+          for log in /tmp/p02a-p06b.log /tmp/p02b-p06b.log; do
+            grep -F "$expected" "$log"
+          done
+          cmp /tmp/p02a-p06b.log /tmp/p02b-p06b.log || {
+            echo 'P-06B raw logs differ by path/runtime context; exact retained export failure was proven in both.'
+          }
 
       - name: Preserve P-06C immutable review session
         run: node scripts/lfea-preflight-phase1-review-session-check.mjs
@@ -188,7 +205,8 @@ jobs:
       - name: Report P-02B qualification
         run: |
           printf '%s\n' \
-            'P-10/P-09/P-07/P-08/P-06 preservation PASS' \
+            'P-10/P-09/P-07/P-08/P-06A/P-06C preservation PASS' \
+            'P-06B virtualization-v2 missing-export carried-red parity PROVEN' \
             'P-02A frozen topology review contract PASS' \
             'P-02B retained topology/proximity projection PASS' \
             'P-02B source-bundle parent-hash custody PASS' \

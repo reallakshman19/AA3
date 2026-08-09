@@ -88,8 +88,8 @@ const curvatureChangeRatio = Math.PI * mec21.pressure * mec21.innerRadius ** 4
   * shellCorrection / (mec21.elasticModulus * mec21.secondMoment);
 const translationScale = curvatureChangeRatio * mec21.bendRadius;
 
-// MEC-21 Eq. (2.25) components are at the bend final point in that station's
-// local a-b-c basis. Verify those scalar component equations independently.
+// Literal MEC-21 Eq. (2.25): final-point components in that final station's
+// local a-b-c basis.
 const expectedQuarterTurnLocalFinal = Object.freeze({
   translationAbc: [
     translationScale * (Math.sin(quarterTurn) - quarterTurn),
@@ -99,51 +99,60 @@ const expectedQuarterTurnLocalFinal = Object.freeze({
   rotationAbc: [0, curvatureChangeRatio * quarterTurn, 0],
 });
 const directQuarterTurn = deriveMec21BendPressureFreeMovement({ ...mec21, bendAngle: quarterTurn });
+assert.equal(directQuarterTurn.basis, 'STATION_FINAL_ABC');
 close(directQuarterTurn.curvatureChangeRatio, curvatureChangeRatio, 1e-12);
 close(directQuarterTurn.shellCorrection, shellCorrection, 1e-12);
 vectorClose(directQuarterTurn.translationAbc, expectedQuarterTurnLocalFinal.translationAbc, 1e-12);
 vectorClose(directQuarterTurn.rotationAbc, expectedQuarterTurnLocalFinal.rotationAbc, 1e-12);
 
 const initialStation = deriveMec21BendPressureFreeState({ ...mec21, bendAngle: 0 });
+assert.equal(initialStation.basis, 'BEND_INITIAL_ABC');
 vectorClose(initialStation.translationAbc, [0, 0, 0], 1e-15);
 vectorClose(initialStation.rotationAbc, [0, 0, 0], 1e-15);
+vectorClose(initialStation.localFinalTranslationAbc, [0, 0, 0], 1e-15);
+vectorClose(initialStation.localFinalRotationAbc, [0, 0, 0], 1e-15);
 close(initialStation.curvatureChangeRatio, curvatureChangeRatio, 1e-12);
 
 // Independent canonical benchmark: a uniform small curvature reduction lambda
 // rotates the tangent perturbation along the arc. Integrating that perturbation
-// in the bend-start basis gives these physical free translations. Transforming
-// Eq. (2.25) from the rotating station basis must reproduce the same field.
+// in the bend-start basis gives the physical cumulative nodal free field.
+// The cumulative-state helper must match that integral for any station mesh.
 for (const subdivision of [1, 2, 4, 8, 32]) {
   const physicalStations = Array.from({ length: subdivision + 1 }, (_unused, index) => {
     const angle = quarterTurn * index / subdivision;
     const state = deriveMec21BendPressureFreeState({ ...mec21, bendAngle: angle });
+    assert.equal(state.basis, 'BEND_INITIAL_ABC');
     const localExpected = [
       translationScale * (Math.sin(angle) - angle),
       0,
       translationScale * (Math.cos(angle) - 1),
     ];
-    vectorClose(state.translationAbc, localExpected, 1e-12);
-    vectorClose(state.rotationAbc, [0, curvatureChangeRatio * angle, 0], 1e-12);
+    vectorClose(state.localFinalTranslationAbc, localExpected, 1e-12);
+    vectorClose(state.localFinalRotationAbc, [0, curvatureChangeRatio * angle, 0], 1e-12);
 
-    const axes = quarterBendStationAxes(angle);
-    const physicalTranslation = abcToStartBasis(axes, state.translationAbc);
     const integratedCurvatureTranslation = [
       translationScale * (Math.sin(angle) - angle * Math.cos(angle)),
       0,
       translationScale * (1 - Math.cos(angle) - angle * Math.sin(angle)),
     ];
-    vectorClose(physicalTranslation, integratedCurvatureTranslation, 1e-12);
-    const physicalRotation = abcToStartBasis(axes, state.rotationAbc);
-    vectorClose(physicalRotation, [0, curvatureChangeRatio * angle, 0], 1e-12);
-    return { physicalTranslation, physicalRotation };
+    vectorClose(state.translationAbc, integratedCurvatureTranslation, 1e-12);
+    vectorClose(state.rotationAbc, [0, curvatureChangeRatio * angle, 0], 1e-12);
+
+    // Independent coordinate check: rotate the literal final-local Eq. (2.25)
+    // components into the bend-start basis and recover the cumulative state.
+    const axes = quarterBendStationAxes(angle);
+    const transformedLocalFinal = abcToStartBasis(axes, state.localFinalTranslationAbc);
+    vectorClose(transformedLocalFinal, state.translationAbc, 1e-12);
+    return state;
   });
   const expectedPhysicalQuarterTurn = integratedCurvatureField(translationScale, curvatureChangeRatio, quarterTurn);
-  vectorClose(physicalStations.at(-1).physicalTranslation, expectedPhysicalQuarterTurn.translation, 1e-12);
-  vectorClose(physicalStations.at(-1).physicalRotation, expectedPhysicalQuarterTurn.rotation, 1e-12);
+  vectorClose(physicalStations.at(-1).translationAbc, expectedPhysicalQuarterTurn.translation, 1e-12);
+  vectorClose(physicalStations.at(-1).rotationAbc, expectedPhysicalQuarterTurn.rotation, 1e-12);
 }
 
-// Explicit falsification of I002: interpreting Eq. (2.25) station components in
-// one fixed bend-start basis is not the governing coordinate transformation.
+// Explicit falsification of the blocked I002 semantics: interpreting literal
+// Eq. (2.25) final-local station components in one fixed bend-start basis is
+// not the physical cumulative nodal field.
 const expectedPhysicalQuarterTurn = integratedCurvatureField(
   translationScale,
   curvatureChangeRatio,
@@ -192,6 +201,8 @@ console.log(JSON.stringify({
   })),
   mec21PressureExpansion: {
     benchmark: 'MEC21_PART_II_EQ_2_25_ROTATING_FINAL_BASIS_VS_INTEGRATED_CURVATURE',
+    cumulativeStateBasis: 'BEND_INITIAL_ABC',
+    literalMovementBasis: 'STATION_FINAL_ABC',
     curvatureChangeRatio,
     subdivisionCounts: [1, 2, 4, 8, 32],
     rotatingBasisMatchesIntegratedCurvature: true,

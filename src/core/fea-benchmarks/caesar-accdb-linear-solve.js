@@ -58,6 +58,7 @@ import {
 import {
   RIGID_ELEMENT_REQUEST_SCHEMA,
   compileCaesarRigidElementAuthority,
+  rigidElementBourdonPressureEffect,
   sealRigidElementRequest,
 } from '../linear-fea-rigid-element/index.js';
 import {
@@ -398,8 +399,9 @@ function buildFrameElement(input) {
     : 0;
   const pressureStrain = input.caseMode.pressure
     && input.solveProfile.bourdonPressureEffects.mode !== 'DISABLED'
-    ? closedEndPressureAxialStrain(input.row, frame.material.elasticModulus)
-      * input.pressureLengthScale
+    ? (input.pressureAxialStrainOverride ?? (
+        closedEndPressureAxialStrain(input.row, frame.material.elasticModulus)
+        * input.pressureLengthScale))
     : 0;
   const axialInitialLocal = thermalInitialStrainVector({
     elasticModulus: frame.material.elasticModulus,
@@ -496,6 +498,10 @@ function buildRigidElement(input) {
     sourceEvidence: sourceEvidence(`ACCDB:RIGID:${Number(input.row.RIGID_PTR)}`, input.benchmarkPackage.source.sha256),
     semanticHash: '',
   }));
+  const pressureEffect = rigidElementBourdonPressureEffect(authority, {
+    pressure: Number(input.row.PRESSURE1) * KPA_TO_PA,
+    poissonRatio: Number(input.row.POISSONS),
+  });
   const rigidSection = input.sectionRegistry.resolve(
     authority.stiffnessSection.outsideDiameter,
     authority.stiffnessSection.wallThickness,
@@ -506,6 +512,7 @@ function buildRigidElement(input) {
     section: rigidSection,
     kind: 'RIGID',
     pressureLengthScale: 0,
+    pressureAxialStrainOverride: pressureEffect.equivalentAxialStrain,
     thermalLengthScale: 1,
     gravityLengthScale: 1,
     gravityLineWeight: authority.gravity.totalLineWeight,

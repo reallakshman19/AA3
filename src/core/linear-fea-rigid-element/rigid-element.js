@@ -182,6 +182,47 @@ export function compileCaesarRigidElementAuthority(request) {
 }
 
 /**
+ * Convert activated CAESAR Bourdon pressure effects into the axial free state
+ * of a rigid element. CAESAR rigid stiffness uses the original ID with ten
+ * times the entered wall thickness; the Bourdon pressure action remains the
+ * physical closed-end force F_B = (1 - 2 nu) P A_i. Dividing that force by
+ * the rigid axial rigidity gives the equivalent free strain of the artificial
+ * stiffness section without multiplying physical-pipe strain by rigid EA.
+ *
+ * SOURCE: Hexagon CAESAR II rigid-element application and Bourdon/code-note
+ * authorities. The helper owns only the local axial pressure free state; job
+ * activation remains an adapter/load-case responsibility.
+ */
+export function rigidElementBourdonPressureEffect(authority, input) {
+  const accepted = requireRigidElementAuthority(authority);
+  const pressure = input?.pressure;
+  const poissonRatio = input?.poissonRatio;
+  if (typeof pressure !== 'number' || !Number.isFinite(pressure) || pressure < 0) {
+    throw new TypeError('Rigid Bourdon pressure must be a finite nonnegative pressure.');
+  }
+  if (typeof poissonRatio !== 'number' || !Number.isFinite(poissonRatio)
+    || !(poissonRatio > -1 && poissonRatio < 0.5)) {
+    throw new TypeError('Rigid Bourdon Poisson ratio must satisfy -1 < nu < 0.5.');
+  }
+  const insideArea = Math.PI * accepted.geometry.originalInsideDiameter ** 2 / 4;
+  const axialForce = (1 - 2 * poissonRatio) * pressure * insideArea;
+  const equivalentAxialStrain = axialForce / accepted.rigidities.axial;
+  const initialStrainLoad = new Array(12).fill(0);
+  initialStrainLoad[0] = cleanNumber(-axialForce);
+  initialStrainLoad[6] = cleanNumber(axialForce);
+  return Object.freeze({
+    rule: 'BOURDON_FORCE_ON_RIGID_STIFFNESS_SECTION_V1',
+    pressure: cleanNumber(pressure),
+    poissonRatio: cleanNumber(poissonRatio),
+    insideArea: cleanNumber(insideArea),
+    axialForce: cleanNumber(axialForce),
+    equivalentAxialStrain: cleanNumber(equivalentAxialStrain),
+    freeExpansion: cleanNumber(equivalentAxialStrain * accepted.geometry.length),
+    initialStrainLoad: Object.freeze(initialStrainLoad),
+  });
+}
+
+/**
  * Build the consistent local gravity vector for a compiled authority.
  * `gravityDirectionLocal` is a unit vector in the element local basis.
  */

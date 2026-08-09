@@ -6,6 +6,11 @@ import {
 import { requireLinearPipingQualifiedApplicationResult } from '../core/linear-piping-code-application/index.js';
 import { renderLinearPipingResultsView } from './linear-piping-results-view.js';
 import { runLinearPipingWorkbenchAnalysis } from './linear-piping-run-analysis.js';
+import {
+  LINEAR_PIPING_PRERUN_PROFILE_IDS,
+  checkLinearPipingRunRequest,
+} from './linear-piping-prerun-check.js';
+import { renderLinearPipingPreRunView } from './linear-piping-prerun-view.js';
 
 export const LINEAR_PIPING_WORKSPACE_PACKAGE_SCHEMA = 'linear-piping-workspace-result-package/v1';
 export const LINEAR_PIPING_WORKSPACE_PACKAGE_KEYS = Object.freeze([
@@ -19,22 +24,28 @@ export const LINEAR_PIPING_WORKSPACE_PACKAGE_KEYS = Object.freeze([
 ]);
 
 /**
- * Mounts the current-only piping result surface in the active WORKSPACE view.
+ * Mounts the current-only piping result surface in the active LFEA view.
  *
- * The controller either imports sealed Phase 4/5 records or delegates a
- * caller-supplied InputXML request to the existing production orchestration.
- * It renders governed outcomes but does not implement model compilation,
- * solving, recovery, interface mechanics, nozzle assessment or code stress.
+ * The controller runs governed pre-FEA diagnostics, imports sealed Phase 4/5
+ * records, or delegates a caller-supplied InputXML request to the existing
+ * production orchestration. It renders governed outcomes but does not
+ * implement model compilation, solving, recovery, interface mechanics, nozzle
+ * assessment or code stress.
  */
 export function mountLinearPipingResultsWorkbench(applicationRoot, options = {}) {
   if (!applicationRoot || typeof applicationRoot.querySelector !== 'function') {
     throw new TypeError('Linear piping results integration requires the application root.');
   }
+  // The LFEA view is the home for the piping run/review surface. The
+  // properties-panel slot is retained only as a fallback so a host that has
+  // not adopted the LFEA root still mounts rather than failing closed.
   const panelContainer = applicationRoot.querySelector(
+    '[data-role="linear-piping-consumer-root"]',
+  ) ?? applicationRoot.querySelector(
     '[data-panel="properties"] .panel-collapsible-content',
   );
   if (!panelContainer) {
-    throw new TypeError('Linear piping results integration could not find the properties panel.');
+    throw new TypeError('Linear piping results integration could not find a mount root.');
   }
   const documentRef = options.documentRef ?? applicationRoot.ownerDocument ?? document;
   const urlApi = options.urlApi ?? documentRef.defaultView?.URL ?? globalThis.URL;
@@ -63,8 +74,9 @@ export class LinearPipingResultsWorkbenchController {
     this.liveRunResult = null;
     this.runStatus = 'IDLE';
     this.runFailure = null;
+    this.preRunCheck = null;
     this.elements = null;
-    this.message = 'Run a caller-supplied InputXML analysis request or import a sealed result package.';
+    this.message = 'Pre-run check or run a caller-supplied InputXML analysis request, or import a sealed result package.';
     this.error = '';
     this.initialized = false;
   }
@@ -73,6 +85,8 @@ export class LinearPipingResultsWorkbenchController {
     if (this.initialized) return this;
     this.elements = createWorkbenchSection(this.documentRef);
     this.panelContainer.append(this.elements.section);
+    this.elements.preRunButton.addEventListener('click', () => this.elements.preRunFileInput.click());
+    this.elements.preRunFileInput.addEventListener('change', () => this.checkSelectedFile());
     this.elements.runButton.addEventListener('click', () => this.elements.runFileInput.click());
     this.elements.runFileInput.addEventListener('change', () => this.runSelectedFile());
     this.elements.importButton.addEventListener('click', () => this.elements.fileInput.click());
@@ -158,11 +172,13 @@ export class LinearPipingResultsWorkbenchController {
     this.liveRunResult = null;
     this.runStatus = 'IDLE';
     this.runFailure = null;
+    this.preRunCheck = null;
     this.error = '';
     this.message = 'Linear piping workbench cleared.';
     if (this.elements) {
       this.elements.fileInput.value = '';
       this.elements.runFileInput.value = '';
+      this.elements.preRunFileInput.value = '';
     }
     this.render();
   }
@@ -172,6 +188,8 @@ export class LinearPipingResultsWorkbenchController {
       status: this.presentation ? 'CURRENT' : 'EMPTY',
       runStatus: this.runStatus,
       runFailure: this.runFailure,
+      preRunStatus: this.preRunCheck?.status ?? 'NOT_RUN',
+      preRunSolveAuthorized: this.preRunCheck?.solveAuthorized ?? false,
       applicationId: this.presentation?.applicationId ?? null,
       applicationResultSemanticHash: this.presentation?.applicationResultSemanticHash ?? null,
       presentationSemanticHash: this.presentation?.semanticHash ?? null,
@@ -220,6 +238,59 @@ export class LinearPipingResultsWorkbenchController {
     });
   }
 
+  /**
+   * Run governed pre-FEA diagnostics only. No compile, no assembly, no solve.
+   */
+  checkRequest(value) {
+    try {
+      this.preRunCheck = checkLinearPipingRunRequest(value, {
+        requestedProfileId: this.elements?.profileSelect.value,
+      });
+      this.error = '';
+      this.message = [
+        `Pre-run check ${this.preRunCheck.status} for ${this.preRunCheck.applicationId}.`,
+        this.preRunCheck.solveAuthorized
+          ? 'No blocking or conditional finding.'
+          : 'Findings must be resolved before the solve is worth running.',
+      ].join(' ');
+      this.render();
+      return this.preRunCheck;
+    } catch (error) {
+      this.preRunCheck = null;
+      this.error = errorMessage(error);
+      this.message = 'Pre-run check rejected the supplied request.';
+      this.render();
+      throw error;
+    }
+  }
+
+  getPreRunCheck() {
+    return this.preRunCheck;
+  }
+
+  async checkSelectedFile() {
+    const file = this.elements?.preRunFileInput.files?.[0];
+    if (!file) return;
+    let value;
+    try {
+      value = JSON.parse(await file.text());
+    } catch (error) {
+      this.preRunCheck = null;
+      this.error = errorMessage(error);
+      this.message = 'The supplied pre-run file is not valid JSON.';
+      this.render();
+      if (this.elements) this.elements.preRunFileInput.value = '';
+      return;
+    }
+    try {
+      this.checkRequest(value);
+    } catch {
+      // checkRequest already recorded and rendered the rejection.
+    } finally {
+      if (this.elements) this.elements.preRunFileInput.value = '';
+    }
+  }
+
   async runSelectedFile() {
     const file = this.elements?.runFileInput.files?.[0];
     if (!file) return;
@@ -259,7 +330,11 @@ export class LinearPipingResultsWorkbenchController {
     this.elements.error.hidden = !this.error || this.runStatus === 'BLOCKED';
     this.elements.error.textContent = this.error;
     renderRunOutcome(this.documentRef, this.elements.runOutcome, this.runStatus, this.runFailure);
+    renderLinearPipingPreRunView(this.elements.preRunRoot, this.preRunCheck);
+    this.elements.preRunRoot.hidden = !this.preRunCheck;
     const hasCurrent = Boolean(this.presentation && this.applicationResult);
+    this.elements.preRunButton.disabled = running;
+    this.elements.profileSelect.disabled = running;
     this.elements.runButton.disabled = running;
     this.elements.importButton.disabled = running;
     this.elements.clearButton.disabled = running || (!hasCurrent && this.runStatus === 'IDLE');
@@ -268,6 +343,7 @@ export class LinearPipingResultsWorkbenchController {
       || this.presentation.exportEligibility !== 'ENGINEERING_EXPORT_ALLOWED';
     this.elements.section.dataset.current = hasCurrent ? 'true' : 'false';
     this.elements.section.dataset.runStatus = this.runStatus;
+    this.elements.section.dataset.preRunStatus = this.preRunCheck?.status ?? 'NOT_RUN';
     this.elements.section.dataset.qualificationStatus = this.presentation?.status ?? 'EMPTY';
     if (hasCurrent) {
       renderLinearPipingResultsView(
@@ -306,6 +382,7 @@ export class LinearPipingResultsWorkbenchController {
     this.liveRunResult = null;
     this.runStatus = 'IDLE';
     this.runFailure = null;
+    this.preRunCheck = null;
     this.error = '';
     this.message = '';
     this.elements?.section.remove();
@@ -316,6 +393,7 @@ export class LinearPipingResultsWorkbenchController {
   beginRun() {
     this.clearCurrentResult();
     this.liveRunResult = null;
+    this.preRunCheck = null;
     this.runStatus = 'RUNNING';
     this.runFailure = null;
     this.error = '';
@@ -436,6 +514,26 @@ function createWorkbenchSection(doc) {
   body.className = 'accordion-section-body';
   const toolbar = doc.createElement('div');
   toolbar.className = 'linear-piping-results-workbench__toolbar';
+  const profileLabel = doc.createElement('label');
+  profileLabel.className = 'linear-piping-results-workbench__profile';
+  profileLabel.textContent = 'Pre-run profile ';
+  const profileSelect = doc.createElement('select');
+  profileSelect.dataset.role = 'linear-piping-prerun-profile';
+  for (const profileId of LINEAR_PIPING_PRERUN_PROFILE_IDS) {
+    const option = doc.createElement('option');
+    option.value = profileId;
+    option.textContent = profileId;
+    profileSelect.append(option);
+  }
+  profileSelect.value = LINEAR_PIPING_PRERUN_PROFILE_IDS[0];
+  profileLabel.append(profileSelect);
+  const preRunButton = button(doc, 'Pre-Run Check');
+  preRunButton.dataset.action = 'check-linear-piping-analysis';
+  const preRunFileInput = doc.createElement('input');
+  preRunFileInput.type = 'file';
+  preRunFileInput.accept = '.json,application/json';
+  preRunFileInput.hidden = true;
+  preRunFileInput.dataset.role = 'linear-piping-prerun-request-file';
   const runButton = button(doc, 'Run Analysis');
   runButton.dataset.action = 'run-linear-piping-analysis';
   const runFileInput = doc.createElement('input');
@@ -443,6 +541,13 @@ function createWorkbenchSection(doc) {
   runFileInput.accept = '.json,application/json';
   runFileInput.hidden = true;
   runFileInput.dataset.role = 'linear-piping-run-request-file';
+  const analyzerLink = doc.createElement('a');
+  analyzerLink.className = 'linear-piping-results-workbench__analyzer-link';
+  analyzerLink.dataset.role = 'linear-piping-analyzer-link';
+  analyzerLink.href = 'analyze.html';
+  analyzerLink.target = '_blank';
+  analyzerLink.rel = 'noopener';
+  analyzerLink.textContent = 'Open InputXML Analyzer';
   const importButton = button(doc, 'Import Sealed Result Package');
   importButton.dataset.action = 'import-linear-piping-results';
   const clearButton = button(doc, 'Clear');
@@ -457,6 +562,9 @@ function createWorkbenchSection(doc) {
   fileInput.hidden = true;
   fileInput.dataset.role = 'linear-piping-result-package-file';
   toolbar.append(
+    profileLabel,
+    preRunButton,
+    preRunFileInput,
     runButton,
     runFileInput,
     importButton,
@@ -464,6 +572,7 @@ function createWorkbenchSection(doc) {
     auditButton,
     engineeringButton,
     fileInput,
+    analyzerLink,
   );
 
   const status = doc.createElement('output');
@@ -479,13 +588,21 @@ function createWorkbenchSection(doc) {
   error.className = 'linear-piping-results-workbench__error';
   error.dataset.role = 'linear-piping-results-error';
   error.hidden = true;
+  const preRunRoot = doc.createElement('div');
+  preRunRoot.className = 'linear-piping-results-workbench__prerun';
+  preRunRoot.dataset.role = 'linear-piping-prerun-root';
+  preRunRoot.hidden = true;
   const resultsRoot = doc.createElement('div');
   resultsRoot.className = 'linear-piping-results-workbench__results';
   resultsRoot.dataset.role = 'linear-piping-results-root';
-  body.append(toolbar, status, runOutcome, error, resultsRoot);
+  body.append(toolbar, status, runOutcome, error, preRunRoot, resultsRoot);
   section.append(header, body);
   return {
     section,
+    profileSelect,
+    preRunButton,
+    preRunFileInput,
+    preRunRoot,
     runButton,
     runFileInput,
     importButton,

@@ -155,6 +155,10 @@
   flex-direction: column;
   min-height: 0;
   flex: 1;
+  /* The panel itself clips (overflow: hidden), so anything appended below the
+     stock sections was previously unreachable — no scrollbar existed to reach
+     it. Own the scroll here so late-appended sections stay operable. */
+  overflow-y: auto;
 }
 
 .panel-search-container {

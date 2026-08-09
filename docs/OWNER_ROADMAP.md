@@ -1140,6 +1140,17 @@ InputXML path; a real gap-flagged review UI
 importers anywhere. Conclusion: full unification is real, large
 reconciliation work, not a small connecting step.
 
+> **Superseded 2026-08-09 (Phase 0.1).** The preflight screen is no longer
+> orphaned. Its `RETIRE`/`REPLACE` dispositions were applied (complete
+> candidate sets with `BLOCKED_AMBIGUOUS`, duplicate-preserving key buckets,
+> blocked empty model, no topology autofix, no `sharedModel` mutation, bounded
+> DOM), the pure core was split into
+> `src/workspace/lfea-preflight-resolution.js`, and the screen is mounted in
+> the LFEA view via `mountLfeaPreflightUi` from `src/main.js`. The frozen-risk
+> assertions in `scripts/check-enrichment-ui-phase0-antidrift.mjs` now assert
+> the remediated state and are backed by behavioural invariant checks. Phase 1
+> items still outstanding are listed in `docs/enrichment-ui-phase0-inventory.md`.
+
 Given that, proposed a 3-phase split (InputXML-side ground-truth
 document; StagedJSON→canonical unification, tied to the user's own P1
 Benchmark B / P12; an in-app review UI) via `AskUserQuestion` — user

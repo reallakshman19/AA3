@@ -58,6 +58,24 @@ immutable snapshot
 
 Components use compressed line-to-component adjacency and are materialized only in a separately bounded drill-down viewport.
 
-## Phase 0 invariant
+## Phase 0 invariant (historical)
 
-This work freezes and measures current risks without changing `src/workspace/lfea-preflight-ui.js`. It creates no engineering approval, production authority, topology decision, solver authorization, or release qualification.
+Phase 0 froze and measured current risks without changing `src/workspace/lfea-preflight-ui.js`. It created no engineering approval, production authority, topology decision, solver authorization, or release qualification.
+
+## Phase 0.1 remediation — screen made reachable
+
+The screen was orphaned (zero importers) for as long as it carried the risks above. It is now mounted in the LFEA view, and the `RETIRE` and `REPLACE` dispositions in the table above were applied first:
+
+| Disposition applied | Where |
+|---|---|
+| First substring containment + `break` → complete candidate set, `BLOCKED_AMBIGUOUS` with `selectedOrdinal: null` | `resolveLineKeyCandidates` in `src/workspace/lfea-preflight-resolution.js` |
+| `Map<normalizedKey, Row>` → duplicate-preserving `Map<normalizedKey, ordinal[]>` | `buildNormalizedKeyBuckets` |
+| Demonstration dataset on empty model → explicit blocked state | `projectPreflightModel` |
+| Topology autofix, viewer overlays, `sharedModel.supports` mutation | removed from the enrichment surface |
+| Run fallback verification | removed |
+| Inline editable cells and service/class fill-down | removed; cells are read-only with status and candidate counts |
+| Render-all string HTML + hidden component rows | element-built DOM, zero component rows before expansion, explicit row caps |
+
+The pure resolution core lives in `src/workspace/lfea-preflight-resolution.js` so `scripts/check-enrichment-ui-phase0-antidrift.mjs` can assert the duplicate, ambiguity, order-independence and blocked-empty-model invariants behaviourally rather than by grepping the view layer.
+
+**Not yet delivered from the Phase 1 acceptance checklist:** indexed bitset facets, exception queues as first-class surfaces, proposal and review-event ledger, true row/column virtualization, and the 40-column ordinal schema. Live DOM is bounded by declared caps in the interim, and surplus rows are reported on screen rather than silently dropped.

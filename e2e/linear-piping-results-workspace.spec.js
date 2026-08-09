@@ -26,6 +26,8 @@ const CONDITIONAL_PACKAGE = jsonValue(workspacePackage({
 test('[SIMULATED] current qualified piping package renders and downloads governed audit evidence', async ({ page }) => {
   await page.goto('/');
   await expect.poll(() => page.evaluate(() => Boolean(globalThis.AnalysisWorkspace))).toBe(true);
+  // The piping run/review surface lives in the LFEA view.
+  await page.click('[data-application-nav="LFEA"]');
 
   const state = await page.evaluate((value) => {
     AnalysisWorkspace.importLinearPipingResultPackage(value);
@@ -69,6 +71,7 @@ test('[SIMULATED] current qualified piping package renders and downloads governe
 test('[SIMULATED] conditional result blocks engineering export and rejected replacement clears prior state', async ({ page }) => {
   await page.goto('/');
   await expect.poll(() => page.evaluate(() => Boolean(globalThis.AnalysisWorkspace))).toBe(true);
+  await page.click('[data-application-nav="LFEA"]');
 
   await page.evaluate((value) => {
     AnalysisWorkspace.importLinearPipingResultPackage(value);

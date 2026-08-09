@@ -12,6 +12,8 @@ import { createAuthorizedEnrichmentWorkspaceApi } from './workspace/enrichment/a
 import { ENGINEERING_MODEL_EVENTS } from './workspace/engineering-model-controller.js';
 import { EventBus } from './workspace/event-bus.js';
 import { mountLinearPipingResultsWorkbench } from './workspace/linear-piping-results-workbench.js';
+import { mountLfeaPreflightUi } from './workspace/lfea-preflight-ui.js';
+import { EVENT_TOPICS } from './workspace/event-topics.js';
 
 const applicationRoot = document.getElementById('root');
 const coreWorkspace = bootstrapAnalysisWorkspace(applicationRoot);
@@ -42,12 +44,27 @@ const linearPipingResults = mountLinearPipingResultsWorkbench(applicationRoot, {
   documentRef: applicationRoot.ownerDocument,
   urlApi: applicationRoot.ownerDocument.defaultView?.URL,
 });
+// Read-only source-enrichment review. It reads the shared model and the saved
+// master Line List; it publishes nothing back into either.
+const preflightUi = mountLfeaPreflightUi(applicationRoot, {
+  getModel: () => ({ sharedModel: coreWorkspace.getSharedModel() }),
+});
+const preflightSubscriptions = [
+  EventBus.subscribe(EVENT_TOPICS.DATASET_LOADED, () => preflightUi.render()),
+  EventBus.subscribe(EVENT_TOPICS.DATASET_CLEARED, () => preflightUi.render()),
+];
 
 const workspace = Object.freeze({
   ...coreWorkspace,
   ...authorizedEnrichmentApi,
   importLinearPipingResultPackage(value) {
     return linearPipingResults.loadPackage(value);
+  },
+  checkLinearPipingRunRequest(value) {
+    return linearPipingResults.checkRequest(value);
+  },
+  getLinearPipingPreRunCheck() {
+    return linearPipingResults.getPreRunCheck();
   },
   clearLinearPipingResultPackage() {
     linearPipingResults.clear();
@@ -64,7 +81,12 @@ const workspace = Object.freeze({
   createLinearPipingEngineeringExportRecords() {
     return linearPipingResults.createEngineeringExports();
   },
+  getPreflightReviewModel() {
+    return preflightUi.getProjection();
+  },
   destroy() {
+    preflightSubscriptions.forEach((unsubscribe) => unsubscribe());
+    preflightUi.destroy();
     linearPipingResults.destroy();
     coreWorkspace.destroy();
   },

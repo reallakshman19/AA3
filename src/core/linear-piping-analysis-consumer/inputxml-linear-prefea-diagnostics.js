@@ -186,7 +186,7 @@ function normalizeFinding(row, fallbackCategory, effects) {
     category: validCategory(row.category) ? row.category : fallbackCategory,
     severity,
     disposition,
-    capabilityEffects: row.capabilityEffects ?? effects,
+    capabilityEffects: capabilityEffectIds(row.capabilityEffects, effects),
     sourceFeatureIds: row.sourceFeatureIds ?? row.featureIds ?? compact([row.sourceFeatureId]),
     sourcePaths: row.sourcePaths ?? compact([row.sourcePath]),
     canonicalEntityIds: row.canonicalEntityIds ?? compact([
@@ -195,11 +195,36 @@ function normalizeFinding(row, fallbackCategory, effects) {
     physicalCaseIds: row.physicalCaseIds ?? [],
     message: String(row.message ?? row.description ?? row.code ?? 'InputXML diagnostic.'),
     technicalBasis: String(row.technicalBasis ?? row.reason ?? 'Existing production diagnostic authority reported this condition.'),
-    evidence: row.evidence ?? row.data ?? row.details ?? { originalCode: row.code ?? null },
+    evidence: findingEvidence(row),
     remediation: String(row.remediation ?? 'Correct the identified source authority and rerun pre-FEA diagnostics.'),
     approximationEligible: row.approximationEligible === true,
     authorizationRequired: disposition === 'CONDITIONAL' || row.authorizationRequired === true,
   });
+}
+
+/**
+ * The finding contract stores capability effects as a list of capability ids.
+ * The model-health authority publishes them as a record keyed by capability id
+ * whose values carry the per-capability disposition and limitation code, so
+ * both shapes reach this adapter. Reduce a record to its ordered key set; the
+ * dispositions it carries are preserved by `findingEvidence`.
+ */
+function capabilityEffectIds(value, fallback) {
+  if (value === null || value === undefined) return fallback;
+  if (Array.isArray(value)) return value;
+  if (typeof value === 'object') return Object.keys(value);
+  return [String(value)];
+}
+
+function findingEvidence(row) {
+  if (row.evidence !== undefined && row.evidence !== null) return row.evidence;
+  if (row.data !== undefined && row.data !== null) return row.data;
+  if (row.details !== undefined && row.details !== null) return row.details;
+  const capabilityEffects = row.capabilityEffects;
+  if (capabilityEffects && !Array.isArray(capabilityEffects) && typeof capabilityEffects === 'object') {
+    return { originalCode: row.code ?? null, capabilityEffects };
+  }
+  return { originalCode: row.code ?? null };
 }
 
 function normalizeSeverity(value, disposition) {

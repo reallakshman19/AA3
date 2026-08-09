@@ -1,0 +1,390 @@
+PR 982 STATUS — CURVED CYLINDRICAL SHELL HOLES
+================================================
+
+Repository: reallaksh19/Advanced_Analysis
+Issue: #951 — automatic meshing pending activities
+PR: #982 — feat(lafea): qualify curved cylindrical shell holes
+Branch: agent/lafea-meshing-shell-curved-holes
+Base PR: #979 — full-cylinder periodic seam closure
+Base head: be02f5ad4a212a3aa1b4f94d229e6179a7d002f6
+State: DRAFT / OPEN / UNMERGED
+Release authority: NONE
+Merge authority: NONE
+
+1. PURPOSE OF THIS SLICE
+------------------------
+Qualify automatic external meshing of holes on a single analytic non-wrapping
+cylindrical shell midsurface for LAFEA.4 and LAFEA.5, while preserving the
+existing CST_DKT_TRI3_THIN_SHELL_V1 solver boundary and all existing fail-closed
+quality/custody rules.
+
+This slice does not move automatic/adaptive meshing authority into the local
+shell solver. The solver limitation NO_AUTOMATIC_OR_ADAPTIVE_MESHING remains
+in force. The qualified mesher is an upstream governed producer.
+
+2. QUALIFIED GEOMETRY ENVELOPE
+------------------------------
+Surface:
+  - analytic cylinder only
+  - one rectangular non-wrapping patch
+  - maximum angular span: 180 degrees
+  - u = circumferential arc length
+  - v = axial length
+  - UV metric is isometric for this cylinder parameterization
+
+Holes:
+  - straight polygonal HOLE loops in UV
+  - disjoint
+  - non-nested
+  - multiple holes supported inside the qualified non-wrapping patch
+  - hole orientation enforced
+  - hole touching/crossing outer boundary rejected
+  - outside holes rejected
+  - nested holes rejected
+  - intersecting/overlapping holes rejected
+
+Element family:
+  - CST_DKT_TRI3_THIN_SHELL_V1 only
+  - 5 DOF/node accounting for LAFEA.4 and LAFEA.5
+
+3. SIZING AUTHORITIES
+---------------------
+Curvature sizing is applied first. The cylindrical chord/facet criterion remains
+bounded by the existing 15 degree surface-normal/director qualification rule.
+For R = 100 mm the curvature target is:
+
+  h_curvature = R * 15 deg * pi / 180
+              = 26.17993877991494 mm
+
+Hole-bearing requests must ALSO satisfy the existing material-ligament rule:
+
+  h_effective <= L_ligament,min / 2
+
+Therefore curvature refinement cannot bypass insufficient hole/ligament
+resolution.
+
+Permanent witnesses:
+
+ONE_RECT_HOLE
+  minimum material ligament: 45 mm
+  maximum qualified target: 22.5 mm
+  coarse target 60 mm: rejected before meshing because the curvature-capped
+    26.1799 mm target remains above the 22.5 mm ligament ceiling
+  representative qualified targets: 22.5, 20, 15, 10, 8 mm
+
+TWO_RECT_HOLES
+  minimum material ligament: 40 mm
+  maximum qualified target: 20 mm
+  target 22.5 mm: rejected before meshing
+  representative qualified targets: 20, 15, 10, 8 mm
+
+4. ROOT CAUSE FOUND DURING QUALIFICATION
+----------------------------------------
+The initial curved-hole candidate exposed a real deterministic lattice-phase
+quality defect in the shared constrained-Delaunay interior seeding.
+
+Old interior refinement revision:
+  LAFEA.10.CDT-HOLES-TRI.V3
+  BOUNDARY_CLEARANCE_FACTOR = 0.18
+
+Observed before repair:
+  - one-hole target 10 mm produced one quality BLOCK
+  - scaled Jacobian was approximately 0.19719, below the unchanged 0.20 floor
+  - the corresponding UV scaled Jacobian was approximately 0.1971605
+  - the corresponding 3D scaled Jacobian was approximately 0.1971920
+  - therefore cylindrical mapping was not the cause
+  - the triangle was an outer-boundary sliver caused by an interior triangular
+    lattice seed lying only about 2.08 mm inside a constrained boundary
+
+The two-hole diagnostic ladder confirmed this was not safe to address by
+cherry-picking a passing target. Under V3, accepted/blocking states varied with
+target-size phase.
+
+Rejected remedies:
+  - relaxing the scaled-Jacobian threshold
+  - hiding the BLOCK in evidence
+  - post-generation uncontrolled quality repair
+  - qualifying only selected lucky targets
+
+5. PRODUCTION REPAIR
+--------------------
+Current interior refinement revision:
+  LAFEA.10.CDT-HOLES-TRI.V4
+
+Change:
+  BOUNDARY_CLEARANCE_FACTOR = 0.25
+
+Meaning:
+  deterministic interior Steiner candidates closer than 0.25*h to any
+  constrained boundary are not inserted.
+
+Not changed:
+  - aspect-ratio thresholds
+  - scaled-Jacobian thresholds
+  - scaledJacobianBlock remains 0.20
+  - hole material-ligament rule
+  - boundary discretization
+  - constrained-hole topology recovery
+  - element formulation
+  - shell director/facet compatibility criterion
+  - no auto-repair was added
+
+The change prevents the known near-boundary sliver mechanism before it is
+introduced rather than repairing or accepting a blocked element afterward.
+
+6. PERMANENT ROBUSTNESS EVIDENCE
+--------------------------------
+Permanent test:
+  scripts/lafea-shell-curved-hole-ladder-check.mjs
+
+For BOTH LAFEA.4 and LAFEA.5:
+  - deterministic replay at every retained level: PASS
+  - zero blocking elements at every retained level: PASS
+  - strict density increase as target decreases: PASS
+  - quality thresholds relaxed: FALSE
+  - minimum elements across material ligament: 2
+
+ONE_RECT_HOLE minimum scaled Jacobian witnesses after V4:
+  target 22.5 mm: 0.4056295634603414
+  target 20 mm:   0.3323759129984223
+  target 15 mm:   0.3967691768686420
+  target 10 mm:   0.3553918924018250
+  target 8 mm:    0.2377136041819846
+
+The old 10 mm resonance is therefore specifically repaired without changing the
+0.20 quality floor.
+
+TWO_RECT_HOLES minimum scaled Jacobian witnesses after V4:
+  target 20 mm: 0.24281912268711248
+  target 15 mm: 0.35772899480241000
+  target 10 mm: 0.31615049633518470
+  target 8 mm:  0.23771360418198460
+
+The target levels that previously exposed phase-dependent blocks now remain
+above the unchanged block floor in the permanent qualified ladder.
+
+7. DETAILED PRODUCTION/CUSTODY EVIDENCE
+---------------------------------------
+Permanent test:
+  scripts/lafea-shell-curved-hole-check.mjs
+  output schema: lafea-shell-curved-hole-check/v2
+
+Qualified checks include:
+  - curved-hole parent/evidence validation
+  - separate curved-hole midsurface schema
+  - one-hole 20 mm generated evidence PASS
+  - one-hole 10 mm repaired-regression PASS
+  - one-hole 8 mm finer-density PASS
+  - two-hole 15 mm PASS
+  - hole interiors remain empty in UV
+  - constrained hole corners retained
+  - analytic cylinder conformity
+  - actual local-shell element authority accepts a hole-adjacent generated facet
+  - nodal director/tangent bases remain compatible with shell element authority
+  - deterministic plan/mesh/artifact replay
+  - public workbench plan/generate route reaches CURRENT_PASS
+  - Discretization reports run-eligible current evidence
+  - source change invalidates retained curved parent and generated child
+  - shell local refinement remains denied and retained parent is preserved
+  - reversed/touching/outside/nested/intersecting holes rejected
+  - >180 degree non-wrapping patch rejected
+  - invalid cylinder basis rejected
+
+Canonical detailed witness, both stages:
+  radius: 100 mm
+  angular span: 90 degrees
+  curvature target: 26.17993877991494 mm
+  one-hole accepted target: 20 mm
+  one-hole 20 mm: 76 nodes / 116 elements / 380 DOF
+  repaired one-hole 10 mm: 247 nodes / 424 elements
+  one-hole 8 mm: 383 nodes / 678 elements
+  two-hole 15 mm: 134 nodes / 216 elements
+  minimum facet/director alignment: 0.9894501136571836
+  maximum facet-normal deviation: 8.329982220145963 degrees
+
+8. PRODUCER IDENTITY / GOVERNANCE
+---------------------------------
+Canonical mesh output changed because the shared seed acceptance rule changed.
+The producer identity was therefore intentionally advanced rather than retaining
+an old qualification identity.
+
+Current producer:
+  engine revision: LAFEA.10.T6Q8.SHELL.V9
+  qualification revision: R10
+  qualification ID: LAFEA-MESH-Q1
+  governance reference: npm run check:lafea-meshing
+
+The binding gate explicitly checks V9/R10 and retains all earlier continuum,
+planar-hole, shell, cylindrical and retained-refinement assertions.
+
+9. EXACT-HEAD QUALIFICATION BEFORE THIS STATUS COMMIT
+-----------------------------------------------------
+Engineering code head:
+  36716ad594a86ca9ed2924df778effc28b311b98
+
+Workflow:
+  .github/workflows/lafea-meshing-exact-head.yml
+
+Run:
+  31317361350
+
+Verdict:
+  PASS
+
+Passing steps include:
+  - verify exact SHA
+  - npm ci
+  - stage-aware mesh DOF policy
+  - governed canvas meshing intent
+  - retained-mesh local refinement regression
+  - planar shell producer mechanics
+  - shell workbench custody / Discretization
+  - planar shell-hole robustness ladder
+  - planar shell-hole topology/custody route
+  - hole-free cylindrical curved shell gate
+  - curved-hole robustness ladder
+  - detailed non-wrapping curved-hole gate
+  - full-cylinder periodic seam regression
+  - P2-11 classification
+  - full npm run check:lafea-meshing aggregate
+  - aggregate evidence upload
+
+This status-file commit is documentation-only. The final PR head must receive its
+own exact-head run before final handoff.
+
+10. INHERITED CAPABILITIES CONFIRMED UNREGRESSED
+------------------------------------------------
+The exact-head run also retains PASS evidence for:
+  - LAFEA.3 automatic T3/T6/Q8 generation
+  - P1-5 interior refinement
+  - planar holes
+  - logical mapped four-side chains
+  - P2-9 retained T3/T6 local refinement
+  - planar LAFEA.4/LAFEA.5 TRI3 shell generation
+  - planar shell holes
+  - hole-free analytic non-wrapping cylinder
+  - hole-free full-cylinder periodic seam closure
+
+The current periodic full-cylinder scope remains HOLE-FREE. This PR does not
+combine periodic seam identification with holes.
+
+11. CURRENT EXCLUSIONS / PENDING ROADMAP
+----------------------------------------
+Next qualification slices, in recommended order:
+
+A. FULL_CYLINDER_PERIODIC_HOLE_INTERACTION
+   - qualify holes on a cylinder whose u chart is periodic
+   - define seam-crossing hole ownership explicitly
+   - reject ambiguous holes straddling the chart cut until canonical periodic
+     loop representation is defined
+   - prove no duplicate seam DOFs and correct physical boundary topology with
+     holes present
+   - combine periodic topology Euler characteristic checks with hole cavity
+     ownership and ligament rules
+
+B. MULTI_PATCH_SEAMS
+   - explicit patch IDs and seam pairing authority
+   - conforming node ownership across patch interfaces
+   - C0 positional continuity minimum
+   - director/normal compatibility and orientation across seams
+   - no duplicate interface DOFs
+   - deterministic seam canonicalization
+   - fail closed for gaps, overlaps, T-junctions and ambiguous ownership
+
+C. ADDITIONAL ANALYTIC CURVED SURFACES
+   - cone only after singular-apex policy is explicit
+   - sphere only with chart/singularity policy
+   - preserve declared parametric authority; no PCA/best-fit surface inference
+   - analytic geometry-error and director oracle required
+
+D. OFFSET_SURFACE_GENERATION
+   - define source/reference/offset-side authority
+   - curvature/radius-of-offset validity gate
+   - self-intersection and collapsed-offset detection
+   - thickness/midsurface semantic ownership must remain explicit
+
+E. THICKNESS_TRANSITION_MESHING
+   - define thickness-field authority independent of topology generation
+   - transition grading limits
+   - element thickness ownership and evidence lineage
+   - no silent geometric offset substitution for thickness change
+
+F. SHELL_LOCAL_REFINEMENT
+   - retained parent artifactHash + meshHash targeting
+   - shell NODE/ELEMENT target semantics
+   - curved-surface projection of inserted nodes
+   - seam/hole/patch-boundary preservation
+   - atomic custody replacement
+   - deterministic replay
+   - new convergence evidence remains separate from mesh-quality qualification
+
+G. NURBS / FREEFORM SURFACES
+   - only after a declared parametric surface contract exists
+   - patch/chart authority, trimming-loop authority and singularity handling
+   - independent geometric approximation-error oracle
+   - deterministic projection / inversion semantics
+   - no closest-point ambiguity accepted silently
+
+12. ISSUE #951 ROADMAP POSITION
+-------------------------------
+Previously qualified stacked work includes:
+  P0        UI/profile binding and fail-closed producer boundary
+  P1-5      interior Steiner refinement
+  P1-6      holes
+  P1-7      logical four-side chains
+  P2-13     stage-aware DOF policy
+  P2-10     retired canvas intent
+  P2-11     check classification
+  P2-12     lock/dependency sync already addressed in earlier stack
+  P2-9      retained-mesh local refinement for T3/T6
+  P2-8      external planar shell producer
+  extension planar shell holes
+  extension analytic non-wrapping cylindrical shell
+  extension full-cylinder periodic seam closure
+  THIS PR   analytic non-wrapping cylindrical holes + V4 seeding repair
+
+Remaining advanced shell meshing is intentionally split into independent
+qualification slices listed in Section 11 rather than broadening one PR beyond
+its evidence envelope.
+
+13. KEEP / REJECT / REVERT DISPOSITION
+--------------------------------------
+KEEP:
+  - curved-hole analytic-cylinder contract
+  - V4 deterministic 0.25h constrained-boundary seed clearance
+  - two-elements-across-minimum-ligament rule
+  - 15 degree curvature/director criterion
+  - unchanged mesh quality thresholds
+  - permanent one-hole/two-hole target ladder
+  - exact parent/profile/source custody and deterministic evidence
+
+REJECT:
+  - qualification by a single favorable target size
+  - quality-threshold relaxation
+  - uncontrolled post-generation repair
+  - arbitrary curved/freeform-surface claims
+  - periodic seam + hole interaction claims in this PR
+  - shell local-refinement claims in this PR
+
+REVERT if future exact-head evidence shows:
+  - regression in inherited continuum/planar-hole/periodic gates
+  - any accepted curved-hole ladder level contains a blocking element
+  - loss of deterministic replay
+  - loss of exact source/profile/geometry custody
+  - local-shell director/facet incompatibility
+  - duplicate or non-manifold topology introduced by a future seam extension
+
+14. AUTHORITY STATEMENT
+-----------------------
+This PR qualifies only the declared meshing envelope and its evidence route.
+It does not assert:
+  - release qualification
+  - merge authority
+  - arbitrary shell geometry support
+  - nonlinear/contact authority
+  - structural-stress/code-assessment authority
+  - solution convergence merely from mesh-quality PASS
+
+Mesh quality PASS means the generated mesh satisfies the qualified topology,
+family, geometry, quality, determinism and custody rules. Structural-response
+convergence remains a separate analysis qualification obligation.

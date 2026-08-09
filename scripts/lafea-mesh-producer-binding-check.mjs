@@ -380,7 +380,7 @@ assert.throws(
   (error) => error?.code === 'LAFEA_MESH_ENGINE_Q8_FULL_RECOMBINATION_REQUIRED',
 );
 
-// --- LMB-16: Discretization continues to surface governed generation --------
+// --- LMB-16: Discretization remains truthful for a retained Q8 mesh --------
 const generatedStage = {
   ...stage,
   retainedAnalysisMeshEvidenceV2: evidence,
@@ -388,6 +388,7 @@ const generatedStage = {
   analysisMeshProfileHash: configuration.meshProfileHash,
   lastAnalysisMeshPlan: {
     schema: 'lafea-analysis-mesh-plan-summary/v1', stageId: 'LAFEA.3',
+    generationMode: 'AUTOMATIC_MESH',
     elementFamily: planned.plan.elementFamily, strategy: planned.generated.strategy,
     strategyReason: planned.generated.strategyReason, nodeCount: planned.plan.estimatedNodes,
     elementCount: planned.plan.estimatedElements, estimatedDofs: planned.plan.estimatedDofs,
@@ -406,8 +407,12 @@ assert.equal(viewModel.generation.available, true);
 assert.equal(viewModel.actions.canGenerateMesh, true);
 assert.equal(viewModel.actions.canAdvance, true);
 assert.equal(viewModel.evidence.producerRef, LAFEA_MESH_PRODUCER_REF);
-assert.equal(viewModel.configuration.modes.find((row) => row.mode === 'MANUAL_REFINEMENT').enabled, true);
-assert.equal(viewModel.actions.manualRefinementEnabled, true);
+assert.equal(viewModel.evidence.elementFamily, 'Q8');
+const manualMode = viewModel.configuration.modes.find((row) => row.mode === 'MANUAL_REFINEMENT');
+assert.equal(manualMode.enabled, false);
+assert.equal(manualMode.reason, 'Q8_LOCAL_REFINEMENT_NOT_QUALIFIED');
+assert.equal(viewModel.actions.manualRefinementEnabled, false);
+assert.equal(viewModel.actions.canRefineMesh, false);
 
 // --- LMB-17: unbound profile remains explicit and fail-closed ---------------
 const unboundViewModel = buildLafeaDiscretizationViewModel({

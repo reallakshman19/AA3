@@ -6,8 +6,12 @@ on:
       - 'src/core/centerline-beam-fea/**'
       - 'src/core/linear-fea-*/**'
       - 'src/core/linear-piping-analysis-consumer/**'
+      - 'src/core/fea-benchmarks/caesar-accdb-*'
+      - 'benchmarks/LFEA/CAESAR_ACCDB/**'
       - 'scripts/lfea-b1-conditioning-check.mjs'
       - 'scripts/lfea-linear-core-exact-head-evidence.mjs'
+      - 'scripts/lfea-caesar-accdb-*.mjs'
+      - 'scripts/lfea-m047-*.mjs'
       - 'scripts/linear-piping-inputxml-unit-normalization-check.mjs'
       - '.github/workflows/lfea-linear-core-exact-head.yml'
 
@@ -42,7 +46,7 @@ jobs:
           git diff --name-only "$merge_base" "${{ github.event.pull_request.head.sha }}" > /tmp/lfea-linear-core-paths.txt
           while IFS= read -r changed; do
             case "$changed" in
-              src/core/centerline-beam-fea/*|src/core/linear-fea-*/*|src/core/linear-piping-analysis-consumer/*|scripts/lfea-b1-conditioning-check.mjs|scripts/lfea-linear-core-exact-head-evidence.mjs|scripts/linear-piping-inputxml-unit-normalization-check.mjs|.github/workflows/lfea-linear-core-exact-head.yml) ;;
+              src/core/centerline-beam-fea/*|src/core/linear-fea-*/*|src/core/linear-piping-analysis-consumer/*|src/core/fea-benchmarks/caesar-accdb-*|benchmarks/LFEA/CAESAR_ACCDB/*|scripts/lfea-b1-conditioning-check.mjs|scripts/lfea-linear-core-exact-head-evidence.mjs|scripts/lfea-caesar-accdb-*.mjs|scripts/lfea-m047-*.mjs|scripts/linear-piping-inputxml-unit-normalization-check.mjs|.github/workflows/lfea-linear-core-exact-head.yml) ;;
               *) echo "Forbidden changed path for the linear-core qualification slice: $changed"; exit 1 ;;
             esac
           done < /tmp/lfea-linear-core-paths.txt
@@ -80,6 +84,9 @@ jobs:
 
       - name: Element-end, nodal and code-station recovery
         run: npm run check:lfea-b3.4
+
+      - name: M047 traceable ACCDB mechanics and retained evidence
+        run: node scripts/lfea-m047-check.mjs
 
       - name: Production linear piping consumer
         run: npm run check:linear-piping-analysis-consumer

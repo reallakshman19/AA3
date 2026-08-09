@@ -35,8 +35,10 @@ console.log(JSON.stringify({
     ordinal: row.ordinal,
     status: row.levelEvidence?.status,
     diagnostics: row.levelEvidence?.diagnostics ?? [],
+    observedQuantity: row.observedQuantity ?? null,
   })) ?? [],
   receiptStatus: result.controllerResult?.receipt?.status ?? null,
+  pilotConvergence: result.controllerResult?.receipt?.pilotConvergence ?? null,
   readiness: result.controllerResult?.readiness ?? null,
 }, null, 2));
 if (result.status !== 'ACCEPTED') process.exitCode = 1;

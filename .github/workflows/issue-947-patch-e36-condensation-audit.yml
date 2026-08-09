@@ -1,0 +1,50 @@
+name: Issue 947 patch E36 condensation diagnostic parity
+
+on:
+  push:
+    branches:
+      - codex/issue-947-bm4nl-qualification
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  patch:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: codex/issue-947-bm4nl-qualification
+          fetch-depth: 0
+      - name: Patch diagnostic only
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          p=Path('scripts/lfea-issue947-e36-production-condensation-audit.mjs')
+          s=p.read_text()
+          s=s.replace("import { solveCaesarAccdbLinearBenchmark } from '../src/core/fea-benchmarks/caesar-accdb-linear-solve.js';", "import { solveCaesarAccdbLinearBenchmark } from '../src/core/fea-benchmarks/caesar-accdb-linear-solve.js';\nimport { semanticHash } from '../src/core/shared-piping-model/canonical-json.js';")
+          s=s.replace("const geometry = buildE36Geometry({ branch, nextBranch, bend: bendRows.get(7), coordinateIndex, runSection });", "const geometry = buildE36Geometry({ branch, nextBranch, bend: bendRows.get(7), coordinateIndex, runSection, branchSection, material });")
+          s=s.replace("outerDiameter: input.runSection.dimensions.outerDiameter,\n      wallThickness: input.runSection.dimensions.wallThickness,", "outerDiameter: input.branchSection.dimensions.outerDiameter,\n      wallThickness: input.branchSection.dimensions.wallThickness,")
+          s=s.replace("elasticModulus: Number(input.branch.MODULUS) * KPA_TO_PA,", "elasticModulus: input.material.materialState.elasticModulus,")
+          old="""  const material = buildMaterial([...sourceRows.values()], pkg);\n  const sectionRegistry = createSectionRegistry(pkg);\n  const section = sectionRegistry.resolve(Number(input.branch.DIAMETER) * MM_TO_M, Number(input.branch.WALL_THICK) * MM_TO_M);\n  const component = compilePipingComponent({"""
+          s=s.replace(old, "  const component = compilePipingComponent({")
+          s=s.replace("    material,\n    section,", "    material: input.material,\n    section: input.branchSection,")
+          s=s.replace("sourceEvidence: { sourceId: 'ACCDB:INPUT_BASIC_ELEMENT_DATA:MATERIAL', sourceRevision: benchmarkPackage.source.sha256, sourceSemanticHash: 'ISSUE947-DIAGNOSTIC' },", "sourceEvidence: sourceEvidence('ACCDB:INPUT_BASIC_ELEMENT_DATA:MATERIAL', benchmarkPackage.source.sha256),")
+          s=s.replace("sourceEvidence: { sourceId: 'ACCDB:PIPE_SECTION', sourceRevision: `${benchmarkPackage.source.sha256}:${key}`, sourceSemanticHash: 'ISSUE947-DIAGNOSTIC' },", "sourceEvidence: sourceEvidence('ACCDB:PIPE_SECTION', `${benchmarkPackage.source.sha256}:${key}`),")
+          marker="function density(value) { return Number(value) * KG_PER_CM3_TO_KG_PER_M3; }"
+          helper="function sourceEvidence(sourceId, sourceRevision) { const identity = { sourceId, sourceRevision }; return { ...identity, sourceSemanticHash: semanticHash(identity) }; }\n"
+          s=s.replace(marker, helper+marker)
+          p.write_text(s)
+          PY
+          node --check scripts/lfea-issue947-e36-production-condensation-audit.mjs
+          git diff --check
+      - name: Commit diagnostic repair
+        run: |
+          if git diff --quiet; then exit 0; fi
+          git config user.name github-actions[bot]
+          git config user.email 41898282+github-actions[bot]@users.noreply.github.com
+          git add scripts/lfea-issue947-e36-production-condensation-audit.mjs
+          git commit -m "fix(issue947): repair E36 diagnostic authority parity"
+          git push origin HEAD:codex/issue-947-bm4nl-qualification

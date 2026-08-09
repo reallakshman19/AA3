@@ -92,7 +92,7 @@ jobs:
           $selected = @(
             $evidence.pathResults |
               ForEach-Object { $_.pathsToNearestI015SelectedSources } |
-              ForEach-Object { $_.selectedSourceId } |
+              ForEach-Object { [int]$_.selectedSourceId } |
               Sort-Object -Unique
           )
           if (($selected -join ',') -ne '8,14,44') {

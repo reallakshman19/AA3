@@ -45,6 +45,9 @@ export function renderLafeaWorkbenchContent(root, state, stage, options) {
   const viewportCard = card(root, `Governed engineering viewport — ${state.activeStageId}`);
   viewportCard.section.dataset.guidedTarget = 'viewport';
   const preview = element(root, 'div', 'lafea-workbench__svg');
+  const retainedMeshEvidence = stage.domainFirstProfileActive === true
+    ? stage.retainedAnalysisMeshEvidenceV2 ?? null
+    : stage.retainedAnalysisMeshEvidence ?? null;
   activeViewport = mountLafeaLiveWorkbenchViewport(preview, {
     stageId: state.activeStageId,
     document: stage.document,
@@ -62,7 +65,7 @@ export function renderLafeaWorkbenchContent(root, state, stage, options) {
       : undefined,
     onSelectionChange: options.onSelectionChange,
     retainedMeshEvidence: stage.analysisMeshCustodyProjection?.canView
-      ? stage.retainedAnalysisMeshEvidence
+      ? retainedMeshEvidence
       : null,
     analysisMeshCustodyState: stage.analysisMeshCustodyProjection?.state ?? null,
     focusedMeshElementId: options.focusedMeshElementId,
@@ -86,6 +89,7 @@ export function renderLafeaWorkbenchContent(root, state, stage, options) {
     onImportEvidence: options.handlers.onImportMeshEvidence,
     onValidateEvidence: options.handlers.onValidateMeshEvidence,
     onExportEvidence: options.handlers.onExportMeshEvidence,
+    onBindMeshProfile: options.handlers.onBindMeshProfile,
     onPlanMesh: options.handlers.onPlanMesh,
     onGenerateMesh: options.handlers.onGenerateMesh,
     onFocusElement: (elementId) => {

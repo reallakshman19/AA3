@@ -166,6 +166,102 @@ jobs:
             --package .work/package/bm4nl-canonical-package.json \
             --out .work/out/issue947-e36-production-descendant-condensation-audit.json
 
+      - name: Run controlled E36 mechanic-removal sensitivity A/Bs
+        shell: bash
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          import json, subprocess
+
+          module_path = Path('src/core/fea-benchmarks/caesar-accdb-linear-solve.js')
+          baseline_text = module_path.read_text()
+          out_dir = Path('.work/out')
+          audit_script = 'scripts/lfea-issue947-e36-production-descendant-condensation-audit.mjs'
+          package = '.work/package/bm4nl-canonical-package.json'
+          baseline = json.loads((out_dir / 'issue947-e36-production-descendant-condensation-audit.json').read_text())
+
+          variants = {
+              'NO_TEE_ROTATIONAL_SPRING': [(
+                  "  const entries = teeModifier.rotationalSprings\n    .map((spring) => ({",
+                  "  const springSource = teeModifier.junctionNodeId === '20295' ? [] : teeModifier.rotationalSprings;\n  const entries = springSource\n    .map((spring) => ({",
+              )],
+              'NO_TEE_RIGID_OFFSET': [(
+                  "function teeRigidOffsets(teeModifier) {\n  if (teeModifier === null || teeModifier.rigidOffset === null) return { I: null, J: null };\n  return teeModifier.junctionEnd === 'I'",
+                  "function teeRigidOffsets(teeModifier) {\n  if (teeModifier === null || teeModifier.rigidOffset === null) return { I: null, J: null };\n  if (teeModifier.junctionNodeId === '20295') return { I: null, J: null };\n  return teeModifier.junctionEnd === 'I'",
+              )],
+              'NO_B31_BEND_FLEXIBILITY': [(
+                  "      effectiveLocalStiffness: componentEntry.effectiveLocalStiffness,",
+                  "      effectiveLocalStiffness: sourceElementId === '36' ? componentEntry.frameElement.localStiffness : componentEntry.effectiveLocalStiffness,",
+              )],
+              'NO_E36_INCOMING_PRESSURE': [(
+                  "      kind: 'BEND_INCOMING_STRAIGHT',\n      pressureLengthScale: 1,\n      thermalLengthScale: 1,",
+                  "      kind: 'BEND_INCOMING_STRAIGHT',\n      pressureLengthScale: sourceElementId === '36' ? 0 : 1,\n      thermalLengthScale: 1,",
+              )],
+              'NO_E36_MEC21': [(
+                  "      bourdonBendSegment: bourdonMode === 'TRANSLATION_AND_ROTATION'\n        ? bend.bourdonSegments[index]\n        : null,",
+                  "      bourdonBendSegment: bourdonMode === 'TRANSLATION_AND_ROTATION' && sourceElementId !== '36'\n        ? bend.bourdonSegments[index]\n        : null,",
+              )],
+          }
+
+          summary = {
+              'schema': 'lfea-issue947-e36-mechanic-removal-sensitivity/v1',
+              'issue': 947,
+              'caseId': 'L19',
+              'purpose': 'DIAGNOSTIC_SENSITIVITY_ONLY_NOT_FIX_ACCEPTANCE',
+              'rule': 'A removal that improves CAESAR agreement only identifies the mechanic for deeper authority audit; removal is not an admissible production fix without independent governing authority and whole-model replay.',
+              'baseline': {},
+              'variants': {},
+          }
+
+          def metrics(result):
+              inj = result['caesarInjection']
+              return {
+                  'classification': result['classification'],
+                  'productionParityMaxAbs': result['productionParity']['maxAbsResidual'],
+                  'maxAbsNormalizedResidual': inj['maxAbsNormalizedResidual'],
+                  'normalizedResidualL2': inj['normalizedResidualL2'],
+                  'governingComponent': inj['governingComponent'],
+                  'normalizedResidual': inj['normalizedResidual'],
+                  'toMxResidualNm': inj['residual'][9],
+              }
+
+          summary['baseline'] = metrics(baseline)
+          try:
+              for name, replacements in variants.items():
+                  text = baseline_text
+                  replacement_evidence = []
+                  for old, new in replacements:
+                      count = text.count(old)
+                      if count != 1:
+                          raise SystemExit(f'{name}: expected one patch site, found {count} for {old[:80]!r}')
+                      text = text.replace(old, new)
+                      replacement_evidence.append({'replacementCount': count, 'old': old, 'new': new})
+                  module_path.write_text(text)
+                  output_path = out_dir / f'issue947-e36-{name.lower()}.json'
+                  completed = subprocess.run(
+                      ['node', audit_script, '--package', package, '--out', str(output_path)],
+                      text=True, capture_output=True,
+                  )
+                  if completed.returncode != 0:
+                      raise SystemExit(f'{name} audit failed:\nSTDOUT:\n{completed.stdout}\nSTDERR:\n{completed.stderr}')
+                  result = json.loads(output_path.read_text())
+                  item = metrics(result)
+                  item['replacementEvidence'] = replacement_evidence
+                  item['deltaMaxAbsNormalizedResidual'] = item['maxAbsNormalizedResidual'] - summary['baseline']['maxAbsNormalizedResidual']
+                  item['deltaNormalizedResidualL2'] = item['normalizedResidualL2'] - summary['baseline']['normalizedResidualL2']
+                  summary['variants'][name] = item
+          finally:
+              module_path.write_text(baseline_text)
+
+          ranked = sorted(summary['variants'].items(), key=lambda item: item[1]['normalizedResidualL2'])
+          summary['rankedByNormalizedResidualL2'] = [
+              {'variant': name, 'normalizedResidualL2': item['normalizedResidualL2'], 'maxAbsNormalizedResidual': item['maxAbsNormalizedResidual']}
+              for name, item in ranked
+          ]
+          (out_dir / 'issue947-e36-mechanic-removal-sensitivity.json').write_text(json.dumps(summary, indent=2) + '\n')
+          print(json.dumps(summary, indent=2))
+          PY
+
       - name: Upload E36 condensation evidence
         if: always()
         uses: actions/upload-artifact@v4
@@ -173,5 +269,5 @@ jobs:
           name: issue-947-e36-production-descendant-condensation-audit
           if-no-files-found: error
           path: |
-            .work/out/issue947-e36-production-descendant-condensation-audit.json
+            .work/out/*.json
             .work/issue947-e36-production-inspection-patch.json

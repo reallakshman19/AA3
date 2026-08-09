@@ -2,12 +2,15 @@
 
 import assert from 'node:assert/strict';
 import {
-  authorizeLinearPipingInputXmlPreFlight,
   createLinearPipingInputXmlIntake,
   inspectLinearPipingInputXmlSource,
-  prepareLinearPipingInputXmlPreFlight,
   requireLinearPipingInputXmlIntake,
 } from '../src/workspace/linear-piping-inputxml-intake.js';
+import {
+  authorizeLinearPipingInputXmlPreFlight,
+  prepareLinearPipingInputXmlPreFlight,
+  requireLinearPipingInputXmlPreFlight,
+} from '../src/workspace/linear-piping-inputxml-prefea.js';
 
 const DECLARED_MM_XML = fullInputXml({ withUnits: true });
 const NO_UNITS_GEOMETRY_XML = `<PIPINGMODEL JOBNAME="P07-NO-UNITS">
@@ -154,16 +157,29 @@ if (preFlight.status === 'WARN') {
     reason: 'Reviewed and accepted the complete disclosed native InputXML pre-flight limitations.',
   });
 }
-assert.equal(preFlight.solveAuthorized, true);
-assert.match(preFlight.authorization.semanticHash, /^fnv1a64:[0-9a-f]{16}$/u);
-assert.equal(preFlight.authorization.authorizedPhysicalCaseIds.includes(GOVERNED_WEIGHT_CASE_ID), true);
+const validatedPreFlight = requireLinearPipingInputXmlPreFlight(preFlight);
+assert.equal(validatedPreFlight.solveAuthorized, true);
+assert.match(validatedPreFlight.authorization.semanticHash, /^fnv1a64:[0-9a-f]{16}$/u);
+assert.equal(validatedPreFlight.authorization.authorizedPhysicalCaseIds.includes(GOVERNED_WEIGHT_CASE_ID), true);
 results.push({
   id: 'P07-INTAKE-06',
   status: 'PASS',
   statement: 'Raw native InputXML reaches the real diagnostics/preparation/authorization chain without hand-authored run JSON.',
-  readiness: preFlight.status,
-  availableCaseIds: preFlight.sourceSummary.availableCaseIds,
-  authorizationSemanticHash: preFlight.authorization.semanticHash,
+  readiness: validatedPreFlight.status,
+  availableCaseIds: validatedPreFlight.sourceSummary.availableCaseIds,
+  authorizationSemanticHash: validatedPreFlight.authorization.semanticHash,
+});
+
+const preFlightTamper = structuredClone(validatedPreFlight);
+preFlightTamper.sourceSummary.contentSha256 = `${'0'.repeat(63)}1`;
+assert.throws(
+  () => requireLinearPipingInputXmlPreFlight(preFlightTamper),
+  (error) => error?.code === 'PIPING_INPUTXML_NATIVE_PREFLIGHT_SOURCE_SUMMARY_STALE',
+);
+results.push({
+  id: 'P07-INTAKE-07',
+  status: 'PASS',
+  statement: 'Native pre-flight receipt tamper is rejected by parent-derived source-summary custody before reuse.',
 });
 
 const repeated = createLinearPipingInputXmlIntake({
@@ -176,7 +192,7 @@ const repeated = createLinearPipingInputXmlIntake({
 });
 assert.equal(JSON.stringify(repeated), JSON.stringify(declaredIntake));
 results.push({
-  id: 'P07-INTAKE-07',
+  id: 'P07-INTAKE-08',
   status: 'PASS',
   statement: 'Identical source bytes and declared intake decisions are byte deterministic.',
 });

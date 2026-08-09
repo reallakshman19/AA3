@@ -179,8 +179,16 @@ export function requireInputXmlLinearPreFeaPreparation(record, diagnostics) {
       );
     }
   }
+  // The invariant is that no factorization handle survives into a preparation
+  // record. Two states satisfy it: a prepared model assembled stiffness and did
+  // not retain the handle (NOT_RETAINED), and a blocked model never created one
+  // (NOT_CREATED). Requiring NOT_RETAINED alone rejected every blocked record,
+  // so a genuine engineering block surfaced to the caller as
+  // PREFEA_PREPARATION_RUNTIME_STATE_INVALID — "this record is corrupt" — in
+  // place of the real reason. Accepting NOT_CREATED does not weaken the guard:
+  // it is the stronger of the two states. Any other value is still rejected.
   if (accepted.executionBoundary.solverRuntime !== 'NOT_CREATED'
-    || accepted.executionBoundary.factorizationHandle !== 'NOT_RETAINED') {
+    || !['NOT_RETAINED', 'NOT_CREATED'].includes(accepted.executionBoundary.factorizationHandle)) {
     throw stalePreFeaPreparation(
       'PREFEA_PREPARATION_RUNTIME_STATE_INVALID',
       'Preparation retains prohibited runtime state.',

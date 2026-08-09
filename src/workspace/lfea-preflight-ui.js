@@ -26,7 +26,6 @@ import {
   projectPreflightModel,
 } from './lfea-preflight-resolution.js';
 import { masterDataController } from './master-data-controller.js';
-import { renderProjectDataView } from './project-data/project-data-view.js';
 
 export {
   PREFLIGHT_MATCH_STATUS,
@@ -41,10 +40,6 @@ export const PREFLIGHT_LINE_KEY_ROW_CAP = 500;
 export const PREFLIGHT_COMPONENT_ROW_CAP = 200;
 
 const STYLE_ROLE = 'lfea-preflight-styles';
-
-export function renderProjectConfiguration(container, renderCallback) {
-  renderProjectDataView(container, renderCallback);
-}
 
 /**
  * Render the read-only pre-flight review grid into a host element.
@@ -170,7 +165,7 @@ function lineKeyRow(doc, entry, index, body) {
     nameCell,
     textCell(doc, entry.cls),
     valueCell(doc, entry.bore),
-    valueCell(doc, null),
+    wallThicknessCell(doc, entry.wallThickness, entry.wallThicknessConflict === true),
     valueCell(doc, entry.p1),
     valueCell(doc, entry.t1),
     valueCell(doc, entry.t2),
@@ -202,7 +197,7 @@ function toggleComponents(doc, body, row, rowId, entry, toggle) {
       textCell(doc, `↳ ${item.itemType} ${item.itemName}`),
       textCell(doc, entry.cls),
       valueCell(doc, item.bore ?? entry.bore),
-      valueCell(doc, null),
+      wallThicknessCell(doc, item.wallThickness, false),
       valueCell(doc, entry.p1),
       valueCell(doc, entry.t1),
       valueCell(doc, entry.t2),
@@ -245,6 +240,20 @@ function resolutionCell(doc, entry) {
 function textCell(doc, text) {
   const cell = create(doc, 'td');
   cell.textContent = String(text);
+  return cell;
+}
+
+/**
+ * Wall thickness is shown only from explicit source evidence. Members of one
+ * line key that declare disagreeing thicknesses are a review condition, so the
+ * line-key row reports the conflict rather than picking a winner.
+ */
+function wallThicknessCell(doc, value, conflict) {
+  if (!conflict) return valueCell(doc, value);
+  const cell = create(doc, 'td');
+  const badge = create(doc, 'span', 'preflight-status preflight-status--BLOCKED_AMBIGUOUS');
+  badge.textContent = 'BLOCKED_CONFLICT';
+  cell.append(badge);
   return cell;
 }
 

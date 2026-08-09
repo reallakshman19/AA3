@@ -26,7 +26,7 @@ If an analytical workflow (such as model normalization, editing, load distributi
 
 ## 2. Project Data Authority (`ProjectDataStore`)
 
-The centralized state engine responsible for enforcing engineering readiness is the `ProjectDataStore` ([project-data-store.js](file:///f:/CODE-6/Advanced_Analysis-backups/20260801_161744/src/workspace/project-data/project-data-store.js)). It operates as an in-memory authority that rejects automatic default substitutions and mandates explicit profile imports, edits, and audit checks.
+The centralized state engine responsible for enforcing engineering readiness is the `ProjectDataStore` ([project-data-store.js](../src/workspace/project-data/project-data-store.js)). It operates as an in-memory authority that rejects automatic default substitutions and mandates explicit profile imports, edits, and audit checks.
 
 ```mermaid
 graph TD
@@ -40,7 +40,7 @@ graph TD
 ```
 
 ### Categorical Field Groups
-Parameters are organized into domain-specific functional groups ([project-data-fields.js](file:///f:/CODE-6/Advanced_Analysis-backups/20260801_161744/src/workspace/project-data/project-data-fields.js)):
+Parameters are organized into domain-specific functional groups ([project-data-fields.js](../src/workspace/project-data/project-data-fields.js)):
 * `sourcesAndUnits`: Establishes the authoritative file paths and SHA-256 digests for SJSON geometries, line lists, piping-class catalogs, and weight registers. Also defines spatial base units (`lengthUnit: "mm"`), source up-axis (`sourceUpAxis: "Z"`), and rendering boundary transforms (e.g., source \(Z\)-up to Three.js \(Y\)-up).
 * `topology`: Defines spatial proximity bounds for sequential sketcher operations, including port-match tolerances (\(1.0\text{ mm}\)), support-site grouping spheres (\(0.1\text{ mm}\)), and restraint family capabilities (e.g., mapping `REST` to vertical support capability while excluding `GUIDE` and `LINESTOP` from gravity reactivity unless configured).
 * `editing`: Dictates interactive snap thresholds (\(25\text{ mm}\)), connection bounds (\(1.0\text{ mm}\)), and catalog dimension source precedence (`["componentWeightMaster", "sourceDTXR", "sourceGeometry"]`).
@@ -48,7 +48,7 @@ Parameters are organized into domain-specific functional groups ([project-data-f
 * `webglNavigation` & `benchmark`: Enforces visualization tolerances, picking radii, zoom rates, camera frustum margins, and regression acceptance criteria (max WebGL ready time, selection p95 latency, target frames per second).
 
 ### Validation and Auditing Mechanics
-Before an analysis executes, it calls `validateProjectDataProfile(profile, workflow, activeHashes)` ([project-data-contract.js](file:///f:/CODE-6/Advanced_Analysis-backups/20260801_161744/src/workspace/project-data/project-data-contract.js#L40-L51)). This evaluator produces an array of blocker codes if any condition is violated:
+Before an analysis executes, it calls `validateProjectDataProfile(profile, workflow, activeHashes)` ([project-data-contract.js](../src/workspace/project-data/project-data-contract.js#L40-L51)). This evaluator produces an array of blocker codes if any condition is violated:
 * `INVALID_NUMBER` / `NON_POSITIVE_VALUE`: Prevented by strict type checking; physical masses, densities, and tolerances must be finite positive real numbers.
 * `MISSING_EVIDENCE` / `NOT_APPROVED`: Raised when an operator enters a numerical value without source justification or without toggling the formal approval sign-off check.
 * `STALE_SOURCE_HASH` / `ACTIVE_SOURCE_HASH_MISSING`: Raised when the SHA-256 digest of an imported master spreadsheet or SJSON file does not match the exact hash recorded when the Project Data profile was previously validated.
@@ -57,7 +57,7 @@ Before an analysis executes, it calls `validateProjectDataProfile(profile, workf
 
 ## 3. Pre-Flight Screening & UI Mechanics
 
-When 3D piping geometries are converted from CAD, XML, or SJSON archives, they often lack thermodynamic process metadata (operating temperatures, fluid pressures, phase states) and may contain geometrical anomalies such as duplicated or coincident support nodes. The **Pre-Flight UI** ([lfea-preflight-ui.js](file:///f:/CODE-6/Advanced_Analysis-backups/20260801_161744/src/workspace/lfea-preflight-ui.js)) bridges raw 3D spatial geometry with analytical readiness.
+When 3D piping geometries are converted from CAD, XML, or SJSON archives, they often lack thermodynamic process metadata (operating temperatures, fluid pressures, phase states) and may contain geometrical anomalies such as duplicated or coincident support nodes. The **Pre-Flight UI** ([lfea-preflight-ui.js](../src/workspace/lfea-preflight-ui.js)) bridges raw 3D spatial geometry with analytical readiness.
 
 ### 4-Tier Topology Clustering
 To prevent engineering fatigue when reviewing industrial models containing thousands of individual branch elements, the pre-flight engine flattens and groups structural items into a rigid 4-tier tree:
@@ -74,23 +74,34 @@ To prevent engineering fatigue when reviewing industrial models containing thous
 
 ### O(1) Master Data Enrichment ("Load Process Data")
 When an engineer triggers **"⚡ Load Process Data"**, the UI matches every unassigned 3D piping branch against imported spreadsheet line list rows:
-1. **Hash Indexing**: To prevent main-thread UI lag or browser freezes on massive industrial models, spreadsheet rows are pre-indexed into a high-speed JavaScript `Map` keyed by stripped, uppercase alphanumeric tokens ([lfea-preflight-ui.js:L365-L378](file:///f:/CODE-6/Advanced_Analysis-backups/20260801_161744/src/workspace/lfea-preflight-ui.js#L365-L378)).
-2. **Metadata Decorate**: Matching branches instantly inherit operating pressures (\(P_1\)), temperature triplets (\(T_1, T_2, T_3\)), thermodynamic phases (`MIXED`, `LIQUID`, `GAS`), and fluid densities.
-3. **DTXR Schedule Extraction**: For elements lacking explicit wall thickness tables, `deriveWallThicknessFromDtxr()` scans source text attributes (`DTXR`, `WT`, `THK`) for piping schedule evidence (such as `Sch 80` or explicit mm dimensions). If no evidence is present, the UI badges the parameter as `<span class="val-error">BLOCKED</span>`.
+1. **Duplicate-preserving key buckets**: spreadsheet rows are pre-indexed into a `Map<normalizedKey, ordinal[]>` keyed by stripped, uppercase alphanumeric tokens ([buildNormalizedKeyBuckets](../src/workspace/lfea-preflight-resolution.js)). An earlier `Map<normalizedKey, Row>` let a second row carrying the same normalized key silently overwrite the first; buckets keep every ordinal so a collision becomes reportable.
+2. **Resolution**: exactly one exact candidate yields `EXACT`, and that row contributes operating pressure \(P_1\), temperature triplets \(T_1, T_2, T_3\), phase and fluid density. Duplicate keys or several containment candidates yield `BLOCKED_AMBIGUOUS` with no selected row, and **no value is inherited** ([resolveLineKeyCandidates](../src/workspace/lfea-preflight-resolution.js)). Nothing is chosen by first-found order.
+3. **DTXR explicit-thickness evidence**: `deriveWallThicknessFromDtxr()` reads a declared thickness from the source element attributes (`WT`, `WALL_THICKNESS`, `WALLTHK`, `THK`, `THICKNESS`). It performs **no schedule inference** — there is no `Sch 80` lookup — and returns `null` when no explicit value is declared, which the grid renders as `BLOCKED`. Members of one line key declaring disagreeing thicknesses render `BLOCKED_CONFLICT` rather than a chosen value.
 
-### Hierarchical Fill-Down & Live Overrides
-The pre-flight grid combines mass-editing efficiency with fine-grained engineering oversight:
-* **Bulk Propagation (`⚡ Fill Service` / `⚡ Fill Class`)**: Entering a baseline temperature or pressure into a Service or Class parent header and triggering fill-down automatically iterates through the DOM dataset, overwriting child Line Keys and leaf nodes while marking their provenance badge as `⚡ Service Filled` or `⚡ Class Filled`.
-* **Live Custom Overrides**: If a single piping run operates under anomalous conditions, editing that row directly fires input event listeners that immediately break inheritance and tag the row with `✏️ Overridden` or `✏️ Custom Override`, preserving the adjustment for auditing.
+### Review-only cells (fill-down not implemented)
 
-### Topology Autofixing (Model Healing)
-Before structural matrices are formulated, physical spatial defects must be resolved:
-1. The user launches **Autofix Overlaps**, which imports the approved spatial clustering tolerance from Project Data (`topology.supportSiteGroupingToleranceMm`, typically \(0.1\text{ mm}\)).
-2. The engine evaluates all support locations (`analyzeTopologyOverlaps`) to identify coincident nodes within the tolerance sphere.
-3. When multiple restraints overlap, merges are arbitrated via configurable hierarchy rules (`REST > LINESTOP > SUPPORT > SREF`), marking absorbed redundant records as `IGNORED_OVERLAP`.
-4. Merges are rendered directly into the 3D WebGL viewport as visual arrows and cataloged in an interactive audit log ledger before being committed to the shared calculation model.
+The grid is read-only. Service/class fill-down and live inline overrides were classified
+`REPLACE` in the Phase 0 inventory — they are to become impact-previewed proposals that
+never overwrite stronger evidence — and that flow has not been built. No editable cell,
+no `Fill Service`, no `Fill Class`, and no `Overridden` provenance badge exists today.
+Cells display value, blocked state and resolution status only.
 
----
+### Topology review (relocated)
+
+Topology autofix no longer runs from the enrichment surface. It was classified
+`RELOCATE` in [the Phase 0 inventory](enrichment-ui-phase0-inventory.md) and now lives
+behind a read-only topology review owner
+([lfea-topology-review-model.js](../src/workspace/lfea-topology-review-model.js),
+[lfea-topology-review-from-prefea.js](../src/workspace/lfea-topology-review-from-prefea.js)).
+Enrichment is read-only to geometry and topology: it proposes no merges and mutates no
+shared model.
+
+Historical note, because the previous description overstated what shipped: the retired
+flow dispatched `viewport:render-autofix-overlays`, `viewport:fly-to`,
+`viewport:clear-autofix-overlays` and `topology:rebuild-requested`, and **no listener for
+any of them existed in `src/`**. The 3D arrow rendering and fly-to navigation described
+here previously were never wired to a consumer. `analyzeTopologyOverlaps` itself survives
+and is exercised by `scripts/run_load_calc.mjs`.
 
 ## 4. Novice Agent Onboarding Guide & Cheat Sheet
 
@@ -102,9 +113,9 @@ When onboarding, instructing, or collaborating with an autonomous AI agent to ex
 
 ### 2. Best Practices for Adding Engineering Inputs
 When introducing a new physical variable, spatial threshold, or material attribute to the system:
-1. **Define in Schema:** Register the variable within the appropriate domain group inside `PROJECT_DATA_GROUPS` in [project-data-fields.js](file:///f:/CODE-6/Advanced_Analysis-backups/20260801_161744/src/workspace/project-data/project-data-fields.js).
+1. **Define in Schema:** Register the variable within the appropriate domain group inside `PROJECT_DATA_GROUPS` in [project-data-fields.js](../src/workspace/project-data/project-data-fields.js).
 2. **Assign Workflow Requirements:** Add the parameter key (e.g., `loadCalculation.newProperty`) to the required array in `PROJECT_DATA_REQUIREMENTS` for every analytical workflow that depends on it.
-3. **Fetch via Contract:** Always access the parameter within computational algorithms via `projectDataValue(profile, 'group.field')` or `projectDataEntry(profile, 'group.field')` ([project-data-contract.js](file:///f:/CODE-6/Advanced_Analysis-backups/20260801_161744/src/workspace/project-data/project-data-contract.js)).
+3. **Fetch via Contract:** Always access the parameter within computational algorithms via `projectDataValue(profile, 'group.field')` or `projectDataEntry(profile, 'group.field')` ([project-data-contract.js](../src/workspace/project-data/project-data-contract.js)).
 4. **Never Fallback:** Never write expressions like `projectDataValue(profile, '...') || 9.81` within solvers. Let a missing value remain `null` so the fail-fast blocker can properly abort the pipeline and notify the engineer.
 
 ### 3. Quick Reference Checklist for Code Review
@@ -118,7 +129,7 @@ Before submitting code or generating qualification reports, verify:
 
 ## 5. Appendix: Derivation of Vertical Gravity Support Reactions (\(F_{\text{vertical}}\)) & Structural Loads
 
-This appendix details the rigorous mathematical procedures and engineering mechanics utilized within the empirical load calculation engine (`CHAINAGE_TRIBUTARY_SPAN_V2`, schema `support-load-distribution/v3`) implemented in [support-load-distribution-v3.js](file:///f:/CODE-6/Advanced_Analysis-backups/20260801_161744/src/workspace/engineering-loads/support-load-distribution-v3.js), as well as structural structural loads in Linear and Advanced FEA models.
+This appendix details the rigorous mathematical procedures and engineering mechanics utilized within the empirical load calculation engine (`CHAINAGE_TRIBUTARY_SPAN_V2`, schema `support-load-distribution/v3`) implemented in [support-load-distribution-v3.js](../src/workspace/engineering-loads/support-load-distribution-v3.js), as well as structural structural loads in Linear and Advanced FEA models.
 
 ### A1. Global Coordinate Basis and Sign Conventions
 * **Spatial Axis Basis:** All calculations operate directly in source geometry coordinates where **\(Z\)-up** is aligned with opposite gravity (\(+\vec{k}\)).
@@ -242,7 +253,7 @@ All individual force allocations across all routes are recorded in an audit ledg
 F_{\text{vertical}, j} = \sum_{k} \Delta F_{\text{alloc}, k \to j} \quad (\text{N})
 \]
 
-To guarantee physical statics validity, the solver evaluates **Global Equilibrium** ([lfea-preflight-ui.js:equilibriumCheck](file:///f:/CODE-6/Advanced_Analysis-backups/20260801_161744/src/workspace/engineering-loads/support-load-distribution-v3.js#L218-L229)) across the entire system model:
+To guarantee physical statics validity, the solver evaluates **Global Equilibrium** ([support-load-distribution-v3.js](../src/workspace/engineering-loads/support-load-distribution-v3.js)) across the entire system model:
 1. **Vertical Force Balance:** The absolute mismatch between total applied gravitational load and total reaction support force must remain below Project Data threshold `loadCalculation.equilibriumTolerances.forceN`:
    \[
    R_{\text{force}} = \sum_{j} F_{\text{vertical}, j} - \sum_{i} F_{i,\text{applied}}

@@ -1,0 +1,51 @@
+{
+  "schema": "lfea-caesar-accdb-iteration-request/v1",
+  "issueId": "M047",
+  "iterationId": "M047-I023",
+  "expectedSourceAccdbSha256": "85d39463296e569da811d8572e2eff680b858097f76fdf0f47d1755f0b161c21",
+  "expectedBendPointerCount": 12,
+  "baseCommitSha": "882d59a99c3a03847d20bec34770ba57ff479d91",
+  "parentAcceptedIteration": "M047-I015",
+  "supportingIterations": ["M047-I019", "M047-I020", "M047-I021", "M047-I022"],
+  "hypothesis": "The five tee-modified straight FRAME sources are still ordinary flexible pipe beneath independently owned B31J end-condition flexibility. Because the solver first builds the base frame and its gravity/initial-load vectors and then condenses the B31J rotational springs and rigid offsets consistently, the accepted common Timoshenko beam law can be tested under the existing tee modifier without changing the directional B31J factors themselves. The tee-owned bend incoming straight source 36 remains held so bend and tee family changes are not bundled.",
+  "candidateBoundary": {
+    "retainedI015": "all FRAME with teeModifier===null",
+    "additionalI023": "FRAME with teeModifier!==null",
+    "expectedAdditionalSourceIds": ["9", "12", "13", "17", "18"],
+    "heldTeeBendIncomingStraightSourceId": "36",
+    "teeCondensationOrder": "base stiffness/load vectors -> B31J end-condition condensation -> global transform/offset",
+    "kappaY": 0.53,
+    "kappaZ": 0.53,
+    "kappaAuthority": "COWPER-1966-THIN-ANNULUS-INPUT"
+  },
+  "heldAuthority": [
+    "B31J directional flexibility factors",
+    "tee rotational spring construction",
+    "tee rigid surface offsets",
+    "BEND_INCOMING_STRAIGHT",
+    "BEND_ARC",
+    "REDUCER",
+    "RIGID",
+    "BOURDON",
+    "PRESSURE",
+    "THERMAL AUTHORITY",
+    "TOLERANCES"
+  ],
+  "predictedSignature": [
+    "Candidate must start from the exact accepted I015 solver-file SHA.",
+    "The only added Timoshenko sources are tee-modified FRAME sources 9, 12, 13, 17 and 18; source 36 remains a held BEND_INCOMING_STRAIGHT even though it participates in tee node 20295.",
+    "Both tee-junction modifier semantic hashes and directional flexibility factors must remain identical between parent and candidate mechanics evidence.",
+    "The existing tee condensation must continue to apply to stiffness, equivalent gravity load and initial-strain load vectors together.",
+    "Locked system A/B must retain 12/12 bend coverage, identical CAESAR reference rows and target-node action/equilibrium closure.",
+    "Acceptance requires no new L19 restraint failure and no unexplained aggregate regression; node-20160/source-9 changes are evaluated together with I019/I020 sentinels.",
+    "No benchmark fitting, tolerance change, bend cutover or thermal coefficient change is permitted."
+  ],
+  "changedPaths": [
+    "scripts/lfea-m047-apply-tee-frame-timoshenko-candidate.mjs",
+    "scripts/lfea-m047-tee-frame-timoshenko-candidate-check.mjs",
+    ".github/workflows/m047-bm4nl-i023-tee-frame-ab.yml"
+  ],
+  "mechanicsDelta": "Runtime tee-FRAME qualification candidate only: accepted I015 ordinary FRAME mechanics are extended to the five tee-modified FRAME carriers before the unchanged B31J end-condition condensation. Source 36 and all bend/reducer mechanics remain held.",
+  "verdict": "PENDING",
+  "decisionReason": "Await exact-head locked Windows I023 tee-FRAME A/B evidence."
+}

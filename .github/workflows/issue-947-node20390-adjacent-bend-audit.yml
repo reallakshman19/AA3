@@ -2,6 +2,7 @@ name: Issue 947 node 20390 adjacent bend audit
 # E19+E20 are condensed as one upstream bend chain because their internal
 # 20330 junction has no direct pinned source-action witness. E25 is recoverable
 # independently from its straight outer neighbors E24 and E26.
+# Rerun with restrained outer-boundary equilibrium custody enabled.
 
 on:
   push:

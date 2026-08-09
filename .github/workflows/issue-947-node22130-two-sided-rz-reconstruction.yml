@@ -1,4 +1,5 @@
 name: Issue 947 node 22130 two-sided RZ reconstruction
+# Diagnostic revision: corrected exact E79 22125->22130 source adjacency.
 
 on:
   push:

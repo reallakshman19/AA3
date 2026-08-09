@@ -26,7 +26,7 @@ function applicationMarkup() {
     <div data-application-view="WORKSPACE" class="application-view application-view--workspace">${workspaceMarkup()}</div>
     <div data-application-view="LOAD_CALC" hidden aria-hidden="true"></div>
     <div class="application-view application-view--lafea" data-application-view="LAFEA" hidden aria-hidden="true"><div data-role="lafea-consumer-root"></div></div>
-    <div class="application-view application-view--lfea" data-application-view="LFEA" hidden aria-hidden="true"><div data-role="lfea-consumer-root"></div></div>
+    <div class="application-view application-view--lfea" data-application-view="LFEA" hidden aria-hidden="true"><div data-role="linear-piping-consumer-root"></div><div data-role="lfea-preflight-root"></div><div data-role="lfea-consumer-root"></div></div>
     ${nativeModelDialogMarkup()}
   </div>`;
 }

@@ -1,10 +1,63 @@
+/* Mounted in the LFEA view, above the mesh-package workbench. */
+.linear-piping-results-workbench {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  border: 1px solid #1e293b;
+  background: #0b1220;
+}
+
+.linear-piping-results-workbench .accordion-section-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 8px 10px;
+  border-bottom: 1px solid #1e293b;
+  background: #0f172a;
+}
+
+.linear-piping-results-workbench .accordion-section-title {
+  color: #f8fafc;
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
 .linear-piping-results-workbench__toolbar {
   display: flex;
   flex-wrap: wrap;
+  align-items: center;
   gap: 6px;
   padding: 8px;
   border-bottom: 1px solid #1e293b;
   background: #07111f;
+}
+
+.linear-piping-results-workbench__profile {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  color: #94a3b8;
+  font-size: 11px;
+  font-weight: 700;
+}
+
+.linear-piping-results-workbench__profile select {
+  border: 1px solid #334155;
+  border-radius: 4px;
+  padding: 4px 6px;
+  background: #0f172a;
+  color: #e2e8f0;
+  font-size: 11px;
+}
+
+.linear-piping-results-workbench__analyzer-link {
+  margin-left: auto;
+  color: #60a5fa;
+  font-size: 11px;
+  font-weight: 700;
 }
 
 .linear-piping-results-workbench__toolbar button {
@@ -50,6 +103,81 @@
   color: #94a3b8;
 }
 
+.linear-piping-results-workbench__prerun {
+  max-height: 420px;
+  overflow: auto;
+  background: #020617;
+}
+
+.linear-piping-prerun {
+  display: block;
+  padding: 10px;
+  color: #e2e8f0;
+  font-size: 11px;
+}
+
+.linear-piping-prerun__header h3 {
+  margin: 0 0 4px;
+  color: #f8fafc;
+}
+
+.linear-piping-prerun__state {
+  margin: 0;
+  color: #93c5fd;
+}
+
+.linear-piping-prerun__case {
+  margin-top: 10px;
+  padding: 8px;
+  border: 1px solid #1e293b;
+  background: #07111f;
+}
+
+.linear-piping-prerun__case h4 {
+  margin: 0 0 4px;
+  color: #f8fafc;
+}
+
+.linear-piping-prerun__case[data-status="BLOCK"] { border-color: #7f1d1d; }
+.linear-piping-prerun__case[data-status="WARN"] { border-color: #78350f; }
+.linear-piping-prerun__case[data-status="PASS"] { border-color: #14532d; }
+
+.linear-piping-prerun__counts,
+.linear-piping-prerun__clean {
+  margin: 0 0 6px;
+  color: #94a3b8;
+}
+
+.linear-piping-prerun__error {
+  margin: 0;
+  color: #fecaca;
+  white-space: pre-wrap;
+}
+
+.linear-piping-prerun__findings {
+  width: 100%;
+  border-collapse: collapse;
+  background: #020617;
+}
+
+.linear-piping-prerun__findings th,
+.linear-piping-prerun__findings td {
+  padding: 5px 7px;
+  border: 1px solid #1e293b;
+  text-align: left;
+  vertical-align: top;
+}
+
+.linear-piping-prerun__findings th {
+  background: #111827;
+  color: #bae6fd;
+  white-space: nowrap;
+}
+
+.linear-piping-prerun__findings tr[data-disposition="BLOCK"] td:first-child { color: #fca5a5; }
+.linear-piping-prerun__findings tr[data-disposition="CONDITIONAL"] td:first-child { color: #fcd34d; }
+.linear-piping-prerun__findings tr[data-disposition="ADVISORY"] td:first-child { color: #93c5fd; }
+
 .linear-piping-results-workbench__results {
   max-height: 520px;
   overflow: auto;
@@ -57,7 +185,7 @@
 }
 
 .linear-piping-results {
-  min-width: 720px;
+  min-width: 0;
   padding: 10px;
   color: #e2e8f0;
   font-size: 11px;

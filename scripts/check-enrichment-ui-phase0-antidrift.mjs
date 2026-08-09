@@ -179,15 +179,68 @@ assert.match(`${negativeRuntimeImport.stdout}
 ${negativeRuntimeImport.stderr}`, /E_QF_FORBIDDEN_IMPORT/u,
   'E_QF_UNEXPECTED_FAILURE_CODE: runtime import guard');
 
+// The Phase 0 invariant froze these risks as `true` while the screen was
+// orphaned and unreachable. The screen is now mounted in the LFEA view, so the
+// same probes are asserted against the remediated state: every risk the
+// inventory classified RETIRE or REPLACE must read false before the surface is
+// allowed to be reachable. A regression here means an unsafe behaviour came
+// back into a screen a reader can now actually see.
 const currentUiPath = 'src/workspace/lfea-preflight-ui.js';
 const currentUiRisk = fs.existsSync(path.join(REPOSITORY_ROOT, currentUiPath))
   ? analyzeCurrentPreflightRenderRisk(read(currentUiPath))
   : null;
 if (currentUiRisk) {
-  assert.equal(currentUiRisk.singleValueMapOverwriteRisk, true, 'E_QF_CURRENT_RISK_INVENTORY_DRIFT');
-  assert.equal(currentUiRisk.firstFoundContainmentRisk, true, 'E_QF_CURRENT_RISK_INVENTORY_DRIFT');
-  assert.equal(currentUiRisk.renderAllComponentRowsRisk, true, 'E_QF_CURRENT_RISK_INVENTORY_DRIFT');
-  assert.equal(currentUiRisk.fullInnerHtmlAssignmentRisk, true, 'E_QF_CURRENT_RISK_INVENTORY_DRIFT');
+  for (const [risk, value] of Object.entries(currentUiRisk)) {
+    assert.equal(value, false, `E_QF_RETIRED_RISK_REGRESSION: ${risk}`);
+  }
+}
+const currentUiSource = fs.existsSync(path.join(REPOSITORY_ROOT, currentUiPath))
+  ? read(currentUiPath)
+  : '';
+if (currentUiSource) {
+  // RETIRE/RELOCATE dispositions from docs/enrichment-ui-phase0-inventory.md.
+  for (const token of ['analyzeTopologyOverlaps', 'mountAutofixLog', 'alert(']) {
+    assert(!currentUiSource.includes(token), `E_QF_RETIRED_BEHAVIOUR_PRESENT: ${token}`);
+  }
+}
+
+// Behavioural proof of the duplicate and ambiguity invariants. A regex over the
+// view layer cannot distinguish a duplicate-preserving bucket from a
+// last-writer-wins slot, so the pure resolution core is exercised in a
+// subprocess instead. This script must not import from src/ directly (see
+// isForbiddenImport), hence the spawn.
+const resolutionPath = 'src/workspace/lfea-preflight-resolution.js';
+if (fs.existsSync(path.join(REPOSITORY_ROOT, resolutionPath))) {
+  const probe = [
+    "import assert from 'node:assert/strict';",
+    `const m = await import(${JSON.stringify(pathToFileURL(path.join(REPOSITORY_ROOT, resolutionPath)).href)});`,
+    "const rows = [{ lineKey: 'S8811951' }, { lineKey: 'S8811951' }, { lineKey: 'S9900001' }];",
+    'const buckets = m.buildNormalizedKeyBuckets(rows);',
+    "assert.deepEqual([...buckets.get('S8811951')], [0, 1], 'duplicate normalized keys must be preserved');",
+    "const dup = m.resolveLineKeyCandidates(buckets, 'S8811951');",
+    "assert.equal(dup.status, 'BLOCKED_AMBIGUOUS');",
+    'assert.equal(dup.selectedOrdinal, null);',
+    "const one = m.resolveLineKeyCandidates(buckets, 'S9900001');",
+    "assert.equal(one.status, 'EXACT');",
+    'assert.equal(one.selectedOrdinal, 2);',
+    "assert.equal(m.resolveLineKeyCandidates(buckets, 'ZZZ9999').status, 'BLOCKED_MISSING');",
+    // Input-order reversal must not change identities or outcomes.
+    'const reversed = m.buildNormalizedKeyBuckets([...rows].reverse());',
+    "assert.deepEqual([...reversed.get('S8811951')], [1, 2]);",
+    "assert.equal(m.resolveLineKeyCandidates(reversed, 'S8811951').selectedOrdinal, null);",
+    // An empty model stays blocked; no demonstration data is produced.
+    'const empty = m.projectPreflightModel(null, rows);',
+    'assert.equal(empty.groups.length, 0);',
+    'assert.ok(typeof empty.blocked === "string" && empty.blocked.length > 0);',
+    "console.log('PREFLIGHT_RESOLUTION_INVARIANTS_OK');",
+  ].join('\n');
+  const behaviour = spawnSync(process.execPath, ['--input-type=module', '--eval', probe], {
+    cwd: REPOSITORY_ROOT,
+    encoding: 'utf8',
+    maxBuffer: 16 * 1024 * 1024,
+  });
+  assert.equal(behaviour.status, 0, `E_QF_RESOLUTION_INVARIANT_FAILED: ${behaviour.stderr}`);
+  assert.match(behaviour.stdout, /PREFLIGHT_RESOLUTION_INVARIANTS_OK/u, 'E_QF_RESOLUTION_INVARIANT_FAILED');
 }
 
 for (const [relativePath, requiredTokens] of Object.entries({
@@ -212,17 +265,34 @@ console.log(JSON.stringify({
   runtimeNegativeImportRejected: true,
 }));
 
+/**
+ * Probe the preflight screen for the behaviours the Phase 0 inventory
+ * classified RETIRE or REPLACE. Every probe must read false.
+ *
+ * Two probes were widened when the screen was remediated, because the original
+ * expressions characterised the old implementation rather than the invariant:
+ *
+ * - `singleValueMapOverwriteRisk` previously matched any `new Map()` followed
+ *   by any `.set(k, v)`. The remediation keeps a Map, but its values are
+ *   duplicate-preserving ordinal arrays. The invariant is that a normalized-key
+ *   Map slot holds a collection, so the probe now fires only when the stored
+ *   value is not an array literal.
+ * - `sharedModelMutationRisk` previously matched the substring `sharedModel =`,
+ *   which also matches a local `const sharedModel = ...` read. The invariant is
+ *   assignment to a shared-model member, so the probe now requires a property
+ *   assignment and excludes comparisons.
+ */
 export function analyzeCurrentPreflightRenderRisk(source) {
   const implementation = stripComments(source);
   return Object.freeze({
-    singleValueMapOverwriteRisk: /new Map\(\)[\s\S]*?\.set\([^,]+,\s*[^)]+\)/u.test(implementation)
+    singleValueMapOverwriteRisk: /\.set\(\s*[^,]+,\s*(?!\[)[^)]+\)/u.test(implementation)
       || /lineRowMap\.set\(/u.test(implementation),
     firstFoundContainmentRisk: /includes\([^)]*\)[\s\S]{0,300}?break\s*;/u.test(implementation),
     renderAllComponentRowsRisk: /for\s*\([^)]*of\s+[^)]*items[^)]*\)[\s\S]{0,600}?preflight-leaf/u.test(implementation),
-    fullInnerHtmlAssignmentRisk: /container\.innerHTML\s*=\s*html/u.test(implementation),
+    fullInnerHtmlAssignmentRisk: /\.innerHTML\s*=/u.test(implementation),
     demonstrationDatasetRisk: /if\s*\([^)]*!elements[^)]*length[^)]*\)[\s\S]{0,500}?elements\s*=\s*\[/u.test(implementation),
     topologyEventRisk: /topology:|viewport:render-autofix-overlays/u.test(implementation),
-    sharedModelMutationRisk: /sharedModel\s*=|\.supports\s*=/u.test(implementation),
+    sharedModelMutationRisk: /\.sharedModel\s*=[^=]|\.supports\s*=[^=]/u.test(implementation),
   });
 }
 

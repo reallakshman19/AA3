@@ -11,6 +11,7 @@ on:
       - 'src/workspace/linear-piping-prerun-view.js'
       - 'src/workspace/linear-piping-results-workbench.js'
       - 'scripts/lfea-p10-capability-effects-traceability-check.mjs'
+      - 'scripts/linear-piping-run-gate-check.mjs'
       - 'scripts/linear-piping-live-run-workbench-check.mjs'
       - '.github/workflows/agent16-p10-qualification.yml'
 
@@ -56,7 +57,7 @@ jobs:
           cat /tmp/p09-paths.txt
           while IFS= read -r changed; do
             case "$changed" in
-              src/workspace/linear-piping-run-request.js|src/workspace/linear-piping-run-gate.js|src/workspace/linear-piping-run-analysis.js|src/workspace/linear-piping-prerun-check.js|src/workspace/linear-piping-prerun-view.js|src/workspace/linear-piping-results-workbench.js|scripts/linear-piping-live-run-workbench-check.mjs|.github/workflows/agent16-p10-qualification.yml) ;;
+              src/workspace/linear-piping-run-request.js|src/workspace/linear-piping-run-gate.js|src/workspace/linear-piping-run-analysis.js|src/workspace/linear-piping-prerun-check.js|src/workspace/linear-piping-prerun-view.js|src/workspace/linear-piping-results-workbench.js|scripts/linear-piping-run-gate-check.mjs|scripts/linear-piping-live-run-workbench-check.mjs|.github/workflows/agent16-p10-qualification.yml) ;;
               *) echo "P-09 changed an unqualified path: $changed" >&2; exit 1 ;;
             esac
           done < /tmp/p09-paths.txt
@@ -122,8 +123,52 @@ jobs:
           assert.notEqual(head.semanticHash, base.semanticHash);
           EOF
 
-      - name: P-09 governed workbench Run gate and numerical live-run qualification
+      - name: P-09 sealed PASS WARN BLOCK authorization contract
+        run: node scripts/linear-piping-run-gate-check.mjs
+
+      - name: P-09 legacy M003 bypass is governed BLOCK with no override
         run: node scripts/linear-piping-live-run-workbench-check.mjs
+
+      - name: M003 core mechanics P-10 P-09 equivalence beneath workspace gate
+        shell: bash
+        run: |
+          set -euo pipefail
+          cat > /tmp/p09-m003-core-oracle.mjs <<'EOF'
+          import assert from 'node:assert/strict';
+          import path from 'node:path';
+          import { pathToFileURL } from 'node:url';
+          const root = path.resolve(process.argv[2]);
+          const { buildM003LiveRunRequest } = await import(pathToFileURL(path.join(root, 'scripts/m003-live-run-analysis-fixture.mjs')));
+          const { compileLinearPipingInputXmlAnalysisContext } = await import(pathToFileURL(path.join(root, 'src/core/linear-piping-analysis-consumer/index.js')));
+          const request = buildM003LiveRunRequest();
+          const high = request.cases.find((entry) => entry.caseId === 'HIGH');
+          assert.ok(high, 'M003 HIGH case is required.');
+          const context = compileLinearPipingInputXmlAnalysisContext(
+            high.inputXmlAnalysisRequest,
+            { factorizationCache: new Map() },
+          );
+          const result = context.sourceAnalysisContext.analysisResult;
+          const reaction = (dof) => result.execution.reactions.find(
+            (entry) => entry.nodeId === 'RED-001.N0' && entry.dof === dof,
+          )?.value;
+          const uy = reaction('UY');
+          const rz = reaction('RZ');
+          assert.ok(Number.isFinite(uy));
+          assert.ok(Number.isFinite(rz));
+          assert.ok(Math.abs(uy + 1000) < 1e-8, `M003 UY reaction drifted: ${uy}`);
+          assert.ok(Math.abs(rz + 2400) < 1e-8, `M003 RZ reaction drifted: ${rz}`);
+          process.stdout.write(JSON.stringify({
+            status: result.status,
+            semanticHash: result.semanticHash,
+            uy,
+            rz,
+          }));
+          EOF
+          node /tmp/p09-m003-core-oracle.mjs /tmp/p10-anchor > /tmp/p10-m003-core.json
+          node /tmp/p09-m003-core-oracle.mjs "$GITHUB_WORKSPACE" > /tmp/p09-m003-core.json
+          cat /tmp/p09-m003-core.json
+          cmp /tmp/p10-m003-core.json /tmp/p09-m003-core.json
+          printf '%s\n' 'M003 core analysis result and reaction anchors are byte-identical P-10 anchor to P-09 head.'
 
       - name: Linear piping consumer anti-drift
         run: node scripts/linear-piping-analysis-consumer-anti-drift-check.mjs
@@ -149,7 +194,7 @@ jobs:
       - name: Pre-FEA PF-01..15 and PF-17..24 regression
         run: node --test --test-name-pattern='^PF-(0[1-9]|1[0-5]|1[7-9]|2[0-4]) ' test/lfea-prefea-gateway.test.js
 
-      - name: Pre-FEA exercise G/H regression
+      - name: Pre-FEA exercise G H regression
         run: node --test --test-name-pattern='^Exercise [GH] ' test/lfea-prefea-gateway.test.js
 
       - name: Pre-FEA runtime-creation regression
@@ -158,7 +203,7 @@ jobs:
       - name: Linear piping consumer regression
         run: node scripts/linear-piping-analysis-consumer-check.mjs
 
-      - name: Closed-form mechanics P-10/P-09 equivalence
+      - name: Closed-form mechanics P-10 P-09 equivalence
         shell: bash
         run: |
           set -euo pipefail
@@ -192,15 +237,16 @@ jobs:
       - name: Required 6 — production Vite build
         run: npx vite build
 
-      - name: Report stacked P-10/P-09 qualification
+      - name: Report stacked P-10 P-09 qualification
         run: |
           printf '%s\n' \
             'P-10 frozen qualified anchor 5353ae5eb0f441652db8227c64674ecb4694f950 PRESERVED' \
-            'P-09 ungated Run negative control PASS' \
-            'P-09 PASS/WARN/BLOCK Run policy and sealed receipt PASS' \
-            'P-09 stale request rejection before runtime PASS' \
-            'P-09 profile invalidation PASS' \
-            'P-09 live production orchestration numerical anchors PASS' \
+            'P-09 PASS automatic sealed authorization PASS' \
+            'P-09 WARN explicit complete-limitation authorization PASS' \
+            'P-09 BLOCK no-bypass policy PASS' \
+            'P-09 stale request and receipt-tamper rejection PASS' \
+            'P-09 M003 formerly executable bypass now governed BLOCK PASS' \
+            'M003 core P-10/P-09 numerical oracle equivalence PASS' \
             'linear-piping anti-drift PASS' \
             'PF-16 carried-red parity PROVEN' \
             'all other pre-FEA gateway tests PASS' \

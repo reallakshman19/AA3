@@ -1,0 +1,49 @@
+name: Issue 947 resolution-aware plain-frame scan
+
+on:
+  push:
+    branches:
+      - codex/issue-947-bm4nl-qualification
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  actions: read
+
+jobs:
+  scan:
+    if: "${{ github.event_name == 'workflow_dispatch' || github.event.head_commit.message == 'ci(issue947): run resolution-aware plain-frame scan' }}"
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Checkout qualification branch
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Download current rigid-pressure BM4_NL replay
+        uses: actions/download-artifact@v4
+        with:
+          name: issue-947-bm4nl-qualification
+          path: .work/current
+          github-token: ${{ github.token }}
+          repository: reallaksh19/Advanced_Analysis
+          run-id: 31314047095
+
+      - name: Scan plain frames with pinned rotation-output resolution bound
+        run: |
+          node scripts/lfea-issue947-resolution-aware-plain-frame-scan.mjs \
+            --package .work/current/bm4nl-canonical-package.json \
+            --qualification .work/current/bm4nl-report.json \
+            --out .work/issue947-resolution-aware-plain-frame-scan.json
+
+      - name: Upload resolution-aware localization evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: issue-947-resolution-aware-plain-frame-scan
+          if-no-files-found: error
+          path: .work/issue947-resolution-aware-plain-frame-scan.json

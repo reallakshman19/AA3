@@ -1,0 +1,45 @@
+name: Issue 947 one-shot restrained boundary action custody
+
+on:
+  push:
+    branches:
+      - codex/issue-947-bm4nl-qualification
+
+permissions:
+  contents: write
+
+jobs:
+  apply:
+    if: "${{ github.event.head_commit.message == 'ci(issue947): enable restrained boundary action custody' }}"
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Checkout qualification branch
+        uses: actions/checkout@v4
+        with:
+          ref: codex/issue-947-bm4nl-qualification
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Apply deterministic boundary-custody patch
+        run: node scripts/lfea-issue947-apply-restrained-boundary-custody.mjs
+
+      - name: Syntax-check condenser
+        run: node --check scripts/lfea-issue947-bend-descendant-condensation-audit.mjs
+
+      - name: Commit diagnostic-only boundary custody
+        shell: bash
+        run: |
+          set -euo pipefail
+          git add scripts/lfea-issue947-bend-descendant-condensation-audit.mjs
+          if git diff --cached --quiet; then
+            echo 'Expected restrained-boundary custody patch produced no diff.' >&2
+            exit 1
+          fi
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git commit -m 'test(issue947): recover restrained source boundaries by equilibrium'
+          git push origin HEAD:codex/issue-947-bm4nl-qualification

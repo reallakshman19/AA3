@@ -1,0 +1,153 @@
+name: Issue 947 E48 E85 bend condensation A-B
+
+on:
+  push:
+    branches:
+      - codex/issue-947-bm4nl-qualification
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  actions: read
+
+jobs:
+  audit:
+    if: "${{ github.event_name == 'workflow_dispatch' || github.event.head_commit.message == 'ci(issue947): run E48 E85 bend condensation A-B' }}"
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Checkout qualification branch
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Download pinned canonical BM4_NL package
+        uses: actions/download-artifact@v4
+        with:
+          name: issue-947-bm4nl-qualification
+          path: .work/package
+          github-token: ${{ github.token }}
+          repository: reallaksh19/Advanced_Analysis
+          run-id: 31314047095
+
+      - name: Expose read-only exact production mechanics
+        run: python scripts/lfea-issue947-expose-accdb-case-mechanics.py
+
+      - name: Run current 1.65-h baseline condensations
+        run: |
+          mkdir -p .work/out
+          node scripts/lfea-issue947-bend-descendant-condensation-audit.mjs \
+            --package .work/package/bm4nl-canonical-package.json \
+            --source-element 48 \
+            --out .work/out/e48-baseline.json
+          node scripts/lfea-issue947-bend-descendant-condensation-audit.mjs \
+            --package .work/package/bm4nl-canonical-package.json \
+            --source-element 85 \
+            --out .work/out/e85-baseline.json
+
+      - name: Apply source-authorized Version-14 smooth-90 rule to E48 and E85 only
+        shell: bash
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          import hashlib, json
+          path = Path('src/core/fea-benchmarks/caesar-accdb-linear-solve.js')
+          text = path.read_text()
+          before = hashlib.sha256(text.encode()).hexdigest()
+          old = '        smooth90FlexibilityCorrection: input.solveProfile.b31jSmooth90FlexibilityCorrection.enabled,'
+          new = "        smooth90FlexibilityCorrection: input.solveProfile.b31jSmooth90FlexibilityCorrection.enabled || ['48', '85'].includes(String(row.ELEMENTID)),"
+          count = text.count(old)
+          if count != 1:
+              raise SystemExit(f'Expected exactly one smooth-90 factor-selection patch site; found {count}.')
+          text = text.replace(old, new)
+          path.write_text(text)
+          Path('.work/issue947-e48-e85-smooth90-candidate-patch.json').write_text(json.dumps({
+              'schema': 'lfea-issue947-diagnostic-patch/v1',
+              'scope': 'DIAGNOSTIC_ONLY_E48_E85_SMOOTH90_LOCAL_AB',
+              'productionSourceChanged': False,
+              'sourceElements': ['48', '85'],
+              'bendPointers': [10, 11],
+              'authority': 'CAESAR_II_14_00_B31J_SMOOTH_90_K_EQUALS_1_3_OVER_H',
+              'beforeSha256': before,
+              'afterSha256': hashlib.sha256(text.encode()).hexdigest(),
+          }, indent=2) + '\n')
+          PY
+
+      - name: Run Version-14 1.3-h candidate condensations
+        run: |
+          node scripts/lfea-issue947-bend-descendant-condensation-audit.mjs \
+            --package .work/package/bm4nl-canonical-package.json \
+            --source-element 48 \
+            --out .work/out/e48-smooth90.json
+          node scripts/lfea-issue947-bend-descendant-condensation-audit.mjs \
+            --package .work/package/bm4nl-canonical-package.json \
+            --source-element 85 \
+            --out .work/out/e85-smooth90.json
+
+      - name: Classify local A-B results
+        shell: bash
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          import json
+          out = Path('.work/out')
+          records = []
+          for source_id in ('48', '85'):
+              baseline = json.loads((out / f'e{source_id}-baseline.json').read_text())
+              candidate = json.loads((out / f'e{source_id}-smooth90.json').read_text())
+              b = baseline['caesarInjection']
+              c = candidate['caesarInjection']
+              records.append({
+                  'sourceElementId': source_id,
+                  'bendPtr': baseline['sourceElement']['bendPtr'],
+                  'referenceActionCustody': baseline['referenceActionCustody'],
+                  'baseline': {
+                      'classification': baseline['classification'],
+                      'productionParityMaxAbs': baseline['productionParity']['maxAbsResidual'],
+                      'normalizedResidualL2': b['normalizedResidualL2'],
+                      'maxAbsNormalizedResidual': b['maxAbsNormalizedResidual'],
+                      'governingComponent': b['governingComponent'],
+                      'definitelyFailingComponents': b['rotationResolutionAssessment']['definitelyFailingComponents'],
+                      'normalizedResidual': b['normalizedResidual'],
+                  },
+                  'smooth90': {
+                      'classification': candidate['classification'],
+                      'productionParityMaxAbs': candidate['productionParity']['maxAbsResidual'],
+                      'normalizedResidualL2': c['normalizedResidualL2'],
+                      'maxAbsNormalizedResidual': c['maxAbsNormalizedResidual'],
+                      'governingComponent': c['governingComponent'],
+                      'definitelyFailingComponents': c['rotationResolutionAssessment']['definitelyFailingComponents'],
+                      'normalizedResidual': c['normalizedResidual'],
+                  },
+                  'deltaNormalizedResidualL2': c['normalizedResidualL2'] - b['normalizedResidualL2'],
+                  'deltaMaxAbsNormalizedResidual': c['maxAbsNormalizedResidual'] - b['maxAbsNormalizedResidual'],
+                  'localDisposition': 'SMOOTH90_LOCALLY_PASSES' if c['maxAbsNormalizedResidual'] <= 0.1 else ('SMOOTH90_LOCALLY_IMPROVES_BUT_REMAINS_FAILING' if c['normalizedResidualL2'] < b['normalizedResidualL2'] else 'SMOOTH90_DOES_NOT_IMPROVE_LOCAL_VECTOR'),
+              })
+          summary = {
+              'schema': 'lfea-issue947-e48-e85-bend-condensation-ab/v1',
+              'issue': 947,
+              'caseId': 'L19',
+              'sourceAccdbSha256': '85d39463296e569da811d8572e2eff680b858097f76fdf0f47d1755f0b161c21',
+              'authority': 'CAESAR_II_14_00_B31J_SMOOTH_90_K_EQUALS_1_3_OVER_H',
+              'purpose': 'LOCAL_PRODUCTION_DESCENDANT_CONSTITUTIVE_AB_NO_GLOBAL_PARAMETER_FIT_NO_PRODUCTION_UPDATE',
+              'records': records,
+              'classification': 'LOCAL_BEND_AB_COMPLETE',
+              'falsificationRule': 'Each local result is admissible only if its own production parity, unrestrained junction-action custody, condensation/load decomposition, and rotation-resolution gates pass. Global regression rows are not used to choose the coefficient.',
+          }
+          (out / 'e48-e85-summary.json').write_text(json.dumps(summary, indent=2) + '\n')
+          print(json.dumps(summary, indent=2))
+          PY
+
+      - name: Upload bend condensation evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: issue-947-e48-e85-bend-condensation-ab
+          if-no-files-found: error
+          path: |
+            .work/out/*.json
+            .work/issue947-accdb-case-mechanics-inspection-patch.json
+            .work/issue947-e48-e85-smooth90-candidate-patch.json

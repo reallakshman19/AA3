@@ -1,0 +1,68 @@
+name: Issue 947 one-shot Timoshenko frame profile
+
+on:
+  push:
+    branches:
+      - codex/issue-947-bm4nl-qualification
+
+permissions:
+  contents: write
+  actions: read
+
+jobs:
+  apply:
+    if: "${{ github.event.head_commit.message == 'chore(issue947): apply Timoshenko frame profile' }}"
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Checkout qualification branch
+        uses: actions/checkout@v4
+        with:
+          ref: codex/issue-947-bm4nl-qualification
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Apply deterministic frame-profile patch
+        run: node scripts/lfea-issue947-apply-timoshenko-frame-profile.mjs
+
+      - name: Run independent frame-element qualification
+        run: node scripts/lfea-b3.1-frame-element-check.mjs
+
+      - name: Download pinned canonical BM4_NL package
+        uses: actions/download-artifact@v4
+        with:
+          name: issue-947-bm4nl-qualification
+          path: .work/pinned
+          github-token: ${{ github.token }}
+          repository: reallaksh19/Advanced_Analysis
+          run-id: 31300020859
+
+      - name: Run CAESAR-displacement constitutive residual audit
+        run: |
+          node scripts/lfea-issue947-element-constitutive-audit.mjs \
+            --package .work/pinned/bm4nl-canonical-package.json \
+            --elements 3,4 \
+            --out .work/issue947-element-constitutive-audit.json
+
+      - name: Run Bourdon subdivision falsification regression
+        run: node scripts/lfea-issue947-bourdon-subdivision-check.mjs
+
+      - name: Run bend pressure authority regression
+        run: node scripts/lfea-issue947-bend-pressure-stiffening-check.mjs
+
+      - name: Commit production frame-profile change
+        shell: bash
+        run: |
+          set -euo pipefail
+          git add src/core/fea-benchmarks/caesar-accdb-linear-solve.js
+          if git diff --cached --quiet; then
+            echo 'Expected Timoshenko frame-profile patch produced no source diff.' >&2
+            exit 1
+          fi
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git commit -m 'fix(lfea): use qualified Timoshenko pipe frames in ACCDB solve'
+          git push origin HEAD:codex/issue-947-bm4nl-qualification

@@ -1,0 +1,83 @@
+name: Issue 947 B31J baseline bend condensation
+
+on:
+  push:
+    branches:
+      - codex/issue-947-bm4nl-qualification
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  actions: read
+
+jobs:
+  audit:
+    if: "${{ github.event_name == 'workflow_dispatch' || github.event.head_commit.message == 'ci(issue947): audit authoritative B31J bend condensation' || github.event.head_commit.message == 'ci(issue947): fix B31J bend condensation artifact upload' }}"
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Checkout qualification branch
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Download authoritative Version-14 B31J baseline package
+        uses: actions/download-artifact@v4
+        with:
+          name: issue-947-bm4nl-qualification
+          path: .work/package
+          github-token: ${{ github.token }}
+          repository: reallaksh19/Advanced_Analysis
+          run-id: 31324887225
+
+      - name: Condense upstream E19+E20 bend chain
+        run: |
+          node scripts/lfea-issue947-bend-descendant-condensation-audit.mjs \
+            --package .work/package/bm4nl-canonical-package.json \
+            --source-elements 19,20 \
+            --out .work/b31j-e19-e20.json
+
+      - name: Condense E25
+        run: |
+          node scripts/lfea-issue947-bend-descendant-condensation-audit.mjs \
+            --package .work/package/bm4nl-canonical-package.json \
+            --source-element 25 \
+            --out .work/b31j-e25.json
+
+      - name: Condense E36
+        run: |
+          node scripts/lfea-issue947-bend-descendant-condensation-audit.mjs \
+            --package .work/package/bm4nl-canonical-package.json \
+            --source-element 36 \
+            --out .work/b31j-e36.json
+
+      - name: Condense E48
+        run: |
+          node scripts/lfea-issue947-bend-descendant-condensation-audit.mjs \
+            --package .work/package/bm4nl-canonical-package.json \
+            --source-element 48 \
+            --out .work/b31j-e48.json
+
+      - name: Condense E85
+        run: |
+          node scripts/lfea-issue947-bend-descendant-condensation-audit.mjs \
+            --package .work/package/bm4nl-canonical-package.json \
+            --source-element 85 \
+            --out .work/b31j-e85.json
+
+      - name: Upload current-baseline bend evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: issue-947-b31j-baseline-bend-condensation
+          if-no-files-found: error
+          include-hidden-files: true
+          path: |
+            .work/b31j-e19-e20.json
+            .work/b31j-e25.json
+            .work/b31j-e36.json
+            .work/b31j-e48.json
+            .work/b31j-e85.json

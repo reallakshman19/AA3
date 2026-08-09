@@ -1,0 +1,60 @@
+name: Issue 947 rotation output resolution audit
+# Source-custody audit only; 0.0001 degree gate intentionally unchanged.
+
+on:
+  push:
+    branches:
+      - codex/issue-947-bm4nl-qualification
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  actions: read
+
+jobs:
+  audit:
+    if: "${{ github.event_name == 'workflow_dispatch' || github.event.head_commit.message == 'ci(issue947): run rotation output resolution audit' }}"
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Checkout qualification branch
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Download exact ACCDB custody evidence
+        uses: actions/download-artifact@v4
+        with:
+          name: issue-947-node22130-reference-custody
+          path: .work/custody
+          github-token: ${{ github.token }}
+          repository: reallaksh19/Advanced_Analysis
+          run-id: 31311427176
+
+      - name: Download production-faithful node 22130 reconstruction
+        uses: actions/download-artifact@v4
+        with:
+          name: issue-947-node22130-two-sided-rz-reconstruction
+          path: .work/reconstruction
+          github-token: ${{ github.token }}
+          repository: reallaksh19/Advanced_Analysis
+          run-id: 31313813802
+
+      - name: Audit raw ACCDB rotation output resolution
+        run: |
+          mkdir -p .work/out
+          node scripts/lfea-issue947-rotation-output-resolution-audit.mjs \
+            --raw .work/custody/node22130-raw-export.json \
+            --reconstruction .work/reconstruction/issue947-node22130-two-sided-rz-reconstruction.json \
+            --out .work/out/issue947-rotation-output-resolution-audit.json
+
+      - name: Upload rotation output resolution evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: issue-947-rotation-output-resolution-audit
+          if-no-files-found: error
+          path: .work/out/issue947-rotation-output-resolution-audit.json

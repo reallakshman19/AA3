@@ -139,6 +139,10 @@ function normalizeLinearSolve(value) {
     ),
     gravityAcceleration: positive(value.gravityAcceleration, 'linearSolve.gravityAcceleration'),
     bourdonPressureEffects: normalizeBourdonPressureEffects(value.bourdonPressureEffects),
+    b31jSmooth90FlexibilityCorrection: normalizeBooleanAuthority(
+      value.b31jSmooth90FlexibilityCorrection,
+      'linearSolve.b31jSmooth90FlexibilityCorrection',
+    ),
     directionalB31JTeeFlexibility: requiredBoolean(
       value.directionalB31JTeeFlexibility,
       'linearSolve.directionalB31JTeeFlexibility',
@@ -156,6 +160,16 @@ function normalizeLinearSolve(value) {
     throw new TypeError('linearSolve.teeNominalDiameterRelativeTolerance must not exceed 0.01.');
   }
   return deepFreeze(result);
+}
+
+function normalizeBooleanAuthority(value, field) {
+  if (!value || typeof value !== 'object' || Array.isArray(value)) {
+    throw new TypeError(`${field} must be an object.`);
+  }
+  return deepFreeze({
+    enabled: requiredBoolean(value.enabled, `${field}.enabled`),
+    source: nonempty(value.source, `${field}.source`),
+  });
 }
 
 function normalizeBourdonPressureEffects(value) {

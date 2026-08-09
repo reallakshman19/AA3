@@ -17,5 +17,6 @@ export {
   CAESAR_RIGID_INSULATION_WEIGHT_MULTIPLIER,
   CAESAR_RIGID_WALL_MULTIPLIER,
   compileCaesarRigidElementAuthority,
+  rigidElementBourdonPressureEffect,
   rigidElementGravityLocalVector,
 } from './rigid-element.js';

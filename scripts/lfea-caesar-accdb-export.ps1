@@ -29,6 +29,24 @@ function Convert-DatabaseValue {
   return $Value
 }
 
+function Get-Sha256Hex {
+  param(
+    [Parameter(Mandatory = $true)]
+    [string]$Path
+  )
+
+  $stream = [System.IO.File]::OpenRead($Path)
+  $sha256 = [System.Security.Cryptography.SHA256]::Create()
+  try {
+    $digest = $sha256.ComputeHash($stream)
+    return ([System.BitConverter]::ToString($digest)).Replace('-', '').ToLowerInvariant()
+  }
+  finally {
+    $stream.Dispose()
+    $sha256.Dispose()
+  }
+}
+
 function Read-DatabaseTable {
   param(
     [Parameter(Mandatory = $true)]
@@ -119,7 +137,7 @@ try {
       fileName = $file.Name
       byteLength = $file.Length
       lastWriteTimeUtc = $file.LastWriteTimeUtc.ToString('o')
-      sha256 = (Get-FileHash -LiteralPath $resolvedPath -Algorithm SHA256).Hash.ToLowerInvariant()
+      sha256 = Get-Sha256Hex -Path $resolvedPath
     }
     provider = 'Microsoft.ACE.OLEDB.12.0'
     tables = $tables

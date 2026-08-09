@@ -1,0 +1,58 @@
+name: Issue 947 E36 MEC21 split audit
+
+on:
+  push:
+    branches:
+      - codex/issue-947-bm4nl-qualification
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  actions: read
+
+jobs:
+  audit:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Checkout qualification branch
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Download pinned canonical BM4_NL package
+        uses: actions/download-artifact@v4
+        with:
+          name: issue-947-bm4nl-qualification
+          path: .work/package
+          github-token: ${{ github.token }}
+          repository: reallaksh19/Advanced_Analysis
+          run-id: 31302834835
+
+      - name: Run MEC21 translation/rotation split
+        shell: bash
+        run: |
+          set +e
+          node scripts/lfea-issue947-e36-mec21-split-audit.mjs \
+            --package .work/package/bm4nl-canonical-package.json \
+            --out .work/issue947-e36-mec21-split-audit.json \
+            > .work/issue947-e36-mec21-split-stdout.txt \
+            2> .work/issue947-e36-mec21-split-stderr.txt
+          status=$?
+          cat .work/issue947-e36-mec21-split-stdout.txt
+          cat .work/issue947-e36-mec21-split-stderr.txt >&2
+          exit $status
+
+      - name: Upload MEC21 split evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: issue-947-e36-mec21-split-audit
+          if-no-files-found: error
+          path: |
+            .work/issue947-e36-mec21-split-audit.json
+            .work/issue947-e36-mec21-split-stdout.txt
+            .work/issue947-e36-mec21-split-stderr.txt

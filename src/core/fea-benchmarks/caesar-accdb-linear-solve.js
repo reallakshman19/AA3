@@ -23,6 +23,7 @@ import {
   frameTransformationMatrix,
   sealFrameElementProfile,
   thermalInitialStrainVector,
+  transformDisplacementToLocal,
   transformLoadToGlobal,
   transformStiffnessToGlobal,
 } from '../linear-fea-frame-element/index.js';
@@ -43,7 +44,7 @@ import {
 import {
   classifyBranchLegs,
   compilePipingComponent,
-  deriveMec21BendPressureFreeMovement,
+  deriveMec21BendPressureFreeState,
   deriveB31JDirectionalBranchEndModifiers,
   sealPipingComponentProfile,
 } from '../linear-fea-piping-components/index.js';
@@ -57,6 +58,7 @@ import {
 import {
   RIGID_ELEMENT_REQUEST_SCHEMA,
   compileCaesarRigidElementAuthority,
+  rigidElementBourdonPressureEffect,
   sealRigidElementRequest,
 } from '../linear-fea-rigid-element/index.js';
 import {
@@ -75,6 +77,7 @@ import {
   gatherJointDisplacement12,
   recoverElementEndAction,
 } from '../linear-fea-result-recovery/index.js';
+import { resolveCaesarBendPressureStiffeningPressurePa } from './caesar-bend-pressure-authority.js';
 import { semanticHash } from '../shared-piping-model/canonical-json.js';
 import { deepFreeze } from '../shared-piping-model/immutable.js';
 
@@ -90,6 +93,50 @@ const KG_PER_CM3_TO_KG_PER_M3 = 1e6;
 const CELSIUS_TO_KELVIN = 273.15;
 const POSITION_TOLERANCE_M = 1e-7;
 const CAESAR_WELDING_TEE_TYPE = 3;
+
+/**
+ * Read-only mechanics inspection for qualification diagnostics.
+ *
+ * This intentionally calls the same solveCase path as the benchmark solve and
+ * exposes only matrices/load vectors already sealed in each element's solver
+ * contribution. It does not recompute stiffness, alter assembly, or provide a
+ * second solver path.
+ */
+export function inspectCaesarAccdbLinearCaseMechanics(benchmarkPackage, caseId) {
+  requireBenchmarkPackage(benchmarkPackage);
+  const solveProfile = benchmarkPackage.profile.linearSolve;
+  if (solveProfile === null) throw new TypeError('The ACCDB profile does not declare linearSolve authorities.');
+  const matches = benchmarkPackage.cases.filter((entry) => String(entry.caseId) === String(caseId));
+  if (matches.length !== 1) {
+    throw new TypeError(`ACCDB mechanics inspection requires exactly one case ${String(caseId)}; found ${matches.length}.`);
+  }
+  const solved = solveCase(benchmarkPackage, matches[0], solveProfile);
+  return deepFreeze({
+    schema: 'lfea-accdb-linear-case-mechanics-inspection/v1',
+    sourceAccdbSha256: benchmarkPackage.source.sha256,
+    caseId: String(matches[0].caseId),
+    executionStatus: solved.execution.status,
+    executionSemanticHash: solved.execution.semanticHash,
+    executionEvidenceHash: solved.execution.evidenceHash,
+    rows: solved.rows.map((entry) => ({ ...entry })),
+    elements: solved.analysisElements.map((entry) => ({
+      elementId: entry.elementId,
+      sourceElementId: entry.sourceElementId,
+      nodeI: entry.nodeI,
+      nodeJ: entry.nodeJ,
+      kind: entry.kind,
+      teeJunctionNodeId: entry.teeJunctionNodeId,
+      globalStiffness: [...entry.contribution.globalStiffness],
+      equivalentLoadGlobal: [...entry.contribution.equivalentLoadGlobal],
+      initialStrainLoadGlobal: [...entry.contribution.initialStrainLoadGlobal],
+      effectiveLocalStiffness: [...entry.effectiveLocalStiffness],
+      pressureAxialStrain: entry.pressureAxialStrain,
+      bourdonRotationRadians: entry.bourdonRotationRadians,
+      bourdonFreeEndTranslationM: [...entry.bourdonFreeEndTranslationM],
+      gravityWeightN: entry.gravityWeightN,
+    })),
+  });
+}
 
 /** Solve every selected physical case and emit normalized comparison rows plus mechanics evidence. */
 export function solveCaesarAccdbLinearBenchmark(benchmarkPackage) {
@@ -119,8 +166,9 @@ export function solveCaesarAccdbLinearBenchmark(benchmarkPackage) {
       limitations: [
         'Restraints are linearized as bilateral fixed DOFs; friction and lift-off are excluded as requested.',
         'The explicit Bourdon job mode is supplied by the benchmark profile because CAESAR existing-job settings are absent from ACCDB exports.',
-        'Translation-and-rotation mode applies closed-end axial pressure strain to non-bend spans and MEC-21 equation (2.25) free movements to declared bend arcs.',
+        'Translation-and-rotation mode applies closed-end axial pressure strain to non-bend spans and one MEC-21 equation (2.25) bend-level free field sampled at all discretized bend stations.',
         'Bend stiffness uses the qualified B31.3/B31J factor calculator and true tangent-to-tangent arc components.',
+        'B31.3 flexibility stiffness uses the cold/reference elastic modulus Ec (ACCDB MODULUS); HOT_MOD1/Eh is not selected by thermal-case presence.',
         'Reducer stiffness, gravity and thermal loads use the governed ten-cylinder midpoint-sampling candidate.',
         'Topology-qualified TYPE=3 welding tees use unreduced B31J directional end springs; branch legs connect at the run surface through a rigid offset.',
       ],
@@ -132,7 +180,7 @@ function solveCase(benchmarkPackage, caseRecord, solveProfile) {
   const caseMode = requireSupportedCase(caseRecord);
   const modelInput = benchmarkPackage.model;
   const sourceRows = sortedElements(modelInput.tables.INPUT_BASIC_ELEMENT_DATA.rows);
-  const material = buildMaterial(sourceRows, caseMode, solveProfile, benchmarkPackage);
+  const material = buildMaterial(sourceRows, solveProfile, benchmarkPackage);
   const sectionRegistry = createSectionRegistry(benchmarkPackage);
   const sourceSections = new Map(sourceRows.map((row) => [
     String(row.ELEMENTID),
@@ -141,6 +189,7 @@ function solveCase(benchmarkPackage, caseRecord, solveProfile) {
   const sourcePositions = buildSourcePositions(modelInput.tables.INPUT_NODAL_COORDINATES.rows);
   const bendDefinitions = buildBendDefinitions({
     benchmarkPackage,
+    solveProfile,
     sourceRows,
     sourcePositions,
     sourceSections,
@@ -198,6 +247,7 @@ function solveCase(benchmarkPackage, caseRecord, solveProfile) {
   return {
     execution,
     rows: resultRows({ benchmarkPackage, execution, recovered, analysis }),
+    analysisElements: analysis.elements,
     evidence: {
       formula: caseRecord.formula,
       thermalIncluded: caseMode.thermal,
@@ -397,8 +447,9 @@ function buildFrameElement(input) {
     : 0;
   const pressureStrain = input.caseMode.pressure
     && input.solveProfile.bourdonPressureEffects.mode !== 'DISABLED'
-    ? closedEndPressureAxialStrain(input.row, frame.material.elasticModulus)
-      * input.pressureLengthScale
+    ? (input.pressureAxialStrainOverride ?? (
+        closedEndPressureAxialStrain(input.row, frame.material.elasticModulus)
+        * input.pressureLengthScale))
     : 0;
   const axialInitialLocal = thermalInitialStrainVector({
     elasticModulus: frame.material.elasticModulus,
@@ -495,6 +546,10 @@ function buildRigidElement(input) {
     sourceEvidence: sourceEvidence(`ACCDB:RIGID:${Number(input.row.RIGID_PTR)}`, input.benchmarkPackage.source.sha256),
     semanticHash: '',
   }));
+  const pressureEffect = rigidElementBourdonPressureEffect(authority, {
+    pressure: Number(input.row.PRESSURE1) * KPA_TO_PA,
+    poissonRatio: Number(input.row.POISSONS),
+  });
   const rigidSection = input.sectionRegistry.resolve(
     authority.stiffnessSection.outsideDiameter,
     authority.stiffnessSection.wallThickness,
@@ -505,6 +560,7 @@ function buildRigidElement(input) {
     section: rigidSection,
     kind: 'RIGID',
     pressureLengthScale: 0,
+    pressureAxialStrainOverride: pressureEffect.equivalentAxialStrain,
     thermalLengthScale: 1,
     gravityLengthScale: 1,
     gravityLineWeight: authority.gravity.totalLineWeight,
@@ -848,10 +904,10 @@ function buildBendDefinitions(input) {
         outerDiameter: section.dimensions.outerDiameter,
         wallThickness: section.dimensions.wallThickness,
         bendRadius: radius,
-        pressure: Number(row.PRESSURE1) * KPA_TO_PA,
+        pressure: resolveCaesarBendPressureStiffeningPressurePa(row),
         elasticModulus: input.material.materialState.elasticModulus,
         bendAngleDegrees: bendAngle * 180 / Math.PI,
-        smooth90FlexibilityCorrection: false,
+        smooth90FlexibilityCorrection: input.solveProfile.b31jSmooth90FlexibilityCorrection.enabled,
         sourceEvidence: { sourceId: `ACCDB:BEND:${pointer}`, sourceRevision: input.benchmarkPackage.source.sha256 },
       },
       momentDirectionMapping: MOMENT_DIRECTION_MAPPING,
@@ -884,6 +940,8 @@ function buildBendDefinitions(input) {
       component.geometry.centre,
       radius,
       pointer,
+      incomingDirection,
+      bendAngle,
     );
     const middleIndex = component.subdivision.elementCount / 2;
     if (!Number.isInteger(middleIndex)) throw new TypeError(`BEND_PTR ${pointer} lacks an exact mid-arc station.`);
@@ -912,10 +970,29 @@ function buildBendDefinitions(input) {
   return definitions.sort((left, right) => left.pointer - right.pointer);
 }
 
-/** Build CAESAR a-b-c axes and angular extent for every discretized bend arc. */
-function buildBourdonSegments(points, centrePoint, bendRadius, pointer) {
+/**
+ * Build one cumulative MEC-21 bend coordinate field over the numerical arc.
+ * Each chord retains its own frame axes for stiffness, but its pressure free
+ * state is sampled from the same physical bend initial point. This prevents
+ * the pressure endpoint from changing when the stiffness mesh is refined.
+ */
+function buildBourdonSegments(points, centrePoint, bendRadius, pointer, incomingDirection, totalBendAngle) {
   const centre = [...centrePoint];
-  return points.slice(0, -1).map((pointI, index) => {
+  const referenceAAxis = unit(incomingDirection, `BEND_PTR ${pointer} reference a-axis`);
+  const referenceCAxis = unit(subtract(centre, points[0]), `BEND_PTR ${pointer} reference c-axis`);
+  const referenceBAxis = unit(
+    cross(referenceCAxis, referenceAAxis),
+    `BEND_PTR ${pointer} reference b-axis`,
+  );
+  const referenceAxes = Object.freeze({
+    aAxis: Object.freeze([...referenceAAxis]),
+    bAxis: Object.freeze([...referenceBAxis]),
+    cAxis: Object.freeze([...referenceCAxis]),
+  });
+  const segments = [];
+  let cumulativeAngle = 0;
+  for (let index = 0; index < points.length - 1; index += 1) {
+    const pointI = points[index];
     const pointJ = points[index + 1];
     const cAxis = unit(subtract(centre, pointI), `BEND_PTR ${pointer} segment ${index} c-axis`);
     const nextCAxis = unit(subtract(centre, pointJ), `BEND_PTR ${pointer} segment ${index} next c-axis`);
@@ -925,8 +1002,28 @@ function buildBourdonSegments(points, centrePoint, bendRadius, pointer) {
     const bAxis = unit(cross(cAxis, aAxis), `BEND_PTR ${pointer} segment ${index} b-axis`);
     const bendAngle = Math.acos(clamp(dot(cAxis, nextCAxis), -1, 1));
     if (!(bendAngle > 0)) throw new TypeError(`BEND_PTR ${pointer} segment ${index} has zero arc angle.`);
-    return Object.freeze({ aAxis, bAxis, cAxis, bendAngle, bendRadius });
-  });
+    const startAngle = cumulativeAngle;
+    const rawEndAngle = cumulativeAngle + bendAngle;
+    const endAngle = index === points.length - 2 ? totalBendAngle : rawEndAngle;
+    cumulativeAngle = endAngle;
+    segments.push(Object.freeze({
+      aAxis,
+      bAxis,
+      cAxis,
+      bendAngle,
+      bendRadius,
+      startAngle,
+      endAngle,
+      referenceAxes,
+    }));
+  }
+  const angularError = Math.abs(cumulativeAngle - totalBendAngle);
+  if (angularError > 1e-10 * Math.max(1, totalBendAngle)) {
+    throw new TypeError(
+      `BEND_PTR ${pointer} discretized angle ${cumulativeAngle} does not close declared angle ${totalBendAngle}.`,
+    );
+  }
+  return Object.freeze(segments);
 }
 
 function compileAnalysisModel(input) {
@@ -1120,16 +1217,17 @@ function sourceResultElementId(row) {
     + `|${String(row.ELEMENT_NAME ?? '').trim()}`;
 }
 
-function buildMaterial(sourceRows, caseMode, solveProfile, benchmarkPackage) {
-  const elasticValues = uniqueNumbers(sourceRows.map((row) => Number(caseMode.thermal ? row.HOT_MOD1 : row.MODULUS)));
+function buildMaterial(sourceRows, solveProfile, benchmarkPackage) {
+  // CAESAR II flexibility analysis for B31.3 uses the cold/reference elastic
+  // modulus Ec. HOT_MOD1 (Eh) is retained as source custody but must not be
+  // selected merely because a physical case contains temperature loading.
+  const elasticValues = uniqueNumbers(sourceRows.map((row) => Number(row.MODULUS)));
   const poissonValues = uniqueNumbers(sourceRows.map((row) => Number(row.POISSONS)));
   const densityValues = uniqueNumbers(sourceRows.map((row) => density(row.PIPE_DENSITY)));
   if (elasticValues.length !== 1 || poissonValues.length !== 1 || densityValues.length !== 1) {
     throw new TypeError('The current ACCDB linear solve requires one material state per selected case.');
   }
-  const evaluationTemperature = caseMode.thermal
-    ? Math.max(...sourceRows.map((row) => Number(row.TEMP_EXP_C1) + CELSIUS_TO_KELVIN))
-    : benchmarkPackage.model.installationTemperatureK;
+  const evaluationTemperature = benchmarkPackage.model.installationTemperatureK;
   const elasticModulus = elasticValues[0] * KPA_TO_PA;
   const poissonRatio = poissonValues[0];
   const point = {
@@ -1150,7 +1248,7 @@ function buildMaterial(sourceRows, caseMode, solveProfile, benchmarkPackage) {
   return resolveLinearFeaMaterialState({
     table,
     request: {
-      materialStateId: `ACCDB-MAT-${caseMode.thermal ? 'HOT1' : 'AMBIENT'}`,
+      materialStateId: 'ACCDB-MAT-COLD-EC',
       materialId: table.materialId,
       evaluationTemperature,
     },
@@ -1390,32 +1488,57 @@ function closedEndPressureAxialStrain(row, elasticModulus) {
     / (elasticModulus * (outerDiameter ** 2 - innerDiameter ** 2));
 }
 
-/** Convert MEC-21 bend free movement into the initial load of one arc frame. */
+/**
+ * Convert one physical bend's cumulative MEC-21 free field into this chord's
+ * initial load. Both chord-end generalized movements are sampled relative to
+ * the physical bend initial point, transformed by the authoritative frame
+ * relation d_local = T d_global, then multiplied by the stiffness actually
+ * assembled for this chord. A free bend therefore has q = K(d-d0) = 0 and its
+ * external free endpoint is independent of numerical subdivision.
+ */
 function buildBourdonBendInitialLoad(input) {
-  const freeMovement = deriveMec21BendPressureFreeMovement({
+  const stateInput = {
     pressure: Number(input.row.PRESSURE1) * KPA_TO_PA,
     innerRadius: input.section.dimensions.innerDiameter / 2,
     bendRadius: input.segment.bendRadius,
     elasticModulus: input.frame.material.elasticModulus,
     secondMoment: input.section.sectionState.secondMomentY,
     poissonRatio: Number(input.row.POISSONS),
-    bendAngle: input.segment.bendAngle,
+  };
+  const startState = deriveMec21BendPressureFreeState({
+    ...stateInput,
+    bendAngle: input.segment.startAngle,
   });
-  const translationGlobal = add(
-    scale(input.segment.aAxis, freeMovement.translationAbc[0]),
-    scale(input.segment.cAxis, freeMovement.translationAbc[2]),
+  const endState = deriveMec21BendPressureFreeState({
+    ...stateInput,
+    bendAngle: input.segment.endAngle,
+  });
+  const startTranslationGlobal = abcVectorToGlobal(input.segment.referenceAxes, startState.translationAbc);
+  const startRotationGlobal = abcVectorToGlobal(input.segment.referenceAxes, startState.rotationAbc);
+  const endTranslationGlobal = abcVectorToGlobal(input.segment.referenceAxes, endState.translationAbc);
+  const endRotationGlobal = abcVectorToGlobal(input.segment.referenceAxes, endState.rotationAbc);
+  const freeDofGlobal = [
+    ...startTranslationGlobal,
+    ...startRotationGlobal,
+    ...endTranslationGlobal,
+    ...endRotationGlobal,
+  ];
+  const freeDofLocal = transformDisplacementToLocal(
+    freeDofGlobal,
+    input.frame.transformation.matrix,
   );
-  const rotationGlobal = scale(input.segment.bAxis, freeMovement.rotationAbc[1]);
-  const translationLocal = projectToLocal(input.frame.localAxes.axes, translationGlobal);
-  const rotationLocal = projectToLocal(input.frame.localAxes.axes, rotationGlobal);
-  const freeDofLocal = zero12();
-  freeDofLocal.splice(6, 3, ...translationLocal);
-  freeDofLocal.splice(9, 3, ...rotationLocal);
   return Object.freeze({
     initialLocal: matrixVector12(input.effectiveLocalStiffness, freeDofLocal),
-    rotationRadians: freeMovement.rotationAbc[1],
-    freeEndTranslationM: translationGlobal,
+    rotationRadians: endState.rotationAbc[1] - startState.rotationAbc[1],
+    freeEndTranslationM: subtract(endTranslationGlobal, startTranslationGlobal),
   });
+}
+
+function abcVectorToGlobal(axes, vector) {
+  return add(
+    add(scale(axes.aAxis, vector[0]), scale(axes.bAxis, vector[1])),
+    scale(axes.cAxis, vector[2]),
+  );
 }
 
 function sectionDimensions(section) {
@@ -1520,8 +1643,10 @@ function frameProfile() {
   return sealFrameElementProfile({
     schema: 'fea-linear-frame-element-profile/v1',
     profileId: 'LINEAR-FRAME-ELEMENT-R1',
-    straightPipeFormulation: 'PIPE_FRAME3D_EULER_BERNOULLI_V1',
-    shearDeformation: false,
+    straightPipeFormulation: 'PIPE_FRAME3D_TIMOSHENKO_V1',
+    shearDeformation: true,
+    shearCorrectionFactorY: { value: 0.5, source: 'INTERGRAPH-CAESAR-II-CAUX-2015-FKX-SHEAR-COEFFICIENT-2' },
+    shearCorrectionFactorZ: { value: 0.5, source: 'INTERGRAPH-CAESAR-II-CAUX-2015-FKX-SHEAR-COEFFICIENT-2' },
     releaseRule: 'STATIC_CONDENSATION_V1',
     thermalStrainApproximation: 'UNIFORM_TEMPERATURE_ALPHA_DELTA_T_V1',
     releaseSingularityTolerance: { value: 1e-12, source: PROFILE_SOURCE },

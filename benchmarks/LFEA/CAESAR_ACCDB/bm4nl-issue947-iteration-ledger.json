@@ -1,0 +1,109 @@
+{
+  "schema": "lfea-bm4nl-issue947-iteration-ledger/v1",
+  "issue": 947,
+  "purpose": "Record every mechanics iteration as an explicit, reproducible before/after hypothesis test. This ledger is process evidence; benchmark outputs and solver qualification diagnostics remain the numerical authority.",
+  "target": {
+    "sourceAccdbSha256": "85d39463296e569da811d8572e2eff680b858097f76fdf0f47d1755f0b161c21",
+    "casesInOrder": ["L19", "L20"],
+    "restraintBoundary": "LINEAR_BILATERAL_ONLY",
+    "acceptanceRelativeError": 0.1,
+    "excludedPhysics": ["FRICTION", "LIFT_OFF", "GAP_CONTACT_HISTORY", "NONLINEAR_SUPPORT_STATE", "CODE_STRESS", "EXP", "HYD", "DAMPING", "FOLLOWER_LOAD", "MATERIAL_NONLINEARITY"]
+  },
+  "measurementPolicy": {
+    "requiredPerIteration": ["iterationId", "hypothesis", "codeOrConfigurationDelta", "candidateCommitSha", "beforeMetrics", "afterMetrics", "metricDelta", "solverResidualAndEquilibriumStatus", "canonicalOrFalsificationEvidence", "disposition"],
+    "improvementRule": "An iteration is an improvement only when target errors decrease without weakening solver/profile tolerances, changing the reference data, or violating residual/equilibrium/canonical invariants.",
+    "dispositions": ["KEEP", "REVERT", "BLOCKED", "PENDING_REAL_ACCDB"]
+  },
+  "baseline": {
+    "iterationId": "I000",
+    "candidateCommitSha": "882d59a99c3a03847d20bec34770ba57ff479d91",
+    "benchmarkStatus": "FAIL",
+    "beforeMetrics": {
+      "L19": {"restraintComponentsOver10Percent": 1, "worstTarget": {"node": "20090", "quantity": "FORCE", "component": "UY", "reference": -1659.836792, "candidate": -1941.29179, "relativeError": 0.1696, "unit": "N"}},
+      "L20": {"restraintComponentsOver10Percent": 5, "targets": [
+        {"node": "20350", "component": "UY", "reference": -1758.342407, "candidate": -1376.711849, "relativeError": 0.2170, "unit": "N"},
+        {"node": "20390", "component": "UZ", "reference": -757.635376, "candidate": -674.898892, "relativeError": 0.1092, "unit": "N"},
+        {"node": "20550", "component": "UZ", "reference": 26.630367, "candidate": 16.281663, "relativeError": 0.2070, "unit": "N"},
+        {"node": "22140", "component": "UX", "reference": -718.479126, "candidate": -624.916166, "relativeError": 0.1302, "unit": "N"},
+        {"node": "22490", "component": "UX", "reference": 1063.09082, "candidate": 950.858994, "relativeError": 0.1056, "unit": "N"}
+      ]}
+    },
+    "solverResidualAndEquilibriumStatus": "QUALIFIED_BY_EXISTING_BENCHMARK_RUN",
+    "canonicalOrFalsificationEvidence": "Incident element-end action sums agree with reported restraint components to the existing benchmark audit tolerance, so the primary mismatch is upstream of reaction reporting.",
+    "disposition": "BASELINE"
+  },
+  "iterations": [
+    {
+      "iterationId": "I001",
+      "hypothesis": "Restarting MEC-21 Part II equation (2.25) independently on every numerical bend chord is kinematically subdivision invariant.",
+      "codeOrConfigurationDelta": "Added a cumulative-station MEC-21 state API and an independent quarter-bend closed-form/falsification fixture; solver behavior was not changed in this iteration.",
+      "candidateCommitSha": "236ceefdd02e771f284627b2237739cd87f9652f",
+      "beforeMetrics": "I000", "afterMetrics": null, "metricDelta": null,
+      "solverResidualAndEquilibriumStatus": "UNCHANGED_SOLVER_PATH",
+      "canonicalOrFalsificationEvidence": {"fixture": "MEC21_PART_II_EQ_2_25_QUARTER_BEND_CLOSED_FORM", "subdivisionCounts": [1,2,4,8,32], "cumulativeFieldEndpointInvariant": true, "restartedFourChordTranslationRelativeError": 1.3273984331376751, "totalRotationPreservedByRestartedConstruction": true, "hypothesisResult": "FALSIFIED"},
+      "disposition": "KEEP"
+    },
+    {
+      "iterationId": "I002",
+      "hypothesis": "Sampling one physical bend-level MEC-21 free field at both ends of every stiffness chord in a single fixed bend-start a-b-c basis correctly represents the cumulative pressure free field while preserving the qualified linear solver and recovery contracts.",
+      "codeOrConfigurationDelta": "ACCDB adapter sampled cumulative bend stations, mapped literal MEC-21 a-b-c components through one fixed bend-start basis, transformed the resulting two-end generalized displacement with d_local = T d_global, and formed f0 = K_effective d0. No solver, restraint, tolerance, B31/B31J stiffness, or recovery-sign change.",
+      "candidateCommitSha": "36457f3002f04f0cd4c3ac7ce6800654072713e3",
+      "beforeMetrics": "I000", "afterMetrics": null, "metricDelta": null,
+      "solverResidualAndEquilibriumStatus": "NOT_RUN_AFTER_CANONICAL_BASIS_FALSIFICATION",
+      "canonicalOrFalsificationEvidence": {"freeStateIdentity": "q_local = K_effective (d_local - d0_local) = 0", "selfReviewFinding1": "The first angular-closure guard snapped the final cumulative angle before measuring the residual, so that guard could not detect a bad chord-angle sum.", "selfReviewFinding2": "MEC-21 final-point a-b-c coordinates rotate with bend station angle; a fixed bend-start basis is not the governing transformation when literal equation components are used directly.", "hypothesisResult": "FALSIFIED_BEFORE_BM4_RERUN"},
+      "disposition": "BLOCKED"
+    },
+    {
+      "iterationId": "I003",
+      "hypothesis": "MEC-21 equation (2.25) bend pressure translations are components in the final-station local basis, and transforming that rotating basis to the bend-start basis must match an independent curvature-change integration.",
+      "codeOrConfigurationDelta": "No solver behavior changed. Performed an independent coordinate/kinematic derivation before revising I002.",
+      "candidateCommitSha": "82a3c9047861a43311b30de37db36bcb394006bc",
+      "beforeMetrics": "I000", "afterMetrics": null, "metricDelta": null,
+      "solverResidualAndEquilibriumStatus": "UNCHANGED_SOLVER_PATH",
+      "canonicalOrFalsificationEvidence": {"mec21LocalFinalComponents": {"ua": "lambda*R*(sin(theta)-theta)", "uc": "lambda*R*(cos(theta)-1)", "phib": "lambda*theta"}, "stationBasis": {"aFinal": "cos(theta)*a0 + sin(theta)*c0", "cFinal": "-sin(theta)*a0 + cos(theta)*c0", "bFinal": "b0"}, "transformedBendStartComponents": {"ua0": "lambda*R*(sin(theta)-theta*cos(theta))", "uc0": "lambda*R*(1-cos(theta)-theta*sin(theta))", "phib0": "lambda*theta"}, "independentDerivation": "Integrating the first-order tangent change caused by a uniform curvature reduction over s in [0,R*theta] gives the same bend-start translation components.", "sourceContract": "MEC-21 Part II sections 2.3.1, 2.3.5.2 and 2.4 define element flexibility/free movement at the final point in local a-b-c coordinates and the displacement coordinate transformation.", "hypothesisResult": "SUPPORTED"},
+      "disposition": "KEEP"
+    },
+    {
+      "iterationId": "I004",
+      "hypothesis": "The station-rotating transformation of MEC-21 equation (2.25) is numerically identical to the independently integrated curvature-change field for any station subdivision, while the fixed bend-start interpretation is not.",
+      "codeOrConfigurationDelta": "Extended the governed B-3.18 bend check with rotating station axes, independent integrated-curvature translations, a fixed-basis falsification metric, and explicit historical restart labeling. Solver behavior was not changed.",
+      "candidateCommitSha": "7a64e598926157aeefc373fc637c26b71759b340",
+      "beforeMetrics": "I000", "afterMetrics": null, "metricDelta": null,
+      "solverResidualAndEquilibriumStatus": "UNCHANGED_SOLVER_PATH; FULL_REPOSITORY_CHECK_NOT_AVAILABLE_IN_CONNECTOR_ENVIRONMENT",
+      "canonicalOrFalsificationEvidence": {"fixture": "MEC21_PART_II_EQ_2_25_ROTATING_FINAL_BASIS_VS_INTEGRATED_CURVATURE", "independentStandaloneArithmeticReplay": "PASS", "curvatureChangeRatio": 0.000020114034735306585, "subdivisionCounts": [1,2,4,8,32], "rotatingBasisMatchesIntegratedCurvature": true, "fixedStartBasisQuarterTurnRelativeError": 1.4142135623730947, "expectedFixedStartBasisError": "sqrt(2)", "hypothesisResult": "SUPPORTED"},
+      "disposition": "KEEP"
+    },
+    {
+      "iterationId": "I005",
+      "hypothesis": "If the branch-local cumulative-state API resolves MEC-21 final-station components into the physical bend-initial a-b-c basis, the existing BM4 adapter's fixed bend-start mapping becomes the correct cumulative nodal free field without changing solver, stiffness, restraints, or recovery.",
+      "codeOrConfigurationDelta": "Kept deriveMec21BendPressureFreeMovement as literal STATION_FINAL_ABC Eq. (2.25). Changed deriveMec21BendPressureFreeState to return the same physical state resolved in BEND_INITIAL_ABC and retain the literal final-local components as qualification evidence. Updated the governed bend check to bind both basis contracts. The ACCDB adapter and linear solver code were not changed in this iteration; their behavior changes only through the corrected cumulative-state contract.",
+      "candidateCommitSha": "39729d5a252b8137535374f1b6f368d2bac42c34",
+      "supportingCommitShas": ["85db5bb38f8bff0fd7d083c72a374a3637b81b3e", "39729d5a252b8137535374f1b6f368d2bac42c34"],
+      "beforeMetrics": "I000", "afterMetrics": null, "metricDelta": null,
+      "solverResidualAndEquilibriumStatus": "PENDING_REAL_ACCDB; SOLVER_PROFILE_AND_TOLERANCES_UNCHANGED",
+      "canonicalOrFalsificationEvidence": {"literalMovementBasis": "STATION_FINAL_ABC", "cumulativeStateBasis": "BEND_INITIAL_ABC", "freeStateIdentity": "q_local = K_effective (d_local - d0_local) = 0", "independentStandaloneArithmeticReplay": "PASS", "quarterTurnTranslationInitialAbcM": [0.0000030653788936607233,0,-0.000001749707012736145], "curvatureChangeRatio": 0.000020114034735306585, "subdivisionCounts": [1,2,4,8,32], "hypothesisResult": "CANONICAL_SUPPORTED_BM4_UNMEASURED"},
+      "disposition": "PENDING_REAL_ACCDB"
+    },
+    {
+      "iterationId": "I006",
+      "hypothesis": "A canonical ACCDB benchmark package can be captured once from the authoritative Windows/ACE extraction and replayed cross-platform without losing source/model identity, so later solver improvements can be measured against exactly the same normalized input.",
+      "codeOrConfigurationDelta": "Added a package capture/replay command that reuses requiredCaesarAccdbTables, buildCaesarAccdbBenchmarkPackage and solveCaesarAccdbLinearBenchmark; validates model and package semantic hashes; permits machine-local relinking without changing identity; requires --package-out on capture and --actual-out on solves; added a tamper-detection check and an L19-only gate profile.",
+      "candidateCommitSha": "525fe2742edf8899c16cc5c936658881aede0038",
+      "supportingCommitShas": ["f91acdca82e9f66d59ae5bd5086a8f7c0118479a", "d3650cffff8930e7810e91d51b6c1e572f077e29", "00e844942992d10afa888ff80e0a3e9768b11c9c", "525fe2742edf8899c16cc5c936658881aede0038"],
+      "beforeMetrics": "I000", "afterMetrics": null, "metricDelta": null,
+      "solverResidualAndEquilibriumStatus": "UNCHANGED_SOLVER_PATH; REAL_PACKAGE_CAPTURE_NOT_AVAILABLE_IN_CONNECTOR_ENVIRONMENT",
+      "canonicalOrFalsificationEvidence": {"syntheticHashReplay": "PASS", "syntheticModelSemanticHash": "fnv1a64:cd266e5e7e6fc242", "syntheticPackageSemanticHash": "fnv1a64:f1c389a398be0c26", "modelTamperDetection": "PASS", "packageTamperDetection": "PASS", "machineLocalRelinkIdentity": "PASS", "l19Profile": "BM4NL-L19-LINEAR-SOLVE-V1", "hypothesisResult": "SUPPORTED_FOR_REPLAY_CONTRACT"},
+      "disposition": "KEEP"
+    },
+    {
+      "iterationId": "I007",
+      "hypothesis": "The repository already contains a serialized canonical BM4_NL package sufficient to rerun I005 without Windows/ACE extraction.",
+      "codeOrConfigurationDelta": "No solver or mechanics change. Searched benchmark and report artifacts for a source-hash-bound package/model table set before attempting to reuse prior output as input.",
+      "candidateCommitSha": "525fe2742edf8899c16cc5c936658881aede0038",
+      "beforeMetrics": "I000", "afterMetrics": null, "metricDelta": null,
+      "solverResidualAndEquilibriumStatus": "BLOCKED_SOURCE_PACKAGE_UNAVAILABLE; PRIOR_ACTUAL_AND_REFERENCE_REPORTS_ARE_NOT_SOLVER_INPUT",
+      "canonicalOrFalsificationEvidence": {"benchmarkDirectoryContainsSerializedPackage": false, "committedArtifactsFound": ["reports/lfea-bm4nl-accdb-linear-actual.json", "reports/lfea-bm4nl-accdb-linear-benchmark.json", "reports/lfea-bm4nl-accdb-reference.json"], "reuseOfOldActualAsNewSolve": "REJECTED", "hypothesisResult": "FALSIFIED"},
+      "disposition": "BLOCKED"
+    }
+  ]
+}

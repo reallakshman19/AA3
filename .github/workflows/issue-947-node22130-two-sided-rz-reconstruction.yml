@@ -1,0 +1,96 @@
+name: Issue 947 node 22130 two-sided RZ reconstruction
+# Diagnostic revision: exact E79 adjacency plus production Timoshenko rigid-frame profile and rigid Bourdon pressure free state.
+
+on:
+  push:
+    branches:
+      - codex/issue-947-bm4nl-qualification
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  actions: read
+
+jobs:
+  audit:
+    if: "${{ github.event_name == 'workflow_dispatch' || github.event.head_commit.message == 'ci(issue947): run two-sided node 22130 RZ reconstruction' }}"
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Checkout qualification branch
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Download pinned canonical BM4_NL package
+        uses: actions/download-artifact@v4
+        with:
+          name: issue-947-bm4nl-qualification
+          path: .work/package
+          github-token: ${{ github.token }}
+          repository: reallaksh19/Advanced_Analysis
+          run-id: 31302834835
+
+      - name: Align standalone E79 evaluator with current production rigid mechanics
+        shell: bash
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          import hashlib, json
+          path = Path('scripts/lfea-issue947-node22130-two-sided-rz-reconstruction.mjs')
+          text = path.read_text()
+          before = hashlib.sha256(text.encode()).hexdigest()
+          stiffness_old = """    length,\n    shearDeformation: false,\n  }).matrix;"""
+          stiffness_new = """    length,\n    shearDeformation: true,\n    shearCorrectionFactorY: 0.5,\n    shearCorrectionFactorZ: 0.5,\n  }).matrix;"""
+          stiffness_count = text.count(stiffness_old)
+          if stiffness_count != 1:
+              raise SystemExit(f'Expected exactly one E79 rigid stiffness patch site, found {stiffness_count}.')
+          text = text.replace(stiffness_old, stiffness_new)
+          pressure_old = """  const initialLocal = new Array(12).fill(0);\n  return (globalDof) => recover(stiffness, transformation, globalDof, equivalentLocal, initialLocal);"""
+          pressure_new = """  const bourdonAxialForce = (1 - 2 * Number(row.POISSONS))\n    * Number(row.PRESSURE1) * KPA_TO_PA\n    * Math.PI * physical.innerDiameter ** 2 / 4;\n  const rigidPressureStrain = bourdonAxialForce / (material.elasticModulus * stiffnessSection.area);\n  const initialLocal = thermalInitialStrainVector({\n    elasticModulus: material.elasticModulus,\n    area: stiffnessSection.area,\n    axialStrain: rigidPressureStrain,\n  });\n  return (globalDof) => recover(stiffness, transformation, globalDof, equivalentLocal, initialLocal);"""
+          pressure_count = text.count(pressure_old)
+          if pressure_count != 1:
+              raise SystemExit(f'Expected exactly one E79 rigid pressure patch site, found {pressure_count}.')
+          text = text.replace(pressure_old, pressure_new)
+          path.write_text(text)
+          after = hashlib.sha256(text.encode()).hexdigest()
+          Path('.work').mkdir(exist_ok=True)
+          Path('.work/issue947-node22130-rigid-evaluator-production-parity-patch.json').write_text(json.dumps({
+              'schema': 'lfea-issue947-diagnostic-patch/v2',
+              'scope': 'DIAGNOSTIC_ONLY_E79_STANDALONE_EVALUATOR',
+              'reason': 'Current ACCDB production compiles the 10x-wall rigid section through PIPE_FRAME3D_TIMOSHENKO_V1 with kappaY=kappaZ=0.5 and applies rigid Bourdon pressure force as equivalent free strain on the rigid stiffness section.',
+              'productionSourceChanged': False,
+              'productionMechanicsCommit': '95a80585e92a0a0a057e8f60d10f713c6d7d2638',
+              'beforeSha256': before,
+              'afterSha256': after,
+              'stiffnessReplacementCount': stiffness_count,
+              'pressureReplacementCount': pressure_count,
+          }, indent=2) + '\n')
+          PY
+
+      - name: Run two-sided node 22130 RZ reconstruction
+        shell: bash
+        run: |
+          set +e
+          mkdir -p .work
+          node scripts/lfea-issue947-node22130-two-sided-rz-reconstruction.mjs \
+            --package .work/package/bm4nl-canonical-package.json \
+            --out .work/issue947-node22130-two-sided-rz-reconstruction.json \
+            > .work/issue947-node22130-two-sided-rz-reconstruction.log 2>&1
+          status=$?
+          cat .work/issue947-node22130-two-sided-rz-reconstruction.log
+          exit $status
+
+      - name: Upload two-sided RZ evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: issue-947-node22130-two-sided-rz-reconstruction
+          if-no-files-found: error
+          path: |
+            .work/issue947-node22130-two-sided-rz-reconstruction.json
+            .work/issue947-node22130-two-sided-rz-reconstruction.log
+            .work/issue947-node22130-rigid-evaluator-production-parity-patch.json

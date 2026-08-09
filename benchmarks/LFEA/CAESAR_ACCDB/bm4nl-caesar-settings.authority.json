@@ -1,0 +1,239 @@
+{
+  "schema": "bm4nl-caesar-settings-authority/v1",
+  "benchmarkId": "BM4_NL",
+  "caesarVersion": "14.000",
+  "precedence": [
+    "LOAD_CASE_SETTING",
+    "INDIVIDUAL_FILE_SETTING",
+    "MODEL_INPUT",
+    "OVERALL_SETTING"
+  ],
+  "overall": {
+    "source": "USER_PASTED_CAESAR_V14_OVERALL_SETTINGS_2026-08-09",
+    "settings": {
+      "CONNECT_GEOMETRY_THRU_CNODES": "YES",
+      "Z_AXIS_UP": "NO",
+      "USE_PRESSURE_STIFFENING": "DEFAULT",
+      "BEND_AXIAL_SHAPE": "YES",
+      "DEFAULT_TRANS_RESTRAINT_STIFF": 1000000000000,
+      "DEFAULT_ROT_RESTRAINT_STIFF": 1000000000000,
+      "FRICT_STIF": 1000000,
+      "FRICT_NORM_FORCE_VAR": 0.15,
+      "FRICT_ANGLE_VAR": 15,
+      "FRICT_SLIDE_MULT": 1,
+      "MIN_WALL_MILL_TOLERANCE_PERCENT": 12.5,
+      "DEFAULT_AMBIENT_TEMPERATURE_RAW": 70,
+      "BOURDON_PRESSURE": "NONE",
+      "COEFFICIENT_OF_FRICTION_MU": 0,
+      "INCLUDE_INSULATION_IN_HYDROTEST": "NO",
+      "ALL_STRESS_CASES_CORRODED": "NO",
+      "DEFAULT_CODE": "B31.3_2022",
+      "ALLOW_USERS_BEND_SIF": "YES",
+      "LIBERAL_EXPANSION_ALLOWABLE": "YES",
+      "B31_3_SEC_319_2_3C_SAXIAL": "DEFAULT",
+      "B31_3_WELDING_CONTOUR_TEE_IS_B16_9": false,
+      "PRESSURE_VARIATION_IN_EXP_CASE": "DEFAULT",
+      "IMPLEMENT_B313_CODE_CASE_178": "YES",
+      "IGNORE_B31_1_B31_3_WC_FACTOR": "YES",
+      "APPLY_B31J_SIFS_AND_FLEX": "DEFAULT",
+      "ENFORCE_B31J_SIFS_ONLY": false,
+      "BEND_LENGTH_ATTACHMENT_PERCENT": 1
+    }
+  },
+  "modelInput": {
+    "source": "USER_CONFIRMED_BM4NL_MODEL_INPUT_2026-08-09",
+    "settings": {
+      "COEFFICIENT_OF_FRICTION_MU": 0.3
+    }
+  },
+  "individualFile": {
+    "source": "USER_CONFIRMED_BM4NL_INDIVIDUAL_FILE_SETTINGS_2026-08-09",
+    "settings": {
+      "BOURDON_PRESSURE": "TRANSLATION_AND_ROTATION",
+      "AMBIENT_TEMPERATURE": {
+        "value": 21,
+        "unit": "C"
+      }
+    }
+  },
+  "loadCases": {
+    "source": "USER_CONFIRMED_BM4NL_LOAD_CASE_SETTINGS_2026-08-09",
+    "cases": {
+      "L19": {
+        "COEFFICIENT_OF_FRICTION_MU": 0
+      },
+      "L20": {
+        "COEFFICIENT_OF_FRICTION_MU": 0
+      }
+    }
+  },
+  "effective": {
+    "BOURDON_PRESSURE": "TRANSLATION_AND_ROTATION",
+    "AMBIENT_TEMPERATURE": {
+      "value": 21,
+      "unit": "C"
+    },
+    "Z_AXIS_UP": "NO",
+    "DEFAULT_CODE": "B31.3_2022",
+    "L19": {
+      "COEFFICIENT_OF_FRICTION_MU": 0
+    },
+    "L20": {
+      "COEFFICIENT_OF_FRICTION_MU": 0
+    }
+  },
+  "bindings": [
+    {
+      "setting": "BOURDON_PRESSURE",
+      "authority": "INDIVIDUAL_FILE_SETTING",
+      "target": "profile.linearSolve.bourdonPressureEffects.mode",
+      "status": "BOUND",
+      "value": "TRANSLATION_AND_ROTATION",
+      "note": "Individual-file setting overrides overall BOURDON_PRESSURE=NONE."
+    },
+    {
+      "setting": "AMBIENT_TEMPERATURE",
+      "authority": "INDIVIDUAL_FILE_SETTING",
+      "target": "profile.installationTemperature",
+      "status": "BOUND",
+      "value": "21 C",
+      "note": "Individual-file setting overrides the overall default ambient value."
+    },
+    {
+      "setting": "Z_AXIS_UP",
+      "authority": "OVERALL_SETTING",
+      "target": "linear static gravity axis",
+      "status": "BOUND_EXISTING",
+      "value": "NO",
+      "note": "Current BM4_NL load primitive uses global -Y gravity; no solver change required."
+    },
+    {
+      "setting": "COEFFICIENT_OF_FRICTION_MU",
+      "authority": "MODEL_INPUT",
+      "target": "BM4_NL model friction definition",
+      "status": "RECORDED_MODEL_INPUT",
+      "value": 0.3,
+      "note": "The model/input contains mu=0.3. This does not govern L19/L20 because their case-specific effective mu is zero."
+    },
+    {
+      "setting": "L19.COEFFICIENT_OF_FRICTION_MU",
+      "authority": "LOAD_CASE_SETTING",
+      "target": "L19 validation mechanics",
+      "status": "BOUND_CASE_EFFECTIVE",
+      "value": 0,
+      "note": "L19 is frictionless for validation even though the underlying model input contains mu=0.3. No frictional tangential load may be introduced into the L19 replay."
+    },
+    {
+      "setting": "L20.COEFFICIENT_OF_FRICTION_MU",
+      "authority": "LOAD_CASE_SETTING",
+      "target": "L20 validation mechanics",
+      "status": "BOUND_CASE_EFFECTIVE",
+      "value": 0,
+      "note": "L20 is frictionless for validation even though the underlying model input contains mu=0.3. No frictional tangential load may be introduced into the L20 replay."
+    },
+    {
+      "setting": "DEFAULT_CODE",
+      "authority": "OVERALL_SETTING",
+      "target": "B31 factor profile",
+      "status": "BOUND_EXISTING",
+      "value": "B31.3_2022",
+      "note": "Matches the benchmark B31.3 2022 / B31J factor authority."
+    },
+    {
+      "setting": "MIN_WALL_MILL_TOLERANCE_PERCENT",
+      "authority": "OVERALL_SETTING",
+      "target": "section-property interpretation",
+      "status": "RECORDED_NON_STIFFNESS",
+      "value": 12.5,
+      "note": "Not applied to BM4_NL FE stiffness; ACCDB element mill-tolerance fields are separately audited."
+    },
+    {
+      "setting": "DEFAULT_TRANS_RESTRAINT_STIFF",
+      "authority": "OVERALL_SETTING",
+      "target": "restraint formulation",
+      "status": "RECORDED_PENDING_SOURCE_UNIT_AUDIT",
+      "value": 1000000000000,
+      "note": "Raw CAESAR configuration value. Native BM4_NL unit and mechanical significance are resolved by the source-driven node-20390 restraint audit; no production restraint change is authorized by this record alone."
+    },
+    {
+      "setting": "DEFAULT_ROT_RESTRAINT_STIFF",
+      "authority": "OVERALL_SETTING",
+      "target": "restraint formulation",
+      "status": "RECORDED_PENDING_SOURCE_UNIT_AUDIT",
+      "value": 1000000000000,
+      "note": "Raw CAESAR configuration value. No production rotational-restraint change is authorized by this record alone."
+    },
+    {
+      "setting": "FRICT_STIF",
+      "authority": "OVERALL_SETTING",
+      "target": "friction formulation",
+      "status": "RECORDED_NON_GOVERNING_L19_L20",
+      "value": 1000000,
+      "note": "Raw CAESAR configuration value. L19/L20 friction multiplier is zero, so this friction stiffness cannot govern those cases."
+    },
+    {
+      "setting": "USE_PRESSURE_STIFFENING",
+      "authority": "OVERALL_SETTING",
+      "target": "bend pressure stiffening",
+      "status": "RECORDED_DEFAULT_REQUIRES_SEMANTIC_MAPPING",
+      "value": "DEFAULT",
+      "note": "DEFAULT is not converted into a new coefficient without code/profile authority."
+    },
+    {
+      "setting": "BEND_AXIAL_SHAPE",
+      "authority": "OVERALL_SETTING",
+      "target": "bend formulation",
+      "status": "BLOCKING_CAESAR_BEND_AXIAL_SHAPE_OPERATOR_UNMAPPED",
+      "value": "YES",
+      "note": "Overall CAESAR setting is YES, but the BM4_NL linearSolve profile does not declare a bendAxialShape operator and the production bend compiler is a chain of corrected straight frame elements. The earlier closed-form curved-arc convergence evidence proves only ordinary curved-beam/segmented-frame convergence; it does not prove identity to CAESAR axial-shape interpolation. Direct L19 raw E48 half-bend action evidence remains unresolved on the near half after 8x angular refinement, while the far half converges inside the unchanged 10% action gate. Independent continuum-arch evidence reproduces the refined ordinary curved-beam limit; public Hexagon documentation establishes the axial-shape displacement mode but does not expose the Version-14 operator equation. No production coefficient or inferred operator is authorized from BM4_NL residual fit. Full qualification remains blocked until an independently specified CAESAR-equivalent operator is implemented and falsified by whole-model L19 replay."
+    },
+    {
+      "setting": "BEND_LENGTH_ATTACHMENT_PERCENT",
+      "authority": "OVERALL_SETTING",
+      "target": "bend exit analysis geometry",
+      "status": "BOUND_GEOMETRY_TRIGGER_AUDIT_ONLY",
+      "value": 1,
+      "note": "Hexagon Version 14 defines a minimum n-percent-of-radius attachment when the leaving-element To node falls within that distance of the far weld line. BM4_NL source geometry audit determines applicability; no production node relocation is authorized until exact inserted-element geometry semantics are reproduced."
+    },
+    {
+      "setting": "APPLY_B31J_SIFS_AND_FLEX",
+      "authority": "OVERALL_SETTING",
+      "target": "B31J application",
+      "status": "BOUND_B31J_REQUIRED_BY_CODE",
+      "value": "DEFAULT",
+      "note": "CAESAR II Version 14 Default applies B31J SIFs and flexibilities when required by the selected code. B31.3-2022 is a 2020-or-later edition and therefore requires B31J; for smooth 90-degree B31J bends Version 14 uses 1.3/h rather than legacy B31.3 1.65/h."
+    },
+    {
+      "setting": "ENFORCE_B31J_SIFS_ONLY",
+      "authority": "OVERALL_SETTING",
+      "target": "B31J application",
+      "status": "RECORDED",
+      "value": false,
+      "note": "Does not establish smooth-90 Note (3) applicability."
+    },
+    {
+      "setting": "B31J_SMOOTH_90_BEND_FLEXIBILITY",
+      "authority": "CODE_DERIVED_FROM_DEFAULT_CODE_AND_APPLY_B31J_DEFAULT",
+      "target": "profile.linearSolve.b31jSmooth90FlexibilityCorrection.enabled",
+      "status": "BOUND_TRUE",
+      "value": true,
+      "note": "Pinned BM4_NL has smooth non-miter 90-degree bends with no user K-factor override. Version-14 B31J smooth-90 flexibility therefore uses the 1.3/h rule."
+    }
+  ],
+  "qualificationBlockers": [
+    {
+      "id": "CAESAR_BEND_AXIAL_SHAPE_OPERATOR_UNMAPPED",
+      "setting": "BEND_AXIAL_SHAPE",
+      "effectiveValue": "YES",
+      "status": "BLOCKING",
+      "evidence": {
+        "authoritativeL19ReplayRun": 31324887225,
+        "e48RawHalfBendRun": 31327789378,
+        "e48SubdivisionRun": 31327940476,
+        "e48MidpointKinematicRun": 31327674577,
+        "e48ContinuumArchRun": 31328724212
+      },
+      "falsification": "Do not infer or tune an axial-shape coefficient from E48. Require an independent equation/source, generic benchmark verification, E48 direct raw-action closure at unchanged limits, and whole-model L19 replay with no new failures."
+    }
+  ]
+}

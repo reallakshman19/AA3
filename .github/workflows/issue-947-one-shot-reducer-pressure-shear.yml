@@ -1,0 +1,108 @@
+name: Issue 947 one-shot reducer pressure and shear authority
+
+on:
+  push:
+    branches:
+      - codex/issue-947-bm4nl-qualification
+
+permissions:
+  contents: write
+  actions: read
+
+jobs:
+  apply:
+    if: "${{ github.event.head_commit.message == 'chore(issue947): qualify reducer authority without missing BM3 fixture' }}"
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Checkout qualification branch
+        uses: actions/checkout@v4
+        with:
+          ref: codex/issue-947-bm4nl-qualification
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Repair generator findings from dry-runs
+        shell: python
+        run: |
+          from pathlib import Path
+          path = Path('scripts/lfea-issue947-apply-reducer-pressure-shear.mjs')
+          text = path.read_text()
+          text = text.replace('`uniform Timoshenko condensed stiffness[${index}]`', "'uniform Timoshenko condensed stiffness[' + index + ']'")
+          text = text.replace('`uniform pressure vector[${index}]`', "'uniform pressure vector[' + index + ']'")
+          text = text.replace(
+            'const uniformFreeAction = directTimoshenko.map((_unused, row) => {',
+            'const uniformFreeAction = new Array(12).fill(0).map((_unused, row) => {',
+          )
+          text = text.replace(
+            'const taperedFreeAction = pressureAuthority.condensed.localStiffness.map((_unused, row) => {',
+            'const taperedFreeAction = new Array(12).fill(0).map((_unused, row) => {',
+          )
+          path.write_text(text)
+
+      - name: Apply deterministic reducer authority patch
+        run: node scripts/lfea-issue947-apply-reducer-pressure-shear.mjs
+
+      - name: Run reducer condensation qualification
+        run: node scripts/lfea-b3.23-reducer-condensation-check.mjs
+
+      - name: Prove legacy EB pressure-off reducer behavior unchanged
+        run: node scripts/lfea-issue947-reducer-backcompat-check.mjs
+
+      - name: Syntax-check BM3 caller after explicit legacy profile update
+        run: node --check scripts/lfea-m028-bm3-fixtures.mjs
+
+      - name: Record unavailable BM3 fixture boundary
+        shell: bash
+        run: |
+          if [ -f benchmarks/LFEA/BM3/BM3_InputXML.xml ]; then
+            node scripts/lfea-m028-bm3-check.mjs
+          else
+            echo 'BM3 full solve not executed: benchmarks/LFEA/BM3/BM3_InputXML.xml is not committed on this branch.'
+            echo 'The one-shot gate instead requires exact legacy reducer shadow parity plus syntax validation of the BM3 caller.'
+          fi
+
+      - name: Download current-schema canonical BM4_NL package
+        uses: actions/download-artifact@v4
+        with:
+          name: issue-947-bm4nl-qualification
+          path: .work/package
+          github-token: ${{ github.token }}
+          repository: reallaksh19/Advanced_Analysis
+          run-id: 31302834835
+
+      - name: Re-run reducer constitutive audit against patched production authority
+        run: |
+          node scripts/lfea-issue947-reducer-pressure-shear-audit.mjs \
+            --package .work/package/bm4nl-canonical-package.json \
+            --out .work/issue947-reducer-pressure-shear-audit.json
+
+      - name: Run CAESAR pipe shear authority regression
+        run: node scripts/lfea-issue947-caesar-pipe-shear-authority-check.mjs
+
+      - name: Run Bourdon subdivision regression
+        run: node scripts/lfea-issue947-bourdon-subdivision-check.mjs
+
+      - name: Commit qualified reducer authority changes
+        shell: bash
+        run: |
+          set -euo pipefail
+          git add \
+            src/core/linear-fea-reducer-condensation/contract.js \
+            src/core/linear-fea-reducer-condensation/reducer-condensation.js \
+            src/core/fea-benchmarks/caesar-accdb-linear-solve.js \
+            scripts/lfea-b3.23-reducer-condensation-check.mjs \
+            scripts/lfea-m028-bm3-fixtures.mjs \
+            scripts/lfea-issue947-reducer-pressure-shear-audit.mjs \
+            scripts/lfea-issue947-apply-reducer-pressure-shear.mjs
+          if git diff --cached --quiet; then
+            echo 'Expected reducer pressure/shear patch produced no source diff.' >&2
+            exit 1
+          fi
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git commit -m 'fix(lfea): condense reducer shear and pressure mechanics'
+          git push origin HEAD:codex/issue-947-bm4nl-qualification

@@ -1,0 +1,56 @@
+{
+  "schema": "caesar-accdb-benchmark-profile/v1",
+  "profileId": "BM4NL-L19-LINEAR-SOLVE-V1",
+  "benchmarkId": "BM4_NL",
+  "installationTemperature": {
+    "value": 21,
+    "unit": "C"
+  },
+  "caseSelection": {
+    "mode": "EXPLICIT",
+    "cases": [
+      { "caseId": "L19", "lcaseNumber": 19 }
+    ]
+  },
+  "nodeSelection": "INPUT_ENDPOINT_NODES",
+  "resultFamilies": [
+    "DISPLACEMENT",
+    "RESTRAINT_REACTION",
+    "GLOBAL_ELEMENT_END_ACTION",
+    "NODAL_EQUILIBRIUM"
+  ],
+  "conventions": {
+    "restraintReaction": "CAESAR_FORCE_ON_SUPPORT"
+  },
+  "equilibriumTolerance": {
+    "forceN": 0.1,
+    "momentNm": 0.1
+  },
+  "tolerances": {
+    "DISPLACEMENT": { "absolute": 0, "relative": 0.1, "scaleFloor": 0.000001 },
+    "ROTATION": { "absolute": 0, "relative": 0.1, "scaleFloor": 0.000001 },
+    "FORCE": { "absolute": 0, "relative": 0.1, "scaleFloor": 50 },
+    "MOMENT": { "absolute": 0, "relative": 0.1, "scaleFloor": 5 },
+    "GLOBAL_END_FORCE_FROM": { "absolute": 0, "relative": 0.1, "scaleFloor": 50 },
+    "GLOBAL_END_FORCE_TO": { "absolute": 0, "relative": 0.1, "scaleFloor": 50 },
+    "GLOBAL_END_MOMENT_FROM": { "absolute": 0, "relative": 0.1, "scaleFloor": 5 },
+    "GLOBAL_END_MOMENT_TO": { "absolute": 0, "relative": 0.1, "scaleFloor": 5 },
+    "INCIDENT_GLOBAL_FORCE": { "absolute": 0, "relative": 0.1, "scaleFloor": 50 },
+    "INCIDENT_GLOBAL_MOMENT": { "absolute": 0, "relative": 0.1, "scaleFloor": 5 }
+  },
+  "linearSolve": {
+    "thermalExpansionCoefficientPerKelvin": 0.0000117,
+    "gravityAcceleration": 9.80665,
+    "bourdonPressureEffects": {
+      "mode": "TRANSLATION_AND_ROTATION",
+      "source": "BM4NL_CAESAR_SETTINGS_AUTHORITY_V1:INDIVIDUAL_FILE_OVERRIDE_BOURDON_TRANSLATION_AND_ROTATION"
+    },
+    "b31jSmooth90FlexibilityCorrection": {
+      "enabled": true,
+      "source": "CAESAR_II_V14:B31_3_2022+APPLY_B31J_DEFAULT=>B31J_REQUIRED;B31J_SMOOTH_90_BEND=>1_3_OVER_H"
+    },
+    "directionalB31JTeeFlexibility": true,
+    "teeNominalDiameterRelativeTolerance": 0.001,
+    "reducerCondensation": true
+  }
+}

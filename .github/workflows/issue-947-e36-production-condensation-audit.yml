@@ -1,0 +1,49 @@
+name: Issue 947 E36 production condensation audit
+
+on:
+  push:
+    branches:
+      - codex/issue-947-bm4nl-qualification
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  actions: read
+
+jobs:
+  audit:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Checkout qualification branch
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Download pinned canonical BM4_NL package
+        uses: actions/download-artifact@v4
+        with:
+          name: issue-947-bm4nl-qualification
+          path: .work/package
+          github-token: ${{ github.token }}
+          repository: reallaksh19/Advanced_Analysis
+          run-id: 31302834835
+
+      - name: Run production-faithful E36 condensation audit
+        run: |
+          node scripts/lfea-issue947-e36-production-condensation-audit.mjs \
+            --package .work/package/bm4nl-canonical-package.json \
+            --out .work/issue947-e36-production-condensation-audit.json
+
+      - name: Upload E36 condensation evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: issue-947-e36-production-condensation-audit
+          if-no-files-found: error
+          path: .work/issue947-e36-production-condensation-audit.json
+
+# Diagnostic rerun after authority/parity repair at eb53eb10977dbdf949d66094ad2247a7ee3a70a4.

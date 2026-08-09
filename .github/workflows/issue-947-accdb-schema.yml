@@ -1,0 +1,71 @@
+name: Issue 947 ACCDB schema inventory
+
+on:
+  push:
+    branches:
+      - codex/issue-947-bm4nl-qualification
+
+permissions:
+  contents: read
+
+jobs:
+  inventory:
+    if: "${{ github.event.head_commit.message == 'test(issue947): inventory ACCDB schemas' }}"
+    runs-on: windows-latest
+    timeout-minutes: 20
+    steps:
+      - name: Checkout qualification branch
+        uses: actions/checkout@v4
+
+      - name: Materialize pinned BM4_NL ACCDB
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          New-Item -ItemType Directory -Force -Path .work | Out-Null
+          $zip = Join-Path $PWD '.work/BM4_NL.zip'
+          Invoke-WebRequest `
+            -Uri 'https://raw.githubusercontent.com/reallaksh19/Common/1728651c94504b497aae4041578b1095fd8e292e/LFEA/BM4/BM4_NL.zip' `
+            -OutFile $zip
+          Expand-Archive -LiteralPath $zip -DestinationPath .work/BM4_NL -Force
+          $accdb = Resolve-Path '.work/BM4_NL/BM4_NL.ACCDB'
+          $actual = (Get-FileHash -Algorithm SHA256 -LiteralPath $accdb).Hash.ToLowerInvariant()
+          $expected = '85d39463296e569da811d8572e2eff680b858097f76fdf0f47d1755f0b161c21'
+          if ($actual -ne $expected) { throw "ACCDB SHA-256 mismatch: $actual" }
+          "BM4_ACCDB=$accdb" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
+
+      - name: Install Microsoft Access Runtime database engine
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $bootstrap = Join-Path $PWD '.work/officedeploymenttool_19725-20126.exe'
+          $odt = Join-Path $PWD '.work/odt'
+          New-Item -ItemType Directory -Force -Path $odt | Out-Null
+          Invoke-WebRequest `
+            -Uri 'https://download.microsoft.com/download/6c1eeb25-cf8b-41d9-8d0d-cc1dbc032140/officedeploymenttool_19725-20126.exe' `
+            -OutFile $bootstrap
+          $extract = Start-Process -FilePath $bootstrap -ArgumentList '/quiet', "/extract:$odt" -PassThru -Wait
+          if ($extract.ExitCode -ne 0) { throw "ODT extraction failed: $($extract.ExitCode)" }
+          @'
+          <Configuration>
+            <Add OfficeClientEdition="64">
+              <Product ID="AccessRuntimeRetail"><Language ID="en-us" /></Product>
+            </Add>
+            <Display Level="None" AcceptEULA="TRUE" />
+          </Configuration>
+          '@ | Set-Content -LiteralPath (Join-Path $odt 'access-runtime.xml') -Encoding utf8
+          $install = Start-Process -FilePath (Join-Path $odt 'setup.exe') `
+            -ArgumentList '/configure', (Join-Path $odt 'access-runtime.xml') -PassThru -Wait
+          if ($install.ExitCode -ne 0) { throw "Access Runtime install failed: $($install.ExitCode)" }
+
+      - name: Inventory ACCDB table schemas
+        shell: pwsh
+        run: |
+          & ./scripts/lfea-caesar-accdb-schema-diagnostics.ps1 `
+            -AccdbPath "$env:BM4_ACCDB" `
+            -OutPath .work/bm4nl-accdb-schema.json
+
+      - name: Upload schema inventory
+        uses: actions/upload-artifact@v4
+        with:
+          name: issue-947-accdb-schema
+          path: .work/bm4nl-accdb-schema.json

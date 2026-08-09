@@ -1,0 +1,57 @@
+name: Issue 947 canonical package replay qualification
+
+on:
+  push:
+    branches:
+      - codex/issue-947-bm4nl-qualification
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  actions: read
+
+jobs:
+  replay:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Checkout qualification branch
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Download current-schema canonical BM4_NL package
+        uses: actions/download-artifact@v4
+        with:
+          name: issue-947-bm4nl-qualification
+          path: .work/pinned
+          github-token: ${{ github.token }}
+          repository: reallaksh19/Advanced_Analysis
+          run-id: 31302834835
+
+      - name: Replay current solver against pinned package
+        run: |
+          node scripts/lfea-caesar-accdb-package-replay.mjs \
+            --package-in .work/pinned/bm4nl-canonical-package.json \
+            --expected-source-sha256 85d39463296e569da811d8572e2eff680b858097f76fdf0f47d1755f0b161c21 \
+            --solve-linear true \
+            --actual-out .work/bm4nl-replay-actual.json \
+            --qualification-out .work/bm4nl-replay-qualification.json \
+            --measurement-out .work/bm4nl-replay-measurement.json
+
+      - name: Print restraint measurement
+        run: cat .work/bm4nl-replay-measurement.json
+
+      - name: Upload replay evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: issue-947-canonical-package-replay
+          if-no-files-found: error
+          path: |
+            .work/bm4nl-replay-actual.json
+            .work/bm4nl-replay-qualification.json
+            .work/bm4nl-replay-measurement.json

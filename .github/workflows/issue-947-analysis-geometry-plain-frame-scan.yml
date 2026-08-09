@@ -1,0 +1,57 @@
+name: Issue 947 analysis-geometry plain-frame scan
+
+on:
+  push:
+    branches:
+      - codex/issue-947-bm4nl-qualification
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  actions: read
+
+jobs:
+  scan:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Checkout qualification branch
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Download pinned canonical package
+        uses: actions/download-artifact@v4
+        with:
+          name: issue-947-bm4nl-qualification
+          path: .work/package
+          github-token: ${{ github.token }}
+          repository: reallaksh19/Advanced_Analysis
+          run-id: 31302834835
+
+      - name: Download retained kappa-0.5 qualification
+        uses: actions/download-artifact@v4
+        with:
+          name: issue-947-canonical-package-replay
+          path: .work/replay
+          github-token: ${{ github.token }}
+          repository: reallaksh19/Advanced_Analysis
+          run-id: 31304001795
+
+      - name: Scan failing plain sources at production analysis geometry
+        run: |
+          node scripts/lfea-issue947-analysis-geometry-plain-frame-scan.mjs \
+            --package .work/package/bm4nl-canonical-package.json \
+            --qualification .work/replay/bm4nl-replay-qualification.json \
+            --out .work/issue947-analysis-geometry-plain-frame-scan.json
+
+      - name: Upload corrected localization evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: issue-947-analysis-geometry-plain-frame-scan
+          if-no-files-found: error
+          path: .work/issue947-analysis-geometry-plain-frame-scan.json

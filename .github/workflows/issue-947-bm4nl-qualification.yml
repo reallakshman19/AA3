@@ -1,0 +1,215 @@
+name: Issue 947 BM4_NL qualification
+# Authoritative Version-14 B31.3-2022/B31J smooth-90 baseline replay.
+
+on:
+  push:
+    branches:
+      - codex/issue-947-bm4nl-qualification
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  bm4nl:
+    runs-on: windows-latest
+    timeout-minutes: 45
+
+    steps:
+      - name: Checkout qualification branch
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Validate CAESAR settings custody and precedence
+        shell: pwsh
+        run: node scripts/lfea-issue947-caesar-settings-custody-check.mjs
+
+      - name: Materialize pinned BM4_NL ACCDB
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          New-Item -ItemType Directory -Force -Path .work | Out-Null
+          $zip = Join-Path $PWD '.work/BM4_NL.zip'
+          $url = 'https://raw.githubusercontent.com/reallaksh19/Common/1728651c94504b497aae4041578b1095fd8e292e/LFEA/BM4/BM4_NL.zip'
+          Invoke-WebRequest -Uri $url -OutFile $zip
+          Expand-Archive -LiteralPath $zip -DestinationPath .work/BM4_NL -Force
+          $accdb = Resolve-Path '.work/BM4_NL/BM4_NL.ACCDB'
+          $actual = (Get-FileHash -Algorithm SHA256 -LiteralPath $accdb).Hash.ToLowerInvariant()
+          $expected = '85d39463296e569da811d8572e2eff680b858097f76fdf0f47d1755f0b161c21'
+          if ($actual -ne $expected) {
+            throw "BM4_NL.ACCDB SHA-256 mismatch: expected $expected, got $actual"
+          }
+          "BM4_ACCDB=$accdb" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
+          Write-Host "BM4_NL.ACCDB SHA-256: $actual"
+
+      - name: Run independent Bourdon mechanics regression
+        shell: pwsh
+        run: node scripts/lfea-issue947-bourdon-subdivision-check.mjs
+
+      - name: Run independent bend pressure-stiffening authority regression
+        shell: pwsh
+        run: node scripts/lfea-issue947-bend-pressure-stiffening-check.mjs
+
+      - name: Install Microsoft Access Runtime database engine
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $odtBootstrap = Join-Path $PWD '.work/officedeploymenttool_19725-20126.exe'
+          $odtDirectory = Join-Path $PWD '.work/odt'
+          New-Item -ItemType Directory -Force -Path $odtDirectory | Out-Null
+          Invoke-WebRequest `
+            -Uri 'https://download.microsoft.com/download/6c1eeb25-cf8b-41d9-8d0d-cc1dbc032140/officedeploymenttool_19725-20126.exe' `
+            -OutFile $odtBootstrap
+          $extract = Start-Process `
+            -FilePath $odtBootstrap `
+            -ArgumentList '/quiet', "/extract:$odtDirectory" `
+            -PassThru -Wait
+          if ($extract.ExitCode -ne 0) {
+            throw "Office Deployment Tool extraction failed with exit $($extract.ExitCode)."
+          }
+          $setup = Join-Path $odtDirectory 'setup.exe'
+          if (-not (Test-Path $setup)) {
+            throw "Office Deployment Tool did not materialize setup.exe in $odtDirectory."
+          }
+          $configuration = Join-Path $odtDirectory 'access-runtime.xml'
+          @'
+          <Configuration>
+            <Add OfficeClientEdition="64">
+              <Product ID="AccessRuntimeRetail">
+                <Language ID="en-us" />
+              </Product>
+            </Add>
+            <Display Level="None" AcceptEULA="TRUE" />
+          </Configuration>
+          '@ | Set-Content -LiteralPath $configuration -Encoding utf8
+          $install = Start-Process `
+            -FilePath $setup `
+            -ArgumentList '/configure', $configuration `
+            -PassThru -Wait
+          if ($install.ExitCode -ne 0) {
+            throw "Access Runtime installation failed with exit $($install.ExitCode)."
+          }
+
+      - name: Require Microsoft ACE OLE DB provider
+        shell: pwsh
+        run: |
+          $providers = [System.Data.OleDb.OleDbEnumerator]::GetRootEnumerator()
+          $names = @()
+          while ($providers.Read()) {
+            $name = [string]$providers['SOURCES_NAME']
+            if ($name -like 'Microsoft.ACE.OLEDB.*') {
+              $names += $name
+            }
+          }
+          $names = $names | Sort-Object -Unique
+          if ($names.Count -eq 0) {
+            throw 'Microsoft Access Runtime installation completed but no Microsoft.ACE.OLEDB provider is visible.'
+          }
+          $names | ForEach-Object { Write-Host "ACE provider: $_" }
+
+      - name: Capture canonical BM4_NL replay package
+        shell: pwsh
+        run: |
+          node scripts/lfea-caesar-accdb-package-replay.mjs `
+            --accdb "$env:BM4_ACCDB" `
+            --profile benchmarks/LFEA/CAESAR_ACCDB/bm4nl-l19-l20-linear-solve.profile.json `
+            --package-out .work/bm4nl-canonical-package.json `
+            --expected-source-sha256 85d39463296e569da811d8572e2eff680b858097f76fdf0f47d1755f0b161c21
+
+      - name: Validate B31.3 Ec material-state custody
+        shell: pwsh
+        run: |
+          node scripts/lfea-issue947-bm4nl-modulus-custody-audit.mjs `
+            --package .work/bm4nl-canonical-package.json `
+            --out .work/bm4nl-b31-material-custody.json
+
+      - name: Validate B31J smooth-90 authority and pinned bend applicability
+        shell: pwsh
+        run: |
+          node scripts/lfea-issue947-bm4nl-b31j-smooth90-authority-audit.mjs `
+            --package .work/bm4nl-canonical-package.json `
+            --out .work/bm4nl-b31j-smooth90-authority.json
+
+      - name: Validate ordinary curved-arc axial-mode convergence (CAESAR operator remains blocked)
+        shell: pwsh
+        run: |
+          node scripts/lfea-issue947-bend-axial-shape-audit.mjs `
+            --package .work/bm4nl-canonical-package.json `
+            --out .work/bm4nl-bend-axial-shape-audit.json
+
+      - name: Validate bend attachment-percent applicability
+        shell: pwsh
+        run: |
+          node scripts/lfea-issue947-bend-attachment-audit.mjs `
+            --package .work/bm4nl-canonical-package.json `
+            --out .work/bm4nl-bend-attachment-audit.json
+
+      - name: Run real BM4_NL L19/L20 qualification
+        shell: pwsh
+        run: |
+          node scripts/lfea-caesar-accdb-benchmark.mjs `
+            --accdb "$env:BM4_ACCDB" `
+            --profile benchmarks/LFEA/CAESAR_ACCDB/bm4nl-l19-l20-linear-solve.profile.json `
+            --solve-linear true `
+            --actual-out .work/bm4nl-actual.json `
+            --summary-out .work/bm4nl-summary.md `
+            --out .work/bm4nl-report.json
+
+      - name: Audit node 20390 UZ mechanics and kinematic sensitivity
+        shell: pwsh
+        run: |
+          node scripts/lfea-issue947-node20390-uz-audit.mjs `
+            --package .work/bm4nl-canonical-package.json `
+            --actual .work/bm4nl-actual.json `
+            --out .work/bm4nl-node20390-uz-audit.json
+
+      - name: Diagnose L19 Bourdon mode contributions
+        continue-on-error: true
+        shell: pwsh
+        run: |
+          node scripts/lfea-issue947-bourdon-mode-diagnostics.mjs `
+            --package .work/bm4nl-canonical-package.json `
+            --out .work/bm4nl-bourdon-mode-diagnostics.json
+
+      - name: Print BM4_NL qualification summary
+        if: always()
+        shell: pwsh
+        run: |
+          if (Test-Path .work/bm4nl-summary.md) {
+            Get-Content .work/bm4nl-summary.md
+          }
+
+      - name: Upload BM4_NL qualification evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: issue-947-bm4nl-qualification
+          if-no-files-found: warn
+          path: |
+            .work/bm4nl-caesar-settings-custody.json
+            .work/bm4nl-b31-material-custody.json
+            .work/bm4nl-b31j-smooth90-authority.json
+            .work/bm4nl-bend-axial-shape-audit.json
+            .work/bm4nl-bend-attachment-audit.json
+            .work/bm4nl-node20390-uz-audit.json
+            .work/bm4nl-canonical-package.json
+            .work/bm4nl-bourdon-mode-diagnostics.json
+            .work/bm4nl-actual.json
+            .work/bm4nl-report.json
+            .work/bm4nl-summary.md
+
+      - name: Enforce fail-closed qualification authority
+        if: always()
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $authority = Get-Content 'benchmarks/LFEA/CAESAR_ACCDB/bm4nl-caesar-settings.authority.json' -Raw | ConvertFrom-Json
+          $blocking = @($authority.qualificationBlockers | Where-Object { $_.status -eq 'BLOCKING' })
+          if ($blocking.Count -gt 0) {
+            $ids = ($blocking | ForEach-Object { $_.id }) -join ', '
+            throw "BM4_NL qualification remains fail-closed because blocking CAESAR operators are unresolved: $ids"
+          }

@@ -44,7 +44,11 @@
     "gravityAcceleration": 9.80665,
     "bourdonPressureEffects": {
       "mode": "TRANSLATION_AND_ROTATION",
-      "source": "USER_VERIFIED_CAESAR_EXISTING_JOB_SETTING_2026-08-09"
+      "source": "BM4NL_CAESAR_SETTINGS_AUTHORITY_V1:INDIVIDUAL_FILE_OVERRIDE_BOURDON_TRANSLATION_AND_ROTATION"
+    },
+    "b31jSmooth90FlexibilityCorrection": {
+      "enabled": true,
+      "source": "CAESAR_II_V14:B31_3_2022+APPLY_B31J_DEFAULT=>B31J_REQUIRED;B31J_SMOOTH_90_BEND=>1_3_OVER_H"
     },
     "directionalB31JTeeFlexibility": true,
     "teeNominalDiameterRelativeTolerance": 0.001,

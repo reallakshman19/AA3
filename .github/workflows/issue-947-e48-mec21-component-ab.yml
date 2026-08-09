@@ -1,0 +1,134 @@
+name: Issue 947 E48 MEC21 component A-B
+
+on:
+  push:
+    branches:
+      - codex/issue-947-bm4nl-qualification
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  actions: read
+
+jobs:
+  audit:
+    if: "${{ github.event_name == 'workflow_dispatch' || github.event.head_commit.message == 'ci(issue947): run E48 MEC21 component audit' }}"
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Download pinned canonical BM4_NL package
+        uses: actions/download-artifact@v4
+        with:
+          name: issue-947-bm4nl-qualification
+          path: .work/package
+          github-token: ${{ github.token }}
+          repository: reallaksh19/Advanced_Analysis
+          run-id: 31314047095
+
+      - name: Expose read-only production case mechanics
+        run: python scripts/lfea-issue947-expose-accdb-case-mechanics.py
+
+      - name: Run E48 smooth90 baseline and MEC21 component removals
+        shell: bash
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          import json, subprocess
+
+          solver = Path('src/core/fea-benchmarks/caesar-accdb-linear-solve.js')
+          original = solver.read_text()
+          out = Path('.work/out')
+          out.mkdir(parents=True, exist_ok=True)
+
+          factor_old = "        smooth90FlexibilityCorrection: input.solveProfile.b31jSmooth90FlexibilityCorrection.enabled,"
+          factor_new = "        smooth90FlexibilityCorrection: input.solveProfile.b31jSmooth90FlexibilityCorrection.enabled || pointer === 10,"
+          if original.count(factor_old) != 1:
+              raise SystemExit(f'Expected one smooth90 factor-selection site; found {original.count(factor_old)}.')
+          smooth90 = original.replace(factor_old, factor_new)
+
+          dof_old = """  const freeDofGlobal = [\n    ...startTranslationGlobal,\n    ...startRotationGlobal,\n    ...endTranslationGlobal,\n    ...endRotationGlobal,\n  ];"""
+          if smooth90.count(dof_old) != 1:
+              raise SystemExit(f'Expected one MEC21 free-DOF construction site; found {smooth90.count(dof_old)}.')
+
+          variants = {
+            'FULL_TRANSLATION_AND_ROTATION': dof_old,
+            'TRANSLATION_ONLY_MEC21': """  const freeDofGlobal = [\n    ...startTranslationGlobal,\n    ...zero3(),\n    ...endTranslationGlobal,\n    ...zero3(),\n  ];""",
+            'ROTATION_ONLY_MEC21': """  const freeDofGlobal = [\n    ...zero3(),\n    ...startRotationGlobal,\n    ...zero3(),\n    ...endRotationGlobal,\n  ];""",
+            'NO_MEC21_FREE_FIELD': """  const freeDofGlobal = [\n    ...zero3(),\n    ...zero3(),\n    ...zero3(),\n    ...zero3(),\n  ];""",
+          }
+
+          records = {}
+          try:
+            for name, replacement in variants.items():
+              text = smooth90 if name == 'FULL_TRANSLATION_AND_ROTATION' else smooth90.replace(dof_old, replacement)
+              solver.write_text(text)
+              target = out / f'e48-{name.lower()}.json'
+              completed = subprocess.run([
+                'node', 'scripts/lfea-issue947-bend-descendant-condensation-audit.mjs',
+                '--package', '.work/package/bm4nl-canonical-package.json',
+                '--source-element', '48', '--out', str(target),
+              ], text=True, capture_output=True)
+              if completed.returncode != 0:
+                raise SystemExit(f'{name} failed:\nSTDOUT:\n{completed.stdout}\nSTDERR:\n{completed.stderr}')
+              result = json.loads(target.read_text())
+              inj = result['caesarInjection']
+              records[name] = {
+                'classification': result['classification'],
+                'productionParityMaxAbs': result['productionParity']['maxAbsResidual'],
+                'normalizedResidualL2': inj['normalizedResidualL2'],
+                'maxAbsNormalizedResidual': inj['maxAbsNormalizedResidual'],
+                'governingComponent': inj['governingComponent'],
+                'residual': inj['residual'],
+                'normalizedResidual': inj['normalizedResidual'],
+                'gates': result.get('gates'),
+                'decomposition': result.get('linearActionDecomposition'),
+              }
+          finally:
+            solver.write_text(original)
+
+          baseline = records['FULL_TRANSLATION_AND_ROTATION']
+          summary = {
+            'schema': 'lfea-issue947-e48-mec21-component-ab/v1',
+            'issue': 947,
+            'caseId': 'L19',
+            'sourceElementId': '48',
+            'bendPointer': 10,
+            'purpose': 'FIXED_SMOOTH90_MEC21_TRANSLATION_ROTATION_COMPONENT_FALSIFICATION_NO_PRODUCTION_UPDATE',
+            'controlledMechanics': {
+              'bendFlexibility': 'B31J_SMOOTH90_1_3_OVER_H_FIXED_FOR_ALL_VARIANTS',
+              'gravity': 'UNCHANGED',
+              'incomingStraightPressure': 'UNCHANGED',
+              'mec21': 'ONLY_TRANSLATION_AND_ROTATION_COMPONENT_PRESENCE_VARIES',
+              'scaling': 'NONE',
+            },
+            'records': records,
+            'rankedByNormalizedResidualL2': sorted([
+              {'variant': k, 'normalizedResidualL2': v['normalizedResidualL2'], 'maxAbsNormalizedResidual': v['maxAbsNormalizedResidual']}
+              for k,v in records.items()
+            ], key=lambda x: x['normalizedResidualL2']),
+            'deltasFromFull': {
+              k: {
+                'deltaNormalizedResidualL2': v['normalizedResidualL2'] - baseline['normalizedResidualL2'],
+                'deltaMaxAbsNormalizedResidual': v['maxAbsNormalizedResidual'] - baseline['maxAbsNormalizedResidual'],
+              }
+              for k,v in records.items() if k != 'FULL_TRANSLATION_AND_ROTATION'
+            },
+            'classification': 'DIAGNOSTIC_COMPONENT_SENSITIVITY_COMPLETE_NO_MECHANIC_ACCEPTANCE',
+            'falsificationRule': 'A component-removal variant may identify MEC21 component ownership only if exact production-descendant parity remains <=1e-3 and the full residual vector improves without any fitted scale. Removal is not a production fix without independent source authority.',
+          }
+          (out / 'e48-mec21-component-summary.json').write_text(json.dumps(summary, indent=2) + '\n')
+          print(json.dumps(summary, indent=2))
+          PY
+
+      - name: Upload E48 MEC21 evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: issue-947-e48-mec21-component-ab
+          if-no-files-found: error
+          path: .work/out/*.json

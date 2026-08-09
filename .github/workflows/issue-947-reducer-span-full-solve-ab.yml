@@ -1,0 +1,185 @@
+name: Issue 947 reducer span full-solve A/B
+
+on:
+  push:
+    branches:
+      - codex/issue-947-bm4nl-qualification
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  actions: read
+
+jobs:
+  audit:
+    if: "${{ github.event_name == 'workflow_dispatch' || github.event.head_commit.message == 'ci(issue947): run reducer span full-solve ab' }}"
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Checkout qualification branch
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Download pinned canonical BM4_NL package
+        uses: actions/download-artifact@v4
+        with:
+          name: issue-947-bm4nl-qualification
+          path: .work/package
+          github-token: ${{ github.token }}
+          repository: reallaksh19/Advanced_Analysis
+          run-id: 31314047095
+
+      - name: Prove historical midpoint reducer fixture before candidate mutation
+        run: node scripts/lfea-b3.23-reducer-condensation-check.mjs
+
+      - name: Solve accepted baseline from canonical package
+        run: |
+          mkdir -p .work
+          node scripts/lfea-issue947-package-solve-snapshot.mjs \
+            --package .work/package/bm4nl-canonical-package.json \
+            --out .work/reducer-span-baseline.json
+
+      - name: Repair historical reducer patch generator dry-run findings
+        shell: python
+        run: |
+          from pathlib import Path
+          path = Path('scripts/lfea-issue947-apply-reducer-pressure-shear.mjs')
+          text = path.read_text()
+          text = text.replace('`uniform Timoshenko condensed stiffness[${index}]`', "'uniform Timoshenko condensed stiffness[' + index + ']'")
+          text = text.replace('`uniform pressure vector[${index}]`', "'uniform pressure vector[' + index + ']'")
+          text = text.replace(
+            'const uniformFreeAction = directTimoshenko.map((_unused, row) => {',
+            'const uniformFreeAction = new Array(12).fill(0).map((_unused, row) => {',
+          )
+          text = text.replace(
+            'const taperedFreeAction = pressureAuthority.condensed.localStiffness.map((_unused, row) => {',
+            'const taperedFreeAction = new Array(12).fill(0).map((_unused, row) => {',
+          )
+          path.write_text(text)
+
+      - name: Apply diagnostic-only reducer pressure and shear mechanics
+        run: node scripts/lfea-issue947-apply-reducer-pressure-shear.mjs
+
+      - name: Change only reducer representative sections to ten values spanning declared ends
+        shell: python
+        run: |
+          from pathlib import Path
+          path = Path('src/core/linear-fea-reducer-condensation/reducer-condensation.js')
+          text = path.read_text()
+          old = '    const fraction = (index + 0.5) / REDUCER_SEGMENT_COUNT;'
+          new = '    const fraction = index / (REDUCER_SEGMENT_COUNT - 1);'
+          count = text.count(old)
+          if count != 1:
+              raise SystemExit(f'Expected exactly one reducer sampling patch site, found {count}.')
+          path.write_text(text.replace(old, new))
+
+      - name: Record candidate source diff
+        run: |
+          git diff --check
+          git diff -- src/core/linear-fea-reducer-condensation src/core/fea-benchmarks/caesar-accdb-linear-solve.js > .work/reducer-span-candidate.diff
+
+      - name: Bind candidate invariants to independently passed local evidence
+        shell: python
+        run: |
+          from pathlib import Path
+          import json
+          reducer = Path('src/core/linear-fea-reducer-condensation/reducer-condensation.js').read_text()
+          span = 'const fraction = index / (REDUCER_SEGMENT_COUNT - 1);'
+          midpoint = 'const fraction = (index + 0.5) / REDUCER_SEGMENT_COUNT;'
+          if reducer.count(span) != 1:
+              raise SystemExit(f'Expected exactly one ten-section-span rule, found {reducer.count(span)}.')
+          if midpoint in reducer:
+              raise SystemExit('Midpoint sampling remains active after candidate mutation.')
+          evidence = {
+              'schema': 'lfea-issue947-reducer-span-candidate-invariants/v1',
+              'issue': 947,
+              'candidateSamplingRule': 'index/(REDUCER_SEGMENT_COUNT-1)',
+              'candidateSamplingInvariant': 'PASS',
+              'independentLocalEvidence': {
+                  'workflowRunId': 31318962251,
+                  'artifactId': 9039595134,
+                  'artifactDigest': 'sha256:d36b5d7382e6a52d0b804639b0547ce6ce8f6c9739246e64f88388b35e5d0ac2',
+                  'classification': 'TEN_SECTION_SPAN_RULE_SUPPORTED_FOR_NEXT_WHOLE_MODEL_GATE',
+                  'productionSourceChanged': False,
+              },
+              'acceptanceBoundary': 'This step binds source invariants to previously passed local evidence; it does not rerun a self-patching diagnostic against already-mutated source.',
+          }
+          Path('.work/reducer-span-candidate-invariants.json').write_text(json.dumps(evidence, indent=2) + '\n')
+          print(json.dumps(evidence, indent=2))
+
+      - name: Run shared-mechanics regressions compatible with candidate sampling
+        run: |
+          node scripts/lfea-issue947-reducer-backcompat-check.mjs
+          node scripts/lfea-issue947-caesar-pipe-shear-authority-check.mjs
+          node scripts/lfea-issue947-bourdon-subdivision-check.mjs
+
+      - name: Solve reducer span candidate from identical canonical package
+        run: |
+          node scripts/lfea-issue947-package-solve-snapshot.mjs \
+            --package .work/package/bm4nl-canonical-package.json \
+            --out .work/reducer-span-candidate.json
+
+      - name: Compare full L19 and L20 failure ledgers fail-closed
+        shell: python
+        run: |
+          import json
+          from pathlib import Path
+          before = json.loads(Path('.work/reducer-span-baseline.json').read_text())
+          after = json.loads(Path('.work/reducer-span-candidate.json').read_text())
+          cases = {}
+          for case_id in ('L19', 'L20'):
+              b = before['cases'][case_id]
+              a = after['cases'][case_id]
+              bmap = {row['identity']: row for row in b['failures']}
+              amap = {row['identity']: row for row in a['failures']}
+              cases[case_id] = {
+                  'baselineCounts': b['counts'],
+                  'candidateCounts': a['counts'],
+                  'removedFailures': [bmap[key] for key in sorted(set(bmap) - set(amap))],
+                  'addedFailures': [amap[key] for key in sorted(set(amap) - set(bmap))],
+                  'node20390Uz': {'baseline': b['node20390Uz'], 'candidate': a['node20390Uz']},
+                  'node20090Uy': {'baseline': b['node20090Uy'], 'candidate': a['node20090Uy']},
+                  'execution': {'baseline': b['executionStatus'], 'candidate': a['executionStatus']},
+              }
+          l19 = cases['L19']
+          no_new = len(l19['addedFailures']) == 0
+          no_increase = l19['candidateCounts']['failed'] <= l19['baselineCounts']['failed']
+          solver_ok = all(v['execution']['baseline'] != 'BLOCKED' and v['execution']['candidate'] != 'BLOCKED' for v in cases.values())
+          output = {
+              'schema': 'lfea-issue947-reducer-span-full-solve-ab/v1',
+              'issue': 947,
+              'sourceAccdbSha256': before['sourceAccdbSha256'],
+              'purpose': 'FULL_SOLVE_AB_DIAGNOSTIC_NO_PRODUCTION_UPDATE',
+              'candidate': {
+                  'reducerFrame': 'TIMOSHENKO_KAPPA_0_5',
+                  'pressure': 'CLOSED_END_BOURDON_PER_CYLINDER',
+                  'sectionSampling': 'TEN_SECTION_VALUES_SPAN_BOTH_DECLARED_ENDS_INDEX_OVER_9',
+              },
+              'cases': cases,
+              'gates': {
+                  'l19NoNewFailures': 'PASS' if no_new else 'FAIL',
+                  'l19FailureCountDoesNotIncrease': 'PASS' if no_increase else 'FAIL',
+                  'solverExecutionQualified': 'PASS' if solver_ok else 'FAIL',
+              },
+              'classification': 'REDUCER_SPAN_CANDIDATE_PASSES_FULL_L19_AB_GATE' if no_new and no_increase and solver_ok else 'REDUCER_SPAN_CANDIDATE_REJECT_OR_INVESTIGATE',
+              'acceptanceBoundary': 'L19 is primary; L20 is reported only. No source file is committed by this workflow.',
+          }
+          Path('.work/reducer-span-full-solve-ab.json').write_text(json.dumps(output, indent=2) + '\n')
+          print(json.dumps(output, indent=2))
+
+      - name: Upload reducer full-solve A/B evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: issue-947-reducer-span-full-solve-ab
+          if-no-files-found: warn
+          path: |
+            .work/reducer-span-baseline.json
+            .work/reducer-span-candidate.json
+            .work/reducer-span-full-solve-ab.json
+            .work/reducer-span-candidate-invariants.json
+            .work/reducer-span-candidate.diff

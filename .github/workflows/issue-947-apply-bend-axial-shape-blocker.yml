@@ -1,0 +1,43 @@
+name: Issue 947 apply bend axial-shape qualification blocker
+
+on:
+  push:
+    branches:
+      - codex/issue-947-bm4nl-qualification
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  apply:
+    if: "${{ github.event_name == 'workflow_dispatch' || github.event.head_commit.message == 'ci(issue947): apply bend axial shape qualification blocker' }}"
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: codex/issue-947-bm4nl-qualification
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Fail-close BEND_AXIAL_SHAPE authority without changing mechanics
+        run: node scripts/lfea-issue947-apply-bend-axial-shape-blocker.mjs
+
+      - name: Validate updated settings custody
+        run: node scripts/lfea-issue947-caesar-settings-custody-check.mjs
+
+      - name: Commit validation-authority correction
+        shell: bash
+        run: |
+          set -euo pipefail
+          git add benchmarks/LFEA/CAESAR_ACCDB/bm4nl-caesar-settings.authority.json scripts/lfea-issue947-caesar-settings-custody-check.mjs
+          if git diff --cached --quiet; then
+            echo 'Expected bend axial-shape authority correction produced no diff.' >&2
+            exit 1
+          fi
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git commit -m 'fix(issue947): fail-close unmapped CAESAR bend axial shape'
+          git push origin HEAD:codex/issue-947-bm4nl-qualification

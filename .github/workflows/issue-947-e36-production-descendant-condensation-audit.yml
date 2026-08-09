@@ -1,0 +1,273 @@
+name: Issue 947 E36 production descendant condensation audit
+
+on:
+  push:
+    branches:
+      - codex/issue-947-bm4nl-qualification
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  actions: read
+
+jobs:
+  audit:
+    if: "${{ github.event_name == 'workflow_dispatch' || github.event.head_commit.message == 'ci(issue947): run E36 production descendant condensation audit' }}"
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Checkout qualification branch
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Download pinned canonical BM4_NL package
+        uses: actions/download-artifact@v4
+        with:
+          name: issue-947-bm4nl-qualification
+          path: .work/package
+          github-token: ${{ github.token }}
+          repository: reallaksh19/Advanced_Analysis
+          run-id: 31314047095
+
+      - name: Expose read-only production mechanics inspection seam
+        shell: bash
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          import hashlib, json
+          path = Path('src/core/fea-benchmarks/caesar-accdb-linear-solve.js')
+          text = path.read_text()
+          before = hashlib.sha256(text.encode()).hexdigest()
+          return_old = "  return {\n    execution,\n    rows: resultRows({ benchmarkPackage, execution, recovered, analysis }),"
+          return_new = "  return {\n    analysis,\n    execution,\n    rows: resultRows({ benchmarkPackage, execution, recovered, analysis }),"
+          count = text.count(return_old)
+          if count != 1:
+              raise SystemExit(f'Expected exactly one solveCase return patch site; found {count}.')
+          text = text.replace(return_old, return_new)
+          anchor = "\nfunction solveCase(benchmarkPackage, caseRecord, solveProfile) {"
+          count = text.count(anchor)
+          if count != 1:
+              raise SystemExit(f'Expected exactly one solveCase anchor; found {count}.')
+          helper_lines = [
+              '', '',
+              '/** Diagnostic-only read access to the exact production case construction. */',
+              'export function inspectCaesarAccdbLinearCaseMechanics(benchmarkPackage, caseId) {',
+              '  requireBenchmarkPackage(benchmarkPackage);',
+              '  const solveProfile = benchmarkPackage.profile.linearSolve;',
+              "  if (solveProfile === null) throw new TypeError('The ACCDB profile does not declare linearSolve authorities.');",
+              '  const caseRecord = benchmarkPackage.cases.find((entry) => entry.caseId === caseId);',
+              "  if (!caseRecord) throw new TypeError(`ACCDB benchmark package lacks case ${String(caseId)}.`);",
+              '  const solved = solveCase(benchmarkPackage, caseRecord, solveProfile);',
+              '  return deepFreeze({',
+              "    schema: 'lfea-accdb-linear-case-mechanics-inspection/v1',",
+              '    sourceAccdbSha256: benchmarkPackage.source.sha256,',
+              '    caseId: caseRecord.caseId,',
+              '    formula: caseRecord.formula,',
+              '    executionStatus: solved.execution.status,',
+              '    rows: solved.rows.map((row) => ({ ...row })),',
+              '    elements: solved.analysis.elements.map((entry) => ({',
+              '      elementId: entry.elementId,',
+              '      sourceElementId: entry.sourceElementId,',
+              '      nodeI: entry.nodeI,',
+              '      nodeJ: entry.nodeJ,',
+              '      kind: entry.kind,',
+              '      teeJunctionNodeId: entry.teeJunctionNodeId,',
+              '      globalStiffness: [...entry.contribution.globalStiffness],',
+              '      equivalentLoadGlobal: [...entry.contribution.equivalentLoadGlobal],',
+              '      initialStrainLoadGlobal: [...entry.contribution.initialStrainLoadGlobal],',
+              '      pressureAxialStrain: entry.pressureAxialStrain,',
+              '      bourdonRotationRadians: entry.bourdonRotationRadians,',
+              '      bourdonFreeEndTranslationM: [...entry.bourdonFreeEndTranslationM],',
+              '      gravityWeightN: entry.gravityWeightN,',
+              '    })),',
+              '  });',
+              '}',
+          ]
+          text = text.replace(anchor, '\n'.join(helper_lines) + anchor)
+          path.write_text(text)
+          after = hashlib.sha256(text.encode()).hexdigest()
+          Path('.work').mkdir(exist_ok=True)
+          Path('.work/issue947-e36-production-inspection-patch.json').write_text(json.dumps({
+              'schema': 'lfea-issue947-diagnostic-patch/v1',
+              'scope': 'DIAGNOSTIC_ONLY_READ_ONLY_PRODUCTION_MECHANICS_INSPECTION',
+              'productionSourceChanged': False,
+              'reason': 'Expose exact already-built analysis descendant K, equivalent load and initial-strain vectors plus solved source rows so E36 can be Schur-condensed without copying component mechanics.',
+              'beforeSha256': before,
+              'afterSha256': after,
+          }, indent=2) + '\n')
+          PY
+
+      - name: Align E36 diagnostic source-entity identity with emitted result custody
+        shell: bash
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          path = Path('scripts/lfea-issue947-e36-production-descendant-condensation-audit.mjs')
+          text = path.read_text()
+          old = """function sourceAction(rows, row) {\n  const entityId = sourceResultElementId(row);\n  const index = new Map(rows\n    .filter((entry) => entry.entityKind === 'ELEMENT' && entry.entityId === entityId)\n    .map((entry) => [`${entry.quantity}:${entry.component}`, Number(entry.value)]));"""
+          new = """function sourceAction(rows, row) {\n  const requestedEntityId = sourceResultElementId(row);\n  const prefix = `INPUT_ELEMENT:${String(row.ELEMENTID)}|`;\n  const candidateIds = [...new Set(rows\n    .filter((entry) => entry.entityKind === 'ELEMENT' && String(entry.entityId).startsWith(prefix))\n    .map((entry) => String(entry.entityId)))];\n  const entityId = candidateIds.includes(requestedEntityId)\n    ? requestedEntityId\n    : candidateIds.length === 1 ? candidateIds[0] : null;\n  if (entityId === null) throw new TypeError(`Expected one emitted source entity for E${row.ELEMENTID}; found ${JSON.stringify(candidateIds)}.`);\n  const index = new Map(rows\n    .filter((entry) => entry.entityKind === 'ELEMENT' && entry.entityId === entityId)\n    .map((entry) => [`${entry.quantity}:${entry.component}`, Number(entry.value)]));"""
+          count = text.count(old)
+          if count != 1:
+              raise SystemExit(f'Expected exactly one sourceAction identity patch site; found {count}.')
+          path.write_text(text.replace(old, new))
+          PY
+
+      - name: Derive missing CAESAR E36 source actions from junction equilibrium
+        shell: bash
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          path = Path('scripts/lfea-issue947-e36-production-descendant-condensation-audit.mjs')
+          text = path.read_text()
+          old = "const caesarSourceAction = sourceAction(referenceRows, sourceRow);"
+          new = "const caesarReference = deriveCaesarE36SourceAction(referenceRows, pkg);\nconst caesarSourceAction = caesarReference.action;"
+          count = text.count(old)
+          if count != 1:
+              raise SystemExit(f'Expected exactly one direct E36 reference lookup; found {count}.')
+          text = text.replace(old, new)
+          output_old = "  referenceUsage: 'DIAGNOSTIC_ONLY_NO_PARAMETER_FIT_NO_REFERENCE_MUTATION',"
+          output_new = "  referenceUsage: 'DIAGNOSTIC_ONLY_NO_PARAMETER_FIT_NO_REFERENCE_MUTATION',\n  referenceDerivation: caesarReference,"
+          count = text.count(output_old)
+          if count != 1:
+              raise SystemExit(f'Expected exactly one referenceUsage output anchor; found {count}.')
+          text = text.replace(output_old, output_new)
+          helper_anchor = "function actionScaleVector(reference, tolerances) {"
+          helper = """function deriveCaesarE36SourceAction(rows, pkg) {\n  const e17 = sourceAction(rows, requireSourceRow(pkg, '17'));\n  const e18 = sourceAction(rows, requireSourceRow(pkg, '18'));\n  const e37 = sourceAction(rows, requireSourceRow(pkg, '37'));\n  const e17To = e17.slice(6, 12);\n  const e18From = e18.slice(0, 6);\n  const e37From = e37.slice(0, 6);\n  const from = e17To.map((value, index) => -(value + e18From[index]));\n  const to = e37From.map((value) => -value);\n  return {\n    rule: 'E36_FROM_EQUALS_NEGATIVE_E17_TO_PLUS_E18_FROM_AT_NODE_20295_AND_E36_TO_EQUALS_NEGATIVE_E37_FROM_AT_NODE_21430',\n    source: 'PINNED_L19_JUNCTION_EQUILIBRIUM_NO_DIRECT_E36_REFERENCE_ROW',\n    node20295: { e17To, e18From, derivedE36From: from },\n    node21430: { e37From, derivedE36To: to },\n    action: [...from, ...to],\n  };\n}\n\n"""
+          count = text.count(helper_anchor)
+          if count != 1:
+              raise SystemExit(f'Expected exactly one actionScaleVector helper anchor; found {count}.')
+          text = text.replace(helper_anchor, helper + helper_anchor)
+          path.write_text(text)
+          PY
+
+      - name: Align flattened condensed stiffness decomposition helper
+        shell: bash
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          path = Path('scripts/lfea-issue947-e36-production-descendant-condensation-audit.mjs')
+          text = path.read_text()
+          old = "const stiffnessAction = multiplyVector(condensed.stiffness, caesarDisplacement);"
+          new = "const stiffnessAction = multiplyFlat12(condensed.stiffness, caesarDisplacement);"
+          count = text.count(old)
+          if count != 1:
+              raise SystemExit(f'Expected exactly one flattened stiffness decomposition call; found {count}.')
+          path.write_text(text.replace(old, new))
+          PY
+
+      - name: Run E36 production descendant condensation audit
+        run: |
+          mkdir -p .work/out
+          node scripts/lfea-issue947-e36-production-descendant-condensation-audit.mjs \
+            --package .work/package/bm4nl-canonical-package.json \
+            --out .work/out/issue947-e36-production-descendant-condensation-audit.json
+
+      - name: Run controlled E36 mechanic-removal sensitivity A/Bs
+        shell: bash
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          import json, subprocess
+
+          module_path = Path('src/core/fea-benchmarks/caesar-accdb-linear-solve.js')
+          baseline_text = module_path.read_text()
+          out_dir = Path('.work/out')
+          audit_script = 'scripts/lfea-issue947-e36-production-descendant-condensation-audit.mjs'
+          package = '.work/package/bm4nl-canonical-package.json'
+          baseline = json.loads((out_dir / 'issue947-e36-production-descendant-condensation-audit.json').read_text())
+
+          variants = {
+              'NO_TEE_ROTATIONAL_SPRING': [(
+                  "  const entries = teeModifier.rotationalSprings\n    .map((spring) => ({",
+                  "  const springSource = teeModifier.junctionNodeId === '20295' ? [] : teeModifier.rotationalSprings;\n  const entries = springSource\n    .map((spring) => ({",
+              )],
+              'NO_TEE_RIGID_OFFSET': [(
+                  "function teeRigidOffsets(teeModifier) {\n  if (teeModifier === null || teeModifier.rigidOffset === null) return { I: null, J: null };\n  return teeModifier.junctionEnd === 'I'",
+                  "function teeRigidOffsets(teeModifier) {\n  if (teeModifier === null || teeModifier.rigidOffset === null) return { I: null, J: null };\n  if (teeModifier.junctionNodeId === '20295') return { I: null, J: null };\n  return teeModifier.junctionEnd === 'I'",
+              )],
+              'NO_B31_BEND_FLEXIBILITY': [(
+                  "      effectiveLocalStiffness: componentEntry.effectiveLocalStiffness,",
+                  "      effectiveLocalStiffness: sourceElementId === '36' ? componentEntry.frameElement.localStiffness : componentEntry.effectiveLocalStiffness,",
+              )],
+              'NO_E36_INCOMING_PRESSURE': [(
+                  "      kind: 'BEND_INCOMING_STRAIGHT',\n      pressureLengthScale: 1,\n      thermalLengthScale: 1,",
+                  "      kind: 'BEND_INCOMING_STRAIGHT',\n      pressureLengthScale: sourceElementId === '36' ? 0 : 1,\n      thermalLengthScale: 1,",
+              )],
+              'NO_E36_MEC21': [(
+                  "      bourdonBendSegment: bourdonMode === 'TRANSLATION_AND_ROTATION'\n        ? bend.bourdonSegments[index]\n        : null,",
+                  "      bourdonBendSegment: bourdonMode === 'TRANSLATION_AND_ROTATION' && sourceElementId !== '36'\n        ? bend.bourdonSegments[index]\n        : null,",
+              )],
+          }
+
+          summary = {
+              'schema': 'lfea-issue947-e36-mechanic-removal-sensitivity/v1',
+              'issue': 947,
+              'caseId': 'L19',
+              'purpose': 'DIAGNOSTIC_SENSITIVITY_ONLY_NOT_FIX_ACCEPTANCE',
+              'rule': 'A removal that improves CAESAR agreement only identifies the mechanic for deeper authority audit; removal is not an admissible production fix without independent governing authority and whole-model replay.',
+              'baseline': {},
+              'variants': {},
+          }
+
+          def metrics(result):
+              inj = result['caesarInjection']
+              return {
+                  'classification': result['classification'],
+                  'productionParityMaxAbs': result['productionParity']['maxAbsResidual'],
+                  'maxAbsNormalizedResidual': inj['maxAbsNormalizedResidual'],
+                  'normalizedResidualL2': inj['normalizedResidualL2'],
+                  'governingComponent': inj['governingComponent'],
+                  'normalizedResidual': inj['normalizedResidual'],
+                  'toMxResidualNm': inj['residual'][9],
+              }
+
+          summary['baseline'] = metrics(baseline)
+          try:
+              for name, replacements in variants.items():
+                  text = baseline_text
+                  replacement_evidence = []
+                  for old, new in replacements:
+                      count = text.count(old)
+                      if count != 1:
+                          raise SystemExit(f'{name}: expected one patch site, found {count} for {old[:80]!r}')
+                      text = text.replace(old, new)
+                      replacement_evidence.append({'replacementCount': count, 'old': old, 'new': new})
+                  module_path.write_text(text)
+                  output_path = out_dir / f'issue947-e36-{name.lower()}.json'
+                  completed = subprocess.run(
+                      ['node', audit_script, '--package', package, '--out', str(output_path)],
+                      text=True, capture_output=True,
+                  )
+                  if completed.returncode != 0:
+                      raise SystemExit(f'{name} audit failed:\nSTDOUT:\n{completed.stdout}\nSTDERR:\n{completed.stderr}')
+                  result = json.loads(output_path.read_text())
+                  item = metrics(result)
+                  item['replacementEvidence'] = replacement_evidence
+                  item['deltaMaxAbsNormalizedResidual'] = item['maxAbsNormalizedResidual'] - summary['baseline']['maxAbsNormalizedResidual']
+                  item['deltaNormalizedResidualL2'] = item['normalizedResidualL2'] - summary['baseline']['normalizedResidualL2']
+                  summary['variants'][name] = item
+          finally:
+              module_path.write_text(baseline_text)
+
+          ranked = sorted(summary['variants'].items(), key=lambda item: item[1]['normalizedResidualL2'])
+          summary['rankedByNormalizedResidualL2'] = [
+              {'variant': name, 'normalizedResidualL2': item['normalizedResidualL2'], 'maxAbsNormalizedResidual': item['maxAbsNormalizedResidual']}
+              for name, item in ranked
+          ]
+          (out_dir / 'issue947-e36-mechanic-removal-sensitivity.json').write_text(json.dumps(summary, indent=2) + '\n')
+          print(json.dumps(summary, indent=2))
+          PY
+
+      - name: Upload E36 condensation evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: issue-947-e36-production-descendant-condensation-audit
+          if-no-files-found: error
+          path: |
+            .work/out/*.json
+            .work/issue947-e36-production-inspection-patch.json

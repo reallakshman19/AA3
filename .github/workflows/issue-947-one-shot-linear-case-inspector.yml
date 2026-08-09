@@ -1,0 +1,45 @@
+name: Issue 947 one-shot read-only linear case inspector
+
+on:
+  push:
+    branches:
+      - codex/issue-947-bm4nl-qualification
+
+permissions:
+  contents: write
+
+jobs:
+  apply:
+    if: "${{ github.event.head_commit.message == 'ci(issue947): restore read-only linear case inspector' }}"
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Checkout qualification branch
+        uses: actions/checkout@v4
+        with:
+          ref: codex/issue-947-bm4nl-qualification
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Apply deterministic inspection-only patch
+        run: node scripts/lfea-issue947-apply-linear-case-inspector.mjs
+
+      - name: Syntax-check benchmark solver
+        run: node --check src/core/fea-benchmarks/caesar-accdb-linear-solve.js
+
+      - name: Commit read-only inspection surface
+        shell: bash
+        run: |
+          set -euo pipefail
+          git add src/core/fea-benchmarks/caesar-accdb-linear-solve.js
+          if git diff --cached --quiet; then
+            echo 'Expected inspection-only patch produced no source diff.' >&2
+            exit 1
+          fi
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git commit -m 'test(lfea): expose sealed linear case mechanics for qualification'
+          git push origin HEAD:codex/issue-947-bm4nl-qualification

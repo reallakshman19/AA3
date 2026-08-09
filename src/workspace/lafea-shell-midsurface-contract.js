@@ -30,6 +30,24 @@ const TOPOLOGY_CLASSES = Object.freeze([
   LAFEA_SHELL_MIDSURFACE_TOPOLOGY,
   LAFEA_SHELL_MIDSURFACE_TOPOLOGY_WITH_HOLES,
 ]);
+const HOLE_FREE_LIMITATIONS = Object.freeze([
+  'PLANAR_SINGLE_PATCH_ONLY',
+  'STRAIGHT_PERIMETER_SEGMENTS_ONLY',
+  'NO_HOLES',
+  'NO_MULTI_PATCH_SEAMS',
+  'NO_CURVED_MIDSURFACE',
+  'NO_OFFSET_SURFACE_GENERATION',
+  'NO_THICKNESS_TRANSITION_MESHING',
+]);
+const HOLE_LIMITATIONS = Object.freeze([
+  'PLANAR_SINGLE_PATCH_ONLY',
+  'STRAIGHT_OUTER_AND_HOLE_SEGMENTS_ONLY',
+  'NON_NESTED_HOLES_ONLY',
+  'NO_MULTI_PATCH_SEAMS',
+  'NO_CURVED_MIDSURFACE',
+  'NO_OFFSET_SURFACE_GENERATION',
+  'NO_THICKNESS_TRANSITION_MESHING',
+]);
 
 /** Mesh-independent shell analysis-domain authority. */
 export function createLafeaShellAnalysisDomain(value) {
@@ -63,9 +81,7 @@ export function validateLafeaShellAnalysisDomain(value) {
     lengthUnit: value.lengthUnit,
     topologyClass: value.topologyClass,
   });
-  if (value.semanticHash !== rebuilt.semanticHash) {
-    fail('LAFEA_SHELL_DOMAIN_HASH_INVALID');
-  }
+  if (value.semanticHash !== rebuilt.semanticHash) fail('LAFEA_SHELL_DOMAIN_HASH_INVALID');
   return rebuilt;
 }
 
@@ -74,9 +90,10 @@ export function validateLafeaShellAnalysisDomain(value) {
  * not inferred from an existing facet mesh. `axisU × axisV` defines the shell
  * director used when the generated mesh is compiled into the local-shell model.
  *
- * Hole-free V1 evidence remains valid. Hole-bearing V2 geometry is one planar
- * patch with one OUTER loop plus one-or-more non-nested HOLE loops. All shell
- * boundary segments remain straight in this qualification slice.
+ * Hole-free V1 evidence remains byte-semantically compatible with the P2-8
+ * contract. Hole-bearing V2 geometry is one planar patch with one OUTER loop
+ * plus one-or-more non-nested HOLE loops. All shell boundary segments remain
+ * straight in this qualification slice.
  */
 export function createLafeaShellMidsurfaceGeometry(value) {
   exact(value, GEOMETRY_KEYS, 'LAFEA_SHELL_MIDSURFACE_GEOMETRY_KEYS_INVALID');
@@ -152,9 +169,7 @@ export function createLafeaShellMidsurfaceGeometry(value) {
   const expectedOrientation = holes.length
     ? LAFEA_SHELL_MIDSURFACE_ORIENTATION_WITH_HOLES
     : LAFEA_SHELL_MIDSURFACE_ORIENTATION;
-  const orientationPolicy = exactText(
-    value.orientationPolicy, expectedOrientation, 'ORIENTATION_POLICY',
-  );
+  const orientationPolicy = exactText(value.orientationPolicy, expectedOrientation, 'ORIENTATION_POLICY');
 
   validateShellPlanarTopology({
     stageId,
@@ -235,15 +250,7 @@ export function createLafeaShellMidsurfaceEvidence(value) {
     geometry,
     producerRef: text(value.producerRef, 'PRODUCER_REF'),
     qualification: 'PASS',
-    limitations: freeze([
-      'PLANAR_SINGLE_PATCH_ONLY',
-      'STRAIGHT_OUTER_AND_HOLE_SEGMENTS_ONLY',
-      'NON_NESTED_HOLES_ONLY',
-      'NO_MULTI_PATCH_SEAMS',
-      'NO_CURVED_MIDSURFACE',
-      'NO_OFFSET_SURFACE_GENERATION',
-      'NO_THICKNESS_TRANSITION_MESHING',
-    ]),
+    limitations: hasHoles ? HOLE_LIMITATIONS : HOLE_FREE_LIMITATIONS,
   };
   return freeze({
     ...core,

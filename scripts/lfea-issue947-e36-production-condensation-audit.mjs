@@ -40,6 +40,7 @@ import {
   resolvePipeSection,
 } from '../src/core/linear-fea-section/index.js';
 import { solveCaesarAccdbLinearBenchmark } from '../src/core/fea-benchmarks/caesar-accdb-linear-solve.js';
+import { semanticHash } from '../src/core/shared-piping-model/canonical-json.js';
 
 const EXPECTED_SOURCE_SHA256 = '85d39463296e569da811d8572e2eff680b858097f76fdf0f47d1755f0b161c21';
 const PROFILE_SOURCE = 'ISSUE_947_E36_PRODUCTION_CONDENSATION_AUDIT';
@@ -79,7 +80,7 @@ const material = buildMaterial([...sourceRows.values()], pkg);
 const sectionRegistry = createSectionRegistry(pkg);
 const runSection = sectionRegistry.resolve(Number(runIn.DIAMETER) * MM_TO_M, Number(runIn.WALL_THICK) * MM_TO_M);
 const branchSection = sectionRegistry.resolve(Number(branch.DIAMETER) * MM_TO_M, Number(branch.WALL_THICK) * MM_TO_M);
-const geometry = buildE36Geometry({ branch, nextBranch, bend: bendRows.get(7), coordinateIndex, runSection });
+const geometry = buildE36Geometry({ branch, nextBranch, bend: bendRows.get(7), coordinateIndex, runSection, branchSection, material });
 const tee = buildTeeAuthority({ pkg, runIn, runOut, branch, coordinateIndex, runSection, branchSection, material, geometry });
 const chain = buildProductionFaithfulChain({ pkg, branch, material, branchSection, geometry, tee });
 const condensed = condenseChain(chain, ['20295', '21430']);
@@ -282,11 +283,11 @@ function buildE36Geometry(input) {
       schema: COMPONENT_GEOMETRY_SCHEMA,
       componentType: 'BEND',
       lengthUnit: 'm',
-      outerDiameter: input.runSection.dimensions.outerDiameter,
-      wallThickness: input.runSection.dimensions.wallThickness,
+      outerDiameter: input.branchSection.dimensions.outerDiameter,
+      wallThickness: input.branchSection.dimensions.wallThickness,
       bendRadius: radius,
       pressure: Number(input.branch.PRESSURE1) * KPA_TO_PA,
-      elasticModulus: Number(input.branch.MODULUS) * KPA_TO_PA,
+      elasticModulus: input.material.materialState.elasticModulus,
       bendAngleDegrees: bendAngle * 180 / Math.PI,
       smooth90FlexibilityCorrection: false,
       sourceEvidence: { sourceId: 'ACCDB:BEND:7', sourceRevision: EXPECTED_SOURCE_SHA256 },
@@ -295,16 +296,13 @@ function buildE36Geometry(input) {
     semanticHash: '',
   });
   assert.equal(factorResult.status, 'QUALIFIED');
-  const material = buildMaterial([...sourceRows.values()], pkg);
-  const sectionRegistry = createSectionRegistry(pkg);
-  const section = sectionRegistry.resolve(Number(input.branch.DIAMETER) * MM_TO_M, Number(input.branch.WALL_THICK) * MM_TO_M);
   const component = compilePipingComponent({
     componentId: 'ACCDB-BEND-7',
     componentType: 'BEND',
     profile: componentProfile(),
     arc: { tangentStart, tangentEnd, incomingDirection, declaredRadius: radius },
-    material,
-    section,
+    material: input.material,
+    section: input.branchSection,
     frameElementProfile: frameProfile(),
     localAxisProfile: FRAME_LOCAL_AXIS_PROFILE,
     referenceVector: null,
@@ -603,7 +601,7 @@ function buildMaterial(rows, benchmarkPackage) {
   const table = sealMaterialTable({
     schema: 'fea-linear-material-table/v1',
     materialId: `ACCDB-MATERIAL-${Number(rows[0].MATERIAL_NUM)}`,
-    sourceEvidence: { sourceId: 'ACCDB:INPUT_BASIC_ELEMENT_DATA:MATERIAL', sourceRevision: benchmarkPackage.source.sha256, sourceSemanticHash: 'ISSUE947-DIAGNOSTIC' },
+    sourceEvidence: sourceEvidence('ACCDB:INPUT_BASIC_ELEMENT_DATA:MATERIAL', benchmarkPackage.source.sha256),
     points: [point],
     semanticHash: '',
   });
@@ -626,7 +624,7 @@ function createSectionRegistry(benchmarkPackage) {
           formulationId: PIPE_SECTION_FORMULATION_ID,
           outerDiameter,
           wallThickness,
-          sourceEvidence: { sourceId: 'ACCDB:PIPE_SECTION', sourceRevision: `${benchmarkPackage.source.sha256}:${key}`, sourceSemanticHash: 'ISSUE947-DIAGNOSTIC' },
+          sourceEvidence: sourceEvidence('ACCDB:PIPE_SECTION', `${benchmarkPackage.source.sha256}:${key}`),
         };
         byKey.set(key, resolvePipeSection({ request: { ...base, semanticHash: computePipeSectionRequestSemanticHash(base) }, profile: PIPE_SECTION_PROFILE }));
       }
@@ -806,6 +804,7 @@ function requireCoordinate(index, nodeId) { const value = index.get(String(nodeI
 function requireSourceRow(index, id) { const row = index.get(String(id)); if (!row) throw new TypeError(`Missing source element ${id}`); return row; }
 function requirePinnedPackage(value) { if (!value || value.schema !== 'caesar-accdb-benchmark-package/v1') throw new TypeError('Canonical package required.'); assert.equal(value.source.sha256, EXPECTED_SOURCE_SHA256); assert.equal(value.cases.find((entry) => entry.caseId === 'L19')?.formula, 'W+P1'); }
 function parseArgs(argv) { const out = {}; for (let i = 0; i < argv.length; i += 1) { if (argv[i] === '--package') out.package = argv[++i]; else if (argv[i] === '--out') out.out = argv[++i]; } return out; }
+function sourceEvidence(sourceId, sourceRevision) { const identity = { sourceId, sourceRevision }; return { ...identity, sourceSemanticHash: semanticHash(identity) }; }
 function density(value) { return Number(value) * KG_PER_CM3_TO_KG_PER_M3; }
 function validStationNode(value) { return Number.isFinite(Number(value)) && Number(value) > 0; }
 function uniqueNumbers(values) { return [...new Set(values)]; }

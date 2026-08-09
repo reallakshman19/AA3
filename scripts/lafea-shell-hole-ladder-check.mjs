@@ -15,22 +15,28 @@ import {
 } from '../src/workspace/lafea-shell-midsurface-contract.js';
 import {
   LAFEA_SHELL_ELEMENT,
+  LAFEA_SHELL_HOLE_MINIMUM_ELEMENTS_ACROSS_LIGAMENT,
   planLafeaShellAnalysisMesh,
   produceLafeaShellAnalysisMesh,
 } from '../src/workspace/lafea-shell-mesh-producer.js';
 
 const SOURCE_HASH = `sha256:${'9'.repeat(64)}`;
 const ROOT2 = Math.sqrt(0.5);
-const TARGETS = Object.freeze([40, 30, 25, 20, 15, 10]);
 const CASES = Object.freeze([
   Object.freeze({
     caseId: 'ONE_RECT_HOLE',
+    minimumLigament: 50,
+    rejectedTargets: Object.freeze([40, 30]),
+    qualifiedTargets: Object.freeze([25, 20, 15, 10]),
     holes: Object.freeze([
       Object.freeze({ x0: 80, y0: 50, x1: 160, y1: 110 }),
     ]),
   }),
   Object.freeze({
     caseId: 'TWO_RECT_HOLES',
+    minimumLigament: 45,
+    rejectedTargets: Object.freeze([40, 30, 25]),
+    qualifiedTargets: Object.freeze([20, 15, 10]),
     holes: Object.freeze([
       Object.freeze({ x0: 45, y0: 48, x1: 85, y1: 96 }),
       Object.freeze({ x0: 155, y0: 56, x1: 195, y1: 104 }),
@@ -38,15 +44,38 @@ const CASES = Object.freeze([
   }),
 ]);
 
+assert.equal(LAFEA_SHELL_HOLE_MINIMUM_ELEMENTS_ACROSS_LIGAMENT, 2);
+
 const cases = [];
 for (const testCase of CASES) {
   const parent = shellParent(testCase.caseId, testCase.holes);
-  const levels = TARGETS.map((targetElementLength) => {
+  const maximumQualifiedTarget = testCase.minimumLigament
+    / LAFEA_SHELL_HOLE_MINIMUM_ELEMENTS_ACROSS_LIGAMENT;
+
+  for (const targetElementLength of testCase.rejectedTargets) {
+    assert.ok(targetElementLength > maximumQualifiedTarget);
+    assert.throws(
+      () => planLafeaShellAnalysisMesh({
+        midsurfaceEvidence: parent,
+        meshProfile: shellProfile(testCase.caseId, targetElementLength),
+      }),
+      (error) => error?.code === 'LAFEA_SHELL_HOLE_TARGET_TOO_COARSE_FOR_LIGAMENT',
+      `${testCase.caseId} target ${targetElementLength} must fail closed before meshing.`,
+    );
+  }
+
+  const levels = testCase.qualifiedTargets.map((targetElementLength) => {
+    assert.ok(targetElementLength <= maximumQualifiedTarget + 1e-12);
     const profile = shellProfile(testCase.caseId, targetElementLength);
     const plan = planLafeaShellAnalysisMesh({
       midsurfaceEvidence: parent,
       meshProfile: profile,
     });
+    assert.equal(plan.minimumMaterialLigament, testCase.minimumLigament,
+      `${testCase.caseId}: retained minimum material ligament`);
+    assert.equal(plan.maximumQualifiedTargetElementLength, maximumQualifiedTarget,
+      `${testCase.caseId}: retained maximum qualified target`);
+    assert.equal(plan.minimumElementsAcrossLigament, 2);
     assert.equal(plan.resourceDisposition, 'WITHIN_LIMITS',
       `${testCase.caseId} target ${targetElementLength}: resource disposition`);
     assert.equal(plan.estimatedDofs, plan.nodeCount * 5,
@@ -55,25 +84,15 @@ for (const testCase of CASES) {
     const directQuality = qualifyLafeaAnalysisMesh('LAFEA.4', plan.mesh, profile);
     assert.notEqual(directQuality.worstStatus, 'BLOCK',
       `${testCase.caseId} target ${targetElementLength}: direct quality BLOCK; `
-      + `minSJ=${directQuality.minimumScaledJacobian}, maxAR=${directQuality.maximumAspectRatio}, `
       + `blocking=${directQuality.blockingElementIds.join(',')}`);
     assert.equal(directQuality.blockingElementIds.length, 0,
       `${testCase.caseId} target ${targetElementLength}: direct blockers`);
 
-    let produced;
-    try {
-      produced = produceLafeaShellAnalysisMesh({
-        midsurfaceEvidence: parent,
-        meshProfile: profile,
-        plan,
-      });
-    } catch (error) {
-      error.message = `${testCase.caseId} target ${targetElementLength}: ${error.message}; `
-        + `direct minSJ=${directQuality.minimumScaledJacobian}, `
-        + `direct maxAR=${directQuality.maximumAspectRatio}, `
-        + `direct blockers=${directQuality.blockingElementIds.join(',')}`;
-      throw error;
-    }
+    const produced = produceLafeaShellAnalysisMesh({
+      midsurfaceEvidence: parent,
+      meshProfile: profile,
+      plan,
+    });
     assert.equal(produced.evidence.qualification, 'PASS',
       `${testCase.caseId} target ${targetElementLength}: qualification`);
     assert.equal(produced.evidence.quality.blockingElementIds.length, 0,
@@ -109,17 +128,25 @@ for (const testCase of CASES) {
     assert.ok(levels[index].elementCount > levels[index - 1].elementCount,
       `${testCase.caseId}: element count must increase as target decreases.`);
   }
-  cases.push(Object.freeze({ caseId: testCase.caseId, levels: Object.freeze(levels) }));
+  cases.push(Object.freeze({
+    caseId: testCase.caseId,
+    minimumMaterialLigament: testCase.minimumLigament,
+    maximumQualifiedTargetElementLength: maximumQualifiedTarget,
+    rejectedTargets: testCase.rejectedTargets,
+    qualifiedTargets: testCase.qualifiedTargets,
+    levels: Object.freeze(levels),
+  }));
 }
 
 console.log(JSON.stringify({
-  schema: 'lafea-shell-hole-ladder-check/v1',
+  schema: 'lafea-shell-hole-ladder-check/v2',
   status: 'PASS',
   stageId: 'LAFEA.4',
-  targetElementLengths: TARGETS,
+  minimumElementsAcrossLigament: LAFEA_SHELL_HOLE_MINIMUM_ELEMENTS_ACROSS_LIGAMENT,
   qualityThresholdsRelaxed: false,
-  zeroBlockingElementsAtEveryLevel: true,
-  deterministicReplayAtEveryLevel: true,
+  coarseTargetsFailClosedBeforeMeshing: true,
+  zeroBlockingElementsAtEveryQualifiedLevel: true,
+  deterministicReplayAtEveryQualifiedLevel: true,
   monotonicDensityResponse: true,
   cases,
 }, null, 2));

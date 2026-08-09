@@ -50,19 +50,20 @@ validInput.refinementEntityIds.push('N3');
 assert.deepEqual(intent.refinementEntityIds, ['N1', 'N2']);
 validInput.refinementEntityIds.pop();
 
-// Shell stages remain truthful: request construction is possible but cannot
-// self-authorize while P2-8 has no qualified automatic shell producer.
+// P2-8 binds an external planar shell producer for LAFEA.4/.5. The intent may
+// therefore be executable for the declared shell element family; this does
+// not imply that the local-shell solver meshes internally.
 const shellIntent = createLafeaMeshGenerationIntent({
   ...validInput,
   stageId: 'LAFEA.4',
   elementFamily: 'CST_DKT_TRI3_THIN_SHELL_V1',
   maximumEstimatedDofs: 50000,
 });
-assert.equal(shellIntent.status, 'UNEXECUTABLE_INTENT');
-assert.equal(shellIntent.executionAuthorized, false);
-assert.equal(shellIntent.producerRef, null);
-assert.equal(shellIntent.producesMesh, false);
-assert.equal(shellIntent.reason, 'QUALIFIED_MESH_PRODUCER_NOT_AVAILABLE');
+assert.equal(shellIntent.status, 'EXECUTABLE_INTENT');
+assert.equal(shellIntent.executionAuthorized, true);
+assert.ok(shellIntent.producerRef?.startsWith('LAFEA_CORE_MESHER/'));
+assert.equal(shellIntent.producesMesh, true);
+assert.equal(shellIntent.reason, 'QUALIFIED_MESH_PRODUCER_BOUND');
 
 assert.throws(() => createLafeaMeshGenerationIntent({
   ...validInput,

@@ -84,9 +84,7 @@ function normalizeFinding(row, fallbackCategory, effects) {
     capabilityEffects: capabilityProjection.ids,
     sourceFeatureIds: row.sourceFeatureIds ?? row.featureIds ?? compact([row.sourceFeatureId]),
     sourcePaths: row.sourcePaths ?? compact([row.sourcePath]),
-    canonicalEntityIds: row.canonicalEntityIds ?? compact([
-      row.nodeId, row.segmentId, row.componentId, row.restraintId,
-    ]),
+    canonicalEntityIds: row.canonicalEntityIds ?? entityIdsFromRow(row),
     physicalCaseIds: row.physicalCaseIds ?? [],
     message: String(row.message ?? row.description ?? row.code ?? 'InputXML diagnostic.'),
     technicalBasis: String(row.technicalBasis ?? row.reason ?? 'Existing production diagnostic authority reported this condition.'),
@@ -99,16 +97,35 @@ function normalizeFinding(row, fallbackCategory, effects) {
 
 /**
  * Pre-FEA findings intentionally expose capabilityEffects as an ordered list of ids.
- * Model-health findings intentionally expose a richer record keyed by capability id.
- * Keep those contracts distinct: project the record to ids for readiness folding and
- * preserve the complete upstream record separately in finding evidence.
+ * Three upstream authorities publish three deliberate shapes, and all three reach
+ * this normalizer:
+ *
+ *   model-health   Record<capabilityId, {disposition, limitationCode}>
+ *   topology and   Array<{capabilityId, effect}>
+ *     proximity
+ *   pre-FEA        Array<capabilityId>
+ *
+ * Keep those contracts distinct: project each to ids for readiness folding and
+ * preserve the richer upstream form separately in finding evidence.
+ *
+ * The object-array shape previously fell through the bare Array branch, so a
+ * topology or proximity finding reached makeFinding carrying objects. uniqueAscii
+ * stringifies its input, so capabilityEffects became ["[object Object]"] — the
+ * affected capability was destroyed, and because capabilityEffects is part of the
+ * finding identity, that value fed findingId and the sealed semantic hash.
  */
 function projectCapabilityEffects(value, fallback) {
   if (value === null || value === undefined) {
     return { ids: fallback, upstreamCapabilityEffects: null };
   }
   if (Array.isArray(value)) {
-    return { ids: value, upstreamCapabilityEffects: null };
+    if (!value.some(isCapabilityEffectRecord)) {
+      return { ids: value, upstreamCapabilityEffects: null };
+    }
+    return {
+      ids: value.map((row) => (isCapabilityEffectRecord(row) ? row.capabilityId : row)),
+      upstreamCapabilityEffects: structuredClone(value),
+    };
   }
   if (typeof value === 'object') {
     return {
@@ -117,6 +134,32 @@ function projectCapabilityEffects(value, fallback) {
     };
   }
   return { ids: [String(value)], upstreamCapabilityEffects: null };
+}
+
+/**
+ * Topology and proximity findings carry the entities they implicate under an
+ * `entities` record (nodeIds, segmentIds, componentIds, restraintIds) rather than
+ * the scalar fields the other authorities use. Without this, every such finding
+ * reached the pre-FEA contract with an empty canonicalEntityIds, so the summary's
+ * affected-entity counts under-reported topology damage to zero.
+ */
+function entityIdsFromRow(row) {
+  const scalars = compact([row.nodeId, row.segmentId, row.componentId, row.restraintId]);
+  const entities = row.entities;
+  if (entities === null || typeof entities !== 'object' || Array.isArray(entities)) return scalars;
+  const collected = [...scalars];
+  for (const value of Object.values(entities)) {
+    if (Array.isArray(value)) collected.push(...compact(value));
+    else if (value !== null && value !== undefined && typeof value !== 'object') collected.push(String(value));
+  }
+  return collected;
+}
+
+function isCapabilityEffectRecord(value) {
+  return value !== null
+    && typeof value === 'object'
+    && !Array.isArray(value)
+    && typeof value.capabilityId === 'string';
 }
 
 function findingEvidence(row, upstreamCapabilityEffects) {

@@ -74,6 +74,12 @@ export function manualChunk(id) {
     .some((modulePath) => source.endsWith(modulePath))) {
     return 'lafea-meshing-contracts';
   }
+  // This helper owns no controller/store/singleton state. Splitting its I/O and
+  // style dependencies gives the graph a safe leaf boundary without forcing
+  // the LAFEA workbench controller itself into a manual chunk.
+  if (source.endsWith('/src/workspace/lafea-workbench-controller-io.js')) {
+    return 'lafea-workbench-io';
+  }
   if (source.endsWith('/src/workspace/topology-edit/topology-edit-inline-component-replacement.js')
     || source.endsWith('/src/workspace/topology-edit/topology-edit-junction-relation-command.js')
     || source.endsWith('/src/workspace/topology-edit/topology-edit-engineering-edit-effect.js')) {
@@ -87,6 +93,12 @@ export function manualChunk(id) {
     || source.endsWith('/src/workspace/viewport-interaction/topology-edit-endpoint-affordance-model.js')
     || source.endsWith('/src/workspace/viewport-interaction/topology-edit-endpoint-affordance-runtime.js')) {
     return 'topology-edit-r1-pure-presentation';
+  }
+  // Fidelity evidence publication is a stateless projection to host datasets.
+  // Keep it out of the large stateful SJSON controller chunk while leaving the
+  // controller/backend lifecycle under Rollup graph-aware ownership.
+  if (source.endsWith('/src/workspace/topology-edit/topology-edit-sjson-fidelity-evidence-v2.js')) {
+    return 'topology-edit-sjson-evidence';
   }
   if (source.endsWith('/src/workspace/resolved-engineering-geometry.js')
     || source.endsWith('/src/workspace/model-zone-selector.js')

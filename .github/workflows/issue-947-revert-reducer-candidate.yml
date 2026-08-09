@@ -1,0 +1,30 @@
+name: Issue 947 revert falsified reducer candidate
+
+on:
+  push:
+    branches:
+      - codex/issue-947-bm4nl-qualification
+
+permissions:
+  contents: write
+
+jobs:
+  revert:
+    if: "${{ github.event.head_commit.message == 'chore(issue947): revert falsified reducer candidate' }}"
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Checkout qualification branch
+        uses: actions/checkout@v4
+        with:
+          ref: codex/issue-947-bm4nl-qualification
+          fetch-depth: 0
+
+      - name: Revert rejected production mechanics commit
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git revert --no-edit 6d520781a83a2944041c2e7f31c912fbcdc3baa9
+          git push origin HEAD:codex/issue-947-bm4nl-qualification

@@ -66,6 +66,7 @@ jobs:
           node --check tests/topology-edit-navigation-pick-fallback.test.mjs
           node --check e2e/topology-edit-tool-audit.spec.js
           node --check e2e/topology-edit-tool-icon-manifest.spec.js
+          node --check e2e/topology-edit-tool-icon-mutation.spec.js
           node --check e2e/topology-edit-tool-icon-reference.spec.js
           node --check e2e/topology-edit-ray-scan.spec.js
           git diff --check
@@ -83,6 +84,12 @@ jobs:
         run: |
           set -euo pipefail
           npx playwright test e2e/topology-edit-tool-icon-manifest.spec.js \
+            --project=chromium --workers=1 --retries=0 --reporter=line
+
+      - name: Execute production icon mutation sanity
+        run: |
+          set -euo pipefail
+          npx playwright test e2e/topology-edit-tool-icon-mutation.spec.js \
             --project=chromium --workers=1 --retries=0 --reporter=line
 
       - name: Execute SVG icon reference defense regression
@@ -112,6 +119,7 @@ jobs:
             reports/qualification/topology-edit-tool-audit.json
             reports/qualification/topology-edit-icon-manifest.json
             reports/qualification/topology-edit-icon-manifest.png
+            reports/qualification/topology-edit-icon-mutation-sanity.json
             playwright-report
             test-results
           if-no-files-found: warn

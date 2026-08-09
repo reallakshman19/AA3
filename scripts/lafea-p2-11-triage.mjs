@@ -21,7 +21,8 @@ const scripts = [
 const rows = scripts.map((script) => {
   const path = `scripts/${script}`;
   if (!fs.existsSync(path)) return { script, status: 'MISSING', exitCode: null, tail: 'script missing' };
-  const run = spawnSync(process.execPath, [path], {
+  const args = templateSourceGuard(script) ? [path, '--base', 'HEAD'] : [path];
+  const run = spawnSync(process.execPath, args, {
     encoding: 'utf8',
     env: process.env,
     maxBuffer: 4 * 1024 * 1024,
@@ -29,6 +30,7 @@ const rows = scripts.map((script) => {
   const combined = `${run.stdout ?? ''}\n${run.stderr ?? ''}`.trim();
   return {
     script,
+    invocation: args.slice(1),
     status: run.status === 0 ? 'PASS' : 'FAIL',
     exitCode: run.status,
     signal: run.signal ?? null,
@@ -45,3 +47,7 @@ const report = {
 };
 fs.writeFileSync('lafea-p2-11-triage.json', `${JSON.stringify(report, null, 2)}\n`);
 console.log(JSON.stringify(report, null, 2));
+
+function templateSourceGuard(script) {
+  return /^lafea-template-t(?:6[abc]|7[abc])-source-guard\.mjs$/u.test(script);
+}

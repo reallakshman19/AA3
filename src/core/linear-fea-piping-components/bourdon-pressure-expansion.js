@@ -1,39 +1,85 @@
 /**
  * MEC-21 pressure-expansion free movements for a circular pipe bend.
  *
- * Inputs use SI units. The returned translations and rotations use the
- * CAESAR/MEC bend axes: `a` is tangent toward the far end, `b` is normal to
- * the bend plane, and `c = a x b` points toward the bend centre.
+ * Inputs use SI units. MEC-21 Part II equation (2.25) reports the final-point
+ * translation and rotation components in that final station's local a-b-c
+ * basis: `a` is tangent toward the far end, `b` is normal to the bend plane,
+ * and `c = a x b` points toward the bend centre.
  *
- * Source: MEC-21 Part II, section 2.3.5.2, equation (2.25). The equation
- * supplies free movement only; the caller converts it to an initial-strain
- * load with the stiffness actually assembled for the bend element.
+ * A discretized structural model also needs a cumulative nodal free field.
+ * `deriveMec21BendPressureFreeState` therefore resolves the same physical
+ * station state into the physical bend's INITIAL a-b-c basis. That initial
+ * basis is fixed for the bend and can be mapped once into global coordinates.
+ *
+ * Source: MEC-21 Part II, section 2.3.5.2, equation (2.25). These helpers
+ * supply free movement only; callers convert it to an initial-strain load with
+ * the stiffness actually assembled for the bend element.
  */
 
 export const MEC21_BEND_PRESSURE_EXPANSION_FORMULATION =
   'MEC21_PART_II_EQ_2_25_BEND_PRESSURE_FREE_MOVEMENT_V1';
 
-/** Derive one positive-angle bend arc's pressure-induced free end movement. */
+/**
+ * Derive one positive-angle bend arc's pressure-induced free end movement in
+ * the MEC-21 FINAL-STATION local a-b-c basis exactly as equation (2.25).
+ */
 export function deriveMec21BendPressureFreeMovement(input) {
   const bendAngle = positive(input?.bendAngle, 'bendAngle');
-  return deriveMec21BendPressureState(input, bendAngle);
+  const localFinal = deriveMec21BendPressureLocalFinalState(input, bendAngle);
+  return Object.freeze({
+    ...localFinal,
+    basis: 'STATION_FINAL_ABC',
+  });
 }
 
 /**
- * Derive the free state at a cumulative station angle measured from one
- * physical bend's initial point. Unlike the standalone movement helper this
- * accepts the initial station `bendAngle = 0`, where the free state is zero.
+ * Derive the physical free state at a cumulative station angle measured from
+ * one physical bend's initial point. This accepts `bendAngle = 0`, where the
+ * free state is zero.
  *
- * This exists so a discretized stiffness model can sample one physical
- * bend-level MEC-21 field at all analysis stations instead of restarting
- * equation (2.25) independently on every numerical chord.
+ * `translationAbc` and `rotationAbc` are resolved in the BEND-INITIAL a-b-c
+ * basis. The original equation (2.25) station-local components are retained as
+ * `localFinalTranslationAbc` and `localFinalRotationAbc` for qualification.
+ *
+ * This cumulative-state contract prevents a numerical bend mesh from
+ * restarting equation (2.25) independently on every stiffness chord.
  */
 export function deriveMec21BendPressureFreeState(input) {
   const bendAngle = nonnegative(input?.bendAngle, 'bendAngle');
-  return deriveMec21BendPressureState(input, bendAngle);
+  const localFinal = deriveMec21BendPressureLocalFinalState(input, bendAngle);
+  const cosine = Math.cos(bendAngle);
+  const sine = Math.sin(bendAngle);
+  const [ua, ub, uc] = localFinal.translationAbc;
+  const [ra, rb, rc] = localFinal.rotationAbc;
+
+  // Station basis relative to bend-initial basis:
+  // a(theta) = cos(theta) a0 + sin(theta) c0
+  // b(theta) = b0
+  // c(theta) = -sin(theta) a0 + cos(theta) c0
+  const translationInitialAbc = Object.freeze([
+    cosine * ua - sine * uc,
+    ub,
+    sine * ua + cosine * uc,
+  ]);
+  const rotationInitialAbc = Object.freeze([
+    cosine * ra - sine * rc,
+    rb,
+    sine * ra + cosine * rc,
+  ]);
+
+  return Object.freeze({
+    formulation: localFinal.formulation,
+    basis: 'BEND_INITIAL_ABC',
+    translationAbc: translationInitialAbc,
+    rotationAbc: rotationInitialAbc,
+    localFinalTranslationAbc: localFinal.translationAbc,
+    localFinalRotationAbc: localFinal.rotationAbc,
+    curvatureChangeRatio: localFinal.curvatureChangeRatio,
+    shellCorrection: localFinal.shellCorrection,
+  });
 }
 
-function deriveMec21BendPressureState(input, bendAngle) {
+function deriveMec21BendPressureLocalFinalState(input, bendAngle) {
   const pressure = nonnegative(input?.pressure, 'pressure');
   const innerRadius = positive(input?.innerRadius, 'innerRadius');
   const bendRadius = positive(input?.bendRadius, 'bendRadius');

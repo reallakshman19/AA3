@@ -6,6 +6,7 @@ on:
       - 'src/workspace/lfea-topology-review-from-prefea.js'
       - 'src/workspace/lfea-topology-review-view.js'
       - 'src/workspace/linear-piping-inputxml-diagnostics-view.js'
+      - 'src/workspace/lfea-preflight-phase1-component-index.js'
       - 'scripts/lfea-topology-review-prefea-integration-check.mjs'
       - '.github/workflows/agent16-p02b-qualification.yml'
 
@@ -29,7 +30,7 @@ jobs:
           node-version: '22'
           cache: npm
 
-      - name: Prove exact head and P-02B containment above frozen P-02A
+      - name: Prove exact head and stacked P-06B repair plus P-02B containment
         shell: bash
         run: |
           set -euo pipefail
@@ -40,8 +41,8 @@ jobs:
           cat /tmp/p02b-paths.txt
           while IFS= read -r changed; do
             case "$changed" in
-              src/workspace/lfea-topology-review-from-prefea.js|src/workspace/lfea-topology-review-view.js|src/workspace/linear-piping-inputxml-diagnostics-view.js|scripts/lfea-topology-review-prefea-integration-check.mjs|.github/workflows/agent16-p02b-qualification.yml) ;;
-              *) echo "P-02B changed an unqualified path: $changed" >&2; exit 1 ;;
+              src/workspace/lfea-topology-review-from-prefea.js|src/workspace/lfea-topology-review-view.js|src/workspace/linear-piping-inputxml-diagnostics-view.js|src/workspace/lfea-preflight-phase1-component-index.js|scripts/lfea-topology-review-prefea-integration-check.mjs|.github/workflows/agent16-p02b-qualification.yml) ;;
+              *) echo "P-02B qualification stack changed an unqualified path: $changed" >&2; exit 1 ;;
             esac
           done < /tmp/p02b-paths.txt
 
@@ -77,22 +78,8 @@ jobs:
       - name: Preserve P-06A indexed review core
         run: node scripts/lfea-preflight-phase1-indexed-model-check.mjs
 
-      - name: Prove P-06B virtualization-v2 carried-red parity on P-02A and P-02B
-        shell: bash
-        run: |
-          set -euo pipefail
-          expected="does not provide an export named 'getLfeaPreflightPhase1ComponentParentLineTargetId'"
-          set +e
-          (cd /tmp/p02a-anchor && node scripts/lfea-preflight-phase1-virtualization-v2-check.mjs) > /tmp/p02a-p06b.log 2>&1
-          anchor_status=$?
-          node scripts/lfea-preflight-phase1-virtualization-v2-check.mjs > /tmp/p02b-p06b.log 2>&1
-          head_status=$?
-          set -e
-          test "$anchor_status" -ne 0
-          test "$head_status" -ne 0
-          for log in /tmp/p02a-p06b.log /tmp/p02b-p06b.log; do
-            grep -F "$expected" "$log"
-          done
+      - name: P-06B repaired 100k-line / 1m-component virtualization
+        run: node scripts/lfea-preflight-phase1-virtualization-v2-check.mjs
 
       - name: Preserve P-06C immutable review session
         run: node scripts/lfea-preflight-phase1-review-session-check.mjs
@@ -217,7 +204,8 @@ jobs:
         run: |
           printf '%s\n' \
             'P-10/P-09/P-07/P-08/P-06A preservation PASS' \
-            'P-06B virtualization-v2 missing-export carried-red parity PROVEN' \
+            'P-06B stable component-parent repair PASS' \
+            'P-06B 100k-line / 1m-component virtualization PASS' \
             'P-06C immutable review session PASS' \
             'P-06C live-surface missing-CSS carried-red parity PROVEN' \
             'P-02A frozen topology review contract PASS' \

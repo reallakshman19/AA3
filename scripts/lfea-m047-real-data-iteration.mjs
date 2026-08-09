@@ -296,14 +296,17 @@ function requireEvidenceToolPathsClean(workspaceRows, metaPath) {
 }
 
 function runCandidateRegressions(candidateRoot) {
-  const focused = resolve(candidateRoot, 'scripts/lfea-m047-check.mjs');
-  if (existsSync(focused)) {
-    return [runNode(candidateRoot, [focused], 'M047 focused regression gate')];
-  }
-  return LEGACY_REGRESSION_CHECKS.map((relativePath) => runNode(
+  const candidateMechanicsChecks = [
+    'scripts/lfea-m047-bourdon-mechanics-check.mjs',
+    'scripts/lfea-m047-bourdon-subdivision-check.mjs',
+    'scripts/lfea-m047-bourdon-compatible-field-check.mjs',
+    'scripts/lfea-m047-bourdon-source-guard.mjs',
+    ...LEGACY_REGRESSION_CHECKS,
+  ];
+  return candidateMechanicsChecks.map((relativePath) => runNode(
     candidateRoot,
     [resolve(candidateRoot, relativePath)],
-    `candidate regression ${relativePath}`,
+    `candidate mechanics regression ${relativePath}`,
   ));
 }
 

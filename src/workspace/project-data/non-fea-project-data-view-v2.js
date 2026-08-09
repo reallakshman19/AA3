@@ -136,15 +136,62 @@ function fieldMarkup(groupKey, field, entry) {
   const value = entry.value === null ? '' : ['json', 'source'].includes(field.inputType)
     ? JSON.stringify(entry.value, null, 2) : String(entry.value);
   const evidence = entry.evidence === null ? '' : JSON.stringify(entry.evidence, null, 2);
+  // Human-readable evidence summary: show just the source string, not raw JSON
+  const evidenceSource = entry.evidence?.source ? String(entry.evidence.source) : (entry.evidence !== null ? '(evidence set)' : '');
   const min = field.numericPolicy === 'SIGNED' ? '' : ' min="0"';
-  const input = field.inputType === 'number'
-    ? `<input type="number"${min} step="any" data-project-value="${escape(path)}" value="${escape(value)}">`
-    : `<textarea rows="${field.inputType === 'text' ? 2 : 5}" data-project-value="${escape(path)}" data-value-type="${escape(field.inputType)}">${escape(value)}</textarea>`;
   const state = entry.value === null ? 'MISSING' : entry.approved ? 'APPROVED' : 'REVIEW';
-  return `<label title="${escape(field.usage)}"><strong>${escape(field.label)}</strong><small>${escape(path)} · ${escape(field.usage)} · ${escape(field.numericPolicy)}</small></label>
-    ${input}<textarea rows="4" data-project-evidence="${escape(path)}" placeholder='{"source":"...","locator":"...","sourceHash":"..."}'>${escape(evidence)}</textarea>
+  // Sublabel: show unit only — no internal path, no numericPolicy
+  const sublabel = field.usage && field.usage !== field.label ? field.usage : '';
+
+  // Human-readable value summary for complex types
+  function valueSummary(val, inputType) {
+    if (val === null) return '';
+    if (inputType === 'source') {
+      // Source object: show just the filename from the path
+      const filePath = val?.path || val?.sha256 || '';
+      const fileName = filePath ? filePath.replace(/\\/g, '/').split('/').pop() : '';
+      const sheet = val?.sheet ? ` · ${val.sheet}` : '';
+      return fileName ? `${fileName}${sheet}` : '(source set)';
+    }
+    if (inputType === 'json') {
+      if (Array.isArray(val)) return `[${val.length} item${val.length !== 1 ? 's' : ''}]`;
+      if (val && typeof val === 'object') {
+        const keys = Object.keys(val);
+        // Show first 2 keys as a preview
+        const preview = keys.slice(0, 2).join(', ');
+        return `{${keys.length} key${keys.length !== 1 ? 's' : ''}: ${preview}${keys.length > 2 ? '…' : ''}}`;
+      }
+      return String(val);
+    }
+    return String(val);
+  }
+
+  let inputHtml;
+  if (field.inputType === 'number') {
+    inputHtml = `<input type="number"${min} step="any" data-project-value="${escape(path)}" value="${escape(value)}">`;
+  } else if (field.inputType === 'text') {
+    inputHtml = `<textarea rows="2" data-project-value="${escape(path)}" data-value-type="${escape(field.inputType)}">${escape(value)}</textarea>`;
+  } else {
+    // json or source — wrap with collapsible summary
+    const summary = valueSummary(entry.value, field.inputType);
+    inputHtml = `<div class="phase2-value-cell">
+      <textarea rows="5" data-project-value="${escape(path)}" data-value-type="${escape(field.inputType)}" class="phase2-value-raw">${escape(value)}</textarea>
+      ${summary ? `<span class="phase2-value-summary" title="${escape(value)}">${escape(summary)}</span>` : `<span class="phase2-value-empty">${state === 'MISSING' ? 'Not set — click to edit' : '(set)'}</span>`}
+    </div>`;
+  }
+
+  return `<label title="${escape(field.usage)}">
+      <strong>${escape(field.label)}</strong>
+      ${sublabel ? `<small>${escape(sublabel)}</small>` : ''}
+    </label>
+    ${inputHtml}
+    <div class="phase2-evidence-cell">
+      <textarea rows="4" data-project-evidence="${escape(path)}" placeholder='{"source":"...","locator":"...","sourceHash":"..."}' class="phase2-evidence-raw">${escape(evidence)}</textarea>
+      ${evidenceSource ? `<span class="phase2-evidence-summary" title="${escape(evidence)}">${escape(evidenceSource)}</span>` : '<span class="phase2-evidence-empty">No evidence</span>'}
+    </div>
     <label class="phase2-approval" data-state="${state}"><input type="checkbox" data-project-approved="${escape(path)}" ${entry.approved ? 'checked' : ''}><span>${state}</span></label>`;
 }
+
 
 function ownershipMarkup(matrix) {
   return `<details id="non-fea-field-ownership" open class="phase2-group" data-role="non-fea-field-ownership-matrix"><summary><div><span class="eyebrow">FORMAL FIELD REGISTRY</span><strong>Field ownership matrix</strong></div><span>${matrix.rows.length} fields · ${escape(matrix.semanticHash)}</span></summary>
@@ -236,6 +283,23 @@ function escape(value) { return String(value ?? '').replace(/[&<>"']/g, (char) =
 
 function styles() {
   return `<style>
-    .non-fea-project-data-v2{height:100%;overflow:auto;padding:16px;background:#07101e;color:#e2e8f0;box-sizing:border-box}.phase2-header{display:flex;gap:16px;justify-content:space-between;align-items:flex-start}.phase2-header h2{margin:3px 0;font-size:25px}.phase2-header p{margin:4px 0;color:#94a3b8;overflow-wrap:anywhere}.phase2-title{display:flex;gap:9px;align-items:center}.eyebrow{display:block;color:#38bdf8;font-size:10px;font-weight:800;letter-spacing:.1em}.phase2-badge{padding:3px 8px;border:1px solid #0ea5e9;border-radius:999px;color:#7dd3fc;font-size:10px;font-weight:800}.phase2-actions{display:flex;gap:7px;flex-wrap:wrap}.phase2-actions button,.phase2-actions label{border:1px solid #334155;border-radius:5px;background:#111c2f;color:#e2e8f0;padding:7px 10px;cursor:pointer}.phase2-summary{display:grid;grid-template-columns:repeat(5,1fr);gap:8px;margin-top:13px}.phase2-summary article{padding:10px;border:1px solid #293548;border-radius:6px;background:#0d1728}.phase2-summary span{display:block;color:#94a3b8;font-size:10px;text-transform:uppercase}.phase2-summary strong{display:block;margin-top:4px;font-size:15px;overflow-wrap:anywhere}.phase2-summary [data-state="ready"]{border-color:#166534}.phase2-summary [data-state="warning"]{border-color:#92400e}.phase2-summary [data-state="blocked"]{border-color:#7f1d1d}.phase2-audits{display:flex;gap:8px;margin:9px 0;flex-wrap:wrap}.phase2-audits span{padding:4px 8px;border-radius:999px;border:1px solid #334155}.phase2-audits [data-status="READY"]{color:#4ade80;border-color:#166534}.phase2-audits [data-status="BLOCKED"]{color:#fbbf24;border-color:#92400e}.phase2-scope{padding:10px 12px;border:1px solid #155e75;border-radius:6px;background:#082f49;color:#bae6fd;margin:10px 0}.phase2-layout{display:grid;grid-template-columns:250px minmax(0,1fr);gap:12px;align-items:start}.phase2-rail{position:sticky;top:0;padding:10px;border:1px solid #293548;border-radius:7px;background:#0b1424}.phase2-rail a{display:block;padding:9px 10px;border-radius:5px;color:#cbd5e1;text-decoration:none}.phase2-rail a:hover{background:#10243a;color:#7dd3fc}.phase2-rail a span,.phase2-rail p{display:block;color:#64748b;font-size:10px;margin-top:2px}.phase2-main{display:flex;flex-direction:column;gap:9px}.phase2-group,.phase2-panel{border:1px solid #334155;border-radius:7px;background:#0b1424;overflow:hidden}.phase2-group summary{display:flex;justify-content:space-between;gap:10px;padding:10px 12px;cursor:pointer;background:#101b2d}.phase2-group summary strong{display:block;color:#7dd3fc}.phase2-group summary>span{color:#94a3b8;overflow-wrap:anywhere}.phase2-fields{display:grid;grid-template-columns:minmax(190px,1fr) minmax(220px,1.2fr) minmax(240px,1.4fr) 100px;gap:6px;padding:9px 12px;align-items:start}.phase2-fields>strong{color:#94a3b8;font-size:10px;text-transform:uppercase}.phase2-fields label{padding-top:6px}.phase2-fields label strong,.phase2-fields label small{display:block}.phase2-fields label small{color:#64748b}.phase2-fields input[type="number"],.phase2-fields textarea{width:100%;box-sizing:border-box;border:1px solid #334155;border-radius:4px;background:#07101e;color:#e2e8f0;padding:7px}.phase2-approval{display:flex;gap:5px;align-items:center}.phase2-approval[data-state="APPROVED"]{color:#4ade80}.phase2-approval[data-state="MISSING"]{color:#f87171}.phase2-table-wrap{overflow:auto}.phase2-table-wrap table{width:100%;border-collapse:collapse}.phase2-table-wrap th,.phase2-table-wrap td{padding:8px;border-bottom:1px solid #26354a;text-align:left;vertical-align:top}.phase2-table-wrap th{color:#7dd3fc;font-size:10px;text-transform:uppercase}.phase2-table-wrap code,.phase2-table-wrap small{display:block;color:#64748b}.phase2-table-wrap td span{font-size:10px}.phase2-panel{padding:13px}.phase2-panel header{display:flex;justify-content:space-between;gap:10px}.phase2-panel h3{margin:3px 0}.phase2-panel p,.phase2-panel dt{color:#94a3b8}.phase2-panel dl{display:grid;grid-template-columns:120px 1fr;gap:6px}.phase2-panel dd{margin:0;overflow-wrap:anywhere}.phase2-policy{display:grid;grid-template-columns:1fr 1fr;gap:9px}.phase2-policy article{border:1px solid #293548;border-radius:7px;background:#0b1424;padding:13px}.phase2-policy h3{margin:3px 0}.phase2-policy p{color:#94a3b8}.phase2-actions button:focus,.phase2-actions label:focus-within,.phase2-rail a:focus{outline:2px solid #38bdf8;outline-offset:2px}@media(max-width:1100px){.phase2-summary{grid-template-columns:repeat(2,1fr)}.phase2-layout{grid-template-columns:1fr}.phase2-rail{position:static}.phase2-fields{grid-template-columns:1fr}.phase2-policy{grid-template-columns:1fr}}
+    .non-fea-project-data-v2{height:100%;overflow:auto;padding:16px;background:#07101e;color:#e2e8f0;box-sizing:border-box}.phase2-header{display:flex;gap:16px;justify-content:space-between;align-items:flex-start}.phase2-header h2{margin:3px 0;font-size:25px}.phase2-header p{margin:4px 0;color:#94a3b8;overflow-wrap:anywhere}.phase2-title{display:flex;gap:9px;align-items:center}.eyebrow{display:block;color:#38bdf8;font-size:10px;font-weight:800;letter-spacing:.1em}.phase2-badge{padding:3px 8px;border:1px solid #0ea5e9;border-radius:999px;color:#7dd3fc;font-size:10px;font-weight:800}.phase2-actions{display:flex;gap:7px;flex-wrap:wrap}.phase2-actions button,.phase2-actions label{border:1px solid #334155;border-radius:5px;background:#111c2f;color:#e2e8f0;padding:7px 10px;cursor:pointer}.phase2-summary{display:grid;grid-template-columns:repeat(5,1fr);gap:8px;margin-top:13px}.phase2-summary article{padding:10px;border:1px solid #293548;border-radius:6px;background:#0d1728}.phase2-summary span{display:block;color:#94a3b8;font-size:10px;text-transform:uppercase}.phase2-summary strong{display:block;margin-top:4px;font-size:15px;overflow-wrap:anywhere}.phase2-summary [data-state="ready"]{border-color:#166534}.phase2-summary [data-state="warning"]{border-color:#92400e}.phase2-summary [data-state="blocked"]{border-color:#7f1d1d}.phase2-audits{display:flex;gap:8px;margin:9px 0;flex-wrap:wrap}.phase2-audits span{padding:4px 8px;border-radius:999px;border:1px solid #334155}.phase2-audits [data-status="READY"]{color:#4ade80;border-color:#166534}.phase2-audits [data-status="BLOCKED"]{color:#fbbf24;border-color:#92400e}.phase2-scope{padding:10px 12px;border:1px solid #155e75;border-radius:6px;background:#082f49;color:#bae6fd;margin:10px 0}.phase2-layout{display:grid;grid-template-columns:250px minmax(0,1fr);gap:12px;align-items:start}.phase2-rail{position:sticky;top:0;padding:10px;border:1px solid #293548;border-radius:7px;background:#0b1424}.phase2-rail a{display:block;padding:9px 10px;border-radius:5px;color:#cbd5e1;text-decoration:none}.phase2-rail a:hover{background:#10243a;color:#7dd3fc}.phase2-rail a span,.phase2-rail p{display:block;color:#64748b;font-size:10px;margin-top:2px}.phase2-main{display:flex;flex-direction:column;gap:9px}.phase2-group,.phase2-panel{border:1px solid #334155;border-radius:7px;background:#0b1424;overflow:hidden}.phase2-group summary{display:flex;justify-content:space-between;gap:10px;padding:10px 12px;cursor:pointer;background:#101b2d}.phase2-group summary strong{display:block;color:#7dd3fc}.phase2-group summary>span{color:#94a3b8;overflow-wrap:anywhere}.phase2-fields{display:grid;grid-template-columns:minmax(190px,1fr) minmax(220px,1.2fr) minmax(240px,1.4fr) 100px;gap:6px;padding:9px 12px;align-items:start}.phase2-fields>strong{color:#94a3b8;font-size:10px;text-transform:uppercase}.phase2-fields label{padding-top:6px}.phase2-fields label strong,.phase2-fields label small{display:block}.phase2-fields label small{color:#64748b}.phase2-fields input[type="number"],.phase2-fields textarea{width:100%;box-sizing:border-box;border:1px solid #334155;border-radius:4px;background:#07101e;color:#e2e8f0;padding:7px}.phase2-approval{display:flex;gap:5px;align-items:center}.phase2-approval[data-state="APPROVED"]{color:#4ade80}.phase2-approval[data-state="MISSING"]{color:#f87171}.phase2-table-wrap{overflow:auto}.phase2-table-wrap table{width:100%;border-collapse:collapse}.phase2-table-wrap th,.phase2-table-wrap td{padding:8px;border-bottom:1px solid #26354a;text-align:left;vertical-align:top}.phase2-table-wrap th{color:#7dd3fc;font-size:10px;text-transform:uppercase}.phase2-table-wrap code,.phase2-table-wrap small{display:block;color:#64748b}.phase2-table-wrap td span{font-size:10px}.phase2-panel{padding:13px}.phase2-panel header{display:flex;justify-content:space-between;gap:10px}.phase2-panel h3{margin:3px 0}.phase2-panel p,.phase2-panel dt{color:#94a3b8}.phase2-panel dl{display:grid;grid-template-columns:120px 1fr;gap:6px}.phase2-panel dd{margin:0;overflow-wrap:anywhere}.phase2-policy{display:grid;grid-template-columns:1fr 1fr;gap:9px}.phase2-policy article{border:1px solid #293548;border-radius:7px;background:#0b1424;padding:13px}.phase2-policy h3{margin:3px 0}.phase2-policy p{color:#94a3b8}.phase2-actions button:focus,.phase2-actions label:focus-within,.phase2-rail a:focus{outline:2px solid #38bdf8;outline-offset:2px}
+    /* Evidence cell: show human summary, raw JSON only on hover/focus */
+    .phase2-evidence-cell{position:relative;display:flex;flex-direction:column;gap:4px}
+    .phase2-evidence-raw{font-size:10px;font-family:monospace;display:none}
+    .phase2-evidence-cell:focus-within .phase2-evidence-raw{display:block}
+    .phase2-evidence-summary{font-size:11px;color:#7dd3fc;padding:4px 6px;border:1px solid #1e3a5f;border-radius:4px;background:#0a1f3a;cursor:pointer;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%}
+    .phase2-evidence-summary:hover{background:#0f2d52}
+    .phase2-evidence-empty{font-size:11px;color:#475569;font-style:italic;padding:4px 6px}
+    /* Value cell for source/json fields: same collapse pattern */
+    .phase2-value-cell{display:flex;flex-direction:column;gap:4px}
+    .phase2-value-raw{font-size:10px;font-family:monospace;display:none}
+    .phase2-value-cell:focus-within .phase2-value-raw{display:block}
+    .phase2-value-summary{font-size:11px;color:#e2e8f0;padding:4px 6px;border:1px solid #334155;border-radius:4px;background:#0d1728;cursor:pointer;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%}
+    .phase2-value-summary:hover{background:#182a45;border-color:#4a6080}
+    .phase2-value-empty{font-size:11px;color:#475569;font-style:italic;padding:4px 6px;border:1px dashed #293548;border-radius:4px;cursor:pointer}
+    .phase2-value-empty:hover{color:#94a3b8;border-color:#475569}
+    @media(max-width:1100px){.phase2-summary{grid-template-columns:repeat(2,1fr)}.phase2-layout{grid-template-columns:1fr}.phase2-rail{position:static}.phase2-fields{grid-template-columns:1fr}.phase2-policy{grid-template-columns:1fr}}
   </style>`;
 }
+

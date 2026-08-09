@@ -10,6 +10,34 @@ export function renderLoadCalcConsumer(documentRef, state) {
   return section;
 }
 
+function runReasonText(snap, authState) {
+  const code = snap?.reasonCode || authState?.reasonCode || '';
+  const MAP = {
+    'EMPIRICAL_SCENARIO_REQUIRED': 'Configure a scenario in the Methods tab',
+    'EMPIRICAL_SCENARIO_BLOCKED':  'Scenario has blockers — check Methods tab',
+    'EMPIRICAL_SCENARIO_NOT_READY': 'Scenario not ready — authorize first',
+    'EMPIRICAL_SCENARIO_AUTHORIZATION_REQUIRED': 'Authorize the scenario first',
+    'EMPIRICAL_SCENARIO_AUTHORIZATION_STALE': 'Authorization is stale — re-authorize',
+    'NO_ACTIVE_DATASET': 'No dataset loaded — import SJSON first',
+    'EMPIRICAL_RUNTIME_ACTIVE_MODEL_MISSING': 'Load a dataset first',
+    'EMPIRICAL_INPUT_NOT_READY': 'Check Verify & Run tab — some inputs are missing',
+    'EMPIRICAL_MODELS_NOT_READY': 'Topology models not ready',
+  };
+  return MAP[code] || (code ? code.replace(/_/g, ' ').toLowerCase() : 'Not ready');
+}
+
+function resolveRunAction(state) {
+  const snap = state.empiricalScenarioState;
+  const authState = state.authorizationState;
+  if (snap?.calculationEligible) {
+    return { label: 'Run Load Calc', eligible: true, reason: 'Execute configured empirical scenario', action: 'empirical' };
+  }
+  if (authState?.calculationEligible) {
+    return { label: 'Run Load Calc — Gravity', eligible: true, reason: 'Execute authorized gravity load calc', action: 'gravity' };
+  }
+  return { label: 'Run Load Calc', eligible: false, reason: runReasonText(snap, authState), action: 'none' };
+}
+
 function headerMarkup(state) {
   const supportSummary = state.supportSiteModel?.summary;
   const routeSummary = state.routePartitionModel?.summary;
@@ -27,31 +55,35 @@ function headerMarkup(state) {
   const eligible = authorization.calculationEligible === true;
   const recalculate = authorization.state === 'EXECUTED_CURRENT';
   const disabledReason = authorizationReason(authorization);
+  const runAction = resolveRunAction(state);
+
+  const sealStatus = commonSeal === 'CURRENT' ? 'ok' : (commonSeal === 'NOT_SEALED' ? 'warn' : 'fail');
+  const authSt = authorization.state || 'NOT_CONFIGURED';
+  const authStatus = (authSt === 'EXECUTED_CURRENT' || authSt === 'AUTHORIZED_CURRENT') ? 'ok' : (authSt.includes('AWAITING') || authSt === 'DRAFT_READY' ? 'warn' : 'fail');
+  const resultStatus = freshness === 'CURRENT' ? 'ok' : (freshness === 'NOT_CALCULATED' ? 'warn' : 'fail');
+
+  // Human-readable pill labels
+  const SEAL_LABELS = { CURRENT: 'Sealed ✓', STALE: 'Seal stale ⚠', NOT_SEALED: 'Not sealed' };
+  const AUTH_LABELS = {
+    EXECUTED_CURRENT: 'Authorized ✓', AUTHORIZED_CURRENT: 'Authorized ✓',
+    DRAFT_READY: 'Ready to authorize', DRAFT_BLOCKED: 'Scenario blocked',
+    AUTHORIZED_STALE: 'Stale — re-authorize', EXECUTED_STALE: 'Results stale',
+    NOT_CONFIGURED: 'No scenario', AWAITING_AUTHORIZATION: 'Awaiting auth',
+  };
+  const RESULT_LABELS = { CURRENT: 'Results ready ✓', NOT_CALCULATED: 'Not run yet', STALE: 'Results stale' };
+  const sealLabel  = SEAL_LABELS[commonSeal]   || commonSeal;
+  const authLabel  = AUTH_LABELS[authSt]        || authSt;
+  const resultLabel = RESULT_LABELS[freshness]  || freshness;
+
   return `<header class="empirical-load-calc__header">
     <div><span class="panel-eyebrow">${escapeHtml(activeMethod)}</span><h1>Empirical Support Loads</h1></div>
     <div class="empirical-load-calc__facts">
-      <span>Input seal: ${escapeHtml(commonSeal)}</span>
-      <span>Authorization: ${escapeHtml(authorization.state || 'NOT_CONFIGURED')}</span>
-      <span>Result: ${escapeHtml(freshness)}</span>
-      <details class="empirical-load-calc__state-details">
-        <summary>Calculation state</summary>
-        <div>
-          <span>Assemblies: ${integer(supportSummary?.supportAssemblyCount)}</span>
-          <span>Sites: ${integer(supportSummary?.physicalLocationCount)}</span>
-          <span>Routes: ${integer(routeSummary?.routeCount)}</span>
-          <span>Freshness: ${escapeHtml(freshness)}</span>
-          <span>Authority: ${escapeHtml(authority)}</span>
-          <span>Authorization: ${escapeHtml(authorization.state || 'NOT_CONFIGURED')}</span>
-          <span>Authorization freshness: ${escapeHtml(authorization.authorizationFreshness || 'NOT_APPLICABLE')}</span>
-          <span>Execution freshness: ${escapeHtml(authorization.executionFreshness || 'NOT_APPLICABLE')}</span>
-          <span>Empirical scenario: ${escapeHtml(empiricalScenario.state || 'NOT_CONFIGURED')}</span>
-          <span>Empirical profile: ${escapeHtml(empiricalScenario.profile ? `${empiricalScenario.profile.profileId} v${empiricalScenario.profile.profileVersion}` : 'NOT_BOUND')}</span>
-          <span>Common checker: ${escapeHtml(commonInput.report?.packageState || 'NOT_EVALUATED')}</span>
-          <span>Common seal: ${escapeHtml(commonSeal)}</span>
-        </div>
-      </details>
+      <span data-pill-status="${sealStatus}">${escapeHtml(sealLabel)}</span>
+      <span data-pill-status="${authStatus}">${escapeHtml(authLabel)}</span>
+      <span data-pill-status="${resultStatus}">${escapeHtml(resultLabel)}</span>
     </div>
     <nav class="empirical-load-calc__tabs" aria-label="Load calculation views">
+      <button type="button" class="${state.activeTab === 'verify' || !state.activeTab ? 'is-active' : ''}" data-load-calc-tab="verify" title="Pre-run readiness checklist">★ Verify &amp; Run</button>
       ${tabGroup('Setup', [
         ['overview', 'Overview'],
         ['project-data', 'Project Data'],
@@ -79,8 +111,13 @@ function headerMarkup(state) {
       ], state.activeTab)}
     </nav>
     <div class="empirical-load-calc__actions">
-      <button type="button" data-engineering-load-calculate ${eligible ? '' : 'disabled'} aria-disabled="${eligible ? 'false' : 'true'}" title="${escapeHtml(eligible ? 'Execute the current authorized gravity package. Configured scenario methods are calculated from the Methods tab.' : disabledReason)}">${recalculate ? 'Recalculate — Authorized Gravity' : 'Calculate — Authorized Gravity'}</button>
-      <output data-engineering-load-status aria-live="polite">${escapeHtml(state.message || (!eligible ? disabledReason : ''))}</output>
+      <button type="button" class="button button--primary" 
+        ${runAction.eligible ? '' : 'disabled'}
+        data-load-calc-run
+        title="${escapeHtml(runAction.reason)}">
+        ▶ ${escapeHtml(runAction.label)}
+      </button>
+      <output data-engineering-load-status aria-live="polite">${escapeHtml(state.message || (!runAction.eligible ? runAction.reason : ''))}</output>
     </div>
   </header>`;
 }

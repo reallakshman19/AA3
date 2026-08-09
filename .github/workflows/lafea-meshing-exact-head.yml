@@ -10,9 +10,11 @@ on:
       - 'src/workspace/lafea-discretization*.js'
       - 'src/workspace/lafea-workbench*.js'
       - 'src/workspace/lafea-stage-analysis-adapter.js'
+      - 'src/workspace/lafea-canvas/**'
       - 'scripts/lafea.10-*.mjs'
       - 'scripts/lafea-mesh-producer-binding-check.mjs'
       - 'scripts/lafea-mesh-dof-policy-check.mjs'
+      - 'scripts/lafea-meshing-system-check.mjs'
       - 'package.json'
       - '.github/workflows/lafea-meshing-exact-head.yml'
   workflow_dispatch:
@@ -50,6 +52,9 @@ jobs:
 
       - name: Qualify stage-aware mesh DOF policy
         run: node scripts/lafea-mesh-dof-policy-check.mjs
+
+      - name: Qualify governed canvas meshing intent
+        run: node scripts/lafea-meshing-system-check.mjs
 
       - name: Run governed LAFEA meshing gate
         run: npm run check:lafea-meshing

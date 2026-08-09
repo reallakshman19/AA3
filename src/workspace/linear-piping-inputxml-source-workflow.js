@@ -138,7 +138,7 @@ export class LinearPipingInputXmlSourceWorkflowController {
     const validated = this.preFlight ? requireLinearPipingInputXmlPreFlight(this.preFlight) : null;
     return Object.freeze({
       schema: LINEAR_PIPING_INPUTXML_SOURCE_WORKFLOW_SCHEMA,
-      sourceStatus: sourceStatus(this.inspection, validated),
+      sourceStatus: sourceStatus(this.inspection, validated, this.intake),
       fileName: this.sourceInput?.fileName ?? null,
       contentSha256: this.inspection?.contentSha256 ?? null,
       unitDeclared: this.intake?.unitAuthority.declared ?? this.inspection?.unitDeclared ?? null,
@@ -189,11 +189,12 @@ export class LinearPipingInputXmlSourceWorkflowController {
     try {
       this.loadSource({ fileName: file.name, content: await file.text() });
     } catch (error) {
-      this.intake = null;
-      this.preFlight = null;
-      this.error = errorMessage(error);
-      this.message = 'Native InputXML source was rejected.';
-      this.render();
+      if (this.intake === null) {
+        this.preFlight = null;
+        this.error = errorMessage(error);
+        this.message = 'Native InputXML source was rejected before source authority could be sealed.';
+        this.render();
+      }
     } finally {
       if (this.elements) this.elements.fileInput.value = '';
     }
@@ -203,9 +204,11 @@ export class LinearPipingInputXmlSourceWorkflowController {
     try {
       this.authorizeUnit(this.elements?.unitSelect.value ?? '');
     } catch (error) {
-      this.error = errorMessage(error);
-      this.message = 'Source-unit authorization was rejected.';
-      this.render();
+      if (this.intake === null) {
+        this.error = errorMessage(error);
+        this.message = 'Source-unit authorization was rejected before source authority could be sealed.';
+        this.render();
+      }
     }
   }
 
@@ -239,11 +242,15 @@ export class LinearPipingInputXmlSourceWorkflowController {
       this.message = `Analysis profile changed; native pre-flight was regenerated and any prior authorization was invalidated. ${this.message}`;
       this.render();
     } catch (error) {
-      this.intake = null;
-      this.preFlight = null;
-      this.error = errorMessage(error);
-      this.message = 'Analysis profile change invalidated the prior native pre-flight; regeneration failed closed.';
-      this.render();
+      if (this.intake === null) {
+        this.preFlight = null;
+        this.error = errorMessage(error);
+        this.message = 'Analysis profile change invalidated the prior native pre-flight; source authority could not be resealed.';
+        this.render();
+      } else {
+        this.message = `Analysis profile changed and prior authorization was invalidated. ${this.message}`;
+        this.render();
+      }
     }
   }
 
@@ -255,7 +262,19 @@ export class LinearPipingInputXmlSourceWorkflowController {
       requestedProfileId: profileId,
       requestedCaseIds: [LINEAR_PIPING_INPUTXML_DEFAULT_CASE_ID],
     });
-    this.preFlight = prepareLinearPipingInputXmlPreFlight(this.intake);
+    this.preFlight = null;
+    try {
+      this.preFlight = prepareLinearPipingInputXmlPreFlight(this.intake);
+    } catch (error) {
+      this.error = errorMessage(error);
+      this.message = [
+        `InputXML source authority sealed (${this.intake.unitAuthority.sourceUnit}; ${this.intake.unitAuthority.authority}).`,
+        'Downstream native pre-flight failed closed.',
+        'No pre-FEA authorization or execution authority exists.',
+      ].join(' ');
+      this.render();
+      throw error;
+    }
     this.error = '';
     if (this.preFlight.status === 'PASS') {
       this.message = [
@@ -290,7 +309,7 @@ export class LinearPipingInputXmlSourceWorkflowController {
     this.elements.authorizeButton.hidden = !warnPending;
     this.elements.clearButton.disabled = this.sourceInput === null;
     renderSourceSummary(this.documentRef, this.elements.summaryRoot, this);
-    this.elements.section.dataset.sourceStatus = sourceStatus(this.inspection, this.preFlight);
+    this.elements.section.dataset.sourceStatus = sourceStatus(this.inspection, this.preFlight, this.intake);
     this.elements.section.dataset.preFlightStatus = this.preFlight?.status ?? 'NOT_PREPARED';
     this.elements.section.dataset.preFlightAuthorized = this.preFlight?.solveAuthorized ? 'true' : 'false';
     this.elements.section.dataset.nativeExecutionReady = 'false';
@@ -443,6 +462,9 @@ function renderSourceSummary(doc, root, controller) {
     rows.push(['Pre-FEA authorization', controller.preFlight.solveAuthorized
       ? controller.preFlight.authorization.semanticHash
       : 'NOT AUTHORIZED']);
+  } else if (controller.intake) {
+    rows.push(['Pre-flight', controller.error ? 'FAILED CLOSED — NOT AUTHORIZED' : 'NOT PREPARED']);
+    rows.push(['Pre-FEA authorization', 'NOT AUTHORIZED']);
   }
 
   const table = doc.createElement('table');
@@ -497,9 +519,10 @@ function retainSourceInput(value) {
   return Object.freeze({ fileName: value.fileName, content: value.content });
 }
 
-function sourceStatus(inspection, preFlight) {
+function sourceStatus(inspection, preFlight, intake) {
   if (!inspection) return 'EMPTY';
   if (preFlight) return preFlight.status;
+  if (intake) return 'SOURCE_AUTHORIZED_PREFLIGHT_NOT_READY';
   return inspection.status;
 }
 

@@ -1,0 +1,44 @@
+{
+  "schema": "lfea-caesar-accdb-iteration-request/v1",
+  "issueId": "M047",
+  "iterationId": "M047-I021",
+  "expectedSourceAccdbSha256": "85d39463296e569da811d8572e2eff680b858097f76fdf0f47d1755f0b161c21",
+  "expectedBendPointerCount": 12,
+  "baseCommitSha": "882d59a99c3a03847d20bec34770ba57ff479d91",
+  "parentAcceptedIteration": "M047-I015",
+  "supportingCustodyIterations": ["M047-I019", "M047-I020"],
+  "hypothesis": "Finite incoming straight portions of bend source elements are ordinary straight flexible pipe and should consume the same governed Timoshenko base-beam law accepted by I015. Applying that law only to non-tee BEND_INCOMING_STRAIGHT carriers, while holding every BEND_ARC carrier and all component-specific bend flexibility/pressure mechanics unchanged, should remove one deliberate partial-constitutive boundary without double-owning curved-pipe mechanics.",
+  "candidateBoundary": {
+    "retainedI015": "FRAME && teeModifier===null",
+    "additionalI021": "BEND_INCOMING_STRAIGHT && teeModifier===null",
+    "held": [
+      "BEND_INCOMING_STRAIGHT with tee modifier",
+      "BEND_ARC",
+      "TEE/B31J component mechanics",
+      "REDUCER",
+      "RIGID",
+      "BOURDON",
+      "PRESSURE",
+      "THERMAL_AUTHORITY"
+    ],
+    "shearCorrectionFactorY": 0.53,
+    "shearCorrectionFactorZ": 0.53,
+    "shearCorrectionAuthority": "COWPER-1966-THIN-ANNULUS-INPUT"
+  },
+  "predictedSignature": [
+    "The accepted I015 solver source hash must be the exact parent of the I021 mutation.",
+    "Exactly the non-tee BEND_INCOMING_STRAIGHT carrier family is added to the Timoshenko selection; tee-modified incoming straight source 36 remains held.",
+    "All BEND_ARC carriers continue to use their precompiled component frame/effective stiffness and are not selected by the I021 profile predicate.",
+    "The locked system A/B must retain identical CAESAR reference rows, 12/12 bend coverage, and target-node incident-action/equilibrium closure.",
+    "Report L19/L20 restraint, displacement/rotation, source-end-action metrics and the tracked node 20090 FY response without fitting or tolerance changes.",
+    "No automatic acceptance is inferred from a single reaction improvement; system metrics and I019/I020 redistribution sentinels must be adjudicated together."
+  ],
+  "changedPaths": [
+    "scripts/lfea-m047-apply-bend-incoming-straight-timoshenko-candidate.mjs",
+    "scripts/lfea-m047-bend-incoming-straight-timoshenko-candidate-check.mjs",
+    ".github/workflows/m047-bm4nl-i021-bend-incoming-straight-ab.yml"
+  ],
+  "mechanicsDelta": "Runtime qualification candidate only. Retain accepted I015 ordinary plain-FRAME Timoshenko mechanics and add the same governed base-beam law to non-tee BEND_INCOMING_STRAIGHT carriers. BEND_ARC and all other component mechanics remain held.",
+  "verdict": "PENDING",
+  "decisionReason": "Await exact-head locked Windows I021 A/B evidence."
+}

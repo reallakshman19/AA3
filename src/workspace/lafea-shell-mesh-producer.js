@@ -401,7 +401,7 @@ function planPeriodicShellAnalysisMesh(midsurfaceEvidence, meshProfile) {
     resourceDisposition,
     capabilityHash: capability.capabilityHash,
     qualificationHash: qualification.qualificationHash,
-    producerRef: LAFEA_MESH_PRODUCER_REF,
+    producerRef: LAFA_MESH_PRODUCER_REF,
     producerId: capability.producerId,
     producerRevision: capability.producerRevision,
     repeatabilityPolicy: capability.repeatabilityPolicy,
@@ -461,7 +461,6 @@ function produceEvidenceFromPlan(plan, meshProfile, outputSchema, outputHashSche
     elementFamily: LAFEA_SHELL_ELEMENT,
     meshHash,
     mesh: plan.mesh,
-    lifecycleAuthority: false,
   };
   const output = freeze({
     ...outputCore,

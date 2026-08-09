@@ -4,6 +4,7 @@ import { resolve } from 'node:path';
 import { TOPOLOGY_EDIT_ICON_MANIFEST } from '../src/workspace/viewport-productivity/topology-edit-icon-manifest.js';
 import {
   candidateSha,
+  expectToolbarHitTargetsSeparated,
   expectVisibleIcon,
   identityFromSelector,
   inspectControl,
@@ -47,7 +48,7 @@ test('42-control production manifest resolves to visibly rendered SVG icons', as
 
   const rows = [];
   for (const entry of TOPOLOGY_EDIT_ICON_MANIFEST) {
-    await openApplicableSurface(host, entry.surface);
+    await openApplicableSurface(host, entry);
     const locator = host.locator(entry.selector);
     await expect(locator, entry.key).toHaveCount(1);
     await expect(locator, entry.key).toHaveAccessibleName(entry.accessibility.accessibleName);
@@ -168,6 +169,7 @@ test('production icon identity survives real UI states and deactivate/reactivate
   await expect.poll(() => host.getAttribute(canonicalHashAttribute)).not.toBe(baselineHash);
   await expect(undo).toBeEnabled();
   await expectVisibleIcon(undo, 'icon-undo');
+  await expectToolbarHitTargetsSeparated(host);
   await undo.click();
   await expect(host).toHaveAttribute(canonicalHashAttribute, baselineHash);
   await expect(redo).toBeEnabled();

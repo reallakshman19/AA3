@@ -1,3 +1,4 @@
+import { createLafeaAnalysisGeometry } from './lafea-analysis-geometry-contract.js';
 import {
   LAFEA_SHELL_MIDSURFACE_EVIDENCE_SCHEMA,
   LAFEA_SHELL_MIDSURFACE_GEOMETRY_SCHEMA,
@@ -82,7 +83,6 @@ export function shellMidsurfaceParameterGeometry(value) {
     return curvedShellParameterGeometry(geometry);
   }
   const planar = validateLafeaShellMidsurfaceGeometry(geometry);
-  const { createLafeaAnalysisGeometry } = requireAnalysisGeometryFactory();
   return createLafeaAnalysisGeometry({
     schema: 'lafea-analysis-geometry/v1',
     stageId: 'LAFEA.3',
@@ -101,13 +101,6 @@ export function shellMidsurfaceParameterGeometry(value) {
       loopId: row.loopId, role: row.role, segmentIds: [...row.segmentIds],
     })),
   });
-}
-
-// Keep this module dependency-light for custody/producer use. The planar
-// parameter-geometry builder is retained in the producer; callers should not
-// reach this helper until the static import version lands.
-function requireAnalysisGeometryFactory() {
-  fail('LAFEA_SHELL_PLANAR_PARAMETER_GEOMETRY_DISPATCH_NOT_AVAILABLE');
 }
 
 function cross(left, right) {

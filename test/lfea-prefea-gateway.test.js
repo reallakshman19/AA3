@@ -319,10 +319,18 @@ const cases = [
     assert.doesNotThrow(() => assertSerializable(JSON.parse(JSON.stringify({ prepared, auth }))));
     expectCode(() => assertSerializable({ matrix: [[1]] }), 'PREFEA_RUNTIME_STATE_PROHIBITED');
   }],
-  ['PF-22 every public InputXML solve path requires authorization', () => {
-    const index = fs.readFileSync(path.join(ROOT, 'src/core/linear-piping-analysis-consumer/index.js'), 'utf8');
-    assert.match(index, /solveInputXmlLinearAnalysis/u);
-    assert.doesNotMatch(index, /runLinearPipingAnalysisFromInputXml/u);
+  ['PF-22 every public InputXML solve path requires authorization', async () => {
+    const publicApi = await import('../src/core/linear-piping-analysis-consumer/index.js');
+    assert.equal(
+      publicApi.solveInputXmlLinearAnalysis,
+      solveInputXmlLinearAnalysis,
+      'The public InputXML solver export must resolve to the governed authorization-enforcing implementation.',
+    );
+    assert.equal(
+      Object.hasOwn(publicApi, 'runLinearPipingAnalysisFromInputXml'),
+      false,
+      'The legacy ungated InputXML solve entry point must remain absent from the public consumer API.',
+    );
   }],
   ['PF-23 legacy gateway bypass attempt fails', async () => {
     const legacy = await import('../src/core/linear-piping-analysis-consumer/generic-inputxml-solve.js');

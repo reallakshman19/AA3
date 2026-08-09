@@ -11,6 +11,7 @@ on:
       - 'src/workspace/lafea-workbench*.js'
       - 'scripts/lafea.10-*.mjs'
       - 'scripts/lafea-mesh-producer-binding-check.mjs'
+      - 'scripts/lafea-mesh-refinement-diagnostic.mjs'
       - 'package.json'
       - '.github/workflows/lafea-meshing-exact-head.yml'
   workflow_dispatch:
@@ -45,6 +46,9 @@ jobs:
 
       - name: Install exact dependencies
         run: npm ci
+
+      - name: Report P1 refinement quality diagnostics
+        run: node scripts/lafea-mesh-refinement-diagnostic.mjs
 
       - name: Run governed LAFEA meshing gate
         run: npm run check:lafea-meshing

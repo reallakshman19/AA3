@@ -1,8 +1,10 @@
 #!/usr/bin/env node
 import { mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { dirname, resolve } from 'node:path';
+import { fileURLToPath } from 'node:url';
 import { canonicalPrettyStringify, semanticHash } from '../src/core/shared-piping-model/canonical-json.js';
 
+const SCRIPT_PATH = fileURLToPath(import.meta.url);
 const MEASUREMENT_SCHEMA = 'lfea-bm4nl-iteration-measurement/v1';
 
 export function compareBm4IterationMeasurements(before, after, iterationId = null) {
@@ -60,16 +62,16 @@ function compareCase(beforeCase, afterCase) {
   }
 
   const components = identities.map((key) => compareComponent(beforeRows.get(key), afterRows.get(key)));
-  const decreased = components.filter((row) => row.relativeErrorDelta < 0);
-  const increased = components.filter((row) => row.relativeErrorDelta > 0);
-  const unchanged = components.filter((row) => row.relativeErrorDelta === 0);
+  const decreased = components.filter((row) => row.comparisonErrorDelta < 0);
+  const increased = components.filter((row) => row.comparisonErrorDelta > 0);
+  const unchanged = components.filter((row) => row.comparisonErrorDelta === 0);
   const transitions = Object.fromEntries([
     'FAIL_TO_PASS', 'PASS_TO_FAIL', 'PASS_TO_PASS', 'FAIL_TO_FAIL',
   ].map((name) => [name, components.filter((row) => row.statusTransition === name).length]));
   const largestImprovement = [...components].sort((left, right) =>
-    left.relativeErrorDelta - right.relativeErrorDelta)[0] ?? null;
+    left.comparisonErrorDelta - right.comparisonErrorDelta)[0] ?? null;
   const largestRegression = [...components].sort((left, right) =>
-    right.relativeErrorDelta - left.relativeErrorDelta)[0] ?? null;
+    right.comparisonErrorDelta - left.comparisonErrorDelta)[0] ?? null;
 
   return {
     beforeQualificationStatus: beforeCase.qualificationStatus,
@@ -83,7 +85,7 @@ function compareCase(beforeCase, afterCase) {
     beforeExceedingRestraintCount: beforeCase.exceedingRestraintCount,
     afterExceedingRestraintCount: afterCase.exceedingRestraintCount,
     exceedingRestraintCountDelta: afterCase.exceedingRestraintCount - beforeCase.exceedingRestraintCount,
-    relativeErrorMovement: {
+    comparisonErrorMovement: {
       decreasedComponentCount: decreased.length,
       increasedComponentCount: increased.length,
       unchangedComponentCount: unchanged.length,
@@ -100,8 +102,8 @@ function compareComponent(before, after) {
       || before.scaleFloor !== after.scaleFloor) {
     throw new TypeError(`Reference/tolerance drift for restraint component ${identity(before)}.`);
   }
-  const beforeError = before.relativeError ?? 0;
-  const afterError = after.relativeError ?? 0;
+  const beforeError = comparisonError(before);
+  const afterError = comparisonError(after);
   return {
     nodeId: before.nodeId,
     quantity: before.quantity,
@@ -114,12 +116,27 @@ function compareComponent(before, after) {
     actualValueDelta: after.actualValue - before.actualValue,
     beforeRelativeError: before.relativeError,
     afterRelativeError: after.relativeError,
-    relativeErrorDelta: afterError - beforeError,
+    relativeErrorDelta: before.relativeError === null || after.relativeError === null
+      ? null
+      : after.relativeError - before.relativeError,
+    beforeComparisonError: beforeError,
+    afterComparisonError: afterError,
+    comparisonErrorDelta: afterError - beforeError,
     beforePercentError: before.percentError,
     afterPercentError: after.percentError,
-    percentErrorDelta: (after.percentError ?? 0) - (before.percentError ?? 0),
+    percentErrorDelta: before.percentError === null || after.percentError === null
+      ? null
+      : after.percentError - before.percentError,
     statusTransition: `${before.status}_TO_${after.status}`,
   };
+}
+
+function comparisonError(row) {
+  if (row.relativeError !== null) return row.relativeError;
+  if (Number.isFinite(row.scaleFloor) && row.scaleFloor > 0) {
+    return Math.abs(row.absoluteError) / row.scaleFloor;
+  }
+  return row.absoluteError === 0 ? 0 : Number.POSITIVE_INFINITY;
 }
 
 function aggregateCases(cases) {
@@ -131,8 +148,8 @@ function aggregateCases(cases) {
     exceedingComponentCountDelta: values.reduce((sum, row) => sum + row.exceedingComponentCountDelta, 0),
     failToPassCount: values.reduce((sum, row) => sum + row.statusTransitions.FAIL_TO_PASS, 0),
     passToFailCount: values.reduce((sum, row) => sum + row.statusTransitions.PASS_TO_FAIL, 0),
-    decreasedErrorComponentCount: values.reduce((sum, row) => sum + row.relativeErrorMovement.decreasedComponentCount, 0),
-    increasedErrorComponentCount: values.reduce((sum, row) => sum + row.relativeErrorMovement.increasedComponentCount, 0),
+    decreasedErrorComponentCount: values.reduce((sum, row) => sum + row.comparisonErrorMovement.decreasedComponentCount, 0),
+    increasedErrorComponentCount: values.reduce((sum, row) => sum + row.comparisonErrorMovement.increasedComponentCount, 0),
   };
 }
 
@@ -202,7 +219,7 @@ function parseArguments(argv) {
   });
 }
 
-if (resolve(process.argv[1] ?? '') === resolve(new URL(import.meta.url).pathname)) {
+if (resolve(process.argv[1] ?? '') === resolve(SCRIPT_PATH)) {
   try {
     const args = parseArguments(process.argv.slice(2));
     const comparison = compareBm4IterationMeasurements(

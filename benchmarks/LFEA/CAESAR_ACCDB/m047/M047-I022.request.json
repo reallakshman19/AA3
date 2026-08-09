@@ -1,0 +1,53 @@
+{
+  "schema": "lfea-caesar-accdb-iteration-request/v1",
+  "issueId": "M047",
+  "iterationId": "M047-I022",
+  "expectedSourceAccdbSha256": "85d39463296e569da811d8572e2eff680b858097f76fdf0f47d1755f0b161c21",
+  "expectedBendPointerCount": 12,
+  "baseCommitSha": "882d59a99c3a03847d20bec34770ba57ff479d91",
+  "parentAcceptedIteration": "M047-I015",
+  "supportingIterations": ["M047-I020", "M047-I021"],
+  "hypothesis": "I021 failed because it changed only the finite incoming straight carriers while holding the connected curved-pipe base beam at Euler-Bernoulli. The B-3.2 bend package already qualifies the bend flexibility correction under a Timoshenko frame profile and proves the correction remains exact under its double-count guard. A coherent bend-family candidate should therefore apply the accepted base-beam shear law to non-tee BEND_INCOMING_STRAIGHT carriers and to the BEND_ARC component base frames together, while leaving the independently owned bend flexibility factor, pressure-stiffening factor authority, subdivision, tee mechanics and reducer mechanics unchanged.",
+  "componentAuthority": {
+    "package": "LFEA-B3.2",
+    "test": "B32-T23",
+    "qualifiedStatement": "The piping bend component consumes the B-3.1 element under Timoshenko; measured bend flexibility correction remains exact and the double-count guard remains accepted.",
+    "flexibilityCorrection": "BENDING_FLEXIBILITY_CORRECTION_V1",
+    "flexibilityOwnership": "BEND bending Y/Z only",
+    "pressureStiffeningAuthorityChanged": false
+  },
+  "candidateBoundary": {
+    "retainedI015": "FRAME && teeModifier===null",
+    "bendIncomingStraight": "BEND_INCOMING_STRAIGHT && teeModifier===null",
+    "bendArc": "compilePipingComponent(BEND) frameElementProfile=plainFrameTimoshenkoProfile()",
+    "held": [
+      "source 36 tee-modified bend incoming straight",
+      "TEE/B31J directional junction mechanics",
+      "REDUCER",
+      "RIGID",
+      "BOURDON",
+      "PRESSURE/BEND FACTOR AUTHORITY",
+      "THERMAL AUTHORITY"
+    ],
+    "kappaY": 0.53,
+    "kappaZ": 0.53,
+    "kappaAuthority": "COWPER-1966-THIN-ANNULUS-INPUT"
+  },
+  "predictedSignature": [
+    "Candidate must start from the exact accepted I015 solver-file SHA.",
+    "All 226 BEND_ARC analysis carriers must be generated from a Timoshenko B-3.1 component base frame while retaining the same B31/B31J factor-set identity, bend subdivision and effective-stiffness correction path.",
+    "All 11 non-tee bend incoming straight carriers must use the same Timoshenko base-beam profile; source 36 incoming straight remains held under tee ownership.",
+    "B3.2 piping-component check and reviewer check must pass, including B32-T23 Timoshenko bend flexibility/double-count proof.",
+    "Locked system A/B must preserve 12/12 bend coverage, identical CAESAR reference rows and target-node action/equilibrium closure.",
+    "Acceptance requires no new L19 restraint failure and no unexplained aggregate L19/L20 regression; improvement at node 20090 alone is insufficient.",
+    "No tolerance, benchmark reference, thermal coefficient or commercial result is fitted."
+  ],
+  "changedPaths": [
+    "scripts/lfea-m047-apply-bend-composite-timoshenko-candidate.mjs",
+    "scripts/lfea-m047-bend-composite-timoshenko-candidate-check.mjs",
+    ".github/workflows/m047-bm4nl-i022-bend-composite-ab.yml"
+  ],
+  "mechanicsDelta": "Runtime bend-family qualification candidate only: accepted I015 ordinary frames plus non-tee bend incoming straights plus BEND_ARC component base frames consume the same governed Timoshenko B-3.1 law. Bend flexibility correction and all other component/load authority remain unchanged.",
+  "verdict": "PENDING",
+  "decisionReason": "Await exact-head locked Windows I022 component-check and system A/B evidence."
+}

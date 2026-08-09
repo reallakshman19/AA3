@@ -8,26 +8,25 @@
  * cycle through them.
  *
  * Adding a stage to `BOUND_SCOPES` is a qualification claim. It is only
- * correct when the core implementation for that stage is covered by the
- * governance reference below and scoped to exactly these element families.
+ * correct when the implementation for that stage is covered by the governance
+ * reference below and scoped to exactly these element families.
  */
 
 export const LAFEA_MESH_PRODUCER_REGISTRY_SCHEMA = 'lafea-mesh-producer-registry/v1';
 
 export const LAFEA_MESH_PRODUCER_ENGINE_ID = 'LAFEA_CORE_MESHER';
-export const LAFEA_MESH_PRODUCER_ENGINE_REVISION = 'LAFEA.10.T6Q8.V4';
+export const LAFEA_MESH_PRODUCER_ENGINE_REVISION = 'LAFEA.10.T6Q8.SHELL.V5';
 export const LAFEA_MESH_PRODUCER_QUALIFICATION_ID = 'LAFEA-MESH-Q1';
-export const LAFEA_MESH_PRODUCER_QUALIFICATION_REVISION = 'R5';
+export const LAFEA_MESH_PRODUCER_QUALIFICATION_REVISION = 'R6';
 export const LAFEA_MESH_PRODUCER_GOVERNANCE_REF = 'npm run check:lafea-meshing';
 export const LAFEA_MESH_PRODUCER_QUALITY_POLICY_ID = 'LAFEA_MESH_PROFILE_QUALITY_GATES_V1';
 export const LAFEA_MESH_PRODUCER_REF =
   `${LAFEA_MESH_PRODUCER_ENGINE_ID}/${LAFEA_MESH_PRODUCER_ENGINE_REVISION}/${LAFEA_MESH_PRODUCER_QUALIFICATION_ID}`;
 
 /**
- * Automatic generation plus retained-mesh refinement regeneration. The local
- * refinement implementation is qualified for T3/T6 parents only; Q8 is
- * rejected by the refinement planner until a conforming quad-local-refinement
- * rule is independently qualified.
+ * Automatic generation plus retained-mesh refinement regeneration. Local
+ * refinement remains qualified only for LAFEA.3 T3/T6 parents. Shell stages
+ * have automatic planar-midsurface generation but no local refinement claim.
  */
 export const LAFEA_MESH_PRODUCER_GENERATION_MODES = Object.freeze([
   'AUTOMATIC_MESH', 'REFINEMENT_REGENERATION',
@@ -43,13 +42,11 @@ export const LAFEA_MESH_PRODUCER_MAXIMUM_NODES = 200_000;
 export const LAFEA_MESH_PRODUCER_MAXIMUM_ELEMENTS = 100_000;
 export const LAFEA_MESH_PRODUCER_MAXIMUM_ESTIMATED_DOFS = 400_000;
 
-/**
- * Only LAFEA.3 planar continuum is bound. LAFEA.4 and LAFEA.5 are mesh
- * applicable but have no qualified shell mesh producer, so they keep
- * reporting `QUALIFIED_MESH_PRODUCER_NOT_AVAILABLE`.
- */
+const SHELL_TRI3 = 'CST_DKT_TRI3_THIN_SHELL_V1';
 const BOUND_SCOPES = Object.freeze({
   'LAFEA.3': Object.freeze(['Q8', 'T3', 'T6']),
+  'LAFEA.4': Object.freeze([SHELL_TRI3]),
+  'LAFEA.5': Object.freeze([SHELL_TRI3]),
 });
 
 export function lafeaMeshProducerBound(stageId, elementFamily = null) {

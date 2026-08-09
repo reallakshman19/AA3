@@ -7,16 +7,22 @@
  * something to classify. It holds no listeners and publishes nothing itself.
  *
  * Custody is only mutated after evidence has been fully built and validated
- * (`NO_CUSTODY_MUTATION_UNTIL_FULL_EVIDENCE_ACCEPTED`): a generation or
- * recovery that throws leaves the previously retained mesh exactly as it was.
+ * (`NO_CUSTODY_MUTATION_UNTIL_FULL_EVIDENCE_ACCEPTED`): a generation,
+ * retained-mesh refinement, or recovery that throws leaves the previously
+ * retained mesh exactly as it was.
  */
 import { canonicalLafeaAnalysisMeshProfile } from './lafea-analysis-mesh-contract.js';
 import { validateLafeaAnalysisMeshEvidenceV2 } from './lafea-analysis-mesh-evidence-v2.js';
+import {
+  LAFEA_RETAINED_MESH_REFINEMENT_COMMAND_SCHEMA,
+  createLafeaRetainedMeshRefinementCommand,
+} from './lafea-mesh-refinement-command.js';
 import {
   lafeaMeshGenerationConfiguration,
   planLafeaAnalysisMesh,
   produceLafeaAnalysisMeshEvidence,
 } from './lafea-mesh-producer-binding.js';
+import { produceLafeaRetainedMeshRefinement } from './lafea-retained-mesh-refinement.js';
 
 export function createLafeaWorkbenchMeshGenerationState(stageIds) {
   const profiles = new Map(stageIds.map((stageId) => [stageId, null]));
@@ -74,6 +80,51 @@ export function createLafeaWorkbenchMeshGenerationState(stageIds) {
     });
   }
 
+  /**
+   * Refine the exact retained v2 parent. Parent artifact/mesh hashes are taken
+   * from custody here rather than trusted from UI input. The child replaces
+   * custody only after generation, quality qualification and v2 evidence
+   * validation all succeed.
+   */
+  function refineMesh(stage, request = {}) {
+    const stageId = stage.stageId;
+    requireStage(stageId);
+    const profile = profiles.get(stageId);
+    if (!profile) fail('LAFEA_ANALYSIS_MESH_PROFILE_BINDING_REQUIRED');
+    const parentEvidence = evidence.get(stageId);
+    if (!parentEvidence) fail('LAFEA_RETAINED_MESH_REFINEMENT_PARENT_REQUIRED');
+    const command = createLafeaRetainedMeshRefinementCommand({
+      schema: LAFEA_RETAINED_MESH_REFINEMENT_COMMAND_SCHEMA,
+      commandId: request.commandId ?? `LAFEA-${stageId}-RETAINED-REFINEMENT`,
+      stageId,
+      parentMeshArtifactHash: parentEvidence.artifactHash,
+      parentMeshHash: parentEvidence.meshHash,
+      kind: request.kind ?? 'TARGET_LENGTH',
+      targetType: request.targetType,
+      targetIds: request.targetIds,
+      targetElementLength: request.targetElementLength,
+      lengthUnit: request.lengthUnit,
+      reason: request.reason ?? 'User-governed retained analysis-mesh refinement',
+    });
+    const produced = produceLafeaRetainedMeshRefinement({
+      stage,
+      meshProfile: profile,
+      parentEvidence,
+      command,
+    });
+    const validated = validateLafeaAnalysisMeshEvidenceV2(produced.evidence);
+    evidence.set(stageId, validated);
+    lastPlan.set(stageId, summarizeRefinement(produced));
+    return freeze({
+      changed: true,
+      command,
+      parentEvidence,
+      evidence: validated,
+      summary: lastPlan.get(stageId),
+      localPointCount: produced.localPointCount,
+    });
+  }
+
   function validateEvidence(value) {
     return validateLafeaAnalysisMeshEvidenceV2(value);
   }
@@ -126,7 +177,7 @@ export function createLafeaWorkbenchMeshGenerationState(stageIds) {
   }
 
   return Object.freeze({
-    fields, bindMeshProfile, planMesh, generateMesh,
+    fields, bindMeshProfile, planMesh, generateMesh, refineMesh,
     validateEvidence, recoverEvidence, exportEvidence,
     selectEvidence, selectMeshProfile, selectPlan, invalidate, clear,
   });
@@ -146,6 +197,7 @@ function summarize(planned) {
   return freeze({
     schema: 'lafea-analysis-mesh-plan-summary/v1',
     stageId: planned.plan.stageId,
+    generationMode: 'AUTOMATIC_MESH',
     elementFamily: planned.plan.elementFamily,
     strategy: planned.generated.strategy,
     strategyReason: planned.generated.strategyReason,
@@ -162,6 +214,36 @@ function summarize(planned) {
     capabilityHash: planned.capabilityHash,
     qualificationHash: planned.qualificationHash,
     producerRef: planned.producerRef,
+  });
+}
+
+function summarizeRefinement(produced) {
+  return freeze({
+    schema: 'lafea-analysis-mesh-plan-summary/v1',
+    stageId: produced.plan.stageId,
+    generationMode: 'REFINEMENT_REGENERATION',
+    elementFamily: produced.plan.elementFamily,
+    strategy: 'RETAINED_LOCAL_REFINEMENT',
+    strategyReason: 'TARGETED_STEINER_INSERTION_WITH_CONSTRAINED_LAWSON_RESTORATION',
+    nodeCount: produced.evidence.mesh.nodes.length,
+    elementCount: produced.evidence.mesh.elements.length,
+    estimatedDofs: produced.estimatedDofs,
+    boundarySegmentCount: null,
+    characteristicLengthMin: null,
+    characteristicLengthMedian: produced.plan.targetElementLength,
+    characteristicLengthMax: produced.plan.globalTargetElementLength,
+    resourceDisposition: 'WITHIN_LIMITS',
+    intentHash: produced.plan.commandHash,
+    planHash: produced.plan.planHash,
+    capabilityHash: produced.plan.capabilityHash,
+    qualificationHash: produced.plan.qualificationHash,
+    producerRef: produced.plan.producerRef,
+    parentMeshArtifactHash: produced.plan.parentMeshArtifactHash,
+    parentMeshHash: produced.plan.parentMeshHash,
+    targetType: produced.plan.targetType,
+    targetIds: [...produced.plan.targetIds],
+    targetElementLength: produced.plan.targetElementLength,
+    localPointCount: produced.localPointCount,
   });
 }
 

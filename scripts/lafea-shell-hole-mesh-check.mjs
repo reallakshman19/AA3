@@ -52,7 +52,9 @@ for (const stageId of ['LAFEA.4', 'LAFEA.5']) {
   });
   assert.equal(produced.evidence.qualification, 'PASS');
   assert.equal(produced.evidence.quality.blockingElementIds.length, 0);
-  assert.equal(produced.output.lifecycleAuthority, false);
+  for (const field of ['lifecycleAuthority', 'releaseAuthority', 'mergeAuthority']) {
+    assert.equal(Object.hasOwn(produced.output, field), false, `${stageId}:${field}`);
+  }
   assert.equal(produced.evidence.sourceHash, SOURCE_HASH);
   assert.equal(produced.evidence.analysisDomainHash, parent.analysisDomainHash);
   assert.equal(produced.evidence.analysisGeometryHash, parent.analysisGeometryHash);

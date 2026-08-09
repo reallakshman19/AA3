@@ -32,8 +32,9 @@ Included qualification work:
 - I016 rejected hot/cold modulus-selector A/B;
 - I017 accepted full ACCDB material-authority export-boundary audit;
 - I018 accepted pinned-source-archive authority survey;
+- I019 accepted carried L19 sources 9-11 MZ redistribution custody;
 - portable read-only ACCDB hashing/export support;
-- deterministic A/B, thermal-delta and target-node evidence tooling;
+- deterministic A/B, thermal-delta, source-action and target-node evidence tooling;
 - pinned ACE provisioning and exact-head Windows workflows.
 
 Not included / not promotable:
@@ -85,20 +86,18 @@ Locked system A/B, L19:
 - failing displacement/rotation nodes 52 -> 45;
 - displacement/rotation normalized RMS ~0.4111 -> ~0.3464;
 - source-end-action normalized RMS ~0.05405 -> ~0.05304;
+- source-end-action threshold failures 20 -> 23;
 - 12/12 bends retained;
 - target-node incident-action/reaction closure remains numerical roundoff.
-
-Carried L19 source-action residual:
-- threshold failures 20 -> 23;
-- six new modest MZ failures cluster around sources 9-11;
-- aggregate source-action RMS still improves;
-- sources 9-11 must remain visible and be resolved by prescribed-DOF/spatial
-  custody analysis, not hidden by tolerances or a global fit.
 
 Accepted mechanics statement:
 
     Missing transverse shear deformation in ordinary flexible-pipe response is
     strongly supported and accepted as the current L19 constitutive correction.
+
+The 20 -> 23 source-action threshold increase is now separately qualified by
+I019 below; it remains visible but is no longer treated as six unexplained
+independent local regressions.
 
 ======================================================================
 3. QUALIFIED MECHANISM IS NOT YET FINAL ARCHITECTURE
@@ -307,7 +306,69 @@ No numeric CTE change is authorized by I018. The I009/I010 ~12.23199e-6/K
 value remains diagnostic-only.
 
 ======================================================================
-9. REJECTED / HELD WORK THAT MUST STAY SEPARATE
+9. I019 — L19 SOURCES 9-11 MZ REDISTRIBUTION CUSTODY ACCEPTED
+======================================================================
+
+I019 re-used the immutable retained I014 and I015 artifacts and verified their
+archive SHA-256 values before analysis. It made no mechanics/profile/tolerance
+change and did not re-fit any benchmark output.
+
+Exact retained I019 evidence:
+- orchestration head 0146fd13840eea8d267604acdd6c7c4ef861e53b;
+- run 31315808938, success;
+- artifact 9038700084;
+- artifact sha256
+  64621bb1efd0206e9aef50a6d095579a272b39e7b3e97f826a0a51c35f630ddb;
+- semantic hash fnv1a64:73c14de94926027d.
+
+Derived threshold transitions, L19:
+- six new source-end-action failures;
+- three previously failing source-action rows resolve;
+- therefore the net threshold count is 20 -> 23;
+- all six new rows are GLOBAL MZ on sources 9, 10 and 11.
+
+Cluster mechanics custody:
+- source 9: FRAME with teeJunctionNodeId=20160; outside the I015 mutation;
+- source 10: plain FRAME/no tee, 20170 -> 20220; the only I015-selected cluster
+  member;
+- source 11: REDUCER, 20220 -> 20230; outside the I015 mutation.
+
+The new MZ rows are one transmitted interface field, not six independent
+component failures:
+- node 20170, source 9 TO + source 10 FROM:
+  candidate closure 5.258016244624741e-12 N*m;
+  I015 delta closure 2.2168933355715126e-12 N*m;
+  transmitted delta magnitude ~3.955995 N*m.
+- node 20220, source 10 TO + source 11 FROM:
+  candidate closure -4.333742253948003e-10 N*m;
+  I015 delta closure -3.8400571611418854e-10 N*m;
+  transmitted delta magnitude ~3.956087 N*m.
+
+Independent fixed-CAESAR-endpoint I014 source-10 evidence remains strongly
+favorable to the local Timoshenko constitutive correction:
+- local transverse RMS residual 551.1708174224023 -> 20.63416823340225;
+- 8/8 local transverse end-action components improve;
+- zero local transverse components worsen.
+
+Solved-state interface RZ also moves toward CAESAR under I015:
+- node 20170 absolute RZ error
+  6.13429785107847e-6 -> 3.6466668287949257e-6 rad;
+- node 20220 absolute RZ error
+  6.550150362043044e-6 -> 4.285642080358639e-6 rad.
+
+Decision: I019 ACCEPTED as a custody/localization finding.
+
+    classification =
+      SYSTEM_STATE_REDISTRIBUTION_ACROSS_CONNECTED_9_10_11_PATH
+
+This closes the question of whether the six new threshold rows themselves prove
+six local Timoshenko regressions: they do not. It does not authorize production
+tee/reducer propagation or hide the rows. Follow-up is to locate the first
+upstream system component/DOF that drives the redistributed MZ field, and to
+retain the cluster as a regression sentinel during later component-family A/Bs.
+
+======================================================================
+10. REJECTED / HELD WORK THAT MUST STAY SEPARATE
 ======================================================================
 
 I004 cumulative Bourdon compatible-field candidate:
@@ -334,7 +395,7 @@ Reducer Timoshenko propagation:
 - conclusion is that complete reducer stiffness/load ownership is not qualified.
 
 ======================================================================
-10. ROADMAP
+11. ROADMAP
 ======================================================================
 
 P0 — package/source/equilibrium custody — COMPLETE
@@ -382,10 +443,14 @@ P2 — complete transverse-shear propagation
    offsets, stiffness and load Schur condensation;
 5. one component family per system A/B.
 
-P3 — remaining L19 source-action custody
-- investigate sources 9-11 MZ cluster with prescribed-DOF replay and spatial
-  residual ordering;
-- identify first physical divergence; no global coefficient fitting.
+P3 — L19 source-action redistribution custody — PARTIALLY CLOSED BY I019
+- accepted: six new 9-11 MZ threshold rows are one connected solved-state
+  redistribution field, not six independent local constitutive regressions;
+- accepted: source 10 fixed-CAESAR-endpoint Timoshenko replay remains 8/8
+  improved, while source 9 and source 11 are outside the I015 mutation;
+- next: trace the first upstream component/DOF feeding the ~3.956 N*m MZ shift,
+  beginning at tee node 20160 and the reducer-side continuation;
+- keep the six rows as regression sentinels; do not weaken tolerances.
 
 P4 — final issue #947 closure
 - freeze final formulation/profile/source authority;
@@ -402,7 +467,7 @@ P4 — final issue #947 closure
 - clean source/profile/ACCDB/evidence hashes.
 
 ======================================================================
-11. CURRENT DECISION
+12. CURRENT DECISION
 ======================================================================
 
 PR #978 remains DRAFT / NOT READY TO MERGE.
@@ -412,7 +477,8 @@ Accepted:
 - L19 node 20090 restraint closure and aggregate displacement improvement;
 - exact action/equilibrium/source custody supporting I015;
 - I017 ACCDB material-authority export boundary;
-- I018 pinned-source-archive authority boundary.
+- I018 pinned-source-archive authority boundary;
+- I019 sources 9-11 MZ redistribution custody/localization.
 
 Rejected / not promotable:
 - I004 cumulative Bourdon production mechanics;
@@ -424,7 +490,7 @@ Pending / blocked:
 - exact source-authoritative A106 Grade B 21 -> 120 C mean CTE / thermal strain;
 - special-component thermal-growth ownership after base free strain is known;
 - exact CAESAR shear-factor/profile promotion;
-- L19 sources 9-11 MZ cluster;
+- first-upstream localization of the I019 ~3.956 N*m redistributed MZ field;
 - bend incoming straight propagation;
 - bend arc propagation;
 - tee/branch propagation;

@@ -1,6 +1,7 @@
 import assert from 'node:assert/strict';
 import {
   TOPOLOGY_EDIT_ICON_DISPOSITION,
+  TOPOLOGY_EDIT_ICON_EXCLUDED_AFFORDANCES,
   TOPOLOGY_EDIT_ICON_MANIFEST,
   topologyEditRequiredIconEntries,
 } from '../src/workspace/viewport-productivity/topology-edit-icon-manifest.js';
@@ -14,6 +15,14 @@ const HISTORICAL_EXACT = Object.freeze({
   'draft.save': 'icon-save',
   'command.move-positive-z': 'icon-move',
 });
+const EXCLUDED_AFFORDANCE_KEYS = Object.freeze([
+  'orientation-cube-faces',
+  'presentation-info-glyphs',
+  'shortcuts-close',
+  'panel-carets',
+  'sidecar-resizer',
+  'node-nudge-labels',
+]);
 
 assert.equal(
   TOPOLOGY_EDIT_ICON_MANIFEST.length,
@@ -56,6 +65,20 @@ assert.equal(
   'The locked #976 production design requires SVG icons on all 42 fixed controls.',
 );
 
+assert.deepEqual(
+  TOPOLOGY_EDIT_ICON_EXCLUDED_AFFORDANCES.map((entry) => entry.key),
+  EXCLUDED_AFFORDANCE_KEYS,
+  'Intentional non-SVG affordances must remain explicitly documented outside the 42-control count.',
+);
+assert.equal(
+  new Set(TOPOLOGY_EDIT_ICON_EXCLUDED_AFFORDANCES.map((entry) => entry.key)).size,
+  EXCLUDED_AFFORDANCE_KEYS.length,
+  'Excluded non-SVG affordance keys must be unique.',
+);
+for (const entry of TOPOLOGY_EDIT_ICON_EXCLUDED_AFFORDANCES) {
+  assert.ok(entry.description && entry.reason, `Excluded affordance ${entry.key} requires an explicit rationale.`);
+}
+
 for (const [key, expectedFragmentId] of Object.entries(HISTORICAL_EXACT)) {
   const entry = TOPOLOGY_EDIT_ICON_MANIFEST.find((candidate) => candidate.key === key);
   assert.ok(entry, `Historical control ${key} must remain in the production manifest.`);
@@ -71,4 +94,4 @@ assert.equal(
   'Fit was historically affected but its historical href was not retained; do not fabricate provenance.',
 );
 
-console.log(`topology-edit-icon-manifest: ${EXPECTED_CONTROL_COUNT}/42 controls dispositioned; ${topologyEditRequiredIconEntries().length} required SVG icons.`);
+console.log(`topology-edit-icon-manifest: ${EXPECTED_CONTROL_COUNT}/42 controls dispositioned; ${topologyEditRequiredIconEntries().length} required SVG icons; ${TOPOLOGY_EDIT_ICON_EXCLUDED_AFFORDANCES.length} non-SVG affordance classes documented.`);

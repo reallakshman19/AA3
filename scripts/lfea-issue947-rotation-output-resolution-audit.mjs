@@ -81,7 +81,7 @@ const output = {
   l19AdjacentWitness: {
     node22125RzDeg: Number(node22125L19.RZ),
     node22130ExportedRzDeg: node22130.find((entry) => entry.lcaseNum === 19)?.rzDeg ?? null,
-    inferredRzDeg,
+    inferredRzDeg: inferredDeg,
   },
   gates: {
     noStoredNonzeroRotationBelowObservedFloor: noStoredNonzeroBelowFloor ? 'PASS' : 'FAIL',

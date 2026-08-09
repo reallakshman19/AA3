@@ -11,6 +11,7 @@ import {
   prepareLinearPipingInputXmlPreFlight,
   requireLinearPipingInputXmlPreFlight,
 } from './linear-piping-inputxml-prefea.js';
+import { renderLinearPipingInputXmlDiagnostics } from './linear-piping-inputxml-diagnostics-view.js';
 
 export const LINEAR_PIPING_INPUTXML_SOURCE_WORKFLOW_SCHEMA = 'linear-piping-inputxml-source-workflow/v1';
 
@@ -499,11 +500,12 @@ function renderSourceSummary(doc, root, controller) {
       }
       root.append(list);
     }
+    renderLinearPipingInputXmlDiagnostics(doc, root, controller.preFlight);
   }
 
   const execution = doc.createElement('p');
   execution.dataset.role = 'linear-piping-inputxml-execution-boundary';
-  execution.textContent = 'Execution custody: NOT CONNECTED in P-07. This source/pre-flight surface never fabricates a legacy run-request JSON or downstream load authority.';
+  execution.textContent = 'Execution custody: NOT CONNECTED in P-07/P-08. This source/pre-flight surface never fabricates a legacy run-request JSON or downstream load authority.';
   root.append(execution);
 }
 

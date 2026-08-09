@@ -1,0 +1,109 @@
+name: Issue 947 E48 output precision audit
+
+on:
+  push:
+    branches:
+      - codex/issue-947-bm4nl-qualification
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  actions: read
+
+jobs:
+  audit:
+    if: "${{ github.event_name == 'workflow_dispatch' || github.event.head_commit.message == 'ci(issue947): run E48 output precision audit' }}"
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Checkout qualification branch
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Download pinned canonical BM4_NL package
+        uses: actions/download-artifact@v4
+        with:
+          name: issue-947-bm4nl-qualification
+          path: .work/package
+          github-token: ${{ github.token }}
+          repository: reallaksh19/Advanced_Analysis
+          run-id: 31314047095
+
+      - name: Download exact raw ACCDB output custody
+        uses: actions/download-artifact@v4
+        with:
+          name: issue-947-node22130-reference-custody
+          path: .work/raw
+          github-token: ${{ github.token }}
+          repository: reallaksh19/Advanced_Analysis
+          run-id: 31311427176
+
+      - name: Expose read-only exact production mechanics
+        run: python scripts/lfea-issue947-expose-accdb-case-mechanics.py
+
+      - name: Fail closed restrained-boundary custody and expose condensed K
+        shell: bash
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          import hashlib, json
+          path = Path('scripts/lfea-issue947-bend-descendant-condensation-audit.mjs')
+          text = path.read_text()
+          before = hashlib.sha256(text.encode()).hexdigest()
+
+          restraint_old = "const restraintCount = restraintRows.filter((row) => String(row.NODE ?? '') === nodeId).length;"
+          restraint_new = "const restraintCount = restraintRows.filter((row) => String(row.NODE_NUM ?? '') === nodeId).length;"
+          count = text.count(restraint_old)
+          if count != 1:
+              raise SystemExit(f'Expected exactly one restraint custody patch site; found {count}.')
+          text = text.replace(restraint_old, restraint_new)
+
+          anchor = "  method: 'EXACT_PRODUCTION_DESCENDANT_K_F_EQ_F_0_ASSEMBLY_PLUS_SCHUR_CONDENSATION_TO_SOURCE_12_DOF_BOUNDARY',"
+          replacement = anchor + "\n  diagnosticCondensedStiffnessGlobal12x12: condensed.stiffness,"
+          count = text.count(anchor)
+          if count != 1:
+              raise SystemExit(f'Expected exactly one condensed-stiffness evidence anchor; found {count}.')
+          text = text.replace(anchor, replacement)
+          path.write_text(text)
+
+          Path('.work/issue947-e48-output-precision-diagnostic-patch.json').write_text(json.dumps({
+              'schema': 'lfea-issue947-diagnostic-patch/v1',
+              'scope': 'DIAGNOSTIC_ONLY_RESTRAINT_CUSTODY_AND_CONDENSED_K_EVIDENCE',
+              'productionSourceChanged': False,
+              'restraintNodeField': 'INPUT_RESTRAINTS.NODE_NUM',
+              'beforeSha256': before,
+              'afterSha256': hashlib.sha256(text.encode()).hexdigest(),
+          }, indent=2) + '\n')
+          PY
+
+      - name: Rebuild exact E48 baseline with corrected custody
+        run: |
+          mkdir -p .work/out
+          node scripts/lfea-issue947-bend-descendant-condensation-audit.mjs \
+            --package .work/package/bm4nl-canonical-package.json \
+            --source-element 48 \
+            --out .work/out/e48-corrected-baseline.json
+
+      - name: Propagate raw float32 half-ULP through exact E48 condensed stiffness
+        run: |
+          node scripts/lfea-issue947-e48-output-precision-audit.mjs \
+            --raw .work/raw/node22130-raw-export.json \
+            --e48 .work/out/e48-corrected-baseline.json \
+            --package .work/package/bm4nl-canonical-package.json \
+            --out .work/out/e48-output-precision-audit.json
+
+      - name: Upload E48 precision evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: issue-947-e48-output-precision-audit
+          if-no-files-found: error
+          path: |
+            .work/out/e48-corrected-baseline.json
+            .work/out/e48-output-precision-audit.json
+            .work/issue947-e48-output-precision-diagnostic-patch.json
+            .work/issue947-accdb-case-mechanics-inspection-patch.json

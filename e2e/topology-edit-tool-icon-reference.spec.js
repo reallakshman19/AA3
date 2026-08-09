@@ -5,7 +5,7 @@ test.beforeEach(async ({ page }) => {
   await page.addInitScript(() => globalThis.localStorage?.clear());
 });
 
-test('3D Edit repairs broken runtime SVG fragments without changing command bindings', async ({ page }) => {
+test('3D Edit repairs broken runtime SVG fragments without changing production bindings', async ({ page }) => {
   const host = await openTopologyEdit(page);
 
   const initialReferences = await host.locator('svg use, use').evaluateAll((uses) => uses.map((use) => (
@@ -14,33 +14,23 @@ test('3D Edit repairs broken runtime SVG fragments without changing command bind
       ?? ''
   )));
   expect(initialReferences.filter((reference) => reference.endsWith('-broken'))).toEqual([]);
+  expect(initialReferences.length).toBeGreaterThanOrEqual(42);
   await expect(host).toHaveAttribute('data-topology-edit-icon-broken-reference-count', '0');
+  await expect(host).toHaveAttribute('data-topology-edit-icon-unresolved-reference-count', '0');
+  await expect(page.locator('svg[data-role="topology-edit-icon-sprite"]')).toHaveCount(1);
 
   const undo = host.locator('[data-action="undo"]');
   await expect(undo).toHaveCount(1);
   await expect(undo).toHaveAttribute('data-action', 'undo');
+  await expect(undo).toHaveAttribute('data-topology-edit-icon-symbol', 'icon-undo');
 
   await host.evaluate((element) => {
     const documentRef = element.ownerDocument;
     const svgNamespace = 'http://www.w3.org/2000/svg';
     const xlinkNamespace = 'http://www.w3.org/1999/xlink';
-    const sprite = documentRef.createElementNS(svgNamespace, 'svg');
-    sprite.dataset.iconRepairProbeSprite = 'true';
-    sprite.setAttribute('aria-hidden', 'true');
-    sprite.style.display = 'none';
-
-    for (const id of ['icon-undo', 'icon-redo']) {
-      const symbol = documentRef.createElementNS(svgNamespace, 'symbol');
-      symbol.id = id;
-      symbol.setAttribute('viewBox', '0 0 16 16');
-      const path = documentRef.createElementNS(svgNamespace, 'path');
-      path.setAttribute('d', 'M2 8h12');
-      symbol.append(path);
-      sprite.append(symbol);
-    }
-
     const probe = documentRef.createElement('span');
     probe.dataset.iconRepairProbe = 'true';
+
     const firstSvg = documentRef.createElementNS(svgNamespace, 'svg');
     const firstUse = documentRef.createElementNS(svgNamespace, 'use');
     firstUse.dataset.iconRepairProbeUse = 'href';
@@ -54,7 +44,7 @@ test('3D Edit repairs broken runtime SVG fragments without changing command bind
     secondSvg.append(secondUse);
 
     probe.append(firstSvg, secondSvg);
-    element.append(sprite, probe);
+    element.append(probe);
   });
 
   const hrefUse = host.locator('[data-icon-repair-probe-use="href"]');
@@ -77,6 +67,8 @@ test('3D Edit repairs broken runtime SVG fragments without changing command bind
   )).toBeGreaterThanOrEqual(3);
 
   await expect(undo).toHaveAttribute('data-action', 'undo');
+  await expect(undo.locator(':scope > svg use')).toHaveAttribute('href', '#icon-undo');
+  await expect(page.locator('svg[data-role="topology-edit-icon-sprite"]')).toHaveCount(1);
 });
 
 async function openTopologyEdit(page) {
@@ -91,6 +83,7 @@ async function openTopologyEdit(page) {
   const host = page.locator('[data-role="topology-edit-render-host"]');
   await expect(host).toBeVisible();
   await expect(host).toHaveAttribute('data-topology-edit-clean-shell', 'true');
-  await expect(host).toHaveAttribute('data-topology-edit-icon-reference-status', /NO_SVG_ICONS|RESOLVED/);
+  await expect(host).toHaveAttribute('data-topology-edit-icon-presentation-status', 'BOUND');
+  await expect(host).toHaveAttribute('data-topology-edit-icon-reference-status', 'RESOLVED');
   return host;
 }

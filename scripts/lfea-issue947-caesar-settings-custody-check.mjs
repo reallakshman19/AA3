@@ -33,6 +33,9 @@ assert.equal(authority.effective.L19.COEFFICIENT_OF_FRICTION_MU, 0);
 assert.equal(authority.effective.L20.COEFFICIENT_OF_FRICTION_MU, 0);
 assert.equal(authority.overall.settings.DEFAULT_CODE, 'B31.3_2022');
 assert.equal(authority.overall.settings.MIN_WALL_MILL_TOLERANCE_PERCENT, 12.5);
+assert.equal(authority.overall.settings.DEFAULT_TRANS_RESTRAINT_STIFF, 1e12);
+assert.equal(authority.overall.settings.DEFAULT_ROT_RESTRAINT_STIFF, 1e12);
+assert.equal(authority.overall.settings.FRICT_STIF, 1e6);
 assert.equal(authority.overall.settings.APPLY_B31J_SIFS_AND_FLEX, 'DEFAULT');
 assert.equal(authority.overall.settings.ENFORCE_B31J_SIFS_ONLY, false);
 
@@ -42,8 +45,9 @@ assert.equal(requiredBindings.get('AMBIENT_TEMPERATURE')?.status, 'BOUND');
 assert.equal(requiredBindings.get('COEFFICIENT_OF_FRICTION_MU')?.status, 'RECORDED_MODEL_INPUT');
 assert.equal(requiredBindings.get('L19.COEFFICIENT_OF_FRICTION_MU')?.status, 'BOUND_CASE_EFFECTIVE');
 assert.equal(requiredBindings.get('L20.COEFFICIENT_OF_FRICTION_MU')?.status, 'BOUND_CASE_EFFECTIVE');
-assert.equal(requiredBindings.get('DEFAULT_TRANS_RESTRAINT_STIFF')?.status, 'UNRESOLVED_UNIT_AND_APPLICATION');
-assert.equal(requiredBindings.get('DEFAULT_ROT_RESTRAINT_STIFF')?.status, 'UNRESOLVED_UNIT_AND_APPLICATION');
+assert.equal(requiredBindings.get('DEFAULT_TRANS_RESTRAINT_STIFF')?.status, 'RECORDED_PENDING_SOURCE_UNIT_AUDIT');
+assert.equal(requiredBindings.get('DEFAULT_ROT_RESTRAINT_STIFF')?.status, 'RECORDED_PENDING_SOURCE_UNIT_AUDIT');
+assert.equal(requiredBindings.get('FRICT_STIF')?.status, 'RECORDED_NON_GOVERNING_L19_L20');
 assert.equal(requiredBindings.get('BEND_AXIAL_SHAPE')?.status, 'RECORDED_REQUIRES_FORMULATION_MAPPING');
 assert.equal(requiredBindings.get('APPLY_B31J_SIFS_AND_FLEX')?.status, 'DOES_NOT_RESOLVE_SMOOTH90_NOTE3');
 
@@ -82,6 +86,11 @@ const result = {
   authorityPath,
   precedence: authority.precedence,
   effective: authority.effective,
+  rawConfigurationScalars: {
+    defaultTransRestraintStiffness: authority.overall.settings.DEFAULT_TRANS_RESTRAINT_STIFF,
+    defaultRotRestraintStiffness: authority.overall.settings.DEFAULT_ROT_RESTRAINT_STIFF,
+    frictionStiffness: authority.overall.settings.FRICT_STIF,
+  },
   frictionCustody: {
     overallDefaultMu: authority.overall.settings.COEFFICIENT_OF_FRICTION_MU,
     modelInputMu: authority.modelInput.settings.COEFFICIENT_OF_FRICTION_MU,
@@ -90,7 +99,7 @@ const result = {
     qualification: 'L19_AND_L20_FRICTIONLESS_BY_CASE_SETTING_NOT_BY_MODEL_INPUT',
   },
   unresolved: authority.bindings
-    .filter((entry) => entry.status.startsWith('UNRESOLVED') || entry.status.includes('REQUIRES_') || entry.status === 'DOES_NOT_RESOLVE_SMOOTH90_NOTE3')
+    .filter((entry) => entry.status.startsWith('UNRESOLVED') || entry.status.includes('PENDING_') || entry.status.includes('REQUIRES_') || entry.status === 'DOES_NOT_RESOLVE_SMOOTH90_NOTE3')
     .map((entry) => ({ setting: entry.setting, status: entry.status })),
   profiles: profileEvidence,
 };

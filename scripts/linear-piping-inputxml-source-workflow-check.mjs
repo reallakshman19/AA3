@@ -76,13 +76,27 @@ function runChecks() {
   assert.match(controller.message, /No geometry-magnitude, diameter, filename, or coordinate heuristic is used/u);
   console.log('P07-UI-05 PASS missing LENGTH declaration fails closed with explicit mm/in controls');
 
-  controller.authorizeUnit('mm');
+  assert.throws(
+    () => controller.authorizeUnit('mm'),
+    (error) => error?.code === 'PREFEA_PREPARATION_RUNTIME_STATE_INVALID'
+      && /Preparation retains prohibited runtime state/u.test(error?.message ?? ''),
+    'Known PF-16 must remain a hard downstream pre-flight stop after source-unit authority is sealed.',
+  );
   snapshot = controller.getSnapshot();
+  assert.equal(snapshot.sourceStatus, 'SOURCE_AUTHORIZED_PREFLIGHT_NOT_READY');
   assert.equal(snapshot.sourceUnit, 'mm');
   assert.equal(snapshot.unitDeclared, false);
   assert.equal(snapshot.unitAuthority, 'LFEA_ENGINEER_DECLARED_FALLBACK_LENGTH_UNIT');
+  assert.equal(snapshot.preFlightStatus, 'NOT_PREPARED');
+  assert.equal(snapshot.preFlightSolveAuthorized, false);
   assert.equal(snapshot.nativeExecutionReady, false);
-  console.log('P07-UI-06 PASS explicit fallback unit becomes retained authority and still cannot infer execution readiness');
+  assert.match(snapshot.error, /PREFEA_PREPARATION_RUNTIME_STATE_INVALID/u);
+  assert.match(snapshot.message, /source authority sealed/u);
+  assert.match(snapshot.message, /pre-flight failed closed/u);
+  assert.match(flattenText(controller.elements.summaryRoot), /FAILED CLOSED — NOT AUTHORIZED/u);
+  assert.equal(controller.elements.unitLabel.hidden, true);
+  assert.equal(controller.elements.unitButton.hidden, true);
+  console.log('P07-UI-06 PASS explicit fallback unit remains retained while known PF-16 stops pre-flight and execution fail-closed');
 
   controller.clear();
   snapshot = controller.getSnapshot();
@@ -113,6 +127,7 @@ function runChecks() {
     normalLfeaInputXmlPicker: true,
     missingUnitFailsClosed: true,
     inferredUnits: false,
+    carriedPf16AfterUnitSeal: true,
     nativeExecutionReady: false,
     legacyRunRequestFabricated: false,
   }));

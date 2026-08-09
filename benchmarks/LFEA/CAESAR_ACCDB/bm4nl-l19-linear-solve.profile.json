@@ -43,11 +43,11 @@
     "gravityAcceleration": 9.80665,
     "bourdonPressureEffects": {
       "mode": "TRANSLATION_AND_ROTATION",
-      "source": "USER_VERIFIED_CAESAR_EXISTING_JOB_SETTING_2026-08-09"
+      "source": "BM4NL_CAESAR_SETTINGS_AUTHORITY_V1:INDIVIDUAL_FILE_OVERRIDE_BOURDON_TRANSLATION_AND_ROTATION"
     },
     "b31jSmooth90FlexibilityCorrection": {
       "enabled": false,
-      "source": "ISSUE_947_REPRODUCED_REPOSITORY_BASELINE_PENDING_NON_EXPORTED_CAESAR_JOB_SETTING"
+      "source": "BM4NL_CAESAR_SETTINGS_AUTHORITY_V1:OVERALL_B31J_DEFAULT_DOES_NOT_RESOLVE_SMOOTH90_NOTE3;FAIL_CLOSED_PENDING_FILE_AUTHORITY"
     },
     "directionalB31JTeeFlexibility": true,
     "teeNominalDiameterRelativeTolerance": 0.001,

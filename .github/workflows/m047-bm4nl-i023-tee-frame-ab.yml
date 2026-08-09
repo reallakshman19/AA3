@@ -136,7 +136,7 @@ jobs:
           foreach ($caseId in @('L19','L20')) {
             if ($candActual.mechanics.cases.$caseId.bendPointerCount -ne 12) { throw "I023 $caseId bend coverage drifted." }
             $tee = @($candActual.mechanics.cases.$caseId.elementLedger | Where-Object { $null -ne $_.teeJunctionNodeId })
-            $teeFrames = @($tee | Where-Object { $_.kind -eq 'FRAME' } | ForEach-Object { [string]$_.sourceElementId } | Sort-Object -Unique)
+            $teeFrames = @($tee | Where-Object { $_.kind -eq 'FRAME' } | ForEach-Object { [int]$_.sourceElementId } | Sort-Object -Unique)
             if (($teeFrames -join ',') -ne '9,12,13,17,18') { throw "I023 $caseId tee FRAME custody drifted: $($teeFrames -join ',')" }
             $held = @($tee | Where-Object { $_.kind -eq 'BEND_INCOMING_STRAIGHT' })
             if ($held.Count -ne 1 -or [string]$held[0].sourceElementId -ne '36') { throw "I023 $caseId source-36 tee/bend hold drifted." }

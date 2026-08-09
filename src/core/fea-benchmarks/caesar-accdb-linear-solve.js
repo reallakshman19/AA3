@@ -43,7 +43,7 @@ import {
 import {
   classifyBranchLegs,
   compilePipingComponent,
-  deriveMec21BendPressureFreeMovement,
+  deriveMec21BendPressureCumulativeField,
   deriveB31JDirectionalBranchEndModifiers,
   sealPipingComponentProfile,
 } from '../linear-fea-piping-components/index.js';
@@ -912,10 +912,10 @@ function buildBendDefinitions(input) {
   return definitions.sort((left, right) => left.pointer - right.pointer);
 }
 
-/** Build CAESAR a-b-c axes and angular extent for every discretized bend arc. */
+/** Build CAESAR a-b-c axes and cumulative angular stations for every discretized bend arc. */
 function buildBourdonSegments(points, centrePoint, bendRadius, pointer) {
   const centre = [...centrePoint];
-  return points.slice(0, -1).map((pointI, index) => {
+  const rawSegments = points.slice(0, -1).map((pointI, index) => {
     const pointJ = points[index + 1];
     const cAxis = unit(subtract(centre, pointI), `BEND_PTR ${pointer} segment ${index} c-axis`);
     const nextCAxis = unit(subtract(centre, pointJ), `BEND_PTR ${pointer} segment ${index} next c-axis`);
@@ -925,7 +925,25 @@ function buildBourdonSegments(points, centrePoint, bendRadius, pointer) {
     const bAxis = unit(cross(cAxis, aAxis), `BEND_PTR ${pointer} segment ${index} b-axis`);
     const bendAngle = Math.acos(clamp(dot(cAxis, nextCAxis), -1, 1));
     if (!(bendAngle > 0)) throw new TypeError(`BEND_PTR ${pointer} segment ${index} has zero arc angle.`);
-    return Object.freeze({ aAxis, bAxis, cAxis, bendAngle, bendRadius });
+    return { aAxis, bAxis, cAxis, bendAngle, bendRadius };
+  });
+  if (rawSegments.length === 0) throw new TypeError(`BEND_PTR ${pointer} has no discretized arc segments.`);
+  const referenceAxes = Object.freeze({
+    a: rawSegments[0].aAxis,
+    b: rawSegments[0].bAxis,
+    c: rawSegments[0].cAxis,
+  });
+  let cumulativeAngle = 0;
+  return rawSegments.map((segment) => {
+    const cumulativeAngleI = cumulativeAngle;
+    const cumulativeAngleJ = cumulativeAngle + segment.bendAngle;
+    cumulativeAngle = cumulativeAngleJ;
+    return Object.freeze({
+      ...segment,
+      referenceAxes,
+      cumulativeAngleI,
+      cumulativeAngleJ,
+    });
   });
 }
 
@@ -1390,31 +1408,32 @@ function closedEndPressureAxialStrain(row, elasticModulus) {
     / (elasticModulus * (outerDiameter ** 2 - innerDiameter ** 2));
 }
 
-/** Convert MEC-21 bend free movement into the initial load of one arc frame. */
+/** Convert one compatible MEC-21 bend nodal field segment into its initial load. */
 function buildBourdonBendInitialLoad(input) {
-  const freeMovement = deriveMec21BendPressureFreeMovement({
+  const field = deriveMec21BendPressureCumulativeField({
     pressure: Number(input.row.PRESSURE1) * KPA_TO_PA,
     innerRadius: input.section.dimensions.innerDiameter / 2,
     bendRadius: input.segment.bendRadius,
     elasticModulus: input.frame.material.elasticModulus,
     secondMoment: input.section.sectionState.secondMomentY,
     poissonRatio: Number(input.row.POISSONS),
-    bendAngle: input.segment.bendAngle,
+    cumulativeAngleI: input.segment.cumulativeAngleI,
+    cumulativeAngleJ: input.segment.cumulativeAngleJ,
+    referenceAxes: input.segment.referenceAxes,
   });
-  const translationGlobal = add(
-    scale(input.segment.aAxis, freeMovement.translationAbc[0]),
-    scale(input.segment.cAxis, freeMovement.translationAbc[2]),
-  );
-  const rotationGlobal = scale(input.segment.bAxis, freeMovement.rotationAbc[1]);
-  const translationLocal = projectToLocal(input.frame.localAxes.axes, translationGlobal);
-  const rotationLocal = projectToLocal(input.frame.localAxes.axes, rotationGlobal);
+  const translationLocalI = projectToLocal(input.frame.localAxes.axes, field.translationGlobalI);
+  const rotationLocalI = projectToLocal(input.frame.localAxes.axes, field.rotationGlobalI);
+  const translationLocalJ = projectToLocal(input.frame.localAxes.axes, field.translationGlobalJ);
+  const rotationLocalJ = projectToLocal(input.frame.localAxes.axes, field.rotationGlobalJ);
   const freeDofLocal = zero12();
-  freeDofLocal.splice(6, 3, ...translationLocal);
-  freeDofLocal.splice(9, 3, ...rotationLocal);
+  freeDofLocal.splice(0, 3, ...translationLocalI);
+  freeDofLocal.splice(3, 3, ...rotationLocalI);
+  freeDofLocal.splice(6, 3, ...translationLocalJ);
+  freeDofLocal.splice(9, 3, ...rotationLocalJ);
   return Object.freeze({
     initialLocal: matrixVector12(input.effectiveLocalStiffness, freeDofLocal),
-    rotationRadians: freeMovement.rotationAbc[1],
-    freeEndTranslationM: translationGlobal,
+    rotationRadians: field.incrementalRotationRadians,
+    freeEndTranslationM: field.translationGlobalJ,
   });
 }
 

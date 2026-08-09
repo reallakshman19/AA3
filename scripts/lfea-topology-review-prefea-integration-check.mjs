@@ -11,6 +11,34 @@ import {
 import { renderLfeaTopologyReview } from '../src/workspace/lfea-topology-review-view.js';
 import { renderLinearPipingInputXmlDiagnostics } from '../src/workspace/linear-piping-inputxml-diagnostics-view.js';
 
+class FakeDocument {
+  createElement(tagName) {
+    return new FakeElement(tagName);
+  }
+}
+
+class FakeElement {
+  constructor(tagName) {
+    this.tagName = tagName;
+    this.children = [];
+    this.dataset = {};
+    this.textContent = '';
+    this.scope = '';
+    this.parentNode = null;
+  }
+
+  append(...children) {
+    for (const child of children) {
+      child.parentNode = this;
+      this.children.push(child);
+    }
+  }
+
+  setAttribute(name, value) {
+    this[name] = value;
+  }
+}
+
 const diagnostics = diagnosticsFixture('mm');
 const review = createLfeaTopologyReviewFromDiagnostics(diagnostics);
 assert.equal(review.summary.findingCount, 4);
@@ -255,32 +283,4 @@ function preFlightFixture(diagnosticsValue) {
 
 function flattenText(node) {
   return [node.textContent, ...node.children.map(flattenText)].join(' ');
-}
-
-class FakeDocument {
-  createElement(tagName) {
-    return new FakeElement(tagName);
-  }
-}
-
-class FakeElement {
-  constructor(tagName) {
-    this.tagName = tagName;
-    this.children = [];
-    this.dataset = {};
-    this.textContent = '';
-    this.scope = '';
-    this.parentNode = null;
-  }
-
-  append(...children) {
-    for (const child of children) {
-      child.parentNode = this;
-      this.children.push(child);
-    }
-  }
-
-  setAttribute(name, value) {
-    this[name] = value;
-  }
 }

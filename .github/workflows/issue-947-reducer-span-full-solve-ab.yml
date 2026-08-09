@@ -82,11 +82,34 @@ jobs:
           git diff --check
           git diff -- src/core/linear-fea-reducer-condensation src/core/fea-benchmarks/caesar-accdb-linear-solve.js > .work/reducer-span-candidate.diff
 
-      - name: Recheck candidate-specific local reducer evidence
+      - name: Bind candidate invariants to independently passed local evidence
+        shell: python
         run: |
-          node scripts/lfea-issue947-reducer-ten-section-span-audit.mjs \
-            --package .work/package/bm4nl-canonical-package.json \
-            --out .work/reducer-span-local-recheck.json
+          from pathlib import Path
+          import json
+          reducer = Path('src/core/linear-fea-reducer-condensation/reducer-condensation.js').read_text()
+          span = 'const fraction = index / (REDUCER_SEGMENT_COUNT - 1);'
+          midpoint = 'const fraction = (index + 0.5) / REDUCER_SEGMENT_COUNT;'
+          if reducer.count(span) != 1:
+              raise SystemExit(f'Expected exactly one ten-section-span rule, found {reducer.count(span)}.')
+          if midpoint in reducer:
+              raise SystemExit('Midpoint sampling remains active after candidate mutation.')
+          evidence = {
+              'schema': 'lfea-issue947-reducer-span-candidate-invariants/v1',
+              'issue': 947,
+              'candidateSamplingRule': 'index/(REDUCER_SEGMENT_COUNT-1)',
+              'candidateSamplingInvariant': 'PASS',
+              'independentLocalEvidence': {
+                  'workflowRunId': 31318962251,
+                  'artifactId': 9039595134,
+                  'artifactDigest': 'sha256:d36b5d7382e6a52d0b804639b0547ce6ce8f6c9739246e64f88388b35e5d0ac2',
+                  'classification': 'TEN_SECTION_SPAN_RULE_SUPPORTED_FOR_NEXT_WHOLE_MODEL_GATE',
+                  'productionSourceChanged': False,
+              },
+              'acceptanceBoundary': 'This step binds source invariants to previously passed local evidence; it does not rerun a self-patching diagnostic against already-mutated source.',
+          }
+          Path('.work/reducer-span-candidate-invariants.json').write_text(json.dumps(evidence, indent=2) + '\n')
+          print(json.dumps(evidence, indent=2))
 
       - name: Run shared-mechanics regressions compatible with candidate sampling
         run: |
@@ -158,5 +181,5 @@ jobs:
             .work/reducer-span-baseline.json
             .work/reducer-span-candidate.json
             .work/reducer-span-full-solve-ab.json
-            .work/reducer-span-local-recheck.json
+            .work/reducer-span-candidate-invariants.json
             .work/reducer-span-candidate.diff

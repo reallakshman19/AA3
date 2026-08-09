@@ -275,7 +275,8 @@ function requireFineLevelRequest(fieldRequest) {
 }
 
 function requireStressUnits(execution, units) {
-  const retainedUnits = execution.canonicalInput?.units?.stress;
+  const retainedUnits = execution.canonicalInput?.units?.canonical?.stress
+    ?? execution.canonicalInput?.units?.stress;
   if (typeof retainedUnits !== 'string' || retainedUnits !== units) {
     throw bridgeError('LAFEA_NB_T6D_STRESS_UNIT_MISMATCH');
   }

@@ -157,7 +157,7 @@ function annulus(outerDiameter, wallThickness) {
   const innerDiameter = outerDiameter - 2 * wallThickness;
   const area = Math.PI * (outerDiameter ** 2 - innerDiameter ** 2) / 4;
   const secondMoment = Math.PI * (outerDiameter ** 4 - innerDiameter ** 4) / 64;
-  return { innerDiameter, area, secondMoment };
+  return { outerDiameter, wallThickness, innerDiameter, area, secondMoment };
 }
 function lerp(a, b, f) { return a + f * (b - a); }
 function matrix(size) { return Array.from({ length: size }, () => new Array(size).fill(0)); }

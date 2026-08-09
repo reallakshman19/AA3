@@ -53,8 +53,7 @@ jobs:
           if count != 1:
               raise SystemExit(f'Expected exactly one solveCase anchor; found {count}.')
           helper_lines = [
-              '',
-              '',
+              '', '',
               '/** Diagnostic-only read access to the exact production case construction. */',
               'export function inspectCaesarAccdbLinearCaseMechanics(benchmarkPackage, caseId) {',
               '  requireBenchmarkPackage(benchmarkPackage);',
@@ -88,8 +87,7 @@ jobs:
               '  });',
               '}',
           ]
-          helper = '\n'.join(helper_lines)
-          text = text.replace(anchor, helper + anchor)
+          text = text.replace(anchor, '\n'.join(helper_lines) + anchor)
           path.write_text(text)
           after = hashlib.sha256(text.encode()).hexdigest()
           Path('.work').mkdir(exist_ok=True)
@@ -97,10 +95,25 @@ jobs:
               'schema': 'lfea-issue947-diagnostic-patch/v1',
               'scope': 'DIAGNOSTIC_ONLY_READ_ONLY_PRODUCTION_MECHANICS_INSPECTION',
               'productionSourceChanged': False,
-              'reason': 'Expose the exact already-built analysis descendant K, equivalent load and initial-strain vectors plus solved source rows so E36 can be Schur-condensed without copying component mechanics.',
+              'reason': 'Expose exact already-built analysis descendant K, equivalent load and initial-strain vectors plus solved source rows so E36 can be Schur-condensed without copying component mechanics.',
               'beforeSha256': before,
               'afterSha256': after,
           }, indent=2) + '\n')
+          PY
+
+      - name: Align E36 diagnostic source-entity identity with emitted result custody
+        shell: bash
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          path = Path('scripts/lfea-issue947-e36-production-descendant-condensation-audit.mjs')
+          text = path.read_text()
+          old = """function sourceAction(rows, row) {\n  const entityId = sourceResultElementId(row);\n  const index = new Map(rows\n    .filter((entry) => entry.entityKind === 'ELEMENT' && entry.entityId === entityId)\n    .map((entry) => [`${entry.quantity}:${entry.component}`, Number(entry.value)]));"""
+          new = """function sourceAction(rows, row) {\n  const requestedEntityId = sourceResultElementId(row);\n  const prefix = `INPUT_ELEMENT:${String(row.ELEMENTID)}|`;\n  const candidateIds = [...new Set(rows\n    .filter((entry) => entry.entityKind === 'ELEMENT' && String(entry.entityId).startsWith(prefix))\n    .map((entry) => String(entry.entityId)))];\n  const entityId = candidateIds.includes(requestedEntityId)\n    ? requestedEntityId\n    : candidateIds.length === 1 ? candidateIds[0] : null;\n  if (entityId === null) throw new TypeError(`Expected one emitted source entity for E${row.ELEMENTID}; found ${JSON.stringify(candidateIds)}.`);\n  const index = new Map(rows\n    .filter((entry) => entry.entityKind === 'ELEMENT' && entry.entityId === entityId)\n    .map((entry) => [`${entry.quantity}:${entry.component}`, Number(entry.value)]));"""
+          count = text.count(old)
+          if count != 1:
+              raise SystemExit(f'Expected exactly one sourceAction identity patch site; found {count}.')
+          path.write_text(text.replace(old, new))
           PY
 
       - name: Run E36 production descendant condensation audit

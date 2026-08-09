@@ -78,21 +78,21 @@ jobs:
         run: node scripts/lafea-shell-domain-hash-probe.mjs
 
       - name: Qualify planar shell mesh producer
-        shell: bash
-        run: |
-          set -o pipefail
-          node scripts/lafea-shell-mesh-producer-check.mjs 2>&1 | tee shell-qualifier.log
-
-      - name: Upload shell qualifier log
-        if: always()
-        uses: actions/upload-artifact@v4
-        with:
-          name: lafea-shell-qualifier-log
-          path: shell-qualifier.log
-          if-no-files-found: error
+        run: node scripts/lafea-shell-mesh-producer-check.mjs
 
       - name: Qualify P2-11 check classification
         run: node scripts/lafea-p2-11-triage.mjs
 
       - name: Run governed LAFEA meshing gate
-        run: npm run check:lafea-meshing
+        shell: bash
+        run: |
+          set -o pipefail
+          npm run check:lafea-meshing 2>&1 | tee meshing-aggregate.log
+
+      - name: Upload meshing aggregate log
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: lafea-meshing-aggregate-log
+          path: meshing-aggregate.log
+          if-no-files-found: error

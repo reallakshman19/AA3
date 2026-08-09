@@ -33,19 +33,6 @@ jobs:
       - name: Expose read-only production case mechanics
         run: python scripts/lfea-issue947-expose-accdb-case-mechanics.py
 
-      - name: Correct generic bend-audit restraint custody field
-        run: |
-          python - <<'PY'
-          from pathlib import Path
-          p = Path('scripts/lfea-issue947-bend-descendant-condensation-audit.mjs')
-          s = p.read_text()
-          old = "String(row.NODE) === nodeId"
-          new = "String(row.NODE_NUM ?? row.NODE) === nodeId"
-          if s.count(old) != 1:
-              raise SystemExit(f'Expected one restraint-node custody site; found {s.count(old)}.')
-          p.write_text(s.replace(old, new))
-          PY
-
       - name: Run E48 smooth90 baseline and MEC21 component removals
         shell: bash
         run: |

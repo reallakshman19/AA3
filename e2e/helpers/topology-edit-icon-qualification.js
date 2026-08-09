@@ -40,6 +40,21 @@ export async function openApplicableSurface(host, entry) {
   }
 }
 
+export async function expectToolbarHitTargetsSeparated(host) {
+  const views = host.locator(
+    '.topology-edit-clean-shell__navigation > details[data-panel-kind="views"] > summary',
+  );
+  const history = host.locator('.topology-edit-clean-shell__history');
+  await expect(views).toHaveCount(1);
+  await expect(history).toHaveCount(1);
+  await expect.poll(async () => {
+    const viewsBox = await views.boundingBox();
+    const historyBox = await history.boundingBox();
+    if (!viewsBox || !historyBox) return false;
+    return viewsBox.x + viewsBox.width <= historyBox.x;
+  }).toBe(true);
+}
+
 export async function openPanel(host, kind) {
   const details = host.locator(`details[data-panel-kind="${kind}"]`);
   await expect(details).toHaveCount(1);

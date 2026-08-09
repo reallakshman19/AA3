@@ -1,0 +1,28 @@
+{
+  "schema": "bm4nl-b31-material-authority/v1",
+  "benchmarkId": "BM4_NL",
+  "caesarVersion": "14.000",
+  "code": "B31.3_2022",
+  "flexibilityElasticModulus": {
+    "basis": "COLD_EC",
+    "accdbField": "INPUT_BASIC_ELEMENT_DATA.MODULUS",
+    "hotFieldRetainedForCustody": "INPUT_BASIC_ELEMENT_DATA.HOT_MOD1",
+    "authority": [
+      "HEXAGON_CAESAR_II_USERS_GUIDE_FAC: FBDR is the only CAESAR II piping code using hot modulus in flexibility analysis",
+      "USER_CONFIRMED_BM4NL_L20_USES_EC_2026-08-09"
+    ]
+  },
+  "bm4nlFalsification": {
+    "requiredColdHotEquality": true,
+    "expectedModulusKPa": 203395008,
+    "expectedElementCount": 96,
+    "reason": "For pinned BM4_NL, Ec and Eh are equal. Correcting modulus-field semantics must not be accepted on benchmark improvement because the numerical stiffness is unchanged."
+  },
+  "qualification": {
+    "L19": "COLD_EC",
+    "L20": "COLD_EC",
+    "thermalStrainTemperature": "OPERATING_T1_WHEN_PRESENT",
+    "materialStiffnessTemperatureBasis": "REFERENCE_COLD",
+    "status": "BOUND"
+  }
+}

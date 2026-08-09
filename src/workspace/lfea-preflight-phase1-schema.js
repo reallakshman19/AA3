@@ -62,6 +62,7 @@ export const LFEA_PREFLIGHT_FIELD_STATUS = Object.freeze({
   BLOCKED_STALE_SOURCE: 7,
   NOT_APPLICABLE: 8,
 });
+const FIELD_STATUS_VALUES = new Set(Object.values(LFEA_PREFLIGHT_FIELD_STATUS));
 
 export const LFEA_PREFLIGHT_EXCEPTION_QUEUE = Object.freeze({
   MISSING: 'MISSING',
@@ -164,7 +165,7 @@ export function requireLfeaPreflightFieldOrdinal(fieldId) {
 
 export function requireLfeaPreflightFieldStatus(value) {
   const status = Number(value);
-  if (!Object.values(LFEA_PREFLIGHT_FIELD_STATUS).includes(status)) {
+  if (!FIELD_STATUS_VALUES.has(status)) {
     throw phase1SchemaError('E_P06_FIELD_STATUS_INVALID', `Unknown Phase-1 field status: ${value}`);
   }
   return status;

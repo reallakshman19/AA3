@@ -2,6 +2,7 @@
 import { canonicalLafeaSha256 } from './lafea-canonical-sha256.js';
 import { createLafeaMeshGenerationIntent } from './lafea-mesh-generation-intent.js';
 import { lafeaMeshCapabilities } from './lafea-mesh-capabilities.js';
+import { lafeaMeshProducerBound } from './lafea-mesh-producer-registry.js';
 
 export const LAFEA_MESH_PRODUCER_CAPABILITY_SCHEMA = 'lafea-mesh-producer-capability/v1';
 export const LAFEA_MESH_PRODUCER_QUALIFICATION_SCHEMA = 'lafea-mesh-producer-qualification/v1';
@@ -105,6 +106,7 @@ export function buildLafeaMeshProducerReadiness(intentValue, capabilityValue, qu
   if (intent.maximumElements > qualification.maximumElements) reasons.push('ELEMENT_LIMIT_EXCEEDS_QUALIFICATION');
   if (intent.maximumEstimatedDofs > qualification.maximumEstimatedDofs) reasons.push('DOF_LIMIT_EXCEEDS_QUALIFICATION');
   const producerContractReady = reasons.length === 0;
+  const bound = lafeaMeshProducerBound(intent.stageId, intent.elementFamily);
   return freeze({
     schema: LAFEA_MESH_PRODUCER_READINESS_SCHEMA,
     stageId: intent.stageId,
@@ -115,8 +117,10 @@ export function buildLafeaMeshProducerReadiness(intentValue, capabilityValue, qu
     producerId: capability.producerId,
     producerRevision: capability.producerRevision,
     producerContractReady,
-    executionAuthorized: false,
-    reasons: producerContractReady ? ['REAL_PRODUCER_IMPLEMENTATION_NOT_BOUND'] : reasons,
+    executionAuthorized: producerContractReady && bound,
+    reasons: producerContractReady
+      ? (bound ? [] : ['REAL_PRODUCER_IMPLEMENTATION_NOT_BOUND'])
+      : reasons,
   });
 }
 

@@ -159,7 +159,7 @@ const intent = createLafeaMeshGenerationIntentV2({
   stageAdapterId: 'LAFEA_STAGE_ADAPTER:LAFEA.3:V1',
   stageAdapterRevision: 'V1',
 });
-assert.equal(intent.executionAuthorized, false);
+assert.ok(intent.executionAuthorized && intent.status === 'EXECUTABLE_INTENT' && intent.producerRef?.startsWith('LAFEA_CORE_MESHER/'));
 assert.equal(Object.hasOwn(intent, 'canonicalModelHash'), false);
 expectCode(() => createLafeaMeshGenerationIntentV2({
   ...Object.fromEntries([
@@ -209,7 +209,7 @@ const qualification = createLafeaMeshProducerQualification({
 const readiness = buildLafeaMeshProducerReadinessV2(intent, capability, qualification);
 assert.equal(readiness.schema, LAFEA_MESH_PRODUCER_READINESS_V2_SCHEMA);
 assert.equal(readiness.producerContractReady, true);
-assert.equal(readiness.executionAuthorized, false);
+assert.ok(readiness.executionAuthorized && readiness.reasons.length === 0); // LAFEA.3/T6 is bound
 
 const profile = meshProfile('T6');
 const mesh = t6Mesh();

@@ -3,10 +3,15 @@ import { canonicalLafeaSha256 } from './lafea-canonical-sha256.js';
 import { lafeaMeshCapabilities } from './lafea-mesh-capabilities.js';
 import { requireLafeaPreparationProfile } from './lafea-preparation-profile.js';
 import { requireLafeaStageAnalysisAdapter } from './lafea-stage-analysis-adapter.js';
+import {
+  lafeaMeshProducerBound,
+  lafeaMeshProducerRefFor,
+} from './lafea-mesh-producer-registry.js';
 
 export const LAFEA_PREPARATION_REQUEST_V2_SCHEMA = 'lafea-preparation-request/v2';
 export const LAFEA_MESH_GENERATION_INTENT_V2_SCHEMA = 'lafea-mesh-generation-intent/v2';
 export const LAFEA_MESH_GENERATION_INTENT_V2_STATUS = 'UNEXECUTABLE_INTENT';
+export const LAFEA_MESH_GENERATION_INTENT_V2_EXECUTABLE_STATUS = 'EXECUTABLE_INTENT';
 
 const PREP_KEYS = Object.freeze([
   'schema', 'stageId', 'sourceHash', 'analysisDomainHash', 'analysisGeometryHash',
@@ -61,7 +66,9 @@ export function createLafeaMeshGenerationIntentV2(value) {
     sourceHash: sha256(value.sourceHash, 'SOURCE_HASH'),
     analysisDomainHash: sha256(value.analysisDomainHash, 'ANALYSIS_DOMAIN_HASH'),
     analysisGeometryHash: sha256(value.analysisGeometryHash, 'ANALYSIS_GEOMETRY_HASH'),
-    meshProfileHash: sha256(value.meshProfileHash, 'MESH_PROFILE_HASH'),
+    // Carried as free text, like the v1 intent: a canonical mesh profile
+    // hashes with the profile contract's digest (`fnv1a64:...`), not SHA-256.
+    meshProfileHash: text(value.meshProfileHash, 'MESH_PROFILE_HASH'),
     targetElementLength: positive(value.targetElementLength, 'TARGET_ELEMENT_LENGTH'),
     lengthUnit: text(value.lengthUnit, 'LENGTH_UNIT'),
     elementFamily: value.elementFamily,
@@ -78,13 +85,18 @@ export function createLafeaMeshGenerationIntentV2(value) {
   const semanticHash = canonicalLafeaSha256({
     schema: 'lafea-mesh-generation-intent-hash-input/v2', intent: record,
   });
+  const bound = lafeaMeshProducerBound('LAFEA.3', record.elementFamily);
   return freeze({
     ...record, semanticHash,
-    status: LAFEA_MESH_GENERATION_INTENT_V2_STATUS,
-    executionAuthorized: false,
-    producerRef: null,
-    producesMesh: false,
-    reason: 'QUALIFIED_DOMAIN_FIRST_MESH_PRODUCER_NOT_AVAILABLE',
+    status: bound
+      ? LAFEA_MESH_GENERATION_INTENT_V2_EXECUTABLE_STATUS
+      : LAFEA_MESH_GENERATION_INTENT_V2_STATUS,
+    executionAuthorized: bound,
+    producerRef: bound ? lafeaMeshProducerRefFor('LAFEA.3') : null,
+    producesMesh: bound,
+    reason: bound
+      ? 'QUALIFIED_DOMAIN_FIRST_MESH_PRODUCER_BOUND'
+      : 'QUALIFIED_DOMAIN_FIRST_MESH_PRODUCER_NOT_AVAILABLE',
   });
 }
 

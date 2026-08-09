@@ -34,17 +34,19 @@ const stage5 = stage('LAFEA.5', {
   },
 });
 
-for (const [stageId, families, sourceSurface] of [
-  ['LAFEA.3', ['T3', 'T6', 'Q8'], 'CONTINUUM_2D'],
-  ['LAFEA.4', ['CST_DKT_TRI3_THIN_SHELL_V1'], 'THIN_SHELL'],
-  ['LAFEA.5', ['CST_DKT_TRI3_THIN_SHELL_V1'], 'HOST_SHELL'],
+// LAFEA.3 has a bound, qualified automatic producer; the shell stages do not.
+// Local refinement is unqualified everywhere.
+for (const [stageId, families, sourceSurface, generation] of [
+  ['LAFEA.3', ['T3', 'T6', 'Q8'], 'CONTINUUM_2D', true],
+  ['LAFEA.4', ['CST_DKT_TRI3_THIN_SHELL_V1'], 'THIN_SHELL', false],
+  ['LAFEA.5', ['CST_DKT_TRI3_THIN_SHELL_V1'], 'HOST_SHELL', false],
 ]) {
   const adapter = lafeaMeshStageAdapter(stageId);
   assert.equal(adapter.schema, LAFEA_MESH_STAGE_ADAPTER_SCHEMA);
   assert.deepEqual(adapter.allowedElementFamilies, families);
   assert.equal(adapter.sourceSurface, sourceSurface);
-  assert.equal(adapter.generationExecutionAuthorized, false);
-  assert.equal(adapter.refinementExecutionAuthorized, false);
+  assert.equal(adapter.generationExecutionAuthorized, generation, stageId);
+  assert.equal(adapter.refinementExecutionAuthorized, false, stageId);
   assert(Object.isFrozen(adapter));
 }
 
@@ -53,11 +55,11 @@ for (const stageId of ['LAFEA.1', 'LAFEA.2', 'LAFEA.6']) {
   assert.equal(projectLafeaMeshRequestReadiness({ stageId }).ready, false);
 }
 
-for (const candidate of [stage3, stage4, stage5]) {
+for (const [candidate, generation] of [[stage3, true], [stage4, false], [stage5, false]]) {
   const projection = projectLafeaMeshRequestReadiness(candidate);
   assert.equal(projection.schema, LAFEA_MESH_REQUEST_READINESS_SCHEMA);
   assert.equal(projection.ready, true, projection.reasons.join(','));
-  assert.equal(projection.executionAuthorized, false);
+  assert.equal(projection.executionAuthorized, generation, projection.stageId);
 }
 assert.deepEqual(
   projectLafeaMeshRequestReadiness(stage3).availableRefinementEntityIds,
@@ -72,10 +74,11 @@ for (const elementFamily of ['T3', 'T6', 'Q8']) {
   const intent = buildLafeaMeshGenerationIntentFromStage(
     stage3, generationConfig(elementFamily, ['N1', 'E1']),
   );
-  assert.equal(intent.status, 'UNEXECUTABLE_INTENT');
-  assert.equal(intent.executionAuthorized, false);
-  assert.equal(intent.producerRef, null);
-  assert.equal(intent.producesMesh, false);
+  // Every LAFEA.3 family is inside the bound producer's scope.
+  assert.equal(intent.status, 'EXECUTABLE_INTENT');
+  assert.equal(intent.executionAuthorized, true);
+  assert.ok(intent.producerRef?.startsWith('LAFEA_CORE_MESHER/'));
+  assert.equal(intent.producesMesh, true);
   assert.deepEqual(
     [intent.sourceHash, intent.canonicalModelHash, intent.analysisGeometryHash, intent.meshProfileHash],
     [H.source, H.model, H.geometry, PROFILE],
@@ -86,8 +89,12 @@ for (const candidate of [stage4, stage5]) {
   const intent = buildLafeaMeshGenerationIntentFromStage(
     candidate, generationConfig('CST_DKT_TRI3_THIN_SHELL_V1', []),
   );
+  // The shell stages have no bound producer, so their intents stay unexecutable.
   assert.equal(intent.stageId, candidate.stageId);
+  assert.equal(intent.status, 'UNEXECUTABLE_INTENT');
   assert.equal(intent.executionAuthorized, false);
+  assert.equal(intent.producerRef, null);
+  assert.equal(intent.producesMesh, false);
 }
 
 throwsCode(
@@ -183,7 +190,7 @@ console.log(JSON.stringify({
   status: 'PASS',
   package: 'WP-MA1',
   stageAdapters: ['LAFEA.3', 'LAFEA.4', 'LAFEA.5'],
-  generationExecutionAuthorized: false,
+  generationExecutionAuthorized: ['LAFEA.3'],
   refinementExecutionAuthorized: false,
 }, null, 2));
 

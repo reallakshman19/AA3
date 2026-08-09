@@ -1,0 +1,76 @@
+/**
+ * Orchestrator actions for the bound analysis-mesh producer.
+ *
+ * These sit between the store's publication boundary and the generation state
+ * slice: they enforce the route precondition, publish once per action, and
+ * turn a producer rejection into an orchestrator diagnostic rather than an
+ * exception escaping into the view.
+ */
+
+export function createLafeaMeshGenerationActions(context) {
+  const {
+    meshGeneration, mesh, rawStage, readStageState, deriveStage, publish,
+    invokeRetained, getRetainedState, clearOrchestratorDiagnostic, failOrchestrator,
+    storeError,
+  } = context;
+
+  /**
+   * Bind the governed mesh profile and record the binding on the lifecycle,
+   * which is what invalidates any analysis mesh held under the old profile.
+   */
+  function bindAnalysisMeshProfile(value, stageId = getRetainedState().activeStageId) {
+    const result = meshGeneration.bindMeshProfile(value, stageId);
+    if (!result.changed) return freeze({ ...result, stage: deriveStage(stageId) });
+    const event = {
+      changeClass: 'ANALYSIS_MESH_PROFILE',
+      profileHash: result.meshProfile.semanticHash,
+    };
+    invokeRetained('applyLifecycleEvent', [event]);
+    const succeeded = getRetainedState().status !== 'FAILED';
+    mesh.afterLifecycleEvent(event, succeeded);
+    if (succeeded) clearOrchestratorDiagnostic();
+    return freeze({ ...result, stage: publish().stages[stageId] });
+  }
+
+  /** Preview only: runs the producer and reports the result, custody untouched. */
+  function planAnalysisMesh(overrides = {}, stageId = getRetainedState().activeStageId) {
+    return attempt(stageId, 'LAFEA_ANALYSIS_MESH_PLAN_REJECTED',
+      () => meshGeneration.planMesh(readStageState(stageId), overrides));
+  }
+
+  function generateAnalysisMesh(overrides = {}, stageId = getRetainedState().activeStageId) {
+    return attempt(stageId, 'LAFEA_ANALYSIS_MESH_GENERATION_REJECTED',
+      () => meshGeneration.generateMesh(readStageState(stageId), overrides));
+  }
+
+  function attempt(stageId, fallbackCode, action) {
+    requireGenerationAuthorized(stageId);
+    try {
+      const result = action();
+      clearOrchestratorDiagnostic();
+      return freeze({ ...result, stage: publish().stages[stageId] });
+    } catch (error) {
+      failOrchestrator(error, fallbackCode);
+      publish();
+      return null;
+    }
+  }
+
+  /**
+   * Generation needs the retained analysis geometry, which only the
+   * domain-first route carries.
+   */
+  function requireGenerationAuthorized(stageId) {
+    if (!rawStage(stageId).domainFirstProfileActive) {
+      throw storeError('LAFEA_ANALYSIS_MESH_GENERATION_REQUIRES_DOMAIN_FIRST_PROFILE');
+    }
+  }
+
+  return Object.freeze({ bindAnalysisMeshProfile, planAnalysisMesh, generateAnalysisMesh });
+}
+
+function freeze(value) {
+  if (!value || typeof value !== 'object' || Object.isFrozen(value)) return value;
+  Object.values(value).forEach(freeze);
+  return Object.freeze(value);
+}

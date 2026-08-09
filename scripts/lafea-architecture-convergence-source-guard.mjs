@@ -31,8 +31,13 @@ for (const stateSource of [sourceState, meshState, preparationState]) {
 }
 assert.doesNotMatch(projection, /document\.querySelector|HTMLElement|addEventListener/u);
 assert.doesNotMatch(adapter, /executeControlledLafea|registerLifecycleArtifact|createLafeaAnalysisMeshEvidence|(?:generate|refine)[A-Z][A-Za-z0-9_]*\s*\(/u);
-assert.match(adapter, /generationAuthorized:\s*false/u);
-assert.match(adapter, /refinementAuthorized:\s*false/u);
+// The adapter stays a pure boundary: it may report whether a producer is
+// bound, but must derive that from the producer registry rather than assert
+// authority of its own, and must never execute generation (guarded above).
+assert.match(adapter, /generationAuthorized:\s*meshApplicable\s*&&\s*lafeaMeshProducerBound\(/u);
+assert.doesNotMatch(adapter, /generationAuthorized:\s*true/u);
+assert.doesNotMatch(adapter, /refinementAuthorized:\s*true/u);
+assert.match(adapter, /LAFEA_MESH_PRODUCER_LOCAL_REFINEMENT_AUTHORIZED/u);
 assert.match(projection, /RELEASE_NOT_QUALIFIED/u);
 assert.match(preparationProfile, /LAFEA_PREPARATION_PRODUCER_NOT_QUALIFIED/u);
 assert.match(projection, /preparation\?\.usableForAuthorization/u);

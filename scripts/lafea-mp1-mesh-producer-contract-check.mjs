@@ -59,7 +59,7 @@ const qualification = createLafeaMeshProducerQualification({
 });
 assert.equal(validateLafeaMeshProducerQualification(qualification, capability).qualificationHash, qualification.qualificationHash);
 
-const intent = createLafeaMeshGenerationIntent({
+const intentInput = {
   schema: 'lafea-mesh-generation-intent/v1',
   stageId: 'LAFEA.3',
   sourceHash: hash('a'),
@@ -75,11 +75,39 @@ const intent = createLafeaMeshGenerationIntent({
   maximumElements: 200,
   maximumEstimatedDofs: 300,
   refinementEntityIds: ['E-2', 'E-1'],
-});
+};
+const intent = createLafeaMeshGenerationIntent(intentInput);
+// LAFEA.3/T3 is inside the bound producer's scope, so readiness is authorized
+// and reports no outstanding reason.
 const readiness = buildLafeaMeshProducerReadiness(intent, capability, qualification);
 assert.equal(readiness.producerContractReady, true);
-assert.equal(readiness.executionAuthorized, false);
-assert.deepEqual(readiness.reasons, ['REAL_PRODUCER_IMPLEMENTATION_NOT_BOUND']);
+assert.equal(readiness.executionAuthorized, true);
+assert.deepEqual(readiness.reasons, []);
+
+// A contract-valid request for a stage with no bound producer stays
+// unauthorized, and says exactly why.
+const unboundIntent = createLafeaMeshGenerationIntent({
+  ...intentInput,
+  stageId: 'LAFEA.4',
+  elementFamily: 'CST_DKT_TRI3_THIN_SHELL_V1',
+});
+const unboundCapability = createLafeaMeshProducerCapability({
+  ...stripHash(capability),
+  producerId: 'TEST-SHELL-PRODUCER',
+  scopes: [{ stageId: 'LAFEA.4', elementFamilies: ['CST_DKT_TRI3_THIN_SHELL_V1'] }],
+});
+const unboundQualification = createLafeaMeshProducerQualification({
+  ...stripHash(qualification),
+  qualificationId: 'TEST-SHELL-QUALIFICATION',
+  capabilityHash: unboundCapability.capabilityHash,
+  authorizedScopes: [{ stageId: 'LAFEA.4', elementFamilies: ['CST_DKT_TRI3_THIN_SHELL_V1'] }],
+});
+const unboundReadiness = buildLafeaMeshProducerReadiness(
+  unboundIntent, unboundCapability, unboundQualification,
+);
+assert.equal(unboundReadiness.producerContractReady, true);
+assert.equal(unboundReadiness.executionAuthorized, false);
+assert.deepEqual(unboundReadiness.reasons, ['REAL_PRODUCER_IMPLEMENTATION_NOT_BOUND']);
 
 const refinementOnlyCapability = createLafeaMeshProducerCapability({
   ...stripHash(capability),
@@ -161,11 +189,17 @@ assert.equal(output.lifecycleAuthority, false);
 assert.throws(() => createLafeaMeshProducerCapability({
   ...stripHash(capability), scopes: [{ stageId: 'LAFEA.1', elementFamilies: ['T3'] }],
 }), /LAFEA_MESH_PRODUCER_SCOPE_STAGE_NOT_APPLICABLE/u);
+// stripHash drops capabilityHash, which a qualification requires, so it has to
+// be restored or these assert on a keys error instead of the widening they name.
 assert.throws(() => validateLafeaMeshProducerQualification(createLafeaMeshProducerQualification({
-  ...stripHash(qualification), authorizedScopes: [{ stageId: 'LAFEA.3', elementFamilies: ['Q8'] }],
+  ...stripHash(qualification),
+  capabilityHash: capability.capabilityHash,
+  authorizedScopes: [{ stageId: 'LAFEA.3', elementFamilies: ['Q8'] }],
 }), capability), /LAFEA_MESH_PRODUCER_QUALIFICATION_SCOPE_WIDENING/u);
 assert.throws(() => validateLafeaMeshProducerQualification(createLafeaMeshProducerQualification({
-  ...stripHash(qualification), maximumNodes: 1001,
+  ...stripHash(qualification),
+  capabilityHash: capability.capabilityHash,
+  maximumNodes: 1001,
 }), capability), /LAFEA_MESH_PRODUCER_QUALIFICATION_MAXIMUM_NODES_WIDENING/u);
 assert.throws(() => validateLafeaMeshProducerOutput({ ...output, producerRevision: 'TAMPERED' }, context), /HASH_INVALID|PRODUCER_REVISION/u);
 
@@ -194,7 +228,8 @@ console.log(JSON.stringify({
   executionAuthorized: readiness.executionAuthorized,
   meshPlanProducesMesh: plan.producesMesh,
   outputLifecycleAuthority: output.lifecycleAuthority,
-  realProducerQualified: false,
+  realProducerQualified: true,
+  realProducerQualifiedStages: ['LAFEA.3'],
   generalMeshGeneration: false,
 }));
 

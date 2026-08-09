@@ -1,9 +1,20 @@
-/** Non-executable intent contract for a future qualified mesh producer. */
+/**
+ * Mesh-generation intent contract.
+ *
+ * The intent reports whether it is executable, which depends on whether a
+ * qualified producer is bound for its stage and element family. It remains
+ * unexecutable — and says so — wherever no producer is bound.
+ */
 import { canonicalLafeaSha256 } from './lafea-canonical-sha256.js';
 import { lafeaMeshCapabilities } from './lafea-mesh-capabilities.js';
+import {
+  lafeaMeshProducerBound,
+  lafeaMeshProducerRefFor,
+} from './lafea-mesh-producer-registry.js';
 
 export const LAFEA_MESH_GENERATION_INTENT_SCHEMA = 'lafea-mesh-generation-intent/v1';
 export const LAFEA_MESH_GENERATION_INTENT_STATUS = 'UNEXECUTABLE_INTENT';
+export const LAFEA_MESH_GENERATION_INTENT_EXECUTABLE_STATUS = 'EXECUTABLE_INTENT';
 
 const KEYS = Object.freeze([
   'schema', 'stageId', 'sourceHash', 'canonicalModelHash', 'analysisGeometryHash',
@@ -43,14 +54,19 @@ export function createLafeaMeshGenerationIntent(value) {
     schema: 'lafea-mesh-generation-intent-hash-input/v1',
     intent,
   });
+  const bound = lafeaMeshProducerBound(intent.stageId, intent.elementFamily);
   return freeze({
     ...intent,
     semanticHash,
-    status: LAFEA_MESH_GENERATION_INTENT_STATUS,
-    executionAuthorized: false,
-    producerRef: null,
-    producesMesh: false,
-    reason: 'QUALIFIED_MESH_PRODUCER_NOT_AVAILABLE',
+    status: bound
+      ? LAFEA_MESH_GENERATION_INTENT_EXECUTABLE_STATUS
+      : LAFEA_MESH_GENERATION_INTENT_STATUS,
+    executionAuthorized: bound,
+    producerRef: bound ? lafeaMeshProducerRefFor(intent.stageId) : null,
+    producesMesh: bound,
+    reason: bound
+      ? 'QUALIFIED_MESH_PRODUCER_BOUND'
+      : 'QUALIFIED_MESH_PRODUCER_NOT_AVAILABLE',
   });
 }
 

@@ -153,7 +153,8 @@ function readiness(stageId, adapter, entityIds, reasons, hashes = {}) {
     analysisGeometryHash: hashes.analysisGeometryHash ?? null,
     meshProfileHash: hashes.meshProfileHash ?? null,
     reasons: uniqueReasons,
-    executionAuthorized: false,
+    executionAuthorized: Boolean(adapter) && uniqueReasons.length === 0
+      && adapter.generationExecutionAuthorized === true,
   });
 }
 

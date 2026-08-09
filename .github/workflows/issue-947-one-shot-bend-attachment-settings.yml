@@ -1,0 +1,45 @@
+name: Issue 947 one-shot bend attachment settings custody
+
+on:
+  push:
+    branches:
+      - codex/issue-947-bm4nl-qualification
+
+permissions:
+  contents: write
+
+jobs:
+  apply:
+    if: "${{ github.event.head_commit.message == 'ci(issue947): bind bend attachment settings custody' }}"
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Checkout qualification branch
+        uses: actions/checkout@v4
+        with:
+          ref: codex/issue-947-bm4nl-qualification
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Apply deterministic settings-custody patch
+        run: node scripts/lfea-issue947-apply-bend-attachment-settings-custody.mjs
+
+      - name: Validate settings custody after patch
+        run: node scripts/lfea-issue947-caesar-settings-custody-check.mjs
+
+      - name: Commit validation-only custody change
+        shell: bash
+        run: |
+          set -euo pipefail
+          git add benchmarks/LFEA/CAESAR_ACCDB/bm4nl-caesar-settings.authority.json scripts/lfea-issue947-caesar-settings-custody-check.mjs
+          if git diff --cached --quiet; then
+            echo 'Expected bend attachment custody patch produced no diff.' >&2
+            exit 1
+          fi
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git commit -m 'test(issue947): bind bend attachment and axial-shape settings'
+          git push origin HEAD:codex/issue-947-bm4nl-qualification

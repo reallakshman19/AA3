@@ -33,6 +33,9 @@ jobs:
           repository: reallaksh19/Advanced_Analysis
           run-id: 31314047095
 
+      - name: Prove historical midpoint reducer fixture before candidate mutation
+        run: node scripts/lfea-b3.23-reducer-condensation-check.mjs
+
       - name: Solve accepted baseline from canonical package
         run: |
           mkdir -p .work
@@ -79,9 +82,14 @@ jobs:
           git diff --check
           git diff -- src/core/linear-fea-reducer-condensation src/core/fea-benchmarks/caesar-accdb-linear-solve.js > .work/reducer-span-candidate.diff
 
-      - name: Run reducer and shared-mechanics regressions
+      - name: Recheck candidate-specific local reducer evidence
         run: |
-          node scripts/lfea-b3.23-reducer-condensation-check.mjs
+          node scripts/lfea-issue947-reducer-ten-section-span-audit.mjs \
+            --package .work/package/bm4nl-canonical-package.json \
+            --out .work/reducer-span-local-recheck.json
+
+      - name: Run shared-mechanics regressions compatible with candidate sampling
+        run: |
           node scripts/lfea-issue947-reducer-backcompat-check.mjs
           node scripts/lfea-issue947-caesar-pipe-shear-authority-check.mjs
           node scripts/lfea-issue947-bourdon-subdivision-check.mjs
@@ -150,4 +158,5 @@ jobs:
             .work/reducer-span-baseline.json
             .work/reducer-span-candidate.json
             .work/reducer-span-full-solve-ab.json
+            .work/reducer-span-local-recheck.json
             .work/reducer-span-candidate.diff

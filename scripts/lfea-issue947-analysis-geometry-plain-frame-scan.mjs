@@ -18,9 +18,13 @@ const coordinateAnchor = "const coordinates = sourceCoordinateIndex(benchmarkPac
 if (!source.includes(coordinateAnchor)) throw new Error('Plain-frame scan coordinate anchor not found.');
 source = source.replace(coordinateAnchor, `const rawCoordinates = sourceCoordinateIndex(benchmarkPackage.model.tables.INPUT_NODAL_COORDINATES.rows);\nconst { coordinates, bendFarAdjustments } = analysisCoordinatesWithBendFarNodes(\n  rawCoordinates,\n  [...sourceRows.values()],\n  benchmarkPackage.model.tables.INPUT_BENDS.rows,\n);`);
 
+const gravityPhiAnchor = `    phiXY: stiffness.phiXY,\n    phiXZ: stiffness.phiXZ,`;
+if (!source.includes(gravityPhiAnchor)) throw new Error('Plain-frame gravity load-vector anchor not found.');
+source = source.replace(gravityPhiAnchor, `    phiXY: 0,\n    phiXZ: 0,`);
+
 source = source.replace(
   "method: 'CAESAR_NODAL_DISPLACEMENT_INJECTED_INTO_CURRENT_CAESAR_PIPE_FRAME_LAW_V1',",
-  "method: 'CAESAR_NODAL_DISPLACEMENT_INJECTED_INTO_CURRENT_CAESAR_PIPE_FRAME_LAW_WITH_ANALYSIS_BEND_FAR_GEOMETRY_V2',\n  analysisGeometryCorrection: { rule: 'BEND_SOURCE_TO_NODE_MOVED_FROM_RAW_INTERSECTION_TO_TANGENT_END_FAR_POINT', bendFarAdjustments },",
+  "method: 'CAESAR_NODAL_DISPLACEMENT_INJECTED_INTO_PRODUCTION_PARITY_PIPE_FRAME_LAW_V3',\n  analysisGeometryCorrection: { rule: 'BEND_SOURCE_TO_NODE_MOVED_FROM_RAW_INTERSECTION_TO_TANGENT_END_FAR_POINT', bendFarAdjustments },\n  gravityLoadVectorParity: { rule: 'ACCDB_PRODUCTION_GRAVITY_VECTOR_PHI_ZERO', phiXY: 0, phiXZ: 0 },",
 );
 
 const helperAnchor = 'function sourceCoordinateIndex(rows) {';

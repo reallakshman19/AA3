@@ -48,43 +48,28 @@ export function generationSection(doc, model, handlers) {
     return section;
   }
 
+  const governed = node(doc, 'dl', 'lafea-discretization__facts');
+  governed.dataset.role = 'lafea-generation-bound-configuration';
+  governed.append(
+    node(doc, 'dt', null, 'Governing element family'),
+    node(doc, 'dd', null, generation.declaredElementFamily),
+    node(doc, 'dt', null, 'Governing target element length'),
+    node(doc, 'dd', null, String(generation.targetElementLength)),
+  );
+  section.append(governed);
+
   const controls = node(doc, 'div', 'lafea-discretization__generation-controls');
-
-  const familyLabel = node(doc, 'label', null, 'Element family ');
-  const family = node(doc, 'select');
-  family.dataset.role = 'lafea-generation-element-family';
-  for (const option of generation.elementFamilies) {
-    const item = node(doc, 'option', null, option);
-    item.value = option;
-    if (option === generation.declaredElementFamily) item.selected = true;
-    family.append(item);
-  }
-  familyLabel.append(family);
-
-  const sizeLabel = node(doc, 'label', null, 'Target element length ');
-  const size = node(doc, 'input');
-  size.type = 'number';
-  size.min = '0';
-  size.step = 'any';
-  size.value = String(generation.targetElementLength ?? '');
-  size.dataset.role = 'lafea-generation-target-length';
-  sizeLabel.append(size);
-
-  const overrides = () => ({
-    elementFamily: family.value,
-    targetElementLength: Number(size.value),
-  });
-
-  const plan = button(doc, 'Plan mesh', () => handlers.onPlanMesh?.(overrides()));
+  const plan = button(doc, 'Plan mesh', () => handlers.onPlanMesh?.({}));
   plan.dataset.role = 'lafea-generation-plan';
   plan.disabled = !model.actions.canPlanMesh;
-  plan.title = 'Runs the producer and reports the result. Custody is not modified.';
+  plan.title = 'Runs the producer from the bound profile and reports the result. Custody is not modified.';
 
-  const generate = button(doc, 'Generate and retain mesh', () => handlers.onGenerateMesh?.(overrides()));
+  const generate = button(doc, 'Generate and retain mesh', () => handlers.onGenerateMesh?.({}));
   generate.dataset.role = 'lafea-generation-generate';
   generate.disabled = !model.actions.canGenerateMesh;
+  generate.title = 'Generation uses the bound profile exactly; change family or size by binding a new profile.';
 
-  controls.append(familyLabel, sizeLabel, plan, generate);
+  controls.append(plan, generate);
   section.append(controls);
 
   if (model.generation.plan) section.append(planSummary(doc, model.generation.plan));

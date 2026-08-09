@@ -17,6 +17,7 @@ import {
   createAdvancedTabBenchmarkRegistry,
   reconcileNavigationAndBenchmarkRegistry,
 } from '../src/core/tab-benchmarks/index.js';
+import { renderLoadCalcConsumer } from '../src/workspace/load-calc-consumer-view.js';
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const registry = createWorkspaceConsumerRegistryV11();
@@ -95,6 +96,58 @@ assert.match(loadCalcViewSource, /data-load-calc-run/u,
   'Load Calc must expose one governed run control.');
 assert.match(loadCalcViewSource, /Run Load Calc — Gravity/u,
   'The governed run control must identify the authorized gravity fallback.');
+
+const runRenderDocument = {
+  createElement(tagName) {
+    assert.equal(tagName, 'section', 'Load Calc renderer must create the governed section root.');
+    return { className: '', dataset: {}, innerHTML: '' };
+  },
+};
+const baseRunState = {
+  activeTab: 'verify',
+  empiricalScenarioState: { calculationEligible: false },
+  authorizationState: { state: 'NOT_CONFIGURED', calculationEligible: false },
+  commonInputState: {},
+  supportSiteModel: null,
+  routePartitionModel: null,
+  distribution: null,
+  message: '',
+};
+
+const empiricalRun = governedRunButton({
+  ...baseRunState,
+  empiricalScenarioState: { calculationEligible: true },
+});
+assert.doesNotMatch(empiricalRun.button, /\bdisabled\b/u,
+  'A calculation-eligible empirical scenario must enable the governed Run action.');
+assert.match(empiricalRun.button, /Run Load Calc/u,
+  'An eligible empirical scenario must render the generic governed Run label.');
+assert.doesNotMatch(empiricalRun.button, /Gravity/u,
+  'Empirical eligibility must take precedence over the gravity fallback.');
+
+const gravityRun = governedRunButton({
+  ...baseRunState,
+  authorizationState: { state: 'AUTHORIZED_CURRENT', calculationEligible: true },
+});
+assert.doesNotMatch(gravityRun.button, /\bdisabled\b/u,
+  'An eligible authorized gravity state must enable the governed Run action.');
+assert.match(gravityRun.button, /Run Load Calc — Gravity/u,
+  'Gravity eligibility must remain an explicit governed fallback.');
+
+const blockedRun = governedRunButton({
+  ...baseRunState,
+  authorizationState: {
+    state: 'AWAITING_AUTHORIZATION',
+    calculationEligible: false,
+    reasonCode: 'NO_ACTIVE_DATASET',
+  },
+});
+assert.match(blockedRun.button, /\bdisabled\b/u,
+  'The governed Run action must remain disabled when no execution path is eligible.');
+assert.match(blockedRun.button, /No dataset loaded — import SJSON first/u,
+  'A blocked Run action must expose the governing reason rather than silently disabling.');
+assert.match(blockedRun.html, /No dataset loaded — import SJSON first/u,
+  'The governing blocked reason must remain visible in the status output.');
 
 const loadCalcControllerSource = await readFile(path.join(root, 'src/workspace/load-calc-consumer-controller.js'), 'utf8');
 for (const requiredView of [
@@ -217,6 +270,15 @@ for (const packageName of ['react', 'react-dom', 'zustand', 'lucide-react', '@re
 }
 
 console.log('Advanced four-tab shell, grouped Load Calc navigation, certified authoring chain and benchmark registry reconciliation passed.');
+
+function governedRunButton(runState) {
+  const section = renderLoadCalcConsumer(runRenderDocument, runState);
+  const runControlCount = [...section.innerHTML.matchAll(/data-load-calc-run/gu)].length;
+  assert.equal(runControlCount, 1, 'Load Calc must render exactly one governed Run control.');
+  const match = section.innerHTML.match(/<button[^>]*data-load-calc-run[^>]*>[\s\S]*?<\/button>/u);
+  assert.ok(match, 'Load Calc must render the governed Run control as a button.');
+  return { button: match[0], html: section.innerHTML };
+}
 
 async function pathExists(targetPath) {
   try {

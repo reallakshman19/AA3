@@ -258,18 +258,18 @@ function shellProfile(stageId, target, suffix) {
 function assertCylinderAndHole(mesh, geometry, holePolygons) {
   const uvById = new Map();
   for (const node of mesh.nodes) {
-    const uv = curvedHoleShellUvAtPoint3d(geometry, node);
+    const uv = curvedHoleShellUvAtPoint3d(geometry, physicalPoint(node));
     uvById.set(node.nodeId, uv);
-    const frame = curvedHoleShellFrameAtPoint3d(geometry, node);
+    const frame = curvedHoleShellFrameAtPoint3d(geometry, physicalPoint(node));
     close(norm(frame.director), 1, 1e-12);
     assert.ok(!holePolygons.some((hole) => pointStrictlyInside(uv, hole)),
       `node ${node.nodeId} entered a cylindrical hole in UV`);
   }
   for (const element of mesh.elements) {
-    const rows = element.nodeIds.map((nodeId) => uvById.get(nodeId));
+    const elementRows = element.nodeIds.map((nodeId) => uvById.get(nodeId));
     const centroid = {
-      u: rows.reduce((sum, row) => sum + row.u, 0) / rows.length,
-      v: rows.reduce((sum, row) => sum + row.v, 0) / rows.length,
+      u: elementRows.reduce((sum, row) => sum + row.u, 0) / elementRows.length,
+      v: elementRows.reduce((sum, row) => sum + row.v, 0) / elementRows.length,
     };
     assert.ok(!holePolygons.some((hole) => pointStrictlyInside(centroid, hole)),
       `element ${element.elementId} centroid entered a cylindrical hole in UV`);
@@ -277,7 +277,7 @@ function assertCylinderAndHole(mesh, geometry, holePolygons) {
 }
 
 function assertHoleCornersRetained(mesh, geometry, holePolygon) {
-  const uvNodes = mesh.nodes.map((node) => curvedHoleShellUvAtPoint3d(geometry, node));
+  const uvNodes = mesh.nodes.map((node) => curvedHoleShellUvAtPoint3d(geometry, physicalPoint(node)));
   for (const corner of holePolygon) {
     assert.ok(uvNodes.some((uv) => distance2(uv, corner) <= 1e-8),
       `missing constrained curved-hole corner ${JSON.stringify(corner)}`);
@@ -286,14 +286,16 @@ function assertHoleCornersRetained(mesh, geometry, holePolygon) {
 
 function qualifyHoleAdjacentFacetAgainstLocalShell(mesh, geometry, holePolygon) {
   const corner = holePolygon[0];
-  const node = mesh.nodes.find((row) => distance2(curvedHoleShellUvAtPoint3d(geometry, row), corner) <= 1e-8);
+  const node = mesh.nodes.find((row) => distance2(
+    curvedHoleShellUvAtPoint3d(geometry, physicalPoint(row)), corner,
+  ) <= 1e-8);
   assert.ok(node, 'expected hole-corner node');
   const element = mesh.elements.find((row) => row.nodeIds.includes(node.nodeId));
   assert.ok(element, 'expected hole-adjacent element');
   const nodeById = new Map(mesh.nodes.map((row) => [row.nodeId, row]));
   const shellNodes = element.nodeIds.map((nodeId) => {
     const point = nodeById.get(nodeId);
-    const frame = curvedHoleShellFrameAtPoint3d(geometry, point);
+    const frame = curvedHoleShellFrameAtPoint3d(geometry, physicalPoint(point));
     return {
       nodeId,
       position: [point.x, point.y, point.z],
@@ -423,6 +425,7 @@ function inputGeometry(geometry) {
   };
 }
 
+function physicalPoint(value) { return { x: value.x, y: value.y, z: value.z }; }
 function pointStrictlyInside(point, polygon) {
   if (pointOnBoundary(point, polygon)) return false;
   let inside = false;

@@ -1,4 +1,3 @@
-import { createLafeaAnalysisGeometry } from './lafea-analysis-geometry-contract.js';
 import {
   LAFEA_ANALYSIS_MESH_AUTHORITY_V2_ROLE,
   LAFEA_ANALYSIS_MESH_AUTHORITY_V2_SCHEMA,
@@ -21,16 +20,29 @@ import {
   lafeaCoreMeshProducerCapability,
   lafeaCoreMeshProducerQualification,
 } from './lafea-mesh-producer-binding.js';
+import { LAFEA_SHELL_MIDSURFACE_STAGES } from './lafea-shell-midsurface-contract.js';
 import {
-  LAFEA_SHELL_MIDSURFACE_STAGES,
-  shellMidsurfacePoint3d,
-  validateLafeaShellMidsurfaceEvidence,
-} from './lafea-shell-midsurface-contract.js';
+  LAFEA_SHELL_SURFACE_KINDS,
+  shellMidsurfaceFrameAtUvAny,
+  shellMidsurfaceKind,
+  shellMidsurfaceParameterGeometry,
+  shellMidsurfacePoint3dAny,
+  validateLafeaAnyShellMidsurfaceEvidence,
+} from './lafea-shell-midsurface-dispatch.js';
+import { curvedShellGeometryBounds } from './lafea-shell-curved-midsurface-contract.js';
 
 export const LAFEA_SHELL_MESH_PLAN_SCHEMA = 'lafea-shell-mesh-plan/v1';
 export const LAFEA_SHELL_MESH_OUTPUT_SCHEMA = 'lafea-shell-mesh-output/v1';
 export const LAFEA_SHELL_MESH_PRODUCER_SCOPE =
   'PLANAR_SINGLE_PATCH_STRAIGHT_BOUNDARY_WITH_NON_NESTED_HOLES_CST_DKT_TRI3_V2';
+export const LAFEA_SHELL_CURVED_MESH_PLAN_SCHEMA = 'lafea-shell-curved-mesh-plan/v1';
+export const LAFEA_SHELL_CURVED_MESH_OUTPUT_SCHEMA = 'lafea-shell-curved-mesh-output/v1';
+export const LAFEA_SHELL_CURVED_MESH_PRODUCER_SCOPE =
+  'CYLINDRICAL_SINGLE_RECTANGULAR_PATCH_CST_DKT_TRI3_V1';
+export const LAFEA_SHELL_CURVED_MESH_STRATEGY = 'CYLINDRICAL_SHELL_MIDSURFACE_TRIANGULATION';
+export const LAFEA_SHELL_CURVED_TARGET_ANGLE_DEGREES = 15;
+export const LAFEA_SHELL_CURVED_MINIMUM_FACET_DIRECTOR_ALIGNMENT =
+  Math.cos((15 * Math.PI) / 180);
 export const LAFEA_SHELL_ELEMENT = 'CST_DKT_TRI3_THIN_SHELL_V1';
 export const LAFEA_SHELL_HOLE_MINIMUM_ELEMENTS_ACROSS_LIGAMENT = 2;
 
@@ -39,24 +51,37 @@ export const LAFEA_SHELL_HOLE_MINIMUM_ELEMENTS_ACROSS_LIGAMENT = 2;
  * solver and continues to declare NO_AUTOMATIC_OR_ADAPTIVE_MESHING; this
  * producer executes before canonical shell-model assembly.
  *
- * For a hole-bearing patch, the requested global target must permit at least
- * two nominal element lengths across the narrowest material ligament between
- * distinct boundary loops. A coarser request is rejected explicitly before
- * meshing; the producer never relies on post-generation threshold relaxation
- * or uncontrolled adaptive repair to rescue an under-resolved ligament.
+ * Planar parents retain their previously qualified behavior byte-for-byte at
+ * the plan schema level. A cylindrical parent enters through a distinct plan
+ * schema and uses u=circumferential arc length, v=axial distance. Curvature may
+ * reduce the effective mesh target below the user's global target, never make
+ * it coarser. Every curved facet must also align with the analytic nodal
+ * directors before v2 analysis-mesh evidence can be produced.
  */
 export function planLafeaShellAnalysisMesh({ midsurfaceEvidence: evidenceValue, meshProfile: profileValue }) {
-  const midsurfaceEvidence = validateLafeaShellMidsurfaceEvidence(evidenceValue);
-  const stageId = shellStage(midsurfaceEvidence.stageId);
+  const midsurfaceEvidence = validateLafeaAnyShellMidsurfaceEvidence(evidenceValue);
   const meshProfile = canonicalLafeaAnalysisMeshProfile(profileValue);
-  requireShellProfile(meshProfile);
-  if (!lafeaMeshProducerBound(stageId, LAFEA_SHELL_ELEMENT)) {
-    fail('LAFEA_SHELL_MESH_PRODUCER_NOT_BOUND');
+  return shellMidsurfaceKind(midsurfaceEvidence) === LAFEA_SHELL_SURFACE_KINDS.CYLINDRICAL
+    ? planCurvedShellAnalysisMesh(midsurfaceEvidence, meshProfile)
+    : planPlanarShellAnalysisMesh(midsurfaceEvidence, meshProfile);
+}
+
+export function produceLafeaShellAnalysisMesh(input) {
+  const midsurfaceEvidence = validateLafeaAnyShellMidsurfaceEvidence(input.midsurfaceEvidence);
+  const meshProfile = canonicalLafeaAnalysisMeshProfile(input.meshProfile);
+  const plan = input.plan ?? planLafeaShellAnalysisMesh({ midsurfaceEvidence, meshProfile });
+  if (plan.schema === LAFEA_SHELL_CURVED_MESH_PLAN_SCHEMA) {
+    return produceCurvedShellAnalysisMesh(plan, midsurfaceEvidence, meshProfile);
   }
+  return producePlanarShellAnalysisMesh(plan, midsurfaceEvidence, meshProfile);
+}
+
+function planPlanarShellAnalysisMesh(midsurfaceEvidence, meshProfile) {
+  const stageId = shellStage(midsurfaceEvidence.stageId);
+  requireShellProfile(meshProfile);
+  requireProducerBinding(stageId);
   const capability = lafeaCoreMeshProducerCapability();
   const qualification = lafeaCoreMeshProducerQualification();
-  requireScope(capability.scopes, stageId);
-  requireScope(qualification.authorizedScopes, stageId);
 
   const ligament = shellHoleLigamentQualification(midsurfaceEvidence.geometry);
   if (ligament && meshProfile.fields.globalTargetSize > ligament.maximumQualifiedTargetElementLength + 1e-12) {
@@ -64,20 +89,19 @@ export function planLafeaShellAnalysisMesh({ midsurfaceEvidence: evidenceValue, 
   }
 
   const generated2d = generateLafeaAnalysisMesh(
-    buildLafeaMeshTopology(toPlanarAnalysisGeometry(midsurfaceEvidence.geometry)),
+    buildLafeaMeshTopology(shellMidsurfaceParameterGeometry(midsurfaceEvidence)),
     {
       targetElementLength: meshProfile.fields.globalTargetSize,
       curvatureToleranceDegrees: 15,
       elementFamily: 'T3',
     },
   );
-  const mesh = mapPlanarMeshToShell(generated2d.mesh, midsurfaceEvidence.geometry, stageId);
+  const mesh = mapParameterMeshToShell(generated2d.mesh, midsurfaceEvidence.geometry, stageId);
   const estimatedDofs = estimateLafeaMeshDofs(stageId, mesh.nodes.length);
-  const resourceDisposition = mesh.nodes.length > LAFEA_MESH_PRODUCER_MAXIMUM_NODES
-    || mesh.elements.length > LAFEA_MESH_PRODUCER_MAXIMUM_ELEMENTS
-    || estimatedDofs > LAFEA_MESH_PRODUCER_MAXIMUM_ESTIMATED_DOFS
-    ? 'BLOCK' : 'WITHIN_LIMITS';
+  const resourceDisposition = resourceDispositionFor(mesh, estimatedDofs);
 
+  // Preserve the established planar plan core exactly. Compatibility matters:
+  // hole-free and planar-hole parents keep the same schema and field set.
   const core = {
     schema: LAFEA_SHELL_MESH_PLAN_SCHEMA,
     stageId,
@@ -117,19 +141,104 @@ export function planLafeaShellAnalysisMesh({ midsurfaceEvidence: evidenceValue, 
   });
 }
 
-export function produceLafeaShellAnalysisMesh(input) {
-  const midsurfaceEvidence = validateLafeaShellMidsurfaceEvidence(input.midsurfaceEvidence);
-  const meshProfile = canonicalLafeaAnalysisMeshProfile(input.meshProfile);
-  const plan = input.plan ?? planLafeaShellAnalysisMesh({ midsurfaceEvidence, meshProfile });
-  requirePlan(plan, midsurfaceEvidence, meshProfile);
-  if (plan.resourceDisposition === 'BLOCK') fail('LAFEA_SHELL_MESH_RESOURCE_LIMIT_EXCEEDED');
+function planCurvedShellAnalysisMesh(midsurfaceEvidence, meshProfile) {
+  const stageId = shellStage(midsurfaceEvidence.stageId);
+  requireShellProfile(meshProfile);
+  requireProducerBinding(stageId);
+  const capability = lafeaCoreMeshProducerCapability();
+  const qualification = lafeaCoreMeshProducerQualification();
+  const geometry = midsurfaceEvidence.geometry;
+  const bounds = curvedShellGeometryBounds(geometry);
+  const curvatureTargetElementLength = geometry.surface.radius
+    * (LAFEA_SHELL_CURVED_TARGET_ANGLE_DEGREES * Math.PI / 180);
+  const effectiveTargetElementLength = Math.min(
+    meshProfile.fields.globalTargetSize,
+    curvatureTargetElementLength,
+  );
 
+  const generated2d = generateLafeaAnalysisMesh(
+    buildLafeaMeshTopology(shellMidsurfaceParameterGeometry(midsurfaceEvidence)),
+    {
+      targetElementLength: effectiveTargetElementLength,
+      curvatureToleranceDegrees: LAFEA_SHELL_CURVED_TARGET_ANGLE_DEGREES,
+      elementFamily: 'T3',
+    },
+  );
+  const mesh = mapParameterMeshToShell(generated2d.mesh, geometry, stageId);
+  const curvedGeometry = curvedFacetQualification(generated2d.mesh, mesh, geometry);
+  if (curvedGeometry.minimumFacetDirectorAlignment
+      < LAFEA_SHELL_CURVED_MINIMUM_FACET_DIRECTOR_ALIGNMENT - 1e-12) {
+    fail('LAFEA_SHELL_CURVED_FACET_DIRECTOR_ALIGNMENT_BLOCKED');
+  }
+  const estimatedDofs = estimateLafeaMeshDofs(stageId, mesh.nodes.length);
+  const resourceDisposition = resourceDispositionFor(mesh, estimatedDofs);
+
+  const core = {
+    schema: LAFEA_SHELL_CURVED_MESH_PLAN_SCHEMA,
+    stageId,
+    generationMode: 'AUTOMATIC_MESH',
+    strategy: LAFEA_SHELL_CURVED_MESH_STRATEGY,
+    scope: LAFEA_SHELL_CURVED_MESH_PRODUCER_SCOPE,
+    sourceHash: midsurfaceEvidence.sourceHash,
+    analysisDomainHash: midsurfaceEvidence.analysisDomainHash,
+    analysisGeometryHash: midsurfaceEvidence.analysisGeometryHash,
+    meshProfileHash: meshProfile.semanticHash,
+    elementFamily: LAFEA_SHELL_ELEMENT,
+    requestedTargetElementLength: meshProfile.fields.globalTargetSize,
+    effectiveTargetElementLength,
+    curvatureTargetElementLength,
+    curvatureTargetAngleDegrees: LAFEA_SHELL_CURVED_TARGET_ANGLE_DEGREES,
+    radius: geometry.surface.radius,
+    angularSpanDegrees: bounds.angularSpanDegrees,
+    axialSpan: bounds.axialSpan,
+    minimumFacetDirectorAlignment: curvedGeometry.minimumFacetDirectorAlignment,
+    maximumFacetNormalDeviationDegrees: curvedGeometry.maximumFacetNormalDeviationDegrees,
+    requiredMinimumFacetDirectorAlignment: LAFEA_SHELL_CURVED_MINIMUM_FACET_DIRECTOR_ALIGNMENT,
+    lengthUnit: geometry.lengthUnit,
+    nodeCount: mesh.nodes.length,
+    elementCount: mesh.elements.length,
+    estimatedDofs,
+    characteristicLengthMin: generated2d.characteristicLengthMin,
+    characteristicLengthMedian: generated2d.characteristicLengthMedian,
+    characteristicLengthMax: generated2d.characteristicLengthMax,
+    resourceDisposition,
+    capabilityHash: capability.capabilityHash,
+    qualificationHash: qualification.qualificationHash,
+    producerRef: LAFEA_MESH_PRODUCER_REF,
+    producerId: capability.producerId,
+    producerRevision: capability.producerRevision,
+    repeatabilityPolicy: capability.repeatabilityPolicy,
+    midsurfaceEvidenceHash: midsurfaceEvidence.semanticHash,
+  };
+  return freeze({
+    ...core,
+    mesh,
+    planHash: canonicalLafeaSha256({
+      schema: 'lafea-shell-curved-mesh-plan-hash-input/v1', plan: core,
+    }),
+  });
+}
+
+function producePlanarShellAnalysisMesh(plan, midsurfaceEvidence, meshProfile) {
+  requirePlanarPlan(plan, midsurfaceEvidence, meshProfile);
+  return produceEvidenceFromPlan(plan, meshProfile, LAFEA_SHELL_MESH_OUTPUT_SCHEMA,
+    'lafea-shell-mesh-output-hash-input/v1');
+}
+
+function produceCurvedShellAnalysisMesh(plan, midsurfaceEvidence, meshProfile) {
+  requireCurvedPlan(plan, midsurfaceEvidence, meshProfile);
+  return produceEvidenceFromPlan(plan, meshProfile, LAFEA_SHELL_CURVED_MESH_OUTPUT_SCHEMA,
+    'lafea-shell-curved-mesh-output-hash-input/v1');
+}
+
+function produceEvidenceFromPlan(plan, meshProfile, outputSchema, outputHashSchema) {
+  if (plan.resourceDisposition === 'BLOCK') fail('LAFEA_SHELL_MESH_RESOURCE_LIMIT_EXCEEDED');
   const meshHash = canonicalLafeaSha256({
     schema: 'lafea-analysis-mesh-content-hash-input/v1',
     mesh: plan.mesh,
   });
   const outputCore = {
-    schema: LAFEA_SHELL_MESH_OUTPUT_SCHEMA,
+    schema: outputSchema,
     stageId: plan.stageId,
     planHash: plan.planHash,
     capabilityHash: plan.capabilityHash,
@@ -147,11 +256,8 @@ export function produceLafeaShellAnalysisMesh(input) {
   };
   const output = freeze({
     ...outputCore,
-    outputHash: canonicalLafeaSha256({
-      schema: 'lafea-shell-mesh-output-hash-input/v1', output: outputCore,
-    }),
+    outputHash: canonicalLafeaSha256({ schema: outputHashSchema, output: outputCore }),
   });
-
   const evidence = createLafeaAnalysisMeshEvidenceV2({
     schema: LAFEA_ANALYSIS_MESH_INTAKE_V2_SCHEMA,
     stageId: plan.stageId,
@@ -180,44 +286,42 @@ export function produceLafeaShellAnalysisMesh(input) {
   return freeze({ plan, output, evidence });
 }
 
-function toPlanarAnalysisGeometry(shellGeometry) {
-  const vertices = shellGeometry.vertices.map((row) => ({
-    vertexId: row.vertexId, x: row.u, y: row.v,
-  }));
-  const segments = shellGeometry.segments.map((row) => ({
-    segmentId: row.segmentId,
-    type: 'LINE',
-    startVertexId: row.startVertexId,
-    endVertexId: row.endVertexId,
-  }));
-  return createLafeaAnalysisGeometry({
-    schema: 'lafea-analysis-geometry/v1',
-    stageId: 'LAFEA.3',
-    geometryId: `${shellGeometry.geometryId}:PARAMETRIC`,
-    coordinateSystemId: 'SHELL_MIDSURFACE_UV',
-    lengthUnit: shellGeometry.lengthUnit,
-    orientationPolicy: 'OUTER_CCW_HOLES_CW_V1',
-    vertices,
-    segments,
-    loops: shellGeometry.loops.map((row) => ({
-      loopId: row.loopId, role: row.role, segmentIds: [...row.segmentIds],
-    })),
-  });
-}
-
-function mapPlanarMeshToShell(mesh2d, shellGeometry, stageId) {
+function mapParameterMeshToShell(mesh2d, shellGeometry, stageId) {
   return freeze({
     schema: 'lafea-analysis-mesh/v1',
     meshIdentity: `${LAFEA_MESH_PRODUCER_REF}:${stageId}:${shellGeometry.geometryId}:SHELL`,
     nodes: mesh2d.nodes.map((node) => ({
       nodeId: node.nodeId,
-      ...shellMidsurfacePoint3d(shellGeometry, node.x, node.y),
+      ...shellMidsurfacePoint3dAny(shellGeometry, node.x, node.y),
     })),
     elements: mesh2d.elements.map((element) => ({
       elementId: element.elementId,
       elementType: LAFEA_SHELL_ELEMENT,
       nodeIds: [...element.nodeIds.slice(0, 3)],
     })),
+  });
+}
+
+function curvedFacetQualification(mesh2d, mesh3d, geometry) {
+  const uvById = new Map(mesh2d.nodes.map((node) => [node.nodeId, { u: node.x, v: node.y }]));
+  const pointById = new Map(mesh3d.nodes.map((node) => [node.nodeId, node]));
+  let minimumFacetDirectorAlignment = 1;
+  for (const element of mesh3d.elements) {
+    const points = element.nodeIds.map((nodeId) => pointById.get(nodeId));
+    const normal = normalizedCross(subtract3(points[1], points[0]), subtract3(points[2], points[0]));
+    for (const nodeId of element.nodeIds) {
+      const uv = uvById.get(nodeId);
+      const frame = shellMidsurfaceFrameAtUvAny(geometry, uv.u, uv.v);
+      minimumFacetDirectorAlignment = Math.min(
+        minimumFacetDirectorAlignment,
+        dot3(normal, frame.director),
+      );
+    }
+  }
+  const clamped = Math.max(-1, Math.min(1, minimumFacetDirectorAlignment));
+  return freeze({
+    minimumFacetDirectorAlignment,
+    maximumFacetNormalDeviationDegrees: Math.acos(clamped) * 180 / Math.PI,
   });
 }
 
@@ -267,7 +371,6 @@ function segmentDistance(left, right, vertexById) {
     pointSegmentDistance(d, a, b),
   );
 }
-
 function pointSegmentDistance(point, start, end) {
   const dx = end.u - start.u;
   const dy = end.v - start.v;
@@ -284,13 +387,22 @@ function requireShellProfile(profile) {
   }
   if (!(profile.fields.globalTargetSize > 0)) fail('LAFEA_SHELL_MESH_PROFILE_TARGET_INVALID');
 }
+function requireProducerBinding(stageId) {
+  if (!lafeaMeshProducerBound(stageId, LAFEA_SHELL_ELEMENT)) {
+    fail('LAFEA_SHELL_MESH_PRODUCER_NOT_BOUND');
+  }
+  const capability = lafeaCoreMeshProducerCapability();
+  const qualification = lafeaCoreMeshProducerQualification();
+  requireScope(capability.scopes, stageId);
+  requireScope(qualification.authorizedScopes, stageId);
+}
 function requireScope(scopes, stageId) {
   if (!scopes.some((row) => row.stageId === stageId
     && row.elementFamilies.includes(LAFEA_SHELL_ELEMENT))) {
     fail('LAFEA_SHELL_MESH_QUALIFICATION_SCOPE_MISSING');
   }
 }
-function requirePlan(plan, evidence, profile) {
+function requirePlanarPlan(plan, evidence, profile) {
   if (!plan || plan.schema !== LAFEA_SHELL_MESH_PLAN_SCHEMA
     || plan.stageId !== evidence.stageId
     || plan.sourceHash !== evidence.sourceHash
@@ -301,17 +413,62 @@ function requirePlan(plan, evidence, profile) {
     || plan.midsurfaceEvidenceHash !== evidence.semanticHash) {
     fail('LAFEA_SHELL_MESH_PLAN_PARENT_MISMATCH');
   }
+  requirePlanHashAndMesh(plan, 'lafea-shell-mesh-plan-hash-input/v1');
+}
+function requireCurvedPlan(plan, evidence, profile) {
+  if (!plan || plan.schema !== LAFEA_SHELL_CURVED_MESH_PLAN_SCHEMA
+    || plan.stageId !== evidence.stageId
+    || plan.sourceHash !== evidence.sourceHash
+    || plan.analysisDomainHash !== evidence.analysisDomainHash
+    || plan.analysisGeometryHash !== evidence.analysisGeometryHash
+    || plan.meshProfileHash !== profile.semanticHash
+    || plan.elementFamily !== LAFEA_SHELL_ELEMENT
+    || plan.midsurfaceEvidenceHash !== evidence.semanticHash
+    || plan.strategy !== LAFEA_SHELL_CURVED_MESH_STRATEGY
+    || plan.minimumFacetDirectorAlignment < plan.requiredMinimumFacetDirectorAlignment - 1e-12) {
+    fail('LAFEA_SHELL_CURVED_MESH_PLAN_PARENT_OR_GEOMETRY_MISMATCH');
+  }
+  requirePlanHashAndMesh(plan, 'lafea-shell-curved-mesh-plan-hash-input/v1');
+}
+function requirePlanHashAndMesh(plan, hashSchema) {
   const { mesh, planHash, ...core } = plan;
-  if (planHash !== canonicalLafeaSha256({
-    schema: 'lafea-shell-mesh-plan-hash-input/v1', plan: core,
-  })) fail('LAFEA_SHELL_MESH_PLAN_HASH_INVALID');
+  if (planHash !== canonicalLafeaSha256({ schema: hashSchema, plan: core })) {
+    fail('LAFEA_SHELL_MESH_PLAN_HASH_INVALID');
+  }
   if (!mesh || mesh.elements.some((row) => row.elementType !== LAFEA_SHELL_ELEMENT)) {
     fail('LAFEA_SHELL_MESH_PLAN_MESH_INVALID');
   }
+}
+function resourceDispositionFor(mesh, estimatedDofs) {
+  return mesh.nodes.length > LAFEA_MESH_PRODUCER_MAXIMUM_NODES
+    || mesh.elements.length > LAFEA_MESH_PRODUCER_MAXIMUM_ELEMENTS
+    || estimatedDofs > LAFEA_MESH_PRODUCER_MAXIMUM_ESTIMATED_DOFS
+    ? 'BLOCK' : 'WITHIN_LIMITS';
 }
 function shellStage(value) {
   if (!LAFEA_SHELL_MIDSURFACE_STAGES.includes(value)) fail('LAFEA_SHELL_MESH_STAGE_INVALID');
   return value;
 }
+function subtract3(left, right) {
+  return { x: left.x - right.x, y: left.y - right.y, z: left.z - right.z };
+}
+function cross3(left, right) {
+  return {
+    x: left.y * right.z - left.z * right.y,
+    y: left.z * right.x - left.x * right.z,
+    z: left.x * right.y - left.y * right.x,
+  };
+}
+function normalizedCross(left, right) {
+  const value = cross3(left, right);
+  const length = Math.hypot(value.x, value.y, value.z);
+  if (!(length > 0)) fail('LAFEA_SHELL_CURVED_DEGENERATE_FACET');
+  return { x: value.x / length, y: value.y / length, z: value.z / length };
+}
+function dot3(left, right) { return left.x * right.x + left.y * right.y + left.z * right.z; }
 function fail(code) { const error = new TypeError(code); error.code = code; throw error; }
-function freeze(value) { if (!value || typeof value !== 'object' || Object.isFrozen(value)) return value; Object.values(value).forEach(freeze); return Object.freeze(value); }
+function freeze(value) {
+  if (!value || typeof value !== 'object' || Object.isFrozen(value)) return value;
+  Object.values(value).forEach(freeze);
+  return Object.freeze(value);
+}

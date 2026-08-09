@@ -129,16 +129,27 @@ export function lafeaCoreMeshProducerQualification() {
 }
 
 /**
- * Derive the generation configuration from the bound mesh profile. Sizes and
- * quality thresholds are governed inputs; nothing here is invented locally.
+ * Derive the generation configuration from the bound mesh profile. Element
+ * family, target size and quality thresholds are governed profile inputs; a
+ * caller may not silently override the first two while retaining the same
+ * profile hash. Changing either requires an explicit profile rebind.
  */
 export function lafeaMeshGenerationConfiguration(meshProfileValue, overrides = {}) {
   const meshProfile = canonicalLafeaAnalysisMeshProfile(meshProfileValue);
+  const elementFamily = meshProfile.fields.continuumElement;
+  const targetElementLength = meshProfile.fields.globalTargetSize;
+  if (overrides.elementFamily !== undefined && overrides.elementFamily !== elementFamily) {
+    fail('LAFEA_MESH_GENERATION_PROFILE_ELEMENT_FAMILY_OVERRIDE_MISMATCH');
+  }
+  if (overrides.targetElementLength !== undefined
+    && overrides.targetElementLength !== targetElementLength) {
+    fail('LAFEA_MESH_GENERATION_PROFILE_TARGET_LENGTH_OVERRIDE_MISMATCH');
+  }
   return Object.freeze({
     meshProfile,
     meshProfileHash: meshProfile.semanticHash,
-    elementFamily: overrides.elementFamily ?? meshProfile.fields.continuumElement,
-    targetElementLength: overrides.targetElementLength ?? meshProfile.fields.globalTargetSize,
+    elementFamily,
+    targetElementLength,
     growthLimit: meshProfile.fields.adjacentSizeRatioMax,
     curvatureToleranceDegrees: overrides.curvatureToleranceDegrees ?? 15,
     maximumNodes: MAXIMUM_NODES,

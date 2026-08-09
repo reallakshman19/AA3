@@ -72,7 +72,9 @@ export function createLafeaWorkbenchOrchestratorStore(options) {
     const legacyCustody = mesh.buildAnalysisMeshCustodyProjection(
       withReadiness, withReadiness.retainedAnalysisMeshEvidence,
     );
-    const analysisMeshCustodyProjection = withReadiness.domainFirstProfileActive
+    const v2MeshRoute = withReadiness.domainFirstProfileActive
+      || withReadiness.shellMidsurfaceProfileActive;
+    const analysisMeshCustodyProjection = v2MeshRoute
       ? buildLafeaDomainFirstMeshCustodyProjection(
         withReadiness, withReadiness.retainedAnalysisMeshEvidenceV2,
       )
@@ -244,8 +246,9 @@ export function createLafeaWorkbenchOrchestratorStore(options) {
   });
   function registerAnalysisMeshEvidence(value) {
     const stageId = value?.stageId ?? retainedState.activeStageId;
-    if (rawStage(stageId).domainFirstProfileActive) {
-      throw storeError('LAFEA_DOMAIN_FIRST_ANALYSIS_MESH_REQUIRES_V2_CUSTODY');
+    const stage = rawStage(stageId);
+    if (stage.domainFirstProfileActive || stage.shellMidsurfaceProfileActive) {
+      throw storeError('LAFEA_GOVERNED_V2_ANALYSIS_MESH_REQUIRES_V2_CUSTODY');
     }
     return mesh.registerAnalysisMeshEvidence(value);
   }
@@ -261,6 +264,7 @@ export function createLafeaWorkbenchOrchestratorStore(options) {
       domainFirstLifecycle: stage.domainFirstLifecycle,
       analysisDomain: stage.analysisDomainProjection,
       analysisGeometry: stage.analysisGeometryProjection,
+      shellMidsurface: stage.retainedShellMidsurfaceEvidence,
       orchestration: stage.orchestration,
     });
   }

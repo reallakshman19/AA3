@@ -406,14 +406,23 @@ function summarizeLevel({
   const loadCase = result.loadCaseResults?.find(
     (row) => row.loadCaseId === loadCaseId,
   );
-  if (!loadCase || loadCase.solverEvidence?.method !== 'DETERMINISTIC_CHOLESKY'
+  const freeDofIdentities = loadCase?.solverEvidence?.freeDofIdentities;
+  const constrainedDofIdentities = loadCase?.solverEvidence?.constrainedDofIdentities;
+  const supportReactions = loadCase?.supportReactions;
+  const supportedSolverMethods = new Set([
+    'DETERMINISTIC_CHOLESKY',
+    'DETERMINISTIC_PCG_IC0',
+  ]);
+  if (!loadCase || !supportedSolverMethods.has(loadCase.solverEvidence?.method)
     || loadCase.solverEvidence?.accepted !== true
-    || !Array.isArray(loadCase.freeDofIdentities)
-    || loadCase.freeDofIdentities.length === 0
+    || !Array.isArray(freeDofIdentities)
+    || freeDofIdentities.length === 0
+    || !Array.isArray(constrainedDofIdentities)
+    || !Array.isArray(supportReactions)
     || loadCase.equilibrium?.accepted !== true) {
     throw handoffError('LAFEA_NB_T6E_FREE_DOF_EVIDENCE_INVALID');
   }
-  const reactionResultant = loadCase.reactions.reduce((sum, row) => {
+  const reactionResultant = supportReactions.reduce((sum, row) => {
     sum[row.dofIdentity.endsWith(':UX') ? 0 : 1] += row.value;
     return sum;
   }, [0, 0]);
@@ -435,9 +444,8 @@ function summarizeLevel({
     }),
   );
   const checks = [
-    [loadCase.freeDofIdentities.length, qualificationLevel.freeDofCount],
-    [loadCase.constrainedDofIdentities.length,
-      qualificationLevel.constrainedDofCount],
+    [freeDofIdentities.length, qualificationLevel.freeDofCount],
+    [constrainedDofIdentities.length, qualificationLevel.constrainedDofCount],
     [loadCase.solverEvidence.method, qualificationLevel.solverMethod],
     [maximumDisplacementMagnitude,
       qualificationLevel.maximumDisplacementMagnitude],

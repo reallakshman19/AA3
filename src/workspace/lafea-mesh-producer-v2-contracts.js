@@ -135,6 +135,9 @@ export function createLafeaMeshProducerOutputV2(value) {
     elementFamily: text(value.elementFamily, 'ELEMENT_FAMILY'),
     mesh,
   };
+  if (mesh.elements.some((element) => element.elementType !== record.elementFamily)) {
+    fail('LAFEA_MESH_PRODUCER_OUTPUT_V2_ELEMENT_FAMILY_MISMATCH');
+  }
   const meshHash = lafeaAnalysisMeshContentHash(mesh);
   return freeze({
     ...record,

@@ -21,6 +21,8 @@ export function lafeaMeshStageAdapter(stageId) {
   if (discretization?.applicable !== true
     || !Array.isArray(discretization.allowedElementFamilies)
     || discretization.allowedElementFamilies.length === 0
+    || !Number.isInteger(discretization.dofsPerNode)
+    || discretization.dofsPerNode <= 0
     || !nonempty(discretization.sourceNodePath)
     || !nonempty(discretization.sourceElementPath)) {
     throw meshStageAdapterError('LAFEA_MESH_STAGE_ADAPTER_NOT_AVAILABLE');
@@ -33,6 +35,7 @@ export function lafeaMeshStageAdapter(stageId) {
     nodeCollectionPath: discretization.sourceNodePath.split('.'),
     elementCollectionPath: discretization.sourceElementPath.split('.'),
     allowedElementFamilies: [...discretization.allowedElementFamilies],
+    dofsPerNode: discretization.dofsPerNode,
     refinementEntityKinds: ['NODE', 'ELEMENT'],
     generationExecutionAuthorized: discretization.generationAuthorized === true,
     refinementExecutionAuthorized: discretization.refinementAuthorized === true,
@@ -147,6 +150,7 @@ function readiness(stageId, adapter, entityIds, reasons, hashes = {}) {
     ready: Boolean(adapter) && uniqueReasons.length === 0,
     sourceSurface: adapter?.sourceSurface ?? null,
     allowedElementFamilies: adapter ? [...adapter.allowedElementFamilies] : [],
+    dofsPerNode: adapter?.dofsPerNode ?? null,
     availableRefinementEntityIds: [...entityIds],
     sourceHash: hashes.sourceHash ?? null,
     canonicalModelHash: hashes.canonicalModelHash ?? null,

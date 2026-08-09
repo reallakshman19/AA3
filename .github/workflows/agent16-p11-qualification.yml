@@ -1,9 +1,10 @@
-name: agent16-p11-qualification
+name: agent16-p11-p12-qualification
 
 on:
   pull_request:
     paths:
       - 'scripts/advanced-shell-contract-check.mjs'
+      - 'test/lfea-prefea-gateway.test.js'
       - '.github/workflows/agent16-p11-qualification.yml'
 
 permissions:
@@ -26,20 +27,20 @@ jobs:
           node-version: '22'
           cache: npm
 
-      - name: Prove exact-head execution and P-11 containment
+      - name: Prove exact-head execution and stacked containment
         shell: bash
         run: |
           set -euo pipefail
           test "$(git rev-parse HEAD)" = "${{ github.event.pull_request.head.sha }}"
           git diff --exit-code
-          git diff --name-only "${{ github.event.pull_request.base.sha }}" "${{ github.event.pull_request.head.sha }}" > /tmp/p11-paths.txt
-          cat /tmp/p11-paths.txt
+          git diff --name-only "${{ github.event.pull_request.base.sha }}" "${{ github.event.pull_request.head.sha }}" > /tmp/agent16-stack-paths.txt
+          cat /tmp/agent16-stack-paths.txt
           while IFS= read -r changed; do
             case "$changed" in
-              scripts/advanced-shell-contract-check.mjs|.github/workflows/agent16-p11-qualification.yml) ;;
-              *) echo "Forbidden changed path for P-11 qualification: $changed" >&2; exit 1 ;;
+              scripts/advanced-shell-contract-check.mjs|test/lfea-prefea-gateway.test.js|.github/workflows/agent16-p11-qualification.yml) ;;
+              *) echo "Forbidden changed path for stacked P-11/P-12 qualification: $changed" >&2; exit 1 ;;
             esac
-          done < /tmp/p11-paths.txt
+          done < /tmp/agent16-stack-paths.txt
           test -z "$(git diff --name-only "${{ github.event.pull_request.base.sha }}" "${{ github.event.pull_request.head.sha }}" -- 'src/core/**')"
 
       - name: Install dependencies
@@ -47,6 +48,9 @@ jobs:
 
       - name: P-11 governed shell contract
         run: node scripts/advanced-shell-contract-check.mjs
+
+      - name: P-12 pre-FEA gateway public export contract
+        run: node --test test/lfea-prefea-gateway.test.js
 
       - name: Required 1 — strict syntax
         id: syntax

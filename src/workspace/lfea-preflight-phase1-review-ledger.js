@@ -93,13 +93,14 @@ export function appendLfeaPreflightReviewEvent(ledger, input) {
     evidence,
     compensatesEventId,
   };
-  const eventId = `REV-${semanticHash(eventIdentity).slice('fnv1a64:'.length).toUpperCase()}`;
+  const eventId = eventIdFor(eventIdentity);
   if (accepted.events.some((event) => event.eventId === eventId)) {
     throw ledgerError('E_P06_REVIEW_EVENT_DUPLICATE', `Review event identity already exists: ${eventId}`);
   }
   const event = Object.freeze({
     schema: LFEA_PREFLIGHT_REVIEW_EVENT_SCHEMA,
     eventId,
+    priorLedgerHash: accepted.semanticHash,
     sequence,
     action,
     targetId,
@@ -112,7 +113,7 @@ export function appendLfeaPreflightReviewEvent(ledger, input) {
     occurredAt,
     evidence,
     compensatesEventId,
-    semanticHash: semanticHash({ schema: LFEA_PREFLIGHT_REVIEW_EVENT_SCHEMA, eventId, ...eventIdentity }),
+    semanticHash: eventHash(eventId, eventIdentity),
   });
   const next = {
     ...accepted,
@@ -131,13 +132,31 @@ export function requireLfeaPreflightReviewLedger(value) {
       || event.sequence !== index + 1)) {
     throw ledgerError('E_P06_REVIEW_LEDGER_INVALID', 'Phase-1 review ledger structure is invalid.');
   }
-  requireText(value.datasetIdentity, 'datasetIdentity');
-  requireText(value.reviewerPolicyId, 'reviewerPolicyId');
+  const datasetIdentity = requireText(value.datasetIdentity, 'datasetIdentity');
+  const reviewerPolicyId = requireText(value.reviewerPolicyId, 'reviewerPolicyId');
+  let expectedPriorLedgerHash = ledgerHash({
+    schema: LFEA_PREFLIGHT_REVIEW_LEDGER_SCHEMA,
+    datasetIdentity,
+    reviewerPolicyId,
+    events: [],
+  });
+  const verifiedEvents = [];
+  const knownIds = new Set();
+  for (const event of value.events) {
+    validateEvent(event, expectedPriorLedgerHash, knownIds);
+    verifiedEvents.push(event);
+    knownIds.add(event.eventId);
+    expectedPriorLedgerHash = ledgerHash({
+      schema: LFEA_PREFLIGHT_REVIEW_LEDGER_SCHEMA,
+      datasetIdentity,
+      reviewerPolicyId,
+      events: verifiedEvents,
+    });
+  }
   const expected = ledgerHash(value);
-  if (value.semanticHash !== expected) {
+  if (value.semanticHash !== expected || value.semanticHash !== expectedPriorLedgerHash) {
     throw ledgerError('E_P06_REVIEW_LEDGER_HASH_INVALID', 'Phase-1 review ledger semantic hash is stale.');
   }
-  for (const event of value.events) validateEvent(event);
   return value;
 }
 
@@ -201,20 +220,59 @@ function requireUndoTarget(ledger, eventId, targetId, fieldId) {
   return id;
 }
 
-function validateEvent(event) {
+function validateEvent(event, expectedPriorLedgerHash, knownIds) {
   if (event.schema !== LFEA_PREFLIGHT_REVIEW_EVENT_SCHEMA
     || !Number.isSafeInteger(event.sequence) || event.sequence < 1) {
     throw ledgerError('E_P06_REVIEW_EVENT_INVALID', 'Phase-1 review event is invalid.');
   }
-  requireAction(event.action);
-  requireText(event.targetId, 'targetId');
+  if (event.priorLedgerHash !== expectedPriorLedgerHash) {
+    throw ledgerError('E_P06_REVIEW_EVENT_PARENT_STALE', 'Phase-1 review event parent ledger hash is stale.');
+  }
+  const action = requireAction(event.action);
+  const targetId = requireText(event.targetId, 'targetId');
   const fieldId = requireField(event.fieldId);
   if (event.fieldOrdinal !== requireLfeaPreflightFieldOrdinal(fieldId)) {
     throw ledgerError('E_P06_REVIEW_EVENT_INVALID', 'Phase-1 review event field ordinal is stale.');
   }
-  requireText(event.actor, 'actor');
-  requireText(event.reason, 'reason');
-  requireTimestamp(event.occurredAt, 'occurredAt');
+  const proposalId = nullableText(event.proposalId);
+  const actor = requireText(event.actor, 'actor');
+  const reason = requireText(event.reason, 'reason');
+  const occurredAt = requireTimestamp(event.occurredAt, 'occurredAt');
+  const value = normalizeJsonValue(event.value);
+  const evidence = normalizeEvidence(event.evidence);
+  const compensatesEventId = event.compensatesEventId === null
+    ? null
+    : requireText(event.compensatesEventId, 'compensatesEventId');
+  if (action === LFEA_PREFLIGHT_REVIEW_ACTION.UNDO && !knownIds.has(compensatesEventId)) {
+    throw ledgerError('E_P06_REVIEW_UNDO_TARGET_INVALID', 'UNDO references an unknown prior review event.');
+  }
+  const identity = {
+    priorLedgerHash: event.priorLedgerHash,
+    sequence: event.sequence,
+    action,
+    targetId,
+    fieldId,
+    proposalId,
+    value,
+    actor,
+    reason,
+    occurredAt,
+    evidence,
+    compensatesEventId,
+  };
+  const expectedEventId = eventIdFor(identity);
+  const expectedEventHash = eventHash(expectedEventId, identity);
+  if (event.eventId !== expectedEventId || event.semanticHash !== expectedEventHash) {
+    throw ledgerError('E_P06_REVIEW_EVENT_HASH_INVALID', 'Phase-1 review event identity or semantic hash is stale.');
+  }
+}
+
+function eventIdFor(identity) {
+  return `REV-${semanticHash(identity).slice('fnv1a64:'.length).toUpperCase()}`;
+}
+
+function eventHash(eventId, identity) {
+  return semanticHash({ schema: LFEA_PREFLIGHT_REVIEW_EVENT_SCHEMA, eventId, ...identity });
 }
 
 function ledgerHash(value) {

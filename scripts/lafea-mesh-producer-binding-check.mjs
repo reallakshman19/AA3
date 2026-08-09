@@ -5,11 +5,9 @@
  * v2 -> analysis-mesh evidence v2 -> domain-first custody -> discretization
  * view model.
  *
- * Also asserts the negative cases, which are the ones that matter for
- * governance: stages with no bound producer must stay unauthorized, a mesh
- * that fails the profile's quality gates must not clear the gate, a Q8 request
- * must not leak partial T6 recombination, profile-hash inputs must not be
- * overridden after binding, and v2 evidence must round-trip.
+ * Governance negatives remain fail-closed, while the P1-5 qualification also
+ * proves that reducing target size creates true interior corner nodes and no
+ * longer causes the boundary-only quality collapse registered in #951.
  */
 import assert from 'node:assert/strict';
 
@@ -56,10 +54,12 @@ const SOURCE_HASH = `sha256:${'a'.repeat(64)}`;
 const capability = lafeaCoreMeshProducerCapability();
 const qualification = lafeaCoreMeshProducerQualification();
 assert.equal(capability.producerId, 'LAFEA_CORE_MESHER');
+assert.equal(capability.producerRevision, 'LAFEA.10.T6Q8.V2');
 assert.deepEqual(capability.generationModes, ['AUTOMATIC_MESH']);
 assert.equal(capability.supportsLocalRefinement, false,
-  'local refinement is not implemented and must not be claimed');
+  'manual/local refinement is not implemented and must not be claimed');
 assert.equal(qualification.capabilityHash, capability.capabilityHash);
+assert.equal(qualification.qualificationRevision, 'R2');
 assert.equal(qualification.localRefinementAuthorized, false);
 assert.ok(qualification.governanceRef.includes('check:lafea-meshing'));
 assert.ok(qualification.maximumNodes <= capability.maximumNodes);
@@ -147,7 +147,7 @@ function meshProfileFor(continuumElement, globalTargetSize) {
   return canonicalProfile(PROFILE_KINDS.MESH, {
     schema: 'lafea-mesh-profile/v1',
     profileIdentity: 'CHECK_MESH_PROFILE',
-    sourceRevision: 'R1',
+    sourceRevision: 'R2',
     semanticHash: undefined,
     fields: {
       continuumElement,
@@ -208,7 +208,7 @@ assert.equal(adapter.holeLoopIds.length, 0);
 assert.equal(lafeaMeshTopologySupported(adapter), true);
 assert.equal(adapter.analysisGeometryHash, geometry.semanticHash);
 
-// --- LMB-04: the mapped strategy is used for a four-sided Q8 region ----------
+// --- LMB-04: mapped Q8 is retained; unstructured T6 now has interior nodes ---
 const mapped = generateLafeaAnalysisMesh(adapter, {
   targetElementLength: 30, curvatureToleranceDegrees: 15, elementFamily: 'Q8',
 });
@@ -222,12 +222,11 @@ const unstructured = generateLafeaAnalysisMesh(adapter, {
   targetElementLength: 30, curvatureToleranceDegrees: 15, elementFamily: 'T6',
 });
 assert.equal(unstructured.strategy, 'CONSTRAINED_DELAUNAY');
-assert.equal(unstructured.strategyReason, 'UNSTRUCTURED_ELEMENT_FAMILY_REQUESTED');
+assert.equal(unstructured.strategyReason, 'UNSTRUCTURED_INTERIOR_REFINEMENT');
+assert.ok(unstructured.interiorPointCount > 0,
+  'the unstructured path must insert true interior corner vertices');
 
 // --- LMB-05: partial Q8 recombination is rejected truthfully -----------------
-// Five boundary corners produce three triangles. Pair recombination can consume
-// at most two of them, so at least one true T6 remains. A uniform-Q8 request
-// must fail here, before plan/output/evidence can misrepresent that topology.
 const pentagonAdapter = buildLafeaMeshTopology(pentagon());
 assert.throws(
   () => generateLafeaAnalysisMesh(pentagonAdapter, {
@@ -238,12 +237,13 @@ assert.throws(
 
 // --- LMB-06: determinism / BYTE_IDENTICAL_CANONICAL_MESH_V1 -----------------
 const replay = generateLafeaAnalysisMesh(adapter, {
-  targetElementLength: 30, curvatureToleranceDegrees: 15, elementFamily: 'Q8',
+  targetElementLength: 30, curvatureToleranceDegrees: 15, elementFamily: 'T6',
 });
-assert.equal(JSON.stringify(replay.mesh), JSON.stringify(mapped.mesh),
-  'the declared repeatability policy requires a byte-identical replay');
+assert.equal(JSON.stringify(replay.mesh), JSON.stringify(unstructured.mesh),
+  'the refined path must replay byte-identically');
+assert.equal(replay.interiorPointCount, unstructured.interiorPointCount);
 
-// --- LMB-07: the curvature tolerance is the only curvature control ----------
+// --- LMB-07: the curvature tolerance remains the binding curvature control ---
 const arcGeometry = createLafeaAnalysisGeometry({
   schema: 'lafea-analysis-geometry/v1',
   stageId: 'LAFEA.3',
@@ -370,16 +370,37 @@ assert.equal(staleCustody.state, 'STALE');
 assert.equal(staleCustody.usableForAdvance, false);
 assert.ok(staleCustody.staleReasons.includes('ANALYSIS_MESH_V2_SOURCE_PARENT_STALE'));
 
-// --- LMB-13: a mesh that fails its quality gates does not clear the gate ----
-const blockingConfiguration = lafeaMeshGenerationConfiguration(meshProfileFor('T6', 15));
-const blockingProduced = produceLafeaAnalysisMeshEvidence(stage, blockingConfiguration);
-assert.equal(blockingProduced.evidence.qualification, 'BLOCK');
-const blockedCustody = buildLafeaDomainFirstMeshCustodyProjection(
-  stage, blockingProduced.evidence,
-);
-assert.equal(blockedCustody.state, 'CURRENT_BLOCK');
-assert.equal(blockedCustody.usableForAdvance, false);
-assert.equal(blockedCustody.advancePolicy, 'DENY');
+// --- LMB-13: P1-5 target refinement increases interior density without BLOCK -
+const refinementLadder = [60, 30, 15, 8].map((targetElementLength) => {
+  const ladderConfiguration = lafeaMeshGenerationConfiguration(
+    meshProfileFor('T6', targetElementLength),
+  );
+  const ladderProduced = produceLafeaAnalysisMeshEvidence(stage, ladderConfiguration);
+  return Object.freeze({
+    targetElementLength,
+    interiorPointCount: ladderProduced.planned.generated.interiorPointCount,
+    elementCount: ladderProduced.evidence.mesh.elements.length,
+    qualification: ladderProduced.evidence.qualification,
+    blockingElementCount: ladderProduced.evidence.quality.blockingElementIds.length,
+  });
+});
+for (const row of refinementLadder) {
+  assert.ok(row.interiorPointCount > 0, `target ${row.targetElementLength} must seed interior points`);
+  assert.equal(row.qualification, 'PASS',
+    `target ${row.targetElementLength} must not regress to a quality BLOCK`);
+  assert.equal(row.blockingElementCount, 0,
+    `target ${row.targetElementLength} must have zero blocking elements`);
+}
+for (let index = 1; index < refinementLadder.length; index += 1) {
+  assert.ok(
+    refinementLadder[index].interiorPointCount > refinementLadder[index - 1].interiorPointCount,
+    'smaller target length must create a denser interior mesh',
+  );
+  assert.ok(
+    refinementLadder[index].elementCount > refinementLadder[index - 1].elementCount,
+    'smaller target length must increase element count rather than only subdivide the boundary',
+  );
+}
 
 // --- LMB-14: the discretization view model surfaces generation --------------
 const generatedStage = {
@@ -438,4 +459,4 @@ assert.equal(unboundViewModel.generation.unavailableReason,
   'ANALYSIS_MESH_PROFILE_BINDING_REQUIRED');
 assert.equal(unboundViewModel.actions.canGenerateMesh, false);
 
-console.log('LAFEA mesh-producer binding check PASS (LMB-01..LMB-15)');
+console.log('LAFEA mesh-producer binding check PASS (LMB-01..LMB-15, P1-5 refined)');

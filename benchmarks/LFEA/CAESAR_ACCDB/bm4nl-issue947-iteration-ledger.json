@@ -90,19 +90,51 @@
     },
     {
       "iterationId": "I002",
-      "hypothesis": "Sampling one physical bend-level MEC-21 free field at both ends of every stiffness chord removes the identified mesh-dependent pressure kinematics while preserving the qualified linear solver and recovery contracts.",
-      "codeOrConfigurationDelta": "ACCDB adapter now forms each bend chord free generalized displacement from cumulative bend stations, transforms it with the existing d_local = T d_global relation, and forms f0 = K_effective d0. No solver, restraint, tolerance, B31/B31J stiffness, or recovery-sign change.",
+      "hypothesis": "Sampling one physical bend-level MEC-21 free field at both ends of every stiffness chord in a single fixed bend-start a-b-c basis correctly represents the cumulative pressure free field while preserving the qualified linear solver and recovery contracts.",
+      "codeOrConfigurationDelta": "ACCDB adapter sampled cumulative bend stations, mapped all MEC-21 a-b-c components through one fixed bend-start basis, transformed the resulting two-end generalized displacement with d_local = T d_global, and formed f0 = K_effective d0. No solver, restraint, tolerance, B31/B31J stiffness, or recovery-sign change.",
       "candidateCommitSha": "36457f3002f04f0cd4c3ac7ce6800654072713e3",
       "beforeMetrics": "I000",
       "afterMetrics": null,
       "metricDelta": null,
-      "solverResidualAndEquilibriumStatus": "PENDING_REAL_ACCDB",
+      "solverResidualAndEquilibriumStatus": "NOT_RUN_AFTER_CANONICAL_BASIS_FALSIFICATION",
       "canonicalOrFalsificationEvidence": {
         "freeStateIdentity": "q_local = K_effective (d_local - d0_local) = 0",
-        "selfReviewFinding": "The first angular-closure guard snapped the final cumulative angle before measuring the residual, so that guard could not detect a bad chord-angle sum.",
-        "selfReviewDisposition": "FIX_REQUIRED_BEFORE_BENCHMARK_CLAIM"
+        "selfReviewFinding1": "The first angular-closure guard snapped the final cumulative angle before measuring the residual, so that guard could not detect a bad chord-angle sum.",
+        "selfReviewFinding2": "MEC-21 defines bend flexibility and internal-expansion free movement at the final point in the element local a-b-c coordinate system. For a bend that final-point basis rotates with station angle; mapping every station through a fixed bend-start basis is therefore not the governing coordinate transformation.",
+        "hypothesisResult": "FALSIFIED_BEFORE_BM4_RERUN"
       },
-      "disposition": "PENDING_REAL_ACCDB"
+      "disposition": "BLOCKED"
+    },
+    {
+      "iterationId": "I003",
+      "hypothesis": "MEC-21 equation (2.25) bend pressure translations are components in the final-station local basis, and transforming that rotating basis to the bend-start basis must match an independent curvature-change integration.",
+      "codeOrConfigurationDelta": "No solver behavior changed. Performed an independent coordinate/kinematic derivation before revising I002.",
+      "candidateCommitSha": "82a3c9047861a43311b30de37db36bcb394006bc",
+      "beforeMetrics": "I000",
+      "afterMetrics": null,
+      "metricDelta": null,
+      "solverResidualAndEquilibriumStatus": "UNCHANGED_SOLVER_PATH",
+      "canonicalOrFalsificationEvidence": {
+        "mec21LocalFinalComponents": {
+          "ua": "lambda*R*(sin(theta)-theta)",
+          "uc": "lambda*R*(cos(theta)-1)",
+          "phib": "lambda*theta"
+        },
+        "stationBasis": {
+          "aFinal": "cos(theta)*a0 + sin(theta)*c0",
+          "cFinal": "-sin(theta)*a0 + cos(theta)*c0",
+          "bFinal": "b0"
+        },
+        "transformedBendStartComponents": {
+          "ua0": "lambda*R*(sin(theta)-theta*cos(theta))",
+          "uc0": "lambda*R*(1-cos(theta)-theta*sin(theta))",
+          "phib0": "lambda*theta"
+        },
+        "independentDerivation": "Integrating the first-order tangent change caused by a uniform curvature reduction over s in [0,R*theta] gives the same bend-start translation components.",
+        "sourceContract": "MEC-21 Part II sections 2.3.1, 2.3.5.2 and 2.4 define element flexibility/free movement at the final point in local a-b-c coordinates and the displacement coordinate transformation.",
+        "hypothesisResult": "SUPPORTED"
+      },
+      "disposition": "KEEP"
     }
   ]
 }

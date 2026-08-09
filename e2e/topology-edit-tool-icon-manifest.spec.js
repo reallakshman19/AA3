@@ -43,12 +43,16 @@ test('42-control production manifest resolves to visibly rendered SVG icons', as
   await expect(host).toHaveAttribute('data-topology-edit-icon-broken-reference-count', '0');
   await expect(host).toHaveAttribute('data-topology-edit-icon-unresolved-reference-count', '0');
   await expect(page.locator('svg[data-role="topology-edit-icon-sprite"]')).toHaveCount(1);
+  await expect(host.locator('button > svg.topology-edit-control-icon')).toHaveCount(42);
 
   const rows = [];
   for (const entry of TOPOLOGY_EDIT_ICON_MANIFEST) {
     await openApplicableSurface(host, entry.surface);
     const locator = host.locator(entry.selector);
     await expect(locator, entry.key).toHaveCount(1);
+    await expect(locator, entry.key).toHaveAccessibleName(entry.accessibility.accessibleName);
+    await expect(locator.locator(':scope > svg[data-topology-edit-icon-key]'), entry.key)
+      .toHaveAttribute('aria-hidden', 'true');
     const evidence = await inspectControl(locator, entry);
     expect(evidence.bindingKey, entry.key).toBe(entry.key);
     expect(evidence.bindingSymbol, entry.key).toBe(entry.symbolId);

@@ -15,9 +15,9 @@
       "Z_AXIS_UP": "NO",
       "USE_PRESSURE_STIFFENING": "DEFAULT",
       "BEND_AXIAL_SHAPE": "YES",
-      "DEFAULT_TRANS_RESTRAINT_STIFF": 10000000000000,
-      "DEFAULT_ROT_RESTRAINT_STIFF": 10000000000000,
-      "FRICT_STIF": 10000000,
+      "DEFAULT_TRANS_RESTRAINT_STIFF": 1000000000000,
+      "DEFAULT_ROT_RESTRAINT_STIFF": 1000000000000,
+      "FRICT_STIF": 1000000,
       "FRICT_NORM_FORCE_VAR": 0.15,
       "FRICT_ANGLE_VAR": 15,
       "FRICT_SLIDE_MULT": 1,
@@ -150,17 +150,25 @@
       "setting": "DEFAULT_TRANS_RESTRAINT_STIFF",
       "authority": "OVERALL_SETTING",
       "target": "restraint formulation",
-      "status": "UNRESOLVED_UNIT_AND_APPLICATION",
-      "value": 10000000000000,
-      "note": "Recorded for node-20390 investigation. Do not replace exact fixed-DOF validation restraints until units and source-row applicability are established."
+      "status": "RECORDED_PENDING_SOURCE_UNIT_AUDIT",
+      "value": 1000000000000,
+      "note": "Raw CAESAR configuration value. Native BM4_NL unit and mechanical significance are resolved by the source-driven node-20390 restraint audit; no production restraint change is authorized by this record alone."
     },
     {
       "setting": "DEFAULT_ROT_RESTRAINT_STIFF",
       "authority": "OVERALL_SETTING",
       "target": "restraint formulation",
-      "status": "UNRESOLVED_UNIT_AND_APPLICATION",
-      "value": 10000000000000,
-      "note": "Recorded only; no production restraint change is authorized."
+      "status": "RECORDED_PENDING_SOURCE_UNIT_AUDIT",
+      "value": 1000000000000,
+      "note": "Raw CAESAR configuration value. No production rotational-restraint change is authorized by this record alone."
+    },
+    {
+      "setting": "FRICT_STIF",
+      "authority": "OVERALL_SETTING",
+      "target": "friction formulation",
+      "status": "RECORDED_NON_GOVERNING_L19_L20",
+      "value": 1000000,
+      "note": "Raw CAESAR configuration value. L19/L20 friction multiplier is zero, so this friction stiffness cannot govern those cases."
     },
     {
       "setting": "USE_PRESSURE_STIFFENING",

@@ -541,9 +541,9 @@ function normalizePilotConvergence(value, request, levels, recoveryReady) {
   const priorChange = relativeChanges.at(-2);
   if (fineChange > normalizedInput.tolerance) {
     reasons.push('PILOT_FINE_LEVEL_CHANGE_EXCEEDS_TOLERANCE');
-  }
-  if (fineChange > priorChange) {
-    reasons.push('PILOT_CONVERGENCE_NOT_IMPROVING');
+    if (fineChange > priorChange) {
+      reasons.push('PILOT_CONVERGENCE_NOT_IMPROVING');
+    }
   }
   if (levels.some((row) => row.status !== 'ACCEPTED'
     || row.recoveryAuthority !== 'RETAINED_INTEGRATION_POINT_VALUES')) {

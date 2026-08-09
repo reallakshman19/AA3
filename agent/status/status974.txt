@@ -1,0 +1,255 @@
+PR 974 STATUS / ROADMAP
+=======================
+
+Repository: reallaksh19/Advanced_Analysis
+Issue programme: #951 — LAFEA automatic meshing pending activities
+PR: #974 — feat(lafea): qualify cylindrical curved shell meshing
+Branch: agent/lafea-meshing-shell-curved-cylinder
+Base PR branch: agent/lafea-meshing-p2-shell-holes (#971)
+State: DRAFT / OPEN / UNMERGED
+
+1. CURRENT AUTHORITY POSITION
+-----------------------------
+
+PR #974 extends the external LAFEA shell mesher beyond the qualified planar shell scope with one deliberately narrow curved-surface class:
+
+- LAFEA.4 and LAFEA.5 only;
+- analytic cylindrical midsurface;
+- one rectangular, non-wrapping parameter patch;
+- u = circumferential arc length;
+- v = axial distance;
+- angular span <= 180 degrees;
+- arbitrary declared 3D cylinder axis/radial orientation subject to exact unit/orthogonality checks;
+- CST_DKT_TRI3_THIN_SHELL_V1 only;
+- curvature-driven effective target may reduce the bound profile target but may never enlarge it;
+- analytic nodal director and tangent rotation bases are reconstructed from the retained curved parent;
+- generated curved facets are independently checked against analytic nodal directors before v2 mesh evidence is retained;
+- one generated facet is compiled through the actual local-shell CST/DKT element authority to prove director/rigid-motion compatibility;
+- public workbench custody + Discretization route remains usable;
+- shell local refinement remains fail-closed;
+- solver-internal NO_AUTOMATIC_OR_ADAPTIVE_MESHING remains unchanged.
+
+This PR DOES NOT qualify arbitrary curved shell meshing.
+
+2. FIXES COMPLETED IN PR #974
+-----------------------------
+
+A. Curved midsurface authority
+- Added a separate curved shell midsurface contract instead of changing the meaning of the existing planar origin + u*axisU + v*axisV contract.
+- Added exact cylindrical surface map, inverse frame reconstruction, topology validation, semantic hashing, and fail-closed scope checks.
+
+B. Planar/curved dispatch
+- Added generic shell midsurface dispatch so existing planar evidence and new cylindrical evidence can coexist without relabelling or weakening the planar contract.
+- Corrected the first dispatch draft so the planar parameter-geometry path is executable and does not contain a placeholder/stub authority path.
+
+C. External shell producer
+- Extended the external shell producer to map the existing qualified 2D parameter triangulation onto the analytic cylinder.
+- Added a curvature-controlled effective target based on a 15 degree nominal circumferential increment.
+- Added physical facet-normal versus analytic nodal-director qualification before evidence acceptance.
+- Preserved v2 mesh/evidence authority flags and existing source/domain/geometry/profile lineage checks.
+
+D. Interface bug repaired during qualification
+- The analytic inverse cylinder helper correctly accepts physical {x,y,z} coordinates.
+- Workbench mesh nodes additionally contain nodeId.
+- The dispatch boundary now passes only physical coordinates into the strict curved geometry inverse map instead of weakening the geometry validator.
+
+E. Adversarial qualification fixture repaired
+- The >180 degree and non-rectangular negative fixtures were initially keyed by floating-point value equality.
+- They now mutate explicit vertex identities, removing ordering/floating-point equality ambiguity from the negative tests while preserving the production rejection requirements.
+
+F. Producer governance revision
+- Producer revision intentionally advanced to LAFEA.10.T6Q8.SHELL.V7.
+- Qualification revision intentionally advanced to R8.
+- Legacy producer-binding assertions were updated to the new governed revision rather than suppressing the revision bump.
+
+3. NUMERICAL / MECHANICS WITNESS
+--------------------------------
+
+Canonical cylinder used for LAFEA.4 and LAFEA.5 qualification:
+
+- radius = 100 mm;
+- angular span = 90 degrees;
+- axial span = 120 mm;
+- axis origin = (10, -20, 30);
+- axis direction = (sqrt(0.5), sqrt(0.5), 0);
+- radial reference = (0, 0, 1).
+
+Coarse request:
+- profile target = 60 mm;
+- curvature cap = 26.1799387799 mm;
+- effective target = 26.1799387799 mm;
+- nodes = 52;
+- elements = 78;
+- DOF = 260;
+- minimum facet/director alignment approximately 0.987734;
+- maximum facet-normal deviation approximately 8.9832 degrees;
+- mesh quality PASS;
+- blocking elements = 0.
+
+Fine request:
+- target/effective target = 20 mm;
+- nodes = 73;
+- elements = 116;
+- DOF = 365;
+- mesh quality PASS;
+- blocking elements = 0;
+- density increases relative to the curvature-capped coarse mesh.
+
+4. EXACT-HEAD QUALIFICATION COMPLETED BEFORE THIS STATUS COMMIT
+---------------------------------------------------------------
+
+Qualified code head: 6455c650f24dd35cc7f0fcc9fb2a5053c138f770
+Exact-head workflow: 31310197918
+Result: PASS
+
+Passed gates on that exact code head:
+- exact SHA verification;
+- clean npm ci;
+- stage-aware mesh DOF policy;
+- governed canvas meshing intent;
+- retained-mesh local refinement regression;
+- existing planar shell producer mechanics;
+- existing shell workbench custody + Discretization route;
+- planar shell-hole material-ligament robustness ladder;
+- planar shell-hole topology + custody route;
+- cylindrical curved-shell mechanics/custody/local-shell compatibility;
+- P2-11 check classification;
+- full npm run check:lafea-meshing aggregate.
+
+Repository-wide note on the same code head:
+- LAFEA Non-Bucket Stack Certification run 31310197929 is FAILURE.
+- This is not being represented as a curved-meshing PASS.
+- It remains a separate pending stack/integration item to triage before any final programme-level closure.
+
+This status file itself is a documentation-only commit after the qualified code head. The PR remains draft. A final exact-head qualification should be taken again after all subsequent PR changes are complete.
+
+5. ISSUE #951 PROGRAMME STATUS
+------------------------------
+
+The original issue items have implementation PRs in the current unmerged stack:
+
+P0 usability / authority path
+- P0-1 mixed-family/Q8 truthfulness: addressed in #959 fail-closed route.
+- P0-2 UI mesh-profile binding: addressed in #959.
+- P0-3 generated v2 mesh rendering: addressed in #959.
+- P0-4 v2 mesh import/export custody: addressed in #959.
+
+P1 engineering capability
+- P1-5 interior Steiner refinement: #960.
+- P1-6 hole support: #962.
+- P1-7 logical four-side-chain recognition: #963.
+
+P2 scope / hygiene
+- P2-13 stage-aware DOF policy: #964.
+- P2-10 legacy canvas intent retirement/reconciliation: #965.
+- P2-11 check triage/classification: #966.
+- P2-9 retained generated-mesh local refinement for LAFEA.3 T3/T6: #967.
+- P2-8 planar LAFEA.4/LAFEA.5 shell producer + workbench route: #968.
+- P2-12 lock/dependency reproducibility problem: lock sync landed in the stack with clean npm ci evidence.
+
+Extensions beyond the original P2-8 minimum:
+- planar shell holes + material-ligament qualification envelope: #971.
+- engineering/qualification procedure documentation: #973 (sibling documentation PR based on #971, not a base of #974).
+- analytic cylindrical curved shell single-patch qualification: #974.
+
+All PRs above remain subject to their own review/merge authority. Implementation completion in a draft stack is not equivalent to merged programme closure.
+
+6. WHAT IS STILL PENDING FOR PR #974
+------------------------------------
+
+PR-local pending work:
+
+1) Keep PR #974 draft until review.
+2) Triage the red LAFEA Non-Bucket Stack Certification on the current stack and determine whether it is:
+   - a pre-existing/global failure,
+   - a stacked-base expectation mismatch,
+   - or a real regression requiring repair.
+3) Re-run exact-head qualification after any further production/test change and after final stack reconciliation.
+4) Update the meshing engineering document from #973 after curved-shell scope stabilizes so the stable procedure reflects the cylinder qualification, curvature sizing rule, analytic director basis, and remaining exclusions.
+5) Reconcile stack/base order before merge so documentation and later curved work are not lost or duplicated.
+6) No merge until explicit owner authorization.
+
+7. REMAINING SHELL-MESH ROADMAP
+-------------------------------
+
+R1 — Curved holes
+Status: NOT QUALIFIED.
+Need a curved-surface hole topology contract, material-ligament metric on the surface, constrained parameter-space hole treatment, analytic-surface containment checks, physical facet/director checks, and workbench/evidence qualification. Do not inherit planar ligament rules without proving the surface metric and seam behavior.
+
+R2 — Full-cylinder seam closure
+Status: NOT QUALIFIED.
+Current cylinder is deliberately non-wrapping. Full 360 degree shells require periodic parameter topology, deterministic seam-node identity/welding, no duplicate stiffness at the seam, canonical ordering independent of seam start angle, and solver-frame/director continuity evidence.
+
+R3 — Multi-patch seams and continuity
+Status: NOT QUALIFIED.
+Need explicit patch adjacency, conforming shared-edge node authority, C0 geometry continuity checks, director/tangent compatibility, deterministic cross-patch node identity, non-manifold rejection, and evidence lineage that does not double-own seam entities.
+
+R4 — Additional analytic curved surfaces
+Status: NOT QUALIFIED.
+Candidate sequence:
+- cone/frustum;
+- sphere/spherical patch;
+- only after those are qualified, consider general parametric/NURBS/freeform surfaces.
+Each surface class needs an exact or governed evaluation map, inverse/parameter custody where required, tangent/director basis, singularity handling, curvature sizing metric, and independent physical-facet qualification. Do not market this as generic curved meshing until the contract supports it.
+
+R5 — Offset-surface generation
+Status: NOT QUALIFIED.
+Need declared reference-surface ownership, signed offset convention, thickness/midsurface relation, self-intersection detection, offset-boundary treatment, and proof that generated analysis geometry matches shell formulation assumptions. No inference from visual/render facets.
+
+R6 — Thickness-transition meshing
+Status: NOT QUALIFIED.
+Need thickness field ownership, transition representation rules, element-property partitioning, grading/quality limits, solver/material handoff evidence, and convergence qualification around discontinuities.
+
+R7 — Shell local refinement
+Status: NOT QUALIFIED.
+Current refinement authority is LAFEA.3 T3/T6 only. Shell refinement needs surface-aware insertion, exact parent mesh/artifact lineage, boundary/seam/hole preservation, curvature/director qualification after refinement, deterministic replay, and atomic custody replacement. Q8 and shell refinement must not be enabled by analogy.
+
+R8 — General curved/freeform meshing
+Status: FUTURE / HIGHER RISK.
+Prerequisites should include robust parametric trimming, curvature/adaptive metric governance, singularity/trim handling, deterministic projection/inverse rules, patch topology, and an expanded numerical qualification ladder. This should be a separate authority programme rather than an incremental flag on the cylinder implementation.
+
+8. PROGRAMME / MERGE ROADMAP
+-----------------------------
+
+Recommended order:
+
+A. Stabilize #974
+- resolve/triage non-bucket certification;
+- keep exact curved mechanics + custody tests permanent;
+- no threshold weakening;
+- final exact-head PASS on the candidate to be reviewed.
+
+B. Documentation convergence
+- rebase or supersede #973 after the final curved code head;
+- add the qualified cylinder envelope and explicitly keep the broader curved exclusions.
+
+C. Stack reconciliation
+- verify every stacked PR base/head relationship;
+- rebase in dependency order only;
+- re-run exact-head qualification after each material rebase if hashes or code change;
+- preserve issue-to-PR traceability for P0/P1/P2 items.
+
+D. Review / limited authority
+- review each engineering expansion independently;
+- do not collapse all draft scopes into one unreviewable merge;
+- no automatic merge and no producer lifecycle/release authority claim.
+
+E. Issue #951 closure
+- close only after the intended PR set is merged or the owner explicitly accepts a narrower closure boundary;
+- record exact merged heads/runs, not draft-head evidence, in the final closure note.
+
+F. Next capability slice after #974
+Recommended next technical slice: R2 full-cylinder periodic seam OR R1 curved holes, but not both in one PR. Full-cylinder seam is the cleaner next geometry-authority increment because it exercises periodic topology without simultaneously introducing hole topology.
+
+9. NON-NEGOTIABLE ENGINEERING RULES
+-----------------------------------
+
+- Fail closed outside the explicitly qualified scope.
+- Never relabel element topology to satisfy a profile declaration.
+- Never weaken quality thresholds to rescue a candidate.
+- Producer output does not self-assert lifecycle, engineering, release, or merge authority.
+- Generated evidence must remain source/domain/geometry/profile/producer traceable.
+- Deterministic replay remains an acceptance criterion.
+- Mesh PASS is not structural solution convergence or code compliance.
+- Solver-internal automatic/adaptive meshing authority remains false unless separately qualified.
+- No merge without explicit owner authorization.

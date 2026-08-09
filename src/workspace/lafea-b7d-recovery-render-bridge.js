@@ -29,6 +29,9 @@ const QUANTITY_KEYS = Object.freeze({
   SIGMA_Y: 'sigmaY',
   TAU_XY: 'tauXY',
 });
+const COLOR_MAP_ALIASES = Object.freeze({
+  'LAFEA-DEFAULT-DIVERGING': 'COOL_WARM',
+});
 const INTAKE_KEYS = Object.freeze([
   'schema', 'sceneRevision', 'projection', 'executionPackage', 'fieldRequest',
 ]);
@@ -275,7 +278,8 @@ function requireFineLevelRequest(fieldRequest) {
 }
 
 function requireStressUnits(execution, units) {
-  const retainedUnits = execution.canonicalInput?.units?.stress;
+  const retainedUnits = execution.canonicalInput?.units?.canonical?.stress
+    ?? execution.canonicalInput?.units?.stress;
   if (typeof retainedUnits !== 'string' || retainedUnits !== units) {
     throw bridgeError('LAFEA_NB_T6D_STRESS_UNIT_MISMATCH');
   }
@@ -410,7 +414,7 @@ function createRenderPacket(options) {
         source: 'NB_T6D_B7D_FINE_LEVEL_RETAINED_RECOVERY',
         semanticHash: boundsHash,
       },
-      colorMapId: options.fieldRequest.colorMapId,
+      colorMapId: canonicalColorMapId(options.fieldRequest.colorMapId),
     },
     pickMap: {
       schema: 'LafeaPickMap.v1',
@@ -429,6 +433,10 @@ function createRenderPacket(options) {
       producerRef: PRODUCER_REF,
     },
   });
+}
+
+function canonicalColorMapId(value) {
+  return COLOR_MAP_ALIASES[value] ?? value;
 }
 
 function bridgeAuthority() {

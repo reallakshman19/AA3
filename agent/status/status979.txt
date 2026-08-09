@@ -1,0 +1,234 @@
+PR 979 STATUS — LAFEA FULL-CYLINDER PERIODIC SHELL SEAM
+Date: 2026-08-09
+Issue: #951 — LAFEA automatic meshing pending activities
+PR: #979 — feat(lafea): qualify full-cylinder periodic shell seam
+Base PR: #974 — analytic non-wrapping cylindrical curved shell meshing
+Branch: agent/lafea-meshing-shell-periodic-seam
+
+1. AUTHORITY / QUALIFICATION SNAPSHOT
+
+Engineering-qualified code head:
+  b3a7df7209fd1a0e393b9d275b0a692dda4c64eb
+
+Exact-head meshing qualification run:
+  31312935707 — PASS
+
+Producer identity promoted by this slice:
+  LAFEA.10.T6Q8.SHELL.V8
+  Qualification revision R9
+
+This record is documentation only. If this status-file commit moves the PR branch head beyond the engineering-qualified SHA above, do not silently substitute the documentation-only head for the exact-head engineering evidence. Re-run the meshing qualification after any material source/test/workflow/rebase change.
+
+No merge, lifecycle-release, code-assessment, or engineering-release authority is asserted by this record.
+
+2. QUALIFIED PERIODIC SCOPE
+
+Qualified for LAFEA.4 and LAFEA.5:
+
+- analytic CYLINDER midsurface only;
+- one full 360-degree cylinder represented by one canonical rectangular parameter chart;
+- u = circumferential arc length;
+- v = axial distance;
+- canonical periodic chart u = [-pi*R, +pi*R];
+- u-min and u-max represent the same physical seam;
+- seam policy = IDENTIFY_UMIN_UMAX_BY_V_V1;
+- deterministic seam-node matching by axial v station;
+- duplicate u-max seam nodes removed before shell evidence;
+- element connectivity rewired to the retained seam-node identity;
+- seam edges become interior edges with incidence 2;
+- exactly two physical boundary loops remain: the two axial rims;
+- no edge incidence greater than 2;
+- one connected shell element component;
+- Euler characteristic V-E+F = 0, consistent with an open cylindrical annulus;
+- no duplicate physical seam DOF chain;
+- CST_DKT_TRI3_THIN_SHELL_V1 only;
+- 5 DOF per node;
+- same 15-degree curvature sizing cap as PR #974;
+- same facet-normal versus analytic-director compatibility requirement;
+- generated seam-adjacent TRI3 is compiled through the actual local-shell CST/DKT element authority;
+- governed v2 mesh evidence and workbench custody route reach CURRENT_PASS / usableForRun;
+- byte-deterministic plan/mesh/evidence replay;
+- source-authority change invalidates both retained periodic parent and generated child;
+- shell local refinement remains fail-closed.
+
+The local-shell solver itself still declares NO_AUTOMATIC_OR_ADAPTIVE_MESHING. Automatic meshing remains an external upstream producer responsibility.
+
+3. NUMERICAL QUALIFICATION WITNESS
+
+Canonical periodic fixture, both LAFEA.4 and LAFEA.5:
+
+  Radius                         100 mm
+  Angular span                  360 degrees
+  Axial span                    120 mm
+  Requested coarse target       60 mm
+  Curvature/effective target    26.17993877991494 mm
+  Nodes                         170
+  Elements                      292 TRI3
+  Estimated DOF                 850
+  Retained seam nodes           6
+  Interior seam edges           5
+  Physical boundary loops       2
+  Euler characteristic          0
+  Minimum facet/director dot    0.9833107881563025
+  Max facet-normal deviation    10.482416298245456 degrees
+  Allowed deviation             15 degrees
+  Quality blockers              0
+
+Exact exploratory artifact witnesses (same periodic mechanics before governance revision):
+  LAFEA.4 artifact sha256:7cc1d1203ff01c79ac3024892643e2abce2c683d0592bba7936e45d60ba1cc75
+  LAFEA.5 artifact sha256:d918f27f516b4183f8b4918d99de3bfde48643b25ec2f9b8a191eac40dffd1cc
+
+The V8/R9 exact-head run repeats the periodic gate and the complete governed meshing aggregate successfully. Treat run 31312935707 on b3a7df7209fd1a0e393b9d275b0a692dda4c64eb as the qualification record.
+
+4. PERMANENT FALSIFICATION / GUARD TESTS
+
+The periodic qualifier rejects rather than approximates:
+
+- a chart with less than a full 2*pi*R circumference;
+- a shifted full-circle chart that is not the canonical [-pi*R,+pi*R] seam convention;
+- non-orthogonal cylinder axis/radial basis;
+- HOLE topology in this periodic slice;
+- zero axial span;
+- seam station-count mismatch;
+- seam v-station mismatch;
+- any seam weld that creates a degenerate element;
+- any duplicate u-max seam DOF left after identification;
+- any non-manifold edge incidence > 2;
+- any seam edge that remains a physical one-sided boundary;
+- any non-closed axial rim boundary;
+- any seam edge without incidence 2;
+- Euler characteristic other than 0;
+- disconnected element topology;
+- facet/director alignment below the existing curved-shell gate;
+- shell local refinement request.
+
+No quality threshold was weakened to qualify periodic closure.
+
+5. ISSUE #951 STATUS MAP
+
+Completed in earlier stacked PRs:
+
+P0 usable end-to-end:
+  #959 — profile/UI binding, truthful Q8 behavior, generated-mesh render, v2 import/export/custody.
+
+P1 engineering capability:
+  #960 — interior Steiner refinement.
+  #962 — continuum holes.
+  #963 — logical four-side-chain mapped Q8.
+
+P2 hygiene / architecture:
+  #964 — stage-aware DOF policy.
+  #965 — legacy canvas meshing-intent retirement/reconciliation.
+  #966 — P2-11 check triage/classification.
+  #967 — retained T3/T6 local refinement.
+  #968 — planar shell producer for LAFEA.4/.5.
+  #971 — planar shell holes with ligament qualification.
+  #974 — analytic non-wrapping cylindrical shell patch.
+  #979 — full-cylinder periodic seam closure.
+
+Documentation:
+  #973 — /docs/LAFEAMesh.md qualification procedure, currently a sibling based on #971 and requiring later synchronization with the curved/periodic qualification stack.
+
+6. CURRENT EXCLUSIONS / PENDING TECHNICAL WORK
+
+Still explicitly not qualified:
+
+A. Curved holes
+- Holes on cylindrical midsurfaces remain blocked.
+- Must combine multiply-connected UV topology, curvature sizing, material-ligament rules, seam-periodic topology where applicable, and physical 3D hole-boundary verification.
+- Do not combine curved-hole qualification and multi-patch seam qualification in one change.
+
+B. Multi-patch seams / continuity
+- Separate surface patches require explicit interface ownership.
+- Need deterministic common-edge parameter correspondence, conforming node identity, director/tangent-frame compatibility, manifold incidence, and no duplicate interface DOFs.
+- Must distinguish C0 geometric continuity from any stronger kinematic/director continuity claim.
+
+C. Additional analytic curved surfaces
+- Cone should be a separate analytic-surface slice because metric and curvature vary with axial coordinate.
+- Sphere should be separate because no single regular global rectangular chart exists; pole/chart singularities must be owned explicitly.
+- Do not generalize the cylinder implementation by relabelling it as arbitrary curvature.
+
+D. Offset-surface generation
+- Not qualified.
+- Requires declared reference-surface ownership, offset sign convention, normal field, thickness/midsurface semantics, self-intersection checks, and exact lineage from source geometry to generated midsurface.
+
+E. Thickness-transition meshing
+- Not qualified.
+- Requires explicit thickness-field ownership and transition/refinement policy. Mesh sizing must not silently infer structural adequacy from thickness alone.
+
+F. Shell local refinement
+- Not qualified.
+- Existing P2-9 retained refinement authority is LAFEA.3 T3/T6 only.
+- Shell refinement needs target identity, surface reprojection, director reconstruction, seam/interface preservation, topology recertification, quality recertification, and atomic custody replacement.
+
+G. NURBS / general freeform surfaces
+- Last-stage scope.
+- Requires an authoritative surface evaluator, derivatives/normal field, chart/trim topology, parameter-space metric control, projection/inversion rules, seam/singularity handling, and independent geometric-error qualification.
+
+7. RECOMMENDED NEXT IMPLEMENTATION ORDER
+
+1. Curved holes on a non-wrapping cylindrical patch.
+   Reason: reuses already-qualified planar-hole topology plus #974 analytic cylinder mapping without adding a second patch/interface authority problem.
+
+2. Curved holes on the full periodic cylinder.
+   Only after non-wrapping curved holes are proven; then add seam/hole interaction tests.
+
+3. Multi-patch conforming seams for planar/analytic patches.
+
+4. Additional analytic surface class, preferably cone before sphere.
+
+5. Offset-surface generation.
+
+6. Thickness-transition meshing.
+
+7. Shell retained local refinement.
+
+8. General trimmed NURBS/freeform surfaces last.
+
+Each item should be its own stacked draft PR with a dedicated permanent qualification script and exact-head run. Do not advance producer revision or qualification revision until the new scope's dedicated gate and unchanged aggregate are green.
+
+8. QUALIFICATION / EVIDENCE LADDER FOR EVERY NEXT SLICE
+
+For each extension:
+
+1. Freeze source/profile/parent hashes and declared scope.
+2. Prove the geometry/topology law independently with exact or limiting cases.
+3. Verify production contract/producer authority without changing solver authority.
+4. Generate canonical mesh and independently inspect topology/family/quality.
+5. Compile representative generated elements through the actual shell element authority where relevant.
+6. Prove v2 evidence ancestry and CURRENT_PASS custody.
+7. Prove deterministic replay, including identifiers/connectivity/hash stability.
+8. Run adversarial falsification cases and require explicit fail-closed error codes.
+9. Run all inherited meshing regressions and full npm run check:lafea-meshing.
+10. Record accepted and rejected hypotheses; then advance producer qualification identity if canonical behavior changed.
+
+A PASS mesh is not a structural-solution convergence claim. Structural response still requires its own multi-level convergence evidence.
+
+9. STACK / MERGE ROADMAP
+
+Current implementation order is conceptually:
+  #971 planar holes
+    -> #974 non-wrapping cylinder
+      -> #979 periodic full cylinder
+
+#973 is documentation-only and should be rebased or superseded after this curved/periodic implementation sequence stabilizes, then /docs/LAFEAMesh.md should be updated to include:
+- cylindrical parameterization;
+- curvature sizing;
+- facet/director qualification;
+- full-cylinder seam identification;
+- annulus topology certification;
+- the remaining exclusion roadmap.
+
+Before any merge batch:
+- re-check exact stack bases and heads;
+- re-run exact-head qualification after any rebase/material source change;
+- keep broader repository/non-bucket integration failures separately attributed;
+- do not treat a meshing PASS as release authority.
+
+10. BROADER REPOSITORY INTEGRATION
+
+The separate LAFEA Non-Bucket Stack Certification remains outside the meshing authority decision. On the V8/R9 candidate, its repository-integration attribution job is still red even though retained meshing checks and the dedicated meshing workflow pass. Do not rewrite or weaken unrelated repository guards from this meshing PR merely to obtain a green global badge.
+
+Known prior cross-scope failures include the missing lAfea hybrid-browser workflow expected by the U4H source guard and unrelated linear-piping release-ledger anti-drift. These require independent ownership/triage.
+
+END STATUS 979

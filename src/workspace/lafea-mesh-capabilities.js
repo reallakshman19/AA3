@@ -9,6 +9,7 @@ import { requireLafeaLifecycleProfileForStage } from './lafea-lifecycle-profiles
 import {
   LAFEA_MESH_PRODUCER_LOCAL_REFINEMENT_AUTHORIZED,
   lafeaMeshProducerBound,
+  lafeaMeshProducerLocalRefinementFamilies,
 } from './lafea-mesh-producer-registry.js';
 
 export const LAFEA_MESH_CAPABILITIES_SCHEMA = 'lafea-mesh-capabilities/v1';
@@ -23,6 +24,12 @@ export function lafeaMeshCapabilities(stageId) {
   const lifecycleProfile = requireLafeaLifecycleProfileForStage(stageId);
   const applicable = lifecycleProfile.meshApplicable === true;
   const producerBound = applicable && lafeaMeshProducerBound(stageId);
+  const refinementFamilies = producerBound
+    ? lafeaMeshProducerLocalRefinementFamilies(stageId)
+    : [];
+  const manualRefinementQualified = producerBound
+    && LAFEA_MESH_PRODUCER_LOCAL_REFINEMENT_AUTHORIZED
+    && refinementFamilies.length > 0;
   return freeze({
     schema: LAFEA_MESH_CAPABILITIES_SCHEMA,
     stageId,
@@ -30,7 +37,8 @@ export function lafeaMeshCapabilities(stageId) {
     retainedAuthorizedMesh: applicable,
     sourceDiscretizationAuthorized: false,
     automaticMeshProducerQualified: producerBound,
-    manualRefinementQualified: producerBound && LAFEA_MESH_PRODUCER_LOCAL_REFINEMENT_AUTHORIZED,
+    manualRefinementQualified,
+    localRefinementElementFamilies: refinementFamilies,
     allowedElementFamilies: applicable ? [...STAGE_ELEMENT_FAMILIES[stageId]] : [],
     generationRequestSupported: applicable,
     generationExecutionAuthorized: producerBound,
@@ -41,7 +49,9 @@ export function lafeaMeshCapabilities(stageId) {
         producerBound
           ? 'QUALIFIED_MESH_PRODUCER_BOUND'
           : 'QUALIFIED_MESH_PRODUCER_NOT_AVAILABLE',
-        'GOVERNED_REFINEMENT_COMMAND_NOT_AVAILABLE',
+        manualRefinementQualified
+          ? 'GOVERNED_RETAINED_MESH_REFINEMENT_AVAILABLE'
+          : 'GOVERNED_REFINEMENT_COMMAND_NOT_AVAILABLE',
       ]
       : ['ANALYSIS_MESH_NOT_APPLICABLE'],
   });

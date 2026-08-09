@@ -18,9 +18,13 @@ const INTAKE_KEYS = Object.freeze(['schema', 'controller', 'bridge']);
 const CONTEXT_KEYS = Object.freeze([
   'schema', 'stageId', 'sceneRevision', 'sourceSemanticHash', 'mode', 'status',
 ]);
-const LIFECYCLE_EXPORT_KEYS = Object.freeze([
+const LIFECYCLE_EXPORT_REQUIRED_KEYS = Object.freeze([
   'schema', 'stageId', 'lifecycle', 'binding', 'readiness',
 ]);
+const LIFECYCLE_EXPORT_SCHEMAS = Object.freeze(new Set([
+  'lafea-workbench-lifecycle-export/v1',
+  'lafea-workbench-lifecycle-export/v2',
+]));
 const BINDING_KEYS = Object.freeze([
   'schema', 'stageId', 'sceneRevision', 'fieldId', 'status',
 ]);
@@ -231,8 +235,8 @@ function requireStoredContext(value, handoff) {
 }
 
 function requireLifecycleExport(value, bridge) {
-  exactKeys(value, LIFECYCLE_EXPORT_KEYS, 'workbench lifecycle export');
-  if (value.schema !== 'lafea-workbench-lifecycle-export/v1'
+  requireKeys(value, LIFECYCLE_EXPORT_REQUIRED_KEYS, 'workbench lifecycle export');
+  if (!LIFECYCLE_EXPORT_SCHEMAS.has(value.schema)
     || value.stageId !== STAGE_ID
     || value.lifecycle?.stageId !== STAGE_ID
     || value.lifecycle?.source?.status !== 'CURRENT'
@@ -312,6 +316,17 @@ function handoffHash(value) {
     producerRevision: LAFEA_B7D_WORKBENCH_DISPLAY_HANDOFF_PRODUCER_REVISION,
     value,
   });
+}
+
+function requireKeys(value, requiredKeys, label) {
+  if (!value || typeof value !== 'object' || Array.isArray(value)
+    || Object.getPrototypeOf(value) !== Object.prototype) {
+    throw handoffError('LAFEA_NB_T6E_RECORD_INVALID', { label });
+  }
+  const missing = requiredKeys.filter((key) => !Object.prototype.hasOwnProperty.call(value, key));
+  if (missing.length) {
+    throw handoffError('LAFEA_NB_T6E_REQUIRED_KEYS_MISSING', { label, missing });
+  }
 }
 
 function exactKeys(value, expected, label) {

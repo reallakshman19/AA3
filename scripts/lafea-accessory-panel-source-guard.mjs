@@ -27,7 +27,7 @@ assert.match(controllerSource, /const ACCESSORY_PANEL_MANAGERS = new WeakMap\(\)
 assert.match(controllerSource, /const DESTROYED_CONTROLLERS = new WeakSet\(\)/u);
 assert.doesNotMatch(controllerSource, /this\.accessoryPanelManager|this\.destroyed/u);
 assert.match(controllerSource, /const \{ accessoryPanels, THREE, \.\.\.storeOptions \} = configuration/u);
-assert.match(controllerSource, /createLafeaWorkbenchStore\(storeOptions\)/u);
+assert.match(controllerSource, /createLafeaWorkbenchOrchestratorStore\(storeOptions\)/u);
 assert.doesNotMatch(controllerSource, /createLafeaWorkbenchStore\(options\)|createLafeaWorkbenchStore\(configuration\)/u);
 assert.match(controllerSource, /initializeLafeaWorkbenchRenderEvidence\(this, THREE \?\? null\)/u);
 assert.match(controllerSource, /lafeaAccessoryPanelConfigurationRequiresHost\(configuration\)/u);
@@ -60,6 +60,7 @@ console.log(JSON.stringify({
   controllerStatePubliclyExpanded: false,
   storeOptionsContaminated: false,
   threeInjectionStoreContamination: false,
+  canonicalOrchestratorInspected: true,
 }));
 
 function read(relativePath) {

@@ -1,5 +1,9 @@
-/** Automatic mesh-generation controls for the Discretization surface. */
+/** Automatic generation and retained-mesh refinement controls for Discretization. */
+import { PROFILE_KINDS, defaultProfileFields } from '../core/lafea-profile-contract/index.js';
 import { button, node, region } from './lafea-discretization-dom.js';
+
+const PROFILE_SOURCE_REVISION = 'lafea-discretization-ui-mesh-profile/v1';
+const SHELL_ELEMENT_PLACEHOLDER = 'CST_DKT_TRI3_THIN_SHELL_V1';
 
 /**
  * Automatic mesh generation. Rendered whenever the stage is mesh applicable,
@@ -27,11 +31,16 @@ export function generationSection(doc, model, handlers) {
     ['Producer', generation.producerRef],
     ['Qualification basis', generation.governanceRef],
     ['Authorized families', generation.elementFamilies.join(', ')],
+    ['Local-refinement families', generation.localRefinementElementFamilies.join(', ') || 'NONE'],
     ['Bound mesh profile', generation.meshProfileIdentity ?? 'NOT_BOUND'],
   ]) {
     identity.append(node(doc, 'dt', null, label), node(doc, 'dd', null, value ?? 'NONE'));
   }
   section.append(identity);
+
+  if (!generation.meshProfileBound) {
+    section.append(profileBindingControls(doc, generation, handlers));
+  }
 
   if (!generation.available) {
     const blocked = node(doc, 'p', 'lafea-discretization__status', generation.unavailableReason);
@@ -40,47 +49,288 @@ export function generationSection(doc, model, handlers) {
     return section;
   }
 
+  const governed = node(doc, 'dl', 'lafea-discretization__facts');
+  governed.dataset.role = 'lafea-generation-bound-configuration';
+  governed.append(
+    node(doc, 'dt', null, 'Governing element family'),
+    node(doc, 'dd', null, generation.declaredElementFamily),
+    node(doc, 'dt', null, 'Governing target element length'),
+    node(doc, 'dd', null, formatLength(generation.targetElementLength, generation.lengthUnit)),
+  );
+  section.append(governed);
+
   const controls = node(doc, 'div', 'lafea-discretization__generation-controls');
-
-  const familyLabel = node(doc, 'label', null, 'Element family ');
-  const family = node(doc, 'select');
-  family.dataset.role = 'lafea-generation-element-family';
-  for (const option of generation.elementFamilies) {
-    const item = node(doc, 'option', null, option);
-    item.value = option;
-    if (option === generation.declaredElementFamily) item.selected = true;
-    family.append(item);
-  }
-  familyLabel.append(family);
-
-  const sizeLabel = node(doc, 'label', null, 'Target element length ');
-  const size = node(doc, 'input');
-  size.type = 'number';
-  size.min = '0';
-  size.step = 'any';
-  size.value = String(generation.targetElementLength ?? '');
-  size.dataset.role = 'lafea-generation-target-length';
-  sizeLabel.append(size);
-
-  const overrides = () => ({
-    elementFamily: family.value,
-    targetElementLength: Number(size.value),
-  });
-
-  const plan = button(doc, 'Plan mesh', () => handlers.onPlanMesh?.(overrides()));
+  const plan = button(doc, 'Plan mesh', () => handlers.onPlanMesh?.({}));
   plan.dataset.role = 'lafea-generation-plan';
   plan.disabled = !model.actions.canPlanMesh;
-  plan.title = 'Runs the producer and reports the result. Custody is not modified.';
+  plan.title = 'Runs the producer from the bound profile and reports the result. Custody is not modified.';
 
-  const generate = button(doc, 'Generate and retain mesh', () => handlers.onGenerateMesh?.(overrides()));
+  const generate = button(doc, 'Generate and retain mesh', () => handlers.onGenerateMesh?.({}));
   generate.dataset.role = 'lafea-generation-generate';
   generate.disabled = !model.actions.canGenerateMesh;
+  generate.title = 'Generation uses the bound profile exactly; change family or size by binding a new profile.';
 
-  controls.append(familyLabel, sizeLabel, plan, generate);
+  controls.append(plan, generate);
   section.append(controls);
 
   if (model.generation.plan) section.append(planSummary(doc, model.generation.plan));
+  section.append(refinementControls(doc, model, handlers));
   return section;
+}
+
+/**
+ * Profile binding is an explicit engineering action. Only quality-policy
+ * defaults are prefilled, and those values are visible in editable controls.
+ * Element family and target length are never inferred from the generic default
+ * profile because that profile currently declares a mixed family outside the
+ * bound producer's uniform-family contract.
+ */
+function profileBindingControls(doc, generation, handlers) {
+  const defaults = defaultProfileFields(PROFILE_KINDS.MESH);
+  const host = node(doc, 'fieldset', 'lafea-discretization__profile-binding');
+  host.dataset.role = 'lafea-mesh-profile-binding';
+  host.append(node(doc, 'legend', null, 'Bind governed LAFEA.3 mesh profile'));
+  host.append(node(
+    doc,
+    'p',
+    'lafea-discretization__disclosure',
+    'Choose the element family and target length explicitly. Quality-gate values below are the source-controlled profile defaults and remain visible before binding.',
+  ));
+
+  const family = selectControl(
+    doc,
+    'Element family',
+    'lafea-profile-element-family',
+    generation.elementFamilies,
+    null,
+  );
+  const target = numberControl(doc, 'Target element length', 'lafea-profile-target-length', '', 0);
+  const ratio = numberControl(
+    doc, 'Adjacent size ratio max', 'lafea-profile-adjacent-ratio', defaults.adjacentSizeRatioMax, 1,
+  );
+  const aspectWarn = numberControl(
+    doc, 'Aspect ratio warning', 'lafea-profile-aspect-warn', defaults.aspectRatioWarn, 1,
+  );
+  const aspectBlock = numberControl(
+    doc, 'Aspect ratio block', 'lafea-profile-aspect-block', defaults.aspectRatioBlock, 1,
+  );
+  const jacWarn = numberControl(
+    doc, 'Scaled Jacobian warning', 'lafea-profile-jacobian-warn', defaults.scaledJacobianWarn, 0,
+  );
+  const jacBlock = numberControl(
+    doc, 'Scaled Jacobian block', 'lafea-profile-jacobian-block', defaults.scaledJacobianBlock, 0,
+  );
+  const adaptive = numberControl(
+    doc, 'Adaptive levels', 'lafea-profile-adaptive-levels', defaults.adaptiveLevels, 1, '1', true,
+  );
+
+  const bind = button(doc, 'Bind mesh profile', () => {
+    const selectedFamily = family.input.value;
+    if (!generation.elementFamilies.includes(selectedFamily)) {
+      family.input.setCustomValidity('Select an authorized element family.');
+      family.input.reportValidity?.();
+      return;
+    }
+    family.input.setCustomValidity('');
+    const targetValue = Number(target.input.value);
+    if (!(targetValue > 0)) {
+      target.input.setCustomValidity('Target element length must be greater than zero.');
+      target.input.reportValidity?.();
+      return;
+    }
+    target.input.setCustomValidity('');
+    handlers.onBindMeshProfile?.({
+      schema: 'lafea-mesh-profile/v1',
+      profileIdentity: `LAFEA3_UI_${selectedFamily}_MESH_PROFILE_V1`,
+      sourceRevision: PROFILE_SOURCE_REVISION,
+      semanticHash: undefined,
+      fields: {
+        continuumElement: selectedFamily,
+        shellElement: SHELL_ELEMENT_PLACEHOLDER,
+        globalTargetSize: targetValue,
+        adjacentSizeRatioMax: Number(ratio.input.value),
+        aspectRatioWarn: Number(aspectWarn.input.value),
+        aspectRatioBlock: Number(aspectBlock.input.value),
+        scaledJacobianWarn: Number(jacWarn.input.value),
+        scaledJacobianBlock: Number(jacBlock.input.value),
+        adaptiveLevels: Number(adaptive.input.value),
+      },
+    });
+  });
+  bind.dataset.role = 'lafea-profile-bind';
+
+  host.append(
+    family.label,
+    target.label,
+    ratio.label,
+    aspectWarn.label,
+    aspectBlock.label,
+    jacWarn.label,
+    jacBlock.label,
+    adaptive.label,
+    bind,
+  );
+  return host;
+}
+
+function refinementControls(doc, model, handlers) {
+  const host = node(doc, 'fieldset', 'lafea-discretization__refinement');
+  host.dataset.role = 'lafea-retained-mesh-refinement';
+  host.dataset.enabled = String(model.actions.canRefineMesh);
+  host.append(node(doc, 'legend', null, 'Local retained-mesh refinement'));
+
+  const family = model.evidence.elementFamily;
+  if (!model.evidence.present) {
+    host.append(node(
+      doc,
+      'p',
+      'lafea-discretization__disclosure',
+      'Generate or recover a current retained analysis mesh before selecting local refinement targets.',
+    ));
+    return host;
+  }
+  if (!model.generation.localRefinementElementFamilies.includes(family)) {
+    host.append(node(
+      doc,
+      'p',
+      'lafea-discretization__disclosure',
+      family === 'Q8'
+        ? 'Q8 local refinement is not qualified. A conforming quadrilateral local-refinement rule is required; this surface will not silently convert Q8 topology to triangles.'
+        : `Local refinement is not qualified for retained element family ${family ?? 'UNKNOWN'}.`,
+    ));
+    return host;
+  }
+
+  host.append(node(
+    doc,
+    'p',
+    'lafea-discretization__disclosure',
+    'Targets are canonical IDs from the currently retained v2 analysis mesh. The parent artifact and mesh hashes are taken from custody by the orchestrator, not accepted from this form. A rejected refinement leaves the retained parent unchanged.',
+  ));
+
+  const targetType = selectControl(
+    doc,
+    'Target type',
+    'lafea-refinement-target-type',
+    ['ELEMENT', 'NODE'],
+    'ELEMENT',
+  );
+  const ids = textControl(
+    doc,
+    'Target IDs',
+    'lafea-refinement-target-ids',
+    '',
+    'E000034 or E000034, E000035',
+  );
+  const target = numberControl(
+    doc,
+    'Local target element length',
+    'lafea-refinement-target-length',
+    '',
+    0,
+  );
+  const unit = textControl(
+    doc,
+    'Length unit',
+    'lafea-refinement-length-unit',
+    model.generation.lengthUnit ?? '',
+    'Declared geometry length unit',
+  );
+  if (model.generation.lengthUnit) unit.input.readOnly = true;
+
+  const submit = button(doc, 'Refine retained mesh', () => {
+    const targetIds = parseTargetIds(ids.input.value);
+    if (!targetIds.length) {
+      ids.input.setCustomValidity('Enter at least one retained mesh node or element ID.');
+      ids.input.reportValidity?.();
+      return;
+    }
+    ids.input.setCustomValidity('');
+
+    const targetElementLength = Number(target.input.value);
+    const global = Number(model.generation.targetElementLength);
+    if (!(targetElementLength > 0 && targetElementLength < global)) {
+      target.input.setCustomValidity(`Local target length must be greater than zero and smaller than the global target ${global}.`);
+      target.input.reportValidity?.();
+      return;
+    }
+    if (targetElementLength < global * 0.25) {
+      target.input.setCustomValidity(`Qualified local target length is at least 25% of the global target (${global * 0.25}).`);
+      target.input.reportValidity?.();
+      return;
+    }
+    target.input.setCustomValidity('');
+
+    const lengthUnit = unit.input.value.trim();
+    if (!lengthUnit) {
+      unit.input.setCustomValidity('Length unit is required; it is never inferred silently.');
+      unit.input.reportValidity?.();
+      return;
+    }
+    unit.input.setCustomValidity('');
+
+    handlers.onRefineMesh?.({
+      kind: 'TARGET_LENGTH',
+      targetType: targetType.input.value,
+      targetIds,
+      targetElementLength,
+      lengthUnit,
+      reason: 'User-governed retained analysis-mesh local refinement',
+    });
+  });
+  submit.dataset.role = 'lafea-refinement-submit';
+  submit.disabled = !model.actions.canRefineMesh;
+  submit.title = model.actions.canRefineMesh
+    ? 'Refines the exact retained parent and replaces custody only after the child evidence passes.'
+    : 'A current qualified T3/T6 retained mesh is required.';
+
+  host.append(targetType.label, ids.label, target.label, unit.label, submit);
+  return host;
+}
+
+function selectControl(doc, labelText, role, values, selected) {
+  const label = node(doc, 'label', null, `${labelText} `);
+  const input = node(doc, 'select');
+  input.dataset.role = role;
+  input.required = true;
+  if (selected === null) {
+    const placeholder = node(doc, 'option', null, 'Select element family');
+    placeholder.value = '';
+    placeholder.disabled = true;
+    placeholder.selected = true;
+    input.append(placeholder);
+  }
+  for (const value of values) {
+    const option = node(doc, 'option', null, value);
+    option.value = value;
+    option.selected = value === selected;
+    input.append(option);
+  }
+  label.append(input);
+  return { label, input };
+}
+
+function numberControl(doc, labelText, role, value, min, step = 'any', integer = false) {
+  const label = node(doc, 'label', null, `${labelText} `);
+  const input = node(doc, 'input');
+  input.type = 'number';
+  input.min = String(min);
+  input.step = integer ? '1' : step;
+  input.value = String(value);
+  input.dataset.role = role;
+  label.append(input);
+  return { label, input };
+}
+
+function textControl(doc, labelText, role, value, placeholder) {
+  const label = node(doc, 'label', null, `${labelText} `);
+  const input = node(doc, 'input');
+  input.type = 'text';
+  input.value = value;
+  input.placeholder = placeholder;
+  input.dataset.role = role;
+  label.append(input);
+  return { label, input };
 }
 
 function planSummary(doc, plan) {
@@ -89,18 +339,20 @@ function planSummary(doc, plan) {
   summary.dataset.strategy = plan.strategy;
   summary.dataset.disposition = plan.resourceDisposition;
   const facts = node(doc, 'dl', 'lafea-discretization__facts');
+  const characteristic = [
+    plan.characteristicLengthMin,
+    plan.characteristicLengthMedian,
+    plan.characteristicLengthMax,
+  ].map(formatNumber).join(' / ');
   for (const [label, value] of [
+    ['Generation mode', plan.generationMode ?? 'AUTOMATIC_MESH'],
     ['Strategy', `${plan.strategy} (${plan.strategyReason})`],
     ['Element family', plan.elementFamily],
     ['Nodes', String(plan.nodeCount)],
     ['Elements', String(plan.elementCount)],
     ['Estimated DOFs', String(plan.estimatedDofs)],
-    ['Boundary edges', String(plan.boundarySegmentCount)],
-    ['Characteristic length min / median / max', [
-      plan.characteristicLengthMin,
-      plan.characteristicLengthMedian,
-      plan.characteristicLengthMax,
-    ].map((value) => value.toPrecision(4)).join(' / ')],
+    ['Boundary edges', plan.boundarySegmentCount === null ? 'UNCHANGED_PARENT_BOUNDARY' : String(plan.boundarySegmentCount)],
+    ['Characteristic length min / median / max', characteristic],
     ['Resource disposition', plan.resourceDisposition],
     ['Plan hash', plan.planHash],
   ]) {
@@ -113,9 +365,27 @@ function planSummary(doc, plan) {
       doc,
       'p',
       'lafea-discretization__disclosure',
-      'This strategy triangulates the boundary polygon and inserts no interior nodes, so refining the target length produces more sliver elements rather than a better mesh. Expect the mesh-quality gates to report WARNING or BLOCK. A four-sided region meshed as Q8 uses the mapped strategy instead.',
+      'The current constrained-Delaunay path performs deterministic interior Steiner refinement driven by the governed global target length, then restores constrained Delaunay connectivity before higher-order upgrade.',
+    ));
+  }
+  if (plan.strategy === 'RETAINED_LOCAL_REFINEMENT') {
+    summary.append(node(
+      doc,
+      'p',
+      'lafea-discretization__disclosure',
+      `Local refinement child of ${plan.parentMeshHash}; ${plan.localPointCount} deterministic local points inserted around ${plan.targetType} target(s) ${plan.targetIds.join(', ')}.`,
     ));
   }
   return summary;
 }
 
+function parseTargetIds(value) {
+  return [...new Set(String(value).split(/[\s,]+/u).map((item) => item.trim()).filter(Boolean))]
+    .sort((a, b) => a.localeCompare(b));
+}
+function formatLength(value, unit) {
+  return `${value ?? 'UNSET'}${unit ? ` ${unit}` : ' (unit unavailable)'}`;
+}
+function formatNumber(value) {
+  return Number.isFinite(value) ? value.toPrecision(4) : 'NOT_REPORTED';
+}

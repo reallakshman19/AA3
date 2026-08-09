@@ -242,7 +242,7 @@ assert.doesNotMatch(productionSource,
 assert.doesNotMatch(productionSource, /\b(?:smooth|smoothing)\s*\(/u);
 assert.doesNotMatch(productionSource, /MITC4|MITC3/u);
 assert.match(producerSource, /PRODUCER_PROJECTED_DISPLAY_ONLY/u);
-assert.match(producerSource,
+assert.match(contractSource,
   /ELEMENT_LOCAL_CORNER_TESSELLATION_NO_CROSS_ELEMENT_VERTEX_SHARING/u);
 assert.match(producerSource, /RELEASE_NOT_QUALIFIED/u);
 assert.match(producerSource, /convergenceProduced:\s*false/u);

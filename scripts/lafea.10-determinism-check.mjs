@@ -7,6 +7,12 @@
  * random meshing — the same topology input meshed twice, including across
  * two independent Node process invocations (not just in-process
  * repetition), produces byte-identical node/element output.
+ *
+ * P2-8 and its shell-scope extensions make the external shell producers part
+ * of this permanent determinism surface. The imported planar, cylindrical,
+ * cylindrical-hole and full-cylinder periodic qualifiers prove geometry,
+ * topology, quality, custody and stage-scope contracts before this legacy
+ * determinism check continues.
  */
 
 import assert from 'node:assert/strict';
@@ -17,6 +23,10 @@ import path from 'node:path';
 import { canonicalSort, assignCanonicalNumbers, codeUnitCompare } from '../src/core/lafea-meshing/determinism.js';
 import { canonicalTopology } from '../src/core/lafea-geometry/index.js';
 import { triangulateRegion } from '../src/core/lafea-meshing/index.js';
+import './lafea-shell-mesh-producer-check.mjs';
+import './lafea-shell-curved-cylinder-check.mjs';
+import './lafea-shell-curved-hole-check.mjs';
+import './lafea-shell-periodic-cylinder-check.mjs';
 
 console.log('\n--- LAFEA §10.2 meshing determinism check ---');
 checkCanonicalOrderingPrimitives();

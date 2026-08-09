@@ -1,13 +1,18 @@
 /** Controller for the independent guided LAFEA workbench. */
 import { createLafeaWorkbenchOrchestratorStore } from './lafea-workbench-orchestrator-store.js';
-import { LAFEA_WORKBENCH_STYLES } from './lafea-workbench-styles.js';
-import { LAFEA_GUIDED_WORKBENCH_STYLES } from './lafea-guided-workbench-styles.js';
 import { FeaBenchmarkPanel } from './fea-benchmark-panel.js';
-import { FEA_BENCHMARK_STYLES } from './fea-benchmark-styles.js';
 import {
   createLafeaAccessoryPanelManager,
   lafeaAccessoryPanelConfigurationRequiresHost,
 } from './lafea-workbench-accessory-panels.js';
+import {
+  downloadLafeaJson,
+  installLafeaWorkbenchStyles,
+  isLafeaRecord,
+  lafeaStageFilename,
+  parseLafeaJsonObject,
+  readLafeaUtf8,
+} from './lafea-workbench-controller-io.js';
 import {
   bindLafeaWorkbenchDisplayRenderPacket,
   clearLafeaWorkbenchDisplayRenderPacket,
@@ -23,7 +28,7 @@ const DESTROYED_CONTROLLERS = new WeakSet();
 
 export class LafeaWorkbenchController {
   constructor(rootElement, options) {
-    const configuration = isRecord(options) ? options : {};
+    const configuration = isLafeaRecord(options) ? options : {};
     const { accessoryPanels, THREE, ...storeOptions } = configuration;
     this.rootElement = rootElement;
     this.documentRef = rootElement?.ownerDocument ?? globalThis.document;
@@ -51,7 +56,7 @@ export class LafeaWorkbenchController {
       throw new TypeError('LAFEA_WORKBENCH_CONTROLLER_DESTROYED');
     }
     if (this.unsubscribe) return this;
-    installStyles(this.documentRef);
+    installLafeaWorkbenchStyles(this.documentRef);
     this.view.init({
       onStage: (stageId) => this.store.selectStage(stageId),
       onMock: (stageId) => this.loadMockData(stageId),
@@ -67,8 +72,10 @@ export class LafeaWorkbenchController {
       onImportMeshEvidence: (file) => this.loadAnalysisMeshEvidenceFile(file),
       onValidateMeshEvidence: () => this.validateRetainedAnalysisMeshEvidence(),
       onExportMeshEvidence: () => this.downloadAnalysisMeshEvidence(),
+      onBindMeshProfile: (profile) => this.bindAnalysisMeshProfile(profile),
       onPlanMesh: (overrides) => this.planAnalysisMesh(overrides),
       onGenerateMesh: (overrides) => this.generateAnalysisMesh(overrides),
+      onRefineMesh: (request) => this.refineAnalysisMesh(request),
     });
     this.benchmarkPanel.render();
     this.unsubscribe = this.store.subscribe((state) => this.view.render(state));
@@ -87,7 +94,7 @@ export class LafeaWorkbenchController {
   async loadFile(file) {
     if (!file) return this.getState();
     try {
-      return this.importDocument(JSON.parse(await readUtf8(file)));
+      return this.importDocument(JSON.parse(await readLafeaUtf8(file)));
     } catch (error) {
       return this.store.reportEditError('document', null, error);
     }
@@ -96,7 +103,7 @@ export class LafeaWorkbenchController {
   async loadAnalysisMeshEvidenceFile(file) {
     if (!file) return this.getState();
     try {
-      const value = JSON.parse(await readUtf8(file));
+      const value = JSON.parse(await readLafeaUtf8(file));
       this.recoverAnalysisMeshEvidence(value);
       return this.getState();
     } catch (error) {
@@ -139,6 +146,7 @@ export class LafeaWorkbenchController {
   /** Preview only: runs the bound producer without touching mesh custody. */
   planAnalysisMesh(o = {}, s = this.getState().activeStageId) { return this.store.planAnalysisMesh(o, s); }
   generateAnalysisMesh(o = {}, s = this.getState().activeStageId) { return this.store.generateAnalysisMesh(o, s); }
+  refineAnalysisMesh(r = {}, s = this.getState().activeStageId) { return this.store.refineAnalysisMesh(r, s); }
   selectRetainedAnalysisMeshEvidenceV2(s = this.getState().activeStageId) { return this.store.selectRetainedAnalysisMeshEvidenceV2(s); }
 
   buildAnalysisMeshCustodyProjection(stageId = this.getState().activeStageId) {
@@ -202,7 +210,7 @@ export class LafeaWorkbenchController {
 
   applyDocumentText(text) {
     try {
-      return this.store.replaceDocument(parseJsonObject(text, 'LAFEA document'), 'RAW_JSON');
+      return this.store.replaceDocument(parseLafeaJsonObject(text, 'LAFEA document'), 'RAW_JSON');
     } catch (error) {
       return this.store.reportEditError('document', null, error);
     }
@@ -215,14 +223,14 @@ export class LafeaWorkbenchController {
 
   downloadDocument() {
     const value = this.exportDocument();
-    downloadJson(this.documentRef, value, `${fileStage(value.stageId)}-document.json`);
+    downloadLafeaJson(this.documentRef, value, `${lafeaStageFilename(value.stageId)}-document.json`);
     return value;
   }
 
   downloadAnalysisMeshEvidence(stageId = this.getState().activeStageId) {
     const value = this.exportAnalysisMeshEvidence(stageId);
     if (!value) return null;
-    downloadJson(this.documentRef, value, `${fileStage(stageId)}-analysis-mesh-evidence.json`);
+    downloadLafeaJson(this.documentRef, value, `${lafeaStageFilename(stageId)}-analysis-mesh-evidence.json`);
     return value;
   }
 
@@ -241,57 +249,3 @@ export class LafeaWorkbenchController {
     this.rootElement = null;
   }
 }
-
-function installStyles(documentRef) {
-  if (!documentRef || documentRef.querySelector('[data-lafea-workbench-styles]')) return;
-  const style = documentRef.createElement('style');
-  style.dataset.lafeaWorkbenchStyles = 'true';
-  style.textContent = `${LAFEA_WORKBENCH_STYLES}\n${LAFEA_GUIDED_WORKBENCH_STYLES}\n${FEA_BENCHMARK_STYLES}`;
-  documentRef.head?.append(style);
-}
-
-async function readUtf8(file) {
-  if (typeof file.arrayBuffer === 'function') {
-    return new TextDecoder('utf-8', { fatal: true }).decode(await file.arrayBuffer());
-  }
-  if (typeof file.text === 'function') return file.text();
-  throw new TypeError('Selected LAFEA source cannot be read.');
-}
-
-function parseJsonObject(text, label) {
-  const value = JSON.parse(text);
-  if (!isRecord(value)) throw new TypeError(`${label} must be a JSON object.`);
-  return value;
-}
-
-function downloadJson(documentRef, value, filename) {
-  if (!documentRef || typeof Blob === 'undefined' || typeof URL === 'undefined') return;
-  const url = URL.createObjectURL(new Blob(
-    [JSON.stringify(value, null, 2)],
-    { type: 'application/json' },
-  ));
-  const anchor = documentRef.createElement('a');
-  anchor.href = url;
-  anchor.download = filename;
-  anchor.hidden = true;
-  documentRef.body?.append(anchor);
-  anchor.click();
-  anchor.remove();
-  revokeObjectUrlAfterDownload(url);
-}
-
-function revokeObjectUrlAfterDownload(url) {
-  let revoked = false;
-  const revoke = () => {
-    if (revoked) return;
-    revoked = true;
-    URL.revokeObjectURL(url);
-    globalThis.clearTimeout(timeout);
-    globalThis.removeEventListener?.('focus', revoke);
-  };
-  const timeout = globalThis.setTimeout(revoke, 30_000);
-  globalThis.addEventListener?.('focus', revoke, { once: true });
-}
-
-function fileStage(stageId) { return stageId.toLowerCase().replace('.', '-'); }
-function isRecord(value) { return Boolean(value) && typeof value === 'object' && !Array.isArray(value); }

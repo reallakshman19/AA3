@@ -111,6 +111,7 @@ const editorSource = [
 const storeSource = read('lafea-workbench-store.js');
 const controllerSource = read('lafea-workbench-controller.js');
 const viewSource = read('lafea-workbench-view.js');
+const contentSource = read('lafea-workbench-content.js');
 
 assert.match(editorSource, /lafeaStageInputDescriptors/u);
 assert.match(editorSource, /Governed stage-specific inputs/u);
@@ -128,8 +129,10 @@ assert.doesNotMatch(storeSource, /findIndex\([^\n]*identity|rowIndex === index/u
 
 assert.match(controllerSource, /onSetScalar/u);
 assert.doesNotMatch(controllerSource, /onUpdateRecord|onDeleteRecord|updateRecordText|addRecordText/u);
-assert.match(viewSource, /onSetScalar: this\.handlers\.onSetScalar/u);
+assert.match(viewSource, /handlers:\s*this\.handlers/u);
 assert.match(viewSource, /state\.activeStageId/u);
+assert.match(contentSource, /onSetScalar:\s*options\.handlers\.onSetScalar/u);
+assert.match(contentSource, /renderDocumentTableEditor/u);
 
 console.log(JSON.stringify({
   check: 'lafea-u2b-editor-store-command-migration',
@@ -140,4 +143,5 @@ console.log(JSON.stringify({
   arrayIndexEditAuthority: false,
   unimplementedStageEditing: false,
   lifecycleExpansion: false,
+  governedHandlerRelay: 'VIEW_TO_CONTENT_TO_DOCUMENT_EDITOR',
 }));

@@ -1,0 +1,108 @@
+{
+  "schema": "lfea-bm4nl-issue947-iteration-ledger/v1",
+  "issue": 947,
+  "purpose": "Record every mechanics iteration as an explicit, reproducible before/after hypothesis test. This ledger is process evidence; benchmark outputs and solver qualification diagnostics remain the numerical authority.",
+  "target": {
+    "sourceAccdbSha256": "85d39463296e569da811d8572e2eff680b858097f76fdf0f47d1755f0b161c21",
+    "casesInOrder": ["L19", "L20"],
+    "restraintBoundary": "LINEAR_BILATERAL_ONLY",
+    "acceptanceRelativeError": 0.1,
+    "excludedPhysics": [
+      "FRICTION",
+      "LIFT_OFF",
+      "GAP_CONTACT_HISTORY",
+      "NONLINEAR_SUPPORT_STATE",
+      "CODE_STRESS",
+      "EXP",
+      "HYD",
+      "DAMPING",
+      "FOLLOWER_LOAD",
+      "MATERIAL_NONLINEARITY"
+    ]
+  },
+  "measurementPolicy": {
+    "requiredPerIteration": [
+      "iterationId",
+      "hypothesis",
+      "codeOrConfigurationDelta",
+      "candidateCommitSha",
+      "beforeMetrics",
+      "afterMetrics",
+      "metricDelta",
+      "solverResidualAndEquilibriumStatus",
+      "canonicalOrFalsificationEvidence",
+      "disposition"
+    ],
+    "improvementRule": "An iteration is an improvement only when target errors decrease without weakening solver/profile tolerances, changing the reference data, or violating residual/equilibrium/canonical invariants.",
+    "dispositions": ["KEEP", "REVERT", "BLOCKED", "PENDING_REAL_ACCDB"]
+  },
+  "baseline": {
+    "iterationId": "I000",
+    "candidateCommitSha": "882d59a99c3a03847d20bec34770ba57ff479d91",
+    "benchmarkStatus": "FAIL",
+    "beforeMetrics": {
+      "L19": {
+        "restraintComponentsOver10Percent": 1,
+        "worstTarget": {
+          "node": "20090",
+          "quantity": "FORCE",
+          "component": "UY",
+          "reference": -1659.836792,
+          "candidate": -1941.29179,
+          "relativeError": 0.1696,
+          "unit": "N"
+        }
+      },
+      "L20": {
+        "restraintComponentsOver10Percent": 5,
+        "targets": [
+          {"node": "20350", "component": "UY", "reference": -1758.342407, "candidate": -1376.711849, "relativeError": 0.2170, "unit": "N"},
+          {"node": "20390", "component": "UZ", "reference": -757.635376, "candidate": -674.898892, "relativeError": 0.1092, "unit": "N"},
+          {"node": "20550", "component": "UZ", "reference": 26.630367, "candidate": 16.281663, "relativeError": 0.2070, "unit": "N"},
+          {"node": "22140", "component": "UX", "reference": -718.479126, "candidate": -624.916166, "relativeError": 0.1302, "unit": "N"},
+          {"node": "22490", "component": "UX", "reference": 1063.09082, "candidate": 950.858994, "relativeError": 0.1056, "unit": "N"}
+        ]
+      }
+    },
+    "solverResidualAndEquilibriumStatus": "QUALIFIED_BY_EXISTING_BENCHMARK_RUN",
+    "canonicalOrFalsificationEvidence": "Incident element-end action sums agree with reported restraint components to the existing benchmark audit tolerance, so the primary mismatch is upstream of reaction reporting.",
+    "disposition": "BASELINE"
+  },
+  "iterations": [
+    {
+      "iterationId": "I001",
+      "hypothesis": "Restarting MEC-21 Part II equation (2.25) independently on every numerical bend chord is kinematically subdivision invariant.",
+      "codeOrConfigurationDelta": "Added a cumulative-station MEC-21 state API and an independent quarter-bend closed-form/falsification fixture; solver behavior was not changed in this iteration.",
+      "candidateCommitSha": "236ceefdd02e771f284627b2237739cd87f9652f",
+      "beforeMetrics": "I000",
+      "afterMetrics": null,
+      "metricDelta": null,
+      "solverResidualAndEquilibriumStatus": "UNCHANGED_SOLVER_PATH",
+      "canonicalOrFalsificationEvidence": {
+        "fixture": "MEC21_PART_II_EQ_2_25_QUARTER_BEND_CLOSED_FORM",
+        "subdivisionCounts": [1, 2, 4, 8, 32],
+        "cumulativeFieldEndpointInvariant": true,
+        "restartedFourChordTranslationRelativeError": 1.3273984331376751,
+        "totalRotationPreservedByRestartedConstruction": true,
+        "hypothesisResult": "FALSIFIED"
+      },
+      "disposition": "KEEP"
+    },
+    {
+      "iterationId": "I002",
+      "hypothesis": "Sampling one physical bend-level MEC-21 free field at both ends of every stiffness chord removes the identified mesh-dependent pressure kinematics while preserving the qualified linear solver and recovery contracts.",
+      "codeOrConfigurationDelta": "ACCDB adapter now forms each bend chord free generalized displacement from cumulative bend stations, transforms it with the existing d_local = T d_global relation, and forms f0 = K_effective d0. No solver, restraint, tolerance, B31/B31J stiffness, or recovery-sign change.",
+      "candidateCommitSha": "36457f3002f04f0cd4c3ac7ce6800654072713e3",
+      "beforeMetrics": "I000",
+      "afterMetrics": null,
+      "metricDelta": null,
+      "solverResidualAndEquilibriumStatus": "PENDING_REAL_ACCDB",
+      "canonicalOrFalsificationEvidence": {
+        "freeStateIdentity": "q_local = K_effective (d_local - d0_local) = 0",
+        "selfReviewFinding": "The first angular-closure guard snapped the final cumulative angle before measuring the residual, so that guard could not detect a bad chord-angle sum.",
+        "selfReviewDisposition": "FIX_REQUIRED_BEFORE_BENCHMARK_CLAIM"
+      },
+      "disposition": "PENDING_REAL_ACCDB"
+    }
+  ]
+}

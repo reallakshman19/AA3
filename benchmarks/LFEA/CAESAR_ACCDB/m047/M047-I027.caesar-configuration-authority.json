@@ -1,21 +1,35 @@
 {
-  "schema": "lfea-m047-caesar-configuration-authority/v1",
+  "schema": "lfea-m047-caesar-configuration-authority/v2",
   "issueId": "M047",
   "iterationId": "M047-I027",
   "caesarVersion": "14.000",
   "provenance": {
     "overallConfiguration": "USER_PROVIDED_CAESAR_II_OVERALL_SETTINGS_2026-08-09",
     "jobSpecificOverrides": "USER_VERIFIED_BM4_NL_JOB_SETTINGS_2026-08-09",
-    "precedenceRule": "BM4_NL_JOB_SPECIFIC_OVERRIDES_OVERALL_CONFIGURATION_DEFAULTS"
+    "precedenceRule": "BM4_NL_JOB_SPECIFIC_OVERRIDES_OVERALL_CONFIGURATION_DEFAULTS",
+    "vendorAuthority": [
+      "Hexagon CAESAR II User's Guide: Elastic Modulus - EC/EH selection is per load case.",
+      "Hexagon CAESAR II User's Guide: Fac - FDBR is the only piping code documented to use hot modulus in flexibility analysis."
+    ]
   },
   "jobSpecific": {
     "installationAmbientTemperatureC": 21,
     "bourdonPressureEffects": "TRANSLATION_AND_ROTATION",
     "l19l20FrictionCoefficient": 0,
+    "l19FlexibilityElasticModulus": "EC",
+    "l20FlexibilityElasticModulus": "EC",
+    "lockedAccdbModulusObservation": {
+      "material": "A106 Grade B",
+      "MODULUS_kPa": 203395008,
+      "HOT_MOD1_kPa": 203395008,
+      "equalInLockedJob": true,
+      "implication": "The current thermal-case HOT_MOD1 selector is semantically wrong for this B31.3 job but numerically neutral in the locked BM4_NL ACCDB because EC and EH1 are identical."
+    },
     "notes": [
       "The overall BOURDON_PRESSURE=NONE setting is a default/new-job setting and must not override the saved BM4_NL Activate Bourdon Effects state.",
       "Although INPUT_RESTRAINTS contains FRIC_COEF=0.3 on some rows, L19 and L20 in this qualification are modeled with friction coefficient zero by explicit case authority and issue #947 scope.",
-      "The benchmark installation temperature is exactly 21 C, not inferred from the overall new-job ambient default."
+      "The benchmark installation temperature is exactly 21 C, not inferred from the overall new-job ambient default.",
+      "L20 uses cold modulus EC for flexibility analysis even though it contains T1. Presence of HOT_MOD1 in the ACCDB does not make EH1 active for L20."
     ]
   },
   "overallRelevantSettings": {
@@ -45,6 +59,11 @@
     "ALPHA_TOLERANCE": 0.05
   },
   "validationBindings": [
+    {
+      "setting": "L19/L20 flexibility elastic modulus = EC",
+      "classification": "ACTIVE_JOB_LOAD_CASE_CONTROL",
+      "expectedLfeaInvariant": "B31.3 L19 and L20 material stiffness must be built from ACCDB MODULUS/EC, not selected from HOT_MOD1 merely because T1 is present. For locked BM4_NL, assert MODULUS == HOT_MOD1 and therefore zero numerical A/B delta while retaining the correct semantic selector."
+    },
     {
       "setting": "Z_AXIS_UP=NO",
       "classification": "ACTIVE_ANALYSIS_CONTROL",

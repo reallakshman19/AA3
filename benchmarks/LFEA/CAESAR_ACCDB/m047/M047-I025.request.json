@@ -1,0 +1,61 @@
+{
+  "schema": "lfea-caesar-accdb-iteration-request/v1",
+  "issueId": "M047",
+  "iterationId": "M047-I025",
+  "expectedSourceAccdbSha256": "85d39463296e569da811d8572e2eff680b858097f76fdf0f47d1755f0b161c21",
+  "expectedBendPointerCount": 12,
+  "baseCommitSha": "882d59a99c3a03847d20bec34770ba57ff479d91",
+  "parentAcceptedIteration": "M047-I015",
+  "supportingIterations": ["M047-I019", "M047-I020", "M047-I021", "M047-I022", "M047-I023", "M047-I024"],
+  "classification": "FULL_COVERAGE_DIAGNOSTIC_NOT_AUTOMATIC_PROMOTION",
+  "hypothesis": "I021-I024 repeatedly cross node20390/source44 or adjacent thresholds because each changes only one special-component family while neighboring flexible-pipe carriers retain the old base-beam constitutive law. If transverse shear is truly a common flexible-pipe constitutive mechanism, applying the same governed base-beam law simultaneously to every flexible carrier should remove artificial partial-coverage interfaces. Component-owned mechanics remain unchanged so this test isolates coverage coherence from B31J, bend flexibility/pressure-stiffening, and reducer-condensation authority.",
+  "candidateBoundary": {
+    "ordinaryAndTeeFrames": "all FRAME carriers regardless teeModifier",
+    "bendIncomingStraight": "all BEND_INCOMING_STRAIGHT carriers including tee-owned source 36",
+    "bendArcBaseFrame": "all BEND_ARC component base frames consume plainFrameTimoshenkoProfile() before unchanged bend correction",
+    "reducerInternalCylinders": "all ten-cylinder reducer internal beams use Timoshenko stiffness and matching consistent-load phi before unchanged Schur condensation",
+    "rigidElements": "held",
+    "kappaY": 0.53,
+    "kappaZ": 0.53,
+    "kappaAuthority": "COWPER-1966-THIN-ANNULUS-INPUT"
+  },
+  "heldIndependentMechanics": [
+    "B31J directional flexibility factors",
+    "tee rotational spring construction",
+    "tee rigid surface offsets",
+    "bend flexibility correction",
+    "bend pressure-stiffening factor authority",
+    "bend subdivision",
+    "reducer ten-cylinder geometry and midpoint sampling",
+    "reducer Schur condensation equations",
+    "rigid-element mechanics",
+    "Bourdon pressure mechanics",
+    "closed-end pressure strain",
+    "thermal-expansion coefficient authority",
+    "gravity mass authority",
+    "load-case formulas",
+    "tolerances and scale floors",
+    "CAESAR reference rows"
+  ],
+  "diagnosticQuestions": [
+    "Does coherent flexible-carrier coverage restore node20390 FZ below 10% after the I021-I024 partial crossings?",
+    "Do the I019 sources9-11 MZ rows resolve without merely moving the threshold to source44 or another immediate component boundary?",
+    "Does node20090 FY retain or improve the accepted-I015 result?",
+    "Do L19 displacement/rotation and source-action aggregates improve without new restraint failures?",
+    "Does L20 improve or does remaining error demonstrate component-specific/thermal authority rather than coverage alone?"
+  ],
+  "acceptanceInterpretation": [
+    "A favorable I025 result supports the partial-coverage diagnosis but does not by itself authorize production promotion of unchanged bend/B31J correction composition.",
+    "A failing I025 result localizes the remaining discrepancy to component-specific formulation/parameter authority rather than coverage alone.",
+    "All target-node action/equilibrium residuals must remain within the existing 0.1 N / 0.1 N*m custody limit and normally at numerical roundoff.",
+    "No benchmark fitting or tolerance change is permitted."
+  ],
+  "changedPaths": [
+    "scripts/lfea-m047-apply-full-flexible-timoshenko-candidate.mjs",
+    "scripts/lfea-m047-full-flexible-timoshenko-candidate-check.mjs",
+    ".github/workflows/m047-bm4nl-i025-full-flexible-ab.yml"
+  ],
+  "mechanicsDelta": "Runtime diagnostic only: accepted I015 common Timoshenko base-beam law is extended coherently to all flexible-pipe carriers, including tee frames, bend incoming straights, bend-arc base frames and reducer internal cylinders, while all independent component corrections and external authorities remain held.",
+  "verdict": "PENDING",
+  "decisionReason": "Await exact-head locked Windows I025 full-coverage A/B evidence."
+}

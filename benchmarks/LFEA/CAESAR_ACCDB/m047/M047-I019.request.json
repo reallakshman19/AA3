@@ -1,0 +1,44 @@
+{
+  "schema": "lfea-caesar-accdb-iteration-request/v1",
+  "issueId": "M047",
+  "iterationId": "M047-I019",
+  "expectedSourceAccdbSha256": "85d39463296e569da811d8572e2eff680b858097f76fdf0f47d1755f0b161c21",
+  "expectedBendPointerCount": 12,
+  "baseCommitSha": "882d59a99c3a03847d20bec34770ba57ff479d91",
+  "parentAcceptedIteration": "M047-I015",
+  "hypothesis": "The six new L19 source-end-action threshold failures introduced by accepted I015 are a solved-state redistribution of one transmitted global-MZ moment field through connected sources 9-11, not six independent local constitutive regressions. Only source 10 is inside the I015 plain-FRAME/no-tee mutation boundary; fixed-CAESAR-endpoint I014 replay already showed source 10 improves all local transverse components under Timoshenko shear.",
+  "parentEvidence": [
+    {
+      "iteration": "M047-I014",
+      "workflowRunId": 31306028750,
+      "artifactId": 9035999665,
+      "artifactSha256": "e05017cd4907693ab7e558e56320ec088a104a6fa9d82312ae6c57bcd1194860",
+      "semanticHash": "fnv1a64:7ed521d0ee654c46",
+      "role": "fixed-CAESAR-endpoint plain-FRAME local constitutive replay"
+    },
+    {
+      "iteration": "M047-I015",
+      "workflowRunId": 31312435893,
+      "artifactId": 9037781388,
+      "artifactSha256": "6c8d79bcccb19b80ae53fe32d78afefa69871da606166ea5e6e58c2be897fc23",
+      "semanticHash": "fnv1a64:296422c2764f7b4f",
+      "role": "accepted locked system A/B"
+    }
+  ],
+  "predictedSignature": [
+    "Derive the threshold transitions from locked L19 reference/baseline/candidate rows rather than hard-coding result values.",
+    "Exactly six L19 source-end-action rows should newly cross the 10% gate and all six should be global MZ rows on sources 9, 10 and 11; three other source-end-action rows should resolve, explaining the net 20 -> 23 count.",
+    "Candidate mechanics custody should show source 9 as tee-modified FRAME and therefore outside I015, source 10 as the only plain FRAME/no-tee I015-selected source, and source 11 as REDUCER and therefore outside I015.",
+    "At shared nodes 20170 and 20220, CAESAR, baseline and candidate source MZ end actions must close as equal-and-opposite interface pairs within numerical tolerance; the I015 action delta itself must also close.",
+    "I014 fixed-CAESAR-endpoint source-10 replay must retain 8/8 improved local transverse end-action components and zero worsened components.",
+    "Solved L19 RZ at shared nodes 20170 and 20220 should move closer to CAESAR under I015 even though the global MZ threshold crosses, falsifying a simple endpoint-rotation degradation explanation.",
+    "No production mechanics, profile coefficient, tolerance or benchmark target is changed."
+  ],
+  "changedPaths": [
+    "scripts/lfea-m047-i019-source-action-cluster.mjs",
+    ".github/workflows/m047-bm4nl-i019-source-action-cluster.yml"
+  ],
+  "mechanicsDelta": "None. Evidence-only comparison of frozen I014 and accepted I015 artifacts, with source-selection, interface-action and solved-DOF custody.",
+  "verdict": "PENDING",
+  "decisionReason": "Await exact-head I019 artifact-custody run."
+}

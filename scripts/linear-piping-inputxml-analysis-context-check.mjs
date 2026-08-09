@@ -7,10 +7,10 @@ import {
   LINEAR_PIPING_INPUTXML_ANALYSIS_REQUEST_SCHEMA,
   compileLinearPipingInputXmlAnalysisContext,
   requireLinearPipingInputXmlAnalysisContext,
-  runLinearPipingAnalysisFromInputXml,
   sealLinearPipingInputXmlAnalysisContext,
   sealLinearPipingInputXmlSource,
 } from '../src/core/linear-piping-analysis-consumer/index.js';
+import { runLinearPipingAnalysisFromInputXml } from '../src/core/linear-piping-analysis-consumer/inputxml-source-binding.js';
 import {
   compileLinearPipingInterfaceSet,
   recoverLinearPipingInterfaceLoads,

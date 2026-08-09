@@ -2,7 +2,10 @@
 import assert from 'node:assert/strict';
 
 import { canonicalProfile, PROFILE_KINDS } from '../src/core/lafea-profile-contract/index.js';
-import { BASE_LIMITATIONS } from '../src/core/local-shell/index.js';
+import { BASE_LIMITATIONS, createCanonicalLocalShellModel } from '../src/core/local-shell/index.js';
+import { buildShellElementEvidence } from '../src/core/local-shell/element.js';
+import { baseSource, triangleSource as shellFixture } from './lafea.4-fixtures.mjs';
+import { workflowSource as trunnionFixture } from './lafea.5-fixtures.mjs';
 import {
   LAFEA_SHELL_PERIODIC_HOLE_ANALYSIS_DOMAIN_SCHEMA,
   LAFEA_SHELL_PERIODIC_HOLE_MIDSURFACE_GEOMETRY_SCHEMA,
@@ -27,10 +30,13 @@ import {
   planLafeaShellAnalysisMesh,
   produceLafeaShellAnalysisMesh,
 } from '../src/workspace/lafea-shell-mesh-producer.js';
+import { createLafeaWorkbenchOrchestratorStore } from '../src/workspace/lafea-workbench-orchestrator-store.js';
+import { buildLafeaDiscretizationViewModel } from '../src/workspace/lafea-discretization-view-model.js';
 
 assert.ok(BASE_LIMITATIONS.includes('NO_AUTOMATIC_OR_ADAPTIVE_MESHING'));
 
 const SOURCE_HASH = `sha256:${'e'.repeat(64)}`;
+const NEXT_SOURCE_HASH = `sha256:${'d'.repeat(64)}`;
 const ROOT2 = Math.sqrt(0.5);
 const RADIUS = 100;
 const CIRCUMFERENCE = 2 * Math.PI * RADIUS;
@@ -38,6 +44,7 @@ const CANONICAL_SEAM = Math.PI * RADIUS;
 const AXIAL_MIN = 0;
 const AXIAL_MAX = 120;
 const HOLE = Object.freeze({ holeId: 'SEAM-HOLE-1', uMin: 300, uMax: 328, vMin: 40, vMax: 80 });
+const fixtureByStage = { 'LAFEA.4': shellFixture, 'LAFEA.5': trunnionFixture };
 const rows = [];
 
 for (const stageId of ['LAFEA.4', 'LAFEA.5']) {
@@ -93,6 +100,7 @@ for (const stageId of ['LAFEA.4', 'LAFEA.5']) {
   assertCylinderAndHoleEmpty(result.evidence.mesh, parent.geometry, HOLE);
   assertHoleCornersRetained(result.evidence.mesh, parent.geometry, HOLE);
   qualifyPhysicalTopology(result.evidence.mesh, 3, -1);
+  qualifyHoleAdjacentFacetAgainstLocalShell(result.evidence.mesh, parent.geometry, HOLE);
 
   const replay = produceLafeaShellAnalysisMesh({ midsurfaceEvidence: parent, meshProfile: profile });
   assert.equal(replay.plan.planHash, result.plan.planHash);
@@ -112,6 +120,8 @@ for (const stageId of ['LAFEA.4', 'LAFEA.5']) {
   assert.ok(fine.evidence.mesh.elements.length > result.evidence.mesh.elements.length);
   assertCylinderAndHoleEmpty(fine.evidence.mesh, parent.geometry, HOLE);
   qualifyPhysicalTopology(fine.evidence.mesh, 3, -1);
+
+  checkWorkbench(stageId, parent, profile);
 
   rows.push({
     stageId,
@@ -133,6 +143,8 @@ for (const stageId of ['LAFEA.4', 'LAFEA.5']) {
     eulerCharacteristic: plan.eulerCharacteristic,
     minimumFacetDirectorAlignment: plan.minimumFacetDirectorAlignment,
     maximumFacetNormalDeviationDegrees: plan.maximumFacetNormalDeviationDegrees,
+    localShellFacetCompatible: true,
+    publicWorkbenchCurrentPass: true,
     artifactHash: result.evidence.artifactHash,
   });
 }
@@ -140,7 +152,7 @@ for (const stageId of ['LAFEA.4', 'LAFEA.5']) {
 checkAdversarialContracts();
 
 console.log(JSON.stringify({
-  schema: 'lafea-shell-periodic-hole-check/v1',
+  schema: 'lafea-shell-periodic-hole-check/v2',
   status: 'PASS',
   qualityThresholdsRelaxed: false,
   rows,
@@ -152,6 +164,7 @@ console.log(JSON.stringify({
     expectedPhysicalBoundaryLoops: 3,
     expectedEulerCharacteristic: -1,
     sizing: 'MIN_CURVATURE_AND_PROFILE_SUBJECT_TO_TWO_ELEMENTS_ACROSS_PHYSICAL_LIGAMENT',
+    qualityPolicy: 'BLOCK_IS_FAIL_CLOSED_NO_AUTOREPAIR',
     elementFamily: LAFEA_SHELL_ELEMENT,
   },
   exclusions: [
@@ -223,35 +236,102 @@ function shellProfile(stageId, target, label) {
 }
 
 function assertCylinderAndHoleEmpty(mesh, geometry, hole) {
+  const nodeById = new Map(mesh.nodes.map((node) => [node.nodeId, node]));
+  for (const node of mesh.nodes) assertPointOnCylinderOutsideHole(node, geometry, hole, `node ${node.nodeId}`);
+  for (const element of mesh.elements) {
+    const points = element.nodeIds.map((nodeId) => nodeById.get(nodeId));
+    const centroid = {
+      x: points.reduce((sum, point) => sum + point.x, 0) / points.length,
+      y: points.reduce((sum, point) => sum + point.y, 0) / points.length,
+      z: points.reduce((sum, point) => sum + point.z, 0) / points.length,
+    };
+    assertPhysicalPointOutsideHole(centroid, geometry, hole, `element ${element.elementId} centroid`);
+  }
+}
+
+function assertPointOnCylinderOutsideHole(point, geometry, hole, label) {
+  const origin = geometry.surface.axisOrigin;
+  const axis = geometry.surface.axisDirection;
+  const rel = subtract(point, origin);
+  const v = dot(rel, axis);
+  const radial = subtract(rel, scale(axis, v));
+  close(norm(radial), geometry.surface.radius, 1e-8);
+  assertPhysicalPointOutsideHole(point, geometry, hole, label);
+  const frame = periodicHoleShellFrameAtPoint3d(geometry, physicalPoint(point));
+  close(norm(frame.director), 1, 1e-12);
+}
+
+function assertPhysicalPointOutsideHole(point, geometry, hole, label) {
   const origin = geometry.surface.axisOrigin;
   const axis = geometry.surface.axisDirection;
   const radial0 = geometry.surface.radialDirection;
   const tangent0 = cross(axis, radial0);
+  const rel = subtract(point, origin);
+  const v = dot(rel, axis);
+  const radial = subtract(rel, scale(axis, v));
+  const radialLength = norm(radial);
+  assert.ok(radialLength > 0, `${label}: radial projection is undefined`);
+  const radialUnit = scale(radial, 1 / radialLength);
+  const canonicalU = Math.atan2(dot(radialUnit, tangent0), dot(radialUnit, radial0)) * geometry.surface.radius;
   const centerU = 0.5 * (hole.uMin + hole.uMax);
-  for (const node of mesh.nodes) {
-    const rel = subtract(node, origin);
-    const v = dot(rel, axis);
-    const radial = subtract(rel, scale(axis, v));
-    close(norm(radial), geometry.surface.radius, 1e-8);
-    const radialUnit = scale(radial, 1 / norm(radial));
-    const canonicalU = Math.atan2(dot(radialUnit, tangent0), dot(radialUnit, radial0)) * geometry.surface.radius;
-    const u = unwrapNear(canonicalU, centerU, CIRCUMFERENCE);
-    const strictlyInsideHole = u > hole.uMin + 1e-8 && u < hole.uMax - 1e-8
-      && v > hole.vMin + 1e-8 && v < hole.vMax - 1e-8;
-    assert.equal(strictlyInsideHole, false, `node ${node.nodeId} lies inside physical seam hole`);
-    const frame = periodicHoleShellFrameAtPoint3d(geometry, physicalPoint(node));
-    close(norm(frame.director), 1, 1e-12);
-  }
+  const u = unwrapNear(canonicalU, centerU, CIRCUMFERENCE);
+  const strictlyInsideHole = u > hole.uMin + 1e-8 && u < hole.uMax - 1e-8
+    && v > hole.vMin + 1e-8 && v < hole.vMax - 1e-8;
+  assert.equal(strictlyInsideHole, false, `${label} lies inside physical seam hole`);
 }
 
 function assertHoleCornersRetained(mesh, geometry, hole) {
-  const corners = [
-    [hole.uMin, hole.vMin], [hole.uMin, hole.vMax],
-    [hole.uMax, hole.vMax], [hole.uMax, hole.vMin],
-  ].map(([u, v]) => periodicHoleShellPoint3d(geometry, u, v));
+  const corners = holeCorners(geometry, hole);
   for (const corner of corners) {
     assert.ok(mesh.nodes.some((node) => distance(node, corner) <= 1e-8), 'physical hole corner not retained');
   }
+}
+
+function holeCorners(geometry, hole) {
+  return [
+    [hole.uMin, hole.vMin], [hole.uMin, hole.vMax],
+    [hole.uMax, hole.vMax], [hole.uMax, hole.vMin],
+  ].map(([u, v]) => periodicHoleShellPoint3d(geometry, u, v));
+}
+
+function qualifyHoleAdjacentFacetAgainstLocalShell(mesh, geometry, hole) {
+  const corner = periodicHoleShellPoint3d(geometry, hole.uMin, hole.vMin);
+  const node = mesh.nodes.find((row) => distance(row, corner) <= 1e-8);
+  assert.ok(node, 'expected periodic seam-hole corner node');
+  const element = mesh.elements.find((row) => row.nodeIds.includes(node.nodeId));
+  assert.ok(element, 'expected periodic seam-hole adjacent element');
+  const nodeById = new Map(mesh.nodes.map((row) => [row.nodeId, row]));
+  const shellNodes = element.nodeIds.map((nodeId) => {
+    const point = nodeById.get(nodeId);
+    const frame = periodicHoleShellFrameAtPoint3d(geometry, physicalPoint(point));
+    return {
+      nodeId,
+      position: [point.x, point.y, point.z],
+      director: vector(frame.director),
+      rotationBasis1: vector(frame.rotationBasis1),
+      rotationBasis2: vector(frame.rotationBasis2),
+      sourceReference: `PERIODIC-SEAM-HOLE-MESH:${nodeId}`,
+    };
+  });
+  const source = baseSource({
+    modelIdentity: 'PERIODIC-SEAM-HOLE-MESH-FACET-COMPATIBILITY',
+    sourceAncestry: ['lafea-shell-periodic-hole-check/v2'],
+    nodes: shellNodes,
+    elements: [{
+      elementId: 'PERIODIC-SEAM-HOLE-E1',
+      nodeIds: [...element.nodeIds],
+      materialId: 'MAT',
+      thickness: 2,
+      sourceReference: 'PERIODIC-SEAM-HOLE-MESH:E1',
+    }],
+    constraints: [],
+    loadCases: [{ loadCaseId: 'LC', nodalLoads: [], pressureLoads: [], sourceReference: 'LC-SRC' }],
+  });
+  const evidence = buildShellElementEvidence(createCanonicalLocalShellModel(source));
+  assert.equal(evidence.length, 1);
+  assert.ok(evidence[0].directorAlignment.every((row) => row.accepted));
+  assert.ok(evidence[0].qualification.rigidTranslation.accepted);
+  assert.ok(evidence[0].qualification.rigidRotation.scaledQualification.accepted);
 }
 
 function assertNoDuplicatePhysicalNodes(nodes) {
@@ -306,6 +386,40 @@ function boundaryComponents(edges) {
   return rows;
 }
 
+function checkWorkbench(stageId, parent, profile) {
+  const workbench = createLafeaWorkbenchOrchestratorStore({
+    initialStage: stageId,
+    initialDocument: fixtureByStage[stageId](),
+    initialSourceHash: SOURCE_HASH,
+  });
+  assert.equal(workbench.registerShellMidsurfaceEvidence(parent, stageId)?.changed, true);
+  assert.equal(workbench.bindAnalysisMeshProfile(profile, stageId)?.changed, true);
+  const planned = workbench.planAnalysisMesh({}, stageId);
+  assert.equal(planned.summary.strategy, LAFEA_SHELL_PERIODIC_HOLE_MESH_STRATEGY);
+  assert.equal(planned.configuration.effectiveTargetElementLength, 20);
+  assert.equal(planned.configuration.physicalBoundaryLoopCount, 3);
+  assert.equal(planned.configuration.eulerCharacteristic, -1);
+  const generated = workbench.generateAnalysisMesh({}, stageId);
+  assert.equal(generated.evidence.qualification, 'PASS');
+  let stage = workbench.getState().stages[stageId];
+  assert.equal(stage.analysisMeshCustodyProjection.state, 'CURRENT_PASS');
+  assert.equal(stage.analysisMeshCustodyProjection.usableForRun, true);
+  const vm = buildLafeaDiscretizationViewModel(stage);
+  assert.equal(vm.actions.canRun, true);
+  assert.equal(vm.actions.manualRefinementEnabled, false);
+  const retainedHash = workbench.selectRetainedAnalysisMeshEvidenceV2(stageId).artifactHash;
+  assert.equal(workbench.refineAnalysisMesh({
+    targetType: 'ELEMENT', targetIds: ['E000001'], targetElementLength: 8, lengthUnit: 'mm',
+  }, stageId), null);
+  assert.equal(workbench.getState().diagnostics?.[0]?.code, 'LAFEA_SHELL_LOCAL_REFINEMENT_NOT_QUALIFIED');
+  assert.equal(workbench.selectRetainedAnalysisMeshEvidenceV2(stageId).artifactHash, retainedHash);
+  workbench.initializeLifecycle(NEXT_SOURCE_HASH, `PERIODIC-SEAM-HOLE-${stageId}-SOURCE-CHANGE`);
+  stage = workbench.getState().stages[stageId];
+  assert.equal(stage.retainedShellMidsurfaceEvidence, null);
+  assert.equal(stage.retainedAnalysisMeshEvidenceV2, null);
+  workbench.destroy();
+}
+
 function checkAdversarialContracts() {
   assert.throws(
     () => periodicHoleParent('LAFEA.4', SOURCE_HASH, { ...HOLE, uMin: 250, uMax: 280 }),
@@ -341,6 +455,7 @@ function unwrapNear(value, reference, circumference) {
   return value + Math.round((reference - value) / circumference) * circumference;
 }
 function physicalPoint(value) { return { x: value.x, y: value.y, z: value.z }; }
+function vector(value) { return [value.x, value.y, value.z]; }
 function subtract(left, right) { return { x: left.x - right.x, y: left.y - right.y, z: left.z - right.z }; }
 function scale(value, factor) { return { x: value.x * factor, y: value.y * factor, z: value.z * factor }; }
 function dot(left, right) { return left.x * right.x + left.y * right.y + left.z * right.z; }

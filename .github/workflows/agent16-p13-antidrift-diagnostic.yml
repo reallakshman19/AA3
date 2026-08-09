@@ -5,6 +5,7 @@ on:
     paths:
       - 'src/core/linear-piping-analysis-consumer/**'
       - 'scripts/linear-piping-analysis-consumer-anti-drift-check.mjs'
+      - 'scripts/linear-piping-inputxml-source-binding-check.mjs'
       - '.github/workflows/agent16-p13-antidrift-diagnostic.yml'
 
 permissions:

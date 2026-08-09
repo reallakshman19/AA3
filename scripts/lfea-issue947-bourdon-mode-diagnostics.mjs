@@ -7,7 +7,7 @@ if (!args.package || !args.out) {
   throw new TypeError('Usage: node scripts/lfea-issue947-bourdon-mode-diagnostics.mjs --package <json> --out <json>');
 }
 const baselinePackage = JSON.parse(readFileSync(args.package, 'utf8'));
-const modes = ['DISABLED', 'TRANSLATION_ONLY', 'TRANSLATION_AND_ROTATION'];
+const modes = ['DISABLED', 'STRAIGHT_ONLY_DIAGNOSTIC', 'TRANSLATION_ONLY', 'TRANSLATION_AND_ROTATION'];
 const solved = Object.fromEntries(modes.map((mode) => {
   const candidate = cloneWithMode(baselinePackage, mode);
   const result = solveCaesarAccdbLinearBenchmark(candidate);
@@ -15,21 +15,28 @@ const solved = Object.fromEntries(modes.map((mode) => {
 }));
 
 const reference = extract(baselinePackage.references.L19.rows);
+const straight = solved.STRAIGHT_ONLY_DIAGNOSTIC;
 const output = {
-  schema: 'lfea-issue947-bourdon-mode-diagnostics/v1',
+  schema: 'lfea-issue947-bourdon-mode-diagnostics/v2',
   sourceAccdbSha256: baselinePackage.source.sha256,
   caseId: 'L19',
   formula: baselinePackage.cases.find((entry) => entry.caseId === 'L19')?.formula ?? null,
   reference,
   modes: solved,
   deltas: {
+    straightPressureMinusDisabled: difference(straight, solved.DISABLED),
+    currentBendTranslationOnly: difference(solved.TRANSLATION_ONLY, straight),
+    currentBendRotationOpeningOnly: difference(solved.TRANSLATION_AND_ROTATION, straight),
     translationOnlyMinusDisabled: difference(solved.TRANSLATION_ONLY, solved.DISABLED),
     translationAndRotationMinusDisabled: difference(solved.TRANSLATION_AND_ROTATION, solved.DISABLED),
     translationAndRotationMinusTranslationOnly: difference(solved.TRANSLATION_AND_ROTATION, solved.TRANSLATION_ONLY),
+    referenceMinusStraightPressureState: difference(reference, straight),
   },
   interpretationGuard: [
     'DISABLED preserves pressure-stiffened bend stiffness because INPUT pressure is unchanged; it removes Bourdon displacement loads only.',
+    'STRAIGHT_ONLY_DIAGNOSTIC is intentionally not a normalized profile mode. The already-normalized package is cloned after capture: non-bend spans retain pressure strain because the solver only treats DISABLED as pressure-off, while bend arcs match neither production bend-mode branch and therefore receive no bend Bourdon initial load.',
     'TRANSLATION_ONLY and TRANSLATION_AND_ROTATION use the current adapter semantics and are diagnostics, not assertions that either bend translation implementation matches CAESAR.',
+    'All four solves share the same geometry, sections, pressure-stiffened bend stiffness, restraints, gravity, linear solver and recovery contracts.',
     'No reference values are used by the solve or by any update rule.',
   ],
 };

@@ -1,3 +1,5 @@
+import { FRAME_LOCAL_AXIS_PROFILE } from '../centerline-beam-fea/index.js';
+
 /**
  * MEC-21 pressure-expansion free movements for a circular pipe bend.
  *
@@ -33,13 +35,12 @@ export function deriveMec21BendPressureFreeMovement(input) {
  * resetting the Eq. (2.25) I-end movement to zero independently for every
  * sub-element creates an incompatible translation field under subdivision.
  *
- * Axis validation tolerances are explicit inputs so this mechanics utility
- * does not introduce a private numerical policy. The ACCDB solver supplies
- * them from the governed B-2.4 frame-local-axis profile.
+ * Axis validation uses the governed B-2.4 frame-local-axis profile rather than
+ * introducing a second numerical tolerance policy in the piping-component
+ * package.
  */
 export function deriveMec21BendPressureCumulativeField(input) {
-  const axisTolerances = requireAxisTolerances(input?.referenceAxisTolerances);
-  const referenceAxes = requireAbcAxes(input?.referenceAxes, axisTolerances);
+  const referenceAxes = requireAbcAxes(input?.referenceAxes);
   const cumulativeAngleI = nonnegative(input?.cumulativeAngleI, 'cumulativeAngleI');
   const cumulativeAngleJ = positive(input?.cumulativeAngleJ, 'cumulativeAngleJ');
   if (!(cumulativeAngleJ < Math.PI)) {
@@ -62,7 +63,7 @@ export function deriveMec21BendPressureCumulativeField(input) {
     cumulativeAngleI,
     cumulativeAngleJ,
     referenceAxes,
-    referenceAxisTolerances: axisTolerances,
+    referenceAxisProfileId: FRAME_LOCAL_AXIS_PROFILE.profileId,
     translationGlobalI,
     translationGlobalJ,
     rotationGlobalI,
@@ -120,40 +121,26 @@ function abcRotationToGlobal(axes, rotationAbc) {
   return frozenVector(scale(axes.b, rotationAbc[1]));
 }
 
-function requireAbcAxes(value, tolerances) {
+function requireAbcAxes(value) {
   if (!value || typeof value !== 'object' || Array.isArray(value)) {
     throw new TypeError('referenceAxes must be an object containing a, b and c vectors.');
   }
-  const a = unitVector(value.a, 'referenceAxes.a', tolerances.unitVectorTolerance);
-  const b = unitVector(value.b, 'referenceAxes.b', tolerances.unitVectorTolerance);
-  const c = unitVector(value.c, 'referenceAxes.c', tolerances.unitVectorTolerance);
-  if (Math.abs(dot(a, b)) > tolerances.orthogonalityTolerance
-    || Math.abs(dot(a, c)) > tolerances.orthogonalityTolerance
-    || Math.abs(dot(b, c)) > tolerances.orthogonalityTolerance) {
+  const a = unitVector(value.a, 'referenceAxes.a');
+  const b = unitVector(value.b, 'referenceAxes.b');
+  const c = unitVector(value.c, 'referenceAxes.c');
+  if (Math.abs(dot(a, b)) > FRAME_LOCAL_AXIS_PROFILE.orthogonalityTolerance
+    || Math.abs(dot(a, c)) > FRAME_LOCAL_AXIS_PROFILE.orthogonalityTolerance
+    || Math.abs(dot(b, c)) > FRAME_LOCAL_AXIS_PROFILE.orthogonalityTolerance) {
     throw new TypeError('referenceAxes must be mutually orthogonal.');
   }
   const expectedC = cross(a, b);
-  if (norm(subtract(expectedC, c)) > tolerances.handednessTolerance) {
+  if (norm(subtract(expectedC, c)) > FRAME_LOCAL_AXIS_PROFILE.handednessTolerance) {
     throw new TypeError('referenceAxes must be right-handed with c = a x b.');
   }
   return Object.freeze({ a, b, c });
 }
 
-function requireAxisTolerances(value) {
-  if (!value || typeof value !== 'object' || Array.isArray(value)) {
-    throw new TypeError('referenceAxisTolerances must be an object.');
-  }
-  return Object.freeze({
-    unitVectorTolerance: positive(value.unitVectorTolerance, 'referenceAxisTolerances.unitVectorTolerance'),
-    orthogonalityTolerance: positive(
-      value.orthogonalityTolerance,
-      'referenceAxisTolerances.orthogonalityTolerance',
-    ),
-    handednessTolerance: positive(value.handednessTolerance, 'referenceAxisTolerances.handednessTolerance'),
-  });
-}
-
-function unitVector(value, field, tolerance) {
+function unitVector(value, field) {
   if (!Array.isArray(value) || value.length !== 3) {
     throw new TypeError(`${field} must contain three components.`);
   }
@@ -161,7 +148,7 @@ function unitVector(value, field, tolerance) {
   if (vector.some((entry) => !Number.isFinite(entry))) {
     throw new TypeError(`${field} must contain finite components.`);
   }
-  if (Math.abs(norm(vector) - 1) > tolerance) {
+  if (Math.abs(norm(vector) - 1) > FRAME_LOCAL_AXIS_PROFILE.unitVectorTolerance) {
     throw new TypeError(`${field} must be a unit vector.`);
   }
   return Object.freeze(vector);

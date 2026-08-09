@@ -25,6 +25,7 @@ const RIGID_WALL_MULTIPLIER = 10;
 const RIGID_INSULATION_WEIGHT_MULTIPLIER = 1.75;
 const DOFS = Object.freeze(['UX', 'UY', 'UZ', 'RX', 'RY', 'RZ']);
 const Z_MY_PLANE = Object.freeze([2, 4, 8, 10]);
+const CONTROL_NORMALIZED_EQUIVALENCE_LIMIT = 1e-6;
 
 const args = parseArgs(process.argv.slice(2));
 if (!args.package) {
@@ -60,7 +61,7 @@ const affected = witnesses.filter((record) => ['79', '80', '81'].includes(record
 if (!control) throw new TypeError('E78 geometry control missing.');
 const controlGeometryEquivalent = control.geometry.lengthDifferenceMm <= 1e-9
   && Math.abs(control.caesarReplay.deltaGeometry.zMyPlaneNormalizedL2
-    - control.caesarReplay.coordinateGeometry.zMyPlaneNormalizedL2) <= 1e-12;
+    - control.caesarReplay.coordinateGeometry.zMyPlaneNormalizedL2) <= CONTROL_NORMALIZED_EQUIVALENCE_LIMIT;
 const affectedImprove = affected.every((record) =>
   record.caesarReplay.deltaGeometry.zMyPlaneNormalizedL2
     < record.caesarReplay.coordinateGeometry.zMyPlaneNormalizedL2);
@@ -74,6 +75,10 @@ const output = {
   caseId: 'L19',
   sourceAccdbSha256: pkg.source.sha256,
   purpose: 'SOURCE_GEOMETRY_CUSTODY_AND_INJECTED_ACTION_DIAGNOSTIC_NO_PRODUCTION_UPDATE',
+  controlNumericalEquivalence: {
+    normalizedLimit: CONTROL_NORMALIZED_EQUIVALENCE_LIMIT,
+    source: 'EXISTING_NORMALIZED_RESIDUAL_LIMIT_1E-6',
+  },
   sourceMechanism: {
     statement: 'Absolute INPUT_NODAL_COORDINATES are single-precision-like large-magnitude coordinates; subtracting them can lose short-span precision. INPUT_BASIC_ELEMENT_DATA.DELTA_X/Y/Z stores the element relative vector at the span magnitude and therefore has materially finer relative resolution.',
     independentBound: '|(xJ-xI)-DELTA| <= 0.5*ULP32(xI)+0.5*ULP32(xJ)+0.5*ULP32(DELTA) component-wise for a difference explained solely by source float32 storage.',

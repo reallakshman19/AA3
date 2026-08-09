@@ -69,7 +69,7 @@ test('production icon qualification detects adversarial DOM mutations and recove
   observations.push(await observe('duplicate-sprite', host, UNDO));
   expect(observations.at(-1).targetCount).toBe(2);
   expect(observations.at(-1).status).toBe('UNRESOLVED');
-  await page.locator('svg[data-icon-mutation-duplicate="true"]').remove();
+  await page.locator('svg[data-icon-mutation-duplicate="true"]').evaluate((sprite) => sprite.remove());
   await duplicate.dispose();
   await expect.poll(async () => (await classify(host, UNDO)).status).toBe('VISUALLY_RENDERED');
 

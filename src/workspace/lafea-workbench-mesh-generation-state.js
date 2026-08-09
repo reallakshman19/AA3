@@ -27,7 +27,7 @@ import {
   planLafeaShellAnalysisMesh,
   produceLafeaShellAnalysisMesh,
 } from './lafea-shell-mesh-producer.js';
-import { validateLafeaShellMidsurfaceEvidence } from './lafea-shell-midsurface-contract.js';
+import { validateLafeaAnyShellMidsurfaceEvidence } from './lafea-shell-midsurface-dispatch.js';
 
 export function createLafeaWorkbenchMeshGenerationState(stageIds) {
   const profiles = new Map(stageIds.map((stageId) => [stageId, null]));
@@ -72,7 +72,7 @@ export function createLafeaWorkbenchMeshGenerationState(stageIds) {
   function registerShellMidsurface(value, stage) {
     const stageId = stage?.stageId;
     requireStage(stageId);
-    const retained = validateLafeaShellMidsurfaceEvidence(value);
+    const retained = validateLafeaAnyShellMidsurfaceEvidence(value);
     if (retained.stageId !== stageId) fail('LAFEA_SHELL_MIDSURFACE_WORKBENCH_STAGE_MISMATCH');
     if (stage.lifecycleBinding?.status !== 'CURRENT') {
       fail('LAFEA_SHELL_MIDSURFACE_SOURCE_BINDING_NOT_CURRENT');
@@ -296,7 +296,7 @@ function summarizeShell(plan) {
     stageId: plan.stageId,
     generationMode: 'AUTOMATIC_MESH',
     elementFamily: plan.elementFamily,
-    strategy: 'PLANAR_SHELL_MIDSURFACE_TRIANGULATION',
+    strategy: plan.strategy ?? 'PLANAR_SHELL_MIDSURFACE_TRIANGULATION',
     strategyReason: plan.scope,
     nodeCount: plan.nodeCount,
     elementCount: plan.elementCount,
@@ -345,9 +345,11 @@ function summarizeRefinement(produced) {
 }
 
 function shellConfiguration(profile, plan) {
+  const requestedTarget = plan.targetElementLength ?? plan.requestedTargetElementLength;
   return freeze({
     meshProfileHash: profile.semanticHash,
-    targetElementLength: plan.targetElementLength,
+    targetElementLength: requestedTarget,
+    effectiveTargetElementLength: plan.effectiveTargetElementLength ?? requestedTarget,
     elementFamily: plan.elementFamily,
     lengthUnit: plan.lengthUnit,
   });

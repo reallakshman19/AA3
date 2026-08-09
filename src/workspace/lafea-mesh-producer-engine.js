@@ -9,7 +9,8 @@
  * This module creates no lifecycle evidence and asserts no authority.
  *
  * Disclosed limitations:
- *   - mapped Q8 remains restricted to hole-free exactly-four-curve regions;
+ *   - mapped Q8 remains restricted to hole-free logical four-sided regions;
+ *     declared feature vertices may split a logical side into multiple curves;
  *   - any unstructured Q8 request is rejected unless recombination produces
  *     Q8 for every element; partial T6+Q8 is never relabelled or accepted;
  *   - splines remain outside the qualified core geometry scope.
@@ -22,9 +23,10 @@ import {
 import {
   triangulateRefinedRegionAsIndexTriples,
 } from '../core/lafea-meshing/interior-refinement-t6.js';
+import { logicalFourSideCurveChains } from '../core/lafea-meshing/logical-four-side-chains.js';
 import { recombineToQ8 } from '../core/lafea-meshing/q8-recombination.js';
 import { mappedTransfiniteMesh } from '../core/lafea-meshing/mapped-mitc-mesh.js';
-import { arcSweepAngle } from '../core/lafea-geometry/vertex-curve.js';
+import { arcSweepAngle, curveLength } from '../core/lafea-geometry/vertex-curve.js';
 import {
   LAFEA_MESH_TOPOLOGY_REGION_ID,
   lafeaMeshTopologySupported,
@@ -32,7 +34,7 @@ import {
 
 export const LAFEA_MESH_PRODUCER_ENGINE_SCHEMA = 'lafea-mesh-producer-engine/v1';
 export const LAFEA_MESH_PRODUCER_ENGINE_ID = 'LAFEA_CORE_MESHER';
-export const LAFEA_MESH_PRODUCER_ENGINE_REVISION = 'LAFEA.10.T6Q8.V3';
+export const LAFEA_MESH_PRODUCER_ENGINE_REVISION = 'LAFEA.10.T6Q8.V4';
 export const LAFEA_MESH_ENGINE_ELEMENT_FAMILIES = Object.freeze(['T3', 'T6', 'Q8']);
 
 /** Planar continuum: two translational degrees of freedom per node. */
@@ -128,22 +130,28 @@ function unstructuredMesh(topology, region, outerLoop, curveById, vertexById, si
   };
 }
 
-/** Structured strategy: a hole-free four-curve region uses transfinite blending. */
+/** Structured strategy: a hole-free logical quadrilateral uses Coons blending. */
 function tryMappedMesh(outerLoop, curveById, vertexById, sizing) {
-  if (outerLoop.curveIds.length !== 4) return null;
-  const curves = outerLoop.curveIds.map((curveId) => curveById.get(curveId));
-  const counts = curves.map((curve) => curveSegmentCount(curve, vertexById, {
+  const chains = logicalFourSideCurveChains(outerLoop, curveById, vertexById);
+  if (!chains) return null;
+
+  const baseCounts = chains.map((chain) => chain.map((curve) => curveSegmentCount(curve, vertexById, {
     targetSize: sizing.targetSize,
     chordErrorLimit: sizing.chordErrorLimit,
     minimumSegments: minimumSegmentsFor(curve, vertexById, sizing.curvatureRadians),
-  }));
-  const alongCount = Math.max(counts[0], counts[2]);
-  const acrossCount = Math.max(counts[1], counts[3]);
+  })));
+  const naturalTotals = baseCounts.map((counts) => counts.reduce((sum, count) => sum + count, 0));
+  const alongCount = Math.max(naturalTotals[0], naturalTotals[2]);
+  const acrossCount = Math.max(naturalTotals[1], naturalTotals[3]);
+  const targetTotals = [alongCount, acrossCount, alongCount, acrossCount];
+  const allocatedCounts = chains.map((chain, index) => allocateChainSegmentCounts(
+    chain, baseCounts[index], targetTotals[index], vertexById,
+  ));
 
-  const bottom = quadraticChain(curves[0], vertexById, alongCount);
-  const right = quadraticChain(curves[1], vertexById, acrossCount);
-  const top = quadraticChain(curves[2], vertexById, alongCount).slice().reverse();
-  const left = quadraticChain(curves[3], vertexById, acrossCount).slice().reverse();
+  const bottom = quadraticChain(chains[0], vertexById, allocatedCounts[0]);
+  const right = quadraticChain(chains[1], vertexById, allocatedCounts[1]);
+  const top = quadraticChain(chains[2], vertexById, allocatedCounts[2]).slice().reverse();
+  const left = quadraticChain(chains[3], vertexById, allocatedCounts[3]).slice().reverse();
 
   let mapped;
   try {
@@ -162,15 +170,37 @@ function tryMappedMesh(outerLoop, curveById, vertexById, sizing) {
   };
 }
 
-function quadraticChain(curve, vertexById, segmentCount) {
-  const { cornerPoints, midPoints } = discretizeCurveIntoQuadraticEdges(
-    curve, vertexById, segmentCount,
-  );
-  const chain = [];
-  for (let index = 0; index < segmentCount; index += 1) {
-    chain.push(cornerPoints[index].point, midPoints[index].point);
+function allocateChainSegmentCounts(curves, baseCounts, targetTotal, vertexById) {
+  const counts = [...baseCounts];
+  let total = counts.reduce((sum, count) => sum + count, 0);
+  while (total < targetTotal) {
+    let selected = 0;
+    let longestCurrentSegment = -Infinity;
+    for (let index = 0; index < curves.length; index += 1) {
+      const currentSegmentLength = curveLength(curves[index], vertexById) / counts[index];
+      if (currentSegmentLength > longestCurrentSegment) {
+        selected = index;
+        longestCurrentSegment = currentSegmentLength;
+      }
+    }
+    counts[selected] += 1;
+    total += 1;
   }
-  chain.push(cornerPoints[segmentCount].point);
+  return counts;
+}
+
+function quadraticChain(curves, vertexById, segmentCounts) {
+  const chain = [];
+  curves.forEach((curve, curveIndex) => {
+    const segmentCount = segmentCounts[curveIndex];
+    const { cornerPoints, midPoints } = discretizeCurveIntoQuadraticEdges(
+      curve, vertexById, segmentCount,
+    );
+    if (curveIndex === 0) chain.push(cornerPoints[0].point);
+    for (let index = 0; index < segmentCount; index += 1) {
+      chain.push(midPoints[index].point, cornerPoints[index + 1].point);
+    }
+  });
   return chain;
 }
 

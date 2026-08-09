@@ -31,6 +31,7 @@ jobs:
         shell: pwsh
         run: |
           $ErrorActionPreference = 'Stop'
+          $PSNativeCommandUseErrorActionPreference = $true
           node scripts/lfea-issue947-promote-rigid-bourdon-production.mjs
           git diff --check
           git diff -- `
@@ -42,7 +43,10 @@ jobs:
 
       - name: Run rigid canonical authority regression
         shell: pwsh
-        run: node scripts/lfea-b3.22-rigid-element-authority-check.mjs
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $PSNativeCommandUseErrorActionPreference = $true
+          node scripts/lfea-b3.22-rigid-element-authority-check.mjs
 
       - name: Download pinned canonical BM4_NL package
         uses: actions/download-artifact@v4
@@ -56,6 +60,8 @@ jobs:
       - name: Run all-rigid source-action falsification audit
         shell: pwsh
         run: |
+          $ErrorActionPreference = 'Stop'
+          $PSNativeCommandUseErrorActionPreference = $true
           node scripts/lfea-issue947-rigid-bourdon-axial-audit.mjs `
             --package .work/package/bm4nl-canonical-package.json `
             --out .work/issue947-rigid-bourdon-axial-audit.json
@@ -103,6 +109,8 @@ jobs:
       - name: Run exact ACCDB production replay
         shell: pwsh
         run: |
+          $ErrorActionPreference = 'Stop'
+          $PSNativeCommandUseErrorActionPreference = $true
           node scripts/lfea-caesar-accdb-benchmark.mjs `
             --accdb "$env:BM4_ACCDB" `
             --profile benchmarks/LFEA/CAESAR_ACCDB/bm4nl-l19-l20-linear-solve.profile.json `
@@ -114,6 +122,8 @@ jobs:
       - name: Enforce L19 non-regression and source-action gates
         shell: pwsh
         run: |
+          $ErrorActionPreference = 'Stop'
+          $PSNativeCommandUseErrorActionPreference = $true
           @'
           import assert from 'node:assert/strict';
           import { readFileSync, writeFileSync } from 'node:fs';
@@ -150,6 +160,7 @@ jobs:
         shell: pwsh
         run: |
           $ErrorActionPreference = 'Stop'
+          $PSNativeCommandUseErrorActionPreference = $true
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
           git add `
@@ -157,6 +168,8 @@ jobs:
             src/core/linear-fea-rigid-element/index.js `
             src/core/fea-benchmarks/caesar-accdb-linear-solve.js `
             scripts/lfea-b3.22-rigid-element-authority-check.mjs
+          git diff --cached --quiet
+          if ($LASTEXITCODE -eq 0) { throw 'Promotion produced no governed production diff.' }
           git commit -m 'fix(issue947): add rigid Bourdon pressure free state'
           git push origin HEAD:codex/issue-947-bm4nl-qualification
 

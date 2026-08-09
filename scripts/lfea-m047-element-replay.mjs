@@ -8,6 +8,7 @@ import { canonicalPrettyStringify, semanticHash } from '../src/core/shared-pipin
 const LOCKED_ACCDB_SHA256 = '85d39463296e569da811d8572e2eff680b858097f76fdf0f47d1755f0b161c21';
 const DOFS = Object.freeze(['UX', 'UY', 'UZ', 'RX', 'RY', 'RZ']);
 const ACTION_COMPONENTS = Object.freeze(['FX', 'FY', 'FZ', 'MX', 'MY', 'MZ']);
+const INCIDENT_COMPONENTS = Object.freeze(['UX', 'UY', 'UZ', 'RX', 'RY', 'RZ']);
 const PIVOT_RELATIVE_TOLERANCE = 1e-12;
 
 export function buildM047ElementReplay(report) {
@@ -32,6 +33,8 @@ export function buildM047ElementReplay(report) {
     sourceAccdbSha256: report.source.sha256,
     method: Object.freeze({
       displacementAuthority: 'CAESAR_REFERENCE_NODE_DISPLACEMENT_AND_ROTATION',
+      directActionAuthority: 'CAESAR_DIRECT_SOURCE_END_ACTION',
+      derivedActionAuthority: 'CAESAR_INCIDENT_NODE_ACTION_MINUS_DIRECT_NEIGHBOR_END_ACTIONS',
       constitutiveEquation: 'q_global = K_global d_global - equivalentLoadGlobal - initialStrainLoadGlobal',
       internalNodeRule: 'ZERO_EXTERNAL_LOAD_STATIC_CONDENSATION',
       globalSolverUsed: false,
@@ -44,14 +47,27 @@ export function buildM047ElementReplay(report) {
 
 function replayCase(report, caseId, referenceRows, ledger) {
   const displacement = referenceDisplacementMap(referenceRows);
-  const sourceReferences = sourceActionReferences(referenceRows);
   const grouped = groupBySourceElement(ledger);
+  const topologies = sourceTopologies(grouped);
+  const directReferences = sourceActionReferences(referenceRows);
+  validateDirectReferenceTopology(directReferences, topologies);
+  const incident = nodeIncidentActionMap(referenceRows);
+  const resolved = resolveSourceActionReferences(directReferences, incident, topologies);
   const sourceRows = [];
   const skipped = [];
   for (const [sourceElementId, elements] of [...grouped].sort(compareSourceIds)) {
-    const reference = sourceReferences.get(sourceElementId);
+    const topology = topologies.get(sourceElementId);
+    if (!topology?.valid) {
+      skipped.push({ sourceElementId, reason: 'SOURCE_TOPOLOGY_NOT_DIRECTED_CHAIN', detail: topology?.reason ?? 'missing topology' });
+      continue;
+    }
+    const reference = resolved.references.get(sourceElementId);
     if (!reference) {
-      skipped.push({ sourceElementId, reason: 'NO_CAESAR_SOURCE_END_ACTION_REFERENCE' });
+      skipped.push({
+        sourceElementId,
+        reason: 'NO_CAESAR_SOURCE_END_ACTION_REFERENCE',
+        detail: resolved.reasons.get(sourceElementId) ?? 'No direct or uniquely derivable CAESAR source-end action.',
+      });
       continue;
     }
     try {
@@ -63,6 +79,8 @@ function replayCase(report, caseId, referenceRows, ledger) {
   }
   return Object.freeze({
     caseId,
+    directReferenceSourceCount: directReferences.size,
+    derivedReferenceSourceCount: [...resolved.references.values()].filter((entry) => entry.referenceAuthority !== 'CAESAR_DIRECT_SOURCE_END_ACTION').length,
     replayedSourceCount: sourceRows.length,
     skippedSourceCount: skipped.length,
     summary: summarizeSources(sourceRows),
@@ -84,7 +102,7 @@ function replaySource(report, caseId, sourceElementId, elements, reference, disp
     incidence.set(String(element.nodeI), incidence.get(String(element.nodeI)) + 1);
     incidence.set(String(element.nodeJ), incidence.get(String(element.nodeJ)) + 1);
   }
-  const topologicalBoundary = [...incidence].filter(([, count]) => count === 1).map(([nodeId]) => nodeId).sort();
+  const topologicalBoundary = [...incidence].filter(([, count]) => count === 1).map(([nodeId]) => nodeId).sort(compareNodeIds);
   if (!endpoints.every((nodeId) => nodeIds.includes(nodeId))) {
     throw replayError('SOURCE_ENDPOINT_NOT_IN_ANALYSIS_SUBSTRUCTURE', `Source ${sourceElementId} endpoints ${endpoints.join('->')} are not both present in analysis nodes.`);
   }
@@ -147,6 +165,8 @@ function replaySource(report, caseId, sourceElementId, elements, reference, disp
     sourceElementId,
     fromNodeId: reference.fromNodeId,
     toNodeId: reference.toNodeId,
+    referenceAuthority: reference.referenceAuthority,
+    referenceDerivation: reference.referenceDerivation,
     analysisElementCount: elements.length,
     internalNodeCount: internalNodeIds.length,
     analysisElementKinds: Object.freeze(unique(elements.map((entry) => entry.kind)).sort()),
@@ -186,7 +206,7 @@ function referenceDisplacementMap(rows) {
   const result = new Map();
   for (const [nodeId, components] of map) {
     if (DOFS.every((dof) => Number.isFinite(components.get(dof)))) {
-      result.set(nodeId, DOFS.map((dof) => components.get(dof)));
+      result.set(nodeId, Object.freeze(DOFS.map((dof) => components.get(dof))));
     }
   }
   return result;
@@ -222,9 +242,169 @@ function sourceActionReferences(rows) {
         vector.push(value);
       }
     }
-    result.set(sourceElementId, Object.freeze({ ...group, vector: Object.freeze(vector) }));
+    result.set(sourceElementId, Object.freeze({
+      sourceElementId,
+      fromNodeId: group.fromNodeId,
+      toNodeId: group.toNodeId,
+      vector: Object.freeze(vector),
+      referenceAuthority: 'CAESAR_DIRECT_SOURCE_END_ACTION',
+      referenceDerivation: null,
+    }));
   }
   return result;
+}
+
+function nodeIncidentActionMap(rows) {
+  const groups = new Map();
+  for (const row of rows) {
+    if (row.entityKind !== 'NODE' || !['INCIDENT_GLOBAL_FORCE', 'INCIDENT_GLOBAL_MOMENT'].includes(row.quantity)) continue;
+    const nodeId = String(row.entityId);
+    const current = groups.get(nodeId) ?? new Map();
+    current.set(row.component, row.value);
+    groups.set(nodeId, current);
+  }
+  const result = new Map();
+  for (const [nodeId, components] of groups) {
+    if (INCIDENT_COMPONENTS.every((component) => Number.isFinite(components.get(component)))) {
+      result.set(nodeId, Object.freeze(INCIDENT_COMPONENTS.map((component) => components.get(component))));
+    }
+  }
+  return result;
+}
+
+function sourceTopologies(grouped) {
+  return new Map([...grouped].map(([sourceElementId, elements]) => [sourceElementId, sourceTopology(sourceElementId, elements)]));
+}
+
+function sourceTopology(sourceElementId, elements) {
+  const nodes = new Map();
+  const touch = (nodeId) => {
+    const key = String(nodeId);
+    const value = nodes.get(key) ?? { degree: 0, incoming: 0, outgoing: 0 };
+    nodes.set(key, value);
+    return value;
+  };
+  for (const element of elements) {
+    const atI = touch(element.nodeI);
+    const atJ = touch(element.nodeJ);
+    atI.degree += 1;
+    atI.outgoing += 1;
+    atJ.degree += 1;
+    atJ.incoming += 1;
+  }
+  const boundary = [...nodes].filter(([, value]) => value.degree === 1);
+  const from = boundary.filter(([, value]) => value.incoming === 0 && value.outgoing === 1);
+  const to = boundary.filter(([, value]) => value.incoming === 1 && value.outgoing === 0);
+  if (boundary.length !== 2 || from.length !== 1 || to.length !== 1) {
+    return Object.freeze({
+      sourceElementId,
+      valid: false,
+      reason: `Expected directed two-end chain; boundary=${JSON.stringify(boundary.map(([nodeId]) => nodeId))}.`,
+    });
+  }
+  return Object.freeze({
+    sourceElementId,
+    valid: true,
+    fromNodeId: from[0][0],
+    toNodeId: to[0][0],
+  });
+}
+
+function validateDirectReferenceTopology(references, topologies) {
+  for (const [sourceElementId, reference] of references) {
+    const topology = topologies.get(sourceElementId);
+    if (!topology?.valid) continue;
+    if (reference.fromNodeId !== topology.fromNodeId || reference.toNodeId !== topology.toNodeId) {
+      throw new TypeError(
+        `Source ${sourceElementId} CAESAR endpoints ${reference.fromNodeId}->${reference.toNodeId} disagree with analysis topology ${topology.fromNodeId}->${topology.toNodeId}.`,
+      );
+    }
+  }
+}
+
+function resolveSourceActionReferences(directReferences, incidentByNode, topologies) {
+  const references = new Map(directReferences);
+  const reasons = new Map();
+  const incidence = sourceEndIncidence(topologies);
+  for (const [sourceElementId, topology] of topologies) {
+    if (references.has(sourceElementId) || !topology.valid) continue;
+    const from = deriveEndpointAction('FROM', sourceElementId, topology.fromNodeId, directReferences, incidentByNode, incidence);
+    const to = deriveEndpointAction('TO', sourceElementId, topology.toNodeId, directReferences, incidentByNode, incidence);
+    if (!from.ok || !to.ok) {
+      reasons.set(sourceElementId, [from, to].filter((entry) => !entry.ok).map((entry) => entry.reason).join(' | '));
+      continue;
+    }
+    references.set(sourceElementId, Object.freeze({
+      sourceElementId,
+      fromNodeId: topology.fromNodeId,
+      toNodeId: topology.toNodeId,
+      vector: Object.freeze([...from.vector, ...to.vector]),
+      referenceAuthority: 'CAESAR_INCIDENT_NODE_ACTION_MINUS_DIRECT_NEIGHBOR_END_ACTIONS',
+      referenceDerivation: Object.freeze({ FROM: from.evidence, TO: to.evidence }),
+    }));
+  }
+  return { references, reasons };
+}
+
+function sourceEndIncidence(topologies) {
+  const result = new Map();
+  for (const [sourceElementId, topology] of topologies) {
+    if (!topology.valid) continue;
+    for (const [end, nodeId] of [['FROM', topology.fromNodeId], ['TO', topology.toNodeId]]) {
+      const current = result.get(nodeId) ?? [];
+      current.push(Object.freeze({ sourceElementId, end }));
+      result.set(nodeId, current);
+    }
+  }
+  return result;
+}
+
+function deriveEndpointAction(end, sourceElementId, nodeId, directReferences, incidentByNode, incidence) {
+  const incidentVector = incidentByNode.get(nodeId);
+  if (!incidentVector) return { ok: false, reason: `${end} node ${nodeId} has no complete CAESAR incident-action vector.` };
+  const sourceEnds = incidence.get(nodeId) ?? [];
+  const targetMatches = sourceEnds.filter((entry) => entry.sourceElementId === sourceElementId && entry.end === end);
+  if (targetMatches.length !== 1) {
+    return { ok: false, reason: `${end} node ${nodeId} has ${targetMatches.length} matching target source ends.` };
+  }
+  const neighbors = sourceEnds.filter((entry) => entry.sourceElementId !== sourceElementId);
+  if (neighbors.length === 0) return { ok: false, reason: `${end} node ${nodeId} has no neighboring source end for a direct-difference derivation.` };
+  const neighborEvidence = [];
+  const sum = Array(6).fill(0);
+  for (const neighbor of neighbors) {
+    const reference = directReferences.get(neighbor.sourceElementId);
+    if (!reference) {
+      return { ok: false, reason: `${end} node ${nodeId} neighbor source ${neighbor.sourceElementId} lacks a direct CAESAR source-end action.` };
+    }
+    const vector = endVector(reference, neighbor.end);
+    for (let index = 0; index < 6; index += 1) sum[index] += vector[index];
+    neighborEvidence.push(Object.freeze({
+      sourceElementId: neighbor.sourceElementId,
+      end: neighbor.end,
+      vector: Object.freeze([...vector]),
+      authority: reference.referenceAuthority,
+    }));
+  }
+  const vector = incidentVector.map((value, index) => value - sum[index]);
+  return {
+    ok: true,
+    vector: Object.freeze(vector),
+    evidence: Object.freeze({
+      nodeId,
+      end,
+      equation: 'targetSourceEnd = CAESAR incident node action - sum(direct neighboring source end actions)',
+      incidentVector: Object.freeze([...incidentVector]),
+      directNeighborSum: Object.freeze(sum),
+      directNeighbors: Object.freeze(neighborEvidence),
+      derivedVector: Object.freeze([...vector]),
+    }),
+  };
+}
+
+function endVector(reference, end) {
+  if (end === 'FROM') return reference.vector.slice(0, 6);
+  if (end === 'TO') return reference.vector.slice(6, 12);
+  throw new TypeError(`Unsupported source end ${String(end)}.`);
 }
 
 function parseSourceEntityId(value) {
@@ -289,7 +469,7 @@ function solveLinearSystem(matrix, rhs, label) {
 
 function summarizeSources(sources) {
   if (sources.length === 0) return Object.freeze({ sourceCount: 0, maximum: null, top: Object.freeze([]) });
-  const ranked = [...sources].sort((a, b) => b.maximumNormalizedResidual - a.maximumNormalizedResidual || compareSourceIds([a.sourceElementId], [b.sourceElementId]));
+  const ranked = [...sources].sort((a, b) => b.maximumNormalizedResidual - a.maximumNormalizedResidual || compareSourceIdValues(a.sourceElementId, b.sourceElementId));
   return Object.freeze({
     sourceCount: sources.length,
     maximum: Object.freeze({ sourceElementId: ranked[0].sourceElementId, maximumNormalizedResidual: ranked[0].maximumNormalizedResidual }),
@@ -297,6 +477,7 @@ function summarizeSources(sources) {
       sourceElementId: entry.sourceElementId,
       fromNodeId: entry.fromNodeId,
       toNodeId: entry.toNodeId,
+      referenceAuthority: entry.referenceAuthority,
       analysisElementCount: entry.analysisElementCount,
       internalNodeCount: entry.internalNodeCount,
       maximumNormalizedResidual: entry.maximumNormalizedResidual,
@@ -317,7 +498,8 @@ function matVec(matrix, vector) { return matrix.map((row) => dot(row, vector)); 
 function dot(left, right) { return left.reduce((sum, value, index) => sum + value * right[index], 0); }
 function unique(values) { return [...new Set(values)]; }
 function compareNodeIds(left, right) { return Number(left) - Number(right) || String(left).localeCompare(String(right)); }
-function compareSourceIds([left], [right]) { return Number(left) - Number(right) || String(left).localeCompare(String(right)); }
+function compareSourceIdValues(left, right) { return Number(left) - Number(right) || String(left).localeCompare(String(right)); }
+function compareSourceIds([left], [right]) { return compareSourceIdValues(left, right); }
 
 function parseArguments(argv) {
   const args = new Map();
@@ -331,6 +513,8 @@ function parseArguments(argv) {
   const report = args.get('--report');
   const out = args.get('--out');
   if (!report || !out) throw new TypeError('Usage: --report <benchmark.json> --out <element-replay.json>.');
+  const unknown = [...args.keys()].filter((key) => !['--report', '--out'].includes(key));
+  if (unknown.length) throw new TypeError(`Unknown arguments: ${unknown.join(', ')}.`);
   return { report: resolve(report), out: resolve(out) };
 }
 
@@ -342,10 +526,10 @@ if (process.argv[1] === fileURLToPath(import.meta.url)) {
   writeFileSync(input.out, canonicalPrettyStringify(result), 'utf8');
   for (const caseId of ['L19', 'L20']) {
     const value = result.cases[caseId];
-    process.stdout.write(`M047 element replay ${caseId}: ${value.replayedSourceCount} sources; max normalized residual=${value.summary.maximum?.maximumNormalizedResidual ?? 'n/a'}\n`);
+    process.stdout.write(`M047 element replay ${caseId}: ${value.replayedSourceCount} sources; direct=${value.directReferenceSourceCount}; derived=${value.derivedReferenceSourceCount}; max normalized residual=${value.summary.maximum?.maximumNormalizedResidual ?? 'n/a'}\n`);
     for (const sourceId of ['4', '5']) {
       const tracked = value.sources.find((entry) => entry.sourceElementId === sourceId);
-      if (tracked) process.stdout.write(`  source ${sourceId}: max=${tracked.maximumNormalizedResidual}, rms=${tracked.rmsNormalizedResidual}, analysisElements=${tracked.analysisElementCount}\n`);
+      if (tracked) process.stdout.write(`  source ${sourceId}: authority=${tracked.referenceAuthority}, max=${tracked.maximumNormalizedResidual}, rms=${tracked.rmsNormalizedResidual}, analysisElements=${tracked.analysisElementCount}\n`);
     }
   }
   process.stdout.write(`M047 element replay evidence: ${result.semanticHash}\n`);

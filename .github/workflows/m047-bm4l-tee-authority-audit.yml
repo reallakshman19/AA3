@@ -3,7 +3,9 @@ name: M047 BM4_L tee authority audit
 on:
   push:
     branches: [agent/m047-bm4l-fresh-qualification]
-    paths: ['.github/workflows/m047-bm4l-tee-authority-audit.yml']
+    paths:
+      - '.github/workflows/m047-bm4l-tee-authority-audit.yml'
+      - 'benchmarks/LFEA/CAESAR_ACCDB/bm4l-validation.profile.json'
 
 permissions:
   contents: read
@@ -86,6 +88,7 @@ jobs:
         shell: pwsh
         run: |
           $ErrorActionPreference='Stop'
+          $PSNativeCommandUseErrorActionPreference=$true
           node scripts/lfea-caesar-accdb-benchmark.mjs `
             --accdb $env:ACCDB `
             --profile benchmarks/LFEA/CAESAR_ACCDB/bm4l-validation.profile.json `
@@ -102,11 +105,13 @@ jobs:
         shell: pwsh
         run: |
           $ErrorActionPreference='Stop'
+          $PSNativeCommandUseErrorActionPreference=$true
           @'
           const fs=require('fs');
           const text=fs.readFileSync('artifacts/tee-audit/Miscdata_BM4_L.txt','utf8');
           const input=JSON.parse(fs.readFileSync('artifacts/tee-audit/input-siftees.json','utf8').replace(/^\uFEFF/,''));
           const actual=JSON.parse(fs.readFileSync('artifacts/tee-audit/run/actual.json','utf8').replace(/^\uFEFF/,''));
+          const R=JSON.parse(fs.readFileSync('artifacts/tee-audit/run/report.json','utf8').replace(/^\uFEFF/,''));
           const hashes=JSON.parse(fs.readFileSync('artifacts/tee-audit/report-hashes.json','utf8').replace(/^\uFEFF/,''));
           const blocks=text.split(/(?=Tee Node=\s*\d+)/g).filter(x=>/^Tee Node=/m.test(x));
           const report=[];
@@ -136,11 +141,10 @@ jobs:
           });
           const counts={};
           for(const c of ['L2','L3','L4','L5','L6','L14']){
-            const R=JSON.parse(fs.readFileSync('artifacts/tee-audit/run/report.json','utf8').replace(/^\uFEFF/,''));
             counts[c]={restraint:R.restraintBasis.cases[c].exceedingComponentCount,displacementRotation:R.displacementBasis.cases[c].exceedingComponentCount,elementEnd:R.elementBasis.cases[c].exceedingComponentCount};
             if(actual.mechanics.cases[c].recoveredEquilibrium.status!=='PASS') throw new Error(`${c} recovery equilibrium failed`);
           }
-          const out={schema:'m047-bm4l-tee-authority-audit/v1',source:{modelCommonCommit:process.env.MODEL_COMMON_COMMIT,reportCommonCommit:process.env.REPORT_COMMON_COMMIT,zipSha256:process.env.ZIP_SHA256,accdbSha256:process.env.MEMBER_SHA256,...hashes},counts,reportTees:report,comparisons,conflicts:comparisons.filter(x=>x.conflict!=='NONE').map(x=>({nodeId:x.nodeId,reportType:x.reportType,conflict:x.conflict,reportFlex:x.flex,solver:x.solver,inputSiftee:x.inputSiftee}))};
+          const out={schema:'m047-bm4l-tee-authority-audit/v1',source:{modelCommonCommit:process.env.MODEL_COMMON_COMMIT,reportCommonCommit:process.env.REPORT_COMMON_COMMIT,zipSha256:process.env.ZIP_SHA256,accdbSha256:process.env.MEMBER_SHA256,...hashes},loadCaseIdentity:{L14:'L5-L6 ALG; effective linear primitive is T1 with mu=0 and EC because both operands use mu=0 and EC'},counts,reportTees:report,comparisons,conflicts:comparisons.filter(x=>x.conflict!=='NONE').map(x=>({nodeId:x.nodeId,reportType:x.reportType,conflict:x.conflict,reportFlex:x.flex,solver:x.solver,inputSiftee:x.inputSiftee}))};
           fs.writeFileSync('artifacts/tee-audit/audit.json',JSON.stringify(out,null,2)+'\n');
           console.log(JSON.stringify({counts,conflicts:out.conflicts},null,2));
           '@ | node

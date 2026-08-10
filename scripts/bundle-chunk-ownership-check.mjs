@@ -34,6 +34,7 @@ const expectedOwnership = new Map([
   ['/repo/src/workspace/lafea-stage-input-descriptors.js', 'lafea-stage-static-contracts'],
   ['/repo/src/workspace/lafea-stage-registry.js', 'lafea-stage-static-contracts'],
   ['/repo/src/workspace/lafea-stage-composition-bindings.js', 'lafea-stage-static-contracts'],
+  ['/repo/src/workspace/workspace-shell-styles.js', 'workspace-shell-static-styles'],
 ]);
 
 const automaticWorkspaceOwnership = [
@@ -42,6 +43,8 @@ const automaticWorkspaceOwnership = [
   '/repo/src/workspace/engineering-model-store.js',
   '/repo/src/workspace/dataset-controller.js',
   '/repo/src/workspace/workspace-state.js',
+  '/repo/src/workspace/workspace-layout.js',
+  '/repo/src/workspace/workspace-shell-controller.js',
   '/repo/src/workspace/enrichment/first-cut-workbench-controller.js',
   '/repo/src/workspace/linear-piping-results-workbench.js',
   '/repo/src/workspace/lafea-workbench.js',
@@ -79,7 +82,7 @@ assert.equal(viteSource.includes('main-chunk-module-diagnostic'), false);
 assert.equal(policySource.includes('const targetBytes = 500 * 1024;'), true);
 assert.equal(policySource.includes('const maximumBytes = 1024 * 1024;'), true);
 assert.equal(policySource.includes('chunk.bytes <= maximumBytes'), true);
-assert.equal(new Set(expectedOwnership.values()).size >= 12, true);
+assert.equal(new Set(expectedOwnership.values()).size >= 13, true);
 
 console.log(JSON.stringify({
   check: 'bundle-chunk-ownership',

@@ -1,375 +1,292 @@
 # PR #1001 Work Report — M047 BM4_L CAESAR/LFEA Parity
 
 **Repository:** `reallaksh19/Advanced_Analysis`  
-**Pull request:** #1001 — `M047: clean BM4_L qualification and accepted CAESAR mechanics`  
+**PR:** #1001 — `M047: clean BM4_L qualification and accepted CAESAR mechanics`  
 **Branch:** `agent/m047-bm4l-clean-qualified`  
 **Issue:** #991  
-**Status:** active; benchmark still fails the final literal all-row `<10%` target.  
-**Workflow policy after 2026-08-10 15:32 UTC:** local/offline checks only unless the user explicitly authorizes GitHub Actions. No later investigation described below relies on a newly triggered Actions qualification.
+**Status:** active; final literal all-row `<10%` target is not yet closed.
+
+**Current execution policy:** after the user instruction on 2026-08-10, do not intentionally trigger or rerun GitHub Actions. New investigation results below are local/offline unless explicitly identified as earlier CI-qualified evidence.
 
 ---
 
-## 1. Objective and non-negotiable rules
+## 1. Objective and rules
 
-M047/BM4_L must reproduce the selected linear CAESAR II benchmark closely enough that every governed comparison row satisfies the literal acceptance rule for:
+The governed linear cases are:
 
-- `L2 = W`
-- `L3 = T1`
-- `L4 = P1`
-- `L5 = W + T1 + P1`
-- `L6 = W + P1`
-- `L14 = L5 - L6 = T1`
+```text
+L2  = W
+L3  = T1
+L4  = P1
+L5  = W + T1 + P1
+L6  = W + P1
+L14 = L5 - L6 = T1
+```
 
-The objective covers restraint forces/moments, nodal displacement/rotation, and source-element global FROM/TO end actions.
+The objective covers restraint reactions, nodal displacement/rotation, and all source-element global FROM/TO end actions.
 
-The work remains root-cause driven. Benchmark counts are measurements, not fitting targets. Do not mutate references, signs, row selection, source bytes, tolerances, case formulas, or zero-reference gates to improve the result. One physical hypothesis is changed per controlled iteration. A numerical improvement is promotable only when its physical mechanism is independently authoritative and its predicted component/case signature matches the observed movement.
-
-The permanent recovery identity is:
+The work remains authority-first and root-cause driven. Benchmark counts are measurements, not fitting targets. Do not change references, signs, row selection, source bytes, tolerances, zero gates, or load-case formulas to improve the count. Keep one mechanics proposition per production iteration and retain the recovery identity:
 
 ```text
 q = K u - f_fixed - f_initial
 ```
 
-and the selected linear identities are:
-
-```text
-L6  = L2 + L4
-L5  = L2 + L3 + L4
-L14 = L5 - L6 = L3
-```
-
 ---
 
-## 2. Governed source custody
+## 2. Governed source/report custody
 
-### 2.1 ACCDB
-
-Pinned BM4_L source:
+### ACCDB
 
 - Common commit: `45d51ea18624f5775805f399110c1738301c0d90`
 - `BM4_L.zip` SHA-256: `978617cba50fa0b1a16c2fa71dc1e0d38e55ac834b191f887d100c6951abd8b9`
-- ZIP size: `582488` bytes
-- member: `BM4_L.ACCDB`
-- authorized member SHA-256: `64c05a50e9ed0452622ff5880335460486f24ac8e6adecc9a300b549c9aa82f8`
+- authorized `BM4_L.ACCDB` member SHA-256: `64c05a50e9ed0452622ff5880335460486f24ac8e6adecc9a300b549c9aa82f8`
 
-The earlier `e21b...` ACCDB hash is contradicted by the pinned archive member and is not used as authority. The retained read-only Microsoft ACE workflow proved source access does not mutate the authorized member bytes.
+### Exact CAESAR report authority supplied by the user
 
-### 2.2 Exact pinned CAESAR reports supplied by the user
+Pinned Common commit: `179c4831cf521cf797c13699cfbbd118315c9244`.
 
-Use these two files directly as benchmark-specific CAESAR authority:
+Use these exact files:
 
 - `https://github.com/reallaksh19/Common/blob/179c4831cf521cf797c13699cfbbd118315c9244/LFEA/BM4/Miscdata_BM4_L.txt`
 - `https://github.com/reallaksh19/Common/blob/179c4831cf521cf797c13699cfbbd118315c9244/LFEA/BM4/Loadcasereport_BM4_L.txt`
 
-Pinned Common commit: `179c4831cf521cf797c13699cfbbd118315c9244`.
+They identify CAESAR II `14.00.00.0910 (Build 231113)`.
 
-The reports identify CAESAR II `Ver.14.00.00.0910 (Build 231113)` and independently establish:
+The Load Case Report independently confirms:
 
 ```text
-L2  W          EC, friction multiplier 0
-L3  T1         EC, friction multiplier 0
-L4  P1         EC, friction multiplier 0
-L5  W+T1+P1    EC, friction multiplier 0
-L6  W+P1       EC, friction multiplier 0
-L14 L5-L6      ALG combination
+L2:  W,        EC, friction multiplier 0
+L3:  T1,       EC, friction multiplier 0
+L4:  P1,       EC, friction multiplier 0
+L5:  W+T1+P1,  EC, friction multiplier 0
+L6:  W+P1,     EC, friction multiplier 0
+L14: L5-L6,    ALG
 ```
 
-The Misc report provides bend factor pairs and tee intersection data. Important rows include:
+The Misc report independently provides bend factors, thermal-expansion rows, and tee intersection data. Important Type 2.1 rows are:
 
 ```text
-Tee 20160, Type 2.1
-Srf.Node 20161
+Tee node 20160, Srf.Node 20161
 D = 254.737 mm, T = 18.263 mm
-FLEXb in-plane = 1.294
-Kb in-plane = 1.283E+06 N.m/deg
+FLEXb(in-plane) = 1.294
+Kb(in-plane) = 1.283E+06 N.m/deg
 
-Tee 20295, Type 2.1
-Srf.Node 20296
+Tee node 20295, Srf.Node 20296
 D = 157.302 mm, T = 10.973 mm
-FLEXb in-plane = 1.323
-Kb in-plane = 2.877E+05 N.m/deg
+FLEXb(in-plane) = 1.323
+Kb(in-plane) = 2.877E+05 N.m/deg
 ```
 
-The same report also prints Type 2.6 branch entries whose branch flexibility is unity and prints the governed bend SIF/flexibility pairs.
+The report contains six intersection entries total: the two Type 2.1 tees above plus Type 2.6 entries at nodes `20240`, `21740`, `21800`, and `21850`. In the ACCDB structural topology those Type 2.6 declarations do not resolve as three incident structural legs, so they must not be silently converted into new mechanical tee members merely because they appear in the stress/SIF report.
 
 ---
 
-## 3. Accepted mechanics already on PR #1001
+## 3. Accepted mechanics already on the PR
 
-The clean PR reconstructed accepted mechanics without reusing contaminated PR #992 ancestry.
+The clean workstream has accepted, with independent authority and qualification evidence:
 
-### 3.1 B31J smooth-90 bend flexibility
+1. B31J smooth-90 bend flexibility;
+2. straight-pipe Timoshenko shear with `kappa=0.5`;
+3. finite CAESAR default restraint stiffness;
+4. matching-pipe rigid-element shear;
+5. directional B31J Type 2.1 tee flexibility with report-parity Kb checks;
+6. P1 bend pressure stiffening;
+7. Timoshenko shear in the ten reducer cylinders.
 
-The governed smooth-90 treatment is used rather than the older generic bend coefficient when the profile authority enables it.
+These layers reduced the external objective from approximately `1342` failures to **435**.
 
-### 3.2 Straight-pipe Timoshenko shear
+Baseline external triples were:
 
-CAESAR pipe-beam authority maps the shear coefficient of 2 into the LFEA kernel as:
+| Case | restraint / displacement-rotation / source-end action | total |
+|---|---:|---:|
+| L2 | `0 / 29 / 2` | 31 |
+| L3 | `3 / 43 / 75` | 121 |
+| L4 | `0 / 34 / 6` | 40 |
+| L5 | `3 / 53 / 44` | 100 |
+| L6 | `0 / 10 / 12` | 22 |
+| L14 | `3 / 43 / 75` | 121 |
+| **Total** |  | **435** |
 
-```text
-kappaY = kappaZ = 0.5
-```
-
-This removed large straight-pipe response errors. One retained high-signal example was node `20090 UY`, where the support result moved from roughly `-446.039 N` to `-212.432 N` against a `-197.260 N` reference.
-
-### 3.3 Finite CAESAR default restraint stiffness
-
-Blank CAESAR restraint stiffness is represented through the large finite defaults rather than exact DOF elimination. In BM4_L displayed units this resolves approximately to:
-
-```text
-translation = 1.0e14 N/m
-rotation    = 5.729577951e13 N.m/rad
-```
-
-### 3.4 Matching-pipe rigid-element shear
-
-The qualified CAESAR rigid-element path uses matching-pipe-style stiffness with the accepted Timoshenko treatment. The repository authority for rigid stiffness uses ten times the entered wall thickness for the stiffness section, separate from physical weight treatment.
-
-### 3.5 Directional B31J tee flexibility and Kb parity
-
-Welding tees use directional rotational springs and CAESAR surface-node geometry. Independent report comparison showed close elementary Kb parity:
-
-- tee `20160`: about `0.034%` relative difference
-- tee `20295`: about `0.078%` relative difference
-
-The tiny tee-20295 nominal geometry mismatch is not used to relax the generic B31J calculator.
-
-### 3.6 P1 bend pressure stiffening
-
-The pinned Misc report selected P1 as the benchmark-specific bend pressure-stiffening pressure. This reduced the governed external objective from approximately `494 -> 444`.
-
-### 3.7 Reducer-cylinder Timoshenko shear
-
-The ten-cylinder concentric reducer model uses the same qualified pipe shear formulation in each cylinder. The ten-cylinder count is authoritative; the exact representative section sampling location remains provisional. This layer reduced the objective approximately `444 -> 435`.
+The artifact also compares derived incident-equilibrium rows; including those gives a larger all-comparison count. The durable benchmark headline is the 435 external objective rows.
 
 ---
 
-## 4. Last CI-qualified retained state before local-only mode
+## 4. Bend investigation: current disposition
 
-The last fully checked instrumentation state before the no-Actions instruction retained the permanent source/recovery/operator evidence and the external benchmark at **435 failures**.
+The permanent bend profiler condenses all 12 production bend chains and decomposes L3/L14 action/kinematic residuals.
 
-Current governed external triples at that baseline were:
+Later local/offline work reproduced the Intergraph/CAUx MEC-21 FALSE planar flexibility fixture, reconstructed the correct two-node reaction convention, and used exact ACCDB-derived bend `A/G/OD/t` rather than residual-fitted coefficients.
 
-| Case | restraint / displacement-rotation / source-end action |
-|---|---:|
-| L2 | `0 / 29 / 2` |
-| L3 | `3 / 43 / 75` |
-| L4 | `0 / 34 / 6` |
-| L5 | `3 / 53 / 44` |
-| L6 | `0 / 10 / 12` |
-| L14 | `3 / 43 / 75` |
+After correcting the endpoint coordinate convention and coupling stiffness with the corresponding thermal free state:
 
-Totals:
-
-```text
-restraint               9
-displacement/rotation  212
-source-end action      214
-external total         435
-```
-
-A qualification artifact also contains derived incident-equilibrium comparison rows; including those produces 505 comparison failures. The durable project headline remains **435 external objective failures**.
-
----
-
-## 5. Bend instrumentation and what it actually proved
-
-Permanent instrumentation condenses all 12 production bend chains to effective near/far operators and decomposes L3/L14 residuals into physical modes. L3/L14 decompositions agree exactly.
-
-Originally this made the curved-bend operator look like the dominant remaining mechanism. Bend 1/source 5 had a large local correction, about `3.48 kN` axial plus `465 N.m` in-plane bending, and bend 9/source 43 was selected as the independent falsification case.
-
-Additional diagnostic-only work then established:
-
-1. an Intergraph/CAUx MEC-21 `BEND_AXIAL_SHAPE=FALSE` planar flexibility fixture can be reproduced;
-2. the centroidal `R/(EA)` axial contribution can be derived independently by Castigliano;
-3. BM4_L bend source values yield MEC-21 shear factors from exact ACCDB-derived section/material data rather than residual fitting;
-4. the CAUx two-node matrix and published unit-displacement reaction columns can be reproduced when the correct tangent frames and rigid-body moment arm are used.
-
-### 5.1 Rejected bend promotion
-
-Once stiffness and thermal free movement were coupled consistently and the coordinate convention was corrected, the result was decisive:
-
-- continuous curved bending alone was almost neutral/slightly beneficial;
-- adding MEC-21 transverse shear regressed L3 strongly;
+- continuous curved bending alone was nearly neutral;
+- MEC-21 transverse shear regressed L3 substantially;
 - adding the derived axial-shape TRUE contribution regressed it further;
-- at predeclared bends 1 and 9 the MEC-21 shear/TRUE action corrections pointed mostly opposite the CAESAR-required correction vector.
+- predeclared bend 1/source 5 and bend 9/source 43 correction vectors moved mostly opposite the CAESAR-required direction.
 
-Therefore:
-
-**MEC-21 transverse shear and the derived TRUE axial-shape matrix are rejected for BM4_L production promotion in their tested form.**
-
-Do not revive them because an earlier, coordinate-inconsistent diagnostic appeared promising.
+Therefore generic bend softness, MEC-21 shear promotion in the tested form, and the derived TRUE candidate are **rejected for production promotion**.
 
 ---
 
-## 6. Residual clustering after bend rejection
+## 5. Tee residual clustering and corrected branch ownership
 
-Clustering the remaining L3 source-action failures showed the dominant large errors were not on bend source elements:
+After the bend rejection, L3 residual clustering showed a high-value mismatch family around the two Type 2.1 B31J tee neighborhoods.
 
-- only about 14/75 L3 action failures were bend-source rows;
-- a high-value cluster was tee-adjacent, especially around welding tee 20160 and its run/branch spans.
+The current solver correctly identifies two mechanical tee junctions:
 
-This moved the investigation from bend stiffness to B31J surface-node kinematics.
+```text
+node 20160: incident sources 9, 12, 13
+  run = 9 / 13
+  branch = source 12
+  branch junction end = J
+
+node 20295: incident sources 17, 18, 36
+  run = 17 / 18
+  branch = source 36
+  branch junction end = I
+```
+
+This branch ownership is important. An earlier exploratory local notebook mistakenly applied the 20160 branch correction to source 13; that produced an incorrect `435 -> 210` headline. That result is retired.
 
 ---
 
-## 7. Tee geometry experiments and the benchmark-fitting trap
+## 6. B31J fictitious-rigid thermal free growth — corrected local result
 
-A deliberately diagnostic centerline model—removing the surface rigid offset and using the full centerline branch span while keeping Kb unchanged—improved L3 dramatically. Applying it to both Type 2.1 welding tees produced roughly `121 -> 48` external L3 failures.
+The production Type 2.1 tee representation already applies the branch at the CAESAR run surface through a rigid offset and applies the directional branch rotational spring there. The rigid offset is currently homogeneous kinematics only; it has no independent thermal free movement.
 
-That candidate is **rejected** because it contradicts CAESAR's B31J surface-node/fictitious-rigid convention. A large count improvement is not authority.
+The single-factor hypothesis is:
 
-Kb scaling was also tested diagnostically and was essentially flat; the large improvement did not come from rotational Kb magnitude.
+> keep the current surface location, Kb, stiffness operator, pressure mechanics and weights unchanged; add only the thermal free translation of the existing centerline-to-surface rigid offset.
 
----
-
-## 8. High-value newly isolated mechanism: thermal growth of the B31J fictitious rigid
-
-The production tee representation currently applies the centerline-to-run-surface member as an exact rigid offset. That carries stiffness kinematics but no independent free thermal growth.
-
-CAESAR's B31J geometry uses a fictitious rigid member from the centerline node to the Surface Node. The repository already contains a qualified CAESAR rigid-element authority in which rigid members participate in thermal expansion, while rigid weight handling is separate.
-
-This suggested a single-factor test:
-
-> keep the existing tee stiffness operator, surface location, Kb values, source geometry and all W/P mechanics unchanged; add only the thermal free movement of the existing centerline-to-surface rigid offset.
-
-For a thermal strain `epsilon`, the extra free translation at the branch surface is the rigid-offset vector scaled by strain:
+For thermal strain `epsilon` and existing surface offset vector `r_surface`:
 
 ```text
 g_thermal = epsilon * r_surface
 ```
 
-and must enter the element free-state/initial-load relation consistently; it is not a stiffness change.
+In the current joint-coordinate formulation this is an inhomogeneous rigid-offset free state. It changes `f_initial` but **not K**.
 
-### 8.1 Offline result of thermal-growth-only isolation
+### Exact local/offline reassembly check
 
-Using only this inhomogeneous rigid-offset thermal movement, with **no change to K**, produced approximately:
+The local checker reassembles the retained 322 analysis-element matrices and load vectors from the qualified artifact, adds the governed finite support springs, and reproduces the baseline solver displacement vector to approximately `1e-11 m/rad` maximum difference. It then applies only the tee rigid thermal free-state term on source 12 and source 36.
 
-| Case | baseline external | tee rigid thermal growth only |
+Correct external result:
+
+| Case | baseline | tee rigid thermal growth only |
 |---|---:|---:|
-| L2 = W | 31 | 31 |
-| L3 = T1 | 121 | 37 |
-| L4 = P1 | 40 | 40 |
-| L5 = W+T1+P1 | 100 | 43 |
-| L6 = W+P1 | 22 | 22 |
-| L14 = T1 | 121 | 37 |
-| **Total** | **435** | **210** |
+| L2 | 31 | 31 |
+| L3 | 121 | **59** |
+| L4 | 40 | 40 |
+| L5 | 100 | **73** |
+| L6 | 22 | 22 |
+| L14 | 121 | **59** |
+| **Total** | **435** | **284** |
 
-This is a strong mechanism signature:
+The signature is physically selective:
 
-- W-only response is unchanged;
-- P1-only response is unchanged;
-- T1 and every combination containing T1 improve strongly;
-- the common stiffness operator remains unchanged;
-- L3/L14 identity remains preserved.
+- W-only L2 is unchanged;
+- P1-only L4 is unchanged;
+- W+P1 L6 is unchanged;
+- only T1-containing cases move materially;
+- L3 and L14 remain identical;
+- the numeric stiffness operator is unchanged.
 
-A separate finite-10x-wall rigid-stiffness experiment showed that stiffness is a second-order effect here. The major improvement comes from the **thermal free growth**, so the production iteration must add thermal growth alone first rather than combine it with a new stiffness representation.
+Recovered equilibrium in the offline reassembly remains far inside the governed limits. Maximum residuals are roughly `4e-5 N` force and `1.4e-5 N.m` moment in the modified thermal combinations, versus gates of `5 N` and `0.5 N.m`.
 
-### 8.2 Interpretation of remaining L3 actions
-
-After the thermal-growth-only correction, the large L3 source-action mismatch family largely disappears. The remaining action failures are predominantly literal near-zero/threshold-scale rows; in the offline reconstruction the largest remaining force miss was below 1 N and the largest remaining moment miss was around the sub-1-N.m scale.
-
-This materially changes the search problem: after tee thermal growth, another broad stiffness change is not justified by the remaining L3 action evidence.
-
----
-
-## 9. Load-case decomposition after tee thermal growth
-
-The pinned CAESAR references satisfy the expected linear identities to report precision. Remaining L5 errors are not combination-semantics errors.
-
-For major residual rows, the signed L5 error is dominated by the remaining T1 error. Example diagnostic decomposition at node 20350 UY was approximately:
+Linear identities remain at numerical roundoff:
 
 ```text
-W contribution error     +1.8 N
-T1 contribution error  +190.9 N
-P1 contribution error   -1.35 N
+L14 - L3              = 0
+L6 - (L2 + L4)        ~ 2e-6 absolute worst exposed component
+L5 - (L2 + L3 + L4)   ~ 3e-5 absolute worst exposed component
 ```
 
-so the residual L5 mismatch is primarily thermal, not hidden W/P superposition behavior.
+High-signal source/end rows around the 20160 neighborhood move strongly toward CAESAR. The mechanism also improves remote bend/source rows because the tee free state changes the global thermal load path without changing stiffness.
+
+### Promotion status
+
+This is the strongest current production candidate. The source patch should add only this free-state term to existing Type 2.1 tee modifiers. Do **not** simultaneously change Kb, tee stiffness, pressure/Bourdon, Type 2.6 topology, or bend mechanics.
+
+Because the user requested no GitHub Actions usage, the core source change is being prepared/checked locally rather than pushed while PR workflows would auto-start.
 
 ---
 
-## 10. Thermal-expansion authority is now the next blocker
+## 7. Thermal-expansion authority after the tee correction
 
-The current profile still uses:
+The Misc report prints T1 thermal expansion as:
+
+```text
+0.0012 mm/mm
+```
+
+for all 96 elements, with four decimal places. That only bounds the exact value approximately to:
+
+```text
+0.00115 <= strain < 0.00125
+```
+
+The current provisional profile uses:
 
 ```text
 alpha = 1.17e-5 /K
-DeltaT = 120 C - 21 C = 99 K
+DeltaT = 99 K
 strain = 0.0011583
 ```
 
-and classifies it as `[GUESSED] PROVISIONAL` because exact CAESAR material-library thermal strain / Print Alphas evidence has not been retained.
+and remains `[GUESSED] PROVISIONAL` pending exact CAESAR material-library / Print Alphas authority.
 
-Before the tee correction, scalar alpha could not explain the dominant mixed mechanical residual. **After** the tee thermal-growth mechanism is included, thermal-strain precision becomes high leverage.
+After the corrected tee thermal-growth candidate, thermal-strain precision becomes more important. A diagnostic-only sweep within the report's printed interval gives a best external count of about **200** near:
 
-A diagnostic-only post-tee sweep indicates that scaling T1 by roughly `1.043-1.045` would move total strain to about `0.001208-0.001210` and could reduce the external total from roughly `210` toward `150`, with L5 falling substantially. This is consistent with the Misc report's printed `0.0012` strain precision, but it is **not promotable authority**.
+```text
+strain ~= 0.00121175
+alpha  ~= 1.224e-5 /K
+```
 
-Do not set alpha or total strain from that sweep. Obtain sufficiently precise CAESAR Print Alphas/material-library total strain for the exact `21 C -> 120 C` interval first.
+with representative counts near that point:
 
----
+```text
+L2  31
+L3  37
+L4  40
+L5  33
+L6  22
+L14 37
+```
 
-## 11. Current promotion decision
-
-### Promotable next mechanics change
-
-**B31J fictitious-rigid thermal free growth only.**
-
-Implementation requirements:
-
-1. preserve the existing CAESAR B31J Surface Node/run-surface location;
-2. preserve current directional Kb springs and their qualified values;
-3. preserve the current common stiffness matrix/operator;
-4. add the centerline-to-surface rigid member's thermal free translation from source thermal strain and the existing surface offset vector;
-5. do not add rigid weight;
-6. do not add pressure/Bourdon behavior in the same commit;
-7. recover actions through the unchanged `q = Ku - f_fixed - f_initial` convention;
-8. locally verify all six cases, equilibrium, source mapping and L3/L14 identity before any further mechanics change.
-
-### Explicitly rejected / still blocked
-
-- flexible centerline tee replacement — rejected by CAESAR geometry authority;
-- Kb fitting/scaling — rejected; report-parity Kb is already close;
-- generic bend softness — forbidden;
-- MEC-21 bend shear promotion in tested form — rejected by falsification cases;
-- derived axial-shape TRUE matrix in tested form — rejected for BM4_L promotion and still lacks direct TRUE authority;
-- fitted thermal alpha/strain — forbidden;
-- reducer sampling tuning — authority blocked;
-- tolerance/row/reference changes — forbidden.
+This is **not promotable** because the coefficient would be chosen from benchmark minimization. The pinned Common BM4 directory contains no separate full-precision Print-Alphas report, so exact alpha remains an authority blocker.
 
 ---
 
-## 12. Next roadmap
+## 8. Current next steps
 
-1. **Implement and locally test tee fictitious-rigid thermal growth only.**
-2. **Acquire exact CAESAR thermal-expansion authority** for A106 Grade B, 21 C -> 120 C. Replace the provisional alpha only from that authority.
-3. Re-profile the remaining failures after those two items. Expect the remaining L3 source-action family to be predominantly near-zero precision/threshold rows rather than mechanics-scale discrepancies.
-4. Revisit reducer sampling only if an external CAESAR authority identifies the representative section location.
-5. Resolve tee 20295 nominal-geometry compatibility only if still material after thermal closure; keep it adapter-local and fail-closed.
-6. Address literal zero-reference rows last without changing acceptance thresholds.
-7. Run GitHub Actions only when explicitly authorized by the user; until then use local/offline checks and report their provenance separately from CI-qualified evidence.
-
----
-
-## 13. Rules for future agents
-
-1. Re-fetch PR head before every write; stack additive commits and never force-push unknown history.
-2. Do not modify Issue #991 unless the user explicitly asks.
-3. Keep one physical hypothesis per mechanics commit.
-4. Do not fit alpha, flexibility, pressure, sampling, signs or tolerances to benchmark outputs.
-5. Separate `external objective` failures from derived equilibrium-comparison rows when reporting counts.
-6. Preserve source/report custody and exact pinned Common references.
-7. Count improvement alone is never acceptance; require authority and predicted signature.
-8. Do not trigger or rerun GitHub Actions while the user has requested local-only checking.
+1. **Production patch:** implement only Type 2.1 B31J fictitious-rigid thermal free growth on the existing rigid offset; keep K unchanged.
+2. **Local validation:** rerun the offline six-case reassembly, source action recovery, equilibrium and superposition checks against the patch semantics.
+3. **Do not push core source while no-Actions policy is active** if doing so would auto-trigger PR workflows.
+4. **Acquire exact CAESAR thermal strain / Print Alphas** for A106 Grade B over `21 C -> 120 C`; replace the provisional alpha only from authority.
+5. Re-profile remaining failures after those two changes.
+6. Keep reducer sampling and Type 2.6 stress-intersection topology authority-blocked unless direct source evidence resolves them.
+7. Address literal near-zero rows last without changing thresholds.
 
 ---
 
-## 14. Current conclusion
+## 9. Explicitly rejected / forbidden paths
 
-The clean workstream reduced the external BM4_L objective from approximately `1342` failures to `435` with qualified pipe/reducer/rigid/support/bend/tee mechanics. The later local-only investigation then falsified the previously dominant MEC-21 bend-shear hypothesis and identified a stronger, authority-consistent omission in the B31J tee surface-node kinematics: **thermal free growth of the fictitious centerline-to-surface rigid member**.
+- flexible centerline tee replacement that removes CAESAR's run-surface convention;
+- Kb fitting or scaling;
+- inventing structural Type 2.6 branch members from the stress/SIF report alone;
+- generic bend softness;
+- MEC-21 bend shear promotion in the tested form;
+- residual-fitted axial-shape terms;
+- fitted thermal alpha;
+- reducer sampling fitted to BM4_L;
+- tolerance, reference, sign, row or source mutation.
 
-Adding that one free-state mechanism locally, without changing stiffness or Kb, reduces the external benchmark approximately `435 -> 210` and specifically improves T1-containing cases while leaving W/P primitives essentially unchanged. That is the next production change.
+---
 
-After it, exact CAESAR thermal-expansion provenance becomes the dominant authority gap. A fitted alpha remains prohibited even though diagnostic sensitivity shows it could materially reduce the remaining error.
+## 10. Current conclusion
 
-The benchmark is not closed, but the next two steps are now sharply defined: **tee fictitious-rigid thermal growth first; exact Print Alphas authority second.**
+PR #1001 has reduced the external BM4_L objective from roughly `1342` to `435` with accepted mechanics and source custody intact. The later local-only work rejects the previously suspected broad bend-shear correction and identifies a narrower, authority-consistent Type 2.1 tee free-state omission.
+
+The corrected local result for **B31J fictitious-rigid thermal free growth** is **435 -> 284**, not 210. It changes only T1-containing cases, leaves the stiffness operator unchanged, preserves L3/L14 identity and equilibrium, and is the next production mechanics change.
+
+After that change, exact CAESAR thermal-expansion provenance becomes the highest-leverage authority gap. The benchmark remains open, but the next mechanics and authority steps are now sharply separated.

@@ -55,11 +55,28 @@ Therefore:
 
 This is a provenance contradiction between the immutable ZIP authority and the declared extracted-member hash.
 
+## Pinned sibling-archive inventory
+
+A second diagnostic inventoried every ZIP member in `LFEA/BM4` at the same pinned Common commit without selecting any sibling as a fallback:
+
+| Archive | Member | Member size | Member SHA-256 | Matches declared BM4_L ACCDB hash |
+|---|---|---:|---|---|
+| `BM4 accdb.zip` | `BM4.ACCDB` | 3,301,376 | `0c5acb50cbaac9a8a06aa716a907332fe8d5b855e6e9546c13f520f481829b42` | No |
+| `BM4_L.zip` | `BM4_L.ACCDB` | 5,136,384 | `64c05a50e9ed0452622ff5880335460486f24ac8e6adecc9a300b549c9aa82f8` | No |
+| `BM4_NL.zip` | `BM4_NL.ACCDB` | 3,575,808 | `85d39463296e569da811d8572e2eff680b858097f76fdf0f47d1755f0b161c21` | No |
+
+No archive member at the pinned BM4 commit hashes to:
+
+`e21b0862851ea2bb6f20d55e4a3a94f501537b618b98dd46afa9f6777ee38d3c`
+
+This rules out the obvious possibility that the declared BM4_L ACCDB hash was accidentally taken from a sibling ZIP at the same source revision.
+
 ## Execution consequence
 
 The diagnostic workflow failed closed before ACE ingestion and before the BM4_L solve. It did **not**:
 
 - substitute InputXML;
+- substitute a sibling BM4 archive;
 - accept the observed ACCDB hash as a new authority;
 - alter the benchmark profile or reference;
 - run a mechanics A/B test on unapproved source bytes;
@@ -74,15 +91,23 @@ The independent framework regression checks still passed:
 
 ## Reproducible evidence
 
-GitHub Actions run: `31358317689`
+Primary custody run: `31358317689`
 
-Job: `93362058882`
+Primary custody job: `93362058882`
 
-Uploaded artifact: `9051419626`
+Primary custody artifact: `9051419626`
 
-Artifact digest: `sha256:6e1b00faf178e3ec55c436e826457dc65c152a3433c86de842f18b21793c8ea3`
+Primary artifact digest: `sha256:6e1b00faf178e3ec55c436e826457dc65c152a3433c86de842f18b21793c8ea3`
 
-The artifact contains `bm4l-custody.json`, including the pinned commit, blob identity, ZIP identity, member inventory, and both extraction hashes.
+The primary artifact contains `bm4l-custody.json`, including the pinned commit, blob identity, ZIP identity, member inventory, and both extraction hashes.
+
+Pinned archive-inventory run: `31358448741`
+
+Archive-inventory artifact: `9051455720`
+
+Archive-inventory artifact digest: `sha256:64e50d3055840e63963bf9c7e9ad58cf933f7ee0c40569eb48ef39f2d0609257`
+
+The archive-inventory artifact contains `bm4-archive-inventory.json` and proves that no sibling BM4 archive member at the pinned revision matches the declared BM4_L ACCDB SHA-256.
 
 ## Unblock condition
 

@@ -6,7 +6,7 @@
 - **Source issue:** #1015 — `LAFEA UI update`
 - **Pull request:** #1016 — draft
 - **Branch:** `agent/lafea-appendix-a-workreport`
-- **Current stage:** Stage 5 — guided workflow truthfulness in progress
+- **Current stage:** Stage 5 complete; next implementation stage pending
 - **Last updated:** 2026-08-10
 - **CI constraint:** Do not add GitHub Actions workflows or workflow-based CI gates. Use existing repository/local checks where available.
 
@@ -96,46 +96,67 @@ T6 area uses 2D triangular quadrature; curved-edge perimeter uses 1D Gauss-Legen
 **Validation**
 
 - Inspected the full PR diff.
-- Confirmed only report + four Stage-4 workspace paths were changed at that point.
 - Confirmed no `.github/workflows/*` path was touched.
-- Confirmed release remains NOT QUALIFIED because current readiness still fails closed until authoritative release-record binding is implemented.
+- Confirmed release remains NOT QUALIFIED because readiness still fails closed until authoritative release-record binding is implemented.
+
+### Stage 5 — Guided workflow truthfulness — COMPLETE
+
+**Files changed**
+
+- `src/workspace/lafea-guided-workflow.js`
+- `src/workspace/lafea-workbench-reason-labels.js`
+- `scripts/lafea-ui-workflow-truthfulness-check.mjs` (new local check; not wired to Actions)
+
+**Behavior changed**
+
+- `ANALYSIS_PROFILE` is no longer COMPLETE merely because a document exists.
+- Profile completion now requires lifecycle initialization, a non-empty lifecycle `profileId`, and `lifecycleBinding.status === 'CURRENT'`.
+- Materials/Sections, Restraints/BCs, and Loads/Cases now use stage-specific governed collection checks rather than unconditional READY.
+- Generic workflow steps that are genuinely not represented by a stage contract are explicitly COMPLETE with `WORKFLOW_STEP_NOT_APPLICABLE` rather than falsely READY.
+
+**Stage-specific rules introduced**
+
+- **LAFEA.1:** materials -> `materials`; loads -> `loadCases`; restraints/BC generic step -> N/A.
+- **LAFEA.2:** loads/cases -> `screeningCases`; materials and restraints generic steps -> N/A.
+- **LAFEA.3/4:** materials -> `materials`; restraints -> `constraints`; loads -> `loadCases`.
+- **LAFEA.5:** materials -> `shellTemplate.materials`; restraints -> `shellTemplate.constraints`; loads -> `loadCaseMappings`.
+- **LAFEA.6:** materials/load cases are checked if a document is present; generic restraints step is N/A, while execution remains independently blocked because the engine is not implemented.
+
+**Examples**
+
+- LAFEA.1 with `materials: []` -> Materials/Sections BLOCKED with `MATERIALS_REQUIRED`.
+- LAFEA.1 with no lifecycle -> Analysis Profile BLOCKED with `LIFECYCLE_NOT_INITIALIZED`.
+- LAFEA.3 with `constraints: []` -> Restraints/BCs BLOCKED with `BOUNDARY_CONDITIONS_REQUIRED`.
+- LAFEA.1 restraints/BC generic step -> COMPLETE/N/A instead of READY.
+
+**Validation**
+
+- Compared the new rules with `lafea-stage-input-descriptors.js` collection contracts and the LAFEA.1 canonical fixture.
+- Added `scripts/lafea-ui-workflow-truthfulness-check.mjs` with direct assertions for LAFEA.1 and LAFEA.3 workflow behavior.
+- Verified PR changed paths contain no `.github/workflows/*` file.
+- The local regression script has **not been executed in this environment** because there is no local repository checkout and outbound GitHub cloning is unavailable. This is recorded rather than presenting an unexecuted check as PASS.
 
 **Remaining risk**
 
-- `lifecycleReadiness.releaseState` is still hardcoded NOT QUALIFIED. This is intentional until Stage 7 binds a validated authoritative release record.
+- These are workflow-readiness checks, not full semantic validation of every entity. Canonical model/preparation/authorization layers remain responsible for deeper engineering validity.
 
-### Stage 5 — Guided workflow truthfulness — IN PROGRESS
+## Current PR changed paths after Stage 5
 
-**Planned scope**
+- `agents/PRXXX_workreport.md`
+- `scripts/lafea-ui-workflow-truthfulness-check.mjs`
+- `src/workspace/lafea-guided-workflow-view.js`
+- `src/workspace/lafea-guided-workflow.js`
+- `src/workspace/lafea-workbench-orchestration-projection.js`
+- `src/workspace/lafea-workbench-reason-labels.js`
+- `src/workspace/lafea-workbench-view.js`
 
-1. Replace `ANALYSIS_PROFILE = COMPLETE if document exists` with a check requiring a real lifecycle profile and CURRENT lifecycle/source binding.
-2. Replace unconditional Materials/Sections, Restraints/BCs, and Loads/Cases `READY` status with stage-specific document-content checks.
-3. Treat genuinely non-applicable generic workflow steps as COMPLETE/N/A rather than pretending they are READY.
-4. Keep this logic presentation/workflow-only; do not synthesize model, mesh, authorization, or release authority.
-
-**LAFEA.1 examples**
-
-- Materials step requires at least one `materials` entry.
-- Loads step requires at least one `loadCases` entry; pressure/load definitions remain governed document content.
-- A generic restraints/BC step is not represented as an authored collection in the LAFEA.1 input contract, so it should be explicitly N/A instead of unconditionally READY.
-- Analysis profile completes only after lifecycle initialization has produced a profile ID and the lifecycle binding is CURRENT.
-
-**Cross-stage examples**
-
-- LAFEA.3/4: `materials`, `constraints`, and `loadCases` are real governed collections.
-- LAFEA.5: `shellTemplate.materials`, `shellTemplate.constraints`, and `loadCaseMappings` are the relevant collections.
-
-**Validation planned**
-
-- Static diff review against stage input descriptor collection contracts.
-- Ensure missing required collections produce BLOCKED/NOT_STARTED guidance, not false readiness.
-- Confirm no workflow file changes.
+No workflow file is present.
 
 ## Future roadmap
 
 ### Stage 6 — Analysis settings/profile UX
 
-Add a read-only settings/profile card exposing governing code basis, allowables, stress method, load combinations, assumptions, and lifecycle/profile identity. Governed editing comes later only with explicit invalidation semantics.
+Add a read-only settings/profile card exposing only settings that are actually present in the active stage/document contract. Do not invent a code basis or allowable field if that stage source does not define one. Governed editing comes later only with explicit invalidation semantics.
 
 ### Stage 7 — Authoritative release-record binding
 

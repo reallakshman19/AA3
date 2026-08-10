@@ -6,7 +6,7 @@
 - **Source issue:** #1015 — `LAFEA UI update`
 - **Pull request:** #1016 — draft
 - **Branch:** `agent/lafea-appendix-a-workreport`
-- **Current stage:** Stage 8 complete; Stage 9 numerical verification UX next
+- **Current stage:** Stage 9 — numerical verification UX in progress
 - **Last updated:** 2026-08-10
 - **CI constraint:** Do not add GitHub Actions workflows or workflow-based CI gates. Use existing repository/local checks where available.
 
@@ -101,86 +101,56 @@ Workbench release state can consume `lafea-template-release-record/v2` only thro
 3. current target compatibility rerun against the live target-authority snapshot;
 4. current lifecycle/source/profile/source-authority/document-revision identity.
 
-Only after those pass can a CURRENT `RELEASE_QUALIFIED` record project release authority.
+A record SHA-256 proves integrity, not provenance. The trust model remains:
 
-**Key concept:** record SHA-256 validation proves integrity, not provenance. The evidence-hash allow-list separates `record integrity -> trusted provenance -> exact build -> current target -> current source -> release projection`.
-
-- Added `src/workspace/lafea-workbench-release-binding.js`.
-- Added controller/store registration, selection and projection APIs.
-- Lifecycle export includes the retained release record and current binding.
-- Added `scripts/lafea-ui-release-binding-check.mjs` as a local, non-Actions check.
-- No end-user UI can mint or trust a release record.
+`record integrity -> trusted provenance -> exact build -> current target -> current source -> release projection`
 
 ### Stage 8 — Viewport lifecycle/performance — COMPLETE
 
-**Problem confirmed**
+- Added pure viewport dependency/reuse contract.
+- Reuses a mounted viewport only when stage, scene revision, result packet, retained mesh evidence, custody state, and route flags are unchanged.
+- Reparents the existing renderer host for unrelated workbench updates.
+- On dependency change, mounts replacement content before destroying the old viewport.
+- No primitive cache, mutable engineering scene API, or asynchronous render authority was introduced.
+- Added `scripts/lafea-ui-viewport-lifecycle-check.mjs` as a local, non-Actions check.
 
-The previous `LafeaWorkbenchView.render()` destroyed `activeViewport` on every workbench render and `renderLafeaWorkbenchContent()` always mounted a fresh viewport. Stable `sceneRevision` therefore preserved identity/selection semantics but did not avoid renderer reconstruction.
+### Stage 9 — Numerical verification UX — IN PROGRESS
 
-**Implemented**
+**Evidence-custody findings before implementation**
 
-- Added `src/workspace/lafea-workbench-viewport-lifecycle.js`, a pure dependency contract for reuse decisions.
-- Viewport reuse requires exact equality of:
-  - active stage ID;
-  - `sceneRevision`;
-  - render-packet object identity;
-  - effective retained-mesh evidence object identity;
-  - analysis-mesh custody state;
-  - domain-first/shell-midsurface routing flags.
-- `LafeaWorkbenchView` now retains the viewport instance, DOM host and last dependency descriptor.
-- `renderLafeaWorkbenchContent()` accepts a governed `reusedViewport` and reparents the existing viewport host into newly rendered workbench content.
-- Unrelated workbench state changes can therefore refresh workflow/header/results/lifecycle panels without reconstructing the renderer.
-- When dependencies change, the replacement viewport is mounted into detached new content first; only after successful content construction is the previous viewport destroyed. The composition no longer deliberately destroys the old renderer before constructing its replacement.
-- Source selection and retained-mesh focus remain attached to the reused viewport and existing scene maps.
-- No primitive cache, mutable scene-update API, asynchronous rendering authority, or new renderer mode was introduced.
+1. The general Bucket-01 convergence producer (`lafea-bucket-01-convergence-evidence/v1`) is self-validating and retains the complete numerical envelope: mesh sizes, observations, refinement ratio, classification, observed order, Richardson extrapolation, fine/coarse GCI, asymptotic ratio, tolerances and blocking reasons.
+2. The controlled-continuum pilot uses a different self-validating authority: `lafea-controlled-continuum-execution-receipt/v1`. Its `pilotConvergence` retains governed mesh-level observations and relative changes, but it does **not** claim Richardson/GCI. The UI must preserve that method distinction.
+3. The ordinary lifecycle `CONVERGENCE` artifact retains identity/status/qualification and an artifact hash, not the complete GCI payload. Therefore a workbench with only lifecycle evidence can show that convergence is qualified but must not invent mesh sizes, observed order or GCI values.
+4. The retained analysis-mesh evidence *does* contain full general mesh-quality results used by the workbench: node/element counts, aggregate aspect ratio, scaled Jacobian, per-element results and warning/block element IDs.
+5. The richer Bucket-01 T6 geometry qualification (integrated area, hole/outer perimeter, boundary deviation, midside placement, topology and dense Jacobian) is a separate evidence contract whose validator requires the originating mesh package. It is not currently part of generic workbench mesh custody. Stage 9 will not relabel generic aspect-ratio/Jacobian evidence as that richer geometry qualification.
+
+**Planned implementation**
+
+1. Add governed retention for detailed convergence evidence with two accepted, self-validating forms:
+   - Bucket-01 GCI convergence evidence;
+   - controlled-continuum execution receipt / pilot convergence.
+2. Require retained detailed convergence to bind to the current lifecycle `CONVERGENCE` artifact identity. If lifecycle/source/document custody changes, detailed evidence becomes stale rather than being silently reused.
+3. Add a read-only `Numerical verification` card and route the guided Numerical Preflight step to it.
+4. For Bucket-01 GCI evidence, display the actual retained mesh ladder, observations, observed order, Richardson value, fine/coarse GCI, asymptotic ratio, tolerances and reasons.
+5. Explicitly classify near-zero relative-GCI cases as **relative GCI not applicable for the retained response scale**, not as an invented numerical GCI value.
+6. For controlled-continuum receipts, display the governed relative-change method, level observations, tolerance and reasons, and explicitly state that this contract does not compute GCI.
+7. If only the lifecycle convergence hash is present, display a truthful `qualified identity only / detailed payload not retained` state.
+8. Present general retained mesh-quality evidence separately: node/element counts, aspect ratio, scaled Jacobian and warning/block element IDs.
+9. Add an explicit notice that area/perimeter/boundary-deviation/midside/topology/dense-Jacobian qualification is unavailable unless its separate Bucket-01 geometry evidence and parent mesh package are governed into workbench custody in a later extension.
+10. Add a repository-local Stage 9 check; do not wire it to GitHub Actions.
 
 **Examples**
 
-- Preparation/release state change with unchanged scene/render/mesh inputs -> viewport reused.
-- Source geometry or lifecycle identity change -> `sceneRevision` changes -> viewport rebuilt.
-- New/cleared result render packet -> packet identity changes -> viewport rebuilt.
-- Retained mesh evidence replacement or custody WARNING/PASS transition -> viewport rebuilt.
-- Stage change -> viewport rebuilt.
-
-**Validation**
-
-- Added `scripts/lafea-ui-viewport-lifecycle-check.mjs` with pure reuse-contract assertions and static composition checks.
-- The script covers same-input reuse, scene revision changes, packet identity changes, mesh evidence changes, custody changes, domain-first evidence routing, and the replacement-before-destroy code path.
-- Confirmed `src/workspace/lafea-workbench-view.js` remains below the repository's existing 299-line constraint (no content exists at line 285 in the branch file).
-- Inspected final view/content patches.
-- Re-listed PR paths: 18 changed files and no `.github/workflows/*` path.
-- **Local Node scripts remain unexecuted in this environment** because no repository checkout/network clone is available. No unexecuted check is reported as PASS.
-
-## Current PR changed paths after Stage 8
-
-- `agents/PRXXX_workreport.md`
-- `scripts/lafea-ui-analysis-settings-check.mjs`
-- `scripts/lafea-ui-release-binding-check.mjs`
-- `scripts/lafea-ui-viewport-lifecycle-check.mjs`
-- `scripts/lafea-ui-workflow-truthfulness-check.mjs`
-- `src/workspace/lafea-analysis-settings-view.js`
-- `src/workspace/lafea-guided-workflow-view.js`
-- `src/workspace/lafea-guided-workflow.js`
-- `src/workspace/lafea-workbench-content.js`
-- `src/workspace/lafea-workbench-controller.js`
-- `src/workspace/lafea-workbench-orchestration-projection.js`
-- `src/workspace/lafea-workbench-orchestrator-api.js`
-- `src/workspace/lafea-workbench-orchestrator-store.js`
-- `src/workspace/lafea-workbench-readiness.js`
-- `src/workspace/lafea-workbench-reason-labels.js`
-- `src/workspace/lafea-workbench-release-binding.js`
-- `src/workspace/lafea-workbench-view.js`
-- `src/workspace/lafea-workbench-viewport-lifecycle.js`
-
-No workflow file is present.
+- Current lifecycle convergence hash + no detailed envelope -> show current qualified convergence identity, but no GCI values.
+- Bucket-01 evidence with `FINE_OBSERVATION_NEAR_ZERO_FOR_RELATIVE_GCI` -> show Richardson/observed order if retained, show fine/coarse GCI as N/A, and explain the relative denominator issue.
+- Controlled-continuum receipt -> show each governed level and relative change; label method `GOVERNED_RELATIVE_CHANGE`, not GCI.
+- General retained mesh quality -> show worst aspect ratio and minimum scaled Jacobian with thresholds/statuses; do not call them area/perimeter qualification.
 
 ## Future roadmap
 
-### Stage 9 — Numerical verification UX
+### Post-Stage-9 extension — richer T6 geometry evidence custody
 
-- Present convergence: mesh sizes, observed order, Richardson extrapolation, GCI, and blocking reasons.
-- Present mesh qualification separately: area, perimeter, boundary deviation, midside placement, topology, and Jacobian evidence.
-- Distinguish near-zero relative-GCI inapplicability from genuine non-convergence.
+If the product requires area/perimeter/boundary-deviation/midside/topology/dense-Jacobian values in the general workbench, add a dedicated custody binding for `lafea-bucket-01-mesh-qualification-evidence/v1` together with its exact parent mesh package and candidate-head identity. Do not ingest the evidence object without its validator-required parent.
 
 ## Validation policy
 

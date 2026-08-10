@@ -129,7 +129,10 @@ jobs:
         shell: pwsh
         run: |
           node --check src/core/linear-fea-piping-components/component-elements.js
-          npm run check:lfea-b3.2
+          node scripts/lfea-b3.2-piping-component-check.mjs
+          node scripts/lfea-b3.2-reviewer-check.mjs
+          python -c "from pathlib import Path; p=Path('src/core/linear-fea-piping-components/branch-component.js'); p.write_bytes(p.read_bytes().replace(b'\r\n', b'\n'))"
+          node scripts/lfea-b3.2-source-guard.mjs
 
       - name: Run rotational-only candidate six cases
         shell: pwsh

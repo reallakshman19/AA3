@@ -58,12 +58,11 @@ jobs:
           $connection.Open()
           try {
             $tablesSchema = $connection.GetSchema('Tables')
+            $columnsSchema = $connection.GetSchema('Columns')
             $tableNames = @($tablesSchema.Rows | ForEach-Object { [string]$_.TABLE_NAME } | Where-Object { $_ -and $_ -notlike 'MSys*' } | Sort-Object -Unique)
             $records = @()
             foreach ($table in $tableNames) {
-              $restrictions = @($null,$null,$table,$null)
-              $columnsSchema = $connection.GetSchema('Columns',$restrictions)
-              $columns = @($columnsSchema.Rows | Sort-Object {[int]$_.ORDINAL_POSITION} | ForEach-Object {
+              $columns = @($columnsSchema.Rows | Where-Object { [string]$_.TABLE_NAME -eq $table } | Sort-Object {[int]$_.ORDINAL_POSITION} | ForEach-Object {
                 [ordered]@{
                   name=[string]$_.COLUMN_NAME
                   ordinal=[int]$_.ORDINAL_POSITION

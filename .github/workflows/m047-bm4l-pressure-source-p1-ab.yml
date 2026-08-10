@@ -67,7 +67,7 @@ jobs:
           profile=Path('benchmarks/LFEA/CAESAR_ACCDB/bm4l-validation.profile.json')
           data=json.loads(profile.read_text())
           data['linearSolve']['bendPressureStiffening']['pressureSource']='P1'
-          data['linearSolve']['bendPressureStiffening']['authorityStatus']='DIAGNOSTIC_REPORT_MATCH_CANDIDATE'
+          data['linearSolve']['bendPressureStiffening']['authorityStatus']='PROVISIONAL'
           data['linearSolve']['bendPressureStiffening']['source']='COMMON_179c4831_MISC_BEND_REPORT_P1_FACTOR_MATCH_CANDIDATE'
           profile.write_text(json.dumps(data,indent=2)+'\n')
 

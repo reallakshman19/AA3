@@ -167,6 +167,10 @@ Public workbench/controller methods include:
 - Added assertions in `scripts/lafea-ui-release-binding-check.mjs` for absent record, missing trust anchor, unauthorized evidence hash, missing/wrong candidate head, current target compatibility, source-change staleness, imported JSON deep-freeze/validation, and tamper rejection.
 - **The repository-local Node scripts have not been executed in this environment** because there is no local checkout and outbound GitHub cloning is unavailable. No unexecuted check is reported as PASS.
 
+**Final Stage 7 review finding**
+
+The first implementation pass used V2 validation plus exact build/current-target/current-source checks. Final review identified that this still established integrity rather than provenance. The host evidence-hash allow-list was therefore added before closing the stage. Stage 7 is considered complete only with that trust anchor in place.
+
 **Remaining integration dependency**
 
 The application/deployment host must supply its actual candidate commit SHA and trusted release evidence hash(es). Until it does, Stage 7 intentionally leaves release NOT QUALIFIED. There is no UI control that lets an end user mint or trust a release record.

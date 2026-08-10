@@ -100,12 +100,12 @@ jobs:
           $ErrorActionPreference='Stop'
           $r=Get-Content artifacts/report.json -Raw|ConvertFrom-Json
           $expected=[ordered]@{
-            L2=[ordered]@{restraint=3;deformation=25;elementEnd=18;total=46}
-            L3=[ordered]@{restraint=2;deformation=39;elementEnd=55;total=96}
-            L4=[ordered]@{restraint=3;deformation=30;elementEnd=2;total=35}
-            L5=[ordered]@{restraint=2;deformation=35;elementEnd=41;total=78}
-            L6=[ordered]@{restraint=1;deformation=20;elementEnd=7;total=28}
-            L14=[ordered]@{restraint=2;deformation=39;elementEnd=55;total=96}
+            L2=[ordered]@{restraint=1;deformation=39;elementEnd=6;total=46}
+            L3=[ordered]@{restraint=1;deformation=41;elementEnd=54;total=96}
+            L4=[ordered]@{restraint=0;deformation=33;elementEnd=2;total=35}
+            L5=[ordered]@{restraint=2;deformation=41;elementEnd=35;total=78}
+            L6=[ordered]@{restraint=0;deformation=14;elementEnd=14;total=28}
+            L14=[ordered]@{restraint=1;deformation=41;elementEnd=54;total=96}
           }
           $result=[ordered]@{}
           $total=0

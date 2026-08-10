@@ -10,8 +10,10 @@ import {
 
 export const LAFEA_WORKBENCH_VERIFICATION_BINDING_SCHEMA =
   'lafea-workbench-verification-binding/v1';
+export const LAFEA_WORKBENCH_VERIFICATION_INTAKE_SCHEMA =
+  'lafea-workbench-verification-intake/v1';
 export const LAFEA_WORKBENCH_VERIFICATION_BINDING_STATUSES = Object.freeze([
-  'ABSENT', 'HASH_ONLY', 'CURRENT', 'STALE',
+  'ABSENT', 'HASH_ONLY', 'DIAGNOSTIC', 'CURRENT', 'STALE',
 ]);
 
 export function createLafeaWorkbenchVerificationState(stageIds) {
@@ -28,7 +30,7 @@ export function createLafeaWorkbenchVerificationState(stageIds) {
     requireKnownStage(records, stage.stageId);
     const retained = normalizeEvidence(value);
     const projection = projectLafeaWorkbenchVerificationBinding(stage, retained);
-    if (projection.bindingStatus !== 'CURRENT') {
+    if (!['CURRENT', 'DIAGNOSTIC'].includes(projection.bindingStatus)) {
       throw verificationError(
         projection.reasons[0] ?? 'LAFEA_NUMERICAL_VERIFICATION_BINDING_NOT_CURRENT',
       );
@@ -75,16 +77,7 @@ export function projectLafeaWorkbenchVerificationBinding(stageValue, retainedVal
     });
   }
 
-  if (!convergence) {
-    return projection(stage.stageId, {
-      bindingStatus: 'STALE',
-      method: retained.method,
-      lifecycleArtifactHash: null,
-      retainedIdentity: retainedIdentity(retained),
-      evidence: retained.evidence,
-      reasons: ['CONVERGENCE_LIFECYCLE_ARTIFACT_NOT_CURRENT'],
-    });
-  }
+  if (!convergence) return diagnosticProjection(stage, retained);
 
   const reasons = retained.method === 'BUCKET_01_GCI'
     ? bucket01BindingReasons(convergence, retained.evidence)
@@ -99,16 +92,33 @@ export function projectLafeaWorkbenchVerificationBinding(stageValue, retainedVal
   });
 }
 
+function diagnosticProjection(stage, retained) {
+  const reasons = sourceBindingReasons(stage, retained);
+  const diagnosticAllowed = reasons.length === 0
+    && detailedEvidenceStatus(retained) === 'BLOCKED';
+  return projection(stage.stageId, {
+    bindingStatus: diagnosticAllowed ? 'DIAGNOSTIC' : 'STALE',
+    method: retained.method,
+    lifecycleArtifactHash: null,
+    retainedIdentity: retainedIdentity(retained),
+    evidence: retained.evidence,
+    reasons: diagnosticAllowed
+      ? ['CONVERGENCE_SOURCE_BOUND_DIAGNOSTIC_ONLY']
+      : unique(['CONVERGENCE_LIFECYCLE_ARTIFACT_NOT_CURRENT', ...reasons]),
+  });
+}
+
 function bucket01BindingReasons(convergence, evidence) {
-  return convergence.artifactHash === evidence.semanticHash
-    ? [] : ['CONVERGENCE_DETAIL_ARTIFACT_HASH_STALE'];
+  const reasons = [];
+  if (evidence.status !== 'PASS') reasons.push('CONVERGENCE_DETAIL_NOT_ACCEPTED');
+  if (convergence.artifactHash !== evidence.semanticHash) {
+    reasons.push('CONVERGENCE_DETAIL_ARTIFACT_HASH_STALE');
+  }
+  return reasons;
 }
 
 function controlledReceiptBindingReasons(stage, convergence, receipt) {
-  const reasons = [];
-  if (receipt.request.stageId !== stage.stageId) {
-    reasons.push('CONVERGENCE_DETAIL_STAGE_MISMATCH');
-  }
+  const reasons = sourceBindingReasons(stage, normalizeEvidence(receipt));
   if (receipt.status !== 'ACCEPTED' || receipt.convergenceReady !== true
     || receipt.pilotConvergence?.status !== 'PASS') {
     reasons.push('CONVERGENCE_DETAIL_NOT_ACCEPTED');
@@ -116,15 +126,26 @@ function controlledReceiptBindingReasons(stage, convergence, receipt) {
   if (convergence.artifactHash !== receipt.pilotConvergence?.semanticHash) {
     reasons.push('CONVERGENCE_DETAIL_ARTIFACT_HASH_STALE');
   }
+  return unique(reasons);
+}
+
+function sourceBindingReasons(stage, retained) {
+  const reasons = [];
   const sourceHash = stage.sourceAuthority?.sourceHash
     ?? stage.lifecycle?.source?.sourceHash ?? null;
-  if (receipt.exactSourceHash !== sourceHash) {
-    reasons.push('CONVERGENCE_DETAIL_SOURCE_HASH_STALE');
+  const currentDigest = stage.lifecycleBinding?.currentDocumentDigest ?? null;
+  if (retained.method === 'CONTROLLED_CONTINUUM_RELATIVE_CHANGE') {
+    const receipt = retained.evidence;
+    if (receipt.request.stageId !== stage.stageId) reasons.push('CONVERGENCE_DETAIL_STAGE_MISMATCH');
+    if (receipt.exactSourceHash !== sourceHash) reasons.push('CONVERGENCE_DETAIL_SOURCE_HASH_STALE');
+    if (receipt.currentDocumentRevisionDigest !== currentDigest) reasons.push('CONVERGENCE_DETAIL_DOCUMENT_REVISION_STALE');
+    return unique(reasons);
   }
-  if (receipt.currentDocumentRevisionDigest
-    !== stage.lifecycleBinding?.currentDocumentDigest) {
-    reasons.push('CONVERGENCE_DETAIL_DOCUMENT_REVISION_STALE');
-  }
+  const intake = retained.intake;
+  if (!intake) return ['CONVERGENCE_DIAGNOSTIC_SOURCE_BINDING_REQUIRED'];
+  if (intake.stageId !== stage.stageId) reasons.push('CONVERGENCE_DETAIL_STAGE_MISMATCH');
+  if (intake.sourceHash !== sourceHash) reasons.push('CONVERGENCE_DETAIL_SOURCE_HASH_STALE');
+  if (intake.documentRevisionDigest !== currentDigest) reasons.push('CONVERGENCE_DETAIL_DOCUMENT_REVISION_STALE');
   return unique(reasons);
 }
 
@@ -133,24 +154,54 @@ function normalizeEvidence(value) {
     throw verificationError('CONVERGENCE_DETAIL_EVIDENCE_INVALID');
   }
   if (value.method && value.evidence) {
-    return normalizeEvidence(value.evidence);
+    return normalizeEvidence(value.intake
+      ? { schema: LAFEA_WORKBENCH_VERIFICATION_INTAKE_SCHEMA, ...value.intake, evidence: value.evidence }
+      : value.evidence);
   }
+  if (value.schema === LAFEA_WORKBENCH_VERIFICATION_INTAKE_SCHEMA) {
+    return normalizeIntake(value);
+  }
+  return normalizeRawEvidence(value, null);
+}
+
+function normalizeIntake(value) {
+  const keys = Object.keys(value).sort().join('|');
+  if (keys !== ['documentRevisionDigest', 'evidence', 'schema', 'sourceHash', 'stageId'].sort().join('|')) {
+    throw verificationError('CONVERGENCE_DIAGNOSTIC_INTAKE_SHAPE_INVALID');
+  }
+  if (typeof value.stageId !== 'string' || !value.stageId
+    || typeof value.sourceHash !== 'string' || !value.sourceHash
+    || typeof value.documentRevisionDigest !== 'string' || !value.documentRevisionDigest) {
+    throw verificationError('CONVERGENCE_DIAGNOSTIC_INTAKE_IDENTITY_INVALID');
+  }
+  const intake = freeze({
+    stageId: value.stageId,
+    sourceHash: value.sourceHash,
+    documentRevisionDigest: value.documentRevisionDigest,
+  });
+  return normalizeRawEvidence(value.evidence, intake);
+}
+
+function normalizeRawEvidence(value, intake) {
   const evidence = freeze(structuredClone(value));
   if (evidence.schema === LAFEA_BUCKET_01_CONVERGENCE_EVIDENCE_SCHEMA) {
     const validation = validateLafeaBucket01ConvergenceEvidence(evidence);
     if (!validation.ok) throw verificationError(validation.errors[0]);
-    return freeze({ method: 'BUCKET_01_GCI', evidence });
+    return freeze({ method: 'BUCKET_01_GCI', intake, evidence });
   }
   if (evidence.schema === LAFEA_CONTROLLED_CONTINUUM_RECEIPT_SCHEMA) {
     const validation = validateControlledContinuumExecutionReceipt(evidence);
-    if (!validation.ok) {
-      throw verificationError('CONTROLLED_CONTINUUM_RECEIPT_INVALID');
-    }
-    return freeze({ method: 'CONTROLLED_CONTINUUM_RELATIVE_CHANGE', evidence });
+    if (!validation.ok) throw verificationError('CONTROLLED_CONTINUUM_RECEIPT_INVALID');
+    return freeze({ method: 'CONTROLLED_CONTINUUM_RELATIVE_CHANGE', intake: null, evidence });
   }
   throw verificationError('CONVERGENCE_DETAIL_SCHEMA_NOT_SUPPORTED');
 }
 
+function detailedEvidenceStatus(retained) {
+  return retained.method === 'BUCKET_01_GCI'
+    ? retained.evidence.status
+    : retained.evidence.pilotConvergence?.status;
+}
 function currentConvergenceArtifact(stage) {
   const value = stage.lifecycle?.artifacts?.CONVERGENCE;
   return value?.status === 'CURRENT' && value?.qualification === 'PASS'
@@ -184,9 +235,7 @@ function requireStageIds(value) {
   return [...new Set(value)];
 }
 function requireKnownStage(records, stageId) {
-  if (!Object.hasOwn(records, stageId)) {
-    throw verificationError('LAFEA_WORKBENCH_VERIFICATION_STAGE_NOT_FOUND');
-  }
+  if (!Object.hasOwn(records, stageId)) throw verificationError('LAFEA_WORKBENCH_VERIFICATION_STAGE_NOT_FOUND');
 }
 function requireStage(value) {
   if (!value || typeof value !== 'object' || typeof value.stageId !== 'string') {
@@ -195,13 +244,5 @@ function requireStage(value) {
   return value;
 }
 function unique(values) { return [...new Set(values.filter(Boolean))]; }
-function verificationError(code) {
-  const error = new TypeError(code);
-  error.code = code;
-  return error;
-}
-function freeze(value) {
-  if (!value || typeof value !== 'object' || Object.isFrozen(value)) return value;
-  Object.values(value).forEach(freeze);
-  return Object.freeze(value);
-}
+function verificationError(code) { const error = new TypeError(code); error.code = code; return error; }
+function freeze(value) { if (!value || typeof value !== 'object' || Object.isFrozen(value)) return value; Object.values(value).forEach(freeze); return Object.freeze(value); }

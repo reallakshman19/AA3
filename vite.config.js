@@ -23,6 +23,15 @@ const PURE_LAFEA_MESHING_WORKSPACE_MODULES = new Set([
   '/src/workspace/lafea-shell-periodic-midsurface-contract.js',
 ]);
 
+const PURE_ENGINEERING_ENRICHMENT_PRODUCTION_OVERLAYS = new Set([
+  '/src/workspace/engineering-enrichment/production-component-weight-overlay.js',
+  '/src/workspace/engineering-enrichment/production-material-density-overlay.js',
+  '/src/workspace/engineering-enrichment/production-material-support-authority-overlays.js',
+  '/src/workspace/engineering-enrichment/production-operating-fluid-density-overlay.js',
+  '/src/workspace/engineering-enrichment/production-pipe-section-overlay.js',
+  '/src/workspace/engineering-enrichment/production-secondary-density-overlays.js',
+]);
+
 /**
  * Keep manual chunking limited to dependency-oriented or calculation-core
  * domains. Workspace modules remain graph-owned because they contain stores,
@@ -106,6 +115,14 @@ export function manualChunk(id) {
     || source.endsWith('/src/workspace/viewport-render-model.js')
     || source.endsWith('/src/workspace/support-load-viewport-callout-projection.js')) {
     return 'workspace-viewport-engineering-projections';
+  }
+  // These production enrichment files are deterministic builders/validators
+  // over caller-supplied values. They own no controller, store, EventBus,
+  // renderer, DOM node, or module-level mutable singleton. Keep the exception
+  // exact so stateful engineering-load execution remains graph-owned.
+  if ([...PURE_ENGINEERING_ENRICHMENT_PRODUCTION_OVERLAYS]
+    .some((modulePath) => source.endsWith(modulePath))) {
+    return 'workspace-engineering-enrichment-authority-projections';
   }
 
   // Rollup must own the complete stateful workspace graph so evaluation order

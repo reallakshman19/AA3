@@ -135,7 +135,7 @@ export function solveCaesarAccdbLinearBenchmark(benchmarkPackage, selectedCaseId
         'The explicit Bourdon job mode resolves from the individual-file layer because CAESAR existing-job settings are absent from ACCDB exports.',
         'Translation-and-rotation mode applies closed-end axial pressure strain to non-bend spans and one MEC-21 equation (2.25) bend-level free field sampled at all discretized bend stations.',
         'Reducer stiffness, gravity, thermal load and closed-end pressure elongation use the governed ten-cylinder midpoint-sampling candidate.',
-        'Bend stiffness uses the qualified B31.3/B31J factor calculator and true tangent-to-tangent arc components; the governed smooth-90/Note-3 correction is enabled by the BM4_L validation profile.',
+        'Bend stiffness uses the qualified B31.3/B31J factor calculator and true tangent-to-tangent arc components; smooth-90/Note-3 correction remains disabled because its file/case authority is unresolved.',
         'Bend pressure stiffening provisionally uses P1; P1 equals Pmax in this locked source, but the CAESAR DEFAULT load-case pressure rule remains unresolved.',
         'B31.3 flexibility stiffness uses the cold/reference elastic modulus Ec (ACCDB MODULUS); HOT_MOD1/Eh is not selected by thermal-case presence.',
         'Topology-qualified TYPE=3 welding tees use unreduced B31J directional end springs; branch legs connect at the run surface through a rigid offset.',
@@ -930,11 +930,11 @@ function teeFactorGeometry(runSection, branchSection, relativeTolerance, nodeId)
   }
   return {
     runOuterDiameter,
-    branchOuterDiameter: declaredBranchOuterDiameter,
+    branchOuterDiameter: runOuterDiameter,
     reconciliation: Object.freeze({
-      rule: 'ACCDB_EQUAL_NOMINAL_DIAMETER_WITHIN_DECLARED_RELATIVE_TOLERANCE_PRESERVE_DECLARED_BRANCH_OD_V2',
+      rule: 'ACCDB_EQUAL_NOMINAL_DIAMETER_WITHIN_DECLARED_RELATIVE_TOLERANCE_V1',
       declaredBranchOuterDiameter,
-      factorBranchOuterDiameter: declaredBranchOuterDiameter,
+      factorBranchOuterDiameter: runOuterDiameter,
       runOuterDiameter,
       relativeDifference,
       relativeTolerance,

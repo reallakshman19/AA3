@@ -1,0 +1,136 @@
+name: M047 temporary ACE provider probe
+
+on:
+  push:
+    branches:
+      - agent/m047-bm4l-root-cause
+    paths:
+      - '.github/workflows/m047-ace-provider-probe.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  probe:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Download and authenticate Microsoft ACE installer
+        id: installer
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          New-Item -ItemType Directory -Force artifacts/ace-probe | Out-Null
+          $installer = Join-Path $PWD 'artifacts/ace-probe/accessdatabaseengine_X64.exe'
+          $url = 'https://download.microsoft.com/download/3/5/C/35C84C36-661A-44E6-9324-8786B8DBE231/accessdatabaseengine_X64.exe'
+          Invoke-WebRequest -Uri $url -OutFile $installer
+          $hash = (Get-FileHash -LiteralPath $installer -Algorithm SHA256).Hash.ToLowerInvariant()
+          $signature = Get-AuthenticodeSignature -LiteralPath $installer
+          $evidence = [ordered]@{
+            schema = 'm047-ace-installer-evidence/v1'
+            url = $url
+            fileName = (Get-Item $installer).Name
+            byteLength = (Get-Item $installer).Length
+            sha256 = $hash
+            signatureStatus = [string]$signature.Status
+            signerSubject = $signature.SignerCertificate.Subject
+            signerIssuer = $signature.SignerCertificate.Issuer
+            signerThumbprint = $signature.SignerCertificate.Thumbprint
+          }
+          $evidence | ConvertTo-Json -Depth 8 | Set-Content -Encoding utf8 artifacts/ace-probe/installer.json
+          if ($signature.Status -ne 'Valid' -or $signature.SignerCertificate.Subject -notmatch 'Microsoft') {
+            throw "ACE installer Authenticode validation failed: $($signature.Status), $($signature.SignerCertificate.Subject)"
+          }
+
+      - name: Install ACE provider
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $installer = Join-Path $PWD 'artifacts/ace-probe/accessdatabaseengine_X64.exe'
+          $process = Start-Process -FilePath $installer -ArgumentList '/quiet','/norestart' -Wait -PassThru
+          $process.ExitCode | Set-Content artifacts/ace-probe/install-exit-code.txt
+          if ($process.ExitCode -notin @(0, 3010)) {
+            throw "ACE installer exited $($process.ExitCode)."
+          }
+
+      - name: Record provider binary/version
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $progId = 'Microsoft.ACE.OLEDB.12.0'
+          $progIdKey = "Registry::HKEY_CLASSES_ROOT\$progId\CLSID"
+          if (-not (Test-Path $progIdKey)) { throw "$progId is not registered after installation." }
+          $clsid = (Get-ItemProperty $progIdKey).'(default)'
+          $serverKey = "Registry::HKEY_CLASSES_ROOT\CLSID\$clsid\InprocServer32"
+          $binary = (Get-ItemProperty $serverKey).'(default)'
+          if (-not (Test-Path $binary)) { throw "Registered ACE binary is missing: $binary" }
+          $file = Get-Item $binary
+          $sig = Get-AuthenticodeSignature $binary
+          [ordered]@{
+            schema = 'm047-ace-provider-evidence/v1'
+            progId = $progId
+            clsid = $clsid
+            binaryPath = $file.FullName
+            binarySha256 = (Get-FileHash $file.FullName -Algorithm SHA256).Hash.ToLowerInvariant()
+            fileVersion = $file.VersionInfo.FileVersion
+            productVersion = $file.VersionInfo.ProductVersion
+            productName = $file.VersionInfo.ProductName
+            signatureStatus = [string]$sig.Status
+            signerSubject = $sig.SignerCertificate.Subject
+          } | ConvertTo-Json -Depth 8 | Set-Content -Encoding utf8 artifacts/ace-probe/provider-binary.json
+
+      - name: Fetch pinned source and probe hash transition
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $zip = Join-Path $PWD 'artifacts/ace-probe/BM4_L.zip'
+          $url = 'https://raw.githubusercontent.com/reallaksh19/Common/45d51ea18624f5775805f399110c1738301c0d90/LFEA/BM4/BM4_L.zip'
+          Invoke-WebRequest -Uri $url -OutFile $zip
+          $zipHash = (Get-FileHash $zip -Algorithm SHA256).Hash.ToLowerInvariant()
+          if ($zipHash -ne '978617cba50fa0b1a16c2fa71dc1e0d38e55ac834b191f887d100c6951abd8b9') { throw "ZIP hash mismatch $zipHash" }
+          Expand-Archive $zip -DestinationPath artifacts/ace-probe/source -Force
+          $pristine = Join-Path $PWD 'artifacts/ace-probe/source/BM4_L.ACCDB'
+          $work = Join-Path $PWD 'artifacts/ace-probe/BM4_L.work.ACCDB'
+          Copy-Item $pristine $work -Force
+          $pristineHash = (Get-FileHash $pristine -Algorithm SHA256).Hash.ToLowerInvariant()
+          $beforeHash = (Get-FileHash $work -Algorithm SHA256).Hash.ToLowerInvariant()
+          $connection = New-Object -ComObject ADODB.Connection
+          try {
+            $connection.Open("Provider=Microsoft.ACE.OLEDB.12.0;Data Source=$work;Mode=Read;Persist Security Info=False;")
+            $schema = $connection.OpenSchema(20)
+            $tables = New-Object System.Collections.Generic.List[string]
+            try {
+              while (-not $schema.EOF) {
+                if ([string]$schema.Fields.Item('TABLE_TYPE').Value -eq 'TABLE') { $tables.Add([string]$schema.Fields.Item('TABLE_NAME').Value) }
+                $schema.MoveNext()
+              }
+            } finally {
+              $schema.Close()
+              [void][System.Runtime.InteropServices.Marshal]::ReleaseComObject($schema)
+            }
+          } finally {
+            if ($connection.State -ne 0) { $connection.Close() }
+            [void][System.Runtime.InteropServices.Marshal]::ReleaseComObject($connection)
+          }
+          $afterHash = (Get-FileHash $work -Algorithm SHA256).Hash.ToLowerInvariant()
+          [ordered]@{
+            schema = 'm047-accdb-provider-transition/v1'
+            zipSha256 = $zipHash
+            pristineAccdbSha256 = $pristineHash
+            preOpenWorkingSha256 = $beforeHash
+            postOpenWorkingSha256 = $afterHash
+            declaredIssueAccdbSha256 = 'e21b0862851ea2bb6f20d55e4a3a94f501537b618b98dd46afa9f6777ee38d3c'
+            providerOpenChangedBytes = ($beforeHash -ne $afterHash)
+            pristineMatchesDeclared = ($pristineHash -eq 'e21b0862851ea2bb6f20d55e4a3a94f501537b618b98dd46afa9f6777ee38d3c')
+            postOpenMatchesDeclared = ($afterHash -eq 'e21b0862851ea2bb6f20d55e4a3a94f501537b618b98dd46afa9f6777ee38d3c')
+            tableCount = $tables.Count
+            tables = @($tables | Sort-Object)
+          } | ConvertTo-Json -Depth 8 | Set-Content -Encoding utf8 artifacts/ace-probe/hash-transition.json
+
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: m047-ace-provider-probe
+          path: artifacts/ace-probe
+          if-no-files-found: error

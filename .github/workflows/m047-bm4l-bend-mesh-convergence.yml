@@ -1,0 +1,137 @@
+name: M047 BM4_L bend mesh convergence A-B
+
+on:
+  push:
+    branches: [agent/m047-bm4l-root-cause]
+    paths: ['.github/workflows/m047-bm4l-bend-mesh-convergence.yml']
+
+permissions:
+  contents: read
+
+jobs:
+  converge:
+    runs-on: windows-latest
+    timeout-minutes: 50
+    env:
+      COMMON_COMMIT: '45d51ea18624f5775805f399110c1738301c0d90'
+      ZIP_SHA256: '978617cba50fa0b1a16c2fa71dc1e0d38e55ac834b191f887d100c6951abd8b9'
+      MEMBER_SHA256: '64c05a50e9ed0452622ff5880335460486f24ac8e6adecc9a300b549c9aa82f8'
+      ACE_URL: 'https://download.microsoft.com/download/3/5/C/35C84C36-661A-44E6-9324-8786B8DBE231/accessdatabaseengine_X64.exe'
+      ACE_SHA256: '04e96c9f1a1f7d251a88aececf1dc10ff65950392787427c00814a43308003de'
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: agent/m047-bm4l-root-cause
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+      - run: npm ci
+
+      - name: Install authenticated ACE and fetch pinned source
+        shell: pwsh
+        run: |
+          $ErrorActionPreference='Stop'
+          New-Item -ItemType Directory -Force artifacts/mesh/source,artifacts/mesh/base,artifacts/mesh/refined | Out-Null
+          $installer=Join-Path $PWD 'artifacts/mesh/accessdatabaseengine_X64.exe'
+          Invoke-WebRequest -Uri $env:ACE_URL -OutFile $installer
+          if((Get-FileHash $installer -Algorithm SHA256).Hash.ToLowerInvariant() -ne $env:ACE_SHA256){ throw 'ACE installer hash mismatch.' }
+          $sig=Get-AuthenticodeSignature $installer
+          if($sig.Status -ne 'Valid' -or $sig.SignerCertificate.Subject -notmatch 'Microsoft'){ throw 'ACE signature validation failed.' }
+          $p=Start-Process $installer -ArgumentList '/quiet','/norestart' -Wait -PassThru
+          if($p.ExitCode -notin @(0,3010)){ throw "ACE install failed: $($p.ExitCode)" }
+          Remove-Item $installer -Force
+          $zip=Join-Path $PWD 'artifacts/mesh/BM4_L.zip'
+          Invoke-WebRequest -Uri "https://raw.githubusercontent.com/reallaksh19/Common/$env:COMMON_COMMIT/LFEA/BM4/BM4_L.zip" -OutFile $zip
+          if((Get-FileHash $zip -Algorithm SHA256).Hash.ToLowerInvariant() -ne $env:ZIP_SHA256){ throw 'ZIP hash mismatch.' }
+          Expand-Archive $zip -DestinationPath artifacts/mesh/source -Force
+          $accdb=Join-Path $PWD 'artifacts/mesh/source/BM4_L.ACCDB'
+          if((Get-FileHash $accdb -Algorithm SHA256).Hash.ToLowerInvariant() -ne $env:MEMBER_SHA256){ throw 'ACCDB member hash mismatch.' }
+          "ACCDB=$accdb" >> $env:GITHUB_ENV
+
+      - name: Run governed 5-degree bend mesh
+        shell: pwsh
+        run: |
+          $ErrorActionPreference='Stop'
+          node scripts/lfea-caesar-accdb-benchmark.mjs `
+            --accdb $env:ACCDB `
+            --profile benchmarks/LFEA/CAESAR_ACCDB/bm4l-validation.profile.json `
+            --solve-linear true `
+            --solve-cases L2,L3,L4,L5,L6,L14 `
+            --actual-out artifacts/mesh/base/actual.json `
+            --out artifacts/mesh/base/report.json
+
+      - name: Refine only bend chord maximum angle to 2.5 degrees
+        shell: python
+        run: |
+          from pathlib import Path
+          p=Path('src/core/fea-benchmarks/caesar-accdb-linear-solve.js')
+          t=p.read_text()
+          old="bendMaxAngleDegrees: { value: 5, source: PROFILE_SOURCE },"
+          new="bendMaxAngleDegrees: { value: 2.5, source: PROFILE_SOURCE },"
+          if t.count(old)!=1:
+              raise SystemExit(f'expected one bend mesh profile value, found {t.count(old)}')
+          p.write_text(t.replace(old,new))
+
+      - name: Run refined 2.5-degree bend mesh
+        shell: pwsh
+        run: |
+          $ErrorActionPreference='Stop'
+          node --check src/core/fea-benchmarks/caesar-accdb-linear-solve.js
+          node scripts/lfea-caesar-accdb-benchmark.mjs `
+            --accdb $env:ACCDB `
+            --profile benchmarks/LFEA/CAESAR_ACCDB/bm4l-validation.profile.json `
+            --solve-linear true `
+            --solve-cases L2,L3,L4,L5,L6,L14 `
+            --actual-out artifacts/mesh/refined/actual.json `
+            --out artifacts/mesh/refined/report.json
+
+      - name: Build signed convergence evidence
+        shell: pwsh
+        run: |
+          $ErrorActionPreference='Stop'
+          @'
+          const fs=require('fs');
+          const base=JSON.parse(fs.readFileSync('artifacts/mesh/base/report.json','utf8').replace(/^\uFEFF/,''));
+          const fine=JSON.parse(fs.readFileSync('artifacts/mesh/refined/report.json','utf8').replace(/^\uFEFF/,''));
+          const ba=JSON.parse(fs.readFileSync('artifacts/mesh/base/actual.json','utf8').replace(/^\uFEFF/,''));
+          const fa=JSON.parse(fs.readFileSync('artifacts/mesh/refined/actual.json','utf8').replace(/^\uFEFF/,''));
+          const cases=['L2','L3','L4','L5','L6','L14'];
+          function rows(r,c){return r.qualification.cases.find(x=>x.caseId===c).comparison.rows;}
+          function counts(r,c){const q=r.qualification.cases.find(x=>x.caseId===c).comparison.rows; return {restraint:q.filter(x=>x.status==='FAIL'&&x.entityKind==='NODE'&&['FORCE','MOMENT'].includes(x.quantity)).length, displacementRotation:q.filter(x=>x.status==='FAIL'&&x.entityKind==='NODE'&&['DISPLACEMENT','ROTATION'].includes(x.quantity)).length, elementEnd:q.filter(x=>x.status==='FAIL'&&x.entityKind==='ELEMENT'&&x.quantity.startsWith('GLOBAL_END_')).length};}
+          function find(r,c,kind,prefix,quantity,component){const m=rows(r,c).filter(x=>x.entityKind===kind&&String(x.entityId).startsWith(prefix)&&x.quantity===quantity&&x.component===component); if(m.length!==1) throw new Error(`row ${c} ${prefix} ${quantity} ${component}: ${m.length}`); return m[0];}
+          const targets=[
+            ['L2 E5 FROM FY','L2','ELEMENT','INPUT_ELEMENT:5|','GLOBAL_END_FORCE_FROM','FY'],
+            ['L2 E19 FROM FY','L2','ELEMENT','INPUT_ELEMENT:19|','GLOBAL_END_FORCE_FROM','FY'],
+            ['L2 E37 TO MZ','L2','ELEMENT','INPUT_ELEMENT:37|','GLOBAL_END_MOMENT_TO','MZ'],
+            ['L2 E43 TO MZ','L2','ELEMENT','INPUT_ELEMENT:43|','GLOBAL_END_MOMENT_TO','MZ'],
+            ['L2 node 20295 UZ','L2','NODE','20295','DISPLACEMENT','UZ'],
+            ['L2 node 21430 RZ','L2','NODE','21430','ROTATION','RZ'],
+            ['L4 node 20330 RZ','L4','NODE','20330','ROTATION','RZ'],
+            ['L4 node 22260 RY','L4','NODE','22260','ROTATION','RY'],
+            ['L4 E85 FROM FY','L4','ELEMENT','INPUT_ELEMENT:85|','GLOBAL_END_FORCE_FROM','FY'],
+            ['L4 E85 FROM MZ','L4','ELEMENT','INPUT_ELEMENT:85|','GLOBAL_END_MOMENT_FROM','MZ']
+          ];
+          const highSignal=targets.map(t=>{const b=find(base,...t.slice(1)),f=find(fine,...t.slice(1)); const be=Math.abs(b.actualValue-b.referenceValue),fe=Math.abs(f.actualValue-f.referenceValue); return {name:t[0],reference:b.referenceValue,base:b.actualValue,refined:f.actualValue,baseAbsoluteError:be,refinedAbsoluteError:fe,errorRatio:be>0?fe/be:null,meshDelta:f.actualValue-b.actualValue};});
+          const out={schema:'m047-bm4l-bend-mesh-convergence/v1',classification:'DIAGNOSTIC_ONLY_NO_FACTOR_OR_LOAD_CHANGE',sourceAccdbSha256:ba.sourceAccdbSha256,baseMaximumChordAngleDegrees:5,refinedMaximumChordAngleDegrees:2.5,baseAnalysisElementCount:ba.mechanics.cases.L2.elementLedger.length,refinedAnalysisElementCount:fa.mechanics.cases.L2.elementLedger.length,failureCounts:{},highSignal,integrity:{}};
+          for(const c of cases){out.failureCounts[c]={base:counts(base,c),refined:counts(fine,c)}; out.integrity[c]={baseEquilibrium:ba.mechanics.cases[c].recoveredEquilibrium.status,refinedEquilibrium:fa.mechanics.cases[c].recoveredEquilibrium.status};}
+          out.interpretation={maximumNormalizedHighSignalMovement:Math.max(...highSignal.map(x=>Math.abs(x.meshDelta)/Math.max(x.baseAbsoluteError,1e-30))),rule:'Compare refinement movement with the existing CAESAR error. Small movement relative to error falsifies chord discretization as the dominant residual mechanism; no benchmark value is used to choose the mesh.'};
+          fs.writeFileSync('artifacts/mesh/bend-mesh-convergence.json',JSON.stringify(out,null,2)+'\n'); console.log(JSON.stringify(out,null,2));
+          '@ | node
+
+      - name: Integrity regressions on refined state
+        shell: pwsh
+        run: |
+          $ErrorActionPreference='Stop'
+          npm run check:lfea-b3.2
+          npm run check:lfea-b3.3
+          npm run check:lfea-b3.4
+          npm run check:core-fea
+
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: m047-bm4l-bend-mesh-convergence-${{ github.sha }}
+          path: artifacts/mesh
+          retention-days: 14
+          if-no-files-found: error

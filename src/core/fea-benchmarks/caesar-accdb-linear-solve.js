@@ -134,7 +134,7 @@ export function solveCaesarAccdbLinearBenchmark(benchmarkPackage, selectedCaseId
         'The explicit Bourdon job mode resolves from the individual-file layer because CAESAR existing-job settings are absent from ACCDB exports.',
         'Translation-and-rotation mode applies closed-end axial pressure strain to non-bend spans and one MEC-21 equation (2.25) bend-level free field sampled at all discretized bend stations.',
         'Reducer stiffness, gravity, thermal load and closed-end pressure elongation use the governed ten-cylinder midpoint-sampling candidate.',
-        'Bend stiffness uses the qualified B31.3/B31J factor calculator and true tangent-to-tangent arc components; the smooth-90 correction follows the resolved BM4_L profile authority.',
+        'Bend stiffness uses the qualified B31.3/B31J factor calculator and true tangent-to-tangent arc components; the smooth-90 correction follows the resolved BM4_L profile authority, and bend-arc transverse shear follows the MEC-21 annular alpha term mapped as kappa=1/alpha.',
         'Physical straight pipe spans (FRAME and BEND_INCOMING_STRAIGHT) use the CAESAR straight-pipe transverse-shear effective area A/2, mapped to the qualified Timoshenko kernel as kappa=0.5; bend arcs, reducers and rigids remain separately governed.',
         'Bend pressure stiffening provisionally uses P1; P1 equals Pmax in this locked source, but the CAESAR DEFAULT load-case pressure rule remains unresolved.',
         'B31.3 flexibility stiffness uses the cold/reference elastic modulus Ec (ACCDB MODULUS); HOT_MOD1/Eh is not selected by thermal-case presence.',
@@ -1042,7 +1042,7 @@ function buildBendDefinitions(input) {
       arc: { tangentStart, tangentEnd, incomingDirection, declaredRadius: radius },
       material: input.material,
       section,
-      frameElementProfile: frameProfile(),
+      frameElementProfile: mec21BendFrameProfile(section),
       localAxisProfile: FRAME_LOCAL_AXIS_PROFILE,
       referenceVector: null,
       factorSet: factorResult.componentFactorSet,
@@ -2036,6 +2036,36 @@ function compilerProfile() {
     unrepresentableFeatureRule: 'UNREPRESENTABLE_FEATURE_BLOCKS_COMPILATION_V1',
     minimumElementLength: { value: 1e-8, source: PROFILE_SOURCE },
     spanDirectionTolerance: { value: 1e-9, source: PROFILE_SOURCE },
+    semanticHash: '',
+  });
+}
+
+function mec21BendFrameProfile(section) {
+  const ro = section.dimensions.outerDiameter / 2;
+  const ri = ro - section.dimensions.wallThickness;
+  if (!(ri > 0 && ro > ri)) {
+    throw new TypeError('MEC-21 bend annulus geometry is invalid.');
+  }
+  const alpha = (4 / 3)
+    * ((ro ** 3) - (ri ** 3))
+    / (((ro ** 2) + (ri ** 2)) * (ro - ri));
+  const kappa = 1 / alpha;
+  return sealFrameElementProfile({
+    schema: 'fea-linear-frame-element-profile/v1',
+    profileId: 'LINEAR-FRAME-ELEMENT-R1',
+    straightPipeFormulation: 'PIPE_FRAME3D_TIMOSHENKO_V1',
+    shearDeformation: true,
+    shearCorrectionFactorY: {
+      value: kappa,
+      source: 'INTERGRAPH_CAUX_2015_MEC21_ANNULAR_ALPHA',
+    },
+    shearCorrectionFactorZ: {
+      value: kappa,
+      source: 'INTERGRAPH_CAUX_2015_MEC21_ANNULAR_ALPHA',
+    },
+    releaseRule: 'STATIC_CONDENSATION_V1',
+    thermalStrainApproximation: 'UNIFORM_TEMPERATURE_ALPHA_DELTA_T_V1',
+    releaseSingularityTolerance: { value: 1e-12, source: PROFILE_SOURCE },
     semanticHash: '',
   });
 }

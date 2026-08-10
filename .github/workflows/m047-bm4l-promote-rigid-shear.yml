@@ -1,0 +1,93 @@
+name: M047 promote BM4_L rigid shear
+
+on:
+  push:
+    branches: [agent/m047-bm4l-fresh-qualification]
+    paths: ['.github/workflows/m047-bm4l-promote-rigid-shear.yml']
+
+permissions:
+  contents: write
+
+jobs:
+  promote:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: agent/m047-bm4l-fresh-qualification
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+      - run: npm ci
+      - name: Apply qualified rigid shear formulation
+        shell: python
+        run: |
+          from pathlib import Path
+
+          p=Path('src/core/fea-benchmarks/caesar-accdb-linear-solve.js')
+          t=p.read_text()
+          old="profile: isCaesarStraightPipeSpan(input.kind) ? caesarStraightPipeFrameProfile() : frameProfile(),"
+          new="profile: usesCaesarPipeShearProfile(input.kind) ? caesarStraightPipeFrameProfile() : frameProfile(),"
+          if t.count(old)!=1: raise SystemExit(f'frame profile call count={t.count(old)}')
+          t=t.replace(old,new,1)
+          old="""function isCaesarStraightPipeSpan(kind) {
+            return kind === 'FRAME' || kind === 'BEND_INCOMING_STRAIGHT';
+          }
+
+          function caesarStraightPipeFrameProfile() {"""
+          new="""function isCaesarStraightPipeSpan(kind) {
+            return kind === 'FRAME' || kind === 'BEND_INCOMING_STRAIGHT';
+          }
+
+          function usesCaesarPipeShearProfile(kind) {
+            return isCaesarStraightPipeSpan(kind) || kind === 'RIGID';
+          }
+
+          function caesarStraightPipeFrameProfile() {"""
+          if t.count(old)!=1: raise SystemExit(f'helper site count={t.count(old)}')
+          t=t.replace(old,new,1)
+          old='Physical straight pipe spans (FRAME and BEND_INCOMING_STRAIGHT) use the CAESAR straight-pipe transverse-shear effective area A/2, mapped to the qualified Timoshenko kernel as kappa=0.5; bend arcs, reducers and rigids remain separately governed.'
+          new='Physical straight pipe spans (FRAME and BEND_INCOMING_STRAIGHT) use the CAESAR straight-pipe transverse-shear effective area A/2, mapped to the qualified Timoshenko kernel as kappa=0.5; RIGID uses the same pipe shear matrix on its separately governed 10x-wall artificial section; bend arcs and reducers remain separately governed.'
+          if t.count(old)!=1: raise SystemExit(f'limitation site count={t.count(old)}')
+          p.write_text(t.replace(old,new,1))
+
+          p=Path('src/core/linear-fea-rigid-element/rigid-element.js')
+          t=p.read_text()
+          old="ruleId: 'RIGID_10X_WALL_SEPARATE_WEIGHT_V1',"
+          new="ruleId: 'RIGID_10X_WALL_PIPE_SHEAR_SEPARATE_WEIGHT_V1',"
+          if t.count(old)!=1: raise SystemExit(f'rigid rule id count={t.count(old)}')
+          t=t.replace(old,new,1)
+          old='''    length: accepted.length,
+              shearDeformation: false,
+            }).matrix;'''
+          new='''    length: accepted.length,
+              shearDeformation: true,
+              shearCorrectionFactorY: 0.5,
+              shearCorrectionFactorZ: 0.5,
+            }).matrix;'''
+          if t.count(old)!=1: raise SystemExit(f'rigid matrix count={t.count(old)}')
+          p.write_text(t.replace(old,new,1))
+      - name: Validate authority and reusable mechanics
+        run: |
+          node --check src/core/fea-benchmarks/caesar-accdb-linear-solve.js
+          node --check src/core/linear-fea-rigid-element/rigid-element.js
+          node scripts/lfea-m047-caesar-rigid-shear-authority-check.mjs
+          node scripts/lfea-m047-caesar-straight-pipe-shear-authority-check.mjs
+          node scripts/lfea-m047-mec21-bend-shear-authority-check.mjs
+          node scripts/lfea-b3.1-frame-element-check.mjs
+          node scripts/lfea-b3.22-rigid-element-authority-check.mjs
+          node scripts/lfea-b3.2-piping-component-check.mjs
+          node scripts/lfea-b3.3-solver-check.mjs
+          node scripts/lfea-b3.4-recovery-check.mjs
+          npm run check:core-fea
+      - name: Publish mechanics and retire promoter
+        run: |
+          git config user.name github-actions[bot]
+          git config user.email 41898282+github-actions[bot]@users.noreply.github.com
+          rm .github/workflows/m047-bm4l-promote-rigid-shear.yml
+          git add src/core/fea-benchmarks/caesar-accdb-linear-solve.js src/core/linear-fea-rigid-element/rigid-element.js .github/workflows/m047-bm4l-promote-rigid-shear.yml
+          git commit -m "qualify CAESAR rigid transverse shear"
+          git push origin HEAD:agent/m047-bm4l-fresh-qualification

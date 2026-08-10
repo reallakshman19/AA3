@@ -14,25 +14,25 @@ jobs:
     runs-on: windows-2022
     timeout-minutes: 35
     steps:
-      - name: Checkout retained implementation commit
+      - name: Checkout retained implementation and authority commit
         uses: actions/checkout@v4
         with:
-          ref: b03350a11c5e44791c815830cedd5627fbe63ea4
+          ref: 6872d024ca51eb073c6d30279fa8fab5c984a358
           fetch-depth: 1
 
       - name: Record implementation commit
         shell: pwsh
         run: |
           $sha=(git rev-parse HEAD).Trim()
-          if ($sha -ne 'b03350a11c5e44791c815830cedd5627fbe63ea4') { throw "Unexpected implementation commit $sha" }
+          if ($sha -ne '6872d024ca51eb073c6d30279fa8fab5c984a358') { throw "Unexpected implementation commit $sha" }
           "BM4L_IMPLEMENTATION_SHA=$sha" | Out-File -FilePath $env:GITHUB_ENV -Append -Encoding utf8
           $sha | Out-File artifacts-implementation-sha.txt -Encoding ascii
 
-      - name: Checkout pinned Common source
+      - name: Checkout pinned Common source and CAESAR reports
         uses: actions/checkout@v4
         with:
           repository: reallaksh19/Common
-          ref: 45d51ea18624f5775805f399110c1738301c0d90
+          ref: 179c4831cf521cf797c13699cfbbd118315c9244
           path: _common
           fetch-depth: 1
 
@@ -69,16 +69,24 @@ jobs:
           $accdb = Join-Path $extract 'BM4_L.ACCDB'
           if ((Get-FileHash -Algorithm SHA256 $accdb).Hash.ToLowerInvariant() -ne '64c05a50e9ed0452622ff5880335460486f24ac8e6adecc9a300b549c9aa82f8') { throw 'ACCDB custody mismatch.' }
           "BM4L_ACCDB=$accdb" | Out-File -FilePath $env:GITHUB_ENV -Append -Encoding utf8
+          Copy-Item '_common/LFEA/BM4/Miscdata_BM4_L.txt' artifacts/Miscdata_BM4_L.txt
+          Copy-Item '_common/LFEA/BM4/Loadcasereport_BM4_L.txt' artifacts/Loadcasereport_BM4_L.txt
 
       - name: Verify retained profile authority
         shell: pwsh
         run: |
           $ErrorActionPreference = 'Stop'
           $profile = Get-Content benchmarks/LFEA/CAESAR_ACCDB/bm4l-validation.profile.json -Raw | ConvertFrom-Json
-          if ($profile.linearSolve.b31jSmooth90FlexibilityCorrection.enabled -ne $true) { throw 'Retained smooth-90 authority is not enabled.' }
-          if ([string]$profile.linearSolve.b31jSmooth90FlexibilityCorrection.authorityStatus -ne 'RESOLVED') { throw 'Retained smooth-90 authority is not resolved.' }
-          if (@($profile.configurationAuthority.unresolvedSettings | Where-Object setting -eq 'B31J_SMOOTH_90_CORRECTION').Count -ne 0) { throw 'Smooth-90 remains in unresolved settings.' }
-          if ([string]$profile.linearSolve.thermalExpansion.authorityStatus -ne 'PROVISIONAL' -or [string]$profile.linearSolve.thermalExpansion.source -notmatch '\[GUESSED\]') { throw 'Thermal authority must remain provisional/[GUESSED].' }
+          if ($profile.linearSolve.b31jSmooth90FlexibilityCorrection.enabled -ne $true -or [string]$profile.linearSolve.b31jSmooth90FlexibilityCorrection.authorityStatus -ne 'RESOLVED') { throw 'Retained smooth-90 authority is not resolved/enabled.' }
+          if ([string]$profile.linearSolve.thermalExpansion.authorityStatus -ne 'RESOLVED') { throw 'Thermal authority is not RESOLVED.' }
+          if ([string]$profile.linearSolve.thermalExpansion.source -notmatch '\[DERIVED\].*Miscdata_BM4_L\.txt.*T1_TOTAL_STRAIN=0\.0012') { throw 'Thermal authority source does not bind to the CAESAR Misc report.' }
+          $expectedAlpha = 0.0012 / 99.0
+          if ([math]::Abs([double]$profile.linearSolve.thermalExpansion.coefficientPerKelvin - $expectedAlpha) -gt 1e-15) { throw 'T1-equivalent thermal coefficient drift.' }
+          if (@($profile.configurationAuthority.unresolvedSettings | Where-Object setting -eq 'THERMAL_EXPANSION_STRAIN').Count -ne 0) { throw 'Thermal strain remains unresolved.' }
+          foreach ($id in @('L2','L3','L4','L5','L6')) {
+            $case = $profile.configurationAuthority.layers.loadCase.cases.$id
+            if ([string]$case.FLEXIBILITY_ELASTIC_MODULUS -ne 'EC') { throw "$id does not resolve FLEXIBILITY_ELASTIC_MODULUS=EC." }
+          }
 
       - name: Run retained six-case baseline
         shell: pwsh
@@ -98,30 +106,38 @@ jobs:
           $ErrorActionPreference = 'Stop'
           $report = Get-Content artifacts/retained-report.json -Raw | ConvertFrom-Json
           if ($report.source.sha256 -ne '64c05a50e9ed0452622ff5880335460486f24ac8e6adecc9a300b549c9aa82f8') { throw 'Report source hash mismatch.' }
-          $expectedTotals=[ordered]@{L2=243;L3=120;L4=126;L5=132;L6=87;L14=120}
+          $expected=[ordered]@{
+            L2=[ordered]@{r=3;d=130;e=110;total=243}
+            L3=[ordered]@{r=2;d=41;e=72;total=115}
+            L4=[ordered]@{r=5;d=56;e=65;total=126}
+            L5=[ordered]@{r=1;d=49;e=75;total=125}
+            L6=[ordered]@{r=3;d=58;e=26;total=87}
+            L14=[ordered]@{r=2;d=41;e=72;total=115}
+          }
           $actual=[ordered]@{}; $grand=0
-          foreach($id in $expectedTotals.Keys){
+          foreach($id in $expected.Keys){
             $case=$report.qualification.cases|Where-Object caseId -eq $id
             $fails=@($case.comparison.rows|Where-Object status -eq 'FAIL')
             $r=@($fails|Where-Object{ $_.entityKind-eq'NODE' -and $_.quantity-in@('FORCE','MOMENT') }).Count
             $d=@($fails|Where-Object{ $_.entityKind-eq'NODE' -and $_.quantity-in@('DISPLACEMENT','ROTATION') }).Count
             $e=@($fails|Where-Object{ $_.entityKind-eq'ELEMENT' -and $_.quantity-like'GLOBAL_END_*' }).Count
             $total=$r+$d+$e
-            $actual[$id]=[ordered]@{restraint=$r;displacementRotation=$d;elementEnd=$e;total=$total;equilibrium=$report.mechanics.cases.$id.recoveredEquilibrium}
-            if($total-ne$expectedTotals[$id]){ throw "Retained total drift in ${id}: expected $($expectedTotals[$id]), actual $total" }
+            $x=$expected[$id]
+            if($r-ne$x.r -or $d-ne$x.d -or $e-ne$x.e -or $total-ne$x.total){ throw "Retained count drift in ${id}: $r/$d/$e=$total" }
             if($report.mechanics.cases.$id.recoveredEquilibrium.status -eq 'FAIL'){ throw "Recovered equilibrium failed in $id" }
+            $actual[$id]=[ordered]@{restraint=$r;displacementRotation=$d;elementEnd=$e;total=$total;equilibrium=$report.mechanics.cases.$id.recoveredEquilibrium}
             $grand += $total
           }
-          if($grand -ne 828){ throw "Retained targeted total drift: $grand" }
+          if($grand -ne 811){ throw "Retained targeted total drift: $grand" }
           [ordered]@{
-            schema='lfea-m047-retained-baseline/v1'
+            schema='lfea-m047-retained-baseline/v2'
             implementationSha=$env:BM4L_IMPLEMENTATION_SHA
             sourceSha256=$report.source.sha256
             profileId=$report.profileId
-            retainedCorrection='CAESAR14_B31J_SMOOTH90_1_3_OVER_H'
+            retainedCorrections=@('CAESAR14_B31J_SMOOTH90_1_3_OVER_H','CAESAR14_MISC_T1_TOTAL_STRAIN_0_0012','CAESAR14_LOAD_CASE_ELASTIC_MODULUS_EC')
             targetedFailureTotal=$grand
             cases=$actual
-            acceptanceBoundary='L3/L5/L14 remain regression-only while thermal expansion is PROVISIONAL/[GUESSED].'
+            acceptanceBoundary='Thermal T1 and load-case EC authority are source-resolved. Remaining qualification is mechanics/root-cause work; no coefficient fitting is permitted.'
           } | ConvertTo-Json -Depth 20 | Tee-Object -FilePath artifacts/retained-baseline.json
 
       - name: Upload retained baseline evidence

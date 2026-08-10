@@ -6,7 +6,7 @@
 - **Source issue:** #1015 — `LAFEA UI update`
 - **Pull request:** #1016 — draft
 - **Branch:** `agent/lafea-appendix-a-workreport`
-- **Current stage:** Stage 5 complete; next implementation stage pending
+- **Current stage:** Stage 6 — analysis profile/settings UX in progress
 - **Last updated:** 2026-08-10
 - **CI constraint:** Do not add GitHub Actions workflows or workflow-based CI gates. Use existing repository/local checks where available.
 
@@ -87,17 +87,11 @@ T6 area uses 2D triangular quadrature; curved-edge perimeter uses 1D Gauss-Legen
 - Guided reason pills and Run tooltips now display human-readable engineering guidance.
 - Canonical machine reason codes remain unchanged in orchestration/workflow state; translation occurs only in the view layer.
 
-**Examples**
-
-- `SOURCE_DOCUMENT_REQUIRED` -> `Import or create a valid source document.`
-- `CANONICAL_MODEL_NOT_CURRENT` -> `The canonical analysis model is not current.`
-- `ANALYSIS_MESH_WARNING_REVIEW_REQUIRED` -> `Review the retained mesh warning before authorization.`
-
 **Validation**
 
 - Inspected the full PR diff.
 - Confirmed no `.github/workflows/*` path was touched.
-- Confirmed release remains NOT QUALIFIED because readiness still fails closed until authoritative release-record binding is implemented.
+- Confirmed release remains NOT QUALIFIED until authoritative release-record binding is implemented.
 
 ### Stage 5 — Guided workflow truthfulness — COMPLETE
 
@@ -109,54 +103,54 @@ T6 area uses 2D triangular quadrature; curved-edge perimeter uses 1D Gauss-Legen
 
 **Behavior changed**
 
-- `ANALYSIS_PROFILE` is no longer COMPLETE merely because a document exists.
-- Profile completion now requires lifecycle initialization, a non-empty lifecycle `profileId`, and `lifecycleBinding.status === 'CURRENT'`.
-- Materials/Sections, Restraints/BCs, and Loads/Cases now use stage-specific governed collection checks rather than unconditional READY.
-- Generic workflow steps that are genuinely not represented by a stage contract are explicitly COMPLETE with `WORKFLOW_STEP_NOT_APPLICABLE` rather than falsely READY.
+- Analysis Profile no longer completes from document presence alone; it requires lifecycle initialization, a non-empty profile ID, and CURRENT source binding.
+- Materials/Sections, Restraints/BCs, and Loads/Cases use stage-specific governed collection checks.
+- Generic workflow steps not represented by a stage contract are explicit COMPLETE/N/A rather than falsely READY.
 
-**Stage-specific rules introduced**
+**Stage-specific rules**
 
-- **LAFEA.1:** materials -> `materials`; loads -> `loadCases`; restraints/BC generic step -> N/A.
-- **LAFEA.2:** loads/cases -> `screeningCases`; materials and restraints generic steps -> N/A.
-- **LAFEA.3/4:** materials -> `materials`; restraints -> `constraints`; loads -> `loadCases`.
-- **LAFEA.5:** materials -> `shellTemplate.materials`; restraints -> `shellTemplate.constraints`; loads -> `loadCaseMappings`.
-- **LAFEA.6:** materials/load cases are checked if a document is present; generic restraints step is N/A, while execution remains independently blocked because the engine is not implemented.
-
-**Examples**
-
-- LAFEA.1 with `materials: []` -> Materials/Sections BLOCKED with `MATERIALS_REQUIRED`.
-- LAFEA.1 with no lifecycle -> Analysis Profile BLOCKED with `LIFECYCLE_NOT_INITIALIZED`.
-- LAFEA.3 with `constraints: []` -> Restraints/BCs BLOCKED with `BOUNDARY_CONDITIONS_REQUIRED`.
-- LAFEA.1 restraints/BC generic step -> COMPLETE/N/A instead of READY.
+- **LAFEA.1:** `materials`, `loadCases`; generic restraints/BC step N/A.
+- **LAFEA.2:** `screeningCases`; generic materials/restraints steps N/A.
+- **LAFEA.3/4:** `materials`, `constraints`, `loadCases`.
+- **LAFEA.5:** `shellTemplate.materials`, `shellTemplate.constraints`, `loadCaseMappings`.
+- **LAFEA.6:** `materials`, `loadCases`; generic restraints step N/A; execution remains separately unsupported.
 
 **Validation**
 
-- Compared the new rules with `lafea-stage-input-descriptors.js` collection contracts and the LAFEA.1 canonical fixture.
-- Added `scripts/lafea-ui-workflow-truthfulness-check.mjs` with direct assertions for LAFEA.1 and LAFEA.3 workflow behavior.
-- Verified PR changed paths contain no `.github/workflows/*` file.
-- The local regression script has **not been executed in this environment** because there is no local repository checkout and outbound GitHub cloning is unavailable. This is recorded rather than presenting an unexecuted check as PASS.
+- Cross-checked stage collection rules against `lafea-stage-input-descriptors.js` and the LAFEA.1 canonical fixture.
+- Added a direct Node regression script for workflow truthfulness.
+- Script not executed here because no local checkout/network clone is available; no false PASS is recorded.
+- No workflow file added.
 
-**Remaining risk**
+### Stage 6 — Analysis profile/settings UX — IN PROGRESS
 
-- These are workflow-readiness checks, not full semantic validation of every entity. Canonical model/preparation/authorization layers remain responsible for deeper engineering validity.
+**Source-contract finding before implementation**
 
-## Current PR changed paths after Stage 5
+The audit text implied that LAFEA.1 source JSON contains code basis, allowable value, load-combination factors, and stress-classification method. Inspection of the actual `src/core/local-stress/source-model.js` closed source contract shows that LAFEA.1 instead contains fields such as `qualificationProfile`, `resultRequests`, `thicknessBasis`, `units`, materials/loads, and limitations. The contract does **not** declare a governing code/allowable/load-combination field.
 
-- `agents/PRXXX_workreport.md`
-- `scripts/lafea-ui-workflow-truthfulness-check.mjs`
-- `src/workspace/lafea-guided-workflow-view.js`
-- `src/workspace/lafea-guided-workflow.js`
-- `src/workspace/lafea-workbench-orchestration-projection.js`
-- `src/workspace/lafea-workbench-reason-labels.js`
-- `src/workspace/lafea-workbench-view.js`
+This matters because the UI must not invent engineering settings that the source contract does not own.
 
-No workflow file is present.
+**Planned scope**
+
+1. Add a read-only `Analysis profile and settings` card with a dedicated guided target.
+2. Move the `ANALYSIS_PROFILE` guided navigation target from the source card to this new profile card.
+3. Show only real, retained information: lifecycle profile ID, lifecycle binding status, source schema/model identity/version, formulation when present, qualification-profile identity, thickness policy, requested analyses/load cases, unit basis, and retained limitations.
+4. Explicitly state when governing code/allowable is **not declared by the active stage source contract**; do not infer it from solver results or unrelated evidence.
+5. Keep the card read-only. No profile/settings mutation will be introduced in this stage.
+
+**Examples**
+
+- LAFEA.1: show `qualificationProfile.identity`, `thicknessBasis.policy`, `resultRequests.requestedAnalyses`, units, lifecycle profile/binding, and a clear `Code/allowable basis: Not declared by this stage source contract` statement.
+- LAFEA.3: show `formulation`, lifecycle profile/binding, qualification profile, requested load-case IDs, units, and limitations.
+
+**Validation planned**
+
+- Static diff review against the closed LAFEA.1 source schema and LAFEA.3 fixtures.
+- Add a repository-local view-model check if useful; do not wire it to GitHub Actions.
+- Confirm guided `ANALYSIS_PROFILE` navigation resolves to the new profile card.
+- Confirm no workflow files are touched.
 
 ## Future roadmap
-
-### Stage 6 — Analysis settings/profile UX
-
-Add a read-only settings/profile card exposing only settings that are actually present in the active stage/document contract. Do not invent a code basis or allowable field if that stage source does not define one. Governed editing comes later only with explicit invalidation semantics.
 
 ### Stage 7 — Authoritative release-record binding
 

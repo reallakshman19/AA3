@@ -10,6 +10,7 @@ on:
       - 'scripts/lfea-caesar-accdb-*.mjs'
       - 'scripts/lfea-caesar-accdb-export.ps1'
       - 'scripts/lfea-bm4l-root-cause-report.mjs'
+      - 'scripts/lfea-m047-bm4l-recovery-proof.mjs'
       - 'scripts/lfea-m047-bm4l-root-cause-diagnostics.mjs'
       - 'src/core/fea-benchmarks/**'
       - 'src/core/linear-fea-*/**'
@@ -44,11 +45,21 @@ jobs:
         shell: pwsh
         run: npm ci
 
-      - name: Syntax-check diagnostic scripts
+      - name: Syntax-check qualification code
         shell: pwsh
         run: |
           node --check scripts/lfea-bm4l-root-cause-report.mjs
+          node --check scripts/lfea-m047-bm4l-recovery-proof.mjs
           node --check scripts/lfea-m047-bm4l-root-cause-diagnostics.mjs
+          node --check src/core/fea-benchmarks/caesar-accdb-linear-solve.js
+
+      - name: Run evidence instrumentation regressions
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          node scripts/lfea-b3.3-solver-check.mjs
+          node scripts/lfea-b3.4-recovery-check.mjs
+          node scripts/lfea-b3.6-sparse-assembly-check.mjs
 
       - name: Fetch and verify pinned BM4_L source
         id: source
@@ -204,7 +215,7 @@ jobs:
             throw "Solver actual package source hash $($actual.sourceAccdbSha256) does not equal governed expected $env:BM4L_ACCDB_SHA256"
           }
 
-      - name: Build root-cause evidence
+      - name: Build root-cause and recovery evidence
         if: steps.ace.outputs.available == 'true' && steps.ace.outputs.source_authorized == 'true'
         shell: pwsh
         run: |
@@ -217,8 +228,11 @@ jobs:
             --actual artifacts/bm4l/bm4l-actual.json `
             --report artifacts/bm4l/bm4l-report.json `
             --out artifacts/bm4l/bm4l-diagnostics.json
+          node scripts/lfea-m047-bm4l-recovery-proof.mjs `
+            --actual artifacts/bm4l/bm4l-actual.json `
+            --out artifacts/bm4l/bm4l-recovery-proof.json
 
-      - name: Run reusable mechanics regressions
+      - name: Run full reusable mechanics regressions
         if: steps.ace.outputs.available == 'true' && steps.ace.outputs.source_authorized == 'true'
         shell: pwsh
         run: |
@@ -239,3 +253,17 @@ jobs:
           path: artifacts/bm4l
           if-no-files-found: error
           retention-days: 14
+
+      - name: Enforce governed source/provider gate
+        if: always()
+        shell: pwsh
+        env:
+          ACE_AVAILABLE: ${{ steps.ace.outputs.available }}
+          SOURCE_AUTHORIZED: ${{ steps.ace.outputs.source_authorized }}
+        run: |
+          if ($env:ACE_AVAILABLE -ne 'true') {
+            throw 'BLOCKED: Microsoft.ACE.OLEDB.12.0 is unavailable; governed BM4_L solve was not run.'
+          }
+          if ($env:SOURCE_AUTHORIZED -ne 'true') {
+            throw 'BLOCKED: governed BM4_L ACCDB hash authority is unresolved; solve was not run.'
+          }

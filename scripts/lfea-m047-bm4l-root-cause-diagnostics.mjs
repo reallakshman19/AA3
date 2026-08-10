@@ -4,6 +4,7 @@ import { readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { buildBm4lCommonReportParity } from './lfea-m047-bm4l-common-report-parity.mjs';
+import { buildBm4lTeeStiffnessAuthority } from './lfea-m047-bm4l-tee-stiffness-authority.mjs';
 
 function argumentMap(argv) {
   const result = new Map();
@@ -122,6 +123,7 @@ try {
 
   const diagnostics = JSON.parse(readFileSync(outPath, 'utf8'));
   const commonReportParity = await buildBm4lCommonReportParity(actual, report);
+  const teeStiffnessAuthority = buildBm4lTeeStiffnessAuthority();
   const source = Object.freeze({
     ...diagnostics.source,
     actualPath,
@@ -139,10 +141,16 @@ try {
 
   writeFileSync(
     outPath,
-    `${JSON.stringify({ ...diagnostics, source, diagnosticsInputProjection, commonReportParity }, null, 2)}\n`,
+    `${JSON.stringify({
+      ...diagnostics,
+      source,
+      diagnosticsInputProjection,
+      commonReportParity,
+      teeStiffnessAuthority,
+    }, null, 2)}\n`,
     'utf8',
   );
-  console.log(`Augmented BM4_L diagnostics with pinned Common report parity: ${outPath}`);
+  console.log(`Augmented BM4_L diagnostics with pinned Common report parity and tee Kb authority: ${outPath}`);
 } finally {
   rmSync(projectedPath, { force: true });
 }

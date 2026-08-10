@@ -63,17 +63,25 @@ jobs:
             $all=@($names.ToArray() | Sort-Object)
             $relevant=@($all | Where-Object { $_ -match '(?i)(LOAD|CASE|BEND|SIF|FLEX|STATIC|MISC|CONTROL|OPTION|CONFIG|STIFF|CODE)' })
             $details=[ordered]@{}
+            $errors=[System.Collections.Generic.List[object]]::new()
             foreach($table in $relevant){
-              if($table -notmatch '^[A-Za-z0-9_]+$'){ continue }
+              if($table -notmatch '^[A-Za-z0-9_]+$'){
+                $errors.Add([ordered]@{table=$table;reason='UNSAFE_TABLE_NAME_FOR_SCHEMA_QUERY'})
+                continue
+              }
               $rs=New-Object -ComObject ADODB.Recordset
               try {
-                $rs.Open("SELECT TOP 0 * FROM [$table]",$connection,0,1)
-                $cols=[System.Collections.Generic.List[object]]::new()
-                for($i=0;$i -lt $rs.Fields.Count;$i++){
-                  $f=$rs.Fields.Item($i)
-                  $cols.Add([ordered]@{ordinal=$i;name=[string]$f.Name;type=[int]$f.Type;definedSize=[int]$f.DefinedSize})
+                try {
+                  $rs.Open("SELECT * FROM [$table] WHERE 1=0",$connection,0,1)
+                  $cols=[System.Collections.Generic.List[object]]::new()
+                  for($i=0;$i -lt $rs.Fields.Count;$i++){
+                    $f=$rs.Fields.Item($i)
+                    $cols.Add([ordered]@{ordinal=$i;name=[string]$f.Name;type=[int]$f.Type;definedSize=[int]$f.DefinedSize})
+                  }
+                  $details[$table]=$cols.ToArray()
+                } catch {
+                  $errors.Add([ordered]@{table=$table;reason=$_.Exception.Message})
                 }
-                $details[$table]=$cols.ToArray()
               } finally { if($rs.State -ne 0){$rs.Close()}; [void][System.Runtime.InteropServices.Marshal]::ReleaseComObject($rs) }
             }
             [ordered]@{
@@ -82,6 +90,7 @@ jobs:
               allTableCount=$all.Count
               allTables=$all
               relevantTables=$details
+              schemaQueryErrors=$errors.ToArray()
               interpretation='Schema-only catalog; no table values are consumed by this step.'
             } | ConvertTo-Json -Depth 20 | Set-Content -Encoding utf8 artifacts/catalog/authority-catalog.json
           } finally { if($connection.State -ne 0){$connection.Close()}; [void][System.Runtime.InteropServices.Marshal]::ReleaseComObject($connection) }

@@ -11,6 +11,7 @@ on:
       - 'tests/topology-edit-capability-authority.test.mjs'
       - 'tests/topology-edit-endpoint-affordance.test.mjs'
       - 'tests/topology-edit-demo-catalogue-coverage.test.mjs'
+      - 'tests/topology-edit-r1-line-budget-check.test.mjs'
       - 'e2e/topology-edit-real-user-reachability.spec.js'
       - 'scripts/topology-edit-r1-line-budget-check.mjs'
       - 'scripts/topology-edit-real-user-e2e-anti-cheat-check.mjs'
@@ -32,7 +33,7 @@ jobs:
     timeout-minutes: 120
     env:
       TOPOLOGY_EDIT_TARGET_HEAD_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
-      TOPOLOGY_EDIT_R1_BASE_SHA: ddc0d87aa5e1a02cb8b5bf10e71dbb1fb1ce9fb3
+      TOPOLOGY_EDIT_R1_BASE_SHA: ${{ github.event.pull_request.base.sha || '' }}
       PLAYWRIGHT_BROWSER_CHANNEL: chromium
 
     steps:
@@ -53,6 +54,9 @@ jobs:
           set -euo pipefail
           test "$(git rev-parse HEAD)" = "$TOPOLOGY_EDIT_TARGET_HEAD_SHA"
           git diff --check
+
+      - name: Verify line-budget regression contract
+        run: node --test tests/topology-edit-r1-line-budget-check.test.mjs
 
       - name: Enforce new-module physical line budget
         run: node scripts/topology-edit-r1-line-budget-check.mjs

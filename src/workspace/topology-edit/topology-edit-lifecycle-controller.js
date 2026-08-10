@@ -1,7 +1,5 @@
 /** Production coordinator for deterministic draft save, reload, export, and commit. */
 import { deepFreeze, semanticHash } from '../../core/shared-piping-model/index.js';
-import { EventBus } from '../event-bus.js';
-import { EVENT_TOPICS } from '../event-topics.js';
 import { serializeTopologyEditCertifiedJournal } from './topology-edit-certified-journal.js';
 import {
   STORAGE_KEY_EDIT_DRAFT,
@@ -66,14 +64,17 @@ export class TopologyEditLifecycleController {
     storage = globalThis.localStorage,
     downloadText = browserDownload,
     commitPrepared = commitPreparedTopologyEditExport,
-    eventBus = EventBus,
+    publishLfeaSourceContext = () => null,
   } = {}) {
     this.getSession = requiredFunction(getSession, 'getSession');
     this.getViewState = requiredFunction(getViewState, 'getViewState');
     this.storage = storage;
     this.downloadText = requiredFunction(downloadText, 'downloadText');
     this.commitPrepared = requiredFunction(commitPrepared, 'commitPrepared');
-    this.eventBus = requireEventBus(eventBus);
+    this.publishLfeaSourceContextEvent = requiredFunction(
+      publishLfeaSourceContext,
+      'publishLfeaSourceContext',
+    );
   }
 
   session() {
@@ -110,7 +111,7 @@ export class TopologyEditLifecycleController {
       throw new TypeError('TopologyEditLifecycleController: current sessionVersion is invalid.');
     }
     const payload = Object.freeze({ sourceSemanticHash, modelVersion });
-    this.eventBus.publish(EVENT_TOPICS.TOPOLOGY_EDIT_LFEA_SOURCE_CHANGED, payload);
+    this.publishLfeaSourceContextEvent(payload);
     return payload;
   }
 
@@ -198,11 +199,4 @@ export class TopologyEditLifecycleController {
       clearReceipt,
     });
   }
-}
-
-function requireEventBus(value) {
-  if (!value || typeof value.publish !== 'function') {
-    throw new TypeError('TopologyEditLifecycleController: eventBus.publish is required.');
-  }
-  return value;
 }

@@ -1,0 +1,176 @@
+name: M047 BM4_L ACCDB-inferred thermal strain A-B
+
+on:
+  push:
+    branches: [agent/m047-bm4l-root-cause-991]
+    paths:
+      - '.github/workflows/lfea-m047-bm4l-accdb-thermal-strain-ab.yml'
+      - 'scripts/lfea-m047-bm4l-accdb-thermal-strain-audit.mjs'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  thermal-strain-ab:
+    runs-on: windows-2022
+    timeout-minutes: 45
+    steps:
+      - name: Checkout PR branch
+        uses: actions/checkout@v4
+        with:
+          ref: agent/m047-bm4l-root-cause-991
+          fetch-depth: 1
+
+      - name: Checkout pinned BM4_L ACCDB source
+        uses: actions/checkout@v4
+        with:
+          repository: reallaksh19/Common
+          ref: 45d51ea18624f5775805f399110c1738301c0d90
+          path: _common
+          fetch-depth: 1
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci --ignore-scripts
+
+      - name: Install signed Microsoft ACE 2016 x64
+        shell: pwsh
+        run: |
+          $ErrorActionPreference='Stop'
+          $installer=Join-Path $env:RUNNER_TEMP 'accessdatabaseengine_X64.exe'
+          Invoke-WebRequest -Uri 'https://download.microsoft.com/download/3/5/C/35C84C36-661A-44E6-9324-8786B8DBE231/accessdatabaseengine_X64.exe' -OutFile $installer
+          $sig=Get-AuthenticodeSignature $installer
+          if($sig.Status-ne'Valid' -or [string]$sig.SignerCertificate.Subject-notmatch'Microsoft'){throw 'ACE signature check failed.'}
+          $p=Start-Process $installer -ArgumentList '/quiet','/norestart' -Wait -PassThru
+          if($p.ExitCode-notin@(0,3010)){throw "ACE install failed: $($p.ExitCode)"}
+
+      - name: Extract and verify pristine BM4_L.ACCDB
+        shell: pwsh
+        run: |
+          $ErrorActionPreference='Stop'
+          New-Item -ItemType Directory -Force -Path artifacts|Out-Null
+          $zip='_common/LFEA/BM4/BM4_L.zip'
+          if((Get-FileHash -Algorithm SHA256 $zip).Hash.ToLowerInvariant()-ne'978617cba50fa0b1a16c2fa71dc1e0d38e55ac834b191f887d100c6951abd8b9'){throw 'ZIP custody mismatch.'}
+          $dir=Join-Path $env:RUNNER_TEMP 'bm4l-thermal-strain-ab'
+          Expand-Archive $zip $dir -Force
+          $accdb=Join-Path $dir 'BM4_L.ACCDB'
+          if((Get-FileHash -Algorithm SHA256 $accdb).Hash.ToLowerInvariant()-ne'64c05a50e9ed0452622ff5880335460486f24ac8e6adecc9a300b549c9aa82f8'){throw 'ACCDB custody mismatch.'}
+          "BM4L_ACCDB=$accdb"|Out-File $env:GITHUB_ENV -Append -Encoding utf8
+
+      - name: Export ACCDB rows required for thermal inversion
+        shell: powershell
+        run: |
+          $json=& scripts/lfea-caesar-accdb-export.ps1 `
+            -AccdbPath $env:BM4L_ACCDB `
+            -TablesCsv 'INPUT_BASIC_ELEMENT_DATA,INPUT_NODAL_COORDINATES,OUTPUT_DISPLACEMENTS,OUTPUT_LOCAL_ELEMENT_FORCES'
+          $json|Out-File artifacts/thermal-source.json -Encoding utf8
+
+      - name: Infer T1 total strain from BM4_L.ACCDB
+        shell: pwsh
+        run: |
+          node --check scripts/lfea-m047-bm4l-accdb-thermal-strain-audit.mjs
+          node scripts/lfea-m047-bm4l-accdb-thermal-strain-audit.mjs `
+            --raw artifacts/thermal-source.json `
+            --out artifacts/thermal-strain-audit.json `
+            --summary-out artifacts/thermal-strain-audit.md
+
+      - name: Build candidate profile from inferred ACCDB strain
+        shell: pwsh
+        run: |
+          $ErrorActionPreference='Stop'
+          $audit=Get-Content artifacts/thermal-strain-audit.json -Raw|ConvertFrom-Json
+          $strain=[double]$audit.summary.inferredT1TotalThermalStrain
+          if([math]::Abs($strain-0.0012109671166838044)-gt1e-12){throw "Unexpected ACCDB thermal-strain inference: $strain"}
+          $profile=Get-Content benchmarks/LFEA/CAESAR_ACCDB/bm4l-validation.profile.json -Raw|ConvertFrom-Json
+          $profile.linearSolve.thermalExpansion.coefficientPerKelvin=$strain/(120.0-21.0)
+          $profile.linearSolve.thermalExpansion.authorityStatus='RESOLVED'
+          $profile.linearSolve.thermalExpansion.source="[DERIVED_FROM_BM4_L_ACCDB] T1_TOTAL_STRAIN=$strain from OUTPUT_DISPLACEMENTS + OUTPUT_LOCAL_ELEMENT_FORCES axial constitutive inversion; no benchmark failure rows consumed."
+          $profile|ConvertTo-Json -Depth 100|Out-File artifacts/candidate.profile.json -Encoding utf8
+          [ordered]@{inferredStrain=$strain;coefficientPerKelvin=$strain/99.0}|ConvertTo-Json|Out-File artifacts/candidate-thermal-authority.json -Encoding utf8
+
+      - name: Run retained 379 baseline
+        shell: pwsh
+        run: |
+          node scripts/lfea-caesar-accdb-benchmark.mjs `
+            --accdb "$env:BM4L_ACCDB" `
+            --profile benchmarks/LFEA/CAESAR_ACCDB/bm4l-validation.profile.json `
+            --solve-linear true `
+            --solve-cases L2,L3,L4,L5,L6,L14 `
+            --actual-out artifacts/baseline-actual.json `
+            --out artifacts/baseline-report.json `
+            --summary-out artifacts/baseline-summary.md
+
+      - name: Run ACCDB-inferred thermal candidate
+        shell: pwsh
+        run: |
+          node scripts/lfea-caesar-accdb-benchmark.mjs `
+            --accdb "$env:BM4L_ACCDB" `
+            --profile artifacts/candidate.profile.json `
+            --solve-linear true `
+            --solve-cases L2,L3,L4,L5,L6,L14 `
+            --actual-out artifacts/candidate-actual.json `
+            --out artifacts/candidate-report.json `
+            --summary-out artifacts/candidate-summary.md
+
+      - name: Assert primitive signature and summarize A-B
+        shell: pwsh
+        run: |
+          $ErrorActionPreference='Stop'
+          $b=Get-Content artifacts/baseline-report.json -Raw|ConvertFrom-Json
+          $c=Get-Content artifacts/candidate-report.json -Raw|ConvertFrom-Json
+          $ba=Get-Content artifacts/baseline-actual.json -Raw|ConvertFrom-Json
+          $ca=Get-Content artifacts/candidate-actual.json -Raw|ConvertFrom-Json
+          foreach($id in @('L2','L4','L6')){
+            $before=($ba.cases.$id.rows|ConvertTo-Json -Depth 20 -Compress)
+            $after=($ca.cases.$id.rows|ConvertTo-Json -Depth 20 -Compress)
+            if($before-ne$after){throw "$id changed under a thermal-only authority correction."}
+          }
+          $l3=($ca.cases.L3.rows|ConvertTo-Json -Depth 20 -Compress)
+          $l14=($ca.cases.L14.rows|ConvertTo-Json -Depth 20 -Compress)
+          if($l3-ne$l14){throw 'L3 and L14 physical rows diverged under the T1 candidate.'}
+
+          function Counts($report,$id){
+            $case=$report.qualification.cases|Where-Object caseId -eq $id
+            $fails=@($case.comparison.rows|Where-Object status -eq 'FAIL')
+            $r=@($fails|Where-Object{$_.entityKind-eq'NODE' -and $_.quantity-in@('FORCE','MOMENT')}).Count
+            $d=@($fails|Where-Object{$_.entityKind-eq'NODE' -and $_.quantity-in@('DISPLACEMENT','ROTATION')}).Count
+            $e=@($fails|Where-Object{$_.entityKind-eq'ELEMENT' -and $_.quantity-like'GLOBAL_END_*'}).Count
+            return [ordered]@{restraint=$r;deformation=$d;elementEnd=$e;total=$r+$d+$e}
+          }
+          $cases=[ordered]@{};$baselineTotal=0;$candidateTotal=0
+          foreach($id in @('L2','L3','L4','L5','L6','L14')){
+            $bc=Counts $b $id;$cc=Counts $c $id
+            if($b.mechanics.cases.$id.recoveredEquilibrium.status-ne'PASS' -or $c.mechanics.cases.$id.recoveredEquilibrium.status-ne'PASS'){throw "Equilibrium failed in $id"}
+            $cases[$id]=[ordered]@{baseline=$bc;candidate=$cc;delta=$cc.total-$bc.total}
+            $baselineTotal+=$bc.total;$candidateTotal+=$cc.total
+          }
+          if($baselineTotal-ne379){throw "Baseline drift: $baselineTotal"}
+          $authority=Get-Content artifacts/candidate-thermal-authority.json -Raw|ConvertFrom-Json
+          [ordered]@{
+            schema='lfea-m047-bm4l-accdb-thermal-strain-ab/v1'
+            sourceAccdbSha256='64c05a50e9ed0452622ff5880335460486f24ac8e6adecc9a300b549c9aa82f8'
+            inferredT1TotalStrain=$authority.inferredStrain
+            baselineT1TotalStrain=0.0012
+            baselineTargetedTotal=$baselineTotal
+            candidateTargetedTotal=$candidateTotal
+            delta=$candidateTotal-$baselineTotal
+            cases=$cases
+            nonThermalCasesByteIdentical=$true
+            l3L14RowsIdentical=$true
+            equilibrium='PASS_BOTH_VARIANTS_ALL_SIX_CASES'
+          }|ConvertTo-Json -Depth 20|Tee-Object -FilePath artifacts/thermal-strain-ab.json
+
+      - name: Upload ACCDB thermal A-B evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: bm4l-accdb-thermal-strain-ab-${{ github.sha }}
+          path: artifacts/
+          if-no-files-found: error
+          retention-days: 30

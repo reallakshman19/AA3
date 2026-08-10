@@ -1,0 +1,39 @@
+{
+  "schema": "m047-bm4l-bend-bourdon-translation-rejection/v1",
+  "classification": "REJECTED_DOUBLE_COUNTING_HYPOTHESIS",
+  "workflowRunId": 31379196189,
+  "workflowHead": "89aca50c8614d2e7711797c430812d0d21087989",
+  "artifactId": 9059204898,
+  "artifactSha256": "292c97113f4734d2e457cd6462e2d8084b2ae2371d9dce5193b419b4810b77ce",
+  "candidate": {
+    "mechanism": "ADD_UNIFORM_CLOSED_END_PRESSURE_TRANSLATION_TO_EXISTING_BEND_FREE_STATE",
+    "geometry": "epsilon_p * (farPoint-nearPoint)",
+    "benchmarkFitted": false,
+    "productionChangeAuthorized": false
+  },
+  "controls": {
+    "analyticalFreeStateAddition": "PASS",
+    "L2Unchanged": true,
+    "L3Unchanged": true,
+    "L14Unchanged": true,
+    "gravityUnchanged": true,
+    "recoveredEquilibriumAllSixCases": "PASS"
+  },
+  "counts": {
+    "L2": {"before":[1,35,14],"after":[1,35,14]},
+    "L3": {"before":[4,57,97],"after":[4,57,97]},
+    "L4": {"before":[0,36,6],"after":[22,133,233]},
+    "L5": {"before":[3,66,52],"after":[2,58,73]},
+    "L6": {"before":[0,12,14],"after":[8,55,110]},
+    "L14": {"before":[4,57,97],"after":[4,57,97]}
+  },
+  "highSignalL4": [
+    {"name":"20150 UY","beforePercentError":16.2549,"afterPercentError":31.20,"disposition":"WORSE"},
+    {"name":"20330 RZ","beforePercentError":31.5231,"afterPercentError":26.43,"disposition":"SLIGHTLY_BETTER_BUT_NONCONTROLLING"},
+    {"name":"21740 RY","beforePercentError":15.7116,"afterPercentError":179.85,"disposition":"MUCH_WORSE"},
+    {"name":"22260 RY","beforePercentError":10.1905,"afterPercentError":27.88,"disposition":"WORSE"},
+    {"name":"E85 FROM FY","beforePercentError":11.63,"afterPercentError":31.94,"disposition":"WORSE"},
+    {"name":"E85 FROM MZ","beforePercentError":27.36,"afterPercentError":82.70,"disposition":"MUCH_WORSE"}
+  ],
+  "interpretation": "The existing MEC-21 bend pressure free field already owns the translational bend response used by this solver formulation. Adding a second uniform closed-end chord translation strongly over-applies P1 response and is rejected. The documented CAESAR bend translation must not be represented by this additional term on top of the existing field."
+}

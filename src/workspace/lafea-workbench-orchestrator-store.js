@@ -29,7 +29,9 @@ export const LAFEA_RELEASE_STATES = Object.freeze(['RELEASE_NOT_QUALIFIED', 'REL
 const SOURCE_CHANGE_CLASSES = new Set(['MATERIAL_PROPERTY', 'GEOMETRY', 'LOAD_OR_BC', 'MODEL_METADATA']);
 
 export function createLafeaWorkbenchOrchestratorStore(options) {
-  const retained = createRetainedStore(options);
+  const configuration = options ?? {};
+  const { currentCandidateHeadSha = null, ...retainedOptions } = configuration;
+  const retained = createRetainedStore(retainedOptions);
   let retainedState = retained.getState();
   let suppressRetainedPublish = false;
   let orchestratorStatus = null;
@@ -41,7 +43,7 @@ export function createLafeaWorkbenchOrchestratorStore(options) {
     getActiveStageId: () => retainedState.activeStageId,
     invokeRetained,
   });
-  const release = createLafeaWorkbenchReleaseState(stageIds);
+  const release = createLafeaWorkbenchReleaseState(stageIds, { currentCandidateHeadSha });
   const geometry = createLafeaWorkbenchGeometryState(stageIds);
   const mesh = createLafeaWorkbenchMeshState(stageIds, {
     getActiveStageId: () => retainedState.activeStageId,

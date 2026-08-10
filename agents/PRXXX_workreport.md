@@ -1,326 +1,134 @@
-# PR1016 Work Report — LAFEA Appendix A Expert Review
+# PR1016 Work Report — LAFEA Appendix A Expert Review and Implementation
 
 ## Status
 
 - **Repository:** `reallaksh19/Advanced_Analysis`
 - **Source issue:** #1015 — `LAFEA UI update`
-- **Pull request:** #1016 — `Document LAFEA Appendix A expert review and roadmap`
+- **Pull request:** #1016 — draft
 - **Branch:** `agent/lafea-appendix-a-workreport`
-- **Report path:** `agents/PRXXX_workreport.md`
-- **Current stage:** Stage 3 — documentation stage verified
+- **Current stage:** Stage 4 — release/diagnostic UI plumbing in progress
 - **Last updated:** 2026-08-10
-- **CI constraint:** Do not add GitHub Actions workflows or new workflow-based CI gates. Use existing repository/local checks when code implementation begins.
+- **CI constraint:** Do not add GitHub Actions workflows or workflow-based CI gates. Use existing repository/local checks where available.
 
----
+## Purpose
 
-## 1. Purpose
+This report is the persistent engineering log for the Appendix A review and the authorized implementation that follows it. It records tasks completed, the FEA/governance concept behind each change, concrete examples, validation, remaining risks, and the forward roadmap.
 
-This is the persistent engineering work report for the review of **Appendix A — Expert Screening Questions** in issue #1015.
+## Review baseline
 
-The Appendix is implementation-specific and touches more than UI behavior. The review covers FEA governance, canonical engineering identity, mesh chain of custody, convergence, release qualification, viewport lifecycle, and T6 geometric verification.
+Appendix A is directionally strong but five answer-key areas needed correction before implementation:
 
-The purpose of this report is to preserve four things throughout the work:
+- **Q1:** release is hardcoded at view, orchestration, and readiness layers.
+- **Q2:** `-0 -> 0` normalization is good canonical-contract practice, but current `JSON.stringify(-0)` does not produce a distinct JSON numeric representation.
+- **Q6:** stable `sceneRevision` is an identity/selection contract; current code still rebuilds the viewport/model. Lack of flicker mainly follows from synchronous destroy/remount.
+- **Q9:** `executionHash()` is only used in the `QUALIFIED` execution branch, so timeout/failure is not a valid fallback example.
+- **Q10:** 5-point Gauss-Legendre is used for curved-edge perimeter integration; maximum boundary deviation uses separate explicit samples.
 
-1. tasks actually completed;
-2. the engineering concept behind each decision;
-3. concrete examples showing why the decision matters; and
-4. the future implementation roadmap.
+## Engineering concepts retained
 
-This report must be updated as work progresses through later stages.
+### Release authority is not solver success
 
----
-
-## 2. Tasks Completed
-
-### 2.1 Appendix A recovered and reviewed
-
-All ten expert-screening questions from issue #1015 were recovered and evaluated against current repository code rather than accepting the supplied answer key verbatim.
-
-### 2.2 Implementation paths inspected
-
-Primary files checked:
-
-- `src/workspace/lafea-guided-workflow-view.js`
-- `src/workspace/lafea-guided-workflow.js`
-- `src/workspace/lafea-workbench-orchestration-projection.js`
-- `src/workspace/lafea-workbench-readiness.js`
-- `src/workspace/lafea-canonical-sha256.js`
-- `src/workspace/lafea-bucket-01-convergence.js`
-- `src/workspace/lafea-analysis-mesh-custody-controller.js`
-- `src/workspace/lafea-workbench-view.js`
-- `src/workspace/lafea-live-workbench-viewport.js`
-- `src/workspace/lafea-source-workbench-viewport.js`
-- `src/workspace/lafea-workbench-content.js`
-- `src/workspace/lafea-bucket-01-mesh-qualification.js`
-
-### 2.3 Key review findings
-
-Five Appendix answer areas need correction or qualification before they should be used as a strict expert-screening key:
-
-- **Q1 — Release state:** the problem is not only a hardcoded UI label. The orchestration `RELEASE` section is hardcoded blocked and `lafea-workbench-readiness.js` also hardcodes `releaseState: 'RELEASE_NOT_QUALIFIED'`.
-- **Q2 — Negative zero:** explicit `-0 -> 0` normalization is a good canonical-data rule, but current `JSON.stringify(-0)` does not create a distinct JSON numeric representation. The supplied hash-divergence example is therefore not valid for the current serializer.
-- **Q6 — Viewport recreation:** stable `sceneRevision` protects scene identity/selection semantics, but it is not evidence that source primitives are cached. The current viewport/model path is recreated during render. Lack of visible flicker mainly follows from synchronous destroy/remount before browser paint.
-- **Q9 — Execution hash fallback:** `executionHash()` is only used in the `QUALIFIED` execution branch. A timeout/failure is not a valid example for the `canonicalInput.semanticHash` fallback in this function.
-- **Q10 — T6 boundary checks:** 5-point Gauss-Legendre is used for curved-edge perimeter integration. Maximum boundary deviation is sampled separately with `BOUNDARY_SAMPLES = 16`.
-
----
-
-## 3. Engineering Concepts and Examples
-
-### 3.1 Release qualification is a separate engineering authority
-
-**Concept**
-
-Solver success and release authority are different states. A trustworthy FEA system should preserve a chain similar to:
+A trustworthy FEA chain is roughly:
 
 `source -> model -> preparation -> mesh -> authorization -> execution -> results -> release`
 
-Each downstream state must remain tied to current upstream evidence.
+A successful solve cannot by itself imply release. Example: stresses may be below allowable while the retained mesh is stale or independent qualification evidence is missing; release must remain blocked.
 
-**Example**
+### Warnings can remain usable
 
-A solve may complete successfully and produce stresses below allowable, yet release should still remain blocked if the source changed after execution, the retained mesh became stale, convergence evidence is absent, or required approval evidence is missing.
+Preparation may be `WARNING` while `usableForAuthorization === true`. The UI may legitimately show `Preparation: WARNING` and `Authorization: READY` when a reviewed warning is explicitly acceptable.
 
-Therefore a view must never infer `Release = QUALIFIED` directly from `execution.status === 'QUALIFIED'`.
+### Relative GCI near zero
 
-### 3.2 Canonical identity must encode engineering sameness deterministically
+`GCI_fine = Fs * abs((fine - medium) / fine) / (r^p - 1)` becomes ill-conditioned as the fine response approaches zero. Near-zero physical responses require absolute/alternative normalization, not automatic non-convergence.
 
-**Concept**
+### Mesh evidence is custody evidence
 
-Hashes are useful for custody only if semantically identical engineering records produce the same canonical byte stream.
+A qualified mesh is part of engineering lineage. Replacing Mesh A with Mesh B must invalidate/rebuild dependent evidence rather than silently preserving the appearance of one continuous analysis.
 
-The canonicalizer explicitly normalizes `-0` to `0` and sorts keys using deterministic code-unit comparison.
+### Canonical hashes require deterministic semantics
 
-**Example**
+Locale-dependent key ordering is unsuitable for cryptographic identity. `-0` normalization is retained as an explicit canonical-data rule even though current JSON numeric serialization already emits zero without a sign.
 
-A node coordinate produced as IEEE-754 negative zero is physically the same location as positive zero. The canonical data contract should explicitly treat them the same. In current JavaScript JSON serialization they already serialize numerically as `0`, so the explicit normalization is best understood as contract clarity and future-proofing rather than a currently observable JSON hash fix.
+### T6 numerical checks use different parameter spaces
 
-### 3.3 Warning does not necessarily mean unusable
+T6 area uses 2D triangular quadrature. Curved-edge perimeter uses 1D Gauss-Legendre integration of `sqrt((dx/dt)^2 + (dy/dt)^2)`. Boundary deviation is sampled separately.
 
-**Concept**
+## Stage log
 
-Preparation can be `WARNING` while still being approved for authorization through `usableForAuthorization === true`.
+### Stage 1 — Report initialized
 
-**Example**
+- Created branch and persistent report.
+- Recovered and reviewed all 10 Appendix A questions.
+- Recorded answer-key corrections, concepts, examples, and roadmap.
 
-An engineering review may retain a documented warning that is acceptable under the analysis procedure. The correct UI can legitimately show:
+### Stage 2 — PR allocated
 
-- `Preparation: WARNING`
-- `Authorization: READY`
+- Opened draft PR #1016 against `main`.
+- Bound the report to the actual PR and branch.
 
-Turning all warnings into blockers would erase the distinction between "requires review" and "invalid for solve".
+### Stage 3 — Documentation baseline verified
 
-### 3.4 Relative GCI becomes ill-conditioned near a zero response
+- Verified the PR changed only `agents/PRXXX_workreport.md` at that point.
+- Confirmed no `.github/workflows/*` or workflow-based CI gate was added.
 
-**Concept**
+### Stage 4 — Release/diagnostic UI plumbing — IN PROGRESS
 
-The fine-grid relative GCI contains division by the fine-grid response:
+**Planned scope**
 
-`GCI_fine = Fs * abs((fine - medium) / fine) / (r^p - 1)`
+1. Make the guided release badge consume `workflow.releaseQualified` instead of a hardcoded string.
+2. Make the orchestration `RELEASE` section consume `lifecycleReadiness.releaseState` instead of a hardcoded blocked section.
+3. Keep readiness fail-closed: no release promotion will be inferred from `execution.status`, `resultReady`, or `reportQualified` because the workbench is not yet bound to the repository's authoritative template release record.
+4. Replace raw internal reason codes in guided workflow reasons and the Run tooltip with human-readable engineering guidance through one shared formatter.
+5. Preserve the machine reason codes in canonical orchestration state; only presentation text changes.
 
-When `fine` approaches zero, the relative measure can become arbitrarily large or undefined even when the absolute solution is converging correctly.
+**Engineering rationale**
 
-**Example**
+- Presentation must not create engineering authority.
+- A UI should translate machine state without mutating or hiding the underlying canonical reason identity.
+- Release remains NOT QUALIFIED until a real release-record binding exists.
 
-A symmetry-constrained displacement component may physically converge to zero. That quantity should use an absolute tolerance or another physically meaningful normalization instead of being classified as unconverged only because the relative denominator vanishes.
+**Examples**
 
-The current code also guards the medium observation because coarse-grid GCI divides by `medium`.
+- `SOURCE_DOCUMENT_REQUIRED` -> `Import or create a valid source document.`
+- `CANONICAL_MODEL_NOT_CURRENT` -> `The canonical analysis model is not current.`
+- `ANALYSIS_MESH_WARNING_REVIEW_REQUIRED` -> `Review the retained mesh warning before authorization.`
+- A future readiness value `RELEASE_QUALIFIED` will automatically project to a COMPLETE release section and a QUALIFIED badge; absent that value, release remains blocked.
 
-### 3.5 Mesh evidence is chain-of-custody evidence
+**Validation planned**
 
-**Concept**
+- Static inspection of changed-file set and diff.
+- Confirm no workflow files are touched.
+- Confirm orchestration reason codes remain canonical machine values while views display labels.
 
-A mesh is not merely a display object. Once it participates in qualification and authorization, its identity is part of the engineering evidence chain.
+## Future roadmap
 
-`registerAnalysisMeshEvidence()` protects current evidence from conflicting replacement. `recoverAnalysisMeshEvidence()` is a same-evidence recovery/replay path rather than an unrestricted overwrite path.
+### Stage 5 — Guided workflow truthfulness
 
-**Example**
+- Replace `ANALYSIS_PROFILE = COMPLETE when document exists` with a real profile-binding readiness test.
+- Replace unconditional materials/restraints/loads `READY` shortcuts with stage-appropriate content checks.
 
-If Mesh A was authorized for solve, importing Mesh B must not silently overwrite A while preserving the appearance of continuous analysis lineage. Dependent evidence must be invalidated or regenerated under the new mesh identity.
+### Stage 6 — Analysis settings/profile UX
 
-### 3.6 Scene revision is an identity boundary, not a cache guarantee
+- Add a read-only settings/profile card exposing governing code basis, allowables, stress method, load combinations, assumptions, and lifecycle/profile identity.
+- Add governed editing only after invalidation semantics are explicit.
 
-**Concept**
+### Stage 7 — Release-record binding
 
-An unchanged `sceneRevision` says the engineering scene identity is unchanged. It does not automatically mean the renderer skipped reconstruction.
+- Introduce an explicit validated workbench binding to the authoritative `lafea-template-release-record/v2` contract.
+- Verify target stage, source authority, lifecycle profile, and release record validity before projecting `RELEASE_QUALIFIED`.
+- Never substitute report qualification or solver success for release evidence.
 
-**Example**
+### Stage 8 — Viewport lifecycle/performance
 
-Current `render()` destroys the active viewport and synchronously remounts a replacement. The browser normally paints after the task completes, so there is no intermediate blank frame. If future code splits destroy/remount across animation frames, asynchronous tasks, workers, or heavier rendering initialization, visible flicker or avoidable rebuild cost may appear.
+- Measure repeated destroy/remount cost.
+- Add persistent update/refresh semantics if reconstruction is material.
 
-A persistent viewport update/refresh contract would be more robust if rendering cost becomes significant.
+### Stage 9 — Numerical verification UX
 
-### 3.7 Cryptographic canonical ordering must be locale-independent
+- Present mesh levels, observed order, Richardson extrapolation, GCI, and convergence reasons.
+- Present mesh qualification evidence separately for area, perimeter, boundary deviation, midside placement, topology, and Jacobian checks.
 
-**Concept**
+## Validation policy
 
-Canonical hashes cannot depend on linguistic collation rules.
-
-Using code-unit ordering gives a deterministic byte ordering. `localeCompare()` may sort non-ASCII keys differently depending on collation semantics.
-
-**Example**
-
-Keys containing accented Latin, Greek, case variants, or other Unicode text can have linguistic order different from simple code-unit order. A comparator change could alter the canonical JSON and hash without any engineering value changing.
-
-### 3.8 Analysis profile is currently coupled to source/lifecycle state
-
-**Concept**
-
-`ANALYSIS_PROFILE` currently focuses the source card because there is no separate governed profile-authoring surface.
-
-**Example future card**
-
-A standalone profile/settings card should expose at least:
-
-- profile ID/revision;
-- governing code/standard basis;
-- solver assumptions;
-- stress quantity/classification method;
-- allowable basis;
-- load-combination policy;
-- mesh/preparation requirements;
-- lifecycle/binding identity.
-
-If these fields become editable, changes must use governed actions with defined invalidation effects rather than direct UI scalar writes.
-
-### 3.9 Input identity is weaker evidence than retained-result identity
-
-**Concept**
-
-The current priority is:
-
-`result.semanticHash -> result.artifactHash -> canonicalInput.semanticHash -> null`
-
-A result semantic hash best identifies engineering content; an artifact hash identifies the retained serialized artifact; the canonical-input hash proves what was requested to be solved but not the actual retained result.
-
-**Example**
-
-If a `QUALIFIED` execution unexpectedly has no result semantic/artifact hash but does retain the canonical-input hash, traceability to the requested analysis survives, but output identity is degraded. That fallback alone should not be treated as sufficient release-quality evidence.
-
-### 3.10 T6 area and boundary integration use different parameter spaces
-
-**Concept**
-
-A T6 triangle has a two-dimensional parent domain for area integration, while each quadratic boundary edge has a one-dimensional parameter.
-
-For a curved edge:
-
-`x(t) = N1(t)x1 + N2(t)xm + N3(t)x2`
-
-and arc length is:
-
-`L = integral sqrt((dx/dt)^2 + (dy/dt)^2) dt`
-
-Although coordinate derivatives are linear in `t`, their Euclidean norm is generally not polynomial, so a 2-point Gauss rule is not generally exact for curved T6 arc length. A 5-point rule improves perimeter accuracy.
-
-**Important implementation distinction**
-
-- triangular quadrature -> T6 area;
-- 5-point 1D Gauss-Legendre -> curved-edge perimeter;
-- explicit boundary samples -> maximum boundary deviation and related geometric checks.
-
----
-
-## 4. Recommended Appendix A Corrections
-
-1. **Q1:** Extend the expected answer to include the hardcoded readiness-layer `releaseState`, not only the orchestration and view layers.
-2. **Q2:** Describe `-0` normalization as explicit canonical-data normalization/future-proofing. Remove the claim that current `JSON.stringify(-0)` by itself creates a different canonical JSON number.
-3. **Q6:** Replace the unsupported primitive-cache statement with the actual synchronous destroy/remount behavior and the identity role of `sceneRevision`.
-4. **Q9:** Replace the timeout example with a qualified execution whose result hashes are absent but canonical-input semantic identity remains present.
-5. **Q10:** Separate edge/perimeter quadrature from boundary-deviation sampling.
-
----
-
-## 5. Future Roadmap
-
-### Phase A — Correct the expert-screening rubric
-
-- Update Appendix A expected answers for Q1, Q2, Q6, Q9, and Q10.
-- Keep the questions implementation-specific.
-- Explicitly allow technically correct answers that identify defects in the supplied answer key.
-
-### Phase B — Release authority architecture
-
-- Locate the authoritative release record/state already present in lifecycle/application-template layers.
-- Project that authority into workbench readiness.
-- Drive orchestration `RELEASE` from readiness rather than a constant blocked section.
-- Make the guided release badge dynamic only after upstream authority is real.
-- Validate using existing repository check conventions; do not add a GitHub Actions workflow.
-
-### Phase C — Guided workflow truthfulness
-
-- Replace `ANALYSIS_PROFILE = COMPLETE when document exists` with actual profile readiness.
-- Replace unconditional material/restraint/load `READY` shortcuts with stage-appropriate content checks.
-- Preserve warning-vs-block distinctions.
-
-### Phase D — Analysis profile/settings UX
-
-- Add a dedicated read-only analysis profile/settings card first.
-- Show code basis, allowable, stress method, combinations, assumptions, identity and lifecycle status.
-- Add governed editing only after invalidation/custody semantics are explicit.
-
-### Phase E — Viewport lifecycle/performance
-
-- Measure the cost of current destroy/recreate behavior.
-- Introduce persistent viewport update/refresh semantics if reconstruction is material.
-- Preserve `sceneRevision` as an engineering identity contract rather than treating it as an undocumented cache API.
-
-### Phase F — Numerical verification UX
-
-- Add convergence presentation for mesh sizes, observed order, Richardson extrapolation, GCI and blocking reasons.
-- Distinguish near-zero relative-GCI inapplicability from true non-convergence.
-- Present mesh qualification evidence separately for area, perimeter, boundary deviation, midside placement, topology and Jacobian checks.
-
----
-
-## 6. Validation Strategy Under Low Action-Credit Constraint
-
-No new `.github/workflows/*` files, GitHub Actions workflows, or workflow-based CI gates are planned under this authorization.
-
-For implementation stages, validation should prefer:
-
-1. existing targeted `check:lafea-*` scripts;
-2. direct module-level checks for modified controllers/projections;
-3. existing aggregate local checks where practical;
-4. manual lifecycle/evidence transition review for governance-sensitive paths.
-
-A repository-local check script can be added later only if needed by existing project conventions, but it must not be wired into a new GitHub Actions workflow as part of this work.
-
----
-
-## 7. Stage Log
-
-### Stage 1 — 2026-08-10 — Report initialized
-
-**Completed**
-
-- Created branch `agent/lafea-appendix-a-workreport` from `main`.
-- Created `agents/PRXXX_workreport.md`.
-- Recorded the Appendix A review and code paths inspected.
-- Added engineering concepts and examples.
-- Added corrections for Q1/Q2/Q6/Q9/Q10.
-- Added the future roadmap.
-- Recorded the no-new-workflow-CI constraint.
-
-### Stage 2 — 2026-08-10 — PR allocated and report synchronized
-
-**Completed**
-
-- Opened draft PR **#1016** against `main`.
-- Recorded the actual PR number and branch in this report.
-- Reorganized the report so tasks, concepts/examples, corrections, roadmap, and validation constraints are explicit sections.
-- Confirmed this PR remains documentation-only at this stage.
-
-### Stage 3 — 2026-08-10 — Documentation stage verified
-
-**Completed**
-
-- Queried the PR changed-file set after the Stage 2 update.
-- Verified PR #1016 contains exactly one changed path: `agents/PRXXX_workreport.md`.
-- Verified no `.github/workflows/*` path or other CI/workflow file is present in the PR.
-- Confirmed the branch currently contains documentation only; no solver, mesh, lifecycle, UI, or governance implementation has been modified yet.
-- Marked the documentation/control stage complete while leaving the PR in draft for subsequent authorized implementation stages.
-
-**Rule for future stages**
-
-Before each logical implementation stage, add the planned scope and engineering rationale here. After the stage is committed, update this log with files changed, behavior changed, examples/edge cases covered, validation performed, and any remaining risks. Continue to avoid new GitHub Actions workflow gates unless the authorization is explicitly changed.
+No new GitHub Actions workflows or workflow CI gates will be added. Later implementation validation should prefer existing `check:lafea-*` scripts and direct module-level checks. A repository-local check script may be added only if needed by existing project conventions and will not be wired into a new workflow under this authorization.

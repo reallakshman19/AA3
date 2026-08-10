@@ -109,7 +109,14 @@
         "properties": {
           "absolute": { "type": "number", "minimum": 0 },
           "relative": { "type": "number", "minimum": 0 },
-          "scaleFloor": { "type": "number", "minimum": 0 }
+          "scaleFloor": { "type": "number", "minimum": 0 },
+          "comparisonMode": {
+            "enum": [
+              "COMBINED_ABSOLUTE_RELATIVE_SCALE_FLOOR",
+              "LITERAL_RELATIVE_WITH_ZERO_ABSOLUTE"
+            ]
+          },
+          "zeroReferenceAbsolute": { "type": "number", "minimum": 0 }
         }
       }
     },
@@ -169,7 +176,7 @@
       "type": "object",
       "additionalProperties": false,
       "required": [
-        "thermalExpansionCoefficientPerKelvin",
+        "thermalExpansion",
         "gravityAcceleration",
         "bourdonPressureEffects",
         "directionalB31JTeeFlexibility",
@@ -177,10 +184,20 @@
         "reducerCondensation",
         "b31jSmooth90FlexibilityCorrection",
         "bendPressureStiffening",
-        "restraintRepresentation"
+        "restraintRepresentation",
+        "bendAxialShape"
       ],
       "properties": {
-        "thermalExpansionCoefficientPerKelvin": { "type": "number", "exclusiveMinimum": 0 },
+        "thermalExpansion": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["coefficientPerKelvin", "authorityStatus", "source"],
+          "properties": {
+            "coefficientPerKelvin": { "type": "number", "exclusiveMinimum": 0 },
+            "authorityStatus": { "enum": ["RESOLVED", "PROVISIONAL"] },
+            "source": { "type": "string", "minLength": 1 }
+          }
+        },
         "gravityAcceleration": { "type": "number", "exclusiveMinimum": 0 },
         "bourdonPressureEffects": {
           "type": "object",
@@ -223,6 +240,16 @@
           "properties": {
             "mode": { "type": "string", "minLength": 1 },
             "authorityStatus": { "enum": ["RESOLVED", "PROVISIONAL"] },
+            "source": { "type": "string", "minLength": 1 }
+          }
+        },
+        "bendAxialShape": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["enabled", "method", "source"],
+          "properties": {
+            "enabled": { "type": "boolean" },
+            "method": { "const": "DISCRETIZED_CURVED_CENTRELINE_AXIAL_DOF_V1" },
             "source": { "type": "string", "minLength": 1 }
           }
         }

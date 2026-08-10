@@ -9,6 +9,7 @@ import { dirname, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import {
   buildCaesarAccdbBenchmarkPackage,
+  compareBenchmarkResultRows,
   createCaesarAccdbQualificationAdapter,
   normalizeBenchmarkResultRows,
   requiredCaesarAccdbTables,
@@ -29,8 +30,12 @@ export function runCaesarAccdbBenchmark(input) {
   if (input.solveLinear === true && input.actualPath !== null) {
     throw new TypeError('--solve-linear and --actual are mutually exclusive.');
   }
+  const requestedSolveCaseIds = input.solveCaseIds ?? [];
+  const solveCaseIds = requestedSolveCaseIds.length === 0
+    ? benchmarkPackage.cases.map((row) => row.caseId)
+    : requestedSolveCaseIds;
   const actual = input.solveLinear === true
-    ? solveCaesarAccdbLinearBenchmark(benchmarkPackage)
+    ? solveCaesarAccdbLinearBenchmark(benchmarkPackage, solveCaseIds)
     : input.actualPath === null ? null : readJson(input.actualPath, 'actual solver result');
   if (input.actualOutPath !== null) {
     if (actual === null) throw new TypeError('--actual-out requires --solve-linear true or --actual.');
@@ -68,7 +73,8 @@ function qualifyActual(benchmarkPackage, actual) {
   if (actual.sourceAccdbSha256 !== benchmarkPackage.source.sha256) {
     throw new TypeError('Actual solver result is bound to another ACCDB source hash.');
   }
-  const adapter = createCaesarAccdbQualificationAdapter(benchmarkPackage);
+  const actualCaseIds = Object.keys(actual.cases ?? {}).sort(compareText);
+  const adapter = createCaesarAccdbQualificationAdapter(benchmarkPackage, actualCaseIds);
   return runGovernedBenchmarkQualification({
     adapter,
     source: benchmarkPackage,
@@ -116,10 +122,21 @@ function buildReport(benchmarkPackage, qualification, actual) {
       referenceRows: reference.rows,
     };
   });
-  const equilibriumFailure = cases.some((row) => row.equilibrium?.status === 'FAIL');
+  const referenceIntegrityScopeCaseIds = qualification === null
+    ? cases.map((row) => row.caseId)
+    : qualification.caseIds;
+  const referenceIntegrityScope = new Set(referenceIntegrityScopeCaseIds);
+  const equilibriumFailure = cases.some((row) =>
+    referenceIntegrityScope.has(row.caseId) && row.equilibrium?.status === 'FAIL');
+  const actualIntegrityFailure = Object.values(actual?.mechanics?.cases ?? {})
+    .some((row) => row.recoveredEquilibrium?.status === 'FAIL');
+  const derivedCases = buildDerivedLinearCases(benchmarkPackage, actual);
+  const derivedFailure = derivedCases.some((row) => row.comparison.status === 'FAIL');
   const status = equilibriumFailure
     ? 'REFERENCE_INVALID'
-    : qualification === null ? 'REFERENCE_READY' : qualification.status;
+    : actualIntegrityFailure ? 'ACTUAL_INVALID'
+      : qualification === null ? 'REFERENCE_READY'
+        : derivedFailure ? 'FAIL' : qualification.status;
   return Object.freeze({
     schema: 'lfea-caesar-accdb-benchmark-report/v1',
     benchmarkId: benchmarkPackage.benchmarkId,
@@ -135,16 +152,36 @@ function buildReport(benchmarkPackage, qualification, actual) {
     configurationAuthority: benchmarkPackage.profile.configurationAuthority,
     resultFamilies: benchmarkPackage.profile.resultFamilies,
     tolerances: benchmarkPackage.profile.tolerances,
+    referenceIntegrityScopeCaseIds,
     cases,
+    derivedCases,
     qualification,
     mechanics: actual?.mechanics ?? null,
     restraintBasis: buildRestraintBasis(qualification, actual),
     displacementBasis: buildDisplacementBasis(qualification),
     elementBasis: buildElementBasis(qualification),
-    limitations: qualification === null
-      ? ['No LFEA actual-result package was supplied; this run validates and materializes the ACCDB reference only.']
-      : [],
+    limitations: reportLimitations(benchmarkPackage, qualification),
   });
+}
+
+function reportLimitations(benchmarkPackage, qualification) {
+  if (qualification === null) {
+    return ['No LFEA actual-result package was supplied; this run validates and materializes the ACCDB reference only.'];
+  }
+  const qualified = new Set(qualification.caseIds);
+  const deferred = benchmarkPackage.cases.map((row) => row.caseId)
+    .filter((caseId) => !qualified.has(caseId));
+  const limitations = deferred.length === 0
+    ? []
+    : [`Selected ACCDB cases deferred from this solver run: ${deferred.join(', ')}.`];
+  const deferredReferenceFailures = deferred.filter((caseId) =>
+    benchmarkPackage.references[caseId]?.equilibrium?.status === 'FAIL');
+  if (deferredReferenceFailures.length > 0) {
+    limitations.push(
+      `Deferred ACCDB cases failing reference equilibrium: ${deferredReferenceFailures.join(', ')}.`,
+    );
+  }
+  return limitations;
 }
 
 function buildDisplacementBasis(qualification) {
@@ -181,9 +218,94 @@ function comparisonError(row) {
     referenceValue: row.referenceValue,
     actualValue: row.actualValue,
     absoluteError: row.absoluteError,
-    percentError: row.relativeError === null ? null : row.relativeError * 100,
+    percentError: row.rawRelativeError === null ? null : row.rawRelativeError * 100,
+    acceptanceRatioPercent: row.relativeError === null ? null : row.relativeError * 100,
+    comparisonMode: row.tolerance?.comparisonMode ?? null,
+    zeroReferenceAbsolute: row.tolerance?.zeroReferenceAbsolute ?? null,
     scaleFloor: row.tolerance?.scaleFloor ?? null,
   };
+}
+
+function buildDerivedLinearCases(benchmarkPackage, actual) {
+  if (actual === null) return [];
+  const referenceByCase = new Map(benchmarkPackage.cases.map((row) => [
+    row.caseId,
+    benchmarkPackage.references[row.caseId].rows,
+  ]));
+  const results = [];
+  for (const minuend of benchmarkPackage.cases) {
+    if (!actual.cases[minuend.caseId]) continue;
+    const minuendTerms = formulaTerms(minuend.formula);
+    for (const subtrahend of benchmarkPackage.cases) {
+      if (minuend.caseId === subtrahend.caseId) continue;
+      if (!actual.cases[subtrahend.caseId]) continue;
+      const subtrahendTerms = formulaTerms(subtrahend.formula);
+      if (!isProperSubset(subtrahendTerms, minuendTerms)) continue;
+      const addedTerms = minuendTerms.filter((term) => !subtrahendTerms.includes(term));
+      if (addedTerms.length !== 1) continue;
+      const caseId = `DERIVED:${minuend.caseId}-${subtrahend.caseId}`;
+      const referenceRows = subtractCaseRows(
+        caseId,
+        referenceByCase.get(minuend.caseId),
+        referenceByCase.get(subtrahend.caseId),
+      );
+      const actualRows = subtractCaseRows(
+        caseId,
+        actual.cases[minuend.caseId].rows,
+        actual.cases[subtrahend.caseId].rows,
+      );
+      results.push(Object.freeze({
+        caseId,
+        formula: `${minuend.caseId}-${subtrahend.caseId}`,
+        addedTerms: Object.freeze(addedTerms),
+        comparison: compareBenchmarkResultRows({
+          caseId,
+          referenceRows,
+          actualRows,
+          tolerances: benchmarkPackage.profile.tolerances,
+          optionalQuantities: [],
+          exposedQuantities: [...new Set(actualRows.map((row) => row.quantity))],
+        }),
+      }));
+    }
+  }
+  return Object.freeze(results.sort((left, right) => compareText(left.caseId, right.caseId)));
+}
+
+function formulaTerms(formula) {
+  return [...new Set(String(formula).split('+').map((term) => term.trim()).filter(Boolean))].sort(compareText);
+}
+
+function isProperSubset(candidate, target) {
+  return candidate.length < target.length && candidate.every((term) => target.includes(term));
+}
+
+function subtractCaseRows(caseId, minuendRows, subtrahendRows) {
+  const minuend = new Map(minuendRows.map((row) => [caseIndependentRowIdentity(row), row]));
+  const subtrahend = new Map(subtrahendRows.map((row) => [caseIndependentRowIdentity(row), row]));
+  const identities = [...new Set([...minuend.keys(), ...subtrahend.keys()])].sort(compareText);
+  return identities.flatMap((identity) => {
+    const left = minuend.get(identity);
+    const right = subtrahend.get(identity);
+    if (left === undefined || right === undefined) {
+      throw new TypeError(`Derived case ${caseId} has incomplete row coverage at ${identity}.`);
+    }
+    if (left.unit !== right.unit) throw new TypeError(`Derived row ${identity} has incompatible units.`);
+    return [{
+      caseId,
+      entityKind: left.entityKind,
+      entityId: left.entityId,
+      quantity: left.quantity,
+      component: left.component,
+      value: Number(left.value) - Number(right.value),
+      unit: left.unit,
+      required: left.required !== false && right.required !== false,
+    }];
+  });
+}
+
+function caseIndependentRowIdentity(row) {
+  return [row.entityKind, row.entityId, row.quantity, row.component].join(':');
 }
 
 function buildElementBasis(qualification) {
@@ -305,23 +427,36 @@ function parseArguments(argv) {
   }
   const accdbPath = accepted.get('--accdb');
   const profilePath = accepted.get('--profile');
-  if (!accdbPath || !profilePath) throw new TypeError('Usage: --accdb <file.accdb> --profile <profile.json> [--solve-linear true] [--actual <actual.json>] [--actual-out <actual.json>] [--summary-out <summary.md>] [--out <report.json>].');
-  const known = new Set(['--accdb', '--profile', '--solve-linear', '--actual', '--actual-out', '--summary-out', '--out']);
+  if (!accdbPath || !profilePath) throw new TypeError('Usage: --accdb <file.accdb> --profile <profile.json> [--solve-linear true] [--solve-cases L2,L3] [--actual <actual.json>] [--actual-out <actual.json>] [--summary-out <summary.md>] [--out <report.json>].');
+  const known = new Set(['--accdb', '--profile', '--solve-linear', '--solve-cases', '--actual', '--actual-out', '--summary-out', '--out']);
   const unknown = [...accepted.keys()].filter((key) => !known.has(key));
   if (unknown.length > 0) throw new TypeError(`Unknown command arguments: ${unknown.join(', ')}.`);
   const solveLinearValue = accepted.get('--solve-linear');
   if (solveLinearValue !== undefined && !['true', 'false'].includes(solveLinearValue.toLowerCase())) {
     throw new TypeError('--solve-linear must be true or false.');
   }
+  const solveCaseIds = parseCaseIds(accepted.get('--solve-cases'));
+  if (solveCaseIds.length > 0 && solveLinearValue?.toLowerCase() !== 'true') {
+    throw new TypeError('--solve-cases requires --solve-linear true.');
+  }
   return Object.freeze({
     accdbPath,
     profilePath,
     solveLinear: solveLinearValue?.toLowerCase() === 'true',
+    solveCaseIds,
     actualPath: accepted.get('--actual') ?? null,
     actualOutPath: accepted.get('--actual-out') ?? null,
     summaryOutPath: accepted.get('--summary-out') ?? null,
     outPath: accepted.get('--out') ?? null,
   });
+}
+
+function parseCaseIds(value) {
+  if (value === undefined) return Object.freeze([]);
+  const caseIds = value.split(',').map((entry) => entry.trim()).filter(Boolean);
+  if (caseIds.length === 0) throw new TypeError('--solve-cases must contain at least one case ID.');
+  if (new Set(caseIds).size !== caseIds.length) throw new TypeError('--solve-cases contains duplicates.');
+  return Object.freeze(caseIds.sort(compareText));
 }
 
 function writeJson(value, path) {
@@ -347,9 +482,18 @@ function writeRestraintSummary(report, path) {
     `- Installation temperature: ${report.model.installationTemperatureK} K`,
     `- Benchmark status: ${report.status}`,
     `- Boundary: provisional bilateral fixed DOFs; ${caseBoundaries.join('; ')}; lift-off excluded.`,
-    '- Error criterion: combined 10% profile tolerance; percentages use the declared scale floor for near-zero references.',
+    '- Error criterion: literal percentage of each nonzero reference; exactly-zero references use the separately declared absolute tolerance.',
+    ...report.limitations.map((entry) => `- Limitation: ${entry}`),
     '',
   ];
+  for (const [caseId, evidence] of Object.entries(report.mechanics?.cases ?? {})) {
+    const balance = evidence.recoveredEquilibrium;
+    if (balance === undefined) continue;
+    lines.push(
+      `- ${caseId} LFEA recovered-action equilibrium: ${balance.status}; maximum residual ${formatNumber(balance.maximumAbsoluteResidual.forceN)} N / ${formatNumber(balance.maximumAbsoluteResidual.momentNm)} N.m.`,
+    );
+  }
+  lines.push('');
   for (const [caseId, caseBasis] of Object.entries(report.restraintBasis.cases)) {
     lines.push(
       `## ${caseId}`,
@@ -361,7 +505,7 @@ function writeRestraintSummary(report, path) {
     );
     for (const restraint of caseBasis.restraints) {
       for (const component of restraint.exceedingComponents) {
-        lines.push(`| ${restraint.nodeId} | ${component.quantity} | ${component.component} | ${formatNumber(component.referenceValue)} | ${formatNumber(component.actualValue)} | ${component.percentError.toFixed(2)}% | ${component.unit} |`);
+        lines.push(`| ${restraint.nodeId} | ${component.quantity} | ${component.component} | ${formatNumber(component.referenceValue)} | ${formatNumber(component.actualValue)} | ${formatPercent(component.percentError)} | ${component.unit} |`);
       }
     }
     lines.push(
@@ -389,7 +533,7 @@ function writeRestraintSummary(report, path) {
       );
       for (const node of displacementBasis.nodes) {
         for (const component of node.exceedingComponents) {
-          lines.push(`| ${node.nodeId} | ${component.quantity} | ${component.component} | ${formatNumber(component.referenceValue)} | ${formatNumber(component.actualValue)} | ${component.percentError.toFixed(2)}% | ${component.unit} |`);
+          lines.push(`| ${node.nodeId} | ${component.quantity} | ${component.component} | ${formatNumber(component.referenceValue)} | ${formatNumber(component.actualValue)} | ${formatPercent(component.percentError)} | ${component.unit} |`);
         }
       }
       lines.push('');
@@ -406,7 +550,7 @@ function writeRestraintSummary(report, path) {
       );
       for (const element of elementBasis.elements) {
         for (const component of element.exceedingComponents) {
-          lines.push(`| ${element.elementId} | ${component.quantity} | ${component.component} | ${formatNumber(component.referenceValue)} | ${formatNumber(component.actualValue)} | ${component.percentError.toFixed(2)}% | ${component.unit} |`);
+          lines.push(`| ${element.elementId} | ${component.quantity} | ${component.component} | ${formatNumber(component.referenceValue)} | ${formatNumber(component.actualValue)} | ${formatPercent(component.percentError)} | ${component.unit} |`);
         }
       }
       lines.push('');
@@ -422,6 +566,10 @@ function formatNumber(value) {
   if (value === 0) return '0';
   if (Math.abs(value) >= 0.001 && Math.abs(value) < 1e7) return Number(value.toFixed(6)).toString();
   return value.toExponential(6);
+}
+
+function formatPercent(value) {
+  return value === null ? 'absolute-only' : `${value.toFixed(2)}%`;
 }
 
 function writeReport(report, outPath) {

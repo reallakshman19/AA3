@@ -179,6 +179,13 @@ function normalizeToleranceEvidence(value) {
       absolute: finiteNonnegative(row.absolute ?? 0, `${key}.absolute`),
       relative: finiteNonnegative(row.relative ?? 0, `${key}.relative`),
       scaleFloor: finiteNonnegative(row.scaleFloor ?? 0, `${key}.scaleFloor`),
+      comparisonMode: String(
+        row.comparisonMode ?? 'COMBINED_ABSOLUTE_RELATIVE_SCALE_FLOOR',
+      ).trim().toUpperCase(),
+      zeroReferenceAbsolute: finiteNonnegative(
+        row.zeroReferenceAbsolute ?? 0,
+        `${key}.zeroReferenceAbsolute`,
+      ),
     }];
   }));
 }

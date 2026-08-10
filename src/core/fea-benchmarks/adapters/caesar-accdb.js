@@ -6,12 +6,19 @@ import { deepFreeze } from '../../shared-piping-model/immutable.js';
 
 export const CAESAR_ACCDB_ADAPTER_ID = 'CAESAR_ACCDB_DYNAMIC_ADAPTER_V1';
 
-/** Create a qualification adapter whose cases and references came from one ACCDB package. */
-export function createCaesarAccdbQualificationAdapter(benchmarkPackage) {
+/** Create an adapter for an explicit, nonempty subset of ACCDB package cases. */
+export function createCaesarAccdbQualificationAdapter(benchmarkPackage, selectedCaseIds) {
   if (!benchmarkPackage || benchmarkPackage.schema !== 'caesar-accdb-benchmark-package/v1') {
     throw new TypeError('A canonical CAESAR ACCDB benchmark package is required.');
   }
-  const caseIds = Object.freeze(benchmarkPackage.cases.map((row) => row.caseId));
+  const requestedCaseIds = selectedCaseIds ?? benchmarkPackage.cases.map((row) => row.caseId);
+  if (!Array.isArray(requestedCaseIds) || requestedCaseIds.length === 0) {
+    throw new TypeError('At least one ACCDB qualification case ID is required.');
+  }
+  const available = new Set(benchmarkPackage.cases.map((row) => row.caseId));
+  const caseIds = Object.freeze([...new Set(requestedCaseIds.map(String))].sort(compareText));
+  const unknown = caseIds.filter((caseId) => !available.has(caseId));
+  if (unknown.length > 0) throw new TypeError(`Unknown ACCDB qualification cases: ${unknown.join(', ')}.`);
   return Object.freeze({
     adapterId: CAESAR_ACCDB_ADAPTER_ID,
     benchmarkId: benchmarkPackage.benchmarkId,
@@ -36,4 +43,8 @@ export function createCaesarAccdbQualificationAdapter(benchmarkPackage) {
       return reference.rows;
     },
   });
+}
+
+function compareText(left, right) {
+  return String(left) < String(right) ? -1 : String(left) > String(right) ? 1 : 0;
 }

@@ -11,7 +11,13 @@ import { buildDofMap, dofIndexOf } from './dof-map.js';
 import { assembleGlobalSystem } from './assembly.js';
 import { factorizeFreePartition } from './factorization.js';
 import { createFactorizationCache, getOrFactorize } from './reuse-cache.js';
-import { solveCholesky, solveLdlt, subRectangular } from './linear-algebra.js';
+import {
+  matVec,
+  norm2,
+  solveCholesky,
+  solveLdlt,
+  subRectangular,
+} from './linear-algebra.js';
 import { applyDiagonalScalingToVector } from './scaling.js';
 import {
   conditioningReport,
@@ -167,6 +173,97 @@ function solveScaledSystem(factorization, rhs) {
   return applyDiagonalScalingToVector(scaledSolution, factorization.scaling.factors);
 }
 
+/**
+ * Improve a direct solution by repeatedly solving its computed residual with
+ * the same factorization. The iteration count and target are declared solver
+ * policies; the best finite iterate is retained if arithmetic stagnates.
+ */
+function solveRefinedSystem(factorization, matrix, rhs, policies) {
+  const reference = Math.max(norm2(rhs), Number.MIN_VALUE);
+  let currentSolution = solveScaledSystem(factorization, rhs);
+  let currentResidual = freeResidual(factorization, matrix, currentSolution, rhs);
+  let currentRelativeResidual = norm2(currentResidual) / reference;
+  let bestSolution = currentSolution;
+  let bestRelativeResidual = currentRelativeResidual;
+  let bestIteration = 0;
+  const history = [currentRelativeResidual];
+  let completedIterations = 0;
+  for (
+    let iteration = 0;
+    iteration < policies.iterativeRefinementMaximumIterations.value
+      && bestRelativeResidual > policies.iterativeRefinementRelativeTolerance.value;
+    iteration += 1
+  ) {
+    const correction = solveScaledSystem(factorization, currentResidual.map((value) => -value));
+    currentSolution = currentSolution.map((value, index) => value + correction[index]);
+    currentResidual = freeResidual(factorization, matrix, currentSolution, rhs);
+    currentRelativeResidual = norm2(currentResidual) / reference;
+    if (!Number.isFinite(currentRelativeResidual)) break;
+    completedIterations += 1;
+    history.push(currentRelativeResidual);
+    if (currentRelativeResidual < bestRelativeResidual) {
+      bestSolution = currentSolution;
+      bestRelativeResidual = currentRelativeResidual;
+      bestIteration = completedIterations;
+    }
+  }
+  return {
+    solution: bestSolution,
+    evidence: Object.freeze({
+      method: 'DIRECT_RESIDUAL_CORRECTION_BEST_ITERATE_V2',
+      maximumIterations: policies.iterativeRefinementMaximumIterations.value,
+      completedIterations,
+      bestIteration,
+      targetRelativeResidual: policies.iterativeRefinementRelativeTolerance.value,
+      initialRelativeResidual: history[0],
+      finalRelativeResidual: bestRelativeResidual,
+      history: Object.freeze(history),
+    }),
+  };
+}
+
+function freeResidual(factorization, matrix, solution, rhs) {
+  const predicted = factorization.backend === SPARSE_DIRECT_BACKEND_ID
+    ? sparseMultiply(factorization.sparseFreeMatrix, solution)
+    : accurateDenseMatVec(matrix, factorization.m, solution);
+  return predicted.map((value, index) => value - rhs[index]);
+}
+
+/** Compute refinement residuals with product-error compensation without changing result recovery arithmetic. */
+function accurateDenseMatVec(matrix, size, vector) {
+  return Array.from({ length: size }, (_, row) => accurateDenseDot(matrix, size, vector, row));
+}
+
+function accurateDenseDot(matrix, size, vector, row) {
+  let high = 0;
+  let low = 0;
+  for (let column = 0; column < size; column += 1) {
+    const [product, productError] = twoProduct(matrix[row * size + column], vector[column]);
+    const next = high + product;
+    const virtualProduct = next - high;
+    low += productError + (high - (next - virtualProduct)) + (product - virtualProduct);
+    high = next;
+    const normalized = high + low;
+    low -= normalized - high;
+    high = normalized;
+  }
+  return high + low;
+}
+
+function twoProduct(left, right) {
+  const product = left * right;
+  const splitter = 134217729;
+  const leftSplit = splitter * left;
+  const rightSplit = splitter * right;
+  const leftHigh = leftSplit - (leftSplit - left);
+  const rightHigh = rightSplit - (rightSplit - right);
+  const error = ((leftHigh * rightHigh - product)
+    + leftHigh * (right - rightHigh)
+    + (left - leftHigh) * rightHigh)
+    + (left - leftHigh) * (right - rightHigh);
+  return [product, error];
+}
+
 function canonicalEntries(vector, dofMap, nodeIds) {
   const entries = [];
   for (const nodeId of nodeIds) {
@@ -254,19 +351,23 @@ export function compileSolverExecution({ compilation, elementContributions, load
     }),
   );
 
-  const Uf = solveScaledSystem(factorization, Ffree);
+  const denseFreeMatrix = acceptedProfile.backend === SPARSE_DIRECT_BACKEND_ID
+    ? null
+    : subRectangular(assembly.K, assembly.n, assembly.freeIndices, assembly.freeIndices);
+  const refined = solveRefinedSystem(factorization, denseFreeMatrix, Ffree, policies);
+  const Uf = refined.solution;
   assembly.freeIndices.forEach((index, row) => { Ufull[index] = Uf[row]; });
 
-  const residual = residualCheck({
+  const residual = Object.freeze({ ...residualCheck({
     Kff: acceptedProfile.backend === SPARSE_DIRECT_BACKEND_ID
       ? undefined
-      : subRectangular(assembly.K, assembly.n, assembly.freeIndices, assembly.freeIndices),
+      : denseFreeMatrix,
     sparseKff: factorization.sparseFreeMatrix,
     m: assembly.freeIndices.length,
     Uf,
     Ffree,
     policies,
-  });
+  }), iterativeRefinement: refined.evidence });
   const forceEquilibrium = forceEquilibriumCheck({
     model,
     dofMap,

@@ -33,26 +33,29 @@ function multiply({ K, sparseK, n, vector }) {
   return matVec(K, n, vector);
 }
 
-/**
- * Grounded LINEAR_SPRING constraints contribute diagonal stiffness to K, but
- * their `k u` terms are external support actions rather than element-internal
- * nodal resultants. Remove those terms before applying the global rigid-body
- * force/moment identities. Fixed and prescribed reactions remain represented
- * through the element resultants at their constrained nodes.
- */
-function removeGroundedSpringResultants({ model, dofMap, vector, Ufull }) {
-  const result = [...vector];
+/** Build the physical external-plus-support vector used by free-body gates. */
+function externalWithSupportActions({ model, dofMap, KU, Ffull, Ufull }) {
+  const support = new Array(Ffull.length).fill(0);
+  const residual = KU.map((value, index) => value - Ffull[index]);
   let springCount = 0;
   let springForceMagnitude = 0;
   for (const constraint of model.constraints) {
-    if (constraint.behavior !== 'LINEAR_SPRING') continue;
     const index = dofIndexOf(dofMap, constraint.nodeId, constraint.dof);
-    const springResultant = constraint.stiffness * Ufull[index];
-    result[index] -= springResultant;
-    springForceMagnitude += Math.abs(springResultant);
-    springCount += 1;
+    if (constraint.behavior === 'LINEAR_SPRING') {
+      const springAction = -constraint.stiffness * Ufull[index];
+      support[index] += springAction;
+      springForceMagnitude += Math.abs(springAction);
+      springCount += 1;
+    } else {
+      support[index] += residual[index];
+    }
   }
-  return { vector: result, springCount, springForceMagnitude };
+  return {
+    vector: Ffull.map((value, index) => value + support[index]),
+    support,
+    springCount,
+    springForceMagnitude,
+  };
 }
 
 /**
@@ -76,9 +79,9 @@ export function residualCheck({ Kff, sparseKff, m, Uf, Ffree, policies }) {
 /**
  * Section 8.1 "Global force equilibrium": fixed/prescribed reactions are
  * represented by `K U - F` at constrained DOFs, while grounded spring support
- * actions are `-k u` at otherwise-free DOFs. Removing each spring's `k u`
- * contribution from `K U` leaves the element nodal resultants, whose global
- * translational sum is the direct free-body force-balance check.
+ * actions are `-k u` at otherwise-free DOFs. The gate sums those support
+ * actions with the assembled applied loads; unlike `sum(K U)`, this exposes
+ * free-DOF algebraic residuals and is a physical free-body identity.
  */
 export function forceEquilibriumCheck({
   model,
@@ -91,8 +94,8 @@ export function forceEquilibriumCheck({
   policies,
 }) {
   const assembled = multiply({ K, sparseK, n, vector: Ufull });
-  const springAdjusted = removeGroundedSpringResultants({ model, dofMap, vector: assembled, Ufull });
-  const combined = springAdjusted.vector;
+  const external = externalWithSupportActions({ model, dofMap, KU: assembled, Ffull, Ufull });
+  const combined = external.vector;
   let sumX = 0;
   let sumY = 0;
   let sumZ = 0;
@@ -100,10 +103,12 @@ export function forceEquilibriumCheck({
   for (const node of model.nodes) {
     const { force } = nodeVectorAt(combined, dofMap, node.nodeId);
     const { force: applied } = nodeVectorAt(Ffull, dofMap, node.nodeId);
+    const { force: support } = nodeVectorAt(external.support, dofMap, node.nodeId);
     sumX += force.x;
     sumY += force.y;
     sumZ += force.z;
-    referenceMagnitude += Math.hypot(applied.x, applied.y, applied.z);
+    referenceMagnitude += Math.hypot(applied.x, applied.y, applied.z)
+      + Math.hypot(support.x, support.y, support.z);
   }
   const imbalance = Math.hypot(sumX, sumY, sumZ);
   const reference = Math.max(referenceMagnitude, policies.equilibriumAbsoluteForceFloor.value);
@@ -113,8 +118,8 @@ export function forceEquilibriumCheck({
     ...result,
     limitSource: policies.equilibriumRelativeLimit.source,
     imbalance,
-    groundedSpringCount: springAdjusted.springCount,
-    groundedSpringForceMagnitude: springAdjusted.springForceMagnitude,
+    groundedSpringCount: external.springCount,
+    groundedSpringForceMagnitude: external.springForceMagnitude,
   };
 }
 
@@ -133,8 +138,8 @@ export function momentEquilibriumCheck({
   policies,
 }) {
   const assembled = multiply({ K, sparseK, n, vector: Ufull });
-  const springAdjusted = removeGroundedSpringResultants({ model, dofMap, vector: assembled, Ufull });
-  const combined = springAdjusted.vector;
+  const external = externalWithSupportActions({ model, dofMap, KU: assembled, Ffull, Ufull });
+  const combined = external.vector;
   const referenceNodeId = dofMap.nodeOrder[0];
   const referencePosition = model.nodes.find((node) => node.nodeId === referenceNodeId).position;
 
@@ -145,6 +150,11 @@ export function momentEquilibriumCheck({
   for (const node of model.nodes) {
     const { force, moment } = nodeVectorAt(combined, dofMap, node.nodeId);
     const { force: appliedForce, moment: appliedMoment } = nodeVectorAt(Ffull, dofMap, node.nodeId);
+    const { force: supportForce, moment: supportMoment } = nodeVectorAt(
+      external.support,
+      dofMap,
+      node.nodeId,
+    );
     const r = {
       x: node.position.x - referencePosition.x,
       y: node.position.y - referencePosition.y,
@@ -154,7 +164,9 @@ export function momentEquilibriumCheck({
     momentY += (r.z * force.x - r.x * force.z) + moment.y;
     momentZ += (r.x * force.y - r.y * force.x) + moment.z;
     referenceMagnitude += Math.hypot(appliedForce.x, appliedForce.y, appliedForce.z)
-      * Math.hypot(r.x, r.y, r.z) + Math.hypot(appliedMoment.x, appliedMoment.y, appliedMoment.z);
+      * Math.hypot(r.x, r.y, r.z) + Math.hypot(appliedMoment.x, appliedMoment.y, appliedMoment.z)
+      + Math.hypot(supportForce.x, supportForce.y, supportForce.z) * Math.hypot(r.x, r.y, r.z)
+      + Math.hypot(supportMoment.x, supportMoment.y, supportMoment.z);
   }
   const imbalance = Math.hypot(momentX, momentY, momentZ);
   const reference = Math.max(referenceMagnitude, policies.equilibriumAbsoluteMomentFloor.value);
@@ -166,8 +178,8 @@ export function momentEquilibriumCheck({
     imbalance,
     referenceNodeId,
     referenceRule: 'FIRST_CANONICAL_NODE_V1',
-    groundedSpringCount: springAdjusted.springCount,
-    groundedSpringForceMagnitude: springAdjusted.springForceMagnitude,
+    groundedSpringCount: external.springCount,
+    groundedSpringForceMagnitude: external.springForceMagnitude,
   };
 }
 

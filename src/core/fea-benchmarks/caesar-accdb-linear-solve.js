@@ -75,6 +75,7 @@ import {
 } from '../linear-fea-solver/index.js';
 import {
   gatherJointDisplacement12,
+  jointDisplacementToLocal,
   recoverElementEndAction,
 } from '../linear-fea-result-recovery/index.js';
 import { semanticHash } from '../shared-piping-model/canonical-json.js';
@@ -94,14 +95,22 @@ const CELSIUS_TO_KELVIN = 273.15;
 const POSITION_TOLERANCE_M = 1e-7;
 const CAESAR_WELDING_TEE_TYPE = 3;
 
-/** Solve every selected physical case and emit normalized comparison rows plus mechanics evidence. */
-export function solveCaesarAccdbLinearBenchmark(benchmarkPackage) {
+/** Solve an explicit subset of selected physical cases and retain mechanics evidence. */
+export function solveCaesarAccdbLinearBenchmark(benchmarkPackage, selectedCaseIds) {
   requireBenchmarkPackage(benchmarkPackage);
+  const requestedCaseIds = selectedCaseIds ?? benchmarkPackage.cases.map((row) => row.caseId);
+  if (!Array.isArray(requestedCaseIds) || requestedCaseIds.length === 0) {
+    throw new TypeError('At least one ACCDB linear-solve case ID is required.');
+  }
   const solveProfile = benchmarkPackage.profile.linearSolve;
   if (solveProfile === null) throw new TypeError('The ACCDB profile does not declare linearSolve authorities.');
+  const selected = new Set(requestedCaseIds.map(String));
+  const unknown = [...selected].filter((caseId) =>
+    !benchmarkPackage.cases.some((row) => row.caseId === caseId));
+  if (unknown.length > 0) throw new TypeError(`Unknown ACCDB linear-solve cases: ${unknown.join(', ')}.`);
   const cases = {};
   const caseEvidence = {};
-  for (const caseRecord of benchmarkPackage.cases) {
+  for (const caseRecord of benchmarkPackage.cases.filter((row) => selected.has(row.caseId))) {
     const solved = solveCase(benchmarkPackage, caseRecord, solveProfile);
     cases[caseRecord.caseId] = {
       executionSemanticHash: solved.execution.semanticHash,
@@ -121,7 +130,7 @@ export function solveCaesarAccdbLinearBenchmark(benchmarkPackage) {
       cases: caseEvidence,
       limitations: [
         'Restraints are provisionally linearized as bilateral fixed DOFs; the known finite global stiffness is not substituted without file-specific CAESAR formulation authority.',
-        'The model input retains mu=0.3; L19 and L20 resolve to effective mu=0 through the declared load-case authority, so friction and lift-off are excluded for these cases.',
+        'Only cases whose governed effective coefficient of friction is zero are accepted by this linear solver; friction-enabled cases remain reference-only until a nonlinear solver is qualified.',
         'The explicit Bourdon job mode resolves from the individual-file layer because CAESAR existing-job settings are absent from ACCDB exports.',
         'Translation-and-rotation mode applies closed-end axial pressure strain to non-bend spans and one MEC-21 equation (2.25) bend-level free field sampled at all discretized bend stations.',
         'Reducer stiffness, gravity, thermal load and closed-end pressure elongation use the governed ten-cylinder midpoint-sampling candidate.',
@@ -135,7 +144,7 @@ export function solveCaesarAccdbLinearBenchmark(benchmarkPackage) {
 }
 
 function solveCase(benchmarkPackage, caseRecord, solveProfile) {
-  const caseMode = requireSupportedCase(caseRecord);
+  const caseMode = resolveSupportedLinearCaseMode(benchmarkPackage, caseRecord);
   const effectiveConfiguration = resolveCaseConfiguration(
     benchmarkPackage.profile.configurationAuthority,
     caseRecord.caseId,
@@ -188,18 +197,32 @@ function solveCase(benchmarkPackage, caseRecord, solveProfile) {
   const geometry = analysisGeometry(benchmarkPackage, analysis.positions, analysis.elements);
   const conditioned = conditionGeometry(geometry, [], conditioningProfile());
   const constraints = restraintConstraints(modelInput.tables.INPUT_RESTRAINTS.rows);
+  const shiftedAnalysis = applyUniformThermalNumericalShift({
+    analysis,
+    constraints,
+    caseMode,
+    benchmarkPackage,
+    solveProfile,
+  });
   const compilation = compileAnalysisModel({
     benchmarkPackage,
     material,
     sectionResolutions: sectionRegistry.values(),
-    analysis,
+    analysis: shiftedAnalysis,
     conditioned,
     constraints,
   });
-  const loadCase = compileCaseDeclaration({ benchmarkPackage, caseRecord, compilation, solveProfile });
+  const loadCase = compileCaseDeclaration({
+    benchmarkPackage,
+    caseRecord,
+    caseMode,
+    compilation,
+    analysis: shiftedAnalysis,
+    solveProfile,
+  });
   const execution = compileSolverExecution({
     compilation,
-    elementContributions: analysis.elements.map((entry) => entry.contribution),
+    elementContributions: shiftedAnalysis.elements.map((entry) => entry.contribution),
     loadCase,
     solverProfile: solverProfile(),
   });
@@ -211,18 +234,29 @@ function solveCase(benchmarkPackage, caseRecord, solveProfile) {
     error.execution = execution;
     throw error;
   }
-  const recovered = recoverActions(execution, analysis.elements);
+  const recovered = recoverActions(execution, shiftedAnalysis.elements);
+  const recoveredEquilibrium = buildRecoveredEquilibrium({
+    analysisNodeIds: [...shiftedAnalysis.positions.keys()],
+    execution,
+    recovered,
+    tolerance: benchmarkPackage.profile.equilibriumTolerance,
+  });
   return {
     execution,
-    rows: resultRows({ benchmarkPackage, execution, recovered, analysis }),
+    rows: resultRows({ benchmarkPackage, execution, recovered, analysis: shiftedAnalysis }),
     evidence: {
       formula: caseRecord.formula,
       effectiveConfiguration,
+      gravityIncluded: caseMode.gravity,
       thermalIncluded: caseMode.thermal,
       pressureIncluded: caseMode.pressure,
       executionStatus: execution.status,
-      analysisNodeCount: analysis.positions.size,
-      analysisElementCount: analysis.elements.length,
+      solverDiagnostics: execution.diagnostics,
+      recoveredEquilibrium,
+      globalRecoveryDisagreement: recovered.globalRecoveryDisagreement,
+      numericalDisplacementShift: shiftedAnalysis.numericalDisplacementShift.evidence,
+      analysisNodeCount: shiftedAnalysis.positions.size,
+      analysisElementCount: shiftedAnalysis.elements.length,
       sourceElementCount: sourceRows.length,
       bendPointerCount: bendDefinitions.length,
       bendPointers: bendDefinitions.map((entry) => entry.pointer),
@@ -234,13 +268,13 @@ function solveCase(benchmarkPackage, caseRecord, solveProfile) {
         directionalFlexibilityFactors: entry.modifiers.directionalFlexibilityFactors,
         diameterReconciliation: entry.diameterReconciliation,
       })),
-      rigidElementCount: analysis.elements.filter((entry) => entry.kind === 'RIGID').length,
-      reducerElementCount: analysis.elements.filter((entry) => entry.kind === 'REDUCER').length,
-      pressureElongationElementCount: analysis.elements.filter((entry) => entry.pressureAxialStrain !== 0).length,
-      rotationalBourdonElementCount: analysis.elements
+      rigidElementCount: shiftedAnalysis.elements.filter((entry) => entry.kind === 'RIGID').length,
+      reducerElementCount: shiftedAnalysis.elements.filter((entry) => entry.kind === 'REDUCER').length,
+      pressureElongationElementCount: shiftedAnalysis.elements.filter((entry) => entry.pressureAxialStrain !== 0).length,
+      rotationalBourdonElementCount: shiftedAnalysis.elements
         .filter((entry) => entry.bourdonRotationRadians !== 0).length,
-      gravityWeightN: analysis.elements.reduce((sum, entry) => sum + entry.gravityWeightN, 0),
-      elementLedger: analysis.elements.map((entry) => ({
+      gravityWeightN: shiftedAnalysis.elements.reduce((sum, entry) => sum + entry.gravityWeightN, 0),
+      elementLedger: shiftedAnalysis.elements.map((entry) => ({
         elementId: entry.elementId,
         sourceElementId: entry.sourceElementId,
         nodeI: entry.nodeI,
@@ -250,7 +284,9 @@ function solveCase(benchmarkPackage, caseRecord, solveProfile) {
         pressureAxialStrain: entry.pressureAxialStrain,
         bourdonRotationRadians: entry.bourdonRotationRadians,
         bourdonFreeEndTranslationM: entry.bourdonFreeEndTranslationM,
-        initialStrainLoadGlobal: entry.recoveryFrame.initialStrainLoadVector.global,
+        physicalInitialStrainLoadGlobal: entry.physicalInitialStrainLoadGlobal,
+        solvedInitialStrainLoadGlobal: entry.recoveryFrame.initialStrainLoadVector.global,
+        numericalShiftLoadGlobal: entry.numericalShiftLoadGlobal,
         gravityWeightN: entry.gravityWeightN,
       })),
     },
@@ -330,6 +366,92 @@ function buildAnalysisElements(input) {
   return { positions, elements };
 }
 
+/**
+ * Shift a compatible uniform thermal free field out of the linear system.
+ * The shifted element loads and correction displacements recover the same
+ * total displacement, end actions and reactions with less cancellation.
+ */
+function applyUniformThermalNumericalShift(input) {
+  const byNode = new Map([...input.analysis.positions.keys()].map((nodeId) => [nodeId, zero6()]));
+  const temperatures = uniqueNumbers(input.benchmarkPackage.model.tables.INPUT_BASIC_ELEMENT_DATA.rows
+    .map((row) => Number(row.TEMP_EXP_C1)));
+  let mode = 'DISABLED_NON_THERMAL_CASE';
+  let temperatureChangeK = 0;
+  let origin = null;
+  if (input.caseMode.thermal && temperatures.length === 1) {
+    mode = 'UNIFORM_CARTESIAN_FREE_EXPANSION_CONSTRAINED_COMPONENT_SHIFT_V1';
+    temperatureChangeK = temperatures[0] + CELSIUS_TO_KELVIN
+      - input.benchmarkPackage.model.installationTemperatureK;
+    const originNodeId = [...input.analysis.positions.keys()].map(String).sort(compareText)[0];
+    origin = [...input.analysis.positions.get(originNodeId)];
+    const scaleFactor = input.solveProfile.thermalExpansion.coefficientPerKelvin * temperatureChangeK;
+    for (const [nodeId, position] of input.analysis.positions) {
+      byNode.set(nodeId, [
+        scaleFactor * (position[0] - origin[0]),
+        scaleFactor * (position[1] - origin[1]),
+        scaleFactor * (position[2] - origin[2]),
+        0,
+        0,
+        0,
+      ]);
+    }
+    for (const constraint of input.constraints) {
+      byNode.get(constraint.nodeId)[DOFS.indexOf(constraint.dof)] = 0;
+    }
+  } else if (input.caseMode.thermal) {
+    mode = 'DISABLED_NONUNIFORM_ELEMENT_TEMPERATURES';
+  }
+  const elements = input.analysis.elements.map((entry) => shiftAnalysisElement(entry, byNode));
+  const maximumTranslationM = maximum([...byNode.values()]
+    .map((vector) => Math.hypot(vector[0], vector[1], vector[2])));
+  return {
+    ...input.analysis,
+    elements,
+    numericalDisplacementShift: {
+      byNode,
+      evidence: Object.freeze({
+        mode,
+        temperatureChangeK,
+        originM: origin,
+        maximumTranslationM,
+        constrainedComponentCount: input.constraints.length,
+      }),
+    },
+  };
+}
+
+function shiftAnalysisElement(entry, displacementShiftByNode) {
+  const jointShift = [
+    ...displacementShiftByNode.get(entry.nodeI),
+    ...displacementShiftByNode.get(entry.nodeJ),
+  ];
+  const localShift = jointDisplacementToLocal(entry.recoveryFrame, jointShift);
+  const localShiftLoad = matrixVector12(entry.effectiveLocalStiffness, localShift);
+  const globalShiftLoad = matrixVector12(entry.contribution.globalStiffness, jointShift);
+  const physicalInitialLocal = entry.recoveryFrame.initialStrainLoadVector.local;
+  const physicalInitialGlobal = entry.recoveryFrame.initialStrainLoadVector.global;
+  const solvedInitialLocal = physicalInitialLocal.map((value, index) => value - localShiftLoad[index]);
+  const solvedInitialGlobal = physicalInitialGlobal.map((value, index) => value - globalShiftLoad[index]);
+  return Object.freeze({
+    ...entry,
+    physicalInitialStrainLoadGlobal: Object.freeze([...physicalInitialGlobal]),
+    numericalShiftLoadGlobal: Object.freeze([...globalShiftLoad]),
+    recoveryFrame: Object.freeze({
+      ...entry.recoveryFrame,
+      initialStrainLoadVector: Object.freeze({
+        local: Object.freeze(solvedInitialLocal),
+        global: Object.freeze(solvedInitialGlobal),
+      }),
+    }),
+    contribution: requireElementContribution({
+      elementId: entry.elementId,
+      globalStiffness: entry.contribution.globalStiffness,
+      equivalentLoadGlobal: entry.contribution.equivalentLoadGlobal,
+      initialStrainLoadGlobal: solvedInitialGlobal,
+    }),
+  });
+}
+
 function appendBendElements(target, positions, row, bend, teeModifier, input) {
   const sourceElementId = String(row.ELEMENTID);
   const hasIncomingStraight = distance(
@@ -406,10 +528,12 @@ function buildFrameElement(input) {
   const length = frame.geometry.length;
   const lineWeight = input.gravityLineWeight
     ?? physicalLineWeight(input.row, input.section, input.solveProfile.gravityAcceleration);
-  const gravityLineWeight = lineWeight * input.gravityLengthScale;
+  const gravityLineWeight = input.caseMode.gravity
+    ? lineWeight * input.gravityLengthScale
+    : 0;
   const baseEquivalentLocal = gravityVector(frame, gravityLineWeight);
   const thermalStrain = input.caseMode.thermal
-    ? input.solveProfile.thermalExpansionCoefficientPerKelvin
+    ? input.solveProfile.thermalExpansion.coefficientPerKelvin
       * (Number(input.row.TEMP_EXP_C1) + CELSIUS_TO_KELVIN
         - input.benchmarkPackage.model.installationTemperatureK)
       * input.thermalLengthScale
@@ -510,7 +634,7 @@ function buildRigidElement(input) {
     material: {
       elasticModulus: materialState.elasticModulus,
       shearModulus: materialState.shearModulus,
-      thermalExpansionCoefficient: input.solveProfile.thermalExpansionCoefficientPerKelvin,
+      thermalExpansionCoefficient: input.solveProfile.thermalExpansion.coefficientPerKelvin,
     },
     sourceEvidence: sourceEvidence(`ACCDB:RIGID:${Number(input.row.RIGID_PTR)}`, input.benchmarkPackage.source.sha256),
     semanticHash: '',
@@ -563,10 +687,10 @@ function buildReducerElement(input) {
       elasticModulus: materialState.elasticModulus,
       shearModulus: materialState.shearModulus,
       massDensity: materialState.massDensity,
-      thermalExpansionCoefficient: input.solveProfile.thermalExpansionCoefficientPerKelvin,
+      thermalExpansionCoefficient: input.solveProfile.thermalExpansion.coefficientPerKelvin,
     },
     gravity: {
-      enabled: true,
+      enabled: input.caseMode.gravity,
       acceleration: input.solveProfile.gravityAcceleration,
       directionLocal: gravityDirectionLocal,
       fluidDensity: density(input.row.FLUID_DENSITY),
@@ -893,7 +1017,10 @@ function buildBendDefinitions(input) {
         outerDiameter: section.dimensions.outerDiameter,
         wallThickness: section.dimensions.wallThickness,
         bendRadius: radius,
-        pressure: Number(row.PRESSURE1) * KPA_TO_PA,
+        pressure: bendStiffeningPressurePa(
+          row,
+          input.solveProfile.bendPressureStiffening.pressureSource,
+        ),
         elasticModulus: input.material.materialState.elasticModulus,
         bendAngleDegrees: bendAngle * 180 / Math.PI,
         smooth90FlexibilityCorrection:
@@ -1050,12 +1177,9 @@ function compileAnalysisModel(input) {
 }
 
 function compileCaseDeclaration(input) {
-  return compilePhysicalLoadCase({
-    loadCaseId: `ACCDB-${input.caseRecord.caseId}`,
-    loadCaseClass: 'MIXED_PHYSICAL',
-    presentation: { label: input.caseRecord.caseId, description: input.caseRecord.formula },
-    modelReference: modelReferenceFromCompilation(input.compilation),
-    primitives: [{
+  const primitives = [];
+  if (input.caseMode.gravity) {
+    primitives.push({
       schema: 'fea-linear-load-primitive/v1',
       primitiveId: `ACCDB-${input.caseRecord.caseId}-GRAVITY`,
       kind: 'GRAVITY',
@@ -1063,7 +1187,58 @@ function compileCaseDeclaration(input) {
       basis: 'GLOBAL',
       includedMassSources: ['PIPE_WALL', 'CONTENTS', 'INSULATION', 'COMPONENT'],
       sourceEvidence: sourceEvidence('ACCDB:WEIGHT', input.benchmarkPackage.source.sha256),
-    }],
+    });
+  }
+  const sourceRows = new Map(input.benchmarkPackage.model.tables.INPUT_BASIC_ELEMENT_DATA.rows
+    .map((row) => [String(row.ELEMENTID), row]));
+  for (const element of input.analysis.elements) {
+    const row = sourceRows.get(element.sourceElementId);
+    if (!row) throw new TypeError(`Analysis element ${element.elementId} has no ACCDB source row.`);
+    if (input.caseMode.pressure) {
+      const pressure = Number(row.PRESSURE1) * KPA_TO_PA;
+      primitives.push({
+        schema: 'fea-linear-load-primitive/v1',
+        primitiveId: `${element.elementId}-${input.caseRecord.caseId}-P1`,
+        kind: 'PRESSURE',
+        elementId: element.elementId,
+        pressure,
+        pressureBasis: 'GAUGE',
+        authorizedEffects: {
+          codeStress: false,
+          pressureStiffening: true,
+          axialThrust: false,
+          bourdon: input.solveProfile.bourdonPressureEffects.mode !== 'DISABLED',
+        },
+        sourceEvidence: sourceEvidence(
+          `ACCDB:ELEMENT:${element.sourceElementId}:PRESSURE1`,
+          `${input.benchmarkPackage.source.sha256}:${pressure}`,
+        ),
+      });
+    }
+    if (input.caseMode.thermal) {
+      const operatingTemperature = Number(row.TEMP_EXP_C1) + CELSIUS_TO_KELVIN;
+      primitives.push({
+        schema: 'fea-linear-load-primitive/v1',
+        primitiveId: `${element.elementId}-${input.caseRecord.caseId}-T1`,
+        kind: 'TEMPERATURE',
+        elementId: element.elementId,
+        operatingTemperature,
+        installationTemperature: input.benchmarkPackage.model.installationTemperatureK,
+        stiffnessEvaluationMaterialStateId: element.material.materialState.materialStateId,
+        thermalStrainProfileId: 'UNIFORM_TEMPERATURE_ALPHA_DELTA_T_V1',
+        sourceEvidence: sourceEvidence(
+          `ACCDB:ELEMENT:${element.sourceElementId}:TEMP_EXP_C1`,
+          `${input.benchmarkPackage.source.sha256}:${operatingTemperature}`,
+        ),
+      });
+    }
+  }
+  return compilePhysicalLoadCase({
+    loadCaseId: `ACCDB-${input.caseRecord.caseId}`,
+    loadCaseClass: 'MIXED_PHYSICAL',
+    presentation: { label: input.caseRecord.caseId, description: input.caseRecord.formula },
+    modelReference: modelReferenceFromCompilation(input.compilation),
+    primitives,
     profile: loadCaseProfile(input.solveProfile.gravityAcceleration),
   });
 }
@@ -1073,26 +1248,91 @@ function recoverActions(execution, elements) {
     .map((entry) => [`${entry.nodeId}:${entry.dof}`, entry.value]));
   const actions = elements.map((entry) => {
     const jointDisplacement12 = gatherJointDisplacement12(displacementIndex, entry.nodeI, entry.nodeJ);
-    const action = recoverElementEndAction({
+    const localRecovery = recoverElementEndAction({
       frameElementRecord: entry.recoveryFrame,
       effectiveLocalStiffness: entry.effectiveLocalStiffness,
       jointDisplacement12,
     });
-    return { entry, action };
+    const globalElasticAction = matrixVector12(entry.contribution.globalStiffness, jointDisplacement12);
+    const qGlobal = globalElasticAction.map((value, index) => value
+      - entry.contribution.equivalentLoadGlobal[index]
+      - entry.contribution.initialStrainLoadGlobal[index]);
+    const action = { ...localRecovery, qGlobal };
+    return { entry, action, transformedLocalQGlobal: localRecovery.qGlobal };
   });
+  const disagreements = actions.flatMap(({ action, transformedLocalQGlobal }) =>
+    action.qGlobal.map((value, index) => Math.abs(value - transformedLocalQGlobal[index])));
   const incident = new Map();
+  const incidentCorrection = new Map();
   for (const recovered of actions) {
-    addIncident(incident, recovered.entry.nodeI, recovered.action.qGlobal.slice(0, 6));
-    addIncident(incident, recovered.entry.nodeJ, recovered.action.qGlobal.slice(6, 12));
+    addIncident(incident, incidentCorrection, recovered.entry.nodeI, recovered.action.qGlobal.slice(0, 6));
+    addIncident(incident, incidentCorrection, recovered.entry.nodeJ, recovered.action.qGlobal.slice(6, 12));
   }
-  return { actions, incident };
+  for (const [nodeId, correction] of incidentCorrection) {
+    incident.set(nodeId, incident.get(nodeId).map((value, index) => value + correction[index]));
+  }
+  return {
+    actions,
+    incident,
+    globalRecoveryDisagreement: Object.freeze({
+      rule: 'ASSEMBLED_GLOBAL_ACTION_VS_TRANSFORMED_LOCAL_ACTION_V1',
+      maximumAbsolute: maximum(disagreements),
+    }),
+  };
+}
+
+/**
+ * Reconcile recovered element-end actions against solver reactions at every
+ * analysis node. The supported W/T1/P1 formula grammar carries no point-force
+ * primitive, so a free-node action is an absolute assembly/recovery residual
+ * and is never normalized by a larger initial-strain vector.
+ */
+function buildRecoveredEquilibrium(input) {
+  const reactionIndex = new Map(input.execution.reactions
+    .map((entry) => [`${entry.nodeId}:${entry.dof}`, entry.value]));
+  const rows = [];
+  for (const nodeId of [...input.analysisNodeIds].map(String).sort(compareText)) {
+    const incident = input.recovered.incident.get(nodeId) ?? zero6();
+    DOFS.forEach((dof, index) => {
+      const reaction = reactionIndex.get(`${nodeId}:${dof}`) ?? 0;
+      const residual = incident[index] - reaction;
+      const limit = dof.startsWith('U') ? input.tolerance.forceN : input.tolerance.momentNm;
+      rows.push(Object.freeze({
+        nodeId,
+        dof,
+        incidentAction: clean(incident[index]),
+        reaction: clean(reaction),
+        appliedNodalLoad: 0,
+        residual: clean(residual),
+        limit,
+        status: Math.abs(residual) <= limit ? 'PASS' : 'FAIL',
+      }));
+    });
+  }
+  const failures = rows.filter((row) => row.status === 'FAIL');
+  return Object.freeze({
+    status: failures.length === 0 ? 'PASS' : 'FAIL',
+    rule: 'SUM_ELEMENT_END_ACTIONS_EQUALS_REACTION_PLUS_APPLIED_NODAL_LOAD_V1',
+    counts: Object.freeze({
+      total: rows.length,
+      passed: rows.length - failures.length,
+      failed: failures.length,
+    }),
+    maximumAbsoluteResidual: Object.freeze({
+      forceN: maximum(rows.filter((row) => row.dof.startsWith('U')).map((row) => Math.abs(row.residual))),
+      momentNm: maximum(rows.filter((row) => row.dof.startsWith('R')).map((row) => Math.abs(row.residual))),
+    }),
+    failures: Object.freeze(failures),
+  });
 }
 
 function resultRows(input) {
   const sourceNodeIds = new Set(input.benchmarkPackage.model.tables.INPUT_BASIC_ELEMENT_DATA.rows
     .flatMap((row) => [String(row.FROM_NODE), String(row.TO_NODE)]));
-  const displacementIndex = new Map(input.execution.displacement
-    .map((entry) => [`${entry.nodeId}:${entry.dof}`, entry.value]));
+  const displacementIndex = new Map(input.execution.displacement.map((entry) => {
+    const shift = input.analysis.numericalDisplacementShift.byNode.get(entry.nodeId) ?? zero6();
+    return [`${entry.nodeId}:${entry.dof}`, entry.value + shift[DOFS.indexOf(entry.dof)]];
+  }));
   const reactionIndex = new Map(input.execution.reactions
     .map((entry) => [`${entry.nodeId}:${entry.dof}`, entry.value]));
   const restraintNodeIds = [...new Set(input.benchmarkPackage.model.tables.INPUT_RESTRAINTS.rows
@@ -1229,7 +1469,7 @@ function buildMaterial(sourceRows, solveProfile, benchmarkPackage, effectiveConf
     shearModulus: elasticModulus / (2 * (1 + poissonRatio)),
     poissonRatio,
     massDensity: densityValues[0],
-    thermalExpansionCoefficient: solveProfile.thermalExpansionCoefficientPerKelvin,
+    thermalExpansionCoefficient: solveProfile.thermalExpansion.coefficientPerKelvin,
   };
   const table = sealMaterialTable({
     schema: 'fea-linear-material-table/v1',
@@ -1482,6 +1722,22 @@ function closedEndPressureAxialStrain(row, elasticModulus) {
   });
 }
 
+/** Resolve the profile-governed pressure used only for bend flexibility. */
+function bendStiffeningPressurePa(row, pressureSource) {
+  if (pressureSource === 'P1') return Number(row.PRESSURE1) * KPA_TO_PA;
+  if (pressureSource !== 'MAX_DEFINED') {
+    throw new TypeError(`Unsupported bend pressure-stiffening source ${pressureSource}.`);
+  }
+  const definedPressures = [
+    ...Array.from({ length: 9 }, (_value, index) => Number(row[`PRESSURE${index + 1}`])),
+    Number(row.HYDRO_PRESSURE),
+  ].filter((value) => Number.isFinite(value) && value >= 0);
+  if (definedPressures.length === 0) {
+    throw new TypeError(`Element ${row.ELEMENTID} has no defined pressure for bend stiffening.`);
+  }
+  return Math.max(...definedPressures) * KPA_TO_PA;
+}
+
 function closedEndPressureAxialStrainForGeometry(input) {
   const {
     outerDiameter, innerDiameter, pressure, poissonRatio, elasticModulus, context,
@@ -1561,11 +1817,38 @@ function matrixVector12(matrix, vector) {
   if (!Array.isArray(matrix) || matrix.length !== 144 || !Array.isArray(vector) || vector.length !== 12) {
     throw new TypeError('Bourdon initial-load conversion requires a 12x12 matrix and 12-component vector.');
   }
-  return new Array(12).fill(0).map((_unused, row) => {
-    let sum = 0;
-    for (let column = 0; column < 12; column += 1) sum += matrix[row * 12 + column] * vector[column];
-    return clean(sum);
-  });
+  return Array.from({ length: 12 }, (_, row) => preciseDotProduct12(matrix, vector, row)).map(clean);
+}
+
+/** Keep high-cancellation ACCDB load recovery local to this benchmark adapter. */
+function preciseDotProduct12(matrix, vector, row) {
+  let high = 0;
+  let low = 0;
+  for (let column = 0; column < 12; column += 1) {
+    const [product, productError] = twoProduct(matrix[row * 12 + column], vector[column]);
+    const next = high + product;
+    const virtualProduct = next - high;
+    low += productError + (high - (next - virtualProduct)) + (product - virtualProduct);
+    high = next;
+    const normalized = high + low;
+    low -= normalized - high;
+    high = normalized;
+  }
+  return high + low;
+}
+
+function twoProduct(left, right) {
+  const product = left * right;
+  const splitter = 134217729;
+  const leftSplit = splitter * left;
+  const rightSplit = splitter * right;
+  const leftHigh = leftSplit - (leftSplit - left);
+  const rightHigh = rightSplit - (rightSplit - right);
+  const error = ((leftHigh * rightHigh - product)
+    + leftHigh * (right - rightHigh)
+    + (left - leftHigh) * rightHigh)
+    + (left - leftHigh) * (right - rightHigh);
+  return [product, error];
 }
 
 function resolveAxes(positions, nodeI, nodeJ, referenceVector, rigidOffsets) {
@@ -1585,20 +1868,89 @@ function addOffset(point, offset) {
   return point.map((value, index) => value + offset[index]);
 }
 
-function addIncident(map, nodeId, vector) {
+function addIncident(map, correctionMap, nodeId, vector) {
   const id = String(nodeId);
   const prior = map.get(id) ?? zero6();
-  map.set(id, prior.map((value, index) => value + vector[index]));
+  const corrections = correctionMap.get(id) ?? zero6();
+  vector.forEach((term, index) => {
+    const next = prior[index] + term;
+    corrections[index] += Math.abs(prior[index]) >= Math.abs(term)
+      ? (prior[index] - next) + term
+      : (term - next) + prior[index];
+    prior[index] = next;
+  });
+  map.set(id, prior);
+  correctionMap.set(id, corrections);
 }
 
 function nodeResultRow(entityId, quantity, component, value, unit) {
   return { entityKind: 'NODE', entityId, quantity, component, value: clean(value), unit };
 }
 
-function requireSupportedCase(caseRecord) {
-  if (caseRecord.formula === 'W+P1') return Object.freeze({ thermal: false, pressure: true });
-  if (caseRecord.formula === 'W+T1+P1') return Object.freeze({ thermal: true, pressure: true });
-  throw new TypeError(`ACCDB linear solve does not implement physical formula ${caseRecord.formula}.`);
+/** Resolve direct and derived CAESAR formulas to the three implemented linear primitives. */
+function resolveSupportedLinearCaseMode(benchmarkPackage, caseRecord) {
+  const byNumber = new Map(benchmarkPackage.cases.map((entry) => [entry.lcaseNumber, entry]));
+  const coefficients = resolveLinearFormula(caseRecord, byNumber, new Set());
+  for (const [primitive, coefficient] of Object.entries(coefficients)) {
+    if (![0, 1].includes(coefficient)) {
+      throw new TypeError(
+        `${caseRecord.caseId} resolves ${primitive} to coefficient ${coefficient}; `
+        + 'the current physical solver accepts only present/absent primitive states.',
+      );
+    }
+  }
+  return deepFreeze({
+    gravity: coefficients.W === 1,
+    thermal: coefficients.T1 === 1,
+    pressure: coefficients.P1 === 1,
+    coefficients,
+  });
+}
+
+function resolveLinearFormula(caseRecord, byNumber, activeCaseNumbers) {
+  const formula = String(caseRecord.formula).replace(/\s+/gu, '').toUpperCase();
+  const directTerms = formula.split('+');
+  if (directTerms.length > 0 && directTerms.every((term) => ['W', 'T1', 'P1'].includes(term))) {
+    if (new Set(directTerms).size !== directTerms.length) {
+      throw new TypeError(`${caseRecord.caseId} repeats a physical load term in ${caseRecord.formula}.`);
+    }
+    return primitiveCoefficients(directTerms);
+  }
+  const derived = /^L(\d+)=L(\d+)-L(\d+)$/u.exec(formula);
+  if (!derived || Number(derived[1]) !== caseRecord.lcaseNumber) {
+    throw new TypeError(`ACCDB linear solve does not implement formula ${caseRecord.formula}.`);
+  }
+  if (activeCaseNumbers.has(caseRecord.lcaseNumber)) {
+    throw new TypeError(`ACCDB load-case formula cycle includes L${caseRecord.lcaseNumber}.`);
+  }
+  const nextActive = new Set(activeCaseNumbers);
+  nextActive.add(caseRecord.lcaseNumber);
+  const minuend = requireFormulaCase(byNumber, Number(derived[2]), caseRecord);
+  const subtrahend = requireFormulaCase(byNumber, Number(derived[3]), caseRecord);
+  return subtractPrimitiveCoefficients(
+    resolveLinearFormula(minuend, byNumber, nextActive),
+    resolveLinearFormula(subtrahend, byNumber, nextActive),
+  );
+}
+
+function primitiveCoefficients(terms) {
+  return Object.freeze(Object.fromEntries(['W', 'T1', 'P1']
+    .map((term) => [term, terms.includes(term) ? 1 : 0])));
+}
+
+function subtractPrimitiveCoefficients(left, right) {
+  return Object.freeze(Object.fromEntries(['W', 'T1', 'P1']
+    .map((term) => [term, left[term] - right[term]])));
+}
+
+function requireFormulaCase(byNumber, lcaseNumber, owner) {
+  const dependency = byNumber.get(lcaseNumber);
+  if (!dependency) {
+    throw new TypeError(
+      `${owner.caseId} formula ${owner.formula} requires selected dependency L${lcaseNumber}.`,
+    );
+  }
+  return dependency;
 }
 
 function resolveCaseConfiguration(authority, caseId) {
@@ -1612,7 +1964,12 @@ function resolveCaseConfiguration(authority, caseId) {
     'FLEXIBILITY_ELASTIC_MODULUS',
     caseId,
   );
-  return deepFreeze({ friction, flexibilityElasticModulus });
+  const restraintDirectionalBehavior = resolveCaesarConfigurationSetting(
+    authority,
+    'RESTRAINT_DIRECTIONAL_BEHAVIOR',
+    caseId,
+  );
+  return deepFreeze({ friction, flexibilityElasticModulus, restraintDirectionalBehavior });
 }
 
 function requireSupportedLinearConfiguration(authority, solveProfile, effectiveConfiguration, caseId) {
@@ -1624,11 +1981,17 @@ function requireSupportedLinearConfiguration(authority, solveProfile, effectiveC
   if (effectiveConfiguration.flexibilityElasticModulus.value !== 'EC') {
     throw new TypeError(`${caseId} flexibility must use cold modulus EC.`);
   }
-  if (solveProfile.bendPressureStiffening.pressureSource !== 'P1') {
-    throw new TypeError('The current ACCDB solver supports only provisional P1 bend pressure stiffening.');
+  if (effectiveConfiguration.restraintDirectionalBehavior.value !== 'BIDIRECTIONAL') {
+    throw new TypeError(`${caseId} nonlinear one-way restraints are outside the current linear benchmark solver.`);
+  }
+  if (!['P1', 'MAX_DEFINED'].includes(solveProfile.bendPressureStiffening.pressureSource)) {
+    throw new TypeError('The current ACCDB solver supports P1 or MAX_DEFINED bend pressure stiffening.');
   }
   if (solveProfile.restraintRepresentation.mode !== 'FIXED_DOF') {
     throw new TypeError('The current ACCDB solver supports only the provisional FIXED_DOF restraint representation.');
+  }
+  if (!solveProfile.bendAxialShape.enabled) {
+    throw new TypeError('The current ACCDB bend formulation supports only BEND_AXIAL_SHAPE=YES.');
   }
 }
 
@@ -1734,11 +2097,13 @@ function solverProfile() {
   return sealSolverProfile({
     schema: 'fea-linear-solver-profile/v1',
     profileId: 'LINEAR-SOLVER-R1',
-    backend: 'FEA_SPARSE_DIRECT_CHOLESKY_LDLT_V1',
+    backend: 'FEA_DENSE_DIRECT_CHOLESKY_LDLT_V1',
     scaling: 'DIAGONAL_ENERGY_SCALING_V1',
     momentReferenceRule: 'FIRST_CANONICAL_NODE_V1',
     normalizedResidualLimit: { value: 1e-6, source: 'M034-M035-BM4-CONDITIONING-STUDY' },
     normalizedResidualWarnLimit: { value: 1e-4, source: 'M034-M035-BM4-CONDITIONING-STUDY' },
+    iterativeRefinementMaximumIterations: { value: 6, source: 'M047-BM4-RECOVERY-EQUILIBRIUM' },
+    iterativeRefinementRelativeTolerance: { value: 1e-16, source: 'M047-BM4-RECOVERY-EQUILIBRIUM' },
     equilibriumRelativeLimit: { value: 3e-6, source: 'M034-M035-BM4-CONDITIONING-STUDY' },
     equilibriumAbsoluteForceFloor: { value: 1e-3, source: PROFILE_SOURCE },
     equilibriumAbsoluteMomentFloor: { value: 1e-3, source: PROFILE_SOURCE },
@@ -1753,6 +2118,7 @@ function solverProfile() {
 function density(value) { return Number(value) * KG_PER_CM3_TO_KG_PER_M3; }
 function validStationNode(value) { return Number.isFinite(Number(value)) && Number(value) > 0; }
 function uniqueNumbers(values) { return [...new Set(values)]; }
+function maximum(values) { return values.length === 0 ? 0 : Math.max(...values); }
 function zero12() { return new Array(12).fill(0); }
 function zero6() { return new Array(6).fill(0); }
 function zero3() { return new Array(3).fill(0); }

@@ -142,10 +142,7 @@ function normalizeLinearSolve(value) {
   if (value === undefined || value === null) return null;
   if (typeof value !== 'object' || Array.isArray(value)) throw new TypeError('linearSolve must be an object.');
   const result = {
-    thermalExpansionCoefficientPerKelvin: positive(
-      value.thermalExpansionCoefficientPerKelvin,
-      'linearSolve.thermalExpansionCoefficientPerKelvin',
-    ),
+    thermalExpansion: normalizeThermalExpansion(value.thermalExpansion),
     gravityAcceleration: positive(value.gravityAcceleration, 'linearSolve.gravityAcceleration'),
     bourdonPressureEffects: normalizeBourdonPressureEffects(value.bourdonPressureEffects),
     directionalB31JTeeFlexibility: requiredBoolean(
@@ -178,11 +175,44 @@ function normalizeLinearSolve(value) {
       'mode',
       ['RESOLVED', 'PROVISIONAL'],
     ),
+    bendAxialShape: normalizeBendAxialShape(value.bendAxialShape),
   };
   if (result.teeNominalDiameterRelativeTolerance > 0.01) {
     throw new TypeError('linearSolve.teeNominalDiameterRelativeTolerance must not exceed 0.01.');
   }
   return deepFreeze(result);
+}
+
+function normalizeThermalExpansion(value) {
+  if (!value || typeof value !== 'object' || Array.isArray(value)) {
+    throw new TypeError('linearSolve.thermalExpansion must be an object.');
+  }
+  const authorityStatus = nonempty(
+    value.authorityStatus,
+    'linearSolve.thermalExpansion.authorityStatus',
+  ).toUpperCase();
+  if (!['RESOLVED', 'PROVISIONAL'].includes(authorityStatus)) {
+    throw new TypeError('linearSolve.thermalExpansion.authorityStatus is unsupported.');
+  }
+  return deepFreeze({
+    coefficientPerKelvin: positive(
+      value.coefficientPerKelvin,
+      'linearSolve.thermalExpansion.coefficientPerKelvin',
+    ),
+    authorityStatus,
+    source: nonempty(value.source, 'linearSolve.thermalExpansion.source'),
+  });
+}
+
+function normalizeBendAxialShape(value) {
+  if (!value || typeof value !== 'object' || Array.isArray(value)) {
+    throw new TypeError('linearSolve.bendAxialShape must be an object.');
+  }
+  return deepFreeze({
+    enabled: requiredBoolean(value.enabled, 'linearSolve.bendAxialShape.enabled'),
+    method: nonempty(value.method, 'linearSolve.bendAxialShape.method').toUpperCase(),
+    source: nonempty(value.source, 'linearSolve.bendAxialShape.source'),
+  });
 }
 
 function normalizeAuthorityDecision(value, field, valueField, allowedStatuses) {
@@ -221,6 +251,14 @@ function validateConfigurationAuthority(profile) {
   const smooth = profile.linearSolve.b31jSmooth90FlexibilityCorrection;
   if (smooth.authorityStatus === 'UNRESOLVED' && smooth.enabled) {
     throw new TypeError('An unresolved smooth-90 correction must remain disabled.');
+  }
+  const bendAxialShape = resolveCaesarConfigurationSetting(authority, 'BEND_AXIAL_SHAPE', null);
+  const expectedBendAxialShape = bendAxialShape.value === 'YES';
+  if (profile.linearSolve.bendAxialShape.enabled !== expectedBendAxialShape) {
+    throw new TypeError('linearSolve.bendAxialShape conflicts with resolved BEND_AXIAL_SHAPE authority.');
+  }
+  if (profile.linearSolve.bendAxialShape.method !== 'DISCRETIZED_CURVED_CENTRELINE_AXIAL_DOF_V1') {
+    throw new TypeError('linearSolve.bendAxialShape.method is unsupported.');
   }
 }
 
@@ -362,7 +400,23 @@ function normalizeTolerances(value) {
     absolute: nonnegative(value[key]?.absolute, `${key}.absolute`),
     relative: nonnegative(value[key]?.relative, `${key}.relative`),
     scaleFloor: nonnegative(value[key]?.scaleFloor, `${key}.scaleFloor`),
+    comparisonMode: comparisonMode(value[key]?.comparisonMode, `${key}.comparisonMode`),
+    zeroReferenceAbsolute: nonnegative(
+      value[key]?.zeroReferenceAbsolute ?? 0,
+      `${key}.zeroReferenceAbsolute`,
+    ),
   }])));
+}
+
+function comparisonMode(value, field) {
+  const mode = nonempty(value ?? 'COMBINED_ABSOLUTE_RELATIVE_SCALE_FLOOR', field).toUpperCase();
+  if (![
+    'COMBINED_ABSOLUTE_RELATIVE_SCALE_FLOOR',
+    'LITERAL_RELATIVE_WITH_ZERO_ABSOLUTE',
+  ].includes(mode)) {
+    throw new TypeError(`${field} is unsupported.`);
+  }
+  return mode;
 }
 
 function activePointers(rows, field) {

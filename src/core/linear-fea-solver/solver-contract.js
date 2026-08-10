@@ -48,6 +48,8 @@ export const SOLVER_PROFILE_KEYS = Object.freeze([
   'momentReferenceRule',
   'normalizedResidualLimit',
   'normalizedResidualWarnLimit',
+  'iterativeRefinementMaximumIterations',
+  'iterativeRefinementRelativeTolerance',
   'equilibriumRelativeLimit',
   'equilibriumAbsoluteForceFloor',
   'equilibriumAbsoluteMomentFloor',
@@ -240,6 +242,8 @@ export function resolveSolverPolicies(profile) {
   return Object.freeze({
     normalizedResidualLimit: requireTraceableSource(requireDeclaredValue(profile, 'normalizedResidualLimit', { exclusiveMinimum: 0 })),
     normalizedResidualWarnLimit: requireTraceableSource(requireDeclaredValue(profile, 'normalizedResidualWarnLimit', { exclusiveMinimum: 0 })),
+    iterativeRefinementMaximumIterations: requireTraceableSource(requireDeclaredValue(profile, 'iterativeRefinementMaximumIterations', { minimum: 0 })),
+    iterativeRefinementRelativeTolerance: requireTraceableSource(requireDeclaredValue(profile, 'iterativeRefinementRelativeTolerance', { exclusiveMinimum: 0 })),
     equilibriumRelativeLimit: requireTraceableSource(requireDeclaredValue(profile, 'equilibriumRelativeLimit', { exclusiveMinimum: 0 })),
     equilibriumAbsoluteForceFloor: requireTraceableSource(requireDeclaredValue(profile, 'equilibriumAbsoluteForceFloor', { exclusiveMinimum: 0 })),
     equilibriumAbsoluteMomentFloor: requireTraceableSource(requireDeclaredValue(profile, 'equilibriumAbsoluteMomentFloor', { exclusiveMinimum: 0 })),
@@ -280,6 +284,12 @@ function validateProfileCore(profile) {
     fail(
       'profile.normalizedResidualLimit must not exceed profile.normalizedResidualWarnLimit; the pass gate cannot be looser than the warning gate.',
       'SOLVER_PROFILE_GATE_ORDER_INVALID',
+    );
+  }
+  if (!Number.isInteger(policies.iterativeRefinementMaximumIterations.value)) {
+    fail(
+      'profile.iterativeRefinementMaximumIterations must be an integer.',
+      'SOLVER_PROFILE_REFINEMENT_INVALID',
     );
   }
   if (!(policies.conditionWarning.value <= policies.conditionBlock.value)) {

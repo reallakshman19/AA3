@@ -17,14 +17,14 @@ jobs:
       - name: Checkout retained implementation and authority commit
         uses: actions/checkout@v4
         with:
-          ref: 67dd899cb22650a02ffa763a66eec1e5806ba4b9
+          ref: 78652ac554dd4f1f4a6c230b891122bd9386077a
           fetch-depth: 1
 
       - name: Record implementation commit
         shell: pwsh
         run: |
           $sha=(git rev-parse HEAD).Trim()
-          if ($sha -ne '67dd899cb22650a02ffa763a66eec1e5806ba4b9') { throw "Unexpected implementation commit $sha" }
+          if ($sha -ne '78652ac554dd4f1f4a6c230b891122bd9386077a') { throw "Unexpected implementation commit $sha" }
           "BM4L_IMPLEMENTATION_SHA=$sha" | Out-File -FilePath $env:GITHUB_ENV -Append -Encoding utf8
           $sha | Out-File artifacts-implementation-sha.txt -Encoding ascii
 
@@ -88,6 +88,8 @@ jobs:
             $case = $profile.configurationAuthority.layers.loadCase.cases.$id
             if ([string]$case.FLEXIBILITY_ELASTIC_MODULUS -ne 'EC') { throw "$id does not resolve FLEXIBILITY_ELASTIC_MODULUS=EC." }
           }
+          $teeSource = Get-Content src/core/linear-fea-piping-components/directional-branch-flexibility.js -Raw
+          if ($teeSource -notmatch 'outerDiameter - authorities\.section\.dimensions\.wallThickness') { throw 'B31J tee spring does not use mean diameter Do-T.' }
 
       - name: Run retained six-case baseline
         shell: pwsh
@@ -108,12 +110,12 @@ jobs:
           $report = Get-Content artifacts/retained-report.json -Raw | ConvertFrom-Json
           if ($report.source.sha256 -ne '64c05a50e9ed0452622ff5880335460486f24ac8e6adecc9a300b549c9aa82f8') { throw 'Report source hash mismatch.' }
           $expected=[ordered]@{
-            L2=[ordered]@{r=3;d=123;e=99;total=225}
-            L3=[ordered]@{r=4;d=49;e=78;total=131}
+            L2=[ordered]@{r=3;d=124;e=100;total=227}
+            L3=[ordered]@{r=4;d=49;e=76;total=129}
             L4=[ordered]@{r=5;d=50;e=65;total=120}
-            L5=[ordered]@{r=0;d=46;e=52;total=98}
-            L6=[ordered]@{r=3;d=58;e=27;total=88}
-            L14=[ordered]@{r=4;d=49;e=78;total=131}
+            L5=[ordered]@{r=0;d=46;e=51;total=97}
+            L6=[ordered]@{r=2;d=58;e=26;total=86}
+            L14=[ordered]@{r=4;d=49;e=76;total=129}
           }
           $actual=[ordered]@{}; $grand=0
           foreach($id in $expected.Keys){
@@ -129,16 +131,16 @@ jobs:
             $actual[$id]=[ordered]@{restraint=$r;displacementRotation=$d;elementEnd=$e;total=$total;equilibrium=$report.mechanics.cases.$id.recoveredEquilibrium}
             $grand += $total
           }
-          if($grand -ne 793){ throw "Retained targeted total drift: $grand" }
+          if($grand -ne 788){ throw "Retained targeted total drift: $grand" }
           [ordered]@{
-            schema='lfea-m047-retained-baseline/v3'
+            schema='lfea-m047-retained-baseline/v4'
             implementationSha=$env:BM4L_IMPLEMENTATION_SHA
             sourceSha256=$report.source.sha256
             profileId=$report.profileId
-            retainedCorrections=@('CAESAR14_B31J_SMOOTH90_1_3_OVER_H','CAESAR14_MISC_T1_TOTAL_STRAIN_0_0012','CAESAR14_LOAD_CASE_ELASTIC_MODULUS_EC','CAESAR14_MISC_BEND_REPORT_P1_PRESSURE_STIFFENING')
+            retainedCorrections=@('CAESAR14_B31J_SMOOTH90_1_3_OVER_H','CAESAR14_MISC_T1_TOTAL_STRAIN_0_0012','CAESAR14_LOAD_CASE_ELASTIC_MODULUS_EC','CAESAR14_MISC_BEND_REPORT_P1_PRESSURE_STIFFENING','CAESAR14_MISC_TEE_MEAN_DIAMETER_ROTATIONAL_STIFFNESS')
             targetedFailureTotal=$grand
             cases=$actual
-            acceptanceBoundary='CAESAR bend factors, T1 thermal strain and EC authority are source-resolved. Thermal-only regressions after correcting bend stiffening indicate a separate bend/thermal formulation mismatch; no cancellation-based rollback or coefficient fitting is permitted.'
+            acceptanceBoundary='CAESAR bend and tee factors/stiffness, T1 thermal strain and EC authority are source-resolved. Remaining mismatches require further mechanics evidence; no cancellation-based rollback or coefficient fitting is permitted.'
           } | ConvertTo-Json -Depth 20 | Tee-Object -FilePath artifacts/retained-baseline.json
 
       - name: Upload retained baseline evidence

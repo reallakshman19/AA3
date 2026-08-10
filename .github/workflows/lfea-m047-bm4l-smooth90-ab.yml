@@ -96,11 +96,12 @@ jobs:
           $needle = "if (smooth.authorityStatus === 'UNRESOLVED' && smooth.enabled) {"
           $replacement = "if (process.env.LFEA_DIAGNOSTIC_ALLOW_UNRESOLVED_SMOOTH90 !== '1' && smooth.authorityStatus === 'UNRESOLVED' && smooth.enabled) {"
           if (-not $text.Contains($needle)) { throw 'Smooth-90 authority guard source shape changed.' }
-          $text = $text.Replace($needle, $replacement)
-          Set-Content -Path $path -Value $text -Encoding utf8
-          $diff = git diff -- $path
+          $updated = $text.Replace($needle, $replacement)
+          Set-Content -Path $path -Value $updated -Encoding utf8
+          $verify = Get-Content $path -Raw
+          if (-not $verify.Contains('LFEA_DIAGNOSTIC_ALLOW_UNRESOLVED_SMOOTH90')) { throw 'Transient guard patch was not applied.' }
+          $diff = (git diff -- $path) -join "`n"
           $diff | Out-File artifacts/smooth90-transient-guard.patch -Encoding utf8
-          if ($diff -notmatch 'LFEA_DIAGNOSTIC_ALLOW_UNRESOLVED_SMOOTH90') { throw 'Transient guard patch was not recorded.' }
 
       - name: Run L2 smooth-90 ON diagnostic
         shell: pwsh

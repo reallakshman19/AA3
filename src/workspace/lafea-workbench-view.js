@@ -17,6 +17,10 @@ import {
   restoreFocusedControl,
 } from './lafea-workbench-dom.js';
 import { renderLafeaWorkbenchContent } from './lafea-workbench-content.js';
+import {
+  lafeaWorkbenchReasonLabel,
+  lafeaWorkbenchReasonLabels,
+} from './lafea-workbench-reason-labels.js';
 
 const VIEW_RENDER_DEPENDENCIES = new WeakMap();
 
@@ -240,11 +244,17 @@ export class LafeaWorkbenchView {
 }
 
 function runTitle(stage, executionSupported, authorization) {
-  if (!executionSupported) return 'UNSUPPORTED_STAGE_ENGINE_NOT_IMPLEMENTED';
-  if (!stage.document) return 'A validated source document is required.';
-  if (authorization?.state !== 'READY') {
-    const reasons = authorization?.reasons?.join(', ') || 'CANONICAL_AUTHORIZATION_NOT_READY';
-    return `Canonical authorization ${authorization?.state ?? 'UNAVAILABLE'} does not authorize run: ${reasons}`;
+  if (!executionSupported) {
+    return lafeaWorkbenchReasonLabel('UNSUPPORTED_STAGE_ENGINE_NOT_IMPLEMENTED');
   }
-  return 'Canonical workbench authorization is READY. Retained calculation output does not imply release authority.';
+  if (!stage.document) return 'Import or create a valid source document before running the analysis.';
+  if (authorization?.state !== 'READY') {
+    const reasons = lafeaWorkbenchReasonLabels(
+      authorization?.reasons?.length
+        ? authorization.reasons
+        : ['CANONICAL_AUTHORIZATION_NOT_READY'],
+    ).join(' ');
+    return `Run is not authorized. ${reasons}`;
+  }
+  return 'Analysis authorization is ready. A retained calculation result does not by itself establish release qualification.';
 }

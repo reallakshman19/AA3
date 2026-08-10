@@ -48,7 +48,7 @@ jobs:
           @'
           import fs from 'node:fs';
           const p='src/core/fea-benchmarks/caesar-accdb-linear-solve.js';
-          let t=fs.readFileSync(p,'utf8');
+          let t=fs.readFileSync(p,'utf8').replace(/\r\n/g,'\n');
           const once=(oldText,newText,label)=>{const n=t.split(oldText).length-1;if(n!==1)throw new Error(`${label}: expected 1 site, found ${n}`);t=t.replace(oldText,newText);};
           once(
           `    bendDefinitions,
@@ -141,6 +141,7 @@ jobs:
           fs.writeFileSync(p,t);
           '@ | Set-Content artifacts/patch.mjs -Encoding utf8
           node artifacts/patch.mjs
+          if($LASTEXITCODE-ne0){throw 'Fictitious rigid patcher failed.'}
           git diff -- src/core/fea-benchmarks/caesar-accdb-linear-solve.js | Out-File artifacts/tee-fictitious-rigid.patch -Encoding utf8
       - name: Run explicit fictitious-rigid variant
         shell: pwsh

@@ -94,7 +94,7 @@ jobs:
               ($_.entityKind-eq'ELEMENT' -and $_.quantity-like'GLOBAL_END_*') -or
               ($_.entityKind-eq'NODE' -and $_.quantity-in@('DISPLACEMENT','ROTATION','FORCE','MOMENT'))
             }).Count
-            if($target-ne$expected[$id]){throw "Retained baseline drift in $id: $target != $($expected[$id])"}
+            if($target-ne$expected[$id]){throw "Retained baseline drift in ${id}: $target != $($expected[$id])"}
             $total+=$target
           }
           if($total-ne788){throw "Retained total drift: $total"}

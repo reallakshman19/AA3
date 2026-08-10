@@ -1,0 +1,67 @@
+name: M047 one-shot evidence patch
+
+on:
+  push:
+    branches:
+      - agent/m047-bm4l-root-cause
+    paths:
+      - .github/workflows/m047-one-shot-evidence-patch.yml
+
+permissions:
+  contents: write
+
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: agent/m047-bm4l-root-cause
+          fetch-depth: 0
+
+      - name: Apply guarded evidence-only patch
+        shell: python
+        run: |
+          from pathlib import Path
+
+          path = Path('src/core/fea-benchmarks/caesar-accdb-linear-solve.js')
+          text = path.read_text()
+
+          replacements = [
+              (
+                  """    cases[caseRecord.caseId] = {\n      executionSemanticHash: solved.execution.semanticHash,\n      executionEvidenceHash: solved.execution.evidenceHash,\n      rows: solved.rows,\n    };""",
+                  """    cases[caseRecord.caseId] = {\n      executionSemanticHash: solved.execution.semanticHash,\n      executionEvidenceHash: solved.execution.evidenceHash,\n      stiffnessStateHash: solved.execution.stiffnessStateHash,\n      rows: solved.rows,\n    };""",
+              ),
+              (
+                  """      executionStatus: execution.status,\n      solverDiagnostics: execution.diagnostics,\n      recoveredEquilibrium,\n      globalRecoveryDisagreement: recovered.globalRecoveryDisagreement,""",
+                  """      executionStatus: execution.status,\n      solverDiagnostics: execution.diagnostics,\n      stiffnessStateHash: execution.stiffnessStateHash,\n      recoveredEquilibrium,\n      globalRecoveryDisagreement: recovered.globalRecoveryDisagreement,\n      recoveryLedger: recovered.actions.map((recoveredAction) => ({\n        elementId: recoveredAction.entry.elementId,\n        sourceElementId: recoveredAction.entry.sourceElementId,\n        nodeI: recoveredAction.entry.nodeI,\n        nodeJ: recoveredAction.entry.nodeJ,\n        jointDisplacement12: recoveredAction.jointDisplacement12,\n        globalElasticAction: recoveredAction.globalElasticAction,\n        equivalentLoadGlobal: recoveredAction.entry.contribution.equivalentLoadGlobal,\n        initialStrainLoadGlobal: recoveredAction.entry.contribution.initialStrainLoadGlobal,\n        qGlobal: recoveredAction.action.qGlobal,\n        qLocal: recoveredAction.action.qLocal,\n        transformedLocalQGlobal: recoveredAction.transformedLocalQGlobal,\n      })),""",
+              ),
+              (
+                  """    const action = { ...localRecovery, qGlobal };\n    return { entry, action, transformedLocalQGlobal: localRecovery.qGlobal };""",
+                  """    const action = { ...localRecovery, qGlobal };\n    return {\n      entry,\n      action,\n      jointDisplacement12: Object.freeze([...jointDisplacement12]),\n      globalElasticAction: Object.freeze([...globalElasticAction]),\n      transformedLocalQGlobal: localRecovery.qGlobal,\n    };""",
+              ),
+          ]
+
+          for old, new in replacements:
+              count = text.count(old)
+              if count != 1:
+                  raise SystemExit(f'guarded replacement expected exactly once, found {count}: {old[:80]!r}')
+              text = text.replace(old, new)
+
+          path.write_text(text)
+
+      - name: Syntax and targeted regression checks
+        run: |
+          node --check src/core/fea-benchmarks/caesar-accdb-linear-solve.js
+          node scripts/lfea-b3.3-solver-check.mjs
+          node scripts/lfea-b3.4-recovery-check.mjs
+          node scripts/lfea-b3.6-sparse-assembly-check.mjs
+
+      - name: Commit evidence instrumentation
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add src/core/fea-benchmarks/caesar-accdb-linear-solve.js
+          git diff --cached --check
+          git commit -m "expose BM4_L operator and recovery evidence"
+          git push origin HEAD:agent/m047-bm4l-root-cause

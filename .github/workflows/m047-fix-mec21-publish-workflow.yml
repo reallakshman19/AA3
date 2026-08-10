@@ -1,0 +1,41 @@
+name: M047 fix MEC-21 safe publish staging
+
+on:
+  push:
+    branches: [agent/m047-bm4l-root-cause]
+    paths: ['.github/workflows/m047-fix-mec21-publish-workflow.yml']
+
+permissions:
+  contents: write
+
+jobs:
+  fix:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: agent/m047-bm4l-root-cause
+          fetch-depth: 0
+      - name: Make MEC-21 publish cleanup path-safe
+        shell: python
+        run: |
+          from pathlib import Path
+          p=Path('.github/workflows/m047-one-shot-mec21-bend-shear-v2.yml')
+          t=p.read_text()
+          old="git add src/core/linear-fea-piping-components/mec21-bend-shear.js src/core/linear-fea-piping-components/index.js src/core/fea-benchmarks/caesar-accdb-linear-solve.js scripts/lfea-m047-caesar-mec21-bend-shear-authority-check.mjs benchmarks/LFEA/CAESAR_ACCDB/bm4l-mec21-bend-shear-ab.json .github/workflows/m047-one-shot-mec21-bend-shear.yml .github/workflows/m047-one-shot-mec21-bend-shear-v2.yml"
+          if t.count(old)!=1:
+              raise SystemExit(f'expected one publish staging command, found {t.count(old)}')
+          p.write_text(t.replace(old, 'git add -A', 1))
+      - name: Publish harness correction safely
+        shell: bash
+        run: |
+          set -euo pipefail
+          rm .github/workflows/m047-fix-mec21-publish-workflow.yml
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -A
+          git diff --cached --check
+          git commit -m "ci(lfea): fix MEC-21 safe publish staging"
+          git fetch origin agent/m047-bm4l-root-cause
+          git rebase origin/agent/m047-bm4l-root-cause
+          git push origin HEAD:agent/m047-bm4l-root-cause

@@ -39,6 +39,7 @@ import {
   setLfeaPreflightPhase1Sort,
   setLfeaPreflightPhase1ViewportSize,
 } from './lfea-preflight-phase1-viewport.js';
+import { mountLfeaPreflightPhase1ReviewSurface } from './lfea-preflight-phase1-review-surface.js';
 import { masterDataController } from './master-data-controller.js';
 import { projectPreflightModel } from './lfea-preflight-resolution.js';
 
@@ -82,6 +83,9 @@ const STATUS_NAME_BY_VALUE = Object.freeze(Object.fromEntries(
 
 const TRACE_EMPTY = 'Select an engineering cell to inspect source, method, status and locator evidence.';
 
+/** The mounted review ledger owner, torn down whenever the source is replaced. */
+let phase1ReviewSurfaceHandle = null;
+
 /**
  * Render the read-only pre-flight review surface into a host element.
  *
@@ -107,6 +111,12 @@ function createSurface(container, model, renderCallback) {
   root.dataset.role = 'lfea-preflight-grid';
   root.dataset.blocked = source.blocked ? 'true' : 'false';
 
+  // A previous surface owns a review session bound to the previous source
+  // structural hash. Tear it down before a new source replaces it so review
+  // custody can never straddle two datasets.
+  phase1ReviewSurfaceHandle?.destroy();
+  phase1ReviewSurfaceHandle = null;
+
   if (source.blocked) {
     root.append(header(doc, null, renderCallback), blockedNotice(doc, projection.blocked));
     container.replaceChildren(root);
@@ -123,6 +133,18 @@ function createSurface(container, model, renderCallback) {
 
   const parts = buildShell(doc, root, viewport, renderCallback);
   container.replaceChildren(root);
+
+  // The review ledger is a separate governed owner. It receives read-only
+  // getters for the current source and viewport model plus an explicit clock,
+  // so it holds no model, master-data or solver authority of its own and reads
+  // no ambient time.
+  phase1ReviewSurfaceHandle = mountLfeaPreflightPhase1ReviewSurface(parts.reviewBlock, {
+    documentRef: doc,
+    getSource: () => source,
+    getViewportModel: () => getLfeaPreflightPhase1ViewportModel(viewport),
+    nowUtc: () => new Date().toISOString(),
+  });
+
   measureAndPaint(parts, viewport);
   return { projection, viewport };
 }
@@ -144,11 +166,13 @@ function buildShell(doc, root, viewport, renderCallback) {
   traceBlock.dataset.role = 'lfea-preflight-trace';
   const budget = create(doc, 'p', 'lfea-preflight-phase1__budget');
   budget.dataset.role = 'lfea-preflight-budget';
-  root.append(headerBlock, toolbar, scroller, componentsBlock, traceBlock, budget);
+  const reviewBlock = create(doc, 'div');
+  reviewBlock.dataset.role = 'lfea-preflight-review';
+  root.append(headerBlock, toolbar, scroller, componentsBlock, traceBlock, reviewBlock, budget);
 
   const parts = {
     doc, root, headerBlock, toolbar, scroller, sizer, headRow, rowsLayer,
-    componentsBlock, traceBlock, budget, summary: headerBlock.summary,
+    componentsBlock, traceBlock, reviewBlock, budget, summary: headerBlock.summary,
   };
 
   scroller.addEventListener('scroll', () => {
@@ -279,6 +303,10 @@ function paint(parts, viewport) {
     `columns ${model.visibleColumns.length} of ${totalColumns}`,
     `dataset ${model.targetCount} lines / ${model.componentCount} components`,
   ].join(' | ');
+
+  // Selection drives review eligibility, so the ledger re-reads the viewport
+  // model after every paint rather than keeping its own copy of selection.
+  if (phase1ReviewSurfaceHandle !== null) phase1ReviewSurfaceHandle.refresh();
 }
 
 function paintHead(doc, headRow, model) {
@@ -546,6 +574,8 @@ export function mountLfeaPreflightUi(applicationRoot, options = {}) {
     },
     destroy() {
       projection = null;
+      phase1ReviewSurfaceHandle?.destroy();
+      phase1ReviewSurfaceHandle = null;
       host.replaceChildren();
     },
   };

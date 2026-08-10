@@ -258,3 +258,80 @@
   margin: 6px 0 0;
   color: #64748b;
 }
+
+/*
+ * Review ledger. A separately governed owner mounted below the virtualized
+ * grid: it reads the current source and selection through getters and appends
+ * immutable review events. Layout is additive — it changes nothing about the
+ * cap-free virtualized grid above it.
+ */
+.lfea-phase1-review-ledger {
+  margin-top: 8px;
+  padding: 8px;
+  border: 1px solid #1e293b;
+  border-radius: 6px;
+  background: #07111f;
+}
+
+.lfea-phase1-review-ledger__header {
+  margin: 0 0 6px;
+  color: #f8fafc;
+  font-weight: 700;
+}
+
+.lfea-phase1-review-ledger__identity {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-bottom: 6px;
+}
+
+.lfea-phase1-review-ledger__input {
+  flex: 1 1 220px;
+  min-width: 0;
+  border: 1px solid #334155;
+  border-radius: 4px;
+  padding: 4px 6px;
+  background: #0f172a;
+  color: #e2e8f0;
+  font-size: 11px;
+}
+
+.lfea-phase1-review-ledger__trace {
+  display: grid;
+  grid-template-columns: minmax(150px, auto) minmax(0, 1fr);
+  gap: 2px 12px;
+  margin: 0 0 8px;
+  color: #cbd5e1;
+}
+
+.lfea-phase1-review-ledger__trace dt { color: #94a3b8; }
+.lfea-phase1-review-ledger__trace dd { margin: 0; overflow-wrap: anywhere; }
+
+.lfea-phase1-review-ledger__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.lfea-phase1-review-ledger__button {
+  border: 1px solid #334155;
+  border-radius: 4px;
+  padding: 4px 10px;
+  background: #0f172a;
+  color: #e2e8f0;
+  font-size: 11px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.lfea-phase1-review-ledger__button:disabled {
+  cursor: not-allowed;
+  opacity: 0.45;
+}
+
+.lfea-phase1-review-ledger__feedback {
+  margin: 6px 0 0;
+  color: #fcd34d;
+  white-space: pre-wrap;
+}

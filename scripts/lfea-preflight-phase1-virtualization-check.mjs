@@ -5,6 +5,7 @@ import fs from 'node:fs';
 import {
   ENGINEERING_FIELDS as PHASE0_ENGINEERING_FIELDS,
   buildEnrichmentUiFixture,
+  componentTargetId,
 } from './enrichment-ui-phase0-fixtures.mjs';
 import {
   LFEA_PREFLIGHT_ENGINEERING_FIELDS,
@@ -18,6 +19,7 @@ import {
 } from '../src/workspace/lfea-preflight-phase1-index.js';
 import {
   buildLfeaPreflightPhase1ComponentIndex,
+  getLfeaPreflightPhase1ComponentParentLineTargetId,
   getLfeaPreflightPhase1ComponentsForLine,
 } from '../src/workspace/lfea-preflight-phase1-component-index.js';
 import {
@@ -62,8 +64,11 @@ const firstSmallComponents = getLfeaPreflightPhase1ComponentsForLine(
   0,
   4,
 );
-assert.equal(firstSmallComponents.totalComponentCount, 10);
-assert.equal(firstSmallComponents.count, 4);
+assert.equal(
+  firstSmallComponents.totalComponentCount,
+  smallFixture.lines.componentCountByLineOrdinal[0],
+);
+assert.equal(firstSmallComponents.count, Math.min(4, firstSmallComponents.totalComponentCount));
 console.log(`P06B-01 PASS stable component index ${smallComponentIndex.structuralHash}`);
 
 const largeFixture = buildEnrichmentUiFixture('large');
@@ -89,7 +94,7 @@ const syntheticSource = Object.freeze({
   lineIndex: largeLineIndex,
   componentIndex: largeComponentIndex,
 });
-const providers = syntheticProviders(largeLineIndex);
+const providers = syntheticProviders(largeLineIndex, largeComponentIndex);
 const viewport = createLfeaPreflightPhase1Viewport(syntheticSource, {
   providers,
   viewportHeight: 320,
@@ -232,9 +237,7 @@ function componentInputFromFixture(fixture) {
   const targetIdByOrdinal = new Array(count);
   const parentLineTargetIdByOrdinal = new Array(count);
   for (let ordinal = 0; ordinal < count; ordinal += 1) {
-    const sourceBase = fixture.components.targetBaseByOrdinal[ordinal];
-    const typeId = fixture.components.componentTypeIdByOrdinal[ordinal];
-    targetIdByOrdinal[ordinal] = `CMP-${sourceBase.toString(36).toUpperCase()}-T${typeId}`;
+    targetIdByOrdinal[ordinal] = componentTargetId(fixture, ordinal);
     parentLineTargetIdByOrdinal[ordinal] = fixture.lines.targetIdByOrdinal[
       fixture.components.parentLineOrdinal[ordinal]
     ];
@@ -242,7 +245,7 @@ function componentInputFromFixture(fixture) {
   return { targetIdByOrdinal, parentLineTargetIdByOrdinal };
 }
 
-function syntheticProviders(lineIndex) {
+function syntheticProviders(lineIndex, componentIndex) {
   return Object.freeze({
     getLine(_source, targetId) {
       const ordinal = getLfeaPreflightPhase1LineOrdinal(lineIndex, targetId);
@@ -278,23 +281,21 @@ function syntheticProviders(lineIndex) {
       });
     },
     getComponent(source, targetId) {
-      const viewport = getLfeaPreflightPhase1ComponentsForLine;
-      void viewport;
       const text = String(targetId);
-      const match = /^CMP-([A-Z0-9]+)-T(\d+)$/u.exec(text);
-      if (!match) return null;
-      const componentOrdinalBase = Number.parseInt(match[1], 36);
-      const parentLineOrdinal = Math.floor((componentOrdinalBase - 0x50000000) / 10);
-      const parentLineTargetId = source.lineIndex.targetIds[parentLineOrdinal] ?? null;
+      const parentLineTargetId = getLfeaPreflightPhase1ComponentParentLineTargetId(
+        componentIndex,
+        source.lineIndex,
+        targetId,
+      );
       if (parentLineTargetId === null) return null;
       return Object.freeze({
         targetId: text,
         parentLineTargetId,
         sourceEntityId: text,
         name: `Component ${text}`,
-        type: `TYPE-${match[2]}`,
-        bore: 50 + (componentOrdinalBase % 20),
-        provenancePath: `/qualification/components/${text}`,
+        type: 'QUALIFICATION_COMPONENT',
+        bore: null,
+        provenancePath: `/qualification/components/${encodeURIComponent(text)}`,
         sourceHash: 'fnv1a64:p06b-component',
       });
     },

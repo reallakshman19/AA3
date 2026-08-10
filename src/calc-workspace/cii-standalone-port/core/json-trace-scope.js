@@ -36,7 +36,7 @@ export function branchContainsMatch(xmlBranchName, stagedBranchName) {
 }
 
 export function splitDelimitedSupportTags(value) {
-  return uniq(decodeTraceLiteral(value).split(/[=,;|\/\s]+/g)).filter((part) => /^PS[-A-Za-z0-9.]+$/.test(part));
+  return uniq(decodeTraceLiteral(value).split(/[=,;|/\s]+/g)).filter((part) => /^PS[-A-Za-z0-9.]+$/.test(part));
 }
 
 export function normalizeSupportTraceTag(value) {

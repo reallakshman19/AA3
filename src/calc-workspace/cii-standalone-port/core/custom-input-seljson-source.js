@@ -227,7 +227,11 @@ function branchForItem(payload, item, options) {
     if (primitiveIndex > 0) parts = parts.slice(0, primitiveIndex);
     const last = parts[parts.length - 1] || '';
     if (/^(CYLINDER|BOX|FACET|SNOUT|CIRCULAR|RECTANGULAR|TORUS|DISH|CONE|SPHERE)\b/i.test(last)) parts.pop();
-    return `/${parts.map(safePathToken).filter(Boolean).join('/')}` || '/SELJSON/RVM';
+    // The `/${...}` template can never be falsy, so testing the joined tokens
+    // is what actually reaches the fallback. Written the other way round this
+    // returned a bare "/" whenever every token was dropped.
+    const branch = parts.map(safePathToken).filter(Boolean).join('/');
+    return branch ? `/${branch}` : '/SELJSON/RVM';
   }
   const attrBranch = branchPathFromAttrs(item);
   if (attrBranch) return attrBranch;

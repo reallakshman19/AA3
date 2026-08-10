@@ -273,7 +273,7 @@ function requireSafeAttributes(value, targetId) {
 
 function requireSafeAttributeName(value, targetId) {
   const name = requireSafeIdentity(value, 'attributeName');
-  if (/[\/\[\]]/u.test(name)) {
+  if (/[/[\]]/u.test(name)) {
     fail('StagedJson sidecar attribute is path-like.', 'STAGED_JSON_SIDECAR_PROTECTED_FIELD', {
       targetId,
       attribute: name,

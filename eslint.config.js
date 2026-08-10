@@ -32,6 +32,13 @@ export default defineConfig([
         ...globals.jest,
         ...globals.node,
         __BUILD_TIME__: 'readonly',
+        // Provided at runtime by script tags rather than by module import,
+        // chiefly in the standalone CII port.
+        XLSX: 'readonly',
+        showToast: 'readonly',
+        MASTER_FIELDS: 'readonly',
+        AnalysisWorkspace: 'readonly',
+        EventBus: 'readonly',
       },
       parserOptions: {
         ecmaVersion: 'latest',
@@ -40,6 +47,11 @@ export default defineConfig([
     },
     rules: {
       'no-unused-vars': ['warn', { varsIgnorePattern: '^[A-Z_]', argsIgnorePattern: '^_' }],
+      // `catch {}` is a deliberate idiom here for genuinely optional work —
+      // localStorage that may be unavailable, opportunistic JSON parsing — where
+      // failing closed is the intended behaviour. Empty blocks elsewhere are
+      // still reported.
+      'no-empty': ['error', { allowEmptyCatch: true }],
     },
   },
   {
@@ -52,6 +64,40 @@ export default defineConfig([
     },
     rules: {
       'no-unused-vars': ['warn', { varsIgnorePattern: '^[A-Z_]', argsIgnorePattern: '^_' }],
+      // `catch {}` is a deliberate idiom here for genuinely optional work —
+      // localStorage that may be unavailable, opportunistic JSON parsing — where
+      // failing closed is the intended behaviour. Empty blocks elsewhere are
+      // still reported.
+      'no-empty': ['error', { allowEmptyCatch: true }],
+    },
+  },
+  {
+    // Playwright specs run Node, but the bodies of `page.evaluate()` callbacks
+    // execute in the browser and reference the application's own page globals.
+    // Without these declared, the suite reported ~509 no-undef errors that were
+    // not defects and that buried the real findings elsewhere in the tree.
+    files: ['e2e/**/*.js', 'tests/**/*.js', 'test/**/*.js'],
+    extends: [js.configs.recommended],
+    languageOptions: {
+      ecmaVersion: 'latest',
+      globals: {
+        ...globals.node,
+        ...globals.browser,
+        AnalysisWorkspace: 'readonly',
+        EventBus: 'readonly',
+        XLSX: 'readonly',
+        showToast: 'readonly',
+        MASTER_FIELDS: 'readonly',
+      },
+      parserOptions: { ecmaVersion: 'latest', sourceType: 'module' },
+    },
+    rules: {
+      'no-unused-vars': ['warn', { varsIgnorePattern: '^[A-Z_]', argsIgnorePattern: '^_' }],
+      // `catch {}` is a deliberate idiom here for genuinely optional work —
+      // localStorage that may be unavailable, opportunistic JSON parsing — where
+      // failing closed is the intended behaviour. Empty blocks elsewhere are
+      // still reported.
+      'no-empty': ['error', { allowEmptyCatch: true }],
     },
   },
 ])

@@ -270,7 +270,7 @@ function requireSummary(value) {
 }
 function requireFieldName(value, label) {
   const result = requireIdentity(value, label);
-  if (UNSAFE_KEYS.has(result) || /[.\\/\[\]]/u.test(result)) {
+  if (UNSAFE_KEYS.has(result) || /[.\\/[\]]/u.test(result)) {
     fail(`${label} must be a safe direct field name.`, 'STAGED_JSON_WRITE_MAPPING_INVALID');
   }
   return result;

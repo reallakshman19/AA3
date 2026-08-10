@@ -26,6 +26,12 @@ const expectedOwnership = new Map([
   ['/repo/src/workspace/resolved-engineering-geometry.js', 'workspace-viewport-engineering-projections'],
   ['/repo/src/workspace/viewport-render-model.js', 'workspace-viewport-engineering-projections'],
   ['/repo/src/workspace/model-zone-viewport-projection.js', 'workspace-viewport-engineering-projections'],
+  ['/repo/src/workspace/engineering-enrichment/production-component-weight-overlay.js', 'workspace-engineering-enrichment-authority-projections'],
+  ['/repo/src/workspace/engineering-enrichment/production-material-density-overlay.js', 'workspace-engineering-enrichment-authority-projections'],
+  ['/repo/src/workspace/engineering-enrichment/production-material-support-authority-overlays.js', 'workspace-engineering-enrichment-authority-projections'],
+  ['/repo/src/workspace/engineering-enrichment/production-operating-fluid-density-overlay.js', 'workspace-engineering-enrichment-authority-projections'],
+  ['/repo/src/workspace/engineering-enrichment/production-pipe-section-overlay.js', 'workspace-engineering-enrichment-authority-projections'],
+  ['/repo/src/workspace/engineering-enrichment/production-secondary-density-overlays.js', 'workspace-engineering-enrichment-authority-projections'],
 ]);
 
 const automaticWorkspaceOwnership = [
@@ -43,6 +49,7 @@ const automaticWorkspaceOwnership = [
   '/repo/src/workspace/sequential-sketcher/sequential-sketcher-controller.js',
   '/repo/src/workspace/viewport-panel.js',
   '/repo/src/workspace/viewport-renderer.js',
+  '/repo/src/workspace/engineering-loads/authorized-empirical-load-execution-v8.js',
 ];
 
 for (const [id, expected] of expectedOwnership) {

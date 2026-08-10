@@ -17,6 +17,9 @@ export const LAFEA_WORKBENCH_RELEASE_BINDING_STATUSES = Object.freeze([
 export function createLafeaWorkbenchReleaseState(stageIds, options = {}) {
   const ids = requireStageIds(stageIds);
   const currentCandidateHeadSha = optionalCandidateHead(options.currentCandidateHeadSha);
+  const authorizedReleaseEvidenceHashes = authorizedEvidenceHashSet(
+    options.authorizedReleaseEvidenceHashes,
+  );
   const records = Object.fromEntries(ids.map((stageId) => [stageId, null]));
 
   function fields(stageId) {
@@ -24,6 +27,7 @@ export function createLafeaWorkbenchReleaseState(stageIds, options = {}) {
     return freeze({
       retainedTemplateReleaseRecord: records[stageId],
       releaseCandidateHeadSha: currentCandidateHeadSha,
+      releaseAuthorizedEvidenceHashes: [...authorizedReleaseEvidenceHashes],
     });
   }
 
@@ -34,11 +38,10 @@ export function createLafeaWorkbenchReleaseState(stageIds, options = {}) {
     if (record.targetStage.stageId !== stage.stageId) {
       throw releaseError('RELEASE_RECORD_TARGET_STAGE_MISMATCH');
     }
-    const projection = projectLafeaWorkbenchReleaseBinding(
-      stage,
-      record,
+    const projection = projectLafeaWorkbenchReleaseBinding(stage, record, {
       currentCandidateHeadSha,
-    );
+      authorizedReleaseEvidenceHashes: [...authorizedReleaseEvidenceHashes],
+    });
     if (projection.bindingStatus !== 'CURRENT') {
       throw releaseError(projection.reasons[0] ?? 'RELEASE_RECORD_BINDING_NOT_CURRENT');
     }
@@ -59,12 +62,17 @@ export function createLafeaWorkbenchReleaseState(stageIds, options = {}) {
 export function projectLafeaWorkbenchReleaseBinding(
   stageValue,
   recordValue = null,
-  candidateHeadValue = undefined,
+  options = {},
 ) {
   const stage = requireStage(stageValue);
-  const candidateHeadSha = candidateHeadValue === undefined
+  const candidateHeadSha = options.currentCandidateHeadSha === undefined
     ? optionalCandidateHead(stage.releaseCandidateHeadSha)
-    : optionalCandidateHead(candidateHeadValue);
+    : optionalCandidateHead(options.currentCandidateHeadSha);
+  const authorizedReleaseEvidenceHashes = authorizedEvidenceHashSet(
+    options.authorizedReleaseEvidenceHashes === undefined
+      ? stage.releaseAuthorizedEvidenceHashes
+      : options.authorizedReleaseEvidenceHashes,
+  );
   if (!recordValue) return projection(stage.stageId, candidateHeadSha, {
     bindingStatus: 'ABSENT',
     releaseQualified: false,
@@ -73,6 +81,8 @@ export function projectLafeaWorkbenchReleaseBinding(
     recordId: null,
     semanticHash: null,
     evidenceHash: null,
+    evidenceAuthorizationStatus: authorizedReleaseEvidenceHashes.size
+      ? 'AVAILABLE' : 'UNAVAILABLE',
     targetCompatibilityStatus: null,
     targetCompatibilityReasons: [],
     reasons: ['RELEASE_RECORD_ABSENT'],
@@ -90,13 +100,19 @@ export function projectLafeaWorkbenchReleaseBinding(
       recordId: null,
       semanticHash: null,
       evidenceHash: null,
+      evidenceAuthorizationStatus: 'INVALID_RECORD',
       targetCompatibilityStatus: null,
       targetCompatibilityReasons: [],
       reasons: ['RELEASE_RECORD_INVALID'],
     });
   }
 
-  const assessment = currentBindingAssessment(stage, record, candidateHeadSha);
+  const assessment = currentBindingAssessment(
+    stage,
+    record,
+    candidateHeadSha,
+    authorizedReleaseEvidenceHashes,
+  );
   if (assessment.reasons.length) return projection(stage.stageId, candidateHeadSha, {
     bindingStatus: 'STALE',
     releaseQualified: false,
@@ -105,6 +121,7 @@ export function projectLafeaWorkbenchReleaseBinding(
     recordId: record.recordId,
     semanticHash: record.semanticHash,
     evidenceHash: record.evidenceHash,
+    evidenceAuthorizationStatus: assessment.evidenceAuthorizationStatus,
     targetCompatibilityStatus: assessment.compatibility.status,
     targetCompatibilityReasons: assessment.compatibility.reasons,
     reasons: assessment.reasons,
@@ -126,16 +143,30 @@ export function projectLafeaWorkbenchReleaseBinding(
     recordId: record.recordId,
     semanticHash: record.semanticHash,
     evidenceHash: record.evidenceHash,
+    evidenceAuthorizationStatus: assessment.evidenceAuthorizationStatus,
     targetCompatibilityStatus: assessment.compatibility.status,
     targetCompatibilityReasons: assessment.compatibility.reasons,
     reasons: nonQualifiedReasons,
   });
 }
 
-function currentBindingAssessment(stage, record, candidateHeadSha) {
+function currentBindingAssessment(
+  stage,
+  record,
+  candidateHeadSha,
+  authorizedReleaseEvidenceHashes,
+) {
   const reasons = [];
   const snapshot = createCurrentLafeaTargetAuthoritySnapshot(stage.stageId);
   const compatibility = evaluateTemplateTargetCompatibility(record, snapshot);
+  let evidenceAuthorizationStatus = 'AUTHORIZED';
+  if (!authorizedReleaseEvidenceHashes.size) {
+    evidenceAuthorizationStatus = 'UNAVAILABLE';
+    reasons.push('RELEASE_RECORD_TRUST_ANCHOR_UNAVAILABLE');
+  } else if (!authorizedReleaseEvidenceHashes.has(record.evidenceHash)) {
+    evidenceAuthorizationStatus = 'UNAUTHORIZED';
+    reasons.push('RELEASE_RECORD_EVIDENCE_NOT_AUTHORIZED');
+  }
   if (!candidateHeadSha) {
     reasons.push('RELEASE_RECORD_CANDIDATE_HEAD_UNAVAILABLE');
   } else if (record.candidateHeadSha !== candidateHeadSha) {
@@ -148,7 +179,7 @@ function currentBindingAssessment(stage, record, candidateHeadSha) {
   }
   if (!stage.lifecycle) {
     reasons.push('RELEASE_RECORD_LIFECYCLE_NOT_INITIALIZED');
-    return { reasons: unique(reasons), compatibility };
+    return { reasons: unique(reasons), compatibility, evidenceAuthorizationStatus };
   }
   if (stage.lifecycleBinding?.status !== 'CURRENT') {
     reasons.push('RELEASE_RECORD_LIFECYCLE_BINDING_NOT_CURRENT');
@@ -163,7 +194,7 @@ function currentBindingAssessment(stage, record, candidateHeadSha) {
   const authority = stage.sourceAuthority;
   if (!authority) {
     reasons.push('RELEASE_RECORD_SOURCE_AUTHORITY_ABSENT');
-    return { reasons: unique(reasons), compatibility };
+    return { reasons: unique(reasons), compatibility, evidenceAuthorizationStatus };
   }
   if (record.sourceAuthority.sourceHash !== authority.sourceHash) {
     reasons.push('RELEASE_RECORD_SOURCE_HASH_STALE');
@@ -176,7 +207,7 @@ function currentBindingAssessment(stage, record, candidateHeadSha) {
       !== stage.lifecycleBinding?.currentDocumentDigest) {
     reasons.push('RELEASE_RECORD_DOCUMENT_REVISION_STALE');
   }
-  return { reasons: unique(reasons), compatibility };
+  return { reasons: unique(reasons), compatibility, evidenceAuthorizationStatus };
 }
 
 function normalizeReleaseRecord(value) {
@@ -206,12 +237,25 @@ function projection(stageId, candidateHeadSha, value) {
     recordId: value.recordId,
     semanticHash: value.semanticHash,
     evidenceHash: value.evidenceHash,
+    evidenceAuthorizationStatus: value.evidenceAuthorizationStatus,
     targetCompatibilityStatus: value.targetCompatibilityStatus,
     targetCompatibilityReasons: unique(value.targetCompatibilityReasons),
     reasons: unique(value.reasons),
   });
 }
 
+function authorizedEvidenceHashSet(value) {
+  if (value === null || value === undefined) return new Set();
+  if (!Array.isArray(value)) throw releaseError('RELEASE_EVIDENCE_ALLOWLIST_INVALID');
+  const hashes = value.map((hash) => evidenceHash(hash));
+  return new Set(hashes);
+}
+function evidenceHash(value) {
+  if (typeof value !== 'string' || !/^sha256:[0-9a-f]{64}$/u.test(value)) {
+    throw releaseError('RELEASE_EVIDENCE_HASH_INVALID');
+  }
+  return value;
+}
 function optionalCandidateHead(value) {
   if (value === null || value === undefined) return null;
   if (typeof value !== 'string' || !/^[0-9a-f]{40}$/u.test(value)) {

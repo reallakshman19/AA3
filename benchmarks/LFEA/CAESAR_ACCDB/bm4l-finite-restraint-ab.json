@@ -1,0 +1,126 @@
+{
+  "schema": "m047-bm4l-finite-restraint-ab/v1",
+  "classification": "ACCEPTED_AUTHORITY_CORRECTION_NUMERICALLY_NEUTRAL",
+  "mechanism": "CAESAR_CONFIGURED_DEFAULT_FINITE_RESTRAINT_STIFFNESS",
+  "authority": {
+    "caesarVersion": "14.000",
+    "rule": "Blank restraint stiffness uses configured CAESAR default restraint stiffness.",
+    "profileSource": "HEXAGON_CAESAR_II_V14_DEFAULT_RESTRAINT_STIFFNESS_PLUS_BM4L_INPUT_UNITS"
+  },
+  "sourceAccdbSha256": "64c05a50e9ed0452622ff5880335460486f24ac8e6adecc9a300b549c9aa82f8",
+  "units": {
+    "source": "ACCDB:INPUT_UNITS",
+    "sourceUnits": {
+      "translation": "N./cm.",
+      "rotation": "N.m./deg"
+    },
+    "configuredDisplayedValue": 1000000000000,
+    "si": {
+      "translationNPerM": 100000000000000,
+      "rotationNmPerRad": 57295779513082.32
+    },
+    "conversionRules": [
+      "N/cm * 100 = N/m",
+      "N*m/deg * 180/pi = N*m/rad"
+    ]
+  },
+  "beforeRepresentation": "FIXED_DOF_PROVISIONAL",
+  "afterRepresentation": "CAESAR_DEFAULT_FINITE_STIFFNESS",
+  "cases": {
+    "L2": {
+      "before": {
+        "restraint": 1,
+        "displacementRotation": 36,
+        "elementEnd": 18
+      },
+      "after": {
+        "restraint": 1,
+        "displacementRotation": 36,
+        "elementEnd": 18
+      }
+    },
+    "L3": {
+      "before": {
+        "restraint": 2,
+        "displacementRotation": 47,
+        "elementEnd": 83
+      },
+      "after": {
+        "restraint": 2,
+        "displacementRotation": 47,
+        "elementEnd": 83
+      }
+    },
+    "L4": {
+      "before": {
+        "restraint": 0,
+        "displacementRotation": 36,
+        "elementEnd": 6
+      },
+      "after": {
+        "restraint": 0,
+        "displacementRotation": 36,
+        "elementEnd": 6
+      }
+    },
+    "L5": {
+      "before": {
+        "restraint": 3,
+        "displacementRotation": 63,
+        "elementEnd": 50
+      },
+      "after": {
+        "restraint": 3,
+        "displacementRotation": 63,
+        "elementEnd": 50
+      }
+    },
+    "L6": {
+      "before": {
+        "restraint": 0,
+        "displacementRotation": 13,
+        "elementEnd": 14
+      },
+      "after": {
+        "restraint": 0,
+        "displacementRotation": 13,
+        "elementEnd": 14
+      }
+    },
+    "L14": {
+      "before": {
+        "restraint": 2,
+        "displacementRotation": 47,
+        "elementEnd": 83
+      },
+      "after": {
+        "restraint": 2,
+        "displacementRotation": 47,
+        "elementEnd": 83
+      }
+    }
+  },
+  "commonOperator": {
+    "status": "PASS",
+    "distinctStiffnessStateHashes": [
+      "fnv1a64:45fdd6b1ae86b704"
+    ]
+  },
+  "recoveryProofStatus": "PASS",
+  "benchmarkFitting": false,
+  "l2Node20580UX": {
+    "key": "NODE|20580|FORCE|UX|N",
+    "reference": -0.7632771730422974,
+    "before": -0.5945444367570047,
+    "after": -0.5945447971192536,
+    "beforeAbsoluteError": 0.16873273628529262,
+    "afterAbsoluteError": 0.1687323759230438,
+    "delta": -3.603622488190794e-7
+  },
+  "acceptance": {
+    "allFailureCountsUnchanged": true,
+    "recoveryProofPass": true,
+    "commonOperatorPass": true,
+    "allExecutionsQualified": true
+  }
+}

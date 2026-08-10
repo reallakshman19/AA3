@@ -207,7 +207,7 @@ function focusTarget(stepId) {
     RESTRAINTS_BCS: 'source',
     LOADS_CASES: 'source',
     DISCRETIZATION: 'discretization',
-    NUMERICAL_PREFLIGHT: 'findings',
+    NUMERICAL_PREFLIGHT: 'numerical-verification',
     AUTHORIZATION: 'lineage',
     RUN: 'run',
     RESULTS_EVIDENCE: 'results',

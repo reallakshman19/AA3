@@ -58,7 +58,7 @@ jobs:
           $json = & scripts/lfea-caesar-accdb-export.ps1 `
             -AccdbPath $env:BM4L_ACCDB `
             -TablesCsv 'INPUT_BASIC_ELEMENT_DATA,INPUT_BENDS,INPUT_NODAL_COORDINATES,INPUT_OFFSETS,INPUT_REDUCERS,INPUT_RESTRAINTS,INPUT_RIGIDS,INPUT_SIFTEES,INPUT_UNITS'
-          if ($LASTEXITCODE -ne 0) { throw "ACCDB export failed with exit $LASTEXITCODE" }
+          if ($null -eq $json -or $json.Count -eq 0) { throw 'ACCDB export returned no JSON.' }
           $json | Out-File artifacts/bm4l-input-ledger.json -Encoding utf8
 
       - name: Upload input ledger

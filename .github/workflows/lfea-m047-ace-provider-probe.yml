@@ -52,3 +52,14 @@ jobs:
           } else {
             Write-Host '32-bit PowerShell unavailable.'
           }
+
+      - name: Discover Microsoft Access Runtime packages without installing
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Continue'
+          Write-Host 'winget version:'
+          winget --version
+          Write-Host 'Search: Access Runtime'
+          winget search --source winget --accept-source-agreements "Access Runtime"
+          Write-Host 'Search: Microsoft Access'
+          winget search --source winget --accept-source-agreements "Microsoft Access"

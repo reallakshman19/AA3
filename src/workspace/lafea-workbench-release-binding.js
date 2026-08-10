@@ -2,6 +2,9 @@
 import {
   validateTemplateReleaseRecordV2,
 } from '../core/lafea-application-templates/release-record-v2.js';
+import {
+  evaluateTemplateTargetCompatibility,
+} from '../core/lafea-application-templates/target-compatibility.js';
 import { canonicalLafeaSha256 } from './lafea-canonical-sha256.js';
 import { createCurrentLafeaTargetAuthoritySnapshot } from './lafea-target-compatibility-authority.js';
 
@@ -11,13 +14,17 @@ export const LAFEA_WORKBENCH_RELEASE_BINDING_STATUSES = Object.freeze([
   'ABSENT', 'CURRENT', 'STALE',
 ]);
 
-export function createLafeaWorkbenchReleaseState(stageIds) {
+export function createLafeaWorkbenchReleaseState(stageIds, options = {}) {
   const ids = requireStageIds(stageIds);
+  const currentCandidateHeadSha = optionalCandidateHead(options.currentCandidateHeadSha);
   const records = Object.fromEntries(ids.map((stageId) => [stageId, null]));
 
   function fields(stageId) {
     requireKnownStage(records, stageId);
-    return freeze({ retainedTemplateReleaseRecord: records[stageId] });
+    return freeze({
+      retainedTemplateReleaseRecord: records[stageId],
+      releaseCandidateHeadSha: currentCandidateHeadSha,
+    });
   }
 
   function register(recordValue, stageValue) {
@@ -27,7 +34,11 @@ export function createLafeaWorkbenchReleaseState(stageIds) {
     if (record.targetStage.stageId !== stage.stageId) {
       throw releaseError('RELEASE_RECORD_TARGET_STAGE_MISMATCH');
     }
-    const projection = projectLafeaWorkbenchReleaseBinding(stage, record);
+    const projection = projectLafeaWorkbenchReleaseBinding(
+      stage,
+      record,
+      currentCandidateHeadSha,
+    );
     if (projection.bindingStatus !== 'CURRENT') {
       throw releaseError(projection.reasons[0] ?? 'RELEASE_RECORD_BINDING_NOT_CURRENT');
     }
@@ -45,9 +56,16 @@ export function createLafeaWorkbenchReleaseState(stageIds) {
   return Object.freeze({ fields, register, select });
 }
 
-export function projectLafeaWorkbenchReleaseBinding(stageValue, recordValue = null) {
+export function projectLafeaWorkbenchReleaseBinding(
+  stageValue,
+  recordValue = null,
+  candidateHeadValue = undefined,
+) {
   const stage = requireStage(stageValue);
-  if (!recordValue) return projection(stage.stageId, {
+  const candidateHeadSha = candidateHeadValue === undefined
+    ? optionalCandidateHead(stage.releaseCandidateHeadSha)
+    : optionalCandidateHead(candidateHeadValue);
+  if (!recordValue) return projection(stage.stageId, candidateHeadSha, {
     bindingStatus: 'ABSENT',
     releaseQualified: false,
     authorityState: null,
@@ -55,6 +73,8 @@ export function projectLafeaWorkbenchReleaseBinding(stageValue, recordValue = nu
     recordId: null,
     semanticHash: null,
     evidenceHash: null,
+    targetCompatibilityStatus: null,
+    targetCompatibilityReasons: [],
     reasons: ['RELEASE_RECORD_ABSENT'],
   });
 
@@ -62,7 +82,7 @@ export function projectLafeaWorkbenchReleaseBinding(stageValue, recordValue = nu
   try {
     record = normalizeReleaseRecord(recordValue);
   } catch {
-    return projection(stage.stageId, {
+    return projection(stage.stageId, candidateHeadSha, {
       bindingStatus: 'STALE',
       releaseQualified: false,
       authorityState: null,
@@ -70,12 +90,14 @@ export function projectLafeaWorkbenchReleaseBinding(stageValue, recordValue = nu
       recordId: null,
       semanticHash: null,
       evidenceHash: null,
+      targetCompatibilityStatus: null,
+      targetCompatibilityReasons: [],
       reasons: ['RELEASE_RECORD_INVALID'],
     });
   }
 
-  const reasons = currentBindingReasons(stage, record);
-  if (reasons.length) return projection(stage.stageId, {
+  const assessment = currentBindingAssessment(stage, record, candidateHeadSha);
+  if (assessment.reasons.length) return projection(stage.stageId, candidateHeadSha, {
     bindingStatus: 'STALE',
     releaseQualified: false,
     authorityState: record.releaseState.authorityState,
@@ -83,7 +105,9 @@ export function projectLafeaWorkbenchReleaseBinding(stageValue, recordValue = nu
     recordId: record.recordId,
     semanticHash: record.semanticHash,
     evidenceHash: record.evidenceHash,
-    reasons,
+    targetCompatibilityStatus: assessment.compatibility.status,
+    targetCompatibilityReasons: assessment.compatibility.reasons,
+    reasons: assessment.reasons,
   });
 
   const releaseQualified = record.releaseState.authorityState === 'RELEASE_QUALIFIED'
@@ -94,7 +118,7 @@ export function projectLafeaWorkbenchReleaseBinding(stageValue, recordValue = nu
       ? [] : ['RELEASE_RECORD_VALIDITY_NOT_CURRENT']),
     'RELEASE_RECORD_NOT_QUALIFIED',
   ];
-  return projection(stage.stageId, {
+  return projection(stage.stageId, candidateHeadSha, {
     bindingStatus: 'CURRENT',
     releaseQualified,
     authorityState: record.releaseState.authorityState,
@@ -102,33 +126,29 @@ export function projectLafeaWorkbenchReleaseBinding(stageValue, recordValue = nu
     recordId: record.recordId,
     semanticHash: record.semanticHash,
     evidenceHash: record.evidenceHash,
+    targetCompatibilityStatus: assessment.compatibility.status,
+    targetCompatibilityReasons: assessment.compatibility.reasons,
     reasons: nonQualifiedReasons,
   });
 }
 
-function currentBindingReasons(stage, record) {
+function currentBindingAssessment(stage, record, candidateHeadSha) {
   const reasons = [];
   const snapshot = createCurrentLafeaTargetAuthoritySnapshot(stage.stageId);
-  if (record.targetStage.stageId !== stage.stageId) {
-    reasons.push('RELEASE_RECORD_TARGET_STAGE_MISMATCH');
+  const compatibility = evaluateTemplateTargetCompatibility(record, snapshot);
+  if (!candidateHeadSha) {
+    reasons.push('RELEASE_RECORD_CANDIDATE_HEAD_UNAVAILABLE');
+  } else if (record.candidateHeadSha !== candidateHeadSha) {
+    reasons.push('RELEASE_RECORD_CANDIDATE_HEAD_STALE');
   }
-  if (record.targetStage.stageEntryHash !== snapshot.targetStage.registryEntryHash) {
-    reasons.push('RELEASE_RECORD_STAGE_REGISTRY_STALE');
+  if (compatibility.status === 'STALE') {
+    reasons.push('RELEASE_RECORD_TARGET_COMPATIBILITY_STALE');
+  } else if (compatibility.status === 'BLOCKED') {
+    reasons.push('RELEASE_RECORD_TARGET_COMPATIBILITY_BLOCKED');
   }
-  if (record.compositionRoot.compositionRootHash
-    !== snapshot.compositionRoot.compositionRootHash
-    || record.compositionRoot.releaseStateBinding
-      !== snapshot.compositionRoot.releaseStateBinding) {
-    reasons.push('RELEASE_RECORD_COMPOSITION_STALE');
-  }
-  if (record.lifecycleProfile.profileId !== snapshot.lifecycleProfile.profileId
-    || record.lifecycleProfile.profileHash !== snapshot.lifecycleProfile.profileHash) {
-    reasons.push('RELEASE_RECORD_LIFECYCLE_PROFILE_STALE');
-  }
-
   if (!stage.lifecycle) {
     reasons.push('RELEASE_RECORD_LIFECYCLE_NOT_INITIALIZED');
-    return unique(reasons);
+    return { reasons: unique(reasons), compatibility };
   }
   if (stage.lifecycleBinding?.status !== 'CURRENT') {
     reasons.push('RELEASE_RECORD_LIFECYCLE_BINDING_NOT_CURRENT');
@@ -143,17 +163,7 @@ function currentBindingReasons(stage, record) {
   const authority = stage.sourceAuthority;
   if (!authority) {
     reasons.push('RELEASE_RECORD_SOURCE_AUTHORITY_ABSENT');
-    return unique(reasons);
-  }
-  if (record.sourceAuthority.requiredSchema !== snapshot.sourceContract.sourceAuthoritySchema
-    || record.sourceAuthority.requiredSchema !== authority.schema
-    || record.sourceAuthority.requiredRole !== snapshot.sourceContract.sourceAuthorityRole
-    || record.sourceAuthority.requiredRole !== authority.role
-    || record.sourceAuthority.canonicalizationProfile
-      !== snapshot.sourceContract.canonicalizationProfile
-    || record.sourceAuthority.canonicalizationProfile
-      !== authority.canonicalizationProfile) {
-    reasons.push('RELEASE_RECORD_SOURCE_AUTHORITY_CONTRACT_STALE');
+    return { reasons: unique(reasons), compatibility };
   }
   if (record.sourceAuthority.sourceHash !== authority.sourceHash) {
     reasons.push('RELEASE_RECORD_SOURCE_HASH_STALE');
@@ -166,7 +176,7 @@ function currentBindingReasons(stage, record) {
       !== stage.lifecycleBinding?.currentDocumentDigest) {
     reasons.push('RELEASE_RECORD_DOCUMENT_REVISION_STALE');
   }
-  return unique(reasons);
+  return { reasons: unique(reasons), compatibility };
 }
 
 function normalizeReleaseRecord(value) {
@@ -181,13 +191,14 @@ function normalizeReleaseRecord(value) {
   return record;
 }
 
-function projection(stageId, value) {
+function projection(stageId, candidateHeadSha, value) {
   if (!LAFEA_WORKBENCH_RELEASE_BINDING_STATUSES.includes(value.bindingStatus)) {
     throw new TypeError('LAFEA_WORKBENCH_RELEASE_BINDING_STATUS_INVALID');
   }
   return freeze({
     schema: LAFEA_WORKBENCH_RELEASE_BINDING_SCHEMA,
     stageId,
+    candidateHeadSha,
     bindingStatus: value.bindingStatus,
     releaseQualified: value.releaseQualified,
     authorityState: value.authorityState,
@@ -195,10 +206,19 @@ function projection(stageId, value) {
     recordId: value.recordId,
     semanticHash: value.semanticHash,
     evidenceHash: value.evidenceHash,
+    targetCompatibilityStatus: value.targetCompatibilityStatus,
+    targetCompatibilityReasons: unique(value.targetCompatibilityReasons),
     reasons: unique(value.reasons),
   });
 }
 
+function optionalCandidateHead(value) {
+  if (value === null || value === undefined) return null;
+  if (typeof value !== 'string' || !/^[0-9a-f]{40}$/u.test(value)) {
+    throw releaseError('RELEASE_CANDIDATE_HEAD_INVALID');
+  }
+  return value;
+}
 function requireStageIds(value) {
   if (!Array.isArray(value) || !value.length
     || value.some((stageId) => typeof stageId !== 'string' || !stageId)) {

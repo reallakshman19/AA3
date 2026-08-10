@@ -5,6 +5,8 @@ import { renderLfeaSupportActions } from './lfea-support-actions-panel.js';
 import { WorkspaceState } from './workspace-state.js';
 import { engineeringModelStore } from './engineering-model-store.js';
 import { ENGINEERING_MODEL_EVENTS } from './engineering-model-controller.js';
+import { createLfeaSupportActionsState } from './properties-panel-lfea-actions.js';
+import { idleAnalysis, isPlainObject, lifecycleState } from './properties-panel-state.js';
 
 export class PropertiesPanel {
   constructor(rootElement, eventBus = EventBus, workspaceState = WorkspaceState) {
@@ -20,9 +22,7 @@ export class PropertiesPanel {
     this.ledgerStatus = {};
     this.analysisState = idleAnalysis();
     this.searchQuery = '';
-    this.lfeaSupportActions = null;
-    this.lfeaSourceContext = null;
-    this.lfeaSupportActionsInvalidated = false;
+    this.lfeaActions = createLfeaSupportActionsState();
     this.unsubscribeCallbacks = [];
     this.handleClick = this.handleClick.bind(this);
     this.handleChange = this.handleChange.bind(this);
@@ -146,36 +146,21 @@ export class PropertiesPanel {
   }
 
   handleLfeaSourceChanged(payload) {
-    this.lfeaSourceContext = Object.freeze({
-      sourceSemanticHash: payload.sourceSemanticHash,
-      modelVersion: payload.modelVersion,
-    });
-    this.lfeaSupportActionsInvalidated = false;
+    this.lfeaActions.applySourceChanged(payload);
     if (this.selection) this.render();
   }
 
   handleLfeaSupportActions(payload) {
-    this.lfeaSupportActions = Object.freeze(structuredClone(payload));
-    this.lfeaSupportActionsInvalidated = false;
-    if (this.lfeaSourceContext === null) {
-      this.lfeaSourceContext = Object.freeze({
-        sourceSemanticHash: payload.sourceSemanticHash,
-        modelVersion: payload.modelVersion,
-      });
-    }
+    this.lfeaActions.applySupportActions(payload);
     if (this.selection) this.render();
   }
 
   invalidateLfeaSupportActions() {
-    if (!this.lfeaSupportActions) return;
-    this.lfeaSupportActionsInvalidated = true;
-    if (this.selection) this.render();
+    if (this.lfeaActions.invalidate() && this.selection) this.render();
   }
 
   handleDatasetCleared() {
-    this.lfeaSupportActions = null;
-    this.lfeaSourceContext = null;
-    this.lfeaSupportActionsInvalidated = false;
+    this.lfeaActions.clear();
     this.renderEmpty();
   }
 
@@ -204,9 +189,9 @@ export class PropertiesPanel {
     content.append(renderLfeaSupportActions(
       this.rootElement.ownerDocument,
       this.selection,
-      this.lfeaSupportActions,
-      this.lfeaSourceContext,
-      this.lfeaSupportActionsInvalidated,
+      this.lfeaActions.actions,
+      this.lfeaActions.sourceContext,
+      this.lfeaActions.invalidated,
     ));
     this.contentElement.replaceChildren(content);
   }
@@ -308,26 +293,6 @@ export class PropertiesPanel {
     this.analysisLedger = null;
     this.ledgerStatus = {};
     this.analysisState = idleAnalysis();
-    this.lfeaSupportActions = null;
-    this.lfeaSourceContext = null;
-    this.lfeaSupportActionsInvalidated = false;
+    this.lfeaActions.clear();
   }
-}
-
-function lifecycleState(status, payload) {
-  return {
-    status,
-    requestId: payload.requestId,
-    sessionId: payload.sessionId || '',
-    analysisType: payload.analysisType,
-    targetId: payload.targetId,
-  };
-}
-
-function idleAnalysis() {
-  return Object.freeze({ status: 'idle', requestId: '', sessionId: '', analysisType: '', targetId: '' });
-}
-
-function isPlainObject(value) {
-  return value !== null && typeof value === 'object' && !Array.isArray(value);
 }

@@ -9,6 +9,7 @@ import { renderLafeaDiscretizationPanel } from './lafea-discretization-panel.js'
 import { buildLafeaGuidedWorkflow } from './lafea-guided-workflow.js';
 import { renderLafeaGuidedWorkflow } from './lafea-guided-workflow-view.js';
 import { renderLafeaAnalysisSettings } from './lafea-analysis-settings-view.js';
+import { renderLafeaNumericalVerification } from './lafea-numerical-verification-view.js';
 import { lafeaWorkbenchReasonLabels } from './lafea-workbench-reason-labels.js';
 import { renderLafeaNcPlaceholderPanel } from './lafea-nc-placeholder-panel.js';
 import { focusLafeaRetainedMeshElement } from './lafea-canvas/retained-mesh-overlay.js';
@@ -105,14 +106,18 @@ export function renderLafeaWorkbenchContent(root, state, stage, options) {
       options.onMeshFocusChange?.(elementId, true);
       focusLafeaRetainedMeshElement(preview, elementId);
     },
-    onAdvance: () => navigateTo(shell, 'findings'),
+    onAdvance: () => navigateTo(shell, 'numerical-verification'),
   });
   discretizationCard.body.append(discretizationHost);
+
+  const numericalCard = card(root, `Numerical verification — ${state.activeStageId}`);
+  numericalCard.section.dataset.guidedTarget = 'numerical-verification';
+  numericalCard.body.append(renderLafeaNumericalVerification(numericalCard.body, stage));
 
   const preflightCard = card(root, `Pre-FEA and authorization — ${state.activeStageId}`);
   preflightCard.section.dataset.guidedTarget = 'findings';
   preflightCard.body.append(workflowSummary(root, workflow, [
-    'MODEL_DIAGNOSTICS', 'NUMERICAL_PREFLIGHT', 'AUTHORIZATION', 'RUN',
+    'MODEL_DIAGNOSTICS', 'AUTHORIZATION', 'RUN',
   ]));
   if (Array.isArray(state.diagnostics) && state.diagnostics.length) {
     preflightCard.body.append(diagnosticList(root, state.diagnostics));
@@ -144,6 +149,7 @@ export function renderLafeaWorkbenchContent(root, state, stage, options) {
     profileCard.section,
     viewportCard.section,
     discretizationCard.section,
+    numericalCard.section,
     preflightCard.section,
     evidenceCard.section,
     lifecycleCard.section,

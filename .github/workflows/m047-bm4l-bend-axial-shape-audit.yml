@@ -52,7 +52,7 @@ jobs:
           $ErrorActionPreference='Stop'
           .\scripts\lfea-caesar-accdb-export.ps1 `
             -AccdbPath $env:ACCDB `
-            -TablesCsv INPUT_BENDS,INPUT_BASIC_ELEMENT_DATA,INPUT_NODAL_COORDINATES `
+            -TablesCsv 'INPUT_BENDS,INPUT_BASIC_ELEMENT_DATA,INPUT_NODAL_COORDINATES' `
             | Set-Content -Encoding utf8 artifacts/axial-shape/bend-tables.json
 
       - name: Record profile consumption audit

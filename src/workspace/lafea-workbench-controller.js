@@ -141,6 +141,15 @@ export class LafeaWorkbenchController {
   buildReleaseBindingProjection(stageId = this.getState().activeStageId) {
     return this.store.buildReleaseBindingProjection(stageId);
   }
+  registerNumericalVerificationEvidence(value, stageId = this.getState().activeStageId) {
+    return this.store.registerNumericalVerificationEvidence(value, stageId);
+  }
+  selectRetainedNumericalVerificationEvidence(stageId = this.getState().activeStageId) {
+    return this.store.selectRetainedNumericalVerificationEvidence(stageId);
+  }
+  buildNumericalVerificationProjection(stageId = this.getState().activeStageId) {
+    return this.store.buildNumericalVerificationProjection(stageId);
+  }
   validateLafeaAnalysisMeshEvidence(value) {
     return this.store.validateLafeaAnalysisMeshEvidence(value);
   }

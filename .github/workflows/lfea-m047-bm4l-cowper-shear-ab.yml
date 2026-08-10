@@ -72,14 +72,9 @@ jobs:
           $path='src/core/fea-benchmarks/caesar-accdb-linear-solve.js'
           $text=Get-Content $path -Raw
 
-          $callOld=@'
-          const frame = input.stiffnessFrame ?? compileUnloadedFrame({
-            elementId: input.elementId,
-            axesResult,
-            material: input.material,
-            section: input.section,
-          });
-          '@
+          $callPattern='(?ms)  const frame = input\.stiffnessFrame \?\? compileUnloadedFrame\(\{\s+elementId: input\.elementId,\s+axesResult,\s+material: input\.material,\s+section: input\.section,\s+\}\);'
+          $matches=[regex]::Matches($text,$callPattern)
+          if($matches.Count-ne1){throw "Expected one compileUnloadedFrame call block; found $($matches.Count)."}
           $callNew=@'
           const frame = input.stiffnessFrame ?? compileUnloadedFrame({
             elementId: input.elementId,
@@ -89,25 +84,11 @@ jobs:
             kind: input.kind,
           });
           '@
-          if(-not $text.Contains($callOld)){throw 'compileUnloadedFrame call block missing.'}
-          $text=$text.Replace($callOld,$callNew)
+          $text=[regex]::Replace($text,$callPattern,$callNew,1)
 
-          $old=@'
-          function compileUnloadedFrame(input) {
-            return compileFrameElement({
-              elementId: input.elementId,
-              material: input.material,
-              section: input.section,
-              localAxes: { result: input.axesResult, profile: FRAME_LOCAL_AXIS_PROFILE },
-              profile: frameProfile(),
-              distributedLoads: [],
-              temperature: null,
-              releases: [],
-              endSprings: [],
-              rigidOffsets: null,
-            });
-          }
-          '@
+          $functionPattern='(?ms)function compileUnloadedFrame\(input\) \{\s+return compileFrameElement\(\{\s+elementId: input\.elementId,\s+material: input\.material,\s+section: input\.section,\s+localAxes: \{ result: input\.axesResult, profile: FRAME_LOCAL_AXIS_PROFILE \},\s+profile: frameProfile\(\),\s+distributedLoads: \[\],\s+temperature: null,\s+releases: \[\],\s+endSprings: \[\],\s+rigidOffsets: null,\s+\}\);\s+\}'
+          $functionMatches=[regex]::Matches($text,$functionPattern)
+          if($functionMatches.Count-ne1){throw "Expected one compileUnloadedFrame function; found $($functionMatches.Count)."}
           $new=@'
           function compileUnloadedFrame(input) {
             return compileFrameElement({
@@ -153,9 +134,10 @@ jobs:
             });
           }
           '@
-          if(-not $text.Contains($old)){throw 'compileUnloadedFrame block missing.'}
-          $text=$text.Replace($old,$new)
+          $text=[regex]::Replace($text,$functionPattern,$new,1)
           [IO.File]::WriteAllText((Join-Path $PWD $path),$text,(New-Object Text.UTF8Encoding($false)))
+          $diff=git diff -- $path | Out-String
+          if($diff -notmatch 'cowperAnnulusPipeFrameProfile' -or $diff -notmatch 'kind: input.kind'){throw 'Cowper patch verification failed.'}
 
       - name: Run Cowper annulus shear variant
         shell: pwsh
@@ -188,7 +170,6 @@ jobs:
           }
           if($bt-ne788){throw "Baseline total drift: $bt"}
 
-          # Independently evaluate the two pipe sections printed by CAESAR's Misc report.
           $nu=0.3
           function Cowper($od,$wall){
             $a=($od-2*$wall)/$od

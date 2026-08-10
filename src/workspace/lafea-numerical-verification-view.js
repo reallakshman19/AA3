@@ -1,0 +1,186 @@
+/** Read-only presentation of retained convergence and mesh-quality evidence. */
+import { element } from './lafea-workbench-dom.js';
+
+export const LAFEA_NUMERICAL_VERIFICATION_VIEW_SCHEMA =
+  'lafea-numerical-verification-view/v1';
+
+export function buildLafeaNumericalVerificationViewModel(stageValue) {
+  const stage = requireStage(stageValue);
+  return freeze({
+    schema: LAFEA_NUMERICAL_VERIFICATION_VIEW_SCHEMA,
+    stageId: stage.stageId,
+    convergence: convergenceModel(stage.numericalVerificationProjection),
+    meshQuality: meshQualityModel(stage),
+  });
+}
+
+export function renderLafeaNumericalVerification(root, stageValue) {
+  if (!root?.ownerDocument) {
+    throw new TypeError('LAFEA_NUMERICAL_VERIFICATION_ROOT_REQUIRED');
+  }
+  const model = buildLafeaNumericalVerificationViewModel(stageValue);
+  const wrapper = element(root, 'section', 'lafea-numerical-verification');
+  wrapper.dataset.role = 'lafea-numerical-verification';
+  wrapper.append(
+    element(root, 'p', null,
+      'Read-only numerical verification from retained governed evidence. Missing detail is reported as unavailable rather than reconstructed from display data.'),
+    convergenceSection(root, model.convergence),
+    meshSection(root, model.meshQuality),
+  );
+  return wrapper;
+}
+
+function convergenceModel(projection) {
+  if (!projection || projection.bindingStatus === 'ABSENT') {
+    return freeze({ status: 'ABSENT', method: null, rows: [], reasons: [], note: 'No current convergence artifact is retained.' });
+  }
+  if (projection.bindingStatus === 'HASH_ONLY') {
+    return freeze({
+      status: 'HASH_ONLY', method: 'LIFECYCLE_HASH_ONLY',
+      rows: [row('Lifecycle convergence artifact', projection.lifecycleArtifactHash)],
+      reasons: [...projection.reasons],
+      note: 'Convergence is identified by current lifecycle evidence, but the detailed numerical envelope is not retained by this workbench.',
+    });
+  }
+  if (projection.bindingStatus === 'STALE') {
+    return freeze({
+      status: 'STALE', method: projection.method,
+      rows: projection.lifecycleArtifactHash
+        ? [row('Lifecycle convergence artifact', projection.lifecycleArtifactHash)] : [],
+      reasons: [...projection.reasons],
+      note: 'Detailed convergence evidence is retained for audit but is not current for this analysis.',
+    });
+  }
+  if (projection.method === 'BUCKET_01_GCI') return gciModel(projection.evidence);
+  if (projection.method === 'CONTROLLED_CONTINUUM_RELATIVE_CHANGE') {
+    return controlledModel(projection.evidence);
+  }
+  return freeze({ status: 'STALE', method: projection.method, rows: [], reasons: ['CONVERGENCE_METHOD_UNSUPPORTED'], note: 'Unsupported convergence evidence method.' });
+}
+
+function gciModel(evidence) {
+  const nearZero = evidence.reasons.includes('FINE_OBSERVATION_NEAR_ZERO_FOR_RELATIVE_GCI')
+    || evidence.reasons.includes('MEDIUM_OBSERVATION_NEAR_ZERO_FOR_RELATIVE_GCI');
+  return freeze({
+    status: evidence.status,
+    method: 'BUCKET_01_GCI_RICHARDSON',
+    rows: [
+      row('Quantity', evidence.quantityId),
+      row('Sampling authority', evidence.samplingAuthority),
+      row('Location', evidence.locationId),
+      row('Mesh sizes (coarse / medium / fine)', joinNumbers(evidence.meshSizes)),
+      row(`Observations (${evidence.units})`, joinNumbers(evidence.observations)),
+      row('Refinement ratio', number(evidence.refinementRatio)),
+      row('Convergence classification', evidence.classification),
+      row('Observed order', nullableNumber(evidence.observedOrder)),
+      row(`Richardson extrapolation (${evidence.units})`, nullableNumber(evidence.richardsonExtrapolation)),
+      row('Fine-grid GCI', gciValue(evidence.fineGridGci, nearZero)),
+      row('Coarse-grid GCI', gciValue(evidence.coarseGridGci, nearZero)),
+      row('Fine-grid GCI tolerance', number(evidence.gciTolerance)),
+      row('Asymptotic ratio', nullableNumber(evidence.asymptoticRatio)),
+      row('Asymptotic range accepted', String(evidence.asymptoticRangeAccepted)),
+    ],
+    reasons: [...evidence.reasons],
+    nearZeroRelativeGci: nearZero,
+    note: nearZero
+      ? 'Relative GCI is not applicable at the retained near-zero response scale; retained Richardson/order values remain shown where the producer computed them.'
+      : 'GCI/Richardson values are displayed exactly from retained Bucket-01 convergence evidence.',
+  });
+}
+
+function controlledModel(receipt) {
+  const convergence = receipt.pilotConvergence;
+  const levelRows = convergence.levels.map((level, index) => row(
+    `Level ${level.ordinal} observation (${convergence.units})`,
+    `${number(level.observedQuantity)}; relative change: ${index === 0 ? 'N/A' : nullableNumber(convergence.relativeChanges[index])}`,
+  ));
+  return freeze({
+    status: convergence.status,
+    method: 'GOVERNED_RELATIVE_CHANGE',
+    rows: [
+      row('Quantity', convergence.quantityId),
+      row('Convergence tolerance', number(convergence.tolerance)),
+      ...levelRows,
+      row('Recovery-set hash', convergence.recoverySetHash),
+      row('Convergence profile hash', convergence.convergenceProfileHash),
+    ],
+    reasons: [...convergence.reasons],
+    nearZeroRelativeGci: false,
+    note: 'This controlled-continuum contract evaluates governed relative changes across retained mesh levels; it does not claim Richardson extrapolation or GCI.',
+  });
+}
+
+function meshQualityModel(stage) {
+  const evidence = effectiveMeshEvidence(stage);
+  const quality = evidence?.quality ?? null;
+  if (!quality) return freeze({
+    status: 'ABSENT', rows: [], warnings: [], blockers: [],
+    extendedGeometryEvidenceAvailable: false,
+    note: 'No retained general mesh-quality evidence is available.',
+  });
+  const rows = [
+    row('Retained node count', evidence.mesh?.nodes?.length ?? 'Unknown'),
+    row('Retained element count', quality.elementCount ?? evidence.mesh?.elements?.length ?? 'Unknown'),
+    row('Overall mesh-quality status', quality.worstStatus ?? 'UNKNOWN'),
+    ...quality.gateResults.map((gate) => row(
+      gate.metric,
+      `${number(gate.value)} — ${gate.status}; warning ${number(gate.warningThreshold)}, block ${number(gate.blockingThreshold)}`,
+    )),
+  ];
+  return freeze({
+    status: quality.worstStatus ?? 'UNKNOWN',
+    rows,
+    warnings: [...(quality.warningElementIds ?? [])],
+    blockers: [...(quality.blockingElementIds ?? [])],
+    extendedGeometryEvidenceAvailable: false,
+    note: 'General workbench mesh custody currently retains aspect-ratio/scaled-Jacobian quality. Area, curved perimeter, boundary deviation, midside placement, topology and dense-Jacobian qualification belong to a separate Bucket-01 geometry evidence contract and are not inferred here.',
+  });
+}
+
+function convergenceSection(root, model) {
+  const section = element(root, 'section');
+  section.append(element(root, 'h3', null, `Convergence — ${model.status}`));
+  if (model.method) section.append(element(root, 'p', null, `Method: ${model.method}`));
+  if (model.rows.length) section.append(rows(root, model.rows));
+  section.append(element(root, 'p', null, model.note));
+  if (model.reasons.length) section.append(reasonList(root, model.reasons));
+  return section;
+}
+
+function meshSection(root, model) {
+  const section = element(root, 'section');
+  section.append(element(root, 'h3', null, `Retained mesh quality — ${model.status}`));
+  if (model.rows.length) section.append(rows(root, model.rows));
+  section.append(element(root, 'p', null, model.note));
+  if (model.warnings.length) section.append(element(root, 'p', null, `Warning elements: ${model.warnings.join(', ')}`));
+  if (model.blockers.length) section.append(element(root, 'p', null, `Blocking elements: ${model.blockers.join(', ')}`));
+  return section;
+}
+
+function rows(root, values) {
+  const list = element(root, 'dl', 'lafea-numerical-verification__rows');
+  values.forEach((item) => list.append(
+    element(root, 'dt', null, item.label),
+    element(root, 'dd', null, String(item.value)),
+  ));
+  return list;
+}
+function reasonList(root, reasons) {
+  const list = element(root, 'ul');
+  reasons.forEach((value) => list.append(element(root, 'li', null, humanize(value))));
+  return list;
+}
+function effectiveMeshEvidence(stage) {
+  if (stage.analysisMeshCustodyProjection?.canView !== true) return null;
+  return stage.domainFirstProfileActive === true || stage.shellMidsurfaceProfileActive === true
+    ? stage.retainedAnalysisMeshEvidenceV2 ?? null
+    : stage.retainedAnalysisMeshEvidence ?? null;
+}
+function row(label, value) { return freeze({ label, value: value ?? 'N/A' }); }
+function number(value) { return typeof value === 'number' && Number.isFinite(value) ? Number(value.toPrecision(8)).toString() : 'N/A'; }
+function nullableNumber(value) { return value === null || value === undefined ? 'N/A' : number(value); }
+function joinNumbers(values) { return Array.isArray(values) ? values.map(number).join(' / ') : 'N/A'; }
+function gciValue(value, nearZero) { return value === null && nearZero ? 'N/A — near-zero relative scale' : nullableNumber(value); }
+function humanize(value) { return String(value).replace(/^LAFEA_/u, '').replaceAll('_', ' ').toLowerCase().replace(/^./u, (c) => c.toUpperCase()); }
+function requireStage(value) { if (!value || typeof value !== 'object' || typeof value.stageId !== 'string') throw new TypeError('LAFEA_NUMERICAL_VERIFICATION_STAGE_REQUIRED'); return value; }
+function freeze(value) { if (!value || typeof value !== 'object' || Object.isFrozen(value)) return value; Object.values(value).forEach(freeze); return Object.freeze(value); }

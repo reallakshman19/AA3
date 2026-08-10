@@ -1,0 +1,204 @@
+name: M047 BM4_L ordinary-frame shear mechanism A/B
+
+on:
+  push:
+    branches: [agent/m047-bm4l-root-cause]
+    paths: ['.github/workflows/m047-bm4l-shear-mechanism-ab.yml']
+
+permissions:
+  contents: read
+
+jobs:
+  ab:
+    runs-on: windows-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: agent/m047-bm4l-root-cause
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Install authenticated Microsoft ACE provider
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          New-Item -ItemType Directory -Force artifacts/shear-ab | Out-Null
+          $installer = Join-Path $PWD 'artifacts/shear-ab/accessdatabaseengine_X64.exe'
+          $url = 'https://download.microsoft.com/download/3/5/C/35C84C36-661A-44E6-9324-8786B8DBE231/accessdatabaseengine_X64.exe'
+          Invoke-WebRequest -Uri $url -OutFile $installer
+          $hash = (Get-FileHash $installer -Algorithm SHA256).Hash.ToLowerInvariant()
+          if ($hash -ne '04e96c9f1a1f7d251a88aececf1dc10ff65950392787427c00814a43308003de') { throw "ACE installer hash mismatch $hash" }
+          $sig = Get-AuthenticodeSignature $installer
+          if ($sig.Status -ne 'Valid' -or $sig.SignerCertificate.Subject -notmatch 'Microsoft') { throw 'ACE installer signature invalid.' }
+          $process = Start-Process $installer -ArgumentList '/quiet','/norestart' -Wait -PassThru
+          if ($process.ExitCode -notin @(0,3010)) { throw "ACE install failed $($process.ExitCode)" }
+          Remove-Item $installer -Force
+
+      - name: Fetch canonical pinned BM4_L member
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $zip = Join-Path $PWD 'artifacts/shear-ab/BM4_L.zip'
+          Invoke-WebRequest -Uri 'https://raw.githubusercontent.com/reallaksh19/Common/45d51ea18624f5775805f399110c1738301c0d90/LFEA/BM4/BM4_L.zip' -OutFile $zip
+          $zipHash = (Get-FileHash $zip -Algorithm SHA256).Hash.ToLowerInvariant()
+          if ($zipHash -ne '978617cba50fa0b1a16c2fa71dc1e0d38e55ac834b191f887d100c6951abd8b9') { throw "ZIP hash mismatch $zipHash" }
+          Expand-Archive $zip -DestinationPath artifacts/shear-ab/source -Force
+          $accdb = Join-Path $PWD 'artifacts/shear-ab/source/BM4_L.ACCDB'
+          $hash = (Get-FileHash $accdb -Algorithm SHA256).Hash.ToLowerInvariant()
+          if ($hash -ne '64c05a50e9ed0452622ff5880335460486f24ac8e6adecc9a300b549c9aa82f8') { throw "Pinned member hash mismatch $hash" }
+
+      - name: Run baseline
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          New-Item -ItemType Directory -Force artifacts/shear-ab/before | Out-Null
+          node scripts/lfea-caesar-accdb-benchmark.mjs `
+            --accdb artifacts/shear-ab/source/BM4_L.ACCDB `
+            --profile benchmarks/LFEA/CAESAR_ACCDB/bm4l-validation.profile.json `
+            --solve-linear true `
+            --solve-cases L2,L3,L4,L5,L6,L14 `
+            --actual-out artifacts/shear-ab/before/actual.json `
+            --out artifacts/shear-ab/before/report.json
+
+      - name: Apply diagnostic ordinary-FRAME Timoshenko mechanism only
+        shell: python
+        run: |
+          from pathlib import Path
+          path = Path('src/core/fea-benchmarks/caesar-accdb-linear-solve.js')
+          text = path.read_text()
+          old_call = """  const frame = input.stiffnessFrame ?? compileUnloadedFrame({\n    elementId: input.elementId,\n    axesResult,\n    material: input.material,\n    section: input.section,\n  });"""
+          new_call = """  const frame = input.stiffnessFrame ?? compileUnloadedFrame({\n    elementId: input.elementId,\n    axesResult,\n    material: input.material,\n    section: input.section,\n    profile: input.kind === 'FRAME' && teeModifier === null\n      ? diagnosticPlainFrameTimoshenkoProfile()\n      : frameProfile(),\n  });"""
+          old_profile = """    profile: frameProfile(),\n    distributedLoads: [],"""
+          new_profile = """    profile: input.profile ?? frameProfile(),\n    distributedLoads: [],"""
+          old_decl = """function frameProfile() {\n  return sealFrameElementProfile({"""
+          new_decl = """function diagnosticPlainFrameTimoshenkoProfile() {\n  return sealFrameElementProfile({\n    schema: 'fea-linear-frame-element-profile/v1',\n    profileId: 'LINEAR-FRAME-ELEMENT-R1',\n    straightPipeFormulation: 'PIPE_FRAME3D_TIMOSHENKO_V1',\n    shearDeformation: true,\n    shearCorrectionFactorY: { value: 0.53, source: 'COWPER-1966-THIN-ANNULUS-DIAGNOSTIC' },\n    shearCorrectionFactorZ: { value: 0.53, source: 'COWPER-1966-THIN-ANNULUS-DIAGNOSTIC' },\n    releaseRule: 'STATIC_CONDENSATION_V1',\n    thermalStrainApproximation: 'UNIFORM_TEMPERATURE_ALPHA_DELTA_T_V1',\n    releaseSingularityTolerance: { value: 1e-12, source: PROFILE_SOURCE },\n    semanticHash: '',\n  });\n}\n\nfunction frameProfile() {\n  return sealFrameElementProfile({"""
+          for label, old, new in [
+              ('buildFrameElement profile selection', old_call, new_call),
+              ('compileUnloadedFrame optional profile', old_profile, new_profile),
+              ('diagnostic profile declaration', old_decl, new_decl),
+          ]:
+              count = text.count(old)
+              if count != 1:
+                  raise SystemExit(f'{label}: expected 1 match, found {count}')
+              text = text.replace(old, new)
+          path.write_text(text)
+
+      - name: Candidate kernel checks
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          node --check src/core/fea-benchmarks/caesar-accdb-linear-solve.js
+          node scripts/lfea-b3.1-frame-element-check.mjs
+          node scripts/lfea-b3.2-piping-component-check.mjs
+          node scripts/lfea-b3.3-solver-check.mjs
+          node scripts/lfea-b3.4-recovery-check.mjs
+          node scripts/lfea-b3.6-sparse-assembly-check.mjs
+          node scripts/lfea-b3.9-gravity-self-weight-check.mjs
+
+      - name: Run diagnostic candidate
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          New-Item -ItemType Directory -Force artifacts/shear-ab/after | Out-Null
+          node scripts/lfea-caesar-accdb-benchmark.mjs `
+            --accdb artifacts/shear-ab/source/BM4_L.ACCDB `
+            --profile benchmarks/LFEA/CAESAR_ACCDB/bm4l-validation.profile.json `
+            --solve-linear true `
+            --solve-cases L2,L3,L4,L5,L6,L14 `
+            --actual-out artifacts/shear-ab/after/actual.json `
+            --out artifacts/shear-ab/after/report.json
+          node scripts/lfea-m047-bm4l-recovery-proof.mjs `
+            --actual artifacts/shear-ab/after/actual.json `
+            --expected-source-sha 64c05a50e9ed0452622ff5880335460486f24ac8e6adecc9a300b549c9aa82f8 `
+            --out artifacts/shear-ab/after/recovery-proof.json
+
+      - name: Quantify mechanism signature
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $before = Get-Content -Raw artifacts/shear-ab/before/report.json | ConvertFrom-Json -Depth 100
+          $after = Get-Content -Raw artifacts/shear-ab/after/report.json | ConvertFrom-Json -Depth 100
+          $beforeActual = Get-Content -Raw artifacts/shear-ab/before/actual.json | ConvertFrom-Json -Depth 100
+          $afterActual = Get-Content -Raw artifacts/shear-ab/after/actual.json | ConvertFrom-Json -Depth 100
+          $proof = Get-Content -Raw artifacts/shear-ab/after/recovery-proof.json | ConvertFrom-Json -Depth 100
+
+          function Find-Row($report, $caseId, $kind, $prefix, $quantity, $component) {
+            $case = @($report.qualification.cases | Where-Object { $_.caseId -eq $caseId })[0]
+            $rows = @($case.comparison.rows | Where-Object {
+              $_.entityKind -eq $kind -and ([string]$_.entityId).StartsWith($prefix) -and
+              $_.quantity -eq $quantity -and $_.component -eq $component
+            })
+            if ($rows.Count -ne 1) { throw "Expected one $caseId $prefix $quantity $component row; found $($rows.Count)." }
+            return $rows[0]
+          }
+          function AbsErr($row) { return [math]::Abs([double]$row.actualValue - [double]$row.referenceValue) }
+          function Counts($report, $caseId) {
+            $case = @($report.qualification.cases | Where-Object { $_.caseId -eq $caseId })[0]
+            $rows = @($case.comparison.rows)
+            return [ordered]@{
+              restraint=@($rows | Where-Object { $_.status -eq 'FAIL' -and $_.entityKind -eq 'NODE' -and $_.quantity -in @('FORCE','MOMENT') }).Count
+              displacementRotation=@($rows | Where-Object { $_.status -eq 'FAIL' -and $_.entityKind -eq 'NODE' -and $_.quantity -in @('DISPLACEMENT','ROTATION') }).Count
+              elementEnd=@($rows | Where-Object { $_.status -eq 'FAIL' -and $_.entityKind -eq 'ELEMENT' -and $_.quantity -like 'GLOBAL_END_*' }).Count
+            }
+          }
+
+          $targets = @(
+            @('L2 node 20090 UY','L2','NODE','20090','FORCE','UY'),
+            @('L2 E4 TO MZ','L2','ELEMENT','INPUT_ELEMENT:4|','GLOBAL_END_MOMENT_TO','MZ'),
+            @('L2 E4 TO FY','L2','ELEMENT','INPUT_ELEMENT:4|','GLOBAL_END_FORCE_TO','FY'),
+            @('L2 E5 FROM MZ','L2','ELEMENT','INPUT_ELEMENT:5|','GLOBAL_END_MOMENT_FROM','MZ'),
+            @('L2 E5 FROM FY','L2','ELEMENT','INPUT_ELEMENT:5|','GLOBAL_END_FORCE_FROM','FY'),
+            @('L2 node 20120 RZ','L2','NODE','20120','ROTATION','RZ'),
+            @('L3 node 20550 UY','L3','NODE','20550','FORCE','UY'),
+            @('L4 node 22120 UY','L4','NODE','22120','FORCE','UY')
+          )
+          $signal = [System.Collections.Generic.List[object]]::new()
+          foreach ($t in $targets) {
+            $b = Find-Row $before $t[1] $t[2] $t[3] $t[4] $t[5]
+            $a = Find-Row $after $t[1] $t[2] $t[3] $t[4] $t[5]
+            $be = AbsErr $b; $ae = AbsErr $a
+            $signal.Add([ordered]@{
+              name=$t[0]; reference=[double]$b.referenceValue; before=[double]$b.actualValue; after=[double]$a.actualValue
+              beforeAbsoluteError=$be; afterAbsoluteError=$ae; improvementRatio=if($be -gt 0){($be-$ae)/$be}else{0}
+              improved=($ae -lt $be)
+            })
+          }
+          $counts = [ordered]@{}
+          foreach ($caseId in @('L2','L3','L4','L5','L6','L14')) {
+            $counts[$caseId] = [ordered]@{ before=(Counts $before $caseId); after=(Counts $after $caseId) }
+          }
+          $beforeWeight = [double]$beforeActual.mechanics.cases.L2.gravityWeightN
+          $afterWeight = [double]$afterActual.mechanics.cases.L2.gravityWeightN
+          if ([math]::Abs($afterWeight-$beforeWeight) -gt 1e-9) { throw 'Diagnostic shear candidate changed total gravity weight.' }
+          if ($proof.status -ne 'PASS' -or $proof.commonOperator.status -ne 'PASS') { throw 'Diagnostic shear candidate broke recovery/common-operator proof.' }
+          foreach ($caseId in @('L2','L3','L4','L5','L6','L14')) {
+            if ($afterActual.mechanics.cases.$caseId.recoveredEquilibrium.status -ne 'PASS') { throw "$caseId recovered equilibrium failed." }
+          }
+          $mechanismSupported = @($signal | Where-Object { $_.name -in @('L2 node 20090 UY','L2 E4 TO MZ','L2 E4 TO FY','L2 node 20120 RZ') -and $_.improved }).Count -ge 3
+          [ordered]@{
+            schema='m047-bm4l-ordinary-frame-shear-ab/v1'
+            classification='DIAGNOSTIC_ONLY_NOT_PRODUCTION_AUTHORIZED'
+            candidate='ordinary non-tee FRAME Timoshenko, kappaY=kappaZ=0.53'
+            source='Cowper-1966 thin-annulus diagnostic carried from prior M047 mechanism study; not CAESAR-specific authority'
+            sourceAccdbSha256='64c05a50e9ed0452622ff5880335460486f24ac8e6adecc9a300b549c9aa82f8'
+            totalGravityUnchanged=$true
+            recoveryAndEquilibriumPass=$true
+            mechanismSupported=$mechanismSupported
+            highSignal=$signal
+            failureCounts=$counts
+          } | ConvertTo-Json -Depth 20 | Set-Content -Encoding utf8 artifacts/shear-ab/ab-evidence.json
+          if (-not $mechanismSupported) { throw 'Ordinary-frame transverse-compliance mechanism did not produce the predicted BM4_L high-signal response.' }
+
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: m047-bm4l-shear-mechanism-ab
+          path: artifacts/shear-ab
+          if-no-files-found: error

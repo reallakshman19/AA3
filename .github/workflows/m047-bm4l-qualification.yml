@@ -1,0 +1,173 @@
+name: M047 BM4_L qualification
+
+on:
+  workflow_dispatch:
+  pull_request:
+    branches: [main]
+    paths:
+      - '.github/workflows/m047-bm4l-qualification.yml'
+      - 'benchmarks/LFEA/CAESAR_ACCDB/**'
+      - 'scripts/lfea-caesar-accdb-*.mjs'
+      - 'scripts/lfea-caesar-accdb-export.ps1'
+      - 'scripts/lfea-bm4l-root-cause-report.mjs'
+      - 'scripts/lfea-m047-bm4l-root-cause-diagnostics.mjs'
+      - 'src/core/fea-benchmarks/**'
+      - 'src/core/linear-fea-*/**'
+      - 'src/core/centerline-beam-fea/**'
+
+permissions:
+  contents: read
+
+jobs:
+  bm4l-accdb:
+    runs-on: windows-latest
+    timeout-minutes: 30
+    env:
+      BM4L_ZIP_SHA256: '978617cba50fa0b1a16c2fa71dc1e0d38e55ac834b191f887d100c6951abd8b9'
+      BM4L_ZIP_SIZE: '582488'
+      BM4L_ACCDB_SHA256: 'e21b0862851ea2bb6f20d55e4a3a94f501537b618b98dd46afa9f6777ee38d3c'
+      BM4L_ACCDB_SIZE: '5136384'
+      BM4L_COMMON_COMMIT: '45d51ea18624f5775805f399110c1738301c0d90'
+    steps:
+      - name: Checkout exact PR head
+        uses: actions/checkout@v4
+
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+
+      - name: Install dependencies
+        shell: pwsh
+        run: npm ci
+
+      - name: Fetch and verify pinned BM4_L source
+        id: source
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          New-Item -ItemType Directory -Force -Path artifacts/bm4l | Out-Null
+          $zipPath = Join-Path $PWD 'artifacts/bm4l/BM4_L.zip'
+          $url = "https://raw.githubusercontent.com/reallaksh19/Common/$env:BM4L_COMMON_COMMIT/LFEA/BM4/BM4_L.zip"
+          Invoke-WebRequest -Uri $url -OutFile $zipPath
+
+          $zip = Get-Item -LiteralPath $zipPath
+          $zipHash = (Get-FileHash -Algorithm SHA256 -LiteralPath $zipPath).Hash.ToLowerInvariant()
+          if ($zip.Length -ne [int64]$env:BM4L_ZIP_SIZE) {
+            throw "Pinned BM4_L.zip size mismatch: $($zip.Length) != $env:BM4L_ZIP_SIZE"
+          }
+          if ($zipHash -ne $env:BM4L_ZIP_SHA256) {
+            throw "Pinned BM4_L.zip SHA-256 mismatch: $zipHash != $env:BM4L_ZIP_SHA256"
+          }
+
+          $extractDir = Join-Path $PWD 'artifacts/bm4l/source'
+          Expand-Archive -LiteralPath $zipPath -DestinationPath $extractDir -Force
+          $members = @(Get-ChildItem -LiteralPath $extractDir -File -Recurse)
+          if ($members.Count -ne 1 -or $members[0].Name -ne 'BM4_L.ACCDB') {
+            throw "Pinned ZIP must contain exactly BM4_L.ACCDB; found $($members.Count) members."
+          }
+          $accdbPath = $members[0].FullName
+          $accdbHash = (Get-FileHash -Algorithm SHA256 -LiteralPath $accdbPath).Hash.ToLowerInvariant()
+          if ($members[0].Length -ne [int64]$env:BM4L_ACCDB_SIZE) {
+            throw "Pinned BM4_L.ACCDB size mismatch: $($members[0].Length) != $env:BM4L_ACCDB_SIZE"
+          }
+          if ($accdbHash -ne $env:BM4L_ACCDB_SHA256) {
+            throw "Pinned BM4_L.ACCDB SHA-256 mismatch: $accdbHash != $env:BM4L_ACCDB_SHA256"
+          }
+
+          $custody = [ordered]@{
+            schema = 'bm4l-source-custody/v1'
+            commonCommit = $env:BM4L_COMMON_COMMIT
+            zip = [ordered]@{ byteLength = $zip.Length; sha256 = $zipHash }
+            accdb = [ordered]@{ byteLength = $members[0].Length; sha256 = $accdbHash; fileName = $members[0].Name }
+          }
+          $custody | ConvertTo-Json -Depth 8 | Set-Content -Encoding utf8 artifacts/bm4l/custody.json
+          "accdb_path=$accdbPath" >> $env:GITHUB_OUTPUT
+
+      - name: Probe Microsoft ACE OLE DB authority
+        id: ace
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $status = [ordered]@{
+            schema = 'bm4l-accdb-provider-probe/v1'
+            provider = 'Microsoft.ACE.OLEDB.12.0'
+            available = $false
+            error = $null
+          }
+          $connection = $null
+          try {
+            $connection = New-Object -ComObject ADODB.Connection
+            $connection.Open("Provider=Microsoft.ACE.OLEDB.12.0;Data Source=${{ steps.source.outputs.accdb_path }};Mode=Read;Persist Security Info=False;")
+            $status.available = $true
+          }
+          catch {
+            $status.error = $_.Exception.Message
+          }
+          finally {
+            if ($null -ne $connection) {
+              try { if ($connection.State -ne 0) { $connection.Close() } } catch {}
+              try { [void][System.Runtime.InteropServices.Marshal]::ReleaseComObject($connection) } catch {}
+            }
+          }
+          $status | ConvertTo-Json -Depth 8 | Set-Content -Encoding utf8 artifacts/bm4l/provider.json
+          "available=$($status.available.ToString().ToLowerInvariant())" >> $env:GITHUB_OUTPUT
+          if (-not $status.available) {
+            @"
+          ## BM4_L qualification: BLOCKED
+
+          The pinned source passed ZIP/ACCDB custody checks, but this runner does not expose `Microsoft.ACE.OLEDB.12.0`.
+          No XML conversion or alternate reader was used. A versioned custody-preserving ACCDB export package is required for this environment.
+          "@ >> $env:GITHUB_STEP_SUMMARY
+          }
+
+      - name: Reproduce governed six-case baseline
+        if: steps.ace.outputs.available == 'true'
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          node scripts/lfea-caesar-accdb-benchmark.mjs `
+            --accdb "${{ steps.source.outputs.accdb_path }}" `
+            --profile benchmarks/LFEA/CAESAR_ACCDB/bm4l-validation.profile.json `
+            --solve-linear true `
+            --solve-cases L2,L3,L4,L5,L6,L14 `
+            --actual-out artifacts/bm4l/bm4l-actual.json `
+            --out artifacts/bm4l/bm4l-report.json `
+            --summary-out artifacts/bm4l/bm4l-summary.md
+
+      - name: Build root-cause evidence
+        if: steps.ace.outputs.available == 'true'
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          node scripts/lfea-bm4l-root-cause-report.mjs `
+            --actual artifacts/bm4l/bm4l-actual.json `
+            --report artifacts/bm4l/bm4l-report.json `
+            --out artifacts/bm4l/bm4l-root-cause.json
+          node scripts/lfea-m047-bm4l-root-cause-diagnostics.mjs `
+            --actual artifacts/bm4l/bm4l-actual.json `
+            --report artifacts/bm4l/bm4l-report.json `
+            --out artifacts/bm4l/bm4l-diagnostics.json
+
+      - name: Run reusable mechanics regressions
+        if: steps.ace.outputs.available == 'true'
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          npm run check:lfea-b3.3
+          npm run check:lfea-b3.4
+          npm run check:lfea-b3.8
+          npm run check:lfea-b3.9
+          npm run check:lfea-b3.22
+          npm run check:lfea-b3.23
+          npm run check:core-fea
+
+      - name: Publish qualification artifacts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: m047-bm4l-qualification-${{ github.sha }}
+          path: artifacts/bm4l
+          if-no-files-found: error
+          retention-days: 14

@@ -2094,7 +2094,7 @@ function compilerProfile() {
 }
 
 function isCaesarStraightPipeSpan(kind) {
-  return kind === 'FRAME' || kind === 'BEND_INCOMING_STRAIGHT';
+  return kind === 'FRAME' || kind === 'BEND_INCOMING_STRAIGHT' || kind === 'RIGID';
 }
 
 function caesarStraightPipeFrameProfile() {

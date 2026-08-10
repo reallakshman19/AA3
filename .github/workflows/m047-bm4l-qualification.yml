@@ -13,6 +13,8 @@ on:
       - 'scripts/lfea-m047-bm4l-accdb-provenance.ps1'
       - 'scripts/lfea-m047-bm4l-recovery-proof.mjs'
       - 'scripts/lfea-m047-bm4l-root-cause-diagnostics.mjs'
+      - 'scripts/lfea-m047-bm4l-common-report-parity.mjs'
+      - 'scripts/lfea-m047-bm4l-tee-stiffness-authority.mjs'
       - 'src/core/fea-benchmarks/**'
       - 'src/core/linear-fea-*/**'
       - 'src/core/centerline-beam-fea/**'
@@ -52,9 +54,13 @@ jobs:
       - name: Syntax-check qualification code
         shell: pwsh
         run: |
+          $ErrorActionPreference = 'Stop'
+          $PSNativeCommandUseErrorActionPreference = $true
           node --check scripts/lfea-bm4l-root-cause-report.mjs
           node --check scripts/lfea-m047-bm4l-recovery-proof.mjs
           node --check scripts/lfea-m047-bm4l-root-cause-diagnostics.mjs
+          node --check scripts/lfea-m047-bm4l-common-report-parity.mjs
+          node --check scripts/lfea-m047-bm4l-tee-stiffness-authority.mjs
           node --check src/core/fea-benchmarks/caesar-accdb-linear-solve.js
           pwsh -NoProfile -Command "[void][scriptblock]::Create((Get-Content -Raw 'scripts/lfea-m047-bm4l-accdb-provenance.ps1'))"
 
@@ -62,6 +68,7 @@ jobs:
         shell: pwsh
         run: |
           $ErrorActionPreference = 'Stop'
+          $PSNativeCommandUseErrorActionPreference = $true
           node scripts/lfea-b3.3-solver-check.mjs
           node scripts/lfea-b3.4-recovery-check.mjs
           node scripts/lfea-b3.6-sparse-assembly-check.mjs
@@ -255,6 +262,7 @@ jobs:
         shell: pwsh
         run: |
           $ErrorActionPreference = 'Stop'
+          $PSNativeCommandUseErrorActionPreference = $true
           node scripts/lfea-caesar-accdb-benchmark.mjs `
             --accdb "${{ steps.source.outputs.accdb_path }}" `
             --profile benchmarks/LFEA/CAESAR_ACCDB/bm4l-validation.profile.json `
@@ -277,6 +285,7 @@ jobs:
         shell: pwsh
         run: |
           $ErrorActionPreference = 'Stop'
+          $PSNativeCommandUseErrorActionPreference = $true
           node scripts/lfea-bm4l-root-cause-report.mjs `
             --actual artifacts/bm4l/bm4l-actual.json `
             --report artifacts/bm4l/bm4l-report.json `
@@ -286,6 +295,13 @@ jobs:
             --report artifacts/bm4l/bm4l-report.json `
             --expected-source-sha $env:BM4L_PINNED_MEMBER_SHA256 `
             --out artifacts/bm4l/bm4l-diagnostics.json
+          $diagnostics = Get-Content -Raw artifacts/bm4l/bm4l-diagnostics.json | ConvertFrom-Json
+          if ($null -eq $diagnostics.commonReportParity) {
+            throw 'BM4_L diagnostics are missing pinned Common report parity evidence.'
+          }
+          if ($null -eq $diagnostics.teeStiffnessAuthority -or $diagnostics.teeStiffnessAuthority.status -ne 'PASS') {
+            throw 'BM4_L diagnostics are missing passing CAESAR tee Kb authority evidence.'
+          }
           node scripts/lfea-m047-bm4l-recovery-proof.mjs `
             --actual artifacts/bm4l/bm4l-actual.json `
             --expected-source-sha $env:BM4L_PINNED_MEMBER_SHA256 `
@@ -295,6 +311,7 @@ jobs:
         shell: pwsh
         run: |
           $ErrorActionPreference = 'Stop'
+          $PSNativeCommandUseErrorActionPreference = $true
           npm run check:lfea-b3.3
           npm run check:lfea-b3.4
           npm run check:lfea-b3.8

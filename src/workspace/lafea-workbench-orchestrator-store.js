@@ -30,7 +30,11 @@ const SOURCE_CHANGE_CLASSES = new Set(['MATERIAL_PROPERTY', 'GEOMETRY', 'LOAD_OR
 
 export function createLafeaWorkbenchOrchestratorStore(options) {
   const configuration = options ?? {};
-  const { currentCandidateHeadSha = null, ...retainedOptions } = configuration;
+  const {
+    currentCandidateHeadSha = null,
+    authorizedReleaseEvidenceHashes = [],
+    ...retainedOptions
+  } = configuration;
   const retained = createRetainedStore(retainedOptions);
   let retainedState = retained.getState();
   let suppressRetainedPublish = false;
@@ -43,7 +47,10 @@ export function createLafeaWorkbenchOrchestratorStore(options) {
     getActiveStageId: () => retainedState.activeStageId,
     invokeRetained,
   });
-  const release = createLafeaWorkbenchReleaseState(stageIds, { currentCandidateHeadSha });
+  const release = createLafeaWorkbenchReleaseState(stageIds, {
+    currentCandidateHeadSha,
+    authorizedReleaseEvidenceHashes,
+  });
   const geometry = createLafeaWorkbenchGeometryState(stageIds);
   const mesh = createLafeaWorkbenchMeshState(stageIds, {
     getActiveStageId: () => retainedState.activeStageId,

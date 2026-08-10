@@ -1,0 +1,62 @@
+{
+  "schema": "m047-bm4l-fresh-smooth90-straight-shear-sequence/v1",
+  "baseCommit": "7a08f9db84f298990250793226b36d4a82dbe01e",
+  "workflowRunId": 31369523177,
+  "workflowHead": "e6e3cb096543924d303016699703485151c5b17d",
+  "artifactId": 9055554653,
+  "artifactSha256": "ee3f8faf57d47ea7f88e9bade776f1f85acf111642493dda2f9e958f517ea327",
+  "source": {
+    "commonCommit": "45d51ea18624f5775805f399110c1738301c0d90",
+    "zipSha256": "978617cba50fa0b1a16c2fa71dc1e0d38e55ac834b191f887d100c6951abd8b9",
+    "accdbMemberSha256": "64c05a50e9ed0452622ff5880335460486f24ac8e6adecc9a300b549c9aa82f8"
+  },
+  "states": {
+    "baseline": "current-main mechanics and profile",
+    "smooth90": "baseline plus B31J smooth 90-degree flexibility coefficient 1.3/h",
+    "combined": "smooth90 plus diagnostic Timoshenko transverse shear on FRAME and BEND_INCOMING_STRAIGHT with kappaY=kappaZ=0.5"
+  },
+  "authority": {
+    "smooth90": {
+      "status": "INDEPENDENTLY_AUTHORITY_BACKED",
+      "source": "HEXAGON_CAESAR_II_V14_B31J_METHODS_SMOOTH_90_1.3_OVER_H"
+    },
+    "straightShear": {
+      "status": "DIAGNOSTIC_ONLY_PENDING_EXACT_CAESAR_COEFFICIENT_AUTHORITY",
+      "promote": false
+    }
+  },
+  "counts": {
+    "L2": {"baseline": [4,115,142], "smooth90": [3,130,110], "combined": [1,36,18]},
+    "L3": {"baseline": [9,98,179], "smooth90": [2,41,77], "combined": [2,47,83]},
+    "L4": {"baseline": [6,66,86], "smooth90": [5,56,65], "combined": [0,36,6]},
+    "L5": {"baseline": [3,72,162], "smooth90": [1,49,82], "combined": [3,63,50]},
+    "L6": {"baseline": [1,64,49], "smooth90": [3,58,26], "combined": [0,13,14]},
+    "L14": {"baseline": [9,98,179], "smooth90": [2,41,77], "combined": [2,47,83]}
+  },
+  "allCaseTotals": {
+    "baseline": {"restraint":32,"displacementRotation":513,"elementEnd":797,"total":1342},
+    "smooth90": {"restraint":16,"displacementRotation":375,"elementEnd":437,"total":828},
+    "combined": {"restraint":8,"displacementRotation":242,"elementEnd":254,"total":504}
+  },
+  "highSignalL2": [
+    {"name":"node 20090 UY","reference":-197.26048278808594,"baseline":-419.7871144161486,"smooth90":-446.0394956111272,"combined":-212.43193049542242,"baselinePercentError":112.80852022810863,"smooth90PercentError":126.11700494026519,"combinedPercentError":7.691072987809195,"combinedErrorReductionFromBaselinePercent":93.18218785934151},
+    {"name":"E4 TO FY","reference":-265.9423828125,"baseline":-336.11005588127705,"smooth90":-335.5464560422836,"combined":-269.47918486183266,"baselinePercentError":26.384539510668393,"smooth90PercentError":26.172613967611635,"combinedPercentError":1.3299128976468,"combinedErrorReductionFromBaselinePercent":94.95949930409412},
+    {"name":"E4 TO MZ","reference":-484.62725830078125,"baseline":-668.8412725101745,"smooth90":-667.3617879738737,"combined":-493.9725206490863,"baselinePercentError":38.01148430141785,"smooth90PercentError":37.706201321362585,"combinedPercentError":1.9283402219412393,"combinedErrorReductionFromBaselinePercent":94.92695363682677},
+    {"name":"E5 FROM FY","reference":68.68189239501953,"baseline":-83.67705853487143,"smooth90":-110.49303956884285,"combined":57.047254366410925,"baselinePercentError":221.83277952448975,"smooth90PercentError":260.87652176697344,"combinedPercentError":16.9398914661418,"combinedErrorReductionFromBaselinePercent":92.36366622531921},
+    {"name":"E5 FROM MZ","reference":484.62725830078125,"baseline":668.8412725101743,"smooth90":667.3617879738731,"combined":493.9725206490866,"baselinePercentError":38.01148430141783,"smooth90PercentError":37.706201321362464,"combinedPercentError":1.9283402219413097,"combinedErrorReductionFromBaselinePercent":94.92695363682658},
+    {"name":"node 20120 RZ","reference":0.000030088185611162166,"baseline":0.000023723655427648285,"smooth90":0.000022979535078259,"combined":0.000029199006287491957,"baselinePercentError":21.1529211690078,"smooth90PercentError":23.626052513668316,"combinedPercentError":2.9552440787268344,"combinedErrorReductionFromBaselinePercent":86.02914436679929}
+  ],
+  "gravityWeightN": {
+    "baseline": 93510.79023974095,
+    "smooth90": 93510.79023974095,
+    "combined": 93510.79023974095
+  },
+  "recoveredEquilibrium": {
+    "baseline": {"L2":"PASS","L3":"PASS","L4":"PASS","L5":"PASS","L6":"PASS","L14":"PASS"},
+    "smooth90": {"L2":"PASS","L3":"PASS","L4":"PASS","L5":"PASS","L6":"PASS","L14":"PASS"},
+    "combined": {"L2":"PASS","L3":"PASS","L4":"PASS","L5":"PASS","L6":"PASS","L14":"PASS"}
+  },
+  "combinedReusableRegressionSuite": "PASS",
+  "workflowEvidenceStepDisposition": "The three numerical states completed. The final summarizer failed only because it required executionStatus=QUALIFIED for baseline L2, which is CONDITIONAL while unresolved authority settings remain; recovered equilibrium passed. The reports were uploaded and this retained file was reconstructed directly from those reports.",
+  "interpretation": "Smooth90 is independently source-backed and materially improves global totals but slightly worsens several high-signal L2 rows by itself. Adding the straight-span shear diagnostic produces the strongest physical L2/L4 signature and reduces total literal failures from 1342 to 504, but the shear coefficient remains non-production until independently sourced."
+}

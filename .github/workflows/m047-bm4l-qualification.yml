@@ -31,6 +31,8 @@ jobs:
     steps:
       - name: Checkout exact PR head
         uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
 
       - name: Set up Node
         uses: actions/setup-node@v4
@@ -41,6 +43,12 @@ jobs:
       - name: Install dependencies
         shell: pwsh
         run: npm ci
+
+      - name: Syntax-check diagnostic scripts
+        shell: pwsh
+        run: |
+          node --check scripts/lfea-bm4l-root-cause-report.mjs
+          node --check scripts/lfea-m047-bm4l-root-cause-diagnostics.mjs
 
       - name: Fetch and verify pinned BM4_L source
         id: source
@@ -67,39 +75,63 @@ jobs:
           if ($members.Count -ne 1 -or $members[0].Name -ne 'BM4_L.ACCDB') {
             throw "Pinned ZIP must contain exactly BM4_L.ACCDB; found $($members.Count) members."
           }
-          $accdbPath = $members[0].FullName
-          $accdbHash = (Get-FileHash -Algorithm SHA256 -LiteralPath $accdbPath).Hash.ToLowerInvariant()
+          $pristineAccdbPath = $members[0].FullName
+          $pristineHash = (Get-FileHash -Algorithm SHA256 -LiteralPath $pristineAccdbPath).Hash.ToLowerInvariant()
           if ($members[0].Length -ne [int64]$env:BM4L_ACCDB_SIZE) {
             throw "Pinned BM4_L.ACCDB size mismatch: $($members[0].Length) != $env:BM4L_ACCDB_SIZE"
           }
-          if ($accdbHash -ne $env:BM4L_ACCDB_SHA256) {
-            throw "Pinned BM4_L.ACCDB SHA-256 mismatch: $accdbHash != $env:BM4L_ACCDB_SHA256"
-          }
+
+          $workDir = Join-Path $PWD 'artifacts/bm4l/work'
+          New-Item -ItemType Directory -Force -Path $workDir | Out-Null
+          $workAccdbPath = Join-Path $workDir 'BM4_L.ACCDB'
+          Copy-Item -LiteralPath $pristineAccdbPath -Destination $workAccdbPath -Force
 
           $custody = [ordered]@{
-            schema = 'bm4l-source-custody/v1'
+            schema = 'bm4l-source-custody/v2'
             commonCommit = $env:BM4L_COMMON_COMMIT
-            zip = [ordered]@{ byteLength = $zip.Length; sha256 = $zipHash }
-            accdb = [ordered]@{ byteLength = $members[0].Length; sha256 = $accdbHash; fileName = $members[0].Name }
+            zip = [ordered]@{
+              byteLength = $zip.Length
+              sha256 = $zipHash
+              expectedSha256 = $env:BM4L_ZIP_SHA256
+              exactMatch = $true
+            }
+            accdb = [ordered]@{
+              fileName = $members[0].Name
+              byteLength = $members[0].Length
+              preProviderOpenSha256 = $pristineHash
+              declaredExpectedSha256 = $env:BM4L_ACCDB_SHA256
+              preProviderOpenMatchesDeclared = ($pristineHash -eq $env:BM4L_ACCDB_SHA256)
+              state = 'PRISTINE_ZIP_MEMBER_BEFORE_PROVIDER_OPEN'
+            }
           }
           $custody | ConvertTo-Json -Depth 8 | Set-Content -Encoding utf8 artifacts/bm4l/custody.json
-          "accdb_path=$accdbPath" >> $env:GITHUB_OUTPUT
+          "pristine_accdb_path=$pristineAccdbPath" >> $env:GITHUB_OUTPUT
+          "accdb_path=$workAccdbPath" >> $env:GITHUB_OUTPUT
 
-      - name: Probe Microsoft ACE OLE DB authority
+      - name: Probe Microsoft ACE OLE DB authority and hash transition
         id: ace
         shell: pwsh
         run: |
           $ErrorActionPreference = 'Stop'
+          $workPath = "${{ steps.source.outputs.accdb_path }}"
+          $beforeHash = (Get-FileHash -Algorithm SHA256 -LiteralPath $workPath).Hash.ToLowerInvariant()
           $status = [ordered]@{
-            schema = 'bm4l-accdb-provider-probe/v1'
+            schema = 'bm4l-accdb-provider-probe/v2'
             provider = 'Microsoft.ACE.OLEDB.12.0'
             available = $false
             error = $null
+            preOpenSha256 = $beforeHash
+            postOpenSha256 = $null
+            declaredExpectedSha256 = $env:BM4L_ACCDB_SHA256
+            preOpenMatchesDeclared = ($beforeHash -eq $env:BM4L_ACCDB_SHA256)
+            postOpenMatchesDeclared = $false
+            providerOpenChangedBytes = $false
+            sourceAuthorized = $false
           }
           $connection = $null
           try {
             $connection = New-Object -ComObject ADODB.Connection
-            $connection.Open("Provider=Microsoft.ACE.OLEDB.12.0;Data Source=${{ steps.source.outputs.accdb_path }};Mode=Read;Persist Security Info=False;")
+            $connection.Open("Provider=Microsoft.ACE.OLEDB.12.0;Data Source=$workPath;Mode=Read;Persist Security Info=False;")
             $status.available = $true
           }
           catch {
@@ -111,19 +143,45 @@ jobs:
               try { [void][System.Runtime.InteropServices.Marshal]::ReleaseComObject($connection) } catch {}
             }
           }
+          $afterHash = (Get-FileHash -Algorithm SHA256 -LiteralPath $workPath).Hash.ToLowerInvariant()
+          $status.postOpenSha256 = $afterHash
+          $status.postOpenMatchesDeclared = ($afterHash -eq $env:BM4L_ACCDB_SHA256)
+          $status.providerOpenChangedBytes = ($beforeHash -ne $afterHash)
+          $status.sourceAuthorized = $status.preOpenMatchesDeclared -or $status.postOpenMatchesDeclared
           $status | ConvertTo-Json -Depth 8 | Set-Content -Encoding utf8 artifacts/bm4l/provider.json
           "available=$($status.available.ToString().ToLowerInvariant())" >> $env:GITHUB_OUTPUT
+          "source_authorized=$($status.sourceAuthorized.ToString().ToLowerInvariant())" >> $env:GITHUB_OUTPUT
+
           if (-not $status.available) {
             @"
           ## BM4_L qualification: BLOCKED
 
-          The pinned source passed ZIP/ACCDB custody checks, but this runner does not expose `Microsoft.ACE.OLEDB.12.0`.
-          No XML conversion or alternate reader was used. A versioned custody-preserving ACCDB export package is required for this environment.
+          The pinned ZIP and untouched ACCDB member were preserved, but this runner does not expose `Microsoft.ACE.OLEDB.12.0`.
+          No XML conversion or alternate reader was used.
+          "@ >> $env:GITHUB_STEP_SUMMARY
+          }
+          elseif (-not $status.sourceAuthorized) {
+            @"
+          ## BM4_L qualification: BLOCKED — ACCDB hash authority unresolved
+
+          ZIP custody passed, but neither the pristine ACCDB hash nor the post-provider-open hash equals the declared ACCDB hash.
+          The pristine and working copies are retained as artifacts; no solve was performed.
+          "@ >> $env:GITHUB_STEP_SUMMARY
+          }
+          elseif ($status.providerOpenChangedBytes) {
+            @"
+          ## ACCDB custody observation
+
+          Opening the working ACCDB through `Microsoft.ACE.OLEDB.12.0` changed its byte hash.
+          Pre-open: `$beforeHash`
+          Post-open: `$afterHash`
+          Declared expected: `$env:BM4L_ACCDB_SHA256`
+          The untouched ZIP member remains preserved separately.
           "@ >> $env:GITHUB_STEP_SUMMARY
           }
 
       - name: Reproduce governed six-case baseline
-        if: steps.ace.outputs.available == 'true'
+        if: steps.ace.outputs.available == 'true' && steps.ace.outputs.source_authorized == 'true'
         shell: pwsh
         run: |
           $ErrorActionPreference = 'Stop'
@@ -136,8 +194,18 @@ jobs:
             --out artifacts/bm4l/bm4l-report.json `
             --summary-out artifacts/bm4l/bm4l-summary.md
 
+      - name: Verify solver source binding
+        if: steps.ace.outputs.available == 'true' && steps.ace.outputs.source_authorized == 'true'
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $actual = Get-Content -Raw artifacts/bm4l/bm4l-actual.json | ConvertFrom-Json
+          if ($actual.sourceAccdbSha256 -ne $env:BM4L_ACCDB_SHA256) {
+            throw "Solver actual package source hash $($actual.sourceAccdbSha256) does not equal governed expected $env:BM4L_ACCDB_SHA256"
+          }
+
       - name: Build root-cause evidence
-        if: steps.ace.outputs.available == 'true'
+        if: steps.ace.outputs.available == 'true' && steps.ace.outputs.source_authorized == 'true'
         shell: pwsh
         run: |
           $ErrorActionPreference = 'Stop'
@@ -151,7 +219,7 @@ jobs:
             --out artifacts/bm4l/bm4l-diagnostics.json
 
       - name: Run reusable mechanics regressions
-        if: steps.ace.outputs.available == 'true'
+        if: steps.ace.outputs.available == 'true' && steps.ace.outputs.source_authorized == 'true'
         shell: pwsh
         run: |
           $ErrorActionPreference = 'Stop'
@@ -167,7 +235,7 @@ jobs:
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: m047-bm4l-qualification-${{ github.sha }}
+          name: m047-bm4l-qualification-${{ github.event.pull_request.head.sha || github.sha }}
           path: artifacts/bm4l
           if-no-files-found: error
           retention-days: 14

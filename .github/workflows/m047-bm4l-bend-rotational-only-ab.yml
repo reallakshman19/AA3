@@ -80,13 +80,14 @@ jobs:
           pattern=r"export function applyBendingFlexibilityCorrection\(frameElement, factor\) \{.*?\n\}\n\n/\*\*\n \* Represent a valve"
           replacement="""export function applyBendingFlexibilityCorrection(frameElement, factor) {
             const value = requirePositive(factor, 'flexibilityFactor', 'PIPING_COMPONENT_FACTOR_SET_INVALID');
+            const baseLocal = frameLocalStiffness(rigidityInputs(frameElement)).matrix;
             if (value === 1) {
               return Object.freeze({
                 kind: 'B31J_ROTATIONAL_ONLY_FLEXIBILITY_DIAGNOSTIC_V1',
                 factor: value,
                 appliedTo: Object.freeze(['BENDING_Y', 'BENDING_Z']),
-                localStiffness: frameElement.localStiffness,
-                globalStiffness: frameElement.globalStiffness,
+                localStiffness: baseLocal,
+                globalStiffness: transformStiffnessToGlobal(baseLocal, frameElement.transformation.matrix),
               });
             }
             const extra = value - 1;
@@ -95,7 +96,7 @@ jobs:
             const ky = (2 * e * frameElement.section.secondMomentY) / (extra * length);
             const kz = (2 * e * frameElement.section.secondMomentZ) / (extra * length);
             const condensed = condenseEndConditions(
-              frameElement.localStiffness,
+              baseLocal,
               [],
               [
                 { index: 4, stiffness: ky },

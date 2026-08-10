@@ -34,7 +34,7 @@ const expectedOwnership = new Map([
   ['/repo/src/workspace/lafea-stage-input-descriptors.js', 'lafea-stage-static-contracts'],
   ['/repo/src/workspace/lafea-stage-registry.js', 'lafea-stage-static-contracts'],
   ['/repo/src/workspace/lafea-stage-composition-bindings.js', 'lafea-stage-static-contracts'],
-  ['/repo/src/workspace/workspace-shell-styles.js', 'workspace-shell-static-styles'],
+  ['/repo/src/workspace/workspace-shell-styles.js', 'application-shell-static-styles'],
 ]);
 
 const automaticWorkspaceOwnership = [
@@ -79,6 +79,7 @@ assert.equal(viteSource.includes('onlyExplicitManualChunks: false'), true);
 assert.equal(viteSource.includes('onlyExplicitManualChunks: true'), false);
 assert.equal(viteSource.includes('chunkSizeWarningLimit'), false);
 assert.equal(viteSource.includes('main-chunk-module-diagnostic'), false);
+assert.equal(viteSource.includes("return 'workspace-shell-static-styles'"), false);
 assert.equal(policySource.includes('const targetBytes = 500 * 1024;'), true);
 assert.equal(policySource.includes('const maximumBytes = 1024 * 1024;'), true);
 assert.equal(policySource.includes('chunk.bytes <= maximumBytes'), true);

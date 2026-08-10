@@ -26,7 +26,7 @@ assert.match(bridge, /cancelGesture\('DATASET_CHANGED'\)/u);
 assert.match(bridge, /cancelGesture\('STALE_DATASET_REVISION'\)/u);
 assert.match(bridge, /workspaceState\.selectEntity\?\./u);
 assert.match(bridge, /entityRole: 'SOURCE'/u);
-assert.match(bridge, /clearActive\(\);\n    const gatewayResult = gateway\.execute/u);
+assert.match(bridge, /clearActive\(\);\n {4}const gatewayResult = gateway\.execute/u);
 assert.doesNotMatch(bridge, /Math\.random|Date\.now|crypto\.randomUUID/u);
 
 assert.match(contracts, /SequentialSketcherTransientPreview\.v1/u);

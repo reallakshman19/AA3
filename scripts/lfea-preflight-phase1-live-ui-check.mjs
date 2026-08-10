@@ -21,7 +21,7 @@ assert.match(ui, /Trace/u);
 console.log('P06B-UI-01 PASS existing preflight mount path consumes lazy indexed review source and viewport');
 
 for (const label of ['Missing', 'Ambiguous', 'Conflicting', 'Stale', 'Proposed', 'Deferred']) {
-  assert.match(ui, new RegExp(`['\"]${label}['\"]`, 'u'));
+  assert.match(ui, new RegExp(`['"]${label}['"]`, 'u'));
 }
 for (const preset of ['REVIEW', 'PROCESS', 'MECHANICAL', 'EVIDENCE', 'ALL_40']) {
   assert.match(fs.readFileSync('src/workspace/lfea-preflight-phase1-schema.js', 'utf8'), new RegExp(`\\b${preset}\\b`, 'u'));

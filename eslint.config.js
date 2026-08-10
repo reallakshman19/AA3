@@ -19,6 +19,10 @@ export default defineConfig([
     'src/gc3d/**',
     '**/*.test.js',
     'run_*benchmarks*.test.js',
+    // Archived delivery bundle: a point-in-time copy of source shipped with a
+    // patch, not code that runs from here. Linting it reports the same
+    // findings twice and invites edits to a frozen artefact.
+    'Patch/**',
   ]),
   {
     files: ['**/*.js'],
@@ -69,6 +73,23 @@ export default defineConfig([
       // failing closed is the intended behaviour. Empty blocks elsewhere are
       // still reported.
       'no-empty': ['error', { allowEmptyCatch: true }],
+    },
+  },
+  {
+    // The same page-global situation as the e2e specs, for the handful of
+    // scripts that drive a real browser: the callbacks they hand to
+    // `page.evaluate()` run in the page, not in Node. Listed explicitly rather
+    // than granted to all of `scripts/**` so a genuine typo in an ordinary
+    // Node script is still reported.
+    files: [
+      'scripts/check-browser-dom-operations.mjs',
+      'scripts/lfea-phase6h-demo-browser-check.mjs',
+      'scripts/non-fea-baseline/browser-baseline.mjs',
+      'scripts/test-click.mjs',
+      'scripts/test-table-sync.mjs',
+    ],
+    languageOptions: {
+      globals: { ...globals.node, ...globals.browser },
     },
   },
   {

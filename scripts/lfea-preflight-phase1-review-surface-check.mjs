@@ -46,7 +46,7 @@ for (const label of [
   'Review event IDs',
   'Ledger hash',
 ]) {
-  assert.match(surface, new RegExp(`['\"]${label}['\"]`, 'u'));
+  assert.match(surface, new RegExp(`['"]${label}['"]`, 'u'));
 }
 assert.match(surface, /Append-only engineering review evidence/u);
 assert.match(surface, /Undo compensates a prior event; it never deletes history/u);

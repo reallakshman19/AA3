@@ -28,7 +28,7 @@ let importCount = 0;
 for (const name of scripts) {
   const source = fs.readFileSync(path.join(root, 'scripts', name), 'utf8');
   for (const pattern of forbiddenRuntimeSources) assert.equal(pattern.test(source), false, `${name} contains ${pattern}`);
-  const importMatches = source.matchAll(/(?:import\s+(?:[^'\"]+\s+from\s+)?|import\s*\()(['\"])([^'\"]+)\1/g);
+  const importMatches = source.matchAll(/(?:import\s+(?:[^'"]+\s+from\s+)?|import\s*\()(['"])([^'"]+)\1/g);
   for (const match of importMatches) {
     importCount += 1;
     const specifier = match[2].toLowerCase();

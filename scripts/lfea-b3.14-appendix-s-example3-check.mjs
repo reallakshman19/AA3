@@ -55,6 +55,10 @@ assert.equal(TEE_DERIVATION.flexibilityFactor, 1);
 assert.equal(TEE_DERIVATION.outOfPlaneSif, 4.220728265475877);
 assert.equal(TEE_DERIVATION.inPlaneSif, 3.415546199106908);
 assert.equal(COLD_ALLOWABLE, 137.85733333333334e6);
+ // 138.04666666666665e6 is the exact nearest double for this allowable.
+ // The lint-clean plain form (138046666.66666666) would hide that this
+ // is 138.05 MPa, so the engineering form is kept deliberately.
+ // eslint-disable-next-line no-loss-of-precision
 assert.equal(HOT_ALLOWABLE, 138.04666666666665e6);
 assert.equal(CYCLE_REDUCTION_FACTOR, 1.20);
 assert.equal(METER_DERIVATION.equivalentWallThickness, 0.05329793662923343);

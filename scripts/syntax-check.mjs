@@ -37,8 +37,8 @@ function lightweightModuleSyntaxCheck(code) {
   // braces, parentheses, string/template, and ordinary JS syntax errors.
   const transformed = code
     .replace(/^\s*import\s+[^;]+;?\s*$/gm, '')
-    .replace(/^\s*export\s+\{[^}]*\}\s+from\s+['\"][^'\"]+['\"];?\s*$/gm, '')
-    .replace(/^\s*export\s+\*\s+from\s+['\"][^'\"]+['\"];?\s*$/gm, '')
+    .replace(/^\s*export\s+\{[^}]*\}\s+from\s+['"][^'"]+['"];?\s*$/gm, '')
+    .replace(/^\s*export\s+\*\s+from\s+['"][^'"]+['"];?\s*$/gm, '')
     .replace(/^\s*export\s+\{[^}]*\};?\s*$/gm, '')
     .replace(/\bexport\s+default\s+/g, '')
     .replace(/\bexport\s+(?=(const|let|var|function|class)\b)/g, '');

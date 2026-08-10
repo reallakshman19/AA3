@@ -37,6 +37,10 @@ export function createLafeaWorkbenchOrchestratorApi(context) {
     applyLifecycleEvent: c.applyLifecycleEvent,
     registerLifecycleArtifact: (...args) => c.delegate('registerLifecycleArtifact', args),
     revalidateLifecycleBinding: (...args) => c.delegate('revalidateLifecycleBinding', args),
+    registerTemplateReleaseRecord: c.registerTemplateReleaseRecord,
+    selectRetainedTemplateReleaseRecord: (stageId = activeStageId()) => c.release.select(stageId),
+    buildReleaseBindingProjection: (stageId = activeStageId()) =>
+      c.deriveStage(stageId).lifecycleReadiness.releaseBinding,
     exportLifecycle: c.exportLifecycle,
     validateLafeaAnalysisMeshEvidence: (value) => {
       const stageId = value?.stageId ?? activeStageId();

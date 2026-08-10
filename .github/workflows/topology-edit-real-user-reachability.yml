@@ -14,6 +14,7 @@ on:
       - 'tests/topology-edit-r1-line-budget-check.test.mjs'
       - 'e2e/topology-edit-real-user-reachability.spec.js'
       - 'scripts/topology-edit-r1-line-budget-check.mjs'
+      - 'scripts/topology-edit-r1-line-budget-source-guard.mjs'
       - 'scripts/topology-edit-real-user-e2e-anti-cheat-check.mjs'
       - 'scripts/topology-edit-real-user-evidence-report.mjs'
       - 'scripts/bundle-chunk-ownership-check.mjs'
@@ -54,6 +55,9 @@ jobs:
           set -euo pipefail
           test "$(git rev-parse HEAD)" = "$TOPOLOGY_EDIT_TARGET_HEAD_SHA"
           git diff --check
+
+      - name: Verify line-budget base source guard
+        run: node scripts/topology-edit-r1-line-budget-source-guard.mjs
 
       - name: Verify line-budget regression contract
         run: node --test tests/topology-edit-r1-line-budget-check.test.mjs

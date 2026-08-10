@@ -28,7 +28,7 @@ export function buildSourceReplay({ actual, report, caseId = 'L2' }) {
   if (actual.sourceAccdbSha256 !== report.source?.sha256) throw new TypeError('Actual/report source hash mismatch.');
   const evidence = actual.mechanics?.cases?.[caseId];
   if (!evidence || !Array.isArray(evidence.recoveryLedger)) throw new TypeError(`Missing ${caseId} recovery ledger.`);
-  if (!evidence.recoveryLedger.every((row) => matrix12(row.globalStiffness))) {
+  if (!evidence.recoveryLedger.every((row) => normalizeMatrix12(row.globalStiffness) !== null)) {
     throw new TypeError(`${caseId} recovery ledger does not retain every sealed 12x12 global stiffness matrix.`);
   }
   const comparisonRows = report.qualification?.cases?.find((row) => row.caseId === caseId)?.comparison?.rows;
@@ -197,7 +197,7 @@ function assembleSourceSystem(chain, nodes) {
   const K = Array.from({ length: n }, () => Array(n).fill(0));
   const f = Array(n).fill(0);
   for (const element of chain) {
-    const ke = element.globalStiffness;
+    const ke = requireMatrix12(element.globalStiffness, `globalStiffness:${element.elementId}`);
     const fe = element.equivalentLoadGlobal.map((value, index) => Number(value) + Number(element.initialStrainLoadGlobal[index]));
     const elementNodes = [String(element.nodeI), String(element.nodeJ)];
     const map = [];
@@ -285,8 +285,21 @@ function multiply(matrix, vector) {
   return matrix.map((row) => row.reduce((sum, value, index) => sum + value * vector[index], 0));
 }
 
-function matrix12(value) {
-  return Array.isArray(value) && value.length === 12 && value.every((row) => Array.isArray(row) && row.length === 12 && row.every(Number.isFinite));
+export function normalizeMatrix12(value) {
+  if (Array.isArray(value) && value.length === 12
+    && value.every((row) => Array.isArray(row) && row.length === 12 && row.every(Number.isFinite))) {
+    return value.map((row) => [...row]);
+  }
+  if (Array.isArray(value) && value.length === 144 && value.every(Number.isFinite)) {
+    return Array.from({ length: 12 }, (_unused, row) => value.slice(row * 12, (row + 1) * 12));
+  }
+  return null;
+}
+
+function requireMatrix12(value, field) {
+  const matrix = normalizeMatrix12(value);
+  if (matrix === null) throw new TypeError(`${field} must be a finite 12x12 matrix in nested or canonical flat storage.`);
+  return matrix;
 }
 
 function classifyTopology(kinds) {

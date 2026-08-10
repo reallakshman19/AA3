@@ -19,6 +19,10 @@ import { createLafeaWorkbenchPreparationState } from './lafea-workbench-preparat
 import { projectLafeaWorkbenchReadiness } from './lafea-workbench-readiness.js';
 import { createLafeaWorkbenchReleaseState } from './lafea-workbench-release-binding.js';
 import { createLafeaWorkbenchSourceState } from './lafea-workbench-source-state.js';
+import {
+  createLafeaWorkbenchVerificationState,
+  projectLafeaWorkbenchVerificationBinding,
+} from './lafea-workbench-verification-state.js';
 
 export { LAFEA_LIFECYCLE_BINDING_SCHEMA, LAFEA_LIFECYCLE_BINDING_STATUSES, LAFEA_WORKBENCH_STATE_SCHEMA };
 export const LAFEA_CALCULATION_STATES = Object.freeze(['CALCULATION_NOT_RUN', 'CALCULATION_ACCEPTED_BY_STAGE_CONTRACT', 'CALCULATION_NOT_ACCEPTED_BY_STAGE_CONTRACT']);
@@ -51,6 +55,7 @@ export function createLafeaWorkbenchOrchestratorStore(options) {
     currentCandidateHeadSha,
     authorizedReleaseEvidenceHashes,
   });
+  const verification = createLafeaWorkbenchVerificationState(stageIds);
   const geometry = createLafeaWorkbenchGeometryState(stageIds);
   const mesh = createLafeaWorkbenchMeshState(stageIds, {
     getActiveStageId: () => retainedState.activeStageId,
@@ -70,8 +75,9 @@ export function createLafeaWorkbenchOrchestratorStore(options) {
     if (!stage) throw storeError('LAFEA_WORKBENCH_STAGE_NOT_FOUND');
     return freeze({
       ...stage, stageId, ...source.fields(stageId), ...release.fields(stageId),
-      ...mesh.fields(stageId), ...meshGeneration.fields(stageId),
-      ...preparation.fields(stageId), ...geometry.fields(stageId),
+      ...verification.fields(stageId), ...mesh.fields(stageId),
+      ...meshGeneration.fields(stageId), ...preparation.fields(stageId),
+      ...geometry.fields(stageId),
     });
   }
 
@@ -94,7 +100,15 @@ export function createLafeaWorkbenchOrchestratorStore(options) {
     const preparationProjection = withMesh.domainFirstProfileActive
       ? buildLafeaDomainPreparationProjection(withMesh)
       : preparation.buildProjection(withMesh);
-    return freeze({ ...withMesh, preparationProjection });
+    const numericalVerificationProjection = projectLafeaWorkbenchVerificationBinding(
+      withMesh,
+      withMesh.retainedNumericalVerificationEvidence,
+    );
+    return freeze({
+      ...withMesh,
+      preparationProjection,
+      numericalVerificationProjection,
+    });
   }
 
   function deriveStage(stageId) {
@@ -219,6 +233,15 @@ export function createLafeaWorkbenchOrchestratorStore(options) {
     });
   }
 
+  function registerNumericalVerificationEvidence(value, stageId = retainedState.activeStageId) {
+    const result = verification.register(value, readStageState(stageId));
+    const state = result.changed ? publish() : deriveState();
+    return freeze({
+      ...result,
+      projection: state.stages[stageId].numericalVerificationProjection,
+    });
+  }
+
   function registerPreparationEvidence(value) {
     if (rawStage(value?.request?.stageId ?? retainedState.activeStageId).domainFirstProfileActive) {
       throw storeError('LAFEA_DOMAIN_FIRST_PREPARATION_REQUIRES_V2_EVIDENCE');
@@ -281,6 +304,8 @@ export function createLafeaWorkbenchOrchestratorStore(options) {
       lastSourceAuthorityEvent: stage.lastSourceAuthorityEvent,
       templateReleaseRecord: stage.retainedTemplateReleaseRecord,
       releaseBinding: stage.lifecycleReadiness.releaseBinding,
+      numericalVerificationEvidence: stage.retainedNumericalVerificationEvidence,
+      numericalVerification: stage.numericalVerificationProjection,
       readiness: stage.lifecycleReadiness,
       preparation: stage.preparationProjection,
       domainFirstLifecycle: stage.domainFirstLifecycle,
@@ -308,12 +333,12 @@ export function createLafeaWorkbenchOrchestratorStore(options) {
   }
 
   return createLafeaWorkbenchOrchestratorApi({
-    retained, release, mesh, meshGeneration, preparation, geometry, listeners, unsubscribe,
-    ...meshGenerationActions,
+    retained, release, verification, mesh, meshGeneration, preparation, geometry,
+    listeners, unsubscribe, ...meshGenerationActions,
     getRetainedState: () => retainedState,
     readStageState, deriveStage, deriveState, publish, delegate, mutateDocument,
     importDocument, run, initializeLifecycle, applyLifecycleEvent,
-    registerTemplateReleaseRecord,
+    registerTemplateReleaseRecord, registerNumericalVerificationEvidence,
     registerPreparationEvidence, registerPreparationApproval,
     activateDomainFirstProfile, registerAnalysisDomain,
     registerAnalysisGeometryEvidence, registerAnalysisMeshEvidence,

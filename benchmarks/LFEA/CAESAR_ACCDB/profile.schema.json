@@ -18,16 +18,35 @@
     "configurationAuthority"
   ],
   "properties": {
-    "schema": { "const": "caesar-accdb-benchmark-profile/v1" },
-    "profileId": { "type": "string", "minLength": 1 },
-    "benchmarkId": { "type": "string", "minLength": 1 },
+    "schema": {
+      "const": "caesar-accdb-benchmark-profile/v1"
+    },
+    "profileId": {
+      "type": "string",
+      "minLength": 1
+    },
+    "benchmarkId": {
+      "type": "string",
+      "minLength": 1
+    },
     "installationTemperature": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["value", "unit"],
+      "required": [
+        "value",
+        "unit"
+      ],
       "properties": {
-        "value": { "type": "number" },
-        "unit": { "enum": ["C", "F", "K"] }
+        "value": {
+          "type": "number"
+        },
+        "unit": {
+          "enum": [
+            "C",
+            "F",
+            "K"
+          ]
+        }
       }
     },
     "caseSelection": {
@@ -35,28 +54,49 @@
         {
           "type": "object",
           "additionalProperties": false,
-          "required": ["mode", "cases"],
+          "required": [
+            "mode",
+            "cases"
+          ],
           "properties": {
-            "mode": { "const": "ALL_AVAILABLE" },
-            "cases": { "type": "array", "maxItems": 0 }
+            "mode": {
+              "const": "ALL_AVAILABLE"
+            },
+            "cases": {
+              "type": "array",
+              "maxItems": 0
+            }
           }
         },
         {
           "type": "object",
           "additionalProperties": false,
-          "required": ["mode", "cases"],
+          "required": [
+            "mode",
+            "cases"
+          ],
           "properties": {
-            "mode": { "const": "EXPLICIT" },
+            "mode": {
+              "const": "EXPLICIT"
+            },
             "cases": {
               "type": "array",
               "minItems": 1,
               "items": {
                 "type": "object",
                 "additionalProperties": false,
-                "required": ["caseId", "lcaseNumber"],
+                "required": [
+                  "caseId",
+                  "lcaseNumber"
+                ],
                 "properties": {
-                  "caseId": { "type": "string", "minLength": 1 },
-                  "lcaseNumber": { "type": "integer" }
+                  "caseId": {
+                    "type": "string",
+                    "minLength": 1
+                  },
+                  "lcaseNumber": {
+                    "type": "integer"
+                  }
                 }
               }
             }
@@ -65,7 +105,10 @@
       ]
     },
     "nodeSelection": {
-      "enum": ["ALL_OUTPUT_NODES", "INPUT_ENDPOINT_NODES"]
+      "enum": [
+        "ALL_OUTPUT_NODES",
+        "INPUT_ENDPOINT_NODES"
+      ]
     },
     "resultFamilies": {
       "type": "array",
@@ -83,20 +126,34 @@
     "conventions": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["restraintReaction"],
+      "required": [
+        "restraintReaction"
+      ],
       "properties": {
         "restraintReaction": {
-          "enum": ["CAESAR_FORCE_ON_SUPPORT", "FORCE_ON_STRUCTURE"]
+          "enum": [
+            "CAESAR_FORCE_ON_SUPPORT",
+            "FORCE_ON_STRUCTURE"
+          ]
         }
       }
     },
     "equilibriumTolerance": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["forceN", "momentNm"],
+      "required": [
+        "forceN",
+        "momentNm"
+      ],
       "properties": {
-        "forceN": { "type": "number", "minimum": 0 },
-        "momentNm": { "type": "number", "minimum": 0 }
+        "forceN": {
+          "type": "number",
+          "minimum": 0
+        },
+        "momentNm": {
+          "type": "number",
+          "minimum": 0
+        }
       }
     },
     "tolerances": {
@@ -105,28 +162,55 @@
       "additionalProperties": {
         "type": "object",
         "additionalProperties": false,
-        "required": ["absolute", "relative", "scaleFloor"],
+        "required": [
+          "absolute",
+          "relative",
+          "scaleFloor"
+        ],
         "properties": {
-          "absolute": { "type": "number", "minimum": 0 },
-          "relative": { "type": "number", "minimum": 0 },
-          "scaleFloor": { "type": "number", "minimum": 0 },
+          "absolute": {
+            "type": "number",
+            "minimum": 0
+          },
+          "relative": {
+            "type": "number",
+            "minimum": 0
+          },
+          "scaleFloor": {
+            "type": "number",
+            "minimum": 0
+          },
           "comparisonMode": {
             "enum": [
               "COMBINED_ABSOLUTE_RELATIVE_SCALE_FLOOR",
               "LITERAL_RELATIVE_WITH_ZERO_ABSOLUTE"
             ]
           },
-          "zeroReferenceAbsolute": { "type": "number", "minimum": 0 }
+          "zeroReferenceAbsolute": {
+            "type": "number",
+            "minimum": 0
+          }
         }
       }
     },
     "configurationAuthority": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["schema", "caesarVersion", "precedence", "layers", "unresolvedSettings"],
+      "required": [
+        "schema",
+        "caesarVersion",
+        "precedence",
+        "layers",
+        "unresolvedSettings"
+      ],
       "properties": {
-        "schema": { "const": "caesar-configuration-authority/v1" },
-        "caesarVersion": { "type": "string", "minLength": 1 },
+        "schema": {
+          "const": "caesar-configuration-authority/v1"
+        },
+        "caesarVersion": {
+          "type": "string",
+          "minLength": 1
+        },
         "precedence": {
           "const": [
             "LOAD_CASE_SETTING",
@@ -138,20 +222,39 @@
         "layers": {
           "type": "object",
           "additionalProperties": false,
-          "required": ["overallGlobalDefault", "modelInput", "individualFile", "loadCase"],
+          "required": [
+            "overallGlobalDefault",
+            "modelInput",
+            "individualFile",
+            "loadCase"
+          ],
           "properties": {
-            "overallGlobalDefault": { "$ref": "#/$defs/configurationLayer" },
-            "modelInput": { "$ref": "#/$defs/configurationLayer" },
-            "individualFile": { "$ref": "#/$defs/configurationLayer" },
+            "overallGlobalDefault": {
+              "$ref": "#/$defs/configurationLayer"
+            },
+            "modelInput": {
+              "$ref": "#/$defs/configurationLayer"
+            },
+            "individualFile": {
+              "$ref": "#/$defs/configurationLayer"
+            },
             "loadCase": {
               "type": "object",
               "additionalProperties": false,
-              "required": ["source", "cases"],
+              "required": [
+                "source",
+                "cases"
+              ],
               "properties": {
-                "source": { "type": "string", "minLength": 1 },
+                "source": {
+                  "type": "string",
+                  "minLength": 1
+                },
                 "cases": {
                   "type": "object",
-                  "additionalProperties": { "$ref": "#/$defs/configurationSettings" }
+                  "additionalProperties": {
+                    "$ref": "#/$defs/configurationSettings"
+                  }
                 }
               }
             }
@@ -162,11 +265,26 @@
           "items": {
             "type": "object",
             "additionalProperties": false,
-            "required": ["setting", "caseId", "reason"],
+            "required": [
+              "setting",
+              "caseId",
+              "reason"
+            ],
             "properties": {
-              "setting": { "type": "string", "minLength": 1 },
-              "caseId": { "type": ["string", "null"] },
-              "reason": { "type": "string", "minLength": 1 }
+              "setting": {
+                "type": "string",
+                "minLength": 1
+              },
+              "caseId": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "reason": {
+                "type": "string",
+                "minLength": 1
+              }
             }
           }
         }
@@ -191,66 +309,184 @@
         "thermalExpansion": {
           "type": "object",
           "additionalProperties": false,
-          "required": ["coefficientPerKelvin", "authorityStatus", "source"],
+          "required": [
+            "coefficientPerKelvin",
+            "authorityStatus",
+            "source"
+          ],
           "properties": {
-            "coefficientPerKelvin": { "type": "number", "exclusiveMinimum": 0 },
-            "authorityStatus": { "enum": ["RESOLVED", "PROVISIONAL"] },
-            "source": { "type": "string", "minLength": 1 }
+            "coefficientPerKelvin": {
+              "type": "number",
+              "exclusiveMinimum": 0
+            },
+            "authorityStatus": {
+              "enum": [
+                "RESOLVED",
+                "PROVISIONAL"
+              ]
+            },
+            "source": {
+              "type": "string",
+              "minLength": 1
+            }
           }
         },
-        "gravityAcceleration": { "type": "number", "exclusiveMinimum": 0 },
+        "gravityAcceleration": {
+          "type": "number",
+          "exclusiveMinimum": 0
+        },
         "bourdonPressureEffects": {
           "type": "object",
           "additionalProperties": false,
-          "required": ["mode", "source"],
+          "required": [
+            "mode",
+            "source"
+          ],
           "properties": {
             "mode": {
-              "enum": ["DISABLED", "TRANSLATION_ONLY", "TRANSLATION_AND_ROTATION"]
+              "enum": [
+                "DISABLED",
+                "TRANSLATION_ONLY",
+                "TRANSLATION_AND_ROTATION"
+              ]
             },
-            "source": { "type": "string", "minLength": 1 }
+            "source": {
+              "type": "string",
+              "minLength": 1
+            }
           }
         },
-        "directionalB31JTeeFlexibility": { "type": "boolean" },
-        "teeNominalDiameterRelativeTolerance": { "type": "number", "minimum": 0, "maximum": 0.01 },
-        "reducerCondensation": { "type": "boolean" },
+        "directionalB31JTeeFlexibility": {
+          "type": "boolean"
+        },
+        "teeNominalDiameterRelativeTolerance": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 0.01
+        },
+        "reducerCondensation": {
+          "type": "boolean"
+        },
         "b31jSmooth90FlexibilityCorrection": {
           "type": "object",
           "additionalProperties": false,
-          "required": ["enabled", "authorityStatus", "source"],
+          "required": [
+            "enabled",
+            "authorityStatus",
+            "source"
+          ],
           "properties": {
-            "enabled": { "type": "boolean" },
-            "authorityStatus": { "enum": ["RESOLVED", "UNRESOLVED"] },
-            "source": { "type": "string", "minLength": 1 }
+            "enabled": {
+              "type": "boolean"
+            },
+            "authorityStatus": {
+              "enum": [
+                "RESOLVED",
+                "UNRESOLVED"
+              ]
+            },
+            "source": {
+              "type": "string",
+              "minLength": 1
+            }
           }
         },
         "bendPressureStiffening": {
           "type": "object",
           "additionalProperties": false,
-          "required": ["pressureSource", "authorityStatus", "source"],
+          "required": [
+            "pressureSource",
+            "authorityStatus",
+            "source"
+          ],
           "properties": {
-            "pressureSource": { "type": "string", "minLength": 1 },
-            "authorityStatus": { "enum": ["RESOLVED", "PROVISIONAL"] },
-            "source": { "type": "string", "minLength": 1 }
+            "pressureSource": {
+              "type": "string",
+              "minLength": 1
+            },
+            "authorityStatus": {
+              "enum": [
+                "RESOLVED",
+                "PROVISIONAL"
+              ]
+            },
+            "source": {
+              "type": "string",
+              "minLength": 1
+            }
           }
         },
         "restraintRepresentation": {
           "type": "object",
           "additionalProperties": false,
-          "required": ["mode", "authorityStatus", "source"],
+          "required": [
+            "mode",
+            "authorityStatus",
+            "source"
+          ],
           "properties": {
-            "mode": { "type": "string", "minLength": 1 },
-            "authorityStatus": { "enum": ["RESOLVED", "PROVISIONAL"] },
-            "source": { "type": "string", "minLength": 1 }
+            "mode": {
+              "type": "string",
+              "minLength": 1
+            },
+            "authorityStatus": {
+              "enum": [
+                "RESOLVED",
+                "PROVISIONAL"
+              ]
+            },
+            "source": {
+              "type": "string",
+              "minLength": 1
+            }
           }
         },
         "bendAxialShape": {
           "type": "object",
           "additionalProperties": false,
-          "required": ["enabled", "method", "source"],
+          "required": [
+            "enabled",
+            "method",
+            "source"
+          ],
           "properties": {
-            "enabled": { "type": "boolean" },
-            "method": { "const": "DISCRETIZED_CURVED_CENTRELINE_AXIAL_DOF_V1" },
-            "source": { "type": "string", "minLength": 1 }
+            "enabled": {
+              "type": "boolean"
+            },
+            "method": {
+              "const": "DISCRETIZED_CURVED_CENTRELINE_AXIAL_DOF_V1"
+            },
+            "source": {
+              "type": "string",
+              "minLength": 1
+            }
+          }
+        },
+        "straightPipeTransverseShear": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "mode",
+            "authorityStatus",
+            "source"
+          ],
+          "properties": {
+            "mode": {
+              "enum": [
+                "EULER_BERNOULLI",
+                "COWPER_HOLLOW_CIRCLE_TIMOSHENKO"
+              ]
+            },
+            "authorityStatus": {
+              "enum": [
+                "RESOLVED",
+                "PROVISIONAL"
+              ]
+            },
+            "source": {
+              "type": "string",
+              "minLength": 1
+            }
           }
         }
       }
@@ -260,28 +496,53 @@
     "configurationLayer": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["source", "settings"],
+      "required": [
+        "source",
+        "settings"
+      ],
       "properties": {
-        "source": { "type": "string", "minLength": 1 },
-        "settings": { "$ref": "#/$defs/configurationSettings" }
+        "source": {
+          "type": "string",
+          "minLength": 1
+        },
+        "settings": {
+          "$ref": "#/$defs/configurationSettings"
+        }
       }
     },
     "configurationSettings": {
       "type": "object",
-      "additionalProperties": { "$ref": "#/$defs/configurationValue" }
+      "additionalProperties": {
+        "$ref": "#/$defs/configurationValue"
+      }
     },
     "configurationValue": {
       "oneOf": [
-        { "type": "string", "minLength": 1 },
-        { "type": "number" },
-        { "type": "boolean" },
+        {
+          "type": "string",
+          "minLength": 1
+        },
+        {
+          "type": "number"
+        },
+        {
+          "type": "boolean"
+        },
         {
           "type": "object",
           "additionalProperties": false,
-          "required": ["value", "unit"],
+          "required": [
+            "value",
+            "unit"
+          ],
           "properties": {
-            "value": { "type": "number" },
-            "unit": { "type": "string", "minLength": 1 }
+            "value": {
+              "type": "number"
+            },
+            "unit": {
+              "type": "string",
+              "minLength": 1
+            }
           }
         }
       ]

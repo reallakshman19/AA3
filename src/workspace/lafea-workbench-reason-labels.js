@@ -6,6 +6,8 @@ const REASON_LABELS = Object.freeze({
   ANALYSIS_MESH_EVIDENCE_ABSENT: 'Required analysis mesh evidence is absent.',
   ANALYSIS_MESH_QUALITY_BLOCK: 'The retained analysis mesh is blocked by quality checks.',
   ANALYSIS_MESH_WARNING_REVIEW_REQUIRED: 'Review the retained mesh warning before authorization.',
+  ANALYSIS_PROFILE_BINDING_REQUIRED: 'Bind a valid analysis profile before continuing.',
+  BOUNDARY_CONDITIONS_REQUIRED: 'Define the required restraints or boundary conditions.',
   CANONICAL_AUTHORIZATION_NOT_READY: 'Canonical analysis authorization is not ready.',
   CANONICAL_MODEL_NOT_CURRENT: 'The canonical analysis model is not current.',
   CANONICAL_SOLVER_MODEL_NOT_COMPILED: 'The canonical solver model has not been compiled.',
@@ -16,6 +18,8 @@ const REASON_LABELS = Object.freeze({
   LAFEA_PREPARATION_PROJECTION_ABSENT: 'Preparation evidence has not been established.',
   LIFECYCLE_NOT_INITIALIZED: 'Initialize lifecycle authority for the source document.',
   LIFECYCLE_SOURCE_BINDING_STALE: 'The lifecycle source binding is stale; re-establish current source authority.',
+  LOAD_CASES_REQUIRED: 'Define at least one governed load or physical case.',
+  MATERIALS_REQUIRED: 'Define at least one governed material or section basis.',
   RELEASE_NOT_QUALIFIED: 'Release qualification has not been established.',
   RESULT_EVIDENCE_NOT_CURRENT: 'Result evidence is not current for the active analysis.',
   SOURCE_AUTHORITY_REQUIRED: 'Current source authority is required.',
@@ -23,6 +27,8 @@ const REASON_LABELS = Object.freeze({
   SOURCE_DOCUMENT_REQUIRED: 'Import or create a valid source document.',
   STAGE_ENGINE_NOT_IMPLEMENTED: 'The analysis engine for this stage is not implemented.',
   UNSUPPORTED_STAGE_ENGINE_NOT_IMPLEMENTED: 'Calculation is not implemented for this analysis stage.',
+  WORKFLOW_INPUT_CONTRACT_NOT_DECLARED: 'This workflow input contract has not been declared for the active stage.',
+  WORKFLOW_STEP_NOT_APPLICABLE: 'This workflow step is not applicable to the active analysis stage.',
 });
 
 export function lafeaWorkbenchReasonLabel(value) {

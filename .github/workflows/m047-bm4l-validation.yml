@@ -1,0 +1,123 @@
+name: M047 BM4_L governed validation
+
+on:
+  push:
+    branches:
+      - agent/m047-bm4l-root-cause
+    paths:
+      - 'src/core/fea-benchmarks/**'
+      - 'src/core/linear-fea-*/**'
+      - 'benchmarks/LFEA/CAESAR_ACCDB/bm4l-validation.profile.json'
+      - 'scripts/lfea-caesar-accdb-*.ps1'
+      - 'scripts/lfea-caesar-accdb-benchmark.mjs'
+      - 'scripts/lfea-bm4l-root-cause-report.mjs'
+      - 'scripts/lfea-m047-bm4l-*.mjs'
+      - 'scripts/lfea-m047-bm4l-*.ps1'
+      - '.github/workflows/m047-bm4l-validation.yml'
+  pull_request:
+    branches:
+      - main
+    paths:
+      - 'src/core/fea-benchmarks/**'
+      - 'src/core/linear-fea-*/**'
+      - 'benchmarks/LFEA/CAESAR_ACCDB/bm4l-validation.profile.json'
+      - 'scripts/lfea-caesar-accdb-*.ps1'
+      - 'scripts/lfea-caesar-accdb-benchmark.mjs'
+      - 'scripts/lfea-bm4l-root-cause-report.mjs'
+      - 'scripts/lfea-m047-bm4l-*.mjs'
+      - 'scripts/lfea-m047-bm4l-*.ps1'
+      - '.github/workflows/m047-bm4l-validation.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  bm4l:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: Fetch and verify pinned BM4_L ACCDB
+        shell: pwsh
+        run: |
+          New-Item -ItemType Directory -Force -Path artifacts | Out-Null
+          $zip = Join-Path $PWD 'artifacts/BM4_L.zip'
+          $url = 'https://raw.githubusercontent.com/reallaksh19/Common/45d51ea18624f5775805f399110c1738301c0d90/LFEA/BM4/BM4_L.zip'
+          Invoke-WebRequest -Uri $url -OutFile $zip
+          $zipHash = (Get-FileHash -LiteralPath $zip -Algorithm SHA256).Hash.ToLowerInvariant()
+          if ($zipHash -ne '978617cba50fa0b1a16c2fa71dc1e0d38e55ac834b191f887d100c6951abd8b9') {
+            throw "Pinned BM4_L ZIP hash mismatch: $zipHash"
+          }
+          Expand-Archive -LiteralPath $zip -DestinationPath artifacts/bm4l-source -Force
+          $accdb = Join-Path $PWD 'artifacts/bm4l-source/BM4_L.ACCDB'
+          $item = Get-Item -LiteralPath $accdb
+          $accdbHash = (Get-FileHash -LiteralPath $accdb -Algorithm SHA256).Hash.ToLowerInvariant()
+          if ($accdbHash -ne 'e21b0862851ea2bb6f20d55e4a3a94f501537b618b98dd46afa9f6777ee38d3c') {
+            throw "Pinned BM4_L ACCDB hash mismatch: $accdbHash"
+          }
+          if ($item.Length -ne 5136384) { throw "Pinned BM4_L ACCDB size mismatch: $($item.Length)" }
+
+      - name: Emit ACCDB custody and authority provenance
+        shell: powershell
+        run: |
+          $tables = @(
+            'INPUT_BASIC_ELEMENT_DATA','INPUT_BENDS','INPUT_CONTROL','INPUT_FORCMNT',
+            'INPUT_NODAL_COORDINATES','INPUT_OFFSETS','INPUT_REDUCERS','INPUT_RESTRAINTS',
+            'INPUT_RIGIDS','INPUT_SIFTEES','INPUT_UNITS',
+            'OUTPUT_DISPLACEMENTS','OUTPUT_RESTRAINTS_SUMMARY','OUTPUT_GLOBAL_ELEMENT_FORCES'
+          ) -join ','
+          .\scripts\lfea-m047-bm4l-accdb-provenance.ps1 `
+            -AccdbPath .\artifacts\bm4l-source\BM4_L.ACCDB `
+            -ProfilePath .\benchmarks\LFEA\CAESAR_ACCDB\bm4l-validation.profile.json `
+            -TablesCsv $tables `
+            -OutPath .\artifacts\bm4l-provenance.json
+
+      - name: Run governed six-case benchmark
+        shell: pwsh
+        run: |
+          node scripts/lfea-caesar-accdb-benchmark.mjs `
+            --accdb artifacts/bm4l-source/BM4_L.ACCDB `
+            --profile benchmarks/LFEA/CAESAR_ACCDB/bm4l-validation.profile.json `
+            --solve-linear true `
+            --solve-cases L2,L3,L4,L5,L6,L14 `
+            --actual-out artifacts/bm4l-actual.json `
+            --out artifacts/bm4l-report.json `
+            --summary-out artifacts/bm4l-summary.md
+
+      - name: Prove common operator and raw end-action recovery
+        shell: pwsh
+        run: |
+          node scripts/lfea-m047-bm4l-recovery-proof.mjs `
+            --actual artifacts/bm4l-actual.json `
+            --out artifacts/bm4l-recovery-proof.json
+
+      - name: Build root-cause diagnostics
+        shell: pwsh
+        run: |
+          node scripts/lfea-bm4l-root-cause-report.mjs `
+            --report artifacts/bm4l-report.json `
+            --actual artifacts/bm4l-actual.json `
+            --out artifacts/bm4l-root-cause.json
+          node scripts/lfea-m047-bm4l-root-cause-diagnostics.mjs `
+            --actual artifacts/bm4l-actual.json `
+            --report artifacts/bm4l-report.json `
+            --out artifacts/bm4l-diagnostics.json
+
+      - name: Targeted solver regressions
+        shell: pwsh
+        run: |
+          node scripts/lfea-b3.3-solver-check.mjs
+          node scripts/lfea-b3.4-recovery-check.mjs
+          node scripts/lfea-b3.6-sparse-assembly-check.mjs
+          node scripts/lfea-b3.9-gravity-self-weight-check.mjs
+
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: m047-bm4l-evidence
+          path: artifacts/
+          if-no-files-found: warn

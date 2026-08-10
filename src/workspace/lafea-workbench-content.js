@@ -50,11 +50,13 @@ export function renderLafeaWorkbenchContent(root, state, stage, options) {
 
   const viewportCard = card(root, `Governed engineering viewport — ${state.activeStageId}`);
   viewportCard.section.dataset.guidedTarget = 'viewport';
-  const preview = element(root, 'div', 'lafea-workbench__svg');
+  const reusedViewport = validReusableViewport(options.reusedViewport);
+  const preview = reusedViewport?.element ?? element(root, 'div', 'lafea-workbench__svg');
   const retainedMeshEvidence = stage.domainFirstProfileActive === true
+    || stage.shellMidsurfaceProfileActive === true
     ? stage.retainedAnalysisMeshEvidenceV2 ?? null
     : stage.retainedAnalysisMeshEvidence ?? null;
-  activeViewport = mountLafeaLiveWorkbenchViewport(preview, {
+  activeViewport = reusedViewport?.viewport ?? mountLafeaLiveWorkbenchViewport(preview, {
     stageId: state.activeStageId,
     document: stage.document,
     lifecycle: stage.lifecycle,
@@ -166,9 +168,17 @@ export function renderLafeaWorkbenchContent(root, state, stage, options) {
   return Object.freeze({
     element: shell,
     viewport: activeViewport,
+    viewportElement: preview,
+    viewportReused: Boolean(reusedViewport),
     workflow,
     discretization,
   });
+}
+
+function validReusableViewport(value) {
+  if (!value || typeof value !== 'object') return null;
+  if (!value.viewport?.scene || !value.element?.ownerDocument) return null;
+  return value;
 }
 
 function workflowSummary(root, workflow, ids) {

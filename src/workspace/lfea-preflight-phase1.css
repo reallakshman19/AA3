@@ -1,0 +1,260 @@
+/*
+ * Phase-1 pre-flight review surface.
+ *
+ * The grid is virtualized in both axes: the scroller owns the scrollbar, a
+ * sizer element carries the full logical extent so the scrollbar reflects the
+ * complete dataset, and only the rows and cells inside the viewport window are
+ * positioned into it. Row and cell geometry must therefore be driven from the
+ * measured constants in lfea-preflight-ui.js, not from content flow.
+ */
+
+.lfea-preflight-phase1 {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  padding: 12px;
+  color: #e2e8f0;
+  background: #0f172a;
+  font-size: 11px;
+}
+
+.lfea-preflight-phase1__header h3 {
+  margin: 0 0 4px;
+  color: #38bdf8;
+  font-size: 14px;
+}
+
+.lfea-preflight-phase1__summary {
+  margin: 0 0 6px;
+  color: #93c5fd;
+}
+
+.lfea-preflight-phase1__note {
+  margin: 0 0 8px;
+  max-width: 960px;
+  color: #94a3b8;
+  line-height: 1.4;
+}
+
+.lfea-preflight-phase1__blocked {
+  margin: 0;
+  padding: 12px;
+  border: 1px solid #7f1d1d;
+  border-radius: 6px;
+  background: #1f0a0a;
+  color: #fecaca;
+  font-size: 12px;
+}
+
+.lfea-preflight-phase1__toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 0;
+}
+
+.lfea-preflight-phase1__queues {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+
+.lfea-preflight-phase1__refresh,
+.lfea-preflight-phase1__queue {
+  border: 1px solid #334155;
+  border-radius: 4px;
+  padding: 3px 8px;
+  background: #0f172a;
+  color: #cbd5e1;
+  font-size: 11px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.lfea-preflight-phase1__queue[aria-pressed="true"] {
+  border-color: #38bdf8;
+  background: #0c2740;
+  color: #7dd3fc;
+}
+
+.lfea-preflight-phase1__control {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  color: #94a3b8;
+  font-weight: 700;
+}
+
+.lfea-preflight-phase1__control select {
+  border: 1px solid #334155;
+  border-radius: 4px;
+  padding: 3px 6px;
+  background: #0f172a;
+  color: #e2e8f0;
+  font-size: 11px;
+}
+
+/* Scroll owner. The scrollbar must reflect the whole dataset, so the sizer
+   below carries the full extent while only the window is materialized. */
+.lfea-preflight-phase1__scroller {
+  position: relative;
+  height: 420px;
+  overflow: auto;
+  border: 1px solid #334155;
+  border-radius: 6px;
+  background: #0b1121;
+}
+
+.lfea-preflight-phase1__sizer {
+  position: relative;
+}
+
+.lfea-preflight-phase1__headrow {
+  position: sticky;
+  top: 0;
+  z-index: 2;
+  height: 26px;
+  background: #1e293b;
+}
+
+.lfea-preflight-phase1__headcell {
+  position: absolute;
+  top: 0;
+  display: flex;
+  align-items: center;
+  height: 26px;
+  padding: 0 8px;
+  box-sizing: border-box;
+  border-right: 1px solid #334155;
+  border-bottom: 1px solid #334155;
+  color: #7dd3fc;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  font-size: 10px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.lfea-preflight-phase1__row {
+  position: absolute;
+  left: 0;
+  display: block;
+  height: 28px;
+  white-space: nowrap;
+}
+
+.lfea-preflight-phase1__row[aria-selected="true"] {
+  background: rgba(56, 189, 248, 0.08);
+}
+
+.lfea-preflight-phase1__linecell {
+  position: absolute;
+  left: 0;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  height: 28px;
+  padding: 0 8px;
+  box-sizing: border-box;
+  border-right: 1px solid #1e293b;
+  border-bottom: 1px solid rgba(51, 65, 85, 0.4);
+  background: #0b1121;
+}
+
+.lfea-preflight-phase1__cell {
+  position: absolute;
+  top: 0;
+  display: flex;
+  align-items: center;
+  height: 28px;
+  padding: 0 8px;
+  box-sizing: border-box;
+  border-right: 1px solid #1e293b;
+  border-bottom: 1px solid rgba(51, 65, 85, 0.4);
+  color: #cbd5e1;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  cursor: pointer;
+}
+
+.lfea-preflight-phase1__cell[aria-selected="true"] {
+  outline: 1px solid #38bdf8;
+  outline-offset: -1px;
+  background: rgba(56, 189, 248, 0.12);
+}
+
+.lfea-preflight-phase1__expand {
+  border: 0;
+  background: transparent;
+  color: #f8fafc;
+  font: inherit;
+  font-weight: 700;
+  cursor: pointer;
+  padding: 0;
+}
+
+.lfea-preflight-phase1__status {
+  border-radius: 2px;
+  padding: 0 4px;
+  font-weight: 700;
+}
+
+.lfea-preflight-phase1__status--RESOLVED_EXACT { background: rgba(16,185,129,0.2); color: #34d399; }
+.lfea-preflight-phase1__status--RESOLVED_DERIVED { background: rgba(56,189,248,0.15); color: #7dd3fc; }
+.lfea-preflight-phase1__status--PROPOSED_REVIEW { background: rgba(168,85,247,0.15); color: #d8b4fe; }
+.lfea-preflight-phase1__status--BLOCKED_MISSING { background: rgba(239,68,68,0.15); color: #fca5a5; }
+.lfea-preflight-phase1__status--BLOCKED_AMBIGUOUS { background: rgba(234,179,8,0.15); color: #fde047; }
+.lfea-preflight-phase1__status--BLOCKED_CONFLICT { background: rgba(249,115,22,0.15); color: #fdba74; }
+.lfea-preflight-phase1__status--BLOCKED_STALE_SOURCE { background: rgba(148,163,184,0.15); color: #cbd5e1; }
+.lfea-preflight-phase1__status--NOT_APPLICABLE { color: #64748b; }
+
+.lfea-preflight-phase1__components {
+  margin-top: 8px;
+  padding: 8px;
+  border: 1px solid #1e293b;
+  border-radius: 6px;
+  background: #07111f;
+}
+
+.lfea-preflight-phase1__components h4 {
+  margin: 0 0 6px;
+  color: #f8fafc;
+}
+
+.lfea-preflight-phase1__component {
+  display: flex;
+  gap: 12px;
+  padding: 2px 0;
+  color: #cbd5e1;
+}
+
+.lfea-preflight-phase1__trace {
+  margin-top: 8px;
+  padding: 8px;
+  border: 1px solid #1e293b;
+  border-radius: 6px;
+  background: #07111f;
+}
+
+.lfea-preflight-phase1__trace h4 {
+  margin: 0 0 6px;
+  color: #f8fafc;
+}
+
+.lfea-preflight-phase1__trace dl {
+  display: grid;
+  grid-template-columns: minmax(140px, auto) minmax(0, 1fr);
+  gap: 2px 12px;
+  margin: 0;
+}
+
+.lfea-preflight-phase1__trace dt { color: #94a3b8; }
+.lfea-preflight-phase1__trace dd { margin: 0; color: #e2e8f0; overflow-wrap: anywhere; }
+
+.lfea-preflight-phase1__budget {
+  margin: 6px 0 0;
+  color: #64748b;
+}

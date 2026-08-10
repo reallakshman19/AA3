@@ -1,0 +1,81 @@
+name: M047 one-shot preserve exact source replay displacements
+
+on:
+  push:
+    branches: [agent/m047-bm4l-root-cause]
+    paths: ['.github/workflows/m047-one-shot-fix-source-replay-displacement.yml']
+
+permissions:
+  contents: write
+
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: agent/m047-bm4l-root-cause
+          fetch-depth: 0
+
+      - name: Use uncleaned solver displacements for self-replay
+        shell: python
+        run: |
+          from pathlib import Path
+          p=Path('scripts/lfea-m047-bm4l-source-replay.mjs')
+          t=p.read_text()
+          old="  const actualNodeU = nodeVectors(comparisonRows, 'actualValue');"
+          new="  const actualNodeU = exactNodeVectors(evidence.recoveryLedger);"
+          if t.count(old)!=1: raise SystemExit(f'actual node source count {t.count(old)}')
+          t=t.replace(old,new,1)
+          marker="""function actionVector(rows, entityId, field) {"""
+          helper="""export function exactNodeVectors(recoveryLedger) {\n  const values = new Map();\n  for (const row of recoveryLedger) {\n    if (!Array.isArray(row.jointDisplacement12) || row.jointDisplacement12.length !== 12\n      || !row.jointDisplacement12.every(Number.isFinite)) {\n      throw new TypeError(`Recovery ledger element ${row.elementId} does not retain a finite 12-component joint displacement.`);\n    }\n    bindExactNodeVector(values, String(row.nodeI), row.jointDisplacement12.slice(0, 6));\n    bindExactNodeVector(values, String(row.nodeJ), row.jointDisplacement12.slice(6, 12));\n  }\n  return values;\n}\n\nfunction bindExactNodeVector(values, nodeId, vector) {\n  const prior = values.get(nodeId);\n  if (prior !== undefined && prior.some((value, index) => value !== vector[index])) {\n    throw new TypeError(`Recovery ledger carries inconsistent exact displacement values for node ${nodeId}.`);\n  }\n  values.set(nodeId, [...vector]);\n}\n\nfunction actionVector(rows, entityId, field) {"""
+          if t.count(marker)!=1: raise SystemExit(f'action vector marker count {t.count(marker)}')
+          t=t.replace(marker,helper,1)
+          old2="""    currentReplayProof: {\n      worstSourceElementId: currentReplayWorst?.sourceElementId ?? null,"""
+          new2="""    currentReplayProof: {\n      displacementSource: 'RECOVERY_LEDGER_UNCLEANED_SOLVER_DISPLACEMENT',\n      worstSourceElementId: currentReplayWorst?.sourceElementId ?? null,"""
+          if t.count(old2)!=1: raise SystemExit(f'proof evidence site count {t.count(old2)}')
+          p.write_text(t.replace(old2,new2,1))
+
+      - name: Regression — report cleanup must not corrupt self-replay
+        shell: bash
+        run: |
+          set -euo pipefail
+          node --check scripts/lfea-m047-bm4l-source-replay.mjs
+          node --input-type=module <<'NODE'
+          import assert from 'node:assert/strict';
+          import { buildSourceReplay, exactNodeVectors } from './scripts/lfea-m047-bm4l-source-replay.mjs';
+          const tiny=9.5e-16;
+          const flat=Array(144).fill(0);
+          for(let i=0;i<12;i++) flat[i*12+i]=i===0?1e14:1;
+          const joint=[tiny,0,0,0,0,0, 0,0,0,0,0,0];
+          const q=[0.095,0,0,0,0,0, 0,0,0,0,0,0];
+          const ledger=[{elementId:'E1',sourceElementId:'1',nodeI:'1',nodeJ:'2',jointDisplacement12:joint,globalStiffness:flat,equivalentLoadGlobal:Array(12).fill(0),initialStrainLoadGlobal:Array(12).fill(0)}];
+          const exact=exactNodeVectors(ledger);
+          assert.equal(exact.get('1')[0], tiny);
+          const rows=[];
+          const dofs=['UX','UY','UZ','RX','RY','RZ'];
+          for(const node of ['1','2']) for(let i=0;i<6;i++) rows.push({entityKind:'NODE',entityId:node,quantity:i<3?'DISPLACEMENT':'ROTATION',component:dofs[i],actualValue:0,referenceValue:node==='1'&&i===0?tiny:0});
+          const actions=[['GLOBAL_END_FORCE_FROM','FX'],['GLOBAL_END_FORCE_FROM','FY'],['GLOBAL_END_FORCE_FROM','FZ'],['GLOBAL_END_MOMENT_FROM','MX'],['GLOBAL_END_MOMENT_FROM','MY'],['GLOBAL_END_MOMENT_FROM','MZ'],['GLOBAL_END_FORCE_TO','FX'],['GLOBAL_END_FORCE_TO','FY'],['GLOBAL_END_FORCE_TO','FZ'],['GLOBAL_END_MOMENT_TO','MX'],['GLOBAL_END_MOMENT_TO','MY'],['GLOBAL_END_MOMENT_TO','MZ']];
+          actions.forEach(([quantity,component],i)=>rows.push({entityKind:'ELEMENT',entityId:'INPUT_ELEMENT:1|1->2|TEST',quantity,component,unit:i<3||i>=6&&i<9?'N':'N*m',actualValue:q[i],referenceValue:q[i]}));
+          const actual={schema:'lfea-accdb-benchmark-actual/v1',sourceAccdbSha256:'sha',mechanics:{cases:{L2:{stiffnessStateHash:'h',recoveryLedger:ledger,elementLedger:[{elementId:'E1',kind:'FRAME'}]}}}};
+          const report={schema:'lfea-caesar-accdb-benchmark-report/v1',benchmarkId:'TEST',profileId:'TEST',source:{sha256:'sha'},qualification:{cases:[{caseId:'L2',comparison:{rows}}]}};
+          const result=buildSourceReplay({actual,report,caseId:'L2'});
+          assert.equal(result.currentReplayProof.status,'PASS');
+          assert.equal(result.currentReplayProof.displacementSource,'RECOVERY_LEDGER_UNCLEANED_SOLVER_DISPLACEMENT');
+          assert.ok(result.currentReplayProof.maximumAbsoluteDifference < 1e-12, JSON.stringify(result.currentReplayProof));
+          console.log('BM4_L exact source replay displacement regression PASS');
+          NODE
+
+      - name: Publish evidence-only replay fix safely
+        shell: bash
+        run: |
+          set -euo pipefail
+          rm .github/workflows/m047-one-shot-fix-source-replay-displacement.yml
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add scripts/lfea-m047-bm4l-source-replay.mjs .github/workflows/m047-one-shot-fix-source-replay-displacement.yml
+          git diff --cached --check
+          git commit -m "fix(lfea): preserve exact source replay displacements"
+          git fetch origin agent/m047-bm4l-root-cause
+          git rebase origin/agent/m047-bm4l-root-cause
+          git push origin HEAD:agent/m047-bm4l-root-cause

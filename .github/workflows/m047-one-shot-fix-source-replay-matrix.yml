@@ -1,0 +1,68 @@
+name: M047 one-shot normalize source replay matrix storage
+
+on:
+  push:
+    branches: [agent/m047-bm4l-root-cause]
+    paths: ['.github/workflows/m047-one-shot-fix-source-replay-matrix.yml']
+
+permissions:
+  contents: write
+
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: agent/m047-bm4l-root-cause
+          fetch-depth: 0
+
+      - name: Normalize canonical flat and nested 12x12 replay matrices
+        shell: python
+        run: |
+          from pathlib import Path
+          p=Path('scripts/lfea-m047-bm4l-source-replay.mjs')
+          t=p.read_text()
+          old="""  if (!evidence.recoveryLedger.every((row) => matrix12(row.globalStiffness))) {\n    throw new TypeError(`${caseId} recovery ledger does not retain every sealed 12x12 global stiffness matrix.`);\n  }"""
+          new="""  if (!evidence.recoveryLedger.every((row) => normalizeMatrix12(row.globalStiffness) !== null)) {\n    throw new TypeError(`${caseId} recovery ledger does not retain every sealed 12x12 global stiffness matrix.`);\n  }"""
+          if t.count(old)!=1: raise SystemExit(f'validation site count {t.count(old)}')
+          t=t.replace(old,new,1)
+          old2='    const ke = element.globalStiffness;'
+          new2='    const ke = requireMatrix12(element.globalStiffness, `globalStiffness:${element.elementId}`);'
+          if t.count(old2)!=1: raise SystemExit(f'assembly matrix site count {t.count(old2)}')
+          t=t.replace(old2,new2,1)
+          old3="""function matrix12(value) {\n  return Array.isArray(value) && value.length === 12 && value.every((row) => Array.isArray(row) && row.length === 12 && row.every(Number.isFinite));\n}"""
+          new3="""export function normalizeMatrix12(value) {\n  if (Array.isArray(value) && value.length === 12\n    && value.every((row) => Array.isArray(row) && row.length === 12 && row.every(Number.isFinite))) {\n    return value.map((row) => [...row]);\n  }\n  if (Array.isArray(value) && value.length === 144 && value.every(Number.isFinite)) {\n    return Array.from({ length: 12 }, (_unused, row) => value.slice(row * 12, (row + 1) * 12));\n  }\n  return null;\n}\n\nfunction requireMatrix12(value, field) {\n  const matrix = normalizeMatrix12(value);\n  if (matrix === null) throw new TypeError(`${field} must be a finite 12x12 matrix in nested or canonical flat storage.`);\n  return matrix;\n}"""
+          if t.count(old3)!=1: raise SystemExit(f'matrix helper count {t.count(old3)}')
+          p.write_text(t.replace(old3,new3,1))
+
+      - name: Prove both storage representations normalize identically
+        shell: bash
+        run: |
+          set -euo pipefail
+          node --check scripts/lfea-m047-bm4l-source-replay.mjs
+          node --input-type=module <<'NODE'
+          import assert from 'node:assert/strict';
+          import { normalizeMatrix12 } from './scripts/lfea-m047-bm4l-source-replay.mjs';
+          const flat=Array.from({length:144},(_,i)=>i+0.25);
+          const nested=Array.from({length:12},(_,r)=>flat.slice(r*12,(r+1)*12));
+          assert.deepEqual(normalizeMatrix12(flat), nested);
+          assert.deepEqual(normalizeMatrix12(nested), nested);
+          assert.equal(normalizeMatrix12(flat.slice(0,143)), null);
+          assert.equal(normalizeMatrix12([...flat.slice(0,143), Number.NaN]), null);
+          console.log('BM4_L source replay matrix normalization PASS');
+          NODE
+
+      - name: Publish evidence-only utility fix safely
+        shell: bash
+        run: |
+          set -euo pipefail
+          rm .github/workflows/m047-one-shot-fix-source-replay-matrix.yml
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add scripts/lfea-m047-bm4l-source-replay.mjs .github/workflows/m047-one-shot-fix-source-replay-matrix.yml
+          git diff --cached --check
+          git commit -m "fix(lfea): normalize source replay matrix storage"
+          git fetch origin agent/m047-bm4l-root-cause
+          git rebase origin/agent/m047-bm4l-root-cause
+          git push origin HEAD:agent/m047-bm4l-root-cause

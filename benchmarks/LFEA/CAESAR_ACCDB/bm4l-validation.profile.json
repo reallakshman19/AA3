@@ -109,7 +109,7 @@
           "L6": { "COEFFICIENT_OF_FRICTION_MU": 0, "FLEXIBILITY_ELASTIC_MODULUS": "EC" },
           "L7": { "FLEXIBILITY_ELASTIC_MODULUS": "EC" },
           "L13": {},
-          "L14": { "COMBINATION_METHOD": "ALG", "COMBINATION": "L5-L6" },
+          "L14": { "COEFFICIENT_OF_FRICTION_MU": 0, "FLEXIBILITY_ELASTIC_MODULUS": "EC" },
           "L15": {}
         }
       }

@@ -1,0 +1,57 @@
+{
+  "schema": "m047-bm4l-bend-arc-shear-diagnostic/v1",
+  "classification": "MECHANISM_SUPPORTED_AUTHORITY_BLOCKED",
+  "sourceAccdbSha256": "64c05a50e9ed0452622ff5880335460486f24ac8e6adecc9a300b549c9aa82f8",
+  "candidate": {
+    "description": "Apply the existing Timoshenko kappa=0.5 pipe frame profile to numerical BEND_ARC chord members while leaving B31J factors, loads, geometry, restraints, solver, recovery, tolerances and references unchanged.",
+    "kappa": 0.5,
+    "productionPromotionAllowed": false
+  },
+  "authorityBoundary": {
+    "retainedCaesarShearAuthorityScope": "THIN_WALL_STRAIGHT_PIPE_ELEMENT_ONLY",
+    "retainedAuthorityDoesNotCover": [
+      "BEND_ARC_INTERPOLATION",
+      "CURVED_PIPE_TRANSVERSE_SHEAR_COEFFICIENT",
+      "CURVED_BEND_STIFFNESS_MATRIX"
+    ],
+    "hexagonB31JStatement": "CAESAR II B31J flexibility calculations apply to rotational moment stiffness; translational stiffness associated with the B31J flexibility calculation is rigid.",
+    "hexagonBendAxialShapeStatement": "Bend Axial Shape controls a distinct axial displacement mode of the curved bend and disabling it makes the bend stiffer.",
+    "primarySourceSearchResult": "No Hexagon/Intergraph primary source found that extends the retained straight-pipe shear=2 authority to bend arcs or defines a production bend-arc shear coefficient.",
+    "decision": "DO_NOT_PROMOTE_WITHOUT_CURVED_BEND_IMPLEMENTATION_AUTHORITY"
+  },
+  "failureCounts": {
+    "L2": { "before": { "restraint": 1, "displacementRotation": 36, "elementEnd": 18 }, "after": { "restraint": 1, "displacementRotation": 35, "elementEnd": 14 } },
+    "L3": { "before": { "restraint": 2, "displacementRotation": 47, "elementEnd": 83 }, "after": { "restraint": 4, "displacementRotation": 57, "elementEnd": 97 } },
+    "L4": { "before": { "restraint": 0, "displacementRotation": 36, "elementEnd": 6 }, "after": { "restraint": 0, "displacementRotation": 36, "elementEnd": 6 } },
+    "L5": { "before": { "restraint": 3, "displacementRotation": 63, "elementEnd": 50 }, "after": { "restraint": 3, "displacementRotation": 66, "elementEnd": 52 } },
+    "L6": { "before": { "restraint": 0, "displacementRotation": 13, "elementEnd": 14 }, "after": { "restraint": 0, "displacementRotation": 12, "elementEnd": 14 } },
+    "L14": { "before": { "restraint": 2, "displacementRotation": 47, "elementEnd": 83 }, "after": { "restraint": 4, "displacementRotation": 57, "elementEnd": 97 } }
+  },
+  "l2CaesarEndpointSourceReplay": {
+    "5": { "beforeMaximumAbsoluteDifference": 256.4564231792465, "afterMaximumAbsoluteDifference": 77.772926318298, "improvementFraction": 0.696740189408554 },
+    "19": { "beforeMaximumAbsoluteDifference": 114.51256748245623, "afterMaximumAbsoluteDifference": 8.792119716323214, "improvementFraction": 0.9232213554405703 },
+    "20": { "beforeMaximumAbsoluteDifference": 452.82292783941625, "afterMaximumAbsoluteDifference": 16.355857905084804, "improvementFraction": 0.963880234635811 },
+    "42": { "beforeMaximumAbsoluteDifference": 639.5229212261627, "afterMaximumAbsoluteDifference": 24.352877017110586, "improvementFraction": 0.9619202436553508 },
+    "43": { "beforeMaximumAbsoluteDifference": 295.0374719996353, "afterMaximumAbsoluteDifference": 8.596971385856705, "improvementFraction": 0.9708614254061012 },
+    "85": { "beforeMaximumAbsoluteDifference": 17.62619019043663, "afterMaximumAbsoluteDifference": 14.789737129345292, "improvementFraction": 0.16092264014207117 }
+  },
+  "sourceReplayNumericalClosure": {
+    "beforeMaximumAbsoluteDifference": 0.09531705266243867,
+    "afterMaximumAbsoluteDifference": 0.09532659756815114,
+    "strictReplayThresholdStatusBefore": "FAIL",
+    "strictReplayThresholdStatusAfter": "FAIL",
+    "interpretation": "The approximately 0.095 action replay closure is essentially unchanged by the candidate and is a separate condensation/numerical-precision issue; it is orders of magnitude smaller than the hundreds-unit CAESAR bend compatibility mismatches used for mechanism discrimination."
+  },
+  "integrity": {
+    "candidateSixCaseSolveCompleted": true,
+    "pipingComponentRegression": "PASS",
+    "recoveryRegression": "PASS",
+    "sparseAssemblyRegression": "PASS",
+    "benchmarkFitting": false
+  },
+  "decision": {
+    "mechanismSignal": "STRONG",
+    "productionChange": "BLOCKED",
+    "reason": "Applying transverse shear compliance to bend-arc chords substantially improves CAESAR endpoint replay for the dominant failed bends, but the only retained CAESAR shear coefficient authority explicitly covers straight metallic pipe. L3/L14 also regress while thermal strain authority remains provisional. A curved-bend CAESAR stiffness/shear source is required before any production implementation."
+  }
+}

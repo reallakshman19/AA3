@@ -32,11 +32,11 @@ export function renderLafeaNumericalVerification(root, stageValue) {
 
 function convergenceModel(projection) {
   if (!projection || projection.bindingStatus === 'ABSENT') {
-    return freeze({ status: 'ABSENT', method: null, rows: [], reasons: [], note: 'No current convergence artifact is retained.' });
+    return freeze({ status: 'ABSENT', custody: 'NONE', method: null, rows: [], reasons: [], note: 'No current convergence artifact is retained.' });
   }
   if (projection.bindingStatus === 'HASH_ONLY') {
     return freeze({
-      status: 'HASH_ONLY', method: 'LIFECYCLE_HASH_ONLY',
+      status: 'HASH_ONLY', custody: 'LIFECYCLE_QUALIFIED_IDENTITY', method: 'LIFECYCLE_HASH_ONLY',
       rows: [row('Lifecycle convergence artifact', projection.lifecycleArtifactHash)],
       reasons: [...projection.reasons],
       note: 'Convergence is identified by current lifecycle evidence, but the detailed numerical envelope is not retained by this workbench.',
@@ -44,18 +44,28 @@ function convergenceModel(projection) {
   }
   if (projection.bindingStatus === 'STALE') {
     return freeze({
-      status: 'STALE', method: projection.method,
+      status: 'STALE', custody: 'STALE_RETAINED_EVIDENCE', method: projection.method,
       rows: projection.lifecycleArtifactHash
         ? [row('Lifecycle convergence artifact', projection.lifecycleArtifactHash)] : [],
       reasons: [...projection.reasons],
       note: 'Detailed convergence evidence is retained for audit but is not current for this analysis.',
     });
   }
-  if (projection.method === 'BUCKET_01_GCI') return gciModel(projection.evidence);
-  if (projection.method === 'CONTROLLED_CONTINUUM_RELATIVE_CHANGE') {
-    return controlledModel(projection.evidence);
-  }
-  return freeze({ status: 'STALE', method: projection.method, rows: [], reasons: ['CONVERGENCE_METHOD_UNSUPPORTED'], note: 'Unsupported convergence evidence method.' });
+  const diagnostic = projection.bindingStatus === 'DIAGNOSTIC';
+  const base = projection.method === 'BUCKET_01_GCI'
+    ? gciModel(projection.evidence)
+    : projection.method === 'CONTROLLED_CONTINUUM_RELATIVE_CHANGE'
+      ? controlledModel(projection.evidence)
+      : null;
+  if (!base) return freeze({ status: 'STALE', custody: 'UNKNOWN', method: projection.method, rows: [], reasons: ['CONVERGENCE_METHOD_UNSUPPORTED'], note: 'Unsupported convergence evidence method.' });
+  return freeze({
+    ...base,
+    custody: diagnostic ? 'SOURCE_BOUND_DIAGNOSTIC' : 'LIFECYCLE_QUALIFIED_DETAIL',
+    reasons: unique([...projection.reasons, ...base.reasons]),
+    note: diagnostic
+      ? `Source-bound diagnostic only; this evidence is not a qualified lifecycle CONVERGENCE artifact. ${base.note}`
+      : base.note,
+  });
 }
 
 function gciModel(evidence) {
@@ -140,6 +150,7 @@ function meshQualityModel(stage) {
 function convergenceSection(root, model) {
   const section = element(root, 'section');
   section.append(element(root, 'h3', null, `Convergence — ${model.status}`));
+  if (model.custody) section.append(element(root, 'p', null, `Custody: ${model.custody}`));
   if (model.method) section.append(element(root, 'p', null, `Method: ${model.method}`));
   if (model.rows.length) section.append(rows(root, model.rows));
   section.append(element(root, 'p', null, model.note));
@@ -182,5 +193,6 @@ function nullableNumber(value) { return value === null || value === undefined ? 
 function joinNumbers(values) { return Array.isArray(values) ? values.map(number).join(' / ') : 'N/A'; }
 function gciValue(value, nearZero) { return value === null && nearZero ? 'N/A — near-zero relative scale' : nullableNumber(value); }
 function humanize(value) { return String(value).replace(/^LAFEA_/u, '').replaceAll('_', ' ').toLowerCase().replace(/^./u, (c) => c.toUpperCase()); }
+function unique(values) { return [...new Set(values.filter(Boolean))]; }
 function requireStage(value) { if (!value || typeof value !== 'object' || typeof value.stageId !== 'string') throw new TypeError('LAFEA_NUMERICAL_VERIFICATION_STAGE_REQUIRED'); return value; }
 function freeze(value) { if (!value || typeof value !== 'object' || Object.isFrozen(value)) return value; Object.values(value).forEach(freeze); return Object.freeze(value); }

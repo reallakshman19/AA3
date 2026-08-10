@@ -262,7 +262,7 @@ function requireDirectionalFactors(value) {
       'B31J tee result has no directional flexibility factors.',
     );
   }
-  for (const role of ['RUN', 'BRANCH'].map((value) => value.toLowerCase())) {
+  for (const role of ['run', 'branch']) {
     if (!value[role] || typeof value[role] !== 'object') {
       fail(
         'PIPING_COMPONENT_BRANCH_DIRECTIONAL_FACTORS_MISSING',

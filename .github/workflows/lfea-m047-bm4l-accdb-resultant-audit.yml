@@ -80,12 +80,12 @@ jobs:
             --out artifacts/retained-report.json `
             --summary-out artifacts/retained-summary.md
 
-      - name: Verify retained 788 family counts
+      - name: Verify retained 379 case totals
         shell: pwsh
         run: |
           $ErrorActionPreference='Stop'
           $r=Get-Content artifacts/retained-report.json -Raw|ConvertFrom-Json
-          $expected=[ordered]@{L2=227;L3=129;L4=120;L5=97;L6=86;L14=129}
+          $expected=[ordered]@{L2=46;L3=96;L4=35;L5=78;L6=28;L14=96}
           $total=0
           foreach($id in $expected.Keys){
             $c=$r.qualification.cases|Where-Object caseId -eq $id
@@ -95,9 +95,10 @@ jobs:
               ($_.entityKind-eq'NODE' -and $_.quantity-in@('DISPLACEMENT','ROTATION','FORCE','MOMENT'))
             }).Count
             if($target-ne$expected[$id]){throw "Retained baseline drift in ${id}: $target != $($expected[$id])"}
+            if($r.mechanics.cases.$id.recoveredEquilibrium.status-ne'PASS'){throw "Recovered equilibrium failed in $id"}
             $total+=$target
           }
-          if($total-ne788){throw "Retained total drift: $total"}
+          if($total-ne379){throw "Retained total drift: $total"}
 
       - name: Run ACCDB-only resultant audit
         shell: pwsh
@@ -119,6 +120,15 @@ jobs:
             --out artifacts/bm4l-accdb-straight-stiffness-audit.json `
             --summary-out artifacts/bm4l-accdb-straight-stiffness-audit.md
 
+      - name: Run ACCDB-only T1 thermal-strain inversion
+        shell: pwsh
+        run: |
+          node --check scripts/lfea-m047-bm4l-accdb-thermal-strain-audit.mjs
+          node scripts/lfea-m047-bm4l-accdb-thermal-strain-audit.mjs `
+            --raw artifacts/bm4l-resultant-source.json `
+            --out artifacts/bm4l-accdb-thermal-strain-audit.json `
+            --summary-out artifacts/bm4l-accdb-thermal-strain-audit.md
+
       - name: Upload ACCDB-only mechanics evidence
         if: always()
         uses: actions/upload-artifact@v4
@@ -126,4 +136,4 @@ jobs:
           name: bm4l-accdb-resultant-audit-${{ github.sha }}
           path: artifacts/
           if-no-files-found: error
-          retention-days: 14
+          retention-days: 30

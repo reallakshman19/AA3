@@ -80,7 +80,7 @@ jobs:
           function diagnosticTimoshenkoFrameProfile() {
             return sealFrameElementProfile({
               schema: 'fea-linear-frame-element-profile/v1',
-              profileId: 'M047-DIAGNOSTIC-TIMO-K050-BEND',
+              profileId: 'LINEAR-FRAME-ELEMENT-R1',
               straightPipeFormulation: 'PIPE_FRAME3D_TIMOSHENKO_V1',
               shearDeformation: true,
               shearCorrectionFactorY: { value: 0.50, source: 'M047_DIAGNOSTIC_NOT_AUTHORITY' },
@@ -130,7 +130,7 @@ jobs:
           function diagnosticEulerFrameProfile() {
             return sealFrameElementProfile({
               schema: 'fea-linear-frame-element-profile/v1',
-              profileId: 'M047-DIAGNOSTIC-EULER-BEND',
+              profileId: 'LINEAR-FRAME-ELEMENT-R1',
               straightPipeFormulation: 'PIPE_FRAME3D_EULER_BERNOULLI_V1',
               shearDeformation: false,
               releaseRule: 'STATIC_CONDENSATION_V1',
@@ -143,7 +143,7 @@ jobs:
           function frameProfile() {
             return sealFrameElementProfile({
               schema: 'fea-linear-frame-element-profile/v1',
-              profileId: 'M047-DIAGNOSTIC-TIMO-K050-NONBEND',
+              profileId: 'LINEAR-FRAME-ELEMENT-R1',
               straightPipeFormulation: 'PIPE_FRAME3D_TIMOSHENKO_V1',
               shearDeformation: true,
               shearCorrectionFactorY: { value: 0.50, source: 'M047_DIAGNOSTIC_NOT_AUTHORITY' },

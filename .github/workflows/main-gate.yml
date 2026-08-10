@@ -77,6 +77,12 @@ jobs:
           node scripts/lfea-preflight-phase1-virtualization-v3-check.mjs
           node scripts/lfea-preflight-phase1-live-ui-check.mjs
 
+      - name: Support-action engineering triad
+        run: |
+          set -euo pipefail
+          node scripts/linear-piping-support-action-triad-check.mjs
+          node scripts/linear-piping-support-action-triad-source-guard.mjs
+
       - name: Governed pre-FEA solve authorization
         run: node --test test/lfea-prefea-gateway.test.js
 

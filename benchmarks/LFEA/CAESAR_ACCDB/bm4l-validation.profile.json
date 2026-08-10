@@ -99,27 +99,22 @@
         }
       },
       "loadCase": {
-        "source": "USER_VERIFIED_BM4_L_CASE_SETTINGS_2026-08-10",
+        "source": "COMMON_179c4831cf521cf797c13699cfbbd118315c9244:LFEA/BM4/Loadcasereport_BM4_L.txt",
         "cases": {
           "L1": {},
-          "L2": { "COEFFICIENT_OF_FRICTION_MU": 0 },
+          "L2": { "COEFFICIENT_OF_FRICTION_MU": 0, "FLEXIBILITY_ELASTIC_MODULUS": "EC" },
           "L3": { "COEFFICIENT_OF_FRICTION_MU": 0, "FLEXIBILITY_ELASTIC_MODULUS": "EC" },
-          "L4": { "COEFFICIENT_OF_FRICTION_MU": 0 },
+          "L4": { "COEFFICIENT_OF_FRICTION_MU": 0, "FLEXIBILITY_ELASTIC_MODULUS": "EC" },
           "L5": { "COEFFICIENT_OF_FRICTION_MU": 0, "FLEXIBILITY_ELASTIC_MODULUS": "EC" },
-          "L6": { "COEFFICIENT_OF_FRICTION_MU": 0 },
+          "L6": { "COEFFICIENT_OF_FRICTION_MU": 0, "FLEXIBILITY_ELASTIC_MODULUS": "EC" },
           "L7": { "FLEXIBILITY_ELASTIC_MODULUS": "EC" },
           "L13": {},
-          "L14": { "COEFFICIENT_OF_FRICTION_MU": 0 },
+          "L14": { "COMBINATION_METHOD": "ALG", "COMBINATION": "L5-L6" },
           "L15": {}
         }
       }
     },
     "unresolvedSettings": [
-      {
-        "setting": "B31J_SMOOTH_90_CORRECTION",
-        "caseId": null,
-        "reason": "APPLY_B31J_SIFS_AND_FLEX=DEFAULT does not establish the CAESAR smooth-90/B31J Note-3 choice for this file."
-      },
       {
         "setting": "RESTRAINT_FORMULATION",
         "caseId": null,
@@ -128,7 +123,7 @@
       {
         "setting": "THERMAL_EXPANSION_STRAIN",
         "caseId": null,
-        "reason": "The ACCDB exports T1 but not the CAESAR material-library total strain from 21 C to 120 C; Print Alphas evidence is still required."
+        "reason": "COMMON_179c4831cf521cf797c13699cfbbd118315c9244:LFEA/BM4/Miscdata_BM4_L.txt reports T1 thermal expansion as 0.0012 mm/mm, which validates magnitude but is rounded too coarsely to replace the exact material-library strain."
       }
     ]
   },
@@ -136,7 +131,7 @@
     "thermalExpansion": {
       "coefficientPerKelvin": 0.0000117,
       "authorityStatus": "PROVISIONAL",
-      "source": "[GUESSED] PROVISIONAL_A106_GRADE_B_CTE_PENDING_CAESAR_PRINT_ALPHAS"
+      "source": "[GUESSED] PROVISIONAL_A106_GRADE_B_CTE; COMMON_179c4831cf521cf797c13699cfbbd118315c9244:LFEA/BM4/Miscdata_BM4_L.txt independently rounds T1 total strain to 0.0012 mm/mm"
     },
     "gravityAcceleration": 9.80665,
     "bourdonPressureEffects": {
@@ -147,9 +142,9 @@
     "teeNominalDiameterRelativeTolerance": 0.001,
     "reducerCondensation": true,
     "b31jSmooth90FlexibilityCorrection": {
-      "enabled": false,
-      "authorityStatus": "UNRESOLVED",
-      "source": "BM4_L_CONFIGURATION_AUTHORITY:B31J_SMOOTH_90_CORRECTION"
+      "enabled": true,
+      "authorityStatus": "RESOLVED",
+      "source": "COMMON_179c4831cf521cf797c13699cfbbd118315c9244:LFEA/BM4/Miscdata_BM4_L.txt; CAESAR V14 MISC BEND REPORT flexibilities corroborate B31J smooth-90 1.3/h"
     },
     "bendPressureStiffening": {
       "pressureSource": "MAX_DEFINED",

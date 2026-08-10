@@ -1,0 +1,153 @@
+name: M047 BM4_L CAESAR shear coefficient A/B
+
+on:
+  push:
+    branches: [agent/m047-bm4l-root-cause]
+    paths: ['.github/workflows/m047-bm4l-shear-coefficient-ab.yml']
+
+permissions:
+  contents: read
+
+jobs:
+  ab:
+    runs-on: windows-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: agent/m047-bm4l-root-cause
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Install authenticated Microsoft ACE provider
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          New-Item -ItemType Directory -Force artifacts/shear-kappa | Out-Null
+          $installer = Join-Path $PWD 'artifacts/shear-kappa/accessdatabaseengine_X64.exe'
+          $url = 'https://download.microsoft.com/download/3/5/C/35C84C36-661A-44E6-9324-8786B8DBE231/accessdatabaseengine_X64.exe'
+          Invoke-WebRequest -Uri $url -OutFile $installer
+          $hash = (Get-FileHash $installer -Algorithm SHA256).Hash.ToLowerInvariant()
+          if ($hash -ne '04e96c9f1a1f7d251a88aececf1dc10ff65950392787427c00814a43308003de') { throw "ACE installer hash mismatch $hash" }
+          $sig = Get-AuthenticodeSignature $installer
+          if ($sig.Status -ne 'Valid' -or $sig.SignerCertificate.Subject -notmatch 'Microsoft') { throw 'ACE installer signature invalid.' }
+          $process = Start-Process $installer -ArgumentList '/quiet','/norestart' -Wait -PassThru
+          if ($process.ExitCode -notin @(0,3010)) { throw "ACE install failed $($process.ExitCode)" }
+          Remove-Item $installer -Force
+
+      - name: Fetch canonical pinned BM4_L member
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $zip = Join-Path $PWD 'artifacts/shear-kappa/BM4_L.zip'
+          Invoke-WebRequest -Uri 'https://raw.githubusercontent.com/reallaksh19/Common/45d51ea18624f5775805f399110c1738301c0d90/LFEA/BM4/BM4_L.zip' -OutFile $zip
+          if ((Get-FileHash $zip -Algorithm SHA256).Hash.ToLowerInvariant() -ne '978617cba50fa0b1a16c2fa71dc1e0d38e55ac834b191f887d100c6951abd8b9') { throw 'ZIP hash mismatch.' }
+          Expand-Archive $zip -DestinationPath artifacts/shear-kappa/source -Force
+          $accdb = Join-Path $PWD 'artifacts/shear-kappa/source/BM4_L.ACCDB'
+          if ((Get-FileHash $accdb -Algorithm SHA256).Hash.ToLowerInvariant() -ne '64c05a50e9ed0452622ff5880335460486f24ac8e6adecc9a300b549c9aa82f8') { throw 'ACCDB hash mismatch.' }
+
+      - name: Apply expanded non-tee diagnostic shear with kappa 0.53
+        shell: python
+        run: |
+          from pathlib import Path
+          path=Path('src/core/fea-benchmarks/caesar-accdb-linear-solve.js')
+          text=path.read_text()
+          replacements=[
+            ("""  const frame = input.stiffnessFrame ?? compileUnloadedFrame({\n    elementId: input.elementId,\n    axesResult,\n    material: input.material,\n    section: input.section,\n  });""",
+             """  const frame = input.stiffnessFrame ?? compileUnloadedFrame({\n    elementId: input.elementId,\n    axesResult,\n    material: input.material,\n    section: input.section,\n    profile: (input.kind === 'FRAME' || input.kind === 'BEND_INCOMING_STRAIGHT')\n      && teeModifier === null\n      ? diagnosticPipeShearProfile()\n      : frameProfile(),\n  });"""),
+            ("""    profile: frameProfile(),\n    distributedLoads: [],""",
+             """    profile: input.profile ?? frameProfile(),\n    distributedLoads: [],"""),
+            ("""function frameProfile() {\n  return sealFrameElementProfile({""",
+             """function diagnosticPipeShearProfile() {\n  return sealFrameElementProfile({\n    schema: 'fea-linear-frame-element-profile/v1',\n    profileId: 'LINEAR-FRAME-ELEMENT-R1',\n    straightPipeFormulation: 'PIPE_FRAME3D_TIMOSHENKO_V1',\n    shearDeformation: true,\n    shearCorrectionFactorY: { value: 0.53, source: 'COWPER-1966-DIAGNOSTIC' },\n    shearCorrectionFactorZ: { value: 0.53, source: 'COWPER-1966-DIAGNOSTIC' },\n    releaseRule: 'STATIC_CONDENSATION_V1',\n    thermalStrainApproximation: 'UNIFORM_TEMPERATURE_ALPHA_DELTA_T_V1',\n    releaseSingularityTolerance: { value: 1e-12, source: PROFILE_SOURCE },\n    semanticHash: '',\n  });\n}\n\nfunction frameProfile() {\n  return sealFrameElementProfile({""")]
+          for old,new in replacements:
+              if text.count(old)!=1: raise SystemExit(f'guard expected 1 match, found {text.count(old)}')
+              text=text.replace(old,new)
+          path.write_text(text)
+
+      - name: Run kappa 0.53 state
+        shell: pwsh
+        run: |
+          $ErrorActionPreference='Stop'
+          New-Item -ItemType Directory -Force artifacts/shear-kappa/k053 | Out-Null
+          node scripts/lfea-caesar-accdb-benchmark.mjs `
+            --accdb artifacts/shear-kappa/source/BM4_L.ACCDB `
+            --profile benchmarks/LFEA/CAESAR_ACCDB/bm4l-validation.profile.json `
+            --solve-linear true `
+            --solve-cases L2,L3,L4,L5,L6,L14 `
+            --actual-out artifacts/shear-kappa/k053/actual.json `
+            --out artifacts/shear-kappa/k053/report.json
+
+      - name: Change only shear coefficient to CAESAR-authorized kappa 0.5
+        shell: python
+        run: |
+          from pathlib import Path
+          path=Path('src/core/fea-benchmarks/caesar-accdb-linear-solve.js')
+          text=path.read_text()
+          old="""    shearCorrectionFactorY: { value: 0.53, source: 'COWPER-1966-DIAGNOSTIC' },\n    shearCorrectionFactorZ: { value: 0.53, source: 'COWPER-1966-DIAGNOSTIC' },"""
+          new="""    shearCorrectionFactorY: { value: 0.5, source: 'INTERGRAPH-CAESAR-II-CAUX-2015-FKX-SHEAR-COEFFICIENT-2' },\n    shearCorrectionFactorZ: { value: 0.5, source: 'INTERGRAPH-CAESAR-II-CAUX-2015-FKX-SHEAR-COEFFICIENT-2' },"""
+          if text.count(old)!=1: raise SystemExit(f'coefficient-only replacement expected 1 match, found {text.count(old)}')
+          path.write_text(text.replace(old,new))
+
+      - name: Prove authority mapping and run kappa 0.5 state
+        shell: pwsh
+        run: |
+          $ErrorActionPreference='Stop'
+          node --check src/core/fea-benchmarks/caesar-accdb-linear-solve.js
+          node scripts/lfea-b3.1-frame-element-check.mjs
+          node scripts/lfea-b3.2-piping-component-check.mjs
+          node scripts/lfea-b3.3-solver-check.mjs
+          node scripts/lfea-b3.4-recovery-check.mjs
+          node scripts/lfea-b3.6-sparse-assembly-check.mjs
+          node scripts/lfea-b3.9-gravity-self-weight-check.mjs
+          New-Item -ItemType Directory -Force artifacts/shear-kappa/k050 | Out-Null
+          node scripts/lfea-caesar-accdb-benchmark.mjs `
+            --accdb artifacts/shear-kappa/source/BM4_L.ACCDB `
+            --profile benchmarks/LFEA/CAESAR_ACCDB/bm4l-validation.profile.json `
+            --solve-linear true `
+            --solve-cases L2,L3,L4,L5,L6,L14 `
+            --actual-out artifacts/shear-kappa/k050/actual.json `
+            --out artifacts/shear-kappa/k050/report.json
+          node scripts/lfea-m047-bm4l-recovery-proof.mjs `
+            --actual artifacts/shear-kappa/k050/actual.json `
+            --expected-source-sha 64c05a50e9ed0452622ff5880335460486f24ac8e6adecc9a300b549c9aa82f8 `
+            --out artifacts/shear-kappa/k050/recovery-proof.json
+
+      - name: Compare coefficient-only delta
+        shell: pwsh
+        run: |
+          $ErrorActionPreference='Stop'
+          $a=Get-Content -Raw artifacts/shear-kappa/k053/report.json | ConvertFrom-Json -Depth 100
+          $b=Get-Content -Raw artifacts/shear-kappa/k050/report.json | ConvertFrom-Json -Depth 100
+          $aa=Get-Content -Raw artifacts/shear-kappa/k053/actual.json | ConvertFrom-Json -Depth 100
+          $ba=Get-Content -Raw artifacts/shear-kappa/k050/actual.json | ConvertFrom-Json -Depth 100
+          $proof=Get-Content -Raw artifacts/shear-kappa/k050/recovery-proof.json | ConvertFrom-Json -Depth 100
+          function FindRow($r,$c,$k,$p,$q,$x){$case=@($r.qualification.cases|?{$_.caseId-eq$c})[0];$rows=@($case.comparison.rows|?{$_.entityKind-eq$k-and([string]$_.entityId).StartsWith($p)-and$_.quantity-eq$q-and$_.component-eq$x});if($rows.Count-ne1){throw "row $c $p $q $x count $($rows.Count)"};$rows[0]}
+          function Err($r){[math]::Abs([double]$r.actualValue-[double]$r.referenceValue)}
+          function Counts($r,$c){$case=@($r.qualification.cases|?{$_.caseId-eq$c})[0];$rows=@($case.comparison.rows);[ordered]@{restraint=@($rows|?{$_.status-eq'FAIL'-and$_.entityKind-eq'NODE'-and$_.quantity-in@('FORCE','MOMENT')}).Count;displacementRotation=@($rows|?{$_.status-eq'FAIL'-and$_.entityKind-eq'NODE'-and$_.quantity-in@('DISPLACEMENT','ROTATION')}).Count;elementEnd=@($rows|?{$_.status-eq'FAIL'-and$_.entityKind-eq'ELEMENT'-and$_.quantity-like'GLOBAL_END_*'}).Count}}
+          $targets=@(
+            @('L2 node 20090 UY','L2','NODE','20090','FORCE','UY'),
+            @('L2 E4 TO MZ','L2','ELEMENT','INPUT_ELEMENT:4|','GLOBAL_END_MOMENT_TO','MZ'),
+            @('L2 E5 FROM MZ','L2','ELEMENT','INPUT_ELEMENT:5|','GLOBAL_END_MOMENT_FROM','MZ'),
+            @('L2 E5 FROM FY','L2','ELEMENT','INPUT_ELEMENT:5|','GLOBAL_END_FORCE_FROM','FY'),
+            @('L2 node 20120 RZ','L2','NODE','20120','ROTATION','RZ'),
+            @('L4 node 22120 UY','L4','NODE','22120','FORCE','UY'))
+          $signal=[System.Collections.Generic.List[object]]::new()
+          foreach($t in $targets){$ra=FindRow $a $t[1] $t[2] $t[3] $t[4] $t[5];$rb=FindRow $b $t[1] $t[2] $t[3] $t[4] $t[5];$ea=Err $ra;$eb=Err $rb;$signal.Add([ordered]@{name=$t[0];reference=[double]$ra.referenceValue;k053=[double]$ra.actualValue;k050=[double]$rb.actualValue;k053AbsoluteError=$ea;k050AbsoluteError=$eb;k050Improved=($eb-lt$ea)})}
+          $counts=[ordered]@{};foreach($c in @('L2','L3','L4','L5','L6','L14')){$counts[$c]=[ordered]@{k053=(Counts $a $c);k050=(Counts $b $c)}}
+          if([math]::Abs([double]$aa.mechanics.cases.L2.gravityWeightN-[double]$ba.mechanics.cases.L2.gravityWeightN)-gt1e-9){throw'gravity changed'}
+          if($proof.status-ne'PASS'-or$proof.commonOperator.status-ne'PASS'){throw'recovery/operator proof failed'}
+          foreach($c in @('L2','L3','L4','L5','L6','L14')){if($ba.mechanics.cases.$c.recoveredEquilibrium.status-ne'PASS'){throw "$c equilibrium failed"}}
+          [ordered]@{schema='m047-bm4l-caesar-shear-coefficient-ab/v1';classification='AUTHORITY_BACKED_COEFFICIENT_TEST';caesarSource='INTERGRAPH-CAESAR-II-CAUX-2015-FKX';caesarShearCoefficient=2;lfeaKappa=0.5;scope='(FRAME || BEND_INCOMING_STRAIGHT) && no tee modifier';sourceAccdbSha256='64c05a50e9ed0452622ff5880335460486f24ac8e6adecc9a300b549c9aa82f8';highSignal=$signal;failureCounts=$counts;recoveryAndEquilibriumPass=$true}|ConvertTo-Json -Depth 20|Set-Content -Encoding utf8 artifacts/shear-kappa/coefficient-evidence.json
+
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: m047-bm4l-shear-coefficient-ab
+          path: artifacts/shear-kappa
+          if-no-files-found: error

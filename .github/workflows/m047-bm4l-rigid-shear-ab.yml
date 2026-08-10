@@ -1,0 +1,147 @@
+name: M047 BM4_L rigid transverse shear A-B
+
+on:
+  push:
+    branches: [agent/m047-bm4l-fresh-qualification]
+    paths: ['.github/workflows/m047-bm4l-rigid-shear-ab.yml']
+
+permissions:
+  contents: read
+
+jobs:
+  ab:
+    runs-on: windows-latest
+    timeout-minutes: 55
+    env:
+      COMMON_COMMIT: '45d51ea18624f5775805f399110c1738301c0d90'
+      ZIP_SHA256: '978617cba50fa0b1a16c2fa71dc1e0d38e55ac834b191f887d100c6951abd8b9'
+      MEMBER_SHA256: '64c05a50e9ed0452622ff5880335460486f24ac8e6adecc9a300b549c9aa82f8'
+      ACE_URL: 'https://download.microsoft.com/download/3/5/C/35C84C36-661A-44E6-9324-8786B8DBE231/accessdatabaseengine_X64.exe'
+      ACE_SHA256: '04e96c9f1a1f7d251a88aececf1dc10ff65950392787427c00814a43308003de'
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: agent/m047-bm4l-fresh-qualification
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+      - run: npm ci
+
+      - name: Bind pinned BM4_L source
+        shell: pwsh
+        run: |
+          $ErrorActionPreference='Stop'; $PSNativeCommandUseErrorActionPreference=$true
+          New-Item -ItemType Directory -Force artifacts/rigid-shear/source,artifacts/rigid-shear/before,artifacts/rigid-shear/after | Out-Null
+          $installer='artifacts/rigid-shear/accessdatabaseengine_X64.exe'
+          Invoke-WebRequest -Uri $env:ACE_URL -OutFile $installer
+          if((Get-FileHash $installer -Algorithm SHA256).Hash.ToLowerInvariant() -ne $env:ACE_SHA256){throw 'ACE hash mismatch'}
+          $sig=Get-AuthenticodeSignature $installer
+          if($sig.Status -ne 'Valid' -or $sig.SignerCertificate.Subject -notmatch 'Microsoft'){throw 'ACE signature failure'}
+          $p=Start-Process $installer -ArgumentList '/quiet','/norestart' -Wait -PassThru
+          if($p.ExitCode -notin @(0,3010)){throw "ACE install failed $($p.ExitCode)"}
+          Remove-Item $installer -Force
+          $zip='artifacts/rigid-shear/BM4_L.zip'
+          Invoke-WebRequest -Uri "https://raw.githubusercontent.com/reallaksh19/Common/$env:COMMON_COMMIT/LFEA/BM4/BM4_L.zip" -OutFile $zip
+          if((Get-FileHash $zip -Algorithm SHA256).Hash.ToLowerInvariant() -ne $env:ZIP_SHA256){throw 'ZIP hash mismatch'}
+          Expand-Archive $zip -DestinationPath artifacts/rigid-shear/source -Force
+          $accdb=Join-Path $PWD 'artifacts/rigid-shear/source/BM4_L.ACCDB'
+          if((Get-FileHash $accdb -Algorithm SHA256).Hash.ToLowerInvariant() -ne $env:MEMBER_SHA256){throw 'ACCDB hash mismatch'}
+          "ACCDB=$accdb" >> $env:GITHUB_ENV
+
+      - name: Add diagnostic-only matrix and load evidence
+        shell: python
+        run: |
+          from pathlib import Path
+          p=Path('src/core/fea-benchmarks/caesar-accdb-linear-solve.js')
+          t=p.read_text()
+          needle="        numericalShiftLoadGlobal: entry.numericalShiftLoadGlobal,\n        gravityWeightN: entry.gravityWeightN,\n      })),"
+          repl="""        numericalShiftLoadGlobal: entry.numericalShiftLoadGlobal,
+                gravityWeightN: entry.gravityWeightN,
+                diagnosticGlobalStiffness: entry.contribution.globalStiffness,
+                diagnosticEquivalentLoadGlobal: entry.contribution.equivalentLoadGlobal,
+                diagnosticInitialStrainLoadGlobal: entry.contribution.initialStrainLoadGlobal,
+              })),"""
+          if t.count(needle)!=1: raise SystemExit(f'ledger evidence site count={t.count(needle)}')
+          p.write_text(t.replace(needle,repl,1))
+
+      - name: Baseline committed L2
+        shell: pwsh
+        run: |
+          $ErrorActionPreference='Stop'; $PSNativeCommandUseErrorActionPreference=$true
+          node scripts/lfea-caesar-accdb-benchmark.mjs --accdb $env:ACCDB --profile benchmarks/LFEA/CAESAR_ACCDB/bm4l-validation.profile.json --solve-linear true --solve-cases L2 --actual-out artifacts/rigid-shear/before/actual.json --out artifacts/rigid-shear/before/report.json
+
+      - name: Add CAESAR straight-pipe shear to rigid stiffness section only
+        shell: python
+        run: |
+          from pathlib import Path
+          p=Path('src/core/linear-fea-rigid-element/rigid-element.js')
+          t=p.read_text()
+          needle='''    length: accepted.length,
+              shearDeformation: false,
+            }).matrix;'''
+          repl='''    length: accepted.length,
+              shearDeformation: true,
+              shearCorrectionFactorY: 0.5,
+              shearCorrectionFactorZ: 0.5,
+            }).matrix;'''
+          if t.count(needle)!=1: raise SystemExit(f'rigid shear patch site count={t.count(needle)}')
+          p.write_text(t.replace(needle,repl,1))
+
+      - name: Candidate L2 and reusable rigid mechanics gates
+        shell: pwsh
+        run: |
+          $ErrorActionPreference='Stop'; $PSNativeCommandUseErrorActionPreference=$true
+          node --check src/core/linear-fea-rigid-element/rigid-element.js
+          node scripts/lfea-m047-caesar-straight-pipe-shear-authority-check.mjs
+          node scripts/lfea-b3.1-frame-element-check.mjs
+          node scripts/lfea-b3.22-rigid-element-authority-check.mjs
+          node scripts/lfea-b3.3-solver-check.mjs
+          node scripts/lfea-b3.4-recovery-check.mjs
+          node scripts/lfea-caesar-accdb-benchmark.mjs --accdb $env:ACCDB --profile benchmarks/LFEA/CAESAR_ACCDB/bm4l-validation.profile.json --solve-linear true --solve-cases L2 --actual-out artifacts/rigid-shear/after/actual.json --out artifacts/rigid-shear/after/report.json
+
+      - name: Compare rigid CAESAR-endpoint replay
+        shell: pwsh
+        run: |
+          $ErrorActionPreference='Stop'; $PSNativeCommandUseErrorActionPreference=$true
+          @'
+          const fs=require('fs');
+          const names=['before','after'];
+          const A=Object.fromEntries(names.map(n=>[n,JSON.parse(fs.readFileSync(`artifacts/rigid-shear/${n}/actual.json`,'utf8').replace(/^\uFEFF/,''))]));
+          const R=Object.fromEntries(names.map(n=>[n,JSON.parse(fs.readFileSync(`artifacts/rigid-shear/${n}/report.json`,'utf8').replace(/^\uFEFF/,''))]));
+          const dofs=['UX','UY','UZ','RX','RY','RZ'];
+          const actionOrder=[['GLOBAL_END_FORCE_FROM','FX'],['GLOBAL_END_FORCE_FROM','FY'],['GLOBAL_END_FORCE_FROM','FZ'],['GLOBAL_END_MOMENT_FROM','MX'],['GLOBAL_END_MOMENT_FROM','MY'],['GLOBAL_END_MOMENT_FROM','MZ'],['GLOBAL_END_FORCE_TO','FX'],['GLOBAL_END_FORCE_TO','FY'],['GLOBAL_END_FORCE_TO','FZ'],['GLOBAL_END_MOMENT_TO','MX'],['GLOBAL_END_MOMENT_TO','MY'],['GLOBAL_END_MOMENT_TO','MZ']];
+          const forceIdx=[0,1,2,6,7,8],momentIdx=[3,4,5,9,10,11];
+          const norm=(v,idx)=>Math.hypot(...idx.map(i=>v[i]));
+          function replay(name,source){
+            const rows=R[name].qualification.cases.find(x=>x.caseId==='L2').comparison.rows;
+            const e=A[name].mechanics.cases.L2.elementLedger.find(x=>String(x.sourceElementId)===source);
+            if(!e||e.kind!=='RIGID')throw new Error(`${name} source ${source} rigid ledger missing`);
+            if(e.diagnosticGlobalStiffness.length!==144)throw new Error(`${name} source ${source} K missing`);
+            const governed=rows.find(r=>r.entityKind==='ELEMENT'&&String(r.entityId).startsWith(`INPUT_ELEMENT:${source}|`)&&r.referenceValue!==null);
+            const m=String(governed.entityId).match(/^INPUT_ELEMENT:\d+\|([^|]+)->([^|]+)\|/); if(!m)throw new Error('endpoint parse');
+            const endpoints=[m[1],m[2]],u=[];
+            for(const node of endpoints)for(const dof of dofs){const q=dof.startsWith('R')?'ROTATION':'DISPLACEMENT';const rr=rows.find(r=>r.entityKind==='NODE'&&String(r.entityId)===node&&r.quantity===q&&r.component===dof);u.push(rr.referenceValue);}
+            const f=e.diagnosticEquivalentLoadGlobal.map((v,i)=>v+e.diagnosticInitialStrainLoadGlobal[i]);
+            const predicted=new Array(12).fill(0).map((_,i)=>e.diagnosticGlobalStiffness.slice(i*12,i*12+12).reduce((s,v,j)=>s+v*u[j],0)-f[i]);
+            const target=actionOrder.map(([q,c])=>rows.find(r=>r.entityKind==='ELEMENT'&&String(r.entityId).startsWith(`INPUT_ELEMENT:${source}|`)&&r.quantity===q&&r.component===c).referenceValue);
+            const diff=predicted.map((v,i)=>v-target[i]);
+            return {sourceElementId:source,endpoints,forceNormDifferenceN:norm(diff,forceIdx),momentNormDifferenceNm:norm(diff,momentIdx),normalizedForceDifference:norm(diff,forceIdx)/Math.max(1,norm(target,forceIdx)),normalizedMomentDifference:norm(diff,momentIdx)/Math.max(1,norm(target,momentIdx))};
+          }
+          const sources=['76','77','78','79'];
+          const rigidReplay=Object.fromEntries(sources.map(s=>[s,{before:replay('before',s),after:replay('after',s)}]));
+          function node(name,node,dof){const q=dof.startsWith('R')?'ROTATION':'DISPLACEMENT';const rr=R[name].qualification.cases.find(x=>x.caseId==='L2').comparison.rows.find(r=>r.entityKind==='NODE'&&String(r.entityId)===node&&r.quantity===q&&r.component===dof);return {reference:rr.referenceValue,actual:rr.actualValue,relativeError:rr.relativeError,status:rr.status};}
+          const cnt=(r)=>({restraint:r.restraintBasis.cases.L2.exceedingComponentCount,displacementRotation:r.displacementBasis.cases.L2.exceedingComponentCount,elementEnd:r.elementBasis.cases.L2.exceedingComponentCount});
+          if(A.after.mechanics.cases.L2.recoveredEquilibrium.status!=='PASS')throw new Error('candidate equilibrium failed');
+          if(Math.abs(A.after.mechanics.cases.L2.gravityWeightN-A.before.mechanics.cases.L2.gravityWeightN)>1e-9)throw new Error('gravity changed');
+          const out={schema:'m047-bm4l-rigid-shear-ab/v1',candidate:{mechanism:'RIGID_STIFFNESS_TRANSVERSE_SHEAR',shearCorrectionFactor:0.5,authority:'Hexagon rigid stiffness uses equivalent pipe with 10x entered wall; CAESAR straight-pipe stiffness uses effective shear area A/2',benchmarkFitted:false},rigidReplay,node22140RX:{before:node('before','22140','RX'),after:node('after','22140','RX')},counts:{before:cnt(R.before),after:cnt(R.after)},gravityWeightN:A.after.mechanics.cases.L2.gravityWeightN,equilibrium:A.after.mechanics.cases.L2.recoveredEquilibrium};
+          fs.writeFileSync('artifacts/rigid-shear/ab.json',JSON.stringify(out,null,2)+'\n');console.log(JSON.stringify(out,null,2));
+          '@ | node
+
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: m047-bm4l-rigid-shear-ab-${{ github.sha }}
+          path: artifacts/rigid-shear
+          retention-days: 30
+          if-no-files-found: error

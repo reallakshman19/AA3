@@ -107,6 +107,13 @@ export function manualChunk(id) {
     || source.endsWith('/src/workspace/support-load-viewport-callout-projection.js')) {
     return 'workspace-viewport-engineering-projections';
   }
+  // These modules are pure event validation and presentation projection. They
+  // own no controller, store, mutable singleton, or runtime resource, so they
+  // form a safe leaf boundary for the LFEA-to-3D-Edit integration.
+  if (source.endsWith('/src/workspace/event-topics.js')
+    || source.endsWith('/src/workspace/lfea-support-actions-panel.js')) {
+    return 'workspace-event-presentation-contracts';
+  }
 
   // Rollup must own the complete stateful workspace graph so evaluation order
   // follows static dependency analysis rather than filename-based partitions.

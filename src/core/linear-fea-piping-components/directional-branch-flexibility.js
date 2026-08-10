@@ -87,7 +87,8 @@ export function deriveB31JDirectionalBranchEndModifiers({
         factors,
         material: authorities.material.materialState,
         section: authorities.section.sectionState,
-        diameter: authorities.section.dimensions.outerDiameter,
+        // B31J tee stiffness uses the matching-pipe mean diameter Do - T.
+        diameter: authorities.section.dimensions.outerDiameter - authorities.section.dimensions.wallThickness,
         end: leg.junctionEnd ?? 'I',
       });
       return Object.freeze({
@@ -261,7 +262,7 @@ function requireDirectionalFactors(value) {
       'B31J tee result has no directional flexibility factors.',
     );
   }
-  for (const role of ['run', 'branch']) {
+  for (const role of ['RUN', 'BRANCH'].map((value) => value.toLowerCase())) {
     if (!value[role] || typeof value[role] !== 'object') {
       fail(
         'PIPING_COMPONENT_BRANCH_DIRECTIONAL_FACTORS_MISSING',

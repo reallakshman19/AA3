@@ -1,6 +1,7 @@
 import { EventBus } from './event-bus.js';
 import { EVENT_TOPICS } from './event-topics.js';
 import { renderPropertiesContent } from './properties-view.js';
+import { renderLfeaSupportActions } from './lfea-support-actions-panel.js';
 import { WorkspaceState } from './workspace-state.js';
 import { engineeringModelStore } from './engineering-model-store.js';
 import { ENGINEERING_MODEL_EVENTS } from './engineering-model-controller.js';
@@ -19,6 +20,9 @@ export class PropertiesPanel {
     this.ledgerStatus = {};
     this.analysisState = idleAnalysis();
     this.searchQuery = '';
+    this.lfeaSupportActions = null;
+    this.lfeaSourceContext = null;
+    this.lfeaSupportActionsInvalidated = false;
     this.unsubscribeCallbacks = [];
     this.handleClick = this.handleClick.bind(this);
     this.handleChange = this.handleChange.bind(this);
@@ -46,7 +50,10 @@ export class PropertiesPanel {
       this.eventBus.subscribe(EVENT_TOPICS.ANALYSIS_LEDGER_FAILED, (payload) => this.handleLedgerFailure(payload)),
       this.eventBus.subscribe(EVENT_TOPICS.ANALYSIS_EXPORT_COMPLETED, ({ artifact }) => this.handleExportCompleted(artifact)),
       this.eventBus.subscribe(EVENT_TOPICS.ANALYSIS_EXPORT_FAILED, (payload) => this.handleExportFailed(payload)),
-      this.eventBus.subscribe(EVENT_TOPICS.DATASET_CLEARED, () => this.renderEmpty()),
+      this.eventBus.subscribe(EVENT_TOPICS.TOPOLOGY_EDIT_LFEA_SOURCE_CHANGED, (payload) => this.handleLfeaSourceChanged(payload)),
+      this.eventBus.subscribe(EVENT_TOPICS.LFEA_SUPPORT_ACTIONS_PUBLISHED, (payload) => this.handleLfeaSupportActions(payload)),
+      this.eventBus.subscribe(EVENT_TOPICS.WORKSPACE_SNAPSHOT_CHANGED, () => this.invalidateLfeaSupportActions()),
+      this.eventBus.subscribe(EVENT_TOPICS.DATASET_CLEARED, () => this.handleDatasetCleared()),
       this.eventBus.subscribe(ENGINEERING_MODEL_EVENTS.CHANGED, () => { if (this.selection?.entityId) this.renderSelection({ entityId: this.selection.entityId }); }),
     ];
   }
@@ -138,6 +145,40 @@ export class PropertiesPanel {
     if (this.selection) this.render();
   }
 
+  handleLfeaSourceChanged(payload) {
+    this.lfeaSourceContext = Object.freeze({
+      sourceSemanticHash: payload.sourceSemanticHash,
+      modelVersion: payload.modelVersion,
+    });
+    this.lfeaSupportActionsInvalidated = false;
+    if (this.selection) this.render();
+  }
+
+  handleLfeaSupportActions(payload) {
+    this.lfeaSupportActions = Object.freeze(structuredClone(payload));
+    this.lfeaSupportActionsInvalidated = false;
+    if (this.lfeaSourceContext === null) {
+      this.lfeaSourceContext = Object.freeze({
+        sourceSemanticHash: payload.sourceSemanticHash,
+        modelVersion: payload.modelVersion,
+      });
+    }
+    if (this.selection) this.render();
+  }
+
+  invalidateLfeaSupportActions() {
+    if (!this.lfeaSupportActions) return;
+    this.lfeaSupportActionsInvalidated = true;
+    if (this.selection) this.render();
+  }
+
+  handleDatasetCleared() {
+    this.lfeaSupportActions = null;
+    this.lfeaSourceContext = null;
+    this.lfeaSupportActionsInvalidated = false;
+    this.renderEmpty();
+  }
+
   isCurrentTarget(targetId) {
     return this.selection?.entityId === targetId;
   }
@@ -150,7 +191,7 @@ export class PropertiesPanel {
     if (!this.selection) return this.renderEmpty();
     const capabilities = this.capabilityTargetId === this.selection.entityId ? this.capabilities : [];
     const session = this.analysisSession?.targetId === this.selection.entityId ? this.analysisSession : null;
-    this.contentElement.replaceChildren(renderPropertiesContent(
+    const content = renderPropertiesContent(
       this.rootElement.ownerDocument,
       this.selection,
       capabilities,
@@ -158,8 +199,16 @@ export class PropertiesPanel {
       session,
       this.analysisLedger,
       this.ledgerStatus,
-      this.searchQuery
+      this.searchQuery,
+    );
+    content.append(renderLfeaSupportActions(
+      this.rootElement.ownerDocument,
+      this.selection,
+      this.lfeaSupportActions,
+      this.lfeaSourceContext,
+      this.lfeaSupportActionsInvalidated,
     ));
+    this.contentElement.replaceChildren(content);
   }
 
   handleClick(event) {
@@ -259,6 +308,9 @@ export class PropertiesPanel {
     this.analysisLedger = null;
     this.ledgerStatus = {};
     this.analysisState = idleAnalysis();
+    this.lfeaSupportActions = null;
+    this.lfeaSourceContext = null;
+    this.lfeaSupportActionsInvalidated = false;
   }
 }
 

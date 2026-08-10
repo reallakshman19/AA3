@@ -134,7 +134,8 @@ export function solveCaesarAccdbLinearBenchmark(benchmarkPackage, selectedCaseId
         'The explicit Bourdon job mode resolves from the individual-file layer because CAESAR existing-job settings are absent from ACCDB exports.',
         'Translation-and-rotation mode applies closed-end axial pressure strain to non-bend spans and one MEC-21 equation (2.25) bend-level free field sampled at all discretized bend stations.',
         'Reducer stiffness, gravity, thermal load and closed-end pressure elongation use the governed ten-cylinder midpoint-sampling candidate.',
-        'Bend stiffness uses the qualified B31.3/B31J factor calculator and true tangent-to-tangent arc components; smooth-90/Note-3 correction remains disabled because its file/case authority is unresolved.',
+        'Bend stiffness uses the qualified B31.3/B31J factor calculator and true tangent-to-tangent arc components; the smooth-90 correction follows the resolved BM4_L profile authority.',
+        'Physical straight pipe spans (FRAME and BEND_INCOMING_STRAIGHT) use the CAESAR straight-pipe transverse-shear effective area A/2, mapped to the qualified Timoshenko kernel as kappa=0.5; bend arcs, reducers and rigids remain separately governed.',
         'Bend pressure stiffening provisionally uses P1; P1 equals Pmax in this locked source, but the CAESAR DEFAULT load-case pressure rule remains unresolved.',
         'B31.3 flexibility stiffness uses the cold/reference elastic modulus Ec (ACCDB MODULUS); HOT_MOD1/Eh is not selected by thermal-case presence.',
         'Topology-qualified TYPE=3 welding tees use unreduced B31J directional end springs; branch legs connect at the run surface through a rigid offset.',
@@ -524,6 +525,7 @@ function buildFrameElement(input) {
     axesResult,
     material: input.material,
     section: input.section,
+    profile: isCaesarStraightPipeSpan(input.kind) ? caesarStraightPipeFrameProfile() : frameProfile(),
   });
   const length = frame.geometry.length;
   const lineWeight = input.gravityLineWeight
@@ -1523,7 +1525,7 @@ function compileUnloadedFrame(input) {
     material: input.material,
     section: input.section,
     localAxes: { result: input.axesResult, profile: FRAME_LOCAL_AXIS_PROFILE },
-    profile: frameProfile(),
+    profile: input.profile ?? frameProfile(),
     distributedLoads: [],
     temperature: null,
     releases: [],
@@ -2034,6 +2036,31 @@ function compilerProfile() {
     unrepresentableFeatureRule: 'UNREPRESENTABLE_FEATURE_BLOCKS_COMPILATION_V1',
     minimumElementLength: { value: 1e-8, source: PROFILE_SOURCE },
     spanDirectionTolerance: { value: 1e-9, source: PROFILE_SOURCE },
+    semanticHash: '',
+  });
+}
+
+function isCaesarStraightPipeSpan(kind) {
+  return kind === 'FRAME' || kind === 'BEND_INCOMING_STRAIGHT';
+}
+
+function caesarStraightPipeFrameProfile() {
+  return sealFrameElementProfile({
+    schema: 'fea-linear-frame-element-profile/v1',
+    profileId: 'LINEAR-FRAME-ELEMENT-R1',
+    straightPipeFormulation: 'PIPE_FRAME3D_TIMOSHENKO_V1',
+    shearDeformation: true,
+    shearCorrectionFactorY: {
+      value: 0.5,
+      source: 'INTERGRAPH_CAUX_2015_F_EQUALS_KX_STRAIGHT_PIPE_SHEAR_DIVISOR_2',
+    },
+    shearCorrectionFactorZ: {
+      value: 0.5,
+      source: 'INTERGRAPH_CAUX_2015_F_EQUALS_KX_STRAIGHT_PIPE_SHEAR_DIVISOR_2',
+    },
+    releaseRule: 'STATIC_CONDENSATION_V1',
+    thermalStrainApproximation: 'UNIFORM_TEMPERATURE_ALPHA_DELTA_T_V1',
+    releaseSingularityTolerance: { value: 1e-12, source: PROFILE_SOURCE },
     semanticHash: '',
   });
 }

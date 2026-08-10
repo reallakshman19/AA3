@@ -1,0 +1,179 @@
+name: M047 BM4_L finite restraint stiffness A-B
+
+on:
+  push:
+    branches: [agent/m047-bm4l-root-cause]
+    paths: ['.github/workflows/m047-bm4l-finite-restraint-ab.yml']
+
+permissions:
+  contents: read
+
+jobs:
+  ab:
+    runs-on: windows-latest
+    timeout-minutes: 40
+    env:
+      COMMON_COMMIT: '45d51ea18624f5775805f399110c1738301c0d90'
+      ZIP_SHA256: '978617cba50fa0b1a16c2fa71dc1e0d38e55ac834b191f887d100c6951abd8b9'
+      MEMBER_SHA256: '64c05a50e9ed0452622ff5880335460486f24ac8e6adecc9a300b549c9aa82f8'
+      ACE_URL: 'https://download.microsoft.com/download/3/5/C/35C84C36-661A-44E6-9324-8786B8DBE231/accessdatabaseengine_X64.exe'
+      ACE_SHA256: '04e96c9f1a1f7d251a88aececf1dc10ff65950392787427c00814a43308003de'
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: agent/m047-bm4l-root-cause
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+      - run: npm ci
+
+      - name: Install authenticated ACE and fetch canonical source
+        shell: pwsh
+        run: |
+          $ErrorActionPreference='Stop'
+          New-Item -ItemType Directory -Force artifacts/restraint/source | Out-Null
+          $installer=Join-Path $PWD 'artifacts/restraint/accessdatabaseengine_X64.exe'
+          Invoke-WebRequest -Uri $env:ACE_URL -OutFile $installer
+          if((Get-FileHash $installer -Algorithm SHA256).Hash.ToLowerInvariant() -ne $env:ACE_SHA256){ throw 'ACE installer hash mismatch.' }
+          $sig=Get-AuthenticodeSignature $installer
+          if($sig.Status -ne 'Valid' -or $sig.SignerCertificate.Subject -notmatch 'Microsoft'){ throw 'ACE signature validation failed.' }
+          $p=Start-Process $installer -ArgumentList '/quiet','/norestart' -Wait -PassThru
+          if($p.ExitCode -notin @(0,3010)){ throw "ACE install failed: $($p.ExitCode)" }
+          $zip=Join-Path $PWD 'artifacts/restraint/BM4_L.zip'
+          Invoke-WebRequest -Uri "https://raw.githubusercontent.com/reallaksh19/Common/$env:COMMON_COMMIT/LFEA/BM4/BM4_L.zip" -OutFile $zip
+          if((Get-FileHash $zip -Algorithm SHA256).Hash.ToLowerInvariant() -ne $env:ZIP_SHA256){ throw 'ZIP hash mismatch.' }
+          Expand-Archive $zip -DestinationPath artifacts/restraint/source -Force
+          $accdb=Join-Path $PWD 'artifacts/restraint/source/BM4_L.ACCDB'
+          if((Get-FileHash $accdb -Algorithm SHA256).Hash.ToLowerInvariant() -ne $env:MEMBER_SHA256){ throw 'ACCDB member hash mismatch.' }
+          "ACCDB=$accdb" >> $env:GITHUB_ENV
+
+      - name: Prove displayed restraint units
+        shell: pwsh
+        run: |
+          $ErrorActionPreference='Stop'
+          .\scripts\lfea-caesar-accdb-export.ps1 -AccdbPath $env:ACCDB -TablesCsv INPUT_UNITS | Set-Content -Encoding utf8 artifacts/restraint/units.json
+          @'
+          const fs=require('fs');
+          const raw=JSON.parse(fs.readFileSync('artifacts/restraint/units.json','utf8').replace(/^\uFEFF/,''));
+          const rows=raw.tables.INPUT_UNITS.rows;
+          if(rows.length!==1) throw new Error(`expected one INPUT_UNITS row, got ${rows.length}`);
+          const u=rows[0];
+          if(u.TRANS!=='N./cm.') throw new Error(`unexpected translational stiffness unit ${u.TRANS}`);
+          if(u.ROT_STIFF!=='N.m./deg') throw new Error(`unexpected rotational stiffness unit ${u.ROT_STIFF}`);
+          const trans=1e12*100;
+          const rot=1e12*180/Math.PI;
+          fs.writeFileSync('artifacts/restraint/unit-conversion.json', JSON.stringify({
+            sourceUnits:{translation:u.TRANS,rotation:u.ROT_STIFF},
+            configuredDisplayedValue:1e12,
+            si:{translationNPerM:trans,rotationNmPerRad:rot},
+            rules:['N/cm * 100 = N/m','N*m/deg * 180/pi = N*m/rad']
+          },null,2)+'\n');
+          '@ | node
+
+      - name: Run current six-case baseline
+        shell: pwsh
+        run: |
+          New-Item -ItemType Directory -Force artifacts/restraint/before | Out-Null
+          node scripts/lfea-caesar-accdb-benchmark.mjs `
+            --accdb $env:ACCDB `
+            --profile benchmarks/LFEA/CAESAR_ACCDB/bm4l-validation.profile.json `
+            --solve-linear true `
+            --solve-cases L2,L3,L4,L5,L6,L14 `
+            --actual-out artifacts/restraint/before/actual.json `
+            --out artifacts/restraint/before/report.json `
+            --summary-out artifacts/restraint/before/summary.md
+
+      - name: Apply diagnostic finite-restraint formulation
+        shell: python
+        run: |
+          from pathlib import Path
+          import json
+          path=Path('src/core/fea-benchmarks/caesar-accdb-linear-solve.js')
+          text=path.read_text()
+          old="const constraints = restraintConstraints(modelInput.tables.INPUT_RESTRAINTS.rows);"
+          new="""const constraints = restraintConstraints(\n    modelInput.tables.INPUT_RESTRAINTS.rows,\n    benchmarkPackage.profile.configurationAuthority,\n    modelInput.tables.INPUT_UNITS.rows,\n    solveProfile.restraintRepresentation,\n  );"""
+          if text.count(old)!=1: raise SystemExit(f'constraint call count {text.count(old)}')
+          text=text.replace(old,new,1)
+          old2="""function restraintConstraints(rows) {\n  const constraints = new Map();\n  for (const row of rows) {\n    const type = Number(row.RES_TYPEID);\n    const nodeId = String(row.NODE_NUM);\n    const dofs = type === 1 ? [...DOFS] : [dominantTranslationDof(row)];\n    for (const dof of dofs) {\n      const key = `${nodeId}:${dof}`;\n      constraints.set(key, {\n        declarationId: `ACCDB-C-${nodeId}-${dof}`,\n        kind: 'NODAL_RESTRAINT',\n        nodeId,\n        dof,\n        behavior: 'FIXED',\n      });\n    }\n  }\n  return [...constraints.values()].sort((left, right) => compareText(left.declarationId, right.declarationId));\n}"""
+          new2="""function restraintConstraints(rows, authority, unitRows, representation) {\n  const constraints = new Map();\n  const finite = representation.mode === 'CAESAR_DEFAULT_FINITE_STIFFNESS';\n  if (!finite && representation.mode !== 'FIXED_DOF') {\n    throw new TypeError(`Unsupported restraint representation ${representation.mode}.`);\n  }\n  let translationStiffness = null;\n  let rotationStiffness = null;\n  if (finite) {\n    if (unitRows.length !== 1 || unitRows[0].TRANS !== 'N./cm.' || unitRows[0].ROT_STIFF !== 'N.m./deg') {\n      throw new TypeError('BM4_L finite-restraint formulation requires ACCDB INPUT_UNITS N./cm. and N.m./deg.');\n    }\n    const trans = resolveCaesarConfigurationSetting(authority, 'DEFAULT_TRANS_RESTRAINT_STIFF', null).value;\n    const rot = resolveCaesarConfigurationSetting(authority, 'DEFAULT_ROT_RESTRAINT_STIFF', null).value;\n    if (trans.unit !== 'DISPLAYED_CAESAR_UNITS' || rot.unit !== 'DISPLAYED_CAESAR_UNITS') {\n      throw new TypeError('Default restraint stiffness authority must be expressed in displayed CAESAR units.');\n    }\n    translationStiffness = Number(trans.value) * 100;\n    rotationStiffness = Number(rot.value) * 180 / Math.PI;\n  }\n  for (const row of rows) {\n    const type = Number(row.RES_TYPEID);\n    const nodeId = String(row.NODE_NUM);\n    const dofs = type === 1 ? [...DOFS] : [dominantTranslationDof(row)];\n    for (const dof of dofs) {\n      const key = `${nodeId}:${dof}`;\n      constraints.set(key, {\n        declarationId: `ACCDB-C-${nodeId}-${dof}`,\n        kind: 'NODAL_RESTRAINT',\n        nodeId,\n        dof,\n        behavior: finite ? 'LINEAR_SPRING' : 'FIXED',\n        ...(finite ? { stiffness: dof.startsWith('U') ? translationStiffness : rotationStiffness } : {}),\n      });\n    }\n  }\n  return [...constraints.values()].sort((left, right) => compareText(left.declarationId, right.declarationId));\n}"""
+          if text.count(old2)!=1: raise SystemExit(f'constraint function count {text.count(old2)}')
+          text=text.replace(old2,new2,1)
+          old3="""  if (solveProfile.restraintRepresentation.mode !== 'FIXED_DOF') {\n    throw new TypeError('The current ACCDB solver supports only the provisional FIXED_DOF restraint representation.');\n  }"""
+          new3="""  if (!['FIXED_DOF', 'CAESAR_DEFAULT_FINITE_STIFFNESS'].includes(solveProfile.restraintRepresentation.mode)) {\n    throw new TypeError(`Unsupported ACCDB restraint representation ${solveProfile.restraintRepresentation.mode}.`);\n  }"""
+          if text.count(old3)!=1: raise SystemExit(f'restraint guard count {text.count(old3)}')
+          text=text.replace(old3,new3,1)
+          path.write_text(text)
+
+          pp=Path('benchmarks/LFEA/CAESAR_ACCDB/bm4l-validation.profile.json')
+          profile=json.loads(pp.read_text())
+          profile['configurationAuthority']['unresolvedSettings']=[x for x in profile['configurationAuthority']['unresolvedSettings'] if x['setting']!='RESTRAINT_FORMULATION']
+          profile['linearSolve']['restraintRepresentation']={
+            'mode':'CAESAR_DEFAULT_FINITE_STIFFNESS',
+            'authorityStatus':'RESOLVED',
+            'source':'HEXAGON_CAESAR_II_V14_UNSPECIFIED_RESTRAINT_USES_CONFIGURED_DEFAULT_STIFFNESS_PLUS_BM4L_DISPLAYED_UNITS'
+          }
+          pp.write_text(json.dumps(profile,indent=2)+'\n')
+
+      - name: Run reusable regression gates
+        shell: pwsh
+        run: |
+          $ErrorActionPreference='Stop'
+          node --check src/core/fea-benchmarks/caesar-accdb-linear-solve.js
+          node scripts/lfea-b2.5-reviewer-check.mjs
+          node scripts/lfea-b3.3-solver-check.mjs
+          node scripts/lfea-b3.4-recovery-check.mjs
+          node scripts/lfea-b3.6-sparse-assembly-check.mjs
+          node scripts/lfea-b3.9-gravity-self-weight-check.mjs
+          node scripts/lfea-b3.22-thermal-load-check.mjs
+          node scripts/lfea-b3.23-rigid-element-check.mjs
+          npm run check:core-fea
+
+      - name: Run candidate six cases and recovery proof
+        shell: pwsh
+        run: |
+          New-Item -ItemType Directory -Force artifacts/restraint/after | Out-Null
+          node scripts/lfea-caesar-accdb-benchmark.mjs `
+            --accdb $env:ACCDB `
+            --profile benchmarks/LFEA/CAESAR_ACCDB/bm4l-validation.profile.json `
+            --solve-linear true `
+            --solve-cases L2,L3,L4,L5,L6,L14 `
+            --actual-out artifacts/restraint/after/actual.json `
+            --out artifacts/restraint/after/report.json `
+            --summary-out artifacts/restraint/after/summary.md
+          node scripts/lfea-m047-bm4l-recovery-proof.mjs `
+            --actual artifacts/restraint/after/actual.json `
+            --report artifacts/restraint/after/report.json `
+            --out artifacts/restraint/after/recovery-proof.json
+
+      - name: Build signed A-B evidence
+        shell: pwsh
+        run: |
+          @'
+          const fs=require('fs');
+          const before=JSON.parse(fs.readFileSync('artifacts/restraint/before/report.json','utf8'));
+          const after=JSON.parse(fs.readFileSync('artifacts/restraint/after/report.json','utf8'));
+          const a=JSON.parse(fs.readFileSync('artifacts/restraint/after/actual.json','utf8'));
+          const proof=JSON.parse(fs.readFileSync('artifacts/restraint/after/recovery-proof.json','utf8'));
+          const cases=['L2','L3','L4','L5','L6','L14'];
+          const counts=(r,c)=>({restraint:r.restraintBasis.cases[c].exceedingComponentCount,displacementRotation:r.displacementBasis.cases[c].exceedingComponentCount,elementEnd:r.elementBasis.cases[c].exceedingComponentCount});
+          const result={schema:'m047-bm4l-finite-restraint-ab/v1',mechanism:'CAESAR_CONFIGURED_DEFAULT_FINITE_RESTRAINT_STIFFNESS',units:JSON.parse(fs.readFileSync('artifacts/restraint/unit-conversion.json','utf8')),cases:{},commonOperator:{hashes:[...new Set(cases.map(c=>a.mechanics.cases[c].stiffnessStateHash))]},recoveryProofStatus:proof.status};
+          for(const c of cases) result.cases[c]={before:counts(before,c),after:counts(after,c)};
+          const rows=r=>r.qualification.cases.find(x=>x.caseId==='L2').comparison.rows;
+          const key=x=>x.identity;
+          const bm=new Map(rows(before).map(x=>[key(x),x]));
+          const am=new Map(rows(after).map(x=>[key(x),x]));
+          result.l2Node20580UX={before:bm.get('L2:NODE:20580:FORCE:UX'),after:am.get('L2:NODE:20580:FORCE:UX')};
+          result.integrity={allExecutionsQualified:cases.every(c=>a.mechanics.cases[c].executionStatus==='QUALIFIED'),commonOperator:result.commonOperator.hashes.length===1,recoveryProofPass:proof.status==='PASS'};
+          fs.writeFileSync('artifacts/restraint/finite-restraint-ab.json',JSON.stringify(result,null,2)+'\n');
+          console.log(JSON.stringify(result,null,2));
+          if(!result.integrity.allExecutionsQualified || !result.integrity.commonOperator || !result.integrity.recoveryProofPass) process.exit(2);
+          '@ | node
+
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: m047-bm4l-finite-restraint-ab-${{ github.sha }}
+          path: artifacts/restraint
+          retention-days: 90

@@ -6,7 +6,7 @@
 - **Source issue:** #1015 — `LAFEA UI update`
 - **Pull request:** #1016 — draft
 - **Branch:** `agent/lafea-appendix-a-workreport`
-- **Current stage:** Stage 8 — viewport lifecycle/performance in progress
+- **Current stage:** Stage 8 complete; Stage 9 numerical verification UX next
 - **Last updated:** 2026-08-10
 - **CI constraint:** Do not add GitHub Actions workflows or workflow-based CI gates. Use existing repository/local checks where available.
 
@@ -86,80 +86,93 @@ T6 area uses 2D triangular quadrature; curved-edge perimeter uses 1D Gauss-Legen
 
 ### Stage 6 — Analysis profile/settings UX — COMPLETE
 
-**Source-contract correction**
-
-The closed LAFEA.1 source contract does not currently declare the governing code/allowable/load-combination fields implied by the issue audit. The UI therefore exposes only real retained settings and explicitly reports missing code/allowable authority.
-
-**Implemented**
-
 - Added read-only `Analysis profile and settings` card.
 - Guided Analysis Profile navigation targets the card.
-- Shows lifecycle profile/binding, source identity/schema/version, formulation, qualification profile, thickness policy, requested analyses/cases, units, qualification details, and limitations when present.
+- Shows only settings actually retained by the active stage contract.
+- LAFEA.1 explicitly reports that code/allowable basis is not declared by its closed source contract instead of inventing authority.
 - Added `scripts/lafea-ui-analysis-settings-check.mjs` as a local, non-Actions check.
 
 ### Stage 7 — Authoritative release-record binding — COMPLETE
 
-**Governance result**
+Workbench release state can consume `lafea-template-release-record/v2` only through four independent gates:
 
-Workbench release state can now consume `lafea-template-release-record/v2`, but a release record is deliberately insufficient by itself. Release qualification requires an integrity-valid record plus independent runtime trust and current engineering identity.
+1. host-trusted `authorizedReleaseEvidenceHashes`;
+2. exact `currentCandidateHeadSha`;
+3. current target compatibility rerun against the live target-authority snapshot;
+4. current lifecycle/source/profile/source-authority/document-revision identity.
 
-**Four independent gates**
+Only after those pass can a CURRENT `RELEASE_QUALIFIED` record project release authority.
 
-1. **Trusted evidence origin** — host allow-list via `authorizedReleaseEvidenceHashes`.
-2. **Exact build identity** — host `currentCandidateHeadSha` must equal record `candidateHeadSha`.
-3. **Current target authority** — rerun `evaluateTemplateTargetCompatibility()` against the current target-authority snapshot.
-4. **Current analysis-source authority** — lifecycle/source/profile/authority hash/document revision must remain current and equal.
+**Key concept:** record SHA-256 validation proves integrity, not provenance. The evidence-hash allow-list separates `record integrity -> trusted provenance -> exact build -> current target -> current source -> release projection`.
 
-Only after those gates pass does the binding honor:
+- Added `src/workspace/lafea-workbench-release-binding.js`.
+- Added controller/store registration, selection and projection APIs.
+- Lifecycle export includes the retained release record and current binding.
+- Added `scripts/lafea-ui-release-binding-check.mjs` as a local, non-Actions check.
+- No end-user UI can mint or trust a release record.
 
-`authorityState === RELEASE_QUALIFIED && validity === CURRENT && releaseQualified === true`
-
-**Trust-anchor concept**
-
-A SHA-256 inside a release record proves integrity, not provenance. The host evidence-hash allow-list separates:
-
-`record integrity -> trusted provenance -> exact build -> current target -> current source -> release projection`
-
-**Public integration**
-
-Host/controller configuration accepts `currentCandidateHeadSha` and `authorizedReleaseEvidenceHashes`; controller/store methods register/select/project release records, and lifecycle export carries the retained record and current binding projection.
-
-**Validation**
-
-- Final release-binding module is 292 lines.
-- Local Stage 7 script covers trust anchor, exact head, target compatibility, source staleness and tamper rejection.
-- Local scripts are committed but unexecuted in this environment because no checkout/network clone is available.
-- No workflow file added.
-
-### Stage 8 — Viewport lifecycle/performance — IN PROGRESS
+### Stage 8 — Viewport lifecycle/performance — COMPLETE
 
 **Problem confirmed**
 
-`LafeaWorkbenchView.render()` currently destroys `activeViewport` before every render, while `renderLafeaWorkbenchContent()` always creates a fresh viewport host and calls `mountLafeaLiveWorkbenchViewport()`. `sceneRevision` preserves scene identity and selection validity but does not prevent reconstruction.
+The previous `LafeaWorkbenchView.render()` destroyed `activeViewport` on every workbench render and `renderLafeaWorkbenchContent()` always mounted a fresh viewport. Stable `sceneRevision` therefore preserved identity/selection semantics but did not avoid renderer reconstruction.
 
-**Planned implementation**
+**Implemented**
 
-1. Compute a viewport dependency signature from the exact inputs that affect the mounted renderer: active stage, scene revision, render-packet object, effective retained mesh evidence, and mesh custody state.
-2. Reuse the existing viewport instance and DOM host only when that complete dependency signature is unchanged.
-3. Reparent the existing viewport host into freshly rendered workbench content so workflow/results/lifecycle panels may update without destroying the renderer.
-4. When dependencies change, build the replacement viewport first and destroy the old viewport only after the replacement mount succeeds. This makes replacement atomic at the composition boundary and avoids deliberately creating an empty viewport interval.
-5. Preserve source selection and retained-mesh focus because the reused viewport keeps its own interaction state and the workbench scene maps remain unchanged.
-6. Continue rebuilding for engineering-scene changes, result packet changes, mesh-evidence changes, custody-state changes, and stage changes.
-7. Do not introduce asynchronous rendering, caching of engineering primitives, or a mutable scene-update authority in this stage.
+- Added `src/workspace/lafea-workbench-viewport-lifecycle.js`, a pure dependency contract for reuse decisions.
+- Viewport reuse requires exact equality of:
+  - active stage ID;
+  - `sceneRevision`;
+  - render-packet object identity;
+  - effective retained-mesh evidence object identity;
+  - analysis-mesh custody state;
+  - domain-first/shell-midsurface routing flags.
+- `LafeaWorkbenchView` now retains the viewport instance, DOM host and last dependency descriptor.
+- `renderLafeaWorkbenchContent()` accepts a governed `reusedViewport` and reparents the existing viewport host into newly rendered workbench content.
+- Unrelated workbench state changes can therefore refresh workflow/header/results/lifecycle panels without reconstructing the renderer.
+- When dependencies change, the replacement viewport is mounted into detached new content first; only after successful content construction is the previous viewport destroyed. The composition no longer deliberately destroys the old renderer before constructing its replacement.
+- Source selection and retained-mesh focus remain attached to the reused viewport and existing scene maps.
+- No primitive cache, mutable scene-update API, asynchronous rendering authority, or new renderer mode was introduced.
 
 **Examples**
 
-- Registering a preparation approval or release record without changing scene/render evidence -> reuse the existing viewport.
-- Editing source geometry -> `sceneRevision` changes -> rebuild viewport.
-- Binding a new qualified result render packet -> render-packet identity changes -> rebuild viewport.
-- Revalidating mesh custody from WARNING to PASS -> custody dependency changes -> rebuild overlay/viewport.
-- Clicking within the viewport and causing local selection state -> no workbench rebuild is required; if an unrelated workbench render occurs, same-input reuse preserves that selection.
+- Preparation/release state change with unchanged scene/render/mesh inputs -> viewport reused.
+- Source geometry or lifecycle identity change -> `sceneRevision` changes -> viewport rebuilt.
+- New/cleared result render packet -> packet identity changes -> viewport rebuilt.
+- Retained mesh evidence replacement or custody WARNING/PASS transition -> viewport rebuilt.
+- Stage change -> viewport rebuilt.
 
-**Validation planned**
+**Validation**
 
-- Add a repository-local Stage 8 regression/static contract check; do not wire it into GitHub Actions.
-- Inspect changed paths and ensure no workflow file appears.
-- Keep existing public renderer authority unchanged: source authoring remains SVG-only and qualified results still use the existing hybrid result route.
+- Added `scripts/lafea-ui-viewport-lifecycle-check.mjs` with pure reuse-contract assertions and static composition checks.
+- The script covers same-input reuse, scene revision changes, packet identity changes, mesh evidence changes, custody changes, domain-first evidence routing, and the replacement-before-destroy code path.
+- Confirmed `src/workspace/lafea-workbench-view.js` remains below the repository's existing 299-line constraint (no content exists at line 285 in the branch file).
+- Inspected final view/content patches.
+- Re-listed PR paths: 18 changed files and no `.github/workflows/*` path.
+- **Local Node scripts remain unexecuted in this environment** because no repository checkout/network clone is available. No unexecuted check is reported as PASS.
+
+## Current PR changed paths after Stage 8
+
+- `agents/PRXXX_workreport.md`
+- `scripts/lafea-ui-analysis-settings-check.mjs`
+- `scripts/lafea-ui-release-binding-check.mjs`
+- `scripts/lafea-ui-viewport-lifecycle-check.mjs`
+- `scripts/lafea-ui-workflow-truthfulness-check.mjs`
+- `src/workspace/lafea-analysis-settings-view.js`
+- `src/workspace/lafea-guided-workflow-view.js`
+- `src/workspace/lafea-guided-workflow.js`
+- `src/workspace/lafea-workbench-content.js`
+- `src/workspace/lafea-workbench-controller.js`
+- `src/workspace/lafea-workbench-orchestration-projection.js`
+- `src/workspace/lafea-workbench-orchestrator-api.js`
+- `src/workspace/lafea-workbench-orchestrator-store.js`
+- `src/workspace/lafea-workbench-readiness.js`
+- `src/workspace/lafea-workbench-reason-labels.js`
+- `src/workspace/lafea-workbench-release-binding.js`
+- `src/workspace/lafea-workbench-view.js`
+- `src/workspace/lafea-workbench-viewport-lifecycle.js`
+
+No workflow file is present.
 
 ## Future roadmap
 

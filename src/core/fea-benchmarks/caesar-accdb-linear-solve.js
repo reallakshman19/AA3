@@ -135,7 +135,7 @@ export function solveCaesarAccdbLinearBenchmark(benchmarkPackage, selectedCaseId
         'Translation-and-rotation mode applies closed-end axial pressure strain to non-bend spans and one MEC-21 equation (2.25) bend-level free field sampled at all discretized bend stations.',
         'Reducer stiffness, gravity, thermal load and closed-end pressure elongation use the governed ten-cylinder midpoint-sampling candidate.',
         'Bend stiffness uses the qualified B31.3/B31J factor calculator and true tangent-to-tangent arc components; the smooth-90 correction follows the resolved BM4_L profile authority, and bend-arc transverse shear follows the MEC-21 annular alpha term mapped as kappa=1/alpha.',
-        'Physical straight pipe spans (FRAME and BEND_INCOMING_STRAIGHT) use the CAESAR straight-pipe transverse-shear effective area A/2, mapped to the qualified Timoshenko kernel as kappa=0.5; bend arcs, reducers and rigids remain separately governed.',
+        'Physical straight pipe spans (FRAME and BEND_INCOMING_STRAIGHT) use the CAESAR straight-pipe transverse-shear effective area A/2, mapped to the qualified Timoshenko kernel as kappa=0.5; RIGID uses the same pipe shear matrix on its separately governed 10x-wall artificial section; bend arcs and reducers remain separately governed.',
         'Bend pressure stiffening provisionally uses P1; P1 equals Pmax in this locked source, but the CAESAR DEFAULT load-case pressure rule remains unresolved.',
         'B31.3 flexibility stiffness uses the cold/reference elastic modulus Ec (ACCDB MODULUS); HOT_MOD1/Eh is not selected by thermal-case presence.',
         'Topology-qualified TYPE=3 welding tees use unreduced B31J directional end springs; branch legs connect at the run surface through a rigid offset.',
@@ -525,7 +525,7 @@ function buildFrameElement(input) {
     axesResult,
     material: input.material,
     section: input.section,
-    profile: isCaesarStraightPipeSpan(input.kind) ? caesarStraightPipeFrameProfile() : frameProfile(),
+    profile: usesCaesarPipeShearProfile(input.kind) ? caesarStraightPipeFrameProfile() : frameProfile(),
   });
   const length = frame.geometry.length;
   const lineWeight = input.gravityLineWeight
@@ -2072,6 +2072,10 @@ function mec21BendFrameProfile(section) {
 
 function isCaesarStraightPipeSpan(kind) {
   return kind === 'FRAME' || kind === 'BEND_INCOMING_STRAIGHT';
+}
+
+function usesCaesarPipeShearProfile(kind) {
+  return isCaesarStraightPipeSpan(kind) || kind === 'RIGID';
 }
 
 function caesarStraightPipeFrameProfile() {

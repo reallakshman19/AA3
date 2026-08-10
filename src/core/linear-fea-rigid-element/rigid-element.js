@@ -19,7 +19,7 @@ export const CAESAR_RIGID_INSULATION_WEIGHT_MULTIPLIER = 1.75;
 const SOURCE_IDENTITY = Object.freeze({
   standard: 'CAESAR_II_RIGID_ELEMENT',
   edition: 'HEXAGON_USERS_GUIDE_VERSION_14',
-  ruleId: 'RIGID_10X_WALL_SEPARATE_WEIGHT_V1',
+  ruleId: 'RIGID_10X_WALL_PIPE_SHEAR_SEPARATE_WEIGHT_V1',
   sourceRevision: 'RIGID-335594:335041:335596',
 });
 
@@ -108,7 +108,9 @@ export function compileCaesarRigidElementAuthority(request) {
     secondMomentZ: section.secondMomentZ,
     polarMoment: section.polarMoment,
     length: accepted.length,
-    shearDeformation: false,
+    shearDeformation: true,
+    shearCorrectionFactorY: 0.5,
+    shearCorrectionFactorZ: 0.5,
   }).matrix;
   const gravity = physicalWeights(accepted);
   const temperatureDifference = accepted.operatingTemperature - accepted.installationTemperature;

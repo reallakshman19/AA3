@@ -1,69 +1,145 @@
 name: M047 BM4_L combined bend Bourdon translation A-B
+
 on:
-  pull_request:
-    branches: [main]
+  push:
+    branches: [agent/m047-bm4l-root-cause-991]
+  workflow_dispatch:
+
 permissions:
   contents: read
+
 jobs:
   combined-bourdon-ab:
-    if: github.head_ref == 'agent/m047-bm4l-root-cause-991'
     runs-on: windows-2022
-    timeout-minutes: 30
+    timeout-minutes: 40
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/checkout@v4
+      - name: Checkout canonical 788 implementation
+        uses: actions/checkout@v4
+        with:
+          ref: 78652ac554dd4f1f4a6c230b891122bd9386077a
+          fetch-depth: 1
+
+      - name: Checkout pinned Common source and CAESAR reports
+        uses: actions/checkout@v4
         with:
           repository: reallaksh19/Common
-          ref: 45d51ea18624f5775805f399110c1738301c0d90
+          ref: 179c4831cf521cf797c13699cfbbd118315c9244
           path: _common
+          fetch-depth: 1
+
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
           cache: npm
+
       - run: npm ci --ignore-scripts
+
       - name: Install signed Microsoft ACE 2016 x64
         shell: pwsh
         run: |
-          $i=Join-Path $env:RUNNER_TEMP 'ace.exe'; Invoke-WebRequest 'https://download.microsoft.com/download/3/5/C/35C84C36-661A-44E6-9324-8786B8DBE231/accessdatabaseengine_X64.exe' -OutFile $i
-          $s=Get-AuthenticodeSignature $i; if($s.Status-ne'Valid'-or[string]$s.SignerCertificate.Subject-notmatch'Microsoft'){throw 'ACE signature'}
-          $p=Start-Process $i -ArgumentList '/quiet','/norestart' -Wait -PassThru; if($p.ExitCode-notin@(0,3010)){throw "ACE $($p.ExitCode)"}
-      - name: Extract source
+          $ErrorActionPreference='Stop'
+          $i=Join-Path $env:RUNNER_TEMP 'ace.exe'
+          Invoke-WebRequest 'https://download.microsoft.com/download/3/5/C/35C84C36-661A-44E6-9324-8786B8DBE231/accessdatabaseengine_X64.exe' -OutFile $i
+          $s=Get-AuthenticodeSignature $i
+          if($s.Status-ne'Valid'-or[string]$s.SignerCertificate.Subject-notmatch'Microsoft'){throw 'ACE signature'}
+          $p=Start-Process $i -ArgumentList '/quiet','/norestart' -Wait -PassThru
+          if($p.ExitCode-notin@(0,3010)){throw "ACE $($p.ExitCode)"}
+
+      - name: Extract and verify source custody
         shell: pwsh
         run: |
-          New-Item -ItemType Directory -Force artifacts|Out-Null; $z='_common/LFEA/BM4/BM4_L.zip'
-          if((Get-FileHash $z -Algorithm SHA256).Hash.ToLowerInvariant()-ne'978617cba50fa0b1a16c2fa71dc1e0d38e55ac834b191f887d100c6951abd8b9'){throw 'ZIP'}
-          $d=Join-Path $env:RUNNER_TEMP 'bm4l-bourdon-combined'; Expand-Archive $z $d -Force; $a=Join-Path $d 'BM4_L.ACCDB'
-          if((Get-FileHash $a -Algorithm SHA256).Hash.ToLowerInvariant()-ne'64c05a50e9ed0452622ff5880335460486f24ac8e6adecc9a300b549c9aa82f8'){throw 'ACCDB'}
-          "BM4L_ACCDB=$a" >> $env:GITHUB_ENV
-      - name: Baseline L4
+          $ErrorActionPreference='Stop'
+          New-Item -ItemType Directory -Force artifacts|Out-Null
+          $z='_common/LFEA/BM4/BM4_L.zip'
+          if((Get-FileHash $z -Algorithm SHA256).Hash.ToLowerInvariant()-ne'978617cba50fa0b1a16c2fa71dc1e0d38e55ac834b191f887d100c6951abd8b9'){throw 'ZIP custody mismatch.'}
+          $d=Join-Path $env:RUNNER_TEMP 'bm4l-bourdon-combined-788'
+          Expand-Archive $z $d -Force
+          $a=Join-Path $d 'BM4_L.ACCDB'
+          if((Get-FileHash $a -Algorithm SHA256).Hash.ToLowerInvariant()-ne'64c05a50e9ed0452622ff5880335460486f24ac8e6adecc9a300b549c9aa82f8'){throw 'ACCDB custody mismatch.'}
+          "BM4L_ACCDB=$a"|Out-File $env:GITHUB_ENV -Append -Encoding utf8
+
+      - name: Run canonical 788 baseline
         shell: pwsh
         run: |
-          node scripts/lfea-caesar-accdb-benchmark.mjs --accdb "$env:BM4L_ACCDB" --profile benchmarks/LFEA/CAESAR_ACCDB/bm4l-validation.profile.json --solve-linear true --solve-cases L4 --actual-out artifacts/base-actual.json --out artifacts/base-report.json --summary-out artifacts/base.md
-      - name: Add uniform pressure translation to existing MEC21 bend opening field
+          node scripts/lfea-caesar-accdb-benchmark.mjs --accdb "$env:BM4L_ACCDB" --profile benchmarks/LFEA/CAESAR_ACCDB/bm4l-validation.profile.json --solve-linear true --solve-cases L2,L3,L4,L5,L6,L14 --actual-out artifacts/base-actual.json --out artifacts/base-report.json --summary-out artifacts/base.md
+
+      - name: Add CAESAR translational bend effect to Trans+Rot free state
         shell: pwsh
         run: |
-          $p='src/core/fea-benchmarks/caesar-accdb-linear-solve.js'; $t=Get-Content $p -Raw
-          $a='const startTranslationGlobal = abcVectorToGlobal(input.segment.referenceAxes, startState.translationAbc);'
-          $b='const endTranslationGlobal = abcVectorToGlobal(input.segment.referenceAxes, endState.translationAbc);'
-          if(-not$t.Contains($a)-or-not$t.Contains($b)){throw 'Bourdon translation source shape'}
-          $ra="const startTranslationGlobal = abcVectorToGlobal(input.segment.referenceAxes, startState.translationAbc.map((value, index) => value + startState.uniformPressureTranslationAbc[index]));"
-          $rb="const endTranslationGlobal = abcVectorToGlobal(input.segment.referenceAxes, endState.translationAbc.map((value, index) => value + endState.uniformPressureTranslationAbc[index]));"
-          $t=$t.Replace($a,$ra).Replace($b,$rb); Set-Content $p $t -Encoding utf8
-          $diff=(git diff -- $p)-join"`n"; $diff>artifacts/combined-bourdon.patch
-          if(-not$diff.Contains('uniformPressureTranslationAbc')){throw 'patch missing'}
-      - name: Combined translational plus rotational L4
+          $ErrorActionPreference='Stop'
+          $p='src/core/linear-fea-piping-components/bourdon-pressure-expansion.js'
+          $t=Get-Content $p -Raw
+          $old='    translationAbc: bendOpeningTranslationInitialAbc,'
+          $new="    translationAbc: Object.freeze(bendOpeningTranslationInitialAbc.map((value, index) =>`n      value + uniformPressureTranslationInitialAbc[index])),"
+          if(($t.Split($old).Count-1)-ne1){throw 'Expected exactly one active MEC21 translation ownership site.'}
+          $t=$t.Replace($old,$new)
+          [IO.File]::WriteAllText((Join-Path $PWD $p),$t,(New-Object Text.UTF8Encoding($false)))
+          $diff=git diff -- $p | Out-String
+          $diff|Out-File artifacts/combined-bourdon.patch -Encoding utf8
+          if($diff-notmatch 'value \+ uniformPressureTranslationInitialAbc\[index\]'){throw 'Trans+Rot translation patch missing.'}
+
+      - name: Run source-backed Trans+Rot variant
         shell: pwsh
         run: |
-          node scripts/lfea-caesar-accdb-benchmark.mjs --accdb "$env:BM4L_ACCDB" --profile benchmarks/LFEA/CAESAR_ACCDB/bm4l-validation.profile.json --solve-linear true --solve-cases L4 --actual-out artifacts/test-actual.json --out artifacts/test-report.json --summary-out artifacts/test.md
-      - name: Compare
+          node scripts/lfea-caesar-accdb-benchmark.mjs --accdb "$env:BM4L_ACCDB" --profile benchmarks/LFEA/CAESAR_ACCDB/bm4l-validation.profile.json --solve-linear true --solve-cases L2,L3,L4,L5,L6,L14 --actual-out artifacts/test-actual.json --out artifacts/test-report.json --summary-out artifacts/test.md
+
+      - name: Compare source-backed signature
         shell: pwsh
         run: |
-          $b=Get-Content artifacts/base-report.json -Raw|ConvertFrom-Json; $t=Get-Content artifacts/test-report.json -Raw|ConvertFrom-Json
-          function C($r){$q=$r.qualification.cases[0];$f=@($q.comparison.rows|? status -eq 'FAIL');$rr=@($f|?{$_.entityKind-eq'NODE'-and$_.quantity-in@('FORCE','MOMENT')}).Count;$dd=@($f|?{$_.entityKind-eq'NODE'-and$_.quantity-in@('DISPLACEMENT','ROTATION')}).Count;$ee=@($f|?{$_.entityKind-eq'ELEMENT'-and$_.quantity-like'GLOBAL_END_*'}).Count;[ordered]@{r=$rr;d=$dd;e=$ee;total=$rr+$dd+$ee;equilibrium=$q.actualEvidence.recoveredEquilibrium}}
-          $o=[ordered]@{hypothesis='TRANSLATION_AND_ROTATION_MUST_INCLUDE_UNIFORM_BEND_TRANSLATION_PLUS_MEC21_OPENING';base=C $b;test=C $t};$o|ConvertTo-Json -Depth 16|Tee-Object -FilePath artifacts/combined-bourdon-ab.json
-      - uses: actions/upload-artifact@v4
+          $ErrorActionPreference='Stop'
+          $b=Get-Content artifacts/base-report.json -Raw|ConvertFrom-Json
+          $t=Get-Content artifacts/test-report.json -Raw|ConvertFrom-Json
+          $ba=Get-Content artifacts/base-actual.json -Raw|ConvertFrom-Json
+          $ta=Get-Content artifacts/test-actual.json -Raw|ConvertFrom-Json
+          function C($r,$id){
+            $q=$r.qualification.cases|Where-Object caseId -eq $id
+            $f=@($q.comparison.rows|Where-Object status -eq 'FAIL')
+            $rr=@($f|Where-Object{$_.entityKind-eq'NODE'-and$_.quantity-in@('FORCE','MOMENT')}).Count
+            $dd=@($f|Where-Object{$_.entityKind-eq'NODE'-and$_.quantity-in@('DISPLACEMENT','ROTATION')}).Count
+            $ee=@($f|Where-Object{$_.entityKind-eq'ELEMENT'-and$_.quantity-like'GLOBAL_END_*'}).Count
+            [ordered]@{r=$rr;d=$dd;e=$ee;total=$rr+$dd+$ee}
+          }
+          $expected=[ordered]@{L2=227;L3=129;L4=120;L5=97;L6=86;L14=129}
+          $cases=[ordered]@{};$bt=0;$tt=0
+          foreach($id in $expected.Keys){
+            $bc=C $b $id;$tc=C $t $id
+            if($bc.total-ne$expected[$id]){throw "788 baseline drift in ${id}: $($bc.total)"}
+            if($b.mechanics.cases.$id.recoveredEquilibrium.status-eq'FAIL'){throw "Baseline equilibrium failed in $id"}
+            if($t.mechanics.cases.$id.recoveredEquilibrium.status-eq'FAIL'){throw "Trans+Rot equilibrium failed in $id"}
+            $cases[$id]=[ordered]@{before=$bc;after=$tc;delta=$tc.total-$bc.total}
+            $bt+=$bc.total;$tt+=$tc.total
+          }
+          if($bt-ne788){throw "Baseline total drift: $bt"}
+
+          # Only pressure-containing cases may change.
+          foreach($id in @('L2','L3','L14')){
+            $bCase=$ba.mechanics.cases.$id
+            $tCase=$ta.mechanics.cases.$id
+            $bJson=$bCase|ConvertTo-Json -Depth 100 -Compress
+            $tJson=$tCase|ConvertTo-Json -Depth 100 -Compress
+            if($bJson-ne$tJson){throw "$id mechanics changed under pressure-only Trans+Rot patch."}
+          }
+          $l3=$ta.mechanics.cases.L3|ConvertTo-Json -Depth 100 -Compress
+          $l14=$ta.mechanics.cases.L14|ConvertTo-Json -Depth 100 -Compress
+          if($l3-ne$l14){throw 'L14 no longer reproduces L3 mechanics.'}
+
+          [ordered]@{
+            schema='lfea-m047-bourdon-trans-plus-rot-ab/v2'
+            authority='HEXAGON_CAESAR_BOURDON_PRESSURE_EFFECTS_TRANS_PLUS_ROT_INCLUDES_TRANSLATIONAL_AND_ROTATIONAL_BEND_EFFECTS'
+            implementationChange='translationAbc = bendOpeningTranslationAbc + uniformPressureTranslationAbc; rotationAbc unchanged'
+            baselineTotal=$bt
+            testTotal=$tt
+            delta=$tt-$bt
+            cases=$cases
+            invariants=[ordered]@{nonPressureCasesByteStable=$true;L14EqualsL3=$true;equilibriumAllCases='PASS'}
+            acceptanceBoundary='No pressure magnitude, reference value, tolerance, or coefficient is fitted. The added vector is the module existing closed-end pressure translation derived from section/material/pressure data.'
+          }|ConvertTo-Json -Depth 30|Tee-Object artifacts/combined-bourdon-ab.json
+
+      - name: Upload evidence
         if: always()
+        uses: actions/upload-artifact@v4
         with:
           name: bm4l-combined-bourdon-ab-${{ github.sha }}
           path: artifacts/
+          if-no-files-found: error
           retention-days: 14

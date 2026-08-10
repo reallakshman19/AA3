@@ -147,10 +147,17 @@ function resultsSection(stage, readiness) {
 }
 
 function releaseSection(readiness) {
+  const releaseBinding = readiness?.releaseBinding;
+  const refs = releaseBinding?.semanticHash
+    ? [ref('TEMPLATE_RELEASE_RECORD', releaseBinding.semanticHash)]
+    : [];
   if (readiness?.releaseState === 'RELEASE_QUALIFIED') {
-    return section('COMPLETE', [], [], ['VIEW_RELEASE']);
+    return section('COMPLETE', [], refs, ['VIEW_RELEASE']);
   }
-  return section('BLOCKED', [readiness?.releaseState ?? 'RELEASE_NOT_QUALIFIED'], [], []);
+  const reasons = readiness?.releaseBlockingReasons?.length
+    ? readiness.releaseBlockingReasons
+    : [readiness?.releaseState ?? 'RELEASE_NOT_QUALIFIED'];
+  return section('BLOCKED', reasons, refs, refs.length ? ['VIEW_RELEASE'] : []);
 }
 
 function preparationRefs(projection) {

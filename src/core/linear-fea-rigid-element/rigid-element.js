@@ -108,7 +108,12 @@ export function compileCaesarRigidElementAuthority(request) {
     secondMomentZ: section.secondMomentZ,
     polarMoment: section.polarMoment,
     length: accepted.length,
-    shearDeformation: false,
+    // Hexagon defines rigid stiffness from the matching pipe using 10x wall.
+    // The retained CAESAR pipe formulation uses shear coefficient 2, so the
+    // frame kernel's shear-area convention uses kappa = 1/2.
+    shearDeformation: true,
+    shearCorrectionFactorY: 0.5,
+    shearCorrectionFactorZ: 0.5,
   }).matrix;
   const gravity = physicalWeights(accepted);
   const temperatureDifference = accepted.operatingTemperature - accepted.installationTemperature;

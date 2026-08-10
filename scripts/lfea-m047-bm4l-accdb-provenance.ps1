@@ -35,7 +35,7 @@ function Get-FileSha256 {
 }
 
 function Get-TextSha256 {
-  param([Parameter(Mandatory = $true)][string]$Text)
+  param([Parameter(Mandatory = $true)][AllowEmptyString()][string]$Text)
   $bytes = [System.Text.Encoding]::UTF8.GetBytes($Text)
   $hasher = [System.Security.Cryptography.SHA256]::Create()
   try {

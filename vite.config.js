@@ -32,6 +32,28 @@ const PURE_ENGINEERING_ENRICHMENT_PRODUCTION_OVERLAYS = new Set([
   '/src/workspace/engineering-enrichment/production-secondary-density-overlays.js',
 ]);
 
+function mainChunkModuleDiagnostic() {
+  return {
+    name: 'main-chunk-module-diagnostic',
+    generateBundle(_options, bundle) {
+      for (const artifact of Object.values(bundle)) {
+        if (artifact.type !== 'chunk' || artifact.name !== 'main') continue;
+        const rows = Object.entries(artifact.modules)
+          .map(([id, detail]) => ({
+            id: id.replaceAll('\\', '/'),
+            renderedLength: detail.renderedLength || 0,
+          }))
+          .filter((row) => row.id.includes('/src/'))
+          .sort((left, right) => right.renderedLength - left.renderedLength)
+          .slice(0, 120);
+        console.log('BUNDLE_MAIN_MODULES_BEGIN');
+        for (const row of rows) console.log(`BUNDLE_MAIN_MODULE ${row.renderedLength} ${row.id}`);
+        console.log('BUNDLE_MAIN_MODULES_END');
+      }
+    },
+  };
+}
+
 /**
  * Keep manual chunking limited to dependency-oriented or calculation-core
  * domains. Workspace modules remain graph-owned because they contain stores,
@@ -44,11 +66,7 @@ export function manualChunk(id) {
   if (source.includes('vite/preload-helper')) return 'runtime';
   if (source.includes('/node_modules/three/examples/')) return 'vendor-three-examples';
   if (source.includes('/node_modules/three/')) return 'vendor-three-core';
-  // Keep xlsx on Rollup's existing dynamic-import boundary; it is already a
-  // large isolated chunk and must not be folded into the generic leaf vendor.
   if (source.includes('/node_modules/xlsx/')) return undefined;
-  // Dependency-only partition. Workspace modules remain graph-owned below so
-  // this cannot create controller/store evaluation-order cycles.
   if (source.includes('/node_modules/')) return 'vendor';
   if (source.includes('/src/core/element-fea/')) return 'core-element-fea';
   if (source.includes('/src/core/local-continuum/')) return 'core-local-continuum';
@@ -76,16 +94,10 @@ export function manualChunk(id) {
   if (source.includes('/src/calc-workspace/')) return 'calculation-workspaces';
   if (source.includes('/src/vendors/')) return 'vendor-integrations';
   if (source.includes('/src/utils/') || source.includes('/src/mocks/')) return 'application-support';
-  // These exact paths are stateless LAFEA meshing contracts/producers. Keeping
-  // the exception explicit avoids pulling controllers, stores, views, or other
-  // singleton-bearing workspace modules into a forced chunk.
   if ([...PURE_LAFEA_MESHING_WORKSPACE_MODULES]
     .some((modulePath) => source.endsWith(modulePath))) {
     return 'lafea-meshing-contracts';
   }
-  // This helper owns no controller/store/singleton state. Splitting its I/O and
-  // style dependencies gives the graph a safe leaf boundary without forcing
-  // the LAFEA workbench controller itself into a manual chunk.
   if (source.endsWith('/src/workspace/lafea-workbench-controller-io.js')) {
     return 'lafea-workbench-io';
   }
@@ -103,9 +115,6 @@ export function manualChunk(id) {
     || source.endsWith('/src/workspace/viewport-interaction/topology-edit-endpoint-affordance-runtime.js')) {
     return 'topology-edit-r1-pure-presentation';
   }
-  // Fidelity evidence publication is a stateless projection to host datasets.
-  // Keep it out of the large stateful SJSON controller chunk while leaving the
-  // controller/backend lifecycle under Rollup graph-aware ownership.
   if (source.endsWith('/src/workspace/topology-edit/topology-edit-sjson-fidelity-evidence-v2.js')) {
     return 'topology-edit-sjson-evidence';
   }
@@ -116,24 +125,17 @@ export function manualChunk(id) {
     || source.endsWith('/src/workspace/support-load-viewport-callout-projection.js')) {
     return 'workspace-viewport-engineering-projections';
   }
-  // These production enrichment files are deterministic builders/validators
-  // over caller-supplied values. They own no controller, store, EventBus,
-  // renderer, DOM node, or module-level mutable singleton. Keep the exception
-  // exact so stateful engineering-load execution remains graph-owned.
   if ([...PURE_ENGINEERING_ENRICHMENT_PRODUCTION_OVERLAYS]
     .some((modulePath) => source.endsWith(modulePath))) {
     return 'workspace-engineering-enrichment-authority-projections';
   }
-
-  // Rollup must own the complete stateful workspace graph so evaluation order
-  // follows static dependency analysis rather than filename-based partitions.
   if (source.includes('/src/workspace/')) return undefined;
   return undefined;
 }
 
 export default defineConfig({
   base: '/Advanced_Analysis/',
-  plugins: [],
+  plugins: [mainChunkModuleDiagnostic()],
   define: {
     __BUILD_TIME__: JSON.stringify(buildTime),
   },
@@ -146,9 +148,6 @@ export default defineConfig({
       },
       output: {
         manualChunks: manualChunk,
-        // Allow dependencies of a selected manual chunk to move with that
-        // chunk. Explicit-only ownership created circular chunks and TDZ
-        // failures in the generated ESM graph.
         onlyExplicitManualChunks: false,
       },
     },

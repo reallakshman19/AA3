@@ -1,0 +1,154 @@
+name: M047 BM4_L tee authority audit
+
+on:
+  push:
+    branches: [agent/m047-bm4l-fresh-qualification]
+    paths: ['.github/workflows/m047-bm4l-tee-authority-audit.yml']
+
+permissions:
+  contents: read
+
+jobs:
+  audit:
+    runs-on: windows-latest
+    timeout-minutes: 45
+    env:
+      MODEL_COMMON_COMMIT: '45d51ea18624f5775805f399110c1738301c0d90'
+      REPORT_COMMON_COMMIT: '179c4831cf521cf797c13699cfbbd118315c9244'
+      ZIP_SHA256: '978617cba50fa0b1a16c2fa71dc1e0d38e55ac834b191f887d100c6951abd8b9'
+      MEMBER_SHA256: '64c05a50e9ed0452622ff5880335460486f24ac8e6adecc9a300b549c9aa82f8'
+      ACE_URL: 'https://download.microsoft.com/download/3/5/C/35C84C36-661A-44E6-9324-8786B8DBE231/accessdatabaseengine_X64.exe'
+      ACE_SHA256: '04e96c9f1a1f7d251a88aececf1dc10ff65950392787427c00814a43308003de'
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: agent/m047-bm4l-fresh-qualification
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+      - run: npm ci
+
+      - name: Install ACE and fetch pinned model/report sources
+        shell: pwsh
+        run: |
+          $ErrorActionPreference='Stop'
+          New-Item -ItemType Directory -Force artifacts/tee-audit/source,artifacts/tee-audit/run | Out-Null
+          $installer=Join-Path $PWD 'artifacts/tee-audit/accessdatabaseengine_X64.exe'
+          Invoke-WebRequest -Uri $env:ACE_URL -OutFile $installer
+          if((Get-FileHash $installer -Algorithm SHA256).Hash.ToLowerInvariant() -ne $env:ACE_SHA256){ throw 'ACE installer hash mismatch.' }
+          $sig=Get-AuthenticodeSignature $installer
+          if($sig.Status -ne 'Valid' -or $sig.SignerCertificate.Subject -notmatch 'Microsoft'){ throw 'ACE signature validation failed.' }
+          $p=Start-Process $installer -ArgumentList '/quiet','/norestart' -Wait -PassThru
+          if($p.ExitCode -notin @(0,3010)){ throw "ACE install failed: $($p.ExitCode)" }
+          Remove-Item $installer -Force
+
+          $zip='artifacts/tee-audit/BM4_L.zip'
+          Invoke-WebRequest -Uri "https://raw.githubusercontent.com/reallaksh19/Common/$env:MODEL_COMMON_COMMIT/LFEA/BM4/BM4_L.zip" -OutFile $zip
+          if((Get-FileHash $zip -Algorithm SHA256).Hash.ToLowerInvariant() -ne $env:ZIP_SHA256){ throw 'ZIP hash mismatch.' }
+          Expand-Archive $zip -DestinationPath artifacts/tee-audit/source -Force
+          $accdb=Join-Path $PWD 'artifacts/tee-audit/source/BM4_L.ACCDB'
+          if((Get-FileHash $accdb -Algorithm SHA256).Hash.ToLowerInvariant() -ne $env:MEMBER_SHA256){ throw 'ACCDB member hash mismatch.' }
+          "ACCDB=$accdb" >> $env:GITHUB_ENV
+
+          Invoke-WebRequest -Uri "https://raw.githubusercontent.com/reallaksh19/Common/$env:REPORT_COMMON_COMMIT/LFEA/BM4/Miscdata_BM4_L.txt" -OutFile artifacts/tee-audit/Miscdata_BM4_L.txt
+          Invoke-WebRequest -Uri "https://raw.githubusercontent.com/reallaksh19/Common/$env:REPORT_COMMON_COMMIT/LFEA/BM4/Loadcasereport_BM4_L.txt" -OutFile artifacts/tee-audit/Loadcasereport_BM4_L.txt
+          $hashes=[ordered]@{
+            miscdataSha256=(Get-FileHash artifacts/tee-audit/Miscdata_BM4_L.txt -Algorithm SHA256).Hash.ToLowerInvariant()
+            loadCaseReportSha256=(Get-FileHash artifacts/tee-audit/Loadcasereport_BM4_L.txt -Algorithm SHA256).Hash.ToLowerInvariant()
+          }
+          $hashes | ConvertTo-Json | Set-Content artifacts/tee-audit/report-hashes.json -Encoding utf8
+
+      - name: Export INPUT_SIFTEES exactly
+        shell: pwsh
+        run: |
+          $ErrorActionPreference='Stop'
+          $cn=New-Object System.Data.OleDb.OleDbConnection("Provider=Microsoft.ACE.OLEDB.12.0;Data Source=$env:ACCDB;Persist Security Info=False;")
+          $cn.Open()
+          try {
+            $cmd=$cn.CreateCommand(); $cmd.CommandText='SELECT * FROM INPUT_SIFTEES ORDER BY NODE'
+            $da=New-Object System.Data.OleDb.OleDbDataAdapter($cmd)
+            $dt=New-Object System.Data.DataTable
+            [void]$da.Fill($dt)
+            $rows=@()
+            foreach($r in $dt.Rows){
+              $o=[ordered]@{}
+              foreach($c in $dt.Columns){
+                $v=$r[$c.ColumnName]
+                $o[$c.ColumnName]=if($v -is [DBNull]){$null}else{$v}
+              }
+              $rows += [pscustomobject]$o
+            }
+            $rows | ConvertTo-Json -Depth 8 | Set-Content artifacts/tee-audit/input-siftees.json -Encoding utf8
+          } finally { $cn.Close() }
+
+      - name: Solve promoted smooth90 production state
+        shell: pwsh
+        run: |
+          $ErrorActionPreference='Stop'
+          node scripts/lfea-caesar-accdb-benchmark.mjs `
+            --accdb $env:ACCDB `
+            --profile benchmarks/LFEA/CAESAR_ACCDB/bm4l-validation.profile.json `
+            --solve-linear true `
+            --solve-cases L2,L3,L4,L5,L6,L14 `
+            --actual-out artifacts/tee-audit/run/actual.json `
+            --out artifacts/tee-audit/run/report.json
+          node scripts/lfea-b3.1-frame-element-check.mjs
+          node scripts/lfea-b3.2-piping-component-check.mjs
+          node scripts/lfea-b3.3-solver-check.mjs
+          node scripts/lfea-b3.4-recovery-check.mjs
+
+      - name: Bind CAESAR report to ACCDB and solver tee modifiers
+        shell: pwsh
+        run: |
+          $ErrorActionPreference='Stop'
+          @'
+          const fs=require('fs');
+          const text=fs.readFileSync('artifacts/tee-audit/Miscdata_BM4_L.txt','utf8');
+          const input=JSON.parse(fs.readFileSync('artifacts/tee-audit/input-siftees.json','utf8').replace(/^\uFEFF/,''));
+          const actual=JSON.parse(fs.readFileSync('artifacts/tee-audit/run/actual.json','utf8').replace(/^\uFEFF/,''));
+          const hashes=JSON.parse(fs.readFileSync('artifacts/tee-audit/report-hashes.json','utf8').replace(/^\uFEFF/,''));
+          const blocks=text.split(/(?=Tee Node=\s*\d+)/g).filter(x=>/^Tee Node=/m.test(x));
+          const report=[];
+          for(const block of blocks){
+            const node=Number((block.match(/Tee Node=\s*(\d+)/)||[])[1]);
+            const type=(block.match(/Type\s*=\s*([0-9.]+)/)||[])[1]||null;
+            const f=block.match(/FLEXr\s+([0-9.]+)\s+([0-9.]+)\s+([0-9.]+)\s*\|\s*FLEXb\s+([0-9.]+)\s+([0-9.]+)\s+([0-9.]+)/);
+            const k=block.match(/Kr\(min->max\)\s+([0-9.E+-]+)\s+([0-9.E+-]+)\s+([0-9.E+-]+)\s*\|\s*Kb\(min->max\)\s+([0-9.E+-]+)\s+([0-9.E+-]+)\s+([0-9.E+-]+)/);
+            if(!node||!f||!k) continue;
+            const n=v=>Number(v);
+            const row={nodeId:String(node),reportType:type,
+              flex:{run:{inPlane:n(f[1]),outOfPlane:n(f[2]),torsional:n(f[3])},branch:{inPlane:n(f[4]),outOfPlane:n(f[5]),torsional:n(f[6])}},
+              stiffnessNmPerDeg:{run:{inPlane:n(k[1]),outOfPlane:n(k[2]),torsional:n(k[3])},branch:{inPlane:n(k[4]),outOfPlane:n(k[5]),torsional:n(k[6])}},
+              userOverrideNote:/calculated B31J Tee SIFs or flexibilities were overwritten with a user-defined/i.test(block)};
+            row.reportRigid=Object.values(row.flex.run).every(v=>Math.abs(v-1)<5e-4)&&Object.values(row.flex.branch).every(v=>Math.abs(v-1)<5e-4);
+            report.push(row);
+          }
+          const solver=(actual.mechanics.cases.L2.teeJunctions||[]);
+          const solverBy=new Map(solver.map(x=>[String(x.nodeId),x]));
+          const inputBy=new Map(input.map(x=>[String(x.NODE),x]));
+          const comparisons=report.map(r=>{
+            const s=solverBy.get(r.nodeId)||null;
+            const factors=s?.directionalFlexibilityFactors||null;
+            const flexible=factors?Object.values(factors.run).concat(Object.values(factors.branch)).some(v=>v>1.0005):false;
+            return {...r,inputSiftee:inputBy.get(r.nodeId)||null,solver:factors,solverTreatsFlexible:flexible,
+              conflict:r.reportRigid&&flexible?'REPORT_RIGID_SOLVER_FLEXIBLE':(!r.reportRigid&&!s?'REPORT_FLEXIBLE_SOLVER_MISSING':'NONE')};
+          });
+          const counts={};
+          for(const c of ['L2','L3','L4','L5','L6','L14']){
+            const R=JSON.parse(fs.readFileSync('artifacts/tee-audit/run/report.json','utf8').replace(/^\uFEFF/,''));
+            counts[c]={restraint:R.restraintBasis.cases[c].exceedingComponentCount,displacementRotation:R.displacementBasis.cases[c].exceedingComponentCount,elementEnd:R.elementBasis.cases[c].exceedingComponentCount};
+            if(actual.mechanics.cases[c].recoveredEquilibrium.status!=='PASS') throw new Error(`${c} recovery equilibrium failed`);
+          }
+          const out={schema:'m047-bm4l-tee-authority-audit/v1',source:{modelCommonCommit:process.env.MODEL_COMMON_COMMIT,reportCommonCommit:process.env.REPORT_COMMON_COMMIT,zipSha256:process.env.ZIP_SHA256,accdbSha256:process.env.MEMBER_SHA256,...hashes},counts,reportTees:report,comparisons,conflicts:comparisons.filter(x=>x.conflict!=='NONE').map(x=>({nodeId:x.nodeId,reportType:x.reportType,conflict:x.conflict,reportFlex:x.flex,solver:x.solver,inputSiftee:x.inputSiftee}))};
+          fs.writeFileSync('artifacts/tee-audit/audit.json',JSON.stringify(out,null,2)+'\n');
+          console.log(JSON.stringify({counts,conflicts:out.conflicts},null,2));
+          '@ | node
+
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: m047-bm4l-tee-authority-audit-${{ github.sha }}
+          path: artifacts/tee-audit
+          retention-days: 30
+          if-no-files-found: error

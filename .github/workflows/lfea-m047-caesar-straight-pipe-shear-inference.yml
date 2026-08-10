@@ -1,0 +1,44 @@
+name: M047 CAESAR straight-pipe shear inference harness
+
+on:
+  push:
+    branches:
+      - agent/m047-bm4l-root-cause-991
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  shear-inference-self-test:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+      - run: npm ci --ignore-scripts
+      - name: Syntax check
+        run: node --check scripts/lfea-m047-caesar-straight-pipe-shear-inference.mjs
+      - name: Deterministic inference self-test
+        run: node scripts/lfea-m047-caesar-straight-pipe-shear-inference.mjs --self-test
+      - name: Validate pending BM4_L CAESAR input packet
+        run: |
+          node --input-type=module <<'EOF'
+          import fs from 'node:fs';
+          const p='benchmarks/LFEA/CAESAR_ACCDB/bm4l-caesar-straight-pipe-shear-reference.template.json';
+          const x=JSON.parse(fs.readFileSync(p,'utf8'));
+          if(x.schema!=='lfea-m047-caesar-straight-pipe-shear-reference/v1') throw new Error('schema');
+          if(x.caesarVersion!=='14.000') throw new Error('CAESAR version');
+          if(x.sections.length!==2) throw new Error('expected two BM4_L sections');
+          for(const s of x.sections){
+            if(s.tests.length!==8) throw new Error(`${s.sectionId}: expected four lengths in two transverse axes`);
+            const lengths=[...new Set(s.tests.map(t=>t.lengthM))];
+            if(lengths.length!==4) throw new Error(`${s.sectionId}: length design drift`);
+            if(s.elasticModulusPa!==null||s.poissonRatio!==null||s.shearModulusPa!==null) throw new Error(`${s.sectionId}: authority placeholders must remain pending until CAESAR run`);
+            if(s.tests.some(t=>t.tipDisplacementM!==null||t.tipRotationRad!==null)) throw new Error(`${s.sectionId}: CAESAR output placeholders must remain pending in template`);
+          }
+          console.log(JSON.stringify({status:'PASS',sections:x.sections.map(s=>({sectionId:s.sectionId,lengths:[...new Set(s.tests.map(t=>t.lengthM))]}))},null,2));
+          EOF

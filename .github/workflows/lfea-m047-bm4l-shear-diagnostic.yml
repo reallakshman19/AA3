@@ -12,7 +12,7 @@ jobs:
   shear-diagnostic:
     if: github.event_name == 'workflow_dispatch' || github.head_ref == 'agent/m047-bm4l-root-cause-991'
     runs-on: windows-2022
-    timeout-minutes: 40
+    timeout-minutes: 45
     steps:
       - name: Checkout canonical 788 implementation
         uses: actions/checkout@v4
@@ -40,133 +40,166 @@ jobs:
       - name: Install signed Microsoft ACE 2016 x64
         shell: pwsh
         run: |
-          $ErrorActionPreference = 'Stop'
-          $installer = Join-Path $env:RUNNER_TEMP 'accessdatabaseengine_X64.exe'
+          $ErrorActionPreference='Stop'
+          $installer=Join-Path $env:RUNNER_TEMP 'accessdatabaseengine_X64.exe'
           Invoke-WebRequest -Uri 'https://download.microsoft.com/download/3/5/C/35C84C36-661A-44E6-9324-8786B8DBE231/accessdatabaseengine_X64.exe' -OutFile $installer
-          $signature = Get-AuthenticodeSignature -FilePath $installer
-          if ($signature.Status -ne 'Valid' -or [string]$signature.SignerCertificate.Subject -notmatch 'Microsoft') { throw 'Microsoft ACE installer signature check failed.' }
-          $p = Start-Process -FilePath $installer -ArgumentList '/quiet','/norestart' -Wait -PassThru
-          if ($p.ExitCode -notin @(0,3010)) { throw "ACE install failed with exit $($p.ExitCode)" }
+          $sig=Get-AuthenticodeSignature $installer
+          if($sig.Status-ne'Valid' -or [string]$sig.SignerCertificate.Subject-notmatch'Microsoft'){throw 'ACE signature check failed.'}
+          $p=Start-Process $installer -ArgumentList '/quiet','/norestart' -Wait -PassThru
+          if($p.ExitCode-notin@(0,3010)){throw "ACE install failed: $($p.ExitCode)"}
 
       - name: Verify source custody
         shell: pwsh
         run: |
           $ErrorActionPreference='Stop'
-          New-Item -ItemType Directory -Force -Path artifacts | Out-Null
+          New-Item -ItemType Directory -Force -Path artifacts|Out-Null
           $zip='_common/LFEA/BM4/BM4_L.zip'
-          if ((Get-FileHash -Algorithm SHA256 $zip).Hash.ToLowerInvariant() -ne '978617cba50fa0b1a16c2fa71dc1e0d38e55ac834b191f887d100c6951abd8b9') { throw 'ZIP custody mismatch.' }
-          $extract=Join-Path $env:RUNNER_TEMP 'bm4l-shear-diagnostic'
-          Expand-Archive -LiteralPath $zip -DestinationPath $extract -Force
-          $accdb=Join-Path $extract 'BM4_L.ACCDB'
-          if ((Get-FileHash -Algorithm SHA256 $accdb).Hash.ToLowerInvariant() -ne '64c05a50e9ed0452622ff5880335460486f24ac8e6adecc9a300b549c9aa82f8') { throw 'ACCDB custody mismatch.' }
-          "BM4L_ACCDB=$accdb" | Out-File -FilePath $env:GITHUB_ENV -Append -Encoding utf8
+          if((Get-FileHash -Algorithm SHA256 $zip).Hash.ToLowerInvariant()-ne'978617cba50fa0b1a16c2fa71dc1e0d38e55ac834b191f887d100c6951abd8b9'){throw 'ZIP custody mismatch.'}
+          $dir=Join-Path $env:RUNNER_TEMP 'bm4l-shear-ownership'
+          Expand-Archive $zip $dir -Force
+          $accdb=Join-Path $dir 'BM4_L.ACCDB'
+          if((Get-FileHash -Algorithm SHA256 $accdb).Hash.ToLowerInvariant()-ne'64c05a50e9ed0452622ff5880335460486f24ac8e6adecc9a300b549c9aa82f8'){throw 'ACCDB custody mismatch.'}
+          "BM4L_ACCDB=$accdb"|Out-File $env:GITHUB_ENV -Append -Encoding utf8
 
       - name: Run canonical 788 baseline
         shell: pwsh
         run: |
-          node scripts/lfea-caesar-accdb-benchmark.mjs `
-            --accdb "$env:BM4L_ACCDB" `
-            --profile benchmarks/LFEA/CAESAR_ACCDB/bm4l-validation.profile.json `
-            --solve-linear true `
-            --solve-cases L2,L3,L4,L5,L6,L14 `
-            --actual-out artifacts/baseline-actual.json `
-            --out artifacts/baseline-report.json `
-            --summary-out artifacts/baseline-summary.md
+          node scripts/lfea-caesar-accdb-benchmark.mjs --accdb "$env:BM4L_ACCDB" --profile benchmarks/LFEA/CAESAR_ACCDB/bm4l-validation.profile.json --solve-linear true --solve-cases L2,L3,L4,L5,L6,L14 --actual-out artifacts/baseline-actual.json --out artifacts/baseline-report.json --summary-out artifacts/baseline-summary.md
 
-      - name: Patch Timoshenko kappa 0.50 diagnostic
+      - name: Patch bend arcs only to Timoshenko kappa 0.50
         shell: pwsh
         run: |
           $ErrorActionPreference='Stop'
           $path='src/core/fea-benchmarks/caesar-accdb-linear-solve.js'
           $text=Get-Content $path -Raw
-          $old="    straightPipeFormulation: 'PIPE_FRAME3D_EULER_BERNOULLI_V1',`r`n    shearDeformation: false,`r`n    releaseRule: 'STATIC_CONDENSATION_V1',"
-          if (-not $text.Contains($old)) {
-            $old="    straightPipeFormulation: 'PIPE_FRAME3D_EULER_BERNOULLI_V1',`n    shearDeformation: false,`n    releaseRule: 'STATIC_CONDENSATION_V1',"
-          }
-          $new="    straightPipeFormulation: 'PIPE_FRAME3D_TIMOSHENKO_V1',`n    shearDeformation: true,`n    shearCorrectionFactorY: { value: 0.50, source: 'M047_DIAGNOSTIC_NOT_AUTHORITY' },`n    shearCorrectionFactorZ: { value: 0.50, source: 'M047_DIAGNOSTIC_NOT_AUTHORITY' },`n    releaseRule: 'STATIC_CONDENSATION_V1',"
-          if (-not $text.Contains($old)) { throw 'Canonical frame profile block not found.' }
-          $text=$text.Replace($old,$new)
-          [System.IO.File]::WriteAllText((Join-Path $PWD $path),$text,(New-Object System.Text.UTF8Encoding($false)))
+          $needle='      frameElementProfile: frameProfile(),'
+          if(($text.Split($needle).Count-1)-ne1){throw 'Expected exactly one bend frame profile call.'}
+          $text=$text.Replace($needle,'      frameElementProfile: diagnosticTimoshenkoFrameProfile(),')
+          $marker='function frameProfile() {'
+          if(-not $text.Contains($marker)){throw 'frameProfile marker missing.'}
+          $func=@'
+function diagnosticTimoshenkoFrameProfile() {
+  return sealFrameElementProfile({
+    schema: 'fea-linear-frame-element-profile/v1',
+    profileId: 'M047-DIAGNOSTIC-TIMO-K050-BEND',
+    straightPipeFormulation: 'PIPE_FRAME3D_TIMOSHENKO_V1',
+    shearDeformation: true,
+    shearCorrectionFactorY: { value: 0.50, source: 'M047_DIAGNOSTIC_NOT_AUTHORITY' },
+    shearCorrectionFactorZ: { value: 0.50, source: 'M047_DIAGNOSTIC_NOT_AUTHORITY' },
+    releaseRule: 'STATIC_CONDENSATION_V1',
+    thermalStrainApproximation: 'UNIFORM_TEMPERATURE_ALPHA_DELTA_T_V1',
+    releaseSingularityTolerance: { value: 1e-12, source: 'CAESAR_ACCDB_LINEAR_SOLVE_PROFILE_V1' },
+    semanticHash: '',
+  });
+}
 
-      - name: Run kappa 0.50 diagnostic
+'@
+          $text=$text.Replace($marker,$func+$marker)
+          [IO.File]::WriteAllText((Join-Path $PWD $path),$text,(New-Object Text.UTF8Encoding($false)))
+
+      - name: Run bend-only shear diagnostic
         shell: pwsh
         run: |
-          node scripts/lfea-caesar-accdb-benchmark.mjs `
-            --accdb "$env:BM4L_ACCDB" `
-            --profile benchmarks/LFEA/CAESAR_ACCDB/bm4l-validation.profile.json `
-            --solve-linear true `
-            --solve-cases L2,L3,L4,L5,L6,L14 `
-            --actual-out artifacts/kappa050-actual.json `
-            --out artifacts/kappa050-report.json `
-            --summary-out artifacts/kappa050-summary.md
+          node scripts/lfea-caesar-accdb-benchmark.mjs --accdb "$env:BM4L_ACCDB" --profile benchmarks/LFEA/CAESAR_ACCDB/bm4l-validation.profile.json --solve-linear true --solve-cases L2,L3,L4,L5,L6,L14 --actual-out artifacts/bend-only-actual.json --out artifacts/bend-only-report.json --summary-out artifacts/bend-only-summary.md
 
-      - name: Patch Timoshenko kappa 0.53 diagnostic
+      - name: Patch non-bend elements only to Timoshenko kappa 0.50
         shell: pwsh
         run: |
           $ErrorActionPreference='Stop'
           $path='src/core/fea-benchmarks/caesar-accdb-linear-solve.js'
           git checkout -- $path
           $text=Get-Content $path -Raw
-          $old="    straightPipeFormulation: 'PIPE_FRAME3D_EULER_BERNOULLI_V1',`r`n    shearDeformation: false,`r`n    releaseRule: 'STATIC_CONDENSATION_V1',"
-          if (-not $text.Contains($old)) {
-            $old="    straightPipeFormulation: 'PIPE_FRAME3D_EULER_BERNOULLI_V1',`n    shearDeformation: false,`n    releaseRule: 'STATIC_CONDENSATION_V1',"
-          }
-          $new="    straightPipeFormulation: 'PIPE_FRAME3D_TIMOSHENKO_V1',`n    shearDeformation: true,`n    shearCorrectionFactorY: { value: 0.53, source: 'M047_DIAGNOSTIC_NOT_AUTHORITY' },`n    shearCorrectionFactorZ: { value: 0.53, source: 'M047_DIAGNOSTIC_NOT_AUTHORITY' },`n    releaseRule: 'STATIC_CONDENSATION_V1',"
-          if (-not $text.Contains($old)) { throw 'Canonical frame profile block not found.' }
-          $text=$text.Replace($old,$new)
-          [System.IO.File]::WriteAllText((Join-Path $PWD $path),$text,(New-Object System.Text.UTF8Encoding($false)))
+          $needle='      frameElementProfile: frameProfile(),'
+          if(($text.Split($needle).Count-1)-ne1){throw 'Expected exactly one bend frame profile call.'}
+          $text=$text.Replace($needle,'      frameElementProfile: diagnosticEulerFrameProfile(),')
+          $old=@'
+function frameProfile() {
+  return sealFrameElementProfile({
+    schema: 'fea-linear-frame-element-profile/v1',
+    profileId: 'LINEAR-FRAME-ELEMENT-R1',
+    straightPipeFormulation: 'PIPE_FRAME3D_EULER_BERNOULLI_V1',
+    shearDeformation: false,
+    releaseRule: 'STATIC_CONDENSATION_V1',
+    thermalStrainApproximation: 'UNIFORM_TEMPERATURE_ALPHA_DELTA_T_V1',
+    releaseSingularityTolerance: { value: 1e-12, source: PROFILE_SOURCE },
+    semanticHash: '',
+  });
+}
+'@
+          if(-not $text.Contains($old)){throw 'Canonical frameProfile block missing.'}
+          $new=@'
+function diagnosticEulerFrameProfile() {
+  return sealFrameElementProfile({
+    schema: 'fea-linear-frame-element-profile/v1',
+    profileId: 'M047-DIAGNOSTIC-EULER-BEND',
+    straightPipeFormulation: 'PIPE_FRAME3D_EULER_BERNOULLI_V1',
+    shearDeformation: false,
+    releaseRule: 'STATIC_CONDENSATION_V1',
+    thermalStrainApproximation: 'UNIFORM_TEMPERATURE_ALPHA_DELTA_T_V1',
+    releaseSingularityTolerance: { value: 1e-12, source: PROFILE_SOURCE },
+    semanticHash: '',
+  });
+}
 
-      - name: Run kappa 0.53 diagnostic
+function frameProfile() {
+  return sealFrameElementProfile({
+    schema: 'fea-linear-frame-element-profile/v1',
+    profileId: 'M047-DIAGNOSTIC-TIMO-K050-NONBEND',
+    straightPipeFormulation: 'PIPE_FRAME3D_TIMOSHENKO_V1',
+    shearDeformation: true,
+    shearCorrectionFactorY: { value: 0.50, source: 'M047_DIAGNOSTIC_NOT_AUTHORITY' },
+    shearCorrectionFactorZ: { value: 0.50, source: 'M047_DIAGNOSTIC_NOT_AUTHORITY' },
+    releaseRule: 'STATIC_CONDENSATION_V1',
+    thermalStrainApproximation: 'UNIFORM_TEMPERATURE_ALPHA_DELTA_T_V1',
+    releaseSingularityTolerance: { value: 1e-12, source: PROFILE_SOURCE },
+    semanticHash: '',
+  });
+}
+'@
+          $text=$text.Replace($old,$new)
+          [IO.File]::WriteAllText((Join-Path $PWD $path),$text,(New-Object Text.UTF8Encoding($false)))
+
+      - name: Run non-bend-only shear diagnostic
         shell: pwsh
         run: |
-          node scripts/lfea-caesar-accdb-benchmark.mjs `
-            --accdb "$env:BM4L_ACCDB" `
-            --profile benchmarks/LFEA/CAESAR_ACCDB/bm4l-validation.profile.json `
-            --solve-linear true `
-            --solve-cases L2,L3,L4,L5,L6,L14 `
-            --actual-out artifacts/kappa053-actual.json `
-            --out artifacts/kappa053-report.json `
-            --summary-out artifacts/kappa053-summary.md
+          node scripts/lfea-caesar-accdb-benchmark.mjs --accdb "$env:BM4L_ACCDB" --profile benchmarks/LFEA/CAESAR_ACCDB/bm4l-validation.profile.json --solve-linear true --solve-cases L2,L3,L4,L5,L6,L14 --actual-out artifacts/nonbend-only-actual.json --out artifacts/nonbend-only-report.json --summary-out artifacts/nonbend-only-summary.md
 
-      - name: Compare diagnostic signatures
+      - name: Compare ownership signatures
         shell: pwsh
         run: |
           $ErrorActionPreference='Stop'
           function Stats($report,$id){
             $case=$report.qualification.cases|Where-Object caseId -eq $id
             $fails=@($case.comparison.rows|Where-Object status -eq 'FAIL')
-            $r=@($fails|Where-Object{ $_.entityKind-eq'NODE' -and $_.quantity-in@('FORCE','MOMENT') }).Count
-            $d=@($fails|Where-Object{ $_.entityKind-eq'NODE' -and $_.quantity-in@('DISPLACEMENT','ROTATION') }).Count
-            $e=@($fails|Where-Object{ $_.entityKind-eq'ELEMENT' -and $_.quantity-like'GLOBAL_END_*' }).Count
+            $r=@($fails|Where-Object{$_.entityKind-eq'NODE' -and $_.quantity-in@('FORCE','MOMENT')}).Count
+            $d=@($fails|Where-Object{$_.entityKind-eq'NODE' -and $_.quantity-in@('DISPLACEMENT','ROTATION')}).Count
+            $e=@($fails|Where-Object{$_.entityKind-eq'ELEMENT' -and $_.quantity-like'GLOBAL_END_*'}).Count
             [ordered]@{restraint=$r;deformation=$d;elementEnd=$e;total=$r+$d+$e}
           }
           $base=Get-Content artifacts/baseline-report.json -Raw|ConvertFrom-Json
-          $k50=Get-Content artifacts/kappa050-report.json -Raw|ConvertFrom-Json
-          $k53=Get-Content artifacts/kappa053-report.json -Raw|ConvertFrom-Json
+          $bend=Get-Content artifacts/bend-only-report.json -Raw|ConvertFrom-Json
+          $non=Get-Content artifacts/nonbend-only-report.json -Raw|ConvertFrom-Json
           $expected=[ordered]@{L2=227;L3=129;L4=120;L5=97;L6=86;L14=129}
-          $cases=[ordered]@{};$baseTotal=0;$k50Total=0;$k53Total=0
+          $rows=[ordered]@{};$bt=0;$bendt=0;$nont=0
           foreach($id in $expected.Keys){
-            $b=Stats $base $id;$a=Stats $k50 $id;$c=Stats $k53 $id
-            if($b.total-ne$expected[$id]){throw "788 baseline drift in ${id}: $($b.total)"}
-            foreach($pair in @(@($base,'baseline'),@($k50,'kappa050'),@($k53,'kappa053'))){
-              if($pair[0].mechanics.cases.$id.recoveredEquilibrium.status-eq'FAIL'){throw "$($pair[1]) equilibrium failed in $id"}
-            }
-            $cases[$id]=[ordered]@{baseline=$b;kappa050=$a;kappa053=$c;delta050=$a.total-$b.total;delta053=$c.total-$b.total}
-            $baseTotal+=$b.total;$k50Total+=$a.total;$k53Total+=$c.total
+            $b=Stats $base $id;$x=Stats $bend $id;$y=Stats $non $id
+            if($b.total-ne$expected[$id]){throw "788 baseline drift in $id"}
+            foreach($pair in @(@($base,'baseline'),@($bend,'bend-only'),@($non,'nonbend-only'))){if($pair[0].mechanics.cases.$id.recoveredEquilibrium.status-eq'FAIL'){throw "$($pair[1]) equilibrium failed in $id"}}
+            $rows[$id]=[ordered]@{baseline=$b;bendOnly=$x;nonBendOnly=$y;deltaBendOnly=$x.total-$b.total;deltaNonBendOnly=$y.total-$b.total}
+            $bt+=$b.total;$bendt+=$x.total;$nont+=$y.total
           }
-          if($baseTotal-ne788){throw "Baseline total drift: $baseTotal"}
           [ordered]@{
-            schema='lfea-m047-transverse-shear-diagnostic/v1'
+            schema='lfea-m047-shear-ownership-diagnostic/v1'
             authorityStatus='DIAGNOSTIC_ONLY_NOT_RETAINABLE'
-            baselineFormulation='PIPE_FRAME3D_EULER_BERNOULLI_V1'
-            candidates=@(
-              [ordered]@{formulation='PIPE_FRAME3D_TIMOSHENKO_V1';kappaY=0.50;kappaZ=0.50;total=$k50Total;delta=$k50Total-$baseTotal},
-              [ordered]@{formulation='PIPE_FRAME3D_TIMOSHENKO_V1';kappaY=0.53;kappaZ=0.53;total=$k53Total;delta=$k53Total-$baseTotal}
-            )
-            baselineTotal=$baseTotal
-            cases=$cases
-            acceptanceBoundary='Sensitivity evidence only. No kappa value may be retained without independent CAESAR 14 authority; benchmark residual minimization is prohibited.'
-          }|ConvertTo-Json -Depth 20|Tee-Object -FilePath artifacts/shear-diagnostic.json
+            kappa=0.50
+            baselineTotal=$bt
+            bendOnlyTotal=$bendt
+            bendOnlyDelta=$bendt-$bt
+            nonBendOnlyTotal=$nont
+            nonBendOnlyDelta=$nont-$bt
+            cases=$rows
+            acceptanceBoundary='Localization only. Kappa 0.50 is not CAESAR authority and cannot be retained or optimized against reference residuals.'
+          }|ConvertTo-Json -Depth 20|Tee-Object artifacts/shear-ownership.json
 
       - name: Upload shear diagnostic evidence
         if: always()

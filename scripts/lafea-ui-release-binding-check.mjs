@@ -14,12 +14,14 @@ import {
 
 const STAGE_ID = 'LAFEA.1';
 const SHA = 'sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef';
+const OTHER_SHA = 'sha256:1111111111111111111111111111111111111111111111111111111111111111';
 const HEAD = '8c8f0f5937afc53d546ee3d554bda2b4b7ccafd8';
 
 const document = sourceFixture();
 const authority = issueLafeaSourceAuthority(STAGE_ID, document, 'STAGE7/TEST');
 const stage = currentStage(document, authority);
 const releaseRecord = qualifiedRecord(authority);
+const trusted = bindingOptions(releaseRecord);
 
 const absent = projectLafeaWorkbenchReleaseBinding(stage, null);
 assert.equal(absent.schema, LAFEA_WORKBENCH_RELEASE_BINDING_SCHEMA);
@@ -27,25 +29,37 @@ assert.equal(absent.bindingStatus, 'ABSENT');
 assert.equal(absent.releaseQualified, false);
 assert.deepEqual(absent.reasons, ['RELEASE_RECORD_ABSENT']);
 
-const noHead = projectLafeaWorkbenchReleaseBinding(
-  { ...stage, releaseCandidateHeadSha: null },
-  releaseRecord,
-);
+const noTrust = projectLafeaWorkbenchReleaseBinding(stage, releaseRecord, {
+  currentCandidateHeadSha: HEAD,
+});
+assert.equal(noTrust.bindingStatus, 'STALE');
+assert.equal(noTrust.releaseQualified, false);
+assert.ok(noTrust.reasons.includes('RELEASE_RECORD_TRUST_ANCHOR_UNAVAILABLE'));
+
+const unauthorized = projectLafeaWorkbenchReleaseBinding(stage, releaseRecord, {
+  currentCandidateHeadSha: HEAD,
+  authorizedReleaseEvidenceHashes: [OTHER_SHA],
+});
+assert.equal(unauthorized.bindingStatus, 'STALE');
+assert.ok(unauthorized.reasons.includes('RELEASE_RECORD_EVIDENCE_NOT_AUTHORIZED'));
+
+const noHead = projectLafeaWorkbenchReleaseBinding(stage, releaseRecord, {
+  currentCandidateHeadSha: null,
+  authorizedReleaseEvidenceHashes: [releaseRecord.evidenceHash],
+});
 assert.equal(noHead.bindingStatus, 'STALE');
 assert.equal(noHead.releaseQualified, false);
 assert.ok(noHead.reasons.includes('RELEASE_RECORD_CANDIDATE_HEAD_UNAVAILABLE'));
 
-const current = projectLafeaWorkbenchReleaseBinding(stage, releaseRecord);
+const current = projectLafeaWorkbenchReleaseBinding(stage, releaseRecord, trusted);
 assert.equal(current.bindingStatus, 'CURRENT');
 assert.equal(current.releaseQualified, true);
 assert.equal(current.authorityState, 'RELEASE_QUALIFIED');
+assert.equal(current.evidenceAuthorizationStatus, 'AUTHORIZED');
 assert.equal(current.targetCompatibilityStatus, 'CURRENT');
 assert.deepEqual(current.reasons, []);
 
-const releaseState = createLafeaWorkbenchReleaseState(
-  [STAGE_ID],
-  { currentCandidateHeadSha: HEAD },
-);
+const releaseState = createLafeaWorkbenchReleaseState([STAGE_ID], trusted);
 const importedJson = JSON.parse(JSON.stringify(releaseRecord));
 const registered = releaseState.register(importedJson, stage);
 assert.equal(registered.changed, true);
@@ -60,6 +74,7 @@ const changedAuthority = issueLafeaSourceAuthority(STAGE_ID, changedDocument, 'S
 const stale = projectLafeaWorkbenchReleaseBinding(
   currentStage(changedDocument, changedAuthority),
   releaseRecord,
+  trusted,
 );
 assert.equal(stale.bindingStatus, 'STALE');
 assert.equal(stale.releaseQualified, false);
@@ -67,13 +82,16 @@ assert.ok(stale.reasons.includes('RELEASE_RECORD_SOURCE_HASH_STALE'));
 assert.ok(stale.reasons.includes('RELEASE_RECORD_SOURCE_AUTHORITY_HASH_STALE'));
 assert.ok(stale.reasons.includes('RELEASE_RECORD_DOCUMENT_REVISION_STALE'));
 
-const wrongHead = projectLafeaWorkbenchReleaseBinding(stage, releaseRecord, '1111111111111111111111111111111111111111');
+const wrongHead = projectLafeaWorkbenchReleaseBinding(stage, releaseRecord, {
+  currentCandidateHeadSha: '1111111111111111111111111111111111111111',
+  authorizedReleaseEvidenceHashes: [releaseRecord.evidenceHash],
+});
 assert.equal(wrongHead.bindingStatus, 'STALE');
 assert.ok(wrongHead.reasons.includes('RELEASE_RECORD_CANDIDATE_HEAD_STALE'));
 
 const tampered = structuredClone(releaseRecord);
 tampered.semanticHash = SHA;
-const invalid = projectLafeaWorkbenchReleaseBinding(stage, tampered);
+const invalid = projectLafeaWorkbenchReleaseBinding(stage, tampered, trusted);
 assert.equal(invalid.bindingStatus, 'STALE');
 assert.equal(invalid.releaseQualified, false);
 assert.deepEqual(invalid.reasons, ['RELEASE_RECORD_INVALID']);
@@ -82,6 +100,7 @@ console.log(JSON.stringify({
   check: 'lafea-ui-release-binding',
   status: 'PASS',
   importedJsonAcceptedAfterGovernedFreeze: true,
+  trustedEvidenceHashRequired: true,
   exactHeadRequired: true,
   currentTargetCompatibilityRequired: true,
   sourceChangeInvalidatesRelease: true,
@@ -89,11 +108,17 @@ console.log(JSON.stringify({
   githubActionsWorkflowAdded: false,
 }));
 
+function bindingOptions(record) {
+  return {
+    currentCandidateHeadSha: HEAD,
+    authorizedReleaseEvidenceHashes: [record.evidenceHash],
+  };
+}
+
 function currentStage(documentValue, sourceAuthority) {
   return {
     stageId: STAGE_ID,
     document: documentValue,
-    releaseCandidateHeadSha: HEAD,
     lifecycle: createLafeaLifecycle(STAGE_ID, sourceAuthority.sourceHash),
     lifecycleBinding: {
       status: 'CURRENT',

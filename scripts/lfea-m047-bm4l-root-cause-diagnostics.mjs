@@ -3,7 +3,7 @@ import { mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { dirname, resolve } from 'node:path';
 
 const EXPECTED_CASES = Object.freeze(['L2', 'L3', 'L4', 'L5', 'L6', 'L14']);
-const EXPECTED_ACCDB_SHA256 = 'e21b0862851ea2bb6f20d55e4a3a94f501537b618b98dd46afa9f6777ee38d3c';
+const DEFAULT_EXPECTED_ACCDB_SHA256 = 'e21b0862851ea2bb6f20d55e4a3a94f501537b618b98dd46afa9f6777ee38d3c';
 const SUPERPOSITION_IDENTITIES = Object.freeze([
   Object.freeze({ id: 'L6=L2+L4', terms: Object.freeze([['L6', 1], ['L2', -1], ['L4', -1]]) }),
   Object.freeze({ id: 'L5=L2+L3+L4', terms: Object.freeze([['L5', 1], ['L2', -1], ['L3', -1], ['L4', -1]]) }),
@@ -25,12 +25,13 @@ function parseArguments(argv) {
   const actualPath = args.get('--actual');
   const reportPath = args.get('--report');
   const outPath = args.get('--out');
-  if (!actualPath || !reportPath || !outPath) {
-    throw new TypeError('Usage: --actual <bm4l-actual.json> --report <bm4l-report.json> --out <diagnostics.json>.');
+  const expectedSourceSha256 = String(args.get('--expected-source-sha') ?? DEFAULT_EXPECTED_ACCDB_SHA256).toLowerCase();
+  if (!actualPath || !reportPath || !outPath || !/^[a-f0-9]{64}$/u.test(expectedSourceSha256)) {
+    throw new TypeError('Usage: --actual <bm4l-actual.json> --report <bm4l-report.json> --out <diagnostics.json> [--expected-source-sha <sha256>].');
   }
-  const unknown = [...args.keys()].filter((key) => !['--actual', '--report', '--out'].includes(key));
+  const unknown = [...args.keys()].filter((key) => !['--actual', '--report', '--out', '--expected-source-sha'].includes(key));
   if (unknown.length > 0) throw new TypeError(`Unknown command arguments: ${unknown.join(', ')}.`);
-  return Object.freeze({ actualPath: resolve(actualPath), reportPath: resolve(reportPath), outPath: resolve(outPath) });
+  return Object.freeze({ actualPath: resolve(actualPath), reportPath: resolve(reportPath), outPath: resolve(outPath), expectedSourceSha256 });
 }
 
 function readJsonWithHash(path, label) {
@@ -44,15 +45,15 @@ function readJsonWithHash(path, label) {
   return Object.freeze({ value, sha256: createHash('sha256').update(bytes).digest('hex') });
 }
 
-function requireInput(actual, report) {
+function requireInput(actual, report, expectedSourceSha256) {
   if (actual?.schema !== 'lfea-accdb-benchmark-actual/v1') {
     throw new TypeError(`Unexpected actual schema ${String(actual?.schema)}.`);
   }
   if (report?.schema !== 'lfea-caesar-accdb-benchmark-report/v1') {
     throw new TypeError(`Unexpected report schema ${String(report?.schema)}.`);
   }
-  if (actual.sourceAccdbSha256 !== EXPECTED_ACCDB_SHA256 || report.source?.sha256 !== EXPECTED_ACCDB_SHA256) {
-    throw new TypeError('BM4_L diagnostics require the pinned ACCDB SHA-256 from M047 issue #991.');
+  if (actual.sourceAccdbSha256 !== expectedSourceSha256 || report.source?.sha256 !== expectedSourceSha256) {
+    throw new TypeError(`BM4_L diagnostics expected ACCDB ${expectedSourceSha256}.`);
   }
   if (actual.sourceAccdbSha256 !== report.source.sha256) {
     throw new TypeError('Actual and report ACCDB hashes disagree.');
@@ -285,8 +286,11 @@ function buildFailureClusters(traces) {
 
 function buildLinearityAuthority(actual) {
   const cases = {};
+  const stiffnessHashes = [];
   for (const caseId of EXPECTED_CASES) {
     const evidence = actual.mechanics?.cases?.[caseId] ?? {};
+    const stiffnessStateHash = actual.cases?.[caseId]?.stiffnessStateHash ?? evidence.stiffnessStateHash ?? null;
+    if (stiffnessStateHash !== null) stiffnessHashes.push(String(stiffnessStateHash));
     cases[caseId] = Object.freeze({
       formula: evidence.formula ?? null,
       gravityIncluded: evidence.gravityIncluded ?? null,
@@ -294,16 +298,20 @@ function buildLinearityAuthority(actual) {
       pressureIncluded: evidence.pressureIncluded ?? null,
       friction: evidence.effectiveConfiguration?.friction ?? null,
       executionStatus: evidence.executionStatus ?? null,
+      stiffnessStateHash,
       executionSemanticHash: actual.cases[caseId].executionSemanticHash ?? null,
-      note: 'Execution semantic hashes include case loads and therefore are not, by themselves, proof of an identical stiffness operator.',
     });
   }
+  const distinct = [...new Set(stiffnessHashes)];
+  const complete = stiffnessHashes.length === EXPECTED_CASES.length;
+  const common = complete && distinct.length === 1;
   return Object.freeze({
     selectedCases: EXPECTED_CASES,
     cases,
-    commonOperatorHashAvailable: false,
-    status: 'INCOMPLETE_OPERATOR_PROOF',
-    requiredNextEvidence: 'Expose a case-independent assembled stiffness/operator semantic hash and compare it across L2/L3/L4/L5/L6/L14 before using superposition as a mechanics proof.',
+    commonOperatorHashAvailable: complete,
+    distinctStiffnessStateHashes: Object.freeze(distinct),
+    commonStiffnessStateHash: common ? distinct[0] : null,
+    status: common ? 'PASS_COMMON_OPERATOR' : complete ? 'FAIL_OPERATOR_MISMATCH' : 'INCOMPLETE_OPERATOR_PROOF',
   });
 }
 
@@ -323,7 +331,7 @@ function writeJson(path, value) {
 const input = parseArguments(process.argv.slice(2));
 const actualFile = readJsonWithHash(input.actualPath, 'actual result');
 const reportFile = readJsonWithHash(input.reportPath, 'qualification report');
-requireInput(actualFile.value, reportFile.value);
+requireInput(actualFile.value, reportFile.value, input.expectedSourceSha256);
 const failureTraces = buildFailureTraces(actualFile.value, reportFile.value);
 const output = Object.freeze({
   schema: 'lfea-m047-bm4l-root-cause-diagnostics/v1',
@@ -340,9 +348,7 @@ const output = Object.freeze({
   failureClusters: buildFailureClusters(failureTraces),
   failureTraces,
   unresolvedEvidence: Object.freeze([
-    'Raw element-end action decomposition K_global*u - f_fixed - f_initial is not exposed by the current actual-result evidence package.',
-    'A case-independent assembled stiffness/operator hash is not exposed, so common-operator linearity is not yet proven by artifact.',
-    'ACCDB table/field canonical hashes and provider binary version are not yet carried in the benchmark report.',
+    'ACCDB table/field canonical hashes and provider binary version are emitted separately by the provenance artifact when its source/provider gate is satisfied.',
   ]),
 });
 writeJson(input.outPath, output);

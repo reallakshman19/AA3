@@ -24,6 +24,39 @@ const STEP_DEFINITIONS = Object.freeze([
   ['RESULTS_EVIDENCE', 'Results and evidence'],
 ]);
 
+const INPUT_STEP_REQUIREMENTS = Object.freeze({
+  'LAFEA.1': Object.freeze({
+    MATERIALS_SECTIONS: requirement(['materials'], 'MATERIALS_REQUIRED'),
+    RESTRAINTS_BCS: null,
+    LOADS_CASES: requirement(['loadCases'], 'LOAD_CASES_REQUIRED'),
+  }),
+  'LAFEA.2': Object.freeze({
+    MATERIALS_SECTIONS: null,
+    RESTRAINTS_BCS: null,
+    LOADS_CASES: requirement(['screeningCases'], 'LOAD_CASES_REQUIRED'),
+  }),
+  'LAFEA.3': Object.freeze({
+    MATERIALS_SECTIONS: requirement(['materials'], 'MATERIALS_REQUIRED'),
+    RESTRAINTS_BCS: requirement(['constraints'], 'BOUNDARY_CONDITIONS_REQUIRED'),
+    LOADS_CASES: requirement(['loadCases'], 'LOAD_CASES_REQUIRED'),
+  }),
+  'LAFEA.4': Object.freeze({
+    MATERIALS_SECTIONS: requirement(['materials'], 'MATERIALS_REQUIRED'),
+    RESTRAINTS_BCS: requirement(['constraints'], 'BOUNDARY_CONDITIONS_REQUIRED'),
+    LOADS_CASES: requirement(['loadCases'], 'LOAD_CASES_REQUIRED'),
+  }),
+  'LAFEA.5': Object.freeze({
+    MATERIALS_SECTIONS: requirement(['shellTemplate.materials'], 'MATERIALS_REQUIRED'),
+    RESTRAINTS_BCS: requirement(['shellTemplate.constraints'], 'BOUNDARY_CONDITIONS_REQUIRED'),
+    LOADS_CASES: requirement(['loadCaseMappings'], 'LOAD_CASES_REQUIRED'),
+  }),
+  'LAFEA.6': Object.freeze({
+    MATERIALS_SECTIONS: requirement(['materials'], 'MATERIALS_REQUIRED'),
+    RESTRAINTS_BCS: null,
+    LOADS_CASES: requirement(['loadCases'], 'LOAD_CASES_REQUIRED'),
+  }),
+});
+
 export function buildLafeaGuidedWorkflow(stateValue) {
   const state = requireState(stateValue);
   const stage = state.stages[state.activeStageId];
@@ -70,10 +103,10 @@ function stepStatus(stepId, stage, orchestration, executionSupported) {
     return fromSection(section(orchestration, 'PREPARATION'));
   }
   if (stepId === 'ANALYSIS_PROFILE') {
-    return status(documentReady ? 'COMPLETE' : 'NOT_STARTED', documentReady ? [] : ['SOURCE_DOCUMENT_REQUIRED']);
+    return analysisProfileStatus(stage, documentReady);
   }
   if (['MATERIALS_SECTIONS', 'RESTRAINTS_BCS', 'LOADS_CASES'].includes(stepId)) {
-    return status(documentReady ? 'READY' : 'NOT_STARTED', documentReady ? [] : ['SOURCE_DOCUMENT_REQUIRED']);
+    return governedInputStepStatus(stepId, stage, documentReady);
   }
   if (stepId === 'DISCRETIZATION') {
     return fromSection(section(orchestration, 'DISCRETIZATION'));
@@ -95,6 +128,49 @@ function stepStatus(stepId, stage, orchestration, executionSupported) {
     return fromSection(section(orchestration, 'RESULTS'));
   }
   return status('NOT_STARTED');
+}
+
+function analysisProfileStatus(stage, documentReady) {
+  if (!documentReady) return status('NOT_STARTED', ['SOURCE_DOCUMENT_REQUIRED']);
+  if (!stage.lifecycle) return status('BLOCKED', ['LIFECYCLE_NOT_INITIALIZED']);
+  if (stage.lifecycleBinding?.status !== 'CURRENT') {
+    return status('BLOCKED', [
+      `LIFECYCLE_SOURCE_BINDING_${stage.lifecycleBinding?.status ?? 'UNKNOWN'}`,
+    ]);
+  }
+  if (typeof stage.lifecycle.profileId !== 'string' || !stage.lifecycle.profileId) {
+    return status('BLOCKED', ['ANALYSIS_PROFILE_BINDING_REQUIRED']);
+  }
+  return status('COMPLETE');
+}
+
+function governedInputStepStatus(stepId, stage, documentReady) {
+  if (!documentReady) return status('NOT_STARTED', ['SOURCE_DOCUMENT_REQUIRED']);
+  const requirementValue = INPUT_STEP_REQUIREMENTS[stage.stageId]?.[stepId];
+  if (requirementValue === null) {
+    return status('COMPLETE', ['WORKFLOW_STEP_NOT_APPLICABLE']);
+  }
+  if (!requirementValue) {
+    return status('BLOCKED', ['WORKFLOW_INPUT_CONTRACT_NOT_DECLARED']);
+  }
+  const missing = requirementValue.paths.filter(
+    (path) => !hasNonEmptyCollection(stage.document, path),
+  );
+  return missing.length
+    ? status('BLOCKED', [requirementValue.missingReason])
+    : status('READY');
+}
+
+function hasNonEmptyCollection(documentValue, path) {
+  const value = path.split('.').reduce(
+    (current, key) => current && typeof current === 'object' ? current[key] : undefined,
+    documentValue,
+  );
+  return Array.isArray(value) && value.length > 0;
+}
+
+function requirement(paths, missingReason) {
+  return Object.freeze({ paths: Object.freeze([...paths]), missingReason });
 }
 
 function combineSections(...sections) {

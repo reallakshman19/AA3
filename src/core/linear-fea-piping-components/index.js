@@ -81,6 +81,7 @@ export {
 export {
   MEC21_BEND_PRESSURE_EXPANSION_FORMULATION,
   deriveMec21BendPressureFreeMovement,
+  deriveMec21BendPressureFreeState,
 } from './bourdon-pressure-expansion.js';
 
 export {

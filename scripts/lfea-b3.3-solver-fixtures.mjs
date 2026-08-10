@@ -136,6 +136,8 @@ export function solverProfile(overrides = {}) {
     momentReferenceRule: 'FIRST_CANONICAL_NODE_V1',
     normalizedResidualLimit: { value: 1e-9, source: 'LFEA-B3.3-FIXTURE-PROFILE' },
     normalizedResidualWarnLimit: { value: 1e-7, source: 'LFEA-B3.3-FIXTURE-PROFILE' },
+    iterativeRefinementMaximumIterations: { value: 3, source: 'LFEA-B3.3-FIXTURE-PROFILE' },
+    iterativeRefinementRelativeTolerance: { value: 1e-12, source: 'LFEA-B3.3-FIXTURE-PROFILE' },
     equilibriumRelativeLimit: { value: 1e-6, source: 'LFEA-B3.3-FIXTURE-PROFILE' },
     equilibriumAbsoluteForceFloor: { value: 1e-3, source: 'LFEA-B3.3-FIXTURE-PROFILE' },
     equilibriumAbsoluteMomentFloor: { value: 1e-3, source: 'LFEA-B3.3-FIXTURE-PROFILE' },

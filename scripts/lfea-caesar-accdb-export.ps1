@@ -11,6 +11,29 @@ param(
 
 $ErrorActionPreference = 'Stop'
 
+function Get-SharedReadSha256 {
+  param(
+    [Parameter(Mandatory = $true)]
+    [string]$Path
+  )
+
+  $share = [System.IO.FileShare]::ReadWrite -bor [System.IO.FileShare]::Delete
+  $stream = [System.IO.File]::Open(
+    $Path,
+    [System.IO.FileMode]::Open,
+    [System.IO.FileAccess]::Read,
+    $share
+  )
+  $hasher = [System.Security.Cryptography.SHA256]::Create()
+  try {
+    return ([System.BitConverter]::ToString($hasher.ComputeHash($stream))).Replace('-', '').ToLowerInvariant()
+  }
+  finally {
+    $hasher.Dispose()
+    $stream.Dispose()
+  }
+}
+
 function Convert-DatabaseValue {
   param(
     [Parameter(Mandatory = $false)]
@@ -119,7 +142,7 @@ try {
       fileName = $file.Name
       byteLength = $file.Length
       lastWriteTimeUtc = $file.LastWriteTimeUtc.ToString('o')
-      sha256 = (Get-FileHash -LiteralPath $resolvedPath -Algorithm SHA256).Hash.ToLowerInvariant()
+      sha256 = Get-SharedReadSha256 -Path $resolvedPath
     }
     provider = 'Microsoft.ACE.OLEDB.12.0'
     tables = $tables

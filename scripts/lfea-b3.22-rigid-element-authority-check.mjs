@@ -7,6 +7,7 @@ import {
   compileCaesarRigidElementAuthority,
   computeRigidElementRequestSemanticHash,
   requireRigidElementAuthority,
+  rigidElementBourdonPressureEffect,
   rigidElementGravityLocalVector,
   sealRigidElementRequest,
 } from '../src/core/linear-fea-rigid-element/index.js';
@@ -73,6 +74,23 @@ assert.equal(authority.structuralParticipation.calculatePipingCodeStress, false)
 assert.equal(authority.stiffnessSection.localStiffness.length, 144);
 close(authority.thermal.axialStrain, 12e-6 * 200, 'thermal strain');
 close(authority.thermal.freeExpansion, 12e-6 * 200 * 1.2, 'free thermal expansion');
+
+const pressureEffect = rigidElementBourdonPressureEffect(authority, {
+  pressure: 8e6,
+  poissonRatio: 0.3,
+});
+const expectedInsideArea = Math.PI * 0.2 ** 2 / 4;
+const expectedBourdonForce = (1 - 2 * 0.3) * 8e6 * expectedInsideArea;
+close(pressureEffect.insideArea, expectedInsideArea, 'rigid Bourdon inside area');
+close(pressureEffect.axialForce, expectedBourdonForce, 'rigid Bourdon axial force');
+close(pressureEffect.equivalentAxialStrain,
+  expectedBourdonForce / authority.rigidities.axial, 'rigid Bourdon equivalent strain');
+close(pressureEffect.freeExpansion,
+  expectedBourdonForce / authority.rigidities.axial * 1.2, 'rigid Bourdon free expansion');
+close(pressureEffect.initialStrainLoad[0], -expectedBourdonForce, 'rigid Bourdon I load');
+close(pressureEffect.initialStrainLoad[6], expectedBourdonForce, 'rigid Bourdon J load');
+assert.equal(pressureEffect.initialStrainLoad.filter((value, index) => ![0, 6].includes(index) && value !== 0).length, 0);
+assert.throws(() => rigidElementBourdonPressureEffect(authority, { pressure: 1e6, poissonRatio: 0.5 }), TypeError);
 
 const fluidArea = Math.PI * 0.2 ** 2 / 4;
 const expectedFluid = 850 * fluidArea * 1.2 * 9.80665;

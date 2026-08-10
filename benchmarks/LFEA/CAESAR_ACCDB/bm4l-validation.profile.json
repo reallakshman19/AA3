@@ -116,11 +116,6 @@
     },
     "unresolvedSettings": [
       {
-        "setting": "B31J_SMOOTH_90_CORRECTION",
-        "caseId": null,
-        "reason": "APPLY_B31J_SIFS_AND_FLEX=DEFAULT does not establish the CAESAR smooth-90/B31J Note-3 choice for this file."
-      },
-      {
         "setting": "RESTRAINT_FORMULATION",
         "caseId": null,
         "reason": "Support direction is bidirectional, but exact CAESAR application of the finite default stiffness is not established."
@@ -147,9 +142,9 @@
     "teeNominalDiameterRelativeTolerance": 0.001,
     "reducerCondensation": true,
     "b31jSmooth90FlexibilityCorrection": {
-      "enabled": false,
-      "authorityStatus": "UNRESOLVED",
-      "source": "BM4_L_CONFIGURATION_AUTHORITY:B31J_SMOOTH_90_CORRECTION"
+      "enabled": true,
+      "authorityStatus": "RESOLVED",
+      "source": "HEXAGON_CAESAR_II_14_B31_3_2022_DEFAULT_B31J_METHOD_SMOOTH_90_1_3_OVER_H"
     },
     "bendPressureStiffening": {
       "pressureSource": "MAX_DEFINED",

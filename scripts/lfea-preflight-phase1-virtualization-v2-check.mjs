@@ -5,6 +5,7 @@ import fs from 'node:fs';
 import {
   ENGINEERING_FIELDS as PHASE0_ENGINEERING_FIELDS,
   buildEnrichmentUiFixture,
+  componentTargetId,
 } from './enrichment-ui-phase0-fixtures.mjs';
 import {
   LFEA_PREFLIGHT_ENGINEERING_FIELDS,
@@ -63,8 +64,11 @@ const firstSmallComponents = getLfeaPreflightPhase1ComponentsForLine(
   0,
   4,
 );
-assert.equal(firstSmallComponents.totalComponentCount, 10);
-assert.equal(firstSmallComponents.count, 4);
+assert.equal(
+  firstSmallComponents.totalComponentCount,
+  smallFixture.lines.componentCountByLineOrdinal[0],
+);
+assert.equal(firstSmallComponents.count, Math.min(4, firstSmallComponents.totalComponentCount));
 for (const targetId of firstSmallComponents.targetIds) {
   assert.equal(
     getLfeaPreflightPhase1ComponentParentLineTargetId(smallComponentIndex, smallLineIndex, targetId),
@@ -240,9 +244,7 @@ function componentInputFromFixture(fixture) {
   const targetIdByOrdinal = new Array(count);
   const parentLineTargetIdByOrdinal = new Array(count);
   for (let ordinal = 0; ordinal < count; ordinal += 1) {
-    const sourceBase = fixture.components.targetBaseByOrdinal[ordinal];
-    const typeId = fixture.components.componentTypeIdByOrdinal[ordinal];
-    targetIdByOrdinal[ordinal] = `CMP-${sourceBase.toString(36).toUpperCase()}-T${typeId}`;
+    targetIdByOrdinal[ordinal] = componentTargetId(fixture, ordinal);
     parentLineTargetIdByOrdinal[ordinal] = fixture.lines.targetIdByOrdinal[
       fixture.components.parentLineOrdinal[ordinal]
     ];

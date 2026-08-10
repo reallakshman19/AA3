@@ -6,6 +6,7 @@ import './workspace/analysis-session.css';
 import './workspace/analysis-ledger.css';
 import './workspace/enrichment/first-cut-workbench.css';
 import './workspace/linear-piping-results-workbench.css';
+import './workspace/lfea-preflight-phase1.css';
 import { bootstrapAnalysisWorkspace } from './workspace/bootstrap.js';
 import { authorizedEnrichmentConsumerController } from './workspace/enrichment/authorized-enrichment-runtime.js';
 import { createAuthorizedEnrichmentWorkspaceApi } from './workspace/enrichment/authorized-enrichment-workspace-api.js';

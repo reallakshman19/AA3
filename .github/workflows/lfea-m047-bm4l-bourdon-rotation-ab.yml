@@ -76,28 +76,15 @@ jobs:
           $ErrorActionPreference = 'Stop'
           $path = 'src/core/fea-benchmarks/caesar-accdb-linear-solve.js'
           $text = Get-Content $path -Raw
-          $old = @'
-          const freeDofGlobal = [
-            ...startTranslationGlobal,
-            ...startRotationGlobal,
-            ...endTranslationGlobal,
-            ...endRotationGlobal,
-          ];
-          '@
-          $new = @'
-          const freeDofGlobal = [
-            ...startTranslationGlobal,
-            ...zero3(),
-            ...endTranslationGlobal,
-            ...zero3(),
-          ];
-          '@
-          if (-not $text.Contains($old)) { throw 'MEC-21 free DOF source shape changed.' }
-          $text = $text.Replace($old, $new)
+          $startToken = '...startRotationGlobal,'
+          $endToken = '...endRotationGlobal,'
+          if (-not $text.Contains($startToken) -or -not $text.Contains($endToken)) { throw 'MEC-21 rotation vector source shape changed.' }
+          $text = $text.Replace($startToken, '...zero3(),')
+          $text = $text.Replace($endToken, '...zero3(),')
           Set-Content -Path $path -Value $text -Encoding utf8
           $diff = (git diff -- $path) -join "`n"
           $diff | Out-File artifacts/bourdon-rotation-zero-transient.patch -Encoding utf8
-          if (-not $diff.Contains('...zero3()')) { throw 'Rotational Bourdon transient patch was not recorded.' }
+          if (-not $diff.Contains('startRotationGlobal') -or -not $diff.Contains('endRotationGlobal') -or -not $diff.Contains('...zero3()')) { throw 'Rotational Bourdon transient patch was not recorded.' }
 
       - name: Run L4 with bend translation retained and rotation removed
         shell: pwsh

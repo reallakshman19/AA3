@@ -262,6 +262,8 @@ function solveCase(benchmarkPackage, caseRecord, solveProfile) {
         nodeI: recoveredAction.entry.nodeI,
         nodeJ: recoveredAction.entry.nodeJ,
         jointDisplacement12: recoveredAction.jointDisplacement12,
+        globalStiffness: recoveredAction.entry.contribution.globalStiffness,
+        localAxes: recoveredAction.entry.axesResult.axes,
         globalElasticAction: recoveredAction.globalElasticAction,
         equivalentLoadGlobal: recoveredAction.entry.contribution.equivalentLoadGlobal,
         initialStrainLoadGlobal: recoveredAction.entry.contribution.initialStrainLoadGlobal,

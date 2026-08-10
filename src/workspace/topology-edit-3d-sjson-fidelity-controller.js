@@ -1,6 +1,7 @@
 import {
   TopologyEdit3DViewController as ProfessionalController,
 } from './topology-edit-3d-productivity-controller.js';
+import { EVENT_TOPICS } from './event-topics.js';
 import { SupportRestraintStore } from './support-restraint-store.js';
 import { semanticHash } from '../core/shared-piping-model/index.js';
 import {
@@ -22,7 +23,12 @@ import { publishSjsonFidelityEvidence } from './topology-edit/topology-edit-sjso
 
 export class TopologyEdit3DViewController extends ProfessionalController {
   constructor(eventBus, lifecycleOptions = {}) {
-    super(eventBus, lifecycleOptions);
+    super(eventBus, {
+      publishLfeaSourceContext: (payload) => {
+        eventBus.publish(EVENT_TOPICS.TOPOLOGY_EDIT_LFEA_SOURCE_CHANGED, payload);
+      },
+      ...lifecycleOptions,
+    });
     this.sjsonVisualByRole = new Map();
     this.sjsonBenchmarkView = null;
     this.sjsonSupportBundle = null;

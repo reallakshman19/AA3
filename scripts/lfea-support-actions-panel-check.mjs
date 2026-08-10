@@ -132,7 +132,7 @@ assert.ok(!degenerate.rows.slice(1, 3).some((row) => row.value === '0' || row.va
 const published = [];
 const lifecycle = new TopologyEditLifecycleController({
   getSession: () => null,
-  eventBus: { publish: (topic, payload) => published.push({ topic, payload }) },
+  publishLfeaSourceContext: (payload) => published.push(payload),
 });
 const lifecycleSession = {
   currentTopology: () => ({ canonicalTopologyHash: sourceContext.sourceSemanticHash }),
@@ -140,8 +140,7 @@ const lifecycleSession = {
 };
 const emitted = lifecycle.publishLfeaSourceContext(lifecycleSession);
 assert.deepEqual(emitted, sourceContext);
-assert.equal(published.length, 1);
-assert.equal(published[0].topic, EVENT_TOPICS.TOPOLOGY_EDIT_LFEA_SOURCE_CHANGED);
-assert.doesNotThrow(() => assertEventPayload(published[0].topic, published[0].payload));
+assert.deepEqual(published, [sourceContext]);
+assert.doesNotThrow(() => assertEventPayload(EVENT_TOPICS.TOPOLOGY_EDIT_LFEA_SOURCE_CHANGED, published[0]));
 
 console.log('lfea-support-actions-panel-check: PASS');

@@ -1,3 +1,4 @@
+# Baseline parity gate; rerun after platform-correct diagnostic CLI repair.
 name: M047 BM4_L baseline parity probe
 
 on:

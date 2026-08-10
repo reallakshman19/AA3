@@ -54,6 +54,10 @@ function sourceEvidence(sourceId, sourceRevision = 'M047-BM4L-MISC-179C4831') {
   return Object.freeze({ ...identity, sourceSemanticHash: semanticHash(identity) });
 }
 
+function factorSourceEvidence(sourceId, sourceRevision = 'M047-BM4L-MISC-179C4831') {
+  return Object.freeze({ sourceId, sourceRevision });
+}
+
 function materialResolution() {
   const table = sealMaterialTable({
     schema: 'fea-linear-material-table/v1',
@@ -113,7 +117,7 @@ function factorResult(entry) {
       branchOuterDiameter: entry.factorBranchOuterDiameterM,
       branchWallThickness: entry.branchWallThicknessM,
       fittingQuality: 'UNVERIFIED',
-      sourceEvidence: sourceEvidence(`BM4L:MISC:TEE:${entry.nodeId}`),
+      sourceEvidence: factorSourceEvidence(`BM4L:MISC:TEE:${entry.nodeId}`),
     },
     momentDirectionMapping: MOMENT_DIRECTION_MAPPING,
     semanticHash: '',

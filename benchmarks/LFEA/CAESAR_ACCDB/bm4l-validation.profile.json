@@ -124,9 +124,9 @@
   },
   "linearSolve": {
     "thermalExpansion": {
-      "coefficientPerKelvin": 0.00001212121212121212,
+      "coefficientPerKelvin": 0.000012231991077614186,
       "authorityStatus": "RESOLVED",
-      "source": "[DERIVED] COMMON@179c4831cf521cf797c13699cfbbd118315c9244:LFEA/BM4/Miscdata_BM4_L.txt PIPE_PROPERTIES_2 T1_TOTAL_STRAIN=0.0012; EQUIVALENT_T1_ALPHA=0.0012/(120C-21C); VALID_FOR_TARGET_T1_LINEAR_PRIMITIVE"
+      "source": "[DERIVED_FROM_BM4_L_ACCDB] T1_TOTAL_STRAIN=0.0012109671166838044 from OUTPUT_DISPLACEMENTS + OUTPUT_LOCAL_ELEMENT_FORCES axial constitutive inversion; BM4_L.ACCDB SHA256 64c05a50e9ed0452622ff5880335460486f24ac8e6adecc9a300b549c9aa82f8; audit run 31401624139 artifact 9067948232; L3/L14 medians identical across 42 usable non-bend-adjacent ordinary straight spans; no LFEA comparison rows consumed."
     },
     "gravityAcceleration": 9.80665,
     "bourdonPressureEffects": {

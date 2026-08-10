@@ -68,41 +68,20 @@ jobs:
           from pathlib import Path
           p=Path('src/core/fea-benchmarks/caesar-accdb-linear-solve.js')
           t=p.read_text()
-          old="""  const frame = input.stiffnessFrame ?? compileUnloadedFrame({
-            elementId: input.elementId,
-            axesResult,
-            material: input.material,
-            section: input.section,
-          });"""
-          new="""  const frame = input.stiffnessFrame ?? compileUnloadedFrame({
-            elementId: input.elementId,
-            axesResult,
-            material: input.material,
-            section: input.section,
-            profile: isCaesarStraightPipeSpan(input.kind) ? caesarStraightPipeFrameProfile() : frameProfile(),
-          });"""
-          if t.count(old)!=1:
-              raise SystemExit(f'expected one buildFrameElement frame site, found {t.count(old)}')
-          t=t.replace(old,new,1)
-          old2="""function compileUnloadedFrame(input) {
-            return compileFrameElement({
-              elementId: input.elementId,
-              material: input.material,
-              section: input.section,
-              localAxes: { result: input.axesResult, profile: FRAME_LOCAL_AXIS_PROFILE },
-              profile: frameProfile(),"""
-          new2="""function compileUnloadedFrame(input) {
-            return compileFrameElement({
-              elementId: input.elementId,
-              material: input.material,
-              section: input.section,
-              localAxes: { result: input.axesResult, profile: FRAME_LOCAL_AXIS_PROFILE },
-              profile: input.profile ?? frameProfile(),"""
-          if t.count(old2)!=1:
-              raise SystemExit(f'expected one compileUnloadedFrame profile site, found {t.count(old2)}')
-          t=t.replace(old2,new2,1)
-          marker="""function frameProfile() {
-            return sealFrameElementProfile({"""
+
+          needle="    section: input.section,\n  });\n  const length = frame.geometry.length;"
+          replacement="    section: input.section,\n    profile: isCaesarStraightPipeSpan(input.kind) ? caesarStraightPipeFrameProfile() : frameProfile(),\n  });\n  const length = frame.geometry.length;"
+          if t.count(needle)!=1:
+              raise SystemExit(f'buildFrameElement semantic site count {t.count(needle)}')
+          t=t.replace(needle,replacement,1)
+
+          needle2="    profile: frameProfile(),\n    distributedLoads: [],"
+          replacement2="    profile: input.profile ?? frameProfile(),\n    distributedLoads: [],"
+          if t.count(needle2)!=1:
+              raise SystemExit(f'compileUnloadedFrame profile site count {t.count(needle2)}')
+          t=t.replace(needle2,replacement2,1)
+
+          marker="function frameProfile() {\n  return sealFrameElementProfile({"
           helper="""function isCaesarStraightPipeSpan(kind) {
             return kind === 'FRAME' || kind === 'BEND_INCOMING_STRAIGHT';
           }
@@ -125,7 +104,7 @@ jobs:
           function frameProfile() {
             return sealFrameElementProfile({"""
           if t.count(marker)!=1:
-              raise SystemExit(f'expected one frameProfile insertion site, found {t.count(marker)}')
+              raise SystemExit(f'frameProfile insertion site count {t.count(marker)}')
           p.write_text(t.replace(marker,helper,1))
 
       - name: Run candidate six cases and reusable mechanics gates
@@ -158,49 +137,15 @@ jobs:
           const ba=JSON.parse(fs.readFileSync('artifacts/fresh-shear/before/actual.json','utf8').replace(/^\uFEFF/,''));
           const aa=JSON.parse(fs.readFileSync('artifacts/fresh-shear/after/actual.json','utf8').replace(/^\uFEFF/,''));
           const cases=['L2','L3','L4','L5','L6','L14'];
-          const counts=(r,c)=>({
-            restraint:r.restraintBasis.cases[c].exceedingComponentCount,
-            displacementRotation:r.displacementBasis.cases[c].exceedingComponentCount,
-            elementEnd:r.elementBasis.cases[c].exceedingComponentCount,
-          });
+          const counts=(r,c)=>({restraint:r.restraintBasis.cases[c].exceedingComponentCount,displacementRotation:r.displacementBasis.cases[c].exceedingComponentCount,elementEnd:r.elementBasis.cases[c].exceedingComponentCount});
           const rows=(r,c)=>r.qualification.cases.find(x=>x.caseId===c).comparison.rows;
-          function find(r,c,kind,prefix,quantity,component){
-            const m=rows(r,c).filter(x=>x.entityKind===kind&&String(x.entityId).startsWith(prefix)&&x.quantity===quantity&&x.component===component);
-            if(m.length!==1) throw new Error(`row ${c} ${prefix} ${quantity} ${component}: ${m.length}`);
-            return m[0];
-          }
-          const targets=[
-            ['L2 node 20090 UY','L2','NODE','20090','FORCE','UY'],
-            ['L2 E4 TO FY','L2','ELEMENT','INPUT_ELEMENT:4|','GLOBAL_END_FORCE_TO','FY'],
-            ['L2 E4 TO MZ','L2','ELEMENT','INPUT_ELEMENT:4|','GLOBAL_END_MOMENT_TO','MZ'],
-            ['L2 E5 FROM FY','L2','ELEMENT','INPUT_ELEMENT:5|','GLOBAL_END_FORCE_FROM','FY'],
-            ['L2 E5 FROM MZ','L2','ELEMENT','INPUT_ELEMENT:5|','GLOBAL_END_MOMENT_FROM','MZ'],
-            ['L2 node 20120 RZ','L2','NODE','20120','ROTATION','RZ']
-          ];
-          const highSignal=targets.map(t=>{
-            const b=find(before,...t.slice(1)),a=find(after,...t.slice(1));
-            const be=Math.abs(b.actualValue-b.referenceValue),ae=Math.abs(a.actualValue-a.referenceValue);
-            return {name:t[0],reference:b.referenceValue,before:b.actualValue,after:a.actualValue,beforeAbsoluteError:be,afterAbsoluteError:ae,errorReductionFraction:be>0?(be-ae)/be:null,beforePercentError:b.rawRelativeError===null?null:100*b.rawRelativeError,afterPercentError:a.rawRelativeError===null?null:100*a.rawRelativeError};
-          });
-          const equilibrium={};
-          for(const c of cases){
-            equilibrium[c]={before:ba.mechanics.cases[c].recoveredEquilibrium,after:aa.mechanics.cases[c].recoveredEquilibrium};
-            if(aa.mechanics.cases[c].executionStatus!=='QUALIFIED'||aa.mechanics.cases[c].recoveredEquilibrium.status!=='PASS') throw new Error(`${c} candidate integrity failed`);
-          }
-          const bw=ba.mechanics.cases.L2.gravityWeightN,aw=aa.mechanics.cases.L2.gravityWeightN;
-          if(Math.abs(aw-bw)>1e-9*Math.max(1,Math.abs(bw))) throw new Error(`gravity changed ${bw} -> ${aw}`);
-          const out={
-            schema:'m047-bm4l-fresh-straight-shear-ab/v1',
-            baseCommit:'7a08f9db84f298990250793226b36d4a82dbe01e',
-            source:{commonCommit:process.env.COMMON_COMMIT,zipSha256:process.env.ZIP_SHA256,accdbMemberSha256:process.env.MEMBER_SHA256},
-            candidate:{scope:['FRAME','BEND_INCOMING_STRAIGHT'],formulation:'PIPE_FRAME3D_TIMOSHENKO_V1',kappaY:0.5,kappaZ:0.5,bendArcs:false,reducers:false,rigids:false,benchmarkFitted:false},
-            counts:Object.fromEntries(cases.map(c=>[c,{before:counts(before,c),after:counts(after,c)}])),
-            highSignal,
-            gravityWeightN:{before:bw,after:aw},
-            equilibrium:Object.fromEntries(cases.map(c=>[c,{before:equilibrium[c].before.status,after:equilibrium[c].after.status,afterMaxResidual:equilibrium[c].after.maximumAbsoluteResidual}])),
-          };
-          fs.writeFileSync('artifacts/fresh-shear/ab.json',JSON.stringify(out,null,2)+'\n');
-          console.log(JSON.stringify(out,null,2));
+          function find(r,c,kind,prefix,quantity,component){const m=rows(r,c).filter(x=>x.entityKind===kind&&String(x.entityId).startsWith(prefix)&&x.quantity===quantity&&x.component===component);if(m.length!==1)throw new Error(`row ${c} ${prefix} ${quantity} ${component}: ${m.length}`);return m[0];}
+          const targets=[['L2 node 20090 UY','L2','NODE','20090','FORCE','UY'],['L2 E4 TO FY','L2','ELEMENT','INPUT_ELEMENT:4|','GLOBAL_END_FORCE_TO','FY'],['L2 E4 TO MZ','L2','ELEMENT','INPUT_ELEMENT:4|','GLOBAL_END_MOMENT_TO','MZ'],['L2 E5 FROM FY','L2','ELEMENT','INPUT_ELEMENT:5|','GLOBAL_END_FORCE_FROM','FY'],['L2 E5 FROM MZ','L2','ELEMENT','INPUT_ELEMENT:5|','GLOBAL_END_MOMENT_FROM','MZ'],['L2 node 20120 RZ','L2','NODE','20120','ROTATION','RZ']];
+          const highSignal=targets.map(t=>{const b=find(before,...t.slice(1)),a=find(after,...t.slice(1));const be=Math.abs(b.actualValue-b.referenceValue),ae=Math.abs(a.actualValue-a.referenceValue);return {name:t[0],reference:b.referenceValue,before:b.actualValue,after:a.actualValue,beforeAbsoluteError:be,afterAbsoluteError:ae,errorReductionFraction:be>0?(be-ae)/be:null,beforePercentError:b.rawRelativeError===null?null:100*b.rawRelativeError,afterPercentError:a.rawRelativeError===null?null:100*a.rawRelativeError};});
+          const equilibrium={};for(const c of cases){equilibrium[c]={before:ba.mechanics.cases[c].recoveredEquilibrium,after:aa.mechanics.cases[c].recoveredEquilibrium};if(aa.mechanics.cases[c].executionStatus!=='QUALIFIED'||aa.mechanics.cases[c].recoveredEquilibrium.status!=='PASS')throw new Error(`${c} candidate integrity failed`);}
+          const bw=ba.mechanics.cases.L2.gravityWeightN,aw=aa.mechanics.cases.L2.gravityWeightN;if(Math.abs(aw-bw)>1e-9*Math.max(1,Math.abs(bw)))throw new Error(`gravity changed ${bw} -> ${aw}`);
+          const out={schema:'m047-bm4l-fresh-straight-shear-ab/v1',baseCommit:'7a08f9db84f298990250793226b36d4a82dbe01e',source:{commonCommit:process.env.COMMON_COMMIT,zipSha256:process.env.ZIP_SHA256,accdbMemberSha256:process.env.MEMBER_SHA256},candidate:{scope:['FRAME','BEND_INCOMING_STRAIGHT'],formulation:'PIPE_FRAME3D_TIMOSHENKO_V1',kappaY:0.5,kappaZ:0.5,bendArcs:false,reducers:false,rigids:false,benchmarkFitted:false},counts:Object.fromEntries(cases.map(c=>[c,{before:counts(before,c),after:counts(after,c)}])),highSignal,gravityWeightN:{before:bw,after:aw},equilibrium:Object.fromEntries(cases.map(c=>[c,{before:equilibrium[c].before.status,after:equilibrium[c].after.status,afterMaxResidual:equilibrium[c].after.maximumAbsoluteResidual}]))};
+          fs.writeFileSync('artifacts/fresh-shear/ab.json',JSON.stringify(out,null,2)+'\n');console.log(JSON.stringify(out,null,2));
           '@ | node
 
       - uses: actions/upload-artifact@v4

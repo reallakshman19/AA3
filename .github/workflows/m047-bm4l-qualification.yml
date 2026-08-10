@@ -15,6 +15,7 @@ on:
       - 'scripts/lfea-m047-bm4l-root-cause-diagnostics.mjs'
       - 'scripts/lfea-m047-bm4l-common-report-parity.mjs'
       - 'scripts/lfea-m047-bm4l-tee-stiffness-authority.mjs'
+      - 'scripts/lfea-m047-bm4l-numeric-operator-proof.mjs'
       - 'src/core/fea-benchmarks/**'
       - 'src/core/linear-fea-*/**'
       - 'src/core/centerline-beam-fea/**'
@@ -61,6 +62,7 @@ jobs:
           node --check scripts/lfea-m047-bm4l-root-cause-diagnostics.mjs
           node --check scripts/lfea-m047-bm4l-common-report-parity.mjs
           node --check scripts/lfea-m047-bm4l-tee-stiffness-authority.mjs
+          node --check scripts/lfea-m047-bm4l-numeric-operator-proof.mjs
           node --check src/core/fea-benchmarks/caesar-accdb-linear-solve.js
           pwsh -NoProfile -Command "[void][scriptblock]::Create((Get-Content -Raw 'scripts/lfea-m047-bm4l-accdb-provenance.ps1'))"
 
@@ -306,6 +308,9 @@ jobs:
             --actual artifacts/bm4l/bm4l-actual.json `
             --expected-source-sha $env:BM4L_PINNED_MEMBER_SHA256 `
             --out artifacts/bm4l/bm4l-recovery-proof.json
+          node scripts/lfea-m047-bm4l-numeric-operator-proof.mjs `
+            --actual artifacts/bm4l/bm4l-actual.json `
+            --out artifacts/bm4l/bm4l-numeric-operator-proof.json
 
       - name: Run full reusable mechanics regressions
         shell: pwsh

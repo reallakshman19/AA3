@@ -110,7 +110,16 @@ jobs:
             --out artifacts/bm4l-accdb-resultant-audit.json `
             --summary-out artifacts/bm4l-accdb-resultant-audit.md
 
-      - name: Upload ACCDB-only resultant evidence
+      - name: Run ACCDB-only straight-pipe constitutive audit
+        shell: pwsh
+        run: |
+          node --check scripts/lfea-m047-bm4l-accdb-straight-stiffness-audit.mjs
+          node scripts/lfea-m047-bm4l-accdb-straight-stiffness-audit.mjs `
+            --raw artifacts/bm4l-resultant-source.json `
+            --out artifacts/bm4l-accdb-straight-stiffness-audit.json `
+            --summary-out artifacts/bm4l-accdb-straight-stiffness-audit.md
+
+      - name: Upload ACCDB-only mechanics evidence
         if: always()
         uses: actions/upload-artifact@v4
         with:

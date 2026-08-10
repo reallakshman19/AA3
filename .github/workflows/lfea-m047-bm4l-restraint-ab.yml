@@ -102,6 +102,8 @@ jobs:
             // Diagnostic counterfactual only. BM4_L authority supplies 1.0E12 in
             // displayed CAESAR units; INPUT_UNITS declares N/cm translation and
             // N*m/deg rotation. Convert once into solver SI N/m and N*m/rad.
+            // PARTIAL_RELEASE_SPRING is the compiler's existing nodal linear-spring
+            // declaration path; it compiles to behavior LINEAR_SPRING unchanged.
             const translationalStiffnessNPerM = 1e12 * 100;
             const rotationalStiffnessNmPerRad = 1e12 * 180 / Math.PI;
             const constraints = new Map();
@@ -113,10 +115,9 @@ jobs:
                 const key = `${nodeId}:${dof}`;
                 constraints.set(key, {
                   declarationId: `ACCDB-C-${nodeId}-${dof}`,
-                  kind: 'NODAL_RESTRAINT',
+                  kind: 'PARTIAL_RELEASE_SPRING',
                   nodeId,
                   dof,
-                  behavior: 'LINEAR_SPRING',
                   stiffness: dof.startsWith('U')
                     ? translationalStiffnessNPerM
                     : rotationalStiffnessNmPerRad,
@@ -131,7 +132,7 @@ jobs:
           Set-Content -Path $path -Value $text -Encoding utf8
           $diff = (git diff -- $path) -join "`n"
           $diff | Out-File artifacts/restraint-finite-transient.patch -Encoding utf8
-          if (-not $diff.Contains("behavior: 'LINEAR_SPRING'") -or -not $diff.Contains('1e12 * 100')) { throw 'Finite-restraint transient patch was not recorded.' }
+          if (-not $diff.Contains("kind: 'PARTIAL_RELEASE_SPRING'") -or -not $diff.Contains('1e12 * 100')) { throw 'Finite-restraint transient patch was not recorded.' }
 
       - name: Run L2 finite-restraint diagnostic
         shell: pwsh
@@ -170,7 +171,7 @@ jobs:
           $out = [ordered]@{
             schema = 'lfea-m047-single-factor-ab/v1'
             hypothesis = 'CAESAR_FINITE_DEFAULT_RESTRAINT_STIFFNESS'
-            changedField = 'restraintConstraints FIXED -> LINEAR_SPRING'
+            changedField = 'restraintConstraints FIXED -> grounded LINEAR_SPRING via existing PARTIAL_RELEASE_SPRING declaration path'
             authority = 'BM4_L overall global default 1.0E12 displayed CAESAR units; formulation remains unresolved/provisional'
             inputUnits = [ordered]@{ translation = 'N/cm'; rotation = 'N*m/deg' }
             convertedStiffness = [ordered]@{

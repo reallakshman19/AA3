@@ -1,0 +1,84 @@
+name: M047 clean BM4_L shear promotion once
+
+on:
+  push:
+    branches: [agent/m047-bm4l-root-cause-991]
+    paths:
+      - '.github/workflows/lfea-m047-bm4l-clean-shear-promotion-once.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  cleanup:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - name: Checkout PR branch
+        uses: actions/checkout@v4
+        with:
+          ref: agent/m047-bm4l-root-cause-991
+          fetch-depth: 0
+
+      - name: Restore original JSON formatting and insert only shear authority
+        shell: bash
+        run: |
+          set -euo pipefail
+          base=4fc110814a0574c2af642c10d5a74fc4f8057b6c
+          git show "$base:benchmarks/LFEA/CAESAR_ACCDB/bm4l-validation.profile.json" > benchmarks/LFEA/CAESAR_ACCDB/bm4l-validation.profile.json
+          git show "$base:benchmarks/LFEA/CAESAR_ACCDB/profile.schema.json" > benchmarks/LFEA/CAESAR_ACCDB/profile.schema.json
+          python - <<'PY'
+          from pathlib import Path
+
+          profile_path = Path('benchmarks/LFEA/CAESAR_ACCDB/bm4l-validation.profile.json')
+          profile = profile_path.read_text()
+          before = '''    "reducerCondensation": true,\n    "b31jSmooth90FlexibilityCorrection": {'''
+          after = '''    "reducerCondensation": true,\n    "straightPipeTransverseShear": {\n      "mode": "COWPER_HOLLOW_CIRCLE_TIMOSHENKO",\n      "authorityStatus": "RESOLVED",\n      "source": "BM4_L.ACCDB-only straight-span constitutive audit: source SHA-256 64c05a50e9ed0452622ff5880335460486f24ac8e6adecc9a300b549c9aa82f8; run 31398521355 / artifact 9066681744. In both L3 and L4, all 54 usable ordinary straight spans favor section-derived Cowper/Timoshenko over Euler; no LFEA comparison rows or failure counts are consumed."\n    },\n    "b31jSmooth90FlexibilityCorrection": {'''
+          if profile.count(before) != 1:
+              raise SystemExit('profile insertion anchor is not unique')
+          profile_path.write_text(profile.replace(before, after, 1))
+
+          schema_path = Path('benchmarks/LFEA/CAESAR_ACCDB/profile.schema.json')
+          schema = schema_path.read_text()
+          before = '''        "reducerCondensation": { "type": "boolean" },\n        "b31jSmooth90FlexibilityCorrection": {'''
+          after = '''        "reducerCondensation": { "type": "boolean" },\n        "straightPipeTransverseShear": {\n          "type": "object",\n          "additionalProperties": false,\n          "required": ["mode", "authorityStatus", "source"],\n          "properties": {\n            "mode": { "enum": ["EULER_BERNOULLI", "COWPER_HOLLOW_CIRCLE_TIMOSHENKO"] },\n            "authorityStatus": { "enum": ["RESOLVED", "PROVISIONAL"] },\n            "source": { "type": "string", "minLength": 1 }\n          }\n        },\n        "b31jSmooth90FlexibilityCorrection": {'''
+          if schema.count(before) != 1:
+              raise SystemExit('schema insertion anchor is not unique')
+          schema_path.write_text(schema.replace(before, after, 1))
+          PY
+
+      - name: Remove one-shot promotion machinery
+        shell: bash
+        run: |
+          set -euo pipefail
+          git rm -f scripts/lfea-m047-promote-bm4l-accdb-shear.mjs
+          git rm -f .github/workflows/lfea-m047-bm4l-promote-accdb-shear-once.yml
+          git rm -f .github/workflows/lfea-m047-bm4l-clean-shear-promotion-once.yml
+
+      - name: Validate cleaned change
+        shell: bash
+        run: |
+          set -euo pipefail
+          node --check src/core/fea-benchmarks/caesar-accdb-package.js
+          node --check src/core/fea-benchmarks/caesar-accdb-linear-solve.js
+          node --check src/core/fea-benchmarks/caesar-accdb-straight-pipe-profile.js
+          node scripts/lfea-m047-cowper-straight-pipe-profile-check.mjs
+          node -e "JSON.parse(require('fs').readFileSync('benchmarks/LFEA/CAESAR_ACCDB/profile.schema.json','utf8')); JSON.parse(require('fs').readFileSync('benchmarks/LFEA/CAESAR_ACCDB/bm4l-validation.profile.json','utf8'));"
+          git diff --check
+          echo '--- retained production diffstat ---'
+          git diff --stat 4fc110814a0574c2af642c10d5a74fc4f8057b6c -- \
+            src/core/fea-benchmarks/caesar-accdb-package.js \
+            src/core/fea-benchmarks/caesar-accdb-linear-solve.js \
+            src/core/fea-benchmarks/caesar-accdb-straight-pipe-profile.js \
+            benchmarks/LFEA/CAESAR_ACCDB/profile.schema.json \
+            benchmarks/LFEA/CAESAR_ACCDB/bm4l-validation.profile.json
+
+      - name: Commit cleanup
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add -A
+          git commit -m 'chore(lfea): clean ACCDB shear promotion diff'
+          git push origin HEAD:agent/m047-bm4l-root-cause-991

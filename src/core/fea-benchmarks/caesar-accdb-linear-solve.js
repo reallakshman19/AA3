@@ -115,6 +115,7 @@ export function solveCaesarAccdbLinearBenchmark(benchmarkPackage, selectedCaseId
     cases[caseRecord.caseId] = {
       executionSemanticHash: solved.execution.semanticHash,
       executionEvidenceHash: solved.execution.evidenceHash,
+      stiffnessStateHash: solved.execution.stiffnessStateHash,
       rows: solved.rows,
     };
     caseEvidence[caseRecord.caseId] = solved.evidence;
@@ -252,8 +253,22 @@ function solveCase(benchmarkPackage, caseRecord, solveProfile) {
       pressureIncluded: caseMode.pressure,
       executionStatus: execution.status,
       solverDiagnostics: execution.diagnostics,
+      stiffnessStateHash: execution.stiffnessStateHash,
       recoveredEquilibrium,
       globalRecoveryDisagreement: recovered.globalRecoveryDisagreement,
+      recoveryLedger: recovered.actions.map((recoveredAction) => ({
+        elementId: recoveredAction.entry.elementId,
+        sourceElementId: recoveredAction.entry.sourceElementId,
+        nodeI: recoveredAction.entry.nodeI,
+        nodeJ: recoveredAction.entry.nodeJ,
+        jointDisplacement12: recoveredAction.jointDisplacement12,
+        globalElasticAction: recoveredAction.globalElasticAction,
+        equivalentLoadGlobal: recoveredAction.entry.contribution.equivalentLoadGlobal,
+        initialStrainLoadGlobal: recoveredAction.entry.contribution.initialStrainLoadGlobal,
+        qGlobal: recoveredAction.action.qGlobal,
+        qLocal: recoveredAction.action.qLocal,
+        transformedLocalQGlobal: recoveredAction.transformedLocalQGlobal,
+      })),
       numericalDisplacementShift: shiftedAnalysis.numericalDisplacementShift.evidence,
       analysisNodeCount: shiftedAnalysis.positions.size,
       analysisElementCount: shiftedAnalysis.elements.length,
@@ -1258,7 +1273,13 @@ function recoverActions(execution, elements) {
       - entry.contribution.equivalentLoadGlobal[index]
       - entry.contribution.initialStrainLoadGlobal[index]);
     const action = { ...localRecovery, qGlobal };
-    return { entry, action, transformedLocalQGlobal: localRecovery.qGlobal };
+    return {
+      entry,
+      action,
+      jointDisplacement12: Object.freeze([...jointDisplacement12]),
+      globalElasticAction: Object.freeze([...globalElasticAction]),
+      transformedLocalQGlobal: localRecovery.qGlobal,
+    };
   });
   const disagreements = actions.flatMap(({ action, transformedLocalQGlobal }) =>
     action.qGlobal.map((value, index) => Math.abs(value - transformedLocalQGlobal[index])));

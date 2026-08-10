@@ -1,0 +1,54 @@
+{
+  "schema": "m047-bm4l-tee-authority-audit/v1",
+  "classification": "MATCHES_CAESAR_REPORT_NO_MECHANICS_CHANGE",
+  "source": {
+    "modelCommonCommit": "45d51ea18624f5775805f399110c1738301c0d90",
+    "reportCommonCommit": "179c4831cf521cf797c13699cfbbd118315c9244",
+    "zipSha256": "978617cba50fa0b1a16c2fa71dc1e0d38e55ac834b191f887d100c6951abd8b9",
+    "accdbMemberSha256": "64c05a50e9ed0452622ff5880335460486f24ac8e6adecc9a300b549c9aa82f8",
+    "miscdataSha256": "a2f5d5d3d76c8c2ea48e32495129b3689a6c5679de7ba11f03d2f780625692c",
+    "loadCaseReportSha256": "621bf3cef12f66e0fb3e0216d3fbff02e3dd002b829d680b57fc08d33907deb0",
+    "workflowRunId": 31374703037,
+    "artifactId": 9057474441,
+    "artifactSha256": "833174811f004b1e9f2dfb131baddd3c66cd2fa5466a331fd61513591b62968e"
+  },
+  "loadCaseIdentity": {
+    "L14": "CAESAR report defines L14=L5-L6 with ALG. L5 and L6 both use EC and friction multiplier 0, so the equivalent linear primitive is T1 with EC and mu=0."
+  },
+  "productionSmooth90Counts": {
+    "L2": [3, 130, 110],
+    "L3": [2, 41, 77],
+    "L4": [5, 56, 65],
+    "L5": [1, 49, 82],
+    "L6": [3, 58, 26],
+    "L14": [2, 41, 77]
+  },
+  "reportedAndDerivedTees": [
+    {
+      "nodeId": "20160",
+      "accdbType": 3,
+      "caesarReportType": "2.1",
+      "caesarBranchFlexibility": {"inPlane": 1.294, "outOfPlane": 1.0, "torsional": 1.0},
+      "solverBranchFlexibility": {"inPlane": 1.293877268527911, "outOfPlane": 1.0, "torsional": 1.0},
+      "caesarBranchInPlaneStiffnessNmPerDeg": 1283000,
+      "disposition": "MATCH_WITHIN_REPORT_ROUNDING"
+    },
+    {
+      "nodeId": "20295",
+      "accdbType": 3,
+      "caesarReportType": "2.1",
+      "caesarBranchFlexibility": {"inPlane": 1.323, "outOfPlane": 1.0, "torsional": 1.0},
+      "solverBranchFlexibility": {"inPlane": 1.3214362810175229, "outOfPlane": 1.0, "torsional": 1.0},
+      "caesarBranchInPlaneStiffnessNmPerDeg": 287700,
+      "disposition": "CONSISTENT_WITH_REPORTED_FACTOR_TO_PRINT_PRECISION"
+    }
+  ],
+  "reportedRigidIntersections": [
+    {"nodeId": "20240", "accdbType": 5, "caesarReportType": "2.6", "reportedFlexibility": 1.0, "solverTeeModifier": false},
+    {"nodeId": "21740", "accdbType": 5, "caesarReportType": "2.6", "reportedFlexibility": 1.0, "solverTeeModifier": false},
+    {"nodeId": "21800", "accdbType": 5, "caesarReportType": "2.6", "reportedFlexibility": 1.0, "solverTeeModifier": false},
+    {"nodeId": "21850", "accdbType": 5, "caesarReportType": "2.6", "reportedFlexibility": 1.0, "solverTeeModifier": false}
+  ],
+  "conflicts": [],
+  "interpretation": "The BM4_L tee/intersection stiffness path is consistent with the pinned CAESAR misc report. TYPE=3 welding tees receive the expected B31J branch in-plane flexibility; TYPE=5 integrally reinforced intersections remain unmodified and therefore rigid in the stiffness model, matching the report's FLEX=1 and 1.130E+11 N.m/deg output. No tee mechanics change is justified from this audit."
+}

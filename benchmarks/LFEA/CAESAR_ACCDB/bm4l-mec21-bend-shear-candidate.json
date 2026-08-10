@@ -1,0 +1,59 @@
+{
+  "schema": "m047-bm4l-mec21-bend-shear-candidate/v1",
+  "classification": "PHYSICALLY_STRONG_AUTHORITY_BLOCKED_CANDIDATE",
+  "sourceAccdbSha256": "64c05a50e9ed0452622ff5880335460486f24ac8e6adecc9a300b549c9aa82f8",
+  "workflowRunId": 31363413419,
+  "candidate": {
+    "claimedSource": "Intergraph CAUx 2015 F=KX reproduction of MEC-21 bend flexibility matrix",
+    "sectionCoefficient": "alpha=(4/3)*(Ro^3-Ri^3)/((Ro^2+Ri^2)*(Ro-Ri)); kappa=1/alpha",
+    "application": "BEND_ARC transverse shear only through the existing Timoshenko frame kernel",
+    "benchmarkResultUsedToDeriveCoefficient": false
+  },
+  "authorityReview": {
+    "hexagonReferenceList": "CAESAR II Technical Reference cites Olson and Cramer, Pipe Flexibility Analysis Using IBM 705 Computer Program MEC 21, Mare Island Report 277-59 (1959).",
+    "exactFormulaPrimaryCopyVerified": false,
+    "officialHexagonPageWithExactFormulaVerified": false,
+    "productionPromotionAuthorized": false,
+    "reason": "The exact annular shear expression embedded in the one-shot candidate could not be independently verified from a retrievable primary copy or an official Hexagon equation page. Physical agreement cannot substitute for source provenance."
+  },
+  "failureCounts": {
+    "L2": { "before": [1,36,18], "after": [1,35,14] },
+    "L3": { "before": [2,47,83], "after": [4,57,97] },
+    "L4": { "before": [0,36,6], "after": [0,36,6] },
+    "L5": { "before": [3,63,50], "after": [3,66,52] },
+    "L6": { "before": [0,13,14], "after": [0,12,14] },
+    "L14": { "before": [2,47,83], "after": [4,57,97] }
+  },
+  "l2BendSourceReplay": {
+    "5": { "before": 256.4564231792465, "after": 77.80308378021695, "improvementFraction": 0.6966225964797239 },
+    "19": { "before": 114.51256748245623, "after": 9.05537680209818, "improvementFraction": 0.9209224192490008 },
+    "20": { "before": 452.82292783941625, "after": 17.40520546863877, "improvementFraction": 0.9615628882758094 },
+    "25": { "before": 34.73402260441037, "after": 3.2813584443190393, "improvementFraction": 0.905528982873916 },
+    "32": { "before": 104.02837454807013, "after": 10.544125957208735, "improvementFraction": 0.8986418272609226 },
+    "33": { "before": 32.65564950491944, "after": 5.366172379699492, "improvementFraction": 0.8356739963511949 },
+    "36": { "before": 46.68090636816282, "after": 5.596921876452825, "improvementFraction": 0.8801025448753921 },
+    "42": { "before": 639.5229212261627, "after": 24.02905881557308, "improvementFraction": 0.962426587041631 },
+    "43": { "before": 295.0374719996353, "after": 9.413734900815143, "improvementFraction": 0.9680930871695281 },
+    "48": { "before": 118.5320375304529, "after": 12.001689378190548, "improvementFraction": 0.8987472954296671 },
+    "85": { "before": 17.62619019043663, "after": 14.797184550429819, "improvementFraction": 0.16050011996022454 },
+    "88": { "before": 2.4792099659017213, "after": 2.129010606690336, "improvementFraction": 0.14125441734581498 }
+  },
+  "replayControls": {
+    "source16Reducer": { "before": 18703.92154599425, "after": 18703.92154599425 },
+    "source37Straight": { "before": 0.09603745988081869, "after": 0.09603745988081869 },
+    "source65Rigid": { "before": 527811.6427158822, "after": 527811.6427158822 }
+  },
+  "integrity": {
+    "gravityWeightUnchanged": true,
+    "allSixRecoveredEquilibrium": "PASS",
+    "qIdentity": "PASS",
+    "sourceMapping": "PASS",
+    "commonOperatorWithinCandidateCases": "PASS"
+  },
+  "decision": {
+    "promote": false,
+    "reason": "The candidate strongly localizes the missing bend response to the MEC-21-like transverse-shear subspace, but exact formula provenance is not yet sufficient for production. L3/L14 are also not acceptance targets while thermal expansion remains [GUESSED].",
+    "unblockRequirement": "Obtain the exact MEC-21/CAUx equation from an authoritative primary source or a versioned source artifact whose identity can be independently verified."
+  },
+  "benchmarkFitting": false
+}

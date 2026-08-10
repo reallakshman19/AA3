@@ -115,6 +115,18 @@ export function manualChunk(id) {
     return 'workspace-event-presentation-contracts';
   }
 
+  // The Phase-1 pre-flight core is an indexed, DOM-free, clock-free leaf stack.
+  // scripts/lfea-preflight-phase1-indexed-model-check.mjs asserts both halves of
+  // what makes this split safe: these modules create no DOM and read no ambient
+  // clock, and none of them imports the live UI, the review surface or the
+  // application entry point. The dependency therefore runs one way, so giving
+  // them their own chunk cannot reorder evaluation of a stateful workspace
+  // controller. Splitting them keeps the main chunk under the production
+  // ceiling asserted by scripts/bundle-chunk-check.mjs.
+  if (source.includes('/src/workspace/lfea-preflight-phase1-')) {
+    return 'lfea-preflight-phase1';
+  }
+
   // Rollup must own the complete stateful workspace graph so evaluation order
   // follows static dependency analysis rather than filename-based partitions.
   if (source.includes('/src/workspace/')) return undefined;

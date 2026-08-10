@@ -1,0 +1,137 @@
+name: M047 BM4_L L4 source 85 pressure replay
+
+on:
+  push:
+    branches: [agent/m047-bm4l-fresh-qualification]
+    paths: ['.github/workflows/m047-bm4l-source85-pressure-replay.yml']
+
+permissions:
+  contents: read
+
+jobs:
+  replay:
+    runs-on: windows-latest
+    timeout-minutes: 45
+    env:
+      COMMON_COMMIT: '45d51ea18624f5775805f399110c1738301c0d90'
+      ZIP_SHA256: '978617cba50fa0b1a16c2fa71dc1e0d38e55ac834b191f887d100c6951abd8b9'
+      MEMBER_SHA256: '64c05a50e9ed0452622ff5880335460486f24ac8e6adecc9a300b549c9aa82f8'
+      ACE_URL: 'https://download.microsoft.com/download/3/5/C/35C84C36-661A-44E6-9324-8786B8DBE231/accessdatabaseengine_X64.exe'
+      ACE_SHA256: '04e96c9f1a1f7d251a88aececf1dc10ff65950392787427c00814a43308003de'
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: agent/m047-bm4l-fresh-qualification
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+      - run: npm ci
+
+      - name: Bind pinned model source
+        shell: pwsh
+        run: |
+          $ErrorActionPreference='Stop'; $PSNativeCommandUseErrorActionPreference=$true
+          New-Item -ItemType Directory -Force artifacts/source85/source,artifacts/source85/run | Out-Null
+          $installer='artifacts/source85/accessdatabaseengine_X64.exe'
+          Invoke-WebRequest -Uri $env:ACE_URL -OutFile $installer
+          if((Get-FileHash $installer -Algorithm SHA256).Hash.ToLowerInvariant() -ne $env:ACE_SHA256){ throw 'ACE hash mismatch' }
+          $sig=Get-AuthenticodeSignature $installer
+          if($sig.Status -ne 'Valid' -or $sig.SignerCertificate.Subject -notmatch 'Microsoft'){ throw 'ACE signature failure' }
+          $p=Start-Process $installer -ArgumentList '/quiet','/norestart' -Wait -PassThru
+          if($p.ExitCode -notin @(0,3010)){ throw "ACE install failed $($p.ExitCode)" }
+          Remove-Item $installer -Force
+          $zip='artifacts/source85/BM4_L.zip'
+          Invoke-WebRequest -Uri "https://raw.githubusercontent.com/reallaksh19/Common/$env:COMMON_COMMIT/LFEA/BM4/BM4_L.zip" -OutFile $zip
+          if((Get-FileHash $zip -Algorithm SHA256).Hash.ToLowerInvariant() -ne $env:ZIP_SHA256){ throw 'ZIP hash mismatch' }
+          Expand-Archive $zip -DestinationPath artifacts/source85/source -Force
+          $accdb=Join-Path $PWD 'artifacts/source85/source/BM4_L.ACCDB'
+          if((Get-FileHash $accdb -Algorithm SHA256).Hash.ToLowerInvariant() -ne $env:MEMBER_SHA256){ throw 'ACCDB hash mismatch' }
+          "ACCDB=$accdb" >> $env:GITHUB_ENV
+
+      - name: Add runtime-only source stiffness evidence
+        shell: python
+        run: |
+          from pathlib import Path
+          p=Path('src/core/fea-benchmarks/caesar-accdb-linear-solve.js'); t=p.read_text()
+          needle="        numericalShiftLoadGlobal: entry.numericalShiftLoadGlobal,\n        gravityWeightN: entry.gravityWeightN,\n      })),"
+          repl="""        numericalShiftLoadGlobal: entry.numericalShiftLoadGlobal,
+                gravityWeightN: entry.gravityWeightN,
+                diagnosticGlobalStiffness: entry.contribution.globalStiffness,
+                diagnosticEquivalentLoadGlobal: entry.contribution.equivalentLoadGlobal,
+                diagnosticInitialStrainLoadGlobal: entry.contribution.initialStrainLoadGlobal,
+              })),"""
+          if t.count(needle)!=1: raise SystemExit(f'ledger evidence site count={t.count(needle)}')
+          p.write_text(t.replace(needle,repl,1))
+
+      - name: Solve production L4
+        shell: pwsh
+        run: |
+          $ErrorActionPreference='Stop'; $PSNativeCommandUseErrorActionPreference=$true
+          node --check src/core/fea-benchmarks/caesar-accdb-linear-solve.js
+          node scripts/lfea-m047-caesar-straight-pipe-shear-authority-check.mjs
+          node scripts/lfea-m047-mec21-bend-shear-authority-check.mjs
+          node scripts/lfea-caesar-accdb-benchmark.mjs `
+            --accdb $env:ACCDB `
+            --profile benchmarks/LFEA/CAESAR_ACCDB/bm4l-validation.profile.json `
+            --solve-linear true `
+            --solve-cases L4 `
+            --actual-out artifacts/source85/run/actual.json `
+            --out artifacts/source85/run/report.json
+
+      - name: Condense source 85 and replay endpoint motions
+        shell: pwsh
+        run: |
+          $ErrorActionPreference='Stop'; $PSNativeCommandUseErrorActionPreference=$true
+          @'
+          const fs=require('fs');
+          const A=JSON.parse(fs.readFileSync('artifacts/source85/run/actual.json','utf8').replace(/^\uFEFF/,''));
+          const R=JSON.parse(fs.readFileSync('artifacts/source85/run/report.json','utf8').replace(/^\uFEFF/,''));
+          const source='85', fromNode='22220', toNode='22250';
+          const ledger=A.mechanics.cases.L4.elementLedger.filter(e=>String(e.sourceElementId)===source);
+          if(ledger.length<2) throw new Error(`source chain too short ${ledger.length}`);
+          const nodes=[...new Set(ledger.flatMap(e=>[String(e.nodeI),String(e.nodeJ)]))];
+          const ni=new Map(nodes.map((n,i)=>[n,i])); const nd=nodes.length*6;
+          const K=Array.from({length:nd},()=>new Array(nd).fill(0)); const f=new Array(nd).fill(0);
+          for(const e of ledger){
+            if(e.diagnosticGlobalStiffness?.length!==144) throw new Error(`${e.elementId}: missing K`);
+            const en=[String(e.nodeI),String(e.nodeJ)];
+            const fe=e.diagnosticEquivalentLoadGlobal.map((v,i)=>v+e.diagnosticInitialStrainLoadGlobal[i]);
+            for(let a=0;a<12;a++){
+              const ga=ni.get(en[a<6?0:1])*6+a%6; f[ga]+=fe[a];
+              for(let b=0;b<12;b++) K[ga][ni.get(en[b<6?0:1])*6+b%6]+=e.diagnosticGlobalStiffness[a*12+b];
+            }
+          }
+          const bd=[]; for(const n of [fromNode,toNode])for(let d=0;d<6;d++)bd.push(ni.get(n)*6+d);
+          const bs=new Set(bd), ii=Array.from({length:nd},(_,i)=>i).filter(i=>!bs.has(i));
+          function solve(M,b){const n=b.length,a=M.map((r,i)=>[...r,b[i]]);for(let k=0;k<n;k++){let p=k;for(let i=k+1;i<n;i++)if(Math.abs(a[i][k])>Math.abs(a[p][k]))p=i;if(Math.abs(a[p][k])<1e-18)throw new Error(`singular ${k}`);[a[k],a[p]]=[a[p],a[k]];let z=a[k][k];for(let j=k;j<=n;j++)a[k][j]/=z;for(let i=0;i<n;i++)if(i!==k){z=a[i][k];for(let j=k;j<=n;j++)a[i][j]-=z*a[k][j];}}return a.map(r=>r[n]);}
+          function replay(ub){const rhs=ii.map(i=>f[i]-bd.reduce((s,j,k)=>s+K[i][j]*ub[k],0));const ui=solve(ii.map(i=>ii.map(j=>K[i][j])),rhs),u=new Array(nd).fill(0);bd.forEach((g,k)=>u[g]=ub[k]);ii.forEach((g,k)=>u[g]=ui[k]);return bd.map(g=>K[g].reduce((s,v,j)=>s+v*u[j],0)-f[g]);}
+          const cr=R.qualification.cases.find(x=>x.caseId==='L4').comparison.rows;
+          const dofs=['UX','UY','UZ','RX','RY','RZ'];
+          function uv(field){const x=[];for(const n of [fromNode,toNode])for(const d of dofs){const q=d[0]==='R'?'ROTATION':'DISPLACEMENT';const m=cr.filter(r=>r.entityKind==='NODE'&&String(r.entityId)===n&&r.quantity===q&&r.component===d);if(m.length!==1)throw new Error(`u row ${n} ${d}: ${m.length}`);x.push(m[0][field]);}return x;}
+          const acts=[['GLOBAL_END_FORCE_FROM','FX'],['GLOBAL_END_FORCE_FROM','FY'],['GLOBAL_END_FORCE_FROM','FZ'],['GLOBAL_END_MOMENT_FROM','MX'],['GLOBAL_END_MOMENT_FROM','MY'],['GLOBAL_END_MOMENT_FROM','MZ'],['GLOBAL_END_FORCE_TO','FX'],['GLOBAL_END_FORCE_TO','FY'],['GLOBAL_END_FORCE_TO','FZ'],['GLOBAL_END_MOMENT_TO','MX'],['GLOBAL_END_MOMENT_TO','MY'],['GLOBAL_END_MOMENT_TO','MZ']];
+          function qv(field){return acts.map(([q,c])=>{const m=cr.filter(r=>r.entityKind==='ELEMENT'&&String(r.entityId).startsWith('INPUT_ELEMENT:85|')&&r.quantity===q&&r.component===c);if(m.length!==1)throw new Error(`q row ${q} ${c}: ${m.length}`);return m[0][field];});}
+          const labels=['FROM FX','FROM FY','FROM FZ','FROM MX','FROM MY','FROM MZ','TO FX','TO FY','TO FZ','TO MX','TO MY','TO MZ'];
+          const uL=uv('actualValue'),uC=uv('referenceValue'),qL=qv('actualValue'),qC=qv('referenceValue'),s=replay(uL),p=replay(uC);
+          const sd=s.map((v,i)=>v-qL[i]),d=p.map((v,i)=>v-qC[i]);
+          const norm=(v,ids)=>Math.hypot(...ids.map(i=>v[i]));
+          const out={
+            schema:'m047-bm4l-source85-pressure-replay/v1',
+            sourceElementId:source,endpoints:[fromNode,toNode],analysisElementCount:ledger.length,
+            selfReplay:{forceNormN:norm(sd,[0,1,2,6,7,8]),momentNormNm:norm(sd,[3,4,5,9,10,11])},
+            caesarEndpointReplay:{forceNormN:norm(d,[0,1,2,6,7,8]),momentNormNm:norm(d,[3,4,5,9,10,11]),rows:labels.map((label,i)=>({label,predicted:p[i],reference:qC[i],difference:d[i]}))},
+            endpointMotion:{labels:['FROM UX','FROM UY','FROM UZ','FROM RX','FROM RY','FROM RZ','TO UX','TO UY','TO UZ','TO RX','TO RY','TO RZ'],lfea:uL,caesar:uC,delta:uL.map((v,i)=>v-uC[i])},
+            pressureEvidence:ledger.map(e=>({elementId:e.elementId,kind:e.kind,pressureAxialStrain:e.pressureAxialStrain,bourdonRotationRadians:e.bourdonRotationRadians,bourdonFreeEndTranslationM:e.bourdonFreeEndTranslationM,physicalInitialStrainLoadGlobal:e.physicalInitialStrainLoadGlobal})),
+            sourceActions:labels.map((label,i)=>({label,reference:qC[i],actual:qL[i],percentError:qC[i]===0?null:100*Math.abs((qL[i]-qC[i])/qC[i])}))
+          };
+          if(out.selfReplay.forceNormN>1e-3||out.selfReplay.momentNormNm>1e-5) throw new Error(`self replay failed ${JSON.stringify(out.selfReplay)}`);
+          fs.writeFileSync('artifacts/source85/replay.json',JSON.stringify(out,null,2)+'\n'); console.log(JSON.stringify(out,null,2));
+          '@ | node
+
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: m047-bm4l-source85-pressure-replay-${{ github.sha }}
+          path: artifacts/source85
+          retention-days: 30
+          if-no-files-found: error

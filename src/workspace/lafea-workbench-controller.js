@@ -132,6 +132,15 @@ export class LafeaWorkbenchController {
   revalidateLifecycleBinding(sourceHash, originRef) {
     return this.store.revalidateLifecycleBinding(sourceHash, originRef);
   }
+  registerTemplateReleaseRecord(value, stageId = this.getState().activeStageId) {
+    return this.store.registerTemplateReleaseRecord(value, stageId);
+  }
+  selectRetainedTemplateReleaseRecord(stageId = this.getState().activeStageId) {
+    return this.store.selectRetainedTemplateReleaseRecord(stageId);
+  }
+  buildReleaseBindingProjection(stageId = this.getState().activeStageId) {
+    return this.store.buildReleaseBindingProjection(stageId);
+  }
   validateLafeaAnalysisMeshEvidence(value) {
     return this.store.validateLafeaAnalysisMeshEvidence(value);
   }

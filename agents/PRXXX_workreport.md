@@ -6,7 +6,7 @@
 - **Source issue:** #1015 — `LAFEA UI update`
 - **Pull request:** #1016 — draft
 - **Branch:** `agent/lafea-appendix-a-workreport`
-- **Current stage:** Stage 7 — authoritative release-record binding in progress
+- **Current stage:** Stage 7 complete; Stage 8 viewport lifecycle/performance next
 - **Last updated:** 2026-08-10
 - **CI constraint:** Do not add GitHub Actions workflows or workflow-based CI gates. Use existing repository/local checks where available.
 
@@ -54,18 +54,18 @@ T6 area uses 2D triangular quadrature; curved-edge perimeter uses 1D Gauss-Legen
 
 ## Stage log
 
-### Stage 1 — Report initialized
+### Stage 1 — Report initialized — COMPLETE
 
 - Created branch and persistent report.
 - Reviewed all 10 Appendix A questions.
 - Recorded corrections, concepts, examples, and roadmap.
 
-### Stage 2 — PR allocated
+### Stage 2 — PR allocated — COMPLETE
 
 - Opened draft PR #1016 against `main`.
 - Bound report to actual PR/branch.
 
-### Stage 3 — Documentation baseline verified
+### Stage 3 — Documentation baseline verified — COMPLETE
 
 - Verified report was the only changed file at that stage.
 - Confirmed no workflow/CI-gate file was added.
@@ -74,9 +74,8 @@ T6 area uses 2D triangular quadrature; curved-edge perimeter uses 1D Gauss-Legen
 
 - Guided release badge consumes `workflow.releaseQualified` rather than hardcoded text.
 - Orchestration `RELEASE` consumes readiness rather than a hardcoded blocked section.
-- Readiness remains fail-closed; no solver/result/report state is promoted into release authority.
-- Machine reason codes remain canonical while the UI presents human-readable engineering guidance.
-- No workflow file added.
+- Machine reason codes remain canonical while UI presentation is human-readable.
+- Solver/result/report completion alone still cannot create release authority.
 
 ### Stage 5 — Guided workflow truthfulness — COMPLETE
 
@@ -97,58 +96,116 @@ The closed LAFEA.1 source contract does not currently declare the governing code
 - Guided Analysis Profile navigation targets the card.
 - Shows lifecycle profile/binding, source identity/schema/version, formulation, qualification profile, thickness policy, requested analyses/cases, units, qualification details, and limitations when present.
 - Added `scripts/lafea-ui-analysis-settings-check.mjs` as a local, non-Actions check.
-- No workflow file added.
 
-### Stage 7 — Authoritative release-record binding — IN PROGRESS
+### Stage 7 — Authoritative release-record binding — COMPLETE
 
-**Governance objective**
+**Governance result**
 
-Connect the workbench release projection to the repository's actual `lafea-template-release-record/v2` authority contract without allowing the UI, solver completion, report completion, or a self-asserted boolean to create release authority.
+Workbench release state can now consume `lafea-template-release-record/v2`, but a release record is deliberately insufficient by itself. Release qualification requires an integrity-valid record plus independent runtime trust and current engineering identity.
 
-**Planned binding contract**
+**Files added/changed for Stage 7**
 
-A retained release record may affect workbench release state only when all of the following are true:
+- `src/workspace/lafea-workbench-release-binding.js` — new governed release state/projection.
+- `src/workspace/lafea-workbench-readiness.js` — release binding projected into canonical readiness.
+- `src/workspace/lafea-workbench-orchestration-projection.js` — RELEASE section consumes detailed binding state/evidence.
+- `src/workspace/lafea-workbench-orchestrator-store.js` — retains release record and build trust configuration.
+- `src/workspace/lafea-workbench-orchestrator-api.js` — public register/select/project methods.
+- `src/workspace/lafea-workbench-controller.js` — controller wrappers for release-record operations.
+- `src/workspace/lafea-workbench-reason-labels.js` — human-readable release blockers.
+- `scripts/lafea-ui-release-binding-check.mjs` — local Stage 7 regression script; not wired to Actions.
 
-1. the release record passes `validateTemplateReleaseRecordV2` after an imported JSON value is deep-frozen for contract validation;
-2. `targetStage.stageId` matches the active workbench stage;
-3. current stage-registry identity matches `targetStage.stageEntryHash`;
-4. current composition-root identity and release-state binding match the record;
-5. current lifecycle-profile identity/hash matches the record;
-6. lifecycle exists and its editor/source binding is CURRENT;
-7. the record source hash matches the current lifecycle source hash;
-8. the retained workbench source authority exists and its canonical authority hash matches the record;
-9. source-authority schema/role/canonicalization profile and exact document revision match the current workbench authority;
-10. only a CURRENT `RELEASE_QUALIFIED` record with `releaseQualified=true` may project workbench `RELEASE_QUALIFIED`.
+**Four independent gates**
 
-**Fail-closed behavior**
+A record can project `RELEASE_QUALIFIED` only when all four classes of authority are current:
 
-- No retained record -> `RELEASE_NOT_QUALIFIED`.
-- Valid record for an earlier authority state -> retained/current but not qualified.
-- Previously valid record after source, document, stage registry, composition, or lifecycle-profile drift -> stale binding and `RELEASE_NOT_QUALIFIED`.
-- Invalid/tampered record -> registration rejected; it is never retained as authority.
+1. **Trusted evidence origin** — the host must configure `authorizedReleaseEvidenceHashes` and the record's exact `evidenceHash` must be present. V2 hash validation proves integrity, not provenance; arbitrary self-consistent JSON therefore cannot become release authority merely by recomputing its hashes.
+2. **Exact build identity** — the host must configure `currentCandidateHeadSha`, and it must exactly equal `releaseRecord.candidateHeadSha`. Missing build identity fails closed.
+3. **Current target authority** — `evaluateTemplateTargetCompatibility()` is rerun against `createCurrentLafeaTargetAuthoritySnapshot()`. This covers current stage registry, handoff target, composition root/component set/release binding, lifecycle-profile hashes and applicability, source contract, target unit contract, product adapter, mesh applicability, and benchmark binding IDs/hashes/state.
+4. **Current analysis-source authority** — lifecycle must exist, lifecycle binding must be CURRENT, profile IDs must agree, source hashes must agree, the retained source authority must exist, its canonical authority hash must match the release record, and the exact document revision digest must match current workbench custody.
 
-**Planned code shape**
+Only after those gates pass does the binding honor the record's own final state:
 
-- Add a dedicated workbench release-binding state/projection module rather than embedding release-validation logic in the DOM view.
-- Add public store methods to register/select a template release record and inspect its binding projection.
-- Feed the projection into `projectLafeaWorkbenchReadiness()`.
-- Let orchestration use detailed release-binding reasons while the guided release badge remains driven only by projected qualification.
-- Export release binding in lifecycle/workbench evidence output for traceability.
-- Add a repository-local Stage 7 regression script; do not add or modify GitHub Actions workflows.
+`authorityState === RELEASE_QUALIFIED && validity === CURRENT && releaseQualified === true`
 
-**Example**
+**Trust-anchor concept**
 
-A cryptographically valid `RELEASE_QUALIFIED` record for LAFEA.1 source hash A must become stale and immediately project NOT QUALIFIED after the workbench document changes to source hash B, even if the old record itself remains internally valid and retained for audit history.
+A SHA-256 inside a release record is an integrity identifier, not a signature or trust root. Without an external anchor, a caller capable of constructing a valid V2 object could populate qualification-evidence fields and recompute its hashes. Stage 7 therefore requires the deployment/host to supply a known-good release `evidenceHash` allow-list. This separates:
+
+`record integrity -> trusted provenance -> exact build -> current target -> current source -> release projection`
+
+**Examples**
+
+- No release record -> `RELEASE_RECORD_ABSENT` -> NOT QUALIFIED.
+- Valid record but no trusted evidence allow-list -> `RELEASE_RECORD_TRUST_ANCHOR_UNAVAILABLE` -> NOT QUALIFIED.
+- Valid record with an unrecognized `evidenceHash` -> `RELEASE_RECORD_EVIDENCE_NOT_AUTHORIZED` -> NOT QUALIFIED.
+- Trusted record but workbench has no exact commit SHA -> `RELEASE_RECORD_CANDIDATE_HEAD_UNAVAILABLE` -> NOT QUALIFIED.
+- Trusted record for commit A loaded in build B -> `RELEASE_RECORD_CANDIDATE_HEAD_STALE` -> NOT QUALIFIED.
+- Trusted/current-head record whose stage registry, composition, lifecycle, unit/product/mesh requirement, or benchmark bindings drift -> target compatibility becomes STALE/BLOCKED -> NOT QUALIFIED.
+- Trusted/current-head/current-target record for source A remains retained after editing to source B, but projection becomes STALE through source hash, authority hash, and/or document revision mismatch. Audit history remains visible without carrying forward authority.
+- Tampered record fails `validateTemplateReleaseRecordV2` and is never accepted as current release authority.
+
+**Public integration**
+
+Host/controller configuration now accepts:
+
+- `currentCandidateHeadSha`
+- `authorizedReleaseEvidenceHashes`
+
+Public workbench/controller methods include:
+
+- `registerTemplateReleaseRecord(...)`
+- `selectRetainedTemplateReleaseRecord(...)`
+- `buildReleaseBindingProjection(...)`
+
+`exportLifecycle()` now includes the retained template release record and current release-binding projection for traceability.
+
+**Validation performed**
+
+- Inspected final Stage 7 patches for release state, readiness, orchestration, API/store wiring, controller surface, and local regression script.
+- Confirmed the new release-binding module stays under 300 lines (292 lines in the PR patch), consistent with nearby modularity conventions.
+- Re-listed the full PR changed-file set after Stage 7: no `.github/workflows/*` or other workflow file is present.
+- Added assertions in `scripts/lafea-ui-release-binding-check.mjs` for absent record, missing trust anchor, unauthorized evidence hash, missing/wrong candidate head, current target compatibility, source-change staleness, imported JSON deep-freeze/validation, and tamper rejection.
+- **The repository-local Node scripts have not been executed in this environment** because there is no local checkout and outbound GitHub cloning is unavailable. No unexecuted check is reported as PASS.
+
+**Remaining integration dependency**
+
+The application/deployment host must supply its actual candidate commit SHA and trusted release evidence hash(es). Until it does, Stage 7 intentionally leaves release NOT QUALIFIED. There is no UI control that lets an end user mint or trust a release record.
+
+## Current PR changed paths after Stage 7
+
+- `agents/PRXXX_workreport.md`
+- `scripts/lafea-ui-analysis-settings-check.mjs`
+- `scripts/lafea-ui-release-binding-check.mjs`
+- `scripts/lafea-ui-workflow-truthfulness-check.mjs`
+- `src/workspace/lafea-analysis-settings-view.js`
+- `src/workspace/lafea-guided-workflow-view.js`
+- `src/workspace/lafea-guided-workflow.js`
+- `src/workspace/lafea-workbench-content.js`
+- `src/workspace/lafea-workbench-controller.js`
+- `src/workspace/lafea-workbench-orchestration-projection.js`
+- `src/workspace/lafea-workbench-orchestrator-api.js`
+- `src/workspace/lafea-workbench-orchestrator-store.js`
+- `src/workspace/lafea-workbench-readiness.js`
+- `src/workspace/lafea-workbench-reason-labels.js`
+- `src/workspace/lafea-workbench-release-binding.js`
+- `src/workspace/lafea-workbench-view.js`
+
+No workflow file is present.
 
 ## Future roadmap
 
 ### Stage 8 — Viewport lifecycle/performance
 
-Measure destroy/remount cost and introduce persistent update/refresh behavior if reconstruction is material.
+- Remove unnecessary viewport destroy/recreate when scene identity is unchanged.
+- Preserve source selection and retained-mesh focus semantics.
+- Keep `sceneRevision` as engineering identity, not an undocumented cache authority.
+- Add local regression coverage for same-scene refresh versus changed-scene rebuild.
 
 ### Stage 9 — Numerical verification UX
 
-Present convergence (mesh sizes, observed order, Richardson, GCI) and mesh qualification (area, perimeter, boundary deviation, midside placement, topology, Jacobian) as separate engineering evidence.
+- Present convergence: mesh sizes, observed order, Richardson extrapolation, GCI, and blocking reasons.
+- Present mesh qualification separately: area, perimeter, boundary deviation, midside placement, topology, and Jacobian evidence.
+- Distinguish near-zero relative-GCI inapplicability from genuine non-convergence.
 
 ## Validation policy
 

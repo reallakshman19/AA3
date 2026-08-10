@@ -1,8 +1,8 @@
 name: M047 BM4_L transverse shear diagnostic
 
 on:
-  pull_request:
-    branches: [main]
+  push:
+    branches: [agent/m047-bm4l-root-cause-991]
   workflow_dispatch:
 
 permissions:
@@ -10,7 +10,6 @@ permissions:
 
 jobs:
   shear-diagnostic:
-    if: github.event_name == 'workflow_dispatch' || github.head_ref == 'agent/m047-bm4l-root-cause-991'
     runs-on: windows-2022
     timeout-minutes: 45
     steps:
@@ -78,22 +77,22 @@ jobs:
           $marker='function frameProfile() {'
           if(-not $text.Contains($marker)){throw 'frameProfile marker missing.'}
           $func=@'
-function diagnosticTimoshenkoFrameProfile() {
-  return sealFrameElementProfile({
-    schema: 'fea-linear-frame-element-profile/v1',
-    profileId: 'M047-DIAGNOSTIC-TIMO-K050-BEND',
-    straightPipeFormulation: 'PIPE_FRAME3D_TIMOSHENKO_V1',
-    shearDeformation: true,
-    shearCorrectionFactorY: { value: 0.50, source: 'M047_DIAGNOSTIC_NOT_AUTHORITY' },
-    shearCorrectionFactorZ: { value: 0.50, source: 'M047_DIAGNOSTIC_NOT_AUTHORITY' },
-    releaseRule: 'STATIC_CONDENSATION_V1',
-    thermalStrainApproximation: 'UNIFORM_TEMPERATURE_ALPHA_DELTA_T_V1',
-    releaseSingularityTolerance: { value: 1e-12, source: 'CAESAR_ACCDB_LINEAR_SOLVE_PROFILE_V1' },
-    semanticHash: '',
-  });
-}
+          function diagnosticTimoshenkoFrameProfile() {
+            return sealFrameElementProfile({
+              schema: 'fea-linear-frame-element-profile/v1',
+              profileId: 'M047-DIAGNOSTIC-TIMO-K050-BEND',
+              straightPipeFormulation: 'PIPE_FRAME3D_TIMOSHENKO_V1',
+              shearDeformation: true,
+              shearCorrectionFactorY: { value: 0.50, source: 'M047_DIAGNOSTIC_NOT_AUTHORITY' },
+              shearCorrectionFactorZ: { value: 0.50, source: 'M047_DIAGNOSTIC_NOT_AUTHORITY' },
+              releaseRule: 'STATIC_CONDENSATION_V1',
+              thermalStrainApproximation: 'UNIFORM_TEMPERATURE_ALPHA_DELTA_T_V1',
+              releaseSingularityTolerance: { value: 1e-12, source: 'CAESAR_ACCDB_LINEAR_SOLVE_PROFILE_V1' },
+              semanticHash: '',
+            });
+          }
 
-'@
+          '@
           $text=$text.Replace($marker,$func+$marker)
           [IO.File]::WriteAllText((Join-Path $PWD $path),$text,(New-Object Text.UTF8Encoding($false)))
 
@@ -113,49 +112,49 @@ function diagnosticTimoshenkoFrameProfile() {
           if(($text.Split($needle).Count-1)-ne1){throw 'Expected exactly one bend frame profile call.'}
           $text=$text.Replace($needle,'      frameElementProfile: diagnosticEulerFrameProfile(),')
           $old=@'
-function frameProfile() {
-  return sealFrameElementProfile({
-    schema: 'fea-linear-frame-element-profile/v1',
-    profileId: 'LINEAR-FRAME-ELEMENT-R1',
-    straightPipeFormulation: 'PIPE_FRAME3D_EULER_BERNOULLI_V1',
-    shearDeformation: false,
-    releaseRule: 'STATIC_CONDENSATION_V1',
-    thermalStrainApproximation: 'UNIFORM_TEMPERATURE_ALPHA_DELTA_T_V1',
-    releaseSingularityTolerance: { value: 1e-12, source: PROFILE_SOURCE },
-    semanticHash: '',
-  });
-}
-'@
+          function frameProfile() {
+            return sealFrameElementProfile({
+              schema: 'fea-linear-frame-element-profile/v1',
+              profileId: 'LINEAR-FRAME-ELEMENT-R1',
+              straightPipeFormulation: 'PIPE_FRAME3D_EULER_BERNOULLI_V1',
+              shearDeformation: false,
+              releaseRule: 'STATIC_CONDENSATION_V1',
+              thermalStrainApproximation: 'UNIFORM_TEMPERATURE_ALPHA_DELTA_T_V1',
+              releaseSingularityTolerance: { value: 1e-12, source: PROFILE_SOURCE },
+              semanticHash: '',
+            });
+          }
+          '@
           if(-not $text.Contains($old)){throw 'Canonical frameProfile block missing.'}
           $new=@'
-function diagnosticEulerFrameProfile() {
-  return sealFrameElementProfile({
-    schema: 'fea-linear-frame-element-profile/v1',
-    profileId: 'M047-DIAGNOSTIC-EULER-BEND',
-    straightPipeFormulation: 'PIPE_FRAME3D_EULER_BERNOULLI_V1',
-    shearDeformation: false,
-    releaseRule: 'STATIC_CONDENSATION_V1',
-    thermalStrainApproximation: 'UNIFORM_TEMPERATURE_ALPHA_DELTA_T_V1',
-    releaseSingularityTolerance: { value: 1e-12, source: PROFILE_SOURCE },
-    semanticHash: '',
-  });
-}
+          function diagnosticEulerFrameProfile() {
+            return sealFrameElementProfile({
+              schema: 'fea-linear-frame-element-profile/v1',
+              profileId: 'M047-DIAGNOSTIC-EULER-BEND',
+              straightPipeFormulation: 'PIPE_FRAME3D_EULER_BERNOULLI_V1',
+              shearDeformation: false,
+              releaseRule: 'STATIC_CONDENSATION_V1',
+              thermalStrainApproximation: 'UNIFORM_TEMPERATURE_ALPHA_DELTA_T_V1',
+              releaseSingularityTolerance: { value: 1e-12, source: PROFILE_SOURCE },
+              semanticHash: '',
+            });
+          }
 
-function frameProfile() {
-  return sealFrameElementProfile({
-    schema: 'fea-linear-frame-element-profile/v1',
-    profileId: 'M047-DIAGNOSTIC-TIMO-K050-NONBEND',
-    straightPipeFormulation: 'PIPE_FRAME3D_TIMOSHENKO_V1',
-    shearDeformation: true,
-    shearCorrectionFactorY: { value: 0.50, source: 'M047_DIAGNOSTIC_NOT_AUTHORITY' },
-    shearCorrectionFactorZ: { value: 0.50, source: 'M047_DIAGNOSTIC_NOT_AUTHORITY' },
-    releaseRule: 'STATIC_CONDENSATION_V1',
-    thermalStrainApproximation: 'UNIFORM_TEMPERATURE_ALPHA_DELTA_T_V1',
-    releaseSingularityTolerance: { value: 1e-12, source: PROFILE_SOURCE },
-    semanticHash: '',
-  });
-}
-'@
+          function frameProfile() {
+            return sealFrameElementProfile({
+              schema: 'fea-linear-frame-element-profile/v1',
+              profileId: 'M047-DIAGNOSTIC-TIMO-K050-NONBEND',
+              straightPipeFormulation: 'PIPE_FRAME3D_TIMOSHENKO_V1',
+              shearDeformation: true,
+              shearCorrectionFactorY: { value: 0.50, source: 'M047_DIAGNOSTIC_NOT_AUTHORITY' },
+              shearCorrectionFactorZ: { value: 0.50, source: 'M047_DIAGNOSTIC_NOT_AUTHORITY' },
+              releaseRule: 'STATIC_CONDENSATION_V1',
+              thermalStrainApproximation: 'UNIFORM_TEMPERATURE_ALPHA_DELTA_T_V1',
+              releaseSingularityTolerance: { value: 1e-12, source: PROFILE_SOURCE },
+              semanticHash: '',
+            });
+          }
+          '@
           $text=$text.Replace($old,$new)
           [IO.File]::WriteAllText((Join-Path $PWD $path),$text,(New-Object Text.UTF8Encoding($false)))
 

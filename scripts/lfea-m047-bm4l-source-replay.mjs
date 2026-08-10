@@ -36,7 +36,7 @@ export function buildSourceReplay({ actual, report, caseId = 'L2' }) {
 
   const sourceDefinitions = sourceDefinitionsFromRows(comparisonRows);
   const referenceNodeU = nodeVectors(comparisonRows, 'referenceValue');
-  const actualNodeU = nodeVectors(comparisonRows, 'actualValue');
+  const actualNodeU = exactNodeVectors(evidence.recoveryLedger);
   const restrainedNodes = new Set(comparisonRows
     .filter((row) => row.entityKind === 'NODE' && ['FORCE', 'MOMENT'].includes(row.quantity))
     .map((row) => String(row.entityId)));
@@ -139,6 +139,7 @@ export function buildSourceReplay({ actual, report, caseId = 'L2' }) {
     comparedSourceElementCount: compared.length,
     skippedSourceElementCount: results.length - compared.length,
     currentReplayProof: {
+      displacementSource: 'RECOVERY_LEDGER_UNCLEANED_SOLVER_DISPLACEMENT',
       worstSourceElementId: currentReplayWorst?.sourceElementId ?? null,
       maximumAbsoluteDifference: currentReplayWorst?.currentReplay.maximumAbsoluteDifference ?? null,
       status: (currentReplayWorst?.currentReplay.maximumAbsoluteDifference ?? Infinity) <= 1e-5 ? 'PASS' : 'FAIL',
@@ -178,6 +179,27 @@ function nodeVectors(rows, field) {
     values.get(nodeId)[index] = finite(row[field], `${field}:${nodeId}:${row.quantity}:${row.component}`);
   }
   return values;
+}
+
+export function exactNodeVectors(recoveryLedger) {
+  const values = new Map();
+  for (const row of recoveryLedger) {
+    if (!Array.isArray(row.jointDisplacement12) || row.jointDisplacement12.length !== 12
+      || !row.jointDisplacement12.every(Number.isFinite)) {
+      throw new TypeError(`Recovery ledger element ${row.elementId} does not retain a finite 12-component joint displacement.`);
+    }
+    bindExactNodeVector(values, String(row.nodeI), row.jointDisplacement12.slice(0, 6));
+    bindExactNodeVector(values, String(row.nodeJ), row.jointDisplacement12.slice(6, 12));
+  }
+  return values;
+}
+
+function bindExactNodeVector(values, nodeId, vector) {
+  const prior = values.get(nodeId);
+  if (prior !== undefined && prior.some((value, index) => value !== vector[index])) {
+    throw new TypeError(`Recovery ledger carries inconsistent exact displacement values for node ${nodeId}.`);
+  }
+  values.set(nodeId, [...vector]);
 }
 
 function actionVector(rows, entityId, field) {

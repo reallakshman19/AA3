@@ -3,17 +3,18 @@
 **Repository:** `reallaksh19/Advanced_Analysis`  
 **Pull request:** #1001 — `M047: clean BM4_L qualification and accepted CAESAR mechanics`  
 **Branch:** `agent/m047-bm4l-clean-qualified`  
-**Report snapshot head:** `7292177ac77c7d25d456da8d7418d2c5a1417e4c`  
-**Qualification run:** `31383626555` — PASS  
-**Qualification artifact digest:** `sha256:f0c4a8dbff779be8c5a273310ae95b120a967b416cdfff43411cf5e097edf2c8`  
-**Benchmark status:** still FAIL against the final all-row `<10%` target; root-cause work remains active.  
-**Issue #991:** intentionally not modified by this workstream.
+**Latest fully qualified instrumentation head:** `1ea90ef02d26e2641cce61e161a6f7ea714f86d0`  
+**Qualification run:** `31392210270` — PASS  
+**Qualification artifact:** `m047-bm4l-qualification-1ea90ef02d26e2641cce61e161a6f7ea714f86d0`  
+**Artifact digest:** `sha256:77bbacafb8ee0588c768b22c76d225a46f8f7bc244abdb99482ca8e743f61932`  
+**Benchmark status:** still FAIL against the final literal all-row `<10%` target; root-cause work remains active.  
+**Issue #991:** one later user-authorized comment links this report; the issue body/state/reference data were not changed by this workstream.
 
 ---
 
 ## 1. Task objective
 
-The M047/BM4_L task is to reproduce the linear CAESAR II BM4_L benchmark with LFEA closely enough that all governed comparison rows satisfy the literal acceptance rule for the six selected frictionless linear cases:
+The M047/BM4_L task is to reproduce the linear CAESAR II BM4_L benchmark with LFEA closely enough that every governed comparison row satisfies the acceptance rule for six selected frictionless linear cases:
 
 - `L2 = W`
 - `L3 = T1`
@@ -22,42 +23,40 @@ The M047/BM4_L task is to reproduce the linear CAESAR II BM4_L benchmark with LF
 - `L6 = W + P1`
 - `L14 = L5 - L6 = T1`
 
-The objective covers three result families:
+The objective covers:
 
-1. restraint forces/moments (`UX/UY/UZ/RX/RY/RZ`),
+1. restraint forces/moments,
 2. nodal displacement/rotation,
-3. source-element global end actions at FROM and TO (`FX/FY/FZ/MX/MY/MZ`).
+3. source-element global FROM/TO end actions.
 
-The work is deliberately **root-cause driven**. Benchmark counts are used as measurements, not as tuning targets. No benchmark reference values, tolerances, rows, signs, or source data are edited to make the comparison look better.
+The work is deliberately **root-cause driven**. Benchmark counts are measurements, not fitting targets. Reference values, signs, rows, acceptance tolerances, source bytes, and load-case identities are not altered to improve the result.
 
 ---
 
-## 2. Engineering strategy
+## 2. Engineering method
 
 ### 2.1 Clean-room continuation
 
-PR #1001 was created as a clean continuation from `main`, without reusing the commit ancestry of the earlier experimental branch. Only reviewed final mechanics/evidence content was brought forward. This keeps the permanent diff understandable and prevents one-shot diagnostic experiments from becoming accidental production behavior.
+PR #1001 was opened as a clean continuation from `main`, without reusing the commit ancestry of contaminated PR #992. Accepted mechanics/evidence were independently inspected and reconstructed on the fresh branch. Temporary experimental workflows and retained parameter sweeps from #992 were not copied wholesale.
 
 ### 2.2 Authority before fitting
 
-Every production mechanics change follows the same rule:
+Production mechanics follow this sequence:
 
-> **External/physical authority → explicit prediction → one-factor change → all six cases → integrity checks → accept or reject.**
+> **external/physical authority → falsifiable prediction → one-factor implementation → six-case qualification → operator/recovery/equilibrium proof → accept or reject**
 
-Authority comes from, in descending order of relevance:
+Authority is taken from:
 
-- the pinned BM4_L ACCDB source,
-- pinned CAESAR II reports generated from the same benchmark,
-- primary Hexagon/Intergraph documentation for CAESAR behavior,
-- reusable structural-mechanics identities already qualified in the LFEA core.
+- the pinned BM4_L ACCDB,
+- pinned CAESAR II reports for the same benchmark,
+- primary CAESAR/Hexagon/Intergraph documentation,
+- reusable structural mechanics already qualified in the LFEA core.
 
-Observed CAESAR result values are not used to fit arbitrary coefficients.
+CAESAR result rows may identify *where* a model is wrong, but are not used to invent a coefficient.
 
-### 2.3 Common-operator decomposition
+### 2.3 Linear primitive identities
 
-The selected cases are linear combinations of three primitives: gravity `W`, temperature `T1`, and pressure `P1`. For the frictionless linear model, the same stiffness operator should be used in all six cases.
-
-This gives strong identities such as:
+The selected cases reduce to `W`, `T1`, and `P1`, so the same linear stiffness operator must serve all six cases. Strong identities include:
 
 ```text
 L6  = L2 + L4
@@ -65,56 +64,44 @@ L5  = L2 + L3 + L4
 L14 = L5 - L6 = L3
 ```
 
-If a proposed mechanics change accidentally changes the operator by load case, these identities can hide serious implementation errors. PR #1001 therefore retains both structural and **numeric stiffness-ledger hashes** across all six cases.
+The permanent qualification therefore proves a common numeric element-stiffness ledger across every case rather than trusting only metadata.
 
 ### 2.4 Recovery identity
 
-Every element end-action report path is checked against the assembled mechanics identity:
+Element end actions are checked through:
 
 ```text
 q = K u - f_fixed - f_initial
 ```
 
-The work also proves source-element FROM/TO mapping, descendant-chain continuity, and recovered six-DOF equilibrium. This prevents a solver improvement from being confused with a reporting/sign/mapping change.
+The retained evidence also checks source-element descendant continuity, FROM/TO mapping, and six-DOF equilibrium. This prevents a reporting/sign shortcut from being mistaken for a mechanics improvement.
 
 ---
 
-## 3. Source custody and benchmark authority completed
+## 3. Source custody and CAESAR authority
 
-### 3.1 Pinned ACCDB authority
-
-The immutable source remains:
+### 3.1 Pinned ACCDB
 
 - Common commit: `45d51ea18624f5775805f399110c1738301c0d90`
 - `BM4_L.zip` SHA-256: `978617cba50fa0b1a16c2fa71dc1e0d38e55ac834b191f887d100c6951abd8b9`
 - ZIP size: `582488` bytes
-- archive member: `BM4_L.ACCDB`
-- archive-member SHA-256: `64c05a50e9ed0452622ff5880335460486f24ac8e6adecc9a300b549c9aa82f8`
+- member: `BM4_L.ACCDB`
+- authorized member SHA-256: `64c05a50e9ed0452622ff5880335460486f24ac8e6adecc9a300b549c9aa82f8`
 
-A previously declared ACCDB SHA-256 beginning `e21b...` was proven not to be the archive member defined by the pinned Common commit and ZIP. It is retained as contradicted evidence, not used as source authority.
+The previously declared `e21b...` ACCDB hash is recorded as contradicted by the pinned archive member and is not used as authority.
 
-### 3.2 Authenticated Microsoft ACE provider
+### 3.2 Microsoft ACE custody
 
-The permanent qualification workflow installs and authenticates Microsoft Access Database Engine 2016 x64, verifies the installer and provider signatures, opens the pinned ACCDB read-only, and proves that provider access does not mutate the source bytes.
-
-**Concept:** source-custody evidence is part of mechanics qualification. A result cannot be called a CAESAR parity result if the data source itself is ambiguous or silently transformed.
+The qualification authenticates the Microsoft ACE installer/provider, opens the ACCDB read-only, and verifies that provider access does not change the authorized member bytes.
 
 ### 3.3 Pinned CAESAR reports
 
-PR #1001 additionally binds two CAESAR II 14 reports from Common commit `179c4831cf521cf797c13699cfbbd118315c9244`:
+Additional report authority is bound at Common commit `179c4831cf521cf797c13699cfbbd118315c9244`:
 
 - `LFEA/BM4/Miscdata_BM4_L.txt` — Git blob `ef23d224925e4568185a360ecbe1ee62503f15ff`
 - `LFEA/BM4/Loadcasereport_BM4_L.txt` — Git blob `be62eeb08af26dddcd59146e21188c108c4600dd`
 
-The diagnostics fetch these exact blobs and fail on mismatch.
-
-These reports are now used to validate:
-
-- selected load-case formulas and friction settings,
-- printed thermal expansion bounds,
-- welding-tee flexibility/Kb information,
-- bend pressure-stiffening factors,
-- gravity/pipe-property context.
+These reports independently confirm the selected case formulas/friction settings and provide model-specific thermal, tee, and bend-factor evidence.
 
 ---
 
@@ -122,169 +109,117 @@ These reports are now used to validate:
 
 ### 4.1 Fail-closed M047 workflow
 
-A prior diagnostic integration exposed an important process defect: a Node command could fail inside PowerShell and the workflow could continue to a green result. The permanent workflow was hardened so native command failures terminate qualification.
+A previous diagnostic command failed while PowerShell allowed the job to continue. The permanent workflow was hardened with native-command failure handling and explicit artifact-content assertions.
 
-It also explicitly checks that the augmented diagnostics artifact contains the required Common-report and tee-stiffness sections.
-
-**Concept:** a green CI badge is only evidence if failed evidence-generation commands cannot be ignored.
+**Concept:** a green CI badge is evidence only when failed evidence-generation commands cannot be ignored.
 
 ### 4.2 Numeric operator proof
 
-The original `stiffnessStateHash` was useful as a structural-state identifier but did not change when element matrix values changed. PR #1001 therefore adds an independent numeric hash over every recovery-ledger 12×12 global stiffness matrix.
+The old structural stiffness hash did not distinguish all numeric matrix changes. A permanent proof now hashes every recovery-ledger 12×12 global element stiffness matrix.
 
-At the current head all six selected cases share:
+On the latest qualified head, all six cases share:
 
-- numeric element-stiffness ledger SHA-256: `c393ded51edc81f63ebb85d7d8f5243de47e7a3162582fdf7440b4ad39a4d446`
+- element-stiffness ledger SHA-256: `c393ded51edc81f63ebb85d7d8f5243de47e7a3162582fdf7440b4ad39a4d446`
 - combined structural+numeric operator SHA-256: `9422fbda7863c0c4a6080cb8161a3b156522b837026f82346485ee0c9fb5d4c0`
-
-**Concept:** the proof now distinguishes “same model metadata” from “same actual numeric K”.
 
 ### 4.3 Recovery and equilibrium proof
 
-For every selected case the retained evidence checks:
+Every selected case retains passing evidence for:
 
 - `q = K u - f_fixed - f_initial`,
-- source FROM/TO result mapping,
-- multi-descendant source-element continuity,
-- free-node/restrained-node six-DOF equilibrium,
-- common numeric operator across cases.
+- source mapping,
+- descendant-chain continuity,
+- recovered six-DOF equilibrium,
+- one common numeric operator.
 
-This establishes that remaining benchmark differences are mechanics differences, not a hidden report-recovery shortcut.
+### 4.4 Bend effective-stiffness and local-residual profiler
+
+Optimization work added permanent instrumentation:
+
+- profiler commit: `6000c0ba10716fcc42330ccdc5eea31256f27029`
+- workflow integration head: `1ea90ef02d26e2641cce61e161a6f7ea714f86d0`
+- run: `31392210270` — PASS
+- artifact: `9064195771`
+- artifact digest: `sha256:77bbacafb8ee0588c768b22c76d225a46f8f7bc244abdb99482ca8e743f61932`
+
+The retained `bm4l-bend-effective-stiffness.json`:
+
+1. finds all 12 BM4_L bend arcs from the real L3 recovery ledger;
+2. assembles the exact numeric matrices used by production;
+3. statically condenses internal arc nodes to one 12×12 near/far operator per bend;
+4. transforms each operator into a canonical bend basis: `x=tangent`, `z=bend-plane normal`, `y=z×x`;
+5. reports a fixed-near 6×6 far-end stiffness/compliance matrix and unit-DOF probes;
+6. decomposes `CAESAR reference - LFEA actual` end-action and nodal-kinematic residuals into axial, in-plane, out-of-plane, torsional and bending modes;
+7. requires L3 and L14 decompositions to agree.
+
+The exact retained L3/L14 decomposition difference is `0`, and all 12 bends are present, so this is now a permanent, fail-closed search instrument rather than a local one-off experiment.
+
+**Concept:** instead of asking whether a global change lowers 435 failures, future bend work can ask which *matrix mode* is wrong and whether an externally authorized formulation changes precisely that mode.
 
 ---
 
 ## 5. Accepted mechanics layers
 
-## 5.1 B31J smooth-90 bend flexibility
+### 5.1 B31J smooth-90 bend flexibility
 
-### Concept
+The governed B31J smooth-90 treatment is used for 90° bends rather than the older generic bend coefficient. This changes the common stiffness operator, so all six cases are qualified after the change.
 
-For B31.3 2022 with the default B31J method, a smooth 90-degree bend uses the B31J smooth-90 flexibility treatment rather than the older generic bend coefficient. The implementation uses the governed B31J factor rule and keeps pressure stiffening separate.
+### 5.2 Straight-pipe Timoshenko shear (`kappa = 0.5`)
 
-### Why it matters
-
-Bend flexibility changes the global stiffness distribution and therefore affects gravity, thermal, pressure, and combined cases even when the primitive load itself is unchanged.
-
-### Example
-
-A bend-factor error is not local to one bend result row. It changes load redistribution through neighboring supports and source elements, so the correct test is all six load cases plus common-K/equilibrium checks.
-
----
-
-## 5.2 CAESAR straight-pipe Timoshenko shear (`kappa = 0.5`)
-
-### Concept
-
-CAESAR pipe-beam formulation authority gives a pipe shear coefficient of `2`. In the LFEA Timoshenko kernel the effective shear area is represented as `kappa * A`, so the equivalent setting is:
+CAESAR pipe-beam authority gives a transverse shear coefficient of `2`; in the LFEA Timoshenko kernel this maps to effective shear area `kappa A` with:
 
 ```text
 kappaY = kappaZ = 0.5
 ```
 
-This is applied to physically straight pipe spans rather than indiscriminately to every frame-like object.
-
-### Why it matters
-
-Euler-Bernoulli beam stiffness neglects transverse shear deformation. On relatively short/thick piping spans that makes the model too stiff in bending. Timoshenko flexibility corrects the operator rather than scaling the final displacement or force.
-
-### High-signal examples from the root-cause evidence
-
-At node `20090`, `UY`:
+High-signal examples from the earlier root-cause evidence include:
 
 ```text
-CAESAR reference : -197.260
-before correction : -446.039
-after correction  : -212.432
-absolute error    : 248.779 -> 15.172  (~93.9% reduction)
+node 20090 UY
+reference          -197.260
+before             -446.039
+after              -212.432
+absolute error      248.779 -> 15.172
 ```
 
-For source element 4, TO-end `MZ`:
+and source element 4 TO `MZ`:
 
 ```text
-CAESAR reference : -484.627
-before correction : -667.362
-after correction  : -493.973
-absolute error    : 182.735 -> 9.346  (~94.9% reduction)
+reference          -484.627
+before             -667.362
+after              -493.973
+absolute error      182.735 -> 9.346
 ```
 
-For source element 4, TO-end `FY`:
+The same mechanics change improves displacement, force and moment in the expected coupled direction.
+
+### 5.3 Finite CAESAR default restraint stiffness
+
+Blank CAESAR restraint stiffness is represented through the large finite defaults rather than exact mathematical DOF elimination. With BM4_L input units, the governed values are approximately:
 
 ```text
-CAESAR reference : -265.942
-before correction : -335.546
-after correction  : -269.479
-absolute error    : 69.604 -> 3.537  (~94.9% reduction)
+translation = 1.0e14 N/m
+rotation    = 5.729577951e13 N.m/rad
 ```
 
-These examples are important because the correction changes the stiffness formulation and independently improves displacement, shear force, and bending moment in the expected coupled direction.
+This is especially relevant to literal near-zero support rows.
 
----
+### 5.4 Matching-pipe rigid-element shear
 
-## 5.3 Finite CAESAR default restraint stiffness
+Rigid element stiffness is based on matching pipe-like stiffness construction. The accepted pipe Timoshenko treatment is therefore used in that authorized rigid stiffness path rather than classifying every `RIGID` as Euler-Bernoulli.
 
-### Concept
+### 5.5 Directional B31J tee flexibility and Kb evidence
 
-A blank CAESAR restraint stiffness is treated as rigid through very large finite default stiffness, not as a mathematical elimination of the DOF. BM4_L uses displayed units `N/cm` for translation and `N.m/deg` for rotation.
+Welding tees use directional run/branch flexibility through rotational springs attached to existing spans. The independent CAESAR-report Kb comparisons pass closely:
 
-The governed defaults map to approximately:
+- tee `20160`: ~`0.034%` relative Kb difference
+- tee `20295`: ~`0.078%`
 
-```text
-translation: 1.0e12 N/cm      = 1.0e14 N/m
-rotation   : 1.0e12 N.m/deg   = 5.729577951e13 N.m/rad
-```
+Tee `20295` still has a very small entered nominal diameter mismatch: CAESAR prints branch `FLEXb=1.323`, while the strict generic B31J path reconciles the geometry and obtains about `1.321436`. Because Kb already passes, the generic B31J applicability guard was not weakened merely to improve a benchmark count.
 
-### Why it matters
+### 5.6 P1 bend pressure stiffening
 
-A finite spring and an exactly fixed DOF have nearly identical large-scale structural response, but they are not identical at tiny support displacements/rotations. BM4_L includes literal near-zero rows, so the representation must match CAESAR rather than relying on “close enough to rigid”.
-
----
-
-## 5.4 Matching-pipe rigid-element shear scope
-
-### Concept
-
-Rigid elements still use pipe-like stiffness construction for their elastic representation. The accepted CAESAR pipe shear behavior is therefore used where the rigid-element authority resolves a matching pipe stiffness section.
-
-The change was scoped rather than applied blindly to bends/reducers/all special components.
-
-### Why it matters
-
-Component type alone is not enough to choose a beam kernel. The physical/stiffness authority for the component determines whether pipe transverse shear belongs in its internal formulation.
-
----
-
-## 5.5 Directional B31J welding-tee flexibility and Kb proof
-
-### Concept
-
-A B31J tee has different run/branch and in-plane/out-of-plane/torsional flexibility. PR #1001 represents this with directional rotational springs at the existing connected spans, avoiding overlapping duplicate tee elements.
-
-For a directional flexibility factor `k`, the spring uses the CAESAR-compatible characteristic relation based on section rigidity and matching-pipe mean diameter.
-
-The branch flexibility acts at the run outside surface through a rigid offset; the run flexibility acts at the centerline intersection.
-
-### Direct report example
-
-The retained Kb authority check compares LFEA to CAESAR's printed tee stiffness output. Both BM4_L welding tees pass the independent Kb comparison:
-
-- tee `20160`: relative Kb error about `0.034%`
-- tee `20295`: relative Kb error about `0.078%`
-
-### Remaining small geometry gap
-
-CAESAR prints branch `FLEXb = 1.323` at tee `20295` using the entered branch diameter. The strict shared B31J applicability layer currently reconciles a tiny nominal OD mismatch and produces about `1.321436`.
-
-The mismatch is only about `0.0159%` in diameter and Kb already passes, so the generic B31J guard was **not** weakened just to reduce a benchmark count. Any future compatibility behavior must remain CAESAR-adapter-local and bounded by explicit nominal-diameter provenance.
-
----
-
-## 5.6 P1 bend pressure stiffening
-
-### Concept
-
-The previous BM4_L profile interpreted “maximum defined pressure” as including hydrotest pressure. The pinned CAESAR Misc Bend Report provides direct model-specific evidence that the operating bend stiffness is based on `P1`, not the larger hydro pressure.
-
-For bend `20120`, CAESAR prints:
+The pinned CAESAR Misc report directly shows that the bend pressure-stiffening pair corresponds to `P1=11.6 MPa`, not the larger hydro pressure. For bend `20120` CAESAR prints:
 
 ```text
 FLEX : 2.898 -> 3.031
@@ -292,80 +227,33 @@ SIFi : 1.508 -> 1.582
 SIFo : 1.257 -> 1.319
 ```
 
-Using the governed B31J equations:
-
-- the lower/stiffer endpoints reproduce `P1 = 11.6 MPa`,
-- the upper endpoints reproduce the unpressurized values,
-- `HYDRO = 22.035 MPa` does not reproduce the printed pair.
-
-### Change
-
-BM4_L bend pressure stiffening was changed from hydro-inclusive `MAX_DEFINED` to `P1` only. Bourdon, straight-pipe pressure strain, thermal strain, gravity, tolerances, and reference data were unchanged.
-
-### Measured result
-
-Against the immediately preceding clean hydro-inclusive state:
+Changing only the BM4_L bend pressure source from hydro-inclusive `MAX_DEFINED` to `P1` reduced literal objective failures:
 
 ```text
-objective failures: 494 -> 444
-reduction          : 50 rows (~10.1%)
+494 -> 444
 ```
 
-L4 source-element end-action failures became `6 -> 0` before the later reducer-cylinder shear change.
+This layer was accepted because independent report authority selected P1, not because the count happened to improve.
 
-### Why this is a strong result
+### 5.7 Timoshenko shear in the ten reducer cylinders
 
-This was not accepted merely because counts improved. The change was accepted because the pinned CAESAR bend-factor report independently selected P1, and the six-case mechanics/equilibrium/operator proofs stayed valid.
+CAESAR describes a concentric reducer stiffness model as ten successively changing pipe cylinders. Those internal cylinders previously used Euler-Bernoulli stiffness even though ordinary CAESAR pipe spans had already been qualified as Timoshenko.
 
----
+Each reducer cylinder now uses the same governed `kappa=0.5` pipe shear treatment. The ten-cylinder count, midpoint sampling, loads, thermal strain, pressure strain and condensation are unchanged.
 
-## 5.7 Timoshenko pipe shear in the ten reducer cylinders
+The permanent B-3.23 regression proves that ten uniform Timoshenko cylinders condense to one equivalent full-length Timoshenko pipe, preventing subdivision itself from creating artificial extra compliance.
 
-### Concept
-
-Hexagon documents a concentric reducer stiffness model as ten successively changing **pipe cylinders**. The reducer implementation already used ten cylinders but each internal cylinder was Euler-Bernoulli even though ordinary CAESAR pipe spans had already been qualified as Timoshenko with `kappa=0.5`.
-
-The reducer cylinders now use the same governed CAESAR pipe transverse-shear formulation.
-
-### Important scope control
-
-This change did **not** alter:
-
-- the number of cylinders,
-- midpoint section sampling,
-- reducer geometry interpolation,
-- gravity integration,
-- thermal strain,
-- pressure strain,
-- static condensation.
-
-The B-3.23 regression additionally proves that ten uniform Timoshenko cylinders condense to the same full-length uniform Timoshenko pipe. Subdivision therefore does not multiply shear compliance.
-
-### Measured result
-
-Relative to the P1-only state:
+Measured effect:
 
 ```text
-objective failures: 444 -> 435
+444 -> 435 literal objective failures
 ```
-
-Notable count changes:
-
-```text
-L2 : 0 / 33 / 6  -> 0 / 29 / 2
-L5 : 3 / 59 / 44 -> 3 / 53 / 44
-L6 : 0 / 10 / 14 -> 0 / 10 / 12
-```
-
-L3/L14 displacement rows improve slightly (`45 -> 43`), while source-end rows move `73 -> 75`. The major thermal residuals are therefore not explained by reducer shear alone.
-
-The new L4 end-action failures are tiny near-zero rows, roughly `0.0015 N` and `0.0021 N.m` absolute. They remain literal failures; no tolerance was changed to hide them.
 
 ---
 
 ## 6. Current benchmark state
 
-Current governed failure-count triples are **restraint / displacement-rotation / source-end action**:
+Current governed triples are **restraint / displacement-rotation / source-end action**:
 
 | Case | Current failures |
 |---|---:|
@@ -379,273 +267,205 @@ Current governed failure-count triples are **restraint / displacement-rotation /
 Totals:
 
 ```text
-restraint            9
+restraint              9
 displacement/rotation 212
 source-end action     214
---------------------------------
-total                 435
+total                  435
 ```
 
-For comparison, the pinned source reproduction before the accepted mechanics layers had:
+Pinned reproduction before the accepted layers was approximately:
 
 ```text
-restraint             32
+restraint              32
 displacement/rotation 513
 source-end action     797
-total                1342
+total                 1342
 ```
 
-(`L6` source-end count uses the pinned reproduction value `49`; the issue text had reported `50`.)
-
-Approximate reduction from that pinned reproduction to the current PR state:
-
-- restraint failures: `32 -> 9` (~71.9% reduction)
-- displacement/rotation failures: `513 -> 212` (~58.7% reduction)
-- source-end failures: `797 -> 214` (~73.1% reduction)
-- total literal objective failures: `1342 -> 435` (~67.6% reduction)
-
-The remaining target is still strict: every governed row must satisfy the literal acceptance rule.
+So the clean workstream has reduced the literal total by about `67.6%` without modifying references or tolerances.
 
 ---
 
-## 7. Important hypotheses tested and rejected/rule-bounded
+## 7. Bend-profiler findings: what to optimize next
 
-### 7.1 Scalar thermal-alpha fitting rejected
+The new profiler changes the search strategy substantially.
 
-The pinned CAESAR Pipe Properties report prints uniform T1 expansion as approximately:
+### 7.1 Largest bend residuals by L3 far-end moment correction
 
-```text
-0.0012 mm/mm
-```
+| Rank | Bend | Source | Force correction norm | Moment correction norm |
+|---:|---|---:|---:|---:|
+| 1 | `ACCDB-BEND-1` | 5 | `3483.54 N` | `486.40 N.m` |
+| 2 | `ACCDB-BEND-9` | 43 | `546.28 N` | `485.21 N.m` |
+| 3 | `ACCDB-BEND-3` | 20 | `367.03 N` | `324.89 N.m` |
+| 4 | `ACCDB-BEND-2` | 19 | `367.03 N` | `258.27 N.m` |
+| 5 | `ACCDB-BEND-11` | 85 | `52.41 N` | `151.75 N.m` |
+| 6 | `ACCDB-BEND-12` | 88 | `65.47 N` | `122.37 N.m` |
 
-The current provisional coefficient:
-
-```text
-alpha = 1.17e-5 /K
-DeltaT = 99 K
-alpha * DeltaT = 0.0011583
-```
-
-This is inside the report's printed-precision interval. More importantly, the retained audit calculates the scalar strain that each scalable L3 failure would individually require. None of the meaningful scalable L3 failures can all be explained by one scalar alpha within the CAESAR printed interval.
-
-**Conclusion:** exact material-library alpha is still needed for provenance, but alpha fitting is not a defensible next root-cause path.
-
-### 7.2 Bourdon translation-only or rotation-only rejected
-
-BM4_L is governed as `TRANSLATION_AND_ROTATION`. Diagnostic decomposition showed that removing either part makes pressure-case agreement dramatically worse at high-signal rows.
-
-Example at node `20330`, `RZ`:
+For source 5 / bend 1, the local far-end correction is approximately:
 
 ```text
-CAESAR ref       : -6.4575e-6
-full mode        : -4.5183e-6
-translation only : -7.744e-5
-rotation only    : -2.0217e-5
+axial force                  -3482.50 N
+in-plane shear                  +76.53 N
+out-of-plane shear              -37.41 N
+torsion                        -140.94 N.m
+out-of-plane bending moment     -19.80 N.m
+in-plane bending moment        +465.12 N.m
 ```
 
-Example source element 19 TO `MZ`:
+This gives a much stronger physical signature than a global failure count.
+
+### 7.2 Aggregate absolute L3 far-end action corrections over all 12 bends
 
 ```text
-CAESAR ref       : 280.979
-full mode        : 285.835
-translation only : 19.332
-rotation only    : 275.226
+AXIAL_FORCE                     5078.00 N
+IN_PLANE_SHEAR                  2079.20 N
+OUT_OF_PLANE_SHEAR               573.44 N
+TORSION                           422.92 N.m
+OUT_OF_PLANE_BENDING_MOMENT       456.99 N.m
+IN_PLANE_BENDING_MOMENT          1587.11 N.m
 ```
 
-**Conclusion:** combined Bourdon translation + rotation is physically required; pressure residuals should not be “fixed” by disabling one part.
+The largest force-mode mismatch is axial, followed by in-plane shear. The dominant bending-moment mismatch is in-plane.
 
-### 7.3 Bend gravity centroid refinement ruled out as dominant
-
-For the first major bend, replacing chord-midpoint gravity placement with exact arc-segment centroid placement can only move the aggregate gravity moment by roughly `0.17 N.m`, while several remaining historical bend-related discrepancies were multiple N.m or >10 N.
-
-**Conclusion:** this geometric refinement is too small to be the dominant root cause.
-
-### 7.4 Reducer sampling is not fitted
-
-The public reducer documentation confirms ten successively changing cylinders but does not publish whether each cylinder uses start, midpoint, end, or another representative section location.
-
-Current rule remains:
+### 7.3 Aggregate far-node kinematic corrections
 
 ```text
-MIDPOINT_LINEAR_INTERPOLATION_CANDIDATE_V1
+AXIAL_TRANSLATION                 0.002387 m
+IN_PLANE_TRANSLATION              0.002454 m
+OUT_OF_PLANE_TRANSLATION          0.002126 m
+TORSIONAL_ROTATION                0.000317 rad
+OUT_OF_PLANE_BENDING_ROTATION     0.000548 rad
+IN_PLANE_BENDING_ROTATION         0.000731 rad
 ```
 
-It is explicitly provisional. No sampling fraction has been chosen by minimizing BM4_L error.
+The thermal residual is therefore not a single scalar expansion error; it is a coupled curved-component displacement/action signature.
 
-### 7.5 Unqualified curved-bend shear approximation remains blocked
+### 7.4 Existing bend operator already contains strong coupling
 
-Earlier experiments suggested curved-bend transverse/axial flexibility could materially affect the remaining residuals, but a MEC-21-like approximation is not promoted without independently retrievable primary equation authority.
+For bend 1, the fixed-near compliance matrix shows normalized coupling magnitudes approximately:
 
-**Conclusion:** promising numerically is not sufficient for production mechanics.
+```text
+UX <-> UY   0.8926
+UY <-> RZ   0.8902
+UX <-> RZ   0.7342
+UZ <-> RY   0.7169
+```
+
+Other major bends show nearly the same axial/in-plane translation coupling magnitude (`~0.89`).
+
+**Key conclusion:** the next question is **not** “does the current bend have axial/in-plane coupling?” It clearly does. The high-value question is whether CAESAR's `BEND_AXIAL_SHAPE=YES` uses a different curved-beam shape/compliance magnitude or additional matrix terms from the segmented straight-frame-chain approximation.
+
+That distinction prevents a low-information experiment such as adding an arbitrary global bend softness multiplier.
 
 ---
 
-## 8. What the remaining error pattern says
+## 8. Important hypotheses tested and rejected/bounded
 
-The current residual pattern is no longer dominated by the previously identified broad mechanics omissions.
+### 8.1 Scalar thermal alpha is not the main solution
 
-### Pressure case
-
-`L4 = 0 / 34 / 6` is now structurally close. Its six end-action failures after reducer shear are tiny near-zero rows. This strongly reduces the probability that a broad pressure primitive or Bourdon formula error is still driving the benchmark.
-
-### Gravity case
-
-`L2 = 0 / 29 / 2` has only two source-end failures. Total gravity/reaction magnitude was already extremely close to CAESAR. The remaining gravity problem is mainly small/local kinematic distribution, not missing total weight.
-
-### Thermal cases
-
-`L3` and `L14` are identical in the governed linear decomposition and remain the dominant block:
+The CAESAR report prints T1 total strain as `0.0012 mm/mm`. Current provisional alpha gives:
 
 ```text
-3 restraint / 43 displacement-rotation / 75 source-end
+1.17e-5 /K * 99 K = 0.0011583
 ```
 
-Because scalar thermal strain is bounded by the CAESAR report and cannot explain the residual family, the remaining high-value search is an **operator/kinematics problem**, particularly special-component flexibility on the thermal load path.
+which is inside the report's printed interval. The retained audit shows that no single scalar strain inside that interval explains the meaningful L3 residual family. Exact alpha is still needed for provenance, but benchmark fitting of alpha is rejected.
 
-### Combined cases
+### 8.2 Bourdon partial modes rejected
 
-`L5` and `L6` include cancellation between primitives. Small primitive mismatches can therefore become large relative errors where the CAESAR combined reference is small. These cases should be interpreted through the primitive `W/T1/P1` evidence rather than tuned directly.
+Removing either translation or rotation from the required combined Bourdon mode makes high-signal pressure rows much worse. `TRANSLATION_AND_ROTATION` remains governed.
+
+### 8.3 Bend gravity centroid refinement is too small
+
+Exact arc centroid versus chord-midpoint placement produces a very small gravity moment shift relative to the remaining large residuals. It is not the dominant root cause.
+
+### 8.4 Reducer section sampling remains provisional
+
+The ten-cylinder count is authoritative, but the public documentation does not identify the exact representative section position in each tenth. `MIDPOINT_LINEAR_INTERPOLATION_CANDIDATE_V1` remains marked provisional and is not tuned against BM4_L.
+
+### 8.5 MEC-21-like curved-bend shear remains authority-blocked
+
+Earlier numerical experiments were promising, but no independently retrievable primary equation authority has yet justified promotion. It remains diagnostic only.
 
 ---
 
 ## 9. Future roadmap
 
-The roadmap below is ordered by expected information gain and authority quality, not by which change is easiest to code.
+The profiler is now complete, so the roadmap moves from broad experiments to matrix-level authority.
 
-### Priority 1 — Resolve curved-bend axial/kinematic formulation
+### Priority 1 — Obtain authoritative curved-bend axial-shape/matrix equations
 
-**Why first:** thermal residuals remain dominant, scalar alpha is ruled out, tee Kb is already close, reducer shear is not the main driver, and CAESAR explicitly exposes a distinct Bend Axial Shape behavior.
-
-**Work:**
-
-1. Locate primary Hexagon/Intergraph authority for the actual curved-bend stiffness/shape formulation used with `BEND_AXIAL_SHAPE=YES`.
-2. Prefer equations, matrix terms, or a directly reproducible CAESAR factor over secondary descriptions.
-3. Expose the actual factor/kinematic quantities assembled by LFEA in retained diagnostics.
-4. Run one controlled A/B on all six cases.
-5. Require the numeric element-stiffness ledger to remain common across all six cases.
-
-**Accept only if:**
-
-- the formulation is independently authorized,
-- high-signal L3/L14 rows move in the predicted direction,
-- L2/L4 high-load agreement is not damaged,
-- recovery and equilibrium remain exact within governed numerical tolerances.
-
-**Do not:** promote the earlier MEC-21-like candidate merely because it reduces counts.
-
----
-
-### Priority 2 — Close exact thermal-expansion provenance
-
-**Goal:** replace `[GUESSED] PROVISIONAL` alpha with exact CAESAR material-library authority.
-
-**Needed evidence:** CAESAR Print Alphas / Pipe Properties with sufficient precision for the actual A106 Grade B material and the `21 C -> 120 C` interval, or another primary CAESAR output exposing the exact total strain.
-
-**Expected outcome:** this may make a modest numeric correction, but current evidence says it should not be expected to solve the main L3 family by itself.
-
-**Acceptance rule:** update alpha only from authority, never from benchmark error minimization.
-
----
-
-### Priority 3 — Resolve reducer section-sampling authority
-
-**Current state:** ten-cylinder count is authoritative; midpoint section sampling is provisional.
+**Target question:** what exact stiffness/compliance terms does CAESAR use when `BEND_AXIAL_SHAPE=YES`, especially in the axial/in-plane subspace?
 
 **Work:**
 
-1. Search primary CAESAR reducer formulation documentation for the representative cross-section of each cylinder.
-2. If documentation is unavailable, look for an independent CAESAR observable that uniquely distinguishes start/mid/end sampling without using the target benchmark result rows as a fitting objective.
-3. Keep cylinder shear, condensation, load, thermal, and pressure rules fixed while testing the sampling rule.
+1. locate primary Hexagon/Intergraph/CAESAR bend axial-shape or equivalent curved-beam equations;
+2. map the equations to the profiler's canonical six-DOF endpoint basis;
+3. implement them first in an isolated bend matrix/unit test, not in BM4_L;
+4. compare matrix-block direction and magnitude against the retained production bend operator;
+5. only then run a one-factor BM4_L A/B.
 
-**Acceptance rule:** one-factor change only; no fractional sweep selected by minimum BM4_L failure count.
+**Acceptance:** external authority + predicted local mode movement + common numeric K + recovery/equilibrium PASS. No fitted bend scale.
 
----
+### Priority 2 — Use bend 1 / source 5 as the first high-signal falsification case
 
-### Priority 4 — Resolve tee 20295 nominal-diameter compatibility locally
+Any candidate axial-shape formulation should predict the direction of the large `~3.48 kN` axial and `~465 N.m` in-plane moment correction on source 5 before looking at global counts. Bend 9/source 43 is a second independent in-plane moment/shear check.
 
-CAESAR proceeds with the tiny entered branch/run diameter mismatch and prints a branch flexibility factor using the entered branch geometry, while the shared generic B31J calculator correctly enforces formal applicability limits.
+A candidate that improves total counts but moves these targeted local modes in the wrong direction should be rejected.
 
-**Preferred design:** add any CAESAR-specific “warn-and-proceed within declared nominal-diameter tolerance” behavior only in the ACCDB adapter. Keep the generic B31J calculator fail-closed by default.
+### Priority 3 — Close exact thermal-expansion provenance
 
-**Acceptance evidence:**
+Obtain sufficiently precise CAESAR material-library total strain/Print Alphas for A106 Grade B at `21 C -> 120 C`. Update alpha only from authority. This is provenance work and may make a modest numerical correction, but existing evidence says it cannot explain the dominant residual family alone.
 
-- declared tolerance and provenance are explicit,
-- tee `20295` factor reproduces the pinned CAESAR print,
-- Kb stays within report precision,
-- no unrelated B31J caller becomes more permissive.
+### Priority 4 — Resolve reducer sampling authority
 
-This is likely a small correction, not the main thermal root cause.
+If primary CAESAR documentation or an independent observable identifies start/mid/end sampling for the ten cylinders, change only that rule and qualify it. Never select a fractional sampling position by minimizing BM4_L errors.
 
----
+### Priority 5 — Resolve tee 20295 compatibility locally
 
-### Priority 5 — Classify the remaining near-zero literal failures
+If needed, represent CAESAR's tiny nominal run/branch diameter tolerance only in the ACCDB adapter with explicit provenance. Keep the generic B31J calculator fail-closed.
 
-The final DOD intentionally treats exact/near-zero rows strictly. These rows must not be suppressed simply because their engineering magnitude is small.
+### Priority 6 — Near-zero literal rows
 
-**Work:**
+After large mechanical residuals are closed, trace the remaining near-zero rows through report precision, finite-restraint motion, recovery cancellation and numeric formatting. Keep the governed acceptance thresholds unchanged.
 
-- separate large-engineering residuals from report-precision/near-zero residuals in diagnostics,
-- retain the same acceptance tolerance,
-- trace each zero row through source report precision, finite restraint motion, recovery cancellation, and numeric formatting,
-- fix only a real mechanics/recovery/reporting cause.
+### Priority 7 — Final deterministic closure
 
-This work should happen after the large thermal operator mismatch is reduced so small rows do not distract from higher-value mechanics.
+Before completion:
 
----
-
-### Priority 6 — Final closure and deterministic qualification
-
-Before declaring M047 complete:
-
-1. all nonzero governed rows `<10%`,
-2. governed zero-reference absolute gates pass,
-3. all 97 nodes × 6 DOFs and all 96 source elements × 12 end-action components remain covered,
-4. `L6 = L2 + L4`, `L5 = L2 + L3 + L4`, and `L14 = L3` remain valid,
-5. recovered equilibrium passes every selected case,
-6. source custody and report blob identities remain pinned,
-7. numeric K ledger is common across all six cases,
-8. run the final qualification deterministically multiple times and compare retained hashes/results,
-9. remove any temporary diagnostics not intended as permanent gates,
-10. update the PR description with final authority, counts, known limitations, and exact qualification artifact.
+1. every nonzero governed row `<10%`;
+2. zero-reference absolute gates pass;
+3. all 97 nodes × 6 DOFs and 96 source elements × 12 end components remain covered;
+4. linear identities hold;
+5. equilibrium/recovery/source mapping pass;
+6. ACCDB/report custody remains pinned;
+7. numeric K is common across all six cases;
+8. repeat final qualification deterministically and compare hashes/results;
+9. remove any one-shot diagnostics not intended as permanent evidence;
+10. update PR/issue handoff with exact final authority and artifact IDs.
 
 ---
 
-## 10. Development rules for future work on PR #1001
+## 10. Rules for future agents on PR #1001
 
-To preserve the quality of the current workstream:
-
-1. **Re-fetch the PR head before every write.** The branch has previously moved during investigation.
-2. **Never rewrite unknown concurrent changes.** Stack additive commits.
-3. **Do not modify Issue #991.** PR #1001 is the working record.
-4. **One physical hypothesis per mechanics commit.** Keep unrelated evidence changes separate where practical.
-5. **No benchmark fitting.** No pressure scale, alpha scale, flexibility scale, sign flip, tolerance relaxation, or row suppression chosen from target error counts.
-6. **Keep rejected experiments out of the permanent diff.** Record conclusions, not one-shot workflows.
-7. **A count improvement is not sufficient.** Require physical authority plus the predicted row signature.
-8. **A green workflow is not sufficient unless the retained evidence exists.** The workflow now fails closed, and future additions should preserve that property.
+1. Re-fetch PR head before every write; concurrent agents have moved the branch before.
+2. Stack additive commits; do not rewrite unknown history or force-push.
+3. Do not modify Issue #991 unless the user explicitly asks. A user-authorized report-link comment already exists.
+4. Keep one physical hypothesis per mechanics commit.
+5. Do not fit pressure, alpha, flexibility, sampling fractions, signs or tolerances to benchmark output.
+6. Keep rejected one-shot workflows/parameter sweeps out of the permanent diff.
+7. Count improvement alone is not acceptance; require physical authority and the predicted local signature.
+8. Any new diagnostic used for acceptance must fail closed and be retained in the qualification artifact.
+9. Preserve the permanent M047 workflow and the clean-room source/report custody rules.
 
 ---
 
 ## 11. Current conclusion
 
-PR #1001 has converted BM4_L from a broad, multi-mechanism mismatch into a much narrower residual problem.
+PR #1001 has reduced BM4_L from a broad multi-mechanism mismatch to a much narrower special-component/operator problem. Literal objective failures have fallen from about `1342` to `435` while preserving source custody, benchmark references and acceptance tolerances.
 
-The accepted layers now cover:
+The accepted mechanics now cover smooth-90 B31J behavior, straight/rigid/reducer pipe shear where independently authorized, finite restraint defaults, directional tee flexibility/Kb, and P1 bend pressure stiffening. The qualification also proves the common numeric operator, recovery identity and equilibrium.
 
-- authoritative source custody,
-- load-case/report parity,
-- B31J smooth-90 bend flexibility,
-- straight-pipe Timoshenko shear,
-- finite CAESAR restraint stiffness,
-- matching-pipe rigid-element shear,
-- directional B31J tee flexibility and Kb proof,
-- P1-based bend pressure stiffening,
-- Timoshenko pipe shear inside CAESAR's ten-cylinder reducer model,
-- fail-closed CI evidence,
-- numeric common-operator proof,
-- assembly-consistent end-action recovery and equilibrium.
+The new bend effective-stiffness profiler is the key optimization milestone: it shows that the remaining thermal mismatch is concentrated in axial/in-plane curved-bend modes and that the existing segmented bend already contains strong axial/in-plane coupling. The next defensible production change therefore requires authoritative CAESAR curved-bend axial-shape/matrix equations—not a generic softness factor or benchmark-fitted coefficient.
 
-The pinned-source total objective failure count has been reduced from approximately `1342` to `435` without changing benchmark references or acceptance tolerances.
-
-The dominant remaining engineering problem is thermal/special-component kinematics, with curved-bend axial/flexibility formulation the highest-value next target. Thermal alpha still needs exact provenance, reducer sampling remains provisional, and a small CAESAR-specific tee geometry compatibility gap remains bounded for later cleanup.
-
-The benchmark is therefore **materially improved and substantially better understood, but not closed**.
+The benchmark is **materially improved and substantially better understood, but not closed**.

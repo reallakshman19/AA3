@@ -1,0 +1,176 @@
+name: M047 BM4_L production qualification
+
+on:
+  push:
+    branches: [agent/m047-bm4l-fresh-qualification]
+    paths:
+      - '.github/workflows/m047-bm4l-production-qualification.yml'
+      - 'src/core/fea-benchmarks/caesar-accdb-linear-solve.js'
+      - 'benchmarks/LFEA/CAESAR_ACCDB/bm4l-validation.profile.json'
+      - 'scripts/lfea-m047-caesar-straight-pipe-shear-authority-check.mjs'
+
+permissions:
+  contents: read
+
+jobs:
+  qualify:
+    runs-on: windows-latest
+    timeout-minutes: 60
+    env:
+      MODEL_COMMON_COMMIT: '45d51ea18624f5775805f399110c1738301c0d90'
+      REPORT_COMMON_COMMIT: '179c4831cf521cf797c13699cfbbd118315c9244'
+      ZIP_SHA256: '978617cba50fa0b1a16c2fa71dc1e0d38e55ac834b191f887d100c6951abd8b9'
+      MEMBER_SHA256: '64c05a50e9ed0452622ff5880335460486f24ac8e6adecc9a300b549c9aa82f8'
+      MISC_SHA256: 'a2f5d5d3d76c8c2ea48e32495129b3689a6c5679de7ba11f03d2f780625692c4'
+      LOADCASE_SHA256: '621bf3cef12f66e0fb3e0216d3fbff02e3dd002b829d680b57fc08d33907deb0'
+      ACE_URL: 'https://download.microsoft.com/download/3/5/C/35C84C36-661A-44E6-9324-8786B8DBE231/accessdatabaseengine_X64.exe'
+      ACE_SHA256: '04e96c9f1a1f7d251a88aececf1dc10ff65950392787427c00814a43308003de'
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: agent/m047-bm4l-fresh-qualification
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+      - run: npm ci
+
+      - name: Install authenticated ACE and bind pinned sources
+        shell: pwsh
+        run: |
+          $ErrorActionPreference='Stop'
+          $PSNativeCommandUseErrorActionPreference=$true
+          New-Item -ItemType Directory -Force artifacts/m047-production/source,artifacts/m047-production/run | Out-Null
+          $installer='artifacts/m047-production/accessdatabaseengine_X64.exe'
+          Invoke-WebRequest -Uri $env:ACE_URL -OutFile $installer
+          if((Get-FileHash $installer -Algorithm SHA256).Hash.ToLowerInvariant() -ne $env:ACE_SHA256){ throw 'ACE installer hash mismatch.' }
+          $sig=Get-AuthenticodeSignature $installer
+          if($sig.Status -ne 'Valid' -or $sig.SignerCertificate.Subject -notmatch 'Microsoft'){ throw 'ACE signature validation failed.' }
+          $p=Start-Process $installer -ArgumentList '/quiet','/norestart' -Wait -PassThru
+          if($p.ExitCode -notin @(0,3010)){ throw "ACE install failed: $($p.ExitCode)" }
+          Remove-Item $installer -Force
+
+          $zip='artifacts/m047-production/BM4_L.zip'
+          Invoke-WebRequest -Uri "https://raw.githubusercontent.com/reallaksh19/Common/$env:MODEL_COMMON_COMMIT/LFEA/BM4/BM4_L.zip" -OutFile $zip
+          if((Get-FileHash $zip -Algorithm SHA256).Hash.ToLowerInvariant() -ne $env:ZIP_SHA256){ throw 'ZIP hash mismatch.' }
+          Expand-Archive $zip -DestinationPath artifacts/m047-production/source -Force
+          $accdb=Join-Path $PWD 'artifacts/m047-production/source/BM4_L.ACCDB'
+          if((Get-FileHash $accdb -Algorithm SHA256).Hash.ToLowerInvariant() -ne $env:MEMBER_SHA256){ throw 'ACCDB member hash mismatch.' }
+          "ACCDB=$accdb" >> $env:GITHUB_ENV
+
+          Invoke-WebRequest -Uri "https://raw.githubusercontent.com/reallaksh19/Common/$env:REPORT_COMMON_COMMIT/LFEA/BM4/Miscdata_BM4_L.txt" -OutFile artifacts/m047-production/Miscdata_BM4_L.txt
+          Invoke-WebRequest -Uri "https://raw.githubusercontent.com/reallaksh19/Common/$env:REPORT_COMMON_COMMIT/LFEA/BM4/Loadcasereport_BM4_L.txt" -OutFile artifacts/m047-production/Loadcasereport_BM4_L.txt
+          if((Get-FileHash artifacts/m047-production/Miscdata_BM4_L.txt -Algorithm SHA256).Hash.ToLowerInvariant() -ne $env:MISC_SHA256){ throw 'Misc report hash mismatch.' }
+          if((Get-FileHash artifacts/m047-production/Loadcasereport_BM4_L.txt -Algorithm SHA256).Hash.ToLowerInvariant() -ne $env:LOADCASE_SHA256){ throw 'Load-case report hash mismatch.' }
+
+      - name: Prove mechanics authorities and reusable kernels
+        shell: pwsh
+        run: |
+          $ErrorActionPreference='Stop'
+          $PSNativeCommandUseErrorActionPreference=$true
+          node scripts/lfea-m047-caesar-straight-pipe-shear-authority-check.mjs | Tee-Object artifacts/m047-production/straight-shear-authority.json
+          node scripts/lfea-b3.1-frame-element-check.mjs
+          node scripts/lfea-b3.1-reviewer-check.mjs
+          node scripts/lfea-b3.2-piping-component-check.mjs
+          node scripts/lfea-b3.3-solver-check.mjs
+          node scripts/lfea-b3.4-recovery-check.mjs
+
+      - name: Solve all governed BM4_L linear cases
+        shell: pwsh
+        run: |
+          $ErrorActionPreference='Stop'
+          $PSNativeCommandUseErrorActionPreference=$true
+          node scripts/lfea-caesar-accdb-benchmark.mjs `
+            --accdb $env:ACCDB `
+            --profile benchmarks/LFEA/CAESAR_ACCDB/bm4l-validation.profile.json `
+            --solve-linear true `
+            --solve-cases L2,L3,L4,L5,L6,L14 `
+            --actual-out artifacts/m047-production/run/actual.json `
+            --out artifacts/m047-production/run/report.json
+          npm run check:core-fea
+
+      - name: Prove load identities, equilibrium and emit qualification evidence
+        shell: pwsh
+        run: |
+          $ErrorActionPreference='Stop'
+          $PSNativeCommandUseErrorActionPreference=$true
+          @'
+          const fs=require('fs');
+          const A=JSON.parse(fs.readFileSync('artifacts/m047-production/run/actual.json','utf8').replace(/^\uFEFF/,''));
+          const R=JSON.parse(fs.readFileSync('artifacts/m047-production/run/report.json','utf8').replace(/^\uFEFF/,''));
+          const cases=['L2','L3','L4','L5','L6','L14'];
+          const counts={};
+          for(const c of cases){
+            counts[c]={
+              restraint:R.restraintBasis.cases[c].exceedingComponentCount,
+              displacementRotation:R.displacementBasis.cases[c].exceedingComponentCount,
+              elementEnd:R.elementBasis.cases[c].exceedingComponentCount,
+            };
+            if(A.mechanics.cases[c].executionStatus==='BLOCKED') throw new Error(`${c} blocked`);
+            if(A.mechanics.cases[c].recoveredEquilibrium.status!=='PASS') throw new Error(`${c} recovered equilibrium failed`);
+          }
+
+          const key=r=>`${r.entityKind}|${r.entityId}|${r.quantity}|${r.component}|${r.unit}`;
+          const maps=Object.fromEntries(cases.map(c=>[c,new Map(A.cases[c].rows.map(r=>[key(r),r.value]))]));
+          const keys=[...maps.L2.keys()];
+          function identity(name, terms){
+            let maxAbs=0,maxRelative=0,worst=null;
+            for(const k of keys){
+              let lhs=maps[terms.lhs].get(k);
+              let rhs=0;
+              for(const [c,m] of terms.rhs) rhs += m*maps[c].get(k);
+              const abs=Math.abs(lhs-rhs);
+              const scale=Math.max(1,Math.abs(lhs),Math.abs(rhs));
+              const rel=abs/scale;
+              if(rel>maxRelative){maxRelative=rel;maxAbs=abs;worst=k;}
+            }
+            if(maxRelative>2e-9) throw new Error(`${name} load identity failed at ${worst}: ${maxRelative}`);
+            return {status:'PASS',maxAbsoluteDifference:maxAbs,maxNormalizedDifference:maxRelative,worstRow:worst};
+          }
+          const identities={
+            L6_equals_L2_plus_L4:identity('L6=L2+L4',{lhs:'L6',rhs:[['L2',1],['L4',1]]}),
+            L5_equals_L2_plus_L3_plus_L4:identity('L5=L2+L3+L4',{lhs:'L5',rhs:[['L2',1],['L3',1],['L4',1]]}),
+            L14_equals_L3:identity('L14=L3',{lhs:'L14',rhs:[['L3',1]]}),
+          };
+
+          const rows=c=>R.qualification.cases.find(x=>x.caseId===c).comparison.rows;
+          function find(c,kind,prefix,quantity,component){
+            const m=rows(c).filter(x=>x.entityKind===kind&&String(x.entityId).startsWith(prefix)&&x.quantity===quantity&&x.component===component);
+            if(m.length!==1) throw new Error(`row ${c} ${prefix} ${quantity} ${component}: ${m.length}`);
+            return m[0];
+          }
+          const targets=[
+            ['node 20090 UY','L2','NODE','20090','FORCE','UY'],
+            ['E4 TO FY','L2','ELEMENT','INPUT_ELEMENT:4|','GLOBAL_END_FORCE_TO','FY'],
+            ['E4 TO MZ','L2','ELEMENT','INPUT_ELEMENT:4|','GLOBAL_END_MOMENT_TO','MZ'],
+            ['E5 FROM FY','L2','ELEMENT','INPUT_ELEMENT:5|','GLOBAL_END_FORCE_FROM','FY'],
+            ['E5 FROM MZ','L2','ELEMENT','INPUT_ELEMENT:5|','GLOBAL_END_MOMENT_FROM','MZ'],
+            ['node 20120 RZ','L2','NODE','20120','ROTATION','RZ'],
+          ];
+          const highSignal=targets.map(([name,c,kind,prefix,quantity,component])=>{
+            const r=find(c,kind,prefix,quantity,component);
+            return {name,reference:r.referenceValue,actual:r.actualValue,absoluteError:Math.abs(r.actualValue-r.referenceValue),percentError:r.referenceValue===0?null:100*Math.abs((r.actualValue-r.referenceValue)/r.referenceValue),pass:r.passed};
+          });
+          const totals={restraint:0,displacementRotation:0,elementEnd:0};
+          for(const c of cases) for(const k of Object.keys(totals)) totals[k]+=counts[c][k];
+          totals.total=totals.restraint+totals.displacementRotation+totals.elementEnd;
+          const out={
+            schema:'m047-bm4l-production-qualification/v1',
+            headSha:process.env.GITHUB_SHA,
+            source:{modelCommonCommit:process.env.MODEL_COMMON_COMMIT,reportCommonCommit:process.env.REPORT_COMMON_COMMIT,zipSha256:process.env.ZIP_SHA256,accdbMemberSha256:process.env.MEMBER_SHA256,miscdataSha256:process.env.MISC_SHA256,loadCaseReportSha256:process.env.LOADCASE_SHA256},
+            productionMechanics:{smooth90:'RESOLVED_BM4L_CAESAR_REPORT',straightPipeShear:{effectiveArea:'A/2',kappa:0.5,scope:['FRAME','BEND_INCOMING_STRAIGHT']}},
+            counts,totals,highSignal,identities,
+            equilibrium:Object.fromEntries(cases.map(c=>[c,{executionStatus:A.mechanics.cases[c].executionStatus,recovered:A.mechanics.cases[c].recoveredEquilibrium.status,maximumAbsoluteResidual:A.mechanics.cases[c].recoveredEquilibrium.maximumAbsoluteResidual}])),
+            gravityWeightN:A.mechanics.cases.L2.gravityWeightN,
+          };
+          fs.writeFileSync('artifacts/m047-production/qualification.json',JSON.stringify(out,null,2)+'\n');
+          console.log(JSON.stringify(out,null,2));
+          '@ | node
+
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: m047-bm4l-production-qualification-${{ github.sha }}
+          path: artifacts/m047-production
+          retention-days: 30
+          if-no-files-found: error

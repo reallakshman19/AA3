@@ -11,6 +11,9 @@ import {
   sealReducerCondensationAuthority,
 } from './contract.js';
 
+const CAESAR_PIPE_SHEAR_CORRECTION_FACTOR = 0.5;
+const CAESAR_PIPE_SHEAR_SOURCE = 'INTERGRAPH-CAESAR-II-CAUX-2015-FKX-SHEAR-COEFFICIENT-2';
+
 function annulus(outerDiameter, wallThickness) {
   const innerDiameter = outerDiameter - 2 * wallThickness;
   // SOURCE: classical circular-annulus section identities.
@@ -159,9 +162,11 @@ function condense(K, loads) {
  * stations to the original two-node interface.
  *
  * SOURCE: Hexagon CAESAR II Users Guide, Reducer: ten successively changing
- * pipe cylinders. The midpoint sampling rule is intentionally labeled a
- * candidate because the public documentation does not publish the exact
- * representative section location.
+ * pipe cylinders. Each cylinder uses the same retained CAESAR pipe-beam
+ * transverse-shear formulation as a straight pipe span (shear coefficient 2,
+ * represented by kappa=0.5 in the LFEA Timoshenko kernel). The midpoint
+ * section sampling rule remains explicitly provisional because the public
+ * reducer documentation does not publish the exact representative station.
  */
 export function compileTenCylinderReducerAuthority(request) {
   const accepted = requireReducerCondensationRequest(request);
@@ -185,7 +190,7 @@ export function compileTenCylinderReducerAuthority(request) {
       interpolate(accepted.fromSection.outerDiameter, accepted.toSection.outerDiameter, fraction),
       interpolate(accepted.fromSection.wallThickness, accepted.toSection.wallThickness, fraction),
     );
-    const stiffness = frameLocalStiffness({
+    const stiffnessResult = frameLocalStiffness({
       elasticModulus: accepted.material.elasticModulus,
       shearModulus: accepted.material.shearModulus,
       area: section.area,
@@ -193,9 +198,11 @@ export function compileTenCylinderReducerAuthority(request) {
       secondMomentZ: section.secondMomentZ,
       polarMoment: section.polarMoment,
       length: segmentLength,
-      shearDeformation: false,
-    }).matrix;
-    addElementMatrix(K, stiffness, index, index + 1);
+      shearDeformation: true,
+      shearCorrectionFactorY: CAESAR_PIPE_SHEAR_CORRECTION_FACTOR,
+      shearCorrectionFactorZ: CAESAR_PIPE_SHEAR_CORRECTION_FACTOR,
+    });
+    addElementMatrix(K, stiffnessResult.matrix, index, index + 1);
 
     const thermal = thermalInitialStrainVector({
       elasticModulus: accepted.material.elasticModulus,
@@ -225,8 +232,8 @@ export function compileTenCylinderReducerAuthority(request) {
       },
       axes: null,
       length: segmentLength,
-      phiXY: 0,
-      phiXZ: 0,
+      phiXY: stiffnessResult.phiXY,
+      phiXZ: stiffnessResult.phiXZ,
     });
     addElementVector(gravityFull, gravity, index, index + 1);
     const segmentWeight = lineWeight * segmentLength;
@@ -240,6 +247,12 @@ export function compileTenCylinderReducerAuthority(request) {
       endFraction: (index + 1) / REDUCER_SEGMENT_COUNT,
       length: cleanNumber(segmentLength),
       section,
+      shearFlexibility: {
+        phiXY: cleanNumber(stiffnessResult.phiXY),
+        phiXZ: cleanNumber(stiffnessResult.phiXZ),
+        correctionFactorY: CAESAR_PIPE_SHEAR_CORRECTION_FACTOR,
+        correctionFactorZ: CAESAR_PIPE_SHEAR_CORRECTION_FACTOR,
+      },
       lineWeights: {
         metal: cleanNumber(accepted.gravity.enabled ? metalLineWeight : 0),
         fluid: cleanNumber(accepted.gravity.enabled ? fluidLineWeight : 0),
@@ -257,7 +270,7 @@ export function compileTenCylinderReducerAuthority(request) {
     sourceIdentity: {
       standard: 'CAESAR_II_REDUCER',
       edition: 'HEXAGON_USERS_GUIDE_VERSION_12_14',
-      ruleId: 'TEN_SUCCESSIVELY_CHANGING_PIPE_CYLINDERS',
+      ruleId: 'TEN_SUCCESSIVELY_CHANGING_PIPE_CYLINDERS_WITH_CAESAR_PIPE_SHEAR',
       sourceRevision: accepted.sourceEvidence.sourceRevision,
       sourceSemanticHash: accepted.sourceEvidence.sourceSemanticHash,
     },
@@ -291,11 +304,16 @@ export function compileTenCylinderReducerAuthority(request) {
       publicBoundaryNodeCount: 2,
       condensedInternalStationCount: 9,
       publicBoundaryDofCount: 12,
+      cylinderBeamFormulation: 'PIPE_FRAME3D_TIMOSHENKO_V1',
+      shearCorrectionFactorY: CAESAR_PIPE_SHEAR_CORRECTION_FACTOR,
+      shearCorrectionFactorZ: CAESAR_PIPE_SHEAR_CORRECTION_FACTOR,
+      shearSource: CAESAR_PIPE_SHEAR_SOURCE,
       stressSectionRule: 'CODE_SPECIFIC_REDUCER_NOT_CONDENSED_EQUIVALENT_SECTION',
     },
     limitations: [
-      'The public Hexagon documentation confirms ten cylinders but not the exact section sampling position.',
-      'MIDPOINT_LINEAR_INTERPOLATION_CANDIDATE_V1 is a controlled candidate and not a byte-for-byte CAESAR parity claim.',
+      'The public Hexagon documentation confirms ten successively changing pipe cylinders but not the exact section sampling position.',
+      'MIDPOINT_LINEAR_INTERPOLATION_CANDIDATE_V1 remains a controlled candidate and not a byte-for-byte CAESAR section-sampling parity claim.',
+      'Each cylinder uses the retained CAESAR pipe shear coefficient 2 (LFEA kappa=0.5); this is not a reducer-specific fitted coefficient.',
       'Eccentricity is represented by the caller-declared element axis; this authority varies section properties along that axis.',
     ],
     semanticHash: '',

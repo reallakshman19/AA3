@@ -14,8 +14,18 @@ jobs:
     runs-on: windows-2022
     timeout-minutes: 35
     steps:
-      - name: Checkout Advanced_Analysis
+      - name: Checkout pinned diagnostic head
         uses: actions/checkout@v4
+        with:
+          ref: agent/m047-bm4l-root-cause-991
+          fetch-depth: 1
+
+      - name: Record implementation commit
+        shell: pwsh
+        run: |
+          $sha=(git rev-parse HEAD).Trim()
+          "BM4L_IMPLEMENTATION_SHA=$sha" | Out-File -FilePath $env:GITHUB_ENV -Append -Encoding utf8
+          $sha | Out-File artifacts-implementation-sha.txt -Encoding ascii
 
       - name: Checkout pinned Common source
         uses: actions/checkout@v4
@@ -50,6 +60,7 @@ jobs:
         run: |
           $ErrorActionPreference = 'Stop'
           New-Item -ItemType Directory -Force -Path artifacts | Out-Null
+          Move-Item artifacts-implementation-sha.txt artifacts/implementation-sha.txt
           $zip = '_common/LFEA/BM4/BM4_L.zip'
           if ((Get-FileHash -Algorithm SHA256 $zip).Hash.ToLowerInvariant() -ne '978617cba50fa0b1a16c2fa71dc1e0d38e55ac834b191f887d100c6951abd8b9') { throw 'ZIP custody mismatch.' }
           $extract = Join-Path $env:RUNNER_TEMP 'bm4l-retained-baseline'
@@ -104,13 +115,14 @@ jobs:
             $total=$r+$d+$e
             $actual[$id]=[ordered]@{r=$r;d=$d;e=$e;total=$total;equilibrium=$report.mechanics.cases.$id.recoveredEquilibrium}
             $x=$expected[$id]
-            if($r-ne$x.r -or $d-ne$x.d -or $e-ne$x.e -or $total-ne$x.total){ throw "Retained count drift in $id: $r/$d/$e=$total" }
+            if($r-ne$x.r -or $d-ne$x.d -or $e-ne$x.e -or $total-ne$x.total){ throw "Retained count drift in ${id}: $r/$d/$e=$total" }
             if($report.mechanics.cases.$id.recoveredEquilibrium.status -eq 'FAIL'){ throw "Recovered equilibrium failed in $id" }
             $grand += $total
           }
           if($grand -ne 828){ throw "Retained targeted total drift: $grand" }
           [ordered]@{
             schema='lfea-m047-retained-baseline/v1'
+            implementationSha=$env:BM4L_IMPLEMENTATION_SHA
             sourceSha256=$report.source.sha256
             profileId=$report.profileId
             retainedCorrection='CAESAR14_B31J_SMOOTH90_1_3_OVER_H'

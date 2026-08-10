@@ -10,6 +10,7 @@ on:
       - 'scripts/lfea-caesar-accdb-*.mjs'
       - 'scripts/lfea-caesar-accdb-export.ps1'
       - 'scripts/lfea-bm4l-root-cause-report.mjs'
+      - 'scripts/lfea-m047-bm4l-accdb-provenance.ps1'
       - 'scripts/lfea-m047-bm4l-recovery-proof.mjs'
       - 'scripts/lfea-m047-bm4l-root-cause-diagnostics.mjs'
       - 'src/core/fea-benchmarks/**'
@@ -52,6 +53,7 @@ jobs:
           node --check scripts/lfea-m047-bm4l-recovery-proof.mjs
           node --check scripts/lfea-m047-bm4l-root-cause-diagnostics.mjs
           node --check src/core/fea-benchmarks/caesar-accdb-linear-solve.js
+          powershell -NoProfile -Command "[void][scriptblock]::Create((Get-Content -Raw 'scripts/lfea-m047-bm4l-accdb-provenance.ps1'))"
 
       - name: Run evidence instrumentation regressions
         shell: pwsh
@@ -60,6 +62,7 @@ jobs:
           node scripts/lfea-b3.3-solver-check.mjs
           node scripts/lfea-b3.4-recovery-check.mjs
           node scripts/lfea-b3.6-sparse-assembly-check.mjs
+          node scripts/lfea-b3.9-gravity-self-weight-check.mjs
 
       - name: Fetch and verify pinned BM4_L source
         id: source
@@ -190,6 +193,23 @@ jobs:
           The untouched ZIP member remains preserved separately.
           "@ >> $env:GITHUB_STEP_SUMMARY
           }
+
+      - name: Emit ACCDB table, field and provider provenance
+        if: steps.ace.outputs.available == 'true' && steps.ace.outputs.source_authorized == 'true'
+        shell: powershell
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $tables = @(
+            'INPUT_BASIC_ELEMENT_DATA','INPUT_BENDS','INPUT_CONTROL','INPUT_FORCMNT',
+            'INPUT_NODAL_COORDINATES','INPUT_OFFSETS','INPUT_REDUCERS','INPUT_RESTRAINTS',
+            'INPUT_RIGIDS','INPUT_SIFTEES','INPUT_UNITS',
+            'OUTPUT_DISPLACEMENTS','OUTPUT_RESTRAINTS_SUMMARY','OUTPUT_GLOBAL_ELEMENT_FORCES'
+          ) -join ','
+          .\scripts\lfea-m047-bm4l-accdb-provenance.ps1 `
+            -AccdbPath "${{ steps.source.outputs.accdb_path }}" `
+            -ProfilePath .\benchmarks\LFEA\CAESAR_ACCDB\bm4l-validation.profile.json `
+            -TablesCsv $tables `
+            -OutPath .\artifacts\bm4l\bm4l-provenance.json
 
       - name: Reproduce governed six-case baseline
         if: steps.ace.outputs.available == 'true' && steps.ace.outputs.source_authorized == 'true'

@@ -99,14 +99,14 @@
         }
       },
       "loadCase": {
-        "source": "USER_VERIFIED_BM4_L_CASE_SETTINGS_2026-08-10",
+        "source": "COMMON_179C4831_CAESAR14_LOADCASEREPORT_BM4_L_2026-08-10",
         "cases": {
           "L1": {},
-          "L2": { "COEFFICIENT_OF_FRICTION_MU": 0 },
+          "L2": { "COEFFICIENT_OF_FRICTION_MU": 0, "FLEXIBILITY_ELASTIC_MODULUS": "EC" },
           "L3": { "COEFFICIENT_OF_FRICTION_MU": 0, "FLEXIBILITY_ELASTIC_MODULUS": "EC" },
-          "L4": { "COEFFICIENT_OF_FRICTION_MU": 0 },
+          "L4": { "COEFFICIENT_OF_FRICTION_MU": 0, "FLEXIBILITY_ELASTIC_MODULUS": "EC" },
           "L5": { "COEFFICIENT_OF_FRICTION_MU": 0, "FLEXIBILITY_ELASTIC_MODULUS": "EC" },
-          "L6": { "COEFFICIENT_OF_FRICTION_MU": 0 },
+          "L6": { "COEFFICIENT_OF_FRICTION_MU": 0, "FLEXIBILITY_ELASTIC_MODULUS": "EC" },
           "L7": { "FLEXIBILITY_ELASTIC_MODULUS": "EC" },
           "L13": {},
           "L14": { "COEFFICIENT_OF_FRICTION_MU": 0 },
@@ -119,19 +119,14 @@
         "setting": "RESTRAINT_FORMULATION",
         "caseId": null,
         "reason": "Support direction is bidirectional, but exact CAESAR application of the finite default stiffness is not established."
-      },
-      {
-        "setting": "THERMAL_EXPANSION_STRAIN",
-        "caseId": null,
-        "reason": "The ACCDB exports T1 but not the CAESAR material-library total strain from 21 C to 120 C; Print Alphas evidence is still required."
       }
     ]
   },
   "linearSolve": {
     "thermalExpansion": {
-      "coefficientPerKelvin": 0.0000117,
-      "authorityStatus": "PROVISIONAL",
-      "source": "[GUESSED] PROVISIONAL_A106_GRADE_B_CTE_PENDING_CAESAR_PRINT_ALPHAS"
+      "coefficientPerKelvin": 0.00001212121212121212,
+      "authorityStatus": "RESOLVED",
+      "source": "[DERIVED] COMMON@179c4831cf521cf797c13699cfbbd118315c9244:LFEA/BM4/Miscdata_BM4_L.txt PIPE_PROPERTIES_2 T1_TOTAL_STRAIN=0.0012; EQUIVALENT_T1_ALPHA=0.0012/(120C-21C); VALID_FOR_TARGET_T1_LINEAR_PRIMITIVE"
     },
     "gravityAcceleration": 9.80665,
     "bourdonPressureEffects": {

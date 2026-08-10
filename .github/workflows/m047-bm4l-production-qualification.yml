@@ -8,6 +8,7 @@ on:
       - 'src/core/fea-benchmarks/caesar-accdb-linear-solve.js'
       - 'benchmarks/LFEA/CAESAR_ACCDB/bm4l-validation.profile.json'
       - 'scripts/lfea-m047-caesar-straight-pipe-shear-authority-check.mjs'
+      - 'scripts/lfea-m047-mec21-bend-shear-authority-check.mjs'
 
 permissions:
   contents: read
@@ -69,6 +70,7 @@ jobs:
           $ErrorActionPreference='Stop'
           $PSNativeCommandUseErrorActionPreference=$true
           node scripts/lfea-m047-caesar-straight-pipe-shear-authority-check.mjs | Tee-Object artifacts/m047-production/straight-shear-authority.json
+          node scripts/lfea-m047-mec21-bend-shear-authority-check.mjs | Tee-Object artifacts/m047-production/bend-shear-authority.json
           node scripts/lfea-b3.1-frame-element-check.mjs
           node scripts/lfea-b3.1-reviewer-check.mjs
           node scripts/lfea-b3.2-piping-component-check.mjs
@@ -114,18 +116,22 @@ jobs:
           const maps=Object.fromEntries(cases.map(c=>[c,new Map(A.cases[c].rows.map(r=>[key(r),r.value]))]));
           const keys=[...maps.L2.keys()];
           function identity(name, terms){
-            let maxAbs=0,maxRelative=0,worst=null;
+            const participating=[terms.lhs,...terms.rhs.map(([c])=>c)];
+            const forceResidual=2*Math.max(...participating.map(c=>A.mechanics.cases[c].recoveredEquilibrium.maximumAbsoluteResidual.forceN));
+            const momentResidual=2*Math.max(...participating.map(c=>A.mechanics.cases[c].recoveredEquilibrium.maximumAbsoluteResidual.momentNm));
+            const thresholds={'m':1e-10,'rad':1e-12,'N':forceResidual,'N*m':momentResidual};
+            const maxima={};
             for(const k of keys){
-              let lhs=maps[terms.lhs].get(k);
+              const lhs=maps[terms.lhs].get(k);
               let rhs=0;
               for(const [c,m] of terms.rhs) rhs += m*maps[c].get(k);
               const abs=Math.abs(lhs-rhs);
-              const scale=Math.max(1,Math.abs(lhs),Math.abs(rhs));
-              const rel=abs/scale;
-              if(rel>maxRelative){maxRelative=rel;maxAbs=abs;worst=k;}
+              const unit=k.split('|').at(-1);
+              if(!(unit in thresholds)) throw new Error(`${name}: unsupported identity unit ${unit}`);
+              if(!maxima[unit]||abs>maxima[unit].absoluteDifference) maxima[unit]={absoluteDifference:abs,worstRow:k};
+              if(abs>thresholds[unit]) throw new Error(`${name} load identity failed at ${k}: ${abs} > ${thresholds[unit]} ${unit}`);
             }
-            if(maxRelative>2e-9) throw new Error(`${name} load identity failed at ${worst}: ${maxRelative}`);
-            return {status:'PASS',maxAbsoluteDifference:maxAbs,maxNormalizedDifference:maxRelative,worstRow:worst};
+            return {status:'PASS',thresholds,maximaByUnit:maxima};
           }
           const identities={
             L6_equals_L2_plus_L4:identity('L6=L2+L4',{lhs:'L6',rhs:[['L2',1],['L4',1]]}),
@@ -155,13 +161,18 @@ jobs:
           for(const c of cases) for(const k of Object.keys(totals)) totals[k]+=counts[c][k];
           totals.total=totals.restraint+totals.displacementRotation+totals.elementEnd;
           const out={
-            schema:'m047-bm4l-production-qualification/v1',
+            schema:'m047-bm4l-production-qualification/v2',
             headSha:process.env.GITHUB_SHA,
             source:{modelCommonCommit:process.env.MODEL_COMMON_COMMIT,reportCommonCommit:process.env.REPORT_COMMON_COMMIT,zipSha256:process.env.ZIP_SHA256,accdbMemberSha256:process.env.MEMBER_SHA256,miscdataSha256:process.env.MISC_SHA256,loadCaseReportSha256:process.env.LOADCASE_SHA256},
-            productionMechanics:{smooth90:'RESOLVED_BM4L_CAESAR_REPORT',straightPipeShear:{effectiveArea:'A/2',kappa:0.5,scope:['FRAME','BEND_INCOMING_STRAIGHT']}},
+            productionMechanics:{
+              smooth90:'RESOLVED_BM4L_CAESAR_REPORT',
+              straightPipeShear:{effectiveArea:'A/2',kappa:0.5,scope:['FRAME','BEND_INCOMING_STRAIGHT']},
+              bendArcShear:{effectiveArea:'A/alpha',kappa:'1/alpha',alpha:'(4/3)*(Ro^3-Ri^3)/((Ro^2+Ri^2)*(Ro-Ri))',scope:['BEND_ARC']}
+            },
             counts,totals,highSignal,identities,
             equilibrium:Object.fromEntries(cases.map(c=>[c,{executionStatus:A.mechanics.cases[c].executionStatus,recovered:A.mechanics.cases[c].recoveredEquilibrium.status,maximumAbsoluteResidual:A.mechanics.cases[c].recoveredEquilibrium.maximumAbsoluteResidual}])),
             gravityWeightN:A.mechanics.cases.L2.gravityWeightN,
+            unresolvedAuthorities:['THERMAL_EXPANSION_STRAIN exact value','RESTRAINT_FORMULATION exact finite/default application']
           };
           fs.writeFileSync('artifacts/m047-production/qualification.json',JSON.stringify(out,null,2)+'\n');
           console.log(JSON.stringify(out,null,2));

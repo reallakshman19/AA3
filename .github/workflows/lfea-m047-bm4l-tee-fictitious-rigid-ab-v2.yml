@@ -94,7 +94,54 @@ jobs:
                   bourdonBendSegment: null,
                   teeModifier,
                 }));
-              }`,'branch site');
+              }`,'normal branch site');
+          once(
+          `  if (hasIncomingStraight) {
+              target.push(buildFrameElement({
+                ...input,
+                row,
+                elementId: \`ACCDB.E\${sourceElementId}.STRAIGHT\`,
+                nodeI: String(row.FROM_NODE),
+                nodeJ: bend.nodeIds[0],
+                positions,
+                section: input.sourceSections.get(sourceElementId),
+                kind: 'BEND_INCOMING_STRAIGHT',
+                pressureLengthScale: 1,
+                thermalLengthScale: 1,
+                gravityLengthScale: 1,
+                bourdonBendSegment: null,
+                teeModifier,
+              }));
+            }`,
+          `  if (hasIncomingStraight) {
+              if (teeModifier?.role === 'BRANCH' && teeModifier.rigidOffset !== null) {
+                appendB31JFictitiousRigidBranch(
+                  target,
+                  positions,
+                  row,
+                  String(row.FROM_NODE),
+                  bend.nodeIds[0],
+                  teeModifier,
+                  input,
+                );
+              } else {
+                target.push(buildFrameElement({
+                  ...input,
+                  row,
+                  elementId: \`ACCDB.E\${sourceElementId}.STRAIGHT\`,
+                  nodeI: String(row.FROM_NODE),
+                  nodeJ: bend.nodeIds[0],
+                  positions,
+                  section: input.sourceSections.get(sourceElementId),
+                  kind: 'BEND_INCOMING_STRAIGHT',
+                  pressureLengthScale: 1,
+                  thermalLengthScale: 1,
+                  gravityLengthScale: 1,
+                  bourdonBendSegment: null,
+                  teeModifier,
+                }));
+              }
+            }`,'bend-source branch site');
           const marker='function buildRigidElement(input) {';
           const helper=`function appendB31JFictitiousRigidBranch(target, positions, row, nodeI, nodeJ, teeModifier, input) {
             const sourceElementId = String(row.ELEMENTID);
@@ -106,6 +153,7 @@ jobs:
             const branchSection = input.sourceSections.get(sourceElementId);
             const centreNodeId = teeModifier.junctionNodeId;
             const centre = positions.get(centreNodeId);
+            if (!centre) throw new TypeError(\`B31J junction \${centreNodeId} has no analysis position.\`);
             const surfaceNodeId = \`ACCDB.TEE.\${centreNodeId}.SURFACE\`;
             const surface = add(centre, teeModifier.rigidOffset);
             setAnalysisPosition(positions, surfaceNodeId, surface, false);
@@ -153,7 +201,7 @@ jobs:
           $b=gc artifacts/base-report.json -Raw|ConvertFrom-Json;$t=gc artifacts/test-report.json -Raw|ConvertFrom-Json;$ba=gc artifacts/base-actual.json -Raw|ConvertFrom-Json;$ta=gc artifacts/test-actual.json -Raw|ConvertFrom-Json
           $exp=[ordered]@{L2=227;L3=129;L4=120;L5=97;L6=86;L14=129};$cases=[ordered]@{};$bt=0;$tt=0
           foreach($id in $exp.Keys){$bc=C $b $id;$tc=C $t $id;if($bc.total-ne$exp[$id]){throw "baseline $id"};if($t.mechanics.cases.$id.recoveredEquilibrium.status-eq'FAIL'){throw "equilibrium $id"};if($ta.mechanics.cases.$id.analysisNodeCount-ne($ba.mechanics.cases.$id.analysisNodeCount+2)){throw "nodes $id"};if($ta.mechanics.cases.$id.analysisElementCount-ne($ba.mechanics.cases.$id.analysisElementCount+2)){throw "elements $id"};$cases[$id]=[ordered]@{before=$bc;after=$tc;delta=$tc.total-$bc.total};$bt+=$bc.total;$tt+=$tc.total}
-          [ordered]@{schema='lfea-m047-b31j-fictitious-rigid-ab/v2';authority='HEXAGON_B31J_FICTITIOUS_WEIGHTLESS_RIGID_USING_RUN_PROPERTIES';baselineTotal=$bt;testTotal=$tt;delta=$tt-$bt;cases=$cases;equilibrium='PASS'}|ConvertTo-Json -Depth 20|Tee-Object artifacts/result.json
+          [ordered]@{schema='lfea-m047-b31j-fictitious-rigid-ab/v3';authority='HEXAGON_B31J_FICTITIOUS_WEIGHTLESS_RIGID_USING_RUN_PROPERTIES';baselineTotal=$bt;testTotal=$tt;delta=$tt-$bt;cases=$cases;equilibrium='PASS';activeTeeNodes=@('20160','20295')}|ConvertTo-Json -Depth 20|Tee-Object artifacts/result.json
       - name: Upload
         if: always()
         uses: actions/upload-artifact@v4

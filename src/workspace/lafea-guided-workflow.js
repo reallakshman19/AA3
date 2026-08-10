@@ -202,7 +202,7 @@ function focusTarget(stepId) {
   return {
     SOURCE_IDENTITY: 'source',
     MODEL_DIAGNOSTICS: 'findings',
-    ANALYSIS_PROFILE: 'source',
+    ANALYSIS_PROFILE: 'profile',
     MATERIALS_SECTIONS: 'source',
     RESTRAINTS_BCS: 'source',
     LOADS_CASES: 'source',

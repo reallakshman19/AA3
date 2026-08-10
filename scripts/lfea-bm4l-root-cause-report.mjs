@@ -9,6 +9,7 @@
  */
 import { readFileSync, writeFileSync } from 'node:fs';
 import { resolve } from 'node:path';
+import { pathToFileURL } from 'node:url';
 
 const TARGET_CASES = Object.freeze(['L2', 'L3', 'L4', 'L5', 'L6', 'L14']);
 const COMPONENT_ORDER = Object.freeze(['UX', 'UY', 'UZ', 'RX', 'RY', 'RZ', 'FX', 'FY', 'FZ', 'MX', 'MY', 'MZ']);
@@ -364,4 +365,4 @@ function main(argv) {
   else process.stdout.write(serialized);
 }
 
-if (import.meta.url === `file://${process.argv[1]}`) main(process.argv.slice(2));
+if (process.argv[1] && import.meta.url === pathToFileURL(resolve(process.argv[1])).href) main(process.argv.slice(2));

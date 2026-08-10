@@ -8,6 +8,7 @@
  */
 import { readFileSync, writeFileSync } from 'node:fs';
 import { resolve } from 'node:path';
+import { pathToFileURL } from 'node:url';
 
 const CASES = Object.freeze(['L2', 'L3', 'L4', 'L5', 'L6', 'L14']);
 const DECLARED_FROZEN_COUNTS = Object.freeze({
@@ -178,4 +179,4 @@ function main(argv) {
   if (result.status === 'FAIL') process.exitCode = 1;
 }
 
-if (import.meta.url === `file://${process.argv[1]}`) main(process.argv.slice(2));
+if (process.argv[1] && import.meta.url === pathToFileURL(resolve(process.argv[1])).href) main(process.argv.slice(2));

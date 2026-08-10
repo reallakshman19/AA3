@@ -1,0 +1,180 @@
+name: M047 fresh BM4_L MEC-21 bend shear A-B
+
+on:
+  push:
+    branches: [agent/m047-bm4l-fresh-qualification]
+    paths: ['.github/workflows/m047-bm4l-fresh-mec21-bend-shear-ab.yml']
+
+permissions:
+  contents: read
+
+jobs:
+  bend-shear-ab:
+    runs-on: windows-latest
+    timeout-minutes: 55
+    env:
+      COMMON_COMMIT: '45d51ea18624f5775805f399110c1738301c0d90'
+      ZIP_SHA256: '978617cba50fa0b1a16c2fa71dc1e0d38e55ac834b191f887d100c6951abd8b9'
+      MEMBER_SHA256: '64c05a50e9ed0452622ff5880335460486f24ac8e6adecc9a300b549c9aa82f8'
+      ACE_URL: 'https://download.microsoft.com/download/3/5/C/35C84C36-661A-44E6-9324-8786B8DBE231/accessdatabaseengine_X64.exe'
+      ACE_SHA256: '04e96c9f1a1f7d251a88aececf1dc10ff65950392787427c00814a43308003de'
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: agent/m047-bm4l-fresh-qualification
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+      - run: npm ci
+
+      - name: Install authenticated ACE and fetch pinned BM4_L
+        shell: pwsh
+        run: |
+          $ErrorActionPreference='Stop'
+          New-Item -ItemType Directory -Force artifacts/fresh-mec21/source,artifacts/fresh-mec21/before,artifacts/fresh-mec21/after | Out-Null
+          $installer=Join-Path $PWD 'artifacts/fresh-mec21/accessdatabaseengine_X64.exe'
+          Invoke-WebRequest -Uri $env:ACE_URL -OutFile $installer
+          if((Get-FileHash $installer -Algorithm SHA256).Hash.ToLowerInvariant() -ne $env:ACE_SHA256){ throw 'ACE installer hash mismatch.' }
+          $sig=Get-AuthenticodeSignature $installer
+          if($sig.Status -ne 'Valid' -or $sig.SignerCertificate.Subject -notmatch 'Microsoft'){ throw 'ACE signature validation failed.' }
+          $p=Start-Process $installer -ArgumentList '/quiet','/norestart' -Wait -PassThru
+          if($p.ExitCode -notin @(0,3010)){ throw "ACE install failed: $($p.ExitCode)" }
+          Remove-Item $installer -Force
+          $zip=Join-Path $PWD 'artifacts/fresh-mec21/BM4_L.zip'
+          Invoke-WebRequest -Uri "https://raw.githubusercontent.com/reallaksh19/Common/$env:COMMON_COMMIT/LFEA/BM4/BM4_L.zip" -OutFile $zip
+          if((Get-FileHash $zip -Algorithm SHA256).Hash.ToLowerInvariant() -ne $env:ZIP_SHA256){ throw 'ZIP hash mismatch.' }
+          Expand-Archive $zip -DestinationPath artifacts/fresh-mec21/source -Force
+          $accdb=Join-Path $PWD 'artifacts/fresh-mec21/source/BM4_L.ACCDB'
+          if((Get-FileHash $accdb -Algorithm SHA256).Hash.ToLowerInvariant() -ne $env:MEMBER_SHA256){ throw 'ACCDB member hash mismatch.' }
+          "ACCDB=$accdb" >> $env:GITHUB_ENV
+
+      - name: Apply unchanged straight-shear diagnostic parent
+        shell: python
+        run: |
+          from pathlib import Path
+          p=Path('src/core/fea-benchmarks/caesar-accdb-linear-solve.js')
+          t=p.read_text()
+          needle="    section: input.section,\n  });\n  const length = frame.geometry.length;"
+          replacement="    section: input.section,\n    profile: isCaesarStraightPipeSpan(input.kind) ? caesarStraightPipeFrameProfile() : frameProfile(),\n  });\n  const length = frame.geometry.length;"
+          if t.count(needle)!=1: raise SystemExit(f'buildFrameElement site {t.count(needle)}')
+          t=t.replace(needle,replacement,1)
+          needle2="    profile: frameProfile(),\n    distributedLoads: [],"
+          replacement2="    profile: input.profile ?? frameProfile(),\n    distributedLoads: [],"
+          if t.count(needle2)!=1: raise SystemExit(f'compileUnloadedFrame site {t.count(needle2)}')
+          t=t.replace(needle2,replacement2,1)
+          marker="function frameProfile() {\n  return sealFrameElementProfile({"
+          helper="""function isCaesarStraightPipeSpan(kind) {
+            return kind === 'FRAME' || kind === 'BEND_INCOMING_STRAIGHT';
+          }
+
+          function caesarStraightPipeFrameProfile() {
+            return sealFrameElementProfile({
+              schema: 'fea-linear-frame-element-profile/v1', profileId: 'LINEAR-FRAME-ELEMENT-R1',
+              straightPipeFormulation: 'PIPE_FRAME3D_TIMOSHENKO_V1', shearDeformation: true,
+              shearCorrectionFactorY: { value: 0.5, source: 'M047-FRESH-DIAGNOSTIC-PARENT' },
+              shearCorrectionFactorZ: { value: 0.5, source: 'M047-FRESH-DIAGNOSTIC-PARENT' },
+              releaseRule: 'STATIC_CONDENSATION_V1', thermalStrainApproximation: 'UNIFORM_TEMPERATURE_ALPHA_DELTA_T_V1',
+              releaseSingularityTolerance: { value: 1e-12, source: PROFILE_SOURCE }, semanticHash: '',
+            });
+          }
+
+          function frameProfile() {
+            return sealFrameElementProfile({"""
+          if t.count(marker)!=1: raise SystemExit(f'frameProfile site {t.count(marker)}')
+          p.write_text(t.replace(marker,helper,1))
+
+      - name: Run straight-shear parent six cases
+        shell: pwsh
+        run: |
+          $ErrorActionPreference='Stop'
+          node scripts/lfea-caesar-accdb-benchmark.mjs `
+            --accdb $env:ACCDB `
+            --profile benchmarks/LFEA/CAESAR_ACCDB/bm4l-validation.profile.json `
+            --solve-linear true `
+            --solve-cases L2,L3,L4,L5,L6,L14 `
+            --actual-out artifacts/fresh-mec21/before/actual.json `
+            --out artifacts/fresh-mec21/before/report.json
+
+      - name: Add MEC-21 annular transverse shear only to bend arcs
+        shell: python
+        run: |
+          from pathlib import Path
+          p=Path('src/core/fea-benchmarks/caesar-accdb-linear-solve.js')
+          t=p.read_text()
+          needle="      frameElementProfile: frameProfile(),\n      localAxisProfile: FRAME_LOCAL_AXIS_PROFILE,"
+          replacement="      frameElementProfile: mec21BendFrameProfile(section),\n      localAxisProfile: FRAME_LOCAL_AXIS_PROFILE,"
+          if t.count(needle)!=1: raise SystemExit(f'bend profile site {t.count(needle)}')
+          t=t.replace(needle,replacement,1)
+          marker="function isCaesarStraightPipeSpan(kind) {"
+          helper="""function mec21BendFrameProfile(section) {
+            const ro = section.dimensions.outerDiameter / 2;
+            const ri = ro - section.dimensions.wallThickness;
+            if (!(ri > 0 && ro > ri)) throw new TypeError('MEC-21 bend annulus geometry is invalid.');
+            const alpha = (4 / 3) * ((ro ** 3) - (ri ** 3)) / (((ro ** 2) + (ri ** 2)) * (ro - ri));
+            const kappa = 1 / alpha;
+            if (!(kappa > 0 && Number.isFinite(kappa))) throw new TypeError('MEC-21 bend shear coefficient is invalid.');
+            return sealFrameElementProfile({
+              schema: 'fea-linear-frame-element-profile/v1', profileId: 'LINEAR-FRAME-ELEMENT-R1',
+              straightPipeFormulation: 'PIPE_FRAME3D_TIMOSHENKO_V1', shearDeformation: true,
+              shearCorrectionFactorY: { value: kappa, source: 'MEC21-ANNULAR-SHEAR-ALPHA' },
+              shearCorrectionFactorZ: { value: kappa, source: 'MEC21-ANNULAR-SHEAR-ALPHA' },
+              releaseRule: 'STATIC_CONDENSATION_V1', thermalStrainApproximation: 'UNIFORM_TEMPERATURE_ALPHA_DELTA_T_V1',
+              releaseSingularityTolerance: { value: 1e-12, source: PROFILE_SOURCE }, semanticHash: '',
+            });
+          }
+
+          function isCaesarStraightPipeSpan(kind) {"""
+          if t.count(marker)!=1: raise SystemExit(f'bend helper insertion site {t.count(marker)}')
+          p.write_text(t.replace(marker,helper,1))
+
+      - name: Run bend candidate and integrity gates
+        shell: pwsh
+        run: |
+          $ErrorActionPreference='Stop'
+          node --check src/core/fea-benchmarks/caesar-accdb-linear-solve.js
+          node scripts/lfea-b3.1-frame-element-check.mjs
+          node scripts/lfea-b3.1-reviewer-check.mjs
+          node scripts/lfea-b3.2-piping-component-check.mjs
+          node scripts/lfea-b3.3-solver-check.mjs
+          node scripts/lfea-b3.4-recovery-check.mjs
+          node scripts/lfea-caesar-accdb-benchmark.mjs `
+            --accdb $env:ACCDB `
+            --profile benchmarks/LFEA/CAESAR_ACCDB/bm4l-validation.profile.json `
+            --solve-linear true `
+            --solve-cases L2,L3,L4,L5,L6,L14 `
+            --actual-out artifacts/fresh-mec21/after/actual.json `
+            --out artifacts/fresh-mec21/after/report.json
+          npm run check:core-fea
+
+      - name: Build incremental bend evidence
+        shell: pwsh
+        run: |
+          $ErrorActionPreference='Stop'
+          @'
+          const fs=require('fs');
+          const before=JSON.parse(fs.readFileSync('artifacts/fresh-mec21/before/report.json','utf8').replace(/^\uFEFF/,''));
+          const after=JSON.parse(fs.readFileSync('artifacts/fresh-mec21/after/report.json','utf8').replace(/^\uFEFF/,''));
+          const ba=JSON.parse(fs.readFileSync('artifacts/fresh-mec21/before/actual.json','utf8').replace(/^\uFEFF/,''));
+          const aa=JSON.parse(fs.readFileSync('artifacts/fresh-mec21/after/actual.json','utf8').replace(/^\uFEFF/,''));
+          const cases=['L2','L3','L4','L5','L6','L14'];
+          const counts=(r,c)=>({restraint:r.restraintBasis.cases[c].exceedingComponentCount,displacementRotation:r.displacementBasis.cases[c].exceedingComponentCount,elementEnd:r.elementBasis.cases[c].exceedingComponentCount});
+          const rows=(r,c)=>r.qualification.cases.find(x=>x.caseId===c).comparison.rows;
+          const absErr=r=>Math.abs(r.actualValue-r.referenceValue);
+          const l2Before=rows(before,'L2').filter(r=>r.entityKind==='ELEMENT'&&r.quantity.startsWith('GLOBAL_END_')&&r.status==='FAIL');
+          const l2After=rows(after,'L2');
+          const map=new Map(l2After.map(r=>[`${r.entityId}|${r.quantity}|${r.component}`,r]));
+          const changes=l2Before.map(b=>{const a=map.get(`${b.entityId}|${b.quantity}|${b.component}`);return a?{entityId:b.entityId,quantity:b.quantity,component:b.component,reference:b.referenceValue,before:b.actualValue,after:a.actualValue,beforeAbsoluteError:absErr(b),afterAbsoluteError:absErr(a),errorReductionFraction:absErr(b)>0?(absErr(b)-absErr(a))/absErr(b):null,afterStatus:a.status}:null;}).filter(Boolean).sort((x,y)=>y.errorReductionFraction-x.errorReductionFraction);
+          for(const c of cases){if(aa.mechanics.cases[c].executionStatus!=='QUALIFIED'||aa.mechanics.cases[c].recoveredEquilibrium.status!=='PASS')throw new Error(`${c} integrity failed`);}
+          if(Math.abs(ba.mechanics.cases.L2.gravityWeightN-aa.mechanics.cases.L2.gravityWeightN)>1e-9*Math.max(1,Math.abs(ba.mechanics.cases.L2.gravityWeightN)))throw new Error('gravity changed');
+          const out={schema:'m047-bm4l-fresh-mec21-bend-shear-ab/v1',parent:'STRAIGHT_SHEAR_DIAGNOSTIC_KAPPA_0_5',bendCandidate:{alpha:'(4/3)*(Ro^3-Ri^3)/((Ro^2+Ri^2)*(Ro-Ri))',kappa:'1/alpha',scope:'BEND_ARC_ONLY',benchmarkFitted:false},counts:Object.fromEntries(cases.map(c=>[c,{before:counts(before,c),after:counts(after,c)}])),topL2FailedElementEndImprovements:changes.slice(0,25),topL2FailedElementEndRegressions:[...changes].sort((x,y)=>x.errorReductionFraction-y.errorReductionFraction).slice(0,15),gravityWeightN:{before:ba.mechanics.cases.L2.gravityWeightN,after:aa.mechanics.cases.L2.gravityWeightN},equilibrium:Object.fromEntries(cases.map(c=>[c,{status:aa.mechanics.cases[c].recoveredEquilibrium.status,maxResidual:aa.mechanics.cases[c].recoveredEquilibrium.maximumAbsoluteResidual}]))};
+          fs.writeFileSync('artifacts/fresh-mec21/ab.json',JSON.stringify(out,null,2)+'\n');console.log(JSON.stringify(out,null,2));
+          '@ | node
+
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: m047-bm4l-fresh-mec21-bend-shear-${{ github.sha }}
+          path: artifacts/fresh-mec21
+          retention-days: 30
+          if-no-files-found: error

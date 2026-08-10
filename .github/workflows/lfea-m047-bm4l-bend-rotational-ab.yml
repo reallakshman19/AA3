@@ -96,10 +96,6 @@ jobs:
           if (-not $elements.Contains($oldImport)) { throw 'Component-elements import shape changed.' }
           $elements = $elements.Replace($oldImport, $newImport)
 
-          $start = $elements.IndexOf('export function applyBendingFlexibilityCorrection(frameElement, factor) {')
-          $marker = "`n}`n`n/**`n * Represent a valve or flange body"
-          $finish = $elements.IndexOf($marker, $start)
-          if ($start -lt 0 -or $finish -lt 0) { throw 'Bend correction function shape changed.' }
           $replacement = @'
           export function applyBendingFlexibilityCorrection(frameElement, factor, pivotTolerance) {
             const value = requirePositive(factor, 'flexibilityFactor', 'PIPING_COMPONENT_FACTOR_SET_INVALID');
@@ -139,7 +135,10 @@ jobs:
             });
           }
           '@
-          $elements = $elements.Substring(0, $start) + $replacement.TrimEnd() + $elements.Substring($finish + 2)
+          $pattern = '(?s)export function applyBendingFlexibilityCorrection\(frameElement, factor\) \{.*?\r?\n\}\r?\n\r?\n(?=/\*\*\r?\n \* Represent a valve or flange body)'
+          $regex = [regex]::new($pattern)
+          if (-not $regex.IsMatch($elements)) { throw 'Bend correction function shape changed.' }
+          $elements = $regex.Replace($elements, $replacement.TrimEnd() + "`r`n`r`n", 1)
           Set-Content -Path $elementsPath -Value $elements -Encoding utf8
 
           $bend = Get-Content $bendPath -Raw

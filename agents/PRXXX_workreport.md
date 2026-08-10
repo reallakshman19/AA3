@@ -6,7 +6,7 @@
 - **Source issue:** #1015 — `LAFEA UI update`
 - **Pull request:** #1016 — draft
 - **Branch:** `agent/lafea-appendix-a-workreport`
-- **Current stage:** Stage 6 complete; Stage 7 release-record binding remains
+- **Current stage:** Stage 7 — authoritative release-record binding in progress
 - **Last updated:** 2026-08-10
 - **CI constraint:** Do not add GitHub Actions workflows or workflow-based CI gates. Use existing repository/local checks where available.
 
@@ -21,7 +21,7 @@ Five Appendix answer-key areas required correction before coding:
 - **Q1:** release was hardcoded at view, orchestration, and readiness layers.
 - **Q2:** `-0 -> 0` is a useful canonical contract rule, but current `JSON.stringify(-0)` does not create a distinct JSON numeric representation.
 - **Q6:** stable `sceneRevision` preserves identity/selection semantics; it does not prove viewport primitive caching.
-- **Q9:** `executionHash()` is used only for `QUALIFIED` execution, so timeout/failure is not a valid fallback example.
+- **Q9:** `executionHash()` is used only in the `QUALIFIED` execution branch, so timeout/failure is not a valid fallback example.
 - **Q10:** 5-point Gauss-Legendre integrates curved-edge perimeter; boundary deviation uses separate explicit samples.
 
 ## Engineering concepts retained
@@ -72,123 +72,75 @@ T6 area uses 2D triangular quadrature; curved-edge perimeter uses 1D Gauss-Legen
 
 ### Stage 4 — Release/diagnostic UI plumbing — COMPLETE
 
-**Files changed**
-
-- `src/workspace/lafea-guided-workflow-view.js`
-- `src/workspace/lafea-workbench-view.js`
-- `src/workspace/lafea-workbench-orchestration-projection.js`
-- `src/workspace/lafea-workbench-reason-labels.js` (new)
-
-**Behavior changed**
-
 - Guided release badge consumes `workflow.releaseQualified` rather than hardcoded text.
-- Orchestration `RELEASE` consumes `lifecycleReadiness.releaseState` rather than a hardcoded blocked section.
+- Orchestration `RELEASE` consumes readiness rather than a hardcoded blocked section.
 - Readiness remains fail-closed; no solver/result/report state is promoted into release authority.
-- Guided reason pills, preflight workflow summaries, and Run tooltips display human-readable guidance while canonical machine reason codes remain unchanged.
-
-**Examples**
-
-- `SOURCE_DOCUMENT_REQUIRED` -> `Import or create a valid source document.`
-- `CANONICAL_MODEL_NOT_CURRENT` -> `The canonical analysis model is not current.`
-- `ANALYSIS_MESH_WARNING_REVIEW_REQUIRED` -> `Review the retained mesh warning before authorization.`
-
-**Validation**
-
-- Full PR diff inspected.
-- No `.github/workflows/*` path touched.
-- Release remains NOT QUALIFIED until authoritative release-record binding is implemented.
+- Machine reason codes remain canonical while the UI presents human-readable engineering guidance.
+- No workflow file added.
 
 ### Stage 5 — Guided workflow truthfulness — COMPLETE
 
-**Files changed**
-
-- `src/workspace/lafea-guided-workflow.js`
-- `src/workspace/lafea-workbench-reason-labels.js`
-- `scripts/lafea-ui-workflow-truthfulness-check.mjs` (new local check; not wired to Actions)
-
-**Behavior changed**
-
-- Analysis Profile no longer completes from document presence alone; it requires lifecycle initialization, a profile ID, and CURRENT source binding.
+- Analysis Profile requires lifecycle/profile/current binding rather than document presence alone.
 - Materials/Sections, Restraints/BCs, and Loads/Cases use stage-specific governed collection checks.
-- Generic workflow steps not represented by a stage contract are explicit COMPLETE/N/A rather than falsely READY.
-
-**Stage-specific rules**
-
-- **LAFEA.1:** `materials`, `loadCases`; generic restraints/BC step N/A.
-- **LAFEA.2:** `screeningCases`; generic materials/restraints steps N/A.
-- **LAFEA.3/4:** `materials`, `constraints`, `loadCases`.
-- **LAFEA.5:** `shellTemplate.materials`, `shellTemplate.constraints`, `loadCaseMappings`.
-- **LAFEA.6:** `materials`, `loadCases`; generic restraints step N/A; execution remains separately unsupported.
-
-**Examples**
-
-- LAFEA.1 `materials: []` -> Materials/Sections BLOCKED with `MATERIALS_REQUIRED`.
-- LAFEA.1 with no lifecycle -> Analysis Profile BLOCKED with `LIFECYCLE_NOT_INITIALIZED`.
-- LAFEA.3 `constraints: []` -> Restraints/BCs BLOCKED with `BOUNDARY_CONDITIONS_REQUIRED`.
-
-**Validation**
-
-- Cross-checked collection rules against `lafea-stage-input-descriptors.js` and LAFEA.1/LAFEA.3 fixtures.
-- Added direct Node regression assertions.
-- Local script not executed here because no local checkout/network clone is available; no false PASS is recorded.
-- No workflow file added.
+- Non-applicable generic workflow steps are explicit N/A instead of falsely READY.
+- Added `scripts/lafea-ui-workflow-truthfulness-check.mjs` as a local, non-Actions regression check.
 
 ### Stage 6 — Analysis profile/settings UX — COMPLETE
 
-**Source-contract finding**
+**Source-contract correction**
 
-The issue audit implied LAFEA.1 source JSON contains code basis, allowable value, load-combination factors, and stress-classification method. The actual closed contract in `src/core/local-stress/source-model.js` declares `qualificationProfile`, `resultRequests`, `thicknessBasis`, `units`, materials/loads, and limitations, but does **not** declare a governing code/allowable/load-combination field.
+The closed LAFEA.1 source contract does not currently declare the governing code/allowable/load-combination fields implied by the issue audit. The UI therefore exposes only real retained settings and explicitly reports missing code/allowable authority.
 
-The implementation therefore exposes real retained settings and explicitly reports missing authority rather than inventing it.
+**Implemented**
 
-**Files changed**
+- Added read-only `Analysis profile and settings` card.
+- Guided Analysis Profile navigation targets the card.
+- Shows lifecycle profile/binding, source identity/schema/version, formulation, qualification profile, thickness policy, requested analyses/cases, units, qualification details, and limitations when present.
+- Added `scripts/lafea-ui-analysis-settings-check.mjs` as a local, non-Actions check.
+- No workflow file added.
 
-- `src/workspace/lafea-analysis-settings-view.js` (new)
-- `src/workspace/lafea-workbench-content.js`
-- `src/workspace/lafea-guided-workflow.js`
-- `scripts/lafea-ui-analysis-settings-check.mjs` (new local check; not wired to Actions)
+### Stage 7 — Authoritative release-record binding — IN PROGRESS
 
-**Behavior changed**
+**Governance objective**
 
-- Added a read-only `Analysis profile and settings` card with `data-guided-target="profile"`.
-- Guided `ANALYSIS_PROFILE` navigation now targets the profile card rather than the source editor.
-- Card shows retained lifecycle profile/binding, source schema/model identity/version, formulation when present, qualification profile, thickness policy, requested analyses/cases, units, qualification details, and limitations.
-- `Code / allowable basis` explicitly shows `Not declared by the active stage source contract` when absent.
-- The card does not infer settings from solver output, result evidence, or release evidence and exposes no edit action.
+Connect the workbench release projection to the repository's actual `lafea-template-release-record/v2` authority contract without allowing the UI, solver completion, report completion, or a self-asserted boolean to create release authority.
 
-**Examples**
+**Planned binding contract**
 
-- **LAFEA.1:** displays qualification profile, thickness policy, requested analyses and unit basis; code/allowable remains explicitly undeclared.
-- **LAFEA.3:** displays continuum formulation, qualification profile, requested load-case IDs and units.
+A retained release record may affect workbench release state only when all of the following are true:
 
-**Validation**
+1. the release record passes `validateTemplateReleaseRecordV2` after an imported JSON value is deep-frozen for contract validation;
+2. `targetStage.stageId` matches the active workbench stage;
+3. current stage-registry identity matches `targetStage.stageEntryHash`;
+4. current composition-root identity and release-state binding match the record;
+5. current lifecycle-profile identity/hash matches the record;
+6. lifecycle exists and its editor/source binding is CURRENT;
+7. the record source hash matches the current lifecycle source hash;
+8. the retained workbench source authority exists and its canonical authority hash matches the record;
+9. source-authority schema/role/canonicalization profile and exact document revision match the current workbench authority;
+10. only a CURRENT `RELEASE_QUALIFIED` record with `releaseQualified=true` may project workbench `RELEASE_QUALIFIED`.
 
-- Compared the view model with the closed LAFEA.1 source-model contract and LAFEA.3 fixture shape.
-- Added `scripts/lafea-ui-analysis-settings-check.mjs` with LAFEA.1 and LAFEA.3 assertions.
-- Inspected the full PR diff and confirmed guided profile navigation resolves to the new card.
-- Local check not executed in this environment due absence of a checkout/network clone.
-- Confirmed no `.github/workflows/*` or workflow-based CI file is present.
+**Fail-closed behavior**
 
-## Current PR changed paths after Stage 6
+- No retained record -> `RELEASE_NOT_QUALIFIED`.
+- Valid record for an earlier authority state -> retained/current but not qualified.
+- Previously valid record after source, document, stage registry, composition, or lifecycle-profile drift -> stale binding and `RELEASE_NOT_QUALIFIED`.
+- Invalid/tampered record -> registration rejected; it is never retained as authority.
 
-- `agents/PRXXX_workreport.md`
-- `scripts/lafea-ui-analysis-settings-check.mjs`
-- `scripts/lafea-ui-workflow-truthfulness-check.mjs`
-- `src/workspace/lafea-analysis-settings-view.js`
-- `src/workspace/lafea-guided-workflow-view.js`
-- `src/workspace/lafea-guided-workflow.js`
-- `src/workspace/lafea-workbench-content.js`
-- `src/workspace/lafea-workbench-orchestration-projection.js`
-- `src/workspace/lafea-workbench-reason-labels.js`
-- `src/workspace/lafea-workbench-view.js`
+**Planned code shape**
 
-No workflow file is present.
+- Add a dedicated workbench release-binding state/projection module rather than embedding release-validation logic in the DOM view.
+- Add public store methods to register/select a template release record and inspect its binding projection.
+- Feed the projection into `projectLafeaWorkbenchReadiness()`.
+- Let orchestration use detailed release-binding reasons while the guided release badge remains driven only by projected qualification.
+- Export release binding in lifecycle/workbench evidence output for traceability.
+- Add a repository-local Stage 7 regression script; do not add or modify GitHub Actions workflows.
+
+**Example**
+
+A cryptographically valid `RELEASE_QUALIFIED` record for LAFEA.1 source hash A must become stale and immediately project NOT QUALIFIED after the workbench document changes to source hash B, even if the old record itself remains internally valid and retained for audit history.
 
 ## Future roadmap
-
-### Stage 7 — Authoritative release-record binding
-
-Bind workbench release readiness to validated `lafea-template-release-record/v2`; verify target stage, source authority, lifecycle profile, validity, and `releaseQualified` before projecting release authority. This is the next governance-critical stage and must remain fail-closed if no validated binding exists.
 
 ### Stage 8 — Viewport lifecycle/performance
 

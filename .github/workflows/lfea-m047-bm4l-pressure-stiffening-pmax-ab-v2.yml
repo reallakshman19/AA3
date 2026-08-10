@@ -1,0 +1,73 @@
+name: M047 BM4_L pressure stiffening Pmax A-B v2
+on:
+  pull_request:
+    branches: [main]
+permissions:
+  contents: read
+jobs:
+  pmax-ab:
+    if: github.head_ref == 'agent/m047-bm4l-root-cause-991'
+    runs-on: windows-2022
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/checkout@v4
+        with:
+          repository: reallaksh19/Common
+          ref: 45d51ea18624f5775805f399110c1738301c0d90
+          path: _common
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+      - run: npm ci --ignore-scripts
+      - name: Install signed Microsoft ACE 2016 x64
+        shell: pwsh
+        run: |
+          $i=Join-Path $env:RUNNER_TEMP 'ace.exe'
+          Invoke-WebRequest 'https://download.microsoft.com/download/3/5/C/35C84C36-661A-44E6-9324-8786B8DBE231/accessdatabaseengine_X64.exe' -OutFile $i
+          $s=Get-AuthenticodeSignature $i
+          if($s.Status -ne 'Valid' -or [string]$s.SignerCertificate.Subject -notmatch 'Microsoft'){throw 'ACE signature invalid'}
+          $p=Start-Process $i -ArgumentList '/quiet','/norestart' -Wait -PassThru
+          if($p.ExitCode -notin @(0,3010)){throw "ACE install $($p.ExitCode)"}
+      - name: Extract source
+        shell: pwsh
+        run: |
+          New-Item -ItemType Directory -Force artifacts | Out-Null
+          $z='_common/LFEA/BM4/BM4_L.zip'
+          if((Get-FileHash $z -Algorithm SHA256).Hash.ToLowerInvariant() -ne '978617cba50fa0b1a16c2fa71dc1e0d38e55ac834b191f887d100c6951abd8b9'){throw 'ZIP mismatch'}
+          $d=Join-Path $env:RUNNER_TEMP 'bm4l-pmax2'; Expand-Archive $z $d -Force
+          $a=Join-Path $d 'BM4_L.ACCDB'
+          if((Get-FileHash $a -Algorithm SHA256).Hash.ToLowerInvariant() -ne '64c05a50e9ed0452622ff5880335460486f24ac8e6adecc9a300b549c9aa82f8'){throw 'ACCDB mismatch'}
+          "BM4L_ACCDB=$a" >> $env:GITHUB_ENV
+      - name: Baseline L2 L4
+        shell: pwsh
+        run: |
+          node scripts/lfea-caesar-accdb-benchmark.mjs --accdb "$env:BM4L_ACCDB" --profile benchmarks/LFEA/CAESAR_ACCDB/bm4l-validation.profile.json --solve-linear true --solve-cases L2,L4 --actual-out artifacts/base-actual.json --out artifacts/base-report.json --summary-out artifacts/base.md
+      - name: Remove hydro only from bend stiffening candidate list
+        shell: pwsh
+        run: |
+          $p='src/core/fea-benchmarks/caesar-accdb-linear-solve.js'; $t=Get-Content $p -Raw
+          $needle='    Number(row.HYDRO_PRESSURE),'
+          if(-not $t.Contains($needle)){throw 'HYDRO_PRESSURE candidate line missing'}
+          $t=$t.Replace("$needle`r`n",'').Replace("$needle`n",'')
+          Set-Content $p $t -Encoding utf8
+          $diff=(git diff -- $p)-join "`n"; $diff > artifacts/pmax.patch
+          if(-not $diff.Contains('HYDRO_PRESSURE')){throw 'Pmax patch not recorded'}
+      - name: Pmax L2 L4
+        shell: pwsh
+        run: |
+          node scripts/lfea-caesar-accdb-benchmark.mjs --accdb "$env:BM4L_ACCDB" --profile benchmarks/LFEA/CAESAR_ACCDB/bm4l-validation.profile.json --solve-linear true --solve-cases L2,L4 --actual-out artifacts/test-actual.json --out artifacts/test-report.json --summary-out artifacts/test.md
+      - name: Compare
+        shell: pwsh
+        run: |
+          $b=Get-Content artifacts/base-report.json -Raw|ConvertFrom-Json; $t=Get-Content artifacts/test-report.json -Raw|ConvertFrom-Json
+          function C($r,$id){$q=$r.qualification.cases|? caseId -eq $id;$f=@($q.comparison.rows|? status -eq 'FAIL');$rr=@($f|?{$_.entityKind-eq'NODE'-and$_.quantity-in@('FORCE','MOMENT')}).Count;$dd=@($f|?{$_.entityKind-eq'NODE'-and$_.quantity-in@('DISPLACEMENT','ROTATION')}).Count;$ee=@($f|?{$_.entityKind-eq'ELEMENT'-and$_.quantity-like'GLOBAL_END_*'}).Count;[ordered]@{r=$rr;d=$dd;e=$ee;total=$rr+$dd+$ee}}
+          $o=[ordered]@{L2=[ordered]@{base=C $b L2;test=C $t L2};L4=[ordered]@{base=C $b L4;test=C $t L4}}
+          $o|ConvertTo-Json -Depth 8|Tee-Object -FilePath artifacts/pmax-ab.json
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: bm4l-pmax-ab-v2-${{ github.sha }}
+          path: artifacts/
+          retention-days: 14

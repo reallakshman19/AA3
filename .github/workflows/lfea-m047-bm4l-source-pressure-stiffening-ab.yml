@@ -1,0 +1,141 @@
+name: M047 BM4_L source pressure stiffening A-B
+
+on:
+  pull_request:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  source-pressure-ab:
+    if: github.head_ref == 'agent/m047-bm4l-root-cause-991'
+    runs-on: windows-2022
+    timeout-minutes: 40
+    steps:
+      - name: Checkout canonical 811 implementation
+        uses: actions/checkout@v4
+        with:
+          ref: 6872d024ca51eb073c6d30279fa8fab5c984a358
+          fetch-depth: 1
+
+      - name: Checkout Common source and CAESAR reports
+        uses: actions/checkout@v4
+        with:
+          repository: reallaksh19/Common
+          ref: 179c4831cf521cf797c13699cfbbd118315c9244
+          path: _common
+          fetch-depth: 1
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci --ignore-scripts
+
+      - name: Install signed Microsoft ACE 2016 x64
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $installer = Join-Path $env:RUNNER_TEMP 'accessdatabaseengine_X64.exe'
+          Invoke-WebRequest -Uri 'https://download.microsoft.com/download/3/5/C/35C84C36-661A-44E6-9324-8786B8DBE231/accessdatabaseengine_X64.exe' -OutFile $installer
+          $signature = Get-AuthenticodeSignature -FilePath $installer
+          if ($signature.Status -ne 'Valid' -or [string]$signature.SignerCertificate.Subject -notmatch 'Microsoft') { throw 'Microsoft ACE installer signature check failed.' }
+          $p = Start-Process -FilePath $installer -ArgumentList '/quiet','/norestart' -Wait -PassThru
+          if ($p.ExitCode -notin @(0,3010)) { throw "ACE install failed with exit $($p.ExitCode)" }
+
+      - name: Verify source custody
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          New-Item -ItemType Directory -Force -Path artifacts | Out-Null
+          $zip='_common/LFEA/BM4/BM4_L.zip'
+          if ((Get-FileHash -Algorithm SHA256 $zip).Hash.ToLowerInvariant() -ne '978617cba50fa0b1a16c2fa71dc1e0d38e55ac834b191f887d100c6951abd8b9') { throw 'ZIP custody mismatch.' }
+          $extract=Join-Path $env:RUNNER_TEMP 'bm4l-source-pressure-ab'
+          Expand-Archive -LiteralPath $zip -DestinationPath $extract -Force
+          $accdb=Join-Path $extract 'BM4_L.ACCDB'
+          if ((Get-FileHash -Algorithm SHA256 $accdb).Hash.ToLowerInvariant() -ne '64c05a50e9ed0452622ff5880335460486f24ac8e6adecc9a300b549c9aa82f8') { throw 'ACCDB custody mismatch.' }
+          "BM4L_ACCDB=$accdb" | Out-File -FilePath $env:GITHUB_ENV -Append -Encoding utf8
+
+      - name: Build source-backed P1 profile
+        shell: pwsh
+        run: |
+          $ErrorActionPreference='Stop'
+          $profile=Get-Content benchmarks/LFEA/CAESAR_ACCDB/bm4l-validation.profile.json -Raw | ConvertFrom-Json
+          if ([string]$profile.linearSolve.bendPressureStiffening.pressureSource -ne 'MAX_DEFINED') { throw 'Canonical baseline no longer uses expected MAX_DEFINED pressure source.' }
+          $profile.linearSolve.bendPressureStiffening.pressureSource='P1'
+          $profile.linearSolve.bendPressureStiffening.authorityStatus='RESOLVED'
+          $profile.linearSolve.bendPressureStiffening.source='[SOURCE] COMMON@179c4831cf521cf797c13699cfbbd118315c9244:LFEA/BM4/Miscdata_BM4_L.txt BEND_REPORT FLEX/SIF_MIN_MATCH_P1_11600_KPA; ZERO_PRESSURE_MATCHES_REPORT_MAX'
+          $profile | ConvertTo-Json -Depth 100 | Out-File artifacts/source-p1.profile.json -Encoding utf8
+
+      - name: Run canonical 811 baseline
+        shell: pwsh
+        run: |
+          node scripts/lfea-caesar-accdb-benchmark.mjs `
+            --accdb "$env:BM4L_ACCDB" `
+            --profile benchmarks/LFEA/CAESAR_ACCDB/bm4l-validation.profile.json `
+            --solve-linear true `
+            --solve-cases L2,L3,L4,L5,L6,L14 `
+            --actual-out artifacts/baseline-actual.json `
+            --out artifacts/baseline-report.json `
+            --summary-out artifacts/baseline-summary.md
+
+      - name: Run source-backed P1 stiffening
+        shell: pwsh
+        run: |
+          node scripts/lfea-caesar-accdb-benchmark.mjs `
+            --accdb "$env:BM4L_ACCDB" `
+            --profile artifacts/source-p1.profile.json `
+            --solve-linear true `
+            --solve-cases L2,L3,L4,L5,L6,L14 `
+            --actual-out artifacts/p1-actual.json `
+            --out artifacts/p1-report.json `
+            --summary-out artifacts/p1-summary.md
+
+      - name: Compare source-backed pressure signature
+        shell: pwsh
+        run: |
+          $ErrorActionPreference='Stop'
+          $base=Get-Content artifacts/baseline-report.json -Raw | ConvertFrom-Json
+          $p1=Get-Content artifacts/p1-report.json -Raw | ConvertFrom-Json
+          function Stats($report,$id){
+            $case=$report.qualification.cases|Where-Object caseId -eq $id
+            $fails=@($case.comparison.rows|Where-Object status -eq 'FAIL')
+            $r=@($fails|Where-Object{ $_.entityKind-eq'NODE' -and $_.quantity-in@('FORCE','MOMENT') }).Count
+            $d=@($fails|Where-Object{ $_.entityKind-eq'NODE' -and $_.quantity-in@('DISPLACEMENT','ROTATION') }).Count
+            $e=@($fails|Where-Object{ $_.entityKind-eq'ELEMENT' -and $_.quantity-like'GLOBAL_END_*' }).Count
+            [ordered]@{restraint=$r;deformation=$d;elementEnd=$e;total=$r+$d+$e}
+          }
+          $expected=[ordered]@{L2=243;L3=115;L4=126;L5=125;L6=87;L14=115}
+          $result=[ordered]@{};$before=0;$after=0
+          foreach($id in @('L2','L3','L4','L5','L6','L14')){
+            $b=Stats $base $id;$a=Stats $p1 $id
+            if($b.total-ne$expected[$id]){throw "811 baseline drift in ${id}: $($b.total)"}
+            if($base.mechanics.cases.$id.recoveredEquilibrium.status-eq'FAIL'){throw "Baseline equilibrium failed in $id"}
+            if($p1.mechanics.cases.$id.recoveredEquilibrium.status-eq'FAIL'){throw "P1 equilibrium failed in $id"}
+            $result[$id]=[ordered]@{before=$b;after=$a;delta=$a.total-$b.total}
+            $before+=$b.total;$after+=$a.total
+          }
+          if($before-ne811){throw "Baseline total drift: $before"}
+          [ordered]@{
+            schema='lfea-m047-source-pressure-stiffening-ab/v1'
+            authority='CAESAR_MISC_BEND_REPORT_DIRECT_FACTOR_MATCH'
+            pressureSourceBefore='MAX_DEFINED_INCLUDING_HYDRO_22035_KPA'
+            pressureSourceAfter='P1_11600_KPA'
+            beforeTotal=$before
+            afterTotal=$after
+            delta=$after-$before
+            cases=$result
+          }|ConvertTo-Json -Depth 20|Tee-Object -FilePath artifacts/source-pressure-ab.json
+
+      - name: Upload pressure A-B evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: bm4l-source-pressure-stiffening-ab-${{ github.sha }}
+          path: artifacts/
+          if-no-files-found: error
+          retention-days: 14

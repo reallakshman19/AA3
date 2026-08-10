@@ -1,0 +1,114 @@
+name: M047 one-shot exact L2 source replay
+
+on:
+  push:
+    branches: [agent/m047-bm4l-root-cause]
+    paths: ['.github/workflows/m047-one-shot-l2-source-replay.yml']
+
+permissions:
+  contents: write
+
+jobs:
+  replay:
+    runs-on: windows-latest
+    timeout-minutes: 35
+    env:
+      COMMON_COMMIT: '45d51ea18624f5775805f399110c1738301c0d90'
+      ZIP_SHA256: '978617cba50fa0b1a16c2fa71dc1e0d38e55ac834b191f887d100c6951abd8b9'
+      MEMBER_SHA256: '64c05a50e9ed0452622ff5880335460486f24ac8e6adecc9a300b549c9aa82f8'
+      ACE_URL: 'https://download.microsoft.com/download/3/5/C/35C84C36-661A-44E6-9324-8786B8DBE231/accessdatabaseengine_X64.exe'
+      ACE_SHA256: '04e96c9f1a1f7d251a88aececf1dc10ff65950392787427c00814a43308003de'
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: agent/m047-bm4l-root-cause
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+      - run: npm ci
+
+      - name: Install authenticated ACE and fetch canonical source
+        shell: pwsh
+        run: |
+          $ErrorActionPreference='Stop'
+          New-Item -ItemType Directory -Force artifacts/replay/source | Out-Null
+          $installer=Join-Path $PWD 'artifacts/replay/accessdatabaseengine_X64.exe'
+          Invoke-WebRequest -Uri $env:ACE_URL -OutFile $installer
+          if((Get-FileHash $installer -Algorithm SHA256).Hash.ToLowerInvariant() -ne $env:ACE_SHA256){ throw 'ACE installer hash mismatch.' }
+          $sig=Get-AuthenticodeSignature $installer
+          if($sig.Status -ne 'Valid' -or $sig.SignerCertificate.Subject -notmatch 'Microsoft'){ throw 'ACE signature validation failed.' }
+          $p=Start-Process $installer -ArgumentList '/quiet','/norestart' -Wait -PassThru
+          if($p.ExitCode -notin @(0,3010)){ throw "ACE install failed: $($p.ExitCode)" }
+          Remove-Item $installer -Force
+          $zip=Join-Path $PWD 'artifacts/replay/BM4_L.zip'
+          Invoke-WebRequest -Uri "https://raw.githubusercontent.com/reallaksh19/Common/$env:COMMON_COMMIT/LFEA/BM4/BM4_L.zip" -OutFile $zip
+          if((Get-FileHash $zip -Algorithm SHA256).Hash.ToLowerInvariant() -ne $env:ZIP_SHA256){ throw 'ZIP hash mismatch.' }
+          Expand-Archive $zip -DestinationPath artifacts/replay/source -Force
+          $accdb=Join-Path $PWD 'artifacts/replay/source/BM4_L.ACCDB'
+          if((Get-FileHash $accdb -Algorithm SHA256).Hash.ToLowerInvariant() -ne $env:MEMBER_SHA256){ throw 'ACCDB member hash mismatch.' }
+          "ACCDB=$accdb" >> $env:GITHUB_ENV
+
+      - name: Run governed L2 and exact source replay
+        shell: pwsh
+        run: |
+          $ErrorActionPreference='Stop'
+          node scripts/lfea-caesar-accdb-benchmark.mjs `
+            --accdb $env:ACCDB `
+            --profile benchmarks/LFEA/CAESAR_ACCDB/bm4l-validation.profile.json `
+            --solve-linear true `
+            --solve-cases L2 `
+            --actual-out artifacts/replay/actual.json `
+            --out artifacts/replay/report.json `
+            --summary-out artifacts/replay/summary.md
+          node scripts/lfea-m047-bm4l-source-replay.mjs `
+            --actual artifacts/replay/actual.json `
+            --report artifacts/replay/report.json `
+            --case L2 `
+            --out artifacts/replay/source-replay.json
+
+      - name: Retain exact source-replay proof
+        shell: pwsh
+        run: |
+          @'
+          const fs=require('fs');
+          const replay=JSON.parse(fs.readFileSync('artifacts/replay/source-replay.json','utf8'));
+          if(replay.currentReplayProof.status!=='PASS') throw new Error(`self-replay did not close: ${JSON.stringify(replay.currentReplayProof)}`);
+          const ids=['5','19','20','42','43','85'];
+          const byId=new Map(replay.sources.map(s=>[String(s.sourceElementId),s]));
+          const evidence={
+            schema:'m047-bm4l-l2-source-replay-current/v1',
+            sourceAccdbSha256:process.env.MEMBER_SHA256,
+            stiffnessStateHash:replay.stiffnessStateHash,
+            selfReplay:replay.currentReplayProof,
+            caesarEndpointReplay:Object.fromEntries(ids.map(id=>[id,{
+              maximumAbsoluteDifference:byId.get(id)?.caesarReferenceReplay?.maximumAbsoluteDifference,
+              forceN:byId.get(id)?.caesarReferenceReplay?.maximumAbsoluteForceDifferenceN,
+              momentNm:byId.get(id)?.caesarReferenceReplay?.maximumAbsoluteMomentDifferenceNm
+            }]))
+          };
+          fs.writeFileSync('benchmarks/LFEA/CAESAR_ACCDB/bm4l-l2-source-replay-current.json',JSON.stringify(evidence,null,2)+'\n');
+          console.log(JSON.stringify(evidence,null,2));
+          '@ | node
+
+      - name: Publish evidence-only replay proof safely
+        shell: bash
+        run: |
+          set -euo pipefail
+          rm .github/workflows/m047-one-shot-l2-source-replay.yml
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add benchmarks/LFEA/CAESAR_ACCDB/bm4l-l2-source-replay-current.json .github/workflows/m047-one-shot-l2-source-replay.yml
+          git diff --cached --check
+          git commit -m "test(lfea): retain exact BM4_L L2 source replay"
+          git fetch origin agent/m047-bm4l-root-cause
+          git rebase origin/agent/m047-bm4l-root-cause
+          git push origin HEAD:agent/m047-bm4l-root-cause
+
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: m047-exact-l2-source-replay-${{ github.sha }}
+          path: artifacts/replay
+          retention-days: 30

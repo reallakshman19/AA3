@@ -16,6 +16,7 @@ on:
       - 'scripts/lfea-m047-bm4l-common-report-parity.mjs'
       - 'scripts/lfea-m047-bm4l-tee-stiffness-authority.mjs'
       - 'scripts/lfea-m047-bm4l-numeric-operator-proof.mjs'
+      - 'scripts/lfea-m047-bm4l-bend-effective-stiffness.mjs'
       - 'src/core/fea-benchmarks/**'
       - 'src/core/linear-fea-*/**'
       - 'src/core/centerline-beam-fea/**'
@@ -63,6 +64,7 @@ jobs:
           node --check scripts/lfea-m047-bm4l-common-report-parity.mjs
           node --check scripts/lfea-m047-bm4l-tee-stiffness-authority.mjs
           node --check scripts/lfea-m047-bm4l-numeric-operator-proof.mjs
+          node --check scripts/lfea-m047-bm4l-bend-effective-stiffness.mjs
           node --check src/core/fea-benchmarks/caesar-accdb-linear-solve.js
           pwsh -NoProfile -Command "[void][scriptblock]::Create((Get-Content -Raw 'scripts/lfea-m047-bm4l-accdb-provenance.ps1'))"
 
@@ -311,6 +313,14 @@ jobs:
           node scripts/lfea-m047-bm4l-numeric-operator-proof.mjs `
             --actual artifacts/bm4l/bm4l-actual.json `
             --out artifacts/bm4l/bm4l-numeric-operator-proof.json
+          node scripts/lfea-m047-bm4l-bend-effective-stiffness.mjs `
+            --actual artifacts/bm4l/bm4l-actual.json `
+            --report artifacts/bm4l/bm4l-report.json `
+            --out artifacts/bm4l/bm4l-bend-effective-stiffness.json
+          $bendOperator = Get-Content -Raw artifacts/bm4l/bm4l-bend-effective-stiffness.json | ConvertFrom-Json
+          if ($bendOperator.status -ne 'PASS' -or $bendOperator.scope.bendCount -ne 12) {
+            throw 'BM4_L bend effective-stiffness profiler did not retain a passing 12-bend evidence set.'
+          }
 
       - name: Run full reusable mechanics regressions
         shell: pwsh

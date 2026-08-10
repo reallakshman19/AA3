@@ -26,6 +26,15 @@ const expectedOwnership = new Map([
   ['/repo/src/workspace/resolved-engineering-geometry.js', 'workspace-viewport-engineering-projections'],
   ['/repo/src/workspace/viewport-render-model.js', 'workspace-viewport-engineering-projections'],
   ['/repo/src/workspace/model-zone-viewport-projection.js', 'workspace-viewport-engineering-projections'],
+  ['/repo/src/workspace/engineering-loads/empirical-beam-contact-runtime.js', 'workspace-empirical-beam-contact-runtime-contracts'],
+  ['/repo/src/workspace/engineering-loads/empirical-beam-contact-runtime-profile.js', 'workspace-empirical-beam-contact-runtime-contracts'],
+  ['/repo/src/workspace/engineering-loads/empirical-method-registry.js', 'workspace-empirical-beam-contact-runtime-contracts'],
+  ['/repo/src/workspace/engineering-loads/adapters/sjson-to-empirical-piping-request.js', 'workspace-empirical-beam-contact-runtime-contracts'],
+  ['/repo/src/workspace/engineering-loads/contracts/empirical-sjson-contracts.js', 'workspace-empirical-beam-contact-runtime-contracts'],
+  ['/repo/src/workspace/lafea-stage-input-descriptors.js', 'lafea-stage-static-contracts'],
+  ['/repo/src/workspace/lafea-stage-registry.js', 'lafea-stage-static-contracts'],
+  ['/repo/src/workspace/lafea-stage-composition-bindings.js', 'lafea-stage-static-contracts'],
+  ['/repo/src/workspace/workspace-shell-styles.js', 'application-shell-static-styles'],
 ]);
 
 const automaticWorkspaceOwnership = [
@@ -34,15 +43,22 @@ const automaticWorkspaceOwnership = [
   '/repo/src/workspace/engineering-model-store.js',
   '/repo/src/workspace/dataset-controller.js',
   '/repo/src/workspace/workspace-state.js',
+  '/repo/src/workspace/workspace-layout.js',
+  '/repo/src/workspace/workspace-shell-controller.js',
   '/repo/src/workspace/enrichment/first-cut-workbench-controller.js',
   '/repo/src/workspace/linear-piping-results-workbench.js',
   '/repo/src/workspace/lafea-workbench.js',
+  '/repo/src/workspace/lafea-edit-command.js',
+  '/repo/src/workspace/lafea-stage-composition-root.js',
   '/repo/src/workspace/topology-edit/topology-edit-controller.js',
   '/repo/src/workspace/topology-edit/editor-state/topology-edit-capability-authority.js',
   '/repo/src/workspace/topology-edit/topology-edit-reachable-typed-viewport-backend.js',
   '/repo/src/workspace/sequential-sketcher/sequential-sketcher-controller.js',
   '/repo/src/workspace/viewport-panel.js',
   '/repo/src/workspace/viewport-renderer.js',
+  '/repo/src/workspace/engineering-loads/authorized-empirical-beam-contact-execution.js',
+  '/repo/src/workspace/engineering-loads/authorized-empirical-load-execution-v8.js',
+  '/repo/src/workspace/engineering-loads/support-load-distribution-v3.js',
 ];
 
 for (const [id, expected] of expectedOwnership) {
@@ -62,10 +78,12 @@ assert.equal(viteSource.includes("if (source.includes('/src/workspace/')) return
 assert.equal(viteSource.includes('onlyExplicitManualChunks: false'), true);
 assert.equal(viteSource.includes('onlyExplicitManualChunks: true'), false);
 assert.equal(viteSource.includes('chunkSizeWarningLimit'), false);
+assert.equal(viteSource.includes('main-chunk-module-diagnostic'), false);
+assert.equal(viteSource.includes("return 'workspace-shell-static-styles'"), false);
 assert.equal(policySource.includes('const targetBytes = 500 * 1024;'), true);
 assert.equal(policySource.includes('const maximumBytes = 1024 * 1024;'), true);
 assert.equal(policySource.includes('chunk.bytes <= maximumBytes'), true);
-assert.equal(new Set(expectedOwnership.values()).size >= 10, true);
+assert.equal(new Set(expectedOwnership.values()).size >= 13, true);
 
 console.log(JSON.stringify({
   check: 'bundle-chunk-ownership',

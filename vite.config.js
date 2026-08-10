@@ -23,12 +23,26 @@ const PURE_LAFEA_MESHING_WORKSPACE_MODULES = new Set([
   '/src/workspace/lafea-shell-periodic-midsurface-contract.js',
 ]);
 
+const PURE_EMPIRICAL_BEAM_CONTACT_RUNTIME_MODULES = new Set([
+  '/src/workspace/engineering-loads/empirical-beam-contact-runtime.js',
+  '/src/workspace/engineering-loads/empirical-beam-contact-runtime-profile.js',
+  '/src/workspace/engineering-loads/empirical-method-registry.js',
+  '/src/workspace/engineering-loads/adapters/sjson-to-empirical-piping-request.js',
+  '/src/workspace/engineering-loads/contracts/empirical-sjson-contracts.js',
+]);
+
+const PURE_LAFEA_STAGE_DESCRIPTOR_MODULES = new Set([
+  '/src/workspace/lafea-stage-input-descriptors.js',
+  '/src/workspace/lafea-stage-registry.js',
+  '/src/workspace/lafea-stage-composition-bindings.js',
+]);
+
 /**
  * Keep manual chunking limited to dependency-oriented or calculation-core
  * domains. Workspace modules remain graph-owned because they contain stores,
  * controllers, views, and top-level singleton instances with cross-feature
  * imports. The narrow workspace exceptions below contain only stateless pure
- * contract/projection helpers and own no runtime singleton.
+ * contract/projection/presentation helpers and own no runtime singleton.
  */
 export function manualChunk(id) {
   const source = id.replaceAll('\\', '/');
@@ -106,6 +120,27 @@ export function manualChunk(id) {
     || source.endsWith('/src/workspace/viewport-render-model.js')
     || source.endsWith('/src/workspace/support-load-viewport-callout-projection.js')) {
     return 'workspace-viewport-engineering-projections';
+  }
+  // Beam/contact execution is a deterministic calculation runtime over sealed
+  // caller-owned authorities. Its exact local closure below contains only
+  // validators, frozen registries and schema/adaptation helpers, so it has no
+  // dependency back into workspace controllers or stores.
+  if ([...PURE_EMPIRICAL_BEAM_CONTACT_RUNTIME_MODULES]
+    .some((modulePath) => source.endsWith(modulePath))) {
+    return 'workspace-empirical-beam-contact-runtime-contracts';
+  }
+  // Stage descriptors, registry entries and their composition bindings are
+  // immutable static contracts. Keep the edit gateway and composition root
+  // graph-owned; only this self-contained static authority family is split.
+  if ([...PURE_LAFEA_STAGE_DESCRIPTOR_MODULES]
+    .some((modulePath) => source.endsWith(modulePath))) {
+    return 'lafea-stage-static-contracts';
+  }
+  // The workspace shell stylesheet module is a side-effect-free function that
+  // returns one static CSS string and imports nothing. The chunk name avoids
+  // the policy-reserved `workspace-shell-` prefix used for stateful shell code.
+  if (source.endsWith('/src/workspace/workspace-shell-styles.js')) {
+    return 'application-shell-static-styles';
   }
 
   // Rollup must own the complete stateful workspace graph so evaluation order

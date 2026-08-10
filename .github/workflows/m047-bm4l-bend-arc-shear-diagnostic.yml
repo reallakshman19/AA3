@@ -1,0 +1,144 @@
+name: M047 BM4_L bend-arc shear diagnostic
+
+on:
+  push:
+    branches: [agent/m047-bm4l-root-cause]
+    paths: ['.github/workflows/m047-bm4l-bend-arc-shear-diagnostic.yml']
+
+permissions:
+  contents: read
+
+jobs:
+  diagnostic:
+    runs-on: windows-latest
+    timeout-minutes: 40
+    env:
+      COMMON_COMMIT: '45d51ea18624f5775805f399110c1738301c0d90'
+      ZIP_SHA256: '978617cba50fa0b1a16c2fa71dc1e0d38e55ac834b191f887d100c6951abd8b9'
+      MEMBER_SHA256: '64c05a50e9ed0452622ff5880335460486f24ac8e6adecc9a300b549c9aa82f8'
+      ACE_URL: 'https://download.microsoft.com/download/3/5/C/35C84C36-661A-44E6-9324-8786B8DBE231/accessdatabaseengine_X64.exe'
+      ACE_SHA256: '04e96c9f1a1f7d251a88aececf1dc10ff65950392787427c00814a43308003de'
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: agent/m047-bm4l-root-cause
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+      - run: npm ci
+
+      - name: Install authenticated ACE and fetch canonical source
+        shell: pwsh
+        run: |
+          $ErrorActionPreference='Stop'
+          New-Item -ItemType Directory -Force artifacts/bend-shear/source | Out-Null
+          $installer=Join-Path $PWD 'artifacts/bend-shear/accessdatabaseengine_X64.exe'
+          Invoke-WebRequest -Uri $env:ACE_URL -OutFile $installer
+          if((Get-FileHash $installer -Algorithm SHA256).Hash.ToLowerInvariant() -ne $env:ACE_SHA256){ throw 'ACE installer hash mismatch.' }
+          $sig=Get-AuthenticodeSignature $installer
+          if($sig.Status -ne 'Valid' -or $sig.SignerCertificate.Subject -notmatch 'Microsoft'){ throw 'ACE signature validation failed.' }
+          $p=Start-Process $installer -ArgumentList '/quiet','/norestart' -Wait -PassThru
+          if($p.ExitCode -notin @(0,3010)){ throw "ACE install failed: $($p.ExitCode)" }
+          $zip=Join-Path $PWD 'artifacts/bend-shear/BM4_L.zip'
+          Invoke-WebRequest -Uri "https://raw.githubusercontent.com/reallaksh19/Common/$env:COMMON_COMMIT/LFEA/BM4/BM4_L.zip" -OutFile $zip
+          if((Get-FileHash $zip -Algorithm SHA256).Hash.ToLowerInvariant() -ne $env:ZIP_SHA256){ throw 'ZIP hash mismatch.' }
+          Expand-Archive $zip -DestinationPath artifacts/bend-shear/source -Force
+          $accdb=Join-Path $PWD 'artifacts/bend-shear/source/BM4_L.ACCDB'
+          if((Get-FileHash $accdb -Algorithm SHA256).Hash.ToLowerInvariant() -ne $env:MEMBER_SHA256){ throw 'ACCDB member hash mismatch.' }
+          "ACCDB=$accdb" >> $env:GITHUB_ENV
+
+      - name: Run governed baseline and L2 source replay
+        shell: pwsh
+        run: |
+          $ErrorActionPreference='Stop'
+          New-Item -ItemType Directory -Force artifacts/bend-shear/before | Out-Null
+          node scripts/lfea-caesar-accdb-benchmark.mjs `
+            --accdb $env:ACCDB `
+            --profile benchmarks/LFEA/CAESAR_ACCDB/bm4l-validation.profile.json `
+            --solve-linear true `
+            --solve-cases L2,L3,L4,L5,L6,L14 `
+            --actual-out artifacts/bend-shear/before/actual.json `
+            --out artifacts/bend-shear/before/report.json `
+            --summary-out artifacts/bend-shear/before/summary.md
+          node scripts/lfea-m047-bm4l-source-replay.mjs `
+            --actual artifacts/bend-shear/before/actual.json `
+            --report artifacts/bend-shear/before/report.json `
+            --case L2 `
+            --out artifacts/bend-shear/before/source-replay.json
+
+      - name: Apply diagnostic bend-arc Timoshenko shear only
+        shell: python
+        run: |
+          from pathlib import Path
+          path=Path('src/core/fea-benchmarks/caesar-accdb-linear-solve.js')
+          text=path.read_text()
+          old='      frameElementProfile: frameProfile(),\n      localAxisProfile: FRAME_LOCAL_AXIS_PROFILE,\n      referenceVector: null,\n      factorSet: factorResult.componentFactorSet,'
+          new='      frameElementProfile: caesarStraightPipeFrameProfile(),\n      localAxisProfile: FRAME_LOCAL_AXIS_PROFILE,\n      referenceVector: null,\n      factorSet: factorResult.componentFactorSet,'
+          if text.count(old)!=1: raise SystemExit(f'expected one bend component frame-profile site, found {text.count(old)}')
+          path.write_text(text.replace(old,new,1))
+
+      - name: Run candidate six cases and L2 source replay
+        shell: pwsh
+        run: |
+          $ErrorActionPreference='Stop'
+          node --check src/core/fea-benchmarks/caesar-accdb-linear-solve.js
+          node scripts/lfea-b3.2-piping-component-check.mjs
+          node scripts/lfea-b3.4-recovery-check.mjs
+          node scripts/lfea-b3.6-sparse-assembly-check.mjs
+          New-Item -ItemType Directory -Force artifacts/bend-shear/after | Out-Null
+          node scripts/lfea-caesar-accdb-benchmark.mjs `
+            --accdb $env:ACCDB `
+            --profile benchmarks/LFEA/CAESAR_ACCDB/bm4l-validation.profile.json `
+            --solve-linear true `
+            --solve-cases L2,L3,L4,L5,L6,L14 `
+            --actual-out artifacts/bend-shear/after/actual.json `
+            --out artifacts/bend-shear/after/report.json `
+            --summary-out artifacts/bend-shear/after/summary.md
+          node scripts/lfea-m047-bm4l-source-replay.mjs `
+            --actual artifacts/bend-shear/after/actual.json `
+            --report artifacts/bend-shear/after/report.json `
+            --case L2 `
+            --out artifacts/bend-shear/after/source-replay.json
+
+      - name: Build diagnostic signed evidence
+        shell: pwsh
+        run: |
+          @'
+          const fs=require('fs');
+          const before=JSON.parse(fs.readFileSync('artifacts/bend-shear/before/report.json','utf8'));
+          const after=JSON.parse(fs.readFileSync('artifacts/bend-shear/after/report.json','utf8'));
+          const br=JSON.parse(fs.readFileSync('artifacts/bend-shear/before/source-replay.json','utf8'));
+          const ar=JSON.parse(fs.readFileSync('artifacts/bend-shear/after/source-replay.json','utf8'));
+          const aa=JSON.parse(fs.readFileSync('artifacts/bend-shear/after/actual.json','utf8'));
+          const cases=['L2','L3','L4','L5','L6','L14'];
+          const counts=(r,c)=>({restraint:r.restraintBasis.cases[c].exceedingComponentCount,displacementRotation:r.displacementBasis.cases[c].exceedingComponentCount,elementEnd:r.elementBasis.cases[c].exceedingComponentCount});
+          const replayIndex=x=>new Map(x.sources.map(s=>[String(s.sourceElementId),s]));
+          const bm=replayIndex(br), am=replayIndex(ar);
+          const replay={};
+          for(const id of ['5','19','43','85']){
+            const b=bm.get(id), a=am.get(id);
+            replay[id]={before:b?.caesarReferenceReplay?.maximumAbsoluteDifference,after:a?.caesarReferenceReplay?.maximumAbsoluteDifference};
+            if(Number.isFinite(replay[id].before)&&Number.isFinite(replay[id].after)) replay[id].improvementFraction=(replay[id].before-replay[id].after)/replay[id].before;
+          }
+          const evidence={
+            schema:'m047-bm4l-bend-arc-shear-diagnostic/v1',
+            classification:'DIAGNOSTIC_ONLY_NOT_AUTHORIZED_FOR_PRODUCTION',
+            hypothesis:'Applying the existing kappa=0.5 Timoshenko shear kernel to bend-arc chord members tests whether missing transverse shear compliance explains bend-local replay mismatch.',
+            authorityBoundary:'INTERGRAPH CAUX retained authority is explicitly limited to thin-wall physically straight pipe; this candidate cannot be promoted from this result alone.',
+            cases:Object.fromEntries(cases.map(c=>[c,{before:counts(before,c),after:counts(after,c)}])),
+            l2CaesarEndpointSourceReplay:replay,
+            candidateCommonOperatorHashes:[...new Set(cases.map(c=>aa.mechanics.cases[c].stiffnessStateHash))],
+            allCandidateExecutionsQualified:cases.every(c=>aa.mechanics.cases[c].executionStatus==='QUALIFIED'),
+            benchmarkFitting:false
+          };
+          fs.writeFileSync('artifacts/bend-shear/diagnostic.json',JSON.stringify(evidence,null,2)+'\n');
+          console.log(JSON.stringify(evidence,null,2));
+          '@ | node
+
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: m047-bm4l-bend-arc-shear-diagnostic-${{ github.sha }}
+          path: artifacts/bend-shear
+          retention-days: 30

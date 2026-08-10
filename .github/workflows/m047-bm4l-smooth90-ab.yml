@@ -60,6 +60,8 @@ jobs:
           $profile=Get-Content -Raw benchmarks/LFEA/CAESAR_ACCDB/bm4l-validation.profile.json | ConvertFrom-Json -Depth 64
           if($profile.linearSolve.b31jSmooth90FlexibilityCorrection.enabled -ne $false){ throw 'Baseline smooth-90 switch is not false.' }
           $profile.linearSolve.b31jSmooth90FlexibilityCorrection.enabled=$true
+          $profile.linearSolve.b31jSmooth90FlexibilityCorrection.authorityStatus='RESOLVED'
+          $profile.linearSolve.b31jSmooth90FlexibilityCorrection.source='M047_DIAGNOSTIC_AB_ONLY_B31J_SMOOTH_90_TRUE'
           $profile | ConvertTo-Json -Depth 64 | Set-Content -Encoding utf8 artifacts/ab/bm4l-smooth90.profile.json
 
       - name: Run baseline six cases

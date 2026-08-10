@@ -73,13 +73,32 @@ jobs:
             --out artifacts/bend-point/report.json `
             --summary-out artifacts/bend-point/summary.md
 
+      - name: Normalize canonical flat 12x12 storage for legacy replay consumer
+        shell: pwsh
+        run: |
+          $ErrorActionPreference='Stop'
+          @'
+          const fs = require('fs');
+          const source = 'artifacts/bend-point/actual.json';
+          const target = 'artifacts/bend-point/replay-actual.json';
+          const actual = JSON.parse(fs.readFileSync(source, 'utf8').replace(/^\uFEFF/, ''));
+          for (const evidence of Object.values(actual.mechanics?.cases ?? {})) {
+            for (const row of evidence.recoveryLedger ?? []) {
+              if (Array.isArray(row.globalStiffness) && row.globalStiffness.length === 144 && !Array.isArray(row.globalStiffness[0])) {
+                row.globalStiffness = Array.from({ length: 12 }, (_unused, i) => row.globalStiffness.slice(i * 12, (i + 1) * 12));
+              }
+            }
+          }
+          fs.writeFileSync(target, `${JSON.stringify(actual)}\n`);
+          '@ | node
+
       - name: Run bend point and replay sensitivity diagnostic
         shell: pwsh
         run: |
           $ErrorActionPreference='Stop'
           node --check scripts/lfea-m047-bm4l-bend-point-replay-diagnostics.mjs
           node scripts/lfea-m047-bm4l-bend-point-replay-diagnostics.mjs `
-            --actual artifacts/bend-point/actual.json `
+            --actual artifacts/bend-point/replay-actual.json `
             --report artifacts/bend-point/report.json `
             --tables artifacts/bend-point/bend-tables.json `
             --case L2 `

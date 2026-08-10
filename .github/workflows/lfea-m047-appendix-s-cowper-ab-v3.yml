@@ -1,0 +1,40 @@
+name: M047 independent Appendix S Cowper shear A-B v3
+
+on:
+  push:
+    branches:
+      - agent/m047-bm4l-root-cause-991
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  appendix-s-cowper:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: 7a08f9db84f298990250793226b36d4a82dbe01e
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+      - run: npm ci --ignore-scripts
+      - name: Restore experiment runner from PR branch
+        run: |
+          git fetch --depth=1 origin agent/m047-bm4l-root-cause-991
+          git checkout FETCH_HEAD -- scripts/lfea-m047-appendix-s-cowper-ab.mjs
+      - name: Run independent published-benchmark discriminator
+        run: |
+          mkdir -p artifacts
+          node --check scripts/lfea-m047-appendix-s-cowper-ab.mjs
+          node scripts/lfea-m047-appendix-s-cowper-ab.mjs --out artifacts/appendix-s-cowper-ab.json | tee artifacts/appendix-s-cowper-ab.log
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: m047-independent-appendix-s-cowper-v3-${{ github.sha }}
+          path: artifacts/
+          if-no-files-found: error
+          retention-days: 14

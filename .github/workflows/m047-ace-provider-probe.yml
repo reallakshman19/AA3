@@ -80,7 +80,7 @@ jobs:
             signerSubject = $sig.SignerCertificate.Subject
           } | ConvertTo-Json -Depth 8 | Set-Content -Encoding utf8 artifacts/ace-probe/provider-binary.json
 
-      - name: Fetch pinned source and probe hash transition
+      - name: Fetch pinned source and probe provider-open hash transition
         shell: pwsh
         run: |
           $ErrorActionPreference = 'Stop'
@@ -120,13 +120,46 @@ jobs:
             pristineAccdbSha256 = $pristineHash
             preOpenWorkingSha256 = $beforeHash
             postOpenWorkingSha256 = $afterHash
-            declaredIssueAccdbSha256 = 'e21b0862851ea2bb6f20d55e4a3a94f501537b618b98dd46afa9f6777ee38d3c'
+            declaredExpectedAccdbSha256 = 'e21b0862851ea2bb6f20d55e4a3a94f501537b618b98dd46afa9f6777ee38d3c'
             providerOpenChangedBytes = ($beforeHash -ne $afterHash)
             pristineMatchesDeclared = ($pristineHash -eq 'e21b0862851ea2bb6f20d55e4a3a94f501537b618b98dd46afa9f6777ee38d3c')
             postOpenMatchesDeclared = ($afterHash -eq 'e21b0862851ea2bb6f20d55e4a3a94f501537b618b98dd46afa9f6777ee38d3c')
             tableCount = $tables.Count
             tables = @($tables | Sort-Object)
           } | ConvertTo-Json -Depth 8 | Set-Content -Encoding utf8 artifacts/ace-probe/hash-transition.json
+
+      - name: Probe production exporter hash transition
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $work = Join-Path $PWD 'artifacts/ace-probe/BM4_L.work.ACCDB'
+          $beforeExportHash = (Get-FileHash $work -Algorithm SHA256).Hash.ToLowerInvariant()
+          $tables = @(
+            'INPUT_BASIC_ELEMENT_DATA','INPUT_BENDS','INPUT_CONTROL','INPUT_FORCMNT',
+            'INPUT_NODAL_COORDINATES','INPUT_OFFSETS','INPUT_REDUCERS','INPUT_RESTRAINTS',
+            'INPUT_RIGIDS','INPUT_SIFTEES','INPUT_UNITS',
+            'OUTPUT_DISPLACEMENTS','OUTPUT_RESTRAINTS_SUMMARY','OUTPUT_GLOBAL_ELEMENT_FORCES'
+          ) -join ','
+          $rawJson = & powershell.exe -NoLogo -NoProfile -NonInteractive -ExecutionPolicy Bypass `
+            -File scripts/lfea-caesar-accdb-export.ps1 `
+            -AccdbPath $work `
+            -TablesCsv $tables
+          if ($LASTEXITCODE -ne 0) { throw "Production ACCDB exporter exited $LASTEXITCODE." }
+          $rawJson | Set-Content -Encoding utf8 artifacts/ace-probe/raw-export.json
+          $export = $rawJson | ConvertFrom-Json
+          $afterExportHash = (Get-FileHash $work -Algorithm SHA256).Hash.ToLowerInvariant()
+          [ordered]@{
+            schema = 'm047-accdb-export-transition/v1'
+            preExportSha256 = $beforeExportHash
+            exporterReportedSha256 = [string]$export.source.sha256
+            postExportSha256 = $afterExportHash
+            declaredExpectedAccdbSha256 = 'e21b0862851ea2bb6f20d55e4a3a94f501537b618b98dd46afa9f6777ee38d3c'
+            exporterChangedBytes = ($beforeExportHash -ne $afterExportHash)
+            exporterReportedMatchesPostExport = ([string]$export.source.sha256 -eq $afterExportHash)
+            exporterReportedMatchesDeclared = ([string]$export.source.sha256 -eq 'e21b0862851ea2bb6f20d55e4a3a94f501537b618b98dd46afa9f6777ee38d3c')
+            postExportMatchesDeclared = ($afterExportHash -eq 'e21b0862851ea2bb6f20d55e4a3a94f501537b618b98dd46afa9f6777ee38d3c')
+            exportedTableNames = @($export.tables.psobject.Properties.Name | Sort-Object)
+          } | ConvertTo-Json -Depth 8 | Set-Content -Encoding utf8 artifacts/ace-probe/export-transition.json
 
       - uses: actions/upload-artifact@v4
         if: always()

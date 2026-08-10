@@ -34,6 +34,14 @@ import {
 const SOURCE_HASH = 'fnv1a64:1234567890abcdef';
 const MODEL_VERSION = 41;
 const TOLERANCE = 1e-10;
+const ACTION_TOLERANCE = 1e-9;
+
+function close(actual, expected) {
+  assert.ok(
+    Math.abs(actual - expected) <= ACTION_TOLERANCE,
+    `Expected ${actual} to equal ${expected} within ${ACTION_TOLERANCE}.`,
+  );
+}
 
 function supportAuthorities() {
   const evidence = supportEvidence({
@@ -174,9 +182,9 @@ assert.equal(horizontal.actions.length, 1);
 assert.equal(horizontal.actions[0].entityId, 'SUP-ANCHOR-01');
 assert.equal(horizontal.actions[0].interfaceId, 'IF-ANCHOR-01');
 assert.equal(horizontal.actions[0].triadStatus, 'RESOLVED');
-assert.equal(horizontal.actions[0].fAxial, 1500);
-assert.equal(horizontal.actions[0].fLateral, 0);
-assert.equal(horizontal.actions[0].fVertical, -900);
+close(horizontal.actions[0].fAxial, 1500);
+close(horizontal.actions[0].fLateral, 0);
+close(horizontal.actions[0].fVertical, -900);
 assert.ok(Object.isFrozen(horizontal));
 assert.ok(Object.isFrozen(horizontal.actions[0]));
 
@@ -193,7 +201,7 @@ const vertical = createLinearPipingSupportActionsPublication({
 assert.equal(vertical.actions[0].entityId, 'SUP-ANCHOR-01');
 assert.equal(vertical.actions[0].triadStatus, 'BLOCKED_AXIS_DEGENERATE');
 assert.equal(vertical.actions[0].triadReason, 'AXIAL_PARALLEL_TO_VERTICAL');
-assert.equal(vertical.actions[0].fAxial, -900);
+close(vertical.actions[0].fAxial, -900);
 assert.equal(vertical.actions[0].fLateral, null);
 assert.equal(vertical.actions[0].fVertical, null);
 

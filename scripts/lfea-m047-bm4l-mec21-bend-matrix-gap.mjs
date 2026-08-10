@@ -150,15 +150,17 @@ function continuousMec21BendingOnly(properties, centralAngleDegrees) {
   const B1 = theta - Math.sin(theta);
   const B2 = 1 - Math.cos(theta);
   const B3 = (2 * theta - Math.sin(2 * theta)) / 4;
+  const R2overEI = (R ** 2) / EIeff;
+  const R3overEI = (R ** 3) / EIeff;
   return Object.freeze({
     thetaRadians: clean(theta),
     B1: clean(B1),
     B2: clean(B2),
     B3: clean(B3),
     matrix3x3: Object.freeze([
-      Object.freeze([R ** 3 / EIeff * (2 * B1 - B3), R ** 3 / EIeff * (B2 ** 2 / 2), -R ** 2 / EIeff * B1]),
-      Object.freeze([R ** 3 / EIeff * (B2 ** 2 / 2), R ** 3 / EIeff * B3, -R ** 2 / EIeff * B2]),
-      Object.freeze([-R ** 2 / EIeff * B1, -R ** 2 / EIeff * B2, R * theta / EIeff]),
+      Object.freeze([R3overEI * (2 * B1 - B3), R3overEI * (B2 ** 2 / 2), -R2overEI * B1]),
+      Object.freeze([R3overEI * (B2 ** 2 / 2), R3overEI * B3, -R2overEI * B2]),
+      Object.freeze([-R2overEI * B1, -R2overEI * B2, R * theta / EIeff]),
     ]),
   });
 }
@@ -249,12 +251,12 @@ function main() {
     conventions: Object.freeze({
       currentPlanarDofs: PLANAR_LABELS,
       comparisonSignRule: 'MAGNITUDE_ONLY_BECAUSE_MEC21_C_AXIS_AND_PROFILER_IN_PLANE_AXIS_SIGN_DEPEND_ON_BEND_NORMAL_ORIENTATION',
-      effectiveRigidityRule: 'EI_EFFECTIVE = EI / DECLARED_BEND_FLEXIBILITY_FACTOR, RECOVERED_FROM CORRECTED CHORD MATRIX',
+      effectiveRigidityRule: 'EI_EFFECTIVE = EI / DECLARED_BEND_FLEXIBILITY_FACTOR, RECOVERED_FROM CORRECTED_CHORD_MATRIX',
       radiusRule: 'R = CHORD_LENGTH / (2 sin(CHORD_TURN/2))',
     }),
     authorityBoundary: Object.freeze({
       curvedBendingTerms: 'INTERGRAPH_CAUX_2015_F_EQUALS_KX_MEC21_BEND_FLEXIBILITY_FALSE_EXAMPLE_AND_MEC21_CASTIGLIANO_METHOD',
-      transverseShearTerms: 'MEC21_FALSE_FORMULATION_CONTAINS_ALPHA_R_OVER_AG_TERMS; THIS SCRIPT DOES_NOT_INFER_OR_FIT_ALPHA_AG',
+      transverseShearTerms: 'MEC21_FALSE_FORMULATION_CONTAINS_ALPHA_R_OVER_AG_TERMS; THIS_SCRIPT_DOES_NOT_INFER_OR_FIT_ALPHA_AG',
       axialShapeTerms: 'OWNED_BY_lfea-caesar-accdb-bend-axial-shape-authority.mjs_AND_REMAIN_BLOCKED_FOR_PRODUCTION_TRUE_PROMOTION',
     }),
     summary,

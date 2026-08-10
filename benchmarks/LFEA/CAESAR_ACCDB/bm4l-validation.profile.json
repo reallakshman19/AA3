@@ -263,9 +263,9 @@
       "source": "HEXAGON_CAESAR_II_14_B31_3_2022_DEFAULT_B31J_METHOD_SMOOTH_90_1_3_OVER_H"
     },
     "bendPressureStiffening": {
-      "pressureSource": "MAX_DEFINED",
+      "pressureSource": "P1",
       "authorityStatus": "RESOLVED",
-      "source": "CAESAR_USE_PRESSURE_STIFFENING_DEFAULT_B31_3_2022_AND_MAX_DEFINED_PRESSURE_RULE"
+      "source": "COMMON_179C4831_MISC_BEND_REPORT_P1_STIFFENED_TO_UNPRESSURIZED_FACTOR_PAIR"
     },
     "restraintRepresentation": {
       "mode": "CAESAR_DEFAULT_FINITE_STIFFNESS",

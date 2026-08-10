@@ -235,7 +235,7 @@ function timestamp(value, label) {
 }
 function fileName(value, label) {
   const result = identity(value, label);
-  if (/[\/]/u.test(result) || result === '.' || result === '..') {
+  if (/[/]/u.test(result) || result === '.' || result === '..') {
     fail(`${label} must be a file name, not a path.`, 'STAGED_JSON_DOWNLOAD_FILE_NAME_INVALID');
   }
   return result;

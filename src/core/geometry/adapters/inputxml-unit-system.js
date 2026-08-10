@@ -21,7 +21,7 @@ const DECLARATIONS = Object.freeze({
     NM: { scale: 1, factor: 0.1129848290276167 },
     KNM: { scale: 1000, factor: 0.0001129848290276167 },
     LBFIN: { scale: 0.1129848290276167, factor: 1 },
-    LBFFT: { scale: 1.3558179483314004, factor: 1 / 12 },
+    LBFFT: { scale: 1.3558179483314003, factor: 1 / 12 },
   }),
   STRESS: Object.freeze({
     PA: { scale: 1, factor: 6894.757293168 },

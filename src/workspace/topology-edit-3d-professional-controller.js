@@ -68,7 +68,9 @@ export class TopologyEdit3DViewController extends InteractionController {
       configurable: true,
       enumerable: true,
       get: () => this.selectionCoordinator.legacySelection(),
-      set: (value) => this.selectionCoordinator.applyLegacySelection(value, 'command'),
+      // Block body: a setter must not return a value, and the concise arrow
+      // form was returning the coordinator's result.
+      set: (value) => { this.selectionCoordinator.applyLegacySelection(value, 'command'); },
     });
     this.selection = initialLegacySelection;
     const getBaseViewState = this.lifecycle.getViewState;

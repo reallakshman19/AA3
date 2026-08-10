@@ -8,6 +8,8 @@ import { buildLafeaDiscretizationViewModel } from './lafea-discretization-view-m
 import { renderLafeaDiscretizationPanel } from './lafea-discretization-panel.js';
 import { buildLafeaGuidedWorkflow } from './lafea-guided-workflow.js';
 import { renderLafeaGuidedWorkflow } from './lafea-guided-workflow-view.js';
+import { renderLafeaAnalysisSettings } from './lafea-analysis-settings-view.js';
+import { lafeaWorkbenchReasonLabels } from './lafea-workbench-reason-labels.js';
 import { renderLafeaNcPlaceholderPanel } from './lafea-nc-placeholder-panel.js';
 import { focusLafeaRetainedMeshElement } from './lafea-canvas/retained-mesh-overlay.js';
 
@@ -41,6 +43,10 @@ export function renderLafeaWorkbenchContent(root, state, stage, options) {
       onApplyJson: options.handlers.onApplyJson,
     },
   ));
+
+  const profileCard = card(root, 'Analysis profile and settings');
+  profileCard.section.dataset.guidedTarget = 'profile';
+  profileCard.body.append(renderLafeaAnalysisSettings(profileCard.body, stage));
 
   const viewportCard = card(root, `Governed engineering viewport — ${state.activeStageId}`);
   viewportCard.section.dataset.guidedTarget = 'viewport';
@@ -133,6 +139,7 @@ export function renderLafeaWorkbenchContent(root, state, stage, options) {
 
   main.append(
     sourceCard.section,
+    profileCard.section,
     viewportCard.section,
     discretizationCard.section,
     preflightCard.section,
@@ -174,7 +181,12 @@ function workflowSummary(root, workflow, ids) {
     row.dataset.status = step.status;
     row.append(
       element(root, 'strong', null, `${step.label}: ${step.status}`),
-      element(root, 'span', null, step.reasons.length ? ` — ${step.reasons.join(' • ')}` : ''),
+      element(
+        root,
+        'span',
+        null,
+        step.reasons.length ? ` — ${lafeaWorkbenchReasonLabels(step.reasons).join(' • ')}` : '',
+      ),
     );
     section.append(row);
   }

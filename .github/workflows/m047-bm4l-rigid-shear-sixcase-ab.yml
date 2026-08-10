@@ -1,0 +1,120 @@
+name: M047 BM4_L rigid shear six-case A-B
+
+on:
+  push:
+    branches: [agent/m047-bm4l-fresh-qualification]
+    paths: ['.github/workflows/m047-bm4l-rigid-shear-sixcase-ab.yml']
+
+permissions:
+  contents: read
+
+jobs:
+  ab:
+    runs-on: windows-latest
+    timeout-minutes: 65
+    env:
+      COMMON_COMMIT: '45d51ea18624f5775805f399110c1738301c0d90'
+      ZIP_SHA256: '978617cba50fa0b1a16c2fa71dc1e0d38e55ac834b191f887d100c6951abd8b9'
+      MEMBER_SHA256: '64c05a50e9ed0452622ff5880335460486f24ac8e6adecc9a300b549c9aa82f8'
+      ACE_URL: 'https://download.microsoft.com/download/3/5/C/35C84C36-661A-44E6-9324-8786B8DBE231/accessdatabaseengine_X64.exe'
+      ACE_SHA256: '04e96c9f1a1f7d251a88aececf1dc10ff65950392787427c00814a43308003de'
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: agent/m047-bm4l-fresh-qualification
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+      - run: npm ci
+      - name: Bind pinned BM4_L source
+        shell: pwsh
+        run: |
+          $ErrorActionPreference='Stop'; $PSNativeCommandUseErrorActionPreference=$true
+          New-Item -ItemType Directory -Force artifacts/rigid-six/source,artifacts/rigid-six/before,artifacts/rigid-six/after | Out-Null
+          $installer='artifacts/rigid-six/accessdatabaseengine_X64.exe'
+          Invoke-WebRequest -Uri $env:ACE_URL -OutFile $installer
+          if((Get-FileHash $installer -Algorithm SHA256).Hash.ToLowerInvariant() -ne $env:ACE_SHA256){throw 'ACE hash mismatch'}
+          $sig=Get-AuthenticodeSignature $installer
+          if($sig.Status -ne 'Valid' -or $sig.SignerCertificate.Subject -notmatch 'Microsoft'){throw 'ACE signature failure'}
+          $p=Start-Process $installer -ArgumentList '/quiet','/norestart' -Wait -PassThru
+          if($p.ExitCode -notin @(0,3010)){throw "ACE install failed $($p.ExitCode)"}
+          Remove-Item $installer -Force
+          $zip='artifacts/rigid-six/BM4_L.zip'
+          Invoke-WebRequest -Uri "https://raw.githubusercontent.com/reallaksh19/Common/$env:COMMON_COMMIT/LFEA/BM4/BM4_L.zip" -OutFile $zip
+          if((Get-FileHash $zip -Algorithm SHA256).Hash.ToLowerInvariant() -ne $env:ZIP_SHA256){throw 'ZIP hash mismatch'}
+          Expand-Archive $zip -DestinationPath artifacts/rigid-six/source -Force
+          $accdb=Join-Path $PWD 'artifacts/rigid-six/source/BM4_L.ACCDB'
+          if((Get-FileHash $accdb -Algorithm SHA256).Hash.ToLowerInvariant() -ne $env:MEMBER_SHA256){throw 'ACCDB hash mismatch'}
+          "ACCDB=$accdb" >> $env:GITHUB_ENV
+      - name: Baseline six cases
+        shell: pwsh
+        run: |
+          $ErrorActionPreference='Stop'; $PSNativeCommandUseErrorActionPreference=$true
+          node scripts/lfea-caesar-accdb-benchmark.mjs --accdb $env:ACCDB --profile benchmarks/LFEA/CAESAR_ACCDB/bm4l-validation.profile.json --solve-linear true --solve-cases L2,L3,L4,L5,L6,L14 --actual-out artifacts/rigid-six/before/actual.json --out artifacts/rigid-six/before/report.json
+      - name: Apply rigid shear candidate consistently
+        shell: python
+        run: |
+          from pathlib import Path
+          p=Path('src/core/fea-benchmarks/caesar-accdb-linear-solve.js'); t=p.read_text()
+          needle="return kind === 'FRAME' || kind === 'BEND_INCOMING_STRAIGHT';"
+          repl="return kind === 'FRAME' || kind === 'BEND_INCOMING_STRAIGHT' || kind === 'RIGID';"
+          if t.count(needle)!=1: raise SystemExit(f'classifier count={t.count(needle)}')
+          p.write_text(t.replace(needle,repl,1))
+          p=Path('src/core/linear-fea-rigid-element/rigid-element.js'); t=p.read_text()
+          needle='''    length: accepted.length,
+              shearDeformation: false,
+            }).matrix;'''
+          repl='''    length: accepted.length,
+              shearDeformation: true,
+              shearCorrectionFactorY: 0.5,
+              shearCorrectionFactorZ: 0.5,
+            }).matrix;'''
+          if t.count(needle)!=1: raise SystemExit(f'authority matrix count={t.count(needle)}')
+          p.write_text(t.replace(needle,repl,1))
+      - name: Authority and reusable mechanics gates
+        shell: pwsh
+        run: |
+          $ErrorActionPreference='Stop'; $PSNativeCommandUseErrorActionPreference=$true
+          node scripts/lfea-m047-caesar-rigid-shear-authority-check.mjs
+          node scripts/lfea-m047-caesar-straight-pipe-shear-authority-check.mjs
+          node scripts/lfea-m047-mec21-bend-shear-authority-check.mjs
+          node scripts/lfea-b3.1-frame-element-check.mjs
+          node scripts/lfea-b3.22-rigid-element-authority-check.mjs
+          node scripts/lfea-b3.2-piping-component-check.mjs
+          node scripts/lfea-b3.3-solver-check.mjs
+          node scripts/lfea-b3.4-recovery-check.mjs
+      - name: Candidate six cases and core gate
+        shell: pwsh
+        run: |
+          $ErrorActionPreference='Stop'; $PSNativeCommandUseErrorActionPreference=$true
+          node scripts/lfea-caesar-accdb-benchmark.mjs --accdb $env:ACCDB --profile benchmarks/LFEA/CAESAR_ACCDB/bm4l-validation.profile.json --solve-linear true --solve-cases L2,L3,L4,L5,L6,L14 --actual-out artifacts/rigid-six/after/actual.json --out artifacts/rigid-six/after/report.json
+          npm run check:core-fea
+      - name: Emit A-B evidence
+        shell: pwsh
+        run: |
+          $ErrorActionPreference='Stop'; $PSNativeCommandUseErrorActionPreference=$true
+          @'
+          const fs=require('fs');
+          const cases=['L2','L3','L4','L5','L6','L14'];
+          const B=JSON.parse(fs.readFileSync('artifacts/rigid-six/before/report.json','utf8').replace(/^\uFEFF/,''));
+          const A=JSON.parse(fs.readFileSync('artifacts/rigid-six/after/report.json','utf8').replace(/^\uFEFF/,''));
+          const BA=JSON.parse(fs.readFileSync('artifacts/rigid-six/before/actual.json','utf8').replace(/^\uFEFF/,''));
+          const AA=JSON.parse(fs.readFileSync('artifacts/rigid-six/after/actual.json','utf8').replace(/^\uFEFF/,''));
+          const cnt=(r,c)=>({restraint:r.restraintBasis.cases[c].exceedingComponentCount,displacementRotation:r.displacementBasis.cases[c].exceedingComponentCount,elementEnd:r.elementBasis.cases[c].exceedingComponentCount});
+          const counts=Object.fromEntries(cases.map(c=>[c,{before:cnt(B,c),after:cnt(A,c)}]));
+          for(const c of cases){if(AA.mechanics.cases[c].recoveredEquilibrium.status!=='PASS')throw new Error(`${c} equilibrium failed`);}
+          const hashes=new Set(cases.map(c=>AA.mechanics.cases[c].stiffnessStateHash).filter(Boolean));
+          const rows=A.qualification.cases.find(x=>x.caseId==='L2').comparison.rows;
+          const node=rows.find(r=>r.entityKind==='NODE'&&String(r.entityId)==='22140'&&r.quantity==='ROTATION'&&r.component==='RX');
+          const out={schema:'m047-bm4l-rigid-shear-sixcase-ab/v1',candidate:{mechanism:'CAESAR_RIGID_USES_STRAIGHT_PIPE_SHEAR_ON_10X_WALL_SECTION',shearCorrectionFactor:0.5,benchmarkFitted:false},counts,node22140RX:{reference:node.referenceValue,actual:node.actualValue,relativeError:node.relativeError,status:node.status},gravityBefore:BA.mechanics.cases.L2.gravityWeightN,gravityAfter:AA.mechanics.cases.L2.gravityWeightN,equilibrium:Object.fromEntries(cases.map(c=>[c,AA.mechanics.cases[c].recoveredEquilibrium.status])),commonStiffnessStateCount:hashes.size};
+          if(Math.abs(out.gravityAfter-out.gravityBefore)>1e-9)throw new Error('gravity changed');
+          fs.writeFileSync('artifacts/rigid-six/ab.json',JSON.stringify(out,null,2)+'\n');console.log(JSON.stringify(out,null,2));
+          '@ | node
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: m047-bm4l-rigid-shear-sixcase-ab-${{ github.sha }}
+          path: artifacts/rigid-six
+          retention-days: 30
+          if-no-files-found: error

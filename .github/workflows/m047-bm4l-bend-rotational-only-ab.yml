@@ -84,7 +84,7 @@ jobs:
               return Object.freeze({
                 kind: 'B31J_ROTATIONAL_ONLY_FLEXIBILITY_DIAGNOSTIC_V1',
                 factor: value,
-                appliedTo: Object.freeze(['ROTATION_Y', 'ROTATION_Z']),
+                appliedTo: Object.freeze(['BENDING_Y', 'BENDING_Z']),
                 localStiffness: frameElement.localStiffness,
                 globalStiffness: frameElement.globalStiffness,
               });
@@ -109,7 +109,7 @@ jobs:
             return Object.freeze({
               kind: 'B31J_ROTATIONAL_ONLY_FLEXIBILITY_DIAGNOSTIC_V1',
               factor: value,
-              appliedTo: Object.freeze(['ROTATION_Y', 'ROTATION_Z']),
+              appliedTo: Object.freeze(['BENDING_Y', 'BENDING_Z']),
               springStiffnessY: ky,
               springStiffnessZ: kz,
               localStiffness: local,

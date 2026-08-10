@@ -1,5 +1,7 @@
 # Read-only BM4_L ACCDB custody/provenance manifest.
-# No provider, XML or configuration fallback is permitted.
+# The pinned Common commit + ZIP SHA-256 define the authoritative member bytes.
+# A conflicting historical ACCDB hash is retained as contradicted evidence, never
+# silently substituted. No provider, XML, source-data or configuration fallback is permitted.
 param(
   [Parameter(Mandatory = $true)]
   [string]$AccdbPath,
@@ -10,14 +12,22 @@ param(
   [Parameter(Mandatory = $true)]
   [string]$TablesCsv,
 
+  [Parameter(Mandatory = $true)]
+  [string]$ExpectedAccdbSha256,
+
+  [Parameter(Mandatory = $false)]
+  [string]$DeclaredAccdbSha256 = '',
+
+  [Parameter(Mandatory = $false)]
+  [long]$ExpectedAccdbBytes = 5136384,
+
   [Parameter(Mandatory = $false)]
   [string]$OutPath
 )
 
 $ErrorActionPreference = 'Stop'
-$ExpectedAccdbSha256 = 'e21b0862851ea2bb6f20d55e4a3a94f501537b618b98dd46afa9f6777ee38d3c'
-$ExpectedAccdbBytes = 5136384
 $ProviderProgId = 'Microsoft.ACE.OLEDB.12.0'
+$SourceAuthorityRule = 'PINNED_COMMON_COMMIT_AND_ZIP_SHA256_DEFINE_ACCDB_MEMBER_BYTES'
 
 function Get-FileSha256 {
   param([Parameter(Mandatory = $true)][string]$Path)
@@ -67,6 +77,10 @@ function Get-ProviderEvidence {
     throw "Provider $ProviderProgId binary is not available at registered path $binary."
   }
   $file = Get-Item -LiteralPath $binary
+  $signature = Get-AuthenticodeSignature -LiteralPath $file.FullName
+  if ($signature.Status -ne 'Valid' -or $signature.SignerCertificate.Subject -notmatch 'Microsoft') {
+    throw "Provider binary Authenticode validation failed: $($signature.Status), $($signature.SignerCertificate.Subject)"
+  }
   return [ordered]@{
     progId = $ProviderProgId
     clsid = [string]$clsid
@@ -75,6 +89,9 @@ function Get-ProviderEvidence {
     fileVersion = $file.VersionInfo.FileVersion
     productVersion = $file.VersionInfo.ProductVersion
     productName = $file.VersionInfo.ProductName
+    signatureStatus = [string]$signature.Status
+    signerSubject = $signature.SignerCertificate.Subject
+    signerThumbprint = $signature.SignerCertificate.Thumbprint
   }
 }
 
@@ -162,17 +179,18 @@ $resolvedAccdb = (Resolve-Path -LiteralPath $AccdbPath).Path
 $resolvedProfile = (Resolve-Path -LiteralPath $ProfilePath).Path
 $file = Get-Item -LiteralPath $resolvedAccdb
 $accdbSha = Get-FileSha256 -Path $resolvedAccdb
-if ($accdbSha -ne $ExpectedAccdbSha256) {
-  throw "BM4_L ACCDB SHA-256 mismatch: expected $ExpectedAccdbSha256, found $accdbSha."
+$expected = $ExpectedAccdbSha256.ToLowerInvariant()
+$declared = $DeclaredAccdbSha256.ToLowerInvariant()
+if ($accdbSha -ne $expected) {
+  throw "BM4_L ACCDB SHA-256 mismatch against pinned ZIP member: expected $expected, found $accdbSha."
 }
 if ($file.Length -ne $ExpectedAccdbBytes) {
   throw "BM4_L ACCDB byte-length mismatch: expected $ExpectedAccdbBytes, found $($file.Length)."
 }
 
-$profileBytes = [System.IO.File]::ReadAllBytes($resolvedProfile)
-$profileText = [System.Text.Encoding]::UTF8.GetString($profileBytes)
+$profileText = [System.Text.Encoding]::UTF8.GetString([System.IO.File]::ReadAllBytes($resolvedProfile))
 $profile = $profileText | ConvertFrom-Json -Depth 64
-if ($profile.benchmarkId -ne 'BM4_L') { throw "Profile benchmarkId must be BM4_L." }
+if ($profile.benchmarkId -ne 'BM4_L') { throw 'Profile benchmarkId must be BM4_L.' }
 
 $requestedTables = $TablesCsv.Split(',') |
   ForEach-Object { $_.Trim().ToUpperInvariant() } |
@@ -208,15 +226,19 @@ try {
 
   $configuration = $profile.configurationAuthority
   $manifest = [ordered]@{
-    schema = 'lfea-bm4l-accdb-provenance/v1'
+    schema = 'lfea-bm4l-accdb-provenance/v2'
     classificationRule = 'No fallback. Missing source authority remains [GUESSED] or BLOCKED.'
     source = [ordered]@{
+      authorityRule = $SourceAuthorityRule
       path = $resolvedAccdb
       fileName = $file.Name
       byteLength = $file.Length
       sha256 = $accdbSha
-      expectedSha256 = $ExpectedAccdbSha256
+      authorizedSha256 = $expected
       expectedByteLength = $ExpectedAccdbBytes
+      declaredConflictingSha256 = if ([string]::IsNullOrWhiteSpace($declared)) { $null } else { $declared }
+      declaredHashMatchesAuthorized = if ([string]::IsNullOrWhiteSpace($declared)) { $null } else { $declared -eq $expected }
+      declaredHashClassification = if ([string]::IsNullOrWhiteSpace($declared)) { 'NOT_DECLARED' } elseif ($declared -eq $expected) { 'CONSISTENT' } else { 'CONTRADICTED_BY_PINNED_ARCHIVE_MEMBER' }
     }
     extraction = [ordered]@{
       provider = $providerEvidence

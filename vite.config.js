@@ -42,7 +42,7 @@ const PURE_LAFEA_STAGE_DESCRIPTOR_MODULES = new Set([
  * domains. Workspace modules remain graph-owned because they contain stores,
  * controllers, views, and top-level singleton instances with cross-feature
  * imports. The narrow workspace exceptions below contain only stateless pure
- * contract/projection helpers and own no runtime singleton.
+ * contract/projection/presentation helpers and own no runtime singleton.
  */
 export function manualChunk(id) {
   const source = id.replaceAll('\\', '/');
@@ -135,6 +135,12 @@ export function manualChunk(id) {
   if ([...PURE_LAFEA_STAGE_DESCRIPTOR_MODULES]
     .some((modulePath) => source.endsWith(modulePath))) {
     return 'lafea-stage-static-contracts';
+  }
+  // The workspace shell stylesheet module is a side-effect-free function that
+  // returns one static CSS string and imports nothing. Keep layout/controller
+  // state graph-owned while isolating this exact presentation leaf.
+  if (source.endsWith('/src/workspace/workspace-shell-styles.js')) {
+    return 'workspace-shell-static-styles';
   }
 
   // Rollup must own the complete stateful workspace graph so evaluation order

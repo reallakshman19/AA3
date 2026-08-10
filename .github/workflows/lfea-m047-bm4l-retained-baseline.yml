@@ -1,0 +1,129 @@
+name: M047 BM4_L retained baseline
+
+on:
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  retained-baseline:
+    if: github.event_name == 'workflow_dispatch' || github.head_ref == 'agent/m047-bm4l-root-cause-991'
+    runs-on: windows-2022
+    timeout-minutes: 35
+    steps:
+      - name: Checkout Advanced_Analysis
+        uses: actions/checkout@v4
+
+      - name: Checkout pinned Common source
+        uses: actions/checkout@v4
+        with:
+          repository: reallaksh19/Common
+          ref: 45d51ea18624f5775805f399110c1738301c0d90
+          path: _common
+          fetch-depth: 1
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci --ignore-scripts
+
+      - name: Install signed Microsoft ACE 2016 x64
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $installer = Join-Path $env:RUNNER_TEMP 'accessdatabaseengine_X64.exe'
+          Invoke-WebRequest -Uri 'https://download.microsoft.com/download/3/5/C/35C84C36-661A-44E6-9324-8786B8DBE231/accessdatabaseengine_X64.exe' -OutFile $installer
+          $signature = Get-AuthenticodeSignature -FilePath $installer
+          if ($signature.Status -ne 'Valid' -or [string]$signature.SignerCertificate.Subject -notmatch 'Microsoft') { throw 'Microsoft ACE installer signature check failed.' }
+          $p = Start-Process -FilePath $installer -ArgumentList '/quiet','/norestart' -Wait -PassThru
+          if ($p.ExitCode -notin @(0,3010)) { throw "ACE install failed with exit $($p.ExitCode)" }
+
+      - name: Extract and verify pinned BM4_L source
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          New-Item -ItemType Directory -Force -Path artifacts | Out-Null
+          $zip = '_common/LFEA/BM4/BM4_L.zip'
+          if ((Get-FileHash -Algorithm SHA256 $zip).Hash.ToLowerInvariant() -ne '978617cba50fa0b1a16c2fa71dc1e0d38e55ac834b191f887d100c6951abd8b9') { throw 'ZIP custody mismatch.' }
+          $extract = Join-Path $env:RUNNER_TEMP 'bm4l-retained-baseline'
+          Expand-Archive -LiteralPath $zip -DestinationPath $extract -Force
+          $accdb = Join-Path $extract 'BM4_L.ACCDB'
+          if ((Get-FileHash -Algorithm SHA256 $accdb).Hash.ToLowerInvariant() -ne '64c05a50e9ed0452622ff5880335460486f24ac8e6adecc9a300b549c9aa82f8') { throw 'ACCDB custody mismatch.' }
+          "BM4L_ACCDB=$accdb" | Out-File -FilePath $env:GITHUB_ENV -Append -Encoding utf8
+
+      - name: Verify retained profile authority
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $profile = Get-Content benchmarks/LFEA/CAESAR_ACCDB/bm4l-validation.profile.json -Raw | ConvertFrom-Json
+          if ($profile.linearSolve.b31jSmooth90FlexibilityCorrection.enabled -ne $true) { throw 'Retained smooth-90 authority is not enabled.' }
+          if ([string]$profile.linearSolve.b31jSmooth90FlexibilityCorrection.authorityStatus -ne 'RESOLVED') { throw 'Retained smooth-90 authority is not resolved.' }
+          if (@($profile.configurationAuthority.unresolvedSettings | Where-Object setting -eq 'B31J_SMOOTH_90_CORRECTION').Count -ne 0) { throw 'Smooth-90 remains in unresolved settings.' }
+          if ([string]$profile.linearSolve.thermalExpansion.authorityStatus -ne 'PROVISIONAL' -or [string]$profile.linearSolve.thermalExpansion.source -notmatch '\[GUESSED\]') { throw 'Thermal authority must remain provisional/[GUESSED].' }
+
+      - name: Run retained six-case baseline
+        shell: pwsh
+        run: |
+          node scripts/lfea-caesar-accdb-benchmark.mjs `
+            --accdb "$env:BM4L_ACCDB" `
+            --profile benchmarks/LFEA/CAESAR_ACCDB/bm4l-validation.profile.json `
+            --solve-linear true `
+            --solve-cases L2,L3,L4,L5,L6,L14 `
+            --actual-out artifacts/retained-actual.json `
+            --out artifacts/retained-report.json `
+            --summary-out artifacts/retained-summary.md
+
+      - name: Assert retained counts and equilibrium
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $report = Get-Content artifacts/retained-report.json -Raw | ConvertFrom-Json
+          if ($report.source.sha256 -ne '64c05a50e9ed0452622ff5880335460486f24ac8e6adecc9a300b549c9aa82f8') { throw 'Report source hash mismatch.' }
+          $expected=[ordered]@{
+            L2=[ordered]@{r=3;d=130;e=110;total=243}
+            L3=[ordered]@{r=5;d=34;e=81;total=120}
+            L4=[ordered]@{r=5;d=56;e=65;total=126}
+            L5=[ordered]@{r=2;d=34;e=96;total=132}
+            L6=[ordered]@{r=1;d=60;e=26;total=87}
+            L14=[ordered]@{r=5;d=34;e=81;total=120}
+          }
+          $actual=[ordered]@{}; $grand=0
+          foreach($id in $expected.Keys){
+            $case=$report.qualification.cases|Where-Object caseId -eq $id
+            $fails=@($case.comparison.rows|Where-Object status -eq 'FAIL')
+            $r=@($fails|Where-Object{ $_.entityKind-eq'NODE' -and $_.quantity-in@('FORCE','MOMENT') }).Count
+            $d=@($fails|Where-Object{ $_.entityKind-eq'NODE' -and $_.quantity-in@('DISPLACEMENT','ROTATION') }).Count
+            $e=@($fails|Where-Object{ $_.entityKind-eq'ELEMENT' -and $_.quantity-like'GLOBAL_END_*' }).Count
+            $total=$r+$d+$e
+            $actual[$id]=[ordered]@{r=$r;d=$d;e=$e;total=$total;equilibrium=$report.mechanics.cases.$id.recoveredEquilibrium}
+            $x=$expected[$id]
+            if($r-ne$x.r -or $d-ne$x.d -or $e-ne$x.e -or $total-ne$x.total){ throw "Retained count drift in $id: $r/$d/$e=$total" }
+            if($report.mechanics.cases.$id.recoveredEquilibrium.status -eq 'FAIL'){ throw "Recovered equilibrium failed in $id" }
+            $grand += $total
+          }
+          if($grand -ne 828){ throw "Retained targeted total drift: $grand" }
+          [ordered]@{
+            schema='lfea-m047-retained-baseline/v1'
+            sourceSha256=$report.source.sha256
+            profileId=$report.profileId
+            retainedCorrection='CAESAR14_B31J_SMOOTH90_1_3_OVER_H'
+            targetedFailureTotal=$grand
+            cases=$actual
+            acceptanceBoundary='L3/L5/L14 remain regression-only while thermal expansion is PROVISIONAL/[GUESSED].'
+          } | ConvertTo-Json -Depth 20 | Tee-Object -FilePath artifacts/retained-baseline.json
+
+      - name: Upload retained baseline evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: bm4l-retained-baseline-${{ github.sha }}
+          path: artifacts/
+          if-no-files-found: error
+          retention-days: 14

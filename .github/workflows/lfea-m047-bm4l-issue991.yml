@@ -1,0 +1,104 @@
+name: M047 BM4_L issue 991 diagnostics
+
+on:
+  workflow_dispatch:
+  pull_request:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  bm4l-diagnostics:
+    if: github.event_name == 'workflow_dispatch' || github.head_ref == 'agent/m047-bm4l-root-cause-991'
+    runs-on: windows-latest
+    timeout-minutes: 30
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci --ignore-scripts
+
+      - name: Fetch pinned BM4_L ACCDB source
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $zip = Join-Path $env:RUNNER_TEMP 'BM4_L.zip'
+          $extract = Join-Path $env:RUNNER_TEMP 'BM4_L'
+          Invoke-WebRequest -Uri 'https://raw.githubusercontent.com/reallaksh19/Common/45d51ea18624f5775805f399110c1738301c0d90/LFEA/BM4/BM4_L.zip' -OutFile $zip
+          $zipHash = (Get-FileHash -Algorithm SHA256 $zip).Hash.ToLowerInvariant()
+          if ($zipHash -ne '978617cba50fa0b1a16c2fa71dc1e0d38e55ac834b191f887d100c6951abd8b9') {
+            throw "BM4_L.zip SHA-256 mismatch: $zipHash"
+          }
+          Expand-Archive -LiteralPath $zip -DestinationPath $extract -Force
+          $accdb = Join-Path $extract 'BM4_L.ACCDB'
+          $accdbHash = (Get-FileHash -Algorithm SHA256 $accdb).Hash.ToLowerInvariant()
+          if ($accdbHash -ne 'e21b0862851ea2bb6f20d55e4a3a94f501537b618b98dd46afa9f6777ee38d3c') {
+            throw "BM4_L.ACCDB SHA-256 mismatch: $accdbHash"
+          }
+          if ((Get-Item $accdb).Length -ne 5136384) {
+            throw "BM4_L.ACCDB size mismatch: $((Get-Item $accdb).Length)"
+          }
+          "BM4L_ACCDB=$accdb" | Out-File -FilePath $env:GITHUB_ENV -Append -Encoding utf8
+
+      - name: Verify ACE provider
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $providers = [System.Data.OleDb.OleDbEnumerator]::GetRootEnumerator()
+          $found = $false
+          while ($providers.Read()) {
+            if ([string]$providers['SOURCES_NAME'] -eq 'Microsoft.ACE.OLEDB.12.0') { $found = $true }
+          }
+          if (-not $found) { throw 'Microsoft.ACE.OLEDB.12.0 is unavailable; BM4_L ACCDB run is BLOCKED.' }
+
+      - name: Reproduce frozen six-case benchmark
+        id: benchmark
+        shell: pwsh
+        continue-on-error: true
+        run: |
+          New-Item -ItemType Directory -Force -Path artifacts | Out-Null
+          node scripts/lfea-caesar-accdb-benchmark.mjs `
+            --accdb "$env:BM4L_ACCDB" `
+            --profile benchmarks/LFEA/CAESAR_ACCDB/bm4l-validation.profile.json `
+            --solve-linear true `
+            --solve-cases L2,L3,L4,L5,L6,L14 `
+            --actual-out artifacts/bm4l-actual.json `
+            --out artifacts/bm4l-report.json `
+            --summary-out artifacts/bm4l-summary.md
+
+      - name: Build issue 991 root-cause evidence
+        if: always() && hashFiles('artifacts/bm4l-actual.json') != '' && hashFiles('artifacts/bm4l-report.json') != ''
+        shell: pwsh
+        run: |
+          node scripts/lfea-m047-bm4l-root-cause.mjs `
+            --actual artifacts/bm4l-actual.json `
+            --report artifacts/bm4l-report.json `
+            --out artifacts/bm4l-root-cause.json `
+            --summary-out artifacts/bm4l-root-cause.md
+
+      - name: Run recovery and primitive regression checks
+        if: always()
+        shell: pwsh
+        run: |
+          npm run check:lfea-b3.0
+          npm run check:lfea-b3.4
+          npm run check:lfea-b3.8
+          npm run check:lfea-b3.9
+
+      - name: Upload BM4_L evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: bm4l-issue991-root-cause-${{ github.sha }}
+          path: artifacts/
+          if-no-files-found: warn
+          retention-days: 14

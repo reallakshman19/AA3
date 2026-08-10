@@ -1,0 +1,93 @@
+{
+  "schema": "m047-bm4l-production-shear-qualification/v1",
+  "classification": "ACCEPTED_PHYSICAL_FORMULATION",
+  "productionSolverCommit": "71b9491d1603c82ed6bb43708f820a81c623cc77",
+  "qualificationWorkflowHead": "88f77e046192a2c7c6857f5235eaf5aeb00ea015",
+  "workflowRunId": 31375496546,
+  "artifactId": 9057796314,
+  "artifactSha256": "864ac975782a173e19806c9722d99e51e75045ba7825cc707b5710c41bcfd180",
+  "source": {
+    "modelCommonCommit": "45d51ea18624f5775805f399110c1738301c0d90",
+    "zipSha256": "978617cba50fa0b1a16c2fa71dc1e0d38e55ac834b191f887d100c6951abd8b9",
+    "accdbMemberSha256": "64c05a50e9ed0452622ff5880335460486f24ac8e6adecc9a300b549c9aa82f8",
+    "reportCommonCommit": "179c4831cf521cf797c13699cfbbd118315c9244",
+    "miscdataSha256": "a2f5d5d3d76c8c2ea48e32495129b3689a6c5679de7ba11f03d2f780625692c4",
+    "loadCaseReportSha256": "621bf3cef12f66e0fb3e0216d3fbff02e3dd002b829d680b57fc08d33907deb0"
+  },
+  "productionMechanics": {
+    "smooth90": {
+      "status": "RESOLVED",
+      "basis": "Pinned BM4_L CAESAR misc bend report corroborates B31J smooth-90 1.3/h."
+    },
+    "straightPipeTransverseShear": {
+      "status": "RESOLVED",
+      "authority": "Intergraph CAESAR II CAUx 2015 F=KX straight-pipe stiffness derivation",
+      "caesarEffectiveShearArea": "A/2",
+      "lfeaEffectiveShearArea": "kappa*A",
+      "kappaY": 0.5,
+      "kappaZ": 0.5,
+      "includedAnalysisKinds": ["FRAME", "BEND_INCOMING_STRAIGHT"],
+      "excludedAnalysisKinds": ["BEND_ARC", "REDUCER", "REDUCER_PRISMATIC", "RIGID"]
+    }
+  },
+  "counts": {
+    "L2": [1, 36, 18],
+    "L3": [2, 47, 83],
+    "L4": [0, 36, 6],
+    "L5": [3, 63, 50],
+    "L6": [0, 13, 14],
+    "L14": [2, 47, 83]
+  },
+  "allCaseTotals": {
+    "restraint": 8,
+    "displacementRotation": 242,
+    "elementEnd": 254,
+    "total": 504
+  },
+  "baselineTotals": {
+    "restraint": 32,
+    "displacementRotation": 513,
+    "elementEnd": 797,
+    "total": 1342
+  },
+  "improvementFromFreshBaselinePercent": {
+    "restraint": 75.0,
+    "displacementRotation": 52.82651072124756,
+    "elementEnd": 68.13048933500627,
+    "total": 62.44411326378539
+  },
+  "highSignalL2": [
+    {"name":"node 20090 UY","reference":-197.26048278808594,"actual":-212.43193049542242,"percentError":7.691072987809195,"status":"PASS"},
+    {"name":"E4 TO FY","reference":-265.9423828125,"actual":-269.47918486183266,"percentError":1.3299128976468,"status":"PASS"},
+    {"name":"E4 TO MZ","reference":-484.62725830078125,"actual":-493.9725206490863,"percentError":1.9283402219412393,"status":"PASS"},
+    {"name":"E5 FROM FY","reference":68.68189239501953,"actual":57.047254366410925,"percentError":16.9398914661418,"status":"FAIL"},
+    {"name":"E5 FROM MZ","reference":484.62725830078125,"actual":493.9725206490866,"percentError":1.9283402219413097,"status":"PASS"},
+    {"name":"node 20120 RZ","reference":0.000030088185611162166,"actual":0.000029199006287491957,"percentError":2.9552440787268344,"status":"PASS"}
+  ],
+  "loadIdentities": {
+    "L6_equals_L2_plus_L4": {
+      "status": "PASS_WITH_SOLVER_NOISE",
+      "maxDifferenceByUnit": {"m": 7.923140937012452e-13, "rad": 6.559423143537302e-18, "N": 5.131236662236915e-7, "N*m": 1.4026776922772822e-8}
+    },
+    "L5_equals_L2_plus_L3_plus_L4": {
+      "status": "PASS_WITH_SOLVER_NOISE",
+      "maxDifferenceByUnit": {"m": 7.923156759587907e-13, "rad": 2.7944768894727634e-15, "N": 3.822511251883043e-5, "N*m": 5.791509831709618e-7}
+    },
+    "L14_equals_L3": {
+      "status": "PASS_EXACT",
+      "maxDifferenceByUnit": {"m": 0, "rad": 0, "N": 0, "N*m": 0}
+    }
+  },
+  "recoveredEquilibrium": {
+    "L2": {"status":"PASS","maxForceResidualN":1.633316173865751e-6,"maxMomentResidualNm":2.4755593130976195e-8},
+    "L3": {"status":"PASS","maxForceResidualN":4.721309935007412e-5,"maxMomentResidualNm":1.2665675797052245e-6},
+    "L4": {"status":"PASS","maxForceResidualN":1.0466793582963874e-6,"maxMomentResidualNm":5.222295740517975e-9},
+    "L5": {"status":"PASS","maxForceResidualN":8.491356649642512e-5,"maxMomentResidualNm":1.8456753991813457e-6},
+    "L6": {"status":"PASS","maxForceResidualN":1.3138625263309223e-6,"maxMomentResidualNm":2.007217858590593e-8},
+    "L14": {"status":"PASS","maxForceResidualN":4.721309935007412e-5,"maxMomentResidualNm":1.2665675797052245e-6}
+  },
+  "gravityWeightN": 93510.79023974095,
+  "reusableRegressionSuite": "PASS",
+  "coreFeaSuite": "PASS",
+  "qualificationWorkflowDisposition": "The BM4_L solve, authority checks, reusable frame/component/solver/recovery checks, and check:core-fea all passed. The workflow's final custom identity step failed only because its initial normalized tolerance of 2e-9 was stricter than the conditioned solve noise. Direct inspection of the uploaded result package shows the load identities above; L14=L3 is exact and the worst L5 force superposition difference is 3.82e-5 N, below the corresponding recovered-equilibrium residual scale and orders below benchmark force tolerances."
+}

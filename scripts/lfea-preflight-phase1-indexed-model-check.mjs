@@ -162,12 +162,35 @@ for (const path of [
   assert.doesNotMatch(source, /document\.|createElement|innerHTML|insertAdjacentHTML/u,
     `${path} must remain independent of DOM creation/mutation.`);
 }
-for (const path of ['src/workspace/lfea-preflight-ui.js', 'src/main.js']) {
+// The live UI has now adopted the Phase-1 core; that integration is asserted by
+// scripts/lfea-preflight-phase1-live-ui-check.mjs and the review-surface check.
+// This guard previously held the pre-integration line — the UI must not import
+// the core "before the reviewed integration batch" — and became unsatisfiable
+// the moment that batch landed. Holding it would mean the integration guard and
+// this one could never both pass.
+//
+// The invariant that outlives the integration is the direction of the
+// dependency: the UI may consume the core, but the core must never consume the
+// UI, or the DOM-free and fixture-free properties asserted above stop being
+// enforceable. That is what is asserted now, so this is a narrowing of scope,
+// not a removal.
+for (const path of [
+  'src/workspace/lfea-preflight-phase1-schema.js',
+  'src/workspace/lfea-preflight-phase1-bitset.js',
+  'src/workspace/lfea-preflight-phase1-index.js',
+  'src/workspace/lfea-preflight-phase1-review-ledger.js',
+  'src/workspace/lfea-preflight-phase1-index.js',
+  'src/workspace/lfea-preflight-phase1-viewport.js',
+  'src/workspace/lfea-preflight-phase1-review-source.js',
+  'src/workspace/lfea-preflight-phase1-review-session.js',
+]) {
   const source = fs.readFileSync(path, 'utf8');
-  assert.doesNotMatch(source, /lfea-preflight-phase1/u,
-    `${path} must not import the Phase-1 core before the reviewed integration batch.`);
+  assert.doesNotMatch(source, /lfea-preflight-ui|lfea-preflight-phase1-review-surface/u,
+    `${path} must not depend on the live UI or the review surface; the Phase-1 core dependency runs one way.`);
+  assert.doesNotMatch(source, /from '\.\/main\.js'|from '\.\.\/main\.js'/u,
+    `${path} must not depend on the application entry point.`);
 }
-console.log('P06A-09 PASS Phase-1 core is production-independent from fixtures, DOM, clocks/randomness and live UI integration');
+console.log('P06A-09 PASS Phase-1 core stays fixture/DOM/clock independent and the core never depends on the live UI');
 
 console.log(JSON.stringify({
   check: 'lfea-preflight-phase1-indexed-model',

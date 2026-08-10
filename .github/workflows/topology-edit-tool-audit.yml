@@ -64,11 +64,16 @@ jobs:
           node --check src/workspace/viewport-productivity/topology-edit-icon-reference-runtime.js
           node --check tests/topology-edit-icon-manifest.test.mjs
           node --check tests/topology-edit-icon-sprite.test.mjs
+          node --check tests/topology-edit-icon-visual-evidence.test.mjs
           node --check tests/topology-edit-navigation-pick-fallback.test.mjs
           node --check e2e/helpers/topology-edit-icon-qualification.js
+          node --check e2e/helpers/topology-edit-icon-visual-evidence.js
+          node --check e2e/helpers/topology-edit-icon-navigation.js
+          node --check e2e/helpers/topology-edit-icon-custody-support.js
           node --check e2e/topology-edit-tool-audit.spec.js
           node --check e2e/topology-edit-tool-icon-manifest.spec.js
           node --check e2e/topology-edit-tool-icon-custody.spec.js
+          node --check e2e/topology-edit-tool-icon-remount-custody.spec.js
           node --check e2e/topology-edit-tool-icon-mutation.spec.js
           node --check e2e/topology-edit-tool-icon-clipping.spec.js
           node --check e2e/topology-edit-tool-icon-reference.spec.js
@@ -80,6 +85,7 @@ jobs:
           set -euo pipefail
           node tests/topology-edit-icon-manifest.test.mjs
           node tests/topology-edit-icon-sprite.test.mjs
+          node --test tests/topology-edit-icon-visual-evidence.test.mjs
 
       - name: Execute GPU-to-ray fallback unit contract
         run: node tests/topology-edit-navigation-pick-fallback.test.mjs
@@ -110,6 +116,7 @@ jobs:
           mkdir -p "$evidence_dir"
           set +e
           npx playwright test e2e/topology-edit-tool-icon-custody.spec.js \
+            e2e/topology-edit-tool-icon-remount-custody.spec.js \
             --project=chromium --workers=1 --retries=0 --reporter=line --trace=on
           status=$?
           set -e

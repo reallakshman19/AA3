@@ -14,7 +14,8 @@
     "resultFamilies",
     "conventions",
     "equilibriumTolerance",
-    "tolerances"
+    "tolerances",
+    "configurationAuthority"
   ],
   "properties": {
     "schema": { "const": "caesar-accdb-benchmark-profile/v1" },
@@ -108,7 +109,66 @@
         "properties": {
           "absolute": { "type": "number", "minimum": 0 },
           "relative": { "type": "number", "minimum": 0 },
-          "scaleFloor": { "type": "number", "minimum": 0 }
+          "scaleFloor": { "type": "number", "minimum": 0 },
+          "comparisonMode": {
+            "enum": [
+              "COMBINED_ABSOLUTE_RELATIVE_SCALE_FLOOR",
+              "LITERAL_RELATIVE_WITH_ZERO_ABSOLUTE"
+            ]
+          },
+          "zeroReferenceAbsolute": { "type": "number", "minimum": 0 }
+        }
+      }
+    },
+    "configurationAuthority": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["schema", "caesarVersion", "precedence", "layers", "unresolvedSettings"],
+      "properties": {
+        "schema": { "const": "caesar-configuration-authority/v1" },
+        "caesarVersion": { "type": "string", "minLength": 1 },
+        "precedence": {
+          "const": [
+            "LOAD_CASE_SETTING",
+            "INDIVIDUAL_FILE_SETTING",
+            "MODEL_INPUT",
+            "OVERALL_GLOBAL_DEFAULT"
+          ]
+        },
+        "layers": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["overallGlobalDefault", "modelInput", "individualFile", "loadCase"],
+          "properties": {
+            "overallGlobalDefault": { "$ref": "#/$defs/configurationLayer" },
+            "modelInput": { "$ref": "#/$defs/configurationLayer" },
+            "individualFile": { "$ref": "#/$defs/configurationLayer" },
+            "loadCase": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": ["source", "cases"],
+              "properties": {
+                "source": { "type": "string", "minLength": 1 },
+                "cases": {
+                  "type": "object",
+                  "additionalProperties": { "$ref": "#/$defs/configurationSettings" }
+                }
+              }
+            }
+          }
+        },
+        "unresolvedSettings": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["setting", "caseId", "reason"],
+            "properties": {
+              "setting": { "type": "string", "minLength": 1 },
+              "caseId": { "type": ["string", "null"] },
+              "reason": { "type": "string", "minLength": 1 }
+            }
+          }
         }
       }
     },
@@ -116,15 +176,28 @@
       "type": "object",
       "additionalProperties": false,
       "required": [
-        "thermalExpansionCoefficientPerKelvin",
+        "thermalExpansion",
         "gravityAcceleration",
         "bourdonPressureEffects",
         "directionalB31JTeeFlexibility",
         "teeNominalDiameterRelativeTolerance",
-        "reducerCondensation"
+        "reducerCondensation",
+        "b31jSmooth90FlexibilityCorrection",
+        "bendPressureStiffening",
+        "restraintRepresentation",
+        "bendAxialShape"
       ],
       "properties": {
-        "thermalExpansionCoefficientPerKelvin": { "type": "number", "exclusiveMinimum": 0 },
+        "thermalExpansion": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["coefficientPerKelvin", "authorityStatus", "source"],
+          "properties": {
+            "coefficientPerKelvin": { "type": "number", "exclusiveMinimum": 0 },
+            "authorityStatus": { "enum": ["RESOLVED", "PROVISIONAL"] },
+            "source": { "type": "string", "minLength": 1 }
+          }
+        },
         "gravityAcceleration": { "type": "number", "exclusiveMinimum": 0 },
         "bourdonPressureEffects": {
           "type": "object",
@@ -139,8 +212,79 @@
         },
         "directionalB31JTeeFlexibility": { "type": "boolean" },
         "teeNominalDiameterRelativeTolerance": { "type": "number", "minimum": 0, "maximum": 0.01 },
-        "reducerCondensation": { "type": "boolean" }
+        "reducerCondensation": { "type": "boolean" },
+        "b31jSmooth90FlexibilityCorrection": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["enabled", "authorityStatus", "source"],
+          "properties": {
+            "enabled": { "type": "boolean" },
+            "authorityStatus": { "enum": ["RESOLVED", "UNRESOLVED"] },
+            "source": { "type": "string", "minLength": 1 }
+          }
+        },
+        "bendPressureStiffening": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["pressureSource", "authorityStatus", "source"],
+          "properties": {
+            "pressureSource": { "type": "string", "minLength": 1 },
+            "authorityStatus": { "enum": ["RESOLVED", "PROVISIONAL"] },
+            "source": { "type": "string", "minLength": 1 }
+          }
+        },
+        "restraintRepresentation": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["mode", "authorityStatus", "source"],
+          "properties": {
+            "mode": { "type": "string", "minLength": 1 },
+            "authorityStatus": { "enum": ["RESOLVED", "PROVISIONAL"] },
+            "source": { "type": "string", "minLength": 1 }
+          }
+        },
+        "bendAxialShape": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["enabled", "method", "source"],
+          "properties": {
+            "enabled": { "type": "boolean" },
+            "method": { "const": "DISCRETIZED_CURVED_CENTRELINE_AXIAL_DOF_V1" },
+            "source": { "type": "string", "minLength": 1 }
+          }
+        }
       }
+    }
+  },
+  "$defs": {
+    "configurationLayer": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["source", "settings"],
+      "properties": {
+        "source": { "type": "string", "minLength": 1 },
+        "settings": { "$ref": "#/$defs/configurationSettings" }
+      }
+    },
+    "configurationSettings": {
+      "type": "object",
+      "additionalProperties": { "$ref": "#/$defs/configurationValue" }
+    },
+    "configurationValue": {
+      "oneOf": [
+        { "type": "string", "minLength": 1 },
+        { "type": "number" },
+        { "type": "boolean" },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["value", "unit"],
+          "properties": {
+            "value": { "type": "number" },
+            "unit": { "type": "string", "minLength": 1 }
+          }
+        }
+      ]
     }
   }
 }

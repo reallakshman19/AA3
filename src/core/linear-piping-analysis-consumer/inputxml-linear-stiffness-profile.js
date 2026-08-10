@@ -44,6 +44,8 @@ export function inputXmlStiffnessSolverProfile(candidate) {
     momentReferenceRule: MOMENT_REFERENCE_RULE,
     normalizedResidualLimit: { value: 1e-9, source: PROFILE_SOURCE },
     normalizedResidualWarnLimit: { value: 1e-7, source: PROFILE_SOURCE },
+    iterativeRefinementMaximumIterations: { value: 3, source: PROFILE_SOURCE },
+    iterativeRefinementRelativeTolerance: { value: 1e-12, source: PROFILE_SOURCE },
     equilibriumRelativeLimit: { value: 1e-6, source: PROFILE_SOURCE },
     equilibriumAbsoluteForceFloor: { value: 1e-3, source: PROFILE_SOURCE },
     equilibriumAbsoluteMomentFloor: { value: 1e-3, source: PROFILE_SOURCE },

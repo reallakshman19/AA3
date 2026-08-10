@@ -5,6 +5,10 @@ import {
   normalizeBenchmarkResultRows,
 } from './qualification-contract.js';
 
+const COMBINED_SCALE_FLOOR_MODE = 'COMBINED_ABSOLUTE_RELATIVE_SCALE_FLOOR';
+const LITERAL_RELATIVE_MODE = 'LITERAL_RELATIVE_WITH_ZERO_ABSOLUTE';
+const COMPARISON_MODES = Object.freeze([COMBINED_SCALE_FLOOR_MODE, LITERAL_RELATIVE_MODE]);
+
 /** Compare one case using combined absolute + relative tolerance. */
 export function compareBenchmarkResultRows({
   caseId,
@@ -70,9 +74,17 @@ function compareOne({ identity, reference, actual, tolerances, optional, exposed
 
   const tolerance = resolveTolerance(tolerances, reference);
   const absoluteError = Math.abs(actual.value - reference.value);
-  const scale = Math.max(Math.abs(reference.value), tolerance.scaleFloor);
+  const referenceMagnitude = Math.abs(reference.value);
+  const rawRelativeError = referenceMagnitude === 0
+    ? (absoluteError === 0 ? 0 : null)
+    : absoluteError / referenceMagnitude;
+  const scale = tolerance.comparisonMode === LITERAL_RELATIVE_MODE
+    ? referenceMagnitude
+    : Math.max(referenceMagnitude, tolerance.scaleFloor);
   const relativeError = scale === 0 ? (absoluteError === 0 ? 0 : null) : absoluteError / scale;
-  const limit = tolerance.absolute + tolerance.relative * scale;
+  const limit = tolerance.comparisonMode === LITERAL_RELATIVE_MODE && referenceMagnitude === 0
+    ? tolerance.zeroReferenceAbsolute
+    : tolerance.absolute + tolerance.relative * scale;
   const status = absoluteError <= limit ? 'PASS' : 'FAIL';
   return deepFreeze({
     identity,
@@ -85,11 +97,14 @@ function compareOne({ identity, reference, actual, tolerances, optional, exposed
     referenceValue: reference.value,
     actualValue: actual.value,
     absoluteError,
+    rawRelativeError,
     relativeError,
     tolerance,
     acceptanceLimit: limit,
     status,
-    note: status === 'PASS' ? null : 'Combined absolute + relative tolerance exceeded.',
+    note: status === 'PASS' ? null : tolerance.comparisonMode === LITERAL_RELATIVE_MODE
+      ? 'Literal relative tolerance, or the declared zero-reference absolute tolerance, was exceeded.'
+      : 'Combined absolute + relative tolerance exceeded.',
   });
 }
 
@@ -106,6 +121,7 @@ function record(identity, actual, reference, status, note) {
     referenceValue: reference?.value ?? null,
     actualValue: actual?.value ?? null,
     absoluteError: null,
+    rawRelativeError: null,
     relativeError: null,
     tolerance: null,
     acceptanceLimit: null,
@@ -127,7 +143,15 @@ function resolveTolerance(tolerances, row) {
   const absolute = finiteNonnegative(keyed.absolute ?? 0, 'tolerance.absolute');
   const relative = finiteNonnegative(keyed.relative ?? 0, 'tolerance.relative');
   const scaleFloor = finiteNonnegative(keyed.scaleFloor ?? 0, 'tolerance.scaleFloor');
-  return deepFreeze({ absolute, relative, scaleFloor });
+  const comparisonMode = String(keyed.comparisonMode ?? COMBINED_SCALE_FLOOR_MODE).trim().toUpperCase();
+  if (!COMPARISON_MODES.includes(comparisonMode)) {
+    throw new TypeError(`Unsupported tolerance.comparisonMode ${comparisonMode}.`);
+  }
+  const zeroReferenceAbsolute = finiteNonnegative(
+    keyed.zeroReferenceAbsolute ?? 0,
+    'tolerance.zeroReferenceAbsolute',
+  );
+  return deepFreeze({ absolute, relative, scaleFloor, comparisonMode, zeroReferenceAbsolute });
 }
 
 function finiteNonnegative(value, field) {

@@ -11,8 +11,9 @@
  * Disclosed limitations:
  *   - mapped Q8 remains restricted to hole-free logical four-sided regions;
  *     declared feature vertices may split a logical side into multiple curves;
- *   - any unstructured Q8 request is rejected unless recombination produces
- *     Q8 for every element; partial T6+Q8 is never relabelled or accepted;
+ *   - a uniform Q8 request that recombination cannot satisfy for every element
+ *     falls back to centroid subdivision, which is all-quad by construction.
+ *     Partial T6+Q8 is still never relabelled or accepted;
  *   - splines remain outside the qualified core geometry scope.
  */
 import { upgradeToT6 } from '../core/lafea-meshing/constrained-delaunay-t6.js';
@@ -24,6 +25,7 @@ import {
   triangulateRefinedRegionAsIndexTriples,
 } from '../core/lafea-meshing/interior-refinement-t6.js';
 import { logicalFourSideCurveChains } from '../core/lafea-meshing/logical-four-side-chains.js';
+import { subdivideTrianglesToQ8 } from '../core/lafea-meshing/quad-subdivision-q8.js';
 import { recombineToQ8 } from '../core/lafea-meshing/q8-recombination.js';
 import { mappedTransfiniteMesh } from '../core/lafea-meshing/mapped-mitc-mesh.js';
 import { arcSweepAngle, curveLength } from '../core/lafea-geometry/vertex-curve.js';
@@ -39,7 +41,7 @@ export const LAFEA_MESH_PRODUCER_ENGINE_REVISION = 'LAFEA.10.T6Q8.V4';
 export const LAFEA_MESH_ENGINE_ELEMENT_FAMILIES = Object.freeze(['T3', 'T6', 'Q8']);
 
 export const LAFEA_MESH_ENGINE_STRATEGIES = Object.freeze([
-  'MAPPED_TRANSFINITE', 'CONSTRAINED_DELAUNAY',
+  'MAPPED_TRANSFINITE', 'CONSTRAINED_DELAUNAY', 'QUAD_SUBDIVISION',
 ]);
 
 /**
@@ -106,21 +108,39 @@ function unstructuredMesh(topology, region, outerLoop, curveById, vertexById, si
       region, topology, curveById, vertexById, sizing.curvatureRadians,
     ),
   });
-  const coreElements = family === 'Q8'
-    ? recombineToQ8(refined, refined.ringCorners, refined.edgesByCornerPair, true)
-    : upgradeToT6(
+  // Uniform Q8 over an unstructured triangulation: prefer pair recombination,
+  // which preserves the refined element sizing, and fall back to centroid
+  // subdivision when recombination cannot pair every triangle. Subdivision is
+  // all-quad by construction, so the request no longer has to be rejected.
+  let subdivided = false;
+  let coreElements;
+  if (family === 'Q8') {
+    const recombined = recombineToQ8(
+      refined, refined.ringCorners, refined.edgesByCornerPair, true,
+    );
+    if (recombined.every((element) => element.elementType === 'Q8')) {
+      coreElements = recombined;
+    } else {
+      coreElements = subdivideTrianglesToQ8(refined, curveById, vertexById);
+      subdivided = true;
+    }
+  } else {
+    coreElements = upgradeToT6(
       refined.points,
       refined.ringCorners,
       refined.triangleTriples,
       refined.edgesByCornerPair,
     );
+  }
   return {
-    strategy: 'CONSTRAINED_DELAUNAY',
-    strategyReason: region.holeLoopIds.length > 0
-      ? 'MULTIPLY_CONNECTED_REGION_CONSTRAINED'
-      : family === 'Q8'
-        ? 'MAPPED_TOPOLOGY_NOT_AVAILABLE'
-        : 'UNSTRUCTURED_INTERIOR_REFINEMENT',
+    strategy: subdivided ? 'QUAD_SUBDIVISION' : 'CONSTRAINED_DELAUNAY',
+    strategyReason: subdivided
+      ? 'UNIFORM_Q8_BY_CENTROID_SUBDIVISION'
+      : region.holeLoopIds.length > 0
+        ? 'MULTIPLY_CONNECTED_REGION_CONSTRAINED'
+        : family === 'Q8'
+          ? 'MAPPED_TOPOLOGY_NOT_AVAILABLE'
+          : 'UNSTRUCTURED_INTERIOR_REFINEMENT',
     coreElements,
     boundarySegmentCount: refined.boundarySegmentCount,
     holeCount: refined.holeCount,

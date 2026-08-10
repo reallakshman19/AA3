@@ -147,6 +147,9 @@ function runCheck(check) {
 function normalize(value) {
   if (typeof value !== 'string' || !value.trim()) return null;
   return value
+    // Deliberate control character: strips ANSI colour codes from captured
+    // output so the comparison sees the text, not the terminal formatting.
+    // eslint-disable-next-line no-control-regex
     .replace(/\u001b\[[0-9;]*m/gu, '')
     .replace(/\bbuilt in \d+(?:\.\d+)?(?:ms|s)\b/giu, 'built in <duration>')
     .replace(/\r\n/gu, '\n')

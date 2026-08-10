@@ -96,6 +96,17 @@ jobs:
           base_sha="$(git merge-base "origin/$BASE_REF" HEAD)"
           changed="$(git diff --name-only "$base_sha"...HEAD)"
           printf '%s\n' "$changed"
+          # This workflow is also triggered by shared files such as package.json,
+          # so a pull request that merely adds an npm script fires it without
+          # being the Batch A pull request at all. The custody perimeter below
+          # only means something for a pull request that actually touches Batch
+          # A's own files; enforcing it on any other change asserts that every
+          # unrelated pull request is out of perimeter, which it always is.
+          owned="$(printf '%s\n' "$changed" | grep -E '^(src/workspace/analysis-authority-overlay/|scripts/m022c-stagedjson-)' || true)"
+          if [ -z "$owned" ]; then
+            echo "Batch A files untouched; custody perimeter not applicable to this pull request."
+            exit 0
+          fi
           unexpected="$(printf '%s\n' "$changed" | grep -Ev '^(\.github/workflows/m022c-stagedjson-authority-composition\.yml|package\.json|src/workspace/analysis-authority-overlay/(index|stagedjson-process-resolution|stagedjson-support-resolution|stagedjson-authority-composition)\.js|scripts/m022c-stagedjson-authority-(composition-check|source-guard)\.mjs)$' || true)"
           test -z "$unexpected"
           test -z "$(git diff "$base_sha"...HEAD -- src/core src/workspace/lfea-shell-v2 || true)"

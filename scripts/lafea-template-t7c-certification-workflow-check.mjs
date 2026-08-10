@@ -23,7 +23,7 @@ for (const triggerPath of [
 }
 
 assert.match(workflow, /name: LAFEA Template T7C Certification/u);
-assert.match(workflow, /permissions:\n  contents: read/u);
+assert.match(workflow, /permissions:\n {2}contents: read/u);
 assert.match(
   workflow,
   /ref: \$\{\{ github\.event\.pull_request\.head\.sha \}\}/u,

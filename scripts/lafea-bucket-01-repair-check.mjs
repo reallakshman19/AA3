@@ -115,5 +115,8 @@ function runNodeCheck(definition) {
 }
 function normalize(value) {
   if (typeof value !== 'string' || !value.trim()) return null;
+   // Deliberate control character: strips ANSI colour codes from captured
+   // output so the comparison sees the text, not the terminal formatting.
+   // eslint-disable-next-line no-control-regex
   return value.replace(/\u001b\[[0-9;]*m/gu, '').trim();
 }

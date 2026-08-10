@@ -50,7 +50,7 @@ reject(
 for (const effect of ['pressureStiffening', 'axialThrust', 'bourdon']) {
   assert.match(
     source.derivation,
-    new RegExp(`(?:['\"]${effect}['\"]|\\b${effect}\\s*:)`, 'u'),
+    new RegExp(`(?:['"]${effect}['"]|\\b${effect}\\s*:)`, 'u'),
     `${effect} must remain an explicitly inspected effect`,
   );
 }

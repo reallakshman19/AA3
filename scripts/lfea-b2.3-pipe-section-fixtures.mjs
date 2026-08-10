@@ -8,7 +8,7 @@ export const NPS6_LIKE_EXPECTED = Object.freeze({
   outerDiameter: 0.1683,
   wallThickness: 0.00711,
   innerDiameter: 0.15408,
-  area: 0.0036004565040065067,
+  area: 0.003600456504006507,
   secondMomentY: 0.00001171623119787297,
   secondMomentZ: 0.00001171623119787297,
   polarMoment: 0.00002343246239574594,
@@ -19,8 +19,8 @@ export const THICK_WALL_EXPECTED = Object.freeze({
   wallThickness: 0.010,
   innerDiameter: 0.080,
   area: 0.002827433388230814,
-  secondMomentY: 0.0000028981192229365843,
-  secondMomentZ: 0.0000028981192229365843,
+  secondMomentY: 0.000002898119222936584,
+  secondMomentZ: 0.000002898119222936584,
   polarMoment: 0.000005796238445873169,
 });
 

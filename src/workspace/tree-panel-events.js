@@ -192,6 +192,10 @@ async function publishDatasetLoad(panel, sourceName, sourceBytes, parsedPackage 
 function parseJsonBytes(sourceBytes) {
   const text = decodeJsonBytes(sourceBytes)
     .replace(/^\uFEFF/u, '')
+    // Deliberate control character: some exported SJSON/JSON files are
+    // NUL-padded to a block boundary, and that padding must come off
+    // before parsing.
+    // eslint-disable-next-line no-control-regex
     .replace(/\u0000+$/u, '')
     .trim();
   if (!text) throw new TypeError('Dataset SJSON/JSON file is empty.');

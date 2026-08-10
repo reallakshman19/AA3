@@ -157,4 +157,4 @@ function canonical(value) {
   return Object.is(value, -0) ? 0 : value;
 }
 function normalizeStdout(text) { return text.replace(/Total CalculiX Time:\s*[0-9.Ee+-]+/gu, 'Total CalculiX Time: NORMALIZED'); }
-function normalizeFrd(text) { return text.replace(/^    1U(?:DATE|TIME|HOST).*$/gmu, (line) => `${line.slice(0, 10)}NORMALIZED`); }
+function normalizeFrd(text) { return text.replace(/^ {4}1U(?:DATE|TIME|HOST).*$/gmu, (line) => `${line.slice(0, 10)}NORMALIZED`); }

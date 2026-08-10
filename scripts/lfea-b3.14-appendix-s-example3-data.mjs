@@ -61,6 +61,10 @@ export const METER_MASS = METER_WEIGHT / GRAVITATIONAL_ACCELERATION;
 export const TEE_STUB_LENGTH = 0.10;
 export const CYCLE_REDUCTION_FACTOR = 1.20;
 export const COLD_ALLOWABLE = 137.85733333333334e6;
+    // 138.04666666666665e6 is the exact nearest double for this allowable.
+    // The lint-clean plain form (138046666.66666666) would hide that this
+    // is 138.05 MPa, so the engineering form is kept deliberately.
+    // eslint-disable-next-line no-loss-of-precision
 export const HOT_ALLOWABLE = 138.04666666666665e6;
 export const PUBLISHED_SUSTAINED_STRESS = 28.380e6;
 export const PUBLISHED_DISPLACEMENT_ALLOWABLE = 248.2e6;

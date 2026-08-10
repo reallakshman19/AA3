@@ -32,9 +32,13 @@ const MOMENT_UNITS = Object.freeze({
   'LB.IN': Object.freeze({ factor: 0.1129848290276167, unit: 'N*m' }),
   'IN.LB': Object.freeze({ factor: 0.1129848290276167, unit: 'N*m' }),
   'LBF.IN': Object.freeze({ factor: 0.1129848290276167, unit: 'N*m' }),
-  'LB.FT': Object.freeze({ factor: 1.3558179483314004, unit: 'N*m' }),
-  'FT.LB': Object.freeze({ factor: 1.3558179483314004, unit: 'N*m' }),
-  'LBF.FT': Object.freeze({ factor: 1.3558179483314004, unit: 'N*m' }),
+  // 1.3558179483314003 is the exact double for 4.4482216152605 N/lbf x
+  // 0.3048 m/ft. The decimal 1.3558179483314004 names the same double but
+  // claims a final digit the format cannot hold, so the value actually
+  // used is what is written.
+  'LB.FT': Object.freeze({ factor: 1.3558179483314003, unit: 'N*m' }),
+  'FT.LB': Object.freeze({ factor: 1.3558179483314003, unit: 'N*m' }),
+  'LBF.FT': Object.freeze({ factor: 1.3558179483314003, unit: 'N*m' }),
   'KIP.FT': Object.freeze({ factor: 1355.8179483314004, unit: 'N*m' }),
 });
 

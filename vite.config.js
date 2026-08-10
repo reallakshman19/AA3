@@ -137,10 +137,10 @@ export function manualChunk(id) {
     return 'lafea-stage-static-contracts';
   }
   // The workspace shell stylesheet module is a side-effect-free function that
-  // returns one static CSS string and imports nothing. Keep layout/controller
-  // state graph-owned while isolating this exact presentation leaf.
+  // returns one static CSS string and imports nothing. The chunk name avoids
+  // the policy-reserved `workspace-shell-` prefix used for stateful shell code.
   if (source.endsWith('/src/workspace/workspace-shell-styles.js')) {
-    return 'workspace-shell-static-styles';
+    return 'application-shell-static-styles';
   }
 
   // Rollup must own the complete stateful workspace graph so evaluation order

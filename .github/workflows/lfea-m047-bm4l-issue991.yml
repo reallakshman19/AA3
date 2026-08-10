@@ -15,8 +15,16 @@ jobs:
     timeout-minutes: 30
 
     steps:
-      - name: Checkout
+      - name: Checkout Advanced_Analysis
         uses: actions/checkout@v4
+
+      - name: Checkout pinned Common custody source
+        uses: actions/checkout@v4
+        with:
+          repository: reallaksh19/Common
+          ref: 45d51ea18624f5775805f399110c1738301c0d90
+          path: _common
+          fetch-depth: 1
 
       - name: Setup Node
         uses: actions/setup-node@v4
@@ -27,27 +35,100 @@ jobs:
       - name: Install dependencies
         run: npm ci --ignore-scripts
 
-      - name: Fetch pinned BM4_L ACCDB source
+      - name: Prove pinned ZIP and ACCDB member custody
         shell: pwsh
         run: |
           $ErrorActionPreference = 'Stop'
-          $zip = Join-Path $env:RUNNER_TEMP 'BM4_L.zip'
-          $extract = Join-Path $env:RUNNER_TEMP 'BM4_L'
-          Invoke-WebRequest -Uri 'https://raw.githubusercontent.com/reallaksh19/Common/45d51ea18624f5775805f399110c1738301c0d90/LFEA/BM4/BM4_L.zip' -OutFile $zip
+          New-Item -ItemType Directory -Force -Path artifacts | Out-Null
+
+          $expectedCommit = '45d51ea18624f5775805f399110c1738301c0d90'
+          $expectedBlob = 'df119ae1b8272469b6204036ab1aff21e561dfb8'
+          $expectedZipHash = '978617cba50fa0b1a16c2fa71dc1e0d38e55ac834b191f887d100c6951abd8b9'
+          $expectedZipSize = 582488
+          $expectedAccdbHash = 'e21b0862851ea2bb6f20d55e4a3a94f501537b618b98dd46afa9f6777ee38d3c'
+          $expectedAccdbSize = 5136384
+
+          $commonHead = (git -C _common rev-parse HEAD).Trim().ToLowerInvariant()
+          $zip = Join-Path $PWD '_common/LFEA/BM4/BM4_L.zip'
+          $blob = (git -C _common hash-object -- 'LFEA/BM4/BM4_L.zip').Trim().ToLowerInvariant()
           $zipHash = (Get-FileHash -Algorithm SHA256 $zip).Hash.ToLowerInvariant()
-          if ($zipHash -ne '978617cba50fa0b1a16c2fa71dc1e0d38e55ac834b191f887d100c6951abd8b9') {
-            throw "BM4_L.zip SHA-256 mismatch: $zipHash"
+          $zipSize = (Get-Item $zip).Length
+
+          Add-Type -AssemblyName System.IO.Compression.FileSystem
+          $archive = [System.IO.Compression.ZipFile]::OpenRead($zip)
+          try {
+            $entries = @($archive.Entries | ForEach-Object {
+              [ordered]@{
+                name = $_.FullName
+                compressedLength = $_.CompressedLength
+                length = $_.Length
+              }
+            })
+            if ($archive.Entries.Count -ne 1 -or $archive.Entries[0].FullName -ne 'BM4_L.ACCDB') {
+              throw "Pinned ZIP member inventory mismatch: $($entries | ConvertTo-Json -Compress)"
+            }
+
+            $dotnetDir = Join-Path $env:RUNNER_TEMP 'BM4_L-dotnet'
+            New-Item -ItemType Directory -Force -Path $dotnetDir | Out-Null
+            $dotnetAccdb = Join-Path $dotnetDir 'BM4_L.ACCDB'
+            $source = $archive.Entries[0].Open()
+            $target = [System.IO.File]::Create($dotnetAccdb)
+            try { $source.CopyTo($target) } finally { $target.Dispose(); $source.Dispose() }
+          } finally {
+            $archive.Dispose()
           }
-          Expand-Archive -LiteralPath $zip -DestinationPath $extract -Force
-          $accdb = Join-Path $extract 'BM4_L.ACCDB'
-          $accdbHash = (Get-FileHash -Algorithm SHA256 $accdb).Hash.ToLowerInvariant()
-          if ($accdbHash -ne 'e21b0862851ea2bb6f20d55e4a3a94f501537b618b98dd46afa9f6777ee38d3c') {
-            throw "BM4_L.ACCDB SHA-256 mismatch: $accdbHash"
+
+          $tarDir = Join-Path $env:RUNNER_TEMP 'BM4_L-tar'
+          New-Item -ItemType Directory -Force -Path $tarDir | Out-Null
+          & tar.exe -xf $zip -C $tarDir
+          if ($LASTEXITCODE -ne 0) { throw "tar.exe ZIP extraction failed with exit $LASTEXITCODE" }
+          $tarAccdb = Join-Path $tarDir 'BM4_L.ACCDB'
+
+          $dotnetHash = (Get-FileHash -Algorithm SHA256 $dotnetAccdb).Hash.ToLowerInvariant()
+          $tarHash = (Get-FileHash -Algorithm SHA256 $tarAccdb).Hash.ToLowerInvariant()
+          $dotnetSize = (Get-Item $dotnetAccdb).Length
+          $tarSize = (Get-Item $tarAccdb).Length
+
+          $custody = [ordered]@{
+            schema = 'lfea-m047-bm4l-custody/v1'
+            common = [ordered]@{
+              expectedCommit = $expectedCommit
+              actualCommit = $commonHead
+              expectedZipBlobSha1 = $expectedBlob
+              actualZipBlobSha1 = $blob
+            }
+            zip = [ordered]@{
+              path = 'LFEA/BM4/BM4_L.zip'
+              expectedSha256 = $expectedZipHash
+              actualSha256 = $zipHash
+              expectedSize = $expectedZipSize
+              actualSize = $zipSize
+              entries = $entries
+            }
+            accdb = [ordered]@{
+              expectedSha256 = $expectedAccdbHash
+              dotnetSha256 = $dotnetHash
+              tarSha256 = $tarHash
+              extractionHashesAgree = ($dotnetHash -eq $tarHash)
+              expectedSize = $expectedAccdbSize
+              dotnetSize = $dotnetSize
+              tarSize = $tarSize
+            }
           }
-          if ((Get-Item $accdb).Length -ne 5136384) {
-            throw "BM4_L.ACCDB size mismatch: $((Get-Item $accdb).Length)"
+          $custody | ConvertTo-Json -Depth 8 | Out-File artifacts/bm4l-custody.json -Encoding utf8
+
+          if ($commonHead -ne $expectedCommit) { throw "Common commit mismatch: $commonHead" }
+          if ($blob -ne $expectedBlob) { throw "BM4_L.zip Git blob mismatch: $blob" }
+          if ($zipHash -ne $expectedZipHash) { throw "BM4_L.zip SHA-256 mismatch: $zipHash" }
+          if ($zipSize -ne $expectedZipSize) { throw "BM4_L.zip size mismatch: $zipSize" }
+          if ($dotnetHash -ne $tarHash) { throw "Independent ACCDB extraction mismatch: .NET=$dotnetHash tar=$tarHash" }
+          if ($dotnetSize -ne $tarSize) { throw "Independent ACCDB extraction size mismatch: .NET=$dotnetSize tar=$tarSize" }
+          if ($dotnetHash -ne $expectedAccdbHash) {
+            throw "Pinned ZIP custody contradiction: expected ACCDB SHA-256 $expectedAccdbHash but both extractors produced $dotnetHash"
           }
-          "BM4L_ACCDB=$accdb" | Out-File -FilePath $env:GITHUB_ENV -Append -Encoding utf8
+          if ($dotnetSize -ne $expectedAccdbSize) { throw "BM4_L.ACCDB size mismatch: $dotnetSize" }
+
+          "BM4L_ACCDB=$dotnetAccdb" | Out-File -FilePath $env:GITHUB_ENV -Append -Encoding utf8
 
       - name: Verify ACE provider
         shell: pwsh
@@ -65,7 +146,6 @@ jobs:
         shell: pwsh
         continue-on-error: true
         run: |
-          New-Item -ItemType Directory -Force -Path artifacts | Out-Null
           node scripts/lfea-caesar-accdb-benchmark.mjs `
             --accdb "$env:BM4L_ACCDB" `
             --profile benchmarks/LFEA/CAESAR_ACCDB/bm4l-validation.profile.json `

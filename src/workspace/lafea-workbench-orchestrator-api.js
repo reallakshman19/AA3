@@ -41,6 +41,11 @@ export function createLafeaWorkbenchOrchestratorApi(context) {
     selectRetainedTemplateReleaseRecord: (stageId = activeStageId()) => c.release.select(stageId),
     buildReleaseBindingProjection: (stageId = activeStageId()) =>
       c.deriveStage(stageId).lifecycleReadiness.releaseBinding,
+    registerNumericalVerificationEvidence: c.registerNumericalVerificationEvidence,
+    selectRetainedNumericalVerificationEvidence: (stageId = activeStageId()) =>
+      c.verification.select(stageId),
+    buildNumericalVerificationProjection: (stageId = activeStageId()) =>
+      c.deriveStage(stageId).numericalVerificationProjection,
     exportLifecycle: c.exportLifecycle,
     validateLafeaAnalysisMeshEvidence: (value) => {
       const stageId = value?.stageId ?? activeStageId();

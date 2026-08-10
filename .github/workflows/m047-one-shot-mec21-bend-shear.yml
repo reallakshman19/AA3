@@ -1,0 +1,373 @@
+name: M047 one-shot MEC-21 bend shear formulation
+
+on:
+  push:
+    branches: [agent/m047-bm4l-root-cause]
+    paths: ['.github/workflows/m047-one-shot-mec21-bend-shear.yml']
+
+permissions:
+  contents: write
+
+jobs:
+  validate-and-publish:
+    runs-on: windows-latest
+    timeout-minutes: 50
+    env:
+      COMMON_COMMIT: '45d51ea18624f5775805f399110c1738301c0d90'
+      ZIP_SHA256: '978617cba50fa0b1a16c2fa71dc1e0d38e55ac834b191f887d100c6951abd8b9'
+      MEMBER_SHA256: '64c05a50e9ed0452622ff5880335460486f24ac8e6adecc9a300b549c9aa82f8'
+      ACE_URL: 'https://download.microsoft.com/download/3/5/C/35C84C36-661A-44E6-9324-8786B8DBE231/accessdatabaseengine_X64.exe'
+      ACE_SHA256: '04e96c9f1a1f7d251a88aececf1dc10ff65950392787427c00814a43308003de'
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: agent/m047-bm4l-root-cause
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+      - run: npm ci
+
+      - name: Install authenticated ACE and fetch canonical BM4_L
+        shell: pwsh
+        run: |
+          $ErrorActionPreference='Stop'
+          New-Item -ItemType Directory -Force artifacts/mec21/source | Out-Null
+          $installer=Join-Path $PWD 'artifacts/mec21/accessdatabaseengine_X64.exe'
+          Invoke-WebRequest -Uri $env:ACE_URL -OutFile $installer
+          if((Get-FileHash $installer -Algorithm SHA256).Hash.ToLowerInvariant() -ne $env:ACE_SHA256){ throw 'ACE installer hash mismatch.' }
+          $sig=Get-AuthenticodeSignature $installer
+          if($sig.Status -ne 'Valid' -or $sig.SignerCertificate.Subject -notmatch 'Microsoft'){ throw 'ACE signature validation failed.' }
+          $p=Start-Process $installer -ArgumentList '/quiet','/norestart' -Wait -PassThru
+          if($p.ExitCode -notin @(0,3010)){ throw "ACE install failed: $($p.ExitCode)" }
+          Remove-Item $installer -Force
+          $zip=Join-Path $PWD 'artifacts/mec21/BM4_L.zip'
+          Invoke-WebRequest -Uri "https://raw.githubusercontent.com/reallaksh19/Common/$env:COMMON_COMMIT/LFEA/BM4/BM4_L.zip" -OutFile $zip
+          if((Get-FileHash $zip -Algorithm SHA256).Hash.ToLowerInvariant() -ne $env:ZIP_SHA256){ throw 'ZIP hash mismatch.' }
+          Expand-Archive $zip -DestinationPath artifacts/mec21/source -Force
+          $accdb=Join-Path $PWD 'artifacts/mec21/source/BM4_L.ACCDB'
+          if((Get-FileHash $accdb -Algorithm SHA256).Hash.ToLowerInvariant() -ne $env:MEMBER_SHA256){ throw 'ACCDB member hash mismatch.' }
+          "ACCDB=$accdb" >> $env:GITHUB_ENV
+
+      - name: Capture current governed six-case baseline and exact L2 replay
+        shell: pwsh
+        run: |
+          $ErrorActionPreference='Stop'
+          New-Item -ItemType Directory -Force artifacts/mec21/before | Out-Null
+          node scripts/lfea-caesar-accdb-benchmark.mjs `
+            --accdb $env:ACCDB `
+            --profile benchmarks/LFEA/CAESAR_ACCDB/bm4l-validation.profile.json `
+            --solve-linear true `
+            --solve-cases L2,L3,L4,L5,L6,L14 `
+            --actual-out artifacts/mec21/before/actual.json `
+            --out artifacts/mec21/before/report.json `
+            --summary-out artifacts/mec21/before/summary.md
+          node scripts/lfea-m047-bm4l-source-replay.mjs `
+            --actual artifacts/mec21/before/actual.json `
+            --report artifacts/mec21/before/report.json `
+            --case L2 `
+            --out artifacts/mec21/before/source-replay.json
+          $replay=Get-Content -Raw artifacts/mec21/before/source-replay.json | ConvertFrom-Json
+          if($replay.currentReplayProof.status -ne 'PASS'){ throw 'Baseline exact L2 source replay is not closed.' }
+
+      - name: Add MEC-21 circular bend shear authority and production candidate
+        shell: python
+        run: |
+          from pathlib import Path
+
+          module=Path('src/core/linear-fea-piping-components/mec21-bend-shear.js')
+          if module.exists(): raise SystemExit('mec21-bend-shear.js already exists; re-evaluate stack before applying candidate')
+          module.write_text("""/**
+ * MEC-21 circular-pipe transverse shear factor used by the CAESAR bend
+ * flexibility formulation. Intergraph CAUx 2015 reproduces the MEC-21 bend
+ * flexibility matrix and its alpha*R/(A*G) shear-compliance terms.
+ *
+ * LFEA's Timoshenko kernel writes shear compliance as L/(kappa*A*G), hence
+ * exact coefficient mapping is kappa = 1/alpha. No benchmark result enters
+ * this calculation.
+ */
+export const MEC21_CIRCULAR_BEND_SHEAR_AUTHORITY =
+  'INTERGRAPH-CAESAR-II-CAUX-2015-FKX-MEC21-BEND-SHEAR';
+
+export function deriveMec21CircularPipeShear(input) {
+  const outerDiameter = positive(input?.outerDiameter, 'outerDiameter');
+  const wallThickness = positive(input?.wallThickness, 'wallThickness');
+  if (!(outerDiameter > 2 * wallThickness)) {
+    throw new TypeError('outerDiameter must exceed two wall thicknesses.');
+  }
+  const outerRadius = outerDiameter / 2;
+  const innerRadius = outerRadius - wallThickness;
+  const alpha = (4 / 3) * (outerRadius ** 3 - innerRadius ** 3)
+    / ((outerRadius ** 2 + innerRadius ** 2) * (outerRadius - innerRadius));
+  if (!(alpha > 0) || !Number.isFinite(alpha)) {
+    throw new TypeError('MEC-21 circular-pipe shear factor alpha is not finite and positive.');
+  }
+  const kappa = 1 / alpha;
+  return Object.freeze({
+    authority: MEC21_CIRCULAR_BEND_SHEAR_AUTHORITY,
+    outerRadius,
+    innerRadius,
+    alpha,
+    kappa,
+    relation: 'alpha*L/(A*G) = L/(kappa*A*G)',
+  });
+}
+
+function positive(value, field) {
+  const number = Number(value);
+  if (!Number.isFinite(number) || number <= 0) throw new TypeError(`${field} must be finite and positive.`);
+  return number;
+}
+""")
+
+          index=Path('src/core/linear-fea-piping-components/index.js')
+          text=index.read_text()
+          marker="""export {
+  MEC21_BEND_PRESSURE_EXPANSION_FORMULATION,
+  deriveMec21BendPressureFreeMovement,
+  deriveMec21BendPressureFreeState,
+} from './bourdon-pressure-expansion.js';
+"""
+          addition=marker+"""
+export {
+  MEC21_CIRCULAR_BEND_SHEAR_AUTHORITY,
+  deriveMec21CircularPipeShear,
+} from './mec21-bend-shear.js';
+"""
+          if text.count(marker)!=1: raise SystemExit(f'piping index marker count {text.count(marker)}')
+          index.write_text(text.replace(marker,addition,1))
+
+          adapter=Path('src/core/fea-benchmarks/caesar-accdb-linear-solve.js')
+          text=adapter.read_text()
+          old_import="""  compilePipingComponent,
+  deriveMec21BendPressureFreeState,
+  deriveB31JDirectionalBranchEndModifiers,"""
+          new_import="""  compilePipingComponent,
+  deriveMec21BendPressureFreeState,
+  deriveMec21CircularPipeShear,
+  deriveB31JDirectionalBranchEndModifiers,"""
+          if text.count(old_import)!=1: raise SystemExit(f'component import site count {text.count(old_import)}')
+          text=text.replace(old_import,new_import,1)
+          old_profile='      frameElementProfile: frameProfile(),\n      localAxisProfile: FRAME_LOCAL_AXIS_PROFILE,\n      referenceVector: null,\n      factorSet: factorResult.componentFactorSet,'
+          new_profile='      frameElementProfile: caesarMec21BendFrameProfile(section),\n      localAxisProfile: FRAME_LOCAL_AXIS_PROFILE,\n      referenceVector: null,\n      factorSet: factorResult.componentFactorSet,'
+          if text.count(old_profile)!=1: raise SystemExit(f'bend frame-profile site count {text.count(old_profile)}')
+          text=text.replace(old_profile,new_profile,1)
+          marker2="""function caesarStraightPipeFrameProfile() {
+  return sealFrameElementProfile({"""
+          helper="""function caesarMec21BendFrameProfile(section) {
+  const shear = deriveMec21CircularPipeShear({
+    outerDiameter: section.dimensions.outerDiameter,
+    wallThickness: section.dimensions.wallThickness,
+  });
+  return sealFrameElementProfile({
+    schema: 'fea-linear-frame-element-profile/v1',
+    profileId: 'LINEAR-FRAME-ELEMENT-R1',
+    straightPipeFormulation: 'PIPE_FRAME3D_TIMOSHENKO_V1',
+    shearDeformation: true,
+    shearCorrectionFactorY: { value: shear.kappa, source: shear.authority },
+    shearCorrectionFactorZ: { value: shear.kappa, source: shear.authority },
+    releaseRule: 'STATIC_CONDENSATION_V1',
+    thermalStrainApproximation: 'UNIFORM_TEMPERATURE_ALPHA_DELTA_T_V1',
+    releaseSingularityTolerance: { value: 1e-12, source: PROFILE_SOURCE },
+    semanticHash: '',
+  });
+}
+
+function caesarStraightPipeFrameProfile() {
+  return sealFrameElementProfile({"""
+          if text.count(marker2)!=1: raise SystemExit(f'profile insertion site count {text.count(marker2)}')
+          adapter.write_text(text.replace(marker2,helper,1))
+
+          check=Path('scripts/lfea-m047-caesar-mec21-bend-shear-authority-check.mjs')
+          check.write_text("""#!/usr/bin/env node
+import assert from 'node:assert/strict';
+import {
+  MEC21_CIRCULAR_BEND_SHEAR_AUTHORITY,
+  deriveMec21CircularPipeShear,
+} from '../src/core/linear-fea-piping-components/index.js';
+
+/*
+ * Independent formulation authority; no BM4 reference/result is consumed.
+ * Intergraph CAESAR II CAUx 2015, F=KX, reproduces the MEC-21 bend flexibility
+ * matrix. Its circular-pipe transverse shear terms are alpha*R/(A*G), with
+ *
+ * alpha = (4/3)(Ro^3-Ri^3)/[(Ro^2+Ri^2)(Ro-Ri)].
+ *
+ * LFEA's frame kernel writes the same shear compliance as L/(kappa*A*G), so
+ * coefficient parity is kappa = 1/alpha.
+ */
+assert.equal(
+  MEC21_CIRCULAR_BEND_SHEAR_AUTHORITY,
+  'INTERGRAPH-CAESAR-II-CAUX-2015-FKX-MEC21-BEND-SHEAR',
+);
+
+// Intergraph CAUx 4-inch standard-wall bend exercise geometry.
+const sample = deriveMec21CircularPipeShear({
+  outerDiameter: 0.1143,
+  wallThickness: 0.0060198,
+});
+close(sample.alpha, 1.9958916774706785, 'CAUx sample alpha');
+close(sample.kappa, 0.501029194764349, 'CAUx sample kappa');
+close(sample.alpha * sample.kappa, 1, 'alpha*kappa');
+
+// The exact annulus formula approaches the familiar thin-wall alpha=2,
+// kappa=0.5 limit without hard-coding that limit into bend mechanics.
+const thin = deriveMec21CircularPipeShear({ outerDiameter: 1, wallThickness: 1e-6 });
+assert.ok(Math.abs(thin.alpha - 2) < 2e-6, `thin-wall alpha ${thin.alpha}`);
+assert.ok(Math.abs(thin.kappa - 0.5) < 1e-6, `thin-wall kappa ${thin.kappa}`);
+
+console.log(JSON.stringify({
+  check: 'lfea-m047-caesar-mec21-bend-shear-authority',
+  status: 'PASS',
+  source: {
+    sourceId: MEC21_CIRCULAR_BEND_SHEAR_AUTHORITY,
+    publisher: 'Intergraph',
+    title: 'F=KX — How CAESAR II formulates the global stiffness matrix',
+    year: 2015,
+    bendTheory: 'MEC-21',
+    benchmarkReferenceValuesUsed: false,
+  },
+  equation: 'alpha=(4/3)*(Ro^3-Ri^3)/((Ro^2+Ri^2)*(Ro-Ri)); kappa=1/alpha',
+  cauxSample: sample,
+  thinWallLimit: thin,
+}, null, 2));
+console.log('M047 CAESAR MEC-21 bend shear authority check PASS');
+
+function close(actual, expected, label) {
+  const scale = Math.max(1, Math.abs(actual), Math.abs(expected));
+  assert.ok(Math.abs(actual - expected) <= 1e-12 * scale, `${label}: expected ${expected}, received ${actual}`);
+}
+""")
+
+      - name: Run independent authority and reusable regression gates
+        shell: pwsh
+        run: |
+          $ErrorActionPreference='Stop'
+          node --check src/core/linear-fea-piping-components/mec21-bend-shear.js
+          node --check src/core/fea-benchmarks/caesar-accdb-linear-solve.js
+          node scripts/lfea-m047-caesar-mec21-bend-shear-authority-check.mjs
+          node scripts/lfea-m047-caesar-pipe-shear-authority-check.mjs
+          node scripts/lfea-b3.2-piping-component-check.mjs
+          node scripts/lfea-b3.3-solver-check.mjs
+          node scripts/lfea-b3.4-recovery-check.mjs
+          node scripts/lfea-b3.6-sparse-assembly-check.mjs
+          node scripts/lfea-b3.9-gravity-self-weight-check.mjs
+          node scripts/lfea-b3.22-thermal-load-check.mjs
+          node scripts/lfea-b3.23-rigid-element-check.mjs
+          npm run check:core-fea
+
+      - name: Run MEC-21 candidate six cases and exact L2 source replay
+        shell: pwsh
+        run: |
+          $ErrorActionPreference='Stop'
+          New-Item -ItemType Directory -Force artifacts/mec21/after | Out-Null
+          node scripts/lfea-caesar-accdb-benchmark.mjs `
+            --accdb $env:ACCDB `
+            --profile benchmarks/LFEA/CAESAR_ACCDB/bm4l-validation.profile.json `
+            --solve-linear true `
+            --solve-cases L2,L3,L4,L5,L6,L14 `
+            --actual-out artifacts/mec21/after/actual.json `
+            --out artifacts/mec21/after/report.json `
+            --summary-out artifacts/mec21/after/summary.md
+          node scripts/lfea-m047-bm4l-source-replay.mjs `
+            --actual artifacts/mec21/after/actual.json `
+            --report artifacts/mec21/after/report.json `
+            --case L2 `
+            --out artifacts/mec21/after/source-replay.json
+          node scripts/lfea-m047-bm4l-recovery-proof.mjs `
+            --actual artifacts/mec21/after/actual.json `
+            --expected-source-sha $env:MEMBER_SHA256 `
+            --out artifacts/mec21/after/recovery-proof.json
+
+      - name: Enforce physical acceptance gates and retain A-B evidence
+        shell: pwsh
+        run: |
+          $ErrorActionPreference='Stop'
+          @'
+          const fs=require('fs');
+          const before=JSON.parse(fs.readFileSync('artifacts/mec21/before/report.json','utf8'));
+          const after=JSON.parse(fs.readFileSync('artifacts/mec21/after/report.json','utf8'));
+          const ba=JSON.parse(fs.readFileSync('artifacts/mec21/before/actual.json','utf8'));
+          const aa=JSON.parse(fs.readFileSync('artifacts/mec21/after/actual.json','utf8'));
+          const br=JSON.parse(fs.readFileSync('artifacts/mec21/before/source-replay.json','utf8'));
+          const ar=JSON.parse(fs.readFileSync('artifacts/mec21/after/source-replay.json','utf8'));
+          const proof=JSON.parse(fs.readFileSync('artifacts/mec21/after/recovery-proof.json','utf8'));
+          const cases=['L2','L3','L4','L5','L6','L14'];
+          const counts=(r,c)=>({restraint:r.restraintBasis.cases[c].exceedingComponentCount,displacementRotation:r.displacementBasis.cases[c].exceedingComponentCount,elementEnd:r.elementBasis.cases[c].exceedingComponentCount});
+          const idx=x=>new Map(x.sources.map(s=>[String(s.sourceElementId),s]));
+          const bm=idx(br), am=idx(ar);
+          const replay={};
+          for(const id of ['5','19','20','42','43','85']){
+            const b=bm.get(id)?.caesarReferenceReplay?.maximumAbsoluteDifference;
+            const a=am.get(id)?.caesarReferenceReplay?.maximumAbsoluteDifference;
+            replay[id]={before:b,after:a,improvementFraction:Number.isFinite(b)&&b!==0?(b-a)/b:null};
+          }
+          const beforeWeight=ba.mechanics.cases.L2.gravityWeightN;
+          const afterWeight=aa.mechanics.cases.L2.gravityWeightN;
+          const evidence={
+            schema:'m047-bm4l-mec21-bend-shear-ab/v1',
+            classification:'ACCEPTED_PHYSICAL_FORMULATION',
+            authority:{
+              sourceId:'INTERGRAPH-CAESAR-II-CAUX-2015-FKX-MEC21-BEND-SHEAR',
+              theory:'MEC-21 circular-pipe bend flexibility',
+              alphaEquation:'(4/3)*(Ro^3-Ri^3)/((Ro^2+Ri^2)*(Ro-Ri))',
+              lfeaMapping:'kappa=1/alpha',
+              benchmarkFittedCoefficient:false
+            },
+            sourceAccdbSha256:process.env.MEMBER_SHA256,
+            thermalAuthority:'[GUESSED] PROVISIONAL; L3/L14 are retained as regressions but are not used to derive or tune bend shear.',
+            gravityWeightN:{before:beforeWeight,after:afterWeight},
+            cases:Object.fromEntries(cases.map(c=>[c,{before:counts(before,c),after:counts(after,c)}])),
+            l2CaesarEndpointSourceReplay:replay,
+            exactReplay:{before:br.currentReplayProof,after:ar.currentReplayProof},
+            commonOperator:{status:proof.commonOperator.status,distinctStiffnessStateHashes:proof.commonOperator.distinctStiffnessStateHashes},
+            integrity:{
+              allExecutionsQualified:cases.every(c=>aa.mechanics.cases[c].executionStatus==='QUALIFIED'),
+              recoveredEquilibrium:cases.every(c=>aa.mechanics.cases[c].recoveredEquilibrium.status==='PASS'),
+              recoveryProof:proof.status==='PASS',
+              commonOperator:proof.commonOperator.status==='PASS',
+              gravityUnchanged:Math.abs(afterWeight-beforeWeight)<=1e-9*Math.max(1,Math.abs(beforeWeight)),
+              exactSourceReplay:ar.currentReplayProof.status==='PASS'
+            },
+            benchmarkFitting:false
+          };
+          const dominant=['19','20','42','43'];
+          evidence.predictedSignature={
+            dominantReplayImprovementAtLeast90Percent:dominant.every(id=>replay[id].improvementFraction>=0.90),
+            l2ElementEndNotWorse:counts(after,'L2').elementEnd<=counts(before,'L2').elementEnd,
+            l4ElementEndNotWorse:counts(after,'L4').elementEnd<=counts(before,'L4').elementEnd
+          };
+          const accepted=Object.values(evidence.integrity).every(Boolean)&&Object.values(evidence.predictedSignature).every(Boolean);
+          evidence.acceptance={status:accepted?'PASS':'FAIL',rule:'INDEPENDENT_MEC21_AUTHORITY_PLUS_PREDICTED_BEND_STIFFNESS_SIGNATURE_V1'};
+          fs.writeFileSync('benchmarks/LFEA/CAESAR_ACCDB/bm4l-mec21-bend-shear-ab.json',JSON.stringify(evidence,null,2)+'\n');
+          console.log(JSON.stringify(evidence,null,2));
+          if(!accepted) throw new Error('MEC-21 bend shear candidate failed the declared physical acceptance gates.');
+          '@ | node
+
+      - name: Publish accepted mechanics layer safely
+        shell: bash
+        run: |
+          set -euo pipefail
+          rm .github/workflows/m047-one-shot-mec21-bend-shear.yml
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add \
+            src/core/linear-fea-piping-components/mec21-bend-shear.js \
+            src/core/linear-fea-piping-components/index.js \
+            src/core/fea-benchmarks/caesar-accdb-linear-solve.js \
+            scripts/lfea-m047-caesar-mec21-bend-shear-authority-check.mjs \
+            benchmarks/LFEA/CAESAR_ACCDB/bm4l-mec21-bend-shear-ab.json \
+            .github/workflows/m047-one-shot-mec21-bend-shear.yml
+          git diff --cached --check
+          git commit -m "fix(lfea): apply MEC-21 bend shear compliance"
+          git fetch origin agent/m047-bm4l-root-cause
+          git rebase origin/agent/m047-bm4l-root-cause
+          git push origin HEAD:agent/m047-bm4l-root-cause
+
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: m047-mec21-bend-shear-${{ github.sha }}
+          path: artifacts/mec21
+          retention-days: 90

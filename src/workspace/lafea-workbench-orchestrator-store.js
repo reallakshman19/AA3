@@ -17,6 +17,7 @@ import { createLafeaWorkbenchMeshGenerationState } from './lafea-workbench-mesh-
 import { createLafeaMeshGenerationActions } from './lafea-workbench-mesh-generation-actions.js';
 import { createLafeaWorkbenchPreparationState } from './lafea-workbench-preparation-state.js';
 import { projectLafeaWorkbenchReadiness } from './lafea-workbench-readiness.js';
+import { createLafeaWorkbenchReleaseState } from './lafea-workbench-release-binding.js';
 import { createLafeaWorkbenchSourceState } from './lafea-workbench-source-state.js';
 
 export { LAFEA_LIFECYCLE_BINDING_SCHEMA, LAFEA_LIFECYCLE_BINDING_STATUSES, LAFEA_WORKBENCH_STATE_SCHEMA };
@@ -40,6 +41,7 @@ export function createLafeaWorkbenchOrchestratorStore(options) {
     getActiveStageId: () => retainedState.activeStageId,
     invokeRetained,
   });
+  const release = createLafeaWorkbenchReleaseState(stageIds);
   const geometry = createLafeaWorkbenchGeometryState(stageIds);
   const mesh = createLafeaWorkbenchMeshState(stageIds, {
     getActiveStageId: () => retainedState.activeStageId,
@@ -58,8 +60,8 @@ export function createLafeaWorkbenchOrchestratorStore(options) {
     const stage = retainedState.stages[stageId];
     if (!stage) throw storeError('LAFEA_WORKBENCH_STAGE_NOT_FOUND');
     return freeze({
-      ...stage, stageId, ...source.fields(stageId), ...mesh.fields(stageId),
-      ...meshGeneration.fields(stageId),
+      ...stage, stageId, ...source.fields(stageId), ...release.fields(stageId),
+      ...mesh.fields(stageId), ...meshGeneration.fields(stageId),
       ...preparation.fields(stageId), ...geometry.fields(stageId),
     });
   }
@@ -199,6 +201,15 @@ export function createLafeaWorkbenchOrchestratorStore(options) {
     return publish();
   }
 
+  function registerTemplateReleaseRecord(value, stageId = retainedState.activeStageId) {
+    const result = release.register(value, readStageState(stageId));
+    const state = result.changed ? publish() : deriveState();
+    return freeze({
+      ...result,
+      projection: state.stages[stageId].lifecycleReadiness.releaseBinding,
+    });
+  }
+
   function registerPreparationEvidence(value) {
     if (rawStage(value?.request?.stageId ?? retainedState.activeStageId).domainFirstProfileActive) {
       throw storeError('LAFEA_DOMAIN_FIRST_PREPARATION_REQUIRES_V2_EVIDENCE');
@@ -259,6 +270,8 @@ export function createLafeaWorkbenchOrchestratorStore(options) {
       ...retained.exportLifecycle(), schema: 'lafea-workbench-lifecycle-export/v2',
       sourceAuthority: stage.sourceAuthority,
       lastSourceAuthorityEvent: stage.lastSourceAuthorityEvent,
+      templateReleaseRecord: stage.retainedTemplateReleaseRecord,
+      releaseBinding: stage.lifecycleReadiness.releaseBinding,
       readiness: stage.lifecycleReadiness,
       preparation: stage.preparationProjection,
       domainFirstLifecycle: stage.domainFirstLifecycle,
@@ -286,11 +299,12 @@ export function createLafeaWorkbenchOrchestratorStore(options) {
   }
 
   return createLafeaWorkbenchOrchestratorApi({
-    retained, mesh, meshGeneration, preparation, geometry, listeners, unsubscribe,
+    retained, release, mesh, meshGeneration, preparation, geometry, listeners, unsubscribe,
     ...meshGenerationActions,
     getRetainedState: () => retainedState,
     readStageState, deriveStage, deriveState, publish, delegate, mutateDocument,
     importDocument, run, initializeLifecycle, applyLifecycleEvent,
+    registerTemplateReleaseRecord,
     registerPreparationEvidence, registerPreparationApproval,
     activateDomainFirstProfile, registerAnalysisDomain,
     registerAnalysisGeometryEvidence, registerAnalysisMeshEvidence,

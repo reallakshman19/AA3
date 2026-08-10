@@ -1,0 +1,151 @@
+name: M047 BM4_L bend mesh convergence
+
+on:
+  workflow_dispatch:
+  pull_request:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  bend-mesh-convergence:
+    if: github.event_name == 'workflow_dispatch' || github.head_ref == 'agent/m047-bm4l-root-cause-991'
+    runs-on: windows-2022
+    timeout-minutes: 35
+    steps:
+      - name: Checkout Advanced_Analysis
+        uses: actions/checkout@v4
+
+      - name: Checkout pinned Common source
+        uses: actions/checkout@v4
+        with:
+          repository: reallaksh19/Common
+          ref: 45d51ea18624f5775805f399110c1738301c0d90
+          path: _common
+          fetch-depth: 1
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci --ignore-scripts
+
+      - name: Install signed Microsoft ACE 2016 x64
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $installer = Join-Path $env:RUNNER_TEMP 'accessdatabaseengine_X64.exe'
+          Invoke-WebRequest -Uri 'https://download.microsoft.com/download/3/5/C/35C84C36-661A-44E6-9324-8786B8DBE231/accessdatabaseengine_X64.exe' -OutFile $installer
+          $signature = Get-AuthenticodeSignature -FilePath $installer
+          if ($signature.Status -ne 'Valid' -or [string]$signature.SignerCertificate.Subject -notmatch 'Microsoft') { throw 'Microsoft ACE installer signature check failed.' }
+          $p = Start-Process -FilePath $installer -ArgumentList '/quiet','/norestart' -Wait -PassThru
+          if ($p.ExitCode -notin @(0,3010)) { throw "ACE install failed with exit $($p.ExitCode)" }
+
+      - name: Extract and verify pinned BM4_L ACCDB
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          New-Item -ItemType Directory -Force -Path artifacts | Out-Null
+          $zip = Join-Path $PWD '_common/LFEA/BM4/BM4_L.zip'
+          if ((Get-FileHash -Algorithm SHA256 $zip).Hash.ToLowerInvariant() -ne '978617cba50fa0b1a16c2fa71dc1e0d38e55ac834b191f887d100c6951abd8b9') { throw 'ZIP custody mismatch.' }
+          $extract = Join-Path $env:RUNNER_TEMP 'bm4l-bend-mesh'
+          Expand-Archive -LiteralPath $zip -DestinationPath $extract -Force
+          $accdb = Join-Path $extract 'BM4_L.ACCDB'
+          if ((Get-FileHash -Algorithm SHA256 $accdb).Hash.ToLowerInvariant() -ne '64c05a50e9ed0452622ff5880335460486f24ac8e6adecc9a300b549c9aa82f8') { throw 'ACCDB custody mismatch.' }
+          "BM4L_ACCDB=$accdb" | Out-File -FilePath $env:GITHUB_ENV -Append -Encoding utf8
+
+      - name: Run baseline 5-degree bend chord mesh
+        shell: pwsh
+        run: |
+          node scripts/lfea-caesar-accdb-benchmark.mjs `
+            --accdb "$env:BM4L_ACCDB" `
+            --profile benchmarks/LFEA/CAESAR_ACCDB/bm4l-validation.profile.json `
+            --solve-linear true `
+            --solve-cases L2 `
+            --actual-out artifacts/l2-mesh5-actual.json `
+            --out artifacts/l2-mesh5-report.json `
+            --summary-out artifacts/l2-mesh5-summary.md
+
+      - name: Refine bend maximum chord angle to 2.5 degrees
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $path = 'src/core/fea-benchmarks/caesar-accdb-linear-solve.js'
+          $text = Get-Content $path -Raw
+          $needle = 'bendMaxAngleDegrees: { value: 5, source: PROFILE_SOURCE },'
+          if (-not $text.Contains($needle)) { throw 'Bend mesh profile shape changed.' }
+          $text = $text.Replace($needle, 'bendMaxAngleDegrees: { value: 2.5, source: PROFILE_SOURCE },')
+          Set-Content -Path $path -Value $text -Encoding utf8
+          (git diff -- $path) -join "`n" | Out-File artifacts/bend-mesh-2p5.patch -Encoding utf8
+
+      - name: Run 2.5-degree bend chord mesh
+        shell: pwsh
+        run: |
+          node scripts/lfea-caesar-accdb-benchmark.mjs `
+            --accdb "$env:BM4L_ACCDB" `
+            --profile benchmarks/LFEA/CAESAR_ACCDB/bm4l-validation.profile.json `
+            --solve-linear true `
+            --solve-cases L2 `
+            --actual-out artifacts/l2-mesh2p5-actual.json `
+            --out artifacts/l2-mesh2p5-report.json `
+            --summary-out artifacts/l2-mesh2p5-summary.md
+
+      - name: Refine bend maximum chord angle to 1.25 degrees
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $path = 'src/core/fea-benchmarks/caesar-accdb-linear-solve.js'
+          $text = Get-Content $path -Raw
+          $needle = 'bendMaxAngleDegrees: { value: 2.5, source: PROFILE_SOURCE },'
+          if (-not $text.Contains($needle)) { throw '2.5-degree bend mesh patch missing.' }
+          $text = $text.Replace($needle, 'bendMaxAngleDegrees: { value: 1.25, source: PROFILE_SOURCE },')
+          Set-Content -Path $path -Value $text -Encoding utf8
+          (git diff -- $path) -join "`n" | Out-File artifacts/bend-mesh-1p25.patch -Encoding utf8
+
+      - name: Run 1.25-degree bend chord mesh
+        shell: pwsh
+        run: |
+          node scripts/lfea-caesar-accdb-benchmark.mjs `
+            --accdb "$env:BM4L_ACCDB" `
+            --profile benchmarks/LFEA/CAESAR_ACCDB/bm4l-validation.profile.json `
+            --solve-linear true `
+            --solve-cases L2 `
+            --actual-out artifacts/l2-mesh1p25-actual.json `
+            --out artifacts/l2-mesh1p25-report.json `
+            --summary-out artifacts/l2-mesh1p25-summary.md
+
+      - name: Record convergence signature
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          function Counts($path) {
+            $r = Get-Content $path -Raw | ConvertFrom-Json
+            $rows = @($r.qualification.cases[0].comparison.rows | Where-Object status -eq 'FAIL')
+            $restraint = @($rows | Where-Object { $_.entityKind -eq 'NODE' -and $_.quantity -in @('FORCE','MOMENT') }).Count
+            $disp = @($rows | Where-Object { $_.entityKind -eq 'NODE' -and $_.quantity -in @('DISPLACEMENT','ROTATION') }).Count
+            $actions = @($rows | Where-Object { $_.entityKind -eq 'ELEMENT' -and $_.quantity -like 'GLOBAL_END_*' }).Count
+            [ordered]@{ restraint = $restraint; displacementRotation = $disp; elementEnd = $actions; totalTargeted = $restraint + $disp + $actions }
+          }
+          $out = [ordered]@{
+            schema = 'lfea-m047-bend-mesh-convergence/v1'
+            sourceSha256 = '64c05a50e9ed0452622ff5880335460486f24ac8e6adecc9a300b549c9aa82f8'
+            hypothesis = 'DISCRETIZED_CURVED_CENTRELINE_MESH_CONVERGENCE'
+            mesh5deg = Counts 'artifacts/l2-mesh5-report.json'
+            mesh2p5deg = Counts 'artifacts/l2-mesh2p5-report.json'
+            mesh1p25deg = Counts 'artifacts/l2-mesh1p25-report.json'
+          }
+          $out | ConvertTo-Json -Depth 8 | Out-File artifacts/l2-bend-mesh-convergence.json -Encoding utf8
+          $out | ConvertTo-Json -Depth 8
+
+      - name: Upload convergence evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: bm4l-l2-bend-mesh-convergence-${{ github.sha }}
+          path: artifacts/
+          if-no-files-found: error
+          retention-days: 14

@@ -1,0 +1,95 @@
+name: M047 BM4_L ACCDB bend/load-case authority catalog
+
+on:
+  push:
+    branches: [agent/m047-bm4l-root-cause]
+    paths: ['.github/workflows/m047-bm4l-accdb-bend-authority-catalog.yml']
+
+permissions:
+  contents: read
+
+jobs:
+  catalog:
+    runs-on: windows-latest
+    timeout-minutes: 30
+    env:
+      COMMON_COMMIT: '45d51ea18624f5775805f399110c1738301c0d90'
+      ZIP_SHA256: '978617cba50fa0b1a16c2fa71dc1e0d38e55ac834b191f887d100c6951abd8b9'
+      MEMBER_SHA256: '64c05a50e9ed0452622ff5880335460486f24ac8e6adecc9a300b549c9aa82f8'
+      ACE_URL: 'https://download.microsoft.com/download/3/5/C/35C84C36-661A-44E6-9324-8786B8DBE231/accessdatabaseengine_X64.exe'
+      ACE_SHA256: '04e96c9f1a1f7d251a88aececf1dc10ff65950392787427c00814a43308003de'
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: agent/m047-bm4l-root-cause
+      - name: Install authenticated ACE and fetch pinned source
+        shell: pwsh
+        run: |
+          $ErrorActionPreference='Stop'
+          New-Item -ItemType Directory -Force artifacts/catalog/source | Out-Null
+          $installer=Join-Path $PWD 'artifacts/catalog/accessdatabaseengine_X64.exe'
+          Invoke-WebRequest -Uri $env:ACE_URL -OutFile $installer
+          if((Get-FileHash $installer -Algorithm SHA256).Hash.ToLowerInvariant() -ne $env:ACE_SHA256){ throw 'ACE installer hash mismatch.' }
+          $sig=Get-AuthenticodeSignature $installer
+          if($sig.Status -ne 'Valid' -or $sig.SignerCertificate.Subject -notmatch 'Microsoft'){ throw 'ACE signature validation failed.' }
+          $p=Start-Process $installer -ArgumentList '/quiet','/norestart' -Wait -PassThru
+          if($p.ExitCode -notin @(0,3010)){ throw "ACE install failed: $($p.ExitCode)" }
+          Remove-Item $installer -Force
+          $zip=Join-Path $PWD 'artifacts/catalog/BM4_L.zip'
+          Invoke-WebRequest -Uri "https://raw.githubusercontent.com/reallaksh19/Common/$env:COMMON_COMMIT/LFEA/BM4/BM4_L.zip" -OutFile $zip
+          if((Get-FileHash $zip -Algorithm SHA256).Hash.ToLowerInvariant() -ne $env:ZIP_SHA256){ throw 'ZIP hash mismatch.' }
+          Expand-Archive $zip -DestinationPath artifacts/catalog/source -Force
+          $accdb=Join-Path $PWD 'artifacts/catalog/source/BM4_L.ACCDB'
+          if((Get-FileHash $accdb -Algorithm SHA256).Hash.ToLowerInvariant() -ne $env:MEMBER_SHA256){ throw 'ACCDB member hash mismatch.' }
+          "ACCDB=$accdb" >> $env:GITHUB_ENV
+
+      - name: Catalog table names and relevant columns without reading values
+        shell: pwsh
+        run: |
+          $ErrorActionPreference='Stop'
+          $connection=New-Object -ComObject ADODB.Connection
+          try {
+            $connection.Open("Provider=Microsoft.ACE.OLEDB.12.0;Data Source=$env:ACCDB;Mode=Read;Persist Security Info=False;")
+            $schema=$connection.OpenSchema(20)
+            $names=[System.Collections.Generic.List[string]]::new()
+            try {
+              while(-not $schema.EOF){
+                if([string]$schema.Fields.Item('TABLE_TYPE').Value -eq 'TABLE'){
+                  $names.Add([string]$schema.Fields.Item('TABLE_NAME').Value)
+                }
+                $schema.MoveNext()
+              }
+            } finally { $schema.Close(); [void][System.Runtime.InteropServices.Marshal]::ReleaseComObject($schema) }
+            $all=@($names.ToArray() | Sort-Object)
+            $relevant=@($all | Where-Object { $_ -match '(?i)(LOAD|CASE|BEND|SIF|FLEX|STATIC|MISC|CONTROL|OPTION|CONFIG|STIFF|CODE)' })
+            $details=[ordered]@{}
+            foreach($table in $relevant){
+              if($table -notmatch '^[A-Za-z0-9_]+$'){ continue }
+              $rs=New-Object -ComObject ADODB.Recordset
+              try {
+                $rs.Open("SELECT TOP 0 * FROM [$table]",$connection,0,1)
+                $cols=[System.Collections.Generic.List[object]]::new()
+                for($i=0;$i -lt $rs.Fields.Count;$i++){
+                  $f=$rs.Fields.Item($i)
+                  $cols.Add([ordered]@{ordinal=$i;name=[string]$f.Name;type=[int]$f.Type;definedSize=[int]$f.DefinedSize})
+                }
+                $details[$table]=$cols.ToArray()
+              } finally { if($rs.State -ne 0){$rs.Close()}; [void][System.Runtime.InteropServices.Marshal]::ReleaseComObject($rs) }
+            }
+            [ordered]@{
+              schema='m047-bm4l-accdb-authority-catalog/v1'
+              sourceAccdbSha256=$env:MEMBER_SHA256
+              allTableCount=$all.Count
+              allTables=$all
+              relevantTables=$details
+              interpretation='Schema-only catalog; no table values are consumed by this step.'
+            } | ConvertTo-Json -Depth 20 | Set-Content -Encoding utf8 artifacts/catalog/authority-catalog.json
+          } finally { if($connection.State -ne 0){$connection.Close()}; [void][System.Runtime.InteropServices.Marshal]::ReleaseComObject($connection) }
+
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: m047-bm4l-accdb-authority-catalog-${{ github.sha }}
+          path: artifacts/catalog
+          retention-days: 14
+          if-no-files-found: error

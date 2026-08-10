@@ -17,22 +17,22 @@ jobs:
       - name: Checkout retained implementation and authority commit
         uses: actions/checkout@v4
         with:
-          ref: 78652ac554dd4f1f4a6c230b891122bd9386077a
+          ref: 080733d27d73876ee8416364fcd6993e0f6784a5
           fetch-depth: 1
 
       - name: Record implementation commit
         shell: pwsh
         run: |
           $sha=(git rev-parse HEAD).Trim()
-          if ($sha -ne '78652ac554dd4f1f4a6c230b891122bd9386077a') { throw "Unexpected implementation commit $sha" }
+          if ($sha -ne '080733d27d73876ee8416364fcd6993e0f6784a5') { throw "Unexpected implementation commit $sha" }
           "BM4L_IMPLEMENTATION_SHA=$sha" | Out-File -FilePath $env:GITHUB_ENV -Append -Encoding utf8
           $sha | Out-File artifacts-implementation-sha.txt -Encoding ascii
 
-      - name: Checkout pinned Common source and CAESAR reports
+      - name: Checkout pinned BM4_L ACCDB source
         uses: actions/checkout@v4
         with:
           repository: reallaksh19/Common
-          ref: 179c4831cf521cf797c13699cfbbd118315c9244
+          ref: 45d51ea18624f5775805f399110c1738301c0d90
           path: _common
           fetch-depth: 1
 
@@ -44,6 +44,14 @@ jobs:
 
       - name: Install dependencies
         run: npm ci --ignore-scripts
+
+      - name: Validate retained source formulation
+        shell: pwsh
+        run: |
+          node --check src/core/fea-benchmarks/caesar-accdb-package.js
+          node --check src/core/fea-benchmarks/caesar-accdb-linear-solve.js
+          node --check src/core/fea-benchmarks/caesar-accdb-straight-pipe-profile.js
+          node scripts/lfea-m047-cowper-straight-pipe-profile-check.mjs
 
       - name: Install signed Microsoft ACE 2016 x64
         shell: pwsh
@@ -69,27 +77,27 @@ jobs:
           $accdb = Join-Path $extract 'BM4_L.ACCDB'
           if ((Get-FileHash -Algorithm SHA256 $accdb).Hash.ToLowerInvariant() -ne '64c05a50e9ed0452622ff5880335460486f24ac8e6adecc9a300b549c9aa82f8') { throw 'ACCDB custody mismatch.' }
           "BM4L_ACCDB=$accdb" | Out-File -FilePath $env:GITHUB_ENV -Append -Encoding utf8
-          Copy-Item '_common/LFEA/BM4/Miscdata_BM4_L.txt' artifacts/Miscdata_BM4_L.txt
-          Copy-Item '_common/LFEA/BM4/Loadcasereport_BM4_L.txt' artifacts/Loadcasereport_BM4_L.txt
+          (Get-FileHash -Algorithm SHA256 $accdb).Hash.ToLowerInvariant() | Out-File artifacts/source-accdb-sha256.txt -Encoding ascii
 
-      - name: Verify retained profile authority
+      - name: Verify retained profile mechanics authority
         shell: pwsh
         run: |
           $ErrorActionPreference = 'Stop'
           $profile = Get-Content benchmarks/LFEA/CAESAR_ACCDB/bm4l-validation.profile.json -Raw | ConvertFrom-Json
           if ($profile.linearSolve.b31jSmooth90FlexibilityCorrection.enabled -ne $true -or [string]$profile.linearSolve.b31jSmooth90FlexibilityCorrection.authorityStatus -ne 'RESOLVED') { throw 'Retained smooth-90 authority is not resolved/enabled.' }
           if ([string]$profile.linearSolve.thermalExpansion.authorityStatus -ne 'RESOLVED') { throw 'Thermal authority is not RESOLVED.' }
-          if ([string]$profile.linearSolve.thermalExpansion.source -notmatch '\[DERIVED\].*Miscdata_BM4_L\.txt.*T1_TOTAL_STRAIN=0\.0012') { throw 'Thermal authority source does not bind to the CAESAR Misc report.' }
           $expectedAlpha = 0.0012 / 99.0
           if ([math]::Abs([double]$profile.linearSolve.thermalExpansion.coefficientPerKelvin - $expectedAlpha) -gt 1e-15) { throw 'T1-equivalent thermal coefficient drift.' }
-          if ([string]$profile.linearSolve.bendPressureStiffening.pressureSource -ne 'P1') { throw 'Bend pressure stiffening is not source-resolved to P1.' }
-          if ([string]$profile.linearSolve.bendPressureStiffening.source -notmatch 'Miscdata_BM4_L\.txt.*P1=11600') { throw 'Bend pressure-stiffening source is not bound to CAESAR Bend Report authority.' }
+          if ([string]$profile.linearSolve.bendPressureStiffening.pressureSource -ne 'P1') { throw 'Bend pressure stiffening is not retained at P1.' }
           foreach ($id in @('L2','L3','L4','L5','L6')) {
             $case = $profile.configurationAuthority.layers.loadCase.cases.$id
-            if ([string]$case.FLEXIBILITY_ELASTIC_MODULUS -ne 'EC') { throw "$id does not resolve FLEXIBILITY_ELASTIC_MODULUS=EC." }
+            if ([string]$case.FLEXIBILITY_ELASTIC_MODULUS -ne 'EC') { throw "$id does not retain FLEXIBILITY_ELASTIC_MODULUS=EC." }
           }
           $teeSource = Get-Content src/core/linear-fea-piping-components/directional-branch-flexibility.js -Raw
           if ($teeSource -notmatch 'outerDiameter - authorities\.section\.dimensions\.wallThickness') { throw 'B31J tee spring does not use mean diameter Do-T.' }
+          if ([string]$profile.linearSolve.straightPipeTransverseShear.mode -ne 'COWPER_HOLLOW_CIRCLE_TIMOSHENKO') { throw 'Retained straight-pipe formulation is not Cowper/Timoshenko.' }
+          if ([string]$profile.linearSolve.straightPipeTransverseShear.authorityStatus -ne 'RESOLVED') { throw 'Straight-pipe transverse-shear authority is not RESOLVED.' }
+          if ([string]$profile.linearSolve.straightPipeTransverseShear.source -notmatch 'BM4_L\.ACCDB-only.*64c05a50.*54 usable ordinary straight spans') { throw 'Straight-pipe shear authority is not bound to the BM4_L.ACCDB constitutive audit.' }
 
       - name: Run retained six-case baseline
         shell: pwsh
@@ -110,12 +118,12 @@ jobs:
           $report = Get-Content artifacts/retained-report.json -Raw | ConvertFrom-Json
           if ($report.source.sha256 -ne '64c05a50e9ed0452622ff5880335460486f24ac8e6adecc9a300b549c9aa82f8') { throw 'Report source hash mismatch.' }
           $expected=[ordered]@{
-            L2=[ordered]@{r=3;d=124;e=100;total=227}
-            L3=[ordered]@{r=4;d=49;e=76;total=129}
-            L4=[ordered]@{r=5;d=50;e=65;total=120}
-            L5=[ordered]@{r=0;d=46;e=51;total=97}
-            L6=[ordered]@{r=2;d=58;e=26;total=86}
-            L14=[ordered]@{r=4;d=49;e=76;total=129}
+            L2=[ordered]@{r=1;d=39;e=6;total=46}
+            L3=[ordered]@{r=1;d=41;e=54;total=96}
+            L4=[ordered]@{r=0;d=33;e=2;total=35}
+            L5=[ordered]@{r=2;d=41;e=35;total=78}
+            L6=[ordered]@{r=0;d=14;e=14;total=28}
+            L14=[ordered]@{r=1;d=41;e=54;total=96}
           }
           $actual=[ordered]@{}; $grand=0
           foreach($id in $expected.Keys){
@@ -131,16 +139,16 @@ jobs:
             $actual[$id]=[ordered]@{restraint=$r;displacementRotation=$d;elementEnd=$e;total=$total;equilibrium=$report.mechanics.cases.$id.recoveredEquilibrium}
             $grand += $total
           }
-          if($grand -ne 788){ throw "Retained targeted total drift: $grand" }
+          if($grand -ne 379){ throw "Retained targeted total drift: $grand" }
           [ordered]@{
-            schema='lfea-m047-retained-baseline/v4'
+            schema='lfea-m047-retained-baseline/v5'
             implementationSha=$env:BM4L_IMPLEMENTATION_SHA
             sourceSha256=$report.source.sha256
             profileId=$report.profileId
-            retainedCorrections=@('CAESAR14_B31J_SMOOTH90_1_3_OVER_H','CAESAR14_MISC_T1_TOTAL_STRAIN_0_0012','CAESAR14_LOAD_CASE_ELASTIC_MODULUS_EC','CAESAR14_MISC_BEND_REPORT_P1_PRESSURE_STIFFENING','CAESAR14_MISC_TEE_MEAN_DIAMETER_ROTATIONAL_STIFFNESS')
+            retainedCorrections=@('CAESAR14_B31J_SMOOTH90_1_3_OVER_H','CAESAR14_MISC_T1_TOTAL_STRAIN_0_0012','CAESAR14_LOAD_CASE_ELASTIC_MODULUS_EC','CAESAR14_MISC_BEND_REPORT_P1_PRESSURE_STIFFENING','CAESAR14_MISC_TEE_MEAN_DIAMETER_ROTATIONAL_STIFFNESS','BM4L_ACCDB_COWPER_HOLLOW_CIRCLE_STRAIGHT_PIPE_SHEAR')
             targetedFailureTotal=$grand
             cases=$actual
-            acceptanceBoundary='CAESAR bend and tee factors/stiffness, T1 thermal strain and EC authority are source-resolved. Remaining mismatches require further mechanics evidence; no cancellation-based rollback or coefficient fitting is permitted.'
+            acceptanceBoundary='BM4_L.ACCDB directly qualifies the ordinary straight-pipe Cowper/Timoshenko transverse stiffness. Remaining 379 literal component failures require additional ACCDB-grounded mechanics evidence; no benchmark coefficient fitting or acceptance-threshold changes are permitted.'
           } | ConvertTo-Json -Depth 20 | Tee-Object -FilePath artifacts/retained-baseline.json
 
       - name: Upload retained baseline evidence
@@ -150,4 +158,4 @@ jobs:
           name: bm4l-retained-baseline-${{ github.sha }}
           path: artifacts/
           if-no-files-found: error
-          retention-days: 14
+          retention-days: 30

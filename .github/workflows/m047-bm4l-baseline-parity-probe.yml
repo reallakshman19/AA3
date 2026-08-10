@@ -1,0 +1,118 @@
+name: M047 BM4_L baseline parity probe
+
+on:
+  push:
+    branches: [agent/m047-bm4l-root-cause]
+    paths:
+      - '.github/workflows/m047-bm4l-baseline-parity-probe.yml'
+      - 'scripts/lfea-m047-bm4l-baseline-parity.mjs'
+
+permissions:
+  contents: read
+
+jobs:
+  parity:
+    runs-on: windows-latest
+    timeout-minutes: 35
+    env:
+      BASELINE_COMMIT: '617d2e574c04692ee2fc136930af60f81d5dc952'
+      COMMON_COMMIT: '45d51ea18624f5775805f399110c1738301c0d90'
+      ZIP_SHA256: '978617cba50fa0b1a16c2fa71dc1e0d38e55ac834b191f887d100c6951abd8b9'
+      MEMBER_SHA256: '64c05a50e9ed0452622ff5880335460486f24ac8e6adecc9a300b549c9aa82f8'
+      ACE_URL: 'https://download.microsoft.com/download/3/5/C/35C84C36-661A-44E6-9324-8786B8DBE231/accessdatabaseengine_X64.exe'
+      ACE_SHA256: '04e96c9f1a1f7d251a88aececf1dc10ff65950392787427c00814a43308003de'
+    steps:
+      - name: Checkout current investigation head
+        uses: actions/checkout@v4
+        with:
+          path: current
+
+      - name: Checkout immutable baseline implementation
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ env.BASELINE_COMMIT }}
+          path: baseline
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: Install current and baseline dependencies
+        shell: pwsh
+        run: |
+          npm ci --prefix current
+          npm ci --prefix baseline
+
+      - name: Install authenticated Microsoft ACE provider
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          New-Item -ItemType Directory -Force artifacts | Out-Null
+          $installer = Join-Path $PWD 'artifacts/accessdatabaseengine_X64.exe'
+          Invoke-WebRequest -Uri $env:ACE_URL -OutFile $installer
+          $hash = (Get-FileHash $installer -Algorithm SHA256).Hash.ToLowerInvariant()
+          if ($hash -ne $env:ACE_SHA256) { throw "ACE installer hash mismatch: $hash" }
+          $signature = Get-AuthenticodeSignature $installer
+          if ($signature.Status -ne 'Valid' -or $signature.SignerCertificate.Subject -notmatch 'Microsoft') {
+            throw "ACE installer signature invalid: $($signature.Status), $($signature.SignerCertificate.Subject)"
+          }
+          $p = Start-Process $installer -ArgumentList '/quiet','/norestart' -Wait -PassThru
+          if ($p.ExitCode -notin @(0,3010)) { throw "ACE installer exited $($p.ExitCode)" }
+
+      - name: Fetch exact pinned source member
+        id: source
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $zip = Join-Path $PWD 'artifacts/BM4_L.zip'
+          Invoke-WebRequest -Uri "https://raw.githubusercontent.com/reallaksh19/Common/$env:COMMON_COMMIT/LFEA/BM4/BM4_L.zip" -OutFile $zip
+          $zipHash = (Get-FileHash $zip -Algorithm SHA256).Hash.ToLowerInvariant()
+          if ($zipHash -ne $env:ZIP_SHA256) { throw "ZIP hash mismatch: $zipHash" }
+          Expand-Archive $zip -DestinationPath artifacts/source -Force
+          $accdb = Join-Path $PWD 'artifacts/source/BM4_L.ACCDB'
+          $memberHash = (Get-FileHash $accdb -Algorithm SHA256).Hash.ToLowerInvariant()
+          if ($memberHash -ne $env:MEMBER_SHA256) { throw "ACCDB member hash mismatch: $memberHash" }
+          "accdb=$accdb" >> $env:GITHUB_OUTPUT
+
+      - name: Run immutable baseline implementation
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          node baseline/scripts/lfea-caesar-accdb-benchmark.mjs `
+            --accdb "${{ steps.source.outputs.accdb }}" `
+            --profile baseline/benchmarks/LFEA/CAESAR_ACCDB/bm4l-validation.profile.json `
+            --solve-linear true `
+            --solve-cases L2,L3,L4,L5,L6,L14 `
+            --actual-out artifacts/baseline-actual.json `
+            --out artifacts/baseline-report.json `
+            --summary-out artifacts/baseline-summary.md
+
+      - name: Run current evidence-instrumented implementation
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          node current/scripts/lfea-caesar-accdb-benchmark.mjs `
+            --accdb "${{ steps.source.outputs.accdb }}" `
+            --profile current/benchmarks/LFEA/CAESAR_ACCDB/bm4l-validation.profile.json `
+            --solve-linear true `
+            --solve-cases L2,L3,L4,L5,L6,L14 `
+            --actual-out artifacts/current-actual.json `
+            --out artifacts/current-report.json `
+            --summary-out artifacts/current-summary.md
+
+      - name: Prove governed comparison-row parity
+        shell: pwsh
+        run: |
+          node current/scripts/lfea-m047-bm4l-baseline-parity.mjs `
+            --current artifacts/current-report.json `
+            --baseline artifacts/baseline-report.json `
+            --out artifacts/baseline-parity.json
+          Get-Content artifacts/baseline-parity.json
+
+      - name: Upload parity evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: m047-bm4l-baseline-parity-${{ github.sha }}
+          path: artifacts
+          retention-days: 14

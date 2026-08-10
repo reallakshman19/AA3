@@ -1,0 +1,177 @@
+{
+  "schema": "m047-bm4l-caesar-straight-pipe-shear-fix/v1",
+  "classification": "ACCEPTED_PHYSICAL_FORMULATION",
+  "caesarAuthority": "INTERGRAPH-CAESAR-II-CAUX-2015-FKX-SHEAR-COEFFICIENT-2",
+  "caesarShearCoefficient": 2,
+  "lfeaKappa": 0.5,
+  "scope": [
+    "FRAME",
+    "BEND_INCOMING_STRAIGHT"
+  ],
+  "excludedScopes": [
+    "BEND_ARC",
+    "REDUCER",
+    "RIGID"
+  ],
+  "sourceAccdbSha256": "64c05a50e9ed0452622ff5880335460486f24ac8e6adecc9a300b549c9aa82f8",
+  "issueDeclaredAccdbSha256": "e21b0862851ea2bb6f20d55e4a3a94f501537b618b98dd46afa9f6777ee38d3c",
+  "sourceHashDiscrepancyRemains": true,
+  "thermalExpansionAuthority": "[GUESSED] PROVISIONAL; L3/L14 deltas retained but not used to fit kappa",
+  "beforeGravityWeightN": 93510.79023974095,
+  "afterGravityWeightN": 93510.79023974095,
+  "recoveryAndEquilibriumPass": true,
+  "commonOperator": {
+    "status": "PASS",
+    "distinctStiffnessStateHashes": [
+      "fnv1a64:6720f2f4d40f574b"
+    ],
+    "byCase": {
+      "L2": "fnv1a64:6720f2f4d40f574b",
+      "L3": "fnv1a64:6720f2f4d40f574b",
+      "L4": "fnv1a64:6720f2f4d40f574b",
+      "L5": "fnv1a64:6720f2f4d40f574b",
+      "L6": "fnv1a64:6720f2f4d40f574b",
+      "L14": "fnv1a64:6720f2f4d40f574b"
+    }
+  },
+  "highSignal": [
+    {
+      "name": "L2 node 20090 UY",
+      "reference": -197.26048278808594,
+      "before": -446.0394956111272,
+      "after": -212.43193049542242,
+      "beforeAbsoluteError": 248.77901282304128,
+      "afterAbsoluteError": 15.171447707336483,
+      "improved": true
+    },
+    {
+      "name": "L2 E4 TO MZ",
+      "reference": -484.62725830078125,
+      "before": -667.3617879738737,
+      "after": -493.9725206490863,
+      "beforeAbsoluteError": 182.73452967309242,
+      "afterAbsoluteError": 9.345262348305027,
+      "improved": true
+    },
+    {
+      "name": "L2 E4 TO FY",
+      "reference": -265.9423828125,
+      "before": -335.5464560422836,
+      "after": -269.47918486183266,
+      "beforeAbsoluteError": 69.60407322978358,
+      "afterAbsoluteError": 3.536802049332664,
+      "improved": true
+    },
+    {
+      "name": "L2 E5 FROM MZ",
+      "reference": 484.62725830078125,
+      "before": 667.3617879738731,
+      "after": 493.9725206490866,
+      "beforeAbsoluteError": 182.73452967309186,
+      "afterAbsoluteError": 9.345262348305369,
+      "improved": true
+    },
+    {
+      "name": "L2 E5 FROM FY",
+      "reference": 68.68189239501953,
+      "before": -110.49303956884285,
+      "after": 57.047254366410925,
+      "beforeAbsoluteError": 179.17493196386238,
+      "afterAbsoluteError": 11.634638028608606,
+      "improved": true
+    },
+    {
+      "name": "L2 node 20120 RZ",
+      "reference": 3.0088185611162166E-05,
+      "before": 2.2979535078259E-05,
+      "after": 2.9199006287491957E-05,
+      "beforeAbsoluteError": 7.1086505329031674E-06,
+      "afterAbsoluteError": 8.891793236702093E-07,
+      "improved": true
+    },
+    {
+      "name": "L4 node 22120 UY",
+      "reference": -0.32686203718185425,
+      "before": -0.3429568778695966,
+      "after": -0.35360685639955136,
+      "beforeAbsoluteError": 0.016094840687742362,
+      "afterAbsoluteError": 0.026744819217697113,
+      "improved": false
+    }
+  ],
+  "failureCounts": {
+    "L2": {
+      "before": {
+        "restraint": 3,
+        "displacementRotation": 130,
+        "elementEnd": 110
+      },
+      "after": {
+        "restraint": 1,
+        "displacementRotation": 36,
+        "elementEnd": 18
+      }
+    },
+    "L3": {
+      "before": {
+        "restraint": 2,
+        "displacementRotation": 41,
+        "elementEnd": 77
+      },
+      "after": {
+        "restraint": 2,
+        "displacementRotation": 47,
+        "elementEnd": 83
+      }
+    },
+    "L4": {
+      "before": {
+        "restraint": 5,
+        "displacementRotation": 56,
+        "elementEnd": 65
+      },
+      "after": {
+        "restraint": 0,
+        "displacementRotation": 36,
+        "elementEnd": 6
+      }
+    },
+    "L5": {
+      "before": {
+        "restraint": 1,
+        "displacementRotation": 49,
+        "elementEnd": 82
+      },
+      "after": {
+        "restraint": 3,
+        "displacementRotation": 63,
+        "elementEnd": 50
+      }
+    },
+    "L6": {
+      "before": {
+        "restraint": 3,
+        "displacementRotation": 58,
+        "elementEnd": 26
+      },
+      "after": {
+        "restraint": 0,
+        "displacementRotation": 13,
+        "elementEnd": 14
+      }
+    },
+    "L14": {
+      "before": {
+        "restraint": 2,
+        "displacementRotation": 41,
+        "elementEnd": 77
+      },
+      "after": {
+        "restraint": 2,
+        "displacementRotation": 47,
+        "elementEnd": 83
+      }
+    }
+  },
+  "benchmarkFitting": false
+}

@@ -541,6 +541,9 @@ function buildFrameElement(input) {
     axesResult,
     material: input.material,
     section: input.section,
+    profile: isCaesarStraightPipeSpan(input.kind)
+      ? caesarStraightPipeFrameProfile()
+      : frameProfile(),
   });
   const length = frame.geometry.length;
   const lineWeight = input.gravityLineWeight
@@ -1546,7 +1549,7 @@ function compileUnloadedFrame(input) {
     material: input.material,
     section: input.section,
     localAxes: { result: input.axesResult, profile: FRAME_LOCAL_AXIS_PROFILE },
-    profile: frameProfile(),
+    profile: input.profile ?? frameProfile(),
     distributedLoads: [],
     temperature: null,
     releases: [],
@@ -2057,6 +2060,31 @@ function compilerProfile() {
     unrepresentableFeatureRule: 'UNREPRESENTABLE_FEATURE_BLOCKS_COMPILATION_V1',
     minimumElementLength: { value: 1e-8, source: PROFILE_SOURCE },
     spanDirectionTolerance: { value: 1e-9, source: PROFILE_SOURCE },
+    semanticHash: '',
+  });
+}
+
+function isCaesarStraightPipeSpan(kind) {
+  return kind === 'FRAME' || kind === 'BEND_INCOMING_STRAIGHT';
+}
+
+function caesarStraightPipeFrameProfile() {
+  return sealFrameElementProfile({
+    schema: 'fea-linear-frame-element-profile/v1',
+    profileId: 'LINEAR-FRAME-ELEMENT-R1',
+    straightPipeFormulation: 'PIPE_FRAME3D_TIMOSHENKO_V1',
+    shearDeformation: true,
+    shearCorrectionFactorY: {
+      value: 0.5,
+      source: 'INTERGRAPH-CAESAR-II-CAUX-2015-FKX-SHEAR-COEFFICIENT-2',
+    },
+    shearCorrectionFactorZ: {
+      value: 0.5,
+      source: 'INTERGRAPH-CAESAR-II-CAUX-2015-FKX-SHEAR-COEFFICIENT-2',
+    },
+    releaseRule: 'STATIC_CONDENSATION_V1',
+    thermalStrainApproximation: 'UNIFORM_TEMPERATURE_ALPHA_DELTA_T_V1',
+    releaseSingularityTolerance: { value: 1e-12, source: PROFILE_SOURCE },
     semanticHash: '',
   });
 }

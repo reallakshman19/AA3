@@ -86,5 +86,10 @@ jobs:
       - name: Governed pre-FEA solve authorization
         run: node --test test/lfea-prefea-gateway.test.js
 
-      - name: Production build
-        run: npx vite build
+      # `npm run build`, not `npx vite build`. The npm script is
+      # advanced-shell-contract-check -> vite build -> bundle-chunk-check, and
+      # the first version of this gate ran only the middle step. That skipped
+      # the production chunk ceiling, so main was already shipping a main chunk
+      # over the 1 MiB maximum while this gate reported green.
+      - name: Production build, shell contract and chunk ceiling
+        run: npm run build

@@ -46,8 +46,10 @@ jobs:
           $extract = Join-Path $env:RUNNER_TEMP 'bm4l-schema-authority'
           Expand-Archive -LiteralPath $zip -DestinationPath $extract -Force
           $accdb = Join-Path $extract 'BM4_L.ACCDB'
-          if ((Get-FileHash -Algorithm SHA256 $accdb).Hash.ToLowerInvariant() -ne '64c05a50e9ed0452622ff5880335460486f24ac8e6adecc9a300b549c9aa82f8') { throw 'ACCDB custody mismatch.' }
+          $sourceHash = (Get-FileHash -Algorithm SHA256 $accdb).Hash.ToLowerInvariant()
+          if ($sourceHash -ne '64c05a50e9ed0452622ff5880335460486f24ac8e6adecc9a300b549c9aa82f8') { throw 'ACCDB custody mismatch.' }
           "BM4L_ACCDB=$accdb" | Out-File -FilePath $env:GITHUB_ENV -Append -Encoding utf8
+          "BM4L_SOURCE_SHA256=$sourceHash" | Out-File -FilePath $env:GITHUB_ENV -Append -Encoding utf8
 
       - name: Inventory all Access tables and columns
         shell: powershell
@@ -74,7 +76,7 @@ jobs:
             }
             $inventory=[ordered]@{
               schema='lfea-m047-accdb-schema-inventory/v1'
-              sourceSha256=(Get-FileHash -Algorithm SHA256 $env:BM4L_ACCDB).Hash.ToLowerInvariant()
+              sourceSha256=$env:BM4L_SOURCE_SHA256
               provider=$provider
               tableCount=$records.Count
               tables=$records

@@ -198,6 +198,12 @@ class LfeaStandaloneRuntime {
     return comparison;
   }
 
+  createNativeEvidenceDossier() {
+    this.requireActive();
+    // Evidence dossier creation remains current-only and fail-closed in the native Verification controller.
+    return this.verificationController.createDossier();
+  }
+
   #engineeringStatePair() {
     return Object.freeze({
       execution: this.executionAuthority.getState(),

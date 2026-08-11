@@ -34,6 +34,9 @@ function buildNativeApi(runtime) {
     selectNativeRun: (runId) => runtime.selectHistoryRun(runId),
     compareNativeRuns: (left, right) => runtime.compareHistoryRuns(left, right),
     getNativeRunComparison: () => active(runtime, () => runtime.comparisonController.getState()),
+    getNativeVerification: () => active(runtime, () => runtime.verificationController.getVerification()),
+    getNativeEvidenceDossier: () => active(runtime, () => runtime.verificationController.getDossier()),
+    createNativeEvidenceDossier: () => active(runtime, () => runtime.verificationController.createDossier()),
   };
 }
 

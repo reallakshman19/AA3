@@ -133,7 +133,7 @@ assert.match(view, /PACKAGE_SHAPE_CODES\.has\(code\)/u);
 assert.match(view, /code\.startsWith\('UNSUPPORTED_'\)/u);
 assert.match(view, /ENGINEERING_VALUE_CODES\.has\(code\)/u);
 assert.match(view, /LOCAL_EDIT_CODES\.has\(code\)/u);
-assert.match(view, /imported semantic hashes are intentionally not repaired/u);
+assert.match(view, /Imported semantic hashes are intentionally not repaired/u);
 assert.match(view, /will not silently coerce unsupported engineering authority/u);
 
 assert.doesNotMatch(

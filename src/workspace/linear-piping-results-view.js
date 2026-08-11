@@ -108,6 +108,10 @@ function renderCodeTable(doc, value) {
     ['Component', (row) => row.componentId],
     ['Code point', (row) => row.codePointId],
     ['Combination', (row) => row.combinationId],
+    ['Code profile', (row) => row.codeProfileId],
+    ['Profile hash', (row) => row.codeProfileSemanticHash],
+    ['Edition dataset', (row) => row.editionDatasetSemanticHash],
+    ['Source cases', formatCodeSourceCases],
     ['Stress', (row) => numberWithUnit(row.calculatedStress, 'Pa')],
     ['Allowable', (row) => numberWithUnit(row.allowableStress, 'Pa')],
     ['Utilization', (row) => numberText(row.utilization)],
@@ -115,6 +119,12 @@ function renderCodeTable(doc, value) {
     ['Result hash', (row) => row.semanticHash],
   ];
   return renderTableSection(doc, 'B31.3 application results', columns, value.codeRows);
+}
+
+function formatCodeSourceCases(row) {
+  return row.sourceCaseIds
+    .map((caseId, index) => `${caseId} [${row.sourcePhysicalLoadCaseHashes[index]}]`)
+    .join(' → ');
 }
 
 function renderLimitations(doc, value) {

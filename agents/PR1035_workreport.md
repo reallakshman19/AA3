@@ -9,295 +9,186 @@
 | PR | #1035 — DRAFT |
 | Branch | `agent/lfea-standalone-s1-1024` |
 | Separation merge base | `f8486ee75c39c33483742607b7d18ee42ebcde5d` |
-| Current stage | Stage 10 — governed support/code authority composition |
-| Last stage | Stage 9 persistence — IMPLEMENTED / PARTIAL validation |
-| Current blocker | Exact execution of `node scripts/run-lfea-standalone-check.mjs` remains NOT_RUN: local checkout cannot resolve github.com and CodingRules prohibit adding/modifying workflows without explicit Owner authorization. |
-| Current file reconciliation | 56 changed PR paths after Stage 9; 56/56 explained. |
-| Exact next action | Extract standalone composition wiring before adding support/code integrations, then compose only existing governed interface/support/B31 authorities. |
+| Current stage | Stage 11 — native Verification / evidence dossier |
+| Last stage | Stage 10 — PARTIAL / `BLOCKED_BY_MISSING_GOVERNED_PARENTS` |
+| Current file reconciliation | 61 PR paths after Stage 10; 61/61 explained. |
+| Current blocker | Exact execution of `node scripts/run-lfea-standalone-check.mjs` remains NOT_RUN because the execution host cannot obtain a checkout and workflow edits are not authorized. |
+| Exact next action | Build Verification and a deterministic current-run evidence dossier exclusively from retained B-3.3/B-3.4/History/build/publication-readiness evidence. |
 
-> The report cannot embed the SHA of the commit containing itself without becoming self-referential. GitHub branch/PR metadata is authoritative for the report-sync HEAD. Stage-specific code heads are recorded below.
+> GitHub branch/PR metadata is authoritative for the report-sync HEAD. Stage-specific code heads are recorded below.
 
 ## Handover in 60 Seconds
 
-### Implemented standalone path
+Implemented standalone path:
 
 `Source → Review → Model → reviewed B-3.3 execution → CURRENT/STALE raw authority → governed B-3.4 recovery → Results → immutable History → semantic Compare → bounded non-authoritative persistence`
 
-### Engineering truths preserved
+Stage 10 additionally delivered a bounded runtime composition and product-visible downstream-publication readiness. Actual support and B31 publication are **correctly blocked**, not fabricated.
 
-- Source custody and reviewed execution remain domain authority.
-- Raw B-3.3 and recovered B-3.4 quantities remain separate.
-- CURRENT/STALE is a relationship to current governed parents, not a mutation of evidence.
-- History retains immutable exact-lineage run evidence; selecting a run changes view context only.
-- Compare subtracts only semantically compatible quantities and returns `NOT_DIRECTLY_COMPARABLE` otherwise.
-- Browser persistence stores only active-view and recent-source metadata. It never stores source XML, authorization, solver execution, recovery, or History engineering evidence.
-- Recent-source metadata explicitly says re-import is required before Review/Analysis.
-- No new LAFEA runtime coupling has been introduced.
+### Current support-action blockers
 
-### Remaining roadmap
+Existing governed chain:
 
-1. Stage 10 support/code authority composition.
-2. Verification / dossier.
-3. Full standalone browser golden journey.
-4. Physical-LAFEA-absence rehearsal.
-5. Physical extraction last.
+`compileLinearPipingInterfaceSet → recoverLinearPipingInterfaceLoads → createLinearPipingSupportActionsPublication`
 
-### Highest-risk unresolved item
+Current standalone state lacks demonstrated governed parents for:
 
-Exact standalone aggregate execution on one PR head remains unavailable. All focused standalone checks committed in this PR remain **NOT_RUN**, never PASS by inference.
+- interface set / interface definitions/profile/support attachment-restraint authority;
+- higher-level current linear-piping analysis-result record expected by interface recovery;
+- explicit governed `upGlobal`;
+- explicit governed `parallelTolerance`.
+
+No Fa/Fl/Fv is calculated in `src/lfea`.
+
+### Current B31 blockers
+
+Existing governed producer:
+
+`compileLinearPipingB31Application`
+
+Current standalone state lacks:
+
+- component/code-point recovery authority;
+- governed B31 code profile;
+- governed edition dataset;
+- governed B31 check set and associated section/material/stress-factor authorities.
+
+No B31 stress, allowable or utilization is calculated in `src/lfea`.
 
 ## Governing Invariants
 
 1. Imported source custody is fail-closed.
 2. Reviewed execution is mandatory.
-3. UI and persistence state never authorize solve/recovery/publication.
+3. UI/persistence/view selection never grants engineering authority.
 4. Run identity is tied to exact source/model/review/authorization/case/method lineage.
-5. Raw, recovered, support-projected, and code-applied results remain distinct authority stages.
-6. Historic evidence is immutable.
-7. History/Compare selection is view context only.
-8. Semantic comparison requires explicit compatibility.
-9. Blocked/unavailable values remain null/blank, never false zero.
-10. Support Fa/Fl/Fv may only come from governed global interface recovery + declared pipe tangent + explicit vertical/up authority; never frame-local e2/e3 relabelling.
-11. B31/code quantities may only come from existing sealed code producers; presentation must not recalculate them.
-12. No hidden engineering defaults.
-13. Browser persistence is explicitly namespaced and non-authoritative.
-14. No new runtime dependency on LAFEA.
-15. No `.github/workflows/*` change without explicit Owner authorization.
+5. Raw, recovered, support-projected and code-applied quantities remain separate authority stages.
+6. History evidence is immutable; currentness is projected against current parents.
+7. Compare subtracts only explicit semantic matches.
+8. Blocked/unavailable values remain null/blank, never false zero.
+9. Support Fa/Fl/Fv may only come from governed global interface recovery + tangent + explicit vertical/up authority.
+10. Frame-local e2/e3 may never be relabelled as engineering lateral/vertical.
+11. B31 quantities may only come from the existing sealed code producer chain.
+12. Verification/dossier may summarize retained evidence but may not recalculate engineering quantities.
+13. Evidence dossier creation must fail closed when no CURRENT qualified/conditional run+recovery exists.
+14. Browser persistence remains non-authoritative.
+15. No hidden defaults.
+16. No new runtime LAFEA coupling.
+17. No `.github/workflows/*` change without explicit Owner authorization.
 
-## Mission Status
+## Status Matrix
 
-| Work item | Status | Evidence |
-|---|---|---|
-| Independent entry/shell/build | IMPLEMENTED | `lfea.html`, `src/lfea/*`, standalone Vite target |
-| Source → Review → Model | IMPLEMENTED | governed InputXML custody/pre-FEA chain |
-| Reviewed B-3.3 execution | IMPLEMENTED | existing governed solve gate + production executor |
-| CURRENT/STALE raw authority | IMPLEMENTED | `native-execution-authority.js` |
-| Governed B-3.4 recovery/Results | IMPLEMENTED / PARTIAL validation | production recovery + Results view |
-| Neutral sparse ownership | IMPLEMENTED | `shared-linear-solve/*` |
-| LFEA History | IMPLEMENTED / PARTIAL validation | immutable deterministic run records |
-| Semantic Compare | IMPLEMENTED / PARTIAL validation | compatibility engine + Compare product view |
-| Persistence isolation | IMPLEMENTED / PARTIAL validation | exact LFEA keys; metadata/UI only |
-| Support/code authority | IN_PROGRESS | Stage 10 registered below |
-| Verification/dossier | DEFERRED | after support/code |
-| Standalone E2E | DEFERRED | after dossier |
-| Physical absence | DEFERRED | final qualification |
-| Physical extraction | DEFERRED | last |
-| Full standalone aggregate | BLOCKED / NOT_RUN | no authorized executable checkout path |
+| Work item | Status |
+|---|---|
+| Independent entry/shell/build | IMPLEMENTED |
+| Source → Review → Model | IMPLEMENTED |
+| Reviewed B-3.3 execution | IMPLEMENTED |
+| CURRENT/STALE raw authority | IMPLEMENTED |
+| Governed B-3.4 recovery / Results | IMPLEMENTED / focused validation NOT_RUN |
+| Neutral sparse ownership | IMPLEMENTED |
+| LFEA History | IMPLEMENTED / focused validation NOT_RUN |
+| Semantic Compare | IMPLEMENTED / focused validation NOT_RUN |
+| Persistence isolation | IMPLEMENTED / focused validation NOT_RUN |
+| Composition-root extraction | IMPLEMENTED |
+| Support-action publication | BLOCKED — missing governed interface/result/up/tolerance parents |
+| B31/code application | BLOCKED — missing component code points + governed code inputs |
+| Verification / dossier | IN_PROGRESS |
+| Full standalone browser E2E | DEFERRED |
+| Physical-LAFEA-absence proof | DEFERRED |
+| Physical extraction | DEFERRED — last |
+| Full standalone aggregate | BLOCKED / NOT_RUN |
 
-## Engineering Item Register
+## Engineering Register
 
 | ID | Type | Status | Summary |
 |---|---|---|---|
-| ISS-001 | defect | IMPLEMENTED | General B-3.3 solver no longer executable-imports LAFEA-owned sparse runtime; neutral primitives live under `shared-linear-solve`. |
 | DEC-001 | decision | ACCEPTED | Native execution remains below `solveInputXmlLinearAnalysis()`. |
 | DEC-002 | decision | ACCEPTED | B-3.3 raw and B-3.4 recovery are distinct authorities. |
-| DEC-003 | decision | ACCEPTED | CURRENT/STALE is a projection against current governed parents. |
-| DEC-004 | decision | ACCEPTED | Production recovery profile is explicit and retained. |
-| DEC-005 | decision | ACCEPTED | History is LFEA-owned rather than generic Workspace AnalysisLedger authority. |
-| DEC-006 | decision | ACCEPTED | History/Compare selection cannot mutate current engineering authority. |
-| DEC-007 | decision | ACCEPTED | Identical History evidence deduplicates deterministically; ambient timestamps do not mint engineering identity. |
-| DEC-008 | decision | ACCEPTED | Compare covers only governed B-3.3/B-3.4 quantities currently retained. |
-| DEC-009 | decision | ACCEPTED | Local recovered-action comparability includes exact local-axis semantic identity. |
-| DEC-010 | decision | ACCEPTED | Method compatibility includes analysis, frame-element, solver, and recovery profile identities. |
-| DEC-011 | decision | ACCEPTED | Persistence stores only non-authoritative active-view/recent-source metadata. |
-| DEC-012 | decision | ACCEPTED | Recent-source metadata never reconstructs source/pre-flight/run authority; operator must re-import. |
-| DEC-013 | decision | ACCEPTED | Stage 10 support actions must reuse `compileLinearPipingInterfaceSet` → `recoverLinearPipingInterfaceLoads` → `createLinearPipingSupportActionsPublication`; direct B-3.4/local-force relabelling is prohibited. |
-| DEC-014 | decision | ACCEPTED | Stage 10 B31/code publication must consume existing sealed code records/producers; no presentation-layer code calculation. |
-| DEC-015 | decision | ACCEPTED | Because `src/lfea/bootstrap.js` reached 299 physical lines at Stage 9, Stage 10 must extract composition wiring before adding new runtime integrations. |
-| RISK-001 | risk | BLOCKED | Standalone focused/aggregate checks remain NOT_RUN. |
-| RISK-002 | risk | OPEN | Final synchronization with current `main` and exact requalification still required. |
-| RISK-003 | risk | ACCEPTED | Narrow LFEA workflows reject this broad PR before intended payload due containment/candidate-chain assumptions. |
-| RISK-004 | risk | ACCEPTED | BM3 workflow is incomplete because expected BM1 fixture is absent. |
-| RISK-005 | risk | ACCEPTED | Owner instructed roadmap continuation while standalone executable validation is blocked; NOT_RUN must remain NOT_RUN. |
-| DEBT-001 | debt | ACTIVE | `bootstrapLfeaStandalone` is an intentionally orchestration-heavy composition root and exceeds the normal function-length target; its module is now exactly 299 physical lines. Stage 10 must extract composition before any further growth. |
+| DEC-003 | decision | ACCEPTED | CURRENT/STALE is a relationship to governed parents, not evidence mutation. |
+| DEC-004 | decision | ACCEPTED | History is LFEA-owned and deterministic. |
+| DEC-005 | decision | ACCEPTED | Compare requires quantity/dimension/unit/basis/sign/entity/station/case/authority/method compatibility. |
+| DEC-006 | decision | ACCEPTED | Persistence stores only active-view and recent-source metadata. |
+| DEC-007 | decision | ACCEPTED | Support publication must reuse the existing governed interface/recovery/publication chain. |
+| DEC-008 | decision | ACCEPTED | B31 must reuse `compileLinearPipingB31Application` with sealed code/material/section/stress-factor/case authorities. |
+| DEC-009 | decision | ACCEPTED | Stage 10 exposes BLOCKED readiness instead of manufacturing missing interface/code parents. |
+| DEC-010 | decision | ACCEPTED | Stage 11 dossier is evidence-only while support/B31 publication remains blocked. |
+| DEC-011 | decision | ACCEPTED | Verification consumes retained solver diagnostics/factorization/equilibrium and recovery identities directly; no recomputation. |
+| RISK-001 | risk | BLOCKED | Standalone focused/aggregate commands remain NOT_RUN. |
+| RISK-002 | risk | OPEN | Final current-main sync and exact requalification still required. |
+| RISK-003 | risk | ACCEPTED | Narrow linear-core/WP-PF1 workflow reds occur before intended payload because of scope/candidate-chain rules. |
+| RISK-004 | risk | ACCEPTED | BM3 workflow cannot reach later payload because expected BM1 fixture is absent. |
+| RISK-005 | risk | ACCEPTED | Owner instructed roadmap continuation while standalone execution evidence is blocked; NOT_RUN remains NOT_RUN. |
+| DEBT-001 | debt | RESOLVED | 299-line bootstrap was extracted before Stage 10 growth. Bootstrap is now a thin boundary; runtime/API/status are bounded leaves. |
+| QST-001 | question | OPEN | Which governed upstream product/source owns interface definitions/profile and explicit support vertical/tolerance authority? |
+| QST-002 | question | OPEN | Which governed upstream product/source owns B31 profile/edition/check/component-code-point authority for standalone LFEA? |
 
 ## Stage Log
 
-### Stages 1–6 — standalone boundary through Results / validation-path reconciliation
+### Stages 1–9
 
-Implemented independent bootstrap/build, governed Source→Review→Model, reviewed native B-3.3 execution, current/stale authority, governed B-3.4 recovery, Results, neutral sparse ownership, dependency guards, and aggregate qualification scripts. Exact standalone execution remains NOT_RUN. **Decision: implemented with partial validation.**
-
-### Stage 7 — LFEA-owned History
-
-Implemented `lfea-native-run-history/v1` / `lfea-native-run-record/v1`, exact lineage binding, deterministic run identity/deduplication, CURRENT/HISTORIC/STALE projection, read-only History UI, and view-only selection. Focused History check is aggregated but NOT_RUN. **Decision: PARTIAL.**
-
-### Stage 8 — semantic Compare
-
-Implemented semantic quantity extraction for governed B-3.3 displacement/reaction and B-3.4 local/global element-end actions. Compatibility checks quantity, dimension, unit, basis, sign convention, entity/end, physical-case hash, result authority, and method/profile identity. Incompatible/missing/unavailable values produce explicit reasons and null delta. Compare is a production navigation surface and cannot mutate current authority. Focused Compare check is aggregated but NOT_RUN. **Decision: PARTIAL.**
-
-### Stage 9 — standalone persistence isolation
-
-**Implementation**
-
-- Added `src/lfea/persistence.js`.
-- Exact keys:
-  - `lfea.ui.activeView.v1`
-  - `lfea.source.recentMetadata.v1`
-- Strict versioned JSON envelope `lfea-persistence-record/v1`.
-- Persisted active-view value is syntactically bounded and is restored only if it names an actually available standalone view.
-- Recent-source metadata has an exact three-field shape: `fileName`, `contentSha256`, `sourceUnit`.
-- Source XML, pre-flight/authorization, execution, recovery, History evidence, solver/recovery profiles, and code/support data are not persisted.
-- Corrupt/unrecognized stored records fail closed to no preference and diagnostics.
-- Storage unavailable/read/write denied does not block standalone operation.
-- Direct browser `localStorage` access is encapsulated in `persistence.js`; other standalone modules do not access local/session storage directly.
-- Bootstrap restores only the active-view preference. Engineering authorities initialize independently from empty/current domain state.
-- Recent source metadata is shown only as convenience context with explicit **re-import required** wording.
-- Metadata persistence is best-effort at the composition boundary so invalid/unavailable UI persistence cannot block governed Source rendering.
-- Added `scripts/lfea-standalone-persistence-check.mjs` and aggregated it.
-
-**Focused persistence check covers**
-
-1. empty storage creates no authority;
-2. exact-key UI/recent metadata round-trip;
-3. serialized values contain no source/pre-flight/execution/recovery evidence;
-4. unrelated and `lafea.*` keys do not affect LFEA projection;
-5. malformed JSON fails closed;
-6. extra engineering-looking metadata fields are rejected;
-7. invalid caller values fail before write;
-8. unavailable/denied storage is non-blocking;
-9. source guard keeps direct browser-storage access inside the adapter.
-
-**CodingRules / size audit**
-
-- `src/lfea/persistence.js`: 129 physical lines.
-- `scripts/lfea-standalone-persistence-check.mjs`: 120 physical lines.
-- `src/lfea/bootstrap.js`: exactly 299 physical lines after the non-blocking metadata correction.
-- No `.github/workflows/*` change.
-- Production persistence abstraction is consumed by standalone bootstrap in the same PR.
-
-**Changed-file reconciliation**
-
-New Stage-9 paths:
-
-- `src/lfea/persistence.js`
-- `scripts/lfea-standalone-persistence-check.mjs`
-
-Existing intentional updates: `src/lfea/bootstrap.js`, `src/lfea/standalone-layout.js`, aggregate checker, and this report. GitHub reports **56 changed PR paths; 56/56 explained; no unexplained path.**
-
-**Exact-head validation — Stage-9 code head `7c02c0789401469236477fb6619cd77df72ad27a`**
-
-| Check | Status | Attribution |
-|---|---|---|
-| `main-gate` | PASS | exact-head repository gate |
-| `LAFEA hybrid browser validation` | PASS | separate LAFEA regression |
-| `non-fea-input-check-load-calc` | PASS | exact-head advisory |
-| `3D Edit SJSON Interaction Authority` | PASS | broad regression |
-| `3D Edit Sjson Render Authority` | PASS | broad browser/render regression |
-| `lfea-linear-core-exact-head` | FAIL | broad PR rejected by narrow changed-path containment before intended numerical payload |
-| `LFEA WP-PF1 exact-head qualification` | FAIL | historical candidate-chain guard before intended product payload |
-| `M028 M029 BM3 Consolidated Qualification` | FAIL | documented missing BM1 fixture; later relevant payload skipped |
-| `scripts/lfea-standalone-persistence-check.mjs` | NOT_RUN | no executable checkout path |
-| standalone Results/History/Compare focused checks | NOT_RUN | no executable checkout path |
-| `node scripts/run-lfea-standalone-check.mjs` | NOT_RUN | local DNS checkout failure; no authorized generic CI runner |
-
-**Stage decision: IMPLEMENTED / PARTIAL.** Persistence behavior is source/diff reviewed and broad exact-head repository gates are green. Focused standalone execution remains NOT_RUN.
+Implemented independent entry/build; governed Source/Review/Model; reviewed B-3.3 execution; current/stale execution; B-3.4 recovery/Results; neutral sparse dependency; immutable History; semantic Compare; and bounded non-authoritative persistence. Focused standalone checks are committed and aggregated but remain NOT_RUN.
 
 ### Stage 10 — governed support/code authority composition
 
-**Pre-stage truth**
+#### 10A — composition extraction — IMPLEMENTED
 
-Existing repository contracts already own the critical engineering transformations:
+- Reduced `src/lfea/bootstrap.js` to identity/storage/runtime boundary wiring.
+- Added `src/lfea/standalone-runtime.js` for lifecycle/action orchestration.
+- Added `src/lfea/standalone-runtime-api.js` for public API projection.
+- Added `src/lfea/standalone-status.js` for status projection.
+- First runtime extraction was 324 lines and was rejected immediately; API/status were split before closure.
+- Final runtime is below the 300-line module ceiling; bootstrap is comfortably below it.
+- No solver/recovery/source/authorization/support/B31 mathematics changed.
 
-1. `compileLinearPipingInterfaceSet(...)` validates exact B-2.5 compilation, support attachment/restraint authority, interface basis, node/source ancestry, DOF ownership, support binding, sign convention, and interface profile.
-2. `recoverLinearPipingInterfaceLoads(...)` consumes the governed interface set + validated linear-piping analysis result + exact physical load case and derives global/local interface loads from solver reactions with retained sign/formula/evidence identity.
-3. `createLinearPipingSupportActionsPublication(...)` consumes governed interface recovery plus explicit `upGlobal` and `parallelTolerance`; it derives Fa/Fl/Fv only via the existing engineering support-action triad. It never assumes +Z and never relabels frame-local e2/e3.
-4. Existing B31 presentation/export code retains sealed `codeProfileId`, code-profile hash, edition-dataset hash, and ordered physical source-case provenance. Stage 10 must locate and consume the actual upstream B31/code producer rather than treating presentation as calculation authority.
+#### 10B/10C — support interface/action publication — BLOCKED
 
-**Critical architectural gap to resolve before support publication**
+Read-only inventory confirmed the required chain is:
 
-The standalone path currently retains the lower-level B-3.3 raw execution batch and B-3.4 result recovery. `recoverLinearPipingInterfaceLoads()` expects a governed `linear-piping-analysis-result` plus a compiled interface set. Stage 10 must determine whether those exact parents and interface definitions/profiles already exist in retained pre-FEA/model authority. It must not fabricate them from UI state, B-3.4 local forces, or guessed support directions.
+`governed B-2.5 compilation + interface/support authorities → compileLinearPipingInterfaceSet → validated linear-piping analysis result + physical case → recoverLinearPipingInterfaceLoads → createLinearPipingSupportActionsPublication({ explicit upGlobal, explicit parallelTolerance })`
 
-**Stage 10 is deliberately split into sub-stages**
+Current standalone pre-FEA retains the B-2.5 mechanical compilation, but does not demonstrate the governed interface definitions/profile/support-attachment records required to create the interface set. Current standalone run/recovery also does not retain the higher-level linear-piping analysis-result record expected by interface recovery.
 
-#### Stage 10A — composition-root extraction and authority inventory
+No interface set or support publication is synthesized from constraints, frame-local actions, or UI state.
 
-Expected work:
+#### 10D — B31/code application — BLOCKED
 
-- move standalone lifecycle/view-controller orchestration out of `bootstrap.js` into bounded LFEA-owned composition/runtime helpers;
-- keep public bootstrap API stable;
-- re-audit module closure and CodingRules sizes;
-- map exact retained parents needed for interface support and B31 execution;
-- no engineering calculation change.
+The actual producer is `compileLinearPipingB31Application(...)`. It requires component/code-point recovery plus sealed section/material/stress-factor/code-profile/edition/case-check inputs.
 
-Acceptance:
+Current standalone B-3.4 production recovery is frame-only and has no component code-point resultants. The app also has no retained governed code profile, edition dataset or B31 check-set authority.
 
-- `bootstrap.js` comfortably below 300 lines;
-- no new authority, solver, recovery or result calculation introduced merely by refactor;
-- standalone dependency guard remains strict.
+No code stress, allowable or utilization is synthesized from frame actions or presentation records.
 
-#### Stage 10B — support interface authority composition
+#### Product-visible readiness — IMPLEMENTED
 
-Proceed only if exact governed parents exist.
+Added `src/lfea/native-publication-readiness.js`:
 
-Required chain:
+- schema `lfea-native-publication-readiness/v1`;
+- support producer chain explicitly named;
+- B31 producer explicitly named;
+- exact missing-parent reason codes exposed;
+- stale B-3.4 and missing mechanical compilation remain explicit blockers;
+- no `+Z` or parallel-tolerance default.
 
-`retained mechanical compilation + governed support attachment/restraint + explicit interface definitions/profile → compileLinearPipingInterfaceSet → governed analysis result + physical load case → recoverLinearPipingInterfaceLoads`
+Results now includes **Engineering publication readiness** and displays stage status, existing governed producer chain, and blockers. It still calculates no support/code quantities.
 
-Acceptance:
+Added `scripts/lfea-standalone-publication-readiness-check.mjs` and included it in the standalone aggregate. The check also guards composition sizes and rejects support/B31 calculation patterns in LFEA application code.
 
-- no UI-generated interface authority;
-- exact model/stiffness/case identities agree;
-- unsupported/nonlinear/ambiguous support states remain blocked;
-- global recovered force/sign convention retained.
+#### Stage-10 reconciliation
 
-If exact interface definitions/profile or support authorities are absent, Stage 10B must stop BLOCKED and register the missing upstream authority. Do not infer it.
+New Stage-10 paths:
 
-#### Stage 10C — support-action publication
+- `src/lfea/standalone-runtime.js`
+- `src/lfea/standalone-runtime-api.js`
+- `src/lfea/standalone-status.js`
+- `src/lfea/native-publication-readiness.js`
+- `scripts/lfea-standalone-publication-readiness-check.mjs`
 
-Required chain:
+Intentional existing-file changes include bootstrap, native Results view, aggregate checker, and this report.
 
-`governed interface recovery → createLinearPipingSupportActionsPublication({ explicit upGlobal, explicit parallelTolerance })`
+GitHub reports **61 PR changed paths; 61/61 explained; no unexplained file.**
 
-Acceptance:
+#### Exact-head validation — Stage-10 code head `3c9804f4926627375e8ffe556e897238e80bdd7b`
 
-- Fa/Fl/Fv trace to interface `forceGlobal`, pipe tangent and explicit vertical/up authority;
-- vertical-axis degeneracy retains Fa but Fl/Fv remain null with explicit blocked status/reason;
-- no local e2/e3 relabelling;
-- support publication currentness tied to exact source/model/result/execution/case/recovery/triad identities.
-
-Stage 10 must not invent default `upGlobal` or `parallelTolerance`; those values require an existing governed product/profile authority or explicit operator/project input.
-
-#### Stage 10D — B31/code authority composition
-
-Before coding, identify the actual existing upstream code-stress producer and its complete required input authorities. Compose that producer; do not reimplement equations in LFEA UI/application code.
-
-Acceptance:
-
-- code stress remains separate from raw/recovered actions;
-- exact code profile/edition/section/material/factor inputs retained;
-- ordered physical source-case IDs/hashes retained;
-- presentation/UI consumes sealed code records only;
-- no continuum/raw stress substitution;
-- unavailable code authority remains blocked/null.
-
-**Expected files — Stage 10A only initially**
-
-- bounded standalone runtime/composition helper(s) under `src/lfea/`;
-- reduced `src/lfea/bootstrap.js`;
-- focused source/architecture check if needed;
-- aggregate checker only if a new focused check is added;
-- this report.
-
-Support/B31 files will be registered after the authority inventory identifies the exact existing producers/parents. No speculative module list is authorized.
-
-**Stage 10 validation plan**
-
-- composition refactor behavior/source invariants;
-- exact parent/authority trace for support and code chains;
-- existing support-action triad/publication qualification aggregated rather than copied where possible;
-- new standalone integration checks only for the new composition seams;
-- no workflow changes;
-- exact standalone aggregate remains NOT_RUN unless execution access becomes available.
-
-**Stage 10 status: IN_PROGRESS — Stage 10A/authority inventory only.**
-
-## Current Changed-File Ledger
-
-GitHub reports **56 changed paths after Stage 9; 56/56 accounted**. Any Stage-10 path must be registered before stage closure. Unexplained files block closure.
-
-## Validation Ledger
-
-### PASS on Stage-9 exact head `7c02c0789401469236477fb6619cd77df72ad27a`
+PASS:
 
 - `main-gate`
 - `LAFEA hybrid browser validation`
@@ -305,78 +196,153 @@ GitHub reports **56 changed paths after Stage 9; 56/56 accounted**. Any Stage-10
 - `3D Edit SJSON Interaction Authority`
 - `3D Edit Sjson Render Authority`
 
-### Known non-product reds
+Known non-product/partial reds:
 
-- narrow linear-core changed-path containment;
-- WP-PF1 historic candidate-chain guard;
-- BM3 missing BM1 fixture.
+- `LFEA WP-PF1 exact-head qualification`: historical candidate-chain guard before intended product payload.
+- `M028 M029 BM3 Consolidated Qualification`: documented missing BM1 fixture before later relevant payload.
+- `lfea-linear-core-exact-head`: narrow changed-path containment is not a broad-PR qualification oracle; do not represent its pre-payload result as standalone product validation.
 
-### Still NOT_RUN
+Still NOT_RUN:
 
-- standalone Results focused check;
-- standalone History focused check;
-- standalone Compare focused check;
-- standalone Persistence focused check;
-- full standalone aggregate;
-- complete standalone browser journey;
-- physical LAFEA-absence qualification.
+- publication-readiness focused check;
+- persistence/Compare/History/Results focused checks;
+- `node scripts/run-lfea-standalone-check.mjs`.
+
+**Stage 10 decision: PARTIAL / BLOCKED_BY_MISSING_GOVERNED_PARENTS.** Composition/readiness is implemented and broad exact-head gates pass. Actual support/B31 publication remains blocked rather than fabricated.
+
+### Stage 11 — native Verification / evidence dossier — IN_PROGRESS
+
+#### Objective
+
+Provide a native standalone Verification surface that reports exact retained evidence for the CURRENT run and can create a deterministic evidence dossier without recalculating engineering quantities.
+
+#### Verification scope
+
+For the CURRENT native run, expose retained:
+
+- source SHA and source-bundle identity;
+- pre-flight/preparation/authorization identity;
+- model/stiffness/load identity;
+- requested case IDs and physical-case hashes;
+- frame-element and solver profile identities;
+- solver execution status/hash/evidence hash;
+- assembly/factorization identities and condition estimate;
+- retained solver diagnostics: residual, force equilibrium, moment equilibrium, energy balance and conditioning;
+- B-3.4 recovery batch/profile/case recovery/evidence hashes;
+- application version/build SHA/time;
+- support/B31 publication readiness and limitations.
+
+No residual, equilibrium, condition, recovery, support action or code value is recalculated in Stage 11.
+
+#### Evidence dossier contract
+
+Planned schema: `lfea-native-evidence-dossier/v1`.
+
+A dossier may be created only from a CURRENT History record whose raw execution and recovery are CURRENT and qualified/conditional and whose identities exactly match current execution/results.
+
+If support/B31 publication remains blocked, the dossier must be explicitly classified as current evidence only, for example:
+
+- `dossierStatus: CURRENT_EVIDENCE_ONLY`
+- `engineeringIssueEligible: false`
+- explicit limitations from publication readiness.
+
+It must not fabricate missing support/code sections.
+
+Dossier creation must fail closed when:
+
+- no CURRENT retained run exists;
+- execution or recovery is STALE;
+- raw execution is blocked/unqualified;
+- History currentness does not match the current raw/recovery identities.
+
+Selecting a historic run must never make that run dossier-current.
+
+#### Expected Stage-11 files
+
+- `src/lfea/native-verification.js`
+- `src/lfea/native-evidence-dossier.js`
+- `src/lfea/native-verification-controller.js`
+- `src/lfea/native-verification-view.js`
+- bounded CSS only if needed
+- `src/lfea/standalone-layout.js` — add native verification sub-root while retaining the separate independent element-FEA verification workbench
+- `src/lfea/standalone-runtime.js` / API — current verification/dossier integration only
+- focused Stage-11 check + aggregate update
+- this report
+
+Any actual path outside this list must be registered before Stage-11 closure.
+
+#### Acceptance / negative cases
+
+- current raw/recovery renders exact retained diagnostics/identity;
+- stale source/model/run suppresses current dossier issuance;
+- publication blockers appear as limitations, never fabricated results;
+- dossier deterministic for identical evidence/build identity;
+- application/build identity included;
+- no UI/result recomputation;
+- no storage/EventBus/LAFEA coupling;
+- dossier creation does not mutate execution/results/history/compare state;
+- existing independent element-FEA verification workbench remains explicitly separate.
+
+#### Stage-11 validation plan
+
+- focused contract/source check for current dossier and stale/unqualified refusal;
+- retained diagnostic equality assertions rather than recalculation;
+- source guards against support/B31 math and generic workspace authority;
+- CodingRules size/function audit;
+- aggregate inclusion;
+- exact focused/aggregate runtime remains NOT_RUN unless execution access becomes available.
+
+## Validation Ledger
+
+### Broad exact-head PASS on Stage-10 code head
+
+- `main-gate`
+- `LAFEA hybrid browser validation`
+- `non-fea-input-check-load-calc`
+- `3D Edit SJSON Interaction Authority`
+- `3D Edit Sjson Render Authority`
+
+### Focused standalone checks still NOT_RUN
+
+- native Results
+- History
+- Compare
+- Persistence
+- Publication readiness
+- full standalone aggregate
 
 ## Forward Sequence
 
-1. Stage 10A composition extraction + exact support/B31 authority inventory.
-2. Stage 10B/C support interface recovery and support-action publication only if exact parents/inputs exist.
-3. Stage 10D B31/code producer composition only after actual producer/input inventory.
-4. Verification / dossier with scope-specific qualification and fail-closed stale issue/export.
-5. Full standalone browser E2E including mutation → stale history → rerun → Compare and negative journeys.
-6. Physical-LAFEA-absence rehearsal: clean standalone build/check/E2E with LAFEA unavailable.
-7. Physical extraction last, followed by clean install and exact qualification.
+1. Stage 11 native Verification / evidence dossier.
+2. Full standalone E2E: Source → Review → Run → Results → History → mutate → stale → rerun → Compare → dossier, plus negative journeys and persistence.
+3. Physical-LAFEA-absence rehearsal: standalone build/check/E2E with LAFEA unavailable.
+4. Physical extraction last; clean install/build/exact qualification with no numerical/code-rule changes bundled merely for extraction.
 
 ## Handover Appendix
 
 ### Current stopping point
 
-Persistence is implemented; Stage 10A is the active boundary. Do not add support/code calculations directly to the 299-line bootstrap.
-
-### Start here
-
-- `src/lfea/bootstrap.js`
-- `src/lfea/native-execution-authority.js`
-- `src/lfea/native-results-authority.js`
-- `src/lfea/native-run-history.js`
-- `src/lfea/native-run-comparison.js`
-- `src/core/linear-piping-interface/interface-set.js`
-- `src/core/linear-piping-interface/recovery.js`
-- `src/workspace/linear-piping-support-actions-publication.js`
-- actual upstream B31/code producer modules once identified
+Support/B31 readiness is product-visible and correctly BLOCKED by missing governed parents. Stage 11 Verification/Dossier is pre-registered and is the active boundary.
 
 ### Do not redo
 
 - source/pre-FEA authority;
-- governed B-3.3 solve gate;
+- B-3.3 run gate;
 - B-3.4 recovery;
 - neutral sparse extraction;
-- History lineage/currentness;
-- semantic Compare;
-- persistence isolation.
+- History;
+- Compare;
+- persistence;
+- Stage-10 composition extraction.
 
 ### Do not weaken
 
-- exact source/review authorization;
-- CURRENT-only result authority;
-- support triad global-force/explicit-up chain;
-- null-on-degenerate support projection;
-- B31 provenance separation;
-- LAFEA dependency guards.
-
-### Do not assume
-
-- B-3.4 element-end actions are interface support actions;
-- support direction can be inferred from local e2/e3;
-- `upGlobal=+Z` unless a governed project/profile authority says so;
-- a default parallel tolerance is acceptable;
-- presentation rows are a code-calculation authority;
-- standalone focused checks have executed.
+- current-only dossier eligibility;
+- null/blocked downstream publication semantics;
+- support global-force/explicit-up chain;
+- B31 sealed input provenance;
+- LAFEA dependency guard.
 
 ### Exact next action
 
-Extract the standalone runtime/composition wiring below the CodingRules module ceiling, then inventory the exact retained support/interface/B31 parent records before implementing Stage 10B/C/D.
+Implement native Verification and deterministic current evidence dossier from retained records only; keep support/B31 sections as explicit blockers until their upstream governed authorities exist.

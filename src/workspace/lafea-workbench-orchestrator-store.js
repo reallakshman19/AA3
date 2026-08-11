@@ -32,7 +32,9 @@ export const LAFEA_RESULT_STATES = Object.freeze(['RESULT_NOT_READY', 'RESULT_RE
 export const LAFEA_CODE_STATES = Object.freeze(['CODE_NOT_READY', 'CODE_READY']);
 export const LAFEA_RELEASE_STATES = Object.freeze(['RELEASE_NOT_QUALIFIED', 'RELEASE_QUALIFIED']);
 
-const SOURCE_CHANGE_CLASSES = new Set(['MATERIAL_PROPERTY', 'GEOMETRY', 'LOAD_OR_BC', 'MODEL_METADATA']);
+const SOURCE_CHANGE_CLASSES = new Set([
+  'MATERIAL_PROPERTY', 'SECTION_PROPERTY', 'GEOMETRY', 'LOAD_OR_BC', 'MODEL_METADATA',
+]);
 
 export function createLafeaWorkbenchOrchestratorStore(options) {
   const configuration = options ?? {};

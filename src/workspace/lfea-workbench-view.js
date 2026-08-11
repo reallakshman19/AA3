@@ -24,6 +24,7 @@ import {
   renderLfeaResults,
   renderLfeaToolbar,
 } from './lfea-workbench-panels.js';
+
 export class LfeaWorkbenchView {
   /**
    * @param {Element|null} rootElement Workbench host.
@@ -33,6 +34,7 @@ export class LfeaWorkbenchView {
     this.handlers = null;
     this.collectionPath = LFEA_COLLECTION_PATHS[0];
     this.selectedIndex = -1;
+    this.recordDrafts = new Map();
     this.benchmarkHost = null;
     this.convergenceHost = null;
     this.section = null;
@@ -51,6 +53,11 @@ export class LfeaWorkbenchView {
 
   setConvergenceHost(hostElement) {
     this.convergenceHost = hostElement;
+  }
+
+  resetRecordDrafts() {
+    this.recordDrafts.clear();
+    this.selectedIndex = -1;
   }
 
   init(handlers) {
@@ -89,6 +96,7 @@ export class LfeaWorkbenchView {
 
   destroy() {
     this.rootElement?.replaceChildren();
+    this.recordDrafts.clear();
     this.section = null;
     this.slots = null;
     this.handlers = null;
@@ -204,12 +212,12 @@ export class LfeaWorkbenchView {
   recordEditor(state) {
     const wrapper = element(this.rootElement, 'div', 'lfea-workbench__records');
     if (!state.packageValue) {
-      const mock = element(this.rootElement, 'button', null, '[SIMULATED] Load Collection Mock Data');
-      mock.type = 'button';
-      mock.addEventListener('click', this.handlers.onMock);
-      mock.dataset.role = 'lfea-collection-mock';
-      mock.dataset.mockData = 'true';
-      wrapper.append(element(this.rootElement, 'p', null, 'No mesh package is loaded.'), mock);
+      wrapper.append(element(
+        this.rootElement,
+        'p',
+        null,
+        'No mesh package is loaded. Import a hash-valid package or use the explicit toolbar mock action.',
+      ));
       return wrapper;
     }
     const select = element(this.rootElement, 'select');
@@ -224,11 +232,7 @@ export class LfeaWorkbenchView {
       this.selectedIndex = -1;
       this.render(state);
     });
-    const collectionMock = element(this.rootElement, 'button', null, `[SIMULATED] Reload Mock for ${this.collectionPath}`);
-    collectionMock.type = 'button';
-    collectionMock.addEventListener('click', this.handlers.onMock);
-    collectionMock.dataset.role = 'lfea-collection-mock';
-    collectionMock.dataset.mockData = 'true';
+
     const rows = valueAt(state.packageValue, this.collectionPath);
     const table = recordTable(this.rootElement, rows, this.selectedIndex, (index) => {
       this.selectedIndex = index;
@@ -236,24 +240,82 @@ export class LfeaWorkbenchView {
     });
     const textarea = element(this.rootElement, 'textarea');
     textarea.dataset.role = 'lfea-record-json';
-    textarea.value = this.selectedIndex >= 0 ? JSON.stringify(rows[this.selectedIndex], null, 2) : '{}';
+    textarea.spellcheck = false;
+    const key = recordDraftKey(this.collectionPath, this.selectedIndex);
+    const baseline = this.selectedIndex >= 0
+      ? JSON.stringify(rows[this.selectedIndex], null, 2)
+      : '{}';
+    textarea.value = this.recordDrafts.get(key) ?? baseline;
+
     const add = element(this.rootElement, 'button', null, 'Add record');
     add.type = 'button';
-    add.addEventListener('click', () => this.handlers.onAddRecord(this.collectionPath, textarea.value));
     const update = element(this.rootElement, 'button', null, 'Update record');
     update.type = 'button';
-    update.addEventListener('click', () => this.handlers.onUpdateRecord(this.collectionPath, this.selectedIndex, textarea.value));
-    update.disabled = this.selectedIndex < 0;
     const remove = element(this.rootElement, 'button', null, 'Delete record');
     remove.type = 'button';
-    remove.addEventListener('click', () => {
-      this.handlers.onDeleteRecord(this.collectionPath, this.selectedIndex);
+
+    const validateDraft = () => {
+      const valid = isJsonObjectText(textarea.value);
+      textarea.setAttribute('aria-invalid', String(!valid));
+      textarea.dataset.dirty = String(textarea.value !== baseline);
+      add.disabled = !valid;
+      update.disabled = this.selectedIndex < 0 || !valid;
+    };
+    textarea.addEventListener('input', () => {
+      this.recordDrafts.set(key, textarea.value);
+      validateDraft();
+    });
+
+    add.addEventListener('click', () => {
+      const next = this.handlers.onAddRecord(this.collectionPath, textarea.value);
+      if (next?.status === 'FAILED') return;
+      this.recordDrafts.delete(key);
       this.selectedIndex = -1;
+      if (next) this.render(next);
+    });
+    update.addEventListener('click', () => {
+      const next = this.handlers.onUpdateRecord(
+        this.collectionPath,
+        this.selectedIndex,
+        textarea.value,
+      );
+      if (next?.status === 'FAILED') return;
+      this.recordDrafts.delete(key);
+      if (next) this.render(next);
+    });
+    remove.addEventListener('click', () => {
+      const path = this.collectionPath;
+      const index = this.selectedIndex;
+      this.selectedIndex = -1;
+      this.clearRecordDrafts(path);
+      this.handlers.onDeleteRecord(path, index);
     });
     remove.disabled = this.selectedIndex < 0;
+    validateDraft();
+
     const actions = element(this.rootElement, 'div', 'lfea-workbench__record-actions');
     actions.append(add, update, remove);
-    wrapper.append(select, collectionMock, table, textarea, actions);
+    wrapper.append(select, table, textarea, actions);
     return wrapper;
+  }
+
+  clearRecordDrafts(path) {
+    const prefix = `${path}\u0000`;
+    for (const key of this.recordDrafts.keys()) {
+      if (key.startsWith(prefix)) this.recordDrafts.delete(key);
+    }
+  }
+}
+
+function recordDraftKey(path, index) {
+  return `${path}\u0000${index}`;
+}
+
+function isJsonObjectText(text) {
+  try {
+    const value = JSON.parse(text);
+    return Boolean(value) && typeof value === 'object' && !Array.isArray(value);
+  } catch {
+    return false;
   }
 }

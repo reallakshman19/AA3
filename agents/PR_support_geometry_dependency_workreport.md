@@ -1,0 +1,59 @@
+# Support geometry dependency closure work report
+
+## Scope
+
+This slice closes the audit finding that geometry-changing 3D Edit operations could affect a support hosted by edge/component identity without recognizing that support as a governed dependency.
+
+The slice is intentionally conservative. It does **not** move, relocate, restation, add, delete, or rewrite supports. Until those semantics are separately certified, affected support geometry blocks the operation.
+
+## Root cause
+
+Support rendering can resolve a host through `hostEntityId`, `edgeId`, or `attachedEdgeId`, with a unique incident-edge fallback from `support.nodeId`. Geometry movement and changed-scope discovery previously recognized supports primarily through direct node references. An edge/station-hosted support could therefore be omitted from movement policy checks, validation neighbourhoods, and Table dependency revisions.
+
+## Architecture decision
+
+A shared support geometry dependency authority now resolves the support host and reports dependencies from both:
+
+- moved support nodes; and
+- affected host edges/components.
+
+The stable fail-closed reason is `SUPPORT_GEOMETRY_POLICY_REQUIRED`.
+
+No canonical support mutation is introduced. The existing governed flow remains:
+
+`intent -> operation plan -> candidate/Preview -> validation -> certified transaction -> canonical topology -> journal undo/redo`.
+
+## Implementation
+
+- Added `topology-edit-support-geometry-dependency.js` with exact host resolution, affected-edge derivation, immutable dependency evidence, and fail-closed assertion.
+- Changed-scope derivation now includes supports whose resolved/candidate host edge is affected, carrying their support IDs into source-record and validation neighbourhood authority.
+- Generic connected-run movement, endpoint extend/shorten movement, and edge split now fail closed when support geometry would be affected.
+- Table `NODE_POSITION` NODE_ONLY planning uses the same support dependency authority; CONNECTED_RUN inherits the generic movement guard.
+- Table NODE_POSITION capability reports `SUPPORT_GEOMETRY_POLICY_REQUIRED` for immediately affected support-host geometry before staging.
+
+## Tests
+
+Added focused coverage for:
+
+- explicit host edge/component resolution;
+- unique incident-edge fallback;
+- node-linked and edge-hosted dependency discovery;
+- ambiguous host authority;
+- hosted support inclusion in changed scope;
+- generic connected-run blocking;
+- PIPE_LENGTH propagation blocking;
+- valve F2F propagation blocking;
+- NODE_POSITION capability and NODE_ONLY planning blocking.
+
+Existing no-support route/Table suites remain the positive-path regression authority.
+
+## Deferred by design
+
+- support-follow-node semantics;
+- support-follow-host translation;
+- station recomputation;
+- support relocation;
+- support add/delete;
+- support property editing.
+
+Those require their own governed support command and certified movement policy and must not be inferred by this fix.

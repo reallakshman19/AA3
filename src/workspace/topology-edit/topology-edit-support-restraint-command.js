@@ -80,10 +80,10 @@ export function validateTopologyEditSupportRestraintEffect(candidate) {
   const other = [
     delta.nodes, delta.edges, delta.junctions, delta.boundaries, delta.rigids, delta.bends,
   ].flatMap(changes);
+  const payload = candidate.resolvedPayload ?? {};
   const support = candidate.canonicalTopology.supports?.find((row) => (
-    row.id === candidate.resolvedCommand?.payload?.supportId
+    row.id === payload.supportId
   ));
-  const payload = candidate.resolvedCommand?.payload ?? candidate.request?.payload ?? {};
   const valid = changed.length === 1
     && changed[0] === payload.supportId
     && (delta.supports?.addedIds ?? []).length === 0
@@ -92,8 +92,8 @@ export function validateTopologyEditSupportRestraintEffect(candidate) {
     && support?.restraint?.restraintId === payload.restraintId
     && support?.restraint?.type === payload.family
     && support?.restraint?.direction === payload.direction
-    && NumberOrNull(support?.restraint?.gapMm) === NumberOrNull(payload.gapMm)
-    && NumberOrNull(support?.restraint?.travelMm) === NumberOrNull(payload.travelMm)
+    && numericOrNull(support?.restraint?.gapMm) === numericOrNull(payload.gapMm)
+    && numericOrNull(support?.restraint?.travelMm) === numericOrNull(payload.travelMm)
     && support?.restraint?.authority === 'CERTIFIED_TABLE_OVERRIDE'
     && support?.updatedByCommandId === candidate.commandId;
   return valid ? [] : [{
@@ -160,7 +160,7 @@ function optionalNonNegative(value, label) {
   }
   return number;
 }
-function NumberOrNull(value) {
+function numericOrNull(value) {
   if (value === null || value === undefined || value === '') return null;
   return Number(value);
 }

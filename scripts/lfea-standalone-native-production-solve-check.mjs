@@ -25,7 +25,9 @@ if (!preFlight.solveAuthorized) {
 }
 
 const authority = createLfeaNativeExecutionAuthority();
-const state = authority.run(preFlight, { requestedCaseIds: [LINEAR_PIPING_INPUTXML_DEFAULT_CASE_ID] });
+const state = authority.run(preFlight, {
+  requestedCaseIds: [LINEAR_PIPING_INPUTXML_DEFAULT_CASE_ID],
+});
 const batch = state.execution;
 assert.equal(state.currentness, 'CURRENT');
 assert.equal(batch.schema, 'fea-inputxml-linear-raw-execution-batch/v1');
@@ -33,12 +35,26 @@ assert.deepEqual(batch.requestedCaseIds, [LINEAR_PIPING_INPUTXML_DEFAULT_CASE_ID
 assert.equal(batch.caseExecutions.length, 1);
 const caseExecution = batch.caseExecutions[0];
 assert.equal(caseExecution.caseId, LINEAR_PIPING_INPUTXML_DEFAULT_CASE_ID);
-assert.equal(caseExecution.solverProfileSemanticHash, preFlight.preparation.stiffnessPreflight.solverProfileSemanticHash);
-assert.equal(caseExecution.frameElementProfileSemanticHash, preFlight.preparation.stiffnessPreflight.frameElementProfileSemanticHash);
-assert.ok(['QUALIFIED', 'CONDITIONAL'].includes(caseExecution.executionStatus),
-  `Raw solver execution must be qualified/conditional, got ${caseExecution.executionStatus}.`);
+assert.equal(
+  caseExecution.solverProfileSemanticHash,
+  preFlight.preparation.stiffnessPreflight.solverProfileSemanticHash,
+);
+assert.equal(
+  caseExecution.frameElementProfileSemanticHash,
+  preFlight.preparation.stiffnessPreflight.frameElementProfileSemanticHash,
+);
+assert.ok(
+  ['QUALIFIED', 'CONDITIONAL'].includes(caseExecution.executionStatus),
+  `Raw solver execution must be qualified/conditional, got ${caseExecution.executionStatus}.`,
+);
 assert.equal(caseExecution.execution.physicalLoadCaseHash, caseExecution.physicalLoadCaseHash);
-assert.equal(caseExecution.execution.mechanicalModelSemanticHash, preFlight.preparation.modelSemanticHash);
+assert.equal(
+  caseExecution.execution.mechanicalModelSemanticHash,
+  preFlight.preparation.modelSemanticHash,
+);
+assert.equal('factorizationHandle' in caseExecution.execution, false);
+assert.equal('prescribedValueDiagnostics' in caseExecution.execution, false);
+assert.equal('nodalForceDiagnostics' in caseExecution.execution, false);
 assert.equal(authority.getCurrentQualifiedExecution(), batch);
 
 console.log(JSON.stringify({
@@ -50,6 +66,7 @@ console.log(JSON.stringify({
   modelSemanticHash: batch.modelSemanticHash,
   stiffnessStateHash: batch.stiffnessStateHash,
   loadStateHash: batch.loadStateHash,
+  runtimeHandleRetained: false,
 }));
 
 function fixtureXml() {

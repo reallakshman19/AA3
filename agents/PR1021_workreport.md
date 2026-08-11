@@ -14,52 +14,53 @@ Maintained throughout PR #1021. This is the single source of truth for current P
 | Branch | `agent/lfea-workbench-integrity-1018` |
 | Base | `751756e9140527b8dc121aa179dc76b7039fb7ad` |
 | PR state | Draft |
-| Current stage | Stage 14 — H01–H03 changed-file/base reconciliation and next-scope grounding |
-| Last completed stage | Stage 13 — analysis-authority and output presentation |
-| Engineering status | C01–C04 and H01–H03 implemented and source-guarded; reconciliation in progress |
-| Validation status | Source/patch review complete through S13; full repository/browser execution remains NOT_RUN |
+| Current stage | Stage 15 — inline record JSON validation and qualified-evidence Undo/Redo warning |
+| Last completed stage | Stage 14 — H01–H03 reconciliation and next-scope grounding |
+| Engineering status | C01–C04 and H01–H03 implemented/guarded; H05/H06 grounded before implementation; H04 explicitly deferred pending a canonical column contract |
+| Validation status | Source/patch + GitHub reconciliation complete through S14; full repository/browser execution remains NOT_RUN |
 | Current blocker | None |
-| Exact next action | Reconcile GitHub changed files and base ancestry at current HEAD, verify no workflows/unregistered files, then ground the next High-priority item before any further production edit |
+| Exact next action | Add record-textarea parse/object validity feedback and disable invalid Add/Update; add qualified-execution confirmation before Undo/Redo clears evidence; extend existing source guards |
 
 ### Handover in 60 seconds
 
 **What is now true**
-- C01: collection-context controls can no longer invoke the global whole-package mock replacement; explicit toolbar mock remains.
-- N01 + sibling: package/record JSON drafts survive benign renders and invalidate only when committed `modelVersion + semanticHash` changes.
-- N02: delete clears selection before synchronous mutation and restores prior context only when the delete is rejected without changing committed model identity.
-- C02: no-Worker Run publishes `RUNNING/QUEUED`, yields a real browser frame/task opportunity, executes only the captured active identity with current pipeline options, and allows cancellation during the queued/yield interval.
-- C03: FAILED presentation is diagnostic-code driven, actionable, and retains raw code/detail. Incoming coded errors survive wrapping; file-import/document-edit/record-edit fallbacks are classified separately.
-- C04: evidence export remains store-governed by current `QUALIFIED_EXPORT`; controller catches qualification/downloader failures, emits `LFEA_EVIDENCE_EXPORT_REJECTED`, and does not treat the failed path as a successful evidence export.
-- H01: a read-only **Analysis settings and authority** card now exposes committed package/profile authority without creating a second authoring path.
-- H02: current authority policy codes render as professional engineering statements while raw policy codes remain in `data-*` attributes and `title`.
-- H03: preflight leads with `Within declared capacity`, `Capacity warning`, or `Capacity blocked`, while raw preflight status remains in `data-status` and `title`.
-- Existing `scripts/lfea-p0-ui-containment-check.mjs` contains durable source/store guards for all above; no workflow was added.
+- C01: collection-context controls cannot invoke whole-package mock replacement.
+- N01 + sibling: package/record drafts survive benign renders and clear on committed model identity change.
+- N02: delete selection sequencing is render-safe with failed-delete context recovery.
+- C02: no-Worker run has a paintable queued boundary, exact run-identity execution, current options parity, and queued cancellation.
+- C03: failure guidance is structured-code driven with raw code/detail retained.
+- C04: evidence export remains current/qualified fail-closed and controller exceptions become diagnostics rather than unhandled UI errors.
+- H01: read-only analysis settings/authority card exposes actual committed package/profile authority.
+- H02/H03: authority and preflight show human labels while retaining raw codes/status metadata.
+- Stage 14 reconciliation at head `034c355d5e3fff278fe4aaf3650cc7a3ce8a532c` showed exactly seven registered files; branch was 36 commits ahead / 0 behind with merge base exactly the authorized base; no workflow path was present.
 
-**Important limitations still true**
-- Full `npm run check:lfea-workbench` is NOT_RUN in this sandbox.
-- Browser interaction/paint/presentation checks are NOT_RUN in this sandbox.
-- No-Worker synchronous numerical computation is still non-preemptible after CPU work starts; only the queued/yield interval is cancellable.
-- Local continuum FEA stress is not automatically CAESAR/B31 piping-code stress.
+**Current active High slice**
+- H05: invalid record JSON currently reaches controller/store failure state instead of being caught inline before Add/Update.
+- H06: Undo/Redo can clear a current `QUALIFIED` execution/evidence without warning.
 
-**Exact next action**
-- Complete Stage 14 reconciliation before selecting further production scope.
+**Grounding decision on H04**
+- Generic `lfeaResultTable` currently derives a union of keys across **all** rows, not only `rows[0]`.
+- Current displacement rows and current T3/Q4 integration-point stress rows are structurally uniform, so the issue's “unstable across runs / mixed row schema” rationale is not demonstrated by current source.
+- Canonical engineering columns may still improve readability, but that requires a deliberate schema-specific column contract. H04 is retained in the register and deferred rather than implemented from a stale rationale.
+
+**Important limitations**
+- Full `npm run check:lfea-workbench`: **NOT_RUN**.
+- Browser interaction/paint/presentation: **NOT_RUN**.
+- No-Worker mid-compute cancellation is not provided once synchronous CPU work begins.
 
 ## 1. Mission and Engineering Intent
 
 ### Mission
-Continue #1018 remediation on one draft PR while preserving engineering-state authority, run identity, diagnostic provenance, evidence-export qualification, and truthful presentation of model/run authority.
+Continue #1018 remediation on one draft PR while preserving engineering-state authority, run/evidence lineage, diagnostic provenance, and clear user intent around edits that can invalidate qualified evidence.
 
 ### Governing principles
-- Imported package authority remains fail-closed; stale hashes are not repaired during import.
-- UI draft/preview state is not solver authority.
-- Run completion/failure is accepted only for the exact active run identity.
-- Worker and no-Worker execution consume equivalent current controller analysis options.
-- Human guidance is driven by structured diagnostic/status/policy codes; raw technical codes/details remain available.
-- Evidence export succeeds only for current qualified evidence.
-- Analysis settings introduced by H01 are read-only views of committed package authority, not a second configuration source.
-- Mixed element families are displayed as mixed; presentation must not invent a false single element type.
-- No `.github/workflows/*` additions or modifications for this work.
-- Validation claims distinguish executed evidence from source-inspected/NOT_RUN evidence.
+- Imported package authority remains fail-closed.
+- Draft/preview state is not solver authority.
+- UI should prevent syntactically invalid record JSON from becoming a workbench-level failure when validity is knowable before submit.
+- Inline JSON validation must match the controller's `parseLfeaJsonObject` contract: valid JSON, non-null object, not an array.
+- Undo/Redo warning is required only when a current `QUALIFIED` execution/evidence would be discarded; ordinary history navigation without qualified execution should stay frictionless.
+- A warning does not preserve old execution after model change; it makes the destructive consequence explicit before the governed state transition.
+- No `.github/workflows/*` changes.
 
 ## 2. Mission Status
 
@@ -68,16 +69,16 @@ Continue #1018 remediation on one draft PR while preserving engineering-state au
 | Living PR report | High | DONE / ACTIVE | S1–current | this file |
 | C01 collection mock scope | Critical | IMPLEMENTED + GUARDED | S4/S7 | source guard |
 | Draft persistence / delete sequencing | High/Medium | IMPLEMENTED + GUARDED | S5–S7 | source guard |
-| C02 no-Worker feedback | Critical | IMPLEMENTED + GUARDED | S9 | source/store guard |
-| No-Worker current-options parity | High | IMPLEMENTED + GUARDED | S9 | ISS-007 |
+| C02 no-Worker lifecycle | Critical | IMPLEMENTED + GUARDED | S9 | source/store guard |
 | C03 structured failure guidance | Critical | IMPLEMENTED + GUARDED | S10 | source/store guard |
-| Diagnostic-code preservation | High | IMPLEMENTED + GUARDED | S10 | ISS-008 |
 | C04 evidence-export containment | Critical | IMPLEMENTED + GUARDED | S11 | source/store guard |
-| Critical-slice reconciliation | Critical | DONE | S12 | GitHub diff/base evidence |
-| H01 analysis settings visibility | High | IMPLEMENTED + GUARDED | S13 | panels/view/source guard |
-| H02 authority policy labels | High | IMPLEMENTED + GUARDED | S13 | real enum mappings + metadata |
-| H03 preflight status labels | High | IMPLEMENTED + GUARDED | S13 | real enum mappings + metadata |
-| H01–H03 reconciliation | High | IN_PROGRESS | S14 | pending GitHub verification |
+| H01 analysis settings | High | IMPLEMENTED + GUARDED | S13 | source guard |
+| H02 authority labels | High | IMPLEMENTED + GUARDED | S13 | source guard |
+| H03 preflight labels | High | IMPLEMENTED + GUARDED | S13 | source guard |
+| H01–H03 reconciliation | High | DONE | S14 | seven-file / ancestry check |
+| H04 canonical result columns | High (audit) | DEFERRED / RE-GROUND | later | current rationale not demonstrated |
+| H05 inline record JSON validation | High | IN_PROGRESS | S15 | current view/controller contract |
+| H06 Undo/Redo evidence-loss warning | High | ACCEPTED | S15 | document-store semantics |
 | Runtime/browser validation | High | NOT_RUN | ongoing | environment limitation |
 
 ## 3. Engineering Item Register
@@ -96,186 +97,174 @@ Continue #1018 remediation on one draft PR while preserving engineering-state au
 | ISS-010 / H01 | Missing transparency | High | IMPLEMENTED + GUARDED | Solver/profile/units/element-family authority invisible outside raw JSON | Yes |
 | ISS-011 / H02 | Presentation defect | High | IMPLEMENTED + GUARDED | Authority line exposed raw internal enum codes | Yes |
 | ISS-012 / H03 | Presentation defect | High | IMPLEMENTED + GUARDED | Preflight primary label exposed raw internal status code | Yes |
+| ISS-013 / H04 | Presentation improvement | High (audit) | DEFERRED / RE-GROUND | Canonical result column order may help, but current dynamic union is all-row and known result schemas are uniform | No for now |
+| ISS-014 / H05 | UX/data-entry defect | High | IN_PROGRESS | Invalid record JSON is only rejected after Add/Update enters failure handling | Yes |
+| ISS-015 / H06 | Workflow defect | High | ACCEPTED | Undo/Redo can clear current qualified execution/evidence without warning | Yes |
 | IMP-001 | Improvement | High | DEFERRED | Cross-run plots need shared engineering colour authority | No |
 | IMP-002 | Improvement | High | DEFERRED | Upstream pre-FEA/linear-piping LFEA surfaces need dedicated audit | No |
 | RISK-001 | Engineering risk | High | OPEN | Continuum von Mises may be mistaken for piping-code stress | No |
 | RISK-002 | Engineering risk | High | OPEN | Support reaction sign convention may be overlooked downstream | No |
 | QST-001 | Engineering question | Medium | OPEN | Authoritative fallback axis for vertical-pipe support triad degeneracy | No |
 
-### Active decisions
-- **DEC-001:** remove collection mock actions instead of relabelling them.
-- **DEC-002:** no new CI workflow gates.
-- **DEC-003:** view-owned drafts are invalidated by committed model identity.
-- **DEC-004:** delete clears selection before mutation; identity-preserving failure restores context.
-- **DEC-005:** no-Worker fallback uses begin → real frame/task yield → captured-identity execution.
-- **DEC-006:** active-run executor accepts explicit current pipeline options and no-ops on stale/cancelled identity.
-- **DEC-007:** failure UI uses code families for recovery while retaining raw code/detail.
-- **DEC-008:** evidence-export failure is diagnostic + no stale/unqualified success.
-- **DEC-009:** H01 settings/authority panel is read-only and derived solely from committed package fields.
-- **DEC-010:** H02/H03 human labels are aliases; raw policy/status codes remain traceable in DOM metadata.
+### Key decisions
+- **DEC-002:** no new CI workflows.
+- **DEC-005/006:** no-Worker uses real yield + exact identity + current options.
+- **DEC-007:** diagnostic guidance is code-driven and retains raw detail.
+- **DEC-008:** evidence-export failure is diagnostic, never stale/unqualified success.
+- **DEC-009/010:** H01 is read-only; H02/H03 human labels retain raw codes.
+- **DEC-011:** H04 is not implemented until canonical per-result column schemas are specified and justified from current result contracts.
+- **DEC-012 (proposed):** H05 validity uses the same JSON-object acceptance semantics as `parseLfeaJsonObject` and disables submit actions while invalid.
+- **DEC-013 (proposed):** H06 confirmation is required only when `state.execution?.status === 'QUALIFIED'`; cancellation leaves state untouched.
 
 ## 4. Stage Roadmap
 
 | Stage | Status | Purpose | Primary output |
 |---|---|---|---|
-| S1–S8 | DONE | Initial integrity slice + handover checkpoint | C01/N01/N02 + report/guards |
-| S9 | DONE | No-Worker feedback + current-option parity | C02 / ISS-007 |
-| S10 | DONE | Structured failure guidance + diagnostic provenance | C03 / ISS-008 |
-| S11 | DONE | Evidence-export exception containment | C04 / ISS-009 |
-| S12 | DONE | Reconcile continued Critical slice | C01–C04 checkpoint |
-| S13 | DONE | Analysis authority + output/preflight human labels | H01/H02/H03 |
-| S14 | IN_PROGRESS | Reconcile H01–H03 and ground next High item | changed-file/base evidence + next scope |
+| S1–S8 | DONE | Initial integrity slice + handover | C01/N01/N02 |
+| S9 | DONE | No-Worker lifecycle/current options | C02 / ISS-007 |
+| S10 | DONE | Failure guidance/provenance | C03 / ISS-008 |
+| S11 | DONE | Evidence-export containment | C04 / ISS-009 |
+| S12 | DONE | Critical-slice reconciliation | C01–C04 checkpoint |
+| S13 | DONE | Analysis authority/output labels | H01/H02/H03 |
+| S14 | DONE | H01–H03 reconciliation + H04–H06 grounding | clean seven-file checkpoint |
+| S15 | IN_PROGRESS | Inline record JSON validation + qualified-evidence history warning | H05/H06 |
+| S16 | PLANNED | Reconcile H05/H06 and choose next scope | handover/roadmap |
 
 ## 5. Stage Execution Log
 
-### Stages 1–8 — initial integrity slice
-**COMPLETE checkpoint.** Living report/PR created; dangerous mock scope, draft lifecycle, and delete sequencing corrected; existing containment guard extended; no workflow changes. Full repository/browser checks were NOT_RUN.
+### Stages 1–12
+**COMPLETE.** See Engineering Item Register and prior commits for detailed stage evidence. Core outcomes: C01–C04, draft integrity, delete sequencing, no-Worker lifecycle/options parity, structured diagnostics, evidence-export containment, all on one draft PR with existing source/store guards and no workflow additions. Full repository/browser checks remain NOT_RUN.
 
-### Stage 9 — C02 + option parity
-**COMPLETE at source/store-guard level.** Added identity-safe `executeActiveRun`; no-Worker controller path now begins, yields a real frame/task boundary, and executes the captured identity with current options; queued cancellation works; stale deferred callbacks cannot hijack a replacement run. Main-thread mid-compute cancellation is explicitly not claimed.
+### Stage 13 — H01/H02/H03
+**COMPLETE at source/patch-guard level.** Added read-only analysis settings/authority card sourced from committed package/profile; mapped actual authority/preflight codes to human labels; retained raw codes/status metadata; existing containment check guards fields/mappings/mixed element-family derivation. Browser presentation NOT_RUN.
 
-### Stage 10 — C03 + diagnostic provenance
-**COMPLETE at source/store-guard level.** Replaced raw-message substring guidance with code-family presentation; retained raw code/detail; preserved coded errors through `reportEditError`; classified import/document/record parse failures separately.
+### Stage 14 — reconciliation and next-scope grounding
+**Status:** COMPLETE.
 
-### Stage 11 — C04 evidence-export containment
-**COMPLETE at source/store-guard level.** Controller catches qualification/downloader failures and emits `LFEA_EVIDENCE_EXPORT_REJECTED`; store current-`QUALIFIED_EXPORT` gate remains unchanged; unavailable evidence does not become a successful download.
+#### Verification performed
+At head `034c355d5e3fff278fe4aaf3650cc7a3ce8a532c`, GitHub changed-file listing exactly matched the seven-file ledger:
+1. `agents/PR1021_workreport.md`
+2. `scripts/lfea-p0-ui-containment-check.mjs`
+3. `src/workspace/lfea-workbench-controller.js`
+4. `src/workspace/lfea-workbench-document-store.js`
+5. `src/workspace/lfea-workbench-panels.js`
+6. `src/workspace/lfea-workbench-run-store.js`
+7. `src/workspace/lfea-workbench-view.js`
 
-### Stage 12 — Critical-slice reconciliation
-**COMPLETE.** At checkpoint head `44ece9cd0152c28db7f8092ff311ddd84fb78832`, GitHub showed six registered files, branch ahead-only with zero behind, merge base exactly `751756e9140527b8dc121aa179dc76b7039fb7ad`, and no workflow changes. C01–C04 were all dispositioned IMPLEMENTED + GUARDED. Full/browser runtime remained NOT_RUN.
+Base comparison: `ahead`, `ahead_by: 36`, `behind_by: 0`; merge base exactly `751756e9140527b8dc121aa179dc76b7039fb7ad`. No `.github/workflows/*` file appears.
 
-### Stage 13 — H01/H02/H03 analysis-authority and output presentation
-**Status:** COMPLETE at source/patch-guard level.
-
-#### Before stage / grounded source truth
-- Real solver profile exposes `profileIdentity`, `profileVersion`, `formulation`, `units`, `dofOrder`, `constraintMethod`, `backendIdentity` and conventions.
-- Package separately declares `unitsIdentity` and `coordinateSystem`.
-- Element type is per `elements[].elementType`; mixed T3/Q4 packages are valid.
-- Actual authority codes are `AUTHORITATIVE_RAW_ELEMENT_OR_INTEGRATION_POINT_STRESS`, `NON_AUTHORITATIVE_REVIEW_PROJECTION`, `NOT_GENERATED`, and convergence `PROHIBITED`.
-- Actual preflight statuses are `WITHIN_CAPACITY`, `EXPORT_LIKELY_TO_EXCEED_BYTE_CAPACITY`, `BLOCKED_BY_DECLARED_CAPACITY`.
-
-#### Implementation performed
-- Added exported `renderLfeaAnalysisSettings(root, packageValue)` in `lfea-workbench-panels.js`.
-- Added dedicated `Analysis settings and authority` card in the workbench grid.
-- Read-only card displays package identity, units identity, coordinate system, deterministic unique element-family set, formulation, solver profile identity/version, backend identity, length/force/stress units, DOF order, and constraint method.
-- Empty/no-package state reports that committed analysis authority is unavailable rather than synthesizing defaults.
-- H02 maps actual authority policy codes to human engineering statements and retains raw codes in `data-raw-stress-policy`, `data-projected-stress-policy`, `data-projected-stress-convergence-policy`, and `title`.
-- H03 maps actual preflight codes to `Within declared capacity`, `Capacity warning`, and `Capacity blocked`, retaining raw status in `data-status` and `title`.
-- Unknown future policy/status codes use explicit neutral fallback labels rather than being silently misrepresented.
-- Extended existing containment check for the card fields, deterministic mixed-family derivation, actual policy/status mappings, and raw-code retention.
-
-#### Changed files
-| File | Change | Why |
-|---|---|---|
-| `src/workspace/lfea-workbench-panels.js` | read-only authority/settings renderer; policy/preflight mappings | H01–H03 |
-| `src/workspace/lfea-workbench-view.js` | mount settings card | H01 |
-| `scripts/lfea-p0-ui-containment-check.mjs` | source guards for H01–H03 | durable regression evidence |
-| `agents/PR1021_workreport.md` | before/after stage state | SSOT/handover |
-
-#### Examples / edge cases
-- Mixed T3/Q4 package displays deterministic `Q4, T3`-style sorted family set according to lexical sort, rather than falsely choosing one element type.
-- Dense/sparse profiles show their actual `backendIdentity` values.
-- Missing optional display field renders `Not declared`; no value is invented.
-- Unknown policy/preflight code remains visible in raw metadata while user text says the policy/status is not recognized by this UI.
-
-#### Validation performed
-- GitHub patches for panels/view/check were re-read after implementation.
-- No authoring controls were introduced by H01.
-- No raw-enum primary-label regression observed in H02/H03.
-- Raw policy/preflight code metadata is explicitly guarded.
-- No missing-newline marker observed in reviewed H01–H03 patches.
-- Full `npm run check:lfea-workbench`: **NOT_RUN**.
-- Browser card/layout/accessibility presentation: **NOT_RUN**.
+#### Next-scope grounding
+- H04: current `lfeaResultTable` builds `keys` from `rows.flatMap(Object.keys)`, so it does not have the issue's claimed `rows[0]` omission problem. Known displacement and integration-point stress result rows are structurally uniform. Deferred pending canonical column contracts.
+- H05: current record textarea submits directly to controller; controller's `parseLfeaJsonObject` accepts only valid JSON objects and then failure handling changes workbench state. Inline validation can mirror this exact contract before submit.
+- H06: document store intentionally clears `execution` on Undo/Redo because model authority changed; warning belongs before controller triggers the transition, not by preserving stale execution afterwards. No existing repository confirmation pattern was found.
 
 #### Stage decision
-**COMPLETE at source/patch-guard level**, subject to Stage 14 changed-file/base reconciliation and Owner runtime/browser validation before merge.
+Proceed with H05/H06 as one small user-intent/integrity stage; do not implement H04 from stale rationale.
 
-#### Handover delta
-- **Newly true:** governed analysis settings and output/preflight authority are readable without decoding raw JSON/enums.
-- **Still unresolved:** runtime/browser evidence and later High/Medium items.
-- **Next stage starts with:** exact final changed-file/base reconciliation before more code.
+### Stage 15 — inline record validation and evidence-loss warning
+**Status:** IN_PROGRESS — pre-stage record complete; production change not yet made.
 
-### Stage 14 — H01–H03 reconciliation and next-scope grounding
-**Status:** IN_PROGRESS — pre-verification record complete.
+#### Before stage
+- Record textarea has no `input` validity state.
+- Add/Update invoke handlers even for invalid JSON/non-object JSON; controller catches and reports failure.
+- Undo/Redo controller methods directly call store methods; store clears execution on model history transition.
+- Toolbar has current state, but confirmation is best applied at controller boundary immediately before the governed store mutation.
 
 #### Objective
-Reconcile the cumulative PR at current HEAD after H01–H03, confirm all files are registered/no workflows were touched, confirm ancestry remains ahead-only from the authorized base, then choose the next scope from current source truth rather than issue hints alone.
+Prevent avoidable record syntax failures before submit and make qualified-evidence invalidation explicit before Undo/Redo.
+
+#### Planned implementation — H05
+1. Add record-textarea `input` validation in the view.
+2. Validity contract: `JSON.parse(text)` succeeds and result is a non-null non-array object, matching `parseLfeaJsonObject`.
+3. Set `aria-invalid="true|false"` and a validity data attribute.
+4. Add a small `role=status` inline message explaining invalid JSON/object requirement.
+5. Disable Add while invalid; disable Update while invalid or no row selected.
+6. Keep controller/store validation unchanged as the authoritative lower boundary.
+
+#### Planned implementation — H06
+1. In controller `undo()` / `redo()`, inspect current state.
+2. If current execution status is `QUALIFIED`, request explicit confirmation that changing committed model history will clear current analysis execution/review/evidence and require re-run for new qualified evidence.
+3. If user cancels, return current state unchanged and do not call store history mutation.
+4. If no qualified execution exists, preserve existing frictionless Undo/Redo behavior.
+5. Use document `defaultView.confirm` where available; non-browser/test environments without confirm preserve existing behavior rather than crashing.
+
+#### Edge cases
+- JSON parses to `[]`, `null`, number, string: invalid record object; Add/Update disabled.
+- `{}` is syntactically valid object; lower contract/store may still reject collection-specific required fields — inline validator must not pretend schema validity.
+- Selected row changes with a valid/invalid draft: current draft lifecycle remains authoritative for text preservation.
+- Qualified execution + user cancels Undo: modelVersion/hash/execution/history remain unchanged.
+- Failed/no execution: Undo/Redo proceeds without evidence-loss warning.
 
 #### Planned validation
-1. List actual PR changed filenames and compare to the Changed-File Ledger.
-2. Compare current HEAD to base `751756e...`; require merge base unchanged and `behind_by = 0`.
-3. Confirm no `.github/workflows/*` path.
-4. Re-read relevant next finding before any further implementation.
-5. Update Mission Control, validation ledger and Next-Agent Handover after reconciliation.
-
-#### Risks
-The cumulative PR is growing; if the next finding needs a materially different architecture or large unrelated surface, preserve it in the roadmap rather than expanding this PR blindly.
+- Existing containment source guard asserts record input listener, `aria-invalid`, validity status and button disable logic.
+- Guard asserts controller qualified-execution confirmation precedes store Undo/Redo and cancellation returns current state.
+- Keep lower controller/store JSON and history behavior intact.
+- Patch review + changed-file reconciliation after implementation.
+- Runtime/browser confirmation and input interaction remain NOT_RUN unless environment changes.
 
 ## 6. Changed-File Ledger
 
 | File | First stage | Latest stage | Purpose | Engineering-sensitive? | Validation |
 |---|---|---|---|---|---|
-| `agents/PR1021_workreport.md` | S2 | S14 | PR SSOT / handover | No | current |
-| `scripts/lfea-p0-ui-containment-check.mjs` | S7 | S13 | existing regression guards | No production | source/store guards; execution NOT_RUN |
-| `src/workspace/lfea-workbench-controller.js` | S9 | S11 | no-Worker lifecycle, failure classification, export containment | Yes | source guard; runtime/browser NOT_RUN |
-| `src/workspace/lfea-workbench-document-store.js` | S10 | S10 | diagnostic provenance + evidence governance boundary | Yes | source/store guard |
-| `src/workspace/lfea-workbench-panels.js` | S13 | S13 | read-only settings + authority/preflight labels | Yes presentation | source guard; browser NOT_RUN |
-| `src/workspace/lfea-workbench-run-store.js` | S9 | S9 | identity-safe active-run execution | Yes | source/store guard |
-| `src/workspace/lfea-workbench-view.js` | S4 | S13 | UI integrity, diagnostic guidance, settings card | Yes | source guards; browser NOT_RUN |
+| `agents/PR1021_workreport.md` | S2 | S15 | PR SSOT / handover | No | current |
+| `scripts/lfea-p0-ui-containment-check.mjs` | S7 | S15 planned | existing regression guards | No production | source/store guards; execution NOT_RUN |
+| `src/workspace/lfea-workbench-controller.js` | S9 | S15 planned | lifecycle/classification/export + history confirmation | Yes | pending S15 guard |
+| `src/workspace/lfea-workbench-document-store.js` | S10 | S10 | diagnostic provenance/evidence/history authority | Yes | source/store guard |
+| `src/workspace/lfea-workbench-panels.js` | S13 | S13 | settings/authority/preflight presentation | Yes presentation | source guard |
+| `src/workspace/lfea-workbench-run-store.js` | S9 | S9 | identity-safe execution | Yes | source/store guard |
+| `src/workspace/lfea-workbench-view.js` | S4 | S15 planned | UI integrity/diagnostics/settings/record validity | Yes | pending S15 guard |
 
 ## 7. Engineering Invariants
 
-- **INV-001:** imported package validation/reseal governance remains unchanged.
-- **INV-002:** preview/draft state is not solver authority.
-- **INV-003:** unrelated render is not implicit discard.
-- **INV-004:** committed model change invalidates incompatible execution and stale drafts.
-- **INV-005:** delete render boundary does not observe stale pre-delete selection.
-- **INV-006:** synchronous execution proceeds only for the exact captured active run identity.
-- **INV-007:** Worker/no-Worker paths consume equivalent current controller analysis options.
-- **INV-008:** friendly failure presentation retains structured code and technical detail.
-- **INV-009:** evidence download occurs only after current qualified evidence is returned by the store.
-- **INV-010:** read-only analysis presentation is derived from committed package authority; it does not create or modify authority.
-- **INV-011:** human policy/preflight labels do not erase raw codes.
+- Imported package validation/reseal governance remains unchanged.
+- Draft/preview state is not solver authority.
+- Committed model change invalidates incompatible execution/drafts.
+- Run execution requires exact active identity/current intended options.
+- Friendly diagnostics retain code/detail.
+- Evidence export requires current qualified evidence.
+- Human presentation does not erase raw policy/status authority.
+- Inline record validity is only syntax/object-shape screening; it does not replace package/collection contract validation.
+- Undo/Redo warning does not preserve stale execution after an accepted model history change.
 
 ## 8. Validation and Evidence Ledger
 
 | Validation | Status | Evidence / limitation |
 |---|---|---|
-| Initial integrity source guards | IMPLEMENTED / SOURCE-INSPECTED | S7 |
-| C02 lifecycle/store guards | IMPLEMENTED / SOURCE-INSPECTED | S9 |
-| C03 diagnostic guards | IMPLEMENTED / SOURCE-INSPECTED | S10 |
-| C04 evidence-export guards | IMPLEMENTED / SOURCE-INSPECTED | S11 |
-| Critical-slice GitHub reconciliation | PASS at S12 checkpoint | ahead-only/no workflows |
+| C01–C04 source/store guards | IMPLEMENTED / SOURCE-INSPECTED | S7–S11 |
 | H01–H03 source guards | IMPLEMENTED / SOURCE-INSPECTED | S13 |
-| H01–H03 patch review | PASS | panels/view/check reviewed |
-| H01–H03 cumulative GitHub reconciliation | PENDING | S14 |
+| S14 cumulative changed-file/base reconciliation | PASS | seven files, 0 behind, no workflows |
+| H05/H06 source guards | PENDING | S15 |
 | Full `npm run check:lfea-workbench` | **NOT_RUN** | no executable checkout in sandbox |
-| Browser interaction/paint/presentation | **NOT_RUN** | no browser checkout in sandbox |
+| Browser interaction/paint/presentation/confirm | **NOT_RUN** | no browser checkout in sandbox |
 
 ## 9. Known Issues / Deferred Scope
 
-### Candidate next High items
-- H04 canonical result table columns — **must be re-grounded first**. Prior expert audit found the issue's proposed displacement/mixed-T3-Q4 reasoning does not match current uniform result schemas; generic all-row union is defensive but canonical engineering columns may still add value.
-- H05/H06 and remaining High findings from #1018 — ground against current source before coding.
+### Active
+- `ISS-014 / H05` inline record JSON/object validation.
+- `ISS-015 / H06` qualified-evidence warning before Undo/Redo.
 
-### Deferred engineering roadmap
-- `IMP-002`: full three-surface governed workflow audit (`linear-piping-consumer-root` → preflight → mesh workbench).
-- restraint/support semantic fidelity: guides, line stops, directional restraints, gaps, friction, springs, vertical cases.
-- `RISK-001`: explicitly separate piping beam response, local continuum FEA, and piping-code stress authority.
-- `RISK-002`: expose support-reaction sign convention at downstream presentation/export boundaries.
+### Deferred / re-ground required
+- `ISS-013 / H04` canonical result columns — specify result-specific canonical schemas before implementation.
+
+### Engineering roadmap retained
+- `IMP-002`: full three-surface governed workflow audit.
+- restraint/support semantic fidelity including gaps/friction/springs/directional supports.
+- `RISK-001`: separate piping beam response, local continuum FEA, and piping-code stress authority.
+- `RISK-002`: expose support-reaction sign convention.
 - `IMP-001`: shared engineering colour authority for run comparison.
 - `QST-001`: authoritative vertical support-triad fallback-axis policy.
 
 ## 10. Recommended Forward Sequence
 
-1. Complete S14 cumulative reconciliation.
-2. Re-ground H04/H05/H06 from current code and pick the highest-value small, reviewable next slice.
-3. Avoid broad cosmetic expansion if the next item would be better handled by the full three-surface authority audit.
-4. Before merge, Owner/reviewer should execute the missing repository/browser validation at exact final HEAD.
+1. Complete S15 H05/H06 with existing-source guards.
+2. S16 reconcile cumulative diff and update handover.
+3. Re-ground remaining H/M findings; prefer engineering-authority/workflow improvements over cosmetic expansion.
+4. Before merge, Owner/reviewer runs missing repository/browser validation at exact final HEAD.
 
 ## 11. Next-Agent Handover
 
 ### Current stopping point
-Stage 13 H01–H03 implementation and patch review are complete. Stage 14 reconciliation is deliberately pending before any further production code.
+Stage 14 is complete; Stage 15 pre-stage record is committed before production changes.
 
 ### PR / branch
 - PR: #1021
@@ -283,36 +272,31 @@ Stage 13 H01–H03 implementation and patch review are complete. Stage 14 reconc
 - Authorized base: `751756e9140527b8dc121aa179dc76b7039fb7ad`
 
 ### Start here
-Run GitHub changed-file listing and base/head comparison. Expected cumulative changed files are exactly the seven paths in Section 6. Confirm no workflow path and zero-behind ancestry, then update this report before grounding the next item.
+- `src/workspace/lfea-workbench-view.js` record editor: add syntax/object validity state and button gating without replacing lower validation.
+- `src/workspace/lfea-workbench-controller.js` `undo()` / `redo()`: confirm only when a `QUALIFIED` execution would be cleared.
+- `scripts/lfea-p0-ui-containment-check.mjs`: guard both behaviors.
 
 ### Do not redo
-- C01–C04 / N01 / N02 investigations and fixes.
-- No-Worker lifecycle/current-options work.
-- Structured failure/code-provenance work.
-- Evidence-export fail-closed work.
-- H01–H03 schema/enum grounding and implementation.
+C01–C04, draft/delete fixes, H01–H03, or H04 grounding.
 
 ### Known failing checks
 None observed through source inspection. Full repository/browser checks are **NOT_RUN**, not PASS.
 
 ### Highest current risk
-Continuing to add unrelated High-priority UI changes without re-grounding them against current schemas could turn this into an oversized PR or encode stale issue assumptions.
-
-### Exact next action
-Reconcile current cumulative diff, then inspect H04–H06 source truth before selecting the next logical stage.
+Turning inline syntax screening into false schema validation. `{}` may be syntactically valid yet contract-invalid; authoritative lower validation must remain.
 
 ## 12. Process Notes / Lessons Learned
 
-- Synchronous store mutation can render before the next event-handler line.
-- Durable item IDs prevent discoveries from disappearing at handover.
-- Committed model identity is an effective UI-draft invalidation boundary.
-- Source inspection, source guards, executable checks and browser interaction are distinct evidence classes.
+- Synchronous mutation/render ordering matters.
+- Durable item IDs preserve handover discoveries.
+- Source guards and runtime/browser proof are different evidence classes.
 - Microtasks are not browser paint boundaries.
-- Execution transport parity includes current analysis options.
-- Structured diagnostic codes are routing authority; raw messages are technical detail.
-- Disabled controls do not replace fail-closed controller/store boundaries.
-- Audit fix hints can be stale against current enum/schema reality; ground mappings from source first.
-- Read-only transparency is preferable to inventing a second editable configuration source.
+- Execution transport parity includes current options.
+- Structured codes are routing authority; messages are detail.
+- Disabled controls do not replace lower fail-closed boundaries.
+- Audit hints can be stale; ground against current schema/enums.
+- Read-only transparency is safer than inventing a second configuration source.
+- Inline validation should screen only what it can know reliably and leave engineering contract validation to governed lower layers.
 
 ## 13. PR Closure / Continuation Record
 
@@ -320,10 +304,12 @@ Reconcile current cumulative diff, then inspect H04–H06 source truth before se
 |---|---|
 | C01–C04 | IMPLEMENTED + GUARDED |
 | H01–H03 | IMPLEMENTED + GUARDED |
-| H01–H03 cumulative reconciliation | IN_PROGRESS |
+| H01–H03 reconciliation | COMPLETE |
+| H05/H06 | IN_PROGRESS |
+| H04 | DEFERRED / RE-GROUND |
 | Engineering Item Register synchronized | YES |
 | Full runtime/browser validation | **NOT_RUN** |
 | New CI workflows added | **NO** |
 | PR status | DRAFT |
 
-Final closure/handover will be rewritten after the active reconciliation/next-scope checkpoint.
+Final closure/handover will be rewritten after the active H05/H06 slice is reconciled.

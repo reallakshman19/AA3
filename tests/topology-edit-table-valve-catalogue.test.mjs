@@ -69,6 +69,21 @@ test('Table valve catalogue candidates expose only compatible BALL records', () 
   assert.deepEqual(records.map((record) => record.recordId), ['BALL-DN80-PCL80']);
 });
 
+test('Table valve catalogue fails closed when target nominal size is unresolved', () => {
+  const exactCatalogue = catalogue();
+  for (const dnInMm of [null, 0, 'not-a-number']) {
+    assert.deepEqual(
+      topologyEditTableValveCatalogueCandidates({ catalogue: exactCatalogue, row: row({ dnInMm }) }),
+      [],
+    );
+    assert.throws(() => resolveTopologyEditTableValveCatalogueSelection({
+      catalogue: exactCatalogue,
+      row: row({ dnInMm }),
+      recordId: 'BALL-DN80-PCL80',
+    }), /resolved 0 compatible BALL records/);
+  }
+});
+
 test('Table valve selection reconstructs immutable binding from certified record authority', () => {
   const exactCatalogue = catalogue();
   const selected = resolveTopologyEditTableValveCatalogueSelection({

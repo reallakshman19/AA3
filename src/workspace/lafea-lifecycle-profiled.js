@@ -35,8 +35,8 @@ export const LAFEA_QUALIFICATION_STATES = Object.freeze([
   'NOT_EVALUATED', 'PASS', 'FAIL', 'BLOCK',
 ]);
 export const LAFEA_LIFECYCLE_CHANGE_CLASSES = Object.freeze([
-  'MATERIAL_PROPERTY', 'GEOMETRY', 'LOAD_OR_BC', 'MODEL_METADATA',
-  'ANALYSIS_MESH_PROFILE', 'RECOVERY_PROFILE', 'CODE_PROFILE',
+  'MATERIAL_PROPERTY', 'SECTION_PROPERTY', 'GEOMETRY', 'LOAD_OR_BC',
+  'MODEL_METADATA', 'ANALYSIS_MESH_PROFILE', 'RECOVERY_PROFILE', 'CODE_PROFILE',
   'DISPLAY_MESH_DENSITY', 'CONTOUR_PALETTE', 'REPORT_RENDER_PROFILE',
 ]);
 
@@ -44,7 +44,8 @@ const DISPLAY_CHANGES = new Set([
   'DISPLAY_MESH_DENSITY', 'CONTOUR_PALETTE', 'REPORT_RENDER_PROFILE',
 ]);
 const SOURCE_CHANGES = new Set([
-  'MATERIAL_PROPERTY', 'GEOMETRY', 'LOAD_OR_BC', 'MODEL_METADATA',
+  'MATERIAL_PROPERTY', 'SECTION_PROPERTY', 'GEOMETRY', 'LOAD_OR_BC',
+  'MODEL_METADATA',
 ]);
 const LIFECYCLE_KEYS = [
   'schema', 'stageId', 'profileId', 'source', 'artifacts', 'display',
@@ -551,7 +552,7 @@ function validateLegacyLifecycle(value) {
   DISPLAY_KEYS.forEach((key) => requireNullableHash(value.display[key], `display.${key}`));
   if (value.lastEvent) validateEvent(value.lastEvent);
   if (value.lastRegistration) validateLegacyRegistration(value.lastRegistration, value.stageId);
-  if (!Array.isArray(value.diagnostics)) throw new TypeError('Legacy diagnostics must be an array.');
+  if (!Array.isArray(value.diagnostics)) throw new TypeError('Legacy lifecycle diagnostics must be an array.');
   value.diagnostics.forEach(validateDiagnostic);
   return deepFreeze({ ...structuredClone(value), artifacts });
 }

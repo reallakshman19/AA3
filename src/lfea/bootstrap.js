@@ -3,6 +3,8 @@ import { createLfeaGovernedJourneyProjection } from './governed-journey-projecti
 import { mountLfeaGovernedJourneyView } from './governed-journey-view.js';
 import { LfeaStandaloneInputXmlSourceController } from './inputxml-source-controller.js';
 import { createLfeaNativeExecutionAuthority } from './native-execution-authority.js';
+import { createLfeaNativeResultsAuthority } from './native-results-authority.js';
+import { mountLfeaNativeResultsView } from './native-results-view.js';
 import {
   clearLfeaStandaloneLayout,
   renderLfeaStandaloneLayout,
@@ -10,7 +12,7 @@ import {
 
 export const LFEA_STANDALONE_APPLICATION_SCHEMA = 'lfea-standalone-application/v1';
 
-/** Standalone LFEA composition root with governed native raw execution. */
+/** Standalone LFEA composition root with governed native raw execution and recovery. */
 export function bootstrapLfeaStandalone(rootElement, options = {}) {
   if (!rootElement?.ownerDocument) throw new TypeError('Standalone LFEA application root was not found.');
 
@@ -21,21 +23,26 @@ export function bootstrapLfeaStandalone(rootElement, options = {}) {
     modelRoot: layout.modelRoot,
     analysisRoot: layout.analysisRoot,
   });
+  const resultsView = mountLfeaNativeResultsView(layout.resultsRoot);
   const executionAuthority = createLfeaNativeExecutionAuthority();
+  const resultsAuthority = createLfeaNativeResultsAuthority();
   let governedJourney = createLfeaGovernedJourneyProjection({
     executionState: executionAuthority.getState(),
   });
   journeyView.update(governedJourney);
+  resultsView.update(executionAuthority.getState(), resultsAuthority.getState());
 
   const refreshJourney = (sourceSnapshot, preFlight) => {
     executionAuthority.reconcile(preFlight);
+    resultsAuthority.reconcile(preFlight, executionAuthority.getState());
     governedJourney = createLfeaGovernedJourneyProjection({
       sourceSnapshot,
       preFlight,
       executionState: executionAuthority.getState(),
     });
     journeyView.update(governedJourney);
-    layout.statusRoot.textContent = journeyStatus(governedJourney);
+    resultsView.update(executionAuthority.getState(), resultsAuthority.getState());
+    layout.statusRoot.textContent = journeyStatus(governedJourney, resultsAuthority.getState());
     return governedJourney;
   };
 
@@ -58,11 +65,20 @@ export function bootstrapLfeaStandalone(rootElement, options = {}) {
       throw error;
     }
   };
-
   const refreshCurrent = () => refreshJourney(
     sourceController.getSnapshot(),
     sourceController.getPreFlight(),
   );
+
+  function recoverCurrentResults() {
+    const state = resultsAuthority.recover(
+      sourceController.getPreFlight(),
+      executionAuthority.getState(),
+    );
+    refreshCurrent();
+    layout.activate('results');
+    return state;
+  }
 
   return Object.freeze({
     getIdentity: () => identity,
@@ -74,6 +90,7 @@ export function bootstrapLfeaStandalone(rootElement, options = {}) {
         source: sourceController.getSnapshot(),
         governedJourney,
         nativeExecution: executionAuthority.getState(),
+        nativeResults: resultsAuthority.getState(),
       });
     },
     activateView(viewId) { requireActive(); return layout.activate(viewId); },
@@ -93,12 +110,20 @@ export function bootstrapLfeaStandalone(rootElement, options = {}) {
     runNativeAnalysis(runOptions = {}) {
       requireActive();
       const state = executionAuthority.run(sourceController.getPreFlight(), runOptions);
-      refreshCurrent();
+      try {
+        resultsAuthority.recover(sourceController.getPreFlight(), state);
+      } finally {
+        refreshCurrent();
+      }
+      layout.activate('results');
       return state;
     },
+    recoverNativeResults() { requireActive(); return recoverCurrentResults(); },
     getNativeExecutionState() { requireActive(); return executionAuthority.getState(); },
     getCurrentNativeExecution() { requireActive(); return executionAuthority.getCurrentExecution(); },
     getCurrentQualifiedNativeExecution() { requireActive(); return executionAuthority.getCurrentQualifiedExecution(); },
+    getNativeResultsState() { requireActive(); return resultsAuthority.getState(); },
+    getCurrentNativeResults() { requireActive(); return resultsAuthority.getCurrentResults(); },
 
     // Verification-workbench compatibility API. It is not native piping execution.
     getState() { requireActive(); return workbenchController.getState(); },
@@ -116,8 +141,10 @@ export function bootstrapLfeaStandalone(rootElement, options = {}) {
     destroy() {
       if (destroyed) return;
       destroyed = true;
+      resultsAuthority.clearCurrentAuthority();
       executionAuthority.clearCurrentAuthority();
       sourceController.destroy();
+      resultsView.destroy();
       journeyView.destroy();
       workbenchController.destroy();
       clearLfeaStandaloneLayout(rootElement);
@@ -125,10 +152,12 @@ export function bootstrapLfeaStandalone(rootElement, options = {}) {
   });
 }
 
-function journeyStatus(journey) {
+function journeyStatus(journey, resultsState) {
   if (journey.source.status === 'EMPTY') return 'Import a governed CAESAR II InputXML source to begin Source → Review → Model preparation.';
+  if (resultsState?.currentness === 'STALE') return 'Retained recovered Results are STALE relative to current raw/source/model authority; current engineering values are hidden.';
+  if (resultsState?.currentness === 'CURRENT') return 'Current governed B-3.4 recovery is available in Results. Raw and recovered quantities remain separate authorities.';
   if (journey.analysis.executionCurrentness === 'STALE') return 'A retained native execution is STALE relative to current source/review/model authority; it is not current evidence.';
-  if (journey.analysis.currentQualifiedExecutionAvailable) return 'Current native raw solver execution is qualified. Results recovery/code application remain separate downstream authority.';
+  if (journey.analysis.currentQualifiedExecutionAvailable) return 'Current native raw solver execution is qualified. Governed B-3.4 recovery can produce current Results.';
   if (journey.analysis.status === 'BLOCKED') return 'Native InputXML pre-FEA is BLOCKED. Review retained findings; no solve authorization exists.';
   if (journey.analysis.readyToRun) return 'Reviewed pre-FEA authorization is sealed. Native raw solve execution is ready.';
   if (journey.review.status === 'REVIEW_REQUIRED') return 'Native InputXML pre-FEA requires explicit engineering review before solve authorization can be sealed.';

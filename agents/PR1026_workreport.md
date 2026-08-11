@@ -8,28 +8,30 @@ Source task / issue: Owner continuation from PR #1001 handover; Issue #991 is re
 PR number: 1026
 Branch: agent/m047-tee-rigid-thermal-growth
 Base commit: 7488ba76126f8240bb61c80fad243cf096c5fe08
-Current HEAD before this report sync: edb787e6160d80ce311418fd5e6bb2afaeb1ab40
+Current HEAD before this report sync: 94027be3d837e20f8de9da8833ed5a8ebb7aa3cf
 Primary mechanics commit: 5ecd4a6b75fc9cf1a644ef0234e78282afa130ca
 Authority-hardening commit: edb787e6160d80ce311418fd5e6bb2afaeb1ab40
+Pinned authority fixture commit: af889780265785cdaffdec885376dde92de35b3f
+No-ACE check current commit: 94027be3d837e20f8de9da8833ed5a8ebb7aa3cf
 PR status: open draft, stacked on agent/m047-bm4l-clean-qualified
-Current stage: Stage 8 — Reconciliation + handover after no-workflow static qualification
-Last completed stage: Stage 7 — Thermal-authority hardening and independent magnitude/sign audit
-Engineering status: IMPLEMENTED + AUTHORITY_HARDENED
-Validation status: PARTIAL — static source/authority/magnitude/sign/carrier audit PASS; governed six-case parity replay NOT_RUN on the current head
-Current blockers: (1) no authorized executable checkout/ACE path in this session; (2) exact CAESAR material-library thermal expansion remains unresolved, so alpha stays provisional.
-Exact next action: Continue no-workflow qualification from source/evidence, or execute the six governed BM4_L cases only when an independently authorized non-workflow executable environment becomes available. Do not promote the predecessor 435 -> 210 result as fresh PR runtime evidence.
+Current stage: Stage 10 — Reconciliation + handover after pinned no-ACE qualification implementation
+Last completed stage: Stage 9 — Pinned CAESAR authority fixture + no-ACE focused regression implementation
+Engineering status: IMPLEMENTED + AUTHORITY_HARDENED + FOCUSED_REGRESSION_COMMITTED
+Validation status: PARTIAL — source/authority/magnitude/sign/carrier audit PASS; focused no-ACE executable check COMMITTED but NOT_RUN; governed six-case parity replay NOT_RUN
+Current blockers: (1) no independent executable checkout/ACE path in this session; (2) exact CAESAR material-library thermal expansion remains unresolved, so alpha stays provisional.
+Exact next action: In an authorized non-workflow checkout, run `node scripts/lfea-m047-tee-rigid-thermal-check.mjs`; only after that result is recorded should the focused regression move from NOT_RUN. Full L2/L3/L4/L5/L6/L14 parity remains separately dependent on ACCDB/ACE execution.
 ```
 
 ## Handover in 60 Seconds
 
 ```text
-What is now true: PR #1026 adds the missing Type 2.1 branch-surface fictitious-rigid thermal free translation g = epsilon_run * r_surface through f_initial, leaves structural K unchanged, follows the actual analysis carrier, and now binds thermal authority to the resolved run material only in cases that actually contain T1.
-What was changed most recently: run thermal authority is no longer evaluated for W/P-only cases; for thermal cases the two run rows must agree on TEMP_EXP_C1 and MATERIAL_NUM, and that MATERIAL_NUM must match materialState.materialId before its temperature is used.
-Independent static proof: with the unchanged provisional epsilon = 1.17e-5*(120-21) = 0.0011583 and the production run-surface rule r = Do/2, BM4_L gives |g| = 0.15810795 mm at tee 20160 and 0.09745646625 mm at tee 20295, matching the predeclared PR #1001 candidate without fitting.
-What remains unfinished: no fresh current-head six-case L2/L3/L4/L5/L6/L14 solve, equilibrium replay, or superposition replay has been executed in this environment.
-What must not be assumed: the predecessor 435 -> 210 counts are not current-head runtime evidence; CAESAR's printed 0.0012 mm/mm is not exact alpha; prior workflow/build success applied to the earlier source head and is historical only.
-Highest-risk remaining item: runtime confirmation that the statically verified sign/carrier/authority path produces the predeclared thermal-selective response while preserving equilibrium and K identity.
-Exact next action: stay off workflows per owner instruction; continue static/fixture-quality qualification and preserve all runtime claims as NOT_RUN until an authorized non-workflow execution path exists.
+What is now true: PR #1026 adds the missing Type 2.1 branch-surface fictitious-rigid thermal free translation g = epsilon_run * r_surface through f_initial, leaves structural K unchanged, follows the actual analysis carrier, and binds thermal authority to the resolved run material only in cases containing T1.
+What was added most recently: a source-custody fixture pins the exact Common commit, Git blob SHAs, CAESAR version/build, Type 2.1 Misc values, and governed L2/L3/L4/L5/L6/L14 definitions; a 256-line no-ACE Node check consumes that fixture and checks B31J FLEX/Kb, surface/free-growth magnitude, thermal selectivity, material custody, sign/order, hard-coded-carrier absence, Type 2.6 exclusion and no fitted alpha.
+Independent static proof: with unchanged provisional epsilon = 1.17e-5*(120-21) = 0.0011583 and production surface rule r = Do/2, BM4_L gives |g| = 0.15810795 mm at tee 20160 and 0.09745646625 mm at tee 20295, matching the predeclared PR #1001 candidate without fitting.
+What remains unfinished: the newly committed no-ACE check has not been executed in this session; no fresh current-head six-case solve, equilibrium replay, or superposition replay has been executed either.
+What must not be assumed: committed tests are not executed tests; predecessor 435 -> 210 counts are not current-head runtime evidence; CAESAR printed 0.0012 mm/mm is not exact alpha; L14 is an ALG case in the pinned report even though its linear primitive content reduces to T1.
+Highest-risk remaining item: executable confirmation that the focused source/geometry/authority checks pass, followed separately by runtime confirmation that the free-state path produces the predeclared thermal-selective response while preserving equilibrium and K identity.
+Exact next action: stay off workflows per owner instruction; run the focused no-ACE command only in an authorized non-workflow checkout when available, then preserve full ACCDB parity as NOT_RUN until ACE-backed execution exists.
 ```
 
 ---
@@ -54,6 +56,8 @@ PR #1001 already models the branch at the CAESAR run surface through a rigid off
 ### Scope
 
 - `src/core/fea-benchmarks/caesar-accdb-linear-solve.js`
+- `benchmarks/LFEA/CAESAR_ACCDB/m047-bm4l-tee-rigid-thermal-authority.json`
+- `scripts/lfea-m047-tee-rigid-thermal-check.mjs`
 - `agents/PR1026_workreport.md`
 
 ### Governing principles
@@ -64,7 +68,9 @@ PR #1001 already models the branch at the CAESAR run surface through a rigid off
 - fail closed when thermal authority is inconsistent;
 - do not make nonthermal cases depend on unused thermal declarations;
 - preserve the repository recovery convention `q = K u - f_fixed - f_initial`;
-- separate static proof from fresh solver-runtime evidence.
+- separate static/source proof, focused executable proof, and full ACCDB parity proof;
+- preserve CAESAR physical-vs-ALG load-case semantics in evidence;
+- keep benchmark source custody pinned rather than relying on conversation history.
 
 ### Explicit non-goals
 
@@ -85,6 +91,8 @@ PR #1001 already models the branch at the CAESAR run surface through a rigid off
 - exact predecessor base: PR #1001 head `7488ba76126f8240bb61c80fad243cf096c5fe08`;
 - coding protocol: `reallaksh19/Common` `CodingRules.md` at `43eccc27967ecec7d67513c08255398b496be5ce`;
 - CAESAR reports: Common commit `179c4831cf521cf797c13699cfbbd118315c9244`;
+- Misc report Git blob: `ef23d224925e4568185a360ecbe1ee62503f15ff`;
+- Load Case report Git blob: `be62eeb08af26dddcd59146e21188c108c4600dd`;
 - CAESAR II report version: `14.00.00.0910 (Build 231113)`;
 - governed cases: L2=W, L3=T1, L4=P1, L5=W+T1+P1, L6=W+P1, L14=ALG(L5-L6);
 - current benchmark profile: installation 21 C and provisional alpha `1.17e-5 /K`, explicitly unresolved pending direct CAESAR alpha authority.
@@ -93,37 +101,41 @@ PR #1001 already models the branch at the CAESAR run surface through a rigid off
 
 ## 2. Mission Status
 
-| Work Item | Priority | Status | Evidence |
-|---|---:|---|---|
-| Mandatory living report before production edit | P0 | DONE | `PR_PENDING` report preceded production edits and was replaced by this PR-numbered report. |
-| Fresh stacked draft PR | P0 | DONE | PR #1026, exact base SHA `7488ba...`. |
-| Tee rigid thermal free-state implementation | P0 | DONE | Primary mechanics commit `5ecd4a6...`. |
-| Actual-carrier integration | P0 | DONE | Modifier-driven frame build; bend source modifier remains on incoming straight only. |
-| K-preserving free-state sign/order | P0 | PASS_STATIC | New mechanism reads condensed K only to form an initial-load vector; no K mutation. |
-| Common run T1/material agreement | P0 | PASS_STATIC | Two run values must each collapse to one value in thermal cases. |
-| Run material binding | P0 | PASS_STATIC | `MATERIAL_NUM` is converted to `ACCDB-MATERIAL-<n>` and must equal resolved `materialState.materialId`. |
-| Nonthermal authority selectivity | P0 | PASS_STATIC | Run thermal authority is `null` unless `caseMode.thermal`; W/P-only cases do not validate unused T1 state. |
-| Independent BM4_L free-growth magnitude | P0 | PASS_STATIC | 20160: 0.15810795 mm; 20295: 0.09745646625 mm using unchanged provisional strain. |
-| Governed six-case BM4_L replay | P0 | NOT_RUN | Owner requested no workflow; no independent executable checkout/ACE path is available in this session. |
-| Post-patch equilibrium/superposition replay | P0 | NOT_RUN | Requires a solver execution path. |
-| Exact CAESAR thermal expansion authority | P1 | BLOCKED | Pinned Misc report exposes only rounded `0.0012 mm/mm`; no Print-Alphas artifact exists in the pinned BM4 directory. |
+| Work Item | Priority | Status | Stage | Evidence |
+|---|---:|---|---:|---|
+| Mandatory living report before production edit | P0 | DONE | 1-2 | `PR_PENDING` report preceded production edits and was replaced by this PR-numbered report. |
+| Fresh stacked draft PR | P0 | DONE | 2 | PR #1026, exact base SHA `7488ba...`. |
+| Tee rigid thermal free-state implementation | P0 | IMPLEMENTED | 4 | Primary mechanics commit `5ecd4a6...`. |
+| Actual-carrier integration | P0 | IMPLEMENTED | 4 | Modifier-driven frame build; bend source modifier remains on incoming straight only. |
+| K-preserving free-state sign/order | P0 | VALIDATED | 7 | Static derivation/source audit: new mechanism reads condensed K only to form initial load; no K mutation. |
+| Common run T1/material agreement | P0 | VALIDATED | 7 | Two run values must each collapse to one value in thermal cases. |
+| Run material binding | P0 | VALIDATED | 7 | `MATERIAL_NUM` maps to `ACCDB-MATERIAL-<n>` and must equal resolved `materialState.materialId`. |
+| Nonthermal authority selectivity | P0 | VALIDATED | 7 | Run thermal authority is `null` unless `caseMode.thermal`; W/P-only cases do not validate unused T1 state. |
+| Independent BM4_L free-growth magnitude | P0 | VALIDATED | 7 | 20160: 0.15810795 mm; 20295: 0.09745646625 mm using unchanged provisional strain. |
+| Pinned Misc/Load Case source custody fixture | P0 | DONE | 9 | Fixture pins Common commit, report blob SHAs, CAESAR version/build, Type 2.1 values and governed load cases. |
+| Focused no-ACE executable regression | P0 | IMPLEMENTED | 9 | `scripts/lfea-m047-tee-rigid-thermal-check.mjs`, 256 physical lines; execution status NOT_RUN. |
+| Governed six-case BM4_L replay | P0 | BLOCKED | 10 | Owner requested no workflow; no independent executable checkout/ACE path is available in this session. |
+| Post-patch equilibrium/superposition replay | P0 | BLOCKED | 10 | Requires full solver execution path. |
+| Exact CAESAR thermal expansion authority | P1 | BLOCKED | 10 | Pinned Misc report exposes only rounded `0.0012 mm/mm`; no Print-Alphas artifact exists in pinned BM4 directory. |
 
 ---
 
 ## 3. Engineering Item Register
 
-| ID | Type | Priority | Status | Summary |
-|---|---|---:|---|---|
-| ISS-001 | confirmed defect | P0 | IMPLEMENTED | Type 2.1 branch-surface fictitious rigid lacked thermal free translation. |
-| RISK-001 | engineering risk | P0 | MITIGATED_STATIC | Source-ID lookup could miss bend source 36's real carrier; production follows the modifier into the actual carrier. |
-| RISK-002 | engineering risk | P0 | MITIGATED_STATIC | Wrong free-state sign/transform order; derivation and source order agree on `-K_eff*g` before standard transforms. |
-| RISK-003 | validation risk | P1 | OPEN | No independent executable checkout/ACE environment is available here; runtime replay remains NOT_RUN. |
-| RISK-004 | applicability risk | P2 | RESOLVED | Thermal authority discovery is now gated by `caseMode.thermal`; W/P-only cases no longer depend on unused T1 declarations. |
-| RISK-005 | authority-custody defect | P0 | RESOLVED | Common run `MATERIAL_NUM` was previously internally consistent but not bound to resolved material state; commit `edb787e...` adds explicit binding. |
-| DEC-001 | engineering decision | P0 | ACCEPTED | New mechanism changes `f_initial` only; K remains unchanged. |
-| DEC-002 | engineering decision | P0 | ACCEPTED | Fictitious rigid inherits common run thermal/material authority rather than branch-row authority. |
-| DEC-003 | engineering decision | P0 | ACCEPTED | Thermal authority is required only when T1 participates in the physical case. |
-| QST-001 | authority blocker | P1 | BLOCKED | Exact CAESAR A106 Grade B expansion from 21 C to 120 C remains unavailable beyond rounded report output. |
+| ID | Type | Priority | Status | Summary | Current PR? |
+|---|---|---:|---|---|---|
+| ISS-001 | confirmed defect | P0 | IMPLEMENTED | Type 2.1 branch-surface fictitious rigid lacked thermal free translation. | Yes |
+| RISK-001 | engineering risk | P0 | VALIDATED | Source-ID lookup could miss bend source 36 carrier; production follows modifier into actual carrier. | Yes |
+| RISK-002 | engineering risk | P0 | VALIDATED | Wrong free-state sign/transform order; derivation/source order agree on `-K_eff*g` before standard transforms. | Yes |
+| RISK-003 | validation risk | P1 | BLOCKED | No independent executable checkout/ACE environment here; focused and full runtime checks remain NOT_RUN. | Yes |
+| RISK-004 | applicability risk | P2 | DONE | Thermal authority discovery is gated by `caseMode.thermal`; W/P-only cases no longer depend on unused T1 declarations. | Yes |
+| RISK-005 | authority-custody defect | P0 | DONE | Common run `MATERIAL_NUM` now explicitly binds to resolved material state. | Yes |
+| IMP-001 | validation improvement | P0 | IMPLEMENTED | Add focused no-ACE regression that consumes pinned report authority instead of relying only on source inspection. | Yes |
+| DEC-001 | engineering decision | P0 | ACCEPTED | New mechanism changes `f_initial` only; K remains unchanged. | Yes |
+| DEC-002 | engineering decision | P0 | ACCEPTED | Fictitious rigid inherits common run thermal/material authority rather than branch-row authority. | Yes |
+| DEC-003 | engineering decision | P0 | ACCEPTED | Thermal authority is required only when T1 participates in the physical/effective case. | Yes |
+| DEC-004 | engineering decision | P0 | ACCEPTED | Focused regression records L14 as CAESAR ALG `L5-L6`; it does not relabel L14 as an independent physical load case. | Yes |
+| QST-001 | authority blocker | P1 | BLOCKED | Exact CAESAR A106 Grade B expansion from 21 C to 120 C remains unavailable beyond rounded report output. | Yes |
 
 ---
 
@@ -173,7 +185,7 @@ f_initial_local = f_initial_condensed + f_extra_local
 f_initial_global = H^T * T^T * f_initial_local
 ```
 
-The directional tee end-spring condensation happens before the free-state multiplication. Therefore `K_effective_local` is the same condensed tee stiffness used for the element contribution. The subsequent frame and rigid-offset transforms remain unchanged.
+The directional tee end-spring condensation happens before free-state multiplication. Therefore `K_effective_local` is the same condensed tee stiffness used for the element contribution. The subsequent frame and rigid-offset transforms remain unchanged.
 
 ### Static sign/transform audit
 
@@ -183,9 +195,9 @@ Source inspection confirms:
 - offset stiffness is transformed as `H^T K H`;
 - offset load is transformed as `H^T q`;
 - the tee free-load helper calculates `K_effective_local*g_local`, negates it, and adds it to the initial-load vector;
-- the global/offset transforms are then applied through the existing path.
+- global/offset transforms are then applied through the existing path.
 
-Result: **PASS_STATIC** for sign and transform ordering.
+Result: **PASS** for static sign and transform ordering. Full numerical replay is separately NOT_RUN.
 
 ---
 
@@ -208,20 +220,18 @@ materialId
 materialStateId
 ```
 
-For nonthermal cases, `runThermalAuthority` is `null` and no unused T1/material thermal-state validation is performed.
-
-At free-state construction the authority must again match both resolved `materialId` and `materialStateId` before use.
+For nonthermal cases, `runThermalAuthority` is `null` and no unused T1/material thermal-state validation is performed. At free-state construction the authority must again match both resolved `materialId` and `materialStateId` before use.
 
 ### 5.2 Actual analysis carrier
 
 No benchmark-specific source IDs appear in production mechanics. Existing ownership remains:
 
 - ordinary source span -> its frame analysis element;
-- bend source with tee at source I -> finite incoming straight carries the modifier;
+- bend source with tee at source I -> finite incoming straight carries modifier;
 - bend arcs explicitly receive `teeModifier: null`;
 - `requireTeeModifierCoverage` requires exactly one tee-modified carrier and rejects bend-arc leakage.
 
-The expected BM4_L carriers remain:
+Expected BM4_L carriers remain:
 
 ```text
 ACCDB.E12
@@ -230,73 +240,90 @@ ACCDB.E36.STRAIGHT
 
 These names are expected evidence, not implementation selectors.
 
-### 5.3 Branch-surface geometry and independent magnitude proof
+### 5.3 Pinned Type 2.1 report geometry and independent magnitude proof
 
-Production B31J directional branch geometry defines:
+Pinned CAESAR Misc Type 2.1 rows state:
+
+```text
+Tee 20160 / Srf.Node 20161: D=254.737 mm, T=18.263 mm, FLEXb(in-plane)=1.294, Kb=1.283E+06 N.m/deg
+Tee 20295 / Srf.Node 20296: D=157.302 mm, T=10.973 mm, d=157.327 mm, t=10.973 mm, FLEXb(in-plane)=1.323, Kb=2.877E+05 N.m/deg
+```
+
+Production branch-surface geometry defines:
 
 ```text
 branchSurfaceOffset = branchDirection * runOuterDiameter / 2
 ```
 
-Pinned CAESAR Misc Type 2.1 rows give:
+Since report nomenclature defines `D = Do - T`:
 
 ```text
-Tee 20160: mean D = 254.737 mm, T = 18.263 mm -> Do = D + T = 273.000 mm
-Tee 20295: mean D = 157.302 mm, T = 10.973 mm -> Do = D + T = 168.275 mm
+Tee 20160: Do = 254.737 + 18.263 = 273.000 mm -> r = 136.500 mm
+Tee 20295: Do = 157.302 + 10.973 = 168.275 mm -> r = 84.1375 mm
 ```
 
-So the production offset magnitudes are:
-
-```text
-r20160 = 136.500 mm
-r20295 = 84.1375 mm
-```
-
-The unchanged provisional benchmark thermal state is:
+The unchanged provisional benchmark state is:
 
 ```text
 alpha = 1.17e-5 /K
 DeltaT = 120 C - 21 C = 99 K
-epsilon = alpha * DeltaT = 0.0011583
+epsilon = 0.0011583
 ```
 
 Therefore, independently of solver response:
 
 ```text
-|g20160| = 0.0011583 * 136.500 mm = 0.15810795 mm
-|g20295| = 0.0011583 * 84.1375 mm = 0.09745646625 mm
+|g20160| = 0.15810795 mm
+|g20295| = 0.09745646625 mm
 ```
 
-These values reproduce the PR #1001 predeclared candidate free-growth magnitudes without changing alpha or using benchmark residuals to select a parameter.
+These reproduce the PR #1001 predeclared free-growth magnitudes without changing alpha or using residual minimization.
 
-### 5.4 Free-state construction
+### 5.4 Pinned load-case semantics
 
-`buildTeeRigidThermalInitialLoad` returns zero for:
+The pinned CAESAR Load Case Report states:
 
-- nonthermal physical cases;
-- no tee modifier;
-- no rigid offset.
+```text
+L2  SUS  W          EC  friction 0
+L3  OPE  T1         EC  friction 0
+L4  SUS  P1         EC  friction 0
+L5  OPE  W+T1+P1    EC  friction 0
+L6  SUS  W+P1       EC  friction 0
+L14 EXP  L14=L5-L6  ALG
+```
 
-For an active thermal branch rigid offset it:
+The focused authority fixture records exactly this distinction. The expected free-state selectivity is therefore:
 
-1. validates I/J end ownership;
-2. validates matching common-run `materialId` and `materialStateId`;
-3. calculates `epsilon_run = alpha * DeltaT_run`;
-4. calculates `g_global = epsilon_run * rigidOffset`;
-5. places that translation only at the tee junction end in the 12-DOF physical-end vector;
-6. transforms free displacement to frame-local coordinates;
-7. calculates `f_extra_local = -K_effective_local * g_local`;
-8. adds that term to the already-condensed initial-load vector.
+- L2/L4/L6: no tee thermal free state;
+- L3/L5: tee thermal free state active;
+- L14: CAESAR algebraic result case whose effective linear primitive content is T1; preserve ALG evidence rather than describing it as a separately declared physical case.
 
-### 5.5 Evidence fields
+### 5.5 Focused no-ACE regression
 
-Mechanics evidence exposes:
+`benchmarks/LFEA/CAESAR_ACCDB/m047-bm4l-tee-rigid-thermal-authority.json` pins:
 
-- tee `runThermalAuthority` (null for nonthermal cases);
-- per-analysis-element `teeRigidThermalStrain`;
-- per-analysis-element `teeRigidThermalFreeTranslationM`.
+- Common commit and exact report paths;
+- Misc and Load Case Git blob SHAs;
+- CAESAR version/build;
+- governed load-case definitions;
+- the two Type 2.1 tee values;
+- explicit Type 2.6 non-structural disposition for this PR;
+- provisional thermal diagnostic state marked non-promotable.
 
-This allows carrier ownership and thermal selectivity to be audited without inferring them from final stress comparisons.
+`scripts/lfea-m047-tee-rigid-thermal-check.mjs` consumes that fixture and is intended to check:
+
+1. exact source custody;
+2. L2/L3/L4/L5/L6/L14 thermal/ALG semantics;
+3. provisional alpha status and alpha*DeltaT consistency;
+4. production B31J welding-tee factor calculation against pinned FLEXb;
+5. production directional branch spring Kb against pinned Kb;
+6. production run-surface offset magnitude and expected free growth;
+7. thermal-only authority gating and resolved material binding in solver source;
+8. free-state location after tee condensation and before standard transforms;
+9. no benchmark-specific `E12`/`E36.STRAIGHT` selector;
+10. no Type 2.6 structural promotion or fitted-alpha constants.
+
+The script is 256 physical lines, below the pinned CodingRules normal 300-line limit. It is **COMMITTED / NOT_RUN** in this session.
 
 ---
 
@@ -306,122 +333,182 @@ This allows carrier ownership and thermal selectivity to be audited without infe
 
 Created `agents/PR_PENDING_workreport.md` before production edits, then renamed/synchronized to this PR-numbered report after PR allocation.
 
-**Result:** PASS.
+**Validation:** PASS.  
+**Stage decision:** COMPLETE.
 
 ### Stage 2 — PR allocation and base custody
 
 Opened draft PR #1026 stacked on exact predecessor head `7488ba76126f8240bb61c80fad243cf096c5fe08`.
 
-**Result:** PASS.
+**Validation:** PASS.  
+**Stage decision:** COMPLETE.
 
 ### Stage 3 — Pre-edit source verification
 
-Verified carrier decomposition, rigid-offset kinematics, existing tee modifier ownership, and clean source blob custody before the primary implementation.
+Verified carrier decomposition, rigid-offset kinematics, existing tee modifier ownership, and clean source blob custody before primary implementation.
 
-**Result:** PASS.
+**Validation:** PASS.  
+**Stage decision:** COMPLETE.
 
 ### Stage 4 — Primary mechanics implementation
 
 **Commit:** `5ecd4a6b75fc9cf1a644ef0234e78282afa130ca`
 
-Added the Type 2.1 rigid thermal free-state path, evidence, and run authority without changing K.
+Added Type 2.1 rigid thermal free-state path, evidence, and run authority without changing K.
 
-**Result:** IMPLEMENTED.
+**Validation:** static diff review PASS; full six-case execution NOT_RUN.  
+**Stage decision:** PARTIAL pending runtime qualification.
 
 ### Stage 5 — Initial static/repository validation
 
-The primary mechanics diff was checked for scope containment, no benchmark-specific carrier IDs, no alpha/Kb/tolerance changes, and no workflow edits. Historical automatic repository gates on that earlier source head succeeded, but those results are not used as current-head runtime qualification.
+Primary mechanics diff was checked for scope containment, no benchmark-specific carrier IDs, no alpha/Kb/tolerance changes, and no workflow edits. Historical automatic repository gates on that earlier source head succeeded, but those results are historical and are not current-head parity evidence.
 
-**Result:** PASS for that source head; six-case parity NOT_RUN.
+**Validation:** PASS for static/repository scope; parity NOT_RUN.  
+**Stage decision:** COMPLETE for static scope only.
 
 ### Stage 6 — Initial reconciliation
 
-Synchronized the report after the primary mechanics implementation.
+Synchronized report after primary mechanics implementation.
 
-**Result:** PASS.
+**Validation:** PASS.  
+**Stage decision:** COMPLETE.
 
-### Stage 7 — No-workflow independent static qualification and authority hardening
+### Stage 7 — No-workflow static qualification and authority hardening
 
 Owner instruction: avoid workflow execution.
 
 Actions:
 
-1. inspected the production branch-surface rule (`runOuterDiameter/2`);
-2. reconstructed the two BM4_L surface radii from pinned CAESAR Type 2.1 Misc data;
-3. independently calculated the free-growth magnitudes using the unchanged provisional alpha;
-4. rechecked the sign/order against the repository's `H`, `T`, and recovery conventions;
-5. confirmed the bend source modifier remains on the incoming straight rather than arc elements;
-6. identified that common run `MATERIAL_NUM` agreement was not explicitly tied to the resolved material state;
-7. identified the broader-applicability issue that the authority check was running in W/P-only cases;
-8. committed the narrow hardening fix.
+1. reconstructed two BM4_L run-surface radii from pinned Type 2.1 Misc data;
+2. independently calculated free-growth magnitudes with unchanged provisional alpha;
+3. rechecked sign/order against repository H/T/recovery conventions;
+4. confirmed bend source modifier stays on incoming straight, not arc elements;
+5. found common run `MATERIAL_NUM` was not explicitly tied to resolved material state;
+6. found unused T1/material authority was being checked for W/P-only cases;
+7. committed narrow authority hardening.
 
 **Authority-hardening commit:** `edb787e6160d80ce311418fd5e6bb2afaeb1ab40`
 
-**Exact diff from prior report head `d4da214...` to hardening commit:**
+**Validation:** PASS static; full runtime NOT_RUN.  
+**Stage decision:** COMPLETE for RISK-004/RISK-005.
+
+### Stage 8 — Reconciliation after authority hardening
+
+Synchronized report and PR description without changing physics.
+
+**Validation:** PASS.  
+**Stage decision:** COMPLETE.
+
+### Stage 9 — Pinned authority fixture + focused no-ACE regression
+
+Owner reconfirmed the pinned Common reports:
+
+- `LFEA/BM4/Miscdata_BM4_L.txt`
+- `LFEA/BM4/Loadcasereport_BM4_L.txt`
+
+Actions:
+
+1. fetched exact report content at Common commit `179c4831...`;
+2. recorded report Git blob SHAs (`ef23d224...`, `be62eeb0...`);
+3. created the focused source-custody fixture in commit `af889780...`;
+4. created the first no-ACE check in commit `b4f193b7...`;
+5. rejected its first self-referential load-case assertion and rewired the script to consume the pinned fixture in `8d41498c...`;
+6. re-read pinned CodingRules and found the normal `<300 physical lines` rule for new JS modules;
+7. reduced the script from 303 to 256 physical lines without weakening its assertions in `94027be3...`.
+
+**Changed files from Stage-8 report head to Stage-9 code head:**
 
 ```text
-1 production file modified
-15 additions
-2 deletions
+benchmarks/LFEA/CAESAR_ACCDB/m047-bm4l-tee-rigid-thermal-authority.json  added
+scripts/lfea-m047-tee-rigid-thermal-check.mjs                          added
 ```
 
-No other file changed in that commit.
+No production solver file changed during Stage 9.
 
-**Result:** PASS_STATIC. RISK-004 and RISK-005 resolved.
+**Validation performed:**
 
-### Stage 8 — Current reconciliation and handover
+- source custody cross-check against connector reads: PASS;
+- report blob SHA capture: PASS;
+- script physical-line rule: PASS (256 lines);
+- exact script execution: NOT_RUN;
+- full six-case parity: NOT_RUN.
 
-This report update records Stage 7 findings. It does not represent a solver replay and does not convert any NOT_RUN runtime item to PASS.
+**New finding:** the initial 303-line check violated the normal new-JS line guideline and was corrected before stage closure.
+
+**Stage decision:** PARTIAL — implementation complete, executable evidence NOT_RUN.
+
+### Stage 10 — Current reconciliation and handover
+
+This report synchronization records Stage 9. It does not convert the focused executable check or any ACCDB parity item from NOT_RUN to PASS.
+
+**Stage decision:** COMPLETE for report reconciliation.
 
 ---
 
 ## 7. Changed-File Ledger
 
-| File | Purpose | Engineering-sensitive? | Current validation |
-|---|---|---|---|
-| `agents/PR1026_workreport.md` | Living mission control, evidence, decisions and handover. | No | SYNCHRONIZED |
-| `src/core/fea-benchmarks/caesar-accdb-linear-solve.js` | Type 2.1 thermal free state + run authority hardening. | Yes | STATIC SOURCE/AUTHORITY/MAGNITUDE/SIGN PASS; six-case runtime NOT_RUN |
+| File | First Stage | Latest Stage | Purpose | Engineering-sensitive? | Validation |
+|---|---:|---:|---|---|---|
+| `agents/PR1026_workreport.md` | 1 | 10 | Living mission control, evidence, decisions and handover. | No | PASS — synchronized |
+| `src/core/fea-benchmarks/caesar-accdb-linear-solve.js` | 4 | 7 | Type 2.1 thermal free state + run authority hardening. | Yes | PASS static; six-case runtime NOT_RUN |
+| `benchmarks/LFEA/CAESAR_ACCDB/m047-bm4l-tee-rigid-thermal-authority.json` | 9 | 9 | Pinned CAESAR Misc/Load Case source custody and focused expected values. | Yes | PASS source cross-check |
+| `scripts/lfea-m047-tee-rigid-thermal-check.mjs` | 9 | 9 | Focused no-ACE regression for source/geometry/factor/authority/integration invariants. | Yes | COMMITTED; execution NOT_RUN; 256-line rule PASS |
 
 No workflow file and no Issue #991 content was changed.
 
 ---
 
-## 8. Validation and Evidence Ledger
+## 8. Decision and Invariant Ledger
 
-### Software/static validation
+| Decision / invariant | What must remain true | Enforcement | Validation | PR changes it? |
+|---|---|---|---|---|
+| DEC-001 / K ownership | Tee thermal free state must not modify structural K. | Solver builds `-K_eff*g` load from existing condensed K. | Static source/sign audit PASS. | Adds free state only. |
+| DEC-002 / run authority | Fictitious rigid thermal state comes from run, not branch. | `runThermalAuthority` propagated through tee modifier. | Static authority audit PASS. | Yes, required mission change. |
+| DEC-003 / selectivity | W/P-only cases cannot be blocked by unused T1 authority. | `caseMode.thermal` gates run authority creation and helper use. | Static source audit PASS; focused executable NOT_RUN. | Yes, hardening. |
+| DEC-004 / ALG semantics | L14 remains recorded as CAESAR ALG `L5-L6`. | Pinned fixture `combinationMethod=ALG`; report remains authority. | Source custody PASS. | No solver formula redesign. |
+| No fitting | Benchmark residual minimization cannot choose alpha/Kb/tolerance. | Profile alpha unchanged; focused guard rejects fitted-alpha constants. | Static diff PASS; focused executable NOT_RUN. | Preserved. |
+| Carrier ownership | Source ID is not assumed to equal analysis carrier. | Existing modifier/carrier coverage and bend incoming-straight logic. | Static source audit PASS. | Preserved. |
+| Type 2.6 boundary | Type 2.6 Misc stress/SIF rows are not promoted to Type 2.1 structural tee mechanics. | Solver structural tee filter remains ACCDB welding-tee type only; focused fixture records exclusion. | Static source custody PASS. | Preserved. |
 
-| Validation | Status | Evidence |
-|---|---|---|
-| Exact base custody | PASS | PR #1026 base `7488ba76126f8240bb61c80fad243cf096c5fe08`. |
-| Primary source diff containment | PASS | Initial mechanics source change was contained to the solver file. |
-| Authority-hardening diff containment | PASS | `d4da214... -> edb787e...`: one file, +15/-2. |
-| Current changed-file scope | PASS | Production solver + living report only. |
-| No workflow modification | PASS | No `.github/workflows/*` changed by this PR continuation. |
-| Current-head executable suite | NOT_RUN | No independent executable checkout/ACE path available; owner instructed to avoid workflows. |
-| Governed six-case BM4_L replay | NOT_RUN | Same execution blocker. |
-| Post-patch equilibrium audit | NOT_RUN | Requires current-head solver execution. |
-| Post-patch superposition audit | NOT_RUN | Requires current-head solver execution. |
+---
 
-### Engineering validation
+## 9. Validation and Evidence Ledger
+
+### Software Validation
+
+| Validation | Status | Last HEAD | Evidence |
+|---|---|---|---|
+| Exact base custody | PASS | `94027be3...` | PR base remains `7488ba76126f8240bb61c80fad243cf096c5fe08`. |
+| Authority-hardening diff containment | PASS | `edb787e...` | One solver file, +15/-2 from prior report head. |
+| Stage-9 changed-file containment | PASS | `94027be3...` | Only new authority JSON + focused script relative to Stage-8 report head. |
+| Focused script line policy | PASS | `94027be3...` | Script ends at physical line 256; CodingRules normally require new JS below 300. |
+| Pinned Misc source read | PASS | `94027be3...` | Common `179c4831...`, blob `ef23d224...`; Type 2.1 values cross-checked. |
+| Pinned Load Case source read | PASS | `94027be3...` | Common `179c4831...`, blob `be62eeb0...`; L2-L6/14 definitions cross-checked. |
+| Focused no-ACE check execution | NOT_RUN | `94027be3...` | No independent local checkout available in this session; workflows explicitly avoided. |
+| Governed six-case BM4_L replay | NOT_RUN | `94027be3...` | Requires ACCDB/ACE execution path. |
+| Post-patch equilibrium audit | NOT_RUN | `94027be3...` | Requires full solver execution. |
+| Post-patch superposition audit | NOT_RUN | `94027be3...` | Requires full solver execution. |
+
+### Engineering Validation
 
 | Property | Status | Evidence |
 |---|---|---|
 | Mechanism independent physical/source rationale | PASS | PR #1001 handover + pinned CAESAR Type 2.1 surface-node data. |
-| Surface offset rule | PASS_STATIC | Production rule is `branchDirection * runOd/2`. |
-| BM4_L free-growth magnitudes | PASS_STATIC | 0.15810795 mm and 0.09745646625 mm at provisional epsilon 0.0011583. |
-| Actual carrier ownership generic | PASS_STATIC | Modifier flows through actual frame carrier; bend arcs get null modifier. |
-| K untouched | PASS_STATIC | New code reads `effectiveLocalStiffness` to form load only; no new stiffness assignment. |
-| Free-state sign | PASS_DERIVATION | `q=K(Hu+g)-f` under repository convention requires `f_extra=-Kg`. |
-| Transform order | PASS_STATIC | Condense -> local free-load -> T transform -> H/offset transform follows existing operators. |
-| Common run temperature agreement | PASS_STATIC | Two run T1 values must collapse to one in thermal cases. |
-| Common run material agreement | PASS_STATIC | Two run material numbers must collapse to one in thermal cases. |
-| Resolved material binding | PASS_STATIC | `ACCDB-MATERIAL-<run material>` must equal `materialState.materialId`; helper later verifies materialId + materialStateId. |
-| W/P authority selectivity | PASS_STATIC | Nonthermal tee discovery leaves `runThermalAuthority=null`; free-state helper exits before authority use. |
-| Exact CAESAR thermal alpha | FAIL/BLOCKED | Only rounded `0.0012 mm/mm` is available from pinned CAESAR report artifacts. |
+| Surface offset rule | PASS | Production rule inspected: `branchDirection * runOd/2`. |
+| BM4_L free-growth magnitudes | PASS | Independent calculation: 0.15810795 mm and 0.09745646625 mm at provisional epsilon 0.0011583. |
+| Actual carrier ownership generic | PASS | Modifier flows through actual frame carrier; bend arcs get null modifier; no hard-coded E12/E36 selector in solver. |
+| K untouched | PASS | New code reads `effectiveLocalStiffness` to form load only; no new stiffness assignment. |
+| Free-state sign | PASS | `q=K(Hu+g)-f` under repository convention requires extra `f_initial=-Kg`. |
+| Transform order | PASS | Condense -> local free-load -> T -> H/offset path confirmed in source. |
+| Common run temperature/material agreement | PASS | Thermal case run rows must collapse to one T1 and material number. |
+| Resolved material binding | PASS | `ACCDB-MATERIAL-<run material>` must equal `materialState.materialId`; helper verifies materialId + stateId. |
+| W/P authority selectivity | PASS | Nonthermal tee discovery leaves run authority null; helper exits before authority use. |
+| Pinned B31J FLEXb/Kb executable reproduction | NOT_RUN | Focused script committed to call production factor + directional modifier code but has not executed here. |
+| Exact CAESAR thermal alpha | FAIL | Only rounded `0.0012 mm/mm` is available from pinned CAESAR report artifacts; QST-001 remains BLOCKED. |
 
 ### Predecessor falsification target — not fresh PR runtime evidence
 
-At the same unchanged provisional strain `0.0011583`, PR #1001's independent local candidate predicted:
+At unchanged provisional strain `0.0011583`, PR #1001 independently predicted:
 
 | Case | Baseline | Candidate |
 |---|---:|---:|
@@ -435,45 +522,60 @@ At the same unchanged provisional strain `0.0011583`, PR #1001's independent loc
 
 This remains a falsification target only. It is not claimed as fresh PR #1026 execution evidence.
 
----
+### Explicitly Not Validated
 
-## 9. Explicitly Not Validated / Not Claimed
-
-- No claim that the current PR head has reproduced 435 -> 210.
-- No claim that current-head six-DOF equilibrium has been executed.
-- No claim that current-head L3=L14, L6=L2+L4, or L5=L2+L3+L4 has been numerically replayed.
-- No claim that exact CAESAR material-library thermal expansion is known.
-- No promotion of `~1.22e-5/K`, rounded `0.0012`, or any benchmark-minimizing alpha.
-- No claim that Type 2.6 rows provide structural tee flexibility.
+- Focused `node scripts/lfea-m047-tee-rigid-thermal-check.mjs` has not executed on the current head.
+- Current PR head has not reproduced 435 -> 210.
+- Current-head six-DOF equilibrium has not executed.
+- Current-head L3=L14, L6=L2+L4, and L5=L2+L3+L4 have not been numerically replayed.
+- Exact CAESAR material-library thermal expansion is not known.
+- Type 2.6 is not structurally interpreted beyond the explicit exclusion in this PR.
 - No workflow execution is part of this continuation.
 
 ---
 
-## 10. Known / Deferred Work
+## 10. Known / Deferred Work and Recommended Forward Sequence
 
-### QST-001 — exact thermal expansion authority
+### QST-001 — exact thermal expansion authority — BLOCKED
 
-Still blocked. The pinned BM4 Common directory contains the ACCDB archives, Misc report, load-case report, InputXML and Output XML, but no separate Print-Alphas/material-library report exposing full-precision T1 expansion.
+Pinned BM4 Common directory has ACCDB archives, Misc report, Load Case report, InputXML and Output XML, but no separate Print-Alphas/material-library report exposing full-precision T1 expansion.
 
-Acceptable future authority remains, in descending preference:
+Acceptable future authority, in order:
 
-1. CAESAR Print Alphas/material-library output for the exact job/version;
+1. CAESAR Print Alphas/material-library output for exact job/version;
 2. another direct CAESAR export exposing full-precision T1 total expansion;
-3. primary material-library documentation demonstrably identical to CAESAR II 14's material implementation.
+3. primary material-library documentation demonstrably identical to CAESAR II 14 material implementation.
 
-Do not use a benchmark sweep, generic handbook CTE, or rounded `0.0012` as exact authority.
+Do not use benchmark sweep, generic handbook CTE, or rounded `0.0012` as exact authority.
 
-### RISK-003 — runtime validation access
+### RISK-003 — runtime validation access — BLOCKED
 
-The connector can read/write repository state, but this session has no independent local checkout plus Microsoft ACE execution path. Per owner instruction, workflows are not used as a workaround. Runtime qualification therefore stays explicitly NOT_RUN.
+Connector can read/write repository state, but this session has no independent local checkout plus Microsoft ACE path. Per owner instruction, workflows are not used as a workaround.
 
-### RISK-004 — resolved
+### IMP-001 — focused no-ACE regression — IMPLEMENTED / NOT_RUN
 
-Previously, unused T1/material declarations could block a W/P-only case because run authority was resolved during tee discovery unconditionally. `edb787e...` passes `caseMode` into tee discovery and resolves run thermal authority only when T1 is present.
+The focused script is now committed and can run on any ordinary Node checkout without ACE because its factor/geometry/source-integration checks consume repository code + pinned JSON fixture rather than ACCDB ingestion.
 
-### RISK-005 — resolved
+### Recommended Forward Sequence
 
-Previously, the two run rows could agree on `MATERIAL_NUM` while the resolved material state used for alpha came from a different material identity. `edb787e...` now requires `ACCDB-MATERIAL-<MATERIAL_NUM> === materialState.materialId`, and the free-state helper verifies both material ID and state ID.
+1. **Execute focused no-ACE regression in a non-workflow checkout.**  
+   Why: closes the newly added deterministic check before any further physics change.  
+   Prerequisite: ordinary repository checkout + Node only.  
+   Related: IMP-001, RISK-003.
+
+2. **Obtain exact CAESAR alpha authority.**  
+   Why: separates exact material-library state from provisional candidate.  
+   Prerequisite: Print Alphas/direct CAESAR full-precision export.  
+   Related: QST-001.
+
+3. **Execute full governed BM4_L six-case replay in ACCDB/ACE environment.**  
+   Why: only this can establish current-head CAESAR parity, equilibrium and superposition.  
+   Prerequisite: executable ACCDB ingestion path and either retained provisional alpha for falsification or exact alpha once authoritative.  
+   Related: RISK-003.
+
+4. **Cluster remaining failures only after the above.**  
+   Why: avoids reopening rejected mechanics or tuning parameters before current tee mechanism is actually measured.  
+   Do not start from total failure count alone.
 
 ---
 
@@ -482,7 +584,7 @@ Previously, the two run rows could agree on `MATERIAL_NUM` while the resolved ma
 Do not reopen without new independent authority:
 
 - generic bend softness;
-- MEC-21 bend transverse shear in the tested form;
+- MEC-21 bend transverse shear in tested form;
 - derived Bend Axial Shape TRUE residual fit;
 - flexible-centerline tee replacement;
 - Kb fitting/scaling;
@@ -493,39 +595,40 @@ Do not reopen without new independent authority:
 - reducer reversal/condensation asymmetry;
 - bend midpoint/chord weight shortcuts;
 - bend subdivision tuning;
-- ordinary-pipe pressure strain applied to the fictitious rigid.
+- ordinary-pipe pressure strain applied to fictitious rigid.
 
 ---
 
 ## 12. Next-Agent Handover
 
 ```text
-Current stopping point: Type 2.1 thermal free state is implemented; independent static magnitude/sign/transform/carrier audit passed; thermal run authority is now thermal-selective and explicitly bound to the resolved run material.
-PR / branch: #1026 / agent/m047-tee-rigid-thermal-growth
-Base: 7488ba76126f8240bb61c80fad243cf096c5fe08
-Primary mechanics commit: 5ecd4a6b75fc9cf1a644ef0234e78282afa130ca
-Authority-hardening commit: edb787e6160d80ce311418fd5e6bb2afaeb1ab40
-Current active stage: Stage 8 reconciliation/handover.
-Static BM4 target values: epsilon=0.0011583; tee 20160 |g|=0.15810795 mm; tee 20295 |g|=0.09745646625 mm.
-Expected runtime falsification signature when a non-workflow execution path exists: L2 31, L3 37, L4 40, L5 43, L6 22, L14 37; total 210.
-Must eventually verify at runtime: common/unchanged K, q=Ku-f_fixed-f_initial, carrier evidence E12 and E36.STRAIGHT, no bend-arc carrier, six-DOF equilibrium, L3=L14, L6=L2+L4, L5=L2+L3+L4.
+Current stopping point: Type 2.1 thermal free state and run-authority hardening are implemented. Pinned Misc/Load Case source custody and a focused no-ACE regression are committed; the focused command itself is NOT_RUN in this session.
+PR / branch / HEAD: #1026 / agent/m047-tee-rigid-thermal-growth / source head 94027be3d837e20f8de9da8833ed5a8ebb7aa3cf before this report sync.
+Last completed stage: Stage 9 pinned authority fixture + focused no-ACE regression implementation.
+Current active stage: Stage 10 reconciliation/handover.
+Start here: `node scripts/lfea-m047-tee-rigid-thermal-check.mjs` in an authorized non-workflow repository checkout.
 Do not redo: bend/MEC-21, gravity scaling, reducer reversal/weight, bend subdivision, Kb fitting, fitted-alpha investigations.
-Do not assume: predecessor 210 is current-head evidence; rounded 0.0012 is exact; source IDs equal analysis carriers; prior historical CI result validates the authority-hardening head.
+Do not assume: committed focused check has executed; predecessor 210 is current-head evidence; rounded 0.0012 is exact; source IDs equal analysis carriers; L14 is a separately declared physical T1 case.
+Files currently involved: agents/PR1026_workreport.md; src/core/fea-benchmarks/caesar-accdb-linear-solve.js; benchmarks/LFEA/CAESAR_ACCDB/m047-bm4l-tee-rigid-thermal-authority.json; scripts/lfea-m047-tee-rigid-thermal-check.mjs.
+Known failing checks: none observed because no new executable check was run; do not interpret NOT_RUN as PASS.
+Validation still required: focused no-ACE script; full L2/L3/L4/L5/L6/L14 replay; equilibrium; superposition; exact alpha authority.
 Open QST-* items: QST-001 exact CAESAR thermal expansion.
-Open risks: RISK-003 runtime execution access only. RISK-004 and RISK-005 are resolved.
-Owner constraint: avoid workflow execution.
-Exact next recommended action: continue source/fixture-quality static qualification or use an authorized non-workflow executable environment when available; do not weaken evidence standards to manufacture a runtime PASS.
-Required reading: this report; agents/PR1001_workreport.md at 7488ba...; pinned Miscdata_BM4_L.txt and Loadcasereport_BM4_L.txt; Common CodingRules.md at 43eccc...
+Important deferred IMP-* items: IMP-001 execution only; implementation is committed.
+Highest-risk remaining item: executable proof of the committed focused check, then full ACCDB parity.
+Exact next recommended action: run focused no-ACE check outside workflows, record exact HEAD and output, then obtain exact alpha or run the predeclared provisional-alpha six-case falsification in an ACE environment.
+Required reading: this report; agents/PR1001_workreport.md at 7488ba...; authority fixture; pinned Miscdata_BM4_L.txt and Loadcasereport_BM4_L.txt; Common CodingRules.md at 43eccc...
 ```
 
 ---
 
 ## 13. Process Notes / Lessons Learned
 
-- Stacking directly on the exact predecessor head isolates the new physics from PR #1001's existing baseline.
-- The correct free-state sign follows from the rigid-offset kinematic equation and repository recovery convention, not by analogy to ordinary pipe eigenstrain.
-- Source 36 demonstrates why source IDs and analysis carriers must remain separate concepts.
-- A run-state authority that merely agrees with itself is insufficient; it must be bound to the material state actually used by the solver.
-- Unused thermal authority should not constrain W/P-only physical cases.
-- The independent branch-surface magnitude reconstruction is valuable because it validates geometry and free-growth scaling without using benchmark residuals.
-- Static/source proof and runtime benchmark proof remain separate evidence classes; neither should be mislabeled as the other.
+- Stack directly on exact predecessor head to isolate one mechanics change.
+- Correct free-state sign follows rigid-offset kinematics + repository recovery convention, not analogy to ordinary pipe eigenstrain.
+- Source 36 demonstrates why source IDs and analysis carriers are distinct concepts.
+- Run-state authority that merely agrees with itself is insufficient; it must bind to the material state actually used by solver.
+- Unused thermal authority should not constrain W/P-only cases.
+- Independent branch-surface magnitude reconstruction validates geometry/free-growth scaling without benchmark residual fitting.
+- A test oracle should consume a pinned source-custody fixture rather than assert a constant against itself.
+- The first focused script exceeded the repository's normal new-JS 300-line guideline; shrinking it to 256 lines before closure preserved the coding rule without weakening assertions.
+- Static/source proof, focused executable proof, and full ACCDB parity proof are separate evidence classes and must remain labelled separately.

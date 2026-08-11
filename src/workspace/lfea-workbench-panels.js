@@ -186,9 +186,10 @@ export function renderLfeaResults(root, state) {
       lfeaResultTable(root, 'Displacements', execution.result.nodalDisplacements ?? []),
       lfeaResultTable(root, 'Reactions', execution.result.reactions ?? []),
       lfeaResultTable(root, 'Raw stress', rawStressRows(execution.result)),
+      meshQualityAuthority(root, state.packageValue),
       lfeaResultTable(
         root,
-        'Mesh quality evidence — no acceptance threshold applied',
+        'Mesh quality evidence',
         qualityEvidenceRows(execution.result),
       ),
     );
@@ -325,6 +326,22 @@ function preflight(root, execution) {
   value.dataset.role = 'lfea-preflight';
   value.dataset.status = status;
   value.title = `Preflight status: ${status}`;
+  return value;
+}
+
+function meshQualityAuthority(root, packageValue) {
+  const tolerance = packageValue?.analysisDefinition?.solverProfile?.tolerances?.geometryArea;
+  const toleranceText = Number.isFinite(tolerance) ? String(tolerance) : 'not declared';
+  const value = workbenchElement(
+    root,
+    'p',
+    'lfea-workbench__preflight',
+    `Geometry validity was qualified upstream using solverProfile.tolerances.geometryArea = ${toleranceText}. `
+      + 'This panel adds no separate acceptance threshold to the displayed Jacobian ratio, edge-length ratio, or corner-cosine metrics; signed-area/Jacobian validity remains governed by upstream model qualification.',
+  );
+  value.dataset.role = 'lfea-quality-authority';
+  value.dataset.geometryTolerance = toleranceText;
+  value.title = 'Geometry gate source: analysisDefinition.solverProfile.tolerances.geometryArea';
   return value;
 }
 

@@ -24,6 +24,7 @@ import {
 } from './topology-edit-table-engineering-runtime.js';
 import { renderTopologyEditTableGrid } from './topology-edit-table-grid-view.js';
 import { stageTopologyEditTablePipeLength } from './topology-edit-table-pipe-length-runtime.js';
+import { handleTopologyEditTableScroll, initializeTopologyEditTableScrollState, resetTopologyEditTableScroll } from './topology-edit-table-scroll-runtime.js';
 import { ensureTopologyEditTableStyles } from './topology-edit-table-styles.js';
 import {
   applyTopologyEditTableRuntime,
@@ -52,6 +53,7 @@ export class TopologyEditTableRuntime {
     this.pending = false;
     this.cellDrafts = new Map();
     this.cellErrorId = null;
+    initializeTopologyEditTableScrollState(this);
     this.emptyRouteValues = {
       startX: '0', startY: '0', startZ: '0',
       endX: '1000', endY: '0', endZ: '0',
@@ -63,6 +65,7 @@ export class TopologyEditTableRuntime {
     this.onClick = (event) => this.handleClick(event);
     this.onInput = (event) => this.handleInput(event);
     this.onKeyDown = (event) => this.handleKeyDown(event);
+    this.onScroll = (event) => handleTopologyEditTableScroll(this, event);
   }
 
   mount(element) {
@@ -74,6 +77,7 @@ export class TopologyEditTableRuntime {
     element.addEventListener('click', this.onClick);
     element.addEventListener('input', this.onInput);
     element.addEventListener('keydown', this.onKeyDown);
+    element.addEventListener('scroll', this.onScroll, true);
     this.refreshProjection();
   }
 
@@ -158,6 +162,7 @@ export class TopologyEditTableRuntime {
     if (handleTopologyEditTableCellInput(this, event)) return;
     if (!event.target.matches?.('[data-table-filter]')) return;
     const caret = event.target.selectionStart;
+    resetTopologyEditTableScroll(this);
     this.viewState = reduceTopologyEditTableViewState(this.viewState, { type: 'QUERY', query: event.target.value });
     this.render();
     const filter = this.element?.querySelector('[data-table-filter]');
@@ -209,6 +214,7 @@ export class TopologyEditTableRuntime {
   sortRows(sortKey) {
     const same = this.viewState.sortKey === sortKey;
     const sortDirection = same && this.viewState.sortDirection === 'ASC' ? 'DESC' : 'ASC';
+    resetTopologyEditTableScroll(this);
     this.viewState = reduceTopologyEditTableViewState(this.viewState, { type: 'SORT', sortKey, sortDirection });
     this.render();
     return true;
@@ -283,6 +289,7 @@ export class TopologyEditTableRuntime {
     this.element?.removeEventListener('click', this.onClick);
     this.element?.removeEventListener('input', this.onInput);
     this.element?.removeEventListener('keydown', this.onKeyDown);
+    this.element?.removeEventListener('scroll', this.onScroll, true);
     this.element?.replaceChildren(); this.element = null;
   }
   destroy() { this.validationClient.destroy(); this.resetStaged(true); this.destroyElementOnly(); }

@@ -6,7 +6,7 @@
 - **Source issue:** #1015 — `LAFEA UI update`
 - **Pull request:** #1016 — draft
 - **Branch:** `agent/lafea-appendix-a-workreport`
-- **Current stage:** Stage 15 — local regression coverage in progress
+- **Current stage:** Stage 16 — documentation and closure in progress
 - **Last updated:** 2026-08-11
 - **CI constraint:** Do not add GitHub Actions workflows or workflow-based CI gates.
 
@@ -51,7 +51,7 @@ Added `src/workspace/lafea-t6-geometry-qualification-view.js` and integrated it 
 
 ### Stage 14 — Preserve/explain numerical method semantics — COMPLETE
 
-The T6 verification view now presents producer-method semantics without recalculating engineering results in UI code:
+The T6 verification view presents producer-method semantics without recalculating engineering results in UI code:
 
 - **Area:** 2D three-point triangular quadrature over the T6 isoparametric mapping.
 - **Curved perimeter:** 1D five-point Gauss-Legendre integration of quadratic-edge arc length.
@@ -60,32 +60,57 @@ The T6 verification view now presents producer-method semantics without recalcul
 - **Dense Jacobian:** separate parent-coordinate grid sampling using the retained division count.
 - **Topology:** edge incidence, shared midside identity, connected-region and feature-set checks.
 
-The view explicitly states that the Bucket-01 qualification contract does not carry a unit symbol, so model-length/area values are shown in the source model basis without inventing display units.
+The view states that the Bucket-01 qualification contract does not carry a unit symbol, so model-length/area values are shown in the source model basis without inventing display units.
 
-### Stage 15 — Local regression coverage — IN PROGRESS
+### Stage 15 — Local regression coverage — COMPLETE
 
-Planned repository-local regression coverage:
+Added `scripts/lafea-ui-t6-geometry-qualification-check.mjs` using the repository's real deterministic T6 generator and Bucket-01 qualifier rather than synthetic hand-built evidence.
 
-- valid exact parent + current mesh/head -> `CURRENT_PASS`;
-- valid but producer-BLOCKED evidence -> `CURRENT_BLOCK` and diagnostic display;
-- tampered evidence -> rejected;
-- wrong parent mesh package -> rejected;
-- missing/mismatched candidate head -> rejected/stale;
-- analysis-mesh replacement -> retained qualification projects STALE;
-- stale view suppresses current geometry metrics;
-- current view exposes retained area/perimeter/deviation/Jacobian values and method semantics;
-- public store/controller surface names remain present;
-- no release promotion and no workflow file.
+Coverage includes:
 
-## Existing repository-local regression scripts in PR
+- exact parent rebuild validation;
+- current exact head + canonical retained mesh -> `CURRENT_PASS`;
+- producer-BLOCKED evidence -> `CURRENT_BLOCK` with no release promotion;
+- evidence tampering rejection;
+- wrong parent mesh package rejection;
+- missing/mismatched candidate head rejection;
+- analysis-mesh replacement -> retained qualification projects `STALE`;
+- stale verification view suppresses geometry metrics and method semantics;
+- current view exposes exact retained area, curved perimeter, boundary deviation and dense-Jacobian values;
+- numerical-method text distinguishes triangular area quadrature, five-point edge integration and independent deviation sampling;
+- public API/controller surface presence;
+- no workflow file and no release promotion.
+
+**Architecture-guard finding and correction**
+
+The repository's existing `lafea-mp2-domain-geometry-check.mjs` explicitly requires `lafea-workbench-orchestrator-store.js` and `lafea-workbench-orchestrator-api.js` to stay below 300 physical lines. The accumulated Stage 7–15 integration had pushed the store above that guard.
+
+Instead of weakening the guard, Stage 15 added `src/workspace/lafea-workbench-evidence-actions.js` and moved registration/export actions out of the store, following the existing mesh-generation action-module pattern. The guarded store is again below line 299; API and new T6 view/state/custody modules are also below 300 lines.
+
+The existing Bucket-01 qualification test was cross-checked: the same 2x16 deterministic T6 mesh is PASS under baseline tolerances, area error is nonzero and decreases with refinement, and tampered/blocked qualification cases are already established by the producer tests.
+
+**Execution limitation:** the new and earlier repository-local Node checks have not been executed in this environment because there is no runnable repository checkout and outbound GitHub cloning is unavailable. Static contract/diff review is complete; no unexecuted check is reported as PASS.
+
+## Repository-local regression scripts added in PR #1016
 
 - `scripts/lafea-ui-workflow-truthfulness-check.mjs`
 - `scripts/lafea-ui-analysis-settings-check.mjs`
 - `scripts/lafea-ui-release-binding-check.mjs`
 - `scripts/lafea-ui-viewport-lifecycle-check.mjs`
 - `scripts/lafea-ui-numerical-verification-check.mjs`
+- `scripts/lafea-ui-t6-geometry-qualification-check.mjs`
 
-They are not connected to a new GitHub Actions workflow and remain unexecuted in this environment because no runnable repository checkout is available.
+None is connected to a new GitHub Actions workflow.
+
+### Stage 16 — Documentation and closure — IN PROGRESS
+
+Closure tasks:
+
+- re-list complete PR file set and confirm no workflow path;
+- inspect final T6 custody/state/view/action/store patches;
+- refresh PR description with Stages 10–16 and the architecture-guard refactor;
+- record current PR state/head/change count;
+- mark the extension roadmap complete while retaining the runtime-validation limitation.
 
 ## Extension roadmap status
 
@@ -94,8 +119,8 @@ They are not connected to a new GitHub Actions workflow and remain unexecuted in
 - Stage 12 — public store/controller APIs: COMPLETE
 - Stage 13 — Numerical Verification UX extension: COMPLETE
 - Stage 14 — preserve/explain numerical method semantics: COMPLETE
-- Stage 15 — local regression coverage: IN PROGRESS
-- Stage 16 — documentation and closure: PLANNED
+- Stage 15 — local regression coverage: COMPLETE
+- Stage 16 — documentation and closure: IN PROGRESS
 
 ## Validation policy
 

@@ -1,6 +1,6 @@
 # PR #1020 Engineering Work Report
 
-> Canonical living handover authority for PR #1020. Current-state sections are authoritative; Stage Execution Log preserves history.
+> Canonical living handover authority for PR #1020. Current-state sections are authoritative; Stage Execution Log preserves relevant history.
 
 ## 0. PR Mission Control
 
@@ -11,70 +11,61 @@
 | PR number | 1020 |
 | Branch | `agent/fix-topology-validation-worker-production` |
 | Base commit | `751756e9140527b8dc121aa179dc76b7039fb7ad` |
-| Current HEAD | `a7fc9413d3931585706cfd19c6cfcc7af16c9ef2` before this report update |
+| Current HEAD | `d8aeadc5b9c198505ff04469f773028320cf547f` before this report update |
 | PR status | OPEN / DRAFT / mergeable |
-| Current stage | Stage 4 — Dense dynamic spreadsheet shell, implicit-column repair |
+| Current stage | Stage 4 — Dense dynamic spreadsheet shell, open/drag boundary repair |
 | Last completed stage | Stage 3 — PR/documentation reconciliation |
-| Engineering status | PARTIAL; density/frozen behavior proven; exact viewport ownership still blocked |
-| Validation status | `main-gate`, source/contracts/build and non-table authorities PASS on `a7fc941...`; Table Slice 3/6 Chromium FAIL on the table layout surface |
-| Current blocker | ISS-006 — `.topology-edit-table-window[open]` defines grid rows but no explicit column; the implicit `auto` grid column expands to table max-content width, yielding `clientWidth === scrollWidth === 2848px` inside a 720px panel. |
-| Exact next action | Add `grid-template-columns:minmax(0,1fr)` to the open floating window, keep the existing E2E oracle unchanged for the first pass, and rerun exact-head table authorities before Stage 5. |
+| Engineering status | PARTIAL; density/frozen context and horizontal track constraint implemented; row reachability/vertical viewport still blocked |
+| Validation status | On `d8aeadc5...`: `main-gate`, Table Slice 4, non-FEA input check and SJSON interaction PASS; Table Slice 3/6 source/contracts/build PASS but Chromium FAIL on table geometry |
+| Current blocker | ISS-007 — collapsed Engineering Table titlebar pointerdown enters drag state before native `<details>` toggle, persisting the collapsed bottom position into inline `top/left` when the panel opens |
+| Exact next action | Guard `beginDrag()` so drag can start only when `details.open === true`; leave the existing Chromium oracle unchanged and requalify exact head before Stage 5 |
 
 ### Handover in 60 seconds
 
-- **What is now true:** compact 11px typography, compact controls, lower-details grouping, sticky header and five frozen columns are implemented. The inherited validation worker still builds as a production asset. Existing source/transaction contracts and production builds are green.
-- **What is currently being worked on:** Stage-4 floating-window geometry only. Exact artifact from `a7fc941...` proves the compact test fails first on horizontal ownership: expected `scrollWidth > clientWidth`; received `2848 === 2848` after the floating panel was set to 720px wide. The panel itself is open and its editor region is present in the accessibility snapshot.
-- **What remains unfinished:** ISS-006 repair and Stage-4 green qualification; Stage 5 direct PIPE-length cells; Stage 6 VALVE/TEE compound cell integration; Stage 7 virtualization/bounded expansion; Stage 8 final closure.
-- **What must not be assumed:** the current click failures are transaction/selection defects; layout is still causing overflowing hit targets. Do not start Stage 5 until Stage 4 browser authorities are green.
-- **Highest-risk remaining item:** ISS-006 / RISK-008 immediately; RISK-001 becomes highest after Stage 4.
-- **Exact next recommended action:** one presentation-only CSS column-track repair, then exact-head Chromium evidence.
+- **What is now true:** production validation worker bundles correctly; compact 11px table styling, compact controls, automatic overflow, five frozen columns, lower-control separation and explicit open-window inline grid track are implemented.
+- **Current browser evidence:** at `d8aeadc5...`, old horizontal max-content escape no longer blocks the layout test. The panel itself grows when resized, but the data viewport gains `0px`; row Select buttons are visible/enabled yet pointer events are intercepted by the table scroll/header/lower regions.
+- **Root cause now verified:** the floating titlebar is a `<summary>`. `pointerdown` calls `beginDrag()` before the native `<details>` click toggles open. While collapsed, the panel is CSS-positioned at the bottom. `beginDrag()` copies that closed geometry into inline `left/top`; opening then retains those inline coordinates and places the expanded body below/behind the intended viewport. Exact artifact screenshot shows the titlebar at the bottom edge with table content geometrically overlapping/off-screen.
+- **What remains unfinished:** ISS-007 repair and Stage-4 green qualification; Stage 5 direct PIPE-length cell editing; Stage 6 VALVE/TEE compound cell integration; Stage 7 virtualization/bounded expansion; Stage 8 final reconciliation.
+- **Do not assume:** current pointer failures are selection/transaction defects. Node authority tests and production build pass; the remaining defect is floating-window interaction/layout custody.
+- **Highest-risk remaining item:** ISS-007 now; RISK-001 (second model authority) becomes primary after Stage 4.
 
 ## 1. Mission and Engineering Intent
 
 ### Mission
 Deliver a spreadsheet-like Engineering Table with dense rows, dynamic X/Y scrolling, frozen context, direct governed cells, keyboard navigation, staged/error/stale state, and atomic certified Apply.
 
-### Engineering/user consequence
-Engineers must be able to reach wide and long tabular data in the resizable floating window. The data viewport must be bounded by the window, not expand to the table’s intrinsic width/height, while canonical topology remains the only engineering authority.
-
-### Scope
-- Preserve/requalify inherited validation-worker production repair.
-- Stage 4: presentation/layout only.
-- Stage 5: direct editing through existing cell-capability authority, starting with PIPE length.
-- Stage 6: existing governed VALVE/TEE compound editors from cells.
-- Stage 7: virtualization and only production-backed additional edit authority.
-- Stage 8: final reconciliation and exact-final-head validation.
-
 ### Governing engineering principles
 1. Canonical topology is the sole model authority.
-2. Table/DOM drafts never mutate canonical topology before certified Apply.
-3. Existing column descriptors and `deriveTopologyEditTableCellCapability` are UI-policy authority.
+2. Table/DOM draft state never mutates canonical topology before certified Apply.
+3. Existing column descriptors and `deriveTopologyEditTableCellCapability` control UI editability.
 4. `AVAILABLE` may be direct; `NEEDS_INPUT` requires governed compound input; blocked/unrepresentable fields are not free text.
-5. Catalogue/derived values are never guessed or silently defaulted.
+5. Catalogue-controlled and derived values are never guessed or silently defaulted.
 6. Stale revisions fail closed or explicitly rebase.
-7. Layout qualification measures actual browser geometry and pointer reachability.
+7. Stage-4 browser geometry and pointer reachability must be green before editing semantics expand.
+8. No new CI workflows are added for this assignment.
 
 ### Explicit non-goals
-No direct canonical DOM mutation; no broad refactor/dependency upgrade; no hidden mocks/fallbacks/shims; no backup files; no speculative abstractions; no new CI workflows.
+No direct canonical DOM mutation; no broad refactor; no dependency upgrades; no hidden mocks/fallbacks/shims; no backup files; no speculative abstractions.
 
 ## 2. Mission Status
 
 | Work Item | Priority | Status | Stage | Evidence |
 |---|---:|---|---|---|
-| Work-report protocol | P0 | DONE | 1-2 | canonical numbered report |
-| PR metadata / initial reconciliation | P0 | DONE | 3 | combined mission; no workflow changes |
-| Production validation-worker repair | P0 | VALIDATED | inherited | baseline matrix + current builds emit worker asset |
-| Dense typography/controls | P1 | VALIDATED | 4 | computed <=12px in Chromium |
-| Sticky/frozen context | P1 | VALIDATED | 4 | 5 columns + offsets `[0,58,190,268,396]` |
+| Work-report protocol | P0 | DONE | 1-2 | canonical PR-numbered report |
+| PR metadata / scope reconciliation | P0 | DONE | 3 | combined mission documented; no workflow changes |
+| Production validation-worker repair | P0 | VALIDATED | inherited | repeated production builds emit worker asset |
+| Dense typography/controls | P1 | VALIDATED | 4 | Chromium computed font <=12px |
+| Sticky/frozen context | P1 | VALIDATED | 4 | Select/Tag/Type/Connect From/Connect To + deterministic offsets |
 | Lower controls separated | P1 | IMPLEMENTED | 4 | `.topology-edit-table__lower` production wrapper |
-| Horizontal viewport ownership | P1 | IN_PROGRESS | 4 | ISS-006: compact client width expands to 2848px |
-| Vertical viewport ownership / resize | P1 | IN_PROGRESS | 4 | prior attempts exposed height-chain defects; re-evaluate after column constraint |
-| Row pointer reachability | P0 | BLOCKED | 4 | overflowing layout can intercept existing row clicks |
+| Horizontal viewport ownership | P1 | IMPLEMENTED / REQUALIFY | 4 | explicit `grid-template-columns:minmax(0,1fr)` landed at `d8aeadc5...`; old `2848 == 2848` failure is no longer first blocker |
+| Vertical viewport ownership / resize | P1 | BLOCKED | 4 | panel height grows but data-scroll height delta is `0px` on `d8aeadc5...` |
+| Row pointer reachability | P0 | BLOCKED | 4 | visible row controls intercepted by overlapping scroll/header/lower regions |
+| Open/collapse/drag geometry custody | P0 | IN_PROGRESS | 4 | ISS-007 verified in production adapter + Chromium artifact |
 | Stage 4 qualification | P0 | BLOCKED | 4 | Table Slice 3/6 Chromium |
 | Inline direct cells | P1 | NOT_STARTED | 5 | capability authority exists |
-| PIPE length direct cell | P1 | NOT_STARTED | 5 | `PIPE_LENGTH` direct `AVAILABLE` |
+| PIPE length direct cell | P1 | NOT_STARTED | 5 | `PIPE_LENGTH` is current direct `AVAILABLE` scalar |
 | VALVE/TEE grid integration | P2 | NOT_STARTED | 6 | `NEEDS_INPUT` compound authority |
-| Virtualization | P2 | NOT_STARTED | 7 | hard 300-row cap remains |
+| Virtualization | P2 | NOT_STARTED | 7 | hard 300-row rendering cap remains |
 | Broader edit authority | P2 | DEFERRED | 7/future | explicit governed operation required |
 | Final reconciliation/validation | P0 | NOT_STARTED | 8 | pending |
 
@@ -84,202 +75,181 @@ No direct canonical DOM mutation; no broad refactor/dependency upgrade; no hidde
 |---|---|---|---|---|---|
 | ISS-001 | Defect | HIGH | VALIDATED | Production validation worker bundling/load failure. | Yes |
 | ISS-002 | Defect | MEDIUM | IMPLEMENTED | Fixed 470px inner viewport/nested overflow prevented dynamic reachability. | Yes |
-| ISS-003 | Defect | MEDIUM | VALIDATED | Frozen test/CSS initially omitted descriptor-frozen connectivity columns. | Yes |
-| ISS-004 | Defect | MEDIUM | IN_PROGRESS | Data viewport remaining-height ownership still requires exact-browser closure. | Yes |
-| ISS-005 | Defect | HIGH | PARTIAL | Surface-only flex exposed zero-height/pointer-interception through an indefinite sizing chain; ancestor flex-fill repair changed failure surface. | Yes |
-| ISS-006 | Defect | HIGH | IN_PROGRESS | Open floating-window implicit grid column expands to table max-content width. | Yes |
+| ISS-003 | Defect | MEDIUM | VALIDATED | Frozen CSS/test initially omitted descriptor-frozen connectivity columns. | Yes |
+| ISS-004 | Defect | MEDIUM | IN_PROGRESS | Data viewport remaining-height ownership requires exact-browser closure. | Yes |
+| ISS-005 | Defect | HIGH | PARTIAL | Flex/min-size chain defects caused zero-height/pointer overlap; several ancestor sizing repairs landed. | Yes |
+| ISS-006 | Defect | HIGH | IMPLEMENTED / REQUALIFY | Open-window implicit grid column expanded to table max-content width; explicit `minmax(0,1fr)` column landed at `d8aeadc5...`. | Yes |
+| ISS-007 | Defect | HIGH | IN_PROGRESS | Collapsed summary pointerdown persists closed geometry into the opened resizable window. | Yes |
 | IMP-001 | Improvement | P1 | VALIDATED | Compact typography/control density. | Yes |
 | IMP-002 | Improvement | P1 | ACCEPTED | Direct governed spreadsheet cells. | Yes |
 | IMP-003 | Improvement | P1 | ACCEPTED | Keyboard navigation + staged/error/stale cells. | Yes |
 | IMP-004 | Improvement | P2 | ACCEPTED | Windowed rendering after cell semantics stabilize. | Yes |
 | IMP-005 | Improvement | P2 | DEFERRED | Broad XYZ/catalogue/fitting/support edits need governed operations. | Bounded only |
 | RISK-001 | Risk | HIGH | ACCEPTED | Spreadsheet drafts could become a second model authority. | Yes |
-| RISK-002 | Risk | HIGH | ACCEPTED | No local checkout/gh limits local executable validation. | Yes |
+| RISK-002 | Risk | HIGH | ACCEPTED | No local checkout/`gh`; executable evidence comes from connected GitHub checks. | Yes |
 | RISK-003 | Risk | MEDIUM | ACCEPTED | Whole-grid rerender can destroy focus/caret/draft. | Yes |
-| RISK-004 | Risk | MEDIUM | ACCEPTED | Frozen region can dominate narrow widths. | Yes |
-| RISK-005 | Risk | MEDIUM | ACCEPTED | Resize tests can misdiagnose layout without actual geometry. | Yes |
+| RISK-004 | Risk | MEDIUM | ACCEPTED | Five frozen columns can dominate narrow widths. | Yes |
+| RISK-005 | Risk | MEDIUM | ACCEPTED | Resize tests can misdiagnose layout unless actual browser geometry is measured. | Yes |
 | RISK-006 | Risk | MEDIUM | ACCEPTED | Table min-content/lower controls can defeat constrained data sizing. | Yes |
-| RISK-007 | Risk | HIGH | ACCEPTED | Overflowing zero/invalid viewport geometry can make visible rows unclickable. | Yes |
-| RISK-008 | Risk | HIGH | ACCEPTED | Implicit CSS Grid auto columns can let max-content width escape the resizable window. | Yes |
+| RISK-007 | Risk | HIGH | ACCEPTED | Invalid viewport geometry makes visible rows unclickable. | Yes |
+| RISK-008 | Risk | HIGH | MITIGATED / REQUALIFY | Implicit grid auto column allowed max-content width to escape resizable window. | Yes |
+| RISK-009 | Risk | HIGH | ACCEPTED | Native `<summary>` toggle and custom drag pointerdown can race and persist collapsed geometry. | Yes |
 | DEC-001 | Decision | HIGH | ACCEPTED | Cell edits stage governed intents; Apply remains mutation boundary. | Yes |
 | DEC-002 | Decision | HIGH | ACCEPTED | Existing capability/column metadata controls UI authority. | Yes |
 | DEC-003 | Decision | MEDIUM | ACCEPTED | Stage 4 must be green before Stage 5. | Yes |
 | DEC-004 | Decision | MEDIUM | ACCEPTED | All work remains on PR #1020. | Yes |
 | DEC-005 | Decision | MEDIUM | ACCEPTED | Preserve all five source-authoritative frozen columns. | Yes |
-| DEC-006 | Decision | MEDIUM | REJECTED | CSS Grid remains rejected as the populated-surface vertical sizing authority after min-content failures. | Yes |
 | DEC-007 | Decision | MEDIUM | ACCEPTED | Data rows and lower controls use separate scroll domains. | Yes |
-| DEC-008 | Decision | MEDIUM | REVISED | Flex is retained through body→mount→surface; exact-browser result must be requalified after width constraint. | Yes |
-| DEC-009 | Decision | MEDIUM | ACCEPTED | Body→runtime mount→populated surface uses explicit flex-fill/min-size-zero chain. | Yes |
-| DEC-010 | Decision | MEDIUM | ACCEPTED | Floating window open-state grid explicitly declares `grid-template-columns:minmax(0,1fr)` so intrinsic table width cannot size the panel track. | Yes |
-| QST-001 | Question | MEDIUM | DONE | PIPE length is only current direct scalar; VALVE/TEE require compound input. | Yes |
-| DEBT-001 | Debt | LOW | ACCEPTED | Inherited worker commits predate protocol. | Yes |
+| DEC-009 | Decision | MEDIUM | ACCEPTED | Body→runtime mount→populated surface retains explicit flex-fill/min-size-zero chain. | Yes |
+| DEC-010 | Decision | MEDIUM | ACCEPTED | Open floating window declares `grid-template-columns:minmax(0,1fr)`. | Yes |
+| DEC-011 | Decision | HIGH | ACCEPTED | Collapsed table can toggle open but cannot initiate custom drag state. | Yes |
+| QST-001 | Question | MEDIUM | DONE | PIPE length is the only current direct scalar; VALVE/TEE require compound input. | Yes |
+| DEBT-001 | Debt | LOW | ACCEPTED | Inherited worker commits predate report protocol. | Yes |
 | DEBT-002 | Debt | MEDIUM | DEFERRED | Existing npm audit vulnerabilities; upgrades out of scope. | No change |
 | DEBT-003 | Debt | LOW | DEFERRED | Existing build chunk warnings; bundle ceiling passes. | No change |
 
 ### ISS-001 — production validation-worker load failure
-**Status:** VALIDATED. Static Vite module-worker constructor is production-consumed; explicit injected worker config remains test-only; builds emit worker asset.
+**Status:** VALIDATED. Production uses Vite-recognizable `new Worker(new URL(...))`; injected worker configuration remains available for tests. Current production builds emit the validation-worker asset.
 
-### ISS-003 — frozen descriptor coverage
-**Status:** VALIDATED. Select/Tag/Type/Connect From/Connect To remain frozen with deterministic offsets and browser evidence.
+### ISS-006 — implicit open-window grid column
+**Status:** IMPLEMENTED / REQUALIFY. `d8aeadc5...` added `grid-template-columns:minmax(0,1fr)` to the open floating window. Exact one-commit diff touched only `topology-edit-table-styles.js`. The former compact-width failure (`clientWidth === scrollWidth === 2848px` inside a 720px panel) is no longer the blocking assertion. Full Stage-4 closure still waits on ISS-007 and a green Chromium lifecycle.
 
-### ISS-005 — flex sizing / pointer reachability
-**Status:** PARTIAL. The body→mount→surface flex-fill repair on `a7fc941...` changed the first layout failure from the prior zero-height/vertical surface to a horizontal intrinsic-width failure. Row-click interception still appears in existing lifecycle/compound tests, so closure waits on ISS-006 and a fresh Chromium pass.
-
-### ISS-006 — implicit open-window grid column expands to max-content
+### ISS-007 — collapsed summary drag captures closed geometry
 - **Status:** IN_PROGRESS.
-- **Severity:** HIGH because it defeats the user-requested horizontal scrolling and contributes to click reachability failures.
-- **Stage discovered:** Stage-4 exact Chromium on `a7fc941...`.
-- **Affected:** `src/workspace/viewport-productivity/topology-edit-table-styles.js`; existing E2E is the oracle.
-- **Observed behavior:** layout test sets the actual floating panel to 720px width and passes the `<450px` compact-height check. At line 150 the first compact overflow assertion fails: expected `scrollWidth > clientWidth`, received `2848 === 2848`. Accessibility snapshot shows the open Engineering Table editor and full grid, confirming the test targets the correct panel.
-- **Engineering consequence:** the data viewport grows to the full table intrinsic width instead of remaining bounded and horizontally scrollable; clipped content/hit targets can escape the floating panel geometry.
-- **Root cause:** `.topology-edit-table-window[open]` is `display:grid` with explicit rows but no `grid-template-columns`. The single implicit grid column defaults to `auto`, whose min/max sizing follows the 2848px max-content table.
-- **Chosen resolution:** add `grid-template-columns:minmax(0,1fr)` to the open window. Keep body/mount/populated flex-fill rules and existing E2E unchanged for the first qualification pass.
-- **Alternatives considered:** fixed window/body widths rejected as non-responsive; forcing table max-width rejected because horizontal scrolling should occur in the data viewport; weakening the test rejected because `2848px` viewport in a `720px` panel is a real defect.
-- **Edge cases:** narrow/mobile window; frozen 524px region; very wide property set; collapsed details; empty-model form.
-- **Validation required:** compact `clientWidth < scrollWidth` in 720px panel; row selects clickable; compact positive vertical viewport/overflow and expanded-height growth reached; existing PIPE lifecycle and M06/M10 green; table slices/main-gate exact head.
-- **Closure evidence:** pending.
+- **Severity:** HIGH because it makes the expanded table visibly present but geometrically unreachable.
+- **Stage discovered:** Stage-4 exact Chromium on `d8aeadc5...` after ISS-006 repair.
+- **Affected production file:** `src/workspace/viewport-productivity/topology-edit-table-productivity-adapter.js`.
+- **Observed behavior:** row Select controls resolve as visible/enabled/stable but clicks time out while the scroll/header/lower regions intercept pointer events. In the layout test the floating panel height itself increases by >120px, but the data-scroll `clientHeight` increases by `0px` instead of >80px.
+- **Artifact evidence:** the failed Chromium screenshot shows the Engineering Table titlebar at the bottom edge of the 3D viewport while expanded table content is laid out below/behind the intended region.
+- **Root cause:** the titlebar is a `<summary>`. On a normal collapsed-panel click, `pointerdown` fires before the native `<details>` toggle. `beginDrag()` currently always copies the collapsed panel rectangle into inline `right:auto`, `left`, and `top`, captures the pointer, and marks dragging. The native click then opens the details, but those inline closed-state coordinates override the open-state `top:58px/right:14px` CSS.
+- **Engineering consequence:** the open panel inherits closed-state bottom placement; descendants overlap in an off-screen/degenerate vertical region, breaking pointer reachability and dynamic viewport growth without changing canonical engineering authority.
+- **Chosen resolution:** fail closed in `beginDrag()` unless `this.details.open === true`. A collapsed panel may use its native summary click to open, but cannot seed custom drag geometry.
+- **Alternatives rejected:** force Playwright clicks; disable pointer events on overlapping regions; reset geometry only in tests; rewrite the whole floating window positioning model. Those approaches hide the native-toggle/drag race or expand scope.
+- **Edge cases:** click-to-open from collapsed; click-to-collapse while open; genuine drag while open; drag threshold/no-move click; programmatic `showWindow()`; mobile constrained window.
+- **Validation required:** unchanged Table authority Chromium suite proves row selection, horizontal overflow, positive vertical viewport, panel-resize growth, PIPE lifecycle and M06/M10 editor reachability; then Table Slice 3/6 and remaining table slices/main-gate are checked on exact head.
 
 ## 4. Stage Roadmap
 
-| Stage | Status | Purpose | Primary Output | Commit |
-|---|---|---|---|---|
-| 1 | COMPLETE | Report initialization | living report before production edits | `c908e7c...` |
-| 2 | COMPLETE | PR/report synchronization | single numbered report | `d92b958...` |
-| 3 | COMPLETE | PR metadata/reconciliation | truthful draft PR scope | complete |
-| 4 | PARTIAL | Dense dynamic spreadsheet shell | bounded reachable data viewport with X/Y scroll + frozen context | active |
-| 5 | NOT_STARTED | Inline edit foundation | direct PIPE length + keyboard/draft semantics | pending |
-| 6 | NOT_STARTED | Compound editor integration | VALVE/TEE cells to governed editors | pending |
-| 7 | NOT_STARTED | Scaling/bounded expansion | virtualization + production-backed additions | pending |
-| 8 | NOT_STARTED | Final closure | final-head reconciliation/evidence | pending |
+| Stage | Status | Purpose | Primary Output |
+|---|---|---|---|
+| 1 | COMPLETE | Report initialization | living report before spreadsheet production edits |
+| 2 | COMPLETE | PR/report synchronization | single PR-numbered report |
+| 3 | COMPLETE | PR metadata/reconciliation | truthful combined draft PR scope |
+| 4 | PARTIAL | Dense dynamic spreadsheet shell | bounded reachable X/Y viewport + frozen context + safe open/drag interaction |
+| 5 | NOT_STARTED | Inline edit foundation | direct PIPE length + keyboard/draft semantics |
+| 6 | NOT_STARTED | Compound editor integration | VALVE/TEE cells route to governed editors |
+| 7 | NOT_STARTED | Scaling/bounded expansion | virtualization + production-backed additions |
+| 8 | NOT_STARTED | Final closure | changed-file reconciliation + final-head evidence |
 
 ## 5. Stage Execution Log
 
-### Stage 1 — Report initialization
-Pending report created before spreadsheet production edits; architecture/invariants recorded. **COMPLETE.**
+### Stages 1-3 — initialization and scope reconciliation
+Report initialized before spreadsheet production edits, canonical PR-numbered report retained, PR title/body synchronized to combined mission, no workflow changes, existing cell-capability authority identified. **COMPLETE.**
 
-### Stage 2 — PR/report synchronization
-Canonical PR1020 report created, pending path removed, baseline matrix green. **COMPLETE.**
+### Stage 4 — dense dynamic spreadsheet shell
+**Before:** larger `.78rem` text, larger controls, nested/fixed `max-height:min(48vh,470px)` viewport.
 
-### Stage 3 — Documentation/changed-file completion
-PR metadata synchronized to combined mission; no workflow changes; direct capability authority identified. **COMPLETE.**
+**Implementation to date:** compact styling; fixed inner height cap removed; sticky header/five frozen columns; stable frozen metadata; lower-controls wrapper; body/mount/populated flex/min-size repairs; exact-browser geometry test; explicit open-window inline grid track.
 
-### Stage 4 — Dense dynamic spreadsheet shell
-
-**Before:** `.78rem` text, larger controls, nested/fixed `max-height:min(48vh,470px)` data viewport.
-
-**Objective:** compact responsive data viewport with dynamic X/Y scrolling and frozen context; no engineering-mutation changes.
-
-**Scope:** table styles, grid presentation markup, existing table-authority E2E only.
-
-**Implementation to date:** compact styles; fixed cap removed; stable frozen metadata; five frozen offsets; lower controls wrapper; browser density/overflow/frozen/resize test; several exact-browser sizing repairs (Grid percentage, Grid `1fr`, lower wrapper, surface flex, body→mount flex chain).
-
-**Validation:** source/line/table contracts and production build repeatedly PASS; validation worker bundle emitted. Density/frozen assertions pass on prior heads. Exact `a7fc941...` layout fails first on horizontal compact ownership `2848 == 2848`; existing row-click tests still suffer layout interception. `main-gate` passes.
+**Validation history:** source/line/table contracts and production builds repeatedly pass. Density/frozen assertions have passed. Multiple exact-browser iterations exposed independent layout defects rather than authority defects; each was kept in Stage 4 instead of moving prematurely to editing semantics.
 
 **Decision:** PARTIAL. Stage 5 remains blocked.
 
-### Stage 4 implicit-column repair — before implementation
-- **Before stage:** `a7fc941...`; open window uses grid rows only; compact data viewport equals table max-content width 2848px despite 720px panel.
-- **Objective:** constrain the open window’s inline grid track so data viewport can own horizontal scrolling.
-- **Scope:** one CSS rule in `topology-edit-table-styles.js`; existing E2E unchanged initially.
-- **Engineering rationale:** explicit `minmax(0,1fr)` column prevents intrinsic max-content sizing from escaping the declared panel width while preserving responsive resizing.
-- **Planned implementation:** `.topology-edit-table-window[open] { display:grid; grid-template-columns:minmax(0,1fr); grid-template-rows:36px minmax(0,1fr); }`.
-- **Expected examples:** 720px panel produces ~bounded data `clientWidth` and `scrollWidth > clientWidth`; frozen columns remain; row hit targets remain inside panel; later vertical/resize assertions become reachable.
-- **Edge cases:** mobile rule, collapsed details, empty model.
-- **Planned validation:** exact diff; existing E2E unchanged; Table Slice 3/6/7/8 + main-gate; no workflow/runtime/intent changes.
-- **Known risks:** once horizontal ownership is corrected, a later vertical assertion may expose a remaining independent defect; record rather than weaken it.
+### Stage 4 ISS-006 repair — implementation and result
+- **Implementation:** `d8aeadc5b9c198505ff04469f773028320cf547f`, `topology-edit-table-styles.js` only; open window now declares `grid-template-columns:minmax(0,1fr)`.
+- **Exact-head software evidence:** `main-gate` PASS; Table Slice 4 PASS; non-FEA input check PASS; SJSON interaction PASS; Table Slice 3/6 pre-browser source/contracts/build PASS; production build emitted validation-worker asset.
+- **Chromium result:** old horizontal-width blocker moved; all three table-authority browser tests then exposed open-window geometry/pointer defects. Layout test: panel growth PASS, data viewport growth FAIL at delta `0px`. PIPE and M06/M10 tests: row controls visible/enabled but intercepted by scroll/header/lower regions.
+- **Decision:** ISS-006 implementation retained; new independent ISS-007 recorded.
+
+### Stage 4 open/drag boundary repair — before implementation
+- **Before stage:** `d8aeadc5...`; horizontal track constrained, but collapsed summary pointerdown seeds closed geometry into inline open-window positioning.
+- **Objective:** keep native collapsed→open toggle independent from custom dragging so expanded geometry starts from open-state CSS.
+- **Scope:** one guard in `TopologyEditTableProductivityAdapter.beginDrag()`; existing E2E unchanged initially; report update only otherwise.
+- **Engineering rationale:** drag state has meaning only for an already open resizable window. Closed-state geometry must never become open-state inline authority.
+- **Planned implementation:** change the initial guard to return when `!this.details.open`.
+- **Expected behavior:** clicking a collapsed Engineering Table opens it at normal top/right placement; clicking without moving while open still collapses; dragging while open still works; row controls are inside the visible viewport; increasing panel height increases data viewport height.
+- **Planned validation:** exact one-commit diff; Table Slice 3/6 Chromium; remaining table slices/main-gate; no workflow/intent/transaction changes.
+- **Known risk:** if an independent vertical flex defect remains after correct placement, the unchanged browser oracle will expose it; do not weaken the assertion.
 
 ## 6. Changed-File Ledger
 
-| File | First Stage | Latest Stage | Purpose | Engineering-sensitive? | Validation |
-|---|---:|---:|---|---|---|
-| `src/workspace/topology-edit/professional/topology-edit-validation-worker-client.js` | inherited | inherited | production worker repair | Yes | validated; final rerun required |
-| `tests/topology-edit-professional-validation-worker-client.test.mjs` | inherited | inherited | worker regression | No | baseline validated |
-| `agents/PR_PENDING_workreport.md` | 1 | 2 | temporary bootstrap; deleted | No | no net diff |
-| `agents/PR1020_workreport.md` | 2 | 4 | living report | No | current |
-| `src/workspace/viewport-productivity/topology-edit-table-styles.js` | 4 | 4 | density/scroll/frozen/window sizing | Presentation | active repair |
-| `src/workspace/viewport-productivity/topology-edit-table-grid-view.js` | 4 | 4 | frozen markers + lower wrapper | Presentation | production-consumed |
-| `e2e/topology-edit-table-authority.spec.js` | 4 | 4 | visible layout/authority qualification | Test | current exact oracle |
+| File | First Stage | Latest Stage | Purpose | Engineering-sensitive? |
+|---|---:|---:|---|---|
+| `src/workspace/topology-edit/professional/topology-edit-validation-worker-client.js` | inherited | inherited | production worker repair | Yes |
+| `tests/topology-edit-professional-validation-worker-client.test.mjs` | inherited | inherited | worker regression | No |
+| `agents/PR_PENDING_workreport.md` | 1 | 2 | temporary bootstrap; deleted | No |
+| `agents/PR1020_workreport.md` | 2 | 4 | living source of truth | No |
+| `src/workspace/viewport-productivity/topology-edit-table-styles.js` | 4 | 4 | density/scroll/frozen/window sizing | Presentation |
+| `src/workspace/viewport-productivity/topology-edit-table-grid-view.js` | 4 | 4 | frozen markers + lower wrapper | Presentation |
+| `src/workspace/viewport-productivity/topology-edit-table-productivity-adapter.js` | existing | 4 planned | safe floating-window open/drag boundary | UI interaction only |
+| `e2e/topology-edit-table-authority.spec.js` | 4 | 4 | production layout/authority browser qualification | Test |
 
 No `.github/workflows/*` changes.
 
 ## 7. Engineering Decisions and Invariants
 
-- **DEC-001:** canonical mutation only through governed Apply; Stage 4 never touches mutation path.
-- **DEC-002:** column/cell capability metadata is UI authority.
-- **DEC-003:** Stage 4 must be green before Stage 5.
-- **DEC-004:** all work stays on PR #1020.
-- **DEC-005:** preserve five source-authoritative frozen columns.
-- **DEC-007:** data rows and lower controls use separate scroll domains.
-- **DEC-009:** body→runtime mount→populated surface uses explicit flex-fill/min-size-zero chain.
-- **DEC-010:** open floating-window grid declares one `minmax(0,1fr)` column so intrinsic table width cannot size the window track.
+- Canonical mutation remains behind certified Apply; Stage 4 never writes canonical topology.
+- Column/cell capability metadata remains the single editability authority.
+- Five descriptor-authoritative frozen columns are retained.
+- Data rows and lower controls intentionally use separate scroll domains.
+- Open floating-window grid uses an explicit bounded inline track.
+- Native collapsed/open toggle is not allowed to seed custom drag coordinates; custom dragging begins only on an already open table.
+- Green CI is exact-head evidence only.
 
 ## 8. Validation and Evidence Ledger
 
-### Software validation
-| Validation | Status | Last HEAD | Evidence |
-|---|---|---|---|
-| PR scope / no workflow changes | PASS | `a7fc941...` | expected files only |
-| `main-gate` | PASS | `a7fc941...` | exact head |
-| Table source/contracts/build | PASS | `a7fc941...` | Slice 3/6 pre-browser steps |
-| Production worker bundle | PASS | `a7fc941...` | Vite build asset |
-| Density/frozen context | PASS | prior exact-browser heads and a7fc snapshot reaches compact test |
-| Compact horizontal viewport ownership | FAIL | `a7fc941...` | `2848 == 2848` in 720px panel |
-| Row pointer reachability | FAIL/PARTIAL | `a7fc941...` | lifecycle/compound click interception from overflowing layout |
-| Compact vertical ownership | NOT_REACHED on a7fc | — | blocked by horizontal assertion |
-| Dynamic resize growth | NOT_REACHED on a7fc | — | blocked by horizontal assertion |
-| Stage 5 editing | NOT_RUN | — | blocked |
-| Final-head validation | NOT_RUN | — | Stage 8 |
-
-### Engineering validation
-| Property | Status | Evidence |
+### Exact `d8aeadc5...` evidence
+| Validation | Result | Notes |
 |---|---|---|
-| Worker production bundle | PASS | build asset |
-| Compact density | PASS | Chromium computed font |
-| Frozen context | PASS | five-column evidence |
-| Bounded horizontal data viewport | FAIL | data client width 2848px |
-| Positive bounded vertical viewport | UNRESOLVED | re-evaluate after ISS-006 |
-| Row click reachability | UNRESOLVED/FAIL | overflowing layout intercepts |
-| Canonical unchanged before direct cell Apply | NOT_RUN | Stage 5 |
+| `main-gate` | PASS | exact head |
+| Table Slice 4 | PASS | exact head |
+| non-FEA input check | PASS | exact head |
+| SJSON interaction authority | PASS | exact head |
+| Table Slice 3 source/contracts/build | PASS | 23/23 Node contracts; production build PASS |
+| Table Slice 6 architecture/contracts/build | PASS | governed relation/transaction contracts + production build PASS |
+| Production validation-worker asset | PASS | emitted by Vite build |
+| Table Slice 3 Chromium | FAIL | three tests; geometry/pointer reachability |
+| Table Slice 6 Chromium | FAIL | same table browser surface |
+| PIPE row selection | FAIL | visible/enabled button intercepted by overlapping table regions |
+| M06/M10 row selection | FAIL | same pointer interception |
+| Panel resize growth | PASS | panel itself grows |
+| Data viewport resize growth | FAIL | `0px` growth, expected >80px |
 
-### Explicitly not validated
-Stage-4 bounded X/Y viewport and reachability; all direct spreadsheet editing; broad engineering edit authority.
+### Explicitly not yet validated
+Stage-4 final open/drag repair; all Stage-5+ direct spreadsheet editing; final-head closure.
 
 ## 9. Known Issues, Improvements, and Deferred Scope
 
-Open defects: ISS-004, ISS-005, ISS-006. Deferred: IMP-004 virtualization, IMP-005 broad edits. Open risks: RISK-001 through RISK-008. Accepted/deferred debt: DEBT-001/002/003.
+Open Stage-4 defects: ISS-004, ISS-005, ISS-007. ISS-006 is implemented but awaits full Stage-4 requalification. Deferred: virtualization and broad engineering edit authority beyond explicit governed operations. Existing npm audit/chunk warnings are recorded debt and are out of scope.
 
 ## 10. Recommended Forward Sequence
 
-1. Fix ISS-006 explicit column track and obtain fresh exact-browser evidence.
-2. Continue Stage-4 repairs only if a later vertical/resize assertion exposes an independent defect; close ISS-002/004/005/006 together only when row reachability and dynamic X/Y behavior are green.
-3. Stage 5: direct PIPE-length cell through existing capability/intent path; prove no canonical mutation before Apply and keyboard/focus semantics.
-4. Stage 6: VALVE/TEE `NEEDS_INPUT` cells route to existing governed compound editors.
-5. Stage 7: virtualization after active-cell semantics; only explicit production-backed extra edits.
-6. Stage 8: final file reconciliation, exact-final-head validation and item dispositions.
+1. Apply ISS-007 `beginDrag()` open-state guard only.
+2. Re-run exact-head Table Slice 3/6 and inspect unchanged browser oracle.
+3. If Stage 4 becomes green, update this report with closure evidence before starting Stage 5.
+4. Stage 5: direct PIPE-length cell through existing capability/intent path; prove typing/staging/Preview/Validate do not mutate canonical topology and keyboard/focus semantics are stable.
+5. Stage 6: route VALVE/TEE `NEEDS_INPUT` cells into existing governed compound editors.
+6. Stage 7: virtualization after active-cell semantics; only explicit production-backed extra edits.
+7. Stage 8: final changed-file reconciliation, final exact-head matrix, dispositions and handover.
 
 ## 11. Next-Agent Handover
 
-- **Current stopping point:** Stage-4 implicit-column repair, before CSS mutation.
-- **Exact current state:** `a7fc941...`; main-gate/contracts/build green; compact horizontal viewport expands to 2848px inside 720px panel and causes current browser failure.
-- **PR / branch / HEAD:** #1020 / `agent/fix-topology-validation-worker-production` / `a7fc9413d3931585706cfd19c6cfcc7af16c9ef2` before this report commit.
-- **Last completed stage:** Stage 3.
-- **Current active stage:** Stage 4 PARTIAL.
-- **Start here:** `topology-edit-table-styles.js`, `.topology-edit-table-window[open]`; add `grid-template-columns:minmax(0,1fr)`. Leave E2E unchanged for first pass.
-- **Do not redo:** worker investigation, frozen repair, lower wrapper, capability investigation, a7fc artifact diagnosis.
-- **Do not assume:** previous vertical failures remain unchanged after horizontal track correction; exact browser run must decide.
-- **Known failing checks:** Table Slice 3/6 Chromium on a7fc layout surface; exact compact failure at E2E line 150.
-- **Validation still required:** repaired table slices/main-gate; Stage 5+; final head.
-- **Highest-risk remaining item:** RISK-008 now; RISK-001 after Stage 4.
-- **Exact next recommended action:** one-line CSS column-track repair and exact-head CI.
-- **Required reading:** this report §§0,3,5,8,11; table styles open-window rule; Stage-4 E2E compact block.
+- **Current stopping point:** Stage-4 open/drag boundary repair, before production mutation.
+- **PR / branch / pre-report HEAD:** #1020 / `agent/fix-topology-validation-worker-production` / `d8aeadc5b9c198505ff04469f773028320cf547f`.
+- **Start here:** `src/workspace/viewport-productivity/topology-edit-table-productivity-adapter.js`, `beginDrag()` initial guard.
+- **Make only this first repair:** collapsed details must return before writing inline `right/left/top`, creating `this.drag`, or capturing the pointer.
+- **Leave unchanged for first pass:** Table authority E2E assertions; canonical/session/intent/transaction paths; workflow files.
+- **Do not redo:** worker investigation, five-column frozen repair, lower-wrapper work, ISS-006 inline-track repair, cell-capability investigation.
+- **Known failing checks:** Table Slice 3/6 Chromium on `d8aeadc5...`.
+- **Highest-risk remaining item:** ISS-007 until browser green, then RISK-001.
 
 ## 12. Process Notes / Lessons Learned
 
-- CSS Grid needs explicit inline as well as block tracks when max-content children live inside a resizable clipped window.
-- A flex/min-height chain cannot solve a width track that is still intrinsically sized by an implicit grid column.
-- Pointer interception can be a geometry symptom rather than a selection/transaction bug.
 - Exact browser geometry is more reliable than theoretical CSS intent.
-- Green CI is exact-head evidence only.
+- A visible/enabled control can still be unreachable when an ancestor/window is laid out in a degenerate region.
+- Native `<summary>` activation order matters when custom pointer drag behavior shares the same element.
+- Presentation bugs can mimic selection/transaction defects; source/contracts staying green helps isolate them.
+- Do not weaken browser tests to accommodate invalid floating-window geometry.
 
 ## 13. PR Closure Record
 
@@ -298,13 +268,4 @@ Open defects: ISS-004, ISS-005, ISS-006. Deferred: IMP-004 virtualization, IMP-0
 | Final HEAD | Not final |
 
 ### Final outcome
-Pending.
-
-### Remaining known limitations
-Stage-4 viewport geometry blocks Stage 5-8.
-
-### Recommended next PR
-None; Owner authorized single PR #1020.
-
-### Final HEAD
-Not final.
+Pending. Stage 4 remains blocked by ISS-007; Stage 5-8 have not started.

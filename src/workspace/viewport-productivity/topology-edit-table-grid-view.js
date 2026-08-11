@@ -36,14 +36,14 @@ export function renderTopologyEditTableGrid(runtime) {
   );
   const typeSummary = topologyEditTableTypeSummary(runtime.projection.rows);
   element.innerHTML = `
-    <section class="topology-edit-table" data-table-phase="${escapeHtml(runtime.phase())}">
+    <section class="topology-edit-table topology-edit-table--populated" data-table-phase="${escapeHtml(runtime.phase())}">
       <header class="topology-edit-table__header">
         <div><strong>Engineering table</strong><span>${rows.length} / ${runtime.projection.rows.length} rows · ${escapeHtml(typeSummary)}</span></div>
         <label>Filter <input type="search" data-table-filter value="${escapeHtml(runtime.viewState.query)}" placeholder="Tag, type, ID, property, source…"></label>
       </header>
       <div class="topology-edit-table__scroll">
         <table role="grid" aria-label="Certified canonical engineering table">
-          <thead><tr><th scope="col">Select</th>${columns.map((column) => sortHeader(column.key, column.label, runtime.viewState)).join('')}</tr></thead>
+          <thead><tr><th scope="col" data-table-column-key="select" data-table-frozen="select">Select</th>${columns.map((column) => sortHeader(column, runtime.viewState)).join('')}</tr></thead>
           <tbody>${renderedRows.map((row) => rowHtml(
             row,
             columns,
@@ -74,9 +74,15 @@ export function renderTopologyEditTableGrid(runtime) {
 function rowHtml(row, columns, isSelected, stagedIntent) {
   const staged = stagedIntent ? ' data-staged="true"' : '';
   return `<tr data-table-row-id="${escapeHtml(row.rowId)}" data-canonical-id="${escapeHtml(row.identity.canonicalId)}" data-element-type="${escapeHtml(row.elementType)}" data-selected="${String(isSelected)}"${staged}>
-    <td><button type="button" data-table-select="${escapeHtml(row.rowId)}" aria-pressed="${String(isSelected)}" aria-label="${isSelected ? 'Deselect' : 'Select'} ${escapeHtml(row.identity.canonicalId)}">${isSelected ? 'Selected' : 'Select'}</button></td>
-    ${columns.map((column) => `<td data-table-property="${escapeHtml(column.key)}">${escapeHtml(displayValue(value(row, column.key)))}</td>`).join('')}
+    <td data-table-column-key="select" data-table-frozen="select"><button type="button" data-table-select="${escapeHtml(row.rowId)}" aria-pressed="${String(isSelected)}" aria-label="${isSelected ? 'Deselect' : 'Select'} ${escapeHtml(row.identity.canonicalId)}">${isSelected ? 'Selected' : 'Select'}</button></td>
+    ${columns.map((column) => cellHtml(row, column)).join('')}
   </tr>`;
+}
+
+function cellHtml(row, column) {
+  const text = displayValue(value(row, column.key));
+  const frozen = column.frozen ? ` data-table-frozen="${escapeHtml(column.key)}"` : '';
+  return `<td data-table-property="${escapeHtml(column.key)}" data-table-column-key="${escapeHtml(column.key)}"${frozen} title="${escapeHtml(text)}">${escapeHtml(text)}</td>`;
 }
 
 /** Renders the first governed row when the canonical topology is empty. */
@@ -156,10 +162,11 @@ function validationPanel(runtime) {
 }
 
 function diagnosticCode(row) { return row.issueKind ?? row.kind ?? row.code ?? row.diagnosticKind ?? 'HIGH'; }
-function sortHeader(key, label, state) {
-  const active = state.sortKey === key;
+function sortHeader(column, state) {
+  const active = state.sortKey === column.key;
   const marker = active ? (state.sortDirection === 'ASC' ? ' ▲' : ' ▼') : '';
-  return `<th scope="col"><button type="button" data-table-sort="${escapeHtml(key)}">${escapeHtml(label)}${marker}</button></th>`;
+  const frozen = column.frozen ? ` data-table-frozen="${escapeHtml(column.key)}"` : '';
+  return `<th scope="col" data-table-column-key="${escapeHtml(column.key)}"${frozen}><button type="button" data-table-sort="${escapeHtml(column.key)}">${escapeHtml(column.label)}${marker}</button></th>`;
 }
 function value(row, key) { return key === 'elementType' ? row.elementType : row.fields?.[key] ?? null; }
 function displayValue(valueInput) {

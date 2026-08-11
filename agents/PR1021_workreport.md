@@ -2,7 +2,7 @@
 
 Maintained throughout PR #1021. This is the single source of truth for current PR state, engineering findings, decisions, validation evidence, deferred improvements, and next-agent handover. Current-state sections are rewritten as work progresses; stage history remains durable.
 
-> Stage 8 was the closure checkpoint for the initial integrity slice. The Owner then explicitly authorized continuation on the same PR; Stage 9 onward is stacked on that PR rather than opened separately.
+> Stage 8 was the closure checkpoint for the initial integrity slice. The Owner then explicitly authorized continuation on the same PR; subsequent work remains stacked on PR #1021.
 
 ## 0. PR Mission Control
 
@@ -13,67 +13,65 @@ Maintained throughout PR #1021. This is the single source of truth for current P
 | PR | #1021 |
 | Branch | `agent/lfea-workbench-integrity-1018` |
 | Base | `751756e9140527b8dc121aa179dc76b7039fb7ad` |
-| Continuation baseline | `b9b18d53f3ad146aadc354a0d977c23078f397db` |
 | PR state | Draft |
-| Current stage | Stage 11 — evidence-export exception containment |
-| Last completed stage | Stage 10 — structured failure guidance and diagnostic-code preservation |
-| Engineering status | C02/C03 and supporting parity/provenance defects implemented and guarded; C04 grounded before implementation |
-| Validation status | Source/store guards updated; full repository/browser execution still NOT_RUN in this sandbox |
+| Current stage | Stage 13 — H01/H02/H03 analysis-authority and output presentation |
+| Last completed stage | Stage 12 — continued Critical-slice reconciliation |
+| Engineering status | C01–C04 implemented and guarded; High-priority H01–H03 grounded before implementation |
+| Validation status | Source/store guards and GitHub diff reconciliation complete; full repository/browser execution remains NOT_RUN |
 | Current blocker | None |
-| Exact next action | Catch evidence-export/download failures in the controller, surface `LFEA_EVIDENCE_EXPORT_REJECTED`, add dedicated guidance, and guard the fail-closed path |
+| Exact next action | Add a read-only analysis-authority card, humanize authority policy and preflight labels using current real codes, and retain raw codes in data/title attributes |
 
 ### Handover in 60 seconds
 
 **What is now true**
-- C01: collection-context whole-package mock controls removed; toolbar global mock retained.
-- N01/sibling: package and record drafts survive benign renders and invalidate on committed model identity change.
-- N02: delete clears selection before synchronous mutation with identity-preserving failure recovery.
-- C02: no-Worker Run publishes RUNNING/QUEUED, yields a real frame/task opportunity, then executes the captured run identity with current pipeline options; queued cancellation is supported.
-- C03: FAILED header no longer chooses guidance from raw message substrings. It uses diagnostic-code families for summary/recovery while retaining the original code(s) and diagnostic message detail.
-- `reportEditError` now preserves an incoming `error.code`; operation-specific fallbacks classify malformed file import as `LFEA_IMPORT_REJECTED`, document-text edit parse failure as `LFEA_EDIT_REJECTED`, and record edits as `LFEA_RECORD_EDIT_REJECTED`.
-- Existing containment check guards C02/C03 and prior integrity fixes without adding workflows.
+- C01: dangerous collection-context whole-package mock actions removed.
+- C02: no-Worker run publishes a paintable queued state, executes only the captured active identity with current options, and supports cancellation during the queued interval.
+- C03: failure guidance is code-driven, actionable, and retains raw diagnostic code/detail; wrapped error codes are preserved and import/document/record parse failures are classified accurately.
+- C04: evidence download is fail-closed. Store still throws when evidence is not current/qualified; controller converts that or downloader failures into `LFEA_EVIDENCE_EXPORT_REJECTED`. No downloader call occurs after qualification throws.
+- Existing `lfea-p0-ui-containment-check.mjs` guards all of the above without adding workflows.
+- Continued Critical-slice reconciliation at head `44ece9cd0152c28db7f8092ff311ddd84fb78832`: branch is ahead-only from the authorized base and exactly six registered files differ; no `.github/workflows/*` file is changed.
 
 **Currently being worked on**
-- C04: `downloadEvidence()` can call `exportEvidence()` in an unexpected invalid state and allow its TypeError to escape the UI event path.
+- H01: no read-only analysis settings/authority view.
+- H02: output authority policy displays raw internal codes.
+- H03: preflight displays raw internal status code as the primary label.
 
-**Still unresolved**
-- H01–H03 and remaining lower-priority #1018 findings.
-- Full repository/browser validation remains NOT_RUN in this environment.
+**Grounded design correction to issue hints**
+- Actual current authority codes are `AUTHORITATIVE_RAW_ELEMENT_OR_INTEGRATION_POINT_STRESS`, `NON_AUTHORITATIVE_REVIEW_PROJECTION`, `NOT_GENERATED`, and convergence policy `PROHIBITED`; implementation will map these real codes rather than stale example names in the issue.
+- The solver profile has real fields including `backendIdentity`, `formulation`, `units`, `dofOrder`, `constraintMethod`, and conventions. The UI will say **solver backend** rather than inventing a generic solver-type field.
+- Package element family is derived from actual `elements[].elementType`; mixed T3/Q4 packages are valid and must display both.
 
 **Do not assume**
-- Disabled-button state is a sufficient governance boundary for evidence export; controller/store boundaries still need fail-closed handling.
-- Catching an export exception should produce a stale evidence file. The correct outcome is diagnostic + no download.
-- Main-thread no-Worker compute is mid-solve interruptible; only the queued/yield interval is cancellable.
+- H01 is an authoring form. This stage is read-only transparency only; raw package remains the governed edit authority.
+- Human labels replace raw engineering codes. Raw codes remain in data/title attributes for traceability.
 
 ## 1. Mission and Engineering Intent
 
 ### Mission
-Continue #1018 remediation on one draft PR while preserving engineering-state authority, run identity, diagnostic provenance, evidence-export qualification, and truthful user guidance.
+Continue #1018 remediation while preserving engineering authority and making the governed model/run state understandable without requiring users to decode raw JSON or internal enums.
 
 ### Governing principles
-- Imported package authority remains fail-closed; stale hashes are not repaired on import.
-- Draft/preview UI state is not solver authority.
-- Run completion/failure is accepted only for the exact active run identity.
-- Worker and no-Worker paths consume equivalent current analysis options.
-- Recovery guidance is driven by structured diagnostic codes, with raw code/detail retained.
-- Evidence export is permitted only for the current qualified execution; failures must not create/download evidence.
+- Read-only presentation never mutates solver profile or package authority.
+- Display values come directly from the current committed package/execution.
+- Mixed element families are shown, not collapsed to a false single type.
+- Human-readable labels are presentation aliases; raw policy/status codes remain available for technical traceability.
+- Unknown future codes fail visibly to a generic human label rather than being silently misrepresented.
 - No `.github/workflows/*` changes.
-- Validation claims distinguish executed, source-inspected, and NOT_RUN evidence.
 
 ## 2. Mission Status
 
 | Work item | Priority | Status | Stage | Evidence |
 |---|---:|---|---|---|
 | Living PR report | High | DONE / ACTIVE | S1–current | this file |
-| Collection mock scope | Critical | IMPLEMENTED + GUARDED | S4/S7 | source guard |
-| Package/record draft persistence | High | IMPLEMENTED + GUARDED | S5/S7 | source guard |
-| Delete sequencing | Medium | IMPLEMENTED + GUARDED | S6/S7 | source guard |
-| C02 no-Worker feedback | Critical | IMPLEMENTED + GUARDED | S9 | source/store guard |
-| No-Worker current options parity | High | IMPLEMENTED + GUARDED | S9 | ISS-007 |
-| C03 structured failure guidance | Critical | IMPLEMENTED + GUARDED | S10 | view/store/controller + guard |
-| Preserve wrapped diagnostic code | High | IMPLEMENTED + GUARDED | S10 | ISS-008 |
-| C04 evidence-export error surfacing | Critical | IN_PROGRESS | S11 | #1018 + source grounding |
-| H01/H02/H03 usability/authority | High | NOT_STARTED | later | #1018 |
+| C01 collection mock scope | Critical | IMPLEMENTED + GUARDED | S4/S7 | source guard |
+| Draft persistence / delete sequencing | High/Medium | IMPLEMENTED + GUARDED | S5–S7 | source guard |
+| C02 no-Worker lifecycle | Critical | IMPLEMENTED + GUARDED | S9 | source/store guard |
+| C03 structured failure guidance | Critical | IMPLEMENTED + GUARDED | S10 | source/store guard |
+| C04 evidence-export containment | Critical | IMPLEMENTED + GUARDED | S11 | source/store guard |
+| C01–C04 reconciliation | Critical | DONE | S12 | GitHub diff/base reconciliation |
+| H01 analysis settings visibility | High | IN_PROGRESS | S13 | grounded from real package/profile |
+| H02 authority policy labels | High | ACCEPTED | S13 | actual pipeline codes verified |
+| H03 preflight status labels | High | ACCEPTED | S13 | actual preflight codes verified |
 | Runtime/browser validation | High | NOT_RUN | ongoing | environment limitation |
 
 ## 3. Engineering Item Register
@@ -85,217 +83,213 @@ Continue #1018 remediation on one draft PR while preserving engineering-state au
 | ISS-003 | Defect | Medium | IMPLEMENTED + GUARDED | Delete selection cleared after synchronous mutation/render | Yes |
 | ISS-004 | Defect | High | IMPLEMENTED + GUARDED | Render destroyed unsaved package-editor text | Yes |
 | ISS-005 | Quality defect | Low | RESOLVED | Connector replacement removed trailing newlines | Yes |
-| ISS-006 | Defect / C02 | Critical | IMPLEMENTED + GUARDED | No-Worker run lacked a paintable RUNNING boundary | Yes |
+| ISS-006 / C02 | Defect | Critical | IMPLEMENTED + GUARDED | No-Worker run lacked a paintable RUNNING boundary | Yes |
 | ISS-007 | Defect | High | IMPLEMENTED + GUARDED | No-Worker execution used stale construction-time pipeline options | Yes |
-| ISS-008 | Defect | High | IMPLEMENTED + GUARDED | `reportEditError` discarded incoming structured `error.code` | Yes |
-| ISS-009 | Defect / C04 | Critical | IN_PROGRESS | Evidence export exception can escape controller event path instead of becoming a diagnostic | Yes |
+| ISS-008 | Defect | High | IMPLEMENTED + GUARDED | Wrapped edit failures discarded structured diagnostic code | Yes |
+| ISS-009 / C04 | Defect | Critical | IMPLEMENTED + GUARDED | Evidence export exception escaped controller event path | Yes |
+| ISS-010 / H01 | Missing transparency | High | IN_PROGRESS | Solver profile, units and element families invisible outside raw JSON | Yes |
+| ISS-011 / H02 | Presentation defect | High | ACCEPTED | Authority policy line exposes raw internal enum codes | Yes |
+| ISS-012 / H03 | Presentation defect | High | ACCEPTED | Preflight primary label exposes raw internal status code | Yes |
 | IMP-001 | Improvement | High | DEFERRED | Cross-run plots need shared engineering colour authority | No |
 | IMP-002 | Improvement | High | DEFERRED | Upstream pre-FEA/linear-piping LFEA surfaces need dedicated audit | No |
 | RISK-001 | Engineering risk | High | OPEN | Continuum von Mises may be mistaken for piping-code stress | No |
 | RISK-002 | Engineering risk | High | OPEN | Support reaction sign convention may be overlooked downstream | No |
 | QST-001 | Engineering question | Medium | OPEN | Authoritative fallback axis for vertical-pipe support triad degeneracy | No |
-| DEC-001 | Decision | — | ACTIVE | Remove collection mock actions instead of relabelling | Yes |
-| DEC-002 | Decision | — | ACTIVE | No new CI workflow gates | Yes |
-| DEC-003 | Decision | — | ACTIVE | View-owned drafts invalidated by committed model identity | Yes |
-| DEC-004 | Decision | — | ACTIVE | Delete clears selection before mutation; failed delete restores by identity | Yes |
-| DEC-005 | Decision | — | ACTIVE | No-Worker fallback uses begin → real frame/task yield → captured-identity execute | Yes |
-| DEC-006 | Decision | — | ACTIVE | Active-run executor accepts current pipeline options and no-ops on stale/cancelled identity | Yes |
-| DEC-007 | Decision | — | ACTIVE | Failure UI uses code families for guidance while retaining raw code/detail | Yes |
-| DEC-008 | Decision | — | PROPOSED | Evidence export failure becomes `LFEA_EVIDENCE_EXPORT_REJECTED` diagnostic and must not call downloader | Yes |
 
-### ISS-009 — C04 evidence-export exception containment
-`documentStore.exportEvidence()` intentionally throws if execution is not current or `evidenceExport.status !== 'QUALIFIED_EXPORT'`. Toolbar disablement normally prevents the call, but `controller.downloadEvidence()` currently performs `exportEvidence()` and `downloadLfeaJson()` without a try/catch.
-
-**Engineering consequence:** an unexpected UI/state/direct-call path can surface an unhandled exception instead of an explicit fail-closed evidence-governance diagnostic.
-
-**Required outcome:** on failure, no download is attempted; state receives a stable evidence-export rejection diagnostic with recovery guidance. Qualified current evidence continues through the existing download path unchanged.
+### Key active decisions
+- **DEC-002:** no new CI workflows.
+- **DEC-005/006:** no-Worker uses real yield + exact run identity + current options.
+- **DEC-007:** failure guidance uses structured codes and retains raw detail.
+- **DEC-008:** evidence export failure is diagnostic + no stale/unqualified success.
+- **DEC-009 (proposed):** H01 card is read-only and derives values from committed package only.
+- **DEC-010 (proposed):** H02/H03 humanize known current codes but preserve raw codes in `data-*`/`title`.
 
 ## 4. Stage Roadmap
 
 | Stage | Status | Purpose | Primary output |
 |---|---|---|---|
-| S1–S8 | DONE | Initial integrity slice + handover checkpoint | C01/N01/N02 + report/guards |
-| S9 | DONE | No-Worker feedback + current-option parity | C02 / ISS-007 |
-| S10 | DONE | Structured failure guidance + code preservation | C03 / ISS-008 |
-| S11 | IN_PROGRESS | Evidence-export exception containment | C04 / ISS-009 |
-| S12 | PLANNED | Reconcile/validate continued Critical slice | final continued-slice report |
+| S1–S8 | DONE | Initial integrity slice + handover | C01/N01/N02 + report/guards |
+| S9 | DONE | No-Worker lifecycle/current options | C02 / ISS-007 |
+| S10 | DONE | Structured failure guidance/provenance | C03 / ISS-008 |
+| S11 | DONE | Evidence-export exception containment | C04 / ISS-009 |
+| S12 | DONE | Reconcile continued Critical slice | C01–C04 checkpoint |
+| S13 | IN_PROGRESS | Analysis authority + output/preflight human labels | H01/H02/H03 |
+| S14 | PLANNED | Reconcile H01–H03 and choose next High item | handover + roadmap |
 
 ## 5. Stage Execution Log
 
-### Stages 1–8 — initial slice checkpoint
-**COMPLETE.** Living report/PR created; collection destructive scope, draft lifecycle, and delete sequencing corrected; existing source guard extended; initial diff reconciled with no workflow changes. Full repository/browser checks were NOT_RUN.
+### Stages 1–8 — initial slice
+**COMPLETE.** Established living PR report; corrected mock scope, draft lifecycle, and delete sequencing; extended existing containment guard; no workflow changes. Runtime/browser checks NOT_RUN.
 
-### Stage 9 — no-Worker run feedback and execution-option parity
-**COMPLETE at source/guard level.** Added identity-safe `executeActiveRun`; controller no-Worker path now begins, yields frame/task, executes captured identity using current `pipelineOptions`; no-Worker queued cancel works; existing check guards ordering/current options/stale callbacks. Runtime browser paint proof remains NOT_RUN.
+### Stage 9 — C02 + option parity
+**COMPLETE at source/store-guard level.** Added identity-safe active-run execution; real frame/task yield for no-Worker path; current controller options handoff; queued cancellation; stale deferred callback checks. Browser paint proof NOT_RUN.
 
-### Stage 10 — structured failure guidance and diagnostic-code preservation
-**Status:** COMPLETE at source/store-guard level.
+### Stage 10 — C03 + diagnostic provenance
+**COMPLETE at source/store-guard level.** Replaced raw substring failure routing with code-family guidance; retained raw codes/detail; preserved incoming error codes; classified file import/document edit/record parse fallback codes. Browser presentation NOT_RUN.
 
-#### Before stage
-FAILED header joined raw diagnostic messages and selected its only hint by checking message substrings. `reportEditError` could discard incoming error codes.
+### Stage 11 — C04 evidence-export containment
+**COMPLETE at source/store-guard level.**
+- Controller `downloadEvidence()` now wraps qualification and downloader calls in try/catch.
+- Failure publishes `LFEA_EVIDENCE_EXPORT_REJECTED` through existing diagnostic machinery.
+- View has explicit evidence-export recovery guidance.
+- Store's lower `isCurrentExecution && QUALIFIED_EXPORT` throw remains unchanged.
+- Existing containment check guards store boundary + controller catch ordering + guidance and asserts unavailable store export still throws without mutating state.
+- Full/browser runtime NOT_RUN.
 
-#### Implementation performed
-- `reportEditError(path,index,error,fallbackCode)` now preserves any incoming string `error.code` on its location-prefixed wrapper and accepts an operation-specific fallback.
-- Controller file-input read/JSON failures use fallback `LFEA_IMPORT_REJECTED`.
-- Controller document-text JSON failures use fallback `LFEA_EDIT_REJECTED`.
-- Record parse/edit failures retain `LFEA_RECORD_EDIT_REJECTED` default.
-- View FAILED header delegates to `failureBanner(diagnostics)` / `failurePresentation`.
-- Code families cover semantic-hash mismatch, package shape/schema, unsupported declarations, invalid engineering values/connectivity, duplicate/empty structure, local edit rejection, and unknown fallback.
-- Banner exposes primary diagnostic code via `data-code`, aggregate codes via `title`, and raw technical message detail in a secondary detail line.
-- Removed raw-message substring routing.
-- Existing containment check guards all above and adds store-level checks for incoming-code preservation and operation fallback classification.
+### Stage 12 — continued Critical-slice reconciliation
+**Status:** COMPLETE.
 
-#### Changed files
-| File | Change | Why |
-|---|---|---|
-| `src/workspace/lfea-workbench-document-store.js` | preserve incoming code + fallback parameter | diagnostic provenance |
-| `src/workspace/lfea-workbench-controller.js` | classify import/document parse failures | accurate recovery routing |
-| `src/workspace/lfea-workbench-view.js` | code-family failure presentation | C03 actionable UI without hiding detail |
-| `scripts/lfea-p0-ui-containment-check.mjs` | source/store guards | durable regression evidence |
-| `agents/PR1021_workreport.md` | stage/handover update | SSOT |
+#### Changed-file verification
+GitHub reports exactly:
+1. `agents/PR1021_workreport.md`
+2. `scripts/lfea-p0-ui-containment-check.mjs`
+3. `src/workspace/lfea-workbench-controller.js`
+4. `src/workspace/lfea-workbench-document-store.js`
+5. `src/workspace/lfea-workbench-run-store.js`
+6. `src/workspace/lfea-workbench-view.js`
 
-#### Validation performed
-- View patch re-read: old substring logic removed; structured code/detail retained.
-- Guard patch re-read; one capitalization mismatch in the source assertion was found and corrected before stage closure.
-- Store check now verifies a `NONFINITE_VALUE` code survives location-prefix wrapping.
-- Store check verifies explicit `LFEA_IMPORT_REJECTED` fallback classification.
-- Full `npm run check:lfea-workbench`: **NOT_RUN**.
-- Browser presentation checks: **NOT_RUN**.
+No workflow file is changed. Base comparison at `44ece9cd0152c28db7f8092ff311ddd84fb78832` is `ahead`, 0 behind, merge base exactly the authorized base `751756e9140527b8dc121aa179dc76b7039fb7ad`.
 
-#### Handover delta
-- **Newly true:** C03 guidance is structured/code-driven and code provenance survives wrapping.
-- **Still unresolved:** C04 and full runtime/browser evidence.
-- **Next stage starts with:** controller evidence-export exception containment.
+#### Critical disposition
+| Finding | Status |
+|---|---|
+| C01 mock destructive scope | IMPLEMENTED + GUARDED |
+| C02 no-Worker feedback | IMPLEMENTED + GUARDED; mid-compute interruptibility explicitly not claimed |
+| C03 raw failure guidance | IMPLEMENTED + GUARDED |
+| C04 export exception | IMPLEMENTED + GUARDED |
 
-### Stage 11 — evidence-export exception containment
-**Status:** IN_PROGRESS — pre-stage record complete; no Stage 11 production change yet.
+#### Validation limitation
+Full `npm run check:lfea-workbench` and browser interaction checks remain **NOT_RUN**, not PASS.
 
-#### Before stage
-- Toolbar enables export only for a current `QUALIFIED_EXPORT` execution.
-- Store independently enforces that boundary and throws `TypeError('Qualified LFEA evidence export is unavailable.')` when violated.
-- Controller `downloadEvidence()` does not catch either that governance exception or a downstream downloader exception.
+### Stage 13 — H01/H02/H03 analysis-authority and output presentation
+**Status:** IN_PROGRESS — pre-stage record complete; no Stage 13 production change yet.
+
+#### Before stage / ground truth
+- Package `analysisDefinition.solverProfile` contains real authority fields including `profileIdentity`, `profileVersion`, `formulation`, `units.{length,force,stress}`, `dofOrder`, `constraintMethod`, `backendIdentity`, reaction/pressure conventions and more.
+- Package-level `unitsIdentity` and `coordinateSystem` are separate governed declarations.
+- Element family is per `elements[].elementType`; mixed `T3` + `Q4` packages exist and are valid.
+- Current execution authority policy uses `AUTHORITATIVE_RAW_ELEMENT_OR_INTEGRATION_POINT_STRESS`, `NON_AUTHORITATIVE_REVIEW_PROJECTION` or `NOT_GENERATED`, plus `projectedStressForConvergence: PROHIBITED`.
+- Preflight statuses are exactly `WITHIN_CAPACITY`, `EXPORT_LIKELY_TO_EXCEED_BYTE_CAPACITY`, `BLOCKED_BY_DECLARED_CAPACITY`.
 
 #### Objective
-Ensure evidence export fails closed through a diagnostic rather than an unhandled browser exception, with zero stale/unqualified download attempt.
+Expose the declared analysis authority read-only and translate output/preflight enums into professional engineering language without losing raw-code traceability.
 
 #### Planned implementation
-1. Wrap `downloadEvidence()` export + download in try/catch.
-2. On failure call `store.reportEditError('evidenceExport', null, error, 'LFEA_EVIDENCE_EXPORT_REJECTED')`.
-3. Add `LFEA_EVIDENCE_EXPORT_REJECTED` guidance: current qualified evidence is unavailable; rerun/requalify the current model before export; no stale evidence was downloaded.
-4. Extend existing containment check to require try/catch ordering and code/guidance.
-5. Add a store-level check that unavailable `exportEvidence()` still throws as the lower governance boundary; controller containment is an additional UI boundary, not a weakening of the store.
+1. Add `renderLfeaAnalysisSettings(root, packageValue)` to `lfea-workbench-panels.js`.
+2. Add a dedicated `Analysis settings and authority` card in `LfeaWorkbenchView.content()`.
+3. Display: package identity; package units identity; coordinate system; unique element families; formulation; solver profile identity/version; solver backend identity; length/force/stress units; DOF order; constraint method. Use `Not declared` only for genuinely absent optional display fields; do not synthesize authority.
+4. H02: map current authority codes to human statements; include convergence prohibition; preserve raw codes in `data-*` and `title`.
+5. H03: map current preflight statuses to `Within declared capacity`, `Capacity warning`, `Capacity blocked`; retain raw status in existing `data-status` and `title`.
+6. Extend existing containment source guard; no workflow additions.
 
-#### Edge cases
-- Direct `downloadEvidence()` call before any run.
-- Model edited after a qualified run, invalidating current execution.
-- Active run/direct call while export button is disabled.
-- Downloader/environment failure after qualified evidence retrieval: diagnostic is surfaced; evidence object is not treated as successfully downloaded.
+#### Examples / edge cases
+- Mixed mesh displays `Q4, T3` (deterministic sorted set), not a false single element type.
+- Sparse profile displays its actual `backendIdentity`; dense fixture displays `dense-ldlt-reference/v1`.
+- Unknown future authority/preflight code gets a neutral `Policy not recognized` / `Preflight status not recognized` human label while raw code remains traceable.
+- No package: analysis card states no committed package is loaded rather than fabricating defaults.
 
 #### Risks
-Using `reportEditError` changes status to FAILED when no run is active. This is intentional for a user-triggered failed export; it preserves package authority and makes the failure visible. During an active run, existing `editFailureState` keeps RUNNING.
+- A “settings” card could be mistaken for editable controls; card is deliberately read-only and named authority/settings summary.
+- Current issue hint names older authority enum examples; implementation must follow current source codes, not stale examples.
 
 ## 6. Changed-File Ledger
 
 | File | First stage | Latest stage | Purpose | Engineering-sensitive? | Validation |
 |---|---|---|---|---|---|
-| `agents/PR1021_workreport.md` | S2 | S11 | PR SSOT / handover | No | current |
-| `src/workspace/lfea-workbench-view.js` | S4 | S11 planned | mock scope, drafts, delete sequencing, failure/export guidance | Yes | source guards; browser NOT_RUN |
-| `scripts/lfea-p0-ui-containment-check.mjs` | S7 | S11 planned | existing regression guards | No production | source/store checks |
-| `src/workspace/lfea-workbench-controller.js` | S9 | S11 planned | no-Worker lifecycle + failure classification + export containment | Yes | source guard; runtime/browser NOT_RUN |
-| `src/workspace/lfea-workbench-run-store.js` | S9 | S9 | active-run identity-safe execution | Yes | source/store guard |
-| `src/workspace/lfea-workbench-document-store.js` | S10 | S10 | diagnostic-code provenance + evidence governance boundary | Yes | source/store guard |
+| `agents/PR1021_workreport.md` | S2 | S13 | PR SSOT / handover | No | current |
+| `src/workspace/lfea-workbench-view.js` | S4 | S13 planned | UI integrity + failure guidance + settings card | Yes | source guards; browser NOT_RUN |
+| `src/workspace/lfea-workbench-panels.js` | S13 planned | S13 planned | analysis settings + authority/preflight labels | Yes presentation | pending |
+| `scripts/lfea-p0-ui-containment-check.mjs` | S7 | S13 planned | existing regression guards | No production | source/store checks |
+| `src/workspace/lfea-workbench-controller.js` | S9 | S11 | lifecycle/classification/export containment | Yes | source guard |
+| `src/workspace/lfea-workbench-run-store.js` | S9 | S9 | identity-safe execution | Yes | source/store guard |
+| `src/workspace/lfea-workbench-document-store.js` | S10 | S10 | diagnostic provenance/evidence gate | Yes | source/store guard |
 
-## 7. Engineering Decisions and Invariants
+## 7. Engineering Invariants
 
-- **INV-001:** imported package validation/reseal governance remains unchanged.
-- **INV-002:** preview/draft state is not solver authority.
-- **INV-003:** unrelated render is not implicit discard.
-- **INV-004:** committed model change invalidates incompatible execution and stale drafts.
-- **INV-005:** delete render boundary does not observe stale pre-delete selection.
-- **INV-006:** synchronous execution proceeds only for the exact captured active run identity.
-- **INV-007:** Worker/no-Worker paths consume equivalent current controller analysis options.
-- **INV-008:** friendly failure presentation retains structured code and technical detail.
-- **INV-009:** evidence download can occur only after the store returns current qualified evidence; failure at either export or download boundary becomes visible failure, never stale evidence success.
+- Imported package validation/reseal governance remains unchanged.
+- Preview/draft state is not solver authority.
+- Committed model change invalidates incompatible execution/drafts.
+- Run execution requires exact active identity and current intended options.
+- Friendly diagnostics retain code/detail.
+- Evidence export requires current qualified evidence and failure is not success.
+- H01–H03 presentation is read-only and preserves raw engineering authority/status codes.
 
 ## 8. Validation and Evidence Ledger
 
 | Validation | Status | Evidence / limitation |
 |---|---|---|
-| Initial-slice source guards | IMPLEMENTED / SOURCE-INSPECTED | S7 |
-| Stage 9 source/store guards | IMPLEMENTED / SOURCE-INSPECTED | S9 |
-| Stage 10 source/store guards | IMPLEMENTED / SOURCE-INSPECTED | S10 |
+| S7 initial source guards | IMPLEMENTED / SOURCE-INSPECTED | existing check |
+| S9 lifecycle/store guards | IMPLEMENTED / SOURCE-INSPECTED | existing check |
+| S10 diagnostic guards | IMPLEMENTED / SOURCE-INSPECTED | existing check |
+| S11 evidence-export guards | IMPLEMENTED / SOURCE-INSPECTED | existing check |
+| S12 GitHub changed-file/base reconciliation | PASS | six files, ahead-only, no workflows |
 | Full `npm run check:lfea-workbench` | **NOT_RUN** | no executable checkout in sandbox |
-| Browser interaction/paint/presentation | **NOT_RUN** | no browser checkout in sandbox |
-| Stage 11 source/store guards | PENDING | after implementation |
+| Browser interaction/presentation | **NOT_RUN** | no browser checkout in sandbox |
+| S13 presentation guards | PENDING | after implementation |
 
-## 9. Known Issues, Improvements, and Deferred Scope
+## 9. Known Issues / Deferred Scope
 
-### Current active scope
-- C04 / `ISS-009` evidence-export exception containment.
+### Active
+- H01 / ISS-010 analysis settings visibility.
+- H02 / ISS-011 authority human labels.
+- H03 / ISS-012 preflight human labels.
 
 ### Deferred roadmap
-- H01 read-only analysis settings/authority summary.
-- H02 authority-policy human labels.
-- H03 preflight human labels.
+- H04 canonical result table columns (note prior audit found displacement rows uniform and mixed raw-stress row schema currently uniform; scope must be grounded before changing generic table behavior).
+- H05/H06 and medium/low findings from #1018.
 - `IMP-002` full three-surface governed workflow audit.
-- restraint/support fidelity: guides, line stops, directional restraints, gaps, friction, springs, vertical cases.
-- `RISK-001` distinguish piping beam response, local continuum FEA, and piping-code stress.
+- restraint/support fidelity including gaps/friction/springs/directional supports.
+- `RISK-001` explicitly separate piping beam response, local continuum FEA, and piping-code stress.
 - `RISK-002` expose support-reaction sign convention.
 - `IMP-001` shared engineering colour authority for comparisons.
-- `QST-001` authoritative vertical support-triad fallback-axis policy.
+- `QST-001` vertical support-triad authoritative fallback axis.
 
 ## 10. Recommended Forward Sequence
 
-1. Complete S11 and update this report with actual implementation/evidence.
-2. S12: reconcile changed files/base ancestry, review all Critical findings C01–C04 disposition, and leave a fresh handover checkpoint.
-3. Then proceed to H01/H02/H03 or full three-surface audit according to Owner priority.
+1. Complete S13 H01–H03 and update report/evidence.
+2. S14 reconcile and ground next High item rather than blindly applying issue hints.
+3. Prioritize the full three-surface/workflow authority audit before large cosmetic expansion if no more immediate integrity defects emerge.
 
 ## 11. Next-Agent Handover
 
 ### Current stopping point
-Stage 10 is complete at source/store-guard level. Stage 11 pre-stage record is committed before production changes.
-
-### PR / branch
-- PR: #1021
-- Branch: `agent/lfea-workbench-integrity-1018`
-- Base: `751756e9140527b8dc121aa179dc76b7039fb7ad`
+C01–C04 are implemented and guarded; Stage 12 reconciliation is complete. Stage 13 pre-record is committed before H01–H03 production changes.
 
 ### Start here
-`src/workspace/lfea-workbench-controller.js` → `downloadEvidence()`. Add fail-closed try/catch, then add evidence-export guidance in `lfea-workbench-view.js` and guards in existing containment check.
+- `src/workspace/lfea-workbench-panels.js`: add read-only settings rendering and human mappings using actual codes.
+- `src/workspace/lfea-workbench-view.js`: insert settings card.
+- `scripts/lfea-p0-ui-containment-check.mjs`: guard card/mappings/raw-code retention.
 
 ### Do not redo
-- C01/N01/N02 and draft fixes.
-- Stage 9 no-Worker lifecycle/current-options work.
-- Stage 10 code-family failure presentation and diagnostic provenance work.
+C01–C04, N01/N02, no-Worker parity, diagnostic provenance, or evidence-export grounding.
 
 ### Known failing checks
 None observed. Full repository/browser checks remain NOT_RUN.
 
 ### Highest current risk
-Accidentally treating an unavailable/stale evidence object as downloadable after an export failure. The store's qualification throw must remain intact and downloader must not be called on that path.
+Misrepresenting a governed profile by guessing a “solver type” or hiding raw authority/status codes. Display only actual committed fields and retain raw codes.
 
 ## 12. Process Notes / Lessons Learned
 
-- PN-001: synchronous mutation/render ordering matters for UI-local state.
-- PN-002: durable register IDs prevent discoveries from disappearing at handover.
-- PN-003: committed model identity is a useful draft invalidation boundary.
-- PN-004: source inspection, guards, runtime execution, and browser tests are different evidence classes.
-- PN-005: microtasks are not browser paint boundaries.
-- PN-006: execution-transport parity includes current analysis options.
-- PN-007: structured diagnostic codes are the routing authority; raw messages are detail, not a stable interface.
-- PN-008: disabled UI controls are usability guards, not substitutes for fail-closed controller/store boundaries.
+- Synchronous mutation/render ordering matters.
+- Durable item IDs prevent discoveries disappearing at handover.
+- Source guards and browser/runtime proof are different evidence classes.
+- Microtasks are not paint boundaries.
+- Execution transport parity includes analysis options.
+- Structured codes are routing authority; messages are detail.
+- Disabled controls do not replace fail-closed controller/store boundaries.
+- Audit fix hints can be stale against current enum/schema reality; ground UI mappings from source first.
 
 ## 13. PR Closure / Continuation Record
 
 | Criterion | Current result |
 |---|---|
-| Initial integrity slice | COMPLETE checkpoint |
-| C02 | IMPLEMENTED + GUARDED |
-| C03 | IMPLEMENTED + GUARDED |
-| C04 | IN_PROGRESS |
+| C01–C04 | IMPLEMENTED + GUARDED |
+| Critical-slice reconciliation | COMPLETE |
+| H01–H03 | IN_PROGRESS |
 | Engineering Item Register synchronized | YES |
 | Full runtime/browser validation | **NOT_RUN** |
 | New CI workflows added | **NO** |
 | PR status | DRAFT |
 
-Final continued-slice closure will be rewritten after Stage 12 reconciliation.
+Final closure will be rewritten after the active High-priority slice is reconciled.

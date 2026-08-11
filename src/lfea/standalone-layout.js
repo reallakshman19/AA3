@@ -3,7 +3,7 @@ const NAV_ITEMS = Object.freeze([
   { id: 'review', label: 'Review', state: 'available' },
   { id: 'model', label: 'Model', state: 'available' },
   { id: 'analysis', label: 'Analysis', state: 'available' },
-  { id: 'results', label: 'Results', state: 'planned' },
+  { id: 'results', label: 'Results', state: 'available' },
   { id: 'verification', label: 'Verification', state: 'available' },
   { id: 'history', label: 'History / Issue', state: 'planned' },
 ]);

@@ -5,6 +5,7 @@ import { LfeaStandaloneInputXmlSourceController } from './inputxml-source-contro
 import { createLfeaNativeComparisonController } from './native-comparison-controller.js';
 import { createLfeaNativeExecutionAuthority } from './native-execution-authority.js';
 import { mountLfeaNativeHistoryView } from './native-history-view.js';
+import { createLfeaNativePublicationReadiness } from './native-publication-readiness.js';
 import { createLfeaNativeResultsAuthority } from './native-results-authority.js';
 import { mountLfeaNativeResultsView } from './native-results-view.js';
 import { createLfeaNativeRunHistory } from './native-run-history.js';
@@ -72,8 +73,15 @@ class LfeaStandaloneRuntime {
       executionState: this.executionAuthority.getState(),
     });
     this.historySnapshot = this.runHistory.getSnapshot();
+    this.publicationReadiness = createLfeaNativePublicationReadiness({
+      resultsState: this.resultsAuthority.getState(),
+    });
     this.journeyView.update(this.governedJourney);
-    this.resultsView.update(this.executionAuthority.getState(), this.resultsAuthority.getState());
+    this.resultsView.update(
+      this.executionAuthority.getState(),
+      this.resultsAuthority.getState(),
+      this.publicationReadiness,
+    );
     this.historyView.update(this.historySnapshot);
     this.comparisonController.refresh(this.historySnapshot);
     this.sourceController.init();
@@ -104,8 +112,16 @@ class LfeaStandaloneRuntime {
       preFlight,
       executionState: this.executionAuthority.getState(),
     });
+    this.publicationReadiness = createLfeaNativePublicationReadiness({
+      preFlight,
+      resultsState: this.resultsAuthority.getState(),
+    });
     this.journeyView.update(this.governedJourney);
-    this.resultsView.update(this.executionAuthority.getState(), this.resultsAuthority.getState());
+    this.resultsView.update(
+      this.executionAuthority.getState(),
+      this.resultsAuthority.getState(),
+      this.publicationReadiness,
+    );
     this.historySnapshot = this.#currentHistorySnapshot(sourceSnapshot, preFlight);
     this.historyView.update(this.historySnapshot);
     this.comparisonController.refresh(this.historySnapshot);
@@ -223,6 +239,7 @@ class LfeaStandaloneRuntime {
       nativeResults: this.resultsAuthority.getState(),
       nativeHistory: this.historySnapshot,
       nativeComparison: this.comparisonController.getState(),
+      nativePublicationReadiness: this.publicationReadiness,
       nonAuthoritativePersistence: this.persistedState,
     });
   }

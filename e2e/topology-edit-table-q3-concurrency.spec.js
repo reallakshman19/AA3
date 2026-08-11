@@ -2,24 +2,6 @@ import { resolve } from 'node:path';
 import { expect, test } from '@playwright/test';
 
 const FIXTURE = resolve('public/fixtures/topology-edit-table-q3-exact.staged.json');
-const BALL = Object.freeze({
-  catalogueHash: 'sha256:q3-valves-v2',
-  sourceHash: 'sha256:q3-valves-source-v2',
-  recordId: 'BALL-DN80-C150',
-  recordHash: 'sha256:q3-ball-80-150',
-  componentType: 'VALVE',
-  nominalSizeMm: 80,
-  outsideDiameterMm: 88.9,
-  pipingClass: 'PCL-80',
-  pressureClass: '150',
-  materialSpecification: 'A216-WCB',
-  componentMassKg: 24,
-  endConnectionFrom: 'FLANGED',
-  endConnectionTo: 'FLANGED',
-  valveType: 'BALL',
-  valveFaceToFaceMm: 300,
-  sourceReference: { documentId: 'Q3-VALVES', revision: 'R2', path: '/BALL/80/150' },
-});
 
 test.beforeEach(async ({ page }) => {
   test.setTimeout(180_000);
@@ -34,7 +16,10 @@ test('Q3 M04 M06 M10 completes one certified production Table transaction', asyn
 
   await stagePipe(page, q3.m04Id, 3000);
   await selectTableRow(page, q3.m06Id);
-  await page.locator('[data-table-edit-valve-catalogue]').fill(JSON.stringify(BALL));
+  await expect(page.locator('textarea[data-table-edit-valve-catalogue]')).toHaveCount(0);
+  const valveRecord = page.locator('[data-table-edit-valve-catalogue-record]');
+  await expect(valveRecord).toBeVisible();
+  await valveRecord.selectOption(q3.ballRecordId);
   await page.locator('[data-table-edit-anchor]').selectOption('FROM');
   await page.locator('[data-table-edit-propagation]').selectOption('DOWNSTREAM');
   await page.locator('[data-table-action="stage-valve-replacement"]').click();
@@ -62,6 +47,7 @@ test('Q3 M04 M06 M10 completes one certified production Table transaction', asyn
   expect(engineering.m06LengthMm).toBe(300);
   expect(engineering.tailLengthMm).toBe(1000);
   expect(engineering.valveType).toBe('BALL');
+  expect(engineering.valveRecordId).toBe(q3.ballRecordId);
   expect(engineering.reducerRecordHash).toBe('sha256:q3-red-100-80');
   expect(applied.sourceHash).toBe(before.sourceHash);
   expect(applied.sourceOpaqueToken).toBe('KEEP-Q3-OPAQUE');
@@ -113,6 +99,10 @@ async function openQ3(page) {
     document.querySelector('[data-role="topology-edit-render-host"]')
       ?.__topologyEditAuthoringController?.tableAdapter?.runtime?.projection
   ))).toBe(true);
+  await expect.poll(() => page.evaluate(() => Boolean(
+    document.querySelector('[data-role="topology-edit-render-host"]')
+      ?.__topologyEditAuthoringController?.professionalRuntime?.catalogue?.catalogueHash
+  ))).toBe(true);
   const tablePanel = host.locator('details[data-panel-kind="table"]');
   if (!(await tablePanel.evaluate((node) => node.open))) await tablePanel.locator(':scope > summary').click();
   return host;
@@ -127,10 +117,19 @@ async function q3Authority(page) {
     const row = (key) => rows.find((item) => item.identity.componentKey === key);
     const edge = (key) => topology.edges.find((item) => item.componentKey === key);
     const tee = row('T-001'); const reducer = edge('R-001');
+    const valve = row('V-M06');
     const branch = tee.identity.portBindings.find((item) => item.nodeId === reducer.fromNodeId);
+    const ball = controller.professionalRuntime.catalogue.records.find((record) => (
+      record.componentType === 'VALVE' && record.valveType === 'BALL'
+      && record.nominalSizeMm === valve.fields.dnInMm
+      && record.pipingClass === valve.fields.pipingClass
+      && record.pressureClass === valve.fields.pressureClass
+    ));
+    if (!ball) throw new Error('Q3 requires one certified compatible BALL catalogue record.');
     return {
       m04Id: row('P-M04').identity.canonicalId,
-      m06Id: row('V-M06').identity.canonicalId,
+      m06Id: valve.identity.canonicalId,
+      ballRecordId: ball.recordId,
       teeId: tee.identity.canonicalId,
       reducerId: row('R-001').identity.canonicalId,
       branchPortKey: branch.portKey,
@@ -210,7 +209,8 @@ async function q3EngineeringEvidence(page, q3) {
     const tee = topology.junctions.find((row) => row.id === ids.teeId);
     return {
       m04LengthMm: length(m04), m06LengthMm: length(valve), tailLengthMm: length(tail),
-      valveType: valve.valveType, reducerRecordHash: tee.branchRelation?.reducerRecordHash ?? null,
+      valveType: valve.valveType, valveRecordId: valve.catalogueBinding?.recordId ?? null,
+      reducerRecordHash: tee.branchRelation?.reducerRecordHash ?? null,
     };
   }, q3);
 }

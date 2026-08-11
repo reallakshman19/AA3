@@ -51,6 +51,11 @@ jobs:
       - name: Install locked dependencies
         run: npm ci
 
+      - name: Prove candidate is synchronized with main
+        run: >-
+          node scripts/lfea-standalone-main-sync-check.mjs
+          --allow-workflow .github/workflows/lfea-standalone-exact-head.yml
+
       - name: Run standalone source, authority, solve, recovery and build qualification
         run: node scripts/run-lfea-standalone-check.mjs
 

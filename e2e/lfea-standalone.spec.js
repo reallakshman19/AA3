@@ -9,6 +9,7 @@ const LFEA_URL = '/Advanced_Analysis/lfea.html';
 const STATUS = '[data-role="lfea-standalone-status"]';
 const SOURCE_INPUT = 'section[data-view-id="source"] input[type="file"]';
 const view = (id) => `section[data-view-id="${id}"]`;
+const historyRow = (runId) => `${view('history')} tr[data-run-id="${runId}"]`;
 
 async function openStandalone(page) {
   await page.goto(LFEA_URL);
@@ -70,8 +71,8 @@ async function createDossier(page) {
 
 async function historyRunIds(page) {
   await page.locator('button[data-view-id="history"]').click();
-  const runs = page.locator(`${view('history')} [data-run-id]`);
-  return runs.evaluateAll((nodes) => nodes.map((node) => node.getAttribute('data-run-id')).filter(Boolean));
+  const rows = page.locator(`${view('history')} tr[data-run-id]`);
+  return rows.evaluateAll((nodes) => nodes.map((node) => node.getAttribute('data-run-id')).filter(Boolean));
 }
 
 test.describe('LFEA standalone governed browser journey', () => {
@@ -97,7 +98,7 @@ test.describe('LFEA standalone governed browser journey', () => {
     let runs = await historyRunIds(page);
     expect(runs.length).toBe(1);
     const firstRun = runs[0];
-    await expect(page.locator(`[data-run-id="${firstRun}"]`)).toContainText('CURRENT');
+    await expect(page.locator(historyRow(firstRun))).toContainText('CURRENT');
 
     await page.locator('button[data-view-id="source"]').click();
     await uploadXml(page, 'standalone-y.xml', lfeaStandaloneInputXmlY());
@@ -107,14 +108,14 @@ test.describe('LFEA standalone governed browser journey', () => {
     await expect(verification.getByRole('button', { name: 'Create current evidence dossier' })).toHaveCount(0);
 
     runs = await historyRunIds(page);
-    await expect(page.locator(`[data-run-id="${firstRun}"]`)).toContainText('STALE');
+    await expect(page.locator(historyRow(firstRun))).toContainText('STALE');
 
     await runNative(page);
     runs = await historyRunIds(page);
     expect(runs.length).toBe(2);
     const secondRun = runs.find((runId) => runId !== firstRun);
     expect(secondRun).toBeTruthy();
-    await expect(page.locator(`[data-run-id="${secondRun}"]`)).toContainText('CURRENT');
+    await expect(page.locator(historyRow(secondRun))).toContainText('CURRENT');
 
     await page.locator('button[data-view-id="compare"]').click();
     const comparison = page.locator(view('compare'));
@@ -130,7 +131,7 @@ test.describe('LFEA standalone governed browser journey', () => {
     await expect(page.locator(STATUS)).toContainText('Re-import is required');
     await expect(page.getByText('CURRENT_EVIDENCE_ONLY', { exact: true })).toHaveCount(0);
     await page.locator('button[data-view-id="history"]').click();
-    await expect(page.locator(`${view('history')} [data-run-id]`)).toHaveCount(0);
+    await expect(page.locator(`${view('history')} tr[data-run-id]`)).toHaveCount(0);
   });
 
   test('malformed source cannot become runnable engineering authority', async ({ page }) => {

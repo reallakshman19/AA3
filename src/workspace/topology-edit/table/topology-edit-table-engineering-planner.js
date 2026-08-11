@@ -14,8 +14,14 @@ import {
 import { planMoveConnectedRun } from '../professional/topology-edit-route-operations.js';
 
 const EPSILON_MM = 1e-9;
+const NODE_DEPENDANT_COLLECTIONS = Object.freeze([
+  'junctions', 'supports', 'boundaries', 'rigids', 'bends',
+]);
 
 export function compileTopologyEditTableEngineeringIntent(intent, topology) {
+  if (intent.intentKind === 'NODE_POSITION') {
+    return compileNodePosition(intent, topology);
+  }
   if (intent.intentKind === 'VALVE_REPLACEMENT') {
     return compileValveReplacement(intent, topology);
   }
@@ -25,6 +31,96 @@ export function compileTopologyEditTableEngineeringIntent(intent, topology) {
   throw new RangeError(
     `TopologyEditTableEngineeringPlanner: unsupported intent ${intent.intentKind}.`,
   );
+}
+
+function compileNodePosition(intent, topology) {
+  const edge = exact(topology.edges, intent.target.canonicalId, 'EDGE');
+  const endpoint = intent.requestedValue.endpoint;
+  const endpointKey = endpoint === 'FROM' ? 'fromNodeId' : 'toNodeId';
+  const anchorKey = endpoint === 'FROM' ? 'toNodeId' : 'fromNodeId';
+  if (edge[endpointKey] !== intent.requestedValue.nodeId) {
+    throw new Error(
+      `TopologyEditTableEngineeringPlanner: ${endpoint} endpoint binding changed before NODE_POSITION planning.`,
+    );
+  }
+  const node = exact(topology.nodes, intent.requestedValue.nodeId, 'node');
+  if (!samePoint(node.position, intent.requestedValue.expectedPosition)) {
+    throw new Error(
+      `TopologyEditTableEngineeringPlanner: node ${node.id} position changed before NODE_POSITION planning.`,
+    );
+  }
+  const deltaMm = subtract(intent.requestedValue.position, node.position);
+  if (!(magnitude(deltaMm) > EPSILON_MM)) {
+    throw new RangeError(`TopologyEditTableEngineeringPlanner: NODE_POSITION for ${node.id} is a no-op.`);
+  }
+  const movementMode = intent.geometryPolicy.movementMode;
+  if (movementMode === 'NODE_ONLY') {
+    assertNoNodeDependants(topology, new Set([node.id]));
+    const edgeIds = incidentEdgeIds(topology, new Set([node.id]));
+    const changedScope = deriveTopologyEditChangedScope(topology, {
+      basisHash: topology.canonicalTopologyHash,
+      nodeIds: [node.id],
+      edgeIds,
+    });
+    return createTopologyEditOperationPlan({
+      operationType: 'COMPOSITE_ENGINEERING_EDIT',
+      basisHash: topology.canonicalTopologyHash,
+      targetIds: uniqueSorted([edge.id, node.id, ...edgeIds]),
+      parameters: {
+        aggregateKind: 'TABLE_NODE_POSITION',
+        movementMode,
+        sourceEdgeId: edge.id,
+        endpoint,
+        nodeId: node.id,
+        priorPosition: node.position,
+        requestedPosition: intent.requestedValue.position,
+      },
+      commandIntents: [{
+        commandType: 'MOVE_NODE',
+        payload: { nodeId: node.id, position: intent.requestedValue.position },
+      }],
+      changedScope,
+      unresolvedEvidence: [],
+    });
+  }
+  if (movementMode !== 'CONNECTED_RUN') {
+    throw new RangeError(
+      `TopologyEditTableEngineeringPlanner: unsupported NODE_POSITION movement mode ${movementMode}.`,
+    );
+  }
+  const anchorNodeId = edge[anchorKey];
+  const movedNodeIds = edgeComponentWithout(topology, node.id, edge.id);
+  if (movedNodeIds.includes(anchorNodeId)) {
+    throw new RangeError(
+      `TopologyEditTableEngineeringPlanner: ${edge.id} lies on a cycle; connected-run translation is ambiguous.`,
+    );
+  }
+  assertNoNodeDependants(topology, new Set(movedNodeIds));
+  const movement = planMoveConnectedRun({
+    topology,
+    basisHash: topology.canonicalTopologyHash,
+    nodeIds: movedNodeIds,
+    boundaryNodeIds: [anchorNodeId],
+    deltaMm,
+  });
+  return createTopologyEditOperationPlan({
+    operationType: 'MOVE_CONNECTED_RUN',
+    basisHash: topology.canonicalTopologyHash,
+    targetIds: uniqueSorted([edge.id, ...movement.targetIds]),
+    parameters: {
+      aggregateKind: 'TABLE_NODE_POSITION_CONNECTED_RUN',
+      movementMode,
+      sourceEdgeId: edge.id,
+      endpoint,
+      nodeId: node.id,
+      priorPosition: node.position,
+      requestedPosition: intent.requestedValue.position,
+      deltaMm,
+    },
+    commandIntents: movement.commandIntents,
+    changedScope: movement.changedScope,
+    unresolvedEvidence: movement.unresolvedEvidence ?? [],
+  });
 }
 
 function compileValveReplacement(intent, topology) {
@@ -160,6 +256,24 @@ function edgeComponentWithout(topology, startNodeId, blockedEdgeId) {
   return [...visited].sort();
 }
 
+function assertNoNodeDependants(topology, moved) {
+  for (const collection of NODE_DEPENDANT_COLLECTIONS) {
+    for (const record of topology[collection] ?? []) {
+      const affected = recordNodeIds(record).filter((id) => moved.has(id));
+      if (!affected.length) continue;
+      throw new RangeError(
+        `TopologyEditTableEngineeringPlanner: NODE_POSITION crosses ${collection} record ${record.id}; certified dependent geometry policy is required.`,
+      );
+    }
+  }
+}
+
+function incidentEdgeIds(topology, moved) {
+  return uniqueSorted((topology.edges ?? []).filter((edge) => (
+    moved.has(edge.fromNodeId) || moved.has(edge.toNodeId)
+  )).map((edge) => edge.id));
+}
+
 function assertNoPartialMultiNodeDependants(topology, moved) {
   for (const collection of ['junctions', 'rigids', 'boundaries']) {
     for (const record of topology[collection] ?? []) {
@@ -180,9 +294,23 @@ function recordNodeIds(record) {
     ...(record?.nodeIds ?? []), ...(record?.fromNodeIds ?? []), ...(record?.toNodeIds ?? []),
   ].filter(Boolean));
 }
+function exact(rows, id, label) {
+  const matches = (rows ?? []).filter((row) => row?.id === id);
+  if (matches.length !== 1) {
+    throw new RangeError(`TopologyEditTableEngineeringPlanner: ${label} ${id} resolved ${matches.length} records.`);
+  }
+  return matches[0];
+}
 function uniqueSorted(values) { return [...new Set(values)].sort((a, b) => a.localeCompare(b)); }
 function subtract(left, right) { return { x: left.x - right.x, y: left.y - right.y, z: left.z - right.z }; }
 function scale(value, factor) { return { x: value.x * factor, y: value.y * factor, z: value.z * factor }; }
+function magnitude(value) { return Math.hypot(value.x, value.y, value.z); }
+function samePoint(left, right) {
+  return left && right
+    && nearlyEqual(left.x, right.x)
+    && nearlyEqual(left.y, right.y)
+    && nearlyEqual(left.z, right.z);
+}
 function nearlyEqual(left, right) {
   return Math.abs(Number(left) - Number(right)) <= EPSILON_MM;
 }

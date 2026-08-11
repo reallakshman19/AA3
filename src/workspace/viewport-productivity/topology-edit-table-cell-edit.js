@@ -20,15 +20,15 @@ export function topologyEditTableDirectCellHtml(runtime, row, column) {
   const state = cellState(runtime, canonicalId, staged, hasDraft);
   const invalid = state === 'invalid' ? 'true' : 'false';
   return `<td data-table-property="${escapeHtml(column.key)}" data-table-column-key="${escapeHtml(column.key)}" data-table-cell-state="${state}">
-    <input class="topology-edit-table__cell-input" type="number" step="any" min="0" value="${escapeHtml(value)}" data-table-cell-edit="${CELL_KIND}" data-canonical-id="${escapeHtml(canonicalId)}" aria-label="${escapeHtml(`Length for ${row.fields?.tag ?? canonicalId}`)}" aria-invalid="${invalid}">
+    <input class="topology-edit-table__cell-input" type="number" step="any" min="0" value="${escapeHtml(value)}" data-table-cell-edit="${CELL_KIND}" data-table-cell-canonical-id="${escapeHtml(canonicalId)}" aria-label="${escapeHtml(`Length for ${row.fields?.tag ?? canonicalId}`)}" aria-invalid="${invalid}">
   </td>`;
 }
 
 export function handleTopologyEditTableCellInput(runtime, event) {
   const input = directInput(event.target, runtime.element);
   if (!input) return false;
-  runtime.cellDrafts.set(input.dataset.canonicalId, input.value);
-  if (runtime.cellErrorId === input.dataset.canonicalId) {
+  runtime.cellDrafts.set(input.dataset.tableCellCanonicalId, input.value);
+  if (runtime.cellErrorId === input.dataset.tableCellCanonicalId) {
     runtime.cellErrorId = null;
     runtime.error = null;
   }
@@ -40,7 +40,7 @@ export function handleTopologyEditTableCellInput(runtime, event) {
 export function handleTopologyEditTableCellKeyDown(runtime, event) {
   const input = directInput(event.target, runtime.element);
   if (!input) return false;
-  const canonicalId = input.dataset.canonicalId;
+  const canonicalId = input.dataset.tableCellCanonicalId;
   if (event.key === 'Escape') {
     event.preventDefault();
     runtime.cellDrafts.delete(canonicalId);
@@ -97,15 +97,15 @@ function pipePolicy(runtime, canonicalId) {
 
 function adjacentCellId(runtime, canonicalId, direction) {
   const inputs = [...runtime.element.querySelectorAll(`[data-table-cell-edit="${CELL_KIND}"]`)];
-  const index = inputs.findIndex((input) => input.dataset.canonicalId === canonicalId);
+  const index = inputs.findIndex((input) => input.dataset.tableCellCanonicalId === canonicalId);
   if (index < 0 || inputs.length < 2) return canonicalId;
   const next = (index + direction + inputs.length) % inputs.length;
-  return inputs[next].dataset.canonicalId;
+  return inputs[next].dataset.tableCellCanonicalId;
 }
 
 function focusCell(runtime, canonicalId) {
   const input = [...runtime.element.querySelectorAll(`[data-table-cell-edit="${CELL_KIND}"]`)]
-    .find((candidate) => candidate.dataset.canonicalId === canonicalId);
+    .find((candidate) => candidate.dataset.tableCellCanonicalId === canonicalId);
   input?.focus();
   input?.select?.();
 }

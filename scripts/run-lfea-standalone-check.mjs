@@ -5,6 +5,7 @@ import { fileURLToPath } from 'node:url';
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 
 runNode('scripts/lfea-standalone-boundary-self-test.mjs');
+runNode('scripts/lfea-linear-solver-neutral-dependency-check.mjs');
 runNode('scripts/lfea-standalone-boundary-check.mjs');
 runNode('scripts/linear-piping-inputxml-source-workflow-check.mjs');
 runNode('scripts/lfea-standalone-governed-journey-check.mjs');

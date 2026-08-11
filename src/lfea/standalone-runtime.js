@@ -8,11 +8,12 @@ import { mountLfeaNativeHistoryView } from './native-history-view.js';
 import { createLfeaNativeResultsAuthority } from './native-results-authority.js';
 import { mountLfeaNativeResultsView } from './native-results-view.js';
 import { createLfeaNativeRunHistory } from './native-run-history.js';
+import { buildLfeaStandalonePublicApi } from './standalone-runtime-api.js';
+import { lfeaStandaloneJourneyStatus } from './standalone-status.js';
 import { clearLfeaStandaloneLayout, renderLfeaStandaloneLayout } from './standalone-layout.js';
 
 export function createLfeaStandaloneRuntime(rootElement, options) {
-  const runtime = new LfeaStandaloneRuntime(rootElement, options);
-  return buildPublicApi(runtime);
+  return buildLfeaStandalonePublicApi(new LfeaStandaloneRuntime(rootElement, options));
 }
 
 class LfeaStandaloneRuntime {
@@ -108,7 +109,7 @@ class LfeaStandaloneRuntime {
     this.historySnapshot = this.#currentHistorySnapshot(sourceSnapshot, preFlight);
     this.historyView.update(this.historySnapshot);
     this.comparisonController.refresh(this.historySnapshot);
-    this.layout.statusRoot.textContent = journeyStatus(
+    this.layout.statusRoot.textContent = lfeaStandaloneJourneyStatus(
       this.governedJourney,
       this.resultsAuthority.getState(),
       this.persistedState.recentSourceMetadata,
@@ -247,78 +248,4 @@ class LfeaStandaloneRuntime {
     this.workbenchController.destroy();
     clearLfeaStandaloneLayout(this.rootElement);
   }
-}
-
-function buildPublicApi(runtime) {
-  return Object.freeze({
-    ...buildNativeApi(runtime),
-    ...buildVerificationApi(runtime),
-    destroy: () => runtime.destroy(),
-  });
-}
-
-function buildNativeApi(runtime) {
-  return {
-    getIdentity: () => runtime.identity,
-    getApplicationState: () => runtime.applicationState(),
-    activateView: (viewId) => { runtime.requireActive(); return runtime.layout.activate(viewId); },
-    getActiveView: () => { runtime.requireActive(); return runtime.layout.getActiveView(); },
-    getGovernedJourney: () => { runtime.requireActive(); return runtime.governedJourney; },
-    getNonAuthoritativePersistenceState: () => { runtime.requireActive(); return runtime.persistedState; },
-    loadInputXmlSource: (input, options) => { runtime.requireActive(); return runtime.sourceController.loadSource(input, options); },
-    authorizeInputXmlSourceUnit: (unit) => { runtime.requireActive(); return runtime.sourceController.authorizeUnit(unit); },
-    authorizeInputXmlPreFlight: (approval) => { runtime.requireActive(); return runtime.sourceController.authorizePreFlight(approval); },
-    getInputXmlSourceState: () => { runtime.requireActive(); return runtime.sourceController.getSnapshot(); },
-    getInputXmlPreFlight: () => { runtime.requireActive(); return runtime.sourceController.getPreFlight(); },
-    clearInputXmlSource: () => runtime.clearInputXmlSource(),
-    runNativeAnalysis: (options = {}) => runtime.executeNativeAnalysis(options),
-    recoverNativeResults: () => runtime.recoverCurrentResults(),
-    getNativeExecutionState: () => { runtime.requireActive(); return runtime.executionAuthority.getState(); },
-    getCurrentNativeExecution: () => { runtime.requireActive(); return runtime.executionAuthority.getCurrentExecution(); },
-    getCurrentQualifiedNativeExecution: () => { runtime.requireActive(); return runtime.executionAuthority.getCurrentQualifiedExecution(); },
-    getNativeResultsState: () => { runtime.requireActive(); return runtime.resultsAuthority.getState(); },
-    getCurrentNativeResults: () => { runtime.requireActive(); return runtime.resultsAuthority.getCurrentResults(); },
-    getNativeRunHistory: () => { runtime.requireActive(); return runtime.historySnapshot; },
-    getNativeRunRecord: (runId) => { runtime.requireActive(); return runtime.runHistory.getRecord(runId); },
-    getSelectedNativeRunRecord: () => { runtime.requireActive(); return runtime.runHistory.getSelectedRecord(); },
-    selectNativeRun: (runId) => runtime.selectHistoryRun(runId),
-    compareNativeRuns: (left, right) => runtime.compareHistoryRuns(left, right),
-    getNativeRunComparison: () => { runtime.requireActive(); return runtime.comparisonController.getState(); },
-  };
-}
-
-function buildVerificationApi(runtime) {
-  const workbench = runtime.workbenchController;
-  const active = (body) => (...args) => { runtime.requireActive(); return body(...args); };
-  return {
-    getState: active(() => workbench.getState()),
-    importDocument: active((value) => workbench.importDocument(value)),
-    exportDocument: active(() => workbench.exportDocument()),
-    exportPackage: active(() => workbench.exportPackage()),
-    exportEvidence: active(() => workbench.exportEvidence()),
-    loadMockData: active(() => workbench.loadMockData()),
-    run: active(() => workbench.run()),
-    cancelRun: active(() => workbench.cancelRun()),
-    runBenchmark: active(() => workbench.runBenchmark()),
-    getBenchmarkReport: active(() => workbench.getBenchmarkReport()),
-    undo: active(() => workbench.undo()),
-    redo: active(() => workbench.redo()),
-  };
-}
-
-function journeyStatus(journey, resultsState, recentSourceMetadata) {
-  if (journey.source.status === 'EMPTY') return emptyJourneyStatus(recentSourceMetadata);
-  if (resultsState?.currentness === 'STALE') return 'Retained recovered Results are STALE relative to current raw/source/model authority; current engineering values are hidden.';
-  if (resultsState?.currentness === 'CURRENT') return 'Current governed B-3.4 recovery is available in Results. Raw and recovered quantities remain separate authorities.';
-  if (journey.analysis.executionCurrentness === 'STALE') return 'A retained native execution is STALE relative to current source/review/model authority; it is not current evidence.';
-  if (journey.analysis.currentQualifiedExecutionAvailable) return 'Current native raw solver execution is qualified. Governed B-3.4 recovery can produce current Results.';
-  if (journey.analysis.status === 'BLOCKED') return 'Native InputXML pre-FEA is BLOCKED. Review retained findings; no solve authorization exists.';
-  if (journey.analysis.readyToRun) return 'Reviewed pre-FEA authorization is sealed. Native raw solve execution is ready.';
-  if (journey.review.status === 'REVIEW_REQUIRED') return 'Native InputXML pre-FEA requires explicit engineering review before solve authorization can be sealed.';
-  return 'Native InputXML source is retained; complete governed pre-FEA preparation before execution.';
-}
-
-function emptyJourneyStatus(recent) {
-  if (!recent) return 'Import a governed CAESAR II InputXML source to begin Source → Review → Model preparation.';
-  return `No governed source is loaded. Recent source metadata only: ${recent.fileName} · ${recent.contentSha256.slice(0, 12)}…. Re-import is required before Review or Analysis.`;
 }

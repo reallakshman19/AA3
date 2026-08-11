@@ -111,7 +111,7 @@ export function createLfeaWorkbenchDocumentStore(options) {
     return publish({ ...state, nodeDraft: null, diagnostics: [] });
   }
 
-  function reportEditError(path, index, error) {
+  function reportEditError(path, index, error, fallbackCode = 'LFEA_RECORD_EDIT_REJECTED') {
     const state = getState();
     const location = Number.isInteger(index) ? `${path}[${index}]` : path;
     const reported = new TypeError(
@@ -121,7 +121,7 @@ export function createLfeaWorkbenchDocumentStore(options) {
     return publish(editFailureState(
       state,
       reported,
-      'LFEA_RECORD_EDIT_REJECTED',
+      fallbackCode,
     ));
   }
 

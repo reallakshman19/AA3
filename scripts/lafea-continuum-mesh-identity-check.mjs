@@ -11,11 +11,21 @@ import { createLafeaContinuumSourceAnalysisMesh } from '../src/workspace/lafea-c
 import { clone, triangleSource } from './lafea.3-fixtures.mjs';
 
 const baseline = qualify(triangleSource());
+const baselineSourceMesh = createLafeaContinuumSourceAnalysisMesh(
+  baseline.execution.canonicalInput,
+);
 assert.equal(
   baseline.meshRecord.artifactHash,
-  lafeaAnalysisMeshContentHash(
-    createLafeaContinuumSourceAnalysisMesh(baseline.execution.canonicalInput),
-  ),
+  lafeaAnalysisMeshContentHash(baselineSourceMesh),
+);
+assert.equal(
+  baselineSourceMesh.meshIdentity,
+  `LAFEA.3/SOURCE_AUTHORED/${baseline.geometryRecord.artifactHash}`,
+  'source-authored mesh identity must bind the exact canonical geometry identity',
+);
+assert.ok(
+  baselineSourceMesh.nodes.every((row) => row.z === 0),
+  'LAFEA.3 source-authored mesh must remain exactly planar at z=0',
 );
 assert.notEqual(
   baseline.meshRecord.artifactHash,
@@ -73,6 +83,8 @@ console.log(JSON.stringify({
   stageId: 'LAFEA.3',
   stableAcross: ['material', 'section', 'load', 'boundary-condition', 'provenance'],
   changesFor: ['node-coordinate', 'node/topology-identity'],
+  deterministicMeshIdentity: true,
+  planarZBinding: true,
   geometryAndMeshHashesDistinct: true,
   executionStillBindsPhysics: true,
   meshCurrentnessChanged: false,

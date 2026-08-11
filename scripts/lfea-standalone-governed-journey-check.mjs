@@ -75,6 +75,8 @@ assert.equal(cleared.analysis.readyToRun, false);
 console.log('LFEA-STANDALONE-JOURNEY-04 PASS cleared source retains no current run authority');
 
 const bootstrapSource = fs.readFileSync('src/lfea/bootstrap.js', 'utf8');
+const runtimeSource = fs.readFileSync('src/lfea/standalone-runtime.js', 'utf8');
+const apiSource = fs.readFileSync('src/lfea/standalone-runtime-api.js', 'utf8');
 const projectionSource = fs.readFileSync('src/lfea/governed-journey-projection.js', 'utf8');
 const viewSource = fs.readFileSync('src/lfea/governed-journey-view.js', 'utf8');
 const intakeSource = fs.readFileSync('src/workspace/linear-piping-inputxml-intake.js', 'utf8');
@@ -85,9 +87,11 @@ assert.doesNotMatch(viewSource, /solveInputXmlLinearAnalysis|authorizeInputXmlLi
 assert.doesNotMatch(viewSource, /innerHTML|insertAdjacentHTML|outerHTML/u);
 assert.doesNotMatch(intakeSource, /linear-piping-analysis-consumer\/index\.js/u);
 assert.doesNotMatch(preFlightSource, /linear-piping-analysis-consumer\/index\.js/u);
-assert.match(bootstrapSource, /createLfeaNativeExecutionAuthority/u);
-assert.match(bootstrapSource, /runNativeAnalysis/u);
-console.log('LFEA-STANDALONE-JOURNEY-05 PASS standalone composition exposes only governed native run API and narrow custody imports');
+assert.match(bootstrapSource, /createLfeaStandaloneRuntime/u);
+assert.match(runtimeSource, /createLfeaNativeExecutionAuthority/u);
+assert.match(runtimeSource, /executeNativeAnalysis/u);
+assert.match(apiSource, /runNativeAnalysis/u);
+console.log('LFEA-STANDALONE-JOURNEY-05 PASS standalone bootstrap delegates to LFEA runtime, which owns execution authority and exposes only governed native run API');
 
 console.log(JSON.stringify({
   check: 'lfea-standalone-governed-journey', status: 'PASS', sourceCustodyProjected: true,

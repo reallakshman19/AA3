@@ -1,6 +1,6 @@
 # PR #1020 Engineering Work Report
 
-> Canonical living handover authority for PR #1020. Current-state sections are authoritative; the stage record preserves material history.
+> Canonical living handover authority for PR #1020. Current-state sections are authoritative; historical notes preserve material Stage-4 findings.
 
 ## 0. Mission Control
 
@@ -9,23 +9,21 @@
 | Mission | Preserve the production validation-worker repair and make the 3D Edit Engineering Table a compact, dynamically scrolling, governed spreadsheet editing surface. |
 | PR | #1020 · `agent/fix-topology-validation-worker-production` → `main` · OPEN / DRAFT / mergeable |
 | Base commit | `751756e9140527b8dc121aa179dc76b7039fb7ad` |
-| Current production HEAD | `e1c5c0b7fe54c8cd8d8c31f872e6bd523bf7c672` before this report update |
-| Current stage | Stage 4 — dense/dynamic spreadsheet shell; browser geometry diagnosis |
-| Engineering status | PARTIAL. Density, horizontal containment, five frozen columns, lower-region separation and safe collapsed→open drag behavior are implemented. Vertical viewport ownership remains unresolved. |
-| Validation status | On `e1c5c0b7...`: `main-gate` PASS; Table Slice 3/6 source, architecture, governed relation/transaction and production-build gates PASS; both fail only in the shared Chromium table lifecycle. |
-| Current blocker | **ISS-008** — the latest absolute-inset runtime mount makes `.topology-edit-table--populated` hidden/zero-height even though the outer floating window is correctly placed and visibly full-sized. |
-| Exact next action | Add geometry-only diagnostics to the existing Stage-4 Chromium layout test, preserving every current assertion. Measure the bounding boxes/computed layout of details → body → runtime mount → populated surface → data scroll before another production CSS mutation. |
+| Diagnostic HEAD | `2549ed2a15a061e9c632aa162ef3ed0430847c7a` before this report update |
+| Current stage | Stage 4 — dense/dynamic spreadsheet shell; native-details content-wrapper bypass |
+| Engineering status | PARTIAL. Density, horizontal containment, five frozen columns, lower-region separation and safe collapsed→open drag behavior are implemented. Vertical viewport ownership is now measured and root-caused. |
+| Validation status | Diagnostic head: exact-head/line guard PASS, 23/23 Table Node contracts PASS, production build PASS; Chromium intentionally still FAILS on unchanged layout/reachability assertions. |
+| Current blocker | **ISS-008** — Chromium’s native `<details>` content wrapper owns the second grid row; the direct `.topology-edit-table-window__body` remains auto-sized at `0px`, so every descendant viewport is starved of block size. |
+| Exact next action | Production CSS only: absolutely fill the direct body beneath the 36px titlebar relative to the positioned `<details>` panel, then make the runtime mount normal column-flex/flex-fill. This bypasses the native content wrapper’s block-size transfer without touching engineering authority. |
 
 ### Handover in 60 seconds
 
-- The original validation-worker production defect remains fixed; exact Vite builds emit `topology-edit-validation-worker-*.js`.
-- Stage 4 already has compact 11px styling, automatic X/Y overflow, sticky header, five frozen columns with deterministic offsets, lower-controls separation, a bounded open-window inline track, and a collapsed-panel drag guard.
-- `e9345def...` fixed the native `<summary>` toggle/custom-drag race. Keep it: the floating table now opens at the correct top/right location.
-- `33ce5bf2...` nested `%` heights hid the populated surface and was rejected.
-- `95a5ecaa...` restored populated visibility but left `.topology-edit-table__scroll.clientHeight === 0` before/after resize.
-- `e1c5c0b7...` tried a positioned body + absolute `inset:5px` runtime mount. Exact Chromium now shows a blank table body and reports `.topology-edit-table--populated` hidden; reject this sizing model.
-- After four bounded CSS experiments, the next change is test-only evidence collection, not another speculative production layout edit.
-- Stage 5 direct cell editing remains blocked until Stage 4 is green.
+- Validation worker fix remains healthy; production builds emit `topology-edit-validation-worker-*.js`.
+- Stage 4 already has compact 11px styling, automatic X/Y overflow, sticky header, five frozen columns with deterministic offsets, lower-controls separation, a bounded inline track, and the `beginDrag()` closed-state guard from `e9345def...`.
+- The diagnostic receipt is now exact, not inferred: panel = `1120×720`, panel grid rows = `36px 682px`, **direct body height = 0**, mount = 0, populated surface = 0, scroll clientHeight = 0. Header still lays out at ~40px and the scroll border at 2px, which explains the pointer-overlap symptoms.
+- This proves the second `682px` grid track belongs to the browser’s internal details-content wrapper rather than the direct body element. Further descendant flex/grid tuning cannot solve the missing body block size.
+- Next production fix therefore bypasses that wrapper for sizing: body `position:absolute; inset:36px 0 0`, then ordinary flex-fill descendants.
+- Stage 5 direct cell editing remains blocked until Stage 4 Chromium is green.
 
 ## 1. Engineering Invariants
 
@@ -42,91 +40,101 @@
 
 | ID | Type | Status | Summary |
 |---|---|---|---|
-| ISS-001 | Defect | VALIDATED | Production validation worker requires Vite-recognizable `new Worker(new URL(...))`. |
-| ISS-002 | Defect | IMPLEMENTED | Removed fixed `min(48vh,470px)` inner table cap / competing scroll behavior. |
-| ISS-003 | Defect | VALIDATED | Frozen authority is Select, Tag, Type, Connect From, Connect To; CSS/test aligned. |
+| ISS-001 | Defect | VALIDATED | Production validation worker required Vite-recognizable `new Worker(new URL(...))`. |
+| ISS-002 | Defect | IMPLEMENTED | Removed fixed `min(48vh,470px)` inner grid cap / competing scroll ownership. |
+| ISS-003 | Defect | VALIDATED | Frozen authority = Select, Tag, Type, Connect From, Connect To; CSS/test aligned. |
 | ISS-004 | Defect | IN_PROGRESS | Data viewport must consume remaining resizable height. |
-| ISS-005 | Defect | PARTIAL | Ancestor min-size/flex sizing caused zero-height/pointer overlap; bounded repairs landed. |
-| ISS-006 | Defect | IMPLEMENTED / REQUALIFY | Open-window auto column escaped to max-content; `minmax(0,1fr)` inline track landed at `d8aeadc5...`. |
-| ISS-007 | Defect | IMPLEMENTED / PARTIAL-VALIDATED | Collapsed `<summary>` pointerdown seeded closed geometry into drag state; guarded at `e9345def...`. |
-| **ISS-008** | Defect | **IN_PROGRESS** | Direct-child block-size transfer through the native `<details>` floating window remains invalid; current absolute-inset attempt hides the populated surface. |
+| ISS-005 | Defect | PARTIAL | Ancestor sizing produced zero-height/pointer overlap; bounded fixes narrowed it to native-details block-size transfer. |
+| ISS-006 | Defect | IMPLEMENTED / REQUALIFY | Open window max-content escape fixed with bounded inline track. |
+| ISS-007 | Defect | IMPLEMENTED / PARTIAL-VALIDATED | Collapsed `<summary>` pointerdown seeded closed geometry; guarded at `e9345def...`. |
+| **ISS-008** | Defect | **ROOT-CAUSED / IN_PROGRESS** | Native details-content wrapper receives the 682px second grid row while direct body computes to 0px. |
 | IMP-001 | Improvement | VALIDATED | Compact typography/controls. |
 | IMP-002 | Improvement | ACCEPTED | Direct governed spreadsheet cells. |
 | IMP-003 | Improvement | ACCEPTED | Keyboard navigation + staged/invalid/stale cell state. |
-| IMP-004 | Improvement | ACCEPTED / LATER | Windowed rendering after active-cell semantics stabilize. |
+| IMP-004 | Improvement | LATER | Windowed rendering after active-cell semantics stabilize. |
 | QST-001 | Question | DONE | PIPE length is the only current direct scalar; VALVE/TEE require compound input. |
 | RISK-001 | Risk | ACCEPTED | Spreadsheet drafts must never become a second model authority. |
 | RISK-002 | Risk | ACCEPTED | No local checkout/`gh`; executable evidence comes from connected GitHub checks. |
 | RISK-003 | Risk | ACCEPTED | Whole-grid rerender can destroy focus/caret/draft. |
 
-### ISS-008 — exact `e1c5c0b7...` evidence
+### ISS-008 — measured browser geometry
 
-**One-commit scope:** from report head `809a7437...`, exactly `topology-edit-table-styles.js`, 3 additions / 3 deletions. No runtime, intent, transaction or workflow file changed.
+Diagnostic test changes on `24813321...`, `dbe466f0...`, and `2549ed2a...` were test-only; all production assertions remained unchanged. The final diagnostic persisted `reports/qualification/topology-edit-table-authority.json`, producing this exact Chromium receipt:
 
-**Pre-browser authority:** Table Slice 3 exact-head/line budget PASS; 23/23 Table Node contracts PASS; production build PASS; validation-worker asset emitted. Table Slice 6 architecture guards, governed M06/M10 contracts, retained transactions, bundle ownership and production build all PASS.
+| Element | Used rectangle / size | Relevant computed layout |
+|---|---|---|
+| floating `<details>` | `1120×720` at `(586,100)` | `display:grid`; rows `36px 682px` |
+| direct body | `1118×0` at `(587,137)` | `position:relative`; `height:0px` |
+| runtime mount | `1108×0` | `position:absolute`; column flex |
+| populated surface | `1108×0` | column flex; `flex:1 1 0px` |
+| header | ~`1100×40.14` | in-flow fixed flex child |
+| data scroll | `1100×2`; `clientHeight:0` | `overflow:auto`; `flex:1 1 0px` |
+| lower region | `1100×0` | grid; rows exist but available height is zero |
 
-**Chromium result:** both Table Slice 3 and Slice 6 fail only in the shared production Table Canvas lifecycle. Slice 3 fails all three tests:
-- PIPE Select is found/visible/enabled/stable but outer `<details>`/titlebar geometry intercepts pointer events.
-- Layout test fails immediately because `.topology-edit-table--populated` resolves in DOM but is hidden.
-- GATE Select has the same outer-window interception.
+**Root cause:** the panel’s grid reports a healthy 682px second track while its direct body is 0px. In Chromium 147, open `<details>` content is mediated by an internal details-content wrapper; that wrapper is the grid item receiving the second row. The direct body remains content-sized. Absolute-positioning the *mount inside the body* made the body’s in-flow content empty, so the body collapsed completely. Earlier in-flow descendants could only give the body their intrinsic header/lower height, not the remaining panel height.
 
-**Artifact evidence:** the titlebar is correctly located near the top/right after ISS-007, and the large floating window/body is visibly present, but the body is blank. The projection/grid remains in the DOM/accessibility snapshot. This is presentation geometry, not projection or engineering-authority loss.
+**Chosen resolution:** use the already positioned `.topology-edit-table-window` as the containing block and position the **body itself** beneath the titlebar:
 
-**Rejected layout attempts:**
-- `33ce5bf2...`: nested `%` heights — populated surface hidden.
-- `95a5ecaa...`: one-track descendant grids — populated surface visible but data-scroll height remained exactly zero.
-- `e1c5c0b7...`: positioned body + absolute inset mount — populated surface hidden again.
+- body: `position:absolute; inset:36px 0 0; display:flex; padding:5px; min-width:0; min-height:0; overflow:hidden`;
+- runtime mount: return to normal flow; `display:flex; flex:1 1 0; flex-direction:column; min-width:0; min-height:0`;
+- populated surface: `flex:1 1 0; min-width:0; min-height:0; height:auto`;
+- keep the populated surface’s internal header / scroll / lower flex allocation unchanged.
 
-**Next evidence step:** instrument the existing browser test only. Capture computed style + bounding rectangles for the floating `<details>`, direct body, runtime mount, populated surface, header, data scroll and lower region. Attach the JSON before the unchanged visibility/resize assertions. No production mutation until those measurements are available.
+This gives the body a definite height from the panel’s top/bottom edges and no longer asks the native details-content wrapper to propagate block size.
+
+**Rejected alternatives:** force clicks, pointer-events changes, assertion weakening, another descendant percentage-height chain, or replacing the native panel markup. Those either hide invalid geometry or broaden scope unnecessarily.
 
 ## 3. Stage Roadmap
 
 | Stage | Status | Purpose |
 |---|---|---|
-| 1 | COMPLETE | initialize work report before spreadsheet production edits |
+| 1 | COMPLETE | initialize report before spreadsheet production edits |
 | 2 | COMPLETE | synchronize to PR-numbered living report |
-| 3 | COMPLETE | reconcile draft PR scope/metadata and exact changed files |
+| 3 | COMPLETE | reconcile draft PR scope/metadata and changed files |
 | 4 | PARTIAL | compact reachable dynamic X/Y spreadsheet shell |
 | 5 | NOT_STARTED | direct PIPE-length cell + keyboard/draft semantics |
 | 6 | NOT_STARTED | governed VALVE/TEE compound-cell integration |
-| 7 | NOT_STARTED | virtualization and bounded production-backed edit expansion |
+| 7 | NOT_STARTED | virtualization and bounded production-backed expansion |
 | 8 | NOT_STARTED | final reconciliation and exact-head closure |
 
 ## 4. Stage 4 Record
 
-- Density: compact typography, controls and cells implemented; browser font-size assertion passed on earlier Stage-4 heads.
-- Frozen context: source-authoritative five-column set + deterministic left offsets implemented and previously validated.
-- Lower-region separation: data rows and editors/workflow use separate scroll domains.
-- ISS-006: `d8aeadc5...` constrained the open-window inline track; old 2848px max-content escape moved out of the failure path.
-- ISS-007: `e9345def...` prevents custom drag startup while `<details>` is collapsed; keep this guard.
-- ISS-008 remains. Repeated source/contract/build green + browser-only failures prove this is isolated to production floating-window layout/reachability.
+- Density and compact controls implemented; browser font-size assertion has passed on prior Stage-4 heads.
+- Five source-authoritative frozen columns and deterministic left offsets implemented/validated.
+- Data rows and lower controls use separate scroll domains.
+- `d8aeadc5...`: constrained horizontal max-content escape.
+- `e9345def...`: prevented drag startup on collapsed `<details>`; keep.
+- `33ce5bf2...`: rejected nested `%` heights (surface hidden).
+- `95a5ecaa...`: descendant grid stretch restored surface visibility but scroll stayed zero-height.
+- `e1c5c0b7...`: absolute mount inside auto-sized body caused body/surface collapse.
+- `2549ed2a...`: geometry diagnostic proved the native details-content wrapper owns the second grid row and direct body is 0px.
 
-### Geometry-diagnostic substage — before implementation
+### Body-wrapper bypass — before implementation
 
-**Objective:** obtain exact browser boxes/computed layout at the failing boundary without altering product behavior or weakening test expectations.
+**Scope:** `src/workspace/viewport-productivity/topology-edit-table-styles.js` only. Diagnostic E2E remains temporarily so exact geometry can be compared; no assertion changes.
 
-**Expected file:** `e2e/topology-edit-table-authority.spec.js` only.
+**Expected result:** body height becomes roughly panel height minus titlebar/borders; mount/surface inherit that definite height through flex; scroll clientHeight becomes positive; panel resize increases scroll clientHeight; row Select controls become genuinely clickable; frozen/X overflow remains bounded.
 
-**Planned instrumentation:** extend the existing layout test signature with `testInfo`; before `expect(surface).toBeVisible()`, measure panel/body/mount/surface/header/scroll/lower using `getBoundingClientRect()` and `getComputedStyle()`, then attach JSON as `engineering-table-geometry`. Existing density, overflow, frozen, compact-width/height and resize-growth assertions remain unchanged.
-
-**Decision rule after evidence:** if the direct body itself lacks the second-row block size, move the open native `<details>` from grid to explicit column flex and give the direct body `flex:1 1 0`. If body is healthy but mount is zero, repair only mount sizing. No speculative semantic changes.
+**Validation:** exact diff; Table Slice 3/6 unchanged Chromium lifecycle; main-gate and other triggered table/render checks on exact head. If green, remove temporary geometry persistence and record Stage-4 closure before Stage 5.
 
 ## 5. Validation Ledger
 
-### Exact `e1c5c0b7...`
+### Diagnostic `2549ed2a...`
 
 | Check | Result |
 |---|---|
-| `main-gate` | PASS |
-| Table Slice 3 exact-HEAD / line budget | PASS |
+| exact-HEAD / line budget | PASS |
 | Table Node contracts | PASS 23/23 |
-| Table Slice 3 production build | PASS |
-| Validation-worker asset emitted | PASS |
-| Table Slice 6 architecture / M06-M10 / transactions / bundle / build | PASS |
-| Table Slice 3 Chromium | FAIL 3/3 |
-| Table Slice 6 Chromium | FAIL |
-| Populated surface visibility | FAIL: hidden |
-| Latest screenshot | floating window/body visible and correctly placed; table content blank |
+| production build | PASS |
+| validation-worker asset emitted | PASS |
+| Chromium production lifecycle | FAIL as expected on unchanged ISS-008 assertions |
+| geometry evidence artifact | PASS; exact box receipt captured |
+| panel height | PASS: 720px |
+| panel second grid track | PASS: 682px |
+| direct body height | **FAIL: 0px** |
+| data-scroll clientHeight | **FAIL: 0px** |
+
+Earlier exact heads also showed `main-gate` and Slice-6 non-browser authority/contracts green; re-read the full matrix after the next production head rather than inheriting those results.
 
 ## 6. Changed-File Ledger
 
@@ -136,21 +144,21 @@
 | `tests/topology-edit-professional-validation-worker-client.test.mjs` | worker regression |
 | `agents/PR1020_workreport.md` | living engineering source of truth |
 | `src/workspace/viewport-productivity/topology-edit-table-styles.js` | density/scroll/frozen/window sizing |
-| `src/workspace/viewport-productivity/topology-edit-table-grid-view.js` | stable frozen markers + lower-region wrapper |
+| `src/workspace/viewport-productivity/topology-edit-table-grid-view.js` | frozen markers + lower-region wrapper |
 | `src/workspace/viewport-productivity/topology-edit-table-productivity-adapter.js` | safe open/drag interaction boundary |
-| `e2e/topology-edit-table-authority.spec.js` | production layout + authority qualification / next geometry evidence |
+| `e2e/topology-edit-table-authority.spec.js` | production authority/layout oracle + temporary Stage-4 geometry persistence |
 
 No `.github/workflows/*` changes.
 
 ## 7. Next-Agent Handover
 
 - PR/branch: #1020 / `agent/fix-topology-validation-worker-production`.
-- Production head before this report: `e1c5c0b7fe54c8cd8d8c31f872e6bd523bf7c672`.
-- Keep the worker fix, five frozen columns, width-track repair, lower wrapper and `beginDrag()` collapsed-state guard.
-- Next commit is **test-only geometry instrumentation**, not production CSS.
-- Preserve all existing Chromium assertions.
-- Stage 5 must use existing cell-capability authority; PIPE length is the only direct scalar today.
+- Diagnostic head before this report: `2549ed2a15a061e9c632aa162ef3ed0430847c7a`.
+- Keep worker fix, five frozen columns, horizontal track repair, lower wrapper and `beginDrag()` collapsed-state guard.
+- Next production mutation: styles only; absolute-fill the **body**, not the mount, beneath the 36px titlebar.
+- Keep Chromium assertions unchanged. Temporary geometry persistence may remain until Stage 4 is green, then remove it.
+- Stage 5 must use existing cell-capability authority; PIPE length remains the only direct scalar today.
 
 ## 8. Closure Record
 
-Mission complete: **NO**. Stage 4 remains blocked by ISS-008; Stages 5-8 have not started. PR remains draft. Final-head validation and reconciliation remain pending.
+Mission complete: **NO**. Stage 4 remains in progress but ISS-008 is now root-caused with exact browser evidence. Stages 5-8 have not started. PR remains draft; final-head validation/reconciliation pending.

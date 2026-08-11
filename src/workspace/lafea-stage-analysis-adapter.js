@@ -10,9 +10,6 @@ import {
 } from './lafea-mesh-producer-registry.js';
 
 export const LAFEA_STAGE_ANALYSIS_ADAPTER_SCHEMA = 'lafea-stage-analysis-adapter/v1';
-export const LAFEA_ANALYSIS_ROUTE_FAMILIES = Object.freeze([
-  'ANALYTICAL', 'FEA', 'UNSUPPORTED',
-]);
 
 const MESH = Object.freeze({
   'LAFEA.1': Object.freeze({ families: [], nodePath: null, elementPath: null }),
@@ -74,9 +71,6 @@ export function requireLafeaStageAnalysisAdapter(stageId) {
     lifecycleProfileId: lifecycle.profileId,
     engineState: registry.engineState,
     input: {
-      contractRole: registry.inputContractRole,
-      unitSourceRole: registry.unitSourceRole,
-      collectionPaths: [...registry.collectionPaths],
       guidedStepRequirements: GUIDED_INPUT_REQUIREMENTS[stageId],
     },
     preparation: {

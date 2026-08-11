@@ -27,6 +27,7 @@ function buildNativeApi(runtime) {
     getCurrentQualifiedNativeExecution: () => active(runtime, () => runtime.executionAuthority.getCurrentQualifiedExecution()),
     getNativeResultsState: () => active(runtime, () => runtime.resultsAuthority.getState()),
     getCurrentNativeResults: () => active(runtime, () => runtime.resultsAuthority.getCurrentResults()),
+    getNativePublicationReadiness: () => active(runtime, () => runtime.publicationReadiness),
     getNativeRunHistory: () => active(runtime, () => runtime.historySnapshot),
     getNativeRunRecord: (runId) => active(runtime, () => runtime.runHistory.getRecord(runId)),
     getSelectedNativeRunRecord: () => active(runtime, () => runtime.runHistory.getSelectedRecord()),

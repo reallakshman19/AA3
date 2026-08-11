@@ -3,8 +3,10 @@ import { createLfeaGovernedJourneyProjection } from './governed-journey-projecti
 import { mountLfeaGovernedJourneyView } from './governed-journey-view.js';
 import { LfeaStandaloneInputXmlSourceController } from './inputxml-source-controller.js';
 import { createLfeaNativeExecutionAuthority } from './native-execution-authority.js';
+import { mountLfeaNativeHistoryView } from './native-history-view.js';
 import { createLfeaNativeResultsAuthority } from './native-results-authority.js';
 import { mountLfeaNativeResultsView } from './native-results-view.js';
+import { createLfeaNativeRunHistory } from './native-run-history.js';
 import {
   clearLfeaStandaloneLayout,
   renderLfeaStandaloneLayout,
@@ -12,12 +14,15 @@ import {
 
 export const LFEA_STANDALONE_APPLICATION_SCHEMA = 'lfea-standalone-application/v1';
 
-/** Standalone LFEA composition root with governed native raw execution and recovery. */
+/** Standalone LFEA composition root with governed execution, recovery, and History. */
 export function bootstrapLfeaStandalone(rootElement, options = {}) {
   if (!rootElement?.ownerDocument) throw new TypeError('Standalone LFEA application root was not found.');
 
   const identity = createApplicationIdentity(options.identity);
   const layout = renderLfeaStandaloneLayout(rootElement, identity);
+  const executionAuthority = createLfeaNativeExecutionAuthority();
+  const resultsAuthority = createLfeaNativeResultsAuthority();
+  const runHistory = createLfeaNativeRunHistory();
   const journeyView = mountLfeaGovernedJourneyView({
     reviewRoot: layout.reviewRoot,
     modelRoot: layout.modelRoot,
@@ -25,13 +30,16 @@ export function bootstrapLfeaStandalone(rootElement, options = {}) {
     onRunNativeAnalysis: () => executeNativeAnalysis(),
   });
   const resultsView = mountLfeaNativeResultsView(layout.resultsRoot);
-  const executionAuthority = createLfeaNativeExecutionAuthority();
-  const resultsAuthority = createLfeaNativeResultsAuthority();
+  const historyView = mountLfeaNativeHistoryView(layout.historyRoot, {
+    onSelectRun: (runId) => selectHistoryRun(runId),
+  });
   let governedJourney = createLfeaGovernedJourneyProjection({
     executionState: executionAuthority.getState(),
   });
+  let historySnapshot = runHistory.getSnapshot();
   journeyView.update(governedJourney);
   resultsView.update(executionAuthority.getState(), resultsAuthority.getState());
+  historyView.update(historySnapshot);
 
   const refreshJourney = (sourceSnapshot, preFlight) => {
     executionAuthority.reconcile(preFlight);
@@ -43,6 +51,8 @@ export function bootstrapLfeaStandalone(rootElement, options = {}) {
     });
     journeyView.update(governedJourney);
     resultsView.update(executionAuthority.getState(), resultsAuthority.getState());
+    historySnapshot = currentHistorySnapshot(sourceSnapshot, preFlight);
+    historyView.update(historySnapshot);
     layout.statusRoot.textContent = journeyStatus(governedJourney, resultsAuthority.getState());
     return governedJourney;
   };
@@ -71,17 +81,59 @@ export function bootstrapLfeaStandalone(rootElement, options = {}) {
     sourceController.getPreFlight(),
   );
 
+  function currentHistorySnapshot(sourceSnapshot, preFlight) {
+    return runHistory.getSnapshot({
+      sourceSnapshot,
+      preFlight,
+      executionState: executionAuthority.getState(),
+      resultsState: resultsAuthority.getState(),
+    });
+  }
+
+  function archiveCurrentRun() {
+    return runHistory.archive({
+      applicationIdentity: identity,
+      sourceSnapshot: sourceController.getSnapshot(),
+      preFlight: sourceController.getPreFlight(),
+      executionState: executionAuthority.getState(),
+      resultsState: resultsAuthority.getState(),
+    });
+  }
+
+  function selectHistoryRun(runId) {
+    requireActive();
+    const currentExecution = executionAuthority.getState();
+    const currentResults = resultsAuthority.getState();
+    const record = runHistory.selectRun(runId);
+    historySnapshot = currentHistorySnapshot(
+      sourceController.getSnapshot(),
+      sourceController.getPreFlight(),
+    );
+    historyView.update(historySnapshot);
+    assertSelectionDidNotMutateAuthority(currentExecution, currentResults);
+    return record;
+  }
+
+  function assertSelectionDidNotMutateAuthority(expectedExecution, expectedResults) {
+    if (executionAuthority.getState() !== expectedExecution || resultsAuthority.getState() !== expectedResults) {
+      const error = new Error('History selection changed native engineering authority.');
+      error.code = 'LFEA_HISTORY_SELECTION_AUTHORITY_MUTATION';
+      throw error;
+    }
+  }
+
   function executeNativeAnalysis(runOptions = {}) {
     requireActive();
     try {
       const state = executionAuthority.run(sourceController.getPreFlight(), runOptions);
       resultsAuthority.recover(sourceController.getPreFlight(), state);
+      archiveCurrentRun();
       refreshCurrent();
       layout.activate('results');
       return state;
     } catch (error) {
       refreshCurrent();
-      layout.statusRoot.textContent = `Native analysis/Results blocked: ${error?.code ?? error?.message ?? 'UNKNOWN_ERROR'}`;
+      layout.statusRoot.textContent = `Native analysis/Results/History blocked: ${error?.code ?? error?.message ?? 'UNKNOWN_ERROR'}`;
       throw error;
     }
   }
@@ -92,6 +144,7 @@ export function bootstrapLfeaStandalone(rootElement, options = {}) {
       sourceController.getPreFlight(),
       executionAuthority.getState(),
     );
+    archiveCurrentRun();
     refreshCurrent();
     layout.activate('results');
     return state;
@@ -108,6 +161,7 @@ export function bootstrapLfeaStandalone(rootElement, options = {}) {
         governedJourney,
         nativeExecution: executionAuthority.getState(),
         nativeResults: resultsAuthority.getState(),
+        nativeHistory: historySnapshot,
       });
     },
     activateView(viewId) { requireActive(); return layout.activate(viewId); },
@@ -131,6 +185,10 @@ export function bootstrapLfeaStandalone(rootElement, options = {}) {
     getCurrentQualifiedNativeExecution() { requireActive(); return executionAuthority.getCurrentQualifiedExecution(); },
     getNativeResultsState() { requireActive(); return resultsAuthority.getState(); },
     getCurrentNativeResults() { requireActive(); return resultsAuthority.getCurrentResults(); },
+    getNativeRunHistory() { requireActive(); return historySnapshot; },
+    getNativeRunRecord(runId) { requireActive(); return runHistory.getRecord(runId); },
+    getSelectedNativeRunRecord() { requireActive(); return runHistory.getSelectedRecord(); },
+    selectNativeRun(runId) { return selectHistoryRun(runId); },
 
     // Verification-workbench compatibility API. It is not native piping execution.
     getState() { requireActive(); return workbenchController.getState(); },
@@ -150,7 +208,9 @@ export function bootstrapLfeaStandalone(rootElement, options = {}) {
       destroyed = true;
       resultsAuthority.clearCurrentAuthority();
       executionAuthority.clearCurrentAuthority();
+      runHistory.clear();
       sourceController.destroy();
+      historyView.destroy();
       resultsView.destroy();
       journeyView.destroy();
       workbenchController.destroy();

@@ -1,6 +1,9 @@
 import { mkdir, writeFile } from 'node:fs/promises';
 import { expect, test } from '@playwright/test';
-import { engineeringEditorFixture } from './helpers/topology-edit-table-engineering-fixture.js';
+import {
+  engineeringEditorFixture,
+  openTopologyEditTableEngineeringFixture,
+} from './helpers/topology-edit-table-engineering-fixture.js';
 
 const REPORT = 'reports/qualification/topology-edit-table-authority.json';
 
@@ -162,7 +165,7 @@ test('Engineering Table is dense, dynamically scrollable and keeps frozen contex
 test('M06 and M10 production editors expose only explicit engineering authority', async ({ page }) => {
   await page.setViewportSize({ width: 1720, height: 1080 });
   await page.addInitScript(() => globalThis.localStorage?.clear());
-  const host = await openProductionController(page);
+  const host = await openTopologyEditTableEngineeringFixture(page);
   const panel = page.locator('details[data-panel-kind="table"]');
   if (!(await panel.evaluate((node) => node.open))) await panel.locator(':scope > summary').click();
   await expect.poll(() => host.getAttribute('data-topology-edit-table-projection-hash')).toBeTruthy();

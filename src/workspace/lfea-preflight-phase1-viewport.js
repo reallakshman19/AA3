@@ -258,18 +258,14 @@ export function getLfeaPreflightPhase1ViewportModel(viewport) {
 }
 
 function orderedTargetIds(state) {
-  const clauses = [...state.filter.clauses];
+  let targetIds = [...queryLfeaPreflightPhase1Index(state.source.lineIndex, state.filter).targetIds];
   if (state.queueId !== null) {
-    clauses.push(Object.freeze({
-      queueId: state.queueId,
-      mode: 'OR',
-      values: Object.freeze([state.queueId]),
-    }));
+    const queueIds = new Set(getLfeaPreflightPhase1Queue(
+      state.source.lineIndex,
+      state.queueId,
+    ).targetIds);
+    targetIds = targetIds.filter((targetId) => queueIds.has(targetId));
   }
-  const targetIds = [...queryLfeaPreflightPhase1Index(state.source.lineIndex, {
-    combine: state.filter.combine,
-    clauses,
-  }).targetIds];
   if (state.sortId === 'TARGET_ID_ASC') return targetIds;
   targetIds.sort((left, right) => compareLineTargets(state, left, right));
   return targetIds;

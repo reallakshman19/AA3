@@ -140,6 +140,7 @@ assert.ok(record(withoutMaterial.resolutions.pipingClass, 'S100'));
 console.log('P06E-MASTER-07 PASS optional material-map absence does not erase exact piping-class authority');
 
 const source = fs.readFileSync('src/workspace/lfea-preflight-phase1-master-authority.js', 'utf8');
+const implementation = stripComments(source);
 for (const forbidden of [
   'masterDataController',
   'localStorage',
@@ -155,7 +156,7 @@ for (const forbidden of [
   'document.',
   'window.',
 ]) {
-  assert.equal(source.includes(forbidden), false, `Forbidden authority leak: ${forbidden}`);
+  assert.equal(implementation.includes(forbidden), false, `Forbidden authority leak: ${forbidden}`);
 }
 for (const forbiddenDefault of [
   /wallThickness[^\n]*(?:\?\?|\|\|)\s*0/u,
@@ -163,12 +164,12 @@ for (const forbiddenDefault of [
   /elastic[^\n]*(?:\?\?|\|\|)\s*(?:200|210)/u,
   /outsideDiameter[^\n]*nominalBore/u,
 ]) {
-  assert.doesNotMatch(source, forbiddenDefault);
+  assert.doesNotMatch(implementation, forbiddenDefault);
 }
-assert.match(source, /targetScheduleField:\s*null/u);
-assert.match(source, /sourceScheduleField:\s*null/u);
-assert.match(source, /createCommonEnrichedPipingClassResolution/u);
-assert.match(source, /createCommonEnrichedMaterialResolution/u);
+assert.match(implementation, /targetScheduleField:\s*null/u);
+assert.match(implementation, /sourceScheduleField:\s*null/u);
+assert.match(implementation, /createCommonEnrichedPipingClassResolution/u);
+assert.match(implementation, /createCommonEnrichedMaterialResolution/u);
 console.log('P06E-MASTER-08 PASS no mutation, solver, browser, clock, or default-property authority');
 
 console.log(JSON.stringify({
@@ -293,4 +294,10 @@ function assertField(targetRecord, fieldId, value, status, sourceKind) {
   assert.equal(result.status, status, `${fieldId} status`);
   assert.equal(result.sourceKind, sourceKind, `${fieldId} sourceKind`);
   return result;
+}
+
+function stripComments(value) {
+  return value
+    .replace(/\/\*[\s\S]*?\*\//gu, '')
+    .replace(/(^|[^:])\/\/.*$/gmu, '$1');
 }

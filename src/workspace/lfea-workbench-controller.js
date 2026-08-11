@@ -108,15 +108,21 @@ export class LfeaWorkbenchController {
   }
 
   importDocument(value) {
-    return this.store.importDocument(value);
+    const next = this.store.importDocument(value);
+    if (next.status !== 'FAILED') this.view.resetRecordDrafts();
+    return next;
   }
 
   /**
    * Load a deterministic hash-valid mesh through the normal import boundary.
+   * Existing engineering input is never replaced silently.
    *
-   * @returns {Readonly<Record<string, unknown>>} Updated workbench state.
+   * @returns {Promise<Readonly<Record<string, unknown>>>} Updated workbench state.
    */
   async loadMockData() {
+    if (this.store.getState().packageValue && !confirmMockReplacement(this.documentRef)) {
+      return this.store.getState();
+    }
     const { createLfeaMockPackage } = await import('./advanced-mock-data.js');
     return this.importDocument(createLfeaMockPackage());
   }
@@ -170,7 +176,14 @@ export class LfeaWorkbenchController {
   }
 
   async run() {
-    if (!this.workerClient) return this.store.run();
+    if (!this.workerClient) {
+      const running = this.store.beginRun();
+      const runId = running.activeRun.runId;
+      await releaseBrowserTask();
+      const current = this.store.getState();
+      if (current.activeRun?.runId !== runId) return current;
+      return this.store.completeSynchronousRun();
+    }
     const running = this.store.beginRun();
     const identity = running.activeRun;
     const packageInput = running.packageValue;
@@ -224,7 +237,8 @@ export class LfeaWorkbenchController {
   }
 
   cancelRun() {
-    const cancellation = this.workerClient?.cancel('USER');
+    if (!this.workerClient) return this.store.cancelRun(null);
+    const cancellation = this.workerClient.cancel('USER');
     if (!cancellation) return this.store.getState();
     return this.store.cancelRun(cancellation);
   }
@@ -264,9 +278,14 @@ export class LfeaWorkbenchController {
   }
 
   downloadEvidence() {
-    const value = this.exportEvidence();
-    downloadLfeaJson(this.documentRef, value, 'lfea-evidence-export.json');
-    return value;
+    try {
+      const value = this.exportEvidence();
+      downloadLfeaJson(this.documentRef, value, 'lfea-evidence-export.json');
+      return value;
+    } catch (error) {
+      this.store.reportEditError('evidenceExport', null, error);
+      return null;
+    }
   }
 
   destroy() {
@@ -279,4 +298,16 @@ export class LfeaWorkbenchController {
     this.view.destroy();
     this.rootElement = null;
   }
+}
+
+function confirmMockReplacement(documentRef) {
+  const view = documentRef?.defaultView;
+  if (typeof view?.confirm !== 'function') return false;
+  return view.confirm(
+    'Replace the current LFEA mesh package with simulated mock data? Unsaved engineering input will be discarded.',
+  );
+}
+
+function releaseBrowserTask() {
+  return new Promise((resolve) => globalThis.setTimeout(resolve, 0));
 }

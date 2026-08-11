@@ -6,13 +6,12 @@ const CERTIFIED_EDITOR_TO_INTENT = Object.freeze({
   VALVE_REPLACE: 'VALVE_REPLACEMENT',
   BRANCH_RECONFIGURE: 'TEE_REDUCER_RELATION',
   SUPPORT_RESTRAINT: 'SUPPORT_RESTRAINT',
+  CATALOGUE_COMPONENT_REPLACE: 'CATALOGUE_COMPONENT_REPLACEMENT',
 });
 
 const UNCERTIFIED_PROPERTIES = Object.freeze({
   PIPE: new Set(['slopePercent']),
   ELBOW: new Set(['angleDeg', 'radiusMm', 'turnIntent']),
-  FLANGE: new Set(['flangeType', 'flangeFacing', 'rating']),
-  REDUCER: new Set(['reducerType', 'reducerOrientation']),
 });
 const NODE_DEPENDANT_COLLECTIONS = Object.freeze([
   'junctions', 'supports', 'boundaries', 'rigids', 'bends',
@@ -64,6 +63,21 @@ export function deriveTopologyEditTableCellCapability(input = {}) {
     return available
       ? receipt('AVAILABLE', 'READY', 'Certified PIPE_LENGTH intent is available.', row, columnKey, context, { intentKind })
       : receipt('BLOCKED', 'TABLE_TARGET_KIND_INVALID', 'PIPE_LENGTH requires an exact PIPE edge row.', row, columnKey, context, { intentKind });
+  }
+  if (intentKind === 'CATALOGUE_COMPONENT_REPLACEMENT') {
+    if (!['FLANGE', 'REDUCER'].includes(row.elementType) || row.identity?.canonicalKind !== 'EDGE') {
+      return receipt('BLOCKED', 'TABLE_TARGET_KIND_INVALID', 'Catalogue fitting replacement requires an exact FLANGE or REDUCER edge row.', row, columnKey, context, { intentKind });
+    }
+    return receipt(
+      'NEEDS_INPUT',
+      'EXACT_CATALOGUE_RECORD_REQUIRED',
+      'Choose one exact same-envelope catalogue record before staging the fitting replacement.',
+      row,
+      columnKey,
+      context,
+      { intentKind, componentType: row.elementType },
+      ['catalogueBinding'],
+    );
   }
   if (intentKind === 'SUPPORT_RESTRAINT') {
     if (row.elementType !== 'SUPPORT' || row.identity?.canonicalKind !== 'SUPPORT') {
@@ -175,9 +189,7 @@ export function deriveTopologyEditTableNodePositionCapability(input = {}) {
     property,
     context,
     {
-      intentKind: 'NODE_POSITION',
-      endpoint,
-      nodeId,
+      intentKind: 'NODE_POSITION', endpoint, nodeId,
       movementModes: ['NODE_ONLY', 'CONNECTED_RUN'],
     },
   );
@@ -207,18 +219,12 @@ function recordNodeIds(record) {
     ...(record?.nodeIds ?? []), ...(record?.fromNodeIds ?? []), ...(record?.toNodeIds ?? []),
   ].filter(Boolean))];
 }
-function finitePoint(value) {
-  return value && [value.x, value.y, value.z].every(Number.isFinite);
-}
+function finitePoint(value) { return value && [value.x, value.y, value.z].every(Number.isFinite); }
 function receipt(status, reasonCode, reason, row, columnKey, context, details = {}, missingEvidence = []) {
   return createTopologyEditCapabilityReceipt({
     surfaceId: 'ENGINEERING_TABLE',
     actionId: `${row?.elementType || 'ROW'}:${columnKey || 'PROPERTY'}`,
-    status,
-    reasonCode,
-    reason,
-    ...context,
-    missingEvidence,
+    status, reasonCode, reason, ...context, missingEvidence,
     details: {
       canonicalId: row?.identity?.canonicalId ?? null,
       elementType: row?.elementType ?? null,

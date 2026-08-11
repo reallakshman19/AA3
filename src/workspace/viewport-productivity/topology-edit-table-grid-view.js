@@ -1,6 +1,7 @@
 import {
   topologyEditTableVisibleRows,
 } from '../topology-edit/table/topology-edit-table-view-state.js';
+import { topologyEditTableDirectCellHtml } from './topology-edit-table-cell-edit.js';
 import {
   describeTopologyEditTableIntent,
   renderTopologyEditTableEngineeringEditor,
@@ -45,6 +46,7 @@ export function renderTopologyEditTableGrid(runtime) {
         <table role="grid" aria-label="Certified canonical engineering table">
           <thead><tr><th scope="col" data-table-column-key="select" data-table-frozen="select">Select</th>${columns.map((column) => sortHeader(column, runtime.viewState)).join('')}</tr></thead>
           <tbody>${renderedRows.map((row) => rowHtml(
+            runtime,
             row,
             columns,
             selected.has(row.rowId),
@@ -73,15 +75,17 @@ export function renderTopologyEditTableGrid(runtime) {
   publishEvidence(runtime, rows.length, renderedRows.length);
 }
 
-function rowHtml(row, columns, isSelected, stagedIntent) {
+function rowHtml(runtime, row, columns, isSelected, stagedIntent) {
   const staged = stagedIntent ? ' data-staged="true"' : '';
   return `<tr data-table-row-id="${escapeHtml(row.rowId)}" data-canonical-id="${escapeHtml(row.identity.canonicalId)}" data-element-type="${escapeHtml(row.elementType)}" data-selected="${String(isSelected)}"${staged}>
     <td data-table-column-key="select" data-table-frozen="select"><button type="button" data-table-select="${escapeHtml(row.rowId)}" aria-pressed="${String(isSelected)}" aria-label="${isSelected ? 'Deselect' : 'Select'} ${escapeHtml(row.identity.canonicalId)}">${isSelected ? 'Selected' : 'Select'}</button></td>
-    ${columns.map((column) => cellHtml(row, column)).join('')}
+    ${columns.map((column) => cellHtml(runtime, row, column)).join('')}
   </tr>`;
 }
 
-function cellHtml(row, column) {
+function cellHtml(runtime, row, column) {
+  const direct = topologyEditTableDirectCellHtml(runtime, row, column);
+  if (direct) return direct;
   const text = displayValue(value(row, column.key));
   const frozen = column.frozen ? ` data-table-frozen="${escapeHtml(column.key)}"` : '';
   return `<td data-table-property="${escapeHtml(column.key)}" data-table-column-key="${escapeHtml(column.key)}"${frozen} title="${escapeHtml(text)}">${escapeHtml(text)}</td>`;

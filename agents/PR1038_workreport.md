@@ -7,54 +7,57 @@
 - **PR number:** #1038
 - **Branch:** `agent/integrated-lafea-common-stage-roadmap`
 - **Base commit:** `a587867963cc9199caca6e7adfa03af95a316aa2`
-- **Current implementation HEAD before this report update:** `0d5b46d66e9c3da2ba4867c6c5d03d88491a8b5f`
+- **Validated implementation HEAD:** `d01de620ff4b4fcd5a5e077dbcf3b24d062846c3`
 - **PR status:** DRAFT
-- **Current stage:** Stage 5 — Focused regression validation
-- **Last completed stage:** Stage 4 — First production common/stage capability increment
-- **Engineering status:** IMPLEMENTED, validation in progress
-- **Validation status:** exact-head CI started; one prior bundle diagnostic PASS; latest exact-head runs still in progress/queued
-- **Current blocker:** Local repository execution is unavailable in this agent environment because outbound GitHub clone/DNS is unavailable; exact-head GitHub Actions is the executable validation path.
-- **Exact next action:** Inspect exact-head CI for `0d5b46d66e9c3da2ba4867c6c5d03d88491a8b5f`, resolve any failures, then reconcile changed files and finalize this report.
+- **Current stage:** Stage 6 — Reconciliation / handover
+- **Last completed stage:** Stage 5 — Focused exact-head validation
+- **Engineering status:** BOUNDED IMPLEMENTATION COMPLETE; broader roadmap intentionally deferred
+- **Validation status:** LAFEA bounded exact-head evidence PASS; one pre-existing cross-product LFEA repository-attribution defect remains outside this PR scope
+- **Current blocker:** None for the bounded LAFEA slice. The repository-integration attribution job remains red because the pinned base contains an unrelated LFEA anti-drift contradiction documented below.
+- **Exact next action:** Continue the roadmap with canonical common input primitives and dependency-aware invalidation in a follow-on implementation stage/assignment; do not broaden PR #1038 without Owner direction.
 
 ## Handover in 60 Seconds
 
 ### What is now true
 
-- `docs/IntegratedLAFEAroadmap.md` contains the integrated common-vs-unique architecture and staged delivery plan.
+- `docs/IntegratedLAFEAroadmap.md` is the detailed implementation roadmap for common-vs-unique LAFEA architecture.
 - PR #1038 is the single draft PR for this assignment.
-- The first production slice is implemented.
-- `lafea-guided-workflow.js` no longer owns a stage-ID table for materials/BC/load step requirements.
-- Those guided input requirements now live at the existing production-consumed `lafea-stage-analysis-adapter.js` boundary.
-- The stage adapter now classifies routes as `ANALYTICAL`, `FEA`, or `UNSUPPORTED` from existing governed engine/mesh truth.
-- The guided workflow consumes the adapter for execution support and input requirements.
-- Regression coverage now exercises LAFEA.1, LAFEA.3, LAFEA.5, and LAFEA.6 behavior and asserts all six route-family classifications.
+- The existing production-consumed `lafea-stage-analysis-adapter.js` now exposes:
+  - `routeFamily = ANALYTICAL | FEA | UNSUPPORTED` derived from existing qualified engine + mesh applicability truth;
+  - semantic input requirements for `materials`, `restraints`, and `loads`.
+- `lafea-guided-workflow.js` consumes that adapter rather than maintaining an independent stage-ID input table or direct execution-support registry lookup.
+- UI step IDs remain UI-local; the adapter is not coupled to `MATERIALS_SECTIONS`, `RESTRAINTS_BCS`, or `LOADS_CASES` names.
+- LAFEA.1/.2 remain analytical/non-mesh, LAFEA.3/.4/.5 remain FEA routes, and LAFEA.6 remains explicit unsupported.
+- The focused truthfulness check is now part of the real non-bucket certification aggregate and executed on exact head.
+- No solver, element, mesh-custody, lifecycle, release, or GitHub Actions workflow file was changed.
 
-### What is being worked on
+### What remains intentionally unfinished
 
-Exact-head validation and final changed-file/report reconciliation.
+The roadmap's later architecture stages are not implemented in this PR:
 
-### What remains unfinished
-
-- latest exact-head CI conclusions;
-- final report validation ledger;
-- final changed-file reconciliation;
-- PR body refresh after validation.
+- canonical analysis model/common input primitives;
+- dependency-aware invalidation model;
+- geometry authority and stable named physical regions;
+- further meshing commonization/refinement lineage work;
+- canonical solver-model compiler;
+- named probes and semantic run comparison;
+- unified verification center;
+- standalone runtime/shell separation;
+- LAFEA-owned history/release/dossier;
+- physical repository extraction;
+- future 3D LAFEA.7+ physics.
 
 ### What must not be assumed
 
-- LAFEA.1/.2 are not FE-mesh stages.
-- LAFEA.3/.4/.5 share an FEA lifecycle but not identical physical semantics.
-- LAFEA.6 remains unsupported and fail-closed.
-- This PR does **not** implement the later canonical input, geometry, solver-model compiler, 3D meshing, history, release, or standalone-extraction stages in the roadmap.
-- No solver, element, mesh-custody, lifecycle, or release authority was intentionally changed.
+- This PR does not add new FEA physics.
+- It does not qualify any new element family or mesh producer.
+- It does not enable LAFEA.6.
+- `analysisRouteFamily` is a capability/routing classification, not numerical or release authority.
+- A stage calculation PASS, mesh PASS, verification PASS, or T6 `CURRENT_PASS` remains insufficient for release.
 
-### Highest-risk remaining item
+### Highest-risk deferred item
 
-A regression in a broad exact-head gate caused by the additive adapter shape or workflow routing; CI evidence is required before claiming completion.
-
-### Exact next action
-
-Read exact-head workflow results for `0d5b46d66e9c3da2ba4867c6c5d03d88491a8b5f`; if green, perform final PR diff/changed-file reconciliation.
+Future commonization must not erase the different engineering meaning of analytical screening, continuum stress, shell resultants, trunnion footprint load introduction, or future weld/3D physics.
 
 ---
 
@@ -62,340 +65,415 @@ Read exact-head workflow results for `0d5b46d66e9c3da2ba4867c6c5d03d88491a8b5f`;
 
 ### Mission
 
-Create one LAFEA product architecture with a common engineering kernel and explicit stage-specific capability/physics boundaries, while beginning implementation through an existing production-consumed boundary rather than speculative new infrastructure.
+Create one LAFEA product architecture with shared engineering infrastructure and explicit stage-specific physics/capability boundaries, then prove the direction through a small existing production path instead of introducing speculative unused layers.
 
 ### Engineering consequence
 
-Future stages should register qualified stage capability and physics without cloning source, lifecycle, meshing custody, solver infrastructure, result storage, verification orchestration, and release mechanisms. Existing stages retain their real meanings: analytical foundation, analytical screening, 2D continuum, thin shell, trunnion footprint, and unsupported weld placeholder.
+A future stage should primarily register its governed capability plus qualified physics. It should not clone source authority, units, lifecycle, mesh custody, sparse solver infrastructure, result storage, verification orchestration, run history, and release machinery.
 
-### Scope of this PR
+### Scope delivered in this PR
 
-- detailed roadmap;
-- current stage/lifecycle/mesh architecture inventory;
-- one bounded production-consumed common/stage capability increment;
-- focused regression coverage;
-- no solver numerical change.
+1. Detailed integrated roadmap.
+2. Current LAFEA.1–LAFEA.6 common-vs-unique inventory.
+3. Existing stage-adapter capability increment.
+4. Real guided-workflow consumer.
+5. Focused multi-stage regression coverage wired into the existing non-bucket certification aggregate.
+6. Exact-head software/numerical/browser/meshing evidence for the bounded change.
 
 ### Explicit non-goals
 
 - no new FE formulation;
-- no new 3D solid stage;
-- no new generic automatic 3D mesher;
-- no canonical solver-model compiler implementation yet;
+- no new 3D mesher/solid stage;
+- no canonical solver-model compiler yet;
 - no LAFEA.6 weld engine;
 - no release-policy change;
-- no `.github/workflows/*` modification;
-- no physical standalone repository extraction.
+- no `.github/workflows/*` change;
+- no physical standalone-repository extraction.
 
 ---
 
 ## Mission Status
 
-| Work Item | Priority | Status | Stage | Evidence |
-|---|---|---|---|---|
-| Living work report | P0 | IMPLEMENTED | 1–5 | `agents/PR1038_workreport.md` |
-| Integrated roadmap | P0 | IMPLEMENTED | 1 | `docs/IntegratedLAFEAroadmap.md` |
-| PR allocation/report synchronization | P0 | DONE | 2 | Draft PR #1038 |
-| Changed-file/repository-state verification | P0 | DONE | 3 | Base→head compare before production edits showed only roadmap/report |
-| Common/stage production capability slice | P0 | IMPLEMENTED | 4 | Adapter + guided workflow production path |
-| Focused regression coverage | P0 | IMPLEMENTED | 4 | `scripts/lafea-ui-workflow-truthfulness-check.mjs` |
-| Exact-head validation | P0 | IN_PROGRESS | 5 | GitHub Actions runs for exact candidate head |
-| Final reconciliation/handover | P0 | NOT_STARTED | 6 | Pending validation conclusion |
+| Work Item | Priority | Status | Evidence |
+|---|---|---|---|
+| Living work report | P0 | COMPLETE | `agents/PR1038_workreport.md` |
+| Integrated roadmap | P0 | COMPLETE | `docs/IntegratedLAFEAroadmap.md` |
+| PR allocation/report synchronization | P0 | COMPLETE | Draft PR #1038 |
+| Pre-code repository-state verification | P0 | PASS | Base→pre-code head contained only report/roadmap |
+| Common/stage production capability slice | P0 | COMPLETE | Adapter + guided workflow |
+| Focused truthfulness regression | P0 | PASS | Executed through non-bucket aggregate at `d01de620...` |
+| Exact-head LAFEA regression/browser/meshing | P0 | PASS | GitHub Actions at `d01de620...` |
+| Cross-product repository integration attribution | P1 | PRE-EXISTING FAIL | Pinned-base LFEA anti-drift contradiction; not caused by PR files |
+| Final changed-file reconciliation | P0 | COMPLETE at implementation head | Six assignment files, no workflow files |
 
 ---
 
 ## Engineering Item Register
 
-| ID | Type | Severity/Priority | Status | Summary | Current PR? |
-|---|---|---|---|---|---|
-| DEC-001 | Decision | P0 | ACCEPTED | One common LAFEA platform plus explicit stage capability/physics adapters; no six copied pipelines. | Yes |
-| DEC-002 | Decision | P0 | ACCEPTED | Use existing production-consumed stage adapter instead of introducing a parallel capability service. | Yes |
-| DEC-003 | Decision | P0 | ACCEPTED | LAFEA.4/.5 should share shell infrastructure where meaning is identical; footprint semantics remain unique. | Roadmap |
-| DEC-004 | Decision | P0 | ACCEPTED | First production slice centralizes only data immediately consumed by guided workflow; unconsumed target fields remain roadmap-only. | Yes |
-| RISK-001 | Risk | High | MITIGATED | Over-generalization could conflate analytical/continuum/shell/footprint authority. Current slice only moves existing workflow requirements and derives route family from governed truth. | Yes |
-| RISK-002 | Risk | High | MITIGATED | Release/custody authority leakage. No release/custody code changed. | Yes |
-| RISK-003 | Risk | Medium | IN_PROGRESS | Public workflow projection gained additive `analysisRouteFamily`; broad compatibility must be confirmed by CI. | Yes |
-| IMP-001 | Improvement | P0 | IMPLEMENTED | Stage-specific guided input requirements centralized at canonical adapter boundary. | Yes |
-| IMP-002 | Improvement | P1 | DEFERRED | Future LAFEA.7+ plugin registration and deeper common kernel. | Roadmap |
-| QST-001 | Question | P1 | RESOLVED | First production increment = existing adapter + real guided workflow consumer. | Yes |
+| ID | Type | Priority | Status | Summary |
+|---|---|---:|---|---|
+| DEC-001 | Decision | P0 | ACCEPTED | One common LAFEA platform plus explicit stage physics/capability adapters; no six copied pipelines. |
+| DEC-002 | Decision | P0 | ACCEPTED | Extend existing production-consumed stage adapter before adding any new architecture service. |
+| DEC-003 | Decision | P0 | ACCEPTED | LAFEA.4/.5 should reuse shell infrastructure where engineering meaning is identical; footprint semantics remain unique to LAFEA.5. |
+| DEC-004 | Decision | P0 | ACCEPTED | First slice exposes only immediately consumed capability data. Aspirational fields remain roadmap-only. |
+| DEC-005 | Decision | P0 | ACCEPTED | Adapter input capability names are semantic (`materials`, `restraints`, `loads`); UI step-name mapping stays in guided workflow. |
+| RISK-001 | Risk | High | MITIGATED | Over-generalization controlled by small semantic capability slice; no physics/recovery unification introduced. |
+| RISK-002 | Risk | High | MITIGATED | Release/custody authority leakage avoided; those modules are unchanged. |
+| RISK-003 | Risk | Medium | CLOSED | Additive workflow projection/adapter shape passed exact-head bounded, browser, syntax, import, build, and workbench checks. |
+| ISS-001 | Pre-existing defect | P1 | OPEN / OUT OF SCOPE | LFEA repository integration attribution fails because a pinned-base anti-drift checker forbids a release-template path used by pinned-base governance-recording source. |
+| IMP-001 | Improvement | P0 | COMPLETE | Guided input requirements centralized at stage-adapter boundary. |
+| IMP-002 | Improvement | P1 | DEFERRED | Future LAFEA.7+ plugin registration and deeper common kernel. |
 
 ---
 
-## Stage Roadmap and Execution
+## Stage Execution Record
 
 ### Stage 1 — Report initialization + technical findings
 
-**Stage decision:** COMPLETE
+**Status:** COMPLETE
 
-**Implementation performed**
+Performed before production code changes as required by CodingRules.
 
-- Created `agents/PR_PENDING_workreport.md` before production code.
-- Added `docs/IntegratedLAFEAroadmap.md`.
-- Reconciled roadmap against:
-  - `lafea-stage-registry.js`;
-  - `lafea-stage-analysis-adapter.js`;
-  - `lafea-lifecycle-profiles.js`;
-  - `lafea-mesh-producer-registry.js`.
+Reconciled current truth against:
 
-**Key findings**
+- `src/workspace/lafea-stage-registry.js`;
+- `src/workspace/lafea-stage-analysis-adapter.js`;
+- `src/workspace/lafea-lifecycle-profiles.js`;
+- `src/workspace/lafea-mesh-producer-registry.js`.
 
-- LAFEA.1/.2 are analytical/non-mesh routes.
-- LAFEA.3/.4/.5 use `FEA_MESH_RECOVERY_V1`.
-- Current mesh producer scopes: LAFEA.3 T3/T6/Q8; LAFEA.4/.5 shell TRI3.
-- LAFEA.6 is `ENGINE_NOT_IMPLEMENTED`.
-- Existing stage adapter is already the correct production convergence point.
+Findings retained in `docs/IntegratedLAFEAroadmap.md`:
 
-**Validation:** source reconciliation PASS; runtime NOT_APPLICABLE for documentation stage.
+```text
+LAFEA.1 -> analytical foundation, no FE mesh authority
+LAFEA.2 -> analytical screening, no FE mesh authority
+LAFEA.3 -> 2D continuum, T3/T6/Q8
+LAFEA.4 -> thin shell, current legacy CST_DKT_TRI3 route
+LAFEA.5 -> trunnion footprint, reuses shell family with unique footprint semantics
+LAFEA.6 -> unsupported engine placeholder
+```
 
 ### Stage 2 — PR allocation + report synchronization
 
-**Stage decision:** COMPLETE
+**Status:** COMPLETE
 
-- Opened draft PR #1038.
-- Renamed report to `agents/PR1038_workreport.md`.
-- PR base SHA matched pinned base: PASS.
+- Opened draft PR #1038 from `agent/integrated-lafea-common-stage-roadmap` to `main`.
+- Synchronized report filename to `agents/PR1038_workreport.md`.
+- Base SHA confirmed as `a587867963cc9199caca6e7adfa03af95a316aa2`.
 
-### Stage 3 — Changed-file / repository-state verification
+### Stage 3 — Repository-state verification
 
-**Stage decision:** COMPLETE
+**Status:** PASS
 
-**Validation performed**
+Before production changes, GitHub compare/list evidence showed only:
 
-- GitHub changed-file list before production edits: only report + roadmap.
-- Base `a5878679...` to head `b7c5228a...`: three commits ahead, zero behind at that point.
-- No `.github/workflows/*` changes.
-- No production code was changed before Stage 4.
+- roadmap;
+- work report.
 
-**Result:** PASS.
+No production or workflow file had been touched.
 
 ### Stage 4 — First production common/stage capability increment
 
-**Stage decision:** COMPLETE pending Stage-5 validation
-
-**Objective**
-
-Remove duplicated stage input classification from the guided workflow and establish one small common/stage route classification through the existing adapter.
-
-**Implementation performed**
+**Status:** COMPLETE
 
 #### `src/workspace/lafea-stage-analysis-adapter.js`
 
-- Added derived `routeFamily`:
-  - qualified + non-mesh → `ANALYTICAL`;
-  - qualified + mesh-applicable → `FEA`;
-  - unimplemented → `UNSUPPORTED`.
-- Moved the existing guided input requirement table into the adapter under `input.guidedStepRequirements`.
-- Kept this first slice intentionally small; target fields not yet consumed by production were not added.
-- Preserved all existing preparation, discretization, execution, result, and release fields.
+Added derived route family:
+
+```text
+qualified route + no mesh -> ANALYTICAL
+qualified route + mesh    -> FEA
+unimplemented engine      -> UNSUPPORTED
+```
+
+Moved stage-specific guided input facts into semantic adapter requirements:
+
+```text
+input.requirements.materials
+input.requirements.restraints
+input.requirements.loads
+```
+
+Examples:
+
+```text
+LAFEA.1 loads       -> loadCases
+LAFEA.2 loads       -> screeningCases
+LAFEA.3 restraints  -> constraints
+LAFEA.4 restraints  -> constraints
+LAFEA.5 restraints  -> shellTemplate.constraints
+LAFEA.5 loads       -> loadCaseMappings
+```
+
+A `null` requirement explicitly means the capability/step is not applicable.
+
+Existing preparation, discretization, mesh producer, DOF, execution, result presenter, and release fields remain intact.
 
 #### `src/workspace/lafea-guided-workflow.js`
 
-- Replaced direct stage-registry execution-support lookup with `requireLafeaStageAnalysisAdapter()`.
-- Removed local `INPUT_STEP_REQUIREMENTS` stage-ID table.
-- Guided material/BC/load step status now consumes `adapter.input.guidedStepRequirements`.
-- Added `analysisRouteFamily` to the workflow projection.
-- Run eligibility still requires a qualified execution route, a document, and canonical authorization `READY`.
+- Replaced independent execution-support lookup with the canonical stage adapter.
+- Removed the local per-stage input requirement table.
+- Added UI-local mapping:
+
+```text
+MATERIALS_SECTIONS -> materials
+RESTRAINTS_BCS     -> restraints
+LOADS_CASES        -> loads
+```
+
+- Workflow exposes additive `analysisRouteFamily` from the adapter.
+- Run remains gated by:
+  - qualified execution route;
+  - current document;
+  - canonical orchestration `AUTHORIZATION.state === READY`.
+- Release remains projected only from canonical release orchestration.
 
 #### `scripts/lafea-ui-workflow-truthfulness-check.mjs`
 
-- Added route-family assertions for all six current stages.
-- Added LAFEA.5 shell-template input requirement coverage.
-- Added explicit LAFEA.6 unsupported/run-blocked coverage.
-- Preserved existing analytical and continuum missing-input behavior checks.
+Added/retained checks for:
 
-**Engineering consequence**
+- all six route families;
+- LAFEA.1 analytical valid/missing inputs;
+- no-document and no-lifecycle behavior;
+- LAFEA.3 valid/missing boundary conditions;
+- LAFEA.5 shell-template material/restraint/load mapping;
+- LAFEA.6 unsupported RUN block;
+- adapter input structures deep-frozen;
+- semantic adapter requirements independent from UI step IDs.
 
-Stage-specific guided input truth now has one production-consumed source rather than being duplicated in the UI projection. This is the first executable step toward the roadmap's common-kernel/stage-plugin model without changing physics.
+#### `scripts/lafea-nonbucket-stack-check.mjs`
 
-**Edge cases preserved**
+Added the focused truthfulness script as real certification scope:
 
-- LAFEA.1 restraint/BC step remains not applicable.
-- LAFEA.2 remains analytical/non-mesh.
-- LAFEA.5 uses `shellTemplate.materials`, `shellTemplate.constraints`, and `loadCaseMappings`.
-- LAFEA.6 remains run-blocked even if source collections are present.
+```text
+U0_WORKFLOW -> scripts/lafea-ui-workflow-truthfulness-check.mjs
+```
 
-**Authority impact**
+This closes the evidence gap where a regression script existed but was not automatically executed by the relevant aggregate.
 
-No intentional authority change. No release, lifecycle, mesh custody, solver, element, recovery, or verification producer code was modified.
+### Stage 5 — Exact-head validation
 
-### Stage 5 — Focused regression validation
+**Status:** PASS for bounded LAFEA scope at `d01de620ff4b4fcd5a5e077dbcf3b24d062846c3`.
 
-**Current truth**
+The exact-head non-bucket evidence artifact records:
 
-Exact-head GitHub Actions were triggered for implementation HEAD `0d5b46d66e9c3da2ba4867c6c5d03d88491a8b5f`.
+```json
+{
+  "check": "lafea-ui-workflow-truthfulness",
+  "status": "PASS",
+  "workflowReasonsRemainCanonical": true,
+  "stageInputRequirementsUseCanonicalAdapter": true,
+  "adapterInputCapabilitiesAreUiIndependent": true,
+  "routeFamilies": [
+    "ANALYTICAL",
+    "ANALYTICAL",
+    "FEA",
+    "FEA",
+    "FEA",
+    "UNSUPPORTED"
+  ],
+  "githubActionsWorkflowAdded": false
+}
+```
 
-**Planned validation/evidence**
+The non-bucket exact-head failure matrix is `PASS` with all of these outcomes `success`:
 
-- LAFEA bundle diagnostic;
-- LAFEA hybrid browser validation;
-- LAFEA meshing exact-head qualification;
-- main-gate;
-- relevant non-bucket certification triggered by repository CI;
-- focused workflow truthfulness check evidence if surfaced in CI logs/gate.
+- npm install;
+- bounded non-bucket aggregate;
+- numerical core;
+- foundation;
+- meshing;
+- solver;
+- workbench;
+- canvas;
+- Chromium installation/browser validation;
+- strict syntax;
+- import boundary;
+- production build;
+- patch hygiene.
 
-**Local execution status**
+Additional exact-head workflows at the same implementation head:
 
-NOT_RUN. `git clone` failed in the execution container because `github.com` DNS/network access is unavailable. This must not be rewritten as a local pass.
+- `main-gate`: PASS;
+- `LAFEA bundle diagnostic`: PASS;
+- `LAFEA hybrid browser validation`: PASS;
+- `LAFEA meshing exact-head qualification`: PASS;
+- `non-fea-input-check-load-calc`: PASS.
 
-### Stage 6 — Final reconciliation + handover
+Local clone/execution was **NOT_RUN** because the execution container could not resolve `github.com`. This is retained explicitly and is not rewritten as a pass.
 
-Pending Stage-5 conclusions.
+### Stage 6 — Reconciliation / handover
+
+**Status:** COMPLETE for the bounded implementation.
+
+PR remains draft. No merge/readiness transition was requested.
 
 ---
 
 ## Changed-File Ledger
 
-| File | First Stage | Latest Stage | Purpose | Engineering-sensitive? | Validation |
-|---|---|---|---|---|---|
-| `agents/PR1038_workreport.md` | 1 | 5 | Living engineering report | No | Current-state review |
-| `docs/IntegratedLAFEAroadmap.md` | 1 | 1 | Integrated implementation roadmap | Yes — architecture | Source reconciliation PASS |
-| `src/workspace/lafea-stage-analysis-adapter.js` | 4 | 4 | Canonical guided input requirements + route family | Yes — stage capability, not solver authority | CI in progress |
-| `src/workspace/lafea-guided-workflow.js` | 4 | 4 | Consume adapter instead of local stage table | Yes — UI/workflow projection | CI in progress |
-| `scripts/lafea-ui-workflow-truthfulness-check.mjs` | 4 | 4 | Regression coverage for common/stage routing | Test | CI in progress |
+| File | Purpose | Engineering-sensitive? | Validation |
+|---|---|---|---|
+| `agents/PR1038_workreport.md` | Living engineering report | No | Reconciled current truth |
+| `docs/IntegratedLAFEAroadmap.md` | Detailed common/stage implementation roadmap | Architecture | Source reconciliation |
+| `src/workspace/lafea-stage-analysis-adapter.js` | Common/stage route + semantic input requirements | Yes — capability | Exact-head bounded/browser/build PASS |
+| `src/workspace/lafea-guided-workflow.js` | Production consumer; UI mapping/gating | Yes — workflow projection | Exact-head bounded/browser/workbench PASS |
+| `scripts/lafea-ui-workflow-truthfulness-check.mjs` | Focused regression assertions | Test | Explicit exact-head PASS in artifact |
+| `scripts/lafea-nonbucket-stack-check.mjs` | Executes focused test in established aggregate | Test/certification | Exact-head non-bucket matrix PASS |
 
-No `.github/workflows/*` files were intentionally added or modified.
+No `.github/workflows/*` file was added or modified.
 
 ---
 
-## Engineering Decisions and Invariants
+## Engineering Invariants
 
-### INV-001 — UI/preview state is not solver authority
+### INV-001 — UI is not solver authority
 
-- **Must remain true:** UI projection cannot independently authorize execution/release.
-- **Enforced by:** canonical orchestration authorization and existing release binding.
-- **This PR:** unchanged; guided workflow still reads canonical `AUTHORIZATION`.
+Guided workflow remains a projection of canonical orchestration. Run still consumes canonical authorization; the new route family does not authorize calculation.
 
 ### INV-002 — Calculation success is not release
 
-- **Must remain true:** stage calculation or workflow COMPLETE does not create release authority.
-- **This PR:** release code untouched; workflow still projects release from canonical orchestration.
+Release code is untouched. Workflow release state remains derived from canonical `RELEASE` orchestration.
 
-### INV-003 — Mesh identity meanings remain distinct
+### INV-003 — Mesh custody semantics remain exact
 
-- **Must remain true:** producer package, custody parent, mesh content, logical mesh, and qualification evidence identities remain distinct.
-- **This PR:** all mesh-custody code untouched.
+No mesh custody/T6 custody/hash semantics changed.
 
-### INV-004 — Unsupported stage remains explicit
+### INV-004 — LAFEA.6 stays fail-closed
 
-- **Must remain true:** LAFEA.6 cannot gain execution authority through generic defaults.
-- **Enforced by:** stage registry engine state → adapter `routeFamily='UNSUPPORTED'` and `qualifiedRouteRegistered=false` → guided RUN blocked.
-- **Validation:** focused regression assertion added; exact-head CI pending.
+Stage registry unimplemented state derives `routeFamily='UNSUPPORTED'`; execution remains unqualified and RUN remains blocked. Exact-head regression verifies this.
+
+### INV-005 — Common adapter remains UI-independent
+
+The adapter uses semantic input capabilities. Guided workflow owns the mapping from semantic capability to UI step identity.
 
 ---
 
 ## Validation and Evidence Ledger
 
-### Software Validation
+### Software / engineering evidence at validated implementation HEAD
 
-| Validation | Status | Last HEAD | Evidence |
-|---|---|---|---|
-| Stage-1 source reconciliation | PASS | `ced9f1aea98cf2bbd93f9f917a585bbf837d540a` | Registry/lifecycle/adapter/mesh producer review |
-| Stage-3 changed-file verification | PASS | `b7c5228aef710740c4e5f4c27bb7183b17c1d8db` | GitHub list + compare |
-| Local focused Node checks | NOT_RUN | `0d5b46d66e9c3da2ba4867c6c5d03d88491a8b5f` | Environment cannot clone repository; DNS unavailable |
-| LAFEA bundle diagnostic | IN_PROGRESS / latest run queued at last inspection | `0d5b46d66e9c3da2ba4867c6c5d03d88491a8b5f` | GitHub Actions run `31504118934` |
-| LAFEA hybrid browser validation | IN_PROGRESS | `0d5b46d66e9c3da2ba4867c6c5d03d88491a8b5f` | GitHub Actions run `31504118838` |
-| LAFEA meshing exact-head qualification | IN_PROGRESS | `0d5b46d66e9c3da2ba4867c6c5d03d88491a8b5f` | GitHub Actions run `31504118747` |
-| main-gate | QUEUED/PENDING | `0d5b46d66e9c3da2ba4867c6c5d03d88491a8b5f` | GitHub Actions run `31504118921` |
+| Evidence | Result |
+|---|---|
+| Focused `lafea-ui-workflow-truthfulness` | PASS |
+| Bounded non-bucket aggregate | PASS |
+| LAFEA numerical core | PASS |
+| Foundation checks | PASS |
+| Retained meshing checks | PASS |
+| Retained solver checks | PASS |
+| Workbench checks | PASS |
+| Canvas checks | PASS |
+| Scoped Chromium browser validation | PASS |
+| Strict syntax | PASS |
+| Import boundaries | PASS |
+| Production build | PASS |
+| Patch hygiene / clean tree | PASS |
+| main-gate | PASS |
+| LAFEA bundle diagnostic | PASS |
+| standalone LAFEA meshing exact-head qualification | PASS |
 
-### Engineering Validation
+### Exact-head properties evidenced
 
-| Property | Status | Evidence |
-|---|---|---|
-| Current stage inventory reflected correctly | PASS | Stage registry + lifecycle + mesh producer review |
-| Guided input requirements retain LAFEA.1/.3/.5 semantics | IMPLEMENTED, CI PENDING | Focused test additions |
-| LAFEA.6 stays fail-closed | IMPLEMENTED, CI PENDING | Adapter/workflow + focused assertion |
-| Solver numerical behavior changed by this PR | NOT_APPLICABLE by diff scope; broad CI still required | No solver/element files changed |
-| Mesh custody semantics changed | NOT_APPLICABLE | No custody files changed |
-| Release authority changed | NOT_APPLICABLE | No release files changed |
+- stage input requirement centralization preserves current LAFEA.1/.3/.5 behavior;
+- route classification covers all six stages;
+- LAFEA.6 stays unsupported;
+- LAFEA numerical core/solver/meshing regressions remain green;
+- UI/browser/workbench regressions remain green;
+- no workflow file was needed;
+- no release qualification was promoted.
 
-### Explicitly Not Validated
+### Explicitly not validated / not implemented
 
-- full standalone extraction;
-- canonical analysis model implementation;
-- dependency-aware model/mesh invalidation redesign;
-- geometry/named physical region model;
-- future 3D solid meshing/solver;
-- run history/semantic comparison;
-- full release/dossier roadmap stages;
-- LAFEA.6 weld physics.
+- future canonical input schema;
+- geometry-first load/BC mapping;
+- new 3D solid element/mesher;
+- nonlinear/contact physics;
+- physical repository extraction;
+- future LAFEA.6 weld implementation;
+- downstream history/release/dossier architecture.
 
 ---
 
-## Known / Deferred Work and Forward Sequence
+## ISS-001 — Pre-existing cross-product repository-attribution failure
 
-### Open defects
+The `LAFEA Non-Bucket Stack Certification` workflow contains two jobs.
 
-None confirmed yet in this bounded change; CI may produce findings.
+The **bounded non-bucket exact-head certification passes**.
 
-### Deferred improvements
+The separate **Repository integration attribution** job fails its matrix enforcement because `npm run gate` fails in unrelated LFEA piping qualification code.
 
-- canonical input primitives and dependency-aware invalidation;
-- geometry authority and stable physical regions/probes;
-- mesh framework evolution with family-specific quality;
-- deterministic solver-model compiler;
-- result/probe semantic comparison;
-- verification applicability center;
-- standalone runtime split;
-- LAFEA-owned run history/release/dossier;
-- future LAFEA.7+ stage plugin pattern.
+Artifact evidence at `d01de620...` records:
 
-### Recommended Forward Sequence
+```text
+npmCi       success
+legacyAgent1 success
+fullGate    failure
+hygiene     success
+```
 
-1. Finish and validate the current common/stage adapter slice.
-2. Implement canonical input/common primitives only with real production consumers.
-3. Implement invalidation dependency model.
-4. Establish geometry authority + stable named regions, first through LAFEA.3.
-5. Continue meshing integration: LAFEA.3 → LAFEA.4 → LAFEA.5 reuse.
-6. Add deterministic solver-model compiler boundary.
-7. Add named probes/result semantic comparison.
-8. Add verification center/applicability policy.
-9. Perform standalone runtime/shell separation.
-10. Add history/release/dossier, then physical extraction.
+The failure is:
+
+```text
+RELEASE_LEDGER_MUTATION
+```
+
+from:
+
+```text
+scripts/linear-piping-project-qualification-anti-drift-check.mjs
+```
+
+which, at the pinned base, forbids the literal path:
+
+```text
+release-evidence/lfea-piping-release-evidence.json
+```
+
+while another pinned-base file:
+
+```text
+src/core/linear-piping-project-qualification/governance-recording.js
+```
+
+contains that exact release-template path as part of its governed recording-target validation.
+
+Both conflicting files exist at the pinned base `a587867963cc9199caca6e7adfa03af95a316aa2`; neither is modified by PR #1038. Therefore this is recorded as **pre-existing / cross-product / out of scope**, not hidden and not fixed opportunistically in this LAFEA architecture PR.
+
+---
+
+## Recommended Forward Sequence
+
+1. Keep PR #1038 bounded/draft unless Owner requests broader work.
+2. Implement common canonical input primitives only where an immediate current-stage production consumer exists.
+3. Add dependency-aware invalidation for material/load/BC vs geometry/mesh changes.
+4. Establish geometry authority + stable physical regions/probes, first through LAFEA.3.
+5. Continue meshing integration: LAFEA.3 continuum → LAFEA.4 shell → LAFEA.5 shell reuse + footprint semantics.
+6. Add deterministic stage solver-model compiler boundary.
+7. Add result/probe semantic comparison.
+8. Add verification applicability center.
+9. Separate standalone shell/runtime after engineering boundaries stabilize.
+10. Add LAFEA-owned history/release/dossier, then perform physical repository extraction.
 
 ---
 
 ## Next-Agent Handover
 
-- **Current stopping point:** Stage 4 implemented; Stage 5 exact-head CI in progress.
-- **PR / branch / implementation HEAD:** #1038 / `agent/integrated-lafea-common-stage-roadmap` / `0d5b46d66e9c3da2ba4867c6c5d03d88491a8b5f` before this report-only commit.
-- **Last completed stage:** Stage 4.
-- **Current active stage:** Stage 5.
-- **Start here:** Inspect workflow runs tied to implementation HEAD, especially main-gate, hybrid browser validation, and meshing exact-head qualification.
-- **Do not redo:** Do not recreate the roadmap or add a parallel stage-capability service.
-- **Do not assume:** Local Node tests did not run in this environment.
-- **Files currently involved:** five files listed in Changed-File Ledger.
-- **Known failing checks:** None confirmed at last inspection; several exact-head jobs still running/queued.
-- **Validation still required:** final exact-head conclusions and changed-file reconciliation.
-- **Open QST-* items:** none.
-- **Important deferred IMP-* items:** all downstream roadmap stages; especially canonical inputs/geometry/solver compiler.
-- **Highest-risk remaining item:** RISK-003 compatibility regression detected only by broad CI.
-- **Exact next recommended action:** fetch workflow conclusions for implementation HEAD, investigate failures if any, then update this report and PR body.
-- **Required reading:** #1025; `docs/IntegratedLAFEAroadmap.md`; the three Stage-4 code/test files; CodingRules.md.
-
----
-
-## Stage Execution Log
-
-### Stage 1
-
-Initialized report before production code and published detailed roadmap based on current source truth.
-
-### Stage 2
-
-Opened draft PR #1038 and synchronized report filename.
-
-### Stage 3
-
-Verified branch contained only roadmap/report before production coding.
-
-### Stage 4
-
-Centralized guided input stage requirements at the production stage adapter boundary, changed the real guided workflow to consume that adapter, and added focused regression coverage.
+- **PR:** #1038
+- **Branch:** `agent/integrated-lafea-common-stage-roadmap`
+- **Base:** `a587867963cc9199caca6e7adfa03af95a316aa2`
+- **Validated implementation HEAD:** `d01de620ff4b4fcd5a5e077dbcf3b24d062846c3`
+- **Status:** bounded first implementation slice complete and LAFEA-validated; PR intentionally draft.
+- **Start here:** `docs/IntegratedLAFEAroadmap.md` section "Immediate coding plan" and forward sequence above.
+- **Do not redo:** do not create a parallel StageCapability service; existing adapter is the current production convergence point.
+- **Do not assume:** the cross-product repository integration attribution red status is a LAFEA regression; consult ISS-001 first.
+- **Do not broaden:** no LFEA piping fix belongs in this PR without Owner instruction.
+- **Highest-risk next engineering item:** designing canonical shared input/geometry concepts without collapsing stage-specific authority.
+- **Required reading:** issue #1025; roadmap; stage registry/adapter; lifecycle profiles; mesh producer registry; CodingRules.md.
 
 ---
 
 ## Process Notes / Lessons Learned
 
-- Older guided-workbench documentation was stale relative to current qualified meshing source; roadmap claims must use current source as truth.
-- Existing production composition points should be extended before inventing new architecture layers.
-- Under action-first rules, target capability fields that lack an immediate production consumer should remain roadmap-only until their implementation stage.
+- Current source must outrank stale planning documentation when describing qualified meshing capability.
+- A new regression test is not meaningful delivery evidence until a real aggregate executes it.
+- Common/stage abstractions should use semantic engineering concepts, not UI labels.
+- Cross-product failures must be attributed to the pinned base before expanding scope or weakening guards.

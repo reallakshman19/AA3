@@ -12,6 +12,9 @@ import {
 import {
   normalizePipeSegmentCommandPayload,
 } from './topology-edit-pipe-segment-contract.js';
+import {
+  normalizeTopologyEditSupportRestraintPayload,
+} from './topology-edit-support-restraint-command.js';
 
 export const TOPOLOGY_EDIT_COMMAND_REQUEST_SCHEMA = 'TopologyEditCommandRequest.v1';
 export const TOPOLOGY_EDIT_RESOLVED_COMMAND_SCHEMA = 'TopologyEditResolvedCommand.v1';
@@ -26,6 +29,7 @@ export const TOPOLOGY_EDIT_PROFESSIONAL_COMMANDS = Object.freeze([
   'INSERT_INLINE_COMPONENT',
   'REPLACE_INLINE_COMPONENT',
   'UPDATE_JUNCTION_BRANCH_RELATION',
+  'UPDATE_SUPPORT_RESTRAINT',
   'INSERT_BRANCH_COMPONENT',
   'INSERT_PIPE_SEGMENT',
 ]);
@@ -381,6 +385,7 @@ const PAYLOAD_NORMALIZERS = Object.freeze({
   INSERT_INLINE_COMPONENT: normalizeInlineComponent,
   REPLACE_INLINE_COMPONENT: normalizeTopologyEditInlineReplacementPayload,
   UPDATE_JUNCTION_BRANCH_RELATION: normalizeTopologyEditJunctionRelationPayload,
+  UPDATE_SUPPORT_RESTRAINT: normalizeTopologyEditSupportRestraintPayload,
   INSERT_BRANCH_COMPONENT: normalizeTopologyEditBranchComponentRequest,
   INSERT_PIPE_SEGMENT: normalizePipeSegmentCommandPayload,
 });

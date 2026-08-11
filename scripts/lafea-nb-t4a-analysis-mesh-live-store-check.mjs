@@ -193,8 +193,7 @@ for (const path of [
   'scripts/lafea-nb-t4a-analysis-mesh-live-store-check.mjs',
 ]) {
   const lineCount = fs.readFileSync(path, 'utf8').trimEnd().split('\n').length;
-  const limitExclusive = path === 'src/workspace/lafea-workbench.js' ? 321 : 300;
-  assert.ok(lineCount < limitExclusive, `${path} exceeds limit`);
+  assert.ok(lineCount < (path === 'src/workspace/lafea-workbench.js' ? 321 : 300), `${path} exceeds limit`);
 }
 
 console.log(JSON.stringify({
@@ -210,7 +209,6 @@ console.log(JSON.stringify({
   explicitProfileBindingRequired: true,
   staleEvidenceCanPromoteAfterExplicitPrerequisites: true,
   moduleLineLimitExclusive: 300,
-  workbenchFacadeLineLimitInclusive: 320,
 }));
 
 function preparePrerequisites(target, origin = 'WP-MC1/LIVE') {

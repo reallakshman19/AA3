@@ -12,7 +12,18 @@
     "loadCase": {
       "path": "LFEA/BM4/Loadcasereport_BM4_L.txt",
       "gitBlobSha": "be62eeb08af26dddcd59146e21188c108c4600dd"
+    },
+    "inputXml": {
+      "path": "LFEA/BM4/InputXML_BM4.xml",
+      "gitBlobSha": "3423d220374a17f67addd3c8c0c44300ffa46251"
     }
+  },
+  "materialIdentity": {
+    "materialNumber": 106,
+    "materialName": "A106 Grade B",
+    "materialId": "ACCDB-MATERIAL-106",
+    "authoritySource": "INPUT_XML",
+    "note": "Pinned InputXML declares MATERIAL_NUM=106 and MATERIAL_NAME=A106 Grade B in the BM4 model, including the Type 2.1 tee region. This identifies material custody only; it is not full-precision thermal-expansion authority."
   },
   "loadCases": [
     { "caseId": "L2", "caseType": "SUS", "formula": "W", "combinationMethod": "PHYSICAL", "elasticModulus": "EC", "frictionMultiplier": 0, "containsT1": false },

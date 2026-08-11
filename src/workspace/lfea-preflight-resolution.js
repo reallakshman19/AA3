@@ -6,6 +6,7 @@
  * the view layer. See docs/enrichment-ui-phase0-inventory.md for the
  * dispositions these functions implement.
  */
+import { semanticHash } from '../core/shared-piping-model/canonical-json.js';
 import { deriveXmlCiiServiceFromBranchName } from '../calc-workspace/cii-standalone-port/core/service-process-fallback.js';
 import { deriveLineKeyFromBranchName } from '../calc-workspace/cii-standalone-port/core/regex-line-key.js';
 
@@ -119,6 +120,12 @@ function blocked(status, ordinals) {
 /**
  * Project the active model into the grouped, resolved review model.
  *
+ * The projection intentionally keeps engineering concepts separate even when
+ * historical UI code used fallbacks between them. A hydro-test pressure is not
+ * a design pressure, and a mixed-fluid density is not an operating-density
+ * substitute. Missing evidence therefore remains null instead of crossing an
+ * engineering-field boundary.
+ *
  * @param {unknown} model Shared-model carrier, or null.
  * @param {readonly object[]} lineRows Normalized master Line List rows.
  * @returns {{blocked:string|null,groups:object[],lineKeyCount:number,componentCount:number}}
@@ -148,34 +155,36 @@ export function projectPreflightModel(model, lineRows) {
       const selected = resolution.selectedOrdinal === null ? null : rows[resolution.selectedOrdinal] ?? null;
       entry = {
         ...parsed,
+        sourcePipingClass: sourceCodeOrNull(parsed.cls, 'UNKNOWN_SPEC'),
+        sourceRating: sourceCodeOrNull(parsed.rating, 'UNKNOWN_RATING'),
+        masterPipingClass: selected ? textOrNull(selected.pipingClass) : null,
+        masterRating: selected ? textOrNull(selected.rating) : null,
+        masterRowHash: selected ? masterRowSemanticHash(selected) : null,
         resolution,
         candidateCount: resolution.candidateOrdinals.length,
-        p1: selected ? numberOrNull(selected.p1 ?? selected.hydroPressure) : null,
-        t1: selected ? numberOrNull(selected.t1) : null,
-        t2: selected ? numberOrNull(selected.t2) : null,
-        t3: selected ? numberOrNull(selected.t3) : null,
-        phase: selected ? selected.phase ?? null : null,
-        fluidDensity: selected ? numberOrNull(selected.density ?? selected.densityMixed) : null,
+        designPressure: selected ? numberOrNull(selected.p1) : null,
+        hydroTestPressure: selected ? numberOrNull(selected.hydroPressure) : null,
+        designTemperature: selected ? numberOrNull(selected.t1) : null,
+        operatingTemperature: selected ? numberOrNull(selected.t2) : null,
+        minimumTemperature: selected ? numberOrNull(selected.t3) : null,
+        phase: selected ? textOrNull(selected.phase) : null,
+        materialCode: selected ? textOrNull(selected.material) : null,
+        operatingDensity: selected ? numberOrNull(selected.density) : null,
+        gasDensity: selected ? numberOrNull(selected.densityGas) : null,
+        liquidDensity: selected ? numberOrNull(selected.densityLiquid) : null,
+        mixedDensity: selected ? numberOrNull(selected.densityMixed) : null,
+        insulationThickness: selected ? numberOrNull(selected.insThk) : null,
         metalDensity: null,
         items: [],
+        wallThicknessCandidates: [],
+        wallThickness: null,
+        wallThicknessConflict: false,
       };
-      // A line-key wall thickness is reported only when every member component
-      // that declares one agrees. Disagreement is a review condition, not
-      // something to average or take the first of.
-      entry.wallThickness = parsed.wallThickness;
-      if (selected?.pipingClass) entry.cls = selected.pipingClass;
-      if (selected?.rating) entry.rating = selected.rating;
+      pushWallThicknessCandidate(entry, parsed.wallThickness);
       byLineKey.set(groupKey, entry);
     }
     entry.items.push(parsed);
-    if (parsed.wallThickness !== null
-      && entry.wallThickness !== null
-      && parsed.wallThickness !== entry.wallThickness) {
-      entry.wallThickness = null;
-      entry.wallThicknessConflict = true;
-    } else if (entry.wallThickness === null && !entry.wallThicknessConflict) {
-      entry.wallThickness = parsed.wallThickness;
-    }
+    pushWallThicknessCandidate(entry, parsed.wallThickness);
   }
 
   const groups = [...byLineKey.values()].sort(compareLineKeyEntries);
@@ -240,6 +249,36 @@ function parseItem(item) {
     // stays blocked rather than acquiring a schedule-derived default.
     wallThickness: deriveWallThicknessFromDtxr(bore, cls, item.attributes ?? null),
   };
+}
+
+function pushWallThicknessCandidate(entry, value) {
+  if (value === null || value === undefined) return;
+  if (!entry.wallThicknessCandidates.includes(value)) {
+    entry.wallThicknessCandidates.push(value);
+    entry.wallThicknessCandidates.sort((left, right) => left - right);
+  }
+  entry.wallThicknessConflict = entry.wallThicknessCandidates.length > 1;
+  entry.wallThickness = entry.wallThicknessConflict ? null : entry.wallThicknessCandidates[0];
+}
+
+function masterRowSemanticHash(row) {
+  const stable = {};
+  for (const key of Object.keys(row ?? {}).sort()) {
+    if (key === '_sourceRowIndex' || key === '_sourceProvenance') continue;
+    if (row[key] !== undefined) stable[key] = row[key];
+  }
+  return semanticHash(stable);
+}
+
+function sourceCodeOrNull(value, unavailableToken) {
+  const text = textOrNull(value);
+  return text === unavailableToken ? null : text;
+}
+
+function textOrNull(value) {
+  if (value === undefined || value === null) return null;
+  const text = String(value).trim();
+  return text ? text : null;
 }
 
 function compareLineKeyEntries(left, right) {

@@ -1,8 +1,8 @@
 export class LinearSolvePrimitiveError extends Error {
-  constructor(message, code, data = {}) {
+  constructor(message, code = 'REJECTED_SOLVE', evidence = null) {
     super(message);
     this.name = 'LinearSolvePrimitiveError';
     this.code = code;
-    this.data = Object.freeze({ ...data });
+    this.evidence = evidence;
   }
 }

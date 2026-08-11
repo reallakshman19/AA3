@@ -20,6 +20,7 @@ import {
   lfeaRecordTable as recordTable,
 } from './lfea-workbench-tables.js';
 import {
+  renderLfeaAnalysisSummary,
   renderLfeaNodeDraftEditor,
   renderLfeaResults,
   renderLfeaToolbar,
@@ -139,6 +140,8 @@ export class LfeaWorkbenchView {
     const grid = element(this.rootElement, 'div', 'lfea-workbench__grid');
     const documentCard = card(this.rootElement, 'Validated lfea-mesh-package/v1');
     documentCard.body.append(this.documentEditor(state.packageValue));
+    const analysisCard = card(this.rootElement, 'Analysis qualification context');
+    analysisCard.body.append(renderLfeaAnalysisSummary(this.rootElement, state.packageValue));
     const recordsCard = card(this.rootElement, 'Mesh, materials, assignments, loads and constraints');
     recordsCard.body.append(this.recordEditor(state));
     const svgCard = card(this.rootElement, 'Mesh and result field');
@@ -178,7 +181,13 @@ export class LfeaWorkbenchView {
     );
     const resultsCard = card(this.rootElement, 'Qualified results, review and diagnostics');
     resultsCard.body.append(renderLfeaResults(this.rootElement, state));
-    grid.append(documentCard.section, recordsCard.section, svgCard.section, resultsCard.section);
+    grid.append(
+      documentCard.section,
+      analysisCard.section,
+      recordsCard.section,
+      svgCard.section,
+      resultsCard.section,
+    );
     if (this.benchmarkHost) {
       const benchmarkCard = element(this.rootElement, 'div', 'lfea-workbench__benchmark');
       benchmarkCard.append(this.benchmarkHost);

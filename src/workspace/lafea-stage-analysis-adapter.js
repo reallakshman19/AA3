@@ -20,36 +20,36 @@ const MESH = Object.freeze({
   'LAFEA.6': Object.freeze({ families: [], nodePath: null, elementPath: null }),
 });
 
-const GUIDED_INPUT_REQUIREMENTS = freeze({
+const INPUT_REQUIREMENTS = freeze({
   'LAFEA.1': {
-    MATERIALS_SECTIONS: inputRequirement(['materials'], 'MATERIALS_REQUIRED'),
-    RESTRAINTS_BCS: null,
-    LOADS_CASES: inputRequirement(['loadCases'], 'LOAD_CASES_REQUIRED'),
+    materials: inputRequirement(['materials'], 'MATERIALS_REQUIRED'),
+    restraints: null,
+    loads: inputRequirement(['loadCases'], 'LOAD_CASES_REQUIRED'),
   },
   'LAFEA.2': {
-    MATERIALS_SECTIONS: null,
-    RESTRAINTS_BCS: null,
-    LOADS_CASES: inputRequirement(['screeningCases'], 'LOAD_CASES_REQUIRED'),
+    materials: null,
+    restraints: null,
+    loads: inputRequirement(['screeningCases'], 'LOAD_CASES_REQUIRED'),
   },
   'LAFEA.3': {
-    MATERIALS_SECTIONS: inputRequirement(['materials'], 'MATERIALS_REQUIRED'),
-    RESTRAINTS_BCS: inputRequirement(['constraints'], 'BOUNDARY_CONDITIONS_REQUIRED'),
-    LOADS_CASES: inputRequirement(['loadCases'], 'LOAD_CASES_REQUIRED'),
+    materials: inputRequirement(['materials'], 'MATERIALS_REQUIRED'),
+    restraints: inputRequirement(['constraints'], 'BOUNDARY_CONDITIONS_REQUIRED'),
+    loads: inputRequirement(['loadCases'], 'LOAD_CASES_REQUIRED'),
   },
   'LAFEA.4': {
-    MATERIALS_SECTIONS: inputRequirement(['materials'], 'MATERIALS_REQUIRED'),
-    RESTRAINTS_BCS: inputRequirement(['constraints'], 'BOUNDARY_CONDITIONS_REQUIRED'),
-    LOADS_CASES: inputRequirement(['loadCases'], 'LOAD_CASES_REQUIRED'),
+    materials: inputRequirement(['materials'], 'MATERIALS_REQUIRED'),
+    restraints: inputRequirement(['constraints'], 'BOUNDARY_CONDITIONS_REQUIRED'),
+    loads: inputRequirement(['loadCases'], 'LOAD_CASES_REQUIRED'),
   },
   'LAFEA.5': {
-    MATERIALS_SECTIONS: inputRequirement(['shellTemplate.materials'], 'MATERIALS_REQUIRED'),
-    RESTRAINTS_BCS: inputRequirement(['shellTemplate.constraints'], 'BOUNDARY_CONDITIONS_REQUIRED'),
-    LOADS_CASES: inputRequirement(['loadCaseMappings'], 'LOAD_CASES_REQUIRED'),
+    materials: inputRequirement(['shellTemplate.materials'], 'MATERIALS_REQUIRED'),
+    restraints: inputRequirement(['shellTemplate.constraints'], 'BOUNDARY_CONDITIONS_REQUIRED'),
+    loads: inputRequirement(['loadCaseMappings'], 'LOAD_CASES_REQUIRED'),
   },
   'LAFEA.6': {
-    MATERIALS_SECTIONS: inputRequirement(['materials'], 'MATERIALS_REQUIRED'),
-    RESTRAINTS_BCS: null,
-    LOADS_CASES: inputRequirement(['loadCases'], 'LOAD_CASES_REQUIRED'),
+    materials: inputRequirement(['materials'], 'MATERIALS_REQUIRED'),
+    restraints: null,
+    loads: inputRequirement(['loadCases'], 'LOAD_CASES_REQUIRED'),
   },
 });
 
@@ -71,7 +71,7 @@ export function requireLafeaStageAnalysisAdapter(stageId) {
     lifecycleProfileId: lifecycle.profileId,
     engineState: registry.engineState,
     input: {
-      guidedStepRequirements: GUIDED_INPUT_REQUIREMENTS[stageId],
+      requirements: INPUT_REQUIREMENTS[stageId],
     },
     preparation: {
       adapterId: supported ? `LAFEA_PREPARATION_ADAPTER:${stageId}:V1` : null,

@@ -1,0 +1,180 @@
+name: M047 BM4_L bend Bourdon decomposition
+
+on:
+  push:
+    branches: [agent/m047-bm4l-root-cause]
+    paths: ['.github/workflows/m047-bm4l-bourdon-decomposition.yml']
+
+permissions:
+  contents: read
+
+jobs:
+  decompose:
+    runs-on: windows-latest
+    timeout-minutes: 50
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: agent/m047-bm4l-root-cause
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+      - run: npm ci
+
+      - name: Install authenticated ACE and fetch canonical BM4_L
+        shell: pwsh
+        run: |
+          $ErrorActionPreference='Stop'
+          New-Item -ItemType Directory -Force artifacts/bourdon | Out-Null
+          $installer=Join-Path $PWD 'artifacts/bourdon/accessdatabaseengine_X64.exe'
+          Invoke-WebRequest -Uri 'https://download.microsoft.com/download/3/5/C/35C84C36-661A-44E6-9324-8786B8DBE231/accessdatabaseengine_X64.exe' -OutFile $installer
+          if((Get-FileHash $installer -Algorithm SHA256).Hash.ToLowerInvariant()-ne'04e96c9f1a1f7d251a88aececf1dc10ff65950392787427c00814a43308003de'){throw'ACE installer hash mismatch'}
+          $sig=Get-AuthenticodeSignature $installer
+          if($sig.Status-ne'Valid'-or$sig.SignerCertificate.Subject-notmatch'Microsoft'){throw'ACE signature invalid'}
+          $p=Start-Process $installer -ArgumentList '/quiet','/norestart' -Wait -PassThru
+          if($p.ExitCode-notin@(0,3010)){throw"ACE install failed $($p.ExitCode)"}
+          Remove-Item $installer -Force
+          $zip=Join-Path $PWD 'artifacts/bourdon/BM4_L.zip'
+          Invoke-WebRequest -Uri 'https://raw.githubusercontent.com/reallaksh19/Common/45d51ea18624f5775805f399110c1738301c0d90/LFEA/BM4/BM4_L.zip' -OutFile $zip
+          if((Get-FileHash $zip -Algorithm SHA256).Hash.ToLowerInvariant()-ne'978617cba50fa0b1a16c2fa71dc1e0d38e55ac834b191f887d100c6951abd8b9'){throw'ZIP hash mismatch'}
+          Expand-Archive $zip -DestinationPath artifacts/bourdon/source -Force
+          $accdb=Join-Path $PWD 'artifacts/bourdon/source/BM4_L.ACCDB'
+          if((Get-FileHash $accdb -Algorithm SHA256).Hash.ToLowerInvariant()-ne'64c05a50e9ed0452622ff5880335460486f24ac8e6adecc9a300b549c9aa82f8'){throw'ACCDB hash mismatch'}
+
+      - name: Run governed L4 baseline
+        shell: pwsh
+        run: |
+          $ErrorActionPreference='Stop'
+          New-Item -ItemType Directory -Force artifacts/bourdon/full | Out-Null
+          node scripts/lfea-caesar-accdb-benchmark.mjs `
+            --accdb artifacts/bourdon/source/BM4_L.ACCDB `
+            --profile benchmarks/LFEA/CAESAR_ACCDB/bm4l-validation.profile.json `
+            --solve-linear true `
+            --solve-cases L4 `
+            --actual-out artifacts/bourdon/full/actual.json `
+            --out artifacts/bourdon/full/report.json
+
+      - name: Patch diagnostic translation-only bend free field
+        shell: python
+        run: |
+          from pathlib import Path
+          p=Path('src/core/fea-benchmarks/caesar-accdb-linear-solve.js')
+          t=p.read_text()
+          old="""  const freeDofGlobal = [\n    ...startTranslationGlobal,\n    ...startRotationGlobal,\n    ...endTranslationGlobal,\n    ...endRotationGlobal,\n  ];"""
+          new="""  const freeDofGlobal = [\n    ...startTranslationGlobal,\n    ...zero3(),\n    ...endTranslationGlobal,\n    ...zero3(),\n  ];"""
+          if t.count(old)!=1: raise SystemExit(f'full-field guard expected 1, found {t.count(old)}')
+          p.write_text(t.replace(old,new))
+
+      - name: Run translation-only diagnostic
+        shell: pwsh
+        run: |
+          $ErrorActionPreference='Stop'
+          node --check src/core/fea-benchmarks/caesar-accdb-linear-solve.js
+          New-Item -ItemType Directory -Force artifacts/bourdon/translation-only | Out-Null
+          node scripts/lfea-caesar-accdb-benchmark.mjs `
+            --accdb artifacts/bourdon/source/BM4_L.ACCDB `
+            --profile benchmarks/LFEA/CAESAR_ACCDB/bm4l-validation.profile.json `
+            --solve-linear true `
+            --solve-cases L4 `
+            --actual-out artifacts/bourdon/translation-only/actual.json `
+            --out artifacts/bourdon/translation-only/report.json
+
+      - name: Patch diagnostic rotation-only bend free field
+        shell: python
+        run: |
+          from pathlib import Path
+          p=Path('src/core/fea-benchmarks/caesar-accdb-linear-solve.js')
+          t=p.read_text()
+          old="""  const freeDofGlobal = [\n    ...startTranslationGlobal,\n    ...zero3(),\n    ...endTranslationGlobal,\n    ...zero3(),\n  ];"""
+          new="""  const freeDofGlobal = [\n    ...zero3(),\n    ...startRotationGlobal,\n    ...zero3(),\n    ...endRotationGlobal,\n  ];"""
+          if t.count(old)!=1: raise SystemExit(f'translation-only guard expected 1, found {t.count(old)}')
+          p.write_text(t.replace(old,new))
+
+      - name: Run rotation-only diagnostic
+        shell: pwsh
+        run: |
+          $ErrorActionPreference='Stop'
+          node --check src/core/fea-benchmarks/caesar-accdb-linear-solve.js
+          New-Item -ItemType Directory -Force artifacts/bourdon/rotation-only | Out-Null
+          node scripts/lfea-caesar-accdb-benchmark.mjs `
+            --accdb artifacts/bourdon/source/BM4_L.ACCDB `
+            --profile benchmarks/LFEA/CAESAR_ACCDB/bm4l-validation.profile.json `
+            --solve-linear true `
+            --solve-cases L4 `
+            --actual-out artifacts/bourdon/rotation-only/actual.json `
+            --out artifacts/bourdon/rotation-only/report.json
+
+      - name: Compare signed mechanism signatures
+        shell: pwsh
+        run: |
+          $ErrorActionPreference='Stop'
+          $full=Get-Content -Raw artifacts/bourdon/full/report.json|ConvertFrom-Json -Depth 100
+          $trans=Get-Content -Raw artifacts/bourdon/translation-only/report.json|ConvertFrom-Json -Depth 100
+          $rot=Get-Content -Raw artifacts/bourdon/rotation-only/report.json|ConvertFrom-Json -Depth 100
+          $fa=Get-Content -Raw artifacts/bourdon/full/actual.json|ConvertFrom-Json -Depth 100
+          $ta=Get-Content -Raw artifacts/bourdon/translation-only/actual.json|ConvertFrom-Json -Depth 100
+          $ra=Get-Content -Raw artifacts/bourdon/rotation-only/actual.json|ConvertFrom-Json -Depth 100
+
+          function Counts($r){
+            $case=@($r.qualification.cases|Where-Object{$_.caseId-eq'L4'})[0]
+            $rows=@($case.comparison.rows)
+            [ordered]@{
+              restraint=@($rows|Where-Object{$_.status-eq'FAIL'-and$_.entityKind-eq'NODE'-and$_.quantity-in@('FORCE','MOMENT')}).Count
+              displacementRotation=@($rows|Where-Object{$_.status-eq'FAIL'-and$_.entityKind-eq'NODE'-and$_.quantity-in@('DISPLACEMENT','ROTATION')}).Count
+              elementEnd=@($rows|Where-Object{$_.status-eq'FAIL'-and$_.entityKind-eq'ELEMENT'-and$_.quantity-like'GLOBAL_END_*'}).Count
+            }
+          }
+          function FindRow($r,$kind,$prefix,$q,$x){
+            $case=@($r.qualification.cases|Where-Object{$_.caseId-eq'L4'})[0]
+            $rows=@($case.comparison.rows|Where-Object{$_.entityKind-eq$kind-and([string]$_.entityId).StartsWith($prefix)-and$_.quantity-eq$q-and$_.component-eq$x})
+            if($rows.Count-ne1){throw"Expected one row $prefix $q $x; found $($rows.Count)"}
+            $rows[0]
+          }
+          function RowState($r){[ordered]@{reference=[double]$r.referenceValue;actual=[double]$r.actualValue;absoluteError=[math]::Abs([double]$r.actualValue-[double]$r.referenceValue);percentError=if([double]$r.referenceValue-ne0){100*[math]::Abs(([double]$r.actualValue-[double]$r.referenceValue)/[double]$r.referenceValue)}else{$null}}}
+
+          $targets=@(
+            @('node 20330 RZ','NODE','20330','ROTATION','RZ'),
+            @('node 20330 UY','NODE','20330','DISPLACEMENT','UY'),
+            @('node 20330 UZ','NODE','20330','DISPLACEMENT','UZ'),
+            @('node 22260 RY','NODE','22260','ROTATION','RY'),
+            @('E19 TO MZ','ELEMENT','INPUT_ELEMENT:19|','GLOBAL_END_MOMENT_TO','MZ'),
+            @('E20 FROM MZ','ELEMENT','INPUT_ELEMENT:20|','GLOBAL_END_MOMENT_FROM','MZ'),
+            @('E84 TO MZ','ELEMENT','INPUT_ELEMENT:84|','GLOBAL_END_MOMENT_TO','MZ'),
+            @('E85 FROM MZ','ELEMENT','INPUT_ELEMENT:85|','GLOBAL_END_MOMENT_FROM','MZ'),
+            @('E85 TO FY','ELEMENT','INPUT_ELEMENT:85|','GLOBAL_END_FORCE_TO','FY'),
+            @('E86 FROM FY','ELEMENT','INPUT_ELEMENT:86|','GLOBAL_END_FORCE_FROM','FY'))
+          $signal=[System.Collections.Generic.List[object]]::new()
+          foreach($t in $targets){
+            $signal.Add([ordered]@{
+              name=$t[0]
+              full=(RowState (FindRow $full $t[1] $t[2] $t[3] $t[4]))
+              translationOnly=(RowState (FindRow $trans $t[1] $t[2] $t[3] $t[4]))
+              rotationOnly=(RowState (FindRow $rot $t[1] $t[2] $t[3] $t[4]))
+            })
+          }
+
+          foreach($state in @($fa,$ta,$ra)){
+            if($state.mechanics.cases.L4.recoveredEquilibrium.status-ne'PASS'){throw'Diagnostic state lost recovered equilibrium'}
+            if([math]::Abs([double]$state.mechanics.cases.L4.gravityWeightN)-gt1e-12){throw'L4 diagnostic unexpectedly contains gravity'}
+          }
+          $stiffness=@($fa.cases.L4.stiffnessStateHash,$ta.cases.L4.stiffnessStateHash,$ra.cases.L4.stiffnessStateHash)|Sort-Object -Unique
+          if($stiffness.Count-ne1){throw'Diagnostic decomposition changed stiffness operator'}
+
+          [ordered]@{
+            schema='m047-bm4l-bourdon-decomposition/v1'
+            classification='DIAGNOSTIC_ONLY_GOVERNED_MODE_REMAINS_TRANSLATION_AND_ROTATION'
+            sourceAccdbSha256='64c05a50e9ed0452622ff5880335460486f24ac8e6adecc9a300b549c9aa82f8'
+            governedMode='TRANSLATION_AND_ROTATION'
+            commonStiffnessStateHash=$stiffness[0]
+            recoveredEquilibriumPass=$true
+            counts=[ordered]@{full=(Counts $full);translationOnly=(Counts $trans);rotationOnly=(Counts $rot)}
+            highSignal=$signal
+          }|ConvertTo-Json -Depth 30|Set-Content -Encoding utf8 artifacts/bourdon/decomposition.json
+
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: m047-bm4l-bourdon-decomposition
+          path: artifacts/bourdon
+          if-no-files-found: error

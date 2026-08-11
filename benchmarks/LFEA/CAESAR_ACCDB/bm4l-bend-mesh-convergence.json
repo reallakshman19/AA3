@@ -1,0 +1,48 @@
+{
+  "schema": "m047-bm4l-bend-mesh-convergence/v1",
+  "classification": "CHORD_DISCRETIZATION_FALSIFIED_AS_DOMINANT_ROOT_CAUSE",
+  "sourceAccdbSha256": "64c05a50e9ed0452622ff5880335460486f24ac8e6adecc9a300b549c9aa82f8",
+  "workflowRunId": 31361556227,
+  "baseMaximumChordAngleDegrees": 5,
+  "refinedMaximumChordAngleDegrees": 2.5,
+  "baseAnalysisElementCount": 322,
+  "refinedAnalysisElementCount": 538,
+  "factorValuesChanged": false,
+  "loadsChanged": false,
+  "sourceGeometryChanged": false,
+  "failureCounts": {
+    "L2": { "base": [1, 36, 18], "refined": [1, 36, 18] },
+    "L3": { "base": [2, 47, 83], "refined": [2, 47, 83] },
+    "L4": { "base": [0, 36, 6], "refined": [0, 36, 6] },
+    "L5": { "base": [3, 63, 50], "refined": [3, 63, 50] },
+    "L6": { "base": [0, 13, 14], "refined": [0, 13, 14] },
+    "L14": { "base": [2, 47, 83], "refined": [2, 47, 83] }
+  },
+  "highSignal": [
+    { "name": "L2 E5 FROM FY", "reference": 68.68189239501953, "base": 57.04872426356792, "refined": 57.037269655750606, "baseAbsoluteError": 11.633168131451612, "refinedAbsoluteError": 11.644622739268925, "errorRatio": 1.0009846507578914, "meshDelta": -0.011454607817313445 },
+    { "name": "L2 E19 FROM FY", "reference": 12.203158378601074, "base": 10.62765571706933, "refined": 10.629470992917732, "baseAbsoluteError": 1.5755026615317433, "refinedAbsoluteError": 1.5736873856833427, "errorRatio": 0.9988478116269027, "meshDelta": 0.0018152758484006881 },
+    { "name": "L2 E37 TO MZ", "reference": 7.2236328125, "base": 10.458195066706654, "refined": 10.459277904063587, "baseAbsoluteError": 3.2345622542066543, "refinedAbsoluteError": 3.235645091563587, "errorRatio": 1.000334770912362, "meshDelta": 0.0010828373569324867 },
+    { "name": "L2 E43 TO MZ", "reference": 36.928382873535156, "base": 41.08501725824998, "refined": 41.007981223868406, "baseAbsoluteError": 4.15663438471482, "refinedAbsoluteError": 4.079598350333249, "errorRatio": 0.9814667283067148, "meshDelta": -0.07703603438157103 },
+    { "name": "L2 node 20295 UZ", "reference": -2.148752100765705e-6, "base": -1.8613776527965675e-6, "refined": -1.8614579089541755e-6, "baseAbsoluteError": 2.8737444796913756e-7, "refinedAbsoluteError": 2.8729419181152954e-7, "errorRatio": 0.999720726187818, "meshDelta": -8.025615760801633e-11 },
+    { "name": "L2 node 21430 RZ", "reference": 3.132942283748437e-5, "base": 3.0002841330145486e-5, "refined": 3.0004279794471482e-5, "baseAbsoluteError": 1.3265815073388844e-6, "refinedAbsoluteError": 1.3251430430128882e-6, "errorRatio": 0.9989156608033217, "meshDelta": 1.4384643259961725e-9 },
+    { "name": "L4 node 20330 RZ", "reference": -6.457528664528472e-6, "base": -4.518294553235351e-6, "refined": -4.546785958621465e-6, "baseAbsoluteError": 1.9392341112931206e-6, "refinedAbsoluteError": 1.9107427059070067e-6, "errorRatio": 0.9853079083024611, "meshDelta": -2.8491405386113908e-8 },
+    { "name": "L4 node 22260 RY", "reference": 1.0186347349873208e-5, "base": 1.1209084742257142e-5, "refined": 1.12085479297882e-5, "baseAbsoluteError": 1.0227373923839343e-6, "refinedAbsoluteError": 1.022200579914992e-6, "errorRatio": 0.9994751218905851, "meshDelta": -5.368124689423805e-10 },
+    { "name": "L4 E85 FROM FY", "reference": -0.014142101630568504, "base": -0.012496651289842505, "refined": -0.012506904278104327, "baseAbsoluteError": 0.0016454503407259992, "refinedAbsoluteError": 0.0016351973524641773, "errorRatio": 0.9937688862385855, "meshDelta": -1.025298826182186e-5 },
+    { "name": "L4 E85 FROM MZ", "reference": 0.008319332264363766, "base": 0.006037157774320497, "refined": 0.006055023470712087, "baseAbsoluteError": 0.0022821744900432686, "refinedAbsoluteError": 0.0022643087936516787, "errorRatio": 0.9921716343471829, "meshDelta": 1.786569639158995e-5 }
+  ],
+  "maximumNormalizedHighSignalMovement": 0.018533271693285176,
+  "integrity": {
+    "allSixRecoveredEquilibriumBase": "PASS",
+    "allSixRecoveredEquilibriumRefined": "PASS",
+    "pipingComponentChecks": "PASS",
+    "solverChecks": "PASS",
+    "recoveryChecks": "PASS",
+    "coreFeaChecks": "PASS"
+  },
+  "decision": {
+    "promoteRefinedMesh": false,
+    "reason": "Doubling bend discretization changes none of the six-case failure counts and moves the selected engineering-significant responses by at most 1.853% of their existing CAESAR error. The remaining mismatch is not controlled by the 5-degree chord discretization; further mesh tuning would be benchmark chasing rather than a physical correction.",
+    "nextInvestigation": "Curved-bend shape/formulation authority, particularly the CAESAR bend axial-shape mode or another curved-element kinematic effect not represented by chord refinement."
+  },
+  "benchmarkFitting": false
+}

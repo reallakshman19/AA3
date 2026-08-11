@@ -1,0 +1,38 @@
+name: M047 fix tee-scope harness v2
+
+on:
+  push:
+    branches: [agent/m047-bm4l-root-cause]
+    paths: ['.github/workflows/m047-fix-tee-scope-harness-v2.yml']
+
+permissions:
+  contents: write
+
+jobs:
+  fix:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: agent/m047-bm4l-root-cause
+          fetch-depth: 0
+      - name: Correct temporary profile contract ID
+        shell: python
+        run: |
+          from pathlib import Path
+          p=Path('.github/workflows/m047-bm4l-shear-tee-scope-ab.yml')
+          t=p.read_text()
+          old="profileId: 'CAESAR-THIN-WALL-STRAIGHT-PIPE-R1'"
+          new="profileId: 'LINEAR-FRAME-ELEMENT-R1'"
+          if t.count(old)!=1:
+              raise SystemExit(f'expected one profile ID match, found {t.count(old)}')
+          p.write_text(t.replace(old,new))
+      - name: Commit and rebase-safe publish
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add .github/workflows/m047-bm4l-shear-tee-scope-ab.yml
+          git diff --cached --check
+          git commit -m "fix M047 tee-scope harness profile id"
+          git pull --rebase origin agent/m047-bm4l-root-cause
+          git push origin HEAD:agent/m047-bm4l-root-cause

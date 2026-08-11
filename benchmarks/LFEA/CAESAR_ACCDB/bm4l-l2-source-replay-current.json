@@ -1,0 +1,31 @@
+{
+  "schema": "m047-bm4l-l2-source-replay-current/v1",
+  "sourceAccdbSha256": "64c05a50e9ed0452622ff5880335460486f24ac8e6adecc9a300b549c9aa82f8",
+  "stiffnessStateHash": "fnv1a64:45fdd6b1ae86b704",
+  "selfReplay": {
+    "displacementSource": "RECOVERY_LEDGER_UNCLEANED_SOLVER_DISPLACEMENT",
+    "worstSourceElementId": "65",
+    "maximumAbsoluteDifference": 7.197162403826951e-7,
+    "status": "PASS"
+  },
+  "caesarEndpointReplay": {
+    "5": {
+      "maximumAbsoluteDifference": 256.4564231792465
+    },
+    "19": {
+      "maximumAbsoluteDifference": 114.51256748245623
+    },
+    "20": {
+      "maximumAbsoluteDifference": 452.82292783941625
+    },
+    "42": {
+      "maximumAbsoluteDifference": 639.5229212261627
+    },
+    "43": {
+      "maximumAbsoluteDifference": 295.0374719996353
+    },
+    "85": {
+      "maximumAbsoluteDifference": 17.62619019043663
+    }
+  }
+}

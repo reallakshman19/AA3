@@ -1,0 +1,104 @@
+{
+  "schema": "m047-bm4l-bourdon-decomposition/v1",
+  "classification": "DIAGNOSTIC_ONLY_GOVERNED_MODE_REMAINS_TRANSLATION_AND_ROTATION",
+  "sourceAccdbSha256": "64c05a50e9ed0452622ff5880335460486f24ac8e6adecc9a300b549c9aa82f8",
+  "governedMode": "TRANSLATION_AND_ROTATION",
+  "commonStiffnessStateHash": "fnv1a64:6720f2f4d40f574b",
+  "recoveredEquilibriumPass": true,
+  "counts": {
+    "full": { "restraint": 0, "displacementRotation": 36, "elementEnd": 6 },
+    "translationOnly": { "restraint": 47, "displacementRotation": 375, "elementEnd": 973 },
+    "rotationOnly": { "restraint": 27, "displacementRotation": 208, "elementEnd": 367 }
+  },
+  "interpretation": {
+    "productionDecision": "KEEP_TRANSLATION_AND_ROTATION",
+    "formulaChangeAuthorized": false,
+    "reason": "Neither isolated bend translation nor isolated bend rotation reproduces the CAESAR L4 response. The governed combined field is dramatically closer while all three diagnostic states use the same stiffness operator and pass recovered equilibrium."
+  },
+  "highSignal": [
+    {
+      "name": "node 20330 RZ",
+      "reference": -6.457528664528472e-6,
+      "fullActual": -4.518305484625194e-6,
+      "translationOnlyActual": -7.744473456377825e-5,
+      "rotationOnlyActual": -2.0217000132182446e-5,
+      "derivedLinearContributions": {
+        "straightPressureAndNonBend": -9.31434292113355e-5,
+        "bendTranslation": 1.5698694647557254e-5,
+        "bendRotation": 7.292642907915305e-5
+      }
+    },
+    {
+      "name": "node 20330 UY",
+      "reference": -0.00014519065618515015,
+      "fullActual": -0.00014654625081719864,
+      "translationOnlyActual": -8.686025048936486e-5,
+      "rotationOnlyActual": -0.0001110289016200648,
+      "derivedLinearContributions": {
+        "straightPressureAndNonBend": -5.1342901292231045e-5,
+        "bendTranslation": -3.5517349197133834e-5,
+        "bendRotation": -5.968600032783377e-5
+      }
+    },
+    {
+      "name": "node 20330 UZ",
+      "reference": 0.00034968009591102603,
+      "fullActual": 0.0003500490749976529,
+      "translationOnlyActual": 0.0003393804624093774,
+      "rotationOnlyActual": 0.0002912721121049567,
+      "derivedLinearContributions": {
+        "straightPressureAndNonBend": 0.0002806034995166812,
+        "bendTranslation": 5.877696289269621e-5,
+        "bendRotation": 1.0668612588275489e-5
+      }
+    },
+    {
+      "name": "node 22260 RY",
+      "reference": 1.0186347349873208e-5,
+      "fullActual": 1.1209083548637163e-5,
+      "translationOnlyActual": -5.858076889457526e-5,
+      "rotationOnlyActual": 1.9426355148091776e-5,
+      "derivedLinearContributions": {
+        "straightPressureAndNonBend": -5.036349729512064e-5,
+        "bendTranslation": -8.217271599454613e-6,
+        "bendRotation": 6.978985244321242e-5
+      }
+    },
+    {
+      "name": "E19 TO MZ",
+      "reference": 280.978759765625,
+      "fullActual": 285.8347865786996,
+      "translationOnlyActual": 19.332170779340423,
+      "rotationOnlyActual": 275.2262947070972,
+      "derivedLinearContributions": {
+        "straightPressureAndNonBend": 8.72367890773802,
+        "bendTranslation": 10.608491871602382,
+        "bendRotation": 266.5026157993592
+      }
+    },
+    {
+      "name": "E84 TO MZ",
+      "reference": -0.008319332264363766,
+      "fullActual": -0.006037109841486349,
+      "translationOnlyActual": -0.1564579114862056,
+      "rotationOnlyActual": -0.007186759970136733,
+      "derivedLinearContributions": {
+        "straightPressureAndNonBend": -0.157607561614856,
+        "bendTranslation": 0.001149650128650384,
+        "bendRotation": 0.15042080164471927
+      }
+    },
+    {
+      "name": "E85 TO FY",
+      "reference": 0.014142101630568504,
+      "fullActual": 0.01249662406392206,
+      "translationOnlyActual": 0.11009827966934262,
+      "rotationOnlyActual": 0.013176078045199489,
+      "derivedLinearContributions": {
+        "straightPressureAndNonBend": 0.11077773365062005,
+        "bendTranslation": -0.0006794539812774291,
+        "bendRotation": -0.09760165560542056
+      }
+    }
+  ]
+}

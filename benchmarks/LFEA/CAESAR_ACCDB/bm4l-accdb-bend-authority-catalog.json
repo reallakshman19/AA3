@@ -1,0 +1,33 @@
+{
+  "schema": "m047-bm4l-accdb-bend-authority-catalog/v1",
+  "classification": "SOURCE_AUTHORITY_CATALOG_COMPLETE_NO_HIDDEN_BEND_OVERRIDE",
+  "sourceAccdbSha256": "64c05a50e9ed0452622ff5880335460486f24ac8e6adecc9a300b549c9aa82f8",
+  "workflowRunId": 31362276285,
+  "tableCount": 40,
+  "relevantInputTables": {
+    "INPUT_BENDS": ["BEND_PTR", "RADIUS", "TYPE", "ANGLE1", "NODE1", "ANGLE2", "NODE2", "ANGLE3", "NODE3", "NUM_MITER", "FIT_THICK", "KFACTOR", "SEAM_WELD", "WI_FACTOR"],
+    "INPUT_CONTROL": ["NUMELT", "NUMBEND", "NUMRIGID", "NUMREST", "VERSION", "VERT_I", "VERT_J", "VERT_K", "NORTH_X", "NORTH_Y", "NORTH_Z"],
+    "INPUT_SIFTEES": ["SIF_PTR", "SIF_NUM", "NODE", "TYPE", "SIF_IN", "SIF_OUT", "SIF_TORSION", "SIF_AXIAL", "SIF_PRESSURE", "STRESSINDEX_Iin", "STRESSINDEX_Iout", "STRESSINDEX_It", "STRESSINDEX_Ia", "STRESSINDEX_Ipr"]
+  },
+  "loadCaseOrConfigurationInputTableFound": false,
+  "inputBendsValues": {
+    "bendCount": 12,
+    "allType": 0,
+    "allKfactor": -1.01010000705719,
+    "allFittingThickness": -1.01010000705719,
+    "allWiFactor": -1,
+    "allSeamWeld": 0,
+    "interpretation": "KFACTOR and FIT_THICK carry the CAESAR unset sentinel for every governed bend and WI_FACTOR is unset; there is no explicit bend-flexibility, fitting-thickness or weld-factor override to consume."
+  },
+  "authorityNotes": {
+    "KFACTOR": "CAESAR neutral-file/help authority identifies this as the user bend flexibility K-factor override. When unset, code/B31J calculation governs.",
+    "FIT_THICK": "CAESAR uses a populated fitting thickness only for the curved elbow portion and bases flexibility/SIF calculations on that elbow wall thickness.",
+    "catalogBoundary": "The schema catalog inspected table and column authority. Bend values above come from the exact pinned INPUT_BENDS export already used by the governed benchmark evidence."
+  },
+  "decision": {
+    "hiddenAccdbFactorRootCause": false,
+    "reason": "The pinned ACCDB contains no populated bend flexibility/thickness override and no separate load-case/configuration input table from which a missing elbow-stiffening setting can be recovered. External CAESAR configuration authority remains separate from the ACCDB.",
+    "nextInvestigation": "Curved-bend member formulation. The diagnostic bend-arc shear candidate strongly aligns with the CAESAR-required correction, but production promotion remains blocked until the curved-bend compliance is justified independently of benchmark fitting."
+  },
+  "benchmarkFitting": false
+}

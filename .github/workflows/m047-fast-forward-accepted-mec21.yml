@@ -1,0 +1,70 @@
+name: M047 fast-forward accepted MEC-21 source
+
+on:
+  push:
+    branches: [agent/m047-bm4l-root-cause]
+    paths: ['.github/workflows/m047-fast-forward-accepted-mec21.yml']
+
+permissions:
+  contents: write
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: agent/m047-bm4l-root-cause
+          fetch-depth: 0
+      - name: Verify validated base and apply exact packaged candidate
+        shell: python
+        run: |
+          from pathlib import Path
+          import os, subprocess
+          expected={
+            'src/core/fea-benchmarks/caesar-accdb-linear-solve.js':'5db1970b3bbd32ba891da2e07232431db2d8481c',
+            'src/core/linear-fea-piping-components/index.js':'71b097f3ece6d6ee4930b4c2c9056e987db971ca',
+          }
+          for path,sha in expected.items():
+            actual=subprocess.check_output(['git','hash-object',path],text=True).strip()
+            if actual!=sha: raise SystemExit(f'{path} base drifted: {actual} != {sha}')
+          p=Path('.github/workflows/m047-one-shot-mec21-bend-shear-v2.yml')
+          lines=p.read_text().splitlines()
+          start=next(i for i,l in enumerate(lines) if l.strip()=='- name: Apply geometry-derived MEC-21 bend shear candidate')
+          end=next(i for i in range(start+1,len(lines)) if lines[i].startswith('      - name:') and i>start)
+          block=lines[start:end]
+          env={}
+          for line in block:
+            s=line.strip()
+            if s.startswith('MODULE_B64:') or s.startswith('CHECK_B64:'):
+              k,v=s.split(':',1); env[k]=v.strip().strip("'")
+          if set(env)!={'MODULE_B64','CHECK_B64'}: raise SystemExit(f'candidate payload recovery failed: {env.keys()}')
+          os.environ.update(env)
+          run_i=next(i for i,l in enumerate(block) if l.strip()=='run: |')
+          script='\n'.join(line[10:] if line.startswith('          ') else '' for line in block[run_i+1:])+'\n'
+          exec(compile(script,'validated-mec21-candidate','exec'),{'__name__':'__main__'})
+      - name: Recheck independent formulation and core component path
+        shell: bash
+        run: |
+          set -euo pipefail
+          node scripts/lfea-m047-caesar-mec21-bend-shear-authority-check.mjs
+          node scripts/lfea-b3.2-piping-component-check.mjs
+          node scripts/lfea-b3.4-recovery-check.mjs
+          git diff --check -- \
+            src/core/linear-fea-piping-components/mec21-bend-shear.js \
+            src/core/linear-fea-piping-components/index.js \
+            src/core/fea-benchmarks/caesar-accdb-linear-solve.js \
+            scripts/lfea-m047-caesar-mec21-bend-shear-authority-check.mjs
+      - name: Commit only accepted source and fast-forward
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add \
+            src/core/linear-fea-piping-components/mec21-bend-shear.js \
+            src/core/linear-fea-piping-components/index.js \
+            src/core/fea-benchmarks/caesar-accdb-linear-solve.js \
+            scripts/lfea-m047-caesar-mec21-bend-shear-authority-check.mjs
+          git commit -m "fix(lfea): apply MEC-21 bend shear compliance"
+          git push origin HEAD:agent/m047-bm4l-root-cause

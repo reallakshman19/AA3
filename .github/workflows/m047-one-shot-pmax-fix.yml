@@ -1,0 +1,221 @@
+name: M047 one-shot Pmax bend-stiffening correction
+
+on:
+  push:
+    branches: [agent/m047-bm4l-root-cause]
+    paths: ['.github/workflows/m047-one-shot-pmax-fix.yml']
+
+permissions:
+  contents: write
+
+jobs:
+  ab:
+    runs-on: windows-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: agent/m047-bm4l-root-cause
+          fetch-depth: 0
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Install authenticated Microsoft ACE provider
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          New-Item -ItemType Directory -Force artifacts/m047-pmax | Out-Null
+          $installer = Join-Path $PWD 'artifacts/m047-pmax/accessdatabaseengine_X64.exe'
+          $url = 'https://download.microsoft.com/download/3/5/C/35C84C36-661A-44E6-9324-8786B8DBE231/accessdatabaseengine_X64.exe'
+          Invoke-WebRequest -Uri $url -OutFile $installer
+          $hash = (Get-FileHash $installer -Algorithm SHA256).Hash.ToLowerInvariant()
+          if ($hash -ne '04e96c9f1a1f7d251a88aececf1dc10ff65950392787427c00814a43308003de') { throw "ACE installer hash mismatch $hash" }
+          $sig = Get-AuthenticodeSignature $installer
+          if ($sig.Status -ne 'Valid' -or $sig.SignerCertificate.Subject -notmatch 'Microsoft') { throw 'ACE installer signature invalid.' }
+          $process = Start-Process $installer -ArgumentList '/quiet','/norestart' -Wait -PassThru
+          if ($process.ExitCode -notin @(0,3010)) { throw "ACE install failed $($process.ExitCode)" }
+          Remove-Item $installer -Force
+
+      - name: Fetch canonical pinned BM4_L member
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $zip = Join-Path $PWD 'artifacts/m047-pmax/BM4_L.zip'
+          Invoke-WebRequest -Uri 'https://raw.githubusercontent.com/reallaksh19/Common/45d51ea18624f5775805f399110c1738301c0d90/LFEA/BM4/BM4_L.zip' -OutFile $zip
+          $zipHash = (Get-FileHash $zip -Algorithm SHA256).Hash.ToLowerInvariant()
+          if ($zipHash -ne '978617cba50fa0b1a16c2fa71dc1e0d38e55ac834b191f887d100c6951abd8b9') { throw "ZIP hash mismatch $zipHash" }
+          Expand-Archive $zip -DestinationPath artifacts/m047-pmax/source -Force
+          $accdb = Join-Path $PWD 'artifacts/m047-pmax/source/BM4_L.ACCDB'
+          $hash = (Get-FileHash $accdb -Algorithm SHA256).Hash.ToLowerInvariant()
+          if ($hash -ne '64c05a50e9ed0452622ff5880335460486f24ac8e6adecc9a300b549c9aa82f8') { throw "Pinned member hash mismatch $hash" }
+
+      - name: Run before state
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          New-Item -ItemType Directory -Force artifacts/m047-pmax/before | Out-Null
+          node scripts/lfea-caesar-accdb-benchmark.mjs `
+            --accdb artifacts/m047-pmax/source/BM4_L.ACCDB `
+            --profile benchmarks/LFEA/CAESAR_ACCDB/bm4l-validation.profile.json `
+            --solve-linear true `
+            --solve-cases L2,L3,L4,L5,L6,L14 `
+            --actual-out artifacts/m047-pmax/before/actual.json `
+            --out artifacts/m047-pmax/before/report.json
+
+      - name: Apply one-mechanism Pmax correction and regression fixture
+        shell: python
+        run: |
+          from pathlib import Path
+
+          solver = Path('src/core/fea-benchmarks/caesar-accdb-linear-solve.js')
+          text = solver.read_text()
+          old = """function bendStiffeningPressurePa(row, pressureSource) {\n  if (pressureSource === 'P1') return Number(row.PRESSURE1) * KPA_TO_PA;\n  if (pressureSource !== 'MAX_DEFINED') {\n    throw new TypeError(`Unsupported bend pressure-stiffening source ${pressureSource}.`);\n  }\n  const definedPressures = [\n    ...Array.from({ length: 9 }, (_value, index) => Number(row[`PRESSURE${index + 1}`])),\n    Number(row.HYDRO_PRESSURE),\n  ].filter((value) => Number.isFinite(value) && value >= 0);\n  if (definedPressures.length === 0) {\n    throw new TypeError(`Element ${row.ELEMENTID} has no defined pressure for bend stiffening.`);\n  }\n  return Math.max(...definedPressures) * KPA_TO_PA;\n}"""
+          new = """export function bendStiffeningPressurePa(row, pressureSource) {\n  if (pressureSource === 'P1') return Number(row.PRESSURE1) * KPA_TO_PA;\n  if (pressureSource !== 'MAX_DEFINED') {\n    throw new TypeError(`Unsupported bend pressure-stiffening source ${pressureSource}.`);\n  }\n  // CAESAR II Elbow Stiffening Pressure Pmax is the maximum of P1 through P9.\n  // PHydro is a distinct selectable pressure source and must not participate in Pmax.\n  const definedPressures = Array.from(\n    { length: 9 },\n    (_value, index) => Number(row[`PRESSURE${index + 1}`]),\n  ).filter((value) => Number.isFinite(value) && value >= 0);\n  if (definedPressures.length === 0) {\n    throw new TypeError(`Element ${row.ELEMENTID} has no defined pressure for bend stiffening.`);\n  }\n  return Math.max(...definedPressures) * KPA_TO_PA;\n}"""
+          if text.count(old) != 1:
+              raise SystemExit(f'Expected one governed bend pressure helper; found {text.count(old)}')
+          solver.write_text(text.replace(old, new))
+
+          test = Path('scripts/lfea-m047-bend-pressure-source-check.mjs')
+          test.write_text("""import assert from 'node:assert/strict';\nimport { bendStiffeningPressurePa } from '../src/core/fea-benchmarks/caesar-accdb-linear-solve.js';\n\nconst row = {\n  ELEMENTID: 5,\n  PRESSURE1: 11600, PRESSURE2: 12000, PRESSURE3: 0, PRESSURE4: 0, PRESSURE5: 0,\n  PRESSURE6: 0, PRESSURE7: 0, PRESSURE8: 0, PRESSURE9: 0,\n  HYDRO_PRESSURE: 22035,\n};\n\nassert.equal(bendStiffeningPressurePa(row, 'P1'), 11_600_000);\nassert.equal(\n  bendStiffeningPressurePa(row, 'MAX_DEFINED'),\n  12_000_000,\n  'CAESAR Pmax is max(P1..P9); PHydro is a separate elbow-stiffening pressure source',\n);\nassert.equal(\n  bendStiffeningPressurePa({ ...row, PRESSURE2: 0 }, 'MAX_DEFINED'),\n  11_600_000,\n  'BM4_L Pmax must resolve to P1 even when PHydro is larger',\n);\nassert.throws(() => bendStiffeningPressurePa(row, 'HYDRO'), /Unsupported bend pressure-stiffening source/);\nconsole.log('M047 bend stiffening pressure-source checks passed.');\n""")
+
+      - name: Run pressure-source and reusable mechanics checks
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          node --check src/core/fea-benchmarks/caesar-accdb-linear-solve.js
+          node scripts/lfea-m047-bend-pressure-source-check.mjs
+          node scripts/lfea-b3.2-piping-component-check.mjs
+          node scripts/lfea-b3.3-solver-check.mjs
+          node scripts/lfea-b3.4-recovery-check.mjs
+          node scripts/lfea-b3.6-sparse-assembly-check.mjs
+          node scripts/lfea-b3.9-gravity-self-weight-check.mjs
+
+      - name: Run after state
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          New-Item -ItemType Directory -Force artifacts/m047-pmax/after | Out-Null
+          node scripts/lfea-caesar-accdb-benchmark.mjs `
+            --accdb artifacts/m047-pmax/source/BM4_L.ACCDB `
+            --profile benchmarks/LFEA/CAESAR_ACCDB/bm4l-validation.profile.json `
+            --solve-linear true `
+            --solve-cases L2,L3,L4,L5,L6,L14 `
+            --actual-out artifacts/m047-pmax/after/actual.json `
+            --out artifacts/m047-pmax/after/report.json
+          node scripts/lfea-m047-bm4l-recovery-proof.mjs `
+            --actual artifacts/m047-pmax/after/actual.json `
+            --expected-source-sha 64c05a50e9ed0452622ff5880335460486f24ac8e6adecc9a300b549c9aa82f8 `
+            --out artifacts/m047-pmax/after/recovery-proof.json
+
+      - name: Enforce predicted physical signature
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $beforeReport = Get-Content -Raw artifacts/m047-pmax/before/report.json | ConvertFrom-Json -Depth 100
+          $afterReport = Get-Content -Raw artifacts/m047-pmax/after/report.json | ConvertFrom-Json -Depth 100
+          $beforeActual = Get-Content -Raw artifacts/m047-pmax/before/actual.json | ConvertFrom-Json -Depth 100
+          $afterActual = Get-Content -Raw artifacts/m047-pmax/after/actual.json | ConvertFrom-Json -Depth 100
+          $proof = Get-Content -Raw artifacts/m047-pmax/after/recovery-proof.json | ConvertFrom-Json -Depth 100
+
+          function Find-Row($report, $caseId, $entityKind, $entityPrefix, $quantity, $component) {
+            $case = @($report.qualification.cases | Where-Object { $_.caseId -eq $caseId })
+            if ($case.Count -ne 1) { throw "Expected one case $caseId; found $($case.Count)." }
+            $rows = @($case[0].comparison.rows | Where-Object {
+              $_.entityKind -eq $entityKind -and
+              ([string]$_.entityId).StartsWith($entityPrefix) -and
+              $_.quantity -eq $quantity -and
+              $_.component -eq $component
+            })
+            if ($rows.Count -ne 1) { throw "Expected one row $caseId $entityPrefix $quantity $component; found $($rows.Count)." }
+            return $rows[0]
+          }
+
+          function Abs-Error($row) { return [math]::Abs([double]$row.actualValue - [double]$row.referenceValue) }
+
+          $checks = @(
+            @{ name='L2 node 20090 UY'; before=(Find-Row $beforeReport 'L2' 'NODE' '20090' 'FORCE' 'UY'); after=(Find-Row $afterReport 'L2' 'NODE' '20090' 'FORCE' 'UY') },
+            @{ name='L2 source E4 TO MZ'; before=(Find-Row $beforeReport 'L2' 'ELEMENT' 'INPUT_ELEMENT:4|' 'GLOBAL_END_MOMENT_TO' 'MZ'); after=(Find-Row $afterReport 'L2' 'ELEMENT' 'INPUT_ELEMENT:4|' 'GLOBAL_END_MOMENT_TO' 'MZ') },
+            @{ name='L2 source E5 FROM MZ'; before=(Find-Row $beforeReport 'L2' 'ELEMENT' 'INPUT_ELEMENT:5|' 'GLOBAL_END_MOMENT_FROM' 'MZ'); after=(Find-Row $afterReport 'L2' 'ELEMENT' 'INPUT_ELEMENT:5|' 'GLOBAL_END_MOMENT_FROM' 'MZ') },
+            @{ name='L2 source E5 FROM FY'; before=(Find-Row $beforeReport 'L2' 'ELEMENT' 'INPUT_ELEMENT:5|' 'GLOBAL_END_FORCE_FROM' 'FY'); after=(Find-Row $afterReport 'L2' 'ELEMENT' 'INPUT_ELEMENT:5|' 'GLOBAL_END_FORCE_FROM' 'FY') },
+            @{ name='L2 node 20120 RZ'; before=(Find-Row $beforeReport 'L2' 'NODE' '20120' 'ROTATION' 'RZ'); after=(Find-Row $afterReport 'L2' 'NODE' '20120' 'ROTATION' 'RZ') }
+          )
+
+          $evidence = [System.Collections.Generic.List[object]]::new()
+          foreach ($check in $checks) {
+            $beforeError = Abs-Error $check.before
+            $afterError = Abs-Error $check.after
+            $evidence.Add([ordered]@{
+              name = $check.name
+              reference = [double]$check.before.referenceValue
+              before = [double]$check.before.actualValue
+              after = [double]$check.after.actualValue
+              beforeAbsoluteError = $beforeError
+              afterAbsoluteError = $afterError
+              improved = ($afterError -lt $beforeError)
+            })
+          }
+
+          $required = @('L2 node 20090 UY','L2 source E4 TO MZ','L2 source E5 FROM MZ','L2 node 20120 RZ')
+          foreach ($name in $required) {
+            $entry = @($evidence | Where-Object { $_.name -eq $name })[0]
+            if (-not $entry.improved) { throw "Predicted signature failed: $name did not improve." }
+          }
+
+          $beforeWeight = [double]$beforeActual.mechanics.cases.L2.gravityWeightN
+          $afterWeight = [double]$afterActual.mechanics.cases.L2.gravityWeightN
+          if ([math]::Abs($afterWeight - $beforeWeight) -gt 1e-9) { throw "Gravity weight changed: $beforeWeight -> $afterWeight" }
+          if ($proof.status -ne 'PASS' -or $proof.commonOperator.status -ne 'PASS') { throw 'Recovery/common-operator proof failed after Pmax correction.' }
+          foreach ($caseId in @('L2','L3','L4','L5','L6','L14')) {
+            if ($afterActual.mechanics.cases.$caseId.recoveredEquilibrium.status -ne 'PASS') { throw "$caseId equilibrium failed." }
+          }
+
+          function Failure-Counts($report, $caseId) {
+            $case = @($report.qualification.cases | Where-Object { $_.caseId -eq $caseId })[0]
+            $rows = @($case.comparison.rows)
+            return [ordered]@{
+              restraint = @($rows | Where-Object { $_.status -eq 'FAIL' -and $_.entityKind -eq 'NODE' -and $_.quantity -in @('FORCE','MOMENT') }).Count
+              displacementRotation = @($rows | Where-Object { $_.status -eq 'FAIL' -and $_.entityKind -eq 'NODE' -and $_.quantity -in @('DISPLACEMENT','ROTATION') }).Count
+              elementEnd = @($rows | Where-Object { $_.status -eq 'FAIL' -and $_.entityKind -eq 'ELEMENT' -and $_.quantity -like 'GLOBAL_END_*' }).Count
+            }
+          }
+
+          $counts = [ordered]@{}
+          foreach ($caseId in @('L2','L3','L4','L5','L6','L14')) {
+            $counts[$caseId] = [ordered]@{ before=(Failure-Counts $beforeReport $caseId); after=(Failure-Counts $afterReport $caseId) }
+          }
+
+          [ordered]@{
+            schema='m047-pmax-ab-evidence/v1'
+            hypothesis='CAESAR Pmax is max(P1..P9); PHydro is separate. Excluding PHydro reduces excessive common bend pressure stiffening.'
+            sourceAccdbSha256='64c05a50e9ed0452622ff5880335460486f24ac8e6adecc9a300b549c9aa82f8'
+            beforeGravityWeightN=$beforeWeight
+            afterGravityWeightN=$afterWeight
+            commonOperator=$proof.commonOperator
+            highSignal=$evidence
+            failureCounts=$counts
+            accepted=$true
+          } | ConvertTo-Json -Depth 20 | Set-Content -Encoding utf8 artifacts/m047-pmax/ab-evidence.json
+
+      - name: Commit only after A/B acceptance
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add src/core/fea-benchmarks/caesar-accdb-linear-solve.js scripts/lfea-m047-bend-pressure-source-check.mjs
+          git diff --cached --check
+          git commit -m 'correct CAESAR Pmax bend stiffening pressure'
+          git push origin HEAD:agent/m047-bm4l-root-cause
+
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: m047-pmax-ab-evidence
+          path: artifacts/m047-pmax
+          if-no-files-found: warn

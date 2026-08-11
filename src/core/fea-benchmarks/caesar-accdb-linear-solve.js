@@ -115,6 +115,7 @@ export function solveCaesarAccdbLinearBenchmark(benchmarkPackage, selectedCaseId
     cases[caseRecord.caseId] = {
       executionSemanticHash: solved.execution.semanticHash,
       executionEvidenceHash: solved.execution.evidenceHash,
+      stiffnessStateHash: solved.execution.stiffnessStateHash,
       rows: solved.rows,
     };
     caseEvidence[caseRecord.caseId] = solved.evidence;
@@ -129,7 +130,7 @@ export function solveCaesarAccdbLinearBenchmark(benchmarkPackage, selectedCaseId
       profile: solveProfile,
       cases: caseEvidence,
       limitations: [
-        'Restraints are provisionally linearized as bilateral fixed DOFs; the known finite global stiffness is not substituted without file-specific CAESAR formulation authority.',
+        'Blank BM4_L restraints use the governed CAESAR default finite stiffness after explicit INPUT_UNITS conversion to SI.',
         'Only cases whose governed effective coefficient of friction is zero are accepted by this linear solver; friction-enabled cases remain reference-only until a nonlinear solver is qualified.',
         'The explicit Bourdon job mode resolves from the individual-file layer because CAESAR existing-job settings are absent from ACCDB exports.',
         'Translation-and-rotation mode applies closed-end axial pressure strain to non-bend spans and one MEC-21 equation (2.25) bend-level free field sampled at all discretized bend stations.',
@@ -196,7 +197,12 @@ function solveCase(benchmarkPackage, caseRecord, solveProfile) {
   });
   const geometry = analysisGeometry(benchmarkPackage, analysis.positions, analysis.elements);
   const conditioned = conditionGeometry(geometry, [], conditioningProfile());
-  const constraints = restraintConstraints(modelInput.tables.INPUT_RESTRAINTS.rows);
+  const constraints = restraintConstraints(
+    modelInput.tables.INPUT_RESTRAINTS.rows,
+    benchmarkPackage.profile.configurationAuthority,
+    modelInput.tables.INPUT_UNITS.rows,
+    solveProfile.restraintRepresentation,
+  );
   const shiftedAnalysis = applyUniformThermalNumericalShift({
     analysis,
     constraints,
@@ -252,8 +258,24 @@ function solveCase(benchmarkPackage, caseRecord, solveProfile) {
       pressureIncluded: caseMode.pressure,
       executionStatus: execution.status,
       solverDiagnostics: execution.diagnostics,
+      stiffnessStateHash: execution.stiffnessStateHash,
       recoveredEquilibrium,
       globalRecoveryDisagreement: recovered.globalRecoveryDisagreement,
+      recoveryLedger: recovered.actions.map((recoveredAction) => ({
+        elementId: recoveredAction.entry.elementId,
+        sourceElementId: recoveredAction.entry.sourceElementId,
+        nodeI: recoveredAction.entry.nodeI,
+        nodeJ: recoveredAction.entry.nodeJ,
+        jointDisplacement12: recoveredAction.jointDisplacement12,
+        globalStiffness: recoveredAction.entry.contribution.globalStiffness,
+        localAxes: recoveredAction.entry.axesResult.axes,
+        globalElasticAction: recoveredAction.globalElasticAction,
+        equivalentLoadGlobal: recoveredAction.entry.contribution.equivalentLoadGlobal,
+        initialStrainLoadGlobal: recoveredAction.entry.contribution.initialStrainLoadGlobal,
+        qGlobal: recoveredAction.action.qGlobal,
+        qLocal: recoveredAction.action.qLocal,
+        transformedLocalQGlobal: recoveredAction.transformedLocalQGlobal,
+      })),
       numericalDisplacementShift: shiftedAnalysis.numericalDisplacementShift.evidence,
       analysisNodeCount: shiftedAnalysis.positions.size,
       analysisElementCount: shiftedAnalysis.elements.length,
@@ -524,6 +546,9 @@ function buildFrameElement(input) {
     axesResult,
     material: input.material,
     section: input.section,
+    profile: isCaesarStraightPipeSpan(input.kind)
+      ? caesarStraightPipeFrameProfile()
+      : frameProfile(),
   });
   const length = frame.geometry.length;
   const lineWeight = input.gravityLineWeight
@@ -1258,7 +1283,13 @@ function recoverActions(execution, elements) {
       - entry.contribution.equivalentLoadGlobal[index]
       - entry.contribution.initialStrainLoadGlobal[index]);
     const action = { ...localRecovery, qGlobal };
-    return { entry, action, transformedLocalQGlobal: localRecovery.qGlobal };
+    return {
+      entry,
+      action,
+      jointDisplacement12: Object.freeze([...jointDisplacement12]),
+      globalElasticAction: Object.freeze([...globalElasticAction]),
+      transformedLocalQGlobal: localRecovery.qGlobal,
+    };
   });
   const disagreements = actions.flatMap(({ action, transformedLocalQGlobal }) =>
     action.qGlobal.map((value, index) => Math.abs(value - transformedLocalQGlobal[index])));
@@ -1523,7 +1554,7 @@ function compileUnloadedFrame(input) {
     material: input.material,
     section: input.section,
     localAxes: { result: input.axesResult, profile: FRAME_LOCAL_AXIS_PROFILE },
-    profile: frameProfile(),
+    profile: input.profile ?? frameProfile(),
     distributedLoads: [],
     temperature: null,
     releases: [],
@@ -1640,15 +1671,39 @@ function setAnalysisPosition(positions, nodeId, point, canMove) {
   positions.set(id, [...point]);
 }
 
-function restraintConstraints(rows) {
+function restraintConstraints(rows, authority, unitRows, representation) {
   const constraints = new Map();
+  const finite = representation.mode === 'CAESAR_DEFAULT_FINITE_STIFFNESS';
+  if (!finite && representation.mode !== 'FIXED_DOF') {
+    throw new TypeError(`Unsupported restraint representation ${representation.mode}.`);
+  }
+  let translationStiffness = null;
+  let rotationStiffness = null;
+  if (finite) {
+    if (unitRows.length !== 1 || unitRows[0].TRANS !== 'N./cm.' || unitRows[0].ROT_STIFF !== 'N.m./deg') {
+      throw new TypeError('BM4_L finite-restraint formulation requires ACCDB INPUT_UNITS N./cm. and N.m./deg.');
+    }
+    const trans = resolveCaesarConfigurationSetting(authority, 'DEFAULT_TRANS_RESTRAINT_STIFF', null).value;
+    const rot = resolveCaesarConfigurationSetting(authority, 'DEFAULT_ROT_RESTRAINT_STIFF', null).value;
+    if (trans.unit !== 'DISPLAYED_CAESAR_UNITS' || rot.unit !== 'DISPLAYED_CAESAR_UNITS') {
+      throw new TypeError('Default restraint stiffness authority must be expressed in displayed CAESAR units.');
+    }
+    translationStiffness = Number(trans.value) * 100;
+    rotationStiffness = Number(rot.value) * 180 / Math.PI;
+  }
   for (const row of rows) {
     const type = Number(row.RES_TYPEID);
     const nodeId = String(row.NODE_NUM);
     const dofs = type === 1 ? [...DOFS] : [dominantTranslationDof(row)];
     for (const dof of dofs) {
       const key = `${nodeId}:${dof}`;
-      constraints.set(key, {
+      constraints.set(key, finite ? {
+        declarationId: `ACCDB-C-${nodeId}-${dof}`,
+        kind: 'PARTIAL_RELEASE_SPRING',
+        nodeId,
+        dof,
+        stiffness: dof.startsWith('U') ? translationStiffness : rotationStiffness,
+      } : {
         declarationId: `ACCDB-C-${nodeId}-${dof}`,
         kind: 'NODAL_RESTRAINT',
         nodeId,
@@ -1987,8 +2042,8 @@ function requireSupportedLinearConfiguration(authority, solveProfile, effectiveC
   if (!['P1', 'MAX_DEFINED'].includes(solveProfile.bendPressureStiffening.pressureSource)) {
     throw new TypeError('The current ACCDB solver supports P1 or MAX_DEFINED bend pressure stiffening.');
   }
-  if (solveProfile.restraintRepresentation.mode !== 'FIXED_DOF') {
-    throw new TypeError('The current ACCDB solver supports only the provisional FIXED_DOF restraint representation.');
+  if (!['FIXED_DOF', 'CAESAR_DEFAULT_FINITE_STIFFNESS'].includes(solveProfile.restraintRepresentation.mode)) {
+    throw new TypeError(`Unsupported ACCDB restraint representation ${solveProfile.restraintRepresentation.mode}.`);
   }
   if (!solveProfile.bendAxialShape.enabled) {
     throw new TypeError('The current ACCDB bend formulation supports only BEND_AXIAL_SHAPE=YES.');
@@ -2034,6 +2089,31 @@ function compilerProfile() {
     unrepresentableFeatureRule: 'UNREPRESENTABLE_FEATURE_BLOCKS_COMPILATION_V1',
     minimumElementLength: { value: 1e-8, source: PROFILE_SOURCE },
     spanDirectionTolerance: { value: 1e-9, source: PROFILE_SOURCE },
+    semanticHash: '',
+  });
+}
+
+function isCaesarStraightPipeSpan(kind) {
+  return kind === 'FRAME' || kind === 'BEND_INCOMING_STRAIGHT' || kind === 'RIGID';
+}
+
+function caesarStraightPipeFrameProfile() {
+  return sealFrameElementProfile({
+    schema: 'fea-linear-frame-element-profile/v1',
+    profileId: 'LINEAR-FRAME-ELEMENT-R1',
+    straightPipeFormulation: 'PIPE_FRAME3D_TIMOSHENKO_V1',
+    shearDeformation: true,
+    shearCorrectionFactorY: {
+      value: 0.5,
+      source: 'INTERGRAPH-CAESAR-II-CAUX-2015-FKX-SHEAR-COEFFICIENT-2',
+    },
+    shearCorrectionFactorZ: {
+      value: 0.5,
+      source: 'INTERGRAPH-CAESAR-II-CAUX-2015-FKX-SHEAR-COEFFICIENT-2',
+    },
+    releaseRule: 'STATIC_CONDENSATION_V1',
+    thermalStrainApproximation: 'UNIFORM_TEMPERATURE_ALPHA_DELTA_T_V1',
+    releaseSingularityTolerance: { value: 1e-12, source: PROFILE_SOURCE },
     semanticHash: '',
   });
 }

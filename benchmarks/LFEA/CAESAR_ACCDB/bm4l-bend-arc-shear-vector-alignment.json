@@ -1,0 +1,26 @@
+{
+  "schema": "m047-bm4l-bend-arc-shear-vector-alignment/v1",
+  "classification": "MECHANISM_SHAPE_EVIDENCE_ONLY_AUTHORITY_BLOCKED",
+  "sourceAccdbSha256": "64c05a50e9ed0452622ff5880335460486f24ac8e6adecc9a300b549c9aa82f8",
+  "definition": {
+    "requiredCorrection": "CAESAR reference source-end action vector minus baseline LFEA source-replay action vector under the same CAESAR endpoint DOFs",
+    "candidateCorrection": "bend-arc-shear candidate source-replay action vector minus baseline source-replay action vector under the same CAESAR endpoint DOFs",
+    "cosineSimilarity": "dot(required,candidate)/(norm(required)*norm(candidate))",
+    "amplitudeRatio": "least-squares scalar dot(required,candidate)/dot(candidate,candidate); diagnostic only and never a fitted production coefficient",
+    "normReductionFraction": "1 - norm(required-candidate)/norm(required)"
+  },
+  "sources": {
+    "5": { "cosineSimilarity": 0.942347766478453, "amplitudeRatio": 1.101293012802189, "requiredCorrectionNorm": 402.08044110249546, "candidateCorrectionNorm": 344.0497680571996, "residualAfterCandidateNorm": 138.9902196486698, "normReductionFraction": 0.6543223558262079 },
+    "19": { "cosineSimilarity": 0.9999237809756174, "amplitudeRatio": 1.0830518511423632, "requiredCorrectionNorm": 163.26186051725657, "candidateCorrectionNorm": 150.7309337824773, "residualAfterCandidateNorm": 12.679724513300467, "normReductionFraction": 0.9223350482891243 },
+    "20": { "cosineSimilarity": 0.9996198284834447, "amplitudeRatio": 1.0350417602582782, "requiredCorrectionNorm": 647.8057827370936, "candidateCorrectionNorm": 625.6361146903375, "residualAfterCandidateNorm": 28.27815651876148, "normReductionFraction": 0.9563477862156752 },
+    "42": { "cosineSimilarity": 0.9994494564984091, "amplitudeRatio": 0.979868595551086, "requiredCorrectionNorm": 957.6392007300263, "candidateCorrectionNorm": 976.7758483502662, "residualAfterCandidateNorm": 37.36531534238846, "normReductionFraction": 0.960981844400371 },
+    "43": { "cosineSimilarity": 0.9996108501842679, "amplitudeRatio": 1.0291098235047806, "requiredCorrectionNorm": 422.86552943331867, "candidateCorrectionNorm": 410.7442779536315, "residualAfterCandidateNorm": 16.796049726782087, "normReductionFraction": 0.9602803998961787 },
+    "85": { "cosineSimilarity": 0.789345072055095, "amplitudeRatio": 3.3462752892644336, "requiredCorrectionNorm": 27.54063163027671, "candidateCorrectionNorm": 6.496495350632733, "residualAfterCandidateNorm": 22.76478451142905, "normReductionFraction": 0.1734109508802023 }
+  },
+  "interpretation": {
+    "dominantBends": ["19", "20", "42", "43"],
+    "statement": "For the dominant bend sources the candidate correction vector is essentially collinear with the CAESAR-required correction and has comparable amplitude. This strongly identifies a missing bend-member compliance subspace, but does not authorize applying the straight-pipe kappa to curved bends.",
+    "productionPromotion": "BLOCKED_PENDING_PRIMARY_CAESAR_CURVED_BEND_STIFFNESS_OR_SHEAR_AUTHORITY",
+    "benchmarkFitting": false
+  }
+}

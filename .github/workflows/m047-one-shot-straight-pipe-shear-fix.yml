@@ -1,0 +1,223 @@
+name: M047 one-shot CAESAR straight-pipe shear correction
+
+on:
+  push:
+    branches: [agent/m047-bm4l-root-cause]
+    paths: ['.github/workflows/m047-one-shot-straight-pipe-shear-fix.yml']
+
+permissions:
+  contents: write
+
+jobs:
+  validate-and-publish:
+    runs-on: windows-latest
+    timeout-minutes: 55
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: agent/m047-bm4l-root-cause
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+      - run: npm ci
+
+      - name: Install authenticated Microsoft ACE and fetch canonical source
+        shell: pwsh
+        run: |
+          $ErrorActionPreference='Stop'
+          New-Item -ItemType Directory -Force artifacts/straight-shear | Out-Null
+          $installer=Join-Path $PWD 'artifacts/straight-shear/accessdatabaseengine_X64.exe'
+          Invoke-WebRequest -Uri 'https://download.microsoft.com/download/3/5/C/35C84C36-661A-44E6-9324-8786B8DBE231/accessdatabaseengine_X64.exe' -OutFile $installer
+          $installerHash=(Get-FileHash $installer -Algorithm SHA256).Hash.ToLowerInvariant()
+          if($installerHash-ne'04e96c9f1a1f7d251a88aececf1dc10ff65950392787427c00814a43308003de'){throw"ACE installer hash mismatch $installerHash"}
+          $sig=Get-AuthenticodeSignature $installer
+          if($sig.Status-ne'Valid'-or$sig.SignerCertificate.Subject-notmatch'Microsoft'){throw'ACE installer signature invalid'}
+          $p=Start-Process $installer -ArgumentList '/quiet','/norestart' -Wait -PassThru
+          if($p.ExitCode-notin@(0,3010)){throw"ACE install failed $($p.ExitCode)"}
+          Remove-Item $installer -Force
+          $zip=Join-Path $PWD 'artifacts/straight-shear/BM4_L.zip'
+          Invoke-WebRequest -Uri 'https://raw.githubusercontent.com/reallaksh19/Common/45d51ea18624f5775805f399110c1738301c0d90/LFEA/BM4/BM4_L.zip' -OutFile $zip
+          $zipHash=(Get-FileHash $zip -Algorithm SHA256).Hash.ToLowerInvariant()
+          if($zipHash-ne'978617cba50fa0b1a16c2fa71dc1e0d38e55ac834b191f887d100c6951abd8b9'){throw"ZIP hash mismatch $zipHash"}
+          Expand-Archive $zip -DestinationPath artifacts/straight-shear/source -Force
+          $accdb=Join-Path $PWD 'artifacts/straight-shear/source/BM4_L.ACCDB'
+          $memberHash=(Get-FileHash $accdb -Algorithm SHA256).Hash.ToLowerInvariant()
+          if($memberHash-ne'64c05a50e9ed0452622ff5880335460486f24ac8e6adecc9a300b549c9aa82f8'){throw"ACCDB member hash mismatch $memberHash"}
+
+      - name: Run current governed baseline
+        shell: pwsh
+        run: |
+          $ErrorActionPreference='Stop'
+          New-Item -ItemType Directory -Force artifacts/straight-shear/before | Out-Null
+          node scripts/lfea-caesar-accdb-benchmark.mjs `
+            --accdb artifacts/straight-shear/source/BM4_L.ACCDB `
+            --profile benchmarks/LFEA/CAESAR_ACCDB/bm4l-validation.profile.json `
+            --solve-linear true `
+            --solve-cases L2,L3,L4,L5,L6,L14 `
+            --actual-out artifacts/straight-shear/before/actual.json `
+            --out artifacts/straight-shear/before/report.json
+
+      - name: Apply one-mechanism straight-pipe shear correction
+        shell: python
+        run: |
+          from pathlib import Path
+          path=Path('src/core/fea-benchmarks/caesar-accdb-linear-solve.js')
+          text=path.read_text()
+          replacements=[
+            (
+              """  const frame = input.stiffnessFrame ?? compileUnloadedFrame({\n    elementId: input.elementId,\n    axesResult,\n    material: input.material,\n    section: input.section,\n  });""",
+              """  const frame = input.stiffnessFrame ?? compileUnloadedFrame({\n    elementId: input.elementId,\n    axesResult,\n    material: input.material,\n    section: input.section,\n    profile: isCaesarStraightPipeSpan(input.kind)\n      ? caesarStraightPipeFrameProfile()\n      : frameProfile(),\n  });""",
+            ),
+            (
+              """function compileUnloadedFrame(input) {\n  return compileFrameElement({\n    elementId: input.elementId,\n    material: input.material,\n    section: input.section,\n    localAxes: { result: input.axesResult, profile: FRAME_LOCAL_AXIS_PROFILE },\n    profile: frameProfile(),""",
+              """function compileUnloadedFrame(input) {\n  return compileFrameElement({\n    elementId: input.elementId,\n    material: input.material,\n    section: input.section,\n    localAxes: { result: input.axesResult, profile: FRAME_LOCAL_AXIS_PROFILE },\n    profile: input.profile ?? frameProfile(),""",
+            ),
+            (
+              """function frameProfile() {\n  return sealFrameElementProfile({""",
+              """function isCaesarStraightPipeSpan(kind) {\n  return kind === 'FRAME' || kind === 'BEND_INCOMING_STRAIGHT';\n}\n\nfunction caesarStraightPipeFrameProfile() {\n  return sealFrameElementProfile({\n    schema: 'fea-linear-frame-element-profile/v1',\n    profileId: 'LINEAR-FRAME-ELEMENT-R1',\n    straightPipeFormulation: 'PIPE_FRAME3D_TIMOSHENKO_V1',\n    shearDeformation: true,\n    shearCorrectionFactorY: {\n      value: 0.5,\n      source: 'INTERGRAPH-CAESAR-II-CAUX-2015-FKX-SHEAR-COEFFICIENT-2',\n    },\n    shearCorrectionFactorZ: {\n      value: 0.5,\n      source: 'INTERGRAPH-CAESAR-II-CAUX-2015-FKX-SHEAR-COEFFICIENT-2',\n    },\n    releaseRule: 'STATIC_CONDENSATION_V1',\n    thermalStrainApproximation: 'UNIFORM_TEMPERATURE_ALPHA_DELTA_T_V1',\n    releaseSingularityTolerance: { value: 1e-12, source: PROFILE_SOURCE },\n    semanticHash: '',\n  });\n}\n\nfunction frameProfile() {\n  return sealFrameElementProfile({""",
+            ),
+          ]
+          for old,new in replacements:
+              count=text.count(old)
+              if count!=1:
+                  raise SystemExit(f'guarded replacement expected one match, found {count}: {old[:80]!r}')
+              text=text.replace(old,new)
+          path.write_text(text)
+
+      - name: Run formulation authority and regression gates
+        shell: pwsh
+        run: |
+          $ErrorActionPreference='Stop'
+          node --check src/core/fea-benchmarks/caesar-accdb-linear-solve.js
+          node scripts/lfea-m047-caesar-pipe-shear-authority-check.mjs
+          node scripts/lfea-b3.1-frame-element-check.mjs
+          node scripts/lfea-b3.2-piping-component-check.mjs
+          node scripts/lfea-b3.3-solver-check.mjs
+          node scripts/lfea-b3.4-recovery-check.mjs
+          node scripts/lfea-b3.6-sparse-assembly-check.mjs
+          node scripts/lfea-b3.8-thermal-expansion-check.mjs
+          node scripts/lfea-b3.9-gravity-self-weight-check.mjs
+          node scripts/lfea-b3.22-rigid-element-authority-check.mjs
+          node scripts/lfea-b3.23-reducer-condensation-check.mjs
+          npm run check:core-fea
+
+      - name: Run candidate six-case benchmark and proofs
+        shell: pwsh
+        run: |
+          $ErrorActionPreference='Stop'
+          New-Item -ItemType Directory -Force artifacts/straight-shear/after | Out-Null
+          node scripts/lfea-caesar-accdb-benchmark.mjs `
+            --accdb artifacts/straight-shear/source/BM4_L.ACCDB `
+            --profile benchmarks/LFEA/CAESAR_ACCDB/bm4l-validation.profile.json `
+            --solve-linear true `
+            --solve-cases L2,L3,L4,L5,L6,L14 `
+            --actual-out artifacts/straight-shear/after/actual.json `
+            --out artifacts/straight-shear/after/report.json
+          node scripts/lfea-m047-bm4l-recovery-proof.mjs `
+            --actual artifacts/straight-shear/after/actual.json `
+            --expected-source-sha 64c05a50e9ed0452622ff5880335460486f24ac8e6adecc9a300b549c9aa82f8 `
+            --out artifacts/straight-shear/after/recovery-proof.json
+
+      - name: Enforce physical acceptance gates and retain delta evidence
+        shell: pwsh
+        run: |
+          $ErrorActionPreference='Stop'
+          $before=Get-Content -Raw artifacts/straight-shear/before/report.json|ConvertFrom-Json -Depth 100
+          $after=Get-Content -Raw artifacts/straight-shear/after/report.json|ConvertFrom-Json -Depth 100
+          $beforeActual=Get-Content -Raw artifacts/straight-shear/before/actual.json|ConvertFrom-Json -Depth 100
+          $afterActual=Get-Content -Raw artifacts/straight-shear/after/actual.json|ConvertFrom-Json -Depth 100
+          $proof=Get-Content -Raw artifacts/straight-shear/after/recovery-proof.json|ConvertFrom-Json -Depth 100
+
+          function Counts($r,$c){
+            $case=@($r.qualification.cases|Where-Object{$_.caseId-eq$c})[0]
+            $rows=@($case.comparison.rows)
+            [ordered]@{
+              restraint=@($rows|Where-Object{$_.status-eq'FAIL'-and$_.entityKind-eq'NODE'-and$_.quantity-in@('FORCE','MOMENT')}).Count
+              displacementRotation=@($rows|Where-Object{$_.status-eq'FAIL'-and$_.entityKind-eq'NODE'-and$_.quantity-in@('DISPLACEMENT','ROTATION')}).Count
+              elementEnd=@($rows|Where-Object{$_.status-eq'FAIL'-and$_.entityKind-eq'ELEMENT'-and$_.quantity-like'GLOBAL_END_*'}).Count
+            }
+          }
+          function FindRow($r,$c,$kind,$prefix,$q,$x){
+            $case=@($r.qualification.cases|Where-Object{$_.caseId-eq$c})[0]
+            $rows=@($case.comparison.rows|Where-Object{$_.entityKind-eq$kind-and([string]$_.entityId).StartsWith($prefix)-and$_.quantity-eq$q-and$_.component-eq$x})
+            if($rows.Count-ne1){throw"Expected one row $c $prefix $q $x; found $($rows.Count)"}
+            $rows[0]
+          }
+          function AbsErr($r){[math]::Abs([double]$r.actualValue-[double]$r.referenceValue)}
+
+          $targets=@(
+            @('L2 node 20090 UY','L2','NODE','20090','FORCE','UY'),
+            @('L2 E4 TO MZ','L2','ELEMENT','INPUT_ELEMENT:4|','GLOBAL_END_MOMENT_TO','MZ'),
+            @('L2 E4 TO FY','L2','ELEMENT','INPUT_ELEMENT:4|','GLOBAL_END_FORCE_TO','FY'),
+            @('L2 E5 FROM MZ','L2','ELEMENT','INPUT_ELEMENT:5|','GLOBAL_END_MOMENT_FROM','MZ'),
+            @('L2 E5 FROM FY','L2','ELEMENT','INPUT_ELEMENT:5|','GLOBAL_END_FORCE_FROM','FY'),
+            @('L2 node 20120 RZ','L2','NODE','20120','ROTATION','RZ'),
+            @('L4 node 22120 UY','L4','NODE','22120','FORCE','UY'))
+          $signal=[System.Collections.Generic.List[object]]::new()
+          foreach($t in $targets){
+            $b=FindRow $before $t[1] $t[2] $t[3] $t[4] $t[5]
+            $a=FindRow $after $t[1] $t[2] $t[3] $t[4] $t[5]
+            $be=AbsErr $b;$ae=AbsErr $a
+            $signal.Add([ordered]@{name=$t[0];reference=[double]$b.referenceValue;before=[double]$b.actualValue;after=[double]$a.actualValue;beforeAbsoluteError=$be;afterAbsoluteError=$ae;improved=($ae-lt$be)})
+          }
+          foreach($name in @('L2 node 20090 UY','L2 E4 TO MZ','L2 E4 TO FY','L2 E5 FROM MZ','L2 E5 FROM FY','L2 node 20120 RZ')){
+            $entry=@($signal|Where-Object{$_.name-eq$name})[0]
+            if(-not$entry.improved){throw"Predicted L2 signature failed: $name did not improve"}
+          }
+
+          $beforeWeight=[double]$beforeActual.mechanics.cases.L2.gravityWeightN
+          $afterWeight=[double]$afterActual.mechanics.cases.L2.gravityWeightN
+          if([math]::Abs($afterWeight-$beforeWeight)-gt1e-9){throw"Gravity changed $beforeWeight -> $afterWeight"}
+          if($proof.status-ne'PASS'-or$proof.commonOperator.status-ne'PASS'){throw'Recovery/common-operator proof failed'}
+          foreach($c in @('L2','L3','L4','L5','L6','L14')){if($afterActual.mechanics.cases.$c.recoveredEquilibrium.status-ne'PASS'){throw"$c equilibrium failed"}}
+
+          $counts=[ordered]@{}
+          foreach($c in @('L2','L3','L4','L5','L6','L14')){$counts[$c]=[ordered]@{before=(Counts $before $c);after=(Counts $after $c)}}
+          foreach($c in @('L2','L4','L6')){
+            $bc=$counts[$c].before;$ac=$counts[$c].after
+            if(($ac.restraint+$ac.displacementRotation+$ac.elementEnd)-ge($bc.restraint+$bc.displacementRotation+$bc.elementEnd)){throw"$c aggregate primitive failures did not improve"}
+          }
+
+          $evidence=[ordered]@{
+            schema='m047-bm4l-caesar-straight-pipe-shear-fix/v1'
+            classification='ACCEPTED_PHYSICAL_FORMULATION'
+            caesarAuthority='INTERGRAPH-CAESAR-II-CAUX-2015-FKX-SHEAR-COEFFICIENT-2'
+            caesarShearCoefficient=2
+            lfeaKappa=0.5
+            scope=@('FRAME','BEND_INCOMING_STRAIGHT')
+            excludedScopes=@('BEND_ARC','REDUCER','RIGID')
+            sourceAccdbSha256='64c05a50e9ed0452622ff5880335460486f24ac8e6adecc9a300b549c9aa82f8'
+            issueDeclaredAccdbSha256='e21b0862851ea2bb6f20d55e4a3a94f501537b618b98dd46afa9f6777ee38d3c'
+            sourceHashDiscrepancyRemains=$true
+            thermalExpansionAuthority='[GUESSED] PROVISIONAL; L3/L14 deltas retained but not used to fit kappa'
+            beforeGravityWeightN=$beforeWeight
+            afterGravityWeightN=$afterWeight
+            recoveryAndEquilibriumPass=$true
+            commonOperator=$proof.commonOperator
+            highSignal=$signal
+            failureCounts=$counts
+            benchmarkFitting=$false
+          }
+          $evidence|ConvertTo-Json -Depth 20|Set-Content -Encoding utf8 artifacts/straight-shear/ab-evidence.json
+          Copy-Item artifacts/straight-shear/ab-evidence.json benchmarks/LFEA/CAESAR_ACCDB/bm4l-straight-pipe-shear-ab.json
+
+      - name: Commit accepted mechanics layer and evidence
+        shell: pwsh
+        run: |
+          $ErrorActionPreference='Stop'
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add src/core/fea-benchmarks/caesar-accdb-linear-solve.js scripts/lfea-m047-caesar-pipe-shear-authority-check.mjs benchmarks/LFEA/CAESAR_ACCDB/bm4l-straight-pipe-shear-ab.json
+          git diff --cached --check
+          git commit -m 'fix(lfea): apply CAESAR straight-pipe shear flexibility'
+          git pull --rebase origin agent/m047-bm4l-root-cause
+          git push origin HEAD:agent/m047-bm4l-root-cause
+
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: m047-straight-pipe-shear-fix
+          path: artifacts/straight-shear
+          if-no-files-found: warn

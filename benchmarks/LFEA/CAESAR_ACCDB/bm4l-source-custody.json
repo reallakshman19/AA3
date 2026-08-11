@@ -1,0 +1,25 @@
+{
+  "schema": "bm4l-source-custody-authority/v1",
+  "benchmarkId": "BM4_L",
+  "authorityRule": "PINNED_COMMON_COMMIT_AND_ZIP_SHA256_DEFINE_ACCDB_MEMBER_BYTES",
+  "source": {
+    "repository": "reallaksh19/Common",
+    "commit": "45d51ea18624f5775805f399110c1738301c0d90",
+    "path": "LFEA/BM4/BM4_L.zip",
+    "zip": {
+      "byteLength": 582488,
+      "sha256": "978617cba50fa0b1a16c2fa71dc1e0d38e55ac834b191f887d100c6951abd8b9"
+    },
+    "member": {
+      "fileName": "BM4_L.ACCDB",
+      "byteLength": 5136384,
+      "sha256": "64c05a50e9ed0452622ff5880335460486f24ac8e6adecc9a300b549c9aa82f8"
+    }
+  },
+  "contradictedDeclaration": {
+    "sha256": "e21b0862851ea2bb6f20d55e4a3a94f501537b618b98dd46afa9f6777ee38d3c",
+    "classification": "CONTRADICTED_BY_PINNED_ARCHIVE_MEMBER",
+    "note": "The exact pinned ZIP member retains sha256 64c05a50... before and after authenticated Microsoft.ACE.OLEDB.12.0 open and after the production table export. The conflicting declaration is retained as evidence and is not used as solver source authority."
+  },
+  "fallbackPolicy": "NONE"
+}

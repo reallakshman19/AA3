@@ -1,0 +1,107 @@
+{
+  "schema": "m047-bm4l-friction-authority/v1",
+  "benchmarkId": "BM4_L",
+  "scope": "FRICTION_LOADCASE_AND_RESTRAINT_AUTHORITY_ONLY",
+  "stackBase": {
+    "pr": 1042,
+    "branch": "agent/m047-bm4l-local-production-harness",
+    "sha": "b25500333399bcc74e93ab8ed843900bb2a2aa51",
+    "qualification": {
+      "workflowRun": 31513907633,
+      "artifactId": 9110308571,
+      "artifactDigest": "sha256:57684331169984e7770382a3d292fcb7c24bd30c2404fd487c2a5f66e8a907eb",
+      "canonicalPassRatePercent": 99.5994427029
+    }
+  },
+  "sources": {
+    "commonCommit": "179c4831cf521cf797c13699cfbbd118315c9244",
+    "loadCaseReport": {
+      "path": "LFEA/BM4/Loadcasereport_BM4_L.txt",
+      "gitBlobSha": "be62eeb08af26dddcd59146e21188c108c4600dd",
+      "caesarVersion": "14.00.00.0910",
+      "build": "231113"
+    },
+    "inputXml": {
+      "path": "LFEA/BM4/InputXML_BM4.xml",
+      "gitBlobSha": "3423d220374a17f67addd3c8c0c44300ffa46251"
+    },
+    "validationProfile": {
+      "path": "benchmarks/LFEA/CAESAR_ACCDB/bm4l-validation.profile.json",
+      "gitBlobShaAtBase": "1ac9564bb0ce9e33ebf07bb6646f0f6d7579324a"
+    }
+  },
+  "configurationAuthority": {
+    "modelCoefficientOfFrictionMu": 0.3,
+    "profileFrictionStiffnessDisplayedCaesarUnits": 1000000,
+    "currentLinearSolverBoundary": "POSITIVE_EFFECTIVE_FRICTION_IS_UNSUPPORTED",
+    "unresolvedStaticFrictionControls": [
+      "FRICTION_ANGLE_VARIATION",
+      "FRICTION_NORMAL_FORCE_VARIATION",
+      "FRICTION_SLIDE_MULTIPLIER",
+      "STATIC_FRICTION_ALGORITHM_DETAILS"
+    ]
+  },
+  "cases": [
+    {"caseId":"L1","number":1,"stressType":"HYD","definition":"WW+HP","frictionMultiplier":1,"output":"Disp/Force/Stress","role":"LATER_HYDRO_FRICTION"},
+    {"caseId":"L2","number":2,"stressType":"SUS","definition":"W","frictionMultiplier":0,"output":"Disp/Force/Stress","role":"QUALIFIED_LINEAR_BASELINE"},
+    {"caseId":"L3","number":3,"stressType":"OPE","definition":"T1","frictionMultiplier":0,"output":"Disp/Force/Stress","role":"QUALIFIED_LINEAR_BASELINE"},
+    {"caseId":"L4","number":4,"stressType":"SUS","definition":"P1","frictionMultiplier":0,"output":"Disp/Force/Stress","role":"QUALIFIED_LINEAR_BASELINE"},
+    {"caseId":"L5","number":5,"stressType":"OPE","definition":"W+T1+P1","frictionMultiplier":0,"output":"Disp/Force/Stress","role":"NO_FRICTION_COUNTERPART_L7"},
+    {"caseId":"L6","number":6,"stressType":"SUS","definition":"W+P1","frictionMultiplier":0,"output":"Disp/Force/Stress","role":"NO_FRICTION_COUNTERPART_L13"},
+    {"caseId":"L7","number":7,"stressType":"OPE","definition":"W+T1+P1","frictionMultiplier":1,"output":"Disp/Force/Stress","role":"SECOND_PRIMARY_FRICTION_TARGET"},
+    {"caseId":"L8","number":8,"stressType":"Alt-SUS","definition":"W+P1","frictionMultiplier":1,"output":"Stress","role":"LATER_STRESS_ONLY"},
+    {"caseId":"L9","number":9,"stressType":"OPE","definition":"W+T2+P1","frictionMultiplier":1,"output":"Disp/Force/Stress","role":"DEFER_PENDING_T2_AUTHORITY"},
+    {"caseId":"L10","number":10,"stressType":"Alt-SUS","definition":"W+P1","frictionMultiplier":1,"output":"Stress","role":"LATER_STRESS_ONLY"},
+    {"caseId":"L11","number":11,"stressType":"OPE","definition":"W+T3+P1","frictionMultiplier":1,"output":"Disp/Force/Stress","role":"DEFER_PENDING_T3_AUTHORITY"},
+    {"caseId":"L12","number":12,"stressType":"Alt-SUS","definition":"W+P1","frictionMultiplier":1,"output":"Stress","role":"LATER_STRESS_ONLY"},
+    {"caseId":"L13","number":13,"stressType":"SUS","definition":"W+P1","frictionMultiplier":1,"output":"Disp/Force/Stress","role":"FIRST_PRIMARY_FRICTION_TARGET"},
+    {"caseId":"L14","number":14,"stressType":"EXP","definition":"L14=L5-L6","frictionMultiplier":null,"combinationMethod":"ALG","output":"Disp/Force/Stress","role":"QUALIFIED_LINEAR_DERIVED_BASELINE"},
+    {"caseId":"L15","number":15,"stressType":"EXP","definition":"L15=L7-L13","frictionMultiplier":null,"combinationMethod":"ALG","output":"Disp/Force/Stress","role":"FIRST_FRICTION_DERIVED_TARGET"},
+    {"caseId":"L16","number":16,"stressType":"EXP","definition":"L16=L9-L13","frictionMultiplier":null,"combinationMethod":"ALG","output":"Disp/Force/Stress","role":"DEFER_PENDING_T2_AUTHORITY"},
+    {"caseId":"L17","number":17,"stressType":"EXP","definition":"L17=L7-L9","frictionMultiplier":null,"combinationMethod":"ALG","output":"Disp/Force/Stress","role":"DEFER_PENDING_T2_AUTHORITY"},
+    {"caseId":"L18","number":18,"stressType":"EXP","definition":"L18=L11-L13","frictionMultiplier":null,"combinationMethod":"ALG","output":"Disp/Force/Stress","role":"DEFER_PENDING_T3_AUTHORITY"},
+    {"caseId":"L19","number":19,"stressType":"EXP","definition":"L19=L7-L11","frictionMultiplier":null,"combinationMethod":"ALG","output":"Disp/Force/Stress","role":"DEFER_PENDING_T3_AUTHORITY"},
+    {"caseId":"L20","number":20,"stressType":"EXP","definition":"L20=L9-L11","frictionMultiplier":null,"combinationMethod":"ALG","output":"Disp/Force/Stress","role":"DEFER_PENDING_T2_T3_AUTHORITY"}
+  ],
+  "qualificationPlan": [
+    "F0_SOURCE_INVENTORY",
+    "F1_GENERIC_3D_CONTACT_FRICTION_KERNEL",
+    "F2_L13_VS_L6",
+    "F3_L7_VS_L5_AND_L15_ALGEBRA",
+    "F4_HYDRO_L1",
+    "F5_T2_T3_FAMILY_AFTER_THERMAL_AUTHORITY"
+  ],
+  "acceptanceInvariants": [
+    "FRICTION_ZERO_IDENTITY_REPRODUCES_LINEAR_BASELINE",
+    "NO_CHANGE_TO_QUALIFIED_LINEAR_OPERATOR_OR_TOLERANCES",
+    "GLOBAL_FORCE_AND_MOMENT_EQUILIBRIUM",
+    "CONTACT_ADMISSIBILITY",
+    "FRICTION_BOUND_ADMISSIBILITY",
+    "DETERMINISTIC_STATE_HISTORY",
+    "NONCONVERGENCE_FAILS_CLOSED",
+    "ALGEBRAIC_CASES_ARE_DERIVED_FROM_CONVERGED_PRIMARY_CASES"
+  ],
+  "officialDocumentation": [
+    {
+      "topic": "LOAD_CASE_REPORT_INCLUDES_FRICTION_MULTIPLIER",
+      "url": "https://docs.hexagonali.com/r/en-US/CAESAR-II-Users-Guide/Version-14/333024"
+    },
+    {
+      "topic": "NONLINEAR_RESTRAINTS_AND_FRICTION_COMPLICATE_LOAD_CASE_COMBINATIONS",
+      "url": "https://docs.hexagonali.com/r/en-US/CAESAR-II-Users-Guide/Version-12/336084?contentId=Mz~429yOimLaKNRXMVrNCw"
+    },
+    {
+      "topic": "LOAD_CASE_FRICTION_FACTOR_SCALING_EXISTS",
+      "url": "https://docs.hexagonali.com/r/en-US/CAESAR-II-Users-Guide/Version-12/336249?contentId=RSfZDB3qo5PUCEjY4DSjyQ"
+    },
+    {
+      "topic": "STATIC_CONFIGURATION_EXPOSES_FRICTION_CONTROLS",
+      "url": "https://docs.hexagonali.com/r/en-US/CAESAR-II-Users-Guide/Version-14/998595?contentId=RIPrPnsC7Tnol7UqxE2brg"
+    }
+  ],
+  "result": {
+    "status": "F0_AUTHORITY_READY_F1_BLOCKED_PENDING_STATIC_ALGORITHM_CONTROLS",
+    "newMechanicsAuthorized": false,
+    "nextStackBranch": "agent/m047-bm4l-friction-kernel"
+  }
+}

@@ -162,15 +162,15 @@ test('3D Edit provides resizable persistent inspector, selection focus, status b
     await commandPanel.locator(':scope > summary').click();
   }
   await expect(host).toHaveAttribute('data-topology-edit-source-visual-cache', /MISS|HIT/);
-  await host.locator('[data-command-action="move-positive-z"]').click();
-  await expect(host.locator('[data-role="topology-edit-status"]'))
-    .toContainText('SUPPORT_GEOMETRY_POLICY_REQUIRED');
+  const move = host.locator('[data-command-action="move-positive-z"]');
+  await expect(move).toBeDisabled();
   await expect(host).toHaveAttribute('data-topology-edit-active-command-count', '0');
   await expect(host).toHaveAttribute('data-topology-edit-draft-state', 'clean');
 
   const safeNodeId = await selectUnrestrainedNode(page);
   await expect(host.locator('[data-role="topology-edit-selection-summary"]')).toHaveAttribute('title', safeNodeId);
-  await host.locator('[data-command-action="move-positive-z"]').click();
+  await expect(move).toBeEnabled();
+  await move.click();
   await expect(host).toHaveAttribute('data-topology-edit-active-command-count', '1');
   await expect(host).toHaveAttribute('data-topology-edit-draft-state', 'saved');
   await expect(host).toHaveAttribute('data-topology-edit-source-visual-cache', 'HIT');

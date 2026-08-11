@@ -52,20 +52,28 @@ assert.match(surface, /Append-only engineering review evidence/u);
 assert.match(surface, /Undo compensates a prior event; it never deletes history/u);
 console.log('P06C-UI-04 PASS selected-cell Trace uses one source/provenance/review/ledger language');
 
+assert.match(surface, /reviewableSelection/u);
+assert.match(surface, /selection\.inFilteredSet !== false/u);
+assert.match(surface, /selection\.inPreset !== false/u);
+assert.match(surface, /outside the current indexed filter or exception queue/u);
+assert.match(surface, /outside the current column preset/u);
+assert.match(surface, /Review actions are disabled/u);
+console.log('P06C-UI-05 PASS review actions remain stable through viewport recycling but fail closed when filters or presets hide selection');
+
 assert.doesNotMatch(surface, /EventBus|publish\(|dispatchEvent|masterDataController|applyMaster|runLinearPiping|solveInputXml|compileSolver|factorization/u);
 assert.doesNotMatch(surface, /innerHTML|insertAdjacentHTML|outerHTML/u);
 assert.doesNotMatch(surface, /Date\.now|new Date|Math\.random|randomUUID|localeCompare/u,
   'Review surface must consume the explicit nowUtc provider rather than reading ambient clock/entropy itself.');
 assert.doesNotMatch(session, /Date\.now|new Date|Math\.random|randomUUID|localeCompare/u);
 assert.match(session, /E_P06_REVIEW_MUTATED_SOURCE/u);
-console.log('P06C-UI-05 PASS review surface/session own no model/master/solver mutation or hidden time/entropy authority');
+console.log('P06C-UI-06 PASS review surface/session own no model/master/solver mutation or hidden time/entropy authority');
 
 assert.match(css, /\.lfea-phase1-review-ledger/u);
 assert.match(css, /\.lfea-phase1-review-ledger__trace/u);
 assert.match(css, /\.lfea-phase1-review-ledger__actions/u);
 assert.match(css, /\.lfea-phase1-review-ledger__feedback/u);
 assert.doesNotMatch(ui, /PREFLIGHT_LINE_KEY_ROW_CAP|PREFLIGHT_COMPONENT_ROW_CAP/u);
-console.log('P06C-UI-06 PASS review ledger is additive to the already-virtualized cap-free Phase-1 review layout');
+console.log('P06C-UI-07 PASS review ledger is additive to the already-virtualized cap-free Phase-1 review layout');
 
 console.log(JSON.stringify({
   check: 'lfea-preflight-phase1-review-surface',
@@ -76,6 +84,7 @@ console.log(JSON.stringify({
     'reviewDisposition', 'proposalIds', 'reviewEventIds', 'ledgerHash',
   ],
   explicitHostTimestamp: true,
+  hiddenSelectionReviewBlocked: true,
   coreReadsAmbientClock: false,
   sourceMutationAuthority: false,
   solverAuthority: false,

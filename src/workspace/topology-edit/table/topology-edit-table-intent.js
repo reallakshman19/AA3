@@ -177,11 +177,7 @@ function normalizeValveReplacement(requestedValue, geometryPolicy, row) {
     throw new RangeError('TopologyEditTableIntent: M06 replacement catalogue record must be a BALL valve.');
   }
   const observedDn = finitePositive(row.fields.dnInMm);
-  if (observedDn === null) {
-    throw new RangeError(
-      'TopologyEditTableIntent: replacement valve target nominal size must be positive and finite.',
-    );
-  }
+  if (observedDn === null) throw new RangeError('TopologyEditTableIntent: replacement valve target nominal size must be positive and finite.');
   if (Math.abs(observedDn - normalized.catalogueBinding.nominalSizeMm) > 1e-9) {
     throw new RangeError('TopologyEditTableIntent: replacement valve nominal size differs from the target row.');
   }

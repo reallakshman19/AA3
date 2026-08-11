@@ -9,12 +9,15 @@ const NAV_ITEMS = Object.freeze([
   { id: 'compare', label: 'Compare', state: 'available' },
 ]);
 
-export function renderLfeaStandaloneLayout(rootElement, identity = {}) {
+export function renderLfeaStandaloneLayout(rootElement, identity = {}, options = {}) {
   if (!rootElement?.ownerDocument) {
     throw new TypeError('Standalone LFEA requires a DOM root element.');
   }
 
   const documentRef = rootElement.ownerDocument;
+  const onViewActivated = typeof options.onViewActivated === 'function'
+    ? options.onViewActivated
+    : null;
   rootElement.replaceChildren();
   rootElement.dataset.application = 'LFEA';
   rootElement.dataset.mode = 'standalone';
@@ -72,12 +75,6 @@ export function renderLfeaStandaloneLayout(rootElement, identity = {}) {
     view.dataset.viewId = item.id;
     view.dataset.state = item.state;
     view.hidden = true;
-    if (item.state === 'planned') {
-      const placeholder = documentRef.createElement('p');
-      placeholder.className = 'lfea-standalone-planned';
-      placeholder.textContent = `${item.label} remains outside the current separation batch.`;
-      view.append(placeholder);
-    }
     main.append(view);
     viewRoots.set(item.id, view);
   }
@@ -108,6 +105,7 @@ export function renderLfeaStandaloneLayout(rootElement, identity = {}) {
       if (active) node.setAttribute('aria-current', 'page');
       else node.removeAttribute?.('aria-current');
     }
+    onViewActivated?.(activeViewId);
     return activeViewId;
   }
 
@@ -117,7 +115,7 @@ export function renderLfeaStandaloneLayout(rootElement, identity = {}) {
 
   shell.append(header, nav, main);
   rootElement.append(shell);
-  activate('source');
+  activate(validInitialView(options.initialViewId) ? options.initialViewId : 'source');
 
   return Object.freeze({
     statusRoot,
@@ -141,6 +139,10 @@ export function clearLfeaStandaloneLayout(rootElement) {
     delete rootElement.dataset.application;
     delete rootElement.dataset.mode;
   }
+}
+
+function validInitialView(viewId) {
+  return NAV_ITEMS.some((entry) => entry.id === viewId && entry.state === 'available');
 }
 
 function formatIdentity(identity) {

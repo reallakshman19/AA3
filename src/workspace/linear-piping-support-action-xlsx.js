@@ -1,4 +1,5 @@
 import * as XLSX from 'xlsx';
+import { INTERFACE_SIGN_CONVENTIONS } from '../core/linear-piping-interface/index.js';
 import { requireCurrentLinearPipingPresentation } from '../core/linear-piping-presentation/index.js';
 import { requireSupportActionTriad } from '../core/linear-piping-support-action-triad/index.js';
 import { canonicalStringify, semanticHash } from '../core/shared-piping-model/canonical-json.js';
@@ -11,10 +12,6 @@ export const SUPPORT_ACTION_XLSX_MEDIA_TYPE =
 const HASH_PATTERN = /^fnv1a64:[0-9a-f]{16}$/u;
 const ENGINEERING_SHEET = 'Engineering Loads';
 const AUDIT_SHEET = 'Audit Actions';
-const REPORTING_SIGN_CONVENTIONS = Object.freeze([
-  'FORCE_ON_PIPE_FROM_INTERFACE',
-  'FORCE_ON_INTERFACE_FROM_PIPE',
-]);
 
 export function createLinearPipingSupportActionWorkbookModel(input) {
   requireRecord(input, 'supportActionXlsxInput');
@@ -341,7 +338,7 @@ function requireText(value, field) {
 }
 
 function requireReportingSignConvention(value, field) {
-  if (!REPORTING_SIGN_CONVENTIONS.includes(value)) {
+  if (!INTERFACE_SIGN_CONVENTIONS.includes(value)) {
     fail(
       `${field} must be a recognized interface reporting sign convention.`,
       'PIPING_SUPPORT_ACTION_XLSX_SIGN_CONVENTION_INVALID',

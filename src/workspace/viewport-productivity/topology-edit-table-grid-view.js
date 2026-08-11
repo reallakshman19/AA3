@@ -58,7 +58,7 @@ export function renderTopologyEditTableGrid(runtime) {
       </div>
       <div class="topology-edit-table__lower" data-table-lower-region>
         ${window.renderedRows < rows.length ? `<p class="topology-edit-table__notice" data-table-window-notice>Rendering rows ${window.start + 1}–${window.end} of ${rows.length} while scrolling.</p>` : ''}
-        ${primary ? editorHtml(primary, staged.get(primary.identity.canonicalId), runtime.projection) : '<p class="topology-edit-table__notice">Select an exact canonical row to inspect or edit it.</p>'}
+        ${primary ? editorHtml(primary, staged.get(primary.identity.canonicalId), runtime) : '<p class="topology-edit-table__notice">Select an exact canonical row to inspect or edit it.</p>'}
         ${primary ? renderTopologyEditTableAllProperties(primary, runtime) : ''}
         ${stagedPanel(runtime)}
         ${validationPanel(runtime)}
@@ -135,8 +135,13 @@ function pointInputs(role, values) {
   }).join('');
 }
 
-function editorHtml(row, stagedIntent, projection) {
-  const engineering = renderTopologyEditTableEngineeringEditor(row, stagedIntent, projection);
+function editorHtml(row, stagedIntent, runtime) {
+  const engineering = renderTopologyEditTableEngineeringEditor(
+    row,
+    stagedIntent,
+    runtime.projection,
+    runtime.controller.professionalRuntime?.catalogue ?? null,
+  );
   if (engineering) return engineering;
   const identity = `<div class="topology-edit-table__identity"><strong>${escapeHtml(row.fields.tag ?? row.identity.canonicalId)}</strong><code>${escapeHtml(row.identity.canonicalId)}</code><span>${escapeHtml(row.elementType)}</span></div>`;
   if (row.elementType !== 'PIPE' || row.identity.canonicalKind !== 'EDGE') {

@@ -185,6 +185,7 @@ test('available but mismatched source evidence is incompatible rather than neare
     'VALVE-DN100-GLOBE-600-B',
     'VALVE-DN25-BALL-150-XYZ-B',
     'VALVE-DN25-GATE-150-XYZ-A',
+    'VALVE-DN80-BALL-150-Q3-B',
   ]);
   assert.equal(context.recommendedRecordId, null);
   assert.equal(context.exactCandidateCount, 0);

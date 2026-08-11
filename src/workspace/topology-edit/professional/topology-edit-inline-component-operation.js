@@ -7,8 +7,15 @@ import {
   assertTopologyEditSpecificationCatalogue,
   assertTopologyEditSpecificationRecord,
 } from './topology-edit-spec-catalog.js';
+import {
+  topologyEditSpecificationCatalogueBinding,
+} from './topology-edit-spec-catalog-binding.js';
 import { deriveTopologyEditChangedScope } from './topology-edit-change-scope.js';
 import { createTopologyEditOperationPlan } from './topology-edit-operation-plan.js';
+
+export {
+  topologyEditSpecificationCatalogueBinding as topologyEditInlineCatalogueBinding,
+} from './topology-edit-spec-catalog-binding.js';
 
 const COMPONENT_TYPES = new Set(['FLANGE', 'VALVE', 'REDUCER']);
 const DIRECTIONS = new Set(['FROM_TO', 'TO_FROM']);
@@ -49,7 +56,7 @@ export function planTopologyEditInlineComponentOperation(input = {}) {
     lengthAuthority: length.authority,
     direction,
     placement,
-    catalogueBinding: topologyEditInlineCatalogueBinding(catalogue, record),
+    catalogueBinding: topologyEditSpecificationCatalogueBinding(catalogue, record),
   });
   assertTopologyEditInlineComponentTarget(topology, payload);
   const changedScope = deriveTopologyEditChangedScope(topology, {
@@ -91,42 +98,6 @@ export function planTopologyEditInlineComponentOperation(input = {}) {
     changedScope,
     unresolvedEvidence: [],
   });
-}
-
-export function topologyEditInlineCatalogueBinding(catalogueInput, recordInput) {
-  const catalogue = assertTopologyEditSpecificationCatalogue(catalogueInput);
-  const record = assertTopologyEditSpecificationRecord(recordInput);
-  return {
-    catalogueHash: catalogue.catalogueHash,
-    sourceHash: catalogue.authority.sourceHash,
-    recordId: record.recordId,
-    recordHash: record.recordHash,
-    componentType: record.componentType,
-    nominalSizeMm: record.nominalSizeMm,
-    outsideDiameterMm: record.outsideDiameterMm,
-    secondaryNominalSizeMm: record.secondaryNominalSizeMm,
-    secondaryOutsideDiameterMm: record.secondaryOutsideDiameterMm,
-    pipingClass: record.pipingClass,
-    pressureClass: record.pressureClass,
-    materialSpecification: record.materialSpecification,
-    componentLengthMm: record.componentLengthMm,
-    componentMassKg: record.componentMassKg,
-    endConnectionFrom: record.endConnectionFrom,
-    endConnectionTo: record.endConnectionTo,
-    valveType: record.valveType,
-    valveFaceToFaceMm: record.valveFaceToFaceMm,
-    flangeClass: record.flangeClass,
-    flangeFacing: record.flangeFacing,
-    flangeType: record.flangeType,
-    flangeThicknessMm: record.flangeThicknessMm,
-    flangeOutsideDiameterMm: record.flangeOutsideDiameterMm,
-    boltCircleDiameterMm: record.boltCircleDiameterMm,
-    boltHoleCount: record.boltHoleCount,
-    boltHoleDiameterMm: record.boltHoleDiameterMm,
-    reducerType: record.reducerType,
-    reducerOrientation: record.reducerOrientation,
-    sourceReference: record.sourceReference,
-  };
 }
 
 export function topologyEditInlineInsertionLength(recordInput, value) {

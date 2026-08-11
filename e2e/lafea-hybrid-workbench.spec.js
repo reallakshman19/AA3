@@ -279,7 +279,7 @@ async function mountP06Scenario(page, masterWallThickness) {
   return page.evaluate(async ({ fixtureUrl, wallThickness }) => {
     const fixture = await import(fixtureUrl);
     const root = document.createElement('main');
-    root.id = 'lfea-p06-browser-root';
+    root.id = 'lafea-p06-browser-root';
     document.body.replaceChildren(root);
     return fixture.mountP06MasterReview(root, { masterWallThickness: wallThickness });
   }, { fixtureUrl: P06_FIXTURE_URL, wallThickness: masterWallThickness });

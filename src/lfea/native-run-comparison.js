@@ -63,10 +63,10 @@ export function extractLfeaComparableQuantities(runRecord) {
   const recoveredByCase = new Map(recovery.caseRecoveries.map((row) => [row.caseId, row]));
   const quantities = [];
   for (const rawCase of raw.caseExecutions) {
-    quantities.push(...rawVectorQuantities(rawCase, 'displacement'));
-    quantities.push(...rawVectorQuantities(rawCase, 'reactions'));
+    quantities.push(...rawVectorQuantities(raw, rawCase, 'displacement'));
+    quantities.push(...rawVectorQuantities(raw, rawCase, 'reactions'));
     const recoveredCase = recoveredByCase.get(rawCase.caseId);
-    if (recoveredCase) quantities.push(...recoveredActionQuantities(rawCase, recoveredCase, recovery));
+    if (recoveredCase) quantities.push(...recoveredActionQuantities(raw, rawCase, recoveredCase, recovery));
   }
   return Object.freeze(quantities.sort((left, right) => compareAscii(left.slotId, right.slotId)));
 }
@@ -80,11 +80,12 @@ export function compareQuantityPair(left, right, slotId = null) {
     if (left[field] !== right[field]) reasons.push(code);
   }
   if (basisUnavailable(left.basisId) || basisUnavailable(right.basisId)) reasons.push('BASIS_UNAVAILABLE');
+  if (methodUnavailable(left.methodIdentity) || methodUnavailable(right.methodIdentity)) reasons.push('METHOD_IDENTITY_UNAVAILABLE');
   if (!Number.isFinite(left.value) || !Number.isFinite(right.value)) reasons.push('VALUE_UNAVAILABLE');
   return comparisonRow(left, right, slotId ?? left.slotId, reasons);
 }
 
-function rawVectorQuantities(caseRow, kind) {
+function rawVectorQuantities(rawBatch, caseRow, kind) {
   const execution = caseRow.execution;
   const rows = kind === 'displacement' ? execution.displacement : execution.reactions;
   return rows.map((row) => {
@@ -98,13 +99,13 @@ function rawVectorQuantities(caseRow, kind) {
       stationIdentity: row.dof,
       physicalLoadCaseHash: caseRow.physicalLoadCaseHash,
       caseId: caseRow.caseId,
-      methodIdentity: `SOLVER:${caseRow.solverProfileSemanticHash}`,
+      methodIdentity: governedMethodIdentity(rawBatch, caseRow),
       value: row.value,
     });
   });
 }
 
-function recoveredActionQuantities(rawCase, recoveredCase, recoveryBatch) {
+function recoveredActionQuantities(rawBatch, rawCase, recoveredCase, recoveryBatch) {
   const axisByElement = new Map(rawCase.elementLedger.map((row) => [row.elementId, row.localAxisResultSemanticHash]));
   const rows = [];
   for (const action of recoveredCase.recovery.elementActions) {
@@ -125,10 +126,7 @@ function recoveredActionQuantities(rawCase, recoveredCase, recoveryBatch) {
             physicalLoadCaseHash: recoveredCase.physicalLoadCaseHash,
             caseId: recoveredCase.caseId,
             resultAuthority: 'RECOVERED_B3.4_ELEMENT_ACTION',
-            methodIdentity: semanticHash({
-              solverProfileSemanticHash: rawCase.solverProfileSemanticHash,
-              recoveryProfileSemanticHash: recoveryBatch.recoveryProfileSemanticHash,
-            }),
+            methodIdentity: governedMethodIdentity(rawBatch, rawCase, recoveryBatch.recoveryProfileSemanticHash),
             value: action[basis][end][field],
           }));
         }
@@ -136,6 +134,16 @@ function recoveredActionQuantities(rawCase, recoveredCase, recoveryBatch) {
     }
   }
   return rows;
+}
+
+function governedMethodIdentity(rawBatch, caseRow, recoveryProfileHash = null) {
+  return [
+    recoveryProfileHash ? 'B3.4' : 'B3.3',
+    rawBatch.requestedProfileId ?? 'UNAVAILABLE',
+    caseRow.frameElementProfileSemanticHash ?? 'UNAVAILABLE',
+    caseRow.solverProfileSemanticHash ?? 'UNAVAILABLE',
+    ...(recoveryProfileHash ? [recoveryProfileHash ?? 'UNAVAILABLE'] : []),
+  ].join(':');
 }
 
 function displacementDescriptor(dof, translation) {
@@ -193,6 +201,10 @@ function comparisonRow(left, right, slotId, reasons) {
 
 function basisUnavailable(basisId) {
   return String(basisId ?? '').endsWith(':UNAVAILABLE');
+}
+
+function methodUnavailable(methodIdentity) {
+  return String(methodIdentity ?? '').split(':').includes('UNAVAILABLE');
 }
 
 function requireRunRecord(record) {

@@ -15,6 +15,7 @@ const layout = source('src/workspace/workspace-layout.js');
 const bootstrap = source('src/workspace/bootstrap.js');
 const client = source('src/workspace/lfea-worker-client.js');
 const worker = source('src/workspace/lfea-worker.js');
+const controller = source('src/workspace/lfea-workbench-controller.js');
 const store = [
   source('src/workspace/lfea-workbench-store.js'),
   source('src/workspace/lfea-workbench-run-store.js'),
@@ -55,6 +56,37 @@ assert.match(store, /state\.packageValue\?\.semanticHash !== activeRun\.inputSem
 assert.match(store, /LFEA_STALE_RESULT_REJECTED/u);
 assert.match(store, /LFEA_RUN_CANCELLED_MODEL_CHANGED/u);
 assert.match(store, /beforeCommittedMutation\(activeRun\)/u);
+
+assert.match(
+  store,
+  /function run\(optionsOverride = pipelineOptions\)[\s\S]*?const running = beginRun\(\);[\s\S]*?return executeActiveRun\(running\.activeRun, optionsOverride\)/u,
+  'standalone synchronous run must delegate through the identity-safe started-run executor',
+);
+assert.match(
+  store,
+  /function executeActiveRun\(identity, optionsOverride = pipelineOptions\)[\s\S]*?!running\.activeRun \|\| !sameRunIdentity\(identity, running\.activeRun\)[\s\S]*?executeLfeaWorkbench\([\s\S]*?requirePackage\(running\),[\s\S]*?optionsOverride/u,
+  'started synchronous execution must verify active run identity before consuming explicit/current options',
+);
+assert.doesNotMatch(
+  controller,
+  /if \(!this\.workerClient\) return this\.store\.run\(\)/u,
+  'no-Worker controller path must not execute begin/solve/complete in one unpaintable task',
+);
+assert.match(
+  controller,
+  /if \(!this\.workerClient\) \{[\s\S]*?const running = this\.store\.beginRun\(\);[\s\S]*?const identity = running\.activeRun;[\s\S]*?await yieldRunFeedbackFrame\(this\.documentRef\);[\s\S]*?return this\.store\.executeActiveRun\(identity, this\.pipelineOptions\)/u,
+  'no-Worker path must publish RUNNING, yield a real feedback boundary, then execute the same captured identity with current options',
+);
+assert.match(
+  controller,
+  /cancelRun\(\) \{[\s\S]*?if \(!this\.workerClient\) return this\.store\.cancelRun\(\)/u,
+  'no-Worker queued run must be cancellable through store cancellation',
+);
+assert.match(
+  controller,
+  /function yieldRunFeedbackFrame\(documentRef\)[\s\S]*?requestAnimationFrame[\s\S]*?scheduleTask\(resolve, 0\)/u,
+  'browser fallback must use a real frame/task opportunity rather than a microtask-only yield',
+);
 
 assert.match(view, /deformation:\s*\{[\s\S]*?enabled:[\s\S]*?scale: state\.display\.deformationScale/u);
 assert.match(view, /state\.display\.resultMode/u);
@@ -119,6 +151,9 @@ console.log(JSON.stringify({
   staleCompletionGuard: true,
   editDuringRunCancellation: true,
   explicitDeformationScale: true,
+  noWorkerRunFeedbackGuarded: true,
+  noWorkerCurrentOptionsGuarded: true,
+  noWorkerQueuedCancellationGuarded: true,
   collectionMockScopeSafe: true,
   editorDraftPersistenceGuarded: true,
   deleteSelectionSequencingGuarded: true,
@@ -189,4 +224,20 @@ async function runStoreChecks() {
   });
   assert.equal(staleStore.getState().execution, null);
   assert.equal(staleStore.getState().diagnostics[0].code, 'LFEA_RUN_ID_MISMATCH');
+
+  const queuedStore = createLfeaWorkbenchStore({ initialDocument: packageValue });
+  const cancelledIdentity = queuedStore.beginRun().activeRun;
+  queuedStore.cancelRun();
+  const cancelledState = queuedStore.executeActiveRun(cancelledIdentity, {});
+  assert.equal(cancelledState.status, 'READY');
+  assert.equal(cancelledState.activeRun, null);
+  assert.equal(cancelledState.execution, null);
+  assert.equal(cancelledState.diagnostics[0].code, 'LFEA_RUN_CANCELLED');
+
+  const replacementIdentity = queuedStore.beginRun().activeRun;
+  const staleDeferredState = queuedStore.executeActiveRun(cancelledIdentity, {});
+  assert.equal(staleDeferredState.status, 'RUNNING');
+  assert.equal(staleDeferredState.activeRun.runId, replacementIdentity.runId);
+  assert.equal(staleDeferredState.execution, null);
+  queuedStore.cancelRun();
 }

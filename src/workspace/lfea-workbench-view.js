@@ -33,6 +33,9 @@ export class LfeaWorkbenchView {
     this.handlers = null;
     this.collectionPath = LFEA_COLLECTION_PATHS[0];
     this.selectedIndex = -1;
+    this.documentDraft = null;
+    this.recordDrafts = new Map();
+    this.modelIdentity = null;
     this.benchmarkHost = null;
     this.convergenceHost = null;
     this.section = null;
@@ -61,6 +64,8 @@ export class LfeaWorkbenchView {
     if (!this.rootElement || !this.handlers) return;
     const focused = captureWorkbenchFocus(this.rootElement);
     this.ensureShell();
+    this.captureEditorDrafts();
+    this.syncDraftModelIdentity(state);
     this.slots.header.replaceChildren(this.header(state));
     this.slots.toolbar.replaceChildren(renderLfeaToolbar(
       this.rootElement,
@@ -92,6 +97,35 @@ export class LfeaWorkbenchView {
     this.section = null;
     this.slots = null;
     this.handlers = null;
+    this.documentDraft = null;
+    this.recordDrafts.clear();
+    this.modelIdentity = null;
+  }
+
+  captureEditorDrafts() {
+    if (!this.slots?.content) return;
+    const documentEditor = this.slots.content.querySelector('[data-role="lfea-package-json"]');
+    if (documentEditor) this.documentDraft = documentEditor.value;
+    const recordEditor = this.slots.content.querySelector('[data-role="lfea-record-json"]');
+    const draftKey = recordEditor?.dataset?.draftKey;
+    if (recordEditor && draftKey) this.recordDrafts.set(draftKey, recordEditor.value);
+  }
+
+  syncDraftModelIdentity(state) {
+    const nextIdentity = this.committedModelIdentity(state);
+    if (this.modelIdentity !== null && nextIdentity !== this.modelIdentity) {
+      this.documentDraft = null;
+      this.recordDrafts.clear();
+    }
+    this.modelIdentity = nextIdentity;
+  }
+
+  committedModelIdentity(state) {
+    return `${state.modelVersion ?? 'NONE'}:${state.packageValue?.semanticHash ?? 'NONE'}`;
+  }
+
+  recordDraftKey(collectionPath, selectedIndex) {
+    return JSON.stringify([collectionPath, selectedIndex]);
   }
 
   header(state) {
@@ -193,7 +227,8 @@ export class LfeaWorkbenchView {
     const textarea = element(this.rootElement, 'textarea');
     textarea.dataset.role = 'lfea-package-json';
     textarea.spellcheck = false;
-    textarea.value = packageValue ? JSON.stringify(packageValue, null, 2) : '';
+    const committedText = packageValue ? JSON.stringify(packageValue, null, 2) : '';
+    textarea.value = this.documentDraft ?? committedText;
     textarea.placeholder = 'Import a hash-valid lfea-mesh-package/v1.';
     const apply = actionButton(this.rootElement, 'Apply and reseal local edit', () => this.handlers.onApplyJson(textarea.value));
     apply.disabled = !packageValue;
@@ -226,7 +261,12 @@ export class LfeaWorkbenchView {
     });
     const textarea = element(this.rootElement, 'textarea');
     textarea.dataset.role = 'lfea-record-json';
-    textarea.value = this.selectedIndex >= 0 ? JSON.stringify(rows[this.selectedIndex], null, 2) : '{}';
+    const draftKey = this.recordDraftKey(this.collectionPath, this.selectedIndex);
+    textarea.dataset.draftKey = draftKey;
+    const committedText = this.selectedIndex >= 0
+      ? JSON.stringify(rows[this.selectedIndex], null, 2)
+      : '{}';
+    textarea.value = this.recordDrafts.get(draftKey) ?? committedText;
     const add = element(this.rootElement, 'button', null, 'Add record');
     add.type = 'button';
     add.addEventListener('click', () => this.handlers.onAddRecord(this.collectionPath, textarea.value));

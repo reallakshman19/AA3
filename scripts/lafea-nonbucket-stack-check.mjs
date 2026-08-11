@@ -27,6 +27,7 @@ const CHECKS = Object.freeze([
   { scope: 'COMMON_INPUT', path: 'scripts/lafea-common-input-units-check.mjs' },
   { scope: 'INVALIDATION', path: 'scripts/lafea-section-property-invalidation-check.mjs' },
   { scope: 'GEOMETRY_IDENTITY', path: 'scripts/lafea-continuum-geometry-identity-check.mjs' },
+  { scope: 'MESH_IDENTITY', path: 'scripts/lafea-continuum-mesh-identity-check.mjs' },
   { scope: 'U1', path: 'scripts/lafea-u1-stage-registry-check.mjs' },
   { scope: 'U1', path: 'scripts/lafea-u1b-registry-consumer-check.mjs' },
   { scope: 'U2', path: 'scripts/lafea-u2a-input-command-check.mjs' },
@@ -97,7 +98,7 @@ for (const row of CHECKS) {
 }
 
 const report = Object.freeze({
-  schema: 'lafea-nonbucket-stack-report/v17',
+  schema: 'lafea-nonbucket-stack-report/v18',
   check: 'lafea-nonbucket-stack-certification',
   status: failures.length ? 'FAIL' : 'PASS',
   exactHead: gitHead(),
@@ -118,6 +119,7 @@ const report = Object.freeze({
   commonUnitFactorsIntegrated: true,
   sectionPropertyInvalidationClassIntegrated: true,
   continuumGeometryIdentityIntegrated: true,
+  continuumMeshIdentityIntegrated: true,
   registryV2Implemented: true,
   compositionRootIntegrated: true,
   analyticalProductEvidenceIntegrated: true,

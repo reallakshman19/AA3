@@ -16,6 +16,9 @@ const UNCERTIFIED_PROPERTIES = Object.freeze({
   FLANGE: new Set(['flangeType', 'flangeFacing', 'rating']),
   REDUCER: new Set(['reducerType', 'reducerOrientation']),
 });
+const NODE_DEPENDANT_COLLECTIONS = Object.freeze([
+  'junctions', 'supports', 'boundaries', 'rigids', 'bends',
+]);
 
 export function deriveTopologyEditTableCellCapability(input = {}) {
   const row = input.row;
@@ -110,6 +113,74 @@ export function deriveTopologyEditTableCellCapability(input = {}) {
   return receipt('UNREPRESENTABLE', 'TABLE_INTENT_NOT_CERTIFIED', 'No certified Table intent is available.', row, columnKey, context);
 }
 
+export function deriveTopologyEditTableNodePositionCapability(input = {}) {
+  const row = input.row;
+  const endpoint = token(input.endpoint);
+  const projection = input.projection;
+  const topology = input.canonicalTopology;
+  const context = {
+    basisCanonicalHash: input.basisCanonicalHash ?? projection?.authority?.canonicalTopologyHash ?? null,
+    selectionHash: input.selectionHash ?? null,
+    selectionRevision: input.selectionRevision ?? null,
+  };
+  const property = `nodePosition:${endpoint || 'ENDPOINT'}`;
+  if (!row || !['FROM', 'TO'].includes(endpoint)) {
+    return receipt('BLOCKED', 'SELECTION_REQUIRED', 'Select an exact EDGE endpoint.', row, property, context, {
+      intentKind: 'NODE_POSITION', endpoint: endpoint || null,
+    });
+  }
+  if (row.identity?.canonicalKind !== 'EDGE') {
+    return receipt('BLOCKED', 'TABLE_TARGET_KIND_INVALID', 'NODE_POSITION requires an exact canonical EDGE row.', row, property, context, {
+      intentKind: 'NODE_POSITION', endpoint,
+    });
+  }
+  if (!topology || topology.canonicalTopologyHash !== projection?.authority?.canonicalTopologyHash) {
+    return receipt('BLOCKED', 'CANONICAL_BASIS_STALE', 'Canonical topology differs from the Table projection.', row, property, context, {
+      intentKind: 'NODE_POSITION', endpoint,
+    });
+  }
+  const bindings = (row.identity?.portBindings ?? []).filter((entry) => entry?.endpoint === endpoint && entry?.nodeId);
+  if (bindings.length !== 1) {
+    return receipt('BLOCKED', 'NODE_ENDPOINT_AMBIGUOUS', `EDGE ${endpoint} endpoint does not resolve one canonical node.`, row, property, context, {
+      intentKind: 'NODE_POSITION', endpoint,
+    });
+  }
+  const nodeId = bindings[0].nodeId;
+  const nodes = (topology.nodes ?? []).filter((node) => node?.id === nodeId);
+  if (nodes.length !== 1 || !finitePoint(nodes[0]?.position)) {
+    return receipt('BLOCKED', 'NODE_POSITION_UNRESOLVED', `Canonical node ${nodeId} has no exact finite position.`, row, property, context, {
+      intentKind: 'NODE_POSITION', endpoint, nodeId,
+    });
+  }
+  const dependants = nodeDependants(topology, nodeId);
+  if (dependants.length) {
+    return receipt(
+      'UNREPRESENTABLE',
+      'NODE_DEPENDANT_POLICY_REQUIRED',
+      `Node ${nodeId} participates in certified dependent records; move policy must be defined before editing.`,
+      row,
+      property,
+      context,
+      { intentKind: 'NODE_POSITION', endpoint, nodeId, dependants },
+    );
+  }
+  return receipt(
+    'AVAILABLE',
+    'READY',
+    `Certified NODE_POSITION editing is available for ${endpoint} node ${nodeId}.`,
+    row,
+    property,
+    context,
+    {
+      intentKind: 'NODE_POSITION',
+      endpoint,
+      nodeId,
+      movementModes: ['NODE_ONLY', 'CONNECTED_RUN'],
+      position: nodes[0].position,
+    },
+  );
+}
+
 export function topologyEditTableRowCapabilityMap(row, projection) {
   const result = {};
   for (const column of topologyEditTableColumnsFor(row?.elementType)) {
@@ -118,6 +189,25 @@ export function topologyEditTableRowCapabilityMap(row, projection) {
   return Object.freeze(result);
 }
 
+function nodeDependants(topology, nodeId) {
+  const result = [];
+  for (const collection of NODE_DEPENDANT_COLLECTIONS) {
+    for (const record of topology?.[collection] ?? []) {
+      if (!recordNodeIds(record).includes(nodeId)) continue;
+      result.push(`${collection}:${record.id}`);
+    }
+  }
+  return result.sort();
+}
+function recordNodeIds(record) {
+  return [...new Set([
+    record?.nodeId, record?.fromNodeId, record?.toNodeId,
+    ...(record?.nodeIds ?? []), ...(record?.fromNodeIds ?? []), ...(record?.toNodeIds ?? []),
+  ].filter(Boolean))];
+}
+function finitePoint(value) {
+  return value && [value.x, value.y, value.z].every(Number.isFinite);
+}
 function receipt(status, reasonCode, reason, row, columnKey, context, details = {}, missingEvidence = []) {
   return createTopologyEditCapabilityReceipt({
     surfaceId: 'ENGINEERING_TABLE',

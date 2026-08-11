@@ -3,7 +3,8 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
-const ENTRY = path.join(ROOT, 'src/lfea/main.js');
+const requestedEntry = argumentValue('--entry');
+const ENTRY = path.resolve(ROOT, requestedEntry ?? 'src/lfea/main.js');
 const HTML = path.join(ROOT, 'lfea.html');
 
 const FORBIDDEN_EXACT = new Set([
@@ -17,16 +18,19 @@ const IMPORT_RE = /(?:import|export)\s+(?:[^'";]*?\sfrom\s*)?['"]([^'"]+)['"]|im
 const URL_RE = /new\s+URL\(\s*['"]([^'"]+)['"]\s*,\s*import\.meta\.url\s*\)/gu;
 const SCRIPT_EXTENSIONS = new Set(['.js', '.mjs', '.cjs']);
 
-assertStandaloneHtml();
+if (!requestedEntry) assertStandaloneHtml();
+assert(fs.existsSync(ENTRY), `Standalone boundary entry is missing: ${repoRelative(ENTRY)}.`);
 
 const visited = new Set();
 walk(ENTRY, []);
 
-const entrySource = fs.readFileSync(ENTRY, 'utf8');
-assert(!entrySource.includes('bootstrapAnalysisWorkspace'),
-  'Standalone LFEA entry must not call the combined workspace bootstrap.');
-assert(!entrySource.includes('AnalysisWorkspace'),
-  'Standalone LFEA entry must not publish the legacy AnalysisWorkspace global.');
+if (!requestedEntry) {
+  const entrySource = fs.readFileSync(ENTRY, 'utf8');
+  assert(!entrySource.includes('bootstrapAnalysisWorkspace'),
+    'Standalone LFEA entry must not call the combined workspace bootstrap.');
+  assert(!entrySource.includes('AnalysisWorkspace'),
+    'Standalone LFEA entry must not publish the legacy AnalysisWorkspace global.');
+}
 
 console.log(`LFEA standalone boundary PASS (${visited.size} local modules inspected).`);
 
@@ -100,6 +104,16 @@ function assertStandaloneHtml() {
   assert(source.includes('/src/lfea/main.js'), 'lfea.html must load /src/lfea/main.js.');
   assert(!source.includes('/src/main.js'), 'lfea.html must not load the combined application entry.');
   assert(!source.includes('lafea-consumer-root'), 'lfea.html must not contain a LAFEA application root.');
+}
+
+function argumentValue(name) {
+  const index = process.argv.indexOf(name);
+  if (index < 0) return null;
+  const value = process.argv[index + 1];
+  if (!value || value.startsWith('--')) {
+    throw new TypeError(`${name} requires a repository-relative path.`);
+  }
+  return value;
 }
 
 function repoRelative(filePath) {

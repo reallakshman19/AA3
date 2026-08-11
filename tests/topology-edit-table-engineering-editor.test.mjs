@@ -1,6 +1,12 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {
+  createTopologyEditSpecificationCatalogue,
+} from '../src/workspace/topology-edit/professional/topology-edit-spec-catalog.js';
+import {
+  topologyEditInlineCatalogueBinding,
+} from '../src/workspace/topology-edit/professional/topology-edit-inline-component-operation.js';
+import {
   describeTopologyEditTableIntent,
   renderTopologyEditTableEngineeringEditor,
 } from '../src/workspace/viewport-productivity/topology-edit-table-engineering-editor.js';
@@ -9,11 +15,37 @@ import {
   topologyEditTableVisibleColumns,
 } from '../src/workspace/viewport-productivity/topology-edit-table-properties-view.js';
 
+const CATALOGUE = createTopologyEditSpecificationCatalogue({
+  catalogueId: 'TABLE-EDITOR-VALVES', catalogueVersion: '1',
+  authority: { sourceId: 'EDITOR-SPEC', sourceVersion: '1', sourceHash: `sha256:${'2'.repeat(64)}` },
+  records: [
+    valveRecord('BALL-DN80', 80, 'PCL-80', 300),
+    valveRecord('BALL-DN100', 100, 'PCL-100', 400),
+  ],
+});
+const BALL_RECORD = CATALOGUE.records.find((record) => record.recordId === 'BALL-DN80');
+const BALL = Object.freeze(topologyEditInlineCatalogueBinding(CATALOGUE, BALL_RECORD));
+
+function valveRecord(recordId, nominalSizeMm, pipingClass, valveFaceToFaceMm) {
+  return {
+    recordId, componentType: 'VALVE', nominalSizeMm,
+    outsideDiameterMm: nominalSizeMm === 80 ? 88.9 : 114.3,
+    pressureClass: '150', materialSpecification: 'A216-WCB',
+    componentLengthMm: valveFaceToFaceMm, componentMassKg: 24,
+    endConnectionFrom: 'FLANGED', endConnectionTo: 'FLANGED',
+    valveType: 'BALL', valveFaceToFaceMm, pipingClass,
+    sourceReference: { documentId: 'EDITOR-SPEC', revision: '1', path: `/valve/${recordId}` },
+  };
+}
 function valveRow(type = 'GATE') {
   return {
     elementType: 'VALVE', targetRevision: 'sha256:valve-r1',
     identity: { canonicalKind: 'EDGE', canonicalId: 'edge:valve', nodeIds: [], portBindings: [] },
-    fields: { tag: 'V-101', valveType: type, lengthMm: 200 },
+    fields: {
+      tag: 'V-101', valveType: type, lengthMm: 200, dnInMm: 80,
+      pipingClass: 'PCL-80', pressureClass: '150',
+      endConnectionFrom: 'FLANGED', endConnectionTo: 'FLANGED',
+    },
     custody: { sourceStatus: 'IMPORTED', catalogueAuthority: 'EXACT' },
   };
 }
@@ -45,33 +77,30 @@ function reducerRow(exact = true) {
   };
 }
 
-const BALL = Object.freeze({
-  catalogueHash: 'sha256:cat', sourceHash: 'sha256:source', recordId: 'BALL-80',
-  recordHash: 'sha256:ball', componentType: 'VALVE', nominalSizeMm: 80,
-  outsideDiameterMm: 88.9, pipingClass: 'PCL-80', pressureClass: '150',
-  materialSpecification: 'A216-WCB', componentMassKg: 24,
-  endConnectionFrom: 'FLANGED', endConnectionTo: 'FLANGED', valveType: 'BALL',
-  valveFaceToFaceMm: 300,
-  sourceReference: { documentId: 'VALVES', revision: 'R2', path: '/BALL/80' },
-});
-
-test('M06 editor requires supplied exact BALL record and never pre-populates current GATE custody', () => {
-  const empty = renderTopologyEditTableEngineeringEditor(valveRow(), null, { rows: [] });
-  assert.match(empty, /data-table-edit-valve-catalogue/);
+test('M06 editor selects compatible immutable BALL records and exposes no catalogue free text', () => {
+  const empty = renderTopologyEditTableEngineeringEditor(valveRow(), null, { rows: [] }, CATALOGUE);
+  assert.match(empty, /data-table-edit-valve-catalogue-record/);
+  assert.match(empty, /BALL-DN80/);
+  assert.doesNotMatch(empty, /BALL-DN100/);
+  assert.doesNotMatch(empty, /textarea/);
+  assert.doesNotMatch(empty, /data-table-edit-valve-catalogue=/);
+  assert.match(empty, /record values and hashes are never typed or inferred/);
   assert.match(empty, /Stage GATE → BALL/);
-  assert.doesNotMatch(empty, /GATE-RECORD/);
   assert.doesNotMatch(empty, /disabled>Stage GATE/);
 
   const staged = renderTopologyEditTableEngineeringEditor(valveRow(), {
     intentKind: 'VALVE_REPLACEMENT', requestedValue: { catalogueBinding: BALL },
     geometryPolicy: { anchor: 'TO', propagation: 'UPSTREAM' },
-  }, { rows: [] });
-  assert.match(staged, /sha256:ball/);
+  }, { rows: [] }, CATALOGUE);
+  assert.match(staged, /value="BALL-DN80" selected/);
   assert.match(staged, /<option selected>TO<\/option>/);
   assert.match(staged, /<option selected>UPSTREAM<\/option>/);
 
-  const nongate = renderTopologyEditTableEngineeringEditor(valveRow('BALL'), null, { rows: [] });
+  const nongate = renderTopologyEditTableEngineeringEditor(valveRow('BALL'), null, { rows: [] }, CATALOGUE);
   assert.match(nongate, /disabled>Stage GATE → BALL/);
+  const unavailable = renderTopologyEditTableEngineeringEditor(valveRow(), null, { rows: [] }, null);
+  assert.match(unavailable, /Certified catalogue unavailable/);
+  assert.match(unavailable, /disabled>Stage GATE → BALL/);
 });
 
 test('M10 editor exposes explicit branch ports and only exact-custody reducer rows', () => {
@@ -90,7 +119,7 @@ test('staged descriptions disclose exact M06 and M10 engineering intent', () => 
   assert.match(describeTopologyEditTableIntent({
     intentKind: 'VALVE_REPLACEMENT', priorValue: { valveType: 'GATE', lengthMm: 200 },
     requestedValue: { catalogueBinding: BALL }, geometryPolicy: { anchor: 'FROM', propagation: 'DOWNSTREAM' },
-  }), /GATE → BALL/);
+  }), /GATE → BALL · record BALL-DN80/);
   assert.match(describeTopologyEditTableIntent({
     intentKind: 'TEE_REDUCER_RELATION', requestedValue: {
       branchPortKey: 'tee:port:c', reducerEdgeId: 'edge:reducer',

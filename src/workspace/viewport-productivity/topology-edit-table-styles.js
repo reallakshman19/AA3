@@ -38,12 +38,16 @@ export function ensureTopologyEditTableStyles(documentRef) {
     .topology-edit-table--populated > .topology-edit-table__lower { flex:0 1 auto; }
     .topology-edit-table table { width:max-content; min-width:100%; border-collapse:separate; border-spacing:0; font-variant-numeric:tabular-nums; }
     .topology-edit-table th, .topology-edit-table td { padding:3px 5px; border-bottom:1px solid #14273c; white-space:nowrap; text-align:left; }
+    .topology-edit-table tbody tr:not(.topology-edit-table__window-spacer) { height:33px; }
+    .topology-edit-table__window-spacer, .topology-edit-table__window-spacer td { pointer-events:none; background:#050c16; }
     .topology-edit-table tbody tr:hover { background:#0b1a2d; }
     .topology-edit-table tbody tr[data-selected="true"] { background:#0b2941; box-shadow:inset 3px 0 #38bdf8; }
     .topology-edit-table thead { position:sticky; top:0; z-index:4; background:#0c192b; }
     .topology-edit-table th button { min-height:20px; border:0; background:transparent; padding:0; font-weight:700; }
     .topology-edit-table__cell-input { width:88px !important; min-height:20px !important; padding:0 4px !important; border-color:transparent !important; background:transparent !important; font-variant-numeric:tabular-nums; }
     .topology-edit-table__cell-input:focus { border-color:#60a5fa !important; background:#0a1727 !important; outline:none; }
+    .topology-edit-table [data-table-compound-edit] { min-height:20px; border:0; background:transparent; padding:0 2px; color:#bae6fd; }
+    .topology-edit-table [data-table-cell-state="needs-input"] { box-shadow:inset 0 0 0 1px #315070; }
     .topology-edit-table [data-table-cell-state="draft"] { box-shadow:inset 0 0 0 1px #38bdf8; }
     .topology-edit-table [data-table-cell-state="staged"] { box-shadow:inset 0 0 0 1px #34d399; }
     .topology-edit-table [data-table-cell-state="invalid"] { box-shadow:inset 0 0 0 1px #f87171; }

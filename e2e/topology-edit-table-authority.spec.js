@@ -137,8 +137,10 @@ test('Engineering Table is dense, dynamically scrollable and keeps frozen contex
 
   await panel.evaluate((node) => {
     node.style.width = '720px';
-    node.style.height = '460px';
+    node.style.height = '420px';
   });
+  await expect.poll(() => panel.evaluate((node) => node.getBoundingClientRect().height)).toBeLessThan(450);
+  const compactPanelHeight = await panel.evaluate((node) => node.getBoundingClientRect().height);
   const compact = await scroll.evaluate((node) => ({
     clientHeight: node.clientHeight,
     clientWidth: node.clientWidth,
@@ -148,8 +150,11 @@ test('Engineering Table is dense, dynamically scrollable and keeps frozen contex
   expect(compact.scrollWidth).toBeGreaterThan(compact.clientWidth);
   expect(compact.scrollHeight).toBeGreaterThan(compact.clientHeight);
 
-  await panel.evaluate((node) => { node.style.height = '760px'; });
-  await expect.poll(() => scroll.evaluate((node) => node.clientHeight)).toBeGreaterThan(compact.clientHeight + 80);
+  await panel.evaluate((node) => { node.style.height = '620px'; });
+  await expect.poll(() => panel.evaluate((node) => node.getBoundingClientRect().height))
+    .toBeGreaterThan(compactPanelHeight + 120);
+  await expect.poll(() => scroll.evaluate((node) => node.clientHeight))
+    .toBeGreaterThan(compact.clientHeight + 80);
 });
 
 test('M06 and M10 production editors expose only explicit engineering authority', async ({ page }) => {

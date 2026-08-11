@@ -1,6 +1,6 @@
 # PR #1020 Engineering Work Report
 
-> Canonical living handover authority for PR #1020. Current-state sections are authoritative; Stage Execution Log is historical.
+> Canonical living handover authority for PR #1020. Current-state sections are authoritative; the Stage Execution Log preserves history.
 
 ## 0. PR Mission Control
 
@@ -11,23 +11,23 @@
 | PR number | 1020 |
 | Branch | `agent/fix-topology-validation-worker-production` |
 | Base commit | `751756e9140527b8dc121aa179dc76b7039fb7ad` |
-| Current HEAD | `3984e470409eb47c0da107ab1928b2578fc562ba` before this Stage-4-preparation report commit |
+| Current HEAD | `8fe3c90ea16b1e1115503922f6b79007ecd4e3c6` before this report update |
 | PR status | OPEN / DRAFT / mergeable; title/body synchronized to combined mission |
-| Current stage | Stage 4 — Dense dynamic spreadsheet shell |
+| Current stage | Stage 4 — Dense dynamic spreadsheet shell, CI repair substage |
 | Last completed stage | Stage 3 — Changed-file verification and documentation-stage completion |
-| Engineering status | IN_PROGRESS |
-| Validation status | Baseline PASS at `d92b958...`; spreadsheet layout/edit behavior not yet validated |
-| Current blocker | No local checkout/`gh`; source changes and evidence use connected GitHub API plus existing repository checks. |
-| Exact next action | Edit `topology-edit-table-styles.js` and, only if required for sticky metadata, `topology-edit-table-grid-view.js`; then verify exact diff and existing table checks. |
+| Engineering status | PARTIAL — Stage 4 source implemented, exact-head browser qualification exposed ISS-003 |
+| Validation status | FAIL on Table Slice 3 and Slice 6 at `8fe3c90...`; `main-gate`, Table Slice 4, source/unit/build portions pass |
+| Current blocker | ISS-003: authoritative frozen `connectFrom` / `connectTo` columns were surfaced by the renderer but Stage-4 CSS lacks deterministic left offsets; new test oracle also assumed only three frozen columns. |
+| Exact next action | Repair Stage 4 by adding bounded sticky offsets for all five authoritative frozen columns and correcting the test oracle; rerun exact-head Table Slice 3/6 and related checks before Stage 5. |
 
 ### Handover in 60 seconds
 
-- **What is now true:** PR metadata matches the combined mission; the net diff at Stage-3 close is exactly the work report plus the two inherited worker-fix files; no workflow files changed. Existing triggered checks were green on `d92b958...`. The repository already has `deriveTopologyEditTableCellCapability`, so editability authority does not need to be invented.
-- **Currently being worked on:** Stage 4 layout-only work: smaller typography/controls, one dynamically sized X/Y spreadsheet viewport, sticky header/frozen context.
-- **Remains unfinished:** Stage 4 implementation/validation; direct cell editing; keyboard semantics; compound editors; scaling/virtualization; final-head validation.
-- **Must not be assumed:** Stage-4 CSS has not been changed yet; PIPE length is the only direct scalar capability currently `AVAILABLE`; valve/TEE require compound governed input; unsupported/derived/support edits remain blocked/unrepresentable.
-- **Highest-risk remaining item:** RISK-001 — later cell editing must not create a second model authority.
-- **Exact next recommended action:** implement Stage 4 as a layout-only slice and keep table intent/runtime semantics untouched.
+- **What is now true:** Stage 4 compact/dynamic table code exists at `8fe3c90...`. It changes only table styles, table grid presentation metadata, and the existing table-authority E2E. `main-gate` passed. Table Slice 3 and Slice 6 both failed at the same new browser assertion. The production build succeeds and emits the bundled topology validation worker asset.
+- **What is currently being worked on:** a focused Stage-4 repair. Existing column descriptors already mark five columns frozen: Select is renderer-owned, while Tag, Type, Connect From and Connect To are descriptor-owned. The renderer correctly emitted all five; the test expected only three and the CSS assigned offsets only to the first three.
+- **What remains unfinished:** fix ISS-003, requalify Stage 4, then direct cell editing/keyboard semantics, compound editors, scaling/virtualization, final reconciliation.
+- **What must not be assumed:** Stage 4 is not validated yet; `connectFrom` and `connectTo` must not be silently unfrozen merely to satisfy the original test; prior green baseline does not validate current head.
+- **Highest-risk remaining item:** RISK-001 for later spreadsheet editing; immediate Stage-4 risk is frozen-column overlap/viewport starvation if offsets are not bounded.
+- **Exact next recommended action:** add 128px fixed sticky widths/offsets for `connectFrom` and `connectTo`, update the browser expectation to all five authoritative frozen columns, then inspect exact diff and CI.
 
 ## 1. Mission and Engineering Intent
 
@@ -35,24 +35,25 @@
 Provide spreadsheet-like engineering authoring with compact readable rows, dynamic scrolling, sticky/frozen context, direct editing only where explicit engineering authority exists, keyboard navigation, staged/error/stale state, and atomic certified Apply.
 
 ### Engineering/user consequence
-The current inner grid is capped at `min(48vh,470px)` inside another scrolling body, so resizing does not give the data grid the available space and wide/long content feels hidden. Editing also lives in a separate row panel rather than the cells. The target must reduce interaction cost without weakening canonical topology custody.
+The existing table’s fixed inner height and separate editor make engineering review/editing slower and can hide content in a resizable window. The spreadsheet experience must improve reachability without making table/DOM state a second engineering model authority.
 
 ### Scope
 - Preserve inherited validation-worker fix.
 - Stage 4: density, available-space X/Y scrolling, sticky/frozen context only.
-- Stage 5: spreadsheet cell interaction using existing capability authority; start with PIPE length.
+- Stage 5: direct spreadsheet cell interaction using existing capability authority; start with PIPE length.
 - Stage 6: route valve/TEE cells to existing compound governed editors.
 - Stage 7: scaling/virtualization and only bounded extra edit authority with real production consumers.
-- No new GitHub Actions workflows.
+- No new GitHub Actions workflows or gates.
 
 ### Governing engineering principles
 1. Canonical topology remains the sole model authority.
-2. Table projection and DOM state never become independent model truth.
+2. Table projection and DOM state never become independent engineering truth.
 3. Cell typing/staging/preview/validation must not mutate canonical topology.
-4. Certified Apply remains the model mutation boundary and one applied batch remains one undo unit.
-5. `deriveTopologyEditTableCellCapability` is the current editability authority: `AVAILABLE` may be direct; `NEEDS_INPUT` requires compound input; `BLOCKED`/`UNREPRESENTABLE` is not free-text editable.
-6. Catalogue-controlled and derived values are never guessed or silently defaulted.
-7. Stale target revisions fail closed or explicitly rebase.
+4. Certified Apply remains the model mutation boundary; one applied batch remains one undo unit.
+5. Existing column/capability metadata is authoritative UI policy; presentation tests must derive expectations from that authority rather than contradict it.
+6. `deriveTopologyEditTableCellCapability`: `AVAILABLE` may be direct; `NEEDS_INPUT` requires compound input; `BLOCKED`/`UNREPRESENTABLE` is not free-text editable.
+7. Catalogue-controlled and derived values are never guessed or silently defaulted.
+8. Stale target revisions fail closed or explicitly rebase.
 
 ### Explicit non-goals
 No direct canonical writes from DOM handlers; no broad refactor; no dependency upgrades; no backup files; no speculative abstractions; no workflow additions.
@@ -64,17 +65,18 @@ Named exports; pure helpers where practical; new JS modules <300 physical lines 
 
 | Work Item | Priority | Status | Stage | Evidence |
 |---|---:|---|---|---|
-| Work report protocol | P0 | DONE | 1-2 | Canonical `agents/PR1020_workreport.md`; pending path removed |
-| PR metadata / changed-file reconciliation | P0 | DONE | 3 | PR title/body synchronized; exactly 3 expected net files at close |
-| Production validation-worker repair | P0 | VALIDATED | inherited | Existing workflow matrix PASS on `d92b958...` |
-| Dense typography/controls | P1 | IN_PROGRESS | 4 | Before-state recorded; production edit next |
-| Dynamic X/Y spreadsheet viewport | P1 | IN_PROGRESS | 4 | ISS-002 accepted; production edit next |
-| Sticky header/frozen context | P1 | IN_PROGRESS | 4 | Column metadata already marks Tag/Type frozen |
+| Work report protocol | P0 | DONE | 1-2 | Canonical `agents/PR1020_workreport.md` |
+| PR metadata / changed-file reconciliation | P0 | DONE | 3 | Combined PR mission; no workflow changes |
+| Production validation-worker repair | P0 | VALIDATED | inherited | Baseline workflows PASS; current build emits worker bundle |
+| Dense typography/controls | P1 | IMPLEMENTED | 4 | 11px table font, compact controls/cells at `8fe3c90...` |
+| Dynamic X/Y spreadsheet viewport | P1 | IMPLEMENTED | 4 | fixed 470px cap removed; flexible overflow viewport at `8fe3c90...` |
+| Sticky header/frozen context | P1 | IN_PROGRESS | 4 | renderer exposes authority; ISS-003 offset mismatch requires repair |
+| Stage 4 browser qualification | P0 | BLOCKED | 4 | Slice 3/6 fail on frozen-column expectation at `8fe3c90...` |
 | Inline cell editing foundation | P1 | NOT_STARTED | 5 | Capability authority identified |
-| PIPE length direct cell | P1 | NOT_STARTED | 5 | Capability returns `AVAILABLE` / `PIPE_LENGTH` |
-| VALVE/TEE cell integration | P2 | NOT_STARTED | 6 | Capability returns `NEEDS_INPUT`; existing compound editors required |
-| Virtualization/scaling | P2 | NOT_STARTED | 7 | Current renderer hard-caps 300 rows |
-| Broader edit authority | P2 | DEFERRED | 7/future | Only bounded additions with explicit governed operations |
+| PIPE length direct cell | P1 | NOT_STARTED | 5 | `AVAILABLE` / `PIPE_LENGTH` |
+| VALVE/TEE cell integration | P2 | NOT_STARTED | 6 | `NEEDS_INPUT`; existing compound editors |
+| Virtualization/scaling | P2 | NOT_STARTED | 7 | hard 300-row cap remains |
+| Broader edit authority | P2 | DEFERRED | 7/future | explicit governed operation required |
 | Final reconciliation/validation | P0 | NOT_STARTED | 8 | Pending |
 
 ## 3. Engineering Item Register
@@ -82,30 +84,49 @@ Named exports; pure helpers where practical; new JS modules <300 physical lines 
 | ID | Type | Severity/Priority | Status | Summary | Current PR? |
 |---|---|---|---|---|---|
 | ISS-001 | Defect | HIGH | VALIDATED | Production validation worker bundling/load failure. | Yes |
-| ISS-002 | Defect | MEDIUM | IN_PROGRESS | Fixed inner max-height/nested overflow hides or strands table content. | Yes |
-| IMP-001 | Improvement | P1 | IN_PROGRESS | Reduce typography/control density. | Yes |
+| ISS-002 | Defect | MEDIUM | IMPLEMENTED | Fixed inner max-height/nested overflow prevented dynamic table reachability. | Yes |
+| ISS-003 | Defect | MEDIUM | IN_PROGRESS | Stage-4 frozen-column CSS/test mismatch with existing descriptor authority. | Yes |
+| IMP-001 | Improvement | P1 | IMPLEMENTED | Reduce typography/control density. | Yes |
 | IMP-002 | Improvement | P1 | ACCEPTED | Direct spreadsheet cells for explicitly governed fields. | Yes |
-| IMP-003 | Improvement | P1 | ACCEPTED | Keyboard navigation and staged/error/stale cell states. | Yes |
+| IMP-003 | Improvement | P1 | ACCEPTED | Keyboard navigation plus staged/error/stale cell states. | Yes |
 | IMP-004 | Improvement | P2 | ACCEPTED | Replace hard 300-row cap with windowed rendering after interaction semantics stabilize. | Yes |
 | IMP-005 | Improvement | P2 | DEFERRED | Broad XYZ/catalogue/fitting/support editing needs explicit governed operations. | Bounded subset only |
 | RISK-001 | Risk | HIGH | ACCEPTED | Spreadsheet drafts could become a second model authority. | Yes |
 | RISK-002 | Risk | HIGH | ACCEPTED | No local checkout/gh limits local executable validation. | Yes |
 | RISK-003 | Risk | MEDIUM | ACCEPTED | Whole-grid rerender can destroy focus/caret/uncommitted draft. | Yes |
+| RISK-004 | Risk | MEDIUM | ACCEPTED | Freezing too many/wide columns can consume most of a narrow spreadsheet viewport. | Yes |
 | DEC-001 | Decision | HIGH | ACCEPTED | Cell editing stages governed intents; Apply remains mutation boundary. | Yes |
-| DEC-002 | Decision | HIGH | ACCEPTED | Capability authority controls cell editability; no fake free-text editing. | Yes |
+| DEC-002 | Decision | HIGH | ACCEPTED | Capability/column metadata controls editability and frozen presentation; no fake free-text or test-only override. | Yes |
 | DEC-003 | Decision | MEDIUM | ACCEPTED | Layout/density precedes edit semantics. | Yes |
 | DEC-004 | Decision | MEDIUM | ACCEPTED | Owner-authorized assignment stays on PR #1020. | Yes |
-| QST-001 | Question | MEDIUM | DONE | Direct scalar availability resolved: PIPE length only; valve/TEE need compound input; others blocked/unrepresentable. | Yes |
+| DEC-005 | Decision | MEDIUM | ACCEPTED | Honor all current `frozen:true` descriptors; do not change engineering column metadata to make Stage-4 test pass. | Yes |
+| QST-001 | Question | MEDIUM | DONE | Direct scalar availability resolved: PIPE length only; valve/TEE need compound input. | Yes |
 | DEBT-001 | Debt | LOW | ACCEPTED | Two inherited worker commits predate protocol adoption. | Yes |
+| DEBT-002 | Debt | MEDIUM | DEFERRED | `npm ci` reports 6 existing dependency vulnerabilities (1 low, 5 high); no dependency upgrade allowed in this work pack. | No change here |
+| DEBT-003 | Debt | LOW | DEFERRED | Production build reports existing circular chunk / >500kB warnings; bundle ceiling still passes. | No change here |
 
 ### ISS-001 — production validation-worker load failure
-**Status:** VALIDATED. **Affected:** validation-worker client/test. **Observed:** first-pipe Preview worked but production Validate emitted generic worker failure. **Root cause:** Vite worker URL was not statically nested in `new Worker(new URL(...))`. **Resolution:** static production Worker form, explicit injected test configuration retained. **Alternative rejected:** main-thread fallback. **Closure evidence:** all existing triggered workflows passed on `d92b958...`, including `main-gate`, table slices, render/interaction/tool-audit/reachability.
+**Status:** VALIDATED. **Root cause:** Vite worker reference was not statically nested. **Resolution:** production `new Worker(new URL(..., import.meta.url), ...)`; explicit injected test configuration remains. **Evidence:** current Stage-4 production build emits `topology-edit-validation-worker-BBC6OYgy.js`; baseline full workflows also passed.
 
 ### ISS-002 — constrained table viewport
-**Status:** IN_PROGRESS, Stage 4. **Affected:** `topology-edit-table-styles.js`, potentially grid markup for sticky attributes. **Observed:** `.topology-edit-table__scroll` capped to `min(48vh,470px)` inside independently scrolling window body. **Consequence:** resizing does not proportionally expose the grid; wide/long content feels hidden. **Root cause:** competing overflow owners plus fixed inner cap. **Chosen resolution:** window body/table/grid become min-height-aware; the spreadsheet viewport owns automatic X/Y scrolling and consumes remaining space. **Alternative rejected:** merely increasing fixed max-height. **Edge cases:** collapsed window, narrow viewport, empty model, all-properties sections. **Validation:** source check plus existing table browser workflows; inspect geometry/scroll evidence where available.
+**Status:** IMPLEMENTED, validation pending Stage-4 repair rerun. **Affected:** table styles/grid. **Resolution:** min-height-aware floating body, flexible populated-grid row, fixed inner `max-height` removed, spreadsheet overflow container owns X/Y scroll, compact density. **Validation evidence so far:** source/unit/build steps pass; browser layout assertion reaches frozen-column check before failing.
+
+### ISS-003 — frozen descriptor coverage mismatch
+- **Status:** IN_PROGRESS.
+- **Severity:** MEDIUM.
+- **Stage discovered:** Stage 4 exact-head CI at `8fe3c90...`.
+- **Affected files/components:** `topology-edit-table-styles.js`, `e2e/topology-edit-table-authority.spec.js`; grid renderer is behaving as designed.
+- **Observed behaviour:** new test expected frozen headers `select, tag, elementType`; actual renderer returned `select, tag, elementType, connectFrom, connectTo`. Generic frozen CSS made the last two sticky but without deterministic `left` offsets.
+- **Engineering consequence:** the test oracle contradicted source metadata, and the two connection columns could overlap other frozen columns during horizontal scroll.
+- **Root cause:** Stage-4 planning overlooked that `connectFrom` and `connectTo` are already declared `{ frozen: true }` in common column descriptors.
+- **Chosen resolution:** preserve descriptor authority; assign bounded 128px widths/left offsets to Connect From and Connect To and update the browser oracle to all five frozen columns.
+- **Alternatives considered:** removing frozen metadata from connectivity columns rejected because it changes established column semantics merely to satisfy a presentation test. Letting sticky columns have `left:auto` rejected because it is visually inconsistent.
+- **Edge cases:** 720px compact width leaves ~196px beyond the 524px frozen region; long port identities use title/ellipsis; narrow mobile remains horizontally scrollable.
+- **Validation required:** Table Slice 3 and Slice 6 exact-head Chromium; `main-gate`; inspect resulting horizontal overflow and height growth assertion.
+- **Closure evidence:** pending.
 
 ### QST-001 — direct editable columns
-**Status:** DONE in Stage 3/4 investigation. **Evidence:** `topology-edit-table-edit-capability.js` maps only `PIPE_LENGTH` to direct `AVAILABLE`; valve replacement and TEE reconfiguration return `NEEDS_INPUT`; unsupported, derived and support mutations fail closed. **Consequence:** Stage 5 can use existing capability receipts as the single UI editability policy.
+**Status:** DONE. `topology-edit-table-edit-capability.js` maps PIPE length to direct `AVAILABLE`; valve/TEE are `NEEDS_INPUT`; unsupported/derived/support mutations fail closed.
 
 ## 4. Stage Roadmap
 
@@ -113,8 +134,8 @@ Named exports; pure helpers where practical; new JS modules <300 physical lines 
 |---|---|---|---|---|
 | 1 | COMPLETE | Report initialization/findings | Pre-implementation report | `c908e7c...` |
 | 2 | COMPLETE | PR allocation/report synchronization | Sole PR-numbered report | `d92b958...` |
-| 3 | COMPLETE | Changed-file verification/documentation | PR metadata + exact 3-file reconciliation | `3984e470...` metadata state |
-| 4 | IN_PROGRESS | Dense dynamic spreadsheet shell | Compact CSS, available-space scroll, sticky/frozen context | pending |
+| 3 | COMPLETE | Changed-file verification/documentation | PR metadata + reconciliation | `3984e470...` metadata state |
+| 4 | PARTIAL | Dense dynamic spreadsheet shell | Compact CSS, dynamic scroll, authoritative frozen context | `8fe3c90...` failed qualification head; repair pending |
 | 5 | NOT_STARTED | Inline edit foundation | Active/edit cell state, PIPE length direct cell, keyboard commit/cancel | pending |
 | 6 | NOT_STARTED | Compound editor integration | Existing VALVE/TEE authority surfaced from grid | pending |
 | 7 | NOT_STARTED | Bounded expansion/scaling | Virtualization; production-backed extra edits only | pending |
@@ -123,163 +144,197 @@ Named exports; pure helpers where practical; new JS modules <300 physical lines 
 ## 5. Stage Execution Log
 
 ### Stage 1 — Report initialization and technical findings
-**Before:** PR #1020 already had two worker-fix files. **Objective:** create mandated report before spreadsheet production edits. **Scope:** pending report + inspection. **Implementation:** created `agents/PR_PENDING_workreport.md`. **Validation:** PR metadata/file list/report presence PASS. **Issues:** ISS-002, IMP-001..005, RISK-001..003, DEC-001..003, QST-001, DEBT-001. **Decision:** COMPLETE at `c908e7c...`. **Handover delta:** durable invariants/roadmap established.
+Created pending report before spreadsheet production edits; inspected PR/table authority. Validation of report/PR/file list passed. Stage COMPLETE at `c908e7c...`.
 
 ### Stage 2 — PR allocation and report synchronization
-**Before:** pending report existed; PR #1020 already allocated. **Objective:** one canonical PR-numbered report. **Scope:** report paths only. **Implementation:** created `agents/PR1020_workreport.md`, deleted pending path. **Changed files:** numbered report retained; pending report has no net diff. **Validation:** numbered fetch PASS, pending 404 PASS, current 3-file list PASS, all triggered workflows on `d92b958...` PASS. **Decision:** COMPLETE. **Handover delta:** one report; baseline green evidence.
+Created canonical `agents/PR1020_workreport.md`, deleted pending path. Net diff reconciled; baseline workflows passed on `d92b958...`. Stage COMPLETE.
 
 ### Stage 3 — Changed-file verification and documentation-stage completion
-**Before:** net diff exactly report + inherited worker client/test; PR body worker-only. **Objective:** make PR scope truthful before new production work. **Scope:** report + PR metadata only. **Engineering rationale:** avoid apparent scope drift and preserve single-PR authorization. **Planned:** update title/body, re-list files, confirm no workflow changes. **Implementation:** PR title changed to `feat(3d-edit): spreadsheet Engineering Table and production validation worker`; body now records combined mission, workreport path, invariants, scope control, no-new-workflows rule and exact-head validation policy. **Changed files:** report only; PR metadata is not repository content. **Deviations:** none. **Validation:** PR fetch PASS (open/draft/mergeable, new title/body); changed-file list PASS (same 3 files); no `.github/workflows/*` in diff PASS. **Issues discovered:** QST-001 resolved by existing capability authority. **Risks remaining:** RISK-001/002/003. **Decision:** COMPLETE. **Handover delta:** PR metadata now matches authorized mission; Stage 4 may start.
+Updated PR title/body to combined mission, confirmed draft/mergeable, no workflow changes and exact expected diff. Resolved QST-001 via existing capability module. Stage COMPLETE.
 
 ### Stage 4 — Dense dynamic spreadsheet shell
 
 #### Before stage
-Current table styles use `.78rem` base text, ~1.8rem inputs, ~2rem buttons, `.3rem .45rem` table cells, a body with `overflow:auto`, and an inner grid viewport with `max-height:min(48vh,470px); overflow:auto`. The window itself is already resizable and open-state layout is a two-row grid. Table markup has sticky `<thead>` but no explicit frozen-column attributes. Tag and Type descriptors are declared `frozen` in the column model.
+Table had `.78rem` text, larger controls/cells, nested body scrolling and `max-height:min(48vh,470px)` inner grid. Header was sticky; renderer did not expose frozen descriptor metadata as attributes.
 
 #### Objective
-Make the Engineering Table materially denser and ensure the data grid dynamically consumes available window space with automatic horizontal/vertical scrolling, while keeping header/context reachable and without changing engineering mutation semantics.
+Reduce density and make the data viewport consume available floating-window space with dynamic X/Y scrolling and frozen engineering identity/connectivity context, without touching mutation semantics.
 
 #### Scope
-Expected production files:
-- `src/workspace/viewport-productivity/topology-edit-table-styles.js`
-- `src/workspace/viewport-productivity/topology-edit-table-grid-view.js` only if stable data attributes are required to freeze descriptor-marked columns.
-Expected validation/tests:
-- existing `e2e/topology-edit-table-authority.spec.js` / table slice workflows;
-- focused source/DOM assertions if an existing test can be extended without broad fixture churn.
-No runtime/intent/workflow mutation in this stage.
+`topology-edit-table-styles.js`, `topology-edit-table-grid-view.js`, existing `e2e/topology-edit-table-authority.spec.js`. No runtime/intent/workflow mutation.
 
 #### Engineering rationale
-Fixing layout independently separates reachability/density regressions from later editing/state-machine changes. One intentional spreadsheet overflow owner avoids nested-scroll ambiguity and lets user resizing control how much data is visible.
+Layout changes are isolated before spreadsheet editing so reachability regressions are attributable.
 
 #### Planned implementation
-1. Make table window/body/inner table min-height-aware so the table component can fill remaining height.
-2. Change outer body from general scrolling to clipped/min-height layout; make the table grid container the intentional X/Y overflow region.
-3. Remove fixed `48vh/470px` grid cap; use flexible `minmax(0,1fr)` allocation.
-4. Reduce base font, cell padding and control heights while preserving readable labels/status text.
-5. Keep `<thead>` sticky.
-6. Surface descriptor `frozen` metadata as data attributes/classes and freeze Select/Tag/Type columns with deterministic sticky left offsets if markup change is required.
-7. Keep empty-model first-pipe form scrollable/reachable within the same window without changing its authoring semantics.
+Min-height-aware hierarchy; one spreadsheet overflow owner; remove fixed grid cap; reduce font/control/cell sizing; expose frozen metadata; sticky header/frozen columns; preserve empty-model authoring.
 
 #### Expected examples
-- Widening the floating window reveals more columns before horizontal scroll is needed.
-- Increasing window height gives the grid more rows instead of leaving it capped at 470px.
-- Narrowing/shrinking automatically produces the necessary scrollbars.
-- Header remains visible during vertical scroll; Select/Tag/Type remain visible during horizontal scroll if frozen treatment is implemented.
+Resizing taller exposes more grid rows; shrinking produces vertical scroll; narrow width produces horizontal scroll; frozen context remains visible; full values available by title.
 
 #### Edge cases
-Collapsed `<details>` window; mobile media queries; long canonical IDs/port labels; all-properties sections below the grid; empty-model first-pipe form; browser scrollbar thickness; sticky z-index overlap.
+Collapsed window, mobile, long connection IDs, lower editor/properties panels, empty model, sticky z-index overlap.
 
 #### Planned validation
-- Inspect exact diff for layout-only scope.
-- Verify no runtime/intent/workflow files changed.
-- Run/observe existing table slice and `main-gate` workflows on resulting HEAD.
-- Where tests expose computed layout, assert scroll container has overflow capacity and sticky/frozen attributes exist.
-
-#### Known risks
-CSS grid sizing can fail if any ancestor lacks `min-height:0`; sticky left offsets can overlap if widths are not deterministic; clipping the outer body could hide below-grid editor sections unless the table component itself allocates its lower content intentionally.
+Exact diff containment; syntax/line budget; unit/source contracts; production build; Chromium table authority; main-gate/table slices.
 
 #### Implementation performed
-NOT_STARTED — this before-stage record authorizes the next production edit.
+- `topology-edit-table-styles.js`: reduced title/table/control/cell density; body/table min-height hierarchy; flexible populated table grid; removed fixed 470px cap; X/Y scroll container owns overflow; compact lower panels; sticky/frozen styles.
+- `topology-edit-table-grid-view.js`: populated marker class; stable column-key attributes; descriptor-driven frozen attributes; full-value titles; Select frozen marker.
+- `e2e/topology-edit-table-authority.spec.js`: added exact browser evidence for <=12px font, auto X/Y overflow, frozen context, compact-window overflow and taller-window grid growth.
+
+#### Changed files
+| File | Change | Why |
+|---|---|---|
+| `src/workspace/viewport-productivity/topology-edit-table-styles.js` | Density/dynamic layout/sticky CSS | Resolve ISS-002/IMP-001. |
+| `src/workspace/viewport-productivity/topology-edit-table-grid-view.js` | Stable frozen/column metadata and populated class | Make descriptor authority consumable by CSS/test. |
+| `e2e/topology-edit-table-authority.spec.js` | Browser layout qualification | Independent visible behavior evidence. |
+
+#### Deviations from plan
+Frozen metadata exposed more columns than initially remembered: Connect From/To were already descriptor-frozen. This revealed ISS-003 rather than just a test typo because CSS had no offsets for those columns.
+
+#### Examples/edge cases actually observed
+At 720px test width the grid has horizontal overflow as intended. Browser execution reached the frozen-column assertion. Existing lifecycle and M06/M10 tests passed unchanged.
+
+#### Validation performed
+| Check | Result | Evidence/Notes |
+|---|---|---|
+| Exact changed-file scope for Stage 4 | PASS | only styles, grid view, existing E2E from pre-Stage4 report head |
+| Line budget / `node --check` | PASS | Table Slice 3 step 4 |
+| Table authority Node contracts | PASS | 23/23 tests; Slice 3 step 5 |
+| Production build | PASS | Slice 3/6; worker bundle emitted; bundle-chunk check PASS |
+| Existing lifecycle E2E | PASS | first of 3 table-authority Chromium tests |
+| Existing M06/M10 E2E | PASS | third of 3 table-authority Chromium tests |
+| New density/scroll/frozen E2E | FAIL | expected 3 frozen headers; actual authoritative set has 5 |
+| Table Slice 3 | FAIL | only Chromium lifecycle step failed due above assertion |
+| Table Slice 6 | FAIL | same browser assertion; earlier steps passed |
+| `main-gate` | PASS | exact `8fe3c90...` |
+| Table Slice 4 | PASS | exact `8fe3c90...` |
+
+#### Issues discovered
+ISS-003; RISK-004. Existing dependency vulnerabilities recorded as DEBT-002; existing bundle warnings as DEBT-003.
+
+#### Risks introduced or remaining
+Frozen region must stay bounded on compact width; Stage 4 cannot close until all five authoritative columns have deterministic offsets and browser checks pass.
 
 #### Stage decision
-IN_PROGRESS.
+PARTIAL.
+
+#### Handover delta
+- **Newly true:** density and dynamic sizing are implemented; existing table engineering lifecycle still passes in the same E2E file.
+- **Newly discovered:** Connect From/To are authoritative frozen columns and require explicit offsets; test oracle was incomplete.
+- **Still unresolved:** ISS-003 and exact-head Stage-4 qualification.
+- **Next stage starts with:** do not start Stage 5; first repair styles/test only and rerun Stage 4 checks.
+
+### Stage 4 repair substage — before fix
+**Before stage:** exact head `8fe3c90...`; two table workflows fail only on frozen-list expectation; current CSS assigns deterministic offsets to Select/Tag/Type but not Connect From/To. **Objective:** align presentation with existing frozen descriptor authority and make the test independent of the mistaken three-column assumption. **Scope:** styles + existing E2E only; grid renderer is already correct. **Engineering rationale:** metadata is source authority; fix consumers/test rather than rewriting metadata. **Planned implementation:** add Connect From left 268px / width 128px and Connect To left 396px / width 128px; expect all five frozen headers; optionally assert increasing computed left offsets. **Expected examples:** horizontal scroll keeps five identity/connectivity columns fixed without overlap; long values ellipsize and remain available via title. **Edge cases:** 720px panel retains non-frozen scrollable region; narrow mobile can still horizontal-scroll. **Planned validation:** exact diff, Table Slice 3/6, main-gate, other triggered table checks. **Known risks:** excessive frozen width; corrected test may expose a second layout issue after the earlier assertion is passed.
 
 ## 6. Changed-File Ledger
 
 | File | First Stage | Latest Stage | Purpose | Engineering-sensitive? | Validation |
 |---|---:|---:|---|---|---|
-| `src/workspace/topology-edit/professional/topology-edit-validation-worker-client.js` | inherited | inherited | Production Worker bundling/load repair | Yes | baseline workflows PASS; final HEAD rerun required |
-| `tests/topology-edit-professional-validation-worker-client.test.mjs` | inherited | inherited | Worker regression coverage | No | baseline workflows PASS; final HEAD rerun required |
-| `agents/PR_PENDING_workreport.md` | 1 | 2 | Temporary protocol bootstrap; created then deleted | No | no net PR diff; explained |
-| `agents/PR1020_workreport.md` | 2 | 4 | Living report | No | present/current |
-
-Stage 4 production files are not added to this ledger until actually changed.
+| `src/workspace/topology-edit/professional/topology-edit-validation-worker-client.js` | inherited | inherited | Production Worker bundling/load repair | Yes | baseline PASS; current build emits worker asset; final rerun required |
+| `tests/topology-edit-professional-validation-worker-client.test.mjs` | inherited | inherited | Worker regression coverage | No | baseline PASS; final rerun required |
+| `agents/PR_PENDING_workreport.md` | 1 | 2 | Temporary bootstrap; created/deleted | No | no net diff; explained |
+| `agents/PR1020_workreport.md` | 2 | 4 | Living report | No | current |
+| `src/workspace/viewport-productivity/topology-edit-table-styles.js` | 4 | 4 | Compact/dynamic/frozen presentation | No model mutation | source/build PASS; browser partial, ISS-003 repair pending |
+| `src/workspace/viewport-productivity/topology-edit-table-grid-view.js` | 4 | 4 | Stable descriptor-driven column/frozen attributes | No model mutation | source/build PASS; renderer output exposed correct 5-column authority |
+| `e2e/topology-edit-table-authority.spec.js` | 4 | 4 | Visible density/scroll/frozen qualification | Test | two existing tests PASS; new test needs oracle repair |
 
 ## 7. Engineering Decisions and Invariants
 
 ### DEC-001 — governed staging, explicit Apply
-**Must remain true:** cell interaction never mutates canonical topology directly. **Enforced:** table intent/batch/workflow/certified session. **Validation:** Stage 5 canonical-hash lifecycle; current table authority tests. **PR effect:** none in Stage 4.
+Direct spreadsheet interaction may never mutate canonical topology. Stage 4 does not touch runtime/intents/workflow.
 
-### DEC-002 — capability-driven editability
-**Must remain true:** direct/compound/read-only state is derived from existing capability receipts, not CSS/DOM guesses. `AVAILABLE` can be direct, `NEEDS_INPUT` opens governed compound input, `BLOCKED`/`UNREPRESENTABLE` is not editable. **Enforced:** `topology-edit-table-edit-capability.js` + column descriptors. **Validation:** Stage 5/6 tests.
+### DEC-002 — metadata/capability-driven policy
+Column frozen/read-only/editor metadata and cell capability receipts are UI policy authority. Tests must not hard-code a conflicting policy.
 
 ### DEC-003 — layout before semantics
-**Must remain true:** Stage 4 modifies presentation/layout only. **Enforced:** changed-file scope. **Validation:** diff reconciliation.
+Stage 4 remains presentation-only, including its repair.
 
 ### DEC-004 — single PR stacking
-All authorized work stays on PR #1020; PR remains draft until final closure.
+All authorized assignment work stays on PR #1020; PR remains draft.
+
+### DEC-005 — honor all frozen descriptors
+Connect From/To stay frozen because existing descriptor authority says so. Stage 4 supplies bounded layout rather than changing semantic metadata.
 
 ## 8. Validation and Evidence Ledger
 
 ### Software validation
 | Validation | Status | Last HEAD | Evidence |
 |---|---|---|---|
-| PR metadata synchronized | PASS | `3984e470...` | combined mission title/body; draft/mergeable |
-| Changed files vs ledger | PASS | `3984e470...` | exactly report + inherited worker client/test |
-| No workflow changes | PASS | `3984e470...` | no `.github/workflows/*` in PR diff |
-| Baseline `main-gate` | PASS | `d92b958...` | run 279 |
-| Baseline Table Slice 6 / 8 | PASS | `d92b958...` | runs 208 / 114 |
-| Baseline render/interaction/tool audit/reachability | PASS | `d92b958...` | triggered workflows successful |
-| Stage 4 layout validation | NOT_RUN | current | implementation next |
+| PR metadata synchronized | PASS | `3984e470...` | combined mission |
+| Stage 4 diff containment | PASS | `8fe3c90...` | styles + grid + existing E2E only |
+| No workflow changes | PASS | `8fe3c90...` | none in diff |
+| `main-gate` | PASS | `8fe3c90...` | exact-head run success |
+| Table Node/source contracts | PASS | `8fe3c90...` | 23/23 tests, syntax/line guard |
+| Production build | PASS | `8fe3c90...` | Vite + bundle check; worker asset emitted |
+| Table Slice 4 | PASS | `8fe3c90...` | exact-head workflow success |
+| Table Slice 3 | FAIL | `8fe3c90...` | frozen list test oracle mismatch |
+| Table Slice 6 | FAIL | `8fe3c90...` | same assertion |
+| Stage 4 repaired layout | NOT_RUN | pending head | fix next |
 | Spreadsheet direct-edit validation | NOT_RUN | current | Stage 5+ |
-| Final-head applicable validation | NOT_RUN | current | Stage 8 |
+| Final-head full applicable validation | NOT_RUN | current | Stage 8 |
 
 ### Engineering validation
 | Property | Status | Evidence |
 |---|---|---|
-| Worker production path qualified at baseline | PASS | existing workflow matrix on `d92b958...` |
-| Direct scalar authority identified | PASS | capability module: PIPE length only |
-| Dynamic X/Y scrolling | NOT_RUN | Stage 4 |
-| Sticky/frozen context | NOT_RUN | Stage 4 |
-| Canonical unchanged before spreadsheet Apply | NOT_RUN | Stage 5 |
+| Worker production bundle present | PASS | built `topology-edit-validation-worker-BBC6OYgy.js` |
+| Existing table certified lifecycle preserved | PASS | lifecycle E2E passed on `8fe3c90...` |
+| Existing M06/M10 authority preserved | PASS | E2E passed on `8fe3c90...` |
+| Dense font/control presentation | PASS to first browser assertions | font/overflow assertions passed before frozen-list failure |
+| Dynamic X/Y scrolling | PARTIAL | overflow assertions passed; height-growth assertion not reached due earlier failure |
+| Frozen context consistency | FAIL | authoritative Connect From/To had no deterministic left offsets |
+| Canonical unchanged before future direct Apply | NOT_RUN | Stage 5 |
 | Focus/caret safe | NOT_RUN | Stage 5 |
 | Stale revision safe | NOT_RUN | Stage 5+ |
 | Atomic spreadsheet undo/redo | NOT_RUN | Stage 5+ |
 
 ### Explicitly not validated
-No claim yet that Stage 4 layout works; no spreadsheet editing exists yet; no broad XYZ/catalogue/support edit authority is assumed.
+Stage 4 cannot be called VALIDATED until repaired exact-head browser checks pass. Spreadsheet editing does not exist yet. Broad XYZ/catalogue/support edit authority is not assumed.
 
 ## 9. Known Issues, Improvements, and Deferred Scope
 
-- **Open defects:** ISS-002 (active Stage 4).
-- **Deferred improvements:** IMP-005 broad authority; IMP-004 waits until edit semantics stabilize.
-- **Open risks:** RISK-001/002/003.
-- **Open questions:** none currently; QST-001 resolved.
-- **Accepted debt:** DEBT-001.
+- **Open defects:** ISS-003 active; ISS-002 implemented but awaits Stage-4 closure evidence.
+- **Deferred improvements:** IMP-004 virtualization after edit semantics; IMP-005 broad edit authority.
+- **Open risks:** RISK-001/002/003/004.
+- **Open questions:** none; QST-001 closed.
+- **Accepted/deferred debt:** DEBT-001; DEBT-002 dependency audit; DEBT-003 existing chunk warnings.
 
 ## 10. Recommended Forward Sequence
 
-1. Complete Stage 4 layout-only slice to resolve ISS-002/IMP-001 before editing semantics.
-2. Stage 5 use existing capability authority and existing `PIPE_LENGTH` intent for direct cell editing; this is prerequisite evidence against RISK-001/003.
-3. Stage 6 route `NEEDS_INPUT` valve/TEE capabilities to their existing compound editors; do not flatten them into free text.
-4. Stage 7 add vertical virtualization only after active-cell semantics are stable; add extra engineering edits only with explicit production-consumed authority.
-5. Stage 8 reconcile final files, rerun applicable existing checks at exact final HEAD, disposition every item, refresh PR body/report, and leave ready-for-review decision to Owner.
+1. Repair ISS-003 in Stage 4 using descriptor authority; requalify exact head before any new feature work.
+2. After Stage 4 is VALIDATED, Stage 5 uses existing capability receipts and `PIPE_LENGTH` for the first direct cell, proving no canonical mutation before Apply and focus/caret stability.
+3. Stage 6 routes `NEEDS_INPUT` valve/TEE cells to existing compound editors; never flatten catalogue/topology authority into free text.
+4. Stage 7 adds virtualization only after active-cell semantics stabilize; extra engineering edits require explicit production authority.
+5. Stage 8 reconciles final files and reruns applicable checks on exact final head; every register item gets a disposition.
 
 ## 11. Next-Agent Handover
 
-- **Current stopping point:** Stage 4 before first production edit.
-- **Exact current state:** Stage 1-3 complete; PR metadata truthful; net diff before Stage 4 production code is report + two inherited worker files; QST-001 resolved.
-- **PR / branch / HEAD:** #1020 / `agent/fix-topology-validation-worker-production` / `3984e470409eb47c0da107ab1928b2578fc562ba` before this report commit.
+- **Current stopping point:** Stage 4 repair, before code fix.
+- **Exact current state:** `8fe3c90...` has compact/dynamic presentation; Table Slice 3/6 fail on the same new test assertion; main-gate/build/source/unit pass.
+- **PR / branch / HEAD:** #1020 / `agent/fix-topology-validation-worker-production` / `8fe3c90ea16b1e1115503922f6b79007ecd4e3c6` before this report update.
 - **Last completed stage:** Stage 3.
-- **Current active stage:** Stage 4; no production layout change has been made yet.
-- **Start here:** `src/workspace/viewport-productivity/topology-edit-table-styles.js`. Remove fixed inner height, establish one spreadsheet overflow owner, reduce density. Inspect `topology-edit-table-grid-view.js` only for frozen-column metadata; do not touch runtime/intents/workflow in Stage 4.
-- **Do not redo:** worker investigation, report bootstrap, PR metadata reconciliation, direct-editability investigation.
-- **Do not assume:** all columns editable; later commits inherit baseline CI; outer overflow can be clipped without checking lower panels.
-- **Files currently involved:** report; inherited worker files; next production file is table styles.
-- **Known failing checks:** None known at baseline.
-- **Validation still required:** Stage 4 exact diff + table/main-gate checks; all Stage 5+ editing evidence; final HEAD rerun.
-- **Open engineering questions:** None.
-- **Deferred improvements:** IMP-004, IMP-005.
-- **Highest-risk remaining item:** RISK-001 for later editing; Stage-4-specific risk is hiding below-grid panels through incorrect flex/grid sizing.
-- **Exact next recommended action:** edit table styles only, then inspect diff before adding any grid markup change.
-- **Required reading:** this report §§0,2,3,4,7,8,11; `topology-edit-table-styles.js`; `topology-edit-table-grid-view.js`; `topology-edit-table-productivity-adapter.js`; `topology-edit-table-edit-capability.js`.
+- **Current active stage:** Stage 4 PARTIAL; repair ISS-003 before moving on.
+- **Start here:** `src/workspace/viewport-productivity/topology-edit-table-styles.js`: add deterministic Connect From/To sticky offsets. Then `e2e/topology-edit-table-authority.spec.js`: expect all five frozen headers and check offsets. Do not change `topology-edit-table-columns.js` or grid renderer to hide the existing authority.
+- **Do not redo:** worker root cause; baseline table architecture; Stage1-3; CI root-cause investigation for this failure.
+- **Do not assume:** the corrected frozen assertion is the only remaining layout issue—rerun and inspect the height-growth assertion after it becomes reachable.
+- **Files currently involved:** report, table styles, table grid view, table-authority E2E, inherited worker client/test.
+- **Known failing checks:** Table Slice 3 and Table Slice 6 at `8fe3c90...`, same frozen-column assertion.
+- **Validation still required:** repaired Slice3/6/main-gate/other triggered table checks; Stage5+; final head.
+- **Open engineering questions:** none.
+- **Deferred improvements:** IMP-004/005; DEBT-002/003.
+- **Highest-risk remaining item:** RISK-004 immediately; RISK-001 for Stage 5.
+- **Exact next recommended action:** apply CSS/test repair only and let exact-head CI prove Stage 4 before Stage 5.
+- **Required reading:** this report §§0,3,4,5 Stage4,7,8,11; `topology-edit-table-columns.js`; `topology-edit-table-styles.js`; `e2e/topology-edit-table-authority.spec.js` Stage4 test.
 
 ## 12. Process Notes / Lessons Learned
 
-- Spreadsheet interaction does not imply spreadsheet authority; capability receipts already encode the safe edit boundary.
-- Fixed nested scrolling can make a resizable panel feel clipped even with `overflow:auto`; available-space ownership must be explicit through every `min-height:0` ancestor.
-- Existing `frozen`, `readOnly`, `valueType`, and `editor` metadata should drive UI policy rather than duplicated renderer rules.
-- Green CI is exact-HEAD evidence only.
+- Spreadsheet presentation must consume existing metadata rather than recreate policy in tests/CSS.
+- A test oracle derived from memory instead of the source descriptor set can reject correct production behavior.
+- Sticky columns need both `position:sticky` and deterministic cumulative offsets; generic sticky styling alone is incomplete.
+- Green CI is exact-head evidence only.
+- The production build at Stage 4 independently confirms the original validation worker is now emitted as a deployable asset.
 
 ## 13. PR Closure Record
 
@@ -287,8 +342,8 @@ No claim yet that Stage 4 layout works; no spreadsheet editing exists yet; no br
 |---|---|
 | Mission completed | NO |
 | In-scope items dispositioned | NO |
-| Engineering Item Register synchronized | YES current stage |
-| Changed files reconciled | YES through Stage 3; repeat after Stage 4/final |
+| Engineering Item Register synchronized | YES current state |
+| Changed files reconciled | YES through `8fe3c90...`; repeat after repair/final |
 | Validation rerun at final HEAD | NO |
 | Unexplained changes | None known |
 | Deferred improvements recorded | YES |
@@ -301,10 +356,10 @@ No claim yet that Stage 4 layout works; no spreadsheet editing exists yet; no br
 Pending.
 
 ### Remaining known limitations
-Stage 4 onward incomplete.
+Stage 4 needs ISS-003 repair/qualification; Stage 5-8 not complete.
 
 ### Recommended next PR
-None for this assignment; Owner authorized all work on PR #1020.
+None for this assignment; Owner authorized single PR #1020.
 
 ### Final HEAD
 Not final.

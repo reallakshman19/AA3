@@ -6,6 +6,7 @@ const NAV_ITEMS = Object.freeze([
   { id: 'results', label: 'Results', state: 'available' },
   { id: 'verification', label: 'Verification', state: 'available' },
   { id: 'history', label: 'History', state: 'available' },
+  { id: 'compare', label: 'Compare', state: 'available' },
 ]);
 
 export function renderLfeaStandaloneLayout(rootElement, identity = {}) {
@@ -127,6 +128,7 @@ export function renderLfeaStandaloneLayout(rootElement, identity = {}) {
     resultsRoot: viewRoots.get('results'),
     verificationRoot,
     historyRoot: viewRoots.get('history'),
+    comparisonRoot: viewRoots.get('compare'),
     workbenchRoot,
     activate,
     getActiveView: () => activeViewId,

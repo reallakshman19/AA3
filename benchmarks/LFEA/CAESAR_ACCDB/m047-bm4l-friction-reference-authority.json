@@ -1,0 +1,44 @@
+{
+  "schema": "m047-bm4l-friction-reference-authority/v1",
+  "benchmarkId": "BM4_L",
+  "scope": "REFERENCE_DIFFERENTIAL_EVIDENCE_ONLY",
+  "stackBase": {
+    "pr": 1047,
+    "branch": "agent/m047-bm4l-friction-iteration-controller",
+    "sha": "2865397456b11d2cc5dae1b7b77148790b7929c4"
+  },
+  "sourceArtifact": {
+    "workflowRun": 31513907633,
+    "artifactId": 9110308571,
+    "artifactDigest": "sha256:57684331169984e7770382a3d292fcb7c24bd30c2404fd487c2a5f66e8a907eb",
+    "reportSha256": "3bbdf58707d6384908021e07ed88ce2e046bf89df36398e4c703db4ca73eb55c",
+    "actualSha256": "8e33c9949812b27309149fceb689572e1cff41793dc01d2b8e9d86382ac3cd8a"
+  },
+  "pairs": [
+    {"frictionOff":"L6","frictionOn":"L13","nominalLoads":"W+P1","role":"FIRST_PRIMARY_DIFFERENTIAL"},
+    {"frictionOff":"L5","frictionOn":"L7","nominalLoads":"W+T1+P1","role":"SECOND_PRIMARY_DIFFERENTIAL"}
+  ],
+  "derivedControls": [
+    {"caseId":"L14","formula":"L14=L5-L6","role":"FRICTIONLESS_ALGEBRA_CONTROL"},
+    {"caseId":"L15","formula":"L15=L7-L13","role":"FRICTION_DERIVED_TARGET"}
+  ],
+  "expectedReferenceCountsPerPrimaryCase": {
+    "DISPLACEMENT": 291,
+    "ROTATION": 291,
+    "FORCE": 90,
+    "MOMENT": 90,
+    "GLOBAL_END_FORCE_FROM": 288,
+    "GLOBAL_END_FORCE_TO": 288,
+    "GLOBAL_END_MOMENT_FROM": 288,
+    "GLOBAL_END_MOMENT_TO": 288,
+    "INCIDENT_GLOBAL_FORCE": 291,
+    "INCIDENT_GLOBAL_MOMENT": 291
+  },
+  "policy": {
+    "responseValuesMayAuthorizeSlideMultiplier": false,
+    "responseValuesMayTuneMechanics": false,
+    "algebraResidualUsedAsTolerance": false,
+    "newMechanicsAuthorized": false
+  },
+  "next": "BM4_L_SOURCE_MAPPING_THEN_F2_ONLY_AFTER_INDEPENDENT_SLIDE_AND_CONTROL_AUTHORITY"
+}

@@ -10,49 +10,42 @@ Maintained throughout PR #1021. This is the single source of truth for scope, en
 | PR | #1021 |
 | Branch | `agent/lfea-workbench-integrity-1018` |
 | Base | `751756e9140527b8dc121aa179dc76b7039fb7ad` |
-| Last reconciled head | `932629b5899d1345ba7ca85a93bc3bf1080d9c1b` at S23; S26 reconciliation pending after ISS-022 repair |
-| PR state | Draft |
-| Current stage | Stage 26 — cumulative architecture/restraint reconciliation |
-| Last completed stage | Stage 25 — skew unilateral direction fail-closed repair |
-| Engineering status | Local workbench slice + support-action sign provenance + skew-restraint representability fixes implemented/source-guarded |
-| Validation status | S25 source/patch inspection PASS; S26 GitHub reconciliation pending; executable repository/browser checks remain NOT_RUN |
+| Reconciled S26 head | `925b9e247ddc31c25c8f9949ed6f393a991f2f26` before this report-only transition commit |
+| PR state | Draft, open, mergeable |
+| Current stage | Stage 27 — piping-code vs local-continuum stress authority audit |
+| Last completed stage | Stage 26 — cumulative architecture/restraint reconciliation |
+| Engineering status | Local workbench + sign provenance + skew-restraint fail-closed fixes implemented/source-guarded; stress-authority audit opened before code |
+| Validation status | Source/patch + GitHub reconciliation complete through S26; executable repository/browser checks remain NOT_RUN |
 | Workflow constraint | No `.github/workflows/*` additions or modifications |
-| Exact next action | Reconcile the expected 18-file PR, verify ahead-only ancestry/no workflows, then select the next source-proven engineering-authority target |
+| Exact next action | Trace local continuum stress, beam/piping response, B31/code-stress result generation and user/export presentation to identify any authority conflation before further production changes |
 
 ### Handover in 60 seconds
 
-Implemented/source-guarded before S24:
-- C01–C04 critical workbench integrity/run/error/export fixes;
-- package/record draft persistence and delete sequencing;
-- H01–H03/H05/H06 authority/settings, failure, record-validation and history-warning improvements;
-- M01/M04/M06/M08 status, quality-gate ownership, deformation-multiplier and progress clarity;
-- ISS-020/021 support-action reporting-sign provenance in 3D panel and engineering XLSX.
+Completed/source-guarded issue slice:
+- C01–C04 workbench integrity/run/error/export;
+- unsaved package/record draft preservation + delete sequencing;
+- H01–H03/H05/H06 authority/settings, human output guidance, record validity and evidence-history warning;
+- M01/M04/M06/M08 status, quality-gate ownership, deformation and progress clarity;
+- ISS-020/021 support-action sign convention + physical-case provenance in 3D panel/XLSX;
+- ISS-022 skew unilateral restraint direction now blocks in the approximation profile rather than snapping to a global DOF.
 
-S24 verified most nonlinear support states already fail closed: nonzero gap/friction, connecting-node and finite-stiffness InputXML restraints are unsupported/nonlinear; interface ownership prohibits GAP/UNKNOWN/CONFLICT/ONE_WAY/LIFT_OFF/FRICTION/CONTACT/NONLINEAR_SPRING and cross-checks DOF mechanics against the sealed mechanical model.
+S26 reconciliation at `925b9e24…`:
+- exactly **18** changed files matching the ledger;
+- **71 commits ahead / 0 behind** exact authorized base;
+- merge base exactly `751756e9140527b8dc121aa179dc76b7039fb7ad`;
+- PR open, mergeable, draft;
+- no `.github/workflows/*` changed.
 
-S24 found **ISS-022**: valid skew unilateral direction cosines could be snapped to the dominant global DOF under the disclosed approximation profile. Example `[0.7071, 0.7071, 0]` could become UX or UY, changing restraint orientation/stiffness physics beyond the declared unilateral→bilateral approximation.
-
-S25 now blocks that condition:
-- valid source direction remains valid source data;
-- strict profile remains `NONLINEAR_OUT_OF_SCOPE` for unilateral TYPE 14/15;
-- approximate profile accepts only already axis-aligned direction vectors within `1e-9`;
-- skew vectors become `UNSUPPORTED_BY_GENERIC_SOLVER / MODEL_RESTRAINT_SKEW_DIRECTION_UNSUPPORTED`;
-- axis-aligned +Y remains conditionally approximable as UY FIXED under the pre-existing disclosed limitation;
-- gap/friction/connect-node/finite-stiffness behavior is unchanged;
-- no arbitrary-direction solver equations were added.
-
-The legacy `solveInputXmlGeneric()` raw-solve entrypoint was verified to always fail closed and direct callers to diagnose→prepare→authorize→solve, so the old helper path was not modified.
+Runtime/browser validation remains NOT_RUN and is still required before merge.
 
 ## 1. Engineering Invariants
 
-- Unsupported nonlinear restraint behavior never silently becomes fixed/free mechanics.
-- A valid source direction is not permission to rotate it to a convenient solver axis.
-- Current mechanical constraints are global UX/UY/UZ/RX/RY/RZ; arbitrary-direction constraints are not represented by pretending a skew vector is one of those axes.
-- Axis-aligned unilateral behavior may be linearized only under the explicitly disclosed approximation profile.
-- Signed support forces carry the exact reporting sign convention and physical load-case provenance.
-- Vertical support-action axis degeneracy remains blocked without authoritative secondary axis.
-- Local continuum FEA stress is not ASME/B31/CAESAR piping-code stress authority.
-- No solver numerical/formulation changes and no CI workflow additions.
+- Local continuum stress, beam-element piping response, and ASME/B31/CAESAR-style piping-code stress are different engineering authorities.
+- A local continuum von Mises field must never be labelled or exported as code stress/allowable compliance without an explicit code application path.
+- Code-stress results must retain their source physical case/load combination and code basis.
+- Support/reaction sign and physical load-case provenance remain first-class downstream data.
+- Unsupported restraint mechanics block explicitly rather than silently becoming different physics.
+- No solver numerical/formulation changes and no CI workflow additions without a separately registered source-proven defect.
 
 ## 2. Engineering Item Register
 
@@ -61,23 +54,21 @@ The legacy `solveInputXmlGeneric()` raw-solve entrypoint was verified to always 
 | ISS-001–019 | Critical–Medium | IMPLEMENTED / DEFERRED as previously recorded | Local workbench audit slice |
 | ISS-020 | High | IMPLEMENTED + GUARDED | 3D support-action publication/panel lost reporting sign convention |
 | ISS-021 | High | IMPLEMENTED + GUARDED | Engineering XLSX omitted/could not verify reporting sign convention |
-| ISS-022 | High | IMPLEMENTED + GUARDED | Skew unilateral InputXML direction was approximation-eligible after dominant-axis snapping |
+| ISS-022 | High | IMPLEMENTED + GUARDED | Skew unilateral InputXML direction could be snapped to dominant global DOF |
 | IMP-001 | High | DEFERRED | Shared colour authority for cross-run comparison |
 | IMP-002 | High | ACTIVE AUDIT | Full linear-piping/pre-FEA/workbench authority handoff audit |
-| RISK-001 | High | OPEN | Continuum von Mises may be mistaken for piping-code stress |
+| **RISK-001** | **High** | **ACTIVE S27** | Continuum von Mises may be mistaken for piping-code stress |
 | RISK-002 | High | PARTIALLY MITIGATED | Reaction sign convention visibility downstream |
-| RISK-003 | High | MITIGATED FOR CURRENT INPUTXML PATH | Silent restraint semantic simplification; skew-axis defect repaired, nonlinear cases verified blocked |
+| RISK-003 | High | MITIGATED FOR CURRENT INPUTXML PATH | Silent restraint semantic simplification |
 | QST-001 | Medium | OPEN | Authoritative vertical support-triad fallback-axis policy |
 
 ## 3. Decision Log
 
 - **DEC-002:** no new CI workflow gates.
 - **DEC-018:** architecture changes are audit-first; no speculative edits.
-- **DEC-019–022:** support-action sign provenance is required, canonical, and cross-checked against current sealed presentation.
-- **DEC-023:** representability must be based on actual mechanics, not generic support labels.
-- **DEC-024:** unilateral approximation requires normalized direction to be axis-aligned within `1e-9`; otherwise block with `MODEL_RESTRAINT_SKEW_DIRECTION_UNSUPPORTED`.
-- **DEC-025:** strict unilateral behavior remains nonlinear-blocked; S25 changes representability only, not source validity or physical unilateral equations.
-- **DEC-026:** keep `targetDof` diagnostic/dominant-axis evidence for skew source rows, but block their approximate disposition so the structural compiler cannot consume that projection. This preserves the distinction between valid source direction and unsupported solver representation.
+- **DEC-019–022:** support-action signed-force provenance is mandatory and cross-checked.
+- **DEC-024/025:** only axis-aligned unilateral restraints may enter the disclosed global-DOF approximation; skew source direction blocks without changing source validity.
+- **DEC-027:** S27 will not introduce a code-stress formula. It first verifies authority naming, provenance and export separation among existing continuum, beam and code-engine outputs.
 
 ## 4. Stage Roadmap
 
@@ -87,54 +78,49 @@ The legacy `solveInputXmlGeneric()` raw-solve entrypoint was verified to always 
 | S21 | DONE | Focused authority/sign provenance audit |
 | S22 | DONE | Support-action sign provenance repair |
 | S23 | DONE | 16-file architecture-slice reconciliation |
-| S24 | DONE | Restraint/support semantic fidelity audit; ISS-022 registered before code |
-| S25 | DONE | Fail closed on skew unilateral direction in approximate linear path |
-| S26 | IN_PROGRESS | Reconcile expanded architecture/restraint slice |
-| S27 | PLANNED | Ground next source-proven engineering-authority target before code |
+| S24 | DONE | Restraint/support semantic fidelity audit |
+| S25 | DONE | Skew unilateral fail-closed repair |
+| S26 | DONE | 18-file cumulative reconciliation |
+| S27 | IN_PROGRESS | Piping-code vs local-continuum stress authority audit |
+| S28 | PLANNED | Implement only source-proven S27 authority defect(s), or record audit pass |
 
 ## 5. Stage Execution Log
 
-### Stages 1–23
-Complete at documented source/patch evidence level. S23 reconciled head `932629b5899d1345ba7ca85a93bc3bf1080d9c1b`: 65 commits ahead / 0 behind exact base, exactly 16 changed files, same merge base, no workflow changes. Full command/browser execution remained NOT_RUN.
-
-### Stage 24 — restraint/support semantic fidelity audit
-**COMPLETE.** Verified gap/friction/connect-node/finite-stiffness and interface prohibited states fail closed. Found ISS-022 skew-direction loss in the approximation profile and registered the defect/invariant before code. The legacy raw InputXML solve entrypoint was verified fail-closed and therefore not a reachable bypass requiring modification.
-
-### Stage 25 — skew unilateral direction fail-closed repair
-**COMPLETE at source/patch evidence level.**
-
-Changed production file:
-- `src/core/linear-piping-analysis-consumer/inputxml-feature-inventory-restraints.js`
-
-Implementation:
-- introduced shared `DIRECTION_TOLERANCE = 1e-9` for unit-direction qualification/alignment;
-- added `axisAlignedDirection(direction)` on the normalized cosine vector;
-- for corrected unilateral TYPE 14/15:
-  - invalid/non-unit direction remains `MODEL_RESTRAINT_DIRECTION_INVALID`;
-  - strict profile remains `NONLINEAR_OUT_OF_SCOPE / MODEL_RESTRAINT_UNILATERAL_UNSUPPORTED`;
-  - skew-but-valid direction now returns approximate `UNSUPPORTED_BY_GENERIC_SOLVER / MODEL_RESTRAINT_SKEW_DIRECTION_UNSUPPORTED`;
-  - axis-aligned direction retains existing `IMPLEMENTED_WITH_DECLARED_APPROXIMATION / GENERIC_APPROX_UNILATERAL_LINEARIZED`.
-
-Changed existing guard:
-- `scripts/linear-piping-analysis-consumer-anti-drift-check.mjs`, already part of `check:linear-piping-analysis-consumer`.
-
-Guard evidence added:
-- static assertions retain existing gap/friction/connect-node/finite-stiffness blocking and require the new skew limitation/source condition;
-- direct classification check proves TYPE 14 `[0,1,0]` targets UY, strict-blocks nonlinear, approximate-accepts disclosed linearization;
-- direct classification check proves TYPE 14 `[sqrt(.5),sqrt(.5),0]` remains source-direction valid but approximate-blocks with `MODEL_RESTRAINT_SKEW_DIRECTION_UNSUPPORTED`;
-- canonical profile keys `STRICT_INPUTXML_LINEAR_STATIC_V1` and `DISCLOSED_GENERIC_ANALYZER_APPROXIMATION_V1` are used in the guard.
-
-Patch review confirmed the production delta is limited to approximation representability; no structural compiler, solver, force, spring, gap/friction or source type mutation code changed.
-
-**Execution limitation:** the anti-drift command was not executed in this environment; source/patch evidence only.
+### Stages 1–25
+Complete at documented source/patch evidence level. Full command/browser execution remains NOT_RUN.
 
 ### Stage 26 — cumulative architecture/restraint reconciliation
-**IN PROGRESS — opened before reconciliation; no production changes planned.**
+**COMPLETE.** At head `925b9e247ddc31c25c8f9949ed6f393a991f2f26`:
+- `get_pr_info`: open, mergeable, draft; 71 commits; 18 changed files;
+- changed-file list exactly equals Section 6;
+- `compare_commits`: status `ahead`, ahead 71, behind 0;
+- merge base exactly the authorized base SHA;
+- no `.github/workflows/*` path appears.
 
-## 6. Changed-File Ledger — Expected S26
+No production changes were made in S26.
 
-Expected cumulative changed files: prior 16 plus the two S25 paths = **18** total.
+### Stage 27 — piping-code vs local-continuum stress authority audit
+**IN PROGRESS — opened before source audit and before any production change.**
 
+Audit targets:
+1. independent LFEA continuum result authority (`RAW_STRESS`, projected review stress, von Mises presentation/export);
+2. linear piping beam-analysis recovered response/stress inputs;
+3. B31/code-application result generation, allowables/utilization/status and physical case provenance;
+4. combined/main presentation and XLSX/UI naming;
+5. any route by which continuum result could be interpreted as code stress or vice versa.
+
+Questions:
+- Is continuum von Mises explicitly identified as local continuum stress rather than piping-code stress?
+- Does projected nodal stress remain non-authoritative review evidence everywhere?
+- Are code-engine results labelled with code/basis and source case identity?
+- Do exports/panels place continuum and code results in separate columns/sections/authorities?
+- Are B31 sustained/expansion/occasional results derived only through the code-engine/application path rather than continuum von Mises?
+
+No-code gate: register a concrete source defect and expected authority invariant in this report before any S28 production edit.
+
+## 6. Changed-File Ledger — S26 Reconciled
+
+Exactly 18 paths:
 1. `agents/PR1021_workreport.md`
 2. `scripts/lfea-p0-ui-containment-check.mjs`
 3. `scripts/lfea-support-actions-panel-check.mjs`
@@ -154,7 +140,7 @@ Expected cumulative changed files: prior 16 plus the two S25 paths = **18** tota
 17. `src/workspace/linear-piping-support-action-xlsx.js`
 18. `src/workspace/linear-piping-support-actions-publication.js`
 
-No workflow path is authorized.
+S27 is audit-only until a defect is registered.
 
 ## 7. Validation Ledger
 
@@ -162,33 +148,29 @@ No workflow path is authorized.
 |---|---|
 | Local workbench source/store guards | IMPLEMENTED / SOURCE-INSPECTED |
 | Support sign publication/panel/XLSX guards | IMPLEMENTED / SOURCE-INSPECTED / NOT_EXECUTED |
-| S23 reconciliation | PASS — 16 files; ahead 65 / behind 0; exact merge base |
-| S24 restraint semantic audit | PASS with ISS-022 found |
-| S25 production patch inspection | PASS |
-| S25 static/direct guard source inspection | PASS / NOT_EXECUTED |
-| S26 cumulative reconciliation | IN_PROGRESS |
+| S25 skew-restraint production/guard patch inspection | PASS / NOT_EXECUTED |
+| S26 changed-file reconciliation | PASS — exactly 18 |
+| S26 ancestry | PASS — ahead 71 / behind 0; exact merge base |
+| Workflow constraint | PASS |
+| S27 stress-authority audit | IN_PROGRESS |
 | Full repository/workbench commands | **NOT_RUN** |
 | Browser interaction/presentation | **NOT_RUN** |
 
 ## 8. Examples / Edge Cases
 
-- Axis-aligned +Y `[0,1,0]`: strict profile rejects nonlinear unilateral behavior; disclosed approximation may compile UY FIXED after explicit limitation acceptance.
-- Skew +Y source direction `[0.7071,0.7071,0]`: source direction is valid, but current solver cannot represent that arbitrary direction; approximate profile blocks instead of snapping to UX/UY.
-- Non-unit/incomplete cosine vector remains invalid source direction.
-- Nonzero gap/friction, connecting node and finite stiffness remain unsupported/nonlinear as before.
-- Negative axis-aligned direction remains axis-aligned; S25 intentionally does not redefine CAESAR type/direction sign semantics without separate source proof.
-- Vertical support-action tangent parallel to gravity-up remains axis-degenerate; no arbitrary lateral axis is invented.
+- Continuum `VON_MISES` may be useful local stress evidence, but it is not a B31 sustained/expansion/occasional code check.
+- Projected nodal stress is a non-authoritative visualization/review projection, not a convergence or code-stress authority.
+- A code utilization/result must retain governing physical load case/combination and allowable/code basis.
+- A spreadsheet/support-action force sign convention is separate from stress authority; both need explicit provenance.
+- Skew unilateral restraints remain valid source data but unsupported by current global-DOF approximation.
 
 ## 9. Roadmap
 
-After S26, prioritize source-proven engineering-authority work over cosmetic UI. Highest open candidates:
-- RISK-001: clearly separate piping beam response, local continuum FEA stress and piping-code/CAESAR stress in downstream authority/export surfaces;
-- further IMP-002 handoff audit for physical load-case provenance and any remaining support semantics;
-- CAESAR/reference correlation suite for anchor, guide/line-stop, vertical riser, elbow, branch, loop and directional support.
+After S27/S28, prioritize a CAESAR/reference correlation suite and remaining source-proven handoff issues. Deferred cosmetic UI remains lower priority than code-stress/load-case/support semantics.
 
 ## 10. Handover
 
-Current stopping point: S25 implementation and source guard are complete; S26 reconciliation is the only active stage. Do not expand S25 into arbitrary-direction solver mechanics. Reconcile first, then open S27 in this report before any new code.
+Current stopping point: S26 clean reconciliation; S27 opened before code. Start from code-engine/application/presentation sources and compare them to independent workbench continuum stress naming/export. Do not add code equations in S27.
 
 ## 11. PR Continuation Record
 
@@ -197,7 +179,8 @@ Current stopping point: S25 implementation and source guard are complete; S26 re
 | Local workbench issue slice | IMPLEMENTED + GUARDED |
 | ISS-020/021 sign provenance | IMPLEMENTED + GUARDED |
 | ISS-022 skew restraint | IMPLEMENTED + GUARDED |
-| S26 reconciliation | IN_PROGRESS |
+| S26 reconciliation | COMPLETE |
+| S27 stress-authority audit | IN_PROGRESS |
 | Full runtime/browser validation | **NOT_RUN** |
 | New CI workflows | **NO** |
 | PR | DRAFT |

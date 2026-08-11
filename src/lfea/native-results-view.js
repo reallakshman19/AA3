@@ -34,6 +34,9 @@ function render(root, executionState, resultsState) {
     ['Recovery status', batch.status],
     ['Raw execution batch', batch.rawExecutionBatchId],
     ['Recovery profile identity', batch.recoveryProfileSemanticHash],
+    ['Force-field stations/span', declared(batch.recoveryProfile.elementForceStationsPerSpan)],
+    ['Code-point consistency tolerance', declared(batch.recoveryProfile.codePointConsistencyTolerance)],
+    ['Local + global actions retained', batch.recoveryProfile.retainLocalAndGlobalActions ? 'YES' : 'NO'],
     ['Mechanical model identity', batch.modelSemanticHash],
     ['Stiffness identity', batch.stiffnessStateHash],
     ['Load identity', batch.loadStateHash],
@@ -167,4 +170,5 @@ function scrollWrap(doc, table) {
 function subheading(doc, value) { const heading = doc.createElement('h4'); heading.textContent = value; return heading; }
 function text(doc, value) { const p = doc.createElement('p'); p.className = 'lfea-journey-copy'; p.textContent = value; return p; }
 function codeList(doc, label, values) { const box = doc.createElement('div'); box.append(subheading(doc, label)); const list = doc.createElement('ul'); for (const value of values ?? []) { const li = doc.createElement('li'); const code = doc.createElement('code'); code.textContent = value; li.append(code); list.append(li); } box.append(list); return box; }
+function declared(entry) { return entry ? `${entry.value} · ${entry.source}` : null; }
 function display(value) { return value === null || value === undefined || value === '' ? '—' : String(value); }

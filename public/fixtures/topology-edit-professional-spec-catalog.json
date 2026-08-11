@@ -192,6 +192,26 @@
       }
     },
     {
+      "recordId": "VALVE-DN80-BALL-150-Q3-B",
+      "componentType": "VALVE",
+      "nominalSizeMm": 80,
+      "outsideDiameterMm": 88.9,
+      "pressureClass": "150",
+      "materialSpecification": "A216-WCB",
+      "componentLengthMm": 300,
+      "componentMassKg": 24,
+      "valveType": "BALL",
+      "valveFaceToFaceMm": 300,
+      "endConnectionFrom": "FLANGED",
+      "endConnectionTo": "FLANGED",
+      "pipingClass": "PCL-80",
+      "sourceReference": {
+        "documentId": "SPEC-DEMO",
+        "revision": "8",
+        "path": "/valve/dn80/ball/pcl80/class150"
+      }
+    },
+    {
       "recordId": "FLANGE-DN100-600-RF-A",
       "componentType": "FLANGE",
       "nominalSizeMm": 100,

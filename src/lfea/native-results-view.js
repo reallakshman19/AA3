@@ -1,3 +1,8 @@
+import {
+  LINEAR_FEA_UNITS,
+  TRANSLATIONAL_DOFS,
+} from '../core/linear-fea-contract/index.js';
+
 const ACTION_FIELDS = Object.freeze(['fx', 'fy', 'fz', 'mx', 'my', 'mz']);
 
 export function mountLfeaNativeResultsView(root) {
@@ -61,7 +66,7 @@ function header(doc, resultsState) {
   headerNode.append(title, badge);
   const note = doc.createElement('p');
   note.className = 'lfea-journey-copy';
-  note.textContent = 'Raw B-3.3 solver quantities and recovered B-3.4 element actions are displayed as separate authorities. Support-action and code-applied quantities are not derived here.';
+  note.textContent = 'Raw B-3.3 solver quantities and recovered B-3.4 element actions are displayed as separate authorities in canonical FEA units. Support-action and code-applied quantities are not derived here.';
   const wrapper = doc.createElement('div');
   wrapper.append(headerNode, note);
   return wrapper;
@@ -100,25 +105,25 @@ function casePanel(doc, rawCase, caseResult) {
   ]));
   if (rawCase) {
     section.append(subheading(doc, 'Raw B-3.3 displacement — GLOBAL basis'));
-    section.append(rawVectorTable(doc, rawCase.execution.displacement, 'RAW_B3.3_DISPLACEMENT'));
+    section.append(rawVectorTable(doc, rawCase.execution.displacement, 'RAW_B3.3_DISPLACEMENT', displacementUnit));
     section.append(subheading(doc, 'Raw B-3.3 reactions — GLOBAL basis'));
-    section.append(rawVectorTable(doc, rawCase.execution.reactions, 'RAW_B3.3_REACTION'));
+    section.append(rawVectorTable(doc, rawCase.execution.reactions, 'RAW_B3.3_REACTION', reactionUnit));
   }
   section.append(subheading(doc, 'Recovered B-3.4 element-end actions'));
   section.append(recoveredActionTable(doc, caseResult.recovery.elementActions));
   return section;
 }
 
-function rawVectorTable(doc, rows, authority) {
-  const table = tableWithHead(doc, ['Node', 'DOF', 'Value', 'Basis', 'Authority']);
+function rawVectorTable(doc, rows, authority, unitForDof) {
+  const table = tableWithHead(doc, ['Node', 'DOF', 'Value', 'Unit', 'Basis', 'Authority']);
   for (const row of rows) {
-    table.append(tableRow(doc, [row.nodeId, row.dof, row.value, 'GLOBAL', authority]));
+    table.append(tableRow(doc, [row.nodeId, row.dof, row.value, unitForDof(row.dof), 'GLOBAL', authority]));
   }
   return scrollWrap(doc, table);
 }
 
 function recoveredActionTable(doc, actions) {
-  const labels = ['Element', 'End', 'Basis', ...ACTION_FIELDS.map((field) => field.toUpperCase()), 'Authority'];
+  const labels = ['Element', 'End', 'Basis', ...ACTION_FIELDS.map((field) => `${field.toUpperCase()} [${actionUnit(field)}]`), 'Authority'];
   const table = tableWithHead(doc, labels);
   for (const action of actions) {
     for (const end of ['I', 'J']) {
@@ -136,6 +141,14 @@ function recoveredActionTable(doc, actions) {
   }
   return scrollWrap(doc, table);
 }
+
+function displacementUnit(dof) {
+  return TRANSLATIONAL_DOFS.includes(dof) ? LINEAR_FEA_UNITS.length : LINEAR_FEA_UNITS.rotation;
+}
+function reactionUnit(dof) {
+  return TRANSLATIONAL_DOFS.includes(dof) ? LINEAR_FEA_UNITS.force : LINEAR_FEA_UNITS.moment;
+}
+function actionUnit(field) { return field.startsWith('f') ? LINEAR_FEA_UNITS.force : LINEAR_FEA_UNITS.moment; }
 
 function factTable(doc, rows) {
   const table = doc.createElement('table');

@@ -123,11 +123,17 @@ test('Engineering Table is dense, dynamically scrollable and keeps frozen contex
   const frozen = await scroll.locator('thead [data-table-frozen]').evaluateAll(
     (nodes) => nodes.map((node) => node.getAttribute('data-table-frozen')),
   );
-  expect(frozen).toEqual(['select', 'tag', 'elementType']);
+  expect(frozen).toEqual(['select', 'tag', 'elementType', 'connectFrom', 'connectTo']);
   await expect(scroll.locator('tbody tr').first().locator('[data-table-frozen="tag"]')).toBeVisible();
-  expect(await scroll.locator('[data-table-frozen="tag"]').first().evaluate(
-    (node) => getComputedStyle(node).position,
-  )).toBe('sticky');
+  const frozenLayout = await scroll.locator('thead [data-table-frozen]').evaluateAll((nodes) => (
+    nodes.map((node) => ({
+      key: node.getAttribute('data-table-frozen'),
+      left: Number.parseFloat(getComputedStyle(node).left),
+      position: getComputedStyle(node).position,
+    }))
+  ));
+  expect(frozenLayout.map((entry) => entry.position)).toEqual(Array(5).fill('sticky'));
+  expect(frozenLayout.map((entry) => entry.left)).toEqual([0, 58, 190, 268, 396]);
 
   await panel.evaluate((node) => {
     node.style.width = '720px';

@@ -27,6 +27,7 @@ walk(ENTRY, []);
 if (!requestedEntry) {
   const entrySource = fs.readFileSync(ENTRY, 'utf8');
   const bootstrapSource = fs.readFileSync(path.join(ROOT, 'src/lfea/bootstrap.js'), 'utf8');
+  const runtimeSource = fs.readFileSync(path.join(ROOT, 'src/lfea/standalone-runtime.js'), 'utf8');
   const layoutSource = fs.readFileSync(path.join(ROOT, 'src/lfea/standalone-layout.js'), 'utf8');
   assert(!entrySource.includes('bootstrapAnalysisWorkspace'),
     'Standalone LFEA entry must not call the combined workspace bootstrap.');
@@ -34,8 +35,14 @@ if (!requestedEntry) {
     'Standalone LFEA entry must not publish the legacy AnalysisWorkspace global.');
   assert(!bootstrapSource.includes('bootstrapAnalysisWorkspace'),
     'Standalone LFEA bootstrap must not call the combined workspace bootstrap.');
-  assert(bootstrapSource.includes('LfeaStandaloneInputXmlSourceController'),
-    'Standalone LFEA bootstrap must compose the governed native InputXML source controller.');
+  assert(bootstrapSource.includes('createLfeaStandaloneRuntime'),
+    'Standalone LFEA bootstrap must delegate composition to the LFEA-owned runtime.');
+  assert(runtimeSource.includes('LfeaStandaloneInputXmlSourceController'),
+    'Standalone LFEA runtime must compose the governed native InputXML source controller.');
+  assert(runtimeSource.includes('createLfeaNativeExecutionAuthority'),
+    'Standalone LFEA runtime must compose native execution authority.');
+  assert(runtimeSource.includes('createLfeaNativeResultsAuthority'),
+    'Standalone LFEA runtime must compose native Results authority.');
   for (const viewId of ['source', 'review', 'model', 'analysis']) {
     assert(layoutSource.includes(`id: '${viewId}'`) && layoutSource.includes(`state: 'available'`),
       `Standalone LFEA ${viewId} view must be an available application-owned route.`);

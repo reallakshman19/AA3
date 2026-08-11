@@ -109,7 +109,10 @@ export class LfeaWorkbenchController {
 
   importDocument(value) {
     const next = this.store.importDocument(value);
-    if (next.status !== 'FAILED') this.view.resetRecordDrafts();
+    if (next.status !== 'FAILED') {
+      this.view.resetRecordDrafts();
+      this.view.render(next);
+    }
     return next;
   }
 
@@ -303,9 +306,13 @@ export class LfeaWorkbenchController {
 function confirmMockReplacement(documentRef) {
   const view = documentRef?.defaultView;
   if (typeof view?.confirm !== 'function') return false;
-  return view.confirm(
-    'Replace the current LFEA mesh package with simulated mock data? Unsaved engineering input will be discarded.',
-  );
+  try {
+    return view.confirm(
+      'Replace the current LFEA mesh package with simulated mock data? Unsaved engineering input will be discarded.',
+    );
+  } catch {
+    return false;
+  }
 }
 
 function releaseBrowserTask() {

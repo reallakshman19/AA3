@@ -109,6 +109,8 @@ console.log(JSON.stringify({
   currentOnlyRecovery: true,
   rawTamperRejected: true,
   staleResultsHiddenFromCurrentAuthority: true,
+  canonicalUnitsVisible: true,
+  runUiIsProjectionOnly: true,
   recoveryProfileSemanticHash: batch.recoveryProfileSemanticHash,
   recoveryBatchId: batch.recoveryBatchId,
 }));
@@ -117,6 +119,7 @@ function sourceGuards() {
   const recoverySource = fs.readFileSync(
     'src/core/linear-piping-analysis-consumer/inputxml-linear-production-recovery.js', 'utf8');
   const viewSource = fs.readFileSync('src/lfea/native-results-view.js', 'utf8');
+  const journeyViewSource = fs.readFileSync('src/lfea/governed-journey-view.js', 'utf8');
   const layoutSource = fs.readFileSync('src/lfea/standalone-layout.js', 'utf8');
   const bootstrapSource = fs.readFileSync('src/lfea/bootstrap.js', 'utf8');
   assert.match(recoverySource, /compileResultRecovery/u);
@@ -124,9 +127,13 @@ function sourceGuards() {
   assert.doesNotMatch(recoverySource, /linear-piping-support-action-triad|linear-fea-b31-code-engine|codeStress/u);
   assert.doesNotMatch(viewSource, /compileResultRecovery|linear-piping-support-action-triad|linear-fea-b31-code-engine/u);
   assert.doesNotMatch(viewSource, /innerHTML|insertAdjacentHTML|outerHTML/u);
+  assert.match(viewSource, /LINEAR_FEA_UNITS/u);
   assert.match(viewSource, /RAW_B3\.3_DISPLACEMENT/u);
   assert.match(viewSource, /RECOVERED_B3\.4_ELEMENT_ACTION/u);
+  assert.match(journeyViewSource, /dataset\.role = 'lfea-native-run'/u);
+  assert.match(journeyViewSource, /button\.disabled = !analysis\.readyToRun/u);
   assert.match(layoutSource, /id: 'results', label: 'Results', state: 'available'/u);
+  assert.match(bootstrapSource, /onRunNativeAnalysis/u);
   assert.match(bootstrapSource, /resultsAuthority\.recover/u);
 }
 

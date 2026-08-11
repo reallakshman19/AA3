@@ -7,94 +7,80 @@
 - **PR:** #1038, DRAFT.
 - **Branch:** `agent/integrated-lafea-common-stage-roadmap`.
 - **Original base:** `a587867963cc9199caca6e7adfa03af95a316aa2`.
-- **Last validated implementation HEAD:** `5709110edb38539853f02c6e0a5e6fd715cc68d7`.
-- **Current report HEAD before Stage 9 production edits:** `ed19b3e1256102effed00c637a1f316fbdecf7ab`.
-- **Current `main` observed:** `084e0587ce1d3d17c87670456226bd6534891ed9`.
-- **Current stage:** Stage 9 — Batch 3A LAFEA.3 canonical geometry identity, IN_PROGRESS.
-- **Last completed stage:** Stage 8 — FE `SECTION_PROPERTY` taxonomy.
+- **Current validated implementation HEAD:** `1dab5bc4b6a73f0f4fac474d37130f6c47be37f6`.
+- **Current `main` last observed:** `084e0587ce1d3d17c87670456226bd6534891ed9`.
+- **Current stage:** Stage 10 — Batch 3B LAFEA.3 source-mesh content identity, IN_PROGRESS.
+- **Last completed stage:** Stage 9 — Batch 3A canonical continuum geometry identity.
 - **Engineering status:** IN_PROGRESS.
-- **Validation status:** Stage 8 exact-head PASS; Stage 9 NOT_RUN.
-- **Current blockers:** final PR closure remains blocked on explicit current-`main` reconciliation. Cross-product repository integration attribution has unrelated LFEA piping defect ISS-001.
-- **Exact next action:** add a production-consumed LAFEA.3 canonical geometry projection, make the legacy lifecycle producer use its semantic hash for `ANALYSIS_GEOMETRY`, add focused stability/change regression, and run exact-head retained suites.
+- **Validation status:** Stage 9 exact-head bounded certification PASS; Stage 10 NOT_RUN.
+- **Current blockers:** final PR closure remains blocked on current-`main` reconciliation (RISK-004). Repository-integration attribution remains red from unrelated LFEA piping defect ISS-001 while its complete repository gate and hygiene steps pass.
+- **Exact next action:** make the legacy LAFEA.3 `ANALYSIS_MESH` artifact identify canonical mesh content only, keep execution/recovery physics evidence separate, add focused production regression, then exact-head validate.
 
 ## Handover in 60 Seconds
 
-### Completed architecture increments
+### Completed bounded increments
 
-1. Stage route/input semantics centralized in the existing production stage adapter.
-2. Shared unit scale facts consumed by real LAFEA.1 and LAFEA.3 unit adapters.
-3. FE thickness edits classified as `SECTION_PROPERTY`, while LAFEA.1 pipe-wall thickness remains true geometry.
-4. No batch has promoted release, changed numerical formulas, or silently repaired stale evidence.
+1. Production stage adapter now owns route family and semantic input requirements.
+2. LAFEA.1 and LAFEA.3 consume one shared unit-factor registry without changing stage unit contracts.
+3. FE thickness edits are `SECTION_PROPERTY`; analytical pipe-wall thickness remains `GEOMETRY`.
+4. Legacy LAFEA.3 `ANALYSIS_GEOMETRY.artifactHash` now comes from canonical coordinates/topology only.
 
-### Stage 9 finding
+### Stage 9 validated truth
 
-The repository already contains a strong pure planar geometry contract for the domain-first LAFEA.3 route:
-
-```text
-analysisGeometryHash = hash(
-  geometryId,
-  coordinateSystemId,
-  lengthUnit,
-  vertices,
-  segments,
-  loops
-)
-```
-
-That domain-first hash correctly excludes material, section, load, and BC semantics.
-
-The older/common lifecycle producer does not. Its current `ANALYSIS_GEOMETRY` hash is derived from:
+The production LAFEA.3 geometry record is stable across:
 
 ```text
-sourceHash
-canonicalModelHash
-source nodes
-source elements
+material-property edits
+section/thickness edits
+load edits
+boundary-condition edits
+provenance-only source-reference edits
 ```
 
-and raw element rows include:
+and changes for:
 
 ```text
-elementId
-elementType
-nodeIds
-materialId
-thickness
-sourceReference
+node-coordinate edits
+stable node/topology identity edits
 ```
 
-Therefore a material/section/provenance edit can change legacy `ANALYSIS_GEOMETRY` identity even when physical coordinates/topology do not change.
+The geometry record still carries exact current `sourceHash` and `canonicalModelHash` parents. Stable geometry identity therefore does **not** automatically imply current evidence after a source edit; explicit revalidation remains required.
 
-### Stage 9 principle
+### Why Stage 10 exists
 
-Fix the **artifact identity first**, not currentness.
-
-The Stage 9A result must be:
+The legacy LAFEA.3 mesh hash is still broader than mesh content. It currently hashes:
 
 ```text
-same canonical geometry
-+ changed material/section/load/BC/provenance
-→ same ANALYSIS_GEOMETRY artifactHash
-
-changed coordinates/topology
-→ different ANALYSIS_GEOMETRY artifactHash
+analysisGeometryHash
+meshProfileHash
+sourceMesh = essentially the full LAFEA.3 source document
+retainedAcceptedMeshEvidence = stiffness/element/numerical evidence
 ```
 
-The lifecycle record will still carry exact current `sourceHash` and `canonicalModelHash` parents. A changed source therefore still requires explicit geometry revalidation. Mesh evidence will not be promoted or preserved in this batch.
+The source document contains materials, element thickness, constraints, loads, result requests, and provenance. Retained mesh evidence contains stiffness-related numerical evidence. Consequently the legacy `ANALYSIS_MESH.artifactHash` changes for edits that do not alter discretization.
+
+The repository already has the correct semantic distinction in `lafea-analysis-mesh-contract.js`:
+
+```text
+meshHash       = canonical mesh content
+artifactHash   = broader governed evidence envelope (in explicit custody paths)
+```
+
+Stage 10 aligns the legacy lifecycle producer with the **mesh-content** side of that distinction. It will not change currentness rules.
 
 ---
 
 ## Governing Engineering Invariants
 
-1. UI/render geometry is never engineering geometry authority.
+1. UI/render state is never engineering authority.
 2. Calculation success is not release qualification.
-3. No previous source/canonical/mesh hash is copied forward to manufacture currentness.
-4. Geometry artifact identity and geometry evidence parent binding are separate concepts.
-5. Producer, custody, mesh, recovery, verification, and release hashes remain distinct.
-6. LAFEA.6 remains unsupported.
+3. Geometry identity, mesh-content identity, execution evidence, recovery evidence, custody evidence, and release evidence remain distinct.
+4. No old source/model/mesh hash is copied forward to manufacture currentness.
+5. Stable artifact identity is not equivalent to current parent binding.
+6. LAFEA.6 remains fail-closed unsupported.
 7. No `.github/workflows/*` changes without explicit Owner authorization.
-8. Every new authority helper must have an immediate production consumer and focused regression.
-9. Stage 9 is LAFEA.3-only; shell geometry identity is deferred until the continuum pattern is proven.
+8. Every new abstraction must have an immediate production consumer and focused regression.
+9. Stage 10 is LAFEA.3-only; LAFEA.4/.5 legacy geometry/mesh hashing remains unchanged.
 
 ---
 
@@ -103,37 +89,36 @@ The lifecycle record will still carry exact current `sourceHash` and `canonicalM
 | Work item | Priority | Status | Evidence |
 |---|---:|---|---|
 | Integrated roadmap | P0 | DONE | `docs/IntegratedLAFEAroadmap.md` |
-| Common/stage route + semantic input boundary | P0 | VALIDATED | prior exact-head PASS |
+| Common/stage route + semantic inputs | P0 | VALIDATED | prior exact-head PASS |
 | Shared LAFEA.1/.3 unit factors | P0 | DONE | `569dfaa...` PASS |
 | FE section-property taxonomy | P0 | DONE | `5709110...` PASS |
-| LAFEA.3 canonical geometry identity | P0 | IN_PROGRESS | Stage 9 plan below |
-| Explicit geometry revalidation/currentness | P0 | NOT_STARTED | later batch |
-| Mesh identity/preservation after nongeometry edit | P0 | NOT_STARTED | depends on geometry + mesh projections |
+| LAFEA.3 canonical geometry identity | P0 | DONE | `1dab5bc...` PASS |
+| LAFEA.3 canonical source-mesh identity | P0 | IN_PROGRESS | Stage 10 plan below |
+| Explicit geometry/mesh revalidation | P0 | NOT_STARTED | later batch |
+| Dependency-aware mesh preservation | P0 | NOT_STARTED | requires explicit revalidation |
 | Named physical regions/probes | P0 | NOT_STARTED | roadmap |
 | Canonical solver-model compiler | P0 | NOT_STARTED | roadmap |
-| Results/verification center | P1 | NOT_STARTED | roadmap |
-| Runtime extraction/history/release/dossier | P1 | NOT_STARTED | roadmap |
+| Results/comparison/verification center | P1 | NOT_STARTED | roadmap |
+| Standalone runtime/history/release/dossier | P1 | NOT_STARTED | roadmap |
 | Current-main reconciliation | P0 | IN_PROGRESS | RISK-004 |
 | Cross-product attribution defect | P1 | BLOCKED | ISS-001 |
 
 ---
 
-## Engineering Item Register
+## Engineering Decisions / Risks
 
 | ID | Type | Status | Summary |
 |---|---|---|---|
 | DEC-001 | Decision | ACCEPTED | One common LAFEA platform plus explicit stage physics/capability adapters. |
-| DEC-005 | Decision | VALIDATED | Common stage adapter is semantic/UI-independent. |
 | DEC-006 | Decision | VALIDATED | Unit commonization shares scale facts, not stage unit authority. |
-| DEC-007 | Decision | VALIDATED | No mesh-current preservation until exact geometry parent identity exists. |
-| DEC-008 | Decision | VALIDATED | FE thickness is `SECTION_PROPERTY`; analytical pipe-wall thickness stays `GEOMETRY`. |
-| DEC-009 | Decision | ACCEPTED | Canonical LAFEA.3 geometry identity must exclude material, section, loads/BCs, and provenance-only metadata. |
-| DEC-010 | Decision | ACCEPTED | Stage 9 changes artifact identity only; existing source/canonical parent binding stays exact and fail-closed. |
-| IMP-003 | Improvement | DONE | Shared unit-factor registry. |
-| IMP-004 | Improvement | DONE | FE section-property taxonomy. |
-| IMP-005 | Improvement | IN_PROGRESS | Stable LAFEA.3 legacy lifecycle geometry artifact identity. |
-| RISK-004 | Risk | IN_PROGRESS | Branch/main divergence must be reconciled before PR closure. |
-| ISS-001 | Defect | BLOCKED | Unrelated LFEA piping repository-attribution contradiction. |
+| DEC-007 | Decision | VALIDATED | No mesh-current preservation until exact geometry/mesh parent evidence can be revalidated. |
+| DEC-008 | Decision | VALIDATED | FE thickness is `SECTION_PROPERTY`; analytical wall thickness remains geometry. |
+| DEC-009 | Decision | VALIDATED | LAFEA.3 geometry identity excludes material/section/load/BC/provenance semantics. |
+| DEC-010 | Decision | VALIDATED | Geometry artifact identity changed; source/model parent contract remained exact. |
+| DEC-011 | Decision | ACCEPTED | Legacy LAFEA.3 mesh artifact should identify discretization content, not stiffness/load/result evidence. |
+| DEC-012 | Decision | ACCEPTED | Execution/recovery hashes remain responsible for physics/numerical evidence removed from mesh identity. |
+| RISK-004 | Risk | IN_PROGRESS | Branch is not closure-ready until synchronized with current `main` and revalidated. |
+| ISS-001 | Defect | BLOCKED | Unrelated LFEA piping repository-attribution contradiction; out of scope. |
 
 ---
 
@@ -141,189 +126,204 @@ The lifecycle record will still carry exact current `sourceHash` and `canonicalM
 
 ### Stages 1–3 — baseline / roadmap / draft PR
 
-**Stage decision: COMPLETE.**
+**COMPLETE.** Pinned the initial base, retained the integrated roadmap and living report, and opened draft PR #1038 before production changes.
 
-Pinned base truth, created `docs/IntegratedLAFEAroadmap.md`, created the living report, and opened draft PR #1038 before production changes.
+### Stages 4–6 — first common/stage production boundary
 
-### Stages 4–6 — production common/stage boundary
-
-**Stage decision: COMPLETE.**
-
-Centralized route classification and semantic input requirements in `lafea-stage-analysis-adapter.js`; `lafea-guided-workflow.js` consumes them. Exact-head focused/aggregate checks passed.
+**COMPLETE.** Centralized route classification (`ANALYTICAL`, `FEA`, `UNSUPPORTED`) and semantic input requirements in the existing stage adapter; guided workflow consumes them.
 
 ### Stage 7 — shared unit scale facts
 
-**Stage decision: COMPLETE.**
-
-Added `src/core/lafea-common-input/units.js`; LAFEA.1 and LAFEA.3 production unit adapters consume it. Stage contracts/errors remain local. Validated head: `569dfaa8642ffeebb3cd3b866e9626b125659193`.
+**COMPLETE.** Added `src/core/lafea-common-input/units.js`; real LAFEA.1/LAFEA.3 unit adapters consume it. Stage-specific required dimensions, canonical maps, errors, and derived dimensions remain local. Validated head `569dfaa8642ffeebb3cd3b866e9626b125659193`.
 
 ### Stage 8 — FE `SECTION_PROPERTY` taxonomy
 
+**COMPLETE.** Added FE-only `SECTION_PROPERTY` and reclassified LAFEA.3/.4/.5 element thickness. LAFEA.1 wall thickness remains geometry. Current lifecycle stays conservative: canonical/downstream stale, geometry/mesh revalidation required. Validated head `5709110edb38539853f02c6e0a5e6fd715cc68d7`.
+
+### Stage 9 — Batch 3A canonical LAFEA.3 geometry identity
+
 **Stage decision: COMPLETE.**
 
-Added `SECTION_PROPERTY` as an FE-only source-change class and reclassified LAFEA.3/.4/.5 element thickness. LAFEA.1 nominal/corrosion thickness remains geometry. Current lifecycle behavior remains fail-closed:
+#### Implemented
+
+- Added `src/workspace/lafea-continuum-geometry-projection.js`.
+- Projection validates the canonical local-continuum model and retains only:
+  - canonical length unit;
+  - node identity and canonical x/y coordinates;
+  - element identity, element type, and node connectivity.
+- Excludes material assignment, thickness, source references, ancestry, loads, constraints, result requests, and qualification metadata.
+- `lafea-lifecycle-producers.js` now uses that projection semantic hash as the legacy LAFEA.3 `ANALYSIS_GEOMETRY.artifactHash`.
+- LAFEA.4/.5 retain the pre-existing geometry-hash path.
+- General lifecycle parent keys remain `{ sourceHash, canonicalModelHash }`.
+- Added `scripts/lafea-continuum-geometry-identity-check.mjs` to the established non-bucket aggregate.
+
+#### Focused production proof
+
+Actual workbench executions + producer batches demonstrated:
 
 ```text
-CANONICAL_MODEL        STALE
-ANALYSIS_GEOMETRY      REVALIDATION_REQUIRED
-ANALYSIS_MESH          REVALIDATION_REQUIRED
-EXECUTION/RECOVERY     STALE
+baseline geometry hash = G
+material edit           = G
+section edit            = G
+load edit               = G
+BC edit                 = G
+provenance edit         = G
+node coordinate edit   != G
+node/topology ID edit  != G
 ```
 
-Validated head `5709110edb38539853f02c6e0a5e6fd715cc68d7` passed focused invalidation regression, bounded non-bucket enforcement, numerical core, foundation, meshing, solver, workbench, canvas, Chromium, syntax/import, build/hygiene, main-gate, hybrid browser, and dedicated meshing qualification.
+For every non-geometric edit:
+
+- exact source authority changed;
+- canonical-model evidence changed;
+- geometry artifact identity remained equal;
+- geometry record parent hashes matched the new exact source/model.
+
+#### Validated exact head
+
+`1dab5bc4b6a73f0f4fac474d37130f6c47be37f6`
+
+PASS:
+
+- focused geometry-identity regression through bounded non-bucket aggregate;
+- retained LAFEA numerical core;
+- LAFEA.1 foundation;
+- retained meshing, solver, workbench, canvas;
+- scoped Chromium;
+- strict syntax/import;
+- production build and exact patch hygiene;
+- bounded certification matrix + enforcement;
+- `main-gate`;
+- bundle/T6 integration diagnostics;
+- hybrid browser validation;
+- dedicated LAFEA meshing exact-head qualification.
+
+Repository integration attribution remained red only at its known enforcement matrix; its legacy aggregate, complete repository gate, and hygiene all passed. ISS-001 remains unrelated.
+
+#### Authority statement
+
+- solver formulas changed: **no**;
+- material/section/load/BC semantics changed: **no**;
+- geometry parent binding weakened: **no**;
+- mesh currentness changed: **no**;
+- release authority changed: **no**.
 
 ---
 
-## Stage 9 — Batch 3A LAFEA.3 Canonical Geometry Identity
-
-### Current truth
-
-Two lineages coexist:
-
-1. **Domain-first LAFEA.3** already has `lafea-analysis-geometry/v1`, a canonical geometry semantic hash independent of material/load/section data.
-2. **Legacy/common lifecycle producer** computes `ANALYSIS_GEOMETRY` from `sourceHash + canonicalModelHash + sourceMesh nodes/elements`, and the element rows include non-geometric fields.
-
-The general lifecycle record then parent-binds `ANALYSIS_GEOMETRY` to exact `sourceHash` and `canonicalModelHash`. That parent binding is useful and will remain.
+## Stage 10 — Batch 3B LAFEA.3 Source-Mesh Content Identity
 
 ### Objective
 
-Make the legacy/common LAFEA.3 `ANALYSIS_GEOMETRY.artifactHash` describe canonical geometry only, so the artifact identity can remain stable across non-geometric engineering edits while parent records continue to prove which exact source/model revalidated it.
+Make legacy LAFEA.3 `ANALYSIS_MESH.artifactHash` describe source-authored discretization content only, while leaving exact lifecycle invalidation/currentness unchanged.
 
 ### Expected scope
 
 ```text
 agents/PR1038_workreport.md
-src/workspace/lafea-continuum-geometry-projection.js      new
+src/workspace/lafea-continuum-source-mesh.js             new
 src/workspace/lafea-lifecycle-producers.js                modify
-scripts/lafea-continuum-geometry-identity-check.mjs       new
+scripts/lafea-continuum-mesh-identity-check.mjs           new
 scripts/lafea-nonbucket-stack-check.mjs                   modify
 ```
 
-No general lifecycle schema/parent-key change, no mesh producer/custody change, no numerical-kernel change, no release change, no workflow YAML.
+No lifecycle schema/parent-key change, no mesh producer/custody v1/v2 change, no numerical kernel, no shell-stage change, no release, no workflow YAML.
 
-### Engineering projection
+### Planned engineering contract
 
-Use the already-canonical LAFEA.3 model as input. The projection should retain only:
+Create a deterministic LAFEA.3 source-authored analysis-mesh representation from the validated canonical continuum model:
 
 ```text
-schema
-stageId
-canonical length unit
+schema: lafea-analysis-mesh/v1
+meshIdentity: deterministic LAFEA.3 source-authored identity derived from canonical geometry identity
 nodes:
-  nodeId
-  x
-  y
+  nodeId, canonical x, canonical y, z=0
 elements:
-  elementId
-  elementType
-  nodeIds
+  elementId, elementType, nodeIds
 ```
 
-Exclude:
+Then use existing `lafeaAnalysisMeshContentHash(...)` for the legacy LAFEA.3 lifecycle `ANALYSIS_MESH.artifactHash`.
+
+This keeps mesh identity distinct from geometry identity because the existing mesh hash schema is different, while ensuring both change on actual coordinate/topology changes.
+
+### Explicit exclusions from mesh identity
 
 ```text
 materialId
 thickness
 sourceReference
-source ancestry
-loads
 constraints
+loads
 result requests
-qualification metadata
+stiffness matrices
+element stress/stiffness evidence
+recovery evidence
+source/canonical model hashes
 ```
 
-Rationale:
+Those belong to model/execution/recovery authority, not discretization content.
 
-- coordinates and element connectivity/type determine the legacy source-authored FE geometry/topology;
-- material assignment and thickness affect stiffness/section semantics, not coordinate/topology identity;
-- loads/BCs do not define the mesh geometry;
-- source references are provenance, not physical geometry;
-- canonical coordinates make physically equivalent declared length-unit representations normalize before hashing.
+### Parent/currentness rule retained
 
-### Planned implementation
-
-1. Add a small LAFEA.3-only projection module that validates the canonical local-continuum model and returns a frozen canonical projection plus `semanticHash` using `canonicalLafeaSha256`.
-2. In `feaRecords`, use this projection only for `stageId === 'LAFEA.3'` when producing the `ANALYSIS_GEOMETRY` artifact hash.
-3. Preserve the existing LAFEA.4/.5 geometry-hash path unchanged in Stage 9A.
-4. Preserve the `ANALYSIS_GEOMETRY` record parents `{ sourceHash, canonicalModelHash }` unchanged.
-5. Do not change `ANALYSIS_MESH` hashing/currentness in this batch.
-6. Add a focused production regression that runs actual LAFEA.3 stores/producer batches and proves hash invariance/change behavior.
-7. Wire the focused regression into the existing non-bucket aggregate.
-
-### Expected behavior
-
-For qualified LAFEA.3 runs:
+The lifecycle record still has parents:
 
 ```text
-baseline                    → geometry hash G
-elastic modulus changed     → geometry hash G
-thickness changed           → geometry hash G
-load magnitude changed      → geometry hash G
-constraint value changed    → geometry hash G
-provenance-only source ref  → geometry hash G
-node coordinate changed     → geometry hash G2 != G
+analysisGeometryHash
+meshProfileHash
 ```
 
-Canonical model/source hashes are expected to change in the non-geometric cases; only geometry artifact identity remains stable.
+and Stage 8 invalidation still marks geometry/mesh `REVALIDATION_REQUIRED` after a non-geometric source edit. Stage 10 does not promote retained mesh to current.
 
-### Edge cases
+### Focused acceptance criteria
 
-- T3 declared rotation/reflection canonicalization remains governed by the existing canonical model; projection does not repair topology.
-- T6/Q8 node order remains meaningful and therefore participates in the projection hash.
-- Element IDs and node IDs remain part of identity because existing loads/refinement mappings use stable engineering IDs.
-- Element type changes geometry/topology identity.
-- A change from raw `mm` to physically equivalent `m` should not change geometry identity if the canonical model resolves to identical canonical coordinates/unit.
-- Invalid canonical models fail closed before projection.
-- Shell stages remain on their existing path and must show no changed evidence hashes due to this batch.
+Actual LAFEA.3 workbench producer batches must prove:
 
-### Validation plan
+```text
+material edit        → same mesh artifact hash
+section edit         → same mesh artifact hash
+load edit            → same mesh artifact hash
+BC edit              → same mesh artifact hash
+provenance edit      → same mesh artifact hash
+coordinate edit      → different mesh artifact hash
+topology identity    → different mesh artifact hash
+```
 
-Focused:
+Additionally:
 
-- baseline vs material edit = same geometry hash;
-- baseline vs section edit = same geometry hash;
-- baseline vs load/BC edit = same geometry hash;
-- baseline vs provenance-only metadata = same geometry hash;
-- baseline vs node-coordinate edit = different geometry hash;
-- producer batch consumes the projection hash as `ANALYSIS_GEOMETRY.artifactHash`;
-- parent record still contains exact current `sourceHash` and `canonicalModelHash`.
-
-Retained:
-
-- bounded non-bucket aggregate;
-- LAFEA.3 numerical core;
-- foundation/analytical routes;
-- retained meshing/solver/workbench/canvas;
-- Chromium, syntax/import, build/hygiene;
-- main-gate and dedicated meshing qualification as triggered.
+- mesh hash must differ from geometry hash;
+- execution hash must still change when material/section/load/BC physics changes;
+- execution parent `meshHash` must equal the new clean mesh artifact hash;
+- release remains unqualified;
+- LAFEA.4/.5 retained regression remains green.
 
 ### Risks
 
-- accidentally using source/raw rather than canonical coordinates;
-- excluding topology that meshing/refinement actually depends on;
-- changing LAFEA.4/.5 hash behavior unintentionally;
-- treating stable artifact identity as proof of current parent binding;
-- tests asserting only helper behavior while the real producer still uses old hashing.
+- misusing `meshIdentity` so metadata leaks back into content identity;
+- accidentally removing physics evidence from execution/recovery hashes as well;
+- treating stable mesh hash as automatic currentness;
+- changing explicit mesh-custody v1/v2 behavior.
 
-**Stage decision: PARTIAL until implementation + exact-head evidence complete.**
+**Stage decision: IN_PROGRESS; production code not yet changed for Stage 10.**
 
 ---
 
 ## Changed-File Ledger
 
-Validated assignment files through Stage 8:
+Validated through Stage 9:
 
 ```text
 agents/PR1038_workreport.md
 docs/IntegratedLAFEAroadmap.md
 scripts/lafea-common-input-units-check.mjs
+scripts/lafea-continuum-geometry-identity-check.mjs
 scripts/lafea-nonbucket-stack-check.mjs
 scripts/lafea-section-property-invalidation-check.mjs
 scripts/lafea-ui-workflow-truthfulness-check.mjs
 src/core/lafea-common-input/units.js
 src/core/local-continuum/units.js
 src/core/local-stress/units.js
+src/workspace/lafea-continuum-geometry-projection.js
 src/workspace/lafea-guided-workflow.js
+src/workspace/lafea-lifecycle-producers.js
 src/workspace/lafea-lifecycle-profiled.js
 src/workspace/lafea-lifecycle-profiles.js
 src/workspace/lafea-stage-analysis-adapter.js
@@ -331,7 +331,7 @@ src/workspace/lafea-stage-input-descriptors.js
 src/workspace/lafea-workbench-source-state.js
 ```
 
-Stage 9 planned files are listed in its scope section. No `.github/workflows/*` file is authorized.
+Stage 10 planned files are listed above. No `.github/workflows/*` modification is authorized.
 
 ---
 
@@ -339,33 +339,33 @@ Stage 9 planned files are listed in its scope section. No `.github/workflows/*` 
 
 | Evidence | Head | Status |
 |---|---|---|
-| Common/stage first slice | `d01de620...` | PASS |
-| Batch 1A common units | `569dfaa864...` | PASS |
-| Batch 2A section taxonomy | `5709110edb...` | PASS |
-| Stage 8 main-gate / hybrid / meshing exact-head | `5709110edb...` | PASS |
-| Stage 9 focused geometry identity | — | NOT_RUN |
-| Stage 9 bounded regression | — | NOT_RUN |
-| Repository integration attribution | current heads | BLOCKED — ISS-001 unrelated |
+| First common/stage slice | `d01de620...` | PASS |
+| Shared unit factors | `569dfaa864...` | PASS |
+| Section-property taxonomy | `5709110edb...` | PASS |
+| Canonical geometry identity | `1dab5bc4b6...` | PASS |
+| Stage 9 main-gate / browser / meshing | `1dab5bc4b6...` | PASS |
+| Stage 10 mesh identity | — | NOT_RUN |
+| Repository integration attribution | `1dab5bc4b6...` | BLOCKED by ISS-001 only |
 | Current-main integrated PR | — | NOT_STARTED |
 
 ---
 
 ## Known / Deferred Work
 
-- **ISS-001:** unrelated LFEA repository-attribution contradiction — BLOCKED / OUT OF SCOPE.
-- **RISK-004:** branch/main reconciliation required before closure.
-- Mesh artifact identity still includes broader source mesh/evidence and is not addressed in Stage 9A.
-- Explicit geometry revalidation/currentness across non-geometric source edits remains deferred.
-- LAFEA.4/.5 geometry projection follows only after LAFEA.3 is proven.
-- Named physical regions/probes, solver-model compiler, result comparison, verification center, standalone runtime/history/release/dossier remain roadmap work.
+- **ISS-001:** unrelated LFEA piping attribution contradiction — OUT OF SCOPE.
+- **RISK-004:** branch/main reconciliation required before PR closure.
+- Explicit geometry/mesh revalidation across non-geometric edits — deferred until geometry + mesh identities are both stable.
+- Actual dependency-aware retained-mesh currentness — deferred until a governed revalidation transaction exists.
+- LAFEA.4/.5 equivalent geometry/mesh identity cleanup — deferred until continuum path is proven.
+- Named physical regions/probes, solver-model compiler, semantic result comparison, verification center, standalone runtime/history/release/dossier remain roadmap work.
 
 ---
 
 ## Next-Agent Handover
 
-- **Current stage:** Stage 9 / Batch 3A, IN_PROGRESS.
-- **Last validated implementation head:** `5709110edb38539853f02c6e0a5e6fd715cc68d7`.
-- **Start here:** add `lafea-continuum-geometry-projection.js`; consume it in the LAFEA.3 branch of `lafea-lifecycle-producers.js`.
-- **Do not alter:** lifecycle parent keys, mesh hash/currentness, shell-stage geometry identity, solver numerics, release, workflow YAML.
-- **Required proof:** production producer-batch geometry hash stable for material/section/load/BC/provenance edits and changed for coordinate/topology edit.
-- **Highest risk:** confusing stable geometry artifact identity with current authority; parents must remain exact and changed-source revalidation must remain explicit.
+- **Current stage:** Stage 10 / Batch 3B, IN_PROGRESS.
+- **Last validated implementation head:** `1dab5bc4b6a73f0f4fac474d37130f6c47be37f6`.
+- **Start here:** create `lafea-continuum-source-mesh.js` from the canonical continuum geometry projection and existing `lafea-analysis-mesh-contract` content hash.
+- **Modify only:** LAFEA.3 branch of legacy `lafea-lifecycle-producers.js` plus focused regression/aggregate wiring.
+- **Do not alter:** lifecycle parent keys, invalidation currentness, explicit mesh custody v1/v2, shell stages, solver numerics, release, workflow YAML.
+- **Highest risk:** confusing clean mesh content identity with evidence currentness. Stable hash does not authorize reuse by itself.

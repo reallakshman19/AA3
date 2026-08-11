@@ -8,12 +8,13 @@
 - Branch: `agent/m047-bm4l-clean-qualified`.
 - Base: `7a08f9db84f298990250793226b36d4a82dbe01e`.
 - Governed implementation head for numerical replay: `7488ba76126f8240bb61c80fad243cf096c5fe08`.
-- HEAD immediately before this Stage-10 canonical sync: `afbefb07e09b41bb530146894b419c5f942c39d1`.
+- HEAD immediately before this handover update: `e0dddb9da738d0f969883aeaeed90bd4554bb153`.
 - Current stage: **Stage 11 — production-delivery gating / remaining external authority**.
 - Last completed stage: **Stage 10 — nonzero residual classification and constitutive falsification checks**.
 - Current qualified local result under the live comparison gate: **150 failures** — L2 31, L3 22, L4 40, L5 13, L6 22, L14 22.
 - Separate Stage-7 zero-rotation gate candidate remains local/unpromoted. Combined with resolved alpha it gives **46**, but 46 is not live PR parity.
 - Production core/profile candidates remain local because current workflow policy says **do not intentionally rerun GitHub Actions**. Documentation updates and read-only use of completed artifacts are allowed.
+- **Next-agent capability requirement:** the next implementation agent must be able to obtain/use an exact-head local checkout or equivalent complete source tree and execute deterministic local qualification. GitHub Actions are not an acceptable substitute for development feedback, diagnosis, or first-line validation.
 
 Detailed durable evidence:
 
@@ -277,14 +278,17 @@ Hold mechanics stable. Proceed only through one of these routes:
 | DEC-014 | decision | P0 | ACCEPTED | Stage-10 cancellation rows do not authorize new global mechanics |
 | DEC-015 | decision | P0 | ACCEPTED | current straight-pipe closed-end pressure strain is validated by direct L4 reconstruction |
 | DEC-016 | decision | P0 | ACCEPTED | reducer pressure free elongation is validated; reducer sampling remains blocked |
+| DEC-017 | decision | P0 | ACCEPTED | next implementation agent must validate locally from an exact-head/complete source tree; workflow success is not first-line engineering evidence |
 | QST-001 | question | P0 | RESOLVED_LOCAL_AUTHORITY | BM4_L exact T1 interval strain |
 | QST-002 | question | P1 | BLOCKED | exact reducer cylinder property station |
 | QST-003 | question | P0 | COMPLETE | Stage-8 residual diagnostics |
 | QST-004 | question | P0 | VALIDATED_LOCAL | native-unit zero boundary; promotion pending Owner/reviewer |
 | QST-005 | question | P0 | COMPLETE_NO_NEW_MECHANICS | remaining 45 nonzero-reference failure classification |
+| QST-006 | question | P0 | OPEN | can residual families be converted into source-local invariant tests that remain well-conditioned near zero resultants? |
 | RISK-001 | risk | P0 | CLOSED_FOR_BM4L_INTERVAL | provisional alpha no longer needed for BM4_L T1 interval |
 | RISK-002 | risk | P0 | OPEN | no explicit Hexagon hard `0.0001 deg` cutoff statement |
 | RISK-003 | risk | P0 | OPEN | exact-equation replay calibrated, but full Node checkout execution not run |
+| RISK-004 | risk | P0 | OPEN | an agent that relies on CI instead of a local deterministic harness can regress or overfit before evidence is available |
 
 ## Stage Roadmap
 
@@ -299,6 +303,7 @@ Hold mechanics stable. Proceed only through one of these routes:
 - Stage 9 — exact interval authority + combined local replay — COMPLETE / LOCAL_VALIDATION_PASS
 - Stage 10 — remaining nonzero residual classification — COMPLETE / NO NEW MECHANICS PROMOTED
 - Stage 11 — production delivery / external authority — IN_PROGRESS / BLOCKED
+- Stage 12 — next iteration, if new authority or implementation access exists — **LOCAL-FIRST DECOMPOSITION / ONE-FACTOR QUALIFICATION**
 
 ## Changed-File Ledger
 
@@ -306,7 +311,7 @@ Hold mechanics stable. Proceed only through one of these routes:
 |---|---|---|---|
 | `src/core/fea-benchmarks/caesar-accdb-linear-solve.js` | 4/5/9 | tee v3 mechanics | LOCAL ONLY |
 | `benchmarks/LFEA/CAESAR_ACCDB/bm4l-validation.profile.json` | 7/9 | resolved interval alpha + separate zero-gate candidate | LOCAL ONLY |
-| `agents/PR1001_workreport.md` | all | canonical mission control | BRANCH DOC |
+| `agents/PR1001_workreport.md` | all | canonical mission control + next-agent handover | BRANCH DOC |
 | `PE_1001workreport.md` | 6/10 | pointer to canonical/detailed reports | BRANCH DOC |
 | `agents/PR1001_stage9_local_replay.md` | 9 | detailed local replay evidence | BRANCH DOC |
 | `agents/PR1001_stage10_residual_classification.md` | 10 | detailed residual/constitutive closure | BRANCH DOC |
@@ -358,6 +363,7 @@ Any unexplained changed file blocks closure.
 5. Continue reducer representative-station work only from direct CAESAR authority; never select a station from BM4_L score or the ill-conditioned stiffness reconstruction.
 6. Do not introduce a new global coefficient/mechanic from the Stage-10 cancellation-sensitive families.
 7. Keep Type 2.6 deferred without structural topology authority.
+8. Before any next mechanics iteration, establish a local exact-head execution path and save the commands/results as durable evidence so the iteration does not depend on CI availability.
 
 ## Next-Agent Handover
 
@@ -370,3 +376,102 @@ Any unexplained changed file blocks closure.
 - No further coefficient tuning is authorized from current evidence.
 - Do not redo: generic bend softness, MEC-21 tested shear, fitted axial shape, gravity scaling, bend-weight/subdivision variants, source-ID-only tee replay, reducer pressure disable/sign tests, reducer station fitting, type-7 rotational remap, type-10 snubber-off.
 - Do not assume: 46 is live; `0.0001 deg` is explicitly documented as a hard CAESAR cutoff; the interval alpha is a generic material curve; midpoint reducer sampling is CAESAR-exact.
+
+### Mandatory capability for the next agent
+
+The next implementation agent **must be capable of local checking**. It should not depend on GitHub Actions to discover whether a proposed mechanic works. Before changing production mechanics, the agent should have one of the following locally available:
+
+1. an exact-head checkout of the governed implementation plus the pinned BM4_L source/reference package; or
+2. an equivalent complete source tree with deterministic local commands that exercise the same production modules and comparator.
+
+The local harness must be able to produce, at minimum:
+
+- six governed case counts for L2/L3/L4/L5/L6/L14;
+- identity-level changed-row diff versus the previous candidate;
+- primitive-case and combination-case decomposition;
+- stiffness-state/K invariance or an explicit justified K change;
+- recovered source-element actions;
+- nodal/restraint results;
+- equilibrium and superposition checks;
+- a machine-readable JSON/CSV artifact that another agent can replay or inspect.
+
+**Workflows are a final integration/CI signal, not the development loop.** A candidate that cannot be reproduced locally should remain `NOT_RUN`/`BLOCKED` rather than being pushed merely to obtain a workflow result.
+
+## Next Priority — Breakdown and Fix Methodology
+
+The next iteration should attack residuals by **conditioning and ownership**, not by raw failure count.
+
+### Priority 1 — Build a local primitive-residual matrix
+
+Create one durable table keyed by `(case, source/node, quantity, component)` containing reference, actual, absolute error, relative error, primitive contributors, combination contributors, source kind, topology kind, and a cancellation/conditioning metric.
+
+For each L5/L6/L14 failure, first map it back to L2/L3/L4 primitive terms. Do not treat a combination failure as evidence for a new mechanic when all primitives pass and the miss is caused by subtraction of larger terms.
+
+### Priority 2 — Rank by well-conditioned source ownership
+
+Prioritize rows where:
+
+- reference magnitude is physically meaningful rather than near zero;
+- one source/topology owns most of the response;
+- the same mechanism repeats across multiple independent locations/cases;
+- a source-backed correction predicts sign and direction before replay.
+
+De-prioritize rows with cancellation factors in the tens/hundreds, near-zero moments/forces, or different dominant sources on opposing sides of the resultant.
+
+### Priority 3 — Reconstruct constitutive behavior directly from CAESAR outputs
+
+Repeat the successful Stage-9/10 pattern wherever possible: solve the constitutive parameter from CAESAR kinematics + recovered element action instead of minimizing comparison count. Examples include effective axial/shear/bending stiffness, free strain/curvature, rigid/free-state behavior, or component end compliance.
+
+Use multiple independent elements and require an overdetermined, repeatable value. If the inferred property varies strongly across nominally equivalent elements, treat the reconstruction as ill-conditioned or as evidence of a missing topology/state distinction—not as a scalar calibration opportunity.
+
+### Priority 4 — One factor per local replay
+
+For any new candidate:
+
+1. write the authority/mechanics hypothesis first;
+2. state the expected affected rows/cases and expected unchanged rows/cases;
+3. patch one factor only;
+4. run locally;
+5. compare identity-level changed rows;
+6. verify K/recovery/equilibrium/superposition;
+7. reject the candidate if it improves score outside the predicted family or degrades already-qualified primitives.
+
+Do not bundle tee, alpha, zero-gate, reducer sampling, restraint semantics, or gravity changes in the same experimental patch.
+
+### Priority 5 — Convert discoveries into reusable local tests
+
+Every accepted mechanism should gain a deterministic local test/fixture that asserts the physical identity, not just the BM4_L final count. Examples:
+
+- tee fictitious-rigid free translation equals `epsilon * r_surface` and leaves K unchanged;
+- run-state inheritance fails closed on inconsistent material/T1;
+- straight closed-end pressure strain reconstructs the known formula;
+- reducer pressure free elongation remains within the independently reconstructed CAESAR values;
+- combination cases preserve exact linear superposition.
+
+The goal is for the next agent to be able to change code, run a local command, and know which physical invariant passed or failed **without waiting for any workflow**.
+
+## Five Expert-Level Implementation Questions for the Next Iteration
+
+1. **Can the remaining 17 primitive failures be converted from output-relative errors into source-local invariant residuals that remain numerically well-conditioned near zero?** Specifically, can each failure be expressed in local element coordinates as an error in free state, end compliance, distributed-load resultant/centroid, or recovered action, so that a physical defect can be separated from cancellation amplification?
+
+2. **What exact local execution harness can run the production `caesar-accdb-linear-solve` path from the pinned BM4_L package and reproduce 435 -> 210 -> 150 without GitHub Actions?** The next agent should identify the minimum Node entry point, package/dependency setup, pinned inputs, generated actual/reference files, and deterministic comparator command, then commit or document that harness before additional mechanics work.
+
+3. **For reducer stiffness, can an independently derived observable isolate transverse/bending compliance from the ill-conditioned thermal axial subtraction?** For example, is there a pressure- or weight-dominated response, source-end flexibility relation, or another benchmark/model with the same reducer geometry where CAESAR's ten-cylinder representative station can be inferred without using BM4_L score minimization?
+
+4. **Can the tiny L2/L3/L4 primitive source-action residuals be traced to load-vector integration/placement rather than stiffness by comparing CAESAR-equivalent total resultant and first moment for each curved/rigid/reducer component?** The implementation question is whether component gravity/pressure/free-state loads have exactly the same resultant, centroid, and local-to-global transfer as CAESAR before any stiffness hypothesis is considered.
+
+5. **Can the Stage-7 zero-rotation behavior be established as a product/export semantics rule independently of this benchmark?** The next agent should seek a reproducible CAESAR experiment or direct product authority that distinguishes solver zeroing, Access/XML export cleanup, and report display precision. Only if the same native boundary reproduces across controlled models should the profile-only gate be proposed for promotion.
+
+## Handover Acceptance Criteria for Any Successor Agent
+
+A successor agent should not claim the next iteration is implementation-ready until all of the following are true:
+
+- **PASS_LOCAL** — exact/current source can be executed locally with no workflow dependency.
+- **PASS_BASELINE** — local run reproduces the known baseline/candidate signature before code changes.
+- **PASS_IDENTITY_DIFF** — changed result rows are enumerated and match the predicted mechanism family.
+- **PASS_PHYSICS** — the proposed change is supported by source authority or an overdetermined constitutive reconstruction, not by benchmark score.
+- **PASS_INVARIANTS** — equilibrium, recovery, K expectations, and superposition are checked locally.
+- **PASS_SEPARATION** — unrelated candidates remain separate patches/commits.
+- **NOT_RUN is acceptable** for CI/workflows when local qualification is complete and workflow execution is intentionally prohibited; **workflow-only evidence is not acceptable** as the primary engineering qualification.
+
+If a future agent cannot establish the local execution path, its priority should be to build/fix that local harness first rather than attempting another mechanics change.

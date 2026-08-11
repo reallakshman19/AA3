@@ -7,6 +7,7 @@ import { assertCanonicalTopologyHash } from './topology-edit-canonical-state.js'
 import { createTopologyEditCommandRequest } from './topology-edit-command-contract.js';
 import { serializeTopologyEditCertifiedJournal } from './topology-edit-certified-journal.js';
 import { TopologyEditAutofixController } from './topology-edit-autofix-controller.js';
+import { assertNoTopologyEditSupportGeometryDependencies, topologyEditAffectedEdgeIds } from './professional/topology-edit-support-geometry-dependency.js';
 import {
   acceptTopologyEditCommand,
   cancelTopologyEditCommandPreparation,
@@ -93,6 +94,14 @@ export class TopologyEditCertifiedSession {
 
   execute(commandType, payload, options = {}) {
     this.assertUsable();
+    if (commandType === 'MOVE_NODE') {
+      const topology = this.currentTopology();
+      const movedNodeIds = [payload?.nodeId];
+      assertNoTopologyEditSupportGeometryDependencies(topology, {
+        movedNodeIds,
+        affectedEdgeIds: topologyEditAffectedEdgeIds(topology, movedNodeIds),
+      });
+    }
     const request = createTopologyEditCommandRequest({
       commandId: commandIdentity(this.journal, commandType, payload),
       commandType,

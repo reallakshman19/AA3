@@ -13,13 +13,14 @@ Maintained throughout PR #1021. This is the single source of truth for current P
 | PR | #1021 |
 | Branch | `agent/lfea-workbench-integrity-1018` |
 | Base | `751756e9140527b8dc121aa179dc76b7039fb7ad` |
+| Reconciled S18 head | `de139aca102c8b78ac5c861cfc7a9abfa2991e73` before this report-only closure commit |
 | PR state | Draft |
-| Current stage | Stage 18 — cumulative Medium-slice reconciliation and handover refresh |
-| Last completed stage | Stage 17 — M01/M06/M08 presentation clarity |
+| Current stage | Stage 18 — COMPLETE |
+| Last completed stage | Stage 18 — cumulative Medium-slice reconciliation and handover refresh |
 | Engineering status | Critical + selected High/Medium integrity/presentation work implemented and source-guarded; H04 and larger architecture items deliberately deferred |
-| Validation status | Stage 17 source/patch review complete; cumulative GitHub reconciliation now in progress; full repository/browser execution remains NOT_RUN |
-| Current blocker | None |
-| Exact next action | Reconcile changed files/base ancestry/no-workflow constraint at the exact current head, then refresh PR metadata and future roadmap |
+| Validation status | Source/patch + GitHub reconciliation complete through S18; full repository/browser execution remains NOT_RUN |
+| Current blocker | None for continuation; merge is still blocked on missing runtime/browser evidence |
+| Exact next action | Ground the next engineering-value item before production changes: M04 quality gate ownership or the broader three-surface authority/handoff audit |
 
 ### Handover in 60 seconds
 
@@ -36,6 +37,9 @@ Maintained throughout PR #1021. This is the single source of truth for current P
 - M01 distinct visual treatment for EMPTY, READY, RUNNING, QUALIFIED, FAILED while retaining raw `data-status`.
 - M06 dimensionally correct deformation presentation: dimensionless display multiplier, `1× = true displacement`, physical displacement unit stated separately.
 - M08 professional progress labels for real pipeline stages while retaining raw stage metadata/title and unknown-stage fallback.
+
+**Stage 18 reconciliation**
+At head `de139aca102c8b78ac5c861cfc7a9abfa2991e73`, GitHub reports **49 commits ahead / 0 behind** the authorized base; merge base remains exactly `751756e9140527b8dc121aa179dc76b7039fb7ad`. The changed-file list exactly matches the nine-file ledger in Section 6. No `.github/workflows/*` file is changed. PR #1021 remains open, mergeable, and draft. PR title/body were refreshed to describe the real current scope and validation limitations.
 
 **Stage 17 guard placement**
 A full replacement of the already-large `lfea-p0-ui-containment-check.mjs` timed out through the GitHub connector. Rather than risk a giant rewrite, Stage 17 assertions were added to the existing `scripts/lfea-workbench-check.mjs`, which is already executed by `npm run check:lfea-workbench` after the containment check. No workflow or package-script change was needed.
@@ -74,6 +78,7 @@ Continue issue #1018 remediation while preserving engineering authority and impr
 | M01 distinct status states | Medium | IMPLEMENTED + GUARDED | S17 | styles + workbench check |
 | M06 deformation multiplier meaning | Medium | IMPLEMENTED + GUARDED | S17 | panels + workbench check |
 | M08 progress labels | Medium | IMPLEMENTED + GUARDED | S17 | panels + workbench check |
+| S18 cumulative reconciliation | High | PASS | S18 | 9 files, ahead-only, no workflows |
 | Runtime/browser validation | High | NOT_RUN | ongoing | environment limitation |
 
 ## 3. Engineering Item Register
@@ -100,11 +105,11 @@ Continue issue #1018 remediation while preserving engineering authority and impr
 | ISS-018 / M08 | Presentation | Medium | IMPLEMENTED + GUARDED | Progress uses human labels while retaining raw stages | Yes |
 | IMP-003 / M02 | Improvement | Medium | DEFERRED | SVG needs responsive sizing architecture | No for now |
 | IMP-004 / M03 | Improvement | Medium | DEFERRED | Convergence card visibility should depend on relevant package/evidence state | No for now |
-| IMP-005 / M04 | Improvement | Medium | DEFERRED / GROUND | Mesh quality title should reflect actual gate ownership only after current threshold path is verified | No for now |
+| IMP-005 / M04 | Improvement | Medium | NEXT_GROUNDING_CANDIDATE | Mesh quality title should reflect actual gate ownership only after current threshold path is verified | No for now |
 | IMP-006 / M05 | Improvement | Medium | DEFERRED | Selection/action semantics may benefit from further visual separation | No for now |
 | IMP-007 / M07 | Improvement | Medium | DEFERRED | Non-blocking package export preview/hash visibility | No for now |
 | IMP-001 | Improvement | High | DEFERRED | Cross-run plots need shared engineering colour authority | No |
-| IMP-002 | Improvement | High | DEFERRED | Full upstream pre-FEA/linear-piping LFEA surface audit | No |
+| IMP-002 | Improvement | High | NEXT_ARCHITECTURE_CANDIDATE | Full upstream pre-FEA/linear-piping LFEA surface audit | No |
 | RISK-001 | Engineering risk | High | OPEN | Continuum von Mises may be mistaken for piping-code stress | No |
 | RISK-002 | Engineering risk | High | OPEN | Support reaction sign convention may be overlooked downstream | No |
 | QST-001 | Engineering question | Medium | OPEN | Authoritative vertical support-triad fallback axis | No |
@@ -136,7 +141,8 @@ Continue issue #1018 remediation while preserving engineering authority and impr
 | S15 | DONE | Inline record validity + evidence history warning | H05/H06 |
 | S16 | DONE | H05/H06 reconciliation | eight-file checkpoint |
 | S17 | DONE | Status/deformation/progress clarity | M01/M06/M08 |
-| S18 | IN_PROGRESS | Reconcile Medium slice and refresh handover | diff + roadmap |
+| S18 | DONE | Reconcile Medium slice and refresh handover | nine-file checkpoint + PR metadata |
+| S19 | PLANNED | Ground next engineering-value item before coding | M04 or IMP-002 |
 
 ## 5. Stage Execution Log
 
@@ -147,43 +153,26 @@ Continue issue #1018 remediation while preserving engineering authority and impr
 **COMPLETE.** At head `be3bf17519443256d673119ac43177fd187f54ce`, GitHub changed-file listing exactly matched the then-current eight-file ledger. Base comparison was ahead 43 / behind 0 with merge base exactly `751756e9`; no workflow file appeared.
 
 ### Stage 17 — status, deformation-multiplier, and progress clarity
-**Status:** COMPLETE at source/patch evidence level.
-
-#### M01 — status states
-Added explicit styling selectors for `EMPTY`, `READY`, `RUNNING`, `QUALIFIED`, and `FAILED`. The state machine and raw `data-status` values are unchanged.
-
-#### M06 — deformation presentation
-- Visible label: `Displayed displacement multiplier`.
-- Explicitly states `dimensionless; 1× = true displacement`.
-- Solver-profile length unit is displayed separately as the unit of calculated displacement, not of the multiplier.
-- Input metadata identifies `DIMENSIONLESS_DISPLAY_MULTIPLIER`; title states display-only authority.
-- Store validation (`finite && > 0`) and solved displacement values are unchanged.
-
-#### M08 — progress labels
-Maps QUEUED/VALIDATE/PREFLIGHT/ADAPT/SOLVE/PROJECT/REVIEW/EXPORT/COMPLETE to human labels. Raw stage remains in `data-stage` and title; unknown stages fall back to raw code.
-
-#### Validation/guard decision
-- Production patches were re-read after implementation.
-- Status/multiplier/progress source assertions were added to `scripts/lfea-workbench-check.mjs`, already part of `npm run check:lfea-workbench`.
-- Attempted full update of `lfea-p0-ui-containment-check.mjs` timed out without landing; branch state was verified before the smaller guard placement was chosen.
-- No workflow or package script was changed.
-- Full command execution/browser rendering remain **NOT_RUN** in this environment.
+**COMPLETE at source/patch evidence level.** Added explicit EMPTY/READY/RUNNING/QUALIFIED/FAILED presentation; corrected deformation multiplier wording/metadata without changing solved displacement or positive scale validation; mapped known progress stages to human labels while retaining raw stage metadata and unknown fallback. Source assertions were placed in existing `scripts/lfea-workbench-check.mjs`, already part of `npm run check:lfea-workbench`. Full command/browser execution remains NOT_RUN.
 
 ### Stage 18 — cumulative reconciliation and handover refresh
-**Status:** IN_PROGRESS — documentation opened before reconciliation.
+**Status:** COMPLETE.
 
-#### Scope
-- Verify exact changed-file ledger against GitHub.
-- Verify branch remains ahead-only from the authorized base and merge base is unchanged.
-- Verify no `.github/workflows/*` changes.
-- Refresh PR body/current-head metadata so it no longer describes only the original three-file slice.
-- Decide next engineering priority after current UI integrity/presentation slice.
+**Verification performed:**
+- GitHub changed-file list returned exactly nine files and exactly matched Section 6.
+- `compare_commits` base `751756e9140527b8dc121aa179dc76b7039fb7ad` → head `de139aca102c8b78ac5c861cfc7a9abfa2991e73` returned `ahead`, **ahead_by 49**, **behind_by 0**.
+- Merge base is exactly the authorized base SHA.
+- No `.github/workflows/*` file appears in the changed-file list.
+- PR remained open, mergeable, and draft.
+- PR title/body were refreshed to cover C01–C04, H01–H03/H05/H06, M01/M06/M08, the nine-file ledger, and missing runtime/browser evidence.
+
+**Stage decision:** COMPLETE. Continue engineering work only after the next item is grounded and recorded before production changes.
 
 ## 6. Changed-File Ledger
 
 | File | First stage | Latest stage | Purpose | Validation |
 |---|---|---|---|---|
-| `agents/PR1021_workreport.md` | S2 | S18 | PR SSOT/handover | reconciliation pending |
+| `agents/PR1021_workreport.md` | S2 | S18 | PR SSOT/handover | reconciled at S18 |
 | `scripts/lfea-p0-ui-containment-check.mjs` | S7 | S15 | prior integrity/high guards | source/store; execution NOT_RUN |
 | `scripts/lfea-workbench-check.mjs` | S17 | S17 | M01/M06/M08 source guards within existing workbench check | patch inspected; execution NOT_RUN |
 | `src/workspace/lfea-workbench-controller.js` | S9 | S15 | lifecycle/errors/export/history warning | source guard; browser NOT_RUN |
@@ -192,6 +181,8 @@ Maps QUEUED/VALIDATE/PREFLIGHT/ADAPT/SOLVE/PROJECT/REVIEW/EXPORT/COMPLETE to hum
 | `src/workspace/lfea-workbench-run-store.js` | S9 | S9 | identity-safe execution | source/store guard |
 | `src/workspace/lfea-workbench-styles.js` | S15 | S17 | invalid input + distinct status styling | patch/source guarded |
 | `src/workspace/lfea-workbench-view.js` | S4 | S15 | UI integrity/diagnostics/settings/record validity | source guard; browser NOT_RUN |
+
+**Ledger reconciliation result:** PASS at S18 — actual GitHub changed files equal this ledger exactly.
 
 ## 7. Engineering Invariants
 
@@ -211,9 +202,11 @@ Maps QUEUED/VALIDATE/PREFLIGHT/ADAPT/SOLVE/PROJECT/REVIEW/EXPORT/COMPLETE to hum
 | C01–C04 source/store guards | IMPLEMENTED / SOURCE-INSPECTED |
 | H01–H03 source guards | IMPLEMENTED / SOURCE-INSPECTED |
 | H05/H06 source guards | IMPLEMENTED / SOURCE-INSPECTED |
-| S16 cumulative reconciliation | PASS — 8 files, 0 behind, no workflows |
 | M01/M06/M08 source guards | IMPLEMENTED / PATCH-INSPECTED |
-| S18 cumulative reconciliation | IN_PROGRESS |
+| S18 changed-file reconciliation | PASS — 9 files |
+| S18 ancestry | PASS — ahead 49 / behind 0; merge base unchanged |
+| Workflow constraint | PASS — no workflow changed |
+| PR metadata refresh | PASS |
 | Full `npm run check:lfea-workbench` | **NOT_RUN** |
 | Browser presentation/interaction | **NOT_RUN** |
 
@@ -222,10 +215,10 @@ Maps QUEUED/VALIDATE/PREFLIGHT/ADAPT/SOLVE/PROJECT/REVIEW/EXPORT/COMPLETE to hum
 - H04 canonical columns: deferred/re-ground required.
 - M02 responsive SVG: deferred; broader layout/viewBox work.
 - M03 convergence visibility: deferred; requires convergence-controller state grounding.
-- M04 quality-title/gate ownership: deferred until actual threshold/governing gate path is verified.
+- M04 quality-title/gate ownership: next candidate; ground actual threshold/governing gate path first.
 - M05 selection/action semantics: deferred.
 - M07 export preview/hash: deferred; prefer non-blocking preview over modal confirmation.
-- `IMP-002`: full three-surface governed workflow audit.
+- `IMP-002`: full three-surface governed workflow audit; strongest next architecture candidate.
 - `RISK-001`: piping beam vs local continuum vs code-stress authority distinction.
 - `RISK-002`: support-reaction sign convention visibility.
 - `IMP-001`: shared colour authority for comparisons.
@@ -233,27 +226,28 @@ Maps QUEUED/VALIDATE/PREFLIGHT/ADAPT/SOLVE/PROJECT/REVIEW/EXPORT/COMPLETE to hum
 
 ## 10. Recommended Forward Sequence
 
-1. Complete S18 cumulative reconciliation and refresh PR body/head metadata.
-2. Reassess whether further UI polish adds more engineering value than `IMP-002` full three-surface authority/handoff audit.
-3. If continuing UI work, ground M04 gate ownership before changing mesh-quality wording and keep M02/M03 as separate architecture/layout stages.
-4. Before merge, Owner/reviewer executes missing repository/browser checks at exact final HEAD.
+1. **S19 grounding:** compare M04 local quality-gate value against `IMP-002` three-surface authority/handoff audit and choose the higher engineering-value next stage based on source evidence.
+2. If M04 is chosen, identify the exact governing quality threshold/status source before changing result-card wording.
+3. If IMP-002 is chosen, trace `diagnoseInputXmlLinearPreFea → prepareInputXmlLinearPreFea → authorizeInputXmlLinearSolve → runLinearPipingWorkbenchAnalysis` and register any handoff defects before coding.
+4. Keep M02/M03 as separate architecture/layout stages, not mixed with engineering-authority changes.
+5. Before merge, Owner/reviewer executes missing repository/browser checks at exact final HEAD.
 
 ## 11. Next-Agent Handover
 
 ### Current stopping point
-S17 is complete at source/patch evidence level; S18 reconciliation is open.
+S18 reconciliation is complete. The branch is cleanly ahead-only from the requested base with exactly nine registered changed files and updated PR metadata.
 
 ### Start here
-GitHub changed-file list + compare from base to current head, then PR body refresh. Do not modify production code during S18 unless reconciliation discovers a concrete defect and registers it first.
+Ground S19 before editing production code. Highest-value candidates are M04 quality-gate ownership and IMP-002 full three-surface authority/handoff audit.
 
 ### Do not redo
-C01–C04, N01/N02, H01–H06 grounding/implementation, H04 grounding, S16 reconciliation, or M01/M06/M08 implementation.
+C01–C04, N01/N02, H01–H06 grounding/implementation, H04 grounding, S16/S18 reconciliation, or M01/M06/M08 implementation.
 
 ### Known failing checks
 None observed through source inspection. Full repository/browser checks remain **NOT_RUN**, not PASS.
 
 ### Highest current risk
-Merge/review could rely on stale PR metadata or mistake source guards for executed browser/runtime evidence unless S18 closes those documentation/evidence gaps.
+The remaining engineering risks are now more about **authority/handoff semantics** than local UI mechanics: continuum stress versus piping-code stress, downstream reaction sign convention, restraint semantics, and physical load-case provenance.
 
 ## 12. Process Notes / Lessons Learned
 
@@ -274,7 +268,7 @@ Merge/review could rely on stale PR metadata or mistake source guards for execut
 | H05/H06 | IMPLEMENTED + GUARDED |
 | H04 | DEFERRED / RE-GROUND |
 | M01/M06/M08 | IMPLEMENTED + GUARDED |
-| S18 reconciliation | IN_PROGRESS |
+| S18 reconciliation | COMPLETE |
 | Full runtime/browser validation | **NOT_RUN** |
 | New CI workflows added | **NO** |
 | PR status | DRAFT |

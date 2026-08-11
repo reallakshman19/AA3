@@ -183,6 +183,11 @@ function sourceIdentity(snapshot, preFlight) {
   const sha = text(snapshot?.contentSha256);
   if (!sha) throw historyError('LFEA_HISTORY_SOURCE_IDENTITY_REQUIRED',
     'LFEA History requires the retained InputXML source content SHA.');
+  if (snapshot?.preFlightSemanticHash !== preFlight.semanticHash
+    || snapshot?.authorizationSemanticHash !== preFlight.authorization?.semanticHash) {
+    throw historyError('LFEA_HISTORY_SOURCE_PREFLIGHT_MISMATCH',
+      'The retained source snapshot does not belong to the governed pre-flight being archived.');
+  }
   return {
     fileName: text(snapshot?.fileName),
     contentSha256: sha,

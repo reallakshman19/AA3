@@ -1,0 +1,84 @@
+{
+  "schema": "m047-bm4l-t1-interval-authority/v1",
+  "benchmarkId": "BM4_L",
+  "caesar": {
+    "version": "14.00.00.0910 (Build 231113)",
+    "commonCommit": "179c4831cf521cf797c13699cfbbd118315c9244",
+    "miscReport": {
+      "path": "LFEA/BM4/Miscdata_BM4_L.txt",
+      "gitBlobSha": "ef23d224925e4568185a360ecbe1ee62503f15ff",
+      "reportedT1ExpansionStrainMmPerMm": 0.0012,
+      "printedDecimals": 4
+    },
+    "loadCaseReport": {
+      "path": "LFEA/BM4/Loadcasereport_BM4_L.txt",
+      "gitBlobSha": "be62eeb08af26dddcd59146e21188c108c4600dd",
+      "governedCases": {
+        "L2": "W",
+        "L3": "T1",
+        "L4": "P1",
+        "L5": "W+T1+P1",
+        "L6": "W+P1",
+        "L14": "L5-L6"
+      }
+    }
+  },
+  "interval": {
+    "installationTemperatureC": 21,
+    "operatingTemperatureC": 120,
+    "temperatureDifferenceK": 99,
+    "epsilonT1": 0.00121096700947,
+    "meanAlphaPerK": 0.000012231989994646464,
+    "scope": "BM4_L 21 C -> 120 C interval only; not a generic A106 Grade B temperature-dependent material curve."
+  },
+  "reconstruction": {
+    "method": "CAESAR L3 ordinary non-tee straight endpoint kinematics plus recovered axial end force",
+    "robustSpanCount": 54,
+    "minimumSpanLengthM": 0.1,
+    "robustScatterUpperBound": 1e-9,
+    "evidenceSourceCommit": "7488ba76126f8240bb61c80fad243cf096c5fe08",
+    "qualificationRunId": 31457644192,
+    "artifactId": 9088676941,
+    "artifactDigest": "sha256:8819dbbbf21aff8e314fe6cae85db0c3407afc12ca71dde3b459442242d3e934"
+  },
+  "exactEquationReplay": {
+    "baselineExternalFailures": {
+      "L2": 31,
+      "L3": 121,
+      "L4": 40,
+      "L5": 100,
+      "L6": 22,
+      "L14": 121,
+      "total": 435
+    },
+    "teeAtProvisionalStrain": {
+      "L2": 31,
+      "L3": 37,
+      "L4": 40,
+      "L5": 43,
+      "L6": 22,
+      "L14": 37,
+      "total": 210
+    },
+    "teeAtResolvedIntervalStrain": {
+      "L2": 31,
+      "L3": 22,
+      "L4": 40,
+      "L5": 13,
+      "L6": 22,
+      "L14": 22,
+      "total": 150
+    },
+    "invariants": [
+      "K unchanged",
+      "W/P-only L2/L4/L6 unchanged",
+      "L14=L3",
+      "L5=L6+L3"
+    ]
+  },
+  "nonScope": [
+    "No rotation zero-reference gate change.",
+    "No benchmark tolerance, reference, sign or row-selection change.",
+    "No reducer, bend, restraint, pressure, gravity or Type 2.6 mechanics change."
+  ]
+}

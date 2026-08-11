@@ -53,12 +53,16 @@ assert.notEqual(
 );
 
 const topologyEdit = clone(triangleSource());
-topologyEdit.elements[0].elementType = 'T3';
-topologyEdit.elements[0].nodeIds = ['A', 'C', 'B'];
-assert.throws(
-  () => qualify(topologyEdit),
-  /ELEMENT|COUNTERCLOCKWISE|orientation|counter-clockwise/iu,
-  'invalid topology declarations must fail closed rather than be repaired by geometry projection',
+const nodeC = topologyEdit.nodes.find((row) => row.nodeId === 'C');
+nodeC.nodeId = 'D';
+nodeC.sourceReference = 'NODE#D';
+topologyEdit.elements[0].nodeIds = topologyEdit.elements[0].nodeIds
+  .map((nodeId) => nodeId === 'C' ? 'D' : nodeId);
+const topology = qualify(topologyEdit);
+assert.notEqual(
+  topology.geometryRecord.artifactHash,
+  baseline.geometryRecord.artifactHash,
+  'stable node/topology identity edit must change canonical geometry identity',
 );
 
 console.log(JSON.stringify({
@@ -67,7 +71,7 @@ console.log(JSON.stringify({
   status: 'PASS',
   stageId: 'LAFEA.3',
   stableAcross: ['material', 'section', 'load', 'boundary-condition', 'provenance'],
-  changesFor: ['node-coordinate'],
+  changesFor: ['node-coordinate', 'node/topology-identity'],
   lifecycleParentsRemainExact: true,
   meshCurrentnessChanged: false,
   releaseAuthorityChanged: false,

@@ -80,14 +80,17 @@ export function renderLfeaStandaloneLayout(rootElement, identity = {}, options =
   }
 
   const verificationRoot = viewRoots.get('verification');
+  const nativeVerificationRoot = documentRef.createElement('div');
+  nativeVerificationRoot.className = 'lfea-native-verification-root';
+  nativeVerificationRoot.dataset.role = 'lfea-native-verification-root';
   const verificationIntro = documentRef.createElement('p');
   verificationIntro.className = 'lfea-standalone-verification-intro';
-  verificationIntro.textContent = 'Independent element-FEA verification workbench. It does not represent native InputXML piping execution custody.';
+  verificationIntro.textContent = 'Independent element-FEA verification workbench below. It does not represent native InputXML piping execution custody.';
   const workbenchRoot = documentRef.createElement('div');
   workbenchRoot.className = 'lfea-standalone-workbench';
   workbenchRoot.dataset.role = 'lfea-consumer-root';
   workbenchRoot.setAttribute('aria-label', 'LFEA verification workbench');
-  verificationRoot.append(verificationIntro, workbenchRoot);
+  verificationRoot.append(nativeVerificationRoot, verificationIntro, workbenchRoot);
 
   let activeViewId = null;
   function activate(viewId) {
@@ -125,6 +128,7 @@ export function renderLfeaStandaloneLayout(rootElement, identity = {}, options =
     analysisRoot: viewRoots.get('analysis'),
     resultsRoot: viewRoots.get('results'),
     verificationRoot,
+    nativeVerificationRoot,
     historyRoot: viewRoots.get('history'),
     comparisonRoot: viewRoots.get('compare'),
     workbenchRoot,

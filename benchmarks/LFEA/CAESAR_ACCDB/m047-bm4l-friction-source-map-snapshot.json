@@ -1,0 +1,30 @@
+{
+  "schema": "m047-bm4l-friction-source-map-snapshot/v1",
+  "source": {
+    "commonCommit": "179c4831cf521cf797c13699cfbbd118315c9244",
+    "path": "LFEA/BM4/InputXML_BM4.xml",
+    "gitBlobSha": "3423d220374a17f67addd3c8c0c44300ffa46251"
+  },
+  "activeRestraintNodeCount": 30,
+  "frictionSiteCount": 26,
+  "frictionNodeCount": 26,
+  "positiveFrictionCoefficients": [0.3],
+  "frictionNodeIds": [
+    "20030", "20090", "20170", "20250", "20350", "20390", "20440", "20520", "20550", "20580", "20710", "21470", "21480", "21610", "21740", "21800", "21860", "21930", "22020", "22070", "22120", "22140", "22220", "22260", "22310", "22370"
+  ],
+  "positiveGapFrictionSiteCount": 4,
+  "positiveGapCompanionCount": 5,
+  "positiveGapSites": [
+    {"nodeId":"20030","gaps":[{"restraintNumber":2,"typeCode":"7","gap":25,"direction":[0,0,-1]}]},
+    {"nodeId":"20390","gaps":[{"restraintNumber":3,"typeCode":"10","gap":5,"direction":[-1,0,0]}]},
+    {"nodeId":"21480","gaps":[{"restraintNumber":2,"typeCode":"7","gap":25,"direction":[0,0,1]},{"restraintNumber":3,"typeCode":"10","gap":10,"direction":[1,0,0]}]},
+    {"nodeId":"22310","gaps":[{"restraintNumber":2,"typeCode":"10","gap":10,"direction":[0,0,-1]}]}
+  ],
+  "invariants": {
+    "allFrictionSourcesType17": true,
+    "allFrictionNormalsPositiveY": true,
+    "allFrictionCoefficientsPointThree": true,
+    "mapperAssignsSlideMultiplier": false,
+    "newMechanicsAuthorized": false
+  }
+}

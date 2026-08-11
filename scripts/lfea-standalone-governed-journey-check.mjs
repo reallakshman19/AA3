@@ -37,6 +37,7 @@ let projection = createLfeaGovernedJourneyProjection({ sourceSnapshot: snapshot,
 assert.equal(projection.source.fileName, 'standalone-governed-journey.xml');
 assert.match(projection.source.contentSha256, /^[0-9a-f]{64}$/u);
 assert.equal(projection.source.sourceUnit, 'mm');
+assert.equal(projection.review.findings.length, preFlight.preparation.findings.length);
 assert.equal(projection.model.nodeCount, preFlight.sourceSummary.nodeCount);
 assert.equal(projection.model.elementCount, preFlight.sourceSummary.elementCount);
 assert.equal(projection.model.modelSemanticHash, preFlight.preparation.modelSemanticHash);
@@ -45,7 +46,7 @@ assert.equal(projection.model.loadStateHash, preFlight.preparation.loadStateHash
 assert.ok(projection.model.physicalCases.some((row) => row.caseId === LINEAR_PIPING_INPUTXML_DEFAULT_CASE_ID));
 assert.equal(projection.analysis.nativeExecutionConnected, false);
 assert.equal(projection.analysis.readyToRun, false);
-console.log('LFEA-STANDALONE-JOURNEY-02 PASS source and compiled model identities project without re-derivation');
+console.log('LFEA-STANDALONE-JOURNEY-02 PASS source, findings and compiled model identities project without re-derivation');
 
 if (preFlight.status === 'WARN' && !preFlight.solveAuthorized) {
   assert.equal(projection.review.status, 'REVIEW_REQUIRED');
@@ -62,11 +63,15 @@ if (preFlight.status !== 'BLOCK') {
   assert.equal(preFlight.solveAuthorized, true);
   assert.equal(projection.review.solveAuthorized, true);
   assert.equal(projection.analysis.readyForExecutionHandoff, true);
+  assert.deepEqual(
+    projection.analysis.authorizedPhysicalCaseIds,
+    [...preFlight.authorization.authorizedPhysicalCaseIds],
+  );
   assert.match(projection.analysis.authorizationSemanticHash, /^fnv1a64:[0-9a-f]{16}$/u);
   assert.equal(projection.analysis.readyToRun, false,
     'Pre-FEA authorization must not be presented as connected native solve execution.');
 }
-console.log('LFEA-STANDALONE-JOURNEY-03 PASS reviewed authorization is distinct from solver handoff');
+console.log('LFEA-STANDALONE-JOURNEY-03 PASS reviewed authorization and exact case subset remain distinct from solver handoff');
 
 const cleared = createLfeaGovernedJourneyProjection({
   sourceSnapshot: { sourceStatus: 'EMPTY', preFlightStatus: 'NOT_PREPARED' },
@@ -80,13 +85,17 @@ console.log('LFEA-STANDALONE-JOURNEY-04 PASS cleared source does not retain hist
 const bootstrapSource = fs.readFileSync('src/lfea/bootstrap.js', 'utf8');
 const projectionSource = fs.readFileSync('src/lfea/governed-journey-projection.js', 'utf8');
 const viewSource = fs.readFileSync('src/lfea/governed-journey-view.js', 'utf8');
+const intakeSource = fs.readFileSync('src/workspace/linear-piping-inputxml-intake.js', 'utf8');
+const preFlightSource = fs.readFileSync('src/workspace/linear-piping-inputxml-prefea.js', 'utf8');
 assert.doesNotMatch(bootstrapSource, /solveInputXmlLinearAnalysis|runLinearPipingWorkbenchAnalysis|AnalysisCoordinator/u);
 assert.doesNotMatch(projectionSource, /solveInputXmlLinearAnalysis|authorizeInputXmlLinearSolve|prepareInputXmlLinearPreFea/u);
 assert.doesNotMatch(viewSource, /solveInputXmlLinearAnalysis|authorizeInputXmlLinearSolve|prepareInputXmlLinearPreFea/u);
 assert.doesNotMatch(viewSource, /innerHTML|insertAdjacentHTML|outerHTML/u);
+assert.doesNotMatch(intakeSource, /linear-piping-analysis-consumer\/index\.js/u);
+assert.doesNotMatch(preFlightSource, /linear-piping-analysis-consumer\/index\.js/u);
 assert.match(bootstrapSource, /LfeaStandaloneInputXmlSourceController/u);
 assert.match(bootstrapSource, /readyForExecutionHandoff/u);
-console.log('LFEA-STANDALONE-JOURNEY-05 PASS standalone composition projects authority and owns no direct solver bypass');
+console.log('LFEA-STANDALONE-JOURNEY-05 PASS standalone composition projects authority, uses narrow custody imports and owns no direct solver bypass');
 
 console.log(JSON.stringify({
   check: 'lfea-standalone-governed-journey',
@@ -94,6 +103,7 @@ console.log(JSON.stringify({
   sourceCustodyProjected: true,
   modelIdentityProjected: true,
   reviewAuthorizationProjected: true,
+  broadConsumerBarrelUsedByNativeSourcePath: false,
   nativeExecutionConnected: false,
   readyToRun: false,
 }));

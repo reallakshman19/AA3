@@ -15,13 +15,20 @@ export function createLfeaWorkbenchRunStore(options) {
     pipelineOptions,
   } = options;
 
-  function run() {
+  function run(optionsOverride = pipelineOptions) {
     const running = beginRun();
-    const identity = running.activeRun;
+    return executeActiveRun(running.activeRun, optionsOverride);
+  }
+
+  function executeActiveRun(identity, optionsOverride = pipelineOptions) {
+    const running = getState();
+    if (!running.activeRun || !sameRunIdentity(identity, running.activeRun)) {
+      return running;
+    }
     try {
       const execution = executeLfeaWorkbench(
         requirePackage(running),
-        pipelineOptions,
+        optionsOverride,
       );
       return completeRun({ type: 'COMPLETE', ...identity, execution });
     } catch (error) {
@@ -173,6 +180,7 @@ export function createLfeaWorkbenchRunStore(options) {
   return Object.freeze({
     run,
     beginRun,
+    executeActiveRun,
     updateRunProgress,
     completeRun,
     failRun,

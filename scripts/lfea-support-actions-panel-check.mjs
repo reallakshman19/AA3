@@ -25,6 +25,7 @@ const publication = Object.freeze({
       nodeId: 'N1',
       interfaceId: 'IF-S1',
       loadCaseId: 'CASE-W',
+      reportingSignConvention: 'FORCE_ON_INTERFACE_FROM_PIPE',
       triadSemanticHash: 'fnv1a64:5555555555555555',
       recoverySemanticHash: 'fnv1a64:6666666666666666',
       triadStatus: 'RESOLVED',
@@ -38,6 +39,7 @@ const publication = Object.freeze({
       nodeId: 'N2',
       interfaceId: 'IF-S2',
       loadCaseId: 'CASE-W',
+      reportingSignConvention: 'FORCE_ON_PIPE_FROM_INTERFACE',
       triadSemanticHash: 'fnv1a64:7777777777777777',
       recoverySemanticHash: 'fnv1a64:8888888888888888',
       triadStatus: 'BLOCKED_AXIS_DEGENERATE',
@@ -84,6 +86,35 @@ assert.deepEqual(current.rows.slice(0, 3), [
   { label: 'Flateral', value: '-2 kN' },
   { label: 'Fvertical', value: '8 kN' },
 ]);
+assert.deepEqual(current.rows.find((row) => row.label === 'Reporting sign'), {
+  label: 'Reporting sign',
+  value: 'Force on interface from pipe (FORCE_ON_INTERFACE_FROM_PIPE)',
+});
+assert.deepEqual(current.rows.find((row) => row.label === 'Physical load case'), {
+  label: 'Physical load case',
+  value: publication.physicalLoadCaseHash,
+});
+
+const missingSign = structuredClone(publication);
+delete missingSign.actions[0].reportingSignConvention;
+const missingSignProjection = projectLfeaSupportActionsForSelection(
+  { entityId: 'support:S1' },
+  missingSign,
+  sourceContext,
+);
+assert.equal(missingSignProjection.status, LFEA_SUPPORT_ACTIONS_PANEL_STATUS.STALE);
+assert.match(missingSignProjection.message, /no recognized reporting sign convention/u);
+assert.equal(missingSignProjection.rows.length, 0);
+
+const unknownSign = structuredClone(publication);
+unknownSign.actions[0].reportingSignConvention = 'UNKNOWN_SIGN';
+const unknownSignProjection = projectLfeaSupportActionsForSelection(
+  { entityId: 'support:S1' },
+  unknownSign,
+  sourceContext,
+);
+assert.equal(unknownSignProjection.status, LFEA_SUPPORT_ACTIONS_PANEL_STATUS.STALE);
+assert.equal(unknownSignProjection.rows.length, 0);
 
 const staleHash = projectLfeaSupportActionsForSelection(
   { entityId: 'support:S1' },
@@ -127,6 +158,10 @@ assert.equal(degenerate.status, LFEA_SUPPORT_ACTIONS_PANEL_STATUS.AXIS_DEGENERAT
 assert.equal(degenerate.rows[0].value, '14 kN');
 assert.equal(degenerate.rows[1].value, 'Blocked — axial parallel to vertical');
 assert.equal(degenerate.rows[2].value, 'Blocked — axial parallel to vertical');
+assert.deepEqual(degenerate.rows.find((row) => row.label === 'Reporting sign'), {
+  label: 'Reporting sign',
+  value: 'Force on pipe from interface (FORCE_ON_PIPE_FROM_INTERFACE)',
+});
 assert.ok(!degenerate.rows.slice(1, 3).some((row) => row.value === '0' || row.value.startsWith('0 ')));
 
 const published = [];

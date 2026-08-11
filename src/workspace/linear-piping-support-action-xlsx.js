@@ -1,4 +1,5 @@
 import * as XLSX from 'xlsx';
+import { INTERFACE_SIGN_CONVENTIONS } from '../core/linear-piping-interface/index.js';
 import { requireCurrentLinearPipingPresentation } from '../core/linear-piping-presentation/index.js';
 import { requireSupportActionTriad } from '../core/linear-piping-support-action-triad/index.js';
 import { canonicalStringify, semanticHash } from '../core/shared-piping-model/canonical-json.js';
@@ -47,7 +48,9 @@ export function createLinearPipingSupportActionWorkbookModel(input) {
     ));
   }
   sheets.push(audit, limitationsSheet(presentation));
-  sheets.push(engineeringAllowed ? signOffSheet(presentation, sourceSemanticHash, modelVersion) : conditionalNoticeSheet(presentation));
+  sheets.push(engineeringAllowed
+    ? signOffSheet(presentation, sourceSemanticHash, modelVersion)
+    : conditionalNoticeSheet(presentation));
 
   const semanticMaterial = {
     schema: SUPPORT_ACTION_XLSX_SCHEMA,
@@ -120,6 +123,10 @@ function requireActions(value, presentation) {
     const nodeId = requireText(action.nodeId, `actions[${index}].nodeId`);
     const entityId = requireText(action.entityId, `actions[${index}].entityId`);
     const loadCaseId = requireText(action.loadCaseId, `actions[${index}].loadCaseId`);
+    const reportingSignConvention = requireReportingSignConvention(
+      action.reportingSignConvention,
+      `actions[${index}].reportingSignConvention`,
+    );
     const physicalLoadCaseHash = requireHash(action.physicalLoadCaseHash, `actions[${index}].physicalLoadCaseHash`);
     const analysisResultSemanticHash = requireHash(action.analysisResultSemanticHash, `actions[${index}].analysisResultSemanticHash`);
     const executionHash = requireHash(action.executionHash, `actions[${index}].executionHash`);
@@ -140,6 +147,12 @@ function requireActions(value, presentation) {
         'PIPING_SUPPORT_ACTION_XLSX_INTERFACE_STALE',
       );
     }
+    if (interfaceRow.reportingSignConvention !== reportingSignConvention) {
+      fail(
+        `Support action ${interfaceId}/${loadCaseId} reporting sign convention does not match the current interface presentation.`,
+        'PIPING_SUPPORT_ACTION_XLSX_SIGN_CONVENTION_STALE',
+      );
+    }
     const analysisRow = presentation.analysisRows.find((row) => (
       row.analysisResultSemanticHash === analysisResultSemanticHash
       && row.executionHash === executionHash
@@ -156,6 +169,7 @@ function requireActions(value, presentation) {
       nodeId,
       interfaceId,
       loadCaseId,
+      reportingSignConvention,
       physicalLoadCaseHash,
       analysisResultSemanticHash,
       executionHash,
@@ -187,13 +201,14 @@ function coverSheet(presentation, sourceSemanticHash, modelVersion, engineeringA
     ['Application evidence hash', presentation.applicationResultEvidenceHash],
     ['Source semantic hash', sourceSemanticHash],
     ['Model version', modelVersion],
+    ['Signed force convention', 'Per action row; must match current interface presentation'],
   ];
   return sheet('Cover', ['Field', 'Value'], rows);
 }
 
 function actionSheet(name, actions, presentation, sourceSemanticHash, modelVersion, forceUnit, engineering) {
   const columns = [
-    'Entity ID', 'Node ID', 'Interface ID', 'Load Case ID',
+    'Entity ID', 'Node ID', 'Interface ID', 'Load Case ID', 'Reporting Sign Convention',
     `Fa [${forceUnit}]`, `Fl [${forceUnit}]`, `Fv [${forceUnit}]`,
     'Triad Status', 'Triad Reason',
     'Source Semantic Hash', 'Model Version', 'Physical Load Case Hash',
@@ -205,6 +220,7 @@ function actionSheet(name, actions, presentation, sourceSemanticHash, modelVersi
     action.nodeId,
     action.interfaceId,
     action.loadCaseId,
+    action.reportingSignConvention,
     action.triad.fAxial,
     action.triad.fLateral,
     action.triad.fVertical,
@@ -267,20 +283,21 @@ function sheet(name, columns, rows) {
 }
 
 function addCellProvenanceComments(worksheet, sheetModel, exportModel) {
-  const forceColumns = [4, 5, 6];
+  const forceColumns = [5, 6, 7];
   sheetModel.rows.forEach((row, rowIndex) => {
     const provenance = [
       `Application: ${exportModel.applicationId}`,
       `Presentation: ${exportModel.presentationSemanticHash}`,
-      `Source: ${row[9]}`,
-      `Model version: ${row[10]}`,
+      `Source: ${row[10]}`,
+      `Model version: ${row[11]}`,
       `Load case: ${row[3]}`,
-      `Physical load case: ${row[11]}`,
-      `Analysis result: ${row[12]}`,
-      `Execution: ${row[13]}`,
-      `Recovery: ${row[14]}`,
-      `Triad: ${row[15]}`,
-      `Triad status: ${row[7]}${row[8] ? ` (${row[8]})` : ''}`,
+      `Reporting sign: ${row[4]}`,
+      `Physical load case: ${row[12]}`,
+      `Analysis result: ${row[13]}`,
+      `Execution: ${row[14]}`,
+      `Recovery: ${row[15]}`,
+      `Triad: ${row[16]}`,
+      `Triad status: ${row[8]}${row[9] ? ` (${row[9]})` : ''}`,
     ].join('\n');
     for (const columnIndex of forceColumns) {
       const address = XLSX.utils.encode_cell({ r: rowIndex + 1, c: columnIndex });
@@ -316,6 +333,16 @@ function requireRecord(value, field) {
 function requireText(value, field) {
   if (typeof value !== 'string' || value.trim() === '') {
     fail(`${field} must be a non-empty string.`, 'PIPING_SUPPORT_ACTION_XLSX_INPUT_INVALID');
+  }
+  return value;
+}
+
+function requireReportingSignConvention(value, field) {
+  if (!INTERFACE_SIGN_CONVENTIONS.includes(value)) {
+    fail(
+      `${field} must be a recognized interface reporting sign convention.`,
+      'PIPING_SUPPORT_ACTION_XLSX_SIGN_CONVENTION_INVALID',
+    );
   }
   return value;
 }

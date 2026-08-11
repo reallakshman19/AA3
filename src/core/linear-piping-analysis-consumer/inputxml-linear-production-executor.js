@@ -1,4 +1,7 @@
-import { compileSolverExecution } from '../linear-fea-solver/index.js';
+import {
+  compileSolverExecution,
+  requireSolverExecution,
+} from '../linear-fea-solver/index.js';
 import { semanticHash } from '../shared-piping-model/canonical-json.js';
 import { deepFreeze } from '../shared-piping-model/immutable.js';
 import { compileInputXmlExecutionElementAuthorities } from './inputxml-linear-execution-elements.js';
@@ -13,12 +16,9 @@ export const INPUTXML_LINEAR_RAW_EXECUTION_BATCH_SCHEMA =
 
 /**
  * Production raw-case executor for the authorization-only InputXML solve gate.
- *
- * This function is deliberately not an authorization API. Callers must invoke
- * it only through `solveInputXmlLinearAnalysis`, which supplies a revalidated
- * preparation, authorization and selected case subset. The executor consumes
- * only retained structural/physical preparation and emits sealed B-3.3 solver
- * executions; result recovery and code application remain downstream.
+ * Retained case evidence contains only the sealed B-3.3 execution record; the
+ * non-hashed runtime factorization handle returned by compileSolverExecution
+ * is deliberately discarded at this boundary.
  */
 export function executeInputXmlAuthorizedRawCases({
   preparation,
@@ -54,12 +54,13 @@ export function executeInputXmlAuthorizedRawCases({
       frameProfile,
       physical.loadCase,
     );
-    const execution = compileSolverExecution({
+    const runtimeExecution = compileSolverExecution({
       compilation: accepted.structuralPreparation.compilation,
       elementContributions: elements.elementContributions,
       loadCase: physical.loadCase,
       solverProfile,
     });
+    const execution = retainedSolverExecution(runtimeExecution);
 
     cases.push({
       caseId,
@@ -127,6 +128,19 @@ export function rawExecutionSemanticProjection(record) {
     caseExecutions: record.caseExecutions.map(caseIdentity),
     status: record.status,
   };
+}
+
+function retainedSolverExecution(runtimeExecution) {
+  const {
+    factorizationHandle: ignoredFactorizationHandle,
+    prescribedValueDiagnostics: ignoredPrescribedDiagnostics,
+    nodalForceDiagnostics: ignoredNodalDiagnostics,
+    ...record
+  } = runtimeExecution;
+  void ignoredFactorizationHandle;
+  void ignoredPrescribedDiagnostics;
+  void ignoredNodalDiagnostics;
+  return requireSolverExecution(record);
 }
 
 function requireQualifiedProfileCustody(preflight, frameProfile, solverProfile) {

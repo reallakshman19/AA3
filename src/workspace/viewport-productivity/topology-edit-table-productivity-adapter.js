@@ -110,7 +110,7 @@ export class TopologyEditTableProductivityAdapter {
   }
 
   beginDrag(event) {
-    if (event.button !== 0 || !this.details || !this.summary) return;
+    if (event.button !== 0 || !this.details?.open || !this.summary) return;
     const hostRect = this.controller.hostElement?.getBoundingClientRect?.();
     const windowRect = this.details.getBoundingClientRect();
     if (!hostRect) return;

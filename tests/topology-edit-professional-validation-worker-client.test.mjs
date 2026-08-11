@@ -1,4 +1,5 @@
 import assert from 'node:assert/strict';
+import { readFile } from 'node:fs/promises';
 import test from 'node:test';
 
 import { finalizeCanonicalTopology } from '../src/workspace/topology-edit/topology-edit-canonical-state.js';
@@ -190,6 +191,19 @@ test('postMessage failure terminates the worker and clears the active request', 
   assert.equal(BrokenPostWorker.instances.at(-1).terminated, true);
   assert.equal(client.snapshot().activeRequest, null);
   assert.equal(client.active, null);
+});
+
+test('production worker URL remains directly nested in the Worker constructor', async () => {
+  const source = await readFile(new URL(
+    '../src/workspace/topology-edit/professional/topology-edit-validation-worker-client.js',
+    import.meta.url,
+  ), 'utf8');
+
+  assert.match(source, /return new Worker\(\s*new URL\(\s*['"]\.\/topology-edit-validation-worker\.js['"]\s*,\s*import\.meta\.url\s*\)/s);
+  assert.doesNotMatch(
+    source,
+    /workerUrl\s*=\s*options\.workerUrl\s*\?\?\s*new URL\(/,
+  );
 });
 
 function clock(values) {

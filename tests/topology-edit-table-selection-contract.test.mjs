@@ -7,6 +7,10 @@ import {
   TOPOLOGY_EDIT_SELECTION_SOURCES,
   normalizeTopologyEditSelectionSource,
 } from '../src/workspace/topology-edit/editor-state/topology-edit-selection-contract.js';
+import {
+  handleTopologyEditTableCompoundCellClick,
+  topologyEditTableDirectCellHtml,
+} from '../src/workspace/viewport-productivity/topology-edit-table-cell-edit.js';
 
 function store() {
   return createTopologyEditEditorStore({
@@ -16,6 +20,16 @@ function store() {
       sessionVersion: 7,
     },
   });
+}
+
+function compoundRow(elementType, canonicalKind, canonicalId, fields = {}) {
+  return {
+    rowId: `table:${canonicalId}`,
+    elementType,
+    identity: { canonicalKind, canonicalId, portBindings: [] },
+    fields: { tag: canonicalId, ...fields },
+    custody: {},
+  };
 }
 
 test('shared canonical selection contract authorizes Table origin explicitly', () => {
@@ -73,4 +87,51 @@ test('Table source remains compatible with stale request custody', () => {
   assert.equal(stale.disposition, 'STALE');
   assert.deepEqual(stale.staleFields, ['selectionRevision']);
   assert.deepEqual(editorStore.getState().selection.canonicalIds, ['edge:E-002']);
+});
+
+test('NEEDS_INPUT valve and tee cells render governed compound affordances only', () => {
+  const valve = compoundRow('VALVE', 'EDGE', 'edge:V-001', { valveType: 'GATE' });
+  const tee = compoundRow('TEE', 'JUNCTION', 'junction:T-001', { branchDnMm: 50 });
+  const runtime = {
+    projection: { authority: { canonicalTopologyHash: 'canonical-a' } },
+    intents: [],
+    staleResult: null,
+    cellDrafts: new Map(),
+  };
+  const valveHtml = topologyEditTableDirectCellHtml(runtime, valve, { key: 'valveType', label: 'Valve Type' });
+  const teeHtml = topologyEditTableDirectCellHtml(runtime, tee, { key: 'branchDnMm', label: 'Branch DN' });
+  assert.match(valveHtml, /data-table-compound-edit="VALVE_REPLACEMENT"/);
+  assert.match(teeHtml, /data-table-compound-edit="TEE_REDUCER_RELATION"/);
+  assert.doesNotMatch(valveHtml, /data-canonical-id=/);
+  assert.doesNotMatch(teeHtml, /data-canonical-id=/);
+});
+
+test('compound cell activation changes exact selection and focus only', async () => {
+  const row = compoundRow('VALVE', 'EDGE', 'edge:V-001', { valveType: 'GATE' });
+  const calls = [];
+  let focused = false;
+  const button = {
+    dataset: {
+      tableCellCanonicalId: row.identity.canonicalId,
+      tableCompoundEdit: 'VALVE_REPLACEMENT',
+    },
+  };
+  const runtime = {
+    projection: { rows: [row] },
+    coordinator: {
+      tableSelection: (...args) => calls.push(args),
+    },
+    element: {
+      contains: (candidate) => candidate === button,
+      querySelector: (selector) => selector === '[data-table-edit-valve-catalogue]'
+        ? { scrollIntoView() {}, focus() { focused = true; } }
+        : null,
+    },
+    render() { throw new Error('activation must not directly rerender/stage'); },
+  };
+  const event = { target: { closest: () => button } };
+  assert.equal(handleTopologyEditTableCompoundCellClick(runtime, event), true);
+  assert.deepEqual(calls, [['REPLACE', [row.rowId], row.rowId]]);
+  await new Promise((resolve) => queueMicrotask(resolve));
+  assert.equal(focused, true);
 });

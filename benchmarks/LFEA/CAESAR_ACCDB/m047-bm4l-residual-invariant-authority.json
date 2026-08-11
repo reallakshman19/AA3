@@ -1,0 +1,186 @@
+{
+  "schema": "m047-bm4l-residual-invariant-authority/v1",
+  "benchmarkId": "BM4_L",
+  "scope": "QST-006 source-local conditioning diagnostics; evidence only",
+  "source": {
+    "qualificationArtifact": {
+      "sourceCommit": "7488ba76126f8240bb61c80fad243cf096c5fe08",
+      "workflowRun": 31457644192,
+      "artifactId": 9088676941,
+      "digest": "sha256:8819dbbbf21aff8e314fe6cae85db0c3407afc12ca71dde3b459442242d3e934",
+      "reportSha256": "d19d34a0f7ca7abd533b0c1123ba30ecf84bb3369a260e08f78c4fcb5b79c915"
+    },
+    "accdbSha256": "64c05a50e9ed0452622ff5880335460486f24ac8e6adecc9a300b549c9aa82f8"
+  },
+  "operatorReconstruction": {
+    "analysisNodeCount": 323,
+    "dofCount": 1938,
+    "finiteRestraintDofCount": 51,
+    "translationStiffnessNPerM": 100000000000000.0,
+    "rotationStiffnessNmPerRad": 57295779513082.32,
+    "maximumSupportStiffnessRelativeDifference": 5.15625e-15,
+    "cases": {
+      "L2": {
+        "maximumSolvedStateDifference": 3.084644085299404e-13,
+        "maximumEquationResidual": 2.0713196136057377e-07,
+        "maximumSourceSuperpositionDifference": 2.360124357232707e-13
+      },
+      "L4": {
+        "maximumSolvedStateDifference": 4.849077953408831e-13,
+        "maximumEquationResidual": 1.4575198292732239e-06,
+        "maximumSourceSuperpositionDifference": 8.129914927032522e-13
+      }
+    }
+  },
+  "conditioningPolicy": {
+    "nodalCancellationFactor": "sum(abs(source-owned displacement contribution)) / abs(resultant displacement component)",
+    "sourceEndVectorInvariant": "Euclidean norm of the global force or moment vector at one source-element end; invariant under rigid rotation of axes",
+    "componentConditioning": "source-end vector reference norm / abs(component reference)",
+    "globalCancellationDominatedThreshold": 10,
+    "sourceVectorPassThreshold": 0.1,
+    "interpretation": [
+      "A component-relative failure with a source-end vector error <=10% is not evidence for a constitutive correction to that source.",
+      "A nodal row with cancellation factor >=10 is not suitable for coefficient selection because the reported resultant is a small difference of larger source-owned responses.",
+      "No comparator acceptance rule is changed by these diagnostics."
+    ]
+  },
+  "unaffectedPrimitiveRows": {
+    "reason": "L2 and L4 are unchanged by tee thermal free growth and the BM4_L T1 interval-alpha delivery.",
+    "nodalCancellation": [
+      {
+        "caseId": "L2",
+        "nodeId": "20500",
+        "quantity": "DISPLACEMENT",
+        "component": "UY",
+        "referenceValue": -4.1810469701886175e-06,
+        "actualValue": -3.4898167399100004e-06,
+        "componentRelativeError": 0.1653246747064011,
+        "vectorReferenceNorm": 4.59710057795758e-06,
+        "vectorErrorNorm": 6.913737176213614e-07,
+        "vectorRelativeError": 0.1503934286181156,
+        "sourceContributionSum": -3.4898167253869937e-06,
+        "sourceAbsoluteContributionSum": 0.0010039771626819626,
+        "sourceCancellationFactor": 287.68764594436965,
+        "topSourceContributions": [
+          {"sourceElementId": "28", "contribution": 0.0003644331388419052, "absoluteContribution": 0.0003644331388419052},
+          {"sourceElementId": "25", "contribution": -0.00014836724241960557, "absoluteContribution": 0.00014836724241960557},
+          {"sourceElementId": "24", "contribution": -0.00011785147945654906, "absoluteContribution": 0.00011785147945654906},
+          {"sourceElementId": "23", "contribution": 0.00010027270981186367, "absoluteContribution": 0.00010027270981186367},
+          {"sourceElementId": "29", "contribution": -8.96762641393205e-05, "absoluteContribution": 8.96762641393205e-05},
+          {"sourceElementId": "22", "contribution": -8.104085722822677e-05, "absoluteContribution": 8.104085722822677e-05},
+          {"sourceElementId": "27", "contribution": -5.899311979713983e-05, "absoluteContribution": 5.899311979713983e-05},
+          {"sourceElementId": "30", "contribution": 1.528514807095434e-05, "absoluteContribution": 1.528514807095434e-05}
+        ],
+        "classification": "GLOBAL_CANCELLATION_DOMINATED"
+      },
+      {
+        "caseId": "L2",
+        "nodeId": "20510",
+        "quantity": "DISPLACEMENT",
+        "component": "UY",
+        "referenceValue": -4.074692726135254e-06,
+        "actualValue": -3.4715727311390115e-06,
+        "componentRelativeError": 0.148016067844283,
+        "vectorReferenceNorm": 4.50877343601634e-06,
+        "vectorErrorNorm": 6.036086668533867e-07,
+        "vectorRelativeError": 0.1338742510394792,
+        "sourceContributionSum": -3.471572716623239e-06,
+        "sourceAbsoluteContributionSum": 0.0010034652341020913,
+        "sourceCancellationFactor": 289.0520556004188,
+        "topSourceContributions": [
+          {"sourceElementId": "28", "contribution": 0.00036425974902053084, "absoluteContribution": 0.00036425974902053084},
+          {"sourceElementId": "25", "contribution": -0.00014828714989633865, "absoluteContribution": 0.00014828714989633865},
+          {"sourceElementId": "24", "contribution": -0.00011778754902526511, "absoluteContribution": 0.00011778754902526511},
+          {"sourceElementId": "23", "contribution": 0.00010021815410951507, "absoluteContribution": 0.00010021815410951507},
+          {"sourceElementId": "29", "contribution": -8.963366948733043e-05, "absoluteContribution": 8.963366948733043e-05},
+          {"sourceElementId": "22", "contribution": -8.099527971284403e-05, "absoluteContribution": 8.099527971284403e-05},
+          {"sourceElementId": "27", "contribution": -5.896403065062615e-05, "absoluteContribution": 5.896403065062615e-05},
+          {"sourceElementId": "30", "contribution": 1.5278077489890483e-05, "absoluteContribution": 1.5278077489890483e-05}
+        ],
+        "classification": "GLOBAL_CANCELLATION_DOMINATED"
+      },
+      {
+        "caseId": "L2",
+        "nodeId": "22140",
+        "quantity": "ROTATION",
+        "component": "RX",
+        "referenceValue": 2.0457584838936056e-06,
+        "actualValue": 1.0953127605058462e-06,
+        "componentRelativeError": 0.46459331874739007,
+        "vectorReferenceNorm": 2.7604072999303974e-05,
+        "vectorErrorNorm": 1.0259135162266865e-06,
+        "vectorRelativeError": 0.03716529500021806,
+        "sourceContributionSum": 1.0953127665741065e-06,
+        "sourceAbsoluteContributionSum": 0.000489043760456463,
+        "sourceCancellationFactor": 446.4877778202902,
+        "topSourceContributions": [
+          {"sourceElementId": "77", "contribution": 0.00011858878815024897, "absoluteContribution": 0.00011858878815024897},
+          {"sourceElementId": "71", "contribution": -6.826124111472698e-05, "absoluteContribution": 6.826124111472698e-05},
+          {"sourceElementId": "87", "contribution": -5.760080154703593e-05, "absoluteContribution": 5.760080154703593e-05},
+          {"sourceElementId": "76", "contribution": 5.091281635273962e-05, "absoluteContribution": 5.091281635273962e-05},
+          {"sourceElementId": "73", "contribution": -4.826096335859388e-05, "absoluteContribution": 4.826096335859388e-05},
+          {"sourceElementId": "85", "contribution": 2.366008994592482e-05, "absoluteContribution": 2.366008994592482e-05},
+          {"sourceElementId": "74", "contribution": 2.0527491677604913e-05, "absoluteContribution": 2.0527491677604913e-05},
+          {"sourceElementId": "72", "contribution": -1.9624224722485016e-05, "absoluteContribution": 1.9624224722485016e-05}
+        ],
+        "classification": "GLOBAL_CANCELLATION_DOMINATED"
+      },
+      {
+        "caseId": "L4",
+        "nodeId": "20150",
+        "quantity": "DISPLACEMENT",
+        "component": "UY",
+        "referenceValue": -2.73765972815454e-06,
+        "actualValue": -3.294453769988483e-06,
+        "componentRelativeError": 0.2033832167335415,
+        "vectorReferenceNorm": 0.0008892112017703124,
+        "vectorErrorNorm": 6.34892524929016e-07,
+        "vectorRelativeError": 0.000713995194465636,
+        "sourceContributionSum": -3.2944537695698447e-06,
+        "sourceAbsoluteContributionSum": 0.00010165502919831429,
+        "sourceCancellationFactor": 30.856413929484177,
+        "topSourceContributions": [
+          {"sourceElementId": "43", "contribution": 2.104162467175393e-05, "absoluteContribution": 2.104162467175393e-05},
+          {"sourceElementId": "5", "contribution": -1.8987928851816645e-05, "absoluteContribution": 1.8987928851816645e-05},
+          {"sourceElementId": "6", "contribution": -1.4036996209367497e-05, "absoluteContribution": 1.4036996209367497e-05},
+          {"sourceElementId": "36", "contribution": 1.340007669344036e-05, "absoluteContribution": 1.340007669344036e-05},
+          {"sourceElementId": "4", "contribution": -7.182020970650121e-06, "absoluteContribution": 7.182020970650121e-06},
+          {"sourceElementId": "12", "contribution": 4.608262690031821e-06, "absoluteContribution": 4.608262690031821e-06},
+          {"sourceElementId": "42", "contribution": -4.377043852174284e-06, "absoluteContribution": 4.377043852174284e-06},
+          {"sourceElementId": "38", "contribution": 4.2238557765262565e-06, "absoluteContribution": 4.2238557765262565e-06}
+        ],
+        "classification": "GLOBAL_CANCELLATION_DOMINATED"
+      }
+    ],
+    "directSourceEndVectors": [
+      {"caseId":"L2","sourceElementId":"5","entityId":"INPUT_ELEMENT:5|20090->20120|","quantity":"GLOBAL_END_FORCE_FROM","referenceVectorNorm":211.09174660478868,"errorVectorNorm":8.004630457728847,"vectorRelativeError":0.03792014887590712,"failedComponents":[{"component":"FY","referenceValue":68.68189239501953,"actualValue":60.680206570019664,"componentRelativeError":0.1165035724260287,"componentConditioning":3.073470157035102}],"classification":"COMPONENT_ILL_CONDITIONED_VECTOR_PASS"},
+      {"caseId":"L2","sourceElementId":"19","entityId":"INPUT_ELEMENT:19|20300->20330|","quantity":"GLOBAL_END_FORCE_FROM","referenceVectorNorm":15.551151346435097,"errorVectorNorm":1.5421924674158396,"vectorRelativeError":0.09916902183383146,"failedComponents":[{"component":"FY","referenceValue":12.203158378601074,"actualValue":10.663790622807369,"componentRelativeError":0.12614502803578076,"componentConditioning":1.2743546272172388}],"classification":"COMPONENT_ILL_CONDITIONED_VECTOR_PASS"},
+      {"caseId":"L4","sourceElementId":"84","entityId":"INPUT_ELEMENT:84|22210->22220|","quantity":"GLOBAL_END_MOMENT_TO","referenceVectorNorm":370.31005946043194,"errorVectorNorm":0.023356932530495478,"vectorRelativeError":6.307398876640885e-05,"failedComponents":[{"component":"MZ","referenceValue":-0.008319332264363766,"actualValue":-0.010436225058133146,"componentRelativeError":0.2544546517077081,"componentConditioning":44511.99299331651}],"classification":"COMPONENT_ILL_CONDITIONED_VECTOR_PASS"},
+      {"caseId":"L4","sourceElementId":"85","entityId":"INPUT_ELEMENT:85|22220->22250|","quantity":"GLOBAL_END_FORCE_FROM","referenceVectorNorm":185.41704356255366,"errorVectorNorm":0.06724330120954974,"vectorRelativeError":0.00036265976372805257,"failedComponents":[{"component":"FY","referenceValue":-0.014142101630568504,"actualValue":-0.015612289038273098,"componentRelativeError":0.10395819844249647,"componentConditioning":13110.996399698479}],"classification":"COMPONENT_ILL_CONDITIONED_VECTOR_PASS"},
+      {"caseId":"L4","sourceElementId":"85","entityId":"INPUT_ELEMENT:85|22220->22250|","quantity":"GLOBAL_END_FORCE_TO","referenceVectorNorm":185.41704356255366,"errorVectorNorm":0.06724342483682966,"vectorRelativeError":0.0003626604304805665,"failedComponents":[{"component":"FY","referenceValue":0.014142101630568504,"actualValue":0.015612289050865544,"componentRelativeError":0.10395819933291903,"componentConditioning":13110.996399698479}],"classification":"COMPONENT_ILL_CONDITIONED_VECTOR_PASS"},
+      {"caseId":"L4","sourceElementId":"85","entityId":"INPUT_ELEMENT:85|22220->22250|","quantity":"GLOBAL_END_MOMENT_FROM","referenceVectorNorm":370.31005946043194,"errorVectorNorm":0.023356932530330957,"vectorRelativeError":6.307398876596457e-05,"failedComponents":[{"component":"MZ","referenceValue":0.008319332264363766,"actualValue":0.01043622505813321,"componentRelativeError":0.2544546517077158,"componentConditioning":44511.99299331651}],"classification":"COMPONENT_ILL_CONDITIONED_VECTOR_PASS"},
+      {"caseId":"L4","sourceElementId":"86","entityId":"INPUT_ELEMENT:86|22250->22260|","quantity":"GLOBAL_END_FORCE_FROM","referenceVectorNorm":185.41704356255366,"errorVectorNorm":0.0672434229347608,"vectorRelativeError":0.0003626604202222384,"failedComponents":[{"component":"FY","referenceValue":-0.014142101630568504,"actualValue":-0.015612289036274474,"componentRelativeError":0.10395819830117212,"componentConditioning":13110.996399698479}],"classification":"COMPONENT_ILL_CONDITIONED_VECTOR_PASS"},
+      {"caseId":"L4","sourceElementId":"86","entityId":"INPUT_ELEMENT:86|22250->22260|","quantity":"GLOBAL_END_FORCE_TO","referenceVectorNorm":185.41704356255366,"errorVectorNorm":0.0672434229347608,"vectorRelativeError":0.0003626604202222384,"failedComponents":[{"component":"FY","referenceValue":0.014142101630568504,"actualValue":0.015612289036274474,"componentRelativeError":0.10395819830117212,"componentConditioning":13110.996399698479}],"classification":"COMPONENT_ILL_CONDITIONED_VECTOR_PASS"}
+    ],
+    "primitiveFailureRowsCovered": 12
+  },
+  "resolvedThermalPublishedEvidence": {
+    "source": "PR1001 Stage 10 resolved tee + interval-alpha replay; documentary cross-reference, not regenerated from the pre-delivery artifact",
+    "primitiveFailureRows": 5,
+    "node20250RXCancellationFactorApprox": 521.8,
+    "smallSourceMomentReferencesNm": {"source62_63_MY": 0.638, "source64_65_MX": 0.147},
+    "classification": "GLOBAL_CANCELLATION_PLUS_NEAR_ZERO_SOURCE_COMPONENTS"
+  },
+  "closure": {
+    "primitiveFailureRowsTotal": 17,
+    "primitiveFailureRowsClassified": 17,
+    "newMechanicsAuthorized": false,
+    "qst006Status": "COMPLETE_NO_NEW_MECHANICS",
+    "nextAuthorityBoundary": "External product/source authority only (not residual fitting): reducer representative cylinder station or another independently observable constitutive rule."
+  },
+  "nonScope": [
+    "No stiffness, load, thermal, pressure, reducer, bend, tee, restraint, gravity, Bourdon, recovery, sign, topology, reference or tolerance change.",
+    "No change to the literal nonzero <10% comparator.",
+    "No attempt to fit a reducer station or any coefficient from cancellation rows."
+  ]
+}

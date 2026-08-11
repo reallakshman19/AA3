@@ -10,6 +10,9 @@ import {
 } from './lafea-mesh-producer-registry.js';
 
 export const LAFEA_STAGE_ANALYSIS_ADAPTER_SCHEMA = 'lafea-stage-analysis-adapter/v1';
+export const LAFEA_ANALYSIS_ROUTE_FAMILIES = Object.freeze([
+  'ANALYTICAL', 'FEA', 'UNSUPPORTED',
+]);
 
 const MESH = Object.freeze({
   'LAFEA.1': Object.freeze({ families: [], nodePath: null, elementPath: null }),
@@ -18,6 +21,39 @@ const MESH = Object.freeze({
   'LAFEA.4': Object.freeze({ families: Object.freeze(['CST_DKT_TRI3_THIN_SHELL_V1']), nodePath: 'nodes', elementPath: 'elements' }),
   'LAFEA.5': Object.freeze({ families: Object.freeze(['CST_DKT_TRI3_THIN_SHELL_V1']), nodePath: 'shellTemplate.nodes', elementPath: 'shellTemplate.elements' }),
   'LAFEA.6': Object.freeze({ families: [], nodePath: null, elementPath: null }),
+});
+
+const GUIDED_INPUT_REQUIREMENTS = freeze({
+  'LAFEA.1': {
+    MATERIALS_SECTIONS: inputRequirement(['materials'], 'MATERIALS_REQUIRED'),
+    RESTRAINTS_BCS: null,
+    LOADS_CASES: inputRequirement(['loadCases'], 'LOAD_CASES_REQUIRED'),
+  },
+  'LAFEA.2': {
+    MATERIALS_SECTIONS: null,
+    RESTRAINTS_BCS: null,
+    LOADS_CASES: inputRequirement(['screeningCases'], 'LOAD_CASES_REQUIRED'),
+  },
+  'LAFEA.3': {
+    MATERIALS_SECTIONS: inputRequirement(['materials'], 'MATERIALS_REQUIRED'),
+    RESTRAINTS_BCS: inputRequirement(['constraints'], 'BOUNDARY_CONDITIONS_REQUIRED'),
+    LOADS_CASES: inputRequirement(['loadCases'], 'LOAD_CASES_REQUIRED'),
+  },
+  'LAFEA.4': {
+    MATERIALS_SECTIONS: inputRequirement(['materials'], 'MATERIALS_REQUIRED'),
+    RESTRAINTS_BCS: inputRequirement(['constraints'], 'BOUNDARY_CONDITIONS_REQUIRED'),
+    LOADS_CASES: inputRequirement(['loadCases'], 'LOAD_CASES_REQUIRED'),
+  },
+  'LAFEA.5': {
+    MATERIALS_SECTIONS: inputRequirement(['shellTemplate.materials'], 'MATERIALS_REQUIRED'),
+    RESTRAINTS_BCS: inputRequirement(['shellTemplate.constraints'], 'BOUNDARY_CONDITIONS_REQUIRED'),
+    LOADS_CASES: inputRequirement(['loadCaseMappings'], 'LOAD_CASES_REQUIRED'),
+  },
+  'LAFEA.6': {
+    MATERIALS_SECTIONS: inputRequirement(['materials'], 'MATERIALS_REQUIRED'),
+    RESTRAINTS_BCS: null,
+    LOADS_CASES: inputRequirement(['loadCases'], 'LOAD_CASES_REQUIRED'),
+  },
 });
 
 export function requireLafeaStageAnalysisAdapter(stageId) {
@@ -34,8 +70,15 @@ export function requireLafeaStageAnalysisAdapter(stageId) {
     schema: LAFEA_STAGE_ANALYSIS_ADAPTER_SCHEMA,
     adapterId: `LAFEA_STAGE_ADAPTER:${stageId}:V1`,
     stageId,
+    routeFamily: routeFamily(supported, meshApplicable),
     lifecycleProfileId: lifecycle.profileId,
     engineState: registry.engineState,
+    input: {
+      contractRole: registry.inputContractRole,
+      unitSourceRole: registry.unitSourceRole,
+      collectionPaths: [...registry.collectionPaths],
+      guidedStepRequirements: GUIDED_INPUT_REQUIREMENTS[stageId],
+    },
     preparation: {
       adapterId: supported ? `LAFEA_PREPARATION_ADAPTER:${stageId}:V1` : null,
       qualified: supported,
@@ -67,5 +110,12 @@ export function requireLafeaStageAnalysisAdapter(stageId) {
 }
 
 export function lafeaStageAnalysisAdapter(stageId) { return requireLafeaStageAnalysisAdapter(stageId); }
+function routeFamily(supported, meshApplicable) {
+  if (!supported) return 'UNSUPPORTED';
+  return meshApplicable ? 'FEA' : 'ANALYTICAL';
+}
+function inputRequirement(paths, missingReason) {
+  return { paths: [...paths], missingReason };
+}
 function adapterError(code) { const error = new TypeError(code); error.code = code; return error; }
 function freeze(value) { if (!value || typeof value !== 'object' || Object.isFrozen(value)) return value; Object.values(value).forEach(freeze); return Object.freeze(value); }

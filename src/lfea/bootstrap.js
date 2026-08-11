@@ -22,6 +22,7 @@ export function bootstrapLfeaStandalone(rootElement, options = {}) {
     reviewRoot: layout.reviewRoot,
     modelRoot: layout.modelRoot,
     analysisRoot: layout.analysisRoot,
+    onRunNativeAnalysis: () => executeNativeAnalysis(),
   });
   const resultsView = mountLfeaNativeResultsView(layout.resultsRoot);
   const executionAuthority = createLfeaNativeExecutionAuthority();
@@ -70,7 +71,23 @@ export function bootstrapLfeaStandalone(rootElement, options = {}) {
     sourceController.getPreFlight(),
   );
 
+  function executeNativeAnalysis(runOptions = {}) {
+    requireActive();
+    try {
+      const state = executionAuthority.run(sourceController.getPreFlight(), runOptions);
+      resultsAuthority.recover(sourceController.getPreFlight(), state);
+      refreshCurrent();
+      layout.activate('results');
+      return state;
+    } catch (error) {
+      refreshCurrent();
+      layout.statusRoot.textContent = `Native analysis/Results blocked: ${error?.code ?? error?.message ?? 'UNKNOWN_ERROR'}`;
+      throw error;
+    }
+  }
+
   function recoverCurrentResults() {
+    requireActive();
     const state = resultsAuthority.recover(
       sourceController.getPreFlight(),
       executionAuthority.getState(),
@@ -107,18 +124,8 @@ export function bootstrapLfeaStandalone(rootElement, options = {}) {
       refreshCurrent();
       return sourceController.getSnapshot();
     },
-    runNativeAnalysis(runOptions = {}) {
-      requireActive();
-      const state = executionAuthority.run(sourceController.getPreFlight(), runOptions);
-      try {
-        resultsAuthority.recover(sourceController.getPreFlight(), state);
-      } finally {
-        refreshCurrent();
-      }
-      layout.activate('results');
-      return state;
-    },
-    recoverNativeResults() { requireActive(); return recoverCurrentResults(); },
+    runNativeAnalysis(runOptions = {}) { return executeNativeAnalysis(runOptions); },
+    recoverNativeResults() { return recoverCurrentResults(); },
     getNativeExecutionState() { requireActive(); return executionAuthority.getState(); },
     getCurrentNativeExecution() { requireActive(); return executionAuthority.getCurrentExecution(); },
     getCurrentQualifiedNativeExecution() { requireActive(); return executionAuthority.getCurrentQualifiedExecution(); },

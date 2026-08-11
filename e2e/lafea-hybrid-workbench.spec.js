@@ -3,12 +3,16 @@ import { expect, test } from '@playwright/test';
 const FIXTURE_URL = '/Advanced_Analysis/e2e/fixtures/lafea-hybrid-workbench-fixture.js';
 const AUTHORING_FIXTURE_URL =
   '/Advanced_Analysis/e2e/fixtures/sequential-authoring-bridge-fixture.js';
+const P06_FIXTURE_URL =
+  '/Advanced_Analysis/e2e/fixtures/lfea-preflight-master-review-fixture.js';
 
 test.describe('LAFEA hybrid workbench Phase 6 browser validation', () => {
   test.afterEach(async ({ page }) => {
     await page.evaluate(() => {
       globalThis.__LAFEA_HC_BROWSER__?.controller?.destroy?.();
+      globalThis.__P06_PREFLIGHT_BROWSER__?.controller?.destroy?.();
       delete globalThis.__LAFEA_HC_BROWSER__;
+      delete globalThis.__P06_PREFLIGHT_BROWSER__;
     }).catch(() => {});
   });
 
@@ -208,6 +212,52 @@ test.describe('LAFEA hybrid workbench Phase 6 browser validation', () => {
     });
     await expect(page.locator('.sequential-sketcher-svg-host svg')).toHaveCount(1);
   });
+
+  test('P06-CHROMIUM-01: exact source/master agreement renders both sealed evidence rows', async ({ page }) => {
+    const context = await mountP06Scenario(page, 6.02);
+    expect(context).toMatchObject({
+      fieldId: 'piping.wallThicknessMm',
+      status: 'RESOLVED_EXACT',
+      value: 6.02,
+      evidenceCount: 2,
+      evidenceKinds: ['SHARED_MODEL', 'PIPING_CLASS'],
+      sourceStableTargetIdentity: true,
+      conflict: false,
+    });
+
+    const review = page.locator('[data-role="lfea-phase1-review-ledger"]');
+    await expect(review).toHaveCount(1);
+    const trace = review.locator('.lfea-phase1-review-ledger__trace');
+    await expect(trace).toContainText('piping.wallThicknessMm');
+    await expect(trace).toContainText('RESOLVED_EXACT');
+    await expect(trace).toContainText('EXACT_EVIDENCE_AGREEMENT');
+    await expect(trace).toContainText('SHARED_MODEL');
+    await expect(trace).toContainText('PIPING_CLASS');
+    await expect(trace).toContainText('value=6.02');
+  });
+
+  test('P06-CHROMIUM-02: source/master disagreement renders null-valued conflict with both evidence rows', async ({ page }) => {
+    const context = await mountP06Scenario(page, 8.18);
+    expect(context).toMatchObject({
+      fieldId: 'piping.wallThicknessMm',
+      status: 'BLOCKED_CONFLICT',
+      value: null,
+      evidenceCount: 2,
+      evidenceKinds: ['SHARED_MODEL', 'PIPING_CLASS'],
+      sourceStableTargetIdentity: true,
+      conflict: true,
+    });
+
+    const review = page.locator('[data-role="lfea-phase1-review-ledger"]');
+    await expect(review).toHaveCount(1);
+    const trace = review.locator('.lfea-phase1-review-ledger__trace');
+    await expect(trace).toContainText('BLOCKED_CONFLICT');
+    await expect(trace).toContainText('EXACT_EVIDENCE_CONFLICT');
+    await expect(trace).toContainText('value=6.02');
+    await expect(trace).toContainText('value=8.18');
+    await expect(trace).toContainText('SHARED_MODEL');
+    await expect(trace).toContainText('PIPING_CLASS');
+  });
 });
 
 async function mountScenario(page, exportName) {
@@ -220,4 +270,15 @@ async function mountScenario(page, exportName) {
     const mounted = fixture[selectedExport](root);
     return mounted.context;
   }, { fixtureUrl: FIXTURE_URL, exportName });
+}
+
+async function mountP06Scenario(page, masterWallThickness) {
+  await page.goto('/');
+  return page.evaluate(async ({ fixtureUrl, wallThickness }) => {
+    const fixture = await import(fixtureUrl);
+    const root = document.createElement('main');
+    root.id = 'lfea-p06-browser-root';
+    document.body.replaceChildren(root);
+    return fixture.mountP06MasterReview(root, { masterWallThickness: wallThickness });
+  }, { fixtureUrl: P06_FIXTURE_URL, wallThickness: masterWallThickness });
 }

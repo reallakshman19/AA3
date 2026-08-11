@@ -65,7 +65,9 @@ jobs:
           node --check scripts/lfea-m047-bm4l-tee-stiffness-authority.mjs
           node --check scripts/lfea-m047-bm4l-numeric-operator-proof.mjs
           node --check scripts/lfea-m047-bm4l-bend-effective-stiffness.mjs
+          node --check scripts/lfea-accdb-bend-gravity-first-moment.mjs
           node --check src/core/fea-benchmarks/caesar-accdb-linear-solve.js
+          node --check src/core/fea-benchmarks/qualification-engineering-assessment.js
           pwsh -NoProfile -Command "[void][scriptblock]::Create((Get-Content -Raw 'scripts/lfea-m047-bm4l-accdb-provenance.ps1'))"
 
       - name: Run evidence instrumentation regressions
@@ -283,6 +285,45 @@ jobs:
           $actual = Get-Content -Raw artifacts/bm4l/bm4l-actual.json | ConvertFrom-Json
           if ($actual.sourceAccdbSha256 -ne $env:BM4L_PINNED_MEMBER_SHA256) {
             throw "Solver actual package source hash $($actual.sourceAccdbSha256) does not equal pinned archive member $env:BM4L_PINNED_MEMBER_SHA256"
+          }
+
+      - name: Verify engineering assessment gates
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $report = Get-Content -Raw artifacts/bm4l/bm4l-report.json | ConvertFrom-Json
+          $assessment = $report.engineeringAssessment
+          if ($null -eq $assessment) { throw 'BM4_L report is missing the engineering assessment.' }
+          if ($assessment.restraintComponents.status -ne 'PASS') {
+            throw 'BM4_L restraint component gate did not pass.'
+          }
+          if ($assessment.physicalEquilibrium.status -ne 'PASS') {
+            throw 'BM4_L physical equilibrium gate did not pass.'
+          }
+          if ($assessment.equilibriumResidualDisposition.status -ne 'PASS') {
+            throw 'BM4_L equilibrium residual comparison disposition did not pass.'
+          }
+          if ($assessment.linearCaseConditioning.status -ne 'PASS') {
+            throw 'BM4_L linear case conditioning gate did not pass.'
+          }
+          if ([int]$assessment.literalExternalComponents.counts.failed -ne [int]$report.qualification.totals.failed) {
+            throw 'Literal external failure count diverges from the qualification failure count.'
+          }
+
+      - name: Audit bend gravity first moments
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $PSNativeCommandUseErrorActionPreference = $true
+          node scripts/lfea-accdb-bend-gravity-first-moment.mjs `
+            --actual artifacts/bm4l/bm4l-actual.json `
+            --case L2 `
+            --out artifacts/bm4l/bm4l-l2-bend-gravity-first-moment.json
+          $evidence = Get-Content -Raw artifacts/bm4l/bm4l-l2-bend-gravity-first-moment.json | ConvertFrom-Json
+          $report = Get-Content -Raw artifacts/bm4l/bm4l-report.json | ConvertFrom-Json
+          if ($evidence.status -ne 'PASS') { throw 'BM4_L bend gravity first-moment ledger did not pass.' }
+          if ([int]$evidence.counts.bendCount -ne [int]$report.model.inventory.bendPointerCount) {
+            throw 'Bend gravity evidence does not cover the ACCDB bend inventory.'
           }
 
       - name: Build root-cause and recovery evidence

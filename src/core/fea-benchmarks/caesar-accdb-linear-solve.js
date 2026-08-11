@@ -298,6 +298,9 @@ function solveCase(benchmarkPackage, caseRecord, solveProfile) {
       rotationalBourdonElementCount: shiftedAnalysis.elements
         .filter((entry) => entry.bourdonRotationRadians !== 0).length,
       gravityWeightN: shiftedAnalysis.elements.reduce((sum, entry) => sum + entry.gravityWeightN, 0),
+      analysisNodePositions: [...shiftedAnalysis.positions.entries()]
+        .map(([nodeId, position]) => ({ nodeId: String(nodeId), positionM: Object.freeze([...position]) }))
+        .sort((left, right) => compareText(left.nodeId, right.nodeId)),
       elementLedger: shiftedAnalysis.elements.map((entry) => ({
         elementId: entry.elementId,
         sourceElementId: entry.sourceElementId,

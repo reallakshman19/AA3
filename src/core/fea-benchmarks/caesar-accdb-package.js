@@ -106,6 +106,7 @@ function normalizeProfile(value) {
   const configurationAuthority = normalizeCaesarConfigurationAuthority(value.configurationAuthority);
   const caseSelection = normalizeCaseSelection(value.caseSelection);
   const linearSolve = normalizeLinearSolve(value.linearSolve);
+  const engineeringAssessment = normalizeEngineeringAssessment(value.engineeringAssessment, caseSelection);
   const profile = {
     schema: CAESAR_ACCDB_PROFILE_SCHEMA,
     profileId: nonempty(value.profileId, 'profileId'),
@@ -120,9 +121,57 @@ function normalizeProfile(value) {
     tolerances: normalizeTolerances(value.tolerances),
     configurationAuthority,
     linearSolve,
+    engineeringAssessment,
   };
   validateConfigurationAuthority(profile);
   return deepFreeze(profile);
+}
+
+function normalizeEngineeringAssessment(value, caseSelection) {
+  if (value === undefined || value === null) return null;
+  if (typeof value !== 'object' || Array.isArray(value)) {
+    throw new TypeError('engineeringAssessment must be an object.');
+  }
+  const conditioning = value.linearCaseConditioning;
+  if (!conditioning || typeof conditioning !== 'object' || Array.isArray(conditioning)) {
+    throw new TypeError('engineeringAssessment.linearCaseConditioning must be an object.');
+  }
+  const mode = nonempty(
+    conditioning.mode,
+    'engineeringAssessment.linearCaseConditioning.mode',
+  ).toUpperCase();
+  if (mode !== 'FORMULA_SUPERPOSITION') {
+    throw new TypeError('engineeringAssessment.linearCaseConditioning.mode is unsupported.');
+  }
+  const caseIds = uniqueStrings(
+    conditioning.caseIds,
+    'engineeringAssessment.linearCaseConditioning.caseIds',
+  );
+  if (caseSelection.mode === 'EXPLICIT') {
+    const selected = new Set(caseSelection.cases.map((entry) => entry.caseId));
+    const unknown = caseIds.filter((caseId) => !selected.has(caseId));
+    if (unknown.length > 0) {
+      throw new TypeError(`Engineering assessment cases are not selected: ${unknown.join(', ')}.`);
+    }
+  }
+  return deepFreeze({
+    vectorRelativeTolerance: nonnegative(
+      value.vectorRelativeTolerance,
+      'engineeringAssessment.vectorRelativeTolerance',
+    ),
+    equilibriumOnlyQuantities: uniqueStrings(
+      value.equilibriumOnlyQuantities,
+      'engineeringAssessment.equilibriumOnlyQuantities',
+    ),
+    linearCaseConditioning: {
+      mode,
+      caseIds,
+      superpositionRelativeTolerance: nonnegative(
+        conditioning.superpositionRelativeTolerance,
+        'engineeringAssessment.linearCaseConditioning.superpositionRelativeTolerance',
+      ),
+    },
+  });
 }
 
 function normalizeNodeSelection(value) {

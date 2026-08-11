@@ -9,6 +9,7 @@ import { dirname, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import {
   buildCaesarAccdbBenchmarkPackage,
+  buildBenchmarkEngineeringAssessment,
   compareBenchmarkResultRows,
   createCaesarAccdbQualificationAdapter,
   normalizeBenchmarkResultRows,
@@ -80,6 +81,7 @@ function qualifyActual(benchmarkPackage, actual) {
     source: benchmarkPackage,
     tolerances: benchmarkPackage.profile.tolerances,
     optionalQuantities: [],
+    excludedQuantities: benchmarkPackage.profile.engineeringAssessment?.equilibriumOnlyQuantities ?? [],
     prepare: ({ caseIds, modelInput }) => governedRecord('ACCDB-PREPARATION', { caseIds, modelSemanticHash: modelInput.semanticHash }),
     authorize: ({ caseIds, preparation }) => governedRecord('ACCDB-AUTHORIZATION', {
       preparationSemanticHash: preparation.semanticHash,
@@ -132,6 +134,17 @@ function buildReport(benchmarkPackage, qualification, actual) {
     .some((row) => row.recoveredEquilibrium?.status === 'FAIL');
   const derivedCases = buildDerivedLinearCases(benchmarkPackage, actual);
   const derivedFailure = derivedCases.some((row) => row.comparison.status === 'FAIL');
+  const engineeringAssessment = qualification === null
+    || actual === null
+    || benchmarkPackage.profile.engineeringAssessment === null
+    ? null
+    : buildBenchmarkEngineeringAssessment({
+        caseRecords: cases,
+        qualification,
+        actual,
+        equilibriumTolerance: benchmarkPackage.profile.equilibriumTolerance,
+        policy: benchmarkPackage.profile.engineeringAssessment,
+      });
   const status = equilibriumFailure
     ? 'REFERENCE_INVALID'
     : actualIntegrityFailure ? 'ACTUAL_INVALID'
@@ -156,6 +169,7 @@ function buildReport(benchmarkPackage, qualification, actual) {
     cases,
     derivedCases,
     qualification,
+    engineeringAssessment,
     mechanics: actual?.mechanics ?? null,
     restraintBasis: buildRestraintBasis(qualification, actual),
     displacementBasis: buildDisplacementBasis(qualification),
@@ -265,6 +279,7 @@ function buildDerivedLinearCases(benchmarkPackage, actual) {
           tolerances: benchmarkPackage.profile.tolerances,
           optionalQuantities: [],
           exposedQuantities: [...new Set(actualRows.map((row) => row.quantity))],
+          excludedQuantities: benchmarkPackage.profile.engineeringAssessment?.equilibriumOnlyQuantities ?? [],
         }),
       }));
     }
@@ -486,6 +501,36 @@ function writeRestraintSummary(report, path) {
     ...report.limitations.map((entry) => `- Limitation: ${entry}`),
     '',
   ];
+  if (report.engineeringAssessment !== null) {
+    const assessment = report.engineeringAssessment;
+    lines.push(
+      '## Qualification gates',
+      '',
+      `- Literal external components: ${assessment.literalExternalComponents.status}; ${assessment.literalExternalComponents.counts.failed} failed (${assessment.literalExternalComponents.counts.nonzeroFailed} nonzero, ${assessment.literalExternalComponents.counts.exactZeroFailed} exact-zero reference).`,
+      `- Restraint components: ${assessment.restraintComponents.status}; ${assessment.restraintComponents.counts.failed} failed.`,
+      `- Equilibrium residual disposition: ${assessment.equilibriumResidualDisposition.status}; ${assessment.equilibriumResidualDisposition.counts.excludedFromRelativeComparison} residual rows use the physical equilibrium gate instead of relative comparison.`,
+      `- Coordinate-invariant vectors: ${assessment.vectorGroups.status}; ${assessment.vectorGroups.counts.failed} failed groups.`,
+      `- Physical equilibrium: ${assessment.physicalEquilibrium.status}; ${assessment.physicalEquilibrium.counts.failed} failed cases.`,
+      `- Linear case conditioning: ${assessment.linearCaseConditioning.status}; ${assessment.linearCaseConditioning.counts.primitiveFailedRows} primitive (${assessment.linearCaseConditioning.counts.primitiveNonzeroFailedRows} nonzero, ${assessment.linearCaseConditioning.counts.primitiveExactZeroFailedRows} exact-zero), ${assessment.linearCaseConditioning.counts.duplicateFailedRows} duplicate, and ${assessment.linearCaseConditioning.counts.derivedFailedRows} derived literal failure rows.`,
+      '',
+      'Literal component failures remain visible. Vector and conditioning gates are additional physical classifications, not replacement tolerances.',
+      '',
+    );
+    const vectorFailures = Object.values(assessment.vectorGroups.cases)
+      .flatMap((entry) => entry.failures);
+    if (vectorFailures.length > 0) {
+      lines.push(
+        '### Coordinate-invariant vector failures',
+        '',
+        '| Case | Entity | Quantity | Reference norm | Error norm | Error | Unit |',
+        '|---|---|---|---:|---:|---:|---|',
+      );
+      for (const failure of vectorFailures) {
+        lines.push(`| ${failure.caseId} | ${failure.entityId} | ${failure.quantity} | ${formatNumber(failure.referenceNorm)} | ${formatNumber(failure.errorNorm)} | ${formatPercent(failure.percentError)} | ${failure.unit} |`);
+      }
+      lines.push('');
+    }
+  }
   for (const [caseId, evidence] of Object.entries(report.mechanics?.cases ?? {})) {
     const balance = evidence.recoveredEquilibrium;
     if (balance === undefined) continue;

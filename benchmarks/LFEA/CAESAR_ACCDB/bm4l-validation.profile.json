@@ -65,6 +65,25 @@
     "forceN": 5,
     "momentNm": 0.5
   },
+  "engineeringAssessment": {
+    "vectorRelativeTolerance": 0.1,
+    "equilibriumOnlyQuantities": [
+      "INCIDENT_GLOBAL_FORCE",
+      "INCIDENT_GLOBAL_MOMENT"
+    ],
+    "linearCaseConditioning": {
+      "mode": "FORMULA_SUPERPOSITION",
+      "superpositionRelativeTolerance": 0.000001,
+      "caseIds": [
+        "L2",
+        "L3",
+        "L4",
+        "L5",
+        "L6",
+        "L14"
+      ]
+    }
+  },
   "tolerances": {
     "DISPLACEMENT": {
       "absolute": 0,

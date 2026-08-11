@@ -25,7 +25,7 @@ current source — do not trust the document alone.
 | P10 Professional results UI + exports | Partial (text/table only for Stack C) | M003 |
 | P11 Closed-form + convergence qualification | 13+/20 mandate cases verified, growing (adds thermal expansion, gravity self-weight, B31.3 combined stress) | M004, M006, M007, M009 |
 | P12 Real 1885 end-to-end qualification | Blocked on P1 Benchmark B | — |
-| P13 Independent/commercial comparison | Not started | — |
+| P13 Independent/commercial comparison | BM4_L CAESAR v14 linear comparison is in draft qualification: all restraint components pass; literal component reporting remains open at 46 rows, while the coordinate-invariant engineering gate isolates two L2 displacement vectors above 10% | M047 (stacked draft qualification) |
 
 ## Work Pack log
 
@@ -49,6 +49,7 @@ current source — do not trust the document alone.
 | M013 | #496 | #506 | Merged (`cb9e2a2`), Owner-fixed | ASME B31.3 Appendix S Example 1 — real published benchmark against Tables S301.5.1 (displacements/rotations) and S301.5.2 (reactions), solved end to end through the real production chain (B-2.2/B-2.3 → B-3.1/B-3.2 → M012 gravity → M014 thermal → B-3.3 sparse solve → B-3.4 recovery). Correctly stopped once on the real thermal-binding gap that became M014 (see above), and stopped a second time reporting a 13.18% pressure-corrected-flexibility-factor mismatch found via the agent's own hand-built equivalent-frame audit — **without ever running the real check** (no repository checkout in that sandbox). Owner ran the real check for real and found a *different* failure than the hand-audit predicted (a reminder that a hand-reconstruction is not evidence of what the real chain does): the fixture's thermal expansion coefficient was derived from a cited "3.7 in/100ft" (ASME B31.3 Appendix C Table C-1, carbon steel, 70°F→500°F) that turned out to be wrong — verified against a real reproduction of the actual table, the true value is 3.62. That ~2.2% coefficient error explained essentially the entire systematic, distance-from-anchor-proportional displacement mismatch; fixing it took the check from one failing assertion to all displacements passing within ~1mm. One remaining assertion (node 50's small Fy reaction, the smallest magnitude in the table) needed a narrowly-justified absolute-floor increase (750N→1200N), documented inline with the comparison to the other reactions' own absolute deviations. Full `check:lfea-linear-core` green after both fixes; the real solver's own internal diagnostics (residual, equilibrium, energy balance) were 5+ orders of magnitude inside their limits throughout, confirming the original failure was bad input data, not a solver defect. See process note below |
 | M014 | #501 | #503 | Merged (`385d699`) | Bind sealed `TEMPERATURE` primitives into piping-component elements' initial-strain vectors via a new consumer, structurally parallel to gravity's own post-construction augmentation (M007/M012). Owner cloned the exact PR head before merging (per the M012/#500 lesson), read every new file, hand-verified the thermal force `F = E·A·α·ΔT = 838,186.27 N` against the fixture's own material/section values (exact match), confirmed the byte-identical direct-vs-augmented parity assertion, and ran the full `check:lfea-linear-core` aggregate (green) before merging. No fixes needed |
 | M015 | #502 | #504 | Merged (`73c89ba`) | Optional `sustainedSectionResolution` override on `compileCodeResult`, used only for `SUSTAINED` checks — closes the code-engine gap found while scoping M013: no path exists today to use a corrosion-allowance-reduced section for `S_L` while stiffness/displacement stress keep the nominal section, which Appendix S Example 1's own stated computer-model options require. Owner independently recomputed both scaling ratios from the real annulus-section formula (axial `1.195462448562988`, section-modulus `1.1861536715256218`) and got an exact match to the PR's own reported values before merging. Hit a real `package.json` slot collision against M014 (both registered into `check:lfea-linear-core` from the same pre-M014 base) — rebased onto post-M014 `main`, reconciled the aggregate string by hand, re-ran the full suite (still green), force-pushed, then merged |
+| M047 | — | This stacked draft PR | Draft qualification | Profile-driven BM4_L CAESAR v14 validation now separates literal scalar comparison, coordinate-invariant vector accuracy, physical equilibrium, and derived-case conditioning. The benchmark preserves all 46 literal external failures, reports zero restraint failures, and isolates only two L2 displacement vectors above 10%. Incident equilibrium residuals are no longer compared residual-to-residual by relative percentage. An analytic curved-bend gravity ledger closes force and first-moment custody without fitting mechanics. Core calculation backup: `backups/m047-core-fea-calc-validation-gates.zip` (SHA-256 `bc014f5e60d88cd9f63a745d09dbb9fff78456e387276873ff0ea3b83df2742d`). |
 
 ### Non-LFEA workstreams (user-directed pivot, 4 parallel read-only audits + direct fixes)
 
@@ -1849,3 +1850,39 @@ and after each base retarget.
 
 None of the three touch BM1's production model or existing behavior;
 `check:lfea-linear-core` passed cleanly on each exact head throughout.
+
+---
+
+## M047 BM4_L CAESAR v14 qualification — draft state
+
+### Authority and scope
+
+- Benchmark authority is `BM4_L.ACCDB`; the retired `BM4_NL` path is not part of this qualification.
+- Current linear, non-friction scope is L2, L3, L4, L5, L6, and L14. Friction cases, including L13, remain outside this stage.
+- All supports are treated as bidirectional. Installation temperature is 21 °C. Bourdon translation and rotation are enabled. OPE restraint-load flexibility uses the cold modulus (`Ec`). The established global settings and the precedence rule `load case > individual file > model input > global default` remain authoritative.
+- Restraint, displacement, and global element-end actions are in scope. Stress, EXP, HYD, friction, and lift-off qualification remain later stages.
+
+### Current real-data result
+
+The same classification was reproduced from the local ACCDB custody copy and the pinned Common ZIP member:
+
+| Gate | Result | Interpretation |
+|---|---:|---|
+| Literal external scalar components | **FAIL — 46 rows** | Preserved as the strict diagnostic count: 45 nonzero-reference rows and one exact-zero row. |
+| Restraint components | **PASS — 0 failures** | The present linear restraint/reaction objective is within the configured 10% component criterion. |
+| Coordinate-invariant vectors | **FAIL — 2 groups** | L2 displacement at node 20500 is 15.039% (0.691 µm absolute error); node 20510 is 13.387% (0.604 µm absolute error). |
+| Physical nodal equilibrium | **PASS** | Incident actions are checked against zero using engineering force/moment caps; cancellation residuals are not compared to one another by relative percentage. |
+| Derived-case conditioning | **PASS** | L14 duplicates L3; the L5/L6 residuals are explained by verified linear combinations and cancellation amplification rather than independent missing mechanics. |
+
+The 45 nonzero literal failures reduce to 17 independent primitive rows. When each physical translation, rotation, force, or moment is assessed as a three-component vector, 43 of the 45 nonzero scalar failures are below 10%. Literal scalar percentages remain visible and are not reclassified as engineering passes.
+
+### Remaining focused work
+
+1. Investigate only the localized L2 displacement field around bend source E25 and nodes 20500/20510; require full-field improvement without restraint or element-action regression.
+2. Keep the existing gravity magnitude and arc/chord correction frozen. The analytic curved-bend audit passes all 12 bends: total arc weight is 3598.941769 N, the absolute sum of exact-arc first-moment differences is 0.394046 N·m, and bend 4's centroid difference is 0.105807 mm. This evidence does not justify a broad mechanics correction.
+3. Preserve separate literal-component, vector-engineering, physical-equilibrium, and conditioning statuses in every future ACCDB template run.
+4. Qualify unresolved universal mechanics only with independent CAESAR discriminator models, not by tuning BM4_L residual counts. Open authority items include the exact `BEND_AXIAL_SHAPE=YES` operator and reducer stiffness-section sampling.
+
+### Recoverability
+
+The draft PR includes `backups/m047-core-fea-calc-validation-gates.zip`, a verified snapshot of 129 files under the core FEA calculation modules plus an internal SHA-256 inventory. Archive SHA-256: `bc014f5e60d88cd9f63a745d09dbb9fff78456e387276873ff0ea3b83df2742d`.

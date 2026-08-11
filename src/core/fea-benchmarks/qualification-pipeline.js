@@ -24,6 +24,7 @@ export function runGovernedBenchmarkQualification({
   solve,
   tolerances,
   optionalQuantities = [],
+  excludedQuantities = [],
   normalizeSolved = normalizeLinearSolverBenchmarkResult,
 }) {
   requireAdapter(adapter);
@@ -73,6 +74,7 @@ export function runGovernedBenchmarkQualification({
       tolerances,
       optionalQuantities,
       exposedQuantities: actual.exposedQuantities,
+      excludedQuantities,
     });
     cases.push(deepFreeze({
       caseId,
@@ -106,6 +108,7 @@ export function runGovernedBenchmarkQualification({
     },
     tolerances: normalizeToleranceEvidence(tolerances),
     optionalQuantities: [...new Set(optionalQuantities.map((row) => String(row).toUpperCase()))].sort(compareAscii),
+    excludedQuantities: [...new Set(excludedQuantities.map((row) => String(row).toUpperCase()))].sort(compareAscii),
     totals,
     cases,
     reportBasisHash: semanticHash({

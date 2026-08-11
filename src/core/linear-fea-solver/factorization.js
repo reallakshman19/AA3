@@ -1,8 +1,8 @@
-import { partitionSparseSystem } from '../lafea-linear-solve/bc-elimination.js';
-import { estimateConditionNumber } from '../lafea-linear-solve/condition-estimate.js';
-import { applyDiagonalScalingToMatrix as applySparseDiagonalScalingToMatrix } from '../lafea-linear-solve/diagonal-scaling.js';
-import { sparseCholeskyFactorize, sparseCholeskySolve } from '../lafea-linear-solve/sparse-cholesky.js';
-import { sparseLdltFactorize, sparseLdltSolve } from '../lafea-linear-solve/sparse-ldlt.js';
+import { partitionSparseSystem } from '../shared-linear-solve/bc-elimination.js';
+import { estimateConditionNumber } from '../shared-linear-solve/condition-estimate.js';
+import { applyDiagonalScalingToMatrix as applySparseDiagonalScalingToMatrix } from '../shared-linear-solve/diagonal-scaling.js';
+import { sparseCholeskyFactorize, sparseCholeskySolve } from '../shared-linear-solve/sparse-cholesky.js';
+import { sparseLdltFactorize, sparseLdltSolve } from '../shared-linear-solve/sparse-ldlt.js';
 import {
   DENSE_DIRECT_BACKEND_ID,
   DIAGONAL_ENERGY_SCALING_ID,
@@ -21,18 +21,6 @@ import { connectedComponents, detectFloatingComponents } from './mechanism-diagn
  * profile. Both backends attempt Cholesky first and fall back to LDLT only to
  * classify a non-SPD system; neither backend silently regularizes or switches
  * to the other backend.
- *
- * This is the one place stiffness is factorized. It is deliberately free of
- * load-case data so a factorization remains reusable for every load case that
- * shares the stiffness state, constrained partition and declared backend.
- *
- * @param {object} args
- * @param {object} args.model Sealed `fea-linear-model/v1` (for mechanism diagnostics only).
- * @param {Readonly<object>} args.dofMap Section 8 DOF map.
- * @param {Readonly<object>} args.assembly Result of `assembleGlobalSystem`.
- * @param {object} args.policies Resolved solver policies (see `resolveSolverPolicies`).
- * @param {string} args.backend Declared solver backend from the sealed profile; sparse when omitted by a direct caller.
- * @returns {Readonly<object>} Factorization evidence plus backend-specific factors needed to solve.
  */
 export function factorizeFreePartition({ model, dofMap, assembly, policies, backend = SPARSE_DIRECT_BACKEND_ID }) {
   const floating = detectFloatingComponents(model);

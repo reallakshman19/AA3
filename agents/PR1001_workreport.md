@@ -284,7 +284,7 @@ Hold mechanics stable. Proceed only through one of these routes:
 | QST-003 | question | P0 | COMPLETE | Stage-8 residual diagnostics |
 | QST-004 | question | P0 | VALIDATED_LOCAL | native-unit zero boundary; promotion pending Owner/reviewer |
 | QST-005 | question | P0 | COMPLETE_NO_NEW_MECHANICS | remaining 45 nonzero-reference failure classification |
-| QST-006 | question | P0 | OPEN | can residual families be converted into source-local invariant tests that remain well-conditioned near zero resultants? |
+| QST-006 | question | P0 | ANSWERED_DESIGN_IMPLEMENTATION_PENDING | source-local invariant-test design defined below; implementation/local replay still pending |
 | RISK-001 | risk | P0 | CLOSED_FOR_BM4L_INTERVAL | provisional alpha no longer needed for BM4_L T1 interval |
 | RISK-002 | risk | P0 | OPEN | no explicit Hexagon hard `0.0001 deg` cutoff statement |
 | RISK-003 | risk | P0 | OPEN | exact-equation replay calibrated, but full Node checkout execution not run |
@@ -461,6 +461,150 @@ The goal is for the next agent to be able to change code, run a local command, a
 4. **Can the tiny L2/L3/L4 primitive source-action residuals be traced to load-vector integration/placement rather than stiffness by comparing CAESAR-equivalent total resultant and first moment for each curved/rigid/reducer component?** The implementation question is whether component gravity/pressure/free-state loads have exactly the same resultant, centroid, and local-to-global transfer as CAESAR before any stiffness hypothesis is considered.
 
 5. **Can the Stage-7 zero-rotation behavior be established as a product/export semantics rule independently of this benchmark?** The next agent should seek a reproducible CAESAR experiment or direct product authority that distinguishes solver zeroing, Access/XML export cleanup, and report display precision. Only if the same native boundary reproduces across controlled models should the profile-only gate be proposed for promotion.
+
+## FEA Expert Answers — 2026-08-11
+
+These answers are engineering dispositions for the five questions above. They do not authorize production mechanics changes by benchmark score and do not change the no-Actions policy.
+
+### Answer 1 — YES: convert residuals to physical invariants; do not gate on near-zero resultants
+
+The remaining primitive rows can and should be decomposed into invariants that have a physical scale independent of the small final resultant.
+
+For each analysis/source element retain the local 12-DOF vectors and evaluate:
+
+1. **Equivalent-load resultant** for external distributed/body loads. From the local equivalent nodal vector `p_eq`, form the net force `R` and first moment about source end I. For a straight span under uniform line load the target is the analytically integrated `w L` acting at `L/2`; for a curved source the target must be the continuous-arc resultant and first moment, not merely the final nodal response.
+2. **Free-state identity** for thermal/Bourdon/pressure fields. Construct the free generalized displacement `d0` and require `q_free = K d0 - p_eq - p_initial` to be numerically zero. This tests the constitutive/load state without support or model cancellation.
+3. **Recovery identity** under solved displacement: require recovered `q = K d - p_eq - p_initial`, then check element/source end equilibrium before summing at nodes.
+4. **Compliance identity** where a local unit action can isolate one stiffness channel. Compare displacement/rotation per unit force/moment rather than a nearly cancelled global displacement.
+5. **Combination identity**: keep `L14=L3`, `L6=L2+L4`, and `L5=L6+L3` as exact linear-algebra checks. Combination failures do not create new mechanics when their primitives pass.
+
+A conditioning diagnostic should accompany, but never replace, the governed comparator. Use a cancellation factor such as
+
+```text
+conditioning = sum(abs(primitive/source contributions)) / max(abs(resultant), physical_floor)
+```
+
+Rows with large conditioning are diagnostic-only for mechanics discovery. The current ~31x to ~522x nodal residuals should therefore not be used to select global coefficients.
+
+**Disposition:** QST-006 is answered at design level. Implementation remains pending until the local production harness exists.
+
+### Answer 2 — production entry point identified; full reproducible 435 -> 210 -> 150 harness is NOT YET complete
+
+The minimum production command boundary already exists:
+
+- entry point: `scripts/lfea-caesar-accdb-benchmark.mjs`;
+- solver: `solveCaesarAccdbLinearBenchmark(...)` in `src/core/fea-benchmarks/caesar-accdb-linear-solve.js`;
+- comparator: governed qualification through `qualification-comparison.js` / the benchmark pipeline;
+- profile: `benchmarks/LFEA/CAESAR_ACCDB/bm4l-validation.profile.json`.
+
+From an exact checkout, after dependency installation, the intended six-case command is:
+
+```text
+npm ci
+node scripts/lfea-caesar-accdb-benchmark.mjs \
+  --accdb <path-to-pinned-BM4_L.accdb> \
+  --profile benchmarks/LFEA/CAESAR_ACCDB/bm4l-validation.profile.json \
+  --solve-linear true \
+  --solve-cases L2,L3,L4,L5,L6,L14 \
+  --actual-out .artifacts/bm4l.actual.json \
+  --summary-out .artifacts/bm4l.summary.md \
+  --out .artifacts/bm4l.report.json
+```
+
+However, the script's direct ACCDB extraction intentionally requires **Windows + Microsoft ACE OLE DB** and invokes `scripts/lfea-caesar-accdb-export.ps1`; it rejects non-Windows execution. More importantly, the branch does not contain the local-only tee-v3 and resolved-alpha production/profile candidates, so the current branch alone cannot truthfully reproduce all three signatures 435 -> 210 -> 150.
+
+The local harness is complete only when it can save and replay three named states from one pinned source package:
+
+- A: governed baseline/provisional alpha -> **435**;
+- B: tee-v3 only/provisional alpha -> **210**;
+- C: tee-v3 + resolved BM4_L interval strain, live zero gate -> **150**.
+
+Each state must emit the actual JSON, report JSON, six case counts, identity-level changed-row diff, stiffness-state hash/K comparison, recovery/equilibrium evidence and primitive/combination decomposition. Until the exact candidate patches and pinned ACCDB are available in the local checkout, this question remains **PARTIALLY RESOLVED / EXECUTION BLOCKED** rather than PASS_LOCAL.
+
+A future cross-platform improvement may add a hash-bound normalized ACCDB-export fixture input so extraction and solving can be separated, but that is tooling work and must not alter benchmark semantics.
+
+### Answer 3 — YES: use an isolated reducer compliance matrix, not thermal subtraction or BM4_L score
+
+Official Hexagon CAESAR II documentation states that a concentric reducer is constructed from **ten successively changing pipe cylinders**, but the public reducer documentation reviewed here does not state the representative section point used inside each cylinder. Therefore midpoint sampling remains provisional authority, not a verified CAESAR rule.
+
+Preferred experiment:
+
+1. Build an isolated concentric reducer with the same `D1/t1 -> D2/t2`, length and material as the BM4_L reducer.
+2. Anchor end I and disable thermal, pressure, gravity, friction and other nonlinear effects.
+3. At end J apply six independent small mechanical unit load cases: `Fx`, `Fy`, `Fz`, `Mx`, `My`, `Mz`.
+4. Export the six J-end translations/rotations and assemble a 6x6 tip compliance matrix `C_caesar`.
+5. In the implementation, parameterize the representative section of each tenth by a common fractional station `s` within the cylinder and compute `C_model(s)` without fitting any BM4_L pass/fail count.
+6. Require one station/rule to explain the well-conditioned axial, torsional and both bending/transverse channels, and repeat with reducer orientation reversed. Failure of one scalar/rule to explain the overdetermined matrix means the missing semantics are not merely a representative station.
+
+The best discriminator is the bending/rotation compliance (`theta_y/M_y`, `theta_z/M_z` and coupled transverse terms), because it avoids the Stage-10 subtraction of nearly equal thermal free growth and total elongation. Torsion is an additional independent section-property check. Axial compliance may be included only as a secondary consistency channel.
+
+**Disposition:** exact station remains BLOCKED pending this controlled CAESAR experiment or direct Hexagon authority. Do not select endpoint/midpoint/fractional sampling from BM4_L score.
+
+Primary product authority reviewed: Hexagon CAESAR II Users Guide, Reducer help — https://docs.hexagonppm.com/r/en-US/CAESAR-II-Users-Guide/Version-12/1226707
+
+### Answer 4 — YES: resultant/centroid invariants are the next valid discriminator before stiffness changes
+
+The current code already provides useful separation between stiffness and loading:
+
+- straight/rigid gravity is formed with `distributedLoadLocalVector(...)` from a physical line weight;
+- the frame-element load implementation documents that a **uniform** transverse line load reduces to `qL/2` end forces and `qL^2/12` end moments for every Timoshenko shear parameter, so using the uniform-load vector is not evidence for a missing straight-pipe shear-load correction;
+- bend arc chords apply gravity with an arc-to-chord length scale, which preserves total modeled arc weight but still warrants an explicit continuous-arc first-moment check;
+- reducer authority already carries `totalWeight` and `firstWeightMomentFromEnd`, giving a direct invariant against the condensed equivalent nodal load;
+- pressure/thermal/Bourdon terms are free-state loads and should be checked through free kinematics and zero recovered action, not treated as an external-force resultant.
+
+Implement one per-source load ledger containing, at minimum:
+
+```text
+sourceElementId
+analysisKind
+localResultantForce
+localMomentAboutSourceI
+centroid/firstMoment
+expectedPhysicalResultant
+expectedPhysicalFirstMoment
+resultantError
+firstMomentError
+freeStateResidualNorm
+localToGlobalRoundTripError
+```
+
+For a bend, calculate the physical continuous-arc gravity invariant directly:
+
+```text
+R = integral w(s) ds
+M_I = integral (r(s)-r_I) x w(s) ds
+```
+
+and compare that with the assembled source equivalent load before solving the structure. This cleanly tests whether a small bend-source miss is a load placement/integration issue. Only if a source-local invariant fails with the correct sign and affected-source signature should a one-factor load-vector patch be attempted.
+
+For straight uniform gravity, if the resultant and first moment already pass, **do not reopen stiffness or Timoshenko load integration**. For reducers, keep any mismatch separate from the unresolved section-sampling authority.
+
+**Disposition:** implement this ledger/test family before any new gravity, bend, reducer or pressure mechanic.
+
+### Answer 5 — NO hard cutoff authority yet; controlled export experiment can resolve the semantics
+
+The reviewed Hexagon documentation establishes two important facts but does **not** establish a hard `0.0001 deg` solver cutoff:
+
+- CAESAR II custom report templates allow user-controlled numeric **Precision** and **Units Based Precision**, so a displayed zero can be formatting rather than solver zeroing.
+- CAESAR II output export exposes displacement rotations as `RX/RY/RZ` in `OUTPUT_DISPLACEMENTS` / XML displacement-report data, providing separate channels to test export semantics.
+
+Primary product authority reviewed:
+
+- Report Template Editor — https://docs.hexagonppm.com/r/en-US/CAESAR-II-Users-Guide/Version-12/332452
+- Displacement Reports (Output Options) — https://docs.hexagonppm.com/r/en-US/CAESAR-II-Users-Guide/Version-12/425706
+
+Required controlled experiment:
+
+1. Create a simple linear cantilever with an analytically controlled end rotation under a small end moment.
+2. Run a logarithmic sequence that brackets `0.0001 deg`, for example about `0.00002`, `0.00005`, `0.00009`, `0.00011`, and `0.0002 deg`.
+3. For each run capture: (a) Static Output Processor report with deliberately increased precision, (b) Access `OUTPUT_DISPLACEMENTS`, and (c) XML displacement report.
+4. Repeat with at least two unit files/report precision settings.
+5. Interpret the result:
+   - report zero but Access/XML nonzero -> **display formatting**, not a solver/export cutoff;
+   - Access/XML both become exact zero below the same native threshold while high-precision report/source state differs -> **export cleanup semantics**;
+   - all raw/output channels become zero at the same threshold independent of report precision -> evidence for **solver/native zeroing**.
+
+Until that experiment or an explicit Hexagon statement exists, `0.0001 deg` may be considered only as a **BM4_L profile/output-resolution tolerance candidate** if the Owner/reviewer accepts that benchmark policy. It must not be described as a proven CAESAR internal hard-zero rule, and the nonzero `<10%` comparator must remain unchanged.
 
 ## Handover Acceptance Criteria for Any Successor Agent
 

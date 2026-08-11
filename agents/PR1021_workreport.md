@@ -1,100 +1,99 @@
 # PR1021 Work Report — LFEA Workbench Integrity (#1018)
 
-Maintained throughout PR #1021. This is the single source of truth for current PR state, engineering findings, decisions, validation evidence, deferred improvements, and next-agent handover. Current-state sections describe the final PR state; Stage Execution Log and Process Notes preserve history.
+Maintained throughout PR #1021. This file is the single source of truth for current PR state, engineering findings, decisions, validation evidence, deferred improvements, and next-agent handover. Current-state sections are rewritten as work progresses; the Stage Execution Log preserves the stage history.
+
+> Owner continuation note: Stage 8 was a valid closure/handover checkpoint for the initial slice, but the Owner subsequently authorized continuation on the same PR. That checkpoint remains recorded below; PR #1021 is active again from Stage 9 onward.
 
 ## 0. PR Mission Control
 
-| Item | Final state |
+| Item | Current state |
 |---|---|
-| Mission | Correct LFEA workbench engineering-data integrity defects from #1018 without solver-numeric or CI-workflow changes |
+| Mission | Continue resolving the highest-value verified LFEA workbench defects from #1018 without changing solver numerics or adding CI workflows |
 | Source issue | #1018 |
 | PR | #1021 |
 | Branch | `agent/lfea-workbench-integrity-1018` |
 | Base | `751756e9140527b8dc121aa179dc76b7039fb7ad` |
-| Reconciled implementation/report baseline | `d8fc6a52dacc759c37e8d4691548a00c13f242f4` before this closure-report commit |
-| PR state | Draft — do not merge without Owner/reviewer validation |
-| Current stage | Stage 8 — COMPLETE |
-| Last completed stage | Stage 8 |
-| Engineering status | Authorized implementation slice complete |
-| Validation status | Source-regression evidence complete; full repository/browser execution NOT_RUN |
-| Current blocker | None for handover; merge should wait for missing runtime/browser evidence |
-| Exact next action | On a real checkout of PR #1021 head, run `npm run check:lfea-workbench` plus targeted dirty-draft browser interactions before merge |
-
-> Git commit hashes cannot self-reference the commit that contains this report. The exact post-report PR head is therefore recorded in PR #1021 metadata/body after this closure commit; `d8fc6a5` is the reconciled head against which Stage 8 changed-file verification was performed.
+| Continuation baseline | `b9b18d53f3ad146aadc354a0d977c23078f397db` |
+| PR state | Draft |
+| Current stage | Stage 9 — no-Worker run feedback and execution-option parity |
+| Last completed stage | Stage 8 — initial-slice closure checkpoint |
+| Engineering status | Stage 9 grounded; production implementation not yet changed for this stage |
+| Validation status | Earlier source guards retained; Stage 9 validation pending |
+| Current blocker | None |
+| Exact next action | Refactor the existing run-store API so a started run can execute by identity with current pipeline options, then make the controller no-Worker path begin → yield a paint → execute safely |
 
 ### Handover in 60 seconds
 
 **What is now true**
-- Collection-context whole-package mock controls are removed. The explicit toolbar `[SIMULATED] Load Mock Data` action remains the single intended mock-package entrypoint.
-- Package and record JSON drafts are captured before workbench content replacement.
-- Drafts survive renders while committed model identity is unchanged.
-- Drafts are invalidated when `${modelVersion}:${semanticHash}` changes, so stale editor text does not cross committed model transitions.
-- Record drafts are keyed by collection and selected index, preserving separate editing contexts across navigation.
-- Delete clears `selectedIndex` before the synchronous store mutation can render; an identity-preserving failed delete restores the previous row/draft.
-- Existing `scripts/lfea-p0-ui-containment-check.mjs` now guards all these source contracts.
-- Missing trailing newlines introduced by connector full-file writes were found during patch review, registered as ISS-005, and corrected.
-- Final Stage 8 reconciliation found exactly three changed files and no `.github/workflows/*` changes.
+- Stages 1–8 corrected collection mock destructive scope, package/record draft loss, and delete-selection sequencing; existing containment checks guard those source contracts.
+- PR #1021 remains draft and all work continues on the same branch/PR.
+- Issue C02 is the next Critical defect: without `Worker`, `controller.run()` currently delegates to synchronous `store.run()`, so the browser has no useful paintable RUNNING frame before CPU work begins.
+- Stage 9 grounding found a second no-Worker divergence: the convergence controller replaces `this.pipelineOptions` as evidence changes, while the store's synchronous `run()` uses `configuration.pipelineOptions` captured at store construction. The no-Worker path can therefore execute stale analysis options while the Worker path uses current options.
+- `queueMicrotask()` is **not** an acceptable paint-yield mechanism: microtasks drain before browser rendering. Stage 9 will use a real task/frame boundary.
 
-**What remains before merge**
-- Execute `npm run check:lfea-workbench` against the exact PR head.
-- Execute targeted browser-level dirty-draft interactions described in Section 10.
-- Treat these as missing validation evidence, not as known product failures.
+**Currently being worked on**
+- C02 plus the newly identified no-Worker dynamic-options parity defect.
+
+**Still unresolved after Stage 9 planning**
+- C03 import/edit failure guidance.
+- C04 evidence-export exception handling.
+- H01–H03 and other lower-priority UX/authority items.
+- Full runtime/browser validation remains unavailable in this sandbox unless an executable checkout becomes available.
 
 **Do not assume**
-- Source-regression assertions are equivalent to browser interaction tests.
-- `NOT_RUN` means `PASS`.
-- Local continuum von Mises is equivalent to piping-code stress.
+- A JavaScript microtask allows the RUNNING UI to paint.
+- A no-Worker fallback can be interruptible once the synchronous numerical solve has started; only the queued/yield interval can be user-cancelable without a worker/chunked solver.
+- Worker and no-Worker paths currently consume the same dynamic convergence options; source review shows they do not.
 
-**Highest remaining risk**
-- Merge-time validation depth. The implementation is source-reviewed and guarded, but direct runtime/browser validation could not be executed in this sandbox.
+**Exact next action**
+- Implement the Stage 9 run-store/controller changes only after this pre-stage record is committed.
 
 ## 1. Mission and Engineering Intent
 
 ### Mission
-Prevent destructive-scope mismatch and silent loss/inconsistency of uncommitted engineering edits in the LFEA mesh workbench while preserving existing package validation/resealing, semantic hashing, model-version lineage, solver authority, and run cancellation.
+Continue the #1018 remediation on PR #1021, prioritizing verified Critical defects and preserving engineering-state authority, run identity, cancellation semantics, and analysis-option parity.
 
 ### Governing principles
-- External engineering packages remain validated, not silently repaired.
-- UI draft/preview state never becomes solver authority without an explicit existing Apply/Add/Update action.
-- Destructive UI scope must match actual destructive scope.
-- A render is not an implicit discard operation.
-- A committed model-identity change invalidates stale UI drafts.
-- Synchronous model mutation must not render against UI-local state intended to be cleared immediately afterwards.
-- Validation evidence must say whether it was executed, source-inspected, or not run.
-- No GitHub Actions workflow was added or modified for this PR.
+- External package validation/reseal governance remains unchanged.
+- UI draft/preview state is not solver authority.
+- Run completion/failure must still be accepted only for the exact active run identity.
+- Worker and no-Worker execution must consume equivalent current analysis options.
+- Browser feedback must use a real rendering opportunity, not a microtask that still blocks paint.
+- No new `.github/workflows/*` changes.
+- Validation claims explicitly distinguish executed, source-inspected, and NOT_RUN evidence.
 
-### Non-goals
-- Solver numerical or formulation changes.
-- Semantic-hash algorithm changes.
-- Full three-surface LFEA redesign.
-- Piping-code stress implementation from continuum results.
-- Cross-run colour normalization.
-- New CI workflow gates.
+### Non-goals for Stage 9
+- Making a CPU-bound no-Worker solve preemptible after computation starts.
+- Changing solver numerics/formulations.
+- Changing worker protocol or semantic-hash algorithms.
+- Implementing C03/C04/H01+ inside the same logical stage.
 
 ## 2. Mission Status
 
-| Work item | Priority | Final status | Stage | Evidence |
+| Work item | Priority | Status | Stage | Evidence |
 |---|---:|---|---|---|
-| Living PR report | High | DONE | S1 | `07829ac` onward |
-| PR allocation/report sync | High | DONE | S2 | PR #1021 |
-| Changed-file bootstrap baseline | High | DONE | S3 | report-only baseline |
-| Remove collection mock actions | Critical | IMPLEMENTED + GUARDED | S4/S7 | `365c9f3`, source guard |
-| Preserve record drafts | High | IMPLEMENTED + GUARDED | S5/S7 | `1de80e6`, source guard |
-| Preserve package draft | High | IMPLEMENTED + GUARDED | S5/S7 | `1de80e6`, source guard |
-| Correct delete sequencing | Medium | IMPLEMENTED + GUARDED | S6/S7 | `71373bc`, source guard |
-| Durable source regression guard | High | DONE | S7 | `ed53c69` |
-| Restore file-ending hygiene | Low | RESOLVED | S7 | `acb1201`, `f879684` |
-| Final changed-file/handover audit | High | DONE | S8 | exactly 3 changed files |
+| Living PR report | High | DONE / ACTIVE | S1–current | this file |
+| Remove collection mock actions | Critical | IMPLEMENTED + GUARDED | S4/S7 | source guard |
+| Preserve package/record drafts | High | IMPLEMENTED + GUARDED | S5/S7 | source guard |
+| Correct delete sequencing | Medium | IMPLEMENTED + GUARDED | S6/S7 | source guard |
+| C02 no-Worker feedback | Critical | IN_PROGRESS | S9 | issue #1018 + source grounding |
+| No-Worker current pipeline-options parity | High | ACCEPTED | S9 | ISS-007 |
+| C03 failure guidance | Critical | NOT_STARTED | S10 candidate | #1018 |
+| C04 evidence-export error surfacing | Critical | NOT_STARTED | S11 candidate | #1018 |
+| H01/H02/H03 output/settings usability | High | NOT_STARTED | later | #1018 |
+| Runtime/browser validation | High | NOT_RUN | ongoing | environment limitation |
 
 ## 3. Engineering Item Register
 
-| ID | Type | Sev./priority | Final status | Summary | Current PR? |
+| ID | Type | Sev./priority | Status | Summary | Current PR? |
 |---|---|---:|---|---|---|
 | ISS-001 | Defect | Critical | IMPLEMENTED + GUARDED | Collection-context Mock Package actions replaced whole package | Yes |
 | ISS-002 | Defect | High | IMPLEMENTED + GUARDED | Render destroyed unsaved record-editor text | Yes |
 | ISS-003 | Defect | Medium | IMPLEMENTED + GUARDED | Delete selection cleared after synchronous mutation/render | Yes |
 | ISS-004 | Defect | High | IMPLEMENTED + GUARDED | Render destroyed unsaved package-editor text | Yes |
-| ISS-005 | Quality defect | Low | RESOLVED | Connector replacement removed trailing newlines from two JS files | Yes |
+| ISS-005 | Quality defect | Low | RESOLVED | Connector replacement removed trailing newlines | Yes |
+| ISS-006 | Defect / C02 | Critical | IN_PROGRESS | No-Worker run provides no paintable RUNNING feedback before synchronous solve | Yes |
+| ISS-007 | Defect | High | ACCEPTED | No-Worker `store.run()` can use stale construction-time pipeline options instead of current controller convergence options | Yes |
 | IMP-001 | Improvement | High | DEFERRED | Cross-run plots need shared engineering colour authority | No |
 | IMP-002 | Improvement | High | DEFERRED | Upstream pre-FEA/linear-piping LFEA surfaces need dedicated audit | No |
 | RISK-001 | Engineering risk | High | OPEN | Continuum von Mises may be mistaken for piping-code stress | No |
@@ -104,261 +103,207 @@ Prevent destructive-scope mismatch and silent loss/inconsistency of uncommitted 
 | DEC-002 | Decision | — | ACTIVE | No new CI workflow gates | Yes |
 | DEC-003 | Decision | — | ACTIVE | View-owned drafts invalidated by committed model identity | Yes |
 | DEC-004 | Decision | — | ACTIVE | Delete clears selection before mutation; failed delete restores by identity | Yes |
+| DEC-005 | Decision | — | PROPOSED | No-Worker fallback must begin run, yield a real paint/task boundary, then execute by captured run identity | Yes |
+| DEC-006 | Decision | — | PROPOSED | Active synchronous execution accepts explicit current pipeline options and no-ops on stale/cancelled identity | Yes |
 
-### ISS-001 — collection-context destructive scope
-**Observed:** both collection-labelled mock controls called the same global whole-package `onMock` handler.
+### ISS-006 — C02 no-Worker feedback
+**Observed:** `if (!this.workerClient) return this.store.run();` enters begin/execute/complete synchronously in one JavaScript task. Store subscribers are notified, but the browser cannot paint the intermediate RUNNING/QUEUED UI before CPU execution completes.
 
-**Resolution:** removed both records-card mock controls and preserved only the toolbar global mock entrypoint.
+**Required behaviour:** publish RUNNING/QUEUED first; release the browser to a real rendering opportunity; then execute the synchronous fallback only if the same run identity is still active.
 
-**Guard:** existing LFEA containment check rejects collection-mock labels/role and requires toolbar `lfea-mock` wired to `handlers.onMock`.
+**Limitation:** after CPU execution begins on the main thread it remains non-preemptible. The fix improves truthful feedback and allows cancellation during the queued/yield window; full mid-solve cancellation requires Worker support or a separately authorized chunked/cooperative solver.
 
-### ISS-002 / ISS-004 — unsaved editor drafts lost on render
-**Observed:** `render()` replaced the full content subtree; package and record textareas were reconstructed from committed data.
+### ISS-007 — stale no-Worker analysis options
+**Observed:** `createLfeaWorkbenchStore()` passes `configuration.pipelineOptions` into `createLfeaWorkbenchRunStore()` once. Later, the convergence controller reassigns `controller.pipelineOptions = {...}`. Worker execution reads the current controller object, while no-Worker `store.run()` reads the originally captured store options.
 
-**Resolution:** `LfeaWorkbenchView` owns `documentDraft`, `recordDrafts`, and `modelIdentity`; captures textarea values before replacement; keys record drafts by `[collectionPath, selectedIndex]`; and invalidates all drafts only when committed `${modelVersion}:${semanticHash}` changes.
+**Engineering consequence:** two execution transports can apply different convergence/review inputs for the same visible workbench state.
 
-**Engineering effect:** worker progress, display changes, and navigation can render without discarding unsaved text; successful committed apply/add/update/delete/import/undo/redo cannot retain stale draft text across a new committed model identity.
-
-**Authority boundary:** draft text remains view-only and enters engineering state only through the pre-existing explicit Apply/Add/Update actions.
-
-### ISS-003 — delete-selection sequencing
-**Observed:** delete store mutation happened before `selectedIndex = -1`, so synchronous render could observe stale selection.
-
-**Resolution:** cache prior index/identity, clear selection before mutation, and restore previous selection/render only if returned state preserves the previous committed identity.
-
-**Engineering effect:** successful deletion cannot render the shifted record as if it were still selected; failed deletion preserves user editing context.
-
-### ISS-005 — trailing-newline hygiene
-**Observed:** PR patch review showed `No newline at end of file` for both connector-replaced JS files.
-
-**Resolution:** formatting-only rewrites added final newline; patch reinspection confirmed markers disappeared.
-
-### Deferred / future items
-- `IMP-001`: true run comparison needs shared/user-defined engineering colour authority.
-- `IMP-002`: audit all three LFEA surfaces and the governed chain, not only the mesh workbench.
-- `RISK-001`: distinguish piping beam-analysis results, local continuum stress, and piping-code stress authority.
-- `RISK-002`: visibly surface reaction sign convention for downstream support/nozzle/structural use.
-- `QST-001`: vertical-pipe support triad fallback must use an authoritative axis or fail closed, never an arbitrary convenience axis.
+**Resolution concept:** execute a started synchronous run through the store using an explicit current options argument from the controller, while retaining the store's default behavior for standalone callers.
 
 ## 4. Stage Roadmap
 
-| Stage | Status | Purpose | Primary output | Commit(s) |
-|---|---|---|---|---|
-| S1 | DONE | Report initialization and technical findings | initial register/handover | `07829ac` |
-| S2 | DONE | PR allocation and report synchronization | permanent PR report | `ee8a7ea`, `6335c68` |
-| S3 | DONE | Changed-file verification and documentation-stage completion | clean report-only baseline | pre-S4 |
-| S4 | DONE | Correct collection mock behaviour | ISS-001 | `365c9f3` |
-| S5 | DONE | Preserve package/record drafts across renders | ISS-002/004 | `1de80e6` |
-| S6 | DONE | Correct delete-selection sequencing | ISS-003 | `71373bc` |
-| S7 | DONE | Regression qualification and hygiene | source guards + ISS-005 | `ed53c69`, `acb1201`, `f879684` |
-| S8 | DONE | Final changed-file verification and handover closure | reconciled report/PR | reconciled at `d8fc6a5` before closure report |
+| Stage | Status | Purpose | Primary output |
+|---|---|---|---|
+| S1 | DONE | Report initialization and findings | living report/register |
+| S2 | DONE | PR allocation/report sync | PR #1021 report identity |
+| S3 | DONE | Bootstrap changed-file verification | clean starting diff |
+| S4 | DONE | Collection mock correction | ISS-001 |
+| S5 | DONE | Draft persistence | ISS-002/004 |
+| S6 | DONE | Delete sequencing | ISS-003 |
+| S7 | DONE | Source guards/hygiene | regression evidence |
+| S8 | DONE | Initial-slice handover checkpoint | reconciled draft PR |
+| S9 | IN_PROGRESS | No-Worker feedback + current-option parity | ISS-006/007 |
+| S10 | PLANNED | Friendly structured failure guidance | C03 |
+| S11 | PLANNED | Evidence-export exception containment | C04 |
+| S12 | PLANNED | Reconcile/validate next Critical slice | report + PR evidence |
 
 ## 5. Stage Execution Log
 
-### Stage 1 — Report initialization and technical findings
-**COMPLETE.** Created `agents/PR_PENDING_workreport.md` before production changes. Verified base `main` at `751756e9`. Recorded defects, improvements, risks, decisions, roadmap, and handover. No production or workflow changes.
+### Stages 1–8 — initial authorized slice
+**COMPLETE checkpoint.** Created and synchronized PR #1021 report; removed collection-context global mock controls; added model-identity-aware package/record draft persistence; corrected delete-selection sequencing with failed-delete context restoration; extended existing LFEA containment source checks; corrected file-ending hygiene; reconciled exactly three changed files and no workflow changes. Runtime/browser checks were explicitly NOT_RUN in this environment. Stage 8 produced a valid draft handover checkpoint at the then-current PR head; Owner later authorized continuation on this same PR.
 
-### Stage 2 — PR allocation and report synchronization
-**COMPLETE.** Created draft PR #1021, created permanent `agents/PR1021_workreport.md`, removed temporary pending path, and synchronized PR/base/branch metadata.
+### Stage 9 — no-Worker run feedback and execution-option parity
+**Status:** IN_PROGRESS — pre-stage record complete, production code not yet changed for Stage 9.
 
-### Stage 3 — Changed-file verification and documentation-stage completion
-**COMPLETE.** GitHub changed-file list was exactly `agents/PR1021_workreport.md` before production work. Source review identified ISS-004 (package textarea shares the record-editor render-loss root cause) and added it to the same narrow draft-lifecycle scope.
+#### Before stage
+- `controller.run()` directly returns `store.run()` when `workerClient` is absent.
+- `runStore.run()` calls `beginRun()` and then immediately executes `executeLfeaWorkbench()` before the task returns.
+- `beginRun()` correctly publishes RUNNING with `progress.stage = 'QUEUED'`, but browser paint cannot occur before the synchronous execution finishes.
+- `controller.cancelRun()` currently cannot cancel a no-Worker queued run because it returns current state when `workerClient?.cancel()` is absent.
+- Controller convergence updates replace `this.pipelineOptions`; run store captured construction-time options, creating no-Worker/Worker option drift.
 
-### Stage 4 — Correct collection mock behaviour
-**COMPLETE.** Removed both misleading records-card whole-package mock controls from `src/workspace/lfea-workbench-view.js`. Kept toolbar global mock. Source inspected after `365c9f3`.
+#### Objective
+Make the no-Worker path visibly and semantically consistent with the governed run lifecycle without changing solver numerics.
 
-### Stage 5 — Preserve package and record drafts across renders
-**COMPLETE.** Added view-owned drafts, capture-before-replace, record context keys, committed-model identity invalidation, and destroy cleanup. Source inspected after `1de80e6`. No store/controller/solver/hash file changed.
+#### Planned implementation
+1. Refactor `lfea-workbench-run-store.js` so `run()` is `beginRun()` + a reusable `executeActiveRun(identity, optionsOverride)` operation.
+2. `executeActiveRun` verifies the supplied identity is still the active run before executing, preventing a cancelled/stale queued callback from running or hijacking a later run.
+3. Permit explicit current pipeline options for that execution while preserving construction-time defaults for standalone store callers.
+4. In `LfeaWorkbenchController.run()`, no-Worker path will call `beginRun()`, capture identity, await a real browser task/frame yield, then call `executeActiveRun(identity, this.pipelineOptions)`.
+5. In `cancelRun()`, if there is no worker, delegate to `store.cancelRun()` so the queued/yield interval is cancellable.
+6. Extend an existing LFEA source check; do not add a workflow.
 
-### Stage 6 — Correct delete-selection sequencing
-**COMPLETE.** Selection clears before synchronous delete mutation; identity-preserving failure restores selection/draft. Source inspected after `71373bc`. No store/controller/solver/hash file changed.
+#### Engineering rationale
+- Run identity remains the authority for accepting work.
+- Dynamic options parity is part of engineering equivalence between execution transports.
+- A real task/frame boundary is necessary for visible feedback; `queueMicrotask` would still run before browser rendering and therefore would not solve the reported symptom.
 
-### Stage 7 — Regression qualification and validation hygiene
-**COMPLETE with explicit execution limitation.** Extended existing `scripts/lfea-p0-ui-containment-check.mjs` instead of adding a workflow. Added source assertions covering mock scope, draft capture/invalidation/restoration, delete ordering, and failed-delete recovery.
+#### Expected examples
+- No Worker: click Run → state becomes RUNNING/QUEUED and can paint → synchronous solve starts → complete/fail is accepted only for that same identity.
+- No Worker: click Run then Cancel during the yielded queued interval → state returns READY and the deferred execution callback observes stale/no active identity and does not execute.
+- No Worker after convergence qualification changes → execution receives current controller pipeline options, matching Worker path intent.
 
-**Evidence:** branch sources and PR patches inspected; new guard regex shapes received a self-contained Node syntax/match sanity check; GitHub returned no commit status checks. Full `npm run check:lfea-workbench` and browser interaction tests were **NOT_RUN** because this sandbox could not obtain a repository checkout (`github.com` DNS unavailable). No Actions workflow was added to compensate.
+#### Edge cases
+- User cancels and starts another run before the old deferred callback resumes.
+- Model edit occurs during queued interval and cancels active run via existing model-change semantics.
+- `requestAnimationFrame` is unavailable in a non-browser/test document; fallback must still yield with a macrotask.
+- Solver throws after execution starts; existing failRun identity/error handling must remain intact.
 
-Patch review discovered ISS-005; it was registered before correction, fixed, and rechecked.
+#### Planned validation
+- Source guard asserts no direct no-Worker `return this.store.run()` remains.
+- Guard asserts begin → yield → execute-by-identity ordering.
+- Guard asserts no-Worker cancel delegates to store cancellation.
+- Guard asserts run-store identity check before synchronous execution.
+- Guard asserts controller supplies current `this.pipelineOptions` to fallback execution.
+- Re-read final patches and reconcile changed files.
+- Runtime/browser checks remain NOT_RUN unless executable checkout becomes available.
 
-### Stage 8 — Final changed-file verification and handover closure
-**COMPLETE.**
-
-**Before:** all implementation and source-guard changes were finished; expected persistent changed files were report, view, and containment check only.
-
-**Verification performed:**
-- GitHub `list_pr_changed_filenames` returned exactly:
-  1. `agents/PR1021_workreport.md`
-  2. `scripts/lfea-p0-ui-containment-check.mjs`
-  3. `src/workspace/lfea-workbench-view.js`
-- `compare_commits` from base `751756e9` to reconciled head `d8fc6a5` reported branch **ahead 15, behind 0**, merge base equal to the requested base.
-- Compare reported exactly those three files. At reconciled head the view diff was 51 additions / 15 deletions and the containment guard added 52 lines.
-- No `.github/workflows/*` file appears in changed files.
-- Final view/check patches were re-read; the production patch is limited to mock-scope removal, draft lifecycle, and delete sequencing; the check patch is limited to source-regression assertions.
-- PR remained open, mergeable, and **draft**.
-
-**Stage decision:** COMPLETE. Hand over as draft with missing runtime/browser validation clearly recorded.
+#### Risks
+- API refactor could accidentally change standalone `store.run()` behavior; preserve it as synchronous convenience using the same new execute operation.
+- A queued no-Worker path can be cancelled before compute, but not after main-thread compute starts; report/UI must not imply otherwise.
 
 ## 6. Changed-File Ledger
 
-| File | First stage | Latest stage | Purpose | Engineering-sensitive? | Final validation |
+| File | First stage | Latest stage | Purpose | Engineering-sensitive? | Validation |
 |---|---|---|---|---|---|
-| `agents/PR1021_workreport.md` | S2 | S8 | PR SSOT, engineering register, roadmap, handover | No | reconciled |
-| `src/workspace/lfea-workbench-view.js` | S4 | S7 | destructive scope, draft lifecycle, delete sequencing | Yes | source + patch inspected; runtime/browser NOT_RUN |
-| `scripts/lfea-p0-ui-containment-check.mjs` | S7 | S7 | durable source regression assertions | No production | source + patch inspected; full script NOT_RUN |
-
-**Ledger reconciliation result:** PASS — actual GitHub changed-file list equals this ledger exactly.
+| `agents/PR1021_workreport.md` | S2 | S9 | PR SSOT / handover | No | current |
+| `src/workspace/lfea-workbench-view.js` | S4 | S7 | mock scope, drafts, delete sequencing | Yes | source-guarded; runtime/browser NOT_RUN |
+| `scripts/lfea-p0-ui-containment-check.mjs` | S7 | S7 | existing UI containment guards | No production | source-inspected |
+| `src/workspace/lfea-workbench-controller.js` | S9 planned | S9 planned | no-Worker lifecycle/yield/cancel/current options | Yes | pending |
+| `src/workspace/lfea-workbench-run-store.js` | S9 planned | S9 planned | execute active run by identity/options | Yes | pending |
 
 ## 7. Engineering Decisions and Invariants
 
-### DEC-001 — remove collection mock entrypoints
-Whole-package mock action does not belong in a collection-local editing surface. A true collection-mock feature, if desired, requires separate semantics rather than relabelling the global action.
-
-### DEC-002 — no new CI workflows
-No `.github/workflows/*` additions or changes. Existing checks/source guards were used instead.
-
-### DEC-003 — draft state is view-owned and model-identity invalidated
-This prevents UI authoring text from contaminating governed engineering state while preserving it across benign renders.
-
-### DEC-004 — delete state becomes safe before mutation
-Pre-mutation selection clearing fixes the synchronous-render window; identity-preserving failure recovery avoids losing editing context.
-
-### Invariants
-- **INV-001:** external package validation/reseal governance is unchanged.
+- **INV-001:** external package validation/reseal governance remains unchanged.
 - **INV-002:** preview/draft state is not solver authority.
 - **INV-003:** unrelated render is not implicit discard.
-- **INV-004:** committed model change invalidates incompatible execution and stale editor drafts.
-- **INV-005:** successful delete render boundary does not observe the pre-delete selection intended to be cleared.
+- **INV-004:** committed model change invalidates incompatible execution and stale drafts.
+- **INV-005:** successful delete render boundary does not observe stale pre-delete selection.
+- **INV-006:** synchronous execution may proceed only for the exact currently active run identity captured at beginRun.
+- **INV-007:** Worker and no-Worker paths must consume the same current controller analysis options for a given run intent.
 
 ## 8. Validation and Evidence Ledger
 
-| Validation | Final status | Evidence / limitation |
+| Validation | Status | Evidence / limitation |
 |---|---|---|
-| Bootstrap changed-file baseline | PASS | report only before coding |
-| S4 source verification | PASS | branch view + toolbar panel |
-| S5 source verification | PASS | branch view after `1de80e6` |
-| S6 source verification | PASS | branch view after `71373bc` |
-| Durable UI containment source guard | IMPLEMENTED / SOURCE-INSPECTED | `ed53c69` |
-| Guard regex syntax/match sanity | PASS, SELF-CONTAINED | not the repo suite |
-| File-ending hygiene | PASS | final patches show no missing-newline marker |
-| Final changed-file reconciliation | PASS | exactly 3 ledger files |
-| Base-to-head ancestry | PASS | ahead 15, behind 0 at `d8fc6a5` reconciliation |
-| Workflow constraint | PASS | no workflow changed |
-| Full `npm run check:lfea-workbench` | **NOT_RUN** | no checkout available; no workflow added |
-| Browser interaction validation | **NOT_RUN** | no checkout/browser environment available |
-| GitHub CI/status evidence | NONE | no status entries returned |
-
-### Validation interpretation
-The PR has strong source-level anti-regression evidence for the intended contracts. It does **not** have executed end-to-end/browser evidence from this environment. Merge review should require the two NOT_RUN items to be executed on a real checkout, rather than treating source inspection as equivalent evidence.
+| Initial-slice source guards | IMPLEMENTED / SOURCE-INSPECTED | S7 |
+| Initial-slice final diff reconciliation | PASS at S8 checkpoint | no workflow changes |
+| Full `npm run check:lfea-workbench` | **NOT_RUN** | no executable checkout in sandbox |
+| Browser dirty-draft tests | **NOT_RUN** | no browser checkout in sandbox |
+| Stage 9 source validation | PENDING | after implementation |
+| Stage 9 runtime/browser validation | PENDING / likely NOT_RUN | environment dependent |
 
 ## 9. Known Issues, Improvements, and Deferred Scope
 
-### Current PR
-No known unimplemented defect remains in the authorized initial integrity slice. Missing runtime/browser validation is an evidence gap, not a newly observed failure.
+### Current active scope
+- `ISS-006` / C02 — no-Worker feedback.
+- `ISS-007` — no-Worker current pipeline-options parity.
 
-### Deferred roadmap register
-- `IMP-001` shared engineering colour authority for true comparison.
-- `IMP-002` complete three-surface LFEA audit.
-- `RISK-001` continuum stress versus piping-code stress authority.
-- `RISK-002` reaction sign convention visibility.
-- `QST-001` authoritative vertical support-triad axis policy.
+### Next Critical findings from #1018
+- C03 — raw/substr-derived failure banner lacks structured recovery guidance.
+- C04 — evidence export can throw through controller without diagnostic containment.
 
-These items stay in this report so handover does not depend on chat history.
+### Deferred engineering roadmap
+- `IMP-002` full three-surface governed workflow audit.
+- Restraint/support semantic fidelity including gaps/friction/springs/directional supports.
+- `RISK-001` explicit separation of piping beam response, local continuum FEA, and piping-code stress authority.
+- `RISK-002` reaction sign-convention visibility.
+- `IMP-001` shared engineering colour authority for cross-run comparison.
+- `QST-001` authoritative vertical support-triad fallback axis policy.
 
 ## 10. Recommended Forward Sequence
 
-### Before merging PR #1021
-On the exact PR head:
-1. Run `npm run check:lfea-workbench`.
-2. Browser-test a dirty package JSON draft through an unrelated progress/display render.
-3. Browser-test a dirty record draft through progress render and row/collection away-and-return navigation.
-4. Verify failed Update/Delete retains the relevant draft/context.
-5. Verify successful Apply/Add/Update/Delete/import/mock/undo/redo clears stale drafts because committed identity changes.
-6. Verify no collection mock action exists and toolbar global mock still functions.
-
-If any runtime behaviour disagrees with the source contract, record a new `ISS-*` in this same report before changing code.
-
-### Future engineering roadmap
-1. **Three-surface LFEA audit:** linear piping consumer → pre-FEA surface → mesh workbench, focusing on governed handoffs.
-2. **Restraint/support semantic fidelity:** guides, line stops, directional restraints, gaps, friction, variable/constant springs, and vertical cases.
-3. **Engineering result authority:** visibly distinguish piping beam response, local continuum FEA, and piping-code stress.
-4. **True comparison visualization:** shared/user-fixed ranges or engineering threshold bands.
-5. **CAESAR/reference correlation suite:** displacement, global reactions, local support actions, and governing physical load-case identity for anchor/guide/riser/elbow/branch/loop/directional-support cases.
+1. Complete S9 and update this report with actual implementation/evidence.
+2. S10: C03 structured error guidance driven by diagnostic/error codes rather than raw substring matching.
+3. S11: C04 evidence-export exception containment and diagnostic surfacing.
+4. S12: reconcile changed files, source guards, remaining Critical findings, and next handover.
+5. Only then move into H01/H02/H03 or the larger three-surface audit unless a new finding changes priority.
 
 ## 11. Next-Agent Handover
 
 ### Current stopping point
-All authorized implementation and documentation stages are complete. PR #1021 remains draft specifically because runtime/browser evidence could not be executed here.
+Stage 9 pre-stage record is complete. No Stage 9 production change should be assumed until the next commit is inspected.
 
-### PR / branch / base
+### PR / branch / baseline
 - PR: #1021
 - Branch: `agent/lfea-workbench-integrity-1018`
 - Base: `751756e9140527b8dc121aa179dc76b7039fb7ad`
-- Stage 8 reconciled head before this closure-report commit: `d8fc6a52dacc759c37e8d4691548a00c13f242f4`
-- Exact post-report head: see PR #1021 body/metadata (updated after this commit without changing Git history).
+- Continuation baseline: `b9b18d53f3ad146aadc354a0d977c23078f397db`
 
 ### Start here
-Do **not** start by changing code. First run the two missing validation layers on the exact PR head: existing workbench check, then targeted browser dirty-draft interactions from Section 10.
+Read `src/workspace/lfea-workbench-run-store.js` and `src/workspace/lfea-workbench-controller.js`. Implement S9 exactly as planned: identity-safe execute operation, real paint/task yield in no-Worker path, current pipeline-options handoff, and queued no-Worker cancellation.
 
 ### Do not redo
-- C01/N01/N02 investigation.
-- Package-editor sibling finding ISS-004.
-- Draft-lifecycle design.
-- Delete sequencing design.
-- Source guard creation.
-- Changed-file reconciliation.
+- Initial C01/N01/N02 investigation or fixes.
+- Stage 9 grounding showing construction-time versus current controller options.
+- Decision that `queueMicrotask` is insufficient for paint.
 
 ### Known failing checks
-None observed. The relevant full checks were **not run**, so there is no basis to claim they pass or fail.
+None observed. Full repository/browser checks remain NOT_RUN.
 
-### Files involved
-- `src/workspace/lfea-workbench-view.js`
-- `scripts/lfea-p0-ui-containment-check.mjs`
-- `agents/PR1021_workreport.md`
+### Highest current risk
+Accidentally allowing a deferred callback from a cancelled run to execute against a later run. Preserve exact identity checking before computation.
 
-### Highest remaining risk
-Merging without direct runtime/browser validation of draft preservation/invalidation semantics.
-
-### Exact next recommended action
-Checkout PR #1021 head, run `npm run check:lfea-workbench`, then execute the targeted browser scenarios. Record results in this report before any merge decision.
-
-### Required reading
-This report first; then only the two changed JS files and issue #1018/re-audit as needed.
+### Exact next action
+Implement `executeActiveRun(identity, optionsOverride)` in the run store, then wire the controller fallback around a real yield and update existing source guards.
 
 ## 12. Process Notes / Lessons Learned
 
-- **PN-001:** synchronous store mutation can render before the next event-handler line; local render-sensitive state must be safe before the mutation.
-- **PN-002:** credible issues/improvements/risks receive durable IDs even when deferred.
-- **PN-003:** sibling editor surfaces should be checked for the same lifecycle defect; N01 exposed ISS-004.
-- **PN-004:** committed model identity is a useful UI-draft invalidation boundary because progress/display changes do not alter it.
-- **PN-005:** source inspection, source guards, runtime execution, and browser interaction are distinct evidence classes.
-- **PN-006:** connector full-file replacement can introduce file-ending hygiene changes; final patch review caught this.
-- **PN-007:** the work report remained usable as a handover checkpoint before and after every logical stage, rather than being reconstructed at the end.
+- PN-001: synchronous store mutation can render before the next event-handler line.
+- PN-002: credible out-of-scope findings receive durable IDs instead of disappearing.
+- PN-003: sibling surfaces often share lifecycle defects; record them when discovered.
+- PN-004: committed model identity is an effective UI-draft invalidation boundary.
+- PN-005: source inspection, source guards, runtime execution, and browser interaction are different evidence classes.
+- PN-006: connector full-file writes require final patch/file-ending review.
+- PN-007: a closure checkpoint can be superseded by explicit Owner continuation while remaining valuable handover history.
+- PN-008: microtask scheduling is not a browser paint boundary; UI feedback before synchronous CPU work requires a real task/frame opportunity.
+- PN-009: execution-transport parity includes analysis options, not only numerical pipeline code.
 
-## 13. PR Closure Record
+## 13. PR Closure / Continuation Record
 
-| Closure criterion | Final result |
+### Stage 8 checkpoint
+Initial integrity slice: COMPLETE as a draft handover checkpoint. Runtime/browser evidence remained NOT_RUN.
+
+### Current continuation state
+PR reopened for active implementation by Owner instruction; Stage 9 is IN_PROGRESS. Final PR closure record will be rewritten after the continued Critical-finding slice is reconciled.
+
+| Criterion | Current result |
 |---|---|
-| Mission implementation | COMPLETE |
-| In-scope engineering items dispositioned | YES |
+| Initial slice implementation | COMPLETE |
+| Stage 9 pre-record | COMPLETE |
+| Stage 9 implementation | PENDING |
+| C03 | PENDING |
+| C04 | PENDING |
 | Engineering Item Register synchronized | YES |
-| GitHub changed files reconciled | PASS — exactly 3 registered files |
-| Base ancestry reconciled | PASS — ahead only at S8 baseline |
-| Source regression guards | IMPLEMENTED |
-| Full runtime workbench check | **NOT_RUN** |
-| Browser interaction validation | **NOT_RUN** |
-| Unexplained changes | NONE |
-| Deferred improvements recorded | YES |
-| Known limitations recorded | YES |
-| Next-agent handover current | YES |
 | New CI workflows added | **NO** |
 | PR status | DRAFT |
-| Reconciled S8 head | `d8fc6a52dacc759c37e8d4691548a00c13f242f4` before closure-report commit |
-
-### Final outcome
-The initial #1018 integrity slice is implemented on one draft PR with a durable handover record: destructive mock scope corrected; package/record draft loss corrected with model-identity-aware view state; delete sequencing corrected with failure recovery; existing containment check extended with anti-regression source assertions; all discovered current/future engineering items retained in the register.
-
-### Remaining known limitations
-The exact PR head has not been exercised by the full workbench check or browser interaction suite in this sandbox. Those are explicit pre-merge follow-ups.
-
-### Recommended next PR
-After PR #1021 is runtime-validated and reviewed, the highest-value architecture continuation is `IMP-002`: audit the full three-surface LFEA governed workflow, with particular attention to support/restraint semantics, sign convention, load-case provenance, and authority boundaries between piping analysis and local FEA.

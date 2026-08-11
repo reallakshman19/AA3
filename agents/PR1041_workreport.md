@@ -4,130 +4,114 @@
 
 | Field | Current truth |
 |---|---|
-| Mission | Remove arbitrary valve catalogue JSON input and make Engineering Table valve replacement select only exact compatible immutable catalogue records. |
-| Source | User-directed P1 catalogue-HUD closure; independently reviewed against `reallaksh19/Common@43eccc27967ecec7d67513c08255398b496be5ce/CodingRules.md`. |
+| Mission | Remove arbitrary valve catalogue JSON input and make Engineering Table valve replacement use only exact compatible immutable catalogue authority. |
+| Source | User-directed P1 catalogue-HUD closure; reviewed against `reallaksh19/Common@43eccc27967ecec7d67513c08255398b496be5ce/CodingRules.md`. |
 | PR | #1041 — `fix(3d-edit): certify Engineering Table valve catalogue selection` |
 | Branch | `agent/certified-valve-catalogue-selection` |
-| Base | `main` (implementation base `a587867963cc9199caca6e7adfa03af95a316aa2`) |
+| Base | `main` (original implementation base `a587867963cc9199caca6e7adfa03af95a316aa2`) |
 | Initial qualified implementation HEAD | `4bb20e33100e9d5a1e4fb8b989741f8aafe650b0` |
-| DN-remediation code/test head before this report update | `3841842733d4eae4a6e4cb49661c3c872a63fa52` |
-| Status | DRAFT / independent review remediation implemented / requalification pending |
-| Current stage | S5 — final qualification and integration after P0 merge |
-| Last completed stage | S4 — unresolved-DN fail-closed remediation |
-| Engineering state | PASS on review — exact target DN now required before any BALL record can appear |
-| Validation state | Initial 20-workflow suite PASS on `4bb20e...`; remediation-focused/current-head CI is pending and GitHub-authoritative |
-| Blockers | Final validation plus re-evaluation against `main` after #1036 lands |
-| Next | Verify changed-file ledger, merge #1036 first, then re-fetch #1041 mergeability/checks and merge only if final protections pass. |
+| UI DN-remediation code/test head | `3841842733d4eae4a6e4cb49661c3c872a63fa52` |
+| Status | DRAFT / independent review remediation active |
+| Current stage | S4b — reusable Table-intent DN fail-closed closure |
+| Last completed stage | S4a — picker candidate DN fail-closed correction |
+| Engineering state | PARTIAL — UI picker is fail-closed; reusable intent normalizer still permits unresolved target DN and must be tightened |
+| Validation state | Initial 20-workflow suite PASS on `4bb20e...`; current remediation heads are not yet claimed qualified |
+| Blockers | ISS-1041-03 plus final integration qualification after P0 #1036 merge |
+| Next | Tighten `normalizeValveReplacement()` to require exact positive target DN, add focused intent regression, then requalify. |
 
 ## Handover in 60 Seconds
 
-This PR removes the M06 catalogue JSON textarea/parser and reuses `controller.professionalRuntime.catalogue` as the sole catalogue authority. UI state carries `recordId`; runtime exact-resolves the current immutable record and reconstructs the binding from catalogue/record hashes before staging the existing governed `VALVE_REPLACEMENT` intent. Independent review found a reachable fail-open: unresolved `dnInMm` was treated as a wildcard. That is now fixed. `compatibleNumber()` requires both target and candidate DN to be finite, positive, and equal within the existing epsilon; tests cover `null`, zero, and non-numeric target DN and prove zero candidates plus staging rejection. No class/pressure/end semantics or transaction authority was changed. The legacy descriptive report has been removed.
+The M06 JSON textarea/parser is gone. Production UI carries only `recordId`; runtime resolves the current immutable record from `controller.professionalRuntime.catalogue` and rebuilds catalogue binding authority before creating `VALVE_REPLACEMENT`. Independent review first found that unresolved `dnInMm` widened UI candidate matching; that is fixed and tested. A second authority-layer finding is now open: `createTopologyEditTableIntent()` currently calls `finitePositive(row.fields.dnInMm)` and skips size comparison when it returns `null`. Because this function is reusable outside the DOM picker, an unresolved-DN row could still construct an engineering intent if supplied a catalogue binding directly. The intent contract itself must fail closed, not rely exclusively on UI filtering.
 
 ## Mission and Engineering Intent
 
 Preserve:
 
-`exact canonical VALVE row -> certified catalogue candidate derivation -> explicit recordId -> exact current record/hash -> governed VALVE_REPLACEMENT intent -> operation plan -> candidate/Preview -> validation -> certified transaction -> canonical topology -> journal Undo/Redo`
+`exact canonical VALVE row -> certified compatible record -> explicit recordId -> exact current record/hash -> governed VALVE_REPLACEMENT intent -> operation plan -> Preview -> validation -> certified transaction -> canonical topology -> journal Undo/Redo`
 
-No caller-manufactured catalogue binding, nearest-size substitution, inferred record authority, direct topology mutation, or second applied history is permitted.
+Authority must be enforced at each reusable boundary. UI filtering is not a substitute for intent normalization.
 
 ## Mission Status
 
-| Item | Status | Evidence / note |
-|---|---|---|
-| Remove free-text JSON textarea/parser | COMPLETE | Production UI/runtime path removed |
-| Reuse existing certified catalogue authority | COMPLETE | `controller.professionalRuntime.catalogue` |
-| Exact recordId -> record/hash -> binding hydration | COMPLETE | pure catalogue binding authority + Table valve authority |
-| BALL-only filtering | COMPLETE | candidate predicate |
-| Exact nominal-size filtering | COMPLETE | unresolved/non-positive/non-numeric DN now fails closed |
-| Known piping/pressure/end compatibility | COMPLETE | candidate predicate filters available target evidence |
-| Unknown/incompatible/tampered authority rejection | COMPLETE | catalogue assertions + focused tests |
-| Preview/Validate non-mutating / journal Apply | COMPLETE | governed transaction path unchanged |
-| CodingRules report custody | COMPLETE | `agents/PR1041_workreport.md` is sole report |
-| Final current-head / post-#1036 integration qualification | PENDING | GitHub checks and updated base must be read before merge |
+| Item | Status |
+|---|---|
+| Free-text JSON textarea/parser removed | COMPLETE |
+| Existing certified specification catalogue reused | COMPLETE |
+| Exact recordId -> current record/hash -> binding hydration | COMPLETE |
+| BALL-only candidate filtering | COMPLETE |
+| Picker requires exact positive finite target DN | COMPLETE |
+| Reusable Table intent requires exact target DN | BLOCKED — ISS-1041-03 |
+| Known piping/pressure/end compatibility filtering | COMPLETE |
+| Unknown/incompatible/tampered catalogue rejection | COMPLETE |
+| Preview/Validate non-mutating / journal Apply | COMPLETE |
+| Exact-number work-report custody | COMPLETE |
+| Final current-head/post-#1036 integration qualification | PENDING |
 
 ## Engineering Item Register
 
 | ID | Type | Status | Finding / action |
 |---|---|---|---|
-| ISS-1041-01 | Authority | RESOLVED | M06 accepted arbitrary pasted catalogue-shaped JSON. Replaced with exact current record selection/hydration. |
-| DEC-1041-01 | Architecture | ACCEPTED | Existing Professional Operations specification catalogue remains sole catalogue authority. |
-| DEC-1041-02 | Architecture | ACCEPTED | UI persists only stable selection identity; command binding is rebuilt immediately before governed intent construction. |
-| ISS-1041-02 | Correctness / fail-closed | RESOLVED | Missing/invalid/non-positive target DN previously widened candidate matching. `compatibleNumber()` now requires finite positive exact DN; focused tests cover `null`, `0`, and non-numeric values. |
-| RISK-1041-01 | Process custody | RESOLVED | Nonconforming descriptive report replaced by exact-number report; obsolete file removed. |
-| RISK-1041-02 | Integration | OPEN | Branch was originally qualified on same old base as P0 #1036. #1036 must land first; then #1041 mergeability/checks must be re-evaluated against new main. |
+| ISS-1041-01 | Authority | RESOLVED | Arbitrary pasted catalogue JSON removed from M06 production path. |
+| DEC-1041-01 | Architecture | ACCEPTED | Professional Operations specification catalogue remains the sole catalogue authority. |
+| DEC-1041-02 | Architecture | ACCEPTED | UI stores selection identity only; binding is rebuilt from current immutable authority before staging. |
+| ISS-1041-02 | Correctness | RESOLVED | Picker treated missing/invalid/non-positive target DN as wildcard. Candidate predicate now requires finite positive exact DN and focused tests cover null/zero/non-numeric input. |
+| ISS-1041-03 | Authority / fail-closed | OPEN | `normalizeValveReplacement()` permits unresolved target DN by skipping the size comparison. Require `finitePositive(row.fields.dnInMm)` to succeed or throw, then enforce exact nominal-size equality. Add direct `createTopologyEditTableIntent()` regression. |
+| RISK-1041-01 | Process custody | RESOLVED | Descriptive legacy report replaced by `agents/PR1041_workreport.md`. |
+| RISK-1041-02 | Integration | OPEN | Original qualification predates P0 #1036; final merge must be re-evaluated against updated `main`. |
 
 ## Stage Roadmap and Protocol
 
 ### S1 — Authority design — COMPLETE
-
-**Pre-stage truth:** Table parsed arbitrary user JSON into catalogue binding input.
-
-**Objective:** select exact current catalogue record without changing certified replacement semantics.
-
-**Actual:** pure catalogue binding projection and Table record selection authority reuse the existing catalogue.
-
-**Decision:** COMPLETE.
+Pre-stage: arbitrary JSON could enter Table catalogue binding. Objective: reuse exact existing catalogue. Actual: pure catalogue binding projection plus exact record selection. Decision: COMPLETE.
 
 ### S2 — UI/runtime integration — COMPLETE
-
-**Expected:** no free-text fallback; exact BALL record IDs only; same governed intent path; no direct canonical write.
-
-**Actual:** textarea/parser removed, controlled selector added, runtime exact-hydrates current catalogue record before intent creation.
-
-**Decision:** COMPLETE.
+Textarea/parser removed; selector stages same governed `VALVE_REPLACEMENT`; no direct canonical write or second Undo. Decision: COMPLETE.
 
 ### S3 — Initial qualification — COMPLETE
+Head `4bb20e33100e9d5a1e4fb8b989741f8aafe650b0`: all 20 triggered workflows completed successfully. Decision: COMPLETE for that head.
 
-**Head:** `4bb20e33100e9d5a1e4fb8b989741f8aafe650b0`.
+### S4a — Picker DN fail-closed remediation — COMPLETE
 
-All 20 triggered workflows completed successfully, covering main-gate, Table slices, protected SJSON render/interaction, R1, Tool Audit, Component HUD, Q3 transaction and authoring suites.
+**Finding:** Table projection can emit `dnInMm: null` / `UNRESOLVED`; picker number predicate widened such rows.
 
-**Decision:** COMPLETE for that head.
+**Files:** `topology-edit-table-valve-catalogue.js`, `tests/topology-edit-table-valve-catalogue.test.mjs`.
 
-### S4 — Independent review remediation — COMPLETE
+**Implementation:** both target and candidate DN must be finite, positive and equal within epsilon. Null/zero/non-numeric targets return no candidates and selected-record resolution fails.
 
-**Pre-stage finding:** Table projection can emit `dnInMm: null` / `UNRESOLVED`, while candidate `compatibleNumber()` treated missing/invalid/non-positive observed DN as compatible with any candidate.
+**Decision:** COMPLETE; final CI still pending.
 
-**Objective:** make nominal-size compatibility strictly fail closed without altering other catalogue predicates or transaction paths.
+### S4b — Intent-layer DN fail-closed remediation — IN_PROGRESS
 
-**Files changed:**
-- `src/workspace/topology-edit/table/topology-edit-table-valve-catalogue.js`
-- `tests/topology-edit-table-valve-catalogue.test.mjs`
+**Current truth:** reusable Table intent normalization does not require target DN authority; `finitePositive()` returning `null` bypasses mismatch validation.
+
+**Objective:** ensure direct/rebase/internal callers cannot construct M06 intent without exact target DN.
+
+**Planned files:**
+- `src/workspace/topology-edit/table/topology-edit-table-intent.js`
+- `tests/topology-edit-table-m04-m06-m10.test.mjs`
 - this report
 
-**Implementation:** candidate number compatibility now requires finite positive target and candidate values plus exact epsilon match. Added regression over `null`, `0`, and `not-a-number`, asserting no candidates and selection rejection.
+**Plan:** if target `dnInMm` is unresolved/non-positive/non-finite, throw a stable M06 target-DN error before accepting catalogue binding; otherwise require exact nominal-size equality. Add direct intent tests for unresolved target DN and mismatch.
 
-**Deviation:** none; class/pressure/end optional-known-value semantics deliberately unchanged.
+**Expected behavior:** no reusable Table M06 intent exists without exact target nominal-size authority.
 
-**Actual behavior:** unresolved target DN no longer exposes or stages any BALL record.
+**Scope guard:** do not change catalogue loading, class/pressure/end optional-known-value semantics, operation planning, Preview, validation, transaction, or journal behavior.
 
-**Validation:** code/test change is committed; final CI result is not claimed here until GitHub reports it.
-
-**New findings:** none.
-
-**Remaining risk:** combined state with P0 #1036 has not yet been validated.
-
-**Stage decision:** COMPLETE.
-
-### S5 — Final qualification and merge integration — IN_PROGRESS
-
-**Current truth:** remediation is implemented and initial pre-remediation suite was green. #1036 is the mandated P0 predecessor.
-
-**Plan:** merge #1036 only after its current protections pass; then re-fetch #1041 current head/base mergeability and checks. Do not use old-base green evidence as sole proof if GitHub requires a refreshed candidate.
-
-**Expected:** final candidate includes P0 support custody plus exact valve catalogue DN fail-closed behavior with no conflicts.
+### S5 — Final qualification and integration — PENDING
+Merge #1036 first, then re-fetch #1041 mergeability/checks against new main. Never bypass stale/failed required checks.
 
 ## Next-Agent Handover
 
-1. Confirm final changed-file list equals ledger.
-2. Confirm current branch workflows include the focused regression through main-gate/Table suites.
-3. Merge #1036 first.
-4. Re-fetch #1041 PR state after main changes; if GitHub reports stale/conflicting/blocked, refresh rather than bypass.
-5. Mark ready and merge with `expected_head_sha` only when protections are satisfied.
-6. Proceed to topology-aware TEE/reducer candidate derivation as a new PR/report.
+1. Close ISS-1041-03 exactly at intent normalization plus focused test.
+2. Verify final changed-file list against ledger.
+3. Confirm current-head workflows after remediation.
+4. Merge P0 #1036 first.
+5. Re-evaluate #1041 against updated main; mark ready and merge only if protections pass.
+6. Start topology-aware TEE/reducer derivation as a separate PR/report.
 
 ## Changed-File Ledger
+
+Expected final paths after ISS-1041-03:
 
 - `agents/PR1041_workreport.md`
 - `e2e/helpers/topology-edit-table-engineering-fixture.js`
@@ -137,6 +121,7 @@ All 20 triggered workflows completed successfully, covering main-gate, Table sli
 - `public/fixtures/topology-edit-professional-spec-catalog.json`
 - `src/workspace/topology-edit/professional/topology-edit-inline-component-operation.js`
 - `src/workspace/topology-edit/professional/topology-edit-spec-catalog-binding.js`
+- `src/workspace/topology-edit/table/topology-edit-table-intent.js`
 - `src/workspace/topology-edit/table/topology-edit-table-valve-catalogue.js`
 - `src/workspace/viewport-productivity/topology-edit-table-cell-edit.js`
 - `src/workspace/viewport-productivity/topology-edit-table-engineering-editor.js`
@@ -144,80 +129,60 @@ All 20 triggered workflows completed successfully, covering main-gate, Table sli
 - `src/workspace/viewport-productivity/topology-edit-table-grid-view.js`
 - `tests/topology-edit-component-hud-context.test.mjs`
 - `tests/topology-edit-table-engineering-editor.test.mjs`
+- `tests/topology-edit-table-m04-m06-m10.test.mjs`
 - `tests/topology-edit-table-selection-contract.test.mjs`
 - `tests/topology-edit-table-valve-catalogue.test.mjs`
 
-Any discrepancy is a closure blocker until documented.
+Any discrepancy blocks closure until recorded.
 
 ## Decisions and Invariants
 
 - Catalogue authority remains `TopologyEditSpecificationCatalogue.v3` owned by Professional Operations.
-- UI identity is not engineering catalogue data; record/hash is rehydrated from current immutable authority.
-- No free-text catalogue binding fallback.
-- Target nominal size must be positive, finite and exactly compatible; unresolved DN never broadens candidates.
-- Pressure/class/end filters use available target evidence and never synthesize missing values.
-- Preview/Validate remain non-mutating; Apply is the certified transaction boundary.
-- Canonical topology/journal Undo/Redo remain authoritative.
+- UI identity is not catalogue engineering data; exact record/hash is rehydrated from current authority.
+- No free-text catalogue fallback.
+- Exact target DN is mandatory both for picker candidates and reusable intent normalization.
+- Known class/pressure/end evidence constrains candidates; missing optional evidence is not synthesized.
+- Preview/Validate remain non-mutating; Apply is certified transaction boundary; canonical journal remains sole applied Undo/Redo authority.
 - No workflow or architecture guard weakening.
 
 ## Validation Ledger
 
-Initial qualification head: `4bb20e33100e9d5a1e4fb8b989741f8aafe650b0`.
+Initial head `4bb20e33100e9d5a1e4fb8b989741f8aafe650b0`: PASS on all 20 triggered workflows (main-gate; Table Slices 1/2/3/4/6/7/8; SJSON Render/Interaction; R1; Tool Audit; Component HUD; Inline/Component/Valve/Tee-Olet/Blind-Flange authoring; LAFEA; non-FEA).
 
-| Workflow | Initial status |
-|---|---|
-| main-gate | PASS |
-| 3D Edit Sjson Render Authority | PASS |
-| 3D Edit SJSON Interaction Authority | PASS |
-| 3D Edit R1 Real User Reachability | PASS |
-| 3D Edit Tool Audit | PASS |
-| Topology Edit Table Slice 1 | PASS |
-| Topology Edit Table Slice 2 | PASS |
-| Topology Edit Table Slice 3 | PASS |
-| Topology Edit Table Slice 4 | PASS |
-| Topology Edit Table Slice 6 | PASS |
-| Topology Edit Table Slice 7 | PASS |
-| Topology Edit Table Slice 8 | PASS |
-| 3D Edit Component HUD | PASS |
-| 3D Edit Inline Component Insertion | PASS |
-| 3D Edit Component Authoring | PASS |
-| 3D Edit Valve Assembly Authoring | PASS |
-| 3D Edit Tee Olet Branch Authoring | PASS |
-| 3D Edit Blind Flange Authoring | PASS |
-| LAFEA hybrid browser validation | PASS |
-| non-fea-input-check-load-calc | PASS |
+Picker remediation head before report sync: `3841842733d4eae4a6e4cb49661c3c872a63fa52`; final CI not yet claimed.
 
-Remediation code/test head before this report update: `3841842733d4eae4a6e4cb49661c3c872a63fa52` — current workflow status must be fetched from GitHub before merge.
+Intent remediation: NOT_RUN — code change not yet applied.
 
 ## Evidence Ledger
 
 - Initial qualified SHA: `4bb20e33100e9d5a1e4fb8b989741f8aafe650b0`.
-- DN remediation code/test head: `3841842733d4eae4a6e4cb49661c3c872a63fa52`.
-- Projection evidence: canonical/source nominal may be absent, yielding `dnInMm: null` with `UNRESOLVED` authority; the remediation closes that reachable path.
-- Review state at audit: no comments, no submitted reviews, no unresolved review threads.
+- Picker remediation code/test SHA: `3841842733d4eae4a6e4cb49661c3c872a63fa52`.
+- Projection evidence: unresolved nominal size is representable as `dnInMm: null` / `UNRESOLVED`.
+- Intent evidence: `normalizeValveReplacement()` currently skips comparison when `finitePositive()` returns null.
+- Review state: no comments, no submitted reviews, no unresolved review threads at independent audit.
 
 ## Explicitly Not Validated
 
 | Item | Status | Reason |
 |---|---|---|
-| Final report-sync head CI | NOT_RUN / pending query | This update itself creates a new report-only head. GitHub is authoritative. |
-| Combined state after #1036 merge | NOT_RUN | P0 has not yet landed. |
-| Wider valve families beyond GATE -> BALL | NOT_APPLICABLE | Deferred. |
+| ISS-1041-03 remediation | NOT_RUN | Registered before code change. |
+| Combined state after #1036 | NOT_RUN | P0 not yet merged. |
+| Wider valve families | NOT_APPLICABLE | Out of scope. |
 | Catalogue authoring/source ingestion | NOT_APPLICABLE | Separate authority slice. |
 
 ## Known / Deferred Work
 
 - Broader valve-family replacement.
 - Catalogue authoring/source ingestion.
-- Topology-aware TEE/reducer candidate derivation (next PR).
-- Production NODE_POSITION browser qualification (following PR).
-- Support editing/movement semantics.
+- Topology-aware TEE/reducer candidate derivation.
+- NODE_POSITION production-browser qualification.
+- Certified support editing/movement semantics.
 - Multi-cell paste/fill/range editing.
 
 ## Recommended Forward Sequence
 
-1. Merge #1036 when its current protections pass.
-2. Re-evaluate and merge #1041 only after current-head/post-P0 protections pass.
-3. Implement topology-aware TEE -> branch port/node -> directly connected reducer -> compatible catalogue record derivation.
-4. Add NODE_POSITION NODE_ONLY / CONNECTED_RUN / concurrency browser qualification.
-5. Only then design certified SUPPORT editing semantics.
+1. Close ISS-1041-03 and requalify.
+2. Merge #1036 P0.
+3. Re-evaluate and merge #1041 against updated main.
+4. Implement topology-aware TEE/reducer choices.
+5. Add full NODE_POSITION browser qualification.

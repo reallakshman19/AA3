@@ -252,10 +252,14 @@ export class LfeaWorkbenchController {
   }
 
   undo() {
+    const state = this.store.getState();
+    if (!confirmQualifiedEvidenceReset(this.documentRef, state, 'Undo')) return state;
     return this.store.undo();
   }
 
   redo() {
+    const state = this.store.getState();
+    if (!confirmQualifiedEvidenceReset(this.documentRef, state, 'Redo')) return state;
     return this.store.redo();
   }
 
@@ -294,6 +298,16 @@ export class LfeaWorkbenchController {
     this.view.destroy();
     this.rootElement = null;
   }
+}
+
+function confirmQualifiedEvidenceReset(documentRef, state, actionLabel) {
+  if (state.execution?.status !== 'QUALIFIED') return true;
+  const confirmAction = documentRef?.defaultView?.confirm;
+  if (typeof confirmAction !== 'function') return true;
+  return confirmAction.call(
+    documentRef.defaultView,
+    `${actionLabel} changes the committed mesh package and clears the current qualified analysis execution, review, and evidence. Continue?`,
+  );
 }
 
 function yieldRunFeedbackFrame(documentRef) {

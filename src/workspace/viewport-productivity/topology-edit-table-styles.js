@@ -18,7 +18,7 @@ export function ensureTopologyEditTableStyles(documentRef) {
     .topology-edit-table-window__body { display:grid; grid-template-rows:minmax(0,1fr); min-width:0; min-height:0; overflow:hidden; padding:5px; background:#07101c; box-sizing:border-box; }
     .topology-edit-table-window__body > [data-role="topology-edit-table"] { min-width:0; min-height:0; height:100%; }
     .topology-edit-table { display:grid; gap:.4rem; min-width:0; min-height:0; height:100%; overflow:auto; scrollbar-gutter:stable; font-size:11px; line-height:1.25; color:#cbd5e1; }
-    .topology-edit-table--populated { grid-template-rows:auto minmax(140px,62%) auto; grid-auto-rows:auto; }
+    .topology-edit-table--populated { grid-template-rows:auto minmax(140px,1fr); grid-auto-rows:auto; }
     .topology-edit-table--empty-model { align-content:start; height:auto; min-height:100%; }
     .topology-edit-table__header { display:flex; align-items:end; justify-content:space-between; gap:.55rem; }
     .topology-edit-table__header > div { display:flex; flex-direction:column; gap:.1rem; min-width:0; }
@@ -76,7 +76,7 @@ export function ensureTopologyEditTableStyles(documentRef) {
     .topology-edit-table__property-group tbody th { color:#bae6fd; font-weight:600; }
     .topology-edit-table__property-group td:nth-child(2) { max-width:44rem; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
     .topology-edit-table__property-group td:nth-child(3) { color:#94a3b8; }
-    @media (max-width:900px) { .topology-edit-table-window { left:6px !important; right:6px !important; width:auto; max-width:none; } .topology-edit-table--populated { grid-template-rows:auto minmax(120px,58%) auto; } }
+    @media (max-width:900px) { .topology-edit-table-window { left:6px !important; right:6px !important; width:auto; max-width:none; } .topology-edit-table--populated { grid-template-rows:auto minmax(120px,1fr); } }
     @media (max-width:760px) { .topology-edit-table__header { align-items:stretch; flex-direction:column; } .topology-edit-table__header label { min-width:0; } .topology-edit-table__editor-grid, .topology-edit-table__first-pipe { grid-template-columns:1fr; } .topology-edit-table__editor-grid .topology-edit-table__wide, .topology-edit-table__editor-grid > button, .topology-edit-table__first-pipe > .topology-edit-table__wide { grid-column:1; } }
   `;
   documentRef.head?.append(style);

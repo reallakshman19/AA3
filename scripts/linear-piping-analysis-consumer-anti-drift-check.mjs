@@ -127,6 +127,59 @@ for (const token of [
 
 assert.doesNotMatch(combined, /unit\s*\?\?\s*['"]m['"]|unit\s*\|\|\s*['"]m['"]/u);
 
+const restraintInventory = source['inputxml-feature-inventory-restraints.js'];
+assert.match(restraintInventory, /MODEL_RESTRAINT_GAP_UNSUPPORTED/u);
+assert.match(restraintInventory, /MODEL_RESTRAINT_FRICTION_UNSUPPORTED/u);
+assert.match(restraintInventory, /MODEL_RESTRAINT_CONNECTING_NODE_UNSUPPORTED/u);
+assert.match(restraintInventory, /MODEL_RESTRAINT_FINITE_STIFFNESS_UNSUPPORTED/u);
+assert.match(restraintInventory, /MODEL_RESTRAINT_SKEW_DIRECTION_UNSUPPORTED/u);
+assert.match(
+  restraintInventory,
+  /function axisAlignedDirection\(direction\)[\s\S]*?maximum >= 1 - DIRECTION_TOLERANCE[\s\S]*?value <= DIRECTION_TOLERANCE/u,
+  'Approximate unilateral restraint must require an already axis-aligned direction.',
+);
+assert.match(
+  restraintInventory,
+  /!axisAlignedDirection\(classification\.direction\)[\s\S]*?\[APPROXIMATE\]: unsupportedDisposition\('MODEL_RESTRAINT_SKEW_DIRECTION_UNSUPPORTED'\)/u,
+  'Skew unilateral restraint must block rather than snap to dominant global DOF.',
+);
+
+const {
+  classifyRestraint,
+  restraintDispositions,
+} = await import('../src/core/linear-piping-analysis-consumer/inputxml-feature-inventory-restraints.js');
+const element = { fromNodeId: '10', toNodeId: '20' };
+const segment = { startNodeId: '10', endNodeId: '20' };
+const axisAligned = classifyRestraint({
+  TYPE: '14',
+  NODE: '10',
+  XCOSINE: '0',
+  YCOSINE: '1',
+  ZCOSINE: '0',
+}, element, segment);
+const axisAlignedDispositions = restraintDispositions(axisAligned);
+assert.equal(axisAligned.targetDof, 'UY');
+assert.equal(axisAlignedDispositions.STRICT_INPUTXML_LINEAR_STATIC_V1.disposition, 'NONLINEAR_OUT_OF_SCOPE');
+assert.equal(axisAlignedDispositions.DISCLOSED_GENERIC_ANALYZER_APPROXIMATION_V1.disposition,
+  'IMPLEMENTED_WITH_DECLARED_APPROXIMATION');
+
+const diagonal = Math.SQRT1_2;
+const skew = classifyRestraint({
+  TYPE: '14',
+  NODE: '10',
+  XCOSINE: String(diagonal),
+  YCOSINE: String(diagonal),
+  ZCOSINE: '0',
+}, element, segment);
+const skewDispositions = restraintDispositions(skew);
+assert.equal(skew.direction.valid, true);
+assert.ok(['UX', 'UY'].includes(skew.targetDof));
+assert.equal(skewDispositions.STRICT_INPUTXML_LINEAR_STATIC_V1.disposition, 'NONLINEAR_OUT_OF_SCOPE');
+assert.equal(skewDispositions.DISCLOSED_GENERIC_ANALYZER_APPROXIMATION_V1.disposition,
+  'UNSUPPORTED_BY_GENERIC_SOLVER');
+assert.equal(skewDispositions.DISCLOSED_GENERIC_ANALYZER_APPROXIMATION_V1.limitationCode,
+  'MODEL_RESTRAINT_SKEW_DIRECTION_UNSUPPORTED');
+
 const gravityExpansion = source['gravity-expansion.js'];
 const massSourceExpansion = source['gravity-expansion-mass-sources.js'];
 const gravityExpansionPrimitives = source['gravity-expansion-primitives.js'];

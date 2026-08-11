@@ -181,6 +181,11 @@ assert.deepEqual(horizontal.units, { force: 'N' });
 assert.equal(horizontal.actions.length, 1);
 assert.equal(horizontal.actions[0].entityId, 'SUP-ANCHOR-01');
 assert.equal(horizontal.actions[0].interfaceId, 'IF-ANCHOR-01');
+assert.equal(horizontal.actions[0].reportingSignConvention, 'FORCE_ON_INTERFACE_FROM_PIPE');
+assert.equal(
+  horizontal.actions[0].reportingSignConvention,
+  horizontalRecovery.results[0].reportingSignConvention,
+);
 assert.equal(horizontal.actions[0].triadStatus, 'RESOLVED');
 close(horizontal.actions[0].fAxial, 1500);
 close(horizontal.actions[0].fLateral, 0);
@@ -199,6 +204,7 @@ const vertical = createLinearPipingSupportActionsPublication({
   parallelTolerance: TOLERANCE,
 });
 assert.equal(vertical.actions[0].entityId, 'SUP-ANCHOR-01');
+assert.equal(vertical.actions[0].reportingSignConvention, 'FORCE_ON_INTERFACE_FROM_PIPE');
 assert.equal(vertical.actions[0].triadStatus, 'BLOCKED_AXIS_DEGENERATE');
 assert.equal(vertical.actions[0].triadReason, 'AXIAL_PARALLEL_TO_VERTICAL');
 close(vertical.actions[0].fAxial, -900);

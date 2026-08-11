@@ -113,6 +113,36 @@ export {
   requireLafeaStageAnalysisAdapter,
 } from './lafea-lifecycle-workbench-store.js';
 export {
+  LAFEA_WORKBENCH_RELEASE_BINDING_SCHEMA,
+  LAFEA_WORKBENCH_RELEASE_BINDING_STATUSES,
+  createLafeaWorkbenchReleaseState,
+  projectLafeaWorkbenchReleaseBinding,
+} from './lafea-workbench-release-binding.js';
+export {
+  LAFEA_WORKBENCH_VERIFICATION_BINDING_SCHEMA,
+  LAFEA_WORKBENCH_VERIFICATION_BINDING_STATUSES,
+  LAFEA_WORKBENCH_VERIFICATION_INTAKE_SCHEMA,
+  createLafeaWorkbenchVerificationState,
+  projectLafeaWorkbenchVerificationBinding,
+} from './lafea-workbench-verification-state.js';
+export {
+  LAFEA_NUMERICAL_VERIFICATION_VIEW_SCHEMA,
+  buildLafeaNumericalVerificationViewModel,
+} from './lafea-numerical-verification-view.js';
+export {
+  LAFEA_T6_GEOMETRY_QUALIFICATION_CUSTODY_SCHEMA,
+  LAFEA_T6_GEOMETRY_QUALIFICATION_INTAKE_SCHEMA,
+  LAFEA_T6_GEOMETRY_QUALIFICATION_STAGE_ID,
+  createLafeaT6GeometryQualificationCustody,
+  validateLafeaT6GeometryQualificationCustody,
+} from './lafea-t6-geometry-qualification-custody.js';
+export {
+  LAFEA_T6_GEOMETRY_QUALIFICATION_PROJECTION_SCHEMA,
+  LAFEA_T6_GEOMETRY_QUALIFICATION_STATES,
+  createLafeaT6GeometryQualificationState,
+  projectLafeaT6GeometryQualification,
+} from './lafea-t6-geometry-qualification-state.js';
+export {
   LAFEA_CANONICAL_SHA256_PROFILE,
   canonicalLafeaJson,
   canonicalLafeaSha256,
@@ -267,6 +297,12 @@ export { lafeaPreviewGeometry } from './lafea-stage-preview.js';
  * extensions only and receive a frozen facade containing `getState` and
  * `importDocument`.
  *
+ * `currentCandidateHeadSha` and `authorizedReleaseEvidenceHashes` are optional
+ * host-supplied release trust anchors. `currentCandidateHeadSha` is also used
+ * by governed T6 geometry qualification custody so exact-head evidence cannot
+ * remain current across a different build. End-user UI does not create these
+ * trust anchors.
+ *
  * `THREE` is an optional injected Three.js namespace. It is used only after a
  * producer supplies a V2 render packet whose scene revision and complete U3
  * engineering/display lineage evaluate as current and qualified. Producers use
@@ -275,7 +311,7 @@ export { lafeaPreviewGeometry } from './lafea-stage-preview.js';
  * do not register lifecycle evidence or expose retained packet buffers.
  *
  * @param {Element} rootElement Workbench host.
- * @param {{initialStage?:string,initialDocument?:unknown,initialSourceHash?:string,accessoryPanels?:unknown[],THREE?:unknown}|undefined} options Explicit initial state, optional accessory panels and optional Three.js dependency.
+ * @param {{initialStage?:string,initialDocument?:unknown,initialSourceHash?:string,accessoryPanels?:unknown[],THREE?:unknown,currentCandidateHeadSha?:string,authorizedReleaseEvidenceHashes?:string[]}|undefined} options Explicit initial state, optional accessory panels, release/T6 build trust anchors and optional Three.js dependency.
  * @returns {LafeaWorkbenchController} Initialized controller.
  */
 export function mountLafeaWorkbench(rootElement, options) {

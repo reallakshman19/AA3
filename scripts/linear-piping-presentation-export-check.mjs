@@ -80,12 +80,23 @@ test('P5-PRES-01', 'Current application chain compiles into a read-only qualifie
 
 test('P5-PRES-02', 'Presentation rows retain units, basis, sign and direct evidence identities', () => {
   const interfaceRow = presentation.interfaceRows[0];
+  const codeRow = presentation.codeRows[0];
+  const b31Entry = fixture.b31Application.results[0];
+  const sourceBinding = fixture.b31Application.caseBindings.find(
+    (binding) => binding.caseId === 'OPERATING_CASE',
+  );
+  assert.ok(sourceBinding, 'qualified fixture must retain the OPERATING_CASE binding');
   assert.equal(interfaceRow.reportingSignConvention, 'FORCE_ON_INTERFACE_FROM_PIPE');
   assert.deepEqual(interfaceRow.units, { force: 'N', moment: 'N*m', length: 'm' });
   assert.equal(interfaceRow.recoverySemanticHash, fixture.interfaceRecoveries[0].semanticHash);
   assert.equal(interfaceRow.recoveryEvidenceHash, fixture.interfaceRecoveries[0].evidenceHash);
   assert.equal(presentation.nozzleRows[0].profileSemanticHash, fixture.nozzleAssessments[0].profileSemanticHash);
-  assert.deepEqual(presentation.codeRows[0].sourceRecoveryHashes, [fixture.analysisResults[0].recovery.semanticHash]);
+  assert.deepEqual(codeRow.sourceRecoveryHashes, [fixture.analysisResults[0].recovery.semanticHash]);
+  assert.equal(codeRow.codeProfileId, b31Entry.codeResult.codeProfileId);
+  assert.equal(codeRow.codeProfileSemanticHash, fixture.b31Application.codeProfileSemanticHash);
+  assert.equal(codeRow.editionDatasetSemanticHash, fixture.b31Application.editionDatasetSemanticHash);
+  assert.deepEqual(codeRow.sourceCaseIds, ['OPERATING_CASE']);
+  assert.deepEqual(codeRow.sourcePhysicalLoadCaseHashes, [sourceBinding.physicalLoadCaseHash]);
 });
 
 test('P5-PRES-03', 'Input array order does not change presentation identity', () => {
@@ -124,9 +135,25 @@ test('P5-EXP-02', 'Qualified interface, nozzle and B31 CSV exports are byte dete
     first.map((row) => ({ role: row.role, contentHash: row.contentHash, content: row.content })),
     second.map((row) => ({ role: row.role, contentHash: row.contentHash, content: row.content })),
   );
-  assert.match(first.find((row) => row.role === 'INTERFACE_LOADS_CSV').content, /recovery_evidence_hash/u);
-  assert.match(first.find((row) => row.role === 'NOZZLE_ASSESSMENTS_CSV').content, /assessment_evidence_hash/u);
-  assert.match(first.find((row) => row.role === 'B31_CODE_RESULTS_CSV').content, /source_recovery_hashes/u);
+  const interfaceExport = first.find((row) => row.role === 'INTERFACE_LOADS_CSV');
+  const nozzleExport = first.find((row) => row.role === 'NOZZLE_ASSESSMENTS_CSV');
+  const codeExport = first.find((row) => row.role === 'B31_CODE_RESULTS_CSV');
+  assert.ok(interfaceExport);
+  assert.ok(nozzleExport);
+  assert.ok(codeExport);
+  assert.match(interfaceExport.content, /recovery_evidence_hash/u);
+  assert.match(nozzleExport.content, /assessment_evidence_hash/u);
+  assert.match(codeExport.content, /source_recovery_hashes/u);
+  assert.match(codeExport.content, /code_profile_id/u);
+  assert.match(codeExport.content, /code_profile_hash/u);
+  assert.match(codeExport.content, /edition_dataset_hash/u);
+  assert.match(codeExport.content, /source_case_ids/u);
+  assert.match(codeExport.content, /source_physical_load_case_hashes/u);
+  assert.ok(codeExport.content.includes(presentation.codeRows[0].codeProfileId));
+  assert.ok(codeExport.content.includes(presentation.codeRows[0].codeProfileSemanticHash));
+  assert.ok(codeExport.content.includes(presentation.codeRows[0].editionDatasetSemanticHash));
+  assert.ok(codeExport.content.includes(presentation.codeRows[0].sourceCaseIds[0]));
+  assert.ok(codeExport.content.includes(presentation.codeRows[0].sourcePhysicalLoadCaseHashes[0]));
 });
 
 test('P5-EXP-03', 'Conditional current result remains audit-visible but engineering issue export is blocked', () => {
@@ -179,16 +206,23 @@ test('P5-PRES-05', 'Tampered presentation evidence is rejected independently', (
   expectCode(() => requireLinearPipingPresentation(tampered), 'PIPING_PRESENTATION_HASH_MISMATCH');
 });
 
-test('P5-UI-01', 'Workspace renderer consumes the sealed current presentation without mechanics', () => {
+test('P5-UI-01', 'Workspace renderer consumes sealed current B31 provenance without mechanics', () => {
   const documentRef = new FakeDocument();
   const root = new FakeElement('div', documentRef);
   const view = renderLinearPipingResultsView(root, presentation, fixture.applicationResult);
+  const rendered = flattenText(view);
+  const codeRow = presentation.codeRows[0];
   assert.equal(root.children.length, 1);
   assert.equal(view.dataset.currency, 'CURRENT');
   assert.equal(view.dataset.status, 'QUALIFIED');
   assert.equal(view.dataset.exportEligibility, 'ENGINEERING_EXPORT_ALLOWED');
-  assert.ok(flattenText(view).includes('B31.3 application results'));
-  assert.ok(flattenText(view).includes(fixture.interfaceRecoveries[0].semanticHash));
+  assert.ok(rendered.includes('B31.3 application results'));
+  assert.ok(rendered.includes(fixture.interfaceRecoveries[0].semanticHash));
+  assert.ok(rendered.includes(codeRow.codeProfileId));
+  assert.ok(rendered.includes(codeRow.codeProfileSemanticHash));
+  assert.ok(rendered.includes(codeRow.editionDatasetSemanticHash));
+  assert.ok(rendered.includes(codeRow.sourceCaseIds[0]));
+  assert.ok(rendered.includes(codeRow.sourcePhysicalLoadCaseHashes[0]));
 });
 
 console.log('Linear piping Phase 5 presentation and export checks PASS');

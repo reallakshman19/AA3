@@ -23,6 +23,21 @@ const PURE_LAFEA_MESHING_WORKSPACE_MODULES = new Set([
   '/src/workspace/lafea-shell-periodic-midsurface-contract.js',
 ]);
 
+const PURE_LAFEA_WORKBENCH_GOVERNANCE_MODULES = new Set([
+  '/src/workspace/lafea-analysis-settings-view.js',
+  '/src/workspace/lafea-guided-workflow.js',
+  '/src/workspace/lafea-guided-workflow-view.js',
+  '/src/workspace/lafea-numerical-verification-view.js',
+  '/src/workspace/lafea-t6-geometry-qualification-custody.js',
+  '/src/workspace/lafea-t6-geometry-qualification-state.js',
+  '/src/workspace/lafea-t6-geometry-qualification-view.js',
+  '/src/workspace/lafea-workbench-orchestration-projection.js',
+  '/src/workspace/lafea-workbench-readiness.js',
+  '/src/workspace/lafea-workbench-reason-labels.js',
+  '/src/workspace/lafea-workbench-release-binding.js',
+  '/src/workspace/lafea-workbench-verification-state.js',
+]);
+
 /**
  * Keep manual chunking limited to dependency-oriented or calculation-core
  * domains. Workspace modules remain graph-owned because they contain stores,
@@ -114,17 +129,27 @@ export function manualChunk(id) {
     || source.endsWith('/src/workspace/lfea-support-actions-panel.js')) {
     return 'workspace-event-presentation-contracts';
   }
+  // PR #1016 adds a bounded set of read-only views, immutable qualification
+  // custody, and derived readiness/release projections. These modules export
+  // functions/contracts only; they own no workbench controller, store, mounted
+  // viewport, or top-level mutable singleton. Keeping them in a dedicated leaf
+  // chunk reduces the entry chunk without manually partitioning the stateful
+  // workbench composition graph.
+  if ([...PURE_LAFEA_WORKBENCH_GOVERNANCE_MODULES]
+    .some((modulePath) => source.endsWith(modulePath))) {
+    return 'lafea-workbench-governance';
+  }
 
   // The Phase-1 pre-flight core is an indexed, DOM-free, clock-free leaf stack.
-  // scripts/lfea-preflight-phase1-indexed-model-check.mjs asserts both halves of
+  // scripts/lafea-preflight-phase1-indexed-model-check.mjs asserts both halves of
   // what makes this split safe: these modules create no DOM and read no ambient
   // clock, and none of them imports the live UI, the review surface or the
   // application entry point. The dependency therefore runs one way, so giving
   // them their own chunk cannot reorder evaluation of a stateful workspace
   // controller. Splitting them keeps the main chunk under the production
   // ceiling asserted by scripts/bundle-chunk-check.mjs.
-  if (source.includes('/src/workspace/lfea-preflight-phase1-')) {
-    return 'lfea-preflight-phase1';
+  if (source.includes('/src/workspace/lafea-preflight-phase1-')) {
+    return 'lafea-preflight-phase1';
   }
 
   // Rollup must own the complete stateful workspace graph so evaluation order

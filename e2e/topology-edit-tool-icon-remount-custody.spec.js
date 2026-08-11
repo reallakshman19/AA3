@@ -8,7 +8,6 @@ import {
   installBrokenProbe,
   openPanel,
   openTopologyEdit,
-  selectFirstNodeThroughObjectTree,
 } from './helpers/topology-edit-icon-qualification.js';
 import {
   applyCustodyRunContext,
@@ -39,10 +38,11 @@ test('three deactivate/reactivate cycles retain one sprite, one command effect, 
     expect(custody.extraIconBearingControlCount).toBe(0);
     expect((await collectWebglEvidence(host)).live).toBe(true);
 
-    await selectFirstNodeThroughObjectTree(host);
-    await closePanel(host, 'topology-edit-object-tree');
+    await selectUnrestrainedEndpoint(host);
+    await closePanel(host, 'topology-edit-visible-endpoints');
     await openPanel(host, 'commands');
     const move = host.locator('[data-command-action="move-positive-z"]');
+    await expect(move).toBeEnabled();
     const beforeMove = await engineeringEvidence(host);
     expect(beforeMove.activeCommandCount).toBe(0);
     await move.click();
@@ -173,3 +173,14 @@ test('delayed lazy icon import cannot mount a stale activation after exit and re
     contentType: 'application/json',
   });
 });
+
+async function selectUnrestrainedEndpoint(host) {
+  await openPanel(host, 'topology-edit-visible-endpoints');
+  const button = host.locator(
+    '[data-role="topology-edit-visible-endpoints"] button[data-workspace-entity-ids="P-003"][data-endpoint-role="TO"]',
+  );
+  await expect(button).toHaveCount(1);
+  await expect(button).toBeVisible();
+  await button.click();
+  await expect(host).toHaveAttribute('data-topology-edit-selection-count', '1');
+}

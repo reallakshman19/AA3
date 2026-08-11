@@ -52,6 +52,23 @@ test('exact-gap command is available for graph-open endpoints in separate compon
   assert.equal(receipt.status, 'AVAILABLE');
 });
 
+test('node move capability is truthful about support-host geometry policy', () => {
+  const model = topology([
+    { id: 'edge:a-b', componentKey: 'P-AB', fromNodeId: 'node:a', toNodeId: 'node:b' },
+    { id: 'edge:c-d', componentKey: 'P-CD', fromNodeId: 'node:c', toNodeId: 'node:d' },
+  ]);
+  model.supports.push({ id: 'support:s1', hostEntityId: 'P-AB', stationMm: 20 });
+  const blocked = deriveTopologyEditCommandCapability({
+    actionId: 'move-positive-z', selection: { nodeIds: ['node:a'] }, topology: model,
+  });
+  assert.equal(blocked.status, 'UNREPRESENTABLE');
+  assert.equal(blocked.reasonCode, 'SUPPORT_GEOMETRY_POLICY_REQUIRED');
+  const available = deriveTopologyEditCommandCapability({
+    actionId: 'move-positive-z', selection: { nodeIds: ['node:c'] }, topology: model,
+  });
+  assert.equal(available.status, 'AVAILABLE');
+});
+
 test('professional offset without an isolated corner is unrepresentable, not a generic failure', () => {
   const model = topology([
     { id: 'edge:a-x', fromNodeId: 'node:a', toNodeId: 'node:x' },

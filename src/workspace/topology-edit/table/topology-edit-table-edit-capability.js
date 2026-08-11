@@ -1,5 +1,10 @@
 import { topologyEditTableColumnsFor } from './topology-edit-table-columns.js';
 import { createTopologyEditCapabilityReceipt } from '../editor-state/topology-edit-capability-contract.js';
+import {
+  SUPPORT_GEOMETRY_POLICY_REQUIRED,
+  topologyEditAffectedEdgeIds,
+  topologyEditSupportGeometryDependencies,
+} from '../professional/topology-edit-support-geometry-dependency.js';
 
 const CERTIFIED_EDITOR_TO_INTENT = Object.freeze({
   PIPE_LENGTH: 'PIPE_LENGTH',
@@ -17,7 +22,7 @@ const UNCERTIFIED_PROPERTIES = Object.freeze({
   REDUCER: new Set(['reducerType', 'reducerOrientation']),
 });
 const NODE_DEPENDANT_COLLECTIONS = Object.freeze([
-  'junctions', 'supports', 'boundaries', 'rigids', 'bends',
+  'junctions', 'boundaries', 'rigids', 'bends',
 ]);
 
 export function deriveTopologyEditTableCellCapability(input = {}) {
@@ -151,6 +156,21 @@ export function deriveTopologyEditTableNodePositionCapability(input = {}) {
     return receipt('BLOCKED', 'NODE_POSITION_UNRESOLVED', `Canonical node ${nodeId} has no exact finite position.`, row, property, context, {
       intentKind: 'NODE_POSITION', endpoint, nodeId,
     });
+  }
+  const supportDependencies = topologyEditSupportGeometryDependencies(topology, {
+    movedNodeIds: [nodeId],
+    affectedEdgeIds: topologyEditAffectedEdgeIds(topology, [nodeId]),
+  });
+  if (supportDependencies.length) {
+    return receipt(
+      'UNREPRESENTABLE',
+      SUPPORT_GEOMETRY_POLICY_REQUIRED,
+      `Node ${nodeId} affects support-host geometry; support movement policy must be certified before editing.`,
+      row,
+      property,
+      context,
+      { intentKind: 'NODE_POSITION', endpoint, nodeId, supportDependencies },
+    );
   }
   const dependants = nodeDependants(topology, nodeId);
   if (dependants.length) {

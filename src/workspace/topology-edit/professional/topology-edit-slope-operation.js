@@ -3,6 +3,7 @@ import {
   createUnrepresentableTopologyEditOperationResult,
 } from './topology-edit-operation-plan.js';
 import { deriveTopologyEditChangedScope } from './topology-edit-change-scope.js';
+import { assertNoTopologyEditSupportGeometryDependencies, topologyEditAffectedEdgeIds } from './topology-edit-support-geometry-dependency.js';
 import {
   assertMovedGeometry,
   exactNode,
@@ -56,9 +57,14 @@ export function planApplyDeclaredSlope(input = {}) {
     });
   }
   assertMovedGeometry(context, movedPositions);
+  const movedNodeIds = path.orderedNodeIds.slice(1);
+  assertNoTopologyEditSupportGeometryDependencies(context.topology, {
+    movedNodeIds,
+    affectedEdgeIds: topologyEditAffectedEdgeIds(context.topology, movedNodeIds),
+  });
   const changedScope = deriveTopologyEditChangedScope(context.topology, {
     basisHash: context.basisHash,
-    nodeIds: path.orderedNodeIds.slice(1),
+    nodeIds: movedNodeIds,
     edgeIds: path.pathEdgeIds,
   });
   return createTopologyEditOperationPlan({
@@ -73,7 +79,7 @@ export function planApplyDeclaredSlope(input = {}) {
       runMm,
       direction,
     },
-    commandIntents: path.orderedNodeIds.slice(1).map((nodeId) => ({
+    commandIntents: movedNodeIds.map((nodeId) => ({
       commandType: 'MOVE_NODE',
       payload: { nodeId, position: movedPositions.get(nodeId) },
     })),

@@ -1,5 +1,9 @@
 /** Read-only presentation of retained convergence and mesh-quality evidence. */
 import { element } from './lafea-workbench-dom.js';
+import {
+  buildLafeaT6GeometryQualificationViewModel,
+  renderLafeaT6GeometryQualification,
+} from './lafea-t6-geometry-qualification-view.js';
 
 export const LAFEA_NUMERICAL_VERIFICATION_VIEW_SCHEMA =
   'lafea-numerical-verification-view/v1';
@@ -11,6 +15,7 @@ export function buildLafeaNumericalVerificationViewModel(stageValue) {
     stageId: stage.stageId,
     convergence: convergenceModel(stage.numericalVerificationProjection),
     meshQuality: meshQualityModel(stage),
+    t6GeometryQualification: buildLafeaT6GeometryQualificationViewModel(stage),
   });
 }
 
@@ -26,6 +31,7 @@ export function renderLafeaNumericalVerification(root, stageValue) {
       'Read-only numerical verification from retained governed evidence. Missing detail is reported as unavailable rather than reconstructed from display data.'),
     convergenceSection(root, model.convergence),
     meshSection(root, model.meshQuality),
+    renderLafeaT6GeometryQualification(root, stageValue),
   );
   return wrapper;
 }
@@ -142,8 +148,9 @@ function meshQualityModel(stage) {
     rows,
     warnings: [...(quality.warningElementIds ?? [])],
     blockers: [...(quality.blockingElementIds ?? [])],
-    extendedGeometryEvidenceAvailable: false,
-    note: 'General workbench mesh custody currently retains aspect-ratio/scaled-Jacobian quality. Area, curved perimeter, boundary deviation, midside placement, topology and dense-Jacobian qualification belong to a separate Bucket-01 geometry evidence contract and are not inferred here.',
+    extendedGeometryEvidenceAvailable:
+      ['CURRENT_PASS', 'CURRENT_BLOCK'].includes(stage.t6GeometryQualificationProjection?.state),
+    note: 'General mesh custody reports aspect-ratio/scaled-Jacobian quality only. The separate T6 geometry section below owns area, curved perimeter, boundary deviation, midside placement, topology and dense-Jacobian qualification when governed custody is current.',
   });
 }
 

@@ -29,9 +29,9 @@ const BY_TYPE = Object.freeze({
     column('turnIntent', 'Turn Intent', 'enum', { readOnly: true }),
   ],
   FLANGE: [
-    column('flangeType', 'Flange Type', 'enum', { readOnly: true }),
-    column('flangeFacing', 'Facing', 'enum', { readOnly: true }),
-    column('rating', 'Rating', 'text', { readOnly: true }),
+    column('flangeType', 'Flange Type', 'enum', { editor: 'CATALOGUE_COMPONENT_REPLACE' }),
+    column('flangeFacing', 'Facing', 'enum', { editor: 'CATALOGUE_COMPONENT_REPLACE' }),
+    column('rating', 'Rating', 'text', { editor: 'CATALOGUE_COMPONENT_REPLACE' }),
   ],
   VALVE: [
     column('valveType', 'Valve Type', 'enum', { editor: 'VALVE_REPLACE' }),
@@ -47,8 +47,8 @@ const BY_TYPE = Object.freeze({
     column('branchAngleDeg', 'Branch Angle', 'angle', { editor: 'BRANCH_RECONFIGURE' }),
   ],
   REDUCER: [
-    column('reducerType', 'Reducer Type', 'enum', { readOnly: true }),
-    column('reducerOrientation', 'Orientation', 'enum', { readOnly: true }),
+    column('reducerType', 'Reducer Type', 'enum', { editor: 'CATALOGUE_COMPONENT_REPLACE' }),
+    column('reducerOrientation', 'Orientation', 'enum', { editor: 'CATALOGUE_COMPONENT_REPLACE' }),
   ],
   SUPPORT: [
     column('hostEntityId', 'Host', 'identity', { readOnly: true }),

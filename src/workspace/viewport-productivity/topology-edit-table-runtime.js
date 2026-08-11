@@ -9,6 +9,7 @@ import { TopologyEditValidationWorkerClient } from '../topology-edit/professiona
 import {
   handleTopologyEditTableCellInput,
   handleTopologyEditTableCellKeyDown,
+  handleTopologyEditTableCompoundCellClick,
   resetTopologyEditTableCellEditing,
 } from './topology-edit-table-cell-edit.js';
 import {
@@ -167,6 +168,7 @@ export class TopologyEditTableRuntime {
   handleKeyDown(event) { return handleTopologyEditTableCellKeyDown(this, event); }
 
   handleClick(event) {
+    if (handleTopologyEditTableCompoundCellClick(this, event)) return true;
     const select = event.target.closest?.('[data-table-select]');
     if (select && this.element?.contains(select)) return this.selectRow(select.dataset.tableSelect, event);
     const sort = event.target.closest?.('[data-table-sort]');

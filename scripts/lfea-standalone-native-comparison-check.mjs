@@ -71,6 +71,31 @@ assert.equal(methodComparison.comparableCount, 0);
 assert.ok(methodComparison.rows.every((row) => row.reasonCodes.includes('METHOD_IDENTITY_MISMATCH')));
 console.log('LFEA-NATIVE-COMPARE-06 PASS solver/method identity change blocks direct comparison');
 
+const changedFrameMethod = runRecord('F2', {
+  displacement: 0.02,
+  reaction: 90,
+  actionScale: 0.9,
+  frameElementProfileHash: 'fnv1a64:ffffffffffffffff',
+});
+const frameMethodComparison = compareLfeaNativeRunRecords(runA, changedFrameMethod);
+assert.equal(frameMethodComparison.comparableCount, 0);
+assert.ok(frameMethodComparison.rows.every((row) => row.reasonCodes.includes('METHOD_IDENTITY_MISMATCH')));
+console.log('LFEA-NATIVE-COMPARE-06B PASS frame-element formulation profile participates in method compatibility');
+
+const changedRecoveryMethod = runRecord('F3', {
+  displacement: 0.02,
+  reaction: 90,
+  actionScale: 0.9,
+  recoveryProfileHash: 'fnv1a64:9999999999999999',
+});
+const recoveryMethodComparison = compareLfeaNativeRunRecords(runA, changedRecoveryMethod);
+assert.equal(recoveryMethodComparison.comparableCount, 2);
+assert.equal(recoveryMethodComparison.incompatibleCount, 24);
+assert.ok(recoveryMethodComparison.rows
+  .filter((row) => row.left?.resultAuthority === 'RECOVERED_B3.4_ELEMENT_ACTION')
+  .every((row) => row.reasonCodes.includes('METHOD_IDENTITY_MISMATCH')));
+console.log('LFEA-NATIVE-COMPARE-06C PASS recovery-profile changes block recovered deltas without blocking unchanged raw quantities');
+
 const missingAxis = runRecord('G', {
   displacement: 0.02, reaction: 90, actionScale: 0.9, localAxisHash: null,
 });
@@ -103,7 +128,10 @@ for (const [field, value, reason] of mutations) {
 const unavailableValue = compareQuantityPair(reference, Object.freeze({ ...reference, value: null }));
 assert.ok(unavailableValue.reasonCodes.includes('VALUE_UNAVAILABLE'));
 assert.equal(unavailableValue.delta, null);
-console.log('LFEA-NATIVE-COMPARE-08 PASS every semantic tuple dimension and unavailable value fails closed independently');
+const unavailableMethod = compareQuantityPair(reference, Object.freeze({ ...reference, methodIdentity: 'B3.3:UNAVAILABLE:x:y' }));
+assert.ok(unavailableMethod.reasonCodes.includes('METHOD_IDENTITY_UNAVAILABLE'));
+assert.equal(unavailableMethod.delta, null);
+console.log('LFEA-NATIVE-COMPARE-08 PASS every semantic tuple dimension and unavailable value/method fails closed independently');
 
 sourceGuards();
 console.log('LFEA-NATIVE-COMPARE-09 PASS Compare is a production view consumer with no support/code derivation, storage, EventBus, generic ledger, or LAFEA coupling');
@@ -121,6 +149,8 @@ function runRecord(id, options) {
   const caseId = options.caseId ?? 'CASE-A';
   const physicalLoadCaseHash = options.physicalLoadCaseHash ?? 'fnv1a64:1111111111111111';
   const solverProfileHash = options.solverProfileHash ?? 'fnv1a64:2222222222222222';
+  const frameElementProfileHash = options.frameElementProfileHash ?? 'fnv1a64:4444444444444444';
+  const recoveryProfileHash = options.recoveryProfileHash ?? 'fnv1a64:3333333333333333';
   const localAxisHash = options.localAxisHash === undefined ? 'fnv1a64:aaaaaaaaaaaaaaaa' : options.localAxisHash;
   const action = actionPair(options.actionScale);
   return Object.freeze({
@@ -128,9 +158,11 @@ function runRecord(id, options) {
     runId: `LFEA-RUN-${id}`,
     evidence: Object.freeze({
       rawExecutionBatch: Object.freeze({
+        requestedProfileId: 'STRICT_INPUTXML_LINEAR_STATIC_V1',
         caseExecutions: Object.freeze([Object.freeze({
           caseId,
           physicalLoadCaseHash,
+          frameElementProfileSemanticHash: frameElementProfileHash,
           solverProfileSemanticHash: solverProfileHash,
           elementLedger: Object.freeze([Object.freeze({
             elementId: 'E-000001',
@@ -143,7 +175,7 @@ function runRecord(id, options) {
         })]),
       }),
       recoveryBatch: Object.freeze({
-        recoveryProfileSemanticHash: 'fnv1a64:3333333333333333',
+        recoveryProfileSemanticHash: recoveryProfileHash,
         caseRecoveries: Object.freeze([Object.freeze({
           caseId,
           physicalLoadCaseHash,

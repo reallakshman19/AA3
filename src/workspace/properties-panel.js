@@ -1,9 +1,12 @@
 import { EventBus } from './event-bus.js';
 import { EVENT_TOPICS } from './event-topics.js';
 import { renderPropertiesContent } from './properties-view.js';
+import { renderLfeaSupportActions } from './lfea-support-actions-panel.js';
 import { WorkspaceState } from './workspace-state.js';
 import { engineeringModelStore } from './engineering-model-store.js';
 import { ENGINEERING_MODEL_EVENTS } from './engineering-model-controller.js';
+import { createLfeaSupportActionsState } from './properties-panel-lfea-actions.js';
+import { idleAnalysis, isPlainObject, lifecycleState } from './properties-panel-state.js';
 
 export class PropertiesPanel {
   constructor(rootElement, eventBus = EventBus, workspaceState = WorkspaceState) {
@@ -19,6 +22,7 @@ export class PropertiesPanel {
     this.ledgerStatus = {};
     this.analysisState = idleAnalysis();
     this.searchQuery = '';
+    this.lfeaActions = createLfeaSupportActionsState();
     this.unsubscribeCallbacks = [];
     this.handleClick = this.handleClick.bind(this);
     this.handleChange = this.handleChange.bind(this);
@@ -46,7 +50,10 @@ export class PropertiesPanel {
       this.eventBus.subscribe(EVENT_TOPICS.ANALYSIS_LEDGER_FAILED, (payload) => this.handleLedgerFailure(payload)),
       this.eventBus.subscribe(EVENT_TOPICS.ANALYSIS_EXPORT_COMPLETED, ({ artifact }) => this.handleExportCompleted(artifact)),
       this.eventBus.subscribe(EVENT_TOPICS.ANALYSIS_EXPORT_FAILED, (payload) => this.handleExportFailed(payload)),
-      this.eventBus.subscribe(EVENT_TOPICS.DATASET_CLEARED, () => this.renderEmpty()),
+      this.eventBus.subscribe(EVENT_TOPICS.TOPOLOGY_EDIT_LFEA_SOURCE_CHANGED, (payload) => this.handleLfeaSourceChanged(payload)),
+      this.eventBus.subscribe(EVENT_TOPICS.LFEA_SUPPORT_ACTIONS_PUBLISHED, (payload) => this.handleLfeaSupportActions(payload)),
+      this.eventBus.subscribe(EVENT_TOPICS.WORKSPACE_SNAPSHOT_CHANGED, () => this.invalidateLfeaSupportActions()),
+      this.eventBus.subscribe(EVENT_TOPICS.DATASET_CLEARED, () => this.handleDatasetCleared()),
       this.eventBus.subscribe(ENGINEERING_MODEL_EVENTS.CHANGED, () => { if (this.selection?.entityId) this.renderSelection({ entityId: this.selection.entityId }); }),
     ];
   }
@@ -138,6 +145,25 @@ export class PropertiesPanel {
     if (this.selection) this.render();
   }
 
+  handleLfeaSourceChanged(payload) {
+    this.lfeaActions.applySourceChanged(payload);
+    if (this.selection) this.render();
+  }
+
+  handleLfeaSupportActions(payload) {
+    this.lfeaActions.applySupportActions(payload);
+    if (this.selection) this.render();
+  }
+
+  invalidateLfeaSupportActions() {
+    if (this.lfeaActions.invalidate() && this.selection) this.render();
+  }
+
+  handleDatasetCleared() {
+    this.lfeaActions.clear();
+    this.renderEmpty();
+  }
+
   isCurrentTarget(targetId) {
     return this.selection?.entityId === targetId;
   }
@@ -150,7 +176,7 @@ export class PropertiesPanel {
     if (!this.selection) return this.renderEmpty();
     const capabilities = this.capabilityTargetId === this.selection.entityId ? this.capabilities : [];
     const session = this.analysisSession?.targetId === this.selection.entityId ? this.analysisSession : null;
-    this.contentElement.replaceChildren(renderPropertiesContent(
+    const content = renderPropertiesContent(
       this.rootElement.ownerDocument,
       this.selection,
       capabilities,
@@ -158,8 +184,16 @@ export class PropertiesPanel {
       session,
       this.analysisLedger,
       this.ledgerStatus,
-      this.searchQuery
+      this.searchQuery,
+    );
+    content.append(renderLfeaSupportActions(
+      this.rootElement.ownerDocument,
+      this.selection,
+      this.lfeaActions.actions,
+      this.lfeaActions.sourceContext,
+      this.lfeaActions.invalidated,
     ));
+    this.contentElement.replaceChildren(content);
   }
 
   handleClick(event) {
@@ -259,23 +293,6 @@ export class PropertiesPanel {
     this.analysisLedger = null;
     this.ledgerStatus = {};
     this.analysisState = idleAnalysis();
+    this.lfeaActions.clear();
   }
-}
-
-function lifecycleState(status, payload) {
-  return {
-    status,
-    requestId: payload.requestId,
-    sessionId: payload.sessionId || '',
-    analysisType: payload.analysisType,
-    targetId: payload.targetId,
-  };
-}
-
-function idleAnalysis() {
-  return Object.freeze({ status: 'idle', requestId: '', sessionId: '', analysisType: '', targetId: '' });
-}
-
-function isPlainObject(value) {
-  return value !== null && typeof value === 'object' && !Array.isArray(value);
 }

@@ -116,14 +116,18 @@ function nozzleCsv(presentation) {
 function codeCsv(presentation) {
   const headers = [
     'application_id', 'presentation_hash', 'check_id', 'category', 'component_id',
-    'code_point_id', 'combination_id', 'status', 'calculated_stress_pa',
-    'allowable_stress_pa', 'utilization', 'governing_rule_id',
-    'source_recovery_hashes', 'code_result_hash', 'code_result_evidence_hash',
+    'code_point_id', 'combination_id', 'code_profile_id', 'code_profile_hash',
+    'edition_dataset_hash', 'source_case_ids', 'source_physical_load_case_hashes',
+    'status', 'calculated_stress_pa', 'allowable_stress_pa', 'utilization',
+    'governing_rule_id', 'source_recovery_hashes', 'code_result_hash',
+    'code_result_evidence_hash',
   ];
   const rows = presentation.codeRows.map((row) => [
     presentation.applicationId, presentation.semanticHash, row.checkId, row.category,
-    row.componentId, row.codePointId, row.combinationId, row.status,
-    row.calculatedStress, row.allowableStress, row.utilization, row.governingRuleId,
+    row.componentId, row.codePointId, row.combinationId, row.codeProfileId,
+    row.codeProfileSemanticHash, row.editionDatasetSemanticHash, row.sourceCaseIds.join('|'),
+    row.sourcePhysicalLoadCaseHashes.join('|'), row.status, row.calculatedStress,
+    row.allowableStress, row.utilization, row.governingRuleId,
     row.sourceRecoveryHashes.join('|'), row.semanticHash, row.evidenceHash,
   ]);
   return createCsvContent(headers, rows);

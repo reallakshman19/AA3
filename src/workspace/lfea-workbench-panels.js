@@ -12,6 +12,35 @@ import {
 import { lfeaResultTable } from './lfea-workbench-tables.js';
 import { qualityEvidenceRows } from './lfea-quality-adapter.js';
 
+const AUTHORITY_POLICY_LABELS = Object.freeze({
+  AUTHORITATIVE_RAW_ELEMENT_OR_INTEGRATION_POINT_STRESS:
+    'Raw element/integration-point stress is the qualified stress authority.',
+  NON_AUTHORITATIVE_REVIEW_PROJECTION:
+    'Projected nodal stress is a non-authoritative review projection.',
+  NOT_GENERATED:
+    'Projected stress was not generated for this run.',
+  PROHIBITED:
+    'Projected stress is prohibited for convergence evidence.',
+});
+
+const PREFLIGHT_STATUS_LABELS = Object.freeze({
+  WITHIN_CAPACITY: 'Within declared capacity',
+  EXPORT_LIKELY_TO_EXCEED_BYTE_CAPACITY: 'Capacity warning',
+  BLOCKED_BY_DECLARED_CAPACITY: 'Capacity blocked',
+});
+
+const PROGRESS_STAGE_LABELS = Object.freeze({
+  QUEUED: 'Queued for analysis',
+  VALIDATE: 'Validating mesh package',
+  PREFLIGHT: 'Checking declared capacity',
+  ADAPT: 'Building qualified FEA model',
+  SOLVE: 'Solving continuum model',
+  PROJECT: 'Preparing review stress projection',
+  REVIEW: 'Running engineering review',
+  EXPORT: 'Preparing evidence export',
+  COMPLETE: 'Analysis complete',
+});
+
 export function renderLfeaToolbar(root, state, modes, handlers) {
   const toolbar = workbenchElement(root, 'div', 'lfea-workbench__toolbar');
   const mock = workbenchButton(root, '[SIMULATED] Load Mock Data', handlers.onMock);
@@ -69,6 +98,43 @@ export function renderLfeaToolbar(root, state, modes, handlers) {
   return toolbar;
 }
 
+export function renderLfeaAnalysisSettings(root, packageValue) {
+  const wrapper = workbenchElement(root, 'div', 'lfea-workbench__analysis-settings');
+  wrapper.dataset.role = 'lfea-analysis-settings';
+  if (!packageValue) {
+    wrapper.append(workbenchElement(
+      root,
+      'p',
+      null,
+      'No committed mesh package is loaded; analysis authority is not available.',
+    ));
+    return wrapper;
+  }
+
+  const profile = packageValue.analysisDefinition?.solverProfile ?? {};
+  const units = profile.units ?? {};
+  const elementFamilies = [...new Set((packageValue.elements ?? [])
+    .map((row) => row?.elementType)
+    .filter((value) => typeof value === 'string' && value))]
+    .sort();
+  const list = workbenchElement(root, 'dl', 'lfea-workbench__analysis-settings-list');
+  appendSetting(root, list, 'Package', packageValue.packageIdentity);
+  appendSetting(root, list, 'Units identity', packageValue.unitsIdentity);
+  appendSetting(root, list, 'Coordinate system', packageValue.coordinateSystem);
+  appendSetting(root, list, 'Element families', elementFamilies.join(', '));
+  appendSetting(root, list, 'Formulation', packageValue.analysisDefinition?.formulation);
+  appendSetting(root, list, 'Solver profile', profile.profileIdentity);
+  appendSetting(root, list, 'Profile version', profile.profileVersion);
+  appendSetting(root, list, 'Solver backend', profile.backendIdentity);
+  appendSetting(root, list, 'Length unit', units.length);
+  appendSetting(root, list, 'Force unit', units.force);
+  appendSetting(root, list, 'Stress unit', units.stress);
+  appendSetting(root, list, 'DOF order', Array.isArray(profile.dofOrder) ? profile.dofOrder.join(', ') : null);
+  appendSetting(root, list, 'Constraint method', profile.constraintMethod);
+  wrapper.append(list);
+  return wrapper;
+}
+
 export function renderLfeaNodeDraftEditor(root, nodeDraft, handlers) {
   const form = workbenchElement(root, 'div', 'lfea-workbench__node-draft');
   if (!nodeDraft) {
@@ -120,9 +186,10 @@ export function renderLfeaResults(root, state) {
       lfeaResultTable(root, 'Displacements', execution.result.nodalDisplacements ?? []),
       lfeaResultTable(root, 'Reactions', execution.result.reactions ?? []),
       lfeaResultTable(root, 'Raw stress', rawStressRows(execution.result)),
+      meshQualityAuthority(root, state.packageValue),
       lfeaResultTable(
         root,
-        'Mesh quality evidence — no acceptance threshold applied',
+        'Mesh quality evidence',
         qualityEvidenceRows(execution.result),
       ),
     );
@@ -167,11 +234,14 @@ function resultModeSelect(root, state, modes, handlers) {
 }
 
 function deformationScaleInput(root, state, handlers) {
+  const displacementUnit = state.packageValue?.analysisDefinition?.solverProfile?.units?.length
+    ?? 'not declared';
   const label = workbenchElement(
     root,
     'label',
     'lfea-workbench__deformation-scale',
-    `Deformation scale (${state.display.deformationScaleSource}) `,
+    `Displayed displacement multiplier (${state.display.deformationScaleSource}; `
+      + `dimensionless; 1× = true displacement; displacement unit ${displacementUnit}) `,
   );
   const input = workbenchElement(root, 'input');
   input.type = 'number';
@@ -179,18 +249,23 @@ function deformationScaleInput(root, state, handlers) {
   input.min = '0';
   input.value = String(state.display.deformationScale);
   input.dataset.role = 'lfea-deformation-scale';
+  input.dataset.quantity = 'DIMENSIONLESS_DISPLAY_MULTIPLIER';
+  input.title = `Display-only multiplier. Calculated displacement values remain in ${displacementUnit}.`;
   input.addEventListener('change', () => handlers.onDeformationScale(input.value));
   label.append(input);
   return label;
 }
 
 function progressOutput(root, progress) {
+  const rawStage = typeof progress.stage === 'string' ? progress.stage : 'UNKNOWN';
   const output = workbenchElement(
     root,
     'output',
     'lfea-workbench__progress',
-    `${progress.stage} ${progress.index}/${progress.total}`,
+    `${progressStageLabel(rawStage)} — step ${progress.index}/${progress.total}`,
   );
+  output.dataset.stage = rawStage;
+  output.title = `Pipeline stage: ${rawStage}`;
   output.setAttribute('role', 'status');
   output.setAttribute('aria-live', 'polite');
   return output;
@@ -216,30 +291,83 @@ function diagnosticsBlock(root, diagnostics) {
 }
 
 function authorityPolicy(root, execution) {
-  return workbenchElement(
+  const policy = execution.authorityPolicy ?? {};
+  const rawCode = policy.rawStress ?? 'NOT_DECLARED';
+  const projectedCode = policy.projectedStress ?? 'NOT_DECLARED';
+  const convergenceCode = policy.projectedStressForConvergence ?? 'NOT_DECLARED';
+  const value = workbenchElement(
     root,
     'p',
     'lfea-workbench__authority',
-    `Raw: ${execution.authorityPolicy.rawStress}. `
-      + `Projected: ${execution.authorityPolicy.projectedStress}.`,
+    `Raw stress: ${authorityPolicyLabel(rawCode)} `
+      + `Projected stress: ${authorityPolicyLabel(projectedCode)} `
+      + `Convergence use: ${authorityPolicyLabel(convergenceCode)}`,
   );
+  value.dataset.rawStressPolicy = rawCode;
+  value.dataset.projectedStressPolicy = projectedCode;
+  value.dataset.projectedStressConvergencePolicy = convergenceCode;
+  value.title = `Raw=${rawCode}; Projected=${projectedCode}; ProjectedForConvergence=${convergenceCode}`;
+  return value;
 }
 
 function preflight(root, execution) {
   if (!execution.preflight) return workbenchElement(root, 'span');
+  const status = execution.preflight.status;
   const value = workbenchElement(
     root,
     'p',
     'lfea-workbench__preflight',
-    `Preflight ${execution.preflight.status} — `
+    `Preflight ${preflightStatusLabel(status)} — `
       + `${execution.preflight.nodeCount} nodes, `
       + `${execution.preflight.elementCount} elements, `
       + `${execution.preflight.dofCount} DOF. `
       + execution.preflight.advice,
   );
   value.dataset.role = 'lfea-preflight';
-  value.dataset.status = execution.preflight.status;
+  value.dataset.status = status;
+  value.title = `Preflight status: ${status}`;
   return value;
+}
+
+function meshQualityAuthority(root, packageValue) {
+  const tolerance = packageValue?.analysisDefinition?.solverProfile?.tolerances?.geometryArea;
+  const toleranceText = Number.isFinite(tolerance) ? String(tolerance) : 'not declared';
+  const value = workbenchElement(
+    root,
+    'p',
+    'lfea-workbench__preflight',
+    `Geometry validity was qualified upstream using solverProfile.tolerances.geometryArea = ${toleranceText}. `
+      + 'This panel adds no separate acceptance threshold to the displayed Jacobian ratio, edge-length ratio, or corner-cosine metrics; signed-area/Jacobian validity remains governed by upstream model qualification.',
+  );
+  value.dataset.role = 'lfea-quality-authority';
+  value.dataset.geometryTolerance = toleranceText;
+  value.title = 'Geometry gate source: analysisDefinition.solverProfile.tolerances.geometryArea';
+  return value;
+}
+
+function appendSetting(root, list, label, value) {
+  list.append(
+    workbenchElement(root, 'dt', null, label),
+    workbenchElement(root, 'dd', null, displaySetting(value)),
+  );
+}
+
+function displaySetting(value) {
+  if (typeof value === 'string' && value.trim()) return value;
+  if (Number.isFinite(value)) return String(value);
+  return 'Not declared';
+}
+
+function authorityPolicyLabel(code) {
+  return AUTHORITY_POLICY_LABELS[code] ?? 'Policy not recognized in this UI.';
+}
+
+function preflightStatusLabel(status) {
+  return PREFLIGHT_STATUS_LABELS[status] ?? 'Preflight status not recognized';
+}
+
+function progressStageLabel(stage) {
+  return PROGRESS_STAGE_LABELS[stage] ?? stage;
 }
 
 function rawStressRows(result) {

@@ -1,9 +1,6 @@
 import assert from 'node:assert/strict';
 import { buildCaesarAccdbLocalInvariantDiagnostics } from '../src/core/fea-benchmarks/caesar-accdb-local-invariants.js';
 
-const identity = Array(144).fill(0);
-for (let index = 0; index < 12; index += 1) identity[index * 12 + index] = 1;
-
 const displacement = Array(12).fill(0);
 displacement[0] = 100;
 displacement[1] = 10;
@@ -27,11 +24,11 @@ function actualWith(qGlobal) {
             nodeI: '10',
             nodeJ: '20',
             jointDisplacement12: displacement,
-            globalStiffness: identity,
             globalElasticAction: displacement,
             equivalentLoadGlobal: equivalent,
             initialStrainLoadGlobal: initial,
             qGlobal,
+            transformedLocalQGlobal: recovered,
           }],
         },
       },
@@ -42,6 +39,7 @@ function actualWith(qGlobal) {
 const good = buildCaesarAccdbLocalInvariantDiagnostics(actualWith(recovered));
 assert.equal(good.summary.rowCount, 12);
 assert.equal(good.summary.closureStatus, 'PASS');
+assert.equal(good.summary.maximumQIdentityRelativeResidual, 0);
 const cancellationRow = good.rows.find((row) => row.dof === 'UX' && row.end === 'I');
 assert.equal(cancellationRow.conditioningClass, 'CANCELLATION_SENSITIVE');
 assert.ok(cancellationRow.conditioning > 1e6);

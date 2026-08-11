@@ -12,6 +12,23 @@ import {
 import { lfeaResultTable } from './lfea-workbench-tables.js';
 import { qualityEvidenceRows } from './lfea-quality-adapter.js';
 
+const AUTHORITY_POLICY_LABELS = Object.freeze({
+  AUTHORITATIVE_RAW_ELEMENT_OR_INTEGRATION_POINT_STRESS:
+    'Raw element/integration-point stress is the qualified stress authority.',
+  NON_AUTHORITATIVE_REVIEW_PROJECTION:
+    'Projected nodal stress is a non-authoritative review projection.',
+  NOT_GENERATED:
+    'Projected stress was not generated for this run.',
+  PROHIBITED:
+    'Projected stress is prohibited for convergence evidence.',
+});
+
+const PREFLIGHT_STATUS_LABELS = Object.freeze({
+  WITHIN_CAPACITY: 'Within declared capacity',
+  EXPORT_LIKELY_TO_EXCEED_BYTE_CAPACITY: 'Capacity warning',
+  BLOCKED_BY_DECLARED_CAPACITY: 'Capacity blocked',
+});
+
 export function renderLfeaToolbar(root, state, modes, handlers) {
   const toolbar = workbenchElement(root, 'div', 'lfea-workbench__toolbar');
   const mock = workbenchButton(root, '[SIMULATED] Load Mock Data', handlers.onMock);
@@ -67,6 +84,43 @@ export function renderLfeaToolbar(root, state, modes, handlers) {
   }
   if (state.progress) toolbar.append(progressOutput(root, state.progress));
   return toolbar;
+}
+
+export function renderLfeaAnalysisSettings(root, packageValue) {
+  const wrapper = workbenchElement(root, 'div', 'lfea-workbench__analysis-settings');
+  wrapper.dataset.role = 'lfea-analysis-settings';
+  if (!packageValue) {
+    wrapper.append(workbenchElement(
+      root,
+      'p',
+      null,
+      'No committed mesh package is loaded; analysis authority is not available.',
+    ));
+    return wrapper;
+  }
+
+  const profile = packageValue.analysisDefinition?.solverProfile ?? {};
+  const units = profile.units ?? {};
+  const elementFamilies = [...new Set((packageValue.elements ?? [])
+    .map((row) => row?.elementType)
+    .filter((value) => typeof value === 'string' && value))]
+    .sort();
+  const list = workbenchElement(root, 'dl', 'lfea-workbench__analysis-settings-list');
+  appendSetting(root, list, 'Package', packageValue.packageIdentity);
+  appendSetting(root, list, 'Units identity', packageValue.unitsIdentity);
+  appendSetting(root, list, 'Coordinate system', packageValue.coordinateSystem);
+  appendSetting(root, list, 'Element families', elementFamilies.join(', '));
+  appendSetting(root, list, 'Formulation', packageValue.analysisDefinition?.formulation);
+  appendSetting(root, list, 'Solver profile', profile.profileIdentity);
+  appendSetting(root, list, 'Profile version', profile.profileVersion);
+  appendSetting(root, list, 'Solver backend', profile.backendIdentity);
+  appendSetting(root, list, 'Length unit', units.length);
+  appendSetting(root, list, 'Force unit', units.force);
+  appendSetting(root, list, 'Stress unit', units.stress);
+  appendSetting(root, list, 'DOF order', Array.isArray(profile.dofOrder) ? profile.dofOrder.join(', ') : null);
+  appendSetting(root, list, 'Constraint method', profile.constraintMethod);
+  wrapper.append(list);
+  return wrapper;
 }
 
 export function renderLfeaNodeDraftEditor(root, nodeDraft, handlers) {
@@ -216,30 +270,63 @@ function diagnosticsBlock(root, diagnostics) {
 }
 
 function authorityPolicy(root, execution) {
-  return workbenchElement(
+  const policy = execution.authorityPolicy ?? {};
+  const rawCode = policy.rawStress ?? 'NOT_DECLARED';
+  const projectedCode = policy.projectedStress ?? 'NOT_DECLARED';
+  const convergenceCode = policy.projectedStressForConvergence ?? 'NOT_DECLARED';
+  const value = workbenchElement(
     root,
     'p',
     'lfea-workbench__authority',
-    `Raw: ${execution.authorityPolicy.rawStress}. `
-      + `Projected: ${execution.authorityPolicy.projectedStress}.`,
+    `Raw stress: ${authorityPolicyLabel(rawCode)} `
+      + `Projected stress: ${authorityPolicyLabel(projectedCode)} `
+      + `Convergence use: ${authorityPolicyLabel(convergenceCode)}`,
   );
+  value.dataset.rawStressPolicy = rawCode;
+  value.dataset.projectedStressPolicy = projectedCode;
+  value.dataset.projectedStressConvergencePolicy = convergenceCode;
+  value.title = `Raw=${rawCode}; Projected=${projectedCode}; ProjectedForConvergence=${convergenceCode}`;
+  return value;
 }
 
 function preflight(root, execution) {
   if (!execution.preflight) return workbenchElement(root, 'span');
+  const status = execution.preflight.status;
   const value = workbenchElement(
     root,
     'p',
     'lfea-workbench__preflight',
-    `Preflight ${execution.preflight.status} — `
+    `Preflight ${preflightStatusLabel(status)} — `
       + `${execution.preflight.nodeCount} nodes, `
       + `${execution.preflight.elementCount} elements, `
       + `${execution.preflight.dofCount} DOF. `
       + execution.preflight.advice,
   );
   value.dataset.role = 'lfea-preflight';
-  value.dataset.status = execution.preflight.status;
+  value.dataset.status = status;
+  value.title = `Preflight status: ${status}`;
   return value;
+}
+
+function appendSetting(root, list, label, value) {
+  list.append(
+    workbenchElement(root, 'dt', null, label),
+    workbenchElement(root, 'dd', null, displaySetting(value)),
+  );
+}
+
+function displaySetting(value) {
+  if (typeof value === 'string' && value.trim()) return value;
+  if (Number.isFinite(value)) return String(value);
+  return 'Not declared';
+}
+
+function authorityPolicyLabel(code) {
+  return AUTHORITY_POLICY_LABELS[code] ?? 'Policy not recognized in this UI.';
+}
+
+function preflightStatusLabel(status) {
+  return PREFLIGHT_STATUS_LABELS[status] ?? 'Preflight status not recognized';
 }
 
 function rawStressRows(result) {

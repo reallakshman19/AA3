@@ -7,7 +7,7 @@ import {
   getLfeaBrowserStorage,
 } from '../src/lfea/persistence.js';
 
-const storage = new MemoryStorage();
+const storage = createMemoryStorage();
 const adapter = createLfeaPersistenceAdapter(storage);
 let snapshot = adapter.load();
 assert.equal(snapshot.schema, 'lfea-persistence-snapshot/v1');
@@ -115,11 +115,13 @@ function sourceGuards() {
   assert.doesNotMatch(bootstrap, /localStorage|sessionStorage/u);
 }
 
-class MemoryStorage {
-  #values = new Map();
-  getItem(key) { return this.#values.has(key) ? this.#values.get(key) : null; }
-  setItem(key, value) { this.#values.set(String(key), String(value)); }
-  removeItem(key) { this.#values.delete(String(key)); }
-  keys() { return this.#values.keys(); }
-  values() { return this.#values.values(); }
+function createMemoryStorage() {
+  const values = new Map();
+  return {
+    getItem(key) { return values.has(key) ? values.get(key) : null; },
+    setItem(key, value) { values.set(String(key), String(value)); },
+    removeItem(key) { values.delete(String(key)); },
+    keys() { return values.keys(); },
+    values() { return values.values(); },
+  };
 }

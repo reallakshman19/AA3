@@ -30,21 +30,21 @@ export function createLafeaT6GeometryQualificationState(stageIds, options = {}) 
     const stage = requireStage(stageValue);
     requireKnownStage(records, stage.stageId);
     const retained = createLafeaT6GeometryQualificationCustody(intakeValue);
-    const projection = projectLafeaT6GeometryQualification(
+    const projectionValue = projectLafeaT6GeometryQualification(
       stage,
       retained,
       currentCandidateHeadSha,
     );
-    if (!['CURRENT_PASS', 'CURRENT_BLOCK'].includes(projection.state)) {
+    if (!['CURRENT_PASS', 'CURRENT_BLOCK'].includes(projectionValue.state)) {
       throw stateError(
-        projection.reasons[0] ?? 'LAFEA_T6_GEOMETRY_BINDING_NOT_CURRENT',
+        projectionValue.reasons[0] ?? 'LAFEA_T6_GEOMETRY_BINDING_NOT_CURRENT',
       );
     }
     const previous = records[stage.stageId];
     const changed = previous?.evidenceSemanticHash !== retained.evidenceSemanticHash
       || previous?.parentMeshPackageDigest !== retained.parentMeshPackageDigest;
     records[stage.stageId] = retained;
-    return freeze({ changed, retained, projection });
+    return freeze({ changed, retained, projection: projectionValue });
   }
 
   function select(stageId) {
@@ -71,8 +71,9 @@ export function projectLafeaT6GeometryQualification(
   currentCandidateHeadSha,
 ) {
   const stage = requireStage(stageValue);
+  const meshCustodyState = stage.analysisMeshCustodyProjection?.state ?? null;
   if (!retainedValue) {
-    return projection(stage.stageId, 'ABSENT', null, [], null);
+    return projection(stage.stageId, 'ABSENT', null, [], meshCustodyState);
   }
   const validation = validateLafeaT6GeometryQualificationCustody(retainedValue);
   if (!validation.ok) {
@@ -81,13 +82,19 @@ export function projectLafeaT6GeometryQualification(
       'INVALID',
       retainedValue,
       validation.errors,
-      null,
+      meshCustodyState,
     );
   }
 
   const reasons = bindingReasons(stage, retainedValue, currentCandidateHeadSha);
   if (reasons.length) {
-    return projection(stage.stageId, 'STALE', retainedValue, reasons, null);
+    return projection(
+      stage.stageId,
+      'STALE',
+      retainedValue,
+      reasons,
+      meshCustodyState,
+    );
   }
   const state = retainedValue.status === 'PASS' ? 'CURRENT_PASS' : 'CURRENT_BLOCK';
   return projection(
@@ -95,7 +102,7 @@ export function projectLafeaT6GeometryQualification(
     state,
     retainedValue,
     retainedValue.status === 'BLOCKED' ? retainedValue.evidence.reasons : [],
-    currentMeshEvidence(stage),
+    meshCustodyState,
   );
 }
 
@@ -145,7 +152,7 @@ function currentMeshEvidence(stage) {
     ? stage.retainedAnalysisMeshEvidenceV2 ?? null
     : stage.retainedAnalysisMeshEvidence ?? null;
 }
-function projection(stageId, state, retained, reasons, meshEvidence) {
+function projection(stageId, state, retained, reasons, meshCustodyState) {
   if (!LAFEA_T6_GEOMETRY_QUALIFICATION_STATES.includes(state)) {
     throw new TypeError('LAFEA_T6_GEOMETRY_PROJECTION_STATE_INVALID');
   }
@@ -164,9 +171,7 @@ function projection(stageId, state, retained, reasons, meshEvidence) {
     analysisMeshHash: retained?.analysisMeshHash ?? null,
     meshIdentity: retained?.meshIdentity ?? null,
     evidenceSemanticHash: retained?.evidenceSemanticHash ?? null,
-    meshCustodyState: meshEvidence
-      ? null
-      : null,
+    meshCustodyState,
     releaseQualified: false,
   });
 }

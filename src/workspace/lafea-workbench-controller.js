@@ -150,6 +150,18 @@ export class LafeaWorkbenchController {
   buildNumericalVerificationProjection(stageId = this.getState().activeStageId) {
     return this.store.buildNumericalVerificationProjection(stageId);
   }
+  registerT6GeometryQualification(value, stageId = this.getState().activeStageId) {
+    return this.store.registerT6GeometryQualification(value, stageId);
+  }
+  selectRetainedT6GeometryQualification(stageId = this.getState().activeStageId) {
+    return this.store.selectRetainedT6GeometryQualification(stageId);
+  }
+  buildT6GeometryQualificationProjection(stageId = this.getState().activeStageId) {
+    return this.store.buildT6GeometryQualificationProjection(stageId);
+  }
+  exportT6GeometryQualification(stageId = this.getState().activeStageId) {
+    return this.store.exportT6GeometryQualification(stageId);
+  }
   validateLafeaAnalysisMeshEvidence(value) {
     return this.store.validateLafeaAnalysisMeshEvidence(value);
   }

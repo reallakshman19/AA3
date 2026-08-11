@@ -104,6 +104,8 @@ export function createRunRecord({
 function relationToCurrent(record, context) {
   const preFlight = validatedPreFlight(context.preFlight);
   if (!preFlight) return LFEA_NATIVE_RUN_RELATION.STALE;
+  const sameContext = sameGovernedContext(record, preFlight, context.sourceSnapshot);
+  if (!sameContext) return LFEA_NATIVE_RUN_RELATION.STALE;
 
   const raw = context.executionState?.currentness === 'CURRENT'
     ? context.executionState.execution
@@ -118,9 +120,7 @@ function relationToCurrent(record, context) {
     && record.identity.recovery.semanticHash === recovery.semanticHash) {
     return LFEA_NATIVE_RUN_RELATION.CURRENT;
   }
-  return sameGovernedContext(record, preFlight, context.sourceSnapshot)
-    ? LFEA_NATIVE_RUN_RELATION.HISTORIC
-    : LFEA_NATIVE_RUN_RELATION.STALE;
+  return LFEA_NATIVE_RUN_RELATION.HISTORIC;
 }
 
 function sameGovernedContext(record, preFlight, sourceSnapshot) {

@@ -102,7 +102,7 @@ test('Table stays projection-only until certified pipe-length Apply', async ({ p
   }, null, 2)}\n`);
 });
 
-test('Engineering Table is dense, dynamically scrollable and keeps frozen context', async ({ page }, testInfo) => {
+test('Engineering Table is dense, dynamically scrollable and keeps frozen context', async ({ page }) => {
   await page.setViewportSize({ width: 1720, height: 1080 });
   await page.addInitScript(() => globalThis.localStorage?.clear());
   const host = await openProductionController(page);
@@ -113,7 +113,7 @@ test('Engineering Table is dense, dynamically scrollable and keeps frozen contex
   const surface = page.locator('.topology-edit-table--populated');
   const scroll = page.locator('.topology-edit-table__scroll');
   const geometry = await panel.evaluate((node) => { const measure = (target) => { if (!target) return null; const rect = target.getBoundingClientRect(); const style = getComputedStyle(target); return { rect: { left: rect.left, top: rect.top, width: rect.width, height: rect.height }, clientHeight: target.clientHeight, offsetHeight: target.offsetHeight, display: style.display, position: style.position, height: style.height, minHeight: style.minHeight, flex: style.flex, flexDirection: style.flexDirection, gridTemplateRows: style.gridTemplateRows, overflow: style.overflow, visibility: style.visibility }; }; return { panel: measure(node), body: measure(node.querySelector('.topology-edit-table-window__body')), mount: measure(node.querySelector('[data-role="topology-edit-table"]')), surface: measure(node.querySelector('.topology-edit-table--populated')), header: measure(node.querySelector('.topology-edit-table__header')), scroll: measure(node.querySelector('.topology-edit-table__scroll')), lower: measure(node.querySelector('.topology-edit-table__lower')) }; });
-  await testInfo.attach('engineering-table-geometry', { body: JSON.stringify(geometry, null, 2), contentType: 'application/json' });
+  await mkdir('reports/qualification', { recursive: true }); await writeFile(REPORT, `${JSON.stringify({ schema: 'TopologyEditTableGeometryEvidence.v1', candidateHead: process.env.TOPOLOGY_EDIT_TARGET_HEAD_SHA || null, geometry }, null, 2)}\n`);
   await expect(surface).toBeVisible();
   await expect(scroll).toBeVisible();
 

@@ -10,25 +10,26 @@
 | Branch | `agent/fix-support-geometry-dependency` |
 | Base | `main` (implementation base `a587867963cc9199caca6e7adfa03af95a316aa2`) |
 | Reviewed implementation HEAD | `d6d72148a8a49998b9e93e17e368c812c81eae6a` |
-| Status | DRAFT / reviewed / implementation qualified / merge closure in progress |
-| Current stage | S4 — closure, exact-number work-report custody, merge readiness |
-| Last completed stage | S3 — browser and regression qualification |
-| Engineering state | PASS — no code blocker found in independent review |
-| Validation state | PASS on reviewed implementation HEAD; all 16 triggered workflows completed successfully |
-| Blocker | Process-only: prior report filename/structure did not satisfy pinned CodingRules. This report resolves the structure/name requirement; obsolete report is to be removed before closure. |
-| Next | Remove obsolete descriptive report, refresh PR body, verify current head/check state, mark ready and merge if GitHub still reports a safe merge. |
+| Report-custody head before this update | `e205a7b57fac360372d1edfc208d3f1601f861ed` |
+| Status | DRAFT / reviewed / implementation qualified / closure checks pending |
+| Current stage | S4 — merge readiness |
+| Last completed stage | S4a — exact-number work-report custody |
+| Engineering state | PASS — independent review found no production-code blocker |
+| Validation state | PASS on reviewed implementation HEAD; all 16 triggered workflows completed successfully. Report-only head checks must remain GitHub-authoritative for merge. |
+| Blocker | None in production code. Merge remains gated by current GitHub check/mergeability state. |
+| Next | Verify changed-file ledger, refresh PR body, mark ready, and merge only if current required checks/protections permit it. |
 
 ## Handover in 60 Seconds
 
-This PR introduces one shared, pure support geometry dependency authority and routes geometry-changing planners plus the certified `MOVE_NODE` session boundary through it. Supports can be resolved by `hostEntityId`, `edgeId`, `attachedEdgeId`, or unique incident-edge fallback from `nodeId`. If an affected support depends on moved/affected geometry and no certified relocation policy exists, the operation fails closed with `SUPPORT_GEOMETRY_POLICY_REQUIRED` before canonical mutation or journal change. No support is moved or rewritten. Browser qualification uses support-dependent P-001 as a negative control and unrestrained P-003/TO as a positive MOVE_NODE control. Independent review found no production-code blocker. The remaining closure work is report custody + safe merge.
+This PR introduces one shared, pure support geometry dependency authority and routes geometry-changing planners plus the certified `MOVE_NODE` session boundary through it. Supports resolve by `hostEntityId`, `edgeId`, `attachedEdgeId`, or unique incident-edge fallback from `nodeId`. If an affected support depends on moved/affected geometry and no certified relocation policy exists, the operation fails closed with `SUPPORT_GEOMETRY_POLICY_REQUIRED` before canonical mutation or journal change. No support is moved or rewritten. Browser qualification uses support-dependent P-001 as a negative control and unrestrained P-003/TO as a positive MOVE_NODE control. Independent review found no code blocker. The descriptive legacy report has been replaced by this numbered report.
 
 ## Mission and Engineering Intent
 
-Preserve the existing authority flow:
+Preserve the authority flow:
 
 `UI interaction -> governed intent -> operation plan -> candidate/Preview -> validation -> certified transaction -> canonical topology -> journal Undo/Redo -> renderer projection`
 
-The mission is specifically to prevent support geometry dependencies from being omitted when support attachment is represented by edge/component authority rather than only `support.nodeId`. The conservative policy is intentional: reject the parent geometry operation until support movement semantics are separately certified.
+The mission prevents support geometry dependencies from being omitted when attachment is represented by edge/component authority rather than only `support.nodeId`. Policy remains conservative: reject parent geometry movement until support movement semantics are separately certified.
 
 ## Mission Status
 
@@ -42,71 +43,70 @@ The mission is specifically to prevent support geometry dependencies from being 
 | Every governed MOVE_NODE final backstop | COMPLETE | `topology-edit-certified-session.js` |
 | Capability truthfulness | COMPLETE | editor-state capability authority/contract |
 | Positive and negative browser controls | COMPLETE | clean layout, R1 reachability, Tool Audit, remount custody |
-| Support relocation/follow semantics | DEFERRED | Explicitly out of scope; requires separate certified support command policy |
-| CodingRules report custody | IN_PROGRESS | Exact report created here; obsolete report removal pending |
+| Support relocation/follow semantics | DEFERRED | Separate certified support-command policy required |
+| CodingRules report custody | COMPLETE | `agents/PR1036_workreport.md` is the sole PR report |
 
 ## Engineering Item Register
 
 | ID | Type | Status | Finding / action |
 |---|---|---|---|
-| ISS-1036-01 | Correctness | RESOLVED | Edge/station-hosted supports could escape geometry dependency custody when no direct `support.nodeId` relationship exposed the affected geometry. Resolved with shared dependency authority + session backstop. |
-| DEC-1036-01 | Architecture | ACCEPTED | Support movement remains unsupported. Parent geometry changes fail closed instead of auto-following, restationing, or mutating support records. |
-| DEC-1036-02 | Architecture | ACCEPTED | Certified session is the final backstop for every `MOVE_NODE`; planner/capability checks remain earlier truthful guards, not alternate mutation authorities. |
-| RISK-1036-01 | Process custody | RESOLVING | Previous report path `agents/PR_support_geometry_dependency_workreport.md` does not meet pinned `agents/PR<NUMBER>_workreport.md` rule and lacks mandatory ledgers/stage protocol. This report supersedes it; obsolete file must be deleted. |
-| RISK-1036-02 | Integration | OPEN UNTIL MERGE | PR #1041 was qualified from the same old base. After #1036 lands, #1041 must be re-evaluated against the new `main` before its merge. |
+| ISS-1036-01 | Correctness | RESOLVED | Edge/station-hosted supports could escape geometry dependency custody when direct node linkage did not expose affected geometry. Shared authority + session backstop closes it. |
+| DEC-1036-01 | Architecture | ACCEPTED | Support movement remains unsupported; affected parent geometry changes fail closed rather than auto-following/restationing supports. |
+| DEC-1036-02 | Architecture | ACCEPTED | Certified session is final backstop for every `MOVE_NODE`; planner/capability guards remain earlier truthfulness layers. |
+| RISK-1036-01 | Process custody | RESOLVED | Legacy descriptive report was nonconforming; replaced with this exact-number report and obsolete file removed. |
+| RISK-1036-02 | Integration | OPEN UNTIL #1041 MERGE | #1041 was originally qualified on the same older base. After #1036 lands, #1041 must be re-evaluated against new `main`. |
 
 ## Stage Roadmap and Protocol
 
 ### S1 — Architecture impact and dependency semantics — COMPLETE
 
-**Pre-stage truth:** support rendering could resolve host edges through explicit edge/component fields while movement custody was primarily node-oriented.
+**Pre-stage truth:** renderer support hosting could use explicit edge/component identity while geometry custody was primarily node-oriented.
 
-**Objective:** identify one reusable dependency authority instead of planner-specific patches.
+**Objective:** one reusable dependency authority, deterministic immutable evidence, no planner-specific support mutation.
 
-**Expected behavior:** exact host resolution, deterministic immutable evidence, fail-closed ambiguous affected host authority, no support mutation.
-
-**Actual:** implemented the shared support dependency module and reused it from planners, changed-scope derivation, capability authority, and certified session.
+**Actual:** shared support dependency resolution reused by planners, changed-scope, capability authority and certified session.
 
 **Decision:** COMPLETE.
 
 ### S2 — Production integration — COMPLETE
 
-**Files/areas:** professional route/slope/change-scope, Table NODE_POSITION capability/planner, editor capability, certified session.
+**Files/areas:** route/slope/change-scope, Table NODE_POSITION capability/planner, editor capability, certified session.
 
-**Edge cases:** direct node dependency, explicit edge/component host, unique incident fallback, ambiguous affected host, unrelated support, split edge, connected run, valve F2F, PIPE length propagation, declared slope.
+**Edge cases:** direct node dependency, explicit host, incident fallback, ambiguous affected host, unrelated support, split edge, connected run, valve F2F, PIPE-length propagation, declared slope.
 
-**Actual:** unsupported affected supports fail before command/journal mutation; unrelated supports do not block; no second Undo or support write path introduced.
+**Actual:** unsupported affected supports fail before command/journal mutation; unrelated supports do not block; no second Undo/support write path introduced.
 
 **Decision:** COMPLETE.
 
 ### S3 — Qualification — COMPLETE
 
-**Objective:** prove negative and positive controls through repository-owned production-browser paths and focused node tests.
+**Objective:** prove negative/positive controls through repository production-browser paths and focused tests.
 
-**Actual:** implementation head `d6d72148...` has all 16 triggered workflows completed with `success`; browser suites were updated to prove P-001 blocked/no mutation and P-003/TO successful MOVE_NODE/Undo/Redo behavior.
+**Actual:** implementation head `d6d72148...` has all 16 triggered workflows completed successfully; browser suites prove P-001 blocked/no mutation and P-003/TO successful MOVE_NODE/Undo/Redo behavior.
 
 **Decision:** COMPLETE.
 
-### S4 — Closure and merge custody — IN_PROGRESS
+### S4 — Closure and merge custody — COMPLETE EXCEPT MERGE ACTION
 
-**Current truth:** code review found no production blocker and no unresolved PR review thread/comment. The implementation head is green. The only discovered closure defect is report naming/structure under the newly pinned CodingRules.
+**Current truth:** independent code review found no production blocker, no comments, no submitted reviews, and no unresolved review threads. Required work-report naming/structure has been corrected and obsolete report removed.
 
-**Plan:** keep production code unchanged; replace descriptive report with this exact-number report; update PR description reference; verify head/check/mergeability; mark ready; merge only with expected head protection.
+**Actual behavior:** production code remained unchanged during report custody repair.
 
-**Risk:** any report commit changes the branch head. GitHub required checks remain authoritative for merge readiness; do not claim an untested post-report code head as separately qualified engineering logic.
+**Validation:** implementation qualification remains PASS on `d6d72148...`; current report-only branch checks are to be read from GitHub before merge.
+
+**Remaining risk:** GitHub mergeability/required checks can change with base/head state.
+
+**Stage decision:** COMPLETE; merge action is permitted only if current GitHub protections are satisfied.
 
 ## Next-Agent Handover
 
-1. Confirm `agents/PR1036_workreport.md` exists and the obsolete descriptive report is removed.
-2. Confirm PR changed-file ledger matches the list below exactly.
-3. Confirm no new review threads/comments appeared.
-4. Confirm GitHub reports the PR merge-safe after leaving draft and required checks permit merge.
-5. Merge with expected current head SHA; do not force merge through protection.
-6. After merge, treat PR #1041 as based on an older `main`; re-evaluate it before merging.
+1. Verify changed files match the ledger exactly.
+2. Verify no new review/comment/thread appeared.
+3. Mark draft PR ready for review.
+4. Re-fetch PR metadata/checks and merge with `expected_head_sha`; do not bypass protection.
+5. Re-evaluate #1041 after `main` changes.
 
 ## Changed-File Ledger
-
-Expected final PR paths after report rename/cleanup:
 
 - `agents/PR1036_workreport.md`
 - `e2e/topology-edit-clean-layout.spec.js`
@@ -127,17 +127,16 @@ Expected final PR paths after report rename/cleanup:
 - `tests/topology-edit-support-geometry-dependency.test.mjs`
 - `tests/topology-edit-support-geometry-table-regression.test.mjs`
 
-Any additional or missing path is a closure blocker until explained here.
+Any discrepancy is a closure blocker until documented.
 
 ## Decisions and Invariants
 
 - Canonical topology and certified journal remain the only engineering mutation/history authorities.
-- Preview/validation remain non-mutating.
-- Meshes/render objects remain projections only.
-- No automatic support follow, relocation, restation, add, delete, or property mutation is authorized by this PR.
-- `SUPPORT_GEOMETRY_POLICY_REQUIRED` is the stable fail-closed disposition for affected support geometry without a certified policy.
-- Capability derivation and planners may reject earlier, but the certified session retains the final MOVE_NODE guard.
-- Deterministic support dependency evidence is sorted and immutable.
+- Preview/validation remain non-mutating; meshes remain projections only.
+- No support follow, relocation, restation, add/delete/property mutation is authorized.
+- `SUPPORT_GEOMETRY_POLICY_REQUIRED` is the stable fail-closed disposition.
+- Capability/planner checks may reject earlier; certified session retains final MOVE_NODE guard.
+- Dependency evidence is deterministic, sorted and immutable.
 
 ## Validation Ledger
 
@@ -162,33 +161,33 @@ Implementation qualification head: `d6d72148a8a49998b9e93e17e368c812c81eae6a`.
 | LAFEA hybrid browser validation | PASS |
 | non-fea-input-check-load-calc | PASS |
 
-Focused test intent additionally covers explicit/incident support hosts, ambiguous authority, changed scope, connected run, PIPE length, valve F2F, NODE_POSITION, slope, and exact no-mutation session rejection.
+Focused test intent covers explicit/incident hosts, ambiguous authority, changed scope, connected run, PIPE length, valve F2F, NODE_POSITION, slope, and no-mutation session rejection.
 
 ## Evidence Ledger
 
-- Candidate implementation SHA: `d6d72148a8a49998b9e93e17e368c812c81eae6a`.
-- Repository fixture/browser evidence is produced by the workflow suites listed above.
-- PR metadata at review time: 18 changed files, +658 / -76 before report path cleanup.
-- Review state at independent audit: no comments, no submitted reviews, no unresolved review threads.
+- Reviewed implementation SHA: `d6d72148a8a49998b9e93e17e368c812c81eae6a`.
+- Report-custody branch head before this report update: `e205a7b57fac360372d1edfc208d3f1601f861ed`.
+- Review state: no comments, no submitted reviews, no unresolved review threads.
+- Browser/fixture evidence is produced by the successful workflow suites above.
 
 ## Explicitly Not Validated
 
 | Item | Status | Reason |
 |---|---|---|
-| Certified support relocation/follow behavior | NOT_APPLICABLE | Deliberately not implemented. |
-| Combined post-merge state with PR #1041 | NOT_RUN | #1041 must be re-evaluated after #1036 changes `main`. |
-| Support add/delete/property editing | NOT_APPLICABLE | Separate future governed slice. |
+| Certified support relocation/follow | NOT_APPLICABLE | Deliberately not implemented. |
+| Combined post-merge state with PR #1041 | NOT_RUN | Must be checked after #1036 changes main. |
+| Support add/delete/property editing | NOT_APPLICABLE | Future governed slice. |
 
 ## Known / Deferred Work
 
-- Decide certified support movement semantics: fixed global, follow host translation, station-preserving, or explicit relocation.
-- Implement support editing only after those semantics and command/journal behavior are separately certified.
+- Decide certified support movement semantics: fixed global, host-follow translation, station-preserving, or explicit relocation.
+- Implement support editing only after command/journal semantics are separately certified.
 - No known production correctness limitation remains inside this PR's stated fail-closed mission.
 
 ## Recommended Forward Sequence
 
-1. Close this report custody discrepancy and merge #1036 if GitHub protections remain green.
-2. Rebase/re-evaluate PR #1041 against updated `main`; close its catalogue fail-closed review findings before merge.
+1. Merge #1036 if current protections are green.
+2. Re-evaluate/fix/requalify #1041 against updated main, then merge.
 3. Implement topology-aware TEE/reducer choice derivation.
-4. Add full production-browser NODE_POSITION qualification.
-5. Only then consider certified SUPPORT editing semantics.
+4. Add production-browser NODE_POSITION qualification.
+5. Only then design certified SUPPORT editing.

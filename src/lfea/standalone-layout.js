@@ -1,24 +1,13 @@
 const NAV_ITEMS = Object.freeze([
-  { id: 'source', label: 'Source', state: 'planned' },
-  { id: 'review', label: 'Review', state: 'planned' },
-  { id: 'model', label: 'Model', state: 'planned' },
-  { id: 'analysis', label: 'Analysis', state: 'active' },
+  { id: 'source', label: 'Source', state: 'available' },
+  { id: 'review', label: 'Review', state: 'available' },
+  { id: 'model', label: 'Model', state: 'available' },
+  { id: 'analysis', label: 'Analysis', state: 'available' },
   { id: 'results', label: 'Results', state: 'planned' },
-  { id: 'verification', label: 'Verification', state: 'planned' },
+  { id: 'verification', label: 'Verification', state: 'available' },
   { id: 'history', label: 'History / Issue', state: 'planned' },
 ]);
 
-/**
- * Render the application-owned shell for standalone LFEA.
- *
- * The shell intentionally contains no LAFEA host and does not reuse the combined
- * Advanced Analysis application shell. Planned navigation entries are inert
- * until their standalone composition slices are connected.
- *
- * @param {Element} rootElement Standalone application root.
- * @param {{applicationVersion?:string|null,buildSha?:string|null}} identity Build identity.
- * @returns {{workbenchRoot:Element,statusRoot:Element}} Mounted shell references.
- */
 export function renderLfeaStandaloneLayout(rootElement, identity = {}) {
   if (!rootElement?.ownerDocument) {
     throw new TypeError('Standalone LFEA requires a DOM root element.');
@@ -35,31 +24,26 @@ export function renderLfeaStandaloneLayout(rootElement, identity = {}) {
 
   const header = documentRef.createElement('header');
   header.className = 'lfea-standalone-header';
-
   const brand = documentRef.createElement('div');
   brand.className = 'lfea-standalone-brand';
-  brand.innerHTML = '<strong>LFEA</strong><span>Linear finite element analysis</span>';
+  const brandName = documentRef.createElement('strong');
+  brandName.textContent = 'LFEA';
+  const brandDescription = documentRef.createElement('span');
+  brandDescription.textContent = 'Linear finite element analysis';
+  brand.append(brandName, brandDescription);
 
   const identityNode = documentRef.createElement('div');
   identityNode.className = 'lfea-standalone-identity';
   identityNode.dataset.role = 'lfea-build-identity';
   identityNode.textContent = formatIdentity(identity);
-
   header.append(brand, identityNode);
 
   const nav = documentRef.createElement('nav');
   nav.className = 'lfea-standalone-nav';
   nav.setAttribute('aria-label', 'LFEA workflow');
-  NAV_ITEMS.forEach((item) => {
-    const node = documentRef.createElement('span');
-    node.className = `lfea-standalone-nav-item is-${item.state}`;
-    node.dataset.viewId = item.id;
-    node.dataset.state = item.state;
-    node.textContent = item.label;
-    if (item.state === 'active') node.setAttribute('aria-current', 'page');
-    nav.append(node);
-  });
 
+  const viewRoots = new Map();
+  const navNodes = new Map();
   const main = documentRef.createElement('main');
   main.className = 'lfea-standalone-main';
 
@@ -67,18 +51,86 @@ export function renderLfeaStandaloneLayout(rootElement, identity = {}) {
   statusRoot.className = 'lfea-standalone-status';
   statusRoot.dataset.role = 'lfea-standalone-status';
   statusRoot.setAttribute('role', 'status');
-  statusRoot.textContent = 'Standalone LFEA analysis workbench ready.';
+  statusRoot.textContent = 'Import a governed InputXML source to begin.';
+  main.append(statusRoot);
 
-  const workbenchRoot = documentRef.createElement('section');
+  for (const item of NAV_ITEMS) {
+    const node = item.state === 'available'
+      ? documentRef.createElement('button')
+      : documentRef.createElement('span');
+    if (node.tagName === 'BUTTON') node.type = 'button';
+    node.className = `lfea-standalone-nav-item is-${item.state}`;
+    node.dataset.viewId = item.id;
+    node.dataset.state = item.state;
+    node.textContent = item.label;
+    nav.append(node);
+    navNodes.set(item.id, node);
+
+    const view = documentRef.createElement('section');
+    view.className = 'lfea-standalone-view';
+    view.dataset.viewId = item.id;
+    view.dataset.state = item.state;
+    view.hidden = true;
+    if (item.state === 'planned') {
+      const placeholder = documentRef.createElement('p');
+      placeholder.className = 'lfea-standalone-planned';
+      placeholder.textContent = `${item.label} remains outside the current separation batch.`;
+      view.append(placeholder);
+    }
+    main.append(view);
+    viewRoots.set(item.id, view);
+  }
+
+  const verificationRoot = viewRoots.get('verification');
+  const verificationIntro = documentRef.createElement('p');
+  verificationIntro.className = 'lfea-standalone-verification-intro';
+  verificationIntro.textContent = 'Independent element-FEA verification workbench. It does not represent native InputXML piping execution custody.';
+  const workbenchRoot = documentRef.createElement('div');
   workbenchRoot.className = 'lfea-standalone-workbench';
   workbenchRoot.dataset.role = 'lfea-consumer-root';
-  workbenchRoot.setAttribute('aria-label', 'LFEA analysis workbench');
+  workbenchRoot.setAttribute('aria-label', 'LFEA verification workbench');
+  verificationRoot.append(verificationIntro, workbenchRoot);
 
-  main.append(statusRoot, workbenchRoot);
+  let activeViewId = null;
+  function activate(viewId) {
+    const item = NAV_ITEMS.find((entry) => entry.id === viewId);
+    if (!item || item.state !== 'available') {
+      const error = new TypeError(`Standalone LFEA view is not available: ${viewId}`);
+      error.code = 'LFEA_STANDALONE_VIEW_UNAVAILABLE';
+      throw error;
+    }
+    activeViewId = viewId;
+    for (const [id, view] of viewRoots) view.hidden = id !== viewId;
+    for (const [id, node] of navNodes) {
+      const active = id === viewId;
+      node.classList?.toggle('is-active', active);
+      if (active) node.setAttribute('aria-current', 'page');
+      else node.removeAttribute?.('aria-current');
+    }
+    return activeViewId;
+  }
+
+  for (const item of NAV_ITEMS.filter((entry) => entry.state === 'available')) {
+    navNodes.get(item.id).addEventListener('click', () => activate(item.id));
+  }
+
   shell.append(header, nav, main);
   rootElement.append(shell);
+  activate('source');
 
-  return Object.freeze({ workbenchRoot, statusRoot });
+  return Object.freeze({
+    statusRoot,
+    sourceRoot: viewRoots.get('source'),
+    reviewRoot: viewRoots.get('review'),
+    modelRoot: viewRoots.get('model'),
+    analysisRoot: viewRoots.get('analysis'),
+    resultsRoot: viewRoots.get('results'),
+    verificationRoot,
+    historyRoot: viewRoots.get('history'),
+    workbenchRoot,
+    activate,
+    getActiveView: () => activeViewId,
+  });
 }
 
 export function clearLfeaStandaloneLayout(rootElement) {

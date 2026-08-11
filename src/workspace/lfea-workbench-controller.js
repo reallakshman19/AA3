@@ -253,12 +253,14 @@ export class LfeaWorkbenchController {
 
   undo() {
     const state = this.store.getState();
+    if (!state.past.length) return state;
     if (!confirmQualifiedEvidenceReset(this.documentRef, state, 'Undo')) return state;
     return this.store.undo();
   }
 
   redo() {
     const state = this.store.getState();
+    if (!state.future.length) return state;
     if (!confirmQualifiedEvidenceReset(this.documentRef, state, 'Redo')) return state;
     return this.store.redo();
   }

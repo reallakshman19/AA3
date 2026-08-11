@@ -31,6 +31,8 @@ export function buildCaesarAccdbLocalInvariantDiagnostics(actual, options = {}) 
     sourceAccdbSha256: actual.sourceAccdbSha256,
     diagnosticOnly: true,
     governedComparatorStatusUnaffected: true,
+    primaryClosureRule: 'Q_GLOBAL_EQUALS_GLOBAL_ELASTIC_MINUS_EQUIVALENT_MINUS_INITIAL_V1',
+    alternateLocalRecoveryRule: 'TRANSFORMED_LOCAL_Q_IS_DIAGNOSTIC_ONLY_V1',
     options: resolved,
     summary: summarizeRows(rows),
     cases: Object.freeze(cases),
@@ -42,13 +44,16 @@ export function buildCaesarAccdbLocalInvariantDiagnostics(actual, options = {}) 
 function recoveryRows(caseId, entry, options) {
   const elementId = requireText(entry.elementId, 'recoveryLedger.elementId');
   const sourceElementId = requireText(entry.sourceElementId, `${elementId}.sourceElementId`);
-  const stiffness = requireVector(entry.globalStiffness, 144, `${elementId}.globalStiffness`);
   const displacement = requireVector(entry.jointDisplacement12, 12, `${elementId}.jointDisplacement12`);
   const recordedElastic = requireVector(entry.globalElasticAction, 12, `${elementId}.globalElasticAction`);
   const equivalent = requireVector(entry.equivalentLoadGlobal, 12, `${elementId}.equivalentLoadGlobal`);
   const initial = requireVector(entry.initialStrainLoadGlobal, 12, `${elementId}.initialStrainLoadGlobal`);
   const recovered = requireVector(entry.qGlobal, 12, `${elementId}.qGlobal`);
-  const stiffnessTimesDisplacement = multiply12(stiffness, displacement);
+  const transformedLocal = requireVector(
+    entry.transformedLocalQGlobal,
+    12,
+    `${elementId}.transformedLocalQGlobal`,
+  );
   return Array.from({ length: 12 }, (_unused, index) => {
     const endIndex = index < 6 ? index : index - 6;
     const end = index < 6 ? 'I' : 'J';
@@ -56,27 +61,22 @@ function recoveryRows(caseId, entry, options) {
     const quantity = dof.startsWith('U') ? 'FORCE' : 'MOMENT';
     const component = `${quantity === 'FORCE' ? 'F' : 'M'}${dof.at(-1)}`;
     const unit = quantity === 'FORCE' ? 'N' : 'N*m';
-    const predictedElastic = stiffnessTimesDisplacement[index];
-    const stiffnessProductResidual = recordedElastic[index] - predictedElastic;
-    const stiffnessScale = Math.max(
-      Math.abs(recordedElastic[index]) + Math.abs(predictedElastic),
-      options.physicalFloor,
-    );
-    const stiffnessProductRelativeResidual = Math.abs(stiffnessProductResidual) / stiffnessScale;
     const predictedRecovered = recordedElastic[index] - equivalent[index] - initial[index];
-    const recoveryResidual = recovered[index] - predictedRecovered;
-    const recoveryScale = Math.max(
+    const qIdentityResidual = recovered[index] - predictedRecovered;
+    const qIdentityScale = Math.max(
       Math.abs(recordedElastic[index])
         + Math.abs(equivalent[index])
         + Math.abs(initial[index])
         + Math.abs(recovered[index]),
       options.physicalFloor,
     );
-    const recoveryRelativeResidual = Math.abs(recoveryResidual) / recoveryScale;
-    const closureRelativeResidual = Math.max(
-      stiffnessProductRelativeResidual,
-      recoveryRelativeResidual,
+    const qIdentityRelativeResidual = Math.abs(qIdentityResidual) / qIdentityScale;
+    const localToGlobalResidual = recovered[index] - transformedLocal[index];
+    const localToGlobalScale = Math.max(
+      Math.abs(recovered[index]) + Math.abs(transformedLocal[index]),
+      options.physicalFloor,
     );
+    const localToGlobalRelativeResidual = Math.abs(localToGlobalResidual) / localToGlobalScale;
     const conditioningNumerator = Math.abs(recordedElastic[index])
       + Math.abs(equivalent[index])
       + Math.abs(initial[index]);
@@ -92,17 +92,16 @@ function recoveryRows(caseId, entry, options) {
       component,
       unit,
       displacement: displacement[index],
-      stiffnessTimesDisplacement: predictedElastic,
       recordedElasticAction: recordedElastic[index],
       equivalentLoad: equivalent[index],
       initialStrainLoad: initial[index],
       recoveredAction: recovered[index],
-      stiffnessProductResidual,
-      stiffnessProductRelativeResidual,
-      recoveryResidual,
-      recoveryRelativeResidual,
-      closureRelativeResidual,
-      closureStatus: closureRelativeResidual <= options.closureRelativeLimit ? 'PASS' : 'FAIL',
+      qIdentityResidual,
+      qIdentityRelativeResidual,
+      closureStatus: qIdentityRelativeResidual <= options.closureRelativeLimit ? 'PASS' : 'FAIL',
+      transformedLocalRecoveredAction: transformedLocal[index],
+      localToGlobalResidual,
+      localToGlobalRelativeResidual,
       conditioning,
       conditioningClass: conditioning >= options.conditioningWarning
         ? 'CANCELLATION_SENSITIVE'
@@ -114,12 +113,18 @@ function recoveryRows(caseId, entry, options) {
 function summarizeRows(rows) {
   const failures = rows.filter((row) => row.closureStatus === 'FAIL');
   const cancellationSensitive = rows.filter((row) => row.conditioningClass === 'CANCELLATION_SENSITIVE');
+  const forces = rows.filter((row) => row.quantity === 'FORCE');
+  const moments = rows.filter((row) => row.quantity === 'MOMENT');
   return Object.freeze({
     rowCount: rows.length,
     closureStatus: failures.length === 0 ? 'PASS' : 'FAIL',
     closureFailureCount: failures.length,
     cancellationSensitiveCount: cancellationSensitive.length,
-    maximumClosureRelativeResidual: maximum(rows.map((row) => row.closureRelativeResidual)),
+    maximumQIdentityRelativeResidual: maximum(rows.map((row) => row.qIdentityRelativeResidual)),
+    maximumAbsoluteQIdentityResidualForceN: maximum(forces.map((row) => Math.abs(row.qIdentityResidual))),
+    maximumAbsoluteQIdentityResidualMomentNm: maximum(moments.map((row) => Math.abs(row.qIdentityResidual))),
+    maximumAbsoluteLocalToGlobalResidualForceN: maximum(forces.map((row) => Math.abs(row.localToGlobalResidual))),
+    maximumAbsoluteLocalToGlobalResidualMomentNm: maximum(moments.map((row) => Math.abs(row.localToGlobalResidual))),
     maximumConditioning: maximum(rows.map((row) => row.conditioning)),
   });
 }
@@ -139,21 +144,6 @@ function summarizeSources(rows) {
       analysisElementIds: Object.freeze([...new Set(sourceRows.map((row) => row.elementId))].sort(compareText)),
       ...summarizeRows(sourceRows),
     }));
-}
-
-function multiply12(matrix, vector) {
-  return Array.from({ length: 12 }, (_unused, row) => {
-    let sum = 0;
-    let compensation = 0;
-    for (let column = 0; column < 12; column += 1) {
-      const value = matrix[row * 12 + column] * vector[column];
-      const corrected = value - compensation;
-      const next = sum + corrected;
-      compensation = (next - sum) - corrected;
-      sum = next;
-    }
-    return sum;
-  });
 }
 
 function resolveOptions(options) {

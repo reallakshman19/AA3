@@ -29,6 +29,18 @@ const PREFLIGHT_STATUS_LABELS = Object.freeze({
   BLOCKED_BY_DECLARED_CAPACITY: 'Capacity blocked',
 });
 
+const PROGRESS_STAGE_LABELS = Object.freeze({
+  QUEUED: 'Queued for analysis',
+  VALIDATE: 'Validating mesh package',
+  PREFLIGHT: 'Checking declared capacity',
+  ADAPT: 'Building qualified FEA model',
+  SOLVE: 'Solving continuum model',
+  PROJECT: 'Preparing review stress projection',
+  REVIEW: 'Running engineering review',
+  EXPORT: 'Preparing evidence export',
+  COMPLETE: 'Analysis complete',
+});
+
 export function renderLfeaToolbar(root, state, modes, handlers) {
   const toolbar = workbenchElement(root, 'div', 'lfea-workbench__toolbar');
   const mock = workbenchButton(root, '[SIMULATED] Load Mock Data', handlers.onMock);
@@ -221,11 +233,14 @@ function resultModeSelect(root, state, modes, handlers) {
 }
 
 function deformationScaleInput(root, state, handlers) {
+  const displacementUnit = state.packageValue?.analysisDefinition?.solverProfile?.units?.length
+    ?? 'not declared';
   const label = workbenchElement(
     root,
     'label',
     'lfea-workbench__deformation-scale',
-    `Deformation scale (${state.display.deformationScaleSource}) `,
+    `Displayed displacement multiplier (${state.display.deformationScaleSource}; `
+      + `dimensionless; 1× = true displacement; displacement unit ${displacementUnit}) `,
   );
   const input = workbenchElement(root, 'input');
   input.type = 'number';
@@ -233,18 +248,23 @@ function deformationScaleInput(root, state, handlers) {
   input.min = '0';
   input.value = String(state.display.deformationScale);
   input.dataset.role = 'lfea-deformation-scale';
+  input.dataset.quantity = 'DIMENSIONLESS_DISPLAY_MULTIPLIER';
+  input.title = `Display-only multiplier. Calculated displacement values remain in ${displacementUnit}.`;
   input.addEventListener('change', () => handlers.onDeformationScale(input.value));
   label.append(input);
   return label;
 }
 
 function progressOutput(root, progress) {
+  const rawStage = typeof progress.stage === 'string' ? progress.stage : 'UNKNOWN';
   const output = workbenchElement(
     root,
     'output',
     'lfea-workbench__progress',
-    `${progress.stage} ${progress.index}/${progress.total}`,
+    `${progressStageLabel(rawStage)} — step ${progress.index}/${progress.total}`,
   );
+  output.dataset.stage = rawStage;
+  output.title = `Pipeline stage: ${rawStage}`;
   output.setAttribute('role', 'status');
   output.setAttribute('aria-live', 'polite');
   return output;
@@ -327,6 +347,10 @@ function authorityPolicyLabel(code) {
 
 function preflightStatusLabel(status) {
   return PREFLIGHT_STATUS_LABELS[status] ?? 'Preflight status not recognized';
+}
+
+function progressStageLabel(stage) {
+  return PROGRESS_STAGE_LABELS[stage] ?? stage;
 }
 
 function rawStressRows(result) {

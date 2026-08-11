@@ -2,6 +2,7 @@ import { LfeaWorkbenchController } from '../workspace/lfea-workbench-controller.
 import { createLfeaGovernedJourneyProjection } from './governed-journey-projection.js';
 import { mountLfeaGovernedJourneyView } from './governed-journey-view.js';
 import { LfeaStandaloneInputXmlSourceController } from './inputxml-source-controller.js';
+import { createLfeaNativeComparisonController } from './native-comparison-controller.js';
 import { createLfeaNativeExecutionAuthority } from './native-execution-authority.js';
 import { mountLfeaNativeHistoryView } from './native-history-view.js';
 import { createLfeaNativeResultsAuthority } from './native-results-authority.js';
@@ -14,7 +15,7 @@ import {
 
 export const LFEA_STANDALONE_APPLICATION_SCHEMA = 'lfea-standalone-application/v1';
 
-/** Standalone LFEA composition root with governed execution, recovery, and History. */
+/** Standalone LFEA composition root with governed execution, recovery, History, and Compare. */
 export function bootstrapLfeaStandalone(rootElement, options = {}) {
   if (!rootElement?.ownerDocument) throw new TypeError('Standalone LFEA application root was not found.');
 
@@ -23,6 +24,9 @@ export function bootstrapLfeaStandalone(rootElement, options = {}) {
   const executionAuthority = createLfeaNativeExecutionAuthority();
   const resultsAuthority = createLfeaNativeResultsAuthority();
   const runHistory = createLfeaNativeRunHistory();
+  const comparisonController = createLfeaNativeComparisonController(layout.comparisonRoot, {
+    lookupRun: (runId) => runHistory.getRecord(runId),
+  });
   const journeyView = mountLfeaGovernedJourneyView({
     reviewRoot: layout.reviewRoot,
     modelRoot: layout.modelRoot,
@@ -40,6 +44,7 @@ export function bootstrapLfeaStandalone(rootElement, options = {}) {
   journeyView.update(governedJourney);
   resultsView.update(executionAuthority.getState(), resultsAuthority.getState());
   historyView.update(historySnapshot);
+  comparisonController.refresh(historySnapshot);
 
   const refreshJourney = (sourceSnapshot, preFlight) => {
     executionAuthority.reconcile(preFlight);
@@ -53,6 +58,7 @@ export function bootstrapLfeaStandalone(rootElement, options = {}) {
     resultsView.update(executionAuthority.getState(), resultsAuthority.getState());
     historySnapshot = currentHistorySnapshot(sourceSnapshot, preFlight);
     historyView.update(historySnapshot);
+    comparisonController.refresh(historySnapshot);
     layout.statusRoot.textContent = journeyStatus(governedJourney, resultsAuthority.getState());
     return governedJourney;
   };
@@ -110,14 +116,24 @@ export function bootstrapLfeaStandalone(rootElement, options = {}) {
       sourceController.getPreFlight(),
     );
     historyView.update(historySnapshot);
-    assertSelectionDidNotMutateAuthority(currentExecution, currentResults);
+    comparisonController.refresh(historySnapshot);
+    assertAuthorityUnchanged(currentExecution, currentResults, 'History selection');
     return record;
   }
 
-  function assertSelectionDidNotMutateAuthority(expectedExecution, expectedResults) {
+  function compareHistoryRuns(leftRunId, rightRunId) {
+    requireActive();
+    const currentExecution = executionAuthority.getState();
+    const currentResults = resultsAuthority.getState();
+    const comparison = comparisonController.compare(leftRunId, rightRunId);
+    assertAuthorityUnchanged(currentExecution, currentResults, 'Run comparison');
+    return comparison;
+  }
+
+  function assertAuthorityUnchanged(expectedExecution, expectedResults, operation) {
     if (executionAuthority.getState() !== expectedExecution || resultsAuthority.getState() !== expectedResults) {
-      const error = new Error('History selection changed native engineering authority.');
-      error.code = 'LFEA_HISTORY_SELECTION_AUTHORITY_MUTATION';
+      const error = new Error(`${operation} changed native engineering authority.`);
+      error.code = 'LFEA_VIEW_CONTEXT_AUTHORITY_MUTATION';
       throw error;
     }
   }
@@ -162,6 +178,7 @@ export function bootstrapLfeaStandalone(rootElement, options = {}) {
         nativeExecution: executionAuthority.getState(),
         nativeResults: resultsAuthority.getState(),
         nativeHistory: historySnapshot,
+        nativeComparison: comparisonController.getState(),
       });
     },
     activateView(viewId) { requireActive(); return layout.activate(viewId); },
@@ -189,6 +206,8 @@ export function bootstrapLfeaStandalone(rootElement, options = {}) {
     getNativeRunRecord(runId) { requireActive(); return runHistory.getRecord(runId); },
     getSelectedNativeRunRecord() { requireActive(); return runHistory.getSelectedRecord(); },
     selectNativeRun(runId) { return selectHistoryRun(runId); },
+    compareNativeRuns(leftRunId, rightRunId) { return compareHistoryRuns(leftRunId, rightRunId); },
+    getNativeRunComparison() { requireActive(); return comparisonController.getState(); },
 
     // Verification-workbench compatibility API. It is not native piping execution.
     getState() { requireActive(); return workbenchController.getState(); },
@@ -206,6 +225,7 @@ export function bootstrapLfeaStandalone(rootElement, options = {}) {
     destroy() {
       if (destroyed) return;
       destroyed = true;
+      comparisonController.destroy();
       resultsAuthority.clearCurrentAuthority();
       executionAuthority.clearCurrentAuthority();
       runHistory.clear();

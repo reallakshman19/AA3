@@ -37,6 +37,13 @@ assert(authority.benchmarkId === 'BM4_L', 'benchmark mismatch');
 assert(authority.stackBase?.sha === 'b25500333399bcc74e93ab8ed843900bb2a2aa51', 'stack base mismatch');
 assert(authority.configurationAuthority?.modelCoefficientOfFrictionMu === 0.3, 'BM4_L model mu must remain 0.3');
 assert(authority.configurationAuthority?.currentLinearSolverBoundary === 'POSITIVE_EFFECTIVE_FRICTION_IS_UNSUPPORTED', 'linear friction boundary mismatch');
+assert(authority.configurationAuthority?.frictionAngleVariationDegrees === 15, 'friction angle variation authority mismatch');
+assert(authority.configurationAuthority?.frictionNormalForceVariationFraction === 0.15, 'friction normal-force variation authority mismatch');
+assert(authority.configurationAuthority?.profileFrictionStiffnessDisplayedCaesarUnits === 1000000, 'friction stiffness authority mismatch');
+assert(authority.configurationAuthority?.staticFrictionMethod?.method === 'STIFFNESS_METHOD', 'static friction method mismatch');
+assert(JSON.stringify(authority.configurationAuthority?.unresolvedStaticFrictionControls) === JSON.stringify(['FRICTION_SLIDE_MULTIPLIER_NUMERIC_VALUE']), 'unexpected unresolved friction controls');
+assert(authority.result?.genericKernelAuthorized === true, 'generic kernel must be authorized after public method reconstruction');
+assert(authority.result?.bm4lProductionFrictionAuthorized === false, 'BM4_L production friction must remain blocked');
 assert(authority.result?.newMechanicsAuthorized === false, 'F0 must not authorize mechanics');
 assert(Array.isArray(authority.cases) && authority.cases.length === 20, 'expected exactly 20 load cases');
 

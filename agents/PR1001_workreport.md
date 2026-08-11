@@ -7,15 +7,16 @@
 - PR number: 1001
 - Branch: `agent/m047-bm4l-clean-qualified`
 - Base commit: `7a08f9db84f298990250793226b36d4a82dbe01e`
-- Current HEAD before this report update: `2c2b88a18d7d1b01f282d0b7adaa04966d4aca24`
+- Current HEAD before this report update: `894ce9b2b4e5622c6565ff5e64bded863b8fedb7`
 - Governed implementation head for exact numerical replay: `7488ba76126f8240bb61c80fad243cf096c5fe08`
 - PR status: OPEN / DRAFT
-- Current stage: Stage 6 — authority-first continuation and residual/output-authority diagnostics
+- Current stage: Stage 7 — local profile-only native-unit gate candidate qualification
 - Last completed stage: Stage 5 — Type 2.1 tee free-growth accuracy qualification
-- Engineering status: tee fictitious-rigid thermal free growth is qualified locally/offline; no second production mechanism is yet authorized. Stage 6 has narrowed the remaining error to unresolved alpha, unresolved reducer cylinder property sampling, and a newly discovered CAESAR native-output zero-boundary / rotation-gate unit-consistency question.
-- Validation status: exact-head replay, tee sign/carrier/K/equilibrium/superposition, reducer source/provenance, reducer pressure consistency and ACCDB reference-import checks PASS. GitHub Actions have not been intentionally rerun.
-- Current blocker: independent authority is still missing for exact CAESAR material-library T1 strain, reducer cylinder property station, and whether the benchmark's exact-zero rotation gate should represent CAESAR's apparent `0.0001 deg` stored-output floor.
-- Exact next action: validate the native-unit zero boundary on independent CAESAR ACCDB evidence before any tolerance change; continue primary-authority searches for exact alpha and reducer sampling.
+- Stage 6 decision: PARTIAL — authority/residual investigation materially narrowed the remaining gap and independently reproduced the native-unit small-result boundary outside BM4_L, but CAESAR public documentation does not state an explicit `0.0001 deg` stored-output zero-suppression rule.
+- Engineering status: tee fictitious-rigid thermal free growth is qualified locally/offline. No second production-mechanics mechanism is authorized. QST-004 is now accepted only as a controlled profile-authority candidate for local falsification; the live rotation gate remains unchanged.
+- Validation status: exact-head replay, tee sign/carrier/K/equilibrium/superposition, reducer source/provenance, reducer pressure consistency, ACCDB reference-import checks, cross-model CAESAR output checks, and profile-only signature replay PASS. GitHub Actions have not been intentionally rerun.
+- Current blocker: exact CAESAR material-library T1 strain and exact reducer cylinder property station remain unavailable; direct primary documentation for an exact stored-output `0.0001 deg` zeroing rule was not found.
+- Exact next action: locally qualify a one-line rotation `zeroReferenceAbsolute` candidate derived from `0.0001 deg -> rad`, proving that it changes only exact-zero ROTATION statuses and leaves actual/reference rows, nonzero-relative results, K, recovery, equilibrium and superposition untouched. Do not push the profile candidate under the current no-Actions policy.
 
 ## Handover in 60 Seconds
 
@@ -27,30 +28,47 @@
 - The tee correction changes `f_initial` only. K, Kb, Surface Node geometry, gravity, pressure and bend mechanics stay unchanged.
 - Exact-head offline replay independently reproduces **210 failures**: L2 31, L3 37, L4 40, L5 43, L6 22, L14 37.
 - Candidate equilibrium is about `4.1e-5 N / 7.5e-6 N.m`; `L14=L3` is exact and the other six-case superposition identities remain at numerical roundoff.
-- All 105 candidate failures with exact-zero CAESAR references are **ROTATION** rows.
-- Exact-zero candidate counts: L2 26, L3 17, L4 33, L5 5, L6 7, L14 17. L3 and L14 have the same zero-reference set.
-- Exact-head system replay error is about `1e-11 m/rad`; the failing zero-reference rotations are typically `1e-7` to `2e-6 rad`, so they are not solver numerical noise.
+- All 105 tee-candidate failures with exact-zero CAESAR references are **ROTATION** rows: L2 26, L3 17, L4 33, L5 5, L6 7, L14 17. L3 and L14 have the same zero-reference set.
+- Exact-head replay error is about `1e-11 m/rad`; failing zero-reference rotations are typically `1e-7` to `2e-6 rad`, so they are not solver numerical noise.
 - BM4_L reducer provenance proves all four `INPUT_REDUCERS` rows have `R1=R2=L1=L2=0.0`.
-- Reducer sampling sensitivity can move L4 nonzero-magnitude failures but does not materially remove the exact-zero rotation floor. Disabling reducer Bourdon pressure is strongly falsified (`L4: 40 -> 281`).
-- Pinned Common evidence contains no Print-Alphas/material-table output, so exact T1 material strain remains externally blocked.
-- **New Stage-6 finding:** across the governed CAESAR reference data, the smallest nonzero translation is `0.00010186503 mm` and the smallest nonzero rotation is `0.000100629848 deg`. This shows a sharp ~`0.0001` boundary in both native CAESAR output units.
-- The ACCDB importer does not zero or round rotations; it reads `OUTPUT_DISPLACEMENTS.RX/RY/RZ` and only converts degrees to radians. Therefore the apparent boundary exists upstream in CAESAR's stored results, not in our reference importer.
-- Current zero gates are `1e-7 m` for displacement and `1e-7 rad` for rotation. The displacement gate equals `0.0001 mm`, but the rotation gate equals only `0.00000572958 deg`, approximately **17.4533x tighter in native units**.
-- Diagnostic only: using `0.0001 deg = 1.7453292519943296e-6 rad` for exact-zero rotation comparisons clears **103 of 105** current zero-reference failures and would reduce the tee-corrected total from about 210 to about **107** without changing K, loads, reference values, signs or any nonzero-relative comparison. This is **not promoted** pending independent authority.
+- Reducer sampling sensitivity materially moves L4 nonzero-magnitude failures but leaves the exact-zero rotation floor near 32-33. Disabling reducer Bourdon pressure is strongly falsified (`L4: 40 -> 281`).
+- Pinned Common evidence contains no Print-Alphas/material table, so exact T1 material strain remains externally blocked.
+- BM4_L raw ACCDB references show a sharp native-unit lower nonzero boundary: smallest nonzero translation `0.00010186503 mm`; smallest nonzero rotation `0.000100629848 deg`.
+- The ACCDB importer performs no clipping: it reads `OUTPUT_DISPLACEMENTS.RX/RY/RZ` and converts degrees to radians only.
+- The current displacement zero gate `1e-7 m` equals `0.0001 mm`; the rotation zero gate `1e-7 rad` equals only `0.00000572958 deg`, a **17.4533x native-unit asymmetry**.
+- Independent CAESAR v14 output evidence outside BM4_L is consistent with the same small-rotation boundary:
+  - BM1 XML: exact zeros coexist with a smallest visible nonzero rotation of `0.000120 deg` in the inspected displacement report.
+  - BM2 XML: exact zeros coexist with visible nonzero rotations such as `0.000141 deg` and `0.000217 deg`; searches found no displayed nonzero `0.00001-0.00009 deg` values.
+  - BM3 XML: exact-zero small components coexist with larger nonzero rotations; no contrary sub-`0.0001 deg` visible value was found in the inspected report.
+  - BM4_NL is a separate raw ACCDB benchmark (`SHA-256 85d39463296e569da811d8572e2eff680b858097f76fdf0f47d1755f0b161c21`, CAESAR 14.000). Its Access-derived report contains exact-zero rotation references alongside small nonzero references `1.819680e-6`, `1.919403e-6`, `2.201650e-6 rad`, i.e. just above `0.0001 deg`.
+- Hexagon primary documentation confirms rotations use degrees, displacement reports export to Access `OUTPUT_DISPLACEMENTS`, and report precision is a separately configurable presentation setting. It does **not** explicitly document a hard `0.0001 deg` Access-storage zeroing rule.
+- Diagnostic profile-only replay with `ROTATION.zeroReferenceAbsolute = 0.0001 deg = 1.7453292519943296e-6 rad` changes tee-candidate counts from `31/37/40/43/22/37` to **`6/20/7/39/15/20`**, total **210 -> 107**.
+- That diagnostic changes **only exact-zero ROTATION statuses**. Every nonzero-reference failure count is identical before/after:
+  - L2 nonzero 5 -> 5
+  - L3 20 -> 20
+  - L4 7 -> 7
+  - L5 38 -> 38
+  - L6 15 -> 15
+  - L14 20 -> 20
+- The two exact-zero rotation rows still failing at a `0.0001 deg` gate are:
+  - L2 node 20440 RZ: `-2.033276225626185e-6 rad = -0.000116498146 deg`;
+  - L5 node 22110 RZ: `+1.7487675123311166e-6 rad = +0.000100196998 deg`.
+- Correction to prior note: the two remaining rows are **one L2 and one L5**, not two L5 rows.
 
 ### What is being worked on
 
 - QST-001: exact CAESAR material-library T1 strain from 21 C to 120 C.
 - QST-002: exact property station used inside each of CAESAR's ten structural reducer cylinders.
-- QST-003: mechanics/recovery ownership of the residual exact-zero rotation bands.
-- QST-004: whether CAESAR's stored-output native zero boundary is generically `0.0001 mm / 0.0001 deg`, and whether the BM4_L rotation zero gate has an SI-unit conversion defect.
+- QST-003: mechanics/recovery ownership of the remaining real zero-reference rotation discrepancies after any independently qualified output-authority correction.
+- QST-004: native-unit zero-boundary / SI gate consistency. Cross-model evidence is now strong enough for a local profile-only candidate, but the live gate remains unchanged until the candidate is reviewed/authorized.
 
 ### What remains unfinished
 
 - Core tee free-growth patch is staged locally, not committed to the PR branch.
 - Exact CAESAR T1 material strain is unresolved.
 - Exact reducer cylinder property sampling is unresolved.
-- QST-004 requires independent cross-benchmark or direct CAESAR authority before changing `zeroReferenceAbsolute` for rotations.
+- QST-004 has no explicit Hexagon sentence establishing a hard `0.0001 deg` Access-storage cutoff; therefore the profile candidate is local-only and not yet branch authority.
+- The two residual exact-zero rotations above `0.0001 deg` remain genuine QST-003 targets.
 
 ### What must not be assumed
 
@@ -58,16 +76,16 @@
 - Do not choose reducer endpoint/midpoint sampling from failure counts.
 - Do not treat the reducer 60%-length Alpha/SIF fallback as structural taper stiffness authority.
 - Do not infer structural Type 2.6 branches from Misc SIF rows alone.
-- Do not change the rotation zero gate solely because it improves BM4_L. The `0.0001 deg` observation is evidence for investigation, not yet authority.
-- Do not alter reference values, signs, source mappings, row identities or nonzero `<10%` relative gates.
+- Do not change the live rotation gate merely because 107 is a better score. The Stage-7 candidate is justified by native-unit consistency plus independent CAESAR evidence, and must remain a separate profile-only change if eventually authorized.
+- Do not alter reference values, actual solver rows, signs, source mappings, row identities or nonzero `<10%` relative gates.
 
 ### Highest-risk remaining item
 
-Turning a diagnostic pattern into authority. This applies equally to alpha, reducer sampling and the newly observed native-unit output boundary.
+Conflating an empirically consistent CAESAR output resolution with a formally documented storage rule. The Stage-7 candidate must be reviewable and separable so it can be rejected without affecting tee mechanics.
 
 ### Exact next action
 
-Test QST-004 against independent CAESAR ACCDB datasets / primary CAESAR output semantics. If the same native-unit boundary is independently reproduced, classify the existing `1e-7 rad` gate as a unit-consistency defect and validate a separate profile-only correction before any production-mechanics change.
+Create and locally validate the one-line Stage-7 profile candidate only. No branch profile commit and no Actions trigger. Record its exact signature and retain the current live profile as authority until Owner/review authorization.
 
 ## Mission and Engineering Intent
 
@@ -100,8 +118,9 @@ The Misc report establishes Type 2.1 Surface Nodes 20161 and 20296 plus branch F
 | Exact CAESAR T1 strain | P0 | BLOCKED | 6 | no Print-Alphas/material table in pinned bundle |
 | Exact reducer cylinder property station | P1 | BLOCKED | 6 | ten cylinders documented; station not published |
 | Reducer R1/R2/L1/L2 source state | P1 | VALIDATED | 6 | all four rows hash to `0.0` values |
-| Exact-zero residual mechanics ownership | P1 | INVESTIGATING | 6 | all 105 are rotations; coherent load-family cancellation |
-| Native-unit output zero boundary / rotation gate unit consistency | P0 | INVESTIGATING | 6 | ~0.0001 native-unit boundary; importer performs no clipping |
+| Exact-zero residual mechanics ownership | P1 | INVESTIGATING | 6-7 | all 105 are rotations; two remain above Stage-7 candidate gate |
+| Native-unit output zero boundary / rotation gate unit consistency | P0 | ACCEPTED | 7 local candidate | BM4_L raw ACCDB + independent BM4_NL raw benchmark + BM1/BM2/BM3 output + unit/history checks |
+| Stage-7 profile-only candidate | P0 | IN_PROGRESS | 7 | predeclared one-line local patch; live profile unchanged |
 | Type 2.6 structural modifiers | P2 | DEFERRED | future | no structural topology authority |
 
 ## Engineering Item Register
@@ -115,12 +134,13 @@ The Misc report establishes Type 2.1 Surface Nodes 20161 and 20296 plus branch F
 | RISK-001 | risk | P0 | OPEN | Provisional alpha must not be fitted | YES |
 | QST-001 | question | P0 | BLOCKED | Exact CAESAR T1 material strain from 21 C to 120 C | YES |
 | QST-002 | question | P1 | BLOCKED | Exact structural property station in each ten-cylinder reducer segment | YES |
-| QST-003 | question | P1 | INVESTIGATING | Mechanics/recovery ownership of exact-zero rotation bands | YES |
-| QST-004 | question | P0 | INVESTIGATING | Is the rotation zero gate a native-unit-to-SI conversion defect relative to CAESAR stored-output semantics? | YES |
-| RISK-002 | risk | P0 | OPEN | `1e-7 rad` may be 17.45x stricter than the corresponding CAESAR native `0.0001 deg` output boundary, but changing it without independent authority would be benchmark fitting | YES |
+| QST-003 | question | P1 | INVESTIGATING | Mechanics/recovery ownership of genuine zero-reference rotation residuals | YES |
+| QST-004 | question | P0 | ACCEPTED | Native-unit/SI gate inconsistency is a controlled profile-authority candidate; live gate unchanged pending authorization | YES |
+| RISK-002 | risk | P0 | OPEN | Primary docs confirm unit/export semantics but not an explicit hard `0.0001 deg` Access-storage cutoff | YES |
 | DEC-003 | decision | P0 | ACCEPTED | Do not create Type 2.6 mechanics without topology authority | YES |
 | DEC-004 | decision | P1 | ACCEPTED | Do not use reducer 60%-Alpha rule as structural stiffness taper | YES |
-| DEC-005 | decision | P0 | ACCEPTED | Keep current zero gates unchanged until QST-004 is independently qualified | YES |
+| DEC-005 | decision | P0 | ACCEPTED | Keep live zero gates unchanged while qualifying Stage-7 candidate locally | YES |
+| DEC-006 | decision | P0 | ACCEPTED | If authorized, Stage-7 is profile-only and must not be bundled with tee mechanics or alpha | YES |
 | IMP-001 | improvement | P1 | DEFERRED | Productize explicit reducer auxiliary-source evidence | YES |
 
 ## Engineering Decisions and Invariants
@@ -140,14 +160,23 @@ The fictitious rigid inherits common run temperature/material state. If the two 
 
 CAESAR documents ten successive structural pipe cylinders over reducer element length. A separate 60%-entered-length fallback is used to derive reducer Alpha/slope when Alpha is blank. BM4_L has `R1=R2=L1=L2=0.0`; the 60% rule is not structural-stiffness authority.
 
-### DEC-005 — Native-output gate finding remains diagnostic
+### DEC-005 / DEC-006 — Rotation zero-gate candidate boundary
 
-Observed reference minima:
+Observed BM4_L raw reference minima:
 
 - translation: `1.0186503e-7 m = 0.00010186503 mm`;
 - rotation: `1.7563201286787792e-6 rad = 0.000100629848 deg`.
 
-The benchmark profile's displacement exact-zero gate `1e-7 m` corresponds to `0.0001 mm`. The rotation exact-zero gate `1e-7 rad` corresponds to `0.00000572958 deg`. The mismatch is technically significant, but no profile change is authorized until the CAESAR native-output boundary is independently established.
+Current profile:
+
+- displacement zero gate `1e-7 m = 0.0001 mm`;
+- rotation zero gate `1e-7 rad = 0.00000572958 deg`.
+
+Stage-7 candidate:
+
+`ROTATION.zeroReferenceAbsolute = radians(0.0001 deg) = 1.7453292519943296e-6 rad`
+
+This candidate is not a solver tolerance and does not modify CAESAR reference values. It is only the absolute acceptance rule used when the stored reference is literally zero. If ever authorized, it must be committed independently from tee mechanics and exact-alpha work.
 
 ### Permanent recovery identity
 
@@ -161,9 +190,10 @@ Do not alter recovery sign, reference values, row identities or source mapping t
 - Stage 2 — PR allocation/report synchronization — COMPLETE
 - Stage 3 — changed-file/repository-state verification — COMPLETE
 - Stage 4 — tee thermal free-growth implementation preparation — COMPLETE / branch delivery pending
-- Stage 5 — exact-head accuracy replay and qualification — COMPLETE
-- Stage 6 — authority-first continuation, residual and output-authority diagnostics — IN_PROGRESS / PARTIAL
-- Stage 7 — next single-factor implementation or authority correction — NOT_STARTED
+- Stage 5 — exact-head accuracy replay and tee qualification — COMPLETE
+- Stage 6 — authority-first continuation, residual and output-authority diagnostics — PARTIAL / investigation complete enough to define Stage 7
+- Stage 7 — local profile-only native-unit gate candidate qualification — IN_PROGRESS
+- Stage 8 — remaining mechanics only after Stage-7 disposition and independent authority — NOT_STARTED
 
 ## Stage 5 Completion Record
 
@@ -200,7 +230,7 @@ Stage decision: **COMPLETE**.
 
 ### Exact-zero load-family decomposition
 
-All 105 candidate exact-zero failures are rotations.
+All 105 tee-candidate exact-zero failures are rotations.
 
 | Case | Dominant analysis kinds among zero failures |
 |---|---|
@@ -213,55 +243,124 @@ All 105 candidate exact-zero failures are rotations.
 
 Representative L4 node 22130 RX is a cancellation: reducer about `-1.67e-6 rad` against bend/straight/frame about `+1.08e-6 rad`, leaving about `-5.95e-7 rad` versus CAESAR zero. Reducer station sensitivity changes nonzero pressure magnitudes materially but leaves the zero-rotation count approximately 32-33, so station uncertainty alone does not explain the zero floor.
 
-### Native-unit zero-boundary finding
+### Native-unit zero-boundary evidence
 
-From all governed CAESAR reference rows:
+BM4_L raw ACCDB governed reference rows:
 
 - smallest nonzero displacement = `1.0186503000000001e-7 m = 0.00010186503 mm`;
 - smallest nonzero rotation = `1.7563201286787792e-6 rad = 0.000100629848 deg`.
 
-The ACCDB reference adapter reads Access `OUTPUT_DISPLACEMENTS` and only applies unit conversion. Rotation conversion is exactly degrees × `pi/180`; no clipping/rounding is performed in our importer. The observed boundary therefore predates our comparison layer.
+The ACCDB reference adapter reads Access `OUTPUT_DISPLACEMENTS` and only applies unit conversion; degrees-to-radians conversion contains no clipping.
 
-Current comparison contract interprets `zeroReferenceAbsolute` in normalized row SI units. Existing profile:
+Independent evidence:
 
-- displacement zero gate `1e-7 m` = `0.0001 mm`;
-- rotation zero gate `1e-7 rad` = `0.00000572958 deg`.
+- BM4_NL PR #957 uses separate ACCDB SHA-256 `85d39463296e569da811d8572e2eff680b858097f76fdf0f47d1755f0b161c21`, CAESAR 14.000. Its Access-derived comparison report contains exact-zero rotation references and small nonzero rotation references at/above approximately `0.000104 deg`.
+- BM1/BM2/BM3 CAESAR v14 XML displacement output independently shows the same pattern of exact-zero small components with first visible nonzero values around or above `0.0001 deg`; BM2 was explicitly searched for visible `0.00001-0.00009` values and none were found.
+- Hexagon primary documentation states rotation output units are degrees, displacement-report data is exported to Access table `OUTPUT_DISPLACEMENTS`, and report precision is configurable separately. No explicit hard Access zero-suppression threshold was located.
 
-This is a 17.4533x native-unit asymmetry. Diagnostic application of a `0.0001 deg` rotation zero gate (`1.7453292519943296e-6 rad`) clears 103/105 candidate zero-reference failures; two L5 rotation rows remain above that value. No gate change has been made.
-
-History check: commit `eda9e1388b361185bc3c6ef219f35038bbb83a9e` introduced literal zero gates and assigned the same numeric `1e-7` to displacement and rotation after normalization, without a documented unit-specific derivation. PR #988 describes a separately declared exact-zero gate but does not record an Owner mandate or CAESAR source for specifically `1e-7 rad`.
+History check: commit `eda9e1388b361185bc3c6ef219f35038bbb83a9e` introduced literal-zero gates and assigned the same numeric `1e-7` to displacement and rotation after normalization, without a documented quantity-specific native-unit derivation. PR #988 documents a separate exact-zero gate but no Owner mandate/source for specifically `1e-7 rad`.
 
 ### Stage-6 validation
 
 - PASS — exact-head Access oracle/import path checked; importer has no rotation clipping.
-- PASS — native-unit reference minima measured across all six governed cases.
-- PASS — profile/comparator unit interpretation checked.
-- PASS — diagnostic `0.0001 deg` gate impact quantified without mutating production/profile/reference data.
+- PASS — BM4_L native-unit reference minima measured across all six governed cases.
+- PASS — independent BM4_NL Access-derived report checked.
+- PASS — independent BM1/BM2/BM3 CAESAR v14 output checked for contradictory sub-`0.0001 deg` visible rotations; none found in inspected data.
+- PASS — Hexagon unit/export/report-precision semantics checked.
+- PASS — profile/comparator SI-unit interpretation checked.
 - PASS — reducer source auxiliary zero proof.
 - PASS — reducer pressure disable falsification.
 - PASS — reducer station sensitivity bounded as non-authoritative.
 - NOT_RUN — no Actions rerun.
 
-### New findings / decisions
-
-- QST-001 remains externally blocked.
-- QST-002 remains externally blocked and is more relevant to nonzero L4 magnitude than the zero floor.
-- QST-003 is not solver precision or our reference-import rounding.
-- QST-004 is now the highest-value authority question because it could explain 103/105 exact-zero failures as a unit-consistency issue while leaving mechanics and nonzero comparisons untouched.
-- DEC-005: do not change the gate until QST-004 is independently qualified.
-
 ### Stage decision
 
-**PARTIAL** — materially narrowed; no new production/profile change authorized yet.
+**PARTIAL** — enough independent evidence exists for a controlled local profile-only candidate, but no explicit primary hard-zero storage rule was found. Live profile stays unchanged.
+
+## Stage 7 Pre-Implementation / Local Qualification Record
+
+### Current truth
+
+- Live tee candidate under current profile: 210 failures.
+- QST-004 is not a mechanics change.
+- The proposed value is derived exactly from the native rotation unit, not selected by a failure-count sweep: `0.0001 deg * pi/180`.
+- The branch profile remains unchanged until explicit authorization.
+
+### Objective
+
+Falsify or qualify a one-line profile-only native-unit consistency candidate without changing production mechanics or CAESAR references.
+
+### Expected scope/files
+
+Local only:
+
+- `benchmarks/LFEA/CAESAR_ACCDB/bm4l-validation.profile.json`
+
+No solver, reducer, tee, recovery, reference-import, comparison-code or source-data changes.
+
+### Engineering rationale
+
+The current displacement exact-zero gate corresponds to `0.0001` in CAESAR's native length unit (mm), while the current rotation gate does not correspond to `0.0001` in CAESAR's native rotation unit (deg). Independent CAESAR models show a consistent small-rotation output boundary near `0.0001 deg`. The candidate tests unit consistency without altering actual/reference values.
+
+### Planned implementation
+
+Change only:
+
+```text
+ROTATION.zeroReferenceAbsolute
+1e-7 rad
+->
+1.7453292519943296e-6 rad
+```
+
+### Predeclared expected behavior
+
+- Actual solver results: byte/number identical.
+- Reference rows: identical.
+- Stiffness K: identical.
+- Equivalent/initial loads: identical.
+- Nonzero-reference relative statuses: identical.
+- Only rows with `quantity=ROTATION` and `referenceValue=0` may change PASS/FAIL status.
+- Expected tee-candidate external counts under diagnostic replay:
+  - L2 31 -> 6
+  - L3 37 -> 20
+  - L4 40 -> 7
+  - L5 43 -> 39
+  - L6 22 -> 15
+  - L14 37 -> 20
+  - total 210 -> 107
+- Expected remaining exact-zero failures: exactly two, L2:20440:RZ and L5:22110:RZ.
+
+### Edge cases
+
+- A nonzero CAESAR reference near the boundary must still use the literal `<10%` relative rule; the candidate must never turn a nonzero reference into a zero-reference comparison.
+- Values exactly equal to the zero gate use the existing comparator's `<=` semantics.
+- No unit conversion is added to comparator code; the profile stores the SI value explicitly.
+
+### Planned validation
+
+- Verify exact radian conversion of `0.0001 deg`.
+- Replay all six tee-candidate cases from exact-head artifact.
+- Compare before/after failed-row identities.
+- Assert every changed row is exact-zero ROTATION.
+- Assert nonzero-reference failure identities/counts unchanged.
+- Assert actual and reference values are unchanged.
+- K/equilibrium/superposition checks are NOT_APPLICABLE to the profile comparison itself but must remain byte-identical because no solve is rerun/changed.
+- Do not run or rerun GitHub Actions.
+
+### Known risks
+
+- Strong empirical cross-model evidence is not the same as an explicit Hexagon storage-threshold statement.
+- The correction could be rejected by Owner/reviewer even if its signature is clean; keep it local and separable.
 
 ## Changed-File Ledger
 
 | File | First Stage | Latest Stage | Purpose | Engineering-sensitive? | Validation |
 |---|---|---|---|---|---|
 | `src/core/fea-benchmarks/caesar-accdb-linear-solve.js` | prior | 5 | governed mechanics; tee v3 patch staged locally | YES | exact-head offline replay PASS; not branch-committed |
-| `agents/PR1001_workreport.md` | 1 | 6 | canonical mission control / handover | YES | updated with QST-004 |
+| `agents/PR1001_workreport.md` | 1 | 7 | canonical mission control / handover | YES | updated before Stage-7 local candidate |
 | `PE_1001workreport.md` | 6 | 6 | Owner-requested pointer to canonical report | NO | pointer-only |
-| `benchmarks/LFEA/CAESAR_ACCDB/bm4l-validation.profile.json` | prior | 6 read-only | governed profile / gate investigation | YES | unchanged |
+| `benchmarks/LFEA/CAESAR_ACCDB/bm4l-validation.profile.json` | prior | 7 local candidate | governed profile / native-unit gate candidate | YES | live file unchanged; local one-line patch planned |
 | `src/core/fea-benchmarks/caesar-accdb-reference.js` | prior | 6 read-only | ACCDB reference import path | YES | no clipping found |
 | `src/core/fea-benchmarks/caesar-accdb-units.js` | prior | 6 read-only | degrees-to-radians conversion | YES | exact conversion only |
 | `src/core/fea-benchmarks/qualification-comparison.js` | prior | 6 read-only | zero gate semantics | YES | SI-row-unit interpretation confirmed |
@@ -279,8 +378,10 @@ Before closure, compare this ledger with GitHub's actual changed-file list. Any 
 | Tee v3 focused syntax/algebra | PASS | local | sign/carrier/free-growth checks |
 | Six-case tee candidate replay | PASS | exact-head artifact | 210 total |
 | Reference importer clipping check | PASS | `7488ba...` | no clipping/rounding |
-| Native-unit minima analysis | PASS | exact-head CAESAR references | ~0.0001 mm / deg boundary |
+| BM4_L native-unit minima analysis | PASS | exact-head CAESAR references | ~0.0001 mm / deg boundary |
+| Cross-model output evidence | PASS | BM1/BM2/BM3/BM4_NL | no contradictory inspected sub-0.0001deg nonzero evidence |
 | Reducer auxiliary source hash | PASS | exact-head provenance | R1/R2/L1/L2 all zero |
+| Stage-7 local signature replay | PASS_PREIMPLEMENTATION | exact-head reconstructed tee candidate | expected 210 -> 107; nonzero failure counts unchanged |
 | Actions rerun | NOT_RUN | current | intentionally not rerun |
 
 ## Engineering Validation
@@ -289,56 +390,59 @@ Before closure, compare this ledger with GitHub's actual changed-file list. Any 
 |---|---|---|
 | Tee carrier coverage | PASS | E12 + E36.STRAIGHT |
 | K unchanged | PASS | common stiffness state |
-| thermal selectivity | PASS | only T1-containing cases move |
+| thermal selectivity | PASS | only T1-containing cases move under tee mechanics |
 | `L14=L3` | PASS | exact |
 | superposition | PASS | numerical roundoff |
 | equilibrium | PASS | ~4.1e-5 N / 7.5e-6 N.m |
 | exact alpha authority | BLOCKED | no pinned full-precision material strain |
 | exact reducer station authority | BLOCKED | public source omits station |
-| rotation zero-gate native-unit authority | INVESTIGATING | strong internal evidence; independent confirmation required |
+| rotation native-unit candidate evidence | ACCEPTED_LOCAL_CANDIDATE | BM4_L raw + BM4_NL raw-derived + BM1/BM2/BM3 + Hexagon unit/export semantics |
+| explicit hard `0.0001 deg` Access storage rule | NOT_VALIDATED | no direct primary statement found |
 
 ## Explicitly Not Validated
 
 - Exact CAESAR material-library T1 strain from 21 C to 120 C.
 - Exact reducer cylinder property station.
-- Generic CAESAR stored-output zero boundary of exactly `0.0001 deg` outside BM4_L.
-- Any profile change to rotation zeroReferenceAbsolute.
+- A directly documented Hexagon hard zero-suppression threshold of exactly `0.0001 deg` in Access storage.
+- Any branch/profile change for Stage 7.
 - Structural Type 2.6 interpretation.
 
 ## Known / Deferred Work and Forward Sequence
 
-1. **QST-004 first:** validate the observed native-unit zero boundary against an independent CAESAR ACCDB dataset or explicit primary CAESAR output authority.
-2. If QST-004 is independently validated, prepare a **separate profile-only** unit-consistency correction; do not combine it with tee mechanics or alpha. Predeclare expected signature: only exact-zero rotation rows may change status; references, actual results and nonzero-relative rows remain identical.
-3. Obtain exact Print Alphas/material-library strain and replay tee free growth with that exact value as a separate authority change.
-4. Continue QST-002 authority search for reducer cylinder station; never select station from BM4_L failure minimization.
-5. Continue QST-003 only for the two zero-reference rotation rows above the apparent `0.0001 deg` boundary and any remaining nonzero mechanics families after authoritative changes.
-6. Keep Type 2.6 deferred without structural topology authority.
-7. When Actions are explicitly authorized for production delivery, push/qualify the single-factor tee patch separately from any profile/alpha change.
+1. Complete Stage-7 **local-only** profile candidate validation and retain artifact/changed-row evidence.
+2. Present Stage-7 candidate for Owner/reviewer disposition; do not push while no-Actions policy is active.
+3. If authorized later, commit Stage-7 profile change alone and qualify it independently; no tee or alpha change in same commit.
+4. Continue QST-003 on the two residual exact-zero rotations and all nonzero-reference failures; do not globally tune stiffness.
+5. Obtain exact Print Alphas/material-library strain and replay tee free growth with that exact value as a separate authority change.
+6. Continue QST-002 authority search for reducer cylinder station; never select station from BM4_L minimization.
+7. Keep Type 2.6 deferred without structural topology authority.
+8. When Actions are explicitly authorized for production delivery, push/qualify the single-factor tee patch separately from profile/alpha work.
 
 ## Process Notes / Lessons Learned
 
 - Source-ID-only tee ownership can miss an incoming-straight carrier when the source also owns a bend.
-- Exact-head completed artifacts are useful read-only evidence without rerunning Actions.
+- Exact-head completed artifacts provide high-fidelity read-only evidence without rerunning Actions.
 - Diagnostic optima inside rounded authority ranges are not authority.
-- Access storage precision, CAESAR output cleanup and report formatting are separate layers; do not conflate them.
-- A tolerance written in normalized SI units must be derived consistently from the intended source/native-unit rule for each quantity; copying the same numeric SI value across metres and radians can change the native tolerance materially.
+- Access storage precision, CAESAR solver/output cleanup and report formatting are separate layers; do not conflate them.
+- A tolerance stored in normalized SI units must be derived consistently from the intended source/native-unit rule for each quantity; copying the same numeric SI value across metres and radians creates a large native-unit asymmetry.
+- A profile-authority correction must be treated separately from mechanics. A lower failure count alone is not validation.
 - Reducer pressure boundary free elongation is consistent with segment-wise pressure free strain; disabling it is strongly falsified.
 - Reducer 60%-Alpha fallback is an SIF/slope rule, not structural taper authority.
 
 ## Next-Agent Handover
 
-- Current stopping point: Stage 6, after discovery of QST-004 native-unit zero-boundary / rotation-gate asymmetry.
-- PR / branch / HEAD before this report commit: PR1001 / `agent/m047-bm4l-clean-qualified` / `2c2b88a18d7d1b01f282d0b7adaa04966d4aca24`.
+- Current stopping point: Stage 7 pre-implementation, after independent QST-004 evidence and corrected diagnostic signature.
+- PR / branch / HEAD before this report commit: PR1001 / `agent/m047-bm4l-clean-qualified` / `894ce9b2b4e5622c6565ff5e64bded863b8fedb7`.
 - Governed implementation head for replay: `7488ba76126f8240bb61c80fad243cf096c5fe08`.
 - Last completed stage: Stage 5.
-- Current active stage: Stage 6 — PARTIAL.
-- Start here: independently validate QST-004 on another CAESAR ACCDB source or explicit CAESAR output semantics.
-- Do not redo: bend/MEC-21 rejected paths, gravity scaling, fitted alpha, source-ID tee replay, reducer pressure disable/sign tests, hidden reducer L2 hypothesis, XML-format-rounding hypothesis.
-- Do not assume: `0.0001 deg` is yet an authorized benchmark gate; alpha 1.17e-5/K is exact; midpoint reducer sampling is CAESAR-exact; Type 2.6 rows are structural branches.
-- Files currently involved: governed solver, validation profile, reference importer/units/comparison, reducer/rigid authorities, provenance script and this report.
-- Known failing checks: tee candidate 210 under current profile/provisional alpha; 105 failures are exact-zero rotations.
-- Validation still required: independent QST-004 confirmation; branch-level tee patch validation when authorized; exact-alpha replay if authority arrives.
-- Open questions: QST-001, QST-002, QST-003, QST-004.
-- Highest-risk item: weakening a benchmark gate from BM4_L-specific evidence rather than correcting an independently proven unit/authority defect.
-- Exact next recommended action: cross-benchmark CAESAR reference-minimum analysis; if unavailable, seek explicit CAESAR output precision/cleanup documentation before touching the profile.
-- Required reading: this report; pinned CodingRules; Common Misc/Loadcase reports; governed BM4_L profile; reference importer/units/comparison source; reducer/rigid source; provenance script.
+- Current active stage: Stage 7 — local-only candidate.
+- Start here: generate one-line local profile diff and machine-readable changed-row proof; do not push it.
+- Do not redo: bend/MEC-21 rejected paths, gravity scaling, fitted alpha, source-ID tee replay, reducer pressure disable/sign tests, hidden reducer L2 hypothesis, reducer station fitting, XML-only rounding hypothesis.
+- Do not assume: `0.0001 deg` is a directly documented Access-storage rule; alpha 1.17e-5/K is exact; midpoint reducer sampling is CAESAR-exact; Type 2.6 rows are structural branches.
+- Files currently involved: governed solver, BM4_L profile, reference importer/units/comparison, reducer/rigid authorities, provenance script and this report.
+- Known failing checks: tee candidate 210 under current live profile/provisional alpha; Stage-7 local candidate predicts 107, with two exact-zero rotations remaining.
+- Validation still required: Stage-7 local artifact proof; Owner/reviewer disposition; branch-level tee/profile qualification only when Actions are authorized; exact-alpha replay if authority arrives.
+- Open questions: QST-001, QST-002, QST-003. QST-004 is accepted only as a local candidate pending branch authority.
+- Highest-risk item: presenting the 107 diagnostic as achieved production parity when the live profile remains unchanged.
+- Exact next recommended action: finish the local Stage-7 candidate artifact and then return to the two residual exact-zero rotations / nonzero mechanics without changing live tolerances.
+- Required reading: this report; pinned CodingRules; Common Misc/Loadcase reports; governed BM4_L profile; reference importer/units/comparison source; reducer/rigid source; provenance script; BM4_NL benchmark report from PR #957.

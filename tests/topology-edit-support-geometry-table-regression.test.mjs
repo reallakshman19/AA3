@@ -4,6 +4,7 @@ import test from 'node:test';
 import { finalizeCanonicalTopology } from '../src/workspace/topology-edit/topology-edit-canonical-state.js';
 import { TopologyEditCertifiedSession } from '../src/workspace/topology-edit/topology-edit-certified-session.js';
 import { planMoveConnectedRun } from '../src/workspace/topology-edit/professional/topology-edit-route-operations.js';
+import { planApplyDeclaredSlope } from '../src/workspace/topology-edit/professional/topology-edit-slope-operation.js';
 import { createTopologyEditTableBatch } from '../src/workspace/topology-edit/table/topology-edit-table-batch.js';
 import { planTopologyEditTableBatch } from '../src/workspace/topology-edit/table/topology-edit-table-batch-planner.js';
 import {
@@ -36,10 +37,10 @@ function topology(supportHost = 'pipe:tail') {
       pipe('edge:tail', 'pipe:tail', 'node:n3', 'node:n4'),
     ],
     junctions: [], boundaries: [], rigids: [], bends: [],
-    supports: [{
+    supports: supportHost ? [{
       id: 'support:s1', entityId: 'S-001', hostEntityId: supportHost, stationMm: 100,
       restraint: { id: 'restraint:r1', type: 'GUIDE', gapMm: 2, direction: 'Y' },
-    }],
+    }] : [],
   });
 }
 function node(id, x) { return { id, position: { x, y: 0, z: 0 }, portKeys: [] }; }
@@ -134,4 +135,33 @@ test('NODE_POSITION capability and NODE_ONLY planning both block support-host ge
     projection: table,
     canonicalTopology: model,
   }));
+});
+
+test('declared slope fails during planning when moved path geometry carries a support', () => {
+  const model = topology();
+  expectSupportPolicy(() => planApplyDeclaredSlope({
+    topology: model,
+    orderedNodeIds: ['node:n1', 'node:n2', 'node:n3', 'node:n4'],
+    verticalAxis: 'Z', riseMm: 1, runMm: 100, direction: 'ASCENDING',
+  }));
+});
+
+test('certified MOVE_NODE boundary rejects support geometry without mutating journal authority', () => {
+  const model = topology('pipe:p1');
+  const session = new TopologyEditCertifiedSession(model);
+  const before = session.snapshot();
+  expectSupportPolicy(() => session.execute('MOVE_NODE', {
+    nodeId: 'node:n2', position: { x: 1050, y: 0, z: 0 },
+  }));
+  const after = session.snapshot();
+  assert.equal(after.activeCanonicalTopologyHash, before.activeCanonicalTopologyHash);
+  assert.equal(after.journalHash, before.journalHash);
+  assert.equal(after.activeLedgerHash, before.activeLedgerHash);
+  assert.deepEqual(after.activeCommandIds, before.activeCommandIds);
+
+  const unrestrained = new TopologyEditCertifiedSession(topology(null));
+  const transition = unrestrained.execute('MOVE_NODE', {
+    nodeId: 'node:n4', position: { x: 2300, y: 0, z: 0 },
+  });
+  assert.equal(transition.disposition, 'ACCEPTED');
 });

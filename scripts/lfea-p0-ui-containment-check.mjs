@@ -16,6 +16,7 @@ const bootstrap = source('src/workspace/bootstrap.js');
 const client = source('src/workspace/lfea-worker-client.js');
 const worker = source('src/workspace/lfea-worker.js');
 const controller = source('src/workspace/lfea-workbench-controller.js');
+const documentStore = source('src/workspace/lfea-workbench-document-store.js');
 const store = [
   source('src/workspace/lfea-workbench-store.js'),
   source('src/workspace/lfea-workbench-run-store.js'),
@@ -88,8 +89,52 @@ assert.match(
   'browser fallback must use a real frame/task opportunity rather than a microtask-only yield',
 );
 
+assert.match(
+  documentStore,
+  /function reportEditError\(path, index, error, fallbackCode = 'LFEA_RECORD_EDIT_REJECTED'\)[\s\S]*?typeof error\?\.code === 'string'[\s\S]*?reported\.code = error\.code[\s\S]*?reported,[\s\S]*?fallbackCode/u,
+  'edit-error reporting must retain a supplied diagnostic code and allow operation-specific fallback classification',
+);
+assert.match(
+  controller,
+  /reportEditError\('document', null, error, 'LFEA_IMPORT_REJECTED'\)/u,
+  'file-input parse/read failures must be classified as import failures',
+);
+assert.match(
+  controller,
+  /reportEditError\('document', null, error, 'LFEA_EDIT_REJECTED'\)/u,
+  'document textarea parse failures must be classified as local document edits',
+);
+
 assert.match(view, /deformation:\s*\{[\s\S]*?enabled:[\s\S]*?scale: state\.display\.deformationScale/u);
 assert.match(view, /state\.display\.resultMode/u);
+
+assert.doesNotMatch(
+  view,
+  /errorMsg\.includes|\.includes\('lfea-mesh-package\/v1'\)|\.includes\('schema'\)/u,
+  'failure guidance must not be selected by raw diagnostic-message substring matching',
+);
+assert.match(
+  view,
+  /header\.append\(this\.failureBanner\(state\.diagnostics\)\)/u,
+  'FAILED header must route diagnostics through structured failure presentation',
+);
+assert.match(
+  view,
+  /errorBanner\.dataset\.code = presentation\.code[\s\S]*?errorBanner\.title = presentation\.codes\.join/u,
+  'failure banner must retain primary and aggregate diagnostic-code traceability',
+);
+assert.match(
+  view,
+  /Diagnostic \$\{presentation\.code\}: \$\{presentation\.detail\}/u,
+  'failure banner must retain original technical diagnostic detail',
+);
+assert.match(view, /code === 'STALE_PACKAGE_SEMANTIC_HASH'/u);
+assert.match(view, /PACKAGE_SHAPE_CODES\.has\(code\)/u);
+assert.match(view, /code\.startsWith\('UNSUPPORTED_'\)/u);
+assert.match(view, /ENGINEERING_VALUE_CODES\.has\(code\)/u);
+assert.match(view, /LOCAL_EDIT_CODES\.has\(code\)/u);
+assert.match(view, /imported semantic hashes are intentionally not repaired/u);
+assert.match(view, /will not silently coerce unsupported engineering authority/u);
 
 assert.doesNotMatch(
   view,
@@ -154,6 +199,8 @@ console.log(JSON.stringify({
   noWorkerRunFeedbackGuarded: true,
   noWorkerCurrentOptionsGuarded: true,
   noWorkerQueuedCancellationGuarded: true,
+  structuredFailureGuidanceGuarded: true,
+  diagnosticCodePreservationGuarded: true,
   collectionMockScopeSafe: true,
   editorDraftPersistenceGuarded: true,
   deleteSelectionSequencingGuarded: true,
@@ -240,4 +287,21 @@ async function runStoreChecks() {
   assert.equal(staleDeferredState.activeRun.runId, replacementIdentity.runId);
   assert.equal(staleDeferredState.execution, null);
   queuedStore.cancelRun();
+
+  const codeStore = createLfeaWorkbenchStore({ initialDocument: packageValue });
+  const codedError = new TypeError('node coordinate is not finite');
+  codedError.code = 'NONFINITE_VALUE';
+  const codedState = codeStore.reportEditError('nodes', 0, codedError);
+  assert.equal(codedState.status, 'FAILED');
+  assert.equal(codedState.diagnostics[0].code, 'NONFINITE_VALUE');
+  assert.match(codedState.diagnostics[0].message, /^nodes\[0\]: /u);
+
+  const importErrorStore = createLfeaWorkbenchStore({ initialDocument: packageValue });
+  const importState = importErrorStore.reportEditError(
+    'document',
+    null,
+    new SyntaxError('invalid JSON'),
+    'LFEA_IMPORT_REJECTED',
+  );
+  assert.equal(importState.diagnostics[0].code, 'LFEA_IMPORT_REJECTED');
 }

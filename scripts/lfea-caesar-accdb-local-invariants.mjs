@@ -76,10 +76,10 @@ function writeCsv(rows, path) {
   if (path === null) return;
   const columns = [
     'caseId', 'sourceElementId', 'elementId', 'end', 'dof', 'quantity', 'component', 'unit',
-    'displacement', 'stiffnessTimesDisplacement', 'recordedElasticAction', 'equivalentLoad',
-    'initialStrainLoad', 'recoveredAction', 'stiffnessProductResidual',
-    'stiffnessProductRelativeResidual', 'recoveryResidual', 'recoveryRelativeResidual',
-    'closureRelativeResidual', 'closureStatus', 'conditioning', 'conditioningClass',
+    'displacement', 'recordedElasticAction', 'equivalentLoad', 'initialStrainLoad', 'recoveredAction',
+    'qIdentityResidual', 'qIdentityRelativeResidual', 'closureStatus',
+    'transformedLocalRecoveredAction', 'localToGlobalResidual', 'localToGlobalRelativeResidual',
+    'conditioning', 'conditioningClass',
   ];
   const lines = [columns.join(',')];
   for (const row of rows) {

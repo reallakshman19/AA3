@@ -159,7 +159,7 @@ const axisAligned = classifyRestraint({
 }, element, segment);
 const axisAlignedDispositions = restraintDispositions(axisAligned);
 assert.equal(axisAligned.targetDof, 'UY');
-assert.equal(axisAlignedDispositions.STRICT.disposition, 'NONLINEAR_OUT_OF_SCOPE');
+assert.equal(axisAlignedDispositions.STRICT_INPUTXML_LINEAR_STATIC_V1.disposition, 'NONLINEAR_OUT_OF_SCOPE');
 assert.equal(axisAlignedDispositions.DISCLOSED_GENERIC_ANALYZER_APPROXIMATION_V1.disposition,
   'IMPLEMENTED_WITH_DECLARED_APPROXIMATION');
 
@@ -174,7 +174,7 @@ const skew = classifyRestraint({
 const skewDispositions = restraintDispositions(skew);
 assert.equal(skew.direction.valid, true);
 assert.ok(['UX', 'UY'].includes(skew.targetDof));
-assert.equal(skewDispositions.STRICT.disposition, 'NONLINEAR_OUT_OF_SCOPE');
+assert.equal(skewDispositions.STRICT_INPUTXML_LINEAR_STATIC_V1.disposition, 'NONLINEAR_OUT_OF_SCOPE');
 assert.equal(skewDispositions.DISCLOSED_GENERIC_ANALYZER_APPROXIMATION_V1.disposition,
   'UNSUPPORTED_BY_GENERIC_SOLVER');
 assert.equal(skewDispositions.DISCLOSED_GENERIC_ANALYZER_APPROXIMATION_V1.limitationCode,

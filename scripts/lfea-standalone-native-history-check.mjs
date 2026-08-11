@@ -182,13 +182,16 @@ function sourceGuards() {
   const historySource = fs.readFileSync('src/lfea/native-run-history.js', 'utf8');
   const viewSource = fs.readFileSync('src/lfea/native-history-view.js', 'utf8');
   const bootstrapSource = fs.readFileSync('src/lfea/bootstrap.js', 'utf8');
+  const runtimeSource = fs.readFileSync('src/lfea/standalone-runtime.js', 'utf8');
+  const apiSource = fs.readFileSync('src/lfea/standalone-runtime-api.js', 'utf8');
   const layoutSource = fs.readFileSync('src/lfea/standalone-layout.js', 'utf8');
   assert.doesNotMatch(historySource, /AnalysisLedger|analysis-ledger-store|EventBus|localStorage|sessionStorage|lafea-linear-solve/u);
   assert.doesNotMatch(viewSource, /innerHTML|insertAdjacentHTML|outerHTML|localStorage|sessionStorage/u);
   assert.match(viewSource, /changes this view only/u);
-  assert.match(bootstrapSource, /createLfeaNativeRunHistory/u);
-  assert.match(bootstrapSource, /archiveCurrentRun/u);
-  assert.match(bootstrapSource, /selectNativeRun/u);
+  assert.match(bootstrapSource, /createLfeaStandaloneRuntime/u);
+  assert.match(runtimeSource, /createLfeaNativeRunHistory/u);
+  assert.match(runtimeSource, /archiveCurrentRun/u);
+  assert.match(apiSource, /selectNativeRun/u);
   assert.match(layoutSource, /id: 'history', label: 'History', state: 'available'/u);
 }
 

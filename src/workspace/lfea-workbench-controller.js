@@ -170,7 +170,12 @@ export class LfeaWorkbenchController {
   }
 
   async run() {
-    if (!this.workerClient) return this.store.run();
+    if (!this.workerClient) {
+      const running = this.store.beginRun();
+      const identity = running.activeRun;
+      await yieldRunFeedbackFrame(this.documentRef);
+      return this.store.executeActiveRun(identity, this.pipelineOptions);
+    }
     const running = this.store.beginRun();
     const identity = running.activeRun;
     const packageInput = running.packageValue;
@@ -224,7 +229,8 @@ export class LfeaWorkbenchController {
   }
 
   cancelRun() {
-    const cancellation = this.workerClient?.cancel('USER');
+    if (!this.workerClient) return this.store.cancelRun();
+    const cancellation = this.workerClient.cancel('USER');
     if (!cancellation) return this.store.getState();
     return this.store.cancelRun(cancellation);
   }
@@ -279,4 +285,18 @@ export class LfeaWorkbenchController {
     this.view.destroy();
     this.rootElement = null;
   }
+}
+
+function yieldRunFeedbackFrame(documentRef) {
+  const view = documentRef?.defaultView ?? globalThis;
+  const scheduleTask = typeof view.setTimeout === 'function'
+    ? view.setTimeout.bind(view)
+    : globalThis.setTimeout.bind(globalThis);
+  return new Promise((resolve) => {
+    if (typeof view.requestAnimationFrame === 'function') {
+      view.requestAnimationFrame(() => scheduleTask(resolve, 0));
+      return;
+    }
+    scheduleTask(resolve, 0);
+  });
 }

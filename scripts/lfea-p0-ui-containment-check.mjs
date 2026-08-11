@@ -150,6 +150,74 @@ assert.match(view, /LOCAL_EDIT_CODES\.has\(code\)/u);
 assert.match(view, /Imported semantic hashes are intentionally not repaired/u);
 assert.match(view, /will not silently coerce unsupported engineering authority/u);
 
+assert.match(
+  panels,
+  /export function renderLfeaAnalysisSettings\(root, packageValue\)[\s\S]*?wrapper\.dataset\.role = 'lfea-analysis-settings'/u,
+  'workbench must expose a dedicated read-only analysis settings/authority panel',
+);
+assert.match(
+  panels,
+  /new Set\(\(packageValue\.elements \?\? \[\]\)[\s\S]*?row\?\.elementType[\s\S]*?\.sort\(\)/u,
+  'analysis settings must derive a deterministic set of actual element families, including mixed meshes',
+);
+for (const label of [
+  'Package',
+  'Units identity',
+  'Coordinate system',
+  'Element families',
+  'Formulation',
+  'Solver profile',
+  'Profile version',
+  'Solver backend',
+  'Length unit',
+  'Force unit',
+  'Stress unit',
+  'DOF order',
+  'Constraint method',
+]) {
+  assert.match(panels, new RegExp(`appendSetting\\(root, list, '${label.replace(/[.*+?^${}()|[\]\\]/gu, '\\$&')}'`, 'u'),
+    `analysis settings must render ${label}`);
+}
+assert.match(panels, /return 'Not declared'/u);
+assert.match(
+  view,
+  /card\(this\.rootElement, 'Analysis settings and authority'\)[\s\S]*?renderLfeaAnalysisSettings\(this\.rootElement, state\.packageValue\)[\s\S]*?settingsCard\.section/u,
+  'view must mount the read-only analysis settings card from committed package state',
+);
+
+for (const code of [
+  'AUTHORITATIVE_RAW_ELEMENT_OR_INTEGRATION_POINT_STRESS',
+  'NON_AUTHORITATIVE_REVIEW_PROJECTION',
+  'NOT_GENERATED',
+  'PROHIBITED',
+]) {
+  assert.match(panels, new RegExp(code, 'u'), `authority label map must cover ${code}`);
+}
+assert.match(panels, /Raw element\/integration-point stress is the qualified stress authority/u);
+assert.match(panels, /Projected nodal stress is a non-authoritative review projection/u);
+assert.match(panels, /Projected stress is prohibited for convergence evidence/u);
+assert.match(
+  panels,
+  /value\.dataset\.rawStressPolicy = rawCode[\s\S]*?value\.dataset\.projectedStressPolicy = projectedCode[\s\S]*?value\.dataset\.projectedStressConvergencePolicy = convergenceCode[\s\S]*?value\.title = `Raw=\$\{rawCode\}; Projected=\$\{projectedCode\}; ProjectedForConvergence=\$\{convergenceCode\}`/u,
+  'human authority text must retain the raw policy codes for technical traceability',
+);
+
+for (const status of [
+  'WITHIN_CAPACITY',
+  'EXPORT_LIKELY_TO_EXCEED_BYTE_CAPACITY',
+  'BLOCKED_BY_DECLARED_CAPACITY',
+]) {
+  assert.match(panels, new RegExp(status, 'u'), `preflight label map must cover ${status}`);
+}
+assert.match(panels, /WITHIN_CAPACITY: 'Within declared capacity'/u);
+assert.match(panels, /EXPORT_LIKELY_TO_EXCEED_BYTE_CAPACITY: 'Capacity warning'/u);
+assert.match(panels, /BLOCKED_BY_DECLARED_CAPACITY: 'Capacity blocked'/u);
+assert.match(
+  panels,
+  /Preflight \$\{preflightStatusLabel\(status\)\}[\s\S]*?value\.dataset\.status = status;[\s\S]*?value\.title = `Preflight status: \$\{status\}`/u,
+  'preflight must lead with a human label while retaining raw status metadata/title',
+);
+
 assert.doesNotMatch(
   view,
   /lfea-collection-mock|Load Collection Mock Data|Reload Mock for/u,
@@ -216,6 +284,9 @@ console.log(JSON.stringify({
   structuredFailureGuidanceGuarded: true,
   diagnosticCodePreservationGuarded: true,
   evidenceExportFailClosedGuarded: true,
+  analysisSettingsAuthorityGuarded: true,
+  authorityPolicyHumanLabelsGuarded: true,
+  preflightHumanLabelsGuarded: true,
   collectionMockScopeSafe: true,
   editorDraftPersistenceGuarded: true,
   deleteSelectionSequencingGuarded: true,

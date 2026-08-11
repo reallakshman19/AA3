@@ -1,13 +1,22 @@
 import {
   deriveTopologyEditTableNodePositionCapability,
 } from '../topology-edit/table/topology-edit-table-edit-capability.js';
+import {
+  topologyEditTableValveCatalogueCandidates,
+  topologyEditTableValveCatalogueLabel,
+} from '../topology-edit/table/topology-edit-table-valve-catalogue.js';
 
 const EDITABLE_TYPES = new Set(['VALVE', 'TEE']);
 
-export function renderTopologyEditTableEngineeringEditor(row, stagedIntent, projection) {
+export function renderTopologyEditTableEngineeringEditor(
+  row,
+  stagedIntent,
+  projection,
+  catalogue = null,
+) {
   if (!EDITABLE_TYPES.has(row?.elementType)) return '';
   if (row.elementType === 'VALVE' && row.identity?.canonicalKind === 'EDGE') {
-    return valveEditor(row, stagedIntent);
+    return valveEditor(row, stagedIntent, catalogue);
   }
   if (row.elementType === 'TEE' && row.identity?.canonicalKind === 'JUNCTION') {
     return teeReducerEditor(row, stagedIntent, projection);
@@ -43,7 +52,7 @@ export function describeTopologyEditTableIntent(intent) {
     return `${display(intent.requestedValue?.endpoint)} node ${display(intent.requestedValue?.nodeId)} · (${display(prior.x)}, ${display(prior.y)}, ${display(prior.z)}) → (${display(next.x)}, ${display(next.y)}, ${display(next.z)}) mm · ${display(intent.geometryPolicy?.movementMode)}`;
   }
   if (intent?.intentKind === 'VALVE_REPLACEMENT') {
-    return `${display(intent.priorValue?.valveType)} → ${display(intent.requestedValue?.catalogueBinding?.valveType)} · F2F ${display(intent.priorValue?.lengthMm)} → ${display(intent.requestedValue?.catalogueBinding?.valveFaceToFaceMm)} mm · ${display(intent.geometryPolicy?.anchor)} / ${display(intent.geometryPolicy?.propagation)}`;
+    return `${display(intent.priorValue?.valveType)} → ${display(intent.requestedValue?.catalogueBinding?.valveType)} · record ${display(intent.requestedValue?.catalogueBinding?.recordId)} · F2F ${display(intent.priorValue?.lengthMm)} → ${display(intent.requestedValue?.catalogueBinding?.valveFaceToFaceMm)} mm · ${display(intent.geometryPolicy?.anchor)} / ${display(intent.geometryPolicy?.propagation)}`;
   }
   if (intent?.intentKind === 'TEE_REDUCER_RELATION') {
     return `branch ${display(intent.requestedValue?.branchPortKey)} · reducer ${display(intent.requestedValue?.reducerEdgeId)} · DN run ${display(intent.requestedValue?.runNominalSizeMm)} / branch ${display(intent.requestedValue?.teeBranchNominalSizeMm)} / downstream ${display(intent.requestedValue?.downstreamNominalSizeMm)}`;
@@ -80,19 +89,28 @@ function nodeEndpointEditor(row, stagedIntent, runtime, topology, endpoint) {
   </fieldset>`;
 }
 
-function valveEditor(row, stagedIntent) {
+function valveEditor(row, stagedIntent, catalogue) {
   const staged = stagedIntent?.intentKind === 'VALVE_REPLACEMENT' ? stagedIntent : null;
-  const binding = staged?.requestedValue?.catalogueBinding ?? null;
-  const catalogueJson = binding ? JSON.stringify(binding, null, 2) : '';
+  const selectedRecordId = staged?.requestedValue?.catalogueBinding?.recordId ?? '';
+  const candidates = topologyEditTableValveCatalogueCandidates({ catalogue, row });
+  const catalogueOptions = candidates.map((record) => option(
+    record.recordId,
+    topologyEditTableValveCatalogueLabel(record),
+    record.recordId === selectedRecordId,
+  )).join('');
   const anchor = staged?.geometryPolicy?.anchor ?? 'FROM';
   const propagation = staged?.geometryPolicy?.propagation ?? 'DOWNSTREAM';
   const gate = token(row.fields?.valveType) === 'GATE';
-  const disabled = gate ? '' : 'disabled';
+  const selectable = gate && candidates.length > 0;
+  const disabled = selectable ? '' : 'disabled';
+  const prompt = catalogue
+    ? (candidates.length ? 'Choose exact compatible BALL record…' : 'No compatible BALL record in certified catalogue')
+    : 'Certified catalogue unavailable';
   return `<section class="topology-edit-table__editor" data-table-editor-id="${esc(row.identity.canonicalId)}">
     ${identityHtml(row)}
-    <p class="topology-edit-table__notice">M06 replaces an observed GATE valve in-place. Paste the exact BALL catalogue record; no catalogue value is inferred.</p>
+    <p class="topology-edit-table__notice">M06 replaces an observed GATE valve in-place. Select one immutable BALL record from the same certified specification catalogue used by Professional Operations; record values and hashes are never typed or inferred here.</p>
     <div class="topology-edit-table__editor-grid">
-      <label class="topology-edit-table__wide">Exact BALL catalogue JSON<textarea rows="7" spellcheck="false" data-table-edit-valve-catalogue placeholder='{"catalogueHash":"…","sourceHash":"…","recordId":"…","recordHash":"…","componentType":"VALVE","nominalSizeMm":80,"outsideDiameterMm":88.9,"pipingClass":"…","endConnectionFrom":"…","endConnectionTo":"…","valveType":"BALL","valveFaceToFaceMm":300,"sourceReference":{"documentId":"…","revision":"…","path":"…"}}'>${esc(catalogueJson)}</textarea></label>
+      <label class="topology-edit-table__wide">Certified BALL catalogue record<select data-table-edit-valve-catalogue-record data-table-valve-catalogue-hash="${esc(catalogue?.catalogueHash ?? '')}" ${candidates.length ? '' : 'disabled'}><option value="">${esc(prompt)}</option>${catalogueOptions}</select></label>
       <label>Anchor<select data-table-edit-anchor><option ${anchor === 'FROM' ? 'selected' : ''}>FROM</option><option ${anchor === 'TO' ? 'selected' : ''}>TO</option></select></label>
       <label>Propagation<select data-table-edit-propagation><option ${propagation === 'DOWNSTREAM' ? 'selected' : ''}>DOWNSTREAM</option><option ${propagation === 'UPSTREAM' ? 'selected' : ''}>UPSTREAM</option></select></label>
       <button type="button" data-table-action="stage-valve-replacement" data-canonical-id="${esc(row.identity.canonicalId)}" ${disabled}>Stage GATE → BALL</button>

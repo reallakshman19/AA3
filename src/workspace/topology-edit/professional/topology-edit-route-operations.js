@@ -4,6 +4,10 @@ import {
 } from './topology-edit-operation-plan.js';
 import { deriveTopologyEditChangedScope } from './topology-edit-change-scope.js';
 import {
+  assertNoTopologyEditSupportGeometryDependencies,
+  topologyEditAffectedEdgeIds,
+} from './topology-edit-support-geometry-dependency.js';
+import {
   addPoints,
   addScaled,
   assertExactBoundarySet,
@@ -62,6 +66,9 @@ export function planSplitEdgeByDistance(input = {}) {
   if (!(distanceMm < endpoint.lengthMm)) {
     throw new RangeError('TopologyEditRouteOperations: distanceMm must be less than the edge length.');
   }
+  assertNoTopologyEditSupportGeometryDependencies(context.topology, {
+    affectedEdgeIds: [endpoint.edge.id],
+  });
   assertSplitDependantsAbsent(context, endpoint.edge.id);
   const fractionFromStart = distanceMm / endpoint.lengthMm;
   const fraction = endpoint.endpoint === 'FROM' ? fractionFromStart : 1 - fractionFromStart;
@@ -134,6 +141,11 @@ export function planMoveConnectedRun(input = {}) {
     addPoints(exactNode(context, nodeId).position, deltaMm),
   ]));
   assertMovedGeometry(context, movedPositions);
+  const affectedEdgeIds = topologyEditAffectedEdgeIds(context.topology, nodeIds);
+  assertNoTopologyEditSupportGeometryDependencies(context.topology, {
+    movedNodeIds: nodeIds,
+    affectedEdgeIds,
+  });
   const changedScope = deriveTopologyEditChangedScope(context.topology, {
     basisHash: context.basisHash,
     nodeIds,
@@ -221,9 +233,15 @@ export function planProfessionalOperation(input = {}) {
 }
 
 function nodeMovePlan(context, operationType, endpoint, position, parameters) {
+  const movedNodeIds = [endpoint.node.id];
+  const affectedEdgeIds = topologyEditAffectedEdgeIds(context.topology, movedNodeIds);
+  assertNoTopologyEditSupportGeometryDependencies(context.topology, {
+    movedNodeIds,
+    affectedEdgeIds,
+  });
   const changedScope = deriveTopologyEditChangedScope(context.topology, {
     basisHash: context.basisHash,
-    nodeIds: [endpoint.node.id],
+    nodeIds: movedNodeIds,
     edgeIds: [endpoint.edge.id],
   });
   return createTopologyEditOperationPlan({
@@ -254,7 +272,7 @@ function assertIsolatedNode(context, nodeId) {
   }
 }
 function assertSplitDependantsAbsent(context, edgeId) {
-  for (const collection of ['junctions', 'supports', 'boundaries', 'rigids', 'bends']) {
+  for (const collection of ['junctions', 'boundaries', 'rigids', 'bends']) {
     const dependent = (context.topology[collection] ?? []).find((record) => (
       record?.edgeId === edgeId || record?.edgeIds?.includes?.(edgeId)
     ));

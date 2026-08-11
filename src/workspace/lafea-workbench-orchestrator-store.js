@@ -19,6 +19,7 @@ import { createLafeaWorkbenchPreparationState } from './lafea-workbench-preparat
 import { projectLafeaWorkbenchReadiness } from './lafea-workbench-readiness.js';
 import { createLafeaWorkbenchReleaseState } from './lafea-workbench-release-binding.js';
 import { createLafeaWorkbenchSourceState } from './lafea-workbench-source-state.js';
+import { createLafeaT6GeometryQualificationState } from './lafea-t6-geometry-qualification-state.js';
 import {
   createLafeaWorkbenchVerificationState,
   projectLafeaWorkbenchVerificationBinding,
@@ -56,6 +57,9 @@ export function createLafeaWorkbenchOrchestratorStore(options) {
     authorizedReleaseEvidenceHashes,
   });
   const verification = createLafeaWorkbenchVerificationState(stageIds);
+  const t6Geometry = createLafeaT6GeometryQualificationState(stageIds, {
+    currentCandidateHeadSha,
+  });
   const geometry = createLafeaWorkbenchGeometryState(stageIds);
   const mesh = createLafeaWorkbenchMeshState(stageIds, {
     getActiveStageId: () => retainedState.activeStageId,
@@ -75,9 +79,9 @@ export function createLafeaWorkbenchOrchestratorStore(options) {
     if (!stage) throw storeError('LAFEA_WORKBENCH_STAGE_NOT_FOUND');
     return freeze({
       ...stage, stageId, ...source.fields(stageId), ...release.fields(stageId),
-      ...verification.fields(stageId), ...mesh.fields(stageId),
-      ...meshGeneration.fields(stageId), ...preparation.fields(stageId),
-      ...geometry.fields(stageId),
+      ...verification.fields(stageId), ...t6Geometry.fields(stageId),
+      ...mesh.fields(stageId), ...meshGeneration.fields(stageId),
+      ...preparation.fields(stageId), ...geometry.fields(stageId),
     });
   }
 
@@ -104,10 +108,12 @@ export function createLafeaWorkbenchOrchestratorStore(options) {
       withMesh,
       withMesh.retainedNumericalVerificationEvidence,
     );
+    const t6GeometryQualificationProjection = t6Geometry.project(withMesh);
     return freeze({
       ...withMesh,
       preparationProjection,
       numericalVerificationProjection,
+      t6GeometryQualificationProjection,
     });
   }
 
@@ -242,6 +248,15 @@ export function createLafeaWorkbenchOrchestratorStore(options) {
     });
   }
 
+  function registerT6GeometryQualification(value, stageId = retainedState.activeStageId) {
+    const result = t6Geometry.register(value, readStageState(stageId));
+    const state = result.changed ? publish() : deriveState();
+    return freeze({
+      ...result,
+      projection: state.stages[stageId].t6GeometryQualificationProjection,
+    });
+  }
+
   function registerPreparationEvidence(value) {
     if (rawStage(value?.request?.stageId ?? retainedState.activeStageId).domainFirstProfileActive) {
       throw storeError('LAFEA_DOMAIN_FIRST_PREPARATION_REQUIRES_V2_EVIDENCE');
@@ -306,6 +321,8 @@ export function createLafeaWorkbenchOrchestratorStore(options) {
       releaseBinding: stage.lifecycleReadiness.releaseBinding,
       numericalVerificationEvidence: stage.retainedNumericalVerificationEvidence,
       numericalVerification: stage.numericalVerificationProjection,
+      t6GeometryQualification: stage.retainedT6GeometryQualification,
+      t6GeometryQualificationProjection: stage.t6GeometryQualificationProjection,
       readiness: stage.lifecycleReadiness,
       preparation: stage.preparationProjection,
       domainFirstLifecycle: stage.domainFirstLifecycle,
@@ -333,12 +350,13 @@ export function createLafeaWorkbenchOrchestratorStore(options) {
   }
 
   return createLafeaWorkbenchOrchestratorApi({
-    retained, release, verification, mesh, meshGeneration, preparation, geometry,
-    listeners, unsubscribe, ...meshGenerationActions,
+    retained, release, verification, t6Geometry, mesh, meshGeneration,
+    preparation, geometry, listeners, unsubscribe, ...meshGenerationActions,
     getRetainedState: () => retainedState,
     readStageState, deriveStage, deriveState, publish, delegate, mutateDocument,
     importDocument, run, initializeLifecycle, applyLifecycleEvent,
     registerTemplateReleaseRecord, registerNumericalVerificationEvidence,
+    registerT6GeometryQualification,
     registerPreparationEvidence, registerPreparationApproval,
     activateDomainFirstProfile, registerAnalysisDomain,
     registerAnalysisGeometryEvidence, registerAnalysisMeshEvidence,

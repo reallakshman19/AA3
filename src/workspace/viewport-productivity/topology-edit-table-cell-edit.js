@@ -3,6 +3,10 @@ import { stageTopologyEditTablePipeLength } from './topology-edit-table-pipe-len
 
 const CELL_KIND = 'PIPE_LENGTH';
 const DEFAULT_POLICY = Object.freeze({ anchor: 'FROM', propagation: 'DOWNSTREAM' });
+const COMPOUND_FOCUS = Object.freeze({
+  VALVE_REPLACEMENT: '[data-table-edit-valve-catalogue]',
+  TEE_REDUCER_RELATION: '[data-table-edit-tee-branch-port]',
+});
 
 export function topologyEditTableDirectCellHtml(runtime, row, column) {
   const capability = deriveTopologyEditTableCellCapability({
@@ -10,18 +14,31 @@ export function topologyEditTableDirectCellHtml(runtime, row, column) {
     columnKey: column.key,
     projection: runtime.projection,
   });
-  if (capability.status !== 'AVAILABLE' || capability.details?.intentKind !== CELL_KIND) return null;
-  const canonicalId = row.identity.canonicalId;
-  const staged = stagedIntent(runtime, canonicalId);
-  const hasDraft = runtime.cellDrafts.has(canonicalId);
-  const value = hasDraft
-    ? runtime.cellDrafts.get(canonicalId)
-    : staged?.requestedValue?.lengthMm ?? row.fields?.lengthMm ?? '';
-  const state = cellState(runtime, canonicalId, staged, hasDraft);
-  const invalid = state === 'invalid' ? 'true' : 'false';
-  return `<td data-table-property="${escapeHtml(column.key)}" data-table-column-key="${escapeHtml(column.key)}" data-table-cell-state="${state}">
-    <input class="topology-edit-table__cell-input" type="number" step="any" min="0" value="${escapeHtml(value)}" data-table-cell-edit="${CELL_KIND}" data-table-cell-canonical-id="${escapeHtml(canonicalId)}" aria-label="${escapeHtml(`Length for ${row.fields?.tag ?? canonicalId}`)}" aria-invalid="${invalid}">
-  </td>`;
+  const intentKind = capability.details?.intentKind;
+  if (capability.status === 'AVAILABLE' && intentKind === CELL_KIND) {
+    return directPipeCellHtml(runtime, row, column);
+  }
+  if (capability.status === 'NEEDS_INPUT' && COMPOUND_FOCUS[intentKind]) {
+    return compoundCellHtml(runtime, row, column, capability);
+  }
+  return null;
+}
+
+export function handleTopologyEditTableCompoundCellClick(runtime, event) {
+  const button = event.target.closest?.('[data-table-compound-edit]');
+  if (!button || !runtime.element?.contains(button)) return false;
+  const canonicalId = button.dataset.tableCellCanonicalId;
+  const intentKind = button.dataset.tableCompoundEdit;
+  const row = runtime.projection?.rows.find((candidate) => candidate.identity?.canonicalId === canonicalId);
+  const focusSelector = COMPOUND_FOCUS[intentKind];
+  if (!row || !focusSelector || !runtime.coordinator) {
+    runtime.error = 'Engineering Table: exact compound editor authority is unavailable.';
+    runtime.render();
+    return true;
+  }
+  runtime.coordinator.tableSelection('REPLACE', [row.rowId], row.rowId);
+  queueMicrotask(() => focusCompoundEditor(runtime, focusSelector));
+  return true;
 }
 
 export function handleTopologyEditTableCellInput(runtime, event) {
@@ -76,6 +93,38 @@ export function resetTopologyEditTableCellEditing(runtime) {
   runtime.cellErrorId = null;
 }
 
+function directPipeCellHtml(runtime, row, column) {
+  const canonicalId = row.identity.canonicalId;
+  const staged = stagedIntent(runtime, canonicalId);
+  const hasDraft = runtime.cellDrafts.has(canonicalId);
+  const value = hasDraft
+    ? runtime.cellDrafts.get(canonicalId)
+    : staged?.requestedValue?.lengthMm ?? row.fields?.lengthMm ?? '';
+  const state = cellState(runtime, canonicalId, staged, hasDraft);
+  const invalid = state === 'invalid' ? 'true' : 'false';
+  return `<td data-table-property="${escapeHtml(column.key)}" data-table-column-key="${escapeHtml(column.key)}" data-table-cell-state="${state}">
+    <input class="topology-edit-table__cell-input" type="number" step="any" min="0" value="${escapeHtml(value)}" data-table-cell-edit="${CELL_KIND}" data-table-cell-canonical-id="${escapeHtml(canonicalId)}" aria-label="${escapeHtml(`Length for ${row.fields?.tag ?? canonicalId}`)}" aria-invalid="${invalid}">
+  </td>`;
+}
+
+function compoundCellHtml(runtime, row, column, capability) {
+  const canonicalId = row.identity.canonicalId;
+  const staged = stagedIntent(runtime, canonicalId);
+  const state = runtime.staleResult && staged ? 'stale' : staged ? 'staged' : 'needs-input';
+  const intentKind = capability.details.intentKind;
+  const value = displayValue(column.key === 'elementType' ? row.elementType : row.fields?.[column.key]);
+  const label = `Edit ${column.label} for ${row.fields?.tag ?? canonicalId}`;
+  return `<td data-table-property="${escapeHtml(column.key)}" data-table-column-key="${escapeHtml(column.key)}" data-table-cell-state="${state}">
+    <button type="button" data-table-compound-edit="${escapeHtml(intentKind)}" data-table-cell-canonical-id="${escapeHtml(canonicalId)}" data-table-cell-column-key="${escapeHtml(column.key)}" aria-label="${escapeHtml(label)}" title="${escapeHtml(capability.reason)}">${escapeHtml(value)} ↗</button>
+  </td>`;
+}
+
+function focusCompoundEditor(runtime, selector) {
+  const target = runtime.element?.querySelector(selector);
+  target?.scrollIntoView?.({ block: 'nearest', inline: 'nearest' });
+  target?.focus?.();
+}
+
 function cellState(runtime, canonicalId, staged, hasDraft) {
   if (runtime.cellErrorId === canonicalId) return 'invalid';
   if (runtime.staleResult && staged) return 'stale';
@@ -117,6 +166,12 @@ function stagedIntent(runtime, canonicalId) {
 function directInput(target, root) {
   if (!target?.matches?.(`[data-table-cell-edit="${CELL_KIND}"]`) || !root?.contains(target)) return null;
   return target;
+}
+
+function displayValue(value) {
+  if (value === null || value === undefined || value === '') return '—';
+  if (typeof value === 'number') return Number.isInteger(value) ? String(value) : String(Number(value.toFixed(4)));
+  return String(value);
 }
 
 function escapeHtml(value) {

@@ -5,7 +5,7 @@ const NAV_ITEMS = Object.freeze([
   { id: 'analysis', label: 'Analysis', state: 'available' },
   { id: 'results', label: 'Results', state: 'available' },
   { id: 'verification', label: 'Verification', state: 'available' },
-  { id: 'history', label: 'History / Issue', state: 'planned' },
+  { id: 'history', label: 'History', state: 'available' },
 ]);
 
 export function renderLfeaStandaloneLayout(rootElement, identity = {}) {

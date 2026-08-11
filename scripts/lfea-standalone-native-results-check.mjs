@@ -73,6 +73,18 @@ for (const action of caseRecovery.recovery.elementActions) {
 }
 console.log('LFEA-NATIVE-RESULTS-04 PASS B-3.4 retains distinct local/global recovered element actions');
 
+const tamperedExecution = structuredClone(executionState.execution);
+tamperedExecution.caseExecutions[0].elementLedger[0].equivalentLoadHash = 'fnv1a64:0000000000000000';
+const tamperedAuthority = createLfeaNativeResultsAuthority();
+assert.throws(
+  () => tamperedAuthority.recover(preFlightA, {
+    currentness: 'CURRENT',
+    execution: tamperedExecution,
+  }),
+  (error) => error?.code === 'INPUTXML_RECOVERY_RAW_BATCH_HASH_MISMATCH',
+);
+console.log('LFEA-NATIVE-RESULTS-05 PASS tampered raw element custody is rejected before recovery');
+
 const retainedResults = batch;
 const preFlightB = authorizedPreFlight(fixtureXml(1001));
 executionAuthority.reconcile(preFlightB);
@@ -85,16 +97,17 @@ assert.throws(
   () => resultsAuthority.recover(preFlightB, executionAuthority.getState()),
   (error) => error?.code === 'LFEA_NATIVE_RESULTS_CURRENT_EXECUTION_REQUIRED',
 );
-console.log('LFEA-NATIVE-RESULTS-05 PASS stale raw authority preserves evidence but removes current Results');
+console.log('LFEA-NATIVE-RESULTS-06 PASS stale raw authority preserves evidence but removes current Results');
 
 sourceGuards();
-console.log('LFEA-NATIVE-RESULTS-06 PASS Results presentation does not derive support/B31 authority');
+console.log('LFEA-NATIVE-RESULTS-07 PASS Results presentation does not derive support/B31 authority');
 
 console.log(JSON.stringify({
   check: 'lfea-standalone-native-results',
   status: 'PASS',
   rawAndRecoveredAuthoritySeparated: true,
   currentOnlyRecovery: true,
+  rawTamperRejected: true,
   staleResultsHiddenFromCurrentAuthority: true,
   recoveryProfileSemanticHash: batch.recoveryProfileSemanticHash,
   recoveryBatchId: batch.recoveryBatchId,

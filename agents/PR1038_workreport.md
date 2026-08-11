@@ -2,423 +2,335 @@
 
 ## PR Mission Control
 
-- **Mission:** Evolve LAFEA into one governed analysis platform with common engineering infrastructure and explicit stage-specific physics/authority, while preserving lifecycle, mesh custody, numerical verification, and fail-closed release semantics.
-- **Source task / issue:** #1025 — LAFEA Standalone Application — separation, governed local-FEA workflow, and next-level roadmap
-- **PR number:** #1038
-- **Branch:** `agent/integrated-lafea-common-stage-roadmap`
-- **Original base commit:** `a587867963cc9199caca6e7adfa03af95a316aa2`
-- **Current branch HEAD before Stage 7 implementation:** `bfbd16221736bc109b779fec395169875e4433ee`
-- **Current `main` observed before Stage 7:** `084e0587ce1d3d17c87670456226bd6534891ed9`
-- **PR status:** DRAFT
-- **Current stage:** Stage 7 — Batch 1A common unit-conversion primitive
-- **Last completed stage:** Stage 6 — bounded first-slice reconciliation / handover
-- **Engineering status:** IN_PROGRESS
-- **Validation status:** prior bounded implementation PASS at `d01de620ff4b4fcd5a5e077dbcf3b24d062846c3`; Stage 7 not yet validated
-- **Current blocker:** None for Stage 7 implementation. PR branch is 22 commits behind current `main`; comparison shows no direct overlap with the six existing PR files. This divergence must be reconciled before final PR closure.
-- **Exact next action:** Implement the shared unit-factor registry, make existing LAFEA.1 and LAFEA.3 unit adapters consume it, add focused regression, wire the regression into the existing non-bucket aggregate, then run exact-head validation.
+- **Mission:** evolve LAFEA into one governed analysis platform with common engineering infrastructure and explicit stage-specific physics/authority while preserving lifecycle, mesh custody, numerical verification, and fail-closed release semantics.
+- **Source task:** #1025.
+- **PR:** #1038, DRAFT.
+- **Branch:** `agent/integrated-lafea-common-stage-roadmap`.
+- **Original base:** `a587867963cc9199caca6e7adfa03af95a316aa2`.
+- **Current validated implementation HEAD:** `569dfaa8642ffeebb3cd3b866e9626b125659193`.
+- **Current `main` last observed before Batch 1A:** `084e0587ce1d3d17c87670456226bd6534891ed9`.
+- **Current stage:** Stage 8 — Batch 2A dependency-change taxonomy.
+- **Last completed stage:** Stage 7 — Batch 1A shared unit-conversion primitive.
+- **Engineering status:** IN_PROGRESS.
+- **Validation status:** Stage 7 bounded exact-head certification PASS; Stage 8 NOT_STARTED.
+- **Current blockers:** final PR closure remains blocked on explicit current-`main` reconciliation. Cross-product repository integration attribution has a known unrelated LFEA piping defect (ISS-001).
+- **Exact next action:** add `SECTION_PROPERTY` as a governed FE source-change class, reclassify continuum/shell thickness descriptors, preserve current lifecycle status behavior, and add focused exact-head regression.
 
 ## Handover in 60 Seconds
 
-### What is now true
+### What is true now
 
-- `docs/IntegratedLAFEAroadmap.md` is the governing implementation roadmap.
-- The first production slice already centralized stage route family and semantic input requirements in `lafea-stage-analysis-adapter.js`.
-- `lafea-guided-workflow.js` consumes that adapter and no longer maintains a duplicate per-stage input table.
-- LAFEA.1/.2 remain analytical routes, LAFEA.3/.4/.5 remain FEA routes, LAFEA.6 remains explicit unsupported.
-- Stage 7 is intentionally narrower than a generic material model: current LAFEA.1 material records are identity/role/source evidence, while LAFEA.3 material records carry constitutive properties. Their physics must not be collapsed.
-- Existing LAFEA.1 and LAFEA.3 unit modules duplicate compatible conversion factors for common dimensions; this is the first common-input primitive being extracted.
+- The integrated architecture roadmap is in `docs/IntegratedLAFEAroadmap.md`.
+- Stage route family and semantic input requirements are centralized in the production-consumed stage analysis adapter.
+- LAFEA.1/.2 remain analytical, LAFEA.3/.4/.5 remain FE, LAFEA.6 remains fail-closed unsupported.
+- Common unit scale facts are now owned by `src/core/lafea-common-input/units.js` and consumed by both LAFEA.1 and LAFEA.3 production unit adapters.
+- Stage-specific required unit keys, canonical unit maps, validation errors, derived dimensions, and physics remain local.
+- Exact-head Batch 1A validation passed the focused common-unit guard, retained numerical core, foundation, meshing, solver, workbench, canvas, Chromium, syntax/import, build, hygiene, main-gate, bundle diagnostic, and hybrid-browser checks.
+- The first Batch 1A focused run exposed only an over-strict test literal for `1e-6 / 1000`; production behavior was unchanged. The test was corrected to assert the actual derivation, then the exact-head certification passed.
 
-### What is being worked on
+### Important new finding
 
-Batch 1A:
+The target invalidation model cannot safely keep a retained mesh `CURRENT` after a material/load/section edit under the current parent contract, because `ANALYSIS_GEOMETRY` is bound to both `sourceHash` and `canonicalModelHash`. A source/model change therefore breaks exact geometry lineage even when geometry coordinates did not change.
+
+This means the implementation sequence must be:
 
 ```text
-shared unit-factor registry
-        ↓
-LAFEA.1 local-stress units adapter
-        ↓
-LAFEA.3 local-continuum units adapter
-        ↓
-existing canonical model/execution paths
+semantic change taxonomy
+    ↓
+geometry-specific authority / projection identity
+    ↓
+dependency-aware mesh preservation
 ```
 
-The shared module will own only unit-to-canonical scaling facts. Stage-specific required unit keys, canonical unit sets, validation errors, derived dimensions, and physics remain in each engine package.
+Do **not** simply change `REVALIDATION_REQUIRED` to `CURRENT`; that would copy old authority across a changed source without a valid parent binding.
 
-### What remains unfinished
+### Stage 8 objective
 
-- further common input identity primitives;
-- dependency-aware invalidation;
-- geometry authority / named physical regions;
-- deeper meshing integration;
-- canonical solver-model compiler;
-- physical probes / semantic comparison;
-- verification center;
-- LAFEA runtime extraction/history/release/dossier;
-- physical repository extraction;
-- future LAFEA.7+ physics.
+Correct one current semantic error without changing custody authority:
 
-### What must not be assumed
+```text
+LAFEA.3 element thickness
+LAFEA.4 shell thickness
+LAFEA.5 host-shell thickness
+```
 
-- Stage 7 does not alter numerical formulations or canonical units.
-- Shared conversion factors do not create engineering authority.
-- LAFEA.1 material role/source evidence is not equivalent to LAFEA.3 elastic constitutive data.
-- The PR is not synchronized with current `main` yet.
-- No release qualification is created by this work.
-
-### Highest-risk remaining item
-
-Commonization must not silently broaden accepted units, change canonical values, or replace stage-specific validation/error semantics.
-
-### Exact next action
-
-Implement Stage 7 exactly as scoped below, then validate both direct unit behavior and existing LAFEA numerical/product paths.
+are section/property edits, not geometric-coordinate/topology edits. Introduce `SECTION_PROPERTY` as an FE engineering source change class and route those descriptors through it. Current lifecycle invalidation statuses intentionally remain the same as other non-geometry source edits until geometry authority is split in a later batch.
 
 ---
 
-## Mission and Engineering Intent
-
-### Mission
-
-Create one LAFEA platform that shares infrastructure only where engineering meaning is actually identical. Stage-specific formulations, result semantics, verification applicability, and authority remain explicit.
-
-### Governing principles
+## Governing Engineering Invariants
 
 1. UI state is not solver authority.
 2. Calculation success is not release qualification.
-3. Current/stale custody must remain explicit.
-4. Shared infrastructure may remove duplication but may not broaden engineering claims.
-5. Every new abstraction must have a real production consumer in this PR.
-6. No hidden defaults or fallback engineering data.
-7. No `.github/workflows/*` modification without explicit Owner authorization.
-
-### Explicit non-goals for Stage 7
-
-- no material-schema unification;
-- no load/BC schema redesign;
-- no solver, element, mesher, recovery, or release changes;
-- no canonical-unit changes;
-- no new accepted unit aliases beyond existing engine behavior;
-- no LAFEA.6 activation;
-- no broad directory move.
+3. Producer/custody/currentness evidence remains exact and fail-closed.
+4. No source/mesh evidence is silently repaired by copying old hashes forward.
+5. Shared infrastructure may remove duplicated facts but may not broaden physics or accepted inputs.
+6. LAFEA.6 stays unsupported.
+7. No `.github/workflows/*` changes without explicit Owner authorization.
+8. Every new abstraction/change class must have a real production consumer and focused regression in the same batch.
 
 ---
 
 ## Mission Status
 
-| Work Item | Priority | Status | Stage | Evidence |
+| Work item | Priority | Status | Stage | Evidence |
 |---|---:|---|---|---|
 | Living work report | P0 | IN_PROGRESS | All | This file |
 | Integrated roadmap | P0 | DONE | 1 | `docs/IntegratedLAFEAroadmap.md` |
-| Common/stage route/input boundary | P0 | VALIDATED | 4–5 | Adapter + workflow, exact-head PASS |
-| Batch 1A shared unit factors | P0 | IN_PROGRESS | 7 | Planned below |
-| Batch 1A focused regression | P0 | NOT_STARTED | 7 | Planned script |
-| Dependency-aware invalidation | P0 | NOT_STARTED | Future | Roadmap Stage D |
-| Geometry authority / named regions | P0 | NOT_STARTED | Future | Roadmap Stage E |
-| Meshing integration | P0 | NOT_STARTED | Future | Roadmap Stage F |
-| Canonical solver-model compiler | P0 | NOT_STARTED | Future | Roadmap Stage G |
-| Results/probes/comparison | P1 | NOT_STARTED | Future | Roadmap Stage H |
-| Verification center | P1 | NOT_STARTED | Future | Roadmap Stage I |
-| Standalone LAFEA runtime extraction | P1 | NOT_STARTED | Future | Roadmap Stage J/L |
-| Cross-product repository integration attribution | P1 | BLOCKED | Existing | ISS-001 |
-| Upstream branch synchronization | P0 | IN_PROGRESS | 7/closure | RISK-004 |
+| Common/stage route + semantic input boundary | P0 | VALIDATED | 4–6 | exact-head PASS |
+| Batch 1A shared unit factors | P0 | DONE | 7 | `569dfaa...` bounded certification PASS |
+| Batch 2A section-property change taxonomy | P0 | IN_PROGRESS | 8 | plan below |
+| Geometry-specific authority identity | P0 | NOT_STARTED | next | prerequisite to mesh preservation |
+| Dependency-aware mesh preservation | P0 | NOT_STARTED | later | blocked by geometry parent contract |
+| Named physical regions / probes | P0 | NOT_STARTED | later | roadmap |
+| Meshing integration / lineage | P0 | NOT_STARTED | later | roadmap |
+| Canonical solver-model compiler | P0 | NOT_STARTED | later | roadmap |
+| Results / semantic comparison | P1 | NOT_STARTED | later | roadmap |
+| Verification center | P1 | NOT_STARTED | later | roadmap |
+| Standalone runtime/history/release/dossier | P1 | NOT_STARTED | later | roadmap |
+| Current-main branch reconciliation | P0 | IN_PROGRESS | closure | RISK-004 |
+| Cross-product attribution defect | P1 | BLOCKED | existing | ISS-001 |
 
 ---
 
 ## Engineering Item Register
 
-| ID | Type | Priority | Status | Summary | Current PR? |
-|---|---|---:|---|---|---|
-| DEC-001 | Decision | P0 | ACCEPTED | One common LAFEA platform plus explicit stage physics/capability adapters. | Yes |
-| DEC-002 | Decision | P0 | ACCEPTED | Extend production-consumed boundaries; no speculative parallel capability service. | Yes |
-| DEC-003 | Decision | P0 | ACCEPTED | LAFEA.4/.5 share shell infrastructure only where engineering meaning is identical. | Roadmap |
-| DEC-004 | Decision | P0 | ACCEPTED | New common fields/modules require immediate production consumption. | Yes |
-| DEC-005 | Decision | P0 | ACCEPTED | Common adapter uses semantic capabilities; UI step IDs remain UI-local. | Yes |
-| DEC-006 | Decision | P0 | ACCEPTED | Batch 1A shares only unit-factor facts; stage-specific required keys, canonical unit maps, errors, and derived dimensions remain local. | Yes |
-| RISK-001 | Risk | High | MITIGATED | Over-generalization controlled by semantic boundaries. | Yes |
-| RISK-002 | Risk | High | MITIGATED | Release/custody authority leakage avoided. | Yes |
-| RISK-003 | Risk | Medium | CLOSED | First adapter/workflow slice passed bounded exact-head checks. | Yes |
-| RISK-004 | Risk | High | OPEN | PR branch is 22 commits behind current `main`; must be reconciled before closure. No direct overlap with existing six PR files was found in pre-Stage-7 compare. | Yes |
-| ISS-001 | Defect | P1 | BLOCKED / OUT OF SCOPE | Pre-existing LFEA repository-attribution contradiction in pinned-base anti-drift vs governance-recording path. | No |
-| IMP-001 | Improvement | P0 | DONE | Guided input requirements centralized at stage adapter. | Yes |
-| IMP-002 | Improvement | P1 | DEFERRED | Future LAFEA.7+ plugin registration/deeper common kernel. | Roadmap |
-| IMP-003 | Improvement | P0 | IN_PROGRESS | Remove duplicated common unit conversion factors across analytical and FE engines without changing accepted behavior. | Yes |
-
-### RISK-004 detail — upstream divergence
-
-Observed before Stage 7:
-
-```text
-current main: 084e0587ce1d3d17c87670456226bd6534891ed9
-PR head:      bfbd16221736bc109b779fec395169875e4433ee
-comparison:   PR ahead 14, behind 22, diverged
-merge base:   a587867963cc9199caca6e7adfa03af95a316aa2
-```
-
-The 22 upstream commits are dominated by standalone LFEA runtime/shared-solver work. GitHub compare showed no changes to the existing six PR files:
-
-```text
-agents/PR1038_workreport.md
-docs/IntegratedLAFEAroadmap.md
-scripts/lafea-nonbucket-stack-check.mjs
-scripts/lafea-ui-workflow-truthfulness-check.mjs
-src/workspace/lafea-guided-workflow.js
-src/workspace/lafea-stage-analysis-adapter.js
-```
-
-Decision: Stage 7 may proceed on the current assignment branch because there is no direct file overlap, but final closure is blocked until current-main integration is explicitly reconciled and revalidated.
+| ID | Type | Priority | Status | Summary |
+|---|---|---:|---|---|
+| DEC-001 | Decision | P0 | ACCEPTED | One common LAFEA platform plus explicit stage physics/capability adapters. |
+| DEC-002 | Decision | P0 | ACCEPTED | Extend production-consumed boundaries; no speculative parallel service. |
+| DEC-003 | Decision | P0 | ACCEPTED | LAFEA.4/.5 share shell infrastructure only where engineering meaning is identical. |
+| DEC-004 | Decision | P0 | ACCEPTED | New common abstractions require immediate real consumers. |
+| DEC-005 | Decision | P0 | ACCEPTED | Common adapter is semantic/UI-independent. |
+| DEC-006 | Decision | P0 | VALIDATED | Batch 1A shares unit scale facts only; stage unit contracts remain local. |
+| DEC-007 | Decision | P0 | ACCEPTED | Do not keep mesh current across changed source until a geometry-specific parent identity exists. |
+| DEC-008 | Decision | P0 | ACCEPTED | FE thickness is `SECTION_PROPERTY`; analytical pipe-wall dimensions remain `GEOMETRY`. |
+| RISK-001 | Risk | High | VALIDATED | Commonization boundary protected by exact-head numerical/product checks. |
+| RISK-002 | Risk | High | VALIDATED | Release/custody authority remained unchanged through Batch 1A. |
+| RISK-004 | Risk | High | IN_PROGRESS | PR branch was 22 commits behind `main` before Batch 1A; final closure requires reconciliation/revalidation. |
+| ISS-001 | Defect | P1 | BLOCKED | Pre-existing LFEA piping anti-drift/governance-recording contradiction causes repository attribution failure. Out of scope. |
+| IMP-001 | Improvement | P0 | DONE | Guided input requirements centralized at stage adapter. |
+| IMP-003 | Improvement | P0 | DONE | Shared LAFEA.1/LAFEA.3 unit factor registry with real consumers and focused gate. |
+| IMP-004 | Improvement | P0 | IN_PROGRESS | Correct FE section-property source-change taxonomy. |
 
 ---
 
-## Stage Roadmap / Execution Log
+## Stage History
 
-### Stage 1 — Report initialization + technical findings
+### Stages 1–3 — baseline, roadmap, report, draft PR
 
-**Decision:** COMPLETE.
+**Decision: COMPLETE.**
 
-Established current LAFEA.1–.6 registry/lifecycle/meshing truth and retained the integrated roadmap before production changes.
+Pinned the initial base, inventoried current LAFEA stage/lifecycle/meshing truth, created the roadmap and living report, and opened draft PR #1038 before production changes.
 
-### Stage 2 — PR allocation + report synchronization
+### Stages 4–6 — first common/stage boundary
 
-**Decision:** COMPLETE.
+**Decision: COMPLETE.**
 
-Opened draft PR #1038 and synchronized the work-report filename.
+Implemented production-consumed route classification (`ANALYTICAL`, `FEA`, `UNSUPPORTED`) and semantic input capabilities (`materials`, `restraints`, `loads`) in `lafea-stage-analysis-adapter.js`; the guided workflow consumes them. Focused and aggregate exact-head validations passed. No solver/custody/release authority changed.
 
-### Stage 3 — Initial changed-file / repository-state verification
+### Stage 7 — Batch 1A shared unit-conversion primitive
 
-**Decision:** COMPLETE.
+**Decision: COMPLETE.**
 
-Before initial production changes, only roadmap/report files were present.
+#### Implemented
 
-### Stage 4 — First production common/stage capability increment
+- Added `src/core/lafea-common-input/units.js` with frozen unit-to-canonical factor facts and fail-closed lookup.
+- Converted LAFEA.1 `local-stress/units.js` to consume the shared factors.
+- Converted LAFEA.3 `local-continuum/units.js` to consume the shared factors.
+- Kept stage-specific canonical unit sets and required dimensions local.
+- Kept LAFEA.3 `bodyForceIntensity` as an explicitly derived local dimension.
+- Added `scripts/lafea-common-input-units-check.mjs` and wired it into the established non-bucket aggregate.
+- No workflow YAML, solver, mesh custody, recovery, or release file changed.
 
-**Decision:** COMPLETE.
+#### Validation issue and correction
 
-Implemented route classification and semantic input requirements in the existing stage adapter; guided workflow consumes them. No numerical/custody/release authority changed.
+First implementation head `00220e17056db3b52efc015cc99cd86485af1780` passed all retained product/numerical checks but the new focused test failed because it expected floating-point `1e-9` exactly while production evaluates `1e-6 / 1000` as `9.999999999999999e-10`. This was a test defect only.
 
-### Stage 5 — Focused exact-head validation
+The test was corrected to assert the exact production derivation. No production code changed in the correction.
 
-**Decision:** COMPLETE.
+#### Validated head
 
-Validated implementation head `d01de620ff4b4fcd5a5e077dbcf3b24d062846c3` through focused workflow truthfulness, bounded non-bucket, numerical core, foundation, meshing, solver, workbench, canvas, browser, syntax/import/build/hygiene, main-gate, bundle diagnostic, hybrid browser, and meshing exact-head qualification.
+`569dfaa8642ffeebb3cd3b866e9626b125659193`
 
-### Stage 6 — Reconciliation / handover
+PASS on the exact head:
 
-**Decision:** COMPLETE for the first bounded slice.
+- bounded non-bucket aggregate including `lafea-common-input-units`;
+- retained LAFEA numerical core;
+- LAFEA.1 foundation checks;
+- retained meshing, solver, workbench and canvas checks;
+- scoped Chromium validation;
+- strict syntax/import checks;
+- production build and patch hygiene;
+- `main-gate`;
+- LAFEA bundle diagnostic;
+- LAFEA hybrid browser validation.
 
-PR remained draft and unmerged.
+Dedicated meshing qualification was still completing its final aggregate step when this report stage was opened; the same retained meshing checks already passed inside the bounded exact-head certification.
 
-### Stage 7 — Batch 1A common unit-conversion primitive
+#### Authority statement
 
-**Current truth**
+- numerical formulas changed: **no**;
+- accepted unit vocabulary broadened: **no**;
+- canonical units changed: **no**;
+- lifecycle semantics changed: **no**;
+- mesh custody changed: **no**;
+- release authority changed: **no**.
 
-- LAFEA.1 `src/core/local-stress/units.js` owns factors for `length`, `force`, `moment`, `pressure`, `stress`.
-- LAFEA.3 `src/core/local-continuum/units.js` independently owns overlapping factors for `length`, `force`, `stress` plus `modulus`.
-- Both canonicalize to the same scale for shared dimensions (`mm`, `N`, `MPa`).
-- LAFEA.3 derives body-force-intensity scaling from `stress / length`; this remains local.
-- LAFEA.1 canonical unit contract includes moment/pressure; LAFEA.3 canonical unit contract includes modulus/strain/body-force intensity. These contracts remain local.
+---
 
-**Objective**
+## Stage 8 — Batch 2A dependency-change taxonomy
 
-Create one bounded shared registry of unit-to-canonical scale factors and have both production engines consume it without changing their schemas, canonical outputs, validation errors, or accepted unit sets.
+### Current truth
 
-**Expected scope/files**
+`LAFEA_INVALIDATION_CLASSES` and lifecycle source change classes currently include:
+
+```text
+MATERIAL_PROPERTY
+GEOMETRY
+LOAD_OR_BC
+MODEL_METADATA
+```
+
+In the current descriptors:
+
+- LAFEA.3 `element.thickness` is `GEOMETRY`;
+- LAFEA.4 `element.thickness` is `GEOMETRY`;
+- LAFEA.5 `shell.element.thickness` is `GEOMETRY`.
+
+Those thickness values affect section/stiffness behavior but do not change nodal coordinates or element topology. Treating them as geometry prevents a future correct dependency graph from distinguishing remesh-relevant edits from solve-only section edits.
+
+LAFEA.1 nominal pipe thickness/corrosion allowance remain `GEOMETRY` because they define the analytical pipe-wall geometry itself.
+
+### Objective
+
+Introduce a bounded semantic source-change class:
+
+```text
+SECTION_PROPERTY
+```
+
+for FE section/thickness edits and route the three existing FE thickness descriptors through it.
+
+### Expected scope
 
 ```text
 agents/PR1038_workreport.md
-src/core/lafea-common-input/units.js                 new
-src/core/local-stress/units.js                       modify
-src/core/local-continuum/units.js                    modify
-scripts/lafea-common-input-units-check.mjs           new
-scripts/lafea-nonbucket-stack-check.mjs              modify
+src/workspace/lafea-stage-input-descriptors.js
+src/workspace/lafea-lifecycle-profiled.js
+src/workspace/lafea-lifecycle-profiles.js
+src/workspace/lafea-workbench-source-state.js
+scripts/lafea-section-property-invalidation-check.mjs
+scripts/lafea-nonbucket-stack-check.mjs
 ```
 
-**Engineering rationale**
+No workflow YAML, numerical engine, mesh producer, custody, solver, recovery, or release module is in scope.
 
-Unit scale facts such as `m -> 1000 mm`, `kN -> 1000 N`, and `Pa -> 1e-6 MPa` have identical engineering meaning across these stages. Required unit keys and stage-specific physics do not. Sharing only the scale registry removes duplicated engineering constants while retaining each engine's authority boundary.
+### Planned implementation
 
-**Planned implementation**
+1. Add `SECTION_PROPERTY` to the governed descriptor invalidation vocabulary.
+2. Add it to lifecycle source-change classes.
+3. Authorize it only in `FEA_MESH_RECOVERY_V1` for current stages LAFEA.3/.4/.5.
+4. Add it to workbench source transition classification.
+5. Reclassify only FE thickness descriptors:
+   - `LAFEA.3.element.thickness`;
+   - `LAFEA.4.element.thickness`;
+   - `LAFEA.5.shell.element.thickness`.
+6. Keep LAFEA.1 wall-thickness geometry descriptors unchanged.
+7. Preserve current lifecycle status transition for all non-geometry source changes: canonical model/downstream stale; geometry/mesh `REVALIDATION_REQUIRED` under the current parent contract.
+8. Add focused regression proving semantic classification, FE-only lifecycle authorization, LAFEA.1 geometry retention, and unchanged artifact-status behavior.
+9. Wire the focused regression into the existing non-bucket aggregate.
 
-1. Add a small pure common module containing frozen scale-factor tables and a lookup function.
-2. Replace local duplicated factor tables in LAFEA.1 and LAFEA.3 unit modules with the shared lookup.
-3. Keep stage-specific explicit-key validation and `modelError` creation in the existing modules.
-4. Keep LAFEA.3 derived `bodyForceIntensity` factor local.
-5. Add focused regression proving exact scale factors, aliases, unsupported-unit failure, missing-unit failure, and both analytical/FE consumers.
-6. Add that script to the existing non-bucket aggregate; do not modify workflow YAML.
+### Expected behavior
 
-**Expected behavior**
+A typed FE thickness edit emits `SECTION_PROPERTY`, not `GEOMETRY`. It does **not yet** preserve the mesh as `CURRENT`; exact lineage remains fail-closed until a later geometry-authority batch can provide a parent identity independent of full source/canonical-model changes.
 
-- All current valid unit sets produce byte-equivalent numeric factors/canonical values.
-- Existing invalid unit sets still fail closed with the same engine error code.
-- No unit is accepted merely because it exists in the shared registry unless that stage's required dimension explicitly consumes it.
+### Edge cases
 
-**Edge cases**
+- LAFEA.1 pipe nominal thickness and corrosion allowance remain geometry changes.
+- LAFEA.6 does not gain `SECTION_PROPERTY` authorization.
+- Whole-document replacement remains conservatively broad.
+- Unknown/untyped edits retain current fail-closed fallback behavior.
+- No stale evidence is promoted or rebound.
 
-- LAFEA.1 moment aliases `N·mm`/`N*mm`, `N·m`/`N*m`, `kN·m`/`kN*m` remain accepted.
-- LAFEA.3 `GPa -> MPa` modulus conversion remains 1000.
-- LAFEA.3 body-force intensity remains derived from declared stress and length factors.
-- Missing required dimensions remain rejected; no hidden defaults.
-- Unknown dimension/unit lookup returns no factor and cannot silently fall back.
+### Validation plan
 
-**Planned validation**
-
-- focused `scripts/lafea-common-input-units-check.mjs`;
-- existing LAFEA.1 contract/foundation checks;
-- existing LAFEA.3 numerical core checks;
+- focused `lafea-section-property-invalidation` script;
+- U2 descriptor/edit checks;
+- U3 lifecycle/source-state checks;
 - bounded non-bucket aggregate;
-- syntax/import/build/hygiene through exact-head CI when available.
+- retained numerical/core/meshing/solver/workbench checks;
+- syntax/import/build/hygiene exact-head CI.
 
-**Known risks**
+### Risks
 
-- accepted-unit broadening from a careless common lookup;
-- error-shape drift;
-- accidental canonical-unit drift;
-- stale-base interaction (RISK-004).
+- accidental authorization of a new change class for analytical/unsupported profiles;
+- changing status behavior rather than only taxonomy;
+- future code treating `SECTION_PROPERTY` as mesh-current before geometry parent authority exists.
 
-**Stage decision:** IN_PROGRESS.
+**Stage decision: IN_PROGRESS.**
 
 ---
 
 ## Changed-File Ledger
 
-| File | First Stage | Latest Stage | Purpose | Engineering-sensitive? | Validation |
-|---|---:|---:|---|---|---|
-| `agents/PR1038_workreport.md` | 1 | 7 | Living engineering report | No | Current-state protocol |
-| `docs/IntegratedLAFEAroadmap.md` | 1 | 1 | Integrated common/stage roadmap | Architecture | Source reconciliation |
-| `src/workspace/lafea-stage-analysis-adapter.js` | 4 | 4 | Route + semantic input capability boundary | Yes | Prior exact-head PASS |
-| `src/workspace/lafea-guided-workflow.js` | 4 | 4 | Production workflow consumer | Yes | Prior exact-head PASS |
-| `scripts/lafea-ui-workflow-truthfulness-check.mjs` | 4 | 4 | Focused stage/workflow regression | Test | Prior exact-head PASS |
-| `scripts/lafea-nonbucket-stack-check.mjs` | 4 | 7 planned | Established aggregate; Stage 7 focused check wiring | Test/certification | Stage 7 NOT_RUN |
-| `src/core/lafea-common-input/units.js` | 7 planned | 7 planned | Shared unit-to-canonical scale facts | Yes | Stage 7 NOT_RUN |
-| `src/core/local-stress/units.js` | 7 planned | 7 planned | LAFEA.1 production consumer | Yes | Stage 7 NOT_RUN |
-| `src/core/local-continuum/units.js` | 7 planned | 7 planned | LAFEA.3 production consumer | Yes | Stage 7 NOT_RUN |
-| `scripts/lafea-common-input-units-check.mjs` | 7 planned | 7 planned | Focused shared-unit regression | Test | Stage 7 NOT_RUN |
+| File | Stage | Purpose | Status |
+|---|---:|---|---|
+| `docs/IntegratedLAFEAroadmap.md` | 1 | integrated architecture roadmap | DONE |
+| `agents/PR1038_workreport.md` | all | living report | IN_PROGRESS |
+| `src/workspace/lafea-stage-analysis-adapter.js` | 4 | route/input capability boundary | VALIDATED |
+| `src/workspace/lafea-guided-workflow.js` | 4 | production consumer | VALIDATED |
+| `scripts/lafea-ui-workflow-truthfulness-check.mjs` | 4 | focused route/input regression | VALIDATED |
+| `src/core/lafea-common-input/units.js` | 7 | shared unit factors | VALIDATED |
+| `src/core/local-stress/units.js` | 7 | LAFEA.1 shared-unit consumer | VALIDATED |
+| `src/core/local-continuum/units.js` | 7 | LAFEA.3 shared-unit consumer | VALIDATED |
+| `scripts/lafea-common-input-units-check.mjs` | 7 | focused common-unit regression | VALIDATED |
+| `scripts/lafea-nonbucket-stack-check.mjs` | 4,7,8 | bounded aggregate wiring | IN_PROGRESS |
+| Stage 8 files listed above | 8 | section-property taxonomy | NOT_STARTED |
 
-No `.github/workflows/*` change is authorized or planned.
-
----
-
-## Engineering Invariants
-
-### INV-001 — UI is not solver authority
-
-Must remain true. Stage 7 does not touch UI/solver authorization.
-
-### INV-002 — Calculation success is not release
-
-Must remain true. Release machinery is untouched.
-
-### INV-003 — Mesh custody semantics remain exact
-
-Must remain true. Mesh/custody code is untouched.
-
-### INV-004 — LAFEA.6 stays fail-closed
-
-Must remain true. Stage registry/execution support is untouched.
-
-### INV-005 — Common adapter remains UI-independent
-
-Must remain true. Stage 7 does not change the adapter.
-
-### INV-006 — Common unit registry is not a stage unit contract
-
-The shared registry may contain factors used by multiple stages, but a stage accepts only units requested through its own explicit dimension/key contract. Enforced in the stage-local `canonicalizeUnits` functions. Stage 7 must validate no hidden fallback/default.
+Current PR changed-file count before Stage 8 production edits: 10 files. No `.github/workflows/*` file is changed.
 
 ---
 
-## Validation and Evidence Ledger
+## Validation / Evidence Ledger
 
-### Software Validation
-
-| Validation | Status | Last HEAD | Evidence |
+| Evidence | Head | Status | Notes |
 |---|---|---|---|
-| First-slice focused workflow truthfulness | PASS | `d01de620...` | Non-bucket exact-head artifact |
-| First-slice bounded non-bucket aggregate | PASS | `d01de620...` | Failure matrix PASS |
-| First-slice numerical/solver/meshing/workbench/browser | PASS | `d01de620...` | GitHub Actions |
-| Batch 1A focused common-unit regression | NOT_RUN | — | Pending Stage 7 |
-| Batch 1A LAFEA.1 foundation regression | NOT_RUN | — | Pending Stage 7 |
-| Batch 1A LAFEA.3 numerical regression | NOT_RUN | — | Pending Stage 7 |
-| Current-main integration validation | NOT_RUN | — | Blocked until branch reconciliation |
-
-### Engineering Validation
-
-| Property | Status | Evidence |
-|---|---|---|
-| Route family truthfulness | PASS | Prior exact-head checks |
-| LAFEA.6 remains unsupported | PASS | Prior exact-head checks |
-| Shared unit factors preserve analytical canonicalization | NOT_RUN | Stage 7 pending |
-| Shared unit factors preserve FE canonicalization | NOT_RUN | Stage 7 pending |
-| No accepted-unit broadening | NOT_RUN | Stage 7 pending |
-| No numerical authority change | NOT_RUN | Stage 7 pending existing numerical suites |
-
-### Explicitly Not Validated
-
-- current-main integrated PR head;
-- future common material/load/BC identity primitives;
-- dependency-aware invalidation;
-- geometry-first mapping;
-- new 3D physics;
-- physical LAFEA repository extraction.
+| First common/stage slice | `d01de620...` | PASS | exact-head bounded suite |
+| Batch 1A focused common-unit + nonbucket | `569dfaa864...` | PASS | exact-head certification |
+| Batch 1A numerical core/foundation | `569dfaa864...` | PASS | retained numerical/product suites |
+| Batch 1A solver/workbench/canvas | `569dfaa864...` | PASS | retained suites |
+| Batch 1A Chromium/syntax/import/build/hygiene | `569dfaa864...` | PASS | exact-head certification |
+| Batch 1A main-gate | `569dfaa864...` | PASS | all steps |
+| Batch 1A hybrid browser | `569dfaa864...` | PASS | exact candidate head |
+| Repository integration attribution | `569dfaa864...` | BLOCKED | ISS-001 pre-existing LFEA piping gate contradiction |
+| Current-main integration | — | NOT_STARTED | required before closure |
+| Stage 8 focused/aggregate validation | — | NOT_STARTED | next |
 
 ---
 
 ## Known / Deferred Work
 
-### Open defects
+### ISS-001 — pre-existing cross-product integration defect
 
-- **ISS-001:** unrelated LFEA repository-attribution contradiction. Do not fix in this PR without Owner scope change.
+Pinned-base LFEA piping anti-drift code rejects a literal governed release-ledger path that another pinned-base governance-recording module contains. The repository integration matrix therefore reports full-gate failure. This PR does not modify either file. Keep out of scope unless Owner explicitly expands scope.
 
-### Open risks
+### RISK-004 — branch divergence
 
-- **RISK-004:** branch behind current `main`; closure requires reconciliation and revalidation.
+Before Batch 1A, PR #1038 was 22 commits behind current `main`, with no direct overlap found in the then-existing PR files. Final closure requires explicit synchronization/integration and full revalidation. Do not merge while this remains unresolved.
 
-### Deferred improvements
+### Geometry authority prerequisite
 
-- common material identity/source primitives after unit facts are proven;
-- load-case/BC/coordinate identity where same semantics are demonstrated;
-- invalidation graph;
-- geometry authority;
-- meshing/compiler/results/verification/runtime phases from roadmap.
-
----
-
-## Recommended Forward Sequence
-
-1. Complete and validate Stage 7 Batch 1A.
-2. If green, evaluate Batch 1B material/source identity using actual LAFEA.1 and LAFEA.3 contracts; do not force constitutive-property commonality.
-3. Implement dependency-aware invalidation before deeper meshing refactoring.
-4. Establish LAFEA.3 geometry authority and stable physical regions/probes.
-5. Integrate LAFEA.3 meshing/custody lineage.
-6. Add deterministic LAFEA.3 solver-model compiler.
-7. Extend to LAFEA.4 shell, then LAFEA.5 shell reuse + footprint semantics.
-8. Add result comparison / verification center.
-9. Reconcile standalone runtime/history/release/dossier and perform final repository extraction only after engineering boundaries stabilize.
+True mesh preservation for material/load/section edits is deferred until the FE geometry artifact can bind to geometry-specific source/model identity rather than the entire changed source/canonical model. This is the next architecture dependency after Stage 8 taxonomy.
 
 ---
 
 ## Next-Agent Handover
 
-- **Current stopping point:** Stage 7 plan recorded; production code not yet changed for Batch 1A.
-- **PR / branch / HEAD:** #1038 / `agent/integrated-lafea-common-stage-roadmap` / `bfbd16221736bc109b779fec395169875e4433ee` before this report update.
-- **Last completed stage:** Stage 6.
-- **Current active stage:** Stage 7 — Batch 1A common unit-conversion primitive.
-- **Start here:** `src/core/local-stress/units.js` and `src/core/local-continuum/units.js`; implement only the shared factor lookup described above.
-- **Do not redo:** stage route/input capability work already validated.
-- **Do not assume:** branch is current with `main`; RISK-004 is open.
-- **Files currently involved:** ledger above.
-- **Known failing checks:** ISS-001 cross-product attribution only; Stage 7 tests not yet run.
-- **Validation still required:** focused common-unit test, LAFEA.1/.3 existing suites, non-bucket aggregate, exact-head CI, current-main integration before closure.
-- **Open QST items:** none currently.
-- **Important deferred IMP items:** IMP-002 future plugin/deeper kernel; material/load/BC common primitives after Batch 1A.
-- **Highest-risk remaining item:** unit commonization broadening accepted inputs or changing canonical numeric behavior.
-- **Exact next recommended action:** create `src/core/lafea-common-input/units.js`, then convert LAFEA.1 and LAFEA.3 unit adapters to explicit shared lookup with unchanged error handling.
-- **Required reading:** issue #1025; `docs/IntegratedLAFEAroadmap.md`; `CodingRules.md`; current stage adapter; both existing unit modules.
-
----
-
-## Process Notes / Lessons Learned
-
-- Current source outranks stale planning text when describing qualified capability.
-- A regression script is only useful delivery evidence when an established aggregate executes it.
-- Common/stage abstractions should use semantic engineering concepts, not UI labels.
-- Commonizing a value table is safer than commonizing stage physics when contracts differ.
-- Upstream branch divergence must be recorded before further implementation even when there is no direct file overlap.
+- **Current stage:** Stage 8, Batch 2A `SECTION_PROPERTY` taxonomy.
+- **Last validated head:** `569dfaa8642ffeebb3cd3b866e9626b125659193`.
+- **Start files:** `lafea-stage-input-descriptors.js`, `lafea-lifecycle-profiled.js`, `lafea-lifecycle-profiles.js`, `lafea-workbench-source-state.js`.
+- **Do not change:** solver numerics, mesh producer/custody, release, workflow YAML.
+- **Do not claim:** mesh can remain current after section edit yet.
+- **Required focused proof:** FE thickness emits/accepts `SECTION_PROPERTY`; LAFEA.1 pipe-wall thickness stays `GEOMETRY`; current lifecycle artifact status transition is unchanged and fail-closed.
+- **After Stage 8:** open a geometry-authority batch before attempting dependency-aware mesh preservation.

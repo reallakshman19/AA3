@@ -16,8 +16,22 @@ export function createLfeaWorkbenchRunStore(options) {
   } = options;
 
   function run() {
-    const running = beginRun();
+    beginRun();
+    return completeSynchronousRun();
+  }
+
+  /**
+   * Complete an already-started in-process run.
+   *
+   * Keeping beginRun() separate lets the controller publish RUNNING and yield
+   * one browser task before the synchronous solver occupies the main thread.
+   */
+  function completeSynchronousRun() {
+    const running = getState();
     const identity = running.activeRun;
+    if (!identity || running.status !== 'RUNNING') {
+      throw new TypeError('An active LFEA run is required before synchronous completion.');
+    }
     try {
       const execution = executeLfeaWorkbench(
         requirePackage(running),
@@ -173,6 +187,7 @@ export function createLfeaWorkbenchRunStore(options) {
   return Object.freeze({
     run,
     beginRun,
+    completeSynchronousRun,
     updateRunProgress,
     completeRun,
     failRun,

@@ -55,7 +55,8 @@ Added focused coverage for:
 - certified-session `MOVE_NODE` rejection with exact no-mutation journal assertions;
 - support-aware command capability with an unrestrained positive control;
 - production visible-user qualification that proves a supported endpoint is blocked without canonical/journal mutation before a safe endpoint succeeds;
-- clean-layout/render qualification that proves the blocked support move remains a clean draft before an unrestrained move is saved;
+- clean-layout/render qualification that proves support-dependent MOVE is disabled and leaves a clean draft before an unrestrained move is saved;
+- remount/icon-custody qualification that performs the one-command lifecycle on the verified unrestrained `P-003, TO` endpoint across three deactivate/reactivate cycles;
 - Tool Audit qualification that uses a verified unrestrained P-003 endpoint for successful MOVE_NODE coverage while support-dependent P-001 MOVE is unavailable.
 
 Existing no-support route/Table/browser suites remain the positive-path regression authority.

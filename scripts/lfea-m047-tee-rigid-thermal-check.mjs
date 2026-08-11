@@ -3,19 +3,17 @@
 /**
  * M047 Type 2.1 tee rigid-thermal qualification that does not require ACE/ACCDB.
  *
- * Governing external evidence is pinned to reallaksh19/Common
- * 179c4831cf521cf797c13699cfbbd118315c9244:
- * - LFEA/BM4/Miscdata_BM4_L.txt
- * - LFEA/BM4/Loadcasereport_BM4_L.txt
+ * Source custody lives in:
+ * benchmarks/LFEA/CAESAR_ACCDB/m047-bm4l-tee-rigid-thermal-authority.json
  *
- * The Misc report supplies the two Type 2.1 welding-tee geometries and rounded
- * B31J FLEXb/Kb values. The Load Case report establishes that L2/L4/L6 are
- * nonthermal, L3/L5 contain T1, and L14 is ALG L5-L6. This check deliberately
- * does not promote the report's rounded 0.0012 mm/mm as exact thermal authority.
+ * The fixture pins the CAESAR II 14 Misc and Load Case reports in Common. This
+ * check deliberately retains the benchmark alpha as provisional diagnostic
+ * state and never promotes the rounded report value 0.0012 mm/mm to authority.
  */
 
 import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
+import { fileURLToPath } from 'node:url';
 import {
   COMPONENT_GEOMETRY_SCHEMA,
   FACTOR_CALCULATION_REQUEST_SCHEMA,
@@ -38,51 +36,20 @@ import {
 } from '../src/core/linear-fea-section/index.js';
 import { semanticHash } from '../src/core/shared-piping-model/canonical-json.js';
 
-const COMMON_REVISION = '179c4831cf521cf797c13699cfbbd118315c9244';
+const AUTHORITY_PATH = fileURLToPath(new URL(
+  '../benchmarks/LFEA/CAESAR_ACCDB/m047-bm4l-tee-rigid-thermal-authority.json',
+  import.meta.url,
+));
+const authority = JSON.parse(await readFile(AUTHORITY_PATH, 'utf8'));
+const COMMON_REVISION = authority.sources.commonCommit;
 const FACTOR_PROFILE_ID = 'B31_3_2022_B31J_2017';
 const MOMENT_DIRECTION_MAPPING = Object.freeze({ inPlaneField: 'my', outOfPlaneField: 'mz' });
-const INSTALLATION_TEMPERATURE_C = 21;
-const OPERATING_TEMPERATURE_C = 120;
-const PROVISIONAL_ALPHA_PER_K = 1.17e-5;
-const PROVISIONAL_STRAIN = PROVISIONAL_ALPHA_PER_K
-  * (OPERATING_TEMPERATURE_C - INSTALLATION_TEMPERATURE_C);
 const ELASTIC_MODULUS_PA = 203395008e3;
 const POISSON_RATIO = 0.292;
 const MATERIAL_NUMBER = 106;
-
-const CASE_THERMAL_AUTHORITY = Object.freeze({
-  L2: false,
-  L3: true,
-  L4: false,
-  L5: true,
-  L6: false,
-  L14: 'ALG:L5-L6=T1',
-});
-
-const TEE_CASES = Object.freeze([
-  Object.freeze({
-    nodeId: '20160',
-    surfaceNodeId: '20161',
-    runMeanDiameterM: 0.254737,
-    runWallM: 0.018263,
-    branchMeanDiameterM: 0.254737,
-    branchWallM: 0.018263,
-    expectedFlexBranchInPlane: 1.294,
-    expectedKbNmPerDegree: 1.283e6,
-    expectedFreeGrowthM: 0.00015810795,
-  }),
-  Object.freeze({
-    nodeId: '20295',
-    surfaceNodeId: '20296',
-    runMeanDiameterM: 0.157302,
-    runWallM: 0.010973,
-    branchMeanDiameterM: 0.157327,
-    branchWallM: 0.010973,
-    expectedFlexBranchInPlane: 1.323,
-    expectedKbNmPerDegree: 2.877e5,
-    expectedFreeGrowthM: 0.00009745646625,
-  }),
-]);
+const provisional = authority.provisionalThermalDiagnostic;
+const PROVISIONAL_STRAIN = provisional.coefficientPerKelvin
+  * (provisional.operatingTemperatureC - provisional.installationTemperatureC);
 
 function test(id, name, body) {
   body();
@@ -96,17 +63,17 @@ function sourceEvidence(sourceId) {
 
 function materialResolution() {
   const point = {
-    absoluteTemperature: INSTALLATION_TEMPERATURE_C + 273.15,
+    absoluteTemperature: provisional.installationTemperatureC + 273.15,
     elasticModulus: ELASTIC_MODULUS_PA,
     shearModulus: ELASTIC_MODULUS_PA / (2 * (1 + POISSON_RATIO)),
     poissonRatio: POISSON_RATIO,
     massDensity: 7833,
-    thermalExpansionCoefficient: PROVISIONAL_ALPHA_PER_K,
+    thermalExpansionCoefficient: provisional.coefficientPerKelvin,
   };
   const table = sealMaterialTable({
     schema: 'fea-linear-material-table/v1',
     materialId: `ACCDB-MATERIAL-${MATERIAL_NUMBER}`,
-    sourceEvidence: sourceEvidence('COMMON:BM4_L:A106_GRADE_B'),
+    sourceEvidence: sourceEvidence('BM4_L:ACCDB:COLD-MATERIAL-106'),
     points: [point],
     semanticHash: '',
   });
@@ -128,7 +95,7 @@ function sectionResolution(sectionStateId, outerDiameter, wallThickness) {
     formulationId: PIPE_SECTION_FORMULATION_ID,
     outerDiameter,
     wallThickness,
-    sourceEvidence: sourceEvidence(`COMMON:BM4_L:${sectionStateId}`),
+    sourceEvidence: sourceEvidence(`BM4_L:MISC:${sectionStateId}`),
   };
   return resolvePipeSection({
     request: { ...payload, semanticHash: computePipeSectionRequestSemanticHash(payload) },
@@ -137,28 +104,35 @@ function sectionResolution(sectionStateId, outerDiameter, wallThickness) {
 }
 
 function qualifyTee(entry) {
-  const runOuterDiameter = entry.runMeanDiameterM + entry.runWallM;
-  const branchOuterDiameter = entry.branchMeanDiameterM + entry.branchWallM;
+  const runMeanDiameterM = entry.runMeanDiameterMm / 1000;
+  const runWallM = entry.runWallMm / 1000;
+  const branchMeanDiameterM = entry.branchMeanDiameterMm / 1000;
+  const branchWallM = entry.branchWallMm / 1000;
+  const runOuterDiameter = runMeanDiameterM + runWallM;
+  const branchOuterDiameter = branchMeanDiameterM + branchWallM;
   const material = materialResolution();
   const runSection = sectionResolution(
-    `BM4L-TEE-${entry.nodeId}-RUN`,
+    `TEE-${entry.teeNode}-RUN`,
     runOuterDiameter,
-    entry.runWallM,
+    runWallM,
   );
   const branchSection = sectionResolution(
-    `BM4L-TEE-${entry.nodeId}-BRANCH`,
+    `TEE-${entry.teeNode}-BRANCH`,
     branchOuterDiameter,
-    entry.branchWallM,
+    branchWallM,
   );
   const branchRelativeExcess = (branchOuterDiameter - runOuterDiameter) / runOuterDiameter;
-  assert.ok(branchRelativeExcess <= 0.001, `tee ${entry.nodeId} branch OD reconciliation exceeds production tolerance`);
+  assert.ok(
+    branchRelativeExcess <= 0.001,
+    `tee ${entry.teeNode} branch OD reconciliation exceeds production tolerance`,
+  );
   const factorBranchOuterDiameter = branchOuterDiameter > runOuterDiameter
     ? runOuterDiameter
     : branchOuterDiameter;
   const factorResult = calculateB31Factors({
     schema: FACTOR_CALCULATION_REQUEST_SCHEMA,
-    calculationId: `M047-TEE-${entry.nodeId}-FACTORS`,
-    componentId: `M047-TEE-${entry.nodeId}`,
+    calculationId: `M047-TEE-${entry.teeNode}-FACTORS`,
+    componentId: `M047-TEE-${entry.teeNode}`,
     editionProfileId: FACTOR_PROFILE_ID,
     componentType: 'WELDING_TEE',
     geometry: {
@@ -166,21 +140,21 @@ function qualifyTee(entry) {
       componentType: 'WELDING_TEE',
       lengthUnit: 'm',
       runOuterDiameter,
-      runWallThickness: entry.runWallM,
+      runWallThickness: runWallM,
       branchOuterDiameter: factorBranchOuterDiameter,
-      branchWallThickness: entry.branchWallM,
+      branchWallThickness: branchWallM,
       fittingQuality: 'UNVERIFIED',
       sourceEvidence: {
-        sourceId: `COMMON:BM4_L:MISC:TYPE2.1:${entry.nodeId}`,
+        sourceId: `COMMON:BM4_L:MISC:TYPE2.1:${entry.teeNode}`,
         sourceRevision: COMMON_REVISION,
       },
     },
     momentDirectionMapping: MOMENT_DIRECTION_MAPPING,
     semanticHash: '',
   });
-  assert.equal(factorResult.status, 'QUALIFIED', `tee ${entry.nodeId} factor result must qualify`);
+  assert.equal(factorResult.status, 'QUALIFIED', `tee ${entry.teeNode} factor result must qualify`);
   const modifiers = deriveB31JDirectionalBranchEndModifiers({
-    componentId: `M047-TEE-${entry.nodeId}`,
+    componentId: `M047-TEE-${entry.teeNode}`,
     factorResult,
     junctionPosition: [0, 0, 0],
     legs: [
@@ -213,49 +187,82 @@ function qualifyTee(entry) {
 
 function relativeClose(actual, expected, tolerance, message) {
   const scale = Math.max(Math.abs(expected), Number.MIN_VALUE);
-  assert.ok(Math.abs(actual - expected) <= tolerance * scale, `${message}: ${actual} vs ${expected}`);
+  assert.ok(
+    Math.abs(actual - expected) <= tolerance * scale,
+    `${message}: ${actual} vs ${expected}`,
+  );
 }
 
 console.log('\n--- M047 Type 2.1 tee rigid thermal no-ACE qualification ---');
 
-test('M047-RT-01', 'Pinned Load Case Report keeps thermal selectivity explicit', () => {
-  assert.deepEqual(CASE_THERMAL_AUTHORITY, {
-    L2: false,
-    L3: true,
-    L4: false,
-    L5: true,
-    L6: false,
-    L14: 'ALG:L5-L6=T1',
-  });
+test('M047-RT-01', 'Source custody pins the requested CAESAR reports and version', () => {
+  assert.equal(authority.schema, 'm047-bm4l-tee-rigid-thermal-authority/v1');
+  assert.equal(authority.benchmarkId, 'BM4_L');
+  assert.equal(authority.caesarVersion, '14.00.00.0910');
+  assert.equal(authority.caesarBuild, '231113');
+  assert.equal(COMMON_REVISION, '179c4831cf521cf797c13699cfbbd118315c9244');
+  assert.equal(authority.sources.misc.path, 'LFEA/BM4/Miscdata_BM4_L.txt');
+  assert.equal(authority.sources.misc.gitBlobSha, 'ef23d224925e4568185a360ecbe1ee62503f15ff');
+  assert.equal(authority.sources.loadCase.path, 'LFEA/BM4/Loadcasereport_BM4_L.txt');
+  assert.equal(authority.sources.loadCase.gitBlobSha, 'be62eeb08af26dddcd59146e21188c108c4600dd');
 });
 
-for (const entry of TEE_CASES) {
+test('M047-RT-02', 'Pinned Load Case Report keeps T1 selectivity and ALG L14 explicit', () => {
+  const cases = new Map(authority.loadCases.map((entry) => [entry.caseId, entry]));
+  assert.deepEqual([...cases.keys()], ['L2', 'L3', 'L4', 'L5', 'L6', 'L14']);
+  assert.deepEqual(
+    [...cases.values()].filter((entry) => entry.combinationMethod === 'PHYSICAL' && entry.containsT1)
+      .map((entry) => entry.caseId),
+    ['L3', 'L5'],
+  );
+  assert.deepEqual(
+    [...cases.values()].filter((entry) => entry.combinationMethod === 'PHYSICAL' && !entry.containsT1)
+      .map((entry) => entry.caseId),
+    ['L2', 'L4', 'L6'],
+  );
+  for (const entry of [...cases.values()].filter((row) => row.combinationMethod === 'PHYSICAL')) {
+    assert.equal(entry.elasticModulus, 'EC', `${entry.caseId} must use EC`);
+    assert.equal(entry.frictionMultiplier, 0, `${entry.caseId} must have zero friction multiplier`);
+  }
+  assert.equal(cases.get('L14').combinationMethod, 'ALG');
+  assert.equal(cases.get('L14').formula, 'L14=L5-L6');
+  assert.equal(cases.get('L14').containsT1, true);
+});
+
+test('M047-RT-03', 'Provisional thermal state is diagnostic only and internally consistent', () => {
+  assert.equal(provisional.authorityStatus, 'PROVISIONAL_GUESSED_NOT_PROMOTABLE');
+  relativeClose(PROVISIONAL_STRAIN, provisional.strain, 1e-14, 'provisional alpha*DeltaT strain');
+  assert.notEqual(provisional.strain, 0.0012, 'rounded Misc output must not become exact benchmark strain');
+});
+
+for (const entry of authority.type21Tees) {
   const qualified = qualifyTee(entry);
   const branch = qualified.modifiers.modifiers.find((modifier) => modifier.role === 'BRANCH');
-  assert.ok(branch, `tee ${entry.nodeId} must resolve one branch modifier`);
+  assert.ok(branch, `tee ${entry.teeNode} must resolve one branch modifier`);
 
-  test(`M047-RT-${entry.nodeId}-A`, `Tee ${entry.nodeId} reproduces pinned B31J branch flexibility`, () => {
+  test(`M047-RT-${entry.teeNode}-A`, `Tee ${entry.teeNode} reproduces pinned B31J FLEXb/Kb`, () => {
     relativeClose(
       qualified.factorResult.factors.flexibility.branch.inPlane,
-      entry.expectedFlexBranchInPlane,
+      entry.flexBranchInPlane,
       1e-3,
-      `tee ${entry.nodeId} FLEXb in-plane`,
+      `tee ${entry.teeNode} FLEXb in-plane`,
     );
     const inPlaneSpring = branch.rotationalSprings.find((spring) => spring.dof === 'RY');
-    assert.ok(inPlaneSpring, `tee ${entry.nodeId} requires one in-plane branch spring`);
+    assert.ok(inPlaneSpring, `tee ${entry.teeNode} requires one in-plane branch spring`);
     relativeClose(
       inPlaneSpring.stiffness * Math.PI / 180,
-      entry.expectedKbNmPerDegree,
+      entry.kbBranchInPlaneNmPerDegree,
       1e-3,
-      `tee ${entry.nodeId} Kb in N.m/deg`,
+      `tee ${entry.teeNode} Kb in N.m/deg`,
     );
   });
 
-  test(`M047-RT-${entry.nodeId}-B`, `Tee ${entry.nodeId} surface offset gives the predeclared free growth`, () => {
+  test(`M047-RT-${entry.teeNode}-B`, `Tee ${entry.teeNode} surface offset gives predeclared free growth`, () => {
     const radius = Math.hypot(...branch.rigidOffset);
-    relativeClose(radius, qualified.runOuterDiameter / 2, 1e-12, `tee ${entry.nodeId} surface radius`);
+    relativeClose(radius, qualified.runOuterDiameter / 2, 1e-12, `tee ${entry.teeNode} surface radius`);
     const freeGrowth = radius * PROVISIONAL_STRAIN;
-    relativeClose(freeGrowth, entry.expectedFreeGrowthM, 1e-12, `tee ${entry.nodeId} provisional free growth`);
+    const expected = provisional.expectedFreeGrowthMm[String(entry.teeNode)] / 1000;
+    relativeClose(freeGrowth, expected, 1e-12, `tee ${entry.teeNode} provisional free growth`);
   });
 }
 
@@ -267,24 +274,28 @@ const frameStart = solverSource.indexOf('function buildFrameElement(input)');
 const frameEnd = solverSource.indexOf('function buildRigidElement(input)');
 const frameSource = solverSource.slice(frameStart, frameEnd);
 
-test('M047-RT-06', 'Solver integration is thermal-only and fail-closed on run material custody', () => {
+test('M047-RT-08', 'Solver integration is thermal-only and fail-closed on run material custody', () => {
   assert.match(solverSource, /const runThermalAuthority = input\.caseMode\.thermal\s*\? commonTeeRunThermalAuthority/u);
   assert.match(solverSource, /material\.materialState\.materialId !== materialId/u);
   assert.match(solverSource, /authority\.materialId !== input\.material\.materialState\.materialId/u);
   assert.match(solverSource, /!input\.caseMode\.thermal \|\| modifier === null \|\| modifier\.rigidOffset === null/u);
 });
 
-test('M047-RT-07', 'Solver integration applies -Keff*g after tee condensation and before T/H transforms', () => {
+test('M047-RT-09', 'Solver integration applies -Keff*g after tee condensation and before T/H transforms', () => {
   const condensed = frameSource.indexOf('const effectiveLocalStiffness = condensed.matrix;');
   const freeState = frameSource.indexOf('const teeRigidThermal = buildTeeRigidThermalInitialLoad({');
   const globalTransform = frameSource.indexOf('let effectiveGlobalStiffness = transformStiffnessToGlobal(');
-  assert.ok(condensed >= 0 && freeState > condensed && globalTransform > freeState, 'tee free state must sit between condensation and global transforms');
+  assert.ok(
+    condensed >= 0 && freeState > condensed && globalTransform > freeState,
+    'tee free state must sit between condensation and global transforms',
+  );
   assert.match(solverSource, /const freeTranslationGlobal = scale\(modifier\.rigidOffset, strain\);/u);
   assert.match(solverSource, /initialLocal: Object\.freeze\(scale\(freeLoadLocal, -1\)\)/u);
   assert.doesNotMatch(solverSource, /ACCDB\.E12|ACCDB\.E36\.STRAIGHT/u);
 });
 
-test('M047-RT-08', 'Qualification keeps Type 2.6 and fitted alpha outside this patch', () => {
+test('M047-RT-10', 'Type 2.6 structural invention and fitted alpha remain outside this patch', () => {
+  assert.equal(authority.excludedStructuralInterpretation.miscType, '2.6');
   assert.match(solverSource, /const CAESAR_WELDING_TEE_TYPE = 3;/u);
   assert.doesNotMatch(solverSource, /1\.22e-5|0\.001208|0\.001210/u);
 });

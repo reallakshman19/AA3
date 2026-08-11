@@ -1,0 +1,33 @@
+{
+  "schema": "m047-bm4l-friction-readiness-snapshot/v1",
+  "stackBase": {
+    "pr": 1049,
+    "branch": "agent/m047-bm4l-friction-source-mapping",
+    "sha": "449750b260c98b935901033d8689b697d3349561"
+  },
+  "resolvedAuthority": {
+    "frictionStiffness": {"status":"RESOLVED","value":1000000,"source":"HEXAGON_CAESAR_II_V14_FRICTION_STIFFNESS","provenanceClass":"INDEPENDENT_AUTHORITY"},
+    "frictionAngleVariationDeg": {"status":"RESOLVED","value":15,"source":"HEXAGON_CAESAR_II_V14_FRICTION_ANGLE_VARIATION","provenanceClass":"INDEPENDENT_AUTHORITY"},
+    "frictionNormalForceVariation": {"status":"RESOLVED","value":0.15,"source":"HEXAGON_CAESAR_II_V14_FRICTION_NORMAL_FORCE_VARIATION","provenanceClass":"INDEPENDENT_AUTHORITY"}
+  },
+  "unresolvedAuthority": {
+    "frictionSlideMultiplier": "PUBLIC_NUMERIC_VALUE_NOT_FOUND",
+    "frictionStateHistorySemantics": "EXACT_STATIC_STATE_HISTORY_NOT_PUBLISHED",
+    "gapContactStateSemantics": "EXACT_STATIC_GAP_CONTACT_ALGORITHM_NOT_PUBLISHED"
+  },
+  "cases": [
+    {"caseId":"L2","frictionMultiplier":0,"status":"READY_LINEAR_BYPASS","route":"QUALIFIED_LINEAR_SOLVER"},
+    {"caseId":"L3","frictionMultiplier":0,"status":"READY_LINEAR_BYPASS","route":"QUALIFIED_LINEAR_SOLVER"},
+    {"caseId":"L4","frictionMultiplier":0,"status":"READY_LINEAR_BYPASS","route":"QUALIFIED_LINEAR_SOLVER"},
+    {"caseId":"L5","frictionMultiplier":0,"status":"READY_LINEAR_BYPASS","route":"QUALIFIED_LINEAR_SOLVER"},
+    {"caseId":"L6","frictionMultiplier":0,"status":"READY_LINEAR_BYPASS","route":"QUALIFIED_LINEAR_SOLVER"},
+    {"caseId":"L7","frictionMultiplier":1,"status":"BLOCKED_AUTHORITY","blockers":["FRICTION_SLIDE_MULTIPLIER_AUTHORITY_REQUIRED","FRICTION_STATE_HISTORY_SEMANTICS_AUTHORITY_REQUIRED","GAP_CONTACT_STATE_SEMANTICS_AUTHORITY_REQUIRED"]},
+    {"caseId":"L13","frictionMultiplier":1,"status":"BLOCKED_AUTHORITY","blockers":["FRICTION_SLIDE_MULTIPLIER_AUTHORITY_REQUIRED","FRICTION_STATE_HISTORY_SEMANTICS_AUTHORITY_REQUIRED","GAP_CONTACT_STATE_SEMANTICS_AUTHORITY_REQUIRED"]}
+  ],
+  "policy": {
+    "zeroFrictionInspectsNonlinearAuthority": false,
+    "responseFittedAuthorityPermitted": false,
+    "productionFrictionAuthorized": false,
+    "newMechanicsAuthorized": false
+  }
+}

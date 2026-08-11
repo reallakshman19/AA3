@@ -1,7 +1,7 @@
 import { stringValue } from '../../../core/shared-piping-model/index.js';
 import {
-  topologyEditInlineCatalogueBinding,
-} from '../professional/topology-edit-inline-component-operation.js';
+  topologyEditSpecificationCatalogueBinding,
+} from '../professional/topology-edit-spec-catalog-binding.js';
 import {
   assertTopologyEditSpecificationCatalogue,
 } from '../professional/topology-edit-spec-catalog.js';
@@ -50,7 +50,7 @@ export function resolveTopologyEditTableValveCatalogueSelection({
     catalogueHash: exactCatalogue.catalogueHash,
     sourceHash: exactCatalogue.authority.sourceHash,
     record,
-    catalogueBinding: Object.freeze(topologyEditInlineCatalogueBinding(exactCatalogue, record)),
+    catalogueBinding: topologyEditSpecificationCatalogueBinding(exactCatalogue, record),
   });
 }
 

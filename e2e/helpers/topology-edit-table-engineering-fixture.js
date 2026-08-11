@@ -1,3 +1,30 @@
+import { resolve } from 'node:path';
+import { expect } from '@playwright/test';
+
+const Q3_FIXTURE = resolve('public/fixtures/topology-edit-table-q3-exact.staged.json');
+
+export async function openTopologyEditTableEngineeringFixture(page) {
+  await page.goto('/', { waitUntil: 'domcontentloaded' });
+  const navigation = page.getByRole('navigation', { name: 'Application views' });
+  await navigation.getByRole('button', { name: 'Workspace', exact: true }).click();
+  await page.locator('[data-role="dataset-file"]').setInputFiles(Q3_FIXTURE);
+  await expect.poll(() => page.evaluate(() => (
+    globalThis.AnalysisWorkspace?.getSnapshot?.()?.dataset?.entities?.length ?? 0
+  ))).toBe(8);
+  await page.getByRole('button', { name: '3D Edit', exact: true }).click();
+  const host = page.locator('[data-role="topology-edit-render-host"]');
+  await expect(host).toBeVisible();
+  await expect.poll(() => page.evaluate(() => Boolean(
+    document.querySelector('[data-role="topology-edit-render-host"]')
+      ?.__topologyEditAuthoringController?.tableAdapter?.runtime?.projection
+  ))).toBe(true);
+  await expect.poll(() => page.evaluate(() => Boolean(
+    document.querySelector('[data-role="topology-edit-render-host"]')
+      ?.__topologyEditAuthoringController?.professionalRuntime?.catalogue?.catalogueHash
+  ))).toBe(true);
+  return host;
+}
+
 export async function engineeringEditorFixture(page) {
   return page.evaluate(() => {
     const controller = document.querySelector('[data-role="topology-edit-render-host"]')
@@ -30,7 +57,7 @@ export async function engineeringEditorFixture(page) {
     const tee = projection.rows.find((row) => row.elementType === 'TEE'
       && row.identity?.canonicalKind === 'JUNCTION');
     if (!valveAuthority || !tee) {
-      throw new Error('Demo must expose a certified replaceable GATE valve and TEE row.');
+      throw new Error('Fixture must expose a certified replaceable GATE valve and TEE row.');
     }
     const exactReducerIds = projection.rows.filter((row) => row.elementType === 'REDUCER'
       && row.custody?.catalogueAuthority === 'EXACT' && row.custody?.catalogue)

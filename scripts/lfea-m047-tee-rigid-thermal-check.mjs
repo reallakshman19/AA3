@@ -229,16 +229,31 @@ const solverSource = await readFile(
   new URL('../src/core/fea-benchmarks/caesar-accdb-linear-solve.js', import.meta.url),
   'utf8',
 );
+const frameLoadSource = await readFile(
+  new URL('../src/core/linear-fea-frame-element/frame-element-loads.js', import.meta.url),
+  'utf8',
+);
 const frameStart = solverSource.indexOf('function buildFrameElement(input)');
 const frameEnd = solverSource.indexOf('function buildRigidElement(input)');
 const frameSource = solverSource.slice(frameStart, frameEnd);
-test('M047-RT-08', 'Solver integration is thermal-only and fail-closed on run material custody', () => {
+test('M047-RT-08', 'Ordinary thermal strain rejects non-finite source values before assembly', () => {
+  assert.match(
+    frameLoadSource,
+    /const strain = requireFinite\(axialStrain, 'axialStrain', LOAD_CODE\);/u,
+  );
+  assert.ok(
+    frameSource.indexOf('thermalInitialStrainVector({')
+      < frameSource.indexOf('buildTeeRigidThermalInitialLoad({'),
+    'ordinary finite thermal-strain validation must precede tee rigid free-load construction',
+  );
+});
+test('M047-RT-09', 'Solver integration is thermal-only and fail-closed on run material custody', () => {
   assert.match(solverSource, /const runThermalAuthority = input\.caseMode\.thermal\s*\? commonTeeRunThermalAuthority/u);
   assert.match(solverSource, /material\.materialState\.materialId !== materialId/u);
   assert.match(solverSource, /authority\.materialId !== input\.material\.materialState\.materialId/u);
   assert.match(solverSource, /!input\.caseMode\.thermal \|\| modifier === null \|\| modifier\.rigidOffset === null/u);
 });
-test('M047-RT-09', 'Solver integration applies -Keff*g after tee condensation and before T/H transforms', () => {
+test('M047-RT-10', 'Solver integration applies -Keff*g after tee condensation and before T/H transforms', () => {
   const condensed = frameSource.indexOf('const effectiveLocalStiffness = condensed.matrix;');
   const freeState = frameSource.indexOf('const teeRigidThermal = buildTeeRigidThermalInitialLoad({');
   const globalTransform = frameSource.indexOf('let effectiveGlobalStiffness = transformStiffnessToGlobal(');
@@ -250,7 +265,7 @@ test('M047-RT-09', 'Solver integration applies -Keff*g after tee condensation an
   assert.match(solverSource, /initialLocal: Object\.freeze\(scale\(freeLoadLocal, -1\)\)/u);
   assert.doesNotMatch(solverSource, /ACCDB\.E12|ACCDB\.E36\.STRAIGHT/u);
 });
-test('M047-RT-10', 'Type 2.6 structural invention and fitted alpha remain outside this patch', () => {
+test('M047-RT-11', 'Type 2.6 structural invention and fitted alpha remain outside this patch', () => {
   assert.equal(authority.excludedStructuralInterpretation.miscType, '2.6');
   assert.match(solverSource, /const CAESAR_WELDING_TEE_TYPE = 3;/u);
   assert.doesNotMatch(solverSource, /1\.22e-5|0\.001208|0\.001210/u);

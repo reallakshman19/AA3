@@ -312,13 +312,33 @@ export class LfeaWorkbenchView {
       ? JSON.stringify(rows[this.selectedIndex], null, 2)
       : '{}';
     textarea.value = this.recordDrafts.get(draftKey) ?? committedText;
+
     const add = element(this.rootElement, 'button', null, 'Add record');
     add.type = 'button';
     add.addEventListener('click', () => this.handlers.onAddRecord(this.collectionPath, textarea.value));
     const update = element(this.rootElement, 'button', null, 'Update record');
     update.type = 'button';
     update.addEventListener('click', () => this.handlers.onUpdateRecord(this.collectionPath, this.selectedIndex, textarea.value));
-    update.disabled = this.selectedIndex < 0;
+    const validity = element(
+      this.rootElement,
+      'p',
+      'lfea-workbench__record-validation',
+    );
+    validity.dataset.role = 'lfea-record-validation';
+    validity.setAttribute('role', 'status');
+    validity.setAttribute('aria-live', 'polite');
+    const syncValidity = () => {
+      const result = recordJsonValidity(textarea.value);
+      textarea.setAttribute('aria-invalid', String(!result.valid));
+      textarea.dataset.jsonValidity = result.valid ? 'VALID_OBJECT' : result.code;
+      validity.dataset.valid = String(result.valid);
+      validity.textContent = result.message;
+      add.disabled = !result.valid;
+      update.disabled = this.selectedIndex < 0 || !result.valid;
+    };
+    textarea.addEventListener('input', syncValidity);
+    syncValidity();
+
     const remove = element(this.rootElement, 'button', null, 'Delete record');
     remove.type = 'button';
     remove.addEventListener('click', () => {
@@ -334,8 +354,32 @@ export class LfeaWorkbenchView {
     remove.disabled = this.selectedIndex < 0;
     const actions = element(this.rootElement, 'div', 'lfea-workbench__record-actions');
     actions.append(add, update, remove);
-    wrapper.append(select, table, textarea, actions);
+    wrapper.append(select, table, textarea, validity, actions);
     return wrapper;
+  }
+}
+
+function recordJsonValidity(text) {
+  try {
+    const value = JSON.parse(text);
+    if (!value || typeof value !== 'object' || Array.isArray(value)) {
+      return {
+        valid: false,
+        code: 'NOT_JSON_OBJECT',
+        message: 'Record input must be a JSON object. Arrays, null, and scalar values cannot be submitted.',
+      };
+    }
+    return {
+      valid: true,
+      code: 'VALID_OBJECT',
+      message: 'JSON object syntax is valid. Engineering fields are checked when the record is submitted.',
+    };
+  } catch {
+    return {
+      valid: false,
+      code: 'INVALID_JSON',
+      message: 'Enter valid JSON object syntax before using Add record or Update record.',
+    };
   }
 }
 

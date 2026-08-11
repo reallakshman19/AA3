@@ -4,127 +4,258 @@
 
 - Mission: qualify BM4_L CAESAR-II mechanics against literal `<10%` gates for L2/L3/L4/L5/L6/L14 without benchmark fitting.
 - Source task / issue: M047 / BM4_L parity continuation. Issue #991 remains untouched.
-- PR number: 1001.
+- PR: #1001, OPEN / DRAFT.
 - Branch: `agent/m047-bm4l-clean-qualified`.
-- Base commit: `7a08f9db84f298990250793226b36d4a82dbe01e`.
+- Base: `7a08f9db84f298990250793226b36d4a82dbe01e`.
 - Governed implementation head for numerical replay: `7488ba76126f8240bb61c80fad243cf096c5fe08`.
-- HEAD immediately before this canonical Stage-9 sync: `c25913f62158f39096a4dcb6f7921a8c690896fb`.
-- PR status: OPEN / DRAFT.
-- Current stage: Stage 10 — residual nonzero-error prioritization and remaining authority acquisition.
-- Last completed stage: Stage 9 — direct CAESAR T1 strain reconstruction plus local tee+alpha six-case replay.
-- Current qualified local mechanics/profile result under the **live** comparison gate: **150 failures** — L2 31, L3 22, L4 40, L5 13, L6 22, L14 22.
-- Historical Stage-5 tee-only result at provisional alpha: **210 failures** — L2 31, L3 37, L4 40, L5 43, L6 22, L14 37.
-- Stage-7 zero-rotation profile candidate remains **local-only and unpromoted**. With provisional alpha it gave 107; combined with resolved alpha it gives **46**.
-- Current blocker: exact CAESAR reducer-cylinder representative property station remains unavailable. The generic A106 Grade B full temperature curve is also not claimed from the BM4_L interval reconstruction.
-- Workflow policy: do not intentionally rerun GitHub Actions. Documentation handoff updates are allowed. Core/profile candidates remain local until Actions are explicitly authorized.
+- HEAD immediately before this Stage-10 canonical sync: `afbefb07e09b41bb530146894b419c5f942c39d1`.
+- Current stage: **Stage 11 — production-delivery gating / remaining external authority**.
+- Last completed stage: **Stage 10 — nonzero residual classification and constitutive falsification checks**.
+- Current qualified local result under the live comparison gate: **150 failures** — L2 31, L3 22, L4 40, L5 13, L6 22, L14 22.
+- Separate Stage-7 zero-rotation gate candidate remains local/unpromoted. Combined with resolved alpha it gives **46**, but 46 is not live PR parity.
+- Production core/profile candidates remain local because current workflow policy says **do not intentionally rerun GitHub Actions**. Documentation updates and read-only use of completed artifacts are allowed.
+
+Detailed durable evidence:
+
+- Stage 9 local replay: [`agents/PR1001_stage9_local_replay.md`](PR1001_stage9_local_replay.md)
+- Stage 10 residual classification: [`agents/PR1001_stage10_residual_classification.md`](PR1001_stage10_residual_classification.md)
+- Owner-requested pointer: [`../PE_1001workreport.md`](../PE_1001workreport.md)
 
 ## Handover in 60 Seconds
 
-### What is now true
+### Qualified Type 2.1 tee mechanics
 
-- Accepted production baseline before the new tee state: **435 failures** — L2 31, L3 121, L4 40, L5 100, L6 22, L14 121.
-- Qualified Type 2.1 tee mechanism: `g_thermal = epsilon * r_surface` on the existing CAESAR centerline-to-run-surface fictitious rigid.
-- Correct carriers:
-  - tee 20160 / Surface Node 20161 -> source 12 end J -> `ACCDB.E12`;
-  - tee 20295 / Surface Node 20296 -> source 36 end I -> `ACCDB.E36.STRAIGHT`.
-- Tee free growth changes `f_initial` only. K, Kb, Surface Node geometry, gravity, pressure, bend mechanics, references and tolerances remain unchanged.
-- Fictitious-rigid thermal state inherits the common **run** material/temperature state and fails closed on inconsistent/missing run data.
-- Tee v3 at provisional `epsilon=0.0011583` independently replays exactly **210** failures.
-- Stage 9 reconstructs the CAESAR BM4_L T1 interval strain directly from ordinary-straight L3 kinematics and axial end forces:
-  - `epsilon_T1 = 0.00121096700947` from 21 C to 120 C;
-  - interval mean `alpha = 1.2231989994646464e-5 /K` over `DeltaT=99 K`.
-- The reconstruction is overdetermined: 54 non-tee straight spans >=0.1 m collapse on the same strain, with median absolute deviation below `1e-9` in strain. This is constitutive reconstruction, not pass/fail optimization.
-- The value independently rounds to the pinned CAESAR Misc report expansion `0.0012 mm/mm`.
-- Resolved tee free translations are:
-  - tee 20160: `0.1652969968 mm`;
-  - tee 20295: `0.1018877368 mm`.
-- Exact-equation local replay at the reconstructed strain gives **150** under the live gate:
+Correct structural carriers:
 
-| Case | baseline | tee + provisional alpha | tee + resolved alpha |
-|---|---:|---:|---:|
-| L2 | 31 | 31 | 31 |
-| L3 | 121 | 37 | **22** |
-| L4 | 40 | 40 | 40 |
-| L5 | 100 | 43 | **13** |
-| L6 | 22 | 22 | 22 |
-| L14 | 121 | 37 | **22** |
-| **Total** | **435** | **210** | **150** |
+- tee 20160 / Surface Node 20161: source 12 end J -> `ACCDB.E12`;
+- tee 20295 / Surface Node 20296: source 36 end I -> `ACCDB.E36.STRAIGHT`.
 
-- W/P-only cases L2/L4/L6 remain unchanged by the tee thermal free state and alpha correction.
-- `L14=L3` is exact in the replay. `L5=L6+L3` is exact in the replay.
-- Resolved full L3 equilibrium is about `1.78e-5 N / 7.86e-8 N.m`, far inside governed `5 N / 0.5 N.m` gates.
-- The 150 live-gate failures divide cleanly into **105 exact-zero-reference + 45 nonzero-reference** failures.
-- Stage-7 candidate boundary remains local only: `ROTATION.zeroReferenceAbsolute = 0.0001 deg = 1.7453292519943296e-6 rad`.
-- With tee + resolved alpha + that local boundary, result is **46**: L2 6, L3 5, L4 7, L5 8, L6 15, L14 5.
-- That 46 consists of the same **45 nonzero-reference** failures plus only one remaining exact-zero failure, `L2:20440:RZ`.
-- The formerly alpha-contingent `L5:22110:RZ` moves from `1.7487675e-6` to `1.7283668e-6 rad`, below the local `0.0001 deg` boundary exactly as predicted before replay.
-- `L2:20440:RZ` is unchanged by alpha because L2 has no thermal term. Adjacent source23/source24 actions already match CAESAR closely; no gravity/stiffness tuning is authorized from that cancellation-sensitive row.
-- Reducer pressure formulation remains internally consistent. Exact CAESAR representative station inside each of the ten reducer cylinders remains unresolved; midpoint sampling stays provisional and must not be benchmark-fit.
-- Type-7 rotational-remap and type-10 snubber-off hypotheses remain rejected by severe exact-head regression.
-- Type 2.6 structural modifiers remain deferred without structural topology authority.
+Qualified free state:
 
-### What is being worked on
+```text
+g_thermal = epsilon * r_surface
+f_extra_local = -K_local g_local
+```
 
-- QST-002: exact CAESAR property station inside each ten-cylinder reducer segment.
-- QST-004: Owner/reviewer disposition for the local-only `0.0001 deg` exact-zero rotation boundary.
-- QST-005: classify the remaining **45 nonzero-reference** failures by shared source/topology/mechanics and promote only a source-backed correction.
+The tee correction changes `f_initial` only. K, Kb, Surface Node geometry, gravity, pressure, bends, source mapping, references and tolerances remain unchanged. The fictitious rigid inherits the common **run** material/temperature state and fails closed if that run state is inconsistent or missing.
 
-### What remains unfinished
+At the old provisional strain `epsilon=0.0011583`, the calibrated exact-equation replay reproduces the prior Stage-5 signature exactly:
 
-- Core tee free-growth v3 patch is local and unpushed.
-- BM4_L resolved-alpha profile patch is local and unpushed.
-- Stage-7 zero-rotation profile patch is local and unpromoted.
-- Full Node module execution from a complete exact-head checkout is NOT_RUN because the connected GitHub interface cannot transfer the repository source archive into the local shell. The artifact-backed exact-equation replay is calibrated to the already-qualified 210 result before applying resolved alpha.
-- GitHub Actions are NOT_RUN by policy.
-- Exact reducer sampling authority remains blocked.
+| Case | baseline | tee + provisional alpha |
+|---|---:|---:|
+| L2 | 31 | 31 |
+| L3 | 121 | 37 |
+| L4 | 40 | 40 |
+| L5 | 100 | 43 |
+| L6 | 22 | 22 |
+| L14 | 121 | 37 |
+| **Total** | **435** | **210** |
 
-### What must not be assumed
+### BM4_L T1 interval strain resolved in Stage 9
 
-- Do not present 46 as live PR parity; live profile still uses `1e-7 rad` and the live-gate local candidate is 150.
-- Do not generalize the reconstructed BM4_L 21 C -> 120 C interval mean alpha into a complete A106 Grade B material curve.
-- Do not fit reducer stations, gravity, stiffness, signs, source mappings, zero gates or reference values from score minimization.
-- Do not infer Type 2.6 structural branches from Misc SIF/FLEX rows alone.
-- Do not reopen rejected type-7/type-10 restraint reinterpretations without new model-specific CAESAR evidence.
+CAESAR L3 ordinary-straight endpoint kinematics and axial end forces independently recover:
 
-## Mission and Engineering Intent
+- `epsilon_T1 = 0.00121096700947` from 21 C to 120 C;
+- interval mean `alpha = 1.2231989994646464e-5 /K` over `DeltaT = 99 K`.
 
-The target is physical/output parity with CAESAR II `14.00.00.0910 (Build 231113)`, not benchmark-score minimization. One independently justified mechanism or authority correction is allowed per controlled iteration.
+The result is overdetermined: 54 non-tee straight spans >=0.1 m collapse on the same strain with robust scatter below `1e-9` strain. This is a constitutive reconstruction, not pass/fail optimization. It independently rounds to the pinned Misc report expansion `0.0012 mm/mm`.
 
-Governed cases:
+This resolves the **BM4_L 21 C -> 120 C interval only**. It must not be generalized into a full A106 Grade B temperature-dependent material curve.
 
-- `L2 = W`
-- `L3 = T1`
-- `L4 = P1`
-- `L5 = W + T1 + P1`
-- `L6 = W + P1`
-- `L14 = L5 - L6 = T1`
+Resolved tee free translations:
 
-Pinned CAESAR authority at Common `179c4831cf521cf797c13699cfbbd118315c9244`:
+- tee 20160: about `0.165296997 mm`;
+- tee 20295: about `0.101887737 mm`.
 
-- `LFEA/BM4/Miscdata_BM4_L.txt`
-- `LFEA/BM4/Loadcasereport_BM4_L.txt`
+### Stage-9 full local exact-equation replay
 
-Authorized ACCDB member SHA-256: `64c05a50e9ed0452622ff5880335460486f24ac8e6adecc9a300b549c9aa82f8`.
+The completed exact-head artifact contains all 322 analysis-element global stiffness matrices, recovery ledgers, joint displacement states, benchmark references and finite-restraint behavior. The local replay reassembled the same common K, calibrated first to the already-qualified 210 result, then applied the resolved interval strain.
 
-## Mission Status
+| Case | tee + provisional alpha | tee + resolved alpha |
+|---|---:|---:|
+| L2 | 31 | **31** |
+| L3 | 37 | **22** |
+| L4 | 40 | **40** |
+| L5 | 43 | **13** |
+| L6 | 22 | **22** |
+| L14 | 37 | **22** |
+| **Total** | **210** | **150** |
 
-| Work Item | Priority | Status | Stage | Evidence |
-|---|---|---|---|---|
-| Type 2.1 tee topology / Kb | P0 | VALIDATED | prior | Misc report + production modifiers |
-| Tee fictitious-rigid thermal free growth | P0 | VALIDATED_LOCAL | 5/9 | calibrated 210 replay; resolved-alpha 150 replay |
-| E12 + E36.STRAIGHT carrier coverage | P0 | VALIDATED | 5 | source36 incoming-straight proof |
-| Common run material/temp ownership | P0 | IMPLEMENTED_LOCAL | 5 | fail-closed v3 patch |
-| BM4_L T1 interval strain | P0 | RESOLVED_LOCAL_AUTHORITY | 9 | 54-span constitutive reconstruction + rounded Misc consistency |
-| Generic material-106 full alpha curve | P1 | NOT_CLAIMED | 9 | interval reconstruction only |
-| Exact reducer cylinder property station | P1 | BLOCKED | 9/10 | ten cylinders documented; representative station not published |
-| Reducer R1/R2/L1/L2 source state | P1 | VALIDATED | 6 | all four rows = 0.0 via provenance |
-| Native-unit rotation gate candidate | P0 | VALIDATED_LOCAL_NOT_PROMOTED | 7/9 | 107 historical; 46 with resolved alpha |
-| L2:20440:RZ real mechanics | P0 | CLOSED_NO_CHANGE | 8/9 | cancellation-sensitive; local actions already close |
-| L5:22110:RZ alpha contingency | P0 | RESOLVED | 9 | resolved alpha predicts movement below local native gate |
-| restraint type-7 reinterpretation | P0 | REJECTED | 8 | 435 -> 6088 |
-| restraint type-10 snubber-off | P0 | REJECTED | 8 | 435 -> 7115 |
-| Type 2.6 structural modifiers | P2 | DEFERRED | future | no topology authority |
-| Remaining 45 nonzero failures | P0 | IN_PROGRESS | 10 | classify before any new mechanic |
+Validation:
+
+- PASS — provisional tee calibration exactly reproduces 210.
+- PASS — source endpoint baseline recovery mapping maximum absolute error = 0.
+- PASS — K unchanged.
+- PASS — W/P-only L2/L4/L6 unchanged by tee thermal free state / alpha.
+- PASS — `L14 = L3` exactly.
+- PASS — `L5 = L6 + L3` exactly.
+- PASS — resolved L3 equilibrium about `1.78e-5 N / 7.86e-8 N.m`, inside governed `5 N / 0.5 N.m` gates.
+- NOT_RUN — full Node production-module execution from a complete local checkout; the connected GitHub interface cannot transfer a complete source archive into the shell.
+- NOT_RUN — GitHub Actions rerun, intentionally prohibited by current workflow policy.
+
+The 150 live-gate failures split exactly into **105 exact-zero-reference + 45 nonzero-reference** failures.
+
+### Stage-7 zero-rotation candidate remains separate
+
+Local candidate only:
+
+```text
+ROTATION.zeroReferenceAbsolute = 0.0001 deg
+                               = 1.7453292519943296e-6 rad
+```
+
+At provisional alpha it gave 107. With tee + resolved alpha it gives:
+
+`L2/L3/L4/L5/L6/L14 = 6/5/7/8/15/5`, total **46**.
+
+Exactly 104 of the 105 exact-zero failures disappear; the same 45 nonzero-reference failures remain plus one exact-zero row, `L2:20440:RZ`. The live branch still uses `1e-7 rad`; **46 is not live parity**.
+
+The previously alpha-contingent `L5:22110:RZ` moves to `1.7283668e-6 rad`, below the local `0.0001 deg` boundary as predicted before the Stage-9 replay.
+
+## Stage 10 — Pre-implementation Gate
+
+### Current truth at stage entry
+
+- best live-gate local candidate: 150;
+- exact-zero failures: 105;
+- nonzero-reference failures: 45;
+- reducer representative cylinder station still unresolved;
+- no further global coefficient tuning was authorized.
+
+### Objective
+
+Classify the 45 nonzero-reference failures by primitive case, source and topology. Promote a new mechanic only if one independently sourced correction owns a coherent residual family and predicts its case signature before replay.
+
+### Planned validation
+
+- PASS required — identity-level failure decomposition.
+- PASS required — primitive-versus-combination separation.
+- PASS required — direct constitutive checks for any proposed pressure/reducer correction.
+- PASS required — independent engineering/CAESAR authority before a production change.
+- ABORT — score-selected coefficient, gravity/stiffness tuning, reducer station fitting, reference/tolerance weakening, or unrelated refactor.
+
+## Stage 10 — Post-validation Result
+
+### 45 failures reduce to 17 primitive failures
+
+The 45 nonzero-reference rows are not 45 independent mechanics defects:
+
+- 5 L14 rows are exact duplicates of L3.
+- all 8 L5 nonzero failures are cancellation-amplified combinations whose resolved-L3 and L6 primitive contributions individually pass `<10%`.
+- all 15 L6 nonzero failures are cancellation-amplified W+P combinations whose L2 and L4 primitive contributions individually pass `<10%`.
+- only **17 primitive failing rows** remain: L2=5, L3=5, L4=7.
+
+Representative L6 axial-force chain, sources 13-17:
+
+- L2 weight term error about `0.16%`;
+- L4 pressure term error about `2.72%`;
+- L6 resultant error about `12.95%` because the two larger terms oppose each other.
+
+Therefore the L6 result does **not** authorize a 13% pressure correction.
+
+### Primitive thermal residuals
+
+Four L3/L14 source-action failures are very small moments: roughly `0.638 N.m` reference magnitude for source62/63 MY and `0.147 N.m` for source64/65 MX.
+
+The meaningful nodal residual, `L3/L14 node 20250 RX`, is a global cancellation:
+
+- resolved actual about `2.713e-6 rad`;
+- CAESAR reference about `3.433e-6 rad`;
+- sum of absolute source-wise thermal contributions about `1.416e-3 rad`;
+- cancellation factor about **522x**.
+
+Different bends and frames own the largest positive and negative terms. No tee or reducer source owns the residual.
+
+### Primitive pressure residuals
+
+Six of seven L4 primitive source-action failures are near-zero actions around sources 84-86: roughly `0.014-0.016 N` force and `0.008-0.010 N.m` moment magnitudes.
+
+`L4 node 20150 UY` is also a cancellation:
+
+- actual about `-3.294e-6 m`;
+- reference about `-2.738e-6 m`;
+- sum of absolute source contributions about `1.017e-4 m`;
+- cancellation factor about **30.9x**.
+
+Reducer contributions are small; dominant terms are distributed bend/frame pressure fields.
+
+### Straight-pipe pressure constitutive check
+
+The exact-head straight closed-end pressure strain implementation is:
+
+```text
+(1 - 2 nu) * P * Di^2 / (E * (Do^2 - Di^2))
+```
+
+CAESAR L4 pressure free strain was independently reconstructed from ordinary straight endpoint kinematics and axial force:
+
+- 60 usable spans;
+- 57 robust spans after excluding ill-conditioned near-zero deformation rows;
+- median CAESAR/implemented ratio = **1.0000000456**;
+- median absolute deviation about **6.97e-7** in that ratio.
+
+Decision: **PASS — do not modify straight closed-end pressure strain.**
+
+### Reducer pressure free-state check
+
+Direct endpoint reconstruction gives CAESAR/current equivalent reducer pressure-free-elongation ratios:
+
+- source 11: `1.00123635`;
+- source 16: `1.00033398`;
+- source 67: `0.99759246`;
+- source 75: `0.99759165`.
+
+Decision: **PASS — reducer pressure free elongation is already within about +/-0.24%; it does not explain the remaining combination amplification.**
+
+### Reducer stiffness/sampling check
+
+Using resolved T1 strain, nominal L3 endpoint reconstruction suggests CAESAR/current reducer axial-stiffness ratios around `0.9966`, `0.9855`, `0.9833`, `0.9803` for sources 11/16/67/75. This inference is **ill-conditioned** because elastic deformation is the tiny difference between nearly equal free thermal growth and total endpoint movement. Mirrored reducers 67/75 already infer different ratios despite equivalent current condensed properties.
+
+Decision: **BLOCKED — these ratios cannot establish endpoint/midpoint/other CAESAR section sampling. Do not fit a reducer station from them.**
+
+### Primitive weight residuals
+
+The three L2 nodal residuals are cancellation-sensitive:
+
+- node 20500 UY: about **287.7x** cancellation factor;
+- node 20510 UY: about **289.1x**;
+- node 22140 RX: about **446.5x**.
+
+The two direct bend-source FY misses are small against bend weight:
+
+- source5: about `8.0 N` difference versus about `2008 N` modeled bend weight;
+- source19: about `1.54 N` difference versus about `709 N` modeled bend weight.
+
+Previously tested bend-weight/subdivision/global-gravity variants remain rejected. Stage 10 provides no source authority to reopen them.
+
+### Stage 10 decision
+
+**COMPLETE — NO_NEW_MECHANICS_PROMOTED.**
+
+The remaining nonzero count is dominated by relative-error amplification on small algebraic resultants and near-zero source actions. Direct constitutive checks validate straight pressure strain and reducer pressure free elongation. Reducer stiffness/sampling inference is too ill-conditioned to establish CAESAR's representative station.
+
+## Stage 11 — Pre-implementation / Delivery Gate
+
+### Current truth
+
+- best live-gate local combined candidate: **150**;
+- local-only Stage-7 gate sensitivity: **46**, not live parity;
+- Stage 10 found no additional source-backed production mechanic;
+- tee v3 and resolved-alpha profile candidates remain local/unpushed;
+- reducer representative station remains externally blocked;
+- explicit product authority for a hard `0.0001 deg` zero boundary remains unavailable.
+
+### Objective
+
+Hold mechanics stable. Proceed only through one of these routes:
+
+1. explicit authorization to deliver the already-qualified core/profile candidates and allow the resulting Actions runs;
+2. direct new CAESAR authority for reducer sampling;
+3. Owner/reviewer disposition on the Stage-7 profile-only zero-boundary candidate.
+
+### Stage decision
+
+**IN_PROGRESS / BLOCKED_ON_DELIVERY_OR_EXTERNAL_AUTHORITY**.
 
 ## Engineering Item Register
 
@@ -137,325 +268,105 @@ Authorized ACCDB member SHA-256: `64c05a50e9ed0452622ff5880335460486f24ac8e6adec
 | DEC-003 | decision | P0 | ACCEPTED | no Type 2.6 mechanics without topology authority |
 | DEC-004 | decision | P1 | ACCEPTED | reducer 60%-Alpha/SIF rule is not structural taper authority |
 | DEC-005 | decision | P0 | ACCEPTED | live zero gates remain unchanged until explicit promotion |
-| DEC-006 | decision | P0 | ACCEPTED | Stage-7 promotion, if ever authorized, is profile-only and separate |
+| DEC-006 | decision | P0 | ACCEPTED | any Stage-7 promotion is profile-only and separate |
 | DEC-008 | decision | P0 | ACCEPTED | type-7 rotational reinterpretation is falsified for BM4_L |
-| DEC-009 | decision | P0 | ACCEPTED | type-10 snubber-off reinterpretation is falsified for governed cases |
+| DEC-009 | decision | P0 | ACCEPTED | type-10 snubber-off reinterpretation is falsified |
 | DEC-010 | decision | P0 | ACCEPTED | L2:20440:RZ does not authorize gravity/stiffness tuning |
-| DEC-011 | decision | P0 | SUPERSEDED_BY_RESULT | L5:22110:RZ was alpha-contingent; Stage 9 resolved the alpha dependency |
 | DEC-012 | decision | P0 | ACCEPTED | BM4_L interval strain may be resolved from overdetermined CAESAR constitutive output without score fitting |
-| DEC-013 | decision | P0 | ACCEPTED | do not promote interval mean alpha as a generic full material curve |
+| DEC-013 | decision | P0 | ACCEPTED | interval mean alpha is not a generic full material curve |
+| DEC-014 | decision | P0 | ACCEPTED | Stage-10 cancellation rows do not authorize new global mechanics |
+| DEC-015 | decision | P0 | ACCEPTED | current straight-pipe closed-end pressure strain is validated by direct L4 reconstruction |
+| DEC-016 | decision | P0 | ACCEPTED | reducer pressure free elongation is validated; reducer sampling remains blocked |
 | QST-001 | question | P0 | RESOLVED_LOCAL_AUTHORITY | BM4_L exact T1 interval strain |
 | QST-002 | question | P1 | BLOCKED | exact reducer cylinder property station |
-| QST-003 | question | P0 | COMPLETE | Stage-8 residual diagnostics found no new promotable mechanic |
-| QST-004 | question | P0 | VALIDATED_LOCAL | native-unit zero boundary; branch promotion pending Owner/reviewer |
-| QST-005 | question | P0 | IN_PROGRESS | remaining 45 nonzero-reference failure classification |
+| QST-003 | question | P0 | COMPLETE | Stage-8 residual diagnostics |
+| QST-004 | question | P0 | VALIDATED_LOCAL | native-unit zero boundary; promotion pending Owner/reviewer |
+| QST-005 | question | P0 | COMPLETE_NO_NEW_MECHANICS | remaining 45 nonzero-reference failure classification |
 | RISK-001 | risk | P0 | CLOSED_FOR_BM4L_INTERVAL | provisional alpha no longer needed for BM4_L T1 interval |
-| RISK-002 | risk | P0 | OPEN | no explicit hard Hexagon `0.0001 deg` cutoff statement |
-| RISK-003 | risk | P0 | OPEN | artifact replay is exact-equation calibrated but not full Node module execution |
-
-## Engineering Decisions and Invariants
-
-### Tee free state
-
-`g_thermal = epsilon * r_surface`.
-
-The added initial-load term follows production order:
-
-`f_extra_local = -K_local g_local`
-
-then the existing global/offset transforms. K is unchanged.
-
-### Permanent recovery identity
-
-`q = K u - f_fixed - f_initial`
-
-### BM4_L interval thermal authority
-
-For ordinary straight elements under L3:
-
-`Delta u_axial = epsilon_T L + N L/(EA)`
-
-so
-
-`epsilon_T = (Delta u_axial - N L/(EA)) / L`
-
-with the implemented sign convention applied consistently to exported end force. Independent spans collapse on `epsilon_T1 = 0.00121096700947`.
-
-This resolves the BM4_L interval value only. It does not create a generic temperature-dependent material curve.
-
-### Stage-7 profile candidate boundary
-
-Candidate only:
-
-`ROTATION.zeroReferenceAbsolute = 1.7453292519943296e-6 rad` (`0.0001 deg`).
-
-This affects exact-zero comparison status only; it does not mutate solver values, references or nonzero `<10%` comparisons.
-
-### Residual no-fitting boundary
-
-A residual row does not authorize a mechanic when:
-
-- neighboring source actions already agree closely;
-- the proposed change is selected by score rather than authority;
-- the relevant upstream CAESAR rule remains unknown;
-- the candidate alters unrelated cases or previously-qualified invariants.
+| RISK-002 | risk | P0 | OPEN | no explicit Hexagon hard `0.0001 deg` cutoff statement |
+| RISK-003 | risk | P0 | OPEN | exact-equation replay calibrated, but full Node checkout execution not run |
 
 ## Stage Roadmap
 
 - Stage 1 — report initialization + findings — COMPLETE
 - Stage 2 — PR allocation/report synchronization — COMPLETE
 - Stage 3 — repository/changed-file verification — COMPLETE
-- Stage 4 — tee free-growth implementation preparation — COMPLETE; core delivery pending
-- Stage 5 — exact-head tee accuracy qualification — COMPLETE
+- Stage 4 — tee free-growth implementation preparation — COMPLETE; delivery pending
+- Stage 5 — tee accuracy qualification — COMPLETE
 - Stage 6 — authority/residual/output investigation — COMPLETE ENOUGH FOR STAGE 7
-- Stage 7 — local profile-only native-unit candidate — COMPLETE, NOT PROMOTED
-- Stage 8 — residual real-mechanics diagnostics — COMPLETE, NO NEW MECHANICS PROMOTED
-- Stage 9 — exact thermal interval authority + local combined replay — COMPLETE / LOCAL_VALIDATION_PASS
-- Stage 10 — remaining nonzero residual classification / reducer authority — IN_PROGRESS
-
-## Stage Execution Log
-
-### Stage 5 — tee free-growth qualification
-
-Implementation: local v3 patch adds generic tee rigid thermal free growth on the actual carrier and fail-closed common run authority.
-
-Validation:
-
-- PASS — syntax and I/J transform/sign checks.
-- PASS — exact-head physical-system reconstruction.
-- PASS — six-case provisional replay `31/37/40/43/22/37 = 210`.
-- PASS — thermal selectivity, common K, recovery, equilibrium and superposition.
-- NOT_RUN — Actions rerun.
-
-Decision: **COMPLETE**.
-
-### Stage 6 — authority/residual/output investigation
-
-Findings:
-
-- pinned sources did not contain Print-Alphas/current-material table;
-- reducer R1/R2/L1/L2 all zero;
-- exact reducer representative station remains unknown;
-- tee candidate contained 105 exact-zero rotation failures;
-- raw BM4_L and independent CAESAR evidence motivated a local `0.0001 deg` exact-zero boundary investigation;
-- importer performs unit conversion, not clipping.
-
-Decision: **COMPLETE ENOUGH TO DEFINE STAGE 7**; no production change promoted.
-
-### Stage 7 — local profile-only native-unit candidate
-
-At provisional alpha, local one-line gate change:
-
-`1e-7 rad -> 1.7453292519943296e-6 rad`.
-
-Validation:
-
-- PASS — exact native-unit conversion.
-- PASS — `210 -> 107` at provisional alpha.
-- PASS — exactly 103 status changes, all exact-zero ROTATION `FAIL -> PASS`.
-- PASS — nonzero-reference statuses unchanged.
-- NOT_RUN — branch promotion / Actions.
-
-Decision: **COMPLETE / NOT PROMOTED**.
-
-### Stage 8 — residual mechanics diagnostics
-
-Key results:
-
-- `L2:20440:RZ = -2.0332762e-6 rad` is a cancellation-sensitive weight response; adjacent source23/source24 FY/MZ actions already agree approximately `0.01-0.29%` with CAESAR. No gravity/stiffness tuning.
-- `L5:22110:RZ = +1.7487675e-6 rad` was shown to be linearly alpha-contingent.
-- type-7 -> rotational reinterpretation: FAIL, `435 -> 6088`.
-- type-10 snubber-off reinterpretation: FAIL, `435 -> 7115`.
-- both: FAIL, `7945`.
-- reducer public authority confirms ten cylinders but not the representative internal station.
-
-Decision: **COMPLETE / NO NEW MECHANICS PROMOTED**.
-
-### Stage 9 — pre-implementation truth
-
-At stage entry:
-
-- tee-only result 210 was the best promotable mechanics result;
-- exact thermal interval strain remained unresolved;
-- reducer station remained unresolved;
-- alpha fitting from benchmark counts was prohibited.
-
-Objective: obtain direct upstream authority without benchmark minimization.
-
-### Stage 9 — CAESAR interval-strain reconstruction
-
-Method:
-
-- use CAESAR L3 ordinary straight-element endpoint displacements;
-- project onto each element axis;
-- use exported axial end force and known EA/L relation;
-- recover total free thermal strain independently for each eligible span;
-- exclude tee-special carriers and very short spans from the robust authority statistic.
-
-Result:
-
-- 54 non-tee spans >=0.1 m give median `epsilon = 0.001210967009`;
-- median interval mean `alpha = 1.223199e-5/K`;
-- long-span subset gives the same value;
-- scatter is below `1e-9` strain at the median-absolute-deviation level;
-- value independently agrees with the pinned Misc report when rounded to four decimal places (`0.0012`).
-
-Decision: **QST-001 RESOLVED FOR THE BM4_L 21 C -> 120 C INTERVAL**.
-
-### Stage 9 — local tee + resolved-alpha replay
-
-Replay method:
-
-1. Reassemble global K from all 322 exact-head analysis-element stiffness matrices in the cached completed artifact.
-2. Recover 30 finite-restraint nodes / 51 restrained DOFs from exact nodal equilibrium.
-3. Verify source-element endpoint recovery mapping exactly; baseline maximum mapping error is `0`.
-4. Apply tee free-growth initial-load perturbation only on E12 and E36.STRAIGHT.
-5. Solve with unchanged K.
-6. Scale the existing T1 state to `epsilon=0.00121096700947`.
-7. Recompute restraint reactions and source-element actions.
-8. Compare governed quantities only; derived `INCIDENT_GLOBAL_*` diagnostics are excluded from the governed 435 count.
-
-Calibration:
-
-- PASS — at provisional `epsilon=0.0011583`, local replay reproduces Stage-5 exactly: **210**.
-
-Resolved-alpha result:
-
-- PASS — L2 31.
-- PASS — L3 22.
-- PASS — L4 40.
-- PASS — L5 13.
-- PASS — L6 22.
-- PASS — L14 22.
-- PASS — total **150**.
-- PASS — 105 exact-zero-reference + 45 nonzero-reference failures.
-- PASS — Stage-7 sensitivity becomes **46**, i.e. the 45 nonzero failures plus only `L2:20440:RZ` as the remaining exact-zero failure.
-- PASS — `L5:22110:RZ` becomes `1.7283668e-6 rad`, below local `0.0001 deg` boundary as predicted.
-- PASS — tee perturbation equilibrium about `2.75e-7 N / 2.84e-9 N.m`.
-- PASS — full resolved L3 equilibrium about `1.78e-5 N / 7.86e-8 N.m`.
-- PASS — `L14=L3` exactly.
-- PASS — `L5=L6+L3` exactly.
-- PASS — W/P-only cases unchanged.
-- NOT_RUN — full Node module execution from a complete local checkout.
-- NOT_RUN — Actions rerun.
-
-Decision: **COMPLETE / LOCAL_VALIDATION_PASS**.
-
-## Stage 10 — pre-implementation gate
-
-### Current truth
-
-The live-gate local combined candidate is 150. Exactly 105 failures are exact-zero-reference rows and 45 are nonzero-reference rows. The separate Stage-7 local gate would remove 104 of the 105 zero-reference failures without changing nonzero comparisons, leaving 46 total.
-
-### Objective
-
-Classify the 45 nonzero-reference failures and find only a source-backed, single-mechanism correction. Continue reducer-station authority acquisition in parallel. Do not use the local zero boundary as a substitute for mechanics.
-
-### Planned validation
-
-- PASS required — identity-level residual clustering by case/source/topology.
-- PASS required — candidate predicts a specific residual family before replay.
-- PASS required — independent CAESAR/engineering authority.
-- PASS required — single-factor replay with unchanged references/tolerances.
-- PASS required — K/recovery/equilibrium/superposition as applicable.
-- ABORT — any candidate selected from global score optimization.
-
-Stage decision: **IN_PROGRESS**.
+- Stage 7 — local native-unit zero-boundary candidate — COMPLETE, NOT PROMOTED
+- Stage 8 — residual mechanics diagnostics — COMPLETE, NO NEW MECHANICS PROMOTED
+- Stage 9 — exact interval authority + combined local replay — COMPLETE / LOCAL_VALIDATION_PASS
+- Stage 10 — remaining nonzero residual classification — COMPLETE / NO NEW MECHANICS PROMOTED
+- Stage 11 — production delivery / external authority — IN_PROGRESS / BLOCKED
 
 ## Changed-File Ledger
 
-| File | Stage | Purpose | Branch state |
+| File | Stage | Purpose | State |
 |---|---|---|---|
 | `src/core/fea-benchmarks/caesar-accdb-linear-solve.js` | 4/5/9 | tee v3 mechanics | LOCAL ONLY |
 | `benchmarks/LFEA/CAESAR_ACCDB/bm4l-validation.profile.json` | 7/9 | resolved interval alpha + separate zero-gate candidate | LOCAL ONLY |
 | `agents/PR1001_workreport.md` | all | canonical mission control | BRANCH DOC |
-| `PE_1001workreport.md` | 6 | pointer to canonical report | BRANCH DOC |
-| `agents/PR1001_stage9_local_replay.md` | 9 | durable detailed Stage-9 local replay evidence | BRANCH DOC |
+| `PE_1001workreport.md` | 6/10 | pointer to canonical/detailed reports | BRANCH DOC |
+| `agents/PR1001_stage9_local_replay.md` | 9 | detailed local replay evidence | BRANCH DOC |
+| `agents/PR1001_stage10_residual_classification.md` | 10 | detailed residual/constitutive closure | BRANCH DOC |
 | `src/core/fea-benchmarks/caesar-accdb-reference.js` | 6 | reference ingestion | READ ONLY |
-| `src/core/fea-benchmarks/caesar-accdb-units.js` | 6 | degree/radian conversion | READ ONLY |
 | `src/core/fea-benchmarks/qualification-comparison.js` | 6/7 | comparator semantics | READ ONLY |
-| `src/core/linear-fea-reducer-condensation/reducer-condensation.js` | 6/9/10 | reducer station authority | READ ONLY |
-| `src/core/linear-piping-analysis-consumer/inputxml-thermal-authority.js` | 9 | generic internal fixture review | READ ONLY / UNCHANGED |
+| `src/core/linear-fea-reducer-condensation/reducer-condensation.js` | 6/9/10 | reducer authority investigation | READ ONLY |
+| `src/core/linear-piping-analysis-consumer/inputxml-thermal-authority.js` | 9 | generic material fixture review | READ ONLY / UNCHANGED |
 
 Any unexplained changed file blocks closure.
 
-## Software Validation
+## Validation Ledger
 
 | Validation | Status | Evidence |
 |---|---|---|
 | exact-head artifact reconstruction | PASS | governed implementation `7488ba...` |
 | source endpoint recovery mapping | PASS | max absolute mapping error 0 |
-| tee v3 algebra/syntax | PASS | carrier/sign checks |
-| tee provisional six-case replay | PASS | exact calibration = 210 |
-| BM4_L interval strain reconstruction | PASS | 54-span overdetermined CAESAR constitutive recovery |
+| tee v3 algebra/syntax | PASS | carrier/sign/fail-closed checks |
+| provisional tee six-case replay | PASS | exact calibration 210 |
+| BM4_L interval strain reconstruction | PASS | 54-span overdetermined constitutive recovery |
 | tee + resolved-alpha live-gate replay | PASS_LOCAL | 150 |
-| tee + resolved-alpha + Stage-7 local gate | PASS_LOCAL_ONLY | 46; not promoted |
+| tee + resolved-alpha + Stage-7 local gate | PASS_LOCAL_ONLY | 46, not promoted |
+| Stage-10 45-row decomposition | PASS | 17 primitive + duplicate/combination amplification |
+| straight L4 pressure-strain reconstruction | PASS | median ratio 1.0000000456 |
+| reducer pressure free-state reconstruction | PASS | all four within about +/-0.24% |
+| reducer stiffness/station inference | BLOCKED | ill-conditioned; no station promoted |
 | resolved L3 equilibrium | PASS | ~`1.78e-5 N / 7.86e-8 N.m` |
-| superposition | PASS | exact L14=L3 and L5=L6+L3 in replay |
-| Stage-8 type-7 remap | FAIL / REJECTED | 6088 |
-| Stage-8 type-10 snubber-off | FAIL / REJECTED | 7115 |
-| Stage-8 combined reinterpretation | FAIL / REJECTED | 7945 |
-| full local Node module run | NOT_RUN | no transferable complete source checkout |
-| Actions rerun | NOT_RUN | intentionally prohibited |
+| superposition | PASS | exact `L14=L3`, `L5=L6+L3` |
+| type-7 reinterpretation | FAIL / REJECTED | 435 -> 6088 |
+| type-10 snubber-off | FAIL / REJECTED | 435 -> 7115 |
+| combined restraint reinterpretation | FAIL / REJECTED | 7945 |
+| full local Node production-module run | NOT_RUN | complete source checkout unavailable to local shell |
+| GitHub Actions rerun | NOT_RUN | intentionally prohibited |
 
-## Engineering Validation
+## Explicitly Not Validated / Deferred
 
-| Property | Status | Evidence |
-|---|---|---|
-| tee carrier coverage | PASS | E12 + E36.STRAIGHT |
-| K unchanged by tee/alpha | PASS | common stiffness state |
-| thermal selectivity | PASS | L2/L4/L6 unchanged |
-| common run thermal ownership | PASS_LOCAL | v3 fail-closed helper |
-| BM4_L exact T1 interval strain | PASS_LOCAL_AUTHORITY | constitutive reconstruction |
-| generic full A106 alpha curve | NOT_APPLICABLE / NOT_CLAIMED | interval-only authority |
-| exact reducer station | BLOCKED | no direct rule found |
-| Stage-7 local gate candidate | PASS_LOCAL_ONLY | zero-reference-only effect |
-| explicit hard Hexagon `0.0001 deg` rule | NOT_VALIDATED | no direct statement |
-| L2:20440 additional mechanic | NOT_APPLICABLE | cancellation with close local actions |
-| L5:22110 alpha dependency | RESOLVED | moved below local boundary at exact interval strain |
-| remaining nonzero failures | IN_PROGRESS | 45 rows |
+- exact CAESAR reducer cylinder representative section/property station;
+- direct Hexagon statement establishing a hard `0.0001 deg` result-zero cutoff;
+- branch promotion of Stage-7 zero gate;
+- generic full A106 Grade B thermal-expansion curve from the BM4_L interval;
+- structural Type 2.6 interpretation;
+- full Node execution of tee + resolved alpha from a complete exact-head checkout.
 
-## Explicitly Not Validated
+## Forward Sequence
 
-- Exact reducer cylinder representative section/property station.
-- A directly documented hard `0.0001 deg` CAESAR/Access zero cutoff.
-- Branch/profile promotion of Stage 7.
-- A generic A106 Grade B full thermal-expansion curve derived from the BM4_L interval.
-- Structural Type 2.6 interpretation.
-- Full Node production-module execution of tee + resolved-alpha from a complete exact-head checkout.
-
-## Known / Deferred Work and Forward Sequence
-
-1. Stage 10: classify the 45 nonzero-reference failures by repeated identity/source/topology signature.
-2. Promote only a correction with independent CAESAR/engineering authority and a predicted case signature.
-3. Continue reducer representative-station authority search; never select station from BM4_L score.
-4. Keep Stage-7 zero gate local until Owner/reviewer disposition. If authorized, commit profile-only and qualify independently.
-5. Keep type-7/type-10 restraint reinterpretations rejected unless direct model-specific evidence overturns them.
-6. Keep Type 2.6 deferred without topology authority.
-7. When Actions are explicitly authorized for production delivery, push and qualify tee mechanics separately from resolved-alpha profile authority, then any zero-gate profile decision separately.
-
-## Process Notes / Lessons Learned
-
-- A source element that also owns a bend may require an incoming-straight analysis carrier for tee modifiers.
-- Exact-head completed artifacts can support high-fidelity local linear-system replay without rerunning Actions.
-- A replay must use the governed comparison scope; derived incident-force/moment diagnostics are not part of the 435 target count.
-- Restraint reaction perturbations must be recomputed from finite support stiffness, not treated as displacement rows.
-- Calibration against a previously qualified single-factor result is a strong guard before trusting a combined replay.
-- Diagnostic optima inside rounded authority ranges are not authority; overdetermined constitutive reconstruction can be.
-- Interval thermal authority must not be generalized into an unsupported full material curve.
-- Access storage, CAESAR output cleanup, report formatting and comparator gates are separate layers.
-- Near-zero rotations can be cancellation-sensitive even when controlling element actions are already accurate.
-- Falsified candidates belong in the durable report so future work does not repeat them.
+1. Keep tee v3 and BM4_L resolved-interval-alpha patches ready for delivery.
+2. Do not push those production/profile changes while the no-Actions policy remains in force.
+3. If Owner explicitly authorizes Actions/delivery, deliver tee mechanics and resolved-alpha authority as separate controlled changes and qualify each.
+4. Keep Stage-7 zero-boundary change separate; promote only on Owner/reviewer disposition and qualify profile-only.
+5. Continue reducer representative-station work only from direct CAESAR authority; never select a station from BM4_L score or the ill-conditioned stiffness reconstruction.
+6. Do not introduce a new global coefficient/mechanic from the Stage-10 cancellation-sensitive families.
+7. Keep Type 2.6 deferred without structural topology authority.
 
 ## Next-Agent Handover
 
-- PR: #1001, draft.
-- Branch: `agent/m047-bm4l-clean-qualified`.
+- PR #1001 remains draft.
 - Governed implementation head: `7488ba76126f8240bb61c80fad243cf096c5fe08`.
-- Last completed stage: Stage 9.
-- Current active stage: Stage 10 residual classification / remaining authority.
+- Last completed stage: Stage 10.
+- Active stage: Stage 11 delivery/external-authority gate.
 - Best live-gate local combined result: **150**.
 - Local-only Stage-7 combined sensitivity: **46**, not live parity.
-- Start here: classify the 45 nonzero-reference rows; continue reducer station authority search.
-- Do not redo: generic bend softness, MEC-21 tested shear, fitted axial shape, gravity scaling, bend-weight variants, bend subdivision tuning, source-ID-only tee replay, reducer pressure disable/sign tests, reducer station fitting, type-7 rotational remap, type-10 snubber-off.
-- Do not assume: 46 is live; `0.0001 deg` is explicitly documented as a hard cutoff; the BM4_L interval mean is a generic material curve; midpoint reducer sampling is CAESAR-exact.
+- No further coefficient tuning is authorized from current evidence.
+- Do not redo: generic bend softness, MEC-21 tested shear, fitted axial shape, gravity scaling, bend-weight/subdivision variants, source-ID-only tee replay, reducer pressure disable/sign tests, reducer station fitting, type-7 rotational remap, type-10 snubber-off.
+- Do not assume: 46 is live; `0.0001 deg` is explicitly documented as a hard CAESAR cutoff; the interval alpha is a generic material curve; midpoint reducer sampling is CAESAR-exact.

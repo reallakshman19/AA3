@@ -28,18 +28,19 @@ async function uploadXml(page, name, content) {
 async function authorizeIfRequired(page) {
   const run = page.getByRole('button', { name: 'Run native analysis' });
   if (await run.isEnabled()) return;
-  const candidates = [
-    page.getByRole('button', { name: /accept warn limitations/i }),
-    page.getByRole('button', { name: /authorize.*pre.?flight/i }),
-    page.getByRole('button', { name: /accept.*limitations/i }),
-  ];
-  for (const candidate of candidates) {
-    if (await candidate.isVisible().catch(() => false)) {
-      await candidate.click();
-      await expect(run).toBeEnabled();
-      return;
-    }
-  }
+
+  await page.locator('button[data-view-id="source"]').click();
+  const authorize = page.getByRole('button', { name: 'Accept Native Pre-flight Limitations' });
+  await expect(authorize).toBeVisible();
+  await page.locator('[data-role="linear-piping-inputxml-reviewer"]').fill('LFEA-STANDALONE-E2E-REVIEWER');
+  await page.locator('[data-role="linear-piping-inputxml-review-reason"]').fill(
+    'Browser qualification accepts the complete disclosed conditional limitation set for this fixture.',
+  );
+  await authorize.click();
+  await expect(page.locator('[data-role="linear-piping-inputxml-source-workflow"]'))
+    .toHaveAttribute('data-pre-flight-authorized', 'true');
+
+  await page.locator('button[data-view-id="analysis"]').click();
   await expect(run).toBeEnabled();
 }
 
@@ -131,7 +132,12 @@ test.describe('LFEA standalone governed browser journey', () => {
   test('malformed source cannot become runnable engineering authority', async ({ page }) => {
     await openStandalone(page);
     await uploadXml(page, 'malformed.xml', lfeaStandaloneMalformedInputXml());
-    await expect(page.locator(view('source'))).toContainText(/failed|invalid|error|block/i);
+
+    const source = page.locator(view('source'));
+    await expect(source).toContainText('UNIT AUTHORITY REQUIRED');
+    await page.getByRole('button', { name: 'Authorize Source Unit' }).click();
+    await expect(source).toContainText(/rejected|failed closed|invalid|block/i);
+
     await page.locator('button[data-view-id="analysis"]').click();
     await expect(page.getByRole('button', { name: 'Run native analysis' })).toBeDisabled();
     await expect(page.getByRole('button', { name: 'Create current evidence dossier' })).toHaveCount(0);

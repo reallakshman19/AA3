@@ -26,10 +26,22 @@ walk(ENTRY, []);
 
 if (!requestedEntry) {
   const entrySource = fs.readFileSync(ENTRY, 'utf8');
+  const bootstrapSource = fs.readFileSync(path.join(ROOT, 'src/lfea/bootstrap.js'), 'utf8');
+  const layoutSource = fs.readFileSync(path.join(ROOT, 'src/lfea/standalone-layout.js'), 'utf8');
   assert(!entrySource.includes('bootstrapAnalysisWorkspace'),
     'Standalone LFEA entry must not call the combined workspace bootstrap.');
   assert(!entrySource.includes('AnalysisWorkspace'),
     'Standalone LFEA entry must not publish the legacy AnalysisWorkspace global.');
+  assert(!bootstrapSource.includes('bootstrapAnalysisWorkspace'),
+    'Standalone LFEA bootstrap must not call the combined workspace bootstrap.');
+  assert(bootstrapSource.includes('LfeaStandaloneInputXmlSourceController'),
+    'Standalone LFEA bootstrap must compose the governed native InputXML source controller.');
+  for (const viewId of ['source', 'review', 'model', 'analysis']) {
+    assert(layoutSource.includes(`id: '${viewId}'`) && layoutSource.includes(`state: 'available'`),
+      `Standalone LFEA ${viewId} view must be an available application-owned route.`);
+  }
+  assert(layoutSource.includes("id: 'verification'") && layoutSource.includes('verification workbench'),
+    'Element-FEA workbench must be explicitly scoped to Verification.');
 }
 
 console.log(`LFEA standalone boundary PASS (${visited.size} local modules inspected).`);

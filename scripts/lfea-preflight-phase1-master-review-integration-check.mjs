@@ -6,6 +6,7 @@ import { createLfeaPreflightPhase1MasterAuthority } from '../src/workspace/lfea-
 import {
   createLfeaPreflightPhase1ReviewSource,
   getLfeaPreflightPhase1ReviewCell,
+  getLfeaPreflightPhase1ReviewLine,
 } from '../src/workspace/lfea-preflight-phase1-review-source.js';
 import {
   LFEA_PREFLIGHT_ENGINEERING_FIELDS,
@@ -38,7 +39,7 @@ const integrated = createLfeaPreflightPhase1ReviewSource(
 );
 const targetId = integrated.lineIndex.targetIds[0];
 
-assert.equal(integrated.lineIndex.normalizedKeyByOrdinal[0], 'S100');
+assert.equal(getLfeaPreflightPhase1ReviewLine(integrated, targetId)?.isolatedLineKeyToken, 'S100');
 assert.equal(integrated.datasetIdentity, sourceOnly.datasetIdentity,
   'Master enrichment must not rewrite source-stable dataset identity.');
 assert.equal(targetId, sourceOnly.lineIndex.targetIds[0],
@@ -53,7 +54,7 @@ assert.equal(wall.value, 6.02);
 assert.equal(wall.status, LFEA_PREFLIGHT_FIELD_STATUS.RESOLVED_EXACT);
 assert.equal(wall.method, 'EXACT_EVIDENCE_AGREEMENT');
 assert.deepEqual(wall.evidence.map((entry) => entry.sourceKind), ['SHARED_MODEL', 'PIPING_CLASS']);
-assert.equal(wall.evidence[1].method, 'EXACT_PIPING_CLASS_KEY');
+assert.equal(wall.evidence[1].method, 'EXACT_PIPING_CLASS_KEY_AND_FIELD');
 assert.match(wall.evidence[1].sourceHash, /^2{64}$/u);
 console.log('P06F-BRIDGE-02 PASS explicit source and governed piping-class wall agreement retain both evidence records');
 
@@ -62,7 +63,7 @@ assert.equal(material.value, 'A106-B');
 assert.equal(material.status, LFEA_PREFLIGHT_FIELD_STATUS.RESOLVED_EXACT);
 assert.equal(material.method, 'EXACT_EVIDENCE_AGREEMENT');
 assert.deepEqual(material.evidence.map((entry) => entry.sourceKind), ['MASTER_LINE_LIST', 'MATERIAL_REGISTER']);
-assert.equal(material.evidence[1].method, 'EXACT_MATERIAL_CODE');
+assert.equal(material.evidence[1].method, 'EXACT_MATERIAL_CODE_AND_FIELD');
 console.log('P06F-BRIDGE-03 PASS Line List and Material Register material identity agreement is sealed, not reconstructed');
 
 for (const [fieldId, expected] of [

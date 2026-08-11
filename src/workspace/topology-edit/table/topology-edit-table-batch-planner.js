@@ -23,7 +23,8 @@ export function planTopologyEditTableBatch({
   assertBasis(batch, projection, topology);
   const childPlans = batch.intents.map((intent) => compileIntent(intent, topology));
   const engineering = batch.intents.some((intent) => intent.intentKind !== 'PIPE_LENGTH');
-  if (!engineering) assertNonOverlappingMoves(childPlans);
+  const containsNodePosition = batch.intents.some((intent) => intent.intentKind === 'NODE_POSITION');
+  if (!engineering || containsNodePosition) assertNonOverlappingMoves(childPlans);
   const changedScope = combineChangedScopes(childPlans, topology.canonicalTopologyHash);
   const targetIds = uniqueSorted([
     ...batch.intents.map((intent) => intent.target.canonicalId),

@@ -1,0 +1,83 @@
+name: LFEA standalone exact-head qualification
+
+on:
+  pull_request:
+    paths:
+      - '.github/workflows/lfea-standalone-exact-head.yml'
+      - 'lfea.html'
+      - 'vite.lfea.config.js'
+      - 'src/lfea/**'
+      - 'src/core/linear-fea-solver/**'
+      - 'src/core/shared-linear-solve/**'
+      - 'src/core/linear-piping-analysis-consumer/**'
+      - 'src/workspace/linear-piping-inputxml-*.js'
+      - 'src/workspace/lfea-workbench-controller.js'
+      - 'src/workspace/lfea-mock-data.js'
+      - 'scripts/lfea-standalone-*.mjs'
+      - 'scripts/lfea-linear-solver-neutral-dependency-check.mjs'
+      - 'scripts/lfea-physical-absence-source-check.mjs'
+      - 'scripts/run-lfea-*.mjs'
+      - 'e2e/lfea-standalone.spec.js'
+      - 'e2e/fixtures/lfea-standalone-inputxml-fixtures.js'
+      - 'package.json'
+      - 'package-lock.json'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: lfea-standalone-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  qualify:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 45
+    env:
+      PLAYWRIGHT_BROWSERS_PATH: '0'
+
+    steps:
+      - name: Checkout exact candidate head
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+          fetch-depth: 0
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+
+      - name: Install locked dependencies
+        run: npm ci
+
+      - name: Prove candidate is synchronized with main
+        run: >-
+          node scripts/lfea-standalone-main-sync-check.mjs
+          --allow-workflow .github/workflows/lfea-standalone-exact-head.yml
+
+      - name: Run standalone source, authority, solve, recovery and build qualification
+        run: node scripts/run-lfea-standalone-check.mjs
+
+      - name: Install pinned Chromium
+        run: npx playwright install chromium --with-deps
+
+      - name: Run standalone governed browser journey
+        run: node scripts/run-lfea-standalone-e2e.mjs
+
+      - name: Prove standalone operation with LAFEA production runtime physically absent
+        run: node scripts/run-lfea-physical-absence-rehearsal.mjs
+
+      - name: Upload standalone evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: lfea-standalone-exact-head-evidence
+          path: |
+            playwright-report/
+            test-results/
+            reports/lfea-physical-absence-rehearsal.json
+          if-no-files-found: warn
+          retention-days: 14

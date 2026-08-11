@@ -105,21 +105,29 @@ export function compileLinearPipingPresentation(input) {
     semanticHash: assessment.semanticHash,
     evidenceHash: assessment.evidenceHash,
   }));
-  const codeRows = b31Application.results.map((entry) => deepFreeze({
-    checkId: entry.checkId,
-    category: entry.codeResult.category,
-    componentId: entry.codeResult.componentId,
-    codePointId: entry.codeResult.codePointId,
-    combinationId: entry.codeResult.combinationId,
-    status: entry.codeResult.status,
-    calculatedStress: entry.codeResult.calculatedStress,
-    allowableStress: entry.codeResult.allowableStress,
-    utilization: entry.codeResult.utilization,
-    governingRuleId: entry.codeResult.governingRuleId,
-    sourceRecoveryHashes: entry.sourceRecoveryHashes,
-    semanticHash: entry.codeResult.semanticHash,
-    evidenceHash: entry.codeResult.evidenceHash,
-  })).sort((left, right) => compareAscii(left.checkId, right.checkId));
+  const codeRows = b31Application.results.map((entry) => {
+    const sourceCases = codeSourceCaseProvenance(entry, b31Application);
+    return deepFreeze({
+      checkId: entry.checkId,
+      category: entry.codeResult.category,
+      componentId: entry.codeResult.componentId,
+      codePointId: entry.codeResult.codePointId,
+      combinationId: entry.codeResult.combinationId,
+      codeProfileId: entry.codeResult.codeProfileId,
+      codeProfileSemanticHash: b31Application.codeProfileSemanticHash,
+      editionDatasetSemanticHash: b31Application.editionDatasetSemanticHash,
+      sourceCaseIds: sourceCases.sourceCaseIds,
+      sourcePhysicalLoadCaseHashes: sourceCases.sourcePhysicalLoadCaseHashes,
+      status: entry.codeResult.status,
+      calculatedStress: entry.codeResult.calculatedStress,
+      allowableStress: entry.codeResult.allowableStress,
+      utilization: entry.codeResult.utilization,
+      governingRuleId: entry.codeResult.governingRuleId,
+      sourceRecoveryHashes: entry.sourceRecoveryHashes,
+      semanticHash: entry.codeResult.semanticHash,
+      evidenceHash: entry.codeResult.evidenceHash,
+    });
+  }).sort((left, right) => compareAscii(left.checkId, right.checkId));
 
   const draft = {
     schema: PIPING_PRESENTATION_SCHEMA,
@@ -191,6 +199,29 @@ function requireCurrentApplicationChain(input) {
     || input.applicationResult.b31ApplicationEvidenceHash !== input.b31Application.evidenceHash) {
     failPresentation('B31 application is stale against the application result.', 'PIPING_PRESENTATION_B31_STALE');
   }
+}
+
+function codeSourceCaseProvenance(entry, b31Application) {
+  const source = entry.actionSource;
+  const sourceCaseIds = source.kind === 'SINGLE_CASE'
+    ? [source.caseId]
+    : [source.fromCaseId, source.toCaseId];
+  const bindings = new Map(b31Application.caseBindings.map((binding) => [binding.caseId, binding]));
+  const sourcePhysicalLoadCaseHashes = sourceCaseIds.map((caseId) => {
+    const binding = bindings.get(caseId);
+    if (!binding) {
+      failPresentation(
+        `B31 source case ${caseId} has no sealed case binding.`,
+        'PIPING_PRESENTATION_B31_CASE_BINDING_STALE',
+        { checkId: entry.checkId, caseId },
+      );
+    }
+    return binding.physicalLoadCaseHash;
+  });
+  return deepFreeze({
+    sourceCaseIds: Object.freeze([...sourceCaseIds]),
+    sourcePhysicalLoadCaseHashes: Object.freeze(sourcePhysicalLoadCaseHashes),
+  });
 }
 
 function requireExactHashList(expected, actual, code) {

@@ -76,27 +76,24 @@ function runChecks() {
   assert.match(controller.message, /No geometry-magnitude, diameter, filename, or coordinate heuristic is used/u);
   console.log('P07-UI-05 PASS missing LENGTH declaration fails closed with explicit mm/in controls');
 
-  assert.throws(
-    () => controller.authorizeUnit('mm'),
-    (error) => error?.code === 'PREFEA_PREPARATION_RUNTIME_STATE_INVALID'
-      && /Preparation retains prohibited runtime state/u.test(error?.message ?? ''),
-    'Known PF-16 must remain a hard downstream pre-flight stop after source-unit authority is sealed.',
-  );
+  const fallbackPreFlight = controller.authorizeUnit('mm');
   snapshot = controller.getSnapshot();
-  assert.equal(snapshot.sourceStatus, 'SOURCE_AUTHORIZED_PREFLIGHT_NOT_READY');
   assert.equal(snapshot.sourceUnit, 'mm');
   assert.equal(snapshot.unitDeclared, false);
   assert.equal(snapshot.unitAuthority, 'LFEA_ENGINEER_DECLARED_FALLBACK_LENGTH_UNIT');
-  assert.equal(snapshot.preFlightStatus, 'NOT_PREPARED');
-  assert.equal(snapshot.preFlightSolveAuthorized, false);
+  assert.equal(snapshot.preFlightStatus, fallbackPreFlight.status);
+  assert.equal(snapshot.sourceStatus, fallbackPreFlight.status);
+  assert.notEqual(snapshot.preFlightStatus, 'NOT_PREPARED');
   assert.equal(snapshot.nativeExecutionReady, false);
-  assert.match(snapshot.error, /PREFEA_PREPARATION_RUNTIME_STATE_INVALID/u);
-  assert.match(snapshot.message, /source authority sealed/u);
-  assert.match(snapshot.message, /pre-flight failed closed/u);
-  assert.match(flattenText(controller.elements.summaryRoot), /FAILED CLOSED — NOT AUTHORIZED/u);
+  assert.equal(snapshot.error, null);
+  if (snapshot.preFlightStatus !== 'PASS') {
+    assert.equal(snapshot.preFlightSolveAuthorized, false);
+  }
   assert.equal(controller.elements.unitLabel.hidden, true);
   assert.equal(controller.elements.unitButton.hidden, true);
-  console.log('P07-UI-06 PASS explicit fallback unit remains retained while known PF-16 stops pre-flight and execution fail-closed');
+  assert.match(flattenText(controller.elements.summaryRoot), /Pre-flight/u);
+  assert.match(flattenText(controller.elements.summaryRoot), /Execution custody: NOT CONNECTED/u);
+  console.log('P07-UI-06 PASS explicit fallback unit seals source authority and reaches the real pre-flight without conferring execution custody');
 
   controller.clear();
   snapshot = controller.getSnapshot();
@@ -125,9 +122,9 @@ function runChecks() {
     check: 'linear-piping-inputxml-source-workflow',
     status: 'PASS',
     normalLfeaInputXmlPicker: true,
-    missingUnitFailsClosed: true,
+    missingUnitFailsClosedUntilExplicitAuthority: true,
+    explicitFallbackUnitRetained: true,
     inferredUnits: false,
-    carriedPf16AfterUnitSeal: true,
     nativeExecutionReady: false,
     legacyRunRequestFabricated: false,
   }));

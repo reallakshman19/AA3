@@ -1,4 +1,4 @@
-import { assembleSparseSymmetric } from '../lafea-linear-solve/sparse-matrix.js';
+import { assembleSparseSymmetric } from '../shared-linear-solve/sparse-matrix.js';
 import { semanticHash } from '../shared-piping-model/canonical-json.js';
 import { ELEMENT_DOF_ORDER } from '../linear-fea-contract/conventions.js';
 import { INACTIVE_ANALYSIS_DOF_BEHAVIOR } from '../linear-fea-contract/model-schema.js';
@@ -29,11 +29,6 @@ const LOCAL_DOF_REFERENCES = ELEMENT_DOF_ORDER.map((token) => {
  * depends on `Map`/object iteration order or on the order elements were
  * passed in — only on the row/column identity and, as a last tie-break, the
  * contributing element or constraint identity.
- *
- * @param {object} model Sealed `fea-linear-model/v1` (for nodeI/nodeJ per element and constraints).
- * @param {Readonly<object>} dofMap Section 8 DOF map.
- * @param {Array<object>} elementContributions Normalized element contributions.
- * @returns {{triplets: Array<object>, elementLoad: Array<number>, elementIds: Array<string>}}
  */
 function buildElementTriplets(model, dofMap, elementContributions) {
   const elementsById = new Map(model.elements.map((element) => [element.elementId, element]));
@@ -179,11 +174,6 @@ function assertSymmetryResidual(worst) {
   }
 }
 
-/**
- * Partition the DOF set into free, physical constraints (FIXED or
- * PRESCRIBED_SLOT), analysis-only inactive DOFs, and springs (which stay free
- * but add stiffness). Section 8 Boundary conditions.
- */
 function partitionDofs(model, dofMap) {
   const constrained = model.constraints
     .filter((constraint) => constraint.behavior === 'FIXED'
@@ -212,20 +202,6 @@ function partitionDofs(model, dofMap) {
   return { constrained, freeIndices, partitionHash };
 }
 
-/**
- * Assemble the global system for one bound mechanical model. The declared
- * backend selects exactly one retained matrix representation: dense row-major
- * `K` for the dense reference backend, or lower-triangle Map-backed `sparseK`
- * for the sparse production backend. Sparse solves therefore never allocate
- * the dense `n x n` array.
- *
- * @param {object} args
- * @param {Readonly<object>} args.model Sealed `fea-linear-model/v1`.
- * @param {Readonly<object>} args.dofMap Section 8 DOF map for this model.
- * @param {Array<object>} args.elementContributions Normalized contributions, one per model element.
- * @param {string} [args.backend] Declared backend; omitted direct callers retain the historical dense representation.
- * @returns {Readonly<object>} Assembly evidence, canonical triplets, selected matrix representation and load arrays.
- */
 export function assembleGlobalSystem({
   model,
   dofMap,

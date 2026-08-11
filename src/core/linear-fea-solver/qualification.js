@@ -1,4 +1,4 @@
-import { sparseMultiply } from '../lafea-linear-solve/sparse-matrix.js';
+import { sparseMultiply } from '../shared-linear-solve/sparse-matrix.js';
 import { DOF_ORDER } from '../linear-fea-contract/conventions.js';
 import { dot, matVec, norm2 } from './linear-algebra.js';
 import { dofIndexOf } from './dof-map.js';
@@ -33,7 +33,6 @@ function multiply({ K, sparseK, n, vector }) {
   return matVec(K, n, vector);
 }
 
-/** Build the physical external-plus-support vector used by free-body gates. */
 function externalWithSupportActions({ model, dofMap, KU, Ffull, Ufull }) {
   const support = new Array(Ffull.length).fill(0);
   const residual = KU.map((value, index) => value - Ffull[index]);
@@ -58,10 +57,6 @@ function externalWithSupportActions({ model, dofMap, KU, Ffull, Ufull }) {
   };
 }
 
-/**
- * Section 8.1 "Algebraic residual": normalized residual of the solved
- * free-free system, `||Kff Uf - Ffree|| / max(||Ffree||, floor)`.
- */
 export function residualCheck({ Kff, sparseKff, m, Uf, Ffree, policies }) {
   const predicted = multiply({ K: Kff, sparseK: sparseKff, n: m, vector: Uf });
   const residual = predicted.map((value, index) => value - Ffree[index]);
@@ -76,13 +71,6 @@ export function residualCheck({ Kff, sparseKff, m, Uf, Ffree, policies }) {
   return { ...result, limitSource: policies.normalizedResidualLimit.source };
 }
 
-/**
- * Section 8.1 "Global force equilibrium": fixed/prescribed reactions are
- * represented by `K U - F` at constrained DOFs, while grounded spring support
- * actions are `-k u` at otherwise-free DOFs. The gate sums those support
- * actions with the assembled applied loads; unlike `sum(K U)`, this exposes
- * free-DOF algebraic residuals and is a physical free-body identity.
- */
 export function forceEquilibriumCheck({
   model,
   dofMap,
@@ -123,10 +111,6 @@ export function forceEquilibriumCheck({
   };
 }
 
-/**
- * Section 8.1 "Global moment equilibrium", about the retained reference point
- * (`MOMENT_REFERENCE_RULE`: the first node in canonical ascending order).
- */
 export function momentEquilibriumCheck({
   model,
   dofMap,
@@ -183,30 +167,30 @@ export function momentEquilibriumCheck({
   };
 }
 
-/**
- * Section 8.1 "Energy balance": internal strain energy `0.5 U^T K U` against
- * external work `0.5 U^T (F + R)`, which the reaction convention `R = K U - F`
- * makes an identity up to solver residual — a second, independently-combined
- * check on the same solved state rather than a restatement of the residual.
- */
 export function energyBalanceCheck({ K, sparseK, n, Ufull, Ffull, policies }) {
   const KU = multiply({ K, sparseK, n, vector: Ufull });
   const internalEnergy = 0.5 * dot(Ufull, KU);
-  const externalWork = 0.5 * dot(Ufull, Ffull) + 0.5 * dot(Ufull, KU.map((value, index) => value - Ffull[index]));
+  const externalWork = 0.5 * dot(Ufull, Ffull)
+    + 0.5 * dot(Ufull, KU.map((value, index) => value - Ffull[index]));
   const reference = Math.max(Math.abs(internalEnergy), Math.abs(externalWork), Number.MIN_VALUE);
   const relativeMismatch = Math.abs(internalEnergy - externalWork) / reference;
   const result = gate('ENERGY_BALANCE_RELATIVE', relativeMismatch, policies.energyBalanceLimit.value);
   return { ...result, limitSource: policies.energyBalanceLimit.source, internalEnergy, externalWork };
 }
 
-/**
- * Section 8.1 "Conditioning": always reported; warning/block thresholds are
- * solver-profile fields.
- */
 export function conditioningReport(conditionEstimate, policies) {
-  const result = gate('CONDITION_ESTIMATE', conditionEstimate, policies.conditionWarning.value, policies.conditionBlock.value);
-  /* gate() treats its second limit as WARN; conditioning needs the opposite sense (below warn = PASS, between warn and block = WARN, above block = BLOCK), which is exactly what gate() already computes when passed (warning, block) in that order. */
-  return { ...result, limitSource: policies.conditionWarning.source, blockLimit: policies.conditionBlock.value, blockLimitSource: policies.conditionBlock.source };
+  const result = gate(
+    'CONDITION_ESTIMATE',
+    conditionEstimate,
+    policies.conditionWarning.value,
+    policies.conditionBlock.value,
+  );
+  return {
+    ...result,
+    limitSource: policies.conditionWarning.source,
+    blockLimit: policies.conditionBlock.value,
+    blockLimitSource: policies.conditionBlock.source,
+  };
 }
 
 export function worstStatus(results) {

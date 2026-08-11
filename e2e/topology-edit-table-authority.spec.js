@@ -40,10 +40,11 @@ test('Table stays projection-only until certified pipe-length Apply', async ({ p
   await expect(row).toBeVisible();
   await row.locator('[data-table-select]').click();
   await expect.poll(() => host.getAttribute('data-topology-edit-selection-primary-id')).toBe(editable.edgeId);
-  await page.locator('[data-table-edit-length]').fill(String(editable.currentLengthMm - 120));
-  await page.locator('[data-table-edit-anchor]').selectOption(editable.anchor);
-  await page.locator('[data-table-edit-propagation]').selectOption(editable.propagation);
-  await page.locator('[data-table-action="stage-pipe-length"]').click();
+  await page.locator('[data-table-edit-anchor]').selectOption(editable.anchor); await page.locator('[data-table-edit-propagation]').selectOption(editable.propagation);
+  const directLength = row.locator('[data-table-cell-edit="PIPE_LENGTH"]'); await directLength.fill('0'); await directLength.press('Enter');
+  await expect(row.locator('[data-table-cell-state="invalid"]')).toBeVisible(); expect(await host.getAttribute('data-topology-edit-table-batch-hash')).toBe(''); await directLength.press('Escape');
+  await directLength.fill(String(editable.currentLengthMm - 120)); await expect(row.locator('[data-table-cell-state="draft"]')).toBeVisible(); expectAuthorityNoop(await evidence(page), before);
+  await directLength.press('Enter');
   await expect.poll(() => host.getAttribute('data-topology-edit-table-batch-hash')).toBeTruthy();
   const staged = await evidence(page);
   expectAuthorityNoop(staged, before);
@@ -100,6 +101,61 @@ test('Table stays projection-only until certified pipe-length Apply', async ({ p
     status: 'PASS_TABLE_CANVAS_CERTIFIED_PIPE_LENGTH_LIFECYCLE',
     evidence: { editable, before, afterPresentation, staged, preview, validated, applied, undone, redone },
   }, null, 2)}\n`);
+});
+
+test('Engineering Table is dense, dynamically scrollable and keeps frozen context', async ({ page }) => {
+  await page.setViewportSize({ width: 1720, height: 1080 });
+  await page.addInitScript(() => globalThis.localStorage?.clear());
+  const host = await openProductionController(page);
+  const panel = page.locator('details[data-panel-kind="table"]');
+  if (!(await panel.evaluate((node) => node.open))) await panel.locator(':scope > summary').click();
+  await expect.poll(() => host.getAttribute('data-topology-edit-table-projection-hash')).toBeTruthy();
+
+  const surface = page.locator('.topology-edit-table--populated');
+  const scroll = page.locator('.topology-edit-table__scroll');
+  await expect(surface).toBeVisible();
+  await expect(scroll).toBeVisible();
+
+  const fontSize = await surface.evaluate((node) => Number.parseFloat(getComputedStyle(node).fontSize));
+  expect(fontSize).toBeLessThanOrEqual(12);
+  expect(await scroll.evaluate((node) => getComputedStyle(node).overflowX)).toBe('auto');
+  expect(await scroll.evaluate((node) => getComputedStyle(node).overflowY)).toBe('auto');
+
+  const frozen = await scroll.locator('thead [data-table-frozen]').evaluateAll(
+    (nodes) => nodes.map((node) => node.getAttribute('data-table-frozen')),
+  );
+  expect(frozen).toEqual(['select', 'tag', 'elementType', 'connectFrom', 'connectTo']);
+  await expect(scroll.locator('tbody tr').first().locator('[data-table-frozen="tag"]')).toBeVisible();
+  const frozenLayout = await scroll.locator('thead [data-table-frozen]').evaluateAll((nodes) => (
+    nodes.map((node) => ({
+      key: node.getAttribute('data-table-frozen'),
+      left: Number.parseFloat(getComputedStyle(node).left),
+      position: getComputedStyle(node).position,
+    }))
+  ));
+  expect(frozenLayout.map((entry) => entry.position)).toEqual(Array(5).fill('sticky'));
+  expect(frozenLayout.map((entry) => entry.left)).toEqual([0, 58, 190, 268, 396]);
+
+  await panel.evaluate((node) => {
+    node.style.width = '720px';
+    node.style.height = '420px';
+  });
+  await expect.poll(() => panel.evaluate((node) => node.getBoundingClientRect().height)).toBeLessThan(450);
+  const compactPanelHeight = await panel.evaluate((node) => node.getBoundingClientRect().height);
+  const compact = await scroll.evaluate((node) => ({
+    clientHeight: node.clientHeight,
+    clientWidth: node.clientWidth,
+    scrollHeight: node.scrollHeight,
+    scrollWidth: node.scrollWidth,
+  }));
+  expect(compact.scrollWidth).toBeGreaterThan(compact.clientWidth);
+  expect(compact.scrollHeight).toBeGreaterThan(compact.clientHeight);
+
+  await panel.evaluate((node) => { node.style.height = '620px'; });
+  await expect.poll(() => panel.evaluate((node) => node.getBoundingClientRect().height))
+    .toBeGreaterThan(compactPanelHeight + 120);
+  await expect.poll(() => scroll.evaluate((node) => node.clientHeight))
+    .toBeGreaterThan(compact.clientHeight + 80);
 });
 
 test('M06 and M10 production editors expose only explicit engineering authority', async ({ page }) => {

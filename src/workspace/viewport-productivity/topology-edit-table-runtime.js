@@ -1,7 +1,4 @@
 import { TopologyStore } from '../topology-store.js';
-import { createTopologyEditTableBatch } from '../topology-edit/table/topology-edit-table-batch.js';
-import { planTopologyEditTableBatch } from '../topology-edit/table/topology-edit-table-batch-planner.js';
-import { createTopologyEditTableIntent } from '../topology-edit/table/topology-edit-table-intent.js';
 import { buildTopologyEditTableProjection } from '../topology-edit/table/topology-edit-table-projection.js';
 import { rebaseTopologyEditTableBatchPlan } from '../topology-edit/table/topology-edit-table-rebase.js';
 import {
@@ -9,6 +6,12 @@ import {
   reduceTopologyEditTableViewState,
 } from '../topology-edit/table/topology-edit-table-view-state.js';
 import { TopologyEditValidationWorkerClient } from '../topology-edit/professional/topology-edit-validation-worker-client.js';
+import {
+  handleTopologyEditTableCellInput,
+  handleTopologyEditTableCellKeyDown,
+  handleTopologyEditTableCompoundCellClick,
+  resetTopologyEditTableCellEditing,
+} from './topology-edit-table-cell-edit.js';
 import {
   topologyEditTableEmptyRoutePhase,
   topologyEditTableEmptyRoutePipeOptions,
@@ -20,6 +23,8 @@ import {
   stageTopologyEditValveReplacement,
 } from './topology-edit-table-engineering-runtime.js';
 import { renderTopologyEditTableGrid } from './topology-edit-table-grid-view.js';
+import { stageTopologyEditTablePipeLength } from './topology-edit-table-pipe-length-runtime.js';
+import { handleTopologyEditTableScroll, initializeTopologyEditTableScrollState, resetTopologyEditTableScroll } from './topology-edit-table-scroll-runtime.js';
 import { ensureTopologyEditTableStyles } from './topology-edit-table-styles.js';
 import {
   applyTopologyEditTableRuntime,
@@ -46,6 +51,9 @@ export class TopologyEditTableRuntime {
     this.redoTransaction = null;
     this.lastExport = null;
     this.pending = false;
+    this.cellDrafts = new Map();
+    this.cellErrorId = null;
+    initializeTopologyEditTableScrollState(this);
     this.emptyRouteValues = {
       startX: '0', startY: '0', startZ: '0',
       endX: '1000', endY: '0', endZ: '0',
@@ -56,6 +64,8 @@ export class TopologyEditTableRuntime {
     this.validationClient = new TopologyEditValidationWorkerClient();
     this.onClick = (event) => this.handleClick(event);
     this.onInput = (event) => this.handleInput(event);
+    this.onKeyDown = (event) => this.handleKeyDown(event);
+    this.onScroll = (event) => handleTopologyEditTableScroll(this, event);
   }
 
   mount(element) {
@@ -66,6 +76,8 @@ export class TopologyEditTableRuntime {
     ensureTopologyEditTableStyles(element.ownerDocument);
     element.addEventListener('click', this.onClick);
     element.addEventListener('input', this.onInput);
+    element.addEventListener('keydown', this.onKeyDown);
+    element.addEventListener('scroll', this.onScroll, true);
     this.refreshProjection();
   }
 
@@ -95,6 +107,7 @@ export class TopologyEditTableRuntime {
   canonicalChanged(canonical) {
     const priorBatch = this.batch;
     const priorPlan = this.batchPlan;
+    resetTopologyEditTableCellEditing(this);
     this.clearCandidate();
     this.lastExport = null;
     this.refreshProjection(canonical);
@@ -146,8 +159,10 @@ export class TopologyEditTableRuntime {
       };
       return;
     }
+    if (handleTopologyEditTableCellInput(this, event)) return;
     if (!event.target.matches?.('[data-table-filter]')) return;
     const caret = event.target.selectionStart;
+    resetTopologyEditTableScroll(this);
     this.viewState = reduceTopologyEditTableViewState(this.viewState, { type: 'QUERY', query: event.target.value });
     this.render();
     const filter = this.element?.querySelector('[data-table-filter]');
@@ -155,7 +170,10 @@ export class TopologyEditTableRuntime {
     if (Number.isInteger(caret)) filter?.setSelectionRange?.(caret, caret);
   }
 
+  handleKeyDown(event) { return handleTopologyEditTableCellKeyDown(this, event); }
+
   handleClick(event) {
+    if (handleTopologyEditTableCompoundCellClick(this, event)) return true;
     const select = event.target.closest?.('[data-table-select]');
     if (select && this.element?.contains(select)) return this.selectRow(select.dataset.tableSelect, event);
     const sort = event.target.closest?.('[data-table-sort]');
@@ -180,7 +198,6 @@ export class TopologyEditTableRuntime {
     return false;
   }
 
-  /** Lists the governed pipe records available to an empty canonical model. */
   emptyRoutePipeOptions() { return topologyEditTableEmptyRoutePipeOptions(this); }
   emptyRoutePhase() { return topologyEditTableEmptyRoutePhase(this); }
   async runEmptyRouteAction(kind) { return runTopologyEditTableEmptyRouteAction(this, kind); }
@@ -197,37 +214,25 @@ export class TopologyEditTableRuntime {
   sortRows(sortKey) {
     const same = this.viewState.sortKey === sortKey;
     const sortDirection = same && this.viewState.sortDirection === 'ASC' ? 'DESC' : 'ASC';
+    resetTopologyEditTableScroll(this);
     this.viewState = reduceTopologyEditTableViewState(this.viewState, { type: 'SORT', sortKey, sortDirection });
     this.render();
     return true;
   }
 
   stagePipeLength(canonicalId) {
-    try {
-      const intent = createTopologyEditTableIntent({
-        projection: this.projection,
-        sessionSnapshot: this.controller.session.snapshot(),
-        canonicalId,
-        intentKind: 'PIPE_LENGTH',
-        requestedValue: { lengthMm: Number(this.element.querySelector('[data-table-edit-length]')?.value) },
-        geometryPolicy: {
-          anchor: this.element.querySelector('[data-table-edit-anchor]')?.value,
-          propagation: this.element.querySelector('[data-table-edit-propagation]')?.value,
-        },
-      });
-      const intents = [...this.intents.filter((row) => row.target.canonicalId !== canonicalId), intent];
-      const batch = createTopologyEditTableBatch({ intents });
-      const batchPlan = planTopologyEditTableBatch({
-        batch, projection: this.projection, canonicalTopology: this.controller.session.currentTopology(),
-      });
-      this.intents = intents;
-      this.batch = batch;
-      this.batchPlan = batchPlan;
-      this.staleResult = null;
-      this.clearCandidate();
-      this.error = null;
-      this.message = `${batch.intentCount} table change(s) staged against the exact certified revision.`;
-    } catch (error) { this.error = errorMessage(error); }
+    const result = stageTopologyEditTablePipeLength(this, {
+      canonicalId,
+      lengthMm: this.element.querySelector('[data-table-edit-length]')?.value,
+      anchor: this.element.querySelector('[data-table-edit-anchor]')?.value,
+      propagation: this.element.querySelector('[data-table-edit-propagation]')?.value,
+    });
+    if (result.ok) {
+      this.cellDrafts.delete(canonicalId);
+      this.cellErrorId = null;
+    } else {
+      this.cellErrorId = canonicalId;
+    }
     this.render();
     return true;
   }
@@ -272,6 +277,7 @@ export class TopologyEditTableRuntime {
   resetStaged(clearGhost = true) {
     this.intents = []; this.batch = null; this.batchPlan = null; this.staleResult = null;
     this.preview = null; this.validation = null;
+    resetTopologyEditTableCellEditing(this);
     if (clearGhost) this.controller.viewportBackend?.clearGhost();
   }
   clearCandidate() {
@@ -282,6 +288,8 @@ export class TopologyEditTableRuntime {
   destroyElementOnly() {
     this.element?.removeEventListener('click', this.onClick);
     this.element?.removeEventListener('input', this.onInput);
+    this.element?.removeEventListener('keydown', this.onKeyDown);
+    this.element?.removeEventListener('scroll', this.onScroll, true);
     this.element?.replaceChildren(); this.element = null;
   }
   destroy() { this.validationClient.destroy(); this.resetStaged(true); this.destroyElementOnly(); }

@@ -25,7 +25,7 @@ export function buildLafeaWorkbenchOrchestrationProjection(stageValue) {
     AUTHORIZATION: authorizationSection(stage, adapter, readiness, preparation, custody),
     EXECUTION: executionSection(stage),
     RESULTS: resultsSection(stage, readiness),
-    RELEASE: section('BLOCKED', ['RELEASE_NOT_QUALIFIED'], [], []),
+    RELEASE: releaseSection(readiness),
   };
   return freeze({
     schema: LAFEA_WORKBENCH_ORCHESTRATION_SCHEMA,
@@ -144,6 +144,20 @@ function resultsSection(stage, readiness) {
   const executed = stage.execution?.status === 'QUALIFIED';
   return section(executed ? 'BLOCKED' : 'NOT_STARTED',
     [executed ? 'RESULT_EVIDENCE_NOT_CURRENT' : 'EXECUTION_REQUIRED'], [], []);
+}
+
+function releaseSection(readiness) {
+  const releaseBinding = readiness?.releaseBinding;
+  const refs = releaseBinding?.semanticHash
+    ? [ref('TEMPLATE_RELEASE_RECORD', releaseBinding.semanticHash)]
+    : [];
+  if (readiness?.releaseState === 'RELEASE_QUALIFIED') {
+    return section('COMPLETE', [], refs, ['VIEW_RELEASE']);
+  }
+  const reasons = readiness?.releaseBlockingReasons?.length
+    ? readiness.releaseBlockingReasons
+    : [readiness?.releaseState ?? 'RELEASE_NOT_QUALIFIED'];
+  return section('BLOCKED', reasons, refs, refs.length ? ['VIEW_RELEASE'] : []);
 }
 
 function preparationRefs(projection) {

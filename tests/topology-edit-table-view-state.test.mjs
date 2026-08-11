@@ -10,6 +10,13 @@ import {
 import {
   TopologyEditTableCanvasCoordinator,
 } from '../src/workspace/viewport-productivity/topology-edit-table-canvas-coordinator.js';
+import {
+  TOPOLOGY_EDIT_TABLE_ROW_HEIGHT_PX,
+  TOPOLOGY_EDIT_TABLE_WINDOW_ROWS,
+  topologyEditTableRowWindow,
+  topologyEditTableWindowStart,
+  topologyEditTableWindowStartForRow,
+} from '../src/workspace/viewport-productivity/topology-edit-table-row-window.js';
 
 function projection() {
   const rows = [
@@ -94,4 +101,36 @@ test('Table to Canvas selection uses exact canonical IDs and Canvas echo creates
     rowIds: ['r-pipe', 'r-tee'], primaryRowId: 'r-tee', anchorRowId: 'r-pipe',
   }]);
   assert.equal(requests.length, 1, 'selection echo must not emit a second selection/edit request');
+});
+
+test('row window keeps short projections complete and unspaced', () => {
+  assert.deepEqual(topologyEditTableRowWindow(20, 999), {
+    totalRows: 20, start: 0, end: 20, renderedRows: 20, topSpacerPx: 0, bottomSpacerPx: 0,
+  });
+});
+
+test('row window bounds large projection DOM and preserves full scroll extent', () => {
+  const first = topologyEditTableRowWindow(1000, 0);
+  assert.equal(first.renderedRows, TOPOLOGY_EDIT_TABLE_WINDOW_ROWS);
+  assert.equal(first.topSpacerPx, 0);
+  assert.equal(first.bottomSpacerPx, (1000 - TOPOLOGY_EDIT_TABLE_WINDOW_ROWS) * TOPOLOGY_EDIT_TABLE_ROW_HEIGHT_PX);
+
+  const middleStart = topologyEditTableWindowStart(700 * TOPOLOGY_EDIT_TABLE_ROW_HEIGHT_PX);
+  const middle = topologyEditTableRowWindow(1000, middleStart);
+  assert.ok(middle.start <= 700 && middle.end > 700);
+  assert.equal(middle.renderedRows, TOPOLOGY_EDIT_TABLE_WINDOW_ROWS);
+
+  const last = topologyEditTableRowWindow(
+    1000,
+    topologyEditTableWindowStart(999 * TOPOLOGY_EDIT_TABLE_ROW_HEIGHT_PX),
+  );
+  assert.equal(last.end, 1000);
+  assert.equal(last.renderedRows, TOPOLOGY_EDIT_TABLE_WINDOW_ROWS);
+  assert.equal(last.bottomSpacerPx, 0);
+});
+
+test('row-target window start keeps keyboard target inside bounded window', () => {
+  const start = topologyEditTableWindowStartForRow(521);
+  const targetWindow = topologyEditTableRowWindow(1000, start);
+  assert.ok(targetWindow.start <= 521 && targetWindow.end > 521);
 });

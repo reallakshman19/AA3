@@ -5,6 +5,10 @@ import {
 import {
   normalizeTopologyEditJunctionRelationPayload,
 } from '../topology-edit-junction-relation-command.js';
+import {
+  normalizeTopologyEditTableNodePositionPayload,
+  topologyEditTableNodePositionPriorValue,
+} from './topology-edit-table-node-position-contract.js';
 import { assertTopologyEditTableProjection } from './topology-edit-table-projection.js';
 
 export const TOPOLOGY_EDIT_TABLE_INTENT_SCHEMA = 'TopologyEditTableIntent.v1';
@@ -18,8 +22,6 @@ const INTENT_KINDS = new Set([
 ]);
 const ANCHORS = new Set(['FROM', 'TO', 'BOTH']);
 const PROPAGATION = new Set(['DOWNSTREAM', 'UPSTREAM', 'FIT_BETWEEN_FIXED']);
-const NODE_ENDPOINTS = new Set(['FROM', 'TO']);
-const NODE_MOVEMENT_MODES = new Set(['NODE_ONLY', 'CONNECTED_RUN']);
 
 export function createTopologyEditTableIntent({
   projection: projectionInput,
@@ -133,7 +135,9 @@ function assertEditAuthority(value) {
 
 function normalizeIntentPayload(kind, requestedValue, geometryPolicy, row, projection) {
   if (kind === 'PIPE_LENGTH') return normalizePipeLength(requestedValue, geometryPolicy, row);
-  if (kind === 'NODE_POSITION') return normalizeNodePosition(requestedValue, geometryPolicy, row);
+  if (kind === 'NODE_POSITION') {
+    return normalizeTopologyEditTableNodePositionPayload(requestedValue, geometryPolicy, row);
+  }
   if (kind === 'VALVE_REPLACEMENT') {
     return normalizeValveReplacement(requestedValue, geometryPolicy, row);
   }
@@ -154,31 +158,6 @@ function normalizePipeLength(requestedValue, geometryPolicy, row) {
   return {
     requestedValue: { lengthMm },
     geometryPolicy: normalizeGeometryPolicy(geometryPolicy),
-  };
-}
-
-function normalizeNodePosition(requestedValue, geometryPolicy, row) {
-  if (row.identity?.canonicalKind !== 'EDGE') {
-    throw new RangeError('TopologyEditTableIntent: NODE_POSITION requires an exact canonical EDGE row.');
-  }
-  const endpoint = requiredEnum(requestedValue?.endpoint, NODE_ENDPOINTS, 'requestedValue.endpoint');
-  const nodeId = requiredText(requestedValue?.nodeId, 'requestedValue.nodeId');
-  const bindings = (row.identity?.portBindings ?? []).filter((entry) => (
-    entry?.endpoint === endpoint && entry?.nodeId === nodeId
-  ));
-  if (bindings.length !== 1) {
-    throw new RangeError(
-      `TopologyEditTableIntent: ${endpoint} node ${nodeId} is not the exact EDGE endpoint binding.`,
-    );
-  }
-  return {
-    requestedValue: {
-      endpoint,
-      nodeId,
-      expectedPosition: finitePoint(requestedValue?.expectedPosition, 'requestedValue.expectedPosition'),
-      position: finitePoint(requestedValue?.position, 'requestedValue.position'),
-    },
-    geometryPolicy: normalizeNodeGeometryPolicy(geometryPolicy),
   };
 }
 
@@ -276,22 +255,9 @@ function normalizeGeometryPolicy(value) {
     ),
   };
 }
-function normalizeNodeGeometryPolicy(value) {
-  return {
-    movementMode: requiredEnum(
-      value?.movementMode,
-      NODE_MOVEMENT_MODES,
-      'geometryPolicy.movementMode',
-    ),
-  };
-}
 function priorValue(kind, row, payload) {
   if (kind === 'PIPE_LENGTH') return deepFreeze({ lengthMm: row.fields.lengthMm });
-  if (kind === 'NODE_POSITION') return deepFreeze({
-    endpoint: payload.requestedValue.endpoint,
-    nodeId: payload.requestedValue.nodeId,
-    position: payload.requestedValue.expectedPosition,
-  });
+  if (kind === 'NODE_POSITION') return topologyEditTableNodePositionPriorValue(payload);
   if (kind === 'VALVE_REPLACEMENT') return deepFreeze({
     valveType: row.fields.valveType,
     lengthMm: row.fields.lengthMm,
@@ -322,15 +288,6 @@ function requiredText(value, label) {
   const text = stringValue(value);
   if (!text) throw new TypeError(`TopologyEditTableIntent: ${label} is required.`);
   return text;
-}
-function finitePoint(value, label) {
-  const point = value && typeof value === 'object' && !Array.isArray(value)
-    ? { x: Number(value.x), y: Number(value.y), z: Number(value.z) }
-    : null;
-  if (!point || !Object.values(point).every(Number.isFinite)) {
-    throw new RangeError(`TopologyEditTableIntent: ${label} must contain finite x, y and z coordinates.`);
-  }
-  return point;
 }
 function token(value) { return stringValue(value).toUpperCase(); }
 function finitePositive(value) {

@@ -8,7 +8,7 @@ The slice is intentionally conservative. It does **not** move, relocate, restati
 
 ## Root cause
 
-Support rendering can resolve a host through `hostEntityId`, `edgeId`, or `attachedEdgeId`, with a unique incident-edge fallback from `support.nodeId`. Geometry movement and changed-scope discovery previously recognized supports primarily through direct node references. An edge/station-hosted support could therefore be omitted from movement policy checks, validation neighbourhoods, and Table dependency revisions.
+Support rendering can resolve a host through `hostEntityId`, `edgeId`, or `attachedEdgeId`, with a unique incident-edge fallback from `support.nodeId`. Geometry movement and changed-scope discovery previously recognized supports primarily through direct node references. An edge/station-hosted support could therefore be omitted from movement policy checks, validation neighbourhoods, Table dependency revisions, and command capability truthfulness.
 
 ## Architecture decision
 
@@ -21,6 +21,8 @@ The stable fail-closed reason is `SUPPORT_GEOMETRY_POLICY_REQUIRED`.
 
 The certified session also enforces the rule at the mutable boundary for every governed `MOVE_NODE`. This provides a backstop for direct Canvas MOVE/STRETCH and future callers even when their higher-level planner does not use the connected-run helper.
 
+Capability authority uses the same dependency evidence. A support-dependent node move is now advertised as `UNREPRESENTABLE`, not as an action that appears available and then fails at the session boundary.
+
 No canonical support mutation is introduced. The existing governed flow remains:
 
 `intent -> operation plan -> candidate/Preview -> validation -> certified transaction -> canonical topology -> journal undo/redo`.
@@ -32,6 +34,7 @@ No canonical support mutation is introduced. The existing governed flow remains:
 - Generic connected-run movement, endpoint extend/shorten movement, and edge split now fail closed when support geometry would be affected.
 - Declared-slope planning now performs the same support geometry dependency check before producing `MOVE_NODE` intents.
 - The certified session rejects any governed `MOVE_NODE` whose moved node/incident geometry affects unresolved support geometry, before command request creation or journal mutation.
+- Command capability derives support dependencies before advertising `move-positive-z`; support-dependent nodes return `SUPPORT_GEOMETRY_POLICY_REQUIRED`.
 - Table `NODE_POSITION` NODE_ONLY planning uses the same support dependency authority; CONNECTED_RUN inherits the generic movement guard.
 - Table NODE_POSITION capability reports `SUPPORT_GEOMETRY_POLICY_REQUIRED` for immediately affected support-host geometry before staging.
 
@@ -50,7 +53,10 @@ Added focused coverage for:
 - NODE_POSITION capability and NODE_ONLY planning blocking;
 - declared-slope blocking;
 - certified-session `MOVE_NODE` rejection with exact no-mutation journal assertions;
-- retained positive `MOVE_NODE` behavior where no support dependency exists.
+- support-aware command capability with an unrestrained positive control;
+- production visible-user qualification that proves a supported endpoint is blocked without canonical/journal mutation before a safe endpoint succeeds;
+- clean-layout/render qualification that proves the blocked support move remains a clean draft before an unrestrained move is saved;
+- Tool Audit qualification that uses a verified unrestrained P-003 endpoint for successful MOVE_NODE coverage while support-dependent P-001 MOVE is unavailable.
 
 Existing no-support route/Table/browser suites remain the positive-path regression authority.
 

@@ -13,6 +13,10 @@ const HASH_PATTERN = /^fnv1a64:[0-9a-f]{16}$/u;
  * Build the read-only 3D Edit presentation payload from governed recovery.
  * Gravity-up is explicit input: this layer has no authority to assume +Z or
  * infer vertical from the frame-element local e2/e3 axes.
+ *
+ * reportingSignConvention is retained per action because interface definitions
+ * may legitimately use different reporting signs. The projected axial/lateral/
+ * vertical values are incomplete engineering data without that convention.
  */
 export function createLinearPipingSupportActionsPublication(input) {
   requireRecord(input, 'supportActionsPublicationInput');
@@ -61,6 +65,7 @@ export function createLinearPipingSupportActionsPublication(input) {
       nodeId: result.nodeId,
       interfaceId: result.interfaceId,
       loadCaseId: recovery.loadCaseId,
+      reportingSignConvention: result.reportingSignConvention,
       triadSemanticHash: triad.semanticHash,
       recoverySemanticHash: recovery.semanticHash,
       triadStatus: triad.status,

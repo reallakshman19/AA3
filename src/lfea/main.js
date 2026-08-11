@@ -1,0 +1,11 @@
+import './standalone.css';
+import { bootstrapLfeaStandalone } from './bootstrap.js';
+
+const applicationRoot = document.getElementById('root');
+const application = bootstrapLfeaStandalone(applicationRoot);
+
+globalThis.LfeaApplication = application;
+
+if (import.meta.hot) {
+  import.meta.hot.dispose(() => application.destroy());
+}

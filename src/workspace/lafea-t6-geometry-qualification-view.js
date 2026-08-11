@@ -11,10 +11,7 @@ export function buildLafeaT6GeometryQualificationViewModel(stageValue) {
     return freeze({
       schema: LAFEA_T6_GEOMETRY_QUALIFICATION_VIEW_SCHEMA,
       stageId: stage.stageId,
-      status: 'ABSENT',
-      custody: 'NONE',
-      rows: [],
-      reasons: [],
+      status: 'ABSENT', custody: 'NONE', rows: [], methodSemantics: [], reasons: [],
       note: 'No governed T6 geometry-qualification custody is retained for this stage.',
     });
   }
@@ -27,6 +24,7 @@ export function buildLafeaT6GeometryQualificationViewModel(stageValue) {
       custody: projection.state === 'STALE'
         ? 'STALE_RETAINED_EVIDENCE' : 'INVALID_RETAINED_EVIDENCE',
       rows: identityRows(projection),
+      methodSemantics: [],
       reasons: [...projection.reasons],
       note: projection.state === 'STALE'
         ? 'T6 qualification evidence is retained for audit but no longer matches the current build and analysis-mesh custody. Numerical qualification values are not presented as current.'
@@ -40,9 +38,8 @@ export function buildLafeaT6GeometryQualificationViewModel(stageValue) {
     return freeze({
       schema: LAFEA_T6_GEOMETRY_QUALIFICATION_VIEW_SCHEMA,
       stageId: stage.stageId,
-      status: 'INVALID',
-      custody: 'DETAIL_NOT_RETAINED',
-      rows: identityRows(projection),
+      status: 'INVALID', custody: 'DETAIL_NOT_RETAINED',
+      rows: identityRows(projection), methodSemantics: [],
       reasons: ['LAFEA_T6_GEOMETRY_DETAIL_NOT_RETAINED'],
       note: 'The current projection identity exists but the exact retained qualification envelope is unavailable.',
     });
@@ -62,6 +59,7 @@ export function buildLafeaT6GeometryQualificationViewModel(stageValue) {
       ...validityRows(evidence.validity),
       ...toleranceRows(evidence.tolerances),
     ],
+    methodSemantics: methodSemantics(evidence),
     reasons: [...projection.reasons],
     note: projection.state === 'CURRENT_PASS'
       ? 'Exact-head T6 geometry qualification is current for the retained analysis mesh. This qualification does not establish material, load, restraint, solver, code-assessment, or release authority.'
@@ -77,10 +75,28 @@ export function renderLafeaT6GeometryQualification(root, stageValue) {
     element(root, 'h3', null, `T6 geometry qualification — ${model.status}`),
     element(root, 'p', null, `Custody: ${model.custody}`),
   );
+  if (model.methodSemantics.length) {
+    section.append(
+      element(root, 'h4', null, 'Producer numerical methods'),
+      methodList(root, model.methodSemantics),
+    );
+  }
   if (model.rows.length) section.append(rows(root, model.rows));
   section.append(element(root, 'p', null, model.note));
   if (model.reasons.length) section.append(reasonList(root, model.reasons));
   return section;
+}
+
+function methodSemantics(evidence) {
+  return [
+    'Area: 2D three-point triangular quadrature integrates the T6 isoparametric Jacobian over each element.',
+    'Curved perimeter: 1D five-point Gauss-Legendre integrates quadratic-edge arc length. These edge Gauss points are not boundary-deviation samples.',
+    'Boundary deviation: the producer independently samples each declared circular boundary edge and compares sampled radius with the analytical circle.',
+    'Midside placement: circumferential/boundary midsides are compared with the expected circular midpoint; straight/chord edges use their expected geometric midpoint.',
+    `Dense Jacobian: each T6 mapping is sampled on a parent-coordinate grid using ${evidence.validity?.jacobianSampleDivisions ?? 'the retained'} divisions; non-positive determinants block qualification.`,
+    'Topology: edge incidence, shared midside identity, feature-set completeness and connected-region evidence are checked independently of geometry integration.',
+    'Units: the Bucket-01 mesh-qualification contract does not carry a unit symbol. Length/area values are shown in the source model length basis without inventing a display unit.',
+  ];
 }
 
 function identityRows(projection) {
@@ -99,25 +115,25 @@ function identityRows(projection) {
 function geometryRows(value) {
   if (!value) return [];
   return [
-    row('Reference length', number(value.referenceLength)),
-    row('Integrated T6 area', number(value.integratedArea)),
-    row('Analytical area', number(value.analyticalArea)),
+    row('Reference length (model length basis)', number(value.referenceLength)),
+    row('Integrated T6 area (model length² basis)', number(value.integratedArea)),
+    row('Analytical area (model length² basis)', number(value.analyticalArea)),
     row('Area relative error', number(value.areaRelativeError)),
-    row('Hole-boundary maximum radius error', number(value.holeBoundaryMaximumRadiusError)),
-    row('Outer-boundary maximum radius error', number(value.outerBoundaryMaximumRadiusError)),
-    row('Maximum boundary deviation', number(value.maximumBoundaryDeviation)),
-    row('Hole-center error', number(value.holeCenterError)),
-    row('Critical ligament minimum', number(value.criticalLigamentMinimum)),
-    row('Critical ligament maximum', number(value.criticalLigamentMaximum)),
-    row('Analytical critical ligament', number(value.analyticalCriticalLigament)),
+    row('Hole-boundary maximum radius error (model length basis)', number(value.holeBoundaryMaximumRadiusError)),
+    row('Outer-boundary maximum radius error (model length basis)', number(value.outerBoundaryMaximumRadiusError)),
+    row('Maximum boundary deviation (model length basis)', number(value.maximumBoundaryDeviation)),
+    row('Hole-center error (model length basis)', number(value.holeCenterError)),
+    row('Critical ligament minimum (model length basis)', number(value.criticalLigamentMinimum)),
+    row('Critical ligament maximum (model length basis)', number(value.criticalLigamentMaximum)),
+    row('Analytical critical ligament (model length basis)', number(value.analyticalCriticalLigament)),
     row('Critical ligament relative error', number(value.criticalLigamentRelativeError)),
-    row('Hole curved-edge perimeter', number(value.holePerimeter)),
-    row('Outer curved-edge perimeter', number(value.outerPerimeter)),
-    row('Integrated total perimeter', number(value.integratedPerimeter)),
-    row('Analytical total perimeter', number(value.analyticalPerimeter)),
+    row('Hole curved-edge perimeter (model length basis)', number(value.holePerimeter)),
+    row('Outer curved-edge perimeter (model length basis)', number(value.outerPerimeter)),
+    row('Integrated total perimeter (model length basis)', number(value.integratedPerimeter)),
+    row('Analytical total perimeter (model length basis)', number(value.analyticalPerimeter)),
     row('Total perimeter relative error', number(value.totalPerimeterRelativeError)),
-    row('Maximum midside-placement error', number(value.maximumMidsidePlacementError)),
-    row('Rotational-symmetry error', number(value.rotationalSymmetryError)),
+    row('Maximum midside-placement error (model length basis)', number(value.maximumMidsidePlacementError)),
+    row('Rotational-symmetry error (model length basis)', number(value.rotationalSymmetryError)),
   ];
 }
 
@@ -141,7 +157,7 @@ function validityRows(value) {
     row('Dense Jacobian sample divisions', value.jacobianSampleDivisions),
     row('Minimum dense Jacobian determinant', number(value.minimumDenseJacobian)),
     row('Non-positive dense Jacobian count', value.nonPositiveDenseJacobianCount),
-    row('Duplicate-node distance tolerance', number(value.duplicateNodeDistance)),
+    row('Duplicate-node distance tolerance (model length basis)', number(value.duplicateNodeDistance)),
     row('Duplicate-node pair count', value.duplicateNodePairCount),
     row('Duplicate-node pairs', pairList(value.duplicateNodePairs)),
     row('Validity errors', list(value.errors)),
@@ -154,6 +170,11 @@ function toleranceRows(value) {
     row(`Tolerance — ${humanize(key)}`, number(tolerance)));
 }
 
+function methodList(root, values) {
+  const listElement = element(root, 'ul');
+  values.forEach((value) => listElement.append(element(root, 'li', null, value)));
+  return listElement;
+}
 function rows(root, values) {
   const listElement = element(root, 'dl', 'lafea-numerical-verification__rows');
   values.forEach((item) => listElement.append(

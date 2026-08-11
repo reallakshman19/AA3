@@ -8,9 +8,9 @@ const ACTION_FIELDS = Object.freeze(['fx', 'fy', 'fz', 'mx', 'my', 'mz']);
 export function mountLfeaNativeResultsView(root) {
   if (!root?.ownerDocument) throw new TypeError('Native Results root is required.');
   let current = null;
-  function update(executionState, resultsState) {
-    current = { executionState, resultsState };
-    render(root, executionState, resultsState);
+  function update(executionState, resultsState, publicationReadiness = null) {
+    current = { executionState, resultsState, publicationReadiness };
+    render(root, executionState, resultsState, publicationReadiness);
     return current;
   }
   function destroy() {
@@ -20,12 +20,13 @@ export function mountLfeaNativeResultsView(root) {
   return Object.freeze({ update, destroy, getState: () => current });
 }
 
-function render(root, executionState, resultsState) {
+function render(root, executionState, resultsState, publicationReadiness) {
   const doc = root.ownerDocument;
   const section = doc.createElement('section');
   section.className = 'lfea-results-panel';
   section.dataset.currentness = resultsState?.currentness ?? 'NONE';
   section.append(header(doc, resultsState));
+  if (publicationReadiness) section.append(publicationReadinessPanel(doc, publicationReadiness));
 
   if (resultsState?.currentness !== 'CURRENT' || !resultsState.results) {
     section.append(nonCurrentMessage(doc, executionState, resultsState));
@@ -66,10 +67,31 @@ function header(doc, resultsState) {
   headerNode.append(title, badge);
   const note = doc.createElement('p');
   note.className = 'lfea-journey-copy';
-  note.textContent = 'Raw B-3.3 solver quantities and recovered B-3.4 element actions are displayed as separate authorities in canonical FEA units. Support-action and code-applied quantities are not derived here.';
+  note.textContent = 'Raw B-3.3 solver quantities and recovered B-3.4 element actions are separate authorities. Support-action and code-applied quantities appear only when their existing governed producer chains have complete inputs.';
   const wrapper = doc.createElement('div');
   wrapper.append(headerNode, note);
   return wrapper;
+}
+
+function publicationReadinessPanel(doc, readiness) {
+  const section = doc.createElement('section');
+  section.className = 'lfea-results-publication-readiness';
+  section.append(subheading(doc, 'Engineering publication readiness'));
+  section.append(publicationStage(doc, 'Support actions Fa / Fl / Fv', readiness.supportActions));
+  section.append(publicationStage(doc, 'B31 code application', readiness.b31Code));
+  return section;
+}
+
+function publicationStage(doc, label, stage) {
+  const block = doc.createElement('div');
+  block.className = 'lfea-results-publication-stage';
+  block.dataset.status = stage.status;
+  block.append(factTable(doc, [
+    [label, stage.status],
+    ['Existing governed producer chain', stage.producerChain.join(' → ')],
+  ]));
+  if (stage.reasonCodes.length) block.append(codeList(doc, 'Blocked because', stage.reasonCodes));
+  return block;
 }
 
 function nonCurrentMessage(doc, executionState, resultsState) {

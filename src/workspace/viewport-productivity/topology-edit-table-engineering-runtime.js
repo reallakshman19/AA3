@@ -4,6 +4,9 @@ import {
   deriveTopologyEditTableNodePositionCapability,
 } from '../topology-edit/table/topology-edit-table-edit-capability.js';
 import { createTopologyEditTableIntent } from '../topology-edit/table/topology-edit-table-intent.js';
+import {
+  resolveTopologyEditTableValveCatalogueSelection,
+} from '../topology-edit/table/topology-edit-table-valve-catalogue.js';
 
 export function stageTopologyEditNodePosition(runtime, canonicalId, endpointInput) {
   return stage(runtime, () => {
@@ -50,20 +53,28 @@ export function stageTopologyEditNodePosition(runtime, canonicalId, endpointInpu
 }
 
 export function stageTopologyEditValveReplacement(runtime, canonicalId) {
-  return stage(runtime, () => createTopologyEditTableIntent({
-    projection: runtime.projection,
-    sessionSnapshot: runtime.controller.session.snapshot(),
-    canonicalId,
-    intentKind: 'VALVE_REPLACEMENT',
-    requestedValue: {
-      catalogueBinding: parseCatalogueJson(runtime),
-      direction: 'FROM_TO',
-    },
-    geometryPolicy: {
-      anchor: value(runtime, '[data-table-edit-anchor]'),
-      propagation: value(runtime, '[data-table-edit-propagation]'),
-    },
-  }));
+  return stage(runtime, () => {
+    const row = exactRow(runtime.projection, canonicalId);
+    const selection = resolveTopologyEditTableValveCatalogueSelection({
+      catalogue: runtime.controller.professionalRuntime?.catalogue,
+      row,
+      recordId: value(runtime, '[data-table-edit-valve-catalogue-record]'),
+    });
+    return createTopologyEditTableIntent({
+      projection: runtime.projection,
+      sessionSnapshot: runtime.controller.session.snapshot(),
+      canonicalId,
+      intentKind: 'VALVE_REPLACEMENT',
+      requestedValue: {
+        catalogueBinding: selection.catalogueBinding,
+        direction: 'FROM_TO',
+      },
+      geometryPolicy: {
+        anchor: value(runtime, '[data-table-edit-anchor]'),
+        propagation: value(runtime, '[data-table-edit-propagation]'),
+      },
+    });
+  });
 }
 
 export function stageTopologyEditTeeReducerRelation(runtime, canonicalId) {
@@ -125,17 +136,6 @@ function stage(runtime, intentFactory) {
   return true;
 }
 
-function parseCatalogueJson(runtime) {
-  const text = value(runtime, '[data-table-edit-valve-catalogue]');
-  if (!text) throw new TypeError('TopologyEditTableEngineeringRuntime: exact BALL catalogue JSON is required.');
-  let parsed;
-  try { parsed = JSON.parse(text); }
-  catch { throw new TypeError('TopologyEditTableEngineeringRuntime: BALL catalogue JSON is invalid.'); }
-  if (!parsed || typeof parsed !== 'object' || Array.isArray(parsed)) {
-    throw new TypeError('TopologyEditTableEngineeringRuntime: BALL catalogue JSON must be one object.');
-  }
-  return parsed;
-}
 function exactRow(projection, canonicalId) {
   const rows = (projection?.rows ?? []).filter((row) => row.identity?.canonicalId === canonicalId);
   if (rows.length !== 1) {

@@ -10,230 +10,199 @@ Maintained throughout PR #1021. This file is the single source of truth for scop
 | PR | #1021 |
 | Branch | `agent/lfea-workbench-integrity-1018` |
 | Base | `751756e9140527b8dc121aa179dc76b7039fb7ad` |
-| Reconciled S20 head | `3e85064289849d7abeae07164ff6cc86dabbd9f2` before this report-only stage transition commit |
+| Reconciled S20 head | `3e85064289849d7abeae07164ff6cc86dabbd9f2` before S20/S21 report commits |
 | PR state | Draft |
-| Current stage | Stage 21 — three-surface engineering authority/handoff audit |
-| Last completed stage | Stage 20 — post-M04 cumulative reconciliation |
-| Engineering status | Local workbench Critical + selected High/Medium issues implemented/source-guarded; architecture handoff audit now active |
-| Validation status | Source/patch + GitHub reconciliation complete through S20; full repository/browser execution NOT_RUN |
+| Current stage | Stage 22 — support-action sign/provenance authority repair |
+| Last completed stage | Stage 21 — focused three-surface authority/handoff audit |
+| Engineering status | S21 found two source-proven downstream sign-provenance defects; S22 opened before production changes |
+| Validation status | Audit source evidence complete; S22 production/guard validation pending; full repository/browser execution NOT_RUN |
 | Workflow constraint | No `.github/workflows/*` additions or modifications |
-| Exact next action | Trace the governed linear-piping → pre-FEA → authorization → solve/presentation handoff, register concrete authority defects before any production changes |
+| Exact next action | Publish required reporting sign convention through support-action v2 payload, panel and XLSX, then update existing checks/validators without solver changes |
 
 ### Handover in 60 seconds
 
-Implemented/source-guarded before S21:
-- C01 destructive mock scope.
-- Package/record draft persistence and delete sequencing.
-- C02 no-Worker run feedback, exact identity, current-option parity, queued cancellation.
-- C03 diagnostic provenance and code-driven failure guidance.
-- C04 fail-closed evidence-export handling.
-- H01–H03/H05/H06 authority/settings, human policy/preflight labels, inline record JSON-object screening, qualified-evidence history warning.
-- M01 distinct run-state presentation.
-- M06 dimensionless deformation multiplier (`1× = true displacement`) with physical displacement unit separate.
-- M08 human progress labels with raw-stage traceability.
-- M04 quality-gate ownership: upstream `geometryArea` validity gate is visible; shape-quality ratios/cosines remain descriptive without invented panel thresholds.
+Local workbench C01–C04, N01/N02, H01–H03/H05/H06, M01/M04/M06/M08 remain implemented/source-guarded.
 
-S20 reconciliation at `3e850642…`:
-- branch **54 commits ahead / 0 behind** authorized base;
-- merge base exactly `751756e9140527b8dc121aa179dc76b7039fb7ad`;
-- exactly nine registered files differ;
-- no `.github/workflows/*` file differs;
-- PR open, mergeable, draft.
+S21 architecture audit evidence:
+- Pre-FEA preparation retains requested case identity, `loadCaseSemanticHash`, `physicalLoadCaseHash`, model/stiffness/load state hashes and source/evidence hashes.
+- Solve authorization binds preparation/evidence/source/model/stiffness/load identities and authorized physical case IDs; BLOCK cannot be overridden and WARN requires explicit full limitation acceptance.
+- Workbench run gate hashes the entire run request and revalidates preparation + authorization immediately before runtime creation.
+- Interface recovery retains `physicalLoadCaseHash`, `loadCaseId`, `executionHash`, `analysisResultSemanticHash`, frame hash and per-interface `reportingSignConvention`.
+- Main linear-piping presentation retains `reportingSignConvention` in every interface row.
 
-A PR-body refresh adding M04 was attempted in S20 but the connector write-safety layer blocked that metadata update. Branch contents/report are authoritative; the older PR body remains a metadata limitation to retry only if the connector later permits it.
+**Defect found after that boundary:**
+- `createLinearPipingSupportActionsPublication()` derives sign-sensitive axial/lateral/vertical forces from `result.forceGlobal` but drops `result.reportingSignConvention` from each published action.
+- `lfea-support-actions-panel.js` displays signed forces without sign meaning and omits the physical-load-case hash from its visible provenance rows.
+- The engineering XLSX path receives a presentation interface row that already contains `reportingSignConvention`, but its support-action input/model/sheets/comments omit it. An engineering-issued signed load therefore lacks explicit “force on pipe” versus “force on interface” meaning.
 
-Still required before merge:
-- execute `npm run check:lfea-workbench` on an actual checkout of exact final head;
-- execute targeted browser scenarios; NOT_RUN is not PASS.
+This is not a solver numerical defect; it is an engineering provenance/interpretation defect downstream of correctly recovered forces.
 
 ## 1. Engineering Intent and Invariants
 
-- External package authority remains fail-closed; imported semantic hashes are not silently repaired.
+- Imported package authority remains fail-closed.
 - UI draft/preview state is not solver authority until explicit commit succeeds.
-- Run completion/failure requires exact run ID + input semantic hash + model version identity.
-- Worker and no-Worker paths consume equivalent current analysis options.
-- Human labels never replace raw status/policy/stage authority codes.
-- Local continuum stress is not ASME/B31/CAESAR piping-code stress authority.
-- Deformation multiplier is display-only and dimensionless.
-- Quality display does not invent acceptance criteria and does not hide real upstream validity gates.
-- Support/reaction handoff must retain sign convention, coordinate basis, and physical load-case provenance.
-- Unsupported restraint/support semantics must block or remain explicit; they must not be silently simplified into different boundary conditions.
-- No solver numerical/formulation changes and no new GitHub Actions workflow gates without explicit later authorization.
+- Runtime results remain bound to exact model/load/authorization identities.
+- Physical load-case ID/hash must survive downstream engineering handoffs.
+- Signed interface/support loads must carry the exact reporting sign convention that produced their signs.
+- A support-action axis degeneracy remains blocked rather than being filled with false zero transverse forces.
+- Main presentation, 3D support-action panel and XLSX must not disagree on sign meaning.
+- Local continuum stress remains distinct from piping-code/CAESAR stress authority.
+- No solver numerical/formulation changes and no new CI workflows.
 
 ## 2. Engineering Item Register
 
 | ID | Priority | Status | Summary |
 |---|---:|---|---|
 | ISS-001 / C01 | Critical | IMPLEMENTED + GUARDED | Collection-context mock action had whole-package destructive scope |
-| ISS-002 / ISS-004 | High | IMPLEMENTED + GUARDED | Record/package drafts lost on rerender |
+| ISS-002/004 | High | IMPLEMENTED + GUARDED | Record/package drafts lost on rerender |
 | ISS-003 / N02 | Medium | IMPLEMENTED + GUARDED | Delete selection cleared after synchronous mutation/render |
 | ISS-006 / C02 | Critical | IMPLEMENTED + GUARDED | No-Worker solve lacked paintable RUNNING boundary |
 | ISS-007 | High | IMPLEMENTED + GUARDED | No-Worker path could use stale pipeline options |
-| ISS-008 / C03 | High | IMPLEMENTED + GUARDED | Wrapped errors could lose structured diagnostic code |
-| ISS-009 / C04 | Critical | IMPLEMENTED + GUARDED | Evidence-export error escaped controller UI path |
-| ISS-010–012 / H01–H03 | High | IMPLEMENTED + GUARDED | Analysis authority/settings and output codes needed human presentation |
-| ISS-013 / H04 | High (audit) | DEFERRED / RE-GROUND | Canonical columns require an explicit result-schema contract |
+| ISS-008 / C03 | High | IMPLEMENTED + GUARDED | Wrapped errors could lose diagnostic code |
+| ISS-009 / C04 | Critical | IMPLEMENTED + GUARDED | Evidence-export error escaped controller path |
+| ISS-010–012 / H01–H03 | High | IMPLEMENTED + GUARDED | Analysis authority/settings and raw output codes needed safe presentation |
+| ISS-013 / H04 | High (audit) | DEFERRED / RE-GROUND | Canonical columns require explicit result schemas |
 | ISS-014 / H05 | High | IMPLEMENTED + GUARDED | Invalid record JSON discovered only on submit |
 | ISS-015 / H06 | High | IMPLEMENTED + GUARDED | History navigation could discard qualified evidence without warning |
 | ISS-016 / M01 | Medium | IMPLEMENTED + GUARDED | Run-state presentation lacked distinctions |
 | ISS-017 / M06 | Medium | IMPLEMENTED + GUARDED | Deformation multiplier meaning was dimensionally ambiguous |
 | ISS-018 / M08 | Medium | IMPLEMENTED + GUARDED | Progress exposed raw stages as primary text |
-| ISS-019 / M04 | Medium | IMPLEMENTED + GUARDED | Quality wording hid upstream geometry qualification ownership |
-| IMP-001 | High | DEFERRED | Shared engineering colour authority for true cross-run comparison |
-| IMP-002 | High | ACTIVE AUDIT | Full linear-piping/pre-FEA/mesh-workbench authority handoff audit |
+| ISS-019 / M04 | Medium | IMPLEMENTED + GUARDED | Quality wording hid upstream geometry gate ownership |
+| **ISS-020** | **High** | **ACCEPTED / S22** | 3D support-action publication/panel drops interface reporting sign convention from signed forces |
+| **ISS-021** | **High** | **ACCEPTED / S22** | Engineering XLSX omits reporting sign convention although current presentation retains it |
+| IMP-001 | High | DEFERRED | Shared colour authority for cross-run comparison |
+| IMP-002 | High | ACTIVE / PARTIAL AUDIT | Full linear-piping/pre-FEA/workbench authority handoff audit |
 | RISK-001 | High | OPEN | Continuum von Mises may be mistaken for piping-code stress |
-| RISK-002 | High | OPEN | Reaction sign convention may be overlooked downstream |
+| RISK-002 | High | PARTIALLY MATERIALIZED as ISS-020/021 | Reaction sign convention can be lost downstream |
 | QST-001 | Medium | OPEN | Authoritative vertical support-triad fallback-axis policy |
-| M02/M03/M05/M07 | Medium | DEFERRED | Responsive SVG, convergence visibility, selection polish, non-blocking export provenance preview |
 
 ## 3. Decision Log
 
-- **DEC-001:** remove collection mock entrypoints instead of relabelling a whole-package action.
 - **DEC-002:** no new CI workflow gates.
-- **DEC-003:** UI drafts are invalidated by committed model identity, not unrelated renders.
-- **DEC-004:** delete state becomes render-safe before synchronous mutation.
-- **DEC-005/006:** no-Worker uses begin → real render/task yield → execute exact identity with current options.
-- **DEC-014:** deformation multiplier is dimensionless; `1×` = true displacement; result unit is separate.
-- **DEC-015:** map only known real progress stages and retain raw stage metadata/title.
-- **DEC-016:** Stage 17 source guards live in existing `lfea-workbench-check.mjs`; no workflow/package-script change.
-- **DEC-017:** M04 distinguishes upstream geometry validity qualification from no extra panel-level ratio/cosine threshold.
-- **DEC-018:** S21 is audit-first. No architecture production edit occurs until a concrete handoff defect is registered with source evidence and engineering consequence.
+- **DEC-005/006:** no-Worker uses a real task/frame yield and exact identity/current options.
+- **DEC-014:** deformation multiplier is dimensionless; `1×` = true displacement.
+- **DEC-017:** quality display distinguishes upstream validity gates from descriptive metrics.
+- **DEC-018:** architecture changes are audit-first; no speculative edits.
+- **DEC-019:** support-action sign provenance is required engineering data, not optional UI decoration.
+- **DEC-020:** because required publication shape changes, generated support-action event payload moves from `lfea-support-actions-published/v1` to `/v2` rather than silently redefining v1. The canonical allowed sign values remain `FORCE_ON_PIPE_FROM_INTERFACE` and `FORCE_ON_INTERFACE_FROM_PIPE`.
+- **DEC-021:** XLSX sign convention is validated against the current presentation interface row and emitted per engineering-action row/comment; it cannot be supplied independently with a conflicting value.
 
 ## 4. Stage Roadmap
 
 | Stage | Status | Purpose |
 |---|---|---|
-| S1–S8 | DONE | Initial report/PR + C01/drafts/delete integrity/guards/reconciliation |
-| S9 | DONE | C02 no-Worker lifecycle/current-option parity |
-| S10 | DONE | C03 structured failure guidance/provenance |
-| S11 | DONE | C04 evidence-export containment |
-| S12 | DONE | Critical-slice reconciliation |
+| S1–S8 | DONE | Initial report/PR + mock/draft/delete integrity/guards/reconciliation |
+| S9–S12 | DONE | C02–C04 + critical reconciliation |
 | S13–S16 | DONE | H01–H03/H05/H06 + reconciliation |
-| S17–S18 | DONE | M01/M06/M08 + reconciliation/metadata refresh |
-| S19 | DONE | M04 mesh-quality gate ownership clarity |
-| S20 | DONE | Post-M04 cumulative reconciliation |
-| S21 | IN_PROGRESS | Three-surface engineering authority/handoff audit grounding |
-| S22 | PLANNED | Implement only source-proven S21 defect(s), if any |
+| S17–S20 | DONE | M01/M04/M06/M08 + reconciliations |
+| S21 | DONE | Focused three-surface authority/handoff audit and defect registration |
+| S22 | IN_PROGRESS | Propagate support-action reporting sign convention through publication/panel/XLSX |
+| S23 | PLANNED | Reconcile architecture slice and continue restraint/load-case audit if warranted |
 
 ## 5. Stage Execution Log
 
-### Stages 1–19
-Complete at documented source/patch evidence level. Local workbench data-integrity, run-lifecycle, error/evidence, authority/settings, history, status/deformation/progress, and quality-gate ownership issues listed above are implemented/guarded. Full command/browser execution remains NOT_RUN.
+### Stages 1–20
+Complete at documented source/patch evidence level. S20 reconciled head `3e85064289849d7abeae07164ff6cc86dabbd9f2`: 54 commits ahead / 0 behind exact base, nine changed files, same merge base, no workflow changes, PR draft. Full command/browser execution remains NOT_RUN.
 
-### Stage 20 — post-M04 cumulative reconciliation
-**COMPLETE.** GitHub at reconciled head `3e85064289849d7abeae07164ff6cc86dabbd9f2` returned:
-- PR open, mergeable, draft;
-- 54 commits ahead / 0 behind base;
-- merge base exactly the requested base;
-- exactly nine changed files matching Section 6;
-- no `.github/workflows/*` changes.
+### Stage 21 — focused three-surface engineering authority/handoff audit
+**COMPLETE for the sign/provenance path; broader restraint/code-authority audit remains future scope.**
 
-No production code changed in S20. PR-body refresh to include M04 was attempted but blocked by the connector write-safety layer; this report records the actual current scope.
+#### What was verified
+- `prepareInputXmlLinearPreFea`: retains parent source/evidence hashes, model/stiffness/load state hashes, requested physical cases, per-case load semantic/physical hashes, findings/limitations and explicit no-runtime boundary.
+- `authorizeInputXmlLinearSolve`: BLOCK override prohibited; WARN requires explicit approver + exact complete warnings/limitations; authorization binds parent semantic/evidence/model/stiffness/load identities and case IDs.
+- `requireLinearPipingRunGate`: re-hashes complete workbench request and revalidates each preparation/authorization before runtime creation.
+- `runLinearPipingWorkbenchAnalysis`: calls governed solve before production InputXML context compilation and retains authorization hashes in runtime evidence.
+- `recoverLinearPipingInterfaceLoads`: requires current interface/model/stiffness/load parents; applies declared sign convention; retains load case/hash/execution/result provenance and the sign convention on every result.
+- `compileLinearPipingPresentation`: preserves interface-row `reportingSignConvention`.
 
-### Stage 21 — three-surface engineering authority/handoff audit
-**IN PROGRESS — opened before source audit and before any production changes.**
+#### ISS-020 — support-action publication/panel sign loss
+`createLinearPipingSupportActionsPublication` uses already sign-adjusted `result.forceGlobal` to derive `fAxial/fLateral/fVertical` but its action payload omits `result.reportingSignConvention`. The event validator cannot require what is absent, and the support panel shows signed loads without sign meaning. Physical load-case hash is retained top-level but also not shown in visible panel provenance.
 
-#### Audit chain
-`diagnoseInputXmlLinearPreFea → prepareInputXmlLinearPreFea → authorizeInputXmlLinearSolve → runLinearPipingWorkbenchAnalysis`
+**Engineering consequence:** +12.5 kN can mean either force on pipe from support or force on support/interface from pipe depending on interface definition. Without the convention, signed support loads are incomplete engineering data.
 
-#### Surfaces / outputs to trace
-1. Linear-piping consumer/check/run/results surface.
-2. Phase-1 enrichment/pre-FEA surface.
-3. Independent mesh workbench / local continuum review surface.
+#### ISS-021 — XLSX sign loss
+`compileLinearPipingPresentation` already supplies `interfaceRow.reportingSignConvention`, but `linear-piping-support-action-xlsx.js` neither accepts nor cross-checks it and produces engineering-eligible `Fa/Fl/Fv` columns without sign convention. Its cell provenance comments retain hashes/case/triad but not sign meaning.
 
-#### Engineering questions
-- Does each transform retain global/local coordinate basis explicitly?
-- Are restraint/support types (guides, line stops, directional supports, gaps, friction, springs) preserved or explicitly blocked when unsupported?
-- Is recovered interface force sign convention visible and consistent downstream?
-- Is physical load-case identity/hash retained through support-action/local-FEA handoffs?
-- Does vertical-pipe support triad degeneracy remain blocked unless an authoritative secondary axis exists?
-- Are piping beam response, local continuum stress, and piping-code stress clearly separate authorities?
-- Can any UI/adapter silently reinterpret a rejected/unsupported semantic as a simpler fixed UX/UY condition?
+**Engineering consequence:** a spreadsheet can be signed off as engineering issue while the direction/sign semantics of the exported support loads are not self-describing.
 
-#### No-code gate
-Any S22 implementation must cite the exact source defect, expected invariant, examples/edge cases and validation path here first.
+### Stage 22 — support-action sign/provenance authority repair
+**IN PROGRESS — report updated before production changes.**
+
+Planned changes:
+1. `linear-piping-support-actions-publication.js`: emit `/v2`; copy each recovered result’s canonical `reportingSignConvention` into the published action.
+2. `event-payload-validators.js`: require `/v2` and one of the two canonical sign values for every action.
+3. `lfea-support-actions-panel.js`: show human-readable sign meaning + raw code, and show physical load-case hash in provenance.
+4. Publication/panel checks and publication source guard: require sign propagation; preserve blocked vertical-axis behavior.
+5. `linear-piping-support-action-xlsx.js`: require action sign convention, verify it equals current `presentation.interfaceRows` convention, include a `Reporting Sign Convention` column and provenance comments.
+6. XLSX check: prove correct convention exports and mismatched supplied convention fails closed.
+
+Non-goals: no reaction reversal changes, no triad-axis changes, no solver/recovery numerics, no arbitrary vertical fallback axis, no workflow additions.
 
 ## 6. Changed-File Ledger
 
-S20 reconciled exactly these nine paths:
-1. `agents/PR1021_workreport.md`
-2. `scripts/lfea-p0-ui-containment-check.mjs`
-3. `scripts/lfea-workbench-check.mjs`
-4. `src/workspace/lfea-workbench-controller.js`
-5. `src/workspace/lfea-workbench-document-store.js`
-6. `src/workspace/lfea-workbench-panels.js`
-7. `src/workspace/lfea-workbench-run-store.js`
-8. `src/workspace/lfea-workbench-styles.js`
-9. `src/workspace/lfea-workbench-view.js`
+S20 reconciled nine existing PR files. S22 is expected to add modifications to existing repository files outside that prior nine-file set; each must be reconciled after implementation:
+- `src/workspace/linear-piping-support-actions-publication.js`
+- `src/workspace/event-payload-validators.js`
+- `src/workspace/lfea-support-actions-panel.js`
+- `src/workspace/linear-piping-support-action-xlsx.js`
+- `scripts/linear-piping-support-actions-publication-check.mjs`
+- `scripts/linear-piping-support-actions-publication-source-guard.mjs`
+- `scripts/lfea-support-actions-panel-check.mjs`
+- `scripts/linear-piping-support-action-xlsx-check.mjs`
+- plus this report.
 
-S21 is audit-only until a registered defect authorizes a new changed file.
+No `.github/workflows/*` change is authorized.
 
 ## 7. Validation and Evidence Ledger
 
 | Validation | Status |
 |---|---|
-| C01–C04 source/store guards | IMPLEMENTED / SOURCE-INSPECTED |
-| H01–H03/H05/H06 guards | IMPLEMENTED / SOURCE-INSPECTED |
-| M01/M04/M06/M08 guards | IMPLEMENTED / PATCH-INSPECTED |
+| Local workbench C/H/M source/store guards | IMPLEMENTED / SOURCE-INSPECTED |
 | S20 changed-file/ancestry/workflow reconciliation | PASS |
-| S21 architecture source audit | IN_PROGRESS |
+| S21 sign/provenance audit | PASS — defects ISS-020/021 grounded |
+| S22 publication/panel/XLSX source checks | PENDING |
 | Full `npm run check:lfea-workbench` | **NOT_RUN** |
 | Browser interaction/presentation | **NOT_RUN** |
 
-## 8. Examples / Edge Cases Retained
+## 8. Examples / Edge Cases
 
-- No Worker: Cancel/model edit during queued yield prevents stale deferred solve execution.
-- Dirty editors survive benign render but cannot cross a committed model identity change.
-- Stale imported semantic hash is rejected rather than automatically repaired.
-- Evidence export requires current qualified execution.
-- Mixed T3/Q4 settings report actual element families.
-- Quality ratios/cosines are descriptive after upstream geometry validity qualification; no UI threshold is invented.
-- Vertical pipe tangent parallel to global up must not receive an arbitrary lateral axis.
-- Support force handoff must distinguish “force on pipe from interface” from any inverted reporting convention.
-- OPE/SUS/EXP/OCC/thermal or other physical case identity must not be collapsed into an anonymous envelope without governing-case provenance.
+- Interface definition reports `FORCE_ON_INTERFACE_FROM_PIPE`: recovery reverses solver reaction sign; publication/panel/XLSX must explicitly retain that convention.
+- Different interfaces may use different reporting conventions, so sign convention belongs per action/row rather than a single assumed global convention.
+- Vertical tangent parallel to gravity-up remains `BLOCKED_AXIS_DEGENERATE`: axial force may be reported, lateral/vertical remain null; sign provenance must still be present for axial force.
+- An XLSX action whose supplied sign convention differs from its current presentation interface row must be rejected as stale/inconsistent.
+- Physical load-case hash remains provenance distinct from human `loadCaseId`.
 
 ## 9. Known Risks / Roadmap
 
-Highest-value active item: `IMP-002` S21 audit. Existing risks retained:
-- `RISK-001` local continuum von Mises versus piping-code stress authority;
-- `RISK-002` reaction sign convention visibility;
-- nonlinear restraint/support semantic fidelity;
-- load-case provenance;
-- coordinate-transform/handedness and bend/branch/reducer/rigid geometry handoffs;
-- vertical support triad authority.
-
-Future correlation suite should cover anchor, guide/line-stop, vertical riser, elbow, branch, expansion loop and directional support, comparing displacement, global reactions, local support actions and governing physical load case against a CAESAR/reference baseline.
+After S22/S23, continue IMP-002 audit for restraint/support semantic fidelity (guides, line stops, directional, gaps, friction, springs), physical case provenance and code-stress authority. RISK-001 remains open. QST-001 remains blocked by lack of authoritative vertical secondary axis; do not choose an arbitrary fallback.
 
 ## 10. Recommended Forward Sequence
 
-1. Complete S21 source audit and register concrete defects or explicitly record no defect.
-2. If defects exist, update this report before S22 production changes and implement the smallest authority-preserving fixes.
-3. Reconcile after each S22+ logical stage; keep all work on PR #1021.
-4. Before merge, execute missing workbench command and targeted browser tests at exact final head.
+1. Implement S22 exactly as registered; update this report after the stage.
+2. Reconcile changed files/base ancestry/no-workflow constraint in S23.
+3. Continue architecture audit only for source-proven engineering defects.
+4. Before merge, run missing repository/browser validation on exact final PR head.
 
-## 11. Next-Agent Handover
+## 11. Handover
 
-Current stopping point: S20 is cleanly reconciled; S21 audit is open before code. Do not redo local workbench remediation. Start with upstream/pre-FEA/linear-piping interface/support-action sources and register findings before edits.
-
-Known failing checks: none observed through source inspection. Full repository/browser validation remains NOT_RUN.
+Current stopping point: S22 opened before production edits. Start with publication schema/sign field, then validator/panel/tests, then XLSX validation/export/tests. Do not alter core recovery sign calculation; it is already explicit and parent-validated.
 
 ## 12. Process Notes
 
-- Audit-first for architecture changes.
-- Source guards, runtime tests and browser behavior are separate evidence classes.
-- Authority, coordinate basis, sign convention and physical case provenance are first-class engineering data.
-- Unsupported behavior should block explicitly rather than silently degrade to a different physical model.
+- Sign convention is engineering provenance, not cosmetic metadata.
+- A hashed recovery can preserve sign internally while downstream human exports still become ambiguous if the convention is dropped.
+- Version required payload contracts when adding required engineering meaning.
+- Fail closed on mismatched sign provenance rather than trusting caller-supplied text.
 
 ## 13. PR Continuation Record
 
 | Criterion | Current result |
 |---|---|
-| C01–C04 | IMPLEMENTED + GUARDED |
-| H01–H03/H05/H06 | IMPLEMENTED + GUARDED |
-| H04 | DEFERRED / RE-GROUND |
-| M01/M04/M06/M08 | IMPLEMENTED + GUARDED |
+| Local workbench issue slice | IMPLEMENTED + GUARDED |
 | S20 reconciliation | COMPLETE |
-| S21 audit | IN_PROGRESS |
+| S21 audit | COMPLETE for sign/provenance path |
+| ISS-020/021 | ACCEPTED for S22 |
+| S22 implementation | IN_PROGRESS |
 | Full runtime/browser validation | **NOT_RUN** |
 | New CI workflows added | **NO** |
 | PR status | DRAFT |

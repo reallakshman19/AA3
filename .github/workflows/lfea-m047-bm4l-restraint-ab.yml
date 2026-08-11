@@ -1,0 +1,201 @@
+name: M047 BM4_L finite restraint stiffness A-B
+
+on:
+  workflow_dispatch:
+  pull_request:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  restraint-ab:
+    if: github.event_name == 'workflow_dispatch' || github.head_ref == 'agent/m047-bm4l-root-cause-991'
+    runs-on: windows-2022
+    timeout-minutes: 30
+    steps:
+      - name: Checkout Advanced_Analysis
+        uses: actions/checkout@v4
+
+      - name: Checkout pinned Common source
+        uses: actions/checkout@v4
+        with:
+          repository: reallaksh19/Common
+          ref: 45d51ea18624f5775805f399110c1738301c0d90
+          path: _common
+          fetch-depth: 1
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci --ignore-scripts
+
+      - name: Install signed Microsoft ACE 2016 x64
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $installer = Join-Path $env:RUNNER_TEMP 'accessdatabaseengine_X64.exe'
+          Invoke-WebRequest -Uri 'https://download.microsoft.com/download/3/5/C/35C84C36-661A-44E6-9324-8786B8DBE231/accessdatabaseengine_X64.exe' -OutFile $installer
+          $signature = Get-AuthenticodeSignature -FilePath $installer
+          if ($signature.Status -ne 'Valid' -or [string]$signature.SignerCertificate.Subject -notmatch 'Microsoft') { throw 'Microsoft ACE installer signature check failed.' }
+          $p = Start-Process -FilePath $installer -ArgumentList '/quiet','/norestart' -Wait -PassThru
+          if ($p.ExitCode -notin @(0,3010)) { throw "ACE install failed with exit $($p.ExitCode)" }
+
+      - name: Extract and verify pinned BM4_L ACCDB
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          New-Item -ItemType Directory -Force -Path artifacts | Out-Null
+          $zip = Join-Path $PWD '_common/LFEA/BM4/BM4_L.zip'
+          if ((Get-FileHash -Algorithm SHA256 $zip).Hash.ToLowerInvariant() -ne '978617cba50fa0b1a16c2fa71dc1e0d38e55ac834b191f887d100c6951abd8b9') { throw 'ZIP custody mismatch.' }
+          $extract = Join-Path $env:RUNNER_TEMP 'bm4l-restraint-ab'
+          Expand-Archive -LiteralPath $zip -DestinationPath $extract -Force
+          $accdb = Join-Path $extract 'BM4_L.ACCDB'
+          if ((Get-FileHash -Algorithm SHA256 $accdb).Hash.ToLowerInvariant() -ne '64c05a50e9ed0452622ff5880335460486f24ac8e6adecc9a300b549c9aa82f8') { throw 'ACCDB custody mismatch.' }
+          "BM4L_ACCDB=$accdb" | Out-File -FilePath $env:GITHUB_ENV -Append -Encoding utf8
+
+      - name: Run frozen L2 baseline
+        shell: pwsh
+        run: |
+          node scripts/lfea-caesar-accdb-benchmark.mjs `
+            --accdb "$env:BM4L_ACCDB" `
+            --profile benchmarks/LFEA/CAESAR_ACCDB/bm4l-validation.profile.json `
+            --solve-linear true `
+            --solve-cases L2 `
+            --actual-out artifacts/l2-baseline-actual.json `
+            --out artifacts/l2-baseline-report.json `
+            --summary-out artifacts/l2-baseline-summary.md
+
+      - name: Patch only restraint representation in disposable checkout
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $path = 'src/core/fea-benchmarks/caesar-accdb-linear-solve.js'
+          $text = Get-Content $path -Raw
+          $old = @'
+          function restraintConstraints(rows) {
+            const constraints = new Map();
+            for (const row of rows) {
+              const type = Number(row.RES_TYPEID);
+              const nodeId = String(row.NODE_NUM);
+              const dofs = type === 1 ? [...DOFS] : [dominantTranslationDof(row)];
+              for (const dof of dofs) {
+                const key = `${nodeId}:${dof}`;
+                constraints.set(key, {
+                  declarationId: `ACCDB-C-${nodeId}-${dof}`,
+                  kind: 'NODAL_RESTRAINT',
+                  nodeId,
+                  dof,
+                  behavior: 'FIXED',
+                });
+              }
+            }
+            return [...constraints.values()].sort((left, right) => compareText(left.declarationId, right.declarationId));
+          }
+          '@
+          $new = @'
+          function restraintConstraints(rows) {
+            // Diagnostic counterfactual only. BM4_L authority supplies 1.0E12 in
+            // displayed CAESAR units; INPUT_UNITS declares N/cm translation and
+            // N*m/deg rotation. Convert once into solver SI N/m and N*m/rad.
+            // PARTIAL_RELEASE_SPRING is the compiler's existing nodal linear-spring
+            // declaration path; it compiles to behavior LINEAR_SPRING unchanged.
+            const translationalStiffnessNPerM = 1e12 * 100;
+            const rotationalStiffnessNmPerRad = 1e12 * 180 / Math.PI;
+            const constraints = new Map();
+            for (const row of rows) {
+              const type = Number(row.RES_TYPEID);
+              const nodeId = String(row.NODE_NUM);
+              const dofs = type === 1 ? [...DOFS] : [dominantTranslationDof(row)];
+              for (const dof of dofs) {
+                const key = `${nodeId}:${dof}`;
+                constraints.set(key, {
+                  declarationId: `ACCDB-C-${nodeId}-${dof}`,
+                  kind: 'PARTIAL_RELEASE_SPRING',
+                  nodeId,
+                  dof,
+                  stiffness: dof.startsWith('U')
+                    ? translationalStiffnessNPerM
+                    : rotationalStiffnessNmPerRad,
+                });
+              }
+            }
+            return [...constraints.values()].sort((left, right) => compareText(left.declarationId, right.declarationId));
+          }
+          '@
+          if (-not $text.Contains($old)) { throw 'Restraint constraint source shape changed.' }
+          $text = $text.Replace($old, $new)
+          Set-Content -Path $path -Value $text -Encoding utf8
+          $diff = (git diff -- $path) -join "`n"
+          $diff | Out-File artifacts/restraint-finite-transient.patch -Encoding utf8
+          if (-not $diff.Contains("kind: 'PARTIAL_RELEASE_SPRING'") -or -not $diff.Contains('1e12 * 100')) { throw 'Finite-restraint transient patch was not recorded.' }
+
+      - name: Run L2 finite-restraint diagnostic
+        shell: pwsh
+        run: |
+          node scripts/lfea-caesar-accdb-benchmark.mjs `
+            --accdb "$env:BM4L_ACCDB" `
+            --profile benchmarks/LFEA/CAESAR_ACCDB/bm4l-validation.profile.json `
+            --solve-linear true `
+            --solve-cases L2 `
+            --actual-out artifacts/l2-finite-restraint-actual.json `
+            --out artifacts/l2-finite-restraint-report.json `
+            --summary-out artifacts/l2-finite-restraint-summary.md
+
+      - name: Record A-B count and equilibrium signature
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $base = Get-Content artifacts/l2-baseline-report.json -Raw | ConvertFrom-Json
+          $test = Get-Content artifacts/l2-finite-restraint-report.json -Raw | ConvertFrom-Json
+          function Counts($r) {
+            $case = $r.qualification.cases[0]
+            $rows = @($case.comparison.rows | Where-Object status -eq 'FAIL')
+            $restraint = @($rows | Where-Object { $_.entityKind -eq 'NODE' -and $_.quantity -in @('FORCE','MOMENT') }).Count
+            $disp = @($rows | Where-Object { $_.entityKind -eq 'NODE' -and $_.quantity -in @('DISPLACEMENT','ROTATION') }).Count
+            $actions = @($rows | Where-Object { $_.entityKind -eq 'ELEMENT' -and $_.quantity -like 'GLOBAL_END_*' }).Count
+            [ordered]@{
+              restraint = $restraint
+              displacementRotation = $disp
+              elementEnd = $actions
+              totalTargeted = $restraint + $disp + $actions
+              equilibrium = $case.actualEvidence.recoveredEquilibrium
+            }
+          }
+          $b = Counts $base
+          $t = Counts $test
+          $out = [ordered]@{
+            schema = 'lfea-m047-single-factor-ab/v1'
+            hypothesis = 'CAESAR_FINITE_DEFAULT_RESTRAINT_STIFFNESS'
+            changedField = 'restraintConstraints FIXED -> grounded LINEAR_SPRING via existing PARTIAL_RELEASE_SPRING declaration path'
+            authority = 'BM4_L overall global default 1.0E12 displayed CAESAR units; formulation remains unresolved/provisional'
+            inputUnits = [ordered]@{ translation = 'N/cm'; rotation = 'N*m/deg' }
+            convertedStiffness = [ordered]@{
+              translationNPerM = 1e14
+              rotationNmPerRad = 1e12 * 180 / [Math]::PI
+            }
+            sourceSha256 = $base.source.sha256
+            baseline = $b
+            test = $t
+            deltaFailures = [ordered]@{
+              restraint = $t.restraint - $b.restraint
+              displacementRotation = $t.displacementRotation - $b.displacementRotation
+              elementEnd = $t.elementEnd - $b.elementEnd
+              totalTargeted = $t.totalTargeted - $b.totalTargeted
+            }
+          }
+          $out | ConvertTo-Json -Depth 20 | Out-File artifacts/l2-restraint-ab.json -Encoding utf8
+          $out | ConvertTo-Json -Depth 20
+
+      - name: Upload A-B evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: bm4l-l2-restraint-ab-${{ github.sha }}
+          path: artifacts/
+          if-no-files-found: error
+          retention-days: 14

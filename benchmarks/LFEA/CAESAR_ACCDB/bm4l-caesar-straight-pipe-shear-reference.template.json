@@ -1,0 +1,53 @@
+{
+  "schema": "lfea-m047-caesar-straight-pipe-shear-reference/v1",
+  "status": "PENDING_CAESAR_II_14_RUN",
+  "source": "CAESAR II 14 straight-pipe cantilever microbenchmark; BM4_L pipe sections; no BM4 reference residuals used",
+  "caesarVersion": "14.000",
+  "modelProtocol": "One straight PIPE element along global X; node 10 fully anchored; node 20 free; W/T/P disabled; one transverse F1 at node 20; L1=F1; no bends, rigids, reducers, tees, springs or intermediate nodes. Run each listed length as a separate otherwise-identical job. Record free-node transverse displacement and corresponding bending rotation from CAESAR output.",
+  "tolerances": {
+    "rotationTolerance": 0.03,
+    "linearityTolerance": 0.05,
+    "kappaCvTolerance": 0.08,
+    "eulerShearFractionTolerance": 0.0001
+  },
+  "sections": [
+    {
+      "sectionId": "BM4L-OD273-T18.263",
+      "outerDiameterM": 0.273,
+      "wallThicknessM": 0.018263,
+      "elasticModulusPa": null,
+      "poissonRatio": null,
+      "shearModulusPa": null,
+      "notes": "Fill E, nu and (if CAESAR exposes/overrides it) G from the same CAESAR job authority used for the unit-load runs. Do not infer these values from BM4 residuals.",
+      "tests": [
+        { "testId": "OD273-Y-4D", "axis": "Y", "lengthM": 1.092, "forceN": 10000, "tipDisplacementM": null, "tipRotationRad": null },
+        { "testId": "OD273-Y-8D", "axis": "Y", "lengthM": 2.184, "forceN": 10000, "tipDisplacementM": null, "tipRotationRad": null },
+        { "testId": "OD273-Y-16D", "axis": "Y", "lengthM": 4.368, "forceN": 10000, "tipDisplacementM": null, "tipRotationRad": null },
+        { "testId": "OD273-Y-32D", "axis": "Y", "lengthM": 8.736, "forceN": 10000, "tipDisplacementM": null, "tipRotationRad": null },
+        { "testId": "OD273-Z-4D", "axis": "Z", "lengthM": 1.092, "forceN": 10000, "tipDisplacementM": null, "tipRotationRad": null },
+        { "testId": "OD273-Z-8D", "axis": "Z", "lengthM": 2.184, "forceN": 10000, "tipDisplacementM": null, "tipRotationRad": null },
+        { "testId": "OD273-Z-16D", "axis": "Z", "lengthM": 4.368, "forceN": 10000, "tipDisplacementM": null, "tipRotationRad": null },
+        { "testId": "OD273-Z-32D", "axis": "Z", "lengthM": 8.736, "forceN": 10000, "tipDisplacementM": null, "tipRotationRad": null }
+      ]
+    },
+    {
+      "sectionId": "BM4L-OD168.3-T10.973",
+      "outerDiameterM": 0.1683,
+      "wallThicknessM": 0.010973,
+      "elasticModulusPa": null,
+      "poissonRatio": null,
+      "shearModulusPa": null,
+      "notes": "Fill E, nu and (if CAESAR exposes/overrides it) G from the same CAESAR job authority used for the unit-load runs. Do not infer these values from BM4 residuals.",
+      "tests": [
+        { "testId": "OD168-Y-4D", "axis": "Y", "lengthM": 0.6732, "forceN": 10000, "tipDisplacementM": null, "tipRotationRad": null },
+        { "testId": "OD168-Y-8D", "axis": "Y", "lengthM": 1.3464, "forceN": 10000, "tipDisplacementM": null, "tipRotationRad": null },
+        { "testId": "OD168-Y-16D", "axis": "Y", "lengthM": 2.6928, "forceN": 10000, "tipDisplacementM": null, "tipRotationRad": null },
+        { "testId": "OD168-Y-32D", "axis": "Y", "lengthM": 5.3856, "forceN": 10000, "tipDisplacementM": null, "tipRotationRad": null },
+        { "testId": "OD168-Z-4D", "axis": "Z", "lengthM": 0.6732, "forceN": 10000, "tipDisplacementM": null, "tipRotationRad": null },
+        { "testId": "OD168-Z-8D", "axis": "Z", "lengthM": 1.3464, "forceN": 10000, "tipDisplacementM": null, "tipRotationRad": null },
+        { "testId": "OD168-Z-16D", "axis": "Z", "lengthM": 2.6928, "forceN": 10000, "tipDisplacementM": null, "tipRotationRad": null },
+        { "testId": "OD168-Z-32D", "axis": "Z", "lengthM": 5.3856, "forceN": 10000, "tipDisplacementM": null, "tipRotationRad": null }
+      ]
+    }
+  ]
+}

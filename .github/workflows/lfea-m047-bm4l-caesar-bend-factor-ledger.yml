@@ -1,0 +1,89 @@
+name: M047 BM4_L CAESAR bend factor ledger
+
+on:
+  pull_request:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  bend-factor-ledger:
+    if: github.head_ref == 'agent/m047-bm4l-root-cause-991'
+    runs-on: windows-2022
+    timeout-minutes: 25
+    steps:
+      - name: Checkout factor-ledger implementation
+        uses: actions/checkout@v4
+        with:
+          ref: d6ca2eb7eb91839a196ed9bea20c0b068e04b931
+          fetch-depth: 1
+
+      - name: Checkout source and CAESAR Misc report
+        uses: actions/checkout@v4
+        with:
+          repository: reallaksh19/Common
+          ref: 179c4831cf521cf797c13699cfbbd118315c9244
+          path: _common
+          fetch-depth: 1
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci --ignore-scripts
+
+      - name: Install signed Microsoft ACE 2016 x64
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $installer = Join-Path $env:RUNNER_TEMP 'accessdatabaseengine_X64.exe'
+          Invoke-WebRequest -Uri 'https://download.microsoft.com/download/3/5/C/35C84C36-661A-44E6-9324-8786B8DBE231/accessdatabaseengine_X64.exe' -OutFile $installer
+          $signature = Get-AuthenticodeSignature -FilePath $installer
+          if ($signature.Status -ne 'Valid' -or [string]$signature.SignerCertificate.Subject -notmatch 'Microsoft') { throw 'Microsoft ACE installer signature check failed.' }
+          $p = Start-Process -FilePath $installer -ArgumentList '/quiet','/norestart' -Wait -PassThru
+          if ($p.ExitCode -notin @(0,3010)) { throw "ACE install failed with exit $($p.ExitCode)" }
+
+      - name: Extract and verify pinned BM4_L ACCDB
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          New-Item -ItemType Directory -Force -Path artifacts | Out-Null
+          $zip = '_common/LFEA/BM4/BM4_L.zip'
+          if ((Get-FileHash -Algorithm SHA256 $zip).Hash.ToLowerInvariant() -ne '978617cba50fa0b1a16c2fa71dc1e0d38e55ac834b191f887d100c6951abd8b9') { throw 'ZIP custody mismatch.' }
+          $extract = Join-Path $env:RUNNER_TEMP 'bm4l-factor-ledger'
+          Expand-Archive -LiteralPath $zip -DestinationPath $extract -Force
+          $accdb = Join-Path $extract 'BM4_L.ACCDB'
+          if ((Get-FileHash -Algorithm SHA256 $accdb).Hash.ToLowerInvariant() -ne '64c05a50e9ed0452622ff5880335460486f24ac8e6adecc9a300b549c9aa82f8') { throw 'ACCDB custody mismatch.' }
+          "BM4L_ACCDB=$accdb" | Out-File -FilePath $env:GITHUB_ENV -Append -Encoding utf8
+
+      - name: Export factor input tables
+        shell: powershell
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $json = (& ./scripts/lfea-caesar-accdb-export.ps1 `
+            -AccdbPath "$env:BM4L_ACCDB" `
+            -TablesCsv 'INPUT_BASIC_ELEMENT_DATA,INPUT_BENDS') -join [Environment]::NewLine
+          $utf8NoBom = New-Object System.Text.UTF8Encoding($false)
+          [System.IO.File]::WriteAllText((Join-Path $PWD 'artifacts/factor-input.json'), $json, $utf8NoBom)
+
+      - name: Compare LFEA factors to CAESAR report
+        shell: pwsh
+        run: |
+          node scripts/lfea-m047-bm4l-caesar-bend-factor-ledger.mjs `
+            --raw artifacts/factor-input.json `
+            --misc _common/LFEA/BM4/Miscdata_BM4_L.txt `
+            --out artifacts/bend-factor-ledger.json `
+            --md artifacts/bend-factor-ledger.md
+
+      - name: Upload bend factor evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: bm4l-caesar-bend-factor-ledger-${{ github.sha }}
+          path: artifacts/
+          if-no-files-found: error
+          retention-days: 14

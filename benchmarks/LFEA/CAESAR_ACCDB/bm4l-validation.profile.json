@@ -99,14 +99,14 @@
         }
       },
       "loadCase": {
-        "source": "USER_VERIFIED_BM4_L_CASE_SETTINGS_2026-08-10",
+        "source": "COMMON_179C4831_CAESAR14_LOADCASEREPORT_BM4_L_2026-08-10",
         "cases": {
           "L1": {},
-          "L2": { "COEFFICIENT_OF_FRICTION_MU": 0 },
+          "L2": { "COEFFICIENT_OF_FRICTION_MU": 0, "FLEXIBILITY_ELASTIC_MODULUS": "EC" },
           "L3": { "COEFFICIENT_OF_FRICTION_MU": 0, "FLEXIBILITY_ELASTIC_MODULUS": "EC" },
-          "L4": { "COEFFICIENT_OF_FRICTION_MU": 0 },
+          "L4": { "COEFFICIENT_OF_FRICTION_MU": 0, "FLEXIBILITY_ELASTIC_MODULUS": "EC" },
           "L5": { "COEFFICIENT_OF_FRICTION_MU": 0, "FLEXIBILITY_ELASTIC_MODULUS": "EC" },
-          "L6": { "COEFFICIENT_OF_FRICTION_MU": 0 },
+          "L6": { "COEFFICIENT_OF_FRICTION_MU": 0, "FLEXIBILITY_ELASTIC_MODULUS": "EC" },
           "L7": { "FLEXIBILITY_ELASTIC_MODULUS": "EC" },
           "L13": {},
           "L14": { "COEFFICIENT_OF_FRICTION_MU": 0 },
@@ -116,27 +116,17 @@
     },
     "unresolvedSettings": [
       {
-        "setting": "B31J_SMOOTH_90_CORRECTION",
-        "caseId": null,
-        "reason": "APPLY_B31J_SIFS_AND_FLEX=DEFAULT does not establish the CAESAR smooth-90/B31J Note-3 choice for this file."
-      },
-      {
         "setting": "RESTRAINT_FORMULATION",
         "caseId": null,
         "reason": "Support direction is bidirectional, but exact CAESAR application of the finite default stiffness is not established."
-      },
-      {
-        "setting": "THERMAL_EXPANSION_STRAIN",
-        "caseId": null,
-        "reason": "The ACCDB exports T1 but not the CAESAR material-library total strain from 21 C to 120 C; Print Alphas evidence is still required."
       }
     ]
   },
   "linearSolve": {
     "thermalExpansion": {
-      "coefficientPerKelvin": 0.0000117,
-      "authorityStatus": "PROVISIONAL",
-      "source": "[GUESSED] PROVISIONAL_A106_GRADE_B_CTE_PENDING_CAESAR_PRINT_ALPHAS"
+      "coefficientPerKelvin": 0.000012231991077614186,
+      "authorityStatus": "RESOLVED",
+      "source": "[DERIVED_FROM_BM4_L_ACCDB] T1_TOTAL_STRAIN=0.0012109671166838044 from OUTPUT_DISPLACEMENTS + OUTPUT_LOCAL_ELEMENT_FORCES axial constitutive inversion; BM4_L.ACCDB SHA256 64c05a50e9ed0452622ff5880335460486f24ac8e6adecc9a300b549c9aa82f8; audit run 31401624139 artifact 9067948232; L3/L14 medians identical across 42 usable non-bend-adjacent ordinary straight spans; no LFEA comparison rows consumed."
     },
     "gravityAcceleration": 9.80665,
     "bourdonPressureEffects": {
@@ -146,15 +136,20 @@
     "directionalB31JTeeFlexibility": true,
     "teeNominalDiameterRelativeTolerance": 0.001,
     "reducerCondensation": true,
+    "straightPipeTransverseShear": {
+      "mode": "COWPER_HOLLOW_CIRCLE_TIMOSHENKO",
+      "authorityStatus": "RESOLVED",
+      "source": "BM4_L.ACCDB-only straight-span constitutive audit: source SHA-256 64c05a50e9ed0452622ff5880335460486f24ac8e6adecc9a300b549c9aa82f8; run 31398521355 / artifact 9066681744. In both L3 and L4, all 54 usable ordinary straight spans favor section-derived Cowper/Timoshenko over Euler; no LFEA comparison rows or failure counts are consumed."
+    },
     "b31jSmooth90FlexibilityCorrection": {
-      "enabled": false,
-      "authorityStatus": "UNRESOLVED",
-      "source": "BM4_L_CONFIGURATION_AUTHORITY:B31J_SMOOTH_90_CORRECTION"
+      "enabled": true,
+      "authorityStatus": "RESOLVED",
+      "source": "HEXAGON_CAESAR_II_14_B31J_METHODS_B31_3_2022_DEFAULT_APPLIES_B31J_2017_SMOOTH90_1_3_OVER_H"
     },
     "bendPressureStiffening": {
-      "pressureSource": "MAX_DEFINED",
+      "pressureSource": "P1",
       "authorityStatus": "RESOLVED",
-      "source": "CAESAR_USE_PRESSURE_STIFFENING_DEFAULT_B31_3_2022_AND_MAX_DEFINED_PRESSURE_RULE"
+      "source": "[SOURCE] COMMON@179c4831cf521cf797c13699cfbbd118315c9244:LFEA/BM4/Miscdata_BM4_L.txt BEND_REPORT; P1=11600_KPA_REPRODUCES_REPORTED_PRESSURE_STIFFENED_FLEX_AND_SIF_MINIMA; ZERO_PRESSURE_REPRODUCES_REPORTED_MAXIMA"
     },
     "restraintRepresentation": {
       "mode": "FIXED_DOF",

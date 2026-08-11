@@ -1,0 +1,65 @@
+name: M047 ACE provider probe
+
+on:
+  workflow_dispatch:
+  pull_request:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  ace-provider-probe:
+    if: github.event_name == 'workflow_dispatch' || github.head_ref == 'agent/m047-bm4l-root-cause-991'
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [windows-2022, windows-2025]
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 10
+    steps:
+      - name: Probe 64-bit and 32-bit ACE COM providers
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Continue'
+          $script = @'
+          $result = [ordered]@{ processBitness = if ([Environment]::Is64BitProcess) { '64' } else { '32' }; providers = @(); connectionOpen = $false; error = $null }
+          try {
+            $conn = New-Object -ComObject ADODB.Connection
+            $result.providers += 'ADODB.Connection'
+            try {
+              $conn.Open('Provider=Microsoft.ACE.OLEDB.12.0;Data Source=Z:\definitely-missing.accdb;Mode=Read;Persist Security Info=False;')
+              $result.connectionOpen = $true
+            } catch {
+              $result.error = $_.Exception.Message
+            } finally {
+              if ($conn.State -ne 0) { $conn.Close() }
+              [void][System.Runtime.InteropServices.Marshal]::ReleaseComObject($conn)
+            }
+          } catch {
+            $result.error = $_.Exception.Message
+          }
+          $result | ConvertTo-Json -Compress
+          '@
+
+          Write-Host '64-bit probe:'
+          & powershell.exe -NoLogo -NoProfile -NonInteractive -Command $script
+
+          $x86 = Join-Path $env:WINDIR 'SysWOW64\WindowsPowerShell\v1.0\powershell.exe'
+          if (Test-Path $x86) {
+            Write-Host '32-bit probe:'
+            & $x86 -NoLogo -NoProfile -NonInteractive -Command $script
+          } else {
+            Write-Host '32-bit PowerShell unavailable.'
+          }
+
+      - name: Discover Microsoft Access Runtime packages without installing
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Continue'
+          Write-Host 'winget version:'
+          winget --version
+          Write-Host 'Search: Access Runtime'
+          winget search --source winget --accept-source-agreements "Access Runtime"
+          Write-Host 'Search: Microsoft Access'
+          winget search --source winget --accept-source-agreements "Microsoft Access"

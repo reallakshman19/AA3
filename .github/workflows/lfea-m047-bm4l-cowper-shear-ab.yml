@@ -1,0 +1,206 @@
+name: M047 BM4_L Cowper annulus shear A-B
+
+on:
+  push:
+    branches: [agent/m047-bm4l-root-cause-991]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  cowper-shear-ab:
+    runs-on: windows-2022
+    timeout-minutes: 40
+    steps:
+      - name: Checkout canonical 788 implementation
+        uses: actions/checkout@v4
+        with:
+          ref: 78652ac554dd4f1f4a6c230b891122bd9386077a
+          fetch-depth: 1
+
+      - name: Checkout pinned Common source
+        uses: actions/checkout@v4
+        with:
+          repository: reallaksh19/Common
+          ref: 179c4831cf521cf797c13699cfbbd118315c9244
+          path: _common
+          fetch-depth: 1
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci --ignore-scripts
+
+      - name: Install signed Microsoft ACE 2016 x64
+        shell: pwsh
+        run: |
+          $ErrorActionPreference='Stop'
+          $installer=Join-Path $env:RUNNER_TEMP 'accessdatabaseengine_X64.exe'
+          Invoke-WebRequest -Uri 'https://download.microsoft.com/download/3/5/C/35C84C36-661A-44E6-9324-8786B8DBE231/accessdatabaseengine_X64.exe' -OutFile $installer
+          $sig=Get-AuthenticodeSignature $installer
+          if($sig.Status-ne'Valid' -or [string]$sig.SignerCertificate.Subject-notmatch'Microsoft'){throw 'ACE signature check failed.'}
+          $p=Start-Process $installer -ArgumentList '/quiet','/norestart' -Wait -PassThru
+          if($p.ExitCode-notin@(0,3010)){throw "ACE install failed: $($p.ExitCode)"}
+
+      - name: Verify source custody
+        shell: pwsh
+        run: |
+          $ErrorActionPreference='Stop'
+          New-Item -ItemType Directory -Force -Path artifacts|Out-Null
+          $zip='_common/LFEA/BM4/BM4_L.zip'
+          if((Get-FileHash -Algorithm SHA256 $zip).Hash.ToLowerInvariant()-ne'978617cba50fa0b1a16c2fa71dc1e0d38e55ac834b191f887d100c6951abd8b9'){throw 'ZIP custody mismatch.'}
+          $dir=Join-Path $env:RUNNER_TEMP 'bm4l-cowper-shear'
+          Expand-Archive $zip $dir -Force
+          $accdb=Join-Path $dir 'BM4_L.ACCDB'
+          if((Get-FileHash -Algorithm SHA256 $accdb).Hash.ToLowerInvariant()-ne'64c05a50e9ed0452622ff5880335460486f24ac8e6adecc9a300b549c9aa82f8'){throw 'ACCDB custody mismatch.'}
+          "BM4L_ACCDB=$accdb"|Out-File $env:GITHUB_ENV -Append -Encoding utf8
+
+      - name: Run canonical 788 baseline
+        shell: pwsh
+        run: |
+          node scripts/lfea-caesar-accdb-benchmark.mjs --accdb "$env:BM4L_ACCDB" --profile benchmarks/LFEA/CAESAR_ACCDB/bm4l-validation.profile.json --solve-linear true --solve-cases L2,L3,L4,L5,L6,L14 --actual-out artifacts/baseline-actual.json --out artifacts/baseline-report.json --summary-out artifacts/baseline-summary.md
+
+      - name: Patch ordinary pipe spans to Cowper annulus Timoshenko shear
+        shell: pwsh
+        run: |
+          $ErrorActionPreference='Stop'
+          $path='src/core/fea-benchmarks/caesar-accdb-linear-solve.js'
+          $text=Get-Content $path -Raw
+
+          $callPattern='(?ms)  const frame = input\.stiffnessFrame \?\? compileUnloadedFrame\(\{\s+elementId: input\.elementId,\s+axesResult,\s+material: input\.material,\s+section: input\.section,\s+\}\);'
+          $matches=[regex]::Matches($text,$callPattern)
+          if($matches.Count-ne1){throw "Expected one compileUnloadedFrame call block; found $($matches.Count)."}
+          $callNew=@'
+          const frame = input.stiffnessFrame ?? compileUnloadedFrame({
+            elementId: input.elementId,
+            axesResult,
+            material: input.material,
+            section: input.section,
+            kind: input.kind,
+          });
+          '@
+          $text=[regex]::Replace($text,$callPattern,$callNew,1)
+
+          $functionPattern='(?ms)function compileUnloadedFrame\(input\) \{\s+return compileFrameElement\(\{\s+elementId: input\.elementId,\s+material: input\.material,\s+section: input\.section,\s+localAxes: \{ result: input\.axesResult, profile: FRAME_LOCAL_AXIS_PROFILE \},\s+profile: frameProfile\(\),\s+distributedLoads: \[\],\s+temperature: null,\s+releases: \[\],\s+endSprings: \[\],\s+rigidOffsets: null,\s+\}\);\s+\}'
+          $functionMatches=[regex]::Matches($text,$functionPattern)
+          if($functionMatches.Count-ne1){throw "Expected one compileUnloadedFrame function; found $($functionMatches.Count)."}
+          $new=@'
+          function compileUnloadedFrame(input) {
+            return compileFrameElement({
+              elementId: input.elementId,
+              material: input.material,
+              section: input.section,
+              localAxes: { result: input.axesResult, profile: FRAME_LOCAL_AXIS_PROFILE },
+              profile: input.kind === 'RIGID'
+                ? frameProfile()
+                : cowperAnnulusPipeFrameProfile(input.material, input.section),
+              distributedLoads: [],
+              temperature: null,
+              releases: [],
+              endSprings: [],
+              rigidOffsets: null,
+            });
+          }
+
+          function cowperAnnulusPipeFrameProfile(materialResolution, sectionResolution) {
+            const nu = materialResolution.materialState.poissonRatio;
+            const outerDiameter = sectionResolution.dimensions.outerDiameter;
+            const innerDiameter = sectionResolution.dimensions.innerDiameter;
+            const a = innerDiameter / outerDiameter;
+            const onePlusA2 = 1 + a * a;
+            const onePlusA2Squared = onePlusA2 * onePlusA2;
+            const kappa = (6 * (1 + nu) * onePlusA2Squared)
+              / ((7 + 6 * nu) * onePlusA2Squared + (20 + 12 * nu) * a * a);
+            if (!(kappa > 0 && kappa < 1)) {
+              throw new TypeError(`Cowper annulus shear correction is invalid: ${kappa}.`);
+            }
+            const authority = '[EXTERNAL] Cowper hollow-circle shear correction reproduced in S0020768325001933 Eq.58; geometry/material-derived, not benchmark-fitted';
+            return sealFrameElementProfile({
+              schema: 'fea-linear-frame-element-profile/v1',
+              profileId: 'LINEAR-FRAME-ELEMENT-R1',
+              straightPipeFormulation: 'PIPE_FRAME3D_TIMOSHENKO_V1',
+              shearDeformation: true,
+              shearCorrectionFactorY: { value: kappa, source: authority },
+              shearCorrectionFactorZ: { value: kappa, source: authority },
+              releaseRule: 'STATIC_CONDENSATION_V1',
+              thermalStrainApproximation: 'UNIFORM_TEMPERATURE_ALPHA_DELTA_T_V1',
+              releaseSingularityTolerance: { value: 1e-12, source: PROFILE_SOURCE },
+              semanticHash: '',
+            });
+          }
+          '@
+          $text=[regex]::Replace($text,$functionPattern,$new,1)
+          [IO.File]::WriteAllText((Join-Path $PWD $path),$text,(New-Object Text.UTF8Encoding($false)))
+          $diff=git diff -- $path | Out-String
+          if($diff -notmatch 'cowperAnnulusPipeFrameProfile' -or $diff -notmatch 'kind: input.kind'){throw 'Cowper patch verification failed.'}
+
+      - name: Run Cowper annulus shear variant
+        shell: pwsh
+        run: |
+          node scripts/lfea-caesar-accdb-benchmark.mjs --accdb "$env:BM4L_ACCDB" --profile benchmarks/LFEA/CAESAR_ACCDB/bm4l-validation.profile.json --solve-linear true --solve-cases L2,L3,L4,L5,L6,L14 --actual-out artifacts/cowper-actual.json --out artifacts/cowper-report.json --summary-out artifacts/cowper-summary.md
+
+      - name: Compare physically-derived shear signature
+        shell: pwsh
+        run: |
+          $ErrorActionPreference='Stop'
+          function Stats($report,$id){
+            $case=$report.qualification.cases|Where-Object caseId -eq $id
+            $fails=@($case.comparison.rows|Where-Object status -eq 'FAIL')
+            $r=@($fails|Where-Object{$_.entityKind-eq'NODE' -and $_.quantity-in@('FORCE','MOMENT')}).Count
+            $d=@($fails|Where-Object{$_.entityKind-eq'NODE' -and $_.quantity-in@('DISPLACEMENT','ROTATION')}).Count
+            $e=@($fails|Where-Object{$_.entityKind-eq'ELEMENT' -and $_.quantity-like'GLOBAL_END_*'}).Count
+            [ordered]@{restraint=$r;deformation=$d;elementEnd=$e;total=$r+$d+$e}
+          }
+          $base=Get-Content artifacts/baseline-report.json -Raw|ConvertFrom-Json
+          $after=Get-Content artifacts/cowper-report.json -Raw|ConvertFrom-Json
+          $expected=[ordered]@{L2=227;L3=129;L4=120;L5=97;L6=86;L14=129}
+          $cases=[ordered]@{};$bt=0;$at=0
+          foreach($id in $expected.Keys){
+            $b=Stats $base $id;$a=Stats $after $id
+            if($b.total-ne$expected[$id]){throw "788 baseline drift in $id"}
+            if($base.mechanics.cases.$id.recoveredEquilibrium.status-eq'FAIL'){throw "Baseline equilibrium failed in $id"}
+            if($after.mechanics.cases.$id.recoveredEquilibrium.status-eq'FAIL'){throw "Cowper equilibrium failed in $id"}
+            $cases[$id]=[ordered]@{baseline=$b;cowper=$a;delta=$a.total-$b.total}
+            $bt+=$b.total;$at+=$a.total
+          }
+          if($bt-ne788){throw "Baseline total drift: $bt"}
+
+          $nu=0.3
+          function Cowper($od,$wall){
+            $a=($od-2*$wall)/$od
+            $s=1+$a*$a
+            (6*(1+$nu)*$s*$s)/((7+6*$nu)*$s*$s+(20+12*$nu)*$a*$a)
+          }
+          $k273=Cowper 0.273 0.018263
+          $k1683=Cowper 0.1683 0.010973
+          if([math]::Abs($k273-0.5349818360)-gt1e-9){throw '273mm Cowper check drift.'}
+          if([math]::Abs($k1683-0.5347481746)-gt1e-9){throw '168.3mm Cowper check drift.'}
+
+          [ordered]@{
+            schema='lfea-m047-cowper-annulus-shear-ab/v1'
+            authorityStatus='PHYSICAL_THEORY_SOURCE_BACKED_CAESAR_IMPLEMENTATION_NOT_YET_EXPLICITLY_DOCUMENTED'
+            theory='Cowper hollow-circle Timoshenko shear correction; kappa derived per section from nu and ID/OD'
+            source='G.R. Cowper, Journal of Applied Mechanics 1966; hollow-circle formula independently reproduced in International Journal of Solids and Structures 2025 Eq.58'
+            caesarDocumentation='Hexagon CAESAR II Version 14 states material shear modulus is used to develop the stiffness matrix, but accessible help does not state its transverse-shear correction coefficient.'
+            application='ordinary non-bend pipe spans only; BEND_ARC remains on CAESAR B31J bend flexibility formulation; RIGID and REDUCER formulations unchanged'
+            caesarMiscSectionKappa=[ordered]@{'OD273_T18.263'=$k273;'OD168.3_T10.973'=$k1683}
+            baselineTotal=$bt
+            cowperTotal=$at
+            delta=$at-$bt
+            cases=$cases
+            acceptanceBoundary='This A-B uses a mechanics-derived section formula, not residual fitting. Promotion still requires a repository decision that continuum Cowper authority is sufficient for the CAESAR ordinary-pipe stiffness representation.'
+          }|ConvertTo-Json -Depth 20|Tee-Object artifacts/cowper-shear-ab.json
+
+      - name: Upload Cowper A-B evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: bm4l-cowper-shear-ab-${{ github.sha }}
+          path: artifacts/
+          if-no-files-found: error
+          retention-days: 14

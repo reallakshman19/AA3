@@ -1,0 +1,121 @@
+name: M047 BM4_L ACCDB schema authority inventory
+
+on:
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  schema-authority:
+    if: github.event_name == 'workflow_dispatch' || github.head_ref == 'agent/m047-bm4l-root-cause-991'
+    runs-on: windows-2022
+    timeout-minutes: 25
+    steps:
+      - name: Checkout Advanced_Analysis
+        uses: actions/checkout@v4
+
+      - name: Checkout pinned Common source
+        uses: actions/checkout@v4
+        with:
+          repository: reallaksh19/Common
+          ref: 45d51ea18624f5775805f399110c1738301c0d90
+          path: _common
+          fetch-depth: 1
+
+      - name: Install signed Microsoft ACE 2016 x64
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $installer = Join-Path $env:RUNNER_TEMP 'accessdatabaseengine_X64.exe'
+          Invoke-WebRequest -Uri 'https://download.microsoft.com/download/3/5/C/35C84C36-661A-44E6-9324-8786B8DBE231/accessdatabaseengine_X64.exe' -OutFile $installer
+          $signature = Get-AuthenticodeSignature -FilePath $installer
+          if ($signature.Status -ne 'Valid' -or [string]$signature.SignerCertificate.Subject -notmatch 'Microsoft') { throw 'Microsoft ACE installer signature check failed.' }
+          $p = Start-Process -FilePath $installer -ArgumentList '/quiet','/norestart' -Wait -PassThru
+          if ($p.ExitCode -notin @(0,3010)) { throw "ACE install failed with exit $($p.ExitCode)" }
+
+      - name: Extract and verify pinned BM4_L source
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          New-Item -ItemType Directory -Force -Path artifacts | Out-Null
+          $zip = '_common/LFEA/BM4/BM4_L.zip'
+          if ((Get-FileHash -Algorithm SHA256 $zip).Hash.ToLowerInvariant() -ne '978617cba50fa0b1a16c2fa71dc1e0d38e55ac834b191f887d100c6951abd8b9') { throw 'ZIP custody mismatch.' }
+          $extract = Join-Path $env:RUNNER_TEMP 'bm4l-schema-authority'
+          Expand-Archive -LiteralPath $zip -DestinationPath $extract -Force
+          $accdb = Join-Path $extract 'BM4_L.ACCDB'
+          $sourceHash = (Get-FileHash -Algorithm SHA256 $accdb).Hash.ToLowerInvariant()
+          if ($sourceHash -ne '64c05a50e9ed0452622ff5880335460486f24ac8e6adecc9a300b549c9aa82f8') { throw 'ACCDB custody mismatch.' }
+          "BM4L_ACCDB=$accdb" | Out-File -FilePath $env:GITHUB_ENV -Append -Encoding utf8
+          "BM4L_SOURCE_SHA256=$sourceHash" | Out-File -FilePath $env:GITHUB_ENV -Append -Encoding utf8
+
+      - name: Inventory all Access tables and columns
+        shell: powershell
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $provider = 'Microsoft.ACE.OLEDB.12.0'
+          $connection = New-Object System.Data.OleDb.OleDbConnection("Provider=$provider;Data Source=$env:BM4L_ACCDB;Persist Security Info=False;")
+          $connection.Open()
+          try {
+            $tablesSchema = $connection.GetSchema('Tables')
+            $columnsSchema = $connection.GetSchema('Columns')
+            $tableNames = @($tablesSchema.Rows | ForEach-Object { [string]$_.TABLE_NAME } | Where-Object { $_ -and $_ -notlike 'MSys*' } | Sort-Object -Unique)
+            $records = @()
+            foreach ($table in $tableNames) {
+              $columns = @($columnsSchema.Rows | Where-Object { [string]$_.TABLE_NAME -eq $table } | Sort-Object {[int]$_.ORDINAL_POSITION} | ForEach-Object {
+                [ordered]@{
+                  name=[string]$_.COLUMN_NAME
+                  ordinal=[int]$_.ORDINAL_POSITION
+                  dataType=[string]$_.DATA_TYPE
+                  nullable=[bool]$_.IS_NULLABLE
+                }
+              })
+              $records += [pscustomobject][ordered]@{ table=$table; columns=$columns }
+            }
+            $inventory=[ordered]@{
+              schema='lfea-m047-accdb-schema-inventory/v1'
+              sourceSha256=$env:BM4L_SOURCE_SHA256
+              provider=$provider
+              tableCount=$records.Count
+              tables=$records
+            }
+            $inventory | ConvertTo-Json -Depth 10 | Out-File artifacts/accdb-schema-inventory.json -Encoding utf8
+
+            $pattern='CASE|LCASE|ELBOW|BEND|STIFF|MODULUS|PRESS|HYDRO|TEMP|ALPHA|EXPAN|FRICT|BOURDON'
+            $hits=@()
+            foreach($record in $records){
+              $matching=@($record.columns | Where-Object { $_.name -match $pattern })
+              if($record.table -match $pattern -or $matching.Count -gt 0){
+                $hits += [pscustomobject][ordered]@{
+                  table=$record.table
+                  matchingColumns=@($matching | ForEach-Object name)
+                  allColumns=@($record.columns | ForEach-Object name)
+                }
+              }
+            }
+            $hits | ConvertTo-Json -Depth 8 | Out-File artifacts/authority-keyword-hits.json -Encoding utf8
+            $hits | Format-Table -AutoSize | Out-String -Width 4096 | Write-Host
+
+            $dedicated=@($hits | Where-Object {
+              $_.table -match 'CASE|LCASE' -or @($_.matchingColumns | Where-Object { $_ -match 'ELBOW.*STIFF|STIFF.*ELBOW|ELBOW.*MOD|MOD.*ELBOW' }).Count -gt 0
+            })
+            [ordered]@{
+              sourceSha256=$inventory.sourceSha256
+              tableCount=$records.Count
+              keywordHitTableCount=$hits.Count
+              dedicatedLoadCaseOrElbowStiffeningCandidates=$dedicated
+              conclusion=if($dedicated.Count -gt 0){'CANDIDATE_FIELDS_PRESENT'}else{'NO_DEDICATED_LOAD_CASE_OR_ELBOW_STIFFENING_FIELD_FOUND'}
+            } | ConvertTo-Json -Depth 10 | Tee-Object -FilePath artifacts/authority-conclusion.json
+          }
+          finally { $connection.Close() }
+
+      - name: Upload schema evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: bm4l-accdb-schema-authority-${{ github.sha }}
+          path: artifacts/
+          if-no-files-found: error
+          retention-days: 14

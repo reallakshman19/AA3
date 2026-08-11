@@ -1,0 +1,208 @@
+name: M047 BM4_L bend rotational flexibility A-B
+
+on:
+  workflow_dispatch:
+  pull_request:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  bend-rotational-ab:
+    if: github.event_name == 'workflow_dispatch' || github.head_ref == 'agent/m047-bm4l-root-cause-991'
+    runs-on: windows-2022
+    timeout-minutes: 35
+    steps:
+      - name: Checkout Advanced_Analysis
+        uses: actions/checkout@v4
+
+      - name: Checkout pinned Common source
+        uses: actions/checkout@v4
+        with:
+          repository: reallaksh19/Common
+          ref: 45d51ea18624f5775805f399110c1738301c0d90
+          path: _common
+          fetch-depth: 1
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci --ignore-scripts
+
+      - name: Install signed Microsoft ACE 2016 x64
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $installer = Join-Path $env:RUNNER_TEMP 'accessdatabaseengine_X64.exe'
+          Invoke-WebRequest -Uri 'https://download.microsoft.com/download/3/5/C/35C84C36-661A-44E6-9324-8786B8DBE231/accessdatabaseengine_X64.exe' -OutFile $installer
+          $signature = Get-AuthenticodeSignature -FilePath $installer
+          if ($signature.Status -ne 'Valid' -or [string]$signature.SignerCertificate.Subject -notmatch 'Microsoft') { throw 'Microsoft ACE installer signature check failed.' }
+          $p = Start-Process -FilePath $installer -ArgumentList '/quiet','/norestart' -Wait -PassThru
+          if ($p.ExitCode -notin @(0,3010)) { throw "ACE install failed with exit $($p.ExitCode)" }
+
+      - name: Extract and verify pinned BM4_L ACCDB
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          New-Item -ItemType Directory -Force -Path artifacts | Out-Null
+          $zip = Join-Path $PWD '_common/LFEA/BM4/BM4_L.zip'
+          if ((Get-FileHash -Algorithm SHA256 $zip).Hash.ToLowerInvariant() -ne '978617cba50fa0b1a16c2fa71dc1e0d38e55ac834b191f887d100c6951abd8b9') { throw 'ZIP custody mismatch.' }
+          $extract = Join-Path $env:RUNNER_TEMP 'bm4l-bend-rotational-ab'
+          Expand-Archive -LiteralPath $zip -DestinationPath $extract -Force
+          $accdb = Join-Path $extract 'BM4_L.ACCDB'
+          if ((Get-FileHash -Algorithm SHA256 $accdb).Hash.ToLowerInvariant() -ne '64c05a50e9ed0452622ff5880335460486f24ac8e6adecc9a300b549c9aa82f8') { throw 'ACCDB custody mismatch.' }
+          "BM4L_ACCDB=$accdb" | Out-File -FilePath $env:GITHUB_ENV -Append -Encoding utf8
+
+      - name: Run frozen L2 baseline
+        shell: pwsh
+        run: |
+          node scripts/lfea-caesar-accdb-benchmark.mjs `
+            --accdb "$env:BM4L_ACCDB" `
+            --profile benchmarks/LFEA/CAESAR_ACCDB/bm4l-validation.profile.json `
+            --solve-linear true `
+            --solve-cases L2 `
+            --actual-out artifacts/l2-baseline-actual.json `
+            --out artifacts/l2-baseline-report.json `
+            --summary-out artifacts/l2-baseline-summary.md
+
+      - name: Patch bend factor application to rotational end compliance in disposable checkout
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $elementsPath = 'src/core/linear-fea-piping-components/component-elements.js'
+          $bendPath = 'src/core/linear-fea-piping-components/bend-component.js'
+
+          $elements = Get-Content $elementsPath -Raw
+          $oldImport = @'
+          import {
+            compileFrameElement,
+            frameLocalStiffness,
+            transformStiffnessToGlobal,
+          } from '../linear-fea-frame-element/index.js';
+          '@
+          $newImport = @'
+          import {
+            compileFrameElement,
+            condenseEndConditions,
+            frameLocalStiffness,
+            transformStiffnessToGlobal,
+          } from '../linear-fea-frame-element/index.js';
+          '@
+          if (-not $elements.Contains($oldImport)) { throw 'Component-elements import shape changed.' }
+          $elements = $elements.Replace($oldImport, $newImport)
+
+          $replacement = @'
+          export function applyBendingFlexibilityCorrection(frameElement, factor, pivotTolerance) {
+            const value = requirePositive(factor, 'flexibilityFactor', 'PIPING_COMPONENT_FACTOR_SET_INVALID');
+            if (!(pivotTolerance > 0)) throw new TypeError('Diagnostic rotational bend correction requires the declared release pivot tolerance.');
+            if (value <= 1) {
+              return Object.freeze({
+                kind: 'BENDING_FLEXIBILITY_CORRECTION_V1',
+                factor: value,
+                appliedTo: Object.freeze(['BENDING_Y', 'BENDING_Z']),
+                localStiffness: frameElement.localStiffness,
+                globalStiffness: frameElement.globalStiffness,
+              });
+            }
+            const E = frameElement.material.elasticModulus;
+            const L = frameElement.geometry.length;
+            const addedCompliance = value - 1;
+            const springY = 2 * E * frameElement.section.secondMomentY / (addedCompliance * L);
+            const springZ = 2 * E * frameElement.section.secondMomentZ / (addedCompliance * L);
+            const condensed = condenseEndConditions(
+              frameElement.localStiffness,
+              [],
+              [
+                { index: 4, stiffness: springY },
+                { index: 5, stiffness: springZ },
+                { index: 10, stiffness: springY },
+                { index: 11, stiffness: springZ },
+              ],
+              pivotTolerance,
+            );
+            const local = condensed.matrix;
+            return Object.freeze({
+              kind: 'BENDING_FLEXIBILITY_CORRECTION_V1',
+              factor: value,
+              appliedTo: Object.freeze(['BENDING_Y', 'BENDING_Z']),
+              localStiffness: local,
+              globalStiffness: transformStiffnessToGlobal(local, frameElement.transformation.matrix),
+            });
+          }
+          '@
+          $pattern = '(?s)export function applyBendingFlexibilityCorrection\(frameElement, factor\) \{.*?\r?\n\}\r?\n\r?\n(?=/\*\*\r?\n \* Represent a valve or flange body)'
+          $regex = [regex]::new($pattern)
+          if (-not $regex.IsMatch($elements)) { throw 'Bend correction function shape changed.' }
+          $elements = $regex.Replace($elements, $replacement.TrimEnd() + "`r`n`r`n", 1)
+          Set-Content -Path $elementsPath -Value $elements -Encoding utf8
+
+          $bend = Get-Content $bendPath -Raw
+          $oldCall = 'const correction = applyBendingFlexibilityCorrection(frameElement, declaredFactor);'
+          $newCall = 'const correction = applyBendingFlexibilityCorrection(frameElement, declaredFactor, input.frameElementProfile.releaseSingularityTolerance.value);'
+          if (-not $bend.Contains($oldCall)) { throw 'Bend correction call shape changed.' }
+          $bend = $bend.Replace($oldCall, $newCall)
+          Set-Content -Path $bendPath -Value $bend -Encoding utf8
+
+          $diff = (git diff -- $elementsPath $bendPath) -join "`n"
+          $diff | Out-File artifacts/bend-rotational-transient.patch -Encoding utf8
+          if (-not $diff.Contains('condenseEndConditions') -or -not $diff.Contains('springY')) { throw 'Transient rotational formulation patch not recorded.' }
+
+      - name: Run L2 rotational-only bend flexibility diagnostic
+        shell: pwsh
+        run: |
+          node scripts/lfea-caesar-accdb-benchmark.mjs `
+            --accdb "$env:BM4L_ACCDB" `
+            --profile benchmarks/LFEA/CAESAR_ACCDB/bm4l-validation.profile.json `
+            --solve-linear true `
+            --solve-cases L2 `
+            --actual-out artifacts/l2-rotational-actual.json `
+            --out artifacts/l2-rotational-report.json `
+            --summary-out artifacts/l2-rotational-summary.md
+
+      - name: Record A-B counts
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $base = Get-Content artifacts/l2-baseline-report.json -Raw | ConvertFrom-Json
+          $test = Get-Content artifacts/l2-rotational-report.json -Raw | ConvertFrom-Json
+          function Counts($r) {
+            $rows = @($r.qualification.cases[0].comparison.rows | Where-Object status -eq 'FAIL')
+            $restraint = @($rows | Where-Object { $_.entityKind -eq 'NODE' -and $_.quantity -in @('FORCE','MOMENT') }).Count
+            $disp = @($rows | Where-Object { $_.entityKind -eq 'NODE' -and $_.quantity -in @('DISPLACEMENT','ROTATION') }).Count
+            $actions = @($rows | Where-Object { $_.entityKind -eq 'ELEMENT' -and $_.quantity -like 'GLOBAL_END_*' }).Count
+            [ordered]@{ restraint = $restraint; displacementRotation = $disp; elementEnd = $actions; totalTargeted = $restraint + $disp + $actions }
+          }
+          $b = Counts $base
+          $t = Counts $test
+          $out = [ordered]@{
+            schema = 'lfea-m047-single-factor-ab/v1'
+            hypothesis = 'BEND_FLEXIBILITY_ROTATIONAL_MOMENT_STIFFNESS'
+            changedField = 'bend factor application: EI/k chord -> straight EI plus symmetric rotational end compliance'
+            authority = 'HEXAGON_B31J_ROTATIONAL_STIFFNESS_DIAGNOSTIC_COUNTERFACTUAL'
+            sourceSha256 = $base.source.sha256
+            pureMomentComplianceRule = '2/S=(k-1)L/EI; therefore L/EI+2/S=kL/EI'
+            baseline = $b
+            test = $t
+            deltaFailures = [ordered]@{
+              restraint = $t.restraint - $b.restraint
+              displacementRotation = $t.displacementRotation - $b.displacementRotation
+              elementEnd = $t.elementEnd - $b.elementEnd
+              totalTargeted = $t.totalTargeted - $b.totalTargeted
+            }
+          }
+          $out | ConvertTo-Json -Depth 12 | Out-File artifacts/l2-bend-rotational-ab.json -Encoding utf8
+          $out | ConvertTo-Json -Depth 12
+
+      - name: Upload A-B evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: bm4l-l2-bend-rotational-ab-${{ github.sha }}
+          path: artifacts/
+          if-no-files-found: error
+          retention-days: 14

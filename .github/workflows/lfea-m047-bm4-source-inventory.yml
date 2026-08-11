@@ -1,0 +1,80 @@
+name: M047 BM4 pinned archive inventory
+
+on:
+  workflow_dispatch:
+  pull_request:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  archive-inventory:
+    if: github.event_name == 'workflow_dispatch' || github.head_ref == 'agent/m047-bm4l-root-cause-991'
+    runs-on: windows-latest
+    timeout-minutes: 10
+
+    steps:
+      - name: Checkout Advanced_Analysis
+        uses: actions/checkout@v4
+
+      - name: Checkout pinned Common source
+        uses: actions/checkout@v4
+        with:
+          repository: reallaksh19/Common
+          ref: 45d51ea18624f5775805f399110c1738301c0d90
+          path: _common
+          fetch-depth: 1
+
+      - name: Inventory ZIP members without selecting a fallback
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          Add-Type -AssemblyName System.IO.Compression.FileSystem
+          New-Item -ItemType Directory -Force -Path artifacts | Out-Null
+          $expected = 'e21b0862851ea2bb6f20d55e4a3a94f501537b618b98dd46afa9f6777ee38d3c'
+          $rows = @()
+          foreach ($zipFile in Get-ChildItem '_common/LFEA/BM4' -Filter '*.zip' | Sort-Object Name) {
+            $archive = [System.IO.Compression.ZipFile]::OpenRead($zipFile.FullName)
+            try {
+              foreach ($entry in $archive.Entries) {
+                if ([string]::IsNullOrEmpty($entry.Name)) { continue }
+                $temp = Join-Path $env:RUNNER_TEMP ([guid]::NewGuid().ToString())
+                $source = $entry.Open()
+                $target = [System.IO.File]::Create($temp)
+                try { $source.CopyTo($target) } finally { $target.Dispose(); $source.Dispose() }
+                try {
+                  $memberHash = (Get-FileHash -Algorithm SHA256 $temp).Hash.ToLowerInvariant()
+                  $rows += [ordered]@{
+                    archive = $zipFile.Name
+                    archiveBlobSha1 = (git -C _common hash-object -- "LFEA/BM4/$($zipFile.Name)").Trim().ToLowerInvariant()
+                    archiveSha256 = (Get-FileHash -Algorithm SHA256 $zipFile.FullName).Hash.ToLowerInvariant()
+                    archiveSize = $zipFile.Length
+                    member = $entry.FullName
+                    memberSize = $entry.Length
+                    memberSha256 = $memberHash
+                    matchesDeclaredBm4lAccdbSha256 = ($memberHash -eq $expected)
+                  }
+                } finally {
+                  Remove-Item -LiteralPath $temp -Force
+                }
+              }
+            } finally {
+              $archive.Dispose()
+            }
+          }
+          [ordered]@{
+            schema = 'lfea-m047-bm4-archive-inventory/v1'
+            commonCommit = (git -C _common rev-parse HEAD).Trim().ToLowerInvariant()
+            declaredBm4lAccdbSha256 = $expected
+            matches = @($rows | Where-Object { $_.matchesDeclaredBm4lAccdbSha256 })
+            archives = $rows
+          } | ConvertTo-Json -Depth 8 | Out-File artifacts/bm4-archive-inventory.json -Encoding utf8
+
+      - name: Upload archive inventory
+        uses: actions/upload-artifact@v4
+        with:
+          name: bm4-pinned-archive-inventory-${{ github.sha }}
+          path: artifacts/bm4-archive-inventory.json
+          if-no-files-found: error
+          retention-days: 14

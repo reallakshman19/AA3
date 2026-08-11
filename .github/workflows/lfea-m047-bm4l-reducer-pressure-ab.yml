@@ -1,0 +1,190 @@
+name: M047 BM4_L reducer pressure elongation A-B
+
+on:
+  workflow_dispatch:
+  pull_request:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  reducer-pressure-ab:
+    if: github.event_name == 'workflow_dispatch' || github.head_ref == 'agent/m047-bm4l-root-cause-991'
+    runs-on: windows-2022
+    timeout-minutes: 35
+    steps:
+      - name: Checkout Advanced_Analysis
+        uses: actions/checkout@v4
+
+      - name: Checkout pinned Common source
+        uses: actions/checkout@v4
+        with:
+          repository: reallaksh19/Common
+          ref: 45d51ea18624f5775805f399110c1738301c0d90
+          path: _common
+          fetch-depth: 1
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci --ignore-scripts
+
+      - name: Install signed Microsoft ACE 2016 x64
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $installer = Join-Path $env:RUNNER_TEMP 'accessdatabaseengine_X64.exe'
+          Invoke-WebRequest -Uri 'https://download.microsoft.com/download/3/5/C/35C84C36-661A-44E6-9324-8786B8DBE231/accessdatabaseengine_X64.exe' -OutFile $installer
+          $signature = Get-AuthenticodeSignature -FilePath $installer
+          if ($signature.Status -ne 'Valid' -or [string]$signature.SignerCertificate.Subject -notmatch 'Microsoft') { throw 'Microsoft ACE installer signature check failed.' }
+          $p = Start-Process -FilePath $installer -ArgumentList '/quiet','/norestart' -Wait -PassThru
+          if ($p.ExitCode -notin @(0,3010)) { throw "ACE install failed with exit $($p.ExitCode)" }
+
+      - name: Extract and verify pinned BM4_L source
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          New-Item -ItemType Directory -Force -Path artifacts | Out-Null
+          $zip = '_common/LFEA/BM4/BM4_L.zip'
+          if ((Get-FileHash -Algorithm SHA256 $zip).Hash.ToLowerInvariant() -ne '978617cba50fa0b1a16c2fa71dc1e0d38e55ac834b191f887d100c6951abd8b9') { throw 'ZIP custody mismatch.' }
+          $extract = Join-Path $env:RUNNER_TEMP 'bm4l-reducer-pressure-ab'
+          Expand-Archive -LiteralPath $zip -DestinationPath $extract -Force
+          $accdb = Join-Path $extract 'BM4_L.ACCDB'
+          if ((Get-FileHash -Algorithm SHA256 $accdb).Hash.ToLowerInvariant() -ne '64c05a50e9ed0452622ff5880335460486f24ac8e6adecc9a300b549c9aa82f8') { throw 'ACCDB custody mismatch.' }
+          "BM4L_ACCDB=$accdb" | Out-File -FilePath $env:GITHUB_ENV -Append -Encoding utf8
+
+      - name: Run frozen L4 baseline
+        shell: pwsh
+        run: |
+          node scripts/lfea-caesar-accdb-benchmark.mjs `
+            --accdb "$env:BM4L_ACCDB" `
+            --profile benchmarks/LFEA/CAESAR_ACCDB/bm4l-validation.profile.json `
+            --solve-linear true `
+            --solve-cases L4 `
+            --actual-out artifacts/l4-base-actual.json `
+            --out artifacts/l4-base-report.json `
+            --summary-out artifacts/l4-base-summary.md
+
+      - name: Prove reducer experiment scope
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $actual = Get-Content artifacts/l4-base-actual.json -Raw | ConvertFrom-Json
+          $ledger = @($actual.mechanics.cases.L4.elementLedger)
+          $reducers = @($ledger | Where-Object kind -eq 'REDUCER')
+          $ids = @($reducers | ForEach-Object { [string]$_.sourceElementId } | Sort-Object {[int]$_})
+          if (($ids -join ',') -ne '11,16,67,75') { throw "Unexpected reducer source IDs: $($ids -join ',')" }
+          if (@($reducers | Where-Object { [math]::Abs([double]$_.pressureAxialStrain) -le 0 }).Count -ne 0) { throw 'One or more reducers has zero baseline P1 pressure strain.' }
+          [ordered]@{
+            sourceSha256 = $actual.sourceAccdbSha256
+            reducerSourceIds = $ids
+            reducerCount = $reducers.Count
+            baselineReducerPressureStrain = @($reducers | ForEach-Object { [ordered]@{ sourceElementId=$_.sourceElementId; elementId=$_.elementId; pressureAxialStrain=$_.pressureAxialStrain; bourdonFreeEndTranslationM=$_.bourdonFreeEndTranslationM } })
+          } | ConvertTo-Json -Depth 8 | Out-File artifacts/reducer-scope.json -Encoding utf8
+
+      - name: Remove only condensed reducer P1 pressure elongation in disposable checkout
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $path = 'src/core/fea-benchmarks/caesar-accdb-linear-solve.js'
+          $text = Get-Content $path -Raw
+          $needle = '  const reducerPressureEnabled = input.caseMode.pressure'
+          $replacement = '  const reducerPressureEnabled = false && input.caseMode.pressure'
+          $count = ([regex]::Matches($text, [regex]::Escape($needle))).Count
+          if ($count -ne 1) { throw "Expected exactly one reducerPressureEnabled declaration, found $count." }
+          $text = $text.Replace($needle, $replacement)
+          Set-Content -Path $path -Value $text -Encoding utf8
+          $diff = (git diff -- $path) -join "`n"
+          $diff | Out-File artifacts/reducer-pressure-zero-transient.patch -Encoding utf8
+          if (-not $diff.Contains('reducerPressureEnabled') -or -not $diff.Contains('false && input.caseMode.pressure')) { throw 'Reducer pressure transient patch was not recorded.' }
+
+      - name: Run L4 with reducer pressure elongation removed
+        shell: pwsh
+        run: |
+          node scripts/lfea-caesar-accdb-benchmark.mjs `
+            --accdb "$env:BM4L_ACCDB" `
+            --profile benchmarks/LFEA/CAESAR_ACCDB/bm4l-validation.profile.json `
+            --solve-linear true `
+            --solve-cases L4 `
+            --actual-out artifacts/l4-no-reducer-pressure-actual.json `
+            --out artifacts/l4-no-reducer-pressure-report.json `
+            --summary-out artifacts/l4-no-reducer-pressure-summary.md
+
+      - name: Compare full signed L4 response
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $base = Get-Content artifacts/l4-base-report.json -Raw | ConvertFrom-Json
+          $test = Get-Content artifacts/l4-no-reducer-pressure-report.json -Raw | ConvertFrom-Json
+          if ($base.source.sha256 -ne $test.source.sha256) { throw 'A-B source hash changed.' }
+          $baseCase = $base.qualification.cases | Where-Object caseId -eq 'L4'
+          $testCase = $test.qualification.cases | Where-Object caseId -eq 'L4'
+          $baseRows = @($baseCase.comparison.rows | Where-Object { $_.status -in @('PASS','FAIL') })
+          $testRows = @($testCase.comparison.rows | Where-Object { $_.status -in @('PASS','FAIL') })
+          function Key($r) { return @($r.entityKind,$r.entityId,$r.quantity,$r.component) -join ':' }
+          $baseMap = @{}; foreach($r in $baseRows){ $baseMap[(Key $r)]=$r }
+          $testMap = @{}; foreach($r in $testRows){ $testMap[(Key $r)]=$r }
+          $keys = @($baseMap.Keys | Sort-Object)
+          if ($keys.Count -ne $testMap.Count) { throw 'A-B row coverage changed.' }
+          foreach($k in $keys){ if(-not $testMap.ContainsKey($k)){ throw "Missing test row $k" } }
+          $deltas = foreach($k in $keys){
+            $b=$baseMap[$k]; $t=$testMap[$k]
+            [pscustomobject][ordered]@{
+              identity=$k; entityKind=$b.entityKind; entityId=$b.entityId; quantity=$b.quantity; component=$b.component; unit=$b.unit
+              referenceValue=[double]$b.referenceValue
+              before=[double]$b.actualValue; after=[double]$t.actualValue
+              modelDelta=[double]$t.actualValue-[double]$b.actualValue
+              beforeSignedError=[double]$b.actualValue-[double]$b.referenceValue
+              afterSignedError=[double]$t.actualValue-[double]$t.referenceValue
+              beforeAbsoluteError=[double]$b.absoluteError; afterAbsoluteError=[double]$t.absoluteError
+              beforeStatus=$b.status; afterStatus=$t.status
+            }
+          }
+          function Counts($rows){
+            $f=@($rows|Where-Object status -eq 'FAIL')
+            $r=@($f|Where-Object{ $_.entityKind-eq'NODE' -and $_.quantity-in@('FORCE','MOMENT')}).Count
+            $d=@($f|Where-Object{ $_.entityKind-eq'NODE' -and $_.quantity-in@('DISPLACEMENT','ROTATION')}).Count
+            $e=@($f|Where-Object{ $_.entityKind-eq'ELEMENT' -and $_.quantity-like'GLOBAL_END_*'}).Count
+            [ordered]@{restraint=$r; displacementRotation=$d; elementEnd=$e; totalTargeted=$r+$d+$e; allFailures=$f.Count}
+          }
+          $bc=Counts $baseRows; $tc=Counts $testRows
+          $fixed=@($deltas|Where-Object{ $_.beforeStatus-eq'FAIL' -and $_.afterStatus-eq'PASS'}).Count
+          $new=@($deltas|Where-Object{ $_.beforeStatus-eq'PASS' -and $_.afterStatus-eq'FAIL'}).Count
+          $changed=@($deltas|Where-Object{ [math]::Abs([double]$_.modelDelta) -gt 1e-15 })
+          $top=@($changed|Sort-Object { [math]::Abs([double]$_.modelDelta) } -Descending|Select-Object -First 60)
+          $reducerRows=@($deltas|Where-Object{ $_.entityKind-eq'ELEMENT' -and [string]$_.entityId -in @('11','16','67','75') })
+          $baseEq=$base.mechanics.cases.L4.recoveredEquilibrium
+          $testEq=$test.mechanics.cases.L4.recoveredEquilibrium
+          if ($testEq.status -eq 'FAIL') { throw 'Reducer-pressure counterfactual violates recovered equilibrium.' }
+          $out=[ordered]@{
+            schema='lfea-m047-single-factor-ab/v1'
+            hypothesis='REDUCER_P1_PRESSURE_ELONGATION'
+            changedField='condensed reducer P1 pressure free elongation: governed value -> zero'
+            frozenMechanics=@('MEC21 bend translation','MEC21 bend rotation','straight-pipe Bourdon translation','pressure-stiffened bend K','bend geometry','tee flexibility','restraints','gravity')
+            sourceSha256=$base.source.sha256
+            reducerSourceIds=@('11','16','67','75')
+            baseline=$bc
+            test=$tc
+            deltaFailures=[ordered]@{restraint=$tc.restraint-$bc.restraint; displacementRotation=$tc.displacementRotation-$bc.displacementRotation; elementEnd=$tc.elementEnd-$bc.elementEnd; totalTargeted=$tc.totalTargeted-$bc.totalTargeted; allFailures=$tc.allFailures-$bc.allFailures}
+            transitions=[ordered]@{fixed=$fixed; newFailures=$new; changedRows=$changed.Count}
+            equilibrium=[ordered]@{baseline=$baseEq; test=$testEq}
+            reducerSourceRows=$reducerRows
+            largestSignedResponseChanges=$top
+          }
+          $out | ConvertTo-Json -Depth 20 | Out-File artifacts/l4-reducer-pressure-ab.json -Encoding utf8
+          $deltas | ConvertTo-Json -Depth 8 | Out-File artifacts/l4-reducer-pressure-row-deltas.json -Encoding utf8
+          $out | ConvertTo-Json -Depth 20
+
+      - name: Upload A-B evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: bm4l-l4-reducer-pressure-ab-${{ github.sha }}
+          path: artifacts/
+          if-no-files-found: error
+          retention-days: 14

@@ -1,0 +1,150 @@
+name: M047 BM4_L ACCDB-qualified Cowper production
+
+on:
+  push:
+    branches: [agent/m047-bm4l-root-cause-991]
+    paths:
+      - '.github/workflows/lfea-m047-bm4l-accdb-cowper-production.yml'
+      - 'src/core/fea-benchmarks/caesar-accdb-linear-solve.js'
+      - 'src/core/fea-benchmarks/caesar-accdb-package.js'
+      - 'src/core/fea-benchmarks/caesar-accdb-straight-pipe-profile.js'
+      - 'benchmarks/LFEA/CAESAR_ACCDB/bm4l-validation.profile.json'
+      - 'benchmarks/LFEA/CAESAR_ACCDB/profile.schema.json'
+      - 'scripts/lfea-m047-cowper-straight-pipe-profile-check.mjs'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  validate-production-state:
+    runs-on: windows-2022
+    timeout-minutes: 40
+    steps:
+      - name: Checkout PR branch head
+        uses: actions/checkout@v4
+        with:
+          ref: agent/m047-bm4l-root-cause-991
+          fetch-depth: 1
+
+      - name: Checkout pinned BM4_L ACCDB source
+        uses: actions/checkout@v4
+        with:
+          repository: reallaksh19/Common
+          ref: 45d51ea18624f5775805f399110c1738301c0d90
+          path: _common
+          fetch-depth: 1
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci --ignore-scripts
+
+      - name: Validate production source and Cowper section formula
+        shell: pwsh
+        run: |
+          node --check src/core/fea-benchmarks/caesar-accdb-package.js
+          node --check src/core/fea-benchmarks/caesar-accdb-linear-solve.js
+          node --check src/core/fea-benchmarks/caesar-accdb-straight-pipe-profile.js
+          node scripts/lfea-m047-cowper-straight-pipe-profile-check.mjs
+          node -e "JSON.parse(require('fs').readFileSync('benchmarks/LFEA/CAESAR_ACCDB/profile.schema.json','utf8')); JSON.parse(require('fs').readFileSync('benchmarks/LFEA/CAESAR_ACCDB/bm4l-validation.profile.json','utf8'));"
+
+      - name: Install signed Microsoft ACE 2016 x64
+        shell: pwsh
+        run: |
+          $ErrorActionPreference='Stop'
+          $installer=Join-Path $env:RUNNER_TEMP 'accessdatabaseengine_X64.exe'
+          Invoke-WebRequest -Uri 'https://download.microsoft.com/download/3/5/C/35C84C36-661A-44E6-9324-8786B8DBE231/accessdatabaseengine_X64.exe' -OutFile $installer
+          $sig=Get-AuthenticodeSignature $installer
+          if($sig.Status-ne'Valid' -or [string]$sig.SignerCertificate.Subject-notmatch'Microsoft'){throw 'ACE signature check failed.'}
+          $p=Start-Process $installer -ArgumentList '/quiet','/norestart' -Wait -PassThru
+          if($p.ExitCode-notin@(0,3010)){throw "ACE install failed: $($p.ExitCode)"}
+
+      - name: Extract and verify pristine BM4_L.ACCDB
+        shell: pwsh
+        run: |
+          $ErrorActionPreference='Stop'
+          New-Item -ItemType Directory -Force -Path artifacts|Out-Null
+          $zip='_common/LFEA/BM4/BM4_L.zip'
+          $zipHash=(Get-FileHash -Algorithm SHA256 $zip).Hash.ToLowerInvariant()
+          if($zipHash-ne'978617cba50fa0b1a16c2fa71dc1e0d38e55ac834b191f887d100c6951abd8b9'){throw "ZIP custody mismatch: $zipHash"}
+          $dir=Join-Path $env:RUNNER_TEMP 'bm4l-cowper-production'
+          Expand-Archive $zip $dir -Force
+          $accdb=Join-Path $dir 'BM4_L.ACCDB'
+          $hash=(Get-FileHash -Algorithm SHA256 $accdb).Hash.ToLowerInvariant()
+          if($hash-ne'64c05a50e9ed0452622ff5880335460486f24ac8e6adecc9a300b549c9aa82f8'){throw "ACCDB custody mismatch: $hash"}
+          "BM4L_ACCDB=$accdb"|Out-File $env:GITHUB_ENV -Append -Encoding utf8
+          "HEAD_SHA=$(git rev-parse HEAD)"|Out-File $env:GITHUB_ENV -Append -Encoding utf8
+          $hash|Out-File artifacts/source-accdb-sha256.txt -Encoding ascii
+          git rev-parse HEAD|Out-File artifacts/implementation-sha.txt -Encoding ascii
+
+      - name: Solve production BM4_L state from ACCDB
+        shell: pwsh
+        run: |
+          node scripts/lfea-caesar-accdb-benchmark.mjs `
+            --accdb "$env:BM4L_ACCDB" `
+            --profile benchmarks/LFEA/CAESAR_ACCDB/bm4l-validation.profile.json `
+            --solve-linear true `
+            --solve-cases L2,L3,L4,L5,L6,L14 `
+            --actual-out artifacts/actual.json `
+            --out artifacts/report.json `
+            --summary-out artifacts/summary.md
+
+      - name: Assert production counts and equilibrium
+        shell: pwsh
+        run: |
+          $ErrorActionPreference='Stop'
+          $r=Get-Content artifacts/report.json -Raw|ConvertFrom-Json
+          $expected=[ordered]@{
+            L2=[ordered]@{restraint=1;deformation=39;elementEnd=6;total=46}
+            L3=[ordered]@{restraint=1;deformation=41;elementEnd=54;total=96}
+            L4=[ordered]@{restraint=0;deformation=33;elementEnd=2;total=35}
+            L5=[ordered]@{restraint=2;deformation=41;elementEnd=35;total=78}
+            L6=[ordered]@{restraint=0;deformation=14;elementEnd=14;total=28}
+            L14=[ordered]@{restraint=1;deformation=41;elementEnd=54;total=96}
+          }
+          $result=[ordered]@{}
+          $total=0
+          foreach($id in $expected.Keys){
+            $case=$r.qualification.cases|Where-Object caseId -eq $id
+            if($null-eq$case){throw "Missing case $id"}
+            $fails=@($case.comparison.rows|Where-Object status -eq 'FAIL')
+            $restraint=@($fails|Where-Object{$_.entityKind-eq'NODE' -and $_.quantity-in@('FORCE','MOMENT')}).Count
+            $deformation=@($fails|Where-Object{$_.entityKind-eq'NODE' -and $_.quantity-in@('DISPLACEMENT','ROTATION')}).Count
+            $elementEnd=@($fails|Where-Object{$_.entityKind-eq'ELEMENT' -and $_.quantity-like'GLOBAL_END_*'}).Count
+            $caseTotal=$restraint+$deformation+$elementEnd
+            $result[$id]=[ordered]@{restraint=$restraint;deformation=$deformation;elementEnd=$elementEnd;total=$caseTotal}
+            foreach($key in @('restraint','deformation','elementEnd','total')){
+              if($result[$id][$key]-ne$expected[$id][$key]){throw "${id}.${key} drift: $($result[$id][$key]) != $($expected[$id][$key])"}
+            }
+            if($r.mechanics.cases.$id.recoveredEquilibrium.status-ne'PASS'){throw "Recovered equilibrium failed in $id"}
+            $total+=$caseTotal
+          }
+          if($total-ne379){throw "Targeted total drift: $total != 379"}
+          $profile=Get-Content benchmarks/LFEA/CAESAR_ACCDB/bm4l-validation.profile.json -Raw|ConvertFrom-Json
+          if($profile.linearSolve.straightPipeTransverseShear.mode-ne'COWPER_HOLLOW_CIRCLE_TIMOSHENKO'){throw 'Cowper profile mode not active.'}
+          if($profile.linearSolve.straightPipeTransverseShear.authorityStatus-ne'RESOLVED'){throw 'Cowper profile authority is not RESOLVED.'}
+          [ordered]@{
+            schema='lfea-m047-bm4l-accdb-cowper-production/v1'
+            implementationSha=$env:HEAD_SHA
+            sourceAccdbSha256='64c05a50e9ed0452622ff5880335460486f24ac8e6adecc9a300b549c9aa82f8'
+            formulation='COWPER_HOLLOW_CIRCLE_TIMOSHENKO'
+            authority='BM4_L.ACCDB direct constitutive discriminator run 31398521355 artifact 9066681744'
+            targetedTotal=$total
+            cases=$result
+            equilibrium='PASS_ALL_SIX_CASES'
+          }|ConvertTo-Json -Depth 20|Out-File artifacts/production-baseline.json -Encoding utf8
+          Get-Content artifacts/production-baseline.json
+
+      - name: Upload production evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: bm4l-accdb-cowper-production-${{ github.sha }}
+          path: artifacts/
+          if-no-files-found: error
+          retention-days: 30

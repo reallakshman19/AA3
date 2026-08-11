@@ -213,6 +213,16 @@
         "directionalB31JTeeFlexibility": { "type": "boolean" },
         "teeNominalDiameterRelativeTolerance": { "type": "number", "minimum": 0, "maximum": 0.01 },
         "reducerCondensation": { "type": "boolean" },
+        "straightPipeTransverseShear": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["mode", "authorityStatus", "source"],
+          "properties": {
+            "mode": { "enum": ["EULER_BERNOULLI", "COWPER_HOLLOW_CIRCLE_TIMOSHENKO"] },
+            "authorityStatus": { "enum": ["RESOLVED", "PROVISIONAL"] },
+            "source": { "type": "string", "minLength": 1 }
+          }
+        },
         "b31jSmooth90FlexibilityCorrection": {
           "type": "object",
           "additionalProperties": false,

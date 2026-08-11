@@ -87,7 +87,8 @@ export function deriveB31JDirectionalBranchEndModifiers({
         factors,
         material: authorities.material.materialState,
         section: authorities.section.sectionState,
-        diameter: authorities.section.dimensions.outerDiameter,
+        // B31J tee stiffness uses the matching-pipe mean diameter Do - T.
+        diameter: authorities.section.dimensions.outerDiameter - authorities.section.dimensions.wallThickness,
         end: leg.junctionEnd ?? 'I',
       });
       return Object.freeze({

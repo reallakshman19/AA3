@@ -1,0 +1,161 @@
+name: M047 BM4_L retained baseline
+
+on:
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  retained-baseline:
+    if: github.event_name == 'workflow_dispatch' || github.head_ref == 'agent/m047-bm4l-root-cause-991'
+    runs-on: windows-2022
+    timeout-minutes: 35
+    steps:
+      - name: Checkout retained implementation and authority commit
+        uses: actions/checkout@v4
+        with:
+          ref: 080733d27d73876ee8416364fcd6993e0f6784a5
+          fetch-depth: 1
+
+      - name: Record implementation commit
+        shell: pwsh
+        run: |
+          $sha=(git rev-parse HEAD).Trim()
+          if ($sha -ne '080733d27d73876ee8416364fcd6993e0f6784a5') { throw "Unexpected implementation commit $sha" }
+          "BM4L_IMPLEMENTATION_SHA=$sha" | Out-File -FilePath $env:GITHUB_ENV -Append -Encoding utf8
+          $sha | Out-File artifacts-implementation-sha.txt -Encoding ascii
+
+      - name: Checkout pinned BM4_L ACCDB source
+        uses: actions/checkout@v4
+        with:
+          repository: reallaksh19/Common
+          ref: 45d51ea18624f5775805f399110c1738301c0d90
+          path: _common
+          fetch-depth: 1
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci --ignore-scripts
+
+      - name: Validate retained source formulation
+        shell: pwsh
+        run: |
+          node --check src/core/fea-benchmarks/caesar-accdb-package.js
+          node --check src/core/fea-benchmarks/caesar-accdb-linear-solve.js
+          node --check src/core/fea-benchmarks/caesar-accdb-straight-pipe-profile.js
+          node scripts/lfea-m047-cowper-straight-pipe-profile-check.mjs
+
+      - name: Install signed Microsoft ACE 2016 x64
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $installer = Join-Path $env:RUNNER_TEMP 'accessdatabaseengine_X64.exe'
+          Invoke-WebRequest -Uri 'https://download.microsoft.com/download/3/5/C/35C84C36-661A-44E6-9324-8786B8DBE231/accessdatabaseengine_X64.exe' -OutFile $installer
+          $signature = Get-AuthenticodeSignature -FilePath $installer
+          if ($signature.Status -ne 'Valid' -or [string]$signature.SignerCertificate.Subject -notmatch 'Microsoft') { throw 'Microsoft ACE installer signature check failed.' }
+          $p = Start-Process -FilePath $installer -ArgumentList '/quiet','/norestart' -Wait -PassThru
+          if ($p.ExitCode -notin @(0,3010)) { throw "ACE install failed with exit $($p.ExitCode)" }
+
+      - name: Extract and verify pinned BM4_L source
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          New-Item -ItemType Directory -Force -Path artifacts | Out-Null
+          Move-Item artifacts-implementation-sha.txt artifacts/implementation-sha.txt
+          $zip = '_common/LFEA/BM4/BM4_L.zip'
+          if ((Get-FileHash -Algorithm SHA256 $zip).Hash.ToLowerInvariant() -ne '978617cba50fa0b1a16c2fa71dc1e0d38e55ac834b191f887d100c6951abd8b9') { throw 'ZIP custody mismatch.' }
+          $extract = Join-Path $env:RUNNER_TEMP 'bm4l-retained-baseline'
+          Expand-Archive -LiteralPath $zip -DestinationPath $extract -Force
+          $accdb = Join-Path $extract 'BM4_L.ACCDB'
+          if ((Get-FileHash -Algorithm SHA256 $accdb).Hash.ToLowerInvariant() -ne '64c05a50e9ed0452622ff5880335460486f24ac8e6adecc9a300b549c9aa82f8') { throw 'ACCDB custody mismatch.' }
+          "BM4L_ACCDB=$accdb" | Out-File -FilePath $env:GITHUB_ENV -Append -Encoding utf8
+          (Get-FileHash -Algorithm SHA256 $accdb).Hash.ToLowerInvariant() | Out-File artifacts/source-accdb-sha256.txt -Encoding ascii
+
+      - name: Verify retained profile mechanics authority
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $profile = Get-Content benchmarks/LFEA/CAESAR_ACCDB/bm4l-validation.profile.json -Raw | ConvertFrom-Json
+          if ($profile.linearSolve.b31jSmooth90FlexibilityCorrection.enabled -ne $true -or [string]$profile.linearSolve.b31jSmooth90FlexibilityCorrection.authorityStatus -ne 'RESOLVED') { throw 'Retained smooth-90 authority is not resolved/enabled.' }
+          if ([string]$profile.linearSolve.thermalExpansion.authorityStatus -ne 'RESOLVED') { throw 'Thermal authority is not RESOLVED.' }
+          $expectedAlpha = 0.0012 / 99.0
+          if ([math]::Abs([double]$profile.linearSolve.thermalExpansion.coefficientPerKelvin - $expectedAlpha) -gt 1e-15) { throw 'T1-equivalent thermal coefficient drift.' }
+          if ([string]$profile.linearSolve.bendPressureStiffening.pressureSource -ne 'P1') { throw 'Bend pressure stiffening is not retained at P1.' }
+          foreach ($id in @('L2','L3','L4','L5','L6')) {
+            $case = $profile.configurationAuthority.layers.loadCase.cases.$id
+            if ([string]$case.FLEXIBILITY_ELASTIC_MODULUS -ne 'EC') { throw "$id does not retain FLEXIBILITY_ELASTIC_MODULUS=EC." }
+          }
+          $teeSource = Get-Content src/core/linear-fea-piping-components/directional-branch-flexibility.js -Raw
+          if ($teeSource -notmatch 'outerDiameter - authorities\.section\.dimensions\.wallThickness') { throw 'B31J tee spring does not use mean diameter Do-T.' }
+          if ([string]$profile.linearSolve.straightPipeTransverseShear.mode -ne 'COWPER_HOLLOW_CIRCLE_TIMOSHENKO') { throw 'Retained straight-pipe formulation is not Cowper/Timoshenko.' }
+          if ([string]$profile.linearSolve.straightPipeTransverseShear.authorityStatus -ne 'RESOLVED') { throw 'Straight-pipe transverse-shear authority is not RESOLVED.' }
+          if ([string]$profile.linearSolve.straightPipeTransverseShear.source -notmatch 'BM4_L\.ACCDB-only.*64c05a50.*54 usable ordinary straight spans') { throw 'Straight-pipe shear authority is not bound to the BM4_L.ACCDB constitutive audit.' }
+
+      - name: Run retained six-case baseline
+        shell: pwsh
+        run: |
+          node scripts/lfea-caesar-accdb-benchmark.mjs `
+            --accdb "$env:BM4L_ACCDB" `
+            --profile benchmarks/LFEA/CAESAR_ACCDB/bm4l-validation.profile.json `
+            --solve-linear true `
+            --solve-cases L2,L3,L4,L5,L6,L14 `
+            --actual-out artifacts/retained-actual.json `
+            --out artifacts/retained-report.json `
+            --summary-out artifacts/retained-summary.md
+
+      - name: Assert retained case totals and equilibrium
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $report = Get-Content artifacts/retained-report.json -Raw | ConvertFrom-Json
+          if ($report.source.sha256 -ne '64c05a50e9ed0452622ff5880335460486f24ac8e6adecc9a300b549c9aa82f8') { throw 'Report source hash mismatch.' }
+          $expected=[ordered]@{
+            L2=[ordered]@{r=1;d=39;e=6;total=46}
+            L3=[ordered]@{r=1;d=41;e=54;total=96}
+            L4=[ordered]@{r=0;d=33;e=2;total=35}
+            L5=[ordered]@{r=2;d=41;e=35;total=78}
+            L6=[ordered]@{r=0;d=14;e=14;total=28}
+            L14=[ordered]@{r=1;d=41;e=54;total=96}
+          }
+          $actual=[ordered]@{}; $grand=0
+          foreach($id in $expected.Keys){
+            $case=$report.qualification.cases|Where-Object caseId -eq $id
+            $fails=@($case.comparison.rows|Where-Object status -eq 'FAIL')
+            $r=@($fails|Where-Object{ $_.entityKind-eq'NODE' -and $_.quantity-in@('FORCE','MOMENT') }).Count
+            $d=@($fails|Where-Object{ $_.entityKind-eq'NODE' -and $_.quantity-in@('DISPLACEMENT','ROTATION') }).Count
+            $e=@($fails|Where-Object{ $_.entityKind-eq'ELEMENT' -and $_.quantity-like'GLOBAL_END_*' }).Count
+            $total=$r+$d+$e
+            $x=$expected[$id]
+            if($r-ne$x.r -or $d-ne$x.d -or $e-ne$x.e -or $total-ne$x.total){ throw "Retained count drift in ${id}: $r/$d/$e=$total" }
+            if($report.mechanics.cases.$id.recoveredEquilibrium.status -eq 'FAIL'){ throw "Recovered equilibrium failed in $id" }
+            $actual[$id]=[ordered]@{restraint=$r;displacementRotation=$d;elementEnd=$e;total=$total;equilibrium=$report.mechanics.cases.$id.recoveredEquilibrium}
+            $grand += $total
+          }
+          if($grand -ne 379){ throw "Retained targeted total drift: $grand" }
+          [ordered]@{
+            schema='lfea-m047-retained-baseline/v5'
+            implementationSha=$env:BM4L_IMPLEMENTATION_SHA
+            sourceSha256=$report.source.sha256
+            profileId=$report.profileId
+            retainedCorrections=@('CAESAR14_B31J_SMOOTH90_1_3_OVER_H','CAESAR14_MISC_T1_TOTAL_STRAIN_0_0012','CAESAR14_LOAD_CASE_ELASTIC_MODULUS_EC','CAESAR14_MISC_BEND_REPORT_P1_PRESSURE_STIFFENING','CAESAR14_MISC_TEE_MEAN_DIAMETER_ROTATIONAL_STIFFNESS','BM4L_ACCDB_COWPER_HOLLOW_CIRCLE_STRAIGHT_PIPE_SHEAR')
+            targetedFailureTotal=$grand
+            cases=$actual
+            acceptanceBoundary='BM4_L.ACCDB directly qualifies the ordinary straight-pipe Cowper/Timoshenko transverse stiffness. Remaining 379 literal component failures require additional ACCDB-grounded mechanics evidence; no benchmark coefficient fitting or acceptance-threshold changes are permitted.'
+          } | ConvertTo-Json -Depth 20 | Tee-Object -FilePath artifacts/retained-baseline.json
+
+      - name: Upload retained baseline evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: bm4l-retained-baseline-${{ github.sha }}
+          path: artifacts/
+          if-no-files-found: error
+          retention-days: 30

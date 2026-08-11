@@ -81,6 +81,7 @@ import {
 import { semanticHash } from '../shared-piping-model/canonical-json.js';
 import { deepFreeze } from '../shared-piping-model/immutable.js';
 import { resolveCaesarConfigurationSetting } from './caesar-configuration-authority.js';
+import { cowperAccdbStraightPipeFrameProfile } from './caesar-accdb-straight-pipe-profile.js';
 
 const PROFILE_SOURCE = 'CAESAR_ACCDB_LINEAR_SOLVE_PROFILE_V1';
 const FACTOR_PROFILE_ID = 'B31_3_2022_B31J_2017';
@@ -524,6 +525,8 @@ function buildFrameElement(input) {
     axesResult,
     material: input.material,
     section: input.section,
+    kind: input.kind,
+    solveProfile: input.solveProfile,
   });
   const length = frame.geometry.length;
   const lineWeight = input.gravityLineWeight
@@ -1518,12 +1521,21 @@ function createSectionRegistry(benchmarkPackage) {
 }
 
 function compileUnloadedFrame(input) {
+  const useCowperStraightPipe = input.kind !== 'RIGID'
+    && input.solveProfile.straightPipeTransverseShear.mode === 'COWPER_HOLLOW_CIRCLE_TIMOSHENKO';
+  const profile = useCowperStraightPipe
+    ? cowperAccdbStraightPipeFrameProfile({
+        materialResolution: input.material,
+        sectionResolution: input.section,
+        source: input.solveProfile.straightPipeTransverseShear.source,
+      })
+    : frameProfile();
   return compileFrameElement({
     elementId: input.elementId,
     material: input.material,
     section: input.section,
     localAxes: { result: input.axesResult, profile: FRAME_LOCAL_AXIS_PROFILE },
-    profile: frameProfile(),
+    profile,
     distributedLoads: [],
     temperature: null,
     releases: [],

@@ -1,0 +1,212 @@
+name: M047 BM4_L B31J fictitious tee rigid A-B v2
+
+on:
+  push:
+    branches: [agent/m047-bm4l-root-cause-991]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  tee-fictitious-rigid-ab:
+    runs-on: windows-2022
+    timeout-minutes: 40
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: 78652ac554dd4f1f4a6c230b891122bd9386077a
+          fetch-depth: 1
+      - uses: actions/checkout@v4
+        with:
+          repository: reallaksh19/Common
+          ref: 179c4831cf521cf797c13699cfbbd118315c9244
+          path: _common
+          fetch-depth: 1
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+      - run: npm ci --ignore-scripts
+      - name: Install ACE and verify source
+        shell: pwsh
+        run: |
+          $ErrorActionPreference='Stop'; New-Item -ItemType Directory -Force artifacts|Out-Null
+          $i=Join-Path $env:RUNNER_TEMP 'ace.exe'; Invoke-WebRequest 'https://download.microsoft.com/download/3/5/C/35C84C36-661A-44E6-9324-8786B8DBE231/accessdatabaseengine_X64.exe' -OutFile $i
+          $s=Get-AuthenticodeSignature $i; if($s.Status-ne'Valid'-or[string]$s.SignerCertificate.Subject-notmatch'Microsoft'){throw 'ACE signature'}
+          $p=Start-Process $i -ArgumentList '/quiet','/norestart' -Wait -PassThru; if($p.ExitCode-notin@(0,3010)){throw "ACE $($p.ExitCode)"}
+          $z='_common/LFEA/BM4/BM4_L.zip'; if((Get-FileHash $z -Algorithm SHA256).Hash.ToLowerInvariant()-ne'978617cba50fa0b1a16c2fa71dc1e0d38e55ac834b191f887d100c6951abd8b9'){throw 'ZIP custody'}
+          $d=Join-Path $env:RUNNER_TEMP 'bm4l-tee-rigid-v2'; Expand-Archive $z $d -Force; $a=Join-Path $d 'BM4_L.ACCDB'
+          if((Get-FileHash $a -Algorithm SHA256).Hash.ToLowerInvariant()-ne'64c05a50e9ed0452622ff5880335460486f24ac8e6adecc9a300b549c9aa82f8'){throw 'ACCDB custody'}
+          "BM4L_ACCDB=$a"|Out-File $env:GITHUB_ENV -Append -Encoding utf8
+      - name: Run canonical 788 baseline
+        shell: pwsh
+        run: node scripts/lfea-caesar-accdb-benchmark.mjs --accdb "$env:BM4L_ACCDB" --profile benchmarks/LFEA/CAESAR_ACCDB/bm4l-validation.profile.json --solve-linear true --solve-cases L2,L3,L4,L5,L6,L14 --actual-out artifacts/base-actual.json --out artifacts/base-report.json --summary-out artifacts/base.md
+      - name: Patch explicit B31J fictitious rigids
+        shell: pwsh
+        run: |
+          @'
+          import fs from 'node:fs';
+          const p='src/core/fea-benchmarks/caesar-accdb-linear-solve.js';
+          let t=fs.readFileSync(p,'utf8').replace(/\r\n/g,'\n');
+          const once=(oldText,newText,label)=>{const n=t.split(oldText).length-1;if(n!==1)throw new Error(`${label}: expected 1 site, found ${n}`);t=t.replace(oldText,newText);};
+          once(
+          `    bendDefinitions,
+              teeModifierBySourceElementId,
+            });`,
+          `    bendDefinitions,
+              teeJunctions,
+              teeModifierBySourceElementId,
+            });`,'analysis call');
+          once(
+          `    } else {
+                elements.push(buildFrameElement({
+                  ...input,
+                  row,
+                  elementId: \`ACCDB.E\${sourceElementId}\`,
+                  nodeI,
+                  nodeJ,
+                  positions,
+                  section: input.sourceSections.get(sourceElementId),
+                  kind: reducerPointer > 0 ? 'REDUCER_PRISMATIC' : 'FRAME',
+                  pressureLengthScale: 1,
+                  thermalLengthScale: 1,
+                  gravityLengthScale: 1,
+                  bourdonBendSegment: null,
+                  teeModifier,
+                }));
+              }`,
+          `    } else if (teeModifier?.role === 'BRANCH' && teeModifier.rigidOffset !== null) {
+                appendB31JFictitiousRigidBranch(elements, positions, row, nodeI, nodeJ, teeModifier, input);
+              } else {
+                elements.push(buildFrameElement({
+                  ...input,
+                  row,
+                  elementId: \`ACCDB.E\${sourceElementId}\`,
+                  nodeI,
+                  nodeJ,
+                  positions,
+                  section: input.sourceSections.get(sourceElementId),
+                  kind: reducerPointer > 0 ? 'REDUCER_PRISMATIC' : 'FRAME',
+                  pressureLengthScale: 1,
+                  thermalLengthScale: 1,
+                  gravityLengthScale: 1,
+                  bourdonBendSegment: null,
+                  teeModifier,
+                }));
+              }`,'normal branch site');
+          once(
+          `  if (hasIncomingStraight) {
+              target.push(buildFrameElement({
+                ...input,
+                row,
+                elementId: \`ACCDB.E\${sourceElementId}.STRAIGHT\`,
+                nodeI: String(row.FROM_NODE),
+                nodeJ: bend.nodeIds[0],
+                positions,
+                section: input.sourceSections.get(sourceElementId),
+                kind: 'BEND_INCOMING_STRAIGHT',
+                pressureLengthScale: 1,
+                thermalLengthScale: 1,
+                gravityLengthScale: 1,
+                bourdonBendSegment: null,
+                teeModifier,
+              }));
+            }`,
+          `  if (hasIncomingStraight) {
+              if (teeModifier?.role === 'BRANCH' && teeModifier.rigidOffset !== null) {
+                appendB31JFictitiousRigidBranch(
+                  target,
+                  positions,
+                  row,
+                  String(row.FROM_NODE),
+                  bend.nodeIds[0],
+                  teeModifier,
+                  input,
+                );
+              } else {
+                target.push(buildFrameElement({
+                  ...input,
+                  row,
+                  elementId: \`ACCDB.E\${sourceElementId}.STRAIGHT\`,
+                  nodeI: String(row.FROM_NODE),
+                  nodeJ: bend.nodeIds[0],
+                  positions,
+                  section: input.sourceSections.get(sourceElementId),
+                  kind: 'BEND_INCOMING_STRAIGHT',
+                  pressureLengthScale: 1,
+                  thermalLengthScale: 1,
+                  gravityLengthScale: 1,
+                  bourdonBendSegment: null,
+                  teeModifier,
+                }));
+              }
+            }`,'bend-source branch site');
+          const marker='function buildRigidElement(input) {';
+          const helper=`function appendB31JFictitiousRigidBranch(target, positions, row, nodeI, nodeJ, teeModifier, input) {
+            const sourceElementId = String(row.ELEMENTID);
+            const junction = input.teeJunctions.find((entry) => entry.nodeId === teeModifier.junctionNodeId);
+            if (!junction) throw new TypeError(\`Missing B31J junction \${teeModifier.junctionNodeId}.\`);
+            const runModifier = junction.modifiers.modifiers.find((entry) => entry.role === 'RUN');
+            if (!runModifier) throw new TypeError(\`B31J junction \${teeModifier.junctionNodeId} has no run modifier.\`);
+            const runSection = input.sourceSections.get(runModifier.legId);
+            const branchSection = input.sourceSections.get(sourceElementId);
+            const centreNodeId = teeModifier.junctionNodeId;
+            const centre = positions.get(centreNodeId);
+            if (!centre) throw new TypeError(\`B31J junction \${centreNodeId} has no analysis position.\`);
+            const surfaceNodeId = \`ACCDB.TEE.\${centreNodeId}.SURFACE\`;
+            const surface = add(centre, teeModifier.rigidOffset);
+            setAnalysisPosition(positions, surfaceNodeId, surface, false);
+            const length = distance(centre, surface);
+            const materialState = input.material.materialState;
+            const authority = compileCaesarRigidElementAuthority(sealRigidElementRequest({
+              schema: RIGID_ELEMENT_REQUEST_SCHEMA,
+              rigidElementId: \`ACCDB-B31J-FICTITIOUS-\${centreNodeId}\`, length,
+              insideDiameter: runSection.dimensions.innerDiameter,
+              enteredOutsideDiameter: runSection.dimensions.outerDiameter,
+              pipeWallThickness: runSection.dimensions.wallThickness,
+              enteredRigidWeight: 0, fluidDensity: 0, insulationThickness: 0, insulationDensity: 0,
+              refractoryWeight: 0, claddingWeight: 0,
+              gravityAcceleration: input.solveProfile.gravityAcceleration,
+              installationTemperature: input.benchmarkPackage.model.installationTemperatureK,
+              operatingTemperature: Number(row.TEMP_EXP_C1) + CELSIUS_TO_KELVIN,
+              material: { elasticModulus: materialState.elasticModulus, shearModulus: materialState.shearModulus, thermalExpansionCoefficient: input.solveProfile.thermalExpansion.coefficientPerKelvin },
+              sourceEvidence: sourceEvidence(\`ACCDB:B31J_FICTITIOUS_RIGID:\${centreNodeId}\`, input.benchmarkPackage.source.sha256), semanticHash: '',
+            }));
+            const rigidSection = input.sectionRegistry.resolve(authority.stiffnessSection.outsideDiameter, authority.stiffnessSection.wallThickness);
+            const springModifier = Object.freeze({ ...teeModifier, rigidOffset: null });
+            const make=(elementId,i,j,section,kind,modifier,loaded)=>buildFrameElement({ ...input,row,elementId,nodeI:i,nodeJ:j,positions,section,kind,
+              pressureLengthScale:loaded?1:0,thermalLengthScale:loaded?1:0,gravityLengthScale:loaded?1:0,gravityLineWeight:loaded?undefined:0,
+              bourdonBendSegment:null,teeModifier:modifier });
+            const rigid=(i,j)=>make(\`ACCDB.E\${sourceElementId}.TEE_RIGID\`,i,j,rigidSection,'TEE_FICTITIOUS_RIGID',null,false);
+            const branch=(i,j,m)=>make(\`ACCDB.E\${sourceElementId}.BRANCH\`,i,j,branchSection,'FRAME',m,true);
+            if (teeModifier.junctionEnd === 'I') { target.push(rigid(nodeI,surfaceNodeId)); target.push(branch(surfaceNodeId,nodeJ,{...springModifier,junctionEnd:'I'})); }
+            else { target.push(branch(nodeI,surfaceNodeId,{...springModifier,junctionEnd:'J'})); target.push(rigid(surfaceNodeId,nodeJ)); }
+          }
+
+          `;
+          once(marker,helper+marker,'rigid helper marker');
+          fs.writeFileSync(p,t);
+          '@ | Set-Content artifacts/patch.mjs -Encoding utf8
+          node artifacts/patch.mjs
+          if($LASTEXITCODE-ne0){throw 'Fictitious rigid patcher failed.'}
+          git diff -- src/core/fea-benchmarks/caesar-accdb-linear-solve.js | Out-File artifacts/tee-fictitious-rigid.patch -Encoding utf8
+      - name: Run explicit fictitious-rigid variant
+        shell: pwsh
+        run: node scripts/lfea-caesar-accdb-benchmark.mjs --accdb "$env:BM4L_ACCDB" --profile benchmarks/LFEA/CAESAR_ACCDB/bm4l-validation.profile.json --solve-linear true --solve-cases L2,L3,L4,L5,L6,L14 --actual-out artifacts/test-actual.json --out artifacts/test-report.json --summary-out artifacts/test.md
+      - name: Compare
+        shell: pwsh
+        run: |
+          function C($r,$id){$q=$r.qualification.cases|? caseId -eq $id;$f=@($q.comparison.rows|? status -eq 'FAIL');$rr=@($f|?{$_.entityKind-eq'NODE'-and$_.quantity-in@('FORCE','MOMENT')}).Count;$dd=@($f|?{$_.entityKind-eq'NODE'-and$_.quantity-in@('DISPLACEMENT','ROTATION')}).Count;$ee=@($f|?{$_.entityKind-eq'ELEMENT'-and$_.quantity-like'GLOBAL_END_*'}).Count;[ordered]@{r=$rr;d=$dd;e=$ee;total=$rr+$dd+$ee}}
+          $b=gc artifacts/base-report.json -Raw|ConvertFrom-Json;$t=gc artifacts/test-report.json -Raw|ConvertFrom-Json;$ba=gc artifacts/base-actual.json -Raw|ConvertFrom-Json;$ta=gc artifacts/test-actual.json -Raw|ConvertFrom-Json
+          $exp=[ordered]@{L2=227;L3=129;L4=120;L5=97;L6=86;L14=129};$cases=[ordered]@{};$bt=0;$tt=0
+          foreach($id in $exp.Keys){$bc=C $b $id;$tc=C $t $id;if($bc.total-ne$exp[$id]){throw "baseline $id"};if($t.mechanics.cases.$id.recoveredEquilibrium.status-eq'FAIL'){throw "equilibrium $id"};if($ta.mechanics.cases.$id.analysisNodeCount-ne($ba.mechanics.cases.$id.analysisNodeCount+2)){throw "nodes $id"};if($ta.mechanics.cases.$id.analysisElementCount-ne($ba.mechanics.cases.$id.analysisElementCount+2)){throw "elements $id"};$cases[$id]=[ordered]@{before=$bc;after=$tc;delta=$tc.total-$bc.total};$bt+=$bc.total;$tt+=$tc.total}
+          [ordered]@{schema='lfea-m047-b31j-fictitious-rigid-ab/v3';authority='HEXAGON_B31J_FICTITIOUS_WEIGHTLESS_RIGID_USING_RUN_PROPERTIES';baselineTotal=$bt;testTotal=$tt;delta=$tt-$bt;cases=$cases;equilibrium='PASS';activeTeeNodes=@('20160','20295')}|ConvertTo-Json -Depth 20|Tee-Object artifacts/result.json
+      - name: Upload
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: bm4l-tee-fictitious-rigid-v2-${{ github.sha }}
+          path: artifacts/
+          if-no-files-found: error
+          retention-days: 14

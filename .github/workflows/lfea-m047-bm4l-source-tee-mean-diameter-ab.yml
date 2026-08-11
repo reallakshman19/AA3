@@ -1,0 +1,156 @@
+name: M047 BM4_L source tee mean-diameter A-B
+
+on:
+  pull_request:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  tee-mean-diameter-ab:
+    if: github.head_ref == 'agent/m047-bm4l-root-cause-991'
+    runs-on: windows-2022
+    timeout-minutes: 40
+    steps:
+      - name: Checkout canonical 793 implementation
+        uses: actions/checkout@v4
+        with:
+          ref: 67dd899cb22650a02ffa763a66eec1e5806ba4b9
+          fetch-depth: 1
+
+      - name: Checkout Common source and CAESAR reports
+        uses: actions/checkout@v4
+        with:
+          repository: reallaksh19/Common
+          ref: 179c4831cf521cf797c13699cfbbd118315c9244
+          path: _common
+          fetch-depth: 1
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci --ignore-scripts
+
+      - name: Install signed Microsoft ACE 2016 x64
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $installer = Join-Path $env:RUNNER_TEMP 'accessdatabaseengine_X64.exe'
+          Invoke-WebRequest -Uri 'https://download.microsoft.com/download/3/5/C/35C84C36-661A-44E6-9324-8786B8DBE231/accessdatabaseengine_X64.exe' -OutFile $installer
+          $signature = Get-AuthenticodeSignature -FilePath $installer
+          if ($signature.Status -ne 'Valid' -or [string]$signature.SignerCertificate.Subject -notmatch 'Microsoft') { throw 'Microsoft ACE installer signature check failed.' }
+          $p = Start-Process -FilePath $installer -ArgumentList '/quiet','/norestart' -Wait -PassThru
+          if ($p.ExitCode -notin @(0,3010)) { throw "ACE install failed with exit $($p.ExitCode)" }
+
+      - name: Verify source custody
+        shell: pwsh
+        run: |
+          $ErrorActionPreference='Stop'
+          New-Item -ItemType Directory -Force -Path artifacts | Out-Null
+          $zip='_common/LFEA/BM4/BM4_L.zip'
+          if ((Get-FileHash -Algorithm SHA256 $zip).Hash.ToLowerInvariant() -ne '978617cba50fa0b1a16c2fa71dc1e0d38e55ac834b191f887d100c6951abd8b9') { throw 'ZIP custody mismatch.' }
+          $extract=Join-Path $env:RUNNER_TEMP 'bm4l-tee-mean-diameter-ab'
+          Expand-Archive -LiteralPath $zip -DestinationPath $extract -Force
+          $accdb=Join-Path $extract 'BM4_L.ACCDB'
+          if ((Get-FileHash -Algorithm SHA256 $accdb).Hash.ToLowerInvariant() -ne '64c05a50e9ed0452622ff5880335460486f24ac8e6adecc9a300b549c9aa82f8') { throw 'ACCDB custody mismatch.' }
+          "BM4L_ACCDB=$accdb" | Out-File -FilePath $env:GITHUB_ENV -Append -Encoding utf8
+
+      - name: Run canonical 793 baseline
+        shell: pwsh
+        run: |
+          node scripts/lfea-caesar-accdb-benchmark.mjs `
+            --accdb "$env:BM4L_ACCDB" `
+            --profile benchmarks/LFEA/CAESAR_ACCDB/bm4l-validation.profile.json `
+            --solve-linear true `
+            --solve-cases L2,L3,L4,L5,L6,L14 `
+            --actual-out artifacts/baseline-actual.json `
+            --out artifacts/baseline-report.json `
+            --summary-out artifacts/baseline-summary.md
+
+      - name: Apply disposable mean-diameter tee spring correction
+        shell: pwsh
+        run: |
+          $ErrorActionPreference='Stop'
+          $path='src/core/linear-fea-piping-components/directional-branch-flexibility.js'
+          $text=Get-Content $path -Raw
+          $old='diameter: authorities.section.dimensions.outerDiameter,'
+          $new='diameter: authorities.section.dimensions.outerDiameter - authorities.section.dimensions.wallThickness,'
+          if (($text.Split($old).Count - 1) -ne 1) { throw 'Expected exactly one tee spring diameter site.' }
+          $text=$text.Replace($old,$new)
+          [System.IO.File]::WriteAllText((Join-Path $PWD $path),$text,(New-Object System.Text.UTF8Encoding($false)))
+          if ((git diff -- $path | Out-String) -notmatch 'outerDiameter - authorities\.section\.dimensions\.wallThickness') { throw 'Mean-diameter patch verification failed.' }
+
+      - name: Run source-backed mean-diameter tee variant
+        shell: pwsh
+        run: |
+          node scripts/lfea-caesar-accdb-benchmark.mjs `
+            --accdb "$env:BM4L_ACCDB" `
+            --profile benchmarks/LFEA/CAESAR_ACCDB/bm4l-validation.profile.json `
+            --solve-linear true `
+            --solve-cases L2,L3,L4,L5,L6,L14 `
+            --actual-out artifacts/mean-diameter-actual.json `
+            --out artifacts/mean-diameter-report.json `
+            --summary-out artifacts/mean-diameter-summary.md
+
+      - name: Compare source-backed tee signature
+        shell: pwsh
+        run: |
+          $ErrorActionPreference='Stop'
+          $base=Get-Content artifacts/baseline-report.json -Raw | ConvertFrom-Json
+          $after=Get-Content artifacts/mean-diameter-report.json -Raw | ConvertFrom-Json
+          $afterActual=Get-Content artifacts/mean-diameter-actual.json -Raw | ConvertFrom-Json
+          function Stats($report,$id){
+            $case=$report.qualification.cases|Where-Object caseId -eq $id
+            $fails=@($case.comparison.rows|Where-Object status -eq 'FAIL')
+            $r=@($fails|Where-Object{ $_.entityKind-eq'NODE' -and $_.quantity-in@('FORCE','MOMENT') }).Count
+            $d=@($fails|Where-Object{ $_.entityKind-eq'NODE' -and $_.quantity-in@('DISPLACEMENT','ROTATION') }).Count
+            $e=@($fails|Where-Object{ $_.entityKind-eq'ELEMENT' -and $_.quantity-like'GLOBAL_END_*' }).Count
+            [ordered]@{restraint=$r;deformation=$d;elementEnd=$e;total=$r+$d+$e}
+          }
+          $expected=[ordered]@{L2=225;L3=131;L4=120;L5=98;L6=88;L14=131}
+          $cases=[ordered]@{};$before=0;$newTotal=0
+          foreach($id in $expected.Keys){
+            $b=Stats $base $id;$a=Stats $after $id
+            if($b.total-ne$expected[$id]){throw "793 baseline drift in ${id}: $($b.total)"}
+            if($base.mechanics.cases.$id.recoveredEquilibrium.status-eq'FAIL'){throw "Baseline equilibrium failed in $id"}
+            if($after.mechanics.cases.$id.recoveredEquilibrium.status-eq'FAIL'){throw "Mean-diameter equilibrium failed in $id"}
+            $cases[$id]=[ordered]@{before=$b;after=$a;delta=$a.total-$b.total}
+            $before+=$b.total;$newTotal+=$a.total
+          }
+          if($before-ne793){throw "Baseline total drift: $before"}
+
+          $tees=$afterActual.mechanics.cases.L2.teeJunctions
+          if($tees.Count-ne2){throw "Expected two active flexible welding tees, got $($tees.Count)"}
+          $t20160=$tees|Where-Object nodeId -eq '20160'
+          $t20295=$tees|Where-Object nodeId -eq '20295'
+          if([math]::Abs([double]$t20160.directionalFlexibilityFactors.branch.inPlane-1.294)-gt0.001){throw '20160 FLEX mismatch'}
+          if([math]::Abs([double]$t20295.directionalFlexibilityFactors.branch.inPlane-1.323)-gt0.002){throw '20295 FLEX mismatch'}
+
+          [ordered]@{
+            schema='lfea-m047-source-tee-mean-diameter-ab/v1'
+            authority='CAESAR_MISC_INTERSECTION_NOMENCLATURE_D_EQUALS_DO_MINUS_T_AND_REPORTED_K'
+            activeFlexibleTeeNodes=@('20160','20295')
+            caesarBranchFlex=[ordered]@{'20160'=1.294;'20295'=1.323}
+            caesarBranchK_NmPerDeg=[ordered]@{'20160'=1.283e6;'20295'=2.877e5}
+            type26UserOverrideRigidNodes=@('20240','21740','21800')
+            springCharacteristicDiameterBefore='OUTER_DIAMETER'
+            springCharacteristicDiameterAfter='MEAN_DIAMETER=OUTER_DIAMETER-WALL_THICKNESS'
+            beforeTotal=$before
+            afterTotal=$newTotal
+            delta=$newTotal-$before
+            cases=$cases
+          }|ConvertTo-Json -Depth 20|Tee-Object -FilePath artifacts/tee-mean-diameter-ab.json
+
+      - name: Upload tee A-B evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: bm4l-source-tee-mean-diameter-ab-${{ github.sha }}
+          path: artifacts/
+          if-no-files-found: error
+          retention-days: 14

@@ -1,0 +1,213 @@
+name: M047 BM4_L source thermal strain A-B
+
+on:
+  pull_request:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  thermal-strain-ab:
+    if: github.head_ref == 'agent/m047-bm4l-root-cause-991'
+    runs-on: windows-2022
+    timeout-minutes: 40
+    steps:
+      - name: Checkout retained implementation
+        uses: actions/checkout@v4
+        with:
+          ref: b03350a11c5e44791c815830cedd5627fbe63ea4
+          fetch-depth: 1
+
+      - name: Checkout source plus CAESAR authority reports
+        uses: actions/checkout@v4
+        with:
+          repository: reallaksh19/Common
+          ref: 179c4831cf521cf797c13699cfbbd118315c9244
+          path: _common
+          fetch-depth: 1
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci --ignore-scripts
+
+      - name: Install signed Microsoft ACE 2016 x64
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $installer = Join-Path $env:RUNNER_TEMP 'accessdatabaseengine_X64.exe'
+          Invoke-WebRequest -Uri 'https://download.microsoft.com/download/3/5/C/35C84C36-661A-44E6-9324-8786B8DBE231/accessdatabaseengine_X64.exe' -OutFile $installer
+          $signature = Get-AuthenticodeSignature -FilePath $installer
+          if ($signature.Status -ne 'Valid' -or [string]$signature.SignerCertificate.Subject -notmatch 'Microsoft') { throw 'Microsoft ACE installer signature check failed.' }
+          $p = Start-Process -FilePath $installer -ArgumentList '/quiet','/norestart' -Wait -PassThru
+          if ($p.ExitCode -notin @(0,3010)) { throw "ACE install failed with exit $($p.ExitCode)" }
+
+      - name: Verify source custody and report authority
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          New-Item -ItemType Directory -Force -Path artifacts | Out-Null
+          $zip = '_common/LFEA/BM4/BM4_L.zip'
+          if ((Get-FileHash -Algorithm SHA256 $zip).Hash.ToLowerInvariant() -ne '978617cba50fa0b1a16c2fa71dc1e0d38e55ac834b191f887d100c6951abd8b9') { throw 'ZIP custody mismatch.' }
+          $extract = Join-Path $env:RUNNER_TEMP 'bm4l-source-thermal-ab'
+          Expand-Archive -LiteralPath $zip -DestinationPath $extract -Force
+          $accdb = Join-Path $extract 'BM4_L.ACCDB'
+          if ((Get-FileHash -Algorithm SHA256 $accdb).Hash.ToLowerInvariant() -ne '64c05a50e9ed0452622ff5880335460486f24ac8e6adecc9a300b549c9aa82f8') { throw 'ACCDB custody mismatch.' }
+          "BM4L_ACCDB=$accdb" | Out-File -FilePath $env:GITHUB_ENV -Append -Encoding utf8
+
+          $miscPath = '_common/LFEA/BM4/Miscdata_BM4_L.txt'
+          $loadPath = '_common/LFEA/BM4/Loadcasereport_BM4_L.txt'
+          $misc = Get-Content $miscPath -Raw
+          $load = Get-Content $loadPath -Raw
+          if ($misc -notmatch 'CAESAR II\s+Ver\.14\.00\.00\.0910') { throw 'Misc report is not CAESAR II 14.00.00.0910.' }
+          if ($load -notmatch 'CAESAR II\s+Ver\.14\.00\.00\.0910') { throw 'Load-case report is not CAESAR II 14.00.00.0910.' }
+
+          $sectionMatch = [regex]::Match($misc, '(?s)----- PIPE PROPERTIES #2.*?----- CENTER OF GRAVITY REPORT')
+          if (-not $sectionMatch.Success) { throw 'PIPE PROPERTIES #2 thermal-expansion section not found.' }
+          $rows = [regex]::Matches($sectionMatch.Value, '(?m)^\s*\d+\.\s+\d+\.\s+([+-]?(?:\d+\.\d+|\.\d+))\s+([+-]?(?:\d+\.\d+|\.\d+))\s+([+-]?(?:\d+\.\d+|\.\d+))')
+          if ($rows.Count -lt 90) { throw "Unexpected thermal expansion row count $($rows.Count)." }
+          $t1 = @($rows | ForEach-Object { $_.Groups[1].Value } | Sort-Object -Unique)
+          $t2 = @($rows | ForEach-Object { $_.Groups[2].Value } | Sort-Object -Unique)
+          $t3 = @($rows | ForEach-Object { $_.Groups[3].Value } | Sort-Object -Unique)
+          if ($t1.Count -ne 1 -or [double]$t1[0] -ne 0.0012) { throw "T1 source strain is not uniformly 0.0012: $($t1 -join ',')." }
+          if ($t2.Count -ne 1 -or [double]$t2[0] -ne 0.0008) { throw "T2 source strain is not uniformly 0.0008: $($t2 -join ',')." }
+          if ($t3.Count -ne 1 -or [double]$t3[0] -ne -0.0002) { throw "T3 source strain is not uniformly -0.0002: $($t3 -join ',')." }
+
+          foreach ($caseNumber in 2..6) {
+            $casePattern = "(?s)CASE $caseNumber .*?(?=CASE $($caseNumber + 1) |\z)"
+            $case = [regex]::Match($load, $casePattern).Value
+            if ($case -notmatch 'Elastic Modulus:\s+EC') { throw "CASE $caseNumber does not resolve Elastic Modulus=EC." }
+          }
+          $case14 = [regex]::Match($load, '(?s)CASE 14 .*?(?=CASE 15 )').Value
+          if ($case14 -notmatch 'L14=L5-L6' -or $case14 -notmatch 'Combination Method:\s+ALG') { throw 'CASE 14 authority is not ALG L5-L6.' }
+
+          Copy-Item $miscPath artifacts/Miscdata_BM4_L.txt
+          Copy-Item $loadPath artifacts/Loadcasereport_BM4_L.txt
+          [ordered]@{
+            schema='lfea-m047-caesar-report-authority/v1'
+            commonCommit='179c4831cf521cf797c13699cfbbd118315c9244'
+            sourceAccdbSha256='64c05a50e9ed0452622ff5880335460486f24ac8e6adecc9a300b549c9aa82f8'
+            caesarVersion='14.00.00.0910'
+            thermalExpansionStrain=[ordered]@{T1=0.0012;T2=0.0008;T3=-0.0002}
+            loadCaseElasticModulus=[ordered]@{L2='EC';L3='EC';L4='EC';L5='EC';L6='EC'}
+            L14='ALG:L5-L6'
+            miscSha256=(Get-FileHash -Algorithm SHA256 $miscPath).Hash.ToLowerInvariant()
+            loadCaseReportSha256=(Get-FileHash -Algorithm SHA256 $loadPath).Hash.ToLowerInvariant()
+          } | ConvertTo-Json -Depth 10 | Out-File artifacts/report-authority.json -Encoding utf8
+
+      - name: Build source-backed T1 diagnostic profile
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $profilePath = 'benchmarks/LFEA/CAESAR_ACCDB/bm4l-validation.profile.json'
+          $profile = Get-Content $profilePath -Raw | ConvertFrom-Json
+          $effectiveCoefficient = 0.0012 / (120.0 - 21.0)
+          $profile.linearSolve.thermalExpansion.coefficientPerKelvin = $effectiveCoefficient
+          $profile.linearSolve.thermalExpansion.authorityStatus = 'RESOLVED'
+          $profile.linearSolve.thermalExpansion.source = 'CAESAR14_00_00_0910_MISC_PIPE_PROPERTIES_2_T1_TOTAL_STRAIN_0_0012_EQUIVALENT_FOR_21C_TO_120C_DIAGNOSTIC'
+          $profile.configurationAuthority.unresolvedSettings = @($profile.configurationAuthority.unresolvedSettings | Where-Object { $_.setting -ne 'THERMAL_EXPANSION_STRAIN' })
+          $profile | ConvertTo-Json -Depth 100 | Out-File artifacts/source-thermal.profile.json -Encoding utf8
+          [ordered]@{
+            sourceTotalStrain=0.0012
+            installationTemperatureC=21.0
+            T1TemperatureC=120.0
+            deltaTemperatureK=99.0
+            diagnosticEquivalentCoefficientPerKelvin=$effectiveCoefficient
+            note='Diagnostic equivalence only; retained implementation should consume CAESAR total strain directly rather than infer a universal constant alpha.'
+          } | ConvertTo-Json -Depth 10 | Out-File artifacts/thermal-equivalence.json -Encoding utf8
+
+      - name: Run retained baseline
+        shell: pwsh
+        run: |
+          node scripts/lfea-caesar-accdb-benchmark.mjs `
+            --accdb "$env:BM4L_ACCDB" `
+            --profile benchmarks/LFEA/CAESAR_ACCDB/bm4l-validation.profile.json `
+            --solve-linear true `
+            --solve-cases L2,L3,L4,L5,L6,L14 `
+            --actual-out artifacts/baseline-actual.json `
+            --out artifacts/baseline-report.json `
+            --summary-out artifacts/baseline-summary.md
+
+      - name: Run source-backed T1 diagnostic
+        shell: pwsh
+        run: |
+          node scripts/lfea-caesar-accdb-benchmark.mjs `
+            --accdb "$env:BM4L_ACCDB" `
+            --profile artifacts/source-thermal.profile.json `
+            --solve-linear true `
+            --solve-cases L2,L3,L4,L5,L6,L14 `
+            --actual-out artifacts/source-thermal-actual.json `
+            --out artifacts/source-thermal-report.json `
+            --summary-out artifacts/source-thermal-summary.md
+
+      - name: Compare thermal authority signature
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $baseline = Get-Content artifacts/baseline-report.json -Raw | ConvertFrom-Json
+          $thermal = Get-Content artifacts/source-thermal-report.json -Raw | ConvertFrom-Json
+          $baselineActual = Get-Content artifacts/baseline-actual.json -Raw | ConvertFrom-Json
+          $thermalActual = Get-Content artifacts/source-thermal-actual.json -Raw | ConvertFrom-Json
+
+          function CaseStats($report, $id) {
+            $case = $report.qualification.cases | Where-Object caseId -eq $id
+            $fails = @($case.comparison.rows | Where-Object status -eq 'FAIL')
+            $r = @($fails | Where-Object { $_.entityKind -eq 'NODE' -and $_.quantity -in @('FORCE','MOMENT') }).Count
+            $d = @($fails | Where-Object { $_.entityKind -eq 'NODE' -and $_.quantity -in @('DISPLACEMENT','ROTATION') }).Count
+            $e = @($fails | Where-Object { $_.entityKind -eq 'ELEMENT' -and $_.quantity -like 'GLOBAL_END_*' }).Count
+            [ordered]@{restraint=$r;deformation=$d;elementEnd=$e;total=$r+$d+$e}
+          }
+
+          $baselineExpected = [ordered]@{L2=243;L3=120;L4=126;L5=132;L6=87;L14=120}
+          $result = [ordered]@{}
+          $baselineGrand = 0
+          $thermalGrand = 0
+          foreach ($id in @('L2','L3','L4','L5','L6','L14')) {
+            $b = CaseStats $baseline $id
+            $t = CaseStats $thermal $id
+            if ($b.total -ne $baselineExpected[$id]) { throw "Retained baseline drift in ${id}: $($b.total)." }
+            if ($baseline.mechanics.cases.$id.recoveredEquilibrium.status -eq 'FAIL') { throw "Baseline equilibrium failed in $id." }
+            if ($thermal.mechanics.cases.$id.recoveredEquilibrium.status -eq 'FAIL') { throw "Thermal authority equilibrium failed in $id." }
+            $result[$id] = [ordered]@{before=$b;after=$t;delta=$t.total-$b.total}
+            $baselineGrand += $b.total
+            $thermalGrand += $t.total
+          }
+          if ($baselineGrand -ne 828) { throw "Retained baseline total drift: $baselineGrand." }
+
+          foreach ($id in @('L2','L4','L6')) {
+            $beforeRows = ($baselineActual.cases.$id.rows | ConvertTo-Json -Depth 20 -Compress)
+            $afterRows = ($thermalActual.cases.$id.rows | ConvertTo-Json -Depth 20 -Compress)
+            if ($beforeRows -cne $afterRows) { throw "Non-thermal case $id changed under T1 authority." }
+          }
+          $l3Rows = ($thermalActual.cases.L3.rows | ConvertTo-Json -Depth 20 -Compress)
+          $l14Rows = ($thermalActual.cases.L14.rows | ConvertTo-Json -Depth 20 -Compress)
+          if ($l3Rows -cne $l14Rows) { throw 'Source-backed L3 and L14 actual rows are not identical.' }
+
+          [ordered]@{
+            schema='lfea-m047-source-thermal-ab/v1'
+            retainedImplementation='b03350a11c5e44791c815830cedd5627fbe63ea4'
+            sourceAccdbSha256=$thermal.source.sha256
+            authorityCommonCommit='179c4831cf521cf797c13699cfbbd118315c9244'
+            authorityT1TotalStrain=0.0012
+            diagnosticEquivalentCoefficientPerKelvin=(0.0012 / 99.0)
+            nonThermalCasesUnchanged=$true
+            L3EqualsL14=$true
+            beforeTotal=$baselineGrand
+            afterTotal=$thermalGrand
+            delta=$thermalGrand-$baselineGrand
+            cases=$result
+          } | ConvertTo-Json -Depth 20 | Tee-Object -FilePath artifacts/source-thermal-ab.json
+
+      - name: Upload thermal authority evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: bm4l-source-thermal-ab-${{ github.sha }}
+          path: artifacts/
+          if-no-files-found: error
+          retention-days: 14

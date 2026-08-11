@@ -1,0 +1,172 @@
+name: M047 independent Appendix S Cowper shear A-B
+
+on:
+  push:
+    branches: [agent/m047-bm4l-root-cause-991]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  appendix-s-cowper-ab:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - name: Checkout independent published-benchmark baseline
+        uses: actions/checkout@v4
+        with:
+          ref: 7a08f9db84f298990250793226b36d4a82dbe01e
+          fetch-depth: 1
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+
+      - run: npm ci --ignore-scripts
+
+      - name: Record independent benchmark metrics helper
+        shell: bash
+        run: |
+          mkdir -p artifacts
+          cat > artifacts/appendix-s-metrics.mjs <<'EOF'
+          import {
+            PUBLISHED_DISPLACEMENTS,
+            PUBLISHED_SUPPORT_LOADS,
+            OUTER_DIAMETER,
+            WALL_THICKNESS,
+            POISSON_RATIO,
+            solveAppendixS,
+          } from '../scripts/lfea-b3.12-appendix-s-example1-fixtures.mjs';
+
+          const run = solveAppendixS();
+          if (run.execution.status !== 'QUALIFIED') throw new Error(`solve status ${run.execution.status}`);
+          function displacement(nodeId, dof) {
+            const entry = run.execution.displacement.find((row) => row.nodeId === nodeId && row.dof === dof);
+            if (!entry) throw new Error(`missing displacement ${nodeId}:${dof}`);
+            return entry.value;
+          }
+          function reaction(nodeId, dof) {
+            const entry = run.execution.reactions.find((row) => row.nodeId === nodeId && row.dof === dof);
+            if (!entry) throw new Error(`missing reaction ${nodeId}:${dof}`);
+            return entry.value;
+          }
+          const dispRows=[];
+          for (const row of PUBLISHED_DISPLACEMENTS) {
+            for (const [dof, expectedMm] of [['UX',row.uxMm],['UY',row.uyMm]]) {
+              if (expectedMm === 0) continue;
+              const actualMm=displacement(row.nodeId,dof)*1000;
+              const scale=Math.max(Math.abs(expectedMm),1.5);
+              dispRows.push({label:row.label,dof,actualMm,expectedMm,errorMm:actualMm-expectedMm,normalized:(actualMm-expectedMm)/scale});
+            }
+          }
+          const supportRows=[];
+          for (const row of PUBLISHED_SUPPORT_LOADS) {
+            const pipeOnSupport=-reaction(row.nodeId,row.dof);
+            const actual=row.absolute?Math.abs(pipeOnSupport):pipeOnSupport;
+            const expected=row.absolute?Math.abs(row.value):row.value;
+            const floor=row.quantity==='moment'?1500:1200;
+            const scale=Math.max(Math.abs(expected),floor);
+            supportRows.push({nodeId:row.nodeId,dof:row.dof,quantity:row.quantity,actual,expected,error:actual-expected,normalized:(actual-expected)/scale});
+          }
+          const rms=(rows)=>Math.sqrt(rows.reduce((s,r)=>s+r.normalized*r.normalized,0)/rows.length);
+          const a=(OUTER_DIAMETER-2*WALL_THICKNESS)/OUTER_DIAMETER;
+          const s=1+a*a;
+          const cowper=(6*(1+POISSON_RATIO)*s*s)/((7+6*POISSON_RATIO)*s*s+(20+12*POISSON_RATIO)*a*a);
+          const summary={
+            schema:'lfea-m047-appendix-s-independent-metrics/v1',
+            source:'ASME B31.3-2006 Appendix S Example 1 published displacement/reaction tables',
+            executionStatus:run.execution.status,
+            cowperFromPublishedSection:{outerDiameter:OUTER_DIAMETER,wallThickness:WALL_THICKNESS,poissonRatio:POISSON_RATIO,kappa:cowper},
+            displacement:{rmsNormalized:rms(dispRows),maxAbsErrorMm:Math.max(...dispRows.map(r=>Math.abs(r.errorMm))),rows:dispRows},
+            support:{rmsNormalized:rms(supportRows),maxAbsNormalized:Math.max(...supportRows.map(r=>Math.abs(r.normalized))),rows:supportRows},
+            diagnostics:run.execution.diagnostics,
+          };
+          console.log(JSON.stringify(summary,null,2));
+          EOF
+
+      - name: Run retained Euler Appendix S benchmark
+        shell: bash
+        run: |
+          node scripts/lfea-b3.12-appendix-s-example1-check.mjs | tee artifacts/baseline-check.log
+          node artifacts/appendix-s-metrics.mjs | tee artifacts/baseline-metrics.json
+
+      - name: Patch only ordinary straight spans to section-derived Cowper Timoshenko shear
+        shell: bash
+        run: |
+          cat > artifacts/patch-appendix-s.mjs <<'EOF'
+          import fs from 'node:fs';
+          const path='scripts/lfea-b3.12-appendix-s-example1-fixtures.mjs';
+          let text=fs.readFileSync(path,'utf8').replace(/\r\n/g,'\n');
+          const once=(oldText,newText,label)=>{
+            const count=text.split(oldText).length-1;
+            if(count!==1) throw new Error(`${label}: expected one site, found ${count}`);
+            text=text.replace(oldText,newText);
+          };
+          once(
+            "import { eulerBernoulliProfile } from './lfea-b3.1-frame-element-fixtures.mjs';",
+            "import { eulerBernoulliProfile, timoshenkoProfile } from './lfea-b3.1-frame-element-fixtures.mjs';",
+            'B3.1 profile import',
+          );
+          once(
+            `  const frameProfile = eulerBernoulliProfile();\n  const bendProfile = componentProfile({`,
+            `  const frameProfile = eulerBernoulliProfile();\n  // Independent continuum-mechanics A/B only: Cowper hollow-circle shear.\n  // BEND component sub-elements deliberately retain the original Euler profile.\n  const cowperA = section.dimensions.innerDiameter / section.dimensions.outerDiameter;\n  const cowperOnePlusA2 = 1 + cowperA ** 2;\n  const cowperNu = material.materialState.poissonRatio;\n  const cowperKappa = (6 * (1 + cowperNu) * cowperOnePlusA2 ** 2)\n    / ((7 + 6 * cowperNu) * cowperOnePlusA2 ** 2 + (20 + 12 * cowperNu) * cowperA ** 2);\n  const straightFrameProfile = timoshenkoProfile({\n    shearCorrectionFactorY: { value: cowperKappa, source: 'COWPER-1966-HOLLOW-CIRCLE-INDEPENDENT-APPENDIX-S-A-B' },\n    shearCorrectionFactorZ: { value: cowperKappa, source: 'COWPER-1966-HOLLOW-CIRCLE-INDEPENDENT-APPENDIX-S-A-B' },\n  });\n  const bendProfile = componentProfile({`,
+            'straight Cowper profile declaration',
+          );
+          once(
+            `      profile: frameProfile,\n      distributedLoads: [],\n      temperature: temperaturesByElement.get(span.elementId),`,
+            `      profile: straightFrameProfile,\n      distributedLoads: [],\n      temperature: temperaturesByElement.get(span.elementId),`,
+            'straight-frame profile ownership',
+          );
+          fs.writeFileSync(path,text);
+          EOF
+          node artifacts/patch-appendix-s.mjs
+          git diff -- scripts/lfea-b3.12-appendix-s-example1-fixtures.mjs | tee artifacts/cowper.patch
+          grep -q "profile: straightFrameProfile" artifacts/cowper.patch
+          test "$(grep -c "frameElementProfile: frameProfile" scripts/lfea-b3.12-appendix-s-example1-fixtures.mjs)" -eq 2
+
+      - name: Run independent Cowper straight-span variant
+        shell: bash
+        run: |
+          set +e
+          node scripts/lfea-b3.12-appendix-s-example1-check.mjs > artifacts/cowper-check.log 2>&1
+          echo $? > artifacts/cowper-check-exit.txt
+          set -e
+          node artifacts/appendix-s-metrics.mjs | tee artifacts/cowper-metrics.json
+
+      - name: Compare independent published-benchmark fit
+        shell: bash
+        run: |
+          cat > artifacts/compare.mjs <<'EOF'
+          import fs from 'node:fs';
+          const base=JSON.parse(fs.readFileSync('artifacts/baseline-metrics.json','utf8'));
+          const cowper=JSON.parse(fs.readFileSync('artifacts/cowper-metrics.json','utf8'));
+          const checkExit=Number(fs.readFileSync('artifacts/cowper-check-exit.txt','utf8').trim());
+          const out={
+            schema:'lfea-m047-independent-appendix-s-cowper-ab/v2',
+            benchmark:'ASME B31.3-2006 Appendix S Example 1',
+            bm4ReferenceUsed:false,
+            baseline:'Euler-Bernoulli ordinary straight spans; unchanged qualified bend components',
+            candidate:'Cowper hollow-circle Timoshenko ordinary straight spans only; bend components unchanged',
+            kappa:cowper.cowperFromPublishedSection.kappa,
+            cowperExistingQualificationCheckPassed:checkExit===0,
+            displacementRms:{baseline:base.displacement.rmsNormalized,cowper:cowper.displacement.rmsNormalized,ratio:cowper.displacement.rmsNormalized/base.displacement.rmsNormalized},
+            displacementMaxAbsErrorMm:{baseline:base.displacement.maxAbsErrorMm,cowper:cowper.displacement.maxAbsErrorMm},
+            supportRms:{baseline:base.support.rmsNormalized,cowper:cowper.support.rmsNormalized,ratio:cowper.support.rmsNormalized/base.support.rmsNormalized},
+            supportMaxAbsNormalized:{baseline:base.support.maxAbsNormalized,cowper:cowper.support.maxAbsNormalized},
+            decisionRule:'Independent published-benchmark validation only; BM4 reference values are excluded from this decision.',
+          };
+          console.log(JSON.stringify(out,null,2));
+          fs.writeFileSync('artifacts/appendix-s-cowper-ab.json',JSON.stringify(out,null,2)+'\n');
+          EOF
+          node artifacts/compare.mjs
+
+      - name: Upload evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: m047-independent-appendix-s-cowper-${{ github.sha }}
+          path: artifacts/
+          if-no-files-found: error
+          retention-days: 14

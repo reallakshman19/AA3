@@ -1,0 +1,141 @@
+name: M047 BM4_L ACCDB populated-field audit
+
+on:
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  populated-field-audit:
+    if: github.event_name == 'workflow_dispatch' || github.head_ref == 'agent/m047-bm4l-root-cause-991'
+    runs-on: windows-2022
+    timeout-minutes: 25
+    steps:
+      - name: Checkout Advanced_Analysis
+        uses: actions/checkout@v4
+
+      - name: Checkout pinned BM4_L source container
+        uses: actions/checkout@v4
+        with:
+          repository: reallaksh19/Common
+          ref: 45d51ea18624f5775805f399110c1738301c0d90
+          path: _common
+          fetch-depth: 1
+
+      - name: Install signed Microsoft ACE 2016 x64
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $installer = Join-Path $env:RUNNER_TEMP 'accessdatabaseengine_X64.exe'
+          Invoke-WebRequest -Uri 'https://download.microsoft.com/download/3/5/C/35C84C36-661A-44E6-9324-8786B8DBE231/accessdatabaseengine_X64.exe' -OutFile $installer
+          $signature = Get-AuthenticodeSignature -FilePath $installer
+          if ($signature.Status -ne 'Valid' -or [string]$signature.SignerCertificate.Subject -notmatch 'Microsoft') { throw 'Microsoft ACE installer signature check failed.' }
+          $p = Start-Process -FilePath $installer -ArgumentList '/quiet','/norestart' -Wait -PassThru
+          if ($p.ExitCode -notin @(0,3010)) { throw "ACE install failed with exit $($p.ExitCode)" }
+
+      - name: Extract and verify BM4_L.ACCDB custody
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          New-Item -ItemType Directory -Force -Path artifacts | Out-Null
+          $zip = '_common/LFEA/BM4/BM4_L.zip'
+          if ((Get-FileHash -Algorithm SHA256 $zip).Hash.ToLowerInvariant() -ne '978617cba50fa0b1a16c2fa71dc1e0d38e55ac834b191f887d100c6951abd8b9') { throw 'ZIP custody mismatch.' }
+          $extract = Join-Path $env:RUNNER_TEMP 'bm4l-accdb-populated-field-audit'
+          Expand-Archive -LiteralPath $zip -DestinationPath $extract -Force
+          $accdb = Join-Path $extract 'BM4_L.ACCDB'
+          $hash = (Get-FileHash -Algorithm SHA256 $accdb).Hash.ToLowerInvariant()
+          if ($hash -ne '64c05a50e9ed0452622ff5880335460486f24ac8e6adecc9a300b549c9aa82f8') { throw 'ACCDB custody mismatch.' }
+          "BM4L_ACCDB=$accdb" | Out-File -FilePath $env:GITHUB_ENV -Append -Encoding utf8
+          "BM4L_SOURCE_SHA256=$hash" | Out-File -FilePath $env:GITHUB_ENV -Append -Encoding utf8
+
+      - name: Audit populated INPUT fields directly from ACCDB
+        shell: powershell
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $provider = 'Microsoft.ACE.OLEDB.12.0'
+          $connection = New-Object System.Data.OleDb.OleDbConnection("Provider=$provider;Data Source=$env:BM4L_ACCDB;Persist Security Info=False;")
+          $connection.Open()
+          try {
+            $tablesSchema = $connection.GetSchema('Tables')
+            $columnsSchema = $connection.GetSchema('Columns')
+            $tableNames = @($tablesSchema.Rows | ForEach-Object { [string]$_.TABLE_NAME } | Where-Object { $_ -like 'INPUT_*' } | Sort-Object -Unique)
+            $tables = @()
+            foreach ($table in $tableNames) {
+              $columns = @($columnsSchema.Rows | Where-Object { [string]$_.TABLE_NAME -eq $table } | Sort-Object {[int]$_.ORDINAL_POSITION} | ForEach-Object { [string]$_.COLUMN_NAME })
+              $cmd = $connection.CreateCommand()
+              $cmd.CommandText = "SELECT * FROM [$table]"
+              $reader = $cmd.ExecuteReader()
+              $rows = @()
+              while ($reader.Read()) {
+                $row = [ordered]@{}
+                foreach ($column in $columns) {
+                  $value = $reader[$column]
+                  if ($value -is [DBNull]) { $value = $null }
+                  $row[$column] = $value
+                }
+                $rows += [pscustomobject]$row
+              }
+              $reader.Close()
+
+              $fieldStats = @()
+              foreach ($column in $columns) {
+                $values = @($rows | ForEach-Object { $_.$column })
+                $nonNull = @($values | Where-Object { $null -ne $_ })
+                $meaningful = @($nonNull | Where-Object {
+                  if ($_ -is [string]) { return -not [string]::IsNullOrWhiteSpace([string]$_) }
+                  $n = 0.0
+                  if ([double]::TryParse([string]$_, [ref]$n)) {
+                    return ([math]::Abs($n + 1.0101) -gt 1e-7 -and [math]::Abs($n + 1.0) -gt 1e-12)
+                  }
+                  return $true
+                })
+                $distinct = @($meaningful | ForEach-Object { [string]$_ } | Sort-Object -Unique)
+                $examples = @($distinct | Select-Object -First 12)
+                $fieldStats += [pscustomobject][ordered]@{
+                  column = $column
+                  nonNullCount = $nonNull.Count
+                  meaningfulCount = $meaningful.Count
+                  distinctMeaningfulCount = $distinct.Count
+                  examples = $examples
+                }
+              }
+              $tables += [pscustomobject][ordered]@{
+                table = $table
+                rowCount = $rows.Count
+                populatedFields = @($fieldStats | Where-Object { $_.meaningfulCount -gt 0 })
+              }
+            }
+
+            $audit = [ordered]@{
+              schema = 'lfea-m047-bm4l-accdb-populated-field-audit/v1'
+              sourceSha256 = $env:BM4L_SOURCE_SHA256
+              provider = $provider
+              inputTableCount = $tables.Count
+              nonEmptyInputTableCount = @($tables | Where-Object { $_.rowCount -gt 0 }).Count
+              tables = $tables
+            }
+            $audit | ConvertTo-Json -Depth 12 | Out-File artifacts/bm4l-accdb-populated-field-audit.json -Encoding utf8
+
+            $summary = @()
+            foreach ($table in ($tables | Where-Object { $_.rowCount -gt 0 })) {
+              $summary += [pscustomobject][ordered]@{
+                table = $table.table
+                rows = $table.rowCount
+                populated = (($table.populatedFields | ForEach-Object column) -join ', ')
+              }
+            }
+            $summary | Format-Table -AutoSize -Wrap | Out-String -Width 4096 | Tee-Object -FilePath artifacts/bm4l-accdb-populated-field-summary.txt | Write-Host
+          }
+          finally { $connection.Close() }
+
+      - name: Upload ACCDB-only audit
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: bm4l-accdb-populated-field-audit-${{ github.sha }}
+          path: artifacts/
+          if-no-files-found: error
+          retention-days: 14

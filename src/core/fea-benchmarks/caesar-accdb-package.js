@@ -10,6 +10,7 @@ import {
   normalizeCaesarConfigurationAuthority,
   resolveCaesarConfigurationSetting,
 } from './caesar-configuration-authority.js';
+import { CAESAR_ACCDB_STRAIGHT_PIPE_MODES } from './caesar-accdb-straight-pipe-profile.js';
 
 export const CAESAR_ACCDB_PROFILE_SCHEMA = 'caesar-accdb-benchmark-profile/v1';
 export const CAESAR_ACCDB_PACKAGE_SCHEMA = 'caesar-accdb-benchmark-package/v1';
@@ -157,6 +158,16 @@ function normalizeLinearSolve(value) {
       value.reducerCondensation,
       'linearSolve.reducerCondensation',
     ),
+    straightPipeTransverseShear: normalizeAuthorityDecision(
+      value.straightPipeTransverseShear ?? {
+        mode: 'EULER_BERNOULLI',
+        authorityStatus: 'PROVISIONAL',
+        source: 'PROFILE_COMPATIBILITY_DEFAULT_EULER_BERNOULLI',
+      },
+      'linearSolve.straightPipeTransverseShear',
+      'mode',
+      ['RESOLVED', 'PROVISIONAL'],
+    ),
     b31jSmooth90FlexibilityCorrection: normalizeAuthorityDecision(
       value.b31jSmooth90FlexibilityCorrection,
       'linearSolve.b31jSmooth90FlexibilityCorrection',
@@ -177,6 +188,11 @@ function normalizeLinearSolve(value) {
     ),
     bendAxialShape: normalizeBendAxialShape(value.bendAxialShape),
   };
+  if (!CAESAR_ACCDB_STRAIGHT_PIPE_MODES.includes(result.straightPipeTransverseShear.mode)) {
+    throw new TypeError(
+      `Unsupported linearSolve.straightPipeTransverseShear.mode ${result.straightPipeTransverseShear.mode}.`,
+    );
+  }
   if (result.teeNominalDiameterRelativeTolerance > 0.01) {
     throw new TypeError('linearSolve.teeNominalDiameterRelativeTolerance must not exceed 0.01.');
   }

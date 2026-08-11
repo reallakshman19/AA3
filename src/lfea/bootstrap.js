@@ -1,4 +1,7 @@
 import { LfeaWorkbenchController } from '../workspace/lfea-workbench-controller.js';
+import { createLfeaGovernedJourneyProjection } from './governed-journey-projection.js';
+import { mountLfeaGovernedJourneyView } from './governed-journey-view.js';
+import { LfeaStandaloneInputXmlSourceController } from './inputxml-source-controller.js';
 import {
   clearLfeaStandaloneLayout,
   renderLfeaStandaloneLayout,
@@ -9,13 +12,10 @@ export const LFEA_STANDALONE_APPLICATION_SCHEMA = 'lfea-standalone-application/v
 /**
  * Bootstrap LFEA without constructing the combined Advanced Analysis workspace.
  *
- * This is the first standalone composition root. It owns only the LFEA shell
- * and LFEA workbench lifecycle; Source/Review/Model/History slices are added to
- * this root incrementally rather than inherited from the legacy application.
- *
- * @param {Element} rootElement Application host.
- * @param {{workbench?:Record<string,unknown>,identity?:Record<string,unknown>}} options Explicit standalone options.
- * @returns {Readonly<Record<string, unknown>>} Public standalone application API.
+ * Native InputXML Source → Review → Model → pre-FEA authorization is composed
+ * from existing governed modules. Native solve execution is deliberately not
+ * connected in this slice; the element-FEA workbench remains isolated under
+ * Verification and is not presented as piping execution authority.
  */
 export function bootstrapLfeaStandalone(rootElement, options = {}) {
   if (!rootElement?.ownerDocument) {
@@ -23,12 +23,31 @@ export function bootstrapLfeaStandalone(rootElement, options = {}) {
   }
 
   const identity = createApplicationIdentity(options.identity);
-  const { workbenchRoot, statusRoot } = renderLfeaStandaloneLayout(rootElement, identity);
-  const workbenchController = new LfeaWorkbenchController(workbenchRoot, options.workbench);
+  const layout = renderLfeaStandaloneLayout(rootElement, identity);
+  const journeyView = mountLfeaGovernedJourneyView({
+    reviewRoot: layout.reviewRoot,
+    modelRoot: layout.modelRoot,
+    analysisRoot: layout.analysisRoot,
+  });
+  let governedJourney = createLfeaGovernedJourneyProjection();
+  journeyView.update(governedJourney);
+
+  const sourceController = new LfeaStandaloneInputXmlSourceController(
+    layout.sourceRoot,
+    rootElement.ownerDocument,
+    (sourceSnapshot, preFlight) => {
+      governedJourney = createLfeaGovernedJourneyProjection({ sourceSnapshot, preFlight });
+      journeyView.update(governedJourney);
+      layout.statusRoot.textContent = journeyStatus(governedJourney);
+    },
+  );
+
+  const workbenchController = new LfeaWorkbenchController(layout.workbenchRoot, options.workbench);
   let destroyed = false;
 
+  sourceController.init();
   workbenchController.init();
-  statusRoot.textContent = 'Standalone LFEA analysis workbench ready.';
+  layout.statusRoot.textContent = journeyStatus(governedJourney);
 
   const requireActive = () => {
     if (destroyed) {
@@ -42,6 +61,55 @@ export function bootstrapLfeaStandalone(rootElement, options = {}) {
     getIdentity() {
       return identity;
     },
+    getApplicationState() {
+      requireActive();
+      return Object.freeze({
+        identity,
+        activeView: layout.getActiveView(),
+        source: sourceController.getSnapshot(),
+        governedJourney,
+      });
+    },
+    activateView(viewId) {
+      requireActive();
+      return layout.activate(viewId);
+    },
+    getActiveView() {
+      requireActive();
+      return layout.getActiveView();
+    },
+    getGovernedJourney() {
+      requireActive();
+      return governedJourney;
+    },
+    loadInputXmlSource(input, sourceOptions) {
+      requireActive();
+      return sourceController.loadSource(input, sourceOptions);
+    },
+    authorizeInputXmlSourceUnit(unit) {
+      requireActive();
+      return sourceController.authorizeUnit(unit);
+    },
+    authorizeInputXmlPreFlight(approval) {
+      requireActive();
+      return sourceController.authorizePreFlight(approval);
+    },
+    getInputXmlSourceState() {
+      requireActive();
+      return sourceController.getSnapshot();
+    },
+    getInputXmlPreFlight() {
+      requireActive();
+      return sourceController.getPreFlight();
+    },
+    clearInputXmlSource() {
+      requireActive();
+      sourceController.clear();
+      return sourceController.getSnapshot();
+    },
+
+    // Verification-workbench compatibility API. This workbench is deliberately
+    // mounted under Verification and is not native piping execution handoff.
     getState() {
       requireActive();
       return workbenchController.getState();
@@ -93,10 +161,28 @@ export function bootstrapLfeaStandalone(rootElement, options = {}) {
     destroy() {
       if (destroyed) return;
       destroyed = true;
+      sourceController.destroy();
+      journeyView.destroy();
       workbenchController.destroy();
       clearLfeaStandaloneLayout(rootElement);
     },
   });
+}
+
+function journeyStatus(journey) {
+  if (journey.source.status === 'EMPTY') {
+    return 'Import a governed CAESAR II InputXML source to begin Source → Review → Model preparation.';
+  }
+  if (journey.analysis.status === 'BLOCKED') {
+    return 'Native InputXML pre-FEA is BLOCKED. Review retained findings; no solve authorization or execution handoff exists.';
+  }
+  if (journey.analysis.readyForExecutionHandoff) {
+    return 'Reviewed pre-FEA authorization is sealed. Native execution handoff remains intentionally disconnected in this slice.';
+  }
+  if (journey.review.status === 'REVIEW_REQUIRED') {
+    return 'Native InputXML pre-FEA requires explicit engineering review before solve authorization can be sealed.';
+  }
+  return 'Native InputXML source is retained; complete governed pre-FEA preparation before execution handoff.';
 }
 
 function createApplicationIdentity(value = {}) {

@@ -6,7 +6,7 @@ export function ensureTopologyEditTableStyles(documentRef) {
   style.id = 'topology-edit-table-styles';
   style.textContent = `
     .topology-edit-table-window { position:absolute; top:58px; right:14px; z-index:90; width:min(1120px,calc(100% - 28px)); height:min(720px,calc(100% - 82px)); min-width:420px; min-height:42px; max-width:calc(100% - 8px); max-height:calc(100% - 54px); overflow:hidden; resize:both; border:1px solid #315070; border-radius:8px; background:#06101c; box-shadow:0 18px 52px rgba(0,0,0,.58); color:#cbd5e1; box-sizing:border-box; }
-    .topology-edit-table-window[open] { display:grid; grid-template-rows:36px minmax(0,1fr); }
+    .topology-edit-table-window[open] { display:grid; grid-template-columns:minmax(0,1fr); grid-template-rows:36px minmax(0,1fr); }
     .topology-edit-table-window:not([open]) { top:auto; right:32%; bottom:0; width:220px; height:32px; min-width:0; min-height:32px; resize:none; }
     .topology-edit-table-window__titlebar { display:flex; align-items:center; gap:.55rem; min-width:0; height:36px; padding:0 8px; border-bottom:1px solid #1e344c; background:linear-gradient(180deg,#10233a,#0a1626); cursor:move; user-select:none; list-style:none; box-sizing:border-box; }
     .topology-edit-table-window__titlebar::-webkit-details-marker { display:none; }

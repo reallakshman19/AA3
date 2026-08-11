@@ -44,8 +44,7 @@ function renderReview(root, review) {
     ['Authorization identity', review.authorizationSemanticHash],
   ]));
   appendCodeList(doc, section, 'Accepted limitations', review.limitationsAccepted);
-  appendCodeList(doc, section, 'Blocking finding IDs', review.blockingFindingIds);
-  appendCodeList(doc, section, 'Conditional finding IDs', review.conditionalFindingIds);
+  appendFindings(doc, section, review.findings);
   root.replaceChildren(section);
 }
 
@@ -67,7 +66,7 @@ function renderModel(root, model) {
   ]));
 
   const heading = doc.createElement('h3');
-  heading.textContent = 'Authorized physical-case candidates';
+  heading.textContent = 'Compiled physical cases';
   section.append(heading);
   if (!model.physicalCases.length) {
     section.append(message(doc, 'No compiled physical case is available.'));
@@ -102,6 +101,7 @@ function renderAnalysis(root, analysis) {
   section.append(factTable(doc, [
     ['Analysis profile', analysis.requestedProfileId],
     ['Requested cases', analysis.requestedCaseIds.join(', ') || null],
+    ['Authorized physical cases', analysis.authorizedPhysicalCaseIds.join(', ') || null],
     ['Ready to review', yesNo(analysis.readyToReview)],
     ['Solve authorization', analysis.solveAuthorized ? 'SEALED' : 'NOT AUTHORIZED'],
     ['Ready for execution handoff', yesNo(analysis.readyForExecutionHandoff)],
@@ -122,6 +122,50 @@ function renderAnalysis(root, analysis) {
     : 'Native solve execution is blocked until the governed source/review/model authorization chain is complete.';
   section.append(boundary);
   root.replaceChildren(section);
+}
+
+function appendFindings(doc, section, findings) {
+  const heading = doc.createElement('h3');
+  heading.textContent = 'Retained engineering findings';
+  section.append(heading);
+  if (!Array.isArray(findings) || findings.length === 0) {
+    section.append(message(doc, 'No retained findings.'));
+    return;
+  }
+
+  const table = doc.createElement('table');
+  table.className = 'lfea-journey-table lfea-journey-findings';
+  const head = doc.createElement('tr');
+  for (const label of ['Disposition', 'Code', 'Category', 'Finding', 'Remediation', 'Cases / entities']) {
+    const th = doc.createElement('th');
+    th.textContent = label;
+    head.append(th);
+  }
+  table.append(head);
+
+  for (const finding of findings) {
+    const tr = doc.createElement('tr');
+    tr.dataset.disposition = finding.disposition ?? 'UNKNOWN';
+    const affected = [
+      ...(finding.physicalCaseIds ?? []).map((value) => `case:${value}`),
+      ...(finding.canonicalEntityIds ?? []).map((value) => `entity:${value}`),
+      ...(finding.sourceFeatureIds ?? []).map((value) => `source:${value}`),
+    ].join(', ');
+    for (const value of [
+      finding.disposition,
+      finding.code,
+      finding.category,
+      finding.message,
+      finding.remediation,
+      affected || null,
+    ]) {
+      const td = doc.createElement('td');
+      td.textContent = display(value);
+      tr.append(td);
+    }
+    table.append(tr);
+  }
+  section.append(table);
 }
 
 function panel(doc, titleText, status, explanation) {

@@ -117,7 +117,7 @@ export class LfeaWorkbenchController {
    * @returns {Readonly<Record<string, unknown>>} Updated workbench state.
    */
   async loadMockData() {
-    const { createLfeaMockPackage } = await import('./advanced-mock-data.js');
+    const { createLfeaMockPackage } = await import('./lfea-mock-data.js');
     return this.importDocument(createLfeaMockPackage());
   }
 

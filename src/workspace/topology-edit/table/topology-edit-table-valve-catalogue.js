@@ -69,8 +69,11 @@ function isValveRow(row) {
   return row?.elementType === 'VALVE' && row.identity?.canonicalKind === 'EDGE';
 }
 function compatibleNumber(observed, candidate) {
-  const value = Number(observed);
-  return !Number.isFinite(value) || value <= 0 || Math.abs(value - Number(candidate)) <= EPSILON;
+  const expected = Number(observed);
+  const actual = Number(candidate);
+  return Number.isFinite(expected) && expected > 0
+    && Number.isFinite(actual) && actual > 0
+    && Math.abs(expected - actual) <= EPSILON;
 }
 function compatibleText(observed, candidate) {
   const expected = stringValue(observed).toUpperCase();

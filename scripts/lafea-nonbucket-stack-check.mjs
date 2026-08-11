@@ -54,6 +54,7 @@ const CHECKS = Object.freeze([
   { scope: 'U4', path: 'scripts/lafea-u4j-source-guard.mjs' },
   { scope: 'WORKBENCH', path: 'scripts/lafea-canvas-contract-check.mjs' },
   { scope: 'U0_WORKBENCH', path: 'scripts/lafea-workbench-check.mjs' },
+  { scope: 'U0_WORKFLOW', path: 'scripts/lafea-ui-workflow-truthfulness-check.mjs' },
 ].map(Object.freeze));
 
 const FORBIDDEN_CHECK_PATHS = Object.freeze([

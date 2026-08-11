@@ -70,7 +70,7 @@ jobs:
       - name: Prove standalone operation with LAFEA production runtime physically absent
         run: node scripts/run-lfea-physical-absence-rehearsal.mjs
 
-      - name: Upload browser evidence
+      - name: Upload standalone evidence
         if: always()
         uses: actions/upload-artifact@v4
         with:
@@ -78,5 +78,6 @@ jobs:
           path: |
             playwright-report/
             test-results/
+            reports/lfea-physical-absence-rehearsal.json
           if-no-files-found: warn
           retention-days: 14

@@ -11,23 +11,23 @@
 | PR number | 1020 |
 | Branch | `agent/fix-topology-validation-worker-production` |
 | Base commit | `751756e9140527b8dc121aa179dc76b7039fb7ad` |
-| Current HEAD | `d92b95840369415cc0b123e18c1e04b40b2dbcdc` before this Stage-3-preparation report commit |
+| Current HEAD | `e73d04d94372f61ae860f4ca0ecefa9358b2059e` before PR metadata synchronization |
 | PR status | OPEN / DRAFT / mergeable at last inspection |
 | Current stage | Stage 3 — Changed-file verification and documentation-stage completion |
 | Last completed stage | Stage 2 — PR allocation and report synchronization |
 | Engineering status | ACCEPTED; spreadsheet production implementation has not started yet |
-| Validation status | PARTIAL PASS: existing PR checks all passed on `d92b958...`; spreadsheet behavior is not yet implemented/validated |
+| Validation status | PARTIAL PASS: existing PR checks all passed on `d92b958...`; Stage-3 report commits require their own later check result |
 | Current blocker | No local checkout or `gh`; writes/inspection use connected GitHub API and existing repository checks. |
-| Exact next action | Synchronize PR title/body to the expanded single-PR mission, reconcile the current three-file diff against this ledger, then mark Stage 3 COMPLETE before Stage 4 production edits. |
+| Exact next action | Update PR #1020 title/body to the combined mission, then reconcile metadata and changed files and close Stage 3 before Stage 4 production edits. |
 
 ### Handover in 60 seconds
 
-- **What is now true:** PR #1020 is the single authorized PR. `agents/PR1020_workreport.md` is the sole living report. The temporary `PR_PENDING` file was deleted and has no net PR diff. Current net diff is exactly the numbered report plus the inherited worker client/test. All existing triggered workflows on `d92b958...` completed successfully.
-- **What is currently being worked on:** Stage 3 documentation/reconciliation only; no spreadsheet production edit has started.
-- **What remains unfinished:** PR metadata synchronization; dense/dynamic table shell; inline spreadsheet editing; compound editor integration; bounded engineering edit-surface expansion; final-head validation and closure.
-- **What must not be assumed:** current table cells are not spreadsheet-editable yet; visible columns are not automatically safe to edit; CI success on `d92b958...` proves only the current inherited/report state, not future spreadsheet changes.
+- **What is now true:** PR #1020 is the single authorized PR. `agents/PR1020_workreport.md` is the sole living report. Current net diff before this metadata action is the report plus the inherited worker client/test. All triggered workflows on `d92b958...` completed successfully.
+- **What is currently being worked on:** Stage 3 PR metadata synchronization only; no spreadsheet production edit has started.
+- **What remains unfinished:** PR metadata sync; dense/dynamic table shell; inline spreadsheet editing; compound editor integration; bounded engineering edit-surface expansion; final-head validation and closure.
+- **What must not be assumed:** current table cells are not spreadsheet-editable yet; visible columns are not automatically safe to edit; prior green CI does not validate later commits.
 - **Highest-risk remaining item:** RISK-001 — direct cells must not bypass certified table intent/planning/validation/transaction authority.
-- **Exact next recommended action:** finish Stage 3 PR-body + changed-file reconciliation, update this report, then begin Stage 4 with `topology-edit-table-styles.js` and layout-focused tests only.
+- **Exact next recommended action:** update PR metadata, verify it, then mark Stage 3 COMPLETE and record Stage 4 before-state.
 
 ## 1. Mission and Engineering Intent
 
@@ -69,7 +69,7 @@ Named exports; pure helpers where practical; new JS modules <300 physical lines 
 |---|---:|---|---|---|
 | Living report initialized | P0 | VALIDATED | 1 | `c908e7c...` created report before spreadsheet production edits |
 | PR-number report synchronization | P0 | DONE | 2 | `PR1020` exists; `PR_PENDING` removed at `d92b958...` |
-| Changed-file verification / PR metadata sync | P0 | IN_PROGRESS | 3 | Current net diff is exactly 3 expected files; PR body still describes worker-only scope |
+| Changed-file verification / PR metadata sync | P0 | IN_PROGRESS | 3 | Current net diff expected; PR metadata action is next |
 | Production validation-worker repair | P0 | VALIDATED | inherited | Existing workflows including `main-gate` passed on `d92b958...` |
 | Dense typography/controls | P1 | NOT_STARTED | 4 | Current CSS `.78rem`, ~1.8rem inputs, ~2rem buttons |
 | Dynamic spreadsheet viewport | P1 | NOT_STARTED | 4 | Current grid `max-height:min(48vh,470px)` |
@@ -261,11 +261,7 @@ COMPLETE.
 ### Stage 3 — Changed-file verification and documentation-stage completion
 
 #### Before stage
-PR #1020 is open/draft/mergeable. HEAD is `d92b958...` before this report update. Current GitHub changed-file list is exactly:
-1. `agents/PR1020_workreport.md`
-2. `src/workspace/topology-edit/professional/topology-edit-validation-worker-client.js`
-3. `tests/topology-edit-professional-validation-worker-client.test.mjs`
-All triggered workflows on `d92b958...` are green. PR title/body still describe only the inherited worker fix.
+PR #1020 is open/draft/mergeable. Current branch report HEAD is `e73d04d...` before metadata mutation. Net code/report files remain the numbered report plus the inherited worker client/test. All triggered workflows on earlier Stage-2 HEAD `d92b958...` are green. PR title/body still describe only the inherited worker fix.
 
 #### Objective
 Finish documentation/reconciliation so the PR accurately declares the Owner-authorized combined mission before spreadsheet production changes begin.
@@ -289,7 +285,7 @@ Reviewers and future agents must not interpret subsequent spreadsheet changes as
 PR description distinguishes inherited worker defect from new table stages; reviewers can identify that canonical mutation semantics are intentionally unchanged until certified Apply.
 
 #### Edge cases
-PR title may broaden while implementation is still incomplete; PR remains draft. Report-only commits can retrigger CI and are not used as evidence for future production changes until completed.
+PR title broadens while implementation is incomplete; PR remains draft. Report-only commits can retrigger CI and are not used as evidence for future production changes until completed.
 
 #### Planned validation
 - Fetch PR metadata after update.
@@ -301,26 +297,28 @@ PR title may broaden while implementation is still incomplete; PR remains draft.
 Metadata may become stale as stages complete; report remains authoritative and PR body will be refreshed at final closure if needed.
 
 #### Implementation performed
-NOT_STARTED beyond this before-stage record.
+Stage-3 pre-state and action recorded. PR metadata update is the immediate next mutation.
 
 #### Changed files
-None yet for Stage 3 beyond this report update.
+| File | Change | Why |
+|---|---|---|
+| `agents/PR1020_workreport.md` | Updated | Record Stage 2 closure and Stage 3 before/action state before PR metadata mutation. |
 
 #### Deviations from plan
-None yet.
+None.
 
 #### Examples/edge cases
-Pending.
+PR remains draft throughout documentation synchronization.
 
 #### Validation performed
 | Check | Result | Evidence/Notes |
 |---|---|---|
-| Pre-stage changed-file list | PASS | Exactly three expected current files |
+| Pre-stage changed-file list | PASS | Exactly three expected current net files at `d92b958...` |
 | Pre-stage workflow matrix | PASS | All triggered workflows on `d92b958...` succeeded |
-| PR body mission synchronized | NOT_RUN | Next action |
+| PR body mission synchronized | NOT_RUN | Immediate next action |
 
 #### Issues discovered
-None new at stage start.
+None new.
 
 #### Risks introduced or remaining
 RISK-001/002/003 remain.
@@ -343,7 +341,7 @@ PARTIAL until PR metadata and post-update reconciliation are complete.
 | `agents/PR_PENDING_workreport.md` | 1 | 2 | Temporary protocol bootstrap report; created then deleted | No | Not present in net PR diff; discrepancy explained |
 | `agents/PR1020_workreport.md` | 2 | 3 | Canonical living PR report | No | Present; exact current content evolves with every stage |
 
-**Current GitHub net changed files at Stage-3 entry:** 3. They match the retained ledger entries; the only historical ledger-only path is `PR_PENDING`, which has no net diff because it was created and deleted on this branch.
+**Current GitHub net changed files at last reconciliation:** 3. They match the retained ledger entries; the only historical ledger-only path is `PR_PENDING`, which has no net diff because it was created and deleted on this branch.
 
 ## 7. Engineering Decisions and Invariants
 
@@ -374,7 +372,7 @@ PARTIAL until PR metadata and post-update reconciliation are complete.
 ### Software validation
 | Validation | Status | Last HEAD | Evidence |
 |---|---|---|---|
-| PR metadata | PASS | `d92b958...` | #1020 open/draft/mergeable; title/body still require scope sync |
+| PR metadata | PARTIAL | `e73d04d...` | PR exists and is draft; mission text update pending |
 | Changed files vs ledger | PASS | `d92b958...` | 3 current net files; historical pending-report discrepancy explained |
 | `main-gate` | PASS | `d92b958...` | run 279 success |
 | Table Slice 6 | PASS | `d92b958...` | run 208 success |
@@ -421,12 +419,12 @@ Spreadsheet layout/editing does not exist yet. Broad XYZ/catalogue/support edit 
 
 ## 11. Next-Agent Handover
 
-- **Current stopping point:** Stage 3 before production implementation. Stage 1 and Stage 2 are complete.
-- **Exact current state:** numbered report is sole report; current net PR diff has exactly three expected files; all triggered workflows passed on `d92b958...`; PR body is still worker-only.
-- **PR / branch / HEAD:** #1020 / `agent/fix-topology-validation-worker-production` / `d92b95840369415cc0b123e18c1e04b40b2dbcdc` before this report commit.
+- **Current stopping point:** Stage 3 immediately before PR metadata update. Stage 1 and Stage 2 are complete.
+- **Exact current state:** numbered report is sole report; current net code/report diff is expected; all triggered workflows passed on `d92b958...`; PR body is still worker-only.
+- **PR / branch / HEAD:** #1020 / `agent/fix-topology-validation-worker-production` / `e73d04d94372f61ae860f4ca0ecefa9358b2059e` before this report commit.
 - **Last completed stage:** Stage 2 — PR allocation/report synchronization.
 - **Current active stage:** Stage 3 — update PR title/body and post-update changed-file reconciliation. No spreadsheet production source has changed.
-- **Start here:** update PR #1020 metadata to describe inherited worker fix + governed spreadsheet work and point reviewers to this report; then fetch PR info and changed filenames and mark Stage 3 COMPLETE here.
+- **Start here:** update PR #1020 title/body to describe inherited worker fix + governed spreadsheet work and point reviewers to this report; then fetch PR info and changed filenames and mark Stage 3 COMPLETE here.
 - **Do not redo:** worker root-cause investigation; table runtime/styles/projection/columns/intent orientation; Stage 1/2 report setup; `d92b958...` workflow inspection.
 - **Do not assume:** later production changes inherit the green `d92b958...` result; all visible table fields are editable; direct DOM values may mutate canonical topology.
 - **Files currently involved:** `agents/PR1020_workreport.md`; inherited worker client/test. Upcoming Stage 4: `topology-edit-table-styles.js`, `topology-edit-table-grid-view.js` only if layout markup is required, plus existing focused tests.
@@ -435,7 +433,7 @@ Spreadsheet layout/editing does not exist yet. Broad XYZ/catalogue/support edit 
 - **Open engineering questions:** QST-001.
 - **Deferred improvements:** IMP-004 sequencing; IMP-005 broad authority.
 - **Highest-risk remaining item:** RISK-001 because spreadsheet-like interaction could tempt direct mutation outside the certified transaction path.
-- **Exact next recommended action:** finish Stage 3 metadata/reconciliation, then record Stage 4 before-state before editing `topology-edit-table-styles.js`.
+- **Exact next recommended action:** update PR metadata, verify/reconcile, close Stage 3, then record Stage 4 before-state before editing `topology-edit-table-styles.js`.
 - **Required reading:** this report §§0,2,3,4,7,8,11; `src/workspace/viewport-productivity/topology-edit-table-styles.js`; `topology-edit-table-grid-view.js`; `topology-edit-table-runtime.js`; `topology-edit-table-columns.js`; `topology-edit-table-intent.js`.
 
 ## 12. Process Notes / Lessons Learned

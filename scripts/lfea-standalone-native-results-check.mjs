@@ -122,6 +122,7 @@ function sourceGuards() {
   const journeyViewSource = fs.readFileSync('src/lfea/governed-journey-view.js', 'utf8');
   const layoutSource = fs.readFileSync('src/lfea/standalone-layout.js', 'utf8');
   const bootstrapSource = fs.readFileSync('src/lfea/bootstrap.js', 'utf8');
+  const runtimeSource = fs.readFileSync('src/lfea/standalone-runtime.js', 'utf8');
   assert.match(recoverySource, /compileResultRecovery/u);
   assert.match(recoverySource, /requireElementLedgerCustody/u);
   assert.doesNotMatch(recoverySource, /linear-piping-support-action-triad|linear-fea-b31-code-engine|codeStress/u);
@@ -133,8 +134,9 @@ function sourceGuards() {
   assert.match(journeyViewSource, /dataset\.role = 'lfea-native-run'/u);
   assert.match(journeyViewSource, /button\.disabled = !analysis\.readyToRun/u);
   assert.match(layoutSource, /id: 'results', label: 'Results', state: 'available'/u);
-  assert.match(bootstrapSource, /onRunNativeAnalysis/u);
-  assert.match(bootstrapSource, /resultsAuthority\.recover/u);
+  assert.match(bootstrapSource, /createLfeaStandaloneRuntime/u);
+  assert.match(runtimeSource, /onRunNativeAnalysis/u);
+  assert.match(runtimeSource, /resultsAuthority\.recover/u);
 }
 
 function authorizedPreFlight(content) {

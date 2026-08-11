@@ -79,6 +79,7 @@ export function compareQuantityPair(left, right, slotId = null) {
   for (const [field, code] of COMPATIBILITY_FIELDS) {
     if (left[field] !== right[field]) reasons.push(code);
   }
+  if (basisUnavailable(left.basisId) || basisUnavailable(right.basisId)) reasons.push('BASIS_UNAVAILABLE');
   if (!Number.isFinite(left.value) || !Number.isFinite(right.value)) reasons.push('VALUE_UNAVAILABLE');
   return comparisonRow(left, right, slotId ?? left.slotId, reasons);
 }
@@ -188,6 +189,10 @@ function comparisonRow(left, right, slotId, reasons) {
     delta: compatible ? rightValue - leftValue : null,
     absoluteDelta: compatible ? Math.abs(rightValue - leftValue) : null,
   });
+}
+
+function basisUnavailable(basisId) {
+  return String(basisId ?? '').endsWith(':UNAVAILABLE');
 }
 
 function requireRunRecord(record) {

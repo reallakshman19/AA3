@@ -20,6 +20,7 @@ const store = [
   source('src/workspace/lfea-workbench-run-store.js'),
 ].join('\n');
 const view = source('src/workspace/lfea-workbench-view.js');
+const panels = source('src/workspace/lfea-workbench-panels.js');
 
 assert.equal(occurrences(layout, 'data-role="lafea-consumer-root"'), 1,
   'workspace layout must contain exactly one LAFEA consumer root');
@@ -58,6 +59,54 @@ assert.match(store, /beforeCommittedMutation\(activeRun\)/u);
 assert.match(view, /deformation:\s*\{[\s\S]*?enabled:[\s\S]*?scale: state\.display\.deformationScale/u);
 assert.match(view, /state\.display\.resultMode/u);
 
+assert.doesNotMatch(
+  view,
+  /lfea-collection-mock|Load Collection Mock Data|Reload Mock for/u,
+  'records-card controls must not expose a collection-labelled whole-package mock action',
+);
+assert.match(
+  panels,
+  /workbenchButton\(root, '\[SIMULATED\] Load Mock Data', handlers\.onMock\)/u,
+  'the explicit toolbar whole-package mock action must remain available',
+);
+assert.match(panels, /mock\.dataset\.role = 'lfea-mock'/u);
+
+assert.match(
+  view,
+  /this\.captureEditorDrafts\(\);[\s\S]*?this\.syncDraftModelIdentity\(state\);[\s\S]*?this\.slots\.content\.replaceChildren/u,
+  'editor drafts must be captured and identity-checked before content replacement',
+);
+assert.match(view, /this\.documentDraft = null;/u);
+assert.match(view, /this\.recordDrafts = new Map\(\);/u);
+assert.match(view, /state\.modelVersion \?\? 'NONE'/u);
+assert.match(view, /state\.packageValue\?\.semanticHash \?\? 'NONE'/u);
+assert.match(
+  view,
+  /nextIdentity !== this\.modelIdentity[\s\S]*?this\.documentDraft = null;[\s\S]*?this\.recordDrafts\.clear\(\)/u,
+  'a committed model-identity change must invalidate package and record drafts',
+);
+assert.match(
+  view,
+  /textarea\.value = this\.documentDraft \?\? committedText/u,
+  'package editor must restore an uncommitted draft when model identity is unchanged',
+);
+assert.match(
+  view,
+  /textarea\.dataset\.draftKey = draftKey[\s\S]*?this\.recordDrafts\.get\(draftKey\) \?\? committedText/u,
+  'record editor must restore the draft for the active collection/selection context',
+);
+
+assert.match(
+  view,
+  /const deletedIndex = this\.selectedIndex;[\s\S]*?this\.selectedIndex = -1;[\s\S]*?this\.handlers\.onDeleteRecord\(this\.collectionPath, deletedIndex\)/u,
+  'delete must clear local selection before invoking a synchronous model mutation',
+);
+assert.match(
+  view,
+  /this\.committedModelIdentity\(nextState\) === previousIdentity[\s\S]*?this\.selectedIndex = deletedIndex;[\s\S]*?this\.render\(nextState\)/u,
+  'a rejected identity-preserving delete must restore the prior selection and draft context',
+);
+
 if (process.env.LFEA_P0_SOURCE_ONLY !== '1') await runStoreChecks();
 
 console.log(JSON.stringify({
@@ -70,6 +119,9 @@ console.log(JSON.stringify({
   staleCompletionGuard: true,
   editDuringRunCancellation: true,
   explicitDeformationScale: true,
+  collectionMockScopeSafe: true,
+  editorDraftPersistenceGuarded: true,
+  deleteSelectionSequencingGuarded: true,
 }));
 
 function occurrences(text, needle) {

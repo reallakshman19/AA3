@@ -78,7 +78,7 @@
       "relative": 0.1,
       "scaleFloor": 0,
       "comparisonMode": "LITERAL_RELATIVE_WITH_ZERO_ABSOLUTE",
-      "zeroReferenceAbsolute": 1e-07
+      "zeroReferenceAbsolute": 0.0000017453292519943296
     },
     "FORCE": {
       "absolute": 0,

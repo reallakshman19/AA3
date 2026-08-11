@@ -176,6 +176,7 @@ function solveCase(benchmarkPackage, caseRecord, solveProfile) {
   const teeJunctions = solveProfile.directionalB31JTeeFlexibility
     ? buildTeeJunctions({
         benchmarkPackage,
+        caseMode,
         sourceRows,
         sourcePositions,
         sourceSections,
@@ -870,7 +871,9 @@ function buildTeeJunctions(input) {
     if (runRows.length !== 2 || !branchRow) {
       throw new TypeError(`ACCDB welding tee node ${nodeId} did not resolve two run legs and one branch leg.`);
     }
-    const runThermalAuthority = commonTeeRunThermalAuthority(runRows, input.material, nodeId);
+    const runThermalAuthority = input.caseMode.thermal
+      ? commonTeeRunThermalAuthority(runRows, input.material, nodeId)
+      : null;
     const runSection = input.sourceSections.get(String(runRows[0].ELEMENTID));
     const branchSection = input.sourceSections.get(String(branchRow.ELEMENTID));
     const factorGeometry = teeFactorGeometry(
@@ -989,9 +992,17 @@ function commonTeeRunThermalAuthority(runRows, material, nodeId) {
       + `found ${temperaturesC.length} temperatures and ${materialNumbers.length} material numbers.`,
     );
   }
+  const materialId = `ACCDB-MATERIAL-${materialNumbers[0]}`;
+  if (material.materialState.materialId !== materialId) {
+    throw new TypeError(
+      `ACCDB welding tee node ${nodeId} run material ${materialNumbers[0]} `
+      + `does not match resolved material ${material.materialState.materialId}.`,
+    );
+  }
   return Object.freeze({
     temperatureC: temperaturesC[0],
     materialNumber: materialNumbers[0],
+    materialId,
     materialStateId: material.materialState.materialStateId,
   });
 }
@@ -1640,7 +1651,9 @@ function buildTeeRigidThermalInitialLoad(input) {
     );
   }
   const authority = modifier.runThermalAuthority;
-  if (!authority || authority.materialStateId !== input.material.materialState.materialStateId) {
+  if (!authority
+    || authority.materialId !== input.material.materialState.materialId
+    || authority.materialStateId !== input.material.materialState.materialStateId) {
     throw new TypeError(
       `ACCDB tee ${modifier.junctionNodeId} rigid thermal state lacks matching common run material authority.`,
     );

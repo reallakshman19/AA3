@@ -19,20 +19,42 @@ import {
 export const LFEA_PREFLIGHT_PHASE1_REVIEW_SOURCE_SCHEMA = 'lfea-preflight-phase1-review-source/v2';
 
 const SOURCE_STATE = new WeakMap();
+
+// Only fields already present as explicit normalized Line List evidence belong
+// here. Engineering concepts are intentionally not cross-filled: design
+// pressure never borrows hydro-test pressure, and operating density never
+// borrows mixed density.
 const MASTER_FIELDS = Object.freeze({
-  'process.designPressureKpaG': 'p1',
-  'process.designTemperatureC': 't1',
-  'process.operatingTemperatureC': 't2',
-  'process.minimumTemperatureC': 't3',
+  'process.designPressureKpaG': 'designPressure',
+  'process.hydroTestPressureKpaG': 'hydroTestPressure',
+  'process.designTemperatureC': 'designTemperature',
+  'process.operatingTemperatureC': 'operatingTemperature',
+  'process.minimumTemperatureC': 'minimumTemperature',
   'process.phaseCode': 'phase',
-  'contents.operatingDensityKgM3': 'fluidDensity',
-  'material.densityKgM3': 'metalDensity',
+  'material.materialCode': 'materialCode',
+  'contents.operatingDensityKgM3': 'operatingDensity',
+  'contents.gasDensityKgM3': 'gasDensity',
+  'contents.liquidDensityKgM3': 'liquidDensity',
+  'contents.mixedDensityKgM3': 'mixedDensity',
+  'insulation.thicknessMm': 'insulationThickness',
 });
+
 const SOURCE_FIELDS = Object.freeze({
-  'piping.pipingClassCode': 'cls',
-  'piping.ratingClassCode': 'rating',
   'piping.nominalBoreMm': 'bore',
 });
+
+const DUAL_CODE_FIELDS = Object.freeze({
+  'piping.pipingClassCode': Object.freeze({
+    sourceProperty: 'sourcePipingClass',
+    masterProperty: 'masterPipingClass',
+  }),
+  'piping.ratingClassCode': Object.freeze({
+    sourceProperty: 'sourceRating',
+    masterProperty: 'masterRating',
+  }),
+});
+
+const WALL_THICKNESS_FIELD = 'piping.wallThicknessMm';
 
 export const LFEA_PREFLIGHT_PHASE1_REVIEW_PROVIDERS = Object.freeze({
   getLine: getLfeaPreflightPhase1ReviewLine,
@@ -53,18 +75,22 @@ export function createLfeaPreflightPhase1ReviewSource(model, lineRows = []) {
     const blocked = Object.freeze({
       schema: LFEA_PREFLIGHT_PHASE1_REVIEW_SOURCE_SCHEMA,
       blocked: true,
-      reason: projection.reason,
+      reason: projection.blocked,
       projection,
       datasetIdentity: null,
       targetCount: 0,
       componentCount: 0,
       columnSchemaHash: LFEA_PREFLIGHT_COLUMN_SCHEMA_HASH,
+      engineeringEvidenceHash: null,
       structuralHash: null,
     });
     SOURCE_STATE.set(blocked, { lineByTargetId: new Map(), componentItems: [] });
     return blocked;
   }
 
+  // Dataset identity remains source-stable. Master enrichment values are kept
+  // out of target identity so a reviewed target does not become a different
+  // target merely because master evidence changes.
   const stableGroups = projection.groups.map(stableGroupIdentity).sort(compareStableGroups);
   const datasetIdentity = semanticHash({
     schema: LFEA_PREFLIGHT_PHASE1_REVIEW_SOURCE_SCHEMA,
@@ -81,6 +107,7 @@ export function createLfeaPreflightPhase1ReviewSource(model, lineRows = []) {
     LFEA_PREFLIGHT_ENGINEERING_FIELDS.map((fieldId) => [fieldId, new Uint8Array(lineCount)]),
   );
   const lineByTargetId = new Map();
+  const engineeringEvidenceRows = [];
   const componentTargetIds = [];
   const parentLineTargetIds = [];
   const componentParentLineOrdinal = [];
@@ -102,9 +129,6 @@ export function createLfeaPreflightPhase1ReviewSource(model, lineRows = []) {
     ratingByOrdinal[lineOrdinal] = group.rating ?? 'UNSPECIFIED';
     classByOrdinal[lineOrdinal] = group.cls ?? 'UNSPECIFIED';
 
-    const rowHash = group.resolution.selected
-      ? semanticHash({ lineKey: group.isolatedLineKeyToken, selected: group.resolution.selected })
-      : null;
     const statuses = new Uint8Array(LFEA_PREFLIGHT_ENGINEERING_FIELDS.length);
     for (let fieldOrdinal = 0; fieldOrdinal < LFEA_PREFLIGHT_ENGINEERING_FIELDS.length; fieldOrdinal += 1) {
       const fieldId = LFEA_PREFLIGHT_ENGINEERING_FIELDS[fieldOrdinal];
@@ -112,7 +136,8 @@ export function createLfeaPreflightPhase1ReviewSource(model, lineRows = []) {
       statuses[fieldOrdinal] = status;
       engineeringStatusByField[fieldId][lineOrdinal] = status;
     }
-    lineByTargetId.set(targetId, Object.freeze({
+
+    const lineRecord = Object.freeze({
       targetId,
       fullLineKeyName: group.fullLineKeyName,
       isolatedLineKeyToken: group.isolatedLineKeyToken,
@@ -121,19 +146,39 @@ export function createLfeaPreflightPhase1ReviewSource(model, lineRows = []) {
       pipingClass: group.cls,
       cls: group.cls,
       bore: group.bore,
-      p1: group.p1,
-      t1: group.t1,
-      t2: group.t2,
-      t3: group.t3,
+      sourcePipingClass: group.sourcePipingClass,
+      sourceRating: group.sourceRating,
+      masterPipingClass: group.masterPipingClass,
+      masterRating: group.masterRating,
+      masterRowHash: group.masterRowHash,
+      candidateCount: group.candidateCount,
+      designPressure: group.designPressure,
+      hydroTestPressure: group.hydroTestPressure,
+      designTemperature: group.designTemperature,
+      operatingTemperature: group.operatingTemperature,
+      minimumTemperature: group.minimumTemperature,
       phase: group.phase,
-      fluidDensity: group.fluidDensity,
+      materialCode: group.materialCode,
+      operatingDensity: group.operatingDensity,
+      gasDensity: group.gasDensity,
+      liquidDensity: group.liquidDensity,
+      mixedDensity: group.mixedDensity,
+      insulationThickness: group.insulationThickness,
+      wallThickness: group.wallThickness,
+      wallThicknessConflict: group.wallThicknessConflict,
+      wallThicknessCandidates: Object.freeze([...(group.wallThicknessCandidates ?? [])]),
       metalDensity: group.metalDensity,
       itemCount: group.items.length,
       resolution: Object.freeze(structuredClone(group.resolution)),
       provenancePath,
-      rowHash,
       sourceMemberIds: Object.freeze(memberIds),
       readiness: readinessFromStatuses(statuses),
+    });
+    lineByTargetId.set(targetId, lineRecord);
+    engineeringEvidenceRows.push(Object.freeze({
+      targetId,
+      masterRowHash: group.masterRowHash,
+      wallThicknessCandidates: lineRecord.wallThicknessCandidates,
     }));
 
     const stableItems = [...group.items].sort(compareItems);
@@ -174,8 +219,12 @@ export function createLfeaPreflightPhase1ReviewSource(model, lineRows = []) {
     targetIdByOrdinal: componentTargetIds,
     parentLineTargetIdByOrdinal: parentLineTargetIds,
   });
+  const engineeringEvidenceHash = semanticHash({
+    lines: [...engineeringEvidenceRows].sort((left, right) => compareAscii(left.targetId, right.targetId)),
+  });
   const structuralHash = semanticHash({
     datasetIdentity,
+    engineeringEvidenceHash,
     lineIndex: lineIndex.structuralHash,
     componentIndex: componentIndex.structuralHash,
     columnSchemaHash: LFEA_PREFLIGHT_COLUMN_SCHEMA_HASH,
@@ -189,6 +238,7 @@ export function createLfeaPreflightPhase1ReviewSource(model, lineRows = []) {
     targetCount: lineIndex.targetCount,
     componentCount: componentIndex.componentCount,
     columnSchemaHash: LFEA_PREFLIGHT_COLUMN_SCHEMA_HASH,
+    engineeringEvidenceHash,
     lineIndex,
     componentIndex,
     structuralHash,
@@ -209,6 +259,13 @@ export function getLfeaPreflightPhase1ReviewCell(source, targetId, fieldOrdinal)
     throw sourceError('E_P06_FIELD_ORDINAL_INVALID', `Phase-1 field ordinal is invalid: ${fieldOrdinal}`);
   }
   const fieldId = LFEA_PREFLIGHT_ENGINEERING_FIELDS[fieldOrdinal];
+
+  if (fieldId in DUAL_CODE_FIELDS) {
+    return dualCodeCell(source, line, fieldId, fieldOrdinal, DUAL_CODE_FIELDS[fieldId]);
+  }
+  if (fieldId === WALL_THICKNESS_FIELD) {
+    return wallThicknessCell(source, line, fieldId, fieldOrdinal);
+  }
   if (fieldId in SOURCE_FIELDS) {
     const property = SOURCE_FIELDS[fieldId];
     const value = normalizeCellValue(line[property]);
@@ -221,7 +278,7 @@ export function getLfeaPreflightPhase1ReviewCell(source, targetId, fieldOrdinal)
       sourceHash: source.datasetIdentity,
       locator: line.provenancePath,
       method: 'SOURCE_MODEL_PROJECTION',
-      candidateCount: 1,
+      candidateCount: value === null ? 0 : 1,
     });
   }
   if (fieldId in MASTER_FIELDS) {
@@ -233,14 +290,10 @@ export function getLfeaPreflightPhase1ReviewCell(source, targetId, fieldOrdinal)
       value,
       status: masterStatus(line.resolution, value),
       sourceKind: 'MASTER_LINE_LIST',
-      sourceHash: line.rowHash,
+      sourceHash: line.masterRowHash,
       locator: `MASTER_LINE_LIST:${line.isolatedLineKeyToken}`,
-      method: line.resolution.status === 'EXACT'
-        ? 'EXACT_NORMALIZED_LINE_KEY'
-        : line.resolution.status === 'BLOCKED_AMBIGUOUS'
-          ? 'DUPLICATE_PRESERVING_KEY_BUCKET'
-          : 'NO_MASTER_ROW_MATCH',
-      candidateCount: line.resolution.candidateCount ?? 0,
+      method: masterMethod(line.resolution),
+      candidateCount: line.candidateCount,
     });
   }
   return sealCell({
@@ -286,7 +339,116 @@ export function getLfeaPreflightPhase1ReviewComponent(source, targetId) {
   });
 }
 
+function dualCodeCell(source, line, fieldId, fieldOrdinal, config) {
+  const sourceValue = normalizeCodeValue(line[config.sourceProperty]);
+  const masterValue = line.resolution.status === 'EXACT'
+    ? normalizeCodeValue(line[config.masterProperty])
+    : null;
+  if (sourceValue !== null && masterValue !== null && !sameCode(sourceValue, masterValue)) {
+    return sealCell({
+      fieldId,
+      fieldOrdinal,
+      value: null,
+      status: LFEA_PREFLIGHT_FIELD_STATUS.BLOCKED_CONFLICT,
+      sourceKind: 'SHARED_MODEL+MASTER_LINE_LIST',
+      sourceHash: combinedSourceHash(source, line),
+      locator: `${line.provenancePath} | MASTER_LINE_LIST:${line.isolatedLineKeyToken}`,
+      method: 'SOURCE_MASTER_CONFLICT',
+      candidateCount: 2,
+    });
+  }
+  if (sourceValue !== null && masterValue !== null) {
+    return sealCell({
+      fieldId,
+      fieldOrdinal,
+      value: sourceValue,
+      status: LFEA_PREFLIGHT_FIELD_STATUS.RESOLVED_EXACT,
+      sourceKind: 'SHARED_MODEL+MASTER_LINE_LIST',
+      sourceHash: combinedSourceHash(source, line),
+      locator: `${line.provenancePath} | MASTER_LINE_LIST:${line.isolatedLineKeyToken}`,
+      method: 'EXACT_SOURCE_MASTER_AGREEMENT',
+      candidateCount: 2,
+    });
+  }
+  if (sourceValue !== null) {
+    return sealCell({
+      fieldId,
+      fieldOrdinal,
+      value: sourceValue,
+      status: LFEA_PREFLIGHT_FIELD_STATUS.RESOLVED_EXACT,
+      sourceKind: 'SHARED_MODEL',
+      sourceHash: source.datasetIdentity,
+      locator: line.provenancePath,
+      method: line.resolution.status === 'BLOCKED_AMBIGUOUS'
+        ? 'SOURCE_MODEL_EXPLICIT; MASTER_LINE_LIST_AMBIGUOUS_NOT_SELECTED'
+        : 'SOURCE_MODEL_EXPLICIT',
+      candidateCount: 1,
+    });
+  }
+  if (masterValue !== null) {
+    return sealCell({
+      fieldId,
+      fieldOrdinal,
+      value: masterValue,
+      status: LFEA_PREFLIGHT_FIELD_STATUS.RESOLVED_EXACT,
+      sourceKind: 'MASTER_LINE_LIST',
+      sourceHash: line.masterRowHash,
+      locator: `MASTER_LINE_LIST:${line.isolatedLineKeyToken}`,
+      method: 'EXACT_NORMALIZED_LINE_KEY',
+      candidateCount: line.candidateCount,
+    });
+  }
+  return sealCell({
+    fieldId,
+    fieldOrdinal,
+    value: null,
+    status: masterStatus(line.resolution, null),
+    sourceKind: line.resolution.status === 'BLOCKED_AMBIGUOUS' ? 'MASTER_LINE_LIST' : 'UNRESOLVED',
+    sourceHash: null,
+    locator: line.resolution.status === 'BLOCKED_AMBIGUOUS'
+      ? `MASTER_LINE_LIST:${line.isolatedLineKeyToken}`
+      : line.provenancePath,
+    method: masterMethod(line.resolution),
+    candidateCount: line.candidateCount,
+  });
+}
+
+function wallThicknessCell(source, line, fieldId, fieldOrdinal) {
+  if (line.wallThicknessConflict) {
+    return sealCell({
+      fieldId,
+      fieldOrdinal,
+      value: null,
+      status: LFEA_PREFLIGHT_FIELD_STATUS.BLOCKED_CONFLICT,
+      sourceKind: 'SHARED_MODEL',
+      sourceHash: source.datasetIdentity,
+      locator: line.provenancePath,
+      method: 'CONFLICTING_EXPLICIT_SOURCE_WALL_THICKNESSES',
+      candidateCount: line.wallThicknessCandidates.length,
+    });
+  }
+  const value = normalizeCellValue(line.wallThickness);
+  return sealCell({
+    fieldId,
+    fieldOrdinal,
+    value,
+    status: value === null ? LFEA_PREFLIGHT_FIELD_STATUS.BLOCKED_MISSING : LFEA_PREFLIGHT_FIELD_STATUS.RESOLVED_EXACT,
+    sourceKind: value === null ? 'UNRESOLVED' : 'SHARED_MODEL',
+    sourceHash: value === null ? null : source.datasetIdentity,
+    locator: line.provenancePath,
+    method: value === null ? 'NO_EXPLICIT_SOURCE_WALL_THICKNESS' : 'AGREED_EXPLICIT_SOURCE_WALL_THICKNESS',
+    candidateCount: line.wallThicknessCandidates.length,
+  });
+}
+
 function fieldStatus(group, fieldId) {
+  if (fieldId in DUAL_CODE_FIELDS) return dualCodeStatus(group, DUAL_CODE_FIELDS[fieldId]);
+  if (fieldId === WALL_THICKNESS_FIELD) {
+    if (group.wallThicknessConflict) return LFEA_PREFLIGHT_FIELD_STATUS.BLOCKED_CONFLICT;
+    return normalizeCellValue(group.wallThickness) === null
+      ? LFEA_PREFLIGHT_FIELD_STATUS.BLOCKED_MISSING
+      : LFEA_PREFLIGHT_FIELD_STATUS.RESOLVED_EXACT;
+  }
   if (fieldId in SOURCE_FIELDS) {
     return normalizeCellValue(group[SOURCE_FIELDS[fieldId]]) === null
       ? LFEA_PREFLIGHT_FIELD_STATUS.BLOCKED_MISSING
@@ -301,12 +463,37 @@ function fieldStatus(group, fieldId) {
   return LFEA_PREFLIGHT_FIELD_STATUS.BLOCKED_MISSING;
 }
 
+function dualCodeStatus(group, config) {
+  const sourceValue = normalizeCodeValue(group[config.sourceProperty]);
+  const masterValue = group.resolution.status === 'EXACT'
+    ? normalizeCodeValue(group[config.masterProperty])
+    : null;
+  if (sourceValue !== null && masterValue !== null && !sameCode(sourceValue, masterValue)) {
+    return LFEA_PREFLIGHT_FIELD_STATUS.BLOCKED_CONFLICT;
+  }
+  if (sourceValue !== null || masterValue !== null) return LFEA_PREFLIGHT_FIELD_STATUS.RESOLVED_EXACT;
+  return masterStatus(group.resolution, null);
+}
+
 function masterStatus(resolution, value) {
   if (resolution.status === 'BLOCKED_AMBIGUOUS') return LFEA_PREFLIGHT_FIELD_STATUS.BLOCKED_AMBIGUOUS;
   if (resolution.status === 'BLOCKED_MISSING') return LFEA_PREFLIGHT_FIELD_STATUS.BLOCKED_MISSING;
   return value === null
     ? LFEA_PREFLIGHT_FIELD_STATUS.BLOCKED_MISSING
     : LFEA_PREFLIGHT_FIELD_STATUS.RESOLVED_EXACT;
+}
+
+function masterMethod(resolution) {
+  if (resolution.status === 'EXACT') return 'EXACT_NORMALIZED_LINE_KEY';
+  if (resolution.status === 'BLOCKED_AMBIGUOUS') return 'DUPLICATE_PRESERVING_KEY_BUCKET';
+  return 'NO_MASTER_ROW_MATCH';
+}
+
+function combinedSourceHash(source, line) {
+  return semanticHash({
+    sharedModel: source.datasetIdentity,
+    masterLineRow: line.masterRowHash,
+  });
 }
 
 function sealCell(input) {
@@ -397,7 +584,17 @@ function compareItems(left, right) {
 function normalizeCellValue(value) {
   if (value === undefined || value === null || value === '') return null;
   if (typeof value === 'number') return Number.isFinite(value) ? (Object.is(value, -0) ? 0 : value) : null;
-  return String(value);
+  const text = String(value).trim();
+  return text ? text : null;
+}
+
+function normalizeCodeValue(value) {
+  const normalized = normalizeCellValue(value);
+  return normalized === null ? null : String(normalized);
+}
+
+function sameCode(left, right) {
+  return left.trim().toUpperCase() === right.trim().toUpperCase();
 }
 
 function requireIdentityText(value, field) {

@@ -118,18 +118,21 @@ function relationToCurrent(record, context) {
     && record.identity.recovery.semanticHash === recovery.semanticHash) {
     return LFEA_NATIVE_RUN_RELATION.CURRENT;
   }
-  return sameGovernedModel(record, preFlight)
+  return sameGovernedContext(record, preFlight, context.sourceSnapshot)
     ? LFEA_NATIVE_RUN_RELATION.HISTORIC
     : LFEA_NATIVE_RUN_RELATION.STALE;
 }
 
-function sameGovernedModel(record, preFlight) {
-  const identity = record.identity.authority;
-  return identity.sourceBundleSemanticHash === preFlight.preparation.sourceBundleSemanticHash
-    && identity.modelSemanticHash === preFlight.preparation.modelSemanticHash
-    && identity.stiffnessStateHash === preFlight.preparation.stiffnessStateHash
-    && identity.loadStateHash === preFlight.preparation.loadStateHash
-    && identity.requestedProfileId === preFlight.preparation.requestedProfileId;
+function sameGovernedContext(record, preFlight, sourceSnapshot) {
+  const authority = record.identity.authority;
+  return record.identity.source.contentSha256 === text(sourceSnapshot?.contentSha256)
+    && authority.preFlightSemanticHash === preFlight.semanticHash
+    && authority.authorizationSemanticHash === preFlight.authorization?.semanticHash
+    && authority.sourceBundleSemanticHash === preFlight.preparation.sourceBundleSemanticHash
+    && authority.modelSemanticHash === preFlight.preparation.modelSemanticHash
+    && authority.stiffnessStateHash === preFlight.preparation.stiffnessStateHash
+    && authority.loadStateHash === preFlight.preparation.loadStateHash
+    && authority.requestedProfileId === preFlight.preparation.requestedProfileId;
 }
 
 function requireCurrentRaw(state) {
@@ -233,10 +236,17 @@ function recoveryIdentity(recovery) {
 }
 
 function applicationIdentityRecord(identity = {}) {
+  const application = text(identity.application);
+  const mode = text(identity.mode);
+  const applicationVersion = text(identity.applicationVersion);
+  if (application !== 'LFEA' || mode !== 'STANDALONE' || !applicationVersion) {
+    throw historyError('LFEA_HISTORY_APPLICATION_IDENTITY_INVALID',
+      'LFEA History requires explicit standalone LFEA application/version identity.');
+  }
   return {
-    application: text(identity.application) ?? 'LFEA',
-    mode: text(identity.mode) ?? 'STANDALONE',
-    applicationVersion: text(identity.applicationVersion) ?? '0.0.0',
+    application,
+    mode,
+    applicationVersion,
     buildSha: text(identity.buildSha),
     buildTime: text(identity.buildTime),
   };

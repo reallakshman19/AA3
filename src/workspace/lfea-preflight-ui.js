@@ -17,9 +17,7 @@
  * DOM.
  */
 import {
-  LFEA_PREFLIGHT_COLUMN_PRESETS,
   LFEA_PREFLIGHT_ENGINEERING_FIELDS,
-  LFEA_PREFLIGHT_EXCEPTION_QUEUE,
   LFEA_PREFLIGHT_FIELD_STATUS,
 } from './lfea-preflight-phase1-schema.js';
 import {
@@ -32,13 +30,10 @@ import {
   getLfeaPreflightPhase1ViewportModel,
   moveLfeaPreflightPhase1Selection,
   selectLfeaPreflightPhase1Cell,
-  setLfeaPreflightPhase1ColumnPreset,
-  setLfeaPreflightPhase1Filter,
-  setLfeaPreflightPhase1Queue,
   setLfeaPreflightPhase1Scroll,
-  setLfeaPreflightPhase1Sort,
   setLfeaPreflightPhase1ViewportSize,
 } from './lfea-preflight-phase1-viewport.js';
+import { mountLfeaPreflightPhase1ReviewNavigation } from './lfea-preflight-phase1-review-navigation.js';
 import { mountLfeaPreflightPhase1ReviewSurface } from './lfea-preflight-phase1-review-surface.js';
 import { masterDataController } from './master-data-controller.js';
 import { projectPreflightModel } from './lfea-preflight-resolution.js';
@@ -60,22 +55,6 @@ export const GRID_ROW_HEIGHT = 28;
 export const GRID_HEAD_HEIGHT = 26;
 export const GRID_COLUMN_WIDTH = 180;
 export const GRID_LINE_COLUMN_WIDTH = 320;
-
-const QUEUE_LABELS = Object.freeze([
-  Object.freeze({ queueId: LFEA_PREFLIGHT_EXCEPTION_QUEUE.MISSING, label: 'Missing' }),
-  Object.freeze({ queueId: LFEA_PREFLIGHT_EXCEPTION_QUEUE.AMBIGUOUS, label: 'Ambiguous' }),
-  Object.freeze({ queueId: LFEA_PREFLIGHT_EXCEPTION_QUEUE.CONFLICTING, label: 'Conflicting' }),
-  Object.freeze({ queueId: LFEA_PREFLIGHT_EXCEPTION_QUEUE.STALE, label: 'Stale' }),
-  Object.freeze({ queueId: LFEA_PREFLIGHT_EXCEPTION_QUEUE.PROPOSED, label: 'Proposed' }),
-  Object.freeze({ queueId: LFEA_PREFLIGHT_EXCEPTION_QUEUE.DEFERRED, label: 'Deferred' }),
-]);
-
-const SORT_LABELS = Object.freeze([
-  Object.freeze({ sortId: 'TARGET_ID_ASC', label: 'Stable target ID' }),
-  Object.freeze({ sortId: 'LINE_KEY_ASC', label: 'Line key' }),
-  Object.freeze({ sortId: 'SERVICE_ASC', label: 'Service' }),
-  Object.freeze({ sortId: 'READINESS_ASC', label: 'Readiness' }),
-]);
 
 const STATUS_NAME_BY_VALUE = Object.freeze(Object.fromEntries(
   Object.entries(LFEA_PREFLIGHT_FIELD_STATUS).map(([name, value]) => [value, name]),
@@ -173,6 +152,7 @@ function buildShell(doc, root, viewport, renderCallback) {
   const parts = {
     doc, root, headerBlock, toolbar, scroller, sizer, headRow, rowsLayer,
     componentsBlock, traceBlock, reviewBlock, budget, summary: headerBlock.summary,
+    navigation: null,
   };
 
   scroller.addEventListener('scroll', () => {
@@ -186,7 +166,13 @@ function buildShell(doc, root, viewport, renderCallback) {
     moveLfeaPreflightPhase1Selection(viewport, step.rowDelta, step.columnDelta);
     paint(parts, viewport);
   });
-  buildToolbar(parts, viewport, renderCallback);
+  parts.navigation = mountLfeaPreflightPhase1ReviewNavigation(toolbar, viewport, {
+    documentRef: doc,
+    getModel: () => getLfeaPreflightPhase1ViewportModel(viewport),
+    paint: () => paint(parts, viewport),
+    measureAndPaint: () => measureAndPaint(parts, viewport),
+    renderCallback,
+  });
   return parts;
 }
 
@@ -197,72 +183,6 @@ function keyboardStep(key) {
   if (key === 'ArrowLeft') return { rowDelta: 0, columnDelta: -1 };
   if (key === 'ArrowRight') return { rowDelta: 0, columnDelta: 1 };
   return null;
-}
-
-function buildToolbar(parts, viewport, renderCallback) {
-  const { doc, toolbar } = parts;
-  const queues = create(doc, 'div', 'lfea-preflight-phase1__queues');
-  const all = queueButton(doc, null, 'All', () => {
-    setLfeaPreflightPhase1Queue(viewport, null);
-    paint(parts, viewport);
-  });
-  queues.append(all);
-  for (const entry of QUEUE_LABELS) {
-    queues.append(queueButton(doc, entry.queueId, entry.label, () => {
-      setLfeaPreflightPhase1Queue(viewport, entry.queueId);
-      paint(parts, viewport);
-    }));
-  }
-  toolbar.append(queues);
-
-  const model = getLfeaPreflightPhase1ViewportModel(viewport);
-  parts.serviceSelect = facetSelect(doc, toolbar, 'Service', 'All services',
-    facetValues(model, 'service'), () => applyFacets(parts, viewport));
-  parts.ratingSelect = facetSelect(doc, toolbar, 'Rating', 'All ratings',
-    facetValues(model, 'rating'), () => applyFacets(parts, viewport));
-
-  parts.presetSelect = labelledSelect(doc, toolbar, 'Columns',
-    Object.keys(LFEA_PREFLIGHT_COLUMN_PRESETS).map((id) => ({ value: id, label: id })), () => {
-      setLfeaPreflightPhase1ColumnPreset(viewport, parts.presetSelect.value);
-      measureAndPaint(parts, viewport);
-    });
-  parts.presetSelect.value = model.presetId;
-
-  parts.sortSelect = labelledSelect(doc, toolbar, 'Sort',
-    SORT_LABELS.map((row) => ({ value: row.sortId, label: row.label })), () => {
-      setLfeaPreflightPhase1Sort(viewport, parts.sortSelect.value);
-      paint(parts, viewport);
-    });
-  parts.sortSelect.value = model.sortId;
-
-  if (typeof renderCallback === 'function') {
-    const refresh = create(doc, 'button', 'lfea-preflight-phase1__refresh');
-    refresh.type = 'button';
-    refresh.dataset.role = 'lfea-preflight-refresh';
-    refresh.textContent = 'Reload source and master data';
-    refresh.addEventListener('click', () => renderCallback());
-    toolbar.append(refresh);
-  }
-}
-
-function applyFacets(parts, viewport) {
-  const clauses = [];
-  if (parts.serviceSelect.value !== '') {
-    clauses.push({ facetId: 'service', mode: 'OR', values: [parts.serviceSelect.value] });
-  }
-  if (parts.ratingSelect.value !== '') {
-    clauses.push({ facetId: 'rating', mode: 'OR', values: [parts.ratingSelect.value] });
-  }
-  setLfeaPreflightPhase1Filter(viewport, { combine: 'AND', clauses });
-  paint(parts, viewport);
-}
-
-function facetValues(model, facetId) {
-  const counts = model.facetCounts?.[facetId] ?? {};
-  return Object.keys(counts).sort(compareAscii).map((value) => ({
-    value,
-    label: `${value} (${counts[value]})`,
-  }));
 }
 
 function measureAndPaint(parts, viewport) {
@@ -294,6 +214,7 @@ function paint(parts, viewport) {
   paintRows(doc, parts, viewport, model, gridWidth);
   paintComponents(doc, parts.componentsBlock, model);
   paintTrace(doc, parts.traceBlock, model);
+  parts.navigation?.refresh(model);
 
   parts.summary.textContent = summaryText(model);
   parts.budget.textContent = [
@@ -465,6 +386,8 @@ function summaryText(model) {
     `Ambiguous ${queue.AMBIGUOUS ?? 0}`,
     `Conflicting ${queue.CONFLICTING ?? 0}`,
     `Stale ${queue.STALE ?? 0}`,
+    `Proposed ${queue.PROPOSED ?? 0}`,
+    `Deferred ${queue.DEFERRED ?? 0}`,
   ].join(' | ');
 }
 
@@ -505,40 +428,6 @@ function normalizedLineRows() {
   if (Array.isArray(master) && master.length) return master;
   const legacy = masterDataController.getLegacyContext()?.lineRows;
   return Array.isArray(legacy) ? legacy : [];
-}
-
-function queueButton(doc, queueId, label, onClick) {
-  const button = create(doc, 'button', 'lfea-preflight-phase1__queue');
-  button.type = 'button';
-  button.dataset.queueId = queueId ?? '';
-  button.setAttribute('aria-pressed', 'false');
-  button.textContent = label;
-  button.addEventListener('click', onClick);
-  return button;
-}
-
-function labelledSelect(doc, toolbar, labelText, options, onChange) {
-  const label = create(doc, 'label', 'lfea-preflight-phase1__control');
-  label.append(doc.createTextNode(`${labelText} `));
-  const select = create(doc, 'select');
-  for (const option of options) {
-    const node = create(doc, 'option');
-    node.value = option.value;
-    node.textContent = option.label;
-    select.append(node);
-  }
-  select.addEventListener('change', onChange);
-  label.append(select);
-  toolbar.append(label);
-  return select;
-}
-
-function facetSelect(doc, toolbar, labelText, allLabel, options, onChange) {
-  return labelledSelect(doc, toolbar, labelText, [{ value: '', label: allLabel }, ...options], onChange);
-}
-
-function compareAscii(left, right) {
-  return left < right ? -1 : left > right ? 1 : 0;
 }
 
 function create(doc, tagName, className) {

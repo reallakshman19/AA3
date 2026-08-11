@@ -168,12 +168,23 @@ test('M06 and M10 production editors expose only explicit engineering authority'
   const fixture = await engineeringEditorFixture(page);
   const filter = page.locator('[data-table-filter]');
   const table = page.locator('[data-role="topology-edit-table"]');
+  const before = await evidence(page);
 
   await filter.fill(fixture.gateId);
   await table.locator(`[data-canonical-id="${fixture.gateId}"] [data-table-select]`).click();
-  await expect(page.locator('[data-table-edit-valve-catalogue]')).toBeVisible();
-  await expect(page.locator('[data-table-edit-valve-catalogue]')).toHaveValue('');
-  await expect(page.locator('[data-table-action="stage-valve-replacement"]')).toBeEnabled();
+  await expect(page.locator('textarea[data-table-edit-valve-catalogue]')).toHaveCount(0);
+  const valveRecord = page.locator('[data-table-edit-valve-catalogue-record]');
+  await expect(valveRecord).toBeVisible();
+  await expect(valveRecord).toHaveAttribute('data-table-valve-catalogue-hash', fixture.catalogueHash);
+  const valveOptions = await valveRecord.locator('option').evaluateAll(
+    (options) => options.slice(1).map((option) => option.value).sort(),
+  );
+  expect(valveOptions).toEqual(fixture.ballRecordIds);
+  await valveRecord.selectOption(fixture.ballRecordIds[0]);
+  await page.locator('[data-table-action="stage-valve-replacement"]').click();
+  await expect.poll(() => host.getAttribute('data-topology-edit-table-batch-hash')).toBeTruthy();
+  expectAuthorityNoop(await evidence(page), before);
+  await page.locator('[data-table-action="discard"]').click();
 
   await filter.fill(fixture.teeId);
   await table.locator(`[data-canonical-id="${fixture.teeId}"] [data-table-select]`).click();
@@ -198,6 +209,7 @@ async function openProductionController(page) {
   await expect(host).toBeVisible();
   await expect.poll(() => page.evaluate(() => Boolean(document.querySelector('[data-role="topology-edit-render-host"]')?.__topologyEditAuthoringController?.session))).toBe(true);
   await expect.poll(() => page.evaluate(() => Boolean(document.querySelector('[data-role="topology-edit-render-host"]')?.__topologyEditAuthoringController?.tableAdapter?.runtime))).toBe(true);
+  await expect.poll(() => page.evaluate(() => Boolean(document.querySelector('[data-role="topology-edit-render-host"]')?.__topologyEditAuthoringController?.professionalRuntime?.catalogue?.catalogueHash))).toBe(true);
   return host;
 }
 
@@ -242,19 +254,39 @@ async function chooseSafeTerminalPipe(page) {
 
 async function engineeringEditorFixture(page) {
   return page.evaluate(() => {
-    const projection = document.querySelector('[data-role="topology-edit-render-host"]')
-      ?.__topologyEditAuthoringController?.tableAdapter?.runtime?.projection;
-    if (!projection) throw new Error('Table projection unavailable for engineering editor check.');
-    const gate = projection.rows.find((row) => row.elementType === 'VALVE'
+    const controller = document.querySelector('[data-role="topology-edit-render-host"]')
+      ?.__topologyEditAuthoringController;
+    const projection = controller?.tableAdapter?.runtime?.projection;
+    const catalogue = controller?.professionalRuntime?.catalogue;
+    if (!projection || !catalogue) throw new Error('Table/catalogue authority unavailable for engineering editor check.');
+    const token = (value) => String(value ?? '').trim().toUpperCase();
+    const compatibleText = (observed, candidate) => !token(observed) || token(observed) === token(candidate);
+    const compatibleNumber = (observed, candidate) => {
+      const value = Number(observed);
+      return !Number.isFinite(value) || value <= 0 || Math.abs(value - Number(candidate)) <= 1e-9;
+    };
+    const gates = projection.rows.filter((row) => row.elementType === 'VALVE'
       && String(row.fields?.valveType ?? '').toUpperCase() === 'GATE');
+    const valveAuthority = gates.map((gate) => ({
+      gate,
+      records: catalogue.records.filter((record) => record.componentType === 'VALVE'
+        && record.valveType === 'BALL'
+        && compatibleNumber(gate.fields?.dnInMm, record.nominalSizeMm)
+        && compatibleText(gate.fields?.pipingClass, record.pipingClass)
+        && compatibleText(gate.fields?.pressureClass, record.pressureClass)
+        && compatibleText(gate.fields?.endConnectionFrom, record.endConnectionFrom)
+        && compatibleText(gate.fields?.endConnectionTo, record.endConnectionTo)),
+    })).find((entry) => entry.records.length > 0);
     const tee = projection.rows.find((row) => row.elementType === 'TEE'
       && row.identity?.canonicalKind === 'JUNCTION');
-    if (!gate || !tee) throw new Error('Demo must expose GATE valve and TEE rows.');
+    if (!valveAuthority || !tee) throw new Error('Demo must expose a certified replaceable GATE valve and TEE row.');
     const exactReducerIds = projection.rows.filter((row) => row.elementType === 'REDUCER'
       && row.custody?.catalogueAuthority === 'EXACT' && row.custody?.catalogue)
       .map((row) => row.identity.canonicalId).sort();
     return {
-      gateId: gate.identity.canonicalId,
+      gateId: valveAuthority.gate.identity.canonicalId,
+      ballRecordIds: valveAuthority.records.map((record) => record.recordId).sort(),
+      catalogueHash: catalogue.catalogueHash,
       teeId: tee.identity.canonicalId,
       branchPortKeys: tee.identity.portBindings.map((entry) => entry.portKey).sort(),
       exactReducerIds,

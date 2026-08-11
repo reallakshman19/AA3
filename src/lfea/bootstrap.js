@@ -8,6 +8,7 @@ import { mountLfeaNativeHistoryView } from './native-history-view.js';
 import { createLfeaNativeResultsAuthority } from './native-results-authority.js';
 import { mountLfeaNativeResultsView } from './native-results-view.js';
 import { createLfeaNativeRunHistory } from './native-run-history.js';
+import { createLfeaPersistenceAdapter, getLfeaBrowserStorage } from './persistence.js';
 import {
   clearLfeaStandaloneLayout,
   renderLfeaStandaloneLayout,
@@ -15,12 +16,23 @@ import {
 
 export const LFEA_STANDALONE_APPLICATION_SCHEMA = 'lfea-standalone-application/v1';
 
-/** Standalone LFEA composition root with governed execution, recovery, History, and Compare. */
+/** Standalone LFEA composition root with governed execution, recovery, History, Compare, and bounded UI persistence. */
 export function bootstrapLfeaStandalone(rootElement, options = {}) {
   if (!rootElement?.ownerDocument) throw new TypeError('Standalone LFEA application root was not found.');
 
   const identity = createApplicationIdentity(options.identity);
-  const layout = renderLfeaStandaloneLayout(rootElement, identity);
+  const storage = Object.hasOwn(options, 'storage')
+    ? options.storage
+    : getLfeaBrowserStorage(rootElement.ownerDocument.defaultView);
+  const persistence = createLfeaPersistenceAdapter(storage);
+  let persistedState = persistence.load();
+  const layout = renderLfeaStandaloneLayout(rootElement, identity, {
+    initialViewId: persistedState.activeView,
+    onViewActivated(viewId) {
+      persistence.saveActiveView(viewId);
+      persistedState = persistence.load();
+    },
+  });
   const executionAuthority = createLfeaNativeExecutionAuthority();
   const resultsAuthority = createLfeaNativeResultsAuthority();
   const runHistory = createLfeaNativeRunHistory();
@@ -47,6 +59,7 @@ export function bootstrapLfeaStandalone(rootElement, options = {}) {
   comparisonController.refresh(historySnapshot);
 
   const refreshJourney = (sourceSnapshot, preFlight) => {
+    persistRecentSource(sourceSnapshot);
     executionAuthority.reconcile(preFlight);
     resultsAuthority.reconcile(preFlight, executionAuthority.getState());
     governedJourney = createLfeaGovernedJourneyProjection({
@@ -59,7 +72,11 @@ export function bootstrapLfeaStandalone(rootElement, options = {}) {
     historySnapshot = currentHistorySnapshot(sourceSnapshot, preFlight);
     historyView.update(historySnapshot);
     comparisonController.refresh(historySnapshot);
-    layout.statusRoot.textContent = journeyStatus(governedJourney, resultsAuthority.getState());
+    layout.statusRoot.textContent = journeyStatus(
+      governedJourney,
+      resultsAuthority.getState(),
+      persistedState.recentSourceMetadata,
+    );
     return governedJourney;
   };
 
@@ -86,6 +103,16 @@ export function bootstrapLfeaStandalone(rootElement, options = {}) {
     sourceController.getSnapshot(),
     sourceController.getPreFlight(),
   );
+
+  function persistRecentSource(snapshot) {
+    if (!snapshot?.fileName || !snapshot.contentSha256 || !snapshot.sourceUnit) return;
+    persistence.saveRecentSourceMetadata({
+      fileName: snapshot.fileName,
+      contentSha256: snapshot.contentSha256,
+      sourceUnit: snapshot.sourceUnit,
+    });
+    persistedState = persistence.load();
+  }
 
   function currentHistorySnapshot(sourceSnapshot, preFlight) {
     return runHistory.getSnapshot({
@@ -179,11 +206,13 @@ export function bootstrapLfeaStandalone(rootElement, options = {}) {
         nativeResults: resultsAuthority.getState(),
         nativeHistory: historySnapshot,
         nativeComparison: comparisonController.getState(),
+        nonAuthoritativePersistence: persistedState,
       });
     },
     activateView(viewId) { requireActive(); return layout.activate(viewId); },
     getActiveView() { requireActive(); return layout.getActiveView(); },
     getGovernedJourney() { requireActive(); return governedJourney; },
+    getNonAuthoritativePersistenceState() { requireActive(); return persistedState; },
     loadInputXmlSource(input, sourceOptions) { requireActive(); return sourceController.loadSource(input, sourceOptions); },
     authorizeInputXmlSourceUnit(unit) { requireActive(); return sourceController.authorizeUnit(unit); },
     authorizeInputXmlPreFlight(approval) { requireActive(); return sourceController.authorizePreFlight(approval); },
@@ -239,8 +268,13 @@ export function bootstrapLfeaStandalone(rootElement, options = {}) {
   });
 }
 
-function journeyStatus(journey, resultsState) {
-  if (journey.source.status === 'EMPTY') return 'Import a governed CAESAR II InputXML source to begin Source → Review → Model preparation.';
+function journeyStatus(journey, resultsState, recentSourceMetadata) {
+  if (journey.source.status === 'EMPTY') {
+    if (recentSourceMetadata) {
+      return `No governed source is loaded. Recent source metadata only: ${recentSourceMetadata.fileName} · ${recentSourceMetadata.contentSha256.slice(0, 12)}…. Re-import is required before Review or Analysis.`;
+    }
+    return 'Import a governed CAESAR II InputXML source to begin Source → Review → Model preparation.';
+  }
   if (resultsState?.currentness === 'STALE') return 'Retained recovered Results are STALE relative to current raw/source/model authority; current engineering values are hidden.';
   if (resultsState?.currentness === 'CURRENT') return 'Current governed B-3.4 recovery is available in Results. Raw and recovered quantities remain separate authorities.';
   if (journey.analysis.executionCurrentness === 'STALE') return 'A retained native execution is STALE relative to current source/review/model authority; it is not current evidence.';

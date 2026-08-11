@@ -21,11 +21,8 @@ const DEFAULT_POLICY = Object.freeze({
 
 export class TopologyEditValidationWorkerClient {
   constructor(options = {}) {
-    this.WorkerCtor = options.WorkerCtor ?? globalThis.Worker ?? null;
-    this.workerUrl = options.workerUrl ?? new URL(
-      './topology-edit-validation-worker.js',
-      import.meta.url,
-    );
+    this.WorkerCtor = options.WorkerCtor ?? null;
+    this.workerUrl = options.workerUrl ?? null;
     this.state = createTopologyEditValidationWorkerState();
     this.active = null;
     this.destroyed = false;
@@ -157,10 +154,28 @@ export class TopologyEditValidationWorkerClient {
 
   createWorker() {
     try {
-      return new this.WorkerCtor(this.workerUrl, {
-        type: 'module',
-        name: 'topology-edit-professional-validation',
-      });
+      if (typeof this.WorkerCtor === 'function') {
+        return new this.WorkerCtor(
+          this.workerUrl ?? new URL('./topology-edit-validation-worker.js', import.meta.url),
+          {
+            type: 'module',
+            name: 'topology-edit-professional-validation',
+          },
+        );
+      }
+      if (this.workerUrl) {
+        return new Worker(this.workerUrl, {
+          type: 'module',
+          name: 'topology-edit-professional-validation',
+        });
+      }
+      return new Worker(
+        new URL('./topology-edit-validation-worker.js', import.meta.url),
+        {
+          type: 'module',
+          name: 'topology-edit-professional-validation',
+        },
+      );
     } catch (error) {
       throw workerStartupFailure(error);
     }
@@ -170,7 +185,7 @@ export class TopologyEditValidationWorkerClient {
     if (this.destroyed) {
       throw new Error('TopologyEditValidationWorkerClient: client is destroyed.');
     }
-    if (typeof this.WorkerCtor !== 'function') {
+    if (typeof this.WorkerCtor !== 'function' && typeof Worker !== 'function') {
       throw new Error('TopologyEditValidationWorkerClient: module Worker support is required.');
     }
   }

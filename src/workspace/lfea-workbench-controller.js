@@ -103,7 +103,7 @@ export class LfeaWorkbenchController {
       const text = await readLfeaUtf8(file);
       return this.importDocument(JSON.parse(text));
     } catch (error) {
-      return this.store.reportEditError('document', null, error);
+      return this.store.reportEditError('document', null, error, 'LFEA_IMPORT_REJECTED');
     }
   }
 
@@ -117,7 +117,7 @@ export class LfeaWorkbenchController {
    * @returns {Readonly<Record<string, unknown>>} Updated workbench state.
    */
   async loadMockData() {
-    const { createLfeaMockPackage } = await import('./advanced-mock-data.js');
+    const { createLfeaMockPackage } = await import('./lfea-mock-data.js');
     return this.importDocument(createLfeaMockPackage());
   }
 
@@ -137,7 +137,7 @@ export class LfeaWorkbenchController {
     try {
       return this.store.replaceDocument(parseLfeaJsonObject(text, 'LFEA package'));
     } catch (error) {
-      return this.store.reportEditError('document', null, error);
+      return this.store.reportEditError('document', null, error, 'LFEA_EDIT_REJECTED');
     }
   }
 
@@ -170,7 +170,12 @@ export class LfeaWorkbenchController {
   }
 
   async run() {
-    if (!this.workerClient) return this.store.run();
+    if (!this.workerClient) {
+      const running = this.store.beginRun();
+      const identity = running.activeRun;
+      await yieldRunFeedbackFrame(this.documentRef);
+      return this.store.executeActiveRun(identity, this.pipelineOptions);
+    }
     const running = this.store.beginRun();
     const identity = running.activeRun;
     const packageInput = running.packageValue;
@@ -224,7 +229,8 @@ export class LfeaWorkbenchController {
   }
 
   cancelRun() {
-    const cancellation = this.workerClient?.cancel('USER');
+    if (!this.workerClient) return this.store.cancelRun();
+    const cancellation = this.workerClient.cancel('USER');
     if (!cancellation) return this.store.getState();
     return this.store.cancelRun(cancellation);
   }
@@ -246,10 +252,16 @@ export class LfeaWorkbenchController {
   }
 
   undo() {
+    const state = this.store.getState();
+    if (!state.past.length) return state;
+    if (!confirmQualifiedEvidenceReset(this.documentRef, state, 'Undo')) return state;
     return this.store.undo();
   }
 
   redo() {
+    const state = this.store.getState();
+    if (!state.future.length) return state;
+    if (!confirmQualifiedEvidenceReset(this.documentRef, state, 'Redo')) return state;
     return this.store.redo();
   }
 
@@ -264,9 +276,18 @@ export class LfeaWorkbenchController {
   }
 
   downloadEvidence() {
-    const value = this.exportEvidence();
-    downloadLfeaJson(this.documentRef, value, 'lfea-evidence-export.json');
-    return value;
+    try {
+      const value = this.exportEvidence();
+      downloadLfeaJson(this.documentRef, value, 'lfea-evidence-export.json');
+      return value;
+    } catch (error) {
+      return this.store.reportEditError(
+        'evidenceExport',
+        null,
+        error,
+        'LFEA_EVIDENCE_EXPORT_REJECTED',
+      );
+    }
   }
 
   destroy() {
@@ -279,4 +300,28 @@ export class LfeaWorkbenchController {
     this.view.destroy();
     this.rootElement = null;
   }
+}
+
+function confirmQualifiedEvidenceReset(documentRef, state, actionLabel) {
+  if (state.execution?.status !== 'QUALIFIED') return true;
+  const confirmAction = documentRef?.defaultView?.confirm;
+  if (typeof confirmAction !== 'function') return true;
+  return confirmAction.call(
+    documentRef.defaultView,
+    `${actionLabel} changes the committed mesh package and clears the current qualified analysis execution, review, and evidence. Continue?`,
+  );
+}
+
+function yieldRunFeedbackFrame(documentRef) {
+  const view = documentRef?.defaultView ?? globalThis;
+  const scheduleTask = typeof view.setTimeout === 'function'
+    ? view.setTimeout.bind(view)
+    : globalThis.setTimeout.bind(globalThis);
+  return new Promise((resolve) => {
+    if (typeof view.requestAnimationFrame === 'function') {
+      view.requestAnimationFrame(() => scheduleTask(resolve, 0));
+      return;
+    }
+    scheduleTask(resolve, 0);
+  });
 }

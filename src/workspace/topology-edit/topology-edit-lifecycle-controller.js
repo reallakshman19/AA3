@@ -64,12 +64,17 @@ export class TopologyEditLifecycleController {
     storage = globalThis.localStorage,
     downloadText = browserDownload,
     commitPrepared = commitPreparedTopologyEditExport,
+    publishLfeaSourceContext = () => null,
   } = {}) {
     this.getSession = requiredFunction(getSession, 'getSession');
     this.getViewState = requiredFunction(getViewState, 'getViewState');
     this.storage = storage;
     this.downloadText = requiredFunction(downloadText, 'downloadText');
     this.commitPrepared = requiredFunction(commitPrepared, 'commitPrepared');
+    this.publishLfeaSourceContextEvent = requiredFunction(
+      publishLfeaSourceContext,
+      'publishLfeaSourceContext',
+    );
   }
 
   session() {
@@ -96,18 +101,35 @@ export class TopologyEditLifecycleController {
     });
   }
 
+  publishLfeaSourceContext(session = this.session()) {
+    const sourceSemanticHash = session.currentTopology().canonicalTopologyHash;
+    const modelVersion = session.journal.sessionVersion;
+    if (typeof sourceSemanticHash !== 'string' || !sourceSemanticHash) {
+      throw new TypeError('TopologyEditLifecycleController: current canonical topology hash is required.');
+    }
+    if (!Number.isSafeInteger(modelVersion) || modelVersion < 0) {
+      throw new TypeError('TopologyEditLifecycleController: current sessionVersion is invalid.');
+    }
+    const payload = Object.freeze({ sourceSemanticHash, modelVersion });
+    this.publishLfeaSourceContextEvent(payload);
+    return payload;
+  }
+
   hasPersistedDraft() {
     if (!this.storage || typeof this.storage.getItem !== 'function') return false;
     return this.storage.getItem(STORAGE_KEY_EDIT_DRAFT) !== null;
   }
 
   saveDraft() {
-    const draftPackage = this.createDraftPackage();
+    const session = this.session();
+    const draftPackage = this.createDraftPackage(session);
+    const sourceContext = this.publishLfeaSourceContext(session);
     const receipt = TopologyEditPersistence.saveDraft(draftPackage, this.storage);
     return result('SAVE', 'SAVED', {
       packageHash: draftPackage.packageHash,
       storageReceipt: receipt,
       draftPackage,
+      lfeaSourceContext: sourceContext,
     });
   }
 
@@ -120,10 +142,12 @@ export class TopologyEditLifecycleController {
     });
     if (!restored) return result('RELOAD', 'EMPTY');
     session.reloadJournal(serializeTopologyEditCertifiedJournal(restored.journal));
+    const sourceContext = this.publishLfeaSourceContext(session);
     return result('RELOAD', 'RESTORED', {
       packageHash: restored.packageHash,
       activeCanonicalTopologyHash: restored.activeCanonicalTopologyHash,
       restored,
+      lfeaSourceContext: sourceContext,
     });
   }
 

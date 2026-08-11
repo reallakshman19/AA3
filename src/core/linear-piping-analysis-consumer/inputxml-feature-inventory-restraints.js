@@ -14,6 +14,7 @@ import {
 } from './inputxml-model-health-profile.js';
 
 export const NUMERIC_TOLERANCE = 1e-12;
+const DIRECTION_TOLERANCE = 1e-9;
 const CAESAR_UNSET_SENTINEL = -1.0101;
 const CAESAR_SENTINEL_TOLERANCE = 0.001;
 const RESTRAINT_DOFS = Object.freeze(['UX', 'UY', 'UZ', 'RX', 'RY', 'RZ']);
@@ -72,6 +73,12 @@ export function restraintDispositions(classification) {
     if (!classification.direction.valid || classification.targetDofs.length !== 1) {
       return both(invalidDisposition('MODEL_RESTRAINT_DIRECTION_INVALID'));
     }
+    if (!axisAlignedDirection(classification.direction)) {
+      return {
+        [STRICT]: nonlinearDisposition('MODEL_RESTRAINT_UNILATERAL_UNSUPPORTED'),
+        [APPROXIMATE]: unsupportedDisposition('MODEL_RESTRAINT_SKEW_DIRECTION_UNSUPPORTED'),
+      };
+    }
     return {
       [STRICT]: nonlinearDisposition('MODEL_RESTRAINT_UNILATERAL_UNSUPPORTED'),
       [APPROXIMATE]: approximationDisposition('GENERIC_APPROX_UNILATERAL_LINEARIZED'),
@@ -109,9 +116,18 @@ function directionOf(attributes) {
     vector: Object.freeze(vector),
     unit: Object.freeze(unit),
     magnitude,
-    valid: Math.abs(magnitude - 1) <= 1e-9,
+    valid: Math.abs(magnitude - 1) <= DIRECTION_TOLERANCE,
     dominantAxis: ['UX', 'UY', 'UZ'][dominantIndex],
   });
+}
+
+function axisAlignedDirection(direction) {
+  if (!direction.valid || !Array.isArray(direction.unit)) return false;
+  const absolute = direction.unit.map(Math.abs);
+  const maximum = Math.max(...absolute);
+  const dominantIndex = absolute.indexOf(maximum);
+  return maximum >= 1 - DIRECTION_TOLERANCE
+    && absolute.every((value, index) => index === dominantIndex || value <= DIRECTION_TOLERANCE);
 }
 
 function canonicalNodeRestraint(segment, nodeId) {

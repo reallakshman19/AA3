@@ -1,13 +1,17 @@
+import { INPUTXML_LINEAR_PREFEA_REQUEST_SCHEMA } from '../core/linear-piping-analysis-consumer/inputxml-linear-prefea-contract.js';
 import {
-  INPUTXML_LINEAR_PREFEA_REQUEST_SCHEMA,
-  authorizeInputXmlLinearSolve,
   diagnoseInputXmlLinearPreFea,
-  prepareInputXmlLinearPreFea,
   requireInputXmlLinearPreFeaDiagnostics,
+} from '../core/linear-piping-analysis-consumer/inputxml-linear-prefea-diagnostics.js';
+import {
+  prepareInputXmlLinearPreFea,
   requireInputXmlLinearPreFeaPreparation,
+} from '../core/linear-piping-analysis-consumer/inputxml-linear-prefea-preparation.js';
+import {
+  authorizeInputXmlLinearSolve,
   requireInputXmlLinearSolveAuthorization,
-  requireLinearPipingInputXmlSource,
-} from '../core/linear-piping-analysis-consumer/index.js';
+} from '../core/linear-piping-analysis-consumer/inputxml-linear-solve-authorization.js';
+import { requireLinearPipingInputXmlSource } from '../core/linear-piping-analysis-consumer/inputxml-source-contract.js';
 import { semanticHash } from '../core/shared-piping-model/canonical-json.js';
 import { requireLinearPipingInputXmlIntake } from './linear-piping-inputxml-intake.js';
 

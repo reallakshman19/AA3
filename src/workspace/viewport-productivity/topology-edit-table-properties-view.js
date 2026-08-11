@@ -4,6 +4,9 @@ import {
 import {
   deriveTopologyEditTableCellCapability,
 } from '../topology-edit/table/topology-edit-table-edit-capability.js';
+import {
+  renderTopologyEditTableNodePositionEditor,
+} from './topology-edit-table-engineering-editor.js';
 
 const TYPE_ORDER = ['PIPE', 'ELBOW', 'FLANGE', 'VALVE', 'TEE', 'REDUCER', 'SUPPORT', 'COMPONENT', 'JUNCTION'];
 
@@ -52,7 +55,7 @@ export function renderTopologyEditTableAllProperties(row, runtime) {
   ];
   const custody = Object.entries(row.custody ?? {}).map(([key, value]) => [humanLabel(key), value]);
   const source = sourcePropertyRows(sourceEntityFor(runtime, row));
-  return `<section class="topology-edit-table__all-properties" data-table-all-properties>
+  return `${renderTopologyEditTableNodePositionEditor(row, stagedIntentFor(runtime, row), runtime)}<section class="topology-edit-table__all-properties" data-table-all-properties>
     <header><strong>All properties</strong><span>${projected.length} projected · ${source.length} source/vendor</span></header>
     ${propertyTable('Identity', identity.map(([label, value]) => ({ label, value, authority: 'IDENTITY' })))}
     ${propertyTable('Engineering properties', projected, true)}
@@ -82,6 +85,9 @@ function propertyTable(title, rows, showCapability = false) {
   </details>`;
 }
 
+function stagedIntentFor(runtime, row) {
+  return (runtime?.intents ?? []).find((intent) => intent.target?.canonicalId === row.identity?.canonicalId) ?? null;
+}
 function sourceEntityFor(runtime, row) {
   const ids = new Set([
     row.identity?.componentKey,

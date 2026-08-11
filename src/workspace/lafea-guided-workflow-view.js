@@ -1,4 +1,6 @@
 /** Render the guided LAFEA step navigator without creating engineering state. */
+import { lafeaWorkbenchReasonLabels } from './lafea-workbench-reason-labels.js';
+
 export function renderLafeaGuidedWorkflow(root, workflow, onNavigate) {
   if (!root?.ownerDocument || workflow?.schema !== 'lafea-guided-workflow/v1') {
     throw new TypeError('LAFEA_GUIDED_WORKFLOW_VIEW_INPUT_INVALID');
@@ -24,14 +26,15 @@ export function renderLafeaGuidedWorkflow(root, workflow, onNavigate) {
     item.append(button);
     if (step.reasons.length) {
       const reasons = doc.createElement('small');
-      reasons.textContent = step.reasons.join(' • ');
+      reasons.textContent = lafeaWorkbenchReasonLabels(step.reasons).join(' • ');
       item.append(reasons);
     }
     list.append(item);
   }
   const release = doc.createElement('p');
   release.className = 'lafea-guided-workflow__release';
-  release.textContent = 'Release authority: NOT QUALIFIED';
+  release.dataset.qualified = workflow.releaseQualified ? 'true' : 'false';
+  release.textContent = `Release authority: ${workflow.releaseQualified ? 'QUALIFIED' : 'NOT QUALIFIED'}`;
   nav.append(title, list, release);
   root.replaceChildren(nav);
   return nav;

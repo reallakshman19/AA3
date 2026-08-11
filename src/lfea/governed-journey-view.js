@@ -1,4 +1,9 @@
-export function mountLfeaGovernedJourneyView({ reviewRoot, modelRoot, analysisRoot }) {
+export function mountLfeaGovernedJourneyView({
+  reviewRoot,
+  modelRoot,
+  analysisRoot,
+  onRunNativeAnalysis = null,
+}) {
   for (const [name, root] of Object.entries({ reviewRoot, modelRoot, analysisRoot })) {
     if (!root?.ownerDocument) throw new TypeError(`${name} is required.`);
   }
@@ -7,7 +12,7 @@ export function mountLfeaGovernedJourneyView({ reviewRoot, modelRoot, analysisRo
     current = projection;
     renderReview(reviewRoot, projection.review);
     renderModel(modelRoot, projection.model);
-    renderAnalysis(analysisRoot, projection.analysis);
+    renderAnalysis(analysisRoot, projection.analysis, onRunNativeAnalysis);
     return projection;
   }
   function destroy() {
@@ -69,10 +74,10 @@ function renderModel(root, model) {
   root.replaceChildren(section);
 }
 
-function renderAnalysis(root, analysis) {
+function renderAnalysis(root, analysis, onRunNativeAnalysis) {
   const doc = root.ownerDocument;
   const section = panel(doc, 'Analysis authority', analysis.status,
-    'Reviewed authorization gates the native raw solve. Current/stale execution is tracked separately from immutable solver evidence; Results and History remain downstream.');
+    'Reviewed authorization gates the native raw solve. The Run control projects readiness only; the domain gate revalidates current authority on every execution.');
   section.append(factTable(doc, [
     ['Analysis profile', analysis.requestedProfileId],
     ['Requested cases', analysis.requestedCaseIds.join(', ') || null],
@@ -93,20 +98,38 @@ function renderAnalysis(root, analysis) {
   ]));
   appendCodeList(doc, section, 'Retained limitations', analysis.limitationCodes);
   appendCodeList(doc, section, 'Execution stale reasons', analysis.staleReasonCodes);
+  section.append(runControl(doc, analysis, onRunNativeAnalysis));
+  section.append(executionBoundary(doc, analysis));
+  root.replaceChildren(section);
+}
+
+function runControl(doc, analysis, onRunNativeAnalysis) {
+  const wrapper = doc.createElement('div');
+  wrapper.className = 'lfea-analysis-actions';
+  const button = doc.createElement('button');
+  button.type = 'button';
+  button.dataset.role = 'lfea-native-run';
+  button.textContent = analysis.currentQualifiedExecutionAvailable ? 'Run again' : 'Run native analysis';
+  button.disabled = !analysis.readyToRun || typeof onRunNativeAnalysis !== 'function';
+  button.addEventListener('click', () => onRunNativeAnalysis?.());
+  wrapper.append(button);
+  return wrapper;
+}
+
+function executionBoundary(doc, analysis) {
   const boundary = doc.createElement('p');
   boundary.className = 'lfea-journey-boundary';
   boundary.dataset.role = 'lfea-native-execution-boundary';
   if (analysis.executionCurrentness === 'STALE') {
-    boundary.textContent = 'The retained execution is HISTORIC/STALE relative to current authority. It is not a current result and cannot authorize current evidence.';
+    boundary.textContent = 'The retained execution is HISTORIC/STALE relative to current authority. It is not a current result and cannot authorize current recovery or evidence.';
   } else if (analysis.currentQualifiedExecutionAvailable) {
-    boundary.textContent = 'A current qualified raw solver execution exists. Result recovery, code application and issue/export authority are not claimed by this slice.';
+    boundary.textContent = 'A current qualified raw solver execution exists. Governed B-3.4 recovery is a separate Results authority; support-action/code/issue authority remains downstream.';
   } else if (analysis.readyToRun) {
     boundary.textContent = 'Reviewed pre-FEA authority is sealed and native raw solve execution is available.';
   } else {
     boundary.textContent = 'Native solve execution is blocked until the governed source/review/model authorization chain is complete.';
   }
-  section.append(boundary);
-  root.replaceChildren(section);
+  return boundary;
 }
 
 function appendFindings(doc, section, findings) {

@@ -277,10 +277,10 @@ export class LfeaWorkbenchView {
 
     add.addEventListener('click', () => {
       const next = this.handlers.onAddRecord(this.collectionPath, textarea.value);
-      if (next?.status === 'FAILED') return;
+      if (!didCommitModelVersion(state, next)) return;
       this.recordDrafts.delete(key);
       this.selectedIndex = -1;
-      if (next) this.render(next);
+      this.render(next);
     });
     update.addEventListener('click', () => {
       const next = this.handlers.onUpdateRecord(
@@ -288,9 +288,9 @@ export class LfeaWorkbenchView {
         this.selectedIndex,
         textarea.value,
       );
-      if (next?.status === 'FAILED') return;
+      if (!didCommitModelVersion(state, next)) return;
       this.recordDrafts.delete(key);
-      if (next) this.render(next);
+      this.render(next);
     });
     remove.addEventListener('click', () => {
       const path = this.collectionPath;
@@ -318,6 +318,11 @@ export class LfeaWorkbenchView {
 
 function recordDraftKey(path, index) {
   return `${path}\u0000${index}`;
+}
+
+function didCommitModelVersion(previous, next) {
+  return Number.isInteger(next?.modelVersion)
+    && next.modelVersion !== previous.modelVersion;
 }
 
 function isJsonObjectText(text) {

@@ -9,10 +9,7 @@ import { createLfeaNativeResultsAuthority } from './native-results-authority.js'
 import { mountLfeaNativeResultsView } from './native-results-view.js';
 import { createLfeaNativeRunHistory } from './native-run-history.js';
 import { createLfeaPersistenceAdapter, getLfeaBrowserStorage } from './persistence.js';
-import {
-  clearLfeaStandaloneLayout,
-  renderLfeaStandaloneLayout,
-} from './standalone-layout.js';
+import { clearLfeaStandaloneLayout, renderLfeaStandaloneLayout } from './standalone-layout.js';
 
 export const LFEA_STANDALONE_APPLICATION_SCHEMA = 'lfea-standalone-application/v1';
 
@@ -106,11 +103,8 @@ export function bootstrapLfeaStandalone(rootElement, options = {}) {
 
   function persistRecentSource(snapshot) {
     if (!snapshot?.fileName || !snapshot.contentSha256 || !snapshot.sourceUnit) return;
-    persistence.saveRecentSourceMetadata({
-      fileName: snapshot.fileName,
-      contentSha256: snapshot.contentSha256,
-      sourceUnit: snapshot.sourceUnit,
-    });
+    const metadata = { fileName: snapshot.fileName, contentSha256: snapshot.contentSha256, sourceUnit: snapshot.sourceUnit };
+    try { persistence.saveRecentSourceMetadata(metadata); } catch { return; }
     persistedState = persistence.load();
   }
 

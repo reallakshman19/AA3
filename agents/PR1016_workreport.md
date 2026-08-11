@@ -6,7 +6,7 @@
 - **Source issue:** #1015 — `LAFEA UI update`
 - **Pull request:** #1016 — draft
 - **Branch:** `agent/lafea-appendix-a-workreport`
-- **Current stage:** Stage 12 — public store/controller APIs in progress
+- **Current stage:** Stage 13 — Numerical Verification UX extension in progress
 - **Last updated:** 2026-08-11
 - **CI constraint:** Do not add GitHub Actions workflows or workflow-based CI gates.
 
@@ -53,47 +53,73 @@ Stage 9 supports Bucket-01 GCI/Richardson and controlled-continuum relative-chan
 
 Added `src/workspace/lafea-t6-geometry-qualification-custody.js`.
 
-The intake requires both:
+The intake requires both the Bucket-01 T6 qualification evidence and its exact deterministic `lafea-lug-pinhole-t6-mesh-package/v1` parent. Both are rebuild-validated. Custody keeps producer status unchanged, never promotes release, and separates:
 
-1. `lafea-bucket-01-mesh-qualification-evidence/v1`;
-2. the exact `lafea-lug-pinhole-t6-mesh-package/v1` parent required by the existing validator.
+- producer-declared `meshPackageHash`;
+- custody-owned canonical `parentMeshPackageDigest`;
+- canonical workbench `analysisMeshHash` reconstructed from the exact parent mesh.
 
-Both are cloned/frozen, the deterministic mesh package is rebuild-validated, and qualification evidence is rebuild-validated against that exact package. Only the bounded `LAFEA.3` / `CONCENTRIC_ANNULAR_LUG_PINHOLE` / `T6` contract is accepted. PASS and BLOCKED producer status are retained, and release authority remains false.
-
-**Parent identity correction:** existing Bucket-01 `meshPackageHash` is a declared SHA-256 field but is not recomputed from the mesh package by the producer validator; repository tests intentionally supply arbitrary values. Custody therefore keeps three distinct identities:
-
-- `declaredMeshPackageHash` — producer-declared value;
-- `parentMeshPackageDigest` — custody-owned canonical digest over the exact validated package;
-- `analysisMeshHash` — canonical workbench analysis-mesh content hash reconstructed from `meshPackage.mesh`.
-
-This avoids overstating the producer-declared field while preserving it for traceability.
+This avoids claiming the existing producer-declared hash is a reconstructed package digest when its validator does not enforce that relationship.
 
 ### Stage 11 — Bind T6 qualification to current workbench authority — COMPLETE
 
 Added `src/workspace/lafea-t6-geometry-qualification-state.js`.
 
-Registration is accepted only when:
+Registration requires:
 
-- stage is `LAFEA.3`;
-- host `currentCandidateHeadSha` exists and exactly matches evidence `exactHeadSha`;
-- ordinary workbench analysis-mesh custody is current/viewable;
-- canonical content hash of the current retained analysis mesh equals Stage 10 `analysisMeshHash`;
-- retained mesh identity agrees.
+- `LAFEA.3`;
+- exact current candidate head;
+- current/viewable ordinary analysis-mesh custody;
+- exact canonical analysis-mesh content equality;
+- matching mesh identity.
 
-The Bucket-01 evidence does not contain source/model/geometry parent hashes, so Stage 11 deliberately inherits those authorities through the already-current analysis-mesh custody projection rather than fabricating missing lineage.
+The Bucket-01 contract does not carry source/model/geometry parent hashes, so those authorities are inherited through current analysis-mesh custody instead of invented. Projection states are `ABSENT`, `CURRENT_PASS`, `CURRENT_BLOCK`, `STALE`, and `INVALID`; no state grants release authority.
 
-Projection states are `ABSENT`, `CURRENT_PASS`, `CURRENT_BLOCK`, `STALE`, and `INVALID`. `CURRENT_PASS` means the **T6 geometry qualification contract** is current/pass; it does not promote overall mesh authorization or release. Later mesh/head drift retains evidence for audit but projects STALE.
+### Stage 12 — Public store/controller APIs — COMPLETE
 
-### Stage 12 — Public store/controller APIs — IN PROGRESS
+Stage 12 integrated the governed T6 custody into the canonical workbench composition.
 
-Target integration:
+**Store integration**
 
-- instantiate Stage 11 state with the same host `currentCandidateHeadSha` used by release binding;
-- include retained T6 qualification custody in raw stage composition;
-- derive a current T6 qualification projection only after ordinary mesh custody is built;
-- add bounded register/select/project/export methods;
-- include retained custody and projection in lifecycle export;
-- expose public contracts without giving UI code authority to generate or alter engineering evidence.
+- Instantiates T6 qualification state with the same host `currentCandidateHeadSha` used by release binding.
+- Adds retained custody fields to raw stage composition.
+- Builds `t6GeometryQualificationProjection` only after ordinary analysis-mesh custody exists.
+- Adds `registerT6GeometryQualification(...)` with current-binding enforcement.
+- Exports retained custody and live projection through lifecycle export.
+
+**Public APIs**
+
+Orchestrator/controller now expose:
+
+- `registerT6GeometryQualification(...)`
+- `selectRetainedT6GeometryQualification(...)`
+- `buildT6GeometryQualificationProjection(...)`
+- `exportT6GeometryQualification(...)`
+
+`src/workspace/lafea-workbench.js` publicly re-exports the Stage 10/11 custody and projection contracts. Host documentation now states that `currentCandidateHeadSha` is also an exact-head trust anchor for T6 qualification evidence. UI code still has no evidence-generation authority.
+
+### Stage 13 — Numerical Verification UX extension — IN PROGRESS
+
+Stage 13 will extend the existing read-only Numerical Verification card with a distinct **T6 geometry qualification** section driven solely by `t6GeometryQualificationProjection` plus retained Stage 10 custody.
+
+Planned displayed retained values:
+
+- integrated and analytical area;
+- area relative error;
+- hole and outer curved perimeter;
+- total perimeter relative error;
+- maximum boundary deviation;
+- hole-center error;
+- critical ligament minimum/maximum/analytical value and relative error;
+- maximum midside-placement error;
+- rotational-symmetry error;
+- topology counts/connectivity/feature-set findings;
+- dense-Jacobian sampling, minimum determinant, non-positive count;
+- duplicate-node findings;
+- producer tolerances and reasons;
+- exact head and parent/mesh identities.
+
+The section will remain separate from generic aspect-ratio/scaled-Jacobian mesh quality and will show STALE/INVALID/BLOCKED custody explicitly rather than displaying retained values as current.
 
 ## Existing repository-local regression scripts in PR
 
@@ -109,8 +135,8 @@ They are not connected to a new GitHub Actions workflow. They remain unexecuted 
 
 - Stage 10 — define T6 qualification custody contract: COMPLETE
 - Stage 11 — bind qualification to current workbench authority: COMPLETE
-- Stage 12 — public store/controller APIs: IN PROGRESS
-- Stage 13 — Numerical Verification UX extension: PLANNED
+- Stage 12 — public store/controller APIs: COMPLETE
+- Stage 13 — Numerical Verification UX extension: IN PROGRESS
 - Stage 14 — preserve/explain numerical method semantics: PLANNED
 - Stage 15 — local regression coverage: PLANNED
 - Stage 16 — documentation and closure: PLANNED

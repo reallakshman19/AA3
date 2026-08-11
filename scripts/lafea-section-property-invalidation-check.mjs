@@ -16,6 +16,8 @@ import {
 import {
   requireLafeaLifecycleProfileForStage,
 } from '../src/workspace/lafea-lifecycle-profiles.js';
+import { createLafeaWorkbenchStore } from '../src/workspace/lafea-workbench.js';
+import { triangleSource } from './lafea.3-fixtures.mjs';
 
 assert.ok(LAFEA_INVALIDATION_CLASSES.includes('SECTION_PROPERTY'));
 assert.ok(LAFEA_LIFECYCLE_CHANGE_CLASSES.includes('SECTION_PROPERTY'));
@@ -112,12 +114,41 @@ assert.throws(
   (error) => error?.code === 'LAFEA_CHANGE_CLASS_NOT_AUTHORIZED_FOR_PROFILE',
 );
 
+const workbench = createLafeaWorkbenchStore({
+  initialStage: 'LAFEA.3',
+  initialDocument: triangleSource(),
+});
+let workbenchState = workbench.run();
+let workbenchStage = workbenchState.stages['LAFEA.3'];
+assert.equal(workbenchStage.execution.status, 'QUALIFIED');
+const previousWorkbenchSourceHash = workbenchStage.lifecycle.source.sourceHash;
+const element = workbenchStage.document.elements[0];
+workbenchState = workbench.setScalar(
+  'LAFEA.3.element.thickness',
+  element.elementId,
+  String(element.thickness * 1.1),
+  'SECTION-PROPERTY-WORKBENCH-CHECK',
+);
+workbenchStage = workbenchState.stages['LAFEA.3'];
+assert.notEqual(workbenchState.status, 'FAILED');
+assert.equal(workbenchStage.lastSourceAuthorityEvent.changeClass, 'SECTION_PROPERTY');
+assert.equal(workbenchStage.lifecycleBinding.status, 'CURRENT');
+assert.notEqual(workbenchStage.lifecycle.source.sourceHash, previousWorkbenchSourceHash);
+assert.equal(workbenchStage.lifecycle.artifacts.CANONICAL_MODEL.status, 'STALE');
+assert.equal(workbenchStage.lifecycle.artifacts.ANALYSIS_GEOMETRY.status, 'REVALIDATION_REQUIRED');
+assert.equal(workbenchStage.lifecycle.artifacts.ANALYSIS_MESH.status, 'REVALIDATION_REQUIRED');
+assert.equal(workbenchStage.lifecycle.artifacts.EXECUTION.status, 'STALE');
+assert.equal(workbenchStage.lifecycle.artifacts.RECOVERY.status, 'STALE');
+assert.equal(workbenchStage.lifecycleReadiness.releaseState, 'RELEASE_NOT_QUALIFIED');
+workbench.destroy();
+
 console.log(JSON.stringify({
-  schema: 'lafea-section-property-invalidation-check/v1',
+  schema: 'lafea-section-property-invalidation-check/v2',
   check: 'lafea-section-property-invalidation',
   status: 'PASS',
   feStages: ['LAFEA.3', 'LAFEA.4', 'LAFEA.5'],
   analyticalPipeThicknessRemainsGeometry: true,
+  liveWorkbenchTransitionQualified: true,
   meshCurrentPromoted: false,
   currentStatusPolicyRetained: true,
   releaseAuthorityChanged: false,

@@ -138,7 +138,7 @@ export function solveCaesarAccdbLinearBenchmark(benchmarkPackage, selectedCaseId
         'Bend stiffness uses the qualified B31.3/B31J factor calculator and true tangent-to-tangent arc components; smooth-90/Note-3 correction remains disabled because its file/case authority is unresolved.',
         'Bend pressure stiffening provisionally uses P1; P1 equals Pmax in this locked source, but the CAESAR DEFAULT load-case pressure rule remains unresolved.',
         'B31.3 flexibility stiffness uses the cold/reference elastic modulus Ec (ACCDB MODULUS); HOT_MOD1/Eh is not selected by thermal-case presence.',
-        'Topology-qualified TYPE=3 welding tees use unreduced B31J directional end springs; branch legs connect at the run surface through a rigid offset.',
+        'Topology-qualified TYPE=3 welding tees use unreduced B31J directional end springs; branch legs connect at the run surface through a rigid offset whose thermal free growth inherits the common run state.',
       ],
     },
   });
@@ -288,6 +288,7 @@ function solveCase(benchmarkPackage, caseRecord, solveProfile) {
         incidentSourceElementIds: entry.incidentSourceElementIds,
         modifierSemanticHash: entry.modifiers.semanticHash,
         directionalFlexibilityFactors: entry.modifiers.directionalFlexibilityFactors,
+        runThermalAuthority: entry.runThermalAuthority,
         diameterReconciliation: entry.diameterReconciliation,
       })),
       rigidElementCount: shiftedAnalysis.elements.filter((entry) => entry.kind === 'RIGID').length,
@@ -303,6 +304,8 @@ function solveCase(benchmarkPackage, caseRecord, solveProfile) {
         nodeJ: entry.nodeJ,
         kind: entry.kind,
         teeJunctionNodeId: entry.teeJunctionNodeId,
+        teeRigidThermalStrain: entry.teeRigidThermalStrain,
+        teeRigidThermalFreeTranslationM: entry.teeRigidThermalFreeTranslationM,
         pressureAxialStrain: entry.pressureAxialStrain,
         bourdonRotationRadians: entry.bourdonRotationRadians,
         bourdonFreeEndTranslationM: entry.bourdonFreeEndTranslationM,
@@ -597,7 +600,16 @@ function buildFrameElement(input) {
   );
   const effectiveLocalStiffness = condensed.matrix;
   const equivalentLocal = condensed.equivalentLocal;
-  const initialLocal = condensed.initialLocal;
+  const teeRigidThermal = buildTeeRigidThermalInitialLoad({
+    benchmarkPackage: input.benchmarkPackage,
+    caseMode: input.caseMode,
+    solveProfile: input.solveProfile,
+    material: input.material,
+    teeModifier,
+    frame,
+    effectiveLocalStiffness,
+  });
+  const initialLocal = add(condensed.initialLocal, teeRigidThermal.initialLocal);
   let effectiveGlobalStiffness = transformStiffnessToGlobal(
     effectiveLocalStiffness,
     frame.transformation.matrix,
@@ -632,6 +644,8 @@ function buildFrameElement(input) {
     bourdonFreeEndTranslationM: bourdon?.freeEndTranslationM ?? zero3(),
     gravityWeightN: gravityLineWeight * length,
     teeJunctionNodeId: teeModifier?.junctionNodeId ?? null,
+    teeRigidThermalStrain: teeRigidThermal.strain,
+    teeRigidThermalFreeTranslationM: teeRigidThermal.freeTranslationGlobal,
   });
 }
 
@@ -806,6 +820,8 @@ function analysisElement(input) {
     nodeJ: input.nodeJ,
     kind: input.kind,
     teeJunctionNodeId: input.teeJunctionNodeId ?? null,
+    teeRigidThermalStrain: input.teeRigidThermalStrain ?? 0,
+    teeRigidThermalFreeTranslationM: input.teeRigidThermalFreeTranslationM ?? zero3(),
     material: input.material,
     bindingSection: input.bindingSection,
     axesResult: input.axesResult,
@@ -854,6 +870,7 @@ function buildTeeJunctions(input) {
     if (runRows.length !== 2 || !branchRow) {
       throw new TypeError(`ACCDB welding tee node ${nodeId} did not resolve two run legs and one branch leg.`);
     }
+    const runThermalAuthority = commonTeeRunThermalAuthority(runRows, input.material, nodeId);
     const runSection = input.sourceSections.get(String(runRows[0].ELEMENTID));
     const branchSection = input.sourceSections.get(String(branchRow.ELEMENTID));
     const factorGeometry = teeFactorGeometry(
@@ -905,6 +922,7 @@ function buildTeeJunctions(input) {
       ),
       factorResult,
       modifiers,
+      runThermalAuthority,
       diameterReconciliation: factorGeometry.reconciliation,
     }));
   }
@@ -962,6 +980,22 @@ function teeLeg(row, nodeId, input) {
   };
 }
 
+function commonTeeRunThermalAuthority(runRows, material, nodeId) {
+  const temperaturesC = uniqueNumbers(runRows.map((row) => Number(row.TEMP_EXP_C1)));
+  const materialNumbers = uniqueNumbers(runRows.map((row) => Number(row.MATERIAL_NUM)));
+  if (temperaturesC.length !== 1 || materialNumbers.length !== 1) {
+    throw new TypeError(
+      `ACCDB welding tee node ${nodeId} requires one common run temperature/material state; `
+      + `found ${temperaturesC.length} temperatures and ${materialNumbers.length} material numbers.`,
+    );
+  }
+  return Object.freeze({
+    temperatureC: temperaturesC[0],
+    materialNumber: materialNumbers[0],
+    materialStateId: material.materialState.materialStateId,
+  });
+}
+
 function mergeTeeModifiers(junctions) {
   const result = new Map();
   for (const junction of junctions) {
@@ -980,6 +1014,7 @@ function mergeTeeModifiers(junctions) {
         rigidOffset: modifier.rigidOffset,
         factorValues: modifier.factorValues,
         role: modifier.role,
+        runThermalAuthority: junction.runThermalAuthority,
       }));
     }
   }
@@ -1590,6 +1625,47 @@ function condenseTeeEndConditions(localStiffness, equivalentLocal, initialLocal,
   };
 }
 
+function buildTeeRigidThermalInitialLoad(input) {
+  const modifier = input.teeModifier;
+  if (!input.caseMode.thermal || modifier === null || modifier.rigidOffset === null) {
+    return Object.freeze({
+      initialLocal: Object.freeze(zero12()),
+      strain: 0,
+      freeTranslationGlobal: Object.freeze(zero3()),
+    });
+  }
+  if (!['I', 'J'].includes(modifier.junctionEnd)) {
+    throw new TypeError(
+      `ACCDB tee ${modifier.junctionNodeId} rigid thermal state has invalid junction end ${String(modifier.junctionEnd)}.`,
+    );
+  }
+  const authority = modifier.runThermalAuthority;
+  if (!authority || authority.materialStateId !== input.material.materialState.materialStateId) {
+    throw new TypeError(
+      `ACCDB tee ${modifier.junctionNodeId} rigid thermal state lacks matching common run material authority.`,
+    );
+  }
+  const temperatureChangeK = authority.temperatureC + CELSIUS_TO_KELVIN
+    - input.benchmarkPackage.model.installationTemperatureK;
+  const strain = input.solveProfile.thermalExpansion.coefficientPerKelvin * temperatureChangeK;
+  const freeTranslationGlobal = scale(modifier.rigidOffset, strain);
+  const freeDofGlobal = zero12();
+  const base = modifier.junctionEnd === 'I' ? 0 : 6;
+  freeDofGlobal[base] = freeTranslationGlobal[0];
+  freeDofGlobal[base + 1] = freeTranslationGlobal[1];
+  freeDofGlobal[base + 2] = freeTranslationGlobal[2];
+  const freeDofLocal = transformDisplacementToLocal(
+    freeDofGlobal,
+    input.frame.transformation.matrix,
+  );
+  const freeLoadLocal = matrixVector12(input.effectiveLocalStiffness, freeDofLocal);
+  return Object.freeze({
+    initialLocal: Object.freeze(scale(freeLoadLocal, -1)),
+    strain,
+    freeTranslationGlobal: Object.freeze([...freeTranslationGlobal]),
+  });
+}
+
 function teeRigidOffsets(teeModifier) {
   if (teeModifier === null || teeModifier.rigidOffset === null) return { I: null, J: null };
   return teeModifier.junctionEnd === 'I'
@@ -1870,7 +1946,7 @@ function projectToLocal(axes, vector) {
 
 function matrixVector12(matrix, vector) {
   if (!Array.isArray(matrix) || matrix.length !== 144 || !Array.isArray(vector) || vector.length !== 12) {
-    throw new TypeError('Bourdon initial-load conversion requires a 12x12 matrix and 12-component vector.');
+    throw new TypeError('ACCDB initial-load conversion requires a 12x12 matrix and 12-component vector.');
   }
   return Array.from({ length: 12 }, (_, row) => preciseDotProduct12(matrix, vector, row)).map(clean);
 }

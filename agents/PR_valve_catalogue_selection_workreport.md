@@ -47,7 +47,7 @@ The 20-object production demo intentionally does not contain a strict compatible
 
 M06 selector reachability therefore uses the existing Q3 exact-authority fixture. Q3 contains the certified DN80 / `PCL-80` target and its exact BALL catalogue record, and the same fixture already exercises the combined M04/M06/M10 transaction. Qualification must not manufacture a looser DEMO-150 replacement record or relax the Table compatibility predicate merely to make the generic demo selectable.
 
-The Component HUD remains a separate evidence projection. Its browser expectation follows the already-certified HUD source-evidence contract: V-001 resolves its existing exact GATE catalogue record from valve type and face-to-face source evidence. That does not make the Table GATE -> BALL replacement compatible, because the Table candidate authority specifically requires a compatible BALL replacement record.
+The Component HUD remains a separate evidence projection. In its explicit synthetic source-evidence unit case, V-001 can resolve the exact GATE record from valve type and face-to-face evidence. The real 20-object browser fixture remains `INCOMPATIBLE`, with no recommended catalogue record, because its available source/class evidence does not exact-resolve one catalogue record. Adding the DN80 BALL record increases that incompatible valve-family inventory by one but does not change the fail-closed disposition. Neither HUD case implies a Table-compatible BALL replacement.
 
 ## Validation coverage
 

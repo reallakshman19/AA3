@@ -1,0 +1,63 @@
+{
+  "schema": "m047-bm4l-tee-rigid-thermal-authority/v1",
+  "benchmarkId": "BM4_L",
+  "caesarVersion": "14.00.00.0910",
+  "caesarBuild": "231113",
+  "sources": {
+    "commonCommit": "179c4831cf521cf797c13699cfbbd118315c9244",
+    "misc": {
+      "path": "LFEA/BM4/Miscdata_BM4_L.txt",
+      "gitBlobSha": "ef23d224925e4568185a360ecbe1ee62503f15ff"
+    },
+    "loadCase": {
+      "path": "LFEA/BM4/Loadcasereport_BM4_L.txt",
+      "gitBlobSha": "be62eeb08af26dddcd59146e21188c108c4600dd"
+    }
+  },
+  "loadCases": [
+    { "caseId": "L2", "caseType": "SUS", "formula": "W", "combinationMethod": "PHYSICAL", "elasticModulus": "EC", "frictionMultiplier": 0, "containsT1": false },
+    { "caseId": "L3", "caseType": "OPE", "formula": "T1", "combinationMethod": "PHYSICAL", "elasticModulus": "EC", "frictionMultiplier": 0, "containsT1": true },
+    { "caseId": "L4", "caseType": "SUS", "formula": "P1", "combinationMethod": "PHYSICAL", "elasticModulus": "EC", "frictionMultiplier": 0, "containsT1": false },
+    { "caseId": "L5", "caseType": "OPE", "formula": "W+T1+P1", "combinationMethod": "PHYSICAL", "elasticModulus": "EC", "frictionMultiplier": 0, "containsT1": true },
+    { "caseId": "L6", "caseType": "SUS", "formula": "W+P1", "combinationMethod": "PHYSICAL", "elasticModulus": "EC", "frictionMultiplier": 0, "containsT1": false },
+    { "caseId": "L14", "caseType": "EXP", "formula": "L14=L5-L6", "combinationMethod": "ALG", "elasticModulus": null, "frictionMultiplier": null, "containsT1": true }
+  ],
+  "type21Tees": [
+    {
+      "teeNode": 20160,
+      "surfaceNode": 20161,
+      "runMeanDiameterMm": 254.737,
+      "runWallMm": 18.263,
+      "branchMeanDiameterMm": 254.737,
+      "branchWallMm": 18.263,
+      "flexBranchInPlane": 1.294,
+      "kbBranchInPlaneNmPerDegree": 1283000
+    },
+    {
+      "teeNode": 20295,
+      "surfaceNode": 20296,
+      "runMeanDiameterMm": 157.302,
+      "runWallMm": 10.973,
+      "branchMeanDiameterMm": 157.327,
+      "branchWallMm": 10.973,
+      "flexBranchInPlane": 1.323,
+      "kbBranchInPlaneNmPerDegree": 287700
+    }
+  ],
+  "excludedStructuralInterpretation": {
+    "miscType": "2.6",
+    "reason": "Pinned Misc rows expose stress/SIF/intersection data without the Type 2.1 surface-node structural tee signature; PR #1026 must not invent a mechanical branch modifier from them."
+  },
+  "provisionalThermalDiagnostic": {
+    "installationTemperatureC": 21,
+    "operatingTemperatureC": 120,
+    "coefficientPerKelvin": 0.0000117,
+    "strain": 0.0011583,
+    "authorityStatus": "PROVISIONAL_GUESSED_NOT_PROMOTABLE",
+    "expectedFreeGrowthMm": {
+      "20160": 0.15810795,
+      "20295": 0.09745646625
+    },
+    "note": "The pinned Misc report prints T1 total expansion only as rounded 0.0012 mm/mm. This diagnostic alpha is retained solely to reproduce the predeclared PR #1001 candidate; it is not exact CAESAR material-library authority."
+  }
+}

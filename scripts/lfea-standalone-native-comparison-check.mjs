@@ -17,8 +17,8 @@ assert.equal(comparison.incompatibleCount, 0);
 assert.equal(Object.isFrozen(comparison), true);
 const displacement = comparison.rows.find((row) => row.left?.quantityId === 'B3.3_NODE_DISPLACEMENT_UX');
 assert.equal(displacement.status, LFEA_COMPARISON_STATUS.COMPARABLE);
-assert.equal(displacement.delta, 0.005);
-assert.equal(displacement.absoluteDelta, 0.005);
+assert.ok(Math.abs(displacement.delta - 0.005) < 1e-12);
+assert.ok(Math.abs(displacement.absoluteDelta - 0.005) < 1e-12);
 console.log('LFEA-NATIVE-COMPARE-01 PASS compatible retained quantities produce signed and absolute deltas');
 
 const quantities = extractLfeaComparableQuantities(runA);

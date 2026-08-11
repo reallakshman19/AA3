@@ -33,7 +33,7 @@ export function topologyEditTableDirectCellHtml(runtime, row, column) {
 
 export function handleTopologyEditTableCompoundCellClick(runtime, event) {
   const nodeStage = event.target.closest?.('[data-table-node-position-stage]');
-  if (nodeStage && runtime.element?.contains(nodeStage)) {
+  if (nodeStage?.dataset?.tableNodePositionStage && runtime.element?.contains(nodeStage)) {
     return stageTopologyEditNodePosition(
       runtime,
       nodeStage.dataset.canonicalId,

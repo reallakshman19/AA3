@@ -105,6 +105,17 @@ assert.match(
   'document textarea parse failures must be classified as local document edits',
 );
 
+assert.match(
+  documentStore,
+  /!isCurrentExecution\(state\)[\s\S]*?state\.execution\?\.evidenceExport\?\.status !== 'QUALIFIED_EXPORT'[\s\S]*?throw new TypeError\('Qualified LFEA evidence export is unavailable\.'\)/u,
+  'store must retain the independent current-qualified evidence export boundary',
+);
+assert.match(
+  controller,
+  /downloadEvidence\(\) \{[\s\S]*?try \{[\s\S]*?const value = this\.exportEvidence\(\);[\s\S]*?downloadLfeaJson\(this\.documentRef, value, 'lfea-evidence-export\.json'\);[\s\S]*?return value;[\s\S]*?\} catch \(error\) \{[\s\S]*?reportEditError\([\s\S]*?'evidenceExport',[\s\S]*?error,[\s\S]*?'LFEA_EVIDENCE_EXPORT_REJECTED'/u,
+  'controller evidence download must catch qualification/downloader failures and publish a stable rejection diagnostic',
+);
+
 assert.match(view, /deformation:\s*\{[\s\S]*?enabled:[\s\S]*?scale: state\.display\.deformationScale/u);
 assert.match(view, /state\.display\.resultMode/u);
 
@@ -128,6 +139,9 @@ assert.match(
   /Diagnostic \$\{presentation\.code\}: \$\{presentation\.detail\}/u,
   'failure banner must retain original technical diagnostic detail',
 );
+assert.match(view, /code === 'LFEA_EVIDENCE_EXPORT_REJECTED'/u);
+assert.match(view, /Only current QUALIFIED_EXPORT evidence may be downloaded/u);
+assert.match(view, /failed path is not treated as a successful evidence export/u);
 assert.match(view, /code === 'STALE_PACKAGE_SEMANTIC_HASH'/u);
 assert.match(view, /PACKAGE_SHAPE_CODES\.has\(code\)/u);
 assert.match(view, /code\.startsWith\('UNSUPPORTED_'\)/u);
@@ -201,6 +215,7 @@ console.log(JSON.stringify({
   noWorkerQueuedCancellationGuarded: true,
   structuredFailureGuidanceGuarded: true,
   diagnosticCodePreservationGuarded: true,
+  evidenceExportFailClosedGuarded: true,
   collectionMockScopeSafe: true,
   editorDraftPersistenceGuarded: true,
   deleteSelectionSequencingGuarded: true,
@@ -304,4 +319,12 @@ async function runStoreChecks() {
     'LFEA_IMPORT_REJECTED',
   );
   assert.equal(importState.diagnostics[0].code, 'LFEA_IMPORT_REJECTED');
+
+  const noEvidenceStore = createLfeaWorkbenchStore({ initialDocument: packageValue });
+  assert.throws(
+    () => noEvidenceStore.exportEvidence(),
+    /Qualified LFEA evidence export is unavailable\./u,
+  );
+  assert.equal(noEvidenceStore.getState().status, 'READY');
+  assert.equal(noEvidenceStore.getState().execution, null);
 }

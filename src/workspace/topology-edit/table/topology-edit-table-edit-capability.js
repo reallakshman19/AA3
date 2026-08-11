@@ -176,7 +176,6 @@ export function deriveTopologyEditTableNodePositionCapability(input = {}) {
       endpoint,
       nodeId,
       movementModes: ['NODE_ONLY', 'CONNECTED_RUN'],
-      position: nodes[0].position,
     },
   );
 }

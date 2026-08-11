@@ -270,9 +270,18 @@ export class LfeaWorkbenchController {
   }
 
   downloadEvidence() {
-    const value = this.exportEvidence();
-    downloadLfeaJson(this.documentRef, value, 'lfea-evidence-export.json');
-    return value;
+    try {
+      const value = this.exportEvidence();
+      downloadLfeaJson(this.documentRef, value, 'lfea-evidence-export.json');
+      return value;
+    } catch (error) {
+      return this.store.reportEditError(
+        'evidenceExport',
+        null,
+        error,
+        'LFEA_EVIDENCE_EXPORT_REJECTED',
+      );
+    }
   }
 
   destroy() {

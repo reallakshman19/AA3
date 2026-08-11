@@ -277,8 +277,14 @@ export class LfeaWorkbenchView {
     const remove = element(this.rootElement, 'button', null, 'Delete record');
     remove.type = 'button';
     remove.addEventListener('click', () => {
-      this.handlers.onDeleteRecord(this.collectionPath, this.selectedIndex);
+      const deletedIndex = this.selectedIndex;
+      const previousIdentity = this.modelIdentity;
       this.selectedIndex = -1;
+      const nextState = this.handlers.onDeleteRecord(this.collectionPath, deletedIndex);
+      if (nextState && this.committedModelIdentity(nextState) === previousIdentity) {
+        this.selectedIndex = deletedIndex;
+        this.render(nextState);
+      }
     });
     remove.disabled = this.selectedIndex < 0;
     const actions = element(this.rootElement, 'div', 'lfea-workbench__record-actions');

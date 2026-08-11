@@ -15,6 +15,7 @@ const layout = source('src/workspace/workspace-layout.js');
 const bootstrap = source('src/workspace/bootstrap.js');
 const client = source('src/workspace/lfea-worker-client.js');
 const worker = source('src/workspace/lfea-worker.js');
+const controller = source('src/workspace/lfea-workbench-controller.js');
 const store = [
   source('src/workspace/lfea-workbench-store.js'),
   source('src/workspace/lfea-workbench-run-store.js'),
@@ -54,9 +55,27 @@ assert.match(store, /state\.packageValue\?\.semanticHash !== activeRun\.inputSem
 assert.match(store, /LFEA_STALE_RESULT_REJECTED/u);
 assert.match(store, /LFEA_RUN_CANCELLED_MODEL_CHANGED/u);
 assert.match(store, /beforeCommittedMutation\(activeRun\)/u);
+assert.match(store, /completeSynchronousRun/u);
 
 assert.match(view, /deformation:\s*\{[\s\S]*?enabled:[\s\S]*?scale: state\.display\.deformationScale/u);
 assert.match(view, /state\.display\.resultMode/u);
+assert.doesNotMatch(view, /Reload Mock for|Load Collection Mock Data/u,
+  'collection-scoped mock controls must not exist');
+assert.match(view, /recordDrafts/u,
+  'record drafts must be retained independently of DOM re-renders');
+assert.match(view, /aria-invalid/u,
+  'record JSON must expose inline validity before Add or Update');
+assert.match(view,
+  /const path = this\.collectionPath;[\s\S]*?this\.selectedIndex = -1;[\s\S]*?this\.clearRecordDrafts\(path\);[\s\S]*?onDeleteRecord\(path, index\)/u,
+  'record selection must be cleared before synchronous delete publication');
+
+assert.match(controller, /confirmMockReplacement/u,
+  'replacing a real package with mock data must require confirmation');
+assert.match(controller, /await releaseBrowserTask\(\)/u,
+  'synchronous fallback must publish RUNNING before yielding to the solver task');
+assert.match(controller, /completeSynchronousRun\(\)/u);
+assert.match(controller, /downloadEvidence\(\)[\s\S]*?try[\s\S]*?catch/u,
+  'evidence download must convert unexpected export state into a diagnostic');
 
 if (process.env.LFEA_P0_SOURCE_ONLY !== '1') await runStoreChecks();
 
@@ -70,6 +89,9 @@ console.log(JSON.stringify({
   staleCompletionGuard: true,
   editDuringRunCancellation: true,
   explicitDeformationScale: true,
+  recordDraftRetention: true,
+  destructiveMockGuard: true,
+  synchronousRunLifecycle: true,
 }));
 
 function occurrences(text, needle) {
@@ -125,6 +147,21 @@ async function runStoreChecks() {
   displayStore.setResultMode('DEFORMED');
   assert.equal(displayStore.getState().display.resultMode, 'DEFORMED');
   assert.equal(assertLfeaWorkbenchStateInvariants(displayStore.getState()), true);
+
+  const syncStore = createLfeaWorkbenchStore({ initialDocument: packageValue });
+  const synchronousRun = syncStore.beginRun();
+  assert.equal(synchronousRun.status, 'RUNNING');
+  assert.equal(synchronousRun.progress.stage, 'QUEUED');
+  assert.equal(syncStore.completeSynchronousRun().status, 'QUALIFIED');
+  assert.equal(syncStore.getState().activeRun, null);
+  assert.equal(syncStore.getState().execution.status, 'QUALIFIED');
+
+  const cancelledSyncStore = createLfeaWorkbenchStore({ initialDocument: packageValue });
+  cancelledSyncStore.beginRun();
+  cancelledSyncStore.cancelRun(null);
+  assert.equal(cancelledSyncStore.getState().status, 'READY');
+  assert.equal(cancelledSyncStore.getState().activeRun, null);
+  assert.equal(cancelledSyncStore.getState().diagnostics[0].code, 'LFEA_RUN_CANCELLED');
 
   const staleStore = createLfeaWorkbenchStore({ initialDocument: packageValue });
   const active = staleStore.beginRun().activeRun;

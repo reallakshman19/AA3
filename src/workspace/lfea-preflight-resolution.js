@@ -30,17 +30,6 @@ export function deriveWallThicknessFromDtxr(boreMm, pipingClass, dtxrAttr) {
   return null;
 }
 
-/**
- * Build duplicate-preserving normalized-key buckets.
- *
- * REPLACE of the previous `Map<normalizedKey, Row>`: a second row carrying the
- * same normalized key used to overwrite the first and the collision was never
- * visible. Buckets keep every ordinal so a duplicate becomes a reportable
- * condition instead of a silent last-writer-wins.
- *
- * @param {readonly object[]} lineRows Normalized master Line List rows.
- * @returns {Map<string, readonly number[]>} Normalized key -> row ordinals.
- */
 export function buildNormalizedKeyBuckets(lineRows) {
   const buckets = new Map();
   const rows = Array.isArray(lineRows) ? lineRows : [];
@@ -69,19 +58,6 @@ function normalizeKey(value) {
   return String(value ?? '').toUpperCase().replace(/[^A-Z0-9]/gu, '');
 }
 
-/**
- * Resolve one normalized line key against the buckets.
- *
- * RETIRE of the previous first-substring-match-then-break: that bound a line to
- * whichever partial candidate the Map happened to yield first, so the answer
- * depended on insertion order and no ambiguity was ever reported. This returns
- * the complete candidate set; anything other than exactly one exact candidate
- * is blocked with `selectedOrdinal: null`.
- *
- * @param {Map<string, readonly number[]>} buckets From buildNormalizedKeyBuckets.
- * @param {string} normalizedLineKey Normalized target key.
- * @returns {{status:string,candidateOrdinals:readonly number[],selectedOrdinal:number|null}}
- */
 export function resolveLineKeyCandidates(buckets, normalizedLineKey) {
   const key = normalizeKey(normalizedLineKey);
   if (!key || key.length < 3) return blocked(PREFLIGHT_MATCH_STATUS.BLOCKED_MISSING, []);
@@ -95,8 +71,6 @@ export function resolveLineKeyCandidates(buckets, normalizedLineKey) {
   }
   if (exact.length > 1) return blocked(PREFLIGHT_MATCH_STATUS.BLOCKED_AMBIGUOUS, exact);
 
-  // No exact key. Collect every containment candidate, deterministically
-  // ordered, and never select one of several.
   const candidates = new Set();
   for (const [candidateKey, ordinals] of buckets) {
     if (candidateKey.length < 3) continue;
@@ -119,23 +93,12 @@ function blocked(status, ordinals) {
 
 /**
  * Project the active model into the grouped, resolved review model.
- *
- * The projection intentionally keeps engineering concepts separate even when
- * historical UI code used fallbacks between them. A hydro-test pressure is not
- * a design pressure, and a mixed-fluid density is not an operating-density
- * substitute. Missing evidence therefore remains null instead of crossing an
- * engineering-field boundary.
- *
- * @param {unknown} model Shared-model carrier, or null.
- * @param {readonly object[]} lineRows Normalized master Line List rows.
- * @returns {{blocked:string|null,groups:object[],lineKeyCount:number,componentCount:number}}
+ * Engineering concepts stay separate: hydro pressure is never design pressure,
+ * and mixed density is never substituted for operating density.
  */
 export function projectPreflightModel(model, lineRows) {
   const elements = sourceElements(model);
   if (elements.length === 0) {
-    // RETIRE of the demonstration dataset: an empty model stays blocked. A
-    // pre-flight screen that invents four branches teaches the reader that the
-    // tool has data when it does not.
     return Object.freeze({
       blocked: 'No active shared model is loaded. Load a dataset in the Workspace tab; this screen shows no synthetic data.',
       groups: Object.freeze([]),
@@ -209,11 +172,25 @@ function flattenItems(elements) {
   for (const element of elements) {
     if (Array.isArray(element.children) && element.children.length > 0) {
       for (const child of element.children) {
-        items.push({ ...child, lineKeyName: element.name || element.id || child.attributes?.OWNER || 'UNASSIGNED_LINEKEY' });
+        const lineKeyName = child.identity?.lineId
+          || element.identity?.lineId
+          || child.attributes?.OWNER
+          || element.attributes?.OWNER
+          || element.owner
+          || element.branchName
+          || element.name
+          || element.id
+          || 'UNASSIGNED_LINEKEY';
+        items.push({ ...child, lineKeyName });
       }
       continue;
     }
-    const owner = element.attributes?.OWNER || element.owner || element.branchName || element.name || 'UNASSIGNED_LINEKEY';
+    const owner = element.identity?.lineId
+      || element.attributes?.OWNER
+      || element.owner
+      || element.branchName
+      || element.name
+      || 'UNASSIGNED_LINEKEY';
     items.push({ ...element, lineKeyName: owner });
   }
   return items;
@@ -232,22 +209,19 @@ function parseItem(item) {
   let cls = item.attributes?.SPEC || 'UNKNOWN_SPEC';
   const parts = cleanFullName.split('-');
   if (parts.length > 3 && cls === 'UNKNOWN_SPEC') cls = parts[4] || parts[3] || cls;
-  let bore = item.boreMm ?? item._boreValue ?? item.bore ?? null;
+  let bore = item.boreMm ?? item._boreValue ?? item.bore ?? item.engineeringProperties?.nominalBoreMm ?? null;
   if (typeof bore === 'string') bore = Number.parseFloat(bore) || null;
   return {
-    id: item.id || item.name || item.supportKey || item.type || 'ITEM',
-    itemName: item.name || item.id || item.supportKey || item.type || 'ITEM',
-    itemType: item.type || item.RAW_TYPE || 'ITEM',
+    id: item.id || item.componentKey || item.sourceEntityId || item.name || item.supportKey || item.type || 'ITEM',
+    itemName: item.name || item.id || item.componentKey || item.supportKey || item.type || 'ITEM',
+    itemType: item.type || item.componentType || item.RAW_TYPE || 'ITEM',
     isolatedLineKeyToken,
     fullLineKeyName: cleanFullName.replace(/\/B\d+.*$/iu, ''),
     service: deriveXmlCiiServiceFromBranchName(cleanFullName, {}) || 'UNKNOWN',
-    rating: item.attributes?.RATING || 'UNKNOWN_RATING',
-    cls,
+    rating: item.attributes?.RATING || item.engineeringProperties?.ratingClassCode || 'UNKNOWN_RATING',
+    cls: item.attributes?.SPEC || item.engineeringProperties?.pipingClassCode || cls,
     bore,
-    // Explicit source evidence only. deriveWallThicknessFromDtxr returns null
-    // unless the source element declares a thickness, so an undeclared wall
-    // stays blocked rather than acquiring a schedule-derived default.
-    wallThickness: deriveWallThicknessFromDtxr(bore, cls, item.attributes ?? null),
+    wallThickness: deriveWallThicknessFromDtxr(bore, cls, item.attributes ?? item.engineeringProperties ?? null),
   };
 }
 

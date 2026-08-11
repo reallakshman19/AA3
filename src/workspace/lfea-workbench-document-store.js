@@ -114,9 +114,13 @@ export function createLfeaWorkbenchDocumentStore(options) {
   function reportEditError(path, index, error) {
     const state = getState();
     const location = Number.isInteger(index) ? `${path}[${index}]` : path;
+    const reported = new TypeError(
+      `${location}: ${error instanceof Error ? error.message : 'Invalid record edit.'}`,
+    );
+    if (typeof error?.code === 'string') reported.code = error.code;
     return publish(editFailureState(
       state,
-      new TypeError(`${location}: ${error instanceof Error ? error.message : 'Invalid record edit.'}`),
+      reported,
       'LFEA_RECORD_EDIT_REJECTED',
     ));
   }

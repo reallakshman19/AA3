@@ -1,16 +1,10 @@
 #!/usr/bin/env node
-
 /**
- * M047 Type 2.1 tee rigid-thermal qualification that does not require ACE/ACCDB.
- *
- * Source custody lives in:
- * benchmarks/LFEA/CAESAR_ACCDB/m047-bm4l-tee-rigid-thermal-authority.json
- *
- * The fixture pins the CAESAR II 14 Misc and Load Case reports in Common. This
- * check deliberately retains the benchmark alpha as provisional diagnostic
- * state and never promotes the rounded report value 0.0012 mm/mm to authority.
+ * M047 Type 2.1 tee rigid-thermal qualification without ACE/ACCDB.
+ * Source custody lives in the M047 BM4_L authority fixture. The fixture pins
+ * the CAESAR II 14 Misc and Load Case reports in Common. Rounded 0.0012 mm/mm
+ * is never promoted to exact thermal authority.
  */
-
 import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
 import { fileURLToPath } from 'node:url';
@@ -24,9 +18,7 @@ import {
   resolveLinearFeaMaterialState,
   sealMaterialTable,
 } from '../src/core/linear-fea-material/index.js';
-import {
-  deriveB31JDirectionalBranchEndModifiers,
-} from '../src/core/linear-fea-piping-components/index.js';
+import { deriveB31JDirectionalBranchEndModifiers } from '../src/core/linear-fea-piping-components/index.js';
 import {
   PIPE_SECTION_FORMULATION_ID,
   PIPE_SECTION_PROFILE,
@@ -55,12 +47,10 @@ function test(id, name, body) {
   body();
   console.log(`${id} PASS ${name}`);
 }
-
 function sourceEvidence(sourceId) {
   const identity = { sourceId, sourceRevision: COMMON_REVISION };
   return { ...identity, sourceSemanticHash: semanticHash(identity) };
 }
-
 function materialResolution() {
   const point = {
     absoluteTemperature: provisional.installationTemperatureC + 273.15,
@@ -87,7 +77,6 @@ function materialResolution() {
     profile: LINEAR_FEA_MATERIAL_RESOLUTION_PROFILE,
   });
 }
-
 function sectionResolution(sectionStateId, outerDiameter, wallThickness) {
   const payload = {
     schema: PIPE_SECTION_REQUEST_SCHEMA,
@@ -102,7 +91,6 @@ function sectionResolution(sectionStateId, outerDiameter, wallThickness) {
     profile: PIPE_SECTION_PROFILE,
   });
 }
-
 function qualifyTee(entry) {
   const runMeanDiameterM = entry.runMeanDiameterMm / 1000;
   const runWallM = entry.runWallMm / 1000;
@@ -111,11 +99,7 @@ function qualifyTee(entry) {
   const runOuterDiameter = runMeanDiameterM + runWallM;
   const branchOuterDiameter = branchMeanDiameterM + branchWallM;
   const material = materialResolution();
-  const runSection = sectionResolution(
-    `TEE-${entry.teeNode}-RUN`,
-    runOuterDiameter,
-    runWallM,
-  );
+  const runSection = sectionResolution(`TEE-${entry.teeNode}-RUN`, runOuterDiameter, runWallM);
   const branchSection = sectionResolution(
     `TEE-${entry.teeNode}-BRANCH`,
     branchOuterDiameter,
@@ -158,43 +142,20 @@ function qualifyTee(entry) {
     factorResult,
     junctionPosition: [0, 0, 0],
     legs: [
-      {
-        legId: 'RUN-A',
-        junctionEnd: 'I',
-        endPoint: [1, 0, 0],
-        material,
-        section: runSection,
-      },
-      {
-        legId: 'RUN-B',
-        junctionEnd: 'I',
-        endPoint: [-1, 0, 0],
-        material,
-        section: runSection,
-      },
-      {
-        legId: 'BRANCH',
-        junctionEnd: 'I',
-        endPoint: [0, 0, 1],
-        material,
-        section: branchSection,
-      },
+      { legId: 'RUN-A', junctionEnd: 'I', endPoint: [1, 0, 0], material, section: runSection },
+      { legId: 'RUN-B', junctionEnd: 'I', endPoint: [-1, 0, 0], material, section: runSection },
+      { legId: 'BRANCH', junctionEnd: 'I', endPoint: [0, 0, 1], material, section: branchSection },
     ],
     runCollinearityTolerance: { value: 1e-9, source: 'M047-BM4L-QUALIFICATION' },
   });
   return { runOuterDiameter, factorResult, modifiers };
 }
-
 function relativeClose(actual, expected, tolerance, message) {
   const scale = Math.max(Math.abs(expected), Number.MIN_VALUE);
-  assert.ok(
-    Math.abs(actual - expected) <= tolerance * scale,
-    `${message}: ${actual} vs ${expected}`,
-  );
+  assert.ok(Math.abs(actual - expected) <= tolerance * scale, `${message}: ${actual} vs ${expected}`);
 }
 
 console.log('\n--- M047 Type 2.1 tee rigid thermal no-ACE qualification ---');
-
 test('M047-RT-01', 'Source custody pins the requested CAESAR reports and version', () => {
   assert.equal(authority.schema, 'm047-bm4l-tee-rigid-thermal-authority/v1');
   assert.equal(authority.benchmarkId, 'BM4_L');
@@ -206,7 +167,6 @@ test('M047-RT-01', 'Source custody pins the requested CAESAR reports and version
   assert.equal(authority.sources.loadCase.path, 'LFEA/BM4/Loadcasereport_BM4_L.txt');
   assert.equal(authority.sources.loadCase.gitBlobSha, 'be62eeb08af26dddcd59146e21188c108c4600dd');
 });
-
 test('M047-RT-02', 'Pinned Load Case Report keeps T1 selectivity and ALG L14 explicit', () => {
   const cases = new Map(authority.loadCases.map((entry) => [entry.caseId, entry]));
   assert.deepEqual([...cases.keys()], ['L2', 'L3', 'L4', 'L5', 'L6', 'L14']);
@@ -228,7 +188,6 @@ test('M047-RT-02', 'Pinned Load Case Report keeps T1 selectivity and ALG L14 exp
   assert.equal(cases.get('L14').formula, 'L14=L5-L6');
   assert.equal(cases.get('L14').containsT1, true);
 });
-
 test('M047-RT-03', 'Provisional thermal state is diagnostic only and internally consistent', () => {
   assert.equal(provisional.authorityStatus, 'PROVISIONAL_GUESSED_NOT_PROMOTABLE');
   relativeClose(PROVISIONAL_STRAIN, provisional.strain, 1e-14, 'provisional alpha*DeltaT strain');
@@ -239,7 +198,6 @@ for (const entry of authority.type21Tees) {
   const qualified = qualifyTee(entry);
   const branch = qualified.modifiers.modifiers.find((modifier) => modifier.role === 'BRANCH');
   assert.ok(branch, `tee ${entry.teeNode} must resolve one branch modifier`);
-
   test(`M047-RT-${entry.teeNode}-A`, `Tee ${entry.teeNode} reproduces pinned B31J FLEXb/Kb`, () => {
     relativeClose(
       qualified.factorResult.factors.flexibility.branch.inPlane,
@@ -256,7 +214,6 @@ for (const entry of authority.type21Tees) {
       `tee ${entry.teeNode} Kb in N.m/deg`,
     );
   });
-
   test(`M047-RT-${entry.teeNode}-B`, `Tee ${entry.teeNode} surface offset gives predeclared free growth`, () => {
     const radius = Math.hypot(...branch.rigidOffset);
     relativeClose(radius, qualified.runOuterDiameter / 2, 1e-12, `tee ${entry.teeNode} surface radius`);
@@ -273,14 +230,12 @@ const solverSource = await readFile(
 const frameStart = solverSource.indexOf('function buildFrameElement(input)');
 const frameEnd = solverSource.indexOf('function buildRigidElement(input)');
 const frameSource = solverSource.slice(frameStart, frameEnd);
-
 test('M047-RT-08', 'Solver integration is thermal-only and fail-closed on run material custody', () => {
   assert.match(solverSource, /const runThermalAuthority = input\.caseMode\.thermal\s*\? commonTeeRunThermalAuthority/u);
   assert.match(solverSource, /material\.materialState\.materialId !== materialId/u);
   assert.match(solverSource, /authority\.materialId !== input\.material\.materialState\.materialId/u);
   assert.match(solverSource, /!input\.caseMode\.thermal \|\| modifier === null \|\| modifier\.rigidOffset === null/u);
 });
-
 test('M047-RT-09', 'Solver integration applies -Keff*g after tee condensation and before T/H transforms', () => {
   const condensed = frameSource.indexOf('const effectiveLocalStiffness = condensed.matrix;');
   const freeState = frameSource.indexOf('const teeRigidThermal = buildTeeRigidThermalInitialLoad({');
@@ -293,11 +248,9 @@ test('M047-RT-09', 'Solver integration applies -Keff*g after tee condensation an
   assert.match(solverSource, /initialLocal: Object\.freeze\(scale\(freeLoadLocal, -1\)\)/u);
   assert.doesNotMatch(solverSource, /ACCDB\.E12|ACCDB\.E36\.STRAIGHT/u);
 });
-
 test('M047-RT-10', 'Type 2.6 structural invention and fitted alpha remain outside this patch', () => {
   assert.equal(authority.excludedStructuralInterpretation.miscType, '2.6');
   assert.match(solverSource, /const CAESAR_WELDING_TEE_TYPE = 3;/u);
   assert.doesNotMatch(solverSource, /1\.22e-5|0\.001208|0\.001210/u);
 });
-
 console.log('M047 Type 2.1 tee rigid thermal no-ACE qualification PASS');

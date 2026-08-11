@@ -54,13 +54,19 @@ const continuum = canonicalizeContinuumUnits({
   stress: 'Pa',
   modulus: 'GPa',
 });
-assert.deepEqual(continuum.conversionFactors, {
-  length: 1000,
-  force: 1000,
-  stress: 1e-6,
-  modulus: 1000,
-  bodyForceIntensity: 1e-9,
-});
+assert.deepEqual(
+  {
+    length: continuum.conversionFactors.length,
+    force: continuum.conversionFactors.force,
+    stress: continuum.conversionFactors.stress,
+    modulus: continuum.conversionFactors.modulus,
+  },
+  { length: 1000, force: 1000, stress: 1e-6, modulus: 1000 },
+);
+assert.equal(
+  continuum.conversionFactors.bodyForceIntensity,
+  continuum.conversionFactors.stress / continuum.conversionFactors.length,
+);
 assert.equal(convertContinuum(2, 'modulus', continuum, 'modulus'), 2000);
 assert.equal(convertContinuum(4, 'stress', continuum, 'stress'), 4e-6);
 

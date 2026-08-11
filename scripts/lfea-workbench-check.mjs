@@ -129,6 +129,39 @@ assert.match(
   'unknown future progress stages must remain visible as their raw code',
 );
 
+assert.doesNotMatch(
+  panelsSource,
+  /Mesh quality evidence — no acceptance threshold applied/u,
+  'quality results must not imply that no upstream geometry qualification exists',
+);
+assert.match(
+  panelsSource,
+  /meshQualityAuthority\(root, state\.packageValue\)[\s\S]*?lfeaResultTable\([\s\S]*?'Mesh quality evidence'/u,
+  'quality table must be paired with explicit gate-ownership presentation',
+);
+assert.match(
+  panelsSource,
+  /solverProfile\?\.tolerances\?\.geometryArea/u,
+  'quality authority note must source the declared upstream geometry tolerance',
+);
+assert.match(panelsSource, /value\.dataset\.role = 'lfea-quality-authority'/u);
+assert.match(panelsSource, /value\.dataset\.geometryTolerance = toleranceText/u);
+assert.match(
+  panelsSource,
+  /Geometry validity was qualified upstream using solverProfile\.tolerances\.geometryArea = \$\{toleranceText\}/u,
+  'quality note must state upstream geometry qualification',
+);
+assert.match(
+  panelsSource,
+  /This panel adds no separate acceptance threshold to the displayed Jacobian ratio, edge-length ratio, or corner-cosine metrics/u,
+  'quality note must distinguish descriptive metrics from upstream geometry validity gates',
+);
+assert.match(
+  panelsSource,
+  /signed-area\/Jacobian validity remains governed by upstream model qualification/u,
+  'quality note must preserve signed-area/Jacobian gate ownership',
+);
+
 console.log(JSON.stringify({
   check: 'lfea-workbench',
   evidenceBasis: '[SIMULATED]/ANALYTICAL',
@@ -141,4 +174,5 @@ console.log(JSON.stringify({
   statusStatePresentationGuarded: true,
   deformationMultiplierSemanticsGuarded: true,
   progressStageHumanLabelsGuarded: true,
+  qualityGateOwnershipGuarded: true,
 }));

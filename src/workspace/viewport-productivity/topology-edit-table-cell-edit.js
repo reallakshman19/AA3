@@ -1,5 +1,11 @@
 import { deriveTopologyEditTableCellCapability } from '../topology-edit/table/topology-edit-table-edit-capability.js';
+import { topologyEditTableVisibleRows } from '../topology-edit/table/topology-edit-table-view-state.js';
 import { stageTopologyEditTablePipeLength } from './topology-edit-table-pipe-length-runtime.js';
+import {
+  TOPOLOGY_EDIT_TABLE_ROW_HEIGHT_PX,
+  topologyEditTableRowWindow,
+  topologyEditTableWindowStartForRow,
+} from './topology-edit-table-row-window.js';
 
 const CELL_KIND = 'PIPE_LENGTH';
 const DEFAULT_POLICY = Object.freeze({ anchor: 'FROM', propagation: 'DOWNSTREAM' });
@@ -83,8 +89,10 @@ export function handleTopologyEditTableCellKeyDown(runtime, event) {
   } else {
     runtime.cellErrorId = canonicalId;
   }
+  const focusId = result.ok ? nextId ?? canonicalId : canonicalId;
+  prepareCellWindow(runtime, focusId);
   runtime.render();
-  focusCell(runtime, result.ok ? nextId ?? canonicalId : canonicalId);
+  focusCell(runtime, focusId);
   return true;
 }
 
@@ -145,11 +153,24 @@ function pipePolicy(runtime, canonicalId) {
 }
 
 function adjacentCellId(runtime, canonicalId, direction) {
-  const inputs = [...runtime.element.querySelectorAll(`[data-table-cell-edit="${CELL_KIND}"]`)];
-  const index = inputs.findIndex((input) => input.dataset.tableCellCanonicalId === canonicalId);
-  if (index < 0 || inputs.length < 2) return canonicalId;
-  const next = (index + direction + inputs.length) % inputs.length;
-  return inputs[next].dataset.tableCellCanonicalId;
+  const ids = topologyEditTableVisibleRows(runtime.projection, runtime.viewState)
+    .filter((row) => deriveTopologyEditTableCellCapability({
+      row, columnKey: 'lengthMm', projection: runtime.projection,
+    }).status === 'AVAILABLE')
+    .map((row) => row.identity.canonicalId);
+  const index = ids.indexOf(canonicalId);
+  if (index < 0 || ids.length < 2) return canonicalId;
+  return ids[(index + direction + ids.length) % ids.length];
+}
+
+function prepareCellWindow(runtime, canonicalId) {
+  const rows = topologyEditTableVisibleRows(runtime.projection, runtime.viewState);
+  const index = rows.findIndex((row) => row.identity.canonicalId === canonicalId);
+  if (index < 0) return;
+  const current = topologyEditTableRowWindow(rows.length, runtime.tableWindowStart);
+  if (index >= current.start && index < current.end) return;
+  runtime.tableWindowStart = topologyEditTableWindowStartForRow(index);
+  runtime.tableScrollTop = index * TOPOLOGY_EDIT_TABLE_ROW_HEIGHT_PX;
 }
 
 function focusCell(runtime, canonicalId) {

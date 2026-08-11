@@ -13,6 +13,7 @@ runNode('scripts/lfea-standalone-native-execution-check.mjs');
 runNode('scripts/lfea-standalone-native-production-solve-check.mjs');
 runNode('scripts/lfea-standalone-native-results-check.mjs');
 runNode('scripts/lfea-standalone-native-history-check.mjs');
+runNode('scripts/lfea-standalone-native-comparison-check.mjs');
 runNode('scripts/lfea-workbench-check.mjs');
 runNode('node_modules/vite/bin/vite.js', ['build', '--config', 'vite.lfea.config.js']);
 runNode('scripts/lfea-standalone-build-artifact-check.mjs');

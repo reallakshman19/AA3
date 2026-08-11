@@ -11,12 +11,12 @@ import {
   topologyEditTableTypeSummary,
   topologyEditTableVisibleColumns,
 } from './topology-edit-table-properties-view.js';
-
-const MAX_RENDERED_ROWS = 300;
+import { topologyEditTableRowWindow } from './topology-edit-table-row-window.js';
 
 export function renderTopologyEditTableGrid(runtime) {
   const element = runtime.element;
   if (!element) return;
+  captureTableScroll(runtime, element);
   if (!runtime.projection) {
     element.innerHTML = `<div class="topology-edit-table__empty">${escapeHtml(runtime.error || runtime.message || 'Table projection unavailable.')}</div>`;
     return;
@@ -24,10 +24,11 @@ export function renderTopologyEditTableGrid(runtime) {
   const rows = topologyEditTableVisibleRows(runtime.projection, runtime.viewState);
   if (runtime.projection.rows.length === 0) {
     element.innerHTML = emptyModelHtml(runtime);
-    publishEvidence(runtime, 0, 0);
+    publishEvidence(runtime, 0, 0, null);
     return;
   }
-  const renderedRows = rows.slice(0, MAX_RENDERED_ROWS);
+  const window = topologyEditTableRowWindow(rows.length, runtime.tableWindowStart);
+  const renderedRows = rows.slice(window.start, window.end);
   const columns = topologyEditTableVisibleColumns(runtime.projection);
   const primary = runtime.projection.rows.find((row) => row.rowId === runtime.viewState.primaryRowId) ?? null;
   const selected = new Set(runtime.viewState.selectedRowIds);
@@ -36,26 +37,27 @@ export function renderTopologyEditTableGrid(runtime) {
     runtime.batch || runtime.batchPlan || runtime.preview || runtime.validation || runtime.staleResult,
   );
   const typeSummary = topologyEditTableTypeSummary(runtime.projection.rows);
+  const columnCount = columns.length + 1;
   element.innerHTML = `
     <section class="topology-edit-table topology-edit-table--populated" data-table-phase="${escapeHtml(runtime.phase())}">
       <header class="topology-edit-table__header">
         <div><strong>Engineering table</strong><span>${rows.length} / ${runtime.projection.rows.length} rows · ${escapeHtml(typeSummary)}</span></div>
         <label>Filter <input type="search" data-table-filter value="${escapeHtml(runtime.viewState.query)}" placeholder="Tag, type, ID, property, source…"></label>
       </header>
-      <div class="topology-edit-table__scroll">
+      <div class="topology-edit-table__scroll" data-table-scroll-region>
         <table role="grid" aria-label="Certified canonical engineering table">
           <thead><tr><th scope="col" data-table-column-key="select" data-table-frozen="select">Select</th>${columns.map((column) => sortHeader(column, runtime.viewState)).join('')}</tr></thead>
-          <tbody>${renderedRows.map((row) => rowHtml(
+          <tbody>${spacerRow('top', window.topSpacerPx, columnCount)}${renderedRows.map((row) => rowHtml(
             runtime,
             row,
             columns,
             selected.has(row.rowId),
             staged.get(row.identity.canonicalId),
-          )).join('')}</tbody>
+          )).join('')}${spacerRow('bottom', window.bottomSpacerPx, columnCount)}</tbody>
         </table>
       </div>
       <div class="topology-edit-table__lower" data-table-lower-region>
-        ${rows.length > MAX_RENDERED_ROWS ? `<p class="topology-edit-table__notice">Showing first ${MAX_RENDERED_ROWS} filtered rows. Refine the filter to inspect more.</p>` : ''}
+        ${window.renderedRows < rows.length ? `<p class="topology-edit-table__notice" data-table-window-notice>Rendering rows ${window.start + 1}–${window.end} of ${rows.length} while scrolling.</p>` : ''}
         ${primary ? editorHtml(primary, staged.get(primary.identity.canonicalId), runtime.projection) : '<p class="topology-edit-table__notice">Select an exact canonical row to inspect or edit it.</p>'}
         ${primary ? renderTopologyEditTableAllProperties(primary, runtime) : ''}
         ${stagedPanel(runtime)}
@@ -72,7 +74,8 @@ export function renderTopologyEditTableGrid(runtime) {
         <output class="topology-edit-table__status" aria-live="polite">${escapeHtml(runtime.error || runtime.message)}</output>
       </div>
     </section>`;
-  publishEvidence(runtime, rows.length, renderedRows.length);
+  restoreTableScroll(runtime, element);
+  publishEvidence(runtime, rows.length, renderedRows.length, window);
 }
 
 function rowHtml(runtime, row, columns, isSelected, stagedIntent) {
@@ -89,6 +92,11 @@ function cellHtml(runtime, row, column) {
   const text = displayValue(value(row, column.key));
   const frozen = column.frozen ? ` data-table-frozen="${escapeHtml(column.key)}"` : '';
   return `<td data-table-property="${escapeHtml(column.key)}" data-table-column-key="${escapeHtml(column.key)}"${frozen} title="${escapeHtml(text)}">${escapeHtml(text)}</td>`;
+}
+
+function spacerRow(role, height, columnCount) {
+  if (!(height > 0)) return '';
+  return `<tr class="topology-edit-table__window-spacer" data-table-window-spacer="${role}" aria-hidden="true"><td colspan="${columnCount}" style="height:${height}px;padding:0;border:0"></td></tr>`;
 }
 
 /** Renders the first governed row when the canonical topology is empty. */
@@ -185,7 +193,19 @@ function shortHash(valueInput) {
   const value = String(valueInput ?? '');
   return value.length > 16 ? `${value.slice(0, 13)}…` : value;
 }
-function publishEvidence(runtime, visibleCount, renderedCount) {
+function captureTableScroll(runtime, element) {
+  const scroll = element.querySelector('[data-table-scroll-region]');
+  if (!scroll) return;
+  runtime.tableScrollTop = scroll.scrollTop;
+  runtime.tableScrollLeft = scroll.scrollLeft;
+}
+function restoreTableScroll(runtime, element) {
+  const scroll = element.querySelector('[data-table-scroll-region]');
+  if (!scroll) return;
+  scroll.scrollTop = Number(runtime.tableScrollTop) || 0;
+  scroll.scrollLeft = Number(runtime.tableScrollLeft) || 0;
+}
+function publishEvidence(runtime, visibleCount, renderedCount, window) {
   const host = runtime.controller.hostElement;
   if (!host) return;
   const blockers = runtime.validation?.blockingDiagnostics ?? [];
@@ -193,6 +213,8 @@ function publishEvidence(runtime, visibleCount, renderedCount) {
   host.dataset.topologyEditTableCanonicalHash = runtime.projection.authority.canonicalTopologyHash;
   host.dataset.topologyEditTableVisibleCount = String(visibleCount);
   host.dataset.topologyEditTableRenderedCount = String(renderedCount);
+  host.dataset.topologyEditTableWindowStart = String(window?.start ?? 0);
+  host.dataset.topologyEditTableWindowEnd = String(window?.end ?? renderedCount);
   host.dataset.topologyEditTableSelectedRowIds = runtime.viewState.selectedRowIds.join(',');
   host.dataset.topologyEditTableBatchHash = runtime.batch?.batchHash ?? '';
   host.dataset.topologyEditTablePlanHash = runtime.batchPlan?.planHash ?? '';

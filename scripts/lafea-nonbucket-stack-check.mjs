@@ -25,6 +25,7 @@ const CHECKS = Object.freeze([
   { scope: 'NB-T6G', path: 'scripts/lafea-nb-t6g-read-only-review-panel-check.mjs' },
   { scope: 'PR-NB1-A', path: 'scripts/lafea-nb1-analytical-verticals-check.mjs' },
   { scope: 'COMMON_INPUT', path: 'scripts/lafea-common-input-units-check.mjs' },
+  { scope: 'INVALIDATION', path: 'scripts/lafea-section-property-invalidation-check.mjs' },
   { scope: 'U1', path: 'scripts/lafea-u1-stage-registry-check.mjs' },
   { scope: 'U1', path: 'scripts/lafea-u1b-registry-consumer-check.mjs' },
   { scope: 'U2', path: 'scripts/lafea-u2a-input-command-check.mjs' },
@@ -95,7 +96,7 @@ for (const row of CHECKS) {
 }
 
 const report = Object.freeze({
-  schema: 'lafea-nonbucket-stack-report/v15',
+  schema: 'lafea-nonbucket-stack-report/v16',
   check: 'lafea-nonbucket-stack-certification',
   status: failures.length ? 'FAIL' : 'PASS',
   exactHead: gitHead(),
@@ -114,6 +115,7 @@ const report = Object.freeze({
   sourceAuthorityIntegrated: true,
   currentCoreProducerAdaptersIntegrated: true,
   commonUnitFactorsIntegrated: true,
+  sectionPropertyInvalidationClassIntegrated: true,
   registryV2Implemented: true,
   compositionRootIntegrated: true,
   analyticalProductEvidenceIntegrated: true,

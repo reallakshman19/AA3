@@ -102,6 +102,50 @@ test('Table stays projection-only until certified pipe-length Apply', async ({ p
   }, null, 2)}\n`);
 });
 
+test('Engineering Table is dense, dynamically scrollable and keeps frozen context', async ({ page }) => {
+  await page.setViewportSize({ width: 1720, height: 1080 });
+  await page.addInitScript(() => globalThis.localStorage?.clear());
+  const host = await openProductionController(page);
+  const panel = page.locator('details[data-panel-kind="table"]');
+  if (!(await panel.evaluate((node) => node.open))) await panel.locator(':scope > summary').click();
+  await expect.poll(() => host.getAttribute('data-topology-edit-table-projection-hash')).toBeTruthy();
+
+  const surface = page.locator('.topology-edit-table--populated');
+  const scroll = page.locator('.topology-edit-table__scroll');
+  await expect(surface).toBeVisible();
+  await expect(scroll).toBeVisible();
+
+  const fontSize = await surface.evaluate((node) => Number.parseFloat(getComputedStyle(node).fontSize));
+  expect(fontSize).toBeLessThanOrEqual(12);
+  expect(await scroll.evaluate((node) => getComputedStyle(node).overflowX)).toBe('auto');
+  expect(await scroll.evaluate((node) => getComputedStyle(node).overflowY)).toBe('auto');
+
+  const frozen = await scroll.locator('thead [data-table-frozen]').evaluateAll(
+    (nodes) => nodes.map((node) => node.getAttribute('data-table-frozen')),
+  );
+  expect(frozen).toEqual(['select', 'tag', 'elementType']);
+  await expect(scroll.locator('tbody tr').first().locator('[data-table-frozen="tag"]')).toBeVisible();
+  expect(await scroll.locator('[data-table-frozen="tag"]').first().evaluate(
+    (node) => getComputedStyle(node).position,
+  )).toBe('sticky');
+
+  await panel.evaluate((node) => {
+    node.style.width = '720px';
+    node.style.height = '460px';
+  });
+  const compact = await scroll.evaluate((node) => ({
+    clientHeight: node.clientHeight,
+    clientWidth: node.clientWidth,
+    scrollHeight: node.scrollHeight,
+    scrollWidth: node.scrollWidth,
+  }));
+  expect(compact.scrollWidth).toBeGreaterThan(compact.clientWidth);
+  expect(compact.scrollHeight).toBeGreaterThan(compact.clientHeight);
+
+  await panel.evaluate((node) => { node.style.height = '760px'; });
+  await expect.poll(() => scroll.evaluate((node) => node.clientHeight)).toBeGreaterThan(compact.clientHeight + 80);
+});
+
 test('M06 and M10 production editors expose only explicit engineering authority', async ({ page }) => {
   await page.setViewportSize({ width: 1720, height: 1080 });
   await page.addInitScript(() => globalThis.localStorage?.clear());

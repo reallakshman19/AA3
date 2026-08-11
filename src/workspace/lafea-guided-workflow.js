@@ -24,6 +24,12 @@ const STEP_DEFINITIONS = Object.freeze([
   ['RESULTS_EVIDENCE', 'Results and evidence'],
 ]);
 
+const INPUT_CAPABILITY_BY_STEP = Object.freeze({
+  MATERIALS_SECTIONS: 'materials',
+  RESTRAINTS_BCS: 'restraints',
+  LOADS_CASES: 'loads',
+});
+
 export function buildLafeaGuidedWorkflow(stateValue) {
   const state = requireState(stateValue);
   const stage = state.stages[state.activeStageId];
@@ -80,7 +86,7 @@ function stepStatus(stepId, stage, orchestration, adapter, executionSupported) {
   if (stepId === 'ANALYSIS_PROFILE') {
     return analysisProfileStatus(stage, documentReady);
   }
-  if (['MATERIALS_SECTIONS', 'RESTRAINTS_BCS', 'LOADS_CASES'].includes(stepId)) {
+  if (INPUT_CAPABILITY_BY_STEP[stepId]) {
     return governedInputStepStatus(stepId, stage, adapter, documentReady);
   }
   if (stepId === 'DISCRETIZATION') {
@@ -121,7 +127,8 @@ function analysisProfileStatus(stage, documentReady) {
 
 function governedInputStepStatus(stepId, stage, adapter, documentReady) {
   if (!documentReady) return status('NOT_STARTED', ['SOURCE_DOCUMENT_REQUIRED']);
-  const requirementValue = adapter.input.guidedStepRequirements?.[stepId];
+  const capabilityId = INPUT_CAPABILITY_BY_STEP[stepId];
+  const requirementValue = adapter.input.requirements?.[capabilityId];
   if (requirementValue === null) {
     return status('COMPLETE', ['WORKFLOW_STEP_NOT_APPLICABLE']);
   }

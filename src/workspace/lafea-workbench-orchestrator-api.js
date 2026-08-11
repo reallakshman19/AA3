@@ -37,6 +37,22 @@ export function createLafeaWorkbenchOrchestratorApi(context) {
     applyLifecycleEvent: c.applyLifecycleEvent,
     registerLifecycleArtifact: (...args) => c.delegate('registerLifecycleArtifact', args),
     revalidateLifecycleBinding: (...args) => c.delegate('revalidateLifecycleBinding', args),
+    registerTemplateReleaseRecord: c.registerTemplateReleaseRecord,
+    selectRetainedTemplateReleaseRecord: (stageId = activeStageId()) => c.release.select(stageId),
+    buildReleaseBindingProjection: (stageId = activeStageId()) =>
+      c.deriveStage(stageId).lifecycleReadiness.releaseBinding,
+    registerNumericalVerificationEvidence: c.registerNumericalVerificationEvidence,
+    selectRetainedNumericalVerificationEvidence: (stageId = activeStageId()) =>
+      c.verification.select(stageId),
+    buildNumericalVerificationProjection: (stageId = activeStageId()) =>
+      c.deriveStage(stageId).numericalVerificationProjection,
+    registerT6GeometryQualification: c.registerT6GeometryQualification,
+    selectRetainedT6GeometryQualification: (stageId = activeStageId()) =>
+      c.t6Geometry.select(stageId),
+    buildT6GeometryQualificationProjection: (stageId = activeStageId()) =>
+      c.deriveStage(stageId).t6GeometryQualificationProjection,
+    exportT6GeometryQualification: (stageId = activeStageId()) =>
+      c.t6Geometry.select(stageId),
     exportLifecycle: c.exportLifecycle,
     validateLafeaAnalysisMeshEvidence: (value) => {
       const stageId = value?.stageId ?? activeStageId();

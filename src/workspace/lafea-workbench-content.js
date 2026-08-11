@@ -8,6 +8,9 @@ import { buildLafeaDiscretizationViewModel } from './lafea-discretization-view-m
 import { renderLafeaDiscretizationPanel } from './lafea-discretization-panel.js';
 import { buildLafeaGuidedWorkflow } from './lafea-guided-workflow.js';
 import { renderLafeaGuidedWorkflow } from './lafea-guided-workflow-view.js';
+import { renderLafeaAnalysisSettings } from './lafea-analysis-settings-view.js';
+import { renderLafeaNumericalVerification } from './lafea-numerical-verification-view.js';
+import { lafeaWorkbenchReasonLabels } from './lafea-workbench-reason-labels.js';
 import { renderLafeaNcPlaceholderPanel } from './lafea-nc-placeholder-panel.js';
 import { focusLafeaRetainedMeshElement } from './lafea-canvas/retained-mesh-overlay.js';
 
@@ -42,13 +45,19 @@ export function renderLafeaWorkbenchContent(root, state, stage, options) {
     },
   ));
 
+  const profileCard = card(root, 'Analysis profile and settings');
+  profileCard.section.dataset.guidedTarget = 'profile';
+  profileCard.body.append(renderLafeaAnalysisSettings(profileCard.body, stage));
+
   const viewportCard = card(root, `Governed engineering viewport — ${state.activeStageId}`);
   viewportCard.section.dataset.guidedTarget = 'viewport';
-  const preview = element(root, 'div', 'lafea-workbench__svg');
+  const reusedViewport = validReusableViewport(options.reusedViewport);
+  const preview = reusedViewport?.element ?? element(root, 'div', 'lafea-workbench__svg');
   const retainedMeshEvidence = stage.domainFirstProfileActive === true
+    || stage.shellMidsurfaceProfileActive === true
     ? stage.retainedAnalysisMeshEvidenceV2 ?? null
     : stage.retainedAnalysisMeshEvidence ?? null;
-  activeViewport = mountLafeaLiveWorkbenchViewport(preview, {
+  activeViewport = reusedViewport?.viewport ?? mountLafeaLiveWorkbenchViewport(preview, {
     stageId: state.activeStageId,
     document: stage.document,
     lifecycle: stage.lifecycle,
@@ -97,14 +106,18 @@ export function renderLafeaWorkbenchContent(root, state, stage, options) {
       options.onMeshFocusChange?.(elementId, true);
       focusLafeaRetainedMeshElement(preview, elementId);
     },
-    onAdvance: () => navigateTo(shell, 'findings'),
+    onAdvance: () => navigateTo(shell, 'numerical-verification'),
   });
   discretizationCard.body.append(discretizationHost);
+
+  const numericalCard = card(root, `Numerical verification — ${state.activeStageId}`);
+  numericalCard.section.dataset.guidedTarget = 'numerical-verification';
+  numericalCard.body.append(renderLafeaNumericalVerification(numericalCard.body, stage));
 
   const preflightCard = card(root, `Pre-FEA and authorization — ${state.activeStageId}`);
   preflightCard.section.dataset.guidedTarget = 'findings';
   preflightCard.body.append(workflowSummary(root, workflow, [
-    'MODEL_DIAGNOSTICS', 'NUMERICAL_PREFLIGHT', 'AUTHORIZATION', 'RUN',
+    'MODEL_DIAGNOSTICS', 'AUTHORIZATION', 'RUN',
   ]));
   if (Array.isArray(state.diagnostics) && state.diagnostics.length) {
     preflightCard.body.append(diagnosticList(root, state.diagnostics));
@@ -133,8 +146,10 @@ export function renderLafeaWorkbenchContent(root, state, stage, options) {
 
   main.append(
     sourceCard.section,
+    profileCard.section,
     viewportCard.section,
     discretizationCard.section,
+    numericalCard.section,
     preflightCard.section,
     evidenceCard.section,
     lifecycleCard.section,
@@ -159,9 +174,17 @@ export function renderLafeaWorkbenchContent(root, state, stage, options) {
   return Object.freeze({
     element: shell,
     viewport: activeViewport,
+    viewportElement: preview,
+    viewportReused: Boolean(reusedViewport),
     workflow,
     discretization,
   });
+}
+
+function validReusableViewport(value) {
+  if (!value || typeof value !== 'object') return null;
+  if (!value.viewport?.scene || !value.element?.ownerDocument) return null;
+  return value;
 }
 
 function workflowSummary(root, workflow, ids) {
@@ -174,7 +197,12 @@ function workflowSummary(root, workflow, ids) {
     row.dataset.status = step.status;
     row.append(
       element(root, 'strong', null, `${step.label}: ${step.status}`),
-      element(root, 'span', null, step.reasons.length ? ` — ${step.reasons.join(' • ')}` : ''),
+      element(
+        root,
+        'span',
+        null,
+        step.reasons.length ? ` — ${lafeaWorkbenchReasonLabels(step.reasons).join(' • ')}` : '',
+      ),
     );
     section.append(row);
   }

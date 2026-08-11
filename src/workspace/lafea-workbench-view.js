@@ -17,6 +17,14 @@ import {
   restoreFocusedControl,
 } from './lafea-workbench-dom.js';
 import { renderLafeaWorkbenchContent } from './lafea-workbench-content.js';
+import {
+  lafeaWorkbenchReasonLabel,
+  lafeaWorkbenchReasonLabels,
+} from './lafea-workbench-reason-labels.js';
+import {
+  canReuseLafeaWorkbenchViewport,
+  createLafeaWorkbenchViewportDependencies,
+} from './lafea-workbench-viewport-lifecycle.js';
 
 const VIEW_RENDER_DEPENDENCIES = new WeakMap();
 
@@ -34,6 +42,8 @@ export class LafeaWorkbenchView {
     this.section = null;
     this.slots = null;
     this.activeViewport = null;
+    this.activeViewportElement = null;
+    this.activeViewportDependencies = null;
     this.sceneDocuments = new Map();
     this.sceneLifecycles = new Map();
     this.sceneLifecycleBindings = new Map();
@@ -48,38 +58,48 @@ export class LafeaWorkbenchView {
   render(state) {
     if (!this.rootElement || !this.handlers) return;
     const focused = captureFocusedControl(this.rootElement);
-    const stage = state.stages[state.activeStageId];
-    const registryEntry = requireLafeaStageRegistryEntry(state.activeStageId);
+    const stageId = state.activeStageId;
+    const stage = state.stages[stageId];
+    const registryEntry = requireLafeaStageRegistryEntry(stageId);
     const dependencies = VIEW_RENDER_DEPENDENCIES.get(this);
+    const renderPacket = dependencies.getRenderPacket(stageId);
+    const sceneRevision = this.nextSceneRevision(
+      stageId, stage.document, stage.lifecycle, stage.lifecycleBinding,
+    );
+    const viewportDependencies = createLafeaWorkbenchViewportDependencies({
+      stageId, stage, sceneRevision, renderPacket,
+    });
+    const reuseViewport = Boolean(this.activeViewport && this.activeViewportElement)
+      && canReuseLafeaWorkbenchViewport(
+        this.activeViewportDependencies,
+        viewportDependencies,
+      );
+    const previousViewport = this.activeViewport;
     this.ensureShell();
-    this.activeViewport?.destroy();
-    this.activeViewport = null;
     this.slots.header.replaceChildren(this.header(state, stage, registryEntry));
     this.slots.navigation.replaceChildren(this.stageNavigation(state));
-    this.slots.toolbar.replaceChildren(this.toolbar(state.activeStageId, stage));
+    this.slots.toolbar.replaceChildren(this.toolbar(stageId, stage));
     const content = renderLafeaWorkbenchContent(this.rootElement, state, stage, {
       handlers: this.handlers,
       registryEntry,
-      renderPacket: dependencies.getRenderPacket(state.activeStageId),
+      renderPacket,
       THREE: dependencies.THREE,
-      sceneRevision: this.nextSceneRevision(
-        state.activeStageId,
-        stage.document,
-        stage.lifecycle,
-        stage.lifecycleBinding,
-      ),
-      selection: this.sceneSelections.get(state.activeStageId),
-      focusedMeshElementId: this.sceneMeshFocus.get(state.activeStageId) ?? null,
-      onSelectionChange: (selection) => {
-        this.sceneSelections.set(state.activeStageId, selection);
-      },
-      onMeshFocusChange: (elementId) => {
-        this.sceneMeshFocus.set(state.activeStageId, elementId);
-      },
+      sceneRevision,
+      reusedViewport: reuseViewport ? {
+        viewport: this.activeViewport,
+        element: this.activeViewportElement,
+      } : null,
+      selection: this.sceneSelections.get(stageId),
+      focusedMeshElementId: this.sceneMeshFocus.get(stageId) ?? null,
+      onSelectionChange: (selection) => this.sceneSelections.set(stageId, selection),
+      onMeshFocusChange: (elementId) => this.sceneMeshFocus.set(stageId, elementId),
       onNavigateTarget: (target) => this.focusToolbarTarget(target),
       benchmarkHost: this.benchmarkHost,
     });
+    if (!reuseViewport) previousViewport?.destroy();
     this.activeViewport = content.viewport;
+    this.activeViewportElement = content.viewportElement;
+    this.activeViewportDependencies = viewportDependencies;
     this.slots.content.replaceChildren(content.element);
     restoreFocusedControl(this.rootElement, focused);
   }
@@ -102,6 +122,8 @@ export class LafeaWorkbenchView {
   destroy() {
     this.activeViewport?.destroy();
     this.activeViewport = null;
+    this.activeViewportElement = null;
+    this.activeViewportDependencies = null;
     this.sceneDocuments.clear();
     this.sceneLifecycles.clear();
     this.sceneLifecycleBindings.clear();
@@ -240,11 +262,17 @@ export class LafeaWorkbenchView {
 }
 
 function runTitle(stage, executionSupported, authorization) {
-  if (!executionSupported) return 'UNSUPPORTED_STAGE_ENGINE_NOT_IMPLEMENTED';
-  if (!stage.document) return 'A validated source document is required.';
-  if (authorization?.state !== 'READY') {
-    const reasons = authorization?.reasons?.join(', ') || 'CANONICAL_AUTHORIZATION_NOT_READY';
-    return `Canonical authorization ${authorization?.state ?? 'UNAVAILABLE'} does not authorize run: ${reasons}`;
+  if (!executionSupported) {
+    return lafeaWorkbenchReasonLabel('UNSUPPORTED_STAGE_ENGINE_NOT_IMPLEMENTED');
   }
-  return 'Canonical workbench authorization is READY. Retained calculation output does not imply release authority.';
+  if (!stage.document) return 'Import or create a valid source document before running the analysis.';
+  if (authorization?.state !== 'READY') {
+    const reasons = lafeaWorkbenchReasonLabels(
+      authorization?.reasons?.length
+        ? authorization.reasons
+        : ['CANONICAL_AUTHORIZATION_NOT_READY'],
+    ).join(' ');
+    return `Run is not authorized. ${reasons}`;
+  }
+  return 'Analysis authorization is ready. A retained calculation result does not by itself establish release qualification.';
 }

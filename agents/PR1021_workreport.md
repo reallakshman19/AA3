@@ -9,39 +9,39 @@ Maintained throughout PR #1021. This is the single source of truth for scope, en
 | Source issue | #1018 — LFEA update |
 | PR | #1021 |
 | Branch | `agent/lfea-workbench-integrity-1018` |
-| Base | `751756e9140527b8dc121aa179dc76b7039fb7ad` |
+| Authorized base | `751756e9140527b8dc121aa179dc76b7039fb7ad` |
 | Review head before closure repair | `b7e64384f4a04f19c1bb4e0e8a282faf1b150043` |
-| PR state | Draft, open, mergeable |
-| Current stage | Stage 28 closure repair — expose already-sealed B31 provenance in UI and regression checks |
-| Last completed stage | Stage 27 — piping-code vs local-continuum stress authority audit |
-| Engineering status | Sealed presentation/CSV provenance is implemented; review found the primary results UI and presentation/export regression script did not yet consume/assert it |
-| Validation status | Closure repair started after exact-head review; executable repository/browser checks remain NOT_RUN until the final head exists |
+| Closure code head | `f54657db0a76f34e9a0cac1ef187248ecc4e74b6` |
+| PR state before owner-directed merge | Draft, open, mergeable |
+| Current stage | S29 — closure reconciliation / owner-directed merge handoff |
+| Last completed implementation stage | S28 — B31 code-basis and physical-case provenance closure |
+| Engineering status | Closure implementation complete; no solver/code-stress equations changed |
+| Validation status | Exact-head `main-gate` and relevant support-action workflows PASS at closure code head; full `npm run check:lfea-workbench` and targeted Playwright remain explicitly NOT_RUN because this environment cannot obtain an executable checkout and no existing workflow runs them |
 | Workflow constraint | No `.github/workflows/*` additions or modifications |
-| Exact next action | Update the read-only B31 results table and existing presentation/export regression script only; then reconcile S29 and execute the declared final-head validation |
+| Merge decision | Owner explicitly instructed `fix and merge` after the review findings and validation limitation were disclosed; remaining NOT_RUN items are an accepted residual validation risk, not a PASS |
 
 ### Handover in 60 seconds
 
-Completed/source-guarded before S27: C01–C04, draft/delete integrity, H01–H03/H05/H06, M01/M04/M06/M08, support-action sign provenance ISS-020/021, and skew unilateral restraint fail-closed ISS-022.
+Completed across PR #1021: C01–C04, draft/delete integrity, H01–H03/H05/H06, M01/M04/M06/M08, support-action sign provenance ISS-020/021, skew unilateral restraint fail-closed ISS-022, and B31 presentation/export/UI provenance ISS-023.
 
-S27 audit result:
-- independent LFEA continuum raw stress is explicitly governed as raw element/integration-point authority; projected nodal stress remains non-authoritative review projection and prohibited for convergence;
-- B31/code engine is a separate calculation path based on recovered beam actions, sealed section/material resolutions, stress factors, pressure contribution, code profile and edition dataset;
-- B31 categories/allowables/utilization are not sourced from the continuum von Mises field;
-- main results UI already labels the code table `B31.3 application results`, so direct continuum→code conflation was not found in the calculation path.
+S27 confirmed the engineering-authority separation:
+- independent LFEA continuum raw stress is governed as raw element/integration-point authority;
+- projected nodal stress remains non-authoritative review projection and is prohibited for convergence;
+- B31/code stress is a separate calculation path based on recovered beam actions plus sealed code/edition/section/material/factor inputs;
+- B31 categories/allowables/utilization are not sourced from the continuum von Mises field.
 
-**ISS-023:** the B31 application retains `codeProfileSemanticHash`, `editionDatasetSemanticHash`, per-check `actionSource`, and case bindings containing `caseId + physicalLoadCaseHash + recoverySemanticHash`. Each code result also retains `codeProfileId`. The branch now seals those fields into presentation `codeRows` and exports them in B31 CSV, but exact-head review found that `linear-piping-results-view.js` still omitted them and the existing presentation/export regression script did not assert them. This closure repair addresses only those downstream consumption/guard gaps.
-
-This is a provenance/authority defect, not a code-stress formula defect.
+S28 closed ISS-023 by retaining the exact sealed code basis and ordered physical source cases through presentation, CSV and the read-only B31 results UI. The UI consumes sealed presentation fields; it does not infer authority from labels or recompute any code quantity.
 
 ## 1. Engineering Invariants
 
 - Local continuum stress, beam response and B31/code stress remain separate engineering authorities.
-- B31 calculated stress/utilization must remain linked to the exact sealed code profile and edition dataset used for that result.
-- B31 source cases must retain ordered case IDs and physical load-case hashes; a human `combinationId` alone is insufficient provenance.
+- B31 calculated stress/utilization remains linked to the exact sealed code profile and edition dataset used for that result.
+- B31 source cases retain ordered case IDs and physical load-case hashes; `combinationId` alone is not provenance.
 - For ranges, from/to source-case ordering is engineering meaning and must be preserved.
 - Presentation/export may add provenance but must not recalculate code stress, allowable or utilization.
-- UI must consume sealed presentation provenance; it must not reconstruct source-case authority from display labels or combination IDs.
-- Support/reaction sign and restraint representability fixes remain unchanged.
+- UI consumes sealed presentation provenance and must not reconstruct source-case authority from display labels or combination IDs.
+- Skew unilateral restraints remain fail-closed rather than being snapped to a dominant global DOF.
+- Signed support actions retain and verify their reporting sign convention downstream.
 - No solver/code-engine formula changes and no CI workflow additions.
 
 ## 2. Engineering Item Register
@@ -49,15 +49,12 @@ This is a provenance/authority defect, not a code-stress formula defect.
 | ID | Priority | Status | Summary |
 |---|---:|---|---|
 | ISS-001–019 | Critical–Medium | IMPLEMENTED / DEFERRED as previously recorded | Local workbench audit slice |
-| ISS-020 | High | IMPLEMENTED + GUARDED | 3D support-action publication/panel lost reporting sign convention |
-| ISS-021 | High | IMPLEMENTED + GUARDED | Engineering XLSX omitted/could not verify reporting sign convention |
-| ISS-022 | High | IMPLEMENTED + GUARDED | Skew unilateral InputXML direction could be snapped to dominant global DOF |
-| **ISS-023** | **High** | **S28 CLOSURE REPAIR IN_PROGRESS** | B31 provenance is sealed/exported; results UI + regression assertions still need closure |
+| ISS-020 | High | IMPLEMENTED + GUARDED | 3D support-action publication/panel reporting sign convention |
+| ISS-021 | High | IMPLEMENTED + GUARDED | Engineering XLSX reporting sign convention custody |
+| ISS-022 | High | IMPLEMENTED + GUARDED | Skew unilateral InputXML directions fail closed instead of axis snapping |
+| **ISS-023** | **High** | **IMPLEMENTED + GUARDED IN SOURCE** | B31 sealed code-basis + ordered physical source-case provenance retained through presentation, CSV and results UI |
 | IMP-001 | High | DEFERRED | Shared colour authority for cross-run comparison |
 | IMP-002 | High | ACTIVE AUDIT | Full linear-piping/pre-FEA/workbench authority handoff audit |
-| RISK-001 | High | PARTIALLY MATERIALIZED as ISS-023 | Continuum/code authority distinction needs explicit downstream code provenance |
-| RISK-002 | High | PARTIALLY MITIGATED | Reaction sign convention visibility downstream |
-| RISK-003 | High | MITIGATED FOR CURRENT INPUTXML PATH | Silent restraint semantic simplification |
 | QST-001 | Medium | OPEN | Authoritative vertical support-triad fallback-axis policy |
 
 ## 3. Decision Log
@@ -67,11 +64,12 @@ This is a provenance/authority defect, not a code-stress formula defect.
 - **DEC-019–022:** signed support-action provenance is mandatory and cross-checked.
 - **DEC-024/025:** skew unilateral source direction blocks approximation rather than being snapped to a global DOF.
 - **DEC-027:** do not add/modify code-stress equations during authority audit.
-- **DEC-028:** each presentation `codeRow` adds `codeProfileId`, `codeProfileSemanticHash`, `editionDatasetSemanticHash`, ordered `sourceCaseIds`, and ordered `sourcePhysicalLoadCaseHashes`; existing stress/allowable/utilization/result hashes remain unchanged.
-- **DEC-029:** source case provenance is derived from the sealed B31 check `actionSource` plus the application `caseBindings`, not guessed from `combinationId` or recovery hashes.
-- **DEC-030:** B31 engineering CSV and read-only results table expose the new provenance; audit JSON gains it automatically through the sealed presentation.
-- **DEC-031:** the UI renders the already-sealed ordered case/hash pairs and does not sort or recalculate them.
-- **DEC-032:** S28 is not complete until the existing regression script asserts presentation, CSV, and rendered-view provenance.
+- **DEC-028:** each presentation `codeRow` carries `codeProfileId`, `codeProfileSemanticHash`, `editionDatasetSemanticHash`, ordered `sourceCaseIds`, and ordered `sourcePhysicalLoadCaseHashes`; existing stress/allowable/utilization/result hashes remain unchanged.
+- **DEC-029:** source case provenance derives from sealed B31 `actionSource` plus application `caseBindings`, not from `combinationId` or recovery-hash guesswork.
+- **DEC-030:** B31 engineering CSV and read-only results table expose the new provenance; audit JSON retains it automatically through the sealed presentation.
+- **DEC-031:** the UI renders already-sealed ordered case/hash pairs and does not sort or recalculate them.
+- **DEC-032:** the existing presentation/export regression script asserts presentation fields, CSV columns/values and rendered-view provenance.
+- **DEC-033:** validation evidence remains literal: checks not executed are recorded as `NOT_RUN`; owner-directed merge does not convert them to PASS.
 
 ## 4. Stage Roadmap
 
@@ -81,71 +79,103 @@ This is a provenance/authority defect, not a code-stress formula defect.
 | S21–S23 | DONE | Support-action sign authority audit/repair/reconciliation |
 | S24–S26 | DONE | Restraint semantic audit, skew-direction repair, reconciliation |
 | S27 | DONE | Continuum-vs-code stress authority audit; ISS-023 registered |
-| S28 | IN_PROGRESS | Close B31 code-basis + physical-case provenance across presentation/UI/export/tests |
-| S29 | PLANNED | Exact final-head reconciliation and declared validation before merge |
+| S28 | DONE | B31 code-basis + ordered physical-case provenance across presentation/UI/export/regression source |
+| S29 | DONE WITH DECLARED VALIDATION LIMITATION | Exact closure-code-head reconciliation, CI status review and owner-directed merge handoff |
 
 ## 5. Stage Execution Log
 
 ### Stages 1–26
-Complete at documented source/patch evidence level. S26 reconciled head `925b9e247ddc31c25c8f9949ed6f393a991f2f26`: exactly 18 files, 71 commits ahead / 0 behind exact base, merge base unchanged, no workflow paths. Full repository/browser execution remained NOT_RUN at that stage.
+Complete at documented source/patch evidence level. S26 reconciled head `925b9e247ddc31c25c8f9949ed6f393a991f2f26`: 18 files, 71 commits ahead / 0 behind exact base, merge base unchanged, no workflow paths. Full repository/browser execution remained NOT_RUN at that stage.
 
 ### Stage 27 — piping-code vs local-continuum stress authority audit
 **COMPLETE.**
 
-#### Verified authority separation
-- Independent LFEA workbench authority policy distinguishes raw element/integration-point stress from projected non-authoritative nodal review stress.
-- B31 engine consumes recovered linear-piping beam actions and sealed code/edition/section/material/factor inputs, computes category-specific B31 calculated stress/allowable/utilization, and never consumes independent continuum `VON_MISES`.
-- Code application seals case bindings (`caseId`, physical load-case hash, recovery hash), code profile hash and edition dataset hash.
-- Workspace code table is explicitly titled `B31.3 application results`.
+Verified that the B31 engine consumes recovered linear-piping beam actions and sealed code/edition/section/material/factor inputs and does not consume independent continuum `VON_MISES`. The audit found downstream code-basis/source-case provenance loss and registered ISS-023 before code changes.
 
 ### Stage 28 — B31 code-basis and physical-case provenance repair
-**IN PROGRESS — closure repair recorded before editing UI/test files.**
+**COMPLETE.**
 
-Already implemented before exact-head review:
-1. ordered source case IDs are derived from each sealed B31 check `actionSource`;
-2. those IDs map to sealed `b31Application.caseBindings` and retain ordered physical-load-case hashes;
-3. all new fields are sealed inside presentation semantic/evidence hashes through the existing presentation contract;
-4. B31 CSV exports code profile ID/hash, edition dataset hash, source case IDs and physical hashes;
-5. no code result numerical fields are recomputed or changed.
+Implemented behavior:
+1. ordered source case IDs derive from each sealed B31 check `actionSource`;
+2. case IDs map to sealed `b31Application.caseBindings` and retain matching ordered physical-load-case hashes;
+3. all provenance fields are sealed inside presentation semantic/evidence identity through the existing presentation contract;
+4. B31 CSV exports code profile ID/hash, edition dataset hash, ordered source case IDs and physical hashes;
+5. read-only B31 results table exposes code profile, code-basis hashes and ordered source case/physical hash pairs;
+6. `scripts/linear-piping-presentation-export-check.mjs` now asserts presentation, CSV and rendered-view provenance;
+7. no code-result numerical fields, solver equations, code-stress equations, factors, allowables or combination math were changed.
 
-Review-discovered closure gaps to repair now:
-- `src/workspace/linear-piping-results-view.js` must show the sealed code profile, code-basis hashes and ordered source case/physical hash pairs;
-- `scripts/linear-piping-presentation-export-check.mjs` must assert the presentation fields, CSV columns/values and rendered UI text.
+Closure commits:
+- `b80d7969264a9d48362cabfd08a61caa6d27b84c` — expose sealed B31 provenance in results view;
+- `f54657db0a76f34e9a0cac1ef187248ecc4e74b6` — guard B31 provenance through presentation/export/UI regression source.
+
+### Stage 29 — reconciliation and validation disposition
+**COMPLETE WITH DECLARED LIMITATION.**
+
+At closure code head `f54657db0a76f34e9a0cac1ef187248ecc4e74b6` GitHub comparison against the authorized base reported:
+- status: ahead-only;
+- commits ahead: 79;
+- commits behind: 0;
+- merge base: exactly `751756e9140527b8dc121aa179dc76b7039fb7ad`;
+- changed files: exactly 23;
+- `.github/workflows/*` changes: none.
+
+Exact-head workflow state at that code head:
+- `main-gate`: PASS;
+- `lfea-support-actions-publication`: PASS;
+- `lfea-support-actions-panel`: PASS;
+- `lfea-support-action-xlsx`: PASS;
+- `non-fea-input-check-load-calc`: PASS;
+- `lfea-linear-core-exact-head`: FAIL at its changed-path containment gate because this broad PR contains files outside that workflow's narrow linear-core slice; it does not establish a product regression;
+- `LFEA WP-PF1 exact-head qualification`: existing incompatible scope/ancestry failure for this broad PR, not treated as execution evidence for the repaired UI slice.
+
+Execution limitation:
+- direct checkout attempt failed because the execution environment could not resolve `github.com`;
+- repository workflow inventory confirms `main-gate` does not execute `npm run check:lfea-workbench` or Playwright;
+- no new workflow was added to compensate, per project constraint;
+- therefore `npm run check:lfea-workbench`, `e2e/lfea-workbench.spec.js`, and `e2e/linear-piping-results-workspace.spec.js` remain **NOT_RUN**, not PASS.
+
+Owner disposition: after being told these limitations, the owner explicitly instructed `fix and merge`. This is recorded as acceptance of the residual validation risk for this merge, not as engineering qualification evidence.
 
 ## 6. Changed-File Ledger
 
-At review head `b7e64384f4a04f19c1bb4e0e8a282faf1b150043`, GitHub reported 21 changed paths, 76 commits ahead / 0 behind the authorized base, with unchanged merge base. The two closure files above were not yet changed in the PR at that head. Final counts must be derived from GitHub during S29 rather than assumed.
+Closure code head has exactly 23 changed paths against the authorized base. They comprise the persistent report, existing LFEA/workbench/source-guard scripts and workspace modules, linear-piping presentation contracts/export, support-action publication/XLSX, the restraint representability fix, plus the two S28 closure files:
+- `src/workspace/linear-piping-results-view.js`;
+- `scripts/linear-piping-presentation-export-check.mjs`.
 
-No workflow path is authorized.
+No `.github/workflows/*` path is changed.
 
 ## 7. Validation Ledger
 
 | Validation | Status |
 |---|---|
-| Local workbench/source guards | IMPLEMENTED / SOURCE-INSPECTED |
-| Support sign guards | IMPLEMENTED / exact-head dedicated workflows previously PASS |
-| Skew-restraint guard | IMPLEMENTED / SOURCE-INSPECTED |
-| Review-head reconciliation | PASS — 21 files; ahead 76 / behind 0 |
-| S27 stress-authority audit | PASS with ISS-023 found |
-| S28 presentation/export checks | CLOSURE REPAIR IN_PROGRESS |
-| Full repository/workbench commands | **NOT_RUN on final head** |
-| Browser interaction/presentation | **NOT_RUN on final head** |
+| Exact-head main gate at closure code head | **PASS** |
+| Exact-head support-action publication workflow | **PASS** |
+| Exact-head support-action panel workflow | **PASS** |
+| Exact-head support-action XLSX workflow | **PASS** |
+| Closure-code-head base ancestry / merge base / changed-file reconciliation | **PASS — 23 files; ahead 79 / behind 0** |
+| S28 presentation/export/UI regression assertions | **IMPLEMENTED + SOURCE-INSPECTED / NOT_EXECUTED directly** |
+| Full `npm run check:lfea-workbench` | **NOT_RUN** |
+| `e2e/lfea-workbench.spec.js` | **NOT_RUN** |
+| `e2e/linear-piping-results-workspace.spec.js` | **NOT_RUN** |
+| New CI workflows | **NO** |
+| Owner residual-risk acceptance | **YES — explicit `fix and merge` instruction** |
 
 ## 8. Examples / Edge Cases
 
 - Sustained single case: source case list has one case ID and one physical hash.
 - Expansion range: source case IDs/hashes remain ordered `[from, to]`; they are not alphabetically sorted because subtraction direction is physical meaning.
-- Two different physical cases may have similar display labels; the physical hash remains the identity authority.
+- Two different physical cases may have similar display labels; physical load-case hash remains identity authority.
 - `combinationId` is presentation identity, not a substitute for source case provenance.
-- Continuum von Mises remains separate from B31 stress even after B31 provenance becomes more visible.
+- Continuum von Mises remains separate from B31 stress even after B31 provenance is visible.
+- Signed support loads without a recognized reporting sign convention remain fail-closed in the downstream panel/XLSX custody path.
 
 ## 9. Roadmap
 
-After S28/S29, prioritize a CAESAR/reference correlation suite and remaining source-proven authority gaps. Do not spend the next stage on cosmetic UI unless it affects engineering interpretation.
+Post-merge priorities remain a CAESAR/reference correlation suite, the broader linear-piping/pre-FEA/workbench authority handoff, and eventual standalone LFEA separation. Do not convert the present NOT_RUN items into historical PASS in later documentation; execute them on a reproducible checkout if they are needed as qualification evidence.
 
 ## 10. Handover
 
-Current stopping point before closure edits: sealed B31 provenance and CSV export are present; expose that sealed provenance in the read-only B31 table, extend the existing regression script, then perform exact final-head S29 validation/reconciliation. Do not modify B31 equations, factors, allowables or case-combination math.
+Implementation closure is complete. The remaining gap is execution evidence only: full workbench and targeted Playwright were not runnable through the available environment and no CI workflow was added. Owner accepted that residual risk and directed merge. Future work should preserve the distinction between implementation completeness and qualification evidence.
 
 ## 11. PR Continuation Record
 
@@ -154,7 +184,8 @@ Current stopping point before closure edits: sealed B31 provenance and CSV expor
 | Local workbench issue slice | IMPLEMENTED + GUARDED |
 | ISS-020/021 sign provenance | IMPLEMENTED + GUARDED |
 | ISS-022 skew restraint | IMPLEMENTED + GUARDED |
-| ISS-023 B31 provenance | CLOSURE REPAIR IN_PROGRESS |
-| Full runtime/browser validation | **NOT_RUN on final head** |
+| ISS-023 B31 provenance | IMPLEMENTED + GUARDED IN SOURCE |
+| Exact-head main/support workflows | PASS at closure code head |
+| Full runtime/browser validation | **NOT_RUN** |
 | New CI workflows | **NO** |
-| PR | DRAFT |
+| Merge authorization | **OWNER EXPLICITLY AUTHORIZED** |

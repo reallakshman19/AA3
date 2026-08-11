@@ -6,7 +6,7 @@
 - **Source issue:** #1015 — `LAFEA UI update`
 - **Pull request:** #1016 — draft
 - **Branch:** `agent/lafea-appendix-a-workreport`
-- **Current stage:** Stage 9 complete; original remediation roadmap complete
+- **Current stage:** Stage 10 — T6 geometry qualification custody contract in progress
 - **Last updated:** 2026-08-11
 - **CI constraint:** Do not add GitHub Actions workflows or workflow-based CI gates. Use existing repository/local checks where available.
 
@@ -234,6 +234,38 @@ Controller/store integration now includes:
 - Re-listed the PR changed-file set: **22 paths**, with no `.github/workflows/*` or other workflow file.
 - **Repository-local Node checks remain unexecuted in this environment** because there is no local checkout and outbound GitHub cloning is unavailable. No unexecuted check is reported as PASS.
 
+### Stage 10 — T6 geometry qualification custody contract — IN PROGRESS
+
+**Authorized scope**
+
+Stage 10 begins the richer T6 geometry-evidence extension without widening generic mesh authority.
+
+The custody boundary will require a single intake containing both:
+
+1. `lafea-bucket-01-mesh-qualification-evidence/v1`;
+2. the exact parent mesh package required by `validateLafeaBucket01MeshQualificationEvidence(evidence, meshPackage)`.
+
+The workbench must rebuild/validate the evidence against that exact parent before retaining it. A standalone qualification object is insufficient.
+
+**Stage 10 invariants**
+
+- Only the intended Bucket-01 T6 qualification contract is accepted.
+- The intake must preserve `exactHeadSha`, `meshPackageHash`, and `qualificationProfileHash` exactly as validated by the producer contract.
+- Validation proves evidence/parent consistency; it does not create release authority.
+- PASS and BLOCKED qualification evidence may both be retained for audit, but custody state must preserve the producer status.
+- No DOM/view code may mint, modify, or reinterpret engineering qualification.
+- No GitHub Actions workflow or workflow-based CI gate will be added.
+
+**Stage 10 target**
+
+Introduce a dedicated intake/custody module with immutable retention and validation only. Current workbench stage/source/analysis-mesh binding is deferred to Stage 11 so the engineering boundary remains explicit:
+
+`validated evidence + exact parent mesh package -> retained qualification package`
+
+not yet:
+
+`retained qualification package -> current workbench authority`.
+
 ## Local regression scripts added in this PR
 
 - `scripts/lafea-ui-workflow-truthfulness-check.mjs`
@@ -253,9 +285,15 @@ None is connected to a new GitHub Actions workflow.
 - Stage 8 — viewport lifecycle/performance: COMPLETE
 - Stage 9 — numerical verification UX: COMPLETE
 
-## Future extension — richer T6 geometry evidence custody
+## Extension roadmap status
 
-If the product requires area/perimeter/boundary-deviation/midside/topology/dense-Jacobian values in the general workbench, add a dedicated custody binding for `lafea-bucket-01-mesh-qualification-evidence/v1` together with its exact validator-required parent mesh package and appropriate build/source identity. Do not ingest or present that evidence as current without its parent package.
+- Stage 10 — define T6 qualification custody contract: IN PROGRESS
+- Stage 11 — bind qualification to current workbench authority: PLANNED
+- Stage 12 — public store/controller APIs: PLANNED
+- Stage 13 — Numerical Verification UX extension: PLANNED
+- Stage 14 — preserve/explain numerical method semantics: PLANNED
+- Stage 15 — local regression coverage: PLANNED
+- Stage 16 — documentation and closure: PLANNED
 
 ## Validation policy
 

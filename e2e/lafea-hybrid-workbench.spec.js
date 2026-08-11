@@ -234,6 +234,7 @@ test.describe('LAFEA hybrid workbench Phase 6 browser validation', () => {
     await expect(trace).toContainText('SHARED_MODEL');
     await expect(trace).toContainText('PIPING_CLASS');
     await expect(trace).toContainText('value=6.02');
+    console.log('P06-CHROMIUM-01 PASS exact agreement rendered with source + piping-class evidence');
   });
 
   test('P06-CHROMIUM-02: source/master disagreement renders null-valued conflict with both evidence rows', async ({ page }) => {
@@ -257,6 +258,7 @@ test.describe('LAFEA hybrid workbench Phase 6 browser validation', () => {
     await expect(trace).toContainText('value=8.18');
     await expect(trace).toContainText('SHARED_MODEL');
     await expect(trace).toContainText('PIPING_CLASS');
+    console.log('P06-CHROMIUM-02 PASS disagreement rendered as null-valued conflict with both evidence rows');
   });
 });
 

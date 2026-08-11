@@ -5,11 +5,12 @@ import {
   lfeaStandaloneMalformedInputXml,
 } from './fixtures/lfea-standalone-inputxml-fixtures.js';
 
+const LFEA_URL = '/Advanced_Analysis/lfea.html';
 const STATUS = '[data-role="lfea-standalone-status"]';
 const SOURCE_INPUT = '[data-view-id="source"] input[type="file"]';
 
 async function openStandalone(page) {
-  await page.goto('/lfea.html');
+  await page.goto(LFEA_URL);
   await expect(page.locator('[data-role="lfea-standalone-shell"]')).toBeVisible();
   await expect(page.locator('[data-role="lafea-consumer-root"]')).toHaveCount(0);
   await expect(page.locator('[data-role="lfea-consumer-root"]')).toHaveCount(1);

@@ -22,6 +22,7 @@ export {
   sealBenchmarkQualificationReport,
 } from './qualification-contract.js';
 export { compareBenchmarkResultRows } from './qualification-comparison.js';
+export { buildBenchmarkEngineeringAssessment } from './qualification-engineering-assessment.js';
 export { normalizeLinearSolverBenchmarkResult } from './qualification-normalization.js';
 export { runGovernedBenchmarkQualification } from './qualification-pipeline.js';
 export { createBenchmarkQualificationAdapter } from './adapters/generic.js';

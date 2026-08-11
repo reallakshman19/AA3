@@ -67,6 +67,8 @@ if (-not $SkipNpmCi) { Invoke-Checked { npm ci } 'npm ci' }
   'scripts/lfea-m047-bm4l-tee-stiffness-authority.mjs',
   'scripts/lfea-m047-bm4l-numeric-operator-proof.mjs',
   'scripts/lfea-m047-bm4l-bend-effective-stiffness.mjs',
+  'scripts/lfea-accdb-bend-gravity-first-moment.mjs',
+  'src/core/fea-benchmarks/qualification-engineering-assessment.js',
   'src/core/fea-benchmarks/caesar-accdb-linear-solve.js'
 ) | ForEach-Object { Invoke-Checked { node --check $_ } "node --check $_" }
 [void][scriptblock]::Create((Get-Content -Raw 'scripts/lfea-m047-bm4l-accdb-provenance.ps1'))
@@ -196,6 +198,24 @@ if ($bend.status -ne 'PASS' -or $bend.scope.bendCount -ne 12) { throw '12-bend e
   ForEach-Object { Invoke-Checked { npm run $_ } "npm run $_" }
 
 $reportJson = Get-Content -Raw $report | ConvertFrom-Json
+$assessment = $reportJson.engineeringAssessment
+if ($null -eq $assessment) { throw 'BM4_L report is missing the engineering assessment.' }
+if ($assessment.restraintComponents.status -ne 'PASS') { throw 'BM4_L restraint component gate did not pass.' }
+if ($assessment.physicalEquilibrium.status -ne 'PASS') { throw 'BM4_L physical equilibrium gate did not pass.' }
+if ($assessment.equilibriumResidualDisposition.status -ne 'PASS') { throw 'BM4_L equilibrium residual comparison disposition did not pass.' }
+if ($assessment.linearCaseConditioning.status -ne 'PASS') { throw 'BM4_L linear case conditioning gate did not pass.' }
+if ([int]$assessment.literalExternalComponents.counts.failed -ne [int]$reportJson.qualification.totals.failed) {
+  throw 'Literal external failure count diverges from the qualification failure count.'
+}
+$bendGravityPath = Join-Path $artifacts 'bm4l-l2-bend-gravity-first-moment.json'
+Invoke-Checked {
+  node scripts/lfea-accdb-bend-gravity-first-moment.mjs --actual $actual --case L2 --out $bendGravityPath
+} 'bend gravity first-moment audit'
+$bendGravity = Get-Content -Raw $bendGravityPath | ConvertFrom-Json
+if ($bendGravity.status -ne 'PASS') { throw 'BM4_L bend gravity first-moment ledger did not pass.' }
+if ([int]$bendGravity.counts.bendCount -ne [int]$reportJson.model.inventory.bendPointerCount) {
+  throw 'Bend gravity evidence does not cover the ACCDB bend inventory.'
+}
 $caseFailures = [ordered]@{}
 foreach ($case in $reportJson.qualification.cases) { $caseFailures[[string]$case.caseId] = [int]$case.comparison.counts.failed }
 $receipt = [ordered]@{
@@ -208,6 +228,15 @@ $receipt = [ordered]@{
     productVersion=$providerFile.VersionInfo.ProductVersion
   }
   qualification=[ordered]@{caseFailures=$caseFailures; totals=$reportJson.qualification.totals; semanticHash=$reportJson.qualification.semanticHash}
+  engineeringAssessment=[ordered]@{
+    literalExternalComponents=[ordered]@{status=$assessment.literalExternalComponents.status; counts=$assessment.literalExternalComponents.counts}
+    restraintComponents=[ordered]@{status=$assessment.restraintComponents.status; counts=$assessment.restraintComponents.counts}
+    equilibriumResidualDisposition=[ordered]@{status=$assessment.equilibriumResidualDisposition.status; counts=$assessment.equilibriumResidualDisposition.counts}
+    vectorGroups=[ordered]@{status=$assessment.vectorGroups.status; counts=$assessment.vectorGroups.counts}
+    physicalEquilibrium=[ordered]@{status=$assessment.physicalEquilibrium.status; counts=$assessment.physicalEquilibrium.counts}
+    linearCaseConditioning=[ordered]@{status=$assessment.linearCaseConditioning.status; counts=$assessment.linearCaseConditioning.counts; operator=$assessment.linearCaseConditioning.operator}
+  }
+  bendGravityFirstMoment=[ordered]@{status=$bendGravity.status; counts=$bendGravity.counts; totals=$bendGravity.totals}
   artifactsRoot=$ArtifactsRoot
 }
 $receiptPath = Join-Path $artifacts 'bm4l-local-production-receipt.json'

@@ -17,6 +17,7 @@ export function compareBenchmarkResultRows({
   tolerances,
   optionalQuantities = [],
   exposedQuantities = [],
+  excludedQuantities = [],
 }) {
   const reference = normalizeBenchmarkResultRows(referenceRows, caseId);
   const actual = normalizeBenchmarkResultRows(actualRows, caseId);
@@ -25,6 +26,7 @@ export function compareBenchmarkResultRows({
   const identities = [...new Set([...referenceById.keys(), ...actualById.keys()])].sort(compareAscii);
   const optional = new Set(optionalQuantities.map((value) => String(value).toUpperCase()));
   const exposed = new Set(exposedQuantities.map((value) => String(value).toUpperCase()));
+  const excluded = new Set(excludedQuantities.map((value) => String(value).toUpperCase()));
 
   const rows = identities.map((identity) => compareOne({
     identity,
@@ -33,6 +35,7 @@ export function compareBenchmarkResultRows({
     tolerances,
     optional,
     exposed,
+    excluded,
   }));
 
   const failed = rows.filter((row) => row.status === 'FAIL');
@@ -54,7 +57,11 @@ export function compareBenchmarkResultRows({
   });
 }
 
-function compareOne({ identity, reference, actual, tolerances, optional, exposed }) {
+function compareOne({ identity, reference, actual, tolerances, optional, exposed, excluded }) {
+  const source = reference ?? actual;
+  if (source !== null && excluded.has(source.quantity)) {
+    return excludedRecord(identity, actual, reference);
+  }
   if (!reference) {
     return record(identity, actual, null, 'NOT_COMPARED', 'No reference result exists for this solver quantity.');
   }
@@ -105,6 +112,28 @@ function compareOne({ identity, reference, actual, tolerances, optional, exposed
     note: status === 'PASS' ? null : tolerance.comparisonMode === LITERAL_RELATIVE_MODE
       ? 'Literal relative tolerance, or the declared zero-reference absolute tolerance, was exceeded.'
       : 'Combined absolute + relative tolerance exceeded.',
+  });
+}
+
+function excludedRecord(identity, actual, reference) {
+  const source = reference ?? actual;
+  return deepFreeze({
+    identity,
+    caseId: source.caseId,
+    entityKind: source.entityKind,
+    entityId: source.entityId,
+    quantity: source.quantity,
+    component: source.component,
+    unit: reference?.unit ?? actual?.unit ?? null,
+    referenceValue: reference?.value ?? null,
+    actualValue: actual?.value ?? null,
+    absoluteError: null,
+    rawRelativeError: null,
+    relativeError: null,
+    tolerance: null,
+    acceptanceLimit: null,
+    status: 'NOT_COMPARED',
+    note: 'Quantity is qualified by its declared physical gate, not by residual-to-residual relative comparison.',
   });
 }
 

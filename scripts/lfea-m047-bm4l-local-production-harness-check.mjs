@@ -38,6 +38,8 @@ const requiredFragments = [
   'scripts/lfea-m047-bm4l-recovery-proof.mjs',
   'scripts/lfea-m047-bm4l-numeric-operator-proof.mjs',
   'scripts/lfea-m047-bm4l-bend-effective-stiffness.mjs',
+  'scripts/lfea-accdb-bend-gravity-first-moment.mjs',
+  'src/core/fea-benchmarks/qualification-engineering-assessment.js',
   'check:lfea-b3.3',
   'check:lfea-b3.4',
   'check:lfea-b3.8',
@@ -55,6 +57,9 @@ assert.match(harness, /m047-bm4l-local-production-qualification\/v1/u);
 assert.match(harness, /caseFailures/u);
 assert.match(harness, /qualification\.totals/u);
 assert.match(harness, /qualification\.semanticHash/u);
+assert.match(harness, /engineeringAssessment/u);
+assert.match(harness, /physicalEquilibrium\.status -ne 'PASS'/u);
+assert.match(harness, /linearCaseConditioning\.status -ne 'PASS'/u);
 
 for (const forbidden of [
   'gh workflow run',

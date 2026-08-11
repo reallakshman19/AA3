@@ -4,6 +4,22 @@ import {
   LAFEA_GUIDED_WORKFLOW_SCHEMA,
   buildLafeaGuidedWorkflow,
 } from '../src/workspace/lafea-guided-workflow.js';
+import { requireLafeaStageAnalysisAdapter } from '../src/workspace/lafea-stage-analysis-adapter.js';
+
+const expectedRouteFamilies = Object.freeze({
+  'LAFEA.1': 'ANALYTICAL',
+  'LAFEA.2': 'ANALYTICAL',
+  'LAFEA.3': 'FEA',
+  'LAFEA.4': 'FEA',
+  'LAFEA.5': 'FEA',
+  'LAFEA.6': 'UNSUPPORTED',
+});
+for (const [stageId, routeFamily] of Object.entries(expectedRouteFamilies)) {
+  const adapter = requireLafeaStageAnalysisAdapter(stageId);
+  assert.equal(adapter.routeFamily, routeFamily);
+  assert.ok(Object.isFrozen(adapter.input));
+  assert.ok(Object.isFrozen(adapter.input.guidedStepRequirements));
+}
 
 const noDocument = workflow('LAFEA.1', null, null, null);
 assert.equal(step(noDocument, 'ANALYSIS_PROFILE').status, 'NOT_STARTED');
@@ -82,7 +98,7 @@ console.log(JSON.stringify({
   status: 'PASS',
   workflowReasonsRemainCanonical: true,
   stageInputRequirementsUseCanonicalAdapter: true,
-  routeFamilies: ['ANALYTICAL', 'FEA', 'UNSUPPORTED'],
+  routeFamilies: Object.values(expectedRouteFamilies),
   githubActionsWorkflowAdded: false,
 }));
 

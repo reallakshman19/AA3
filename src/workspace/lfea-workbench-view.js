@@ -10,6 +10,7 @@ import {
 import { renderLfeaWorkbenchSvg } from './lfea-workbench-svg.js';
 import {
   captureWorkbenchFocus,
+  recordIdentity,
   restoreWorkbenchFocus,
   workbenchButton as actionButton,
   workbenchCard as card,
@@ -250,10 +251,10 @@ export class LfeaWorkbenchView {
     const textarea = element(this.rootElement, 'textarea');
     textarea.dataset.role = 'lfea-record-json';
     textarea.spellcheck = false;
-    const key = recordDraftKey(this.collectionPath, this.selectedIndex);
-    const baseline = this.selectedIndex >= 0
-      ? JSON.stringify(rows[this.selectedIndex], null, 2)
-      : '{}';
+    const selectedRecord = this.selectedIndex >= 0 ? rows[this.selectedIndex] : null;
+    const identity = selectedRecord ? recordIdentity(selectedRecord) : '__new__';
+    const key = recordDraftKey(this.collectionPath, identity);
+    const baseline = selectedRecord ? JSON.stringify(selectedRecord, null, 2) : '{}';
     textarea.value = this.recordDrafts.get(key) ?? baseline;
 
     const add = element(this.rootElement, 'button', null, 'Add record');
@@ -296,7 +297,7 @@ export class LfeaWorkbenchView {
       const path = this.collectionPath;
       const index = this.selectedIndex;
       this.selectedIndex = -1;
-      this.clearRecordDrafts(path);
+      this.recordDrafts.delete(key);
       this.handlers.onDeleteRecord(path, index);
     });
     remove.disabled = this.selectedIndex < 0;
@@ -307,17 +308,10 @@ export class LfeaWorkbenchView {
     wrapper.append(select, table, textarea, actions);
     return wrapper;
   }
-
-  clearRecordDrafts(path) {
-    const prefix = `${path}\u0000`;
-    for (const key of this.recordDrafts.keys()) {
-      if (key.startsWith(prefix)) this.recordDrafts.delete(key);
-    }
-  }
 }
 
-function recordDraftKey(path, index) {
-  return `${path}\u0000${index}`;
+function recordDraftKey(path, identity) {
+  return `${path}\u0000${identity}`;
 }
 
 function didCommitModelVersion(previous, next) {

@@ -52,21 +52,23 @@ export function renderTopologyEditTableGrid(runtime) {
           )).join('')}</tbody>
         </table>
       </div>
-      ${rows.length > MAX_RENDERED_ROWS ? `<p class="topology-edit-table__notice">Showing first ${MAX_RENDERED_ROWS} filtered rows. Refine the filter to inspect more.</p>` : ''}
-      ${primary ? editorHtml(primary, staged.get(primary.identity.canonicalId), runtime.projection) : '<p class="topology-edit-table__notice">Select an exact canonical row to inspect or edit it.</p>'}
-      ${primary ? renderTopologyEditTableAllProperties(primary, runtime) : ''}
-      ${stagedPanel(runtime)}
-      ${validationPanel(runtime)}
-      <footer class="topology-edit-table__workflow">
-        <button type="button" data-table-action="preview" ${!runtime.batchPlan || runtime.staleResult || runtime.pending ? 'disabled' : ''}>Preview</button>
-        <button type="button" data-table-action="validate" ${!runtime.preview || runtime.pending ? 'disabled' : ''}>Validate</button>
-        <button type="button" data-table-action="apply" ${runtime.validation?.status !== 'READY_TO_APPLY' || runtime.pending ? 'disabled' : ''}>Apply</button>
-        <button type="button" data-table-action="discard" ${!runtime.batch && !runtime.preview ? 'disabled' : ''}>Discard staged</button>
-        <span aria-hidden="true">│</span>
-        <button type="button" data-table-action="export-csv" ${exportDisabled ? 'disabled' : ''}>Export CSV</button>
-        <button type="button" data-table-action="export-xlsx" ${exportDisabled ? 'disabled' : ''}>Export XLSX</button>
-      </footer>
-      <output class="topology-edit-table__status" aria-live="polite">${escapeHtml(runtime.error || runtime.message)}</output>
+      <div class="topology-edit-table__lower" data-table-lower-region>
+        ${rows.length > MAX_RENDERED_ROWS ? `<p class="topology-edit-table__notice">Showing first ${MAX_RENDERED_ROWS} filtered rows. Refine the filter to inspect more.</p>` : ''}
+        ${primary ? editorHtml(primary, staged.get(primary.identity.canonicalId), runtime.projection) : '<p class="topology-edit-table__notice">Select an exact canonical row to inspect or edit it.</p>'}
+        ${primary ? renderTopologyEditTableAllProperties(primary, runtime) : ''}
+        ${stagedPanel(runtime)}
+        ${validationPanel(runtime)}
+        <footer class="topology-edit-table__workflow">
+          <button type="button" data-table-action="preview" ${!runtime.batchPlan || runtime.staleResult || runtime.pending ? 'disabled' : ''}>Preview</button>
+          <button type="button" data-table-action="validate" ${!runtime.preview || runtime.pending ? 'disabled' : ''}>Validate</button>
+          <button type="button" data-table-action="apply" ${runtime.validation?.status !== 'READY_TO_APPLY' || runtime.pending ? 'disabled' : ''}>Apply</button>
+          <button type="button" data-table-action="discard" ${!runtime.batch && !runtime.preview ? 'disabled' : ''}>Discard staged</button>
+          <span aria-hidden="true">│</span>
+          <button type="button" data-table-action="export-csv" ${exportDisabled ? 'disabled' : ''}>Export CSV</button>
+          <button type="button" data-table-action="export-xlsx" ${exportDisabled ? 'disabled' : ''}>Export XLSX</button>
+        </footer>
+        <output class="topology-edit-table__status" aria-live="polite">${escapeHtml(runtime.error || runtime.message)}</output>
+      </div>
     </section>`;
   publishEvidence(runtime, rows.length, renderedRows.length);
 }

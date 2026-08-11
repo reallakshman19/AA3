@@ -16,14 +16,14 @@ Maintained throughout PR #1021. This is the single source of truth for current P
 | PR state | Draft |
 | Current stage | Stage 17 — status, deformation-multiplier, and run-progress clarity |
 | Last completed stage | Stage 16 — H05/H06 cumulative reconciliation |
-| Engineering status | Critical and High integrity slice complete/source-guarded except H04 deliberately deferred; selected Medium run-clarity slice grounded before implementation |
-| Validation status | Source/patch + GitHub reconciliation complete through S16; full repository/browser execution remains NOT_RUN |
+| Engineering status | M06/M08 production presentation implemented; M01 styling and Stage 17 guards still in progress |
+| Validation status | Source/patch + GitHub reconciliation complete through S16; Stage 17 guard/reconciliation pending; full repository/browser execution remains NOT_RUN |
 | Current blocker | None |
-| Exact next action | Implement M01 distinct status presentation, M06 dimensionally-correct deformation multiplier wording, and M08 human progress-stage labels while retaining raw status/stage codes |
+| Exact next action | Finish M01 distinct status styling, add Stage 17 source guards for M01/M06/M08, then perform S18 cumulative reconciliation |
 
 ### Handover in 60 seconds
 
-**Implemented and guarded**
+**Implemented and guarded through prior stages**
 - C01 collection mock destructive-scope fix.
 - N01/package-editor draft persistence and N02 delete sequencing.
 - C02 no-Worker paintable queued boundary, exact run identity, current-options parity, queued cancellation.
@@ -37,10 +37,11 @@ Maintained throughout PR #1021. This is the single source of truth for current P
 **Stage 16 reconciliation**
 At head `be3bf17519443256d673119ac43177fd187f54ce`, GitHub listed exactly the expected eight files, branch was **43 commits ahead / 0 behind**, merge base remained exactly `751756e9140527b8dc121aa179dc76b7039fb7ad`, and no workflow file was present.
 
-**Current active Medium slice**
-- M01: only QUALIFIED/FAILED status pills are visually distinguished.
-- M06: deformation control currently says only `Deformation scale (source)`, which can be read as a physical quantity. The control value is a **dimensionless display multiplier**. Stage 17 will state that explicitly; it will not incorrectly append a length unit to the multiplier.
-- M08: progress shows raw stages. Actual current pipeline stages are `QUEUED`, `VALIDATE`, `PREFLIGHT`, `ADAPT`, `SOLVE`, `PROJECT`, `REVIEW`, `EXPORT`, `COMPLETE`.
+**Stage 17 partial implementation observed at head `2eedf9ea190d1486dd55afacfc00efdd7ca10fd9`**
+- M06 is implemented in `lfea-workbench-panels.js`: visible label is `Displayed displacement multiplier`, states `dimensionless; 1× = true displacement`, shows the underlying solver-profile length unit separately, and marks the control as `DIMENSIONLESS_DISPLAY_MULTIPLIER` with display-only title text.
+- M08 is implemented in the same file: known raw stages map to human labels while `data-stage` and title retain the raw stage. Unknown stages fall back to the raw value.
+- M01 is **not yet implemented**: stylesheet still only distinguishes QUALIFIED and FAILED.
+- The existing containment check has not yet gained Stage 17 assertions, so M06/M08 are production-implemented but not yet source-guarded.
 
 **Deferred / re-grounded**
 - H04: generic result table already unions keys across all rows; known result schemas are uniform. Canonical columns require a separate result-schema contract.
@@ -71,9 +72,9 @@ Continue issue #1018 remediation while preserving engineering authority and impr
 | H01–H03 | High | IMPLEMENTED + GUARDED | S13–S14 | source + reconciliation |
 | H04 canonical result columns | High (audit) | DEFERRED / RE-GROUND | later | claimed mechanism not present |
 | H05/H06 | High | IMPLEMENTED + GUARDED | S15–S16 | source + reconciliation |
-| M01 distinct status states | Medium | IN_PROGRESS | S17 | current styles grounded |
-| M06 deformation multiplier meaning | Medium | ACCEPTED | S17 | actual display semantics grounded |
-| M08 progress labels | Medium | ACCEPTED | S17 | actual pipeline stages grounded |
+| M01 distinct status states | Medium | IN_PROGRESS | S17 | stylesheet still pending |
+| M06 deformation multiplier meaning | Medium | IMPLEMENTED / GUARD_PENDING | S17 | panels source at `2eedf9e` |
+| M08 progress labels | Medium | IMPLEMENTED / GUARD_PENDING | S17 | panels source at `2eedf9e` |
 | Runtime/browser validation | High | NOT_RUN | ongoing | environment limitation |
 
 ## 3. Engineering Item Register
@@ -96,8 +97,8 @@ Continue issue #1018 remediation while preserving engineering authority and impr
 | ISS-014 / H05 | UX/data entry | High | IMPLEMENTED + GUARDED | Invalid record JSON only failed after submission | Yes |
 | ISS-015 / H06 | Workflow | High | IMPLEMENTED + GUARDED | History navigation discarded qualified evidence without warning | Yes |
 | ISS-016 / M01 | Presentation | Medium | IN_PROGRESS | READY/RUNNING/EMPTY status pills lack distinct state styling | Yes |
-| ISS-017 / M06 | Presentation | Medium | ACCEPTED | Deformation control does not explain dimensionless display multiplier semantics | Yes |
-| ISS-018 / M08 | Presentation | Medium | ACCEPTED | Progress exposes raw pipeline stage codes | Yes |
+| ISS-017 / M06 | Presentation | Medium | IMPLEMENTED / GUARD_PENDING | Deformation control now states dimensionless display multiplier semantics | Yes |
+| ISS-018 / M08 | Presentation | Medium | IMPLEMENTED / GUARD_PENDING | Progress now uses human labels while retaining raw stages | Yes |
 | IMP-003 / M02 | Improvement | Medium | DEFERRED | SVG needs responsive sizing architecture | No for now |
 | IMP-004 / M03 | Improvement | Medium | DEFERRED | Convergence card visibility should depend on relevant package/evidence state | No for now |
 | IMP-005 / M04 | Improvement | Medium | DEFERRED / GROUND | Mesh quality title should reflect actual gate ownership only after current threshold path is verified | No for now |
@@ -164,32 +165,30 @@ Base comparison was `ahead`, `ahead_by: 43`, `behind_by: 0`; merge base exactly 
 - M07 confirmation was not selected: package export is non-destructive. A future non-blocking identity/hash preview has better usability value.
 
 ### Stage 17 — status, deformation-multiplier, and progress clarity
-**Status:** IN_PROGRESS — pre-stage record complete; no Stage 17 production change yet.
+**Status:** IN_PROGRESS — M06/M08 production presentation is implemented; M01 and Stage 17 guards remain.
 
-#### Planned implementation — M01
+#### Before stage
+- Status styling distinguished only QUALIFIED and FAILED.
+- Deformation control exposed a numeric scale without clearly separating display multiplier from displacement unit.
+- Progress exposed raw stage codes as primary text.
+
+#### Partial implementation already completed
+**M06**
+- Visible label is `Displayed displacement multiplier`.
+- It states `dimensionless; 1× = true displacement`.
+- Underlying displacement length unit is shown separately from `solverProfile.units.length`.
+- `data-quantity="DIMENSIONLESS_DISPLAY_MULTIPLIER"` and title state display-only authority.
+- Existing positive-number store validation remains unchanged.
+
+**M08**
+- Known stages map to professional labels: QUEUED, VALIDATE, PREFLIGHT, ADAPT, SOLVE, PROJECT, REVIEW, EXPORT, COMPLETE.
+- Raw stage remains in `data-stage` and title.
+- Unknown stages fall back to their raw value.
+
+#### Remaining implementation — M01
 Add distinct status styling for `EMPTY`, `READY`, `RUNNING`, existing `QUALIFIED`, and existing `FAILED`; do not change state machine/status codes.
 
-#### Planned implementation — M06
-- Rename visible control to `Displayed displacement multiplier`.
-- State `dimensionless; 1× = true displacement`.
-- Show underlying displacement unit separately using committed solver-profile length unit when available.
-- Retain deformation scale source and existing positive-number store validation.
-- Add title/metadata clarifying display-only authority.
-
-#### Planned implementation — M08
-Map raw stage codes to professional labels, for example:
-- QUEUED → `Queued for analysis`
-- VALIDATE → `Validating mesh package`
-- PREFLIGHT → `Checking declared capacity`
-- ADAPT → `Building qualified FEA model`
-- SOLVE → `Solving continuum model`
-- PROJECT → `Preparing review stress projection`
-- REVIEW → `Running engineering review`
-- EXPORT → `Preparing evidence export`
-- COMPLETE → `Analysis complete`
-Retain raw stage in `data-stage` and `title`; unknown stages fall back to the raw code rather than misclassification.
-
-#### Planned validation
+#### Remaining validation
 Extend existing containment source guards for all status states, dimensionless/1× language, separate displacement unit, real stage mappings and raw stage metadata. Patch review and S18 cumulative reconciliation follow. Browser presentation remains NOT_RUN.
 
 ## 6. Changed-File Ledger
@@ -197,12 +196,12 @@ Extend existing containment source guards for all status states, dimensionless/1
 | File | First stage | Latest stage | Purpose | Validation |
 |---|---|---|---|---|
 | `agents/PR1021_workreport.md` | S2 | S17 | PR SSOT/handover | current |
-| `scripts/lfea-p0-ui-containment-check.mjs` | S7 | S17 planned | existing regression guards | source/store; execution NOT_RUN |
+| `scripts/lfea-p0-ui-containment-check.mjs` | S7 | S17 planned | existing regression guards | Stage 17 guards pending |
 | `src/workspace/lfea-workbench-controller.js` | S9 | S15 | lifecycle/errors/export/history warning | source guard; browser NOT_RUN |
 | `src/workspace/lfea-workbench-document-store.js` | S10 | S10 | diagnostic/evidence/history authority | source/store guard |
-| `src/workspace/lfea-workbench-panels.js` | S13 | S17 planned | authority/preflight/deformation/progress presentation | pending S17 guard |
+| `src/workspace/lfea-workbench-panels.js` | S13 | S17 | authority/preflight/deformation/progress presentation | M06/M08 implemented; guard pending |
 | `src/workspace/lfea-workbench-run-store.js` | S9 | S9 | identity-safe execution | source/store guard |
-| `src/workspace/lfea-workbench-styles.js` | S15 | S17 planned | invalid input + status styling | pending S17 guard |
+| `src/workspace/lfea-workbench-styles.js` | S15 | S17 planned | invalid input + distinct status styling | M01 pending |
 | `src/workspace/lfea-workbench-view.js` | S4 | S15 | UI integrity/diagnostics/settings/record validity | source guard; browser NOT_RUN |
 
 ## 7. Engineering Invariants
@@ -223,6 +222,8 @@ Extend existing containment source guards for all status states, dimensionless/1
 | H01–H03 source guards | IMPLEMENTED / SOURCE-INSPECTED |
 | H05/H06 source guards | IMPLEMENTED / SOURCE-INSPECTED |
 | S16 cumulative reconciliation | PASS — 8 files, 0 behind, no workflows |
+| M06/M08 production source | IMPLEMENTED / GUARD_PENDING |
+| M01 production source | PENDING S17 |
 | M01/M06/M08 source guards | PENDING S17 |
 | Full `npm run check:lfea-workbench` | **NOT_RUN** |
 | Browser presentation/interaction | **NOT_RUN** |
@@ -243,7 +244,7 @@ Extend existing containment source guards for all status states, dimensionless/1
 
 ## 10. Recommended Forward Sequence
 
-1. Complete S17 M01/M06/M08.
+1. Finish S17 M01 + source guards for M01/M06/M08.
 2. S18 reconcile cumulative diff and update handover.
 3. Reassess whether further UI polish adds more value than the full three-surface engineering-authority audit.
 4. Before merge, Owner/reviewer executes missing repository/browser checks at exact final HEAD.
@@ -251,19 +252,19 @@ Extend existing containment source guards for all status states, dimensionless/1
 ## 11. Next-Agent Handover
 
 ### Current stopping point
-S16 reconciliation is complete; S17 is documented before production changes.
+S17 is partially implemented: M06/M08 production code is present; M01 and Stage 17 guards remain.
 
 ### Start here
-`src/workspace/lfea-workbench-panels.js` for M06/M08, `src/workspace/lfea-workbench-styles.js` for M01, then existing containment check guards.
+`src/workspace/lfea-workbench-styles.js` for M01, then `scripts/lfea-p0-ui-containment-check.mjs` for M01/M06/M08 guards.
 
 ### Do not redo
-C01–C04, N01/N02, H01–H06 grounding/implementation, H04 grounding, or S16 reconciliation.
+C01–C04, N01/N02, H01–H06 grounding/implementation, H04 grounding, S16 reconciliation, or M06/M08 production wording/stage mapping.
 
 ### Known failing checks
 None observed through source inspection. Full repository/browser checks remain **NOT_RUN**, not PASS.
 
 ### Highest current risk
-Dimensionally misleading the deformation multiplier by presenting it as if it carries the displacement length unit. Keep multiplier and result unit explicitly separate.
+Completing presentation changes without durable guards, or accidentally labelling the dimensionless deformation multiplier with a physical length unit.
 
 ## 12. Process Notes / Lessons Learned
 
@@ -271,6 +272,7 @@ Dimensionally misleading the deformation multiplier by presenting it as if it ca
 - Source guards and browser/runtime proof are distinct evidence classes.
 - Human labels should improve comprehension without replacing raw authority codes.
 - A dimensionless visualization multiplier must not inherit the unit of the quantity it scales.
+- Interrupted stages require explicit reconciliation of what actually reached the branch before continuing.
 - Non-destructive actions should not gain modal confirmations merely because a hash can be shown; prefer non-blocking provenance presentation where possible.
 
 ## 13. PR Closure / Continuation Record
@@ -281,7 +283,8 @@ Dimensionally misleading the deformation multiplier by presenting it as if it ca
 | H01–H03 | IMPLEMENTED + GUARDED |
 | H05/H06 | IMPLEMENTED + GUARDED |
 | H04 | DEFERRED / RE-GROUND |
-| M01/M06/M08 | IN_PROGRESS |
+| M01 | IN_PROGRESS |
+| M06/M08 | IMPLEMENTED / GUARD_PENDING |
 | S16 reconciliation | COMPLETE |
 | Full runtime/browser validation | **NOT_RUN** |
 | New CI workflows added | **NO** |

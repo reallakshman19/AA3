@@ -75,6 +75,8 @@ const authoritySource = fs.readFileSync('src/lfea/native-execution-authority.js'
 const executorSource = fs.readFileSync('src/core/linear-piping-analysis-consumer/inputxml-linear-production-executor.js', 'utf8');
 const elementSource = fs.readFileSync('src/core/linear-piping-analysis-consumer/inputxml-linear-execution-elements.js', 'utf8');
 const bootstrapSource = fs.readFileSync('src/lfea/bootstrap.js', 'utf8');
+const runtimeSource = fs.readFileSync('src/lfea/standalone-runtime.js', 'utf8');
+const apiSource = fs.readFileSync('src/lfea/standalone-runtime-api.js', 'utf8');
 assert.match(authoritySource, /solveInputXmlLinearAnalysis/u);
 assert.doesNotMatch(authoritySource, /compileSolverExecution|solveLinearPipingModel|runLinearPipingAnalysis\(/u);
 assert.match(executorSource, /compileSolverExecution/u);
@@ -84,8 +86,11 @@ assert.doesNotMatch(executorSource, /compileResultRecovery|B31|codeStress/u);
 assert.match(elementSource, /requireAxisCustody/u);
 assert.match(elementSource, /referenceVector: \[\.\.\.element\.localAxes\.y\]/u);
 assert.doesNotMatch(bootstrapSource, /compileSolverExecution|solveLinearPipingModel|runLinearPipingAnalysis\(/u);
-assert.match(bootstrapSource, /runNativeAnalysis/u);
-console.log('LFEA-NATIVE-EXEC-07 PASS source guard keeps low-level solver below authorization gate and defers recovery');
+assert.match(bootstrapSource, /createLfeaStandaloneRuntime/u);
+assert.match(runtimeSource, /createLfeaNativeExecutionAuthority/u);
+assert.match(runtimeSource, /executeNativeAnalysis/u);
+assert.match(apiSource, /runNativeAnalysis/u);
+console.log('LFEA-NATIVE-EXEC-07 PASS source guard keeps low-level solver below runtime authorization gate and defers recovery');
 
 console.log(JSON.stringify({
   check: 'lfea-standalone-native-execution',

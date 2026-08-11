@@ -552,7 +552,7 @@ function validateLegacyLifecycle(value) {
   DISPLAY_KEYS.forEach((key) => requireNullableHash(value.display[key], `display.${key}`));
   if (value.lastEvent) validateEvent(value.lastEvent);
   if (value.lastRegistration) validateLegacyRegistration(value.lastRegistration, value.stageId);
-  if (!Array.isArray(value.diagnostics)) throw new TypeError('Legacy lifecycle diagnostics must be an array.');
+  if (!Array.isArray(value.diagnostics)) throw new TypeError('Legacy diagnostics must be an array.');
   value.diagnostics.forEach(validateDiagnostic);
   return deepFreeze({ ...structuredClone(value), artifacts });
 }

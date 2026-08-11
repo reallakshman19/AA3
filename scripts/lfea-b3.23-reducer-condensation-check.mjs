@@ -11,6 +11,8 @@ import {
   sealReducerCondensationRequest,
 } from '../src/core/linear-fea-reducer-condensation/index.js';
 
+const CAESAR_PIPE_SHEAR_CORRECTION_FACTOR = 0.5;
+
 function close(actual, expected, message, relativeTolerance = 1e-9, absoluteTolerance = 1e-8) {
   const tolerance = Math.max(absoluteTolerance, relativeTolerance * Math.max(1, Math.abs(expected)));
   assert.ok(Math.abs(actual - expected) <= tolerance, `${message}: ${actual} != ${expected} within ${tolerance}`);
@@ -67,10 +69,19 @@ assert.equal(authority.schema, 'fea-linear-reducer-condensation-authority/v1');
 assert.equal(authority.parityStatus, 'CANDIDATE_PENDING_SECTION_SAMPLING_VERIFICATION');
 assert.equal(authority.segments.length, 10);
 assert.equal(authority.structuralParticipation.condensedInternalStationCount, 9);
+assert.equal(authority.structuralParticipation.cylinderBeamFormulation, 'PIPE_FRAME3D_TIMOSHENKO_V1');
+assert.equal(authority.structuralParticipation.shearCorrectionFactorY, CAESAR_PIPE_SHEAR_CORRECTION_FACTOR);
+assert.equal(authority.structuralParticipation.shearCorrectionFactorZ, CAESAR_PIPE_SHEAR_CORRECTION_FACTOR);
 assert.equal(authority.condensed.localStiffness.length, 144);
 assert.equal(authority.condensed.gravityLocalVector.length, 12);
 assert.equal(authority.condensed.thermalInitialStrainLocalVector.length, 12);
 assert.equal(Object.isFrozen(authority), true);
+for (const segment of authority.segments) {
+  assert.ok(segment.shearFlexibility.phiXY > 0);
+  assert.ok(segment.shearFlexibility.phiXZ > 0);
+  assert.equal(segment.shearFlexibility.correctionFactorY, CAESAR_PIPE_SHEAR_CORRECTION_FACTOR);
+  assert.equal(segment.shearFlexibility.correctionFactorZ, CAESAR_PIPE_SHEAR_CORRECTION_FACTOR);
+}
 
 let axialCompliance = 0;
 let torsionalCompliance = 0;
@@ -110,7 +121,9 @@ const direct = frameLocalStiffness({
   secondMomentZ: properties.I,
   polarMoment: properties.J,
   length: 1.5,
-  shearDeformation: false,
+  shearDeformation: true,
+  shearCorrectionFactorY: CAESAR_PIPE_SHEAR_CORRECTION_FACTOR,
+  shearCorrectionFactorZ: CAESAR_PIPE_SHEAR_CORRECTION_FACTOR,
 }).matrix;
 for (let index = 0; index < 144; index += 1) {
   close(uniform.condensed.localStiffness[index], direct[index], `uniform condensed stiffness[${index}]`, 2e-8, 1e-3);
@@ -133,6 +146,7 @@ console.log(JSON.stringify({
   authorityHash: authority.semanticHash,
   totalWeight: authority.gravity.totalWeight,
   centroidFromEnd: authority.gravity.centroidFromEnd,
+  cylinderBeamFormulation: authority.structuralParticipation.cylinderBeamFormulation,
   parityStatus: authority.parityStatus,
 }, null, 2));
 console.log('LFEA B-3.23 ten-cylinder reducer condensation PASS');

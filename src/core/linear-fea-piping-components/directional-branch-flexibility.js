@@ -8,7 +8,7 @@ import { requireRecord } from './piping-component-contract.js';
 
 export const B31J_DIRECTIONAL_BRANCH_SCHEMA = 'fea-linear-b31j-directional-branch/v1';
 export const B31J_DIRECTIONAL_BRANCH_FORMULATION = 'BRANCH_B31J_DIRECTIONAL_ROTATIONAL_SPRINGS_V1';
-export const B31J_DIRECTIONAL_SPRING_RULE = 'K_EQUALS_RIGIDITY_OVER_KD_V1';
+export const B31J_DIRECTIONAL_SPRING_RULE = 'K_EQUALS_RIGIDITY_OVER_K_MEAN_DIAMETER_V2';
 export const B31J_BRANCH_SURFACE_RULE = 'RUN_SURFACE_RIGID_OFFSET_V1';
 
 /**
@@ -87,7 +87,8 @@ export function deriveB31JDirectionalBranchEndModifiers({
         factors,
         material: authorities.material.materialState,
         section: authorities.section.sectionState,
-        diameter: authorities.section.dimensions.outerDiameter,
+        meanDiameter:
+          authorities.section.dimensions.outerDiameter - authorities.section.dimensions.wallThickness,
         end: leg.junctionEnd ?? 'I',
       });
       return Object.freeze({
@@ -135,6 +136,7 @@ export function deriveB31JDirectionalBranchEndModifiers({
     limitations: Object.freeze([
       'Modifiers apply to existing adjacent spans; no duplicate tee leg element is introduced in production assembly.',
       'B31J directional flexibility modifies rotational stiffness only; translations remain connected through the original frame span.',
+      'Directional spring characteristic length uses matching-pipe mean diameter (Do - t), consistent with CAESAR II Misc Data Kb output.',
       'Run flexibility acts at the centerline intersection; branch flexibility acts at the run surface through a rigid offset.',
     ]),
   };
@@ -225,7 +227,7 @@ export function compileB31JDirectionalBranchFlexibility({
   return Object.freeze({ ...draft, semanticHash: semanticHash(draft) });
 }
 
-function directionalRotationalSprings({ role, factors, material, section, diameter, end }) {
+function directionalRotationalSprings({ role, factors, material, section, meanDiameter, end }) {
   const factorValues = {
     torsional: positiveFactor(factors.torsional, `${role}.torsional`),
     inPlane: positiveFactor(factors.inPlane, `${role}.inPlane`),
@@ -248,7 +250,7 @@ function directionalRotationalSprings({ role, factors, material, section, diamet
     springs.push(Object.freeze({
       end,
       dof,
-      stiffness: rigidity[dof] / (flexibility * diameter),
+      stiffness: rigidity[dof] / (flexibility * meanDiameter),
     }));
   }
   return { factorValues, springs };
@@ -320,6 +322,7 @@ function unit(vector, field) {
   return scale(vector, 1 / length);
 }
 function compareAscii(left, right) { return left < right ? -1 : left > right ? 1 : 0; }
+
 function fail(code, message) {
   const error = new Error(message);
   error.code = code;

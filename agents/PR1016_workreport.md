@@ -6,9 +6,9 @@
 - **Source issue:** #1015 — `LAFEA UI update`
 - **Pull request:** #1016 — draft
 - **Branch:** `agent/lafea-appendix-a-workreport`
-- **Current stage:** Stage 11 — bind T6 qualification to current workbench authority in progress
+- **Current stage:** Stage 12 — public store/controller APIs in progress
 - **Last updated:** 2026-08-11
-- **CI constraint:** Do not add GitHub Actions workflows or workflow-based CI gates. Use existing repository/local checks where available.
+- **CI constraint:** Do not add GitHub Actions workflows or workflow-based CI gates.
 
 ## Purpose
 
@@ -19,152 +19,83 @@ Persistent engineering log for the Appendix A review and authorized implementati
 Five Appendix answer-key areas required correction before coding:
 
 - **Q1:** release was hardcoded at view, orchestration, and readiness layers.
-- **Q2:** `-0 -> 0` is a useful canonical contract rule, but current `JSON.stringify(-0)` does not create a distinct JSON numeric representation.
-- **Q6:** stable `sceneRevision` preserves identity/selection semantics; it does not prove viewport primitive caching.
-- **Q9:** `executionHash()` is used only in the `QUALIFIED` execution branch, so timeout/failure is not a valid fallback example.
-- **Q10:** 5-point Gauss-Legendre integrates curved-edge perimeter; boundary deviation uses separate explicit samples.
+- **Q2:** `-0 -> 0` is useful canonical discipline, but current `JSON.stringify(-0)` does not create a distinct JSON numeric representation.
+- **Q6:** stable `sceneRevision` preserves identity/selection semantics; it is not a renderer primitive cache.
+- **Q9:** `executionHash()` fallback is reached only for `QUALIFIED` execution, not timeout/failure.
+- **Q10:** five-point Gauss-Legendre integrates curved-edge perimeter; boundary deviation is sampled separately.
 
 ## Engineering concepts retained
 
-### Release authority is not solver success
+- Release authority is separate from solver/result/report success.
+- Warning evidence may remain usable only when the governing projection explicitly allows it.
+- Relative GCI becomes ill-conditioned near zero; N/A is preferable to fabricated relative error.
+- Mesh evidence is custody evidence: replacement/staleness must invalidate dependent authority.
+- Canonical cryptographic identity must be deterministic and locale-independent.
+- T6 area, curved-edge perimeter, boundary deviation, midside placement, topology, and Jacobian checks are different numerical checks and must not be conflated.
 
-`source -> model -> preparation -> mesh -> authorization -> execution -> results -> release`
+## Completed original roadmap
 
-A successful solve cannot imply release if mesh/source/evidence lineage is stale or qualification evidence is incomplete.
+- **Stage 1:** report initialized — COMPLETE.
+- **Stage 2:** draft PR #1016 established — COMPLETE.
+- **Stage 3:** documentation baseline/no-workflow constraint verified — COMPLETE.
+- **Stage 4:** release/diagnostic UI plumbing — COMPLETE.
+- **Stage 5:** guided workflow truthfulness — COMPLETE.
+- **Stage 6:** read-only analysis profile/settings UX — COMPLETE.
+- **Stage 7:** authoritative release-record binding — COMPLETE.
+- **Stage 8:** viewport lifecycle/performance reuse — COMPLETE.
+- **Stage 9:** numerical verification UX and convergence custody — COMPLETE.
 
-### Warnings can remain usable
+Stage 9 supports Bucket-01 GCI/Richardson and controlled-continuum relative-change evidence as distinct methods. It exposes qualified detail, qualified identity only, source-bound diagnostic, and stale retained states. Generic retained mesh quality remains aspect-ratio/scaled-Jacobian evidence only.
 
-`Preparation: WARNING` can coexist with `Authorization: READY` when `usableForAuthorization === true` after governed review.
-
-### Relative GCI near zero
-
-`GCI_fine = Fs * abs((fine - medium) / fine) / (r^p - 1)` is ill-conditioned as the physical response approaches zero; an absolute or alternative normalization is required.
-
-### Mesh evidence is custody evidence
-
-A qualified mesh cannot be silently replaced without invalidating/rebuilding dependent analysis evidence.
-
-### Canonical hashes require deterministic semantics
-
-Locale-dependent ordering is unsuitable for cryptographic identity. Explicit zero normalization remains useful contract discipline.
-
-### T6 checks use different parameter spaces
-
-T6 area uses 2D triangular quadrature; curved-edge perimeter uses 1D Gauss-Legendre; maximum boundary deviation is sampled separately.
-
-## Stage log
-
-### Stage 1 — Report initialized — COMPLETE
-
-- Created branch and persistent report.
-- Reviewed all 10 Appendix A questions.
-- Recorded corrections, concepts, examples, and roadmap.
-
-### Stage 2 — PR allocated — COMPLETE
-
-- Opened draft PR #1016 against `main`.
-- Bound report to actual PR/branch.
-
-### Stage 3 — Documentation baseline verified — COMPLETE
-
-- Verified report was the only changed file at that stage.
-- Confirmed no workflow/CI-gate file was added.
-
-### Stage 4 — Release/diagnostic UI plumbing — COMPLETE
-
-- Guided release badge consumes `workflow.releaseQualified` rather than hardcoded text.
-- Orchestration `RELEASE` consumes readiness rather than a hardcoded blocked section.
-- Machine reason codes remain canonical while UI presentation is human-readable.
-- Solver/result/report completion alone still cannot create release authority.
-
-### Stage 5 — Guided workflow truthfulness — COMPLETE
-
-- Analysis Profile requires lifecycle/profile/current binding rather than document presence alone.
-- Materials/Sections, Restraints/BCs, and Loads/Cases use stage-specific governed collection checks.
-- Non-applicable generic workflow steps are explicit N/A instead of falsely READY.
-- Added `scripts/lafea-ui-workflow-truthfulness-check.mjs` as a local, non-Actions regression check.
-
-### Stage 6 — Analysis profile/settings UX — COMPLETE
-
-- Added read-only `Analysis profile and settings` card.
-- Guided Analysis Profile navigation targets the card.
-- Shows only settings actually retained by the active stage contract.
-- LAFEA.1 explicitly reports that code/allowable basis is not declared by its closed source contract instead of inventing authority.
-- Added `scripts/lafea-ui-analysis-settings-check.mjs` as a local, non-Actions check.
-
-### Stage 7 — Authoritative release-record binding — COMPLETE
-
-Workbench release state can consume `lafea-template-release-record/v2` only through four independent gates:
-
-1. host-trusted `authorizedReleaseEvidenceHashes`;
-2. exact `currentCandidateHeadSha`;
-3. current target compatibility rerun against the live target-authority snapshot;
-4. current lifecycle/source/profile/source-authority/document-revision identity.
-
-A record SHA-256 proves integrity, not provenance. The trust model remains:
-
-`record integrity -> trusted provenance -> exact build -> current target -> current source -> release projection`
-
-- Added governed release-record retention/projection and public controller/store methods.
-- Lifecycle export includes the retained release record and current release binding.
-- Added `scripts/lafea-ui-release-binding-check.mjs` as a local, non-Actions check.
-
-### Stage 8 — Viewport lifecycle/performance — COMPLETE
-
-- Added pure viewport dependency/reuse contract.
-- Reuses a mounted viewport only when stage, scene revision, result packet, retained mesh evidence, custody state, and route flags are unchanged.
-- Reparents the existing renderer host for unrelated workbench updates.
-- On dependency change, mounts replacement content before destroying the old viewport.
-- No primitive cache, mutable engineering scene API, or asynchronous render authority was introduced.
-- Added `scripts/lafea-ui-viewport-lifecycle-check.mjs` as a local, non-Actions check.
-
-### Stage 9 — Numerical verification UX — COMPLETE
-
-Stage 9 added governed detailed-convergence custody and a read-only numerical verification surface. It distinguishes lifecycle-qualified detail, lifecycle-qualified identity only, source-bound diagnostic evidence, and stale retained evidence. Bucket-01 GCI/Richardson remains distinct from controlled-continuum relative-change convergence. Generic mesh quality remains limited to the evidence actually retained by the workbench.
+## Extension stages
 
 ### Stage 10 — T6 geometry qualification custody contract — COMPLETE
 
-Stage 10 introduced `src/workspace/lafea-t6-geometry-qualification-custody.js` as a pure engineering custody boundary.
+Added `src/workspace/lafea-t6-geometry-qualification-custody.js`.
 
-**Implemented contract**
+The intake requires both:
 
-- Intake schema: `lafea-t6-geometry-qualification-intake/v1`.
-- Retained custody schema: `lafea-t6-geometry-qualification-custody/v1`.
-- Only `LAFEA.3` and the bounded `CONCENTRIC_ANNULAR_LUG_PINHOLE` / `T6` contract are accepted.
-- Intake must contain both the qualification evidence and its exact validator-required mesh package.
-- The parent mesh package is rebuild-validated with `validateLafeaLugPinholeT6MeshPackage(...)`.
-- Qualification evidence is rebuild-validated against that exact parent using `validateLafeaBucket01MeshQualificationEvidence(...)`.
-- PASS and BLOCKED producer status are preserved rather than normalized into a generic pass/fail.
-- Retained custody remains immutable and explicitly carries `releaseQualified: false`.
+1. `lafea-bucket-01-mesh-qualification-evidence/v1`;
+2. the exact `lafea-lug-pinhole-t6-mesh-package/v1` parent required by the existing validator.
 
-**Important parent-hash finding**
+Both are cloned/frozen, the deterministic mesh package is rebuild-validated, and qualification evidence is rebuild-validated against that exact package. Only the bounded `LAFEA.3` / `CONCENTRIC_ANNULAR_LUG_PINHOLE` / `T6` contract is accepted. PASS and BLOCKED producer status are retained, and release authority remains false.
 
-The existing Bucket-01 qualification producer accepts `meshPackageHash` as a declared SHA-256 field but does not itself recompute that field from the supplied mesh package; the repository check intentionally supplies arbitrary values. Stage 10 therefore does **not** mislabel that field as a proven canonical parent digest.
+**Parent identity correction:** existing Bucket-01 `meshPackageHash` is a declared SHA-256 field but is not recomputed from the mesh package by the producer validator; repository tests intentionally supply arbitrary values. Custody therefore keeps three distinct identities:
 
-Instead custody retains three separate identities:
+- `declaredMeshPackageHash` — producer-declared value;
+- `parentMeshPackageDigest` — custody-owned canonical digest over the exact validated package;
+- `analysisMeshHash` — canonical workbench analysis-mesh content hash reconstructed from `meshPackage.mesh`.
 
-1. `declaredMeshPackageHash` — the producer-declared field copied from qualification evidence;
-2. `parentMeshPackageDigest` — custody-owned canonical SHA-256 over the exact validated parent package;
-3. `analysisMeshHash` — canonical workbench analysis-mesh content hash calculated from `meshPackage.mesh`.
+This avoids overstating the producer-declared field while preserving it for traceability.
 
-This separates producer-declared identity from independently reconstructed custody identity.
+### Stage 11 — Bind T6 qualification to current workbench authority — COMPLETE
 
-### Stage 11 — Bind T6 qualification to current workbench authority — IN PROGRESS
+Added `src/workspace/lafea-t6-geometry-qualification-state.js`.
 
-Stage 11 will project retained Stage 10 custody against the live workbench without changing the producer evidence.
+Registration is accepted only when:
 
-**Binding requirements**
+- stage is `LAFEA.3`;
+- host `currentCandidateHeadSha` exists and exactly matches evidence `exactHeadSha`;
+- ordinary workbench analysis-mesh custody is current/viewable;
+- canonical content hash of the current retained analysis mesh equals Stage 10 `analysisMeshHash`;
+- retained mesh identity agrees.
 
-- active/current stage must be `LAFEA.3`;
-- host must provide `currentCandidateHeadSha`, and it must equal evidence `exactHeadSha`;
-- the currently retained analysis mesh must be viewable/current in ordinary mesh custody;
-- canonical mesh content from the current retained analysis mesh must equal Stage 10 `analysisMeshHash`;
-- mesh identity must agree;
-- source/model/geometry currency is inherited through existing analysis-mesh custody rather than fabricated from Bucket-01 evidence, which does not carry those parents.
+The Bucket-01 evidence does not contain source/model/geometry parent hashes, so Stage 11 deliberately inherits those authorities through the already-current analysis-mesh custody projection rather than fabricating missing lineage.
 
-A registration must be current at intake time. Later workbench mesh/head changes may leave the retained qualification available for audit but project it as STALE.
+Projection states are `ABSENT`, `CURRENT_PASS`, `CURRENT_BLOCK`, `STALE`, and `INVALID`. `CURRENT_PASS` means the **T6 geometry qualification contract** is current/pass; it does not promote overall mesh authorization or release. Later mesh/head drift retains evidence for audit but projects STALE.
 
-## Local regression scripts added in this PR
+### Stage 12 — Public store/controller APIs — IN PROGRESS
+
+Target integration:
+
+- instantiate Stage 11 state with the same host `currentCandidateHeadSha` used by release binding;
+- include retained T6 qualification custody in raw stage composition;
+- derive a current T6 qualification projection only after ordinary mesh custody is built;
+- add bounded register/select/project/export methods;
+- include retained custody and projection in lifecycle export;
+- expose public contracts without giving UI code authority to generate or alter engineering evidence.
+
+## Existing repository-local regression scripts in PR
 
 - `scripts/lafea-ui-workflow-truthfulness-check.mjs`
 - `scripts/lafea-ui-analysis-settings-check.mjs`
@@ -172,22 +103,13 @@ A registration must be current at intake time. Later workbench mesh/head changes
 - `scripts/lafea-ui-viewport-lifecycle-check.mjs`
 - `scripts/lafea-ui-numerical-verification-check.mjs`
 
-None is connected to a new GitHub Actions workflow.
-
-## Original roadmap status
-
-- Stage 4 — release/diagnostic UI plumbing: COMPLETE
-- Stage 5 — guided workflow truthfulness: COMPLETE
-- Stage 6 — analysis profile/settings UX: COMPLETE
-- Stage 7 — authoritative release-record binding: COMPLETE
-- Stage 8 — viewport lifecycle/performance: COMPLETE
-- Stage 9 — numerical verification UX: COMPLETE
+They are not connected to a new GitHub Actions workflow. They remain unexecuted in this environment because no runnable repository checkout is available.
 
 ## Extension roadmap status
 
 - Stage 10 — define T6 qualification custody contract: COMPLETE
-- Stage 11 — bind qualification to current workbench authority: IN PROGRESS
-- Stage 12 — public store/controller APIs: PLANNED
+- Stage 11 — bind qualification to current workbench authority: COMPLETE
+- Stage 12 — public store/controller APIs: IN PROGRESS
 - Stage 13 — Numerical Verification UX extension: PLANNED
 - Stage 14 — preserve/explain numerical method semantics: PLANNED
 - Stage 15 — local regression coverage: PLANNED

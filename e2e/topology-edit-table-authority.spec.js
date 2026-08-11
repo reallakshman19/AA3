@@ -40,10 +40,11 @@ test('Table stays projection-only until certified pipe-length Apply', async ({ p
   await expect(row).toBeVisible();
   await row.locator('[data-table-select]').click();
   await expect.poll(() => host.getAttribute('data-topology-edit-selection-primary-id')).toBe(editable.edgeId);
-  await page.locator('[data-table-edit-length]').fill(String(editable.currentLengthMm - 120));
-  await page.locator('[data-table-edit-anchor]').selectOption(editable.anchor);
-  await page.locator('[data-table-edit-propagation]').selectOption(editable.propagation);
-  await page.locator('[data-table-action="stage-pipe-length"]').click();
+  await page.locator('[data-table-edit-anchor]').selectOption(editable.anchor); await page.locator('[data-table-edit-propagation]').selectOption(editable.propagation);
+  const directLength = row.locator('[data-table-cell-edit="PIPE_LENGTH"]'); await directLength.fill('0'); await directLength.press('Enter');
+  await expect(row.locator('[data-table-cell-state="invalid"]')).toBeVisible(); expect(await host.getAttribute('data-topology-edit-table-batch-hash')).toBe(''); await directLength.press('Escape');
+  await directLength.fill(String(editable.currentLengthMm - 120)); await expect(row.locator('[data-table-cell-state="draft"]')).toBeVisible(); expectAuthorityNoop(await evidence(page), before);
+  await directLength.press('Enter');
   await expect.poll(() => host.getAttribute('data-topology-edit-table-batch-hash')).toBeTruthy();
   const staged = await evidence(page);
   expectAuthorityNoop(staged, before);

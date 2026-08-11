@@ -348,6 +348,12 @@ function failurePresentation(diagnostics) {
 }
 
 function failureGuidance(code) {
+  if (code === 'LFEA_EVIDENCE_EXPORT_REJECTED') {
+    return {
+      summary: 'Evidence export did not complete.',
+      action: 'Only current QUALIFIED_EXPORT evidence may be downloaded. Re-run or requalify the current model if needed, then retry. The failed path is not treated as a successful evidence export.',
+    };
+  }
   if (code === 'STALE_PACKAGE_SEMANTIC_HASH') {
     return {
       summary: 'Imported package identity does not match its content.',

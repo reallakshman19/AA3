@@ -15,24 +15,47 @@ import {
   getLfeaPreflightPhase1ComponentParentLineTargetId,
   getLfeaPreflightPhase1ComponentSourceOrdinal,
 } from './lfea-preflight-phase1-component-index.js';
+import {
+  combineLfeaPreflightPhase1CellEvidence,
+  createLfeaPreflightPhase1AuthorityBridge,
+  getLfeaPreflightPhase1MasterEvidence,
+} from './lfea-preflight-phase1-authority-bridge.js';
 
 export const LFEA_PREFLIGHT_PHASE1_REVIEW_SOURCE_SCHEMA = 'lfea-preflight-phase1-review-source/v2';
 
 const SOURCE_STATE = new WeakMap();
+
 const MASTER_FIELDS = Object.freeze({
-  'process.designPressureKpaG': 'p1',
-  'process.designTemperatureC': 't1',
-  'process.operatingTemperatureC': 't2',
-  'process.minimumTemperatureC': 't3',
+  'process.designPressureKpaG': 'designPressure',
+  'process.hydroTestPressureKpaG': 'hydroTestPressure',
+  'process.designTemperatureC': 'designTemperature',
+  'process.operatingTemperatureC': 'operatingTemperature',
+  'process.minimumTemperatureC': 'minimumTemperature',
   'process.phaseCode': 'phase',
-  'contents.operatingDensityKgM3': 'fluidDensity',
-  'material.densityKgM3': 'metalDensity',
+  'material.materialCode': 'materialCode',
+  'contents.operatingDensityKgM3': 'operatingDensity',
+  'contents.gasDensityKgM3': 'gasDensity',
+  'contents.liquidDensityKgM3': 'liquidDensity',
+  'contents.mixedDensityKgM3': 'mixedDensity',
+  'insulation.thicknessMm': 'insulationThickness',
 });
+
 const SOURCE_FIELDS = Object.freeze({
-  'piping.pipingClassCode': 'cls',
-  'piping.ratingClassCode': 'rating',
   'piping.nominalBoreMm': 'bore',
 });
+
+const DUAL_CODE_FIELDS = Object.freeze({
+  'piping.pipingClassCode': Object.freeze({
+    sourceProperty: 'sourcePipingClass',
+    masterProperty: 'masterPipingClass',
+  }),
+  'piping.ratingClassCode': Object.freeze({
+    sourceProperty: 'sourceRating',
+    masterProperty: 'masterRating',
+  }),
+});
+
+const WALL_THICKNESS_FIELD = 'piping.wallThicknessMm';
 
 export const LFEA_PREFLIGHT_PHASE1_REVIEW_PROVIDERS = Object.freeze({
   getLine: getLfeaPreflightPhase1ReviewLine,
@@ -42,28 +65,18 @@ export const LFEA_PREFLIGHT_PHASE1_REVIEW_PROVIDERS = Object.freeze({
 
 /**
  * Adapt the current read-only pre-flight projection into indexed Phase-1 state.
- * Engineering cell DTOs and component DTOs are lazy; the retained large-model
- * state is typed status columns, stable indexes, compact line records and source
- * item references. No shared-model/master-data/event-bus/solver mutation path
- * is introduced.
+ * A caller may supply an already-sealed master authority bundle in options.
+ * This module never constructs that authority and never invents missing source
+ * provenance. Target identity remains a function of source membership only.
  */
-export function createLfeaPreflightPhase1ReviewSource(model, lineRows = []) {
+export function createLfeaPreflightPhase1ReviewSource(model, lineRows = [], options = {}) {
   const projection = projectPreflightModel(model, lineRows);
-  if (projection.blocked) {
-    const blocked = Object.freeze({
-      schema: LFEA_PREFLIGHT_PHASE1_REVIEW_SOURCE_SCHEMA,
-      blocked: true,
-      reason: projection.reason,
-      projection,
-      datasetIdentity: null,
-      targetCount: 0,
-      componentCount: 0,
-      columnSchemaHash: LFEA_PREFLIGHT_COLUMN_SCHEMA_HASH,
-      structuralHash: null,
-    });
-    SOURCE_STATE.set(blocked, { lineByTargetId: new Map(), componentItems: [] });
-    return blocked;
-  }
+  if (projection.blocked) return blockedSource(projection);
+
+  const sourceModelHash = sharedModelHash(model);
+  const authorityBridge = options.masterAuthority === undefined || options.masterAuthority === null
+    ? null
+    : createLfeaPreflightPhase1AuthorityBridge(options.masterAuthority, sourceModelHash);
 
   const stableGroups = projection.groups.map(stableGroupIdentity).sort(compareStableGroups);
   const datasetIdentity = semanticHash({
@@ -81,6 +94,7 @@ export function createLfeaPreflightPhase1ReviewSource(model, lineRows = []) {
     LFEA_PREFLIGHT_ENGINEERING_FIELDS.map((fieldId) => [fieldId, new Uint8Array(lineCount)]),
   );
   const lineByTargetId = new Map();
+  const engineeringEvidenceRows = [];
   const componentTargetIds = [];
   const parentLineTargetIds = [];
   const componentParentLineOrdinal = [];
@@ -102,38 +116,24 @@ export function createLfeaPreflightPhase1ReviewSource(model, lineRows = []) {
     ratingByOrdinal[lineOrdinal] = group.rating ?? 'UNSPECIFIED';
     classByOrdinal[lineOrdinal] = group.cls ?? 'UNSPECIFIED';
 
-    const rowHash = group.resolution.selected
-      ? semanticHash({ lineKey: group.isolatedLineKeyToken, selected: group.resolution.selected })
-      : null;
+    const lineDraft = createLineDraft(group, targetId, provenancePath, memberIds);
     const statuses = new Uint8Array(LFEA_PREFLIGHT_ENGINEERING_FIELDS.length);
     for (let fieldOrdinal = 0; fieldOrdinal < LFEA_PREFLIGHT_ENGINEERING_FIELDS.length; fieldOrdinal += 1) {
       const fieldId = LFEA_PREFLIGHT_ENGINEERING_FIELDS[fieldOrdinal];
-      const status = fieldStatus(group, fieldId);
-      statuses[fieldOrdinal] = status;
-      engineeringStatusByField[fieldId][lineOrdinal] = status;
+      const resolved = resolveCell(datasetIdentity, lineDraft, fieldId, fieldOrdinal, authorityBridge);
+      statuses[fieldOrdinal] = resolved.status;
+      engineeringStatusByField[fieldId][lineOrdinal] = resolved.status;
     }
-    lineByTargetId.set(targetId, Object.freeze({
-      targetId,
-      fullLineKeyName: group.fullLineKeyName,
-      isolatedLineKeyToken: group.isolatedLineKeyToken,
-      service: group.service,
-      rating: group.rating,
-      pipingClass: group.cls,
-      cls: group.cls,
-      bore: group.bore,
-      p1: group.p1,
-      t1: group.t1,
-      t2: group.t2,
-      t3: group.t3,
-      phase: group.phase,
-      fluidDensity: group.fluidDensity,
-      metalDensity: group.metalDensity,
-      itemCount: group.items.length,
-      resolution: Object.freeze(structuredClone(group.resolution)),
-      provenancePath,
-      rowHash,
-      sourceMemberIds: Object.freeze(memberIds),
+
+    const lineRecord = Object.freeze({
+      ...lineDraft,
       readiness: readinessFromStatuses(statuses),
+    });
+    lineByTargetId.set(targetId, lineRecord);
+    engineeringEvidenceRows.push(Object.freeze({
+      targetId,
+      masterRowHash: group.masterRowHash,
+      wallThicknessCandidates: lineRecord.wallThicknessCandidates,
     }));
 
     const stableItems = [...group.items].sort(compareItems);
@@ -174,8 +174,13 @@ export function createLfeaPreflightPhase1ReviewSource(model, lineRows = []) {
     targetIdByOrdinal: componentTargetIds,
     parentLineTargetIdByOrdinal: parentLineTargetIds,
   });
+  const engineeringEvidenceHash = semanticHash({
+    lines: [...engineeringEvidenceRows].sort((left, right) => compareAscii(left.targetId, right.targetId)),
+    masterAuthoritySemanticHash: authorityBridge?.masterAuthoritySemanticHash ?? null,
+  });
   const structuralHash = semanticHash({
     datasetIdentity,
+    engineeringEvidenceHash,
     lineIndex: lineIndex.structuralHash,
     componentIndex: componentIndex.structuralHash,
     columnSchemaHash: LFEA_PREFLIGHT_COLUMN_SCHEMA_HASH,
@@ -189,11 +194,13 @@ export function createLfeaPreflightPhase1ReviewSource(model, lineRows = []) {
     targetCount: lineIndex.targetCount,
     componentCount: componentIndex.componentCount,
     columnSchemaHash: LFEA_PREFLIGHT_COLUMN_SCHEMA_HASH,
+    engineeringEvidenceHash,
+    masterAuthoritySemanticHash: authorityBridge?.masterAuthoritySemanticHash ?? null,
     lineIndex,
     componentIndex,
     structuralHash,
   });
-  SOURCE_STATE.set(source, { lineByTargetId, componentItems });
+  SOURCE_STATE.set(source, { lineByTargetId, componentItems, authorityBridge });
   return source;
 }
 
@@ -203,57 +210,14 @@ export function getLfeaPreflightPhase1ReviewLine(source, targetId) {
 }
 
 export function getLfeaPreflightPhase1ReviewCell(source, targetId, fieldOrdinal) {
-  const line = getLfeaPreflightPhase1ReviewLine(source, targetId);
+  const state = requireSource(source);
+  const line = state.lineByTargetId.get(String(targetId)) ?? null;
   if (line === null) return null;
   if (!Number.isSafeInteger(fieldOrdinal) || fieldOrdinal < 0 || fieldOrdinal >= LFEA_PREFLIGHT_ENGINEERING_FIELDS.length) {
     throw sourceError('E_P06_FIELD_ORDINAL_INVALID', `Phase-1 field ordinal is invalid: ${fieldOrdinal}`);
   }
   const fieldId = LFEA_PREFLIGHT_ENGINEERING_FIELDS[fieldOrdinal];
-  if (fieldId in SOURCE_FIELDS) {
-    const property = SOURCE_FIELDS[fieldId];
-    const value = normalizeCellValue(line[property]);
-    return sealCell({
-      fieldId,
-      fieldOrdinal,
-      value,
-      status: value === null ? LFEA_PREFLIGHT_FIELD_STATUS.BLOCKED_MISSING : LFEA_PREFLIGHT_FIELD_STATUS.RESOLVED_EXACT,
-      sourceKind: 'SHARED_MODEL',
-      sourceHash: source.datasetIdentity,
-      locator: line.provenancePath,
-      method: 'SOURCE_MODEL_PROJECTION',
-      candidateCount: 1,
-    });
-  }
-  if (fieldId in MASTER_FIELDS) {
-    const property = MASTER_FIELDS[fieldId];
-    const value = line.resolution.status === 'EXACT' ? normalizeCellValue(line[property]) : null;
-    return sealCell({
-      fieldId,
-      fieldOrdinal,
-      value,
-      status: masterStatus(line.resolution, value),
-      sourceKind: 'MASTER_LINE_LIST',
-      sourceHash: line.rowHash,
-      locator: `MASTER_LINE_LIST:${line.isolatedLineKeyToken}`,
-      method: line.resolution.status === 'EXACT'
-        ? 'EXACT_NORMALIZED_LINE_KEY'
-        : line.resolution.status === 'BLOCKED_AMBIGUOUS'
-          ? 'DUPLICATE_PRESERVING_KEY_BUCKET'
-          : 'NO_MASTER_ROW_MATCH',
-      candidateCount: line.resolution.candidateCount ?? 0,
-    });
-  }
-  return sealCell({
-    fieldId,
-    fieldOrdinal,
-    value: null,
-    status: LFEA_PREFLIGHT_FIELD_STATUS.BLOCKED_MISSING,
-    sourceKind: 'UNRESOLVED',
-    sourceHash: null,
-    locator: line.provenancePath,
-    method: 'NOT_YET_PROJECTED_BY_CURRENT_READ_ONLY_PREFLIGHT',
-    candidateCount: 0,
-  });
+  return resolveCell(source.datasetIdentity, line, fieldId, fieldOrdinal, state.authorityBridge);
 }
 
 export function getLfeaPreflightPhase1ReviewComponent(source, targetId) {
@@ -269,7 +233,7 @@ export function getLfeaPreflightPhase1ReviewComponent(source, targetId) {
     source.lineIndex,
     targetId,
   );
-  const parentLine = getLfeaPreflightPhase1ReviewLine(source, parentLineTargetId);
+  const parentLine = state.lineByTargetId.get(parentLineTargetId) ?? null;
   if (parentLine === null) {
     throw sourceError('E_P06_COMPONENT_PARENT_STALE', `Component parent line is stale: ${targetId}`);
   }
@@ -286,19 +250,205 @@ export function getLfeaPreflightPhase1ReviewComponent(source, targetId) {
   });
 }
 
-function fieldStatus(group, fieldId) {
+function resolveCell(datasetIdentity, line, fieldId, fieldOrdinal, authorityBridge) {
+  const baseCell = legacyCell(datasetIdentity, line, fieldId, fieldOrdinal);
+  const masterEvidence = getLfeaPreflightPhase1MasterEvidence(
+    authorityBridge,
+    line.isolatedLineKeyToken,
+    fieldId,
+  );
+  return combineLfeaPreflightPhase1CellEvidence(baseCell, masterEvidence);
+}
+
+function legacyCell(datasetIdentity, line, fieldId, fieldOrdinal) {
+  if (fieldId in DUAL_CODE_FIELDS) {
+    return dualCodeCell(datasetIdentity, line, fieldId, fieldOrdinal, DUAL_CODE_FIELDS[fieldId]);
+  }
+  if (fieldId === WALL_THICKNESS_FIELD) {
+    return wallThicknessCell(datasetIdentity, line, fieldId, fieldOrdinal);
+  }
   if (fieldId in SOURCE_FIELDS) {
-    return normalizeCellValue(group[SOURCE_FIELDS[fieldId]]) === null
-      ? LFEA_PREFLIGHT_FIELD_STATUS.BLOCKED_MISSING
-      : LFEA_PREFLIGHT_FIELD_STATUS.RESOLVED_EXACT;
+    const value = normalizeCellValue(line[SOURCE_FIELDS[fieldId]]);
+    return sealCell({
+      fieldId,
+      fieldOrdinal,
+      value,
+      status: value === null ? LFEA_PREFLIGHT_FIELD_STATUS.BLOCKED_MISSING : LFEA_PREFLIGHT_FIELD_STATUS.RESOLVED_EXACT,
+      sourceKind: 'SHARED_MODEL',
+      sourceHash: datasetIdentity,
+      locator: line.provenancePath,
+      method: 'SOURCE_MODEL_PROJECTION',
+      candidateCount: value === null ? 0 : 1,
+    });
   }
   if (fieldId in MASTER_FIELDS) {
-    const value = group.resolution.status === 'EXACT'
-      ? normalizeCellValue(group[MASTER_FIELDS[fieldId]])
+    const value = line.resolution.status === 'EXACT'
+      ? normalizeCellValue(line[MASTER_FIELDS[fieldId]])
       : null;
-    return masterStatus(group.resolution, value);
+    return sealCell({
+      fieldId,
+      fieldOrdinal,
+      value,
+      status: masterStatus(line.resolution, value),
+      sourceKind: 'MASTER_LINE_LIST',
+      sourceHash: line.masterRowHash,
+      locator: `MASTER_LINE_LIST:${line.isolatedLineKeyToken}`,
+      method: masterMethod(line.resolution),
+      candidateCount: line.candidateCount,
+    });
   }
-  return LFEA_PREFLIGHT_FIELD_STATUS.BLOCKED_MISSING;
+  return sealCell({
+    fieldId,
+    fieldOrdinal,
+    value: null,
+    status: LFEA_PREFLIGHT_FIELD_STATUS.BLOCKED_MISSING,
+    sourceKind: 'UNRESOLVED',
+    sourceHash: null,
+    locator: line.provenancePath,
+    method: 'NOT_YET_PROJECTED_BY_CURRENT_READ_ONLY_PREFLIGHT',
+    candidateCount: 0,
+  });
+}
+
+function dualCodeCell(datasetIdentity, line, fieldId, fieldOrdinal, config) {
+  const sourceValue = normalizeCodeValue(line[config.sourceProperty]);
+  const masterValue = line.resolution.status === 'EXACT'
+    ? normalizeCodeValue(line[config.masterProperty])
+    : null;
+  if (sourceValue !== null && masterValue !== null && !sameCode(sourceValue, masterValue)) {
+    return sealCell({
+      fieldId,
+      fieldOrdinal,
+      value: null,
+      status: LFEA_PREFLIGHT_FIELD_STATUS.BLOCKED_CONFLICT,
+      sourceKind: 'SHARED_MODEL+MASTER_LINE_LIST',
+      sourceHash: combinedSourceHash(datasetIdentity, line),
+      locator: `${line.provenancePath} | MASTER_LINE_LIST:${line.isolatedLineKeyToken}`,
+      method: 'SOURCE_MASTER_CONFLICT',
+      candidateCount: 2,
+    });
+  }
+  if (sourceValue !== null && masterValue !== null) {
+    return sealCell({
+      fieldId,
+      fieldOrdinal,
+      value: sourceValue,
+      status: LFEA_PREFLIGHT_FIELD_STATUS.RESOLVED_EXACT,
+      sourceKind: 'SHARED_MODEL+MASTER_LINE_LIST',
+      sourceHash: combinedSourceHash(datasetIdentity, line),
+      locator: `${line.provenancePath} | MASTER_LINE_LIST:${line.isolatedLineKeyToken}`,
+      method: 'EXACT_SOURCE_MASTER_AGREEMENT',
+      candidateCount: 2,
+    });
+  }
+  if (sourceValue !== null) {
+    return sealCell({
+      fieldId,
+      fieldOrdinal,
+      value: sourceValue,
+      status: LFEA_PREFLIGHT_FIELD_STATUS.RESOLVED_EXACT,
+      sourceKind: 'SHARED_MODEL',
+      sourceHash: datasetIdentity,
+      locator: line.provenancePath,
+      method: line.resolution.status === 'BLOCKED_AMBIGUOUS'
+        ? 'SOURCE_MODEL_EXPLICIT; MASTER_LINE_LIST_AMBIGUOUS_NOT_SELECTED'
+        : 'SOURCE_MODEL_EXPLICIT',
+      candidateCount: 1,
+    });
+  }
+  if (masterValue !== null) {
+    return sealCell({
+      fieldId,
+      fieldOrdinal,
+      value: masterValue,
+      status: LFEA_PREFLIGHT_FIELD_STATUS.RESOLVED_EXACT,
+      sourceKind: 'MASTER_LINE_LIST',
+      sourceHash: line.masterRowHash,
+      locator: `MASTER_LINE_LIST:${line.isolatedLineKeyToken}`,
+      method: 'EXACT_NORMALIZED_LINE_KEY',
+      candidateCount: line.candidateCount,
+    });
+  }
+  return sealCell({
+    fieldId,
+    fieldOrdinal,
+    value: null,
+    status: masterStatus(line.resolution, null),
+    sourceKind: line.resolution.status === 'BLOCKED_AMBIGUOUS' ? 'MASTER_LINE_LIST' : 'UNRESOLVED',
+    sourceHash: null,
+    locator: line.resolution.status === 'BLOCKED_AMBIGUOUS'
+      ? `MASTER_LINE_LIST:${line.isolatedLineKeyToken}`
+      : line.provenancePath,
+    method: masterMethod(line.resolution),
+    candidateCount: line.candidateCount,
+  });
+}
+
+function wallThicknessCell(datasetIdentity, line, fieldId, fieldOrdinal) {
+  if (line.wallThicknessConflict) {
+    return sealCell({
+      fieldId,
+      fieldOrdinal,
+      value: null,
+      status: LFEA_PREFLIGHT_FIELD_STATUS.BLOCKED_CONFLICT,
+      sourceKind: 'SHARED_MODEL',
+      sourceHash: datasetIdentity,
+      locator: line.provenancePath,
+      method: 'CONFLICTING_EXPLICIT_SOURCE_WALL_THICKNESSES',
+      candidateCount: line.wallThicknessCandidates.length,
+    });
+  }
+  const value = normalizeCellValue(line.wallThickness);
+  return sealCell({
+    fieldId,
+    fieldOrdinal,
+    value,
+    status: value === null ? LFEA_PREFLIGHT_FIELD_STATUS.BLOCKED_MISSING : LFEA_PREFLIGHT_FIELD_STATUS.RESOLVED_EXACT,
+    sourceKind: value === null ? 'UNRESOLVED' : 'SHARED_MODEL',
+    sourceHash: value === null ? null : datasetIdentity,
+    locator: line.provenancePath,
+    method: value === null ? 'NO_EXPLICIT_SOURCE_WALL_THICKNESS' : 'AGREED_EXPLICIT_SOURCE_WALL_THICKNESS',
+    candidateCount: line.wallThicknessCandidates.length,
+  });
+}
+
+function createLineDraft(group, targetId, provenancePath, memberIds) {
+  return {
+    targetId,
+    fullLineKeyName: group.fullLineKeyName,
+    isolatedLineKeyToken: group.isolatedLineKeyToken,
+    service: group.service,
+    rating: group.rating,
+    pipingClass: group.cls,
+    cls: group.cls,
+    bore: group.bore,
+    sourcePipingClass: group.sourcePipingClass,
+    sourceRating: group.sourceRating,
+    masterPipingClass: group.masterPipingClass,
+    masterRating: group.masterRating,
+    masterRowHash: group.masterRowHash,
+    candidateCount: group.candidateCount,
+    designPressure: group.designPressure,
+    hydroTestPressure: group.hydroTestPressure,
+    designTemperature: group.designTemperature,
+    operatingTemperature: group.operatingTemperature,
+    minimumTemperature: group.minimumTemperature,
+    phase: group.phase,
+    materialCode: group.materialCode,
+    operatingDensity: group.operatingDensity,
+    gasDensity: group.gasDensity,
+    liquidDensity: group.liquidDensity,
+    mixedDensity: group.mixedDensity,
+    insulationThickness: group.insulationThickness,
+    wallThickness: group.wallThickness,
+    wallThicknessConflict: group.wallThicknessConflict,
+    wallThicknessCandidates: Object.freeze([...(group.wallThicknessCandidates ?? [])]),
+    metalDensity: group.metalDensity,
+    itemCount: group.items.length,
+    resolution: Object.freeze(structuredClone(group.resolution)),
+    provenancePath,
+    sourceMemberIds: Object.freeze(memberIds),
+  };
 }
 
 function masterStatus(resolution, value) {
@@ -309,12 +459,24 @@ function masterStatus(resolution, value) {
     : LFEA_PREFLIGHT_FIELD_STATUS.RESOLVED_EXACT;
 }
 
+function masterMethod(resolution) {
+  if (resolution.status === 'EXACT') return 'EXACT_NORMALIZED_LINE_KEY';
+  if (resolution.status === 'BLOCKED_AMBIGUOUS') return 'DUPLICATE_PRESERVING_KEY_BUCKET';
+  return 'NO_MASTER_ROW_MATCH';
+}
+
+function combinedSourceHash(datasetIdentity, line) {
+  return semanticHash({
+    sharedModel: datasetIdentity,
+    masterLineRow: line.masterRowHash,
+  });
+}
+
 function sealCell(input) {
-  if (input.status >= LFEA_PREFLIGHT_FIELD_STATUS.BLOCKED_MISSING
-    && input.status <= LFEA_PREFLIGHT_FIELD_STATUS.BLOCKED_STALE_SOURCE
-    && input.value !== null) {
+  if (isBlockedStatus(input.status) && input.value !== null) {
     throw sourceError('E_P06_BLOCKED_VALUE_NON_NULL', `Blocked Phase-1 field ${input.fieldId} must retain null value.`);
   }
+  const evidence = input.evidence ?? defaultEvidence(input);
   return Object.freeze({
     fieldId: input.fieldId,
     fieldOrdinal: input.fieldOrdinal,
@@ -326,7 +488,50 @@ function sealCell(input) {
     locator: input.locator,
     method: input.method,
     candidateCount: input.candidateCount,
+    evidence,
   });
+}
+
+function defaultEvidence(input) {
+  if (input.sourceKind === 'UNRESOLVED' && input.sourceHash === null) return Object.freeze([]);
+  return Object.freeze([Object.freeze({
+    value: input.value,
+    status: input.status,
+    statusText: statusText(input.status),
+    sourceKind: input.sourceKind,
+    sourceKey: null,
+    sourceHash: input.sourceHash,
+    locator: input.locator,
+    method: input.method,
+    candidateCount: input.candidateCount,
+    diagnostics: Object.freeze([]),
+    targetRecordHash: null,
+  })]);
+}
+
+function blockedSource(projection) {
+  const blocked = Object.freeze({
+    schema: LFEA_PREFLIGHT_PHASE1_REVIEW_SOURCE_SCHEMA,
+    blocked: true,
+    reason: projection.blocked,
+    projection,
+    datasetIdentity: null,
+    targetCount: 0,
+    componentCount: 0,
+    columnSchemaHash: LFEA_PREFLIGHT_COLUMN_SCHEMA_HASH,
+    engineeringEvidenceHash: null,
+    masterAuthoritySemanticHash: null,
+    structuralHash: null,
+  });
+  SOURCE_STATE.set(blocked, { lineByTargetId: new Map(), componentItems: [], authorityBridge: null });
+  return blocked;
+}
+
+function sharedModelHash(model) {
+  const sharedModel = model?._context?.contracts?.sharedModel
+    ?? model?.sharedModel
+    ?? (model?.semanticHash && Array.isArray(model?.components) ? model : null);
+  return sharedModel?.semanticHash ?? null;
 }
 
 function readinessFromStatuses(statuses) {
@@ -351,6 +556,13 @@ function statusText(status) {
     if (value === status) return name;
   }
   throw sourceError('E_P06_FIELD_STATUS_INVALID', `Unknown Phase-1 field status: ${status}`);
+}
+
+function isBlockedStatus(status) {
+  return status === LFEA_PREFLIGHT_FIELD_STATUS.BLOCKED_MISSING
+    || status === LFEA_PREFLIGHT_FIELD_STATUS.BLOCKED_AMBIGUOUS
+    || status === LFEA_PREFLIGHT_FIELD_STATUS.BLOCKED_CONFLICT
+    || status === LFEA_PREFLIGHT_FIELD_STATUS.BLOCKED_STALE_SOURCE;
 }
 
 function stableGroupIdentity(group) {
@@ -397,7 +609,17 @@ function compareItems(left, right) {
 function normalizeCellValue(value) {
   if (value === undefined || value === null || value === '') return null;
   if (typeof value === 'number') return Number.isFinite(value) ? (Object.is(value, -0) ? 0 : value) : null;
-  return String(value);
+  const text = String(value).trim();
+  return text ? text : null;
+}
+
+function normalizeCodeValue(value) {
+  const normalized = normalizeCellValue(value);
+  return normalized === null ? null : String(normalized);
+}
+
+function sameCode(left, right) {
+  return left.trim().toUpperCase() === right.trim().toUpperCase();
 }
 
 function requireIdentityText(value, field) {

@@ -8,6 +8,7 @@ assert.match(source, /result\.forceGlobal/u);
 assert.match(source, /definition\.basis\.e1/u);
 assert.match(source, /supportBinding\?\.supportKey \?\? definition\.sourceEntityId/u);
 assert.match(source, /upGlobal: input\.upGlobal/u);
+assert.match(source, /reportingSignConvention: result\.reportingSignConvention/u);
 assert.match(source, /LFEA_SUPPORT_ACTIONS_INTERFACE_SET_STALE/u);
 assert.match(source, /LFEA_SUPPORT_ACTIONS_ENTITY_AMBIGUOUS/u);
 assert.doesNotMatch(source, /\bforceLocal\b/u);

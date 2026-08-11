@@ -67,6 +67,101 @@ const workbenchFiles = fs.readdirSync(path.join(ROOT, 'src', 'workspace'))
 const sourceText = workbenchFiles.map((name) => fs.readFileSync(path.join(ROOT, 'src', 'workspace', name), 'utf8')).join('\n');
 assert.doesNotMatch(sourceText, /EventBus|analysis-context|workspace-consumer-context/u);
 
+const panelsSource = fs.readFileSync(
+  path.join(ROOT, 'src', 'workspace', 'lfea-workbench-panels.js'),
+  'utf8',
+);
+const stylesSource = fs.readFileSync(
+  path.join(ROOT, 'src', 'workspace', 'lfea-workbench-styles.js'),
+  'utf8',
+);
+
+for (const status of ['EMPTY', 'READY', 'RUNNING', 'QUALIFIED', 'FAILED']) {
+  assert.match(
+    stylesSource,
+    new RegExp(`lfea-workbench__status\\[data-status="${status}"\\]`, 'u'),
+    `workbench status styling must explicitly distinguish ${status}`,
+  );
+}
+assert.match(
+  panelsSource,
+  /Displayed displacement multiplier[\s\S]*?dimensionless; 1× = true displacement; displacement unit \$\{displacementUnit\}/u,
+  'deformation control must identify the scale as dimensionless and keep its result unit separate',
+);
+assert.match(
+  panelsSource,
+  /state\.packageValue\?\.analysisDefinition\?\.solverProfile\?\.units\?\.length/u,
+  'deformation presentation must source the displacement unit from the committed solver profile',
+);
+assert.match(panelsSource, /input\.dataset\.quantity = 'DIMENSIONLESS_DISPLAY_MULTIPLIER'/u);
+assert.match(
+  panelsSource,
+  /input\.title = `Display-only multiplier\. Calculated displacement values remain in \$\{displacementUnit\}\.`/u,
+  'deformation title must preserve display-only authority',
+);
+
+const progressLabels = {
+  QUEUED: 'Queued for analysis',
+  VALIDATE: 'Validating mesh package',
+  PREFLIGHT: 'Checking declared capacity',
+  ADAPT: 'Building qualified FEA model',
+  SOLVE: 'Solving continuum model',
+  PROJECT: 'Preparing review stress projection',
+  REVIEW: 'Running engineering review',
+  EXPORT: 'Preparing evidence export',
+  COMPLETE: 'Analysis complete',
+};
+for (const [stage, label] of Object.entries(progressLabels)) {
+  assert.match(
+    panelsSource,
+    new RegExp(`${stage}: '${label}'`, 'u'),
+    `progress presentation must map real stage ${stage}`,
+  );
+}
+assert.match(
+  panelsSource,
+  /progressStageLabel\(rawStage\)[\s\S]*?output\.dataset\.stage = rawStage;[\s\S]*?output\.title = `Pipeline stage: \$\{rawStage\}`/u,
+  'progress output must retain raw stage metadata/title beside the human label',
+);
+assert.match(
+  panelsSource,
+  /return PROGRESS_STAGE_LABELS\[stage\] \?\? stage/u,
+  'unknown future progress stages must remain visible as their raw code',
+);
+
+assert.doesNotMatch(
+  panelsSource,
+  /Mesh quality evidence — no acceptance threshold applied/u,
+  'quality results must not imply that no upstream geometry qualification exists',
+);
+assert.match(
+  panelsSource,
+  /meshQualityAuthority\(root, state\.packageValue\)[\s\S]*?lfeaResultTable\([\s\S]*?'Mesh quality evidence'/u,
+  'quality table must be paired with explicit gate-ownership presentation',
+);
+assert.match(
+  panelsSource,
+  /solverProfile\?\.tolerances\?\.geometryArea/u,
+  'quality authority note must source the declared upstream geometry tolerance',
+);
+assert.match(panelsSource, /value\.dataset\.role = 'lfea-quality-authority'/u);
+assert.match(panelsSource, /value\.dataset\.geometryTolerance = toleranceText/u);
+assert.match(
+  panelsSource,
+  /Geometry validity was qualified upstream using solverProfile\.tolerances\.geometryArea = \$\{toleranceText\}/u,
+  'quality note must state upstream geometry qualification',
+);
+assert.match(
+  panelsSource,
+  /This panel adds no separate acceptance threshold to the displayed Jacobian ratio, edge-length ratio, or corner-cosine metrics/u,
+  'quality note must distinguish descriptive metrics from upstream geometry validity gates',
+);
+assert.match(
+  panelsSource,
+  /signed-area\/Jacobian validity remains governed by upstream model qualification/u,
+  'quality note must preserve signed-area/Jacobian gate ownership',
+);
+
 console.log(JSON.stringify({
   check: 'lfea-workbench',
   evidenceBasis: '[SIMULATED]/ANALYTICAL',
@@ -76,4 +171,8 @@ console.log(JSON.stringify({
   projectedStressAuthority: 'NON_AUTHORITATIVE_REVIEW_PROJECTION',
   failClosed: true,
   workspaceCoupling: false,
+  statusStatePresentationGuarded: true,
+  deformationMultiplierSemanticsGuarded: true,
+  progressStageHumanLabelsGuarded: true,
+  qualityGateOwnershipGuarded: true,
 }));

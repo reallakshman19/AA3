@@ -1,0 +1,67 @@
+name: LAFEA hybrid browser validation
+
+on:
+  pull_request:
+    paths:
+      - '.github/workflows/lafea-hybrid-browser-validation.yml'
+      - 'e2e/lafea-hybrid-validation-matrix.json'
+      - 'e2e/lafea-hybrid-workbench.spec.js'
+      - 'e2e/fixtures/lafea-hybrid-workbench-fixture.js'
+      - 'e2e/fixtures/sequential-authoring-bridge-fixture.js'
+      - 'scripts/lafea-u4h-browser-source-guard.mjs'
+      - 'scripts/sequential-sketcher-authoring-bridge-check.mjs'
+      - 'scripts/sequential-sketcher-authoring-bridge-source-guard.mjs'
+      - 'scripts/run-playwright.mjs'
+      - 'src/**'
+      - 'package.json'
+      - 'package-lock.json'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  browser-validation:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    steps:
+      - name: Checkout exact candidate head
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+          fetch-depth: 0
+          show-progress: false
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: Install locked dependencies
+        run: npm ci
+
+      - name: Validate browser and authoring source contracts
+        run: |
+          node scripts/lafea-u4h-browser-source-guard.mjs
+          node scripts/sequential-sketcher-authoring-bridge-check.mjs
+          node scripts/sequential-sketcher-authoring-bridge-source-guard.mjs
+
+      - name: Install pinned Chromium
+        env:
+          PLAYWRIGHT_BROWSERS_PATH: '0'
+        run: npx playwright install chromium --with-deps
+
+      - name: Run hybrid workbench browser validation
+        run: node scripts/run-playwright.mjs e2e/lafea-hybrid-workbench.spec.js
+
+      - name: Upload browser validation evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: lafea-hybrid-browser-validation-evidence
+          path: |
+            playwright-report/
+            test-results/
+          if-no-files-found: warn
+          retention-days: 14

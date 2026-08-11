@@ -58,7 +58,9 @@ export const NOZZLE_ROW_KEYS = Object.freeze([
   'semanticHash', 'evidenceHash',
 ]);
 export const CODE_ROW_KEYS = Object.freeze([
-  'checkId', 'category', 'componentId', 'codePointId', 'combinationId', 'status',
+  'checkId', 'category', 'componentId', 'codePointId', 'combinationId',
+  'codeProfileId', 'codeProfileSemanticHash', 'editionDatasetSemanticHash',
+  'sourceCaseIds', 'sourcePhysicalLoadCaseHashes', 'status',
   'calculatedStress', 'allowableStress', 'utilization', 'governingRuleId',
   'sourceRecoveryHashes', 'semanticHash', 'evidenceHash',
 ]);
@@ -180,6 +182,28 @@ export function requireLinearPipingPresentation(record) {
     requireHash(row.evidenceHash, `nozzleRows[${index}].evidenceHash`);
   });
   record.codeRows.forEach((row, index) => {
+    nonEmptyString(row.codeProfileId, `codeRows[${index}].codeProfileId`);
+    requireHash(row.codeProfileSemanticHash, `codeRows[${index}].codeProfileSemanticHash`);
+    requireHash(row.editionDatasetSemanticHash, `codeRows[${index}].editionDatasetSemanticHash`);
+    const sourceCaseIds = requireArray(row.sourceCaseIds, `codeRows[${index}].sourceCaseIds`);
+    const physicalHashes = requireArray(
+      row.sourcePhysicalLoadCaseHashes,
+      `codeRows[${index}].sourcePhysicalLoadCaseHashes`,
+    );
+    if (sourceCaseIds.length < 1 || sourceCaseIds.length !== physicalHashes.length) {
+      failPresentation(
+        'B31 code row source case IDs and physical hashes must be non-empty ordered pairs.',
+        'PIPING_PRESENTATION_B31_CASE_PROVENANCE_INVALID',
+        { index, sourceCaseCount: sourceCaseIds.length, physicalHashCount: physicalHashes.length },
+      );
+    }
+    sourceCaseIds.forEach((caseId, caseIndex) => {
+      nonEmptyString(caseId, `codeRows[${index}].sourceCaseIds[${caseIndex}]`);
+      requireHash(
+        physicalHashes[caseIndex],
+        `codeRows[${index}].sourcePhysicalLoadCaseHashes[${caseIndex}]`,
+      );
+    });
     requireArray(row.sourceRecoveryHashes, `codeRows[${index}].sourceRecoveryHashes`)
       .forEach((hash, hashIndex) => requireHash(hash, `codeRows[${index}].sourceRecoveryHashes[${hashIndex}]`));
     requireHash(row.semanticHash, `codeRows[${index}].semanticHash`);

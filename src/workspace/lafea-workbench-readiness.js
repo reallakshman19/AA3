@@ -1,4 +1,5 @@
 import { lafeaLifecycleReadiness } from './lafea-lifecycle.js';
+import { projectLafeaWorkbenchReleaseBinding } from './lafea-workbench-release-binding.js';
 
 export function projectLafeaWorkbenchReadiness(stageId, stage) {
   const calculationState = stage.execution?.status === 'QUALIFIED'
@@ -9,6 +10,13 @@ export function projectLafeaWorkbenchReadiness(stageId, stage) {
   const domainFirst = stage.domainFirstProfileActive === true;
   const domainCurrent = domainFirst && stage.analysisDomainProjection?.state === 'CURRENT_PASS';
   const geometryCurrent = domainFirst && stage.analysisGeometryProjection?.state === 'CURRENT_PASS';
+  const releaseBinding = projectLafeaWorkbenchReleaseBinding(
+    stage,
+    stage.retainedTemplateReleaseRecord,
+  );
+  const releaseState = releaseBinding.releaseQualified
+    ? 'RELEASE_QUALIFIED'
+    : 'RELEASE_NOT_QUALIFIED';
   if (!lifecycle) return freeze({
     schema: 'lafea-workbench-lifecycle-readiness/v2',
     stageId,
@@ -17,7 +25,9 @@ export function projectLafeaWorkbenchReadiness(stageId, stage) {
     calculationState,
     resultState: 'RESULT_NOT_READY',
     codeState: 'CODE_NOT_READY',
-    releaseState: 'RELEASE_NOT_QUALIFIED',
+    releaseState,
+    releaseBinding,
+    releaseBlockingReasons: [...releaseBinding.reasons],
     sourceCurrent: false,
     modelCurrent: false,
     preMeshModelCurrent: domainCurrent,
@@ -51,7 +61,9 @@ export function projectLafeaWorkbenchReadiness(stageId, stage) {
     calculationState,
     resultState: resultReady ? 'RESULT_READY' : 'RESULT_NOT_READY',
     codeState: codeReady ? 'CODE_READY' : 'CODE_NOT_READY',
-    releaseState: 'RELEASE_NOT_QUALIFIED',
+    releaseState,
+    releaseBinding,
+    releaseBlockingReasons: [...releaseBinding.reasons],
     sourceCurrent: current && base.sourceCurrent,
     modelCurrent: current && base.modelCurrent,
     preMeshModelCurrent: domainFirst ? current && domainCurrent : current && base.modelCurrent,

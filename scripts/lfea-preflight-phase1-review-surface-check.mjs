@@ -41,6 +41,7 @@ for (const label of [
   'Method',
   'Locator',
   'Source hash',
+  'Evidence count',
   'Review disposition',
   'Proposal IDs',
   'Review event IDs',
@@ -48,9 +49,15 @@ for (const label of [
 ]) {
   assert.match(surface, new RegExp(`['"]${label}['"]`, 'u'));
 }
+assert.match(surface, /value\.cell\.evidence/u);
+assert.match(surface, /formatEvidence/u);
+assert.match(surface, /entry\.sourceKind/u);
+assert.match(surface, /entry\.statusText/u);
+assert.match(surface, /entry\.method/u);
+assert.match(surface, /entry\.sourceHash/u);
 assert.match(surface, /Append-only engineering review evidence/u);
 assert.match(surface, /Undo compensates a prior event; it never deletes history/u);
-console.log('P06C-UI-04 PASS selected-cell Trace uses one source/provenance/review/ledger language');
+console.log('P06C-UI-04 PASS selected-cell Trace renders sealed multi-source evidence without reconstructing authority');
 
 assert.doesNotMatch(surface, /EventBus|publish\(|dispatchEvent|masterDataController|applyMaster|runLinearPiping|solveInputXml|compileSolver|factorization/u);
 assert.doesNotMatch(surface, /innerHTML|insertAdjacentHTML|outerHTML/u);
@@ -73,8 +80,9 @@ console.log(JSON.stringify({
   actions: ['ACCEPT', 'REJECT', 'OVERRIDE', 'DEFER', 'UNDO'],
   traceFields: [
     'target', 'field', 'value', 'status', 'source', 'method', 'locator', 'sourceHash',
-    'reviewDisposition', 'proposalIds', 'reviewEventIds', 'ledgerHash',
+    'evidence', 'reviewDisposition', 'proposalIds', 'reviewEventIds', 'ledgerHash',
   ],
+  sealedEvidenceRendering: true,
   explicitHostTimestamp: true,
   coreReadsAmbientClock: false,
   sourceMutationAuthority: false,

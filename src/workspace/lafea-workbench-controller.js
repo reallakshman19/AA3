@@ -132,6 +132,36 @@ export class LafeaWorkbenchController {
   revalidateLifecycleBinding(sourceHash, originRef) {
     return this.store.revalidateLifecycleBinding(sourceHash, originRef);
   }
+  registerTemplateReleaseRecord(value, stageId = this.getState().activeStageId) {
+    return this.store.registerTemplateReleaseRecord(value, stageId);
+  }
+  selectRetainedTemplateReleaseRecord(stageId = this.getState().activeStageId) {
+    return this.store.selectRetainedTemplateReleaseRecord(stageId);
+  }
+  buildReleaseBindingProjection(stageId = this.getState().activeStageId) {
+    return this.store.buildReleaseBindingProjection(stageId);
+  }
+  registerNumericalVerificationEvidence(value, stageId = this.getState().activeStageId) {
+    return this.store.registerNumericalVerificationEvidence(value, stageId);
+  }
+  selectRetainedNumericalVerificationEvidence(stageId = this.getState().activeStageId) {
+    return this.store.selectRetainedNumericalVerificationEvidence(stageId);
+  }
+  buildNumericalVerificationProjection(stageId = this.getState().activeStageId) {
+    return this.store.buildNumericalVerificationProjection(stageId);
+  }
+  registerT6GeometryQualification(value, stageId = this.getState().activeStageId) {
+    return this.store.registerT6GeometryQualification(value, stageId);
+  }
+  selectRetainedT6GeometryQualification(stageId = this.getState().activeStageId) {
+    return this.store.selectRetainedT6GeometryQualification(stageId);
+  }
+  buildT6GeometryQualificationProjection(stageId = this.getState().activeStageId) {
+    return this.store.buildT6GeometryQualificationProjection(stageId);
+  }
+  exportT6GeometryQualification(stageId = this.getState().activeStageId) {
+    return this.store.exportT6GeometryQualification(stageId);
+  }
   validateLafeaAnalysisMeshEvidence(value) {
     return this.store.validateLafeaAnalysisMeshEvidence(value);
   }

@@ -37,6 +37,7 @@ function action(triad) {
     nodeId: interfaceRow.nodeId,
     interfaceId: interfaceRow.interfaceId,
     loadCaseId: interfaceRow.loadCaseId,
+    reportingSignConvention: interfaceRow.reportingSignConvention,
     physicalLoadCaseHash: analysisRow.physicalLoadCaseHash,
     analysisResultSemanticHash: analysisRow.analysisResultSemanticHash,
     executionHash: analysisRow.executionHash,
@@ -64,16 +65,25 @@ const qualifiedModel = createLinearPipingSupportActionWorkbookModel(qualifiedInp
 assert.equal(qualifiedModel.exportEligibility, 'ENGINEERING_EXPORT_ALLOWED');
 assert.ok(qualifiedModel.sheets.some((sheet) => sheet.name === 'Engineering Loads'));
 assert.ok(qualifiedModel.sheets.some((sheet) => sheet.name === 'Sign-off'));
-assert.equal(qualifiedModel.sheets.find((sheet) => sheet.name === 'Engineering Loads').rows[0][4], resolvedTriad.fAxial);
-assert.equal(qualifiedModel.sheets.find((sheet) => sheet.name === 'Engineering Loads').rows[0][15], resolvedTriad.semanticHash);
+const engineeringModelSheet = qualifiedModel.sheets.find((sheet) => sheet.name === 'Engineering Loads');
+assert.equal(engineeringModelSheet.columns[4], 'Reporting Sign Convention');
+assert.equal(engineeringModelSheet.rows[0][4], interfaceRow.reportingSignConvention);
+assert.equal(engineeringModelSheet.rows[0][5], resolvedTriad.fAxial);
+assert.equal(engineeringModelSheet.rows[0][16], resolvedTriad.semanticHash);
+assert.match(
+  qualifiedModel.sheets.find((sheet) => sheet.name === 'Cover').rows.at(-1)[1],
+  /Per action row/u,
+);
 
 const workbook = linearPipingSupportActionWorkbook(qualifiedInput);
 assert.ok(workbook.SheetNames.includes('Engineering Loads'));
 const engineeringSheet = workbook.Sheets['Engineering Loads'];
-for (const address of ['E2', 'F2', 'G2']) {
+assert.equal(engineeringSheet.E2.v, interfaceRow.reportingSignConvention);
+for (const address of ['F2', 'G2', 'H2']) {
   assert.ok(Array.isArray(engineeringSheet[address].c));
   assert.match(engineeringSheet[address].c[0].t, new RegExp(analysisRow.executionHash.replace(/[.*+?^${}()|[\]\\]/gu, '\\$&'), 'u'));
   assert.match(engineeringSheet[address].c[0].t, new RegExp(interfaceRow.recoverySemanticHash.replace(/[.*+?^${}()|[\]\\]/gu, '\\$&'), 'u'));
+  assert.match(engineeringSheet[address].c[0].t, new RegExp(interfaceRow.reportingSignConvention, 'u'));
   assert.match(engineeringSheet[address].c[0].t, /Model version: 17/u);
 }
 const bytes = linearPipingSupportActionXlsxBytes(qualifiedInput);
@@ -90,18 +100,20 @@ const degenerateModel = createLinearPipingSupportActionWorkbookModel({
   actions: [action(degenerateTriad)],
 });
 const degenerateRow = degenerateModel.sheets.find((sheet) => sheet.name === 'Engineering Loads').rows[0];
-assert.equal(degenerateRow[4], degenerateTriad.fAxial);
-assert.equal(degenerateRow[5], null);
+assert.equal(degenerateRow[4], interfaceRow.reportingSignConvention);
+assert.equal(degenerateRow[5], degenerateTriad.fAxial);
 assert.equal(degenerateRow[6], null);
-assert.equal(degenerateRow[7], 'BLOCKED_AXIS_DEGENERATE');
-assert.equal(degenerateRow[8], 'AXIAL_PARALLEL_TO_VERTICAL');
+assert.equal(degenerateRow[7], null);
+assert.equal(degenerateRow[8], 'BLOCKED_AXIS_DEGENERATE');
+assert.equal(degenerateRow[9], 'AXIAL_PARALLEL_TO_VERTICAL');
 const degenerateWorkbook = linearPipingSupportActionWorkbook({
   ...qualifiedInput,
   actions: [action(degenerateTriad)],
 });
-assert.notEqual(degenerateWorkbook.Sheets['Engineering Loads'].F2?.v, 0);
 assert.notEqual(degenerateWorkbook.Sheets['Engineering Loads'].G2?.v, 0);
-assert.match(degenerateWorkbook.Sheets['Engineering Loads'].F2.c[0].t, /BLOCKED_AXIS_DEGENERATE/u);
+assert.notEqual(degenerateWorkbook.Sheets['Engineering Loads'].H2?.v, 0);
+assert.match(degenerateWorkbook.Sheets['Engineering Loads'].G2.c[0].t, /BLOCKED_AXIS_DEGENERATE/u);
+assert.match(degenerateWorkbook.Sheets['Engineering Loads'].G2.c[0].t, new RegExp(interfaceRow.reportingSignConvention, 'u'));
 
 const conditionalApplication = sealLinearPipingQualifiedApplicationResult({
   schema: APPLICATION_RESULT_REQUEST_SCHEMA,
@@ -136,6 +148,7 @@ const conditionalModel = createLinearPipingSupportActionWorkbookModel({
     nodeId: conditionalInterface.nodeId,
     interfaceId: conditionalInterface.interfaceId,
     loadCaseId: conditionalInterface.loadCaseId,
+    reportingSignConvention: conditionalInterface.reportingSignConvention,
     physicalLoadCaseHash: conditionalAnalysis.physicalLoadCaseHash,
     analysisResultSemanticHash: conditionalAnalysis.analysisResultSemanticHash,
     executionHash: conditionalAnalysis.executionHash,
@@ -150,6 +163,23 @@ assert.ok(conditionalModel.sheets.some((sheet) => sheet.name === 'Audit Actions'
 assert.ok(conditionalModel.sheets.some((sheet) => sheet.name === 'Conditional Notice'));
 assert.match(conditionalModel.sheets.find((sheet) => sheet.name === 'Cover').rows[1][1], /AUDIT ONLY/u);
 
+expectCode(
+  () => createLinearPipingSupportActionWorkbookModel({
+    ...qualifiedInput,
+    actions: [{ ...action(resolvedTriad), reportingSignConvention: 'UNKNOWN_SIGN' }],
+  }),
+  'PIPING_SUPPORT_ACTION_XLSX_SIGN_CONVENTION_INVALID',
+);
+const reversedSign = interfaceRow.reportingSignConvention === 'FORCE_ON_PIPE_FROM_INTERFACE'
+  ? 'FORCE_ON_INTERFACE_FROM_PIPE'
+  : 'FORCE_ON_PIPE_FROM_INTERFACE';
+expectCode(
+  () => createLinearPipingSupportActionWorkbookModel({
+    ...qualifiedInput,
+    actions: [{ ...action(resolvedTriad), reportingSignConvention: reversedSign }],
+  }),
+  'PIPING_SUPPORT_ACTION_XLSX_SIGN_CONVENTION_STALE',
+);
 expectCode(
   () => createLinearPipingSupportActionWorkbookModel({
     ...qualifiedInput,

@@ -70,6 +70,8 @@ jobs:
           set -euo pipefail
           node scripts/lfea-preflight-phase1-indexed-model-check.mjs
           node scripts/lfea-preflight-phase1-review-source-check.mjs
+          node scripts/lfea-preflight-phase1-master-authority-check.mjs
+          node scripts/lfea-preflight-phase1-master-review-integration-check.mjs
           node scripts/lfea-preflight-phase1-review-session-check.mjs
           node scripts/lfea-preflight-phase1-review-surface-check.mjs
           node scripts/lfea-preflight-phase1-virtualization-check.mjs

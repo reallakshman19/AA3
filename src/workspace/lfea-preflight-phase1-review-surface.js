@@ -246,6 +246,11 @@ function renderSelected(elements, value) {
   addTrace(elements.trace, 'Method', value.cell.method);
   addTrace(elements.trace, 'Locator', value.cell.locator);
   addTrace(elements.trace, 'Source hash', value.cell.sourceHash ?? '—');
+  const evidence = Array.isArray(value.cell.evidence) ? value.cell.evidence : [];
+  addTrace(elements.trace, 'Evidence count', evidence.length);
+  evidence.forEach((entry, index) => {
+    addTrace(elements.trace, `Evidence ${index + 1}`, formatEvidence(entry));
+  });
   addTrace(elements.trace, 'Review disposition', value.review.reviewState.disposition);
   addTrace(elements.trace, 'Proposal IDs', value.review.proposalIds.join(', ') || '—');
   addTrace(elements.trace, 'Review event IDs', value.review.events.map((event) => event.eventId).join(', ') || '—');
@@ -254,6 +259,18 @@ function renderSelected(elements, value) {
   const uncompensated = value.review.events.some((event) => event.action !== LFEA_PREFLIGHT_REVIEW_ACTION.UNDO
     && !value.review.reviewState.compensatedEventIds.includes(event.eventId));
   setActionAvailability(elements, { proposalEligible, undoEligible: uncompensated, selected: true });
+}
+
+function formatEvidence(entry) {
+  return [
+    entry.sourceKind,
+    entry.statusText,
+    `value=${formatValue(entry.value)}`,
+    `method=${entry.method}`,
+    `locator=${entry.locator ?? '—'}`,
+    `hash=${entry.sourceHash ?? '—'}`,
+    entry.diagnostics?.length ? `diagnostics=${entry.diagnostics.join(',')}` : null,
+  ].filter(Boolean).join(' | ');
 }
 
 function setActionAvailability(elements, state) {

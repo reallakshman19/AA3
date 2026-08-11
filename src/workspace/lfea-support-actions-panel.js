@@ -5,6 +5,11 @@ export const LFEA_SUPPORT_ACTIONS_PANEL_STATUS = Object.freeze({
   AXIS_DEGENERATE: 'AXIS_DEGENERATE',
 });
 
+const SIGN_CONVENTION_LABELS = Object.freeze({
+  FORCE_ON_PIPE_FROM_INTERFACE: 'Force on pipe from interface',
+  FORCE_ON_INTERFACE_FROM_PIPE: 'Force on interface from pipe',
+});
+
 export function projectLfeaSupportActionsForSelection(
   selection,
   publication,
@@ -27,9 +32,15 @@ export function projectLfeaSupportActionsForSelection(
   if (action.loadCaseId !== publication.loadCaseId) {
     return stale('This recovered action belongs to a different load case.');
   }
+  const signLabel = SIGN_CONVENTION_LABELS[action.reportingSignConvention];
+  if (!signLabel) {
+    return stale('This recovered action has no recognized reporting sign convention. Signed support loads are not displayed.');
+  }
   const unit = publication.units.force;
   const provenance = Object.freeze([
+    row('Reporting sign', `${signLabel} (${action.reportingSignConvention})`),
     row('Load case', publication.loadCaseId),
+    row('Physical load case', publication.physicalLoadCaseHash),
     row('Model version', String(publication.modelVersion)),
     row('Execution', publication.executionHash),
     row('Analysis result', publication.analysisResultSemanticHash),

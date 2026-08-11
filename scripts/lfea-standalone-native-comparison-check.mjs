@@ -207,6 +207,8 @@ function sourceGuards() {
   const controller = fs.readFileSync('src/lfea/native-comparison-controller.js', 'utf8');
   const view = fs.readFileSync('src/lfea/native-comparison-view.js', 'utf8');
   const bootstrap = fs.readFileSync('src/lfea/bootstrap.js', 'utf8');
+  const runtime = fs.readFileSync('src/lfea/standalone-runtime.js', 'utf8');
+  const api = fs.readFileSync('src/lfea/standalone-runtime-api.js', 'utf8');
   const layout = fs.readFileSync('src/lfea/standalone-layout.js', 'utf8');
   for (const source of [engine, controller, view]) {
     assert.doesNotMatch(source, /AnalysisLedger|analysis-ledger|EventBus|localStorage|sessionStorage|lafea-linear-solve/u);
@@ -214,7 +216,9 @@ function sourceGuards() {
   assert.doesNotMatch(engine, /support.?action|B31|utilization|allowable/iu);
   assert.doesNotMatch(view, /innerHTML|insertAdjacentHTML|outerHTML/u);
   assert.match(view, /Deltas are produced only when quantity, dimension, unit, basis/u);
-  assert.match(bootstrap, /compareNativeRuns/u);
-  assert.match(bootstrap, /assertAuthorityUnchanged/u);
+  assert.match(bootstrap, /createLfeaStandaloneRuntime/u);
+  assert.match(runtime, /compareHistoryRuns/u);
+  assert.match(runtime, /assertAuthorityUnchanged/u);
+  assert.match(api, /compareNativeRuns/u);
   assert.match(layout, /id: 'compare', label: 'Compare', state: 'available'/u);
 }

@@ -13,6 +13,7 @@ import {
 import { requireLafeaLifecycleProfileForStage } from './lafea-lifecycle-profiles.js';
 import { requireLafeaStageRegistryEntry } from './lafea-stage-registry.js';
 import { canonicalLafeaSha256 } from './lafea-canonical-sha256.js';
+import { createLafeaContinuumGeometryProjection } from './lafea-continuum-geometry-projection.js';
 import {
   sourceAuthorityDocument,
   validateLafeaSourceAuthority,
@@ -137,11 +138,13 @@ function feaRecords(stage, profile, authority, execution) {
     canonicalInput: execution.canonicalInput,
   });
   const sourceMesh = requireSourceAuthoredMesh(stage.stageId, execution.source);
-  const analysisGeometryHash = engineeringHash(stage.stageId, 'ANALYSIS_GEOMETRY', {
+  const analysisGeometryHash = geometryArtifactHash(
+    stage.stageId,
     sourceHash,
     canonicalModelHash,
-    geometry: sourceGeometry(stage.stageId, sourceMesh),
-  });
+    sourceMesh,
+    execution.canonicalInput,
+  );
   const meshProfileHash = engineeringHash(stage.stageId, 'ANALYSIS_MESH_PROFILE', {
     authority: 'CALLER_AUTHORED_SOURCE_MESH_ONLY',
     previewPolicy: stage.previewPolicy,
@@ -197,6 +200,17 @@ function feaRecords(stage, profile, authority, execution) {
       executionHash, meshHash, recoveryProfileHash,
     }, producerRef),
   ];
+}
+
+function geometryArtifactHash(stageId, sourceHash, canonicalModelHash, sourceMesh, canonicalInput) {
+  if (stageId === 'LAFEA.3') {
+    return createLafeaContinuumGeometryProjection(canonicalInput).semanticHash;
+  }
+  return engineeringHash(stageId, 'ANALYSIS_GEOMETRY', {
+    sourceHash,
+    canonicalModelHash,
+    geometry: sourceGeometry(stageId, sourceMesh),
+  });
 }
 
 function record(stageId, kind, artifactHash, parentHashes, producerRef) {

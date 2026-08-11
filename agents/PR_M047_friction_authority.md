@@ -75,9 +75,13 @@ Public Hexagon CAESAR II documentation independently establishes that:
 - the Load Case Report records the per-case Friction Multiplier;
 - static load cases support load-case-level friction-factor scaling;
 - friction and gaps are nonlinear effects that complicate load-case combinations;
-- the Version 14 configuration surface exposes Friction Angle Variation, Friction Normal Force Variation, Friction Slide Multiplier and Friction Stiffness controls.
+- CAESAR uses the **stiffness method** for static friction: while the tangential trial load is below `mu * normal force`, the tangential reaction is displacement times friction stiffness; at/above the friction limit, the stiffness is replaced on the following iteration by a constant effort opposite sliding direction;
+- Friction Stiffness defaults to `1.0E+06` in the active force/length unit; the BM4_L profile independently pins the same displayed value;
+- Friction Angle Variation defaults to `15 deg`;
+- Friction Normal Force Variation defaults to `0.15`;
+- the Version 14 configuration surface retains those controls plus Friction Slide Multiplier.
 
-F0 does not infer undocumented defaults for the remaining static nonlinear controls. Before F1 production mechanics, their BM4_L values and the exact static iteration semantics must be pinned or independently reconstructed.
+The remaining exact-parity blocker is the numeric **Friction Slide Multiplier**. Hexagon documents it as an internal sliding-force multiplier and explicitly advises users not to adjust it, but the public help reviewed does not publish its numeric value. Therefore a generic F1 stiffness-method kernel is now authorized only with an explicit required slide-multiplier parameter; BM4_L production friction remains blocked until that scalar is independently pinned.
 
 ## Qualification sequence
 
@@ -117,9 +121,9 @@ The connected GitHub source was inspected directly for the load-case report and 
 
 ## Decision
 
-**F0 COMPLETE — NO NEW MECHANICS.**
+**F0 COMPLETE — NO BM4_L PRODUCTION FRICTION MECHANICS YET.**
 
-The next authorized work is the generic nonlinear friction/contact kernel, stacked on this branch. It must retain the exact zero-friction identity and may not be fitted to BM4_L residuals.
+Public Hexagon authority is now sufficient to authorize the next stacked **generic** stiffness-method friction/contact kernel, provided it requires the internal slide multiplier explicitly and does not guess a BM4_L value. The first BM4_L production comparison (L13 vs L6) remains blocked until that numeric scalar is independently pinned. The generic kernel must retain the exact zero-friction identity and may not be fitted to BM4_L residuals.
 
 ## Non-scope
 

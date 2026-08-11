@@ -41,6 +41,8 @@ export function ensureTopologyEditTableStyles(documentRef) {
     .topology-edit-table [data-table-frozen="select"] { left:0; width:58px; min-width:58px; max-width:58px; }
     .topology-edit-table [data-table-frozen="tag"] { left:58px; width:132px; min-width:132px; max-width:132px; overflow:hidden; text-overflow:ellipsis; }
     .topology-edit-table [data-table-frozen="elementType"] { left:190px; width:78px; min-width:78px; max-width:78px; overflow:hidden; text-overflow:ellipsis; }
+    .topology-edit-table [data-table-frozen="connectFrom"] { left:268px; width:128px; min-width:128px; max-width:128px; overflow:hidden; text-overflow:ellipsis; }
+    .topology-edit-table [data-table-frozen="connectTo"] { left:396px; width:128px; min-width:128px; max-width:128px; overflow:hidden; text-overflow:ellipsis; }
     .topology-edit-table thead [data-table-frozen] { z-index:6; background:#0c192b; }
     .topology-edit-table tbody [data-table-frozen] { z-index:2; background:#050c16; }
     .topology-edit-table tbody tr:hover [data-table-frozen] { background:#0b1a2d; }

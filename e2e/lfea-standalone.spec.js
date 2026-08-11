@@ -56,15 +56,16 @@ async function runNative(page) {
 
 async function createDossier(page) {
   await page.locator('button[data-view-id="verification"]').click();
-  await expect(page.getByRole('heading', { name: 'Native piping Verification' })).toBeVisible();
-  await expect(page.getByText('CURRENT', { exact: true }).first()).toBeVisible();
-  const create = page.getByRole('button', { name: 'Create current evidence dossier' });
+  const verification = page.locator(view('verification'));
+  await expect(verification.getByRole('heading', { name: 'Native piping Verification' })).toBeVisible();
+  await expect(verification.getByText('CURRENT', { exact: true }).first()).toBeVisible();
+  const create = verification.getByRole('button', { name: 'Create current evidence dossier' });
   await expect(create).toBeEnabled();
   await create.click();
-  await expect(page.getByText('CURRENT_EVIDENCE_ONLY', { exact: true })).toBeVisible();
-  await expect(page.getByText('NO', { exact: true })).toBeVisible();
-  await expect(page.getByText('SUPPORT_ACTIONS_PUBLICATION_BLOCKED')).toBeVisible();
-  await expect(page.getByText('B31_CODE_PUBLICATION_BLOCKED')).toBeVisible();
+  await expect(verification.getByText('CURRENT_EVIDENCE_ONLY', { exact: true })).toBeVisible();
+  await expect(verification.getByText('NO', { exact: true })).toBeVisible();
+  await expect(verification.getByText('SUPPORT_ACTIONS_PUBLICATION_BLOCKED').first()).toBeVisible();
+  await expect(verification.getByText('B31_CODE_PUBLICATION_BLOCKED').first()).toBeVisible();
 }
 
 async function historyRunIds(page) {
@@ -87,9 +88,10 @@ test.describe('LFEA standalone governed browser journey', () => {
     await expect(page.locator(view('model'))).toBeVisible();
 
     await runNative(page);
-    await expect(page.getByText('Support actions Fa / Fl / Fv')).toBeVisible();
-    await expect(page.getByText('GOVERNED_INTERFACE_SET_REQUIRED')).toBeVisible();
-    await expect(page.getByText('COMPONENT_CODE_POINT_RECOVERY_REQUIRED')).toBeVisible();
+    const results = page.locator(view('results'));
+    await expect(results.getByText('Support actions Fa / Fl / Fv')).toBeVisible();
+    await expect(results.getByText('GOVERNED_INTERFACE_SET_REQUIRED').first()).toBeVisible();
+    await expect(results.getByText('COMPONENT_CODE_POINT_RECOVERY_REQUIRED').first()).toBeVisible();
     await createDossier(page);
 
     let runs = await historyRunIds(page);
@@ -100,8 +102,9 @@ test.describe('LFEA standalone governed browser journey', () => {
     await page.locator('button[data-view-id="source"]').click();
     await uploadXml(page, 'standalone-y.xml', lfeaStandaloneInputXmlY());
     await page.locator('button[data-view-id="verification"]').click();
-    await expect(page.getByText('CURRENT_RAW_EXECUTION_REQUIRED')).toBeVisible();
-    await expect(page.getByRole('button', { name: 'Create current evidence dossier' })).toHaveCount(0);
+    const verification = page.locator(view('verification'));
+    await expect(verification.getByText('CURRENT_RAW_EXECUTION_REQUIRED').first()).toBeVisible();
+    await expect(verification.getByRole('button', { name: 'Create current evidence dossier' })).toHaveCount(0);
 
     runs = await historyRunIds(page);
     await expect(page.locator(`[data-run-id="${firstRun}"]`)).toContainText('STALE');
@@ -114,11 +117,12 @@ test.describe('LFEA standalone governed browser journey', () => {
     await expect(page.locator(`[data-run-id="${secondRun}"]`)).toContainText('CURRENT');
 
     await page.locator('button[data-view-id="compare"]').click();
-    await page.locator('[data-role="lfea-compare-left"]').selectOption(firstRun);
-    await page.locator('[data-role="lfea-compare-right"]').selectOption(secondRun);
-    await page.getByRole('button', { name: 'Compare selected runs' }).click();
-    await expect(page.getByText('NOT_DIRECTLY_COMPARABLE', { exact: true }).first()).toBeVisible();
-    await expect(page.getByText('BASIS_MISMATCH').first()).toBeVisible();
+    const comparison = page.locator(view('compare'));
+    await comparison.locator('[data-role="lfea-compare-left"]').selectOption(firstRun);
+    await comparison.locator('[data-role="lfea-compare-right"]').selectOption(secondRun);
+    await comparison.getByRole('button', { name: 'Compare selected runs' }).click();
+    await expect(comparison.getByText('NOT_DIRECTLY_COMPARABLE', { exact: true }).first()).toBeVisible();
+    await expect(comparison.getByText('BASIS_MISMATCH').first()).toBeVisible();
 
     await page.reload();
     await expect(page.locator('[data-role="lfea-standalone-shell"]')).toBeVisible();
@@ -135,7 +139,7 @@ test.describe('LFEA standalone governed browser journey', () => {
 
     const source = page.locator(view('source'));
     await expect(source).toContainText('UNIT AUTHORITY REQUIRED');
-    await page.getByRole('button', { name: 'Authorize Source Unit' }).click();
+    await source.getByRole('button', { name: 'Authorize Source Unit' }).click();
     await expect(source).toContainText(/rejected|failed closed|invalid|block/i);
 
     await page.locator('button[data-view-id="analysis"]').click();

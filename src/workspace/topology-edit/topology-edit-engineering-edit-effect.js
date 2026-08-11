@@ -17,25 +17,45 @@ export function validateTopologyEditEngineeringCommandEffect(candidate) {
 function validateReplacement(candidate) {
   const delta = candidate.topologyDelta;
   const payload = candidate.resolvedPayload ?? {};
+  const binding = payload.catalogueBinding ?? {};
   const edge = (candidate.canonicalTopology.edges ?? []).find((row) => row.id === payload.edgeId);
   const exactDelta = sameIds(delta.edges.changedIds, [payload.edgeId])
     && noChanges(delta.edges, ['addedIds', 'removedIds'])
     && noCollectionChanges(delta, ['nodes', 'junctions', 'supports', 'boundaries', 'rigids', 'bends']);
   const exactAuthority = edge?.id === payload.edgeId
     && edge?.topologyOperation === 'REPLACE_INLINE_COMPONENT'
-    && edge?.entityType === 'VALVE'
-    && edge?.catalogueRecordHash === payload.catalogueBinding?.recordHash
-    && edge?.catalogueHash === payload.catalogueBinding?.catalogueHash
-    && edge?.catalogueSourceHash === payload.catalogueBinding?.sourceHash
-    && edge?.valveType === payload.catalogueBinding?.valveType
-    && edge?.valveFaceToFaceMm === payload.catalogueBinding?.valveFaceToFaceMm
-    && edge?.lastModifiedByCommandId === candidate.commandId;
+    && edge?.entityType === binding.componentType
+    && edge?.catalogueRecordHash === binding.recordHash
+    && edge?.catalogueHash === binding.catalogueHash
+    && edge?.catalogueSourceHash === binding.sourceHash
+    && edge?.lastModifiedByCommandId === candidate.commandId
+    && typeAuthority(edge, binding);
   if (exactDelta && exactAuthority) return [];
   return [finding(
     'REPLACE_INLINE_COMPONENT_DELTA_INVALID',
-    'REPLACE_INLINE_COMPONENT must change exactly one existing valve edge while preserving its canonical identity and exact catalogue custody.',
+    'REPLACE_INLINE_COMPONENT must change exactly one existing component edge while preserving canonical identity and exact catalogue custody.',
     [...changes(delta.edges), payload.edgeId].filter(Boolean),
   )];
+}
+
+function typeAuthority(edge, binding) {
+  if (binding.componentType === 'VALVE') {
+    return edge.valveType === binding.valveType
+      && edge.valveFaceToFaceMm === binding.valveFaceToFaceMm;
+  }
+  if (binding.componentType === 'FLANGE') {
+    return edge.flangeType === binding.flangeType
+      && edge.flangeFacing === binding.flangeFacing
+      && edge.flangeClass === binding.flangeClass
+      && edge.componentLengthMm === binding.componentLengthMm;
+  }
+  if (binding.componentType === 'REDUCER') {
+    return edge.reducerType === binding.reducerType
+      && edge.reducerOrientation === binding.reducerOrientation
+      && edge.secondaryNominalSizeMm === binding.secondaryNominalSizeMm
+      && edge.componentLengthMm === binding.componentLengthMm;
+  }
+  return false;
 }
 
 function validateJunctionRelation(candidate) {

@@ -1,3 +1,7 @@
+import {
+  deriveTopologyEditTableNodePositionCapability,
+} from '../topology-edit/table/topology-edit-table-edit-capability.js';
+
 const EDITABLE_TYPES = new Set(['VALVE', 'TEE']);
 
 export function renderTopologyEditTableEngineeringEditor(row, stagedIntent, projection) {
@@ -11,9 +15,32 @@ export function renderTopologyEditTableEngineeringEditor(row, stagedIntent, proj
   return '';
 }
 
+export function renderTopologyEditTableNodePositionEditor(row, stagedIntent, runtime) {
+  if (row?.identity?.canonicalKind !== 'EDGE') return '';
+  const topology = runtime?.controller?.session?.currentTopology?.();
+  if (!topology || !runtime?.projection) return '';
+  const panels = ['FROM', 'TO'].map((endpoint) => nodeEndpointEditor(
+    row,
+    stagedIntent,
+    runtime,
+    topology,
+    endpoint,
+  )).join('');
+  return `<section class="topology-edit-table__editor" data-table-node-position-editor="${esc(row.identity.canonicalId)}">
+    <div class="topology-edit-table__identity"><strong>Certified node position</strong><code>${esc(row.identity.canonicalId)}</code><span>MOVE_NODE / CONNECTED_RUN</span></div>
+    <p class="topology-edit-table__notice">Coordinates are staged as an explicit engineering operation. NODE_ONLY moves the exact endpoint node; CONNECTED_RUN translates the plain connected run on that side of this edge. Junction/support/boundary/rigid/bend dependants fail closed until their own policies are certified.</p>
+    <div class="topology-edit-table__editor-grid">${panels}</div>
+  </section>`;
+}
+
 export function describeTopologyEditTableIntent(intent) {
   if (intent?.intentKind === 'PIPE_LENGTH') {
     return `length ${display(intent.priorValue?.lengthMm)} → ${display(intent.requestedValue?.lengthMm)} mm · ${display(intent.geometryPolicy?.anchor)} / ${display(intent.geometryPolicy?.propagation)}`;
+  }
+  if (intent?.intentKind === 'NODE_POSITION') {
+    const prior = intent.priorValue?.position ?? {};
+    const next = intent.requestedValue?.position ?? {};
+    return `${display(intent.requestedValue?.endpoint)} node ${display(intent.requestedValue?.nodeId)} · (${display(prior.x)}, ${display(prior.y)}, ${display(prior.z)}) → (${display(next.x)}, ${display(next.y)}, ${display(next.z)}) mm · ${display(intent.geometryPolicy?.movementMode)}`;
   }
   if (intent?.intentKind === 'VALVE_REPLACEMENT') {
     return `${display(intent.priorValue?.valveType)} → ${display(intent.requestedValue?.catalogueBinding?.valveType)} · F2F ${display(intent.priorValue?.lengthMm)} → ${display(intent.requestedValue?.catalogueBinding?.valveFaceToFaceMm)} mm · ${display(intent.geometryPolicy?.anchor)} / ${display(intent.geometryPolicy?.propagation)}`;
@@ -22,6 +49,35 @@ export function describeTopologyEditTableIntent(intent) {
     return `branch ${display(intent.requestedValue?.branchPortKey)} · reducer ${display(intent.requestedValue?.reducerEdgeId)} · DN run ${display(intent.requestedValue?.runNominalSizeMm)} / branch ${display(intent.requestedValue?.teeBranchNominalSizeMm)} / downstream ${display(intent.requestedValue?.downstreamNominalSizeMm)}`;
   }
   return display(intent?.intentKind);
+}
+
+function nodeEndpointEditor(row, stagedIntent, runtime, topology, endpoint) {
+  const capability = deriveTopologyEditTableNodePositionCapability({
+    row,
+    endpoint,
+    projection: runtime.projection,
+    canonicalTopology: topology,
+  });
+  const nodeId = capability.details?.nodeId
+    ?? row.identity?.portBindings?.find((entry) => entry?.endpoint === endpoint)?.nodeId
+    ?? null;
+  const node = (topology.nodes ?? []).find((entry) => entry?.id === nodeId) ?? null;
+  const staged = stagedIntent?.intentKind === 'NODE_POSITION'
+    && stagedIntent.requestedValue?.endpoint === endpoint
+    ? stagedIntent : null;
+  const point = staged?.requestedValue?.position ?? node?.position ?? { x: '', y: '', z: '' };
+  const mode = staged?.geometryPolicy?.movementMode ?? 'NODE_ONLY';
+  const disabled = capability.status === 'AVAILABLE' ? '' : 'disabled';
+  const title = capability.reason ?? 'Node position authority unavailable.';
+  return `<fieldset class="topology-edit-table__wide" data-table-node-endpoint="${endpoint}">
+    <legend>${endpoint} node · ${esc(nodeId ?? 'unresolved')}</legend>
+    <label>X (mm)<input type="number" step="any" data-table-edit-node-x="${endpoint}" value="${esc(point.x)}" ${disabled}></label>
+    <label>Y (mm)<input type="number" step="any" data-table-edit-node-y="${endpoint}" value="${esc(point.y)}" ${disabled}></label>
+    <label>Z (mm)<input type="number" step="any" data-table-edit-node-z="${endpoint}" value="${esc(point.z)}" ${disabled}></label>
+    <label>Movement<select data-table-edit-node-mode="${endpoint}" ${disabled}><option value="NODE_ONLY" ${mode === 'NODE_ONLY' ? 'selected' : ''}>NODE_ONLY</option><option value="CONNECTED_RUN" ${mode === 'CONNECTED_RUN' ? 'selected' : ''}>CONNECTED_RUN</option></select></label>
+    <button type="button" data-table-node-position-stage="${endpoint}" data-canonical-id="${esc(row.identity.canonicalId)}" title="${esc(title)}" ${disabled}>Stage ${endpoint} position</button>
+    <span data-table-node-capability="${endpoint}" data-table-capability-status="${esc(capability.status)}">${esc(capability.status === 'AVAILABLE' ? 'Certified' : title)}</span>
+  </fieldset>`;
 }
 
 function valveEditor(row, stagedIntent) {

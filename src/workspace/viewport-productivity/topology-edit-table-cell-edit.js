@@ -1,5 +1,6 @@
 import { deriveTopologyEditTableCellCapability } from '../topology-edit/table/topology-edit-table-edit-capability.js';
 import { topologyEditTableVisibleRows } from '../topology-edit/table/topology-edit-table-view-state.js';
+import { stageTopologyEditNodePosition } from './topology-edit-table-engineering-runtime.js';
 import { stageTopologyEditTablePipeLength } from './topology-edit-table-pipe-length-runtime.js';
 import {
   TOPOLOGY_EDIT_TABLE_ROW_HEIGHT_PX,
@@ -31,6 +32,14 @@ export function topologyEditTableDirectCellHtml(runtime, row, column) {
 }
 
 export function handleTopologyEditTableCompoundCellClick(runtime, event) {
+  const nodeStage = event.target.closest?.('[data-table-node-position-stage]');
+  if (nodeStage?.dataset?.tableNodePositionStage && runtime.element?.contains(nodeStage)) {
+    return stageTopologyEditNodePosition(
+      runtime,
+      nodeStage.dataset.canonicalId,
+      nodeStage.dataset.tableNodePositionStage,
+    );
+  }
   const button = event.target.closest?.('[data-table-compound-edit]');
   if (!button || !runtime.element?.contains(button)) return false;
   const canonicalId = button.dataset.tableCellCanonicalId;

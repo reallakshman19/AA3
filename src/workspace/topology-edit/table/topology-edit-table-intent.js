@@ -5,6 +5,10 @@ import {
 import {
   normalizeTopologyEditJunctionRelationPayload,
 } from '../topology-edit-junction-relation-command.js';
+import {
+  normalizeTopologyEditTableNodePositionPayload,
+  topologyEditTableNodePositionPriorValue,
+} from './topology-edit-table-node-position-contract.js';
 import { assertTopologyEditTableProjection } from './topology-edit-table-projection.js';
 
 export const TOPOLOGY_EDIT_TABLE_INTENT_SCHEMA = 'TopologyEditTableIntent.v1';
@@ -12,6 +16,7 @@ export const TOPOLOGY_EDIT_TABLE_AUTHORITY_SCHEMA = 'TopologyEditTableEditAuthor
 
 const INTENT_KINDS = new Set([
   'PIPE_LENGTH',
+  'NODE_POSITION',
   'VALVE_REPLACEMENT',
   'TEE_REDUCER_RELATION',
 ]);
@@ -48,7 +53,7 @@ export function createTopologyEditTableIntent({
     intentKind: kind,
     authority,
     target,
-    priorValue: priorValue(kind, row),
+    priorValue: priorValue(kind, row, payload),
     requestedValue: payload.requestedValue,
     geometryPolicy: payload.geometryPolicy,
   };
@@ -130,6 +135,9 @@ function assertEditAuthority(value) {
 
 function normalizeIntentPayload(kind, requestedValue, geometryPolicy, row, projection) {
   if (kind === 'PIPE_LENGTH') return normalizePipeLength(requestedValue, geometryPolicy, row);
+  if (kind === 'NODE_POSITION') {
+    return normalizeTopologyEditTableNodePositionPayload(requestedValue, geometryPolicy, row);
+  }
   if (kind === 'VALVE_REPLACEMENT') {
     return normalizeValveReplacement(requestedValue, geometryPolicy, row);
   }
@@ -247,8 +255,9 @@ function normalizeGeometryPolicy(value) {
     ),
   };
 }
-function priorValue(kind, row) {
+function priorValue(kind, row, payload) {
   if (kind === 'PIPE_LENGTH') return deepFreeze({ lengthMm: row.fields.lengthMm });
+  if (kind === 'NODE_POSITION') return topologyEditTableNodePositionPriorValue(payload);
   if (kind === 'VALVE_REPLACEMENT') return deepFreeze({
     valveType: row.fields.valveType,
     lengthMm: row.fields.lengthMm,

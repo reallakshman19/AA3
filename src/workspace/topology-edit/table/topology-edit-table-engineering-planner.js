@@ -12,10 +12,16 @@ import {
   createTopologyEditOperationPlan,
 } from '../professional/topology-edit-operation-plan.js';
 import { planMoveConnectedRun } from '../professional/topology-edit-route-operations.js';
+import {
+  compileTopologyEditTableNodePosition,
+} from './topology-edit-table-node-position-planner.js';
 
 const EPSILON_MM = 1e-9;
 
 export function compileTopologyEditTableEngineeringIntent(intent, topology) {
+  if (intent.intentKind === 'NODE_POSITION') {
+    return compileTopologyEditTableNodePosition(intent, topology);
+  }
   if (intent.intentKind === 'VALVE_REPLACEMENT') {
     return compileValveReplacement(intent, topology);
   }

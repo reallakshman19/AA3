@@ -1,6 +1,53 @@
 import { createTopologyEditTableBatch } from '../topology-edit/table/topology-edit-table-batch.js';
 import { planTopologyEditTableBatch } from '../topology-edit/table/topology-edit-table-batch-planner.js';
+import {
+  deriveTopologyEditTableNodePositionCapability,
+} from '../topology-edit/table/topology-edit-table-edit-capability.js';
 import { createTopologyEditTableIntent } from '../topology-edit/table/topology-edit-table-intent.js';
+
+export function stageTopologyEditNodePosition(runtime, canonicalId, endpointInput) {
+  return stage(runtime, () => {
+    const endpoint = required(endpointInput, 'endpoint').toUpperCase();
+    if (!['FROM', 'TO'].includes(endpoint)) {
+      throw new RangeError('TopologyEditTableEngineeringRuntime: endpoint must be FROM or TO.');
+    }
+    const row = exactRow(runtime.projection, canonicalId);
+    const topology = runtime.controller.session.currentTopology();
+    const capability = deriveTopologyEditTableNodePositionCapability({
+      row,
+      endpoint,
+      projection: runtime.projection,
+      canonicalTopology: topology,
+    });
+    if (capability.status !== 'AVAILABLE') {
+      throw new RangeError(`TopologyEditTableEngineeringRuntime: ${capability.reason}`);
+    }
+    const nodeId = capability.details.nodeId;
+    const node = exactNode(topology, nodeId);
+    return createTopologyEditTableIntent({
+      projection: runtime.projection,
+      sessionSnapshot: runtime.controller.session.snapshot(),
+      canonicalId,
+      intentKind: 'NODE_POSITION',
+      requestedValue: {
+        endpoint,
+        nodeId,
+        expectedPosition: node.position,
+        position: {
+          x: finite(value(runtime, `[data-table-edit-node-x="${endpoint}"]`), `${endpoint} X`),
+          y: finite(value(runtime, `[data-table-edit-node-y="${endpoint}"]`), `${endpoint} Y`),
+          z: finite(value(runtime, `[data-table-edit-node-z="${endpoint}"]`), `${endpoint} Z`),
+        },
+      },
+      geometryPolicy: {
+        movementMode: required(
+          value(runtime, `[data-table-edit-node-mode="${endpoint}"]`),
+          `${endpoint} movement mode`,
+        ),
+      },
+    });
+  });
+}
 
 export function stageTopologyEditValveReplacement(runtime, canonicalId) {
   return stage(runtime, () => createTopologyEditTableIntent({
@@ -96,11 +143,25 @@ function exactRow(projection, canonicalId) {
   }
   return rows[0];
 }
+function exactNode(topology, nodeId) {
+  const nodes = (topology?.nodes ?? []).filter((node) => node?.id === nodeId);
+  if (nodes.length !== 1) {
+    throw new RangeError(`TopologyEditTableEngineeringRuntime: node ${nodeId} resolved ${nodes.length} records.`);
+  }
+  return nodes[0];
+}
 function value(runtime, selector) { return runtime.element?.querySelector(selector)?.value ?? ''; }
 function required(input, label) {
   const text = String(input ?? '').trim();
   if (!text) throw new TypeError(`TopologyEditTableEngineeringRuntime: ${label} is required.`);
   return text;
+}
+function finite(input, label) {
+  const number = Number(input);
+  if (!Number.isFinite(number)) {
+    throw new RangeError(`TopologyEditTableEngineeringRuntime: ${label} must be finite.`);
+  }
+  return number;
 }
 function positive(input, label) {
   const number = Number(input);

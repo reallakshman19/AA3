@@ -1,0 +1,197 @@
+name: M047 BM4_L rigid-region source replay
+
+on:
+  push:
+    branches: [agent/m047-bm4l-fresh-qualification]
+    paths: ['.github/workflows/m047-bm4l-rigid-region-source-replay.yml']
+
+permissions:
+  contents: read
+
+jobs:
+  replay:
+    runs-on: windows-latest
+    timeout-minutes: 50
+    env:
+      COMMON_COMMIT: '45d51ea18624f5775805f399110c1738301c0d90'
+      ZIP_SHA256: '978617cba50fa0b1a16c2fa71dc1e0d38e55ac834b191f887d100c6951abd8b9'
+      MEMBER_SHA256: '64c05a50e9ed0452622ff5880335460486f24ac8e6adecc9a300b549c9aa82f8'
+      ACE_URL: 'https://download.microsoft.com/download/3/5/C/35C84C36-661A-44E6-9324-8786B8DBE231/accessdatabaseengine_X64.exe'
+      ACE_SHA256: '04e96c9f1a1f7d251a88aececf1dc10ff65950392787427c00814a43308003de'
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: agent/m047-bm4l-fresh-qualification
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+      - run: npm ci
+
+      - name: Bind pinned BM4_L source
+        shell: pwsh
+        run: |
+          $ErrorActionPreference='Stop'; $PSNativeCommandUseErrorActionPreference=$true
+          New-Item -ItemType Directory -Force artifacts/rigid-replay/source,artifacts/rigid-replay/run | Out-Null
+          $installer='artifacts/rigid-replay/accessdatabaseengine_X64.exe'
+          Invoke-WebRequest -Uri $env:ACE_URL -OutFile $installer
+          if((Get-FileHash $installer -Algorithm SHA256).Hash.ToLowerInvariant() -ne $env:ACE_SHA256){throw 'ACE hash mismatch'}
+          $sig=Get-AuthenticodeSignature $installer
+          if($sig.Status -ne 'Valid' -or $sig.SignerCertificate.Subject -notmatch 'Microsoft'){throw 'ACE signature failure'}
+          $p=Start-Process $installer -ArgumentList '/quiet','/norestart' -Wait -PassThru
+          if($p.ExitCode -notin @(0,3010)){throw "ACE install failed $($p.ExitCode)"}
+          Remove-Item $installer -Force
+          $zip='artifacts/rigid-replay/BM4_L.zip'
+          Invoke-WebRequest -Uri "https://raw.githubusercontent.com/reallaksh19/Common/$env:COMMON_COMMIT/LFEA/BM4/BM4_L.zip" -OutFile $zip
+          if((Get-FileHash $zip -Algorithm SHA256).Hash.ToLowerInvariant() -ne $env:ZIP_SHA256){throw 'ZIP hash mismatch'}
+          Expand-Archive $zip -DestinationPath artifacts/rigid-replay/source -Force
+          $accdb=Join-Path $PWD 'artifacts/rigid-replay/source/BM4_L.ACCDB'
+          if((Get-FileHash $accdb -Algorithm SHA256).Hash.ToLowerInvariant() -ne $env:MEMBER_SHA256){throw 'ACCDB hash mismatch'}
+          "ACCDB=$accdb" >> $env:GITHUB_ENV
+
+      - name: Add diagnostic-only matrix and load evidence
+        shell: python
+        run: |
+          from pathlib import Path
+          p=Path('src/core/fea-benchmarks/caesar-accdb-linear-solve.js')
+          t=p.read_text()
+          needle="        numericalShiftLoadGlobal: entry.numericalShiftLoadGlobal,\n        gravityWeightN: entry.gravityWeightN,\n      })),"
+          repl="""        numericalShiftLoadGlobal: entry.numericalShiftLoadGlobal,
+                gravityWeightN: entry.gravityWeightN,
+                diagnosticGlobalStiffness: entry.contribution.globalStiffness,
+                diagnosticEquivalentLoadGlobal: entry.contribution.equivalentLoadGlobal,
+                diagnosticInitialStrainLoadGlobal: entry.contribution.initialStrainLoadGlobal,
+              })),"""
+          if t.count(needle)!=1: raise SystemExit(f'ledger evidence site count={t.count(needle)}')
+          p.write_text(t.replace(needle,repl,1))
+
+      - name: Solve committed production L2
+        shell: pwsh
+        run: |
+          $ErrorActionPreference='Stop'; $PSNativeCommandUseErrorActionPreference=$true
+          node --check src/core/fea-benchmarks/caesar-accdb-linear-solve.js
+          node scripts/lfea-m047-caesar-straight-pipe-shear-authority-check.mjs
+          node scripts/lfea-m047-mec21-bend-shear-authority-check.mjs
+          node scripts/lfea-caesar-accdb-benchmark.mjs `
+            --accdb $env:ACCDB `
+            --profile benchmarks/LFEA/CAESAR_ACCDB/bm4l-validation.profile.json `
+            --solve-linear true `
+            --solve-cases L2 `
+            --actual-out artifacts/rigid-replay/run/actual.json `
+            --out artifacts/rigid-replay/run/report.json
+
+      - name: Replay reducer, rigid chain and adjacent frames
+        shell: pwsh
+        run: |
+          $ErrorActionPreference='Stop'; $PSNativeCommandUseErrorActionPreference=$true
+          @'
+          const fs=require('fs');
+          const A=JSON.parse(fs.readFileSync('artifacts/rigid-replay/run/actual.json','utf8').replace(/^\uFEFF/,''));
+          const R=JSON.parse(fs.readFileSync('artifacts/rigid-replay/run/report.json','utf8').replace(/^\uFEFF/,''));
+          const caseRows=R.qualification.cases.find(x=>x.caseId==='L2').comparison.rows;
+          const allLedger=A.mechanics.cases.L2.elementLedger;
+          const dofs=['UX','UY','UZ','RX','RY','RZ'];
+          const actionOrder=[
+            ['GLOBAL_END_FORCE_FROM','FX'],['GLOBAL_END_FORCE_FROM','FY'],['GLOBAL_END_FORCE_FROM','FZ'],
+            ['GLOBAL_END_MOMENT_FROM','MX'],['GLOBAL_END_MOMENT_FROM','MY'],['GLOBAL_END_MOMENT_FROM','MZ'],
+            ['GLOBAL_END_FORCE_TO','FX'],['GLOBAL_END_FORCE_TO','FY'],['GLOBAL_END_FORCE_TO','FZ'],
+            ['GLOBAL_END_MOMENT_TO','MX'],['GLOBAL_END_MOMENT_TO','MY'],['GLOBAL_END_MOMENT_TO','MZ'],
+          ];
+          const labels=['FROM FX','FROM FY','FROM FZ','FROM MX','FROM MY','FROM MZ','TO FX','TO FY','TO FZ','TO MX','TO MY','TO MZ'];
+          function solveDense(M,b){
+            const n=b.length; if(n===0)return [];
+            const a=M.map((r,i)=>[...r,b[i]]);
+            for(let k=0;k<n;k++){
+              let p=k; for(let i=k+1;i<n;i++)if(Math.abs(a[i][k])>Math.abs(a[p][k]))p=i;
+              if(Math.abs(a[p][k])<1e-18)throw new Error(`singular condensation ${k}`);
+              [a[k],a[p]]=[a[p],a[k]]; const piv=a[k][k];
+              for(let j=k;j<=n;j++)a[k][j]/=piv;
+              for(let i=0;i<n;i++)if(i!==k){const m=a[i][k];if(m===0)continue;for(let j=k;j<=n;j++)a[i][j]-=m*a[k][j];}
+            }
+            return a.map(r=>r[n]);
+          }
+          function sourceEntity(source){
+            const m=caseRows.find(r=>r.entityKind==='ELEMENT'&&String(r.entityId).startsWith(`INPUT_ELEMENT:${source}|`)&&r.referenceValue!==null);
+            if(!m)throw new Error(`no governed entity for source ${source}`);
+            const x=String(m.entityId).match(/^INPUT_ELEMENT:\d+\|([^|]+)->([^|]+)\|/);
+            if(!x)throw new Error(`cannot parse endpoints ${m.entityId}`);
+            return {prefix:`INPUT_ELEMENT:${source}|`,fromNode:x[1],toNode:x[2]};
+          }
+          function endpointVector(fromNode,toNode,valueField){
+            const out=[];
+            for(const node of [fromNode,toNode])for(const dof of dofs){
+              const quantity=dof.startsWith('R')?'ROTATION':'DISPLACEMENT';
+              const m=caseRows.filter(r=>r.entityKind==='NODE'&&String(r.entityId)===node&&r.quantity===quantity&&r.component===dof);
+              if(m.length!==1)throw new Error(`endpoint row ${node} ${dof}: ${m.length}`);
+              out.push(m[0][valueField]);
+            }
+            return out;
+          }
+          function sourceActions(prefix,valueField){
+            return actionOrder.map(([q,c])=>{
+              const m=caseRows.filter(r=>r.entityKind==='ELEMENT'&&String(r.entityId).startsWith(prefix)&&r.quantity===q&&r.component===c);
+              if(m.length!==1)throw new Error(`action ${prefix} ${q} ${c}: ${m.length}`);
+              return m[0][valueField];
+            });
+          }
+          function assemble(source,fromNode,toNode){
+            const ledger=allLedger.filter(e=>String(e.sourceElementId)===String(source));
+            if(ledger.length===0)throw new Error(`source ${source}: no ledger`);
+            for(const e of ledger){
+              if(!Array.isArray(e.diagnosticGlobalStiffness)||e.diagnosticGlobalStiffness.length!==144)throw new Error(`${e.elementId}: missing K`);
+              if(!Array.isArray(e.diagnosticEquivalentLoadGlobal)||e.diagnosticEquivalentLoadGlobal.length!==12)throw new Error(`${e.elementId}: missing fixed load`);
+              if(!Array.isArray(e.diagnosticInitialStrainLoadGlobal)||e.diagnosticInitialStrainLoadGlobal.length!==12)throw new Error(`${e.elementId}: missing initial load`);
+            }
+            const nodes=[...new Set(ledger.flatMap(e=>[String(e.nodeI),String(e.nodeJ)]))];
+            const nodeIndex=new Map(nodes.map((n,i)=>[n,i])), nd=nodes.length*6;
+            const K=Array.from({length:nd},()=>new Array(nd).fill(0)),f=new Array(nd).fill(0);
+            for(const e of ledger){
+              const en=[String(e.nodeI),String(e.nodeJ)],ft=e.diagnosticEquivalentLoadGlobal.map((v,i)=>v+e.diagnosticInitialStrainLoadGlobal[i]);
+              for(let aa=0;aa<12;aa++){
+                const ga=nodeIndex.get(en[aa<6?0:1])*6+aa%6; f[ga]+=ft[aa];
+                for(let bb=0;bb<12;bb++){const gb=nodeIndex.get(en[bb<6?0:1])*6+bb%6;K[ga][gb]+=e.diagnosticGlobalStiffness[aa*12+bb];}
+              }
+            }
+            const bd=[];for(const n of [fromNode,toNode])for(let d=0;d<6;d++)bd.push(nodeIndex.get(n)*6+d);
+            if(bd.some(x=>x===undefined||Number.isNaN(x)))throw new Error(`source ${source}: endpoint absent`);
+            const bset=new Set(bd),id=[];for(let i=0;i<nd;i++)if(!bset.has(i))id.push(i);
+            function replay(ub){
+              const rhs=id.map(i=>f[i]-bd.reduce((s,j,k)=>s+K[i][j]*ub[k],0));
+              const ui=solveDense(id.map(i=>id.map(j=>K[i][j])),rhs),u=new Array(nd).fill(0);
+              bd.forEach((g,k)=>u[g]=ub[k]);id.forEach((g,k)=>u[g]=ui[k]);
+              return bd.map(g=>K[g].reduce((s,v,j)=>s+v*u[j],0)-f[g]);
+            }
+            return {ledger,nodes,replay};
+          }
+          function norm(v,idx){return Math.hypot(...idx.map(i=>v[i]));}
+          const forceIdx=[0,1,2,6,7,8],momentIdx=[3,4,5,9,10,11];
+          const results=[];
+          for(const source of ['74','75','76','77','78','79','80','81']){
+            const entity=sourceEntity(source), assembled=assemble(source,entity.fromNode,entity.toNode);
+            const lfeaU=endpointVector(entity.fromNode,entity.toNode,'actualValue'),caesarU=endpointVector(entity.fromNode,entity.toNode,'referenceValue');
+            const lfeaQ=sourceActions(entity.prefix,'actualValue'),caesarQ=sourceActions(entity.prefix,'referenceValue');
+            const selfQ=assembled.replay(lfeaU),caesarMotionQ=assembled.replay(caesarU);
+            const selfDiff=selfQ.map((v,i)=>v-lfeaQ[i]),caesarDiff=caesarMotionQ.map((v,i)=>v-caesarQ[i]);
+            const targetForceNorm=Math.max(1,norm(caesarQ,forceIdx)),targetMomentNorm=Math.max(1,norm(caesarQ,momentIdx));
+            const rowsOut=labels.map((label,i)=>({label,caesar:caesarQ[i],lfea:lfeaQ[i],replayAtCaesarMotion:caesarMotionQ[i],replayDifference:caesarDiff[i]}));
+            const endpointDelta=lfeaU.map((v,i)=>v-caesarU[i]);
+            results.push({
+              sourceElementId:source,kind:assembled.ledger.map(x=>x.kind),endpoints:[entity.fromNode,entity.toNode],analysisElementCount:assembled.ledger.length,
+              selfReplay:{forceNormDifferenceN:norm(selfDiff,forceIdx),momentNormDifferenceNm:norm(selfDiff,momentIdx)},
+              caesarEndpointReplay:{forceNormDifferenceN:norm(caesarDiff,forceIdx),momentNormDifferenceNm:norm(caesarDiff,momentIdx),normalizedForceDifference:norm(caesarDiff,forceIdx)/targetForceNorm,normalizedMomentDifference:norm(caesarDiff,momentIdx)/targetMomentNorm,rows:rowsOut},
+              endpointMotion:{labels:['FROM UX','FROM UY','FROM UZ','FROM RX','FROM RY','FROM RZ','TO UX','TO UY','TO UZ','TO RX','TO RY','TO RZ'],lfea:lfeaU,caesar:caesarU,delta:endpointDelta},
+            });
+          }
+          for(const x of results)if(x.selfReplay.forceNormDifferenceN>1e-3||x.selfReplay.momentNormDifferenceNm>1e-5)throw new Error(`self replay failed source ${x.sourceElementId}`);
+          const node22140=Object.fromEntries(dofs.map(d=>{const q=d.startsWith('R')?'ROTATION':'DISPLACEMENT';const m=caseRows.find(r=>r.entityKind==='NODE'&&String(r.entityId)==='22140'&&r.quantity===q&&r.component===d);return[d,{reference:m.referenceValue,actual:m.actualValue,relativeError:m.relativeError,status:m.status}];}));
+          const out={schema:'m047-bm4l-rigid-region-source-replay/v1',productionHead:process.env.GITHUB_SHA,sources:results,node22140,recoveredEquilibrium:A.mechanics.cases.L2.recoveredEquilibrium,interpretation:'Self replay proves recovery. Large CAESAR-endpoint replay error localizes a source formulation mismatch; small replay error with a large nodal-motion error points to global redistribution or another mechanism.'};
+          fs.writeFileSync('artifacts/rigid-replay/replay.json',JSON.stringify(out,null,2)+'\n');console.log(JSON.stringify(out,null,2));
+          '@ | node
+
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: m047-bm4l-rigid-region-source-replay-${{ github.sha }}
+          path: artifacts/rigid-replay
+          retention-days: 30
+          if-no-files-found: error

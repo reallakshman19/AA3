@@ -1,0 +1,72 @@
+{
+  "schema": "m047-bm4l-rigid-shear-ab/v1",
+  "classification": "ACCEPTED_PHYSICAL_FORMULATION_WITH_REMAINING_RIGID_EDGE_RESIDUAL",
+  "source": {
+    "commonCommit": "45d51ea18624f5775805f399110c1738301c0d90",
+    "zipSha256": "978617cba50fa0b1a16c2fa71dc1e0d38e55ac834b191f887d100c6951abd8b9",
+    "accdbSha256": "64c05a50e9ed0452622ff5880335460486f24ac8e6adecc9a300b549c9aa82f8"
+  },
+  "candidate": {
+    "mechanism": "CAESAR_RIGID_USES_STRAIGHT_PIPE_TRANSVERSE_SHEAR_ON_10X_WALL_ARTIFICIAL_SECTION",
+    "shearCorrectionFactor": 0.5,
+    "benchmarkFitted": false,
+    "authority": [
+      "Hexagon CAESAR II Users Guide: Rigid Element Application — preserve pipe inside diameter and use ten times entered wall thickness for rigid stiffness",
+      "Intergraph CAESAR II CAUx 2015 F=KX — straight-pipe shear divisor 2, equivalent to effective shear area A/2"
+    ]
+  },
+  "rawInputAudit": {
+    "rigidCarrierOuterDiameterM": 0.1683000030517578,
+    "enteredWallThicknessM": 0.010972800254821777,
+    "corrosionAllowanceM": 0.001,
+    "effectiveIdOverridePresent": false,
+    "sources": {
+      "76": { "lengthM": 0.14922499084472656, "rigidWeightN": 493.75238037109375, "rigidType": "Flange" },
+      "77": { "lengthM": 0.30097503662109375, "rigidWeightN": 3000, "rigidType": "Unspecified" },
+      "78": { "lengthM": 0.3, "rigidWeightN": 3000, "rigidType": "Unspecified" },
+      "79": { "lengthM": 0.14922499084472656, "rigidWeightN": 493.75238037109375, "rigidType": "Flange" }
+    },
+    "rigidTypeDisposition": "CAESAR documentation defines Rigid Type as graphical/database metadata; it does not authorize a separate flange stiffness law."
+  },
+  "caesarEndpointReplay": {
+    "metric": "norm(K_rigid*u_caesar-f_gravity-q_caesar)/max(1,norm(q_caesar))",
+    "sources": {
+      "76": { "before": { "force": 151.623, "moment": 16.056 }, "after": { "force": 5.366388828491877, "moment": 0.5682728761944607 } },
+      "77": { "before": { "force": 4.053, "moment": 5.046 }, "after": { "force": 0.06117650768737986, "moment": 0.07623615676940065 } },
+      "78": { "before": { "force": 4.556, "moment": 5.415 }, "after": { "force": 0.40359624778183795, "moment": 0.47973488133792774 } },
+      "79": { "before": { "force": 79.066, "moment": 18.877 }, "after": { "force": 3.6862371162677503, "moment": 7.164976909115638 } }
+    },
+    "interpretation": "Rigid shear removes the dominant local incompatibility, especially for the two middle rigids. Sources 76 and 79 retain a separate edge-rigid stiffness/kinematic residual and are not declared closed by this correction."
+  },
+  "gravityDiscrimination": {
+    "resultantCheck": "With candidate stiffness, the inverse required element load retains the correct total global -Y weight on all four rigids, but sources 76/79 would require large self-equilibrated horizontal force pairs to match CAESAR exactly. Uniform gravity cannot generate those pairs.",
+    "disposition": "REMAINING_EDGE_RESIDUAL_IS_NOT_A_RIGID_WEIGHT_MAGNITUDE_OR_LINE_WEIGHT_PLACEMENT_TARGET"
+  },
+  "sixCaseAB": {
+    "countsOrder": ["restraint", "displacementRotation", "elementEnd"],
+    "L2": { "before": [0, 34, 4], "after": [0, 33, 4] },
+    "L3": { "before": [6, 57, 87], "after": [6, 56, 87] },
+    "L4": { "before": [0, 33, 0], "after": [0, 33, 0] },
+    "L5": { "before": [3, 64, 44], "after": [3, 63, 44] },
+    "L6": { "before": [0, 11, 12], "after": [0, 10, 12] },
+    "L14": { "before": [6, 57, 87], "after": [6, 56, 87] },
+    "gravityWeightNBefore": 93510.79023974095,
+    "gravityWeightNAfter": 93510.79023974095,
+    "allRecoveredEquilibriaPass": true,
+    "reusableMechanicsAndCoreGatesPass": true
+  },
+  "knownNonAcceptanceTarget": {
+    "row": "L2 node 22140 RX",
+    "referenceRad": 0.0000020457584838936056,
+    "productionBeforeRad": 7.137207730919012e-7,
+    "candidateAfterRad": 6.414836613928624e-7,
+    "candidateRelativeError": 0.6864323592235807,
+    "reason": "This row worsens slightly and therefore is explicitly not used to justify the physical formulation correction."
+  },
+  "decision": {
+    "retainRigidShear": true,
+    "formulaChangeAuthorized": true,
+    "basis": "Independent rigid-section and CAESAR pipe-matrix authority plus order-of-magnitude local replay improvement; not governed failure-count fitting.",
+    "nextMechanism": "Resolve residual edge-rigid stiffness/kinematics for sources 76 and 79 separately, then return to reducer source 75."
+  }
+}

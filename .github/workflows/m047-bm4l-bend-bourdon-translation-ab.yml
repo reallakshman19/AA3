@@ -1,0 +1,143 @@
+name: M047 BM4_L bend Bourdon translation A-B
+
+on:
+  push:
+    branches: [agent/m047-bm4l-fresh-qualification]
+    paths: ['.github/workflows/m047-bm4l-bend-bourdon-translation-ab.yml']
+
+permissions:
+  contents: read
+
+jobs:
+  ab:
+    runs-on: windows-latest
+    timeout-minutes: 60
+    env:
+      COMMON_COMMIT: '45d51ea18624f5775805f399110c1738301c0d90'
+      ZIP_SHA256: '978617cba50fa0b1a16c2fa71dc1e0d38e55ac834b191f887d100c6951abd8b9'
+      MEMBER_SHA256: '64c05a50e9ed0452622ff5880335460486f24ac8e6adecc9a300b549c9aa82f8'
+      ACE_URL: 'https://download.microsoft.com/download/3/5/C/35C84C36-661A-44E6-9324-8786B8DBE231/accessdatabaseengine_X64.exe'
+      ACE_SHA256: '04e96c9f1a1f7d251a88aececf1dc10ff65950392787427c00814a43308003de'
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: agent/m047-bm4l-fresh-qualification
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+      - run: npm ci
+
+      - name: Bind pinned BM4_L source
+        shell: pwsh
+        run: |
+          $ErrorActionPreference='Stop'; $PSNativeCommandUseErrorActionPreference=$true
+          New-Item -ItemType Directory -Force artifacts/bend-bourdon/source,artifacts/bend-bourdon/before,artifacts/bend-bourdon/after | Out-Null
+          $installer='artifacts/bend-bourdon/accessdatabaseengine_X64.exe'
+          Invoke-WebRequest -Uri $env:ACE_URL -OutFile $installer
+          if((Get-FileHash $installer -Algorithm SHA256).Hash.ToLowerInvariant() -ne $env:ACE_SHA256){throw 'ACE hash mismatch'}
+          $sig=Get-AuthenticodeSignature $installer
+          if($sig.Status -ne 'Valid' -or $sig.SignerCertificate.Subject -notmatch 'Microsoft'){throw 'ACE signature failure'}
+          $p=Start-Process $installer -ArgumentList '/quiet','/norestart' -Wait -PassThru
+          if($p.ExitCode -notin @(0,3010)){throw "ACE install failed $($p.ExitCode)"}
+          Remove-Item $installer -Force
+          $zip='artifacts/bend-bourdon/BM4_L.zip'
+          Invoke-WebRequest -Uri "https://raw.githubusercontent.com/reallaksh19/Common/$env:COMMON_COMMIT/LFEA/BM4/BM4_L.zip" -OutFile $zip
+          if((Get-FileHash $zip -Algorithm SHA256).Hash.ToLowerInvariant() -ne $env:ZIP_SHA256){throw 'ZIP hash mismatch'}
+          Expand-Archive $zip -DestinationPath artifacts/bend-bourdon/source -Force
+          $accdb=Join-Path $PWD 'artifacts/bend-bourdon/source/BM4_L.ACCDB'
+          if((Get-FileHash $accdb -Algorithm SHA256).Hash.ToLowerInvariant() -ne $env:MEMBER_SHA256){throw 'ACCDB hash mismatch'}
+          "ACCDB=$accdb" >> $env:GITHUB_ENV
+
+      - name: Current production six cases
+        shell: pwsh
+        run: |
+          $ErrorActionPreference='Stop'; $PSNativeCommandUseErrorActionPreference=$true
+          node scripts/lfea-m047-caesar-straight-pipe-shear-authority-check.mjs
+          node scripts/lfea-m047-mec21-bend-shear-authority-check.mjs
+          node scripts/lfea-caesar-accdb-benchmark.mjs --accdb $env:ACCDB --profile benchmarks/LFEA/CAESAR_ACCDB/bm4l-validation.profile.json --solve-linear true --solve-cases L2,L3,L4,L5,L6,L14 --actual-out artifacts/bend-bourdon/before/actual.json --out artifacts/bend-bourdon/before/report.json
+
+      - name: Add bend chord translation to Trans+Rot Bourdon free state
+        shell: python
+        run: |
+          from pathlib import Path
+          p=Path('src/core/linear-fea-piping-components/bourdon-pressure-expansion.js')
+          t=p.read_text()
+          old="""    translationAbc: bendOpeningTranslationInitialAbc,
+            rotationAbc: bendOpeningRotationInitialAbc,"""
+          new="""    translationAbc: Object.freeze(bendOpeningTranslationInitialAbc.map(
+              (value, index) => value + uniformPressureTranslationInitialAbc[index],
+            )),
+            rotationAbc: bendOpeningRotationInitialAbc,"""
+          if t.count(old)!=1: raise SystemExit(f'return site count={t.count(old)}')
+          t=t.replace(old,new,1)
+          old_comment="""  // Diagnostic only: uniform closed-end pressure strain integrated along the
+            // original centreline tangent. The ACCDB bend-arc load path does not add this
+            // vector to the MEC-21 opening field in TRANSLATION_AND_ROTATION mode."""
+          new_comment="""  // Translational Bourdon effect integrated along the bend centreline tangent.
+            // The integral is exactly the near-to-far chord vector multiplied by the
+            // closed-end pressure strain, matching CAESAR's documented bend translation."""
+          if t.count(old_comment)!=1: raise SystemExit(f'comment site count={t.count(old_comment)}')
+          p.write_text(t.replace(old_comment,new_comment,1))
+
+      - name: Prove candidate free-state addition analytically
+        shell: pwsh
+        run: |
+          $ErrorActionPreference='Stop'; $PSNativeCommandUseErrorActionPreference=$true
+          node --check src/core/linear-fea-piping-components/bourdon-pressure-expansion.js
+          @'
+          import { deriveMec21BendPressureFreeState } from './src/core/linear-fea-piping-components/bourdon-pressure-expansion.js';
+          const s=deriveMec21BendPressureFreeState({bendAngle:Math.PI/2,pressure:3e6,innerRadius:.05,bendRadius:.2,elasticModulus:2e11,secondMoment:1e-6,poissonRatio:.3});
+          const expected=s.bendOpeningTranslationAbc.map((v,i)=>v+s.uniformPressureTranslationAbc[i]);
+          for(let i=0;i<3;i++) if(Math.abs(s.translationAbc[i]-expected[i])>1e-15) throw new Error('combined bend translation mismatch');
+          if(!(Math.hypot(...s.uniformPressureTranslationAbc)>0)) throw new Error('uniform bend translation absent');
+          console.log(JSON.stringify({status:'PASS',translationAbc:s.translationAbc,bendOpening:s.bendOpeningTranslationAbc,uniformChord:s.uniformPressureTranslationAbc,rotationAbc:s.rotationAbc},null,2));
+          '@ | node --input-type=module
+
+      - name: Candidate six cases
+        shell: pwsh
+        run: |
+          $ErrorActionPreference='Stop'; $PSNativeCommandUseErrorActionPreference=$true
+          node scripts/lfea-caesar-accdb-benchmark.mjs --accdb $env:ACCDB --profile benchmarks/LFEA/CAESAR_ACCDB/bm4l-validation.profile.json --solve-linear true --solve-cases L2,L3,L4,L5,L6,L14 --actual-out artifacts/bend-bourdon/after/actual.json --out artifacts/bend-bourdon/after/report.json
+          node scripts/lfea-b3.1-frame-element-check.mjs
+          node scripts/lfea-b3.3-solver-check.mjs
+          node scripts/lfea-b3.4-recovery-check.mjs
+
+      - name: Emit A-B evidence
+        shell: pwsh
+        run: |
+          $ErrorActionPreference='Stop'; $PSNativeCommandUseErrorActionPreference=$true
+          @'
+          const fs=require('fs');
+          const names=['before','after'],cases=['L2','L3','L4','L5','L6','L14'];
+          const R=Object.fromEntries(names.map(n=>[n,JSON.parse(fs.readFileSync(`artifacts/bend-bourdon/${n}/report.json`,'utf8').replace(/^\uFEFF/,''))]));
+          const A=Object.fromEntries(names.map(n=>[n,JSON.parse(fs.readFileSync(`artifacts/bend-bourdon/${n}/actual.json`,'utf8').replace(/^\uFEFF/,''))]));
+          const cnt=(r,c)=>({restraint:r.restraintBasis.cases[c].exceedingComponentCount,displacementRotation:r.displacementBasis.cases[c].exceedingComponentCount,elementEnd:r.elementBasis.cases[c].exceedingComponentCount});
+          const rows=(r,c)=>r.qualification.cases.find(x=>x.caseId===c).comparison.rows;
+          function find(r,c,kind,prefix,q,comp){const m=rows(r,c).filter(x=>x.entityKind===kind&&String(x.entityId).startsWith(prefix)&&x.quantity===q&&x.component===comp);if(m.length!==1)throw new Error(`row ${c} ${prefix} ${q} ${comp}: ${m.length}`);return m[0];}
+          const specs=[
+            ['20150 UY','L4','NODE','20150','DISPLACEMENT','UY'],
+            ['20330 RZ','L4','NODE','20330','ROTATION','RZ'],
+            ['21740 RY','L4','NODE','21740','ROTATION','RY'],
+            ['22260 RY','L4','NODE','22260','ROTATION','RY'],
+            ['E84 TO MZ','L4','ELEMENT','INPUT_ELEMENT:84|','GLOBAL_END_MOMENT_TO','MZ'],
+            ['E85 FROM FY','L4','ELEMENT','INPUT_ELEMENT:85|','GLOBAL_END_FORCE_FROM','FY'],
+            ['E85 FROM MZ','L4','ELEMENT','INPUT_ELEMENT:85|','GLOBAL_END_MOMENT_FROM','MZ'],
+            ['E86 FROM FY','L4','ELEMENT','INPUT_ELEMENT:86|','GLOBAL_END_FORCE_FROM','FY']
+          ];
+          const highSignal=specs.map(s=>{const b=find(R.before,...s.slice(1)),a=find(R.after,...s.slice(1));const err=x=>Math.abs(x.actualValue-x.referenceValue);return {name:s[0],reference:b.referenceValue,before:b.actualValue,after:a.actualValue,beforePercentError:b.referenceValue===0?null:100*err(b)/Math.abs(b.referenceValue),afterPercentError:a.referenceValue===0?null:100*err(a)/Math.abs(a.referenceValue),errorReductionFraction:err(b)>0?(err(b)-err(a))/err(b):null,beforePass:b.passed,afterPass:a.passed};});
+          const counts=Object.fromEntries(cases.map(c=>[c,{before:cnt(R.before,c),after:cnt(R.after,c)}]));
+          for(const n of names)for(const c of cases)if(A[n].mechanics.cases[c].recoveredEquilibrium.status!=='PASS')throw new Error(`${n} ${c} equilibrium failed`);
+          if(Math.abs(A.before.mechanics.cases.L2.gravityWeightN-A.after.mechanics.cases.L2.gravityWeightN)>1e-9)throw new Error('gravity changed');
+          const unaffected={}; for(const c of ['L2','L3','L14']) unaffected[c]=JSON.stringify(A.before.cases[c].rows)===JSON.stringify(A.after.cases[c].rows);
+          const out={schema:'m047-bm4l-bend-bourdon-translation-ab/v1',candidate:{mechanism:'ADD_UNIFORM_CLOSED_END_PRESSURE_TRANSLATION_TO_BEND_FREE_STATE',geometry:'epsilon_p * (farPoint-nearPoint)',authority:'CAESAR documentation: bend Bourdon translation elongates along near-to-far node line; Trans+Rot includes translational and rotational bend effects',benchmarkFitted:false},counts,highSignal,unaffectedCases:unaffected,gravityWeightN:A.after.mechanics.cases.L2.gravityWeightN,equilibrium:Object.fromEntries(cases.map(c=>[c,A.after.mechanics.cases[c].recoveredEquilibrium.status]))};
+          fs.writeFileSync('artifacts/bend-bourdon/ab.json',JSON.stringify(out,null,2)+'\n'); console.log(JSON.stringify(out,null,2));
+          '@ | node
+
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: m047-bm4l-bend-bourdon-translation-ab-${{ github.sha }}
+          path: artifacts/bend-bourdon
+          retention-days: 30
+          if-no-files-found: error

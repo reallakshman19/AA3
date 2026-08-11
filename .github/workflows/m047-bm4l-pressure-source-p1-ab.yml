@@ -1,0 +1,144 @@
+name: M047 BM4_L bend pressure source P1 A-B
+
+on:
+  push:
+    branches: [agent/m047-bm4l-fresh-qualification]
+    paths: ['.github/workflows/m047-bm4l-pressure-source-p1-ab.yml']
+
+permissions:
+  contents: read
+
+jobs:
+  ab:
+    runs-on: windows-latest
+    timeout-minutes: 65
+    env:
+      MODEL_COMMON_COMMIT: '45d51ea18624f5775805f399110c1738301c0d90'
+      REPORT_COMMON_COMMIT: '179c4831cf521cf797c13699cfbbd118315c9244'
+      ZIP_SHA256: '978617cba50fa0b1a16c2fa71dc1e0d38e55ac834b191f887d100c6951abd8b9'
+      MEMBER_SHA256: '64c05a50e9ed0452622ff5880335460486f24ac8e6adecc9a300b549c9aa82f8'
+      MISC_SHA256: 'a2f5d5d3d76c8c2ea48e32495129b3689a6c5679de7ba11f03d2f780625692c4'
+      ACE_URL: 'https://download.microsoft.com/download/3/5/C/35C84C36-661A-44E6-9324-8786B8DBE231/accessdatabaseengine_X64.exe'
+      ACE_SHA256: '04e96c9f1a1f7d251a88aececf1dc10ff65950392787427c00814a43308003de'
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: agent/m047-bm4l-fresh-qualification
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+      - run: npm ci
+
+      - name: Bind pinned model and report
+        shell: pwsh
+        run: |
+          $ErrorActionPreference='Stop'; $PSNativeCommandUseErrorActionPreference=$true
+          New-Item -ItemType Directory -Force artifacts/p1-pressure/source,artifacts/p1-pressure/before,artifacts/p1-pressure/after | Out-Null
+          $installer='artifacts/p1-pressure/accessdatabaseengine_X64.exe'
+          Invoke-WebRequest -Uri $env:ACE_URL -OutFile $installer
+          if((Get-FileHash $installer -Algorithm SHA256).Hash.ToLowerInvariant() -ne $env:ACE_SHA256){throw 'ACE hash mismatch'}
+          $sig=Get-AuthenticodeSignature $installer
+          if($sig.Status -ne 'Valid' -or $sig.SignerCertificate.Subject -notmatch 'Microsoft'){throw 'ACE signature failure'}
+          $p=Start-Process $installer -ArgumentList '/quiet','/norestart' -Wait -PassThru
+          if($p.ExitCode -notin @(0,3010)){throw "ACE install failed $($p.ExitCode)"}
+          Remove-Item $installer -Force
+          $zip='artifacts/p1-pressure/BM4_L.zip'
+          Invoke-WebRequest -Uri "https://raw.githubusercontent.com/reallaksh19/Common/$env:MODEL_COMMON_COMMIT/LFEA/BM4/BM4_L.zip" -OutFile $zip
+          if((Get-FileHash $zip -Algorithm SHA256).Hash.ToLowerInvariant() -ne $env:ZIP_SHA256){throw 'ZIP hash mismatch'}
+          Expand-Archive $zip -DestinationPath artifacts/p1-pressure/source -Force
+          $accdb=Join-Path $PWD 'artifacts/p1-pressure/source/BM4_L.ACCDB'
+          if((Get-FileHash $accdb -Algorithm SHA256).Hash.ToLowerInvariant() -ne $env:MEMBER_SHA256){throw 'ACCDB hash mismatch'}
+          "ACCDB=$accdb" >> $env:GITHUB_ENV
+          Invoke-WebRequest -Uri "https://raw.githubusercontent.com/reallaksh19/Common/$env:REPORT_COMMON_COMMIT/LFEA/BM4/Miscdata_BM4_L.txt" -OutFile artifacts/p1-pressure/Miscdata_BM4_L.txt
+          if((Get-FileHash artifacts/p1-pressure/Miscdata_BM4_L.txt -Algorithm SHA256).Hash.ToLowerInvariant() -ne $env:MISC_SHA256){throw 'Misc report hash mismatch'}
+
+      - name: Current production six cases
+        shell: pwsh
+        run: |
+          $ErrorActionPreference='Stop'; $PSNativeCommandUseErrorActionPreference=$true
+          node scripts/lfea-caesar-accdb-benchmark.mjs --accdb $env:ACCDB --profile benchmarks/LFEA/CAESAR_ACCDB/bm4l-validation.profile.json --solve-linear true --solve-cases L2,L3,L4,L5,L6,L14 --actual-out artifacts/p1-pressure/before/actual.json --out artifacts/p1-pressure/before/report.json
+
+      - name: Select P1 only for bend pressure stiffening and expose factors
+        shell: python
+        run: |
+          import json
+          from pathlib import Path
+          profile=Path('benchmarks/LFEA/CAESAR_ACCDB/bm4l-validation.profile.json')
+          data=json.loads(profile.read_text())
+          data['linearSolve']['bendPressureStiffening']['pressureSource']='P1'
+          data['linearSolve']['bendPressureStiffening']['authorityStatus']='PROVISIONAL'
+          data['linearSolve']['bendPressureStiffening']['source']='COMMON_179c4831_MISC_BEND_REPORT_P1_FACTOR_MATCH_CANDIDATE'
+          profile.write_text(json.dumps(data,indent=2)+'\n')
+
+          solver=Path('src/core/fea-benchmarks/caesar-accdb-linear-solve.js')
+          t=solver.read_text()
+          needle='      bendPointers: bendDefinitions.map((entry) => entry.pointer),'
+          repl='''      bendPointers: bendDefinitions.map((entry) => entry.pointer),
+                diagnosticBends: bendDefinitions.map((entry) => {
+                  const sourceRow = sourceRows.find((row) => String(row.ELEMENTID) === entry.sourceElementId);
+                  return {
+                    sourceElementId: entry.sourceElementId,
+                    toNode: String(sourceRow.TO_NODE),
+                    pressure1Kpa: Number(sourceRow.PRESSURE1),
+                    hydroPressureKpa: Number(sourceRow.HYDRO_PRESSURE),
+                    componentFlexibility: entry.component.flexibility,
+                  };
+                }),'''
+          if t.count(needle)!=1: raise SystemExit(f'bend evidence site count={t.count(needle)}')
+          solver.write_text(t.replace(needle,repl,1))
+
+      - name: Candidate six cases and reusable gates
+        shell: pwsh
+        run: |
+          $ErrorActionPreference='Stop'; $PSNativeCommandUseErrorActionPreference=$true
+          node --check src/core/fea-benchmarks/caesar-accdb-linear-solve.js
+          node scripts/lfea-m047-caesar-straight-pipe-shear-authority-check.mjs
+          node scripts/lfea-m047-mec21-bend-shear-authority-check.mjs
+          node scripts/lfea-b3.1-frame-element-check.mjs
+          node scripts/lfea-b3.2-piping-component-check.mjs
+          node scripts/lfea-b3.3-solver-check.mjs
+          node scripts/lfea-b3.4-recovery-check.mjs
+          node scripts/lfea-caesar-accdb-benchmark.mjs --accdb $env:ACCDB --profile benchmarks/LFEA/CAESAR_ACCDB/bm4l-validation.profile.json --solve-linear true --solve-cases L2,L3,L4,L5,L6,L14 --actual-out artifacts/p1-pressure/after/actual.json --out artifacts/p1-pressure/after/report.json
+          npm run check:core-fea
+
+      - name: Compare P1 factors to CAESAR and emit A-B
+        shell: pwsh
+        run: |
+          $ErrorActionPreference='Stop'; $PSNativeCommandUseErrorActionPreference=$true
+          @'
+          const fs=require('fs');
+          const names=['before','after'],cases=['L2','L3','L4','L5','L6','L14'];
+          const R=Object.fromEntries(names.map(n=>[n,JSON.parse(fs.readFileSync(`artifacts/p1-pressure/${n}/report.json`,'utf8').replace(/^\uFEFF/,''))]));
+          const A=Object.fromEntries(names.map(n=>[n,JSON.parse(fs.readFileSync(`artifacts/p1-pressure/${n}/actual.json`,'utf8').replace(/^\uFEFF/,''))]));
+          const text=fs.readFileSync('artifacts/p1-pressure/Miscdata_BM4_L.txt','utf8');
+          const report=[];
+          const re=/^\s*(\d+)\s+None\s+([0-9.]+)\s+[0-9.]+->\s*[0-9.]+\s+[0-9.]+->\s*[0-9.]+\s+[0-9.]+->\s*[0-9.]+\s+([0-9.]+)->\s*([0-9.]+)\s+([0-9.]+)->\s*([0-9.]+)/gm;
+          let m; while((m=re.exec(text))!==null) report.push({nodeId:String(Number(m[1])),h:Number(m[2]),min:Number(m[3]),max:Number(m[4])});
+          if(report.length!==12)throw new Error(`parsed ${report.length} bends`);
+          const byNode=new Map(report.map(x=>[x.nodeId,x]));
+          const factorComparisons=A.after.mechanics.cases.L4.diagnosticBends.map(b=>{
+            const r=byNode.get(String(b.toNode)); if(!r)throw new Error(`missing report ${b.toNode}`);
+            const f=Number(b.componentFlexibility.factor);
+            return {sourceElementId:b.sourceElementId,bendNode:r.nodeId,solverP1Factor:f,caesarPrintedMin:r.min,caesarPrintedMax:r.max,differenceFromMin:f-r.min,withinPrintTolerance:Math.abs(f-r.min)<=0.0015,pressure1Kpa:b.pressure1Kpa,hydroPressureKpa:b.hydroPressureKpa};
+          });
+          const factorFailures=factorComparisons.filter(x=>!x.withinPrintTolerance);
+          const cnt=(r,c)=>({restraint:r.restraintBasis.cases[c].exceedingComponentCount,displacementRotation:r.displacementBasis.cases[c].exceedingComponentCount,elementEnd:r.elementBasis.cases[c].exceedingComponentCount});
+          const counts=Object.fromEntries(cases.map(c=>[c,{before:cnt(R.before,c),after:cnt(R.after,c)}]));
+          const rows=(r,c)=>r.qualification.cases.find(x=>x.caseId===c).comparison.rows;
+          function find(r,c,kind,prefix,q,comp){const x=rows(r,c).filter(v=>v.entityKind===kind&&String(v.entityId).startsWith(prefix)&&v.quantity===q&&v.component===comp);if(x.length!==1)throw new Error(`row ${c} ${prefix} ${q} ${comp}: ${x.length}`);return x[0];}
+          const specs=[['20150 UY','L4','NODE','20150','DISPLACEMENT','UY'],['20330 RZ','L4','NODE','20330','ROTATION','RZ'],['21740 RY','L4','NODE','21740','ROTATION','RY'],['22260 RY','L4','NODE','22260','ROTATION','RY'],['E85 FROM FY','L4','ELEMENT','INPUT_ELEMENT:85|','GLOBAL_END_FORCE_FROM','FY']];
+          const highSignal=specs.map(s=>{const b=find(R.before,...s.slice(1)),a=find(R.after,...s.slice(1));const pe=x=>x.referenceValue===0?null:100*Math.abs((x.actualValue-x.referenceValue)/x.referenceValue);return {name:s[0],reference:b.referenceValue,before:b.actualValue,after:a.actualValue,beforePercentError:pe(b),afterPercentError:pe(a),beforePass:b.passed,afterPass:a.passed};});
+          for(const n of names)for(const c of cases)if(A[n].mechanics.cases[c].recoveredEquilibrium.status!=='PASS')throw new Error(`${n} ${c} equilibrium failed`);
+          const out={schema:'m047-bm4l-pressure-source-p1-ab/v1',candidate:{from:'MAX_DEFINED_INCLUDING_HYDRO',to:'P1',authority:'Pinned CAESAR MISC BEND REPORT factor lower endpoints',benchmarkFitted:false},factorComparisons,factorFailures,counts,highSignal,equilibrium:Object.fromEntries(cases.map(c=>[c,A.after.mechanics.cases[c].recoveredEquilibrium.status])),gravityWeightN:A.after.mechanics.cases.L2.gravityWeightN,decision:factorFailures.length===0?'P1_MATCHES_CAESAR_REPORTED_PRESSURE_STIFFENING':'P1_DOES_NOT_MATCH_REPORT'};
+          fs.writeFileSync('artifacts/p1-pressure/ab.json',JSON.stringify(out,null,2)+'\n');console.log(JSON.stringify(out,null,2));
+          if(factorFailures.length)process.exitCode=2;
+          '@ | node
+
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: m047-bm4l-pressure-source-p1-ab-${{ github.sha }}
+          path: artifacts/p1-pressure
+          retention-days: 30
+          if-no-files-found: error

@@ -1,0 +1,61 @@
+{
+  "schema": "m047-bm4l-fresh-straight-shear-ab/v1",
+  "classification": "DIAGNOSTIC_ONLY_PENDING_EXACT_CAESAR_COEFFICIENT_AUTHORITY",
+  "baseCommit": "7a08f9db84f298990250793226b36d4a82dbe01e",
+  "workflowRunId": 31368617230,
+  "workflowHead": "80b9392d397b6b6d526b764d4555bba865bfd7f2",
+  "artifactId": 9055203772,
+  "artifactSha256": "c85c55464ec68758c72a74f035c78cd6630a06b39771bba85991d8705e0a3575",
+  "source": {
+    "commonCommit": "45d51ea18624f5775805f399110c1738301c0d90",
+    "zipSha256": "978617cba50fa0b1a16c2fa71dc1e0d38e55ac834b191f887d100c6951abd8b9",
+    "accdbMemberSha256": "64c05a50e9ed0452622ff5880335460486f24ac8e6adecc9a300b549c9aa82f8"
+  },
+  "candidate": {
+    "scope": ["FRAME", "BEND_INCOMING_STRAIGHT"],
+    "formulation": "PIPE_FRAME3D_TIMOSHENKO_V1",
+    "kappaY": 0.5,
+    "kappaZ": 0.5,
+    "bendArcs": false,
+    "reducers": false,
+    "rigids": false,
+    "benchmarkFitted": false,
+    "promote": false,
+    "promotionBlocker": "Official Hexagon material retrieved so far confirms shear modulus participates in CAESAR stiffness but does not independently establish the exact straight-pipe shear coefficient used by this candidate."
+  },
+  "counts": {
+    "L2": {"before": {"restraint": 4, "displacementRotation": 115, "elementEnd": 142}, "after": {"restraint": 5, "displacementRotation": 54, "elementEnd": 107}},
+    "L3": {"before": {"restraint": 9, "displacementRotation": 98, "elementEnd": 179}, "after": {"restraint": 13, "displacementRotation": 75, "elementEnd": 271}},
+    "L4": {"before": {"restraint": 6, "displacementRotation": 66, "elementEnd": 86}, "after": {"restraint": 5, "displacementRotation": 67, "elementEnd": 69}},
+    "L5": {"before": {"restraint": 3, "displacementRotation": 72, "elementEnd": 162}, "after": {"restraint": 6, "displacementRotation": 84, "elementEnd": 202}},
+    "L6": {"before": {"restraint": 1, "displacementRotation": 64, "elementEnd": 49}, "after": {"restraint": 2, "displacementRotation": 38, "elementEnd": 33}},
+    "L14": {"before": {"restraint": 9, "displacementRotation": 98, "elementEnd": 179}, "after": {"restraint": 13, "displacementRotation": 75, "elementEnd": 271}}
+  },
+  "highSignalL2": [
+    {"name": "node 20090 UY", "reference": -197.26048278808594, "before": -419.7871144161486, "after": -189.48836139477226, "beforeAbsoluteError": 222.52663162806266, "afterAbsoluteError": 7.772121393313682, "errorReductionFraction": 0.9650732978050724, "beforePercentError": 112.80852022810863, "afterPercentError": 3.940029591057606},
+    {"name": "E4 TO FY", "reference": -265.9423828125, "before": -336.11005588127705, "after": -270.62322218312806, "beforeAbsoluteError": 70.16767306877705, "afterAbsoluteError": 4.680839370628064, "errorReductionFraction": 0.9332906569947105, "beforePercentError": 26.384539510668393, "afterPercentError": 1.7600952962537915},
+    {"name": "E4 TO MZ", "reference": -484.62725830078125, "before": -668.8412725101745, "after": -496.9756186174171, "beforeAbsoluteError": 184.2140142093932, "afterAbsoluteError": 12.348360316635876, "errorReductionFraction": 0.9329673132110368, "beforePercentError": 38.01148430141785, "afterPercentError": 2.5480119215605357},
+    {"name": "E5 FROM FY", "reference": 68.68189239501953, "before": -83.67705853487143, "after": 81.13486078835598, "beforeAbsoluteError": 152.35895092989097, "afterAbsoluteError": 12.452968393336448, "errorReductionFraction": 0.9182655937355019, "beforePercentError": 221.83277952448975, "afterPercentError": 18.131370524437493},
+    {"name": "E5 FROM MZ", "reference": 484.62725830078125, "before": 668.8412725101743, "after": 496.97561861741656, "beforeAbsoluteError": 184.2140142093931, "afterAbsoluteError": 12.348360316635308, "errorReductionFraction": 0.9329673132110399, "beforePercentError": 38.01148430141783, "afterPercentError": 2.5480119215604184},
+    {"name": "node 20120 RZ", "reference": 0.000030088185611162166, "before": 0.000023723655427648285, "after": 0.000030045672251303704, "beforeAbsoluteError": 0.000006364530183513881, "afterAbsoluteError": 4.251335985846184e-8, "errorReductionFraction": 0.9933202673830372, "beforePercentError": 21.1529211690078, "afterPercentError": 0.14129585747666407}
+  ],
+  "gravityWeightN": {"before": 93510.79023974095, "after": 93510.79023974095},
+  "integrity": {
+    "frameElementChecks": "PASS",
+    "frameReviewerChecks": "PASS",
+    "solverChecks": "PASS",
+    "recoveryChecks": "PASS",
+    "coreFeaChecks": "PASS",
+    "allSixExecutionsQualified": true,
+    "allSixRecoveredEquilibrium": "PASS",
+    "afterMaxResiduals": {
+      "L2": {"forceN": 3.643280024334672e-7, "momentNm": 8.27550650228659e-9},
+      "L3": {"forceN": 0.00006476525280163514, "momentNm": 0.0000014756006123661791},
+      "L4": {"forceN": 6.879277629993883e-7, "momentNm": 4.728996954021194e-9},
+      "L5": {"forceN": 0.00006325204429913356, "momentNm": 0.0000014733730893112806},
+      "L6": {"forceN": 0.0000016796144564068527, "momentNm": 2.516338781788363e-8},
+      "L14": {"forceN": 0.00006476525280163514, "momentNm": 0.0000014756006123661791}
+    }
+  },
+  "interpretation": "The candidate strongly collapses the predicted short-straight-span L2 signature while preserving gravity and equilibrium, but it is not accepted production mechanics until the exact CAESAR straight-pipe shear coefficient is independently sourced. Thermal/combo count regressions are retained rather than hidden; L3/L14 also remain non-tuning cases because thermal strain authority is provisional."
+}

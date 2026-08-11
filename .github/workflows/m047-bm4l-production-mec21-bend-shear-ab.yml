@@ -1,0 +1,139 @@
+name: M047 BM4_L production-parent MEC-21 bend shear A-B
+
+on:
+  push:
+    branches: [agent/m047-bm4l-fresh-qualification]
+    paths: ['.github/workflows/m047-bm4l-production-mec21-bend-shear-ab.yml']
+
+permissions:
+  contents: read
+
+jobs:
+  ab:
+    runs-on: windows-latest
+    timeout-minutes: 65
+    env:
+      COMMON_COMMIT: '45d51ea18624f5775805f399110c1738301c0d90'
+      ZIP_SHA256: '978617cba50fa0b1a16c2fa71dc1e0d38e55ac834b191f887d100c6951abd8b9'
+      MEMBER_SHA256: '64c05a50e9ed0452622ff5880335460486f24ac8e6adecc9a300b549c9aa82f8'
+      ACE_URL: 'https://download.microsoft.com/download/3/5/C/35C84C36-661A-44E6-9324-8786B8DBE231/accessdatabaseengine_X64.exe'
+      ACE_SHA256: '04e96c9f1a1f7d251a88aececf1dc10ff65950392787427c00814a43308003de'
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: agent/m047-bm4l-fresh-qualification
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+      - run: npm ci
+
+      - name: Bind pinned source
+        shell: pwsh
+        run: |
+          $ErrorActionPreference='Stop'; $PSNativeCommandUseErrorActionPreference=$true
+          New-Item -ItemType Directory -Force artifacts/mec21-prod/source,artifacts/mec21-prod/before,artifacts/mec21-prod/after | Out-Null
+          $installer='artifacts/mec21-prod/accessdatabaseengine_X64.exe'
+          Invoke-WebRequest -Uri $env:ACE_URL -OutFile $installer
+          if((Get-FileHash $installer -Algorithm SHA256).Hash.ToLowerInvariant() -ne $env:ACE_SHA256){throw 'ACE hash mismatch'}
+          $sig=Get-AuthenticodeSignature $installer
+          if($sig.Status -ne 'Valid' -or $sig.SignerCertificate.Subject -notmatch 'Microsoft'){throw 'ACE signature failure'}
+          $p=Start-Process $installer -ArgumentList '/quiet','/norestart' -Wait -PassThru
+          if($p.ExitCode -notin @(0,3010)){throw "ACE install failed $($p.ExitCode)"}
+          Remove-Item $installer -Force
+          $zip='artifacts/mec21-prod/BM4_L.zip'
+          Invoke-WebRequest -Uri "https://raw.githubusercontent.com/reallaksh19/Common/$env:COMMON_COMMIT/LFEA/BM4/BM4_L.zip" -OutFile $zip
+          if((Get-FileHash $zip -Algorithm SHA256).Hash.ToLowerInvariant() -ne $env:ZIP_SHA256){throw 'ZIP hash mismatch'}
+          Expand-Archive $zip -DestinationPath artifacts/mec21-prod/source -Force
+          $accdb=Join-Path $PWD 'artifacts/mec21-prod/source/BM4_L.ACCDB'
+          if((Get-FileHash $accdb -Algorithm SHA256).Hash.ToLowerInvariant() -ne $env:MEMBER_SHA256){throw 'ACCDB hash mismatch'}
+          "ACCDB=$accdb" >> $env:GITHUB_ENV
+
+      - name: Current production six cases
+        shell: pwsh
+        run: |
+          $ErrorActionPreference='Stop'; $PSNativeCommandUseErrorActionPreference=$true
+          node scripts/lfea-m047-caesar-straight-pipe-shear-authority-check.mjs
+          node scripts/lfea-caesar-accdb-benchmark.mjs --accdb $env:ACCDB --profile benchmarks/LFEA/CAESAR_ACCDB/bm4l-validation.profile.json --solve-linear true --solve-cases L2,L3,L4,L5,L6,L14 --actual-out artifacts/mec21-prod/before/actual.json --out artifacts/mec21-prod/before/report.json
+
+      - name: Add MEC-21 annular transverse shear to bend arcs only
+        shell: python
+        run: |
+          from pathlib import Path
+          p=Path('src/core/fea-benchmarks/caesar-accdb-linear-solve.js'); t=p.read_text()
+          needle="      frameElementProfile: frameProfile(),\n      localAxisProfile: FRAME_LOCAL_AXIS_PROFILE,"
+          repl="      frameElementProfile: mec21BendFrameProfile(section),\n      localAxisProfile: FRAME_LOCAL_AXIS_PROFILE,"
+          if t.count(needle)!=1: raise SystemExit(f'bend profile site count={t.count(needle)}')
+          t=t.replace(needle,repl,1)
+          marker="function isCaesarStraightPipeSpan(kind) {"
+          helper="""function mec21BendFrameProfile(section) {
+            const ro = section.dimensions.outerDiameter / 2;
+            const ri = ro - section.dimensions.wallThickness;
+            if (!(ri > 0 && ro > ri)) throw new TypeError('MEC-21 bend annulus geometry is invalid.');
+            const alpha = (4 / 3) * ((ro ** 3) - (ri ** 3)) / (((ro ** 2) + (ri ** 2)) * (ro - ri));
+            const kappa = 1 / alpha;
+            return sealFrameElementProfile({
+              schema: 'fea-linear-frame-element-profile/v1', profileId: 'LINEAR-FRAME-ELEMENT-R1',
+              straightPipeFormulation: 'PIPE_FRAME3D_TIMOSHENKO_V1', shearDeformation: true,
+              shearCorrectionFactorY: { value: kappa, source: 'INTERGRAPH_CAUX_2015_MEC21_ANNULAR_ALPHA' },
+              shearCorrectionFactorZ: { value: kappa, source: 'INTERGRAPH_CAUX_2015_MEC21_ANNULAR_ALPHA' },
+              releaseRule: 'STATIC_CONDENSATION_V1', thermalStrainApproximation: 'UNIFORM_TEMPERATURE_ALPHA_DELTA_T_V1',
+              releaseSingularityTolerance: { value: 1e-12, source: PROFILE_SOURCE }, semanticHash: '',
+            });
+          }
+
+          function isCaesarStraightPipeSpan(kind) {"""
+          if t.count(marker)!=1: raise SystemExit(f'helper site count={t.count(marker)}')
+          p.write_text(t.replace(marker,helper,1))
+
+      - name: Candidate six cases and integrity gates
+        shell: pwsh
+        run: |
+          $ErrorActionPreference='Stop'; $PSNativeCommandUseErrorActionPreference=$true
+          node --check src/core/fea-benchmarks/caesar-accdb-linear-solve.js
+          node scripts/lfea-b3.1-frame-element-check.mjs
+          node scripts/lfea-b3.1-reviewer-check.mjs
+          node scripts/lfea-b3.2-piping-component-check.mjs
+          node scripts/lfea-b3.3-solver-check.mjs
+          node scripts/lfea-b3.4-recovery-check.mjs
+          node scripts/lfea-caesar-accdb-benchmark.mjs --accdb $env:ACCDB --profile benchmarks/LFEA/CAESAR_ACCDB/bm4l-validation.profile.json --solve-linear true --solve-cases L2,L3,L4,L5,L6,L14 --actual-out artifacts/mec21-prod/after/actual.json --out artifacts/mec21-prod/after/report.json
+          npm run check:core-fea
+
+      - name: Emit governed A-B evidence
+        shell: pwsh
+        run: |
+          $ErrorActionPreference='Stop'; $PSNativeCommandUseErrorActionPreference=$true
+          @'
+          const fs=require('fs');
+          const names=['before','after'],cases=['L2','L3','L4','L5','L6','L14'];
+          const R=Object.fromEntries(names.map(n=>[n,JSON.parse(fs.readFileSync(`artifacts/mec21-prod/${n}/report.json`,'utf8').replace(/^\uFEFF/,''))]));
+          const A=Object.fromEntries(names.map(n=>[n,JSON.parse(fs.readFileSync(`artifacts/mec21-prod/${n}/actual.json`,'utf8').replace(/^\uFEFF/,''))]));
+          const cnt=(r,c)=>({restraint:r.restraintBasis.cases[c].exceedingComponentCount,displacementRotation:r.displacementBasis.cases[c].exceedingComponentCount,elementEnd:r.elementBasis.cases[c].exceedingComponentCount});
+          const rows=(r,c)=>r.qualification.cases.find(x=>x.caseId===c).comparison.rows;
+          function find(r,c,kind,prefix,q,comp){const m=rows(r,c).filter(x=>x.entityKind===kind&&String(x.entityId).startsWith(prefix)&&x.quantity===q&&x.component===comp);if(m.length!==1)throw new Error(`row ${c} ${prefix} ${q} ${comp}: ${m.length}`);return m[0];}
+          const targetSpecs=[
+            ['E5 FROM FY','L2','ELEMENT','INPUT_ELEMENT:5|','GLOBAL_END_FORCE_FROM','FY'],
+            ['E5 FROM MZ','L2','ELEMENT','INPUT_ELEMENT:5|','GLOBAL_END_MOMENT_FROM','MZ'],
+            ['E4 TO FY','L2','ELEMENT','INPUT_ELEMENT:4|','GLOBAL_END_FORCE_TO','FY'],
+            ['E4 TO MZ','L2','ELEMENT','INPUT_ELEMENT:4|','GLOBAL_END_MOMENT_TO','MZ'],
+            ['node 20090 UY','L2','NODE','20090','FORCE','UY'],
+            ['node 20120 RZ','L2','NODE','20120','ROTATION','RZ'],
+            ['node 20330 RZ','L4','NODE','20330','ROTATION','RZ'],
+            ['E19 TO MZ','L4','ELEMENT','INPUT_ELEMENT:19|','GLOBAL_END_MOMENT_TO','MZ']
+          ];
+          const highSignal=targetSpecs.map(s=>{const b=find(R.before,...s.slice(1)),a=find(R.after,...s.slice(1));const err=x=>Math.abs(x.actualValue-x.referenceValue);return {name:s[0],reference:b.referenceValue,before:b.actualValue,after:a.actualValue,beforePercentError:b.referenceValue===0?null:100*err(b)/Math.abs(b.referenceValue),afterPercentError:a.referenceValue===0?null:100*err(a)/Math.abs(a.referenceValue),errorReductionFraction:err(b)>0?(err(b)-err(a))/err(b):null,beforeStatus:b.status,afterStatus:a.status};});
+          for(const n of names)for(const c of cases){if(A[n].mechanics.cases[c].recoveredEquilibrium.status!=='PASS')throw new Error(`${n} ${c} recovery failed`);}
+          if(Math.abs(A.before.mechanics.cases.L2.gravityWeightN-A.after.mechanics.cases.L2.gravityWeightN)>1e-9)throw new Error('gravity changed');
+          const counts=Object.fromEntries(cases.map(c=>[c,{before:cnt(R.before,c),after:cnt(R.after,c)}]));
+          const totals={};for(const n of names){totals[n]={restraint:0,displacementRotation:0,elementEnd:0};for(const c of cases)for(const k of Object.keys(totals[n]))totals[n][k]+=counts[c][n][k];totals[n].total=Object.values(totals[n]).reduce((s,v)=>s+v,0);}
+          const out={schema:'m047-bm4l-production-mec21-bend-shear-ab/v1',candidate:{equation:'alpha=(4/3)*(Ro^3-Ri^3)/((Ro^2+Ri^2)*(Ro-Ri)); kappa=1/alpha',scope:'BEND_ARC_ONLY',source:'Intergraph CAUx 2015 reproducing MEC-21 1964/1977 bend flexibility shear terms',benchmarkFitted:false},counts,totals,highSignal,gravityWeightN:A.after.mechanics.cases.L2.gravityWeightN,equilibrium:Object.fromEntries(cases.map(c=>[c,A.after.mechanics.cases[c].recoveredEquilibrium.status])),decision:(totals.after.total<totals.before.total&&highSignal.find(x=>x.name==='E5 FROM FY').afterStatus==='PASS')?'PHYSICALLY_SUPPORTED_CANDIDATE_REVIEW_FOR_PROMOTION':'REJECT_OR_REFINE'};
+          fs.writeFileSync('artifacts/mec21-prod/ab.json',JSON.stringify(out,null,2)+'\n'); console.log(JSON.stringify(out,null,2));
+          '@ | node
+
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: m047-bm4l-production-mec21-bend-shear-ab-${{ github.sha }}
+          path: artifacts/mec21-prod
+          retention-days: 30
+          if-no-files-found: error

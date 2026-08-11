@@ -1,0 +1,54 @@
+{
+  "schema": "m047-bm4l-pressure-stiffening-p1-qualification/v1",
+  "classification": "ACCEPTED_REPORT_BOUND_FORMULATION",
+  "workflowRunId": 31380536463,
+  "workflowHead": "5f0bd4c7db476a6eb263d7553a66b7ae9ccc101d",
+  "artifactId": 9059741160,
+  "artifactSha256": "1ed756db5c3b5556d39bbad2150f4c52b2f0ac2cc8f9b5ba53817686588b3dde",
+  "source": {
+    "modelCommonCommit": "45d51ea18624f5775805f399110c1738301c0d90",
+    "reportCommonCommit": "179c4831cf521cf797c13699cfbbd118315c9244",
+    "zipSha256": "978617cba50fa0b1a16c2fa71dc1e0d38e55ac834b191f887d100c6951abd8b9",
+    "accdbMemberSha256": "64c05a50e9ed0452622ff5880335460486f24ac8e6adecc9a300b549c9aa82f8",
+    "miscdataSha256": "a2f5d5d3d76c8c2ea48e32495129b3689a6c5679de7ba11f03d2f780625692c4"
+  },
+  "candidate": {
+    "from": "MAX_DEFINED_INCLUDING_HYDRO",
+    "to": "P1",
+    "reason": "The production MAX_DEFINED path selected hydrostatic pressure 22.035 MPa and over-stiffened every bend. P1=11.6 MPa reproduces every CAESAR MISC BEND REPORT printed minimum flexibility factor to report precision.",
+    "benchmarkFitted": false
+  },
+  "factorComparisons": [
+    {"sourceElementId":"5","bendNode":"20120","solverP1Factor":2.8981722445415343,"caesarPrintedMin":2.898,"caesarPrintedMax":3.031,"differenceFromMin":0.00017224454153419444,"pressure1Kpa":11600,"hydroPressureKpa":22035,"status":"MATCH"},
+    {"sourceElementId":"19","bendNode":"20330","solverP1Factor":3.0580330385708625,"caesarPrintedMin":3.058,"caesarPrintedMax":3.206,"differenceFromMin":0.0000330385708626757,"pressure1Kpa":11600,"hydroPressureKpa":22035,"status":"MATCH"},
+    {"sourceElementId":"20","bendNode":"20340","solverP1Factor":3.0580330385708625,"caesarPrintedMin":3.058,"caesarPrintedMax":3.206,"differenceFromMin":0.0000330385708626757,"pressure1Kpa":11600,"hydroPressureKpa":22035,"status":"MATCH"},
+    {"sourceElementId":"25","bendNode":"20500","solverP1Factor":3.0580330385708625,"caesarPrintedMin":3.058,"caesarPrintedMax":3.206,"differenceFromMin":0.0000330385708626757,"pressure1Kpa":11600,"hydroPressureKpa":22035,"status":"MATCH"},
+    {"sourceElementId":"32","bendNode":"20690","solverP1Factor":3.0580330385708625,"caesarPrintedMin":3.058,"caesarPrintedMax":3.206,"differenceFromMin":0.0000330385708626757,"pressure1Kpa":11600,"hydroPressureKpa":22035,"status":"MATCH"},
+    {"sourceElementId":"33","bendNode":"20700","solverP1Factor":3.0580330385708625,"caesarPrintedMin":3.058,"caesarPrintedMax":3.206,"differenceFromMin":0.0000330385708626757,"pressure1Kpa":11600,"hydroPressureKpa":22035,"status":"MATCH"},
+    {"sourceElementId":"36","bendNode":"21430","solverP1Factor":3.0589606102894624,"caesarPrintedMin":3.059,"caesarPrintedMax":3.207,"differenceFromMin":-0.00003938971053774054,"pressure1Kpa":11600,"hydroPressureKpa":22035,"status":"MATCH"},
+    {"sourceElementId":"42","bendNode":"21590","solverP1Factor":2.821262796972944,"caesarPrintedMin":2.821,"caesarPrintedMax":2.941,"differenceFromMin":0.0002627969729438462,"pressure1Kpa":11600,"hydroPressureKpa":22035,"status":"MATCH"},
+    {"sourceElementId":"43","bendNode":"21600","solverP1Factor":2.821262796972944,"caesarPrintedMin":2.821,"caesarPrintedMax":2.941,"differenceFromMin":0.0002627969729438462,"pressure1Kpa":11600,"hydroPressureKpa":22035,"status":"MATCH"},
+    {"sourceElementId":"48","bendNode":"21720","solverP1Factor":3.0589606102894624,"caesarPrintedMin":3.059,"caesarPrintedMax":3.207,"differenceFromMin":-0.00003938971053774054,"pressure1Kpa":11600,"hydroPressureKpa":22035,"status":"MATCH"},
+    {"sourceElementId":"85","bendNode":"22250","solverP1Factor":3.0589606102894624,"caesarPrintedMin":3.059,"caesarPrintedMax":3.207,"differenceFromMin":-0.00003938971053774054,"pressure1Kpa":11600,"hydroPressureKpa":22035,"status":"MATCH"},
+    {"sourceElementId":"88","bendNode":"22350","solverP1Factor":3.0589606102894624,"caesarPrintedMin":3.059,"caesarPrintedMax":3.207,"differenceFromMin":-0.00003938971053774054,"pressure1Kpa":11600,"hydroPressureKpa":22035,"status":"MATCH"}
+  ],
+  "factorFailures": [],
+  "counts": {
+    "L2": {"before":[1,35,14],"after":[0,34,4]},
+    "L3": {"before":[4,57,97],"after":[6,57,87]},
+    "L4": {"before":[0,36,6],"after":[0,33,0]},
+    "L5": {"before":[3,66,52],"after":[3,64,44]},
+    "L6": {"before":[0,12,14],"after":[0,11,12]},
+    "L14": {"before":[4,57,97],"after":[6,57,87]}
+  },
+  "highSignalL4": [
+    {"name":"20150 UY","beforePercentError":16.25488189014629,"afterPercentError":17.07077892971946,"disposition":"SLIGHTLY_WORSE"},
+    {"name":"20330 RZ","beforePercentError":31.523069980234535,"afterPercentError":2.7026301826871975,"disposition":"PASS"},
+    {"name":"21740 RY","beforePercentError":15.711643392564062,"afterPercentError":0.5352013609010688,"disposition":"PASS"},
+    {"name":"22260 RY","beforePercentError":10.190455239702844,"afterPercentError":0.28119617667471053,"disposition":"PASS"},
+    {"name":"E85 FROM FY","beforePercentError":11.625479429120054,"afterPercentError":3.1458642144643814,"disposition":"PASS"}
+  ],
+  "equilibrium": {"L2":"PASS","L3":"PASS","L4":"PASS","L5":"PASS","L6":"PASS","L14":"PASS"},
+  "gravityWeightN": 93510.79023974095,
+  "decision": "PROMOTE_P1_AS_BM4_L_BEND_PRESSURE_STIFFENING_SOURCE"
+}

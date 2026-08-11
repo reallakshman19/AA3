@@ -1,0 +1,118 @@
+name: M047 BM4_L post-P1 production qualification
+
+on:
+  push:
+    branches: [agent/m047-bm4l-fresh-qualification]
+    paths: ['.github/workflows/m047-bm4l-post-p1-production-qualification.yml']
+
+permissions:
+  contents: read
+
+jobs:
+  qualify:
+    runs-on: windows-latest
+    timeout-minutes: 60
+    env:
+      MODEL_COMMON_COMMIT: '45d51ea18624f5775805f399110c1738301c0d90'
+      REPORT_COMMON_COMMIT: '179c4831cf521cf797c13699cfbbd118315c9244'
+      ZIP_SHA256: '978617cba50fa0b1a16c2fa71dc1e0d38e55ac834b191f887d100c6951abd8b9'
+      MEMBER_SHA256: '64c05a50e9ed0452622ff5880335460486f24ac8e6adecc9a300b549c9aa82f8'
+      MISC_SHA256: 'a2f5d5d3d76c8c2ea48e32495129b3689a6c5679de7ba11f03d2f780625692c4'
+      LOADCASE_SHA256: '621bf3cef12f66e0fb3e0216d3fbff02e3dd002b829d680b57fc08d33907deb0'
+      ACE_URL: 'https://download.microsoft.com/download/3/5/C/35C84C36-661A-44E6-9324-8786B8DBE231/accessdatabaseengine_X64.exe'
+      ACE_SHA256: '04e96c9f1a1f7d251a88aececf1dc10ff65950392787427c00814a43308003de'
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: agent/m047-bm4l-fresh-qualification
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+      - run: npm ci
+
+      - name: Bind pinned ACCDB and CAESAR reports
+        shell: pwsh
+        run: |
+          $ErrorActionPreference='Stop'; $PSNativeCommandUseErrorActionPreference=$true
+          New-Item -ItemType Directory -Force artifacts/post-p1/source,artifacts/post-p1/run | Out-Null
+          $installer='artifacts/post-p1/accessdatabaseengine_X64.exe'
+          Invoke-WebRequest -Uri $env:ACE_URL -OutFile $installer
+          if((Get-FileHash $installer -Algorithm SHA256).Hash.ToLowerInvariant() -ne $env:ACE_SHA256){throw 'ACE hash mismatch'}
+          $sig=Get-AuthenticodeSignature $installer
+          if($sig.Status -ne 'Valid' -or $sig.SignerCertificate.Subject -notmatch 'Microsoft'){throw 'ACE signature failure'}
+          $p=Start-Process $installer -ArgumentList '/quiet','/norestart' -Wait -PassThru
+          if($p.ExitCode -notin @(0,3010)){throw "ACE install failed $($p.ExitCode)"}
+          Remove-Item $installer -Force
+          $zip='artifacts/post-p1/BM4_L.zip'
+          Invoke-WebRequest -Uri "https://raw.githubusercontent.com/reallaksh19/Common/$env:MODEL_COMMON_COMMIT/LFEA/BM4/BM4_L.zip" -OutFile $zip
+          if((Get-FileHash $zip -Algorithm SHA256).Hash.ToLowerInvariant() -ne $env:ZIP_SHA256){throw 'ZIP hash mismatch'}
+          Expand-Archive $zip -DestinationPath artifacts/post-p1/source -Force
+          $accdb=Join-Path $PWD 'artifacts/post-p1/source/BM4_L.ACCDB'
+          if((Get-FileHash $accdb -Algorithm SHA256).Hash.ToLowerInvariant() -ne $env:MEMBER_SHA256){throw 'ACCDB hash mismatch'}
+          "ACCDB=$accdb" >> $env:GITHUB_ENV
+          Invoke-WebRequest -Uri "https://raw.githubusercontent.com/reallaksh19/Common/$env:REPORT_COMMON_COMMIT/LFEA/BM4/Miscdata_BM4_L.txt" -OutFile artifacts/post-p1/Miscdata_BM4_L.txt
+          Invoke-WebRequest -Uri "https://raw.githubusercontent.com/reallaksh19/Common/$env:REPORT_COMMON_COMMIT/LFEA/BM4/Loadcasereport_BM4_L.txt" -OutFile artifacts/post-p1/Loadcasereport_BM4_L.txt
+          if((Get-FileHash artifacts/post-p1/Miscdata_BM4_L.txt -Algorithm SHA256).Hash.ToLowerInvariant() -ne $env:MISC_SHA256){throw 'Misc report hash mismatch'}
+          if((Get-FileHash artifacts/post-p1/Loadcasereport_BM4_L.txt -Algorithm SHA256).Hash.ToLowerInvariant() -ne $env:LOADCASE_SHA256){throw 'Load-case report hash mismatch'}
+
+      - name: Prove committed mechanics and solve six cases
+        shell: pwsh
+        run: |
+          $ErrorActionPreference='Stop'; $PSNativeCommandUseErrorActionPreference=$true
+          @'
+          const fs=require('fs');
+          const p=JSON.parse(fs.readFileSync('benchmarks/LFEA/CAESAR_ACCDB/bm4l-validation.profile.json','utf8'));
+          if(p.linearSolve.bendPressureStiffening.pressureSource!=='P1'||p.linearSolve.bendPressureStiffening.authorityStatus!=='RESOLVED') throw new Error('committed P1 pressure authority absent');
+          const q=JSON.parse(fs.readFileSync('benchmarks/LFEA/CAESAR_ACCDB/bm4l-pressure-stiffening-p1-qualification.json','utf8'));
+          if(q.factorComparisons.length!==12||q.factorComparisons.some(x=>x.status!=='MATCH')) throw new Error('12-bend P1 report match absent');
+          '@ | node
+          node scripts/lfea-m047-caesar-straight-pipe-shear-authority-check.mjs
+          node scripts/lfea-m047-mec21-bend-shear-authority-check.mjs
+          node scripts/lfea-b3.1-frame-element-check.mjs
+          node scripts/lfea-b3.2-piping-component-check.mjs
+          node scripts/lfea-b3.3-solver-check.mjs
+          node scripts/lfea-b3.4-recovery-check.mjs
+          node scripts/lfea-caesar-accdb-benchmark.mjs `
+            --accdb $env:ACCDB `
+            --profile benchmarks/LFEA/CAESAR_ACCDB/bm4l-validation.profile.json `
+            --solve-linear true `
+            --solve-cases L2,L3,L4,L5,L6,L14 `
+            --actual-out artifacts/post-p1/run/actual.json `
+            --out artifacts/post-p1/run/report.json
+          npm run check:core-fea
+
+      - name: Emit production qualification
+        shell: pwsh
+        run: |
+          $ErrorActionPreference='Stop'; $PSNativeCommandUseErrorActionPreference=$true
+          @'
+          const fs=require('fs');
+          const A=JSON.parse(fs.readFileSync('artifacts/post-p1/run/actual.json','utf8').replace(/^\uFEFF/,''));
+          const R=JSON.parse(fs.readFileSync('artifacts/post-p1/run/report.json','utf8').replace(/^\uFEFF/,''));
+          const cases=['L2','L3','L4','L5','L6','L14'];
+          const count=(c)=>({restraint:R.restraintBasis.cases[c].exceedingComponentCount,displacementRotation:R.displacementBasis.cases[c].exceedingComponentCount,elementEnd:R.elementBasis.cases[c].exceedingComponentCount});
+          const counts=Object.fromEntries(cases.map(c=>[c,count(c)]));
+          const totals={restraint:0,displacementRotation:0,elementEnd:0};for(const c of cases)for(const k of Object.keys(totals))totals[k]+=counts[c][k];totals.total=totals.restraint+totals.displacementRotation+totals.elementEnd;
+          for(const c of cases) if(A.mechanics.cases[c].recoveredEquilibrium.status!=='PASS') throw new Error(`${c} equilibrium failed`);
+          const key=r=>`${r.entityKind}|${r.entityId}|${r.quantity}|${r.component}|${r.unit}`;
+          const maps=Object.fromEntries(cases.map(c=>[c,new Map(A.cases[c].rows.map(r=>[key(r),r.value]))]));
+          function identity(lhs,rhs){const out={};for(const k of maps[lhs].keys()){let v=0;for(const [c,m] of rhs)v+=m*maps[c].get(k);const d=Math.abs(maps[lhs].get(k)-v),u=k.split('|').at(-1);if(!out[u]||d>out[u].maxDifference)out[u]={maxDifference:d,worstRow:k};}return out;}
+          const identities={L6_equals_L2_plus_L4:identity('L6',[['L2',1],['L4',1]]),L5_equals_L2_plus_L3_plus_L4:identity('L5',[['L2',1],['L3',1],['L4',1]]),L14_equals_L3:identity('L14',[['L3',1]])};
+          const rows=c=>R.qualification.cases.find(x=>x.caseId===c).comparison.rows;
+          const remaining={};
+          for(const c of ['L2','L4','L6']){
+            const failed=rows(c).filter(r=>!r.passed);
+            remaining[c]=failed.map(r=>({entityKind:r.entityKind,entityId:r.entityId,quantity:r.quantity,component:r.component,unit:r.unit,reference:r.referenceValue,actual:r.actualValue,relativeError:r.referenceValue===0?null:Math.abs((r.actualValue-r.referenceValue)/r.referenceValue)}));
+          }
+          const out={schema:'m047-bm4l-post-p1-production-qualification/v1',headSha:process.env.GITHUB_SHA,counts,totals,remaining,identities,equilibrium:Object.fromEntries(cases.map(c=>[c,A.mechanics.cases[c].recoveredEquilibrium])),gravityWeightN:A.mechanics.cases.L2.gravityWeightN,pressureSource:'P1',unresolvedAuthorities:['THERMAL_EXPANSION_STRAIN exact value','RESTRAINT_FORMULATION exact finite/default application']};
+          fs.writeFileSync('artifacts/post-p1/qualification.json',JSON.stringify(out,null,2)+'\n');console.log(JSON.stringify(out,null,2));
+          '@ | node
+
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: m047-bm4l-post-p1-production-qualification-${{ github.sha }}
+          path: artifacts/post-p1
+          retention-days: 30
+          if-no-files-found: error

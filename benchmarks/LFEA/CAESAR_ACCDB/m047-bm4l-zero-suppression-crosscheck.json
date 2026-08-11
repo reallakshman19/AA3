@@ -1,0 +1,63 @@
+{
+  "schema": "m047-bm4l-zero-suppression-crosscheck/v1",
+  "benchmarkId": "BM4_L",
+  "caseId": "L2",
+  "target": {
+    "nodeId": "20440",
+    "component": "RZ",
+    "storedCaesarReferenceRad": 0,
+    "lfeaActualRad": -0.0000020332762129334813,
+    "lfeaActualDeg": -0.00011649814558543177
+  },
+  "rotationZeroBoundary": {
+    "rad": 0.0000017453292519943296,
+    "deg": 0.0001
+  },
+  "method": {
+    "identity": "q = K*u - f_equivalent - f_initial",
+    "case": "L2/W",
+    "plane": "global UY/RZ bending plane",
+    "sourceActions": "CAESAR source-element global FROM/TO end actions from the governed reference rows",
+    "operator": "retained exact-head production element global stiffness and L2 load vectors",
+    "suppressedDofs": "ACCDB exact-zero displacement/rotation entries are treated as unknowns only within the decoupled UY/RZ plane; rigid-translation gauge freedom is removed without constraining target RZ",
+    "selectionRule": "both elements directly incident on node 20440 are solved independently; no benchmark residual coefficient is fitted"
+  },
+  "reconstructions": [
+    {
+      "sourceElementId": "23",
+      "elementId": "ACCDB.E23",
+      "nodes": "20390->20440",
+      "inferredRotationRad": -0.0000016047853422165525,
+      "inferredRotationDeg": -0.00009194742713346596,
+      "maximumEquationResidual": 0.008911681006482874
+    },
+    {
+      "sourceElementId": "24",
+      "elementId": "ACCDB.E24",
+      "nodes": "20440->20480",
+      "inferredRotationRad": -0.0000015953340874645341,
+      "inferredRotationDeg": -0.00009140591012507234,
+      "maximumEquationResidual": 0.0025059254680863674
+    }
+  ],
+  "crossCheck": {
+    "meanInferredRotationRad": -0.0000016000597148405433,
+    "meanInferredRotationDeg": -0.00009167666862926915,
+    "relativeDisagreement": 0.005906813767235087,
+    "bothInferredMagnitudesBelowNativeBoundary": true,
+    "lfeaActualMagnitudeAboveNativeBoundary": true
+  },
+  "interpretation": [
+    "The two adjacent spans independently infer the same sub-0.0001-deg CAESAR rotation to within about 0.6 percent.",
+    "This corroborates that the stored ACCDB zero at L2:20440:RZ is a suppressed sub-floor value rather than evidence of a literal mechanical zero.",
+    "The LFEA value remains above the native 0.0001-deg boundary and therefore remains a failure; this cross-check does not widen the gate or mutate the reference.",
+    "The cross-check is corroborating evidence for source suppression only. It is not a replacement CAESAR reference value and is not used by the comparator."
+  ],
+  "source": {
+    "accdbSha256": "64c05a50e9ed0452622ff5880335460486f24ac8e6adecc9a300b549c9aa82f8",
+    "qualificationArtifactSourceCommit": "7488ba76126f8240bb61c80fad243cf096c5fe08",
+    "workflowRun": 31457644192,
+    "artifactId": 9088676941,
+    "artifactDigest": "sha256:8819dbbbf21aff8e314fe6cae85db0c3407afc12ca71dde3b459442242d3e934"
+  }
+}

@@ -18,8 +18,12 @@ for (const [stageId, routeFamily] of Object.entries(expectedRouteFamilies)) {
   const adapter = requireLafeaStageAnalysisAdapter(stageId);
   assert.equal(adapter.routeFamily, routeFamily);
   assert.ok(Object.isFrozen(adapter.input));
-  assert.ok(Object.isFrozen(adapter.input.guidedStepRequirements));
+  assert.ok(Object.isFrozen(adapter.input.requirements));
 }
+assert.deepEqual(
+  requireLafeaStageAnalysisAdapter('LAFEA.5').input.requirements.restraints.paths,
+  ['shellTemplate.constraints'],
+);
 
 const noDocument = workflow('LAFEA.1', null, null, null);
 assert.equal(step(noDocument, 'ANALYSIS_PROFILE').status, 'NOT_STARTED');
@@ -98,6 +102,7 @@ console.log(JSON.stringify({
   status: 'PASS',
   workflowReasonsRemainCanonical: true,
   stageInputRequirementsUseCanonicalAdapter: true,
+  adapterInputCapabilitiesAreUiIndependent: true,
   routeFamilies: Object.values(expectedRouteFamilies),
   githubActionsWorkflowAdded: false,
 }));

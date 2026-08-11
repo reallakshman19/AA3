@@ -49,6 +49,21 @@ export function stageTopologyEditNodePosition(runtime, canonicalId, endpointInpu
   });
 }
 
+export function stageTopologyEditSupportRestraint(runtime, canonicalId) {
+  return stage(runtime, () => createTopologyEditTableIntent({
+    projection: runtime.projection,
+    sessionSnapshot: runtime.controller.session.snapshot(),
+    canonicalId,
+    intentKind: 'SUPPORT_RESTRAINT',
+    requestedValue: {
+      family: required(value(runtime, '[data-table-edit-support-family]'), 'support family'),
+      direction: value(runtime, '[data-table-edit-support-direction]'),
+      gapMm: optionalNonNegative(value(runtime, '[data-table-edit-support-gap]'), 'support gap'),
+      travelMm: optionalNonNegative(value(runtime, '[data-table-edit-support-travel]'), 'support travel'),
+    },
+  }));
+}
+
 export function stageTopologyEditValveReplacement(runtime, canonicalId) {
   return stage(runtime, () => createTopologyEditTableIntent({
     projection: runtime.projection,
@@ -167,6 +182,14 @@ function positive(input, label) {
   const number = Number(input);
   if (!Number.isFinite(number) || number <= 0) {
     throw new RangeError(`TopologyEditTableEngineeringRuntime: ${label} must be positive.`);
+  }
+  return number;
+}
+function optionalNonNegative(input, label) {
+  if (String(input ?? '').trim() === '') return null;
+  const number = Number(input);
+  if (!Number.isFinite(number) || number < 0) {
+    throw new RangeError(`TopologyEditTableEngineeringRuntime: ${label} must be non-negative.`);
   }
   return number;
 }

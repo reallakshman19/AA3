@@ -3,12 +3,17 @@ import {
   normalizeTopologyEditInlineReplacementPayload,
 } from '../topology-edit-inline-component-replacement.js';
 import {
-  normalizeTopologyEditJunctionRelationPayload,
-} from '../topology-edit-junction-relation-command.js';
-import {
   normalizeTopologyEditTableNodePositionPayload,
   topologyEditTableNodePositionPriorValue,
 } from './topology-edit-table-node-position-contract.js';
+import {
+  normalizeTopologyEditTableSupportRestraintPayload,
+  topologyEditTableSupportRestraintPriorValue,
+} from './topology-edit-table-support-restraint-contract.js';
+import {
+  normalizeTopologyEditTableTeeReducerRelation,
+  topologyEditTableTeeReducerPriorValue,
+} from './topology-edit-table-tee-reducer-contract.js';
 import { assertTopologyEditTableProjection } from './topology-edit-table-projection.js';
 
 export const TOPOLOGY_EDIT_TABLE_INTENT_SCHEMA = 'TopologyEditTableIntent.v1';
@@ -17,6 +22,7 @@ export const TOPOLOGY_EDIT_TABLE_AUTHORITY_SCHEMA = 'TopologyEditTableEditAuthor
 const INTENT_KINDS = new Set([
   'PIPE_LENGTH',
   'NODE_POSITION',
+  'SUPPORT_RESTRAINT',
   'VALVE_REPLACEMENT',
   'TEE_REDUCER_RELATION',
 ]);
@@ -35,13 +41,7 @@ export function createTopologyEditTableIntent({
   const authority = editAuthority(projection, sessionSnapshot);
   const row = exactRow(projection, canonicalId);
   const kind = requiredEnum(intentKind, INTENT_KINDS, 'intentKind');
-  const payload = normalizeIntentPayload(
-    kind,
-    requestedValue,
-    geometryPolicy,
-    row,
-    projection,
-  );
+  const payload = normalizeIntentPayload(kind, requestedValue, geometryPolicy, row, projection);
   const target = {
     rowId: row.rowId,
     canonicalKind: row.identity.canonicalKind,
@@ -138,11 +138,14 @@ function normalizeIntentPayload(kind, requestedValue, geometryPolicy, row, proje
   if (kind === 'NODE_POSITION') {
     return normalizeTopologyEditTableNodePositionPayload(requestedValue, geometryPolicy, row);
   }
+  if (kind === 'SUPPORT_RESTRAINT') {
+    return normalizeTopologyEditTableSupportRestraintPayload(requestedValue, row);
+  }
   if (kind === 'VALVE_REPLACEMENT') {
     return normalizeValveReplacement(requestedValue, geometryPolicy, row);
   }
   if (kind === 'TEE_REDUCER_RELATION') {
-    return normalizeTeeReducerRelation(requestedValue, row, projection);
+    return normalizeTopologyEditTableTeeReducerRelation(requestedValue, row, projection);
   }
   throw new RangeError(`TopologyEditTableIntent: unsupported intent kind ${kind}.`);
 }
@@ -190,85 +193,23 @@ function normalizeValveReplacement(requestedValue, geometryPolicy, row) {
   };
 }
 
-function normalizeTeeReducerRelation(requestedValue, row, projection) {
-  if (row.elementType !== 'TEE' || row.identity.canonicalKind !== 'JUNCTION') {
-    throw new RangeError('TopologyEditTableIntent: TEE_REDUCER_RELATION requires an exact TEE junction row.');
-  }
-  const branchNodeId = requiredText(requestedValue?.branchNodeId, 'requestedValue.branchNodeId');
-  const branchPortKey = requiredText(requestedValue?.branchPortKey, 'requestedValue.branchPortKey');
-  const runNodeIds = [...(requestedValue?.runNodeIds ?? [])].sort();
-  const binding = row.identity.portBindings.find((item) => (
-    item.nodeId === branchNodeId && item.portKey === branchPortKey
-  ));
-  if (!binding) {
-    throw new RangeError('TopologyEditTableIntent: branch node/port is not an exact TEE row binding.');
-  }
-  const expectedRuns = row.identity.nodeIds.filter((id) => id !== branchNodeId).sort();
-  if (runNodeIds.length !== 2 || semanticHash(runNodeIds) !== semanticHash(expectedRuns)) {
-    throw new RangeError('TopologyEditTableIntent: runNodeIds must be the exact two non-branch TEE nodes.');
-  }
-  const reducerRow = exactRow(
-    projection,
-    requestedValue?.reducerCanonicalId ?? requestedValue?.reducerEdgeId,
-  );
-  if (reducerRow.elementType !== 'REDUCER' || reducerRow.identity.canonicalKind !== 'EDGE') {
-    throw new RangeError('TopologyEditTableIntent: M10 requires an exact REDUCER edge row.');
-  }
-  if (reducerRow.custody.catalogueAuthority !== 'EXACT' || !reducerRow.custody.catalogue) {
-    throw new RangeError('TopologyEditTableIntent: M10 reducer catalogue authority must be exact.');
-  }
-  const catalogue = reducerRow.custody.catalogue;
-  const suppliedHash = requestedValue?.reducerCatalogueBinding?.recordHash;
-  if (suppliedHash && suppliedHash !== catalogue.recordHash) {
-    throw new Error('TopologyEditTableIntent: reducer catalogue record changed before intent rebase.');
-  }
-  const normalized = normalizeTopologyEditJunctionRelationPayload({
-    junctionId: row.identity.canonicalId,
-    branchNodeId,
-    branchPortKey,
-    runNodeIds,
-    reducerEdgeId: reducerRow.identity.canonicalId,
-    reducerCatalogueBinding: {
-      catalogueHash: catalogue.catalogueHash,
-      sourceHash: catalogue.sourceHash,
-      recordId: catalogue.recordId,
-      recordHash: catalogue.recordHash,
-      componentType: 'REDUCER',
-      fromNominalSizeMm: reducerRow.fields.dnInMm,
-      toNominalSizeMm: reducerRow.fields.dnOutMm,
-    },
-    runNominalSizeMm: requestedValue?.runNominalSizeMm,
-    teeBranchNominalSizeMm: requestedValue?.teeBranchNominalSizeMm,
-    downstreamNominalSizeMm: requestedValue?.downstreamNominalSizeMm,
-    relationPolicy: requestedValue?.relationPolicy ?? 'EXPLICIT_REDUCER',
-  });
-  return { requestedValue: normalized, geometryPolicy: null };
-}
-
 function normalizeGeometryPolicy(value) {
   return {
     anchor: requiredEnum(value?.anchor, ANCHORS, 'geometryPolicy.anchor'),
-    propagation: requiredEnum(
-      value?.propagation,
-      PROPAGATION,
-      'geometryPolicy.propagation',
-    ),
+    propagation: requiredEnum(value?.propagation, PROPAGATION, 'geometryPolicy.propagation'),
   };
 }
 function priorValue(kind, row, payload) {
   if (kind === 'PIPE_LENGTH') return deepFreeze({ lengthMm: row.fields.lengthMm });
   if (kind === 'NODE_POSITION') return topologyEditTableNodePositionPriorValue(payload);
+  if (kind === 'SUPPORT_RESTRAINT') return topologyEditTableSupportRestraintPriorValue(row);
   if (kind === 'VALVE_REPLACEMENT') return deepFreeze({
     valveType: row.fields.valveType,
     lengthMm: row.fields.lengthMm,
     componentLengthMm: row.fields.componentLengthMm,
     catalogueRecordHash: row.custody.catalogue?.recordHash ?? null,
   });
-  if (kind === 'TEE_REDUCER_RELATION') return deepFreeze({
-    runDnMm: row.fields.runDnMm,
-    branchDnMm: row.fields.branchDnMm,
-    branchAngleDeg: row.fields.branchAngleDeg,
-  });
+  if (kind === 'TEE_REDUCER_RELATION') return topologyEditTableTeeReducerPriorValue(row);
   return null;
 }
 function exactRow(projection, canonicalIdInput) {
@@ -281,7 +222,9 @@ function exactRow(projection, canonicalIdInput) {
 }
 function requiredEnum(value, allowed, label) {
   const text = requiredText(value, label).toUpperCase();
-  if (!allowed.has(text)) throw new RangeError(`TopologyEditTableIntent: ${label} has unsupported value ${text}.`);
+  if (!allowed.has(text)) {
+    throw new RangeError(`TopologyEditTableIntent: ${label} has unsupported value ${text}.`);
+  }
   return text;
 }
 function requiredText(value, label) {

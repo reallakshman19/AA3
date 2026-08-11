@@ -7,6 +7,9 @@ import {
 import {
   validatePipeSegmentCandidateEffect,
 } from './topology-edit-pipe-segment-effect.js';
+import {
+  validateTopologyEditSupportRestraintEffect,
+} from './topology-edit-support-restraint-command.js';
 
 const ENGINEERING_COMMANDS = new Set([
   'REPLACE_INLINE_COMPONENT',
@@ -16,6 +19,9 @@ const ENGINEERING_COMMANDS = new Set([
 export function validateTopologyEditCommandEffect(candidate) {
   if (candidate.commandType === 'INSERT_PIPE_SEGMENT') {
     return validatePipeSegmentCandidateEffect(candidate);
+  }
+  if (candidate.commandType === 'UPDATE_SUPPORT_RESTRAINT') {
+    return validateTopologyEditSupportRestraintEffect(candidate);
   }
   if (ENGINEERING_COMMANDS.has(candidate.commandType)) {
     return validateTopologyEditEngineeringCommandEffect(candidate);

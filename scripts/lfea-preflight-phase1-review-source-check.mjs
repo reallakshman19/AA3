@@ -129,7 +129,7 @@ assertCell(baseline, baselineTarget, 'piping.ratingClassCode', {
   status: LFEA_PREFLIGHT_FIELD_STATUS.RESOLVED_EXACT,
   sourceKind: 'SHARED_MODEL+MASTER_LINE_LIST',
 });
-const conflict = createLfeaPreflightPhase1ReviewSource(sourceModel([8]), [lineRow({ pipingClass: 'B1' })]);
+const conflict = createLfeaPreflightPhase1ReviewSource(sourceModel([8, 8]), [lineRow({ pipingClass: 'B1' })]);
 const conflictTarget = conflict.lineIndex.targetIds[0];
 assert.equal(conflictTarget, baselineTarget,
   'Master enrichment changes must not rewrite source-stable target identity.');
@@ -167,7 +167,7 @@ assertCell(wallMissing, wallMissing.lineIndex.targetIds[0], 'piping.wallThicknes
 console.log('P06D-SOURCE-04 PASS wall thickness is explicit-source-only; disagreement blocks and missing evidence stays null');
 
 const reorderedSelected = lineRow({ _sourceRowIndex: 1 });
-const reordered = createLfeaPreflightPhase1ReviewSource(sourceModel([8]), [
+const reordered = createLfeaPreflightPhase1ReviewSource(sourceModel([8, 8]), [
   lineRow({ lineKey: 'S9900001', _sourceRowIndex: 0, _sourceRowNumber: 99 }),
   reorderedSelected,
 ]);

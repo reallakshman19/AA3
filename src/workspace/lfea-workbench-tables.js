@@ -14,6 +14,41 @@ import {
 } from './workbench-dom.js';
 
 const PAGE_SIZE = 100;
+const RESULT_COLUMN_PRIORITIES = Object.freeze({
+  Displacements: ['nodeId', 'component', 'value', 'unit'],
+  Reactions: ['nodeId', 'component', 'value', 'unit'],
+  'Raw stress': [
+    'elementId',
+    'integrationPoint',
+    'naturalCoordinates',
+    'stress',
+    'sigmaZ',
+    'vonMisesStress',
+    'principalStresses',
+    'jacobianDeterminant',
+    'jacobianDeterminantRatio',
+    'unit',
+  ],
+  'Projected nodal stress': [
+    'nodeId',
+    'stressComponent',
+    'weightedValue',
+    'weightSum',
+    'contributionCount',
+    'unit',
+  ],
+});
+const DEFAULT_RESULT_PRIORITY = Object.freeze([
+  'nodeId',
+  'elementId',
+  'elementType',
+  'component',
+  'integrationPoint',
+  'value',
+  'unit',
+  'status',
+  'evidence',
+]);
 
 export function lfeaRecordTable(root, rows, selectedIndex, onSelect) {
   const wrapper = workbenchElement(root, 'div', 'lfea-workbench__table');
@@ -68,12 +103,12 @@ export function lfeaResultTable(root, title, rows) {
   }
   let page = 0;
   const body = workbenchElement(root, 'div');
+  const keys = orderedResultKeys(title, rows);
   const render = () => {
     const maximumPage = Math.max(0, Math.ceil(rows.length / PAGE_SIZE) - 1);
     page = Math.min(page, maximumPage);
     const start = page * PAGE_SIZE;
     const values = rows.slice(start, start + PAGE_SIZE);
-    const keys = [...new Set(rows.flatMap((row) => Object.keys(row)))];
     const table = workbenchElement(root, 'table');
     const header = workbenchElement(root, 'tr');
     keys.forEach((key) => header.append(workbenchElement(root, 'th', null, key)));
@@ -101,6 +136,16 @@ export function lfeaResultTable(root, title, rows) {
   return section;
 }
 
+function orderedResultKeys(title, rows) {
+  const available = [...new Set(rows.flatMap((row) => Object.keys(row)))];
+  const priority = RESULT_COLUMN_PRIORITIES[title] ?? DEFAULT_RESULT_PRIORITY;
+  const preferred = priority.filter((key) => available.includes(key));
+  const remainder = available
+    .filter((key) => !preferred.includes(key))
+    .sort(compare);
+  return [...preferred, ...remainder];
+}
+
 function pageControls(root, start, count, total, previous, next) {
   const controls = workbenchElement(root, 'div', 'lfea-workbench__pagination');
   const label = workbenchElement(
@@ -115,4 +160,8 @@ function pageControls(root, start, count, total, previous, next) {
   nextButton.disabled = start + count >= total;
   controls.append(label, previousButton, nextButton);
   return controls;
+}
+
+function compare(left, right) {
+  return left < right ? -1 : left > right ? 1 : 0;
 }

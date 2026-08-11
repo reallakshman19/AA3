@@ -12,6 +12,34 @@ import {
 import { lfeaResultTable } from './lfea-workbench-tables.js';
 import { qualityEvidenceRows } from './lfea-quality-adapter.js';
 
+const AUTHORITY_POLICY_LABELS = Object.freeze({
+  AUTHORITATIVE_RAW_ELEMENT_OR_INTEGRATION_POINT_STRESS:
+    'Raw element/integration-point stress is the governing qualified stress evidence.',
+  RAW_STRESS_IS_AUTHORITY:
+    'Raw integration-point stress is the qualified authority.',
+  RAW_STRESS_NOT_AUTHORITATIVE:
+    'Raw stress is present but is not qualified as the primary authority.',
+  NON_AUTHORITATIVE_REVIEW_PROJECTION:
+    'Projected nodal stress is a non-authoritative review aid.',
+  NOT_GENERATED:
+    'Projected stress was not generated for this run.',
+});
+
+const PREFLIGHT_LABELS = Object.freeze({
+  QUALIFIED: 'Preflight qualified',
+  READY: 'Preflight ready',
+  EXPORT_LIKELY_TO_EXCEED_BYTE_CAPACITY: 'Capacity warning',
+  BLOCKED_BY_DECLARED_CAPACITY: 'Capacity blocked',
+});
+
+const PROGRESS_LABELS = Object.freeze({
+  QUEUED: 'Queued',
+  ADAPTER: 'Validating and adapting model',
+  SOLVER: 'Solving finite-element system',
+  REVIEW: 'Reviewing engineering evidence',
+  EXPORT: 'Preparing evidence export',
+});
+
 export function renderLfeaToolbar(root, state, modes, handlers) {
   const toolbar = workbenchElement(root, 'div', 'lfea-workbench__toolbar');
   const mock = workbenchButton(root, '[SIMULATED] Load Mock Data', handlers.onMock);
@@ -99,6 +127,41 @@ export function renderLfeaNodeDraftEditor(root, nodeDraft, handlers) {
   return form;
 }
 
+export function renderLfeaAnalysisSummary(root, packageValue) {
+  const wrapper = workbenchElement(root, 'div', 'lfea-workbench__analysis-summary');
+  if (!packageValue) {
+    wrapper.append(workbenchElement(root, 'p', null, 'No analysis definition is loaded.'));
+    return wrapper;
+  }
+  const analysis = packageValue.analysisDefinition ?? {};
+  const profile = analysis.solverProfile ?? {};
+  const elementTypes = [...new Set(
+    (packageValue.elements ?? []).map((row) => row.elementType).filter(Boolean),
+  )].sort();
+  const units = profile.units ?? {};
+  const rows = [
+    ['Formulation', analysis.formulation ?? profile.formulation ?? 'Not declared'],
+    ['Element types', elementTypes.join(', ') || 'Not declared'],
+    ['Length / force / stress units', [units.length, units.force, units.stress].filter(Boolean).join(' / ') || 'Not declared'],
+    ['Units identity', packageValue.unitsIdentity ?? 'Not declared'],
+    ['DOF order', Array.isArray(profile.dofOrder) ? profile.dofOrder.join(', ') : 'Not declared'],
+    ['Solver backend', profile.backendIdentity ?? 'Not declared'],
+    ['Constraint method', profile.constraintMethod ?? 'Not declared'],
+    ['Material assignments', String(analysis.materialAssignments?.length ?? 0)],
+    ['Thickness assignments', String(analysis.thicknessAssignments?.length ?? 0)],
+    ['Package semantic hash', packageValue.semanticHash ?? 'Not declared'],
+  ];
+  const list = workbenchElement(root, 'dl');
+  for (const [name, value] of rows) {
+    list.append(
+      workbenchElement(root, 'dt', null, name),
+      workbenchElement(root, 'dd', null, value),
+    );
+  }
+  wrapper.append(list);
+  return wrapper;
+}
+
 export function renderLfeaResults(root, state) {
   const wrapper = workbenchElement(root, 'div', 'lfea-workbench__results');
   if (state.diagnostics?.length) {
@@ -122,7 +185,7 @@ export function renderLfeaResults(root, state) {
       lfeaResultTable(root, 'Raw stress', rawStressRows(execution.result)),
       lfeaResultTable(
         root,
-        'Mesh quality evidence — no acceptance threshold applied',
+        'Mesh quality evidence — no acceptance criterion applied in this workbench',
         qualityEvidenceRows(execution.result),
       ),
     );
@@ -173,6 +236,7 @@ function deformationScaleInput(root, state, handlers) {
     'lfea-workbench__deformation-scale',
     `Deformation scale (${state.display.deformationScaleSource}) `,
   );
+  label.title = 'Visualisation multiplier applied to nodal displacements only. 1.0 = true-scale deformation.';
   const input = workbenchElement(root, 'input');
   input.type = 'number';
   input.step = 'any';
@@ -185,12 +249,14 @@ function deformationScaleInput(root, state, handlers) {
 }
 
 function progressOutput(root, progress) {
+  const stage = PROGRESS_LABELS[progress.stage] ?? progress.stage;
   const output = workbenchElement(
     root,
     'output',
     'lfea-workbench__progress',
-    `${progress.stage} ${progress.index}/${progress.total}`,
+    `${stage} ${progress.index}/${progress.total}`,
   );
+  output.dataset.stage = progress.stage;
   output.setAttribute('role', 'status');
   output.setAttribute('aria-live', 'polite');
   return output;
@@ -216,29 +282,35 @@ function diagnosticsBlock(root, diagnostics) {
 }
 
 function authorityPolicy(root, execution) {
-  return workbenchElement(
+  const rawCode = execution.authorityPolicy.rawStress;
+  const projectedCode = execution.authorityPolicy.projectedStress;
+  const value = workbenchElement(
     root,
     'p',
     'lfea-workbench__authority',
-    `Raw: ${execution.authorityPolicy.rawStress}. `
-      + `Projected: ${execution.authorityPolicy.projectedStress}.`,
+    `${authorityLabel(rawCode)} ${authorityLabel(projectedCode)}`,
   );
+  value.title = `Raw: ${rawCode}. Projected: ${projectedCode}.`;
+  return value;
 }
 
 function preflight(root, execution) {
   if (!execution.preflight) return workbenchElement(root, 'span');
+  const status = execution.preflight.status;
+  const label = PREFLIGHT_LABELS[status] ?? humanizeCode(status);
   const value = workbenchElement(
     root,
     'p',
     'lfea-workbench__preflight',
-    `Preflight ${execution.preflight.status} — `
+    `${label} — `
       + `${execution.preflight.nodeCount} nodes, `
       + `${execution.preflight.elementCount} elements, `
       + `${execution.preflight.dofCount} DOF. `
       + execution.preflight.advice,
   );
   value.dataset.role = 'lfea-preflight';
-  value.dataset.status = execution.preflight.status;
+  value.dataset.status = status;
+  value.title = status;
   return value;
 }
 
@@ -271,4 +343,14 @@ function isCurrentExecution(state) {
   return Boolean(state.execution)
     && state.execution.inputSemanticHash === state.packageValue?.semanticHash
     && state.execution.inputModelVersion === state.modelVersion;
+}
+
+function authorityLabel(code) {
+  return AUTHORITY_POLICY_LABELS[code] ?? humanizeCode(code);
+}
+
+function humanizeCode(code) {
+  if (typeof code !== 'string' || !code) return 'Status not declared.';
+  const text = code.toLowerCase().replaceAll('_', ' ');
+  return `${text.charAt(0).toUpperCase()}${text.slice(1)}.`;
 }

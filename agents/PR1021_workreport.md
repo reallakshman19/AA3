@@ -1,264 +1,240 @@
 # PR1021 Work Report — LFEA Workbench Integrity (#1018)
 
-Maintained throughout PR #1021. This is the single source of truth for current PR state, engineering findings, decisions, validation evidence, deferred improvements, and next-agent handover. Current-state sections are rewritten as work progresses; stage history remains durable.
-
-> Stage 8 was the closure checkpoint for the initial integrity slice. The Owner then explicitly authorized continuation on the same PR; all subsequent work remains stacked on PR #1021.
+Maintained throughout PR #1021. This file is the single source of truth for scope, engineering decisions, changed files, validation evidence, risks, and handover. All work remains stacked on PR #1021; no CI workflow gates are added.
 
 ## 0. PR Mission Control
 
 | Item | Current state |
 |---|---|
-| Mission | Resolve the highest-value verified LFEA workbench defects from #1018 without solver-numeric or CI-workflow changes |
-| Source issue | #1018 |
+| Source issue | #1018 — LFEA update |
 | PR | #1021 |
 | Branch | `agent/lfea-workbench-integrity-1018` |
 | Base | `751756e9140527b8dc121aa179dc76b7039fb7ad` |
-| Reconciled S18 head | `de139aca102c8b78ac5c861cfc7a9abfa2991e73` before S18 report-only closure |
 | PR state | Draft |
-| Current stage | Stage 19 — mesh-quality gate ownership clarity (M04) |
-| Last completed stage | Stage 18 — cumulative reconciliation and PR metadata refresh |
-| Engineering status | M04 source-grounded; production wording not yet changed in this stage |
-| Validation status | Source evidence grounded in model/element-quality/quality-adapter paths; Stage 19 patch/guard pending; full repository/browser execution remains NOT_RUN |
-| Current blocker | None |
-| Exact next action | Replace the over-broad “no acceptance threshold applied” result title with explicit upstream geometry-gate ownership plus descriptive-metric wording, then guard the contract |
+| Current stage | Stage 20 — cumulative reconciliation after M04 |
+| Last completed stage | Stage 19 — mesh-quality gate ownership clarity |
+| Engineering status | Critical + selected High/Medium integrity/presentation defects implemented/source-guarded; architecture authority/handoff audit is next priority |
+| Validation status | Source/patch evidence complete through S19; S20 GitHub reconciliation pending; full repository/browser execution NOT_RUN |
+| Workflow constraint | No `.github/workflows/*` additions or modifications |
+| Exact next action | Reconcile current head/changed-file ledger/ancestry, refresh PR metadata for M04, then open architecture audit stage before any further production change |
 
 ### Handover in 60 seconds
 
-**Implemented and guarded before S19**
-- C01–C04 critical integrity/run/error/export fixes.
-- N01/N02 editor-draft and delete sequencing integrity.
-- H01–H03/H05/H06 authority, error, record-validation, and history-warning improvements.
-- M01 distinct state presentation.
-- M06 dimensionless displacement-multiplier semantics.
-- M08 human progress labels with raw-stage traceability.
+Implemented and guarded:
+- C01 destructive mock scope: collection-local controls that actually replaced the whole package were removed; explicit global mock remains.
+- Package/record unsaved drafts survive benign renders and invalidate on committed `${modelVersion}:${semanticHash}` change.
+- Delete selection is made safe before synchronous mutation; failed identity-preserving delete restores context.
+- C02 no-Worker run: RUNNING/QUEUED publishes before a real frame/task yield; deferred synchronous execution is accepted only for exact active run identity, uses current pipeline options, and can be cancelled during the queued interval.
+- C03 failure handling: diagnostic codes survive wrapping; file import/document edit fallbacks are classified separately; code-driven guidance retains original technical detail.
+- C04 evidence export: strict current `QUALIFIED_EXPORT` gate remains; controller failures become `LFEA_EVIDENCE_EXPORT_REJECTED` rather than uncaught/stale success.
+- H01–H03: read-only analysis authority/settings plus human authority/preflight labels while raw codes remain metadata/title authority.
+- H05/H06: inline JSON-object screening for record edits and warning before Undo/Redo discards a current qualified execution/review/evidence.
+- M01/M06/M08: distinct EMPTY/READY/RUNNING/QUALIFIED/FAILED presentation; dimensionless deformation display multiplier (`1× = true displacement`) with displacement unit separate; human progress labels with raw-stage retention.
+- M04: mesh-quality wording now distinguishes upstream geometry validity qualification from descriptive shape-quality metrics.
 
-**S19 grounding finding — M04**
-Current results title says `Mesh quality evidence — no acceptance threshold applied`. That is too broad. The panel does not apply a separate threshold to the displayed Jacobian ratio / edge-length ratio / corner-cosine metrics, but **model qualification already applies hard geometry validity gates**:
-- T3 signed area must be greater than `solverProfile.tolerances.geometryArea`.
-- Q4 connectivity must be strictly convex/counterclockwise/non-crossed, and Q4 Jacobian determinants at retained points must be finite and greater than the same geometry tolerance.
-- hanging-node/improper-edge-intersection geometry checks also use `solverProfile.tolerances.geometryArea`.
-- `lfea-quality-adapter.js` intentionally invents no additional quality score or threshold; it exposes retained quality evidence verbatim.
+Still required before merge:
+- Execute `npm run check:lfea-workbench` on an actual checkout of the exact final PR head.
+- Execute targeted browser scenarios for draft persistence/invalidation, no-Worker paint/cancel behavior, failure/evidence messages, Undo/Redo warning, and presentation semantics.
+- Treat NOT_RUN as missing evidence, never PASS.
 
-Therefore the correct UI distinction is: **geometry validity was qualified upstream; displayed shape-quality metrics are descriptive here and have no additional panel-level ratio/cosine threshold.**
+## 1. Engineering Intent and Invariants
 
-**Planned S19 implementation**
-- Rename the table simply to `Mesh quality evidence`.
-- Add an adjacent authority note stating upstream geometry qualification and the declared `geometryArea` tolerance when available.
-- Explicitly state that this panel adds no separate acceptance threshold for displayed ratio/cosine metrics.
-- Retain raw quality evidence unchanged; do not invent new thresholds, pass/fail statuses, or solver gates.
-- Add source assertions in the existing `lfea-workbench-check.mjs`; no workflow change.
+- External package authority remains fail-closed; imports are validated, not silently repaired.
+- UI draft/preview state is not solver authority until an existing explicit commit action succeeds.
+- Run completion/failure is accepted only for exact run ID + input semantic hash + model version identity.
+- Worker and no-Worker paths must consume equivalent current analysis options.
+- Human labels improve comprehension without replacing raw status/policy/stage codes.
+- Local continuum stress is not piping-code/CAESAR stress authority.
+- Deformation multiplier is dimensionless/display-only; solved displacement remains in the solver-profile length unit.
+- Quality presentation must not invent acceptance criteria, and must not hide qualification gates that already exist upstream.
+- No solver numerical/formulation changes and no new GitHub Actions workflow gates.
 
-**Validation limitations**
-- Full `npm run check:lfea-workbench`: **NOT_RUN**.
-- Browser interaction/presentation: **NOT_RUN**.
+## 2. Engineering Item Register
 
-## 1. Mission and Engineering Intent
+| ID | Priority | Status | Summary |
+|---|---:|---|---|
+| ISS-001 / C01 | Critical | IMPLEMENTED + GUARDED | Collection-context mock action had whole-package destructive scope |
+| ISS-002 | High | IMPLEMENTED + GUARDED | Record draft lost on rerender |
+| ISS-003 / N02 | Medium | IMPLEMENTED + GUARDED | Delete selection cleared after synchronous mutation/render |
+| ISS-004 | High | IMPLEMENTED + GUARDED | Package draft lost on rerender |
+| ISS-005 | Low | RESOLVED | Connector writes introduced missing trailing newlines |
+| ISS-006 / C02 | Critical | IMPLEMENTED + GUARDED | No-Worker solve had no paintable RUNNING boundary |
+| ISS-007 | High | IMPLEMENTED + GUARDED | No-Worker path could use stale construction-time pipeline options |
+| ISS-008 / C03 | High | IMPLEMENTED + GUARDED | Wrapped edit errors could lose structured diagnostic code |
+| ISS-009 / C04 | Critical | IMPLEMENTED + GUARDED | Evidence-export exception could escape controller path |
+| ISS-010 / H01 | High | IMPLEMENTED + GUARDED | Analysis settings/authority invisible outside raw JSON |
+| ISS-011 / H02 | High | IMPLEMENTED + GUARDED | Raw authority enum strings were primary user text |
+| ISS-012 / H03 | High | IMPLEMENTED + GUARDED | Raw preflight codes were primary user text |
+| ISS-013 / H04 | High (audit) | DEFERRED / RE-GROUND | Canonical result columns require explicit result-schema contract; original mechanism claim was inaccurate |
+| ISS-014 / H05 | High | IMPLEMENTED + GUARDED | Invalid record JSON discovered only on submit |
+| ISS-015 / H06 | High | IMPLEMENTED + GUARDED | Undo/Redo could discard qualified evidence without warning |
+| ISS-016 / M01 | Medium | IMPLEMENTED + GUARDED | EMPTY/READY/RUNNING lacked distinct status presentation |
+| ISS-017 / M06 | Medium | IMPLEMENTED + GUARDED | Deformation control obscured dimensionless display-multiplier meaning |
+| ISS-018 / M08 | Medium | IMPLEMENTED + GUARDED | Progress exposed raw stage codes as primary text |
+| ISS-019 / M04 | Medium | IMPLEMENTED + GUARDED | Quality title overclaimed absence of thresholds despite upstream geometry qualification |
+| IMP-001 | High | DEFERRED | Shared engineering colour authority for true cross-run comparison |
+| IMP-002 | High | NEXT ARCHITECTURE PRIORITY | Audit complete linear-piping → pre-FEA → mesh-workbench governed handoff |
+| RISK-001 | High | OPEN | Continuum von Mises may be mistaken for piping-code stress |
+| RISK-002 | High | OPEN | Support reaction sign convention may be overlooked downstream |
+| QST-001 | Medium | OPEN | Authoritative vertical support-triad fallback-axis policy |
+| M02/M03/M05/M07 | Medium | DEFERRED | Responsive SVG, convergence visibility, selection polish, non-blocking export provenance preview |
 
-### Mission
-Continue issue #1018 remediation while preserving engineering authority and making quality/result wording accurately reflect where qualification actually occurs.
+## 3. Decision Log
 
-### Governing principles
-- A presentation layer must not claim “no threshold” when an upstream model-validity gate already exists.
-- A presentation layer must also not invent a ratio/cosine quality threshold that the kernel does not enforce.
-- `solverProfile.tolerances.geometryArea` is geometry qualification authority, not a generic mesh-quality score threshold.
-- Raw quality evidence remains retained kernel evidence.
-- No solver numerical/formulation changes and no `.github/workflows/*` changes.
-
-## 2. Mission Status
-
-| Work item | Priority | Status | Stage | Evidence |
-|---|---:|---|---|---|
-| C01–C04 | Critical | IMPLEMENTED + GUARDED | S4–S12 | source/store + reconciliation |
-| H01–H03 | High | IMPLEMENTED + GUARDED | S13–S14 | source + reconciliation |
-| H04 canonical result columns | High (audit) | DEFERRED / RE-GROUND | later | explicit result schema needed |
-| H05/H06 | High | IMPLEMENTED + GUARDED | S15–S16 | source + reconciliation |
-| M01/M06/M08 | Medium | IMPLEMENTED + GUARDED | S17–S18 | source + reconciliation |
-| M04 quality gate ownership | Medium | IN_PROGRESS | S19 | model/quality source grounded |
-| Runtime/browser validation | High | NOT_RUN | ongoing | environment limitation |
-
-## 3. Engineering Item Register
-
-| ID | Type | Priority | Status | Summary | Current PR? |
-|---|---|---:|---|---|---|
-| ISS-001 | Defect | Critical | IMPLEMENTED + GUARDED | Collection-context mock actions replaced whole package | Yes |
-| ISS-002 | Defect | High | IMPLEMENTED + GUARDED | Render destroyed unsaved record-editor text | Yes |
-| ISS-003 | Defect | Medium | IMPLEMENTED + GUARDED | Delete selection cleared after synchronous mutation/render | Yes |
-| ISS-004 | Defect | High | IMPLEMENTED + GUARDED | Render destroyed unsaved package-editor text | Yes |
-| ISS-005 | Quality | Low | RESOLVED | Connector full-file writes removed trailing newlines | Yes |
-| ISS-006 / C02 | Defect | Critical | IMPLEMENTED + GUARDED | No-Worker run lacked paintable RUNNING boundary | Yes |
-| ISS-007 | Defect | High | IMPLEMENTED + GUARDED | No-Worker path used stale construction-time pipeline options | Yes |
-| ISS-008 | Defect | High | IMPLEMENTED + GUARDED | Wrapped edit failure discarded structured code | Yes |
-| ISS-009 / C04 | Defect | Critical | IMPLEMENTED + GUARDED | Evidence-export error escaped controller UI path | Yes |
-| ISS-010 / H01 | Transparency | High | IMPLEMENTED + GUARDED | Analysis authority invisible outside raw JSON | Yes |
-| ISS-011 / H02 | Presentation | High | IMPLEMENTED + GUARDED | Authority policy exposed raw enums as primary text | Yes |
-| ISS-012 / H03 | Presentation | High | IMPLEMENTED + GUARDED | Preflight exposed raw status as primary label | Yes |
-| ISS-013 / H04 | Presentation | High (audit) | DEFERRED / RE-GROUND | Canonical result columns need explicit result schemas | No for now |
-| ISS-014 / H05 | UX/data entry | High | IMPLEMENTED + GUARDED | Invalid record JSON only failed after submission | Yes |
-| ISS-015 / H06 | Workflow | High | IMPLEMENTED + GUARDED | History navigation discarded qualified evidence without warning | Yes |
-| ISS-016 / M01 | Presentation | Medium | IMPLEMENTED + GUARDED | EMPTY/READY/RUNNING now have distinct status presentation | Yes |
-| ISS-017 / M06 | Presentation | Medium | IMPLEMENTED + GUARDED | Deformation control states dimensionless display multiplier semantics | Yes |
-| ISS-018 / M08 | Presentation | Medium | IMPLEMENTED + GUARDED | Progress uses human labels while retaining raw stages | Yes |
-| ISS-019 / M04 | Authority wording | Medium | IN_PROGRESS | Quality table overstates absence of thresholds despite upstream geometry qualification | Yes |
-| IMP-003 / M02 | Improvement | Medium | DEFERRED | SVG needs responsive sizing architecture | No for now |
-| IMP-004 / M03 | Improvement | Medium | DEFERRED | Convergence card visibility should depend on relevant package/evidence state | No for now |
-| IMP-006 / M05 | Improvement | Medium | DEFERRED | Selection/action semantics may benefit from further visual separation | No for now |
-| IMP-007 / M07 | Improvement | Medium | DEFERRED | Non-blocking package export preview/hash visibility | No for now |
-| IMP-001 | Improvement | High | DEFERRED | Cross-run plots need shared engineering colour authority | No |
-| IMP-002 | Improvement | High | NEXT_ARCHITECTURE_CANDIDATE | Full upstream pre-FEA/linear-piping LFEA surface audit | No |
-| RISK-001 | Engineering risk | High | OPEN | Continuum von Mises may be mistaken for piping-code stress | No |
-| RISK-002 | Engineering risk | High | OPEN | Support reaction sign convention may be overlooked downstream | No |
-| QST-001 | Engineering question | Medium | OPEN | Authoritative vertical support-triad fallback axis | No |
-
-### Key decisions
-- No new CI workflows.
-- Imported/committed authority and run identity rules remain unchanged.
-- H04 waits for canonical per-result schema design.
-- M06 multiplier is dimensionless and display-only.
-- M08 human stage labels retain raw stage codes.
-- **DEC-016:** Stage 17 guards live in existing `lfea-workbench-check.mjs` after connector timeout on full containment replacement.
-- **DEC-017:** M04 will distinguish **upstream geometry validity qualification** from **no extra panel-level threshold on descriptive quality ratios/cosines**; it will not invent a new mesh-quality acceptance policy.
+- **DEC-001:** remove collection mock entrypoints instead of relabelling the global destructive action.
+- **DEC-002:** do not add CI workflow gates.
+- **DEC-003:** view-owned drafts are invalidated by committed model identity, not by unrelated renders.
+- **DEC-004:** delete selection becomes safe before synchronous mutation; identity-preserving failure may restore context.
+- **DEC-005:** no-Worker execution uses begin → real render/task yield → execute by captured run identity.
+- **DEC-006:** no-Worker started execution consumes explicit current controller pipeline options.
+- **DEC-014:** deformation control is a dimensionless display multiplier; `1×` is true calculated displacement and result unit is separate.
+- **DEC-015:** progress maps only known real stages; raw code remains metadata/title and unknown stages remain visible raw.
+- **DEC-016:** Stage 17 source guards live in existing `lfea-workbench-check.mjs` after a large containment-file replacement timed out; no workflow/package-script change was introduced.
+- **DEC-017:** M04 distinguishes upstream geometry validity qualification from the absence of any *additional panel-level* ratio/cosine threshold; no mesh-quality policy is invented.
 
 ## 4. Stage Roadmap
 
-| Stage | Status | Purpose | Primary output |
-|---|---|---|---|
-| S1–S8 | DONE | Initial integrity slice | C01/N01/N02 + report/guards |
-| S9 | DONE | No-Worker lifecycle/current options | C02 / ISS-007 |
-| S10 | DONE | Failure guidance/provenance | C03 / ISS-008 |
-| S11 | DONE | Evidence-export containment | C04 / ISS-009 |
-| S12 | DONE | Critical reconciliation | C01–C04 checkpoint |
-| S13 | DONE | Analysis authority/output labels | H01–H03 |
-| S14 | DONE | High-slice reconciliation/grounding | seven-file checkpoint |
-| S15 | DONE | Inline record validity + evidence history warning | H05/H06 |
-| S16 | DONE | H05/H06 reconciliation | eight-file checkpoint |
-| S17 | DONE | Status/deformation/progress clarity | M01/M06/M08 |
-| S18 | DONE | Reconcile Medium slice and refresh handover | nine-file checkpoint + PR metadata |
-| S19 | IN_PROGRESS | Quality gate ownership clarity | M04 / ISS-019 |
-| S20 | PLANNED | Reconcile M04 then select architecture continuation | diff + IMP-002 decision |
+| Stage | Status | Purpose |
+|---|---|---|
+| S1 | DONE | Report initialization and technical findings |
+| S2 | DONE | PR allocation and report synchronization |
+| S3 | DONE | Changed-file bootstrap verification |
+| S4 | DONE | C01 collection mock scope |
+| S5 | DONE | Package/record draft persistence |
+| S6 | DONE | Delete-selection sequencing |
+| S7 | DONE | Source guards and hygiene |
+| S8 | DONE | Initial-slice reconciliation/handover checkpoint |
+| S9 | DONE | C02 no-Worker lifecycle/current-option parity |
+| S10 | DONE | C03 structured failure guidance/provenance |
+| S11 | DONE | C04 evidence-export exception containment |
+| S12 | DONE | Critical-slice reconciliation |
+| S13 | DONE | H01–H03 analysis authority/output labels |
+| S14 | DONE | High-slice reconciliation/grounding |
+| S15 | DONE | H05 inline validity + H06 qualified-evidence history warning |
+| S16 | DONE | H05/H06 cumulative reconciliation |
+| S17 | DONE | M01/M06/M08 run-state presentation clarity |
+| S18 | DONE | Medium-slice reconciliation + PR metadata refresh |
+| S19 | DONE | M04 mesh-quality gate ownership clarity |
+| S20 | IN_PROGRESS | Reconcile M04/current PR head and refresh handover |
+| S21 | PLANNED | Full three-surface authority/handoff audit grounding before any architecture code |
 
 ## 5. Stage Execution Log
 
 ### Stages 1–18
-**COMPLETE at documented evidence level.** C01–C04, N01/N02, H01–H03/H05/H06, and M01/M06/M08 are implemented/source-guarded. S18 reconciled nine files at `de139aca...`, ahead 49 / behind 0 from the exact authorized base, no workflow changes, and refreshed PR metadata. Full workbench/browser execution remains NOT_RUN.
+Completed at the documented evidence level. The initial integrity slice corrected destructive mock scope, editor draft loss and delete sequencing. Subsequent stages corrected no-Worker lifecycle/options parity, structured error/evidence handling, authority/settings presentation, record validity/history warnings, status/deformation/progress clarity, and kept all changes on PR #1021. S18 reconciled nine files at head `de139aca102c8b78ac5c861cfc7a9abfa2991e73`: 49 commits ahead / 0 behind the exact authorized base, merge base unchanged, no workflow file, PR still draft. Full command/browser execution remained NOT_RUN.
 
 ### Stage 19 — mesh-quality gate ownership clarity
-**Status:** IN_PROGRESS — pre-production grounding complete.
+**Status: COMPLETE at source/patch evidence level.**
 
-#### Source evidence
-- `lfea-quality-adapter.js`: explicitly says no quality score or acceptance threshold is invented in the display adapter; retained evidence is exposed verbatim.
-- `element-quality.js`: Q4 rejects non-convex/crossed geometry and requires finite Jacobian determinant greater than the passed tolerance.
-- `model.js`: T3 signed area must exceed `profile.tolerances.geometryArea`; Q4 calls `qualifyQ4Geometry(..., profile.tolerances.geometryArea)`; hanging-node/intersection checks use the same tolerance.
-- `solver.js`: publishes retained `elementQualityEvidence`; the downstream solver qualification gates residual/equilibrium/energy separately and does not add a ratio/cosine mesh-quality threshold.
+**Before:** Results used the title `Mesh quality evidence — no acceptance threshold applied`. Source grounding showed this conflated two separate authorities.
 
-#### Problem
-The current title `Mesh quality evidence — no acceptance threshold applied` collapses those two facts into one statement and can mislead users into believing no mesh-geometry qualification exists.
+**Engineering evidence:**
+- `lfea-quality-adapter.js` explicitly does not invent a quality score or acceptance threshold; it exposes retained evidence.
+- `model.js` requires T3 signed area > `solverProfile.tolerances.geometryArea`; Q4 geometry qualification receives the same tolerance; hanging-node/intersection geometry checks also use it.
+- `element-quality.js` rejects invalid Q4 convexity/crossing and requires finite positive Jacobian determinants above the supplied tolerance.
+- `solver.js` publishes `elementQualityEvidence` and applies numerical residual/equilibrium/energy qualification separately; it does not add a Jacobian-ratio/edge-ratio/corner-cosine acceptance gate.
 
-#### Planned change
-- table title → `Mesh quality evidence`;
-- adjacent explanatory note with `data-role="lfea-quality-authority"`;
-- note states upstream geometry validity qualification and names `solverProfile.tolerances.geometryArea` as the declared tolerance source/value when available;
-- note states displayed ratio/cosine metrics are descriptive here with no additional panel-level acceptance threshold;
-- no new thresholds/pass-fail classification/numerical changes.
+**Changed behavior:**
+- Table title is now simply `Mesh quality evidence`.
+- An adjacent `data-role="lfea-quality-authority"` note states that geometry validity was qualified upstream using the declared `solverProfile.tolerances.geometryArea` value.
+- The note states that displayed Jacobian ratio, edge-length ratio and corner-cosine metrics have no additional panel-level acceptance threshold and that signed-area/Jacobian validity remains governed upstream.
+- Raw quality evidence rows remain unchanged.
+- No new threshold, pass/fail classification, solver profile, solver numeric, or model qualification rule was added.
 
-#### Planned guard
-Extend existing `scripts/lfea-workbench-check.mjs` source assertions for the quality-authority note, tolerance source, and removal of the over-broad old title.
+**Guard:** `scripts/lfea-workbench-check.mjs` now rejects restoration of the old over-broad title and requires the gate-source path, quality-authority role/metadata, upstream qualification wording, descriptive-metric distinction, and signed-area/Jacobian authority statement.
+
+**Validation:** source grounding PASS; production/guard patch inspection PASS; full `npm run check:lfea-workbench` and browser presentation remain NOT_RUN.
+
+### Stage 20 — cumulative reconciliation after M04
+**Status: IN_PROGRESS — opened before reconciliation.**
+
+Scope: verify exact changed-file ledger, base ancestry/merge base, no workflow changes, current draft PR status, then refresh PR body and this report with exact current-head evidence. No production code changes are planned in S20.
 
 ## 6. Changed-File Ledger
 
-| File | First stage | Latest stage | Purpose | Validation |
-|---|---|---|---|---|
-| `agents/PR1021_workreport.md` | S2 | S19 | PR SSOT/handover | current |
-| `scripts/lfea-p0-ui-containment-check.mjs` | S7 | S15 | prior integrity/high guards | source/store; execution NOT_RUN |
-| `scripts/lfea-workbench-check.mjs` | S17 | S19 planned | presentation/quality source guards | M04 guard pending |
-| `src/workspace/lfea-workbench-controller.js` | S9 | S15 | lifecycle/errors/export/history warning | source guard; browser NOT_RUN |
-| `src/workspace/lfea-workbench-document-store.js` | S10 | S10 | diagnostic/evidence/history authority | source/store guard |
-| `src/workspace/lfea-workbench-panels.js` | S13 | S19 planned | authority/preflight/deformation/progress/quality presentation | M04 pending |
-| `src/workspace/lfea-workbench-run-store.js` | S9 | S9 | identity-safe execution | source/store guard |
-| `src/workspace/lfea-workbench-styles.js` | S15 | S17 | invalid input + distinct status styling | patch/source guarded |
-| `src/workspace/lfea-workbench-view.js` | S4 | S15 | UI integrity/diagnostics/settings/record validity | source guard; browser NOT_RUN |
+Expected cumulative files after S19:
+1. `agents/PR1021_workreport.md` — living SSOT/handover.
+2. `scripts/lfea-p0-ui-containment-check.mjs` — prior integrity/high source/store guards.
+3. `scripts/lfea-workbench-check.mjs` — M01/M06/M08/M04 source guards in existing workbench command.
+4. `src/workspace/lfea-workbench-controller.js` — lifecycle/errors/export/history warning.
+5. `src/workspace/lfea-workbench-document-store.js` — diagnostic/evidence authority.
+6. `src/workspace/lfea-workbench-panels.js` — authority/preflight/deformation/progress/quality presentation.
+7. `src/workspace/lfea-workbench-run-store.js` — identity-safe synchronous execution.
+8. `src/workspace/lfea-workbench-styles.js` — invalid-input/status presentation.
+9. `src/workspace/lfea-workbench-view.js` — mock/draft/delete/failure/settings/record validity UI integrity.
 
-## 7. Engineering Invariants
+S20 must prove the actual GitHub list equals this ledger exactly.
 
-- Imported package authority remains fail-closed.
-- Draft/preview state is not solver authority.
-- Model history changes invalidate incompatible execution/evidence.
-- Execution requires exact active identity/current options.
-- Human labels retain raw technical status/policy/stage codes.
-- Deformation multiplier is display-only and dimensionless.
-- Quality display does not invent engineering acceptance criteria.
-- Upstream geometry qualification must not be hidden by “no threshold” wording.
-- UI/presentation remediation does not convert local continuum stress into piping-code stress authority.
-
-## 8. Validation and Evidence Ledger
+## 7. Validation and Evidence Ledger
 
 | Validation | Status |
 |---|---|
 | C01–C04 source/store guards | IMPLEMENTED / SOURCE-INSPECTED |
-| H01–H03/H05/H06 source guards | IMPLEMENTED / SOURCE-INSPECTED |
-| M01/M06/M08 source guards | IMPLEMENTED / PATCH-INSPECTED |
-| S18 changed-file/ancestry/workflow reconciliation | PASS |
+| H01–H03/H05/H06 guards | IMPLEMENTED / SOURCE-INSPECTED |
+| M01/M06/M08 guards | IMPLEMENTED / PATCH-INSPECTED |
 | M04 source grounding | PASS |
-| M04 production/guard | PENDING S19 |
+| M04 production/guard patch inspection | PASS |
+| S18 changed-file/ancestry/workflow reconciliation | PASS |
+| S20 cumulative reconciliation | IN_PROGRESS |
 | Full `npm run check:lfea-workbench` | **NOT_RUN** |
-| Browser presentation/interaction | **NOT_RUN** |
+| Browser interaction/presentation | **NOT_RUN** |
 
-## 9. Known Issues / Deferred Scope
+## 8. Examples and Edge Cases Retained
 
-- H04 canonical columns: deferred/re-ground required.
-- M02 responsive SVG: deferred; broader layout/viewBox work.
-- M03 convergence visibility: deferred; requires convergence-controller state grounding.
-- M05 selection/action semantics: deferred.
-- M07 export preview/hash: deferred; prefer non-blocking preview over modal confirmation.
-- `IMP-002`: full three-surface governed workflow audit; strongest next architecture candidate after local M04 closure.
-- `RISK-001`: piping beam vs local continuum vs code-stress authority distinction.
-- `RISK-002`: support-reaction sign convention visibility.
-- `IMP-001`: shared colour authority for comparisons.
-- `QST-001`: vertical support-triad fallback-axis authority.
+- No Worker: Run publishes RUNNING/QUEUED, yields, then executes only if the captured identity is still active; Cancel/model edit during the yield prevents stale deferred solve execution.
+- Package/record text can remain dirty through progress/display renders but is cleared when a committed package identity changes.
+- Imported stale semantic hash is rejected and is not automatically repaired.
+- Evidence export from stale/unqualified execution is rejected and not downloaded.
+- Mixed T3/Q4 settings report actual deterministic element families rather than assuming one type.
+- Deformation `1×` is true displacement; 10× is visualization exaggeration and remains dimensionless.
+- Unknown future pipeline stage remains visible as its raw code instead of receiving an incorrect friendly label.
+- Quality ratios/cosines may be descriptive even after the mesh passed upstream signed-area/Jacobian geometry validity gates; the UI does not invent extra acceptance limits.
+
+## 9. Known Risks / Deferred Roadmap
+
+Highest-value continuation is now `IMP-002`: audit all three LFEA surfaces and governed handoffs, with focus on transforms, support/restraint semantics, reaction sign convention, physical load-case provenance, and authority boundaries among piping beam analysis, local continuum FEA and piping-code stress.
+
+Also deferred:
+- H04 canonical per-result columns pending explicit result schemas.
+- Shared/user-fixed cross-run color authority.
+- Responsive SVG and convergence visibility architecture.
+- Non-blocking export provenance/hash preview.
+- Vertical-pipe support triad fallback: use authoritative support/local axis or remain blocked; never choose an arbitrary convenience axis.
+- CAESAR/reference correlation suite: straight anchor, guide/line-stop, vertical riser, elbow, branch, loop, directional support; compare displacement, global reactions, local support actions and governing physical case.
 
 ## 10. Recommended Forward Sequence
 
-1. Complete S19 M04 wording + guard without numerical changes.
-2. S20 reconcile cumulative diff.
-3. Then prioritize `IMP-002` full three-surface governed workflow audit over further cosmetic polish unless a remaining UI item is shown to affect engineering authority.
-4. Before merge, Owner/reviewer executes missing repository/browser checks at exact final HEAD.
+1. Complete S20 cumulative reconciliation and PR metadata refresh.
+2. Open S21 in this report **before** any new production change.
+3. Trace `diagnoseInputXmlLinearPreFea → prepareInputXmlLinearPreFea → authorizeInputXmlLinearSolve → runLinearPipingWorkbenchAnalysis` across the three surfaces.
+4. Register concrete handoff defects before coding; prioritize engineering-authority/correctness defects over cosmetic UI polish.
+5. Before merge, execute the missing workbench command and targeted browser scenarios at the exact final head.
 
 ## 11. Next-Agent Handover
 
-### Current stopping point
-S19 is grounded before production change. The exact defect is wording/gate ownership, not a missing kernel threshold.
+Current stopping point: S19 implementation/guard complete; S20 reconciliation open. Do not redo C01–C04, N01/N02, H01–H06, M01/M04/M06/M08, or prior reconciliations. The next production work must begin with S21 audit grounding, not an unrecorded edit.
 
-### Start here
-`src/workspace/lfea-workbench-panels.js` `renderLfeaResults()`, then guard in `scripts/lfea-workbench-check.mjs`.
+Known failing checks: none observed through source inspection. Full repository/browser validation is **NOT_RUN**, so there is no basis to claim it passes.
 
-### Do not redo
-C01–C04, N01/N02, H01–H06, M01/M06/M08, or S18 reconciliation.
+Highest remaining engineering risk: authority/handoff semantics—especially piping-code versus continuum stress, reaction sign convention, restraint/support fidelity and physical load-case provenance.
 
-### Known failing checks
-None observed through source inspection. Full repository/browser checks remain **NOT_RUN**, not PASS.
+## 12. Process Notes
 
-### Highest current risk
-Inventing or implying a mesh-quality acceptance criterion that does not exist, or hiding the geometry validity gate that does exist.
+- Ground audit hints against actual schemas/enums before coding.
+- Source guards, runtime tests and browser behavior are distinct evidence classes.
+- Gate ownership belongs in presentation when upstream validity and downstream descriptive evidence coexist.
+- A display adapter must never invent engineering thresholds.
+- No workflow changes are needed for source guards in this PR.
 
-## 12. Process Notes / Lessons Learned
-
-- Ground audit hints against current schemas/enums before coding.
-- Source guards and browser/runtime proof are distinct evidence classes.
-- Human labels should improve comprehension without replacing raw authority codes.
-- A display adapter must not invent engineering thresholds.
-- Gate ownership should be explicit when upstream validity and downstream descriptive evidence coexist.
-- Interrupted stages require explicit reconciliation of what actually reached the branch before continuing.
-- No workflow changes are needed for these source guards.
-
-## 13. PR Closure / Continuation Record
+## 13. PR Continuation Record
 
 | Criterion | Current result |
 |---|---|
 | C01–C04 | IMPLEMENTED + GUARDED |
 | H01–H03/H05/H06 | IMPLEMENTED + GUARDED |
 | H04 | DEFERRED / RE-GROUND |
-| M01/M06/M08 | IMPLEMENTED + GUARDED |
-| M04 | IN_PROGRESS |
-| S18 reconciliation | COMPLETE |
+| M01/M04/M06/M08 | IMPLEMENTED + GUARDED |
+| S20 reconciliation | IN_PROGRESS |
 | Full runtime/browser validation | **NOT_RUN** |
 | New CI workflows added | **NO** |
 | PR status | DRAFT |

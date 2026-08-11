@@ -8,27 +8,29 @@ Source task / issue: Owner continuation from PR #1001; Issue #991 is reference-o
 PR number: 1026
 Branch: agent/m047-tee-rigid-thermal-growth
 Base commit: 7488ba76126f8240bb61c80fad243cf096c5fe08
-Current HEAD before Stage 11 source edits: 72c89608bb11397367e413781f8cf01fa0cd3da1
+Current HEAD before this report sync: 76000f24bd54b645ce047799badf45f8d9112e10
 Primary mechanics commit: 5ecd4a6b75fc9cf1a644ef0234e78282afa130ca
 Authority-hardening commit: edb787e6160d80ce311418fd5e6bb2afaeb1ab40
+Stage-11 fixture commit: 0bad15f6b622fe3d17fce36628bb8afc2e7e6546
+Stage-11 focused-check commit: 76000f24bd54b645ce047799badf45f8d9112e10
 PR status: open draft, stacked on agent/m047-bm4l-clean-qualified
-Current stage: Stage 11 — focused regression authority-custody hardening
-Last completed stage: Stage 10 — pinned authority fixture / focused-regression reconciliation
-Engineering status: IMPLEMENTED; Stage 11 test-authority hardening IN_PROGRESS
+Current stage: Stage 12 — reconciliation / next no-workflow qualification
+Last completed stage: Stage 11 — focused regression InputXML material-custody hardening
+Engineering status: IMPLEMENTED + AUTHORITY_HARDENED + FOCUSED_REGRESSION_SOURCE_CUSTODY_COMPLETE
 Validation status: PARTIAL — static mechanics/source evidence PASS; focused Node check and full ACCDB parity remain NOT_RUN
 Current blockers: no independent executable checkout/ACE path; exact CAESAR thermal expansion remains authority-blocked.
-Exact next action: pin Common InputXML material identity into the focused authority fixture, remove the unexplained material-106 test constant, reconcile the diff, then keep execution evidence NOT_RUN unless actually executed outside workflows.
+Exact next action: continue no-workflow review of the focused regression for behavioral coverage gaps; execute `node scripts/lfea-m047-tee-rigid-thermal-check.mjs` only when a real non-workflow checkout is available. Full parity remains separately ACE-dependent.
 ```
 
 ## Handover in 60 Seconds
 
 ```text
-What is now true: Type 2.1 fictitious-rigid thermal free translation g=epsilon_run*r_surface is implemented through f_initial as -Keff*g; structural K is unchanged. Run thermal authority is thermal-only and bound to the resolved run material. Pinned Misc and Load Case authority plus a no-ACE regression are committed.
-What is being worked on: Stage 11 closes a focused-test custody gap: the regression hard-codes MATERIAL_NUMBER=106 even though the pinned BM4 InputXML directly identifies MATERIAL_NUM=106 / A106 Grade B. This is a test-authority fix, not a production-mechanics change.
+What is now true: Type 2.1 fictitious-rigid thermal free translation g=epsilon_run*r_surface is implemented through f_initial as -Keff*g; structural K is unchanged. Run thermal authority is thermal-only and bound to resolved run material. Pinned Misc, Load Case, and InputXML custody now feed the focused regression.
+What changed most recently: the regression no longer embeds MATERIAL_NUMBER=106 as an unexplained engineering constant. The authority fixture pins Common InputXML blob 3423d220... and material 106 / A106 Grade B / ACCDB-MATERIAL-106; the script consumes those fields.
 What remains unfinished: focused Node check NOT_RUN; six-case L2/L3/L4/L5/L6/L14 ACCDB replay NOT_RUN; equilibrium/superposition NOT_RUN; exact CAESAR alpha BLOCKED.
-What must not be assumed: committed tests are not executed tests; predecessor 435->210 is not current-head runtime evidence; rounded 0.0012 mm/mm is not exact alpha; L14 remains CAESAR ALG L5-L6.
+What must not be assumed: committed tests are not executed tests; predecessor 435->210 is not current-head runtime evidence; material identity does not provide full-precision alpha; L14 remains CAESAR ALG L5-L6.
 Highest-risk remaining item: executable confirmation of the focused check, then full ACE-backed parity.
-Exact next action: complete Stage 11 fixture/script custody hardening without workflows or production solver changes.
+Exact next action: stay off workflows; continue static behavioral review or execute the focused command in an authorized ordinary checkout when available.
 ```
 
 ---
@@ -45,7 +47,7 @@ f_extra = -K_eff * g
 ```
 
 ### Engineering consequence
-The existing model already places the Type 2.1 branch at the CAESAR run surface and applies directional B31J flexibility there. Omitting the fictitious rigid's thermal free growth over-restrains T1 response while W/P-only response should remain unchanged.
+The existing model already places the Type 2.1 branch at the CAESAR run surface and applies directional B31J flexibility there. Omitting fictitious-rigid thermal free growth over-restrains T1 response while W/P-only response should remain unchanged.
 
 ### Current scope
 - `src/core/fea-benchmarks/caesar-accdb-linear-solve.js`
@@ -82,9 +84,9 @@ The existing model already places the Type 2.1 branch at the CAESAR run surface 
 | Tee rigid thermal free-state implementation | P0 | IMPLEMENTED | 4 | `5ecd4a6...`. |
 | Run authority thermal selectivity + material binding | P0 | VALIDATED | 7 | `edb787e...`; static source audit. |
 | K-preserving sign / transform order | P0 | VALIDATED | 7 | `-Keff*g` after tee condensation, before existing T/H transforms. |
-| Pinned Misc / Load Case authority fixture | P0 | DONE | 9 | Exact Common commit and report blob SHAs. |
-| Focused no-ACE regression | P0 | IMPLEMENTED | 9 | 256-line Node script; execution NOT_RUN. |
-| InputXML material custody in focused regression | P0 | IN_PROGRESS | 11 | Replace hard-coded material 106 with pinned InputXML authority. |
+| Pinned Misc / Load Case authority fixture | P0 | DONE | 9 | Exact Common commit/report blobs. |
+| Focused no-ACE regression | P0 | IMPLEMENTED | 9 | Node script; execution NOT_RUN. |
+| InputXML material custody in focused regression | P0 | DONE | 11 | InputXML blob/material identity pinned; local material constant removed. |
 | Governed six-case BM4_L replay | P0 | BLOCKED | future | Requires non-workflow ACCDB/ACE execution. |
 | Exact CAESAR alpha | P1 | BLOCKED | future | No Print-Alphas/full-precision authority. |
 
@@ -99,17 +101,18 @@ The existing model already places the Type 2.1 branch at the CAESAR run surface 
 | RISK-002 | risk | P0 | VALIDATED | Free-state sign/order must follow `q=Ku-f_fixed-f_initial`. | Yes |
 | RISK-003 | validation risk | P1 | BLOCKED | No independent checkout/ACE execution path in this session. | Yes |
 | RISK-004 | applicability risk | P2 | DONE | W/P-only cases no longer validate unused T1 authority. | Yes |
-| RISK-005 | authority defect | P0 | DONE | Run `MATERIAL_NUM` now binds to resolved material state. | Yes |
+| RISK-005 | authority defect | P0 | DONE | Run `MATERIAL_NUM` binds to resolved material state. | Yes |
 | IMP-001 | improvement | P0 | IMPLEMENTED | Focused no-ACE regression consumes pinned benchmark evidence. | Yes |
-| ISS-002 | test-authority defect | P1 | IN_PROGRESS | Focused regression embeds material number 106 outside the pinned fixture; Common InputXML is the direct authority. | Yes |
+| ISS-002 | test-authority defect | P1 | DONE | Material 106 test constant replaced with pinned InputXML material custody. | Yes |
 | DEC-001 | decision | P0 | ACCEPTED | Thermal free state changes `f_initial`, not K. | Yes |
 | DEC-002 | decision | P0 | ACCEPTED | Fictitious rigid inherits common run thermal/material state. | Yes |
 | DEC-003 | decision | P0 | ACCEPTED | Thermal authority is required only when effective primitive content contains T1. | Yes |
 | DEC-004 | decision | P0 | ACCEPTED | L14 remains recorded as CAESAR ALG `L5-L6`. | Yes |
+| DEC-005 | decision | P1 | ACCEPTED | InputXML material identity is valid custody for material number/name only; it does not promote an exact thermal-expansion coefficient. | Yes |
 | QST-001 | question | P1 | BLOCKED | Exact CAESAR A106 Grade B expansion 21C->120C unavailable beyond rounded output. | Yes |
 
-### ISS-002 current evidence
-Common InputXML at the pinned commit directly declares `MATERIAL_NUM="106.000000"` and `MATERIAL_NAME="A106 Grade B"`; the same identity is present in the Type 2.1 tee region. The focused test currently declares `const MATERIAL_NUMBER = 106` independently. That weakens source custody even though it does not change production mechanics.
+### ISS-002 closure evidence
+Pinned Common InputXML directly declares `MATERIAL_NUM="106.000000"` and `MATERIAL_NAME="A106 Grade B"`, including in the Type 2.1 tee region. Stage 11 adds `sources.inputXml` and `materialIdentity` to the fixture and replaces the script's `const MATERIAL_NUMBER = 106` with `authority.materialIdentity`. No production solver file changed.
 
 ---
 
@@ -118,11 +121,12 @@ Common InputXML at the pinned commit directly declares `MATERIAL_NUM="106.000000
 | Invariant | Enforcement | Validation | This PR |
 |---|---|---|---|
 | Structural K unchanged by tee free state | Existing condensed K only multiplies free displacement to form initial load. | Static source/sign audit PASS. | Preserved |
-| `f_extra=-Keff*g` under repository recovery convention | Tee free-load helper + existing transforms. | Derivation/source order PASS. | Required change |
+| `f_extra=-Keff*g` | Tee free-load helper + existing transforms. | Derivation/source order PASS. | Required change |
 | Fictitious rigid inherits run state | `runThermalAuthority` follows tee modifier. | Static audit PASS. | Required change |
 | W/P-only cases ignore unused thermal state | `caseMode.thermal` gate. | Static audit PASS. | Hardening |
-| Material identity must be authoritative | Solver binds run material number to resolved material ID; Stage 11 makes focused test source-custody-complete. | Stage 11 pending. | Hardening |
-| No benchmark fitting | Alpha/Kb/tolerances unchanged; fitted-alpha constants prohibited. | Static diff PASS. | Preserved |
+| Material identity must be authoritative | Production run binding + InputXML-backed focused fixture. | Static source custody PASS. | Hardening |
+| Material identity is not alpha authority | Fixture note + provisional alpha remains non-promotable. | Static source audit PASS. | Preserved |
+| No benchmark fitting | Alpha/Kb/tolerances unchanged. | Static diff PASS. | Preserved |
 | L14 remains ALG evidence | Fixture records `L14=L5-L6`, method ALG. | Pinned Load Case report PASS. | Preserved |
 | Type 2.6 not promoted structurally | Welding-tee structural path remains bounded. | Static audit PASS. | Preserved |
 
@@ -135,28 +139,39 @@ Common InputXML at the pinned commit directly declares `MATERIAL_NUM="106.000000
 - **Stages 5-6 — static validation/reconciliation:** COMPLETE / PASS for static scope.
 - **Stage 7 — thermal-authority hardening (`edb787e...`):** COMPLETE / PASS static; RISK-004/RISK-005 closed.
 - **Stage 8 — reconciliation:** COMPLETE.
-- **Stage 9 — pinned Misc/Load Case fixture + focused no-ACE check:** PARTIAL; implementation complete, execution NOT_RUN. First 303-line script was reduced to 256 lines to satisfy CodingRules normal `<300` guidance.
+- **Stage 9 — pinned Misc/Load Case fixture + focused no-ACE check:** PARTIAL; implementation complete, execution NOT_RUN. Script reduced from 303 to 256 lines before closure.
 - **Stage 10 — reconciliation:** COMPLETE.
 
-### Stage 11 — focused regression authority-custody hardening — IN PROGRESS
+### Stage 11 — focused regression InputXML material-custody hardening
 
-**Current truth:** production mechanics are unchanged; focused regression uses an unexplained local `MATERIAL_NUMBER=106` constant although pinned Common InputXML is the direct material identity authority.
+**Pre-stage report commit:** `ea2732d1894f1f2e6f6ca09c49c9a46153a23072`.
 
-**Objective:** make the regression's material-custody claim source-backed end-to-end.
+**Implementation performed:**
+1. pinned `LFEA/BM4/InputXML_BM4.xml` blob `3423d220...` in the authority fixture;
+2. pinned material number `106`, name `A106 Grade B`, and derived solver ID `ACCDB-MATERIAL-106`;
+3. explicitly recorded that this authority is material identity only, not exact alpha authority;
+4. removed focused script's unexplained `MATERIAL_NUMBER=106` constant;
+5. made `materialResolution()` consume fixture-backed `materialIdentity`;
+6. extended custody assertions for InputXML and material ID coherence.
 
-**Expected scope/files:** authority JSON, focused Node script, living report. No solver change expected.
+**Commits:** fixture `0bad15f6b622fe3d17fce36628bb8afc2e7e6546`; script `76000f24bd54b645ce047799badf45f8d9112e10`.
 
-**Engineering rationale:** test authority must not be weaker than production authority. A fixture-backed value is auditable; an embedded constant can silently drift.
+**Changed files from pre-stage head `ea2732d...` to code head `76000f24...`:**
+- authority JSON: +11/-0;
+- focused script: +13/-11;
+- production solver: unchanged;
+- workflows: unchanged.
 
-**Planned implementation:** pin InputXML path/blob plus material number/name in the authority fixture; derive test material ID from that fixture; assert source custody; preserve provisional-alpha status and all existing Type 2.1/ALG assertions.
+**Actual behavior / edge cases:** material custody is now fixture-backed; inherited XML thermal fields were not promoted into new thermal authority; provisional alpha remains explicitly guessed/non-promotable.
 
-**Expected behavior:** no production result changes; focused test semantics become stricter.
+**Validation:** source cross-check PASS; diff containment PASS; script line rule PASS (ends at physical line 258); focused command NOT_RUN; six-case parity NOT_RUN.
 
-**Edge cases:** do not infer full-precision alpha from InputXML; inherited XML thermal fields are not promoted into new authority; do not treat material identity as thermal-expansion authority.
+**New findings:** none beyond ISS-002, now closed.
 
-**Planned validation:** exact source cross-check PASS/FAIL; diff containment PASS/FAIL; script `<300` physical lines PASS/FAIL; focused execution remains NOT_RUN unless an actual non-workflow checkout becomes available.
+**Stage decision:** COMPLETE for source-custody hardening; executable evidence remains separately NOT_RUN.
 
-**Known risks:** fixture/test could accidentally broaden into a benchmark parser; avoid that. Full ACCDB parity remains separate.
+### Stage 12 — reconciliation / next no-workflow qualification
+Current objective is report/PR reconciliation and further focused behavioral review only. Do not alter production mechanics without a new evidence-backed finding.
 
 ---
 
@@ -164,10 +179,10 @@ Common InputXML at the pinned commit directly declares `MATERIAL_NUM="106.000000
 
 | File | First Stage | Latest Stage | Purpose | Engineering-sensitive? | Validation |
 |---|---:|---:|---|---|---|
-| `agents/PR1026_workreport.md` | 1 | 11 | Mission control / evidence / handover. | No | current |
+| `agents/PR1026_workreport.md` | 1 | 12 | Mission control / evidence / handover. | No | current |
 | `src/core/fea-benchmarks/caesar-accdb-linear-solve.js` | 4 | 7 | Type 2.1 free state + run authority hardening. | Yes | static PASS; runtime NOT_RUN |
-| `benchmarks/LFEA/CAESAR_ACCDB/m047-bm4l-tee-rigid-thermal-authority.json` | 9 | 11 | Pinned CAESAR benchmark authority. | Yes | Stage 11 IN_PROGRESS |
-| `scripts/lfea-m047-tee-rigid-thermal-check.mjs` | 9 | 11 | Focused no-ACE regression. | Yes | Stage 11 IN_PROGRESS; execution NOT_RUN |
+| `benchmarks/LFEA/CAESAR_ACCDB/m047-bm4l-tee-rigid-thermal-authority.json` | 9 | 11 | Pinned CAESAR benchmark authority. | Yes | source custody PASS |
+| `scripts/lfea-m047-tee-rigid-thermal-check.mjs` | 9 | 11 | Focused no-ACE regression. | Yes | source review PASS; execution NOT_RUN; 258-line rule PASS |
 
 No workflow or Issue #991 file is in scope.
 
@@ -180,11 +195,11 @@ No workflow or Issue #991 file is in scope.
 | Validation | Status | Last HEAD / evidence |
 |---|---|---|
 | Exact base custody | PASS | base `7488ba76126f8240bb61c80fad243cf096c5fe08` |
-| Current four-file reconciliation before Stage 11 | PASS | head `72c89608...` |
 | Misc source custody | PASS | Common blob `ef23d224...` |
 | Load Case source custody | PASS | Common blob `be62eeb0...` |
-| InputXML source/material identity read | PASS | Common blob `3423d220...`; material 106 / A106 Grade B observed |
-| Stage 11 diff containment | NOT_RUN | pending implementation |
+| InputXML material source custody | PASS | Common blob `3423d220...`; material 106 / A106 Grade B |
+| Stage 11 diff containment | PASS | `ea2732d... -> 76000f24...`; fixture/script only |
+| Focused script line policy | PASS | physical line 258 final line |
 | Focused no-ACE command | NOT_RUN | no independent checkout; workflows prohibited by owner |
 | Six-case ACCDB replay | NOT_RUN | no ACE path |
 | Equilibrium/superposition replay | NOT_RUN | no full solve path |
@@ -198,7 +213,7 @@ No workflow or Issue #991 file is in scope.
 | Generic carrier ownership | PASS | no E12/E36 production selector |
 | K unchanged | PASS | static source audit |
 | Sign / transform order | PASS | derivation + source order |
-| Run material binding | PASS | production source; focused fixture hardening IN_PROGRESS |
+| Run material binding | PASS | production source + InputXML-backed fixture |
 | W/P thermal selectivity | PASS | source gate |
 | B31J FLEXb/Kb executable reproduction | NOT_RUN | focused command committed, not executed |
 | Exact CAESAR alpha | FAIL | authority unavailable; QST-001 BLOCKED |
@@ -210,16 +225,17 @@ Focused Node execution; current-head 435->210; six-DOF equilibrium; L3=L14/L6=L2
 
 ## 8. Known / Deferred Work and Recommended Forward Sequence
 
-**QST-001 — exact alpha — BLOCKED.** Accept only direct CAESAR Print Alphas/full-precision export or demonstrably identical primary material-library authority. Do not use rounded `0.0012`, handbook CTE, or residual fitting.
+**QST-001 — exact alpha — BLOCKED.** Accept only direct CAESAR Print Alphas/full-precision export or demonstrably identical primary material-library authority. Do not use rounded `0.0012`, generic handbook CTE, InputXML material identity, or residual fitting as exact alpha.
 
 **RISK-003 — executable access — BLOCKED.** Do not use workflows as a workaround.
 
 **Forward sequence:**
-1. Complete ISS-002 focused-test source custody in Stage 11.
-2. Execute `node scripts/lfea-m047-tee-rigid-thermal-check.mjs` in a real non-workflow checkout when available.
-3. Obtain exact alpha authority.
-4. Execute full L2/L3/L4/L5/L6/L14 ACCDB replay with equilibrium and superposition.
-5. Only then cluster remaining parity failures; do not reopen rejected mechanics from total-count fitting.
+1. Reconcile PR head / four-file ledger after this report sync.
+2. Continue focused static behavioral audit for test gaps; make no mechanics change without a concrete finding.
+3. Execute `node scripts/lfea-m047-tee-rigid-thermal-check.mjs` in a real non-workflow checkout when available.
+4. Obtain exact alpha authority.
+5. Execute full L2/L3/L4/L5/L6/L14 ACCDB replay with equilibrium and superposition.
+6. Only then cluster remaining parity failures.
 
 Rejected paths retained from PR #1001: generic bend softness, MEC-21 tested form, flexible-centerline tee replacement, Kb fitting/scaling, Type 2.6 structural invention, fitted alpha, gravity/density scaling, reducer reversal/weight substitutions, bend subdivision tuning, fictitious-rigid pressure strain.
 
@@ -228,19 +244,19 @@ Rejected paths retained from PR #1001: generic bend softness, MEC-21 tested form
 ## 9. Next-Agent Handover
 
 ```text
-Current stopping point: Stage 11 IN_PROGRESS; mechanics complete, focused-test material custody being hardened.
-PR / branch / pre-stage HEAD: #1026 / agent/m047-tee-rigid-thermal-growth / 72c89608bb11397367e413781f8cf01fa0cd3da1.
-Last completed stage: Stage 10 reconciliation.
-Current active stage: Stage 11 authority-custody hardening.
-Start here: authority fixture and lfea-m047-tee-rigid-thermal-check.mjs; replace local material 106 constant with pinned InputXML authority.
+Current stopping point: Stage 11 source-custody hardening complete; Stage 12 reconciliation/current static review.
+PR / branch / code HEAD before report sync: #1026 / agent/m047-tee-rigid-thermal-growth / 76000f24bd54b645ce047799badf45f8d9112e10.
+Last completed stage: Stage 11 InputXML material-custody hardening.
+Current active stage: Stage 12 reconciliation / focused behavioral review.
+Start here: focused script + authority fixture; production solver should remain untouched unless a new concrete defect is found.
 Do not redo: rejected PR #1001 mechanics or fitted-alpha work.
-Do not assume: test executed; predecessor 210 current; rounded 0.0012 exact; L14 physical T1 case.
-Files involved: report, solver, authority fixture, focused script; Stage 11 should not modify solver.
-Known failing checks: none; relevant executable checks are NOT_RUN.
+Do not assume: test executed; predecessor 210 current; material 106 implies exact alpha; rounded 0.0012 exact; L14 physical T1 case.
+Files involved: report, solver, authority fixture, focused script.
+Known failing checks: none; executable checks are NOT_RUN.
 Validation still required: focused Node command, full six-case replay, equilibrium, superposition, exact alpha.
 Open QST: QST-001 exact alpha.
-Highest-risk remaining item: executable proof after source custody is clean.
-Exact next recommended action: finish Stage 11, reconcile exact changed files/head, keep workflows untouched.
+Highest-risk remaining item: executable proof of focused check, then full ACCDB parity.
+Exact next recommended action: reconcile exact PR head/files, continue no-workflow static behavioral audit, and keep all unexecuted evidence labelled NOT_RUN.
 Required reading: this report; PR1001 report at 7488ba...; pinned Misc, Load Case, InputXML; Common CodingRules.
 ```
 
@@ -249,6 +265,7 @@ Required reading: this report; PR1001 report at 7488ba...; pinned Misc, Load Cas
 ## 10. Process Notes / Lessons Learned
 
 - Source ID and analysis carrier are distinct; source 36 is the key example.
-- Free-state sign must come from kinematics and the repository recovery convention, not analogy to ordinary member eigenstrain.
-- A test oracle must carry the same authority custody it claims to validate; embedded engineering constants should be replaced by pinned source evidence when that authority exists.
-- Static proof, focused executable proof, and full ACCDB parity are separate evidence classes and must remain separately labelled.
+- Free-state sign comes from kinematics and repository recovery convention, not ordinary member-eigenstrain analogy.
+- A test oracle must carry the same authority custody it claims to validate; embedded engineering constants should be replaced by pinned source evidence when authority exists.
+- Material identity authority and thermal-expansion authority are separate.
+- Static proof, focused executable proof, and full ACCDB parity are separate evidence classes and remain separately labelled.

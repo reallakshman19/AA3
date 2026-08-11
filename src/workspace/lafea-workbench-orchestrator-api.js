@@ -46,6 +46,13 @@ export function createLafeaWorkbenchOrchestratorApi(context) {
       c.verification.select(stageId),
     buildNumericalVerificationProjection: (stageId = activeStageId()) =>
       c.deriveStage(stageId).numericalVerificationProjection,
+    registerT6GeometryQualification: c.registerT6GeometryQualification,
+    selectRetainedT6GeometryQualification: (stageId = activeStageId()) =>
+      c.t6Geometry.select(stageId),
+    buildT6GeometryQualificationProjection: (stageId = activeStageId()) =>
+      c.deriveStage(stageId).t6GeometryQualificationProjection,
+    exportT6GeometryQualification: (stageId = activeStageId()) =>
+      c.t6Geometry.select(stageId),
     exportLifecycle: c.exportLifecycle,
     validateLafeaAnalysisMeshEvidence: (value) => {
       const stageId = value?.stageId ?? activeStageId();

@@ -24,6 +24,30 @@ import {
   renderLfeaResults,
   renderLfeaToolbar,
 } from './lfea-workbench-panels.js';
+
+const PACKAGE_SHAPE_CODES = new Set([
+  'LFEA_IMPORT_REJECTED',
+  'LFEA_PACKAGE_REJECTED',
+  'MESH_PACKAGE_REJECTED',
+  'UNSUPPORTED_PACKAGE_SCHEMA',
+  'INVALID_RECORD',
+  'INVALID_ARRAY',
+  'INVALID_TEXT',
+  'MISSING_FIELD',
+  'UNSUPPORTED_FIELD',
+]);
+const ENGINEERING_VALUE_CODES = new Set([
+  'NONFINITE_VALUE',
+  'NONPOSITIVE_VALUE',
+  'INVALID_INTEGER',
+  'INVALID_MATERIAL',
+  'INVALID_ELEMENT_CONNECTIVITY',
+]);
+const LOCAL_EDIT_CODES = new Set([
+  'LFEA_EDIT_REJECTED',
+  'LFEA_RECORD_EDIT_REJECTED',
+]);
+
 export class LfeaWorkbenchView {
   /**
    * @param {Element|null} rootElement Workbench host.
@@ -144,21 +168,33 @@ export class LfeaWorkbenchView {
     header.append(block, statusGroup);
 
     if (state.status === 'FAILED' && Array.isArray(state.diagnostics) && state.diagnostics.length > 0) {
-      const errorMsg = state.diagnostics.map((d) => d.message).filter(Boolean).join(' ');
-      const hint = errorMsg.includes('lfea-mesh-package/v1') || errorMsg.includes('schema')
-        ? ' Note: Piping datasets (e.g. Sjson.json, .inputxml) belong in the 3D Piping Workspace (W) tab.'
-        : '';
-      const errorBanner = element(
-        this.rootElement,
-        'div',
-        'lfea-workbench__error-banner',
-        `⚠️ Failed: ${errorMsg}${hint}`,
-      );
-      errorBanner.setAttribute('role', 'alert');
-      errorBanner.setAttribute('aria-live', 'assertive');
-      header.append(errorBanner);
+      header.append(this.failureBanner(state.diagnostics));
     }
     return header;
+  }
+
+  failureBanner(diagnostics) {
+    const presentation = failurePresentation(diagnostics);
+    const errorBanner = element(
+      this.rootElement,
+      'div',
+      'lfea-workbench__error-banner',
+    );
+    errorBanner.dataset.code = presentation.code;
+    errorBanner.title = presentation.codes.join(', ');
+    errorBanner.setAttribute('role', 'alert');
+    errorBanner.setAttribute('aria-live', 'assertive');
+    errorBanner.append(
+      element(this.rootElement, 'strong', null, `⚠️ ${presentation.summary}`),
+      element(this.rootElement, 'p', null, presentation.action),
+      element(
+        this.rootElement,
+        'p',
+        'lfea-workbench__error-detail',
+        `Diagnostic ${presentation.code}: ${presentation.detail}`,
+      ),
+    );
+    return errorBanner;
   }
 
   content(state) {
@@ -292,4 +328,66 @@ export class LfeaWorkbenchView {
     wrapper.append(select, table, textarea, actions);
     return wrapper;
   }
+}
+
+function failurePresentation(diagnostics) {
+  const rows = diagnostics.filter((row) => row && typeof row === 'object');
+  const primary = rows.find((row) => row.severity === 'ERROR') ?? rows[0] ?? {};
+  const code = typeof primary.code === 'string' && primary.code
+    ? primary.code
+    : 'LFEA_WORKBENCH_FAILURE';
+  const detail = rows
+    .map((row) => row.message)
+    .filter((message) => typeof message === 'string' && message.trim())
+    .join(' ') || 'No additional diagnostic detail was supplied.';
+  const codes = [...new Set(rows
+    .map((row) => row.code)
+    .filter((value) => typeof value === 'string' && value))];
+  if (!codes.length) codes.push(code);
+  return { code, codes, detail, ...failureGuidance(code) };
+}
+
+function failureGuidance(code) {
+  if (code === 'STALE_PACKAGE_SEMANTIC_HASH') {
+    return {
+      summary: 'Imported package identity does not match its content.',
+      action: 'Re-export or rebuild the package from the authoritative source and retry. Imported semantic hashes are intentionally not repaired in the workbench.',
+    };
+  }
+  if (PACKAGE_SHAPE_CODES.has(code)) {
+    return {
+      summary: 'The input is not a valid LFEA mesh-package shape.',
+      action: 'Check the lfea-mesh-package/v1 schema and required fields. Piping project datasets such as Sjson.json or .inputxml belong in the 3D Piping Workspace (W) tab.',
+    };
+  }
+  if (code === 'UNSUPPORTED_UNITS'
+    || code === 'UNSUPPORTED_COORDINATE_SYSTEM'
+    || code.startsWith('UNSUPPORTED_')) {
+    return {
+      summary: 'The package uses an unsupported analysis declaration.',
+      action: 'Correct or convert the declared units, coordinate system, formulation, element, selector, or constraint upstream. The workbench will not silently coerce unsupported engineering authority.',
+    };
+  }
+  if (ENGINEERING_VALUE_CODES.has(code)) {
+    return {
+      summary: 'An engineering value or connectivity definition is invalid.',
+      action: 'Correct the value or connectivity identified in the diagnostic detail and retry; invalid numerical/model data is not accepted into committed state.',
+    };
+  }
+  if (code.startsWith('DUPLICATE_') || code.startsWith('EMPTY_')) {
+    return {
+      summary: 'The package structure contains a duplicate or required-empty collection.',
+      action: 'Correct the identified identities or required collection contents in the authoritative package and retry.',
+    };
+  }
+  if (LOCAL_EDIT_CODES.has(code)) {
+    return {
+      summary: 'The local engineering edit was rejected.',
+      action: 'Correct the JSON or record data and retry. The rejected edit was not accepted as committed package authority.',
+    };
+  }
+  return {
+    summary: 'The LFEA operation failed validation or execution.',
+    action: 'Review the diagnostic code and detail below, correct the identified condition, and retry. Do not bypass or silently coerce an unknown engineering failure.',
+  };
 }

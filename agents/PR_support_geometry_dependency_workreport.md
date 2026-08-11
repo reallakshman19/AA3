@@ -19,6 +19,8 @@ A shared support geometry dependency authority now resolves the support host and
 
 The stable fail-closed reason is `SUPPORT_GEOMETRY_POLICY_REQUIRED`.
 
+The certified session also enforces the rule at the mutable boundary for every governed `MOVE_NODE`. This provides a backstop for direct Canvas MOVE/STRETCH and future callers even when their higher-level planner does not use the connected-run helper.
+
 No canonical support mutation is introduced. The existing governed flow remains:
 
 `intent -> operation plan -> candidate/Preview -> validation -> certified transaction -> canonical topology -> journal undo/redo`.
@@ -28,6 +30,8 @@ No canonical support mutation is introduced. The existing governed flow remains:
 - Added `topology-edit-support-geometry-dependency.js` with exact host resolution, affected-edge derivation, immutable dependency evidence, and fail-closed assertion.
 - Changed-scope derivation now includes supports whose resolved/candidate host edge is affected, carrying their support IDs into source-record and validation neighbourhood authority.
 - Generic connected-run movement, endpoint extend/shorten movement, and edge split now fail closed when support geometry would be affected.
+- Declared-slope planning now performs the same support geometry dependency check before producing `MOVE_NODE` intents.
+- The certified session rejects any governed `MOVE_NODE` whose moved node/incident geometry affects unresolved support geometry, before command request creation or journal mutation.
 - Table `NODE_POSITION` NODE_ONLY planning uses the same support dependency authority; CONNECTED_RUN inherits the generic movement guard.
 - Table NODE_POSITION capability reports `SUPPORT_GEOMETRY_POLICY_REQUIRED` for immediately affected support-host geometry before staging.
 
@@ -43,9 +47,12 @@ Added focused coverage for:
 - generic connected-run blocking;
 - PIPE_LENGTH propagation blocking;
 - valve F2F propagation blocking;
-- NODE_POSITION capability and NODE_ONLY planning blocking.
+- NODE_POSITION capability and NODE_ONLY planning blocking;
+- declared-slope blocking;
+- certified-session `MOVE_NODE` rejection with exact no-mutation journal assertions;
+- retained positive `MOVE_NODE` behavior where no support dependency exists.
 
-Existing no-support route/Table suites remain the positive-path regression authority.
+Existing no-support route/Table/browser suites remain the positive-path regression authority.
 
 ## Deferred by design
 

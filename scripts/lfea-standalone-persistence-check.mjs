@@ -81,7 +81,7 @@ assert.equal(getLfeaBrowserStorage(deniedWindow), null);
 console.log('LFEA-PERSISTENCE-08 PASS unavailable/denied browser storage cannot block standalone operation');
 
 sourceGuards();
-console.log('LFEA-PERSISTENCE-09 PASS direct browser-storage access is isolated to the LFEA adapter and production labels metadata non-authoritatively');
+console.log('LFEA-PERSISTENCE-09 PASS direct browser-storage access is isolated to the LFEA adapter and runtime persists metadata only');
 
 console.log(JSON.stringify({
   check: 'lfea-standalone-persistence',
@@ -101,12 +101,17 @@ function sourceGuards() {
   }
   const persistence = fs.readFileSync('src/lfea/persistence.js', 'utf8');
   const bootstrap = fs.readFileSync('src/lfea/bootstrap.js', 'utf8');
+  const runtime = fs.readFileSync('src/lfea/standalone-runtime.js', 'utf8');
   assert.match(persistence, /lfea\.ui\.activeView\.v1/u);
   assert.match(persistence, /lfea\.source\.recentMetadata\.v1/u);
+  assert.match(persistence, /non-authoritative standalone LFEA preferences only/u);
   assert.doesNotMatch(persistence, /lafea\.|workspace\.|analysis\./u);
   assert.match(bootstrap, /createLfeaPersistenceAdapter/u);
-  assert.match(bootstrap, /Recent source metadata only/u);
-  assert.match(bootstrap, /Re-import is required/u);
+  assert.match(bootstrap, /createLfeaStandaloneRuntime/u);
+  assert.match(runtime, /saveRecentSourceMetadata/u);
+  assert.match(runtime, /fileName: snapshot\.fileName/u);
+  assert.match(runtime, /contentSha256: snapshot\.contentSha256/u);
+  assert.match(runtime, /sourceUnit: snapshot\.sourceUnit/u);
   assert.doesNotMatch(bootstrap, /localStorage|sessionStorage/u);
 }
 

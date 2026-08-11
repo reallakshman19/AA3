@@ -16,6 +16,8 @@ import {
   LFEA_PREFLIGHT_PHASE1_SNAPSHOT_SCHEMA,
   buildLfeaPreflightPhase1Index,
   getLfeaPreflightPhase1LineOrdinal,
+  getLfeaPreflightPhase1Queue,
+  queryLfeaPreflightPhase1Index,
 } from '../src/workspace/lfea-preflight-phase1-index.js';
 import {
   buildLfeaPreflightPhase1ComponentIndex,
@@ -152,6 +154,29 @@ assert.equal(model.filteredRowCount, expectedFiltered);
 assert(model.liveLineRowCount <= model.rowDomUpperBound);
 console.log(`P06B3-07 PASS OR-within / AND-between indexed facet filter count=${expectedFiltered}`);
 
+const orFilter = Object.freeze({
+  combine: 'OR',
+  clauses: Object.freeze([
+    Object.freeze({ facetId: 'service', mode: 'OR', values: Object.freeze(['0']) }),
+    Object.freeze({ facetId: 'rating', mode: 'OR', values: Object.freeze(['1']) }),
+  ]),
+});
+setLfeaPreflightPhase1Filter(viewport, orFilter);
+const facetOr = queryLfeaPreflightPhase1Index(largeLineIndex, orFilter);
+const missingTargets = new Set(getLfeaPreflightPhase1Queue(
+  largeLineIndex,
+  LFEA_PREFLIGHT_EXCEPTION_QUEUE.MISSING,
+).targetIds);
+const expectedQueueIntersection = facetOr.targetIds.filter((targetId) => missingTargets.has(targetId)).length;
+setLfeaPreflightPhase1Queue(viewport, LFEA_PREFLIGHT_EXCEPTION_QUEUE.MISSING);
+model = getLfeaPreflightPhase1ViewportModel(viewport);
+assert.equal(model.filter.combine, 'OR');
+assert.equal(model.queueId, LFEA_PREFLIGHT_EXCEPTION_QUEUE.MISSING);
+assert.equal(model.filteredRowCount, expectedQueueIntersection);
+assert(model.visibleRows.every((row) => missingTargets.has(row.targetId)));
+console.log(`P06B3-07A PASS exception queue intersects facet-OR result count=${expectedQueueIntersection}`);
+
+setLfeaPreflightPhase1Queue(viewport, null);
 setLfeaPreflightPhase1Filter(viewport, { combine: 'AND', clauses: [] });
 setLfeaPreflightPhase1Sort(viewport, 'TARGET_ID_ASC');
 setLfeaPreflightPhase1ColumnPreset(viewport, 'REVIEW');
@@ -207,6 +232,7 @@ console.log(JSON.stringify({
   reachesEngineeringFieldOrdinal: 39,
   stableComponentIndexHash: largeComponentIndex.structuralHash,
   queues: largeLineIndex.queueCounts,
+  queueSemantics: 'INTERSECT_FACET_FILTER',
 }));
 
 function snapshotFromFixture(fixture) {

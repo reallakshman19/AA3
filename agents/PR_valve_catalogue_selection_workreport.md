@@ -41,6 +41,14 @@ Preview and validation remain non-mutating. Apply remains the only canonical mut
 - Updated compound-cell focus to target the certified record selector.
 - Added one DN80 BALL record to the repository demonstration specification catalogue so the existing Q3 DN80 M06 qualification can exercise the same production catalogue authority instead of injecting a synthetic binding.
 
+## Qualification fixture custody
+
+The 20-object production demo intentionally does not contain a strict compatible BALL replacement for its loaded GATE valve: the canonical V-001 evidence is DN100 / `DEMO-150`, while the existing DN100 specification records are `DEMO-600`. That mismatch is retained because repository coverage uses it to prove there is no nearest-size/class substitution.
+
+M06 selector reachability therefore uses the existing Q3 exact-authority fixture. Q3 contains the certified DN80 / `PCL-80` target and its exact BALL catalogue record, and the same fixture already exercises the combined M04/M06/M10 transaction. Qualification must not manufacture a looser DEMO-150 replacement record or relax the Table compatibility predicate merely to make the generic demo selectable.
+
+The Component HUD remains a separate evidence projection. Its browser expectation follows the already-certified HUD source-evidence contract: V-001 resolves its existing exact GATE catalogue record from valve type and face-to-face source evidence. That does not make the Table GATE -> BALL replacement compatible, because the Table candidate authority specifically requires a compatible BALL replacement record.
+
 ## Validation coverage
 
 Focused tests cover:

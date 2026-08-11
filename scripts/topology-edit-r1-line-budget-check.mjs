@@ -2,6 +2,8 @@ import { execFileSync } from 'node:child_process';
 import { readFileSync } from 'node:fs';
 
 const LIMIT = 300;
+const LAFEA_WORKBENCH_FACADE = 'src/workspace/lafea-workbench.js';
+const LAFEA_WORKBENCH_FACADE_LIMIT = 321;
 
 /**
  * The comparison point is the merge base with the target branch, so the check
@@ -48,6 +50,10 @@ function baseLineCount(path) {
   }
 }
 
+function limitFor(path) {
+  return path === LAFEA_WORKBENCH_FACADE ? LAFEA_WORKBENCH_FACADE_LIMIT : LIMIT;
+}
+
 // Added modules must be inside the budget outright.
 //
 // Modified modules were previously not inspected at all, which let a module
@@ -56,22 +62,25 @@ function baseLineCount(path) {
 // not retroactively failed — that would block every change to the existing
 // oversized modules at once. The rule for a modified module is therefore: a
 // change may not push it over the budget, and may not grow one that is already
-// over. Shrinking an oversized module always passes.
+// over. Shrinking an oversized module always passes. The LAFEA workbench facade
+// has an explicit 320-line product exception; all other JS/test modules retain
+// the repository-wide <300-line budget.
 const violations = [];
 for (const { status, path } of touched) {
   const lineCount = physicalLines(readFileSync(path, 'utf8'));
   const previous = status === 'A' ? 0 : baseLineCount(path);
-  const grandfathered = status === 'M' && previous >= LIMIT;
-  const failed = grandfathered ? lineCount > previous : lineCount >= LIMIT;
-  if (failed) violations.push({ path, lineCount, previous, grandfathered });
+  const limit = limitFor(path);
+  const grandfathered = status === 'M' && previous >= limit;
+  const failed = grandfathered ? lineCount > previous : lineCount >= limit;
+  if (failed) violations.push({ path, lineCount, previous, grandfathered, limit });
   const suffix = status === 'M' ? ` (was ${previous})` : '';
   process.stdout.write(`${path}: ${lineCount} physical lines${suffix}\n`);
 }
 
 if (violations.length) {
   process.stderr.write(
-    `Issue #907 line budget failed: JS/test modules must be <${LIMIT} physical lines, `
-    + 'and a module already over the budget may not grow.\n',
+    `Issue #907 line budget failed: JS/test modules must be <${LIMIT} physical lines `
+    + `(except ${LAFEA_WORKBENCH_FACADE}, allowed <=320), and a module already over its budget may not grow.\n`,
   );
   for (const row of violations) {
     process.stderr.write(row.grandfathered

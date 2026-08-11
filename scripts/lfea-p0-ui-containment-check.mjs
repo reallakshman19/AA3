@@ -63,10 +63,12 @@ assert.doesNotMatch(view, /Reload Mock for|Load Collection Mock Data/u,
   'collection-scoped mock controls must not exist');
 assert.match(view, /recordDrafts/u,
   'record drafts must be retained independently of DOM re-renders');
+assert.match(view, /recordIdentity\(selectedRecord\)/u,
+  'record drafts must be keyed by stable record identity, not table index');
 assert.match(view, /aria-invalid/u,
   'record JSON must expose inline validity before Add or Update');
 assert.match(view,
-  /const path = this\.collectionPath;[\s\S]*?this\.selectedIndex = -1;[\s\S]*?this\.clearRecordDrafts\(path\);[\s\S]*?onDeleteRecord\(path, index\)/u,
+  /const path = this\.collectionPath;[\s\S]*?this\.selectedIndex = -1;[\s\S]*?this\.recordDrafts\.delete\(key\);[\s\S]*?onDeleteRecord\(path, index\)/u,
   'record selection must be cleared before synchronous delete publication');
 
 assert.match(controller, /confirmMockReplacement/u,

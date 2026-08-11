@@ -3,10 +3,7 @@ import {
   createUnrepresentableTopologyEditOperationResult,
 } from './topology-edit-operation-plan.js';
 import { deriveTopologyEditChangedScope } from './topology-edit-change-scope.js';
-import {
-  assertNoTopologyEditSupportGeometryDependencies,
-  topologyEditAffectedEdgeIds,
-} from './topology-edit-support-geometry-dependency.js';
+import { assertNoTopologyEditSupportGeometryDependencies, topologyEditAffectedEdgeIds } from './topology-edit-support-geometry-dependency.js';
 import {
   addPoints,
   addScaled,
@@ -30,9 +27,7 @@ import {
   subtract,
 } from './topology-edit-route-operation-helpers.js';
 import { planApplyDeclaredSlope } from './topology-edit-slope-operation.js';
-import {
-  planTopologyEditInlineComponentOperation,
-} from './topology-edit-inline-component-operation.js';
+import { planTopologyEditInlineComponentOperation } from './topology-edit-inline-component-operation.js';
 
 export { planApplyDeclaredSlope, planTopologyEditInlineComponentOperation };
 

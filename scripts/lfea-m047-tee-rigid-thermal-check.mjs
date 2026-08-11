@@ -2,8 +2,8 @@
 /**
  * M047 Type 2.1 tee rigid-thermal qualification without ACE/ACCDB.
  * Source custody lives in the M047 BM4_L authority fixture. The fixture pins
- * the CAESAR II 14 Misc and Load Case reports in Common. Rounded 0.0012 mm/mm
- * is never promoted to exact thermal authority.
+ * the CAESAR II 14 Misc, Load Case, and InputXML sources in Common. Rounded
+ * 0.0012 mm/mm is never promoted to exact thermal authority.
  */
 import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
@@ -38,7 +38,7 @@ const FACTOR_PROFILE_ID = 'B31_3_2022_B31J_2017';
 const MOMENT_DIRECTION_MAPPING = Object.freeze({ inPlaneField: 'my', outOfPlaneField: 'mz' });
 const ELASTIC_MODULUS_PA = 203395008e3;
 const POISSON_RATIO = 0.292;
-const MATERIAL_NUMBER = 106;
+const materialIdentity = authority.materialIdentity;
 const provisional = authority.provisionalThermalDiagnostic;
 const PROVISIONAL_STRAIN = provisional.coefficientPerKelvin
   * (provisional.operatingTemperatureC - provisional.installationTemperatureC);
@@ -62,8 +62,8 @@ function materialResolution() {
   };
   const table = sealMaterialTable({
     schema: 'fea-linear-material-table/v1',
-    materialId: `ACCDB-MATERIAL-${MATERIAL_NUMBER}`,
-    sourceEvidence: sourceEvidence('BM4_L:ACCDB:COLD-MATERIAL-106'),
+    materialId: materialIdentity.materialId,
+    sourceEvidence: sourceEvidence(`BM4_L:INPUTXML:MATERIAL-${materialIdentity.materialNumber}`),
     points: [point],
     semanticHash: '',
   });
@@ -101,9 +101,7 @@ function qualifyTee(entry) {
   const material = materialResolution();
   const runSection = sectionResolution(`TEE-${entry.teeNode}-RUN`, runOuterDiameter, runWallM);
   const branchSection = sectionResolution(
-    `TEE-${entry.teeNode}-BRANCH`,
-    branchOuterDiameter,
-    branchWallM,
+    `TEE-${entry.teeNode}-BRANCH`, branchOuterDiameter, branchWallM,
   );
   const branchRelativeExcess = (branchOuterDiameter - runOuterDiameter) / runOuterDiameter;
   assert.ok(
@@ -156,16 +154,20 @@ function relativeClose(actual, expected, tolerance, message) {
 }
 
 console.log('\n--- M047 Type 2.1 tee rigid thermal no-ACE qualification ---');
-test('M047-RT-01', 'Source custody pins the requested CAESAR reports and version', () => {
+test('M047-RT-01', 'Source custody pins CAESAR reports, InputXML material, and version', () => {
   assert.equal(authority.schema, 'm047-bm4l-tee-rigid-thermal-authority/v1');
   assert.equal(authority.benchmarkId, 'BM4_L');
   assert.equal(authority.caesarVersion, '14.00.00.0910');
   assert.equal(authority.caesarBuild, '231113');
   assert.equal(COMMON_REVISION, '179c4831cf521cf797c13699cfbbd118315c9244');
-  assert.equal(authority.sources.misc.path, 'LFEA/BM4/Miscdata_BM4_L.txt');
   assert.equal(authority.sources.misc.gitBlobSha, 'ef23d224925e4568185a360ecbe1ee62503f15ff');
-  assert.equal(authority.sources.loadCase.path, 'LFEA/BM4/Loadcasereport_BM4_L.txt');
   assert.equal(authority.sources.loadCase.gitBlobSha, 'be62eeb08af26dddcd59146e21188c108c4600dd');
+  assert.equal(authority.sources.inputXml.path, 'LFEA/BM4/InputXML_BM4.xml');
+  assert.equal(authority.sources.inputXml.gitBlobSha, '3423d220374a17f67addd3c8c0c44300ffa46251');
+  assert.equal(materialIdentity.authoritySource, 'INPUT_XML');
+  assert.equal(materialIdentity.materialNumber, 106);
+  assert.equal(materialIdentity.materialName, 'A106 Grade B');
+  assert.equal(materialIdentity.materialId, `ACCDB-MATERIAL-${materialIdentity.materialNumber}`);
 });
 test('M047-RT-02', 'Pinned Load Case Report keeps T1 selectivity and ALG L14 explicit', () => {
   const cases = new Map(authority.loadCases.map((entry) => [entry.caseId, entry]));

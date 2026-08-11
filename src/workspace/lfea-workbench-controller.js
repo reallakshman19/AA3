@@ -103,7 +103,7 @@ export class LfeaWorkbenchController {
       const text = await readLfeaUtf8(file);
       return this.importDocument(JSON.parse(text));
     } catch (error) {
-      return this.store.reportEditError('document', null, error);
+      return this.store.reportEditError('document', null, error, 'LFEA_IMPORT_REJECTED');
     }
   }
 
@@ -137,7 +137,7 @@ export class LfeaWorkbenchController {
     try {
       return this.store.replaceDocument(parseLfeaJsonObject(text, 'LFEA package'));
     } catch (error) {
-      return this.store.reportEditError('document', null, error);
+      return this.store.reportEditError('document', null, error, 'LFEA_EDIT_REJECTED');
     }
   }
 

@@ -13,7 +13,9 @@ import {
 import { requireLafeaLifecycleProfileForStage } from './lafea-lifecycle-profiles.js';
 import { requireLafeaStageRegistryEntry } from './lafea-stage-registry.js';
 import { canonicalLafeaSha256 } from './lafea-canonical-sha256.js';
+import { lafeaAnalysisMeshContentHash } from './lafea-analysis-mesh-contract.js';
 import { createLafeaContinuumGeometryProjection } from './lafea-continuum-geometry-projection.js';
+import { createLafeaContinuumSourceAnalysisMesh } from './lafea-continuum-source-mesh.js';
 import {
   sourceAuthorityDocument,
   validateLafeaSourceAuthority,
@@ -153,12 +155,14 @@ function feaRecords(stage, profile, authority, execution) {
     producerRevision: LAFEA_PRODUCER_REVISION,
   });
   const retainedMeshEvidence = requireRetainedMeshEvidence(stage.stageId, execution.result);
-  const meshHash = engineeringHash(stage.stageId, 'ANALYSIS_MESH', {
+  const meshHash = meshArtifactHash(
+    stage.stageId,
     analysisGeometryHash,
     meshProfileHash,
     sourceMesh,
-    retainedAcceptedMeshEvidence: retainedMeshEvidence,
-  });
+    retainedMeshEvidence,
+    execution.canonicalInput,
+  );
   const physicalLoadCaseHash = engineeringHash(stage.stageId, 'PHYSICAL_LOAD_CASE_INPUT',
     physicalLoadPayload(stage.stageId, execution.canonicalInput));
   const solverProfileHash = engineeringHash(stage.stageId, 'SOLVER_PROFILE', {
@@ -210,6 +214,27 @@ function geometryArtifactHash(stageId, sourceHash, canonicalModelHash, sourceMes
     sourceHash,
     canonicalModelHash,
     geometry: sourceGeometry(stageId, sourceMesh),
+  });
+}
+
+function meshArtifactHash(
+  stageId,
+  analysisGeometryHash,
+  meshProfileHash,
+  sourceMesh,
+  retainedMeshEvidence,
+  canonicalInput,
+) {
+  if (stageId === 'LAFEA.3') {
+    return lafeaAnalysisMeshContentHash(
+      createLafeaContinuumSourceAnalysisMesh(canonicalInput),
+    );
+  }
+  return engineeringHash(stageId, 'ANALYSIS_MESH', {
+    analysisGeometryHash,
+    meshProfileHash,
+    sourceMesh,
+    retainedAcceptedMeshEvidence: retainedMeshEvidence,
   });
 }
 

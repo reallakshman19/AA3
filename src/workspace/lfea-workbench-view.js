@@ -204,12 +204,7 @@ export class LfeaWorkbenchView {
   recordEditor(state) {
     const wrapper = element(this.rootElement, 'div', 'lfea-workbench__records');
     if (!state.packageValue) {
-      const mock = element(this.rootElement, 'button', null, '[SIMULATED] Load Collection Mock Data');
-      mock.type = 'button';
-      mock.addEventListener('click', this.handlers.onMock);
-      mock.dataset.role = 'lfea-collection-mock';
-      mock.dataset.mockData = 'true';
-      wrapper.append(element(this.rootElement, 'p', null, 'No mesh package is loaded.'), mock);
+      wrapper.append(element(this.rootElement, 'p', null, 'No mesh package is loaded.'));
       return wrapper;
     }
     const select = element(this.rootElement, 'select');
@@ -224,11 +219,6 @@ export class LfeaWorkbenchView {
       this.selectedIndex = -1;
       this.render(state);
     });
-    const collectionMock = element(this.rootElement, 'button', null, `[SIMULATED] Reload Mock for ${this.collectionPath}`);
-    collectionMock.type = 'button';
-    collectionMock.addEventListener('click', this.handlers.onMock);
-    collectionMock.dataset.role = 'lfea-collection-mock';
-    collectionMock.dataset.mockData = 'true';
     const rows = valueAt(state.packageValue, this.collectionPath);
     const table = recordTable(this.rootElement, rows, this.selectedIndex, (index) => {
       this.selectedIndex = index;
@@ -253,7 +243,7 @@ export class LfeaWorkbenchView {
     remove.disabled = this.selectedIndex < 0;
     const actions = element(this.rootElement, 'div', 'lfea-workbench__record-actions');
     actions.append(add, update, remove);
-    wrapper.append(select, collectionMock, table, textarea, actions);
+    wrapper.append(select, table, textarea, actions);
     return wrapper;
   }
 }

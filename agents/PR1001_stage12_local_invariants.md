@@ -149,10 +149,12 @@ Priority components:
 3. straight/rigid uniform gravity: verify `wL` and centroid `L/2` directly;
 4. thermal/pressure/Bourdon: use free-state zero-action identities rather than external-force resultants.
 
+Stage 12B total-force closure is now recorded separately in [`PR1001_stage12b_gravity_resultant.md`](PR1001_stage12b_gravity_resultant.md): all 288 gravity-enabled source/case resultants pass to machine precision. The remaining discriminator is therefore first-moment/centroid placement.
+
 Any Stage-12B additions must be evidence-only. They must not change K, equivalent/initial load vectors, recovered results, references, or comparator semantics.
 
 ## Stage decision
 
 **STAGE_12A_COMPLETE / LOCAL_REAL_ARTIFACT_PASS.**
 
-Next: **STAGE_12B_PHYSICAL_RESULTANT_AND_FIRST_MOMENT_LEDGER**.
+Next: **STAGE_12B_FIRST_MOMENT_AND_CENTROID_EVIDENCE**.

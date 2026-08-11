@@ -5,17 +5,19 @@ import {
   createTopologyEditOperationPlan,
 } from '../professional/topology-edit-operation-plan.js';
 import { planMoveConnectedRun } from '../professional/topology-edit-route-operations.js';
+import {
+  assertNoTopologyEditSupportGeometryDependencies,
+} from '../professional/topology-edit-support-geometry-dependency.js';
 
 const EPSILON_MM = 1e-9;
 const NODE_DEPENDANT_COLLECTIONS = Object.freeze([
-  'junctions', 'supports', 'boundaries', 'rigids', 'bends',
+  'junctions', 'boundaries', 'rigids', 'bends',
 ]);
 
 export function compileTopologyEditTableNodePosition(intent, topology) {
   const edge = exact(topology.edges, intent.target.canonicalId, 'EDGE');
   const endpoint = intent.requestedValue.endpoint;
   const endpointKey = endpoint === 'FROM' ? 'fromNodeId' : 'toNodeId';
-  const anchorKey = endpoint === 'FROM' ? 'toNodeId' : 'fromNodeId';
   if (edge[endpointKey] !== intent.requestedValue.nodeId) {
     throw new Error(
       `TopologyEditTableEngineeringPlanner: ${endpoint} endpoint binding changed before NODE_POSITION planning.`,
@@ -37,11 +39,16 @@ export function compileTopologyEditTableNodePosition(intent, topology) {
 }
 
 function planNodeOnly(intent, topology, edge, node) {
-  assertNoNodeDependants(topology, new Set([node.id]));
-  const edgeIds = incidentEdgeIds(topology, new Set([node.id]));
+  const movedNodeIds = [node.id];
+  const edgeIds = incidentEdgeIds(topology, new Set(movedNodeIds));
+  assertNoTopologyEditSupportGeometryDependencies(topology, {
+    movedNodeIds,
+    affectedEdgeIds: edgeIds,
+  });
+  assertNoNodeDependants(topology, new Set(movedNodeIds));
   const changedScope = deriveTopologyEditChangedScope(topology, {
     basisHash: topology.canonicalTopologyHash,
-    nodeIds: [node.id],
+    nodeIds: movedNodeIds,
     edgeIds,
   });
   return createTopologyEditOperationPlan({

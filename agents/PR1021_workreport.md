@@ -1,6 +1,6 @@
 # PR1021 Work Report — LFEA Workbench Integrity (#1018)
 
-Maintained throughout PR #1021. This file is the single source of truth for current PR state, engineering findings, decisions, validation evidence, deferred improvements, and next-agent handover. Current-state sections are rewritten as work progresses; Stage Execution Log and Process Notes preserve history.
+Maintained throughout PR #1021. This is the single source of truth for current PR state, engineering findings, decisions, validation evidence, deferred improvements, and next-agent handover. Current-state sections are rewritten as work progresses; Stage Execution Log and Process Notes preserve history.
 
 ## 0. PR Mission Control
 
@@ -11,42 +11,36 @@ Maintained throughout PR #1021. This file is the single source of truth for curr
 | PR | #1021 |
 | Branch | `agent/lfea-workbench-integrity-1018` |
 | Base | `751756e9140527b8dc121aa179dc76b7039fb7ad` |
-| Current HEAD | Stage 4 production commit `365c9f3`; this report opens Stage 5 |
+| Current HEAD | Stage 5 production commit `1de80e6`; this report opens Stage 6 |
 | PR state | Draft |
-| Current stage | Stage 5 — preserve package/record drafts across renders |
-| Last completed stage | Stage 4 |
-| Engineering status | ISS-001 implemented; draft-lifecycle implementation next |
-| Validation status | S4 source verification PASS; behavioural draft validation pending |
+| Current stage | Stage 6 — correct delete-selection sequencing |
+| Last completed stage | Stage 5 |
+| Engineering status | ISS-001/002/004 implemented; ISS-003 next |
+| Validation status | S4/S5 branch-source verification PASS; durable regression guard pending S7 |
 | Current blocker | None |
-| Exact next action | Add view-owned draft capture/restore keyed to committed model identity, without touching store/solver authority |
+| Exact next action | Make selection safe before synchronous delete mutation and restore it if the delete is rejected without changing model identity |
 
 ### Handover in 60 seconds
 
-**Now true:** PR/bootstrap is clean; collection-context whole-package mock controls are removed; toolbar whole-package mock remains. `ISS-002` and newly recorded sibling `ISS-004` share one root cause: content replacement recreates record/package textareas from committed state.
+**Now true:** collection-context whole-package mock controls are gone; toolbar mock remains. Package and record JSON drafts are view-owned, captured before content replacement, record drafts are keyed by collection/index, and drafts are cleared only when committed model identity changes.
 
-**Current work:** Stage 5 will capture drafts before content replacement, preserve them while `(modelVersion, semanticHash)` is unchanged, preserve record drafts per collection/selection context, and clear all stale drafts when committed model identity changes.
+**Current work:** Stage 6 fixes delete sequencing. Selection must become `-1` before `onDeleteRecord()` can synchronously render. If delete is rejected and model identity is unchanged, the previous selection/draft should be restored.
 
-**Unfinished:** Stage 5 draft persistence; Stage 6 delete sequencing; Stage 7 regression checks; Stage 8 final reconciliation.
+**Unfinished:** S6 delete sequencing, S7 durable regression validation, S8 final reconciliation.
 
-**Do not assume:** render lifetime equals draft lifetime; draft data is solver authority; continuum von Mises equals piping-code stress.
+**Do not assume:** draft state is model/solver authority; a failed delete changed the model; continuum von Mises is piping-code stress.
 
-**Highest-risk remaining item:** Stage 5 model-identity invalidation. A draft must survive progress/display/selection renders but must not survive a committed model replacement/edit/undo/redo as stale text.
+**Highest-risk remaining in-scope item:** failed-delete UX/state recovery. A pre-mutation selection clear fixes N02, but without recovery a rejected delete would unnecessarily move the user to the add-record context.
 
-**Next action:** implement Stage 5 only in `src/workspace/lfea-workbench-view.js`, then source-check the lifecycle before Stage 6.
+**Next action:** implement the fail-safe delete handler in `lfea-workbench-view.js`, then inspect source and update this report before S7.
 
 ## 1. Mission and Engineering Intent
 
-Prevent destructive-scope mismatch and silent loss/inconsistency of uncommitted engineering edits while preserving existing import validation, resealing, semantic hashes, model-version lineage, solver execution, and run cancellation.
+Prevent destructive-scope mismatch and silent loss/inconsistency of uncommitted engineering edits while preserving import validation, resealing, semantic hashes, model-version lineage, solver execution, and run cancellation.
 
-Governing principles:
-- External packages remain validated, not repaired.
-- Preview/draft state never becomes solve authority.
-- Destructive UI matches actual scope.
-- Render is not implicit discard.
-- Committed model identity change invalidates stale drafts.
-- No `.github/workflows/*` changes.
+Principles: external packages remain validated; preview/drafts never become solver authority; destructive UI matches scope; render is not implicit discard; committed model changes invalidate stale drafts; synchronous mutation boundaries must see coherent UI-local state; no `.github/workflows/*` changes.
 
-Non-goals: solver numerics/formulations, hash algorithms, full LFEA redesign, code-stress implementation, cross-run colour normalization, new CI gates.
+Non-goals: solver/formulation/hash changes, full LFEA redesign, code-stress implementation, cross-run colour normalization, new CI gates.
 
 ## 2. Mission Status
 
@@ -56,9 +50,9 @@ Non-goals: solver numerics/formulations, hash algorithms, full LFEA redesign, co
 | PR allocation/report sync | High | DONE | S2 | PR #1021 |
 | Changed-file baseline | High | DONE | S3 | report-only baseline |
 | Remove collection mock actions | Critical | IMPLEMENTED | S4 | `365c9f3` |
-| Preserve record drafts | High | IN_PROGRESS | S5 | ISS-002 |
-| Preserve package draft | High | IN_PROGRESS | S5 | ISS-004 |
-| Correct delete sequencing | Medium | ACCEPTED | S6 | ISS-003 |
+| Preserve record drafts | High | IMPLEMENTED | S5 | `1de80e6` |
+| Preserve package draft | High | IMPLEMENTED | S5 | `1de80e6` |
+| Correct delete sequencing | Medium | IN_PROGRESS | S6 | ISS-003 |
 | Regression validation | High | NOT_STARTED | S7 | — |
 | Final audit/handover | High | NOT_STARTED | S8 | — |
 
@@ -67,9 +61,9 @@ Non-goals: solver numerics/formulations, hash algorithms, full LFEA redesign, co
 | ID | Type | Sev./priority | Status | Summary | Current PR? |
 |---|---|---:|---|---|---|
 | ISS-001 | Defect | Critical | IMPLEMENTED | Collection-context Mock Package actions replaced whole package | Yes |
-| ISS-002 | Defect | High | IN_PROGRESS | Render can destroy unsaved record-editor text | Yes |
-| ISS-003 | Defect | Medium | ACCEPTED | Delete selection clears after synchronous mutation/render | Yes |
-| ISS-004 | Defect | High | IN_PROGRESS | Render can destroy unsaved package-editor text | Yes |
+| ISS-002 | Defect | High | IMPLEMENTED | Render destroyed unsaved record-editor text | Yes |
+| ISS-003 | Defect | Medium | IN_PROGRESS | Delete selection cleared after synchronous mutation/render | Yes |
+| ISS-004 | Defect | High | IMPLEMENTED | Render destroyed unsaved package-editor text | Yes |
 | IMP-001 | Improvement | High | DEFERRED | Cross-run plots need shared engineering colour authority | No |
 | IMP-002 | Improvement | High | DEFERRED | Upstream pre-FEA/linear-piping surfaces need dedicated audit | No |
 | RISK-001 | Engineering risk | High | OPEN | Continuum von Mises may be mistaken for piping-code stress | No |
@@ -77,29 +71,22 @@ Non-goals: solver numerics/formulations, hash algorithms, full LFEA redesign, co
 | QST-001 | Engineering question | Medium | OPEN | Authoritative fallback axis for vertical-pipe support triad degeneracy | No |
 | DEC-001 | Decision | — | ACTIVE | Remove collection mock actions instead of relabelling | Yes |
 | DEC-002 | Decision | — | ACTIVE | No new CI workflow gates | Yes |
-| DEC-003 | Decision | — | ACTIVE | View-owned drafts; invalidate by committed model identity | Yes |
+| DEC-003 | Decision | — | ACTIVE | View-owned drafts invalidated by committed model identity | Yes |
+| DEC-004 | Decision | — | ACTIVE | Delete clears selection before mutation; failed delete restores by identity check | Yes |
 
 ### ISS-001
-**Resolution:** removed both records-card mock controls. Empty records card now only states no package is loaded; loaded records card contains selector/table/editor/actions without collection mock. Toolbar `[SIMULATED] Load Mock Data` remains in `renderLfeaToolbar()` with role `lfea-mock` and `handlers.onMock`.
-
-**Closure status:** implemented; final regression/source guard pending S7.
+Implemented S4: both collection-context mock buttons removed; toolbar `lfea-mock` remains. Final durable guard pending S7.
 
 ### ISS-002 / ISS-004
-**Root cause:** `render()` replaces `slots.content`; both package and record textareas are reconstructed from committed package data.
+Implemented S5. `LfeaWorkbenchView` now owns `documentDraft`, `recordDrafts`, and `modelIdentity`; `render()` captures editor values before replacement and synchronizes draft validity to `${modelVersion}:${semanticHash}`; record textarea stores a `draftKey` from `[collectionPath, selectedIndex]`; successful committed model changes clear drafts; unchanged identity preserves them. `destroy()` clears view draft state.
 
-**Stage 5 resolution design:**
-1. capture current textarea values before content replacement;
-2. retain one package draft plus record drafts keyed by collection/selected index;
-3. compute committed model identity from `state.modelVersion` plus package `semanticHash`;
-4. preserve drafts when identity is unchanged (worker progress, display mode, row/collection navigation);
-5. clear drafts when identity changes (successful add/update/delete/apply, import/mock, undo/redo);
-6. never pass draft state into model/solver functions except existing explicit Apply/Add/Update user actions.
+Engineering consequence: progress/display/row/collection renders no longer inherently discard typed text, while successful apply/add/update/delete/import/undo/redo cannot retain stale UI drafts across a new committed model identity.
 
 ### ISS-003
-Delete must make selection safe before synchronous mutation; failure handling will be considered so a rejected delete can restore the prior selection/draft.
+Current handler calls delete before clearing selection. Stage 6 design: save prior index/identity, set selection `-1`, invoke synchronous delete, and if returned state retains the prior committed identity restore the selection/render so failed delete retains editing context.
 
-### Deferred engineering items
-IMP-001 shared comparison range; IMP-002 upstream LFEA surface audit; RISK-001 result authority; RISK-002 reaction sign convention visibility.
+### Deferred items
+IMP-001 shared comparison range; IMP-002 upstream three-surface audit; RISK-001 result authority; RISK-002 reaction sign visibility; QST-001 vertical triad axis authority.
 
 ## 4. Stage Roadmap
 
@@ -107,141 +94,113 @@ IMP-001 shared comparison range; IMP-002 upstream LFEA surface audit; RISK-001 r
 |---|---|---|---|---|
 | S1 | DONE | Initialize report/findings | register/handover | `07829ac` |
 | S2 | DONE | Allocate PR/sync report | permanent report | `ee8a7ea`, `6335c68` |
-| S3 | DONE | Verify documentation baseline | report-only diff | `5c0a947` report record |
+| S3 | DONE | Verify documentation baseline | report-only diff | pre-S4 |
 | S4 | DONE | Remove misleading collection mocks | ISS-001 | `365c9f3` |
-| S5 | IN_PROGRESS | Persist package/record drafts | ISS-002/004 | — |
-| S6 | NOT_STARTED | Fix delete selection sequencing | ISS-003 | — |
-| S7 | NOT_STARTED | Regression qualification | existing check + targeted guards | — |
+| S5 | DONE | Persist package/record drafts | ISS-002/004 | `1de80e6` |
+| S6 | IN_PROGRESS | Fix delete sequencing | ISS-003 | — |
+| S7 | NOT_STARTED | Regression qualification | existing check/source guards | — |
 | S8 | NOT_STARTED | Final reconcile/handover | closure record | — |
 
 ## 5. Stage Execution Log
 
 ### Stage 1 — Report initialization and technical findings
-**Status:** COMPLETE. Created `PR_PENDING`; verified main `751756e9`; no production/workflow changes; durable IDs established.
+**COMPLETE.** Created pre-PR report, verified main `751756e9`, recorded durable findings; no production/workflow changes.
 
 ### Stage 2 — PR allocation and report synchronization
-**Status:** COMPLETE. Created draft PR #1021, permanent `agents/PR1021_workreport.md`, removed temporary path.
+**COMPLETE.** Draft PR #1021 created; permanent report created; temporary path removed.
 
 ### Stage 3 — Changed-file verification and documentation-stage completion
-**Status:** COMPLETE. GitHub changed-file list returned exactly `agents/PR1021_workreport.md`. Source review additionally found `ISS-004`, the package-editor sibling of N01.
+**COMPLETE.** GitHub changed files exactly report-only before coding. Discovered sibling `ISS-004` package-editor draft loss.
 
 ### Stage 4 — Correct collection mock behaviour
-**Status:** COMPLETE.
-
-**Before:** `recordEditor()` exposed `[SIMULATED] Load Collection Mock Data` when empty and `[SIMULATED] Reload Mock for <collection>` when loaded; both used global `handlers.onMock`.
-
-**Objective:** eliminate local/global destructive-scope mismatch without inventing collection-mock semantics.
-
-**Scope:** `src/workspace/lfea-workbench-view.js` only plus report.
-
-**Implementation:** removed both collection-context controls; empty state now only displays the no-package message; loaded state appends selector/table/textarea/actions only.
-
-**Changed files:** `src/workspace/lfea-workbench-view.js` (`365c9f3`).
-
-**Validation performed:** fetched branch source after commit and confirmed no collection mock construction/append remains in `recordEditor()`. Separately verified `renderLfeaToolbar()` still constructs role `lfea-mock` using `handlers.onMock`. No controller/store/solver/hash file changed.
-
-**Stage decision:** COMPLETE (implementation). S7 will add durable regression guard.
-
-**Handover delta:** whole-package mock is now exposed only at toolbar/global scope; draft-loss defects remain.
+**COMPLETE.** Removed both records-card mock entrypoints from `lfea-workbench-view.js`; global toolbar mock retained. Branch source inspected after commit. Commit `365c9f3`.
 
 ### Stage 5 — Preserve package and record drafts across renders
-**Status:** IN_PROGRESS.
+**COMPLETE (implementation; durable guard pending S7).**
 
-**Before:** package and record textarea values live only in DOM; content replacement reconstructs them from committed state. Row/collection callbacks also call `render(state)`.
+**Before:** both textareas were reconstructed from committed state on each content render.
 
-**Objective:** retain uncommitted package/record text across non-model renders/navigation while invalidating stale drafts on committed model identity change.
+**Objective:** preserve authoring drafts across non-model renders/navigation, invalidate them on committed model change.
 
-**Scope:** `src/workspace/lfea-workbench-view.js` only for production code; report before/after. No store/controller/solver changes planned.
+**Scope:** `src/workspace/lfea-workbench-view.js` only plus report. Store/controller/solver unchanged.
 
-**Engineering rationale:** Drafts are UI authoring state. View ownership keeps them outside governed package/solver state, while `(modelVersion, semanticHash)` provides a deterministic invalidation boundary after committed mutations.
+**Implementation:** added `documentDraft`, `recordDrafts`, `modelIdentity`; added `captureEditorDrafts()`, `syncDraftModelIdentity()`, `committedModelIdentity()`, `recordDraftKey()`; render captures before replacement; document editor restores draft; record editor restores keyed draft; destroy clears drafts.
 
-**Planned implementation:** add `documentDraft`, `recordDrafts`, and last model identity to the view; capture DOM drafts before replacement; tag record textarea with stable collection/index draft key; restore matching drafts; clear on model-identity change; clear on destroy.
+**Examples/edge cases:** unchanged model identity preserves drafts during progress/display/row/collection navigation; a changed model version/hash clears drafts before rebuilding from committed state; failed edit with same identity retains text.
 
-**Examples/edge cases:** worker progress preserves both drafts; switching row/collection and returning restores prior record draft; successful commit/import/undo/redo clears stale drafts; failed edit with unchanged model identity retains text.
+**Validation performed:** fetched branch source after `1de80e6` and confirmed capture occurs before `slots.content.replaceChildren`, identity invalidation clears both draft stores, document editor uses draft fallback, record editor uses keyed draft fallback. No store/controller/solver edits.
 
-**Validation planned:** inspect resulting branch source; add S7 source guard to existing `lfea-p0-ui-containment-check.mjs`; do not add workflow.
+**Risk remaining:** behavioural proof in browser-like DOM is not yet run; S7 will add durable source guard and run available repository checks if local checkout can be obtained.
 
-**Risk:** stale draft surviving a real model change, or model change being falsely inferred from display-only state. Mitigation: identity uses modelVersion + semanticHash, both unchanged by display/progress updates.
+**Handover delta:** ISS-002/004 implementation complete; ISS-003 remains.
+
+### Stage 6 — Correct delete-selection sequencing
+**IN_PROGRESS.**
+
+**Before:** delete handler invokes `onDeleteRecord()` then sets `selectedIndex = -1`; synchronous store emission can render between those statements.
+
+**Objective:** ensure render sees safe selection before mutation while preserving selection/draft when delete fails.
+
+**Scope:** delete handler in `lfea-workbench-view.js` only plus report.
+
+**Planned implementation:** cache previous index and model identity; set `selectedIndex = -1`; invoke handler; when returned state has unchanged committed identity, restore prior index and render returned state. Successful mutation changes identity, so selection remains cleared and stale drafts are invalidated by S5.
+
+**Validation planned:** branch source inspection and S7 source guard.
 
 ## 6. Changed-File Ledger
 
 | File | First stage | Latest stage | Purpose | Eng-sensitive? | Validation |
 |---|---|---|---|---|---|
-| `agents/PR1021_workreport.md` | S2 | current | PR SSOT/handover | No | continuous |
-| `src/workspace/lfea-workbench-view.js` | S4 | current | mock scope/draft lifecycle/delete sequencing | Yes | S4 verified; S5/S6 pending |
-| `scripts/lfea-p0-ui-containment-check.mjs` | S7 planned | S7 | durable source regression guard | No production | pending |
+| `agents/PR1021_workreport.md` | S2 | current | SSOT/handover | No | continuous |
+| `src/workspace/lfea-workbench-view.js` | S4 | S6 | mock scope, draft lifecycle, delete sequencing | Yes | S4/S5 source verified; S6 pending |
+| `scripts/lfea-p0-ui-containment-check.mjs` | S7 planned | S7 | durable regression source guard | No production | pending |
 
 ## 7. Engineering Decisions and Invariants
 
-**DEC-001:** remove collection-global mock entrypoints, retain toolbar global mock.
+DEC-001 remove collection mock entrypoints; DEC-002 no CI workflows; DEC-003 drafts are view-owned and identity-invalidated; DEC-004 delete state becomes safe before mutation and is restored on identity-preserving failure.
 
-**DEC-002:** no new CI workflows.
-
-**DEC-003:** drafts stay view-owned and are invalidated by committed model identity, not by generic render.
-
-**INV-001:** external package identity still validated, not repaired.
-
-**INV-002:** preview/draft state is not solver authority.
-
-**INV-003:** render is not implicit discard.
-
-**INV-004:** model-changing operations invalidate incompatible execution and, after S5, stale editor drafts.
+INV-001 external package validation unchanged. INV-002 draft/preview is not solver authority. INV-003 render is not discard. INV-004 committed model change invalidates incompatible execution and editor draft state.
 
 ## 8. Validation and Evidence Ledger
 
-### Software
 | Validation | Status | Evidence |
 |---|---|---|
-| Bootstrap changed-file baseline | PASS | report only before coding |
-| S4 collection mock source verification | PASS | branch `lfea-workbench-view.js` |
-| Toolbar global mock retained | PASS | `lfea-workbench-panels.js` |
-| S5 draft source verification | PENDING | — |
-| S6 delete source verification | PENDING | — |
-| Existing `check:lfea-workbench` guard extension | PENDING S7 | no workflow added |
+| Bootstrap changed-file baseline | PASS | report only |
+| S4 collection mock source | PASS | branch view + toolbar panel |
+| S5 draft lifecycle source | PASS | branch view `1de80e6` |
+| S6 delete source | PENDING | — |
+| Existing workbench check/source guard | PENDING S7 | no workflow |
+| Final PR changed-file reconciliation | PENDING S8 | — |
 
-### Engineering
-| Property | Status |
-|---|---|
-| External package/hash authority unchanged | PASS-by-scope; store/model untouched |
-| Execution lineage unchanged | PASS-by-scope; run store/controller untouched |
-| Collection destructive scope | IMPLEMENTED, final guard pending |
-| Draft survives unrelated render | PENDING S5 |
-| Draft invalidates on committed model change | PENDING S5 |
-| Delete selection coherent | PENDING S6 |
+Engineering: package/hash authority unchanged by scope; execution lineage unchanged by scope; destructive mock scope implemented; draft persistence/invalidation implemented; delete coherence pending.
 
 ## 9. Known / Deferred Work
 
-Current PR: ISS-002, ISS-003, ISS-004; ISS-001 implemented.
+Current PR: ISS-003 only remaining implementation; ISS-001/002/004 implemented awaiting final validation.
 
-Deferred: IMP-001 comparison colour authority; IMP-002 upstream surface audit; RISK-001 result authority; RISK-002 support reaction sign convention; QST-001 vertical support-axis authority.
+Deferred: IMP-001, IMP-002, RISK-001, RISK-002, QST-001.
 
 ## 10. Recommended Forward Sequence
 
-S5 shared draft lifecycle → S6 delete sequencing → S7 existing-check/source regression evidence → S8 final changed-file/register/handover reconciliation.
-
-Future PRs: three-surface LFEA audit; restraint/support semantics; result-authority labelling; run comparison; CAESAR/reference correlation.
+S6 delete sequencing → S7 durable guard + available repository checks → S8 final reconciliation/handover. Future: three-surface audit, restraint/support semantics, result authority, cross-run comparison, CAESAR/reference correlation.
 
 ## 11. Next-Agent Handover
 
-**Stopping point:** Stage 5 pre-change design is recorded; S4 commit is `365c9f3`.
+**Stopping point:** Stage 6 pre-change record. View head for Stage 5 is `1de80e6`.
 
-**Start here:** modify `LfeaWorkbenchView` constructor/render/documentEditor/recordEditor/destroy only. Capture drafts before `slots.content.replaceChildren`; clear them only when committed identity changes. Do not touch model/store/solver.
+**Start here:** replace only the Delete record click handler. Save `deletedIndex` and `previousIdentity`, set selection `-1` before handler, call handler with saved index, restore/render only if returned committed identity equals prior identity.
 
-**Do not redo:** C01/N01/N02 verification, PR bootstrap, S4 removal.
+**Do not redo:** S1-S5 investigation/implementation.
 
-**Known failing checks:** none known; runtime checks not yet executed in this connector-only environment.
+**Known failures:** none known; behavioural test execution still pending.
 
-**Highest-risk item:** stale draft invalidation semantics.
+**Highest-risk item:** preserving failed-delete context without reintroducing the stale synchronous-render frame.
 
-**Exact next action:** implement the model-identity-aware draft lifecycle, fetch/inspect branch source, update this report, then open S6.
+**Next action:** implement S6, inspect source, update report, then extend existing source check in S7.
 
 ## 12. Process Notes / Lessons Learned
 
-PN-001: synchronous store mutation can render before the following handler statement.
-
-PN-002: credible findings are registered even if deferred.
-
-PN-003: sibling editor surfaces must be checked for the same lifecycle defect; N01 led to ISS-004.
+PN-001 synchronous mutation can render before following handler statements. PN-002 findings receive durable disposition. PN-003 sibling editors shared the same render-loss root cause. PN-004 committed model identity is a useful UI-draft invalidation boundary because progress/display state does not alter it.
 
 ## 13. PR Closure Record
 
@@ -250,7 +209,7 @@ PN-003: sibling editor surfaces must be checked for the same lifecycle defect; N
 | Mission completed | PENDING |
 | In-scope items dispositioned | PENDING |
 | Register synchronized | YES |
-| Changed files reconciled | pre-production PASS; final pending |
+| Changed files reconciled | final pending |
 | Final-HEAD validation | PENDING |
 | Deferred improvements recorded | YES |
 | Handover current | YES |

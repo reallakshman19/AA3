@@ -17,6 +17,7 @@ const client = source('src/workspace/lfea-worker-client.js');
 const worker = source('src/workspace/lfea-worker.js');
 const controller = source('src/workspace/lfea-workbench-controller.js');
 const documentStore = source('src/workspace/lfea-workbench-document-store.js');
+const styles = source('src/workspace/lfea-workbench-styles.js');
 const store = [
   source('src/workspace/lfea-workbench-store.js'),
   source('src/workspace/lfea-workbench-run-store.js'),
@@ -218,6 +219,38 @@ assert.match(
   'preflight must lead with a human label while retaining raw status metadata/title',
 );
 
+assert.match(
+  view,
+  /function recordJsonValidity\(text\)[\s\S]*?JSON\.parse\(text\)[\s\S]*?!value \|\| typeof value !== 'object' \|\| Array\.isArray\(value\)[\s\S]*?NOT_JSON_OBJECT[\s\S]*?INVALID_JSON/u,
+  'record inline validity must mirror JSON-object syntax/shape screening without claiming schema validation',
+);
+assert.match(
+  view,
+  /const syncValidity = \(\) => \{[\s\S]*?recordJsonValidity\(textarea\.value\)[\s\S]*?textarea\.setAttribute\('aria-invalid', String\(!result\.valid\)\)[\s\S]*?add\.disabled = !result\.valid;[\s\S]*?update\.disabled = this\.selectedIndex < 0 \|\| !result\.valid/u,
+  'record validity must drive aria-invalid and Add/Update availability',
+);
+assert.match(view, /textarea\.addEventListener\('input', syncValidity\);[\s\S]*?syncValidity\(\)/u);
+assert.match(view, /validity\.dataset\.role = 'lfea-record-validation'/u);
+assert.match(view, /Engineering fields are checked when the record is submitted/u);
+assert.match(styles, /textarea\[aria-invalid="true"\]\{border-color:#f87171/u);
+assert.match(styles, /lfea-workbench__record-validation\[data-valid="false"\]\{color:#fca5a5/u);
+
+assert.match(
+  controller,
+  /undo\(\) \{[\s\S]*?const state = this\.store\.getState\(\);[\s\S]*?!confirmQualifiedEvidenceReset\(this\.documentRef, state, 'Undo'\)[\s\S]*?return state;[\s\S]*?return this\.store\.undo\(\)/u,
+  'Undo must leave state untouched when a qualified-evidence reset warning is cancelled',
+);
+assert.match(
+  controller,
+  /redo\(\) \{[\s\S]*?const state = this\.store\.getState\(\);[\s\S]*?!confirmQualifiedEvidenceReset\(this\.documentRef, state, 'Redo'\)[\s\S]*?return state;[\s\S]*?return this\.store\.redo\(\)/u,
+  'Redo must leave state untouched when a qualified-evidence reset warning is cancelled',
+);
+assert.match(
+  controller,
+  /function confirmQualifiedEvidenceReset\(documentRef, state, actionLabel\)[\s\S]*?state\.execution\?\.status !== 'QUALIFIED'[\s\S]*?documentRef\?\.defaultView\?\.confirm[\s\S]*?current qualified analysis execution, review, and evidence/u,
+  'history warning must be scoped to qualified execution and state the evidence consequence',
+);
+
 assert.doesNotMatch(
   view,
   /lfea-collection-mock|Load Collection Mock Data|Reload Mock for/u,
@@ -287,6 +320,8 @@ console.log(JSON.stringify({
   analysisSettingsAuthorityGuarded: true,
   authorityPolicyHumanLabelsGuarded: true,
   preflightHumanLabelsGuarded: true,
+  recordJsonInlineValidityGuarded: true,
+  qualifiedEvidenceHistoryWarningGuarded: true,
   collectionMockScopeSafe: true,
   editorDraftPersistenceGuarded: true,
   deleteSelectionSequencingGuarded: true,

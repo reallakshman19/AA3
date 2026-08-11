@@ -1,6 +1,6 @@
 # PR1021 Work Report — LFEA Workbench Integrity (#1018)
 
-Maintained throughout PR #1021. This file is the single source of truth for current PR state, engineering findings, decisions, validation evidence, deferred improvements, and next-agent handover. Current-state sections are rewritten as work progresses; the Stage Execution Log and Process Notes preserve history.
+Maintained throughout PR #1021. This file is the single source of truth for current PR state, engineering findings, decisions, validation evidence, deferred improvements, and next-agent handover. Current-state sections are rewritten as work progresses; Stage Execution Log and Process Notes preserve history.
 
 ## 0. PR Mission Control
 
@@ -11,63 +11,65 @@ Maintained throughout PR #1021. This file is the single source of truth for curr
 | PR | #1021 |
 | Branch | `agent/lfea-workbench-integrity-1018` |
 | Base | `751756e9140527b8dc121aa179dc76b7039fb7ad` |
-| Current HEAD | Stage 2 synchronization in progress |
+| Current HEAD | Documentation bootstrap complete; Stage 4 pre-change record committed |
 | PR state | Draft |
-| Current stage | Stage 2 — PR allocation and report synchronization |
-| Last completed stage | Stage 1 |
-| Engineering status | Documentation/bootstrap only; production code untouched |
-| Validation status | Source findings verified; PR baseline verification pending Stage 3 |
+| Current stage | Stage 4 — correct collection mock behaviour |
+| Last completed stage | Stage 3 |
+| Engineering status | Production patch not yet applied; Stage 4 scoped to `lfea-workbench-view.js` |
+| Validation status | PR baseline verified: only this report differs from `main` |
 | Current blocker | None |
-| Exact next action | Remove the temporary `PR_PENDING` report, verify the PR changed-file baseline, then begin Stage 4 |
+| Exact next action | Remove both collection-context whole-package mock controls while preserving the explicit toolbar mock action |
 
 ### Handover in 60 seconds
 
 **What is now true**
-- Draft PR #1021 exists from `agent/lfea-workbench-integrity-1018` to `main`.
-- Stage 1 findings are preserved below.
-- C01/ISS-001 is confirmed: a collection-local Mock Package control routes to the whole-package mock handler.
-- N01/ISS-002 is confirmed: full content replacement can destroy textarea-owned unsaved edits.
-- N02/ISS-003 is confirmed: deletion can synchronously render before local selection is cleared.
+- Draft PR #1021 exists against `main` at base `751756e9`.
+- The permanent report path is `agents/PR1021_workreport.md`; the temporary `PR_PENDING` path is gone.
+- Stage 3 verified the PR changed-file list contains only this report before production work.
+- `ISS-001`: both collection-context mock controls call the same whole-package `onMock` action and are in Stage 4 scope.
+- `ISS-002`: record JSON drafts are DOM-owned and vulnerable to unrelated renders.
+- `ISS-004`: the package JSON editor has the same render-loss root cause and is now explicitly tracked for Stage 5.
+- `ISS-003`: delete clears selection after the synchronous mutation/render boundary.
 - No GitHub Actions/workflow additions are authorized or planned.
 
 **Currently being worked on**
-- Stage 2 permanent PR-number report synchronization only.
+- Stage 4 pre-change scope: remove collection-context whole-package mock controls only.
 
 **Unfinished**
-- Stage 3 changed-file baseline verification.
-- Stage 4 collection mock fix.
-- Stage 5 editor-draft persistence.
-- Stage 6 delete-selection sequencing.
-- Stage 7 targeted regression validation.
-- Stage 8 final changed-file/handover closure.
+- S4 collection mock fix.
+- S5 package + record draft persistence.
+- S6 delete-selection sequencing.
+- S7 targeted regression validation.
+- S8 final changed-file/handover closure.
 
 **Do not assume**
-- Issue #1018 Appendix A proposed answers are all technically correct; re-audit found several inaccuracies.
-- A render is a safe discard boundary for uncommitted engineering input.
-- Local continuum von Mises stress is equivalent to CAESAR/B31 piping-code stress.
+- #1018 Appendix A proposed answers are all technically correct.
+- Render lifetime is a safe engineering-draft lifetime.
+- Local continuum von Mises stress is CAESAR/B31 code stress.
 
 **Highest-risk remaining in-scope item**
-- `ISS-002` because draft lifecycle intersects progress renders, selection changes, failed edits, deletion, undo/redo, and run/model transitions.
+- `ISS-002`/`ISS-004`: draft ownership must survive non-model renders but reset on committed model identity changes.
 
 **Exact next action**
-- Finish Stage 2 synchronization, verify Stage 3 baseline, then remove the collection-local whole-package mock control.
+- Apply the minimal Stage 4 change in `src/workspace/lfea-workbench-view.js`, then verify toolbar mock remains and no collection mock remains.
 
 ## 1. Mission and Engineering Intent
 
 ### Mission
-Prevent misleading destructive UI behaviour and silent loss/inconsistency of uncommitted engineering edits in the LFEA workbench while preserving existing package validation, semantic hashing, model-version lineage, solver execution, and run-cancellation behaviour.
+Prevent misleading destructive UI behaviour and silent loss/inconsistency of uncommitted engineering edits in the LFEA workbench while preserving package validation, semantic hashing, model-version lineage, solver execution, and run-cancellation behaviour.
 
 ### Engineering intent
-This is an engineering-data integrity task, not a cosmetic UI pass. Destructive actions must match their displayed scope; user-entered engineering data must not disappear because unrelated state re-rendered the workbench; and view-local selection/draft state must remain coherent around synchronous store mutation.
+This is an engineering-data integrity task. Destructive actions must match displayed scope; uncommitted engineering input must not disappear because unrelated state re-rendered the workbench; local selection/draft state must remain coherent around synchronous mutation.
 
 ### Governing principles
 - External packages remain validated, not silently repaired.
 - Local committed edits continue through existing reseal/governed paths.
-- Preview/display state must not become solver authority.
+- Preview/display state must never become solver authority.
 - Destructive actions must communicate actual destructive scope.
-- A render must not implicitly mean “discard uncommitted engineering input.”
-- Validation claims must identify exact evidence.
-- Do not add or modify GitHub Actions workflows for this PR.
+- A render must not implicitly discard uncommitted engineering input.
+- Draft state must reset when the committed model identity changes.
+- Validation claims identify exact evidence.
+- Do not add/modify GitHub Actions workflows for this PR.
 
 ### Non-goals
 - Solver numerical changes.
@@ -82,11 +84,12 @@ This is an engineering-data integrity task, not a cosmetic UI pass. Destructive 
 
 | Work item | Priority | Status | Stage | Evidence |
 |---|---:|---|---|---|
-| Establish living PR report | High | DONE | S1 | Stage 1 record |
-| Allocate PR and synchronize report | High | IN_PROGRESS | S2 | PR #1021 |
-| Verify changed-file baseline | High | NOT_STARTED | S3 | — |
-| Remove misleading collection mock action | Critical | ACCEPTED | S4 | ISS-001 |
+| Establish living PR report | High | DONE | S1 | `07829ac` |
+| Allocate PR and synchronize report | High | DONE | S2 | PR #1021; permanent path |
+| Verify changed-file baseline | High | DONE | S3 | GitHub changed files = report only |
+| Remove misleading collection mock actions | Critical | IN_PROGRESS | S4 | ISS-001 |
 | Preserve record editor drafts | High | ACCEPTED | S5 | ISS-002 |
+| Preserve package editor draft | High | ACCEPTED | S5 | ISS-004 |
 | Correct delete selection sequencing | Medium | ACCEPTED | S6 | ISS-003 |
 | Targeted regression validation | High | NOT_STARTED | S7 | — |
 | Final changed-file + handover audit | High | NOT_STARTED | S8 | — |
@@ -95,295 +98,267 @@ Status vocabulary: `NOT_STARTED`, `INVESTIGATING`, `ACCEPTED`, `IN_PROGRESS`, `I
 
 ## 3. Engineering Item Register
 
-| ID | Type | Severity / priority | Status | Summary | Current PR? |
+| ID | Type | Sev./priority | Status | Summary | Current PR? |
 |---|---|---:|---|---|---|
-| ISS-001 | Defect | Critical | ACCEPTED | Collection-level Mock Package action replaces the complete package | Yes |
+| ISS-001 | Defect | Critical | IN_PROGRESS | Collection-context Mock Package actions replace the complete package | Yes |
 | ISS-002 | Defect | High | ACCEPTED | Full render can destroy unsaved record-editor text | Yes |
-| ISS-003 | Defect | Medium | ACCEPTED | Delete selection is cleared after synchronous store mutation/render | Yes |
-| IMP-001 | Improvement | High | DEFERRED | Cross-run plots need a shared engineering colour authority | No |
+| ISS-003 | Defect | Medium | ACCEPTED | Delete selection clears after synchronous mutation/render | Yes |
+| ISS-004 | Defect | High | ACCEPTED | Full render can also destroy unsaved package-editor text | Yes |
+| IMP-001 | Improvement | High | DEFERRED | Cross-run plots need shared engineering colour authority | No |
 | IMP-002 | Improvement | High | DEFERRED | Upstream pre-FEA and linear-piping LFEA surfaces need dedicated audit | No |
 | RISK-001 | Engineering risk | High | OPEN | Continuum von Mises may be mistaken for piping-code stress | No |
 | RISK-002 | Engineering risk | High | OPEN | Support reaction sign convention may be overlooked downstream | No |
 | QST-001 | Engineering question | Medium | OPEN | Authoritative fallback axis for vertical-pipe support triad degeneracy | No |
-| DEC-001 | Decision | — | ACTIVE | Remove misleading collection mock action rather than merely relabel it | Yes |
-| DEC-002 | Decision | — | ACTIVE | Do not add CI workflow gates in this PR | Yes |
+| DEC-001 | Decision | — | ACTIVE | Remove collection mock actions instead of relabelling them | Yes |
+| DEC-002 | Decision | — | ACTIVE | No new CI workflow gates | Yes |
+| DEC-003 | Decision | — | ACTIVE | Draft persistence will be view-owned and keyed/reset by committed model identity | Yes |
 
-### ISS-001 — Collection-level Mock Package replaces complete package
-**Observed behaviour:** A collection-scoped control invokes the same global `onMock` handler as the whole-workbench mock action.
+### ISS-001 — Collection-context Mock Package replaces complete package
+**Observed:** When no package is loaded, the records card shows `[SIMULATED] Load Collection Mock Data`; when a package is loaded it shows `[SIMULATED] Reload Mock for <collection>`. Both call `handlers.onMock`, the same whole-package action exposed by the toolbar.
 
-**Engineering consequence:** Displayed scope and destructive scope disagree; a user editing one collection can replace the entire imported engineering package.
+**Consequence:** Displayed local scope and destructive global scope disagree.
 
-**Chosen resolution:** Remove the collection-level whole-package action. Preserve the explicit global mock-package action where its scope is clear.
-
-**Rejected alternatives:** confirmation-only and relabelling-only because neither corrects the placement/scope mismatch.
+**Chosen resolution:** Remove both collection-context whole-package mock controls. Keep the explicit toolbar `[SIMULATED] Load Mock Data` action.
 
 **Closure evidence:** Pending Stage 4.
 
-### ISS-002 — Unsaved record-editor draft can be destroyed by render
-**Observed behaviour:** The workbench render path replaces the content subtree, so unsaved textarea state can be lost when progress/store/selection updates re-render.
+### ISS-002 — Record-editor draft can be destroyed by render
+**Observed:** `render()` replaces the content subtree and `recordEditor()` reconstructs the textarea from committed data.
 
-**Engineering consequence:** User-entered engineering data can disappear without an explicit discard action.
+**Required invariant:** Unrelated re-render must preserve the draft; committed model identity change must invalidate stale draft state.
 
-**Required invariant:** A render must not implicitly discard uncommitted engineering input.
+**Edge cases:** progress render, row switch/return, collection switch/return, failed edit, successful edit, add/delete, undo/redo.
 
-**Resolution concept:** Persist editor draft state independently from DOM lifetime while keeping committed package, draft, and preview state distinct.
+### ISS-004 — Package-editor draft has the same render-loss defect
+**Observed:** `documentEditor()` reconstructs `lfea-package-json` from `packageValue` on every content render, so unrelated progress/display renders can discard unsaved package JSON.
 
-**Edge cases:** worker progress, row switch, collection switch, failed commit, delete, undo/redo, cancel/model change.
+**Resolution:** Cover package and record editors in the same Stage 5 draft lifecycle rather than fixing only one textarea.
 
-**Closure evidence:** Pending Stage 5.
+### ISS-003 — Delete selection sequencing
+**Observed:** `onDeleteRecord()` runs before `selectedIndex = -1`; store mutation can synchronously render in between.
 
-### ISS-003 — Delete selection sequencing permits stale transient render
-**Observed behaviour:** Store deletion occurs before local `selectedIndex = -1`; synchronous mutation/render can therefore observe the old selection.
+**Required invariant:** Selection must be made safe before invoking a synchronous mutation capable of rendering.
 
-**Required invariant:** UI-local selection must be valid before a synchronous mutation that can render.
+### IMP-001 — Shared run-comparison colour authority
+Independent field min/max prevents reliable colour comparison across runs. Deferred.
 
-**Closure evidence:** Pending Stage 6.
-
-### IMP-001 — Shared engineering colour authority for run comparison
-Current plot descriptor ranges are derived from the current field/result. True comparison should use a shared/user-defined range or governed threshold bands. Deferred from this integrity PR.
-
-### RISK-001 — Continuum stress versus piping-code stress
-Future results UI must distinguish piping beam-analysis quantities, local continuum FEA quantities, and piping-code stress evaluation quantities. Raw continuum von Mises must not be presented as CAESAR/B31 code stress without a governed transformation.
+### RISK-001 — Continuum versus piping-code stress
+Future result UI must distinguish beam-analysis, local continuum, and piping-code stress authorities.
 
 ## 4. Stage Roadmap
 
 | Stage | Status | Purpose | Primary output | Commit |
 |---|---|---|---|---|
-| S1 | DONE | Report initialization and technical findings | Initial report/register | `07829ac` |
-| S2 | IN_PROGRESS | PR allocation and report synchronization | `agents/PR1021_workreport.md` | Pending completion |
-| S3 | NOT_STARTED | Changed-file verification and documentation-stage completion | Clean baseline | — |
-| S4 | NOT_STARTED | Correct collection mock behaviour | ISS-001 fix | — |
-| S5 | NOT_STARTED | Preserve editor drafts across render | ISS-002 fix | — |
-| S6 | NOT_STARTED | Correct delete-selection sequencing | ISS-003 fix | — |
-| S7 | NOT_STARTED | Regression qualification | Targeted evidence | — |
-| S8 | NOT_STARTED | Final changed-file verification and handover closure | Closure record | — |
+| S1 | DONE | Report initialization + technical findings | Initial report/register | `07829ac` |
+| S2 | DONE | PR allocation + report synchronization | `agents/PR1021_workreport.md` | `ee8a7ea` + cleanup `6335c68` |
+| S3 | DONE | Changed-file verification + documentation-stage completion | Clean report-only baseline | current pre-S4 report commit |
+| S4 | IN_PROGRESS | Correct collection mock behaviour | ISS-001 fix | — |
+| S5 | NOT_STARTED | Preserve package/record drafts across renders | ISS-002 + ISS-004 | — |
+| S6 | NOT_STARTED | Correct delete-selection sequencing | ISS-003 | — |
+| S7 | NOT_STARTED | Regression qualification | Existing check + targeted source/behaviour evidence | — |
+| S8 | NOT_STARTED | Final changed-file verification + handover closure | Closure record | — |
 
 ## 5. Stage Execution Log
 
 ### Stage 1 — Report initialization and technical findings
-**Status:** DONE
+**Status:** COMPLETE
 
-#### Before stage
-Issue #1018 and its independent re-audit existed, but no PR-specific living handover record existed.
+**Before:** #1018 audit/re-audit existed; no PR living handover record.
 
-#### Objective
-Create the work report before production changes, record confirmed findings, scope/non-goals, and implementation stages.
+**Objective:** Establish SSOT before production code.
 
-#### Scope
-Documentation and source verification only.
+**Scope:** Documentation/source verification only.
 
-#### Engineering rationale
-Implementation starts from current source truth rather than issue prose alone; several proposed Appendix A answers were inaccurate when checked against current code.
+**Changed files:** `agents/PR_PENDING_workreport.md` created.
 
-#### Changed files
-| File | Change | Why |
-|---|---|---|
-| `agents/PR_PENDING_workreport.md` | Created | Living PR SSOT/handover before PR allocation |
+**Validation:** `main` verified at `751756e9`; no production/workflow mutation.
 
-#### Validation performed
-| Check | Result | Evidence / notes |
-|---|---|---|
-| `main` base verification | PASS | `751756e9140527b8dc121aa179dc76b7039fb7ad` |
-| Production mutation | PASS | None performed |
-| Workflow mutation | PASS | None performed |
-
-#### Stage decision
-COMPLETE.
-
-#### Handover delta
-- **Newly true:** Core findings have durable IDs and staged scope.
-- **Still unresolved:** All production defects.
-- **Next stage starts with:** PR allocation and permanent report identity.
+**Handover delta:** findings received durable IDs; all production fixes remained open.
 
 ### Stage 2 — PR allocation and report synchronization
+**Status:** COMPLETE
+
+**Before:** branch contained only `PR_PENDING` report; no PR number.
+
+**Objective:** Create draft PR and permanent report identity.
+
+**Implementation:** Draft PR #1021 created; `agents/PR1021_workreport.md` created/synchronized; temporary pending path deleted.
+
+**Scope:** Documentation only.
+
+**Validation:** Permanent report exists; PR target/head metadata verified.
+
+**Handover delta:** stable PR/report identity established.
+
+### Stage 3 — Changed-file verification and documentation-stage completion
+**Status:** COMPLETE
+
+**Before:** Stage 2 cleanup finished; production code still untouched.
+
+**Objective:** Prove clean baseline before coding.
+
+**Validation performed:** GitHub `list_pr_changed_filenames` returned exactly `agents/PR1021_workreport.md`.
+
+**Additional finding:** `ISS-004` discovered during source review: package JSON editor has the same render-loss mechanism as the record editor. Added to current PR because the root-cause fix is shared and narrow.
+
+**Stage decision:** COMPLETE. Production work authorized within scoped files.
+
+**Handover delta:** clean baseline established; Stage 4 starts from one report-only diff.
+
+### Stage 4 — Correct collection mock behaviour
 **Status:** IN_PROGRESS
 
 #### Before stage
-Stage 1 existed as `agents/PR_PENDING_workreport.md` on `agent/lfea-workbench-integrity-1018`; no PR number existed yet.
+`recordEditor()` exposes two collection-context controls that both invoke the whole-package `handlers.onMock`: one when no package exists and one labelled as reloading the selected collection. Toolbar already provides the correctly scoped whole-package mock action.
 
 #### Objective
-Allocate a draft PR, rename/synchronize the living report to its permanent PR-number path, and preserve all Stage 1 state.
+Remove the misleading collection-context mock controls while leaving the toolbar whole-package mock action unchanged.
 
 #### Scope
-Documentation only. No production files.
+Expected production file only: `src/workspace/lfea-workbench-view.js`. Report updated before/after. No controller/store/solver/hash changes.
 
 #### Engineering rationale
-A permanent PR-number report gives future agents a stable handover target while retaining pre-PR investigation history.
+Removing the misleading local entry point eliminates the scope mismatch without inventing a new collection-mock semantics or changing package governance.
 
-#### Implementation performed so far
-- Draft PR #1021 created against `main`.
-- Permanent report path created as `agents/PR1021_workreport.md`.
-- PR/base/branch metadata synchronized.
+#### Expected examples / edge cases
+- Empty workbench: records card says no package loaded; toolbar still offers `[SIMULATED] Load Mock Data`.
+- Loaded workbench: collection selector/table/editor remain; no collection-scoped mock button.
+- Global toolbar mock remains functional through existing handler.
 
-#### Remaining Stage 2 action
-- Remove `agents/PR_PENDING_workreport.md` after confirming the permanent report exists.
+#### Planned validation
+- Source diff contains no `lfea-collection-mock` control.
+- `renderLfeaToolbar()` still creates `lfea-mock` with `handlers.onMock`.
+- No non-view production file changed in S4.
 
-#### Changed files
-| File | Change | Why |
-|---|---|---|
-| `agents/PR1021_workreport.md` | Created from Stage 1 state and synchronized to PR #1021 | Permanent living report |
-| `agents/PR_PENDING_workreport.md` | Pending removal | Temporary pre-allocation name |
-
-#### Validation planned
-- Confirm permanent report exists on branch.
-- Remove temporary report.
-- Verify PR still contains no production-file changes.
-
-#### Stage decision
-IN_PROGRESS.
-
-#### Handover delta
-- **Newly true:** PR #1021 exists and has a permanent report path.
-- **Still unresolved:** temporary report cleanup, Stage 3 baseline, production fixes.
-- **Next stage starts with:** changed-file baseline verification.
+#### Known risks
+Accidentally removing all mock access rather than only misleading collection-context access.
 
 ## 6. Changed-File Ledger
 
 | File | First stage | Latest stage | Purpose | Engineering-sensitive? | Validation |
 |---|---|---|---|---|---|
-| `agents/PR1021_workreport.md` | S2 | S2 | PR SSOT / handover | No | Pending Stage 3 baseline |
-| `agents/PR_PENDING_workreport.md` | S1 | S2 | Temporary pre-allocation report | No | Scheduled for deletion in S2 |
+| `agents/PR1021_workreport.md` | S2 | Current | PR SSOT/handover | No | Continuous |
+| `src/workspace/lfea-workbench-view.js` | S4 planned | S6 planned | UI destructive scope, draft lifecycle, selection sequencing | Yes | Pending S4-S7 |
 
 ## 7. Engineering Decisions and Invariants
 
-### DEC-001 — Remove collection mock action rather than relabel it
-The operation has whole-package destructive scope and does not belong in a collection-local editing surface. A true collection-specific mock feature, if desired later, should be a separate design.
+### DEC-001 — Remove collection mock actions
+Whole-package destructive action does not belong in collection-local editing UI. No new collection mock behaviour in this PR.
 
 ### DEC-002 — No new CI workflow gates
-Do not modify `.github/workflows/*` merely to enforce this PR. Use existing checks and targeted evidence.
+Use existing repository checks and targeted evidence only.
+
+### DEC-003 — View-owned draft persistence keyed by model identity
+Planned Stage 5 design: capture editor drafts before content replacement; preserve across renders/selections when committed model identity is unchanged; clear stale drafts when `modelVersion`/package identity changes. This keeps draft state separate from solver/package authority.
 
 ### INV-001 — External package identity is not silently repaired
-Must remain true; this PR must not change import/hash governance.
+Must remain true.
 
 ### INV-002 — Preview state is not solver authority
-Must remain true; draft/preview data must not enter solve input authority.
+Must remain true.
 
-### INV-003 — A UI render is not an implicit discard operation
-Target invariant for ISS-002.
+### INV-003 — Render is not implicit discard
+Targeted by Stage 5.
 
-### INV-004 — Model-changing operations invalidate incompatible execution state
-Must remain true; semantic-hash/model-version lineage protection must not be weakened.
+### INV-004 — Model mutation invalidates incompatible execution/draft state
+Existing execution invariant remains; Stage 5 extends analogous invalidation to UI drafts.
 
 ## 8. Validation and Evidence Ledger
 
 ### Software validation
 | Validation | Status | Last HEAD | Evidence |
 |---|---|---|---|
-| Baseline source inspection | PASS | base `751756e9` | Findings verified before branch creation |
-| Stage 1 report creation | PASS | `07829ac` | report-only commit |
-| Changed-file baseline | PENDING | — | Stage 3 |
-| Collection mock regression | PENDING | — | Stage 4/S7 |
-| Draft persistence regression | PENDING | — | Stage 5/S7 |
-| Delete selection regression | PENDING | — | Stage 6/S7 |
-| Relevant existing workbench checks | PENDING | — | Stage 7/8 |
+| Baseline source inspection | PASS | base `751756e9` | #1018 re-audit |
+| PR changed-file bootstrap baseline | PASS | pre-S4 | only `agents/PR1021_workreport.md` |
+| Collection mock regression | PENDING | — | S4/S7 |
+| Draft persistence regression | PENDING | — | S5/S7 |
+| Delete selection regression | PENDING | — | S6/S7 |
+| `npm run check:lfea-workbench` equivalent evidence | PENDING | — | S7; no new workflow |
 
 ### Engineering validation
 | Property | Status | Evidence |
 |---|---|---|
-| External package/hash authority unchanged | NOT_AFFECTED_YET | No production changes |
-| Execution lineage unchanged | NOT_AFFECTED_YET | No production changes |
-| Collection destructive scope corrected | PENDING | Stage 4 |
-| Draft survives unrelated render | PENDING | Stage 5 |
-| Delete selection remains coherent | PENDING | Stage 6 |
+| External package/hash authority unchanged | NOT_AFFECTED_YET | Production patch not applied |
+| Execution lineage unchanged | NOT_AFFECTED_YET | Store/controller untouched |
+| Collection destructive scope corrected | PENDING | S4 |
+| Package/record drafts survive unrelated render | PENDING | S5 |
+| Stale drafts reset on committed model change | PENDING | S5 |
+| Delete selection coherent at render boundary | PENDING | S6 |
 
 ### Explicitly not validated yet
-- No production fix exists yet.
-- No final-HEAD regression run has occurred.
-- No commercial CAESAR comparison is required for the currently scoped UI-integrity fixes.
+No production fix has completed; final-HEAD regression has not run.
 
 ## 9. Known Issues, Improvements, and Deferred Scope
 
-### Open in-scope defects
-- `ISS-001` Critical — collection-local whole-package mock action.
-- `ISS-002` High — unsaved record draft loss on render.
-- `ISS-003` Medium — delete-selection sequencing.
+**Open current PR:** ISS-001, ISS-002, ISS-003, ISS-004.
 
-### Deferred improvements
-- `IMP-001` shared run-comparison colour authority.
-- `IMP-002` separate audit of upstream pre-FEA and linear-piping surfaces.
+**Deferred:** IMP-001 shared plot range; IMP-002 upstream surface audit.
 
-### Open engineering risks
-- `RISK-001` continuum stress versus piping-code stress authority.
-- `RISK-002` support-reaction sign convention visibility.
+**Open risks:** RISK-001 result authority; RISK-002 reaction sign convention visibility.
 
 ## 10. Recommended Forward Sequence
 
-1. **Finish S2/S3 cleanly.** Permanent report identity and clean changed-file baseline before production work.
-2. **S4 — destructive scope first.** Remove the collection-local whole-package action because it has the highest immediate model-loss consequence.
-3. **S5 — draft-state durability.** Separate editor draft lifetime from DOM/render lifetime.
-4. **S6 — selection sequencing.** Correct deletion after draft ownership is explicit.
-5. **S7 — regression qualification.** Exercise progress, selection, validation failure, deletion, undo/redo, and active-run interactions as applicable.
-6. **S8 — final reconciliation.** Changed files, register states, validation at final HEAD, and handover.
+1. S4 destructive-scope correction.
+2. S5 shared package/record draft lifecycle with committed-model invalidation.
+3. S6 deletion sequencing after draft semantics are stable.
+4. S7 targeted regression and existing LFEA workbench check evidence.
+5. S8 final changed-file reconciliation and handover.
 
-Future work: full three-surface LFEA workflow audit; restraint/support semantic fidelity; engineering result authority; true cross-run comparison; CAESAR/reference correlation benchmarks.
+Future PRs: three-surface LFEA audit; restraint/support semantic fidelity; explicit engineering result authority; true cross-run comparison; CAESAR/reference correlation suite.
 
 ## 11. Next-Agent Handover
 
 ### Current stopping point
-Stage 2 report synchronization is in progress. Production code remains untouched.
+Stage 4 is ready for the first production edit. Bootstrap is complete and PR baseline is report-only.
 
-### PR / branch / HEAD
-- PR: #1021
-- Branch: `agent/lfea-workbench-integrity-1018`
-- HEAD: Stage 2 synchronization commit in progress
+### PR / branch
+PR #1021; `agent/lfea-workbench-integrity-1018`; base `751756e9`.
 
 ### Start here
-Confirm `agents/PR1021_workreport.md` exists, delete the temporary `agents/PR_PENDING_workreport.md`, then verify PR #1021 changed files contain only the permanent report before Stage 4 begins.
+Edit `LfeaWorkbenchView.recordEditor()` in `src/workspace/lfea-workbench-view.js`: when no package exists, return only the “No mesh package is loaded.” message; when loaded, remove `collectionMock` creation/append. Do not change toolbar mock.
 
 ### Do not redo
-- Re-audit of C01/N01/N02 against source.
-- Base branch verification.
-- PR allocation.
+C01/N01/N02 verification, PR allocation, report rename, bootstrap changed-file verification.
 
 ### Do not assume
-- Appendix A in #1018 is a valid technical scoring key without corrections.
-- UI render lifetime equals engineering-draft lifetime.
-- Continuum von Mises equals piping-code stress.
+Render lifetime equals draft lifetime; Appendix A is fully correct; continuum von Mises is code stress.
 
 ### Known failing checks
-None known; production validation has not started.
-
-### Validation still required
-Stages 3–8.
+None known. Production validation not yet performed.
 
 ### Highest-risk remaining item
-`ISS-002` because draft ownership must remain correct across progress/store/selection/undo/delete interactions.
+ISS-002/ISS-004 draft lifecycle.
 
-### Exact next recommended action
-Finish Stage 2 cleanup and Stage 3 baseline verification before touching production code.
+### Exact next action
+Apply Stage 4 minimal view change and verify only toolbar retains `onMock` UI exposure.
 
 ### Required reading
-- Issue #1018 and independent re-audit comment.
-- `src/workspace/lfea-workbench-view.js`
-- `src/workspace/lfea-workbench-panels.js`
-- `src/workspace/lfea-workbench-store.js`
-- this report.
+#1018; `lfea-workbench-view.js`; `lfea-workbench-panels.js`; this report.
 
 ## 12. Process Notes / Lessons Learned
 
-### PN-001 — Synchronous store mutation can render before subsequent handler statements
-Local UI state affecting rendering must be established before synchronous model mutation when the mutation can render.
+### PN-001 — Synchronous mutation can render before subsequent handler statements
+Selection/draft state affecting render must be safe before mutation.
 
-### PN-002 — Out-of-scope findings still require disposition
-Credible defects, improvements, risks, questions, or debt receive durable register IDs even when deferred.
+### PN-002 — Out-of-scope findings still receive disposition
+Credible findings are never silently dropped.
 
-### PN-003 — Numerical correctness does not automatically imply comparison-display correctness
-Independent autoscaling can make two individually correct result fields visually incomparable.
+### PN-003 — Similar editor surfaces must be checked for the same lifecycle defect
+N01 named record textarea loss, but source inspection showed the package textarea shares the same reconstruction mechanism; `ISS-004` records that value-add rather than leaving a sibling defect behind.
 
 ## 13. PR Closure Record
 
-**Status:** NOT YET COMPLETE
+**Status:** NOT COMPLETE
 
 | Closure criterion | Result |
 |---|---|
 | Mission completed | PENDING |
 | In-scope items dispositioned | PENDING |
-| Engineering Item Register synchronized | PENDING |
-| GitHub changed files reconciled | PENDING |
+| Register synchronized | YES, current |
+| GitHub changed files reconciled | PASS for pre-production baseline; final pending |
 | Validation rerun at final HEAD | PENDING |
-| Unexplained changes | PENDING |
-| Deferred improvements recorded | YES, initial |
-| Known limitations recorded | YES, initial |
+| Deferred improvements recorded | YES |
+| Known limitations recorded | YES |
 | Handover current | YES |
 | New CI workflows added | NO |
 | Final HEAD | PENDING |

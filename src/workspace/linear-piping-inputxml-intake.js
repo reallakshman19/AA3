@@ -1,13 +1,17 @@
 import {
   DISCLOSED_GENERIC_ANALYZER_APPROXIMATION_PROFILE,
+  STRICT_INPUTXML_LINEAR_STATIC_PROFILE,
+} from '../core/linear-piping-analysis-consumer/inputxml-model-health-profile.js';
+import {
+  requireLinearPipingInputXmlSource,
+  sealLinearPipingInputXmlSource,
+} from '../core/linear-piping-analysis-consumer/inputxml-source-contract.js';
+import {
   INPUTXML_LENGTH_UNIT_REGISTRY_ID,
   LINEAR_PIPING_INPUTXML_UNIT_PROFILE_SCHEMA,
-  STRICT_INPUTXML_LINEAR_STATIC_PROFILE,
-  requireLinearPipingInputXmlSource,
   requireLinearPipingInputXmlUnitProfile,
-  sealLinearPipingInputXmlSource,
   sealLinearPipingInputXmlUnitProfile,
-} from '../core/linear-piping-analysis-consumer/index.js';
+} from '../core/linear-piping-analysis-consumer/inputxml-unit-contract.js';
 import { INPUTXML_LINEAR_IDENTITY_CONDITIONING_PROFILE } from '../core/linear-piping-analysis-consumer/inputxml-linear-structural-profile.js';
 import {
   DEFAULT_RESTRAINT_TYPE_CODE_MAP,

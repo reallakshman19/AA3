@@ -39,9 +39,59 @@ with native boundary: L2/L3/L4/L5/L6/L14 =  6/ 5/ 7/ 8/15/ 5 = 46
 
 Exactly 104 of the 105 exact-zero failures are removed. The same 45 nonzero-reference failures remain, plus exact-zero `L2:20440:RZ`.
 
+## Independent suppressed-zero cross-check at 20440:RZ
+
+The surviving exact-zero row is deliberately **not** absorbed by the new boundary. Its current LFEA value is:
+
+```text
+L2:20440:RZ = -2.0332762129334813e-6 rad
+             = -0.00011649814558543177 deg
+```
+
+which is genuinely above `0.0001 deg`.
+
+The two ordinary source frames directly incident on node `20440` provide an independent constitutive cross-check. Using the governed CAESAR source-element end actions, retained exact-head production `K`/load vectors and the identity
+
+```text
+q = K*u - f_equivalent - f_initial
+```
+
+while treating only ACCDB-stored zero DOFs in the decoupled global `UY/RZ` bending plane as unknowns gives:
+
+```text
+source 23 / 20390->20440: RZ(20440) = -0.00009194742713346596 deg
+source 24 / 20440->20480: RZ(20440) = -0.00009140591012507234 deg
+mean                                      -0.00009167666862926915 deg
+relative disagreement                      0.5907 percent
+```
+
+Both independent reconstructions are below `0.0001 deg`. The rigid-translation null freedom in the source-23 solve has no projection onto the target RZ, so the target rotation is identifiable even though the suppressed UY values are not individually identifiable.
+
+This corroborates that CAESAR's stored zero at `20440:RZ` represents a sub-floor value rather than a literal mechanical zero. It **does not** replace the CAESAR reference and it **does not** widen the comparison gate: the LFEA value remains above the source boundary and stays failed by design.
+
+Durable evidence:
+
+- `benchmarks/LFEA/CAESAR_ACCDB/m047-bm4l-zero-suppression-crosscheck.json`
+- `scripts/lfea-m047-bm4l-zero-suppression-crosscheck.mjs`
+
+## Reducer sampling remains blocked and separate
+
+Official Hexagon CAESAR II documentation confirms that a concentric reducer is represented by ten successively changing pipe cylinders over the element length. It also separately defines the 60-percent rule for the reducer transition `Alpha` used by SIF/code calculations. Public documentation reviewed for this stage does **not** specify the representative OD/wall-thickness station used for each structural cylinder.
+
+Therefore:
+
+- the existing ten-cylinder production representation remains physically supported;
+- the current midpoint section rule remains explicitly provisional;
+- the 60-percent Alpha rule must not be repurposed as a structural stiffness station;
+- start/mid/end residual comparisons are diagnostics only and cannot select a production rule without independent product authority.
+
+No reducer code is changed by this PR.
+
 ## Validation
 
 `node scripts/lfea-m047-bm4l-native-zero-boundary-check.mjs <bm4l-report.json>` was executed locally against the downloaded exact-head qualification artifact and passed. It verifies the all-ten-case zero/nonzero counts, minimum nonzero support, absence of nonzero values below each native boundary, the profile scalar, and the expected residual classification.
+
+`node scripts/lfea-m047-bm4l-zero-suppression-crosscheck.mjs <bm4l-report.json> <bm4l-actual.json>` was also executed locally and passed. It reproduces both independent `20440:RZ` latent-rotation reconstructions, requires their disagreement to remain below 1 percent, requires both inferred values to remain below the native boundary, and explicitly requires the current LFEA value to remain above the boundary.
 
 ## Non-scope
 

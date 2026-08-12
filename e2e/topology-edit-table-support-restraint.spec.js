@@ -123,7 +123,7 @@ test('S-007 restraint follows the certified Table lifecycle without moving suppo
   await mkdir('reports/qualification', { recursive: true });
   await writeFile(REPORT, `${JSON.stringify({
     schema: 'TopologyEditTableSupportRestraintQualification.v1',
-    candidateHead: process.env.TOPOLOGY_EDIT_TARGET_HEAD_SHA || null,
+    candidateHead: process.env.TARGET_HEAD_SHA || process.env.TOPOLOGY_EDIT_TARGET_HEAD_SHA || null,
     fixture: 'public/fixtures/topology-edit-20-element-demo.staged.json#XYZ-10-COMPONENT-BRANCH',
     supportTag: 'S-007', supportId, requested,
     baseline, staged, previewed, validated, applied, undone, redone, before, after,

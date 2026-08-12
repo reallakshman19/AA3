@@ -1,0 +1,102 @@
+{
+  "schema": "m047-friction-micro-model-result-contract/v1",
+  "scope": "FAIL_CLOSED_INGESTION_OF_INDEPENDENT_CAESAR_FRICTION_MICRO_MODEL_RESULTS",
+  "product": {
+    "caesarVersion": "14.00.00.0910",
+    "build": 231113
+  },
+  "sourcePolicy": {
+    "requiredProvenanceClass": "INDEPENDENT_PRODUCT_OBSERVATION",
+    "bm4OrBm4LInputPermitted": false,
+    "bm4OrBm4LResponsePermitted": false,
+    "inputSha256Required": true,
+    "outputSha256Required": true,
+    "caseDefinitionRequired": true,
+    "rawObservationRetentionRequired": true
+  },
+  "commonFields": [
+    "schema",
+    "experimentId",
+    "provenanceClass",
+    "caesarVersion",
+    "build",
+    "inputPath",
+    "inputSha256",
+    "outputPath",
+    "outputSha256",
+    "caseDefinition",
+    "observations"
+  ],
+  "experiments": {
+    "FM1_SLIDE_PLATEAU": {
+      "targetBlocker": "FRICTION_SLIDE_MULTIPLIER_AUTHORITY_REQUIRED",
+      "minimumObservations": 3,
+      "requiredObservationFields": [
+        "normalReactionN",
+        "tangentialReactionN",
+        "tangentialDisplacementMm"
+      ],
+      "derivedMetric": "abs(tangentialReactionN)/(mu*abs(normalReactionN))",
+      "qualification": "REPORT_RATIO_SERIES_AND_SPREAD_ONLY; DO_NOT_AUTO_PROMOTE_MULTIPLIER"
+    },
+    "FM2_ANGLE_UPDATE": {
+      "targetBlocker": "FRICTION_STATE_HISTORY_SEMANTICS_AUTHORITY_REQUIRED",
+      "minimumObservations": 2,
+      "requiredObservationFields": [
+        "commandedDirectionChangeDeg",
+        "tangentialReactionDirectionDeg",
+        "normalReactionN",
+        "tangentialReactionN"
+      ],
+      "coverageRequired": [
+        "AT_LEAST_ONE_DIRECTION_CHANGE_BELOW_15_DEG",
+        "AT_LEAST_ONE_DIRECTION_CHANGE_ABOVE_15_DEG"
+      ],
+      "qualification": "REPORT_DIRECTION_UPDATE_PATTERN_ONLY; DO_NOT_AUTO_PROMOTE_STATE_RULE"
+    },
+    "FM3_NORMAL_FORCE_UPDATE": {
+      "targetBlocker": "FRICTION_STATE_HISTORY_SEMANTICS_AUTHORITY_REQUIRED",
+      "minimumObservations": 2,
+      "requiredObservationFields": [
+        "normalForceChangeFraction",
+        "normalReactionN",
+        "tangentialReactionN"
+      ],
+      "coverageRequired": [
+        "AT_LEAST_ONE_ABSOLUTE_NORMAL_CHANGE_BELOW_0_15",
+        "AT_LEAST_ONE_ABSOLUTE_NORMAL_CHANGE_ABOVE_0_15"
+      ],
+      "qualification": "REPORT_HELD_OR_RECOMPUTED_FORCE_PATTERN_ONLY; DO_NOT_AUTO_PROMOTE_STATE_RULE"
+    },
+    "FM4_GAP_CONTACT": {
+      "targetBlocker": "GAP_CONTACT_STATE_SEMANTICS_AUTHORITY_REQUIRED",
+      "minimumObservations": 3,
+      "requiredObservationFields": [
+        "phase",
+        "gapDirectionDisplacementMm",
+        "gapDirectionReactionN",
+        "normalReactionN",
+        "tangentialReactionN"
+      ],
+      "coverageRequired": [
+        "OPEN",
+        "CLOSED",
+        "REOPENED"
+      ],
+      "qualification": "REPORT_ACTIVE_SET_SEQUENCE_ONLY; DO_NOT_AUTO_PROMOTE_CONTACT_RULE"
+    }
+  },
+  "promotionPolicy": {
+    "checkerMayResolveAuthority": false,
+    "structurallyCompleteResultStatus": "CANDIDATE_PRODUCT_EVIDENCE_REQUIRES_ENGINEERING_REVIEW",
+    "missingOrInvalidResultStatus": "REJECTED",
+    "parameterFittingPermitted": false,
+    "toleranceFittingPermitted": false,
+    "productionIntegrationBeforeIndependentReviewPermitted": false
+  },
+  "remainingBlockersUntilReviewedProductEvidenceExists": [
+    "FRICTION_SLIDE_MULTIPLIER_AUTHORITY_REQUIRED",
+    "FRICTION_STATE_HISTORY_SEMANTICS_AUTHORITY_REQUIRED",
+    "GAP_CONTACT_STATE_SEMANTICS_AUTHORITY_REQUIRED"
+  ]
+}

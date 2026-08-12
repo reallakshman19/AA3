@@ -13,217 +13,43 @@ export const A3D004_RENDERER_POLICY = Object.freeze({
 });
 
 export async function captureA3d004Authority(page) {
-  return page.evaluate((collections) => {
-    const controller = authorityController();
-    const topology = controller.session.currentTopology();
-    const journal = controller.session.journal;
-    return {
-      canonicalHash: topology.canonicalTopologyHash,
-      sourceHash: controller.workspaceDataset?.sourceSnapshot?.sourceSemanticHash ?? null,
-      sourceByteHash: controller.workspaceDataset?.sourceSnapshot?.sourceByteHash ?? null,
-      journalHash: journal.journalHash,
-      activeLedgerHash: journal.activeLedgerHash,
-      activeCommandIds: [...journal.activeCommandIds],
-      activeCommandCount: journal.activeCommandIds.length,
-      sessionVersion: journal.sessionVersion,
-      topologyRecords: recordSnapshot(topology, collections),
-      ghostChildCount: controller.viewportBackend?.groups?.ghostGroup?.children?.length ?? 0,
-    };
-
-    function authorityController() {
-      const controller = document.querySelector('[data-role="topology-edit-render-host"]')
-        ?.__topologyEditAuthoringController;
-      if (!controller?.session?.currentTopology?.() || !controller.session.journal) {
-        throw new Error('A3D-004: mounted production authority is unavailable.');
-      }
-      return controller;
-    }
-    function recordSnapshot(value, names) {
-      const records = {};
-      for (const collection of names) {
-        for (const record of value[collection] ?? []) {
-          records[`${collection}:${record.id}`] = JSON.stringify(record);
-        }
-      }
-      return records;
-    }
-  }, COLLECTIONS);
+  const state = await captureViewportState(page, { mode: 'authority' });
+  return {
+    ...state.authority,
+    topologyRecords: state.topologyRecords,
+    ghostChildCount: state.ghostChildCount,
+  };
 }
 
 export async function captureA3d004Preview(page, surface = 'authoring') {
-  return page.evaluate(({ surfaceId, collections }) => {
-    const controller = authorityController();
-    const current = controller.session.currentTopology();
-    const journal = controller.session.journal;
-    const candidate = surfaceId === 'table'
-      ? controller.tableAdapter?.runtime?.preview?.candidate
-      : controller.authoringRuntime?.candidate;
-    if (!candidate?.canonicalTopology) {
-      throw new Error(`A3D-004: ${surfaceId} candidate is unavailable after visible Preview.`);
-    }
-    const changedCanonicalIds = [...new Set(candidate.changedCanonicalIds ?? [])].sort();
-    const changed = new Set(changedCanonicalIds);
-    const projection = controller.deriveVisual(candidate.canonicalTopology, 'DRAFT').projection;
-    const accepted = (row) => changed.has(
-      row?.pickTarget?.objectId ?? row?.entityId ?? row?.id,
-    );
-    return {
-      surface: surfaceId,
-      authority: {
-        canonicalHash: current.canonicalTopologyHash,
-        sourceHash: controller.workspaceDataset?.sourceSnapshot?.sourceSemanticHash ?? null,
-        sourceByteHash: controller.workspaceDataset?.sourceSnapshot?.sourceByteHash ?? null,
-        journalHash: journal.journalHash,
-        activeLedgerHash: journal.activeLedgerHash,
-        activeCommandIds: [...journal.activeCommandIds],
-        activeCommandCount: journal.activeCommandIds.length,
-        sessionVersion: journal.sessionVersion,
-      },
-      candidateHash: candidate.candidateHash ?? candidate.candidateDraftHash ?? '',
-      planHash: candidate.planHash ?? '',
-      priorCanonicalHash: candidate.priorCanonicalHash
-        ?? candidate.priorCanonicalTopologyHash
-        ?? '',
-      resultingCanonicalHash: candidate.resultingCanonicalHash
-        ?? candidate.canonicalTopologyHash
-        ?? candidate.canonicalTopology.canonicalTopologyHash,
-      changedCanonicalIds,
-      commandTypes: (candidate.materializedCommandIntents ?? [])
-        .map((row) => row.commandType)
-        .filter(Boolean),
-      projectionSignature: normalizedProjection(projection, accepted),
-      ghostSignature: normalizedRenderedGroups([
-        controller.viewportBackend?.groups?.ghostGroup,
-      ]),
-      candidateRecords: recordSnapshot(candidate.canonicalTopology, collections),
-    };
-
-    function authorityController() {
-      const controller = document.querySelector('[data-role="topology-edit-render-host"]')
-        ?.__topologyEditAuthoringController;
-      if (!controller?.session?.currentTopology?.() || !controller.session.journal) {
-        throw new Error('A3D-004: mounted production authority is unavailable.');
-      }
-      return controller;
-    }
-    function recordSnapshot(value, names) {
-      const records = {};
-      for (const collection of names) {
-        for (const record of value[collection] ?? []) {
-          records[`${collection}:${record.id}`] = JSON.stringify(record);
-        }
-      }
-      return records;
-    }
-    function normalizedProjection(value, filter) {
-      const rows = [];
-      for (const row of projectionRows(value, 'elements', 'compactElements')) {
-        if (!filter(row)) continue;
-        rows.push({
-          kind: 'ELEMENT',
-          id: String(row.entityId ?? row.id ?? ''),
-          type: String(row.type ?? ''),
-          position: [round(row.x), round(row.y), round(row.z)],
-          sizeMm: round(row.sizeMm),
-          pick: canonicalPick(row.pickTarget),
-        });
-      }
-      for (const row of projectionRows(value, 'segments', 'compactSegments')) {
-        if (!filter(row)) continue;
-        rows.push({
-          kind: 'SEGMENT',
-          id: String(row.entityId ?? row.id ?? ''),
-          type: String(row.type ?? ''),
-          start: point(row.start),
-          end: point(row.end),
-          points: Array.isArray(row.points) ? row.points.map(point) : [],
-          radiusMm: round(row.radiusMm),
-          endRadiusMm: round(row.endRadiusMm),
-          pick: canonicalPick(row.pickTarget),
-        });
-      }
-      return rows.sort(byJson);
-    }
-    function normalizedRenderedGroups(groups) {
-      const rows = [];
-      for (const group of groups.filter(Boolean)) {
-        group.updateMatrixWorld?.(true);
-        group.traverse((object) => {
-          if (object === group || !object.geometry) return;
-          const picks = renderedPicks(object);
-          if (!picks.length) return;
-          object.geometry.computeBoundingBox?.();
-          const bounds = object.geometry.boundingBox;
-          const geometryType = String(object.geometry?.type ?? '');
-          const shape = {
-            geometryType,
-            position: point(object.position),
-            quaternion: [
-              round(object.quaternion?.x), round(object.quaternion?.y),
-              round(object.quaternion?.z), round(object.quaternion?.w),
-            ],
-            scale: point(object.scale),
-            geometryBounds: geometryType === 'SphereGeometry' || !bounds
-              ? null
-              : { min: point(bounds.min), max: point(bounds.max) },
-          };
-          const fallbackPartRole = object.userData?.partRole ?? '';
-          for (const target of picks) {
-            rows.push({ pick: canonicalPick(target, fallbackPartRole), shape });
-          }
-        });
-      }
-      return rows.sort(byJson);
-    }
-    function renderedPicks(object) {
-      const direct = object.userData?.pickTarget ?? null;
-      const table = Array.isArray(object.userData?.pickTable) ? object.userData.pickTable : [];
-      return [direct, ...table].filter(Boolean);
-    }
-    function canonicalPick(value = {}, fallbackPartRole = '') {
-      return {
-        objectKind: String(value.objectKind ?? ''),
-        objectId: String(value.objectId ?? ''),
-        nodeId: String(value.nodeId ?? ''),
-        partRole: String(value.partRole || fallbackPartRole || ''),
-        supportId: String(value.supportId ?? ''),
-        restraintId: String(value.restraintId ?? ''),
-        restraintFamily: String(value.restraintFamily ?? ''),
-      };
-    }
-    function projectionRows(value, plural, compactPlural) {
-      const compact = value?.[compactPlural];
-      return Array.isArray(compact) ? compact : (value?.[plural] ?? []);
-    }
-    function round(value) {
-      return Number.isFinite(Number(value)) ? Number(Number(value).toFixed(9)) : null;
-    }
-    function point(value) {
-      return value && [value.x, value.y, value.z].every(Number.isFinite)
-        ? [round(value.x), round(value.y), round(value.z)]
-        : null;
-    }
-    function byJson(left, right) {
-      return JSON.stringify(left).localeCompare(JSON.stringify(right));
-    }
-  }, { surfaceId: surface, collections: COLLECTIONS });
+  return captureViewportState(page, { mode: 'preview', surface });
 }
 
 export async function captureA3d004Applied(page, preview) {
-  return page.evaluate(({ changedIds, collections }) => {
-    const controller = authorityController();
-    const topology = controller.session.currentTopology();
-    const journal = controller.session.journal;
-    const changed = new Set(changedIds);
-    const accepted = (row) => changed.has(
-      row?.pickTarget?.objectId ?? row?.entityId ?? row?.id,
-    );
-    const projection = controller.deriveVisual(topology, 'DRAFT').projection;
-    const rendered = normalizedRenderedGroups([
-      controller.viewportBackend?.groups?.draftGroup,
-      controller.viewportBackend?.groups?.supportGroup,
-    ]).filter((row) => changed.has(row.pick.objectId));
-    return {
+  const state = await captureViewportState(page, {
+    mode: 'applied',
+    changedCanonicalIds: preview.changedCanonicalIds,
+  });
+  return {
+    ...state.authority,
+    projectionSignature: state.projectionSignature,
+    renderedSignature: state.renderedSignature,
+    topologyRecords: state.topologyRecords,
+    ghostChildCount: state.ghostChildCount,
+  };
+}
+
+async function captureViewportState(page, options) {
+  return page.evaluate(({ input, collections }) => {
+    const controller = document.querySelector('[data-role="topology-edit-render-host"]')
+      ?.__topologyEditAuthoringController;
+    const topology = controller?.session?.currentTopology?.();
+    const journal = controller?.session?.journal;
+    if (!controller || !topology || !journal) {
+      throw new Error('A3D-004: mounted production authority is unavailable.');
+    }
+
+    const authority = {
       canonicalHash: topology.canonicalTopologyHash,
       sourceHash: controller.workspaceDataset?.sourceSnapshot?.sourceSemanticHash ?? null,
       sourceByteHash: controller.workspaceDataset?.sourceSnapshot?.sourceByteHash ?? null,
@@ -232,20 +58,72 @@ export async function captureA3d004Applied(page, preview) {
       activeCommandIds: [...journal.activeCommandIds],
       activeCommandCount: journal.activeCommandIds.length,
       sessionVersion: journal.sessionVersion,
-      projectionSignature: normalizedProjection(projection, accepted),
-      renderedSignature: rendered,
-      topologyRecords: recordSnapshot(topology, collections),
-      ghostChildCount: controller.viewportBackend?.groups?.ghostGroup?.children?.length ?? 0,
+    };
+    const topologyRecords = recordSnapshot(topology, collections);
+    const ghostChildCount = controller.viewportBackend?.groups?.ghostGroup?.children?.length ?? 0;
+    if (input.mode === 'authority') {
+      return { authority, topologyRecords, ghostChildCount };
+    }
+
+    if (input.mode === 'preview') {
+      const candidate = input.surface === 'table'
+        ? controller.tableAdapter?.runtime?.preview?.candidate
+        : controller.authoringRuntime?.candidate;
+      if (!candidate?.canonicalTopology) {
+        throw new Error(`A3D-004: ${input.surface} candidate is unavailable after visible Preview.`);
+      }
+      const changedCanonicalIds = [...new Set(candidate.changedCanonicalIds ?? [])].sort();
+      const changed = new Set(changedCanonicalIds);
+      const projection = controller.deriveVisual(candidate.canonicalTopology, 'DRAFT').projection;
+      return {
+        surface: input.surface,
+        authority,
+        candidateHash: candidate.candidateHash ?? candidate.candidateDraftHash ?? '',
+        planHash: candidate.planHash ?? '',
+        priorCanonicalHash: candidate.priorCanonicalHash
+          ?? candidate.priorCanonicalTopologyHash
+          ?? '',
+        resultingCanonicalHash: candidate.resultingCanonicalHash
+          ?? candidate.canonicalTopologyHash
+          ?? candidate.canonicalTopology.canonicalTopologyHash,
+        changedCanonicalIds,
+        commandTypes: (candidate.materializedCommandIntents ?? [])
+          .map((row) => row.commandType)
+          .filter(Boolean),
+        projectionSignature: normalizedProjection(
+          projection,
+          (row) => changed.has(row?.pickTarget?.objectId ?? row?.entityId ?? row?.id),
+        ),
+        ghostSignature: normalizedRenderedGroups([
+          controller.viewportBackend?.groups?.ghostGroup,
+        ]),
+        candidateRecords: recordSnapshot(candidate.canonicalTopology, collections),
+      };
+    }
+
+    const changed = new Set(input.changedCanonicalIds ?? []);
+    const projection = controller.deriveVisual(topology, 'DRAFT').projection;
+    const renderedSignature = normalizedRenderedGroups([
+      controller.viewportBackend?.groups?.draftGroup,
+      controller.viewportBackend?.groups?.supportGroup,
+    ]).filter((row) => pickOwnedByChanged(row.pick, changed));
+    return {
+      authority,
+      projectionSignature: normalizedProjection(
+        projection,
+        (row) => changed.has(row?.pickTarget?.objectId ?? row?.entityId ?? row?.id),
+      ),
+      renderedSignature,
+      topologyRecords,
+      ghostChildCount,
     };
 
-    function authorityController() {
-      const controller = document.querySelector('[data-role="topology-edit-render-host"]')
-        ?.__topologyEditAuthoringController;
-      if (!controller?.session?.currentTopology?.() || !controller.session.journal) {
-        throw new Error('A3D-004: applied production authority is unavailable.');
-      }
-      return controller;
+    function pickOwnedByChanged(pick, changedIds) {
+      return [pick.objectId, pick.supportId, pick.nodeId]
+        .filter(Boolean)
+        .some((id) => changedIds.has(id));
     }
+
     function recordSnapshot(value, names) {
       const records = {};
       for (const collection of names) {
@@ -255,6 +133,7 @@ export async function captureA3d004Applied(page, preview) {
       }
       return records;
     }
+
     function normalizedProjection(value, filter) {
       const rows = [];
       for (const row of projectionRows(value, 'elements', 'compactElements')) {
@@ -284,13 +163,16 @@ export async function captureA3d004Applied(page, preview) {
       }
       return rows.sort(byJson);
     }
+
     function normalizedRenderedGroups(groups) {
       const rows = [];
       for (const group of groups.filter(Boolean)) {
         group.updateMatrixWorld?.(true);
         group.traverse((object) => {
           if (object === group || !object.geometry) return;
-          const picks = renderedPicks(object);
+          const direct = object.userData?.pickTarget ?? null;
+          const table = Array.isArray(object.userData?.pickTable) ? object.userData.pickTable : [];
+          const picks = [direct, ...table].filter(Boolean);
           if (!picks.length) return;
           object.geometry.computeBoundingBox?.();
           const bounds = object.geometry.boundingBox;
@@ -315,11 +197,7 @@ export async function captureA3d004Applied(page, preview) {
       }
       return rows.sort(byJson);
     }
-    function renderedPicks(object) {
-      const direct = object.userData?.pickTarget ?? null;
-      const table = Array.isArray(object.userData?.pickTable) ? object.userData.pickTable : [];
-      return [direct, ...table].filter(Boolean);
-    }
+
     function canonicalPick(value = {}, fallbackPartRole = '') {
       return {
         objectKind: String(value.objectKind ?? ''),
@@ -331,6 +209,7 @@ export async function captureA3d004Applied(page, preview) {
         restraintFamily: String(value.restraintFamily ?? ''),
       };
     }
+
     function projectionRows(value, plural, compactPlural) {
       const compact = value?.[compactPlural];
       return Array.isArray(compact) ? compact : (value?.[plural] ?? []);
@@ -346,7 +225,7 @@ export async function captureA3d004Applied(page, preview) {
     function byJson(left, right) {
       return JSON.stringify(left).localeCompare(JSON.stringify(right));
     }
-  }, { changedIds: preview.changedCanonicalIds, collections: COLLECTIONS });
+  }, { input: options, collections: COLLECTIONS });
 }
 
 export function assertA3d004PreviewNonMutating(baseline, preview) {

@@ -51,6 +51,21 @@ L15 is formed only from the two independently converged primitive result states.
 
 For L1, the frozen mechanics are reused through an explicit hydrotest base transformation: ACCDB `HYDRO_PRESSURE` is mapped to the frozen pressure primitive, hydrotest contents are represented as 1000 kg/m3 water, insulation is excluded, and friction is removed only in the internal counterfactual base used to assemble the nonlinear state. The transformation is emitted as evidence and is not treated as a CAESAR reference result.
 
+## ACCDB extraction engine
+
+Stage 2 now reuses the ACCDB engine already implemented in `reallaksh19/XML_Compare_Utilities` instead of requiring Microsoft ACE/COM.
+
+The local production harness pins:
+
+- XML Compare Utilities commit `d83c62214b7a6486c17698225ea4e11bc3121cb6`;
+- `parser/accdb-mdb.js` Git blob `2ea596b6e9fb65e386e5cbb256f4141ce7bb595b`;
+- exported API `readAccdbNamedTables(arrayBuffer, tableNames, log)`;
+- `mdb-reader` version `2.2.6`, matching the app's `mdb-reader@2` engine family but fixed to an exact version for reproducible local qualification.
+
+`scripts/lfea-caesar-accdb-export-xml-compare.mjs` converts those named-table results into the existing `caesar-accdb-raw-export/v1` contract. It does not use the XML app's higher-level geometry heuristics; only the raw Access table reader is reused. The source manifest records the extractor commit, parser blob, package version, and package hash.
+
+No GitHub Actions workflow is required or used for this qualification path.
+
 ## RCA and result families
 
 The Stage 2 command reports the issue-required paired deltas:
@@ -61,12 +76,14 @@ The Stage 2 command reports the issue-required paired deltas:
 
 Literal component comparisons remain unchanged. Coordinate-invariant vectors, all global source-element end actions, physical equilibrium, nonlinear state residuals, repeated-run evidence, and stiffness sensitivity are retained separately rather than collapsed into one score.
 
-## Production custody and acceptance
+## Local production custody and acceptance
 
-Run on the governed Windows/ACE environment from a clean checkout at the exact candidate head:
+Run locally from a clean checkout at the exact candidate head. If `XML_Compare_Utilities` is a sibling checkout it is discovered automatically; otherwise pass its path explicitly. The harness copies/checks out the pinned extractor commit into the artifact directory, so the user's working checkout is not modified.
 
 ```powershell
-pwsh ./scripts/lfea-m047-bm4l-friction-production.ps1 -ExpectedHead (git rev-parse HEAD)
+pwsh ./scripts/lfea-m047-bm4l-friction-production.ps1 `
+  -ExpectedHead (git rev-parse HEAD) `
+  -XmlCompareUtilitiesPath ../XML_Compare_Utilities
 ```
 
 The harness fails closed unless it receives the immutable Issue #1083 custody set:
@@ -82,6 +99,6 @@ It emits source custody, resolved configuration, nonlinear actuals, per-iteratio
 
 ## Current verification status
 
-The new/modified JavaScript friction implementation was syntax-checked locally while authored, and the corrected nonlinear solver blob committed to the branch matches that checked source. The configuration/friction contract checks and the full ACCDB production command are wired into the Windows harness.
+The new/modified JavaScript friction implementation was syntax-checked locally while authored. The XML Compare extraction adapter was also `node --check` validated locally, and its boundary follows the app's existing `readAccdbNamedTables()` API.
 
-A Windows host with Microsoft ACE is required to produce the authoritative ACCDB production receipt. That environment is not available in the current execution session, so this draft must **not** claim CAESAR II friction parity or be merged until the pinned Windows/ACE run is attached and reviewed.
+The current execution container cannot retrieve/install the binary ACCDB runtime dependencies from the public internet, and it does not contain `mdb-reader` preinstalled. Therefore the authoritative BM4_L numerical receipt has not been generated in this session. This remains a draft until the local pinned run above is executed and its evidence reviewed; no GitHub Actions execution is needed or intended.

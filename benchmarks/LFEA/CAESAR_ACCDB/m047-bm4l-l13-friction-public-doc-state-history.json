@@ -1,0 +1,101 @@
+{
+  "schema": "m047-bm4l-l13-friction-public-doc-state-history-diagnostic/v1",
+  "benchmarkId": "BM4_L",
+  "caseId": "L13",
+  "stage": "F2.2_PUBLIC_DOC_STATE_HISTORY_DIAGNOSTIC",
+  "parent": {
+    "pr": 1069,
+    "baselinePassRatePercent": 89.81191222570533,
+    "baselineGovernedRows": 1914,
+    "baselineStatus": "CONVERGED_PHYSICAL_COULOMB_DIAGNOSTIC_NOT_CAESAR_EQUIVALENT"
+  },
+  "fixedMechanics": {
+    "coefficientOfFriction": 0.3,
+    "frictionStiffnessNPerM": 175126835.24647635,
+    "structuralOperator": "EXACT_RECONSTRUCTED_L6_1938_DOF_OPERATOR",
+    "gapContactState": "RETAIN_L6_GROUNDED_RESTRAINT_STATE_NO_GAP_UPDATE",
+    "responseFittingUsed": false
+  },
+  "publicDocumentationRulesAppliedLiterally": {
+    "nonSlidingLaw": "TANGENTIAL_FORCE_EQUALS_FRICTION_STIFFNESS_TIMES_TANGENTIAL_DISPLACEMENT",
+    "slideThreshold": "TRIAL_MAGNITUDE_GREATER_THAN_OR_EQUAL_TO_MU_TIMES_NORMAL_FORCE",
+    "transitionTiming": "CONSTANT_OPPOSING_SLIDING_FORCE_ON_FOLLOWING_ITERATION",
+    "normalForceVariationThreshold": 0.15,
+    "normalForceRule": "ADJUST_EXISTING_SLIDING_FORCE_WHEN_HELD_NORMAL_FORCE_VARIATION_EXCEEDS_15_PERCENT",
+    "directionRuleInterpretation": "FIRST_TRANSITION_ANGLE_CONTROL_IS_SPECIAL; SUBSEQUENT_DIRECTION_COMPENSATION_APPLIED_EACH_ITERATION",
+    "slideMultiplier": "UNRESOLVED_NOT_ASSIGNED_AS_CAESAR_AUTHORITY"
+  },
+  "run150": {
+    "maximumIterations": 150,
+    "converged": false,
+    "finalStickCount": 5,
+    "finalSlidingCount": 21,
+    "minimumMaxDofChangeLast50": 0.0014498247385375156,
+    "maximumMaxDofChangeLast50": 0.003146798452111633,
+    "normalBasisUpdatesLast50": 261,
+    "directionUpdatesLast50": 1050,
+    "tailIterations": [
+      {"iteration":141,"normalBasisUpdates":6,"directionUpdates":21,"slidingSites":21,"maxDofChange":0.0014563480860942087},
+      {"iteration":142,"normalBasisUpdates":5,"directionUpdates":21,"slidingSites":21,"maxDofChange":0.0031361704988346543},
+      {"iteration":143,"normalBasisUpdates":5,"directionUpdates":21,"slidingSites":21,"maxDofChange":0.0023723398029332193},
+      {"iteration":144,"normalBasisUpdates":4,"directionUpdates":21,"slidingSites":21,"maxDofChange":0.0016169258233515362},
+      {"iteration":145,"normalBasisUpdates":6,"directionUpdates":21,"slidingSites":21,"maxDofChange":0.002744257523323553},
+      {"iteration":146,"normalBasisUpdates":6,"directionUpdates":21,"slidingSites":21,"maxDofChange":0.002218192726590143},
+      {"iteration":147,"normalBasisUpdates":6,"directionUpdates":21,"slidingSites":21,"maxDofChange":0.0014498247385375156},
+      {"iteration":148,"normalBasisUpdates":5,"directionUpdates":21,"slidingSites":21,"maxDofChange":0.0031465767002703078},
+      {"iteration":149,"normalBasisUpdates":5,"directionUpdates":21,"slidingSites":21,"maxDofChange":0.002381155015458214},
+      {"iteration":150,"normalBasisUpdates":4,"directionUpdates":21,"slidingSites":21,"maxDofChange":0.001622345982130674}
+    ]
+  },
+  "run80SiteDiagnostics": [
+    {"node":"21610","finalStateAtIteration80":"SLIDING","firstSlideIteration":1,"normalBasisUpdateCountThrough80":79,"maximumRelativeNormalVariationBeforeUpdate":85.29342267640075,"directionUpdateCountThrough80":79,"maximumSingleIterationDirectionChangeDeg":86.61190804905365},
+    {"node":"20170","finalStateAtIteration80":"SLIDING","firstSlideIteration":1,"normalBasisUpdateCountThrough80":77,"maximumRelativeNormalVariationBeforeUpdate":6.09989725870241,"directionUpdateCountThrough80":79,"maximumSingleIterationDirectionChangeDeg":126.29977998379009},
+    {"node":"20090","finalStateAtIteration80":"SLIDING","firstSlideIteration":1,"normalBasisUpdateCountThrough80":74,"maximumRelativeNormalVariationBeforeUpdate":2.998570430499489,"directionUpdateCountThrough80":79,"maximumSingleIterationDirectionChangeDeg":84.17560306230246},
+    {"node":"20250","finalStateAtIteration80":"SLIDING","firstSlideIteration":6,"normalBasisUpdateCountThrough80":74,"maximumRelativeNormalVariationBeforeUpdate":7.401906413648518,"directionUpdateCountThrough80":64,"maximumSingleIterationDirectionChangeDeg":179.99999879258172},
+    {"node":"21470","finalStateAtIteration80":"SLIDING","firstSlideIteration":1,"normalBasisUpdateCountThrough80":65,"maximumRelativeNormalVariationBeforeUpdate":1.2581243659782897,"directionUpdateCountThrough80":79,"maximumSingleIterationDirectionChangeDeg":129.15518182595898},
+    {"node":"20350","finalStateAtIteration80":"SLIDING","firstSlideIteration":1,"normalBasisUpdateCountThrough80":33,"maximumRelativeNormalVariationBeforeUpdate":0.34836036588172103,"directionUpdateCountThrough80":79,"maximumSingleIterationDirectionChangeDeg":69.5808341931055},
+    {"node":"20710","finalStateAtIteration80":"SLIDING","firstSlideIteration":1,"normalBasisUpdateCountThrough80":1,"maximumRelativeNormalVariationBeforeUpdate":0.15051534874587955,"directionUpdateCountThrough80":75,"maximumSingleIterationDirectionChangeDeg":0.00006293649634123074},
+    {"node":"22020","finalStateAtIteration80":"SLIDING","firstSlideIteration":1,"normalBasisUpdateCountThrough80":1,"maximumRelativeNormalVariationBeforeUpdate":0.21449869407775812,"directionUpdateCountThrough80":77,"maximumSingleIterationDirectionChangeDeg":0.0000012074182697257333}
+  ],
+  "run80SiteDiagnosticsNote": "Only sites with persistent or threshold-crossing normal-force updates are retained here; full 26-site baseline localization is pinned by F2.1/PR1069.",
+  "observations": {
+    "initialSlideTransitionsAtIteration1": 20,
+    "additionalSlideTransition": {"node":"20250","iteration":6},
+    "persistentNormalUpdateSites": ["20090","20170","20250","20350","21470","21610"],
+    "worstNormalUpdateCountThrough80": {"node":"21610","count":79},
+    "largeDirectionReversalsObserved": true,
+    "maximumObservedSingleIterationDirectionChangeDeg": 180.0,
+    "noAccuracyScorePublishedForRun150": true,
+    "reasonNoAccuracyScore": "NONCONVERGED_TRIAL_STATE_MUST_NOT_BE_PUBLISHED_AS_A_FINAL_L13_SOLUTION"
+  },
+  "configurationCustody": {
+    "exactWindowsAceArtifactRun": 31513907633,
+    "artifactId": 9110308571,
+    "caesarCfgPresentInArtifact": false,
+    "repositorySearchCaesarCfgFound": false,
+    "accdbStringScanFoundFrictionControlNames": false,
+    "disposition": "EXACT_CONFIGURATION_STATE_HISTORY_CONTROLS_NOT_RECOVERED_FROM_RETAINED_ARTIFACT"
+  },
+  "authorityAssessment": {
+    "publicDocsSufficientForQualitativeLaw": true,
+    "publicDocsSufficientForUniqueStableIterationAlgorithm": false,
+    "numericSlideMultiplierResolved": false,
+    "exactDirectionUpdateOrderingResolved": false,
+    "exactNormalForceUpdateOrderingResolved": false,
+    "exactGapContactOrderingResolved": false
+  },
+  "decision": {
+    "status": "F2_2_PUBLIC_DOC_LITERAL_REPLAY_NONCONVERGENT_NO_MECHANICS_PROMOTION",
+    "baselineDiagnosticAccuracyRetainedPercent": 89.81191222570533,
+    "l13QualifiedAccuracyAuthorized": false,
+    "l7ExecutionAuthorized": false,
+    "nextQualifiedUnlock": "EXACT_CAESAR_CONFIGURATION_OR_ITERATION_TRACE_OR_VENDOR_STATE_ALGORITHM"
+  },
+  "prohibitions": [
+    "DO_NOT_SCORE_NONCONVERGED_ITERATE_AS_ACCURACY",
+    "DO_NOT_ADD_RELAXATION_AND_CALL_IT_CAESAR_EQUIVALENT_WITHOUT_AUTHORITY",
+    "DO_NOT_USE_BM4_L_REFERENCE_RESIDUALS_TO_SELECT_RELAXATION",
+    "DO_NOT_INFER_SLIDE_MULTIPLIER_FROM_MU_N",
+    "DO_NOT_CHANGE_GAP_STATE_FROM_REFERENCE_ERROR"
+  ]
+}

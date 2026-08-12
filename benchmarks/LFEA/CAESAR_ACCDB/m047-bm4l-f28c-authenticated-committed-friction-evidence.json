@@ -1,0 +1,52 @@
+{
+  "schema": "m047-bm4l-f28c-authenticated-committed-friction-contract/v1",
+  "benchmarkId": "BM4_L",
+  "stage": "F2.8C_AUTHENTICATED_COMMITTED_FRICTION_REPLAY",
+  "sources": {
+    "bm4lAccdbSha256": "64c05a50e9ed0452622ff5880335460486f24ac8e6adecc9a300b549c9aa82f8",
+    "bm4NlCommonCommit": "179c4831cf521cf797c13699cfbbd118315c9244",
+    "bm4NlZipGitBlob": "86a803ed27ebdbd2836452dc2e874c3458aa204c",
+    "bm4NlAccdbSha256": "85d39463296e569da811d8572e2eff680b858097f76fdf0f47d1755f0b161c21",
+    "independentExtractionRunId": 31609552661,
+    "independentExtractionArtifactId": 9146596255,
+    "independentExtractionArtifactDigestSha256": "a9213695f6c56b4c2cb1b50b3b723b1e48fe7b9ca33925211a45d81ea8826d00",
+    "independentExtractionHead": "410fec552663e257de9d2a1d362ef52aad35f88c",
+    "freshReplayFirstRunId": 31613587944,
+    "freshReplayFirstHead": "0e09fcd209d5f570cd094100bec3ffbb3c88e1be",
+    "freshReplayFirstObservedScore": "1884/1914"
+  },
+  "caseIdentity": {
+    "bm4NlFrictionOnLcase": 17,
+    "bm4NlFrictionOffLcase": 19,
+    "bm4lFrictionOnCase": "L13",
+    "bm4lFrictionOffCase": "L6",
+    "endpointEquivalenceMustBeRecomputed": true
+  },
+  "replay": {
+    "frictionSiteCount": 26,
+    "coefficientOfFriction": 0.3,
+    "pipeTangentialLoadRule": "NEGATE_ACCDB_OUTPUT_RESTRAINT_RIGID_Y_XZ",
+    "restraintForceReportingRule": "LINEAR_GROUNDED_SPRING_REACTION_PLUS_REPLAY_TANGENTIAL_LOAD",
+    "governedDenominator": 1914,
+    "historicalDiagnosticPassed": 1719,
+    "independentlyPrecomputedExpectedPassed": 1884,
+    "independentlyPrecomputedExpectedFailed": 30,
+    "independentlyPrecomputedExpectedPercent": 98.43260188087774
+  },
+  "withdrawnCandidate": {
+    "pr": 1078,
+    "claimedPercent": 98.43260188087774,
+    "status": "WITHDRAWN_CUSTODY_MISMATCH",
+    "witnessNode": "20350",
+    "authenticatedCase17RigidY": [827.2864379882812, -3094.531982421875, 392.7410583496094],
+    "withdrawnFixture": [-1696.5887451171875, -9537.6845703125, 2287.588134765625],
+    "disposition": "DO_NOT_REUSE_PR1078_VECTOR_FIXTURE; THE_PERCENTAGE_WAS_LATER_INDEPENDENTLY_REPRODUCED_FROM_AUTHENTICATED_SOURCE_BYTES"
+  },
+  "authorityFirewall": {
+    "bm4lReferenceUsedToSelectCommittedVector": false,
+    "responseFittingUsed": false,
+    "comparisonToleranceChanged": false,
+    "productionMechanicsAuthorized": false,
+    "qualifiedL13AccuracyAuthorized": false
+  }
+}

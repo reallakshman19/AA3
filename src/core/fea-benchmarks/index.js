@@ -75,14 +75,22 @@ export { solveCaesarFrictionRefinedDenseSystem } from './caesar-friction-dense-r
 export {
   runBm4lFrictionStiffnessSensitivity,
   scaleBm4lFrictionStiffnessPackage,
-} from './caesar-friction-sensitivity.js';
+} from './caesar-friction-stage2-sensitivity.js';
 export { buildCaesarFrictionStiffnessState } from './caesar-friction-stiffness-state.js';
 export {
   BM4L_FRICTION_EXECUTION_ORDER,
   BM4L_FRICTION_MULTIPLIERS,
   BM4L_FRICTION_PRIMITIVE_CASE_IDS,
-  solveCaesarAccdbFrictionBenchmark,
 } from './caesar-accdb-friction-solve.js';
+export { solveCaesarAccdbFrictionBenchmark } from './caesar-accdb-friction-stage2-governed.js';
+export {
+  BM4L_HYDROTEST_AUTHORITY_SCHEMA,
+  BM4L_HYDROTEST_WATER_DENSITY_KG_PER_M3,
+  BM4L_HYDROTEST_WATER_DENSITY_KG_PER_CM3,
+  buildBm4lHydrotestCompatibilityPackage,
+  resolveBm4lHydrotestAuthority,
+  solveBm4lHydrotestFrictionCase,
+} from './caesar-accdb-hydrotest-friction.js';
 export { solveCaesarAccdbLinearBenchmark } from './caesar-accdb-linear-solve.js';
 export {
   BM4_QUALIFICATION_ADAPTER_ID,

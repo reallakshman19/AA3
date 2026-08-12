@@ -35,7 +35,6 @@ class LfeaStandaloneRuntime {
     this.#createControllers(options.workbench);
     this.#initialize();
   }
-
   #createLayout() {
     return renderLfeaStandaloneLayout(this.rootElement, this.identity, {
       initialViewId: this.persistedState.activeView,
@@ -45,7 +44,6 @@ class LfeaStandaloneRuntime {
       },
     });
   }
-
   #createViews() {
     this.comparisonController = createLfeaNativeComparisonController(this.layout.comparisonRoot, {
       lookupRun: (runId) => this.runHistory.getRecord(runId),
@@ -62,7 +60,6 @@ class LfeaStandaloneRuntime {
       onSelectRun: (runId) => this.selectHistoryRun(runId),
     });
   }
-
   #createControllers(workbenchOptions) {
     this.sourceController = new LfeaStandaloneInputXmlSourceController(
       this.layout.sourceRoot,
@@ -71,7 +68,6 @@ class LfeaStandaloneRuntime {
     );
     this.workbenchController = new LfeaWorkbenchController(this.layout.workbenchRoot, workbenchOptions);
   }
-
   #initialize() {
     this.governedJourney = createLfeaGovernedJourneyProjection({
       executionState: this.executionAuthority.getState(),
@@ -88,18 +84,15 @@ class LfeaStandaloneRuntime {
     this.workbenchController.init();
     this.refreshCurrent();
   }
-
   requireActive() {
     if (!this.destroyed) return;
     const error = new Error('Standalone LFEA application has been destroyed.');
     error.code = 'LFEA_STANDALONE_DESTROYED';
     throw error;
   }
-
   refreshCurrent() {
     return this.refreshJourney(this.sourceController.getSnapshot(), this.sourceController.getPreFlight());
   }
-
   refreshJourney(sourceSnapshot, preFlight) {
     this.#persistRecentSource(sourceSnapshot);
     const executionState = this.executionAuthority.reconcile(preFlight);
@@ -135,7 +128,6 @@ class LfeaStandaloneRuntime {
     );
     return this.governedJourney;
   }
-
   #updateResultsView() {
     this.resultsView.update(
       this.executionAuthority.getState(),
@@ -144,7 +136,6 @@ class LfeaStandaloneRuntime {
       this.supportPublicationAuthority.getState(),
     );
   }
-
   #persistRecentSource(snapshot) {
     if (!snapshot?.fileName || !snapshot.contentSha256 || !snapshot.sourceUnit) return;
     try {
@@ -156,7 +147,6 @@ class LfeaStandaloneRuntime {
     } catch { return; }
     this.persistedState = this.persistence.load();
   }
-
   #currentHistorySnapshot(sourceSnapshot, preFlight) {
     return this.runHistory.getSnapshot({
       sourceSnapshot,
@@ -165,7 +155,6 @@ class LfeaStandaloneRuntime {
       resultsState: this.resultsAuthority.getState(),
     });
   }
-
   #archiveCurrentRun() {
     return this.runHistory.archive({
       applicationIdentity: this.identity,
@@ -175,7 +164,6 @@ class LfeaStandaloneRuntime {
       resultsState: this.resultsAuthority.getState(),
     });
   }
-
   #engineeringStateSet() {
     return Object.freeze({
       execution: this.executionAuthority.getState(),
@@ -183,7 +171,6 @@ class LfeaStandaloneRuntime {
       support: this.supportPublicationAuthority.getState(),
     });
   }
-
   #assertAuthorityUnchanged(before, operation) {
     if (this.executionAuthority.getState() === before.execution
       && this.resultsAuthority.getState() === before.results
@@ -192,7 +179,6 @@ class LfeaStandaloneRuntime {
     error.code = 'LFEA_VIEW_CONTEXT_AUTHORITY_MUTATION';
     throw error;
   }
-
   selectHistoryRun(runId) {
     this.requireActive();
     const before = this.#engineeringStateSet();
@@ -205,7 +191,6 @@ class LfeaStandaloneRuntime {
     this.#assertAuthorityUnchanged(before, 'History selection');
     return record;
   }
-
   compareHistoryRuns(leftRunId, rightRunId) {
     this.requireActive();
     const before = this.#engineeringStateSet();
@@ -213,20 +198,17 @@ class LfeaStandaloneRuntime {
     this.#assertAuthorityUnchanged(before, 'Run comparison');
     return comparison;
   }
-
   // Evidence dossier creation remains current-only and fail-closed.
   createNativeEvidenceDossier() {
     this.requireActive();
     return this.verificationController.createDossier();
   }
-
   stageNativeSupportAuthority(input) {
     this.requireActive();
     const state = this.supportPublicationAuthority.stage(this.sourceController.getPreFlight(), input);
     this.refreshCurrent();
     return state;
   }
-
   authorizeNativeSupportAuthority(approval) {
     this.requireActive();
     const state = this.supportPublicationAuthority.authorize(
@@ -235,7 +217,6 @@ class LfeaStandaloneRuntime {
     this.refreshCurrent();
     return state;
   }
-
   publishNativeSupportActions() {
     this.requireActive();
     const state = this.supportPublicationAuthority.publish(
@@ -247,7 +228,6 @@ class LfeaStandaloneRuntime {
     this.layout.activate('results');
     return state;
   }
-
   executeNativeAnalysis(runOptions = {}) {
     this.requireActive();
     try {
@@ -263,7 +243,6 @@ class LfeaStandaloneRuntime {
       throw error;
     }
   }
-
   recoverCurrentResults() {
     this.requireActive();
     const state = this.resultsAuthority.recover(
@@ -274,7 +253,6 @@ class LfeaStandaloneRuntime {
     this.layout.activate('results');
     return state;
   }
-
   applicationState() {
     this.requireActive();
     return Object.freeze({
@@ -292,14 +270,12 @@ class LfeaStandaloneRuntime {
       nonAuthoritativePersistence: this.persistedState,
     });
   }
-
   clearInputXmlSource() {
     this.requireActive();
     this.sourceController.clear();
     this.refreshCurrent();
     return this.sourceController.getSnapshot();
   }
-
   destroy() {
     if (this.destroyed) return;
     this.destroyed = true;

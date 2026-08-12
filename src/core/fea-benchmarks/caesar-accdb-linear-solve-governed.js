@@ -27,7 +27,7 @@ export function solveCaesarAccdbLinearBenchmark(benchmarkPackage, selectedCaseId
       ...evidence,
       effectiveConfiguration: deepFreeze({
         ...evidence.effectiveConfiguration,
-        friction: evidenceByCase[caseId],
+        friction: effectiveConfigurationFrictionEvidence(evidenceByCase[caseId]),
       }),
       frictionAuthorityAdapter: deepFreeze({
         adapterId: ADAPTER_ID,
@@ -130,6 +130,27 @@ function resolveCaseFriction(benchmarkPackage, caseId, active) {
     frictionMultiplier: deepFreeze(multiplier),
     effectiveCoefficient: modelCoefficient * frictionMultiplier,
     equation: 'COEFFICIENT_OF_FRICTION_MU * FRICTION_MULTIPLIER',
+  });
+}
+
+function effectiveConfigurationFrictionEvidence(state) {
+  if (state.kind !== 'PRIMITIVE') {
+    return deepFreeze({
+      setting: 'EFFECTIVE_FRICTION',
+      level: 'DERIVED_ALGEBRAIC_DEPENDENCIES',
+      value: 0,
+      source: 'MODEL_COEFFICIENT_TIMES_LOAD_CASE_MULTIPLIER_DEPENDENCIES',
+      authority: state,
+    });
+  }
+  return deepFreeze({
+    setting: 'EFFECTIVE_FRICTION',
+    level: 'MODEL_INPUT_X_LOAD_CASE_SETTING',
+    value: state.effectiveCoefficient,
+    source: `${state.modelCoefficient.source} * ${state.frictionMultiplier.source}`,
+    modelCoefficient: state.modelCoefficient,
+    frictionMultiplier: state.frictionMultiplier,
+    equation: state.equation,
   });
 }
 

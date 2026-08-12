@@ -1,6 +1,9 @@
 /** Non-solving Stage 13 preflight for authoritative LAFEA.3 domain-first execution. */
 import { canonicalLafeaSha256 } from './lafea-canonical-sha256.js';
 import {
+  buildLafeaContinuumCompiledExecutionInput,
+} from './lafea-continuum-compiled-input.js';
+import {
   LAFEA_CONTINUUM_SOLVER_COMPILER_ID,
   LAFEA_CONTINUUM_SOLVER_COMPILER_REVISION,
 } from './lafea-continuum-solver-model.js';
@@ -9,13 +12,13 @@ import { compileLafeaContinuumWorkbenchContext } from './lafea-continuum-workben
 export const LAFEA_CONTINUUM_DOMAIN_FIRST_PREFLIGHT_SCHEMA =
   'lafea-continuum-domain-first-preflight/v1';
 export const LAFEA_CONTINUUM_DOMAIN_FIRST_PREFLIGHT_PRODUCER =
-  'STAGE13/LAFEA.3/DOMAIN_FIRST_COMPILED_PREFLIGHT/13.1';
+  'STAGE13/LAFEA.3/DOMAIN_FIRST_COMPILED_PREFLIGHT/13.2';
 
 const STAGE_ID = 'LAFEA.3';
 const CAPABILITIES = Object.freeze([
   'SOURCE', 'SCHEMA', 'UNIT', 'GEOMETRY', 'TOPOLOGY', 'MATERIAL', 'SECTION',
   'RESTRAINT', 'LOAD', 'PHYSICAL_CASE', 'CONSTRAINT', 'MESH_CUSTODY',
-  'SOLVER_MODEL_COMPILATION',
+  'SOLVER_MODEL_COMPILATION', 'EXECUTION_INPUT_LOWERING',
 ]);
 const SEALED_KEYS = Object.freeze([
   'schema', 'stageId', 'producerRef', 'sourceHash', 'analysisDomainHash',
@@ -28,6 +31,7 @@ const SEALED_KEYS = Object.freeze([
 export function createLafeaContinuumDomainFirstPreflight(context, stageId = STAGE_ID) {
   if (stageId !== STAGE_ID) fail('LAFEA_CONTINUUM_PREFLIGHT_STAGE_NOT_AUTHORIZED');
   const compiled = compileLafeaContinuumWorkbenchContext(context, stageId);
+  buildLafeaContinuumCompiledExecutionInput(compiled.solverModel);
   const record = {
     schema: LAFEA_CONTINUUM_DOMAIN_FIRST_PREFLIGHT_SCHEMA,
     stageId,

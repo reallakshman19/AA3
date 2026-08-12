@@ -9,17 +9,17 @@ const contract = JSON.parse(fs.readFileSync(
   new URL('../benchmarks/LFEA/CAESAR_ACCDB/m047-bm4l-l13-state-trace-contract.json', import.meta.url),
   'utf8',
 ));
+validateContract(contract);
 
-assert.equal(contract.schema, 'm047-bm4l-l13-state-trace-contract/v1');
-assert.equal(contract.product.version, '14.00.00.0910');
-assert.equal(contract.product.build, '231113');
-assert.equal(contract.friction.siteCount, 26);
-assert.equal(contract.positiveGapRows.length, 6);
-assert.equal(contract.inputCustody.governedRows, 1914);
-assert.equal(contract.inputCustody.historicalDiagnosticPass, 1719);
-assert.equal(contract.inputCustody.historicalDiagnosticFail, 195);
-assert.equal(contract.authorityFirewall.gateMayAuthorizeProductionMechanics, false);
-assert.equal(contract.authorityFirewall.gateMayAuthorizeL13Rescore, false);
+const inputArg = process.argv.find((arg) => arg.startsWith('--input='));
+if (inputArg) {
+  const inputPath = inputArg.slice('--input='.length);
+  if (!inputPath) throw new Error('--input requires a JSON path');
+  const evidence = JSON.parse(fs.readFileSync(inputPath, 'utf8'));
+  const assessment = assessBm4lL13StateTraceEvidence(evidence);
+  console.log(JSON.stringify(assessment, null, 2));
+  process.exit(assessment.status === BM4L_L13_STATE_TRACE_EVIDENCE_STATUS.READY_FOR_ENGINEERING_REVIEW ? 0 : 2);
+}
 
 const frictionKeys = contract.friction.nodeIds.map((node) => `FRICTION:${node}`);
 const gapKeys = contract.positiveGapRows.map((row) => row.restraintKey);
@@ -40,14 +40,8 @@ const trace = {
     traceSha256: 'a'.repeat(64),
   },
   iterations: [
-    makeIteration(1, false, 2, {
-      gapClosed: false,
-      slidingNode: null,
-    }),
-    makeIteration(2, true, 0, {
-      gapClosed: true,
-      slidingNode: '20090',
-    }),
+    makeIteration(1, false, 2, { gapClosed: false, slidingNode: null }),
+    makeIteration(2, true, 0, { gapClosed: true, slidingNode: '20090' }),
   ],
 };
 
@@ -95,6 +89,20 @@ assert.ok(blockedIncomplete.blockerCodes.includes('ALL_26_FRICTION_SITES_REQUIRE
 console.log('PASS M047 BM4_L F2.7b exact-build L13 state-trace evidence gate');
 console.log('historical L13 remains 1719/1914 = 89.81191222570533%');
 console.log('passing trace authorizes engineering review only; production mechanics/rescore remain false');
+console.log('ingest product trace with: node scripts/lfea-m047-bm4l-l13-state-trace-evidence-check.mjs --input=<trace.json>');
+
+function validateContract(value) {
+  assert.equal(value.schema, 'm047-bm4l-l13-state-trace-contract/v1');
+  assert.equal(value.product.version, '14.00.00.0910');
+  assert.equal(value.product.build, '231113');
+  assert.equal(value.friction.siteCount, 26);
+  assert.equal(value.positiveGapRows.length, 6);
+  assert.equal(value.inputCustody.governedRows, 1914);
+  assert.equal(value.inputCustody.historicalDiagnosticPass, 1719);
+  assert.equal(value.inputCustody.historicalDiagnosticFail, 195);
+  assert.equal(value.authorityFirewall.gateMayAuthorizeProductionMechanics, false);
+  assert.equal(value.authorityFirewall.gateMayAuthorizeL13Rescore, false);
+}
 
 function makeIteration(iteration, converged, unconvergedRestraintCount, options) {
   const restraints = frictionKeys.map((key) => {

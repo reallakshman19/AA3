@@ -1,8 +1,8 @@
 {
-  "schema": "m047-bm4l-friction-authority-closure/v1",
+  "schema": "m047-bm4l-friction-authority-closure/v2",
   "benchmarkId": "BM4_L",
-  "scope": "INDEPENDENT_STATIC_FRICTION_AUTHORITY_CLOSURE",
-  "stackBase": {
+  "scope": "INDEPENDENT_STATIC_FRICTION_AUTHORITY_CLOSURE_WITH_EXACT_CAESAR_CFG",
+  "historicalStackBase": {
     "pr": 1050,
     "branch": "agent/m047-bm4l-friction-readiness-gate",
     "sha": "3a95e8980fbfe8eef5be5920afe8b9108bea480f"
@@ -17,20 +17,35 @@
         "EXCEEDING_LIMIT_REPLACES_STIFFNESS_WITH_CONSTANT_OPPOSING_EFFORT_ON_NEXT_ITERATION"
       ]
     },
-    "frictionStiffness": {"status":"RESOLVED","value":1000000},
-    "frictionAngleVariationDeg": {"status":"RESOLVED","value":15},
-    "frictionNormalForceVariation": {"status":"RESOLVED","value":0.15},
+    "frictionStiffness": {
+      "status": "RESOLVED",
+      "rawCfgValue": 1000000,
+      "siValueNPerM": 175126835.24647635,
+      "source": "USER_SUPPLIED_EXACT_CAESAR14_CFG_PLUS_INDEPENDENT_BM1_PRODUCT_UNIT_VALIDATION"
+    },
+    "frictionAngleVariationDeg": {
+      "status": "RESOLVED",
+      "value": 15,
+      "source": "USER_SUPPLIED_EXACT_CAESAR14_CFG_FRICT_ANGLE_VAR"
+    },
+    "frictionNormalForceVariation": {
+      "status": "RESOLVED",
+      "value": 0.15,
+      "source": "USER_SUPPLIED_EXACT_CAESAR14_CFG_FRICT_NORM_FORCE_VAR"
+    },
     "frictionSlideMultiplier": {
-      "status": "BLOCKED",
-      "numericValue": null,
-      "finding": "OFFICIAL_HELP_IDENTIFIES_INTERNAL_MULTIPLIER_BUT_PUBLISHES_NO_NUMERIC_VALUE"
+      "status": "RESOLVED",
+      "numericValue": 1,
+      "source": "USER_SUPPLIED_EXACT_CAESAR14_CFG_FRICT_SLIDE_MULT",
+      "provenanceClass": "INDEPENDENT_AUTHORITY"
     },
     "frictionStateHistorySemantics": {
       "status": "BLOCKED_PARTIAL",
       "known": [
         "STICK_TO_SLIDE_SWITCH_OCCURS_ON_FOLLOWING_ITERATION",
-        "ANGLE_VARIATION_USED_ON_FIRST_NONSLIDING_TO_SLIDING_ITERATION",
-        "NORMAL_FORCE_VARIATION_CONTROLS_ADJUSTMENT_OF_EXISTING_SLIDING_FORCE"
+        "ANGLE_VARIATION_VALUE_IS_EXACTLY_15_DEG",
+        "NORMAL_FORCE_VARIATION_VALUE_IS_EXACTLY_0_15",
+        "SLIDE_MULTIPLIER_VALUE_IS_EXACTLY_1_0"
       ],
       "missing": "COMPLETE_REPRODUCIBLE_STATIC_STATE_UPDATE_AND_CONVERGENCE_ORDER"
     },
@@ -44,46 +59,47 @@
       "missing": "COMPLETE_REPRODUCIBLE_STATIC_GAP_CONTACT_ACTIVE_SET_AND_CONVERGENCE_ORDER"
     }
   },
-  "repositoryEvidence": {
-    "commonCommit": "179c4831cf521cf797c13699cfbbd118315c9244",
-    "exactKeySearch": {
-      "query": "FRICTION_SLIDE_MULTIPLIER",
-      "independentNumericHits": 0
-    },
-    "phraseSearch": {
-      "query": "Friction Slide Multiplier",
-      "independentNumericHits": 0,
-      "onlyAdvancedAnalysisDocumentationHit": "docs/Nonlinear_LFEAagent.md"
+  "historicalRepositoryAndArtifactSearch": {
+    "finding": "NO_NUMERIC_SLIDE_MULTIPLIER_WAS_PRESENT_IN_THE_PREVIOUSLY_RETAINED_REPOSITORY_OR_WINDOWS_ARTIFACT",
+    "disposition": "SUPERSEDED_AS_A_BLOCKER_BY_USER_SUPPLIED_EXACT_CFG",
+    "productionArtifact": {
+      "workflowRun": 31513907633,
+      "artifactId": 9110308571,
+      "artifactDigest": "sha256:57684331169984e7770382a3d292fcb7c24bd30c2404fd487c2a5f66e8a907eb",
+      "slideMultiplierPresent": false
     }
   },
-  "productionArtifactEvidence": {
-    "workflowRun": 31513907633,
-    "artifactId": 9110308571,
-    "artifactDigest": "sha256:57684331169984e7770382a3d292fcb7c24bd30c2404fd487c2a5f66e8a907eb",
-    "accdbSha256": "64c05a50e9ed0452622ff5880335460486f24ac8e6adecc9a300b549c9aa82f8",
-    "capturedConfiguration": {
-      "frictionStiffness": 1000000,
-      "slideMultiplierPresent": false,
-      "angleVariationPresent": false,
-      "normalForceVariationPresent": false,
-      "gapContactAlgorithmPresent": false
+  "exactCfgEvidence": {
+    "retainedPath": "benchmarks/LFEA/CAESAR_ACCDB/m047-bm4l-caesar14-user-supplied.cfg.txt",
+    "productVersion": "14.000",
+    "frictionControls": {
+      "FRICT_STIF": 1000000,
+      "FRICT_NORM_FORCE_VAR": 0.15,
+      "FRICT_ANGLE_VAR": 15,
+      "FRICT_SLIDE_MULT": 1
     },
-    "accdbStringScan": {
-      "frictionCoefficientTextPresent": true,
-      "slideMultiplierTextPresent": false,
-      "frictionControlTextPresent": false
-    }
+    "overrideExclusions": [
+      "DEFAULT_AMBIENT_TEMPERATURE",
+      "BOURDON_PRESSURE",
+      "COEFFICIENT_OF_FRICTION_(MU)",
+      "FLEXIBILITY_ELASTIC_MODULUS"
+    ]
   },
   "prohibitedInference": [
-    "DO_NOT_ASSUME_SLIDE_MULTIPLIER_EQUALS_ONE_FROM_MU_N_DESCRIPTION",
-    "DO_NOT_FIT_SLIDE_MULTIPLIER_FROM_L13_OR_L7_RESPONSE",
+    "DO_NOT_USE_CFG_GLOBAL_MU_FOR_BM4_L_WHERE_MODEL_OR_LOAD_CASE_OVERRIDES_APPLY",
+    "DO_NOT_USE_CFG_GLOBAL_AMBIENT_FOR_BM4_L_FILE_LEVEL_AMBIENT",
+    "DO_NOT_USE_CFG_GLOBAL_BOURDON_FOR_BM4_L_FILE_LEVEL_BOURDON",
+    "DO_NOT_SOURCE_EC_EH_FROM_THIS_CFG",
+    "DO_NOT_FIT_STATE_HISTORY_FROM_L13_OR_L7_RESPONSE",
     "DO_NOT_FIT_CONTACT_STATE_RULES_FROM_REFERENCE_RESPONSE",
     "DO_NOT_TREAT_REFERENCE_DIFFERENTIALS_AS_MECHANICS_AUTHORITY"
   ],
   "decision": {
-    "status": "COMPLETE_BLOCKED_NO_NEW_MECHANICS",
+    "status": "SLIDE_MULTIPLIER_RESOLVED_TWO_SEMANTICS_BLOCKERS_REMAIN",
+    "resolvedSinceV1": [
+      "FRICTION_SLIDE_MULTIPLIER_AUTHORITY_REQUIRED"
+    ],
     "remainingBlockers": [
-      "FRICTION_SLIDE_MULTIPLIER_AUTHORITY_REQUIRED",
       "FRICTION_STATE_HISTORY_SEMANTICS_AUTHORITY_REQUIRED",
       "GAP_CONTACT_STATE_SEMANTICS_AUTHORITY_REQUIRED"
     ],

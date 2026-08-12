@@ -63,6 +63,18 @@ export {
   runDeterministicCaesarFrictionActiveSet,
 } from './caesar-friction-active-set.js';
 export {
+  BM4L_ACCDB_FRICTION_DIRECTION,
+  BM4L_ACCDB_FRICTION_RESTRAINT_TYPE,
+  BM4L_ACCDB_FRICTION_RESTRAINT_TYPE_ID,
+  selectBm4lAccdbFrictionRows,
+} from './caesar-accdb-friction-restraint-selection.js';
+export { solveCaesarFrictionRefinedDenseSystem } from './caesar-friction-dense-refinement.js';
+export {
+  runBm4lFrictionStiffnessSensitivity,
+  scaleBm4lFrictionStiffnessPackage,
+} from './caesar-friction-sensitivity.js';
+export { buildCaesarFrictionStiffnessState } from './caesar-friction-stiffness-state.js';
+export {
   BM4L_FRICTION_EXECUTION_ORDER,
   BM4L_FRICTION_MULTIPLIERS,
   BM4L_FRICTION_PRIMITIVE_CASE_IDS,

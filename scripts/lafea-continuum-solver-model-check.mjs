@@ -91,6 +91,20 @@ expectCode(() => compileLafeaContinuumSolverModel({
   meshEvidence: missingMaterialEvidence,
 }), 'LAFEA_CONTINUUM_SOLVER_DOMAIN_MATERIAL_NOT_FOUND');
 
+const unitMismatch = compileFixture(triangleSource(), {
+  geometry: triangleGeometry('m'), allowCompileFailure: true,
+});
+expectCode(() => compileLafeaContinuumSolverModel(unitMismatch.input),
+  'LAFEA_CONTINUUM_SOLVER_GEOMETRY_UNIT_SYSTEM_MISMATCH');
+const meterDocument = triangleSource(); meterDocument.units.length = 'm';
+const noncanonical = compileFixture(meterDocument, {
+  geometry: triangleGeometry('m'),
+  units: { length: 'm', force: 'N', stress: 'MPa', temperature: 'C' },
+  allowCompileFailure: true,
+});
+expectCode(() => compileLafeaContinuumSolverModel(noncanonical.input),
+  'LAFEA_CONTINUUM_SOLVER_NONCANONICAL_GEOMETRY_UNITS_UNSUPPORTED');
+
 const nonuniformDocument = patchSource();
 nonuniformDocument.elements[1].thickness = 12;
 const nonuniform = compileFixture(nonuniformDocument, {
@@ -110,12 +124,13 @@ console.log(JSON.stringify({
   geometryFeatureMapping: ['VERTEX', 'SEGMENT', 'REGION'],
   sourceMeshIdsUsedAsAuthority: false,
   sourceExecutionPolicyRetained: true,
+  noncanonicalGeometryFailsClosed: true,
   deterministicCompilation: true,
   productionWorkbenchCompileAction: true,
   solverExecutedByCompileAction: false,
   executionAuthorized: false,
   releaseQualified: false,
-  boundedScope: 'SINGLE_REGION_UNIFORM_THICKNESS',
+  boundedScope: 'SINGLE_REGION_UNIFORM_THICKNESS_CANONICAL_MM',
 }));
 
 function compileThroughWorkbench() {
@@ -154,10 +169,10 @@ function compileFixture(document, overrides = {}) {
   const source = composition.normalizeDocument(document);
   const canonicalInput = composition.canonicalize(source);
   const authority = issueLafeaSourceAuthority('LAFEA.3', source, 'STAGE12-PURE');
-  const geometry = triangleGeometry();
+  const geometry = overrides.geometry ?? triangleGeometry();
   const caseIds = overrides.caseIds ?? canonicalInput.loadCases.map((row) => row.loadCaseId);
   const domain = buildDomain(
-    authority.sourceHash, geometry, 'MAT', caseIds, overrides.attachments,
+    authority.sourceHash, geometry, 'MAT', caseIds, overrides.attachments, overrides.units,
   );
   const geometryEvidence = buildGeometryEvidence(authority.sourceHash, domain, geometry);
   const profile = meshProfile('T6', 25);
@@ -172,11 +187,11 @@ function compileFixture(document, overrides = {}) {
   return { source, canonicalInput, authority, geometry, domain, geometryEvidence, profile, meshEvidence, input, compiled };
 }
 
-function buildDomain(sourceHash, geometry, materialRef, caseIds, attachments = null) {
+function buildDomain(sourceHash, geometry, materialRef, caseIds, attachments = null, units = null) {
   return createLafeaContinuumAnalysisDomain({
     schema: LAFEA_CONTINUUM_ANALYSIS_DOMAIN_SCHEMA,
     stageId: 'LAFEA.3', sourceHash, applicationRef: 'STAGE12-SOLVER-COMPILER',
-    units: { length: 'mm', force: 'N', stress: 'MPa', temperature: 'C' },
+    units: units ?? { length: 'mm', force: 'N', stress: 'MPa', temperature: 'C' },
     formulation: 'PLANE_STRESS', region: { regionId: 'REGION-1', materialRef },
     physicalCases: caseIds.map((caseId) => ({ caseId })),
     attachments: attachments ?? [
@@ -215,11 +230,11 @@ function buildMeshEvidence(sourceHash, domain, geometry, mesh, profile) {
   });
 }
 
-function triangleGeometry() {
+function triangleGeometry(lengthUnit = 'mm') {
   return createLafeaAnalysisGeometry({
     schema: LAFEA_ANALYSIS_GEOMETRY_SCHEMA,
     stageId: 'LAFEA.3', geometryId: 'TRIANGLE-DOMAIN', coordinateSystemId: 'GLOBAL_XY',
-    lengthUnit: 'mm', orientationPolicy: LAFEA_ANALYSIS_GEOMETRY_ORIENTATION_POLICY,
+    lengthUnit, orientationPolicy: LAFEA_ANALYSIS_GEOMETRY_ORIENTATION_POLICY,
     vertices: [
       { vertexId: 'A', x: 0, y: 0 },
       { vertexId: 'B', x: 100, y: 0 },
@@ -247,7 +262,7 @@ function renamedT6Mesh(nonPlanarZ = 0) {
 function meshProfile(element, globalTargetSize) {
   return canonicalProfile(PROFILE_KINDS.MESH, {
     schema: 'lafea-mesh-profile/v1', profileIdentity: `STAGE12-${element}`,
-    sourceRevision: '12A.2', semanticHash: undefined,
+    sourceRevision: '12B.1', semanticHash: undefined,
     fields: {
       continuumElement: element, shellElement: 'CST_DKT_TRI3_THIN_SHELL_V1',
       globalTargetSize, adjacentSizeRatioMax: 1.5, aspectRatioWarn: 4,

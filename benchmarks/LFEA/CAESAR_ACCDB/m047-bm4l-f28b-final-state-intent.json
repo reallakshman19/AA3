@@ -1,0 +1,18 @@
+{
+  "schema": "m047-bm4l-f28b-final-state-intent/v1",
+  "benchmarkId": "BM4_L",
+  "purpose": "READ_ONLY_AUTHENTICATED_BM4_NL_CASE_17_19_DISPLACEMENT_AND_RESTRAINT_EXTRACTION",
+  "source": {
+    "commonCommit": "179c4831cf521cf797c13699cfbbd118315c9244",
+    "bm4NlZipGitBlob": "86a803ed27ebdbd2836452dc2e874c3458aa204c",
+    "bm4NlAccdbSha256": "85d39463296e569da811d8572e2eff680b858097f76fdf0f47d1755f0b161c21"
+  },
+  "cases": [17, 19],
+  "tables": ["OUTPUT_DISPLACEMENTS", "OUTPUT_RESTRAINTS", "INPUT_RESTRAINTS", "INPUT_UNITS"],
+  "authorityFirewall": {
+    "bm4lReferenceUsedToSelectState": false,
+    "responseFittingAllowed": false,
+    "productionMechanicsAuthorized": false,
+    "l13RescoreAuthorized": false
+  }
+}

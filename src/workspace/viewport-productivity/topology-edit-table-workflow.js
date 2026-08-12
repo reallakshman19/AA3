@@ -152,6 +152,12 @@ export function renderTopologyEditTablePreviewGhost(runtime) {
   const representedByPlacement = (row) => placementIds.has(
     row.pickTarget?.supportId ?? row.pickTarget?.objectId ?? row.entityId ?? row.id,
   );
+  const hasDedicatedSupportOverlay = placementElements.length > 0
+    || restraintGhost.elements.length > 0
+    || restraintGhost.segments.length > 0;
+  const primitives = !hasDedicatedSupportOverlay && Array.isArray(projection.primitives)
+    ? projection.primitives.filter((primitive) => changed.has(primitive.canonicalEntityId))
+    : [];
   runtime.controller.viewportBackend?.renderGhost({
     elements: [
       ...(projection.compactElements ?? projection.elements ?? [])
@@ -163,6 +169,7 @@ export function renderTopologyEditTablePreviewGhost(runtime) {
       ...(projection.compactSegments ?? projection.segments ?? []).filter(accepted),
       ...restraintGhost.segments,
     ],
+    primitives,
   });
 }
 

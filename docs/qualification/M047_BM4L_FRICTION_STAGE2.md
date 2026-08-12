@@ -8,6 +8,20 @@ This change is stacked on exact Stage 1 head `0855afb22b76c4b7657a81641c7fbaa890
 
 The nonlinear path changes only tangential support terms. It does not implement stress, lift-off, one-directional contact, or any BM4_NL/InputXML path.
 
+## Pinned source custody
+
+Issue #1083 is the production source authority. The production gate requires the exact embedded database identity declared by the issue:
+
+- archive Git blob: `df119ae1b8272469b6204036ab1aff21e561dfb8`;
+- archive SHA-256: `978617cba50fa0b1a16c2fa71dc1e0d38e55ac834b191f887d100c6951abd8b9`;
+- member name: `BM4_L.ACCDB`;
+- member byte length: `5,136,384`;
+- member SHA-256: `e21b0862851ea2bb6f20d55e4a3a94f501537b618b98dd46afa9f6777ee38d3c`.
+
+A historical Windows/ACE extraction available in repository evidence came from a different ACCDB SHA (`64c05a50...`). Its 46 restraint rows are therefore retained only as a diagnostic/negative-control fixture. They are not production authority and their node list is never used by the solver. `m047-bm4l-friction-restraint-authority.json` records this distinction explicitly.
+
+Production friction-site membership remains row-driven from the pinned ACCDB itself.
+
 ## Configuration authority migration
 
 Stage 2 introduces `caesar-configuration-authority/v2` with the issue-governed low-to-high order:
@@ -26,6 +40,22 @@ For BM4_L:
 - nominal `FRICT_STIF = 1.0E6 N/cm = 1.0E8 N/m`.
 
 The checked-in `m047-bm4l-friction-authority.json` records the migrated authority without modifying the frozen Stage 1 BM4_L profile.
+
+## Friction-surface selection
+
+Friction is not applied to every non-anchor translational restraint. A physical friction surface is selected only when the pinned `INPUT_RESTRAINTS` row satisfies all Stage 2 source-domain rules:
+
+1. `RES_TYPEID = 3` (ACCDB type `Y`);
+2. `FRIC_COEF > 0`;
+3. `Math.fround(FRIC_COEF) = Math.fround(model mu)`;
+4. the normalized restraint direction is global `+Y` within `1e-9`;
+5. only one friction-bearing Y surface is present at a node.
+
+The model-level `mu=0.3` remains the governed coefficient magnitude. `FRIC_COEF` identifies which physical restraint row carries friction and corroborates the database's single-precision storage; it does not override model authority.
+
+GUI/LIM/ANC rows remain fully active in the qualified mechanical model. They can constrain tangential motion, but they cannot create friction surfaces and their reactions cannot enter the Y-surface Coulomb normal force. Each friction surface must bind exactly one qualified Y-normal spring before the active-set solve is allowed to proceed.
+
+The historical `64c05a50...` diagnostic fixture happens to contain 26 positive-friction Y rows and three non-friction Y rows (`20300`, `20640`, `21640`). Those observations exercise negative controls only; they are not node hardcodes and do not define the pinned `e21b...` production topology.
 
 ## Friction law
 
@@ -84,7 +114,11 @@ The adapted boundary intentionally does only what Stage 2 needs: open the binary
 
 It does **not** copy the XML utility's higher-level CAESAR interpretation or fallback heuristics. Advanced_Analysis remains the authority for required tables, units, identities, configuration resolution, assembly, recovery and qualification. Missing required tables, unsafe table names, unsupported cell types and extraction failures remain fatal.
 
-The browser module versions are pinned rather than using the XML application's major-version CDN aliases. No silent ACE fallback is performed. The legacy PowerShell/ACE extractor remains in the repository as an independent earlier tool, not as the Stage 2 fallback path.
+### Current runtime limitation
+
+The current adapter still loads pinned `mdb-reader@2.2.6` and `buffer@6.0.3` through an `esm.sh` browser import map and therefore requires a Playwright Chromium/Chrome runtime plus outbound module access. This is a known packaging limitation, not an engineering-result assumption. No silent ACE fallback is performed.
+
+Upstream `mdb-reader@2.2.6` has a native Node entry point, so an offline/local Node cutover is technically available. That cutover will not be claimed complete until `mdb-reader` and all transitives are represented reproducibly in this repository's npm lock; this branch does not invent package-integrity metadata merely to remove the browser requirement.
 
 ## Integration boundary
 
@@ -96,11 +130,26 @@ For L13/L7 the friction adapter:
 2. intercepts the compiled mechanical model, element contributions, physical load case and governed solver profile;
 3. assembles the exact qualified base matrix/load;
 4. adds only stick tangent blocks or slide capped-load vectors;
-5. iterates deterministically;
-6. returns the converged displacement/reaction state to the original ACCDB recovery path;
-7. requires recovered physical nodal equilibrium to pass.
+5. solves each linearization with the same dense direct scaling and compensated residual-refinement policy used by the qualified linear solver;
+6. applies the same normalized-residual, energy-balance and conditioning thresholds to each final linearization;
+7. iterates deterministically;
+8. returns the converged displacement/reaction state to the original ACCDB recovery path;
+9. requires recovered physical nodal equilibrium to pass.
 
-The bootstrap linear result is never accepted as friction qualification evidence.
+A numerical `WARN` is retained in evidence but is not accepted as a nominal friction qualification PASS. The bootstrap linear result is never accepted as friction qualification evidence.
+
+## Nonlinear stiffness-state identity
+
+The base linear `stiffnessStateHash` is insufficient for friction because the converged tangent matrix depends on STICK/SLIDE state. Stage 2 therefore binds a nonlinear stiffness identity to:
+
+- the frozen base stiffness-state hash;
+- each friction restraint identity/node;
+- its converged STICK/SLIDE state;
+- its declared friction stiffness.
+
+Changing STICK to SLIDE changes the nonlinear tangent-state hash. Changing only a capped slide-force magnitude does not redefine tangent stiffness; that force remains part of the nonlinear load/state ledger and execution identity.
+
+L15 has no independent tangent state because it is an algebraic result combination, not a solve.
 
 ## Execution order
 
@@ -118,29 +167,42 @@ Paired-delta evidence is emitted for:
 - `L15-L14`;
 - identity residual `(L15-L14)-((L7-L5)-(L13-L6))`.
 
+## FRICT_STIF sensitivity
+
+The production run now executes the issue-governed stiffness sensitivity points explicitly:
+
+- `0.5x` — diagnostic-only independent L13/L7 solves, then algebraic L15;
+- `1x` — the governed nominal two-repeat qualification result is reused;
+- `2x` — diagnostic-only independent L13/L7 solves, then algebraic L15.
+
+Only the declared `FRICT_STIF` value is scaled. Model `mu`, load-case friction multipliers, source identity and all qualified non-friction mechanics remain unchanged. The nominal package is not mutated.
+
+Sensitivity is diagnostic only. A 0.5x/2x diagnostic failure is recorded but cannot be used to retune the nominal solver or replace the 1x qualification result. Conversely, a diagnostic PASS cannot rescue a failing nominal 1x run.
+
 ## Direct CAESAR comparison
 
 The same production run compares every emitted actual case against the ACCDB reference rows using the governed benchmark tolerances. It records the full component comparison, restraint-component counts, restraint failures, and the maximum nonzero-reference percentage error per case.
 
 The friction restraint acceptance set is L13, L7, L15 and L1. Missing cases are reported as `NOT_READY`; they are not silently omitted. Overall acceptance is separated into:
 
-- `mechanicsStatus` — nonlinear convergence/equilibrium/determinism status;
+- `mechanicsStatus` — nonlinear convergence/equilibrium/determinism/numerical-qualification status;
+- `frictionRestraintSourceCustodyStatus` — exact pinned ACCDB identity plus row-driven friction-source checks;
 - `benchmarkRestraintAccuracyStatus` — direct CAESAR restraint comparison status;
-- `overallStatus` — may be `PASS` only when both preceding gates pass.
+- `overallStatus` — may be `PASS` only when the governed gates pass.
 
-Thus a converged nonlinear solution cannot be reported overall PASS while its CAESAR restraint components fail the benchmark criterion.
+Thus a converged nonlinear solution cannot be reported overall PASS while its source custody or CAESAR restraint components fail.
 
 ## Convergence and evidence
 
 The versioned nominal profile records all-stick initialization, no nominal load stepping, unit relaxation, maximum iterations, update tolerances, cap/stick/slide tolerances, assembled-load closure tolerance, direction tolerance, physical equilibrium caps, repeat count, and 0.5x/1x/2x stiffness sensitivity points.
 
-Each friction iteration records restraint identity, normal direction, relative tangential displacement, signed/magnitude normal reaction, effective coefficient, stiffness, Coulomb cap, trial spring force, state, state change, applied friction vector, slip direction, residuals, assembly mode, and the maximum assembled-vs-recovered capped-load residual.
+Each friction iteration records restraint identity, normal direction, relative tangential displacement, signed/magnitude normal reaction, effective coefficient, stiffness, Coulomb cap, trial spring force, state, state change, applied friction vector, slip direction, residuals, assembly mode, and the maximum assembled-vs-recovered capped-load residual. Solver evidence also carries factorization kind, condition estimate and iterative-refinement history.
 
-A state is not accepted from displacement stationarity alone. The gates require active-set stability, displacement/reaction update closure, cap and constitutive closure, assembled friction-load closure, opposing slide direction, equation equilibrium, recovered physical equilibrium, and deterministic repeated-run evidence.
+A state is not accepted from displacement stationarity alone. The gates require active-set stability, displacement/reaction update closure, cap and constitutive closure, assembled friction-load closure, opposing slide direction, equation equilibrium, recovered physical equilibrium, deterministic repeated-run evidence, base-solver residual qualification, energy balance and conditioning.
 
 ## Local production command
 
-The command is now cross-platform. It requires Node, the repository dependencies, a Chromium/Chrome runtime usable by Playwright, network access to the pinned `esm.sh` browser modules, and the pinned `BM4_L.ACCDB`. Set `LFEA_ACCDB_BROWSER_CHANNEL` only when an explicit installed Playwright browser channel must be selected.
+The command is cross-platform with the current browser-based extraction packaging. It requires Node, repository dependencies, a Chromium/Chrome runtime usable by Playwright, network access to the pinned `esm.sh` browser modules, and the exact pinned `BM4_L.ACCDB`. Set `LFEA_ACCDB_BROWSER_CHANNEL` only when an explicit installed Playwright browser channel must be selected.
 
 ```powershell
 node scripts/lfea-m047-bm4l-friction.mjs `
@@ -151,7 +213,7 @@ node scripts/lfea-m047-bm4l-friction.mjs `
   --evidence-out reports/m047-bm4l-friction-evidence.json
 ```
 
-The emitted actual-result package remains compatible with the standard ACCDB benchmark comparison contract, while the evidence file already contains the direct Stage 2 accuracy comparison.
+The emitted actual-result package remains compatible with the standard ACCDB benchmark comparison contract. The evidence file contains direct Stage 2 accuracy comparison, pinned-source custody, active-set/repeat evidence, paired-delta RCA and 0.5x/1x/2x sensitivity.
 
 ## Current qualification boundary
 
@@ -160,10 +222,12 @@ L13/L7/L15 mechanics are implemented. L1 is intentionally fail-closed with `CAES
 Accordingly this PR must remain draft and must not claim full issue acceptance until:
 
 1. WW and HP load construction are independently source-authorized and qualified;
-2. the pinned BM4_L production run is executed with the mdb-reader extraction engine;
+2. the exact issue-pinned `e21b0862...` BM4_L production run is executed;
 3. L2-L6/L14 regression evidence remains passing;
 4. L13/L7/L1 restraint components and all required result families are compared to the pinned ACCDB, with the L15 literal combination report retained;
 5. nominal repeat and stiffness-sensitivity artifacts are published.
+
+The historical `64c05a50...` extraction cannot satisfy item 2.
 
 ## Tests available in this branch
 
@@ -175,6 +239,15 @@ Accordingly this PR must remain draft and must not claim full issue acceptance u
 - active-set load carry-forward;
 - rejection of stable-SLIDE convergence until the capped load assembled in the solved RHS matches the newly recovered cap/direction;
 - repeated-run state determinism;
-- scoped solver-interceptor lifetime and exception cleanup.
+- scoped solver-interceptor lifetime and exception cleanup;
+- positive-`FRIC_COEF` type-Y source selection and GUI/LIM/ANC exclusion;
+- parser-normalized `0.3` versus expanded float32 coefficient equivalence;
+- historical 46-row topology retained only as a non-authoritative negative-control fixture;
+- exact issue-pinned ACCDB filename/length/SHA custody gates;
+- dense iterative-refinement behavior and residual/energy/conditioning qualification;
+- 0.5x/2x sensitivity isolation from nominal `FRICT_STIF` and model `mu`;
+- nonlinear tangent-state identity changes on STICK/SLIDE and ignores capped-load magnitude.
 
-The original isolated friction-kernel test set was exercised during authoring and passed 9/9. The new assembled-load closure reproducer was also executed locally against the current controller source and passed. The cross-platform mdb-reader production extraction itself has not been executed in this authoring runtime because it has no repository Playwright installation/browser and outbound module loading is network-isolated; the pinned BM4_L production result is therefore still not claimed here.
+The original isolated friction-kernel test set was exercised during authoring and passed 9/9. The assembled-load closure reproducer was also executed locally against the controller source and passed. The newer repository-integrated tests have been committed but a full repository test run is not claimed from this network-isolated authoring runtime.
+
+The browser-based mdb-reader production extraction itself has not been executed in this authoring runtime because the pinned `e21b...` ACCDB is not materialized locally and outbound module loading/browser execution are unavailable. Fresh L13/L7/L15 CAESAR percentage agreement is therefore still not claimed here.

@@ -26,6 +26,18 @@ test('3D Demo is reachable through visible production controls only', async ({ p
 
   await page.keyboard.press('Enter');
   await expect(page.locator('[data-role="topology-edit-status"]'))
+    .toContainText('SUPPORT_GEOMETRY_POLICY_REQUIRED');
+  const supportBlocked = await visibleEvidence(host);
+  expect(supportBlocked.canonicalHash).toBe(baseline.canonicalHash);
+  expect(supportBlocked.journalHash).toBe(baseline.journalHash);
+  expect(supportBlocked.activeCommandCount).toBe(0);
+
+  await expectEndpoint(page, 'P-003, TO');
+  await page.getByRole('button', { name: 'P-003, TO', exact: true }).click();
+  await page.keyboard.press('PageUp');
+  await expect(host).toHaveAttribute('data-topology-edit-interaction-preview-hash', /.+/);
+  await page.keyboard.press('Enter');
+  await expect(page.locator('[data-role="topology-edit-status"]'))
     .toContainText('MOVE_NODE accepted from exact preview');
   const moved = await visibleEvidence(host);
   expect(moved.canonicalHash).not.toBe(baseline.canonicalHash);
@@ -76,6 +88,7 @@ test('3D Demo is reachable through visible production controls only', async ({ p
     fixture: 'public/fixtures/topology-edit-20-element-demo.staged.json',
     baseline,
     preview,
+    supportBlocked,
     moved,
     splitState,
     twoEndpointState,

@@ -8,6 +8,10 @@ import {
 } from '../professional/topology-edit-professional-operation-session.js';
 import { planProfessionalOperation } from '../professional/topology-edit-route-operations.js';
 import {
+  topologyEditAffectedEdgeIds,
+  topologyEditSupportGeometryDependencies,
+} from '../professional/topology-edit-support-geometry-dependency.js';
+import {
   createTopologyEditCapabilityReceipt,
   TOPOLOGY_EDIT_CAPABILITY_REASONS,
 } from './topology-edit-capability-contract.js';
@@ -20,9 +24,24 @@ export function deriveTopologyEditCommandCapability(input = {}) {
   if (!actionId) return blocked('COMMAND', 'UNKNOWN', context, 'SELECTION_REQUIRED', 'Choose a governed command.');
 
   if (actionId === 'move-positive-z') {
-    return selection.nodeIds.length === 1
-      ? available('COMMAND', actionId, context)
-      : blocked('COMMAND', actionId, context, 'EXACT_NODE_REQUIRED', 'Requires one exact canonical node.');
+    if (selection.nodeIds.length !== 1) {
+      return blocked('COMMAND', actionId, context, 'EXACT_NODE_REQUIRED', 'Requires one exact canonical node.');
+    }
+    const movedNodeIds = selection.nodeIds;
+    const dependencies = topologyEditSupportGeometryDependencies(topology, {
+      movedNodeIds,
+      affectedEdgeIds: topologyEditAffectedEdgeIds(topology, movedNodeIds),
+    });
+    if (dependencies.length) {
+      return unrepresentable(
+        'COMMAND',
+        actionId,
+        context,
+        'SUPPORT_GEOMETRY_POLICY_REQUIRED',
+        `Node ${movedNodeIds[0]} affects support-host geometry; support movement policy must be certified before moving it.`,
+      );
+    }
+    return available('COMMAND', actionId, context);
   }
   if (Object.hasOwn(TOPOLOGY_EDIT_EXACT_GAP_MM, actionId)) {
     if (selection.nodeIds.length !== 2) {
@@ -201,6 +220,7 @@ function missingInputLabels(message) {
 }
 function reasonForPlannerError(message) {
   if (/graph-open|exactly one incident edge/iu.test(message)) return 'ENDPOINT_NOT_GRAPH_OPEN';
+  if (/support.*geometry|SUPPORT_GEOMETRY_POLICY_REQUIRED/iu.test(message)) return 'SUPPORT_GEOMETRY_POLICY_REQUIRED';
   if (/catalogue|compatib/iu.test(message)) return 'EXACT_CATALOGUE_RECORD_INCOMPATIBLE';
   return 'PLANNER_BLOCKED';
 }

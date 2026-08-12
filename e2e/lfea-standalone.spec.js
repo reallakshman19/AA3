@@ -1,0 +1,150 @@
+import { expect, test } from '@playwright/test';
+import {
+  lfeaStandaloneInputXmlX,
+  lfeaStandaloneInputXmlY,
+  lfeaStandaloneMalformedInputXml,
+} from './fixtures/lfea-standalone-inputxml-fixtures.js';
+
+const LFEA_URL = '/Advanced_Analysis/lfea.html';
+const STATUS = '[data-role="lfea-standalone-status"]';
+const SOURCE_INPUT = 'section[data-view-id="source"] input[type="file"]';
+const view = (id) => `section[data-view-id="${id}"]`;
+const historyRow = (runId) => `${view('history')} tr[data-run-id="${runId}"]`;
+
+async function openStandalone(page) {
+  await page.goto(LFEA_URL);
+  await expect(page.locator('[data-role="lfea-standalone-shell"]')).toBeVisible();
+  await expect(page.locator('[data-role="lafea-consumer-root"]')).toHaveCount(0);
+  await expect(page.locator('[data-role="lfea-consumer-root"]')).toHaveCount(1);
+}
+
+async function uploadXml(page, name, content) {
+  await page.locator(SOURCE_INPUT).setInputFiles({
+    name,
+    mimeType: 'text/xml',
+    buffer: Buffer.from(content),
+  });
+}
+
+async function authorizeIfRequired(page) {
+  const run = page.getByRole('button', { name: 'Run native analysis' });
+  if (await run.isEnabled()) return;
+
+  await page.locator('button[data-view-id="source"]').click();
+  const authorize = page.getByRole('button', { name: 'Accept Native Pre-flight Limitations' });
+  await expect(authorize).toBeVisible();
+  await page.locator('[data-role="linear-piping-inputxml-reviewer"]').fill('LFEA-STANDALONE-E2E-REVIEWER');
+  await page.locator('[data-role="linear-piping-inputxml-review-reason"]').fill(
+    'Browser qualification accepts the complete disclosed conditional limitation set for this fixture.',
+  );
+  await authorize.click();
+  await expect(page.locator('[data-role="linear-piping-inputxml-source-workflow"]'))
+    .toHaveAttribute('data-pre-flight-authorized', 'true');
+
+  await page.locator('button[data-view-id="analysis"]').click();
+  await expect(run).toBeEnabled();
+}
+
+async function runNative(page) {
+  await page.locator('button[data-view-id="analysis"]').click();
+  const run = page.getByRole('button', { name: 'Run native analysis' });
+  await authorizeIfRequired(page);
+  await run.click();
+  await expect(page.locator(view('results'))).toBeVisible();
+  await expect(page.getByText('Raw B-3.3 displacement — GLOBAL basis')).toBeVisible();
+  await expect(page.getByText('Recovered B-3.4 element-end actions')).toBeVisible();
+}
+
+async function createDossier(page) {
+  await page.locator('button[data-view-id="verification"]').click();
+  const verification = page.locator(view('verification'));
+  await expect(verification.getByRole('heading', { name: 'Native piping Verification' })).toBeVisible();
+  await expect(verification.getByText('CURRENT', { exact: true }).first()).toBeVisible();
+  const create = verification.getByRole('button', { name: 'Create current evidence dossier' });
+  await expect(create).toBeEnabled();
+  await create.click();
+  await expect(verification.getByText('CURRENT_EVIDENCE_ONLY', { exact: true })).toBeVisible();
+  await expect(verification.getByText('NO', { exact: true })).toBeVisible();
+  await expect(verification.getByText('SUPPORT_ACTIONS_PUBLICATION_BLOCKED').first()).toBeVisible();
+  await expect(verification.getByText('B31_CODE_PUBLICATION_BLOCKED').first()).toBeVisible();
+}
+
+async function historyRunIds(page) {
+  await page.locator('button[data-view-id="history"]').click();
+  const rows = page.locator(`${view('history')} tr[data-run-id]`);
+  return rows.evaluateAll((nodes) => nodes.map((node) => node.getAttribute('data-run-id')).filter(Boolean));
+}
+
+test.describe('LFEA standalone governed browser journey', () => {
+  test('Source → Run → Results → Verification/Dossier → stale → rerun → Compare → reload', async ({ page }) => {
+    await openStandalone(page);
+
+    await uploadXml(page, 'standalone-x.xml', lfeaStandaloneInputXmlX());
+    await expect(page.locator(STATUS)).not.toContainText('Import a governed');
+    await expect(page.getByText(/standalone-x\.xml/i)).toBeVisible();
+
+    await page.locator('button[data-view-id="review"]').click();
+    await expect(page.locator(view('review'))).toBeVisible();
+    await page.locator('button[data-view-id="model"]').click();
+    await expect(page.locator(view('model'))).toBeVisible();
+
+    await runNative(page);
+    const results = page.locator(view('results'));
+    await expect(results.getByText('Support actions Fa / Fl / Fv')).toBeVisible();
+    await expect(results.getByText('GOVERNED_INTERFACE_SET_REQUIRED').first()).toBeVisible();
+    await expect(results.getByText('COMPONENT_CODE_POINT_RECOVERY_REQUIRED').first()).toBeVisible();
+    await createDossier(page);
+
+    let runs = await historyRunIds(page);
+    expect(runs.length).toBe(1);
+    const firstRun = runs[0];
+    await expect(page.locator(historyRow(firstRun))).toContainText('CURRENT');
+
+    await page.locator('button[data-view-id="source"]').click();
+    await uploadXml(page, 'standalone-y.xml', lfeaStandaloneInputXmlY());
+    await page.locator('button[data-view-id="verification"]').click();
+    const verification = page.locator(view('verification'));
+    await expect(verification.getByText('CURRENT_RAW_EXECUTION_REQUIRED').first()).toBeVisible();
+    await expect(verification.getByRole('button', { name: 'Create current evidence dossier' })).toHaveCount(0);
+
+    runs = await historyRunIds(page);
+    await expect(page.locator(historyRow(firstRun))).toContainText('STALE');
+
+    await runNative(page);
+    runs = await historyRunIds(page);
+    expect(runs.length).toBe(2);
+    const secondRun = runs.find((runId) => runId !== firstRun);
+    expect(secondRun).toBeTruthy();
+    await expect(page.locator(historyRow(secondRun))).toContainText('CURRENT');
+
+    await page.locator('button[data-view-id="compare"]').click();
+    const comparison = page.locator(view('compare'));
+    await comparison.locator('[data-role="lfea-compare-left"]').selectOption(firstRun);
+    await comparison.locator('[data-role="lfea-compare-right"]').selectOption(secondRun);
+    await comparison.getByRole('button', { name: 'Compare selected runs' }).click();
+    await expect(comparison.getByText('NOT_DIRECTLY_COMPARABLE', { exact: true }).first()).toBeVisible();
+    await expect(comparison.getByText('BASIS_MISMATCH').first()).toBeVisible();
+
+    await page.reload();
+    await expect(page.locator('[data-role="lfea-standalone-shell"]')).toBeVisible();
+    await expect(page.locator(STATUS)).toContainText('Recent source metadata only');
+    await expect(page.locator(STATUS)).toContainText('Re-import is required');
+    await expect(page.getByText('CURRENT_EVIDENCE_ONLY', { exact: true })).toHaveCount(0);
+    await page.locator('button[data-view-id="history"]').click();
+    await expect(page.locator(`${view('history')} tr[data-run-id]`)).toHaveCount(0);
+  });
+
+  test('malformed source cannot become runnable engineering authority', async ({ page }) => {
+    await openStandalone(page);
+    await uploadXml(page, 'malformed.xml', lfeaStandaloneMalformedInputXml());
+
+    const source = page.locator(view('source'));
+    await expect(source).toContainText('UNIT AUTHORITY REQUIRED');
+    await source.getByRole('button', { name: 'Authorize Source Unit' }).click();
+    await expect(source).toContainText(/rejected|failed closed|invalid|block/i);
+
+    await page.locator('button[data-view-id="analysis"]').click();
+    await expect(page.getByRole('button', { name: 'Run native analysis' })).toBeDisabled();
+    await expect(page.getByRole('button', { name: 'Create current evidence dossier' })).toHaveCount(0);
+  });
+});

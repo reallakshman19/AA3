@@ -1,6 +1,6 @@
-import { sparseEntry, sparseMultiply } from '../lafea-linear-solve/sparse-matrix.js';
-import { sparseCholeskySolve } from '../lafea-linear-solve/sparse-cholesky.js';
-import { sparseLdltSolve } from '../lafea-linear-solve/sparse-ldlt.js';
+import { sparseEntry, sparseMultiply } from '../shared-linear-solve/sparse-matrix.js';
+import { sparseCholeskySolve } from '../shared-linear-solve/sparse-cholesky.js';
+import { sparseLdltSolve } from '../shared-linear-solve/sparse-ldlt.js';
 import { semanticHash } from '../shared-piping-model/canonical-json.js';
 import { deepFreeze } from '../shared-piping-model/immutable.js';
 import { DOF_ORDER } from '../linear-fea-contract/conventions.js';
@@ -72,7 +72,6 @@ function combineBasisComponents(basis, components) {
   ];
 }
 
-/** Scatter every NODAL_FORCE_MOMENT primitive into the global applied-load vector. */
 function addNodalForcePrimitives(Ffull, dofMap, loadCase) {
   const diagnostics = [];
   for (const primitive of loadCase.primitives) {
@@ -88,7 +87,6 @@ function addNodalForcePrimitives(Ffull, dofMap, loadCase) {
   return diagnostics;
 }
 
-/** Section 6 "Nozzle movement": resolve one displacement value per PRESCRIBED_SLOT constraint for this case. */
 function resolvePrescribedValues(constrained, loadCase) {
   const bySlot = new Map(
     loadCase.primitives
@@ -112,12 +110,6 @@ function resolvePrescribedValues(constrained, loadCase) {
   return { values, diagnostics };
 }
 
-/**
- * An inactive analysis DOF is a declared kinematic subspace, not a support.
- * It may be removed only when it is exactly uncoupled from every retained DOF
- * and receives no element, nodal or initial-strain load. Any nonzero term
- * blocks execution rather than silently discarding engineering content.
- */
 function stiffnessCoupling(assembly, rowIndex, columnIndex) {
   if (assembly.sparseK !== undefined) return sparseEntry(assembly.sparseK, rowIndex, columnIndex);
   return assembly.K[rowIndex * assembly.n + columnIndex];
@@ -173,11 +165,6 @@ function solveScaledSystem(factorization, rhs) {
   return applyDiagonalScalingToVector(scaledSolution, factorization.scaling.factors);
 }
 
-/**
- * Improve a direct solution by repeatedly solving its computed residual with
- * the same factorization. The iteration count and target are declared solver
- * policies; the best finite iterate is retained if arithmetic stagnates.
- */
 function solveRefinedSystem(factorization, matrix, rhs, policies) {
   const reference = Math.max(norm2(rhs), Number.MIN_VALUE);
   let currentSolution = solveScaledSystem(factorization, rhs);
@@ -229,7 +216,6 @@ function freeResidual(factorization, matrix, solution, rhs) {
   return predicted.map((value, index) => value - rhs[index]);
 }
 
-/** Compute refinement residuals with product-error compensation without changing result recovery arithmetic. */
 function accurateDenseMatVec(matrix, size, vector) {
   return Array.from({ length: size }, (_, row) => accurateDenseDot(matrix, size, vector, row));
 }
@@ -274,26 +260,6 @@ function canonicalEntries(vector, dofMap, nodeIds) {
   return entries;
 }
 
-/**
- * LFEA-B3.3 exit boundary: assemble one bound mechanical model and one
- * physical load case into a solved, qualified `fea-linear-execution/v1`
- * record (sections 8, 8.1, 9 displacement/reaction).
- *
- * Factorization reuse (section 7.2) is keyed by `stiffnessStateHash` and an
- * independently-computed constrained-partition hash; backend variants are
- * segregated inside that key. Passing the same `cache` across two calls whose
- * model, partition and declared backend are unchanged reuses the same
- * factorization object, while a changed stiffness state, partition or backend
- * always misses the corresponding cache variant.
- *
- * @param {object} args
- * @param {Readonly<object>} args.compilation Sealed `fea-linear-mechanical-model-compilation/v1`.
- * @param {Array<object>} args.elementContributions Normalized contributions, one per model element.
- * @param {Readonly<object>} args.loadCase Sealed `fea-linear-physical-load-case/v1`, bound to the same model.
- * @param {Readonly<object>} args.solverProfile Sealed `fea-linear-solver-profile/v1`.
- * @param {Map<string,object>} [args.cache] Factorization cache; a fresh one-shot cache is created if omitted.
- * @returns {Readonly<object>} `fea-linear-execution/v1` plus a non-hashed `factorizationHandle` for reuse proofs.
- */
 export function compileSolverExecution({ compilation, elementContributions, loadCase, solverProfile, cache }) {
   const acceptedCompilation = requireMechanicalModelCompilation(compilation);
   const acceptedLoadCase = requirePhysicalLoadCase(loadCase);

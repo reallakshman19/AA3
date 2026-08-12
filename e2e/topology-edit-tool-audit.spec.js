@@ -3,15 +3,10 @@ import { expect, test } from '@playwright/test';
 
 const REPORT_PATH = 'reports/qualification/topology-edit-tool-audit.json';
 const CONTROLLER_KEY = '__TOPOLOGY_EDIT_TOOL_AUDIT_CONTROLLER__';
-const EDGE_ACTIONS = Object.freeze([
-  'split-edge-half', 'disconnect-from', 'disconnect-to', 'delete-edge',
-]);
-const TWO_NODE_ACTIONS = Object.freeze([
-  'set-gap-3', 'set-gap-20', 'merge-nodes', 'bridge-gap', 'add-straight',
-]);
-const ALL_ACTIONS = Object.freeze([
-  'move-positive-z', ...TWO_NODE_ACTIONS, ...EDGE_ACTIONS,
-]);
+const EDGE_ACTIONS = Object.freeze(['split-edge-half', 'disconnect-from', 'disconnect-to', 'delete-edge']);
+const TWO_NODE_ACTIONS = Object.freeze(['set-gap-3', 'set-gap-20', 'merge-nodes', 'bridge-gap', 'add-straight']);
+const ALL_ACTIONS = Object.freeze(['move-positive-z', ...TWO_NODE_ACTIONS, ...EDGE_ACTIONS]);
+const QUALIFIED_MOVE_PORT = Object.freeze({ entityId: 'P-003', role: 'TO', portKey: 'P-003:port:end' });
 const QUALIFIED_GAP_PORTS = Object.freeze([
   { entityId: 'P-001', role: 'TO', portKey: 'P-001:port:end' },
   { entityId: 'E-001', role: 'FROM', portKey: 'E-001:port:start' },
@@ -45,8 +40,12 @@ test('production endpoint affordances enable exact governed edit tools', async (
   await expectEnabled(page, EDGE_ACTIONS);
   await expectDisabled(page, ['move-positive-z', ...TWO_NODE_ACTIONS]);
 
-  const nodeId = await selectExactEndpoint(page, host, QUALIFIED_GAP_PORTS[0]);
-  await expect(statusOutput(page)).toContainText(`Selected node ${nodeId}.`);
+  const supportedNodeId = await selectExactEndpoint(page, host, QUALIFIED_GAP_PORTS[0]);
+  await expect(statusOutput(page)).toContainText(`Selected node ${supportedNodeId}.`);
+  await expectDisabled(page, ['move-positive-z', ...TWO_NODE_ACTIONS, ...EDGE_ACTIONS]);
+
+  const moveNodeId = await selectExactEndpoint(page, host, QUALIFIED_MOVE_PORT);
+  await expect(statusOutput(page)).toContainText(`Selected node ${moveNodeId}.`);
   await expectEnabled(page, ['move-positive-z']);
   await expectDisabled(page, [...TWO_NODE_ACTIONS, ...EDGE_ACTIONS]);
 
@@ -63,9 +62,14 @@ test('canonical search replaces active selection and refreshes command enablemen
   await selectBySearch(page, host, edgeId);
   await expectEnabled(page, EDGE_ACTIONS);
 
-  const nodeId = await canonicalNodeForPort(page, 'P-001:port:start');
-  await selectBySearch(page, host, nodeId);
-  await expect(statusOutput(page)).toContainText(`Selected node ${nodeId}.`);
+  const supportedNodeId = await canonicalNodeForPort(page, 'P-001:port:start');
+  await selectBySearch(page, host, supportedNodeId);
+  await expect(statusOutput(page)).toContainText(`Selected node ${supportedNodeId}.`);
+  await expectDisabled(page, ['move-positive-z', ...TWO_NODE_ACTIONS, ...EDGE_ACTIONS]);
+
+  const moveNodeId = await canonicalNodeForPort(page, QUALIFIED_MOVE_PORT.portKey);
+  await selectBySearch(page, host, moveNodeId);
+  await expect(statusOutput(page)).toContainText(`Selected node ${moveNodeId}.`);
   await expectEnabled(page, ['move-positive-z']);
   await expectDisabled(page, [...TWO_NODE_ACTIONS, ...EDGE_ACTIONS]);
 });
@@ -81,13 +85,9 @@ test('all ten governed edit tools execute independently on fresh 20-object sampl
       executions.push(await executeAgainstAnyEdge(page, host, scenario.actionId, baseHash));
       continue;
     }
-    if (scenario.kind === 'two-node') {
-      await selectQualifiedGapVisible(page, host);
-    } else if (scenario.kind === 'single-node') {
-      await selectExactEndpoint(page, host, {
-        entityId: 'P-001', role: 'FROM', portKey: 'P-001:port:start',
-      });
-    } else {
+    if (scenario.kind === 'two-node') await selectQualifiedGapVisible(page, host);
+    else if (scenario.kind === 'single-node') await selectExactEndpoint(page, host, QUALIFIED_MOVE_PORT);
+    else {
       const edgeId = (await canonicalEdgeIds(page))[0];
       await selectBySearch(page, host, edgeId);
     }
@@ -106,6 +106,7 @@ test('all ten governed edit tools execute independently on fresh 20-object sampl
     candidateHead: process.env.TOPOLOGY_EDIT_TARGET_HEAD_SHA || process.env.GITHUB_SHA || null,
     fixture: 'public/fixtures/topology-edit-20-element-demo.staged.json',
     qualifiedGapPorts: QUALIFIED_GAP_PORTS.map((row) => row.portKey),
+    qualifiedMovePort: QUALIFIED_MOVE_PORT.portKey,
     backend: 'TopologyEditNavigationHudViewportBackend',
     executionCount: executions.length,
     rejectedActionIds: rejected.map((row) => row.actionId),
@@ -152,7 +153,7 @@ test('navigation, presentation, history, and draft controls remain operable', as
   await page.locator('[data-action="reset-presentation"]').click();
   await expect(page.locator('[data-role="presentation-visibility-status"]')).toHaveText('Visibility: all');
 
-  const nodeId = await canonicalNodeForPort(page, 'P-001:port:start');
+  const nodeId = await canonicalNodeForPort(page, QUALIFIED_MOVE_PORT.portKey);
   await selectBySearch(page, host, nodeId);
   await expectEnabled(page, ['move-positive-z']);
   await page.locator('[data-command-action="move-positive-z"]').click();
@@ -207,9 +208,7 @@ async function openFinalAuditController(page) {
 
 async function openPanel(host, kind) {
   const panel = host.locator(`details[data-panel-kind="${kind}"]`);
-  if (!(await panel.evaluate((element) => element.open))) {
-    await panel.locator(':scope > summary').click();
-  }
+  if (!(await panel.evaluate((element) => element.open))) await panel.locator(':scope > summary').click();
   return panel;
 }
 
@@ -304,16 +303,10 @@ async function commandAuthorityEvidence(page, priorJournalHash) {
     if (!priorHash || !journal || !replay || !entry) return null;
     const { semanticHash } = await import(new URL('src/core/shared-piping-model/index.js', document.baseURI).href);
     const transactionMaterial = {
-      schema: 'TopologyEditJournalTransition.v1',
-      action: 'ACCEPT_COMMAND',
-      disposition: 'ACCEPTED',
-      priorJournalHash: priorHash,
-      journalHash: journal.journalHash,
-      sessionVersion: journal.sessionVersion,
-      activeCanonicalTopologyHash: replay.activeCanonicalTopologyHash,
-      replayHash: replay.replayHash,
-      certificationHash: entry.certificationHash,
-      reason: null,
+      schema: 'TopologyEditJournalTransition.v1', action: 'ACCEPT_COMMAND', disposition: 'ACCEPTED',
+      priorJournalHash: priorHash, journalHash: journal.journalHash, sessionVersion: journal.sessionVersion,
+      activeCanonicalTopologyHash: replay.activeCanonicalTopologyHash, replayHash: replay.replayHash,
+      certificationHash: entry.certificationHash, reason: null,
     };
     return {
       commandId: entry.commandId,
@@ -327,18 +320,10 @@ async function commandAuthorityEvidence(page, priorJournalHash) {
   }, { key: CONTROLLER_KEY, priorHash: priorJournalHash });
 }
 
-function statusOutput(page) {
-  return page.locator('[data-role="topology-edit-status"]');
-}
-
+function statusOutput(page) { return page.locator('[data-role="topology-edit-status"]'); }
 async function expectEnabled(page, actionIds) {
-  for (const actionId of actionIds) {
-    await expect(page.locator(`[data-command-action="${actionId}"]`)).toBeEnabled();
-  }
+  for (const actionId of actionIds) await expect(page.locator(`[data-command-action="${actionId}"]`)).toBeEnabled();
 }
-
 async function expectDisabled(page, actionIds) {
-  for (const actionId of actionIds) {
-    await expect(page.locator(`[data-command-action="${actionId}"]`)).toBeDisabled();
-  }
+  for (const actionId of actionIds) await expect(page.locator(`[data-command-action="${actionId}"]`)).toBeDisabled();
 }

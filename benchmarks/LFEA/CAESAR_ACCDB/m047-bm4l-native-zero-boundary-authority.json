@@ -1,0 +1,91 @@
+{
+  "schema": "m047-bm4l-native-zero-boundary-authority/v1",
+  "benchmarkId": "BM4_L",
+  "scope": "CAESAR ACCDB exact-zero reference support for displacement/rotation only",
+  "source": {
+    "commonCommit": "45d51ea18624f5775805f399110c1738301c0d90",
+    "accdbSha256": "64c05a50e9ed0452622ff5880335460486f24ac8e6adecc9a300b549c9aa82f8",
+    "outputDisplacementsTableSha256": "f23b9ddd34a076eb09e9759824cae48e0b0da628abc0b790d3491b33a7b88d05",
+    "qualificationArtifact": {
+      "sourceCommit": "7488ba76126f8240bb61c80fad243cf096c5fe08",
+      "workflowRun": 31457644192,
+      "artifactId": 9088676941,
+      "digest": "sha256:8819dbbbf21aff8e314fe6cae85db0c3407afc12ca71dde3b459442242d3e934"
+    }
+  },
+  "referenceSupport": {
+    "DISPLACEMENT": {
+      "nativeScaleUnit": "mm",
+      "proposedZeroBoundarySI": 1e-07,
+      "proposedZeroBoundaryNative": 0.0001,
+      "zeroReferenceCount": 591,
+      "nonzeroReferenceCount": 2319,
+      "minimumNonzeroSI": 1.0186471627093852e-07,
+      "minimumNonzeroNative": 0.00010186471627093852,
+      "nonzeroBelowProposedBoundaryCount": 0,
+      "cases": {
+        "L1": {"zeroReferenceCount": 52, "nonzeroReferenceCount": 239, "minimumNonzeroSI": 1.2941457680426538e-07, "minimumNonzeroNative": 0.00012941457680426538, "nonzeroBelowProposedBoundaryCount": 0},
+        "L2": {"zeroReferenceCount": 109, "nonzeroReferenceCount": 182, "minimumNonzeroSI": 1.0186471627093852e-07, "minimumNonzeroNative": 0.00010186471627093852, "nonzeroBelowProposedBoundaryCount": 0},
+        "L3": {"zeroReferenceCount": 55, "nonzeroReferenceCount": 236, "minimumNonzeroSI": 1.176655205199495e-07, "minimumNonzeroNative": 0.0001176655205199495, "nonzeroBelowProposedBoundaryCount": 0},
+        "L4": {"zeroReferenceCount": 62, "nonzeroReferenceCount": 229, "minimumNonzeroSI": 1.7496838700026275e-07, "minimumNonzeroNative": 0.00017496838700026274, "nonzeroBelowProposedBoundaryCount": 0},
+        "L5": {"zeroReferenceCount": 50, "nonzeroReferenceCount": 241, "minimumNonzeroSI": 1.2461280857678502e-07, "minimumNonzeroNative": 0.00012461280857678503, "nonzeroBelowProposedBoundaryCount": 0},
+        "L6": {"zeroReferenceCount": 51, "nonzeroReferenceCount": 240, "minimumNonzeroSI": 1.2460452853702008e-07, "minimumNonzeroNative": 0.0001246045285370201, "nonzeroBelowProposedBoundaryCount": 0},
+        "L7": {"zeroReferenceCount": 50, "nonzeroReferenceCount": 241, "minimumNonzeroSI": 1.246058673132211e-07, "minimumNonzeroNative": 0.0001246058673132211, "nonzeroBelowProposedBoundaryCount": 0},
+        "L13": {"zeroReferenceCount": 52, "nonzeroReferenceCount": 239, "minimumNonzeroSI": 1.2459779100026935e-07, "minimumNonzeroNative": 0.00012459779100026935, "nonzeroBelowProposedBoundaryCount": 0},
+        "L14": {"zeroReferenceCount": 55, "nonzeroReferenceCount": 236, "minimumNonzeroSI": 1.176655205199495e-07, "minimumNonzeroNative": 0.0001176655205199495, "nonzeroBelowProposedBoundaryCount": 0},
+        "L15": {"zeroReferenceCount": 55, "nonzeroReferenceCount": 236, "minimumNonzeroSI": 1.2509223597589882e-07, "minimumNonzeroNative": 0.00012509223597589883, "nonzeroBelowProposedBoundaryCount": 0}
+      }
+    },
+    "ROTATION": {
+      "nativeScaleUnit": "deg",
+      "proposedZeroBoundarySI": 1.7453292519943296e-06,
+      "proposedZeroBoundaryNative": 0.0001,
+      "zeroReferenceCount": 267,
+      "nonzeroReferenceCount": 2643,
+      "minimumNonzeroSI": 1.7563221737412638e-06,
+      "minimumNonzeroNative": 0.00010062984802061692,
+      "nonzeroBelowProposedBoundaryCount": 0,
+      "cases": {
+        "L1": {"zeroReferenceCount": 14, "nonzeroReferenceCount": 277, "minimumNonzeroSI": 2.096226871818824e-06, "minimumNonzeroNative": 0.00012010495265712962, "nonzeroBelowProposedBoundaryCount": 0},
+        "L2": {"zeroReferenceCount": 39, "nonzeroReferenceCount": 252, "minimumNonzeroSI": 1.7707914748584324e-06, "minimumNonzeroNative": 0.0001014588779071346, "nonzeroBelowProposedBoundaryCount": 0},
+        "L3": {"zeroReferenceCount": 32, "nonzeroReferenceCount": 259, "minimumNonzeroSI": 1.787792183006166e-06, "minimumNonzeroNative": 0.00010243294673273341, "nonzeroBelowProposedBoundaryCount": 0},
+        "L4": {"zeroReferenceCount": 67, "nonzeroReferenceCount": 224, "minimumNonzeroSI": 1.799553180835441e-06, "minimumNonzeroNative": 0.00010310680227121338, "nonzeroBelowProposedBoundaryCount": 0},
+        "L5": {"zeroReferenceCount": 9, "nonzeroReferenceCount": 282, "minimumNonzeroSI": 1.7563221737412638e-06, "minimumNonzeroNative": 0.00010062984802061692, "nonzeroBelowProposedBoundaryCount": 0},
+        "L6": {"zeroReferenceCount": 11, "nonzeroReferenceCount": 280, "minimumNonzeroSI": 1.8196803684199416e-06, "minimumNonzeroNative": 0.00010426000517327338, "nonzeroBelowProposedBoundaryCount": 0},
+        "L7": {"zeroReferenceCount": 12, "nonzeroReferenceCount": 279, "minimumNonzeroSI": 2.941071840780687e-06, "minimumNonzeroNative": 0.0001685110037215054, "nonzeroBelowProposedBoundaryCount": 0},
+        "L13": {"zeroReferenceCount": 18, "nonzeroReferenceCount": 273, "minimumNonzeroSI": 2.011455848701956e-06, "minimumNonzeroNative": 0.00011524793080752715, "nonzeroBelowProposedBoundaryCount": 0},
+        "L14": {"zeroReferenceCount": 32, "nonzeroReferenceCount": 259, "minimumNonzeroSI": 1.787792183006166e-06, "minimumNonzeroNative": 0.00010243294673273341, "nonzeroBelowProposedBoundaryCount": 0},
+        "L15": {"zeroReferenceCount": 33, "nonzeroReferenceCount": 258, "minimumNonzeroSI": 1.8359008535920662e-06, "minimumNonzeroNative": 0.00010518937051529065, "nonzeroBelowProposedBoundaryCount": 0}
+      }
+    }
+  },
+  "interpretation": {
+    "rule": "ZERO_REFERENCE_ABSOLUTE_BOUNDARY_FOLLOWS_CAESAR_ACCDB_NATIVE_ZERO_SUPPORT_FLOOR_V1",
+    "reason": [
+      "ACCDB nonzero displacement references have no support below 0.0001 mm across all ten selected cases.",
+      "ACCDB nonzero rotation references have no support below 0.0001 deg across all ten selected cases.",
+      "Nonzero references above the floor retain high-precision values, so this is treated as a zero-support floor rather than value quantization.",
+      "The live displacement zeroReferenceAbsolute already equals 0.0001 mm in SI. The rotation boundary is normalized symmetrically to 0.0001 deg in SI.",
+      "Only exact-zero reference rows use zeroReferenceAbsolute; every nonzero reference remains governed by the unchanged literal 10 percent relative rule."
+    ],
+    "rotationBoundaryRadians": 1.7453292519943296e-06,
+    "rotationBoundaryDegrees": 0.0001,
+    "displacementBoundaryMeters": 1e-07,
+    "displacementBoundaryMillimeters": 0.0001
+  },
+  "expectedResolvedCandidate": {
+    "prerequisites": ["Type 2.1 tee rigid thermal free growth", "BM4_L resolved 21 C -> 120 C interval strain"],
+    "liveGateBeforeZeroBoundary": {"L2": 31, "L3": 22, "L4": 40, "L5": 13, "L6": 22, "L14": 22, "total": 150},
+    "withRotationZeroBoundary": {"L2": 6, "L3": 5, "L4": 7, "L5": 8, "L6": 15, "L14": 5, "total": 46},
+    "exactZeroFailuresRemoved": 104,
+    "remainingExactZeroFailure": "L2:20440:RZ",
+    "remainingNonzeroReferenceFailures": 45
+  },
+  "nonScope": [
+    "No nonzero relative tolerance change.",
+    "No displacement zero boundary change.",
+    "No force or moment zero boundary change.",
+    "No reference value mutation.",
+    "No mechanics, stiffness, load, topology, recovery, or sign change."
+  ]
+}

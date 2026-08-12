@@ -91,6 +91,21 @@ test('changed scope is deterministic, complete, and source-crosswalk aware', () 
   assert.deepEqual(assertTopologyEditChangedScope(left), left);
 });
 
+test('changed scope includes supports hosted by affected edge identity', () => {
+  const topology = fixtureTopology();
+  topology.supports.push({
+    id: 'support:S-HOST', entityId: 'S-HOST', hostEntityId: 'P-002', stationMm: 50,
+  });
+  topology.crosswalk.supportIdToEntityId['support:S-HOST'] = 'S-HOST';
+  const scope = deriveTopologyEditChangedScope(topology, {
+    edgeIds: ['edge:P-002'],
+  });
+
+  assert.deepEqual(scope.supportIds, ['support:S-001', 'support:S-HOST']);
+  assert.ok(scope.sourceRecordIds.includes('S-HOST'));
+  assert.ok(scope.validationNeighbourhoodIds.includes('support:S-HOST'));
+});
+
 test('direct changed-scope normalization is collection-order stable', () => {
   const left = createTopologyEditChangedScope({
     basisHash: 'fnv1a64:professional-basis',

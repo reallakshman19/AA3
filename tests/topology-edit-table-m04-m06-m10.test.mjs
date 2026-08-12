@@ -92,6 +92,16 @@ function reducer() {
 function projection(topology) {
   return buildTopologyEditTableProjection({ canonicalTopology: topology, topologyGraph: topologyGraph() });
 }
+function unresolvedValveDnProjection(topology) {
+  const table = projection(topology);
+  const rows = table.rows.map((row) => row.identity.canonicalId === 'edge:m06' ? {
+    ...row,
+    fields: { ...row.fields, dnInMm: null },
+    fieldAuthority: { ...row.fieldAuthority, dnInMm: 'UNRESOLVED' },
+  } : row);
+  const material = { schema: table.schema, authority: table.authority, rows };
+  return { ...material, projectionHash: semanticHash(material) };
+}
 function stageIntents(session, topology) {
   const table = projection(topology);
   return { table, intents: [
@@ -127,6 +137,19 @@ function validationReceipt(baseTopology, preview, batchPlan) {
     performancePolicy: { fastPathBudgetMs: 100, warningBudgetMs: 200, hysteresisMs: 10 },
   });
 }
+
+test('M06 Table intent rejects unresolved target nominal-size authority', () => {
+  const topology = topologyFixture();
+  const session = new TopologyEditCertifiedSession(topology);
+  assert.throws(() => createTopologyEditTableIntent({
+    projection: unresolvedValveDnProjection(topology),
+    sessionSnapshot: session.snapshot(),
+    canonicalId: 'edge:m06',
+    intentKind: 'VALVE_REPLACEMENT',
+    requestedValue: { catalogueBinding: BALL, direction: 'FROM_TO' },
+    geometryPolicy: { anchor: 'FROM', propagation: 'DOWNSTREAM' },
+  }), /target nominal size must be positive and finite/);
+});
 
 test('M04 + M06 + M10 compile into one atomic final-state Table transaction', async () => {
   const topology = topologyFixture();

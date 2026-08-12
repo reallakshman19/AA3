@@ -123,7 +123,7 @@ test('compound cell activation changes exact selection and focus only', async ()
     },
     element: {
       contains: (candidate) => candidate === button,
-      querySelector: (selector) => selector === '[data-table-edit-valve-catalogue]'
+      querySelector: (selector) => selector === '[data-table-edit-valve-catalogue-record]'
         ? { scrollIntoView() {}, focus() { focused = true; } }
         : null,
     },

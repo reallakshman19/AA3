@@ -162,7 +162,15 @@ test('3D Edit provides resizable persistent inspector, selection focus, status b
     await commandPanel.locator(':scope > summary').click();
   }
   await expect(host).toHaveAttribute('data-topology-edit-source-visual-cache', /MISS|HIT/);
-  await host.locator('[data-command-action="move-positive-z"]').click();
+  const move = host.locator('[data-command-action="move-positive-z"]');
+  await expect(move).toBeDisabled();
+  await expect(host).toHaveAttribute('data-topology-edit-active-command-count', '0');
+  await expect(host).toHaveAttribute('data-topology-edit-draft-state', 'clean');
+
+  const safeNodeId = await selectUnrestrainedNode(page);
+  await expect(host.locator('[data-role="topology-edit-selection-summary"]')).toHaveAttribute('title', safeNodeId);
+  await expect(move).toBeEnabled();
+  await move.click();
   await expect(host).toHaveAttribute('data-topology-edit-active-command-count', '1');
   await expect(host).toHaveAttribute('data-topology-edit-draft-state', 'saved');
   await expect(host).toHaveAttribute('data-topology-edit-source-visual-cache', 'HIT');
@@ -228,11 +236,18 @@ async function openProductionDemo(page) {
 }
 
 async function selectQualifiedNode(page) {
-  return page.evaluate((key) => {
+  return selectNodeByPort(page, 'P-001:port:start');
+}
+
+async function selectUnrestrainedNode(page) {
+  return selectNodeByPort(page, 'P-003:port:end');
+}
+
+async function selectNodeByPort(page, portKey) {
+  return page.evaluate(({ key, port }) => {
     const controller = globalThis[key];
     const topology = controller.session.currentTopology();
-    const node = topology.nodes.find((row) => row.portKeys?.includes('P-001:port:start'))
-      ?? topology.nodes[0];
+    const node = topology.nodes.find((row) => row.portKeys?.includes(port)) ?? topology.nodes[0];
     controller.selectionCoordinator.requestCanonical(
       'REPLACE',
       [node.id],
@@ -240,7 +255,7 @@ async function selectQualifiedNode(page) {
       { primaryId: node.id, anchorId: node.id },
     );
     return node.id;
-  }, CONTROLLER_KEY);
+  }, { key: CONTROLLER_KEY, port: portKey });
 }
 
 async function integerAttribute(locator, name) {

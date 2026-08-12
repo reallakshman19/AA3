@@ -72,6 +72,15 @@ assert.equal(authority.gravity.insulationDiameterBasis, 'ENTERED_OUTSIDE_DIAMETE
 assert.equal(authority.structuralParticipation.recoverForcesAndMoments, true);
 assert.equal(authority.structuralParticipation.calculatePipingCodeStress, false);
 assert.equal(authority.stiffnessSection.localStiffness.length, 144);
+const expectedRigidPhi = (12 * acceptedRequest.material.elasticModulus
+  * authority.stiffnessSection.secondMomentZ)
+  / (acceptedRequest.material.shearModulus * 0.5 * authority.stiffnessSection.area
+    * acceptedRequest.length ** 2);
+const expectedRigidTransverseK = (12 * acceptedRequest.material.elasticModulus
+  * authority.stiffnessSection.secondMomentZ)
+  / ((1 + expectedRigidPhi) * acceptedRequest.length ** 3);
+close(authority.stiffnessSection.localStiffness[13], expectedRigidTransverseK,
+  'rigid matching-pipe transverse stiffness with CAESAR shear');
 close(authority.thermal.axialStrain, 12e-6 * 200, 'thermal strain');
 close(authority.thermal.freeExpansion, 12e-6 * 200 * 1.2, 'free thermal expansion');
 

@@ -1,5 +1,9 @@
 import { mkdir, writeFile } from 'node:fs/promises';
 import { expect, test } from '@playwright/test';
+import {
+  engineeringEditorFixture,
+  openTopologyEditTableEngineeringFixture,
+} from './helpers/topology-edit-table-engineering-fixture.js';
 
 const REPORT = 'reports/qualification/topology-edit-table-authority.json';
 
@@ -161,19 +165,30 @@ test('Engineering Table is dense, dynamically scrollable and keeps frozen contex
 test('M06 and M10 production editors expose only explicit engineering authority', async ({ page }) => {
   await page.setViewportSize({ width: 1720, height: 1080 });
   await page.addInitScript(() => globalThis.localStorage?.clear());
-  const host = await openProductionController(page);
+  const host = await openTopologyEditTableEngineeringFixture(page);
   const panel = page.locator('details[data-panel-kind="table"]');
   if (!(await panel.evaluate((node) => node.open))) await panel.locator(':scope > summary').click();
   await expect.poll(() => host.getAttribute('data-topology-edit-table-projection-hash')).toBeTruthy();
   const fixture = await engineeringEditorFixture(page);
   const filter = page.locator('[data-table-filter]');
   const table = page.locator('[data-role="topology-edit-table"]');
+  const before = await evidence(page);
 
   await filter.fill(fixture.gateId);
   await table.locator(`[data-canonical-id="${fixture.gateId}"] [data-table-select]`).click();
-  await expect(page.locator('[data-table-edit-valve-catalogue]')).toBeVisible();
-  await expect(page.locator('[data-table-edit-valve-catalogue]')).toHaveValue('');
-  await expect(page.locator('[data-table-action="stage-valve-replacement"]')).toBeEnabled();
+  await expect(page.locator('textarea[data-table-edit-valve-catalogue]')).toHaveCount(0);
+  const valveRecord = page.locator('[data-table-edit-valve-catalogue-record]');
+  await expect(valveRecord).toBeVisible();
+  await expect(valveRecord).toHaveAttribute('data-table-valve-catalogue-hash', fixture.catalogueHash);
+  const valveOptions = await valveRecord.locator('option').evaluateAll(
+    (options) => options.slice(1).map((option) => option.value).sort(),
+  );
+  expect(valveOptions).toEqual(fixture.ballRecordIds);
+  await valveRecord.selectOption(fixture.ballRecordIds[0]);
+  await page.locator('[data-table-action="stage-valve-replacement"]').click();
+  await expect.poll(() => host.getAttribute('data-topology-edit-table-batch-hash')).toBeTruthy();
+  expectAuthorityNoop(await evidence(page), before);
+  await page.locator('[data-table-action="discard"]').click();
 
   await filter.fill(fixture.teeId);
   await table.locator(`[data-canonical-id="${fixture.teeId}"] [data-table-select]`).click();
@@ -198,6 +213,7 @@ async function openProductionController(page) {
   await expect(host).toBeVisible();
   await expect.poll(() => page.evaluate(() => Boolean(document.querySelector('[data-role="topology-edit-render-host"]')?.__topologyEditAuthoringController?.session))).toBe(true);
   await expect.poll(() => page.evaluate(() => Boolean(document.querySelector('[data-role="topology-edit-render-host"]')?.__topologyEditAuthoringController?.tableAdapter?.runtime))).toBe(true);
+  await expect.poll(() => page.evaluate(() => Boolean(document.querySelector('[data-role="topology-edit-render-host"]')?.__topologyEditAuthoringController?.professionalRuntime?.catalogue?.catalogueHash))).toBe(true);
   return host;
 }
 
@@ -237,28 +253,6 @@ async function chooseSafeTerminalPipe(page) {
       if (degree.get(edge.fromNodeId) === 1) return { edgeId: edge.id, tag: row.fields.tag, currentLengthMm: row.fields.lengthMm, anchor: 'TO', propagation: 'UPSTREAM' };
     }
     throw new Error('No safe graph-terminal canonical PIPE is available outside intentional defect/support zones.');
-  });
-}
-
-async function engineeringEditorFixture(page) {
-  return page.evaluate(() => {
-    const projection = document.querySelector('[data-role="topology-edit-render-host"]')
-      ?.__topologyEditAuthoringController?.tableAdapter?.runtime?.projection;
-    if (!projection) throw new Error('Table projection unavailable for engineering editor check.');
-    const gate = projection.rows.find((row) => row.elementType === 'VALVE'
-      && String(row.fields?.valveType ?? '').toUpperCase() === 'GATE');
-    const tee = projection.rows.find((row) => row.elementType === 'TEE'
-      && row.identity?.canonicalKind === 'JUNCTION');
-    if (!gate || !tee) throw new Error('Demo must expose GATE valve and TEE rows.');
-    const exactReducerIds = projection.rows.filter((row) => row.elementType === 'REDUCER'
-      && row.custody?.catalogueAuthority === 'EXACT' && row.custody?.catalogue)
-      .map((row) => row.identity.canonicalId).sort();
-    return {
-      gateId: gate.identity.canonicalId,
-      teeId: tee.identity.canonicalId,
-      branchPortKeys: tee.identity.portBindings.map((entry) => entry.portKey).sort(),
-      exactReducerIds,
-    };
   });
 }
 

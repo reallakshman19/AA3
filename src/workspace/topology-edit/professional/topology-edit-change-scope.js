@@ -4,6 +4,9 @@ import {
   semanticHash,
   stringValue,
 } from '../../../core/shared-piping-model/index.js';
+import {
+  resolveTopologyEditSupportHostEdge,
+} from './topology-edit-support-geometry-dependency.js';
 
 export const TOPOLOGY_EDIT_CHANGED_SCOPE_SCHEMA = 'TopologyEditChangedScope.v1';
 
@@ -67,6 +70,7 @@ export function deriveTopologyEditChangedScope(topology, input = {}) {
   affected.supportIds.forEach((id) => addOptional(affected.nodeIds, indexes.supports.get(id)?.nodeId));
   affected.boundaryIds.forEach((id) => addIds(affected.nodeIds, boundaryNodeIds(indexes.boundaries.get(id))));
   affected.nodeIds.forEach((nodeId) => addIncidentRecords(nodeId, indexes, affected));
+  addHostedSupports(topology, indexes, affected);
 
   const neighbourhood = new Set([
     ...affected.nodeIds,
@@ -145,6 +149,15 @@ function addIncidentRecords(nodeId, indexes, affected) {
   });
   indexes.boundaries.forEach((boundary, id) => {
     if (boundaryNodeIds(boundary).includes(nodeId)) affected.boundaryIds.add(id);
+  });
+}
+
+function addHostedSupports(topology, indexes, affected) {
+  indexes.supports.forEach((support, id) => {
+    const host = resolveTopologyEditSupportHostEdge(topology, support);
+    if (host.candidateEdgeIds.some((edgeId) => affected.edgeIds.has(edgeId))) {
+      affected.supportIds.add(id);
+    }
   });
 }
 

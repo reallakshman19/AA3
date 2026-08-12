@@ -11,7 +11,7 @@ import {
 const CELL_KIND = 'PIPE_LENGTH';
 const DEFAULT_POLICY = Object.freeze({ anchor: 'FROM', propagation: 'DOWNSTREAM' });
 const COMPOUND_FOCUS = Object.freeze({
-  VALVE_REPLACEMENT: '[data-table-edit-valve-catalogue]',
+  VALVE_REPLACEMENT: '[data-table-edit-valve-catalogue-record]',
   TEE_REDUCER_RELATION: '[data-table-edit-tee-branch-port]',
 });
 

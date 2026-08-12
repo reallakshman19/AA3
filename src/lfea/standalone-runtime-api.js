@@ -53,6 +53,8 @@ function buildNativeApi(runtime) {
     getNativeVerification: () => active(runtime, () => runtime.verificationController.getVerification()),
     getNativeEvidenceDossier: () => active(runtime, () => runtime.verificationController.getDossier()),
     createNativeEvidenceDossier: () => runtime.createNativeEvidenceDossier(),
+    downloadNativeEvidenceDossier: () => active(runtime, () => runtime.verificationController.downloadDossier()),
+    downloadNativeResultsCsv: () => runtime.downloadNativeResultsCsv(),
   };
 }
 

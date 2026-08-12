@@ -59,7 +59,34 @@ function reviewProjection(snapshot, preFlight) {
     authorizationSemanticHash: text(snapshot?.authorizationSemanticHash ?? preFlight?.authorization?.semanticHash),
     preparationSemanticHash: text(preFlight?.preparation?.semanticHash),
     diagnosticsSemanticHash: text(preFlight?.diagnostics?.semanticHash),
+    mutatedRestraints: mutatedRestraintRows(preFlight),
   };
+}
+
+/**
+ * Restraint TYPE correction evidence already retained, unmodified, on the
+ * sealed source bundle's canonical geometry nodes
+ * (inputXmlToCanonicalGeometry.js applyRestraints()). Read-only projection --
+ * this does not re-derive or re-run the correction, only reports what the
+ * ingestion path already applied.
+ */
+function mutatedRestraintRows(preFlight) {
+  const nodes = preFlight?.diagnostics?.sourceBundle?.geometry?.nodes;
+  if (!Array.isArray(nodes)) return [];
+  const rows = [];
+  for (const node of nodes) {
+    for (const restraint of Array.isArray(node?.meta?.restraints) ? node.meta.restraints : []) {
+      if (!restraint?.mutationApplied) continue;
+      rows.push({
+        nodeId: text(node.id), sourceTypeCode: text(restraint.sourceTypeCode),
+        correctedTypeCode: text(restraint.typeCode), mutationLabel: text(restraint.mutationLabel),
+        mutationFrom: text(restraint.mutationFrom), mutationTo: text(restraint.mutationTo),
+      });
+    }
+  }
+  return rows.sort((left, right) => (
+    left.nodeId === right.nodeId ? 0 : left.nodeId < right.nodeId ? -1 : 1
+  ));
 }
 
 function modelProjection(snapshot, preFlight) {

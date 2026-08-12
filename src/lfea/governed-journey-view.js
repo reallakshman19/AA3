@@ -1,3 +1,5 @@
+import { DEFAULT_RESTRAINT_TYPE_MUTATION_ROWS } from '../core/geometry/adapters/inputxml-restraint-type-mutation.js';
+
 export function mountLfeaGovernedJourneyView({
   reviewRoot,
   modelRoot,
@@ -36,8 +38,45 @@ function renderReview(root, review) {
     ['Preparation identity', review.preparationSemanticHash], ['Authorization identity', review.authorizationSemanticHash],
   ]));
   appendCodeList(doc, section, 'Accepted limitations', review.limitationsAccepted);
+  appendRestraintMutations(doc, section, review.mutatedRestraints);
   appendFindings(doc, section, review.findings);
   root.replaceChildren(section);
+}
+
+function appendRestraintMutations(doc, section, rows) {
+  const heading = doc.createElement('h3');
+  heading.textContent = 'Restraint TYPE corrections (CAESAR InputXML)';
+  section.append(heading, message(doc,
+    'Numeric InputXML restraint TYPE values are corrected exactly once, before classification, per the owner-confirmed seven-row export-correction table below. This does not change any restraint XCOSINE/YCOSINE/ZCOSINE direction, only its TYPE code.'));
+  const ruleTable = doc.createElement('table');
+  ruleTable.className = 'lfea-journey-table lfea-journey-restraint-mutation-rules';
+  const ruleHead = doc.createElement('tr');
+  for (const label of ['Label', 'From TYPE', 'To TYPE']) {
+    const th = doc.createElement('th'); th.textContent = label; ruleHead.append(th);
+  }
+  ruleTable.append(ruleHead);
+  for (const rule of DEFAULT_RESTRAINT_TYPE_MUTATION_ROWS) {
+    ruleTable.append(tableRow(doc, [rule.label || '—', rule.from, rule.to]));
+  }
+  section.append(ruleTable);
+  const appliedHeading = doc.createElement('h4');
+  appliedHeading.textContent = 'Corrections applied on this source';
+  section.append(appliedHeading);
+  if (!Array.isArray(rows) || rows.length === 0) {
+    section.append(message(doc, 'No restraint TYPE correction matched this source.'));
+    return;
+  }
+  const table = doc.createElement('table');
+  table.className = 'lfea-journey-table lfea-journey-restraint-mutations';
+  const head = doc.createElement('tr');
+  for (const label of ['Node', 'Source TYPE', 'Corrected TYPE', 'Label']) {
+    const th = doc.createElement('th'); th.textContent = label; head.append(th);
+  }
+  table.append(head);
+  for (const row of rows) {
+    table.append(tableRow(doc, [row.nodeId, row.sourceTypeCode, row.correctedTypeCode, row.mutationLabel]));
+  }
+  section.append(table);
 }
 
 function renderModel(root, model) {
@@ -172,6 +211,11 @@ function appendCodeList(doc, section, label, values) {
   const list = doc.createElement('ul'); list.className = 'lfea-journey-list';
   for (const value of values) { const item = doc.createElement('li'); const code = doc.createElement('code'); code.textContent = String(value); item.append(code); list.append(item); }
   section.append(list);
+}
+function tableRow(doc, values) {
+  const tr = doc.createElement('tr');
+  for (const value of values) { const td = doc.createElement('td'); td.textContent = display(value); tr.append(td); }
+  return tr;
 }
 function message(doc, text) { const p = doc.createElement('p'); p.className = 'lfea-journey-copy'; p.textContent = text; return p; }
 function yesNo(value) { return value ? 'YES' : 'NO'; }

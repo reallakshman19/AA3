@@ -63,6 +63,10 @@ assert.equal(CAESAR_ACCDB_FRICTION_SOLVER_PROFILE.initialization, 'ALL_STICK');
 assert.equal(CAESAR_ACCDB_FRICTION_SOLVER_PROFILE.relaxationFactor, 1);
 assert.equal(CAESAR_ACCDB_FRICTION_SOLVER_PROFILE.loadSteps, 1);
 assert.deepEqual(CAESAR_ACCDB_FRICTION_SOLVER_PROFILE.sensitivityMultipliers, [0.5, 1, 2]);
+assert.equal(CAESAR_ACCDB_FRICTION_SOLVER_PROFILE.frictionForceScaleFloorN, 1);
+assert.equal(CAESAR_ACCDB_FRICTION_SOLVER_PROFILE.frictionDirectionCosineTolerance, 1e-8);
+assert.equal(CAESAR_ACCDB_FRICTION_SOLVER_PROFILE.reconstructionForceScaleFloorN, 1);
+assert.equal(CAESAR_ACCDB_FRICTION_SOLVER_PROFILE.reconstructionMomentScaleFloorNm, 1);
 
 const frictionSource = readFileSync(resolve(
   'src/core/fea-benchmarks/caesar-accdb-friction-solve.js',
@@ -111,6 +115,36 @@ assert.match(
   frictionSource,
   /translationReactionVectorRelativeChange:[\s\S]*?momentReactionVectorRelativeChange:/u,
   'Sensitivity must report translation-force and moment-reaction changes separately.',
+);
+assert.match(
+  frictionSource,
+  /rule: 'SENSITIVITY_IS_DIAGNOSTIC_AND_CANNOT_INVALIDATE_A_CONVERGED_NOMINAL_RUN'/u,
+  'Diagnostic stiffness sensitivity must not invalidate a converged nominal result.',
+);
+assert.match(
+  frictionSource,
+  /convergenceStatus: 'DIAGNOSTIC_FAILED'/u,
+  'Failed non-nominal sensitivity solves must be retained as diagnostic evidence rather than thrown away.',
+);
+assert.match(
+  frictionSource,
+  /FORCE_AND_MOMENT_EQUATIONS_NORMALIZED_SEPARATELY_BEFORE_DIMENSIONLESS_MAX/u,
+  'Base reconstruction must normalize force and moment equations separately before comparing a dimensionless residual.',
+);
+assert.match(
+  frictionSource,
+  /return deepFreeze\(\{ \.\.\.row, caseId, value: values\.get\(identity\) \}\)/u,
+  'Recovered nonlinear rows must be relabelled to their friction case rather than inheriting the control-case ID.',
+);
+assert.match(
+  frictionSource,
+  /profile\.frictionDirectionCosineTolerance/u,
+  'Friction direction tolerance must come from the versioned solver profile.',
+);
+assert.match(
+  frictionSource,
+  /profile\.frictionForceScaleFloorN/u,
+  'Friction force scale floor must come from the versioned solver profile.',
 );
 
 const assessmentSource = readFileSync(resolve(

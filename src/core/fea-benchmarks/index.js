@@ -39,10 +39,58 @@ export {
 export { convertCaesarValue, normalizeCaesarUnitToken, temperatureToKelvin } from './caesar-accdb-units.js';
 export {
   CAESAR_CONFIGURATION_AUTHORITY_SCHEMA,
+  CAESAR_CONFIGURATION_AUTHORITY_V2_SCHEMA,
   CAESAR_CONFIGURATION_PRECEDENCE,
+  CAESAR_CONFIGURATION_PRECEDENCE_LOW_TO_HIGH,
+  migrateCaesarFrictionAuthorityV1ToV2,
   normalizeCaesarConfigurationAuthority,
   resolveCaesarConfigurationSetting,
+  resolveCaesarConfigurationSettingTrace,
 } from './caesar-configuration-authority.js';
+export {
+  CAESAR_FRICTION_DERIVED_CASES,
+  CAESAR_FRICTION_SOLVER_PROFILE_SCHEMA,
+  CAESAR_FRICTION_STATE_SCHEMA,
+  CAESAR_FRICTION_STATES,
+  combineCaesarAlgebraicResultRows,
+  compareDeterministicCaesarFrictionRuns,
+  convertCaesarFrictionStiffnessToSi,
+  evaluateCaesarFrictionConvergence,
+  evaluateCaesarFrictionRestraint,
+  frictionAssemblyTerm,
+  frictionResiduals,
+  resolveCaesarFrictionCaseSettings,
+  runDeterministicCaesarFrictionActiveSet,
+} from './caesar-friction-active-set.js';
+export {
+  CAESAR_ACCDB_ANCHOR_RESTRAINT_TYPE_ID,
+  BM4L_FRICTION_DIRECTION_ALIGNMENT_TOLERANCE,
+  selectBm4lAccdbFrictionRows,
+} from './caesar-accdb-friction-restraint-selection.js';
+export {
+  buildCaesarFrictionTangentialTranslationVector,
+  normalizedCaesarFrictionTranslationUpdate,
+} from './caesar-friction-convergence-metrics.js';
+export { solveCaesarFrictionRefinedDenseSystem } from './caesar-friction-dense-refinement.js';
+export {
+  runBm4lFrictionStiffnessSensitivity,
+  scaleBm4lFrictionStiffnessPackage,
+} from './caesar-friction-stage2-sensitivity.js';
+export { buildCaesarFrictionStiffnessState } from './caesar-friction-stiffness-state.js';
+export {
+  BM4L_FRICTION_EXECUTION_ORDER,
+  BM4L_FRICTION_MULTIPLIERS,
+  BM4L_FRICTION_PRIMITIVE_CASE_IDS,
+} from './caesar-accdb-friction-solve.js';
+export { solveCaesarAccdbFrictionBenchmark } from './caesar-accdb-friction-stage2-governed.js';
+export {
+  BM4L_HYDROTEST_AUTHORITY_SCHEMA,
+  BM4L_HYDROTEST_WATER_DENSITY_KG_PER_M3,
+  BM4L_HYDROTEST_WATER_DENSITY_KG_PER_CM3,
+  buildBm4lHydrotestCompatibilityPackage,
+  resolveBm4lHydrotestAuthority,
+  solveBm4lHydrotestFrictionCase,
+} from './caesar-accdb-hydrotest-friction.js';
 export { solveCaesarAccdbLinearBenchmark } from './caesar-accdb-linear-solve.js';
 export {
   BM4_QUALIFICATION_ADAPTER_ID,

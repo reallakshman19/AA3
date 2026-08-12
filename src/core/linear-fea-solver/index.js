@@ -66,6 +66,10 @@ export {
 
 export {
   compileSolverExecution,
+  solverExecutionInterceptorDepth,
+  withSolverExecutionInterceptor,
+} from './execution-interceptor.js';
+export {
   computeExecutionEvidenceHash,
   computeExecutionSemanticHash,
   executionSemanticProjection,

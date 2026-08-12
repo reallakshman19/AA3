@@ -1,17 +1,20 @@
 /**
  * Normalize and resolve layered CAESAR configuration authority.
  *
- * Profiles carry raw settings at their original scope. Resolution always uses
- * the declared CAESAR precedence: load case, individual file, model input,
- * then overall/global default. Unsupported or unresolved settings raise
- * explicit errors; callers never infer an effective value from CASE text.
+ * v1 records preserve the historical high-to-low declaration used by the
+ * existing non-friction benchmarks. v2 records make precedence explicit in
+ * the owner-governed low-to-high form:
+ * overall/global < individual file < load case < model input.
  */
 
 import { deepFreeze } from '../shared-piping-model/immutable.js';
 
 export const CAESAR_CONFIGURATION_AUTHORITY_SCHEMA =
   'caesar-configuration-authority/v1';
+export const CAESAR_CONFIGURATION_AUTHORITY_V2_SCHEMA =
+  'caesar-configuration-authority/v2';
 
+// Compatibility constant for frozen v1 profiles.
 export const CAESAR_CONFIGURATION_PRECEDENCE = Object.freeze([
   'LOAD_CASE_SETTING',
   'INDIVIDUAL_FILE_SETTING',
@@ -19,18 +22,32 @@ export const CAESAR_CONFIGURATION_PRECEDENCE = Object.freeze([
   'OVERALL_GLOBAL_DEFAULT',
 ]);
 
+// M047 Stage 2 authority: lowest -> highest.
+export const CAESAR_CONFIGURATION_PRECEDENCE_LOW_TO_HIGH = Object.freeze([
+  'OVERALL_GLOBAL_DEFAULT',
+  'INDIVIDUAL_FILE_SETTING',
+  'LOAD_CASE_SETTING',
+  'MODEL_INPUT',
+]);
+
 /** Validate and freeze one reusable CAESAR configuration authority record. */
 export function normalizeCaesarConfigurationAuthority(input) {
   if (!input || typeof input !== 'object' || Array.isArray(input)) {
     throw new TypeError('configurationAuthority must be an object.');
   }
-  if (input.schema !== CAESAR_CONFIGURATION_AUTHORITY_SCHEMA) {
+  const schema = nonempty(input.schema, 'configurationAuthority.schema');
+  const expectedPrecedence = schema === CAESAR_CONFIGURATION_AUTHORITY_SCHEMA
+    ? CAESAR_CONFIGURATION_PRECEDENCE
+    : schema === CAESAR_CONFIGURATION_AUTHORITY_V2_SCHEMA
+      ? CAESAR_CONFIGURATION_PRECEDENCE_LOW_TO_HIGH
+      : null;
+  if (expectedPrecedence === null) {
     throw new TypeError(`Unsupported configurationAuthority schema ${String(input.schema)}.`);
   }
   const precedence = stringArray(input.precedence, 'configurationAuthority.precedence');
-  if (!sameStrings(precedence, CAESAR_CONFIGURATION_PRECEDENCE)) {
+  if (!sameStrings(precedence, expectedPrecedence)) {
     throw new TypeError(
-      `configurationAuthority.precedence must be ${CAESAR_CONFIGURATION_PRECEDENCE.join(' > ')}.`,
+      `configurationAuthority.precedence must be ${expectedPrecedence.join(' < ')} for ${schema}.`,
     );
   }
   const layers = input.layers;
@@ -38,7 +55,7 @@ export function normalizeCaesarConfigurationAuthority(input) {
     throw new TypeError('configurationAuthority.layers must be an object.');
   }
   const normalized = {
-    schema: CAESAR_CONFIGURATION_AUTHORITY_SCHEMA,
+    schema,
     caesarVersion: nonempty(input.caesarVersion, 'configurationAuthority.caesarVersion'),
     precedence,
     layers: {
@@ -64,8 +81,31 @@ export function normalizeCaesarConfigurationAuthority(input) {
   return deepFreeze(normalized);
 }
 
-/** Resolve one effective setting using the frozen precedence declaration. */
+/** Resolve one effective setting using the authority record's declared schema. */
 export function resolveCaesarConfigurationSetting(authorityInput, settingInput, caseIdInput) {
+  const trace = resolveCaesarConfigurationSettingTrace(authorityInput, settingInput, caseIdInput);
+  const resolved = trace.applied[trace.applied.length - 1];
+  if (!resolved) {
+    throw new TypeError(
+      `CAESAR setting ${trace.setting}${trace.caseId === null ? '' : ` for ${trace.caseId}`} has no declared authority value.`,
+    );
+  }
+  return deepFreeze({
+    setting: trace.setting,
+    caseId: trace.caseId,
+    level: resolved.level,
+    value: resolved.value,
+    source: resolved.source,
+  });
+}
+
+/**
+ * Return every applied authority layer in resolution order. For v2 this is
+ * the governed low-to-high order and the final entry is the effective value.
+ * For v1, the trace is normalized low-to-high even though its stored
+ * precedence declaration is historical high-to-low.
+ */
+export function resolveCaesarConfigurationSettingTrace(authorityInput, settingInput, caseIdInput) {
   const authority = normalizeCaesarConfigurationAuthority(authorityInput);
   const setting = nonempty(settingInput, 'setting');
   const caseId = caseIdInput === null ? null : nonempty(caseIdInput, 'caseId');
@@ -76,31 +116,99 @@ export function resolveCaesarConfigurationSetting(authorityInput, settingInput, 
       `CAESAR setting ${setting}${caseId === null ? '' : ` for ${caseId}`} is unresolved: ${unresolved.reason}`,
     );
   }
-  const candidates = caseId === null
-    ? []
-    : [[
-        'LOAD_CASE_SETTING',
-        authority.layers.loadCase.cases[caseId]?.[setting],
-        authority.layers.loadCase.source,
-      ]];
-  candidates.push(
-    ['INDIVIDUAL_FILE_SETTING', authority.layers.individualFile.settings[setting], authority.layers.individualFile.source],
-    ['MODEL_INPUT', authority.layers.modelInput.settings[setting], authority.layers.modelInput.source],
-    ['OVERALL_GLOBAL_DEFAULT', authority.layers.overallGlobalDefault.settings[setting], authority.layers.overallGlobalDefault.source],
-  );
-  const resolved = candidates.find((entry) => entry[1] !== undefined);
-  if (!resolved) {
-    throw new TypeError(
-      `CAESAR setting ${setting}${caseId === null ? '' : ` for ${caseId}`} has no declared authority value.`,
-    );
+  const candidates = lowToHighCandidates(authority, setting, caseId);
+  const applied = candidates
+    .filter((entry) => entry.value !== undefined)
+    .map((entry) => deepFreeze({ ...entry }));
+  return deepFreeze({ setting, caseId, schema: authority.schema, applied });
+}
+
+function lowToHighCandidates(authority, setting, caseId) {
+  const byLevel = {
+    OVERALL_GLOBAL_DEFAULT: {
+      level: 'OVERALL_GLOBAL_DEFAULT',
+      value: authority.layers.overallGlobalDefault.settings[setting],
+      source: authority.layers.overallGlobalDefault.source,
+    },
+    INDIVIDUAL_FILE_SETTING: {
+      level: 'INDIVIDUAL_FILE_SETTING',
+      value: authority.layers.individualFile.settings[setting],
+      source: authority.layers.individualFile.source,
+    },
+    LOAD_CASE_SETTING: {
+      level: 'LOAD_CASE_SETTING',
+      value: caseId === null ? undefined : authority.layers.loadCase.cases[caseId]?.[setting],
+      source: authority.layers.loadCase.source,
+    },
+    MODEL_INPUT: {
+      level: 'MODEL_INPUT',
+      value: authority.layers.modelInput.settings[setting],
+      source: authority.layers.modelInput.source,
+    },
+  };
+  const order = authority.schema === CAESAR_CONFIGURATION_AUTHORITY_V2_SCHEMA
+    ? authority.precedence
+    : [...authority.precedence].reverse();
+  return order.map((level) => byLevel[level]);
+}
+
+/**
+ * Migrate a frozen v1 authority record to Stage 2 friction semantics without
+ * mutating the original non-friction profile. Case-level COEFFICIENT_OF_FRICTION_MU
+ * entries are removed and replaced by the supplied FRICTION_MULTIPLIER map;
+ * model-input mu remains a distinct highest-authority quantity.
+ */
+export function migrateCaesarFrictionAuthorityV1ToV2(authorityInput, frictionMultipliersInput) {
+  const authority = normalizeCaesarConfigurationAuthority(authorityInput);
+  if (authority.schema !== CAESAR_CONFIGURATION_AUTHORITY_SCHEMA) {
+    throw new TypeError('Friction authority migration requires a v1 source authority.');
   }
-  return deepFreeze({
-    setting,
-    caseId,
-    level: resolved[0],
-    value: resolved[1],
-    source: resolved[2],
+  const multipliers = frictionMultipliersInput;
+  if (!multipliers || typeof multipliers !== 'object' || Array.isArray(multipliers)) {
+    throw new TypeError('frictionMultipliers must be an object keyed by primitive case ID.');
+  }
+  const modelMu = authority.layers.modelInput.settings.COEFFICIENT_OF_FRICTION_MU;
+  if (!Number.isFinite(Number(modelMu)) || Number(modelMu) < 0) {
+    throw new TypeError('Model input must declare a finite nonnegative COEFFICIENT_OF_FRICTION_MU.');
+  }
+  const cases = {};
+  for (const caseId of Object.keys(authority.layers.loadCase.cases).sort(compareText)) {
+    const source = authority.layers.loadCase.cases[caseId];
+    const migrated = Object.fromEntries(Object.entries(source)
+      .filter(([setting]) => setting !== 'COEFFICIENT_OF_FRICTION_MU'));
+    if (Object.prototype.hasOwnProperty.call(multipliers, caseId)) {
+      migrated.FRICTION_MULTIPLIER = finiteNonnegativeSetting(
+        multipliers[caseId],
+        `frictionMultipliers.${caseId}`,
+      );
+    }
+    cases[caseId] = migrated;
+  }
+  const unknown = Object.keys(multipliers).filter((caseId) => !(caseId in cases));
+  if (unknown.length > 0) {
+    throw new TypeError(`Friction multiplier cases are not declared by the authority: ${unknown.join(', ')}.`);
+  }
+  return normalizeCaesarConfigurationAuthority({
+    schema: CAESAR_CONFIGURATION_AUTHORITY_V2_SCHEMA,
+    caesarVersion: authority.caesarVersion,
+    precedence: [...CAESAR_CONFIGURATION_PRECEDENCE_LOW_TO_HIGH],
+    layers: {
+      overallGlobalDefault: authority.layers.overallGlobalDefault,
+      individualFile: authority.layers.individualFile,
+      loadCase: {
+        source: authority.layers.loadCase.source,
+        cases,
+      },
+      modelInput: authority.layers.modelInput,
+    },
+    unresolvedSettings: authority.unresolvedSettings,
   });
+}
+
+function finiteNonnegativeSetting(value, field) {
+  const number = Number(value);
+  if (!Number.isFinite(number) || number < 0) throw new TypeError(`${field} must be finite and nonnegative.`);
+  return number;
 }
 
 function normalizeLayer(input, field) {

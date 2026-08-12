@@ -1,0 +1,89 @@
+{
+  "schema": "m047-bm4l-friction-authority/v1",
+  "benchmarkId": "BM4_L",
+  "caesarVersion": "14.000",
+  "sourceProfile": {
+    "path": "benchmarks/LFEA/CAESAR_ACCDB/bm4l-validation.profile.json",
+    "gitBlobSha": "ee3cd67cbb980315bef15712d14c1202b4ab0eb4",
+    "baseCommit": "0855afb22b76c4b7657a81641c7fbaa890474cd7"
+  },
+  "configurationAuthority": {
+    "schema": "caesar-configuration-authority/v2",
+    "caesarVersion": "14.000",
+    "precedence": [
+      "OVERALL_GLOBAL_DEFAULT",
+      "INDIVIDUAL_FILE_SETTING",
+      "LOAD_CASE_SETTING",
+      "MODEL_INPUT"
+    ],
+    "layers": {
+      "overallGlobalDefault": {
+        "source": "USER_SUPPLIED_CAESAR_14_GLOBAL_SETTINGS_2026-08-09_RECONFIRMED_FOR_BM4_L_2026-08-10",
+        "settings": {
+          "Z_AXIS_UP": "NO",
+          "USE_PRESSURE_STIFFENING": "DEFAULT",
+          "BEND_AXIAL_SHAPE": "YES",
+          "DEFAULT_TRANS_RESTRAINT_STIFF": { "value": 1000000000000, "unit": "DISPLAYED_CAESAR_UNITS" },
+          "DEFAULT_ROT_RESTRAINT_STIFF": { "value": 1000000000000, "unit": "DISPLAYED_CAESAR_UNITS" },
+          "FRICT_STIF": { "value": 1000000, "unit": "DISPLAYED_CAESAR_UNITS" },
+          "MIN_WALL_MILL_TOLERANCE_PERCENT": 12.5,
+          "AMBIENT_TEMPERATURE": { "value": 70, "unit": "F" },
+          "BOURDON_PRESSURE": "NONE",
+          "COEFFICIENT_OF_FRICTION_MU": 0,
+          "FLEXIBILITY_ELASTIC_MODULUS": "EC",
+          "ALL_STRESS_CASES_CORRODED": "NO",
+          "DEFAULT_CODE": "B31.3_2022",
+          "ALLOW_USERS_BEND_SIF": "YES",
+          "LIBERAL_EXPANSION_ALLOWABLE": "YES",
+          "B31_3_SEC_319_2_3C_SAXIAL": "DEFAULT",
+          "B31_3_WELDING_CONTOUR_TEE_IS_B16_9": false,
+          "IMPLEMENT_B313_CODE_CASE_178": "YES",
+          "IGNORE_B31_1_B31_3_WC_FACTOR": "YES",
+          "APPLY_B31J_SIFS_AND_FLEX": "DEFAULT",
+          "ENFORCE_B31J_SIFS_ONLY": false,
+          "CONNECT_GEOMETRY_THRU_CNODES": "YES"
+        }
+      },
+      "individualFile": {
+        "source": "USER_VERIFIED_BM4_L_FILE_SETTINGS_2026-08-10",
+        "settings": {
+          "BOURDON_PRESSURE": "TRANSLATION_AND_ROTATION",
+          "AMBIENT_TEMPERATURE": { "value": 21, "unit": "C" },
+          "RESTRAINT_DIRECTIONAL_BEHAVIOR": "BIDIRECTIONAL"
+        }
+      },
+      "loadCase": {
+        "source": "LOADCASEREPORT_BM4_L_COMMON_F4D49F2_2026-08-10",
+        "cases": {
+          "L1": { "FRICTION_MULTIPLIER": 1 },
+          "L2": { "FRICTION_MULTIPLIER": 0 },
+          "L3": { "FRICTION_MULTIPLIER": 0, "FLEXIBILITY_ELASTIC_MODULUS": "EC" },
+          "L4": { "FRICTION_MULTIPLIER": 0 },
+          "L5": { "FRICTION_MULTIPLIER": 0, "FLEXIBILITY_ELASTIC_MODULUS": "EC" },
+          "L6": { "FRICTION_MULTIPLIER": 0 },
+          "L7": { "FRICTION_MULTIPLIER": 1, "FLEXIBILITY_ELASTIC_MODULUS": "EC" },
+          "L13": { "FRICTION_MULTIPLIER": 1 },
+          "L14": {},
+          "L15": {}
+        }
+      },
+      "modelInput": {
+        "source": "BM4_L_ACCDB_MODEL_INPUT",
+        "settings": { "COEFFICIENT_OF_FRICTION_MU": 0.3 }
+      }
+    },
+    "unresolvedSettings": []
+  },
+  "frictionStiffnessConversion": {
+    "displayedValue": 1000000,
+    "displayedUnit": "N/cm",
+    "siValueNPerM": 100000000,
+    "rule": "N_PER_CM_X_100_TO_N_PER_M"
+  },
+  "execution": [
+    { "sequence": 1, "caseId": "L13", "kind": "PRIMITIVE_NONLINEAR", "formula": "W+P1", "control": "L6" },
+    { "sequence": 2, "caseId": "L7", "kind": "PRIMITIVE_NONLINEAR", "formula": "W+T1+P1", "control": "L5" },
+    { "sequence": 3, "caseId": "L15", "kind": "DERIVED_ALGEBRAIC", "formula": "L15=L7-L13", "control": "L14" },
+    { "sequence": 4, "caseId": "L1", "kind": "PRIMITIVE_NONLINEAR", "formula": "WW+HP", "control": null }
+  ]
+}

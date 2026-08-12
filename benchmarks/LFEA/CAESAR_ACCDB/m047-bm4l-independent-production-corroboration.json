@@ -1,0 +1,67 @@
+{
+  "schema": "m047-bm4l-independent-production-corroboration/v1",
+  "benchmarkId": "BM4_L",
+  "issue": 1083,
+  "qualificationAuthorityForThisPr": false,
+  "purpose": "Independent exact-pinned-data corroboration of the Stage-2 target and L1 WW+HP interpretation. This record does not assert that PR #1085 has itself been executed against the binary.",
+  "sourceCustody": {
+    "commonCommit": "f4d49f2a47d970ae0abf913b537193e324556177",
+    "zipSha256": "978617cba50fa0b1a16c2fa71dc1e0d38e55ac834b191f887d100c6951abd8b9",
+    "accdbFileName": "BM4_L.ACCDB",
+    "accdbByteLength": 5136384,
+    "accdbSha256": "e21b0862851ea2bb6f20d55e4a3a94f501537b618b98dd46afa9f6777ee38d3c"
+  },
+  "independentRun": {
+    "repository": "reallaksh19/Advanced_Analysis",
+    "pullRequest": 1087,
+    "head": "d8677297cc986b913ebdbb3bcbb3e4a11a103782",
+    "branch": "agent/m047-bm4l-friction-stage2",
+    "reviewCommentId": 4919929896,
+    "reviewCommentCreatedAt": "2026-08-12T18:35:28Z",
+    "cleanWorktreeAsserted": true,
+    "remoteHeadEqualityAsserted": true,
+    "githubActionsUsed": false,
+    "extractor": {
+      "repository": "reallaksh19/XML_Compare_Utilities",
+      "commit": "d83c62214b7a6486c17698225ea4e11bc3121cb6",
+      "parserBlob": "2ea596b6e9fb65e386e5cbb256f4141ce7bb595b",
+      "mdbReaderVersion": "2.2.6"
+    }
+  },
+  "reportedResult": {
+    "scope": "FORCE_DISPLACEMENT_STATIC_FRICTION_ONLY",
+    "overall": "PASS",
+    "cases": {
+      "L13": { "literalFailures": 0, "nonlinearState": "PASS", "physicalEquilibrium": "PASS", "deterministicRepeat": "PASS" },
+      "L7": { "literalFailures": 0, "nonlinearState": "PASS", "physicalEquilibrium": "PASS", "deterministicRepeat": "PASS" },
+      "L15": { "literalFailures": 0, "independentNonlinearSolve": false, "algebraicIdentity": "PASS" },
+      "L1": { "literalFailures": 0, "formula": "WW+HP", "nonlinearState": "PASS", "physicalEquilibrium": "PASS", "deterministicRepeat": "PASS" }
+    },
+    "pairedDeltas": {
+      "L13-L6": { "failures": 0, "status": "PASS" },
+      "L7-L5": { "failures": 0, "status": "PASS" },
+      "L15-L14": { "failures": 0, "status": "PASS" }
+    },
+    "sensitivityMultipliers": [0.5, 1, 2],
+    "sensitivityDiagnosticSolveFailures": 0,
+    "frozenControls": {
+      "literalExternalFailures": 46,
+      "restraintFailures": 0
+    }
+  },
+  "l1CorroboratedInterpretation": {
+    "WW": "PIPE_PLUS_WATER_FILLED_WEIGHT",
+    "waterDensityKgPerM3": 1000,
+    "includeInsulationInHydrotest": false,
+    "HP": "HYDRO_PRESSURE",
+    "frozenAssemblyMapping": "WW+HP -> W+P1 with SG=1 water, hydro insulation excluded, HYDRO_PRESSURE -> PRESSURE1",
+    "benchmarkReference": "PINNED_ACCDB_L1_OUTPUT"
+  },
+  "firewall": {
+    "bm4NlUsed": false,
+    "inputXmlUsed": false,
+    "responseFittingUsedByThisRecord": false,
+    "importIndependentSolverMechanicsIntoPr1085": false,
+    "pr1085StillRequiresOwnPinnedBinaryRunForQualification": true
+  }
+}

@@ -1,0 +1,29 @@
+{
+  "schema": "caesar-friction-solver-profile/v1",
+  "profileId": "M047-BM4L-FRICTION-NOMINAL-V1",
+  "initialization": "ALL_STICK",
+  "stateBoundaryRule": "STICK_WHEN_TRIAL_LE_CAP_PLUS_BOUNDARY",
+  "loadStepping": {
+    "mode": "NONE_NOMINAL",
+    "note": "Versioned implementation policy; not CAESAR benchmark authority."
+  },
+  "relaxation": {
+    "factor": 1,
+    "note": "Versioned implementation policy; not tuned to benchmark failure counts."
+  },
+  "maximumIterations": 100,
+  "displacementUpdateMetric": "NORMALIZED_PROJECTED_TANGENTIAL_TRANSLATIONS_METRES_ONLY",
+  "displacementUpdateNorm": 1e-9,
+  "reactionUpdateMetric": "NORMALIZED_FRICTION_SURFACE_NORMAL_REACTIONS_NEWTONS_ONLY",
+  "reactionUpdateNorm": 1e-6,
+  "capResidualN": 1e-6,
+  "stickResidualN": 1e-6,
+  "slideResidualN": 1e-6,
+  "assemblyLoadResidualN": 1e-6,
+  "directionCosineTolerance": 1e-9,
+  "equilibriumForceN": 5,
+  "equilibriumMomentNm": 0.5,
+  "repeatCount": 2,
+  "stiffnessSensitivityMultipliers": [0.5, 1, 2],
+  "qualificationStiffnessMultiplier": 1
+}

@@ -7,24 +7,24 @@
 - **PR:** #1038, DRAFT, open/mergeable.
 - **Branch:** `agent/integrated-lafea-common-stage-roadmap`.
 - **Original base:** `a587867963cc9199caca6e7adfa03af95a316aa2`.
-- **Current base:** `main@4482dcc481939c3af1068aea2e2db47baec63984`; last compare behind-by-0.
-- **Last implementation head:** `de69e387e8ecc78ee3c617f212fff54ed0325cd4`.
-- **Current report-sync head before this update:** `7e68f47808e3f90f8cb2e127fbd08ebac9fdf4b2`.
-- **PR diff:** 33 explained paths; no `.github/workflows/*`.
-- **Current stage:** Stage 12B hardening — compiled-model parity execution.
-- **Last completed implementation stage:** Stage 12B production seam; stage decision remains **PARTIAL** because numerical/runtime validation is NOT_RUN.
-- **Engineering status:** IMPLEMENTED / VALIDATION_BLOCKED / STATIC_HARDENING_IN_PROGRESS.
-- **Validation status:** exact-head runtime NOT_RUN. GitHub reported zero statuses and zero workflow runs at `de69e387...`; local GitHub DNS resolution is unavailable; the GitHub archive endpoint exposed no ZIP bytes.
-- **Current blocker:** `ISS-005` — parity execution validates solver-model schema/status/hash but not the exact compiler identity/revision whose semantics the lowering code consumes.
+- **Current base:** `main@4482dcc481939c3af1068aea2e2db47baec63984`; exact compare at implementation head is behind-by-0.
+- **Last implementation head:** `295a395cdf59618417e585e5531f76823cccf66c`.
+- **PR diff:** exactly 33 explained paths; no `.github/workflows/*`.
+- **Current stage:** Stage 12B — compiled-model parity execution bridge.
+- **Last completed implementation stage:** Stage 12B.
+- **Stage decision:** **PARTIAL** — production architecture and static fail-closed hardening are implemented; executable numerical parity remains NOT_RUN.
+- **Engineering status:** IMPLEMENTED / VALIDATION_BLOCKED.
+- **Validation status:** GitHub reports zero statuses and zero workflow runs for `295a395...`; local GitHub DNS resolution is unavailable; the archive endpoint exposes no usable ZIP bytes.
+- **Current blocker:** `RISK-005` — no executable exact-head validation route. This blocks numerical parity claims and any authoritative `run()` promotion.
 - **Release status:** unchanged / fail-closed.
-- **Exact next action:** require the exact LAFEA.3 solver compiler ID/revision in the parity executor, add tamper coverage without exceeding 300-line test limits, then resync the report. Do not change authoritative `run()`.
+- **Exact next action:** execute the Stage 12B compiler/input/execution focused checks and aggregate on an exact-head environment. Do not change authoritative `run()` until numerical parity passes.
 
 ## Handover in 60 Seconds
 
 ### Current truth
 
 1. Stages 4–12A are implemented: governed stage routing, shared unit facts, dependency taxonomy, LAFEA.3 geometry identity, mesh identity, explicit revalidation, feature→current-mesh mapping, and deterministic solver-model compilation.
-2. Stage 12B production path exists and is intentionally non-authoritative:
+2. Stage 12B adds a real production-consumed, **non-authoritative** path:
 
 ```text
 workbench.executeContinuumCompiledForParity()
@@ -36,23 +36,24 @@ workbench.executeContinuumCompiledForParity()
 ```
 
 3. Existing `run: c.run` is unchanged. The parity path publishes no lifecycle execution/recovery evidence and cannot qualify release.
-4. Stage 12B is split under CodingRules limits: execution wrapper 140 lines; lowering helper 281 lines.
-5. Temperature is fail-closed because domain evidence uses delta-T but the numerical kernel requires thermal strain and no authoritative alpha exists.
-6. Non-mm geometry is fail-closed at solver compilation: geometry length unit must equal domain length unit and canonical continuum length (`mm`).
-7. A concurrent test-only delta was inspected and accepted: pure compiled-input lowering coverage plus aggregate v22 wiring. No production authority changed.
-8. Numerical parity remains unexecuted on the final Stage 12B line.
-9. Static audit now found `ISS-005`: the parity executor must bind to the exact compiler identity/revision, not only a self-consistent hash.
+4. Stage 12B stays within CodingRules limits: execution wrapper 148 lines, lowering helper 281, solver compiler 223, compiler check 287, execution check 299, pure lowering check 161.
+5. Compiler output retains source model identity/version/ancestry and `elementTypePolicy`; downstream lowering does not manufacture source/T3 execution facts.
+6. Temperature is fail-closed because current domain evidence expresses delta-T while the kernel requires thermal strain and no authoritative alpha exists.
+7. Non-mm geometry is fail-closed: geometry length unit must equal domain length unit and canonical continuum length (`mm` today). No hidden coordinate scaling occurs.
+8. Parity execution is bound to the exact exported LAFEA.3 compiler identity and revision; a re-sealed incompatible-revision artifact now fails closed before lowering/kernel invocation.
+9. Concurrent test-only commits adding pure compiled-input coverage and aggregate v22 wiring were isolated, inspected, and accepted; they change no production authority.
+10. Numerical parity is **not proven** because the final focused scripts have not executed on an exact-head environment.
 
 ### Unfinished
 
-- `ISS-005` compiler identity/revision guard;
 - exact-head compiler/input/execution/aggregate runtime;
 - legacy-vs-compiled numerical parity;
 - numerical traction/pressure/body-force/imposed-displacement parity;
 - T6/Q8 compiled parity;
 - thermal material semantics;
 - qualified non-mm geometry→mesh conversion;
-- authoritative compiled `run()` and later shell-family work.
+- authoritative compiled `run()` / lifecycle evidence;
+- shell-family compiler/execution work.
 
 ### Must not be assumed
 
@@ -60,7 +61,7 @@ Static review is not numerical validation. Opaque domain payload names are not s
 
 ### Highest risk
 
-A semantically incompatible compiled artifact can still produce plausible results if the parity lowering accepts a producer/revision it was not designed for. Fail closed on producer identity before any numerical promotion.
+Promoting the compiled route without executable parity could turn plausible but incorrect unit/attachment lowering into authoritative analysis evidence. Keep the route parity-only and non-retained until empirical evidence is green.
 
 ## Mission / Engineering Intent
 
@@ -72,7 +73,7 @@ current source authority
   -> analysis geometry
   -> governed mesh custody
   -> compiled solver model
-  -> parity-only lowering
+  -> parity-only compiled-input lowering
   -> existing continuum kernel
 ```
 
@@ -92,7 +93,7 @@ Stage 12B proves the integration seam without changing kernel, lifecycle, recove
 10. `workbench.run()` stays unchanged until executable parity passes.
 11. Delta-T cannot become thermal strain without authoritative thermal material data.
 12. Non-mm geometry cannot be silently interpreted as canonical mm.
-13. Compiled execution must accept only the compiler identity/revision it is designed to lower.
+13. Compiled execution accepts only the exact compiler identity/revision it is designed to lower.
 14. LAFEA.6 remains unsupported/fail-closed.
 15. No workflow YAML change without explicit Owner authorization.
 
@@ -109,7 +110,7 @@ Stage 12B proves the integration seam without changing kernel, lifecycle, recove
 | Solver-model compiler | P0 | IMPLEMENTED | 12A | workbench consumer; runtime NOT_RUN |
 | Compiled input lowering | P0 | IMPLEMENTED | 12B | parity executor consumer; focused runtime NOT_RUN |
 | Compiled parity execution | P0 | IMPLEMENTED | 12B | workbench consumer; numerical parity NOT_RUN |
-| Producer identity hardening | P0 | IN_PROGRESS | 12B | `ISS-005` |
+| Producer identity hardening | P0 | IMPLEMENTED | 12B | exact compiler ID/revision fail-closed guard |
 | Authoritative compiled `run()` | P0 | NOT_STARTED | 13 | blocked on parity |
 | Shell compiler/execution | P1 | DEFERRED | future | after continuum parity |
 
@@ -131,6 +132,7 @@ Stage 12B proves the integration seam without changing kernel, lifecycle, recove
 | DEC-020 | Decision | P0 | ACCEPTED | `TEMPERATURE` remains blocked until thermal semantics are qualified. | Yes |
 | DEC-021 | Decision | P0 | IMPLEMENTED | Solver compilation accepts only geometry bound to domain + canonical length units. | Yes |
 | DEC-022 | Decision | P1 | ACCEPTED | Concurrent compiled-input test/aggregate delta retained after bounded review. | Yes |
+| DEC-023 | Decision | P0 | IMPLEMENTED | Parity execution binds exact compiler ID/revision before lowering. | Yes |
 | RISK-005 | Risk | P0 | BLOCKED | No exact-head executable validation route. | Yes |
 | RISK-006 | Risk | P1 | ACCEPTED | Family extraction waits for continuum parity. | Yes |
 | RISK-007 | Risk | P0 | VALIDATED | Reconciled to current `main`, behind-by-0. | Yes |
@@ -140,19 +142,19 @@ Stage 12B proves the integration seam without changing kernel, lifecycle, recove
 | ISS-002 | Defect | P1 | RESOLVED | Stage 12B module split under 300-line limit. | Yes |
 | ISS-003 | Defect | P0 | ACCEPTED | Domain delta-T vs kernel thermal-strain semantic gap. | Yes |
 | ISS-004 | Defect | P0 | RESOLVED | Geometry/domain/noncanonical length unit fail-closed guard added. | Yes |
-| ISS-005 | Defect | P0 | IN_PROGRESS | Parity executor does not yet verify exact compiler ID/revision. | Yes |
+| ISS-005 | Defect | P0 | RESOLVED | Parity executor now rejects incompatible compiler ID/revision before lowering. | Yes |
 | DEBT-001 | Debt | P1 | ACCEPTED | Continuum domain is single-region; no section-region identity. | Yes |
 | DEBT-002 | Debt | P1 | ACCEPTED | Compiled material has E/nu only; no authoritative alpha. | Yes |
 | IMP-001 | Improvement | P2 | DEFERRED | Family-level mapping extraction after parity. | Yes |
 | IMP-002 | Improvement | P1 | DEFERRED | Qualified unit-aware geometry→mesh conversion. | Yes |
 
-## Stage 12B Implementation / Hardening Record
+## Stage 12B Implementation Record
 
 ### Production seam
 
 - `lafea-continuum-solver-model.js`: deterministic compiler; exact parent chain; source identity/policy retained; single-region uniform-thickness bounded scope; canonical-mm geometry gate.
 - `lafea-continuum-compiled-input.js`: pure governed-mesh/material/section/case/attachment lowering; no solver or state mutation.
-- `lafea-continuum-compiled-execution.js`: parity-only compiled-model validator + existing kernel call + immutable parity evidence.
+- `lafea-continuum-compiled-execution.js`: parity-only compiled-model validation, exact compiler ID/revision guard, existing-kernel call, immutable parity evidence.
 - `lafea-workbench-orchestrator-api.js`: real production consumer `executeContinuumCompiledForParity()`; existing `run()` unchanged.
 
 ### Attachment lowering
@@ -165,29 +167,26 @@ Stage 12B proves the integration seam without changing kernel, lifecycle, recove
 - `BODY_FORCE`: `{bx,by,unit}` → mapped region elements.
 - `TEMPERATURE`: fail closed `LAFEA_CONTINUUM_COMPILED_TEMPERATURE_SEMANTICS_NOT_QUALIFIED`.
 
-### Structural and unit hardening already complete
+### Fail-closed hardening complete
 
-- execution wrapper 140 physical lines;
-- lowering helper 281 lines;
-- solver model 223 lines;
-- compiler focused check 287 lines;
-- compiled execution focused check 296 lines;
-- pure compiled-input check 161 lines;
-- geometry/domain mismatch fails `LAFEA_CONTINUUM_SOLVER_GEOMETRY_UNIT_SYSTEM_MISMATCH`;
-- noncanonical geometry fails `LAFEA_CONTINUUM_SOLVER_NONCANONICAL_GEOMETRY_UNITS_UNSUPPORTED`.
+- module/test physical lines: execution 148; input 281; solver model 223; compiler check 287; execution check 299; input check 161;
+- geometry/domain mismatch → `LAFEA_CONTINUUM_SOLVER_GEOMETRY_UNIT_SYSTEM_MISMATCH`;
+- noncanonical geometry → `LAFEA_CONTINUUM_SOLVER_NONCANONICAL_GEOMETRY_UNITS_UNSUPPORTED`;
+- incompatible compiler identity/revision → `LAFEA_CONTINUUM_COMPILED_COMPILER_IDENTITY_INVALID`;
+- delta-T without thermal authority → `LAFEA_CONTINUUM_COMPILED_TEMPERATURE_SEMANTICS_NOT_QUALIFIED`.
 
-### Current static hardening plan — ISS-005
+### Focused evidence prepared
 
-The parity executor currently checks solver-model schema, stage, status, authority booleans, coordinate/DOF policy, canonical units, source-model presence, collections, allowed attachment kinds, and reconstructed `solverModelHash`. It does not check `compilerId` or `compilerRevision`.
+- `lafea-continuum-solver-model-check.mjs`: deterministic compiler, source execution policy, mapped current mesh, unit fail-closed cases.
+- `lafea-continuum-compiled-input-check.mjs`: restraint, imposed displacement, force, traction, pressure, body-force lowering and target/unit fail-closed cases.
+- `lafea-continuum-compiled-execution-check.mjs`: source-equivalent T3 numerical parity design, deterministic repeated execution, payload/authority/compiler tamper rejection, temperature fail-closed, and live workbench non-publication/release assertions.
+- aggregate v22 executes all three when an executable environment exists.
 
-Planned behavior:
+### Deviations from original Stage 12B plan
 
-```text
-compilerId === LAFEA_CONTINUUM_SOLVER_COMPILER_ID
-compilerRevision === LAFEA_CONTINUUM_SOLVER_COMPILER_REVISION
-```
-
-Anything else fails closed before lowering/kernel invocation. Add tamper coverage in the existing compiled-execution focused check while keeping it below 300 physical lines.
+1. Temperature execution is blocked rather than guessed because the available contract is delta-T, not thermal strain.
+2. Non-mm geometry is blocked rather than silently scaled because current geometry→mesh numerics lack a qualified conversion boundary.
+3. Numerical validation remains NOT_RUN; therefore Stage 12B is PARTIAL and authoritative `run()` promotion is prohibited.
 
 ## Validation / Evidence Ledger
 
@@ -199,16 +198,16 @@ Anything else fails closed before lowering/kernel invocation. Add tamper coverag
 | Stage 10 final runtime | NOT_RUN | final stage head | workflows retired/local clone unavailable |
 | Stage 11 final runtime | NOT_RUN | final stage head | workflows retired/local clone unavailable |
 | Stage 12A runtime | NOT_RUN | final stage head | no exact-head route |
-| Main reconciliation | PASS | `de69e387...` | `main@4482dcc...`, behind-by-0 |
-| Stage 12B changed-file audit | PASS | `de69e387...` | 33 explained paths; no workflow YAML |
-| Concurrent test-only delta audit | PASS | `de69e387...` | commits `71ee3769...` and `145ea91f...` test/aggregate only |
-| Module-size audit | PASS | `de69e387...` | production/test modules within 300-line target |
-| Local clone route | FAIL | current environment | `github.com` DNS resolution unavailable |
-| GitHub archive snapshot route | FAIL | `7e68f478...` | archive endpoint returns no usable ZIP content through connector |
-| Exact-head status lookup | NOT_RUN | `de69e387...` | zero statuses |
-| Exact-head workflow lookup | NOT_RUN | `de69e387...` | zero workflow runs |
-| Stage 12B focused/aggregate runtime | NOT_RUN | current line | no executable route |
-| Numerical parity | NOT_RUN | current line | no executable route |
+| Main reconciliation | PASS | `295a395...` | `main@4482dcc...`, behind-by-0 |
+| Stage 12B changed-file audit | PASS | `295a395...` | exactly 33 explained paths; no workflow YAML |
+| Concurrent test-only delta audit | PASS | `295a395...` | `71ee3769...` and `145ea91f...` test/aggregate only |
+| Module-size audit | PASS | `295a395...` | production/test modules remain below 300 lines |
+| Local clone route | FAIL | current environment | `github.com` DNS unavailable |
+| GitHub archive route | FAIL | report-sync head | endpoint exposes no usable ZIP bytes |
+| Exact-head status lookup | NOT_RUN | `295a395...` | zero statuses |
+| Exact-head workflow lookup | NOT_RUN | `295a395...` | zero workflow runs |
+| Stage 12B focused/aggregate runtime | NOT_RUN | `295a395...` | no executable route |
+| Numerical parity | NOT_RUN | `295a395...` | no executable route |
 
 ### Engineering Validation
 
@@ -221,9 +220,19 @@ Anything else fails closed before lowering/kernel invocation. Add tamper coverag
 | Release authority unchanged | PASS (static) | parity evidence false; release path untouched |
 | Temperature guessing avoided | PASS (static) | explicit fail-closed |
 | Non-mm reinterpretation prevented | PASS (static) | compiler unit guards |
+| Compiler producer compatibility bound | PASS (static) | exact compiler ID/revision guard |
 | Non-thermal lowering shapes structurally covered | PASS (test design) | pure lowering check |
-| Exact compiler producer identity bound | IN_PROGRESS | `ISS-005` |
 | Numerical parity | NOT_RUN | exact-head execution required |
+
+### Explicitly Not Validated
+
+- exact-head execution of current Stage 12B scripts;
+- legacy-vs-compiled numerical equality;
+- T6/Q8 compiled equivalence;
+- numerical traction/pressure/body-force/imposed-displacement parity;
+- thermal execution semantics;
+- non-mm domain-first meshing;
+- authoritative compiled `run()` integration.
 
 ## Changed-File Ledger — 33 Paths
 
@@ -267,36 +276,38 @@ All current paths are explained. No workflow YAML is in scope.
 
 ## Recommended Forward Sequence
 
-1. Close `ISS-005` with exact compiler ID/revision enforcement and focused tamper coverage.
-2. Re-audit exact head/main/diff/status/workflow truth and resync this report.
-3. Stop production authority expansion while `RISK-005` blocks executable parity.
-4. On an executable exact-head environment run compiler/input/execution focused checks and aggregate.
-5. Then add numerical parity for traction/pressure/body force/imposed displacement and T6/Q8.
-6. Keep temperature blocked pending thermal material authority; qualify non-mm geometry→mesh conversion separately.
-7. Only after parity is green may Stage 13 design authoritative compiled execution/lifecycle evidence.
-8. LAFEA.4/.5 extension follows proven continuum architecture; analytical alignment follows per roadmap.
+1. **Validation gate first.** On an exact-head environment run:
+   - `scripts/lafea-continuum-solver-model-check.mjs`;
+   - `scripts/lafea-continuum-compiled-input-check.mjs`;
+   - `scripts/lafea-continuum-compiled-execution-check.mjs`;
+   - `scripts/lafea-nonbucket-stack-check.mjs`.
+2. Repair any failure inside Stage 12B without changing `run()` or release authority.
+3. Once source-equivalent T3 parity passes, add numerical parity for traction, pressure, body force, imposed displacement, then T6/Q8.
+4. Keep temperature blocked pending thermal material authority; qualify non-mm geometry→mesh conversion separately.
+5. Only after parity is green may Stage 13 design authoritative compiled execution/lifecycle evidence.
+6. Extend the proven FE architecture to LAFEA.4 then LAFEA.5; analytical alignment follows per roadmap.
 
 ## Process Notes / Lessons Learned
 
 - Generic attachment payloads are opaque; execution semantics must be explicit and stage/family owned.
 - Delta-T cannot infer thermal strain without alpha.
 - Geometry unit labels are insufficient when numeric meshing does not convert them; fail closed until conversion is qualified.
-- A self-consistent artifact hash proves content integrity, not producer compatibility. Consumers must bind producer identity/revision when semantics depend on them.
+- A self-consistent content hash proves integrity, not producer compatibility; semantic consumers must bind producer identity/revision.
 - Concurrent branch changes must be isolated and inspected before acceptance.
 - Runtime infrastructure absence remains NOT_RUN, never an inferred PASS.
 
 ## Next-Agent Handover
 
-- **Stopping point:** Stage 12B production seam implemented; static hardening `ISS-005` in progress; numerical validation blocked.
+- **Stopping point:** Stage 12B production architecture and static hardening complete; stage decision PARTIAL because exact-head numerical/runtime validation is unavailable.
 - **PR / branch:** #1038 / `agent/integrated-lafea-common-stage-roadmap`.
-- **Last implementation head:** `de69e387e8ecc78ee3c617f212fff54ed0325cd4`.
+- **Implementation head:** `295a395cdf59618417e585e5531f76823cccf66c` before this report sync.
 - **Current base:** `main@4482dcc481939c3af1068aea2e2db47baec63984`, behind-by-0 at last compare.
-- **Start here:** `src/workspace/lafea-continuum-compiled-execution.js::validateSolverModel`.
-- **Implement next:** exact `compilerId`/`compilerRevision` guard and focused tamper case.
-- **Do not redo:** Stages 9–12A, Stage 12B split, temperature/unit fail-closed, concurrent-test reconciliation.
+- **Active gate:** executable Stage 12B parity validation.
+- **Start here:** the three Stage 12B focused scripts plus aggregate; do not modify authoritative run code first.
+- **Do not redo:** Stages 9–12A, Stage 12B split, temperature/unit/compiler-identity fail-closed hardening, concurrent-test reconciliation.
 - **Do not assume:** numerical parity, non-mm support, thermal semantics, release qualification, or authoritative compiled `run()`.
-- **Known failing route:** local GitHub clone/DNS and archive-byte access unavailable; no exact-head workflow/status evidence.
-- **Validation required:** exact-head Stage 12B focused/aggregate + numerical parity.
-- **Highest risk:** producer/semantic mismatch producing plausible results.
-- **Exact next recommended action:** close `ISS-005`, resync report, then keep authority changes frozen until executable parity is available.
+- **Known failing route:** local GitHub clone/DNS and archive-byte access unavailable; exact implementation head has no workflow/status evidence.
+- **Validation required:** exact-head Stage 12B focused/aggregate and numerical parity.
+- **Highest risk:** promoting a compiled route before empirical parity is proven.
+- **Exact next recommended action:** obtain/run an exact-head execution environment and execute Stage 12B checks; keep PR draft and `run()` unchanged until green evidence exists.
 - **Required reading:** this report, roadmap, Stage 12A compiler/mapping, Stage 12B input/execution, local-continuum contracts, CodingRules `43eccc...`.

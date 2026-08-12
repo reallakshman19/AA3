@@ -45,7 +45,7 @@ case     BM4_L L13
 ACCDB    64c05a50e9ed0452622ff5880335460486f24ac8e6adecc9a300b549c9aa82f8
 capture  Incore Solver + Active Boundary Conditions
          OR an equivalent exact-build product state trace
-trace    file name + SHA-256
+trace    raw-capture file name + SHA-256
 ```
 
 Any evidence explicitly selected from final BM4_L response accuracy is rejected.
@@ -104,6 +104,48 @@ contactState
 
 The trace must start at iteration 1, remain sequential, contain at least two iterations, and end in a converged iteration.
 
+## Executable operator capture workflow
+
+The repository now generates the capture worksheet rather than requiring hand-built keys.
+
+Create a worksheet with one complete 32-row restraint inventory for every expected nonlinear iteration:
+
+```sh
+node scripts/lfea-m047-bm4l-l13-state-trace-capture.mjs \
+  --template-out=.artifacts/bm4l-l13-state-trace.capture.json \
+  --iterations=<N>
+```
+
+The generated worksheet is intentionally **not** product evidence:
+
+```text
+capturedFromProduct = false
+traceFileName       = null
+traceSha256         = null
+```
+
+For each actual CAESAR iteration, transcribe only what the exact product shows. Preserve a raw capture bundle—preferably a single ZIP containing the screen recording/screenshots and any native product exports—without editing it after capture.
+
+After all iterations are transcribed, seal the worksheet to that immutable raw bundle and run the gate in one command:
+
+```sh
+node scripts/lfea-m047-bm4l-l13-state-trace-capture.mjs \
+  --input=.artifacts/bm4l-l13-state-trace.capture.json \
+  --raw-capture=.artifacts/bm4l-l13-raw-product-capture.zip \
+  --out=.artifacts/bm4l-l13-state-trace.sealed.json
+```
+
+The CLI computes the raw bundle SHA-256, records its file name, sets `capturedFromProduct=true`, writes the sealed trace, and immediately assesses it. Exit `0` means **ready for engineering review**; exit `2` means blocked evidence with explicit blocker codes.
+
+A previously sealed trace can also be inspected without mutation:
+
+```sh
+node scripts/lfea-m047-bm4l-l13-state-trace-capture.mjs \
+  --input=.artifacts/bm4l-l13-state-trace.sealed.json
+```
+
+The capture helpers are regression-locked to exactly 26 friction rows + 6 gap rows per iteration. Sealing an unfilled worksheet still fails the evidence gate; a raw-file hash cannot bypass missing or unconverged product-state evidence.
+
 ## Derived evidence — no fitting
 
 Once a trace passes custody/completeness, the gate derives only direct differences between observed consecutive iterations:
@@ -151,16 +193,18 @@ total                       1914
 accuracy                     89.8119122257%
 ```
 
-A state-trace intake tool is not an accuracy improvement by itself.
+A state-trace capture/intake tool is not an accuracy improvement by itself.
 
 ## Files
 
-Relative to corrected Fix 1 / PR #1076 this stage adds or modifies exactly five files:
+Relative to corrected Fix 1 / PR #1076 this stage now adds or modifies exactly seven files:
 
 ```text
 agents/PR_M047_bm4l_l13_state_trace_evidence_gate.md
 benchmarks/LFEA/CAESAR_ACCDB/m047-bm4l-l13-state-trace-contract.json
+scripts/lfea-m047-bm4l-l13-state-trace-capture.mjs
 scripts/lfea-m047-bm4l-l13-state-trace-evidence-check.mjs
+src/core/nonlinear-restraint-friction/caesar-bm4l-l13-state-trace-capture.js
 src/core/nonlinear-restraint-friction/caesar-bm4l-l13-state-trace-evidence-gate.js
 src/core/nonlinear-restraint-friction/index.js
 ```
@@ -169,4 +213,4 @@ No production nonlinear iteration kernel, linear solver, comparator, tolerance, 
 
 ## Decision
 
-**F2.7B STATE-TRACE INTAKE READY. THE REPOSITORY CAN NOW ACCEPT AND REDUCE THE EXACT-BUILD PRODUCT TRACE REQUIRED TO CLOSE THE TWO REMAINING NONLINEAR SEMANTIC BLOCKERS WITHOUT RESPONSE FITTING. L13 REMAINS 1719/1914 = 89.8119% UNTIL SUCH EVIDENCE IS CAPTURED, REVIEWED, AND THEN IMPLEMENTED IN A SEPARATE F2.8 BATCH.**
+**F2.7B STATE-TRACE CAPTURE AND INTAKE READY. THE REPOSITORY CAN NOW GENERATE THE EXACT 26-FRICTION/6-GAP ITERATION WORKSHEET, SEAL A COMPLETED TRACE TO IMMUTABLE RAW PRODUCT EVIDENCE, AND REDUCE THE EXACT-BUILD TRANSITIONS REQUIRED TO CLOSE THE TWO REMAINING NONLINEAR SEMANTIC BLOCKERS WITHOUT RESPONSE FITTING. L13 REMAINS 1719/1914 = 89.8119% UNTIL SUCH EVIDENCE IS CAPTURED, REVIEWED, AND THEN IMPLEMENTED IN A SEPARATE F2.8 BATCH.**

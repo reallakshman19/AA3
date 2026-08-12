@@ -1,0 +1,38 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "lafea-benchmark-audit-record/v1",
+  "title": "LAFEA benchmark audit record",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema", "programId", "runId", "generatedAt", "repository", "exactHeadSha",
+    "trackedTreeClean", "caseId", "stageId", "methodResults", "caseStatus",
+    "nextBenchmarkAuthorized", "baselineDisposition", "governance", "recordHash"
+  ],
+  "properties": {
+    "schema": {"const": "lafea-benchmark-audit-record/v1"},
+    "programId": {"type": "string"},
+    "runId": {"type": "string"},
+    "generatedAt": {"type": "string"},
+    "repository": {"type": "string"},
+    "exactHeadSha": {"type": "string", "pattern": "^[0-9a-f]{40}$"},
+    "trackedTreeClean": {"const": true},
+    "environment": {"type": "object"},
+    "caseId": {"type": "string"},
+    "stageId": {"type": "string"},
+    "methodResults": {"type": "array", "minItems": 1},
+    "caseStatus": {"enum": ["PASS", "FAIL", "BLOCKED"]},
+    "nextBenchmarkAuthorized": {"type": "boolean"},
+    "baselineDisposition": {"enum": ["ELIGIBLE_EXECUTION_BASELINE", "NOT_ELIGIBLE"]},
+    "governance": {
+      "type": "object",
+      "required": ["productionOutputGeneratedExpectedValues", "releaseAuthorityGranted", "temperatureAuthorityGranted"],
+      "properties": {
+        "productionOutputGeneratedExpectedValues": {"const": false},
+        "releaseAuthorityGranted": {"const": false},
+        "temperatureAuthorityGranted": {"const": false}
+      }
+    },
+    "recordHash": {"type": "string", "pattern": "^sha256:[0-9a-f]{64}$"}
+  }
+}

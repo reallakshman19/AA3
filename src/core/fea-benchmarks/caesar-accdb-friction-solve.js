@@ -13,12 +13,7 @@ import { deepFreeze } from '../shared-piping-model/immutable.js';
 import { buildDofMap, dofIndexOf } from '../linear-fea-solver/dof-map.js';
 import { assembleGlobalSystem } from '../linear-fea-solver/assembly.js';
 import { factorizeFreePartition } from '../linear-fea-solver/factorization.js';
-import {
-  matVec,
-  solveCholesky,
-  solveLdlt,
-} from '../linear-fea-solver/linear-algebra.js';
-import { applyDiagonalScalingToVector } from '../linear-fea-solver/scaling.js';
+import { matVec, subRectangular } from '../linear-fea-solver/linear-algebra.js';
 import { resolveSolverPolicies } from '../linear-fea-solver/solver-contract.js';
 import { withSolverExecutionInterceptor } from '../linear-fea-solver/execution-interceptor.js';
 import {
@@ -26,6 +21,7 @@ import {
 } from './caesar-configuration-authority.js';
 import { solveCaesarAccdbLinearBenchmark } from './caesar-accdb-linear-solve.js';
 import { selectBm4lAccdbFrictionRows } from './caesar-accdb-friction-restraint-selection.js';
+import { solveCaesarFrictionRefinedDenseSystem } from './caesar-friction-dense-refinement.js';
 import {
   combineCaesarAlgebraicResultRows,
   compareDeterministicCaesarFrictionRuns,
@@ -162,6 +158,8 @@ export function solveCaesarAccdbFrictionBenchmark(benchmarkPackage, options = {}
       limitations: [
         'The nonlinear adapter changes only tangential support stiffness/load terms; qualified element, W/T1/P1, restraint-normal and recovery mechanics are reused unchanged.',
         'Friction surfaces are selected only from positive-FRIC_COEF ACCDB type-Y rows; GUI/LIM/ANC rows remain ordinary qualified restraints and cannot create friction surfaces.',
+        'Each Coulomb cap binds to exactly one qualified Y-normal spring; co-located GUI/LIM reactions cannot enter mu|N|.',
+        'Every nonlinear linearization uses the same dense direct residual-refinement policy as the qualified linear solver.',
         'Supports are bidirectional and remain active; no lift-off or one-directional contact logic is introduced.',
         'L15 is algebraic only and never enters the nonlinear iteration.',
         'L1 WW+HP is blocked until hydrotest weight/pressure construction is independently qualified in the ACCDB mechanics.',
@@ -209,6 +207,7 @@ function solvePrimitiveFrictionCase(input) {
       activeSet: nonlinearRun,
       physicalEquilibrium,
       finalEquationResidual: finalIteration.equilibrium,
+      finalIterativeRefinement: finalIteration.refinement,
     }));
     lastLegacy = legacy;
   }
@@ -238,6 +237,7 @@ function solvePrimitiveFrictionCase(input) {
         sourceElementCount: legacyEvidence.sourceElementCount,
         bootstrapLinearFrictionOverrideUsedOnlyForCapture: true,
         bootstrapResultAcceptedAsQualification: false,
+        denseIterativeRefinementMirrorsQualifiedSolver: true,
       },
     },
   });
@@ -308,6 +308,7 @@ function solveCapturedNonlinearSystem(input) {
           factorizationKind: solved.factorization.kind,
           conditionEstimate: solved.factorization.conditionEstimate,
           freeDofCount: baseAssembly.freeIndices.length,
+          iterativeRefinement: solved.refinement,
         },
       };
     },
@@ -348,6 +349,7 @@ function solveCapturedNonlinearSystem(input) {
         status: run.status,
         iterations: run.iterations,
         finalEquationResidual: finalIteration.equilibrium,
+        finalIterativeRefinement: finalIteration.refinement,
       },
     },
   });
@@ -376,10 +378,7 @@ function solveOneFrictionLinearization(input) {
       throw new TypeError(`Unsupported friction assembly mode ${term.mode}.`);
     }
   }
-  const augmentedAssembly = {
-    ...input.baseAssembly,
-    K,
-  };
+  const augmentedAssembly = { ...input.baseAssembly, K };
   const factorization = factorizeFreePartition({
     model: input.model,
     dofMap: input.dofMap,
@@ -388,11 +387,19 @@ function solveOneFrictionLinearization(input) {
     backend: input.backend,
   });
   const Ffree = input.baseAssembly.freeIndices.map((index) => F[index]);
-  const scaledRhs = applyDiagonalScalingToVector(Ffree, factorization.scaling.factors);
-  const scaledSolution = factorization.kind === 'CHOLESKY'
-    ? solveCholesky(factorization.L, factorization.m, scaledRhs)
-    : solveLdlt(factorization.L, factorization.D, factorization.m, scaledRhs);
-  const Uf = applyDiagonalScalingToVector(scaledSolution, factorization.scaling.factors);
+  const Kfree = subRectangular(
+    K,
+    input.baseAssembly.n,
+    input.baseAssembly.freeIndices,
+    input.baseAssembly.freeIndices,
+  );
+  const refined = solveCaesarFrictionRefinedDenseSystem({
+    factorization,
+    matrix: Kfree,
+    rhs: Ffree,
+    policies: input.policies,
+  });
+  const Uf = refined.solution;
   const U = new Array(input.baseAssembly.n).fill(0);
   input.baseAssembly.freeIndices.forEach((globalIndex, row) => { U[globalIndex] = Uf[row]; });
   const residual = matVec(K, input.baseAssembly.n, U).map((value, index) => value - F[index]);
@@ -403,6 +410,7 @@ function solveOneFrictionLinearization(input) {
   return {
     displacementVector: U,
     factorization,
+    refinement: refined.evidence,
     equilibrium: {
       forceN: maximum(freeResiduals.filter((entry) => TRANSLATION_DOFS.includes(entry.dof))
         .map((entry) => Math.abs(entry.value))),
@@ -433,13 +441,16 @@ function buildFrictionRestraints(benchmarkPackage, settings) {
 function normalReactionMap(restraints, model, dofMap, displacement) {
   const result = new Map();
   for (const restraint of restraints) {
-    const constraint = model.constraints.find((entry) =>
+    const matches = model.constraints.filter((entry) =>
       entry.nodeId === restraint.nodeId
       && entry.dof === restraint.normalDof
       && entry.behavior === 'LINEAR_SPRING');
-    if (!constraint) {
-      throw new TypeError(`${restraint.restraintId} cannot bind its qualified normal restraint spring.`);
+    if (matches.length !== 1) {
+      throw new TypeError(
+        `${restraint.restraintId} must bind exactly one qualified ${restraint.sourceRestraintType} normal spring; found ${matches.length}.`,
+      );
     }
+    const constraint = matches[0];
     const component = -constraint.stiffness * displacement[
       dofIndexOf(dofMap, restraint.nodeId, restraint.normalDof)
     ];
@@ -460,6 +471,7 @@ function totalSupportReactionEntries(input) {
   }
   for (const state of input.frictionStates) {
     const restraint = input.restraints.find((entry) => entry.restraintId === state.restraintId);
+    if (!restraint) throw new TypeError(`Unknown final friction restraint ${state.restraintId}.`);
     TRANSLATION_DOFS.forEach((dof, index) => {
       const key = `${restraint.nodeId}:${dof}`;
       byDof.set(key, (byDof.get(key) ?? 0) + state.appliedFrictionForce[index]);
@@ -536,13 +548,6 @@ function requireTranslationStiffnessUnit(benchmarkPackage) {
 function dominantTranslationDof(direction) {
   const values = direction.map(Math.abs);
   return TRANSLATION_DOFS[values.indexOf(Math.max(...values))];
-}
-function unit3(value, field) {
-  const magnitude = Math.hypot(...value);
-  if (!(magnitude > 0) || value.some((entry) => !Number.isFinite(entry))) {
-    throw new TypeError(`${field} must contain a finite nonzero direction.`);
-  }
-  return value.map((entry) => entry / magnitude);
 }
 function positiveInteger(value, field) {
   const number = Number(value);

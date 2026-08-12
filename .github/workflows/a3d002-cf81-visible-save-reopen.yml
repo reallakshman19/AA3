@@ -14,14 +14,14 @@ jobs:
     timeout-minutes: 45
     env:
       BASE_SHA: e977bd15a0fbe30492514d7ad29ae52c998c50c8
-      CANDIDATE_SHA: bdcf2caf957167ddcdb658ea766585cae0a00052
+      CANDIDATE_SHA: 87f3b7fb1081a1f03a155c8517bc4cb2d2e6f0ec
       PLAYWRIGHT_BROWSERS_PATH: '0'
-      TOPOLOGY_EDIT_TARGET_HEAD_SHA: bdcf2caf957167ddcdb658ea766585cae0a00052
+      TOPOLOGY_EDIT_TARGET_HEAD_SHA: 87f3b7fb1081a1f03a155c8517bc4cb2d2e6f0ec
     steps:
       - name: Checkout exact candidate
         uses: actions/checkout@v4
         with:
-          ref: bdcf2caf957167ddcdb658ea766585cae0a00052
+          ref: 87f3b7fb1081a1f03a155c8517bc4cb2d2e6f0ec
           fetch-depth: 0
 
       - name: Verify exact two-file ledger

@@ -14,3 +14,8 @@ export {
   FRICTION_EXECUTION_READINESS_BLOCKERS,
   assessFrictionExecutionReadiness,
 } from './friction-execution-readiness.js';
+export {
+  parseCaesarInputXmlForceLengthUnits,
+  normalizeForcePerLengthToNPerM,
+  normalizeCaesarStaticFrictionStiffnessToSI,
+} from './caesar-friction-unit-contract.js';

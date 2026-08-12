@@ -1,0 +1,99 @@
+{
+  "schema": "m047-bm4l-friction-unit-authority/v2",
+  "benchmarkId": "BM4_L",
+  "scope": "CAESAR_STATIC_FRICTION_STIFFNESS_SOURCE_UNIT_AND_SI_NORMALIZATION",
+  "stackBase": {
+    "pr": 1052,
+    "branch": "agent/m047-bm4l-friction-authority-closure",
+    "sha": "2c8f61b503b2192324f17c4ffbd8ad1b0ef06552"
+  },
+  "officialAuthority": {
+    "product": "CAESAR II",
+    "version": "14.00",
+    "finding": "STATIC_FRICTION_STIFFNESS_DEFAULT_IS_1000000_LB_PER_IN",
+    "sourceClass": "HEXAGON_OFFICIAL_MODELING_FRICTION_EFFECTS",
+    "sourceValue": 1000000,
+    "sourceUnit": "LB/IN"
+  },
+  "normalization": {
+    "sourceValue": 1000000,
+    "sourceUnit": "LB/IN",
+    "poundForceToN": 4.4482216152605,
+    "inchToM": 0.0254,
+    "siValue": 175126835.24647635,
+    "siUnit": "N/m",
+    "equation": "1000000 lb/in * 4.4482216152605 N/lb / 0.0254 m/in"
+  },
+  "modelDisplayUnits": {
+    "common": {
+      "repository": "reallaksh19/Common",
+      "commit": "179c4831cf521cf797c13699cfbbd118315c9244",
+      "path": "LFEA/BM4/InputXML_BM4.xml",
+      "gitBlob": "3423d220374a17f67addd3c8c0c44300ffa46251"
+    },
+    "force": "N",
+    "length": "mm",
+    "finding": "MODEL_INPUTXML_DISPLAY_UNITS_DO_NOT_OVERRIDE_THE_DOCUMENTED_STATIC_FRICTION_CONFIGURATION_SOURCE_UNIT"
+  },
+  "profileObservation": {
+    "path": "benchmarks/LFEA/CAESAR_ACCDB/bm4l-validation.profile.json",
+    "storedValue": 1000000,
+    "storedUnitLabel": "DISPLAYED_CAESAR_UNITS",
+    "disposition": "UNIT_LABEL_TOO_AMBIGUOUS_FOR_NONLINEAR_INTEGRATION; DO_NOT_INTERPRET_AS_N_PER_MM"
+  },
+  "independentProductObservation": {
+    "repository": "reallaksh19/Common",
+    "commit": "179c4831cf521cf797c13699cfbbd118315c9244",
+    "input": {
+      "path": "LFEA/BM1/BM1_InputXML.xml",
+      "gitBlob": "ee88921c4ad80f0265fbed61336b1c896c15f9fa",
+      "frictionCoefficient": 0.3,
+      "positiveFrictionNodes": [70, 80],
+      "positiveGapCompanionsAtFrictionNodes": 0
+    },
+    "output": {
+      "path": "LFEA/BM1/BM1_CIIOutput.xml",
+      "gitBlob": "caa9645ba59e5106ee4243f41a2edf2d81b6e17e",
+      "caesarVersion": "14.00.00.0910",
+      "build": 231113,
+      "case": "CASE 4 (SUS) W+P1+H",
+      "observations": [
+        {
+          "node": 70,
+          "tangentialDisplacementMm": 0.00975308079531796,
+          "tangentialReactionN": 1707.9452393224744,
+          "observedSecantStiffnessNPerM": 175118536.91834342,
+          "relativeDifferenceFromDocumentedDefault": -0.000047384674777273376
+        },
+        {
+          "node": 80,
+          "tangentialDisplacementMm": 0.004848281448100966,
+          "tangentialReactionN": 849.1475935771209,
+          "observedSecantStiffnessNPerM": 175144038.70050186,
+          "relativeDifferenceFromDocumentedDefault": 0.00009823425405532255
+        }
+      ],
+      "interpretation": "TWO_INDEPENDENT_NO_GAP_FRICTION_SITES_REPRODUCE_THE_DOCUMENTED_1E6_LB_PER_IN_STICK_STIFFNESS_WITHIN_0.01_PERCENT"
+    }
+  },
+  "policy": {
+    "positiveFrictionRequiresExplicitSIStiffness": true,
+    "modelDisplayUnitsMayNotInferStaticFrictionConfigUnit": true,
+    "kernelReceivesNPerMOnly": true,
+    "frictionlessLinearBypassUnaffected": true,
+    "comparatorToleranceChanged": false,
+    "bm4ResponseFittingUsed": false
+  },
+  "decision": {
+    "unitNormalizationStatus": "RESOLVED_AND_PRODUCT_VALIDATED",
+    "frictionStiffnessSI": 175126835.24647635,
+    "remainingBlockers": [
+      "FRICTION_SLIDE_MULTIPLIER_AUTHORITY_REQUIRED",
+      "FRICTION_STATE_HISTORY_SEMANTICS_AUTHORITY_REQUIRED",
+      "GAP_CONTACT_STATE_SEMANTICS_AUTHORITY_REQUIRED"
+    ],
+    "l13ProductionSolveAuthorized": false,
+    "l7ProductionSolveAuthorized": false,
+    "newMechanicsAuthorized": false
+  }
+}

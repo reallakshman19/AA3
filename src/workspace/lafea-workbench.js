@@ -1,4 +1,6 @@
 /** Public integration surface for the standalone LAFEA calculation workbench. */
+import { FeaBenchmarkPanel } from './fea-benchmark-panel.js';
+import { createLafeaMockDocument } from './lafea-simulated-source-provider.js';
 import { LafeaWorkbenchController } from './lafea-workbench-controller.js';
 import { LAFEA_WORKBENCH_STYLES, lafeaWorkbenchStyles } from './lafea-workbench-styles.js';
 
@@ -292,6 +294,11 @@ export { lafeaPreviewGeometry } from './lafea-stage-preview.js';
 /**
  * Mount and initialize a LAFEA workbench in an existing shell root.
  *
+ * This compatibility facade deliberately supplies the simulated-source and
+ * generic benchmark providers used by the existing combined/developer surface.
+ * The production standalone entry constructs `LafeaWorkbenchController`
+ * directly and therefore does not load either compatibility provider.
+ *
  * `accessoryPanels` is an optional array of exact
  * `lafea-workbench-accessory-panel/v1` descriptors. Panels are UI composition
  * extensions only and receive a frozen facade containing `getState` and
@@ -311,10 +318,25 @@ export { lafeaPreviewGeometry } from './lafea-stage-preview.js';
  * do not register lifecycle evidence or expose retained packet buffers.
  *
  * @param {Element} rootElement Workbench host.
- * @param {{initialStage?:string,initialDocument?:unknown,initialSourceHash?:string,accessoryPanels?:unknown[],THREE?:unknown,currentCandidateHeadSha?:string,authorizedReleaseEvidenceHashes?:string[]}|undefined} options Explicit initial state, optional accessory panels, release/T6 build trust anchors and optional Three.js dependency.
+ * @param {{initialStage?:string,initialDocument?:unknown,initialSourceHash?:string,accessoryPanels?:unknown[],THREE?:unknown,currentCandidateHeadSha?:string,authorizedReleaseEvidenceHashes?:string[],benchmarkPanelFactory?:Function|null,mockDocumentFactory?:Function|null}|undefined} options Explicit initial state, optional accessory panels, release/T6 build trust anchors and optional compatibility providers.
  * @returns {LafeaWorkbenchController} Initialized controller.
  */
 export function mountLafeaWorkbench(rootElement, options) {
   if (!rootElement) throw new TypeError('LAFEA workbench root is required.');
-  return new LafeaWorkbenchController(rootElement, options).init();
+  const configuration = options && typeof options === 'object' && !Array.isArray(options)
+    ? options
+    : {};
+  const hasBenchmarkFactory = Object.prototype.hasOwnProperty.call(configuration, 'benchmarkPanelFactory');
+  const hasMockFactory = Object.prototype.hasOwnProperty.call(configuration, 'mockDocumentFactory');
+  const benchmarkPanelFactory = hasBenchmarkFactory
+    ? configuration.benchmarkPanelFactory
+    : (hostElement) => new FeaBenchmarkPanel(hostElement, { surface: 'LAFEA' });
+  const mockDocumentFactory = hasMockFactory
+    ? configuration.mockDocumentFactory
+    : createLafeaMockDocument;
+  return new LafeaWorkbenchController(rootElement, {
+    ...configuration,
+    benchmarkPanelFactory,
+    mockDocumentFactory,
+  }).init();
 }

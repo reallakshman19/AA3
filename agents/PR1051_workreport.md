@@ -8,16 +8,18 @@
 | Branch | `agent/topology-aware-tee-reducer-selection` |
 | Base | `main@271d04fa2674ab68367808d05f2429ec5e236a6e` |
 | Rules | `reallaksh19/Common@43eccc27967ecec7d67513c08255398b496be5ce/CodingRules.md` |
-| Mission | Present only M10 reducer choices that the existing certified command can actually represent for the explicitly selected TEE branch. |
-| Status | DRAFT — implementation complete; qualification/audit in progress |
-| Current stage | S3 focused + production-path qualification |
-| Empirical CI | NOT_RUN on final head; `.github/workflows` was retired by #1043 and this agent has no local checkout/network clone path |
+| Mission | Present only M10 reducer choices the existing certified command can represent for the explicitly selected TEE branch. |
+| Final code/test candidate | `ef8e41af71568ae2e3f4d9389e7788e10c449583` |
+| Status | DRAFT / engineering implementation complete / empirical qualification blocked by unavailable execution mechanism |
+| Merge state at code/test candidate | GitHub `mergeable: true`; `main` unchanged at the PR base |
+| Reviews | none; no review threads or PR comments |
+| CI/status | none; `.github/workflows` is absent after #1043 |
 
-## Required Architecture
+## Architecture Preserved
 
 `canonical TEE row -> explicit branch port -> exact branch node -> directly incident exact-catalogue reducer -> oriented size evidence -> governed TEE_REDUCER_RELATION intent -> plan -> Preview -> validation -> certified transaction -> canonical topology -> existing journal Undo/Redo`
 
-No M10 command change, direct canonical write, alternate topology authority, catalogue synthesis, inferred branch role, Table-owned history, or mutation during Preview/Validate is authorized.
+No M10 command change, direct canonical write, alternate topology authority, catalogue synthesis, inferred branch role, Table-owned history, or mutation during Preview/Validate was introduced.
 
 ## Engineering Register
 
@@ -25,108 +27,124 @@ No M10 command change, direct canonical write, alternate topology authority, cat
 |---|---|---|---|
 | ISS-1051-01 | UI truthfulness | RESOLVED | Old editor listed all exact-custody reducers before branch selection. New editor lists none pre-branch and only selected-branch candidates afterward. |
 | DEC-1051-01 | Command authority | ACCEPTED | `topology-edit-junction-relation-command.js` remains unchanged and final. |
-| DEC-1051-02 | Identity | ACCEPTED | TEE branch authority comes from `TEE.identity.portBindings`; reducer incidence/orientation comes from endpoint-specific `FROM`/`TO` Table bindings. No geometry proximity. |
-| DEC-1051-03 | Candidate policy | ACCEPTED | Candidate must be canonical EDGE + REDUCER, incident at exactly one selected branch endpoint, exact-catalogue, positive finite unequal-bore, and reducing away from the branch. |
-| DEC-1051-04 | Stage gate | ACCEPTED | Stage is disabled until branch/reducer/run DN/branch DN/downstream DN form an exact representable relation; runtime re-resolves before intent construction. |
-| RISK-1051-01 | Draft preservation | RESOLVED | Branch input updates only reducer options/capability DOM state; typed DN fields and canonical/staged state are not rerendered or mutated. |
-| RISK-1051-02 | Line budget | PASS STATIC CHECK | All touched production modules return no content at lines 300–305, satisfying the repository `<300` physical-line gate. |
-| RISK-1051-03 | Qualification mechanism | OPEN | Current main has no `.github/workflows`; source tests remain, but exact-head execution is unavailable in this connected-agent environment. Do not claim unrun PASS. |
-| ISS-1051-02 | Test fixture authority | RESOLVED | Shared `engineeringEditorFixture()` no longer defines pre-branch expected reducers as every exact reducer. It now reports zero pre-branch reducers and derives branch-specific eligible reducer cases. |
-| DEC-1051-05 | Browser source coverage | ACCEPTED | Add one small `e2e/topology-edit-table-tee-reducer.spec.js` that reuses the existing Q3 engineering fixture to prove live branch narrowing, Stage gating, and pre-Stage non-mutation. Existing Q3 concurrency spec remains the full Apply/Undo/Redo authority. |
+| DEC-1051-02 | Identity | ACCEPTED | Branch authority comes from TEE Table port bindings; reducer incidence/orientation comes from endpoint-specific `FROM`/`TO` bindings. No geometry proximity. |
+| DEC-1051-03 | Candidate policy | ACCEPTED | Candidate must be canonical EDGE + REDUCER, incident at exactly one selected branch endpoint, exact-catalogue, positive finite unequal-bore, and reducing away from branch. |
+| DEC-1051-04 | Stage gate | ACCEPTED | Stage requires exact branch/reducer plus positive run/branch/downstream DNs matching oriented reducer sizes; runtime re-resolves immediately before intent creation. |
+| RISK-1051-01 | Draft preservation | RESOLVED | Branch input rewrites only reducer options/capability DOM state; typed DNs, staged batch and canonical topology are not rerendered/mutated. |
+| RISK-1051-02 | Line budget | PASS STATIC CHECK | All touched production modules return no content at lines 300–305, satisfying `<300` physical lines. |
+| ISS-1051-02 | Test fixture authority | RESOLVED | Engineering fixture now expects zero pre-branch reducers and derives branch-specific oriented candidates from exact projection identity/custody. |
+| RISK-1051-03 | Empirical qualification | BLOCKER | No current workflow runs/status checks exist and the agent container cannot resolve `github.com` for a checkout. Authored tests are not executed evidence. |
 
-## S0 — Predecessor Custody — COMPLETE
+## Implemented
 
-- #1036 merged as `304f6ff32a0f383cd92793b1c57d7d99d61b4152`.
-- #1041 merged as `271d04fa2674ab68367808d05f2429ec5e236a6e`.
-- PR1051 began from that combined main state with an empty bootstrap commit before production changes.
+### Pure Table authority
 
-## S1 — Pure Candidate / Capability Authority — COMPLETE
+`src/workspace/topology-edit/table/topology-edit-table-tee-reducer.js` adds:
 
-New `src/workspace/topology-edit/table/topology-edit-table-tee-reducer.js` provides deterministic branch bindings, branch-scoped reducer candidates, a representability capability, an exact runtime resolver, and labels carrying branch endpoint plus `DN branch -> downstream` evidence.
+- deterministic exact TEE branch bindings;
+- branch-scoped direct reducer candidates;
+- `FROM|TO` orientation and branch/downstream DN evidence;
+- exact-catalogue custody filtering;
+- unequal-bore / reduction-away filtering;
+- `AVAILABLE|UNREPRESENTABLE` capability derivation;
+- exact fail-closed runtime selection resolver.
 
-Fail-closed cases: missing/ambiguous branch binding; non-REDUCER/non-EDGE; missing exact catalogue custody; missing/ambiguous endpoints; zero/both-endpoint incidence; unresolved/non-positive/equal-bore sizes; expansion away from branch; selected reducer outside current candidate set; invalid supplied DNs; oriented branch/downstream DN mismatch.
+Fail-closed cases cover missing/ambiguous branch binding, non-REDUCER/non-EDGE, unresolved catalogue, malformed endpoint identity, no/direct-both incidence, invalid/equal sizes, expansion away from branch, selected reducer outside the current candidate set, invalid DNs, and oriented size mismatch.
 
-## S2 — Editor / Runtime Wiring — COMPLETE
+### Editor/runtime
 
-- Reducer selector empty/disabled until branch selection.
-- Branch selection derives current candidates only.
-- Branch changes clear an incompatible reducer without resetting typed DNs.
-- Stage button reflects capability status/reason.
-- `stageTopologyEditTeeReducerRelation()` re-resolves the current capability before creating the existing M10 intent.
-- M10 command/planner/Preview/validation/transaction/canonical/journal modules are unchanged.
+- Reducer select starts empty/disabled until branch selection.
+- Changing branch clears incompatible reducer selection while preserving DN inputs.
+- Candidate labels disclose canonical reducer identity, endpoint orientation and `DN branch -> downstream`.
+- Stage button exposes capability status/reason and stays disabled until exact representability.
+- `stageTopologyEditTeeReducerRelation()` re-resolves the same pure capability and then constructs the existing governed M10 intent.
+- Large `TopologyEditTableRuntime`, M10 command, planners, Preview, validation, transaction and journal modules are untouched.
 
-## S3 — Focused Qualification — IN PROGRESS
+## Qualification Source Authored
 
-Authored unit coverage:
+### Node contracts
 
-- `tests/topology-edit-table-tee-reducer.test.mjs`: exact branch identity, direct incidence, FROM/TO orientation, unrelated/unresolved/equal-bore/expansion exclusions, DN mismatch and exact selection details.
-- `tests/topology-edit-table-engineering-editor.test.mjs`: no pre-branch reducer option + disabled Stage; staged exact branch exposes only the direct reducer with oriented label and available capability.
+`tests/topology-edit-table-tee-reducer.test.mjs` covers:
 
-Production source coverage:
+- exact TEE branch identity;
+- direct incidence only;
+- FROM orientation;
+- TO orientation;
+- unrelated exact reducer exclusion;
+- unresolved catalogue exclusion;
+- equal-bore exclusion;
+- expansion-away exclusion;
+- wrong reducer / branch DN / downstream DN / run DN rejection;
+- exact available selection evidence.
 
-- `e2e/helpers/topology-edit-table-engineering-fixture.js`: pre-branch expectation corrected and branch-specific eligible reducer cases derived from exact projection identity/custody.
-- `e2e/topology-edit-table-tee-reducer.spec.js`: authorized new focused spec; must prove no pre-branch reducer, branch-scoped options, Stage disabled until exact DNs, no canonical/batch mutation before Stage, then one governed staged batch.
-- existing `e2e/topology-edit-table-q3-concurrency.spec.js`: unchanged full M04/M06/M10 Stage -> Preview -> Validate -> Apply -> Undo -> Redo path.
-- existing `e2e/topology-edit-table-authority.spec.js`: unchanged source test now expects zero pre-branch reducer IDs through the corrected helper.
+`tests/topology-edit-table-engineering-editor.test.mjs` covers:
 
-## S4 — Production Browser Qualification — PENDING EXECUTION
+- pre-branch reducer selector has no reducer candidates and Stage is disabled;
+- staged exact branch shows only the directly connected exact reducer with oriented size label and available capability.
 
-Required source path:
+### Production browser source
 
-`Table -> select TEE -> reducer disabled/empty -> select branch -> reducer list narrows -> choose exact reducer -> enter matching DNs -> Stage -> existing Q3 Preview -> Validate -> Apply -> Undo -> Redo`
+`e2e/topology-edit-table-tee-reducer.spec.js` reuses the existing Q3 engineering fixture and asserts:
 
-Execution limitation remains explicit: no GitHub workflow runs trigger on current commits because the workflow directory was retired; no local checkout/network clone is available here. Authored tests are not equivalent to executed tests.
+- reducer select empty/disabled before branch selection;
+- Stage disabled before representability;
+- branch selection narrows options to that branch's exact candidates;
+- branch/reducer/DN edits leave canonical hash, batch hash and intent count unchanged before Stage;
+- matching oriented DNs enable capability/Stage;
+- explicit Stage creates exactly one batch intent while canonical hash remains unchanged.
 
-## Changed-File Ledger
+Existing `e2e/topology-edit-table-q3-concurrency.spec.js` remains unchanged and is still the repository source authority for the full M04/M06/M10 Preview -> Validate -> Apply -> Undo -> Redo lifecycle.
 
-Authorized current scope:
+Existing `e2e/topology-edit-table-authority.spec.js` remains unchanged; its shared fixture now expects zero reducer options before a branch is selected.
 
-- `agents/PR1051_workreport.md`
-- `src/workspace/topology-edit/table/topology-edit-table-tee-reducer.js` — new
-- `src/workspace/viewport-productivity/topology-edit-table-engineering-editor.js`
-- `src/workspace/viewport-productivity/topology-edit-table-engineering-runtime.js`
-- `src/workspace/viewport-productivity/topology-edit-table-cell-edit.js`
-- `tests/topology-edit-table-tee-reducer.test.mjs` — new
-- `tests/topology-edit-table-engineering-editor.test.mjs`
-- `e2e/helpers/topology-edit-table-engineering-fixture.js`
-- `e2e/topology-edit-table-tee-reducer.spec.js` — new focused production UI source qualification
+## Changed-File Ledger — Exact at `ef8e41af...`
 
-Existing Q3/authority specs are intentionally not modified unless a newly recorded issue requires it.
+1. `agents/PR1051_workreport.md`
+2. `e2e/helpers/topology-edit-table-engineering-fixture.js`
+3. `e2e/topology-edit-table-tee-reducer.spec.js`
+4. `src/workspace/topology-edit/table/topology-edit-table-tee-reducer.js`
+5. `src/workspace/viewport-productivity/topology-edit-table-cell-edit.js`
+6. `src/workspace/viewport-productivity/topology-edit-table-engineering-editor.js`
+7. `src/workspace/viewport-productivity/topology-edit-table-engineering-runtime.js`
+8. `tests/topology-edit-table-engineering-editor.test.mjs`
+9. `tests/topology-edit-table-tee-reducer.test.mjs`
 
-Any additional path must be registered here before modification.
-
-Explicitly excluded: M10 command, canonical mutation, journal/Undo/Redo, catalogue authorities, validation protocol, and retired `.github/workflows`.
+No command, canonical mutation, journal, catalogue authority, validation protocol, or workflow file is changed.
 
 ## Validation Ledger
 
 | Candidate | Evidence |
 |---|---|
-| `main@271d04fa2674ab68367808d05f2429ec5e236a6e` | architecture audit only |
-| `36ba9966b8cb2b82972bbd457a7da7ebc8e0f3fa` | empty bootstrap; zero changed files |
-| `bfbcbb1b9f88d7a7f709c6355e5a9168adac1f07` | implementation + focused test source authored; empirical execution NOT_RUN |
-| `9e674648089acaf029f4327b76148cec77549b7c` | fixture correction; no statuses/workflows; main unchanged; PR mergeable; reviews/comments/threads empty |
-| final head | pending focused E2E source + final report sync |
+| `main@271d04fa2674ab68367808d05f2429ec5e236a6e` | architectural baseline |
+| `36ba9966b8cb2b82972bbd457a7da7ebc8e0f3fa` | empty bootstrap before implementation |
+| `bfbcbb1b9f88d7a7f709c6355e5a9168adac1f07` | production implementation + focused test source authored |
+| `9e674648089acaf029f4327b76148cec77549b7c` | branch-aware fixture correction; no statuses/workflows; clean mergeability/review surface |
+| `ef8e41af71568ae2e3f4d9389e7788e10c449583` | final code/test source candidate including focused Playwright assertion; empirical execution NOT_RUN |
 
-## Evidence / Invariants
+Static evidence:
 
-- Existing M10 command already rejects non-direct reducers, wrong endpoint sizing, equal-bore reducers, custody drift, and no-op relations.
-- New UI authority mirrors representability only; it does not replace command authority.
-- Branch/reducer/DN input does not create a batch or journal entry; explicit Stage is the first governed-intent boundary.
-- Preview/Validate remain non-mutating; Apply remains the only canonical transaction boundary.
-- No workflow/guard weakening or restoration is permitted to manufacture green evidence.
+- new candidate module: `<300` lines;
+- engineering runtime: `<300` lines;
+- engineering editor: `<300` lines;
+- cell-edit delegation module: `<300` lines;
+- PR has no reviews, threads or comments;
+- `main` remains the original PR base;
+- GitHub reports the PR mergeable;
+- commit status list is empty.
 
 ## Explicitly Not Validated
 
 | Item | Status | Reason |
 |---|---|---|
-| Focused Node execution | NOT_RUN | no local repository/runtime path in this agent environment |
-| Production Chromium execution | NOT_RUN | workflow infrastructure retired; local clone unavailable |
-| M10 command changes | NOT_APPLICABLE | command deliberately unchanged |
+| Focused Node tests | NOT_RUN | no exact repository checkout/runtime available in this agent environment |
+| Focused Playwright M10 test | NOT_RUN | workflows retired; local clone unavailable |
+| Existing Q3 full browser lifecycle on PR1051 head | NOT_RUN | same execution limitation |
+| M10 command behavior changes | NOT_APPLICABLE | command deliberately unchanged |
 
-## Next
+## Merge Decision
 
-1. Add the registered focused E2E source test and enrich its already-authorized fixture evidence if needed.
-2. Audit final changed-file list, PR mergeability/review surfaces and commit statuses.
-3. Synchronize this report and PR description with the exact final head and `NOT_RUN` limitation.
-4. Keep PR draft/unmerged until empirical qualification is available or the user explicitly chooses to accept that evidence gap.
-5. After PR1051, continue with separate NODE_POSITION browser qualification.
+**Do not merge yet.** Branch protection being off and GitHub mergeability being clean are not substitutes for executing new engineering behavior. Keep PR1051 draft until the authored Node + Playwright contracts are run on the exact candidate (or until the user explicitly accepts that qualification gap).
+
+## Next Planned Slice
+
+After PR1051 is empirically qualified and merged, continue with the separate NODE_POSITION production-browser qualification slice: NODE_ONLY, CONNECTED_RUN, support/dependency fail-closed behavior, stale conflicts, Preview/Validate non-mutation, and exact Apply/Undo/Redo custody.

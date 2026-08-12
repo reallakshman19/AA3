@@ -9,6 +9,7 @@ import {
   normalizeBenchmarkResultRows,
   resolveCaesarConfigurationSetting,
   resolveCaesarEffectiveFriction,
+  resolveCaesarHydrotestQualificationAuthority,
   runGovernedBenchmarkQualification,
   solveCaesarAccdbFrictionBenchmark,
   solveCaesarAccdbLinearBenchmark,
@@ -20,7 +21,12 @@ const profile = readJson(args.profile, 'BM4_L profile');
 const rawExport = readJson(args.rawExport, 'BM4_L raw ACCDB export');
 const benchmarkPackage = buildCaesarAccdbBenchmarkPackage({ rawExport, profile });
 const restraintTopology = validateFrictionRestraintTopology(benchmarkPackage);
-const resolvedConfiguration = buildResolvedConfiguration(benchmarkPackage, restraintTopology);
+const hydrotestAuthority = resolveCaesarHydrotestQualificationAuthority(benchmarkPackage);
+const resolvedConfiguration = buildResolvedConfiguration(
+  benchmarkPackage,
+  restraintTopology,
+  hydrotestAuthority,
+);
 writeJson(resolvedConfiguration, args.configOut);
 
 const controls = solveCaesarAccdbLinearBenchmark(benchmarkPackage, ['L2', 'L3', 'L4', 'L5', 'L6', 'L14']);
@@ -128,7 +134,7 @@ function qualifyActual(benchmarkPackage, actual) {
   });
 }
 
-function buildResolvedConfiguration(benchmarkPackage, restraintTopology) {
+function buildResolvedConfiguration(benchmarkPackage, restraintTopology, hydrotestAuthority) {
   const authority = benchmarkPackage.profile.configurationAuthority;
   const primitiveCaseIds = ['L13', 'L7', 'L1'];
   const commonSettings = [
@@ -175,6 +181,7 @@ function buildResolvedConfiguration(benchmarkPackage, restraintTopology) {
       solverUnit: 'N/m',
       solverValue: Number(frictStif.value.value) * 100,
     },
+    hydrotestAuthority,
     restraintTopology,
     cases,
   });
@@ -273,6 +280,7 @@ function writeSummary(report, path) {
     `- ACCDB SHA-256: \`${report.source.sha256}\``,
     `- Precedence: ${report.resolvedConfiguration.precedenceLowToHigh.join(' < ')}`,
     `- Friction stiffness: ${report.resolvedConfiguration.frictionStiffnessConversion.solverValue} N/m`,
+    `- L1 hydrotest: ${report.resolvedConfiguration.hydrotestAuthority.sourceCaseClass} ${report.resolvedConfiguration.hydrotestAuthority.sourceFormula}; WW water basis ${report.resolvedConfiguration.hydrotestAuthority.waterDensityKgPerM3} kg/m^3; HP -> HYDRO_PRESSURE.`,
     `- Friction contacts: ${report.restraintTopology.directionalRestraintCount} directional restraint rows; state scope is per restraint row.`,
     `- Literal external components: ${a.literalExternalComponents.status}; ${a.literalExternalComponents.counts.failed} failures.`,
     `- Restraint components: ${a.restraintComponents.status}; ${a.restraintComponents.counts.failed} failures.`,

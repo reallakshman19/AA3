@@ -17,7 +17,6 @@ import {
   matVec,
   solveCholesky,
   solveLdlt,
-  subMatrix,
 } from '../linear-fea-solver/linear-algebra.js';
 import { applyDiagonalScalingToVector } from '../linear-fea-solver/scaling.js';
 import { resolveSolverPolicies } from '../linear-fea-solver/solver-contract.js';
@@ -26,6 +25,7 @@ import {
   migrateCaesarFrictionAuthorityV1ToV2,
 } from './caesar-configuration-authority.js';
 import { solveCaesarAccdbLinearBenchmark } from './caesar-accdb-linear-solve.js';
+import { selectBm4lAccdbFrictionRows } from './caesar-accdb-friction-restraint-selection.js';
 import {
   combineCaesarAlgebraicResultRows,
   compareDeterministicCaesarFrictionRuns,
@@ -161,6 +161,7 @@ export function solveCaesarAccdbFrictionBenchmark(benchmarkPackage, options = {}
       cases: evidence,
       limitations: [
         'The nonlinear adapter changes only tangential support stiffness/load terms; qualified element, W/T1/P1, restraint-normal and recovery mechanics are reused unchanged.',
+        'Friction surfaces are selected only from positive-FRIC_COEF ACCDB type-Y rows; GUI/LIM/ANC rows remain ordinary qualified restraints and cannot create friction surfaces.',
         'Supports are bidirectional and remain active; no lift-off or one-directional contact logic is introduced.',
         'L15 is algebraic only and never enters the nonlinear iteration.',
         'L1 WW+HP is blocked until hydrotest weight/pressure construction is independently qualified in the ACCDB mechanics.',
@@ -413,25 +414,20 @@ function solveOneFrictionLinearization(input) {
 
 function buildFrictionRestraints(benchmarkPackage, settings) {
   const rows = benchmarkPackage.model.tables.INPUT_RESTRAINTS.rows;
-  const candidates = rows
-    .map((row, index) => ({ row, index }))
-    .filter(({ row }) => Number(row.RES_TYPEID) !== 1);
-  return candidates.map(({ row, index }) => {
-    const normalDirection = unit3([
-      Number(row.XCOSINE),
-      Number(row.YCOSINE),
-      Number(row.ZCOSINE),
-    ], `INPUT_RESTRAINTS[${index}] direction`);
-    return deepFreeze({
-      restraintId: `ACCDB-FRICTION-${String(row.NODE_NUM)}-${index}`,
-      nodeId: String(row.NODE_NUM),
-      sourceRowIndex: index,
-      normalDirection,
-      normalDof: dominantTranslationDof(normalDirection),
-      effectiveCoefficient: settings.effectiveCoefficient,
-      frictionStiffnessNPerM: settings.frictionStiffness.siValueNPerM,
-    });
-  });
+  const candidates = selectBm4lAccdbFrictionRows(rows, settings.modelCoefficient.value);
+  return candidates.map((candidate) => deepFreeze({
+    restraintId: `ACCDB-FRICTION-${candidate.nodeId}-${candidate.sourceRowIndex}`,
+    nodeId: candidate.nodeId,
+    sourceRowIndex: candidate.sourceRowIndex,
+    sourceRestraintTypeId: candidate.sourceRestraintTypeId,
+    sourceRestraintType: candidate.sourceRestraintType,
+    sourceFrictionCoefficient: candidate.sourceFrictionCoefficient,
+    governedModelCoefficient: candidate.governedModelCoefficient,
+    normalDirection: candidate.normalDirection,
+    normalDof: dominantTranslationDof(candidate.normalDirection),
+    effectiveCoefficient: settings.effectiveCoefficient,
+    frictionStiffnessNPerM: settings.frictionStiffness.siValueNPerM,
+  }));
 }
 
 function normalReactionMap(restraints, model, dofMap, displacement) {

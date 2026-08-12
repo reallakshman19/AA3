@@ -17,5 +17,5 @@ export {
 export {
   parseCaesarInputXmlForceLengthUnits,
   normalizeForcePerLengthToNPerM,
-  normalizeDisplayedCaesarFrictionStiffnessToSI,
+  normalizeCaesarStaticFrictionStiffnessToSI,
 } from './caesar-friction-unit-contract.js';

@@ -1,5 +1,5 @@
 {
-  "schema": "m047-bm4l-friction-restraint-authority/v2",
+  "schema": "m047-bm4l-friction-restraint-authority/v3",
   "benchmarkId": "BM4_L",
   "pinnedSourceAuthority": {
     "issue": 1083,
@@ -11,13 +11,15 @@
   },
   "frictionSurfaceRule": {
     "sourceDomain": "ACCDB_INPUT_RESTRAINTS",
-    "membershipRule": "POSITIVE_FRIC_COEF_ON_ACCDB_RESTRAINT_TYPE_Y_ID_3",
-    "resTypeId": 3,
-    "resType": "Y",
+    "membershipRule": "POSITIVE_FRIC_COEF_ON_NON_ANCHOR_DIRECTIONAL_RESTRAINT",
+    "anchorRestraintTypeId": 1,
     "governedModelCoefficient": 0.3,
-    "requiredDirection": [0, 1, 0],
+    "coefficientComparison": "FLOAT32_NORMALIZED_EQUALITY",
+    "directionRequirement": "AXIS_ALIGNED_WITH_QUALIFIED_BASE_RESTRAINT_REPRESENTATION",
+    "directionAlignmentTolerance": 1e-9,
+    "multiPlaneAtOneNode": "FAIL_CLOSED_NOT_IMPLEMENTED",
     "coefficientUse": "FRIC_COEF_IDENTIFIES_SURFACE_AND_CORROBORATES_MODEL_MU;_MODEL_INPUT_MU_GOVERNS_MAGNITUDE",
-    "solverSelectionRule": "ROW_DRIVEN_NOT_NODE_HARDCODED"
+    "solverSelectionRule": "ROW_DRIVEN_NOT_NODE_OR_RESTRAINT_TYPE_HARDCODED"
   },
   "historicalDiagnosticCorroboration": {
     "qualificationAuthority": false,
@@ -31,6 +33,8 @@
     "extractionHead": "5b72b4a48c9b82fb4a9783b017286e5e28202b42",
     "observedStoredFloat32Coefficient": 0.30000001192092896,
     "observedSelectedRowCount": 26,
+    "observedFrictionRestraintTypeId": 3,
+    "observedFrictionDirection": [0, 1, 0],
     "observedFrictionNodeIds": [
       "20030", "20090", "20170", "20250", "20350", "20390", "20440", "20520", "20550", "20580",
       "20710", "21470", "21480", "21610", "21740", "21800", "21860", "21930", "22020", "22070",
@@ -41,7 +45,9 @@
   "custody": {
     "inputXmlUsed": false,
     "bm4NlUsed": false,
-    "productionGate": "PINNED_ACCDB_SHA_PLUS_ROW_DRIVEN_FRICTION_SELECTION",
-    "historicalNodeListUsedBySolver": false
+    "productionGate": "PINNED_ACCDB_SHA_PLUS_ROW_DRIVEN_POSITIVE_FRIC_COEF_SELECTION",
+    "historicalNodeListUsedBySolver": false,
+    "historicalRestraintTypeUsedBySolver": false,
+    "historicalDirectionUsedBySolver": false
   }
 }

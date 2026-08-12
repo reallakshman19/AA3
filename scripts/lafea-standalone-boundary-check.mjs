@@ -15,6 +15,9 @@ const FORBIDDEN_EXACT = new Set([
   'src/workspace/application-shell-controller.js',
   'src/workspace/event-bus.js',
   'src/workspace/event-topics.js',
+  'src/workspace/lafea-workbench.js',
+  'src/workspace/fea-benchmark-panel.js',
+  'src/workspace/advanced-mock-data.js',
 ]);
 const FORBIDDEN_PREFIXES = [
   'src/lfea/',
@@ -40,8 +43,10 @@ walk(ENTRY, []);
 
 if (!requestedEntry) {
   const entrySource = fs.readFileSync(ENTRY, 'utf8');
-  assert(entrySource.includes("../workspace/lafea-workbench.js"),
-    'Standalone LAFEA entry must mount the LAFEA-owned workbench surface.');
+  assert(entrySource.includes("../workspace/lafea-workbench-controller.js"),
+    'Standalone LAFEA entry must construct the LAFEA-owned controller directly.');
+  assert(!entrySource.includes('../workspace/lafea-workbench.js'),
+    'Standalone LAFEA entry must not load the compatibility workbench facade.');
   assert(!entrySource.includes('bootstrapAnalysisWorkspace'),
     'Standalone LAFEA entry must not call the combined workspace bootstrap.');
   assert(!entrySource.includes('AnalysisWorkspace'),
@@ -55,6 +60,7 @@ console.log(JSON.stringify({
   entry: repoRelative(ENTRY),
   localModulesInspected: visited.size,
   combinedWorkspaceRequired: false,
+  compatibilityFacadeRequired: false,
   lfeaRuntimeDependency: false,
   sharedPrimitiveProductDependency: false,
   sharedEventBusDependency: false,

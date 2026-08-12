@@ -1,0 +1,148 @@
+name: M047 BM4_L F2.8b BM4_NL final-state extraction
+
+on:
+  push:
+    branches:
+      - agent/m047-bm4l-f28b-final-state-extraction-temp
+    paths:
+      - 'benchmarks/LFEA/CAESAR_ACCDB/m047-bm4l-f28b-final-state-intent.json'
+
+permissions:
+  contents: read
+
+jobs:
+  extract-final-state:
+    runs-on: windows-latest
+    timeout-minutes: 25
+    env:
+      COMMON_COMMIT: '179c4831cf521cf797c13699cfbbd118315c9244'
+      BM4_NL_ZIP_BLOB: '86a803ed27ebdbd2836452dc2e874c3458aa204c'
+      BM4_NL_ACCDB_SHA256: '85d39463296e569da811d8572e2eff680b858097f76fdf0f47d1755f0b161c21'
+      ACE_INSTALLER_URL: 'https://download.microsoft.com/download/3/5/C/35C84C36-661A-44E6-9324-8786B8DBE231/accessdatabaseengine_X64.exe'
+      ACE_INSTALLER_SHA256: '04e96c9f1a1f7d251a88aececf1dc10ff65950392787427c00814a43308003de'
+
+    steps:
+      - name: Checkout exact head
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.sha }}
+
+      - name: Authenticate and install Microsoft ACE
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          New-Item -ItemType Directory -Force -Path artifacts/f28b/provider | Out-Null
+          $installer = Join-Path $PWD 'artifacts/f28b/provider/accessdatabaseengine_X64.exe'
+          Invoke-WebRequest -Uri $env:ACE_INSTALLER_URL -OutFile $installer
+          $hash = (Get-FileHash -LiteralPath $installer -Algorithm SHA256).Hash.ToLowerInvariant()
+          if ($hash -ne $env:ACE_INSTALLER_SHA256) { throw "ACE installer hash mismatch: $hash" }
+          $signature = Get-AuthenticodeSignature -LiteralPath $installer
+          if ($signature.Status -ne 'Valid' -or $signature.SignerCertificate.Subject -notmatch 'Microsoft') {
+            throw "ACE installer signature invalid: $($signature.Status), $($signature.SignerCertificate.Subject)"
+          }
+          $process = Start-Process -FilePath $installer -ArgumentList '/quiet','/norestart' -Wait -PassThru
+          if ($process.ExitCode -notin @(0,3010)) { throw "ACE installer exited $($process.ExitCode)." }
+
+      - name: Fetch and authenticate BM4_NL ACCDB
+        id: source
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          New-Item -ItemType Directory -Force -Path artifacts/f28b/source | Out-Null
+          $zip = Join-Path $PWD 'artifacts/f28b/BM4_NL.zip'
+          $url = "https://raw.githubusercontent.com/reallaksh19/Common/$env:COMMON_COMMIT/LFEA/BM4/BM4_NL.zip"
+          Invoke-WebRequest -Uri $url -OutFile $zip
+          $blob = (& git hash-object -- $zip).Trim().ToLowerInvariant()
+          if ($blob -ne $env:BM4_NL_ZIP_BLOB) { throw "BM4_NL.zip Git blob mismatch: $blob" }
+          Expand-Archive -LiteralPath $zip -DestinationPath artifacts/f28b/source -Force
+          $members = @(Get-ChildItem artifacts/f28b/source -File -Recurse)
+          if ($members.Count -ne 1 -or $members[0].Name -ne 'BM4_NL.ACCDB') {
+            throw "BM4_NL.zip must contain exactly BM4_NL.ACCDB; found $($members.Count) files."
+          }
+          $accdb = $members[0].FullName
+          $sha = (Get-FileHash -LiteralPath $accdb -Algorithm SHA256).Hash.ToLowerInvariant()
+          if ($sha -ne $env:BM4_NL_ACCDB_SHA256) { throw "BM4_NL.ACCDB SHA-256 mismatch: $sha" }
+          "accdb_path=$accdb" >> $env:GITHUB_OUTPUT
+
+      - name: Extract exact case 17 and 19 final-state rows
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $accdb = "${{ steps.source.outputs.accdb_path }}"
+
+          function Convert-DbValue {
+            param([object]$Value)
+            if ($null -eq $Value -or $Value -is [System.DBNull]) { return $null }
+            if ($Value -is [byte[]]) { return [Convert]::ToBase64String($Value) }
+            if ($Value -is [DateTime]) { return $Value.ToUniversalTime().ToString('o') }
+            return $Value
+          }
+
+          function Read-QueryRows {
+            param([object]$Connection, [string]$Sql)
+            $rs = New-Object -ComObject ADODB.Recordset
+            try {
+              $rs.Open($Sql, $Connection, 0, 1)
+              $rows = @()
+              while (-not $rs.EOF) {
+                $row = [ordered]@{}
+                for ($i=0; $i -lt $rs.Fields.Count; $i += 1) {
+                  $field = $rs.Fields.Item($i)
+                  $row[[string]$field.Name] = Convert-DbValue -Value $field.Value
+                }
+                $rows += $row
+                $rs.MoveNext()
+              }
+              return @($rows)
+            } finally {
+              if ($rs.State -ne 0) { $rs.Close() }
+              [void][System.Runtime.InteropServices.Marshal]::ReleaseComObject($rs)
+            }
+          }
+
+          $connection = New-Object -ComObject ADODB.Connection
+          try {
+            $connection.Open("Provider=Microsoft.ACE.OLEDB.12.0;Data Source=$accdb;Mode=Read;Persist Security Info=False;")
+            $displacements = @(Read-QueryRows -Connection $connection -Sql "SELECT NODE,LCASE_NUM,[CASE],LCASE_NAME,DX,DY,DZ,DUNITS,RX,RY,RZ,RUNITS FROM OUTPUT_DISPLACEMENTS WHERE LCASE_NUM IN (17,19) ORDER BY LCASE_NUM,NODE")
+            $restraints = @(Read-QueryRows -Connection $connection -Sql "SELECT NODE,NODE_NAME,LCASE_NUM,[CASE],LCASE_NAME,FX,FY,FZ,RESULTANTF,FUNITS,MX,MY,MZ,RESULTANTM,MUNITS,[TYPE],RES_TAG,RES_GUID FROM OUTPUT_RESTRAINTS WHERE LCASE_NUM IN (17,19) ORDER BY LCASE_NUM,NODE,[TYPE],RES_TAG")
+            $inputs = @(Read-QueryRows -Connection $connection -Sql "SELECT REST_PTR,NODE_NUM,NODE_NAME,RES_TYPEID,STIFFNESS,GAP,FRIC_COEF,CNODE,XCOSINE,YCOSINE,ZCOSINE,RES_TAG,RES_GUID FROM INPUT_RESTRAINTS ORDER BY REST_PTR")
+            $units = @(Read-QueryRows -Connection $connection -Sql "SELECT * FROM INPUT_UNITS")
+
+            if ($displacements.Count -ne 224) { throw "Expected 224 case17/19 displacement rows; got $($displacements.Count)." }
+            if ($restraints.Count -ne 92) { throw "Expected 92 case17/19 restraint rows; got $($restraints.Count)." }
+            if ($inputs.Count -ne 46) { throw "Expected 46 input restraint rows; got $($inputs.Count)." }
+            if ($units.Count -ne 1) { throw "Expected one input units row; got $($units.Count)." }
+
+            $result = [ordered]@{
+              schema='m047-bm4l-f28b-bm4nl-final-state/v1'
+              exactHead='${{ github.sha }}'
+              commonCommit=$env:COMMON_COMMIT
+              zipGitBlobSha=$env:BM4_NL_ZIP_BLOB
+              accdbSha256=$env:BM4_NL_ACCDB_SHA256
+              cases=@(17,19)
+              outputDisplacements=$displacements
+              outputRestraints=$restraints
+              inputRestraints=$inputs
+              inputUnits=$units
+              policy=[ordered]@{
+                readOnly=$true
+                bm4lReferenceUsedToSelectState=$false
+                responseFittingAllowed=$false
+                productionMechanicsAuthorized=$false
+                l13RescoreAuthorized=$false
+              }
+            }
+            New-Item -ItemType Directory -Force -Path artifacts/f28b/out | Out-Null
+            $result | ConvertTo-Json -Depth 64 | Set-Content -Encoding utf8 artifacts/f28b/out/bm4nl-final-state.json
+          } finally {
+            if ($connection.State -ne 0) { $connection.Close() }
+            [void][System.Runtime.InteropServices.Marshal]::ReleaseComObject($connection)
+          }
+
+      - name: Upload exact final-state evidence
+        uses: actions/upload-artifact@v4
+        with:
+          name: m047-bm4l-f28b-final-state-${{ github.sha }}
+          path: artifacts/f28b/out/bm4nl-final-state.json
+          if-no-files-found: error
+          retention-days: 14

@@ -1,0 +1,104 @@
+{
+  "schema": "m047-bm4l-restraint-code-authority-snapshot/v2",
+  "benchmarkId": "BM4_L",
+  "scope": "SOURCE_DOMAIN_AWARE_RESTRAINT_TYPE_AUTHORITY_ONLY",
+  "source": {
+    "commonCommit": "179c4831cf521cf797c13699cfbbd118315c9244",
+    "inputXmlPath": "LFEA/BM4/InputXML_BM4.xml",
+    "inputXmlGitBlobSha": "3423d220374a17f67addd3c8c0c44300ffa46251",
+    "accdbTable": "INPUT_RESTRAINTS",
+    "accdbTableRowCount": 46,
+    "accdbTableSha256": "08460f1ef574ec6d6c95c46155d5ad4c1acee42e336a7b7e300ed08e0878866a",
+    "accdbResTypeIdMultisetSha256": "a5190ce01187f72428a6e4a0a3861cdda5b04e288d10ff63f8fe42cf8e9ee80f",
+    "caesarVersion": "14.00.00.0910",
+    "caesarBuild": 231113
+  },
+  "sourceDomainPolicy": {
+    "ACCDB": {
+      "typeField": "INPUT_RESTRAINTS.RES_TYPEID",
+      "mutationRequired": false,
+      "rule": "READ_RES_TYPEID_DIRECTLY_NO_INPUTXML_MUTATION"
+    },
+    "INPUTXML": {
+      "typeField": "RESTRAINT.TYPE",
+      "mutationRequired": true,
+      "rule": "APPLY_USER_SUPPLIED_MUTATION_EXACTLY_ONCE_BEFORE_CLASSIFICATION",
+      "authority": "USER_SUPPLIED_BM4_L_RESTRAINT_TYPE_MUTATION_2026-08-12",
+      "config": {
+        "enabled": true,
+        "rows": [
+          {"label":"+Y","from":"17","to":"14"},
+          {"label":"LIM","from":"7","to":"8"},
+          {"label":"GUI","from":"10","to":"9"},
+          {"label":"X","from":"1","to":"2"},
+          {"label":"Y","from":"2","to":"3"},
+          {"label":"Z","from":"3","to":"5"},
+          {"label":"","from":"18","to":"15"}
+        ]
+      }
+    }
+  },
+  "inputXmlInventory": {
+    "activeRestraintRowCount": 46,
+    "activeRestraintNodeCount": 30,
+    "rawByType": [
+      {"sourceTypeCode":0,"rowCount":1,"nodeIds":["22490"]},
+      {"sourceTypeCode":7,"rowCount":6,"nodeIds":["20030","20390","20580","21480","21860","22020"]},
+      {"sourceTypeCode":10,"rowCount":10,"nodeIds":["20030","20250","20390","20550","20710","21480","21640","21930","22140","22310"]},
+      {"sourceTypeCode":17,"rowCount":29,"nodeIds":["20030","20090","20170","20250","20300","20350","20390","20440","20520","20550","20580","20640","20710","21470","21480","21610","21640","21740","21800","21860","21930","22020","22070","22120","22140","22220","22260","22310","22370"]}
+    ],
+    "correctedByType": [
+      {"correctedTypeCode":0,"abbreviation":"ANC","rowCount":1,"sourceTypeCodes":[0]},
+      {"correctedTypeCode":8,"abbreviation":"LIM","rowCount":6,"sourceTypeCodes":[7]},
+      {"correctedTypeCode":9,"abbreviation":"GUI","rowCount":10,"sourceTypeCodes":[10]},
+      {"correctedTypeCode":14,"abbreviation":"+Y","rowCount":29,"sourceTypeCodes":[17]}
+    ]
+  },
+  "frictionSources": {
+    "count": 26,
+    "inputXmlSourceTypeCode": 17,
+    "inputXmlCorrectedTypeCode": 14,
+    "correctedAbbreviation": "+Y",
+    "coefficientOfFriction": 0.3,
+    "nodeIds": ["20030","20090","20170","20250","20350","20390","20440","20520","20550","20580","20710","21470","21480","21610","21740","21800","21860","21930","22020","22070","22120","22140","22220","22260","22310","22370"],
+    "nonFrictionPlusYNodeIds": ["20300","20640","21640"]
+  },
+  "positiveGapRows": {
+    "totalCount": 6,
+    "rows": [
+      {"nodeId":"20030","sourceTypeCode":7,"correctedTypeCode":8,"abbreviation":"LIM","gap":25,"direction":[0,0,-1],"frictionNode":true},
+      {"nodeId":"20390","sourceTypeCode":10,"correctedTypeCode":9,"abbreviation":"GUI","gap":5,"direction":[-1,0,0],"frictionNode":true},
+      {"nodeId":"21480","sourceTypeCode":7,"correctedTypeCode":8,"abbreviation":"LIM","gap":25,"direction":[0,0,1],"frictionNode":true},
+      {"nodeId":"21480","sourceTypeCode":10,"correctedTypeCode":9,"abbreviation":"GUI","gap":10,"direction":[1,0,0],"frictionNode":true},
+      {"nodeId":"21640","sourceTypeCode":10,"correctedTypeCode":9,"abbreviation":"GUI","gap":10,"direction":[1,0,0],"frictionNode":false},
+      {"nodeId":"22310","sourceTypeCode":10,"correctedTypeCode":9,"abbreviation":"GUI","gap":10,"direction":[0,0,-1],"frictionNode":true}
+    ],
+    "frictionCoupledCompanionCount": 5,
+    "frictionCoupledNodeCount": 4,
+    "frictionCoupledNodeIds": ["20030","20390","21480","22310"],
+    "nonFrictionPositiveGapNodeIds": ["21640"]
+  },
+  "currentSolverAudit": {
+    "sourcePath": "ACCDB",
+    "inputXmlMutationAppliedToAccdb": false,
+    "linearRestraintCompilerBehavior": "ACCDB_RES_TYPEID_DIRECT_THEN_NON_ANCHOR_DOMINANT_TRANSLATION_DOF",
+    "knownSemanticCompression": [
+      "ACCDB_TYPE_SPECIFIC_NONLINEAR_BEHAVIOR_NOT_REPRESENTED_IN_LINEAR_SOLVER",
+      "GAP_ACTIVE_SET_NOT_REPRESENTED_IN_LINEAR_SOLVER",
+      "FRICTION_STATE_HISTORY_NOT_REPRESENTED_IN_LINEAR_SOLVER"
+    ],
+    "productionSolverChangeAuthorizedByThisSnapshot": false
+  },
+  "remainingAuthority": [
+    "ACCDB_RESTRAINT_TYPE_SEMANTIC_CLASSIFICATION_REQUIRED_FOR_NONLINEAR_CONTROLLER",
+    "INPUTXML_LIM_GUI_GAP_CONTACT_STATE_SEMANTICS_AUTHORITY_REQUIRED",
+    "FRICTION_STATE_HISTORY_SEMANTICS_AUTHORITY_REQUIRED"
+  ],
+  "policy": {
+    "responseFittingUsed": false,
+    "caesarReferenceAccuracyMaySelectRestraintState": false,
+    "inputXmlMutationMayBeAppliedToAccdb": false,
+    "productionMechanicsAuthorized": false,
+    "l13ProductionSolveAuthorized": false
+  }
+}

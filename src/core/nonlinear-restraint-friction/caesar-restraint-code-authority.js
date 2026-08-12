@@ -1,0 +1,77 @@
+const INPUTXML_CANONICAL = Object.freeze({
+  0: Object.freeze({
+    code: 0,
+    abbreviation: 'ANC',
+    family: 'ANCHOR',
+    axisFromDirectionCosines: false,
+    gapUnitClass: 'NOT_APPLICABLE',
+  }),
+  8: Object.freeze({
+    code: 8,
+    abbreviation: 'LIM',
+    family: 'LIMIT',
+    axisFromDirectionCosines: true,
+    gapUnitClass: 'LENGTH',
+  }),
+  9: Object.freeze({
+    code: 9,
+    abbreviation: 'GUI',
+    family: 'GUIDE',
+    axisFromDirectionCosines: true,
+    gapUnitClass: 'LENGTH',
+  }),
+  14: Object.freeze({
+    code: 14,
+    abbreviation: '+Y',
+    family: 'TRANSLATIONAL_DIRECTIONAL',
+    axisFromDirectionCosines: false,
+    axisUnit: Object.freeze([0, 1, 0]),
+    directionLabel: '+Y',
+    gapUnitClass: 'LENGTH',
+  }),
+});
+
+export const BM4L_INPUTXML_CANONICAL_RESTRAINT_TYPES = INPUTXML_CANONICAL;
+
+/**
+ * ACCDB restraint IDs are already in the ACCDB source domain and must never be
+ * passed through the InputXML mutation table. This helper deliberately does no
+ * mechanical classification: it preserves the exact source ID for a later
+ * ACCDB-specific authority layer.
+ */
+export function retainAccdbRestraintTypeId(value) {
+  const sourceTypeId = requireIntegerCode(value, 'ACCDB restraint RES_TYPEID');
+  return Object.freeze({
+    sourceDomain: 'ACCDB',
+    sourceTypeId,
+    effectiveTypeId: sourceTypeId,
+    mutationRequired: false,
+    mutationApplied: false,
+  });
+}
+
+/**
+ * Decode a restraint TYPE only after the governed InputXML mutation has been
+ * applied exactly once. Raw InputXML TYPE values are not accepted as product
+ * semantics by this function.
+ */
+export function decodeCorrectedInputXmlRestraintType(value) {
+  const code = requireIntegerCode(value, 'corrected InputXML restraint TYPE');
+  const entry = INPUTXML_CANONICAL[code];
+  if (entry) return entry;
+  return Object.freeze({
+    code,
+    abbreviation: null,
+    family: 'UNSUPPORTED_CORRECTED_INPUTXML_RESTRAINT_TYPE',
+    axisFromDirectionCosines: null,
+    gapUnitClass: 'UNKNOWN',
+  });
+}
+
+function requireIntegerCode(value, label) {
+  const code = Number(value);
+  if (!Number.isInteger(code) || code < 0) {
+    throw new TypeError(`${label} must be a non-negative integer; received ${String(value)}.`);
+  }
+  return code;
+}

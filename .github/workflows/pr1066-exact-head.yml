@@ -1,0 +1,105 @@
+name: PR1066 exact-head splitter qualification
+
+on:
+  pull_request:
+    branches:
+      - qualification/pr1066-exact-head
+    types: [opened, synchronize, reopened, ready_for_review, edited]
+
+permissions:
+  contents: read
+
+jobs:
+  qualify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    env:
+      TARGET_HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+      TARGET_BASE_SHA: ${{ github.event.pull_request.base.sha }}
+      CI: '1'
+    steps:
+      - name: Checkout exact pull-request head
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+          fetch-depth: 0
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Install Chromium
+        run: npx playwright install --with-deps chromium
+
+      - name: Exact-head, ledger, source and line gates
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$(git rev-parse HEAD)" = "$TARGET_HEAD_SHA"
+          merge_base="$(git merge-base "$TARGET_BASE_SHA" HEAD)"
+          expected="$(cat <<'EOF' | sort
+          agents/PR1066_workreport.md
+          e2e/topology-edit-table-splitter.spec.js
+          src/workspace/viewport-productivity/topology-edit-table-grid-view.js
+          src/workspace/viewport-productivity/topology-edit-table-splitter-runtime.js
+          src/workspace/viewport-productivity/topology-edit-table-styles.js
+          tests/topology-edit-table-splitter.test.mjs
+          EOF
+          )"
+          actual="$(git diff --name-only "$merge_base"...HEAD | sort)"
+          test "$actual" = "$expected"
+          git diff --check "$merge_base"...HEAD
+          node --check e2e/topology-edit-table-splitter.spec.js
+          node --check src/workspace/viewport-productivity/topology-edit-table-grid-view.js
+          node --check src/workspace/viewport-productivity/topology-edit-table-splitter-runtime.js
+          node --check src/workspace/viewport-productivity/topology-edit-table-styles.js
+          node --check tests/topology-edit-table-splitter.test.mjs
+          for path in \
+            e2e/topology-edit-table-splitter.spec.js \
+            src/workspace/viewport-productivity/topology-edit-table-grid-view.js \
+            src/workspace/viewport-productivity/topology-edit-table-splitter-runtime.js \
+            src/workspace/viewport-productivity/topology-edit-table-styles.js \
+            tests/topology-edit-table-splitter.test.mjs; do
+            lines="$(wc -l < "$path")"
+            test "$lines" -lt 300 || { echo "$path has $lines physical lines" >&2; exit 1; }
+          done
+
+      - name: Focused splitter Node qualification
+        run: node --test tests/topology-edit-table-splitter.test.mjs
+
+      - name: Real Chromium splitter plus Table lifecycle regressions
+        env:
+          PLAYWRIGHT_BROWSER_CHANNEL: chromium
+          PLAYWRIGHT_JSON_OUTPUT_NAME: artifacts/pr1066-playwright.json
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p artifacts
+          printf '{"candidateHead":"%s","baseSha":"%s","runId":"%s","runAttempt":"%s","pullRequest":1066}\n' \
+            "$TARGET_HEAD_SHA" "$TARGET_BASE_SHA" "${{ github.run_id }}" "${{ github.run_attempt }}" \
+            > artifacts/pr1066-run-identity.json
+          npx playwright test \
+            e2e/topology-edit-table-splitter.spec.js \
+            e2e/topology-edit-table-support-placement.spec.js \
+            e2e/topology-edit-table-support-restraint.spec.js \
+            --project=chromium \
+            --workers=1 \
+            --retries=0 \
+            --trace=on \
+            --reporter=line,json
+
+      - name: Upload exact-head qualification evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: pr1066-exact-head-${{ github.event.pull_request.head.sha }}-${{ github.run_attempt }}
+          path: |
+            artifacts/
+            test-results/
+          if-no-files-found: error
+          retention-days: 30

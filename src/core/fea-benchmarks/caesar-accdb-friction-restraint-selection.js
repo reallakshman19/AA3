@@ -17,10 +17,14 @@ export const BM4L_FRICTION_DIRECTION_ALIGNMENT_TOLERANCE = 1e-9;
  * Production rules deliberately do not assume the type-3/+Y pattern observed in
  * a non-authoritative historical extraction. The pinned ACCDB is authoritative:
  * any non-anchor directional restraint with positive FRIC_COEF is a friction
- * surface when its coefficient corroborates model mu. The current qualified
- * linear restraint adapter represents directional restraints on one dominant
- * translational DOF, so a positive-friction skew restraint fails closed rather
- * than mixing a rotated friction plane with an axis-projected normal spring.
+ * surface when its coefficient corroborates model mu. Null/blank FRIC_COEF on
+ * another row means no row-level friction declaration; a malformed nonblank
+ * coefficient still fails closed.
+ *
+ * The current qualified linear restraint adapter represents directional
+ * restraints on one dominant translational DOF, so a positive-friction skew
+ * restraint fails closed rather than mixing a rotated friction plane with an
+ * axis-projected normal spring.
  *
  * The comparison to model mu is made after Math.fround so mdb-reader
  * implementations that return either 0.3 or the expanded float32 value
@@ -40,9 +44,12 @@ export function selectBm4lAccdbFrictionRows(rowsInput, modelCoefficientInput) {
     }
     const nodeId = nonempty(row.NODE_NUM, `INPUT_RESTRAINTS[${sourceRowIndex}].NODE_NUM`);
     const typeId = finiteInteger(row.RES_TYPEID, `INPUT_RESTRAINTS[${sourceRowIndex}].RES_TYPEID`);
+    if (row.FRIC_COEF === null || row.FRIC_COEF === undefined || row.FRIC_COEF === '') return;
     const sourceCoefficient = Number(row.FRIC_COEF);
     if (!Number.isFinite(sourceCoefficient)) {
-      throw new TypeError(`INPUT_RESTRAINTS[${sourceRowIndex}] node ${nodeId} lacks finite FRIC_COEF custody.`);
+      throw new TypeError(
+        `INPUT_RESTRAINTS[${sourceRowIndex}] node ${nodeId} has malformed nonblank FRIC_COEF=${String(row.FRIC_COEF)}.`,
+      );
     }
     if (!(sourceCoefficient > 0)) return;
 

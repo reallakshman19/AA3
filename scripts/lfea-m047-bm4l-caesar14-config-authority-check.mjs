@@ -15,6 +15,7 @@ const cfg = fs.readFileSync(fixture('m047-bm4l-caesar14-user-supplied.cfg.txt'),
 const authority = JSON.parse(fs.readFileSync(fixture('m047-bm4l-caesar14-config-authority.json'), 'utf8'));
 const snapshot = JSON.parse(fs.readFileSync(fixture('m047-bm4l-friction-readiness-snapshot.json'), 'utf8'));
 const sourceMap = JSON.parse(fs.readFileSync(fixture('m047-bm4l-friction-source-map-snapshot.json'), 'utf8'));
+const profile = JSON.parse(fs.readFileSync(fixture('bm4l-validation.profile.json'), 'utf8'));
 
 assert.match(cfg, /^Ver\. 14\.000/m);
 assert.match(cfg, /^FRICT_STIF =\s+0\.1000000E\+07\s+45$/m);
@@ -39,6 +40,32 @@ for (const setting of [
   'COEFFICIENT_OF_FRICTION_(MU)',
   'FLEXIBILITY_ELASTIC_MODULUS',
 ]) assert.ok(excluded.has(setting), `missing cfg override exclusion ${setting}`);
+
+const template = profile.configurationAuthority;
+assert.deepEqual(template.precedence, [
+  'LOAD_CASE_SETTING',
+  'INDIVIDUAL_FILE_SETTING',
+  'MODEL_INPUT',
+  'OVERALL_GLOBAL_DEFAULT',
+]);
+const global = template.layers.overallGlobalDefault.settings;
+assert.equal(global.FRICT_STIF.value, 1_000_000);
+assert.equal(global.FRICT_NORM_FORCE_VAR, 0.15);
+assert.equal(global.FRICT_ANGLE_VAR.value, 15);
+assert.equal(global.FRICT_SLIDE_MULT, 1);
+assert.equal(profile.configurationAuthority.nonlinearFrictionAuthority.resolved.frictionStiffness.normalizedValueNPerM, 175126835.24647635);
+assert.equal(profile.configurationAuthority.nonlinearFrictionAuthority.resolved.frictionSlideMultiplier.value, 1);
+assert.equal(profile.configurationAuthority.nonlinearFrictionAuthority.resolved.frictionNormalForceVariation.value, 0.15);
+assert.equal(profile.configurationAuthority.nonlinearFrictionAuthority.resolved.frictionAngleVariationDeg.value, 15);
+assert.deepEqual(new Set(profile.configurationAuthority.overrideBoundary.globalDefaultsNotGoverningForBM4L), new Set([
+  'AMBIENT_TEMPERATURE',
+  'BOURDON_PRESSURE',
+  'COEFFICIENT_OF_FRICTION_MU',
+  'FLEXIBILITY_ELASTIC_MODULUS',
+]));
+assert.equal(profile.configurationAuthority.layers.modelInput.settings.COEFFICIENT_OF_FRICTION_MU, 0.3);
+assert.equal(profile.configurationAuthority.layers.individualFile.settings.BOURDON_PRESSURE, 'TRANSLATION_AND_ROTATION');
+assert.equal(profile.configurationAuthority.layers.individualFile.settings.AMBIENT_TEMPERATURE.value, 21);
 
 assert.equal(snapshot.schema, 'm047-bm4l-friction-readiness-snapshot/v2');
 assert.equal(snapshot.resolvedAuthority.frictionSlideMultiplier.value, 1);
@@ -80,6 +107,7 @@ assert.equal(authority.f2DiagnosticInterpretation.numericalValueChangesFromSlide
 console.log(JSON.stringify({
   check: 'm047-bm4l-caesar14-config-authority',
   status: 'PASS',
+  validationTemplateUpdated: true,
   resolvedSlideMultiplier: 1,
   resolvedNormalForceVariation: 0.15,
   resolvedAngleVariationDeg: 15,

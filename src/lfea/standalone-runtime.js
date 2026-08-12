@@ -2,6 +2,7 @@ import { LfeaWorkbenchController } from '../workspace/lfea-workbench-controller.
 import { createLfeaGovernedJourneyProjection } from './governed-journey-projection.js';
 import { mountLfeaGovernedJourneyView } from './governed-journey-view.js';
 import { LfeaStandaloneInputXmlSourceController } from './inputxml-source-controller.js';
+import { mountLfeaNativeB31AuthoringView } from './native-b31-authoring-view.js';
 import { createLfeaNativeB31PublicationAuthority } from './native-b31-publication-authority.js';
 import { createLfeaNativeComparisonController } from './native-comparison-controller.js';
 import { createLfeaNativeExecutionAuthority } from './native-execution-authority.js';
@@ -60,6 +61,10 @@ class LfeaStandaloneRuntime {
     this.historyView = mountLfeaNativeHistoryView(this.layout.historyRoot, {
       onSelectRun: (runId) => this.selectHistoryRun(runId),
     });
+    this.b31AuthoringView = mountLfeaNativeB31AuthoringView(this.layout.codeRoot, {
+      onStage: (input) => this.stageNativeB31Authority(input), onAuthorize: (approval) => this.authorizeNativeB31Authority(approval),
+      onPublish: () => this.publishNativeB31Application(),
+    });
   }
   #createControllers(workbenchOptions) {
     this.sourceController = new LfeaStandaloneInputXmlSourceController(
@@ -107,6 +112,7 @@ class LfeaStandaloneRuntime {
     });
     this.journeyView.update(this.governedJourney);
     this.#updateResultsView();
+    this.b31AuthoringView.update(preFlight, this.b31PublicationAuthority.getState());
     this.historySnapshot = this.#currentHistorySnapshot(sourceSnapshot, preFlight);
     this.historyView.update(this.historySnapshot);
     this.comparisonController.refresh(this.historySnapshot);
@@ -206,12 +212,8 @@ class LfeaStandaloneRuntime {
     this.refreshCurrent();
     return state;
   }
-  publishNativeSupportActions() {
-    return this.#publish(this.supportPublicationAuthority, (run, state) => this.runHistory.attachSupportEvidence(run, state));
-  }
-  publishNativeB31Application() {
-    return this.#publish(this.b31PublicationAuthority, (run, state) => this.runHistory.attachB31Evidence(run, state));
-  }
+  publishNativeSupportActions() { return this.#publish(this.supportPublicationAuthority, (run, state) => this.runHistory.attachSupportEvidence(run, state)); }
+  publishNativeB31Application() { return this.#publish(this.b31PublicationAuthority, (run, state) => this.runHistory.attachB31Evidence(run, state)); }
   #publish(authority, attachEvidence) {
     this.requireActive();
     const run = this.runHistory.getCurrentRecord(this.#historyContext());
@@ -250,9 +252,7 @@ class LfeaStandaloneRuntime {
   }
   recoverCurrentResults() {
     this.requireActive();
-    const state = this.resultsAuthority.recover(
-      this.sourceController.getPreFlight(), this.executionAuthority.getState(),
-    );
+    const state = this.resultsAuthority.recover(this.sourceController.getPreFlight(), this.executionAuthority.getState());
     this.#archiveCurrentRun();
     this.refreshCurrent();
     this.layout.activate('results');
@@ -289,6 +289,7 @@ class LfeaStandaloneRuntime {
     this.sourceController.destroy();
     this.historyView.destroy();
     this.resultsView.destroy();
+    this.b31AuthoringView.destroy();
     this.journeyView.destroy();
     this.workbenchController.destroy();
     clearLfeaStandaloneLayout(this.rootElement);

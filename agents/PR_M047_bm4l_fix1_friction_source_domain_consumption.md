@@ -2,21 +2,36 @@
 
 ## Mission
 
-Implement the first bounded correction after F2.6: make the existing InputXML friction-site mapper carry **corrected InputXML restraint semantics** instead of leaving downstream consumers with only raw exported `TYPE` codes.
+Make the InputXML friction-site mapper carry the **corrected InputXML restraint semantics** required by BM4_L without ever substituting those labels into the independent ACCDB namespace.
 
-This PR is stacked directly on PR #1074 head:
+This Fix 1 branch is now structurally stacked on corrected PR #1074 head:
 
 ```text
-d60fd3d34be4f94968818daa653b02f5b6476d26
+b03e0c1d7277b6b9738303de33f70ac9982da9ba
 ```
 
-It is deliberately **not** the F2.7 nonlinear active-boundary implementation. Gap OPEN/CLOSED/REOPENED ordering and proprietary friction state-history ordering remain blocked on exact-build CAESAR evidence.
+It remains a bounded semantic-custody fix. It does not implement the proprietary nonlinear active-set/state-history rules that F2.7 proved are absent from the retained exact-build package.
 
-## Root cause
+## Correct source-domain authority
 
-The older `buildInputXmlFrictionSiteMap()` correctly located friction rows from positive `FRIC_COEF`, but it exposed only the raw InputXML `TYPE` as `sourceTypeCode`.
+F2.6/F2.7 established two distinct source namespaces.
 
-After the F2.5/F2.6 source-domain correction, raw InputXML numeric `TYPE` is not mechanics semantics. For BM4_L the governed correction is:
+### ACCDB — direct database authority, no mutation
+
+Authenticated BM4_L and BM4_NL `RESTRAINT_TYPES` lookups both publish:
+
+```text
+RES_TYPEID 1 -> ANC
+RES_TYPEID 3 -> Y
+RES_TYPEID 8 -> GUI
+RES_TYPEID 9 -> LIM
+```
+
+These are direct ACCDB product labels. No InputXML mutation is applied to them.
+
+### InputXML — mutation exactly once before classification
+
+For BM4_L, the governed InputXML correction includes:
 
 ```text
 +Y   17 -> 14
@@ -28,13 +43,46 @@ Z     3 -> 5
      18 -> 15
 ```
 
-The ACCDB path remains separate and unmutated.
+Therefore representative InputXML semantics are:
 
-Therefore a friction-site consumer that sees raw `17`, `7`, or `10` must not classify those numbers directly as CAESAR restraint mechanics.
+```text
+raw 17 -> corrected 14 -> +Y
+raw  7 -> corrected  8 -> LIM
+raw 10 -> corrected  9 -> GUI
+```
 
-## Fix 1 implementation
+The numeric values `8` and `9` exist in both sources but do **not** have the same source-domain label. This is intentional and must not be normalized away.
 
-`src/core/nonlinear-restraint-friction/inputxml-friction-site-map.js` now supports two explicit modes.
+## Exact cross-source custody
+
+The four complete row sets still reconcile exactly:
+
+| ACCDB | Corrected InputXML | Rows |
+|---|---|---:|
+| ANC | ANC | 1 |
+| Y | +Y | 29 |
+| GUI | LIM | 6 |
+| LIM | GUI | 10 |
+
+This is a row-set crosswalk, not permission to rename either source.
+
+The earlier node-set-derived ACCDB claim:
+
+```text
+1=ANC, 3=+Y, 8=LIM, 9=GUI
+```
+
+is **withdrawn**. Direct `RESTRAINT_TYPES` authority governs ACCDB.
+
+## Root cause fixed
+
+The older `buildInputXmlFrictionSiteMap()` correctly found positive-friction rows from `FRIC_COEF`, but it exposed raw exported InputXML `TYPE` without a governed corrected semantic contract.
+
+Raw InputXML `TYPE` is source evidence, not mechanics semantics. Fix 1 now makes that distinction explicit.
+
+## Implementation
+
+`src/core/nonlinear-restraint-friction/inputxml-friction-site-map.js` supports two explicit modes.
 
 ### Source-only compatibility mode
 
@@ -42,16 +90,14 @@ Therefore a friction-site consumer that sees raw `17`, `7`, or `10` must not cla
 buildInputXmlFrictionSiteMap(xmlText)
 ```
 
-This retains historical source extraction but marks the result:
+The mapper retains raw type custody but reports:
 
 ```text
 SOURCE_ONLY_RAW_TYPE_NOT_CLASSIFIED
 rawTypeUsedAsMechanicsSemantics = false
 ```
 
-Raw `sourceTypeCode` remains evidence only. No corrected type/class is invented.
-
-### Governed semantic mode
+### Governed InputXML semantic mode
 
 ```js
 buildInputXmlFrictionSiteMap(xmlText, {
@@ -62,137 +108,109 @@ buildInputXmlFrictionSiteMap(xmlText, {
 The mapper then:
 
 1. retains raw InputXML `TYPE` as source evidence;
-2. applies the supplied mutation exactly once through the existing governed mutation utility;
-3. decodes only the corrected type;
-4. carries `correctedTypeCode`, abbreviation, family, mutation flag and mutation rule into the site/companion contract;
-5. fails closed if a positive-friction BM4_L row does not classify as corrected `+Y`.
+2. applies the supplied mutation exactly once through the governed mutation utility;
+3. decodes only the corrected InputXML type;
+4. carries corrected code, abbreviation, family and mutation evidence into friction-site and companion contracts;
+5. fails closed if a positive-friction BM4_L row does not resolve to corrected InputXML `+Y`.
 
-For the representative BM4_L semantics:
+The module does not consume, mutate or rename ACCDB `RES_TYPEID` values.
 
-```text
-friction source: raw 17 -> corrected 14 -> +Y
-LIM companion:   raw  7 -> corrected  8 -> LIM
-GUI companion:   raw 10 -> corrected  9 -> GUI
-```
+## Friction and gap custody retained
 
-The existing source-only API remains callable, so this patch does not silently reinterpret historical evidence consumers.
-
-## F2.6 custody retained
-
-The pinned F2.6 reconciliation remains authoritative:
+The source correction preserves the exact BM4_L physical inventory:
 
 ```text
-26 positive-friction +Y rows
-29 total +Y rows
-5 friction-coupled positive-gap rows
-6 total positive-gap rows
-additional non-friction GUI gap: node 21640
+29 corrected InputXML +Y rows
+26 positive-friction rows, mu=0.3
+ACCDB counterpart: 29 Y rows / 26 positive-friction rows
+3 non-friction Y/+Y nodes: 20300, 20640, 21640
+5 friction-coupled positive-gap companion rows
+6 positive-gap rows total
 ACCDB GAP: unset sentinel on all 46 rows
 positive gap magnitude authority: corrected InputXML
 ```
 
-No ACCDB `RES_TYPEID` is passed through the InputXML mutation table.
+No friction node, normal vector, coefficient, gap magnitude, contact state or load is changed by Fix 1.
 
-## Accuracy — present vs Fix 1
+## Accuracy — old vs Fix 1
 
-The user requested the revised result side by side with the present L13 diagnostic.
+The governed L13 denominator remains exactly 1,914 comparisons.
 
-| Metric | Present | Fix 1 revised | Delta |
+| Metric | Before Fix 1 | Corrected Fix 1 | Delta |
 |---|---:|---:|---:|
 | Passed | 1,719 | 1,719 | 0 |
 | Failed | 195 | 195 | 0 |
-| Governed rows | 1,914 | 1,914 | 0 |
+| Total | 1,914 | 1,914 | 0 |
 | Accuracy | **89.8119122257%** | **89.8119122257%** | **0.0000 pp** |
 
-Quantity breakdown is also unchanged:
+Quantity breakdown remains identical:
 
-| Quantity | Present pass/fail | Fix 1 pass/fail |
-|---|---:|---:|
-| Displacement | 279 / 12 | 279 / 12 |
-| Rotation | 264 / 27 | 264 / 27 |
-| Restraint force | 77 / 13 | 77 / 13 |
-| Restraint moment | 90 / 0 | 90 / 0 |
-| Source-end force FROM | 256 / 32 | 256 / 32 |
-| Source-end force TO | 255 / 33 | 255 / 33 |
-| Source-end moment FROM | 249 / 39 | 249 / 39 |
-| Source-end moment TO | 249 / 39 | 249 / 39 |
+| Quantity | Pass | Fail | Total |
+|---|---:|---:|---:|
+| Displacement | 279 | 12 | 291 |
+| Rotation | 264 | 27 | 291 |
+| Restraint force | 77 | 13 | 90 |
+| Restraint moment | 90 | 0 | 90 |
+| Source-end force FROM | 256 | 32 | 288 |
+| Source-end force TO | 255 | 33 | 288 |
+| Source-end moment FROM | 249 | 39 | 288 |
+| Source-end moment TO | 249 | 39 | 288 |
 
-### Why accuracy does not move
+The zero accuracy delta is the expected engineering result. Fix 1 changes semantic custody, not the nonlinear equilibrium equations, comparator, tolerances or CAESAR references.
 
-This is the correct numerical result for Fix 1.
+## Numerical baseline retained
 
-F2.6 proved that the corrected source-domain view preserves the exact same:
-
-- 26 friction-node set;
-- global `+Y` friction normals;
-- `mu = 0.3` values;
-- five friction-coupled positive-gap companions.
-
-Fix 1 changes **semantic custody**, not the assembled nonlinear equations. It does not change:
-
-- contact state;
-- friction state history;
-- friction stiffness;
-- Slide Multiplier;
-- normal-force update rule;
-- angle update rule;
-- comparator;
-- tolerance;
-- CAESAR reference values.
-
-Therefore claiming a higher L13 percentage from this patch would be an unsupported score-driven mechanics change.
-
-## Numerical cross-check performed for this PR
-
-The retained exact Windows/ACE artifact `9110308571` was unpacked locally. Its 322 element stiffness/load ledgers and 51 recovered finite restraint DOFs reconstruct the 1,938-DOF L6 operator.
-
-A local independent Coulomb fixed-point replay reproduced the historical L13 diagnostic exactly:
+The independent replay from the retained exact Windows/ACE stiffness/load ledger remains:
 
 ```text
-iterations: 82
-final states: 7 STICK / 19 SLIDING
-passed: 1719
-failed: 195
-total: 1914
-accuracy: 89.81191222570533%
+1,938 DOFs
+82 iterations
+7 STICK / 19 SLIDING
+passed 1719
+failed 195
+total 1914
+accuracy 89.81191222570533%
 ```
 
-This establishes the present numerical value independently before the source-domain-only patch. Since Fix 1 does not alter the operator, source-node inventory, friction vectors or active-state policy, the revised numerical value is identical.
+No score-selected contact or friction state is introduced.
 
-## Validation
+## Checker hardening
 
-Executed in this agent environment:
+The focused checker now locks all of the following simultaneously:
 
 ```text
-node --check src/core/nonlinear-restraint-friction/inputxml-friction-site-map.js     PASS (materialized candidate)
-node --check scripts/lfea-m047-bm4l-fix1-friction-source-domain-consumption-check.mjs PASS (materialized candidate)
-exact artifact Coulomb replay 1719/1914                                              PASS
+ACCDB direct: 1=ANC, 3=Y, 8=GUI, 9=LIM
+InputXML:     17->14 +Y, 7->8 LIM, 10->9 GUI
+F2.6 schema/status = corrected v2 direct-authority result
+all four row-set crosswalks exact
+cross-source labels not equivalent
+26 positive-friction rows
+6 positive-gap rows / 5 friction-coupled
+ACCDB gaps all unset
+withdrawn ACCDB inference remains withdrawn
+Fix 1 does not rename ACCDB types
+accuracy remains 1719/1914
 ```
 
-Full repository exact-head execution is not claimed: the local container has no `gh` checkout/publish path, so the branch is written through the connected GitHub app. No retired workflow is restored or manually rerun.
+## F2.7 boundary after retained-source audit
 
-## Files
+PR #1075 completed the retained-source observability audit. The exact output XML and all 40 tables in the authenticated BM4_NL ACCDB do **not** expose the nonlinear state history required for a CAESAR-equivalent implementation.
 
-This PR changes exactly four files relative to PR #1074:
+Still missing:
 
 ```text
-agents/PR_M047_bm4l_fix1_friction_source_domain_consumption.md
-benchmarks/LFEA/CAESAR_ACCDB/m047-bm4l-fix1-friction-source-domain-consumption.json
-scripts/lfea-m047-bm4l-fix1-friction-source-domain-consumption-check.mjs
-src/core/nonlinear-restraint-friction/inputxml-friction-site-map.js
+OPEN/CLOSED/REOPENED ordering
+contact-state commit/convergence ordering
+STICK -> SLIDING scheduling
+first-slide 15-degree handling
+subsequent direction/zero-crossing handling
+normal-force update basis around the 0.15 threshold
 ```
 
-## Remaining F2.7 boundary
+Official CAESAR guidance establishes the qualitative stiffness/Coulomb law and scalar controls, but not the full hidden update/commit ordering needed to reproduce the exact state machine.
 
-Fix 1 closes the remaining raw-InputXML semantic-consumption risk in the friction-site map. It does **not** close either numerical blocker:
-
-```text
-GAP_CONTACT_STATE_SEMANTICS_AUTHORITY_REQUIRED
-FRICTION_STATE_HISTORY_SEMANTICS_AUTHORITY_REQUIRED
-```
-
-The next legitimate accuracy-changing batch requires exact-build Active Boundary Conditions / nonlinear iteration evidence sufficient to establish contact OPEN/CLOSED/REOPENED and friction state commit/update ordering without selecting mechanics from the BM4_L score.
+The next authority required for an accuracy-changing F2.8 integration is an exact-build L13 **Active Boundary Conditions plus nonlinear iteration/state trace**, or equivalent product evidence exposing those transitions.
 
 ## Decision
 
-**FIX 1 IMPLEMENTED — SOURCE-DOMAIN SEMANTICS CORRECTED; L13 REMAINS 1719/1914 = 89.8119122257%. NO NUMERICAL ACCURACY CHANGE IS AUTHORIZED BY THIS SEMANTIC FIX. F2.7 REMAINS THE NEXT ACCURACY-CHANGING GATE.**
+**FIX 1 CORRECTED AND RESTACKED ON DIRECT F2.6 AUTHORITY. INPUTXML SEMANTICS ARE MUTATED EXACTLY ONCE; ACCDB REMAINS DIRECT `1=ANC, 3=Y, 8=GUI, 9=LIM`. L13 REMAINS `1719/1914 = 89.8119122257%`. NO ACCURACY-CHANGING NONLINEAR MECHANICS ARE PROMOTED WITHOUT THE MISSING EXACT-BUILD STATE TRACE.**

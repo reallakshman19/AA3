@@ -5,11 +5,15 @@ import {
   topologyEditAffectedEdgeIds,
   topologyEditSupportGeometryDependencies,
 } from '../professional/topology-edit-support-geometry-dependency.js';
+import {
+  topologyEditSupportPlacementContext,
+} from '../topology-edit-support-placement.js';
 
 const CERTIFIED_EDITOR_TO_INTENT = Object.freeze({
   PIPE_LENGTH: 'PIPE_LENGTH',
   VALVE_REPLACE: 'VALVE_REPLACEMENT',
   BRANCH_RECONFIGURE: 'TEE_REDUCER_RELATION',
+  SUPPORT_PLACEMENT: 'SUPPORT_PLACEMENT',
   SUPPORT_RESTRAINT: 'SUPPORT_RESTRAINT',
 });
 
@@ -70,6 +74,11 @@ export function deriveTopologyEditTableCellCapability(input = {}) {
       ? receipt('AVAILABLE', 'READY', 'Certified PIPE_LENGTH intent is available.', row, columnKey, context, { intentKind })
       : receipt('BLOCKED', 'TABLE_TARGET_KIND_INVALID', 'PIPE_LENGTH requires an exact PIPE edge row.', row, columnKey, context, { intentKind });
   }
+  if (intentKind === 'SUPPORT_PLACEMENT') {
+    return row.elementType === 'SUPPORT' && row.identity?.canonicalKind === 'SUPPORT'
+      ? receipt('NEEDS_INPUT', 'EXPLICIT_SUPPORT_STATION_REQUIRED', 'Choose an explicit same-host support station before staging.', row, columnKey, context, { intentKind }, ['stationMm'])
+      : receipt('BLOCKED', 'TABLE_TARGET_KIND_INVALID', 'SUPPORT_PLACEMENT requires an exact canonical SUPPORT row.', row, columnKey, context, { intentKind });
+  }
   if (intentKind === 'SUPPORT_RESTRAINT') {
     if (row.elementType !== 'SUPPORT' || row.identity?.canonicalKind !== 'SUPPORT') {
       return receipt('BLOCKED', 'TABLE_TARGET_KIND_INVALID', 'SUPPORT_RESTRAINT requires an exact canonical SUPPORT row.', row, columnKey, context, { intentKind });
@@ -119,6 +128,26 @@ export function deriveTopologyEditTableCellCapability(input = {}) {
     );
   }
   return receipt('UNREPRESENTABLE', 'TABLE_INTENT_NOT_CERTIFIED', 'No certified Table intent is available.', row, columnKey, context);
+}
+
+export function deriveTopologyEditTableSupportPlacementCapability(input = {}) {
+  const row = input.row; const projection = input.projection; const topology = input.canonicalTopology;
+  const context = { basisCanonicalHash: projection?.authority?.canonicalTopologyHash ?? null,
+    selectionHash: input.selectionHash ?? null, selectionRevision: input.selectionRevision ?? null };
+  if (row?.elementType !== 'SUPPORT' || row?.identity?.canonicalKind !== 'SUPPORT') return receipt(
+    'BLOCKED', 'TABLE_TARGET_KIND_INVALID', 'SUPPORT_PLACEMENT requires an exact canonical SUPPORT row.', row, 'stationMm', context, { intentKind: 'SUPPORT_PLACEMENT' });
+  if (!topology || topology.canonicalTopologyHash !== projection?.authority?.canonicalTopologyHash) return receipt(
+    'BLOCKED', 'CANONICAL_BASIS_STALE', 'Canonical topology differs from the Table projection.', row, 'stationMm', context, { intentKind: 'SUPPORT_PLACEMENT' });
+  try {
+    const supports = (topology.supports ?? []).filter((support) => support.id === row.identity.canonicalId);
+    if (supports.length !== 1) throw new RangeError(`support ${row.identity.canonicalId} resolved ${supports.length} records.`);
+    const placement = topologyEditSupportPlacementContext(topology, supports[0]);
+    if (placement.currentStationMm === null) throw new RangeError('current support station authority is unresolved.');
+    return receipt('NEEDS_INPUT', 'EXPLICIT_SUPPORT_STATION_REQUIRED', 'Choose an explicit station on the exact current straight host.', row, 'stationMm', context,
+      { intentKind: 'SUPPORT_PLACEMENT', ...placement }, ['stationMm']);
+  } catch (error) {
+    return receipt('UNREPRESENTABLE', 'SUPPORT_PLACEMENT_UNREPRESENTABLE', error instanceof Error ? error.message : String(error), row, 'stationMm', context, { intentKind: 'SUPPORT_PLACEMENT' });
+  }
 }
 
 export function deriveTopologyEditTableNodePositionCapability(input = {}) {

@@ -8,11 +8,11 @@
   "resolvedAuthority": {
     "frictionStiffness": {
       "status": "RESOLVED",
-      "value": 1000000000,
+      "value": 175126835.24647635,
       "unit": "N/m",
-      "displayedValue": 1000000,
-      "displayedUnit": "N/mm",
-      "source": "M047_BM4L_FRICTION_UNIT_AUTHORITY_V1",
+      "sourceValue": 1000000,
+      "sourceUnit": "LB/IN",
+      "source": "M047_BM4L_FRICTION_UNIT_AUTHORITY_V2",
       "provenanceClass": "INDEPENDENT_AUTHORITY"
     },
     "frictionAngleVariationDeg": {"status":"RESOLVED","value":15,"source":"HEXAGON_CAESAR_II_V14_FRICTION_ANGLE_VARIATION","provenanceClass":"INDEPENDENT_AUTHORITY"},

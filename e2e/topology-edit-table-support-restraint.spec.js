@@ -16,6 +16,7 @@ test('S-007 restraint follows the certified Table lifecycle without moving suppo
   const supportId = await selectTableSupport(page, 'S-007');
   const before = await supportEvidence(page, supportId);
   expect(before.override).toBeNull();
+  expect(before.restraintAuthority).not.toBe('CERTIFIED_TABLE_OVERRIDE');
 
   const editor = page.locator(`[data-table-support-restraint-editor="${supportId}"]`);
   await expect(editor).toBeVisible();
@@ -50,6 +51,7 @@ test('S-007 restraint follows the certified Table lifecycle without moving suppo
   expect(previewed.ghostChildCount).toBeGreaterThan(0);
   const preview = await supportEvidence(page, supportId);
   expect(preview.override).toBeNull();
+  expect(preview.declaredRestraint).toEqual(before.declaredRestraint);
   expect(preview.previewOverride).toMatchObject({
     type: requested.family,
     direction: requested.direction,
@@ -69,6 +71,7 @@ test('S-007 restraint follows the certified Table lifecycle without moving suppo
     .not.toBe(baseline.canonicalHash);
   const applied = await authorityEvidence(page);
   const after = await supportEvidence(page, supportId);
+  expect(after.restraintAuthority).toBe('CERTIFIED_TABLE_OVERRIDE');
   expect(after.override).toMatchObject({
     type: requested.family,
     direction: requested.direction,
@@ -98,6 +101,7 @@ test('S-007 restraint follows the certified Table lifecycle without moving suppo
   expect(undone.activeLedgerHash).toBe(baseline.activeLedgerHash);
   expect(undone.activeCommandIds).toEqual(baseline.activeCommandIds);
   expect(undoSupport.override).toBeNull();
+  expect(undoSupport.declaredRestraint).toEqual(before.declaredRestraint);
   expect(undoSupport.importedRestraints).toEqual(before.importedRestraints);
   expect(undoSupport.hostEntityId).toBe(before.hostEntityId);
   expect(undoSupport.stationMm).toBe(before.stationMm);
@@ -198,9 +202,13 @@ async function supportEvidence(page, supportId) {
     const tableRow = controller?.tableAdapter?.runtime?.projection?.rows?.find(
       (row) => row.identity.canonicalId === id,
     );
+    const isOverride = support?.restraintAuthority === 'CERTIFIED_TABLE_OVERRIDE';
+    const previewIsOverride = previewSupport?.restraintAuthority === 'CERTIFIED_TABLE_OVERRIDE';
     return {
-      override: support?.restraint ?? null,
-      previewOverride: previewSupport?.restraint ?? null,
+      override: isOverride ? structuredClone(support.restraint) : null,
+      previewOverride: previewIsOverride ? structuredClone(previewSupport.restraint) : null,
+      declaredRestraint: structuredClone(support?.restraint ?? null),
+      restraintAuthority: support?.restraintAuthority ?? null,
       importedRestraints: structuredClone(support?.restraints ?? []),
       hostEntityId: support?.hostEntityId ?? null,
       stationMm: support?.stationMm ?? null,

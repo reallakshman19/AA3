@@ -221,12 +221,22 @@ function meshProfile() {
 function numericalProjection(result) {
   return result.loadCaseResults.map((row) => ({
     loadCaseId: row.loadCaseId,
-    nodalDisplacements: row.nodalDisplacements,
+    nodalDisplacements: row.nodalDisplacements.map(({ nodeId, ux, uy }) => ({ nodeId, ux, uy })),
     supportReactions: row.supportReactions,
     freeDofResiduals: row.freeDofResiduals,
     equilibrium: row.equilibrium,
     totalStrainEnergy: row.totalStrainEnergy,
-    elementResults: row.elementResults,
+    elementResults: row.elementResults.map((element) => ({
+      elementId: element.elementId,
+      nodeIds: element.nodeIds,
+      strain: element.strain,
+      stress: element.stress,
+      principalMaximum: element.principalMaximum,
+      principalMinimum: element.principalMinimum,
+      maximumInPlaneShear: element.maximumInPlaneShear,
+      vonMises: element.vonMises,
+      strainEnergy: element.strainEnergy,
+    })),
   }));
 }
 

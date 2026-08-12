@@ -1,0 +1,56 @@
+{
+  "schema": "lafea-benchmark-program-initialization-audit/v1",
+  "programId": "LAFEA-BENCHMARK-VALIDATION-PROGRAM",
+  "recordedAt": "2026-08-12T22:05:31Z",
+  "repository": "reallaksh19/Advanced_Analysis",
+  "observedMainSha": "258f567afa350f6f2d6ffa93bd80756596444596",
+  "executionEnvironment": {
+    "node": "v22.16.0",
+    "platform": "Linux 6.18.35 x86_64",
+    "byteEquivalentRepositoryCheckoutAvailable": false,
+    "githubActionsUsed": false
+  },
+  "b01DefinitionCustody": {
+    "status": "DEFINITION_REFS_VERIFIED_AT_OBSERVED_MAIN",
+    "refs": [
+      {
+        "path": "scripts/lafea-bucket-01-t3-patch-check.mjs",
+        "gitBlobSha": "47cecae5a5a159ea1ee0e28a0d92990a88f1824e"
+      },
+      {
+        "path": "validation/bucket-01/04-t3-patch-oracle.json",
+        "gitBlobSha": "38cdab72f181eb4407a16aaa0753f8770d5989d8"
+      },
+      {
+        "path": "scripts/lafea.3-t6-patch-check.mjs",
+        "gitBlobSha": "6409e671a01fb4196658bdf7423352b013c7ee82"
+      },
+      {
+        "path": "scripts/lafea.3-q8-patch-check.mjs",
+        "gitBlobSha": "a7d51b1048eb62b605e864afa2f35052984f221b"
+      }
+    ]
+  },
+  "localFrameworkValidation": {
+    "syntax": "PASS",
+    "auditSelfTest": "PASS",
+    "selfTestAssertions": [
+      "all-method PASS authorizes next benchmark",
+      "any method failure blocks next benchmark",
+      "audit record hashing is deterministic",
+      "release authority remains false",
+      "temperature authority remains false"
+    ]
+  },
+  "b01NumericalExecution": {
+    "status": "NOT_RUN",
+    "reason": "NO_BYTE_EQUIVALENT_REPOSITORY_CHECKOUT_IN_CURRENT_EXECUTION_ENVIRONMENT",
+    "passClaimed": false,
+    "nextBenchmarkAuthorized": false
+  },
+  "governance": {
+    "productionOutputGeneratedExpectedValues": false,
+    "releaseAuthorityGranted": false,
+    "temperatureAuthorityGranted": false
+  }
+}

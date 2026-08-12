@@ -1,0 +1,38 @@
+/** Controller-owned LAFEA run evidence; intentionally independent from current engineering authority state. */
+import { createLafeaRunEvidenceDossier } from './lafea-evidence-dossier.js';
+import { compareLafeaRunHistoryEntries } from './lafea-run-comparison.js';
+import { createLafeaRunHistory } from './lafea-run-history.js';
+
+export function createLafeaControllerRunEvidence(options = {}) {
+  const history = createLafeaRunHistory({ buildSha: options.buildSha ?? null });
+
+  function capture(stateValue) {
+    const stage = activeQualifiedStage(stateValue);
+    return stage ? history.append(stage) : null;
+  }
+
+  function compare(leftRunId, rightRunId) {
+    return compareLafeaRunHistoryEntries(history.get(leftRunId), history.get(rightRunId));
+  }
+
+  function dossier(runId) {
+    return createLafeaRunEvidenceDossier(history.get(runId), {
+      currentRunId: history.latest()?.runId ?? null,
+    });
+  }
+
+  return Object.freeze({
+    capture,
+    list: history.list,
+    get: history.get,
+    latest: history.latest,
+    compare,
+    dossier,
+  });
+}
+
+function activeQualifiedStage(value) {
+  const stageId = value?.activeStageId;
+  const stage = stageId ? value?.stages?.[stageId] : null;
+  return stage?.execution?.status === 'QUALIFIED' ? stage : null;
+}

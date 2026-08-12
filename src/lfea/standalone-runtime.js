@@ -195,7 +195,7 @@ class LfeaStandaloneRuntime {
     this.#assertAuthorityUnchanged(before, 'Run comparison');
     return comparison;
   }
-  createNativeEvidenceDossier() { this.requireActive(); return this.verificationController.createDossier(); }
+  createNativeEvidenceDossier() { this.requireActive(); return this.verificationController.createDossier(); } // Evidence dossier creation is owned by the verification controller; this only delegates.
   stageNativeSupportAuthority(input) { return this.#stage(this.supportPublicationAuthority, input); }
   authorizeNativeSupportAuthority(approval) { return this.#authorize(this.supportPublicationAuthority, approval); }
   stageNativeB31Authority(input) { return this.#stage(this.b31PublicationAuthority, input); }

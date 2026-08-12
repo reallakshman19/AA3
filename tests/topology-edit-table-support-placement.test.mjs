@@ -101,6 +101,7 @@ test('SUPPORT_PLACEMENT plan captures support, host edge, and both host endpoint
   const { intent, batchPlan } = planned(session, topology);
 
   assert.deepEqual(batchPlan.operationPlan.commandIntents, [{
+    sequence: 0,
     commandType: 'UPDATE_SUPPORT_PLACEMENT', payload: intent.requestedValue,
   }]);
   for (const id of ['support:s1', 'edge:p1', 'node:n1', 'node:n2']) {

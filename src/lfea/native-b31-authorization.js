@@ -13,6 +13,18 @@ const APPROVAL_KEYS = Object.freeze([
   'reason',
   'acceptedAuthoritySemanticHash',
 ]);
+const RECORD_KEYS = Object.freeze([
+  'schema',
+  'b31AuthoritySemanticHash',
+  'parentSourceBundleSemanticHash',
+  'parentModelSemanticHash',
+  'parentCompilationSemanticHash',
+  'codeProfileSemanticHash',
+  'editionDatasetSemanticHash',
+  'reviewerIdentity',
+  'reason',
+  'semanticHash',
+]);
 
 export function sealLfeaNativeB31Authorization(authority, approval) {
   requireAuthority(authority);
@@ -41,7 +53,8 @@ export function sealLfeaNativeB31Authorization(authority, approval) {
 
 export function requireLfeaNativeB31Authorization(value, authority) {
   requireAuthority(authority);
-  if (!value || value.schema !== LFEA_NATIVE_B31_AUTHORIZATION_SCHEMA) {
+  exactKeys(value, RECORD_KEYS, 'b31Authorization');
+  if (value.schema !== LFEA_NATIVE_B31_AUTHORIZATION_SCHEMA) {
     throw lfeaNativeB31Error('LFEA_NATIVE_B31_REVIEW_INVALID', 'B31 authorization is invalid.');
   }
   const expected = {
@@ -69,7 +82,7 @@ export function requireLfeaNativeB31Authorization(value, authority) {
       'B31 authorization semantic hash is stale.',
     );
   }
-  return value;
+  return deepFreeze({ ...value });
 }
 
 function requireAuthority(authority) {

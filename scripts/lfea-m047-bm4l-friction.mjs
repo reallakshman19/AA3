@@ -1,8 +1,10 @@
 #!/usr/bin/env node
 
 /**
- * Local Windows/ACE production boundary for M047 Stage 2 BM4_L friction.
+ * Cross-platform M047 Stage 2 BM4_L friction production boundary.
  *
+ * ACCDB extraction uses the pure-JavaScript mdb-reader browser engine adapted
+ * from reallaksh19/XML_Compare_Utilities; Microsoft ACE/OLE DB is not required.
  * The command always runs frozen non-friction controls before L13/L7/L15/L1.
  * It writes a standard ACCDB actual-result package for comparison plus a
  * friction-specific evidence ledger. L1 remains explicit BLOCKED until WW+HP
@@ -21,7 +23,7 @@ import {
 import { canonicalPrettyStringify, semanticHash } from '../src/core/shared-piping-model/canonical-json.js';
 
 const SCRIPT_DIR = dirname(fileURLToPath(import.meta.url));
-const EXPORT_SCRIPT = resolve(SCRIPT_DIR, 'lfea-caesar-accdb-export.ps1');
+const EXPORT_SCRIPT = resolve(SCRIPT_DIR, 'lfea-caesar-accdb-mdb-export.mjs');
 const CONTROL_CASE_IDS = Object.freeze(['L2', 'L3', 'L4', 'L5', 'L6', 'L14']);
 const FRICTION_CASE_IDS = Object.freeze(['L13', 'L7', 'L15', 'L1']);
 
@@ -149,23 +151,25 @@ function maximumAbsoluteValue(rows) {
 }
 
 function extractAccdb(accdbPath, tableNames) {
-  if (process.platform !== 'win32') {
-    throw new Error('M047 BM4_L friction production requires Windows and Microsoft ACE OLE DB.');
+  const result = spawnSync(process.execPath, [
+    EXPORT_SCRIPT,
+    '--accdb', resolve(accdbPath),
+    '--tables', tableNames.join(','),
+  ], { encoding: 'utf8', maxBuffer: 64 * 1024 * 1024 });
+  if (result.error) {
+    throw new Error(`mdb-reader ACCDB extraction failed to start: ${result.error.message}`, {
+      cause: result.error,
+    });
   }
-  const result = spawnSync('powershell.exe', [
-    '-NoLogo', '-NoProfile', '-NonInteractive', '-ExecutionPolicy', 'Bypass',
-    '-File', EXPORT_SCRIPT,
-    '-AccdbPath', resolve(accdbPath),
-    '-TablesCsv', tableNames.join(','),
-  ], { encoding: 'utf8', maxBuffer: 64 * 1024 * 1024, windowsHide: true });
-  if (result.error) throw new Error(`ACCDB extraction failed to start: ${result.error.message}`, { cause: result.error });
   if (result.status !== 0) {
-    throw new Error(`ACCDB extraction failed with exit ${result.status}: ${String(result.stderr).trim()}`);
+    throw new Error(
+      `mdb-reader ACCDB extraction failed with exit ${result.status}: ${String(result.stderr).trim()}`,
+    );
   }
   try {
     return JSON.parse(result.stdout);
   } catch (error) {
-    throw new Error(`ACCDB extraction returned invalid JSON: ${error.message}`, { cause: error });
+    throw new Error(`mdb-reader ACCDB extraction returned invalid JSON: ${error.message}`, { cause: error });
   }
 }
 

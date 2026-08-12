@@ -1,4 +1,10 @@
 /** Registration/export actions extracted from the canonical orchestrator store. */
+import { requireLafeaStageComposition } from './lafea-stage-composition-root.js';
+import {
+  LAFEA_CONTINUUM_REVALIDATION_RESULT_SCHEMA,
+  createLafeaContinuumRevalidationBatch,
+  registerLafeaContinuumRevalidationBatch,
+} from './lafea-continuum-revalidation.js';
 
 export function createLafeaWorkbenchEvidenceActions(context) {
   const c = requireContext(context);
@@ -57,6 +63,73 @@ export function createLafeaWorkbenchEvidenceActions(context) {
     return freeze({
       ...result,
       projection: state.stages[resultStageId].preparationProjection,
+    });
+  }
+
+  function revalidateContinuumGeometryMesh() {
+    const stageId = activeStageId();
+    const stage = c.readStageState(stageId);
+    if (stageId !== 'LAFEA.3') {
+      throw c.storeError('LAFEA_CONTINUUM_REVALIDATION_STAGE_NOT_AUTHORIZED');
+    }
+    if (stage.domainFirstProfileActive || stage.shellMidsurfaceProfileActive) {
+      throw c.storeError('LAFEA_CONTINUUM_REVALIDATION_LEGACY_ROUTE_REQUIRED');
+    }
+    if (stage.lifecycleBinding?.status !== 'CURRENT') {
+      throw c.storeError('LAFEA_CONTINUUM_REVALIDATION_SOURCE_BINDING_NOT_CURRENT');
+    }
+    if (!stage.sourceAuthority) {
+      throw c.storeError('LAFEA_CONTINUUM_REVALIDATION_SOURCE_AUTHORITY_REQUIRED');
+    }
+
+    const composition = requireLafeaStageComposition(stageId);
+    if (!composition.executionSupported || typeof composition.canonicalize !== 'function') {
+      throw c.storeError('LAFEA_CONTINUUM_REVALIDATION_CANONICALIZER_NOT_AVAILABLE');
+    }
+    const source = composition.normalizeDocument(c.retained.exportDocument());
+    const canonicalInput = composition.canonicalize(source);
+    const batch = createLafeaContinuumRevalidationBatch({
+      stageId,
+      sourceAuthority: stage.sourceAuthority,
+      source,
+      canonicalInput,
+      lifecycle: stage.lifecycle,
+    });
+
+    // Dry-run the complete batch before the first mutable registration.
+    const predicted = registerLafeaContinuumRevalidationBatch(stage.lifecycle, batch);
+    for (let index = 0; index < batch.records.length; index += 1) {
+      const state = c.retained.registerLifecycleArtifact(
+        batch.records[index],
+        batch.registrations[index].registrationId,
+      );
+      if (state.status === 'FAILED') {
+        throw c.storeError(
+          state.diagnostics?.[0]?.code ?? 'LAFEA_CONTINUUM_REVALIDATION_REGISTRATION_REJECTED',
+        );
+      }
+    }
+
+    const state = c.deriveState();
+    const current = state.stages[stageId];
+    for (const kind of ['CANONICAL_MODEL', 'ANALYSIS_GEOMETRY', 'ANALYSIS_MESH']) {
+      if (current.lifecycle.artifacts[kind].artifactHash !== predicted.artifacts[kind].artifactHash
+        || current.lifecycle.artifacts[kind].status !== 'CURRENT') {
+        throw c.storeError('LAFEA_CONTINUUM_REVALIDATION_COMMIT_DIVERGED');
+      }
+    }
+    c.clearOrchestratorDiagnostic();
+    return freeze({
+      schema: LAFEA_CONTINUUM_REVALIDATION_RESULT_SCHEMA,
+      stageId,
+      status: 'PASS',
+      changeClass: batch.changeClass,
+      calculationState: batch.calculationState,
+      currentIdentity: batch.currentIdentity,
+      retainedIdentity: batch.retainedIdentity,
+      executionStatus: current.lifecycle.artifacts.EXECUTION.status,
+      recoveryStatus: current.lifecycle.artifacts.RECOVERY.status,
+      releaseQualified: false,
     });
   }
 
@@ -129,6 +202,7 @@ export function createLafeaWorkbenchEvidenceActions(context) {
     registerT6GeometryQualification,
     registerPreparationEvidence,
     registerPreparationApproval,
+    revalidateContinuumGeometryMesh,
     activateDomainFirstProfile,
     registerAnalysisDomain,
     registerAnalysisGeometryEvidence,

@@ -76,6 +76,21 @@ expectCode(
   'LAFEA_CONTINUUM_COMPILED_AUTHORITY_STATE_INVALID',
 );
 
+const temperatureDelta = clone(fixture.compiled);
+temperatureDelta.attachments.push({
+  attachmentId: 'TEMP', kind: 'TEMPERATURE', targetType: 'REGION', targetId: 'REGION-1',
+  physicalCaseIds: ['L1'], payload: { value: 50, unit: 'C' },
+  compiledTarget: {
+    targetType: 'REGION', featureId: 'REGION-1', nodeIds: [], edgeNodePaths: [],
+    elementIds: temperatureDelta.elements.map((row) => row.elementId),
+  },
+});
+reseal(temperatureDelta);
+expectCode(
+  () => executeLafeaContinuumCompiledForParity(temperatureDelta),
+  'LAFEA_CONTINUUM_COMPILED_TEMPERATURE_SEMANTICS_NOT_QUALIFIED',
+);
+
 const workbench = executeThroughWorkbench();
 assert.equal(workbench.parity.qualificationState, 'ACCEPTED');
 assert.equal(workbench.executionBefore, null);
@@ -93,6 +108,7 @@ console.log(JSON.stringify({
   existingNumericalKernelReused: true,
   legacyCompiledNumericalParity: true,
   deterministicCompiledExecution: true,
+  temperatureDeltaFailsClosedWithoutThermalExpansionAuthority: true,
   workbenchParityConsumerIntegrated: true,
   authoritativeRunChanged: false,
   lifecycleExecutionPublished: false,

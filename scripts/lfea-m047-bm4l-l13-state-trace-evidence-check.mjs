@@ -1,6 +1,10 @@
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import {
+  buildBm4lL13StateTraceCaptureTemplate,
+  sealBm4lL13StateTraceCapture,
+} from '../src/core/nonlinear-restraint-friction/caesar-bm4l-l13-state-trace-capture.js';
+import {
   BM4L_L13_STATE_TRACE_EVIDENCE_STATUS,
   assessBm4lL13StateTraceEvidence,
 } from '../src/core/nonlinear-restraint-friction/caesar-bm4l-l13-state-trace-evidence-gate.js';
@@ -23,6 +27,33 @@ if (inputArg) {
 
 const frictionKeys = contract.friction.nodeIds.map((node) => `FRICTION:${node}`);
 const gapKeys = contract.positiveGapRows.map((row) => row.restraintKey);
+
+const worksheet = buildBm4lL13StateTraceCaptureTemplate(contract, { iterationCount: 3 });
+assert.equal(worksheet.source.capturedFromProduct, false);
+assert.equal(worksheet.iterations.length, 3);
+assert.equal(worksheet.iterations[0].restraints.length, 32);
+assert.deepEqual(
+  worksheet.iterations[0].restraints.slice(0, 26).map((row) => row.restraintKey),
+  frictionKeys,
+);
+assert.deepEqual(
+  worksheet.iterations[0].restraints.slice(26).map((row) => row.restraintKey),
+  gapKeys,
+);
+assert.equal(worksheet.inputCustody.traceSha256, null);
+
+const sealedWorksheet = sealBm4lL13StateTraceCapture(worksheet, {
+  traceFileName: 'bm4l-l13-incore-active-boundary-capture.zip',
+  traceSha256: 'b'.repeat(64),
+});
+assert.equal(sealedWorksheet.source.capturedFromProduct, true);
+assert.equal(sealedWorksheet.inputCustody.traceFileName, 'bm4l-l13-incore-active-boundary-capture.zip');
+assert.equal(sealedWorksheet.inputCustody.traceSha256, 'b'.repeat(64));
+const blockedUnfilledWorksheet = assessBm4lL13StateTraceEvidence(sealedWorksheet);
+assert.equal(blockedUnfilledWorksheet.status, BM4L_L13_STATE_TRACE_EVIDENCE_STATUS.BLOCKED_EVIDENCE);
+assert.ok(blockedUnfilledWorksheet.blockerCodes.includes('ITERATION_CONVERGENCE_FLAG_REQUIRED'));
+assert.equal(blockedUnfilledWorksheet.authority.productionMechanicsAuthorized, false);
+assert.equal(blockedUnfilledWorksheet.authority.l13RescoreAuthorized, false);
 
 const trace = {
   schema: 'm047-bm4l-l13-state-trace/v1',
@@ -87,6 +118,7 @@ const blockedIncomplete = assessBm4lL13StateTraceEvidence(incomplete);
 assert.ok(blockedIncomplete.blockerCodes.includes('ALL_26_FRICTION_SITES_REQUIRED_EACH_ITERATION'));
 
 console.log('PASS M047 BM4_L F2.7b exact-build L13 state-trace evidence gate');
+console.log('PASS deterministic 26-friction + 6-gap capture worksheet and raw-capture sealing firewall');
 console.log('historical L13 remains 1719/1914 = 89.81191222570533%');
 console.log('passing trace authorizes engineering review only; production mechanics/rescore remain false');
 console.log('ingest product trace with: node scripts/lfea-m047-bm4l-l13-state-trace-evidence-check.mjs --input=<trace.json>');

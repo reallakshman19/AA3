@@ -4,418 +4,389 @@
 
 - **Mission:** evolve LAFEA into one governed analysis platform with common engineering infrastructure and explicit stage-specific physics/authority while preserving lifecycle, mesh custody, numerical verification, and fail-closed release semantics.
 - **Source task:** #1025.
-- **PR:** #1038, DRAFT.
+- **PR:** #1038, DRAFT, open/mergeable.
 - **Branch:** `agent/integrated-lafea-common-stage-roadmap`.
 - **Original base:** `a587867963cc9199caca6e7adfa03af95a316aa2`.
-- **Current reconciled `main`:** `271d04fa2674ab68367808d05f2429ec5e236a6e`.
-- **Current implementation HEAD before Stage 12 planning sync:** `1af1d340d730f504793652c3e521400b69635a15`.
+- **Last branch/base reconciliation commit:** `59ad4a9fc0c79f7b55a607d3fd80e0f31c84ccd9`, against then-current `main` `271d04fa2674ab68367808d05f2429ec5e236a6e`.
+- **Current `main` observed after Stage 12A implementation:** `24f70bcaf9b717cecf34818780165caca60bb178`.
+- **Stage 12A implementation HEAD before report sync:** `3f0f5e0106f2c93fe728b53394115e5b1a07ae2b`.
 - **Last exact-head runtime-validated engineering increment:** Stage 9 at `1dab5bc4b6a73f0f4fac474d37130f6c47be37f6`.
-- **Current stage:** Stage 12A — LAFEA.3 canonical solver-model contract + compiler, IN_PROGRESS.
-- **Last completed stage:** Stage 11 — explicit LAFEA.3 non-geometric geometry/mesh revalidation, IMPLEMENTED / runtime gate unavailable.
+- **Current stage:** Stage 12A — canonical LAFEA.3 solver-model contract + compile action, IMPLEMENTED / RUNTIME_NOT_RUN.
 - **Engineering status:** IN_PROGRESS.
-- **Validation status:** Stage 10/11 exact-head runtime validation remains NOT_RUN because current `main` removed the old Actions fleet and the execution container cannot resolve `github.com`; no pass is claimed.
-- **Current blocker:** executable exact-head gate unavailable; compiler work may proceed only as a bounded non-numerical authority slice with no solver/release promotion.
-- **Exact next action:** implement the Stage 12A pure compiler and a real workbench compile action; add focused contract coverage; static diff-audit; do not route solver execution until executable validation is restored.
+- **Validation status:** Stage 12A static syntax/diff audit PASS; focused/aggregate/runtime validation NOT_RUN because no workflow/status check is attached and the execution environment still cannot clone GitHub.
+- **Current hard gate:** reconcile the new 66-commit `main` advance before any Stage 12B solver execution bridge.
+- **Exact next action:** integrate current `main` into the feature branch after a verified non-overlap merge; re-audit the exact diff; do not change solver execution/recovery/release authority before reconciliation and executable validation planning.
 
 ## Handover in 60 Seconds
 
-### What is now true
+### Completed/implemented architecture
 
-- LAFEA common/stage routing is centralized in the production stage adapter.
-- Shared unit factors are consumed by LAFEA.1 and LAFEA.3.
-- FE thickness is classified as `SECTION_PROPERTY` rather than geometry.
-- LAFEA.3 geometry identity excludes material/section/load/BC/provenance.
-- LAFEA.3 mesh-content identity excludes physics evidence.
-- LAFEA.3 can explicitly revalidate unchanged geometry/mesh after eligible non-geometric edits without running the solver; execution/recovery/release remain stale/unqualified.
-- The branch is reconciled to pinned `main` and no `.github/workflows/*` file is changed.
+1. **Stages 4–6 — common/stage routing:** production stage adapter owns analytical/FEA/unsupported route classification and semantic input requirements.
+2. **Stage 7 — common unit factors:** LAFEA.1 and LAFEA.3 consume shared unit-factor facts while retaining stage-specific unit contracts.
+3. **Stage 8 — dependency taxonomy:** FE thickness is `SECTION_PROPERTY`; analytical pipe-wall thickness remains geometry; orchestration/source-state omissions were repaired.
+4. **Stage 9 — geometry identity:** LAFEA.3 geometry identity is coordinate/topology semantics only. Runtime validated at `1dab5bc4...`.
+5. **Stage 10 — mesh-content identity:** LAFEA.3 mesh identity is discretization content only; physics evidence remains execution/recovery evidence. Implemented, current exact-head runtime gate unavailable.
+6. **Stage 11 — explicit revalidation:** eligible non-geometric edits can rederive and rebind unchanged geometry/mesh without solver execution; execution/recovery/release remain stale/unqualified. Implemented, runtime gate unavailable.
+7. **Stage 12A — solver-model compiler:** current domain-first source/domain/geometry/mesh-v2 evidence can now compile into a deterministic non-executing LAFEA.3 solver model through a real workbench API.
 
-### What is being worked on
+### Stage 12A production result
 
-Stage 12A defines the first deterministic **canonical solver-model compiler** for the governed domain-first LAFEA.3 route:
+The public workbench now exposes:
 
 ```text
-current source authority
-+ canonical LAFEA.3 engineering input
-+ current analysis domain
-+ current analysis geometry evidence
-+ current governed mesh-v2 evidence
-        ↓
-canonical solver model
+workbench.compileContinuumSolverModel()
 ```
 
-The compiler is translation/mapping only. It does not assemble stiffness, solve equations, recover stress, produce convergence, assess code, or qualify release.
+The action requires:
 
-### What remains unfinished
+```text
+LAFEA.3
+domain-first profile active
+CURRENT lifecycle source binding
+CURRENT_PASS analysis domain
+CURRENT_PASS analysis geometry
+CURRENT_PASS governed mesh-v2 custody with usableForRun=true
+```
 
-- Stage 10/11 runtime qualification.
-- General generated-mesh feature mapping for all current domain attachment kinds.
-- Execution of the compiled model through the existing local-continuum numerical kernel.
-- Numerical parity between legacy and domain-first routes.
-- LAFEA.4/.5 compiler migration.
-- Standalone runtime extraction, run history/comparison, verification center, release dossier.
+It then derives:
 
-### What must not be assumed
+```text
+current workbench document
+  → stage normalizeDocument
+  → current source authority
+  → stage canonicalize
+  → exact retained analysis domain
+  → exact retained geometry evidence
+  → exact retained mesh-v2 evidence
+  → compileLafeaContinuumSolverModel(...)
+```
 
-- Stable mesh identity is not solver-execution authority.
-- A current mesh-v2 artifact is not sufficient by itself to apply loads/restraints.
-- Source node/element IDs must not be assumed to survive automatic remeshing.
-- Stage 12A does not prove numerical parity.
-- Stage 10/11 are not runtime-validated on the current branch.
+The compile action does **not** call `calculateLocalContinuum`, assemble stiffness, solve equations, recover stress, mutate lifecycle execution evidence, or qualify release.
 
-### Highest-risk remaining item
+### Stage 12A compiler output
 
-The domain-first contract has mesh-independent geometry features and attachments, while mesh-v2 intentionally contains only topology/coordinates. Generic feature-to-mesh mapping is not yet a first-class common contract. The compiler must fail closed rather than infer engineering authority from coincidental source IDs.
+`lafea-continuum-solver-model/v1` contains:
 
-### Exact next action
+```text
+compiler identity/revision
+exact parent hashes
+formulation
+canonical + declared units
+coordinate system
+2-DOF UX/UY policy
+material assignment
+uniform-thickness section assignment
+governed mesh nodes
+governed mesh elements + region/material/section assignment
+physical cases
+domain attachments + compiled mesh targets
+requested result case IDs
+qualification profile
+limitations
+solverModelHash
+executionAuthorized = false
+releaseQualified = false
+```
 
-Implement a LAFEA.3-only compiler that validates all parents, maps geometry features to governed mesh entities geometrically, supports the current single-region/uniform-thickness scope, and exposes the compiled model through a real workbench API without executing it.
+### Feature-to-mesh mapping authority
+
+`src/workspace/lafea-continuum-solver-mapping.js` resolves physical features against the **current governed mesh**, never source FE numbering:
+
+- `REGION` → all current governed mesh elements in the current single analysis region.
+- `VERTEX` → exactly one current governed mesh node matching the canonical geometry vertex coordinate.
+- `SEGMENT/LINE` → ordered current boundary edge paths lying on the exact canonical line segment.
+- `SEGMENT/CIRCULAR_ARC` → ordered current boundary edge paths lying on the exact radius/sweep.
+- T3/T6/Q8 edge-node order is explicit.
+- Boundary edges are topology-derived by endpoint-pair occurrence count.
+- missing, incomplete, gapped, ambiguous, or unsupported mapping fails closed.
+
+Segment targets retain both ordered `edgeNodePaths` and owning `elementIds` so the later execution bridge can apply boundary loads without rediscovering element ownership.
+
+### Current bounded material/section scope
+
+Stage 12A deliberately supports only the current domain contract:
+
+- one analysis region;
+- `domain.region.materialRef` must resolve to the canonical material table;
+- every canonical source element must use that material;
+- canonical source elements must have one identical positive thickness.
+
+Multi-region material assignment or nonuniform thickness is rejected with explicit mapping-required errors. No averaging/defaulting occurs.
 
 ---
 
-## Mission and Engineering Intent
+## Governing Engineering Invariants
 
-The purpose of this PR is not directory cleanup. It is to establish an engineering architecture where editable source, physical domain, geometry, mesh, solver input, results, verification, and release evidence have explicit independent authority.
-
-### Governing principles
-
-1. UI/render state is never engineering authority.
+1. UI/render state is never solver authority.
 2. Calculation success is not release qualification.
-3. Geometry identity, mesh content, solver-model identity, execution, recovery, custody, verification, and release evidence remain distinct.
-4. No old source/model/mesh hash is copied forward to manufacture currentness.
+3. Geometry identity, mesh content, solver-model identity, execution, recovery, verification, custody, and release evidence remain distinct.
+4. No prior hash is copied forward to manufacture currentness.
 5. Producer-owned mesh hashes are not reinterpreted.
 6. Loads/restraints bind to physical geometry features, not incidental FE numbering.
-7. Compiler output must be deterministic and reconstructable from exact parents.
-8. A compiler may not silently fill missing engineering data.
-9. LAFEA.6 remains fail-closed unsupported.
-10. No `.github/workflows/*` change without explicit Owner authorization.
-
-### Explicit non-goals for Stage 12A
-
-- no element-matrix changes;
-- no sparse-solver changes;
-- no stress-recovery changes;
-- no execution/recovery lifecycle promotion;
-- no release qualification;
-- no shell compiler;
-- no multi-region material mapping;
-- no nonuniform thickness mapping;
-- no compatibility shim that pretends source mesh IDs are generated-mesh authority.
-
----
-
-## Mission Status
-
-| Work Item | Priority | Status | Stage | Evidence |
-|---|---|---|---|---|
-| Common/stage route boundary | P0 | VALIDATED | 4–6 | exact-head focused/bounded checks on prior heads |
-| Shared input unit factors | P0 | VALIDATED | 7 | `569dfaa864...` |
-| Dependency taxonomy / `SECTION_PROPERTY` | P0 | VALIDATED | 8 | `5709110edb...`; closure repair retained |
-| LAFEA.3 canonical geometry identity | P0 | VALIDATED | 9 | `1dab5bc4b6...` |
-| LAFEA.3 canonical mesh-content identity | P0 | IMPLEMENTED | 10 | runtime gate unavailable |
-| Explicit geometry/mesh revalidation | P0 | IMPLEMENTED | 11 | runtime gate unavailable |
-| Canonical solver-model compiler | P0 | IN_PROGRESS | 12A | current stage |
-| Compiled-model numerical execution/parity | P0 | NOT_STARTED | 12B/13 | requires 12A + executable gate |
-| LAFEA.4/.5 family compilers | P1 | NOT_STARTED | later | continuum pattern first |
-| Standalone LAFEA runtime/extraction | P1 | NOT_STARTED | later | engineering pipeline first |
+7. Compiler output is deterministic and reconstructable from exact current parents.
+8. Missing engineering mapping fails closed; the compiler does not guess.
+9. Compilation is not solver execution.
+10. Compilation is not release qualification.
+11. LAFEA.6 remains unsupported/fail-closed.
+12. No `.github/workflows/*` change without explicit Owner authorization.
 
 ---
 
 ## Engineering Item Register
 
-| ID | Type | Severity/Priority | Status | Summary | Current PR? |
-|---|---|---|---|---|---|
-| DEC-001 | Decision | P0 | ACCEPTED | One common LAFEA platform plus explicit stage/family physics adapters. | Yes |
-| DEC-007 | Decision | P0 | VALIDATED | Mesh currentness is established only by explicit recomputation/revalidation. | Yes |
-| DEC-009 | Decision | P0 | VALIDATED | LAFEA.3 geometry identity excludes non-geometric physics/provenance. | Yes |
-| DEC-011 | Decision | P0 | IMPLEMENTED | LAFEA.3 mesh artifact identifies discretization content only. | Yes |
-| DEC-013 | Decision | P0 | IMPLEMENTED | Revalidation derives new identities; no parent hash copying. | Yes |
-| DEC-014 | Decision | P0 | IMPLEMENTED | Revalidation publishes one coherent final state. | Yes |
-| DEC-015 | Decision | P0 | ACCEPTED | Stage 12A compiler is non-numerical and may expose a compiled model without authorizing execution. | Yes |
-| DEC-016 | Decision | P0 | ACCEPTED | Domain-first solver compilation uses geometry-feature mapping; source FE IDs are not accepted as remesh authority. | Yes |
-| RISK-005 | Risk | P0 | BLOCKED | Current branch lacks an executable exact-head Actions gate; local clone also unavailable due DNS. | Yes |
-| RISK-006 | Risk | P0 | OPEN | Generic feature→mesh mapping is not yet a standalone common contract; compiler must own a bounded mapping implementation or fail closed. | Yes |
-| IMP-001 | Improvement | P1 | DEFERRED | Extract reusable feature→mesh mapping contract after LAFEA.3 compiler pattern is proven. | Yes |
-| DEBT-001 | Debt | P1 | ACCEPTED | Current domain contract is single-region and does not encode section-region identity; Stage 12A therefore supports one material region + uniform thickness only. | Yes |
-| ISS-001 | Defect | P2 | BLOCKED | Unrelated LFEA piping repository-attribution contradiction; out of assignment scope. | No |
-
----
-
-## Stage Roadmap
-
-- **Stages 4–6:** common/stage routing — COMPLETE.
-- **Stage 7:** common unit factors — COMPLETE.
-- **Stage 8:** dependency taxonomy — COMPLETE.
-- **Stage 9:** canonical LAFEA.3 geometry identity — COMPLETE.
-- **Stage 10:** canonical LAFEA.3 mesh-content identity — IMPLEMENTED / validation unavailable.
-- **Stage 11:** explicit non-geometric geometry/mesh revalidation — IMPLEMENTED / validation unavailable.
-- **Stage 12A:** canonical LAFEA.3 solver-model contract + compile action — IN_PROGRESS.
-- **Stage 12B:** compiled-model execution bridge to existing numerical kernel — NOT_STARTED.
-- **Stage 13:** legacy-vs-domain-first numerical parity — NOT_STARTED.
-- **Stage 14:** generalized named-region/load/restraint mapping — NOT_STARTED.
-- **Stage 15:** extend compiler architecture to LAFEA.4/.5 — NOT_STARTED.
-
----
-
-## Stage 12A — Pre-Implementation Plan
-
-### Current truth
-
-The local-continuum numerical kernel currently consumes `local-continuum-model/v1`, whose canonical model includes materials, source mesh, constraints, loads, result requests, qualification profile, limitations, and source evidence. The current calculator validates that canonical model and then assembles/solves directly.
-
-The domain-first path already has:
-
-- a mesh-independent `lafea-continuum-analysis-domain/v1` with one region, material reference, physical cases, and attachments targeting `VERTEX`, `SEGMENT`, or `REGION`;
-- retained analysis-geometry evidence with canonical vertices/line-or-arc segments/loops;
-- governed `lafea-analysis-mesh-evidence/v2` containing canonical mesh topology/coordinates plus exact source/domain/geometry/profile/producer/qualification parents;
-- a custody projection that classifies the mesh `CURRENT_PASS` before it is usable for run.
-
-The orchestrator currently blocks domain-first execution with `LAFEA_DOMAIN_FIRST_SOLVER_MODEL_NOT_COMPILED`.
-
-### Objective
-
-Add the first production-consumed deterministic compiler boundary that converts the current LAFEA.3 domain-first authority chain into a canonical solver-model artifact **without executing numerical physics**.
-
-### Expected scope/files
-
-Planned production files:
-
-```text
-src/workspace/lafea-continuum-solver-model.js
-src/workspace/lafea-continuum-solver-mapping.js
-src/workspace/lafea-workbench-evidence-actions.js
-src/workspace/lafea-workbench-orchestrator-api.js
-```
-
-Planned focused validation:
-
-```text
-scripts/lafea-continuum-solver-model-check.mjs
-scripts/lafea-nonbucket-stack-check.mjs
-```
-
-Living report remains this file. No workflow YAML, solver kernel, release, shell-stage, or lifecycle schema file is planned.
-
-### Engineering rationale
-
-The compiler is the missing anti-corruption boundary between engineering intent and FE execution. The solver must never need editable UI/document state or derive physical meaning from coincidental mesh numbering.
-
-### Planned compiler input
-
-The real workbench action will derive:
-
-```text
-sourceAuthority
-canonicalInput = normalizeDocument → canonicalize(current document)
-analysisDomain = current retained domain
-geometryEvidence = current retained analysis geometry
-meshEvidence = current retained governed mesh-v2
-stageAdapter = current LAFEA.3 adapter
-```
-
-### Planned compiler output
-
-A deterministic immutable record containing at minimum:
-
-```text
-schema / stageId / compiler identity
-sourceHash
-canonicalInputHash
-analysisDomainHash
-analysisGeometryHash
-meshArtifactHash / meshHash / meshProfileHash
-formulation / units / coordinateSystemId
-DOF policy
-material table
-uniform section/thickness assignment
-mesh nodes
-elements + materialRef + thickness
-physical cases
-compiled mesh targets for each domain attachment
-solverModelHash
-status = COMPILED
-executionAuthorized = false
-releaseQualified = false
-```
-
-### Mapping policy
-
-- `REGION` → current single analysis region; maps to all governed mesh elements.
-- `VERTEX` → exactly one governed mesh node by geometric coordinate match.
-- `SEGMENT/LINE` → governed mesh nodes lying on the exact line segment, ordered from start to end.
-- `SEGMENT/CIRCULAR_ARC` → governed mesh nodes lying on the exact radius/sweep, ordered by arc parameter.
-- Missing/ambiguous feature mapping is a compiler error.
-- Mesh `z` must remain zero for LAFEA.3.
-- Source FE node/element IDs are not used to establish mapping authority.
-
-### Current bounded material/section policy
-
-The domain contract currently represents exactly one material region and no section-region identity. Stage 12A therefore requires:
-
-- `domain.region.materialRef` resolves to exactly one canonical material;
-- every canonical source element uses that same material;
-- all canonical source elements have one identical positive thickness.
-
-Anything else fails with an explicit mapping-required error. No averaging/defaulting is allowed.
-
-### Expected behavior
-
-A current domain-first LAFEA.3 stage with current PASS geometry and mesh custody can call a production workbench method and receive a deterministic compiled model. The action does not mutate numerical lifecycle evidence and does not authorize release.
-
-### Edge cases
-
-- stale source/domain/geometry/mesh parent → reject;
-- mesh quality block → reject;
-- non-planar mesh node → reject;
-- missing domain material → reject;
-- multiple material regions implied by source → reject;
-- nonuniform thickness → reject;
-- vertex mapping none/multiple → reject;
-- segment mapping lacks endpoints / is ambiguous → reject;
-- unsupported stage/domain-first inactive → reject;
-- repeated compile on same parents → byte-identical canonical model/hash expected.
-
-### Planned validation
-
-Focused script will construct current governed domain/geometry/mesh evidence using existing MP2 fixtures and assert:
-
-1. deterministic compilation under input ordering permutations;
-2. exact parent hashes in compiled output;
-3. material/section assignment is explicit and complete;
-4. vertex/segment/region attachments map only through geometry coordinates/features;
-5. source mesh IDs are not needed for target mapping;
-6. stale parent/tampered mesh/nonuniform thickness/missing material fail closed;
-7. output states `executionAuthorized:false` and `releaseQualified:false`;
-8. workbench production action requires current `CURRENT_PASS` mesh custody.
-
-The script will be wired into the existing non-bucket aggregate. Runtime result remains `NOT_RUN` until an executable gate is available.
-
-### Known risks
-
-- RISK-005 exact-head execution unavailable.
-- RISK-006 mapping is new authority-sensitive behavior and must stay bounded to current domain contract.
-- DEBT-001 multi-region/nonuniform-section generalization is deferred, not silently approximated.
-
----
-
-## Engineering Invariants
-
-| Invariant | Enforced in | Stage 12A change? | Validation intent |
+| ID | Type | Status | Summary |
 |---|---|---|---|
-| Preview/UI is not solver authority | workbench/domain/mesh contracts | No | compiler accepts governed retained evidence only |
-| Mesh hash and solver-model hash are distinct | mesh evidence + compiler | Yes, new explicit solver-model hash | focused parent/hash assertions |
-| Loads/restraints target geometry features, not FE IDs | domain + compiler mapping | Yes, production consumption | geometry-based mapping assertions |
-| Mesh quality BLOCK cannot compile | custody/action | Yes | focused rejection |
-| Compilation is not execution | compiler output/action | Yes | `executionAuthorized:false`; no calculator call |
-| Compilation is not release | compiler output/action | Yes | `releaseQualified:false` |
-| Solver numerics unchanged | local-continuum core | No production edits planned | diff audit + later parity stage |
+| DEC-001 | Decision | ACCEPTED | One common LAFEA platform with explicit stage/family physics adapters. |
+| DEC-007 | Decision | VALIDATED | Mesh currentness requires explicit recomputation/revalidation. |
+| DEC-009 | Decision | VALIDATED | LAFEA.3 geometry identity excludes non-geometric physics/provenance. |
+| DEC-011 | Decision | IMPLEMENTED | LAFEA.3 mesh artifact identifies discretization content only. |
+| DEC-013 | Decision | IMPLEMENTED | Revalidation derives current identities; no old parent copying. |
+| DEC-014 | Decision | IMPLEMENTED | Revalidation publishes one coherent final state. |
+| DEC-015 | Decision | IMPLEMENTED | Solver-model compilation is non-numerical and does not authorize execution. |
+| DEC-016 | Decision | IMPLEMENTED | Feature→mesh mapping uses current geometry/mesh evidence, not source FE IDs. |
+| DEC-017 | Decision | IMPLEMENTED | Stage 12A requires exact domain/canonical physical-case ID set before compilation. |
+| RISK-005 | Risk | BLOCKED | Exact-head executable workflow/local clone is unavailable. |
+| RISK-006 | Risk | BOUNDED | Generic feature→mesh mapping is currently LAFEA.3 compiler-owned; family extraction deferred until proven. |
+| RISK-007 | Risk | OPEN | `main` advanced 66 commits after Stage 12A implementation; reconciliation required before next production stage. |
+| DEBT-001 | Debt | ACCEPTED | Current continuum domain is single-region and lacks section-region identity; compiler therefore supports one material + uniform thickness only. |
+| IMP-001 | Improvement | DEFERRED | Extract reusable family-level feature→mesh mapping after continuum execution/parity proves the interface. |
+| ISS-001 | Defect | BLOCKED | Unrelated LFEA piping attribution contradiction remains outside assignment scope. |
+
+---
+
+## Stage 12A — Implementation Record
+
+### Files changed in the implementation commit
+
+Commit `3f0f5e0106f2c93fe728b53394115e5b1a07ae2b` changed exactly five files:
+
+```text
+scripts/lafea-continuum-solver-model-check.mjs          added
+scripts/lafea-nonbucket-stack-check.mjs                 modified
+src/workspace/lafea-continuum-solver-mapping.js         added
+src/workspace/lafea-continuum-solver-model.js           added
+src/workspace/lafea-workbench-orchestrator-api.js       modified
+```
+
+Exact diff stats:
+
+```text
+focused check                    +264
+non-bucket aggregate             +5 / -1
+feature→mesh mapping             +179
+solver-model compiler            +201
+workbench public API             +48
+```
+
+No solver-core, lifecycle-schema, release, shell, or workflow file changed.
+
+### `lafea-continuum-solver-mapping.js`
+
+Purpose: translate canonical domain attachment targets into current governed mesh entities.
+
+Key behavior:
+
+- validates canonical analysis geometry/domain/mesh;
+- derives true boundary element-edge paths for T3/T6/Q8;
+- maps line and circular-arc features geometrically with a scale-aware tolerance;
+- orders edge paths by physical segment parameter;
+- verifies complete connected start→end coverage;
+- returns explicit current mesh node IDs, edge-node paths, and owning element IDs;
+- ambiguous or missing mapping throws explicit compiler codes.
+
+### `lafea-continuum-solver-model.js`
+
+Purpose: compile one deterministic non-executing LAFEA.3 solver-model artifact.
+
+It validates:
+
+- exact LAFEA.3 stage;
+- exact source authority recomputed from the normalized source;
+- canonical input reconstructs exactly from that normalized source;
+- domain/source/geometry/mesh-v2 parent chain;
+- mesh evidence remains CURRENT/PASS;
+- formulation agreement;
+- length/force/stress declared-unit agreement;
+- exact domain-vs-canonical physical-case ID set;
+- material region mapping;
+- uniform thickness scope.
+
+It then binds current governed mesh elements to the one region/material/section and seals a `solverModelHash` over the complete compiled model with `executionAuthorized:false` and `releaseQualified:false`.
+
+### `lafea-workbench-orchestrator-api.js`
+
+The existing canonical public orchestrator consumes the compiler immediately. `compileContinuumSolverModel()`:
+
+- rejects non-LAFEA.3 or non-domain-first use;
+- requires current source/domain/geometry/mesh custody projections;
+- normalizes and canonicalizes the current editable document through the production stage composition root;
+- issues/rechecks exact source authority;
+- consumes retained domain, geometry evidence, and mesh-v2 evidence;
+- returns the immutable compiled model;
+- does not publish/mutate workbench engineering state.
+
+This satisfies the CodingRules requirement that a new abstraction have a real production consumer in the same PR.
+
+### Focused regression
+
+`scripts/lafea-continuum-solver-model-check.mjs` is designed to prove:
+
+1. deterministic repeated compilation;
+2. exact source/domain/geometry/mesh parent hashes;
+3. UX/UY 2-DOF policy;
+4. explicit material + thickness assignment;
+5. renamed governed mesh IDs are consumed instead of source FE IDs;
+6. vertex mapping (`A → M-A`);
+7. T6 boundary segment mapping (`B → midside → C`) plus owning element ID;
+8. region mapping to current mesh elements;
+9. public workbench path activates domain-first geometry, binds a T6 profile, generates mesh, compiles twice, and does not execute the solver;
+10. non-planar LAFEA.3 mesh is rejected at mesh evidence qualification;
+11. missing domain material fails closed;
+12. nonuniform thickness fails closed;
+13. execution/release authority remains false.
+
+The focused check is wired into the existing non-bucket aggregate as `SOLVER_MODEL`; aggregate schema is now v20 and explicitly reports:
+
+```text
+continuumSolverModelCompilerIntegrated: true
+continuumSolverModelRunsSolver: false
+continuumSolverModelReleaseAuthorityChanged: false
+```
 
 ---
 
 ## Validation / Evidence Ledger
 
-### Software Validation
+### Software validation
 
-| Validation | Status | Last HEAD | Evidence |
+| Validation | Status | Head | Evidence |
 |---|---|---|---|
 | Stage 9 exact-head LAFEA qualification | PASS | `1dab5bc4b6...` | focused + bounded + numerical + browser/build gates |
-| Stage 10 focused/aggregate | NOT_RUN | current branch | executable gate unavailable |
-| Stage 11 focused/aggregate | NOT_RUN | current branch | executable gate unavailable |
-| Stage 12A focused compiler check | NOT_RUN | not implemented yet | planned |
-| Stage 12A bounded aggregate | NOT_RUN | not implemented yet | planned |
+| Stage 10 exact final runtime | NOT_RUN | current branch | old workflow fleet removed |
+| Stage 11 exact final runtime | NOT_RUN | current branch | old workflow fleet removed |
+| Stage 12A JS syntax checks | PASS | local draft corresponding to `3f0f5e0...` | `node --check` on mapping/compiler/API/focused/aggregate files |
+| Stage 12A implementation diff audit | PASS | `3f0f5e0...` | exactly five intended files; no authority spill |
+| Stage 12A focused regression runtime | NOT_RUN | `3f0f5e0...` | no workflow/status run attached; local repo unavailable |
+| Stage 12A non-bucket aggregate runtime | NOT_RUN | `3f0f5e0...` | no workflow/status run attached; local repo unavailable |
 
-### Engineering Validation
+`get_commit_combined_status(3f0f5e0...)` returned no statuses. `fetch_commit_workflow_runs(3f0f5e0...)` returned no workflow runs. No runtime PASS is claimed.
+
+### Engineering validation
 
 | Property | Status | Evidence |
 |---|---|---|
-| Canonical geometry identity semantics | PASS | Stage 9 |
-| Canonical mesh-content identity semantics | NOT_RUN on current final path | Stage 10 code + static audit only |
-| Explicit non-geometric revalidation | NOT_RUN | Stage 11 code + static audit only |
-| Domain-first solver-model mapping | NOT_RUN | Stage 12A not implemented yet |
+| Compiler is non-numerical by construction | PASS (static) | no calculator/solver invocation in Stage 12A code/diff |
+| New compiler has real production consumer | PASS (static) | public workbench API calls compiler |
+| Source/canonical parent anti-mix guard | PASS (static) | compiler reconstructs canonical model from exact source before compile |
+| Source FE IDs excluded from mapping authority | PASS (design/static) | mapping consumes geometry coordinates + current mesh topology only |
 | Numerical equivalence of compiled route | NOT_RUN | Stage 13 future |
-
-### Explicitly Not Validated
-
-- Stage 10/11 exact-head runtime behavior.
-- Stage 12A compiled model runtime behavior.
-- Generated-mesh numerical execution.
-- Multi-region material assignment.
-- Nonuniform thickness assignment after remeshing.
-- Shell compiler behavior.
-- Release qualification from compiled models.
+| Release qualification from compiled route | NOT_APPLICABLE | explicitly false |
 
 ---
 
-## Changed-File Ledger
+## Upstream Reconciliation Gate
 
-Current PR-owned paths before Stage 12 implementation include the roadmap/report; common-input units; geometry/mesh identity and revalidation scripts; non-bucket aggregate; stage adapter/guided workflow; lifecycle producer/profile/source/orchestrator files; and LAFEA.3 geometry/source-mesh/revalidation modules.
+After Stage 12A implementation, `main` advanced from `271d04fa...` to `24f70bca...` by 66 commits.
 
-Stage 12 planned additions/changes are listed in the Stage 12A plan. No `.github/workflows/*` file is authorized.
+The upstream compare shows changes confined to:
 
-Before PR closure the ledger must be reconciled against GitHub's actual changed-file list; any unexplained file blocks closure.
+```text
+agents/PR1059_workreport.md
+agents/PR1065_workreport.md
+scripts/lfea-standalone-*
+scripts/run-lfea-standalone-check.mjs
+src/core/linear-piping-analysis-consumer/*
+src/lfea/native-*
+src/lfea/standalone-runtime*.js
+```
 
----
-
-## Known / Deferred Work
-
-- **RISK-005:** executable exact-head validation unavailable — BLOCKED pending infrastructure/Owner direction.
-- **RISK-006:** feature→mesh mapping authority — current Stage 12A scope.
-- **DEBT-001:** multi-region and nonuniform section mapping — DEFERRED until the single-region compiler is proven.
-- **IMP-001:** extract a reusable family-level feature→mesh mapping service after production use proves the interface.
-- **ISS-001:** unrelated LFEA piping attribution contradiction — out of scope.
-- LAFEA.4/.5 geometry/mesh identity cleanup and compiler migration — deferred.
-- Numerical verification center, history/comparison, standalone runtime, release dossier — roadmap work.
+No upstream file overlaps the 29 current PR-owned paths, including all Stage 12A files. Therefore the expected reconciliation is a clean non-overlap merge, but it must still be performed and verified before Stage 12B.
 
 ---
 
-## Recommended Forward Sequence
+## Current PR Changed-File Ledger
 
-1. Complete Stage 12A compiler contract + production compile action.
-2. Restore/obtain an executable exact-head validation route and run Stage 10–12 focused/bounded checks.
-3. Stage 12B: bridge the compiled model into the existing local-continuum assembly/solve/recovery implementation without changing element mathematics.
-4. Stage 13: legacy vs domain-first numerical parity for T3/T6/Q8.
-5. Generalize feature→mesh mapping only after parity is proven.
-6. Extend the family compiler pattern to LAFEA.4, then reuse for LAFEA.5 footprint specialization.
-7. Complete standalone bootstrap/history/verification/release/extraction last.
+GitHub currently reports exactly 29 PR-owned files:
+
+```text
+agents/PR1038_workreport.md
+docs/IntegratedLAFEAroadmap.md
+scripts/lafea-common-input-units-check.mjs
+scripts/lafea-continuum-geometry-identity-check.mjs
+scripts/lafea-continuum-mesh-identity-check.mjs
+scripts/lafea-continuum-revalidation-check.mjs
+scripts/lafea-continuum-solver-model-check.mjs
+scripts/lafea-nonbucket-stack-check.mjs
+scripts/lafea-section-property-invalidation-check.mjs
+scripts/lafea-ui-workflow-truthfulness-check.mjs
+src/core/lafea-common-input/units.js
+src/core/local-continuum/units.js
+src/core/local-stress/units.js
+src/workspace/lafea-continuum-geometry-projection.js
+src/workspace/lafea-continuum-revalidation.js
+src/workspace/lafea-continuum-solver-mapping.js
+src/workspace/lafea-continuum-solver-model.js
+src/workspace/lafea-continuum-source-mesh.js
+src/workspace/lafea-guided-workflow.js
+src/workspace/lafea-lifecycle-producers.js
+src/workspace/lafea-lifecycle-profiled.js
+src/workspace/lafea-lifecycle-profiles.js
+src/workspace/lafea-lifecycle-workbench-store-retained.js
+src/workspace/lafea-stage-analysis-adapter.js
+src/workspace/lafea-stage-input-descriptors.js
+src/workspace/lafea-workbench-evidence-actions.js
+src/workspace/lafea-workbench-orchestrator-api.js
+src/workspace/lafea-workbench-orchestrator-store.js
+src/workspace/lafea-workbench-source-state.js
+```
+
+No `.github/workflows/*` file is in the assignment diff.
 
 ---
 
-## Stage Execution Log
+## Next Stage Gate — Stage 12B / 13
 
-- **Stages 4–6:** stage route/input semantics moved to production adapter; validated on prior exact heads.
-- **Stage 7:** common unit factors; validated at `569dfaa864...`.
-- **Stage 8:** `SECTION_PROPERTY` taxonomy; validated at `5709110edb...`; later orchestration omission repaired.
-- **Stage 9:** canonical LAFEA.3 geometry identity; validated at `1dab5bc4b6...`.
-- **Stage 10:** canonical source-mesh content identity; implemented; exact final runtime gate unavailable.
-- **Current-main reconciliation:** two-parent merge `59ad4a9fc0...`, preserving upstream workflow removals.
-- **Stage 11:** explicit geometry/mesh revalidation; implemented; publication made atomic at `b02c7a172c...`; runtime gate unavailable.
-- **Stage 12A planning:** current entry; field mapping and authority audit performed before production implementation.
+**Do not begin numerical execution bridging before current-main reconciliation.**
+
+After reconciliation, the intended next engineering sequence is:
+
+1. obtain/restore an executable validation route for Stage 10–12 focused/bounded checks where possible;
+2. define a pure compiled-model → existing local-continuum execution adapter without changing element equations;
+3. do not introduce a second numerical kernel;
+4. run legacy source-authored vs domain-first compiled route on the same physical cases;
+5. compare displacement, reaction, integration-point stress, strain energy, equilibrium, and deterministic evidence hashes under explicit tolerances;
+6. only after parity may the orchestrator `run()` consume retained/compiled domain-first solver models;
+7. release remains separately fail-closed.
+
+### Stage 12B/13 non-goals
+
+- no shell compiler yet;
+- no LAFEA.6 enablement;
+- no numerical solver rewrite;
+- no UI-first work;
+- no release promotion;
+- no generalized multi-region mapping until the current bounded compiler is proven.
 
 ---
 
 ## Process Notes / Lessons Learned
 
-- Planning documentation can lag production contracts; source and retained evidence are the authority for implementation planning.
-- Geometry and mesh identity can be stable while exact source/model parents change; identity equality is not currentness.
-- A safe revalidation transaction must dry-run all parent/prerequisite checks before mutable registration and publish once.
-- A mesh contract that intentionally excludes physics requires an explicit compiler/mapping boundary before execution.
-- Source FE IDs are not a valid remeshing contract; physical geometry features must be resolved to current mesh entities.
+- The missing boundary was not another mesher; it was explicit translation from mesh-independent engineering features onto the current governed mesh.
+- Mesh-v2 correctly excludes material/load/restraint meaning. That meaning belongs in the solver compiler, not the mesh package.
+- Source FE numbering cannot survive arbitrary remeshing as an engineering identity contract.
+- Current continuum domain authority is sufficiently structured for vertex/segment/region mapping, but material/section generalization still needs explicit region contracts.
+- Runtime validation infrastructure is now a material project dependency and must remain visible rather than being replaced by unrun claims.
 
 ---
 
 ## Next-Agent Handover
 
-- **Current stopping point:** Stage 12A pre-implementation gate complete.
-- **PR / branch / HEAD before report sync:** #1038 / `agent/integrated-lafea-common-stage-roadmap` / `1af1d340d730f504793652c3e521400b69635a15`.
-- **Last completed stage:** Stage 11 implementation; runtime gate unavailable.
-- **Current active stage:** Stage 12A canonical LAFEA.3 solver-model compiler.
-- **Start here:** `src/workspace/lafea-continuum-analysis-domain.js`, `lafea-analysis-geometry-evidence.js`, `lafea-analysis-mesh-evidence-v2.js`, and `src/core/local-continuum/canonical-model.js`.
-- **Do not redo:** Stage 9 geometry projection, Stage 10 mesh identity, Stage 11 revalidation.
-- **Do not assume:** generated mesh IDs match source FE IDs; Stage 10/11 are runtime validated; compiler execution is authorized.
-- **Files currently involved:** planned Stage 12A files listed above.
-- **Known failing checks:** none executed on current exact head; absence of executable gate is not a PASS.
-- **Validation still required:** Stage 10/11/12 focused and aggregate runtime checks plus retained numerical suites once executable environment exists.
-- **Open QST-*:** none currently; unsupported mapping cases are intentionally fail-closed decisions/debt, not unresolved guesses.
-- **Important deferred IMP-*:** IMP-001 reusable mapping service extraction.
-- **Highest-risk remaining item:** authority-correct feature→mesh mapping without source-ID leakage.
-- **Exact next recommended action:** implement bounded mapping + compiler, production compile action, focused regression, then diff-audit before any solver bridge.
-- **Required reading:** issue #1025, `docs/IntegratedLAFEAroadmap.md`, pinned Common `CodingRules.md`, this report.
+- **PR/branch:** #1038 / `agent/integrated-lafea-common-stage-roadmap`.
+- **Stage 12A implementation head before report sync:** `3f0f5e0106f2c93fe728b53394115e5b1a07ae2b`.
+- **Current main:** `24f70bcaf9b717cecf34818780165caca60bb178`.
+- **Current active gate:** reconcile 66 non-overlapping upstream commits.
+- **Do not redo:** Stage 9 geometry identity, Stage 10 mesh identity, Stage 11 revalidation, Stage 12A compiler/mapping.
+- **Do not claim:** Stage 10/11/12 runtime PASS.
+- **Do not change yet:** numerical kernel, release authority, workflow YAML, shell compiler.
+- **Highest-risk next item:** introducing solver execution before parity evidence exists.
+- **Exact next action:** merge current main into feature branch with no PR-owned file loss, verify behind-by-0 and unchanged 29-file PR diff, then plan Stage 12B execution/parity as a separate authority-sensitive batch.

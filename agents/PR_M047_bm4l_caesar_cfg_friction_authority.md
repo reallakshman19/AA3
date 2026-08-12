@@ -23,7 +23,7 @@ Ec/Eh selection = not sourced from this cfg
 
 BM4_L continues to use its independently established file/model/load-case authority for those quantities. In particular, the cfg `MU=0` must never zero the BM4_L positive-friction model sites.
 
-## Newly exact friction controls
+## Exact friction controls
 
 The cfg directly resolves:
 
@@ -36,13 +36,7 @@ FRICT_SLIDE_MULT      = 1.0
 
 The friction-stiffness SI value remains `175126835.24647635 N/m`, based on the already independent BM1 product observation/source-unit qualification. The cfg supplies the exact raw static configuration value; it does not reverse the established source-unit qualification.
 
-The key new authority is:
-
-```text
-FRICTION_SLIDE_MULTIPLIER = 1.0
-```
-
-This is now direct configuration evidence, not inference from `mu*N`, BM1 final reactions, or BM4_L response fitting.
+`FRICT_SLIDE_MULT=1.0` is direct configuration evidence, not inference from `mu*N`, BM1 final reactions, or BM4_L response fitting.
 
 ## Geometry/stiffness custody
 
@@ -65,22 +59,20 @@ No new geometry or stiffness mechanics are introduced in this batch; this is aut
 
 ## Validation-template integration
 
-`benchmarks/LFEA/CAESAR_ACCDB/bm4l-validation.profile.json` now carries the four resolved global nonlinear friction controls and the explicit configuration precedence boundary. The profile records model/file/load-case authority above global cfg authority and explicitly identifies ambient temperature, Bourdon mode, coefficient of friction, and Ec/Eh selection as non-governing global defaults for BM4_L.
+`benchmarks/LFEA/CAESAR_ACCDB/bm4l-validation.profile.json` carries the four resolved global nonlinear friction controls and the explicit configuration precedence boundary. The profile records model/file/load-case authority above global cfg authority and explicitly identifies ambient temperature, Bourdon mode, coefficient of friction, and Ec/Eh selection as non-governing global defaults for BM4_L.
 
-The profile therefore has no unresolved scalar friction configuration values. The remaining friction work is algorithmic/state-semantic only.
+The profile therefore has no unresolved scalar friction configuration values.
 
 ## Current L13 measured diagnostic accuracy
 
-The existing F2 physical-Coulomb diagnostic already used `|Ft| = mu*N`, numerically equivalent to Slide Multiplier `1.0`. Therefore the cfg does **not** change the retained converged L13 comparison:
+The existing F2 physical-Coulomb diagnostic used `|Ft| = mu*N`, numerically equivalent to Slide Multiplier `1.0`. Therefore the cfg alone did not change the retained comparison:
 
 ```text
-passed  = 1719
-failed  = 195
-total   = 1914
+passed   = 1719
+failed   = 195
+total    = 1914
 accuracy = 89.8119122257%
 ```
-
-Governed breakdown:
 
 | Quantity | Pass | Fail | Total | Accuracy |
 |---|---:|---:|---:|---:|
@@ -95,71 +87,107 @@ Governed breakdown:
 
 This remains **diagnostic accuracy**, not qualified production CAESAR parity. The fixed denominator remains 1,914 governed rows and no comparator/tolerance change is permitted to increase the result.
 
-## Current nonlinear authority boundary
+## Critical restraint-code source audit
 
-The L13/L7 readiness blockers reduce from three to two:
+A subsequent source audit identified a more fundamental issue than the remaining friction iteration controls: the exported CAESAR restraint `TYPE`/`RES_TYPEID` value is an integer **Restraint Code**, not a generic direction-cosine category.
+
+The official CAESAR code mapping relevant to BM4_L is:
+
+```text
+1  = ANC   anchor
+7  = RZ    rotational double-acting restraint
+10 = XSNB  translational double-acting static snubber
+17 = -Y    translational directional restraint
+```
+
+This invalidates the earlier source-map description of Type 7 / Type 10 rows as generic translational gap companions. In particular:
+
+- Type 7 must be interpreted as an **RZ rotational restraint**; a rotational GAP is angular, in degrees.
+- Type 10 must be interpreted as **XSNB**, whose static participation is controlled by load-case snubber activation rather than by generic translational-contact logic.
+- Type 17 must retain its **-Y one-way directional semantics** in addition to any friction coefficient.
+
+The current ACCDB linear restraint compiler also requires re-audit because it maps every non-anchor row to the dominant translational direction cosine. That shortcut cannot represent RZ, XSNB activation, or -Y one-way behavior exactly.
+
+No production restraint behavior is changed in F2.4. The existing 89.8119% L13 diagnostic is retained as a historical baseline but is now explicitly understood to sit on a restraint-classification model that requires qualification before production promotion.
+
+## Current authority boundary
+
+Scalar friction configuration is closed:
 
 ```text
 RESOLVED:
-  FRICTION_SLIDE_MULTIPLIER_AUTHORITY_REQUIRED -> CLOSED (1.0 exact cfg)
-
-REMAINING:
-  FRICTION_STATE_HISTORY_SEMANTICS_AUTHORITY_REQUIRED
-  GAP_CONTACT_STATE_SEMANTICS_AUTHORITY_REQUIRED
+  friction stiffness
+  friction normal-force variation = 0.15
+  friction angle variation = 15 deg
+  friction slide multiplier = 1.0
 ```
 
-F2.2 remains a valid negative result: with `SlideMultiplier=1`, `NormalForceVar=0.15`, and `AngleVar=15` exactly confirmed, the literal public-help update interpretation still does not converge. Thus the missing information is narrowed to state/update ordering rather than scalar configuration.
+The next blockers are now phrased around the actual exported restraint classes:
 
-F2.3 separately proves that the stable fixed-contact physical-Coulomb solution is not a numerical damping artifact: multiple independent convergent damping choices collapse to the same 7-STICK / 19-SLIDING fixed point with negligible solution differences and closed nonlinear equilibrium.
+```text
+CAESAR_RESTRAINT_CODE_SEMANTICS_INTEGRATION_REQUIRED
+DIRECTIONAL_RESTRAINT_STATE_SEMANTICS_AUTHORITY_REQUIRED
+STATIC_SNUBBER_LOAD_CASE_ACTIVATION_AUTHORITY_REQUIRED
+ROTATIONAL_GAP_STATE_SEMANTICS_AUTHORITY_REQUIRED
+FRICTION_STATE_HISTORY_SEMANTICS_AUTHORITY_REQUIRED
+```
+
+Some of these may close directly from exact source + official product behavior; none may be closed by choosing the state that minimizes BM4_L residuals.
 
 ## Future Roadmap
 
-### F2.5 — deterministic unilateral gap/contact admissibility diagnostic
+### F2.5 — exported restraint-code authority and source-map correction
 
-Implement the five positive-gap companions as unilateral contact constraints using only source geometry and compatibility:
+Decode the pinned InputXML/ACCDB restraint rows by official CAESAR restraint code rather than by direction cosine alone. Produce a v2 BM4_L restraint/friction source map that separately identifies:
 
-1. evaluate signed relative movement along each restraint direction;
-2. compare it with the exact source gap distance;
-3. activate resistance only when the admissible gap is exhausted;
-4. release the restraint when the solved reaction is inconsistent with unilateral contact;
-5. repeat the global solve until the contact active set and friction state are stable.
+- ANC rows;
+- RZ rotational rows and angular gaps;
+- XSNB rows and snubber activation requirements;
+- -Y directional rows, including the 26 rows carrying `mu=0.3`;
+- friction coefficient and normal/contact direction as distinct concepts.
 
-This stage must preserve the exact reconstructed 1,938-DOF L6 operator, `mu=0.3`, friction stiffness `175126835.24647635 N/m`, `FRICT_SLIDE_MULT=1.0`, `FRICT_NORM_FORCE_VAR=0.15`, `FRICT_ANGLE_VAR=15 deg`, and the existing 1,914-row comparator. CAESAR reference accuracy may be measured only after convergence; it may never choose the contact state.
+Remove the old `positiveGapCompanionCount` proxy for translational contact. Do not change the production solver in this stage.
 
-F2.5 is diagnostic until exact CAESAR active-boundary/state-history evidence confirms the ordering.
+### F2.6 — qualify BM4_L restraint state by case
 
-### F2.6 — capture CAESAR L13 Active Boundary Conditions
+For L6/L13 specifically, resolve the case behavior of:
 
-Obtain the exact CAESAR II `14.00.00.0910 Build 231113` L13 Active Boundary Conditions output with pinned input/configuration custody. The required evidence is the final active/inactive state of the five positive-gap companions and friction-restraint state representation. This is the preferred final-state discriminator for `GAP_CONTACT_STATE_SEMANTICS_AUTHORITY_REQUIRED`.
+1. `-Y` one-way directional restraints under the BM4_L Y-up convention;
+2. XSNB participation in SUS load cases;
+3. RZ rotational restraints and any declared rotational gap.
 
-### F2.7 — capture nonlinear iteration/state history
+Run frictionless structural A/B diagnostics only after those semantics are pinned. A failed or unstable interpretation is evidence against that interpretation, not permission to flip a sign or activate a restraint from residual accuracy.
 
-Capture a CAESAR nonlinear iteration trace sufficient to distinguish:
+### F2.7 — CAESAR Active Boundary Conditions and nonlinear trace
 
+Capture exact-build L13 CAESAR evidence with pinned input/configuration custody. The preferred final-state artifact is **Active Boundary Conditions** plus enough nonlinear iteration/status trace to distinguish:
+
+- final active/inactive one-way restraint state;
+- RZ gap state;
+- snubber participation state;
 - STICK -> SLIDING transition scheduling;
 - first-slide 15-degree angle handling;
 - subsequent friction-direction/zero-crossing handling;
 - held versus recomputed normal-force basis around the 0.15 threshold;
-- gap OPEN/CLOSED/REOPENED ordering relative to friction updates;
-- convergence/commit ordering for the final restraint state.
+- convergence/commit ordering.
 
-The trace must be treated as product authority, not as a BM4_L response-fitting source.
+This evidence is product-state authority, not a parameter-fitting source.
 
 ### F2.8 — governed production nonlinear integration
 
-Only after F2.6/F2.7 independently resolve the remaining semantics, integrate those exact rules into the governed nonlinear controller. Preserve exact zero-friction bypass identity for L2/L3/L4/L5/L6/L14 and do not alter the qualified linear operator.
+Only after F2.5-F2.7 resolve the restraint/state semantics, integrate the exact rules into the governed solver. Preserve exact zero-friction bypass identity for L2/L3/L4/L5/L6/L14 and do not alter the qualified structural element operator.
 
 ### F2.9 — qualify L13 first
 
 Solve L13 (`W+P1`, friction multiplier 1) as the first production nonlinear case. Require:
 
 - nonlinear equilibrium convergence;
-- stable restraint/contact state;
+- stable restraint/friction state;
 - literal governed comparison on exactly 1,914 rows;
 - unchanged comparison tolerances and zero-reference boundaries;
-- explicit family-by-family pass/fail counts.
+- family-by-family pass/fail counts.
 
-Only this stage may replace the current 89.8119% diagnostic value with a qualified L13 accuracy result.
+Only this stage may replace the current 89.8119% historical diagnostic value with a qualified L13 accuracy result.
 
 ### F3 — L7 and L15
 
@@ -181,18 +209,18 @@ Any production nonlinear mechanics change must finish with exact-head Windows/AC
 
 The roadmap does **not** authorize:
 
-- choosing STICK/SLIDING/gap states from the CAESAR error surface;
+- choosing one-way, STICK/SLIDING, snubber, or rotational-gap states from the CAESAR error surface;
 - tuning damping/relaxation from BM4_L accuracy;
 - changing friction stiffness, Slide Multiplier, 0.15 normal-force variation, or 15-degree angle variation;
 - changing comparator/tolerance/zero-reference boundaries;
-- changing gravity, bends, tees/B31J, reducer station, pressure, thermal authority, or other linear mechanics to improve friction residuals;
+- changing gravity, bends, tees/B31J, reducer station, pressure, thermal authority, or other structural mechanics to improve friction residuals;
 - solving L15 independently;
 - calling any nonconverged iterate an accuracy result.
 
 ## Changed scope
 
-This layer retains the cfg text, structured authority manifest, validation-template integration, authority/readiness consistency checks, L13 diagnostic authority update, and this work report/roadmap. It does not change the BM4_L production solver, comparator, tolerance, reference response, friction coefficient, load-case definitions, PR #1001, or Issue #991.
+This layer retains the cfg text, structured authority manifest, validation-template integration, authority/readiness consistency checks, L13 diagnostic authority update, and this corrected work report/roadmap. It does not change the BM4_L production solver, comparator, tolerance, reference response, friction coefficient, load-case definitions, PR #1001, or Issue #991.
 
 ## Decision
 
-**F2.4 SCALAR FRICTION CONFIGURATION IS CLOSED. CURRENT L13 DIAGNOSTIC ACCURACY IS 89.8119%. FUTURE ACCURACY WORK IS LIMITED TO STATE-HISTORY ORDERING AND UNILATERAL GAP/CONTACT ACTIVE-SET SEMANTICS, FOLLOWED BY L13 -> L7 -> L15 QUALIFICATION.**
+**F2.4 SCALAR FRICTION CONFIGURATION IS CLOSED. THE 89.8119% L13 VALUE REMAINS A HISTORICAL DIAGNOSTIC BASELINE. NEXT WORK MUST FIRST QUALIFY EXPORTED RESTRAINT-CODE SEMANTICS, THEN STATE HISTORY, BEFORE ANY PRODUCTION L13 ACCURACY CLAIM.**

@@ -37,6 +37,13 @@ assert.equal(fixture.compiled.parents.sourceHash, fixture.authority.sourceHash);
 assert.equal(fixture.compiled.parents.analysisDomainHash, fixture.domain.semanticHash);
 assert.equal(fixture.compiled.parents.analysisGeometryHash, fixture.geometry.semanticHash);
 assert.equal(fixture.compiled.parents.meshHash, fixture.meshEvidence.meshHash);
+assert.equal(fixture.compiled.sourceModel.modelIdentity, fixture.canonicalInput.modelIdentity);
+assert.equal(fixture.compiled.sourceModel.modelVersion, fixture.canonicalInput.modelVersion);
+assert.deepEqual(
+  fixture.compiled.sourceModel.sourceAncestry,
+  fixture.canonicalInput.sourceEvidence.sourceAncestry,
+);
+assert.deepEqual(fixture.compiled.sourceModel.elementTypePolicy, fixture.canonicalInput.elementTypePolicy);
 assert.equal(fixture.compiled.materials[0].materialId, 'MAT');
 assert.equal(fixture.compiled.sections[0].thickness, 10);
 assert.deepEqual(fixture.compiled.dofPolicy, { dofsPerNode: 2, dofOrder: ['UX', 'UY'] });
@@ -102,6 +109,7 @@ console.log(JSON.stringify({
   stageId: 'LAFEA.3',
   geometryFeatureMapping: ['VERTEX', 'SEGMENT', 'REGION'],
   sourceMeshIdsUsedAsAuthority: false,
+  sourceExecutionPolicyRetained: true,
   deterministicCompilation: true,
   productionWorkbenchCompileAction: true,
   solverExecutedByCompileAction: false,
@@ -239,7 +247,7 @@ function renamedT6Mesh(nonPlanarZ = 0) {
 function meshProfile(element, globalTargetSize) {
   return canonicalProfile(PROFILE_KINDS.MESH, {
     schema: 'lafea-mesh-profile/v1', profileIdentity: `STAGE12-${element}`,
-    sourceRevision: '12A.1', semanticHash: undefined,
+    sourceRevision: '12A.2', semanticHash: undefined,
     fields: {
       continuumElement: element, shellElement: 'CST_DKT_TRI3_THIN_SHELL_V1',
       globalTargetSize, adjacentSizeRatioMax: 1.5, aspectRatioWarn: 4,

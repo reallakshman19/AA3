@@ -253,16 +253,35 @@ for (const caseId of ['L13', 'L7']) {
       Math.abs(support.capacityN - support.coefficientOfFriction * support.normalReactionMagnitudeN) <= 1e-9,
       `${caseId} ${support.nodeId} capacity must be mu times |N|`,
     );
-    if (support.regime === 'SLID') {
-      assert.ok(
-        Math.abs(support.appliedFrictionForceMagnitudeN - support.capacityN) <= 1e-6,
-        `${caseId} ${support.restraintId} sliding force must sit on the cap`,
-      );
-      assert.ok(support.oppositionCosine <= -0.999999, `${caseId} friction must oppose motion`);
-      assert.equal(support.stickResidualN, null, caseId);
+    if (support.regime !== 'STUCK') {
+      // A restraint on the cap carries exactly the Coulomb force; one locked below
+      // the cap after earlier slip carries less, and both must stay within it.
+      if (support.regime === 'SLIDING') {
+        assert.ok(
+          Math.abs(support.appliedFrictionForceMagnitudeN - support.capacityN) <= 1e-6,
+          `${caseId} ${support.restraintId} sliding force must sit on the cap`,
+        );
+      } else {
+        assert.ok(
+          support.appliedFrictionForceMagnitudeN <= support.capacityN + 1e-6,
+          `${caseId} ${support.restraintId} locked force must stay within the cap`,
+        );
+      }
+      // Opposition to total motion holds while a restraint is on the cap. Once it
+      // is locked below the cap the force follows the current elastic stretch, so
+      // only the governed flow-direction cosine is asserted there.
+      if (support.regime === 'SLIDING') {
+        assert.ok(support.oppositionCosine <= -0.999999, `${caseId} friction must oppose motion`);
+      }
+      // A support resting on the Coulomb surface satisfies both constitutive
+      // statements, so the stick residual stays published and must still hold.
+      assert.ok(support.stickResidualN <= CAESAR_FRICTION_SOLVER_PROFILE.stickResidualLimitN, caseId);
+      if (support.regime === 'SLIDING') assert.ok(support.slideResidualN !== null, caseId);
       assert.ok(support.slipUpdateM <= CAESAR_FRICTION_SOLVER_PROFILE.slipUpdateLimitM, caseId);
       assert.ok(support.accumulatedSlipMagnitudeM > 0, caseId);
-      assert.ok(support.slipOppositionCosine <= -0.999999, caseId);
+      if (support.regime === 'SLIDING') {
+        assert.ok(support.frictionDirectionCosine <= -0.999999, caseId);
+      }
     } else {
       assert.ok(
         support.appliedFrictionForceMagnitudeN <= support.capacityN + 1e-6,

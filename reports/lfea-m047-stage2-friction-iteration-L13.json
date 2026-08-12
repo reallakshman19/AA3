@@ -1,0 +1,1591 @@
+{
+  "caseId": "L13",
+  "converged": true,
+  "elapsedMs": 64982,
+  "failure": null,
+  "frictionStiffnessScale": 1,
+  "iterationSemanticHash": "fnv1a64:f706f84487b1e18c",
+  "restraints": [
+    {
+      "capacity": {
+        "percentError": 131.20387826004384,
+        "referenceN": 255.68182168331987,
+        "solvedN": 591.1462877377652
+      },
+      "coefficientOfFriction": 0.30000001192092896,
+      "frictionDofs": [
+        "UX",
+        "UZ"
+      ],
+      "nodeId": "21610",
+      "nodeName": "PS-12228.2",
+      "normal": {
+        "percentError": 131.2038782600438,
+        "referenceN": 852.272705078125,
+        "solvedN": 1970.4875474924104
+      },
+      "normalDof": "UY",
+      "regime": {
+        "match": false,
+        "reference": "SLID",
+        "referenceUtilisation": 1.0443251471943515,
+        "solved": "SLIDING",
+        "solvedUtilisation": 0.9999999984741776
+      },
+      "restraintId": "21610:REST_PTR16:TYPE3:UY",
+      "tangential": {
+        "componentPercentErrors": [
+          -82.54758412673958,
+          -325.5621512462735
+        ],
+        "referenceMagnitudeN": 267.014956064353,
+        "referenceN": [
+          51.26813888549805,
+          262.046875
+        ],
+        "solvedMagnitudeN": 591.146286835781,
+        "solvedN": [
+          8.94752880877786,
+          -591.0785685236333
+        ],
+        "vectorErrorN": 854.1744882778119,
+        "vectorRelativeError": 3.198976195445577
+      },
+      "tangentialDisplacement": {
+        "accumulatedSlipM": [
+          -0.00021676364296715082,
+          -0.001972717239579239
+        ],
+        "elasticStretchM": [
+          -8.947528808776859e-8,
+          0.000005910785685236085
+        ],
+        "referenceM": [
+          -0.00021651656925678254,
+          -0.0011066811084747316
+        ],
+        "solvedM": [
+          -0.0002168531182552386,
+          -0.001966806453894003
+        ],
+        "trialMagnitudeN": 591.1462868357562
+      }
+    },
+    {
+      "capacity": {
+        "percentError": 0.1431459860139933,
+        "referenceN": 1357.2344777597755,
+        "solvedN": 1359.1773044354866
+      },
+      "coefficientOfFriction": 0.30000001192092896,
+      "frictionDofs": [
+        "UX"
+      ],
+      "nodeId": "21930",
+      "nodeName": "PS-12248/DATUM",
+      "normal": {
+        "percentError": 0.14314598601399595,
+        "referenceN": 4524.11474609375,
+        "solvedN": 4530.5908347554505
+      },
+      "normalDof": "UY",
+      "regime": {
+        "match": true,
+        "reference": "STUCK",
+        "referenceUtilisation": 0.003653619560161685,
+        "solved": "STUCK",
+        "solvedUtilisation": 0.0053932852101212896
+      },
+      "restraintId": "21930:REST_PTR21:TYPE3:UY",
+      "tangential": {
+        "componentPercentErrors": [
+          247.82615957899162
+        ],
+        "referenceMagnitudeN": 4.958818435668945,
+        "referenceN": [
+          -4.958818435668945
+        ],
+        "solvedMagnitudeN": 7.330430853944431,
+        "solvedN": [
+          7.330430853944431
+        ],
+        "vectorErrorN": 12.289249289613377,
+        "vectorRelativeError": 2.4782615957899163
+      },
+      "tangentialDisplacement": {
+        "accumulatedSlipM": [
+          0
+        ],
+        "elasticStretchM": [
+          -7.330430853944431e-8
+        ],
+        "referenceM": [
+          0
+        ],
+        "solvedM": [
+          -7.330430853944431e-8
+        ],
+        "trialMagnitudeN": 7.330430853944431
+      }
+    },
+    {
+      "capacity": {
+        "percentError": -0.6284533055947806,
+        "referenceN": 393.5294467897984,
+        "solvedN": 391.05629797295904
+      },
+      "coefficientOfFriction": 0.30000001192092896,
+      "frictionDofs": [
+        "UZ"
+      ],
+      "nodeId": "22020",
+      "nodeName": "PS-12249/DATUM",
+      "normal": {
+        "percentError": -0.6284533055947757,
+        "referenceN": 1311.7647705078125,
+        "solvedN": 1303.5209414459284
+      },
+      "normalDof": "UY",
+      "regime": {
+        "match": false,
+        "reference": "SLID",
+        "referenceUtilisation": 1.0016444981184767,
+        "solved": "LOCKED_AFTER_SLIP",
+        "solvedUtilisation": 0.044757442933567156
+      },
+      "restraintId": "22020:REST_PTR22:TYPE3:UY",
+      "tangential": {
+        "componentPercentErrors": [
+          -104.44031424197877
+        ],
+        "referenceMagnitudeN": 394.1766052246094,
+        "referenceN": [
+          394.1766052246094
+        ],
+        "solvedMagnitudeN": 17.502679940336748,
+        "solvedN": [
+          -17.502679940336748
+        ],
+        "vectorErrorN": 411.6792851649461,
+        "vectorRelativeError": 1.0444031424197877
+      },
+      "tangentialDisplacement": {
+        "accumulatedSlipM": [
+          -0.00010792238853841837
+        ],
+        "elasticStretchM": [
+          1.750267994033583e-7
+        ],
+        "referenceM": [
+          -0.00010614782571792603
+        ],
+        "solvedM": [
+          -0.00010774736173901501
+        ],
+        "trialMagnitudeN": 17.502679940335828
+      }
+    },
+    {
+      "capacity": {
+        "percentError": 0.013134982610703972,
+        "referenceN": 545.0582003696036,
+        "solvedN": 545.1297936694403
+      },
+      "coefficientOfFriction": 0.30000001192092896,
+      "frictionDofs": [
+        "UX",
+        "UZ"
+      ],
+      "nodeId": "22370",
+      "nodeName": "PS-12267/DATUM",
+      "normal": {
+        "percentError": 0.013134982610713794,
+        "referenceN": 1816.860595703125,
+        "solvedN": 1817.0992400264315
+      },
+      "normalDof": "UY",
+      "regime": {
+        "match": false,
+        "reference": "SLID",
+        "referenceUtilisation": 1.016486453611979,
+        "solved": "SLIDING",
+        "solvedUtilisation": 1.0000005017779214
+      },
+      "restraintId": "22370:REST_PTR29:TYPE3:UY",
+      "tangential": {
+        "componentPercentErrors": [
+          94.74967834544394,
+          58.87743083931619
+        ],
+        "referenceMagnitudeN": 554.0442771058258,
+        "referenceN": [
+          -435.2528076171875,
+          342.8119812011719
+        ],
+        "solvedMagnitudeN": 545.1300672035351,
+        "solvedN": [
+          -22.852172410388448,
+          544.6508683417815
+        ],
+        "vectorErrorN": 459.1440082165193,
+        "vectorRelativeError": 0.8287135653037708
+      },
+      "tangentialDisplacement": {
+        "accumulatedSlipM": [
+          0.0002986306216534609,
+          -0.00020226248928168785
+        ],
+        "elasticStretchM": [
+          2.2852172410387254e-7,
+          -0.000005446508683417805
+        ],
+        "referenceM": [
+          0.0002972419857978821,
+          -0.0002341124713420868
+        ],
+        "solvedM": [
+          0.00029885914337756476,
+          -0.00020770899796510565
+        ],
+        "trialMagnitudeN": 545.130067203534
+      }
+    },
+    {
+      "capacity": {
+        "percentError": 0.13382382631693562,
+        "referenceN": 698.1792025478353,
+        "solvedN": 699.1135326712339
+      },
+      "coefficientOfFriction": 0.30000001192092896,
+      "frictionDofs": [
+        "UX",
+        "UZ"
+      ],
+      "nodeId": "20520",
+      "nodeName": "PS-12061/DATUM",
+      "normal": {
+        "percentError": 0.13382382631693293,
+        "referenceN": 2327.263916015625,
+        "solvedN": 2330.3783496365304
+      },
+      "normalDof": "UY",
+      "regime": {
+        "match": false,
+        "reference": "STUCK",
+        "referenceUtilisation": 0.9614990688120213,
+        "solved": "SLIDING",
+        "solvedUtilisation": 1.0000138447274558
+      },
+      "restraintId": "20520:REST_PTR9:TYPE3:UY",
+      "tangential": {
+        "componentPercentErrors": [
+          27.40424914359097,
+          -91.56179980954263
+        ],
+        "referenceMagnitudeN": 671.2986531136632,
+        "referenceN": [
+          548.1434326171875,
+          387.531494140625
+        ],
+        "solvedMagnitudeN": 699.1232117075544,
+        "solvedN": [
+          698.3580245558333,
+          32.70068327665649
+        ],
+        "vectorErrorN": 385.3171783994003,
+        "vectorRelativeError": 0.5739877126405599
+      },
+      "tangentialDisplacement": {
+        "accumulatedSlipM": [
+          -0.0004943243018977592,
+          -0.0003474727625208253
+        ],
+        "elasticStretchM": [
+          -0.000006983580245558318,
+          -3.2700683276661036e-7
+        ],
+        "referenceM": [
+          -0.0004905508458614349,
+          -0.0003468141555786133
+        ],
+        "solvedM": [
+          -0.0005013078821433175,
+          -0.00034779976935359194
+        ],
+        "trialMagnitudeN": 699.1232117075531
+      }
+    },
+    {
+      "capacity": {
+        "percentError": 0.030311079073807878,
+        "referenceN": 537.2184661713618,
+        "solvedN": 537.3813028854421
+      },
+      "coefficientOfFriction": 0.30000001192092896,
+      "frictionDofs": [
+        "UX",
+        "UZ"
+      ],
+      "nodeId": "22260",
+      "nodeName": "PS-12321/DATUM",
+      "normal": {
+        "percentError": 0.03031107907381115,
+        "referenceN": 1790.7281494140625,
+        "solvedN": 1791.2709384394284
+      },
+      "normalDof": "UY",
+      "regime": {
+        "match": false,
+        "reference": "STUCK",
+        "referenceUtilisation": 0.9325806311646732,
+        "solved": "LOCKED_AFTER_SLIP",
+        "solvedUtilisation": 0.9059265375617748
+      },
+      "restraintId": "22260:REST_PTR27:TYPE3:UY",
+      "tangential": {
+        "componentPercentErrors": [
+          -61.230634105833445,
+          -48.54453412462231
+        ],
+        "referenceMagnitudeN": 500.9995362554062,
+        "referenceN": [
+          392.5411071777344,
+          -311.30694580078125
+        ],
+        "solvedMagnitudeN": 486.82798307344393,
+        "solvedN": [
+          152.18569812674832,
+          -462.429452337361
+        ],
+        "vectorErrorN": 283.91677414687115,
+        "vectorRelativeError": 0.5667006725573739
+      },
+      "tangentialDisplacement": {
+        "accumulatedSlipM": [
+          -0.0004288073014655762,
+          0.00031110507081368206
+        ],
+        "elasticStretchM": [
+          -0.0000015218569812675128,
+          0.0000046242945233736276
+        ],
+        "referenceM": [
+          -0.00039923620223999024,
+          0.0003166165053844452
+        ],
+        "solvedM": [
+          -0.0004303291584468437,
+          0.0003157293653370557
+        ],
+        "trialMagnitudeN": 486.82798307344655
+      }
+    },
+    {
+      "capacity": {
+        "percentError": -0.05196295544237633,
+        "referenceN": 428.13553947351465,
+        "solvedN": 427.91306759390505
+      },
+      "coefficientOfFriction": 0.30000001192092896,
+      "frictionDofs": [
+        "UX",
+        "UZ"
+      ],
+      "nodeId": "22220",
+      "nodeName": "PS-12311/DATUM",
+      "normal": {
+        "percentError": -0.05196295544237247,
+        "referenceN": 1427.118408203125,
+        "solvedN": 1426.3768353005605
+      },
+      "normalDof": "UY",
+      "regime": {
+        "match": false,
+        "reference": "STUCK",
+        "referenceUtilisation": 0.9570318542600503,
+        "solved": "LOCKED_AFTER_SLIP",
+        "solvedUtilisation": 0.9727034953463639
+      },
+      "restraintId": "22220:REST_PTR26:TYPE3:UY",
+      "tangential": {
+        "componentPercentErrors": [
+          -90.44358408214016,
+          -22.168821164903513
+        ],
+        "referenceMagnitudeN": 409.7393492169647,
+        "referenceN": [
+          228.31321716308594,
+          -340.2343444824219
+        ],
+        "solvedMagnitudeN": 416.23253655297634,
+        "solvedN": [
+          21.81856062755105,
+          -415.66028785231174
+        ],
+        "vectorErrorN": 219.8388412245806,
+        "vectorRelativeError": 0.5365333879811768
+      },
+      "tangentialDisplacement": {
+        "accumulatedSlipM": [
+          -0.00023788410288452138,
+          0.00025399714957867746
+        ],
+        "elasticStretchM": [
+          -2.1818560627551056e-7,
+          0.000004156602878523097
+        ],
+        "referenceM": [
+          -0.00023695388436317444,
+          0.0003531107604503632
+        ],
+        "solvedM": [
+          -0.0002381022884907969,
+          0.00025815375245720056
+        ],
+        "trialMagnitudeN": 416.2325365529743
+      }
+    },
+    {
+      "capacity": {
+        "percentError": -0.1492418013814685,
+        "referenceN": 607.0692501969825,
+        "solvedN": 606.1632491123555
+      },
+      "coefficientOfFriction": 0.30000001192092896,
+      "frictionDofs": [
+        "UX",
+        "UZ"
+      ],
+      "nodeId": "20440",
+      "nodeName": "PS-12165/DATUM",
+      "normal": {
+        "percentError": -0.14924180138147447,
+        "referenceN": 2023.5640869140625,
+        "solvedN": 2020.5440834186434
+      },
+      "normalDof": "UY",
+      "regime": {
+        "match": false,
+        "reference": "STUCK",
+        "referenceUtilisation": 0.9076623601256832,
+        "solved": "SLIDING",
+        "solvedUtilisation": 0.9999995953147709
+      },
+      "restraintId": "20440:REST_PTR8:TYPE3:UY",
+      "tangential": {
+        "componentPercentErrors": [
+          -31.014349131321488,
+          47.643994729996905
+        ],
+        "referenceMagnitudeN": 551.013908393522,
+        "referenceN": [
+          415.6678466796875,
+          361.71337890625
+        ],
+        "solvedMagnitudeN": 606.1630038070422,
+        "solvedN": [
+          286.7511694838031,
+          534.0480820900375
+        ],
+        "vectorErrorN": 215.21793508133095,
+        "vectorRelativeError": 0.39058530429621574
+      },
+      "tangentialDisplacement": {
+        "accumulatedSlipM": [
+          -0.00033214768209920625,
+          -0.00009597349805826333
+        ],
+        "elasticStretchM": [
+          -0.0000028675116948379616,
+          -0.000005340480820900361
+        ],
+        "referenceM": [
+          -0.00033511078357696537,
+          -0.00029161277413368225
+        ],
+        "solvedM": [
+          -0.0003350151937940442,
+          -0.00010131397887916369
+        ],
+        "trialMagnitudeN": 606.1630038070376
+      }
+    },
+    {
+      "capacity": {
+        "percentError": 0.1204807934150846,
+        "referenceN": 514.2718710212648,
+        "solvedN": 514.8914698517818
+      },
+      "coefficientOfFriction": 0.30000001192092896,
+      "frictionDofs": [
+        "UX",
+        "UZ"
+      ],
+      "nodeId": "22070",
+      "nodeName": "PS-12250/DATUM",
+      "normal": {
+        "percentError": 0.1204807934150952,
+        "referenceN": 1714.239501953125,
+        "solvedN": 1716.304831306113
+      },
+      "normalDof": "UY",
+      "regime": {
+        "match": false,
+        "reference": "STUCK",
+        "referenceUtilisation": 0.9362256859958026,
+        "solved": "SLIDING",
+        "solvedUtilisation": 0.9999999999969391
+      },
+      "restraintId": "22070:REST_PTR23:TYPE3:UY",
+      "tangential": {
+        "componentPercentErrors": [
+          -47.894566892231246,
+          -20.039249047145205
+        ],
+        "referenceMagnitudeN": 481.47453523522853,
+        "referenceN": [
+          -274.80596923828125,
+          395.3471984863281
+        ],
+        "solvedMagnitudeN": 514.8914698502058,
+        "solvedN": [
+          -406.4230979989543,
+          316.12258878074135
+        ],
+        "vectorErrorN": 153.62163703790603,
+        "vectorRelativeError": 0.3190649261707119
+      },
+      "tangentialDisplacement": {
+        "accumulatedSlipM": [
+          0.00003245165487785614,
+          -0.00024324902326922397
+        ],
+        "elasticStretchM": [
+          0.0000040642309799895435,
+          -0.000003161225887807434
+        ],
+        "referenceM": [
+          0.00016995711624622346,
+          -0.0002445073276758194
+        ],
+        "solvedM": [
+          0.00003651588585784568,
+          -0.0002464102491570314
+        ],
+        "trialMagnitudeN": 514.8914698502069
+      }
+    },
+    {
+      "capacity": {
+        "percentError": -3.624083966994525,
+        "referenceN": 928.3596316162584,
+        "solvedN": 894.7150990508042
+      },
+      "coefficientOfFriction": 0.30000001192092896,
+      "frictionDofs": [
+        "UX",
+        "UZ"
+      ],
+      "nodeId": "20350",
+      "nodeName": "PS-12170/DATUM",
+      "normal": {
+        "percentError": -3.62408396699453,
+        "referenceN": 3094.531982421875,
+        "solvedN": 2982.383544993406
+      },
+      "normalDof": "UY",
+      "regime": {
+        "match": false,
+        "reference": "SLID",
+        "referenceUtilisation": 0.9864468972055566,
+        "solved": "SLIDING",
+        "solvedUtilisation": 1.0000000083074496
+      },
+      "restraintId": "20350:REST_PTR6:TYPE3:UY",
+      "tangential": {
+        "componentPercentErrors": [
+          19.687921834824934,
+          -52.575644179283664
+        ],
+        "referenceMagnitudeN": 915.7774780987517,
+        "referenceN": [
+          -827.2864379882812,
+          -392.7410583496094
+        ],
+        "solvedMagnitudeN": 894.7151064836047,
+        "solvedN": [
+          -664.410930727041,
+          -599.2271997334528
+        ],
+        "vectorErrorN": 262.99231442989907,
+        "vectorRelativeError": 0.287179277411253
+      },
+      "tangentialDisplacement": {
+        "accumulatedSlipM": [
+          0.0004715723760303789,
+          0.0000622826416544635
+        ],
+        "elasticStretchM": [
+          0.000006644109307270361,
+          0.000005992271997334533
+        ],
+        "referenceM": [
+          0.00047767767310142516,
+          0.00022676989436149598
+        ],
+        "solvedM": [
+          0.00047821648533764925,
+          0.00006827491365179803
+        ],
+        "trialMagnitudeN": 894.7151064836014
+      }
+    },
+    {
+      "capacity": {
+        "percentError": -0.007967312253553214,
+        "referenceN": 697.9402132805262,
+        "solvedN": 697.884606204391
+      },
+      "coefficientOfFriction": 0.30000001192092896,
+      "frictionDofs": [
+        "UX"
+      ],
+      "nodeId": "22310",
+      "nodeName": "PS-12295.2",
+      "normal": {
+        "percentError": -0.00796731225356105,
+        "referenceN": 2326.46728515625,
+        "solvedN": 2326.2819282431647
+      },
+      "normalDof": "UY",
+      "regime": {
+        "match": false,
+        "reference": "STUCK",
+        "referenceUtilisation": 0.4731506498620168,
+        "solved": "LOCKED_AFTER_SLIP",
+        "solvedUtilisation": 0.3586821799682529
+      },
+      "restraintId": "22310:REST_PTR28:TYPE3:UY",
+      "tangential": {
+        "componentPercentErrors": [
+          24.19885659174942
+        ],
+        "referenceMagnitudeN": 330.2308654785156,
+        "referenceN": [
+          -330.2308654785156
+        ],
+        "solvedMagnitudeN": 250.3187719196767,
+        "solvedN": [
+          -250.3187719196767
+        ],
+        "vectorErrorN": 79.91209355883893,
+        "vectorRelativeError": 0.24198856591749418
+      },
+      "tangentialDisplacement": {
+        "accumulatedSlipM": [
+          0.000035333127221354527
+        ],
+        "elasticStretchM": [
+          0.0000025031877191967675
+        ],
+        "referenceM": [
+          0.0000018856676761060954
+        ],
+        "solvedM": [
+          0.000037836314940551294
+        ],
+        "trialMagnitudeN": 250.31877191967675
+      }
+    },
+    {
+      "capacity": {
+        "percentError": 0.9034490451630363,
+        "referenceN": 3364.464391504298,
+        "solvedN": 3394.860612924194
+      },
+      "coefficientOfFriction": 0.30000001192092896,
+      "frictionDofs": [
+        "UX"
+      ],
+      "nodeId": "20250",
+      "nodeName": "PS-12166/DATUM",
+      "normal": {
+        "percentError": 0.9034490451630316,
+        "referenceN": 11214.880859375,
+        "solvedN": 11316.201593415195
+      },
+      "normalDof": "UY",
+      "regime": {
+        "match": true,
+        "reference": "STUCK",
+        "referenceUtilisation": 0.5878682929356948,
+        "solved": "STUCK",
+        "solvedUtilisation": 0.4690203812012724
+      },
+      "restraintId": "20250:REST_PTR4:TYPE3:UY",
+      "tangential": {
+        "componentPercentErrors": [
+          -19.49595733535783
+        ],
+        "referenceMagnitudeN": 1977.8619384765625,
+        "referenceN": [
+          1977.8619384765625
+        ],
+        "solvedMagnitudeN": 1592.2588187988906,
+        "solvedN": [
+          1592.2588187988906
+        ],
+        "vectorErrorN": 385.6031196776719,
+        "vectorRelativeError": 0.19495957335357827
+      },
+      "tangentialDisplacement": {
+        "accumulatedSlipM": [
+          0
+        ],
+        "elasticStretchM": [
+          -0.000015922588187988906
+        ],
+        "referenceM": [
+          -0.000011293887160718442
+        ],
+        "solvedM": [
+          -0.000015922588187988906
+        ],
+        "trialMagnitudeN": 1592.2588187988906
+      }
+    },
+    {
+      "capacity": {
+        "percentError": -0.047515952758356364,
+        "referenceN": 1024.5136637573887,
+        "solvedN": 1024.0268563289148
+      },
+      "coefficientOfFriction": 0.30000001192092896,
+      "frictionDofs": [
+        "UX",
+        "UZ"
+      ],
+      "nodeId": "21800",
+      "nodeName": "PS-12246.2",
+      "normal": {
+        "percentError": -0.04751595275836438,
+        "referenceN": 3415.04541015625,
+        "solvedN": 3413.4227187924835
+      },
+      "normalDof": "UY",
+      "regime": {
+        "match": false,
+        "reference": "STUCK",
+        "referenceUtilisation": 0.9395337430482974,
+        "solved": "SLIDING",
+        "solvedUtilisation": 0.9999999999178059
+      },
+      "restraintId": "21800:REST_PTR19:TYPE3:UY",
+      "tangential": {
+        "componentPercentErrors": [
+          201.03678989683,
+          -2.9395918991705607
+        ],
+        "referenceMagnitudeN": 962.5651573141042,
+        "referenceN": [
+          91.38105773925781,
+          -958.2177124023438
+        ],
+        "solvedMagnitudeN": 1024.0268562447459,
+        "solvedN": [
+          275.09060279203044,
+          -986.3854026525405
+        ],
+        "vectorErrorN": 185.85643846132345,
+        "vectorRelativeError": 0.1930845273684416
+      },
+      "tangentialDisplacement": {
+        "accumulatedSlipM": [
+          0.000007127651175704522,
+          0.00028889866952426366
+        ],
+        "elasticStretchM": [
+          -0.000002750906027920305,
+          0.000009863854026525426
+        ],
+        "referenceM": [
+          -0.00002849404886364937,
+          0.0002987873256206513
+        ],
+        "solvedM": [
+          0.000004376745147784217,
+          0.0002987625235507891
+        ],
+        "trialMagnitudeN": 1024.0268562447477
+      }
+    },
+    {
+      "capacity": {
+        "percentError": 0.047267548043259076,
+        "referenceN": 1646.9098310673144,
+        "solvedN": 1647.6882849629433
+      },
+      "coefficientOfFriction": 0.30000001192092896,
+      "frictionDofs": [
+        "UX",
+        "UZ"
+      ],
+      "nodeId": "22120",
+      "nodeName": "PS-12741-D",
+      "normal": {
+        "percentError": 0.047267548043257335,
+        "referenceN": 5489.69921875,
+        "solvedN": 5492.294064965653
+      },
+      "normalDof": "UY",
+      "regime": {
+        "match": false,
+        "reference": "SLID",
+        "referenceUtilisation": 0.9954411228556276,
+        "solved": "LOCKED_AFTER_SLIP",
+        "solvedUtilisation": 0.9945581825186716
+      },
+      "restraintId": "22120:REST_PTR24:TYPE3:UY",
+      "tangential": {
+        "componentPercentErrors": [
+          93.36373803530903,
+          1.181390649333656
+        ],
+        "referenceMagnitudeN": 1639.4017714796194,
+        "referenceN": [
+          -254.6589813232422,
+          1619.5020751953125
+        ],
+        "solvedMagnitudeN": 1638.7218660500519,
+        "solvedN": [
+          -16.899837117223797,
+          1638.6347212774344
+        ],
+        "vectorErrorN": 238.52771075848187,
+        "vectorRelativeError": 0.14549679944727764
+      },
+      "tangentialDisplacement": {
+        "accumulatedSlipM": [
+          0.000046086314991880776,
+          -0.000279182307019035
+        ],
+        "elasticStretchM": [
+          1.6899837117223537e-7,
+          -0.000016386347212774335
+        ],
+        "referenceM": [
+          0.0000461823008954525,
+          -0.0002936960458755493
+        ],
+        "solvedM": [
+          0.00004625531336305301,
+          -0.0002955686542318093
+        ],
+        "trialMagnitudeN": 1638.721866050051
+      }
+    },
+    {
+      "capacity": {
+        "percentError": 0.16642285665733847,
+        "referenceN": 1341.836479101039,
+        "solvedN": 1344.0696017012292
+      },
+      "coefficientOfFriction": 0.30000001192092896,
+      "frictionDofs": [
+        "UX",
+        "UZ"
+      ],
+      "nodeId": "21740",
+      "nodeName": "PS-12244/DATUM",
+      "normal": {
+        "percentError": 0.166422856657346,
+        "referenceN": 4472.7880859375,
+        "solvedN": 4480.231827642347
+      },
+      "normalDof": "UY",
+      "regime": {
+        "match": false,
+        "reference": "STUCK",
+        "referenceUtilisation": 0.9190783509901178,
+        "solved": "LOCKED_AFTER_SLIP",
+        "solvedUtilisation": 0.9343133632835805
+      },
+      "restraintId": "21740:REST_PTR18:TYPE3:UY",
+      "tangential": {
+        "componentPercentErrors": [
+          -42.623625734732975,
+          -5.174712667607989
+        ],
+        "referenceMagnitudeN": 1233.2528585105686,
+        "referenceN": [
+          368.3182373046875,
+          -1176.96826171875
+        ],
+        "solvedMagnitudeN": 1255.7821900526978,
+        "solvedN": [
+          211.32765032317184,
+          -1237.8729874516357
+        ],
+        "vectorErrorN": 168.39070644604726,
+        "vectorRelativeError": 0.13654191456682865
+      },
+      "tangentialDisplacement": {
+        "accumulatedSlipM": [
+          -0.00012921336831162847,
+          0.00040577747828991534
+        ],
+        "elasticStretchM": [
+          -0.0000021132765032317268,
+          0.000012378729874516303
+        ],
+        "referenceM": [
+          -0.00013087330758571625,
+          0.0004182083308696747
+        ],
+        "solvedM": [
+          -0.0001313266448148602,
+          0.00041815620816443164
+        ],
+        "trialMagnitudeN": 1255.7821900526926
+      }
+    },
+    {
+      "capacity": {
+        "percentError": 5.899209377017667,
+        "referenceN": 2109.060142400267,
+        "solvedN": 2233.478016087686
+      },
+      "coefficientOfFriction": 0.30000001192092896,
+      "frictionDofs": [
+        "UX",
+        "UZ"
+      ],
+      "nodeId": "20090",
+      "nodeName": "PS-12059/DATUM",
+      "normal": {
+        "percentError": 5.899209377017672,
+        "referenceN": 7030.2001953125,
+        "solvedN": 7444.92642445749
+      },
+      "normalDof": "UY",
+      "regime": {
+        "match": false,
+        "reference": "STUCK",
+        "referenceUtilisation": 0.9376072966470415,
+        "solved": "LOCKED_AFTER_SLIP",
+        "solvedUtilisation": 0.9905770417379907
+      },
+      "restraintId": "20090:REST_PTR2:TYPE3:UY",
+      "tangential": {
+        "componentPercentErrors": [
+          11.341606518843545,
+          43.48387981494481
+        ],
+        "referenceMagnitudeN": 1977.4701785819386,
+        "referenceN": [
+          1962.8560791015625,
+          239.9673309326172
+        ],
+        "solvedMagnitudeN": 2212.432045962976,
+        "solvedN": [
+          2185.475492124462,
+          344.3144367104873
+        ],
+        "vectorErrorN": 245.86118347327292,
+        "vectorRelativeError": 0.12433117127944865
+      },
+      "tangentialDisplacement": {
+        "accumulatedSlipM": [
+          -0.00016049619575948871,
+          -0.000004198701835154166
+        ],
+        "elasticStretchM": [
+          -0.000021854754921244628,
+          -0.0000034431443671048735
+        ],
+        "referenceM": [
+          -0.00018277429044246673,
+          -0.000022344917058944704
+        ],
+        "solvedM": [
+          -0.00018235095068073334,
+          -0.00000764184620225904
+        ],
+        "trialMagnitudeN": 2212.432045962977
+      }
+    },
+    {
+      "capacity": {
+        "percentError": -5.064120433830876,
+        "referenceN": 3878.209431449941,
+        "solvedN": 3681.812235165128
+      },
+      "coefficientOfFriction": 0.30000001192092896,
+      "frictionDofs": [
+        "UX",
+        "UZ"
+      ],
+      "nodeId": "20170",
+      "nodeName": "PS-12171/DATUM",
+      "normal": {
+        "percentError": -5.064120433830879,
+        "referenceN": 12927.3642578125,
+        "solvedN": 12272.706962876868
+      },
+      "normalDof": "UY",
+      "regime": {
+        "match": false,
+        "reference": "STUCK",
+        "referenceUtilisation": 0.9327705475445592,
+        "solved": "LOCKED_AFTER_SLIP",
+        "solvedUtilisation": 0.9977003103178761
+      },
+      "restraintId": "20170:REST_PTR3:TYPE3:UY",
+      "tangential": {
+        "componentPercentErrors": [
+          14.106348483239739,
+          -8.399576564711328
+        ],
+        "referenceMagnitudeN": 3617.479534866035,
+        "referenceN": [
+          2329.985595703125,
+          2767.187255859375
+        ],
+        "solvedMagnitudeN": 3673.345209556401,
+        "solvedN": [
+          2658.661483442297,
+          2534.7552436145324
+        ],
+        "vectorErrorN": 402.5574238507092,
+        "vectorRelativeError": 0.1112811890076434
+      },
+      "tangentialDisplacement": {
+        "accumulatedSlipM": [
+          -0.00005190716926248935,
+          -0.00015829274106608687
+        ],
+        "elasticStretchM": [
+          -0.000026586614834422977,
+          -0.00002534755243614533
+        ],
+        "referenceM": [
+          -0.00015383753180503847,
+          -0.00018270380795001984
+        ],
+        "solvedM": [
+          -0.00007849378409691233,
+          -0.0001836402935022322
+        ],
+        "trialMagnitudeN": 3673.3452095564026
+      }
+    },
+    {
+      "capacity": {
+        "percentError": -0.7105013917618512,
+        "referenceN": 564.6915385521061,
+        "solvedN": 560.679397311532
+      },
+      "coefficientOfFriction": 0.30000001192092896,
+      "frictionDofs": [
+        "UZ"
+      ],
+      "nodeId": "20710",
+      "nodeName": "PS-12243",
+      "normal": {
+        "percentError": -0.7105013917618501,
+        "referenceN": 1882.3050537109375,
+        "solvedN": 1868.9312501071176
+      },
+      "normalDof": "UY",
+      "regime": {
+        "match": false,
+        "reference": "SLID",
+        "referenceUtilisation": 1.106335582585517,
+        "solved": "LOCKED_AFTER_SLIP",
+        "solvedUtilisation": 0.9931647602569396
+      },
+      "restraintId": "20710:REST_PTR13:TYPE3:UY",
+      "tangential": {
+        "componentPercentErrors": [
+          10.867161254247922
+        ],
+        "referenceMagnitudeN": 624.7383422851562,
+        "referenceN": [
+          -624.7383422851562
+        ],
+        "solvedMagnitudeN": 556.847019211913,
+        "solvedN": [
+          -556.847019211913
+        ],
+        "vectorErrorN": 67.89132307324326,
+        "vectorRelativeError": 0.10867161254247922
+      },
+      "tangentialDisplacement": {
+        "accumulatedSlipM": [
+          0.000593848243193722
+        ],
+        "elasticStretchM": [
+          0.000005568470192119138
+        ],
+        "referenceM": [
+          0.0005835319757461548
+        ],
+        "solvedM": [
+          0.0005994167133858411
+        ],
+        "trialMagnitudeN": 556.8470192119138
+      }
+    },
+    {
+      "capacity": {
+        "percentError": -2.073067431746984,
+        "referenceN": 622.260229804524,
+        "solvedN": 609.3603556397325
+      },
+      "coefficientOfFriction": 0.30000001192092896,
+      "frictionDofs": [
+        "UX",
+        "UZ"
+      ],
+      "nodeId": "21470",
+      "nodeName": "PS-12025",
+      "normal": {
+        "percentError": -2.0730674317469884,
+        "referenceN": 2074.20068359375,
+        "solvedN": 2031.2011047530946
+      },
+      "normalDof": "UY",
+      "regime": {
+        "match": false,
+        "reference": "SLID",
+        "referenceUtilisation": 1.013611569447551,
+        "solved": "LOCKED_AFTER_SLIP",
+        "solvedUtilisation": 0.9867470633559949
+      },
+      "restraintId": "21470:REST_PTR14:TYPE3:UY",
+      "tangential": {
+        "componentPercentErrors": [
+          -6.916626189021577,
+          -36.89598414794039
+        ],
+        "referenceMagnitudeN": 630.7301681369572,
+        "referenceN": [
+          617.330322265625,
+          -129.3206024169922
+        ],
+        "solvedMagnitudeN": 601.2845414530707,
+        "solvedN": [
+          574.6318915230295,
+          -177.03471138478665
+        ],
+        "vectorErrorN": 64.02961957149823,
+        "vectorRelativeError": 0.10151665927226552
+      },
+      "tangentialDisplacement": {
+        "accumulatedSlipM": [
+          -0.00022216215519096864,
+          0.000006719335813704931
+        ],
+        "elasticStretchM": [
+          -0.000005746318915230293,
+          0.0000017703471138478664
+        ],
+        "referenceM": [
+          -0.00022757397592067718,
+          0.00004767302423715592
+        ],
+        "solvedM": [
+          -0.00022790847410619893,
+          0.000008489682927552797
+        ],
+        "trialMagnitudeN": 601.2845414530705
+      }
+    },
+    {
+      "capacity": {
+        "percentError": -0.17691838524414083,
+        "referenceN": 701.6253208488342,
+        "solvedN": 700.3840166607245
+      },
+      "coefficientOfFriction": 0.30000001192092896,
+      "frictionDofs": [
+        "UZ"
+      ],
+      "nodeId": "22140",
+      "nodeName": "PS-12231/DATUM",
+      "normal": {
+        "percentError": -0.17691838524414802,
+        "referenceN": 2338.7509765625,
+        "solvedN": 2334.613296099884
+      },
+      "normalDof": "UY",
+      "regime": {
+        "match": false,
+        "reference": "STUCK",
+        "referenceUtilisation": 0.8951530882523876,
+        "solved": "LOCKED_AFTER_SLIP",
+        "solvedUtilisation": 0.927508503005672
+      },
+      "restraintId": "22140:REST_PTR25:TYPE3:UY",
+      "tangential": {
+        "componentPercentErrors": [
+          3.4311987625187905
+        ],
+        "referenceMagnitudeN": 628.0620727539062,
+        "referenceN": [
+          628.0620727539062
+        ],
+        "solvedMagnitudeN": 649.6121308220881,
+        "solvedN": [
+          649.6121308220881
+        ],
+        "vectorErrorN": 21.550058068181897,
+        "vectorRelativeError": 0.034311987625187904
+      },
+      "tangentialDisplacement": {
+        "accumulatedSlipM": [
+          -0.00011893222113519369
+        ],
+        "elasticStretchM": [
+          -0.000006496121308220888
+        ],
+        "referenceM": [
+          -0.00005377832800149918
+        ],
+        "solvedM": [
+          -0.00012542834244341457
+        ],
+        "trialMagnitudeN": 649.6121308220887
+      }
+    },
+    {
+      "capacity": {
+        "percentError": 0.024519646211363905,
+        "referenceN": 2328.767963630671,
+        "solvedN": 2329.338969296437
+      },
+      "coefficientOfFriction": 0.30000001192092896,
+      "frictionDofs": [
+        "UZ"
+      ],
+      "nodeId": "21860",
+      "nodeName": "PS-12247.2",
+      "normal": {
+        "percentError": 0.02451964621136067,
+        "referenceN": 7762.5595703125,
+        "solvedN": 7764.462922456087
+      },
+      "normalDof": "UY",
+      "regime": {
+        "match": false,
+        "reference": "SLID",
+        "referenceUtilisation": 1.001821059675356,
+        "solved": "LOCKED_AFTER_SLIP",
+        "solvedUtilisation": 0.9714492717745603
+      },
+      "restraintId": "21860:REST_PTR20:TYPE3:UY",
+      "tangential": {
+        "componentPercentErrors": [
+          3.0078816656138865
+        ],
+        "referenceMagnitudeN": 2333.0087890625,
+        "referenceN": [
+          -2333.0087890625
+        ],
+        "solvedMagnitudeN": 2262.8346454391285,
+        "solvedN": [
+          -2262.8346454391285
+        ],
+        "vectorErrorN": 70.17414362337149,
+        "vectorRelativeError": 0.030078816656138867
+      },
+      "tangentialDisplacement": {
+        "accumulatedSlipM": [
+          0.00014550057516061105
+        ],
+        "elasticStretchM": [
+          0.000022628346454391286
+        ],
+        "referenceM": [
+          0.00016807635128498078
+        ],
+        "solvedM": [
+          0.00016812892161500233
+        ],
+        "trialMagnitudeN": 2262.8346454391285
+      }
+    },
+    {
+      "capacity": {
+        "percentError": -0.20516671055244057,
+        "referenceN": 833.1322596682003,
+        "solvedN": 831.4229496164878
+      },
+      "coefficientOfFriction": 0.30000001192092896,
+      "frictionDofs": [
+        "UX"
+      ],
+      "nodeId": "20550",
+      "nodeName": "PS-12240/DATUM",
+      "normal": {
+        "percentError": -0.20516671055243432,
+        "referenceN": 2777.107421875,
+        "solvedN": 2771.4097219290315
+      },
+      "normalDof": "UY",
+      "regime": {
+        "match": true,
+        "reference": "STUCK",
+        "referenceUtilisation": 0.21159066008432792,
+        "solved": "STUCK",
+        "solvedUtilisation": 0.2144682667945444
+      },
+      "restraintId": "20550:REST_PTR10:TYPE3:UY",
+      "tangential": {
+        "componentPercentErrors": [
+          1.1520306336223927
+        ],
+        "referenceMagnitudeN": 176.2830047607422,
+        "referenceN": [
+          176.2830047607422
+        ],
+        "solvedMagnitudeN": 178.31383897745596,
+        "solvedN": [
+          178.31383897745596
+        ],
+        "vectorErrorN": 2.030834216713771,
+        "vectorRelativeError": 0.011520306336223926
+      },
+      "tangentialDisplacement": {
+        "accumulatedSlipM": [
+          0
+        ],
+        "elasticStretchM": [
+          -0.0000017831383897745595
+        ],
+        "referenceM": [
+          -0.0000010066023096442224
+        ],
+        "solvedM": [
+          -0.0000017831383897745595
+        ],
+        "trialMagnitudeN": 178.31383897745596
+      }
+    },
+    {
+      "capacity": {
+        "percentError": 0.2083124425131539,
+        "referenceN": 659.3675066696596,
+        "solvedN": 660.7410512279413
+      },
+      "coefficientOfFriction": 0.30000001192092896,
+      "frictionDofs": [
+        "UZ"
+      ],
+      "nodeId": "20580",
+      "nodeName": "PS-12242",
+      "normal": {
+        "percentError": 0.20831244251316083,
+        "referenceN": 2197.8916015625,
+        "solvedN": 2202.4700832415065
+      },
+      "normalDof": "UY",
+      "regime": {
+        "match": false,
+        "reference": "SLID",
+        "referenceUtilisation": 0.9961908789132611,
+        "solved": "SLIDING",
+        "solvedUtilisation": 0.9999999979707056
+      },
+      "restraintId": "20580:REST_PTR11:TYPE3:UY",
+      "tangential": {
+        "componentPercentErrors": [
+          -0.5914773567066375
+        ],
+        "referenceMagnitudeN": 656.8558959960938,
+        "referenceN": [
+          -656.8558959960938
+        ],
+        "solvedMagnitudeN": 660.7410498871031,
+        "solvedN": [
+          -660.7410498871031
+        ],
+        "vectorErrorN": 3.885153891009395,
+        "vectorRelativeError": 0.005914773567066375
+      },
+      "tangentialDisplacement": {
+        "accumulatedSlipM": [
+          0.00033210402827151843
+        ],
+        "elasticStretchM": [
+          0.000006607410498871006
+        ],
+        "referenceM": [
+          0.00033862197399139404
+        ],
+        "solvedM": [
+          0.00033871143877038944
+        ],
+        "trialMagnitudeN": 660.7410498871006
+      }
+    }
+  ],
+  "schema": "m047-bm4l-stage2-friction-tuning-iteration/v1",
+  "solutionStrategy": "RETAINED_TANGENTIAL_SPRING_WITH_RETURN_MAPPED_SLIP_OFFSET_V1",
+  "solverProfileId": "CAESAR-ACCDB-FRICTION-SOLVER-R1",
+  "sourceAccdbSha256": "64c05a50e9ed0452622ff5880335460486f24ac8e6adecc9a300b549c9aa82f8",
+  "summary": {
+    "frictionRestraintCount": 23,
+    "goalRelative": 0.1,
+    "normalWithinGoal": 22,
+    "normalWorstPercentError": 131.2038782600438,
+    "regimeMismatchCount": 20,
+    "regimeMismatches": [
+      {
+        "reference": "SLID",
+        "referenceUtilisation": 1.0443251471943515,
+        "restraintId": "21610:REST_PTR16:TYPE3:UY",
+        "solved": "SLIDING",
+        "solvedUtilisation": 0.9999999984741776
+      },
+      {
+        "reference": "SLID",
+        "referenceUtilisation": 1.0016444981184767,
+        "restraintId": "22020:REST_PTR22:TYPE3:UY",
+        "solved": "LOCKED_AFTER_SLIP",
+        "solvedUtilisation": 0.044757442933567156
+      },
+      {
+        "reference": "SLID",
+        "referenceUtilisation": 1.016486453611979,
+        "restraintId": "22370:REST_PTR29:TYPE3:UY",
+        "solved": "SLIDING",
+        "solvedUtilisation": 1.0000005017779214
+      },
+      {
+        "reference": "STUCK",
+        "referenceUtilisation": 0.9614990688120213,
+        "restraintId": "20520:REST_PTR9:TYPE3:UY",
+        "solved": "SLIDING",
+        "solvedUtilisation": 1.0000138447274558
+      },
+      {
+        "reference": "STUCK",
+        "referenceUtilisation": 0.9325806311646732,
+        "restraintId": "22260:REST_PTR27:TYPE3:UY",
+        "solved": "LOCKED_AFTER_SLIP",
+        "solvedUtilisation": 0.9059265375617748
+      },
+      {
+        "reference": "STUCK",
+        "referenceUtilisation": 0.9570318542600503,
+        "restraintId": "22220:REST_PTR26:TYPE3:UY",
+        "solved": "LOCKED_AFTER_SLIP",
+        "solvedUtilisation": 0.9727034953463639
+      },
+      {
+        "reference": "STUCK",
+        "referenceUtilisation": 0.9076623601256832,
+        "restraintId": "20440:REST_PTR8:TYPE3:UY",
+        "solved": "SLIDING",
+        "solvedUtilisation": 0.9999995953147709
+      },
+      {
+        "reference": "STUCK",
+        "referenceUtilisation": 0.9362256859958026,
+        "restraintId": "22070:REST_PTR23:TYPE3:UY",
+        "solved": "SLIDING",
+        "solvedUtilisation": 0.9999999999969391
+      },
+      {
+        "reference": "SLID",
+        "referenceUtilisation": 0.9864468972055566,
+        "restraintId": "20350:REST_PTR6:TYPE3:UY",
+        "solved": "SLIDING",
+        "solvedUtilisation": 1.0000000083074496
+      },
+      {
+        "reference": "STUCK",
+        "referenceUtilisation": 0.4731506498620168,
+        "restraintId": "22310:REST_PTR28:TYPE3:UY",
+        "solved": "LOCKED_AFTER_SLIP",
+        "solvedUtilisation": 0.3586821799682529
+      },
+      {
+        "reference": "STUCK",
+        "referenceUtilisation": 0.9395337430482974,
+        "restraintId": "21800:REST_PTR19:TYPE3:UY",
+        "solved": "SLIDING",
+        "solvedUtilisation": 0.9999999999178059
+      },
+      {
+        "reference": "SLID",
+        "referenceUtilisation": 0.9954411228556276,
+        "restraintId": "22120:REST_PTR24:TYPE3:UY",
+        "solved": "LOCKED_AFTER_SLIP",
+        "solvedUtilisation": 0.9945581825186716
+      },
+      {
+        "reference": "STUCK",
+        "referenceUtilisation": 0.9190783509901178,
+        "restraintId": "21740:REST_PTR18:TYPE3:UY",
+        "solved": "LOCKED_AFTER_SLIP",
+        "solvedUtilisation": 0.9343133632835805
+      },
+      {
+        "reference": "STUCK",
+        "referenceUtilisation": 0.9376072966470415,
+        "restraintId": "20090:REST_PTR2:TYPE3:UY",
+        "solved": "LOCKED_AFTER_SLIP",
+        "solvedUtilisation": 0.9905770417379907
+      },
+      {
+        "reference": "STUCK",
+        "referenceUtilisation": 0.9327705475445592,
+        "restraintId": "20170:REST_PTR3:TYPE3:UY",
+        "solved": "LOCKED_AFTER_SLIP",
+        "solvedUtilisation": 0.9977003103178761
+      },
+      {
+        "reference": "SLID",
+        "referenceUtilisation": 1.106335582585517,
+        "restraintId": "20710:REST_PTR13:TYPE3:UY",
+        "solved": "LOCKED_AFTER_SLIP",
+        "solvedUtilisation": 0.9931647602569396
+      },
+      {
+        "reference": "SLID",
+        "referenceUtilisation": 1.013611569447551,
+        "restraintId": "21470:REST_PTR14:TYPE3:UY",
+        "solved": "LOCKED_AFTER_SLIP",
+        "solvedUtilisation": 0.9867470633559949
+      },
+      {
+        "reference": "STUCK",
+        "referenceUtilisation": 0.8951530882523876,
+        "restraintId": "22140:REST_PTR25:TYPE3:UY",
+        "solved": "LOCKED_AFTER_SLIP",
+        "solvedUtilisation": 0.927508503005672
+      },
+      {
+        "reference": "SLID",
+        "referenceUtilisation": 1.001821059675356,
+        "restraintId": "21860:REST_PTR20:TYPE3:UY",
+        "solved": "LOCKED_AFTER_SLIP",
+        "solvedUtilisation": 0.9714492717745603
+      },
+      {
+        "reference": "SLID",
+        "referenceUtilisation": 0.9961908789132611,
+        "restraintId": "20580:REST_PTR11:TYPE3:UY",
+        "solved": "SLIDING",
+        "solvedUtilisation": 0.9999999979707056
+      }
+    ],
+    "tangentialVectorsCompared": 23,
+    "tangentialVectorsWithinGoal": 4,
+    "tangentialWorstRelativeError": 3.198976195445577
+  },
+  "variant": "A5-with-drag-diagnostic"
+}
+

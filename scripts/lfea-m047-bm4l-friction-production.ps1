@@ -25,6 +25,11 @@ $XML_COMPARE_REPO = 'https://github.com/reallaksh19/XML_Compare_Utilities.git'
 $XML_COMPARE_COMMIT = 'd83c62214b7a6486c17698225ea4e11bc3121cb6'
 $XML_COMPARE_PARSER_BLOB = '2ea596b6e9fb65e386e5cbb256f4141ce7bb595b'
 $MDB_READER_VERSION = '2.2.6'
+$MDB_READER_REGISTRY = 'https://registry.npmjs.org/'
+$MDB_READER_SOURCE_REPO = 'https://github.com/andipaetzold/mdb-reader'
+$MDB_READER_SOURCE_TAG = 'v2.2.6'
+$MDB_READER_SOURCE_COMMIT = '720c8da1ef779b332cc5c4df559489cf45fe60bc'
+$MDB_READER_RUNTIME_POLICY = 'LOCAL_MDB_READER_ONLY_NO_CDN_FALLBACK'
 
 function Require-Command([string]$Name) {
   if (-not (Get-Command $Name -ErrorAction SilentlyContinue)) { throw "Required command '$Name' is unavailable." }
@@ -74,6 +79,7 @@ New-Item -ItemType Directory -Force -Path $artifacts, $sourceDir | Out-Null
   'src/core/fea-benchmarks/caesar-configuration-authority.js',
   'src/core/fea-benchmarks/caesar-accdb-linear-solve-governed.js',
   'src/core/fea-benchmarks/caesar-accdb-friction-solve.js',
+  'src/core/fea-benchmarks/caesar-accdb-friction-solve-governed.js',
   'scripts/lfea-caesar-accdb-export-xml-compare.mjs',
   'scripts/lfea-m047-friction-contract-check.mjs',
   'scripts/lfea-m047-bm4l-friction-benchmark.mjs'
@@ -102,8 +108,8 @@ if (-not $SkipExtractorInstall) {
   Remove-Item $readerRuntime -Force -Recurse -ErrorAction SilentlyContinue
   New-Item -ItemType Directory -Force -Path $readerRuntime | Out-Null
   Invoke-Checked {
-    npm install --prefix $readerRuntime --no-save --package-lock=false --ignore-scripts "mdb-reader@$MDB_READER_VERSION"
-  } 'install pinned mdb-reader runtime'
+    npm install --prefix $readerRuntime --registry=$MDB_READER_REGISTRY --no-save --package-lock=false --ignore-scripts "mdb-reader@$MDB_READER_VERSION"
+  } 'install pinned mdb-reader runtime from npm public registry'
   Remove-Item (Join-Path $xmlCompareCheckout 'node_modules') -Force -Recurse -ErrorAction SilentlyContinue
   Copy-Item -LiteralPath (Join-Path $readerRuntime 'node_modules') -Destination $xmlCompareCheckout -Recurse -Force
 }
@@ -112,8 +118,16 @@ if (-not (Test-Path -LiteralPath $readerPackagePath)) {
   throw "Pinned mdb-reader runtime is unavailable at $readerPackagePath. Rerun without -SkipExtractorInstall."
 }
 $readerPackage = Get-Content -Raw $readerPackagePath | ConvertFrom-Json
-if ([string]$readerPackage.version -ne $MDB_READER_VERSION) {
-  throw "mdb-reader version mismatch: $($readerPackage.version) != $MDB_READER_VERSION"
+if ([string]$readerPackage.name -ne 'mdb-reader' -or [string]$readerPackage.version -ne $MDB_READER_VERSION) {
+  throw "mdb-reader package identity mismatch: $($readerPackage.name)@$($readerPackage.version) != mdb-reader@$MDB_READER_VERSION"
+}
+$readerRepository = if ($readerPackage.repository -is [string]) {
+  [string]$readerPackage.repository
+} else {
+  [string]$readerPackage.repository.url
+}
+if ($readerRepository -notmatch 'github\.com/andipaetzold/mdb-reader') {
+  throw "Unexpected mdb-reader repository identity: $readerRepository"
 }
 
 $zip = Join-Path $artifacts 'BM4_L.zip'
@@ -137,12 +151,21 @@ $tables = @(
 $rawExport = Join-Path $artifacts 'bm4l-raw-export.json'
 Invoke-Checked {
   node scripts/lfea-caesar-accdb-export-xml-compare.mjs `
-    --accdb $accdb --tables $tables --xml-compare-root $xmlCompareCheckout |
+    --accdb $accdb --tables $tables --xml-compare-root $xmlCompareCheckout `
+    --mdb-reader-version $MDB_READER_VERSION |
     Set-Content -LiteralPath $rawExport -Encoding utf8
 } 'XML Compare Utilities ACCDB read-only export'
 $exportObject = Get-Content -Raw $rawExport | ConvertFrom-Json -Depth 100
 if ($exportObject.source.sha256 -ne $ACCDB_SHA256) { throw 'Raw export is not bound to the pinned ACCDB SHA-256.' }
 if ($exportObject.provider -ne $EXTRACTOR_PROVIDER) { throw "Unexpected ACCDB extractor provider: $($exportObject.provider)" }
+if ($exportObject.extractor.runtimePolicy -ne $MDB_READER_RUNTIME_POLICY) { throw 'ACCDB extractor did not enforce the local-only mdb-reader runtime.' }
+if ($exportObject.extractor.mdbReaderVersion -ne $MDB_READER_VERSION) { throw 'ACCDB extractor runtime version mismatch.' }
+$readerRoot = [System.IO.Path]::GetFullPath((Join-Path $xmlCompareCheckout 'node_modules/mdb-reader'))
+$readerPrefix = $readerRoot.TrimEnd([System.IO.Path]::DirectorySeparatorChar, [System.IO.Path]::AltDirectorySeparatorChar) + [System.IO.Path]::DirectorySeparatorChar
+$resolvedReaderEntrypoint = [System.IO.Path]::GetFullPath([string]$exportObject.extractor.mdbReaderEntrypoint)
+if (-not $resolvedReaderEntrypoint.StartsWith($readerPrefix, [System.StringComparison]::OrdinalIgnoreCase)) {
+  throw "ACCDB extractor resolved mdb-reader outside the pinned local runtime: $resolvedReaderEntrypoint"
+}
 
 $loadCaseReport = Join-Path $artifacts 'Loadcasereport_BM4_L.txt'
 $miscReport = Join-Path $artifacts 'Miscdata_BM4_L.txt'
@@ -152,7 +175,7 @@ Assert-Git-Blob $loadCaseReport $LOADCASE_GIT_BLOB 'Loadcasereport_BM4_L.txt'
 Assert-Git-Blob $miscReport $MISC_GIT_BLOB 'Miscdata_BM4_L.txt'
 
 $manifest = [ordered]@{
-  schema='lfea-m047-bm4l-stage2-source-custody/v2'
+  schema='lfea-m047-bm4l-stage2-source-custody/v3'
   code=[ordered]@{head=$head; cleanWorktree=$true}
   commonCommit=$COMMON
   zip=[ordered]@{url="https://github.com/reallaksh19/Common/blob/$COMMON/LFEA/BM4/BM4_L.zip"; gitBlob=$ZIP_GIT_BLOB; byteLength=(Get-Item $zip).Length; sha256=(File-Sha256 $zip)}
@@ -168,7 +191,14 @@ $manifest = [ordered]@{
     parserPath='parser/accdb-mdb.js'
     parserGitBlob=$XML_COMPARE_PARSER_BLOB
     entrypoint='readAccdbNamedTables'
+    runtimePolicy=$MDB_READER_RUNTIME_POLICY
+    mdbReaderRegistry=$MDB_READER_REGISTRY
     mdbReaderVersion=$MDB_READER_VERSION
+    mdbReaderRepository=$readerRepository
+    mdbReaderSourceRepository=$MDB_READER_SOURCE_REPO
+    mdbReaderSourceTag=$MDB_READER_SOURCE_TAG
+    mdbReaderSourceCommit=$MDB_READER_SOURCE_COMMIT
+    mdbReaderLocalEntrypoint=$resolvedReaderEntrypoint
     mdbReaderPackageSha256=File-Sha256 $readerPackagePath
   }
 }
@@ -215,17 +245,32 @@ $l15RestraintFailures = @($reportJson.qualification.cases | Where-Object caseId 
   $_.status -eq 'FAIL' -and $_.entityKind -eq 'NODE' -and $_.quantity -in @('FORCE','MOMENT')
 })
 
+$sensitivityDiagnosticFailures = [ordered]@{}
+foreach ($caseId in @('L13','L7','L1')) {
+  $sensitivityDiagnosticFailures[$caseId] = [int]$reportJson.sensitivity.$caseId.diagnosticFailureCount
+}
+
 $receipt = [ordered]@{
-  schema='lfea-m047-bm4l-stage2-production-receipt/v2'
+  schema='lfea-m047-bm4l-stage2-production-receipt/v3'
   head=$head
   nodeVersion=$nodeVersion
   sourceAccdbSha256=$ACCDB_SHA256
   extractorProvider=$EXTRACTOR_PROVIDER
+  extractorRuntimePolicy=$MDB_READER_RUNTIME_POLICY
   xmlCompareUtilitiesCommit=$XML_COMPARE_COMMIT
   mdbReaderVersion=$MDB_READER_VERSION
+  mdbReaderSourceTag=$MDB_READER_SOURCE_TAG
+  mdbReaderSourceCommit=$MDB_READER_SOURCE_COMMIT
   command='pwsh ./scripts/lfea-m047-bm4l-friction-production.ps1 -ExpectedHead <HEAD> [-XmlCompareUtilitiesPath <path>]'
   reportStatus=$reportJson.status
   nonlinearGate=$reportJson.nonlinearGate.status
+  l15AlgebraicStatus=$reportJson.nonlinearGate.l15AlgebraicStatus
+  l15DerivedEquilibriumStatus=$reportJson.nonlinearGate.l15DerivedEquilibriumStatus
+  hydrotestAuthoritySchema=[string]$reportJson.resolvedConfiguration.hydrotestAuthority.schema
+  hydrotestSourceFormula=[string]$reportJson.resolvedConfiguration.hydrotestAuthority.sourceFormula
+  restraintTopologyStateScope=[string]$reportJson.restraintTopology.stateScope
+  directionalFrictionRestraintCount=[int]$reportJson.restraintTopology.directionalRestraintCount
+  sensitivityDiagnosticFailures=$sensitivityDiagnosticFailures
   nonFrictionLiteralExternalFailures=$controlFailures.Count
   nonFrictionRestraintFailures=$controlRestraintFailures.Count
   primitiveFrictionRestraintFailures=$frictionPrimitiveRestraintFailures.Count

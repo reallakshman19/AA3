@@ -219,10 +219,10 @@ jobs:
             --contract=benchmarks/LFEA/CAESAR_ACCDB/m047-bm4l-f28c-authenticated-committed-friction-evidence.json `
             --out=artifacts/f28c/bm4l-f28c-authenticated-committed-friction-replay.json
           $evidence = Get-Content -Raw artifacts/f28c/bm4l-f28c-authenticated-committed-friction-replay.json | ConvertFrom-Json
-          if ($evidence.authenticatedCommittedVectorDiagnostic.passed -ne 1872 `
-              -or $evidence.authenticatedCommittedVectorDiagnostic.failed -ne 42 `
+          if ($evidence.authenticatedCommittedVectorDiagnostic.passed -ne 1884 `
+              -or $evidence.authenticatedCommittedVectorDiagnostic.failed -ne 30 `
               -or $evidence.authenticatedCommittedVectorDiagnostic.total -ne 1914) {
-            throw 'Authenticated committed-vector replay score drifted from 1872/42/1914.'
+            throw 'Authenticated committed-vector replay score drifted from 1884/30/1914.'
           }
           if ($evidence.authority.productionMechanicsAuthorized -ne $false `
               -or $evidence.authority.qualifiedL13AccuracyAuthorized -ne $false) {

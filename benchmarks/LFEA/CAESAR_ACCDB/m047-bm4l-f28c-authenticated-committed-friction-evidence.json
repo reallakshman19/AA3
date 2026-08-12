@@ -29,18 +29,18 @@
     "restraintForceReportingRule": "LINEAR_GROUNDED_SPRING_REACTION_PLUS_REPLAY_TANGENTIAL_LOAD",
     "governedDenominator": 1914,
     "historicalDiagnosticPassed": 1719,
-    "freshAuthenticatedExpectedPassed": 1884,
-    "freshAuthenticatedExpectedFailed": 30,
-    "freshAuthenticatedExpectedPercent": 98.43260188087774
+    "independentlyPrecomputedExpectedPassed": 1884,
+    "independentlyPrecomputedExpectedFailed": 30,
+    "independentlyPrecomputedExpectedPercent": 98.43260188087774
   },
   "withdrawnCandidate": {
     "pr": 1078,
     "claimedPercent": 98.43260188087774,
-    "status": "WITHDRAWN_FIXTURE_CUSTODY_MISMATCH_PERCENTAGE_LATER_INDEPENDENTLY_REPRODUCED",
+    "status": "WITHDRAWN_CUSTODY_MISMATCH",
     "witnessNode": "20350",
     "authenticatedCase17RigidY": [827.2864379882812, -3094.531982421875, 392.7410583496094],
     "withdrawnFixture": [-1696.5887451171875, -9537.6845703125, 2287.588134765625],
-    "disposition": "DO_NOT_REUSE_PR1078_VECTOR_FIXTURE; ACCEPT_ONLY_FRESH_AUTHENTICATED_RECOMPUTATION"
+    "disposition": "DO_NOT_REUSE_PR1078_VECTOR_FIXTURE; THE_PERCENTAGE_WAS_LATER_INDEPENDENTLY_REPRODUCED_FROM_AUTHENTICATED_SOURCE_BYTES"
   },
   "authorityFirewall": {
     "bm4lReferenceUsedToSelectCommittedVector": false,

@@ -121,12 +121,39 @@ export function renderTopologyEditTablePreviewGhost(runtime) {
     'DRAFT',
   ).projection;
   const changed = new Set(candidate.changedCanonicalIds ?? []);
+  const supportElements = supportPlacementGhostElements(runtime, candidate, changed);
+  const supportIds = new Set(supportElements.map((row) => row.id));
+  if (supportElements.length) {
+    runtime.controller.deriveVisual(runtime.controller.session.currentTopology(), 'DRAFT');
+  }
   const accepted = (row) => changed.has(
     row.pickTarget?.objectId ?? row.entityId ?? row.id,
   );
   runtime.controller.viewportBackend?.renderGhost({
-    elements: (projection.compactElements ?? projection.elements ?? []).filter(accepted),
+    elements: [
+      ...(projection.compactElements ?? projection.elements ?? [])
+        .filter((row) => accepted(row) && !supportIds.has(row.pickTarget?.objectId ?? row.entityId ?? row.id)),
+      ...supportElements,
+    ],
     segments: (projection.compactSegments ?? projection.segments ?? []).filter(accepted),
+  });
+}
+
+function supportPlacementGhostElements(runtime, candidate, changed) {
+  const markerSize = Number(runtime.controller.viewportBackend?.navigationConfiguration?.supportMarkerSize);
+  const sizeMm = Number.isFinite(markerSize) && markerSize > 0 ? markerSize : 20;
+  return (candidate.canonicalTopology.supports ?? []).flatMap((support) => {
+    const origin = support.placementOverride?.origin;
+    if (!changed.has(support.id) || support.placementOverride?.authority !== 'CERTIFIED_TABLE_OVERRIDE'
+      || !origin || ![origin.x, origin.y, origin.z].every(Number.isFinite)) return [];
+    return [{
+      id: support.id,
+      entityId: support.id,
+      type: 'SUPPORT',
+      x: origin.x, y: origin.y, z: origin.z,
+      sizeMm,
+      pickTarget: { objectKind: 'support', objectId: support.id, supportId: support.id },
+    }];
   });
 }
 

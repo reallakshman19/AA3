@@ -35,3 +35,7 @@ export {
   replayCaesarFrictionMicroModelEvidence,
   summarizeIndependentSlidePlateauEvidence,
 } from './caesar-friction-evidence-measurement-replay.js';
+export {
+  buildCommittedTangentialFrictionReplay,
+  verifyZeroFrictionTangentialControl,
+} from './caesar-committed-friction-load-replay.js';

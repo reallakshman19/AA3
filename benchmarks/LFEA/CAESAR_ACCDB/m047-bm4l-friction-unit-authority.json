@@ -1,0 +1,63 @@
+{
+  "schema": "m047-bm4l-friction-unit-authority/v1",
+  "benchmarkId": "BM4_L",
+  "scope": "CAESAR_DISPLAYED_FRICTION_STIFFNESS_TO_SI_NORMALIZATION",
+  "stackBase": {
+    "pr": 1052,
+    "branch": "agent/m047-bm4l-friction-authority-closure",
+    "sha": "2c8f61b503b2192324f17c4ffbd8ad1b0ef06552"
+  },
+  "source": {
+    "caesarVersion": "14.00.00.0910",
+    "common": {
+      "repository": "reallaksh19/Common",
+      "commit": "179c4831cf521cf797c13699cfbbd118315c9244",
+      "path": "LFEA/BM4/InputXML_BM4.xml",
+      "gitBlob": "3423d220374a17f67addd3c8c0c44300ffa46251",
+      "inputXmlUnits": {
+        "force": {"label": "N.", "factor": 4.44822},
+        "length": {"label": "mm.", "factor": 25.4}
+      }
+    },
+    "profile": {
+      "path": "benchmarks/LFEA/CAESAR_ACCDB/bm4l-validation.profile.json",
+      "frictionStiffness": {
+        "displayedValue": 1000000,
+        "storedUnit": "DISPLAYED_CAESAR_UNITS"
+      }
+    },
+    "officialAuthority": {
+      "status": "RESOLVED",
+      "finding": "CAESAR_FRICTION_STIFFNESS_IS_A_TRANSLATIONAL_STIFFNESS_IN_THE_ACTIVE_FORCE_PER_LENGTH_UNIT_SYSTEM"
+    }
+  },
+  "derivation": {
+    "forceUnit": "N",
+    "lengthUnit": "mm",
+    "displayedStiffnessUnit": "N/mm",
+    "displayedValue": 1000000,
+    "scaleToNPerM": 1000,
+    "siValue": 1000000000,
+    "siUnit": "N/m",
+    "equation": "1000000 N/mm * 1000 mm/m = 1000000000 N/m"
+  },
+  "policy": {
+    "positiveFrictionRequiresExplicitSIStiffness": true,
+    "ambiguousDisplayedUnitRejected": true,
+    "kernelReceivesNPerMOnly": true,
+    "frictionlessLinearBypassUnaffected": true,
+    "comparatorToleranceChanged": false,
+    "responseFittingUsed": false
+  },
+  "decision": {
+    "unitNormalizationStatus": "RESOLVED",
+    "remainingBlockers": [
+      "FRICTION_SLIDE_MULTIPLIER_AUTHORITY_REQUIRED",
+      "FRICTION_STATE_HISTORY_SEMANTICS_AUTHORITY_REQUIRED",
+      "GAP_CONTACT_STATE_SEMANTICS_AUTHORITY_REQUIRED"
+    ],
+    "l13ProductionSolveAuthorized": false,
+    "l7ProductionSolveAuthorized": false,
+    "newMechanicsAuthorized": false
+  }
+}

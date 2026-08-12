@@ -6,6 +6,7 @@ import {
   summarizeIndependentSlidePlateauEvidence,
 } from '../src/core/nonlinear-restraint-friction/caesar-friction-evidence-measurement-replay.js';
 
+const k = 175126835.24647635;
 function evidence(runId, normalReactionN, frictionReactionN, shaChar) {
   return {
     experimentId: 'MM2_SLIDE_PLATEAU',
@@ -16,7 +17,7 @@ function evidence(runId, normalReactionN, frictionReactionN, shaChar) {
     configuration: {
       coefficientOfFriction: 0.3,
       frictionMultiplier: 1,
-      frictionStiffnessNPerM: 100_000_000,
+      frictionStiffnessNPerM: k,
       normalUnit: [0, 1, 0],
     },
     finalOutput: {

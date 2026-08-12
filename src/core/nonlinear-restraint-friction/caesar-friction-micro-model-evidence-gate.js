@@ -14,6 +14,7 @@ const FINAL_EQUILIBRIUM_REQUIRED = new Set([
   'MM5_GAP_CONTACT_TRACE',
 ]);
 
+const PINNED_FRICTION_STIFFNESS_N_PER_M = 175126835.24647635;
 const KNOWN_BM4NL_ACCDB_SHA256 = '85d39463296e569da811d8572e2eff680b858097f76fdf0f47d1755f0b161c21';
 const KNOWN_BM4NL_FRICTION_DISABLED_CASES = new Set(['L19', 'L20']);
 
@@ -56,8 +57,8 @@ export function assessCaesarFrictionMicroModelEvidence(evidence) {
     blockers.push('POSITIVE_FRICTION_COEFFICIENT_REQUIRED');
   }
   if (configuration.frictionMultiplier !== 1) blockers.push('FRICTION_MULTIPLIER_ONE_REQUIRED');
-  if (configuration.frictionStiffnessNPerM !== 100000000) {
-    blockers.push('PINNED_FRICTION_STIFFNESS_1E8_N_PER_M_REQUIRED');
+  if (configuration.frictionStiffnessNPerM !== PINNED_FRICTION_STIFFNESS_N_PER_M) {
+    blockers.push('PINNED_FRICTION_STIFFNESS_175126835_24647635_N_PER_M_REQUIRED');
   }
 
   if (!vector3(finalOutput.displacementM)) blockers.push('FINAL_DISPLACEMENT_VECTOR_REQUIRED');

@@ -19,6 +19,7 @@ runNode('scripts/lfea-standalone-native-comparison-check.mjs');
 runNode('scripts/lfea-standalone-persistence-check.mjs');
 runNode('scripts/lfea-standalone-publication-readiness-check.mjs');
 runNode('scripts/lfea-standalone-native-support-publication-check.mjs');
+runNode('scripts/lfea-standalone-native-b31-publication-check.mjs');
 runNode('scripts/lfea-standalone-native-verification-composition-check.mjs');
 runNode('scripts/lfea-standalone-native-verification-check.mjs');
 runNode('scripts/lfea-workbench-check.mjs');

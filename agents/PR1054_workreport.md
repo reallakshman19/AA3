@@ -12,9 +12,10 @@
 | Bootstrap | `4140ffbd147b9cc73655d00e8264f8fb774869ff` — empty tree-equivalent commit |
 | Pre-qualification implementation/test head | `85e67606b588809c96b03c8801a783edaf09620d` |
 | Browser qualification source head | `57df6f795a8ca82a3d3b0f794284871d929b5f76` |
+| First exact-head qualification candidate | `ff96666fccb8ff6bc25be9231228fd750485022d` |
 | Mission | Recover certified support restraint-property editing while keeping support placement/movement fail closed. |
-| Engineering state | **EXACT-HEAD QUALIFICATION READY** |
-| Current execution truth | Production visible-user Chromium qualification is authored and the PR is temporarily retargeted to the isolated runner base. Exact-head Node + Chromium execution is not yet represented as PASS. |
+| Engineering state | **EMPIRICAL TEST REPAIR IN PROGRESS** |
+| Current execution truth | Run `31576192230` checked out exact head `ff96666f…`; setup/source/line-budget checks PASS; focused Node qualification **11 pass / 2 fail**; Chromium correctly skipped. Both failures are stale test expectations against existing deterministic production behavior and are authorized for test-only repair below. |
 | Merge state | Draft / unmerged until exact-head Node + Chromium evidence is green and the final report-sync head is requalified. |
 
 ## Preserved Authority
@@ -73,7 +74,9 @@ The command writes a separate canonical `support.restraint` marked `CERTIFIED_TA
 | DEC-1054-03 | Host authority | ACCEPTED | Shared #1036 resolver only; exact `RESOLVED` required. |
 | DEC-1054-04 | Evidence | ACCEPTED | Imported restraints retained; only marked override becomes active. |
 | ISS-1054-01 | Current-main regression | RESOLVED IN SOURCE | Explicit unresolved host token rejects before override. |
-| ISS-1054-02 | Qualification | **E2E AUTHORED / NOT_RUN** | `e2e/topology-edit-table-support-restraint.spec.js` uses the real Workspace -> XYZ fixture -> 3D Edit -> Engineering Table path, selects S-007 through a typed filter and visible Select action, edits real restraint controls, and drives Stage/Preview/Validate/Apply/Undo/Redo. Controller access is read-only evidence only. |
+| ISS-1054-02 | Qualification | E2E AUTHORED / NOT_YET_EXECUTED | `e2e/topology-edit-table-support-restraint.spec.js` uses the real Workspace -> XYZ fixture -> 3D Edit -> Engineering Table path, selects S-007 through a typed filter and visible Select action, edits real restraint controls, and drives Stage/Preview/Validate/Apply/Undo/Redo. Controller access is read-only evidence only. |
+| ISS-1054-03 | Test expectation | **OPEN / TEST-ONLY REPAIR AUTHORIZED** | Run `31576192230` showed `LOCAL_Y` derives `{x:0,y:1,z:0}` while the recovered test expected `y:-1`. Production `hostFrame()` deterministically defines local Y as `unit(cross(globalVertical, localX))`; for host `node:n1 -> node:n2`, that is +Y. Do not change production geometry to satisfy the stale predecessor assertion; repair only the expected vector. |
+| ISS-1054-04 | Test expectation | **OPEN / TEST-ONLY REPAIR AUTHORIZED** | Run `31576192230` showed the governed Table planner emits deterministic `sequence: 0` on the single `UPDATE_SUPPORT_RESTRAINT` command intent. The recovered test omitted this established command envelope field. Do not remove planner sequencing; repair only the expected plan object. |
 | RISK-1054-01 | Current-head execution | OPEN | Exact-head Node + Chromium execution is required before merge. |
 | RISK-1054-02 | Sibling overlap | OPEN / MANAGEABLE | #1051 overlaps small Table wiring and must reconcile whichever merges second. |
 
@@ -110,7 +113,26 @@ The isolated base branch `qualification/pr1054-exact-head` contains only `.githu
 
 The workflow file is not part of the PR1054 feature diff.
 
-After a feature/test green run:
+### First executed exact-head gate — Node FAIL, Chromium skipped
+
+Run `31576192230`, job `94048733399`, exact head `ff96666fccb8ff6bc25be9231228fd750485022d`:
+
+- exact checkout: PASS
+- Node 22 setup: PASS
+- `npm ci` + real Chromium install: PASS
+- exact-head assertion: PASS
+- all four `node --check` checks: PASS
+- new E2E `<300` physical-line gate: PASS
+- `git diff --check`: PASS
+- focused Node: **13 tests / 11 pass / 2 fail**
+- failure 1: stale `LOCAL_Y` sign expectation; actual deterministic production vector is +Y
+- failure 2: stale Table plan expectation omitted deterministic `sequence: 0`
+- Chromium: SKIPPED because Node gate failed
+- no Playwright artifact existed because Chromium did not start; upload step correctly warned that no files were available.
+
+This is not a feature or browser PASS. The next source changes are restricted to the two demonstrated test expectations above.
+
+After a green feature/test run:
 
 1. update this report with exact run/head/artifact evidence;
 2. run the same gate again on the report-only head;
@@ -163,9 +185,10 @@ The temporary qualification workflow is isolated on `qualification/pr1054-exact-
 | `PR1033@68444777aeb01f165c987975ef1555bb1b7a9a1b` | predecessor exact head; 17/17 triggered workflows PASS |
 | `85e67606b588809c96b03c8801a783edaf09620d` | PR1054 pre-report source/test candidate; static review only |
 | `7d3002df5915027f607a7db10b2f75049fe14c94` | pre-qualification report-sync head; zero pull-request workflow runs |
-| `57df6f795a8ca82a3d3b0f794284871d929b5f76` | browser qualification source authored; exact-head execution NOT_RUN at report time |
-| current report-sync head | trigger exact-head Node + Chromium qualification |
+| `57df6f795a8ca82a3d3b0f794284871d929b5f76` | browser qualification source authored |
+| `ff96666fccb8ff6bc25be9231228fd750485022d` | run `31576192230`: setup/source/line gates PASS; Node 11/13 PASS, 2 stale expectation failures; Chromium skipped |
+| next repaired test head | NOT_RUN until the two authorized expectation repairs are committed |
 
 ## Handover
 
-Do not merge historical evidence as if it were current-head evidence. Complete the exact-head Node + Chromium gate, preserve imported restraint and parent-support-policy custody, qualify the final report head, and only then promote the stack in order #1054 -> #1061 -> #1066.
+Repair only ISS-1054-03 and ISS-1054-04, re-run exact-head qualification, and diagnose any browser result without weakening guards. Preserve imported restraint and parent-support-policy custody. Qualify the final report head, then promote the stack in order #1054 -> #1061 -> #1066.

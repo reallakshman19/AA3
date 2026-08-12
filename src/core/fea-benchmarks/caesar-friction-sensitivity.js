@@ -1,3 +1,4 @@
+import { semanticHash } from '../shared-piping-model/canonical-json.js';
 import { deepFreeze } from '../shared-piping-model/immutable.js';
 import { solveCaesarAccdbFrictionBenchmark } from './caesar-accdb-friction-solve.js';
 
@@ -34,6 +35,7 @@ export function runBm4lFrictionStiffnessSensitivity({
         role: 'QUALIFICATION_NOMINAL_REUSED',
         status: sensitivityProjectionStatus(nominalResult),
         source: 'NOMINAL_TWO_REPEAT_RESULT',
+        packageSemanticHash: benchmarkPackage.semanticHash,
         cases: sensitivityCaseProjection(nominalResult),
         error: null,
       });
@@ -51,6 +53,7 @@ export function runBm4lFrictionStiffnessSensitivity({
         role: 'DIAGNOSTIC_ONLY',
         status: sensitivityProjectionStatus(result),
         source: 'INDEPENDENT_DIAGNOSTIC_SOLVE',
+        packageSemanticHash: diagnosticPackage.semanticHash,
         cases: sensitivityCaseProjection(result),
         error: null,
       });
@@ -60,6 +63,7 @@ export function runBm4lFrictionStiffnessSensitivity({
         role: 'DIAGNOSTIC_ONLY',
         status: 'BLOCKED_DIAGNOSTIC',
         source: 'INDEPENDENT_DIAGNOSTIC_SOLVE',
+        packageSemanticHash: null,
         cases: null,
         error: deepFreeze({
           name: String(error?.name ?? 'Error'),
@@ -81,7 +85,12 @@ export function runBm4lFrictionStiffnessSensitivity({
   });
 }
 
-/** Return a diagnostic package with only the declared FRICT_STIF value scaled. */
+/**
+ * Return a canonical diagnostic package with only the declared FRICT_STIF value
+ * scaled. Its package semantic hash is recomputed with the same source-path
+ * exclusion used by buildCaesarAccdbBenchmarkPackage, so a diagnostic authority
+ * state cannot retain the nominal package identity.
+ */
 export function scaleBm4lFrictionStiffnessPackage(benchmarkPackage, multiplierInput) {
   if (!benchmarkPackage || benchmarkPackage.schema !== 'caesar-accdb-benchmark-package/v1') {
     throw new TypeError('A canonical BM4_L ACCDB package is required.');
@@ -103,26 +112,49 @@ export function scaleBm4lFrictionStiffnessPackage(benchmarkPackage, multiplierIn
     ...declared,
     value: Number(declared.value) * multiplier,
   });
-  return Object.freeze({
-    ...benchmarkPackage,
-    profile: Object.freeze({
-      ...benchmarkPackage.profile,
-      configurationAuthority: Object.freeze({
-        ...authority,
-        layers: Object.freeze({
-          ...authority.layers,
-          overallGlobalDefault: Object.freeze({
-            ...globalLayer,
-            settings: Object.freeze({
-              ...globalLayer.settings,
-              FRICT_STIF: scaledSetting,
-            }),
+  const scaledProfile = Object.freeze({
+    ...benchmarkPackage.profile,
+    configurationAuthority: Object.freeze({
+      ...authority,
+      layers: Object.freeze({
+        ...authority.layers,
+        overallGlobalDefault: Object.freeze({
+          ...globalLayer,
+          settings: Object.freeze({
+            ...globalLayer.settings,
+            FRICT_STIF: scaledSetting,
           }),
         }),
       }),
     }),
-    diagnosticFrictionStiffnessScale: multiplier,
   });
+  const sourceIdentity = sourceSemanticIdentity(benchmarkPackage.source);
+  const base = {
+    schema: benchmarkPackage.schema,
+    benchmarkId: benchmarkPackage.benchmarkId,
+    profile: scaledProfile,
+    source: benchmarkPackage.source,
+    model: benchmarkPackage.model,
+    cases: benchmarkPackage.cases,
+    references: benchmarkPackage.references,
+  };
+  return deepFreeze({
+    ...base,
+    semanticHash: semanticHash({ ...base, source: sourceIdentity }),
+  });
+}
+
+function sourceSemanticIdentity(source) {
+  if (!source || typeof source !== 'object') throw new TypeError('ACCDB package source is required.');
+  const fileName = String(source.fileName ?? '').trim();
+  const lastWriteTimeUtc = String(source.lastWriteTimeUtc ?? '').trim();
+  const sha256 = String(source.sha256 ?? '').trim().toLowerCase();
+  const byteLength = Number(source.byteLength);
+  if (!fileName || !lastWriteTimeUtc || !/^[a-f0-9]{64}$/u.test(sha256)
+    || !Number.isInteger(byteLength) || byteLength < 0) {
+    throw new TypeError('ACCDB package source identity is incomplete for sensitivity hashing.');
+  }
+  return Object.freeze({ fileName, byteLength, lastWriteTimeUtc, sha256 });
 }
 
 function sensitivityProjectionStatus(result) {

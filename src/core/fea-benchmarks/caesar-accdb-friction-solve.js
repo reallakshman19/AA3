@@ -38,10 +38,14 @@ export const CAESAR_ACCDB_FRICTION_SOLVER_PROFILE = deepFreeze({
   reactionUpdateAbsoluteToleranceN: 1e-6,
   frictionForceRelativeTolerance: 1e-8,
   frictionForceAbsoluteToleranceN: 1e-6,
+  frictionForceScaleFloorN: 1,
+  frictionDirectionCosineTolerance: 1e-8,
   stateBoundaryRelativeTolerance: 1e-9,
   minimumSlipDirectionM: 1e-14,
   axisAlignmentTolerance: 1e-8,
   reconstructionRelativeResidualLimit: 1e-6,
+  reconstructionForceScaleFloorN: 1,
+  reconstructionMomentScaleFloorNm: 1,
   loadSteps: 1,
   relaxationFactor: 1,
   sensitivityMultipliers: Object.freeze([0.5, 1, 2]),
@@ -194,14 +198,27 @@ function solveQualifiedPrimitive(input) {
   }
 
   const sensitivityRuns = input.profile.sensitivityMultipliers.map((multiplier) => {
-    if (multiplier === 1) return nominal;
-    return solvePrimitiveActiveSet({
-      ...input,
-      base,
-      friction,
-      frictionStiffnessNPerM: frictionStiffness.valueNPerM * multiplier,
-      stiffnessMultiplier: multiplier,
-    });
+    if (multiplier === 1) return { multiplier, run: nominal, error: null };
+    try {
+      return {
+        multiplier,
+        run: solvePrimitiveActiveSet({
+          ...input,
+          base,
+          friction,
+          frictionStiffnessNPerM: frictionStiffness.valueNPerM * multiplier,
+          stiffnessMultiplier: multiplier,
+        }),
+        error: null,
+      };
+    } catch (error) {
+      if (!isFrictionDiagnosticError(error)) throw error;
+      return {
+        multiplier,
+        run: null,
+        error: { code: error.code, message: error.message },
+      };
+    }
   });
   const sensitivity = summarizeSensitivity(nominal, sensitivityRuns);
   const evidence = deepFreeze({
@@ -268,7 +285,8 @@ function reconstructBaseSystem(input) {
     K[constraint.globalIndex * n + constraint.globalIndex] += constraint.stiffness;
   }
   const residual = matVec(K, n, baseSolverU).map((value, index) => value - F[index]);
-  const normalizedResidual = maxAbs(residual) / Math.max(1, maxAbs(F));
+  const reconstructionResidual = dimensionSeparatedReconstructionResidual(residual, F, input.profile);
+  const normalizedResidual = reconstructionResidual.maximumRelativeResidual;
   if (normalizedResidual > input.profile.reconstructionRelativeResidualLimit) {
     throw frictionError(
       `${input.controlCaseId} frozen system reconstruction residual ${normalizedResidual} exceeds ${input.profile.reconstructionRelativeResidualLimit}.`,
@@ -291,6 +309,7 @@ function reconstructBaseSystem(input) {
     recoveryLedger: ledger,
     baseRows: input.baseCase.rows,
     reconstructionRelativeResidual: normalizedResidual,
+    reconstructionResidual,
   });
 }
 
@@ -471,7 +490,7 @@ function solvePrimitiveActiveSet(input) {
       'CAESAR_ACCDB_FRICTION_NOT_CONVERGED',
     );
   }
-  const rows = updateResultRows(base, finalState);
+  const rows = updateResultRows(input.caseId, base, finalState);
   const stateMap = Object.freeze(finalState.classified.rows.map((row) => Object.freeze({
     supportId: row.supportId,
     nodeId: row.nodeId,
@@ -509,6 +528,7 @@ function solvePrimitiveActiveSet(input) {
       frictionStiffnessNPerM: kf,
       effectiveCoefficient: mu,
       reconstructionRelativeResidual: base.reconstructionRelativeResidual,
+      reconstructionResidual: base.reconstructionResidual,
       iterationCount: finalState.iteration,
       iterationLedger: Object.freeze(iterationLedger),
       activeSet: stateMap,
@@ -538,7 +558,8 @@ function classifySupports(input) {
     const trialForce = tangentialDisplacement.map((value) => -input.kf * value);
     const trialMagnitudeN = Math.hypot(...trialForce);
     const boundaryToleranceN = input.profile.frictionForceAbsoluteToleranceN
-      + input.profile.stateBoundaryRelativeTolerance * Math.max(1, capN);
+      + input.profile.stateBoundaryRelativeTolerance
+        * Math.max(input.profile.frictionForceScaleFloorN, capN);
     const nextState = trialMagnitudeN <= capN + boundaryToleranceN ? 'STICK' : 'SLIDE';
     let nextSlideForce = [0, 0, 0];
     if (nextState === 'SLIDE') {
@@ -601,14 +622,16 @@ function classifySupports(input) {
 function frictionPhysicsGate(rows, profile) {
   const evaluated = rows.map((row) => {
     const forceTolerance = profile.frictionForceAbsoluteToleranceN
-      + profile.frictionForceRelativeTolerance * Math.max(1, row.capN);
+      + profile.frictionForceRelativeTolerance
+        * Math.max(profile.frictionForceScaleFloorN, row.capN);
     const capPass = row.capViolationN <= forceTolerance;
     const constitutivePass = row.currentState === 'STICK'
       ? row.stickResidualN <= forceTolerance
       : row.slideResidualN <= forceTolerance;
     const directionPass = row.currentState !== 'SLIDE'
       || row.appliedFrictionMagnitudeN <= forceTolerance
-      || (row.directionCosine !== null && row.directionCosine <= -1 + 1e-8);
+      || (row.directionCosine !== null
+        && row.directionCosine <= -1 + profile.frictionDirectionCosineTolerance);
     return {
       supportId: row.supportId,
       status: capPass && constitutivePass && directionPass ? 'PASS' : 'FAIL',
@@ -693,7 +716,7 @@ function recoveredEquilibrium(base, recovered, reactions, tolerance) {
   });
 }
 
-function updateResultRows(base, finalState) {
+function updateResultRows(caseId, base, finalState) {
   const values = new Map();
   for (const nodeId of base.nodeIds) {
     const offset = base.nodeIndex.get(nodeId) * 6;
@@ -726,7 +749,7 @@ function updateResultRows(base, finalState) {
     if (!values.has(identity)) {
       throw new TypeError(`Nonlinear recovery did not reproduce base result identity ${identity}.`);
     }
-    return deepFreeze({ ...row, value: values.get(identity) });
+    return deepFreeze({ ...row, caseId, value: values.get(identity) });
   }));
 }
 
@@ -902,35 +925,54 @@ function buildPairedDeltaRca({ benchmarkPackage, controls, cases }) {
   })));
 }
 
-function summarizeSensitivity(nominal, runs) {
+function summarizeSensitivity(nominal, records) {
   const nominalStates = new Map(nominal.stateMap.map((row) => [row.supportId, row.state]));
   const nominalTranslationReaction = translationalDofValues(nominal.finalReactionVector);
   const nominalMomentReaction = rotationalDofValues(nominal.finalReactionVector);
+  const runs = records.map((record) => {
+    if (record.run === null) {
+      return deepFreeze({
+        stiffnessMultiplier: record.multiplier,
+        convergenceStatus: 'DIAGNOSTIC_FAILED',
+        iterationCount: null,
+        stateFlipCount: null,
+        stateFlipSupportIds: null,
+        translationReactionVectorRelativeChange: null,
+        momentReactionVectorRelativeChange: null,
+        fingerprint: null,
+        error: record.error,
+        qualificationUse: 'DIAGNOSTIC_ONLY',
+      });
+    }
+    const run = record.run;
+    const stateFlips = run.stateMap.filter((row) => nominalStates.get(row.supportId) !== row.state);
+    const translationReaction = translationalDofValues(run.finalReactionVector);
+    const momentReaction = rotationalDofValues(run.finalReactionVector);
+    return deepFreeze({
+      stiffnessMultiplier: run.evidence.stiffnessMultiplier,
+      convergenceStatus: run.evidence.executionStatus,
+      iterationCount: run.evidence.iterationCount,
+      stateFlipCount: stateFlips.length,
+      stateFlipSupportIds: Object.freeze(stateFlips.map((row) => row.supportId)),
+      translationReactionVectorRelativeChange: relativeVectorChange(
+        translationReaction,
+        nominalTranslationReaction,
+      ),
+      momentReactionVectorRelativeChange: relativeVectorChange(
+        momentReaction,
+        nominalMomentReaction,
+      ),
+      fingerprint: primitiveFingerprint(run),
+      error: null,
+      qualificationUse: run.evidence.stiffnessMultiplier === 1 ? 'NOMINAL' : 'DIAGNOSTIC_ONLY',
+    });
+  });
   return deepFreeze({
     nominalMultiplier: 1,
+    rule: 'SENSITIVITY_IS_DIAGNOSTIC_AND_CANNOT_INVALIDATE_A_CONVERGED_NOMINAL_RUN',
     reactionChangeRule: 'FORCE_AND_MOMENT_REACTION_NORMS_REPORTED_SEPARATELY_NO_MIXED_UNITS',
-    runs: Object.freeze(runs.map((run) => {
-      const stateFlips = run.stateMap.filter((row) => nominalStates.get(row.supportId) !== row.state);
-      const translationReaction = translationalDofValues(run.finalReactionVector);
-      const momentReaction = rotationalDofValues(run.finalReactionVector);
-      return deepFreeze({
-        stiffnessMultiplier: run.evidence.stiffnessMultiplier,
-        convergenceStatus: run.evidence.executionStatus,
-        iterationCount: run.evidence.iterationCount,
-        stateFlipCount: stateFlips.length,
-        stateFlipSupportIds: Object.freeze(stateFlips.map((row) => row.supportId)),
-        translationReactionVectorRelativeChange: relativeVectorChange(
-          translationReaction,
-          nominalTranslationReaction,
-        ),
-        momentReactionVectorRelativeChange: relativeVectorChange(
-          momentReaction,
-          nominalMomentReaction,
-        ),
-        fingerprint: primitiveFingerprint(run),
-        qualificationUse: run.evidence.stiffnessMultiplier === 1 ? 'NOMINAL' : 'DIAGNOSTIC_ONLY',
-      });
-    })),
+    diagnosticFailureCount: runs.filter((run) => run.convergenceStatus === 'DIAGNOSTIC_FAILED').length,
+    runs: Object.freeze(runs),
   });
 }
 
@@ -1094,6 +1136,35 @@ function relativeVectorChange(current, baseline) {
   const difference = current.map((value, index) => value - baseline[index]);
   const scale = Math.max(norm2(baseline), Number.MIN_VALUE);
   return norm2(difference) / scale;
+}
+
+function dimensionSeparatedReconstructionResidual(residual, reference, profile) {
+  const forceResidual = translationalDofValues(residual);
+  const momentResidual = rotationalDofValues(residual);
+  const forceReference = translationalDofValues(reference);
+  const momentReference = rotationalDofValues(reference);
+  const forceScaleN = Math.max(profile.reconstructionForceScaleFloorN, maxAbs(forceReference));
+  const momentScaleNm = Math.max(profile.reconstructionMomentScaleFloorNm, maxAbs(momentReference));
+  const forceRelativeResidual = maxAbs(forceResidual) / forceScaleN;
+  const momentRelativeResidual = maxAbs(momentResidual) / momentScaleNm;
+  return deepFreeze({
+    rule: 'FORCE_AND_MOMENT_EQUATIONS_NORMALIZED_SEPARATELY_BEFORE_DIMENSIONLESS_MAX',
+    force: {
+      maximumAbsoluteResidualN: maxAbs(forceResidual),
+      scaleN: forceScaleN,
+      relativeResidual: forceRelativeResidual,
+    },
+    moment: {
+      maximumAbsoluteResidualNm: maxAbs(momentResidual),
+      scaleNm: momentScaleNm,
+      relativeResidual: momentRelativeResidual,
+    },
+    maximumRelativeResidual: Math.max(forceRelativeResidual, momentRelativeResidual),
+  });
+}
+
+function isFrictionDiagnosticError(error) {
+  return typeof error?.code === 'string' && error.code.startsWith('CAESAR_ACCDB_FRICTION_');
 }
 
 function sortedSourceRows(base, recoveredActions) {

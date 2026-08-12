@@ -14,16 +14,15 @@ jobs:
     timeout-minutes: 45
     env:
       BASE_SHA: e977bd15a0fbe30492514d7ad29ae52c998c50c8
-      CANDIDATE_SHA: 87f3b7fb1081a1f03a155c8517bc4cb2d2e6f0ec
+      CANDIDATE_SHA: 2103d4d970738fa1f9259cd68e8179d9f90c96cc
       PLAYWRIGHT_BROWSERS_PATH: '0'
-      TOPOLOGY_EDIT_TARGET_HEAD_SHA: 87f3b7fb1081a1f03a155c8517bc4cb2d2e6f0ec
+      TOPOLOGY_EDIT_TARGET_HEAD_SHA: 2103d4d970738fa1f9259cd68e8179d9f90c96cc
     steps:
       - name: Checkout exact candidate
         uses: actions/checkout@v4
         with:
-          ref: 87f3b7fb1081a1f03a155c8517bc4cb2d2e6f0ec
+          ref: 2103d4d970738fa1f9259cd68e8179d9f90c96cc
           fetch-depth: 0
-
       - name: Verify exact two-file ledger
         shell: bash
         run: |
@@ -34,16 +33,13 @@ jobs:
           git diff --check "$BASE_SHA" "$CANDIDATE_SHA"
           node --check e2e/helpers/topology-edit-ghost-applied-differential.js
           node --check e2e/topology-edit-a3d004-ghost-applied.spec.js
-
       - name: Set up Node
         uses: actions/setup-node@v4
         with:
           node-version: '22'
           cache: npm
-
       - name: Install dependencies
         run: npm ci
-
       - name: Run focused governed candidate tests
         run: >-
           node --test
@@ -51,10 +47,8 @@ jobs:
           tests/topology-edit-table-m04-m06-m10.test.mjs
           tests/topology-edit-table-support-restraint.test.mjs
           tests/topology-edit-validation-runtime-identity.test.mjs
-
       - name: Install pinned Chromium
         run: npx playwright install --with-deps chromium
-
       - name: Run A3D-004 semantic ghost applied matrix
         env:
           PLAYWRIGHT_JSON_OUTPUT_NAME: artifacts/a3d004-playwright.json
@@ -65,16 +59,13 @@ jobs:
           --retries=0
           --trace=on
           --reporter=line,json
-
       - name: Record exact-head identity
         if: always()
         shell: bash
         run: |
           mkdir -p artifacts
           printf '{"schema":"A3D004RunIdentity.v1","baseSha":"%s","candidateSha":"%s","runId":"%s","attempt":%s,"workers":1,"retries":0,"trace":"on"}\n' \
-            "$BASE_SHA" "$CANDIDATE_SHA" "$GITHUB_RUN_ID" "$GITHUB_RUN_ATTEMPT" \
-            > artifacts/a3d004-run-identity.json
-
+            "$BASE_SHA" "$CANDIDATE_SHA" "$GITHUB_RUN_ID" "$GITHUB_RUN_ATTEMPT" > artifacts/a3d004-run-identity.json
       - name: Upload exact-head evidence
         if: always()
         uses: actions/upload-artifact@v4

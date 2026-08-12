@@ -112,4 +112,28 @@ assert.match(
   'Element-end force vectors must retain FX/FY/FZ action components.',
 );
 
+const benchmarkSource = readFileSync(resolve(
+  'scripts/lfea-m047-bm4l-friction-benchmark.mjs',
+), 'utf8');
+assert.match(
+  benchmarkSource,
+  /equilibrium: benchmarkPackage\.references\[record\.caseId\]\.equilibrium/u,
+  'Stage 2 must pass CAESAR reference equilibrium evidence into the engineering assessment.',
+);
+assert.match(
+  benchmarkSource,
+  /stateScope: 'PER_ACCDB_DIRECTIONAL_RESTRAINT_ROW'/u,
+  'Friction active-set ownership must remain per ACCDB directional restraint row.',
+);
+assert.match(
+  benchmarkSource,
+  /Duplicate directional restraint DOF/u,
+  'Ambiguous duplicate directional restraint DOFs must fail before nonlinear assembly.',
+);
+assert.match(
+  benchmarkSource,
+  /Directional restraint row .* is attached to anchor node/u,
+  'Directional restraints attached to anchor nodes must fail before nonlinear assembly.',
+);
+
 process.stdout.write('M047 BM4_L friction contract: PASS\n');

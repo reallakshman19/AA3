@@ -40,6 +40,8 @@ assert.deepEqual(
   worksheet.iterations[0].restraints.slice(26).map((row) => row.restraintKey),
   gapKeys,
 );
+assert.equal(worksheet.iterations[0].restraints[0].firstTransitionReferenceDirectionGlobal, null);
+assert.deepEqual(worksheet.iterations[0].stateEvents, []);
 assert.equal(worksheet.inputCustody.traceSha256, null);
 
 const sealedWorksheet = sealBm4lL13StateTraceCapture(worksheet, {
@@ -71,8 +73,32 @@ const trace = {
     traceSha256: 'a'.repeat(64),
   },
   iterations: [
-    makeIteration(1, false, 2, { gapClosed: false, slidingNode: null }),
-    makeIteration(2, true, 0, { gapClosed: true, slidingNode: '20090' }),
+    makeIteration(1, false, 2, {
+      gapClosed: false,
+      slidingNode: null,
+      stateEvents: [],
+    }),
+    makeIteration(2, true, 0, {
+      gapClosed: true,
+      slidingNode: '20090',
+      firstTransitionReferenceDirectionGlobal: [0, 1, 0],
+      stateEvents: [
+        {
+          ordinal: 1,
+          restraintKey: gapKeys[0],
+          eventType: 'CONTACT_STATE_CHANGE',
+          from: 'OPEN',
+          to: 'CLOSED',
+        },
+        {
+          ordinal: 2,
+          restraintKey: 'FRICTION:20090',
+          eventType: 'FRICTION_STATE_CHANGE',
+          from: 'STICK',
+          to: 'SLIDING',
+        },
+      ],
+    }),
   ],
 };
 
@@ -88,6 +114,11 @@ assert.equal(ready.transitions.frictionStateChanges.length, 1);
 assert.equal(ready.transitions.frictionStateChanges[0].restraintKey, 'FRICTION:20090');
 assert.equal(ready.transitions.frictionStateChanges[0].to, 'SLIDING');
 assert.equal(ready.transitions.perIterationFrictionUpdates.length, 26);
+assert.equal(ready.transitions.subIterationStateEvents.length, 2);
+assert.deepEqual(
+  ready.transitions.subIterationStateEvents.map((event) => [event.ordinal, event.eventType]),
+  [[1, 'CONTACT_STATE_CHANGE'], [2, 'FRICTION_STATE_CHANGE']],
+);
 const slideUpdate = ready.transitions.perIterationFrictionUpdates
   .find((row) => row.restraintKey === 'FRICTION:20090');
 assert.ok(slideUpdate.normalForceRelativeChange > 0.19);
@@ -117,8 +148,22 @@ incomplete.iterations[0].restraints = incomplete.iterations[0].restraints
 const blockedIncomplete = assessBm4lL13StateTraceEvidence(incomplete);
 assert.ok(blockedIncomplete.blockerCodes.includes('ALL_26_FRICTION_SITES_REQUIRED_EACH_ITERATION'));
 
+const badEventOrder = structuredClone(trace);
+badEventOrder.iterations[1].stateEvents[1].ordinal = 1;
+const blockedBadEventOrder = assessBm4lL13StateTraceEvidence(badEventOrder);
+assert.ok(blockedBadEventOrder.blockerCodes.includes('STATE_EVENTS_MUST_BE_STRICTLY_ORDERED'));
+assert.ok(blockedBadEventOrder.blockerCodes.includes('DUPLICATE_STATE_EVENT_ORDINAL'));
+
+const badReferenceDirection = structuredClone(trace);
+const slidingRow = badReferenceDirection.iterations[1].restraints
+  .find((row) => row.restraintKey === 'FRICTION:20090');
+slidingRow.firstTransitionReferenceDirectionGlobal = [2, 0, 0];
+const blockedBadReference = assessBm4lL13StateTraceEvidence(badReferenceDirection);
+assert.ok(blockedBadReference.blockerCodes.includes('FIRST_TRANSITION_REFERENCE_DIRECTION_MUST_BE_UNIT_VECTOR'));
+
 console.log('PASS M047 BM4_L F2.7b exact-build L13 state-trace evidence gate');
 console.log('PASS deterministic 26-friction + 6-gap capture worksheet and raw-capture sealing firewall');
+console.log('PASS optional exact-product first-transition direction and ordered sub-iteration state-event validation');
 console.log('historical L13 remains 1719/1914 = 89.81191222570533%');
 console.log('passing trace authorizes engineering review only; production mechanics/rescore remain false');
 console.log('ingest product trace with: node scripts/lfea-m047-bm4l-l13-state-trace-evidence-check.mjs --input=<trace.json>');
@@ -132,6 +177,11 @@ function validateContract(value) {
   assert.equal(value.inputCustody.governedRows, 1914);
   assert.equal(value.inputCustody.historicalDiagnosticPass, 1719);
   assert.equal(value.inputCustody.historicalDiagnosticFail, 195);
+  assert.equal(value.optionalProductObservedEvidence.firstTransitionReferenceDirectionGlobal.type, 'UNIT_VECTOR3_OR_NULL');
+  assert.deepEqual(
+    value.optionalProductObservedEvidence.stateEvents.eventTypes,
+    ['CONTACT_STATE_CHANGE', 'FRICTION_STATE_CHANGE'],
+  );
   assert.equal(value.authorityFirewall.gateMayAuthorizeProductionMechanics, false);
   assert.equal(value.authorityFirewall.gateMayAuthorizeL13Rescore, false);
 }
@@ -147,6 +197,9 @@ function makeIteration(iteration, converged, unconvergedRestraintCount, options)
       normalReactionN: sliding ? 1200 : 1000,
       frictionResistanceN: sliding ? 360 : 100,
       frictionDirectionGlobal: sliding ? [1, 0, 0] : null,
+      firstTransitionReferenceDirectionGlobal: sliding
+        ? (options.firstTransitionReferenceDirectionGlobal ?? null)
+        : null,
     };
   });
   for (const [index, key] of gapKeys.entries()) {
@@ -156,5 +209,11 @@ function makeIteration(iteration, converged, unconvergedRestraintCount, options)
       frictionState: 'NOT_APPLICABLE',
     });
   }
-  return { iteration, converged, unconvergedRestraintCount, restraints };
+  return {
+    iteration,
+    converged,
+    unconvergedRestraintCount,
+    restraints,
+    stateEvents: options.stateEvents ?? [],
+  };
 }

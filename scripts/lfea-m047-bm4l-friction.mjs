@@ -22,10 +22,15 @@ import {
   solveCaesarAccdbFrictionBenchmark,
   solveCaesarAccdbLinearBenchmark,
 } from '../src/core/fea-benchmarks/index.js';
+import { selectBm4lAccdbFrictionRows } from '../src/core/fea-benchmarks/caesar-accdb-friction-restraint-selection.js';
 import { canonicalPrettyStringify, semanticHash } from '../src/core/shared-piping-model/canonical-json.js';
 
 const SCRIPT_DIR = dirname(fileURLToPath(import.meta.url));
 const EXPORT_SCRIPT = resolve(SCRIPT_DIR, 'lfea-caesar-accdb-mdb-export.mjs');
+const RESTRAINT_AUTHORITY_PATH = resolve(
+  SCRIPT_DIR,
+  '../benchmarks/LFEA/CAESAR_ACCDB/m047-bm4l-friction-restraint-authority.json',
+);
 const CONTROL_CASE_IDS = Object.freeze(['L2', 'L3', 'L4', 'L5', 'L6', 'L14']);
 const FRICTION_CASE_IDS = Object.freeze(['L13', 'L7', 'L15', 'L1']);
 const FRICTION_COMPARISON_CASE_IDS = Object.freeze(['L13', 'L7', 'L15', 'L1']);
@@ -33,9 +38,11 @@ const FRICTION_COMPARISON_CASE_IDS = Object.freeze(['L13', 'L7', 'L15', 'L1']);
 export function runBm4lFrictionProduction(input) {
   const profile = readJson(input.profilePath, 'BM4_L benchmark profile');
   const frictionSolverProfile = readJson(input.frictionProfilePath, 'friction solver profile');
+  const restraintAuthority = readJson(RESTRAINT_AUTHORITY_PATH, 'BM4_L friction restraint authority');
   if (profile.benchmarkId !== 'BM4_L') throw new TypeError('M047 friction production requires benchmarkId BM4_L.');
   const rawExport = extractAccdb(input.accdbPath, requiredCaesarAccdbTables(profile));
   const benchmarkPackage = buildCaesarAccdbBenchmarkPackage({ rawExport, profile });
+  const restraintCustody = verifyFrictionRestraintCustody(benchmarkPackage, restraintAuthority);
 
   // Issue #1083 gate: prove the frozen non-friction cases before accepting friction.
   const controls = solveCaesarAccdbLinearBenchmark(benchmarkPackage, CONTROL_CASE_IDS);
@@ -83,12 +90,17 @@ export function runBm4lFrictionProduction(input) {
 
   const accuracy = buildAccuracyEvidence(benchmarkPackage, actualCases);
   const pairedDeltaEvidence = buildPairedDeltaEvidence(actualCases);
-  const overallStatus = resolveOverallAcceptanceStatus(friction.status, accuracy.frictionRestraintGateStatus);
+  const overallStatus = resolveOverallAcceptanceStatus(
+    friction.status,
+    accuracy.frictionRestraintGateStatus,
+    restraintCustody.status,
+  );
   const evidence = Object.freeze({
     schema: 'm047-bm4l-friction-production-evidence/v1',
     benchmarkId: benchmarkPackage.benchmarkId,
     source: benchmarkPackage.source,
     packageSemanticHash: benchmarkPackage.semanticHash,
+    restraintCustody,
     controls: {
       caseIds: CONTROL_CASE_IDS,
       mechanicsSemanticHash: semanticHash(controls.mechanics),
@@ -103,12 +115,81 @@ export function runBm4lFrictionProduction(input) {
       l15IndependentSolvePerformed: false,
       directReferenceComparisonEmitted: true,
       mechanicsStatus: friction.status,
+      frictionRestraintSourceCustodyStatus: restraintCustody.status,
       benchmarkRestraintAccuracyStatus: accuracy.frictionRestraintGateStatus,
       l1Status: friction.mechanics.cases.L1?.status ?? 'BLOCKED',
       overallStatus,
     },
   });
   return { actual, evidence };
+}
+
+export function verifyFrictionRestraintCustody(benchmarkPackage, authority) {
+  if (!authority || authority.schema !== 'm047-bm4l-friction-restraint-authority/v1') {
+    throw new TypeError('A versioned BM4_L friction restraint authority is required.');
+  }
+  if (authority.benchmarkId !== benchmarkPackage.benchmarkId) {
+    throw new TypeError('BM4_L friction restraint authority benchmarkId does not match the benchmark package.');
+  }
+  const rows = benchmarkPackage.model.tables.INPUT_RESTRAINTS.rows;
+  const modelCoefficient = Number(authority.frictionSurfaceAuthority.governedModelCoefficient);
+  const selected = selectBm4lAccdbFrictionRows(rows, modelCoefficient);
+  const actualNodeIds = selected.map((entry) => entry.nodeId);
+  const expectedNodeIds = authority.frictionSurfaceAuthority.nodeIds.map(String);
+  const actualNonFrictionYNodeIds = rows
+    .filter((row) => Number(row.RES_TYPEID) === Number(authority.frictionSurfaceAuthority.resTypeId)
+      && !(Number(row.FRIC_COEF) > 0))
+    .map((row) => String(row.NODE_NUM))
+    .sort(compareText);
+  const expectedNonFrictionYNodeIds = authority.frictionSurfaceAuthority.nonFrictionYNodeIds
+    .map(String)
+    .sort(compareText);
+  const checks = Object.freeze({
+    sourceAccdbSha256: Object.freeze({
+      expected: authority.source.accdbSha256,
+      actual: benchmarkPackage.source.sha256,
+      status: benchmarkPackage.source.sha256 === authority.source.accdbSha256 ? 'PASS' : 'FAIL',
+    }),
+    restraintRowCount: Object.freeze({
+      expected: Number(authority.source.rowCount),
+      actual: rows.length,
+      status: rows.length === Number(authority.source.rowCount) ? 'PASS' : 'FAIL',
+    }),
+    selectedFrictionRowCount: Object.freeze({
+      expected: Number(authority.frictionSurfaceAuthority.selectedRowCount),
+      actual: selected.length,
+      status: selected.length === Number(authority.frictionSurfaceAuthority.selectedRowCount) ? 'PASS' : 'FAIL',
+    }),
+    selectedFrictionNodeIds: Object.freeze({
+      expected: Object.freeze([...expectedNodeIds]),
+      actual: Object.freeze([...actualNodeIds]),
+      status: sameStrings(actualNodeIds, expectedNodeIds) ? 'PASS' : 'FAIL',
+    }),
+    nonFrictionYNodeIds: Object.freeze({
+      expected: Object.freeze([...expectedNonFrictionYNodeIds]),
+      actual: Object.freeze([...actualNonFrictionYNodeIds]),
+      status: sameStrings(actualNonFrictionYNodeIds, expectedNonFrictionYNodeIds) ? 'PASS' : 'FAIL',
+    }),
+  });
+  const failedChecks = Object.entries(checks)
+    .filter(([, check]) => check.status !== 'PASS')
+    .map(([name]) => name);
+  return Object.freeze({
+    schema: 'm047-bm4l-friction-restraint-custody-check/v1',
+    sourceAuthority: authority.source,
+    selectionRule: authority.frictionSurfaceAuthority.rule,
+    solverSelectionIsRowDriven: true,
+    selectedRows: Object.freeze(selected.map((entry) => Object.freeze({
+      nodeId: entry.nodeId,
+      sourceRowIndex: entry.sourceRowIndex,
+      sourceRestraintTypeId: entry.sourceRestraintTypeId,
+      sourceFrictionCoefficient: entry.sourceFrictionCoefficient,
+      normalDirection: entry.normalDirection,
+    }))),
+    checks,
+    failedChecks: Object.freeze(failedChecks),
+    status: failedChecks.length === 0 ? 'PASS' : 'BLOCKED_SOURCE_CUSTODY',
+  });
 }
 
 function buildAccuracyEvidence(benchmarkPackage, actualCases) {
@@ -167,9 +248,15 @@ function buildAccuracyEvidence(benchmarkPackage, actualCases) {
   });
 }
 
-export function resolveOverallAcceptanceStatus(mechanicsStatus, benchmarkRestraintAccuracyStatus) {
+export function resolveOverallAcceptanceStatus(
+  mechanicsStatus,
+  benchmarkRestraintAccuracyStatus,
+  sourceCustodyStatus = 'PASS',
+) {
   const mechanics = String(mechanicsStatus ?? '').trim().toUpperCase();
   const accuracy = String(benchmarkRestraintAccuracyStatus ?? '').trim().toUpperCase();
+  const custody = String(sourceCustodyStatus ?? '').trim().toUpperCase();
+  if (custody !== 'PASS') return 'BLOCKED';
   if (mechanics !== 'PASS') return mechanics || 'BLOCKED';
   if (accuracy === 'PASS') return 'PASS';
   if (accuracy === 'FAIL') return 'FAIL';
@@ -222,6 +309,14 @@ function rowIdentity(row) {
 
 function maximumAbsoluteValue(rows) {
   return rows.reduce((maximum, row) => Math.max(maximum, Math.abs(Number(row.value))), 0);
+}
+
+function sameStrings(left, right) {
+  return left.length === right.length && left.every((value, index) => String(value) === String(right[index]));
+}
+
+function compareText(left, right) {
+  return String(left) < String(right) ? -1 : String(left) > String(right) ? 1 : 0;
 }
 
 function extractAccdb(accdbPath, tableNames) {

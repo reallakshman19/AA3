@@ -29,7 +29,7 @@ export function createLfeaNativePublicationReadiness({
 
 function supportReadiness(preFlight, resultsState, authority) {
   const reasons = [];
-  if (!preFlight?.preparation?.structural?.compilation) reasons.push('CURRENT_MECHANICAL_COMPILATION_REQUIRED');
+  if (!currentCompilation(preFlight)) reasons.push('CURRENT_MECHANICAL_COMPILATION_REQUIRED');
   if (!currentRecovery(resultsState)) reasons.push('CURRENT_B3_4_RECOVERY_REQUIRED');
   if (!authority?.interfaceSet) reasons.push('GOVERNED_INTERFACE_SET_REQUIRED');
   if (!authority?.analysisResultByCase) reasons.push('GOVERNED_LINEAR_PIPING_ANALYSIS_RESULT_REQUIRED');
@@ -41,12 +41,14 @@ function supportReadiness(preFlight, resultsState, authority) {
 function b31Readiness(preFlight, resultsState, authority) {
   const reasons = [];
   const recovery = currentRecovery(resultsState);
-  if (!preFlight?.preparation?.structural?.compilation) reasons.push('CURRENT_MECHANICAL_COMPILATION_REQUIRED');
+  if (!currentCompilation(preFlight)) reasons.push('CURRENT_MECHANICAL_COMPILATION_REQUIRED');
   if (!recovery) reasons.push('CURRENT_B3_4_RECOVERY_REQUIRED');
   if (recovery && !hasComponentCodePoints(recovery)) reasons.push('COMPONENT_CODE_POINT_RECOVERY_REQUIRED');
   if (!authority?.codeProfile) reasons.push('GOVERNED_CODE_PROFILE_REQUIRED');
   if (!authority?.editionDataset) reasons.push('GOVERNED_EDITION_DATASET_REQUIRED');
-  if (!Array.isArray(authority?.checks) || authority.checks.length === 0) reasons.push('GOVERNED_B31_CHECK_SET_REQUIRED');
+  if (!Array.isArray(authority?.checks) || authority.checks.length === 0) {
+    reasons.push('GOVERNED_B31_CHECK_SET_REQUIRED');
+  }
   return publicationStage('B31_CODE', B31_CHAIN, reasons);
 }
 
@@ -54,10 +56,16 @@ function publicationStage(stage, producerChain, reasons) {
   const uniqueReasons = Object.freeze([...new Set(reasons)].sort(compareAscii));
   return deepFreeze({
     stage,
-    status: uniqueReasons.length === 0 ? LFEA_PUBLICATION_STATUS.READY : LFEA_PUBLICATION_STATUS.BLOCKED,
+    status: uniqueReasons.length === 0
+      ? LFEA_PUBLICATION_STATUS.READY
+      : LFEA_PUBLICATION_STATUS.BLOCKED,
     reasonCodes: uniqueReasons,
     producerChain,
   });
+}
+
+function currentCompilation(preFlight) {
+  return preFlight?.preparation?.structuralPreparation?.compilation ?? null;
 }
 
 function currentRecovery(resultsState) {
@@ -72,12 +80,22 @@ function hasComponentCodePoints(batch) {
     const components = caseRow.recovery?.componentResultants;
     return Array.isArray(components)
       && components.length > 0
-      && components.every((component) => Array.isArray(component.codePoints) && component.codePoints.length > 0);
+      && components.every((component) => (
+        Array.isArray(component.codePoints) && component.codePoints.length > 0
+      ));
   });
 }
 
 function explicitVector(value) {
-  return Array.isArray(value) && value.length === 3 && value.every(Number.isFinite);
+  return Boolean(value)
+    && typeof value === 'object'
+    && !Array.isArray(value)
+    && [value.x, value.y, value.z].every(Number.isFinite)
+    && Math.hypot(value.x, value.y, value.z) > 0;
 }
-function positiveFinite(value) { return Number.isFinite(value) && value > 0; }
-function compareAscii(left, right) { return left < right ? -1 : left > right ? 1 : 0; }
+function positiveFinite(value) {
+  return Number.isFinite(value) && value > 0;
+}
+function compareAscii(left, right) {
+  return left < right ? -1 : left > right ? 1 : 0;
+}

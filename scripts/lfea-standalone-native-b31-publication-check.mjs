@@ -15,11 +15,14 @@ import {
   authorizeLinearPipingInputXmlPreFlight,
   prepareLinearPipingInputXmlPreFlight,
 } from '../src/workspace/linear-piping-inputxml-prefea.js';
-import { createLfeaNativeExecutionAuthority } from '../src/lfea/native-execution-authority.js';
-import { createLfeaNativeResultsAuthority } from '../src/lfea/native-results-authority.js';
 import { createLfeaNativeB31PublicationAuthority } from '../src/lfea/native-b31-publication-authority.js';
 import { createLfeaNativeStraightCodeStationAuthority } from '../src/lfea/native-b31-code-stations.js';
+import { createLfeaNativeEvidenceDossier } from '../src/lfea/native-evidence-dossier.js';
+import { createLfeaNativeExecutionAuthority } from '../src/lfea/native-execution-authority.js';
 import { createLfeaNativePublicationReadiness } from '../src/lfea/native-publication-readiness.js';
+import { createLfeaNativeResultsAuthority } from '../src/lfea/native-results-authority.js';
+import { createLfeaNativeRunHistory } from '../src/lfea/native-run-history.js';
+import { createLfeaNativeVerification } from '../src/lfea/native-verification.js';
 import { codeProfile, editionDataset, stressFactorSet } from './lfea-b4.0-code-engine-fixtures.mjs';
 
 const preFlight = authorizedPreFlight(fixtureXml(1000));
@@ -30,6 +33,29 @@ const resultsState = resultsAuthority.recover(preFlight, executionState);
 const baseRecovery = resultsState.results.caseRecoveries[0].recovery;
 assert.equal(baseRecovery.componentResultants.length, 0);
 console.log('LFEA-B31-PUB-01 PASS base native B-3.4 remains bare-frame recovery');
+
+const sourceSnapshot = Object.freeze({
+  fileName: 'native-b31.xml',
+  contentSha256: 'c'.repeat(64),
+  sourceUnit: 'mm',
+  preFlightSemanticHash: preFlight.semanticHash,
+  authorizationSemanticHash: preFlight.authorization.semanticHash,
+});
+const applicationIdentity = Object.freeze({
+  application: 'LFEA',
+  mode: 'STANDALONE',
+  applicationVersion: '0.1.0',
+  buildSha: '0123456789abcdef0123456789abcdef01234567',
+  buildTime: '2026-08-12T04:00:00.000Z',
+});
+const history = createLfeaNativeRunHistory();
+history.archive({ applicationIdentity, sourceSnapshot, preFlight, executionState, resultsState });
+const historySnapshot = history.getSnapshot({
+  sourceSnapshot,
+  preFlight,
+  executionState,
+  resultsState,
+});
 
 const target = targetAuthority(preFlight);
 const input = b31Input(preFlight, target);
@@ -99,6 +125,21 @@ assert.equal(readiness.b31Code.status, 'READY');
 assert.ok(readinessAuthority.codeRecoveryByCase[LINEAR_PIPING_INPUTXML_DEFAULT_CASE_ID]);
 console.log('LFEA-B31-PUB-04 PASS reviewed exact-straight authority produces governed code-point readiness');
 
+const beforePublishVerification = createLfeaNativeVerification({
+  applicationIdentity,
+  sourceSnapshot,
+  preFlight,
+  executionState,
+  resultsState,
+  historySnapshot,
+  publicationReadiness: readiness,
+  b31PublicationState: authority.getState(),
+});
+const beforePublishDossier = createLfeaNativeEvidenceDossier(beforePublishVerification);
+assert.ok(beforePublishDossier.limitationCodes.includes('B31_CODE_NOT_PUBLISHED'));
+assert.equal(beforePublishDossier.engineeringIssueEligible, false);
+console.log('LFEA-B31-PUB-05 PASS reviewed/READY B31 authority is not dossier publication evidence before publish');
+
 const derived = readinessAuthority.codeRecoveryByCase[LINEAR_PIPING_INPUTXML_DEFAULT_CASE_ID];
 const augmented = derived.augmentedRecovery;
 const component = augmented.componentResultants[0];
@@ -108,7 +149,7 @@ assert.deepEqual(pointI.local, baseAction.local.I);
 assert.equal(derived.parentBaseRecoverySemanticHash, baseRecovery.semanticHash);
 assert.strictEqual(resultsAuthority.getState(), resultsState);
 assert.equal(resultsState.results.caseRecoveries[0].recovery.componentResultants.length, 0);
-console.log('LFEA-B31-PUB-05 PASS code point is retained B-3.4 end action; base Results are not rewritten/recovered');
+console.log('LFEA-B31-PUB-06 PASS code point is retained B-3.4 end action; base Results are not rewritten/recovered');
 
 const published = authority.publish(preFlight, executionState, resultsState);
 assert.equal(published.publicationCurrentness, 'CURRENT');
@@ -121,7 +162,27 @@ assert.equal(codeResult.category, 'SUSTAINED');
 assert.ok(Number.isFinite(codeResult.calculatedStress));
 assert.ok(Number.isFinite(codeResult.allowableStress));
 assert.ok(Number.isFinite(codeResult.utilization));
-console.log('LFEA-B31-PUB-06 PASS existing governed B31 compiler publishes sealed sustained straight-pipe result');
+console.log('LFEA-B31-PUB-07 PASS existing governed B31 compiler publishes sealed sustained straight-pipe result');
+
+const publishedVerification = createLfeaNativeVerification({
+  applicationIdentity,
+  sourceSnapshot,
+  preFlight,
+  executionState,
+  resultsState,
+  historySnapshot,
+  publicationReadiness: readiness,
+  b31PublicationState: published,
+});
+assert.equal(publishedVerification.b31Publication.status, 'CURRENT');
+assert.equal(publishedVerification.b31Publication.authoritySemanticHash, staged.authority.semanticHash);
+assert.equal(publishedVerification.b31Publication.authorizationSemanticHash, reviewed.authorization.semanticHash);
+assert.equal(publishedVerification.b31Publication.applicationSemanticHash, published.application.semanticHash);
+assert.equal(publishedVerification.b31Publication.codeResults[0].semanticHash, codeResult.semanticHash);
+const publishedDossier = createLfeaNativeEvidenceDossier(publishedVerification);
+assert.equal(publishedDossier.engineeringIssueEligible, false);
+assert.equal(publishedDossier.limitationCodes.includes('B31_CODE_NOT_PUBLISHED'), false);
+console.log('LFEA-B31-PUB-08 PASS Verification/Dossier retain exact B31 lineage without granting issue authority');
 
 const fakePreFlight = structuredClone(preFlight);
 fakePreFlight.preparation.structuralPreparation.segmentBindings[0].componentKind = 'BEND';
@@ -129,7 +190,7 @@ assert.throws(
   () => createLfeaNativeStraightCodeStationAuthority(fakePreFlight, staged.authority.checks),
   (error) => error?.code === 'LFEA_NATIVE_B31_TARGET_NOT_EXACT_STRAIGHT_PIPE',
 );
-console.log('LFEA-B31-PUB-07 PASS fitting/approximate semantics cannot enter first native B31 population');
+console.log('LFEA-B31-PUB-09 PASS fitting/approximate semantics cannot enter first native B31 population');
 
 const moved = authorizedPreFlight(fixtureXml(1200));
 const stale = authority.reconcile(moved, executionState, resultsState);
@@ -138,10 +199,10 @@ assert.equal(stale.publicationCurrentness, 'STALE');
 assert.equal(authority.getCurrentApplication(), null);
 authority.reconcile(preFlight, executionState, resultsState);
 assert.equal(authority.getState().authorityCurrentness, 'STALE');
-console.log('LFEA-B31-PUB-08 PASS source/model movement is sticky-stale and cannot reactivate code authority');
+console.log('LFEA-B31-PUB-10 PASS source/model movement is sticky-stale and cannot reactivate code authority');
 
 sourceGuards();
-console.log('LFEA-B31-PUB-09 PASS B31 composition retains layer ownership and source-size guards');
+console.log('LFEA-B31-PUB-11 PASS B31 composition retains layer ownership and source-size guards');
 console.log(JSON.stringify({
   check: 'lfea-standalone-native-b31-publication',
   status: 'PASS',
@@ -152,6 +213,7 @@ console.log(JSON.stringify({
   secondB34Recovery: false,
   reviewRequired: true,
   baseRecoveryImmutable: true,
+  evidenceOnlyDossier: true,
   codeData: 'FIXTURE-NOT-ASME',
 }));
 

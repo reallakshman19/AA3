@@ -45,7 +45,6 @@ export function runBm4lFrictionProduction(input) {
   const benchmarkPackage = buildCaesarAccdbBenchmarkPackage({ rawExport, profile });
   const restraintCustody = verifyFrictionRestraintCustody(benchmarkPackage, restraintAuthority);
 
-  // Issue #1083 gate: prove the frozen non-friction cases before accepting friction.
   const controls = solveCaesarAccdbLinearBenchmark(benchmarkPackage, CONTROL_CASE_IDS);
   const friction = solveCaesarAccdbFrictionBenchmark(benchmarkPackage, {
     caseIds: FRICTION_CASE_IDS,
@@ -135,8 +134,8 @@ export function runBm4lFrictionProduction(input) {
 }
 
 export function verifyFrictionRestraintCustody(benchmarkPackage, authority) {
-  if (!authority || authority.schema !== 'm047-bm4l-friction-restraint-authority/v2') {
-    throw new TypeError('A versioned BM4_L friction restraint authority/v2 is required.');
+  if (!authority || authority.schema !== 'm047-bm4l-friction-restraint-authority/v3') {
+    throw new TypeError('A versioned BM4_L friction restraint authority/v3 is required.');
   }
   if (authority.benchmarkId !== benchmarkPackage.benchmarkId) {
     throw new TypeError('BM4_L friction restraint authority benchmarkId does not match the benchmark package.');
@@ -146,12 +145,15 @@ export function verifyFrictionRestraintCustody(benchmarkPackage, authority) {
   const historical = authority.historicalDiagnosticCorroboration;
   const rows = benchmarkPackage.model.tables.INPUT_RESTRAINTS.rows;
   const selected = selectBm4lAccdbFrictionRows(rows, Number(rule.governedModelCoefficient));
-  const requiredDirection = rule.requiredDirection.map(Number);
-  const selectedDirectionStatus = selected.every((entry) =>
-    entry.normalDirection.length === requiredDirection.length
-      && entry.normalDirection.every((value, index) => value === requiredDirection[index]));
-  const selectedTypeStatus = selected.every((entry) =>
-    Number(entry.sourceRestraintTypeId) === Number(rule.resTypeId));
+  const expectedFloat32Coefficient = Math.fround(Number(rule.governedModelCoefficient));
+  const anchorTypeId = Number(rule.anchorRestraintTypeId);
+  const axisTolerance = Number(rule.directionAlignmentTolerance);
+  const selectedTypeIds = [...new Set(selected.map((entry) => entry.sourceRestraintTypeId))].sort((a, b) => a - b);
+  const selectedDirections = [...new Set(selected.map((entry) => entry.normalDirection.join(',')))].sort();
+  const selectedNonAnchorStatus = selected.every((entry) => entry.sourceRestraintTypeId !== anchorTypeId);
+  const coefficientStatus = selected.every((entry) =>
+    entry.sourceFrictionCoefficientFloat32 === expectedFloat32Coefficient);
+  const directionStatus = selected.every((entry) => axisAligned(entry.normalDirection, axisTolerance));
 
   const checks = Object.freeze({
     sourceAccdbFileName: Object.freeze({
@@ -170,19 +172,24 @@ export function verifyFrictionRestraintCustody(benchmarkPackage, authority) {
       status: benchmarkPackage.source.sha256 === pinned.accdbSha256 ? 'PASS' : 'FAIL',
     }),
     rowDrivenFrictionSurfacesPresent: Object.freeze({
-      expected: '>0 positive-FRIC_COEF type-Y rows from the pinned ACCDB',
+      expected: '>0 positive-FRIC_COEF non-anchor directional rows from the pinned ACCDB',
       actual: selected.length,
       status: selected.length > 0 ? 'PASS' : 'FAIL',
     }),
-    selectedRestraintType: Object.freeze({
-      expected: Number(rule.resTypeId),
-      actual: [...new Set(selected.map((entry) => entry.sourceRestraintTypeId))].sort((a, b) => a - b),
-      status: selectedTypeStatus ? 'PASS' : 'FAIL',
+    selectedRowsAreNonAnchor: Object.freeze({
+      anchorRestraintTypeId: anchorTypeId,
+      observedSelectedRestraintTypeIds: Object.freeze(selectedTypeIds),
+      status: selectedNonAnchorStatus ? 'PASS' : 'FAIL',
     }),
-    selectedNormalDirection: Object.freeze({
-      expected: Object.freeze([...requiredDirection]),
-      actual: Object.freeze([...new Set(selected.map((entry) => entry.normalDirection.join(',')))].sort()),
-      status: selectedDirectionStatus ? 'PASS' : 'FAIL',
+    selectedCoefficientsCorroborateModelMu: Object.freeze({
+      expectedFloat32Coefficient,
+      observedRawCoefficients: Object.freeze(selected.map((entry) => entry.sourceFrictionCoefficient)),
+      status: coefficientStatus ? 'PASS' : 'FAIL',
+    }),
+    selectedNormalsMatchQualifiedAxisProjection: Object.freeze({
+      alignmentTolerance: axisTolerance,
+      observedDirections: Object.freeze(selectedDirections),
+      status: directionStatus ? 'PASS' : 'FAIL',
     }),
   });
   const failedChecks = Object.entries(checks)
@@ -198,11 +205,17 @@ export function verifyFrictionRestraintCustody(benchmarkPackage, authority) {
       : 'DIFFERENT_SOURCE_AS_DECLARED',
     topologyComparisonStatus: sameAsHistoricalSource ? 'AVAILABLE_DIAGNOSTIC_ONLY' : 'NOT_APPLICABLE_DIFFERENT_ACCDB_SHA',
     observedHistoricalSelectedRowCount: historical.observedSelectedRowCount,
+    observedHistoricalRestraintTypeId: historical.observedFrictionRestraintTypeId,
+    observedHistoricalDirection: historical.observedFrictionDirection,
     actualPinnedSelectedRowCount: selected.length,
+    actualPinnedSelectedRestraintTypeIds: Object.freeze(selectedTypeIds),
+    actualPinnedSelectedDirections: Object.freeze(selectedDirections),
     historicalNodeListUsedBySolver: false,
+    historicalRestraintTypeUsedBySolver: false,
+    historicalDirectionUsedBySolver: false,
   });
   return Object.freeze({
-    schema: 'm047-bm4l-friction-restraint-custody-check/v2',
+    schema: 'm047-bm4l-friction-restraint-custody-check/v3',
     pinnedSourceAuthority: pinned,
     selectionRule: rule.membershipRule,
     solverSelectionIsRowDriven: true,
@@ -337,6 +350,14 @@ function rowIdentity(row) {
 
 function maximumAbsoluteValue(rows) {
   return rows.reduce((maximum, row) => Math.max(maximum, Math.abs(Number(row.value))), 0);
+}
+
+function axisAligned(direction, tolerance) {
+  const magnitudes = direction.map((value) => Math.abs(Number(value)));
+  const dominant = Math.max(...magnitudes);
+  if (Math.abs(dominant - 1) > tolerance) return false;
+  const dominantIndex = magnitudes.indexOf(dominant);
+  return magnitudes.every((value, index) => index === dominantIndex || value <= tolerance);
 }
 
 function extractAccdb(accdbPath, tableNames) {

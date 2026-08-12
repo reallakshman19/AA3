@@ -12,7 +12,9 @@
     "note": "Versioned implementation policy; not tuned to benchmark failure counts."
   },
   "maximumIterations": 100,
+  "displacementUpdateMetric": "NORMALIZED_PROJECTED_TANGENTIAL_TRANSLATIONS_METRES_ONLY",
   "displacementUpdateNorm": 1e-9,
+  "reactionUpdateMetric": "NORMALIZED_FRICTION_SURFACE_NORMAL_REACTIONS_NEWTONS_ONLY",
   "reactionUpdateNorm": 1e-6,
   "capResidualN": 1e-6,
   "stickResidualN": 1e-6,

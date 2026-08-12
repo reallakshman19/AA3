@@ -32,7 +32,7 @@ export function runBm4lFrictionStiffnessSensitivity({
       runs[key] = deepFreeze({
         multiplier,
         role: 'QUALIFICATION_NOMINAL_REUSED',
-        status: nominalResult.status,
+        status: sensitivityProjectionStatus(nominalResult),
         source: 'NOMINAL_TWO_REPEAT_RESULT',
         cases: sensitivityCaseProjection(nominalResult),
         error: null,
@@ -49,7 +49,7 @@ export function runBm4lFrictionStiffnessSensitivity({
       runs[key] = deepFreeze({
         multiplier,
         role: 'DIAGNOSTIC_ONLY',
-        status: result.status,
+        status: sensitivityProjectionStatus(result),
         source: 'INDEPENDENT_DIAGNOSTIC_SOLVE',
         cases: sensitivityCaseProjection(result),
         error: null,
@@ -123,6 +123,15 @@ export function scaleBm4lFrictionStiffnessPackage(benchmarkPackage, multiplierIn
     }),
     diagnosticFrictionStiffnessScale: multiplier,
   });
+}
+
+function sensitivityProjectionStatus(result) {
+  const l13 = result.mechanics?.cases?.L13;
+  const l7 = result.mechanics?.cases?.L7;
+  const l15 = result.cases?.L15;
+  if (l13?.status !== 'PASS' || l7?.status !== 'PASS') return 'FAIL';
+  if (!Array.isArray(l15?.rows) || l15.rows.length === 0) return 'FAIL';
+  return 'PASS';
 }
 
 function sensitivityCaseProjection(result) {

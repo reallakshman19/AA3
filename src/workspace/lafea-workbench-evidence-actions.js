@@ -1,4 +1,7 @@
 /** Registration/export actions extracted from the canonical orchestrator store. */
+import {
+  createLafeaContinuumDomainFirstPreflight,
+} from './lafea-continuum-domain-first-preflight.js';
 import { requireLafeaStageComposition } from './lafea-stage-composition-root.js';
 import {
   LAFEA_CONTINUUM_REVALIDATION_RESULT_SCHEMA,
@@ -12,6 +15,21 @@ export function createLafeaWorkbenchEvidenceActions(context) {
   const c = requireContext(context);
 
   function activeStageId() { return c.getRetainedState().activeStageId; }
+
+  function prepareContinuumForRun(stageId = activeStageId()) {
+    if (stageId !== 'LAFEA.3' || c.rawStage(stageId).domainFirstProfileActive !== true) {
+      throw c.storeError('LAFEA_CONTINUUM_PREFLIGHT_DOMAIN_FIRST_STAGE_REQUIRED');
+    }
+    const evidence = createLafeaContinuumDomainFirstPreflight(c, stageId);
+    const result = c.continuumPreflight.register(evidence);
+    if (result.changed) c.clearDomainFirstExecution(stageId);
+    c.clearOrchestratorDiagnostic();
+    const state = result.changed ? c.publish() : c.deriveState();
+    return freeze({
+      ...result,
+      projection: state.stages[stageId].preparationProjection,
+    });
+  }
 
   function registerTemplateReleaseRecord(value, stageId = activeStageId()) {
     const result = c.release.register(value, c.readStageState(stageId));
@@ -98,7 +116,6 @@ export function createLafeaWorkbenchEvidenceActions(context) {
       lifecycle: stage.lifecycle,
     });
 
-    // Dry-run the complete batch before the first mutable registration.
     const predicted = registerLafeaContinuumRevalidationBatch(stage.lifecycle, batch);
     for (let index = 0; index < batch.records.length; index += 1) {
       c.invokeRetained('registerLifecycleArtifact', [
@@ -140,6 +157,7 @@ export function createLafeaWorkbenchEvidenceActions(context) {
   function activateDomainFirstProfile(stageId = activeStageId()) {
     const result = c.geometry.activate(c.rawStage(stageId));
     if (result.changed) {
+      c.continuumPreflight.clear(stageId);
       c.clearDomainFirstExecution(stageId);
       c.clearOrchestratorDiagnostic();
     }
@@ -151,6 +169,7 @@ export function createLafeaWorkbenchEvidenceActions(context) {
     const result = c.geometry.registerDomain(value, c.readStageState(stageId));
     if (result.changed) {
       c.meshGeneration.invalidate(stageId);
+      c.continuumPreflight.clear(stageId);
       c.clearDomainFirstExecution(stageId);
     }
     const state = result.changed ? c.publish() : c.deriveState();
@@ -168,6 +187,7 @@ export function createLafeaWorkbenchEvidenceActions(context) {
     );
     if (result.changed) {
       c.meshGeneration.invalidate(stageId);
+      c.continuumPreflight.clear(stageId);
       c.clearDomainFirstExecution(stageId);
     }
     const state = result.changed ? c.publish() : c.deriveState();
@@ -199,6 +219,7 @@ export function createLafeaWorkbenchEvidenceActions(context) {
       numericalVerification: stage.numericalVerificationProjection,
       t6GeometryQualification: stage.retainedT6GeometryQualification,
       t6GeometryQualificationProjection: stage.t6GeometryQualificationProjection,
+      continuumPreflightEvidence: stage.retainedContinuumPreflightEvidence,
       readiness: stage.lifecycleReadiness,
       preparation: stage.preparationProjection,
       domainFirstLifecycle: stage.domainFirstLifecycle,
@@ -210,6 +231,7 @@ export function createLafeaWorkbenchEvidenceActions(context) {
   }
 
   return Object.freeze({
+    prepareContinuumForRun,
     registerTemplateReleaseRecord,
     registerNumericalVerificationEvidence,
     registerT6GeometryQualification,

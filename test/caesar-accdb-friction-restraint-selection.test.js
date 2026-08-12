@@ -39,26 +39,28 @@ test('selects only positive-FRIC_COEF ACCDB Y rows and keeps model mu authoritat
   assert.deepEqual(selected[0].normalDirection, [0, 1, 0]);
 });
 
-test('authenticated 46-row BM4_L extraction selects exactly the 26 friction Y surfaces', () => {
+test('historical 46-row extraction remains diagnostic-only and exercises co-located GUI/LIM negative controls', () => {
   const fixture = JSON.parse(fs.readFileSync(AUTHENTICATED_FIXTURE, 'utf8'));
   const authority = JSON.parse(fs.readFileSync(AUTHORITY, 'utf8'));
-  assert.equal(fixture.sourceAccdbSha256, authority.source.accdbSha256);
-  assert.equal(fixture.inputRestraintsTableSha256, authority.source.inputRestraintsTableSha256);
-  assert.equal(fixture.rowProjectionSha256, authority.source.rowProjectionSha256);
-  assert.equal(fixture.rows.length, authority.source.rowCount);
+  const historical = authority.historicalDiagnosticCorroboration;
 
-  const selected = selectBm4lAccdbFrictionRows(fixture.rows, 0.3);
-  assert.equal(selected.length, authority.frictionSurfaceAuthority.selectedRowCount);
-  assert.deepEqual(
-    selected.map((entry) => entry.nodeId),
-    authority.frictionSurfaceAuthority.nodeIds,
-  );
-  assert.ok(selected.every((entry) => entry.sourceRestraintTypeId === 3));
+  assert.equal(authority.schema, 'm047-bm4l-friction-restraint-authority/v2');
+  assert.equal(historical.qualificationAuthority, false);
+  assert.notEqual(authority.pinnedSourceAuthority.accdbSha256, historical.accdbSha256);
+  assert.equal(fixture.sourceAccdbSha256, historical.accdbSha256);
+  assert.equal(fixture.inputRestraintsTableSha256, historical.inputRestraintsTableSha256);
+  assert.equal(fixture.rowProjectionSha256, historical.rowProjectionSha256);
+  assert.equal(fixture.rows.length, historical.rowCount);
+
+  const selected = selectBm4lAccdbFrictionRows(fixture.rows, authority.frictionSurfaceRule.governedModelCoefficient);
+  assert.equal(selected.length, historical.observedSelectedRowCount);
+  assert.deepEqual(selected.map((entry) => entry.nodeId), historical.observedFrictionNodeIds);
+  assert.ok(selected.every((entry) => entry.sourceRestraintTypeId === authority.frictionSurfaceRule.resTypeId));
   assert.ok(selected.every((entry) => entry.sourceFrictionCoefficient === STORED_MU));
   assert.ok(selected.every((entry) => entry.normalDirection.join(',') === '0,1,0'));
 
   const selectedNodes = new Set(selected.map((entry) => entry.nodeId));
-  for (const nodeId of authority.frictionSurfaceAuthority.nonFrictionYNodeIds) {
+  for (const nodeId of historical.observedNonFrictionYNodeIds) {
     assert.equal(selectedNodes.has(nodeId), false, `${nodeId} must remain a non-friction Y support`);
   }
   for (const sourceTypeId of [1, 8, 9]) {

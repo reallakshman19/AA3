@@ -11,7 +11,7 @@ export function createLafeaMeshGenerationActions(context) {
   const {
     meshGeneration, mesh, rawStage, readStageState, deriveStage, publish,
     invokeRetained, getRetainedState, clearOrchestratorDiagnostic, failOrchestrator,
-    storeError,
+    clearDomainFirstExecution, storeError,
   } = context;
 
   /**
@@ -28,7 +28,10 @@ export function createLafeaMeshGenerationActions(context) {
     invokeRetained('applyLifecycleEvent', [event]);
     const succeeded = getRetainedState().status !== 'FAILED';
     mesh.afterLifecycleEvent(event, succeeded);
-    if (succeeded) clearOrchestratorDiagnostic();
+    if (succeeded) {
+      clearDomainFirstExecution(stageId);
+      clearOrchestratorDiagnostic();
+    }
     return freeze({ ...result, stage: publish().stages[stageId] });
   }
 
@@ -54,12 +57,12 @@ export function createLafeaMeshGenerationActions(context) {
   /** Preview only: runs the producer and reports the result, custody untouched. */
   function planAnalysisMesh(overrides = {}, stageId = getRetainedState().activeStageId) {
     return attempt(stageId, 'LAFEA_ANALYSIS_MESH_PLAN_REJECTED',
-      () => meshGeneration.planMesh(readStageState(stageId), overrides));
+      () => meshGeneration.planMesh(readStageState(stageId), overrides), false);
   }
 
   function generateAnalysisMesh(overrides = {}, stageId = getRetainedState().activeStageId) {
     return attempt(stageId, 'LAFEA_ANALYSIS_MESH_GENERATION_REJECTED',
-      () => meshGeneration.generateMesh(readStageState(stageId), overrides));
+      () => meshGeneration.generateMesh(readStageState(stageId), overrides), true);
   }
 
   /**
@@ -69,7 +72,7 @@ export function createLafeaMeshGenerationActions(context) {
    */
   function refineAnalysisMesh(request = {}, stageId = getRetainedState().activeStageId) {
     return attempt(stageId, 'LAFEA_RETAINED_MESH_REFINEMENT_REJECTED',
-      () => meshGeneration.refineMesh(readStageState(stageId), request));
+      () => meshGeneration.refineMesh(readStageState(stageId), request), true);
   }
 
   /**
@@ -90,6 +93,7 @@ export function createLafeaMeshGenerationActions(context) {
       const binding = bindAnalysisMeshProfile(validated.meshProfile, stageId);
       if (getRetainedState().status === 'FAILED') return null;
       const result = meshGeneration.recoverEvidence(validated, stageId);
+      clearDomainFirstExecution(stageId);
       clearOrchestratorDiagnostic();
       return freeze({
         ...result,
@@ -103,10 +107,11 @@ export function createLafeaMeshGenerationActions(context) {
     }
   }
 
-  function attempt(stageId, fallbackCode, action) {
+  function attempt(stageId, fallbackCode, action, invalidatesExecution) {
     requireGenerationAuthorized(stageId);
     try {
       const result = action();
+      if (invalidatesExecution) clearDomainFirstExecution(stageId);
       clearOrchestratorDiagnostic();
       return freeze({ ...result, stage: publish().stages[stageId] });
     } catch (error) {

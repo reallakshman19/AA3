@@ -30,7 +30,7 @@ const INPUT_KEYS = Object.freeze([
 ]);
 
 /**
- * Own the explicit support/interface authority and its current-only published
+ * Own explicit support/interface authority and its current-only published
  * support actions. This layer composes existing governed producers only; it
  * never infers support semantics from InputXML global restraint rows.
  */
@@ -47,10 +47,9 @@ export function createLfeaNativeSupportPublicationAuthority() {
       definitions: accepted.definitions,
       profile: accepted.interfaceProfile,
     });
-    const authority = sealAuthority(preFlight, accepted, interfaceSet);
     state = deepFreeze({
       authorityCurrentness: LFEA_NATIVE_SUPPORT_CURRENTNESS.CURRENT,
-      authority,
+      authority: sealAuthority(preFlight, accepted, interfaceSet),
       authorityStaleReasonCodes: [],
       publicationCurrentness: LFEA_NATIVE_SUPPORT_CURRENTNESS.NONE,
       publications: null,
@@ -204,12 +203,15 @@ function buildCaseChains(preFlightRecord, executionState, resultsState) {
       expectedParents: null,
     };
     const request = { ...requestBase, expectedParents: deriveLinearPipingParentSet(requestBase) };
-    const analysisResult = composeLinearPipingAnalysisResult({
-      request,
-      execution: rawCase.execution,
-      recovery: recovered.recovery,
+    return deepFreeze({
+      caseId: rawCase.caseId,
+      loadCase: physical.loadCase,
+      analysisResult: composeLinearPipingAnalysisResult({
+        request,
+        execution: rawCase.execution,
+        recovery: recovered.recovery,
+      }),
     });
-    return deepFreeze({ caseId: rawCase.caseId, loadCase: physical.loadCase, analysisResult });
   });
 }
 
@@ -249,8 +251,23 @@ function sealAuthority(preFlight, input, interfaceSet) {
     modelVersion: input.modelVersion,
     semanticHash: '',
   };
-  draft.semanticHash = semanticHash({ ...draft, semanticHash: undefined });
+  draft.semanticHash = semanticHash(authoritySemanticProjection(draft));
   return deepFreeze(draft);
+}
+
+function authoritySemanticProjection(record) {
+  return {
+    schema: record.schema,
+    parentSourceBundleSemanticHash: record.parentSourceBundleSemanticHash,
+    parentModelSemanticHash: record.parentModelSemanticHash,
+    parentCompilationSemanticHash: record.parentCompilationSemanticHash,
+    supportAttachmentModelSemanticHash: record.supportAttachmentModelSemanticHash,
+    restraintCapabilityModelSemanticHash: record.restraintCapabilityModelSemanticHash,
+    interfaceSetSemanticHash: record.interfaceSet.semanticHash,
+    upGlobal: record.upGlobal,
+    parallelTolerance: record.parallelTolerance,
+    modelVersion: record.modelVersion,
+  };
 }
 
 function authorityCurrentnessReasons(preFlightRecord, authority) {
@@ -276,13 +293,7 @@ function publicationCurrentnessReasons(executionState, resultsState, expected) {
   if (!recovery) reasons.push('B3_4_RECOVERY_NO_LONGER_CURRENT');
   if (raw) compare(reasons, 'RAW_EXECUTION_CHANGED', expected.rawExecutionSemanticHash, raw.semanticHash);
   if (recovery) compare(reasons, 'B3_4_RECOVERY_CHANGED', expected.recoveryBatchSemanticHash, recovery.semanticHash);
-  compare(reasons, 'SUPPORT_AUTHORITY_CHANGED', expected.supportAuthoritySemanticHash,
-    stateHashPlaceholder(expected, raw, recovery));
-  return uniqueAscii(reasons.filter((code) => code !== 'SUPPORT_AUTHORITY_CHANGED'));
-}
-
-function stateHashPlaceholder(expected) {
-  return expected.supportAuthoritySemanticHash;
+  return uniqueAscii(reasons);
 }
 
 function publicationParent(executionState, resultsState, authority) {
@@ -324,10 +335,15 @@ function declaredVector(value, field) {
   exactKeys(value, ['value', 'source'], field);
   const vector = value.value;
   exactKeys(vector, ['x', 'y', 'z'], `${field}.value`);
-  if (![vector.x, vector.y, vector.z].every(Number.isFinite) || Math.hypot(vector.x, vector.y, vector.z) === 0) {
-    throw supportError('LFEA_NATIVE_SUPPORT_UP_VECTOR_INVALID', `${field}.value must be a finite non-zero vector.`);
+  if (![vector.x, vector.y, vector.z].every(Number.isFinite)
+    || Math.hypot(vector.x, vector.y, vector.z) === 0) {
+    throw supportError('LFEA_NATIVE_SUPPORT_UP_VECTOR_INVALID',
+      `${field}.value must be a finite non-zero vector.`);
   }
-  return deepFreeze({ value: deepFreeze({ ...vector }), source: nonEmpty(value.source, `${field}.source`) });
+  return deepFreeze({
+    value: deepFreeze({ ...vector }),
+    source: nonEmpty(value.source, `${field}.source`),
+  });
 }
 
 function declaredTolerance(value) {
@@ -336,7 +352,10 @@ function declaredTolerance(value) {
     throw supportError('LFEA_NATIVE_SUPPORT_TOLERANCE_INVALID',
       'parallelTolerance.value must be greater than zero and less than one.');
   }
-  return deepFreeze({ value: value.value, source: nonEmpty(value.source, 'parallelTolerance.source') });
+  return deepFreeze({
+    value: value.value,
+    source: nonEmpty(value.source, 'parallelTolerance.source'),
+  });
 }
 
 function declaredModelVersion(value) {
@@ -345,7 +364,10 @@ function declaredModelVersion(value) {
     throw supportError('LFEA_NATIVE_SUPPORT_MODEL_VERSION_INVALID',
       'modelVersion.value must be a non-negative safe integer.');
   }
-  return deepFreeze({ value: value.value, source: nonEmpty(value.source, 'modelVersion.source') });
+  return deepFreeze({
+    value: value.value,
+    source: nonEmpty(value.source, 'modelVersion.source'),
+  });
 }
 
 function emptyState() {

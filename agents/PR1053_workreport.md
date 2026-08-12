@@ -7,162 +7,109 @@
 | PR | #1053 — `test(3d-edit): qualify NODE_POSITION production browser path` |
 | Branch | `agent/node-position-browser-qualification` |
 | Base | `main@271d04fa2674ab68367808d05f2429ec5e236a6e` |
-| Bootstrap | `904b23c63e96ac5d80c50276f87592b79000f813` — empty tree-equivalent commit; zero changed files |
+| Bootstrap | `904b23c63e96ac5d80c50276f87592b79000f813` — empty tree-equivalent commit |
 | Rules | `reallaksh19/Common@43eccc27967ecec7d67513c08255398b496be5ce/CodingRules.md` |
-| Mission | Qualify the real production-browser Table NODE_POSITION path for NODE_ONLY, CONNECTED_RUN, support/dependency fail-closed behavior, concurrency/staleness, Preview/Validate non-mutation, and exact Apply/Undo/Redo custody. |
-| Status | DRAFT / report-first qualification planning |
-| Production behavior changes | NONE AUTHORIZED unless a browser/source contract proves a defect and that finding is recorded here first |
-| Empirical CI | Current repository has no `.github/workflows` after #1043; source qualification may be authored but must not be reported as executed PASS without an available execution mechanism |
+| Mission | Qualify production-browser Table NODE_POSITION for NODE_ONLY, CONNECTED_RUN, support fail-closed behavior, stale concurrency, Preview/Validate non-mutation, and exact Apply/Undo/Redo custody. |
+| Status | DRAFT / existing-contract audit complete / test-only implementation authorized |
+| Production changes | NONE authorized; a failing browser contract must be registered before any production-source edit |
+| Empirical execution | NOT_RUN unless a current execution mechanism becomes available; `.github/workflows` was retired by #1043 and this agent has no network checkout path |
 
-## Required Architecture
+## Architecture Invariant
 
-The browser path must remain:
+`Table coordinate draft -> governed NODE_POSITION intent -> operation plan -> candidate Preview -> validation worker -> certified transaction -> canonical topology -> existing journal Undo/Redo`
 
-`Table coordinate input -> transient DOM draft -> governed NODE_POSITION intent -> operation plan -> candidate topology -> Preview ghost -> validation worker -> certified transaction -> canonical topology -> existing journal Undo/Redo`
+No direct node writes, Table-owned history, Preview/Validate mutation, support-follow semantics, guessed run membership, or stale-guard weakening.
 
-Prohibited in this PR unless a separately recorded defect proves necessity:
+## Existing Contract Audit
 
-- direct node/canonical writes from Table/DOM;
-- Table-owned applied undo stack;
-- mutation during coordinate editing, Stage, Preview, or Validate;
-- bypassing support/dependent-record custody;
-- guessed connected-run membership;
-- weakening stale/conflict or source/line-budget guards;
-- changing support movement semantics.
+Pure `tests/topology-edit-table-node-position.test.mjs` already proves:
 
-## Qualification Goals
+- exact endpoint capability;
+- NODE_ONLY -> one governed MOVE_NODE;
+- CONNECTED_RUN -> complete selected-side component translation;
+- stale expected-position rejection;
+- dependent-record fail closed;
+- overlapping move closure rejection;
+- Preview/Validate non-mutation;
+- atomic Apply and exact journal Undo/Redo.
 
-### NODE_ONLY positive path
+`deriveTopologyEditTableNodePositionCapability()` already fails support-dependent endpoints with `SUPPORT_GEOMETRY_POLICY_REQUIRED` and other junction/boundary/rigid/bend dependencies with `NODE_DEPENDANT_POLICY_REQUIRED`.
 
-Production browser path:
+`compileTopologyEditTableNodePosition()` computes CONNECTED_RUN by removing the selected source edge, translating the entire endpoint-side component, rejecting cycles and dependent records, then routing through `planMoveConnectedRun()`; support dependencies are checked across all moved nodes/affected edges.
 
-`open Table -> select safe PIPE -> edit FROM/TO XYZ -> NODE_ONLY -> Stage -> Preview -> Validate -> Apply -> Undo -> Redo`
+`validateTopologyEditTableRuntime()` already verifies the Preview hash and current canonical hash after the async validation result returns; stale validation throws `validation completed against a stale Preview` before Apply authorization.
 
-Required evidence:
+## Browser Target Decisions
 
-- typing coordinates does not change canonical hash or journal authority;
-- Stage does not change canonical hash;
-- Preview does not change canonical hash and produces ghost geometry;
-- Validate does not change canonical hash;
-- Apply changes the exact endpoint node to the requested coordinates;
-- source semantic/byte authority remains unchanged;
-- renderer remains singular;
-- Undo restores exact pre-Apply canonical hash + active ledger/hash/command IDs;
-- Redo restores exact applied canonical + ledger state.
-
-Positive-control target should reuse a verified unrestrained production-demo endpoint (prior audit identified P-003 TO as a successful MOVE_NODE target) rather than weakening support policy around supported P-001.
-
-### CONNECTED_RUN positive path
-
-Production browser path uses the same Table editor but `CONNECTED_RUN` movement mode.
-
-Required evidence:
-
-- selected complete plain connected run translates by one identical delta;
-- anchor-side/outside geometry remains fixed;
-- internal translated-run edge lengths remain unchanged;
-- typed/Stage/Preview/Validate remain canonical no-ops;
-- Apply/Undo/Redo custody matches NODE_ONLY standards.
-
-### Support/dependent fail-closed path
-
-Use a support-dependent production target (prior audit identified P-001 as intentionally blocked after merged #1036).
-
-Required evidence:
-
-- capability/editor is disabled or Stage fails closed with `SUPPORT_GEOMETRY_POLICY_REQUIRED` according to the production surface contract;
-- no canonical/journal mutation occurs;
-- no support relocation/follow behavior is introduced.
-
-### Concurrency / stale custody
-
-After staging NODE_POSITION:
-
-- unrelated Canvas edit -> Table safely rebases staged intent/plan and requires regenerated Preview;
-- mutate target node -> `STALE_CONFLICT` / target/dependency revision conflict;
-- mutate affected support/host edge -> stale conflict when applicable;
-- validation result arriving after canonical change is rejected and cannot authorize Apply.
+| Case | Fixture / target | Reason |
+|---|---|---|
+| NODE_ONLY success | 20-element production demo, P-003 TO | already verified by #1036 browser qualification as unrestrained successful MOVE_NODE positive control |
+| support negative | 20-element production demo, P-001 endpoint | intentionally support-dependent; must remain `SUPPORT_GEOMETRY_POLICY_REQUIRED` / disabled with no mutation |
+| CONNECTED_RUN success | Q3 fixture, P-M04 TO | removing P-M04 leaves downstream valve + tail as a plain multi-node component with no support/junction dependency; verifies identical multi-node translation and unchanged internal lengths |
+| unrelated rebase | Q3 fixture, stage P-R42 FROM then Canvas-move P-TAIL terminal | disjoint canonical component |
+| target stale | Q3 fixture, stage P-R42 FROM then Canvas-move that exact FROM node | target revision/coordinate changed |
+| dependency-edge stale | Q3 fixture, stage P-R42 FROM then Canvas-move P-R42 TO | target node unchanged but source edge dependency revision changes |
+| stale validation | Q3 fixture with controlled validation-client delay | test-only timing control; canonical change still performed through certified Canvas path, and production workflow stale-result check remains unmodified |
 
 ## Engineering Register
 
 | ID | Type | Status | Finding / decision |
 |---|---|---|---|
-| DEC-1053-01 | Scope | ACCEPTED | This is qualification-first. Existing NODE_POSITION production/pure behavior is presumed unchanged until a failing contract proves otherwise. |
-| DEC-1053-02 | Positive control | ACCEPTED | Prefer verified unrestrained P-003 TO for NODE_ONLY success; supported P-001 remains a negative/fail-closed control. |
-| DEC-1053-03 | Architecture | ACCEPTED | Reuse existing Table editor/runtime, session, validation worker and journal; no new execution authority. |
-| RISK-1053-01 | Browser execution | OPEN | Repository workflows are retired and this agent currently lacks a local checkout/network clone path; authored Playwright source may remain NOT_RUN. |
-| RISK-1053-02 | Fixture truth | OPEN | Existing production demo/Q3 fixtures must be audited before hard-coding endpoint/run IDs; tests should derive exact topology/custody evidence where practical. |
-| RISK-1053-03 | Concurrency determinism | OPEN | Connected-run and stale-host tests must mutate exact canonical records through existing certified Canvas/Table paths, not direct test-only model mutation unless the repository already treats such fixture setup as authoritative. |
+| DEC-1053-01 | Scope | ACCEPTED | Test-only qualification; no production behavior change absent a proven defect. |
+| DEC-1053-02 | NODE_ONLY control | ACCEPTED | P-003 TO positive, P-001 support negative. |
+| DEC-1053-03 | CONNECTED_RUN control | ACCEPTED | Q3 P-M04 TO exercises a multi-node downstream run, not merely a terminal single node. |
+| DEC-1053-04 | Concurrency | ACCEPTED | Use certified Canvas move operations for unrelated/target/dependency changes; no direct canonical mutation. |
+| DEC-1053-05 | Validation timing | ACCEPTED | A deferred wrapper around the production validation client may control arrival timing, but the canonical change must still use certified UI/Canvas authority and production stale-check code is not replaced. |
+| RISK-1053-01 | Execution infrastructure | OPEN | No current CI workflows/statuses; local clone unavailable. Authored Playwright source is not executed evidence. |
 
-## Stage Roadmap
+## Authorized Changed-File Ledger
 
-### S0 — Report-first custody — COMPLETE
+Registering these paths **before modification**:
 
-PR opened from current main with empty bootstrap commit; this numbered report is the first changed file.
+1. `agents/PR1053_workreport.md`
+2. `e2e/helpers/topology-edit-table-node-position-fixture.js` — new shared production/Q3 helper
+3. `e2e/topology-edit-table-node-position-lifecycle.spec.js` — new NODE_ONLY, CONNECTED_RUN, support negative lifecycle qualification
+4. `e2e/topology-edit-table-node-position-concurrency.spec.js` — new rebase/stale/validation-arrival qualification
 
-### S1 — Existing contract/fixture audit — IN PROGRESS
+No production source file is authorized at this stage.
 
-Read and map:
+## Required Browser Evidence
 
-- pure NODE_POSITION capability/contract/planner/rebase tests;
-- production Table editor selectors/runtime behavior;
-- current production demo fixture topology for safe/blocked endpoints;
-- existing browser helpers for evidence, Canvas move, Table selection and undo/redo;
-- support dependency negative-control evidence from merged #1036.
+### NODE_ONLY
 
-No source/test modification beyond this report during S1.
+Typing, Stage, Preview and Validate must preserve canonical/journal/source authority; Preview must render ghost; Apply must put exact endpoint at requested XYZ; source remains unchanged; renderer singular; Undo restores exact baseline canonical + ledger/command IDs; Redo restores exact applied canonical + ledger state.
 
-### S2 — NODE_ONLY production browser source qualification — PENDING
+### CONNECTED_RUN
 
-Prefer one focused E2E spec/harness reuse rather than duplicating an entire production controller setup.
+All nodes in the selected-side component translate by the same delta; anchor-side node remains fixed; internal moving-side edge lengths remain unchanged; lifecycle custody matches NODE_ONLY.
 
-### S3 — CONNECTED_RUN + support fail-closed source qualification — PENDING
+### Support negative
 
-Derive run membership before movement and compare identical deltas/internal lengths after Apply; verify support-dependent target remains fail closed/no mutation.
+Support-dependent endpoint editor must be `UNREPRESENTABLE`/disabled with reason `SUPPORT_GEOMETRY_POLICY_REQUIRED`; no canonical/journal mutation and no support relocation.
 
-### S4 — concurrency/stale browser source qualification — PENDING
+### Concurrency
 
-Reuse existing Table/Canvas certified operation helpers where possible.
-
-### S5 — empirical execution + merge custody — PENDING
-
-If no execution mechanism exists, leave exact tests marked NOT_RUN and keep the PR draft rather than equating source review with browser PASS.
-
-## Changed-File Ledger
-
-Current authorized scope before S1 audit:
-
-- `agents/PR1053_workreport.md`
-
-Expected later test-only scope, to be registered precisely before edits:
-
-- one focused NODE_POSITION Playwright spec, preferably new and small;
-- existing browser helper/fixture only if required and registered first;
-- existing E2E spec only if a narrow assertion extension is safer than a new focused spec.
-
-Production source files are **not authorized** until a concrete defect is registered here first.
+- unrelated Canvas edit -> staged Table plan safely rebases and Preview is cleared;
+- exact target node edit -> `STALE_CONFLICT`;
+- opposite endpoint edit on same source edge -> dependency revision `STALE_CONFLICT`;
+- delayed validation returning after certified canonical change -> no READY_TO_APPLY and stale Preview error recorded.
 
 ## Validation Ledger
 
 | Candidate | Evidence |
 |---|---|
-| `main@271d04fa2674ab68367808d05f2429ec5e236a6e` | baseline from merged support-dependency + valve-catalogue state |
-| `904b23c63e96ac5d80c50276f87592b79000f813` | empty bootstrap; zero changed files |
-| report-first head | report only; no behavior/test change |
+| `main@271d04fa2674ab68367808d05f2429ec5e236a6e` | architecture/pure-test audit |
+| `904b23c63e96ac5d80c50276f87592b79000f813` | empty bootstrap, zero changed files |
+| report-only heads | no production/test behavior yet |
+| test-source head | pending |
 
 ## Explicitly Not Validated
 
-| Item | Status | Reason |
-|---|---|---|
-| NODE_ONLY production browser | NOT_RUN | audit/source test not yet authored |
-| CONNECTED_RUN production browser | NOT_RUN | audit/source test not yet authored |
-| support fail-closed browser | NOT_RUN | audit/source test not yet authored |
-| concurrency/stale browser | NOT_RUN | audit/source test not yet authored |
-| production behavior changes | NOT_APPLICABLE | none authorized or made |
+All browser cases are currently `NOT_RUN`; source tests are not yet authored. No production behavior changes exist in this PR.
 
 ## Next
 
-1. Audit existing NODE_POSITION tests/capability/planner/editor and browser helpers.
-2. Register exact test/helper files before modification.
-3. Add focused browser source qualification without changing production behavior unless a failing contract proves a defect.
-4. Keep empirical execution evidence separate from authored test source.
+1. Add the registered helper and lifecycle spec.
+2. Add the registered concurrency spec using certified UI mutations only.
+3. Static-audit selectors, file ledger, PR reviews/mergeability/statuses.
+4. If no execution path exists, keep PR draft/unmerged with `NOT_RUN` evidence stated explicitly.

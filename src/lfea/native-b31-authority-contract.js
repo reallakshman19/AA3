@@ -29,6 +29,7 @@ const CHECK_KEYS = Object.freeze([
   'end',
   'combinationId',
   'actionSource',
+  'evaluationCaseId',
   'stressFactorSet',
   'pressureStressContribution',
   'coldTemperature',
@@ -64,6 +65,7 @@ export function requireLfeaNativeB31AuthorityInput(preFlightRecord, input) {
   if (new Set(ids).size !== ids.length) {
     throw b31Error('LFEA_NATIVE_B31_CHECK_DUPLICATE', 'B31 check identities must be unique.');
   }
+  requireCaseCustody(preFlight, checks);
   return deepFreeze({
     preFlight,
     input: deepFreeze({
@@ -109,10 +111,7 @@ export function lfeaNativeB31AuthorityCurrentnessReasons(preFlightRecord, author
 export function requireRunnableB31PreFlight(record) {
   return requireRunnablePreFlight(record);
 }
-
-export function lfeaNativeB31Error(code, message) {
-  return b31Error(code, message);
-}
+export function lfeaNativeB31Error(code, message) { return b31Error(code, message); }
 
 function canonicalCheck(value, index) {
   const field = `b31AuthorityInput.checks[${index}]`;
@@ -127,6 +126,20 @@ function canonicalCheck(value, index) {
     throw b31Error('LFEA_NATIVE_B31_END_INVALID', `${field}.end must be I or J.`);
   }
   const actionSource = canonicalActionSource(value.actionSource, category, `${field}.actionSource`);
+  const evaluationCaseId = requiredText(value.evaluationCaseId, `${field}.evaluationCaseId`);
+  if (actionSource.kind === 'SINGLE_CASE' && evaluationCaseId !== actionSource.caseId) {
+    throw b31Error(
+      'LFEA_NATIVE_B31_EVALUATION_CASE_MISMATCH',
+      'A single-case code check must evaluate section/material state from that same physical case.',
+    );
+  }
+  if (actionSource.kind === 'CASE_RANGE'
+    && ![actionSource.fromCaseId, actionSource.toCaseId].includes(evaluationCaseId)) {
+    throw b31Error(
+      'LFEA_NATIVE_B31_EVALUATION_CASE_MISMATCH',
+      'A range check evaluationCaseId must be one of its two governed endpoint cases.',
+    );
+  }
   return deepFreeze({
     checkId,
     category,
@@ -134,6 +147,7 @@ function canonicalCheck(value, index) {
     end,
     combinationId: requiredText(value.combinationId, `${field}.combinationId`),
     actionSource,
+    evaluationCaseId,
     stressFactorSet: requireStressFactorSet(value.stressFactorSet),
     pressureStressContribution: cloneNullable(value.pressureStressContribution),
     coldTemperature: cloneNullable(value.coldTemperature),
@@ -146,7 +160,7 @@ function canonicalCheck(value, index) {
 function canonicalActionSource(value, category, field) {
   if (value?.kind === 'SINGLE_CASE') {
     exactKeys(value, ['kind', 'caseId'], field);
-    if (category === 'DISPLACEMENT_STRESS_RANGE' || category === 'EXPANSION_RANGE_ENVELOPE') {
+    if (['DISPLACEMENT_STRESS_RANGE', 'EXPANSION_RANGE_ENVELOPE'].includes(category)) {
       throw b31Error('LFEA_NATIVE_B31_RANGE_SOURCE_REQUIRED', `${category} requires CASE_RANGE.`);
     }
     return deepFreeze({ kind: value.kind, caseId: requiredText(value.caseId, `${field}.caseId`) });
@@ -166,6 +180,24 @@ function canonicalActionSource(value, category, field) {
   throw b31Error('LFEA_NATIVE_B31_ACTION_SOURCE_INVALID', `${field}.kind is unsupported.`);
 }
 
+function requireCaseCustody(preFlight, checks) {
+  const ids = new Set(preFlight.preparation.physicalPreparation.physicalCases
+    .map((row) => row.caseId));
+  for (const check of checks) {
+    const referenced = check.actionSource.kind === 'SINGLE_CASE'
+      ? [check.actionSource.caseId, check.evaluationCaseId]
+      : [check.actionSource.fromCaseId, check.actionSource.toCaseId, check.evaluationCaseId];
+    for (const caseId of referenced) {
+      if (!ids.has(caseId)) {
+        throw b31Error(
+          'LFEA_NATIVE_B31_CASE_MISSING',
+          `B31 check ${check.checkId} references unavailable physical case ${caseId}.`,
+        );
+      }
+    }
+  }
+}
+
 function authorityProjection(record) {
   return {
     schema: record.schema,
@@ -178,7 +210,6 @@ function authorityProjection(record) {
     codeStationAuthoritySemanticHash: record.codeStationAuthority.semanticHash,
   };
 }
-
 function requireRunnablePreFlight(record) {
   const preFlight = requireLinearPipingInputXmlPreFlight(record);
   if (!preFlight.solveAuthorized || !preFlight.preparation?.structuralPreparation?.compilation) {
@@ -189,10 +220,7 @@ function requireRunnablePreFlight(record) {
   }
   return preFlight;
 }
-
-function cloneNullable(value) {
-  return value === null ? null : deepFreeze(structuredClone(value));
-}
+function cloneNullable(value) { return value === null ? null : deepFreeze(structuredClone(value)); }
 function exactKeys(value, expectedKeys, field) {
   if (!value || typeof value !== 'object' || Array.isArray(value)) {
     throw b31Error('LFEA_NATIVE_B31_INPUT_INVALID', `${field} must be a record.`);
@@ -213,9 +241,7 @@ function requiredText(value, field) {
   if (!text) throw b31Error('LFEA_NATIVE_B31_INPUT_INVALID', `${field} is required.`);
   return text;
 }
-function compare(reasons, code, expected, actual) {
-  if (expected !== actual) reasons.push(code);
-}
+function compare(reasons, code, expected, actual) { if (expected !== actual) reasons.push(code); }
 function uniqueAscii(values) { return [...new Set(values)].sort(compareAscii); }
 function compareAscii(left, right) { return left < right ? -1 : left > right ? 1 : 0; }
 function b31Error(code, message) {

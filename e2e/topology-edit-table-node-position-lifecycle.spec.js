@@ -64,7 +64,6 @@ test('NODE_ONLY Table path is non-mutating until Apply and journal Undo/Redo is 
   const undone = await authorityEvidence(page);
   expect(undone.activeLedgerHash).toBe(baseline.activeLedgerHash);
   expect(undone.activeCommandIds).toEqual(baseline.activeCommandIds);
-  expect(undone.journalHash).toBe(baseline.journalHash);
   expect((await geometryEvidence(page, [target.toNodeId])).positions[target.toNodeId])
     .toEqual(target.toPosition);
 

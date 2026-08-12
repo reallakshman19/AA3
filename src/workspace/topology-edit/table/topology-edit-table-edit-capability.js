@@ -143,8 +143,11 @@ export function deriveTopologyEditTableSupportPlacementCapability(input = {}) {
     if (supports.length !== 1) throw new RangeError(`support ${row.identity.canonicalId} resolved ${supports.length} records.`);
     const placement = topologyEditSupportPlacementContext(topology, supports[0]);
     if (placement.currentStationMm === null) throw new RangeError('current support station authority is unresolved.');
+    const { currentOrigin, ...placementEvidence } = placement;
     return receipt('NEEDS_INPUT', 'EXPLICIT_SUPPORT_STATION_REQUIRED', 'Choose an explicit station on the exact current straight host.', row, 'stationMm', context,
-      { intentKind: 'SUPPORT_PLACEMENT', ...placement }, ['stationMm']);
+      { intentKind: 'SUPPORT_PLACEMENT', ...placementEvidence,
+        currentOriginX: currentOrigin?.x ?? null, currentOriginY: currentOrigin?.y ?? null,
+        currentOriginZ: currentOrigin?.z ?? null }, ['stationMm']);
   } catch (error) {
     return receipt('UNREPRESENTABLE', 'SUPPORT_PLACEMENT_UNREPRESENTABLE', error instanceof Error ? error.message : String(error), row, 'stationMm', context, { intentKind: 'SUPPORT_PLACEMENT' });
   }

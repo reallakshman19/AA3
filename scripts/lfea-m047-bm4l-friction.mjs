@@ -6,9 +6,10 @@
  * ACCDB extraction uses the pure-JavaScript mdb-reader browser engine adapted
  * from reallaksh19/XML_Compare_Utilities; Microsoft ACE/OLE DB is not required.
  * The command always runs frozen non-friction controls before L13/L7/L15/L1.
- * It writes a standard ACCDB actual-result package for comparison plus a
- * friction-specific evidence ledger. L1 remains explicit BLOCKED until WW+HP
- * load construction is independently qualified in the shared ACCDB mechanics.
+ * It writes a standard ACCDB actual-result package plus direct reference
+ * comparisons and a friction-specific evidence ledger. L1 remains explicit
+ * BLOCKED until WW+HP load construction is independently qualified in the
+ * shared ACCDB mechanics.
  */
 import { spawnSync } from 'node:child_process';
 import { mkdirSync, readFileSync, writeFileSync } from 'node:fs';
@@ -16,6 +17,7 @@ import { dirname, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import {
   buildCaesarAccdbBenchmarkPackage,
+  compareBenchmarkResultRows,
   requiredCaesarAccdbTables,
   solveCaesarAccdbFrictionBenchmark,
   solveCaesarAccdbLinearBenchmark,
@@ -78,6 +80,7 @@ export function runBm4lFrictionProduction(input) {
     },
   });
 
+  const accuracy = buildAccuracyEvidence(benchmarkPackage, actualCases);
   const pairedDeltaEvidence = buildPairedDeltaEvidence(actualCases);
   const evidence = Object.freeze({
     schema: 'm047-bm4l-friction-production-evidence/v1',
@@ -88,6 +91,7 @@ export function runBm4lFrictionProduction(input) {
       caseIds: CONTROL_CASE_IDS,
       mechanicsSemanticHash: semanticHash(controls.mechanics),
     },
+    accuracy,
     friction,
     pairedDeltas: pairedDeltaEvidence,
     acceptance: {
@@ -95,11 +99,64 @@ export function runBm4lFrictionProduction(input) {
       primitiveFrictionCasesConverged: ['L13', 'L7'].every((caseId) =>
         friction.mechanics.cases[caseId]?.status === 'PASS'),
       l15IndependentSolvePerformed: false,
+      directReferenceComparisonEmitted: true,
       l1Status: friction.mechanics.cases.L1?.status ?? 'BLOCKED',
       overallStatus: friction.status,
     },
   });
   return { actual, evidence };
+}
+
+function buildAccuracyEvidence(benchmarkPackage, actualCases) {
+  const excludedQuantities = benchmarkPackage.profile.engineeringAssessment
+    ?.equilibriumOnlyQuantities ?? [];
+  const cases = {};
+  for (const caseId of Object.keys(actualCases).sort()) {
+    const actualRows = actualCases[caseId]?.rows;
+    const referenceRows = benchmarkPackage.references?.[caseId]?.rows;
+    if (!Array.isArray(actualRows) || !Array.isArray(referenceRows)) continue;
+    const exposedQuantities = [...new Set(actualRows.map((row) => row.quantity))].sort();
+    const comparison = compareBenchmarkResultRows({
+      caseId,
+      referenceRows,
+      actualRows,
+      tolerances: benchmarkPackage.profile.tolerances,
+      optionalQuantities: [],
+      exposedQuantities,
+      excludedQuantities,
+    });
+    const comparable = comparison.rows.filter((row) => ['PASS', 'FAIL'].includes(row.status));
+    const nonzero = comparable.filter((row) => Number(row.referenceValue) !== 0);
+    const relativeErrors = nonzero
+      .map((row) => row.rawRelativeError)
+      .filter((value) => Number.isFinite(value));
+    const restraintRows = comparable.filter((row) =>
+      row.entityKind === 'NODE' && ['FORCE', 'MOMENT'].includes(row.quantity));
+    const restraintFailures = restraintRows.filter((row) => row.status === 'FAIL');
+    cases[caseId] = Object.freeze({
+      status: comparison.status,
+      counts: comparison.counts,
+      restraint: Object.freeze({
+        compared: restraintRows.length,
+        failed: restraintFailures.length,
+        status: restraintFailures.length === 0 && restraintRows.length > 0 ? 'PASS' : 'FAIL',
+      }),
+      maximumNonzeroReferencePercentError: relativeErrors.length === 0
+        ? null
+        : 100 * Math.max(...relativeErrors),
+      comparison,
+    });
+  }
+  const frictionCaseIds = ['L13', 'L7', 'L15'].filter((caseId) => cases[caseId]);
+  return Object.freeze({
+    schema: 'm047-bm4l-direct-reference-accuracy/v1',
+    cases: Object.freeze(cases),
+    frictionCaseIds: Object.freeze(frictionCaseIds),
+    frictionRestraintGateStatus: frictionCaseIds.length === 3
+      && frictionCaseIds.every((caseId) => cases[caseId].restraint.status === 'PASS')
+      ? 'PASS'
+      : 'FAIL',
+  });
 }
 
 function buildPairedDeltaEvidence(cases) {

@@ -39,6 +39,10 @@ for (const filePath of javascript) {
     'AnalysisWorkspace',
     '/src/lfea/',
     'linear-piping-',
+    'shared-piping-model',
+    'FeaBenchmarkPanel',
+    'createLafeaMockDocument',
+    'advanced-mock-data',
   ]) {
     assert(!source.includes(forbidden),
       `Standalone LAFEA asset ${relative} contains forbidden runtime marker ${forbidden}.`);
@@ -53,6 +57,7 @@ console.log(JSON.stringify({
   javascriptAssetsInspected: javascript.length,
   lfeaRuntimeChunkPresent: false,
   combinedWorkspaceChunkPresent: false,
+  compatibilityProviderChunkPresent: false,
 }));
 
 function listFiles(directory) {

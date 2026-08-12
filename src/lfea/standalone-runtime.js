@@ -9,6 +9,7 @@ import { createLfeaNativePublicationReadiness } from './native-publication-readi
 import { createLfeaNativeResultsAuthority } from './native-results-authority.js';
 import { mountLfeaNativeResultsView } from './native-results-view.js';
 import { createLfeaNativeRunHistory } from './native-run-history.js';
+import { createLfeaNativeSupportPublicationAuthority } from './native-support-publication-authority.js';
 import { createLfeaNativeVerificationController } from './native-verification-controller.js';
 import { buildLfeaStandalonePublicApi } from './standalone-runtime-api.js';
 import { lfeaStandaloneJourneyStatus } from './standalone-status.js';
@@ -27,6 +28,7 @@ class LfeaStandaloneRuntime {
     this.destroyed = false;
     this.executionAuthority = createLfeaNativeExecutionAuthority();
     this.resultsAuthority = createLfeaNativeResultsAuthority();
+    this.supportPublicationAuthority = createLfeaNativeSupportPublicationAuthority();
     this.runHistory = createLfeaNativeRunHistory();
     this.layout = this.#createLayout();
     this.#createViews();
@@ -81,11 +83,7 @@ class LfeaStandaloneRuntime {
       resultsState: this.resultsAuthority.getState(),
     });
     this.journeyView.update(this.governedJourney);
-    this.resultsView.update(
-      this.executionAuthority.getState(),
-      this.resultsAuthority.getState(),
-      this.publicationReadiness,
-    );
+    this.#updateResultsView();
     this.historyView.update(this.historySnapshot);
     this.comparisonController.refresh(this.historySnapshot);
     this.sourceController.init();
@@ -111,21 +109,28 @@ class LfeaStandaloneRuntime {
     this.#persistRecentSource(sourceSnapshot);
     this.executionAuthority.reconcile(preFlight);
     this.resultsAuthority.reconcile(preFlight, this.executionAuthority.getState());
+    this.supportPublicationAuthority.reconcile(
+      preFlight,
+      this.executionAuthority.getState(),
+      this.resultsAuthority.getState(),
+    );
     this.governedJourney = createLfeaGovernedJourneyProjection({
       sourceSnapshot,
       preFlight,
       executionState: this.executionAuthority.getState(),
     });
+    const supportAuthority = this.supportPublicationAuthority.readinessAuthority(
+      preFlight,
+      this.executionAuthority.getState(),
+      this.resultsAuthority.getState(),
+    );
     this.publicationReadiness = createLfeaNativePublicationReadiness({
       preFlight,
       resultsState: this.resultsAuthority.getState(),
+      supportAuthority,
     });
     this.journeyView.update(this.governedJourney);
-    this.resultsView.update(
-      this.executionAuthority.getState(),
-      this.resultsAuthority.getState(),
-      this.publicationReadiness,
-    );
+    this.#updateResultsView();
     this.historySnapshot = this.#currentHistorySnapshot(sourceSnapshot, preFlight);
     this.historyView.update(this.historySnapshot);
     this.comparisonController.refresh(this.historySnapshot);
@@ -144,6 +149,15 @@ class LfeaStandaloneRuntime {
       this.persistedState.recentSourceMetadata,
     );
     return this.governedJourney;
+  }
+
+  #updateResultsView() {
+    this.resultsView.update(
+      this.executionAuthority.getState(),
+      this.resultsAuthority.getState(),
+      this.publicationReadiness,
+      this.supportPublicationAuthority.getState(),
+    );
   }
 
   #persistRecentSource(snapshot) {
@@ -178,7 +192,7 @@ class LfeaStandaloneRuntime {
 
   selectHistoryRun(runId) {
     this.requireActive();
-    const before = this.#engineeringStatePair();
+    const before = this.#engineeringStateSet();
     const record = this.runHistory.selectRun(runId);
     this.historySnapshot = this.#currentHistorySnapshot(
       this.sourceController.getSnapshot(),
@@ -192,7 +206,7 @@ class LfeaStandaloneRuntime {
 
   compareHistoryRuns(leftRunId, rightRunId) {
     this.requireActive();
-    const before = this.#engineeringStatePair();
+    const before = this.#engineeringStateSet();
     const comparison = this.comparisonController.compare(leftRunId, rightRunId);
     this.#assertAuthorityUnchanged(before, 'Run comparison');
     return comparison;
@@ -200,23 +214,46 @@ class LfeaStandaloneRuntime {
 
   createNativeEvidenceDossier() {
     this.requireActive();
-    // Evidence dossier creation remains current-only and fail-closed in the native Verification controller.
     return this.verificationController.createDossier();
   }
 
-  #engineeringStatePair() {
+  #engineeringStateSet() {
     return Object.freeze({
       execution: this.executionAuthority.getState(),
       results: this.resultsAuthority.getState(),
+      support: this.supportPublicationAuthority.getState(),
     });
   }
 
   #assertAuthorityUnchanged(before, operation) {
     if (this.executionAuthority.getState() === before.execution
-      && this.resultsAuthority.getState() === before.results) return;
+      && this.resultsAuthority.getState() === before.results
+      && this.supportPublicationAuthority.getState() === before.support) return;
     const error = new Error(`${operation} changed native engineering authority.`);
     error.code = 'LFEA_VIEW_CONTEXT_AUTHORITY_MUTATION';
     throw error;
+  }
+
+  installNativeSupportAuthority(input) {
+    this.requireActive();
+    const state = this.supportPublicationAuthority.install(
+      this.sourceController.getPreFlight(),
+      input,
+    );
+    this.refreshCurrent();
+    return state;
+  }
+
+  publishNativeSupportActions() {
+    this.requireActive();
+    const state = this.supportPublicationAuthority.publish(
+      this.sourceController.getPreFlight(),
+      this.executionAuthority.getState(),
+      this.resultsAuthority.getState(),
+    );
+    this.refreshCurrent();
+    this.layout.activate('results');
+    return state;
   }
 
   executeNativeAnalysis(runOptions = {}) {
@@ -256,6 +293,7 @@ class LfeaStandaloneRuntime {
       governedJourney: this.governedJourney,
       nativeExecution: this.executionAuthority.getState(),
       nativeResults: this.resultsAuthority.getState(),
+      nativeSupportPublication: this.supportPublicationAuthority.getState(),
       nativeHistory: this.historySnapshot,
       nativeComparison: this.comparisonController.getState(),
       nativePublicationReadiness: this.publicationReadiness,
@@ -276,6 +314,7 @@ class LfeaStandaloneRuntime {
     this.destroyed = true;
     this.comparisonController.destroy();
     this.verificationController.destroy();
+    this.supportPublicationAuthority.clearCurrentAuthority();
     this.resultsAuthority.clearCurrentAuthority();
     this.executionAuthority.clearCurrentAuthority();
     this.runHistory.clear();

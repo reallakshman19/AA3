@@ -21,3 +21,8 @@ export {
   convertCaesarTranslationalStiffnessToSi,
   normalizeDisplayedCaesarFrictionStiffnessFromInputXml,
 } from './caesar-friction-unit-normalization.js';
+export {
+  measureCaesarFrictionMicroModelRun,
+  compareCaesarFrictionMicroModelRuns,
+  measureCaesarFrictionMicroModelSeries,
+} from './caesar-friction-micro-model-measurement.js';

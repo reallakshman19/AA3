@@ -1,0 +1,113 @@
+{
+  "schema": "m047-friction-independent-micro-model-plan/v1",
+  "scope": "INDEPENDENT_CAESAR_STATIC_FRICTION_AUTHORITY_EXPERIMENTS",
+  "stackBase": {
+    "pr": 1060,
+    "branch": "agent/m047-bm4l-friction-unit-normalization",
+    "sha": "548edf4c1333ef273408ac8711442d7e9fbf36aa"
+  },
+  "requiredProduct": {
+    "name": "CAESAR II",
+    "version": "14.00.00.0910",
+    "build": "231113"
+  },
+  "commonControls": {
+    "coefficientOfFriction": 0.3,
+    "frictionStiffnessNPerM": 100000000,
+    "normalAxis": [0, 1, 0],
+    "positiveGap": false,
+    "responseDataSource": "INDEPENDENT_MICRO_MODEL_ONLY"
+  },
+  "experiments": [
+    {
+      "id": "MM1_STICK_STIFFNESS",
+      "purpose": "Verify the non-sliding tangential stiffness response independently of BM4_L.",
+      "requiredEvidence": [
+        "EXACT_INPUT_MODEL_HASH",
+        "FINAL_NODE_DISPLACEMENT_VECTOR",
+        "FINAL_RESTRAINT_REACTION_VECTOR"
+      ],
+      "measurement": [
+        "EFFECTIVE_TANGENTIAL_STIFFNESS_N_PER_M",
+        "FRICTION_LIMIT_RATIO",
+        "OPPOSITION_COSINE"
+      ],
+      "authorityPromotion": "PERMITTED_ONLY_IF_INPUT_AND_OUTPUT_CUSTODY_ARE_PINNED"
+    },
+    {
+      "id": "MM2_SLIDE_PLATEAU",
+      "purpose": "Measure the converged sliding-force plateau independently of BM4_L and expose a candidate slide multiplier without auto-promoting it.",
+      "requiredEvidence": [
+        "EXACT_INPUT_MODEL_HASH",
+        "FINAL_NODE_DISPLACEMENT_VECTOR",
+        "FINAL_RESTRAINT_REACTION_VECTOR",
+        "GLOBAL_EQUILIBRIUM_CHECK"
+      ],
+      "measurement": [
+        "FRICTION_LIMIT_RATIO",
+        "OPPOSITION_COSINE"
+      ],
+      "authorityPromotion": "DIAGNOSTIC_CANDIDATE_ONLY_UNTIL_REPEATED_ACROSS_INDEPENDENT_LOAD_MAGNITUDES"
+    },
+    {
+      "id": "MM3_DIRECTION_CHANGE_TRACE",
+      "purpose": "Reconstruct the first non-sliding-to-sliding angle-update behavior around the documented 15 degree control.",
+      "requiredEvidence": [
+        "EXACT_INPUT_MODEL_HASH",
+        "CAESAR_NONLINEAR_ITERATION_TRACE",
+        "FINAL_NODE_DISPLACEMENT_VECTOR",
+        "FINAL_RESTRAINT_REACTION_VECTOR"
+      ],
+      "measurement": [
+        "TANGENTIAL_DISPLACEMENT_DIRECTION_CHANGE_DEG",
+        "TANGENTIAL_REACTION_DIRECTION_CHANGE_DEG",
+        "FRICTION_LIMIT_RATIO_CHANGE"
+      ],
+      "authorityPromotion": "PROHIBITED_FROM_FINAL_OUTPUT_ONLY"
+    },
+    {
+      "id": "MM4_NORMAL_FORCE_UPDATE_TRACE",
+      "purpose": "Reconstruct sliding-force update behavior around the documented 0.15 normal-force variation control.",
+      "requiredEvidence": [
+        "EXACT_INPUT_MODEL_HASH",
+        "CAESAR_NONLINEAR_ITERATION_TRACE",
+        "FINAL_NODE_DISPLACEMENT_VECTOR",
+        "FINAL_RESTRAINT_REACTION_VECTOR"
+      ],
+      "measurement": [
+        "NORMAL_FORCE_RELATIVE_CHANGE",
+        "FRICTION_LIMIT_RATIO_CHANGE"
+      ],
+      "authorityPromotion": "PROHIBITED_FROM_FINAL_OUTPUT_ONLY"
+    },
+    {
+      "id": "MM5_GAP_CONTACT_TRACE",
+      "purpose": "Resolve static gap/contact activation and convergence ordering separately from friction response.",
+      "requiredEvidence": [
+        "EXACT_INPUT_MODEL_HASH",
+        "CAESAR_NONLINEAR_ITERATION_TRACE",
+        "FINAL_NODE_DISPLACEMENT_VECTOR",
+        "FINAL_RESTRAINT_REACTION_VECTOR",
+        "POSITIVE_GAP_DEFINITION"
+      ],
+      "measurement": [
+        "CONTACT_STATE_BY_ITERATION",
+        "GAP_MARGIN_BY_ITERATION"
+      ],
+      "authorityPromotion": "PROHIBITED_FROM_BM4_L_FINAL_RESPONSE_FITTING"
+    }
+  ],
+  "prohibitedInputs": [
+    "BM4_L_L7_REFERENCE_RESPONSE_AS_PARAMETER_SOURCE",
+    "BM4_L_L13_REFERENCE_RESPONSE_AS_PARAMETER_SOURCE",
+    "BM4_L_L15_REFERENCE_RESPONSE_AS_PARAMETER_SOURCE",
+    "ASSUMED_FRICTION_SLIDE_MULTIPLIER",
+    "TUNED_COMPARATOR_TOLERANCE"
+  ],
+  "decision": {
+    "status": "EXPERIMENT_HARNESS_READY_NOT_EXECUTED",
+    "l13ProductionSolveAuthorized": false,
+    "l7ProductionSolveAuthorized": false,
+    "newMechanicsAuthorized": false
+  }
+}

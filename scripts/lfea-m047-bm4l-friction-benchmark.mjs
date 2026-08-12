@@ -29,7 +29,11 @@ writeJson(actual, args.actualOut);
 const qualification = qualifyActual(benchmarkPackage, actual);
 const caseRecords = benchmarkPackage.cases
   .filter((record) => actual.cases[record.caseId])
-  .map((record) => ({ ...record, referenceRows: benchmarkPackage.references[record.caseId].rows }));
+  .map((record) => ({
+    ...record,
+    referenceRows: benchmarkPackage.references[record.caseId].rows,
+    equilibrium: benchmarkPackage.references[record.caseId].equilibrium,
+  }));
 const engineeringAssessment = buildBenchmarkEngineeringAssessment({
   caseRecords,
   qualification,

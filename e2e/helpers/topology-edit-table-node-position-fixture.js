@@ -243,8 +243,10 @@ async function open3dTable(page) {
     document.querySelector('[data-role="topology-edit-render-host"]')
       ?.__topologyEditAuthoringController?.tableAdapter?.runtime?.projection
   ))).toBe(true);
-  const panel = host.locator('details[data-panel-kind="table"]');
-  if (!(await panel.evaluate((node) => node.open))) await panel.locator(':scope > summary').click();
+  const openTable = page.locator('[data-action="open-engineering-table"]');
+  await expect(openTable).toBeVisible();
+  await openTable.click();
+  await expect(page.locator('[data-role="topology-edit-table"]')).toBeVisible();
   await expect.poll(() => host.getAttribute('data-topology-edit-table-projection-hash')).toBeTruthy();
   return host;
 }

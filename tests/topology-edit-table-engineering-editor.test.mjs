@@ -1,11 +1,15 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
+import { semanticHash } from '../src/core/shared-piping-model/index.js';
 import {
   createTopologyEditSpecificationCatalogue,
 } from '../src/workspace/topology-edit/professional/topology-edit-spec-catalog.js';
 import {
   topologyEditInlineCatalogueBinding,
 } from '../src/workspace/topology-edit/professional/topology-edit-inline-component-operation.js';
+import {
+  TOPOLOGY_EDIT_TABLE_PROJECTION_SCHEMA,
+} from '../src/workspace/topology-edit/table/topology-edit-table-projection.js';
 import {
   describeTopologyEditTableIntent,
   renderTopologyEditTableEngineeringEditor,
@@ -56,25 +60,43 @@ function teeRow() {
       canonicalKind: 'JUNCTION', canonicalId: 'junction:tee',
       nodeIds: ['node:a', 'node:b', 'node:c'],
       portBindings: [
-        { nodeId: 'node:a', portKey: 'tee:port:a' },
-        { nodeId: 'node:b', portKey: 'tee:port:b' },
-        { nodeId: 'node:c', portKey: 'tee:port:c' },
+        { endpoint: 'MULTIPORT', nodeId: 'node:a', portKey: 'tee:port:a' },
+        { endpoint: 'MULTIPORT', nodeId: 'node:b', portKey: 'tee:port:b' },
+        { endpoint: 'MULTIPORT', nodeId: 'node:c', portKey: 'tee:port:c' },
       ],
     },
     fields: { tag: 'TEE-1', runDnMm: 150, branchDnMm: 100 },
     custody: { sourceStatus: 'IMPORTED', catalogueAuthority: 'UNRESOLVED' },
   };
 }
-function reducerRow(exact = true) {
+function reducerRow(exact = true, id = 'edge:reducer') {
   return {
-    elementType: 'REDUCER', targetRevision: 'sha256:red-r1',
-    identity: { canonicalKind: 'EDGE', canonicalId: 'edge:reducer', nodeIds: [], portBindings: [] },
+    elementType: 'REDUCER', targetRevision: `sha256:${id}-r1`,
+    identity: {
+      canonicalKind: 'EDGE', canonicalId: id, nodeIds: ['node:c', 'node:d'],
+      portBindings: [
+        { endpoint: 'FROM', nodeId: 'node:c', portKey: `${id}:from` },
+        { endpoint: 'TO', nodeId: 'node:d', portKey: `${id}:to` },
+      ],
+    },
     fields: { tag: 'RED-1', dnInMm: 100, dnOutMm: 80 },
     custody: {
       sourceStatus: 'IMPORTED', catalogueAuthority: exact ? 'EXACT' : 'UNRESOLVED',
-      catalogue: exact ? { recordHash: 'sha256:red-record' } : null,
+      catalogue: exact ? {
+        catalogueHash: 'sha256:red-catalogue', sourceHash: 'sha256:red-source',
+        recordId: 'RED-100-80', recordHash: 'sha256:red-record',
+      } : null,
     },
   };
+}
+function tableProjection(rows) {
+  const authority = {
+    datasetId: 'dataset:editor', datasetVersion: 1,
+    sourceHash: 'sha256:source', topologyGraphHash: 'sha256:graph',
+    canonicalTopologyHash: 'sha256:canonical',
+  };
+  const material = { schema: TOPOLOGY_EDIT_TABLE_PROJECTION_SCHEMA, authority, rows };
+  return { ...material, projectionHash: semanticHash(material) };
 }
 
 test('M06 editor selects compatible immutable BALL records and exposes no catalogue free text', () => {
@@ -103,16 +125,31 @@ test('M06 editor selects compatible immutable BALL records and exposes no catalo
   assert.match(unavailable, /disabled>Stage GATE → BALL/);
 });
 
-test('M10 editor exposes explicit branch ports and only exact-custody reducer rows', () => {
-  const html = renderTopologyEditTableEngineeringEditor(teeRow(), null, {
-    rows: [teeRow(), reducerRow(true), { ...reducerRow(false), identity: { ...reducerRow(false).identity, canonicalId: 'edge:unresolved' } }],
-  });
-  assert.match(html, /tee:port:a · node:a/);
-  assert.match(html, /tee:port:b · node:b/);
-  assert.match(html, /tee:port:c · node:c/);
-  assert.match(html, /value="edge:reducer"/);
-  assert.doesNotMatch(html, /edge:unresolved/);
-  assert.match(html, /No branch role or reducer size is guessed/);
+test('M10 editor constrains reducers to the explicitly selected branch topology', () => {
+  const tee = teeRow();
+  const unresolved = reducerRow(false, 'edge:unresolved');
+  const projection = tableProjection([tee, reducerRow(true), unresolved]);
+  const initial = renderTopologyEditTableEngineeringEditor(tee, null, projection);
+  assert.match(initial, /tee:port:a · node:a/);
+  assert.match(initial, /tee:port:b · node:b/);
+  assert.match(initial, /tee:port:c · node:c/);
+  assert.match(initial, /Choose branch port first/);
+  assert.doesNotMatch(initial, /value="edge:reducer"/);
+  assert.match(initial, /disabled>Stage TEE \/ reducer relation/);
+
+  const staged = renderTopologyEditTableEngineeringEditor(tee, {
+    intentKind: 'TEE_REDUCER_RELATION', requestedValue: {
+      branchPortKey: 'tee:port:c', reducerEdgeId: 'edge:reducer',
+      runNominalSizeMm: 150, teeBranchNominalSizeMm: 100, downstreamNominalSizeMm: 80,
+    },
+  }, projection);
+  assert.match(staged, /value="tee:port:c" selected/);
+  assert.match(staged, /value="edge:reducer" selected/);
+  assert.doesNotMatch(staged, /edge:unresolved/);
+  assert.match(staged, /DN 100 → 80/);
+  assert.match(staged, /Certified branch\/reducer relation/);
+  assert.doesNotMatch(staged, /disabled>Stage TEE \/ reducer relation/);
+  assert.match(staged, /no branch role, orientation, or reducer size is guessed/);
 });
 
 test('staged descriptions disclose exact M06 and M10 engineering intent', () => {

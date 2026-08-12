@@ -2,6 +2,12 @@ import {
   deriveTopologyEditTableNodePositionCapability,
 } from '../topology-edit/table/topology-edit-table-edit-capability.js';
 import {
+  deriveTopologyEditTableTeeReducerCapability,
+  topologyEditTableTeeBranchBindings,
+  topologyEditTableTeeReducerCandidateLabel,
+  topologyEditTableTeeReducerCandidates,
+} from '../topology-edit/table/topology-edit-table-tee-reducer.js';
+import {
   topologyEditTableValveCatalogueCandidates,
   topologyEditTableValveCatalogueLabel,
 } from '../topology-edit/table/topology-edit-table-valve-catalogue.js';
@@ -123,35 +129,41 @@ function teeReducerEditor(row, stagedIntent, projection) {
   const staged = stagedIntent?.intentKind === 'TEE_REDUCER_RELATION' ? stagedIntent : null;
   const selectedBranch = staged?.requestedValue?.branchPortKey ?? '';
   const selectedReducer = staged?.requestedValue?.reducerEdgeId ?? '';
-  const bindings = [...(row.identity?.portBindings ?? [])]
-    .filter((entry) => entry?.nodeId && entry?.portKey)
-    .sort((left, right) => left.portKey.localeCompare(right.portKey));
-  const reducers = (projection?.rows ?? [])
-    .filter((candidate) => candidate.elementType === 'REDUCER'
-      && candidate.identity?.canonicalKind === 'EDGE'
-      && candidate.custody?.catalogueAuthority === 'EXACT'
-      && candidate.custody?.catalogue)
-    .sort((left, right) => left.identity.canonicalId.localeCompare(right.identity.canonicalId));
+  const runDn = staged?.requestedValue?.runNominalSizeMm ?? row.fields?.runDnMm ?? '';
+  const branchDn = staged?.requestedValue?.teeBranchNominalSizeMm ?? row.fields?.branchDnMm ?? '';
+  const downstreamDn = staged?.requestedValue?.downstreamNominalSizeMm ?? '';
+  const bindings = topologyEditTableTeeBranchBindings(row);
+  const reducers = selectedBranch
+    ? topologyEditTableTeeReducerCandidates({ projection, row, branchPortKey: selectedBranch }) : [];
+  const capability = deriveTopologyEditTableTeeReducerCapability({
+    projection, row, branchPortKey: selectedBranch, reducerCanonicalId: selectedReducer,
+    runNominalSizeMm: runDn, teeBranchNominalSizeMm: branchDn,
+    downstreamNominalSizeMm: downstreamDn,
+  });
   const branchOptions = bindings.map((entry) => option(
-    entry.portKey,
-    `${entry.portKey} · ${entry.nodeId}`,
-    entry.portKey === selectedBranch,
+    entry.portKey, `${entry.portKey} · ${entry.nodeId}`, entry.portKey === selectedBranch,
   )).join('');
   const reducerOptions = reducers.map((candidate) => option(
-    candidate.identity.canonicalId,
-    `${candidate.fields?.tag ?? candidate.identity.canonicalId} · ${candidate.identity.canonicalId}`,
-    candidate.identity.canonicalId === selectedReducer,
+    candidate.reducerCanonicalId,
+    topologyEditTableTeeReducerCandidateLabel(candidate),
+    candidate.reducerCanonicalId === selectedReducer,
   )).join('');
+  const reducerDisabled = selectedBranch && reducers.length ? '' : 'disabled';
+  const stageDisabled = capability.status === 'AVAILABLE' ? '' : 'disabled';
+  const reducerPrompt = selectedBranch
+    ? (reducers.length ? 'Choose directly connected reducer…' : 'No compatible reducer at selected branch')
+    : 'Choose branch port first…';
   return `<section class="topology-edit-table__editor" data-table-editor-id="${esc(row.identity.canonicalId)}">
     ${identityHtml(row)}
-    <p class="topology-edit-table__notice">M10 binds one explicit TEE branch port to one directly connected reducer with exact catalogue custody. No branch role or reducer size is guessed.</p>
+    <p class="topology-edit-table__notice">M10 binds one explicit TEE branch port to one directly connected reducer with exact catalogue custody. Reducer options are derived from the selected canonical branch node; no branch role, orientation, or reducer size is guessed.</p>
     <div class="topology-edit-table__editor-grid">
       <label>Branch port<select data-table-edit-tee-branch-port><option value="">Choose exact branch port…</option>${branchOptions}</select></label>
-      <label>Reducer<select data-table-edit-tee-reducer><option value="">Choose exact reducer…</option>${reducerOptions}</select></label>
-      <label>Run DN (mm)<input type="number" step="any" min="0" data-table-edit-tee-run-dn value="${esc(staged?.requestedValue?.runNominalSizeMm ?? row.fields?.runDnMm ?? '')}"></label>
-      <label>TEE branch DN (mm)<input type="number" step="any" min="0" data-table-edit-tee-branch-dn value="${esc(staged?.requestedValue?.teeBranchNominalSizeMm ?? row.fields?.branchDnMm ?? '')}"></label>
-      <label>Downstream DN (mm)<input type="number" step="any" min="0" data-table-edit-tee-downstream-dn value="${esc(staged?.requestedValue?.downstreamNominalSizeMm ?? '')}"></label>
-      <button type="button" data-table-action="stage-tee-reducer-relation" data-canonical-id="${esc(row.identity.canonicalId)}">Stage TEE / reducer relation</button>
+      <label>Reducer<select data-table-edit-tee-reducer ${reducerDisabled}><option value="">${esc(reducerPrompt)}</option>${reducerOptions}</select></label>
+      <label>Run DN (mm)<input type="number" step="any" min="0" data-table-edit-tee-run-dn value="${esc(runDn)}"></label>
+      <label>TEE branch DN (mm)<input type="number" step="any" min="0" data-table-edit-tee-branch-dn value="${esc(branchDn)}"></label>
+      <label>Downstream DN (mm)<input type="number" step="any" min="0" data-table-edit-tee-downstream-dn value="${esc(downstreamDn)}"></label>
+      <button type="button" data-table-action="stage-tee-reducer-relation" data-canonical-id="${esc(row.identity.canonicalId)}" title="${esc(capability.reason)}" ${stageDisabled}>Stage TEE / reducer relation</button>
+      <span class="topology-edit-table__wide" data-table-tee-capability data-table-capability-status="${esc(capability.status)}">${esc(capability.status === 'AVAILABLE' ? 'Certified branch/reducer relation' : capability.reason)}</span>
     </div>
     ${custodyHtml(row)}
   </section>`;

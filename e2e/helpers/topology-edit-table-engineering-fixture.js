@@ -59,16 +59,55 @@ export async function engineeringEditorFixture(page) {
     if (!valveAuthority || !tee) {
       throw new Error('Fixture must expose a certified replaceable GATE valve and TEE row.');
     }
-    const exactReducerIds = projection.rows.filter((row) => row.elementType === 'REDUCER'
-      && row.custody?.catalogueAuthority === 'EXACT' && row.custody?.catalogue)
-      .map((row) => row.identity.canonicalId).sort();
+    const reducers = projection.rows.filter((row) => row.elementType === 'REDUCER'
+      && row.identity?.canonicalKind === 'EDGE'
+      && row.custody?.catalogueAuthority === 'EXACT' && row.custody?.catalogue);
+    const branchReducerCases = tee.identity.portBindings.map((branch) => {
+      const reducerCandidates = reducers.flatMap((reducer) => {
+        const from = reducer.identity.portBindings?.filter((item) => (
+          item?.endpoint === 'FROM' && item?.nodeId
+        )) ?? [];
+        const to = reducer.identity.portBindings?.filter((item) => (
+          item?.endpoint === 'TO' && item?.nodeId
+        )) ?? [];
+        if (from.length !== 1 || to.length !== 1 || from[0].nodeId === to[0].nodeId) return [];
+        const endpoint = from[0].nodeId === branch.nodeId
+          ? 'FROM' : to[0].nodeId === branch.nodeId ? 'TO' : null;
+        if (!endpoint) return [];
+        const dnIn = Number(reducer.fields?.dnInMm);
+        const dnOut = Number(reducer.fields?.dnOutMm);
+        if (![dnIn, dnOut].every((value) => Number.isFinite(value) && value > 0)
+          || Math.abs(dnIn - dnOut) <= 1e-9) return [];
+        const branchNominalSizeMm = endpoint === 'FROM' ? dnIn : dnOut;
+        const downstreamNominalSizeMm = endpoint === 'FROM' ? dnOut : dnIn;
+        if (branchNominalSizeMm <= downstreamNominalSizeMm + 1e-9) return [];
+        return [{
+          reducerId: reducer.identity.canonicalId,
+          branchEndpoint: endpoint,
+          branchNominalSizeMm,
+          downstreamNominalSizeMm,
+        }];
+      }).sort((left, right) => left.reducerId.localeCompare(right.reducerId));
+      return {
+        portKey: branch.portKey,
+        nodeId: branch.nodeId,
+        runNominalSizeMm: Number(tee.fields?.runDnMm),
+        reducerIds: reducerCandidates.map((candidate) => candidate.reducerId),
+        reducerCandidates,
+      };
+    }).filter((entry) => entry.reducerCandidates.length > 0)
+      .sort((left, right) => left.portKey.localeCompare(right.portKey));
+    if (!branchReducerCases.length) {
+      throw new Error('Fixture must expose at least one directly connected exact reducing branch candidate.');
+    }
     return {
       gateId: valveAuthority.gate.identity.canonicalId,
       ballRecordIds: valveAuthority.records.map((record) => record.recordId).sort(),
       catalogueHash: catalogue.catalogueHash,
       teeId: tee.identity.canonicalId,
       branchPortKeys: tee.identity.portBindings.map((entry) => entry.portKey).sort(),
-      exactReducerIds,
+      exactReducerIds: [],
+      branchReducerCases,
     };
   });
 }

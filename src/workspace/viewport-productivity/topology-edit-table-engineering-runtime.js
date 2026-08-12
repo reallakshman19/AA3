@@ -5,8 +5,22 @@ import {
 } from '../topology-edit/table/topology-edit-table-edit-capability.js';
 import { createTopologyEditTableIntent } from '../topology-edit/table/topology-edit-table-intent.js';
 import {
+  deriveTopologyEditTableTeeReducerCapability,
+  resolveTopologyEditTableTeeReducerSelection,
+  topologyEditTableTeeReducerCandidateLabel,
+  topologyEditTableTeeReducerCandidates,
+} from '../topology-edit/table/topology-edit-table-tee-reducer.js';
+import {
   resolveTopologyEditTableValveCatalogueSelection,
 } from '../topology-edit/table/topology-edit-table-valve-catalogue.js';
+
+const TEE_EDITOR_INPUT = [
+  '[data-table-edit-tee-branch-port]',
+  '[data-table-edit-tee-reducer]',
+  '[data-table-edit-tee-run-dn]',
+  '[data-table-edit-tee-branch-dn]',
+  '[data-table-edit-tee-downstream-dn]',
+].join(',');
 
 export function stageTopologyEditNodePosition(runtime, canonicalId, endpointInput) {
   return stage(runtime, () => {
@@ -80,32 +94,102 @@ export function stageTopologyEditValveReplacement(runtime, canonicalId) {
 export function stageTopologyEditTeeReducerRelation(runtime, canonicalId) {
   return stage(runtime, () => {
     const row = exactRow(runtime.projection, canonicalId);
-    const branchPortKey = required(value(runtime, '[data-table-edit-tee-branch-port]'), 'branch port');
-    const binding = row.identity.portBindings.find((entry) => entry.portKey === branchPortKey);
-    if (!binding?.nodeId) {
-      throw new RangeError('TopologyEditTableEngineeringRuntime: selected branch port is not an exact row binding.');
-    }
-    const runNodeIds = row.identity.nodeIds.filter((id) => id !== binding.nodeId).sort();
-    if (runNodeIds.length !== 2) {
-      throw new RangeError('TopologyEditTableEngineeringRuntime: TEE branch selection must leave exactly two run nodes.');
-    }
+    const draft = teeDraft(runtime.element);
+    const selection = resolveTopologyEditTableTeeReducerSelection({
+      projection: runtime.projection,
+      row,
+      branchPortKey: draft.branchPortKey,
+      reducerCanonicalId: draft.reducerCanonicalId,
+      runNominalSizeMm: draft.runNominalSizeMm,
+      teeBranchNominalSizeMm: draft.teeBranchNominalSizeMm,
+      downstreamNominalSizeMm: draft.downstreamNominalSizeMm,
+    });
     return createTopologyEditTableIntent({
       projection: runtime.projection,
       sessionSnapshot: runtime.controller.session.snapshot(),
       canonicalId,
       intentKind: 'TEE_REDUCER_RELATION',
       requestedValue: {
-        branchNodeId: binding.nodeId,
-        branchPortKey,
-        runNodeIds,
-        reducerCanonicalId: required(value(runtime, '[data-table-edit-tee-reducer]'), 'reducer'),
-        runNominalSizeMm: positive(value(runtime, '[data-table-edit-tee-run-dn]'), 'run DN'),
-        teeBranchNominalSizeMm: positive(value(runtime, '[data-table-edit-tee-branch-dn]'), 'TEE branch DN'),
-        downstreamNominalSizeMm: positive(value(runtime, '[data-table-edit-tee-downstream-dn]'), 'downstream DN'),
+        branchNodeId: selection.branchNodeId,
+        branchPortKey: selection.branchPortKey,
+        runNodeIds: selection.runNodeIds,
+        reducerCanonicalId: selection.reducerCanonicalId,
+        runNominalSizeMm: selection.runNominalSizeMm,
+        teeBranchNominalSizeMm: selection.teeBranchNominalSizeMm,
+        downstreamNominalSizeMm: selection.downstreamNominalSizeMm,
         relationPolicy: 'EXPLICIT_REDUCER',
       },
     });
   });
+}
+
+export function handleTopologyEditTableEngineeringInput(runtime, event) {
+  const target = event.target;
+  if (!target?.matches?.(TEE_EDITOR_INPUT) || !runtime.element?.contains(target)) return false;
+  const section = target.closest?.('[data-table-editor-id]');
+  const canonicalId = section?.dataset?.tableEditorId;
+  if (!section || !canonicalId) return false;
+  const row = exactRow(runtime.projection, canonicalId);
+  if (target.matches('[data-table-edit-tee-branch-port]')) {
+    syncReducerOptions(section, runtime.projection, row, '');
+  }
+  syncTeeCapability(section, runtime.projection, row);
+  return true;
+}
+
+function syncReducerOptions(section, projection, row, selectedReducerId) {
+  const branchPortKey = section.querySelector('[data-table-edit-tee-branch-port]')?.value ?? '';
+  const select = section.querySelector('[data-table-edit-tee-reducer]');
+  if (!select) return;
+  const candidates = branchPortKey
+    ? topologyEditTableTeeReducerCandidates({ projection, row, branchPortKey }) : [];
+  const prompt = branchPortKey
+    ? (candidates.length ? 'Choose directly connected reducer…' : 'No compatible reducer at selected branch')
+    : 'Choose branch port first…';
+  const document = select.ownerDocument;
+  const options = [domOption(document, '', prompt), ...candidates.map((candidate) => domOption(
+    document,
+    candidate.reducerCanonicalId,
+    topologyEditTableTeeReducerCandidateLabel(candidate),
+  ))];
+  select.replaceChildren(...options);
+  select.disabled = !(branchPortKey && candidates.length);
+  if (candidates.some((candidate) => candidate.reducerCanonicalId === selectedReducerId)) {
+    select.value = selectedReducerId;
+  }
+}
+
+function syncTeeCapability(section, projection, row) {
+  const draft = teeDraft(section);
+  const capability = deriveTopologyEditTableTeeReducerCapability({ projection, row, ...draft });
+  const stageButton = section.querySelector('[data-table-action="stage-tee-reducer-relation"]');
+  if (stageButton) {
+    stageButton.disabled = capability.status !== 'AVAILABLE';
+    stageButton.title = capability.reason;
+  }
+  const status = section.querySelector('[data-table-tee-capability]');
+  if (status) {
+    status.dataset.tableCapabilityStatus = capability.status;
+    status.textContent = capability.status === 'AVAILABLE'
+      ? 'Certified branch/reducer relation' : capability.reason;
+  }
+  return capability;
+}
+
+function teeDraft(root) {
+  return {
+    branchPortKey: root?.querySelector('[data-table-edit-tee-branch-port]')?.value ?? '',
+    reducerCanonicalId: root?.querySelector('[data-table-edit-tee-reducer]')?.value ?? '',
+    runNominalSizeMm: root?.querySelector('[data-table-edit-tee-run-dn]')?.value ?? '',
+    teeBranchNominalSizeMm: root?.querySelector('[data-table-edit-tee-branch-dn]')?.value ?? '',
+    downstreamNominalSizeMm: root?.querySelector('[data-table-edit-tee-downstream-dn]')?.value ?? '',
+  };
+}
+function domOption(document, valueInput, label) {
+  const option = document.createElement('option');
+  option.value = valueInput;
+  option.textContent = label;
+  return option;
 }
 
 function stage(runtime, intentFactory) {
@@ -160,13 +244,6 @@ function finite(input, label) {
   const number = Number(input);
   if (!Number.isFinite(number)) {
     throw new RangeError(`TopologyEditTableEngineeringRuntime: ${label} must be finite.`);
-  }
-  return number;
-}
-function positive(input, label) {
-  const number = Number(input);
-  if (!Number.isFinite(number) || number <= 0) {
-    throw new RangeError(`TopologyEditTableEngineeringRuntime: ${label} must be positive.`);
   }
   return number;
 }

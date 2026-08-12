@@ -1,6 +1,9 @@
 import { deriveTopologyEditTableCellCapability } from '../topology-edit/table/topology-edit-table-edit-capability.js';
 import { topologyEditTableVisibleRows } from '../topology-edit/table/topology-edit-table-view-state.js';
-import { stageTopologyEditNodePosition } from './topology-edit-table-engineering-runtime.js';
+import {
+  handleTopologyEditTableEngineeringInput,
+  stageTopologyEditNodePosition,
+} from './topology-edit-table-engineering-runtime.js';
 import { stageTopologyEditTablePipeLength } from './topology-edit-table-pipe-length-runtime.js';
 import {
   TOPOLOGY_EDIT_TABLE_ROW_HEIGHT_PX,
@@ -57,6 +60,7 @@ export function handleTopologyEditTableCompoundCellClick(runtime, event) {
 }
 
 export function handleTopologyEditTableCellInput(runtime, event) {
+  if (handleTopologyEditTableEngineeringInput(runtime, event)) return true;
   const input = directInput(event.target, runtime.element);
   if (!input) return false;
   runtime.cellDrafts.set(input.dataset.tableCellCanonicalId, input.value);

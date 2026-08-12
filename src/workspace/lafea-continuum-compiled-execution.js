@@ -115,7 +115,9 @@ function appendRestraints(output, attachment) {
   const payload = payloadObject(attachment, ['ux', 'uy'], []);
   const active = ['ux', 'uy'].filter((key) => payload[key] === true);
   for (const key of ['ux', 'uy']) {
-    if (key in payload && typeof payload[key] !== 'boolean') fail('LAFEA_CONTINUUM_COMPILED_RESTRAINT_PAYLOAD_INVALID');
+    if (key in payload && typeof payload[key] !== 'boolean') {
+      fail('LAFEA_CONTINUUM_COMPILED_RESTRAINT_PAYLOAD_INVALID');
+    }
   }
   if (!active.length) fail('LAFEA_CONTINUUM_COMPILED_RESTRAINT_DOF_REQUIRED');
   for (const nodeId of attachment.compiledTarget.nodeIds) {
@@ -131,20 +133,22 @@ function appendRestraints(output, attachment) {
 }
 
 function appendCaseAttachment(loadCase, attachment, model) {
-  if (attachment.kind === 'IMPOSED_DISPLACEMENT') return appendImposed(loadCase, attachment, model);
-  if (attachment.kind === 'CONCENTRATED_LOAD') return appendForce(loadCase, attachment, model);
-  if (attachment.kind === 'TRACTION') return appendEdge(loadCase, attachment, model, 'TRACTION');
-  if (attachment.kind === 'PRESSURE') return appendEdge(loadCase, attachment, model, 'PRESSURE');
-  if (attachment.kind === 'BODY_FORCE') return appendRegion(loadCase, attachment, model, 'BODY_FORCE');
-  if (attachment.kind === 'TEMPERATURE') return appendRegion(loadCase, attachment, model, 'TEMPERATURE');
+  if (attachment.kind === 'IMPOSED_DISPLACEMENT') return appendImposed(loadCase, attachment);
+  if (attachment.kind === 'CONCENTRATED_LOAD') return appendForce(loadCase, attachment);
+  if (attachment.kind === 'TRACTION') return appendEdge(loadCase, attachment, 'TRACTION');
+  if (attachment.kind === 'PRESSURE') return appendEdge(loadCase, attachment, 'PRESSURE');
+  if (attachment.kind === 'BODY_FORCE') return appendBodyForce(loadCase, attachment, model);
+  if (attachment.kind === 'TEMPERATURE') {
+    fail('LAFEA_CONTINUUM_COMPILED_TEMPERATURE_SEMANTICS_NOT_QUALIFIED');
+  }
   fail('LAFEA_CONTINUUM_COMPILED_ATTACHMENT_KIND_UNSUPPORTED');
 }
 
-function appendImposed(loadCase, attachment, model) {
+function appendImposed(loadCase, attachment) {
   const payload = payloadObject(attachment, ['ux', 'uy', 'unit'], ['unit']);
   const components = ['ux', 'uy'].filter((key) => key in payload);
   if (!components.length) fail('LAFEA_CONTINUUM_COMPILED_IMPOSED_DOF_REQUIRED');
-  const factor = dimensionFactor('length', payload.unit, model);
+  const factor = dimensionFactor('length', payload.unit);
   for (const key of components) {
     const value = finite(payload[key], 'LAFEA_CONTINUUM_COMPILED_IMPOSED_VALUE_INVALID') * factor;
     for (const nodeId of attachment.compiledTarget.nodeIds) {
@@ -157,11 +161,13 @@ function appendImposed(loadCase, attachment, model) {
   }
 }
 
-function appendForce(loadCase, attachment, model) {
+function appendForce(loadCase, attachment) {
   const payload = payloadObject(attachment, ['fx', 'fy', 'unit'], ['fx', 'fy', 'unit']);
   const [nodeId] = attachment.compiledTarget.nodeIds;
-  if (attachment.compiledTarget.nodeIds.length !== 1) fail('LAFEA_CONTINUUM_COMPILED_FORCE_VERTEX_MAPPING_INVALID');
-  const factor = dimensionFactor('force', payload.unit, model);
+  if (attachment.compiledTarget.nodeIds.length !== 1) {
+    fail('LAFEA_CONTINUUM_COMPILED_FORCE_VERTEX_MAPPING_INVALID');
+  }
+  const factor = dimensionFactor('force', payload.unit);
   loadCase.nodalForces.push({
     loadId: attachment.attachmentId,
     nodeId,
@@ -171,7 +177,7 @@ function appendForce(loadCase, attachment, model) {
   });
 }
 
-function appendEdge(loadCase, attachment, model, kind) {
+function appendEdge(loadCase, attachment, kind) {
   const pressure = kind === 'PRESSURE';
   const allowed = pressure ? ['pressure', 'unit'] : ['tx', 'ty', 'unit'];
   const payload = payloadObject(attachment, allowed, allowed);
@@ -179,7 +185,7 @@ function appendEdge(loadCase, attachment, model, kind) {
   if (!target.edgeNodePaths.length || target.edgeNodePaths.length !== target.elementIds.length) {
     fail('LAFEA_CONTINUUM_COMPILED_EDGE_OWNER_MAPPING_INVALID');
   }
-  const factor = dimensionFactor('stress', payload.unit, model);
+  const factor = dimensionFactor('stress', payload.unit);
   target.edgeNodePaths.forEach((edgeNodeIds, index) => {
     const common = {
       elementId: target.elementIds[index],
@@ -190,7 +196,9 @@ function appendEdge(loadCase, attachment, model, kind) {
       loadCase.pressureLoads.push({
         pressureLoadId: `${attachment.attachmentId}/${index + 1}`,
         ...common,
-        pressure: finite(payload.pressure, 'LAFEA_CONTINUUM_COMPILED_PRESSURE_VALUE_INVALID') * factor,
+        pressure: finite(
+          payload.pressure, 'LAFEA_CONTINUUM_COMPILED_PRESSURE_VALUE_INVALID',
+        ) * factor,
       });
     } else {
       loadCase.edgeTractions.push({
@@ -203,19 +211,9 @@ function appendEdge(loadCase, attachment, model, kind) {
   });
 }
 
-function appendRegion(loadCase, attachment, model, kind) {
-  if (!attachment.compiledTarget.elementIds.length) fail('LAFEA_CONTINUUM_COMPILED_REGION_MAPPING_EMPTY');
-  if (kind === 'TEMPERATURE') {
-    const payload = payloadObject(attachment, ['thermalStrain'], ['thermalStrain']);
-    const thermalStrain = finite(payload.thermalStrain, 'LAFEA_CONTINUUM_COMPILED_THERMAL_STRAIN_INVALID');
-    for (const elementId of attachment.compiledTarget.elementIds) {
-      loadCase.temperatureLoads.push({
-        temperatureLoadId: `${attachment.attachmentId}/${elementId}`,
-        elementId, thermalStrain,
-        sourceReference: `COMPILED_ATTACHMENT#${attachment.attachmentId}`,
-      });
-    }
-    return;
+function appendBodyForce(loadCase, attachment, model) {
+  if (!attachment.compiledTarget.elementIds.length) {
+    fail('LAFEA_CONTINUUM_COMPILED_REGION_MAPPING_EMPTY');
   }
   const payload = payloadObject(attachment, ['bx', 'by', 'unit'], ['bx', 'by', 'unit']);
   const factor = bodyForceFactor(payload.unit, model);
@@ -231,41 +229,60 @@ function appendRegion(loadCase, attachment, model, kind) {
 }
 
 function validateSolverModel(value) {
-  if (!value || typeof value !== 'object' || Array.isArray(value)) fail('LAFEA_CONTINUUM_COMPILED_SOLVER_MODEL_REQUIRED');
-  if (value.schema !== LAFEA_CONTINUUM_SOLVER_MODEL_SCHEMA || value.stageId !== STAGE_ID || value.status !== 'COMPILED') {
+  if (!value || typeof value !== 'object' || Array.isArray(value)) {
+    fail('LAFEA_CONTINUUM_COMPILED_SOLVER_MODEL_REQUIRED');
+  }
+  if (value.schema !== LAFEA_CONTINUUM_SOLVER_MODEL_SCHEMA
+    || value.stageId !== STAGE_ID || value.status !== 'COMPILED') {
     fail('LAFEA_CONTINUUM_COMPILED_SOLVER_MODEL_SCHEMA_INVALID');
   }
   if (value.executionAuthorized !== false || value.releaseQualified !== false) {
     fail('LAFEA_CONTINUUM_COMPILED_AUTHORITY_STATE_INVALID');
   }
-  if (value.coordinateSystemId !== 'GLOBAL_XY') fail('LAFEA_CONTINUUM_COMPILED_COORDINATE_SYSTEM_UNSUPPORTED');
-  if (value.dofPolicy?.dofsPerNode !== 2 || JSON.stringify(value.dofPolicy?.dofOrder) !== JSON.stringify(['UX', 'UY'])) {
+  if (value.coordinateSystemId !== 'GLOBAL_XY') {
+    fail('LAFEA_CONTINUUM_COMPILED_COORDINATE_SYSTEM_UNSUPPORTED');
+  }
+  if (value.dofPolicy?.dofsPerNode !== 2
+    || JSON.stringify(value.dofPolicy?.dofOrder) !== JSON.stringify(['UX', 'UY'])) {
     fail('LAFEA_CONTINUUM_COMPILED_DOF_POLICY_INVALID');
   }
   requireCanonicalUnits(value.units);
   requireSourceModel(value.sourceModel);
-  for (const key of ['materials', 'sections', 'nodes', 'elements', 'physicalCases', 'attachments', 'requestedCaseIds', 'limitations']) {
+  for (const key of [
+    'materials', 'sections', 'nodes', 'elements', 'physicalCases',
+    'attachments', 'requestedCaseIds', 'limitations',
+  ]) {
     if (!Array.isArray(value[key])) fail(`LAFEA_CONTINUUM_COMPILED_${key.toUpperCase()}_INVALID`);
   }
-  if (!value.materials.length || !value.sections.length || !value.nodes.length || !value.elements.length || !value.physicalCases.length) {
+  if (!value.materials.length || !value.sections.length || !value.nodes.length
+    || !value.elements.length || !value.physicalCases.length) {
     fail('LAFEA_CONTINUUM_COMPILED_SOLVER_MODEL_EMPTY');
   }
-  if (!value.qualificationProfile || typeof value.qualificationProfile !== 'object') fail('LAFEA_CONTINUUM_COMPILED_PROFILE_INVALID');
-  if (!value.attachments.every((row) => KINDS.has(row?.kind))) fail('LAFEA_CONTINUUM_COMPILED_ATTACHMENT_KIND_UNSUPPORTED');
+  if (!value.qualificationProfile || typeof value.qualificationProfile !== 'object') {
+    fail('LAFEA_CONTINUUM_COMPILED_PROFILE_INVALID');
+  }
+  if (!value.attachments.every((row) => KINDS.has(row?.kind))) {
+    fail('LAFEA_CONTINUUM_COMPILED_ATTACHMENT_KIND_UNSUPPORTED');
+  }
   const copy = structuredClone(value);
   delete copy.solverModelHash;
   const expected = canonicalLafeaSha256({
     schema: 'lafea-continuum-solver-model-hash-input/v1', model: copy,
   });
-  if (value.solverModelHash !== expected) fail('LAFEA_CONTINUUM_COMPILED_SOLVER_MODEL_HASH_INVALID');
+  if (value.solverModelHash !== expected) {
+    fail('LAFEA_CONTINUUM_COMPILED_SOLVER_MODEL_HASH_INVALID');
+  }
   return value;
 }
 
 function requireCanonicalUnits(units) {
   for (const key of ['length', 'force', 'stress', 'modulus']) {
-    if (units?.[key] !== CANONICAL_UNITS[key]) fail('LAFEA_CONTINUUM_COMPILED_CANONICAL_UNITS_INVALID');
+    if (units?.[key] !== CANONICAL_UNITS[key]) {
+      fail('LAFEA_CONTINUUM_COMPILED_CANONICAL_UNITS_INVALID');
+    }
   }
 }
+
 function requireSourceModel(value) {
   if (!value || typeof value !== 'object' || !text(value.modelIdentity) || !text(value.modelVersion)
     || !value.sourceAncestry || typeof value.sourceAncestry !== 'object'
@@ -273,37 +290,49 @@ function requireSourceModel(value) {
     fail('LAFEA_CONTINUUM_COMPILED_SOURCE_MODEL_INVALID');
   }
 }
+
 function requireAttachmentCases(attachment, caseMap) {
   if (!Array.isArray(attachment.physicalCaseIds) || !attachment.physicalCaseIds.length
     || attachment.physicalCaseIds.some((caseId) => !caseMap.has(caseId))) {
     fail('LAFEA_CONTINUUM_COMPILED_ATTACHMENT_CASE_INVALID');
   }
 }
+
 function requireCompiledTarget(attachment, nodeIds, elementIds) {
   const target = attachment.compiledTarget;
   if (!target || target.targetType !== attachment.targetType || target.featureId !== attachment.targetId
-    || !Array.isArray(target.nodeIds) || !Array.isArray(target.edgeNodePaths) || !Array.isArray(target.elementIds)) {
+    || !Array.isArray(target.nodeIds) || !Array.isArray(target.edgeNodePaths)
+    || !Array.isArray(target.elementIds)) {
     fail('LAFEA_CONTINUUM_COMPILED_TARGET_INVALID');
   }
-  if (target.nodeIds.some((id) => !nodeIds.has(id)) || target.elementIds.some((id) => !elementIds.has(id))) {
+  if (target.nodeIds.some((id) => !nodeIds.has(id))
+    || target.elementIds.some((id) => !elementIds.has(id))) {
     fail('LAFEA_CONTINUUM_COMPILED_TARGET_REFERENCE_INVALID');
   }
-  if (target.edgeNodePaths.flat().some((id) => !nodeIds.has(id))) fail('LAFEA_CONTINUUM_COMPILED_EDGE_NODE_REFERENCE_INVALID');
+  if (target.edgeNodePaths.flat().some((id) => !nodeIds.has(id))) {
+    fail('LAFEA_CONTINUUM_COMPILED_EDGE_NODE_REFERENCE_INVALID');
+  }
 }
+
 function payloadObject(attachment, allowed, required) {
   const value = attachment.payload;
-  if (!value || typeof value !== 'object' || Array.isArray(value)) fail('LAFEA_CONTINUUM_COMPILED_ATTACHMENT_PAYLOAD_INVALID');
+  if (!value || typeof value !== 'object' || Array.isArray(value)) {
+    fail('LAFEA_CONTINUUM_COMPILED_ATTACHMENT_PAYLOAD_INVALID');
+  }
   const keys = Object.keys(value);
-  if (keys.some((key) => !allowed.includes(key)) || required.some((key) => !(key in value))) {
+  if (keys.some((key) => !allowed.includes(key))
+    || required.some((key) => !(key in value))) {
     fail('LAFEA_CONTINUUM_COMPILED_ATTACHMENT_PAYLOAD_INVALID');
   }
   return value;
 }
-function dimensionFactor(dimension, unit, model) {
+
+function dimensionFactor(dimension, unit) {
   const factor = lafeaUnitFactor(dimension, unit);
   if (factor === null) fail('LAFEA_CONTINUUM_COMPILED_ATTACHMENT_UNIT_UNSUPPORTED');
   return factor;
 }
+
 function bodyForceFactor(unit, model) {
   const forceUnit = model.declaredUnits?.force;
   const lengthUnit = model.declaredUnits?.length;
@@ -311,21 +340,40 @@ function bodyForceFactor(unit, model) {
   const forceFactor = lafeaUnitFactor('force', forceUnit);
   const lengthFactor = lafeaUnitFactor('length', lengthUnit);
   const stressFactor = lafeaUnitFactor('stress', stressUnit);
-  if (forceFactor === null || lengthFactor === null || stressFactor === null) fail('LAFEA_CONTINUUM_COMPILED_DECLARED_UNITS_INVALID');
+  if (forceFactor === null || lengthFactor === null || stressFactor === null) {
+    fail('LAFEA_CONTINUUM_COMPILED_DECLARED_UNITS_INVALID');
+  }
   if (unit === `${forceUnit}/${lengthUnit}^3`) return forceFactor / (lengthFactor ** 3);
   if (unit === `${stressUnit}/${lengthUnit}`) return stressFactor / lengthFactor;
   fail('LAFEA_CONTINUUM_COMPILED_BODY_FORCE_UNIT_UNSUPPORTED');
 }
+
 function emptyCase(loadCaseId) {
   return {
-    loadCaseId, nodalForces: [], edgeTractions: [], pressureLoads: [], bodyForces: [],
-    temperatureLoads: [], imposedDisplacements: [], sourceReference: `COMPILED_CASE#${loadCaseId}`,
+    loadCaseId,
+    nodalForces: [],
+    edgeTractions: [],
+    pressureLoads: [],
+    bodyForces: [],
+    temperatureLoads: [],
+    imposedDisplacements: [],
+    sourceReference: `COMPILED_CASE#${loadCaseId}`,
   };
 }
+
 function ref(model, suffix) { return `SOLVER_MODEL#${model.solverModelHash}/${suffix}`; }
-function finite(value, code) { if (typeof value !== 'number' || !Number.isFinite(value)) fail(code); return value; }
+function finite(value, code) {
+  if (typeof value !== 'number' || !Number.isFinite(value)) fail(code);
+  return value;
+}
 function text(value) { return typeof value === 'string' && value.trim() ? value.trim() : null; }
-function sameIds(left, right) { return JSON.stringify([...left].sort(compare)) === JSON.stringify([...right].sort(compare)); }
+function sameIds(left, right) {
+  return JSON.stringify([...left].sort(compare)) === JSON.stringify([...right].sort(compare));
+}
 function compare(a, b) { return a < b ? -1 : a > b ? 1 : 0; }
 function fail(code) { const error = new TypeError(code); error.code = code; throw error; }
-function freeze(value) { if (!value || typeof value !== 'object' || Object.isFrozen(value)) return value; Object.values(value).forEach(freeze); return Object.freeze(value); }
+function freeze(value) {
+  if (!value || typeof value !== 'object' || Object.isFrozen(value)) return value;
+  Object.values(value).forEach(freeze);
+  return Object.freeze(value);
+}

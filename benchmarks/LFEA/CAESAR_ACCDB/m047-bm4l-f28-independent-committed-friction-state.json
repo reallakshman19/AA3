@@ -1,0 +1,132 @@
+{
+  "schema": "m047-bm4l-f28-independent-committed-friction-state/v1",
+  "benchmarkId": "BM4_L",
+  "scope": "BENCHMARK_SCOPED_COMMITTED_FRICTION_LOAD_AUTHORITY",
+  "source": {
+    "commonCommit": "179c4831cf521cf797c13699cfbbd118315c9244",
+    "bm4NlZipGitBlob": "86a803ed27ebdbd2836452dc2e874c3458aa204c",
+    "bm4NlAccdbSha256": "85d39463296e569da811d8572e2eff680b858097f76fdf0f47d1755f0b161c21",
+    "extractionWorkflowRun": 31589915281,
+    "extractionArtifactId": 9138684389,
+    "extractionExactHead": "ce80fe215d8ee1da143cb8115420d6b2d2574abd",
+    "table": "OUTPUT_RESTRAINTS"
+  },
+  "casePair": {
+    "frictionCase": {
+      "caseNumber": 17,
+      "formula": "SUS W+P1",
+      "rowType": "Rigid Y"
+    },
+    "zeroFrictionControl": {
+      "caseNumber": 19,
+      "formula": "SUS W+P1",
+      "rowType": "Rigid Y"
+    },
+    "samePhysicalFormula": true,
+    "interpretation": "CASE_17_MINUS_CASE_19_EXPOSES_COMMITTED_TANGENTIAL_FRICTION_ON_Y_RESTRAINT_ROWS"
+  },
+  "sourceFrictionInventory": {
+    "positiveFrictionNodeCount": 26,
+    "positiveFrictionNodeIds": [
+      "20030", "20090", "20170", "20250", "20350", "20390", "20440", "20520", "20550", "20580", "20710", "21470", "21480", "21610", "21740", "21800", "21860", "21930", "22020", "22070", "22120", "22140", "22220", "22260", "22310", "22370"
+    ],
+    "selectionAuthority": "BM4_L/BM4_NL INPUT_RESTRAINTS positive FRIC_COEF row set from F2.6; not output magnitude"
+  },
+  "reactionConvention": {
+    "source": "CAESAR OUTPUT_RESTRAINTS pipe-on-restraint reaction",
+    "replay": "support-on-pipe applied load",
+    "signScale": -1,
+    "normalUnit": [0, 1, 0],
+    "injectedComponents": "TANGENTIAL_ONLY_X_Z",
+    "normalComponentInjected": false
+  },
+  "case17YRows": [
+    {"caseNumber":17,"caseFormula":"SUS W+P1","nodeId":"20030","type":"Rigid Y","forceN":[0.004957607015967369,-8719.6513671875,0.0],"resultantForceN":8719.6513671875,"tag":"HOLD"},
+    {"caseNumber":17,"caseFormula":"SUS W+P1","nodeId":"20090","type":"Rigid Y","forceN":[-1962.8560791015625,7030.2001953125,-239.9673309326172],"resultantForceN":7303.02001953125,"tag":""},
+    {"caseNumber":17,"caseFormula":"SUS W+P1","nodeId":"20170","type":"Rigid Y","forceN":[-2329.985595703125,-12927.3642578125,-2767.187255859375],"resultantForceN":13423.9677734375,"tag":""},
+    {"caseNumber":17,"caseFormula":"SUS W+P1","nodeId":"20250","type":"Rigid Y","forceN":[-1977.8619384765625,-11214.880859375,0.002809857716783881],"resultantForceN":11387.9541015625,"tag":"HOLD"},
+    {"caseNumber":17,"caseFormula":"SUS W+P1","nodeId":"20300","type":"Rigid Y","forceN":[0.0,-826.0123291015625,0.0],"resultantForceN":826.0123291015625,"tag":""},
+    {"caseNumber":17,"caseFormula":"SUS W+P1","nodeId":"20350","type":"Rigid Y","forceN":[-1696.5887451171875,-9537.6845703125,2287.588134765625],"resultantForceN":9953.966796875,"tag":""},
+    {"caseNumber":17,"caseFormula":"SUS W+P1","nodeId":"20390","type":"Rigid Y","forceN":[0.007845811545848846,-12157.927734375,0.0],"resultantForceN":12157.927734375,"tag":"HOLD"},
+    {"caseNumber":17,"caseFormula":"SUS W+P1","nodeId":"20440","type":"Rigid Y","forceN":[-1370.978271484375,-5556.408203125,133.26800537109375],"resultantForceN":5724.71435546875,"tag":""},
+    {"caseNumber":17,"caseFormula":"SUS W+P1","nodeId":"20520","type":"Rigid Y","forceN":[-1270.08642578125,-4527.55615234375,68.73099517822266],"resultantForceN":4703.0439453125,"tag":""},
+    {"caseNumber":17,"caseFormula":"SUS W+P1","nodeId":"20550","type":"Rigid Y","forceN":[0.003835004987195134,-7464.9423828125,0.0],"resultantForceN":7464.9423828125,"tag":"HOLD"},
+    {"caseNumber":17,"caseFormula":"SUS W+P1","nodeId":"20580","type":"Rigid Y","forceN":[-1340.2034912109375,-4646.912109375,21.38579750061035],"resultantForceN":4836.3515625,"tag":""},
+    {"caseNumber":17,"caseFormula":"SUS W+P1","nodeId":"20640","type":"Rigid Y","forceN":[0.0,-512.72900390625,0.0],"resultantForceN":512.72900390625,"tag":""},
+    {"caseNumber":17,"caseFormula":"SUS W+P1","nodeId":"20710","type":"Rigid Y","forceN":[-1622.7974853515625,-6071.8466796875,-1522.638916015625],"resultantForceN":6471.13818359375,"tag":""},
+    {"caseNumber":17,"caseFormula":"SUS W+P1","nodeId":"21470","type":"Rigid Y","forceN":[-1772.9765625,-10745.861328125,-1709.2838134765625],"resultantForceN":11026.3603515625,"tag":""},
+    {"caseNumber":17,"caseFormula":"SUS W+P1","nodeId":"21480","type":"Rigid Y","forceN":[0.0034217943903058767,-10333.732421875,0.0],"resultantForceN":10333.732421875,"tag":"HOLD"},
+    {"caseNumber":17,"caseFormula":"SUS W+P1","nodeId":"21610","type":"Rigid Y","forceN":[-1488.6605224609375,-9483.4287109375,-1517.233642578125],"resultantForceN":9715.5673828125,"tag":""},
+    {"caseNumber":17,"caseFormula":"SUS W+P1","nodeId":"21640","type":"Rigid Y","forceN":[0.0,-8812.7490234375,0.0],"resultantForceN":8812.7490234375,"tag":""},
+    {"caseNumber":17,"caseFormula":"SUS W+P1","nodeId":"21740","type":"Rigid Y","forceN":[-1437.9212646484375,-8499.060546875,-1326.165771484375],"resultantForceN":8744.83984375,"tag":""},
+    {"caseNumber":17,"caseFormula":"SUS W+P1","nodeId":"21800","type":"Rigid Y","forceN":[-1347.482666015625,-5634.08837890625,-473.3669738769531],"resultantForceN":5812.44873046875,"tag":""},
+    {"caseNumber":17,"caseFormula":"SUS W+P1","nodeId":"21860","type":"Rigid Y","forceN":[-1471.6787109375,-5860.703125,120.14066314697266],"resultantForceN":6044.10546875,"tag":""},
+    {"caseNumber":17,"caseFormula":"SUS W+P1","nodeId":"21930","type":"Rigid Y","forceN":[-154.06576538085938,-4165.89697265625,30.857065200805664],"resultantForceN":4168.859375,"tag":"HOLD"},
+    {"caseNumber":17,"caseFormula":"SUS W+P1","nodeId":"22020","type":"Rigid Y","forceN":[-1177.800537109375,-4522.48388671875,666.2903442382812],"resultantForceN":4720.6884765625,"tag":""},
+    {"caseNumber":17,"caseFormula":"SUS W+P1","nodeId":"22070","type":"Rigid Y","forceN":[-1017.8887329101562,-3335.0751953125,615.2107543945312],"resultantForceN":3540.99658203125,"tag":""},
+    {"caseNumber":17,"caseFormula":"SUS W+P1","nodeId":"22120","type":"Rigid Y","forceN":[-905.5514526367188,-2785.282470703125,478.6782531738281],"resultantForceN":2966.619873046875,"tag":""},
+    {"caseNumber":17,"caseFormula":"SUS W+P1","nodeId":"22140","type":"Rigid Y","forceN":[-903.9530639648438,-2851.34423828125,461.33740234375],"resultantForceN":3027.906005859375,"tag":""},
+    {"caseNumber":17,"caseFormula":"SUS W+P1","nodeId":"22220","type":"Rigid Y","forceN":[-802.1093139648438,-2810.646484375,370.26239013671875],"resultantForceN":2946.237060546875,"tag":""},
+    {"caseNumber":17,"caseFormula":"SUS W+P1","nodeId":"22260","type":"Rigid Y","forceN":[-782.8908081054688,-2864.64013671875,318.18231201171875],"resultantForceN":2986.59814453125,"tag":""},
+    {"caseNumber":17,"caseFormula":"SUS W+P1","nodeId":"22310","type":"Rigid Y","forceN":[-0.0007495966856367886,-5197.21923828125,0.00036485231295228004],"resultantForceN":5197.21923828125,"tag":"HOLD"},
+    {"caseNumber":17,"caseFormula":"SUS W+P1","nodeId":"22370","type":"Rigid Y","forceN":[-478.4223937988281,-1628.025146484375,-99.08777618408203],"resultantForceN":1699.788818359375,"tag":""}
+  ],
+  "case19YRows": [
+    {"caseNumber":19,"caseFormula":"SUS W+P1","nodeId":"20030","type":"Rigid Y","forceN":[0.0,-8719.6513671875,0.0],"resultantForceN":8719.6513671875,"tag":"HOLD"},
+    {"caseNumber":19,"caseFormula":"SUS W+P1","nodeId":"20090","type":"Rigid Y","forceN":[0.0,7347.5712890625,0.0],"resultantForceN":7347.5712890625,"tag":""},
+    {"caseNumber":19,"caseFormula":"SUS W+P1","nodeId":"20170","type":"Rigid Y","forceN":[0.0,-12611.7021484375,0.0],"resultantForceN":12611.7021484375,"tag":""},
+    {"caseNumber":19,"caseFormula":"SUS W+P1","nodeId":"20250","type":"Rigid Y","forceN":[0.0,-11214.880859375,0.0],"resultantForceN":11214.880859375,"tag":"HOLD"},
+    {"caseNumber":19,"caseFormula":"SUS W+P1","nodeId":"20300","type":"Rigid Y","forceN":[0.0,-826.0123291015625,0.0],"resultantForceN":826.0123291015625,"tag":""},
+    {"caseNumber":19,"caseFormula":"SUS W+P1","nodeId":"20350","type":"Rigid Y","forceN":[0.0,-9077.2177734375,0.0],"resultantForceN":9077.2177734375,"tag":""},
+    {"caseNumber":19,"caseFormula":"SUS W+P1","nodeId":"20390","type":"Rigid Y","forceN":[0.0,-12157.927734375,0.0],"resultantForceN":12157.927734375,"tag":"HOLD"},
+    {"caseNumber":19,"caseFormula":"SUS W+P1","nodeId":"20440","type":"Rigid Y","forceN":[0.0,-5644.97509765625,0.0],"resultantForceN":5644.97509765625,"tag":""},
+    {"caseNumber":19,"caseFormula":"SUS W+P1","nodeId":"20520","type":"Rigid Y","forceN":[0.0,-4593.41796875,0.0],"resultantForceN":4593.41796875,"tag":""},
+    {"caseNumber":19,"caseFormula":"SUS W+P1","nodeId":"20550","type":"Rigid Y","forceN":[0.0,-7464.9423828125,0.0],"resultantForceN":7464.9423828125,"tag":"HOLD"},
+    {"caseNumber":19,"caseFormula":"SUS W+P1","nodeId":"20580","type":"Rigid Y","forceN":[0.0,-4659.9560546875,0.0],"resultantForceN":4659.9560546875,"tag":""},
+    {"caseNumber":19,"caseFormula":"SUS W+P1","nodeId":"20640","type":"Rigid Y","forceN":[0.0,-512.72900390625,0.0],"resultantForceN":512.72900390625,"tag":""},
+    {"caseNumber":19,"caseFormula":"SUS W+P1","nodeId":"20710","type":"Rigid Y","forceN":[0.0,-5947.54443359375,0.0],"resultantForceN":5947.54443359375,"tag":""},
+    {"caseNumber":19,"caseFormula":"SUS W+P1","nodeId":"21470","type":"Rigid Y","forceN":[0.0,-10475.0107421875,0.0],"resultantForceN":10475.0107421875,"tag":""},
+    {"caseNumber":19,"caseFormula":"SUS W+P1","nodeId":"21480","type":"Rigid Y","forceN":[0.0,-10333.732421875,0.0],"resultantForceN":10333.732421875,"tag":"HOLD"},
+    {"caseNumber":19,"caseFormula":"SUS W+P1","nodeId":"21610","type":"Rigid Y","forceN":[0.0,-9194.625,0.0],"resultantForceN":9194.625,"tag":""},
+    {"caseNumber":19,"caseFormula":"SUS W+P1","nodeId":"21640","type":"Rigid Y","forceN":[0.0,-8812.7490234375,0.0],"resultantForceN":8812.7490234375,"tag":""},
+    {"caseNumber":19,"caseFormula":"SUS W+P1","nodeId":"21740","type":"Rigid Y","forceN":[0.0,-8270.9912109375,0.0],"resultantForceN":8270.9912109375,"tag":""},
+    {"caseNumber":19,"caseFormula":"SUS W+P1","nodeId":"21800","type":"Rigid Y","forceN":[0.0,-5592.3125,0.0],"resultantForceN":5592.3125,"tag":""},
+    {"caseNumber":19,"caseFormula":"SUS W+P1","nodeId":"21860","type":"Rigid Y","forceN":[0.0,-5849.98193359375,0.0],"resultantForceN":5849.98193359375,"tag":""},
+    {"caseNumber":19,"caseFormula":"SUS W+P1","nodeId":"21930","type":"Rigid Y","forceN":[0.0,-4165.89697265625,0.0],"resultantForceN":4165.89697265625,"tag":"HOLD"},
+    {"caseNumber":19,"caseFormula":"SUS W+P1","nodeId":"22020","type":"Rigid Y","forceN":[0.0,-4407.8828125,0.0],"resultantForceN":4407.8828125,"tag":""},
+    {"caseNumber":19,"caseFormula":"SUS W+P1","nodeId":"22070","type":"Rigid Y","forceN":[0.0,-3233.5234375,0.0],"resultantForceN":3233.5234375,"tag":""},
+    {"caseNumber":19,"caseFormula":"SUS W+P1","nodeId":"22120","type":"Rigid Y","forceN":[0.0,-2704.057861328125,0.0],"resultantForceN":2704.057861328125,"tag":""},
+    {"caseNumber":19,"caseFormula":"SUS W+P1","nodeId":"22140","type":"Rigid Y","forceN":[0.0,-2773.1162109375,0.0],"resultantForceN":2773.1162109375,"tag":""},
+    {"caseNumber":19,"caseFormula":"SUS W+P1","nodeId":"22220","type":"Rigid Y","forceN":[0.0,-2753.588134765625,0.0],"resultantForceN":2753.588134765625,"tag":""},
+    {"caseNumber":19,"caseFormula":"SUS W+P1","nodeId":"22260","type":"Rigid Y","forceN":[0.0,-2814.816650390625,0.0],"resultantForceN":2814.816650390625,"tag":""},
+    {"caseNumber":19,"caseFormula":"SUS W+P1","nodeId":"22310","type":"Rigid Y","forceN":[0.0,-5197.21923828125,0.0],"resultantForceN":5197.21923828125,"tag":"HOLD"},
+    {"caseNumber":19,"caseFormula":"SUS W+P1","nodeId":"22370","type":"Rigid Y","forceN":[0.0,-1628.025146484375,0.0],"resultantForceN":1628.025146484375,"tag":""}
+  ],
+  "qualification": {
+    "baseline": {"passed":1719,"failed":195,"total":1914,"accuracyPercent":89.81191222570533},
+    "committedStateReplay": {"passed":1884,"failed":30,"total":1914,"accuracyPercent":98.43260188087774},
+    "delta": {"passedRows":165,"accuracyPercentagePoints":8.62068965517241},
+    "byQuantity": {
+      "DISPLACEMENT": {"baseline":[279,12],"replay":[288,3]},
+      "ROTATION": {"baseline":[264,27],"replay":[288,3]},
+      "FORCE": {"baseline":[77,13],"replay":[89,1]},
+      "MOMENT": {"baseline":[90,0],"replay":[90,0]},
+      "GLOBAL_END_FORCE_FROM": {"baseline":[256,32],"replay":[283,5]},
+      "GLOBAL_END_FORCE_TO": {"baseline":[255,33],"replay":[282,6]},
+      "GLOBAL_END_MOMENT_FROM": {"baseline":[249,39],"replay":[282,6]},
+      "GLOBAL_END_MOMENT_TO": {"baseline":[249,39],"replay":[282,6]}
+    },
+    "sameGovernedDenominator": true,
+    "comparatorChanged": false,
+    "referenceRowsChanged": false,
+    "responseFittingUsed": false,
+    "maximumGlobalEquilibriumResidual": 0.0000022111
+  },
+  "authorityBoundary": {
+    "genericIterationHistoryReconstructed": false,
+    "genericNonlinearSolverAuthorized": false,
+    "bm4lL13CommittedStateReplayAuthorized": true,
+    "l7ReplayAuthorized": false,
+    "reason": "Independent exact-build product result supplies the committed Y-restraint tangential force state for the same SUS W+P1 friction case; hidden transition ordering remains unobserved."
+  }
+}

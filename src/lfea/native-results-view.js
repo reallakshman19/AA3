@@ -8,9 +8,25 @@ const ACTION_FIELDS = Object.freeze(['fx', 'fy', 'fz', 'mx', 'my', 'mz']);
 export function mountLfeaNativeResultsView(root) {
   if (!root?.ownerDocument) throw new TypeError('Native Results root is required.');
   let current = null;
-  function update(executionState, resultsState, publicationReadiness = null) {
-    current = { executionState, resultsState, publicationReadiness };
-    render(root, executionState, resultsState, publicationReadiness);
+  function update(
+    executionState,
+    resultsState,
+    publicationReadiness = null,
+    supportPublicationState = null,
+  ) {
+    current = {
+      executionState,
+      resultsState,
+      publicationReadiness,
+      supportPublicationState,
+    };
+    render(
+      root,
+      executionState,
+      resultsState,
+      publicationReadiness,
+      supportPublicationState,
+    );
     return current;
   }
   function destroy() {
@@ -20,13 +36,21 @@ export function mountLfeaNativeResultsView(root) {
   return Object.freeze({ update, destroy, getState: () => current });
 }
 
-function render(root, executionState, resultsState, publicationReadiness) {
+function render(
+  root,
+  executionState,
+  resultsState,
+  publicationReadiness,
+  supportPublicationState,
+) {
   const doc = root.ownerDocument;
   const section = doc.createElement('section');
   section.className = 'lfea-results-panel';
   section.dataset.currentness = resultsState?.currentness ?? 'NONE';
   section.append(header(doc, resultsState));
-  if (publicationReadiness) section.append(publicationReadinessPanel(doc, publicationReadiness));
+  if (publicationReadiness) {
+    section.append(publicationReadinessPanel(doc, publicationReadiness));
+  }
 
   if (resultsState?.currentness !== 'CURRENT' || !resultsState.results) {
     section.append(nonCurrentMessage(doc, executionState, resultsState));
@@ -53,6 +77,9 @@ function render(root, executionState, resultsState, publicationReadiness) {
       .find((candidate) => candidate.caseId === caseResult.caseId);
     section.append(casePanel(doc, rawCase, caseResult));
   }
+  if (supportPublicationState) {
+    section.append(supportPublicationPanel(doc, supportPublicationState));
+  }
   root.replaceChildren(section);
 }
 
@@ -67,7 +94,7 @@ function header(doc, resultsState) {
   headerNode.append(title, badge);
   const note = doc.createElement('p');
   note.className = 'lfea-journey-copy';
-  note.textContent = 'Raw B-3.3 solver quantities and recovered B-3.4 element actions are separate authorities. Support-action and code-applied quantities appear only when their existing governed producer chains have complete inputs.';
+  note.textContent = 'Raw B-3.3 solver quantities, recovered B-3.4 element actions, support-action projections and code-applied quantities are separate engineering authorities.';
   const wrapper = doc.createElement('div');
   wrapper.append(headerNode, note);
   return wrapper;
@@ -90,7 +117,60 @@ function publicationStage(doc, label, stage) {
     [label, stage.status],
     ['Existing governed producer chain', stage.producerChain.join(' → ')],
   ]));
-  if (stage.reasonCodes.length) block.append(codeList(doc, 'Blocked because', stage.reasonCodes));
+  if (stage.reasonCodes.length) {
+    block.append(codeList(doc, 'Blocked because', stage.reasonCodes));
+  }
+  return block;
+}
+
+function supportPublicationPanel(doc, state) {
+  const section = doc.createElement('section');
+  section.className = 'lfea-results-support-publication';
+  section.dataset.currentness = state.publicationCurrentness ?? 'NONE';
+  section.append(subheading(doc, 'Support actions — gravity/tangent engineering triad'));
+  section.append(factTable(doc, [
+    ['Support authority', state.authorityCurrentness ?? 'NONE'],
+    ['Support publication', state.publicationCurrentness ?? 'NONE'],
+    ['Support authority identity', state.authority?.semanticHash ?? null],
+  ]));
+  if (state.publicationCurrentness !== 'CURRENT' || !state.publications) {
+    if (state.publicationStaleReasonCodes?.length) {
+      section.append(codeList(doc, 'Publication stale reasons', state.publicationStaleReasonCodes));
+    }
+    return section;
+  }
+  for (const row of state.publications) {
+    section.append(supportCaseTable(doc, row.publication));
+  }
+  return section;
+}
+
+function supportCaseTable(doc, publication) {
+  const heading = doc.createElement('h5');
+  heading.textContent = `Support actions · ${publication.loadCaseId}`;
+  const table = tableWithHead(doc, [
+    'Entity', 'Node', 'Interface', 'Sign convention',
+    `Fa [${publication.units.force}]`,
+    `Fl [${publication.units.force}]`,
+    `Fv [${publication.units.force}]`,
+    'Triad status', 'Triad reason', 'Recovery identity',
+  ]);
+  for (const action of publication.actions) {
+    table.append(tableRow(doc, [
+      action.entityId,
+      action.nodeId,
+      action.interfaceId,
+      action.reportingSignConvention,
+      action.fAxial,
+      action.fLateral,
+      action.fVertical,
+      action.triadStatus,
+      action.triadReason,
+      action.recoverySemanticHash,
+    ]));
+  }
+  const block = doc.createElement('div');
+  block.append(heading, scrollWrap(doc, table));
   return block;
 }
 
@@ -139,13 +219,24 @@ function casePanel(doc, rawCase, caseResult) {
 function rawVectorTable(doc, rows, authority, unitForDof) {
   const table = tableWithHead(doc, ['Node', 'DOF', 'Value', 'Unit', 'Basis', 'Authority']);
   for (const row of rows) {
-    table.append(tableRow(doc, [row.nodeId, row.dof, row.value, unitForDof(row.dof), 'GLOBAL', authority]));
+    table.append(tableRow(doc, [
+      row.nodeId,
+      row.dof,
+      row.value,
+      unitForDof(row.dof),
+      'GLOBAL',
+      authority,
+    ]));
   }
   return scrollWrap(doc, table);
 }
 
 function recoveredActionTable(doc, actions) {
-  const labels = ['Element', 'End', 'Basis', ...ACTION_FIELDS.map((field) => `${field.toUpperCase()} [${actionUnit(field)}]`), 'Authority'];
+  const labels = [
+    'Element', 'End', 'Basis',
+    ...ACTION_FIELDS.map((field) => `${field.toUpperCase()} [${actionUnit(field)}]`),
+    'Authority',
+  ];
   const table = tableWithHead(doc, labels);
   for (const action of actions) {
     for (const end of ['I', 'J']) {
@@ -165,21 +256,31 @@ function recoveredActionTable(doc, actions) {
 }
 
 function displacementUnit(dof) {
-  return TRANSLATIONAL_DOFS.includes(dof) ? LINEAR_FEA_UNITS.length : LINEAR_FEA_UNITS.rotation;
+  return TRANSLATIONAL_DOFS.includes(dof)
+    ? LINEAR_FEA_UNITS.length
+    : LINEAR_FEA_UNITS.rotation;
 }
 function reactionUnit(dof) {
-  return TRANSLATIONAL_DOFS.includes(dof) ? LINEAR_FEA_UNITS.force : LINEAR_FEA_UNITS.moment;
+  return TRANSLATIONAL_DOFS.includes(dof)
+    ? LINEAR_FEA_UNITS.force
+    : LINEAR_FEA_UNITS.moment;
 }
-function actionUnit(field) { return field.startsWith('f') ? LINEAR_FEA_UNITS.force : LINEAR_FEA_UNITS.moment; }
+function actionUnit(field) {
+  return field.startsWith('f') ? LINEAR_FEA_UNITS.force : LINEAR_FEA_UNITS.moment;
+}
 
 function factTable(doc, rows) {
   const table = doc.createElement('table');
   table.className = 'lfea-journey-table';
   for (const [label, value] of rows) {
     const tr = doc.createElement('tr');
-    const th = doc.createElement('th'); th.scope = 'row'; th.textContent = label;
-    const td = doc.createElement('td'); td.textContent = display(value);
-    tr.append(th, td); table.append(tr);
+    const th = doc.createElement('th');
+    th.scope = 'row';
+    th.textContent = label;
+    const td = doc.createElement('td');
+    td.textContent = display(value);
+    tr.append(th, td);
+    table.append(tr);
   }
   return table;
 }
@@ -188,22 +289,59 @@ function tableWithHead(doc, labels) {
   const table = doc.createElement('table');
   table.className = 'lfea-journey-table lfea-results-table';
   const tr = doc.createElement('tr');
-  for (const label of labels) { const th = doc.createElement('th'); th.textContent = label; tr.append(th); }
+  for (const label of labels) {
+    const th = doc.createElement('th');
+    th.textContent = label;
+    tr.append(th);
+  }
   table.append(tr);
   return table;
 }
 
 function tableRow(doc, values) {
   const tr = doc.createElement('tr');
-  for (const value of values) { const td = doc.createElement('td'); td.textContent = display(value); tr.append(td); }
+  for (const value of values) {
+    const td = doc.createElement('td');
+    td.textContent = display(value);
+    tr.append(td);
+  }
   return tr;
 }
 
 function scrollWrap(doc, table) {
-  const wrap = doc.createElement('div'); wrap.className = 'lfea-results-table-wrap'; wrap.append(table); return wrap;
+  const wrap = doc.createElement('div');
+  wrap.className = 'lfea-results-table-wrap';
+  wrap.append(table);
+  return wrap;
 }
-function subheading(doc, value) { const heading = doc.createElement('h4'); heading.textContent = value; return heading; }
-function text(doc, value) { const p = doc.createElement('p'); p.className = 'lfea-journey-copy'; p.textContent = value; return p; }
-function codeList(doc, label, values) { const box = doc.createElement('div'); box.append(subheading(doc, label)); const list = doc.createElement('ul'); for (const value of values ?? []) { const li = doc.createElement('li'); const code = doc.createElement('code'); code.textContent = value; li.append(code); list.append(li); } box.append(list); return box; }
-function declared(entry) { return entry ? `${entry.value} · ${entry.source}` : null; }
-function display(value) { return value === null || value === undefined || value === '' ? '—' : String(value); }
+function subheading(doc, value) {
+  const heading = doc.createElement('h4');
+  heading.textContent = value;
+  return heading;
+}
+function text(doc, value) {
+  const p = doc.createElement('p');
+  p.className = 'lfea-journey-copy';
+  p.textContent = value;
+  return p;
+}
+function codeList(doc, label, values) {
+  const box = doc.createElement('div');
+  box.append(subheading(doc, label));
+  const list = doc.createElement('ul');
+  for (const value of values ?? []) {
+    const li = doc.createElement('li');
+    const code = doc.createElement('code');
+    code.textContent = value;
+    li.append(code);
+    list.append(li);
+  }
+  box.append(list);
+  return box;
+}
+function declared(entry) {
+  return entry ? `${entry.value} · ${entry.source}` : null;
+}
+function display(value) {
+  return value === null || value === undefined || value === '' ? '—' : String(value);
+}

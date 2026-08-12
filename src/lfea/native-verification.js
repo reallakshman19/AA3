@@ -30,6 +30,7 @@ export function createLfeaNativeVerification(context = {}) {
     authority: authorityEvidence(context.preFlight, raw, recovery),
     application: applicationEvidence(context.applicationIdentity),
     publicationReadiness: context.publicationReadiness,
+    supportPublication: supportPublicationEvidence(context.supportPublicationState),
     cases: Object.freeze(cases),
   });
 }
@@ -67,6 +68,7 @@ function blockedVerification(context, reasons) {
     authority: null,
     application: applicationEvidence(context.applicationIdentity),
     publicationReadiness: context.publicationReadiness ?? null,
+    supportPublication: supportPublicationEvidence(context.supportPublicationState),
     cases: Object.freeze([]),
   });
 }
@@ -120,6 +122,33 @@ function recoveryEvidence(row) {
   });
 }
 
+function supportPublicationEvidence(state) {
+  const status = state?.publicationCurrentness ?? 'NONE';
+  const authorization = state?.authorization ?? null;
+  const base = {
+    status,
+    authorityStatus: state?.authorityCurrentness ?? 'NONE',
+    authoritySemanticHash: state?.authority?.semanticHash ?? null,
+    authorizationSemanticHash: authorization?.semanticHash ?? null,
+    reviewerIdentity: authorization?.reviewerIdentity ?? null,
+  };
+  if (status !== 'CURRENT' || !Array.isArray(state?.publications)) {
+    return deepFreeze({ ...base, cases: Object.freeze([]) });
+  }
+  return deepFreeze({
+    ...base,
+    cases: Object.freeze(state.publications.map((row) => deepFreeze({
+      caseId: row.caseId,
+      analysisResultSemanticHash: row.analysisResultSemanticHash,
+      interfaceRecoverySemanticHash: row.interfaceRecovery.semanticHash,
+      interfaceRecoveryEvidenceHash: row.interfaceRecovery.evidenceHash,
+      executionHash: row.publication.executionHash,
+      physicalLoadCaseHash: row.publication.physicalLoadCaseHash,
+      actionCount: row.publication.actions.length,
+    }))),
+  });
+}
+
 function sourceEvidence(snapshot, raw) {
   return deepFreeze({
     fileName: text(snapshot?.fileName),
@@ -160,6 +189,15 @@ function applicationEvidence(identity = {}) {
 function currentHistoryEntry(snapshot) {
   return snapshot?.entries?.find((entry) => entry.relation === 'CURRENT') ?? null;
 }
-function text(value) { const result = String(value ?? '').trim(); return result || null; }
-function compareAscii(left, right) { return left < right ? -1 : left > right ? 1 : 0; }
-function verificationError(code, message) { const error = new TypeError(message); error.code = code; return error; }
+function text(value) {
+  const result = String(value ?? '').trim();
+  return result || null;
+}
+function compareAscii(left, right) {
+  return left < right ? -1 : left > right ? 1 : 0;
+}
+function verificationError(code, message) {
+  const error = new TypeError(message);
+  error.code = code;
+  return error;
+}

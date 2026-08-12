@@ -1,7 +1,14 @@
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import { semanticHash } from '../src/core/shared-piping-model/canonical-json.js';
+import { createLfeaNativeExecutionAuthority } from '../src/lfea/native-execution-authority.js';
+import { createLfeaNativeResultsAuthority } from '../src/lfea/native-results-authority.js';
 import { createLfeaNativeRunEvidenceLedger } from '../src/lfea/native-run-evidence-ledger.js';
+import { createLfeaNativeRunHistory } from '../src/lfea/native-run-history.js';
+import {
+  authorizedPreFlight,
+  fixtureXml,
+} from './lfea-standalone-native-b31-publication-fixtures.mjs';
 
 const rawHash = semanticHash({ fixture: 'raw-run-evidence' });
 const recoveryHash = semanticHash({ fixture: 'recovery-run-evidence' });
@@ -80,8 +87,11 @@ assert.throws(
 );
 console.log('LFEA-RUN-EVIDENCE-08 PASS stale publication state cannot create a new history attachment');
 
+historyIntegration();
+console.log('LFEA-RUN-EVIDENCE-09 PASS native History projects attached evidence beside the unchanged archived run record');
+
 sourceGuards();
-console.log('LFEA-RUN-EVIDENCE-09 PASS History/runtime integration is append-only and contains no engineering recalculation path');
+console.log('LFEA-RUN-EVIDENCE-10 PASS History/runtime integration is append-only and contains no engineering recalculation path');
 console.log(JSON.stringify({
   check: 'lfea-standalone-native-run-evidence',
   status: 'PASS',
@@ -91,7 +101,39 @@ console.log(JSON.stringify({
   wrongRunBlocked: true,
   staleAttachmentBlocked: true,
   historicEvidenceRetained: true,
+  historyProjectionQualified: true,
 }));
+
+function historyIntegration() {
+  const preFlight = authorizedPreFlight(fixtureXml(1000));
+  const executionAuthority = createLfeaNativeExecutionAuthority();
+  const executionState = executionAuthority.run(preFlight);
+  const resultsAuthority = createLfeaNativeResultsAuthority();
+  const resultsState = resultsAuthority.recover(preFlight, executionState);
+  const sourceSnapshot = Object.freeze({
+    fileName: 'run-evidence-history.xml', contentSha256: 'e'.repeat(64), sourceUnit: 'mm',
+    preFlightSemanticHash: preFlight.semanticHash,
+    authorizationSemanticHash: preFlight.authorization.semanticHash,
+  });
+  const history = createLfeaNativeRunHistory();
+  const record = history.archive({
+    applicationIdentity: Object.freeze({
+      application: 'LFEA', mode: 'STANDALONE', applicationVersion: '0.1.0',
+      buildSha: '0123456789abcdef0123456789abcdef01234567',
+      buildTime: '2026-08-12T05:00:00.000Z',
+    }),
+    sourceSnapshot, preFlight, executionState, resultsState,
+  });
+  const recordJson = JSON.stringify(record);
+  const attachment = history.attachSupportEvidence(record, supportState(record));
+  const snapshot = history.getSnapshot({ sourceSnapshot, preFlight, executionState, resultsState });
+  const entry = snapshot.entries.find((row) => row.runId === record.runId);
+  assert.equal(entry.relation, 'CURRENT');
+  assert.equal(entry.record, record);
+  assert.equal(JSON.stringify(entry.record), recordJson);
+  assert.deepEqual(entry.evidenceAttachments, [attachment]);
+  assert.deepEqual(history.getEvidenceForRun(record.runId), [attachment]);
+}
 
 function supportState(record, overrides = {}) {
   const authorityHash = semanticHash({ fixture: 'support-authority' });

@@ -39,3 +39,7 @@ export {
   BM4L_L13_STATE_TRACE_EVIDENCE_STATUS,
   assessBm4lL13StateTraceEvidence,
 } from './caesar-bm4l-l13-state-trace-evidence-gate.js';
+export {
+  buildBm4lL13StateTraceCaptureTemplate,
+  sealBm4lL13StateTraceCapture,
+} from './caesar-bm4l-l13-state-trace-capture.js';

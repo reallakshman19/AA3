@@ -15,6 +15,7 @@ import {
 import {
   buildLfeaNativeB31ApplicationChecks,
   lfeaNativeB31ApplicationId,
+  validateLfeaNativeB31CheckParents,
 } from './native-b31-application-checks.js';
 import {
   requireLfeaNativeB31Authorization,
@@ -37,6 +38,7 @@ export function createLfeaNativeB31PublicationAuthority() {
       preFlight,
       accepted.checks,
     );
+    validateLfeaNativeB31CheckParents(preFlight, accepted, codeStationAuthority);
     state = deepFreeze({
       authorityCurrentness: LFEA_NATIVE_B31_REVIEW_REQUIRED,
       authority: sealLfeaNativeB31Authority(preFlight, accepted, codeStationAuthority),

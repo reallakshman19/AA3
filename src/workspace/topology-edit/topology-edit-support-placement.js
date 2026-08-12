@@ -66,7 +66,12 @@ export function effectiveTopologyEditSupportStationMm(topology, support) {
   return topologyEditSupportPlacementContext(topology, support).currentStationMm;
 }
 
-export function resolveTopologyEditSupportPlacement(topology, supportInput, stationInput, expectedHostEdgeId = null) {
+export function topologyEditSupportPlacementAtStation(
+  topology,
+  supportInput,
+  stationInput,
+  expectedHostEdgeId = null,
+) {
   const support = exact(topology?.supports, supportInput?.id, 'support');
   const host = resolveSupportHostGeometry(topology, support);
   const expected = stringValue(expectedHostEdgeId);
@@ -85,16 +90,7 @@ export function resolveTopologyEditSupportPlacement(topology, supportInput, stat
     );
   }
   const boundedStationMm = Math.min(stationMm, host.lengthMm);
-  const context = topologyEditSupportPlacementContext(topology, support);
-  if (context.currentStationMm !== null
-      && Math.abs(context.currentStationMm - boundedStationMm) <= EPSILON_MM) {
-    throw new RangeError(`TopologyEditSupportPlacement: support ${support.id} placement is a no-op.`);
-  }
   const segmentParameter = boundedStationMm / host.lengthMm;
-  const origin = interpolate(host.from.position, host.to.position, segmentParameter);
-  if (context.currentOrigin && distance(context.currentOrigin, origin) <= EPSILON_MM) {
-    throw new RangeError(`TopologyEditSupportPlacement: support ${support.id} placement is a no-op.`);
-  }
   return deepFreeze({
     support,
     hostEdge: host.edge,
@@ -103,8 +99,26 @@ export function resolveTopologyEditSupportPlacement(topology, supportInput, stat
     hostLengthMm: host.lengthMm,
     stationMm: boundedStationMm,
     segmentParameter,
-    origin,
+    origin: interpolate(host.from.position, host.to.position, segmentParameter),
   });
+}
+
+export function resolveTopologyEditSupportPlacement(topology, supportInput, stationInput, expectedHostEdgeId = null) {
+  const placement = topologyEditSupportPlacementAtStation(
+    topology,
+    supportInput,
+    stationInput,
+    expectedHostEdgeId,
+  );
+  const context = topologyEditSupportPlacementContext(topology, placement.support);
+  if (context.currentStationMm !== null
+      && Math.abs(context.currentStationMm - placement.stationMm) <= EPSILON_MM) {
+    throw new RangeError(`TopologyEditSupportPlacement: support ${placement.support.id} placement is a no-op.`);
+  }
+  if (context.currentOrigin && distance(context.currentOrigin, placement.origin) <= EPSILON_MM) {
+    throw new RangeError(`TopologyEditSupportPlacement: support ${placement.support.id} placement is a no-op.`);
+  }
+  return placement;
 }
 
 export function topologyEditSupportPlacementOverride({ resolvedPlacement, commandId }) {

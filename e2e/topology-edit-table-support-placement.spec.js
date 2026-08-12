@@ -132,9 +132,10 @@ async function selectTableRowByTag(page, tag, expectedElementType) {
   await expect(filter).toHaveValue(tag);
   const rows = page.locator('[data-role="topology-edit-table"] tbody tr[data-canonical-id]');
   await expect(rows.first()).toBeVisible();
-  const row = rows.filter({ has: page.locator(`[data-element-type="${expectedElementType}"]`) });
+  const row = page.locator(
+    `[data-role="topology-edit-table"] tbody tr[data-canonical-id][data-element-type="${expectedElementType}"]`,
+  );
   await expect(row).toHaveCount(1);
-  await expect(row).toHaveAttribute('data-element-type', expectedElementType);
   const canonicalId = await row.getAttribute('data-canonical-id');
   expect(canonicalId).toBeTruthy();
   await row.locator('[data-table-select]').click();

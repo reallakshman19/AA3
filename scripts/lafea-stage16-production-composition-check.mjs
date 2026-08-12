@@ -6,18 +6,23 @@ const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const read = (relativePath) => fs.readFileSync(path.join(ROOT, relativePath), 'utf8');
 
 const entry = read('src/lafea-app/main.js');
+const standaloneController = read('src/lafea-app/standalone-controller.js');
 const controller = read('src/workspace/lafea-workbench-controller.js');
 const facade = read('src/workspace/lafea-workbench.js');
 const simulatedProvider = read('src/workspace/lafea-simulated-source-provider.js');
 const css = read('src/lafea-app/app.css');
 const e2e = read('e2e/lafea-standalone.spec.js');
 
-assert(entry.includes("from '../workspace/lafea-workbench-controller.js'"),
-  'Production entry must import the LAFEA controller directly.');
-assert(!entry.includes("from '../workspace/lafea-workbench.js'"),
+assert(entry.includes("from './standalone-controller.js'"),
+  'Production entry must import the standalone LAFEA controller.');
+assert(entry.includes('new LafeaStandaloneController(root).init()'),
+  'Production entry must initialize the standalone controller without compatibility providers.');
+assert(!entry.includes('../workspace/lafea-workbench.js'),
   'Production entry must not import the compatibility facade.');
-assert(entry.includes('new LafeaWorkbenchController(root).init()'),
-  'Production entry must initialize the controller without compatibility providers.');
+assert(standaloneController.includes("from '../workspace/lafea-workbench-controller.js'"),
+  'Standalone controller must extend the canonical LAFEA controller.');
+assert(standaloneController.includes("from '../workspace/lafea-controller-run-evidence.js'"),
+  'Standalone controller may add only LAFEA-owned historic run evidence at this composition seam.');
 
 for (const forbidden of [
   './fea-benchmark-panel.js',
@@ -28,6 +33,8 @@ for (const forbidden of [
 ]) {
   assert(!controller.includes(forbidden),
     `LAFEA controller must not own compatibility dependency ${forbidden}.`);
+  assert(!standaloneController.includes(forbidden),
+    `Standalone controller must not own compatibility dependency ${forbidden}.`);
 }
 assert(controller.includes('benchmarkPanelFactory'),
   'LAFEA controller must accept an injected benchmark panel factory.');
@@ -60,7 +67,8 @@ console.log(JSON.stringify({
   schema: 'lafea-stage16-production-composition-check/v1',
   status: 'PASS',
   roadmap: 'A16',
-  productionImportsControllerDirectly: true,
+  productionImportsStandaloneController: true,
+  canonicalControllerRemainsCompositionRoot: true,
   compatibilityFacadeExcluded: true,
   genericBenchmarkProviderExcluded: true,
   simulatedSourceProviderExcluded: true,

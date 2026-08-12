@@ -9,7 +9,7 @@
 
 export function createLafeaMeshGenerationActions(context) {
   const {
-    meshGeneration, mesh, rawStage, readStageState, deriveStage, publish,
+    meshGeneration, mesh, continuumPreflight, rawStage, readStageState, deriveStage, publish,
     invokeRetained, getRetainedState, clearOrchestratorDiagnostic, failOrchestrator,
     clearDomainFirstExecution, storeError,
   } = context;
@@ -29,6 +29,7 @@ export function createLafeaMeshGenerationActions(context) {
     const succeeded = getRetainedState().status !== 'FAILED';
     mesh.afterLifecycleEvent(event, succeeded);
     if (succeeded) {
+      continuumPreflight.clear(stageId);
       clearDomainFirstExecution(stageId);
       clearOrchestratorDiagnostic();
     }
@@ -93,6 +94,7 @@ export function createLafeaMeshGenerationActions(context) {
       const binding = bindAnalysisMeshProfile(validated.meshProfile, stageId);
       if (getRetainedState().status === 'FAILED') return null;
       const result = meshGeneration.recoverEvidence(validated, stageId);
+      continuumPreflight.clear(stageId);
       clearDomainFirstExecution(stageId);
       clearOrchestratorDiagnostic();
       return freeze({
@@ -111,7 +113,10 @@ export function createLafeaMeshGenerationActions(context) {
     requireGenerationAuthorized(stageId);
     try {
       const result = action();
-      if (invalidatesExecution) clearDomainFirstExecution(stageId);
+      if (invalidatesExecution) {
+        continuumPreflight.clear(stageId);
+        clearDomainFirstExecution(stageId);
+      }
       clearOrchestratorDiagnostic();
       return freeze({ ...result, stage: publish().stages[stageId] });
     } catch (error) {

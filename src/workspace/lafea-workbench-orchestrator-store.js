@@ -1,4 +1,8 @@
 /** Canonical LAFEA workbench orchestrator with one public publication boundary. */
+import { executeLafeaContinuumAuthoritativeWorkbenchRun } from './lafea-continuum-authoritative-workbench-run.js';
+import {
+  registerLafeaContinuumDomainFirstLifecycleProducerBatch,
+} from './lafea-continuum-domain-first-lifecycle-producers.js';
 import { createLafeaLifecycleProducerBatch } from './lafea-lifecycle-producers.js';
 import { lafeaDocumentDigest } from './lafea-edit-command.js';
 import {
@@ -13,6 +17,7 @@ import { createLafeaWorkbenchGeometryState } from './lafea-workbench-geometry-st
 import { buildLafeaDomainFirstMeshCustodyProjection } from './lafea-domain-first-mesh-custody.js';
 import { buildLafeaDomainPreparationProjection } from './lafea-domain-first-requests.js';
 import { createLafeaWorkbenchOrchestratorApi } from './lafea-workbench-orchestrator-api.js';
+import { createLafeaWorkbenchDomainFirstExecutionState } from './lafea-workbench-domain-first-execution-state.js';
 import { createLafeaWorkbenchMeshState } from './lafea-workbench-mesh-state.js';
 import { createLafeaWorkbenchMeshGenerationState } from './lafea-workbench-mesh-generation-state.js';
 import { createLafeaMeshGenerationActions } from './lafea-workbench-mesh-generation-actions.js';
@@ -50,6 +55,7 @@ export function createLafeaWorkbenchOrchestratorStore(options) {
   let orchestratorDiagnostics = null;
   const listeners = new Set();
   const stageIds = Object.keys(retainedState.stages);
+  const domainFirstExecution = createLafeaWorkbenchDomainFirstExecutionState(stageIds);
   const source = createLafeaWorkbenchSourceState(stageIds, {
     getRetainedState: () => retainedState,
     getActiveStageId: () => retainedState.activeStageId,
@@ -85,35 +91,36 @@ export function createLafeaWorkbenchOrchestratorStore(options) {
       ...verification.fields(stageId), ...t6Geometry.fields(stageId),
       ...mesh.fields(stageId), ...meshGeneration.fields(stageId),
       ...preparation.fields(stageId), ...geometry.fields(stageId),
+      ...domainFirstExecution.fields(stageId),
     });
   }
 
   function readStageState(stageId) {
     const raw = rawStage(stageId);
     const withGeometry = freeze({ ...raw, ...geometry.buildProjections(raw) });
-    const lifecycleReadiness = projectLafeaWorkbenchReadiness(stageId, withGeometry);
-    const withReadiness = freeze({ ...withGeometry, lifecycleReadiness });
     const legacyCustody = mesh.buildAnalysisMeshCustodyProjection(
-      withReadiness, withReadiness.retainedAnalysisMeshEvidence,
+      withGeometry, withGeometry.retainedAnalysisMeshEvidence,
     );
-    const v2MeshRoute = withReadiness.domainFirstProfileActive
-      || withReadiness.shellMidsurfaceProfileActive;
+    const v2MeshRoute = withGeometry.domainFirstProfileActive
+      || withGeometry.shellMidsurfaceProfileActive;
     const analysisMeshCustodyProjection = v2MeshRoute
       ? buildLafeaDomainFirstMeshCustodyProjection(
-        withReadiness, withReadiness.retainedAnalysisMeshEvidenceV2,
+        withGeometry, withGeometry.retainedAnalysisMeshEvidenceV2,
       )
       : legacyCustody;
-    const withMesh = freeze({ ...withReadiness, analysisMeshCustodyProjection });
-    const preparationProjection = withMesh.domainFirstProfileActive
-      ? buildLafeaDomainPreparationProjection(withMesh)
-      : preparation.buildProjection(withMesh);
+    const withMesh = freeze({ ...withGeometry, analysisMeshCustodyProjection });
+    const lifecycleReadiness = projectLafeaWorkbenchReadiness(stageId, withMesh);
+    const withReadiness = freeze({ ...withMesh, lifecycleReadiness });
+    const preparationProjection = withReadiness.domainFirstProfileActive
+      ? buildLafeaDomainPreparationProjection(withReadiness)
+      : preparation.buildProjection(withReadiness);
     const numericalVerificationProjection = projectLafeaWorkbenchVerificationBinding(
-      withMesh,
-      withMesh.retainedNumericalVerificationEvidence,
+      withReadiness,
+      withReadiness.retainedNumericalVerificationEvidence,
     );
-    const t6GeometryQualificationProjection = t6Geometry.project(withMesh);
+    const t6GeometryQualificationProjection = t6Geometry.project(withReadiness);
     return freeze({
-      ...withMesh,
+      ...withReadiness,
       preparationProjection,
       numericalVerificationProjection,
       t6GeometryQualificationProjection,
@@ -152,6 +159,10 @@ export function createLafeaWorkbenchOrchestratorStore(options) {
     } finally { suppressRetainedPublish = false; }
   }
 
+  function clearDomainFirstExecution(stageId = retainedState.activeStageId) {
+    return domainFirstExecution.clear(stageId);
+  }
+
   function mutateDocument(originRef, method, args, explicitClass = null) {
     const before = retainedState;
     const stageId = before.activeStageId;
@@ -163,6 +174,7 @@ export function createLafeaWorkbenchOrchestratorStore(options) {
     if (documentDigest(beforeDocument) !== documentDigest(afterDocument)) {
       geometry.invalidate(stageId);
       meshGeneration.invalidate(stageId);
+      clearDomainFirstExecution(stageId);
     }
     clearOrchestratorDiagnostic();
     return publish();
@@ -170,10 +182,7 @@ export function createLafeaWorkbenchOrchestratorStore(options) {
 
   function run() {
     const stageId = retainedState.activeStageId;
-    if (rawStage(stageId).domainFirstProfileActive) {
-      failOrchestrator(storeError('LAFEA_DOMAIN_FIRST_SOLVER_MODEL_NOT_COMPILED'), 'LAFEA_DOMAIN_FIRST_SOLVER_MODEL_NOT_COMPILED');
-      return publish();
-    }
+    if (rawStage(stageId).domainFirstProfileActive) return runDomainFirstContinuum(stageId);
     invokeRetained('run');
     let stage = retainedState.stages[stageId];
     try {
@@ -191,12 +200,58 @@ export function createLafeaWorkbenchOrchestratorStore(options) {
     return publish();
   }
 
+  function runDomainFirstContinuum(stageId) {
+    try {
+      const authority = source.ensureRunAuthority(stageId, 'RUN_CALCULATION/SOURCE_AUTHORITY');
+      const outcome = executeLafeaContinuumAuthoritativeWorkbenchRun(apiContext(), stageId);
+      if (outcome.compiled.sourceAuthority.sourceHash !== authority.sourceHash) {
+        throw storeError('LAFEA_CONTINUUM_AUTHORITATIVE_SOURCE_AUTHORITY_MISMATCH');
+      }
+      domainFirstExecution.retain(stageId, outcome.execution);
+      if (outcome.execution.status !== 'QUALIFIED' || !outcome.lifecycleBatch) {
+        const code = outcome.execution.diagnostics?.[0]?.code
+          ?? 'LAFEA_CONTINUUM_AUTHORITATIVE_CALCULATION_REJECTED';
+        failOrchestrator(storeError(code), code);
+        return publish();
+      }
+      const predicted = registerLafeaContinuumDomainFirstLifecycleProducerBatch(
+        readStageState(stageId).lifecycle,
+        outcome.lifecycleBatch,
+      );
+      for (let index = 0; index < outcome.lifecycleBatch.records.length; index += 1) {
+        invokeRetained('registerLifecycleArtifact', [
+          outcome.lifecycleBatch.records[index],
+          outcome.lifecycleBatch.registrations[index].registrationId,
+        ]);
+        if (retainedState.status === 'FAILED') {
+          throw storeError(
+            retainedState.diagnostics?.[0]?.code
+              ?? 'LAFEA_CONTINUUM_DOMAIN_FIRST_REGISTRATION_REJECTED',
+          );
+        }
+      }
+      const current = retainedState.stages[stageId]?.lifecycle;
+      for (const record of outcome.lifecycleBatch.records) {
+        if (current?.artifacts?.[record.kind]?.artifactHash !== predicted.artifacts[record.kind].artifactHash
+          || current?.artifacts?.[record.kind]?.status !== 'CURRENT') {
+          throw storeError('LAFEA_CONTINUUM_DOMAIN_FIRST_PUBLICATION_DIVERGED');
+        }
+      }
+      clearOrchestratorDiagnostic();
+    } catch (error) {
+      clearDomainFirstExecution(stageId);
+      failOrchestrator(error, 'LAFEA_CONTINUUM_AUTHORITATIVE_RUN_REJECTED');
+    }
+    return publish();
+  }
+
   function importDocument(value, stageId = retainedState.activeStageId, sourceHash = null) {
     invokeRetained('importDocument', [value, stageId, sourceHash]);
     if (retainedState.status !== 'FAILED') {
       source.clear(stageId);
       geometry.clear(stageId);
       meshGeneration.clear(stageId);
+      clearDomainFirstExecution(stageId);
       clearOrchestratorDiagnostic();
     }
     return publish();
@@ -205,6 +260,7 @@ export function createLafeaWorkbenchOrchestratorStore(options) {
   function initializeLifecycle(sourceHash, originRef = 'EXTERNAL_SOURCE_AUTHORITY') {
     const stageId = retainedState.activeStageId;
     source.clear(stageId);
+    clearDomainFirstExecution(stageId);
     invokeRetained('initializeLifecycle', [sourceHash, originRef]);
     if (retainedState.status !== 'FAILED') {
       geometry.invalidate(stageId);
@@ -222,6 +278,10 @@ export function createLafeaWorkbenchOrchestratorStore(options) {
     if (succeeded && SOURCE_CHANGE_CLASSES.has(event?.changeClass)) {
       geometry.invalidate(retainedState.activeStageId);
       meshGeneration.invalidate(retainedState.activeStageId);
+      clearDomainFirstExecution(retainedState.activeStageId);
+    }
+    if (succeeded && event?.changeClass === 'ANALYSIS_MESH_PROFILE') {
+      clearDomainFirstExecution(retainedState.activeStageId);
     }
     if (succeeded) clearOrchestratorDiagnostic();
     return publish();
@@ -236,12 +296,14 @@ export function createLafeaWorkbenchOrchestratorStore(options) {
   const meshGenerationActions = createLafeaMeshGenerationActions({
     meshGeneration, mesh, rawStage, readStageState, deriveStage, publish,
     invokeRetained, storeError, clearOrchestratorDiagnostic, failOrchestrator,
+    clearDomainFirstExecution,
     getRetainedState: () => retainedState,
   });
   const evidenceActions = createLafeaWorkbenchEvidenceActions({
     retained, release, verification, t6Geometry, preparation, geometry,
     meshGeneration, mesh, rawStage, readStageState, deriveStage, deriveState,
     publish, invokeRetained, storeError, clearOrchestratorDiagnostic,
+    clearDomainFirstExecution,
     getRetainedState: () => retainedState,
   });
 
@@ -261,15 +323,19 @@ export function createLafeaWorkbenchOrchestratorStore(options) {
     })];
   }
 
-  return createLafeaWorkbenchOrchestratorApi({
-    retained, release, verification, t6Geometry, mesh, meshGeneration,
-    preparation, geometry, listeners, unsubscribe,
-    ...meshGenerationActions, ...evidenceActions,
-    getRetainedState: () => retainedState,
-    readStageState, deriveStage, deriveState, publish, delegate, mutateDocument,
-    importDocument, run, initializeLifecycle, applyLifecycleEvent,
-    subscribe,
-  });
+  function apiContext() {
+    return {
+      retained, release, verification, t6Geometry, mesh, meshGeneration,
+      preparation, geometry, listeners, unsubscribe,
+      ...meshGenerationActions, ...evidenceActions,
+      getRetainedState: () => retainedState,
+      readStageState, deriveStage, deriveState, publish, delegate, mutateDocument,
+      importDocument, run, initializeLifecycle, applyLifecycleEvent,
+      clearDomainFirstExecution, subscribe,
+    };
+  }
+
+  return createLafeaWorkbenchOrchestratorApi(apiContext());
 }
 
 function documentDigest(value) { return value ? lafeaDocumentDigest(value) : null; }

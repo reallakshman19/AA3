@@ -1,0 +1,222 @@
+#!/usr/bin/env node
+
+/**
+ * Local Windows/ACE production boundary for M047 Stage 2 BM4_L friction.
+ *
+ * The command always runs frozen non-friction controls before L13/L7/L15/L1.
+ * It writes a standard ACCDB actual-result package for comparison plus a
+ * friction-specific evidence ledger. L1 remains explicit BLOCKED until WW+HP
+ * load construction is independently qualified in the shared ACCDB mechanics.
+ */
+import { spawnSync } from 'node:child_process';
+import { mkdirSync, readFileSync, writeFileSync } from 'node:fs';
+import { dirname, resolve } from 'node:path';
+import { fileURLToPath } from 'node:url';
+import {
+  buildCaesarAccdbBenchmarkPackage,
+  requiredCaesarAccdbTables,
+  solveCaesarAccdbFrictionBenchmark,
+  solveCaesarAccdbLinearBenchmark,
+} from '../src/core/fea-benchmarks/index.js';
+import { canonicalPrettyStringify, semanticHash } from '../src/core/shared-piping-model/canonical-json.js';
+
+const SCRIPT_DIR = dirname(fileURLToPath(import.meta.url));
+const EXPORT_SCRIPT = resolve(SCRIPT_DIR, 'lfea-caesar-accdb-export.ps1');
+const CONTROL_CASE_IDS = Object.freeze(['L2', 'L3', 'L4', 'L5', 'L6', 'L14']);
+const FRICTION_CASE_IDS = Object.freeze(['L13', 'L7', 'L15', 'L1']);
+
+export function runBm4lFrictionProduction(input) {
+  const profile = readJson(input.profilePath, 'BM4_L benchmark profile');
+  const frictionSolverProfile = readJson(input.frictionProfilePath, 'friction solver profile');
+  if (profile.benchmarkId !== 'BM4_L') throw new TypeError('M047 friction production requires benchmarkId BM4_L.');
+  const rawExport = extractAccdb(input.accdbPath, requiredCaesarAccdbTables(profile));
+  const benchmarkPackage = buildCaesarAccdbBenchmarkPackage({ rawExport, profile });
+
+  // Issue #1083 gate: prove the frozen non-friction cases before accepting friction.
+  const controls = solveCaesarAccdbLinearBenchmark(benchmarkPackage, CONTROL_CASE_IDS);
+  const friction = solveCaesarAccdbFrictionBenchmark(benchmarkPackage, {
+    caseIds: FRICTION_CASE_IDS,
+    frictionSolverProfile,
+    repeatCount: frictionSolverProfile.repeatCount ?? 2,
+  });
+
+  const successfulFrictionIds = ['L13', 'L7', 'L15'].filter((caseId) =>
+    Array.isArray(friction.cases?.[caseId]?.rows) && friction.cases[caseId].rows.length > 0);
+  const actualCases = {
+    ...controls.cases,
+    ...Object.fromEntries(successfulFrictionIds.map((caseId) => [caseId, friction.cases[caseId]])),
+  };
+  const mechanicsCases = {
+    ...controls.mechanics.cases,
+    ...Object.fromEntries(successfulFrictionIds.map((caseId) => {
+      const evidence = friction.mechanics.cases[caseId];
+      const lastRepeat = evidence.repeats?.at(-1) ?? null;
+      return [caseId, {
+        ...evidence,
+        recoveredEquilibrium: lastRepeat?.physicalEquilibrium ?? undefined,
+        effectiveConfiguration: {
+          friction: {
+            value: evidence.configuration?.effectiveCoefficient ?? null,
+            level: 'MODEL_MU_X_LOAD_CASE_FRICTION_MULTIPLIER',
+          },
+        },
+      }];
+    })),
+  };
+  const actual = Object.freeze({
+    schema: 'lfea-accdb-benchmark-actual/v1',
+    benchmarkId: benchmarkPackage.benchmarkId,
+    sourceAccdbSha256: benchmarkPackage.source.sha256,
+    cases: actualCases,
+    mechanics: {
+      ...controls.mechanics,
+      schema: 'lfea-accdb-benchmark-mechanics-with-friction/v1',
+      cases: mechanicsCases,
+      frictionStageEvidenceHash: semanticHash(friction.mechanics),
+    },
+  });
+
+  const pairedDeltaEvidence = buildPairedDeltaEvidence(actualCases);
+  const evidence = Object.freeze({
+    schema: 'm047-bm4l-friction-production-evidence/v1',
+    benchmarkId: benchmarkPackage.benchmarkId,
+    source: benchmarkPackage.source,
+    packageSemanticHash: benchmarkPackage.semanticHash,
+    controls: {
+      caseIds: CONTROL_CASE_IDS,
+      mechanicsSemanticHash: semanticHash(controls.mechanics),
+    },
+    friction,
+    pairedDeltas: pairedDeltaEvidence,
+    acceptance: {
+      nonFrictionControlsExecutedFirst: true,
+      primitiveFrictionCasesConverged: ['L13', 'L7'].every((caseId) =>
+        friction.mechanics.cases[caseId]?.status === 'PASS'),
+      l15IndependentSolvePerformed: false,
+      l1Status: friction.mechanics.cases.L1?.status ?? 'BLOCKED',
+      overallStatus: friction.status,
+    },
+  });
+  return { actual, evidence };
+}
+
+function buildPairedDeltaEvidence(cases) {
+  const sustained = subtractRows('L13-L6', cases.L13?.rows, cases.L6?.rows);
+  const operating = subtractRows('L7-L5', cases.L7?.rows, cases.L5?.rows);
+  const expansion = subtractRows('L15-L14', cases.L15?.rows, cases.L14?.rows);
+  const identity = subtractRowSets(
+    'EXP_IDENTITY',
+    expansion,
+    subtractRowSets('OPE_MINUS_SUS', operating, sustained),
+  );
+  return Object.freeze({
+    schema: 'm047-bm4l-friction-paired-delta/v1',
+    sustained: { formula: 'L13-L6', rows: sustained },
+    operating: { formula: 'L7-L5', rows: operating },
+    expansion: { formula: 'L15-L14', rows: expansion },
+    identity: {
+      formula: '(L15-L14)-((L7-L5)-(L13-L6))',
+      maximumAbsoluteResidual: maximumAbsoluteValue(identity),
+      rows: identity,
+    },
+  });
+}
+
+function subtractRows(caseId, leftRows, rightRows) {
+  if (!Array.isArray(leftRows) || !Array.isArray(rightRows)) return [];
+  return subtractRowSets(caseId, leftRows, rightRows);
+}
+
+function subtractRowSets(caseId, leftRows, rightRows) {
+  const left = new Map(leftRows.map((row) => [rowIdentity(row), row]));
+  const right = new Map(rightRows.map((row) => [rowIdentity(row), row]));
+  const keys = [...new Set([...left.keys(), ...right.keys()])].sort();
+  return keys.map((key) => {
+    const a = left.get(key);
+    const b = right.get(key);
+    if (!a || !b) throw new TypeError(`${caseId} paired delta has incomplete row ${key}.`);
+    if (a.unit !== b.unit) throw new TypeError(`${caseId} paired delta unit mismatch at ${key}.`);
+    return { ...a, caseId, value: Number(a.value) - Number(b.value) };
+  });
+}
+
+function rowIdentity(row) {
+  return [row.entityKind, row.entityId, row.quantity, row.component].join('|');
+}
+
+function maximumAbsoluteValue(rows) {
+  return rows.reduce((maximum, row) => Math.max(maximum, Math.abs(Number(row.value))), 0);
+}
+
+function extractAccdb(accdbPath, tableNames) {
+  if (process.platform !== 'win32') {
+    throw new Error('M047 BM4_L friction production requires Windows and Microsoft ACE OLE DB.');
+  }
+  const result = spawnSync('powershell.exe', [
+    '-NoLogo', '-NoProfile', '-NonInteractive', '-ExecutionPolicy', 'Bypass',
+    '-File', EXPORT_SCRIPT,
+    '-AccdbPath', resolve(accdbPath),
+    '-TablesCsv', tableNames.join(','),
+  ], { encoding: 'utf8', maxBuffer: 64 * 1024 * 1024, windowsHide: true });
+  if (result.error) throw new Error(`ACCDB extraction failed to start: ${result.error.message}`, { cause: result.error });
+  if (result.status !== 0) {
+    throw new Error(`ACCDB extraction failed with exit ${result.status}: ${String(result.stderr).trim()}`);
+  }
+  try {
+    return JSON.parse(result.stdout);
+  } catch (error) {
+    throw new Error(`ACCDB extraction returned invalid JSON: ${error.message}`, { cause: error });
+  }
+}
+
+function readJson(path, label) {
+  try {
+    return JSON.parse(readFileSync(resolve(path), 'utf8'));
+  } catch (error) {
+    throw new Error(`Cannot read ${label} ${path}: ${error.message}`, { cause: error });
+  }
+}
+
+function writeJson(value, path) {
+  const target = resolve(path);
+  mkdirSync(dirname(target), { recursive: true });
+  writeFileSync(target, canonicalPrettyStringify(value), 'utf8');
+  return target;
+}
+
+function parseArguments(argv) {
+  const values = new Map();
+  for (let index = 0; index < argv.length; index += 2) {
+    const key = argv[index];
+    const value = argv[index + 1];
+    if (!key?.startsWith('--') || value === undefined) throw new TypeError(`Invalid argument near ${String(key)}.`);
+    if (values.has(key)) throw new TypeError(`Duplicate argument ${key}.`);
+    values.set(key, value);
+  }
+  const known = new Set(['--accdb', '--profile', '--friction-profile', '--actual-out', '--evidence-out']);
+  const unknown = [...values.keys()].filter((key) => !known.has(key));
+  if (unknown.length > 0) throw new TypeError(`Unknown arguments: ${unknown.join(', ')}.`);
+  const accdbPath = values.get('--accdb');
+  const profilePath = values.get('--profile');
+  const frictionProfilePath = values.get('--friction-profile');
+  const actualOutPath = values.get('--actual-out');
+  const evidenceOutPath = values.get('--evidence-out');
+  if (!accdbPath || !profilePath || !frictionProfilePath || !actualOutPath || !evidenceOutPath) {
+    throw new TypeError('Usage: --accdb <BM4_L.ACCDB> --profile <bm4l-validation.profile.json> --friction-profile <bm4l-friction-solver.profile.json> --actual-out <actual.json> --evidence-out <evidence.json>.');
+  }
+  return { accdbPath, profilePath, frictionProfilePath, actualOutPath, evidenceOutPath };
+}
+
+if (process.argv[1] && resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {
+  try {
+    const input = parseArguments(process.argv.slice(2));
+    const result = runBm4lFrictionProduction(input);
+    const actualPath = writeJson(result.actual, input.actualOutPath);
+    const evidencePath = writeJson(result.evidence, input.evidenceOutPath);
+    process.stdout.write(`${actualPath}\n${evidencePath}\n`);
+    if (result.evidence.acceptance.overallStatus !== 'PASS') process.exitCode = 2;
+  } catch (error) {
+    process.stderr.write(`${error.stack ?? error.message}\n`);
+    process.exitCode = 1;
+  }
+}

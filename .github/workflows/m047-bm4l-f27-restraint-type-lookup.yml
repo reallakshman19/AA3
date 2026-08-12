@@ -1,0 +1,146 @@
+name: M047 BM4 restraint type lookup authority
+
+on:
+  pull_request:
+    branches:
+      - agent/m047-bm4l-f27-observability-base
+    paths:
+      - 'benchmarks/LFEA/CAESAR_ACCDB/m047-bm4l-f27-state-observability-intent.json'
+
+permissions:
+  contents: read
+
+jobs:
+  compare-restraint-type-lookups:
+    runs-on: windows-latest
+    timeout-minutes: 25
+    env:
+      BM4L_COMMON_COMMIT: '45d51ea18624f5775805f399110c1738301c0d90'
+      BM4L_ZIP_SHA256: '978617cba50fa0b1a16c2fa71dc1e0d38e55ac834b191f887d100c6951abd8b9'
+      BM4L_ACCDB_SHA256: '64c05a50e9ed0452622ff5880335460486f24ac8e6adecc9a300b549c9aa82f8'
+      BM4NL_COMMON_COMMIT: '179c4831cf521cf797c13699cfbbd118315c9244'
+      BM4NL_ZIP_BLOB: '86a803ed27ebdbd2836452dc2e874c3458aa204c'
+      BM4NL_ACCDB_SHA256: '85d39463296e569da811d8572e2eff680b858097f76fdf0f47d1755f0b161c21'
+      ACE_INSTALLER_URL: 'https://download.microsoft.com/download/3/5/C/35C84C36-661A-44E6-9324-8786B8DBE231/accessdatabaseengine_X64.exe'
+      ACE_INSTALLER_SHA256: '04e96c9f1a1f7d251a88aececf1dc10ff65950392787427c00814a43308003de'
+
+    steps:
+      - name: Checkout exact PR head
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+
+      - name: Authenticate and install Microsoft ACE
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          New-Item -ItemType Directory -Force -Path artifacts/f27lookup/provider | Out-Null
+          $installer = Join-Path $PWD 'artifacts/f27lookup/provider/accessdatabaseengine_X64.exe'
+          Invoke-WebRequest -Uri $env:ACE_INSTALLER_URL -OutFile $installer
+          $hash = (Get-FileHash -LiteralPath $installer -Algorithm SHA256).Hash.ToLowerInvariant()
+          if ($hash -ne $env:ACE_INSTALLER_SHA256) { throw "ACE installer hash mismatch: $hash" }
+          $signature = Get-AuthenticodeSignature -LiteralPath $installer
+          if ($signature.Status -ne 'Valid' -or $signature.SignerCertificate.Subject -notmatch 'Microsoft') { throw 'ACE signature validation failed.' }
+          $process = Start-Process -FilePath $installer -ArgumentList '/quiet','/norestart' -Wait -PassThru
+          if ($process.ExitCode -notin @(0,3010)) { throw "ACE installer exited $($process.ExitCode)." }
+
+      - name: Fetch exact BM4_L and BM4_NL databases
+        id: sources
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          New-Item -ItemType Directory -Force -Path artifacts/f27lookup/bm4l,artifacts/f27lookup/bm4nl | Out-Null
+
+          $bm4lZip = Join-Path $PWD 'artifacts/f27lookup/BM4_L.zip'
+          Invoke-WebRequest -Uri "https://raw.githubusercontent.com/reallaksh19/Common/$env:BM4L_COMMON_COMMIT/LFEA/BM4/BM4_L.zip" -OutFile $bm4lZip
+          $bm4lZipSha = (Get-FileHash -LiteralPath $bm4lZip -Algorithm SHA256).Hash.ToLowerInvariant()
+          if ($bm4lZipSha -ne $env:BM4L_ZIP_SHA256) { throw "BM4_L.zip hash mismatch: $bm4lZipSha" }
+          Expand-Archive -LiteralPath $bm4lZip -DestinationPath artifacts/f27lookup/bm4l -Force
+          $bm4l = @(Get-ChildItem artifacts/f27lookup/bm4l -File -Recurse)
+          if ($bm4l.Count -ne 1 -or $bm4l[0].Name -ne 'BM4_L.ACCDB') { throw 'BM4_L archive member contract failed.' }
+          $bm4lSha = (Get-FileHash -LiteralPath $bm4l[0].FullName -Algorithm SHA256).Hash.ToLowerInvariant()
+          if ($bm4lSha -ne $env:BM4L_ACCDB_SHA256) { throw "BM4_L ACCDB hash mismatch: $bm4lSha" }
+
+          $bm4nlZip = Join-Path $PWD 'artifacts/f27lookup/BM4_NL.zip'
+          Invoke-WebRequest -Uri "https://raw.githubusercontent.com/reallaksh19/Common/$env:BM4NL_COMMON_COMMIT/LFEA/BM4/BM4_NL.zip" -OutFile $bm4nlZip
+          $bm4nlBlob = (& git hash-object -- $bm4nlZip).Trim().ToLowerInvariant()
+          if ($bm4nlBlob -ne $env:BM4NL_ZIP_BLOB) { throw "BM4_NL.zip blob mismatch: $bm4nlBlob" }
+          Expand-Archive -LiteralPath $bm4nlZip -DestinationPath artifacts/f27lookup/bm4nl -Force
+          $bm4nl = @(Get-ChildItem artifacts/f27lookup/bm4nl -File -Recurse)
+          if ($bm4nl.Count -ne 1 -or $bm4nl[0].Name -ne 'BM4_NL.ACCDB') { throw 'BM4_NL archive member contract failed.' }
+          $bm4nlSha = (Get-FileHash -LiteralPath $bm4nl[0].FullName -Algorithm SHA256).Hash.ToLowerInvariant()
+          if ($bm4nlSha -ne $env:BM4NL_ACCDB_SHA256) { throw "BM4_NL ACCDB hash mismatch: $bm4nlSha" }
+
+          "bm4l=$($bm4l[0].FullName)" >> $env:GITHUB_OUTPUT
+          "bm4nl=$($bm4nl[0].FullName)" >> $env:GITHUB_OUTPUT
+
+      - name: Extract direct RESTRAINT_TYPES authority
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+
+          function Read-Lookup {
+            param([string]$Path, [string]$Label)
+            $connection = New-Object -ComObject ADODB.Connection
+            try {
+              $connection.Open("Provider=Microsoft.ACE.OLEDB.12.0;Data Source=$Path;Mode=Read;Persist Security Info=False;")
+              $rs = New-Object -ComObject ADODB.Recordset
+              try {
+                $rs.Open('SELECT RES_TYPEID, RES_TYPE FROM RESTRAINT_TYPES ORDER BY RES_TYPEID', $connection, 0, 1)
+                $rows = @()
+                while (-not $rs.EOF) {
+                  $rows += [ordered]@{ id=[int]$rs.Fields.Item('RES_TYPEID').Value; type=[string]$rs.Fields.Item('RES_TYPE').Value }
+                  $rs.MoveNext()
+                }
+              } finally {
+                if ($rs.State -ne 0) { $rs.Close() }
+                [void][System.Runtime.InteropServices.Marshal]::ReleaseComObject($rs)
+              }
+              $input = New-Object -ComObject ADODB.Recordset
+              try {
+                $input.Open('SELECT RES_TYPEID, COUNT(*) AS N FROM INPUT_RESTRAINTS GROUP BY RES_TYPEID ORDER BY RES_TYPEID', $connection, 0, 1)
+                $counts = @()
+                while (-not $input.EOF) {
+                  $counts += [ordered]@{ id=[int]$input.Fields.Item('RES_TYPEID').Value; rowCount=[int]$input.Fields.Item('N').Value }
+                  $input.MoveNext()
+                }
+              } finally {
+                if ($input.State -ne 0) { $input.Close() }
+                [void][System.Runtime.InteropServices.Marshal]::ReleaseComObject($input)
+              }
+              return [ordered]@{ label=$Label; lookup=$rows; activeInputTypeCounts=$counts }
+            } finally {
+              if ($connection.State -ne 0) { $connection.Close() }
+              [void][System.Runtime.InteropServices.Marshal]::ReleaseComObject($connection)
+            }
+          }
+
+          $bm4l = Read-Lookup -Path "${{ steps.sources.outputs.bm4l }}" -Label 'BM4_L'
+          $bm4nl = Read-Lookup -Path "${{ steps.sources.outputs.bm4nl }}" -Label 'BM4_NL'
+          $ids = @(1,3,8,9)
+          $focus = @()
+          foreach ($id in $ids) {
+            $left = @($bm4l.lookup | Where-Object { $_.id -eq $id })
+            $right = @($bm4nl.lookup | Where-Object { $_.id -eq $id })
+            if ($left.Count -ne 1 -or $right.Count -ne 1) { throw "Missing lookup authority for RES_TYPEID $id." }
+            $focus += [ordered]@{ id=$id; bm4lType=$left[0].type; bm4nlType=$right[0].type; identical=($left[0].type -eq $right[0].type) }
+          }
+          $result = [ordered]@{
+            schema='m047-bm4l-f27-restraint-type-lookup-authority/v1'
+            exactHead='${{ github.event.pull_request.head.sha }}'
+            bm4l=[ordered]@{ sourceAccdbSha256=$env:BM4L_ACCDB_SHA256; data=$bm4l }
+            bm4nl=[ordered]@{ sourceAccdbSha256=$env:BM4NL_ACCDB_SHA256; data=$bm4nl }
+            focus=$focus
+            allFocusMappingsIdentical=(@($focus | Where-Object { -not $_.identical }).Count -eq 0)
+            policy=[ordered]@{ inputXmlMutationAppliedToAccdb=$false; responseFittingAllowed=$false; productionMechanicsAuthorized=$false; l13RescoreAuthorized=$false }
+          }
+          New-Item -ItemType Directory -Force -Path artifacts/f27lookup/out | Out-Null
+          $result | ConvertTo-Json -Depth 32 | Set-Content -Encoding utf8 artifacts/f27lookup/out/restraint-type-lookup-authority.json
+
+      - name: Upload direct restraint type authority
+        uses: actions/upload-artifact@v4
+        with:
+          name: m047-bm4l-f27-restraint-type-lookup-${{ github.event.pull_request.head.sha }}
+          path: artifacts/f27lookup/out/*
+          if-no-files-found: error
+          retention-days: 14

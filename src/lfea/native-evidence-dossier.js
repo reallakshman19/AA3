@@ -13,6 +13,7 @@ export function createLfeaNativeEvidenceDossier(verification) {
   const limitationCodes = dossierLimitations(
     verification.publicationReadiness,
     verification.supportPublication,
+    verification.b31Publication,
   );
   const evidence = deepFreeze({
     runId: verification.runId,
@@ -22,6 +23,7 @@ export function createLfeaNativeEvidenceDossier(verification) {
     cases: verification.cases,
     publicationReadiness: verification.publicationReadiness,
     supportPublication: verification.supportPublication,
+    b31Publication: verification.b31Publication,
     limitationCodes,
   });
   const dossierSemanticHash = semanticHash({
@@ -61,7 +63,7 @@ function requireCurrentVerification(verification) {
   }
 }
 
-function dossierLimitations(readiness, supportPublication) {
+function dossierLimitations(readiness, supportPublication, b31Publication) {
   const limitations = ['ENGINEERING_ISSUE_NOT_AUTHORIZED_BY_EVIDENCE_DOSSIER'];
   if (!readiness) limitations.push('PUBLICATION_READINESS_UNAVAILABLE');
   for (const [stage, projection] of Object.entries({
@@ -70,20 +72,19 @@ function dossierLimitations(readiness, supportPublication) {
   })) {
     if (projection?.status === 'READY') continue;
     limitations.push(`${stage}_PUBLICATION_BLOCKED`);
-    for (const reason of projection?.reasonCodes ?? []) {
-      limitations.push(`${stage}:${reason}`);
-    }
+    for (const reason of projection?.reasonCodes ?? []) limitations.push(`${stage}:${reason}`);
   }
   if (readiness?.supportActions?.status === 'READY'
     && supportPublication?.status !== 'CURRENT') {
     limitations.push('SUPPORT_ACTIONS_NOT_PUBLISHED');
   }
+  if (readiness?.b31Code?.status === 'READY' && b31Publication?.status !== 'CURRENT') {
+    limitations.push('B31_CODE_NOT_PUBLISHED');
+  }
   return Object.freeze([...new Set(limitations)].sort(compareAscii));
 }
 
-function compareAscii(left, right) {
-  return left < right ? -1 : left > right ? 1 : 0;
-}
+function compareAscii(left, right) { return left < right ? -1 : left > right ? 1 : 0; }
 function dossierError(code, message) {
   const error = new TypeError(message);
   error.code = code;

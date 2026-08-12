@@ -2,12 +2,13 @@ import { LfeaWorkbenchController } from '../workspace/lfea-workbench-controller.
 import { createLfeaGovernedJourneyProjection } from './governed-journey-projection.js';
 import { mountLfeaGovernedJourneyView } from './governed-journey-view.js';
 import { LfeaStandaloneInputXmlSourceController } from './inputxml-source-controller.js';
+import { createLfeaNativeB31PublicationAuthority } from './native-b31-publication-authority.js';
 import { createLfeaNativeComparisonController } from './native-comparison-controller.js';
 import { createLfeaNativeExecutionAuthority } from './native-execution-authority.js';
 import { mountLfeaNativeHistoryView } from './native-history-view.js';
 import { createLfeaNativePublicationReadiness } from './native-publication-readiness.js';
 import { createLfeaNativeResultsAuthority } from './native-results-authority.js';
-import { mountLfeaNativeResultsView } from './native-results-view.js';
+import { mountLfeaNativeResultsCompositeView } from './native-results-composite-view.js';
 import { createLfeaNativeRunHistory } from './native-run-history.js';
 import { createLfeaNativeSupportPublicationAuthority } from './native-support-publication-authority.js';
 import { createLfeaNativeVerificationController } from './native-verification-controller.js';
@@ -29,6 +30,7 @@ class LfeaStandaloneRuntime {
     this.executionAuthority = createLfeaNativeExecutionAuthority();
     this.resultsAuthority = createLfeaNativeResultsAuthority();
     this.supportPublicationAuthority = createLfeaNativeSupportPublicationAuthority();
+    this.b31PublicationAuthority = createLfeaNativeB31PublicationAuthority();
     this.runHistory = createLfeaNativeRunHistory();
     this.layout = this.#createLayout();
     this.#createViews();
@@ -50,20 +52,17 @@ class LfeaStandaloneRuntime {
     });
     this.verificationController = createLfeaNativeVerificationController(this.layout.nativeVerificationRoot);
     this.journeyView = mountLfeaGovernedJourneyView({
-      reviewRoot: this.layout.reviewRoot,
-      modelRoot: this.layout.modelRoot,
-      analysisRoot: this.layout.analysisRoot,
-      onRunNativeAnalysis: () => this.executeNativeAnalysis(),
+      reviewRoot: this.layout.reviewRoot, modelRoot: this.layout.modelRoot,
+      analysisRoot: this.layout.analysisRoot, onRunNativeAnalysis: () => this.executeNativeAnalysis(),
     });
-    this.resultsView = mountLfeaNativeResultsView(this.layout.resultsRoot);
+    this.resultsView = mountLfeaNativeResultsCompositeView(this.layout.resultsRoot);
     this.historyView = mountLfeaNativeHistoryView(this.layout.historyRoot, {
       onSelectRun: (runId) => this.selectHistoryRun(runId),
     });
   }
   #createControllers(workbenchOptions) {
     this.sourceController = new LfeaStandaloneInputXmlSourceController(
-      this.layout.sourceRoot,
-      this.rootElement.ownerDocument,
+      this.layout.sourceRoot, this.rootElement.ownerDocument,
       (snapshot, preFlight) => this.refreshJourney(snapshot, preFlight),
     );
     this.workbenchController = new LfeaWorkbenchController(this.layout.workbenchRoot, workbenchOptions);
@@ -98,15 +97,12 @@ class LfeaStandaloneRuntime {
     const executionState = this.executionAuthority.reconcile(preFlight);
     const resultsState = this.resultsAuthority.reconcile(preFlight, executionState);
     this.supportPublicationAuthority.reconcile(preFlight, executionState, resultsState);
-    this.governedJourney = createLfeaGovernedJourneyProjection({
-      sourceSnapshot, preFlight, executionState,
-    });
+    this.b31PublicationAuthority.reconcile(preFlight, executionState, resultsState);
+    this.governedJourney = createLfeaGovernedJourneyProjection({ sourceSnapshot, preFlight, executionState });
     this.publicationReadiness = createLfeaNativePublicationReadiness({
-      preFlight,
-      resultsState,
-      supportAuthority: this.supportPublicationAuthority.readinessAuthority(
-        preFlight, executionState, resultsState,
-      ),
+      preFlight, resultsState,
+      supportAuthority: this.supportPublicationAuthority.readinessAuthority(preFlight, executionState, resultsState),
+      b31Authority: this.b31PublicationAuthority.readinessAuthority(preFlight, executionState, resultsState),
     });
     this.journeyView.update(this.governedJourney);
     this.#updateResultsView();
@@ -114,14 +110,10 @@ class LfeaStandaloneRuntime {
     this.historyView.update(this.historySnapshot);
     this.comparisonController.refresh(this.historySnapshot);
     this.verificationController.refresh({
-      applicationIdentity: this.identity,
-      sourceSnapshot,
-      preFlight,
-      executionState,
-      resultsState,
+      applicationIdentity: this.identity, sourceSnapshot, preFlight, executionState, resultsState,
       supportPublicationState: this.supportPublicationAuthority.getState(),
-      historySnapshot: this.historySnapshot,
-      publicationReadiness: this.publicationReadiness,
+      b31PublicationState: this.b31PublicationAuthority.getState(),
+      historySnapshot: this.historySnapshot, publicationReadiness: this.publicationReadiness,
     });
     this.layout.statusRoot.textContent = lfeaStandaloneJourneyStatus(
       this.governedJourney, resultsState, this.persistedState.recentSourceMetadata,
@@ -130,51 +122,43 @@ class LfeaStandaloneRuntime {
   }
   #updateResultsView() {
     this.resultsView.update(
-      this.executionAuthority.getState(),
-      this.resultsAuthority.getState(),
-      this.publicationReadiness,
-      this.supportPublicationAuthority.getState(),
+      this.executionAuthority.getState(), this.resultsAuthority.getState(), this.publicationReadiness,
+      this.supportPublicationAuthority.getState(), this.b31PublicationAuthority.getState(),
     );
   }
   #persistRecentSource(snapshot) {
     if (!snapshot?.fileName || !snapshot.contentSha256 || !snapshot.sourceUnit) return;
     try {
       this.persistence.saveRecentSourceMetadata({
-        fileName: snapshot.fileName,
-        contentSha256: snapshot.contentSha256,
-        sourceUnit: snapshot.sourceUnit,
+        fileName: snapshot.fileName, contentSha256: snapshot.contentSha256, sourceUnit: snapshot.sourceUnit,
       });
     } catch { return; }
     this.persistedState = this.persistence.load();
   }
   #currentHistorySnapshot(sourceSnapshot, preFlight) {
     return this.runHistory.getSnapshot({
-      sourceSnapshot,
-      preFlight,
-      executionState: this.executionAuthority.getState(),
-      resultsState: this.resultsAuthority.getState(),
+      sourceSnapshot, preFlight,
+      executionState: this.executionAuthority.getState(), resultsState: this.resultsAuthority.getState(),
     });
   }
   #archiveCurrentRun() {
     return this.runHistory.archive({
-      applicationIdentity: this.identity,
-      sourceSnapshot: this.sourceController.getSnapshot(),
-      preFlight: this.sourceController.getPreFlight(),
-      executionState: this.executionAuthority.getState(),
+      applicationIdentity: this.identity, sourceSnapshot: this.sourceController.getSnapshot(),
+      preFlight: this.sourceController.getPreFlight(), executionState: this.executionAuthority.getState(),
       resultsState: this.resultsAuthority.getState(),
     });
   }
   #engineeringStateSet() {
     return Object.freeze({
-      execution: this.executionAuthority.getState(),
-      results: this.resultsAuthority.getState(),
-      support: this.supportPublicationAuthority.getState(),
+      execution: this.executionAuthority.getState(), results: this.resultsAuthority.getState(),
+      support: this.supportPublicationAuthority.getState(), b31: this.b31PublicationAuthority.getState(),
     });
   }
   #assertAuthorityUnchanged(before, operation) {
     if (this.executionAuthority.getState() === before.execution
       && this.resultsAuthority.getState() === before.results
-      && this.supportPublicationAuthority.getState() === before.support) return;
+      && this.supportPublicationAuthority.getState() === before.support
+      && this.b31PublicationAuthority.getState() === before.b31) return;
     const error = new Error(`${operation} changed native engineering authority.`);
     error.code = 'LFEA_VIEW_CONTEXT_AUTHORITY_MUTATION';
     throw error;
@@ -203,26 +187,28 @@ class LfeaStandaloneRuntime {
     this.requireActive();
     return this.verificationController.createDossier();
   }
-  stageNativeSupportAuthority(input) {
+  stageNativeSupportAuthority(input) { return this.#stage(this.supportPublicationAuthority, input); }
+  authorizeNativeSupportAuthority(approval) { return this.#authorize(this.supportPublicationAuthority, approval); }
+  stageNativeB31Authority(input) { return this.#stage(this.b31PublicationAuthority, input); }
+  authorizeNativeB31Authority(approval) { return this.#authorize(this.b31PublicationAuthority, approval); }
+  #stage(authority, input) {
     this.requireActive();
-    const state = this.supportPublicationAuthority.stage(this.sourceController.getPreFlight(), input);
+    const state = authority.stage(this.sourceController.getPreFlight(), input);
     this.refreshCurrent();
     return state;
   }
-  authorizeNativeSupportAuthority(approval) {
+  #authorize(authority, approval) {
     this.requireActive();
-    const state = this.supportPublicationAuthority.authorize(
-      this.sourceController.getPreFlight(), approval,
-    );
+    const state = authority.authorize(this.sourceController.getPreFlight(), approval);
     this.refreshCurrent();
     return state;
   }
-  publishNativeSupportActions() {
+  publishNativeSupportActions() { return this.#publish(this.supportPublicationAuthority); }
+  publishNativeB31Application() { return this.#publish(this.b31PublicationAuthority); }
+  #publish(authority) {
     this.requireActive();
-    const state = this.supportPublicationAuthority.publish(
-      this.sourceController.getPreFlight(),
-      this.executionAuthority.getState(),
-      this.resultsAuthority.getState(),
+    const state = authority.publish(
+      this.sourceController.getPreFlight(), this.executionAuthority.getState(), this.resultsAuthority.getState(),
     );
     this.refreshCurrent();
     this.layout.activate('results');
@@ -256,18 +242,12 @@ class LfeaStandaloneRuntime {
   applicationState() {
     this.requireActive();
     return Object.freeze({
-      identity: this.identity,
-      activeView: this.layout.getActiveView(),
-      source: this.sourceController.getSnapshot(),
-      governedJourney: this.governedJourney,
-      nativeExecution: this.executionAuthority.getState(),
-      nativeResults: this.resultsAuthority.getState(),
-      nativeSupportPublication: this.supportPublicationAuthority.getState(),
-      nativeHistory: this.historySnapshot,
-      nativeComparison: this.comparisonController.getState(),
-      nativePublicationReadiness: this.publicationReadiness,
-      nativeVerification: this.verificationController.getState(),
-      nonAuthoritativePersistence: this.persistedState,
+      identity: this.identity, activeView: this.layout.getActiveView(), source: this.sourceController.getSnapshot(),
+      governedJourney: this.governedJourney, nativeExecution: this.executionAuthority.getState(),
+      nativeResults: this.resultsAuthority.getState(), nativeSupportPublication: this.supportPublicationAuthority.getState(),
+      nativeB31Publication: this.b31PublicationAuthority.getState(), nativeHistory: this.historySnapshot,
+      nativeComparison: this.comparisonController.getState(), nativePublicationReadiness: this.publicationReadiness,
+      nativeVerification: this.verificationController.getState(), nonAuthoritativePersistence: this.persistedState,
     });
   }
   clearInputXmlSource() {
@@ -281,6 +261,7 @@ class LfeaStandaloneRuntime {
     this.destroyed = true;
     this.comparisonController.destroy();
     this.verificationController.destroy();
+    this.b31PublicationAuthority.clearCurrentAuthority();
     this.supportPublicationAuthority.clearCurrentAuthority();
     this.resultsAuthority.clearCurrentAuthority();
     this.executionAuthority.clearCurrentAuthority();

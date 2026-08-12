@@ -53,7 +53,11 @@ const nonlinearFailures = ['L13', 'L7', 'L1'].filter((caseId) =>
   actual.mechanics.cases[caseId]?.executionStatus !== 'PASS'
   || actual.mechanics.cases[caseId]?.nonlinearStateGate?.status !== 'PASS'
   || actual.mechanics.cases[caseId]?.recoveredEquilibrium?.status !== 'PASS');
-const l15Failure = actual.mechanics.cases.L15?.executionStatus !== 'PASS';
+const l15Evidence = actual.mechanics.cases.L15;
+const l15Failure = l15Evidence?.executionStatus !== 'PASS'
+  || l15Evidence?.independentNonlinearSolve !== false
+  || l15Evidence?.algebraicIdentityStatus !== 'PASS'
+  || Number(l15Evidence?.algebraicIdentityMaximumAbsoluteResidual) !== 0;
 const report = Object.freeze({
   schema: 'lfea-m047-bm4l-friction-stage2-report/v1',
   benchmarkId: benchmarkPackage.benchmarkId,
@@ -71,6 +75,8 @@ const report = Object.freeze({
     status: nonlinearFailures.length === 0 ? 'PASS' : 'FAIL',
     failedPrimitiveCases: nonlinearFailures,
     l15AlgebraicStatus: l15Failure ? 'FAIL' : 'PASS',
+    l15DerivedEquilibriumStatus: l15Evidence?.recoveredEquilibrium?.status ?? 'NOT_EVALUATED',
+    l15DerivedEquilibriumQualificationUse: l15Evidence?.equilibriumQualificationUse ?? null,
   },
   pairedDeltas: actual.mechanics.pairedDeltas,
   repeatedRuns: actual.mechanics.repeatedRuns,
@@ -288,6 +294,7 @@ function writeSummary(report, path) {
     `- Physical equilibrium: ${a.physicalEquilibrium.status}; ${a.physicalEquilibrium.counts.failed} failed cases.`,
     `- Nonlinear friction gate: ${report.nonlinearGate.status}.`,
     `- L15 algebraic identity: ${report.nonlinearGate.l15AlgebraicStatus}.`,
+    `- L15 derived equilibrium (report-only): ${report.nonlinearGate.l15DerivedEquilibriumStatus}.`,
     '',
     'Sensitivity runs are diagnostic only; 1x nominal remains the qualification result.',
   ];

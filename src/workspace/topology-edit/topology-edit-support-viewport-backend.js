@@ -8,6 +8,9 @@ export const TOPOLOGY_EDIT_SUPPORT_RENDER_STYLES = Object.freeze({
   TOPO_VALIDATOR_COMPACT: 'TOPO_VALIDATOR_COMPACT',
 });
 
+const SUPPORT_GHOST_COLOR = 0xf59e0b;
+const SUPPORT_GHOST_OPACITY = 0.38;
+
 export class TopologyEditSupportViewportBackend extends TopologyEditReachableTypedViewportBackend {
   renderSession(model) {
     const supports = model?.supports;
@@ -37,6 +40,30 @@ export class TopologyEditSupportViewportBackend extends TopologyEditReachableTyp
       );
     }
     return this.renderSupportGlyphProjection(group, projection);
+  }
+
+  renderGhost(ghost, markerSize) {
+    const supportProjection = ghost?.engineeringSupportProjection ?? null;
+    if (!supportProjection) return super.renderGhost(ghost, markerSize);
+    const result = super.renderGhost({
+      ...ghost,
+      engineeringSupportProjection: null,
+    }, markerSize);
+    this.appendEngineeringSupportGhostProjection(supportProjection);
+    return result;
+  }
+
+  appendEngineeringSupportGhostProjection(projection) {
+    if (!Array.isArray(projection?.glyphOverlays)) {
+      throw new TypeError(
+        'TopologyEditSupportViewportBackend: engineering support ghost projection requires glyphOverlays.',
+      );
+    }
+    this.renderSupportGlyphProjection(this.groups.ghostGroup, projection);
+    applySupportGhostPresentation(this.groups.ghostGroup);
+    this.applySectionPlanesToGroup(this.groups.ghostGroup);
+    this.engineeringRoot.updateMatrixWorld(true);
+    this.invalidate('engineering-support-ghost');
   }
 
   renderSupportGlyphProjection(group, projection) {
@@ -101,6 +128,21 @@ function supportMarkerSize(configuredValue, projection) {
     );
   }
   return configured;
+}
+
+function applySupportGhostPresentation(group) {
+  const materials = new Set();
+  group.traverse((object) => {
+    if (object?.userData?.pickProxy) return;
+    const rows = Array.isArray(object?.material) ? object.material : [object?.material];
+    rows.filter(Boolean).forEach((material) => materials.add(material));
+  });
+  materials.forEach((material) => {
+    material.color?.setHex?.(SUPPORT_GHOST_COLOR);
+    material.transparent = true;
+    material.opacity = SUPPORT_GHOST_OPACITY;
+    material.needsUpdate = true;
+  });
 }
 
 function disposeStaging(root) {

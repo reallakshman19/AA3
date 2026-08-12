@@ -63,9 +63,8 @@ export {
   runDeterministicCaesarFrictionActiveSet,
 } from './caesar-friction-active-set.js';
 export {
-  BM4L_ACCDB_FRICTION_DIRECTION,
-  BM4L_ACCDB_FRICTION_RESTRAINT_TYPE,
-  BM4L_ACCDB_FRICTION_RESTRAINT_TYPE_ID,
+  CAESAR_ACCDB_ANCHOR_RESTRAINT_TYPE_ID,
+  BM4L_FRICTION_DIRECTION_ALIGNMENT_TOLERANCE,
   selectBm4lAccdbFrictionRows,
 } from './caesar-accdb-friction-restraint-selection.js';
 export { solveCaesarFrictionRefinedDenseSystem } from './caesar-friction-dense-refinement.js';

@@ -1,0 +1,71 @@
+{
+  "schema": "m047-bm4l-l13-friction-coulomb-fixed-point-proof/v1",
+  "benchmarkId": "BM4_L",
+  "caseId": "L13",
+  "stage": "F2.3_PHYSICAL_COULOMB_FIXED_POINT_NUMERICAL_PROOF",
+  "parent": {
+    "pr": 1070,
+    "diagnosticAccuracyPercent": 89.81191222570533,
+    "governedRows": 1914
+  },
+  "fixedMechanics": {
+    "coefficientOfFriction": 0.3,
+    "frictionStiffnessNPerM": 175126835.24647635,
+    "structuralOperator": "EXACT_RECONSTRUCTED_L6_1938_DOF_OPERATOR",
+    "gapContactState": "RETAIN_PARENT_GROUNDED_STATE",
+    "slidingForceLaw": "MIN_KF_UT_MU_N_OPPOSING_TANGENTIAL_DISPLACEMENT",
+    "responseFittingUsed": false
+  },
+  "convergenceRuns": [
+    {"damping":0.1,"iterations":188,"converged":true,"stickSites":7,"slidingSites":19},
+    {"damping":0.15,"iterations":125,"converged":true,"stickSites":7,"slidingSites":19},
+    {"damping":0.2,"iterations":93,"converged":true,"stickSites":7,"slidingSites":19},
+    {"damping":0.25,"iterations":600,"converged":false,"finalSlidingSites":20,"disposition":"NUMERICAL_NEGATIVE_CONTROL_NOT_AUTHORITY"},
+    {"damping":0.3,"iterations":600,"converged":false,"finalSlidingSites":20,"disposition":"NUMERICAL_NEGATIVE_CONTROL_NOT_AUTHORITY"}
+  ],
+  "convergedSolutionAgreement": {
+    "referenceDamping": 0.2,
+    "damping0_1": {
+      "maximumAbsoluteDofDifference": 8.195981870615099e-13,
+      "maximumFrictionForceVectorDifferenceN": 0.000010618404968758259,
+      "identicalStateMap": true
+    },
+    "damping0_15": {
+      "maximumAbsoluteDofDifference": 3.107248616393554e-13,
+      "maximumFrictionForceVectorDifferenceN": 0.0000037256294394332994,
+      "identicalStateMap": true
+    },
+    "maximumDifferenceFromF2_0BaselineDof": 6.6817764429044635e-12
+  },
+  "physicalResidualsAtConvergedFixedPoint": {
+    "maximumAbsoluteGlobalEquilibriumResidual": 0.000002385815605521202,
+    "rmsGlobalEquilibriumResidual": 1.6275640549278642e-7,
+    "maximumSlidingCoulombLawVectorResidualN": 0.000007331728587902487,
+    "minimumStickReserveToCoulombLimitN": 361.92033412643184,
+    "maximumSlidingCapMagnitudeResidualN": 0.000005789342594653135
+  },
+  "state": {
+    "stickCount": 7,
+    "slidingCount": 19,
+    "stickNodes": ["20030","20250","20390","20550","21480","21930","22310"]
+  },
+  "interpretation": {
+    "physicalCoulombFixedPointNumericallyRobust": true,
+    "diagnosticAccuracyGapAttributedToDampingChoice": false,
+    "caesarEquivalentClaimPermitted": false,
+    "reason": "Multiple independent damping choices converge to the same physical fixed point, but F2.2 proves public CAESAR state-history documentation does not uniquely define the proprietary iteration/history semantics."
+  },
+  "decision": {
+    "status": "F2_3_PHYSICAL_FIXED_POINT_PROVED_NUMERICALLY_NO_CAESAR_MECHANICS_PROMOTION",
+    "retainedDiagnosticAccuracyPercent": 89.81191222570533,
+    "l13QualifiedAccuracyAuthorized": false,
+    "l7ExecutionAuthorized": false,
+    "nextQualifiedUnlock": "INDEPENDENT_CAESAR_CONFIGURATION_OR_ITERATION_TRACE_OR_VENDOR_ALGORITHM"
+  },
+  "prohibitions": [
+    "DO_NOT_SELECT_DAMPING_FROM_BM4_L_REFERENCE_ACCURACY",
+    "DO_NOT_CALL_DAMPING_A_CAESAR_PARAMETER",
+    "DO_NOT_PROMOTE_THE_PHYSICAL_FIXED_POINT_TO_CAESAR_EQUIVALENCE",
+    "DO_NOT_SCORE_NONCONVERGED_NEGATIVE_CONTROLS"
+  ]
+}

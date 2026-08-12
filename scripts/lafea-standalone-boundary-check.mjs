@@ -94,10 +94,6 @@ function assertAllowedSource(source, relativePath) {
     fail('COMBINED_WORKSPACE_AUTHORITY_REFERENCE',
       `Combined workspace authority referenced by ${relativePath}.`);
   }
-  if (/\bLFEA(?:_|\.|:)/u.test(source) || /['"]lfea[:./_-]/iu.test(source)) {
-    fail('LFEA_RUNTIME_OR_TOPIC_REFERENCE',
-      `LFEA runtime/topic identifier referenced by ${relativePath}.`);
-  }
   STORAGE_RE.lastIndex = 0;
   let storageMatch;
   while ((storageMatch = STORAGE_RE.exec(source)) !== null) {
@@ -106,6 +102,10 @@ function assertAllowedSource(source, relativePath) {
       fail('CROSS_PRODUCT_STORAGE_KEY',
         `Standalone LAFEA closure uses non-LAFEA storage key ${JSON.stringify(key)} in ${relativePath}.`);
     }
+  }
+  if (/\bLFEA(?:_|\.|:)/u.test(source) || /['"]lfea[:./_-]/iu.test(source)) {
+    fail('LFEA_RUNTIME_OR_TOPIC_REFERENCE',
+      `LFEA runtime/topic identifier referenced by ${relativePath}.`);
   }
 }
 

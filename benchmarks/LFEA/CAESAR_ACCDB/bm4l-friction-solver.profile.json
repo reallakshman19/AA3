@@ -17,6 +17,7 @@
   "capResidualN": 1e-6,
   "stickResidualN": 1e-6,
   "slideResidualN": 1e-6,
+  "assemblyLoadResidualN": 1e-6,
   "directionCosineTolerance": 1e-9,
   "equilibriumForceN": 5,
   "equilibriumMomentNm": 0.5,

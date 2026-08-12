@@ -6,6 +6,8 @@ import {
   registerLafeaContinuumRevalidationBatch,
 } from './lafea-continuum-revalidation.js';
 
+const WORKBENCH_DOCUMENT_SCHEMA = 'lafea-workbench-document/v1';
+
 export function createLafeaWorkbenchEvidenceActions(context) {
   const c = requireContext(context);
 
@@ -86,7 +88,7 @@ export function createLafeaWorkbenchEvidenceActions(context) {
     if (!composition.executionSupported || typeof composition.canonicalize !== 'function') {
       throw c.storeError('LAFEA_CONTINUUM_REVALIDATION_CANONICALIZER_NOT_AVAILABLE');
     }
-    const source = composition.normalizeDocument(c.retained.exportDocument());
+    const source = composition.normalizeDocument(exportedStageDocument(c, stageId));
     const canonicalInput = composition.canonicalize(source);
     const batch = createLafeaContinuumRevalidationBatch({
       stageId,
@@ -137,14 +139,20 @@ export function createLafeaWorkbenchEvidenceActions(context) {
 
   function activateDomainFirstProfile(stageId = activeStageId()) {
     const result = c.geometry.activate(c.rawStage(stageId));
-    if (result.changed) c.clearOrchestratorDiagnostic();
+    if (result.changed) {
+      c.clearDomainFirstExecution(stageId);
+      c.clearOrchestratorDiagnostic();
+    }
     return freeze({ ...result, stage: c.publish().stages[stageId] });
   }
 
   function registerAnalysisDomain(value) {
     const stageId = value?.stageId ?? activeStageId();
     const result = c.geometry.registerDomain(value, c.readStageState(stageId));
-    if (result.changed) c.meshGeneration.invalidate(stageId);
+    if (result.changed) {
+      c.meshGeneration.invalidate(stageId);
+      c.clearDomainFirstExecution(stageId);
+    }
     const state = result.changed ? c.publish() : c.deriveState();
     return freeze({
       ...result,
@@ -158,7 +166,10 @@ export function createLafeaWorkbenchEvidenceActions(context) {
       value,
       c.readStageState(stageId),
     );
-    if (result.changed) c.meshGeneration.invalidate(stageId);
+    if (result.changed) {
+      c.meshGeneration.invalidate(stageId);
+      c.clearDomainFirstExecution(stageId);
+    }
     const state = result.changed ? c.publish() : c.deriveState();
     return freeze({
       ...result,
@@ -211,6 +222,16 @@ export function createLafeaWorkbenchEvidenceActions(context) {
     registerAnalysisMeshEvidence,
     exportLifecycle,
   });
+}
+
+function exportedStageDocument(c, stageId) {
+  const exported = c.retained.exportDocument();
+  if (exported?.schema !== WORKBENCH_DOCUMENT_SCHEMA || exported.stageId !== stageId
+    || !exported.document || typeof exported.document !== 'object'
+    || Array.isArray(exported.document)) {
+    throw c.storeError('LAFEA_WORKBENCH_EXPORTED_DOCUMENT_INVALID');
+  }
+  return exported.document;
 }
 
 function requireContext(value) {

@@ -1,0 +1,133 @@
+{
+  "schema": "m047-friction-bm1-product-observation/v1",
+  "scope": "INDEPENDENT_CAESAR_STATIC_FRICTION_PRODUCT_OBSERVATION",
+  "stackBase": {
+    "pr": 1055,
+    "branch": "agent/m047-bm4l-friction-unit-contract",
+    "sha": "c85700f3e927c29c87735eca512df9e0637e7b38"
+  },
+  "source": {
+    "repository": "reallaksh19/Common",
+    "commit": "179c4831cf521cf797c13699cfbbd118315c9244",
+    "input": {
+      "path": "LFEA/BM1/BM1_InputXML.xml",
+      "gitBlob": "ee88921c4ad80f0265fbed61336b1c896c15f9fa"
+    },
+    "output": {
+      "path": "LFEA/BM1/BM1_CIIOutput.xml",
+      "gitBlob": "caa9645ba59e5106ee4243f41a2edf2d81b6e17e"
+    },
+    "caesarVersion": "14.00.00.0910",
+    "build": 231113
+  },
+  "model": {
+    "positiveFrictionSiteCount": 2,
+    "coefficientOfFriction": 0.3,
+    "sites": [70, 80],
+    "normalDirection": [0, 1, 0],
+    "positiveGapCompanionCountAtFrictionSites": 0
+  },
+  "documentedStaticFrictionStiffness": {
+    "sourceValue": 1000000,
+    "sourceUnit": "LB/IN",
+    "siValue": 175126835.24647635,
+    "siUnit": "N/m"
+  },
+  "cases": {
+    "CASE_4_SUS_W_P1_H": {
+      "classification": "STICK_STIFFNESS_DIRECTLY_OBSERVED",
+      "observations": [
+        {
+          "node": 70,
+          "tangentialDisplacementMm": 0.00975308079531796,
+          "tangentialReactionN": 1707.9452393224744,
+          "normalReactionMagnitudeN": 17230.734375,
+          "coulombLimitAtFinalNormalN": 5169.2203125,
+          "reactionToFinalCoulombRatio": 0.33040674145622895,
+          "observedSecantStiffnessNPerM": 175118536.91834342,
+          "relativeDifferenceFromDocumentedStiffness": -0.000047384674777273376
+        },
+        {
+          "node": 80,
+          "tangentialDisplacementMm": 0.004848281448100966,
+          "tangentialReactionN": 849.1475935771209,
+          "normalReactionMagnitudeN": 15370.623047,
+          "coulombLimitAtFinalNormalN": 4611.1869141,
+          "reactionToFinalCoulombRatio": 0.18414946290305725,
+          "observedSecantStiffnessNPerM": 175144038.70050186,
+          "relativeDifferenceFromDocumentedStiffness": 0.00009823425405532255
+        }
+      ],
+      "finding": "BOTH_SITES_MATCH_DOCUMENTED_STICK_STIFFNESS_WITHIN_0_01_PERCENT_AND_REMAIN_WELL_BELOW_FINAL_COULOMB_LIMIT"
+    },
+    "CASE_3_OPE_W_T1_P1_H": {
+      "classification": "COULOMB_CAPPED_OR_SLIDING_COMPATIBLE",
+      "observations": [
+        {
+          "node": 70,
+          "tangentialDisplacementMm": 56.51595880932929,
+          "tangentialReactionN": 257.20896250807175,
+          "normalReactionMagnitudeN": 862.995361,
+          "coulombLimitAtFinalNormalN": 258.8986083,
+          "documentedStickTrialMagnitudeN": 9897461.007198054,
+          "stickTrialToFinalCoulombRatio": 38229.1008522121,
+          "reactionToFinalCoulombRatio": 0.9934737162048768,
+          "normalForceImpliedIfSlideMultiplierWereOneN": 857.3632083602392,
+          "impliedNormalDifferenceFromFinal": -0.00652628379512316
+        },
+        {
+          "node": 80,
+          "tangentialDisplacementMm": 47.143794452969054,
+          "tangentialReactionN": 5840.254714753826,
+          "normalReactionMagnitudeN": 19742.134766,
+          "coulombLimitAtFinalNormalN": 5922.6404298,
+          "documentedStickTrialMagnitudeN": 8256143.524058857,
+          "stickTrialToFinalCoulombRatio": 1393.9970899664522,
+          "reactionToFinalCoulombRatio": 0.9860896983325804,
+          "normalForceImpliedIfSlideMultiplierWereOneN": 19467.51571584609,
+          "impliedNormalDifferenceFromFinal": -0.01391030166741946
+        }
+      ],
+      "finding": "STICK_STIFFNESS_IS_IMPOSSIBLE_AT_THE_FINAL_DISPLACEMENTS; OBSERVED_REACTIONS_ARE_NEAR_THE_FINAL_MU_N_CAP"
+    }
+  },
+  "identifiability": {
+    "frictionStiffness": {
+      "status": "RESOLVED_AND_PRODUCT_VALIDATED",
+      "reason": "CASE_4_REACTION_DIVIDED_BY_TANGENTIAL_DISPLACEMENT_DIRECTLY_RECOVERS_THE_DOCUMENTED_VALUE_AT_TWO_NO_GAP_SITES"
+    },
+    "frictionSlideMultiplier": {
+      "status": "NOT_IDENTIFIED",
+      "reason": "CASE_3_NEAR_CAP_REACTIONS_ARE_COMPATIBLE_WITH_MULTIPLIER_ONE_AND_A_HELD_NORMAL_FORCE_WITHIN_THE_DOCUMENTED_15_PERCENT_UPDATE_BAND_BUT_DO_NOT_UNIQUELY_IDENTIFY_THE_INTERNAL_MULTIPLIER"
+    },
+    "frictionStateHistorySemantics": {
+      "status": "PARTIALLY_CONSTRAINED_NOT_RESOLVED",
+      "knownFromProductObservation": [
+        "CASE_4_SUPPORTS_A_STICK_STIFFNESS_STATE_AT_BOTH_FRICTION_SITES",
+        "CASE_3_FINAL_STATE_CANNOT_BE_STICK_STIFFNESS_AT_EITHER_SITE",
+        "CASE_3_FINAL_REACTION_IS_NEAR_THE_FINAL_MU_N_CAP"
+      ],
+      "missing": "ITERATION_ORDER_AND_HELD_FORCE_UPDATE_HISTORY"
+    },
+    "gapContactStateSemantics": {
+      "status": "NOT_EXERCISED",
+      "reason": "BM1_FRICTION_SITES_HAVE_NO_POSITIVE_GAP_COMPANIONS"
+    }
+  },
+  "prohibitedInference": [
+    "DO_NOT_SET_SLIDE_MULTIPLIER_TO_ONE_FROM_BM1_NEAR_CAP_REACTIONS",
+    "DO_NOT_INFER_CASE_FRICTION_MULTIPLIERS_FROM_OUTPUT_REACTIONS",
+    "DO_NOT_USE_BM1_TO_AUTHORIZE_GAP_CONTACT_SEMANTICS",
+    "DO_NOT_USE_BM4_L_RESPONSE_TO_COMPLETE_THE_MISSING_STATE_HISTORY"
+  ],
+  "decision": {
+    "newMechanicsAuthorized": false,
+    "l13ProductionSolveAuthorized": false,
+    "l7ProductionSolveAuthorized": false,
+    "remainingBlockers": [
+      "FRICTION_SLIDE_MULTIPLIER_AUTHORITY_REQUIRED",
+      "FRICTION_STATE_HISTORY_SEMANTICS_AUTHORITY_REQUIRED",
+      "GAP_CONTACT_STATE_SEMANTICS_AUTHORITY_REQUIRED"
+    ]
+  }
+}

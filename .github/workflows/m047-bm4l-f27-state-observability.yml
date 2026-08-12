@@ -1,0 +1,185 @@
+name: M047 BM4_L F2.7 state observability
+
+on:
+  pull_request:
+    branches:
+      - agent/m047-bm4l-f27-observability-base
+    paths:
+      - 'agents/PR_M047_bm4l_f27_exact_build_state_observability.md'
+      - 'benchmarks/LFEA/CAESAR_ACCDB/m047-bm4l-f27-state-observability-intent.json'
+
+permissions:
+  contents: read
+
+jobs:
+  audit-retained-state-evidence:
+    runs-on: windows-latest
+    timeout-minutes: 20
+    env:
+      COMMON_COMMIT: '179c4831cf521cf797c13699cfbbd118315c9244'
+      OUTPUT_XML_BLOB: 'f4474379b6835815690e51e57cde6fade70146f2'
+      INPUT_XML_BLOB: '3423d220374a17f67addd3c8c0c44300ffa46251'
+      BM4_NL_ZIP_BLOB: '86a803ed27ebdbd2836452dc2e874c3458aa204c'
+
+    steps:
+      - name: Checkout exact PR head
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+
+      - name: Fetch and authenticate pinned Common objects
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          New-Item -ItemType Directory -Force -Path artifacts/f27/source | Out-Null
+          $objects = @(
+            @{ path='LFEA/BM4/Output_BM4.xml'; out='Output_BM4.xml'; blob=$env:OUTPUT_XML_BLOB },
+            @{ path='LFEA/BM4/InputXML_BM4.xml'; out='InputXML_BM4.xml'; blob=$env:INPUT_XML_BLOB },
+            @{ path='LFEA/BM4/BM4_NL.zip'; out='BM4_NL.zip'; blob=$env:BM4_NL_ZIP_BLOB }
+          )
+          foreach ($object in $objects) {
+            $target = Join-Path $PWD ('artifacts/f27/source/' + $object.out)
+            $url = "https://raw.githubusercontent.com/reallaksh19/Common/$env:COMMON_COMMIT/$($object.path)"
+            Invoke-WebRequest -Uri $url -OutFile $target
+            $actualBlob = (& git hash-object -- $target).Trim().ToLowerInvariant()
+            if ($actualBlob -ne $object.blob) {
+              throw "Git blob mismatch for $($object.path): expected $($object.blob), found $actualBlob"
+            }
+          }
+
+      - name: Audit retained nonlinear state observability
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $keywords = @('ACTIVE','BOUNDARY','STATUS','STICK','SLID','FRICT','CONTACT','ITER','CONVERG','GAP','RESTRAINT','STATE','OPEN','CLOSED','REOPEN')
+
+          function Get-Sha256([string]$Path) {
+            return (Get-FileHash -LiteralPath $Path -Algorithm SHA256).Hash.ToLowerInvariant()
+          }
+
+          function Get-BoundedSnippets([string]$Text, [string]$Keyword) {
+            $matches = [regex]::Matches($Text, [regex]::Escape($Keyword), [System.Text.RegularExpressions.RegexOptions]::IgnoreCase)
+            $snippets = @()
+            foreach ($match in @($matches | Select-Object -First 5)) {
+              $start = [Math]::Max(0, $match.Index - 80)
+              $length = [Math]::Min(220, $Text.Length - $start)
+              $snippet = $Text.Substring($start, $length) -replace '[\r\n\t]+',' '
+              $snippets += $snippet
+            }
+            return [ordered]@{ count=$matches.Count; snippets=$snippets }
+          }
+
+          function Audit-Text([string]$Path, [string]$Label) {
+            $text = [System.IO.File]::ReadAllText($Path)
+            $elements = @{}
+            foreach ($match in [regex]::Matches($text, '<\/?\s*([A-Za-z_][A-Za-z0-9_.:-]*)\b')) {
+              $name = $match.Groups[1].Value
+              if (-not $elements.ContainsKey($name)) { $elements[$name] = 0 }
+              $elements[$name] += 1
+            }
+            $attributes = @{}
+            foreach ($match in [regex]::Matches($text, '\b([A-Za-z_][A-Za-z0-9_.:-]*)\s*=')) {
+              $name = $match.Groups[1].Value
+              if (-not $attributes.ContainsKey($name)) { $attributes[$name] = 0 }
+              $attributes[$name] += 1
+            }
+            $hits = [ordered]@{}
+            foreach ($keyword in $keywords) { $hits[$keyword] = Get-BoundedSnippets -Text $text -Keyword $keyword }
+            $case13 = @()
+            foreach ($match in [regex]::Matches($text, '<PWCASE\s+NUMBER="13"[^>]*>(.*?)</PWCASE>', [System.Text.RegularExpressions.RegexOptions]::IgnoreCase -bor [System.Text.RegularExpressions.RegexOptions]::Singleline)) {
+              $case13 += (($match.Groups[1].Value -replace '[\r\n\t]+',' ').Trim())
+            }
+            $loadCase13Count = [regex]::Matches($text, '\bLOAD_CASE\s*=\s*"13"', [System.Text.RegularExpressions.RegexOptions]::IgnoreCase).Count
+            return [ordered]@{
+              label=$Label
+              byteLength=(Get-Item -LiteralPath $Path).Length
+              sha256=Get-Sha256 $Path
+              elementCounts=[ordered]@{} + ($elements.GetEnumerator() | Sort-Object Name | ForEach-Object { @{ $_.Name = $_.Value } })
+              attributeCounts=[ordered]@{} + ($attributes.GetEnumerator() | Sort-Object Name | ForEach-Object { @{ $_.Name = $_.Value } })
+              keywordHits=$hits
+              pwCase13=$case13
+              loadCase13AttributeCount=$loadCase13Count
+            }
+          }
+
+          function Audit-BinaryStrings([string]$Path, [string]$Label) {
+            $bytes = [System.IO.File]::ReadAllBytes($Path)
+            $ascii = [System.Text.Encoding]::ASCII.GetString($bytes)
+            $unicode = [System.Text.Encoding]::Unicode.GetString($bytes)
+            $hits = [ordered]@{}
+            foreach ($keyword in $keywords) {
+              $a = [regex]::Matches($ascii, [regex]::Escape($keyword), [System.Text.RegularExpressions.RegexOptions]::IgnoreCase).Count
+              $u = [regex]::Matches($unicode, [regex]::Escape($keyword), [System.Text.RegularExpressions.RegexOptions]::IgnoreCase).Count
+              $hits[$keyword] = [ordered]@{ asciiCount=$a; utf16LeCount=$u }
+            }
+            return [ordered]@{ label=$Label; byteLength=$bytes.Length; sha256=Get-Sha256 $Path; keywordHits=$hits }
+          }
+
+          $sourceDir = Join-Path $PWD 'artifacts/f27/source'
+          $outXml = Join-Path $sourceDir 'Output_BM4.xml'
+          $inputXml = Join-Path $sourceDir 'InputXML_BM4.xml'
+          $nlZip = Join-Path $sourceDir 'BM4_NL.zip'
+          $nlDir = Join-Path $PWD 'artifacts/f27/nl'
+          Expand-Archive -LiteralPath $nlZip -DestinationPath $nlDir -Force
+
+          $textExtensions = @('.xml','.txt','.csv','.log','.out','.lis','.dat','.json','.ini','.cfg')
+          $members = @()
+          $memberAudits = @()
+          foreach ($file in @(Get-ChildItem -LiteralPath $nlDir -File -Recurse | Sort-Object FullName)) {
+            $relative = [System.IO.Path]::GetRelativePath($nlDir, $file.FullName).Replace('\\','/')
+            $extension = $file.Extension.ToLowerInvariant()
+            $members += [ordered]@{ path=$relative; byteLength=$file.Length; sha256=Get-Sha256 $file.FullName; extension=$extension }
+            if ($textExtensions -contains $extension) {
+              $memberAudits += Audit-Text -Path $file.FullName -Label $relative
+            }
+            else {
+              $memberAudits += Audit-BinaryStrings -Path $file.FullName -Label $relative
+            }
+          }
+
+          $audit = [ordered]@{
+            schema='m047-bm4l-f27-state-observability-audit/v1'
+            exactHead='${{ github.event.pull_request.head.sha }}'
+            commonCommit=$env:COMMON_COMMIT
+            authenticatedObjects=@(
+              [ordered]@{ path='LFEA/BM4/Output_BM4.xml'; gitBlobSha=$env:OUTPUT_XML_BLOB; byteLength=(Get-Item $outXml).Length; sha256=Get-Sha256 $outXml },
+              [ordered]@{ path='LFEA/BM4/InputXML_BM4.xml'; gitBlobSha=$env:INPUT_XML_BLOB; byteLength=(Get-Item $inputXml).Length; sha256=Get-Sha256 $inputXml },
+              [ordered]@{ path='LFEA/BM4/BM4_NL.zip'; gitBlobSha=$env:BM4_NL_ZIP_BLOB; byteLength=(Get-Item $nlZip).Length; sha256=Get-Sha256 $nlZip }
+            )
+            outputXml=Audit-Text -Path $outXml -Label 'Output_BM4.xml'
+            inputXml=Audit-Text -Path $inputXml -Label 'InputXML_BM4.xml'
+            nonlinearZip=[ordered]@{
+              gitBlobSha=$env:BM4_NL_ZIP_BLOB
+              memberCount=$members.Count
+              members=$members
+              memberAudits=$memberAudits
+            }
+            policy=[ordered]@{
+              finalResponseMaySelectState=$false
+              responseFittingAllowed=$false
+              productionMechanicsAuthorized=$false
+              l13RescoreAuthorized=$false
+            }
+          }
+          New-Item -ItemType Directory -Force -Path artifacts/f27/out | Out-Null
+          $audit | ConvertTo-Json -Depth 64 | Set-Content -Encoding utf8 artifacts/f27/out/state-observability.json
+
+          [ordered]@{
+            schema='m047-bm4l-f27-state-observability-check/v1'
+            status='PASS'
+            exactHead='${{ github.event.pull_request.head.sha }}'
+            commonCommit=$env:COMMON_COMMIT
+            nonlinearZipMemberCount=$members.Count
+            outputCase13=$audit.outputXml.pwCase13
+            sourceObjectsAuthenticated=$true
+            productionMechanicsAuthorized=$false
+            l13RescoreAuthorized=$false
+          } | ConvertTo-Json -Depth 12 | Set-Content -Encoding utf8 artifacts/f27/out/check.json
+
+      - name: Upload F2.7 observability evidence
+        uses: actions/upload-artifact@v4
+        with:
+          name: m047-bm4l-f27-state-observability-${{ github.event.pull_request.head.sha }}
+          path: artifacts/f27/out/*
+          if-no-files-found: error
+          retention-days: 14

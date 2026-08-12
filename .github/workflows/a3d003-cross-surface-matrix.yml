@@ -1,0 +1,77 @@
+name: A3D-003 cross-surface exact-head matrix
+
+on:
+  push:
+    branches:
+      - qualification/a3d003-matrix-22714fb7
+
+permissions:
+  contents: read
+
+jobs:
+  qualify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    env:
+      BASE_SHA: 48e5f228cb3b01835c0f6ec22e11ff292cf07ba0
+      CANDIDATE_SHA: 22714fb769994afe6d3e5da381405d047e25c514
+      PLAYWRIGHT_BROWSERS_PATH: '0'
+      TOPOLOGY_EDIT_TARGET_HEAD_SHA: 22714fb769994afe6d3e5da381405d047e25c514
+    steps:
+      - name: Checkout exact candidate
+        uses: actions/checkout@v4
+        with:
+          ref: 22714fb769994afe6d3e5da381405d047e25c514
+          fetch-depth: 0
+      - name: Verify exact test-only ledger
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$(git rev-parse HEAD)" = "$CANDIDATE_SHA"
+          test "$(git diff --name-only "$BASE_SHA" "$CANDIDATE_SHA")" = 'e2e/topology-edit-a3d003-cross-surface-matrix.spec.js'
+          git diff --check "$BASE_SHA" "$CANDIDATE_SHA"
+          node --check e2e/topology-edit-a3d003-cross-surface-matrix.spec.js
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+      - name: Install dependencies
+        run: npm ci
+      - name: Run shared MOVE_NODE contracts
+        run: >-
+          node --test
+          tests/topology-edit-table-node-position.test.mjs
+          tests/topology-edit-professional-interaction.test.mjs
+          tests/topology-edit-command-contract.test.mjs
+      - name: Install pinned Chromium
+        run: npx playwright install --with-deps chromium
+      - name: Run ordered Mock 1/Mock 2 canvas-table matrix
+        env:
+          PLAYWRIGHT_JSON_OUTPUT_NAME: artifacts/a3d003-playwright.json
+        run: >-
+          node scripts/run-playwright.mjs
+          e2e/topology-edit-a3d003-cross-surface-matrix.spec.js
+          --workers=1
+          --retries=0
+          --trace=on
+          --reporter=line,json
+      - name: Record exact-head identity
+        if: always()
+        shell: bash
+        run: |
+          mkdir -p artifacts
+          printf '{"schema":"A3D003RunIdentity.v1","baseSha":"%s","candidateSha":"%s","runId":"%s","attempt":%s,"workers":1,"retries":0,"trace":"on"}\n' \
+            "$BASE_SHA" "$CANDIDATE_SHA" "$GITHUB_RUN_ID" "$GITHUB_RUN_ATTEMPT" > artifacts/a3d003-run-identity.json
+      - name: Upload matrix evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: a3d003-${{ env.CANDIDATE_SHA }}-${{ github.run_attempt }}
+          path: |
+            artifacts
+            reports/qualification/topology-edit-a3d003-cross-surface.json
+            test-results
+            playwright-report
+          if-no-files-found: warn
+          retention-days: 30

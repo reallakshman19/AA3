@@ -28,6 +28,7 @@ const SCRIPT_DIR = dirname(fileURLToPath(import.meta.url));
 const EXPORT_SCRIPT = resolve(SCRIPT_DIR, 'lfea-caesar-accdb-mdb-export.mjs');
 const CONTROL_CASE_IDS = Object.freeze(['L2', 'L3', 'L4', 'L5', 'L6', 'L14']);
 const FRICTION_CASE_IDS = Object.freeze(['L13', 'L7', 'L15', 'L1']);
+const FRICTION_COMPARISON_CASE_IDS = Object.freeze(['L13', 'L7', 'L15', 'L1']);
 
 export function runBm4lFrictionProduction(input) {
   const profile = readJson(input.profilePath, 'BM4_L benchmark profile');
@@ -44,7 +45,7 @@ export function runBm4lFrictionProduction(input) {
     repeatCount: frictionSolverProfile.repeatCount ?? 2,
   });
 
-  const successfulFrictionIds = ['L13', 'L7', 'L15'].filter((caseId) =>
+  const successfulFrictionIds = FRICTION_CASE_IDS.filter((caseId) =>
     Array.isArray(friction.cases?.[caseId]?.rows) && friction.cases[caseId].rows.length > 0);
   const actualCases = {
     ...controls.cases,
@@ -82,6 +83,7 @@ export function runBm4lFrictionProduction(input) {
 
   const accuracy = buildAccuracyEvidence(benchmarkPackage, actualCases);
   const pairedDeltaEvidence = buildPairedDeltaEvidence(actualCases);
+  const overallStatus = resolveOverallAcceptanceStatus(friction.status, accuracy.frictionRestraintGateStatus);
   const evidence = Object.freeze({
     schema: 'm047-bm4l-friction-production-evidence/v1',
     benchmarkId: benchmarkPackage.benchmarkId,
@@ -100,8 +102,10 @@ export function runBm4lFrictionProduction(input) {
         friction.mechanics.cases[caseId]?.status === 'PASS'),
       l15IndependentSolvePerformed: false,
       directReferenceComparisonEmitted: true,
+      mechanicsStatus: friction.status,
+      benchmarkRestraintAccuracyStatus: accuracy.frictionRestraintGateStatus,
       l1Status: friction.mechanics.cases.L1?.status ?? 'BLOCKED',
-      overallStatus: friction.status,
+      overallStatus,
     },
   });
   return { actual, evidence };
@@ -147,16 +151,29 @@ function buildAccuracyEvidence(benchmarkPackage, actualCases) {
       comparison,
     });
   }
-  const frictionCaseIds = ['L13', 'L7', 'L15'].filter((caseId) => cases[caseId]);
+  const frictionCaseIds = FRICTION_COMPARISON_CASE_IDS.filter((caseId) => cases[caseId]);
+  const missingFrictionCaseIds = FRICTION_COMPARISON_CASE_IDS.filter((caseId) => !cases[caseId]);
+  const frictionRestraintGateStatus = missingFrictionCaseIds.length > 0
+    ? 'NOT_READY'
+    : FRICTION_COMPARISON_CASE_IDS.every((caseId) => cases[caseId].restraint.status === 'PASS')
+      ? 'PASS'
+      : 'FAIL';
   return Object.freeze({
     schema: 'm047-bm4l-direct-reference-accuracy/v1',
     cases: Object.freeze(cases),
     frictionCaseIds: Object.freeze(frictionCaseIds),
-    frictionRestraintGateStatus: frictionCaseIds.length === 3
-      && frictionCaseIds.every((caseId) => cases[caseId].restraint.status === 'PASS')
-      ? 'PASS'
-      : 'FAIL',
+    missingFrictionCaseIds: Object.freeze(missingFrictionCaseIds),
+    frictionRestraintGateStatus,
   });
+}
+
+export function resolveOverallAcceptanceStatus(mechanicsStatus, benchmarkRestraintAccuracyStatus) {
+  const mechanics = String(mechanicsStatus ?? '').trim().toUpperCase();
+  const accuracy = String(benchmarkRestraintAccuracyStatus ?? '').trim().toUpperCase();
+  if (mechanics !== 'PASS') return mechanics || 'BLOCKED';
+  if (accuracy === 'PASS') return 'PASS';
+  if (accuracy === 'FAIL') return 'FAIL';
+  return 'BLOCKED';
 }
 
 function buildPairedDeltaEvidence(cases) {

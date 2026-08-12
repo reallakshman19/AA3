@@ -1,6 +1,7 @@
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import { buildInputXmlFrictionSiteMap } from '../src/core/nonlinear-restraint-friction/inputxml-friction-site-map.js';
+import { decodeBm4lAccdbRestraintType } from '../src/core/nonlinear-restraint-friction/caesar-restraint-code-authority.js';
 
 const BM4L_MUTATION = Object.freeze({
   enabled: true,
@@ -58,15 +59,51 @@ assert.throws(
   (error) => error?.code === 'INPUTXML_FRICTION_RESTRAINT_TYPE_MUTATION_CONFIG_REQUIRED',
 );
 
+// Direct ACCDB authority remains a separate namespace and must not inherit the
+// corrected InputXML class labels merely because the BM4_L row sets crosswalk.
+assert.equal(decodeBm4lAccdbRestraintType(1).abbreviation, 'ANC');
+assert.equal(decodeBm4lAccdbRestraintType(3).abbreviation, 'Y');
+assert.equal(decodeBm4lAccdbRestraintType(8).abbreviation, 'GUI');
+assert.equal(decodeBm4lAccdbRestraintType(9).abbreviation, 'LIM');
+
 const f26 = readJson('../benchmarks/LFEA/CAESAR_ACCDB/m047-bm4l-f26-restraint-semantic-reconciliation.json');
 const baseline = readJson('../benchmarks/LFEA/CAESAR_ACCDB/m047-bm4l-l13-friction-diagnostic-baseline.json');
 const fix1 = readJson('../benchmarks/LFEA/CAESAR_ACCDB/m047-bm4l-fix1-friction-source-domain-consumption.json');
 
-assert.equal(f26.status, 'PASS_WITH_GAP_MAGNITUDE_SOURCE_SPLIT');
+assert.equal(f26.schema, 'm047-bm4l-f26-restraint-semantic-reconciliation/v2');
+assert.equal(f26.status, 'PASS_DIRECT_ACCDB_LOOKUP_WITH_SOURCE_DOMAIN_CROSSWALK');
+assert.equal(f26.directAccdbLookupAuthority.bm4lAndBm4NlLookupIdenticalForActiveIds, true);
+assert.deepEqual(
+  f26.directAccdbLookupAuthority.activeMappings.map((row) => [
+    row.accdbResTypeId,
+    row.accdbType,
+    row.rowCount,
+  ]),
+  [[1, 'ANC', 1], [3, 'Y', 29], [8, 'GUI', 6], [9, 'LIM', 10]],
+);
+assert.equal(f26.rowSetCrosswalk.allNodeSetsExact, true);
+assert.equal(f26.rowSetCrosswalk.allLabelsEquivalent, false);
 assert.equal(f26.frictionReconciliation.positiveFrictionRowCount, 26);
-assert.equal(f26.directionReconciliation.positiveGapRows.length, 6);
-assert.equal(f26.directionReconciliation.positiveGapRows.filter((row) => row.frictionNode).length, 5);
+assert.equal(f26.directionAndGapCrosswalk.positiveGapRows.length, 6);
+assert.equal(
+  f26.directionAndGapCrosswalk.positiveGapRows.filter((row) => row.frictionNode).length,
+  5,
+);
 assert.equal(f26.gapCustody.accdbAllGapFieldsUnsetSentinel, true);
+assert.equal(f26.withdrawnInference.status, 'WITHDRAWN');
+
+assert.equal(fix1.schema, 'm047-bm4l-fix1-friction-source-domain-consumption/v2');
+assert.equal(fix1.stackBase.head, 'b03e0c1d7277b6b9738303de33f70ac9982da9ba');
+assert.equal(fix1.authority.f26Status, f26.status);
+assert.equal(fix1.authority.numericNamespaceEqualityAssumed, false);
+assert.equal(fix1.authority.classLabelEqualityAssumed, false);
+assert.equal(fix1.authority.withdrawnAccdbInferenceStatus, 'WITHDRAWN');
+assert.deepEqual(
+  fix1.authority.directAccdbTypes.map((row) => [row.resTypeId, row.type, row.rowCount]),
+  [[1, 'ANC', 1], [3, 'Y', 29], [8, 'GUI', 6], [9, 'LIM', 10]],
+);
+assert.equal(fix1.implementation.accdbTypeLabelsConsumedOrRenamedByThisFix, false);
+assert.equal(fix1.implementation.productionNonlinearMechanicsChanged, false);
 
 const present = baseline.l13DiagnosticCandidate.canonicalComparison;
 assert.equal(present.passed, 1719);
@@ -80,11 +117,18 @@ assert.equal(fix1.accuracySideBySide.revised.failed, present.failed);
 assert.equal(fix1.accuracySideBySide.revised.total, present.total);
 assert.equal(fix1.accuracySideBySide.revised.passRatePercent, present.passRatePercent);
 assert.equal(fix1.accuracySideBySide.deltaPercentagePoints, 0);
-assert.equal(fix1.implementation.productionNonlinearMechanicsChanged, false);
-assert.equal(fix1.remainingBoundary.f27StillRequired, true);
-assert.equal(fix1.remainingBoundary.l13QualifiedAccuracyAuthorized, false);
+
+assert.equal(
+  fix1.f27Boundary.retainedSourceAuditStatus,
+  'BLOCKED_NO_NONLINEAR_STATE_HISTORY_IN_RETAINED_PACKAGE',
+);
+assert.equal(fix1.f27Boundary.retainedSourceAuditPr, 1075);
+assert.equal(fix1.f27Boundary.l13QualifiedAccuracyAuthorized, false);
+assert.equal(fix1.f27Boundary.productionNonlinearMechanicsAuthorized, false);
 
 console.log('PASS M047 BM4_L Fix 1 source-domain-correct friction-site consumption');
+console.log('ACCDB direct authority: 1=ANC, 3=Y, 8=GUI, 9=LIM');
+console.log('InputXML governed correction: 17->14 +Y, 7->8 LIM, 10->9 GUI');
 console.log(`accuracy present=${present.passed}/${present.total} ${present.passRatePercent}%`);
 console.log(`accuracy revised=${fix1.accuracySideBySide.revised.passed}/${fix1.accuracySideBySide.revised.total} ${fix1.accuracySideBySide.revised.passRatePercent}%`);
 

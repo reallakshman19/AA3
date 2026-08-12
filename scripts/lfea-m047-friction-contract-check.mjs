@@ -122,6 +122,11 @@ assert.match(
 );
 assert.match(
   benchmarkSource,
+  /caseClass: caseRecord\.caseClass/u,
+  'Resolved Stage 2 configuration must publish the canonical OPE/SUS/EXP/HYD case class.',
+);
+assert.match(
+  benchmarkSource,
   /stateScope: 'PER_ACCDB_DIRECTIONAL_RESTRAINT_ROW'/u,
   'Friction active-set ownership must remain per ACCDB directional restraint row.',
 );

@@ -8,7 +8,11 @@ import { canonicalLafeaSha256 } from './lafea-canonical-sha256.js';
 import {
   buildLafeaContinuumCompiledExecutionInput,
 } from './lafea-continuum-compiled-input.js';
-import { LAFEA_CONTINUUM_SOLVER_MODEL_SCHEMA } from './lafea-continuum-solver-model.js';
+import {
+  LAFEA_CONTINUUM_SOLVER_COMPILER_ID,
+  LAFEA_CONTINUUM_SOLVER_COMPILER_REVISION,
+  LAFEA_CONTINUUM_SOLVER_MODEL_SCHEMA,
+} from './lafea-continuum-solver-model.js';
 
 export const LAFEA_CONTINUUM_COMPILED_EXECUTION_SCHEMA =
   'lafea-continuum-compiled-execution/v1';
@@ -56,6 +60,10 @@ function validateSolverModel(value) {
   if (value.schema !== LAFEA_CONTINUUM_SOLVER_MODEL_SCHEMA
     || value.stageId !== STAGE_ID || value.status !== 'COMPILED') {
     fail('LAFEA_CONTINUUM_COMPILED_SOLVER_MODEL_SCHEMA_INVALID');
+  }
+  if (value.compilerId !== LAFEA_CONTINUUM_SOLVER_COMPILER_ID
+    || value.compilerRevision !== LAFEA_CONTINUUM_SOLVER_COMPILER_REVISION) {
+    fail('LAFEA_CONTINUUM_COMPILED_COMPILER_IDENTITY_INVALID');
   }
   if (value.executionAuthorized !== false || value.releaseQualified !== false) {
     fail('LAFEA_CONTINUUM_COMPILED_AUTHORITY_STATE_INVALID');

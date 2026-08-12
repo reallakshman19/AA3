@@ -14,26 +14,28 @@ jobs:
     timeout-minutes: 45
     env:
       BASE_SHA: e977bd15a0fbe30492514d7ad29ae52c998c50c8
-      CANDIDATE_SHA: 075e2503aae33eef8c8025493c4353204da8e45c
+      CANDIDATE_SHA: 1d5547ca3549ac54d061e0facfed8526d41cab68
       PLAYWRIGHT_BROWSERS_PATH: '0'
-      TOPOLOGY_EDIT_TARGET_HEAD_SHA: 075e2503aae33eef8c8025493c4353204da8e45c
+      TOPOLOGY_EDIT_TARGET_HEAD_SHA: 1d5547ca3549ac54d061e0facfed8526d41cab68
     steps:
       - name: Checkout exact candidate
         uses: actions/checkout@v4
         with:
-          ref: 075e2503aae33eef8c8025493c4353204da8e45c
+          ref: 1d5547ca3549ac54d061e0facfed8526d41cab68
           fetch-depth: 0
-      - name: Verify exact three-file ledger
+      - name: Verify exact five-file ledger
         shell: bash
         run: |
           set -euo pipefail
           test "$(git rev-parse HEAD)" = "$CANDIDATE_SHA"
-          expected=$'e2e/helpers/topology-edit-ghost-applied-differential.js\ne2e/topology-edit-a3d004-ghost-applied.spec.js\nsrc/workspace/topology-edit-3d-authoring-controller.js'
+          expected=$'e2e/helpers/topology-edit-ghost-applied-differential.js\ne2e/topology-edit-a3d004-ghost-applied.spec.js\nsrc/workspace/topology-edit-3d-authoring-controller.js\nsrc/workspace/topology-edit/authoring/topology-edit-authored-bend-geometry.js\ntests/topology-edit-authored-bend-typed-projection.test.mjs'
           test "$(git diff --name-only "$BASE_SHA" "$CANDIDATE_SHA")" = "$expected"
           git diff --check "$BASE_SHA" "$CANDIDATE_SHA"
           node --check e2e/helpers/topology-edit-ghost-applied-differential.js
           node --check e2e/topology-edit-a3d004-ghost-applied.spec.js
           node --check src/workspace/topology-edit-3d-authoring-controller.js
+          node --check src/workspace/topology-edit/authoring/topology-edit-authored-bend-geometry.js
+          node --check tests/topology-edit-authored-bend-typed-projection.test.mjs
       - name: Set up Node
         uses: actions/setup-node@v4
         with:
@@ -44,6 +46,8 @@ jobs:
       - name: Run focused governed candidate tests
         run: >-
           node --test
+          tests/topology-edit-authored-bend-geometry.test.mjs
+          tests/topology-edit-authored-bend-typed-projection.test.mjs
           tests/topology-edit-authoring-planner.test.mjs
           tests/topology-edit-table-m04-m06-m10.test.mjs
           tests/topology-edit-table-support-restraint.test.mjs

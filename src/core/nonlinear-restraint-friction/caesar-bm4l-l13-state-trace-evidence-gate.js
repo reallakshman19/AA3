@@ -19,6 +19,7 @@ const GAP_KEYS = Object.freeze([
 ]);
 const CONTACT_STATES = new Set(['OPEN', 'CLOSED', 'ACTIVE', 'INACTIVE', 'NOT_APPLICABLE']);
 const FRICTION_STATES = new Set(['STICK', 'SLIDING', 'NOT_APPLICABLE']);
+const STATE_EVENT_TYPES = new Set(['CONTACT_STATE_CHANGE', 'FRICTION_STATE_CHANGE']);
 const CAPTURE_MODES = new Set([
   'INCORE_SOLVER_AND_ACTIVE_BOUNDARY_CONDITIONS',
   'EQUIVALENT_EXACT_BUILD_PRODUCT_TRACE',
@@ -111,6 +112,7 @@ function validateIteration(iteration, blockers, requiredFrictionKeys, requiredGa
   if (keys.size !== rows.length) blockers.push('DUPLICATE_RESTRAINT_KEY_IN_ITERATION');
 
   for (const row of rows) validateRow(row, blockers);
+  if (iteration?.stateEvents !== undefined) validateStateEvents(iteration.stateEvents, blockers, keys);
 }
 
 function validateRow(row, blockers) {
@@ -125,6 +127,45 @@ function validateRow(row, blockers) {
     if (row?.frictionState === 'SLIDING' && !unitVector3(row?.frictionDirectionGlobal)) {
       blockers.push('SLIDING_DIRECTION_VECTOR_REQUIRED');
     }
+    if (row?.firstTransitionReferenceDirectionGlobal !== undefined
+      && row.firstTransitionReferenceDirectionGlobal !== null
+      && !unitVector3(row.firstTransitionReferenceDirectionGlobal)) {
+      blockers.push('FIRST_TRANSITION_REFERENCE_DIRECTION_MUST_BE_UNIT_VECTOR');
+    }
+  }
+}
+
+function validateStateEvents(events, blockers, validKeys) {
+  if (!Array.isArray(events)) {
+    blockers.push('STATE_EVENTS_ARRAY_REQUIRED_WHEN_PRESENT');
+    return;
+  }
+  let previousOrdinal = 0;
+  const seenOrdinals = new Set();
+  for (const event of events) {
+    if (!Number.isInteger(event?.ordinal) || event.ordinal < 1) {
+      blockers.push('STATE_EVENT_POSITIVE_ORDINAL_REQUIRED');
+    } else {
+      if (event.ordinal <= previousOrdinal) blockers.push('STATE_EVENTS_MUST_BE_STRICTLY_ORDERED');
+      if (seenOrdinals.has(event.ordinal)) blockers.push('DUPLICATE_STATE_EVENT_ORDINAL');
+      previousOrdinal = event.ordinal;
+      seenOrdinals.add(event.ordinal);
+    }
+    const key = String(event?.restraintKey ?? '');
+    if (!validKeys.has(key)) blockers.push('STATE_EVENT_RESTRAINT_KEY_MUST_MATCH_ITERATION_ROW');
+    const eventType = String(event?.eventType ?? '');
+    if (!STATE_EVENT_TYPES.has(eventType)) blockers.push('VALID_STATE_EVENT_TYPE_REQUIRED');
+    if (eventType === 'CONTACT_STATE_CHANGE') {
+      if (!CONTACT_STATES.has(String(event?.from ?? '')) || !CONTACT_STATES.has(String(event?.to ?? ''))) {
+        blockers.push('VALID_CONTACT_STATE_EVENT_ENDPOINTS_REQUIRED');
+      }
+    }
+    if (eventType === 'FRICTION_STATE_CHANGE') {
+      if (!FRICTION_STATES.has(String(event?.from ?? '')) || !FRICTION_STATES.has(String(event?.to ?? ''))) {
+        blockers.push('VALID_FRICTION_STATE_EVENT_ENDPOINTS_REQUIRED');
+      }
+    }
+    if (event?.from === event?.to) blockers.push('STATE_EVENT_MUST_CHANGE_STATE');
   }
 }
 
@@ -132,6 +173,19 @@ function deriveTransitions(iterations) {
   const contact = [];
   const friction = [];
   const forceUpdates = [];
+  const subIterationStateEvents = [];
+  for (const iteration of iterations) {
+    for (const event of iteration.stateEvents ?? []) {
+      subIterationStateEvents.push(Object.freeze({
+        iteration: iteration.iteration,
+        ordinal: event.ordinal,
+        restraintKey: event.restraintKey,
+        eventType: event.eventType,
+        from: event.from,
+        to: event.to,
+      }));
+    }
+  }
   for (let i = 1; i < iterations.length; i += 1) {
     const previous = new Map(iterations[i - 1].restraints.map((row) => [row.restraintKey, row]));
     for (const row of iterations[i].restraints) {
@@ -168,6 +222,7 @@ function deriveTransitions(iterations) {
     contactStateChanges: Object.freeze(contact),
     frictionStateChanges: Object.freeze(friction),
     perIterationFrictionUpdates: Object.freeze(forceUpdates),
+    subIterationStateEvents: Object.freeze(subIterationStateEvents),
   });
 }
 
@@ -194,6 +249,7 @@ function emptyTransitions() {
     contactStateChanges: Object.freeze([]),
     frictionStateChanges: Object.freeze([]),
     perIterationFrictionUpdates: Object.freeze([]),
+    subIterationStateEvents: Object.freeze([]),
   });
 }
 function freezeResult(value) {

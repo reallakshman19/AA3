@@ -146,7 +146,7 @@ function buildResolvedConfiguration(benchmarkPackage, restraintTopology) {
     const caseRecord = benchmarkPackage.cases.find((entry) => entry.caseId === caseId);
     const primitive = primitiveCaseIds.includes(caseId);
     cases[caseId] = {
-      caseType: caseRecord.caseType,
+      caseClass: caseRecord.caseClass,
       formula: caseRecord.formula,
       combinationMethod: primitive ? null : 'ALG',
       independentNonlinearSolve: primitive,

@@ -10,7 +10,7 @@ import './topology-edit-productivity.css';
 export class TopologyEdit3DViewController extends AuthoringController {
   constructor(eventBus, lifecycleOptions = {}) {
     super(eventBus, lifecycleOptions);
-    this.cleanShellRuntime = new TopologyEditCleanShellRuntime(this);
+    this.cleanShellRuntime = new TopologyEditProductivityCleanShellRuntime(this);
     this.iconPresentationRuntime = null;
     this.iconReferenceRuntime = null;
     this.iconRuntimePromise = null;
@@ -234,6 +234,20 @@ export class TopologyEdit3DViewController extends AuthoringController {
   updateActionButtons() {
     super.updateActionButtons();
     this.cleanShellRuntime?.updateAvailability();
+  }
+}
+
+class TopologyEditProductivityCleanShellRuntime extends TopologyEditCleanShellRuntime {
+  updateAvailability() {
+    super.updateAvailability();
+    const tableButton = this.host?.querySelector('[data-action="open-engineering-table"]');
+    const tablePanel = this.host?.querySelector('details[data-panel-kind="table"]');
+    if (tableButton) {
+      tableButton.setAttribute(
+        'aria-expanded',
+        String(Boolean(this.state.inspectorOpen && tablePanel?.open)),
+      );
+    }
   }
 }
 

@@ -1,6 +1,11 @@
 import { deepFreeze, semanticHash } from '../../../core/shared-piping-model/index.js';
+import {
+  createVisualPrimitive,
+  visualPrimitiveId,
+} from '../visual-geometry-contract.js';
 
 const TOLERANCE = 1e-8;
+const AUTHORED_BEND_TYPED_POLICY = 'TopologyEditAuthoredBendTypedProjection.v1';
 
 /**
  * Derive finite tangent arcs and the straight-segment trims required to render
@@ -11,6 +16,7 @@ export function deriveTopologyEditAuthoredBendProjection(topologyInput) {
   const nodes = new Map(topology.nodes.map((node) => [node.id, node]));
   const edges = new Map(topology.edges.map((edge) => [edge.id, edge]));
   const segments = [];
+  const primitives = [];
   const trims = [];
   const diagnostics = [];
   for (const bend of topology.bends ?? []) {
@@ -18,6 +24,7 @@ export function deriveTopologyEditAuthoredBendProjection(topologyInput) {
     try {
       const geometry = bendGeometry(bend, nodes, edges);
       segments.push(geometry.segment);
+      primitives.push(geometry.primitive);
       trims.push(...geometry.trims);
     } catch (error) {
       diagnostics.push({
@@ -32,6 +39,7 @@ export function deriveTopologyEditAuthoredBendProjection(topologyInput) {
     canonicalTopologyHash: topology.canonicalTopologyHash,
     elements: [],
     segments,
+    primitives,
     trims,
     diagnostics,
   };
@@ -67,6 +75,13 @@ export function applyTopologyEditAuthoredBendProjection(projectionInput, topolog
       authored.segments,
     );
   }
+  if (Array.isArray(projection.primitives)) {
+    material.primitives = applyAuthoredBendsToPrimitives(
+      projection.primitives,
+      trimsByEdge,
+      authored.primitives,
+    );
+  }
   return deepFreeze(material);
 }
 
@@ -93,6 +108,41 @@ function applyAuthoredBendsToSegments(rows, trimsByEdge, authoredSegments) {
   return [
     ...trimmed,
     ...authoredSegments.filter((segment) => !existingIds.has(segment.id)),
+  ];
+}
+
+function applyAuthoredBendsToPrimitives(rows, trimsByEdge, authoredPrimitives) {
+  const existingIds = new Set(rows.map((row) => row?.primitiveId).filter(Boolean));
+  const trimmed = rows.map((primitive) => {
+    const trims = trimsByEdge.get(primitive?.canonicalEntityId) ?? [];
+    if (!trims.length) return primitive;
+    const parameters = primitive?.parameters;
+    if (!parameters || typeof parameters !== 'object') {
+      fail(`typed primitive ${primitive?.primitiveId ?? ''} has no parameters.`);
+    }
+    const fromTrim = trims.find((row) => row.endpoint === 'FROM') ?? null;
+    const toTrim = trims.find((row) => row.endpoint === 'TO') ?? null;
+    const next = { ...parameters };
+    if (fromTrim) {
+      if (!finitePoint(next.start)) fail(`typed primitive ${primitive.primitiveId} has no FROM start point.`);
+      next.start = fromTrim.tangentPoint;
+    }
+    if (toTrim) {
+      if (!finitePoint(next.end)) fail(`typed primitive ${primitive.primitiveId} has no TO end point.`);
+      next.end = toTrim.tangentPoint;
+    }
+    if (Array.isArray(next.arcPoints) && next.arcPoints.length >= 2) {
+      next.arcPoints = next.arcPoints.map((point, index) => {
+        if (fromTrim && index === 0) return fromTrim.tangentPoint;
+        if (toTrim && index === next.arcPoints.length - 1) return toTrim.tangentPoint;
+        return point;
+      });
+    }
+    return createVisualPrimitive({ ...primitive, parameters: next });
+  });
+  return [
+    ...trimmed,
+    ...authoredPrimitives.filter((primitive) => !existingIds.has(primitive.primitiveId)),
   ];
 }
 
@@ -150,6 +200,31 @@ function bendGeometry(bend, nodes, edges) {
     ?? positive(arms[1].outsideDiameterMm)
     ?? positive(arms[1].diameterMm)
     ?? 20;
+  const sourcePaths = [...new Set(bend.sourcePaths ?? [])].sort();
+  const primitive = createVisualPrimitive({
+    primitiveId: visualPrimitiveId(
+      bend.id,
+      'authored-elbow-arc',
+      AUTHORED_BEND_TYPED_POLICY,
+    ),
+    canonicalEntityId: bend.id,
+    canonicalType: 'ELBOW',
+    modelRole: 'DRAFT',
+    partRole: 'authored-elbow-arc',
+    kind: 'ELBOW_ARC',
+    sourcePaths,
+    workspaceEntityIds: [],
+    parameters: {
+      start: points[0],
+      end: points.at(-1),
+      center,
+      bendPlaneNormal: normal,
+      centerlineRadiusMm: radiusMm,
+      outsideDiameterMm,
+      angleRad: sweep,
+      segmentCount: count,
+    },
+  });
   return {
     segment: {
       id: `authored-bend:${bend.id}`,
@@ -171,10 +246,11 @@ function bendGeometry(bend, nodes, edges) {
         objectKind: 'component',
         objectId: bend.id,
         workspaceEntityIds: [],
-        sourcePaths: bend.sourcePaths ?? [],
+        sourcePaths,
         partRole: 'authored-elbow-arc',
       },
     },
+    primitive,
     trims: armContexts.map((context, index) => ({
       bendId: bend.id,
       edgeId: context.edge.id,
@@ -206,6 +282,9 @@ function exact(map, id, label) {
   const value = map.get(id);
   if (!value) fail(`${label} ${id} is unavailable.`, RangeError);
   return value;
+}
+function finitePoint(value) {
+  return value && [value.x, value.y, value.z].every((row) => Number.isFinite(Number(row)));
 }
 function add(left, right) { return { x: left.x + right.x, y: left.y + right.y, z: left.z + right.z }; }
 function subtract(left, right) { return { x: left.x - right.x, y: left.y - right.y, z: left.z - right.z }; }

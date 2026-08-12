@@ -1,0 +1,28 @@
+{
+  "schema": "m047-bm4l-f26-extraction-intent/v1",
+  "benchmarkId": "BM4_L",
+  "scope": "READ_ONLY_ACCDB_INPUT_RESTRAINTS_ROW_PROJECTION",
+  "sourceAccdbSha256": "64c05a50e9ed0452622ff5880335460486f24ac8e6adecc9a300b549c9aa82f8",
+  "table": "INPUT_RESTRAINTS",
+  "expectedRowCount": 46,
+  "fields": [
+    "REST_PTR",
+    "NODE_NUM",
+    "RES_TYPEID",
+    "STIFFNESS",
+    "GAP",
+    "FRIC_COEF",
+    "CNODE",
+    "XCOSINE",
+    "YCOSINE",
+    "ZCOSINE",
+    "RES_TAG"
+  ],
+  "sourceDomainPolicy": {
+    "accdbTypeMutationApplied": false,
+    "inputXmlTypeMutationRequired": true,
+    "numericNamespaceEqualityAssumed": false
+  },
+  "productionMechanicsAuthorized": false,
+  "l13RescoreAuthorized": false
+}

@@ -1,10 +1,9 @@
 import { defineConfig } from 'vite';
 import { fileURLToPath } from 'node:url';
-import { manualChunk } from './vite.config.js';
 
 const buildTime = new Date().toISOString();
 
-/** Dedicated standalone LAFEA build target. */
+/** Dedicated standalone LAFEA build target with graph-owned chunking. */
 export default defineConfig({
   base: '/Advanced_Analysis/',
   plugins: [],
@@ -19,10 +18,6 @@ export default defineConfig({
     rollupOptions: {
       input: {
         lafea: fileURLToPath(new URL('./lafea.html', import.meta.url)),
-      },
-      output: {
-        manualChunks: manualChunk,
-        onlyExplicitManualChunks: false,
       },
     },
   },

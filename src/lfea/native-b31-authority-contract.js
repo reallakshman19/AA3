@@ -3,45 +3,27 @@ import {
   requireEditionDataset,
   requireStressFactorSet,
 } from '../core/linear-fea-b31-code-engine/index.js';
+import { requirePipeSectionResolution } from '../core/linear-fea-section/index.js';
 import { semanticHash } from '../core/shared-piping-model/canonical-json.js';
 import { deepFreeze } from '../core/shared-piping-model/immutable.js';
 import { requireLinearPipingInputXmlPreFlight } from '../workspace/linear-piping-inputxml-prefea.js';
 
 export const LFEA_NATIVE_B31_AUTHORITY_SCHEMA = 'lfea-native-b31-authority/v1';
-export const LFEA_NATIVE_B31_CURRENTNESS = Object.freeze({
-  NONE: 'NONE',
-  CURRENT: 'CURRENT',
-  STALE: 'STALE',
-});
+export const LFEA_NATIVE_B31_CURRENTNESS = Object.freeze({ NONE: 'NONE', CURRENT: 'CURRENT', STALE: 'STALE' });
 export const LFEA_NATIVE_B31_REVIEW_REQUIRED = 'REVIEW_REQUIRED';
 
 const INPUT_KEYS = Object.freeze([
-  'parentSourceBundleSemanticHash',
-  'parentModelSemanticHash',
-  'codeProfile',
-  'editionDataset',
-  'checks',
+  'parentSourceBundleSemanticHash', 'parentModelSemanticHash',
+  'codeProfile', 'editionDataset', 'checks',
 ]);
 const CHECK_KEYS = Object.freeze([
-  'checkId',
-  'category',
-  'elementId',
-  'end',
-  'combinationId',
-  'actionSource',
-  'evaluationCaseId',
-  'stressFactorSet',
-  'pressureStressContribution',
-  'coldTemperature',
-  'sustainedStress',
+  'checkId', 'category', 'elementId', 'end', 'combinationId',
+  'actionSource', 'evaluationCaseId', 'stressFactorSet',
+  'sectionBasisReason', 'sustainedSectionResolution',
+  'pressureStressContribution', 'coldTemperature', 'sustainedStress',
   'occasionalCategoryId',
 ]);
-const IMPLEMENTED_CATEGORIES = Object.freeze([
-  'SUSTAINED',
-  'OCCASIONAL',
-  'DISPLACEMENT_STRESS_RANGE',
-  'EXPANSION_RANGE_ENVELOPE',
-]);
+const NATIVE_IMPLEMENTED_CATEGORY = 'SUSTAINED';
 
 export function requireLfeaNativeB31AuthorityInput(preFlightRecord, input) {
   const preFlight = requireRunnablePreFlight(preFlightRecord);
@@ -61,8 +43,7 @@ export function requireLfeaNativeB31AuthorityInput(preFlightRecord, input) {
     throw b31Error('LFEA_NATIVE_B31_CHECKS_REQUIRED', 'At least one governed B31 check is required.');
   }
   const checks = input.checks.map((row, index) => canonicalCheck(row, index));
-  const ids = checks.map((row) => row.checkId);
-  if (new Set(ids).size !== ids.length) {
+  if (new Set(checks.map((row) => row.checkId)).size !== checks.length) {
     throw b31Error('LFEA_NATIVE_B31_CHECK_DUPLICATE', 'B31 check identities must be unique.');
   }
   requireCaseCustody(preFlight, checks);
@@ -108,40 +89,40 @@ export function lfeaNativeB31AuthorityCurrentnessReasons(preFlightRecord, author
   return Object.freeze(uniqueAscii(reasons));
 }
 
-export function requireRunnableB31PreFlight(record) {
-  return requireRunnablePreFlight(record);
-}
+export function requireRunnableB31PreFlight(record) { return requireRunnablePreFlight(record); }
 export function lfeaNativeB31Error(code, message) { return b31Error(code, message); }
 
 function canonicalCheck(value, index) {
   const field = `b31AuthorityInput.checks[${index}]`;
   exactKeys(value, CHECK_KEYS, field);
-  const checkId = requiredText(value.checkId, `${field}.checkId`);
   const category = requiredText(value.category, `${field}.category`);
-  if (!IMPLEMENTED_CATEGORIES.includes(category)) {
-    throw b31Error('LFEA_NATIVE_B31_CATEGORY_UNSUPPORTED', `${field}.category is unsupported.`);
+  if (category !== NATIVE_IMPLEMENTED_CATEGORY) {
+    throw b31Error(
+      'LFEA_NATIVE_B31_CATEGORY_UNSUPPORTED',
+      `${field}.category must be SUSTAINED in the first native straight-pipe publication boundary.`,
+    );
   }
   const end = requiredText(value.end, `${field}.end`);
   if (!['I', 'J'].includes(end)) {
     throw b31Error('LFEA_NATIVE_B31_END_INVALID', `${field}.end must be I or J.`);
   }
-  const actionSource = canonicalActionSource(value.actionSource, category, `${field}.actionSource`);
+  const actionSource = canonicalSingleCase(value.actionSource, `${field}.actionSource`);
   const evaluationCaseId = requiredText(value.evaluationCaseId, `${field}.evaluationCaseId`);
-  if (actionSource.kind === 'SINGLE_CASE' && evaluationCaseId !== actionSource.caseId) {
+  if (evaluationCaseId !== actionSource.caseId) {
     throw b31Error(
       'LFEA_NATIVE_B31_EVALUATION_CASE_MISMATCH',
-      'A single-case code check must evaluate section/material state from that same physical case.',
+      'A native SUSTAINED check must evaluate section/material state from its cited physical case.',
     );
   }
-  if (actionSource.kind === 'CASE_RANGE'
-    && ![actionSource.fromCaseId, actionSource.toCaseId].includes(evaluationCaseId)) {
+  if (value.coldTemperature !== null || value.sustainedStress !== null
+    || value.occasionalCategoryId !== null) {
     throw b31Error(
-      'LFEA_NATIVE_B31_EVALUATION_CASE_MISMATCH',
-      'A range check evaluationCaseId must be one of its two governed endpoint cases.',
+      'LFEA_NATIVE_B31_CATEGORY_FIELDS_INVALID',
+      'Native SUSTAINED checks require coldTemperature, sustainedStress, and occasionalCategoryId to be null.',
     );
   }
   return deepFreeze({
-    checkId,
+    checkId: requiredText(value.checkId, `${field}.checkId`),
     category,
     elementId: requiredText(value.elementId, `${field}.elementId`),
     end,
@@ -149,51 +130,34 @@ function canonicalCheck(value, index) {
     actionSource,
     evaluationCaseId,
     stressFactorSet: requireStressFactorSet(value.stressFactorSet),
+    sectionBasisReason: requiredText(value.sectionBasisReason, `${field}.sectionBasisReason`),
+    sustainedSectionResolution: requirePipeSectionResolution(value.sustainedSectionResolution),
     pressureStressContribution: cloneNullable(value.pressureStressContribution),
-    coldTemperature: cloneNullable(value.coldTemperature),
-    sustainedStress: cloneNullable(value.sustainedStress),
-    occasionalCategoryId: value.occasionalCategoryId === null
-      ? null : requiredText(value.occasionalCategoryId, `${field}.occasionalCategoryId`),
+    coldTemperature: null,
+    sustainedStress: null,
+    occasionalCategoryId: null,
   });
 }
 
-function canonicalActionSource(value, category, field) {
-  if (value?.kind === 'SINGLE_CASE') {
-    exactKeys(value, ['kind', 'caseId'], field);
-    if (['DISPLACEMENT_STRESS_RANGE', 'EXPANSION_RANGE_ENVELOPE'].includes(category)) {
-      throw b31Error('LFEA_NATIVE_B31_RANGE_SOURCE_REQUIRED', `${category} requires CASE_RANGE.`);
-    }
-    return deepFreeze({ kind: value.kind, caseId: requiredText(value.caseId, `${field}.caseId`) });
+function canonicalSingleCase(value, field) {
+  exactKeys(value, ['kind', 'caseId'], field);
+  if (value.kind !== 'SINGLE_CASE') {
+    throw b31Error(
+      'LFEA_NATIVE_B31_ACTION_SOURCE_INVALID',
+      'The first native B31 boundary supports SINGLE_CASE SUSTAINED checks only.',
+    );
   }
-  if (value?.kind === 'CASE_RANGE') {
-    exactKeys(value, ['kind', 'fromCaseId', 'toCaseId'], field);
-    if (!['DISPLACEMENT_STRESS_RANGE', 'EXPANSION_RANGE_ENVELOPE'].includes(category)) {
-      throw b31Error('LFEA_NATIVE_B31_RANGE_CATEGORY_INVALID', `${category} cannot use CASE_RANGE.`);
-    }
-    const fromCaseId = requiredText(value.fromCaseId, `${field}.fromCaseId`);
-    const toCaseId = requiredText(value.toCaseId, `${field}.toCaseId`);
-    if (fromCaseId === toCaseId) {
-      throw b31Error('LFEA_NATIVE_B31_RANGE_CASES_IDENTICAL', 'CASE_RANGE endpoints must differ.');
-    }
-    return deepFreeze({ kind: value.kind, fromCaseId, toCaseId });
-  }
-  throw b31Error('LFEA_NATIVE_B31_ACTION_SOURCE_INVALID', `${field}.kind is unsupported.`);
+  return deepFreeze({ kind: value.kind, caseId: requiredText(value.caseId, `${field}.caseId`) });
 }
 
 function requireCaseCustody(preFlight, checks) {
-  const ids = new Set(preFlight.preparation.physicalPreparation.physicalCases
-    .map((row) => row.caseId));
+  const ids = new Set(preFlight.preparation.physicalPreparation.physicalCases.map((row) => row.caseId));
   for (const check of checks) {
-    const referenced = check.actionSource.kind === 'SINGLE_CASE'
-      ? [check.actionSource.caseId, check.evaluationCaseId]
-      : [check.actionSource.fromCaseId, check.actionSource.toCaseId, check.evaluationCaseId];
-    for (const caseId of referenced) {
-      if (!ids.has(caseId)) {
-        throw b31Error(
-          'LFEA_NATIVE_B31_CASE_MISSING',
-          `B31 check ${check.checkId} references unavailable physical case ${caseId}.`,
-        );
-      }
+    if (!ids.has(check.actionSource.caseId)) {
+      throw b31Error(
+        'LFEA_NATIVE_B31_CASE_MISSING',
+        `B31 check ${check.checkId} references unavailable physical case ${check.actionSource.caseId}.`,
+      );
     }
   }
 }

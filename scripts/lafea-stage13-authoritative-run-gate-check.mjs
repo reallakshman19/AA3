@@ -29,7 +29,7 @@ for (const check of checks) {
 }
 const failures = results.filter((row) => row.status !== 'PASS');
 console.log(JSON.stringify({
-  schema: 'lafea-stage13-authoritative-run-gate/v2',
+  schema: 'lafea-stage13-authoritative-run-gate/v3',
   status: failures.length ? 'FAIL' : 'PASS',
   stageId: 'LAFEA.3',
   results,
@@ -37,6 +37,10 @@ console.log(JSON.stringify({
   authoritativeRunPromoted: failures.length === 0,
   lifecycleExecutionRecoveryRequired: true,
   explicitPreflightRequired: true,
+  compiledInputLoweringPreflightRequired: true,
+  preflightCompilerIdentityRequired: true,
+  executionLineageIntegrityRequired: true,
+  temperatureBlockedAtPreflight: true,
   stage12bParityRequired: true,
   nonbucketAggregateRequired: true,
   releaseAuthorityChanged: false,

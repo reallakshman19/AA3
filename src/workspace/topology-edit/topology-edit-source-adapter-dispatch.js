@@ -31,12 +31,13 @@ export function buildCanonicalTopologyFromWorkspaceDataset(
   attachmentModel = null,
   restraintModel = null,
 ) {
-  const canonical = buildLegacyCanonicalTopology(
+  const legacyCanonical = buildLegacyCanonicalTopology(
     dataset,
     topologyGraph,
     attachmentModel,
     restraintModel,
   );
+  const canonical = retainExactSupportAttachmentPlacement(legacyCanonical, attachmentModel);
   const entities = new Map((dataset?.entities ?? []).map((entity) => [entity.entityId, entity]));
   const audited = (canonical.supports ?? []).filter((support) => (
     entityAttributes(entities.get(support.entityId))?.[AUDIT.authority]
@@ -80,6 +81,35 @@ export function buildCanonicalTopologyFromWorkspaceDataset(
     target.topologyOperation = 'UPDATE_SUPPORT_PLACEMENT';
   }
   return finalizeCanonicalTopology(draft);
+}
+
+function retainExactSupportAttachmentPlacement(canonical, attachmentModel) {
+  const attachments = new Map((attachmentModel?.attachments ?? []).map((attachment) => [
+    stringValue(attachment.supportKey), attachment,
+  ]));
+  if (!attachments.size) return canonical;
+  let changed = false;
+  const supports = (canonical.supports ?? []).map((support) => {
+    const attachment = attachments.get(stringValue(support.entityId));
+    if (!attachment) return support;
+    const projectedPoint = optionalFinitePoint(attachment.projectedPointCanonical);
+    const attachmentId = stringValue(attachment.attachmentId) || null;
+    const segmentParameter = optionalFiniteUnit(attachment.segmentParameter);
+    const distanceCanonical = optionalFiniteNonNegative(attachment.distanceCanonical);
+    if (!projectedPoint && !attachmentId && segmentParameter === null && distanceCanonical === null) {
+      return support;
+    }
+    changed = true;
+    return {
+      ...support,
+      origin: projectedPoint ?? support.origin ?? null,
+      originAuthority: projectedPoint ? 'ATTACHMENT_PROJECTED_POINT' : support.originAuthority ?? null,
+      attachmentId,
+      attachmentSegmentParameter: segmentParameter,
+      attachmentDistanceCanonical: distanceCanonical,
+    };
+  });
+  return changed ? finalizeCanonicalTopology({ ...canonical, supports }) : canonical;
 }
 
 function legacyEditEntityId(dataset, editSessionId, edgeId) {
@@ -158,6 +188,18 @@ function supportPlacementEntity(entity, support, origin, editSessionId) {
   });
 }
 function entityAttributes(entity) { return entity?.properties?.attributes ?? null; }
+function optionalFinitePoint(value) {
+  if (value === null || value === undefined) return null;
+  return finitePoint(value, 'attachment projectedPointCanonical');
+}
+function optionalFiniteUnit(value) {
+  if (value === null || value === undefined) return null;
+  return finiteUnit(value, 'attachment segmentParameter');
+}
+function optionalFiniteNonNegative(value) {
+  if (value === null || value === undefined) return null;
+  return finiteNonNegative(value, 'attachment distanceCanonical');
+}
 function finiteNonNegative(value, label) {
   const number = Number(value);
   if (!Number.isFinite(number) || number < 0) {

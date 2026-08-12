@@ -7,6 +7,7 @@ const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const checks = [
   'scripts/lafea-stage12b-parity-gate-check.mjs',
   'scripts/lafea-continuum-authoritative-run-check.mjs',
+  'scripts/lafea-nonbucket-stack-check.mjs',
 ];
 const results = [];
 for (const check of checks) {
@@ -28,7 +29,7 @@ for (const check of checks) {
 }
 const failures = results.filter((row) => row.status !== 'PASS');
 console.log(JSON.stringify({
-  schema: 'lafea-stage13-authoritative-run-gate/v1',
+  schema: 'lafea-stage13-authoritative-run-gate/v2',
   status: failures.length ? 'FAIL' : 'PASS',
   stageId: 'LAFEA.3',
   results,
@@ -36,6 +37,8 @@ console.log(JSON.stringify({
   authoritativeRunPromoted: failures.length === 0,
   lifecycleExecutionRecoveryRequired: true,
   explicitPreflightRequired: true,
+  stage12bParityRequired: true,
+  nonbucketAggregateRequired: true,
   releaseAuthorityChanged: false,
 }));
 if (failures.length) process.exitCode = 1;

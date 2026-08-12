@@ -21,6 +21,10 @@ import {
 } from './caesar-configuration-authority.js';
 import { solveCaesarAccdbLinearBenchmark } from './caesar-accdb-linear-solve.js';
 import { selectBm4lAccdbFrictionRows } from './caesar-accdb-friction-restraint-selection.js';
+import {
+  buildCaesarFrictionTangentialTranslationVector,
+  normalizedCaesarFrictionTranslationUpdate,
+} from './caesar-friction-convergence-metrics.js';
 import { solveCaesarFrictionRefinedDenseSystem } from './caesar-friction-dense-refinement.js';
 import { buildCaesarFrictionStiffnessState } from './caesar-friction-stiffness-state.js';
 import {
@@ -160,7 +164,8 @@ export function solveCaesarAccdbFrictionBenchmark(benchmarkPackage, options = {}
         'The nonlinear adapter changes only tangential support stiffness/load terms; qualified element, W/T1/P1, restraint-normal and recovery mechanics are reused unchanged.',
         'Friction surfaces are selected from positive-FRIC_COEF non-anchor directional ACCDB rows; historical restraint-type, direction and node patterns are not production rules.',
         'Each Coulomb cap binds to exactly one qualified normal spring aligned with its source restraint; co-located orthogonal restraint reactions cannot enter mu|N|.',
-        'Every nonlinear linearization uses the same dense direct residual-refinement, residual, energy and conditioning policies as the qualified linear solver.',
+        'Friction displacement convergence is measured only on projected tangential translations in metres; rotations are excluded from that constitutive update norm.',
+        'Every nonlinear linearization uses the qualified dense direct residual-refinement pattern; normalized residual and conditioning are governing, while the base energy expression is retained only as informational algebraic parity.',
         'The nonlinear stiffnessStateHash binds the frozen base stiffness hash to the converged stick/slide tangent state.',
         'Supports are bidirectional and remain active; no lift-off or one-directional contact logic is introduced.',
         'L15 is algebraic only and never enters the nonlinear iteration.',
@@ -270,7 +275,7 @@ function solveCapturedNonlinearSystem(input) {
   }
   const baseLoad = addExistingNodalLoads([...baseAssembly.elementLoad], dofMap, loadCase);
   const policies = resolveSolverPolicies(solverProfile);
-  let previousDisplacement = new Array(dofMap.dofCount).fill(0);
+  let previousTangentialTranslations = new Array(input.restraints.length * 3).fill(0);
   let previousNormalReactions = new Map(input.restraints.map((restraint) => [restraint.restraintId, 0]));
   let finalIteration = null;
 
@@ -291,15 +296,22 @@ function solveCapturedNonlinearSystem(input) {
         restraints: input.restraints,
       });
       const normalReactions = normalReactionMap(input.restraints, model, dofMap, solved.displacementVector);
-      const displacementUpdateNorm = normalizedUpdate(solved.displacementVector, previousDisplacement);
-      const normalValues = input.restraints.map((restraint) => normalReactions.get(restraint.restraintId));
-      const previousNormalValues = input.restraints.map((restraint) => previousNormalReactions.get(restraint.restraintId));
-      const reactionUpdateNorm = normalizedUpdate(normalValues, previousNormalValues);
       const relativeTangentialDisplacements = Object.fromEntries(input.restraints.map((restraint) => [
         restraint.restraintId,
         translationalDisplacement(dofMap, solved.displacementVector, restraint.nodeId),
       ]));
-      previousDisplacement = [...solved.displacementVector];
+      const tangentialTranslations = buildCaesarFrictionTangentialTranslationVector(
+        input.restraints,
+        relativeTangentialDisplacements,
+      );
+      const displacementUpdateNorm = normalizedCaesarFrictionTranslationUpdate(
+        tangentialTranslations,
+        previousTangentialTranslations,
+      );
+      const normalValues = input.restraints.map((restraint) => normalReactions.get(restraint.restraintId));
+      const previousNormalValues = input.restraints.map((restraint) => previousNormalReactions.get(restraint.restraintId));
+      const reactionUpdateNorm = normalizedUpdate(normalValues, previousNormalValues);
+      previousTangentialTranslations = [...tangentialTranslations];
       previousNormalReactions = normalReactions;
       finalIteration = solved;
       return {
@@ -314,6 +326,7 @@ function solveCapturedNonlinearSystem(input) {
           factorizationKind: solved.factorization.kind,
           conditionEstimate: solved.factorization.conditionEstimate,
           freeDofCount: baseAssembly.freeIndices.length,
+          displacementUpdateMetric: 'PROJECTED_TANGENTIAL_TRANSLATIONS_METRES_ONLY',
           iterativeRefinement: solved.refinement,
         },
       };

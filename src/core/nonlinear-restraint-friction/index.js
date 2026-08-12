@@ -26,3 +26,7 @@ export {
   compareCaesarFrictionMicroModelRuns,
   measureCaesarFrictionMicroModelSeries,
 } from './caesar-friction-micro-model-measurement.js';
+export {
+  CAESAR_FRICTION_MICRO_MODEL_EVIDENCE_STATUS,
+  assessCaesarFrictionMicroModelEvidence,
+} from './caesar-friction-micro-model-evidence-gate.js';

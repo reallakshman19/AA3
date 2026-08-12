@@ -13,7 +13,7 @@ test('S-007 support station follows the full certified Table lifecycle and keeps
   const diagnostics = collectDiagnostics(page);
   const host = await openXyzTable(page);
   const baseline = await authorityEvidence(page);
-  const supportId = await selectTableRowByTag(page, 'S-007');
+  const supportId = await selectTableRowByTag(page, 'S-007', 'SUPPORT');
 
   const editor = page.locator(`[data-table-support-placement-editor="${supportId}"]`);
   await expect(editor).toBeVisible();
@@ -80,7 +80,7 @@ test('S-007 support station follows the full certified Table lifecycle and keeps
   expect(redone.activeLedgerHash).toBe(applied.activeLedgerHash);
   expect(redone.activeCommandIds).toEqual(applied.activeCommandIds);
 
-  const pipeId = await selectTableRowByTag(page, 'P-011');
+  const pipeId = await selectTableRowByTag(page, 'P-011', 'PIPE');
   const pipeEditor = page.locator('[data-table-node-endpoint="FROM"]');
   await expect(pipeEditor.locator('[data-table-node-capability="FROM"]'))
     .toHaveAttribute('data-table-capability-status', 'UNREPRESENTABLE');
@@ -121,11 +121,15 @@ async function openXyzTable(page) {
   return host;
 }
 
-async function selectTableRowByTag(page, tag) {
+async function selectTableRowByTag(page, tag, expectedElementType) {
   const filter = page.locator('[data-table-filter]');
   await filter.fill(tag);
-  const row = page.locator('[data-role="topology-edit-table"] tbody tr').filter({ hasText: tag }).first();
+  await expect(filter).toHaveValue(tag);
+  const rows = page.locator('[data-role="topology-edit-table"] tbody tr[data-canonical-id]');
+  await expect(rows).toHaveCount(1);
+  const row = rows.first();
   await expect(row).toBeVisible();
+  await expect(row).toHaveAttribute('data-element-type', expectedElementType);
   const canonicalId = await row.getAttribute('data-canonical-id');
   expect(canonicalId).toBeTruthy();
   await row.locator('[data-table-select]').click();

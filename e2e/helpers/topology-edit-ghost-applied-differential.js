@@ -13,12 +13,6 @@ export async function captureA3d004Authority(page) {
     if (!controller || !topology || !journal) {
       throw new Error('A3D-004: mounted production authority is unavailable.');
     }
-    const records = {};
-    for (const collection of collections) {
-      for (const record of topology[collection] ?? []) {
-        records[`${collection}:${record.id}`] = JSON.stringify(record);
-      }
-    }
     return {
       canonicalHash: topology.canonicalTopologyHash,
       sourceHash: controller.workspaceDataset?.sourceSnapshot?.sourceSemanticHash ?? null,
@@ -28,9 +22,19 @@ export async function captureA3d004Authority(page) {
       activeCommandIds: [...journal.activeCommandIds],
       activeCommandCount: journal.activeCommandIds.length,
       sessionVersion: journal.sessionVersion,
-      topologyRecords: records,
+      topologyRecords: recordSnapshot(topology, collections),
       ghostChildCount: controller.viewportBackend?.groups?.ghostGroup?.children?.length ?? 0,
     };
+
+    function recordSnapshot(value, names) {
+      const records = {};
+      for (const collection of names) {
+        for (const record of value[collection] ?? []) {
+          records[`${collection}:${record.id}`] = JSON.stringify(record);
+        }
+      }
+      return records;
+    }
   }, COLLECTIONS);
 }
 
@@ -50,21 +54,11 @@ export async function captureA3d004Preview(page, surface = 'authoring') {
       throw new Error(`A3D-004: ${surfaceId} candidate is unavailable after visible Preview.`);
     }
     const changedCanonicalIds = [...new Set(candidate.changedCanonicalIds ?? [])].sort();
-    const projection = controller.deriveVisual(candidate.canonicalTopology, 'DRAFT').projection;
     const changed = new Set(changedCanonicalIds);
+    const projection = controller.deriveVisual(candidate.canonicalTopology, 'DRAFT').projection;
     const accepted = (row) => changed.has(
       row?.pickTarget?.objectId ?? row?.entityId ?? row?.id,
     );
-    const projectionSignature = normalizedProjection(projection, accepted);
-    const candidateRecords = {};
-    for (const collection of collections) {
-      for (const record of candidate.canonicalTopology[collection] ?? []) {
-        candidateRecords[`${collection}:${record.id}`] = JSON.stringify(record);
-      }
-    }
-    const ghostSignature = normalizedRenderedGroups([
-      controller.viewportBackend?.groups?.ghostGroup,
-    ]);
     return {
       surface: surfaceId,
       authority: {
@@ -89,9 +83,11 @@ export async function captureA3d004Preview(page, surface = 'authoring') {
       commandTypes: (candidate.materializedCommandIntents ?? [])
         .map((row) => row.commandType)
         .filter(Boolean),
-      projectionSignature,
-      ghostSignature,
-      candidateRecords,
+      projectionSignature: normalizedProjection(projection, accepted),
+      ghostSignature: normalizedRenderedGroups([
+        controller.viewportBackend?.groups?.ghostGroup,
+      ]),
+      candidateRecords: recordSnapshot(candidate.canonicalTopology, collections),
     };
 
     function round(value) {
@@ -102,25 +98,25 @@ export async function captureA3d004Preview(page, surface = 'authoring') {
         ? [round(value.x), round(value.y), round(value.z)]
         : null;
     }
-    function pick(value = {}) {
+    function pick(value = {}, fallbackPartRole = '') {
       return {
         modelRole: String(value.modelRole ?? ''),
         objectKind: String(value.objectKind ?? ''),
         objectId: String(value.objectId ?? ''),
         nodeId: String(value.nodeId ?? ''),
-        partRole: String(value.partRole ?? ''),
+        partRole: String(value.partRole ?? fallbackPartRole ?? ''),
         supportId: String(value.supportId ?? ''),
         restraintId: String(value.restraintId ?? ''),
         restraintFamily: String(value.restraintFamily ?? ''),
       };
     }
-    function projectionRows(projectionValue, plural, compactPlural) {
-      const compact = projectionValue?.[compactPlural];
-      return Array.isArray(compact) ? compact : (projectionValue?.[plural] ?? []);
+    function projectionRows(value, plural, compactPlural) {
+      const compact = value?.[compactPlural];
+      return Array.isArray(compact) ? compact : (value?.[plural] ?? []);
     }
-    function normalizedProjection(projectionValue, filter) {
+    function normalizedProjection(value, filter) {
       const rows = [];
-      for (const row of projectionRows(projectionValue, 'elements', 'compactElements')) {
+      for (const row of projectionRows(value, 'elements', 'compactElements')) {
         if (!filter(row)) continue;
         rows.push({
           kind: 'ELEMENT',
@@ -131,7 +127,7 @@ export async function captureA3d004Preview(page, surface = 'authoring') {
           pick: pick(row.pickTarget),
         });
       }
-      for (const row of projectionRows(projectionValue, 'segments', 'compactSegments')) {
+      for (const row of projectionRows(value, 'segments', 'compactSegments')) {
         if (!filter(row)) continue;
         rows.push({
           kind: 'SEGMENT',
@@ -174,10 +170,22 @@ export async function captureA3d004Preview(page, surface = 'authoring') {
               max: point(bounds.max),
             },
           };
-          for (const target of picks) result.push({ pick: pick(target), shape });
+          const fallbackPartRole = object.userData?.partRole ?? '';
+          for (const target of picks) {
+            result.push({ pick: pick(target, fallbackPartRole), shape });
+          }
         });
       }
       return result.sort((left, right) => JSON.stringify(left).localeCompare(JSON.stringify(right)));
+    }
+    function recordSnapshot(value, names) {
+      const records = {};
+      for (const collection of names) {
+        for (const record of value[collection] ?? []) {
+          records[`${collection}:${record.id}`] = JSON.stringify(record);
+        }
+      }
+      return records;
     }
   }, { surfaceId: surface, collections: COLLECTIONS });
 }
@@ -196,13 +204,6 @@ export async function captureA3d004Applied(page, preview) {
       row?.pickTarget?.objectId ?? row?.entityId ?? row?.id,
     );
     const projection = controller.deriveVisual(topology, 'DRAFT').projection;
-    const projectionSignature = normalizedProjection(projection, accepted);
-    const records = {};
-    for (const collection of collections) {
-      for (const record of topology[collection] ?? []) {
-        records[`${collection}:${record.id}`] = JSON.stringify(record);
-      }
-    }
     const wantedPickKeys = new Set(ghostPicks.map((row) => JSON.stringify(row)));
     const rendered = normalizedRenderedGroups([
       controller.viewportBackend?.groups?.draftGroup,
@@ -217,9 +218,9 @@ export async function captureA3d004Applied(page, preview) {
       activeCommandIds: [...journal.activeCommandIds],
       activeCommandCount: journal.activeCommandIds.length,
       sessionVersion: journal.sessionVersion,
-      projectionSignature,
+      projectionSignature: normalizedProjection(projection, accepted),
       renderedSignature: rendered,
-      topologyRecords: records,
+      topologyRecords: recordSnapshot(topology, collections),
       ghostChildCount: controller.viewportBackend?.groups?.ghostGroup?.children?.length ?? 0,
     };
 
@@ -231,25 +232,25 @@ export async function captureA3d004Applied(page, preview) {
         ? [round(value.x), round(value.y), round(value.z)]
         : null;
     }
-    function pick(value = {}) {
+    function pick(value = {}, fallbackPartRole = '') {
       return {
         modelRole: String(value.modelRole ?? ''),
         objectKind: String(value.objectKind ?? ''),
         objectId: String(value.objectId ?? ''),
         nodeId: String(value.nodeId ?? ''),
-        partRole: String(value.partRole ?? ''),
+        partRole: String(value.partRole ?? fallbackPartRole ?? ''),
         supportId: String(value.supportId ?? ''),
         restraintId: String(value.restraintId ?? ''),
         restraintFamily: String(value.restraintFamily ?? ''),
       };
     }
-    function projectionRows(projectionValue, plural, compactPlural) {
-      const compact = projectionValue?.[compactPlural];
-      return Array.isArray(compact) ? compact : (projectionValue?.[plural] ?? []);
+    function projectionRows(value, plural, compactPlural) {
+      const compact = value?.[compactPlural];
+      return Array.isArray(compact) ? compact : (value?.[plural] ?? []);
     }
-    function normalizedProjection(projectionValue, filter) {
+    function normalizedProjection(value, filter) {
       const rows = [];
-      for (const row of projectionRows(projectionValue, 'elements', 'compactElements')) {
+      for (const row of projectionRows(value, 'elements', 'compactElements')) {
         if (!filter(row)) continue;
         rows.push({
           kind: 'ELEMENT',
@@ -260,7 +261,7 @@ export async function captureA3d004Applied(page, preview) {
           pick: pick(row.pickTarget),
         });
       }
-      for (const row of projectionRows(projectionValue, 'segments', 'compactSegments')) {
+      for (const row of projectionRows(value, 'segments', 'compactSegments')) {
         if (!filter(row)) continue;
         rows.push({
           kind: 'SEGMENT',
@@ -303,10 +304,22 @@ export async function captureA3d004Applied(page, preview) {
               max: point(bounds.max),
             },
           };
-          for (const target of picks) result.push({ pick: pick(target), shape });
+          const fallbackPartRole = object.userData?.partRole ?? '';
+          for (const target of picks) {
+            result.push({ pick: pick(target, fallbackPartRole), shape });
+          }
         });
       }
       return result.sort((left, right) => JSON.stringify(left).localeCompare(JSON.stringify(right)));
+    }
+    function recordSnapshot(value, names) {
+      const records = {};
+      for (const collection of names) {
+        for (const record of value[collection] ?? []) {
+          records[`${collection}:${record.id}`] = JSON.stringify(record);
+        }
+      }
+      return records;
     }
   }, {
     changedIds: preview.changedCanonicalIds,

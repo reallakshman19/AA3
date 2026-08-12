@@ -4,6 +4,26 @@ import {
   LAFEA_GUIDED_WORKFLOW_SCHEMA,
   buildLafeaGuidedWorkflow,
 } from '../src/workspace/lafea-guided-workflow.js';
+import { requireLafeaStageAnalysisAdapter } from '../src/workspace/lafea-stage-analysis-adapter.js';
+
+const expectedRouteFamilies = Object.freeze({
+  'LAFEA.1': 'ANALYTICAL',
+  'LAFEA.2': 'ANALYTICAL',
+  'LAFEA.3': 'FEA',
+  'LAFEA.4': 'FEA',
+  'LAFEA.5': 'FEA',
+  'LAFEA.6': 'UNSUPPORTED',
+});
+for (const [stageId, routeFamily] of Object.entries(expectedRouteFamilies)) {
+  const adapter = requireLafeaStageAnalysisAdapter(stageId);
+  assert.equal(adapter.routeFamily, routeFamily);
+  assert.ok(Object.isFrozen(adapter.input));
+  assert.ok(Object.isFrozen(adapter.input.requirements));
+}
+assert.deepEqual(
+  requireLafeaStageAnalysisAdapter('LAFEA.5').input.requirements.restraints.paths,
+  ['shellTemplate.constraints'],
+);
 
 const noDocument = workflow('LAFEA.1', null, null, null);
 assert.equal(step(noDocument, 'ANALYSIS_PROFILE').status, 'NOT_STARTED');
@@ -21,6 +41,7 @@ const analytical = workflow('LAFEA.1', {
   loadCases: [{ identity: 'LC-1' }],
 }, lifecycle('ANALYTICAL_FOUNDATION_V1'), { status: 'CURRENT' });
 assert.equal(analytical.schema, LAFEA_GUIDED_WORKFLOW_SCHEMA);
+assert.equal(analytical.analysisRouteFamily, 'ANALYTICAL');
 assert.equal(step(analytical, 'ANALYSIS_PROFILE').status, 'COMPLETE');
 assert.equal(step(analytical, 'MATERIALS_SECTIONS').status, 'READY');
 assert.equal(step(analytical, 'RESTRAINTS_BCS').status, 'COMPLETE');
@@ -42,6 +63,7 @@ const continuum = workflow('LAFEA.3', {
   constraints: [{ constraintId: 'BC-1' }],
   loadCases: [{ loadCaseId: 'LC-1' }],
 }, lifecycle('FEA_MESH_RECOVERY_V1'), { status: 'CURRENT' });
+assert.equal(continuum.analysisRouteFamily, 'FEA');
 assert.equal(step(continuum, 'MATERIALS_SECTIONS').status, 'READY');
 assert.equal(step(continuum, 'RESTRAINTS_BCS').status, 'READY');
 assert.equal(step(continuum, 'LOADS_CASES').status, 'READY');
@@ -54,10 +76,34 @@ const continuumMissingBc = workflow('LAFEA.3', {
 assert.equal(step(continuumMissingBc, 'RESTRAINTS_BCS').status, 'BLOCKED');
 assert.deepEqual(step(continuumMissingBc, 'RESTRAINTS_BCS').reasons, ['BOUNDARY_CONDITIONS_REQUIRED']);
 
+const footprint = workflow('LAFEA.5', {
+  shellTemplate: {
+    materials: [{ materialId: 'MAT-1' }],
+    constraints: [{ constraintId: 'BC-1' }],
+  },
+  loadCaseMappings: [{ mappingId: 'MAP-1' }],
+}, lifecycle('FEA_MESH_RECOVERY_V1'), { status: 'CURRENT' });
+assert.equal(footprint.analysisRouteFamily, 'FEA');
+assert.equal(step(footprint, 'MATERIALS_SECTIONS').status, 'READY');
+assert.equal(step(footprint, 'RESTRAINTS_BCS').status, 'READY');
+assert.equal(step(footprint, 'LOADS_CASES').status, 'READY');
+
+const unsupported = workflow('LAFEA.6', {
+  materials: [{ materialId: 'MAT-1' }],
+  loadCases: [{ loadCaseId: 'LC-1' }],
+}, lifecycle('UNSUPPORTED_STAGE_V1'), { status: 'CURRENT' });
+assert.equal(unsupported.analysisRouteFamily, 'UNSUPPORTED');
+assert.equal(step(unsupported, 'RUN').status, 'BLOCKED');
+assert.deepEqual(step(unsupported, 'RUN').reasons, ['UNSUPPORTED_STAGE_ENGINE_NOT_IMPLEMENTED']);
+assert.equal(unsupported.runEligibleByCurrentUiGate, false);
+
 console.log(JSON.stringify({
   check: 'lafea-ui-workflow-truthfulness',
   status: 'PASS',
   workflowReasonsRemainCanonical: true,
+  stageInputRequirementsUseCanonicalAdapter: true,
+  adapterInputCapabilitiesAreUiIndependent: true,
+  routeFamilies: Object.values(expectedRouteFamilies),
   githubActionsWorkflowAdded: false,
 }));
 

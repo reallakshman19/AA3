@@ -12,7 +12,8 @@ import {
 import { lafeaStageInputDescriptors } from './lafea-stage-input-descriptors.js';
 
 const SOURCE_CHANGE_CLASSES = new Set([
-  'MATERIAL_PROPERTY', 'GEOMETRY', 'LOAD_OR_BC', 'MODEL_METADATA',
+  'MATERIAL_PROPERTY', 'SECTION_PROPERTY', 'GEOMETRY', 'LOAD_OR_BC',
+  'MODEL_METADATA',
 ]);
 
 export function createLafeaWorkbenchSourceState(stageIds, hostValue) {

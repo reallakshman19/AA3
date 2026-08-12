@@ -36,6 +36,7 @@ export const LAFEA_INPUT_CONTROLS = Object.freeze([
 
 export const LAFEA_INVALIDATION_CLASSES = Object.freeze([
   'MATERIAL_PROPERTY',
+  'SECTION_PROPERTY',
   'GEOMETRY',
   'LOAD_OR_BC',
   'MODEL_METADATA',
@@ -181,8 +182,8 @@ const DEFINITIONS = Object.freeze({
       collectionPath: 'elements', identityKey: 'elementId', propertyPath: ['thickness'],
       label: 'Element thickness', groupId: 'ELEMENTS', order: 50,
       dimension: 'LENGTH', unitSourcePath: ['units', 'length'],
-      sourceRefPath: ['sourceReference'], invalidationClass: 'GEOMETRY',
-      descendants: ALL_ENGINEERING_DESCENDANTS, minimum: 0, minimumExclusive: true,
+      sourceRefPath: ['sourceReference'], invalidationClass: 'SECTION_PROPERTY',
+      descendants: MODEL_DESCENDANTS, minimum: 0, minimumExclusive: true,
     }),
     collectionScalar('LAFEA.3.constraint.value', 'LAFEA.3', {
       collectionPath: 'constraints', identityKey: 'constraintId', propertyPath: ['value'],
@@ -226,8 +227,8 @@ const DEFINITIONS = Object.freeze({
       collectionPath: 'elements', identityKey: 'elementId', propertyPath: ['thickness'],
       label: 'Element thickness', groupId: 'ELEMENTS', order: 60,
       dimension: 'LENGTH', unitSourcePath: ['units', 'length'],
-      sourceRefPath: ['sourceReference'], invalidationClass: 'GEOMETRY',
-      descendants: ALL_ENGINEERING_DESCENDANTS, minimum: 0, minimumExclusive: true,
+      sourceRefPath: ['sourceReference'], invalidationClass: 'SECTION_PROPERTY',
+      descendants: MODEL_DESCENDANTS, minimum: 0, minimumExclusive: true,
     }),
     collectionScalar('LAFEA.4.constraint.value', 'LAFEA.4', {
       collectionPath: 'constraints', identityKey: 'constraintId', propertyPath: ['value'],
@@ -264,8 +265,8 @@ const DEFINITIONS = Object.freeze({
       propertyPath: ['thickness'], label: 'Host-shell element thickness',
       groupId: 'SHELL_ELEMENTS', order: 50,
       dimension: 'LENGTH', unitSourcePath: ['shellTemplate', 'units', 'length'],
-      sourceRefPath: ['sourceReference'], invalidationClass: 'GEOMETRY',
-      descendants: ALL_ENGINEERING_DESCENDANTS, minimum: 0, minimumExclusive: true,
+      sourceRefPath: ['sourceReference'], invalidationClass: 'SECTION_PROPERTY',
+      descendants: MODEL_DESCENDANTS, minimum: 0, minimumExclusive: true,
     }),
     collectionScalar('LAFEA.5.mapping.mechanicalScaleFactor', 'LAFEA.5', {
       collectionPath: 'loadCaseMappings', identityKey: 'workflowLoadCaseId',

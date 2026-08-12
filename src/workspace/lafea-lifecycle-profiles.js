@@ -177,8 +177,8 @@ export const LAFEA_LIFECYCLE_PROFILES = deepFreeze([
     convergenceApplicable: true,
     codeAssessmentApplicable: false,
     engineeringChangeClasses: [
-      'MATERIAL_PROPERTY', 'GEOMETRY', 'LOAD_OR_BC', 'MODEL_METADATA',
-      'ANALYSIS_MESH_PROFILE', 'RECOVERY_PROFILE',
+      'MATERIAL_PROPERTY', 'SECTION_PROPERTY', 'GEOMETRY', 'LOAD_OR_BC',
+      'MODEL_METADATA', 'ANALYSIS_MESH_PROFILE', 'RECOVERY_PROFILE',
     ],
   }),
   profile({

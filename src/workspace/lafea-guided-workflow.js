@@ -3,7 +3,7 @@ import {
   LAFEA_WORKBENCH_ORCHESTRATION_SCHEMA,
   LAFEA_WORKBENCH_ORCHESTRATION_STATES,
 } from './lafea-workbench-orchestration-projection.js';
-import { lafeaRegisteredExecutionSupported } from './lafea-stage-registry.js';
+import { requireLafeaStageAnalysisAdapter } from './lafea-stage-analysis-adapter.js';
 
 export const LAFEA_GUIDED_WORKFLOW_SCHEMA = 'lafea-guided-workflow/v1';
 export const LAFEA_GUIDED_STEP_STATUSES = Object.freeze([
@@ -24,46 +24,26 @@ const STEP_DEFINITIONS = Object.freeze([
   ['RESULTS_EVIDENCE', 'Results and evidence'],
 ]);
 
-const INPUT_STEP_REQUIREMENTS = Object.freeze({
-  'LAFEA.1': Object.freeze({
-    MATERIALS_SECTIONS: requirement(['materials'], 'MATERIALS_REQUIRED'),
-    RESTRAINTS_BCS: null,
-    LOADS_CASES: requirement(['loadCases'], 'LOAD_CASES_REQUIRED'),
-  }),
-  'LAFEA.2': Object.freeze({
-    MATERIALS_SECTIONS: null,
-    RESTRAINTS_BCS: null,
-    LOADS_CASES: requirement(['screeningCases'], 'LOAD_CASES_REQUIRED'),
-  }),
-  'LAFEA.3': Object.freeze({
-    MATERIALS_SECTIONS: requirement(['materials'], 'MATERIALS_REQUIRED'),
-    RESTRAINTS_BCS: requirement(['constraints'], 'BOUNDARY_CONDITIONS_REQUIRED'),
-    LOADS_CASES: requirement(['loadCases'], 'LOAD_CASES_REQUIRED'),
-  }),
-  'LAFEA.4': Object.freeze({
-    MATERIALS_SECTIONS: requirement(['materials'], 'MATERIALS_REQUIRED'),
-    RESTRAINTS_BCS: requirement(['constraints'], 'BOUNDARY_CONDITIONS_REQUIRED'),
-    LOADS_CASES: requirement(['loadCases'], 'LOAD_CASES_REQUIRED'),
-  }),
-  'LAFEA.5': Object.freeze({
-    MATERIALS_SECTIONS: requirement(['shellTemplate.materials'], 'MATERIALS_REQUIRED'),
-    RESTRAINTS_BCS: requirement(['shellTemplate.constraints'], 'BOUNDARY_CONDITIONS_REQUIRED'),
-    LOADS_CASES: requirement(['loadCaseMappings'], 'LOAD_CASES_REQUIRED'),
-  }),
-  'LAFEA.6': Object.freeze({
-    MATERIALS_SECTIONS: requirement(['materials'], 'MATERIALS_REQUIRED'),
-    RESTRAINTS_BCS: null,
-    LOADS_CASES: requirement(['loadCases'], 'LOAD_CASES_REQUIRED'),
-  }),
+const INPUT_CAPABILITY_BY_STEP = Object.freeze({
+  MATERIALS_SECTIONS: 'materials',
+  RESTRAINTS_BCS: 'restraints',
+  LOADS_CASES: 'loads',
 });
 
 export function buildLafeaGuidedWorkflow(stateValue) {
   const state = requireState(stateValue);
   const stage = state.stages[state.activeStageId];
   const orchestration = requireOrchestration(stage);
-  const executionSupported = lafeaRegisteredExecutionSupported(stage.stageId);
+  const adapter = requireLafeaStageAnalysisAdapter(stage.stageId);
+  const executionSupported = adapter.execution.qualifiedRouteRegistered;
   const steps = STEP_DEFINITIONS.map(([stepId, label]) => {
-    const projected = stepStatus(stepId, stage, orchestration, executionSupported);
+    const projected = stepStatus(
+      stepId,
+      stage,
+      orchestration,
+      adapter,
+      executionSupported,
+    );
     return freeze({
       stepId,
       label,
@@ -78,6 +58,7 @@ export function buildLafeaGuidedWorkflow(stateValue) {
     schema: LAFEA_GUIDED_WORKFLOW_SCHEMA,
     stageId: stage.stageId,
     stageAdapterId: orchestration.stageAdapterId,
+    analysisRouteFamily: adapter.routeFamily,
     canonicalOrchestrationSchema: orchestration.schema,
     steps,
     activeBlockingStepId: steps.find((step) => step.status === 'BLOCKED')?.stepId ?? null,
@@ -94,7 +75,7 @@ export function buildLafeaGuidedWorkflow(stateValue) {
   });
 }
 
-function stepStatus(stepId, stage, orchestration, executionSupported) {
+function stepStatus(stepId, stage, orchestration, adapter, executionSupported) {
   const documentReady = Boolean(stage.document);
   if (stepId === 'SOURCE_IDENTITY') {
     return combineSections(section(orchestration, 'SOURCE'), section(orchestration, 'MODEL'));
@@ -105,8 +86,8 @@ function stepStatus(stepId, stage, orchestration, executionSupported) {
   if (stepId === 'ANALYSIS_PROFILE') {
     return analysisProfileStatus(stage, documentReady);
   }
-  if (['MATERIALS_SECTIONS', 'RESTRAINTS_BCS', 'LOADS_CASES'].includes(stepId)) {
-    return governedInputStepStatus(stepId, stage, documentReady);
+  if (INPUT_CAPABILITY_BY_STEP[stepId]) {
+    return governedInputStepStatus(stepId, stage, adapter, documentReady);
   }
   if (stepId === 'DISCRETIZATION') {
     return fromSection(section(orchestration, 'DISCRETIZATION'));
@@ -144,9 +125,10 @@ function analysisProfileStatus(stage, documentReady) {
   return status('COMPLETE');
 }
 
-function governedInputStepStatus(stepId, stage, documentReady) {
+function governedInputStepStatus(stepId, stage, adapter, documentReady) {
   if (!documentReady) return status('NOT_STARTED', ['SOURCE_DOCUMENT_REQUIRED']);
-  const requirementValue = INPUT_STEP_REQUIREMENTS[stage.stageId]?.[stepId];
+  const capabilityId = INPUT_CAPABILITY_BY_STEP[stepId];
+  const requirementValue = adapter.input.requirements?.[capabilityId];
   if (requirementValue === null) {
     return status('COMPLETE', ['WORKFLOW_STEP_NOT_APPLICABLE']);
   }
@@ -167,10 +149,6 @@ function hasNonEmptyCollection(documentValue, path) {
     documentValue,
   );
   return Array.isArray(value) && value.length > 0;
-}
-
-function requirement(paths, missingReason) {
-  return Object.freeze({ paths: Object.freeze([...paths]), missingReason });
 }
 
 function combineSections(...sections) {

@@ -20,6 +20,39 @@ const MESH = Object.freeze({
   'LAFEA.6': Object.freeze({ families: [], nodePath: null, elementPath: null }),
 });
 
+const INPUT_REQUIREMENTS = freeze({
+  'LAFEA.1': {
+    materials: inputRequirement(['materials'], 'MATERIALS_REQUIRED'),
+    restraints: null,
+    loads: inputRequirement(['loadCases'], 'LOAD_CASES_REQUIRED'),
+  },
+  'LAFEA.2': {
+    materials: null,
+    restraints: null,
+    loads: inputRequirement(['screeningCases'], 'LOAD_CASES_REQUIRED'),
+  },
+  'LAFEA.3': {
+    materials: inputRequirement(['materials'], 'MATERIALS_REQUIRED'),
+    restraints: inputRequirement(['constraints'], 'BOUNDARY_CONDITIONS_REQUIRED'),
+    loads: inputRequirement(['loadCases'], 'LOAD_CASES_REQUIRED'),
+  },
+  'LAFEA.4': {
+    materials: inputRequirement(['materials'], 'MATERIALS_REQUIRED'),
+    restraints: inputRequirement(['constraints'], 'BOUNDARY_CONDITIONS_REQUIRED'),
+    loads: inputRequirement(['loadCases'], 'LOAD_CASES_REQUIRED'),
+  },
+  'LAFEA.5': {
+    materials: inputRequirement(['shellTemplate.materials'], 'MATERIALS_REQUIRED'),
+    restraints: inputRequirement(['shellTemplate.constraints'], 'BOUNDARY_CONDITIONS_REQUIRED'),
+    loads: inputRequirement(['loadCaseMappings'], 'LOAD_CASES_REQUIRED'),
+  },
+  'LAFEA.6': {
+    materials: inputRequirement(['materials'], 'MATERIALS_REQUIRED'),
+    restraints: null,
+    loads: inputRequirement(['loadCases'], 'LOAD_CASES_REQUIRED'),
+  },
+});
+
 export function requireLafeaStageAnalysisAdapter(stageId) {
   const registry = requireLafeaStageRegistryEntry(stageId);
   const lifecycle = requireLafeaLifecycleProfileForStage(stageId);
@@ -34,8 +67,12 @@ export function requireLafeaStageAnalysisAdapter(stageId) {
     schema: LAFEA_STAGE_ANALYSIS_ADAPTER_SCHEMA,
     adapterId: `LAFEA_STAGE_ADAPTER:${stageId}:V1`,
     stageId,
+    routeFamily: routeFamily(supported, meshApplicable),
     lifecycleProfileId: lifecycle.profileId,
     engineState: registry.engineState,
+    input: {
+      requirements: INPUT_REQUIREMENTS[stageId],
+    },
     preparation: {
       adapterId: supported ? `LAFEA_PREPARATION_ADAPTER:${stageId}:V1` : null,
       qualified: supported,
@@ -67,5 +104,12 @@ export function requireLafeaStageAnalysisAdapter(stageId) {
 }
 
 export function lafeaStageAnalysisAdapter(stageId) { return requireLafeaStageAnalysisAdapter(stageId); }
+function routeFamily(supported, meshApplicable) {
+  if (!supported) return 'UNSUPPORTED';
+  return meshApplicable ? 'FEA' : 'ANALYTICAL';
+}
+function inputRequirement(paths, missingReason) {
+  return { paths: [...paths], missingReason };
+}
 function adapterError(code) { const error = new TypeError(code); error.code = code; return error; }
 function freeze(value) { if (!value || typeof value !== 'object' || Object.isFrozen(value)) return value; Object.values(value).forEach(freeze); return Object.freeze(value); }

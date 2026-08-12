@@ -155,13 +155,24 @@ try {
 
 const thermal = buildWorkbench(true);
 try {
-  const preflight = thermal.store.prepareContinuumForRun();
-  assert.equal(preflight.projection.state, 'CURRENT_PASS');
+  expectCode(
+    () => thermal.store.prepareContinuumForRun(),
+    'LAFEA_CONTINUUM_COMPILED_TEMPERATURE_SEMANTICS_NOT_QUALIFIED',
+  );
+  let state = thermal.store.getState();
+  let stage = state.stages['LAFEA.3'];
+  assert.equal(stage.preparationProjection.state, 'ABSENT');
+  assert.equal(stage.orchestration.sections.AUTHORIZATION.state, 'BLOCKED');
+  assert.equal(stage.execution, null);
+  assert.equal(stage.lifecycle.artifacts.EXECUTION.status, 'ABSENT');
+  assert.equal(stage.lifecycle.artifacts.RECOVERY.status, 'ABSENT');
+  assert.equal(stage.lifecycleReadiness.releaseState, 'RELEASE_NOT_QUALIFIED');
+
   thermal.store.run();
-  const state = thermal.store.getState();
-  const stage = state.stages['LAFEA.3'];
+  state = thermal.store.getState();
+  stage = state.stages['LAFEA.3'];
   assert.equal(state.status, 'FAILED');
-  assert.equal(state.diagnostics[0].code, 'LAFEA_CONTINUUM_COMPILED_TEMPERATURE_SEMANTICS_NOT_QUALIFIED');
+  assert.equal(state.diagnostics[0].code, 'LAFEA_CONTINUUM_AUTHORITATIVE_PREFLIGHT_NOT_CURRENT_PASS');
   assert.equal(stage.execution, null);
   assert.equal(stage.lifecycle.artifacts.EXECUTION.status, 'ABSENT');
   assert.equal(stage.lifecycle.artifacts.RECOVERY.status, 'ABSENT');
@@ -171,11 +182,12 @@ try {
 }
 
 console.log(JSON.stringify({
-  schema: 'lafea-continuum-authoritative-run-check/v3',
+  schema: 'lafea-continuum-authoritative-run-check/v4',
   check: 'lafea-continuum-authoritative-run',
   status: 'PASS',
   stageId: 'LAFEA.3',
   explicitPreflightRequired: true,
+  compiledInputLoweringQualifiedByPreflight: true,
   preflightIdentityFailsClosed: true,
   authoritativeCompiledRun: true,
   existingNumericalKernelReused: true,
@@ -185,7 +197,7 @@ console.log(JSON.stringify({
   executionEvidenceIntegrityFailsClosed: true,
   currentMeshLineageEnforced: true,
   remeshRevokesAuthority: true,
-  temperatureDeltaFailsClosed: true,
+  temperatureDeltaFailsClosedAtPreflight: true,
   releaseAuthorityChanged: false,
 }));
 

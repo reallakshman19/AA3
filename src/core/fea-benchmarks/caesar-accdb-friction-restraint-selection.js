@@ -5,22 +5,22 @@
  * exceptions or from the load-case multiplier. The governed model coefficient
  * remains the magnitude used by the nonlinear law; FRIC_COEF is used here to
  * identify which physical restraint rows carry friction and to corroborate the
- * database's float32 storage of that model coefficient.
+ * database's single-precision storage of that model coefficient.
  */
 
 export const BM4L_ACCDB_FRICTION_RESTRAINT_TYPE_ID = 3;
 export const BM4L_ACCDB_FRICTION_RESTRAINT_TYPE = 'Y';
 export const BM4L_ACCDB_FRICTION_DIRECTION = Object.freeze([0, 1, 0]);
+const DIRECTION_TOLERANCE = 1e-9;
 
 /**
  * Select friction-bearing BM4_L INPUT_RESTRAINTS rows.
  *
- * Authenticated row evidence for BM4_L establishes:
- * - RES_TYPEID 3 is ACCDB type Y;
- * - friction-bearing rows carry positive FRIC_COEF;
- * - the stored 0.3 coefficient is IEEE-754 float32
- *   (0.30000001192092896);
- * - all friction-bearing Y rows are global +Y.
+ * Historical diagnostic row evidence establishes that BM4_L uses type 3/Y,
+ * positive FRIC_COEF and global +Y for friction surfaces. Production authority
+ * still comes from the issue-pinned ACCDB itself. The comparison to model mu is
+ * deliberately made after Math.fround so mdb-reader implementations that return
+ * either 0.3 or the expanded float32 value 0.30000001192092896 remain equivalent.
  *
  * GUI/LIM/ANC rows remain in the mechanical model as ordinary restraints, but
  * they never create a friction surface merely because they are non-anchors.
@@ -51,7 +51,7 @@ export function selectBm4lAccdbFrictionRows(rowsInput, modelCoefficientInput) {
         + `RES_TYPEID ${typeId}; BM4_L Stage 2 authorizes friction only on ACCDB type Y (3).`,
       );
     }
-    if (sourceCoefficient !== storedModelCoefficient) {
+    if (Math.fround(sourceCoefficient) !== storedModelCoefficient) {
       throw new TypeError(
         `INPUT_RESTRAINTS[${sourceRowIndex}] node ${nodeId} stores FRIC_COEF=${sourceCoefficient}, `
         + `which does not corroborate float32(model mu)=${storedModelCoefficient}.`,
@@ -59,10 +59,11 @@ export function selectBm4lAccdbFrictionRows(rowsInput, modelCoefficientInput) {
     }
 
     const direction = sourceDirection(row, sourceRowIndex, nodeId);
-    if (!same3(direction, BM4L_ACCDB_FRICTION_DIRECTION)) {
+    if (!same3(direction, BM4L_ACCDB_FRICTION_DIRECTION, DIRECTION_TOLERANCE)) {
       throw new TypeError(
         `INPUT_RESTRAINTS[${sourceRowIndex}] node ${nodeId} is a friction-bearing Y row with `
-        + `direction [${direction.join(',')}]; BM4_L authenticated friction rows must be global +Y.`,
+        + `direction [${direction.join(',')}]; BM4_L friction rows must be global +Y within `
+        + `${DIRECTION_TOLERANCE}.`,
       );
     }
 
@@ -73,6 +74,7 @@ export function selectBm4lAccdbFrictionRows(rowsInput, modelCoefficientInput) {
       sourceRestraintTypeId: typeId,
       sourceRestraintType: BM4L_ACCDB_FRICTION_RESTRAINT_TYPE,
       sourceFrictionCoefficient: sourceCoefficient,
+      sourceFrictionCoefficientFloat32: Math.fround(sourceCoefficient),
       governedModelCoefficient: modelCoefficient,
       storedModelCoefficient,
       normalDirection: Object.freeze([...direction]),
@@ -103,9 +105,9 @@ function sourceDirection(row, index, nodeId) {
   return direction.map((value) => clean(value / magnitude));
 }
 
-function same3(left, right) {
+function same3(left, right, tolerance) {
   return left.length === 3 && right.length === 3
-    && left.every((value, index) => Object.is(value, right[index]) || value === right[index]);
+    && left.every((value, index) => Math.abs(value - right[index]) <= tolerance);
 }
 
 function duplicates(values) {

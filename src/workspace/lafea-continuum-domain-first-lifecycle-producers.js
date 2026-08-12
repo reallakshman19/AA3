@@ -1,5 +1,8 @@
 /** Stage 13 lifecycle producer for authoritative domain-first LAFEA.3 execution. */
-import { createLafeaArtifactRecord } from './lafea-lifecycle.js';
+import {
+  createLafeaArtifactRecord,
+  registerLafeaArtifact,
+} from './lafea-lifecycle.js';
 import { canonicalLafeaSha256 } from './lafea-canonical-sha256.js';
 import {
   LAFEA_CONTINUUM_SOLVER_COMPILER_ID,
@@ -91,6 +94,37 @@ export function createLafeaContinuumDomainFirstLifecycleProducerBatch(options) {
     reportProduced: false,
     releaseQualified: false,
   });
+}
+
+export function registerLafeaContinuumDomainFirstLifecycleProducerBatch(
+  lifecycleValue,
+  batchValue,
+) {
+  const batch = requireBatch(batchValue);
+  let lifecycle = lifecycleValue;
+  if (lifecycle?.stageId !== batch.stageId
+    || lifecycle?.source?.sourceHash !== batch.sourceHash) {
+    fail('LAFEA_CONTINUUM_DOMAIN_FIRST_BATCH_LIFECYCLE_MISMATCH');
+  }
+  for (let index = 0; index < batch.records.length; index += 1) {
+    lifecycle = registerLafeaArtifact(
+      lifecycle,
+      batch.records[index],
+      batch.registrations[index].registrationId,
+    );
+  }
+  return lifecycle;
+}
+
+function requireBatch(value) {
+  if (!value || value.schema !== LAFEA_CONTINUUM_DOMAIN_FIRST_PRODUCER_SCHEMA
+    || value.stageId !== STAGE_ID
+    || !Array.isArray(value.records) || !Array.isArray(value.registrations)
+    || value.records.length !== value.registrations.length
+    || value.records.length !== 5) {
+    fail('LAFEA_CONTINUUM_DOMAIN_FIRST_BATCH_INVALID');
+  }
+  return value;
 }
 
 function requireSolverModel(value) {

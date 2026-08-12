@@ -8,6 +8,7 @@ const read = (relativePath) => fs.readFileSync(path.join(ROOT, relativePath), 'u
 const entry = read('src/lafea-app/main.js');
 const controller = read('src/workspace/lafea-workbench-controller.js');
 const facade = read('src/workspace/lafea-workbench.js');
+const simulatedProvider = read('src/workspace/lafea-simulated-source-provider.js');
 const css = read('src/lafea-app/app.css');
 const e2e = read('e2e/lafea-standalone.spec.js');
 
@@ -21,6 +22,7 @@ assert(entry.includes('new LafeaWorkbenchController(root).init()'),
 for (const forbidden of [
   './fea-benchmark-panel.js',
   './advanced-mock-data.js',
+  './lafea-simulated-source-provider.js',
   'FeaBenchmarkPanel',
   'createLafeaMockDocument',
 ]) {
@@ -38,12 +40,14 @@ assert(controller.includes('LAFEA_SIMULATED_SOURCE_NOT_CONFIGURED'),
 
 assert(facade.includes("from './fea-benchmark-panel.js'"),
   'Compatibility facade must retain the existing generic benchmark provider.');
-assert(facade.includes("from './advanced-mock-data.js'"),
-  'Compatibility facade must retain the existing simulated-source provider.');
+assert(facade.includes("from './lafea-simulated-source-provider.js'"),
+  'Compatibility facade must retain the lazy simulated-source provider.');
 assert(facade.includes('benchmarkPanelFactory,'),
   'Compatibility facade must inject the benchmark provider into the controller.');
 assert(facade.includes('mockDocumentFactory,'),
   'Compatibility facade must inject the simulated-source provider into the controller.');
+assert(simulatedProvider.includes("await import('./advanced-mock-data.js')"),
+  'Compatibility simulated-source provider must retain lazy loading.');
 
 assert(css.includes('[data-role="lafea-mock"]') && css.includes('[data-role="lafea-benchmark"]'),
   'Production CSS must suppress compatibility-only toolbar controls.');
@@ -61,6 +65,7 @@ console.log(JSON.stringify({
   genericBenchmarkProviderExcluded: true,
   simulatedSourceProviderExcluded: true,
   compatibilityFacadeBehaviorRetained: true,
+  simulatedSourceCompatibilityRemainsLazy: true,
   productionCompatibilityControlsExposed: false,
 }));
 

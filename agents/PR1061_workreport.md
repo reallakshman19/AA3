@@ -56,6 +56,7 @@ Parent geometry therefore remains fail-closed even after this PR. A later coordi
 6. Table currently exposes `stationMm`; this PR may make only that field editable through a compound governed support-placement intent while host identity remains read-only.
 7. Generic support rendering currently prefers the canonical support node, so accepted placement must override only that projection origin while untouched support behavior remains unchanged.
 8. Table projection must display the certified station after Apply rather than continuing to show stale source station evidence.
+9. Workspace commit planning already routes canonical writeback through `topology-edit-source-adapter-dispatch.js`. That wrapper is the narrow integration point for replacing legacy node-based support center writeback with the certified override and for rehydrating that override on subsequent workspace-canonical rebuilds; the immutable source snapshot remains untouched.
 
 ## Engineering Register
 
@@ -67,8 +68,9 @@ Parent geometry therefore remains fail-closed even after this PR. A later coordi
 | DEC-1061-04 | Host | ACCEPTED | Shared #1036 host resolver must return exactly `RESOLVED`; no alternate lookup. |
 | DEC-1061-05 | Coordinates | ACCEPTED | Station is measured from canonical host `FROM`; origin is deterministic linear interpolation on that exact edge. |
 | DEC-1061-06 | Evidence conflict | ACCEPTED | Conflicting declared-station vs attachment-segment evidence fails closed instead of selecting one authority. |
+| DEC-1061-07 | Durable writeback | ACCEPTED | Persist certified placement as topology-edit audit attributes plus committed support geometry; rehydrate only from those explicit audit fields. Do not overwrite source `STATION_MM`/attachment evidence. |
 | RISK-1061-01 | Curved hosts | OPEN / FAIL-CLOSED | A two-node canonical edge does not encode an independent support centerline parameterization for elbow arcs. Initial operation rejects non-straight/non-representable host types rather than projecting by chord. |
-| RISK-1061-02 | Source writeback | OPEN | Existing support writeback uses resolved node and must be made override-aware without changing imported source authority before Apply. |
+| RISK-1061-02 | Source writeback | IN PROGRESS | Dispatch wrapper must overwrite legacy approximate-node center only for certified placement and reject malformed audit rehydration. |
 | RISK-1061-03 | SJSON grouped projection | OPEN | Source-validator support grouping can prefer source positions; edit projection must display certified override without rewriting source-only validation authority. |
 | RISK-1061-04 | Execution | OPEN | No exact-head runner currently available. |
 
@@ -92,7 +94,7 @@ Pure placement context, command contract, resolver targets, reducer and effect v
 
 ### S4 — Projection/writeback — IN PROGRESS
 
-Three/support overlay must consume only an accepted certified placement override; untouched supports retain prior behavior. Workspace source entity is patched only after accepted canonical transaction/writeback. Table projection must expose certified station authority after Apply. Imported attachment/source evidence remains separately retained.
+Generic support glyphs and Table projection consume an accepted certified override while untouched supports retain prior behavior. Durable workspace writeback/rehydration is now authorized through the dispatch wrapper. Source `STATION_MM`, attachment geometry and immutable source snapshot stay unchanged.
 
 ### S5 — Qualification/closure — PENDING
 
@@ -110,6 +112,7 @@ Production files may be modified only within this declared envelope unless this 
 - `src/workspace/topology-edit/topology-edit-pure-reducer-dispatch.js`
 - `src/workspace/topology-edit/topology-edit-command-effect-dispatch.js`
 - `src/workspace/topology-edit/topology-edit-source-adapter.js`
+- `src/workspace/topology-edit/topology-edit-source-adapter-dispatch.js`
 - `src/workspace/topology-edit/support-restraint-family.js`
 - `src/workspace/topology-edit/topology-edit-sjson-visual-authority.js`
 - `src/workspace/topology-edit/topology-edit-sjson-restraint-projection.js`
@@ -140,7 +143,7 @@ No geometry planner or #1036 dependency module is authorized for weakening/modif
 
 ## Next
 
-1. Make generic/SJSON support projection and source writeback consume certified override only after Apply.
-2. Make Table projection expose the certified station/current authority.
-3. Add Table transaction/rebase/Undo/Redo focused tests.
+1. Implement durable support placement writeback/rehydration in the registered source-adapter dispatch wrapper.
+2. Make SJSON grouped support projection prefer certified placement only in edit projection.
+3. Add Table transaction/rebase/Undo/Redo focused tests and durable commit-roundtrip coverage.
 4. Add production Playwright source qualification while preserving `NOT_RUN` until an actual runner executes it.

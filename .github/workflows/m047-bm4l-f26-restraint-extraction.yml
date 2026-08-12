@@ -1,0 +1,140 @@
+name: M047 BM4_L F2.6 restraint extraction
+
+on:
+  pull_request:
+    branches:
+      - agent/m047-bm4l-f26-extraction-base
+    paths:
+      - 'scripts/lfea-m047-bm4l-accdb-provenance.ps1'
+      - 'benchmarks/LFEA/CAESAR_ACCDB/**'
+      - 'agents/PR_M047_bm4l_accdb_restraint_semantic_reconciliation.md'
+
+permissions:
+  contents: read
+
+jobs:
+  extract-restraints:
+    runs-on: windows-latest
+    timeout-minutes: 20
+    env:
+      BM4L_COMMON_COMMIT: '45d51ea18624f5775805f399110c1738301c0d90'
+      BM4L_ZIP_SHA256: '978617cba50fa0b1a16c2fa71dc1e0d38e55ac834b191f887d100c6951abd8b9'
+      BM4L_ZIP_SIZE: '582488'
+      BM4L_PINNED_MEMBER_SHA256: '64c05a50e9ed0452622ff5880335460486f24ac8e6adecc9a300b549c9aa82f8'
+      BM4L_ACCDB_SIZE: '5136384'
+      BM4L_RESTRAINT_TABLE_SHA256: '08460f1ef574ec6d6c95c46155d5ad4c1acee42e336a7b7e300ed08e0878866a'
+      BM4L_RES_TYPEID_MULTISET_SHA256: 'a5190ce01187f72428a6e4a0a3861cdda5b04e288d10ff63f8fe42cf8e9ee80f'
+      ACE_INSTALLER_URL: 'https://download.microsoft.com/download/3/5/C/35C84C36-661A-44E6-9324-8786B8DBE231/accessdatabaseengine_X64.exe'
+      ACE_INSTALLER_SHA256: '04e96c9f1a1f7d251a88aececf1dc10ff65950392787427c00814a43308003de'
+
+    steps:
+      - name: Checkout exact PR head
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+
+      - name: Parse provenance extractor
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          [void][scriptblock]::Create((Get-Content -Raw 'scripts/lfea-m047-bm4l-accdb-provenance.ps1'))
+
+      - name: Authenticate and install Microsoft ACE
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          New-Item -ItemType Directory -Force -Path artifacts/f26/provider | Out-Null
+          $installer = Join-Path $PWD 'artifacts/f26/provider/accessdatabaseengine_X64.exe'
+          Invoke-WebRequest -Uri $env:ACE_INSTALLER_URL -OutFile $installer
+          $hash = (Get-FileHash -LiteralPath $installer -Algorithm SHA256).Hash.ToLowerInvariant()
+          if ($hash -ne $env:ACE_INSTALLER_SHA256) { throw "ACE installer hash mismatch: $hash" }
+          $signature = Get-AuthenticodeSignature -LiteralPath $installer
+          if ($signature.Status -ne 'Valid' -or $signature.SignerCertificate.Subject -notmatch 'Microsoft') {
+            throw "ACE installer signature invalid: $($signature.Status), $($signature.SignerCertificate.Subject)"
+          }
+          $process = Start-Process -FilePath $installer -ArgumentList '/quiet','/norestart' -Wait -PassThru
+          if ($process.ExitCode -notin @(0, 3010)) { throw "ACE installer exited $($process.ExitCode)." }
+
+      - name: Fetch and authenticate pinned BM4_L ACCDB
+        id: source
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          New-Item -ItemType Directory -Force -Path artifacts/f26/source | Out-Null
+          $zipPath = Join-Path $PWD 'artifacts/f26/BM4_L.zip'
+          $url = "https://raw.githubusercontent.com/reallaksh19/Common/$env:BM4L_COMMON_COMMIT/LFEA/BM4/BM4_L.zip"
+          Invoke-WebRequest -Uri $url -OutFile $zipPath
+          $zip = Get-Item -LiteralPath $zipPath
+          $zipHash = (Get-FileHash -LiteralPath $zipPath -Algorithm SHA256).Hash.ToLowerInvariant()
+          if ($zip.Length -ne [int64]$env:BM4L_ZIP_SIZE -or $zipHash -ne $env:BM4L_ZIP_SHA256) {
+            throw "Pinned BM4_L.zip custody mismatch: size=$($zip.Length), sha=$zipHash"
+          }
+          Expand-Archive -LiteralPath $zipPath -DestinationPath artifacts/f26/source -Force
+          $members = @(Get-ChildItem artifacts/f26/source -File -Recurse)
+          if ($members.Count -ne 1 -or $members[0].Name -ne 'BM4_L.ACCDB') {
+            throw "Pinned ZIP must contain exactly BM4_L.ACCDB; found $($members.Count) members."
+          }
+          $accdb = $members[0].FullName
+          $accdbHash = (Get-FileHash -LiteralPath $accdb -Algorithm SHA256).Hash.ToLowerInvariant()
+          if ($members[0].Length -ne [int64]$env:BM4L_ACCDB_SIZE -or $accdbHash -ne $env:BM4L_PINNED_MEMBER_SHA256) {
+            throw "Pinned ACCDB custody mismatch: size=$($members[0].Length), sha=$accdbHash"
+          }
+          "accdb_path=$accdb" >> $env:GITHUB_OUTPUT
+
+      - name: Extract exact INPUT_RESTRAINTS row projection
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $accdb = "${{ steps.source.outputs.accdb_path }}"
+          $before = (Get-FileHash -LiteralPath $accdb -Algorithm SHA256).Hash.ToLowerInvariant()
+          .\scripts\lfea-m047-bm4l-accdb-provenance.ps1 `
+            -AccdbPath $accdb `
+            -ProfilePath .\benchmarks\LFEA\CAESAR_ACCDB\bm4l-validation.profile.json `
+            -TablesCsv INPUT_RESTRAINTS `
+            -ExpectedAccdbSha256 $env:BM4L_PINNED_MEMBER_SHA256 `
+            -ExpectedAccdbBytes ([int64]$env:BM4L_ACCDB_SIZE) `
+            -OutPath .\artifacts\f26\bm4l-restraint-provenance.json
+          $after = (Get-FileHash -LiteralPath $accdb -Algorithm SHA256).Hash.ToLowerInvariant()
+          if ($before -ne $after -or $after -ne $env:BM4L_PINNED_MEMBER_SHA256) {
+            throw "Read-only extraction changed ACCDB bytes: before=$before after=$after"
+          }
+
+          $manifest = Get-Content -Raw artifacts/f26/bm4l-restraint-provenance.json | ConvertFrom-Json -Depth 64
+          $table = @($manifest.tables | Where-Object { $_.name -eq 'INPUT_RESTRAINTS' })
+          if ($table.Count -ne 1) { throw 'Expected exactly one INPUT_RESTRAINTS table evidence record.' }
+          $table = $table[0]
+          if ($table.rowCount -ne 46) { throw "Expected 46 restraint rows; found $($table.rowCount)." }
+          if ($table.tableSha256 -ne $env:BM4L_RESTRAINT_TABLE_SHA256) {
+            throw "INPUT_RESTRAINTS table hash mismatch: $($table.tableSha256)"
+          }
+          if ($table.fieldValueMultisetSha256.RES_TYPEID -ne $env:BM4L_RES_TYPEID_MULTISET_SHA256) {
+            throw "RES_TYPEID multiset hash mismatch: $($table.fieldValueMultisetSha256.RES_TYPEID)"
+          }
+          $projection = $table.retainedRowProjection
+          if ($null -eq $projection -or $projection.rowCount -ne 46 -or @($projection.rows).Count -ne 46) {
+            throw 'Exact 46-row restraint projection was not retained.'
+          }
+          $expectedFields = @('REST_PTR','NODE_NUM','RES_TYPEID','STIFFNESS','GAP','FRIC_COEF','CNODE','XCOSINE','YCOSINE','ZCOSINE','RES_TAG')
+          if ([string]::Join('|', @($projection.columns)) -ne [string]::Join('|', $expectedFields)) {
+            throw "Retained projection field contract mismatch: $([string]::Join('|', @($projection.columns)))"
+          }
+          [ordered]@{
+            schema = 'm047-bm4l-f26-restraint-extraction-check/v1'
+            status = 'PASS'
+            sourceAccdbSha256 = $manifest.source.sha256
+            tableSha256 = $table.tableSha256
+            rowCount = $projection.rowCount
+            rowsSha256 = $projection.rowsSha256
+            resTypeIdMultisetSha256 = $table.fieldValueMultisetSha256.RES_TYPEID
+            sourceBytesUnchanged = $true
+          } | ConvertTo-Json -Depth 8 | Set-Content -Encoding utf8 artifacts/f26/extraction-check.json
+
+      - name: Upload F2.6 restraint evidence
+        uses: actions/upload-artifact@v4
+        with:
+          name: m047-bm4l-f26-restraint-extraction-${{ github.event.pull_request.head.sha }}
+          path: |
+            artifacts/f26/bm4l-restraint-provenance.json
+            artifacts/f26/extraction-check.json
+          if-no-files-found: error
+          retention-days: 14

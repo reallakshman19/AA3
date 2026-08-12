@@ -10,7 +10,10 @@
     "independentExtractionRunId": 31609552661,
     "independentExtractionArtifactId": 9146596255,
     "independentExtractionArtifactDigestSha256": "a9213695f6c56b4c2cb1b50b3b723b1e48fe7b9ca33925211a45d81ea8826d00",
-    "independentExtractionHead": "410fec552663e257de9d2a1d362ef52aad35f88c"
+    "independentExtractionHead": "410fec552663e257de9d2a1d362ef52aad35f88c",
+    "freshReplayFirstRunId": 31613587944,
+    "freshReplayFirstHead": "0e09fcd209d5f570cd094100bec3ffbb3c88e1be",
+    "freshReplayFirstObservedScore": "1884/1914"
   },
   "caseIdentity": {
     "bm4NlFrictionOnLcase": 17,
@@ -26,17 +29,18 @@
     "restraintForceReportingRule": "LINEAR_GROUNDED_SPRING_REACTION_PLUS_REPLAY_TANGENTIAL_LOAD",
     "governedDenominator": 1914,
     "historicalDiagnosticPassed": 1719,
-    "independentlyPrecomputedExpectedPassed": 1872,
-    "independentlyPrecomputedExpectedFailed": 42,
-    "independentlyPrecomputedExpectedPercent": 97.80564263322884
+    "freshAuthenticatedExpectedPassed": 1884,
+    "freshAuthenticatedExpectedFailed": 30,
+    "freshAuthenticatedExpectedPercent": 98.43260188087774
   },
   "withdrawnCandidate": {
     "pr": 1078,
     "claimedPercent": 98.43260188087774,
-    "status": "WITHDRAWN_CUSTODY_MISMATCH",
+    "status": "WITHDRAWN_FIXTURE_CUSTODY_MISMATCH_PERCENTAGE_LATER_INDEPENDENTLY_REPRODUCED",
     "witnessNode": "20350",
     "authenticatedCase17RigidY": [827.2864379882812, -3094.531982421875, 392.7410583496094],
-    "withdrawnFixture": [-1696.5887451171875, -9537.6845703125, 2287.588134765625]
+    "withdrawnFixture": [-1696.5887451171875, -9537.6845703125, 2287.588134765625],
+    "disposition": "DO_NOT_REUSE_PR1078_VECTOR_FIXTURE; ACCEPT_ONLY_FRESH_AUTHENTICATED_RECOMPUTATION"
   },
   "authorityFirewall": {
     "bm4lReferenceUsedToSelectCommittedVector": false,

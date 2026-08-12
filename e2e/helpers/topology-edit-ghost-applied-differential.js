@@ -168,34 +168,66 @@ async function captureViewportState(page, options) {
       const rows = [];
       for (const group of groups.filter(Boolean)) {
         group.updateMatrixWorld?.(true);
+        const inverseGroupMatrix = group.matrixWorld.clone().invert();
         group.traverse((object) => {
           if (object === group || !object.geometry) return;
           const direct = object.userData?.pickTarget ?? null;
           const table = Array.isArray(object.userData?.pickTable) ? object.userData.pickTable : [];
-          const picks = [direct, ...table].filter(Boolean);
-          if (!picks.length) return;
+          const partRoleTable = Array.isArray(object.userData?.partRoleTable)
+            ? object.userData.partRoleTable : [];
+          if (!direct && !table.length) return;
           object.geometry.computeBoundingBox?.();
           const bounds = object.geometry.boundingBox;
           const geometryType = String(object.geometry?.type ?? '');
-          const shape = {
-            geometryType,
-            position: point(object.position),
-            quaternion: [
-              round(object.quaternion?.x), round(object.quaternion?.y),
-              round(object.quaternion?.z), round(object.quaternion?.w),
-            ],
-            scale: point(object.scale),
-            geometryBounds: geometryType === 'SphereGeometry' || !bounds
-              ? null
-              : { min: point(bounds.min), max: point(bounds.max) },
-          };
+          const geometryBounds = geometryType === 'SphereGeometry' || !bounds
+            ? null
+            : { min: point(bounds.min), max: point(bounds.max) };
           const fallbackPartRole = object.userData?.partRole ?? '';
-          for (const target of picks) {
-            rows.push({ pick: canonicalPick(target, fallbackPartRole), shape });
+
+          if (object.isInstancedMesh && table.length) {
+            for (let index = 0; index < table.length; index += 1) {
+              const instanceMatrix = object.matrixWorld.clone().identity();
+              object.getMatrixAt(index, instanceMatrix);
+              const groupLocalMatrix = inverseGroupMatrix.clone()
+                .multiply(object.matrixWorld)
+                .multiply(instanceMatrix);
+              rows.push({
+                pick: canonicalPick(table[index], partRoleTable[index] ?? fallbackPartRole),
+                shape: shapeFromMatrix(object, groupLocalMatrix, geometryType, geometryBounds),
+              });
+            }
+            return;
+          }
+
+          const groupLocalMatrix = inverseGroupMatrix.clone().multiply(object.matrixWorld);
+          const shape = shapeFromMatrix(object, groupLocalMatrix, geometryType, geometryBounds);
+          if (direct) rows.push({ pick: canonicalPick(direct, fallbackPartRole), shape });
+          for (let index = 0; index < table.length; index += 1) {
+            rows.push({
+              pick: canonicalPick(table[index], partRoleTable[index] ?? fallbackPartRole),
+              shape,
+            });
           }
         });
       }
       return rows.sort(byJson);
+    }
+
+    function shapeFromMatrix(object, matrix, geometryType, geometryBounds) {
+      const position = object.position.clone();
+      const quaternion = object.quaternion.clone();
+      const scale = object.scale.clone();
+      matrix.decompose(position, quaternion, scale);
+      return {
+        geometryType,
+        position: point(position),
+        quaternion: [
+          round(quaternion.x), round(quaternion.y),
+          round(quaternion.z), round(quaternion.w),
+        ],
+        scale: point(scale),
+        geometryBounds,
+      };
     }
 
     function canonicalPick(value = {}, fallbackPartRole = '') {

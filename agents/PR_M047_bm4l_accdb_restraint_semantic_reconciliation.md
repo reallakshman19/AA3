@@ -11,11 +11,11 @@ ACCDB    INPUT_RESTRAINTS.RES_TYPEID -> use directly; no InputXML mutation
 InputXML RESTRAINT.TYPE              -> apply the BM4_L mutation exactly once before classification
 ```
 
-No numeric-code equality is assumed across source domains. Reconciliation is by node, physical direction, gap and friction evidence.
+Numeric codes and class labels are source-domain-specific. Reconciliation is by direct source authority plus node/direction/gap/friction evidence; one source is never renamed from the other.
 
-## Exact Windows/ACE extraction
+## Exact Windows/ACE row extraction
 
-A dedicated read-only exact-head extraction ran on Windows with authenticated Microsoft ACE against the pinned BM4_L ACCDB.
+A read-only exact-head extraction authenticated the pinned BM4_L ACCDB and retained all 46 `INPUT_RESTRAINTS` rows.
 
 ```text
 workflow run       31587484308
@@ -28,28 +28,51 @@ rows               46
 source bytes       unchanged
 ```
 
-The retained row projection contains `REST_PTR, NODE_NUM, RES_TYPEID, STIFFNESS, GAP, FRIC_COEF, CNODE, XCOSINE, YCOSINE, ZCOSINE, RES_TAG` and is sorted deterministically by `REST_PTR`.
+The retained projection contains `REST_PTR, NODE_NUM, RES_TYPEID, STIFFNESS, GAP, FRIC_COEF, CNODE, XCOSINE, YCOSINE, ZCOSINE, RES_TAG`.
 
-## ACCDB type semantics closed for BM4_L
+## Direct ACCDB type authority supersedes the first node-set inference
 
-The ACCDB contains four `RES_TYPEID` values. Their complete node sets match the independently corrected InputXML class node sets exactly:
+The first F2.6 pass assigned labels to the four ACCDB IDs from their node-set correspondence with corrected InputXML. F2.7 then exposed the database-published `RESTRAINT_TYPES` lookup and forced a correction.
 
-| ACCDB `RES_TYPEID` | BM4_L class | Rows | Node-set reconciliation |
-|---:|---|---:|---|
-| 1 | ANC | 1 | exact |
-| 3 | +Y | 29 | exact |
-| 8 | LIM | 6 | exact |
-| 9 | GUI | 10 | exact |
+A second read-only exact Windows/ACE audit authenticated both BM4_L and the independent BM4_NL database and read their `RESTRAINT_TYPES` tables directly:
 
-This is **BM4_L-specific authority**, established by exact row-level reconciliation. It is not promoted as a generic CAESAR enum table.
+```text
+workflow run       31590171146
+artifact           9138785351
+exact head         76c2c0545d853b11a6c2dd79ffe7c87ce1faaaef
+BM4_L ACCDB        64c05a50e9ed0452622ff5880335460486f24ac8e6adecc9a300b549c9aa82f8
+BM4_NL ACCDB       85d39463296e569da811d8572e2eff680b858097f76fdf0f47d1755f0b161c21
+```
 
-No ACCDB ID is mutated. In particular, ACCDB `3` is not converted to the corrected InputXML code `14`; both source-domain values independently identify the same BM4_L `+Y` row set.
+Both databases publish the same active type identities:
 
-## Friction reconciliation
+| ACCDB `RES_TYPEID` | Direct ACCDB type | Active BM4_L rows |
+|---:|---|---:|
+| 1 | ANC | 1 |
+| 3 | Y | 29 |
+| 8 | GUI | 6 |
+| 9 | LIM | 10 |
 
-All 29 ACCDB `RES_TYPEID=3` rows point in global `+Y`.
+The earlier claim `1=ANC, 3=+Y, 8=LIM, 9=GUI` is therefore **withdrawn**. It was a node-set crosswalk mislabeled as product type authority.
 
-Exactly 26 carry positive friction coefficient `0.30000001192092896`, which is the ACCDB floating representation of the source `0.3`. The friction-node set matches corrected InputXML exactly. The three non-friction `+Y` nodes remain:
+## Correct cross-source reconciliation
+
+The source domains still reconcile exactly by row sets, but their labels must remain separate:
+
+| ACCDB ID | Direct ACCDB label | Corrected InputXML label with same node set | Rows |
+|---:|---|---|---:|
+| 1 | ANC | ANC | 1 |
+| 3 | Y | +Y | 29 |
+| 8 | GUI | LIM | 6 |
+| 9 | LIM | GUI | 10 |
+
+All four node sets match exactly. That proves row identity across the retained source views; it does **not** authorize replacing one source's class label with the other's.
+
+The file-level `RESTRAINT_DIRECTIONAL_BEHAVIOR = BIDIRECTIONAL` remains independent governing custody and must be preserved in later nonlinear interpretation.
+
+## Friction custody
+
+All 29 ACCDB type-3 (`Y`) rows have global Y direction. Exactly 26 carry positive `FRIC_COEF=0.30000001192092896`, matching the 26 corrected-InputXML `+Y` friction rows by node exactly. The three non-friction nodes remain:
 
 ```text
 20300
@@ -57,66 +80,47 @@ Exactly 26 carry positive friction coefficient `0.30000001192092896`, which is t
 21640
 ```
 
-Therefore F2.6 closes BM4_L restraint **type, direction and friction-site custody**.
+Thus friction-site custody is closed even though the two source domains use different class labels.
 
-## Gap magnitude source split discovered
+## Positive-gap source split
 
-The exact ACCDB extraction also resolves an important negative fact: `INPUT_RESTRAINTS.GAP` is the unset sentinel
+BM4_L ACCDB `INPUT_RESTRAINTS.GAP` is the unset sentinel
 
 ```text
 -1.01010000705719
 ```
 
-on **all 46 ACCDB rows**.
+on all 46 rows. It therefore supplies **zero positive gap magnitudes**.
 
-That includes the six rows for which corrected InputXML carries positive gap magnitudes. The physical directions reconcile exactly for all six:
-
-```text
-20030 LIM  25  direction  0, 0,-1
-20390 GUI   5  direction -1, 0, 0
-21480 LIM  25  direction  0, 0, 1
-21480 GUI  10  direction  1, 0, 0
-21640 GUI  10  direction  1, 0, 0
-22310 GUI  10  direction  0, 0,-1
-```
-
-Five remain friction-coupled companion rows on four friction nodes (`20030`, `20390`, `21480`, `22310`); `21640` remains the additional non-friction GUI gap.
-
-**Conclusion:** ACCDB closes class/direction/friction identity, but the positive gap magnitudes are not present in ACCDB `GAP`. Their retained source custody remains the correctly normalized InputXML view. This source split must not be erased by forcing both sources into one numeric/data namespace.
-
-## File-level directionality
-
-The user-verified BM4_L file setting remains governing:
+Corrected InputXML retains six positive-gap magnitudes. Their node and physical direction crosswalks against ACCDB are exact, but the direct ACCDB type labels differ from the corrected InputXML labels:
 
 ```text
-RESTRAINT_DIRECTIONAL_BEHAVIOR = BIDIRECTIONAL
+20030  ACCDB GUI / InputXML LIM  gap 25  direction  0, 0,-1
+20390  ACCDB LIM / InputXML GUI  gap  5  direction -1, 0, 0
+21480  ACCDB GUI / InputXML LIM  gap 25  direction  0, 0, 1
+21480  ACCDB LIM / InputXML GUI  gap 10  direction  1, 0, 0
+21640  ACCDB LIM / InputXML GUI  gap 10  direction  1, 0, 0
+22310  ACCDB LIM / InputXML GUI  gap 10  direction  0, 0,-1
 ```
 
-F2.6 does not reinterpret that setting from result accuracy.
+Five remain friction-coupled companions on four friction nodes (`20030`, `20390`, `21480`, `22310`); node `21640` remains the additional non-friction positive-gap row.
+
+**Conclusion:** ACCDB directly closes its own type labels, directions and friction rows. Corrected InputXML independently carries the positive gap magnitudes and its own corrected type labels. The two views must be reconciled without forcing either namespace onto the other.
 
 ## Implementation boundary
 
-A benchmark-scoped decoder now encodes only the exact F2.6 BM4_L ACCDB mapping:
+The benchmark-scoped ACCDB decoder now follows direct database authority only:
 
 ```text
 1 -> ANC
-3 -> +Y
-8 -> LIM
-9 -> GUI
+3 -> Y
+8 -> GUI
+9 -> LIM
 ```
 
-Unknown IDs remain unsupported. The decoder never applies InputXML mutation.
+Unknown IDs remain unsupported; InputXML mutation is never applied to ACCDB.
 
-A focused F2.6 checker locks:
-
-- exact 46-row extraction custody;
-- exact four node-set mappings;
-- exact 26-row friction inventory;
-- exact six positive-gap direction matches;
-- ACCDB gap fields all unset;
-- `BIDIRECTIONAL` custody;
-- `productionNonlinearMechanicsAuthorized=false`;
-- `l13RescoreAuthorized=false`.
+The F2.6 checker locks the direct lookup, exact row-set crosswalk, 26 friction rows, six direction matches, all-unset ACCDB gaps, `BIDIRECTIONAL` custody, and the withdrawal of the earlier mislabeled mapping.
 
 ## Accuracy status
 
@@ -126,21 +130,14 @@ Historical diagnostic remains unchanged:
 1719 / 1914 = 89.8119122257%
 ```
 
-F2.6 does **not** publish a new L13 percentage because it is source/semantic reconciliation, not a qualified nonlinear solve.
+F2.6 does not authorize a new percentage. Source reconciliation is not a nonlinear solve.
 
 ## Remaining blocker — F2.7
 
-F2.6 is now complete for type/direction/friction mapping, but it does not determine the nonlinear active-state sequence. Exact-build CAESAR evidence is still required for:
+F2.6 now closes the source identities correctly but still does not establish the nonlinear state machine. Exact product-state evidence is required for OPEN/CLOSED/REOPENED sequencing, state commit/convergence, STICK→SLIDING scheduling, first-slide 15-degree handling, later direction/zero-crossing behavior, and normal-force update basis around the 0.15 threshold.
 
-- LIM/GUI gap OPEN/CLOSED/REOPENED ordering;
-- contact-state commit/convergence ordering;
-- STICK -> SLIDING scheduling;
-- first-slide 15-degree handling;
-- subsequent friction-direction / zero-crossing behavior;
-- held versus recomputed normal-force basis around the 0.15 variation threshold.
-
-Only after F2.7 closes those rules may governed nonlinear mechanics be integrated and L13 rerun on the unchanged 1,914-row denominator.
+Only after those semantics are independently closed may governed nonlinear mechanics be integrated and L13 rerun on the unchanged 1,914-row denominator.
 
 ## Decision
 
-**F2.6 PASS — BM4_L ACCDB restraint IDs are exactly reconciled as `1=ANC`, `3=+Y`, `8=LIM`, `9=GUI`; all 26 friction rows and all six relevant directions reconcile exactly. ACCDB contains no positive gap magnitudes, so gap magnitude custody remains in corrected InputXML. NO PRODUCTION NONLINEAR MECHANICS OR NEW L13 ACCURACY IS AUTHORIZED UNTIL F2.7 CLOSES ACTIVE-BOUNDARY AND STATE-HISTORY SEMANTICS.**
+**F2.6 PASS AFTER DIRECT-AUTHORITY CORRECTION — BM4_L ACCDB DIRECTLY PUBLISHES `1=ANC`, `3=Y`, `8=GUI`, `9=LIM`. THE CORRECTED INPUTXML VIEW HAS EXACT ROW-SET CROSSWALKS `ANC`, `+Y`, `LIM`, `GUI`, BUT THOSE LABELS ARE NOT SUBSTITUTED INTO ACCDB. FRICTION-SITE AND DIRECTION CUSTODY ARE CLOSED; POSITIVE GAP MAGNITUDES REMAIN INPUTXML-SOURCED. NO PRODUCTION NONLINEAR MECHANICS OR NEW L13 ACCURACY IS AUTHORIZED.**

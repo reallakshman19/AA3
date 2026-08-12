@@ -41,10 +41,42 @@
   "rowSetCrosswalk": {
     "rule": "EXACT_NODE_SET_CROSSWALK_DOES_NOT_RENAME_ACCDB_TYPES",
     "mappings": [
-      {"accdbResTypeId":1,"accdbType":"ANC","correctedInputXmlClass":"ANC","rowCount":1,"nodeIds":["22490"],"exactNodeSetMatch":true,"sameSourceLabel":true},
-      {"accdbResTypeId":3,"accdbType":"Y","correctedInputXmlClass":"+Y","rowCount":29,"nodeIds":["20030","20090","20170","20250","20300","20350","20390","20440","20520","20550","20580","20640","20710","21470","21480","21610","21640","21740","21800","21860","21930","22020","22070","22120","22140","22220","22260","22310","22370"],"exactNodeSetMatch":true,"sameSourceLabel":false},
-      {"accdbResTypeId":8,"accdbType":"GUI","correctedInputXmlClass":"LIM","rowCount":6,"nodeIds":["20030","20390","20580","21480","21860","22020"],"exactNodeSetMatch":true,"sameSourceLabel":false},
-      {"accdbResTypeId":9,"accdbType":"LIM","correctedInputXmlClass":"GUI","rowCount":10,"nodeIds":["20030","20250","20390","20550","20710","21480","21640","21930","22140","22310"],"exactNodeSetMatch":true,"sameSourceLabel":false}
+      {
+        "accdbResTypeId":1,
+        "accdbType":"ANC",
+        "correctedInputXmlClass":"ANC",
+        "rowCount":1,
+        "nodeIds":["22490"],
+        "exactNodeSetMatch":true,
+        "sameSourceLabel":true
+      },
+      {
+        "accdbResTypeId":3,
+        "accdbType":"Y",
+        "correctedInputXmlClass":"+Y",
+        "rowCount":29,
+        "nodeIds":["20030","20090","20170","20250","20300","20350","20390","20440","20520","20550","20580","20640","20710","21470","21480","21610","21640","21740","21800","21860","21930","22020","22070","22120","22140","22220","22260","22310","22370"],
+        "exactNodeSetMatch":true,
+        "sameSourceLabel":false
+      },
+      {
+        "accdbResTypeId":8,
+        "accdbType":"GUI",
+        "correctedInputXmlClass":"LIM",
+        "rowCount":6,
+        "nodeIds":["20030","20390","20580","21480","21860","22020"],
+        "exactNodeSetMatch":true,
+        "sameSourceLabel":false
+      },
+      {
+        "accdbResTypeId":9,
+        "accdbType":"LIM",
+        "correctedInputXmlClass":"GUI",
+        "rowCount":10,
+        "nodeIds":["20030","20250","20390","20550","20710","21480","21640","21930","22140","22310"],
+        "exactNodeSetMatch":true,
+        "sameSourceLabel":false
+      }
     ],
     "allNodeSetsExact": true,
     "allLabelsEquivalent": false
@@ -80,8 +112,15 @@
     "correctedInputXmlPositiveGapMagnitudeCount":6,
     "conclusion":"ACCDB_PUBLISHES_TYPE_DIRECTION_FRICTION_BUT_NOT_POSITIVE_GAP_MAGNITUDES"
   },
-  "fileLevelAuthority": {"restraintDirectionalBehavior":"BIDIRECTIONAL","sourceStatus":"USER_VERIFIED_BM4_L_FILE_SETTING_RETAINED_FROM_F2_5"},
-  "withdrawnInference": {"claim":"ACCDB_1_ANC_3_PLUSY_8_LIM_9_GUI","reason":"DIRECT_RESTRAINT_TYPES_LOOKUP_PUBLISHES_1_ANC_3_Y_8_GUI_9_LIM","status":"WITHDRAWN"},
+  "fileLevelAuthority": {
+    "restraintDirectionalBehavior":"BIDIRECTIONAL",
+    "sourceStatus":"USER_VERIFIED_BM4_L_FILE_SETTING_RETAINED_FROM_F2_5"
+  },
+  "withdrawnInference": {
+    "claim":"ACCDB_1_ANC_3_PLUSY_8_LIM_9_GUI",
+    "reason":"DIRECT_RESTRAINT_TYPES_LOOKUP_PUBLISHES_1_ANC_3_Y_8_GUI_9_LIM",
+    "status":"WITHDRAWN"
+  },
   "decision": {
     "directAccdbTypeLookupClosed":true,
     "crossDomainRowSetsReconciled":true,

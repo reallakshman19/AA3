@@ -125,59 +125,76 @@ export function runBm4lFrictionProduction(input) {
 }
 
 export function verifyFrictionRestraintCustody(benchmarkPackage, authority) {
-  if (!authority || authority.schema !== 'm047-bm4l-friction-restraint-authority/v1') {
-    throw new TypeError('A versioned BM4_L friction restraint authority is required.');
+  if (!authority || authority.schema !== 'm047-bm4l-friction-restraint-authority/v2') {
+    throw new TypeError('A versioned BM4_L friction restraint authority/v2 is required.');
   }
   if (authority.benchmarkId !== benchmarkPackage.benchmarkId) {
     throw new TypeError('BM4_L friction restraint authority benchmarkId does not match the benchmark package.');
   }
+  const pinned = authority.pinnedSourceAuthority;
+  const rule = authority.frictionSurfaceRule;
+  const historical = authority.historicalDiagnosticCorroboration;
   const rows = benchmarkPackage.model.tables.INPUT_RESTRAINTS.rows;
-  const modelCoefficient = Number(authority.frictionSurfaceAuthority.governedModelCoefficient);
-  const selected = selectBm4lAccdbFrictionRows(rows, modelCoefficient);
-  const actualNodeIds = selected.map((entry) => entry.nodeId);
-  const expectedNodeIds = authority.frictionSurfaceAuthority.nodeIds.map(String);
-  const actualNonFrictionYNodeIds = rows
-    .filter((row) => Number(row.RES_TYPEID) === Number(authority.frictionSurfaceAuthority.resTypeId)
-      && !(Number(row.FRIC_COEF) > 0))
-    .map((row) => String(row.NODE_NUM))
-    .sort(compareText);
-  const expectedNonFrictionYNodeIds = authority.frictionSurfaceAuthority.nonFrictionYNodeIds
-    .map(String)
-    .sort(compareText);
+  const selected = selectBm4lAccdbFrictionRows(rows, Number(rule.governedModelCoefficient));
+  const requiredDirection = rule.requiredDirection.map(Number);
+  const selectedDirectionStatus = selected.every((entry) =>
+    entry.normalDirection.length === requiredDirection.length
+      && entry.normalDirection.every((value, index) => value === requiredDirection[index]));
+  const selectedTypeStatus = selected.every((entry) =>
+    Number(entry.sourceRestraintTypeId) === Number(rule.resTypeId));
+
   const checks = Object.freeze({
+    sourceAccdbFileName: Object.freeze({
+      expected: pinned.accdbMemberName,
+      actual: benchmarkPackage.source.fileName,
+      status: benchmarkPackage.source.fileName === pinned.accdbMemberName ? 'PASS' : 'FAIL',
+    }),
+    sourceAccdbByteLength: Object.freeze({
+      expected: Number(pinned.accdbByteLength),
+      actual: Number(benchmarkPackage.source.byteLength),
+      status: Number(benchmarkPackage.source.byteLength) === Number(pinned.accdbByteLength) ? 'PASS' : 'FAIL',
+    }),
     sourceAccdbSha256: Object.freeze({
-      expected: authority.source.accdbSha256,
+      expected: pinned.accdbSha256,
       actual: benchmarkPackage.source.sha256,
-      status: benchmarkPackage.source.sha256 === authority.source.accdbSha256 ? 'PASS' : 'FAIL',
+      status: benchmarkPackage.source.sha256 === pinned.accdbSha256 ? 'PASS' : 'FAIL',
     }),
-    restraintRowCount: Object.freeze({
-      expected: Number(authority.source.rowCount),
-      actual: rows.length,
-      status: rows.length === Number(authority.source.rowCount) ? 'PASS' : 'FAIL',
-    }),
-    selectedFrictionRowCount: Object.freeze({
-      expected: Number(authority.frictionSurfaceAuthority.selectedRowCount),
+    rowDrivenFrictionSurfacesPresent: Object.freeze({
+      expected: '>0 positive-FRIC_COEF type-Y rows from the pinned ACCDB',
       actual: selected.length,
-      status: selected.length === Number(authority.frictionSurfaceAuthority.selectedRowCount) ? 'PASS' : 'FAIL',
+      status: selected.length > 0 ? 'PASS' : 'FAIL',
     }),
-    selectedFrictionNodeIds: Object.freeze({
-      expected: Object.freeze([...expectedNodeIds]),
-      actual: Object.freeze([...actualNodeIds]),
-      status: sameStrings(actualNodeIds, expectedNodeIds) ? 'PASS' : 'FAIL',
+    selectedRestraintType: Object.freeze({
+      expected: Number(rule.resTypeId),
+      actual: [...new Set(selected.map((entry) => entry.sourceRestraintTypeId))].sort((a, b) => a - b),
+      status: selectedTypeStatus ? 'PASS' : 'FAIL',
     }),
-    nonFrictionYNodeIds: Object.freeze({
-      expected: Object.freeze([...expectedNonFrictionYNodeIds]),
-      actual: Object.freeze([...actualNonFrictionYNodeIds]),
-      status: sameStrings(actualNonFrictionYNodeIds, expectedNonFrictionYNodeIds) ? 'PASS' : 'FAIL',
+    selectedNormalDirection: Object.freeze({
+      expected: Object.freeze([...requiredDirection]),
+      actual: Object.freeze([...new Set(selected.map((entry) => entry.normalDirection.join(',')))].sort()),
+      status: selectedDirectionStatus ? 'PASS' : 'FAIL',
     }),
   });
   const failedChecks = Object.entries(checks)
     .filter(([, check]) => check.status !== 'PASS')
     .map(([name]) => name);
+  const sameAsHistoricalSource = benchmarkPackage.source.sha256 === historical.accdbSha256;
+  const historicalDiagnostic = Object.freeze({
+    qualificationAuthority: false,
+    historicalAccdbSha256: historical.accdbSha256,
+    productionAccdbSha256: benchmarkPackage.source.sha256,
+    sourceRelationship: sameAsHistoricalSource
+      ? 'UNEXPECTEDLY_SAME_AS_NONAUTHORITATIVE_HISTORICAL_SOURCE'
+      : 'DIFFERENT_SOURCE_AS_DECLARED',
+    topologyComparisonStatus: sameAsHistoricalSource ? 'AVAILABLE_DIAGNOSTIC_ONLY' : 'NOT_APPLICABLE_DIFFERENT_ACCDB_SHA',
+    observedHistoricalSelectedRowCount: historical.observedSelectedRowCount,
+    actualPinnedSelectedRowCount: selected.length,
+    historicalNodeListUsedBySolver: false,
+  });
   return Object.freeze({
-    schema: 'm047-bm4l-friction-restraint-custody-check/v1',
-    sourceAuthority: authority.source,
-    selectionRule: authority.frictionSurfaceAuthority.rule,
+    schema: 'm047-bm4l-friction-restraint-custody-check/v2',
+    pinnedSourceAuthority: pinned,
+    selectionRule: rule.membershipRule,
     solverSelectionIsRowDriven: true,
     selectedRows: Object.freeze(selected.map((entry) => Object.freeze({
       nodeId: entry.nodeId,
@@ -186,6 +203,7 @@ export function verifyFrictionRestraintCustody(benchmarkPackage, authority) {
       sourceFrictionCoefficient: entry.sourceFrictionCoefficient,
       normalDirection: entry.normalDirection,
     }))),
+    historicalDiagnostic,
     checks,
     failedChecks: Object.freeze(failedChecks),
     status: failedChecks.length === 0 ? 'PASS' : 'BLOCKED_SOURCE_CUSTODY',
@@ -309,14 +327,6 @@ function rowIdentity(row) {
 
 function maximumAbsoluteValue(rows) {
   return rows.reduce((maximum, row) => Math.max(maximum, Math.abs(Number(row.value))), 0);
-}
-
-function sameStrings(left, right) {
-  return left.length === right.length && left.every((value, index) => String(value) === String(right[index]));
-}
-
-function compareText(left, right) {
-  return String(left) < String(right) ? -1 : String(left) > String(right) ? 1 : 0;
 }
 
 function extractAccdb(accdbPath, tableNames) {

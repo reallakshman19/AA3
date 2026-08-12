@@ -97,33 +97,22 @@ class LfeaStandaloneRuntime {
   }
 
   refreshCurrent() {
-    return this.refreshJourney(
-      this.sourceController.getSnapshot(),
-      this.sourceController.getPreFlight(),
-    );
+    return this.refreshJourney(this.sourceController.getSnapshot(), this.sourceController.getPreFlight());
   }
 
   refreshJourney(sourceSnapshot, preFlight) {
     this.#persistRecentSource(sourceSnapshot);
-    this.executionAuthority.reconcile(preFlight);
-    this.resultsAuthority.reconcile(preFlight, this.executionAuthority.getState());
-    this.supportPublicationAuthority.reconcile(
-      preFlight,
-      this.executionAuthority.getState(),
-      this.resultsAuthority.getState(),
-    );
+    const executionState = this.executionAuthority.reconcile(preFlight);
+    const resultsState = this.resultsAuthority.reconcile(preFlight, executionState);
+    this.supportPublicationAuthority.reconcile(preFlight, executionState, resultsState);
     this.governedJourney = createLfeaGovernedJourneyProjection({
-      sourceSnapshot,
-      preFlight,
-      executionState: this.executionAuthority.getState(),
+      sourceSnapshot, preFlight, executionState,
     });
     this.publicationReadiness = createLfeaNativePublicationReadiness({
       preFlight,
-      resultsState: this.resultsAuthority.getState(),
+      resultsState,
       supportAuthority: this.supportPublicationAuthority.readinessAuthority(
-        preFlight,
-        this.executionAuthority.getState(),
-        this.resultsAuthority.getState(),
+        preFlight, executionState, resultsState,
       ),
     });
     this.journeyView.update(this.governedJourney);
@@ -135,16 +124,14 @@ class LfeaStandaloneRuntime {
       applicationIdentity: this.identity,
       sourceSnapshot,
       preFlight,
-      executionState: this.executionAuthority.getState(),
-      resultsState: this.resultsAuthority.getState(),
+      executionState,
+      resultsState,
       supportPublicationState: this.supportPublicationAuthority.getState(),
       historySnapshot: this.historySnapshot,
       publicationReadiness: this.publicationReadiness,
     });
     this.layout.statusRoot.textContent = lfeaStandaloneJourneyStatus(
-      this.governedJourney,
-      this.resultsAuthority.getState(),
-      this.persistedState.recentSourceMetadata,
+      this.governedJourney, resultsState, this.persistedState.recentSourceMetadata,
     );
     return this.governedJourney;
   }
@@ -211,8 +198,7 @@ class LfeaStandaloneRuntime {
     const before = this.#engineeringStateSet();
     const record = this.runHistory.selectRun(runId);
     this.historySnapshot = this.#currentHistorySnapshot(
-      this.sourceController.getSnapshot(),
-      this.sourceController.getPreFlight(),
+      this.sourceController.getSnapshot(), this.sourceController.getPreFlight(),
     );
     this.historyView.update(this.historySnapshot);
     this.comparisonController.refresh(this.historySnapshot);
@@ -234,9 +220,18 @@ class LfeaStandaloneRuntime {
     return this.verificationController.createDossier();
   }
 
-  installNativeSupportAuthority(input) {
+  stageNativeSupportAuthority(input) {
     this.requireActive();
-    const state = this.supportPublicationAuthority.install(this.sourceController.getPreFlight(), input);
+    const state = this.supportPublicationAuthority.stage(this.sourceController.getPreFlight(), input);
+    this.refreshCurrent();
+    return state;
+  }
+
+  authorizeNativeSupportAuthority(approval) {
+    this.requireActive();
+    const state = this.supportPublicationAuthority.authorize(
+      this.sourceController.getPreFlight(), approval,
+    );
     this.refreshCurrent();
     return state;
   }
@@ -272,8 +267,7 @@ class LfeaStandaloneRuntime {
   recoverCurrentResults() {
     this.requireActive();
     const state = this.resultsAuthority.recover(
-      this.sourceController.getPreFlight(),
-      this.executionAuthority.getState(),
+      this.sourceController.getPreFlight(), this.executionAuthority.getState(),
     );
     this.#archiveCurrentRun();
     this.refreshCurrent();

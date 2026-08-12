@@ -6,12 +6,15 @@
 |---|---|
 | PR | #1054 — `feat(3d-edit): recover certified support restraint editing` |
 | Branch | `agent/certified-support-movement-semantics` |
-| Base | `main@271d04fa2674ab68367808d05f2429ec5e236a6e` |
+| Original base | `main@271d04fa2674ab68367808d05f2429ec5e236a6e` |
+| Current main observed | `6463b39866f68eb6476bfa41764538eb19f8b9f9` |
 | Bootstrap | `4140ffbd147b9cc73655d00e8264f8fb774869ff` — empty tree-equivalent commit |
-| Implementation/test head | `85e67606b588809c96b03c8801a783edaf09620d` |
-| Mission | Recover the already-qualified support **restraint-property** edit onto current main while keeping support placement/movement fail closed. |
-| Status | DRAFT / source recovery complete / static audit complete / exact-head execution unavailable |
-| Pending siblings | #1051 TEE/reducer and #1053 NODE_POSITION remain draft/unmerged with exact-head empirical execution `NOT_RUN`; this PR does not depend on their source. |
+| Pre-qualification implementation/test head | `85e67606b588809c96b03c8801a783edaf09620d` |
+| Pre-qualification report-sync head | `7d3002df5915027f607a7db10b2f75049fe14c94` |
+| Mission | Recover certified support restraint-property editing while keeping support placement/movement fail closed. |
+| Engineering state | **EMPIRICAL QUALIFICATION IN PROGRESS** |
+| Current execution truth | Predecessor #1033 had 17/17 workflow PASS, but PR1054 exact-head execution is still NOT_RUN. A production-browser qualification gap is now explicitly registered and authorized below. |
+| Merge state | Draft / unmerged until exact-head Node + Chromium evidence is green and the final report-sync head is requalified. |
 
 ## Preserved Authority
 
@@ -22,168 +25,133 @@ The recovered operation is intentionally narrow:
 Still prohibited:
 
 - editing `stationMm` or host attachment;
-- moving a support node or support placement;
+- moving support placement or a support node as a proxy;
 - implicit support follow/restation when parent geometry moves;
 - direct support/canonical writes from Table/DOM/renderer;
 - replacing imported `support.restraints` evidence;
-- mutation during input, Stage, Preview or Validate;
+- canonical mutation during input, Stage, Preview or Validate;
 - a second support-specific history stack;
 - weakening `SUPPORT_GEOMETRY_POLICY_REQUIRED`;
 - depending on unmerged #1051/#1053 source.
 
-## S1 Audit — COMPLETE
+## Tested Predecessor and Current-Main Reconciliation
 
-### Tested predecessor
+PR #1033 exact head `68444777aeb01f165c987975ef1555bb1b7a9a1b` triggered 17 workflows and all 17 passed. That is predecessor evidence only.
 
-PR #1033 (`feat(3d-edit): certify support restraint editing`) implemented the same narrow operation. Its exact head `68444777aeb01f165c987975ef1555bb1b7a9a1b` triggered **17 workflows and all 17 completed successfully**, including main-gate, Table Slices 1/2/3/6/7/8, R1 reachability, Tool Audit, SJSON render/interaction, authoring suites, non-FEA, and catalogue exact-head qualification.
+Merged #1036 remains the sole support-host authority through `resolveTopologyEditSupportHostEdge()` and the final `SUPPORT_GEOMETRY_POLICY_REQUIRED` backstop. PR1054 requires exact `RESOLVED` host custody and does not restore the predecessor's private host lookup.
 
-PR #1033 was stacked on an older node-position branch and never merged. Its boundary remains correct: `UPDATE_SUPPORT_RESTRAINT` changes family/direction/gap/travel only and **does not change station, host attachment, or node geometry**.
+Merged #1041 catalogue/target-DN custody remains intact in manually reconciled Table modules. Support restraint editing does not widen valve or geometry authority.
 
-### Current-main reconciliation
+Current `main` has advanced 83 commits from the original PR base, but the observed intervening current-main file set is concentrated in LFEA/publication work and does not overlap PR1054's topology-edit paths. Raw GitHub PR state reports `mergeable: true`, `rebaseable: true`, `mergeable_state: clean`.
 
-Merged #1036 introduced shared support-host authority `resolveTopologyEditSupportHostEdge()` and the final `SUPPORT_GEOMETRY_POLICY_REQUIRED` backstop. PR1054 therefore does **not** recover #1033's private host lookup. The current command requires the #1036 resolver to return exact `RESOLVED` host custody before command resolution/planning.
-
-Merged #1041 later strengthened valve catalogue and target-DN custody. Those current-main changes are preserved in the manually merged Table intent/runtime files. PR1054 does not widen or replace valve authority.
-
-### Canonical/source custody
-
-The Table support projection exposes:
-
-- `hostEntityId` — read-only;
-- `stationMm` — canonical/source-observed and read-only;
-- `supportType`, `direction`, `gapMm`, `travelMm` — one compound certified restraint edit.
-
-The command writes a separate canonical `support.restraint` marked `CERTIFIED_TABLE_OVERRIDE` while retaining imported `support.restraints`. `supportRestraintRows()` prefers the override only when that marker is present.
-
-## S2 Semantic Decision — COMPLETE
-
-### Authorized operation: SUPPORT_RESTRAINT
+## Certified SUPPORT_RESTRAINT Contract
 
 Exact requested fields:
 
-- `family` — explicit certified family token;
-- `direction` — explicit direction token; optional only for `ANCHOR`;
-- `gapMm` — optional finite non-negative number;
-- `travelMm` — optional finite non-negative number.
+- `family` — required certified family token;
+- `direction` — required except for `ANCHOR`;
+- `gapMm` — optional finite non-negative mm;
+- `travelMm` — optional finite non-negative mm.
 
-Exact target custody:
+Exact dependency custody:
 
 - one canonical support revision;
-- its canonical node revision when `nodeId` is present;
-- exactly one shared-resolver host edge revision.
+- its canonical node revision when present;
+- exactly one shared-resolver host-edge revision.
 
-Fail closed on non-SUPPORT target, unsupported family/direction, missing direction outside ANCHOR, negative/non-finite gap/travel, unresolved/ambiguous host authority, stale support/node/host revision, candidate delta outside the target support, or loss/replacement of imported restraint evidence.
+Fail closed on non-SUPPORT target, unsupported family/direction, missing non-ANCHOR direction, negative/non-finite gap/travel, unresolved/ambiguous host authority, stale support/node/host revision, candidate delta outside the target support, or loss/replacement of imported restraint evidence.
 
-### Explicitly deferred
-
-- support station editing/restationing;
-- host rebinding;
-- support world-position relocation;
-- parent-geometry host-follow translation;
-- automatic support movement during NODE_POSITION/PIPE_LENGTH/other geometry edits.
-
-Merged #1036 remains final for all geometry-dependent support movement: parent geometry fails closed until a separate placement policy is certified.
+The command writes a separate canonical `support.restraint` marked `CERTIFIED_TABLE_OVERRIDE`; imported `support.restraints` remains retained evidence.
 
 ## Engineering Register
 
 | ID | Type | Status | Finding / decision |
 |---|---|---|---|
-| DEC-1054-01 | Safety | ACCEPTED | Existing support-dependent parent geometry blocking remains final. |
-| DEC-1054-02 | Scope | ACCEPTED NARROW | Recover restraint-property editing only; no placement semantics. |
-| DEC-1054-03 | Integration | ACCEPTED | Build from current main only; #1051/#1053 remain independent drafts. |
-| DEC-1054-04 | Predecessor | ACCEPTED | Reuse byte-identical tested #1033 modules where later merged PRs did not touch them. |
-| DEC-1054-05 | Host authority | ACCEPTED | Current command uses #1036 `resolveTopologyEditSupportHostEdge()` and requires `RESOLVED`. |
-| DEC-1054-06 | Evidence | ACCEPTED | Imported restraint evidence remains; only marked override becomes active. |
-| ISS-1054-01 | Current-main regression | RESOLVED IN SOURCE | Added focused rejection when an explicit support host token is unresolved; no override is written. |
-| RISK-1054-01 | Current-head execution | OPEN | Historical predecessor is green; current-main adaptation has no exact-head runner. |
-| RISK-1054-02 | Sibling overlap | OPEN / MANAGEABLE | #1051 also edits Table cell/runtime wiring. Whichever merges second must rebase the small overlap. |
+| DEC-1054-01 | Safety | ACCEPTED | Parent geometry remains fail closed under #1036 support policy. |
+| DEC-1054-02 | Scope | ACCEPTED NARROW | Restraint properties only; no placement semantics. |
+| DEC-1054-03 | Host authority | ACCEPTED | Shared #1036 resolver only; exact `RESOLVED` required. |
+| DEC-1054-04 | Evidence | ACCEPTED | Imported restraints retained; only marked override becomes active. |
+| ISS-1054-01 | Current-main regression | RESOLVED IN SOURCE | Explicit unresolved host token rejects before override. |
+| ISS-1054-02 | Qualification | **OPEN / E2E AUTHORIZED** | PR1054/predecessor source has no production visible-user browser test for the SUPPORT_RESTRAINT Table lifecycle. Add exactly `e2e/topology-edit-table-support-restraint.spec.js`; use the real Workspace -> XYZ fixture -> 3D Edit -> Engineering Table path; select a real SUPPORT row; edit real restraint controls; Stage/Preview/Validate/Apply/Undo/Redo through visible controls; controller access may be read-only evidence only. |
+| RISK-1054-01 | Current-head execution | OPEN | Exact-head Node + Chromium execution is required before merge. |
+| RISK-1054-02 | Sibling overlap | OPEN / MANAGEABLE | #1051 overlaps small Table wiring and must reconcile whichever merges second. |
 
-## Stage Roadmap
+## Browser Qualification Contract
 
-### S0 — Report-first custody — COMPLETE
+The new E2E must prove all of the following without weakening guards:
 
-PR opened from current main with an empty bootstrap; this numbered report was the first changed file.
+1. real production UI loads the XYZ engineering fixture and opens Engineering Table;
+2. a typed support tag filter selects exactly one canonical SUPPORT row through its visible Select action;
+3. family/direction/gap/travel input changes are transient and do not change canonical hash, journal/ledger, active command IDs, session version, source hashes, or renderer count;
+4. Stage produces one governed intent while canonical authority remains unchanged;
+5. Preview produces a ghost/candidate without canonical mutation;
+6. Validate reaches `READY_TO_APPLY` without canonical mutation;
+7. Apply changes exactly the target support to a `CERTIFIED_TABLE_OVERRIDE` restraint while imported restraint evidence remains semantically unchanged;
+8. source semantic/byte hashes remain unchanged;
+9. Undo restores the exact baseline canonical/ledger/command state and removes the override;
+10. Redo restores the exact applied canonical/ledger/command state;
+11. page/console error assertions remain clean except known favicon noise;
+12. no direct controller operation method is invoked as UI coverage.
 
-### S1 — Canonical/support authority audit — COMPLETE
+## Qualification Harness Plan
 
-Recovered #1033 authority and reconciled it with merged #1036/#1041.
+Use an isolated base branch `qualification/pr1054-exact-head` containing only a temporary pull-request workflow. The workflow must checkout `github.event.pull_request.head.sha`, run deterministic dependency/Chromium provisioning, verify the exact head and qualification source syntax, execute the three existing focused Node files plus the new production Chromium spec, and upload Playwright evidence. The workflow file must never enter the PR1054 feature diff.
 
-### S2 — Semantic decision — COMPLETE
+After a feature/test green run:
 
-Only SUPPORT_RESTRAINT is authorized; placement remains deferred.
+1. update this report with exact run/head/artifact evidence;
+2. run the same gate again on the report-only head;
+3. restore PR1054 to `main` if temporarily retargeted;
+4. re-check raw GitHub mergeability, reviews/comments, exact changed-file ledger, and current main;
+5. merge only with `expected_head_sha` pinned to the qualified final head.
 
-### S3 — Current-main contract recovery — COMPLETE
+## Exact Changed-File Ledger
 
-Recovered command contract/resolver/reducer/effect dispatch, restraint-family geometry, Table columns/planner/batch authority, and added the current-main shared-host strengthening.
-
-### S4 — UI/test recovery — COMPLETE IN SOURCE
-
-Recovered the compound support editor and focused command/Table transaction tests. Current #1036 capability coverage now expects restraint fields to require explicit compound input while station remains read-only. Added shared-host unresolved regression.
-
-### S5 — execution/merge custody — BLOCKED ON EXACT-HEAD EXECUTION
-
-The current implementation/test candidate `85e67606b588809c96b03c8801a783edaf09620d` is mergeable against unchanged main, has zero reviews/threads/comments, zero workflow runs, and zero commit statuses. Historical #1033 execution is retained as predecessor evidence only; it is not represented as current-head PASS.
-
-## Changed-File Ledger
-
-Actual PR diff is exactly these 21 paths:
+Current feature diff is 21 paths; the authorized E2E addition will make the final ledger exactly **22** paths:
 
 1. `agents/PR1054_workreport.md`
-2. `src/workspace/topology-edit/support-restraint-family.js`
-3. `src/workspace/topology-edit/topology-edit-support-restraint-command.js`
-4. `src/workspace/topology-edit/topology-edit-command-contract.js`
-5. `src/workspace/topology-edit/topology-edit-command-resolver.js`
-6. `src/workspace/topology-edit/topology-edit-pure-reducer-dispatch.js`
-7. `src/workspace/topology-edit/topology-edit-command-effect-dispatch.js`
-8. `src/workspace/topology-edit/table/topology-edit-table-support-restraint-contract.js`
-9. `src/workspace/topology-edit/table/topology-edit-table-tee-reducer-contract.js` — extraction-only line-budget move; no M10 semantic change
-10. `src/workspace/topology-edit/table/topology-edit-table-intent.js`
-11. `src/workspace/topology-edit/table/topology-edit-table-columns.js`
-12. `src/workspace/topology-edit/table/topology-edit-table-edit-capability.js`
-13. `src/workspace/topology-edit/table/topology-edit-table-engineering-planner.js`
-14. `src/workspace/topology-edit/table/topology-edit-table-batch-planner.js`
-15. `src/workspace/viewport-productivity/topology-edit-table-support-restraint-editor.js`
-16. `src/workspace/viewport-productivity/topology-edit-table-properties-view.js`
-17. `src/workspace/viewport-productivity/topology-edit-table-cell-edit.js`
-18. `src/workspace/viewport-productivity/topology-edit-table-engineering-runtime.js`
-19. `tests/topology-edit-capability-authority.test.mjs`
-20. `tests/topology-edit-support-restraint-command.test.mjs`
-21. `tests/topology-edit-table-support-restraint.test.mjs`
+2. `e2e/topology-edit-table-support-restraint.spec.js` — authorized next change; not present before this report update
+3. `src/workspace/topology-edit/support-restraint-family.js`
+4. `src/workspace/topology-edit/topology-edit-support-restraint-command.js`
+5. `src/workspace/topology-edit/topology-edit-command-contract.js`
+6. `src/workspace/topology-edit/topology-edit-command-resolver.js`
+7. `src/workspace/topology-edit/topology-edit-pure-reducer-dispatch.js`
+8. `src/workspace/topology-edit/topology-edit-command-effect-dispatch.js`
+9. `src/workspace/topology-edit/table/topology-edit-table-support-restraint-contract.js`
+10. `src/workspace/topology-edit/table/topology-edit-table-tee-reducer-contract.js` — extraction-only line-budget move; no M10 semantic change
+11. `src/workspace/topology-edit/table/topology-edit-table-intent.js`
+12. `src/workspace/topology-edit/table/topology-edit-table-columns.js`
+13. `src/workspace/topology-edit/table/topology-edit-table-edit-capability.js`
+14. `src/workspace/topology-edit/table/topology-edit-table-engineering-planner.js`
+15. `src/workspace/topology-edit/table/topology-edit-table-batch-planner.js`
+16. `src/workspace/viewport-productivity/topology-edit-table-support-restraint-editor.js`
+17. `src/workspace/viewport-productivity/topology-edit-table-properties-view.js`
+18. `src/workspace/viewport-productivity/topology-edit-table-cell-edit.js`
+19. `src/workspace/viewport-productivity/topology-edit-table-engineering-runtime.js`
+20. `tests/topology-edit-capability-authority.test.mjs`
+21. `tests/topology-edit-support-restraint-command.test.mjs`
+22. `tests/topology-edit-table-support-restraint.test.mjs`
 
-`src/workspace/topology-edit/professional/topology-edit-support-geometry-dependency.js` was reused as authority and **not modified**.
+The temporary qualification workflow is isolated on `qualification/pr1054-exact-head` and is not part of this ledger.
 
 ## Static / Source Audit
 
-- Manually merged current-main modules (`topology-edit-table-intent.js`, `topology-edit-table-edit-capability.js`, Table cell/runtime wiring, support command) are directly confirmed below 300 physical lines.
-- Other recovered production files are byte-identical to the #1033 exact head that passed the repository guard/workflow matrix.
-- `topology-edit-table-tee-reducer-contract.js` is an extraction-only move required to preserve the Table-intent line budget; TEE reducer semantics are unchanged.
-- Properties view renders both existing NODE_POSITION and recovered SUPPORT_RESTRAINT editors.
-- Current valve catalogue selector and exact target-DN fail-closed logic remain intact.
-- Shared support host resolver is imported, not duplicated.
+- manually reconciled current-main modules remain below the repository `<300` physical-line gate;
+- recovered production modules were byte-identical to tested #1033 where later merged work did not touch them;
+- `topology-edit-table-tee-reducer-contract.js` is extraction-only line-budget work;
+- current valve catalogue selector and target-DN fail-closed logic remain intact;
+- shared support-host resolver is imported, not duplicated;
+- no canonical topology mutation is authorized from DOM input or pointer movement.
 
 ## Validation Ledger
 
 | Candidate | Evidence |
 |---|---|
-| `main@271d04fa2674ab68367808d05f2429ec5e236a6e` | current integration base, unchanged during PR1054 source recovery |
-| `4140ffbd147b9cc73655d00e8264f8fb774869ff` | empty bootstrap, zero changed files |
 | `PR1033@68444777aeb01f165c987975ef1555bb1b7a9a1b` | predecessor exact head; 17/17 triggered workflows PASS |
-| `85e67606b588809c96b03c8801a783edaf09620d` | current-main source/test candidate; static audit complete; empirical execution NOT_RUN |
-| report-sync head | report-only change after implementation candidate |
-
-## Explicitly Not Validated
-
-| Item | Status | Reason |
-|---|---|---|
-| exact PR1054 Node/browser execution | NOT_RUN | `.github/workflows` retired by #1043; no local checkout/runner available |
-| support station/host relocation | NOT_AUTHORIZED | separate placement semantics required |
-| parent-geometry support follow | NOT_AUTHORIZED | #1036 fail-closed policy remains final |
-| #1051/#1053 combined state | NOT_RUN | sibling drafts remain unmerged |
+| `85e67606b588809c96b03c8801a783edaf09620d` | PR1054 pre-report source/test candidate; static review only |
+| `7d3002df5915027f607a7db10b2f75049fe14c94` | pre-qualification report-sync head; zero pull-request workflow runs |
+| next feature/test head | NOT_RUN until focused Node + production Chromium execute |
 
 ## Handover
 
-1. Keep PR1054 draft/unmerged until exact-head execution is available or the qualification limitation is explicitly accepted.
-2. Do not interpret historical #1033 PASS as current-head PASS.
-3. If #1051 merges before #1054, rebase the small Table cell/runtime overlap and retain both feature additions.
-4. If #1054 merges before #1051, #1051 must perform the reciprocal rebase.
-5. Future support **placement/movement** semantics must be a separate report/PR; do not extend SUPPORT_RESTRAINT into station/host mutation.
+Do not merge historical evidence as if it were current-head evidence. Complete the exact-head Node + Chromium gate, preserve imported restraint and parent-support-policy custody, qualify the final report head, and only then promote the stack in order #1054 -> #1061 -> #1066.

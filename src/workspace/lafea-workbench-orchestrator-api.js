@@ -1,4 +1,5 @@
 /** Public method-surface assembly for the canonical orchestrator; owns no state or listeners. */
+import { executeLafeaContinuumCompiledForParity } from './lafea-continuum-compiled-execution.js';
 import { compileLafeaContinuumSolverModel } from './lafea-continuum-solver-model.js';
 import {
   buildLafeaMeshGenerationIntentV2FromStage,
@@ -42,6 +43,9 @@ export function createLafeaWorkbenchOrchestratorApi(context) {
     revalidateLifecycleBinding: (...args) => c.delegate('revalidateLifecycleBinding', args),
     revalidateContinuumGeometryMesh: c.revalidateContinuumGeometryMesh,
     compileContinuumSolverModel: () => compileContinuumSolverModel(c, activeStageId()),
+    executeContinuumCompiledForParity: () => executeLafeaContinuumCompiledForParity(
+      compileContinuumSolverModel(c, activeStageId()),
+    ),
     registerTemplateReleaseRecord: c.registerTemplateReleaseRecord,
     selectRetainedTemplateReleaseRecord: (stageId = activeStageId()) => c.release.select(stageId),
     buildReleaseBindingProjection: (stageId = activeStageId()) =>

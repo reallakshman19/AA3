@@ -684,13 +684,15 @@ function updateResultRows(base, finalState) {
     const shift = base.shiftByNode.get(nodeId) ?? zero6();
     DOFS.forEach((dof, index) => {
       const physical = finalState.U[offset + index] + shift[index];
-      values.set(rowIdentity('NODE', nodeId, dof.startsWith('U') ? 'DISPLACEMENT' : 'ROTATION', dof), clean(physical));
-      values.set(rowIdentity('NODE', nodeId, dof.startsWith('U') ? 'FORCE' : 'MOMENT', dof), clean(finalState.reactions[offset + index]));
+      const isTranslation = index < 3;
+      const actionComponent = isTranslation ? FORCE_COMPONENTS[index] : MOMENT_COMPONENTS[index - 3];
+      values.set(rowIdentity('NODE', nodeId, isTranslation ? 'DISPLACEMENT' : 'ROTATION', dof), clean(physical));
+      values.set(rowIdentity('NODE', nodeId, isTranslation ? 'FORCE' : 'MOMENT', actionComponent), clean(finalState.reactions[offset + index]));
       const incident = finalState.recovered.incident.get(nodeId) ?? zero6();
       values.set(rowIdentity(
         'NODE', nodeId,
-        dof.startsWith('U') ? 'INCIDENT_GLOBAL_FORCE' : 'INCIDENT_GLOBAL_MOMENT',
-        dof,
+        isTranslation ? 'INCIDENT_GLOBAL_FORCE' : 'INCIDENT_GLOBAL_MOMENT',
+        actionComponent,
       ), clean(incident[index]));
     });
   }
@@ -729,14 +731,22 @@ function appendElementValueMap(values, entityId, qGlobal) {
 function buildDerivedL15(benchmarkPackage, l7, l13) {
   if (!l7 || !l13) throw new TypeError('L15 requires independently converged L7 and L13 states.');
   const rows = subtractRows('L15', l7.rows, l13.rows);
+  const recoveredEquilibrium = equilibriumFromResultRows(
+    rows,
+    benchmarkPackage.profile.equilibriumTolerance,
+  );
   const evidence = deepFreeze({
     formula: 'L15=L7-L13',
     combinationMethod: 'ALG',
     independentNonlinearSolve: false,
     operandExecutionSemanticHashes: Object.freeze([l7.executionSemanticHash, l13.executionSemanticHash]),
     algebraicIdentityMaximumAbsoluteResidual: 0,
-    executionStatus: 'PASS',
+    executionStatus: recoveredEquilibrium.status === 'PASS' ? 'PASS' : 'FAIL',
+    recoveredEquilibrium,
   });
+  if (evidence.executionStatus !== 'PASS') {
+    throw frictionError('L15 derived equilibrium failed.', 'CAESAR_ACCDB_FRICTION_L15_EQUILIBRIUM_FAILED');
+  }
   const executionSemanticHash = semanticHash({ schema: 'caesar-accdb-derived-friction-case/v1', rows, evidence });
   return {
     actualCase: deepFreeze({
@@ -747,6 +757,33 @@ function buildDerivedL15(benchmarkPackage, l7, l13) {
     }),
     evidence,
   };
+}
+
+function equilibriumFromResultRows(rows, tolerance) {
+  const values = new Map(rows.filter((row) => row.entityKind === 'NODE').map((row) => [
+    rowIdentity(row.entityKind, row.entityId, row.quantity, row.component),
+    Number(row.value),
+  ]));
+  const nodeIds = [...new Set(rows.filter((row) => row.entityKind === 'NODE').map((row) => String(row.entityId)))];
+  let forceN = 0;
+  let momentNm = 0;
+  for (const nodeId of nodeIds) {
+    FORCE_COMPONENTS.forEach((component) => {
+      const incident = values.get(rowIdentity('NODE', nodeId, 'INCIDENT_GLOBAL_FORCE', component)) ?? 0;
+      const reaction = values.get(rowIdentity('NODE', nodeId, 'FORCE', component)) ?? 0;
+      forceN = Math.max(forceN, Math.abs(incident - reaction));
+    });
+    MOMENT_COMPONENTS.forEach((component) => {
+      const incident = values.get(rowIdentity('NODE', nodeId, 'INCIDENT_GLOBAL_MOMENT', component)) ?? 0;
+      const reaction = values.get(rowIdentity('NODE', nodeId, 'MOMENT', component)) ?? 0;
+      momentNm = Math.max(momentNm, Math.abs(incident - reaction));
+    });
+  }
+  return deepFreeze({
+    status: forceN <= tolerance.forceN && momentNm <= tolerance.momentNm ? 'PASS' : 'FAIL',
+    rule: 'DERIVED_RESULT_INCIDENT_ACTION_MINUS_SUPPORT_REACTION_V1',
+    maximumAbsoluteResidual: { forceN, momentNm },
+  });
 }
 
 function buildHydrotestBase(benchmarkPackage) {

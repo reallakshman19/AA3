@@ -2,6 +2,14 @@ import assert from 'node:assert/strict';
 import test from 'node:test';
 import { buildSharedPipingModelFromWorkspaceDataset } from '../src/core/shared-piping-model/adapters/workspace-dataset-to-shared.js';
 import { buildPipingPortTopologyGraph } from '../src/core/piping-topology/topology-graph.js';
+import {
+  buildRestraintCapabilityModel,
+  buildSupportAttachmentModel,
+} from '../src/core/support-restraints/index.js';
+import { SupportRestraintStore } from '../src/workspace/support-restraint-store.js';
+import {
+  TopologyEdit3DViewController,
+} from '../src/workspace/topology-edit-3d-sjson-fidelity-controller.js';
 import { buildTopologyEditCandidate } from '../src/workspace/topology-edit/topology-edit-candidate-builder.js';
 import { createTopologyEditCommandRequest } from '../src/workspace/topology-edit/topology-edit-command-contract.js';
 import { resolveTopologyEditCommand } from '../src/workspace/topology-edit/topology-edit-command-resolver.js';
@@ -57,8 +65,12 @@ function supportEntity() {
     properties: {
       identity: { entityId: 'support:s1', sourceEntityId: 'support:s1', name: 'S-1', entityType: 'SUPPORT' },
       geometry: { start: point, end: point, center: point },
-      sourceAttributes: { STATION_MM: 250 },
-      attributes: { TYPE: 'SUPPORT', SUPPORT_TYPE: 'REST', STATION_MM: 250, VENDOR_TOKEN: 'KEEP-ME' },
+      sourceAttributes: { STATION_MM: 250, ATTACHED_COMPONENT_ID: 'pipe:p1' },
+      attributes: {
+        TYPE: 'SUPPORT', SUPPORT_TYPE: 'REST', STATION_MM: 250,
+        ATTACHED_COMPONENT_ID: 'pipe:p1', SUPPORTED_COMPONENT_ID: 'pipe:p1',
+        VENDOR_TOKEN: 'KEEP-ME',
+      },
       enrichedAttributes: {}, nativeParams: {}, diagnostics: [],
     },
   };
@@ -106,6 +118,35 @@ function editedTopology(base) {
   });
   return buildTopologyEditCandidate({ canonicalTopology: base, resolvedCommand: resolved }).canonicalTopology;
 }
+
+test('production controller retains exact attachment projection for a generic workspace source', () => {
+  const dataset = rawDataset();
+  const graph = buildPipingPortTopologyGraph(dataset.sharedModel);
+  const liveAttachmentModel = buildSupportAttachmentModel(dataset.sharedModel, graph);
+  const liveRestraintModel = buildRestraintCapabilityModel(liveAttachmentModel);
+  SupportRestraintStore.setModels(liveAttachmentModel, liveRestraintModel);
+  try {
+    const controller = new TopologyEdit3DViewController({
+      publish() {},
+      subscribe() { return () => {}; },
+    });
+    const canonical = controller.buildWorkspaceCanonical(dataset, graph);
+    const support = canonical.supports.find((row) => row.entityId === 'support:s1');
+    const attachment = liveAttachmentModel.attachments.find((row) => row.supportKey === 'support:s1');
+
+    assert.equal(attachment.attachedComponentKey, 'pipe:p1');
+    assert.deepEqual(attachment.projectedPointCanonical, { x: 250, y: 0, z: 0 });
+    assert.equal(attachment.segmentParameter, 0.25);
+    assert.equal(attachment.distanceCanonical, 0);
+    assert.equal(support.hostEntityId, 'pipe:p1');
+    assert.equal(support.originAuthority, 'ATTACHMENT_PROJECTED_POINT');
+    assert.deepEqual(support.origin, attachment.projectedPointCanonical);
+    assert.equal(support.attachmentSegmentParameter, 0.25);
+    assert.equal(support.attachmentDistanceCanonical, 0);
+  } finally {
+    SupportRestraintStore.clear();
+  }
+});
 
 test('certified support placement writeback preserves source station and reopens exact override', () => {
   const { dataset, canonical: base } = canonicalFixture();

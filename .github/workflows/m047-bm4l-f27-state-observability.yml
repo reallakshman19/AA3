@@ -53,66 +53,66 @@ jobs:
           $ErrorActionPreference = 'Stop'
           $keywords = @('ACTIVE','BOUNDARY','STATUS','STICK','SLID','FRICT','CONTACT','ITER','CONVERG','GAP','RESTRAINT','STATE','OPEN','CLOSED','REOPEN')
 
-          function Get-Sha256([string]$Path) {
+          function Get-Sha256 {
+            param([string]$Path)
             return (Get-FileHash -LiteralPath $Path -Algorithm SHA256).Hash.ToLowerInvariant()
           }
 
-          function Get-BoundedSnippets([string]$Text, [string]$Keyword) {
-            $matches = [regex]::Matches($Text, [regex]::Escape($Keyword), [System.Text.RegularExpressions.RegexOptions]::IgnoreCase)
-            $snippets = @()
-            foreach ($match in @($matches | Select-Object -First 5)) {
-              $start = [Math]::Max(0, $match.Index - 80)
-              $length = [Math]::Min(220, $Text.Length - $start)
-              $snippet = $Text.Substring($start, $length) -replace '[\r\n\t]+',' '
-              $snippets += $snippet
-            }
-            return [ordered]@{ count=$matches.Count; snippets=$snippets }
-          }
-
-          function Audit-Text([string]$Path, [string]$Label) {
+          function Audit-Text {
+            param([string]$Path, [string]$Label)
             $text = [System.IO.File]::ReadAllText($Path)
-            $elements = @{}
-            foreach ($match in [regex]::Matches($text, '<\/?\s*([A-Za-z_][A-Za-z0-9_.:-]*)\b')) {
-              $name = $match.Groups[1].Value
-              if (-not $elements.ContainsKey($name)) { $elements[$name] = 0 }
-              $elements[$name] += 1
+            $elements = @()
+            $elementGroups = [regex]::Matches($text, '<\/?\s*([A-Za-z_][A-Za-z0-9_.:-]*)\b') |
+              Group-Object { $_.Groups[1].Value } | Sort-Object Name
+            foreach ($group in $elementGroups) {
+              $elements += [ordered]@{ name=$group.Name; count=$group.Count }
             }
-            $attributes = @{}
-            foreach ($match in [regex]::Matches($text, '\b([A-Za-z_][A-Za-z0-9_.:-]*)\s*=')) {
-              $name = $match.Groups[1].Value
-              if (-not $attributes.ContainsKey($name)) { $attributes[$name] = 0 }
-              $attributes[$name] += 1
+            $attributes = @()
+            $attributeGroups = [regex]::Matches($text, '\b([A-Za-z_][A-Za-z0-9_.:-]*)\s*=') |
+              Group-Object { $_.Groups[1].Value } | Sort-Object Name
+            foreach ($group in $attributeGroups) {
+              $attributes += [ordered]@{ name=$group.Name; count=$group.Count }
             }
             $hits = [ordered]@{}
-            foreach ($keyword in $keywords) { $hits[$keyword] = Get-BoundedSnippets -Text $text -Keyword $keyword }
+            foreach ($keyword in $keywords) {
+              $matches = [regex]::Matches($text, [regex]::Escape($keyword), [System.Text.RegularExpressions.RegexOptions]::IgnoreCase)
+              $snippets = @()
+              foreach ($match in @($matches | Select-Object -First 5)) {
+                $start = [Math]::Max(0, $match.Index - 80)
+                $length = [Math]::Min(220, $text.Length - $start)
+                $snippets += ($text.Substring($start, $length) -replace '[\r\n\t]+',' ')
+              }
+              $hits[$keyword] = [ordered]@{ count=$matches.Count; snippets=$snippets }
+            }
             $case13 = @()
             foreach ($match in [regex]::Matches($text, '<PWCASE\s+NUMBER="13"[^>]*>(.*?)</PWCASE>', [System.Text.RegularExpressions.RegexOptions]::IgnoreCase -bor [System.Text.RegularExpressions.RegexOptions]::Singleline)) {
               $case13 += (($match.Groups[1].Value -replace '[\r\n\t]+',' ').Trim())
             }
-            $loadCase13Count = [regex]::Matches($text, '\bLOAD_CASE\s*=\s*"13"', [System.Text.RegularExpressions.RegexOptions]::IgnoreCase).Count
             return [ordered]@{
               label=$Label
               byteLength=(Get-Item -LiteralPath $Path).Length
-              sha256=Get-Sha256 $Path
-              elementCounts=[ordered]@{} + ($elements.GetEnumerator() | Sort-Object Name | ForEach-Object { @{ $_.Name = $_.Value } })
-              attributeCounts=[ordered]@{} + ($attributes.GetEnumerator() | Sort-Object Name | ForEach-Object { @{ $_.Name = $_.Value } })
+              sha256=(Get-Sha256 -Path $Path)
+              elementCounts=$elements
+              attributeCounts=$attributes
               keywordHits=$hits
               pwCase13=$case13
-              loadCase13AttributeCount=$loadCase13Count
+              loadCase13AttributeCount=[regex]::Matches($text, '\bLOAD_CASE\s*=\s*"13"', [System.Text.RegularExpressions.RegexOptions]::IgnoreCase).Count
             }
           }
 
-          function Audit-BinaryStrings([string]$Path, [string]$Label) {
+          function Audit-Binary {
+            param([string]$Path, [string]$Label)
             $bytes = [System.IO.File]::ReadAllBytes($Path)
             $ascii = [System.Text.Encoding]::ASCII.GetString($bytes)
-            $unicode = [System.Text.Encoding]::Unicode.GetString($bytes)
+            $utf16 = [System.Text.Encoding]::Unicode.GetString($bytes)
             $hits = [ordered]@{}
             foreach ($keyword in $keywords) {
-              $a = [regex]::Matches($ascii, [regex]::Escape($keyword), [System.Text.RegularExpressions.RegexOptions]::IgnoreCase).Count
-              $u = [regex]::Matches($unicode, [regex]::Escape($keyword), [System.Text.RegularExpressions.RegexOptions]::IgnoreCase).Count
-              $hits[$keyword] = [ordered]@{ asciiCount=$a; utf16LeCount=$u }
+              $hits[$keyword] = [ordered]@{
+                asciiCount=[regex]::Matches($ascii, [regex]::Escape($keyword), [System.Text.RegularExpressions.RegexOptions]::IgnoreCase).Count
+                utf16LeCount=[regex]::Matches($utf16, [regex]::Escape($keyword), [System.Text.RegularExpressions.RegexOptions]::IgnoreCase).Count
+              }
             }
-            return [ordered]@{ label=$Label; byteLength=$bytes.Length; sha256=Get-Sha256 $Path; keywordHits=$hits }
+            return [ordered]@{ label=$Label; byteLength=$bytes.Length; sha256=(Get-Sha256 -Path $Path); keywordHits=$hits }
           }
 
           $sourceDir = Join-Path $PWD 'artifacts/f27/source'
@@ -126,14 +126,13 @@ jobs:
           $members = @()
           $memberAudits = @()
           foreach ($file in @(Get-ChildItem -LiteralPath $nlDir -File -Recurse | Sort-Object FullName)) {
-            $relative = [System.IO.Path]::GetRelativePath($nlDir, $file.FullName).Replace('\\','/')
+            $relative = [System.IO.Path]::GetRelativePath($nlDir, $file.FullName).Replace('\','/')
             $extension = $file.Extension.ToLowerInvariant()
-            $members += [ordered]@{ path=$relative; byteLength=$file.Length; sha256=Get-Sha256 $file.FullName; extension=$extension }
+            $members += [ordered]@{ path=$relative; byteLength=$file.Length; sha256=(Get-Sha256 -Path $file.FullName); extension=$extension }
             if ($textExtensions -contains $extension) {
               $memberAudits += Audit-Text -Path $file.FullName -Label $relative
-            }
-            else {
-              $memberAudits += Audit-BinaryStrings -Path $file.FullName -Label $relative
+            } else {
+              $memberAudits += Audit-Binary -Path $file.FullName -Label $relative
             }
           }
 
@@ -142,28 +141,18 @@ jobs:
             exactHead='${{ github.event.pull_request.head.sha }}'
             commonCommit=$env:COMMON_COMMIT
             authenticatedObjects=@(
-              [ordered]@{ path='LFEA/BM4/Output_BM4.xml'; gitBlobSha=$env:OUTPUT_XML_BLOB; byteLength=(Get-Item $outXml).Length; sha256=Get-Sha256 $outXml },
-              [ordered]@{ path='LFEA/BM4/InputXML_BM4.xml'; gitBlobSha=$env:INPUT_XML_BLOB; byteLength=(Get-Item $inputXml).Length; sha256=Get-Sha256 $inputXml },
-              [ordered]@{ path='LFEA/BM4/BM4_NL.zip'; gitBlobSha=$env:BM4_NL_ZIP_BLOB; byteLength=(Get-Item $nlZip).Length; sha256=Get-Sha256 $nlZip }
+              [ordered]@{ path='LFEA/BM4/Output_BM4.xml'; gitBlobSha=$env:OUTPUT_XML_BLOB; byteLength=(Get-Item $outXml).Length; sha256=(Get-Sha256 -Path $outXml) },
+              [ordered]@{ path='LFEA/BM4/InputXML_BM4.xml'; gitBlobSha=$env:INPUT_XML_BLOB; byteLength=(Get-Item $inputXml).Length; sha256=(Get-Sha256 -Path $inputXml) },
+              [ordered]@{ path='LFEA/BM4/BM4_NL.zip'; gitBlobSha=$env:BM4_NL_ZIP_BLOB; byteLength=(Get-Item $nlZip).Length; sha256=(Get-Sha256 -Path $nlZip) }
             )
-            outputXml=Audit-Text -Path $outXml -Label 'Output_BM4.xml'
-            inputXml=Audit-Text -Path $inputXml -Label 'InputXML_BM4.xml'
-            nonlinearZip=[ordered]@{
-              gitBlobSha=$env:BM4_NL_ZIP_BLOB
-              memberCount=$members.Count
-              members=$members
-              memberAudits=$memberAudits
-            }
-            policy=[ordered]@{
-              finalResponseMaySelectState=$false
-              responseFittingAllowed=$false
-              productionMechanicsAuthorized=$false
-              l13RescoreAuthorized=$false
-            }
+            outputXml=(Audit-Text -Path $outXml -Label 'Output_BM4.xml')
+            inputXml=(Audit-Text -Path $inputXml -Label 'InputXML_BM4.xml')
+            nonlinearZip=[ordered]@{ gitBlobSha=$env:BM4_NL_ZIP_BLOB; memberCount=$members.Count; members=$members; memberAudits=$memberAudits }
+            policy=[ordered]@{ finalResponseMaySelectState=$false; responseFittingAllowed=$false; productionMechanicsAuthorized=$false; l13RescoreAuthorized=$false }
           }
+
           New-Item -ItemType Directory -Force -Path artifacts/f27/out | Out-Null
           $audit | ConvertTo-Json -Depth 64 | Set-Content -Encoding utf8 artifacts/f27/out/state-observability.json
-
           [ordered]@{
             schema='m047-bm4l-f27-state-observability-check/v1'
             status='PASS'

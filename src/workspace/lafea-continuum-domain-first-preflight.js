@@ -1,5 +1,9 @@
 /** Non-solving Stage 13 preflight for authoritative LAFEA.3 domain-first execution. */
 import { canonicalLafeaSha256 } from './lafea-canonical-sha256.js';
+import {
+  LAFEA_CONTINUUM_SOLVER_COMPILER_ID,
+  LAFEA_CONTINUUM_SOLVER_COMPILER_REVISION,
+} from './lafea-continuum-solver-model.js';
 import { compileLafeaContinuumWorkbenchContext } from './lafea-continuum-workbench-route.js';
 
 export const LAFEA_CONTINUUM_DOMAIN_FIRST_PREFLIGHT_SCHEMA =
@@ -12,6 +16,13 @@ const CAPABILITIES = Object.freeze([
   'SOURCE', 'SCHEMA', 'UNIT', 'GEOMETRY', 'TOPOLOGY', 'MATERIAL', 'SECTION',
   'RESTRAINT', 'LOAD', 'PHYSICAL_CASE', 'CONSTRAINT', 'MESH_CUSTODY',
   'SOLVER_MODEL_COMPILATION',
+]);
+const SEALED_KEYS = Object.freeze([
+  'schema', 'stageId', 'producerRef', 'sourceHash', 'analysisDomainHash',
+  'analysisGeometryHash', 'meshHash', 'meshProfileHash', 'solverModelHash',
+  'compilerId', 'compilerRevision', 'requestedCaseIds', 'capabilityIds',
+  'status', 'findings', 'solverExecuted', 'executionAuthorized',
+  'releaseQualified', 'semanticHash',
 ]);
 
 export function createLafeaContinuumDomainFirstPreflight(context, stageId = STAGE_ID) {
@@ -47,14 +58,18 @@ export function createLafeaContinuumDomainFirstPreflight(context, stageId = STAG
 }
 
 export function validateLafeaContinuumDomainFirstPreflight(value) {
-  if (!value || value.schema !== LAFEA_CONTINUUM_DOMAIN_FIRST_PREFLIGHT_SCHEMA
+  exact(value, SEALED_KEYS);
+  if (value.schema !== LAFEA_CONTINUUM_DOMAIN_FIRST_PREFLIGHT_SCHEMA
     || value.stageId !== STAGE_ID
     || value.producerRef !== LAFEA_CONTINUUM_DOMAIN_FIRST_PREFLIGHT_PRODUCER
+    || value.compilerId !== LAFEA_CONTINUUM_SOLVER_COMPILER_ID
+    || value.compilerRevision !== LAFEA_CONTINUUM_SOLVER_COMPILER_REVISION
     || value.status !== 'PASS' || value.solverExecuted !== false
     || value.executionAuthorized !== true || value.releaseQualified !== false
     || !Array.isArray(value.findings) || value.findings.length !== 0
-    || !Array.isArray(value.capabilityIds)
-    || CAPABILITIES.some((id) => !value.capabilityIds.includes(id))) {
+    || JSON.stringify(value.capabilityIds) !== JSON.stringify(CAPABILITIES)
+    || !validCaseIds(value.requestedCaseIds)
+    || typeof value.meshProfileHash !== 'string' || !value.meshProfileHash.trim()) {
     fail('LAFEA_CONTINUUM_PREFLIGHT_INVALID');
   }
   for (const key of [
@@ -75,6 +90,17 @@ export function validateLafeaContinuumDomainFirstPreflight(value) {
   return freeze(structuredClone(value));
 }
 
+function exact(value, keys) {
+  if (!value || typeof value !== 'object' || Array.isArray(value)
+    || JSON.stringify(Object.keys(value).sort()) !== JSON.stringify([...keys].sort())) {
+    fail('LAFEA_CONTINUUM_PREFLIGHT_INVALID');
+  }
+}
+function validCaseIds(value) {
+  return Array.isArray(value) && value.length > 0
+    && value.every((row) => typeof row === 'string' && row.trim())
+    && new Set(value).size === value.length;
+}
 function fail(code) { const error = new TypeError(code); error.code = code; throw error; }
 function freeze(value) {
   if (!value || typeof value !== 'object' || Object.isFrozen(value)) return value;

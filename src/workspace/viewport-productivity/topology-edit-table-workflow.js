@@ -142,17 +142,29 @@ export function renderTopologyEditTablePreviewGhost(runtime) {
   if (!candidate) return;
   const projection = runtime.controller.deriveVisual(candidate.canonicalTopology, 'DRAFT').projection;
   const changed = new Set(candidate.changedCanonicalIds ?? []);
-  const placementElements = supportPlacementGhostElements(runtime, candidate, changed);
+  const governedSupportProjection = changedGovernedSupportProjection(
+    runtime.controller.sjsonSupportBundle?.supportProjection,
+    changed,
+  );
+  const placementElements = governedSupportProjection
+    ? []
+    : supportPlacementGhostElements(runtime, candidate, changed);
   const placementIds = new Set(placementElements.map((row) => row.pickTarget.supportId));
-  const restraintGhost = changedSupportRestraintGhost(runtime, candidate, changed);
-  if (placementElements.length) {
+  const restraintGhost = governedSupportProjection
+    ? { elements: [], segments: [] }
+    : changedSupportRestraintGhost(runtime, candidate, changed);
+  if (governedSupportProjection || placementElements.length) {
+    // SJSON deriveVisual owns a transient support-projection cache on the viewport.
+    // Restore the mounted canonical projection after capturing the candidate packet;
+    // only the ghost group may show the candidate before Apply.
     runtime.controller.deriveVisual(runtime.controller.session.currentTopology(), 'DRAFT');
   }
   const accepted = (row) => changed.has(row.pickTarget?.objectId ?? row.entityId ?? row.id);
   const representedByPlacement = (row) => placementIds.has(
     row.pickTarget?.supportId ?? row.pickTarget?.objectId ?? row.entityId ?? row.id,
   );
-  const hasDedicatedSupportOverlay = placementElements.length > 0
+  const hasDedicatedSupportOverlay = Boolean(governedSupportProjection)
+    || placementElements.length > 0
     || restraintGhost.elements.length > 0
     || restraintGhost.segments.length > 0;
   const primitives = !hasDedicatedSupportOverlay && Array.isArray(projection.primitives)
@@ -170,6 +182,25 @@ export function renderTopologyEditTablePreviewGhost(runtime) {
       ...restraintGhost.segments,
     ],
     primitives,
+    governedSupportProjection,
+  });
+}
+
+function changedGovernedSupportProjection(projection, changed) {
+  if (!projection || !changed.size) return null;
+  const belongsToChangedSupport = (row) => changed.has(
+    row?.pickTarget?.supportId ?? row?.pickTarget?.objectId ?? row?.entityId ?? row?.id,
+  );
+  const elements = (projection.elements ?? []).filter(belongsToChangedSupport);
+  const segments = (projection.segments ?? []).filter(belongsToChangedSupport);
+  if (!elements.length && !segments.length) return null;
+  const glyphOverlays = (projection.glyphOverlays ?? [])
+    .filter((overlay) => changed.has(overlay?.supportId));
+  return Object.freeze({
+    ...projection,
+    elements: Object.freeze(elements),
+    segments: Object.freeze(segments),
+    glyphOverlays: Object.freeze(glyphOverlays),
   });
 }
 

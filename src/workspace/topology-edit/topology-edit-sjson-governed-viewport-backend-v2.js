@@ -20,6 +20,8 @@ import {
 } from './topology-edit-empirical-result-renderer-v1.js';
 
 const DEFAULT_NODE_MARKER_RADIUS_MM = 4.2;
+const GOVERNED_SUPPORT_GHOST_COLOR = 0xf59e0b;
+const GOVERNED_SUPPORT_GHOST_OPACITY = 0.38;
 
 /** One render transaction for SJSON route, nodes, supports, results, and transient checker HUD. */
 export class TopologyEditSjsonGovernedNavigationHudViewportBackendV2
@@ -184,6 +186,28 @@ export class TopologyEditSjsonGovernedNavigationHudViewportBackendV2
     return super.renderProjection(group, projection, colorHex, opacity, markerSize);
   }
 
+  renderGhost(ghost, markerSize) {
+    const supportProjection = ghost?.governedSupportProjection ?? null;
+    if (!supportProjection) return super.renderGhost(ghost, markerSize);
+
+    // Materialize non-support changed geometry through the established ghost path,
+    // then append the exact governed support projection with the same renderer used
+    // by the permanent support group. The ghost group remains non-pickable and owns
+    // no canonical state.
+    const result = super.renderGhost({ ...ghost, governedSupportProjection: null }, markerSize);
+    renderGovernedSjsonSupports({
+      backend: this,
+      group: this.groups.ghostGroup,
+      projection: supportProjection,
+    });
+    applyGovernedSupportGhostPresentation(this.groups.ghostGroup);
+    this.applySectionPlanesToGroup(this.groups.ghostGroup);
+    this.engineeringRoot.updateMatrixWorld(true);
+    this.gpuPicker?.invalidateScene?.();
+    this.invalidate('governed-sjson-support-ghost');
+    return result;
+  }
+
   renderIssues(overlay) {
     if (!this.governedSupportProjection) return super.renderIssues(overlay);
     const count = renderGovernedSjsonIssues({ backend: this, overlay });
@@ -211,3 +235,18 @@ export const TopologyEditSjsonGovernedViewportBackendV2 =
 
 export const TopologyEditSjsonGovernedViewportBackend =
   TopologyEditSjsonGovernedNavigationHudViewportBackendV2;
+
+function applyGovernedSupportGhostPresentation(group) {
+  const materials = new Set();
+  group.traverse((object) => {
+    if (object?.userData?.pickProxy) return;
+    const rows = Array.isArray(object?.material) ? object.material : [object?.material];
+    rows.filter(Boolean).forEach((material) => materials.add(material));
+  });
+  materials.forEach((material) => {
+    material.color?.setHex?.(GOVERNED_SUPPORT_GHOST_COLOR);
+    material.transparent = true;
+    material.opacity = GOVERNED_SUPPORT_GHOST_OPACITY;
+    material.needsUpdate = true;
+  });
+}

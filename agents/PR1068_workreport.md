@@ -15,15 +15,14 @@
 
 ## Handover in 60 Seconds
 
-Before this slice, an LFEA run was archived immediately after raw B-3.3 execution and B-3.4 recovery. Governed support actions and B31 code applications are created later. That meant History could retain the solve/recovery but not the exact later engineering publications needed by a future calculation dossier or issue package.
+Before this slice, an LFEA run was archived immediately after raw B-3.3 execution and B-3.4 recovery. Governed support actions and B31 code applications are created later. History could therefore retain the solve/recovery but not the exact later engineering publications needed by a future calculation dossier or issue package.
 
-PR #1068 adds a companion append-only evidence ledger. It does **not** modify the immutable run record. A support or B31 publication can be attached only when it is CURRENT/reviewed and its retained raw-execution and recovery-batch parent hashes match the exact archived run.
-
-The intended chain is:
+PR #1068 adds a companion append-only evidence ledger. It does **not** modify the immutable run record. A support or B31 publication can be attached only when it is CURRENT/reviewed, its existing review authorization revalidates, and its retained raw-execution and recovery-batch parent hashes match the exact archived run.
 
 ```text
 immutable archived run
-  -> CURRENT reviewed publication
+  -> CURRENT governed publication
+  -> revalidated reviewed authorization
   -> exact raw/recovery parent match
   -> append-only evidence attachment
   -> History/read API
@@ -73,7 +72,7 @@ Adding evidence therefore does not rewrite or reseal the run itself.
 The attachment retains:
 
 - reviewed support authority;
-- support authorization/reviewer identity;
+- revalidated support authorization/reviewer identity;
 - exact per-case support publications and interface-recovery evidence.
 
 ### B31
@@ -81,24 +80,25 @@ The attachment retains:
 The attachment retains:
 
 - reviewed B31 authority;
-- B31 authorization/reviewer identity;
+- revalidated B31 authorization/reviewer identity;
 - code-recovery identities;
 - complete sealed B31 application and code-result evidence.
 
-These are retained objects from the producing authority. History does not rederive support actions, code points or stresses.
+The ledger calls the existing `requireLfeaNativeSupportAuthorization()` and `requireLfeaNativeB31Authorization()` contracts before accepting publication evidence. A caller cannot convert a `CURRENT` flag plus an invented reviewer/hash into reviewed historical evidence.
 
 ## Fail-Closed Gates
 
 1. Run schema is required.
 2. Run semantic hash is recomputed from retained run identity.
 3. Deterministic run ID is recomputed and must match.
-4. Publication must be `CURRENT` and reviewed.
-5. Publication parent raw-execution hash must equal the archived run raw hash.
-6. Publication parent recovery-batch hash must equal the archived run recovery hash.
-7. Support/B31 reviewed authority identity must agree across publication parent, authority and authorization.
-8. Support publication cases / B31 application and code recoveries must actually be retained.
-9. Stale publication cannot create a new attachment.
-10. Runtime publication refuses to proceed when no exact CURRENT archived run exists.
+4. Publication must be `CURRENT` and carry authority, authorization and publication-parent records.
+5. Existing support/B31 authorization contract must revalidate exact shape, parent identities, reviewer/reason and semantic hash.
+6. Publication parent raw-execution hash must equal the archived run raw hash.
+7. Publication parent recovery-batch hash must equal the archived run recovery hash.
+8. Support/B31 authority identity must agree with the retained publication parent.
+9. Support publication cases / B31 application and code recoveries must actually be retained.
+10. Stale publication cannot create a new attachment.
+11. Runtime publication refuses to proceed when no exact CURRENT archived run exists.
 
 ## Append-Only Semantics
 
@@ -152,15 +152,17 @@ The committed focused script is intended to prove:
 
 1. empty ledger fabricates nothing;
 2. forged run identity is rejected;
-3. support publication attaches to exact run without run mutation;
-4. identical attachment is idempotent;
-5. wrong raw/recovery parent is rejected;
-6. B31 and support evidence can coexist on one run;
-7. unrelated later current context does not erase historic evidence;
-8. stale publication cannot append evidence;
-9. source guards prohibit solver/recovery/support/B31 calculation in the ledger;
-10. runtime/history/API ownership is present;
-11. established physical-line budgets remain satisfied.
+3. a tampered reviewed authorization is rejected;
+4. support publication attaches to exact run without run mutation;
+5. identical attachment is idempotent;
+6. wrong raw/recovery parent is rejected;
+7. B31 and support evidence can coexist on one run;
+8. unrelated later current context does not erase historic evidence;
+9. stale publication cannot append evidence;
+10. a real governed InputXML execution/recovery is archived through `createLfeaNativeRunHistory()`, publication evidence is attached, and History projects it beside the unchanged CURRENT run record;
+11. source guards prohibit solver/recovery/support/B31 calculation in the ledger;
+12. runtime/history/API ownership is present;
+13. established physical-line budgets remain satisfied.
 
 ## Static Review Findings and Repairs
 
@@ -176,14 +178,16 @@ The committed focused script is intended to prove:
 | RUN-EVID-08 | Multiple different reviewed publications for one run need deterministic custody. | Preserve all as distinct append-only attachments; future issue/export must explicitly select attachment hashes. |
 | RUN-EVID-09 | History UI could accidentally rederive publication values. | UI shows identity/reviewer hashes only; source guard rejects engineering producer calls in ledger. |
 | RUN-EVID-10 | Existing History qualification requires explicit view-only language. | Preserved `changes this view only` wording. |
+| RUN-EVID-11 | A `CURRENT` state with a fabricated authorization could otherwise satisfy only hash-link checks. | Revalidate existing support/B31 authorization contracts before evidence retention. |
+| RUN-EVID-12 | Initial focused qualification proved the ledger store but only source-guarded its History consumer. | Added real governed InputXML execution/recovery + native History archive/attachment/projection behavior. |
 
 ## Architecture / Numerical Boundaries
 
 This PR does **not** call or change:
 
 - stiffness assembly;
-- solver execution;
-- B-3.4 recovery;
+- solver execution algorithms;
+- B-3.4 recovery algorithms;
 - `recoverComponentCodePoint()`;
 - support interface/load recovery;
 - support triad projection;

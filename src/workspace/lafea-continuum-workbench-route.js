@@ -4,6 +4,7 @@ import { requireLafeaStageComposition } from './lafea-stage-composition-root.js'
 import { issueLafeaSourceAuthority } from './lafea-source-authority.js';
 
 const STAGE_ID = 'LAFEA.3';
+const WORKBENCH_DOCUMENT_SCHEMA = 'lafea-workbench-document/v1';
 
 export function compileLafeaContinuumWorkbenchContext(context, stageId) {
   const c = requireContext(context);
@@ -14,7 +15,7 @@ export function compileLafeaContinuumWorkbenchContext(context, stageId) {
   if (!composition.executionSupported || typeof composition.canonicalize !== 'function') {
     fail('LAFEA_CONTINUUM_SOLVER_CANONICALIZER_NOT_AVAILABLE');
   }
-  const source = composition.normalizeDocument(c.retained.exportDocument());
+  const source = composition.normalizeDocument(workbenchDocument(c.retained.exportDocument(), stageId));
   const sourceAuthority = issueLafeaSourceAuthority(
     stageId, source, 'COMPILE_SOLVER_MODEL/SOURCE_AUTHORITY',
   );
@@ -67,6 +68,14 @@ function requireCompilerReadiness(stage) {
     || stage.analysisMeshCustodyProjection?.usableForRun !== true) {
     fail('LAFEA_CONTINUUM_SOLVER_ANALYSIS_MESH_NOT_CURRENT_PASS');
   }
+}
+
+function workbenchDocument(value, stageId) {
+  if (value?.schema !== WORKBENCH_DOCUMENT_SCHEMA || value?.stageId !== stageId
+    || !value.document || typeof value.document !== 'object' || Array.isArray(value.document)) {
+    fail('LAFEA_CONTINUUM_SOLVER_WORKBENCH_DOCUMENT_INVALID');
+  }
+  return value.document;
 }
 
 function requireContext(value) {

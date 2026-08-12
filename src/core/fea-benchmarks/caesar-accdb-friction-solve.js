@@ -406,15 +406,25 @@ function solvePrimitiveActiveSet(input) {
     const reactions = buildReactionVector(base, U, classified.appliedFrictionByNode);
     const recovered = recoverGlobalActions(base, U);
     const equilibrium = recoveredEquilibrium(base, recovered, reactions, input.benchmarkPackage.profile.equilibriumTolerance);
-    const displacementUpdate = updateMetric(U, previousU, profile.displacementUpdateAbsoluteToleranceM);
-    const reactionUpdate = updateMetric(reactions, previousReaction, profile.reactionUpdateAbsoluteToleranceN);
+    const displacementUpdate = updateMetric(
+      U,
+      previousU,
+      profile.displacementUpdateAbsoluteToleranceM,
+      profile.displacementUpdateRelativeTolerance,
+    );
+    const reactionUpdate = updateMetric(
+      reactions,
+      previousReaction,
+      profile.reactionUpdateAbsoluteToleranceN,
+      profile.reactionUpdateRelativeTolerance,
+    );
     const physics = frictionPhysicsGate(classified.rows, profile);
     const signature = classified.rows.map((row) => `${row.supportId}:${row.nextState}`).join('|');
     const stateStable = classified.stateChanges === 0;
     const converged = previousU !== null
       && stateStable
-      && displacementUpdate.relative <= profile.displacementUpdateRelativeTolerance
-      && reactionUpdate.relative <= profile.reactionUpdateRelativeTolerance
+      && displacementUpdate.status === 'PASS'
+      && reactionUpdate.status === 'PASS'
       && physics.status === 'PASS'
       && equilibrium.status === 'PASS';
 
@@ -514,8 +524,10 @@ function classifySupports(input) {
   for (const support of input.base.frictionSupports) {
     const current = input.states.get(support.supportId);
     const nodeBase = input.base.nodeIndex.get(support.nodeId) * 6;
-    const normalReactionN = -support.normalStiffness * input.U[support.normalGlobalIndex];
-    const capN = input.mu * Math.abs(normalReactionN);
+    const normalReactionGlobal = [0, 0, 0];
+    normalReactionGlobal[support.normalAxis] = -support.normalStiffness * input.U[support.normalGlobalIndex];
+    const signedNormalReactionN = dot(normalReactionGlobal, support.normalDirection);
+    const capN = input.mu * Math.abs(signedNormalReactionN);
     const tangentialDisplacement = [0, 0, 0];
     for (const axis of support.tangentAxes) tangentialDisplacement[axis] = input.physicalU[nodeBase + axis];
     const slipMagnitudeM = Math.hypot(...tangentialDisplacement);
@@ -549,8 +561,8 @@ function classifySupports(input) {
       normalDirection: support.normalDirection,
       tangentialDisplacementM: Object.freeze(tangentialDisplacement),
       slipMagnitudeM,
-      signedNormalReactionN: normalReactionN,
-      normalReactionN: Math.abs(normalReactionN),
+      signedNormalReactionN,
+      normalReactionN: Math.abs(signedNormalReactionN),
       effectiveCoefficient: input.mu,
       frictionStiffnessNPerM: input.kf,
       capN,
@@ -685,14 +697,13 @@ function updateResultRows(base, finalState) {
     DOFS.forEach((dof, index) => {
       const physical = finalState.U[offset + index] + shift[index];
       const isTranslation = index < 3;
-      const actionComponent = isTranslation ? FORCE_COMPONENTS[index] : MOMENT_COMPONENTS[index - 3];
       values.set(rowIdentity('NODE', nodeId, isTranslation ? 'DISPLACEMENT' : 'ROTATION', dof), clean(physical));
-      values.set(rowIdentity('NODE', nodeId, isTranslation ? 'FORCE' : 'MOMENT', actionComponent), clean(finalState.reactions[offset + index]));
+      values.set(rowIdentity('NODE', nodeId, isTranslation ? 'FORCE' : 'MOMENT', dof), clean(finalState.reactions[offset + index]));
       const incident = finalState.recovered.incident.get(nodeId) ?? zero6();
       values.set(rowIdentity(
         'NODE', nodeId,
         isTranslation ? 'INCIDENT_GLOBAL_FORCE' : 'INCIDENT_GLOBAL_MOMENT',
-        actionComponent,
+        dof,
       ), clean(incident[index]));
     });
   }
@@ -768,12 +779,12 @@ function equilibriumFromResultRows(rows, tolerance) {
   let forceN = 0;
   let momentNm = 0;
   for (const nodeId of nodeIds) {
-    FORCE_COMPONENTS.forEach((component) => {
+    TRANSLATION_DOFS.forEach((component) => {
       const incident = values.get(rowIdentity('NODE', nodeId, 'INCIDENT_GLOBAL_FORCE', component)) ?? 0;
       const reaction = values.get(rowIdentity('NODE', nodeId, 'FORCE', component)) ?? 0;
       forceN = Math.max(forceN, Math.abs(incident - reaction));
     });
-    MOMENT_COMPONENTS.forEach((component) => {
+    DOFS.slice(3).forEach((component) => {
       const incident = values.get(rowIdentity('NODE', nodeId, 'INCIDENT_GLOBAL_MOMENT', component)) ?? 0;
       const reaction = values.get(rowIdentity('NODE', nodeId, 'MOMENT', component)) ?? 0;
       momentNm = Math.max(momentNm, Math.abs(incident - reaction));
@@ -1007,12 +1018,32 @@ function primitiveFingerprint(run) {
   });
 }
 
-function updateMetric(current, previous, absoluteFloor) {
-  if (previous === null) return deepFreeze({ absolute: Infinity, relative: Infinity });
+function updateMetric(current, previous, absoluteTolerance, relativeTolerance) {
+  if (previous === null) {
+    return deepFreeze({
+      absolute: Infinity,
+      relative: Infinity,
+      scale: 0,
+      combinedLimit: absoluteTolerance,
+      absoluteTolerance,
+      relativeTolerance,
+      status: 'NOT_EVALUATED',
+    });
+  }
   const difference = current.map((value, index) => value - previous[index]);
   const absolute = maxAbs(difference);
-  const relative = norm2(difference) / Math.max(norm2(current), absoluteFloor);
-  return deepFreeze({ absolute, relative });
+  const scale = Math.max(maxAbs(current), maxAbs(previous));
+  const relative = scale === 0 ? (absolute === 0 ? 0 : Infinity) : absolute / scale;
+  const combinedLimit = absoluteTolerance + relativeTolerance * scale;
+  return deepFreeze({
+    absolute,
+    relative,
+    scale,
+    combinedLimit,
+    absoluteTolerance,
+    relativeTolerance,
+    status: absolute <= combinedLimit ? 'PASS' : 'FAIL',
+  });
 }
 
 function sortedSourceRows(base, recoveredActions) {

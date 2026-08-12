@@ -14,3 +14,10 @@ export {
   FRICTION_EXECUTION_READINESS_BLOCKERS,
   assessFrictionExecutionReadiness,
 } from './friction-execution-readiness.js';
+export {
+  CAESAR_TRANSLATIONAL_STIFFNESS_UNIT_TO_N_PER_M,
+  parseCaesarInputXmlTranslationalStiffnessUnit,
+  normalizeTranslationalStiffnessUnitLabel,
+  convertCaesarTranslationalStiffnessToSi,
+  normalizeDisplayedCaesarFrictionStiffnessFromInputXml,
+} from './caesar-friction-unit-normalization.js';

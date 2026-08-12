@@ -30,3 +30,8 @@ export {
   CAESAR_FRICTION_MICRO_MODEL_EVIDENCE_STATUS,
   assessCaesarFrictionMicroModelEvidence,
 } from './caesar-friction-micro-model-evidence-gate.js';
+export {
+  CAESAR_FRICTION_EVIDENCE_REPLAY_STATUS,
+  replayCaesarFrictionMicroModelEvidence,
+  summarizeIndependentSlidePlateauEvidence,
+} from './caesar-friction-evidence-measurement-replay.js';

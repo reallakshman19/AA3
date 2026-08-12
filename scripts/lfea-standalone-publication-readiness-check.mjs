@@ -7,7 +7,7 @@ import {
 
 const preFlight = {
   preparation: {
-    structural: { compilation: { schema: 'fea-mechanical-model-compilation/v1' } },
+    structuralPreparation: { compilation: { schema: 'fea-mechanical-model-compilation/v1' } },
   },
 };
 const recoveryBatch = {
@@ -84,6 +84,7 @@ function sourceAndSizeGuards() {
   assert.ok(lineCount(api) < 120, `standalone-runtime-api.js is ${lineCount(api)} lines`);
   assert.match(bootstrap, /createLfeaStandaloneRuntime/u);
   assert.doesNotMatch(bootstrap, /LfeaWorkbenchController|createLfeaNativeExecutionAuthority|createLfeaNativeResultsAuthority/u);
+  assert.match(readiness, /structuralPreparation/u);
   assert.match(readiness, /compileLinearPipingInterfaceSet/u);
   assert.match(readiness, /recoverLinearPipingInterfaceLoads/u);
   assert.match(readiness, /createLinearPipingSupportActionsPublication/u);
@@ -92,9 +93,9 @@ function sourceAndSizeGuards() {
     assert.doesNotMatch(source, /forceLocal\s*\.|fAxial\s*=|fLateral\s*=|fVertical\s*=|calculatedStress\s*=|utilization\s*=/u);
     assert.doesNotMatch(source, /localStorage|sessionStorage/u);
   }
-  assert.doesNotMatch(readiness, /DEFAULT.*UP|upGlobal\s*:\s*\[0\s*,\s*0\s*,\s*1\]/u);
+  assert.doesNotMatch(readiness, /DEFAULT.*UP|upGlobal\s*:\s*\{\s*x\s*:\s*0/u);
   assert.doesNotMatch(readiness, /parallelTolerance\s*:\s*[0-9]/u);
-  assert.match(resultsView, /existing governed producer chains have complete inputs/u);
+  assert.match(resultsView, /support-action projections and code-applied quantities are separate engineering authorities/u);
 }
 
 function read(file) { return fs.readFileSync(file, 'utf8'); }

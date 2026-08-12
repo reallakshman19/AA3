@@ -21,7 +21,17 @@ export function topologyEditSupportPlacementContext(topology, supportInput) {
   const override = certifiedOverride(support.placementOverride);
   const declaredStation = finiteNonNegative(support.stationMm);
   const attachmentParameter = finiteUnitInterval(support.attachmentSegmentParameter);
-  const attachmentStation = attachmentParameter === null ? null : attachmentParameter * host.lengthMm;
+  const parameterStation = attachmentParameter === null ? null : attachmentParameter * host.lengthMm;
+  const attachmentOrigin = support.originAuthority === 'ATTACHMENT_PROJECTED_POINT'
+    ? finitePoint(support.origin) : null;
+  const pointStation = attachmentOrigin ? stationForPoint(host, attachmentOrigin) : null;
+  if (!override && parameterStation !== null && pointStation !== null
+      && Math.abs(parameterStation - pointStation) > EPSILON_MM) {
+    throw new RangeError(
+      `TopologyEditSupportPlacement: support ${support.id} has conflicting attachment segment and projected-point evidence.`,
+    );
+  }
+  const attachmentStation = parameterStation ?? pointStation;
   if (!override && declaredStation !== null && declaredStation > host.lengthMm + EPSILON_MM) {
     throw new RangeError(
       `TopologyEditSupportPlacement: support ${support.id} declared station exceeds host length.`,
@@ -41,9 +51,12 @@ export function topologyEditSupportPlacementContext(topology, supportInput) {
   } else if (declaredStation !== null) {
     currentStationMm = Math.min(declaredStation, host.lengthMm);
     stationAuthority = 'DECLARED_SUPPORT_STATION';
-  } else if (attachmentStation !== null) {
-    currentStationMm = attachmentStation;
+  } else if (parameterStation !== null) {
+    currentStationMm = parameterStation;
     stationAuthority = 'ATTACHMENT_SEGMENT_PARAMETER';
+  } else if (pointStation !== null) {
+    currentStationMm = pointStation;
+    stationAuthority = 'ATTACHMENT_PROJECTED_POINT';
   }
   const currentOrigin = override?.origin
     ?? finitePoint(support.origin)
@@ -171,6 +184,22 @@ function resolveSupportHostGeometry(topology, support) {
   return { edge, from, to, lengthMm };
 }
 
+function stationForPoint(host, point) {
+  const from = host.from.position; const to = host.to.position;
+  const axis = { x: to.x - from.x, y: to.y - from.y, z: to.z - from.z };
+  const offset = { x: point.x - from.x, y: point.y - from.y, z: point.z - from.z };
+  const lengthSquared = (axis.x ** 2) + (axis.y ** 2) + (axis.z ** 2);
+  const parameter = ((offset.x * axis.x) + (offset.y * axis.y) + (offset.z * axis.z)) / lengthSquared;
+  if (parameter < -EPSILON_MM || parameter > 1 + EPSILON_MM) {
+    throw new RangeError('TopologyEditSupportPlacement: attachment projected point lies outside the exact host segment.');
+  }
+  const bounded = Math.min(1, Math.max(0, parameter));
+  const projected = interpolate(from, to, bounded);
+  if (distance(projected, point) > EPSILON_MM) {
+    throw new RangeError('TopologyEditSupportPlacement: attachment projected point is not on the exact host centerline.');
+  }
+  return bounded * host.lengthMm;
+}
 function certifiedOverride(value) {
   if (value?.authority !== CERTIFIED_SUPPORT_PLACEMENT_AUTHORITY) return null;
   const stationMm = finiteNonNegative(value.stationMm);

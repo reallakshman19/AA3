@@ -15,10 +15,11 @@
 | Run-4 exact head | `d0e7effbdf9eaa5c14837101c6271697716c8c77` |
 | Run-5 exact head | `c337d6fbc2bad5b0c0d75c6fe362dc39be2caaea` |
 | Run-6 exact head | `95b0679e6863f84e5c67de1770814236bf3f41d2` |
+| Run-7 exact head | `64a46f924b4431c90014260ac25ddc4e4fbc61af` |
 | Mission | Certify explicit relocation of a support along its already-resolved exact straight host, without host rebinding or automatic parent-geometry follow. |
 | Engineering state | EMPIRICAL QUALIFICATION IN PROGRESS |
-| Current execution truth | Run `31569477406`: exact-head/source checks PASS; focused Node qualification PASS; production Chromium launched but failed before Table opening because the test clicked the toolbar trigger before `TopologyEditTableProductivityAdapter.mount()` had attached the Table window/listener. |
-| Merge state | Draft / unmerged. Browser qualification remains required. |
+| Current execution truth | Run `31569884470`: exact-head/source checks PASS; focused Node qualification PASS; real Chromium proves S-007 station authority and the full support relocation lifecycle through exact Redo. The run fails only at the subsequent P-011 row-discovery helper because the text filter legitimately returns both the P-011 PIPE and S-007 SUPPORT whose Host field is P-011. |
+| Merge state | Draft / unmerged. Final P-011 parent-policy browser assertion and report-sync exact-head qualification remain required. |
 
 ## Authority Flow
 
@@ -53,24 +54,13 @@ Still prohibited: host rebinding, arbitrary XYZ support movement, node movement 
 | ISS-1061-05 | RESOLVED / RUN 2+ PASS | Table test asserts the established deterministic `sequence: 0` command envelope. |
 | ISS-1061-06 | RESOLVED / RUN 2+ PASS | Certification regeneration failure was downstream of reducer immutability; Preview/Validate/Apply/Undo/Redo pass without guard weakening. |
 | ISS-1061-07 | RESOLVED / RUN 3+ PASS | Capability receipt carries scalar `currentOriginX/Y/Z`, preserving `TopologyEditCapabilityReceipt.v1`. |
-| ISS-1061-08 | RESOLVED / RUN 4 PROGRESSED | E2E keeps real `S-007`/`P-011` filtering and selects the unique canonical row instead of requiring the source tag in the human label. |
-| ISS-1061-09 | REPAIR IMPLEMENTED / EMPIRICAL RECHECK PENDING | Run 4 proved generic XYZ production canonicalization bypassed the dispatch adapter. The final fidelity controller now uses `buildDispatchedCanonicalTopology(...)` for generic and SJSON workspace sources; only governed SJSON receives additional exact-origin enrichment. No broad support-center inference was added and the oversized core was not modified. Run 6 did not reach S-007 because of ISS-1061-11. |
-| ISS-1061-10 | RESOLVED / RUN 6 NODE PASS | The raw-Node-incompatible full browser-controller regression from run 5 was removed; no previously green support-placement assertion was removed. Run 6 completed the focused Node gate successfully. Real Chromium remains the controller-routing integration authority. |
-| ISS-1061-11 | **OPEN / E2E READINESS REPAIR AUTHORIZED** | Run `31569477406` clicked `[data-action="open-engineering-table"]` successfully, then `[data-role="topology-edit-table"]` remained hidden for 5 s. Trace evidence shows the Table `<details data-role="topology-edit-table-window">` was not mounted in the `before@call@33` snapshot when the toolbar click occurred; by the failed visibility assertion it had mounted in its collapsed state. The shell button exists before `TopologyEditTableProductivityAdapter.mount()`, while adapter mount creates the Table window and attaches the host capture-click listener used by `showWindow()`. The E2E currently waits only for canonical-hash readiness, so this is a browser test readiness race. Repair is limited to waiting for the real Table window to be attached before clicking the real toolbar button, then asserting `aria-expanded="true"` and visible Table content. Do not call adapter/controller methods, do not force the `open` attribute, and do not weaken visible-user interaction coverage. |
+| ISS-1061-08 | RESOLVED / RUN 4+ | E2E keeps real `S-007`/`P-011` filtering and uses exact canonical row identity rather than requiring the source tag in the human label. |
+| ISS-1061-09 | **RESOLVED / RUN 7 CHROMIUM PASS THROUGH REDO** | Generic XYZ production canonicalization had bypassed the dispatch adapter. The final fidelity controller now uses `buildDispatchedCanonicalTopology(...)` for generic and SJSON sources, with SJSON-only extra origin enrichment. Run 7 proves real S-007 reaches `NEEDS_INPUT` with exact host/station basis and completes certified relocation 400 → 500 mm through Stage, Preview, Validate, Apply, exact Undo, and exact Redo. No broad support-center inference was added. |
+| ISS-1061-10 | RESOLVED / RUN 6+ NODE PASS | Raw-Node-incompatible full browser-controller regression was removed; previously green Node assertions remain. Real Chromium is controller-routing integration authority. |
+| ISS-1061-11 | **RESOLVED / RUN 7** | Table-open readiness race was repaired only in E2E by waiting for the real Table window to be attached before the real toolbar click, then requiring `aria-expanded=false → true` and visible Table content. Run 7 passes this path. |
+| ISS-1061-12 | **OPEN / E2E ROW-TARGET REPAIR AUTHORIZED** | After successful Redo, run `31569884470` types real filter `P-011`. The Engineering Table correctly reports `2 / 32 rows`: canonical `edge:P-011` (PIPE) and still-relevant `support:S-007` (SUPPORT), because the support's canonical Host field is also `P-011` and Table query searches projected fields. The helper incorrectly requires *all* filtered canonical rows to have count 1. Repair is limited to requiring exactly one filtered row of the requested `expectedElementType`, while preserving the real typed filter, exact `data-canonical-id`, visible Select click, and the global filtered-result semantics. Do not clear selection, bypass the filter, call controller methods, or weaken the final P-011 support-policy assertion. |
 
-## Run-4 Fixture Evidence for ISS-1061-09
-
-The production XYZ fixture contains:
-
-- P-011 start `[6460,1650,3450]`
-- P-011 end `[7260,1650,3450]`
-- S-007 center `[6860,1650,3450]` — exact midpoint
-- S-007 `ATTACHED_COMPONENT_ID = P-011`
-- S-007 `SUPPORTED_COMPONENT_ID = P-011`
-
-The existing attachment target for a two-port component carries its exact start/end centerline. `createAttachmentRecord()` projects the support canonical position onto that target and records exact projected point, distance and segment parameter. No new proximity algorithm is required or authorized.
-
-## Production Repair for ISS-1061-09 — Implemented
+## Production Repair for Exact Attachment Retention
 
 Authorized path: `src/workspace/topology-edit-3d-sjson-fidelity-controller.js`
 
@@ -81,59 +71,50 @@ Authorized path: `src/workspace/topology-edit-3d-sjson-fidelity-controller.js`
 
 The production controller remains below the repository `<300` physical-line ceiling.
 
+## Run-7 Executed Browser Evidence
+
+Run `31569884470`, exact head `64a46f924b4431c90014260ac25ddc4e4fbc61af`:
+
+- exact-head checkout/source verification: PASS
+- focused Node qualification: PASS
+- real Chromium loads `topology-edit-demo-20-v1-XYZ-10-COMPONENT-BRANCH-v1`: PASS
+- Table adapter/window readiness + real toolbar click + expanded visible Table: PASS
+- real filter `S-007`, unique SUPPORT row, exact canonical ID `support:S-007`, real Select click: PASS
+- support placement editor status `NEEDS_INPUT`: PASS
+- exact current station observed: **400 mm**
+- exact requested station typed through visible input: **500 mm**
+- typing is canonical/journal/source no-op: PASS
+- real Stage click produces exactly one staged intent while canonical/journal/source stay unchanged: PASS
+- real Preview click produces candidate/ghost while canonical placement override remains absent: PASS
+- real Validate click produces `READY_TO_APPLY` while canonical/journal/source stay unchanged: PASS
+- real Apply click changes canonical hash exactly once: PASS
+- applied certified placement override authority `CERTIFIED_TABLE_OVERRIDE`, station 500 mm: PASS
+- Table station projection = 500 mm with certified Table authority: PASS
+- source semantic hash and source byte hash unchanged: PASS
+- singular renderer and one new active engineering command: PASS
+- real Undo restores baseline canonical hash, baseline active ledger hash/command IDs, and removes placement override: PASS
+- real Redo restores applied canonical hash/ledger/command IDs: PASS
+- after Redo, real filter `P-011` returns two rows by design: `edge:P-011` and `support:S-007`; helper fails before pipe selection because it expected one global row
+- therefore final visible P-011 `SUPPORT_GEOMETRY_POLICY_REQUIRED` assertion is **NOT YET EXECUTED** on run 7.
+
+Artifact:
+- ID `9130908187`
+- name `pr1061-support-placement-64a46f924b4431c90014260ac25ddc4e4fbc61af-1`
+- size `3,673,224` bytes
+- SHA256 `e29d71a7afe139daf312768a7cc8ad3ea1908e0e61770e97d3eb5fc1b940b05c`
+- contains failure screenshot, `error-context.md`, and `trace.zip`.
+
+Run 7 is not the final Chromium qualification PASS because the P-011 parent-policy assertion is still pending, but it is affirmative executed evidence for the complete support-relocation lifecycle through Redo.
+
 ## Qualification History
 
-### Run 1 — `31567646893`
-Exact head `66b76dcba5027d737f5ce805e07861b717ee9450`:
-- setup/source checks PASS
-- focused Node 5 pass / 9 fail
-- Chromium skipped.
-
-### Run 2 — `31567986663`
-Exact head `1a8c40967e42a559c0998189a60a11dbb638600a`:
-- setup/source checks PASS
-- focused Node 13 pass / 1 fail
-- Chromium skipped.
-
-### Run 3 — `31568210108`
-Exact head `1747775aedcaac6879e894e0d41a42a9f31df738`:
-- exact-head/source checks PASS
-- focused Node **14/14 PASS**
-- Chromium loaded XYZ fixture, entered 3D Edit, opened Table and filtered S-007
-- E2E row-text assertion mismatch blocked selection
-- artifact `9130325213`, 2,055,005 bytes, SHA256 `88de77d8ef802f84cf5c2a0e0a832536133633f0063a9de744785c85906a3b98`.
-
-### Run 4 — `31568624253`
-Exact head `d0e7effbdf9eaa5c14837101c6271697716c8c77`:
-- exact-head/source checks PASS
-- focused Node **14/14 PASS**
-- real Chromium loaded XYZ, entered 3D Edit/Table, typed S-007, selected unique canonical `support:S-007`
-- placement editor reported `UNREPRESENTABLE`, host P-011, no station range, `Basis UNRESOLVED`
-- no station edit/Stage occurred
-- artifact `9130446496`, 1,927,555 bytes, SHA256 `b4dc0babf2ff3d6f44be5e182f5c86436a5fd24cf57c9384fe71140796daab37`.
-
-### Run 5 — `31569229327`
-Exact head `c337d6fbc2bad5b0c0d75c6fe362dc39be2caaea`:
-- exact-head/source checks PASS
-- newly authored browser-controller Node import failed at module load on transitive CSS (`ERR_UNKNOWN_FILE_EXTENSION .css`)
-- run summary 12 tests, 11 pass / 1 file-level fail
-- Chromium skipped
-- classified as harness-design failure, not production result.
-
-### Run 6 — `31569477406`
-Exact head `95b0679e6863f84e5c67de1770814236bf3f41d2`:
-- exact-head checkout/source verification PASS
-- focused Node qualification PASS after removal of the raw-Node-incompatible controller test
-- production Chromium launched the real application and loaded the XYZ fixture
-- test entered 3D Edit and obtained canonical-hash readiness
-- Playwright successfully clicked the real Engineering table toolbar button
-- failure: `[data-role="topology-edit-table"]` remained hidden for 5 s; the final screenshot shows the Table window mounted but collapsed at the bottom
-- trace `before@call@33` contains the toolbar trigger but no Table window, proving the click raced `TopologyEditTableProductivityAdapter.mount()`; the failed expect occurs after the window has mounted collapsed
-- S-007 filtering/selection and station authority were **not reached**, so run 6 neither confirms nor disproves ISS-1061-09
-- artifact ID `9130757922`, name `pr1061-support-placement-95b0679e6863f84e5c67de1770814236bf3f41d2-1`, size `1,735,613` bytes, SHA256 `f4979d246a9ad6ab7ce9b0cf942db8bffe6e1700979ffa27dd3a3e007971d669`
-- artifact contains failure screenshot, `error-context.md`, and `trace.zip`.
-
-Run 6 is **not** a Chromium qualification PASS.
+- Run 1 `31567646893` / `66b76dcb…`: Node 5/14, Chromium skipped.
+- Run 2 `31567986663` / `1a8c4096…`: Node 13/14, Chromium skipped.
+- Run 3 `31568210108` / `1747775a…`: Node 14/14; Chromium reached S-007 filter; row-label test mismatch. Artifact `9130325213`.
+- Run 4 `31568624253` / `d0e7effb…`: Node 14/14; Chromium selected S-007 but exposed unresolved station authority. Artifact `9130446496`.
+- Run 5 `31569229327` / `c337d6fb…`: source checks pass; newly authored raw-Node browser-controller test failed on transitive CSS; Chromium skipped.
+- Run 6 `31569477406` / `95b0679e…`: Node pass; Chromium hit Table-adapter readiness race. Artifact `9130757922`.
+- Run 7 `31569884470` / `64a46f92…`: Node pass; real Chromium passes Table open, S-007 400→500 Stage/Preview/Validate/Apply/Undo/Redo; fails only at P-011 helper global row-count assumption. Artifact `9130908187`.
 
 ## Exact Changed-File Ledger
 
@@ -170,8 +151,8 @@ No geometry planner or #1036 support-dependency authority is modified. The tempo
 
 ## Next Gate
 
-1. Repair ISS-1061-11 only in the existing E2E: wait for the real Table window mount before the real toolbar click, then assert trigger expansion and visible Table content.
-2. Re-run exact-head source checks and all three focused Node files.
-3. Require real Chromium to prove ISS-1061-09 by reaching S-007 `NEEDS_INPUT` with an exact station basis, then complete type → Stage → Preview → Validate → Apply → Undo → Redo and P-011 support-policy block.
-4. If full lifecycle is green, update this report with exact run/artifact evidence and run an exact-head report-sync qualification.
+1. Repair ISS-1061-12 only in the existing E2E helper: after typing the real filter, require exactly one canonical row of `expectedElementType` and select that row; do not require the entire query result to be singular.
+2. Re-run exact-head source checks, all three focused Node files, and real Chromium.
+3. Require Chromium to repeat the already-proven S-007 lifecycle and then select P-011 through the visible Table and prove FROM node movement remains `UNREPRESENTABLE` with `SUPPORT_GEOMETRY_POLICY_REQUIRED` and disabled Stage.
+4. If green, update this report with the exact successful run/artifact evidence, then execute a report-sync exact-head qualification so the final report commit itself is empirically qualified.
 5. Restore #1061 to its original stacked base, then re-check stack integration/mergeability. Do not merge from source review alone.

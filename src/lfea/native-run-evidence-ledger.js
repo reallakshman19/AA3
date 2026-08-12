@@ -141,6 +141,12 @@ function requireRun(record) {
   requireHash(record.semanticHash, 'runRecord.semanticHash');
   requireHash(record.identity?.rawExecution?.semanticHash, 'runRecord.identity.rawExecution.semanticHash');
   requireHash(record.identity?.recovery?.semanticHash, 'runRecord.identity.recovery.semanticHash');
+  const expectedHash = semanticHash(record.identity);
+  const expectedRunId = `LFEA-RUN-${expectedHash.slice('fnv1a64:'.length).toUpperCase()}`;
+  if (record.semanticHash !== expectedHash || record.runId !== expectedRunId) {
+    throw ledgerError('LFEA_RUN_EVIDENCE_RUN_IDENTITY_MISMATCH',
+      'Run record semantic hash/run ID does not match its retained identity.');
+  }
   return record;
 }
 

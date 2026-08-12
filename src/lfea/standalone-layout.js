@@ -80,6 +80,13 @@ export function renderLfeaStandaloneLayout(rootElement, identity = {}, options =
     viewRoots.set(item.id, view);
   }
 
+  const modelSectionRoot = viewRoots.get('model');
+  const modelJourneyRoot = documentRef.createElement('div');
+  modelJourneyRoot.dataset.role = 'lfea-model-journey-root';
+  const loadCaseRoot = documentRef.createElement('div');
+  loadCaseRoot.dataset.role = 'lfea-load-case-root';
+  modelSectionRoot.append(modelJourneyRoot, loadCaseRoot);
+
   const verificationRoot = viewRoots.get('verification');
   const nativeVerificationRoot = documentRef.createElement('div');
   nativeVerificationRoot.className = 'lfea-native-verification-root';
@@ -125,7 +132,8 @@ export function renderLfeaStandaloneLayout(rootElement, identity = {}, options =
     statusRoot,
     sourceRoot: viewRoots.get('source'),
     reviewRoot: viewRoots.get('review'),
-    modelRoot: viewRoots.get('model'),
+    modelRoot: modelJourneyRoot,
+    loadCaseRoot,
     analysisRoot: viewRoots.get('analysis'),
     resultsRoot: viewRoots.get('results'),
     codeRoot: viewRoots.get('code'),

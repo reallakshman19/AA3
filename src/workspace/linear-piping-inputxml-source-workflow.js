@@ -49,6 +49,7 @@ export class LinearPipingInputXmlSourceWorkflowController {
     this.fallbackUnit = null;
     this.intake = null;
     this.preFlight = null;
+    this.requestedCaseIds = null;
     this.message = 'Import a CAESAR II InputXML source to begin governed pre-flight.';
     this.error = '';
     this.elements = null;
@@ -255,13 +256,45 @@ export class LinearPipingInputXmlSourceWorkflowController {
     }
   }
 
+  /**
+   * Change the requested physical case selection and, if a source is
+   * already loaded, re-run governed preparation against it. Any prior
+   * authorization is invalidated exactly like a profile change, since the
+   * requested case set is sealed into intake/preparation identity.
+   */
+  setRequestedCaseIds(caseIds) {
+    const normalized = Object.freeze([...new Set((caseIds ?? []).map((id) => String(id).trim()).filter(Boolean))].sort());
+    if (normalized.length === 0) {
+      throw workflowError('LINEAR_PIPING_INPUTXML_CASE_SELECTION_EMPTY', 'At least one requested physical case is required.');
+    }
+    this.requestedCaseIds = normalized;
+    if (!this.sourceInput) {
+      this.render();
+      return this.getSnapshot();
+    }
+    try {
+      this.prepareSource(this.fallbackUnit);
+      this.message = `Requested case selection changed; native pre-flight was regenerated and any prior authorization was invalidated. ${this.message}`;
+    } catch (error) {
+      if (this.intake === null) {
+        this.preFlight = null;
+        this.error = errorMessage(error);
+        this.message = 'Case selection change invalidated the prior native pre-flight; source authority could not be resealed.';
+      } else {
+        this.message = `Requested case selection changed and prior authorization was invalidated. ${this.message}`;
+      }
+    }
+    this.render();
+    return this.getSnapshot();
+  }
+
   prepareSource(fallbackUnit) {
     this.fallbackUnit = fallbackUnit;
     const profileId = this.elements?.profileSelect.value ?? LINEAR_PIPING_INPUTXML_INTAKE_PROFILE_IDS[0];
     this.intake = createLinearPipingInputXmlIntake(this.sourceInput, {
       fallbackUnit,
       requestedProfileId: profileId,
-      requestedCaseIds: [LINEAR_PIPING_INPUTXML_DEFAULT_CASE_ID],
+      requestedCaseIds: this.requestedCaseIds ?? [LINEAR_PIPING_INPUTXML_DEFAULT_CASE_ID],
     });
     this.preFlight = null;
     try {

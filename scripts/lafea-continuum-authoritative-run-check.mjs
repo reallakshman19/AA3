@@ -11,6 +11,7 @@ import {
   LAFEA_ANALYSIS_GEOMETRY_SCHEMA,
   createLafeaAnalysisGeometry,
 } from '../src/workspace/lafea-analysis-geometry-contract.js';
+import { canonicalLafeaSha256 } from '../src/workspace/lafea-canonical-sha256.js';
 import {
   LAFEA_CONTINUUM_ANALYSIS_DOMAIN_SCHEMA,
   createLafeaContinuumAnalysisDomain,
@@ -18,6 +19,9 @@ import {
 import {
   createLafeaContinuumDomainFirstLifecycleProducerBatch,
 } from '../src/workspace/lafea-continuum-domain-first-lifecycle-producers.js';
+import {
+  validateLafeaContinuumDomainFirstPreflight,
+} from '../src/workspace/lafea-continuum-domain-first-preflight.js';
 import { requireLafeaStageComposition } from '../src/workspace/lafea-stage-composition-root.js';
 import { issueLafeaSourceAuthority } from '../src/workspace/lafea-source-authority.js';
 import { createLafeaWorkbenchStore } from '../src/workspace/lafea-workbench.js';
@@ -45,6 +49,25 @@ try {
   assert.equal(stage.orchestration.sections.AUTHORIZATION.state, 'READY');
   assert.ok(stage.orchestration.sections.EXECUTION.allowedActions.includes('RUN_SOLVE'));
   assert.equal(stage.retainedContinuumPreflightEvidence.solverExecuted, false);
+
+  const compilerTamper = structuredClone(stage.retainedContinuumPreflightEvidence);
+  compilerTamper.compilerRevision = 'INCOMPATIBLE'; resealPreflight(compilerTamper);
+  expectCode(
+    () => validateLafeaContinuumDomainFirstPreflight(compilerTamper),
+    'LAFEA_CONTINUUM_PREFLIGHT_INVALID',
+  );
+  const casesTamper = structuredClone(stage.retainedContinuumPreflightEvidence);
+  casesTamper.requestedCaseIds = []; resealPreflight(casesTamper);
+  expectCode(
+    () => validateLafeaContinuumDomainFirstPreflight(casesTamper),
+    'LAFEA_CONTINUUM_PREFLIGHT_INVALID',
+  );
+  const capabilityTamper = structuredClone(stage.retainedContinuumPreflightEvidence);
+  capabilityTamper.capabilityIds.push('UNQUALIFIED_CAPABILITY'); resealPreflight(capabilityTamper);
+  expectCode(
+    () => validateLafeaContinuumDomainFirstPreflight(capabilityTamper),
+    'LAFEA_CONTINUUM_PREFLIGHT_INVALID',
+  );
 
   const lifecycleBeforeParity = structuredClone(stage.lifecycle);
   const parity = qualified.store.executeContinuumCompiledForParity();
@@ -81,9 +104,7 @@ try {
     tampered[field] = field === 'meshProfileHash' ? 'tampered-profile' : `sha256:${'f'.repeat(64)}`;
     expectCode(
       () => createLafeaContinuumDomainFirstLifecycleProducerBatch({
-        sourceAuthority: qualified.authority,
-        solverModel,
-        execution: tampered,
+        sourceAuthority: qualified.authority, solverModel, execution: tampered,
       }),
       'LAFEA_CONTINUUM_DOMAIN_FIRST_EXECUTION_INVALID',
     );
@@ -92,11 +113,33 @@ try {
   releaseTamper.releaseQualified = true;
   expectCode(
     () => createLafeaContinuumDomainFirstLifecycleProducerBatch({
-      sourceAuthority: qualified.authority,
-      solverModel,
-      execution: releaseTamper,
+      sourceAuthority: qualified.authority, solverModel, execution: releaseTamper,
     }),
     'LAFEA_CONTINUUM_DOMAIN_FIRST_EXECUTION_INVALID',
+  );
+  const solverHashTamper = structuredClone(solverModel);
+  solverHashTamper.parents.meshHash = `sha256:${'e'.repeat(64)}`;
+  expectCode(
+    () => createLafeaContinuumDomainFirstLifecycleProducerBatch({
+      sourceAuthority: qualified.authority, solverModel: solverHashTamper, execution: stage.execution,
+    }),
+    'LAFEA_CONTINUUM_DOMAIN_FIRST_SOLVER_MODEL_HASH_INVALID',
+  );
+  const executionHashTamper = structuredClone(stage.execution);
+  executionHashTamper.compiledExecutionHash = `sha256:${'d'.repeat(64)}`;
+  expectCode(
+    () => createLafeaContinuumDomainFirstLifecycleProducerBatch({
+      sourceAuthority: qualified.authority, solverModel, execution: executionHashTamper,
+    }),
+    'LAFEA_CONTINUUM_DOMAIN_FIRST_EXECUTION_HASH_INVALID',
+  );
+  const resultTamper = structuredClone(stage.execution);
+  resultTamper.result.loadCaseResults[0].totalStrainEnergy += 1;
+  expectCode(
+    () => createLafeaContinuumDomainFirstLifecycleProducerBatch({
+      sourceAuthority: qualified.authority, solverModel, execution: resultTamper,
+    }),
+    'LAFEA_CONTINUUM_DOMAIN_FIRST_EXECUTION_HASH_INVALID',
   );
 
   qualified.store.generateAnalysisMesh();
@@ -128,15 +171,18 @@ try {
 }
 
 console.log(JSON.stringify({
-  schema: 'lafea-continuum-authoritative-run-check/v2',
+  schema: 'lafea-continuum-authoritative-run-check/v3',
   check: 'lafea-continuum-authoritative-run',
   status: 'PASS',
   stageId: 'LAFEA.3',
   explicitPreflightRequired: true,
+  preflightIdentityFailsClosed: true,
   authoritativeCompiledRun: true,
   existingNumericalKernelReused: true,
   lifecycleExecutionRecoveryPublished: true,
   lifecycleExecutionLineageFailsClosed: true,
+  solverModelIntegrityFailsClosed: true,
+  executionEvidenceIntegrityFailsClosed: true,
   currentMeshLineageEnforced: true,
   remeshRevokesAuthority: true,
   temperatureDeltaFailsClosed: true,
@@ -222,6 +268,12 @@ function attachment(attachmentId, kind, targetType, targetId, physicalCaseIds, p
 }
 function line(segmentId, startVertexId, endVertexId) {
   return { segmentId, type: 'LINE', startVertexId, endVertexId };
+}
+function resealPreflight(value) {
+  delete value.semanticHash;
+  value.semanticHash = canonicalLafeaSha256({
+    schema: 'lafea-continuum-domain-first-preflight-hash-input/v1', evidence: value,
+  });
 }
 function expectCode(action, code) {
   assert.throws(action, (error) => error?.code === code, `expected ${code}`);

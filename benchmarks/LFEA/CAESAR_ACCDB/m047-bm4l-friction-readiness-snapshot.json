@@ -1,19 +1,49 @@
 {
-  "schema": "m047-bm4l-friction-readiness-snapshot/v1",
+  "schema": "m047-bm4l-friction-readiness-snapshot/v2",
   "stackBase": {
-    "pr": 1049,
-    "branch": "agent/m047-bm4l-friction-source-mapping",
-    "sha": "449750b260c98b935901033d8689b697d3349561"
+    "pr": 1071,
+    "branch": "agent/m047-bm4l-l13-friction-coulomb-fixed-point-proof",
+    "sha": "4d5f49a22280bbdb94aad18ffaa43d78c32acd94"
+  },
+  "precedencePolicy": {
+    "loadCaseOrFileOverridesGlobalCfg": true,
+    "cfgExcludedForBm4LGoverningValues": [
+      "DEFAULT_AMBIENT_TEMPERATURE",
+      "BOURDON_PRESSURE",
+      "COEFFICIENT_OF_FRICTION_(MU)",
+      "FLEXIBILITY_ELASTIC_MODULUS"
+    ]
   },
   "resolvedAuthority": {
-    "frictionStiffness": {"status":"RESOLVED","value":1000000,"source":"HEXAGON_CAESAR_II_V14_FRICTION_STIFFNESS","provenanceClass":"INDEPENDENT_AUTHORITY"},
-    "frictionAngleVariationDeg": {"status":"RESOLVED","value":15,"source":"HEXAGON_CAESAR_II_V14_FRICTION_ANGLE_VARIATION","provenanceClass":"INDEPENDENT_AUTHORITY"},
-    "frictionNormalForceVariation": {"status":"RESOLVED","value":0.15,"source":"HEXAGON_CAESAR_II_V14_FRICTION_NORMAL_FORCE_VARIATION","provenanceClass":"INDEPENDENT_AUTHORITY"}
+    "frictionStiffness": {
+      "status": "RESOLVED",
+      "value": 175126835.24647635,
+      "unit": "N/m",
+      "source": "USER_SUPPLIED_CAESAR14_CFG_FRICT_STIF_PLUS_INDEPENDENT_BM1_PRODUCT_UNIT_VALIDATION",
+      "provenanceClass": "INDEPENDENT_AUTHORITY"
+    },
+    "frictionAngleVariationDeg": {
+      "status": "RESOLVED",
+      "value": 15,
+      "source": "USER_SUPPLIED_EXACT_CAESAR14_CFG_FRICT_ANGLE_VAR",
+      "provenanceClass": "INDEPENDENT_AUTHORITY"
+    },
+    "frictionNormalForceVariation": {
+      "status": "RESOLVED",
+      "value": 0.15,
+      "source": "USER_SUPPLIED_EXACT_CAESAR14_CFG_FRICT_NORM_FORCE_VAR",
+      "provenanceClass": "INDEPENDENT_AUTHORITY"
+    },
+    "frictionSlideMultiplier": {
+      "status": "RESOLVED",
+      "value": 1,
+      "source": "USER_SUPPLIED_EXACT_CAESAR14_CFG_FRICT_SLIDE_MULT",
+      "provenanceClass": "INDEPENDENT_AUTHORITY"
+    }
   },
   "unresolvedAuthority": {
-    "frictionSlideMultiplier": "PUBLIC_NUMERIC_VALUE_NOT_FOUND",
-    "frictionStateHistorySemantics": "EXACT_STATIC_STATE_HISTORY_NOT_PUBLISHED",
-    "gapContactStateSemantics": "EXACT_STATIC_GAP_CONTACT_ALGORITHM_NOT_PUBLISHED"
+    "frictionStateHistorySemantics": "EXACT_STATIC_STATE_HISTORY_AND_UPDATE_ORDER_NOT_DEFINED_BY_CFG_OR_PUBLIC_HELP",
+    "gapContactStateSemantics": "EXACT_STATIC_GAP_CONTACT_ACTIVE_SET_ORDER_NOT_DEFINED_BY_CFG_OR_PUBLIC_HELP"
   },
   "cases": [
     {"caseId":"L2","frictionMultiplier":0,"status":"READY_LINEAR_BYPASS","route":"QUALIFIED_LINEAR_SOLVER"},
@@ -21,9 +51,16 @@
     {"caseId":"L4","frictionMultiplier":0,"status":"READY_LINEAR_BYPASS","route":"QUALIFIED_LINEAR_SOLVER"},
     {"caseId":"L5","frictionMultiplier":0,"status":"READY_LINEAR_BYPASS","route":"QUALIFIED_LINEAR_SOLVER"},
     {"caseId":"L6","frictionMultiplier":0,"status":"READY_LINEAR_BYPASS","route":"QUALIFIED_LINEAR_SOLVER"},
-    {"caseId":"L7","frictionMultiplier":1,"status":"BLOCKED_AUTHORITY","blockers":["FRICTION_SLIDE_MULTIPLIER_AUTHORITY_REQUIRED","FRICTION_STATE_HISTORY_SEMANTICS_AUTHORITY_REQUIRED","GAP_CONTACT_STATE_SEMANTICS_AUTHORITY_REQUIRED"]},
-    {"caseId":"L13","frictionMultiplier":1,"status":"BLOCKED_AUTHORITY","blockers":["FRICTION_SLIDE_MULTIPLIER_AUTHORITY_REQUIRED","FRICTION_STATE_HISTORY_SEMANTICS_AUTHORITY_REQUIRED","GAP_CONTACT_STATE_SEMANTICS_AUTHORITY_REQUIRED"]}
+    {"caseId":"L7","frictionMultiplier":1,"status":"BLOCKED_AUTHORITY","blockers":["FRICTION_STATE_HISTORY_SEMANTICS_AUTHORITY_REQUIRED","GAP_CONTACT_STATE_SEMANTICS_AUTHORITY_REQUIRED"]},
+    {"caseId":"L13","frictionMultiplier":1,"status":"BLOCKED_AUTHORITY","blockers":["FRICTION_STATE_HISTORY_SEMANTICS_AUTHORITY_REQUIRED","GAP_CONTACT_STATE_SEMANTICS_AUTHORITY_REQUIRED"]}
   ],
+  "diagnosticState": {
+    "l13GovernedPassRate": 0.8981191222570533,
+    "l13Passed": 1719,
+    "l13Total": 1914,
+    "slideMultiplierNumericallyConsistentWithExistingDiagnostic": true,
+    "qualifiedCaesarParity": false
+  },
   "policy": {
     "zeroFrictionInspectsNonlinearAuthority": false,
     "responseFittedAuthorityPermitted": false,

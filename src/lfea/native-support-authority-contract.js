@@ -31,7 +31,7 @@ export function requireLfeaNativeSupportAuthorityInput(preFlightRecord, input) {
   requireCurrentParents(preFlight, input);
   requireSupportSharedModel(preFlight, input);
   if (!Array.isArray(input.definitions) || input.definitions.length === 0) {
-    throw supportError(
+    throw lfeaNativeSupportError(
       'LFEA_NATIVE_SUPPORT_DEFINITIONS_REQUIRED',
       'At least one governed support interface definition is required.',
     );
@@ -99,7 +99,7 @@ export function lfeaNativeSupportError(code, message) {
 function requireCurrentParents(preFlight, input) {
   if (input.parentSourceBundleSemanticHash !== preFlight.preparation.sourceBundleSemanticHash
     || input.parentModelSemanticHash !== preFlight.preparation.modelSemanticHash) {
-    throw supportError(
+    throw lfeaNativeSupportError(
       'LFEA_NATIVE_SUPPORT_PARENT_MISMATCH',
       'Support authority does not belong to the current source/model preparation.',
     );
@@ -109,21 +109,21 @@ function requireCurrentParents(preFlight, input) {
 function requireSupportSharedModel(preFlight, input) {
   const validation = validateSharedPipingModel(input.supportSharedModel);
   if (!validation.ok) {
-    throw supportError(
+    throw lfeaNativeSupportError(
       'LFEA_NATIVE_SUPPORT_SHARED_MODEL_INVALID',
       `Support shared model is invalid: ${validation.errors.join(' ')}`,
     );
   }
   if (input.supportSharedModel.sourceSnapshotRef.sourceSemanticHash
     !== preFlight.preparation.sourceBundleSemanticHash) {
-    throw supportError(
+    throw lfeaNativeSupportError(
       'LFEA_NATIVE_SUPPORT_SOURCE_CUSTODY_MISMATCH',
       'Support shared model source identity does not match the current InputXML source bundle.',
     );
   }
   if (input.supportAttachmentModel.sharedModelSemanticHash
     !== input.supportSharedModel.semanticHash) {
-    throw supportError(
+    throw lfeaNativeSupportError(
       'LFEA_NATIVE_SUPPORT_ATTACHMENT_PARENT_MISMATCH',
       'Support attachment model does not belong to the supplied shared piping model.',
     );

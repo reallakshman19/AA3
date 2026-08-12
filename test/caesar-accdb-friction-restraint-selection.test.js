@@ -35,8 +35,18 @@ test('selects only positive-FRIC_COEF ACCDB Y rows and keeps model mu authoritat
   assert.equal(selected[0].sourceRestraintTypeId, 3);
   assert.equal(selected[0].sourceRestraintType, 'Y');
   assert.equal(selected[0].sourceFrictionCoefficient, STORED_MU);
+  assert.equal(selected[0].sourceFrictionCoefficientFloat32, STORED_MU);
   assert.equal(selected[0].governedModelCoefficient, 0.3);
   assert.deepEqual(selected[0].normalDirection, [0, 1, 0]);
+});
+
+test('accepts parser-normalized 0.3 and expanded float32 0.30000001192092896 as the same ACCDB coefficient', () => {
+  const normalized = selectBm4lAccdbFrictionRows([row({ node: 10, mu: 0.3 })], 0.3)[0];
+  const expanded = selectBm4lAccdbFrictionRows([row({ node: 20, mu: STORED_MU })], 0.3)[0];
+  assert.equal(normalized.sourceFrictionCoefficient, 0.3);
+  assert.equal(expanded.sourceFrictionCoefficient, STORED_MU);
+  assert.equal(normalized.sourceFrictionCoefficientFloat32, STORED_MU);
+  assert.equal(expanded.sourceFrictionCoefficientFloat32, STORED_MU);
 });
 
 test('historical 46-row extraction remains diagnostic-only and exercises co-located GUI/LIM negative controls', () => {
@@ -56,7 +66,7 @@ test('historical 46-row extraction remains diagnostic-only and exercises co-loca
   assert.equal(selected.length, historical.observedSelectedRowCount);
   assert.deepEqual(selected.map((entry) => entry.nodeId), historical.observedFrictionNodeIds);
   assert.ok(selected.every((entry) => entry.sourceRestraintTypeId === authority.frictionSurfaceRule.resTypeId));
-  assert.ok(selected.every((entry) => entry.sourceFrictionCoefficient === STORED_MU));
+  assert.ok(selected.every((entry) => entry.sourceFrictionCoefficientFloat32 === STORED_MU));
   assert.ok(selected.every((entry) => entry.normalDirection.join(',') === '0,1,0'));
 
   const selectedNodes = new Set(selected.map((entry) => entry.nodeId));
@@ -90,12 +100,19 @@ test('rejects a source coefficient that does not corroborate float32 storage of 
   );
 });
 
+test('accepts numerical direction noise inside the governed +Y tolerance', () => {
+  const selected = selectBm4lAccdbFrictionRows([
+    row({ node: 20030, direction: [1e-12, 1, -1e-12] }),
+  ], 0.3);
+  assert.equal(selected.length, 1);
+});
+
 test('rejects a skewed or wrong-axis friction-bearing Y row for BM4_L', () => {
   assert.throws(
     () => selectBm4lAccdbFrictionRows([
       row({ node: 20030, direction: [0.1, 0.99, 0] }),
     ], 0.3),
-    /authenticated friction rows must be global \+Y/,
+    /friction rows must be global \+Y within/,
   );
 });
 

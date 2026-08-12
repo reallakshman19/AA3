@@ -225,7 +225,12 @@ class LfeaStandaloneRuntime {
     const state = authority.publish(
       this.sourceController.getPreFlight(), this.executionAuthority.getState(), this.resultsAuthority.getState(),
     );
-    attachEvidence(run, state);
+    try { attachEvidence(run, state); }
+    catch (error) {
+      authority.clearCurrentAuthority();
+      this.refreshCurrent();
+      throw error;
+    }
     this.refreshCurrent();
     this.layout.activate('results');
     return state;

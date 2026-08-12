@@ -51,21 +51,6 @@ L15 is formed only from the two independently converged primitive result states.
 
 For L1, the frozen mechanics are reused through an explicit hydrotest base transformation: ACCDB `HYDRO_PRESSURE` is mapped to the frozen pressure primitive, hydrotest contents are represented as 1000 kg/m3 water, insulation is excluded, and friction is removed only in the internal counterfactual base used to assemble the nonlinear state. The transformation is emitted as evidence and is not treated as a CAESAR reference result.
 
-## ACCDB extraction engine
-
-Stage 2 now reuses the ACCDB engine already implemented in `reallaksh19/XML_Compare_Utilities` instead of requiring Microsoft ACE/COM.
-
-The local production harness pins:
-
-- XML Compare Utilities commit `d83c62214b7a6486c17698225ea4e11bc3121cb6`;
-- `parser/accdb-mdb.js` Git blob `2ea596b6e9fb65e386e5cbb256f4141ce7bb595b`;
-- exported API `readAccdbNamedTables(arrayBuffer, tableNames, log)`;
-- `mdb-reader` version `2.2.6`, matching the app's `mdb-reader@2` engine family but fixed to an exact version for reproducible local qualification.
-
-`scripts/lfea-caesar-accdb-export-xml-compare.mjs` converts those named-table results into the existing `caesar-accdb-raw-export/v1` contract. It does not use the XML app's higher-level geometry heuristics; only the raw Access table reader is reused. The source manifest records the extractor commit, parser blob, package version, and package hash.
-
-No GitHub Actions workflow is required or used for this qualification path.
-
 ## RCA and result families
 
 The Stage 2 command reports the issue-required paired deltas:
@@ -76,15 +61,36 @@ The Stage 2 command reports the issue-required paired deltas:
 
 Literal component comparisons remain unchanged. Coordinate-invariant vectors, all global source-element end actions, physical equilibrium, nonlinear state residuals, repeated-run evidence, and stiffness sensitivity are retained separately rather than collapsed into one score.
 
-## Local production custody and acceptance
+## Comparison-driven technical repairs
 
-Run locally from a clean checkout at the exact candidate head. If `XML_Compare_Utilities` is a sibling checkout it is discovered automatically; otherwise pass its path explicitly. The harness copies/checks out the pinned extractor commit into the artifact directory, so the user's working checkout is not modified.
+The initial Stage 2 implementation was compared against the frozen solver and CAESAR reference-normalization contracts before accepting any real-data friction result. That comparison exposed and repaired four blocking integration defects without changing the frozen linear mechanics:
+
+1. **Nodal result identity mismatch.** The CAESAR reference and frozen solver normalize nodal force/moment components as `UX/UY/UZ` and `RX/RY/RZ`; only element-end actions use `FX/FY/FZ` and `MX/MY/MZ`. The nonlinear recovery now reproduces those exact nodal identities instead of creating incompatible `FX/MX` keys.
+2. **L15 equilibrium false-pass.** The original derived-case equilibrium lookup used the nonexistent nodal `FX/MX` identities and defaulted missing values to zero. L15 now evaluates the actual `UX/UY/UZ` and `RX/RY/RZ` incident/reaction rows.
+3. **Iteration-update tolerance contract.** The declared absolute update tolerances previously acted only as a denominator floor while convergence checked relative error alone. Updates now pass a declared combined absolute-plus-relative limit and retain the full evidence in the iteration ledger.
+4. **Signed normal reaction evidence.** Signed normal reaction is now the global normal restraint reaction projected onto the declared restraint direction; the Coulomb cap continues to use its magnitude.
+
+The generic coordinate-invariant vector assessment was also corrected so nodal force/moment vectors use the same benchmark DOF component identities, while element-end action vectors retain global action component names. The local preflight contract checker now fails if any of these mappings regress.
+
+## Local ACCDB extraction — no ACE and no GitHub Actions
+
+The production harness uses the ACCDB reader already implemented in `reallaksh19/XML_Compare_Utilities` rather than Microsoft ACE/COM. It pins:
+
+- XML Compare Utilities commit `d83c62214b7a6486c17698225ea4e11bc3121cb6`;
+- `parser/accdb-mdb.js` Git blob `2ea596b6e9fb65e386e5cbb256f4141ce7bb595b`;
+- `mdb-reader` version `2.2.6`.
+
+The extractor calls the XML Compare module's `readAccdbNamedTables()` boundary and emits the existing `caesar-accdb-raw-export/v1` contract. No Windows/ACE provider is required and no GitHub Actions qualification workflow is part of this Stage 2 path.
+
+Run locally from a clean checkout at the exact candidate head:
 
 ```powershell
 pwsh ./scripts/lfea-m047-bm4l-friction-production.ps1 `
   -ExpectedHead (git rev-parse HEAD) `
   -XmlCompareUtilitiesPath ../XML_Compare_Utilities
 ```
+
+## Production custody and acceptance
 
 The harness fails closed unless it receives the immutable Issue #1083 custody set:
 
@@ -99,6 +105,6 @@ It emits source custody, resolved configuration, nonlinear actuals, per-iteratio
 
 ## Current verification status
 
-The new/modified JavaScript friction implementation was syntax-checked locally while authored. The XML Compare extraction adapter was also `node --check` validated locally, and its boundary follows the app's existing `readAccdbNamedTables()` API.
+The comparison-driven source repairs are committed on the Stage 2 branch with `[skip ci]`; read-only checks show no workflow runs associated with those repair commits. The local harness performs syntax checks and the strengthened M047 source/configuration contract check before extracting or solving.
 
-The current execution container cannot retrieve/install the binary ACCDB runtime dependencies from the public internet, and it does not contain `mdb-reader` preinstalled. Therefore the authoritative BM4_L numerical receipt has not been generated in this session. This remains a draft until the local pinned run above is executed and its evidence reviewed; no GitHub Actions execution is needed or intended.
+The pinned BM4_L binary cannot be materialized into the current ChatGPT execution container through the available GitHub connector, so this session has not produced or claimed numerical CAESAR II friction parity. The next acceptance step is the local pinned-data command above; review the resulting literal, vector, equilibrium, active-set, paired-delta, repeatability, and sensitivity evidence before moving the draft to ready-for-review.

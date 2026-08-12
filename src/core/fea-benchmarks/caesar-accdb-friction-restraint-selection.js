@@ -1,29 +1,30 @@
 /**
  * Source-custody selector for BM4_L friction-bearing restraints.
  *
- * Friction-site membership comes from ACCDB INPUT_RESTRAINTS, not from node
- * exceptions or from the load-case multiplier. The governed model coefficient
- * remains the magnitude used by the nonlinear law; FRIC_COEF is used here to
- * identify which physical restraint rows carry friction and to corroborate the
- * database's single-precision storage of that model coefficient.
+ * Friction-site membership comes from the issue-pinned ACCDB INPUT_RESTRAINTS
+ * rows, not from node exceptions, historical topology, or the load-case
+ * multiplier. The governed model coefficient remains the magnitude used by the
+ * nonlinear law; FRIC_COEF identifies which physical restraint row carries
+ * friction and corroborates the database's single-precision coefficient value.
  */
 
-export const BM4L_ACCDB_FRICTION_RESTRAINT_TYPE_ID = 3;
-export const BM4L_ACCDB_FRICTION_RESTRAINT_TYPE = 'Y';
-export const BM4L_ACCDB_FRICTION_DIRECTION = Object.freeze([0, 1, 0]);
-const DIRECTION_TOLERANCE = 1e-9;
+export const CAESAR_ACCDB_ANCHOR_RESTRAINT_TYPE_ID = 1;
+export const BM4L_FRICTION_DIRECTION_ALIGNMENT_TOLERANCE = 1e-9;
 
 /**
  * Select friction-bearing BM4_L INPUT_RESTRAINTS rows.
  *
- * Historical diagnostic row evidence establishes that BM4_L uses type 3/Y,
- * positive FRIC_COEF and global +Y for friction surfaces. Production authority
- * still comes from the issue-pinned ACCDB itself. The comparison to model mu is
- * deliberately made after Math.fround so mdb-reader implementations that return
- * either 0.3 or the expanded float32 value 0.30000001192092896 remain equivalent.
+ * Production rules deliberately do not assume the type-3/+Y pattern observed in
+ * a non-authoritative historical extraction. The pinned ACCDB is authoritative:
+ * any non-anchor directional restraint with positive FRIC_COEF is a friction
+ * surface when its coefficient corroborates model mu. The current qualified
+ * linear restraint adapter represents directional restraints on one dominant
+ * translational DOF, so a positive-friction skew restraint fails closed rather
+ * than mixing a rotated friction plane with an axis-projected normal spring.
  *
- * GUI/LIM/ANC rows remain in the mechanical model as ordinary restraints, but
- * they never create a friction surface merely because they are non-anchors.
+ * The comparison to model mu is made after Math.fround so mdb-reader
+ * implementations that return either 0.3 or the expanded float32 value
+ * 0.30000001192092896 remain equivalent.
  */
 export function selectBm4lAccdbFrictionRows(rowsInput, modelCoefficientInput) {
   if (!Array.isArray(rowsInput) || rowsInput.length === 0) {
@@ -45,10 +46,10 @@ export function selectBm4lAccdbFrictionRows(rowsInput, modelCoefficientInput) {
     }
     if (!(sourceCoefficient > 0)) return;
 
-    if (typeId !== BM4L_ACCDB_FRICTION_RESTRAINT_TYPE_ID) {
+    if (typeId === CAESAR_ACCDB_ANCHOR_RESTRAINT_TYPE_ID) {
       throw new TypeError(
-        `INPUT_RESTRAINTS[${sourceRowIndex}] node ${nodeId} carries positive FRIC_COEF on `
-        + `RES_TYPEID ${typeId}; BM4_L Stage 2 authorizes friction only on ACCDB type Y (3).`,
+        `INPUT_RESTRAINTS[${sourceRowIndex}] anchor node ${nodeId} carries positive FRIC_COEF; `
+        + 'Stage 2 does not define friction on a fully restrained anchor.',
       );
     }
     if (Math.fround(sourceCoefficient) !== storedModelCoefficient) {
@@ -58,42 +59,35 @@ export function selectBm4lAccdbFrictionRows(rowsInput, modelCoefficientInput) {
       );
     }
 
-    const direction = sourceDirection(row, sourceRowIndex, nodeId);
-    if (!same3(direction, BM4L_ACCDB_FRICTION_DIRECTION, DIRECTION_TOLERANCE)) {
-      throw new TypeError(
-        `INPUT_RESTRAINTS[${sourceRowIndex}] node ${nodeId} is a friction-bearing Y row with `
-        + `direction [${direction.join(',')}]; BM4_L friction rows must be global +Y within `
-        + `${DIRECTION_TOLERANCE}.`,
-      );
-    }
-
+    const normalDirection = axisAlignedSourceDirection(row, sourceRowIndex, nodeId);
     selected.push(Object.freeze({
       row,
       sourceRowIndex,
       nodeId,
       sourceRestraintTypeId: typeId,
-      sourceRestraintType: BM4L_ACCDB_FRICTION_RESTRAINT_TYPE,
+      sourceRestraintType: `RES_TYPEID_${typeId}`,
       sourceFrictionCoefficient: sourceCoefficient,
       sourceFrictionCoefficientFloat32: Math.fround(sourceCoefficient),
       governedModelCoefficient: modelCoefficient,
       storedModelCoefficient,
-      normalDirection: Object.freeze([...direction]),
+      normalDirection: Object.freeze([...normalDirection]),
     }));
   });
 
   if (selected.length === 0) {
-    throw new TypeError('BM4_L has nonzero effective friction but no positive-FRIC_COEF Y restraint rows.');
+    throw new TypeError('BM4_L has nonzero effective friction but no positive-FRIC_COEF directional restraint rows.');
   }
   const duplicateNodes = duplicates(selected.map((entry) => entry.nodeId));
   if (duplicateNodes.length > 0) {
     throw new TypeError(
-      `BM4_L Stage 2 expects one friction-bearing Y surface per node; duplicates: ${duplicateNodes.join(', ')}.`,
+      `BM4_L Stage 2 supports one friction-bearing restraint surface per node; `
+      + `multi-plane friction is not implemented at nodes: ${duplicateNodes.join(', ')}.`,
     );
   }
   return Object.freeze(selected);
 }
 
-function sourceDirection(row, index, nodeId) {
+function axisAlignedSourceDirection(row, index, nodeId) {
   const direction = [Number(row.XCOSINE), Number(row.YCOSINE), Number(row.ZCOSINE)];
   if (direction.some((value) => !Number.isFinite(value))) {
     throw new TypeError(`INPUT_RESTRAINTS[${index}] node ${nodeId} has non-finite direction cosines.`);
@@ -102,12 +96,19 @@ function sourceDirection(row, index, nodeId) {
   if (!(magnitude > 0)) {
     throw new TypeError(`INPUT_RESTRAINTS[${index}] node ${nodeId} has zero restraint direction.`);
   }
-  return direction.map((value) => clean(value / magnitude));
-}
-
-function same3(left, right, tolerance) {
-  return left.length === 3 && right.length === 3
-    && left.every((value, index) => Math.abs(value - right[index]) <= tolerance);
+  const unit = direction.map((value) => clean(value / magnitude));
+  const magnitudes = unit.map(Math.abs);
+  const dominantIndex = magnitudes.indexOf(Math.max(...magnitudes));
+  const skewed = magnitudes.some((value, axis) =>
+    axis !== dominantIndex && value > BM4L_FRICTION_DIRECTION_ALIGNMENT_TOLERANCE);
+  if (skewed) {
+    throw new TypeError(
+      `INPUT_RESTRAINTS[${index}] node ${nodeId} carries friction on skew direction `
+      + `[${unit.join(',')}]; Stage 2 requires an axis-aligned friction normal because the `
+      + 'qualified base restraint adapter is axis projected.',
+    );
+  }
+  return unit;
 }
 
 function duplicates(values) {

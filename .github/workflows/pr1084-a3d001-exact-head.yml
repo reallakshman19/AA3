@@ -1,0 +1,128 @@
+name: PR1084 A3D-001 exact-head qualification
+
+on:
+  push:
+    branches:
+      - qualification/pr1084-a3d001-exact-head
+
+permissions:
+  contents: read
+
+jobs:
+  qualify-a3d001:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    env:
+      CANDIDATE_SHA: 1a1cee4b361bea4bdd09ecb1b57cfa0ddb1e8159
+      BASE_SHA: f2b0f3594bb417fea0f4c3a520ffd52a1ceabd4e
+      PR_NUMBER: '1084'
+      PLAYWRIGHT_BROWSERS_PATH: '0'
+    steps:
+      - name: Checkout exact candidate
+        uses: actions/checkout@v4
+        with:
+          ref: 1a1cee4b361bea4bdd09ecb1b57cfa0ddb1e8159
+          fetch-depth: 0
+
+      - name: Verify exact candidate and 15-file ledger
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$(git rev-parse HEAD)" = "$CANDIDATE_SHA"
+          cat > /tmp/expected-files.txt <<'EOF'
+          e2e/topology-edit-validation-identity-race.spec.js
+          src/workspace/topology-edit/professional/topology-edit-validation-identity.js
+          src/workspace/topology-edit/professional/topology-edit-validation-worker-client.js
+          src/workspace/topology-edit/professional/topology-edit-validation-worker-contract.js
+          src/workspace/topology-edit/professional/topology-edit-validation-worker-state.js
+          src/workspace/viewport-productivity/topology-edit-authoring-runtime.js
+          src/workspace/viewport-productivity/topology-edit-connect-endpoints-authoring-service.js
+          src/workspace/viewport-productivity/topology-edit-professional-operation-actions.js
+          src/workspace/viewport-productivity/topology-edit-start-route-authoring-service.js
+          src/workspace/viewport-productivity/topology-edit-table-workflow.js
+          src/workspace/viewport-productivity/topology-edit-validation-runtime-identity.js
+          tests/topology-edit-professional-engineering-worker.test.mjs
+          tests/topology-edit-professional-validation-worker-client.test.mjs
+          tests/topology-edit-professional-validation-worker-identity.test.mjs
+          tests/topology-edit-validation-runtime-identity.test.mjs
+          EOF
+          sort -o /tmp/expected-files.txt /tmp/expected-files.txt
+          git diff --name-only "$BASE_SHA" "$CANDIDATE_SHA" | sort > /tmp/actual-files.txt
+          diff -u /tmp/expected-files.txt /tmp/actual-files.txt
+          test "$(wc -l < /tmp/actual-files.txt)" -eq 15
+          git diff --check "$BASE_SHA" "$CANDIDATE_SHA"
+
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Syntax-check changed JavaScript
+        shell: bash
+        run: |
+          set -euo pipefail
+          while IFS= read -r file; do
+            case "$file" in
+              *.js|*.mjs) node --check "$file" ;;
+            esac
+          done < <(git diff --name-only "$BASE_SHA" "$CANDIDATE_SHA")
+
+      - name: Run focused authority tests
+        run: >-
+          node --test
+          tests/topology-edit-professional-engineering-worker.test.mjs
+          tests/topology-edit-professional-validation-worker-client.test.mjs
+          tests/topology-edit-professional-validation-worker-identity.test.mjs
+          tests/topology-edit-validation-runtime-identity.test.mjs
+
+      - name: Build production bundle
+        run: npm run build
+
+      - name: Install pinned Chromium
+        run: npx playwright install --with-deps chromium
+
+      - name: Record exact run identity
+        shell: bash
+        run: |
+          mkdir -p artifacts
+          node - <<'NODE'
+          const fs = require('node:fs');
+          const data = {
+            schema: 'PR1084A3D001RunIdentity.v1',
+            candidateHead: process.env.CANDIDATE_SHA,
+            baseHead: process.env.BASE_SHA,
+            pr: Number(process.env.PR_NUMBER),
+            runId: process.env.GITHUB_RUN_ID,
+            runAttempt: Number(process.env.GITHUB_RUN_ATTEMPT),
+            workflowRef: process.env.GITHUB_WORKFLOW_REF,
+            repository: process.env.GITHUB_REPOSITORY,
+          };
+          fs.writeFileSync('artifacts/pr1084-run-identity.json', JSON.stringify(data, null, 2));
+          NODE
+
+      - name: Run real Chromium stale-race qualification
+        env:
+          PLAYWRIGHT_JSON_OUTPUT_NAME: artifacts/pr1084-playwright.json
+        run: >-
+          node scripts/run-playwright.mjs
+          e2e/topology-edit-validation-identity-race.spec.js
+          --workers=1
+          --retries=0
+          --trace=on
+          --reporter=line,json
+
+      - name: Upload exact-head evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: pr1084-a3d001-exact-head-${{ env.CANDIDATE_SHA }}-${{ github.run_attempt }}
+          path: |
+            artifacts
+            test-results
+            playwright-report
+          if-no-files-found: warn
+          retention-days: 30

@@ -1,6 +1,6 @@
 /** Public integration surface for the standalone LAFEA calculation workbench. */
-import { createLafeaMockDocument } from './advanced-mock-data.js';
 import { FeaBenchmarkPanel } from './fea-benchmark-panel.js';
+import { createLafeaMockDocument } from './lafea-simulated-source-provider.js';
 import { LafeaWorkbenchController } from './lafea-workbench-controller.js';
 import { LAFEA_WORKBENCH_STYLES, lafeaWorkbenchStyles } from './lafea-workbench-styles.js';
 

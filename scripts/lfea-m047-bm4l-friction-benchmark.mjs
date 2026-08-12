@@ -2,6 +2,7 @@
 import { mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { dirname, resolve } from 'node:path';
 import {
+  CAESAR_ACCDB_FRICTION_SOLVER_PROFILE,
   buildBenchmarkEngineeringAssessment,
   buildCaesarAccdbBenchmarkPackage,
   createCaesarAccdbQualificationAdapter,
@@ -18,7 +19,8 @@ const args = parseArguments(process.argv.slice(2));
 const profile = readJson(args.profile, 'BM4_L profile');
 const rawExport = readJson(args.rawExport, 'BM4_L raw ACCDB export');
 const benchmarkPackage = buildCaesarAccdbBenchmarkPackage({ rawExport, profile });
-const resolvedConfiguration = buildResolvedConfiguration(benchmarkPackage);
+const restraintTopology = validateFrictionRestraintTopology(benchmarkPackage);
+const resolvedConfiguration = buildResolvedConfiguration(benchmarkPackage, restraintTopology);
 writeJson(resolvedConfiguration, args.configOut);
 
 const controls = solveCaesarAccdbLinearBenchmark(benchmarkPackage, ['L2', 'L3', 'L4', 'L5', 'L6', 'L14']);
@@ -29,7 +31,11 @@ writeJson(actual, args.actualOut);
 const qualification = qualifyActual(benchmarkPackage, actual);
 const caseRecords = benchmarkPackage.cases
   .filter((record) => actual.cases[record.caseId])
-  .map((record) => ({ ...record, referenceRows: benchmarkPackage.references[record.caseId].rows }));
+  .map((record) => ({
+    ...record,
+    referenceRows: benchmarkPackage.references[record.caseId].rows,
+    equilibrium: benchmarkPackage.references[record.caseId].equilibrium,
+  }));
 const engineeringAssessment = buildBenchmarkEngineeringAssessment({
   caseRecords,
   qualification,
@@ -49,6 +55,7 @@ const report = Object.freeze({
   source: benchmarkPackage.source,
   packageSemanticHash: benchmarkPackage.semanticHash,
   resolvedConfiguration,
+  restraintTopology,
   status: nonlinearFailures.length > 0 || l15Failure
     ? 'ACTUAL_INVALID'
     : qualification.status,
@@ -121,7 +128,7 @@ function qualifyActual(benchmarkPackage, actual) {
   });
 }
 
-function buildResolvedConfiguration(benchmarkPackage) {
+function buildResolvedConfiguration(benchmarkPackage, restraintTopology) {
   const authority = benchmarkPackage.profile.configurationAuthority;
   const primitiveCaseIds = ['L13', 'L7', 'L1'];
   const commonSettings = [
@@ -168,7 +175,78 @@ function buildResolvedConfiguration(benchmarkPackage) {
       solverUnit: 'N/m',
       solverValue: Number(frictStif.value.value) * 100,
     },
+    restraintTopology,
     cases,
+  });
+}
+
+function validateFrictionRestraintTopology(benchmarkPackage) {
+  const rows = benchmarkPackage.model.tables.INPUT_RESTRAINTS.rows;
+  const tolerance = Number(CAESAR_ACCDB_FRICTION_SOLVER_PROFILE.axisAlignmentTolerance);
+  const translationDofs = ['UX', 'UY', 'UZ'];
+  const anchorNodes = new Set();
+  const directionalByKey = new Map();
+  const supports = [];
+
+  rows.forEach((row, rowIndex) => {
+    const nodeId = String(row.NODE_NUM);
+    const type = Number(row.RES_TYPEID);
+    if (type === 1) {
+      if (anchorNodes.has(nodeId)) {
+        throw new TypeError(`Duplicate anchor restraint at node ${nodeId}; Stage 2 requires one unambiguous restraint declaration.`);
+      }
+      const directional = [...directionalByKey.keys()].filter((key) => key.startsWith(`${nodeId}:`));
+      if (directional.length > 0) {
+        throw new TypeError(`Anchor node ${nodeId} also declares directional restraints: ${directional.join(', ')}.`);
+      }
+      anchorNodes.add(nodeId);
+      return;
+    }
+    if (anchorNodes.has(nodeId)) {
+      throw new TypeError(`Directional restraint row ${rowIndex + 1} is attached to anchor node ${nodeId}.`);
+    }
+    const direction = [Number(row.XCOSINE), Number(row.YCOSINE), Number(row.ZCOSINE)];
+    if (!direction.every(Number.isFinite)) {
+      throw new TypeError(`Directional restraint row ${rowIndex + 1} at node ${nodeId} has a non-finite direction cosine.`);
+    }
+    const magnitude = Math.hypot(...direction);
+    if (!(magnitude > 0)) {
+      throw new TypeError(`Directional restraint row ${rowIndex + 1} at node ${nodeId} has a zero normal direction.`);
+    }
+    const normal = direction.map((value) => value / magnitude);
+    const absolute = normal.map(Math.abs);
+    const normalAxis = absolute.indexOf(Math.max(...absolute));
+    if (Math.abs(absolute[normalAxis] - 1) > tolerance
+      || absolute.some((value, axis) => axis !== normalAxis && value > tolerance)) {
+      throw new TypeError(
+        `Directional restraint row ${rowIndex + 1} at node ${nodeId} is skewed; Stage 2 will not invent a rotated friction plane.`,
+      );
+    }
+    const dof = translationDofs[normalAxis];
+    const key = `${nodeId}:${dof}`;
+    if (directionalByKey.has(key)) {
+      throw new TypeError(
+        `Duplicate directional restraint DOF ${key} at rows ${directionalByKey.get(key).sourceRowIndex + 1} and ${rowIndex + 1}.`,
+      );
+    }
+    const support = Object.freeze({
+      supportId: `ACCDB-FRICTION-${nodeId}-R${rowIndex + 1}`,
+      sourceRowIndex: rowIndex,
+      nodeId,
+      normalDof: dof,
+      normalDirection: Object.freeze(normal),
+    });
+    directionalByKey.set(key, support);
+    supports.push(support);
+  });
+
+  return Object.freeze({
+    schema: 'lfea-m047-bm4l-friction-restraint-topology/v1',
+    sourceRowCount: rows.length,
+    anchorNodeCount: anchorNodes.size,
+    directionalRestraintCount: supports.length,
+    stateScope: 'PER_ACCDB_DIRECTIONAL_RESTRAINT_ROW',
+    supports: Object.freeze(supports),
   });
 }
 
@@ -195,6 +273,7 @@ function writeSummary(report, path) {
     `- ACCDB SHA-256: \`${report.source.sha256}\``,
     `- Precedence: ${report.resolvedConfiguration.precedenceLowToHigh.join(' < ')}`,
     `- Friction stiffness: ${report.resolvedConfiguration.frictionStiffnessConversion.solverValue} N/m`,
+    `- Friction contacts: ${report.restraintTopology.directionalRestraintCount} directional restraint rows; state scope is per restraint row.`,
     `- Literal external components: ${a.literalExternalComponents.status}; ${a.literalExternalComponents.counts.failed} failures.`,
     `- Restraint components: ${a.restraintComponents.status}; ${a.restraintComponents.counts.failed} failures.`,
     `- Coordinate-invariant vectors: ${a.vectorGroups.status}; ${a.vectorGroups.counts.failed} failures.`,

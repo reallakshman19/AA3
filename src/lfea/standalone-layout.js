@@ -4,6 +4,7 @@ const NAV_ITEMS = Object.freeze([
   { id: 'model', label: 'Model', state: 'available' },
   { id: 'analysis', label: 'Analysis', state: 'available' },
   { id: 'results', label: 'Results', state: 'available' },
+  { id: 'code', label: 'Code checks', state: 'available' },
   { id: 'verification', label: 'Verification', state: 'available' },
   { id: 'history', label: 'History', state: 'available' },
   { id: 'compare', label: 'Compare', state: 'available' },
@@ -79,6 +80,13 @@ export function renderLfeaStandaloneLayout(rootElement, identity = {}, options =
     viewRoots.set(item.id, view);
   }
 
+  const modelSectionRoot = viewRoots.get('model');
+  const modelJourneyRoot = documentRef.createElement('div');
+  modelJourneyRoot.dataset.role = 'lfea-model-journey-root';
+  const loadCaseRoot = documentRef.createElement('div');
+  loadCaseRoot.dataset.role = 'lfea-load-case-root';
+  modelSectionRoot.append(modelJourneyRoot, loadCaseRoot);
+
   const verificationRoot = viewRoots.get('verification');
   const nativeVerificationRoot = documentRef.createElement('div');
   nativeVerificationRoot.className = 'lfea-native-verification-root';
@@ -124,9 +132,11 @@ export function renderLfeaStandaloneLayout(rootElement, identity = {}, options =
     statusRoot,
     sourceRoot: viewRoots.get('source'),
     reviewRoot: viewRoots.get('review'),
-    modelRoot: viewRoots.get('model'),
+    modelRoot: modelJourneyRoot,
+    loadCaseRoot,
     analysisRoot: viewRoots.get('analysis'),
     resultsRoot: viewRoots.get('results'),
+    codeRoot: viewRoots.get('code'),
     verificationRoot,
     nativeVerificationRoot,
     historyRoot: viewRoots.get('history'),

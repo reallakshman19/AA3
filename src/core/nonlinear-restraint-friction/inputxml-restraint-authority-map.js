@@ -1,78 +1,100 @@
-import { decodeCaesarRestraintCode } from './caesar-restraint-code-authority.js';
+import { resolveRestraintTypeMutation } from '../geometry/adapters/inputxml-restraint-type-mutation.js';
+import { decodeCorrectedInputXmlRestraintType } from './caesar-restraint-code-authority.js';
 
 const CAESAR_UNSET = -1.0101;
 const SENTINEL_TOLERANCE = 1e-3;
 const UNIT_TOLERANCE = 1e-9;
 
 /**
- * Parse CAESAR InputXML restraint rows without collapsing the exported TYPE
- * code into a direction-cosine-only restraint. This is an authority/source
- * inventory only; it does not decide nonlinear active states.
+ * Parse CAESAR InputXML restraint rows with an explicit source-mutation config.
+ * InputXML TYPE must be corrected exactly once before classification. ACCDB
+ * rows do not belong on this path and must not be mutated here.
  */
-export function buildInputXmlRestraintAuthorityMap(xmlText) {
+export function buildInputXmlRestraintAuthorityMap(xmlText, options = {}) {
   if (typeof xmlText !== 'string' || xmlText.length === 0) {
     throw new TypeError('xmlText must be a non-empty string.');
   }
+  const mutationConfig = requireMutationConfig(options.restraintTypeMutationConfig);
   const tags = [...xmlText.matchAll(/<RESTRAINT\b[^>]*\/>/g)];
-  const rows = tags.map((match, ordinal) => parseRestraint(match[0], ordinal))
-    .filter((row) => row.nodeId !== null && row.typeCode !== null);
+  const rows = tags
+    .map((match, ordinal) => parseRestraint(match[0], ordinal, mutationConfig))
+    .filter((row) => row.nodeId !== null && row.sourceTypeCode !== null);
 
-  const typeInventory = [...new Set(rows.map((row) => row.typeCode))]
-    .sort((a, b) => a - b)
-    .map((typeCode) => {
-      const matching = rows.filter((row) => row.typeCode === typeCode);
-      const decoded = decodeCaesarRestraintCode(typeCode);
+  const rawTypeInventory = inventory(rows, 'sourceTypeCode', (row) => row.sourceTypeCode);
+  const correctedTypeInventory = inventory(rows, 'correctedTypeCode', (row) => row.correctedTypeCode)
+    .map((entry) => {
+      const decoded = decodeCorrectedInputXmlRestraintType(entry.correctedTypeCode);
       return Object.freeze({
-        typeCode,
+        ...entry,
         abbreviation: decoded.abbreviation,
         family: decoded.family,
-        rowCount: matching.length,
-        nodeIds: Object.freeze(matching.map((row) => row.nodeId).sort(numericText)),
       });
     });
 
   const frictionRows = rows.filter((row) => row.coefficientOfFriction !== null
     && row.coefficientOfFriction > 0);
-  const directionalRows = rows.filter((row) => row.decoded.family === 'TRANSLATIONAL_DIRECTIONAL');
-  const rotationalRows = rows.filter((row) => row.decoded.family === 'ROTATIONAL_DOUBLE_ACTING');
-  const snubberRows = rows.filter((row) => row.decoded.snubber === true);
-  const anchorRows = rows.filter((row) => row.decoded.family === 'ANCHOR');
+  const frictionNodes = new Set(frictionRows.map((row) => row.nodeId));
+  const positiveGapRows = rows.filter((row) => row.gap !== null && row.gap > 0);
+  const frictionCoupledPositiveGapRows = positiveGapRows
+    .filter((row) => frictionNodes.has(row.nodeId) && !(row.coefficientOfFriction > 0));
 
   return Object.freeze({
-    schema: 'inputxml-restraint-authority-map/v1',
+    schema: 'inputxml-restraint-authority-map/v2',
+    sourceDomain: 'INPUTXML',
+    mutation: Object.freeze({
+      required: true,
+      enabled: true,
+      rows: Object.freeze(mutationConfig.rows.map((row) => Object.freeze({ ...row }))),
+    }),
     activeRestraintRowCount: rows.length,
     activeRestraintNodeCount: new Set(rows.map((row) => row.nodeId)).size,
-    typeInventory: Object.freeze(typeInventory),
+    rawTypeInventory: Object.freeze(rawTypeInventory),
+    correctedTypeInventory: Object.freeze(correctedTypeInventory),
     frictionSourceCount: frictionRows.length,
-    frictionSources: Object.freeze(frictionRows.map(frictionContract).sort(nodeRowOrder)),
-    directionalRestraints: Object.freeze(directionalRows.map(rowContract).sort(nodeRowOrder)),
-    rotationalRestraints: Object.freeze(rotationalRows.map(rowContract).sort(nodeRowOrder)),
-    staticSnubbers: Object.freeze(snubberRows.map(rowContract).sort(nodeRowOrder)),
-    anchors: Object.freeze(anchorRows.map(rowContract).sort(nodeRowOrder)),
+    frictionSources: Object.freeze(frictionRows.map(rowContract).sort(nodeRowOrder)),
+    limitRows: Object.freeze(rows.filter((row) => row.decoded.abbreviation === 'LIM')
+      .map(rowContract).sort(nodeRowOrder)),
+    guideRows: Object.freeze(rows.filter((row) => row.decoded.abbreviation === 'GUI')
+      .map(rowContract).sort(nodeRowOrder)),
+    directionalRows: Object.freeze(rows.filter((row) => row.decoded.abbreviation === '+Y')
+      .map(rowContract).sort(nodeRowOrder)),
+    anchorRows: Object.freeze(rows.filter((row) => row.decoded.abbreviation === 'ANC')
+      .map(rowContract).sort(nodeRowOrder)),
+    positiveGapRows: Object.freeze(positiveGapRows.map(rowContract).sort(nodeRowOrder)),
+    frictionCoupledPositiveGapRows: Object.freeze(
+      frictionCoupledPositiveGapRows.map(rowContract).sort(nodeRowOrder),
+    ),
     warnings: Object.freeze([
-      'EXPORTED_TYPE_IS_CAESAR_RESTRAINT_CODE_NOT_GENERIC_DIRECTION_CLASS',
-      'DIRECTION_COSINES_MUST_NOT_REPLACE_TYPE_CODE_SEMANTICS',
-      'ROTATIONAL_GAP_VALUES_USE_ANGLE_UNITS',
-      'STATIC_SNUBBER_ROWS_REQUIRE_LOAD_CASE_ACTIVATION_AUTHORITY',
-      'POSITIVE_GAP_FIELD_ON_A_COMPANION_ROW_IS_NOT_BY_ITSELF_TRANSLATIONAL_CONTACT_AUTHORITY',
+      'INPUTXML_RESTRAINT_TYPE_MUTATION_REQUIRED_BEFORE_CLASSIFICATION',
+      'ACCDB_RESTRAINT_TYPES_MUST_NOT_USE_THIS_MUTATION_PATH',
+      'DIRECTION_COSINES_DO_NOT_REPLACE_CORRECTED_TYPE_SEMANTICS',
       'THIS_MAP_DOES_NOT_AUTHORIZE_NONLINEAR_ACTIVE_STATE_SELECTION',
     ]),
   });
 }
 
-function parseRestraint(tag, ordinal) {
+function parseRestraint(tag, ordinal, mutationConfig) {
   const attrs = Object.fromEntries([...tag.matchAll(/([A-Z0-9_]+)="([^"]*)"/g)]
     .map((match) => [match[1], match[2]]));
   const node = optionalNumber(attrs.NODE);
-  const type = optionalNumber(attrs.TYPE);
+  const sourceType = optionalNumber(attrs.TYPE);
   const restraintNumber = optionalNumber(attrs.NUM);
-  const typeCode = type === null ? null : Math.trunc(type);
-  const decoded = typeCode === null ? null : decodeCaesarRestraintCode(typeCode);
+  if (sourceType === null) {
+    return Object.freeze({ nodeId: node === null ? null : formatNode(node), sourceTypeCode: null });
+  }
+  const mutation = resolveRestraintTypeMutation(attrs.TYPE, mutationConfig);
+  const sourceTypeCode = integerTextToNumber(mutation.sourceTypeCode, 'source InputXML TYPE');
+  const correctedTypeCode = integerTextToNumber(mutation.correctedTypeCode, 'corrected InputXML TYPE');
+  const decoded = decodeCorrectedInputXmlRestraintType(correctedTypeCode);
   return Object.freeze({
     sourceId: `R${ordinal + 1}:N${node === null ? 'UNSET' : formatNode(node)}:S${restraintNumber ?? 'UNSET'}`,
     nodeId: node === null ? null : formatNode(node),
     restraintNumber,
-    typeCode,
+    sourceTypeCode,
+    correctedTypeCode,
+    mutationApplied: mutation.mutationApplied,
+    mutationRuleId: mutation.mutationRuleId,
+    mutationLabel: mutation.mutationLabel,
     decoded,
     stiffness: optionalNumber(attrs.STIFFNESS),
     gap: optionalNumber(attrs.GAP),
@@ -83,32 +105,51 @@ function parseRestraint(tag, ordinal) {
   });
 }
 
+function inventory(rows, fieldName, selector) {
+  return [...new Set(rows.map(selector))]
+    .sort((a, b) => a - b)
+    .map((value) => {
+      const matching = rows.filter((row) => selector(row) === value);
+      return Object.freeze({
+        [fieldName]: value,
+        rowCount: matching.length,
+        nodeIds: Object.freeze(matching.map((row) => row.nodeId).sort(numericText)),
+      });
+    });
+}
+
 function rowContract(row) {
   return Object.freeze({
     nodeId: row.nodeId,
     restraintNumber: row.restraintNumber,
-    typeCode: row.typeCode,
+    sourceTypeCode: row.sourceTypeCode,
+    correctedTypeCode: row.correctedTypeCode,
+    mutationApplied: row.mutationApplied,
+    mutationRuleId: row.mutationRuleId,
+    mutationLabel: row.mutationLabel,
     abbreviation: row.decoded.abbreviation,
     family: row.decoded.family,
-    dofs: row.decoded.dofs,
     gap: row.gap,
     gapUnitClass: row.decoded.gapUnitClass,
     directionCosineAxis: row.direction,
     coefficientOfFriction: row.coefficientOfFriction,
-    activationAuthority: row.decoded.activationAuthority ?? null,
-    freeDirection: row.decoded.freeDirection ?? null,
-    restrainedDirection: row.decoded.restrainedDirection ?? null,
     tag: row.tag,
   });
 }
 
-function frictionContract(row) {
-  const base = rowContract(row);
+function requireMutationConfig(config) {
+  if (config?.enabled !== true || !Array.isArray(config?.rows) || config.rows.length === 0) {
+    const error = new TypeError('InputXML restraint TYPE mutation config must be explicitly enabled with rows.');
+    error.code = 'INPUTXML_RESTRAINT_TYPE_MUTATION_CONFIG_REQUIRED';
+    throw error;
+  }
   return Object.freeze({
-    ...base,
-    frictionCoefficient: row.coefficientOfFriction,
-    frictionAxisUnit: row.direction,
-    classification: 'FRICTION_ON_TYPED_RESTRAINT',
+    enabled: true,
+    rows: Object.freeze(config.rows.map((row) => Object.freeze({
+      label: String(row.label ?? ''),
+      from: String(row.from),
+      to: String(row.to),
+    }))),
   });
 }
 
@@ -129,6 +170,14 @@ function optionalNumber(value) {
   const number = Number(value);
   if (!Number.isFinite(number)) return null;
   return Math.abs(number - CAESAR_UNSET) < SENTINEL_TOLERANCE ? null : number;
+}
+
+function integerTextToNumber(value, label) {
+  const number = Number(value);
+  if (!Number.isInteger(number) || number < 0) {
+    throw new TypeError(`${label} must resolve to a non-negative integer; received ${String(value)}.`);
+  }
+  return number;
 }
 
 function formatNode(number) {

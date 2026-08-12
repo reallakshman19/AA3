@@ -1,0 +1,64 @@
+name: PR1084 Chromium diagnostic
+
+on:
+  push:
+    branches:
+      - qualification/pr1084-chromium-diagnostic
+
+permissions:
+  contents: read
+
+jobs:
+  chromium-diagnostic:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    env:
+      CANDIDATE_SHA: 1a1cee4b361bea4bdd09ecb1b57cfa0ddb1e8159
+      PLAYWRIGHT_BROWSERS_PATH: '0'
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: 1a1cee4b361bea4bdd09ecb1b57cfa0ddb1e8159
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+      - run: npm ci
+      - run: npx playwright install --with-deps chromium
+      - name: Run exact Chromium race and retain output
+        id: chromium
+        continue-on-error: true
+        shell: bash
+        env:
+          PLAYWRIGHT_JSON_OUTPUT_NAME: artifacts/pr1084-diagnostic-playwright.json
+        run: |
+          mkdir -p artifacts
+          set -o pipefail
+          node scripts/run-playwright.mjs \
+            e2e/topology-edit-validation-identity-race.spec.js \
+            --workers=1 \
+            --retries=0 \
+            --trace=on \
+            --reporter=line,json 2>&1 | tee artifacts/pr1084-chromium-diagnostic.log
+      - name: Surface Chromium failure
+        if: steps.chromium.outcome == 'failure'
+        shell: bash
+        run: |
+          tail -n 24 artifacts/pr1084-chromium-diagnostic.log | while IFS= read -r line; do
+            line="${line//'%'/'%25'}"
+            line="${line//$'\r'/'%0D'}"
+            echo "::error::$line"
+          done
+          exit 1
+      - name: Upload diagnostic evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: pr1084-chromium-diagnostic-${{ env.CANDIDATE_SHA }}-${{ github.run_attempt }}
+          path: |
+            artifacts
+            test-results
+            playwright-report
+          if-no-files-found: warn
+          retention-days: 14

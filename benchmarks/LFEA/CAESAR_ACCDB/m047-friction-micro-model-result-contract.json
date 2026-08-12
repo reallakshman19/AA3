@@ -5,6 +5,12 @@
     "caesarVersion": "14.00.00.0910",
     "build": 231113
   },
+  "knownMechanics": {
+    "coefficientOfFriction": 0.3,
+    "staticFrictionStiffnessNPerM": 175126835.24647635,
+    "frictionAngleVariationDeg": 15,
+    "frictionNormalForceVariation": 0.15
+  },
   "sourcePolicy": {
     "requiredProvenanceClass": "INDEPENDENT_PRODUCT_OBSERVATION",
     "bm4OrBm4LInputPermitted": false,
@@ -20,6 +26,8 @@
     "provenanceClass",
     "caesarVersion",
     "build",
+    "coefficientOfFriction",
+    "staticFrictionStiffnessNPerM",
     "inputPath",
     "inputSha256",
     "outputPath",

@@ -1,11 +1,14 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
+import fs from 'node:fs';
 import {
   selectBm4lAccdbFrictionRows,
 } from '../src/core/fea-benchmarks/caesar-accdb-friction-restraint-selection.js';
 
 const STORED_MU = Math.fround(0.3);
 const SENTINEL = -1.01010000705719;
+const AUTHENTICATED_FIXTURE = new URL('./fixtures/bm4l-authenticated-restraint-rows.json', import.meta.url);
+const AUTHORITY = new URL('../benchmarks/LFEA/CAESAR_ACCDB/m047-bm4l-friction-restraint-authority.json', import.meta.url);
 
 function row({ node, type = 3, mu = STORED_MU, direction = [0, 1, 0] }) {
   return {
@@ -34,6 +37,37 @@ test('selects only positive-FRIC_COEF ACCDB Y rows and keeps model mu authoritat
   assert.equal(selected[0].sourceFrictionCoefficient, STORED_MU);
   assert.equal(selected[0].governedModelCoefficient, 0.3);
   assert.deepEqual(selected[0].normalDirection, [0, 1, 0]);
+});
+
+test('authenticated 46-row BM4_L extraction selects exactly the 26 friction Y surfaces', () => {
+  const fixture = JSON.parse(fs.readFileSync(AUTHENTICATED_FIXTURE, 'utf8'));
+  const authority = JSON.parse(fs.readFileSync(AUTHORITY, 'utf8'));
+  assert.equal(fixture.sourceAccdbSha256, authority.source.accdbSha256);
+  assert.equal(fixture.inputRestraintsTableSha256, authority.source.inputRestraintsTableSha256);
+  assert.equal(fixture.rowProjectionSha256, authority.source.rowProjectionSha256);
+  assert.equal(fixture.rows.length, authority.source.rowCount);
+
+  const selected = selectBm4lAccdbFrictionRows(fixture.rows, 0.3);
+  assert.equal(selected.length, authority.frictionSurfaceAuthority.selectedRowCount);
+  assert.deepEqual(
+    selected.map((entry) => entry.nodeId),
+    authority.frictionSurfaceAuthority.nodeIds,
+  );
+  assert.ok(selected.every((entry) => entry.sourceRestraintTypeId === 3));
+  assert.ok(selected.every((entry) => entry.sourceFrictionCoefficient === STORED_MU));
+  assert.ok(selected.every((entry) => entry.normalDirection.join(',') === '0,1,0'));
+
+  const selectedNodes = new Set(selected.map((entry) => entry.nodeId));
+  for (const nodeId of authority.frictionSurfaceAuthority.nonFrictionYNodeIds) {
+    assert.equal(selectedNodes.has(nodeId), false, `${nodeId} must remain a non-friction Y support`);
+  }
+  for (const sourceTypeId of [1, 8, 9]) {
+    assert.equal(
+      selected.some((entry) => entry.sourceRestraintTypeId === sourceTypeId),
+      false,
+      `ACCDB restraint type ${sourceTypeId} must not create a friction surface`,
+    );
+  }
 });
 
 test('rejects positive friction on a non-Y ACCDB restraint instead of broad non-anchor selection', () => {

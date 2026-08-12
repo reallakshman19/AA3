@@ -9,6 +9,7 @@ export const FRICTION_EXECUTION_READINESS_STATUS = STATUS;
 const BLOCKERS = Object.freeze({
   SOURCE_MAP: 'FRICTION_SOURCE_MAP_AUTHORITY_REQUIRED',
   STIFFNESS: 'FRICTION_STIFFNESS_AUTHORITY_REQUIRED',
+  STIFFNESS_UNIT: 'FRICTION_STIFFNESS_UNIT_NORMALIZATION_REQUIRED',
   ANGLE: 'FRICTION_ANGLE_VARIATION_AUTHORITY_REQUIRED',
   NORMAL_FORCE: 'FRICTION_NORMAL_FORCE_VARIATION_AUTHORITY_REQUIRED',
   SLIDE: 'FRICTION_SLIDE_MULTIPLIER_AUTHORITY_REQUIRED',
@@ -50,7 +51,7 @@ export function assessFrictionExecutionReadiness(input) {
   if (!validSourceMap(sourceMap)) blockers.push(BLOCKERS.SOURCE_MAP);
 
   const authority = input?.authority ?? {};
-  requireResolvedScalar(authority.frictionStiffness, BLOCKERS.STIFFNESS, blockers);
+  requireResolvedFrictionStiffness(authority.frictionStiffness, blockers);
   requireResolvedScalar(authority.frictionAngleVariationDeg, BLOCKERS.ANGLE, blockers);
   requireResolvedScalar(authority.frictionNormalForceVariation, BLOCKERS.NORMAL_FORCE, blockers);
   requireResolvedScalar(authority.frictionSlideMultiplier, BLOCKERS.SLIDE, blockers, { strictlyPositive: true });
@@ -107,6 +108,14 @@ function validSourceMap(value) {
     && value.frictionSiteCount > 0
     && Array.isArray(value.frictionNodeIds)
     && value.frictionNodeIds.length === value.frictionSiteCount;
+}
+
+function requireResolvedFrictionStiffness(entry, blockers) {
+  if (!resolved(entry) || !Number.isFinite(entry.value) || !(entry.value > 0)) {
+    blockers.push(BLOCKERS.STIFFNESS);
+    return;
+  }
+  if (entry.unit !== 'N/m') blockers.push(BLOCKERS.STIFFNESS_UNIT);
 }
 
 function requireResolvedScalar(entry, blocker, blockers, options = {}) {

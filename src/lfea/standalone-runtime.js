@@ -135,6 +135,12 @@ class LfeaStandaloneRuntime {
     } catch { return; }
     this.persistedState = this.persistence.load();
   }
+  #historyContext() {
+    return {
+      sourceSnapshot: this.sourceController.getSnapshot(), preFlight: this.sourceController.getPreFlight(),
+      executionState: this.executionAuthority.getState(), resultsState: this.resultsAuthority.getState(),
+    };
+  }
   #currentHistorySnapshot(sourceSnapshot, preFlight) {
     return this.runHistory.getSnapshot({
       sourceSnapshot, preFlight,
@@ -182,7 +188,6 @@ class LfeaStandaloneRuntime {
     this.#assertAuthorityUnchanged(before, 'Run comparison');
     return comparison;
   }
-  // Evidence dossier creation remains current-only and fail-closed.
   createNativeEvidenceDossier() {
     this.requireActive();
     return this.verificationController.createDossier();
@@ -203,13 +208,29 @@ class LfeaStandaloneRuntime {
     this.refreshCurrent();
     return state;
   }
-  publishNativeSupportActions() { return this.#publish(this.supportPublicationAuthority); }
-  publishNativeB31Application() { return this.#publish(this.b31PublicationAuthority); }
-  #publish(authority) {
+  publishNativeSupportActions() {
+    return this.#publish(this.supportPublicationAuthority, (run, state) => this.runHistory.attachSupportEvidence(run, state));
+  }
+  publishNativeB31Application() {
+    return this.#publish(this.b31PublicationAuthority, (run, state) => this.runHistory.attachB31Evidence(run, state));
+  }
+  #publish(authority, attachEvidence) {
     this.requireActive();
+    const run = this.runHistory.getCurrentRecord(this.#historyContext());
+    if (!run) {
+      const error = new Error('Publication evidence requires the exact current run to be archived first.');
+      error.code = 'LFEA_PUBLICATION_CURRENT_HISTORY_RUN_REQUIRED';
+      throw error;
+    }
     const state = authority.publish(
       this.sourceController.getPreFlight(), this.executionAuthority.getState(), this.resultsAuthority.getState(),
     );
+    try { attachEvidence(run, state); }
+    catch (error) {
+      authority.clearCurrentAuthority();
+      this.refreshCurrent();
+      throw error;
+    }
     this.refreshCurrent();
     this.layout.activate('results');
     return state;

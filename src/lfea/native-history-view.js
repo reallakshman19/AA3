@@ -35,7 +35,7 @@ function buildHeader(documentRef) {
   const title = documentRef.createElement('h2');
   title.textContent = 'Native run History';
   const note = paragraph(documentRef,
-    'Retained runs are immutable evidence. Selecting a historic run changes this view only; it does not change current Source, Review, Model, Analysis, or Results authority.',
+    'Retained runs are immutable evidence. Later governed support/B31 publications are append-only attachments to the exact run. Selecting a historic run changes this view only; it does not change current engineering authority.',
     'lfea-native-history-note');
   header.append(title, note);
   return header;
@@ -46,7 +46,7 @@ function buildRunTable(documentRef, snapshot, onSelectRun) {
   table.className = 'lfea-native-history-table';
   const head = documentRef.createElement('thead');
   const headRow = documentRef.createElement('tr');
-  ['Run', 'Relation', 'Source SHA', 'Model', 'Cases', 'Raw', 'Recovery', 'Build'].forEach((label) => {
+  ['Run', 'Relation', 'Source SHA', 'Model', 'Cases', 'Raw', 'Recovery', 'Evidence', 'Build'].forEach((label) => {
     const cell = documentRef.createElement('th');
     cell.scope = 'col';
     cell.textContent = label;
@@ -73,6 +73,7 @@ function buildRunRow(documentRef, entry, selectedRunId, onSelectRun) {
     textCell(documentRef, identity.rawExecution.requestedCaseIds.join(', ')),
     textCell(documentRef, identity.rawExecution.status),
     textCell(documentRef, identity.recovery.status),
+    textCell(documentRef, attachmentLabel(entry.evidenceAttachments)),
     textCell(documentRef, compact(identity.application.buildSha) ?? identity.application.applicationVersion),
   );
   return row;
@@ -102,7 +103,8 @@ function buildSelectedDetail(documentRef, snapshot) {
     section.append(paragraph(documentRef, 'Select a retained run to inspect its provenance.', 'lfea-native-history-empty'));
     return section;
   }
-  const relation = snapshot.entries.find((entry) => entry.runId === selected.runId)?.relation ?? 'STALE';
+  const entry = snapshot.entries.find((row) => row.runId === selected.runId) ?? null;
+  const relation = entry?.relation ?? 'STALE';
   const identity = selected.identity;
   const grid = documentRef.createElement('dl');
   grid.className = 'lfea-native-history-evidence';
@@ -120,10 +122,17 @@ function buildSelectedDetail(documentRef, snapshot) {
   addEvidence(documentRef, grid, 'Recovery batch', identity.recovery.recoveryBatchId);
   addEvidence(documentRef, grid, 'Recovery profile', identity.recovery.recoveryProfileSemanticHash);
   addEvidence(documentRef, grid, 'LFEA build', identity.application.buildSha ?? identity.application.applicationVersion);
+  for (const attachment of entry?.evidenceAttachments ?? []) {
+    addEvidence(documentRef, grid, `${attachment.kind} attachment`, attachment.semanticHash);
+    addEvidence(documentRef, grid, `${attachment.kind} reviewed authority`, attachment.summary.authorizationSemanticHash);
+  }
   section.append(grid);
   return section;
 }
 
+function attachmentLabel(attachments = []) {
+  return attachments.length ? attachments.map((row) => row.kind).join(', ') : 'None retained';
+}
 function addEvidence(documentRef, container, label, value) {
   const term = documentRef.createElement('dt');
   term.textContent = label;
@@ -131,20 +140,17 @@ function addEvidence(documentRef, container, label, value) {
   detail.textContent = value ?? 'Not retained';
   container.append(term, detail);
 }
-
 function textCell(documentRef, value) {
   const cell = documentRef.createElement('td');
   cell.textContent = value ?? '—';
   return cell;
 }
-
 function paragraph(documentRef, value, className) {
   const node = documentRef.createElement('p');
   node.className = className;
   node.textContent = value;
   return node;
 }
-
 function compact(value) {
   const text = String(value ?? '').trim();
   if (!text) return null;

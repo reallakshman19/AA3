@@ -44,6 +44,8 @@ function buildNativeApi(runtime) {
     getNativePublicationReadiness: () => active(runtime, () => runtime.publicationReadiness),
     getNativeRunHistory: () => active(runtime, () => runtime.historySnapshot),
     getNativeRunRecord: (runId) => active(runtime, () => runtime.runHistory.getRecord(runId)),
+    getNativeRunEvidence: (runId) => active(runtime, () => runtime.runHistory.getEvidenceForRun(runId)),
+    getNativeRunEvidenceLedger: () => active(runtime, () => runtime.runHistory.getEvidenceLedger()),
     getSelectedNativeRunRecord: () => active(runtime, () => runtime.runHistory.getSelectedRecord()),
     selectNativeRun: (runId) => runtime.selectHistoryRun(runId),
     compareNativeRuns: (left, right) => runtime.compareHistoryRuns(left, right),

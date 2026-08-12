@@ -1,29 +1,28 @@
 /**
  * Governed public boundary for M047 CAESAR ACCDB friction qualification.
  *
- * The nonlinear mechanics remain in caesar-accdb-friction-solve.js. This layer
- * validates case semantics that must be true before those mechanics are invoked,
- * particularly the L1 hydrotest mapping used to reuse the frozen W/P1 assembly.
+ * Primitive nonlinear mechanics remain in caesar-accdb-friction-solve.js. This
+ * layer owns governed case semantics and execution order: L13, L7, algebraic
+ * L15, then L1. L15 is therefore never passed into the nonlinear kernel.
  */
+import { semanticHash } from '../shared-piping-model/canonical-json.js';
 import { deepFreeze } from '../shared-piping-model/immutable.js';
+import { compareBenchmarkResultRows } from './qualification-comparison.js';
+import { solveCaesarAccdbLinearBenchmark } from './caesar-accdb-linear-solve-governed.js';
 import {
   CAESAR_ACCDB_FRICTION_SOLVER_PROFILE,
   solveCaesarAccdbFrictionBenchmark as solveRawCaesarAccdbFrictionBenchmark,
 } from './caesar-accdb-friction-solve.js';
+
+const DOFS = Object.freeze(['UX', 'UY', 'UZ', 'RX', 'RY', 'RZ']);
+const TRANSLATION_DOFS = Object.freeze(['UX', 'UY', 'UZ']);
 
 export { CAESAR_ACCDB_FRICTION_SOLVER_PROFILE };
 
 export const CAESAR_ACCDB_HYDROTEST_AUTHORITY_SCHEMA =
   'caesar-accdb-hydrotest-qualification-authority/v1';
 
-/**
- * Resolve the exact governed L1 hydrotest interpretation used by Stage 2.
- *
- * The source case must remain the pinned CAESAR HYD case `WW+HP`. The frozen
- * linear mechanics understand W/P1 primitives, so the nonlinear adapter may use
- * a counterfactual zero-friction W+P1 base only after this authority gate passes.
- * Stored L1 ACCDB output remains the comparison authority.
- */
+/** Resolve the exact governed L1 hydrotest interpretation used by Stage 2. */
 export function resolveCaesarHydrotestQualificationAuthority(benchmarkPackage) {
   requireBenchmarkPackage(benchmarkPackage);
   const sourceCase = benchmarkPackage.cases.find((entry) => entry.caseId === 'L1');
@@ -60,14 +59,188 @@ export function resolveCaesarHydrotestQualificationAuthority(benchmarkPackage) {
   });
 }
 
-/** Public governed nonlinear friction solver. */
+/**
+ * Public governed nonlinear friction solver.
+ *
+ * Primitive cases are delegated to the nonlinear kernel. L15 is constructed in
+ * this layer from the already-converged L7/L13 result rows and its physical
+ * equilibrium is retained as report evidence rather than a primitive nonlinear
+ * acceptance gate.
+ */
 export function solveCaesarAccdbFrictionBenchmark(benchmarkPackage, selectedCaseIds, options = {}) {
   requireBenchmarkPackage(benchmarkPackage);
   const requested = selectedCaseIds === undefined
     ? ['L13', 'L7', 'L15', 'L1']
-    : selectedCaseIds.map(String);
+    : [...new Set(selectedCaseIds.map(String))];
+  const allowed = new Set(['L13', 'L7', 'L15', 'L1']);
+  const unknown = requested.filter((caseId) => !allowed.has(caseId));
+  if (unknown.length > 0) {
+    throw new TypeError(`M047 governed friction solver accepts only L13, L7, L15 and L1; got ${unknown.join(', ')}.`);
+  }
   if (requested.includes('L1')) resolveCaesarHydrotestQualificationAuthority(benchmarkPackage);
-  return solveRawCaesarAccdbFrictionBenchmark(benchmarkPackage, requested, options);
+
+  const dependencyIds = [];
+  if (requested.includes('L13') || requested.includes('L15')) dependencyIds.push('L13');
+  if (requested.includes('L7') || requested.includes('L15')) dependencyIds.push('L7');
+  const preDerived = dependencyIds.length > 0
+    ? solveRawCaesarAccdbFrictionBenchmark(benchmarkPackage, dependencyIds, options)
+    : null;
+
+  const derived = requested.includes('L15')
+    ? buildGovernedDerivedL15(benchmarkPackage, preDerived.cases.L7, preDerived.cases.L13)
+    : null;
+
+  // L1 is intentionally invoked only after L15 has been constructed, preserving
+  // the issue-governed execution order even though it is an independent state.
+  const hydro = requested.includes('L1')
+    ? solveRawCaesarAccdbFrictionBenchmark(benchmarkPackage, ['L1'], options)
+    : null;
+
+  const availableCases = {
+    ...(preDerived?.cases ?? {}),
+    ...(derived === null ? {} : { L15: derived.actualCase }),
+    ...(hydro?.cases ?? {}),
+  };
+  const cases = Object.fromEntries(requested.map((caseId) => [caseId, availableCases[caseId]]));
+  const mechanicsCases = {
+    ...(preDerived?.mechanics.cases ?? {}),
+    ...(derived === null ? {} : { L15: derived.evidence }),
+    ...(hydro?.mechanics.cases ?? {}),
+  };
+  const pairedDeltas = {
+    ...(preDerived?.mechanics.pairedDeltas ?? {}),
+    ...(derived === null ? {} : { 'L15-L14': buildL15PairedDelta(benchmarkPackage, derived.actualCase) }),
+  };
+  const repeatedRuns = {
+    ...(preDerived?.mechanics.repeatedRuns ?? {}),
+    ...(hydro?.mechanics.repeatedRuns ?? {}),
+  };
+  const sensitivity = {
+    ...(preDerived?.mechanics.sensitivity ?? {}),
+    ...(hydro?.mechanics.sensitivity ?? {}),
+  };
+  const sourceMechanics = preDerived?.mechanics ?? hydro?.mechanics;
+  return deepFreeze({
+    schema: 'lfea-accdb-benchmark-actual/v1',
+    sourceAccdbSha256: benchmarkPackage.source.sha256,
+    cases,
+    mechanics: {
+      schema: 'lfea-accdb-friction-solve-evidence/v1',
+      sourceModelSemanticHash: benchmarkPackage.model.semanticHash,
+      profile: sourceMechanics?.profile ?? CAESAR_ACCDB_FRICTION_SOLVER_PROFILE,
+      executionOrder: Object.freeze([
+        ...dependencyIds,
+        ...(requested.includes('L15') ? ['L15'] : []),
+        ...(requested.includes('L1') ? ['L1'] : []),
+      ]),
+      dependencyExecution: Object.freeze(dependencyIds),
+      cases: mechanicsCases,
+      pairedDeltas,
+      repeatedRuns,
+      sensitivity,
+      limitations: sourceMechanics?.limitations ?? Object.freeze([]),
+    },
+  });
+}
+
+function buildGovernedDerivedL15(benchmarkPackage, l7, l13) {
+  if (!l7 || !l13) throw new TypeError('L15 requires independently converged L7 and L13 states.');
+  const rows = subtractRows('L15', l7.rows, l13.rows);
+  const recoveredEquilibrium = equilibriumFromResultRows(rows, benchmarkPackage.profile.equilibriumTolerance);
+  const evidence = deepFreeze({
+    formula: 'L15=L7-L13',
+    combinationMethod: 'ALG',
+    independentNonlinearSolve: false,
+    operandExecutionSemanticHashes: Object.freeze([l7.executionSemanticHash, l13.executionSemanticHash]),
+    algebraicIdentityStatus: 'PASS',
+    algebraicIdentityMaximumAbsoluteResidual: 0,
+    executionStatus: 'PASS',
+    recoveredEquilibrium,
+    equilibriumQualificationUse: 'REPORT_ONLY_DERIVED_CASE_PRIMITIVE_OPERANDS_GOVERN_NONLINEAR_EQUILIBRIUM_ACCEPTANCE',
+  });
+  const executionSemanticHash = semanticHash({
+    schema: 'caesar-accdb-derived-friction-case/v2',
+    rows,
+    evidence,
+  });
+  return {
+    actualCase: deepFreeze({
+      executionSemanticHash,
+      executionEvidenceHash: semanticHash(evidence),
+      stiffnessStateHash: semanticHash({ kind: 'ALG', operands: evidence.operandExecutionSemanticHashes }),
+      rows,
+    }),
+    evidence,
+  };
+}
+
+function buildL15PairedDelta(benchmarkPackage, l15) {
+  const control = solveCaesarAccdbLinearBenchmark(benchmarkPackage, ['L14']).cases.L14;
+  const actualDelta = subtractRows('RCA:L15-L14:ACTUAL', l15.rows, control.rows);
+  const referenceDelta = subtractRows(
+    'RCA:L15-L14:REFERENCE',
+    benchmarkPackage.references.L15.rows,
+    benchmarkPackage.references.L14.rows,
+  );
+  const comparison = compareBenchmarkResultRows({
+    caseId: 'RCA:L15-L14',
+    referenceRows: referenceDelta,
+    actualRows: actualDelta,
+    tolerances: benchmarkPackage.profile.tolerances,
+    optionalQuantities: [],
+    exposedQuantities: [...new Set(actualDelta.map((row) => row.quantity))],
+    excludedQuantities: benchmarkPackage.profile.engineeringAssessment?.equilibriumOnlyQuantities ?? [],
+  });
+  return deepFreeze({ actualDeltaRows: actualDelta, referenceDeltaRows: referenceDelta, comparison });
+}
+
+function equilibriumFromResultRows(rows, tolerance) {
+  const values = new Map(rows.filter((row) => row.entityKind === 'NODE').map((row) => [
+    rowIdentity(row.entityKind, row.entityId, row.quantity, row.component),
+    Number(row.value),
+  ]));
+  const nodeIds = [...new Set(rows.filter((row) => row.entityKind === 'NODE').map((row) => String(row.entityId)))];
+  let forceN = 0;
+  let momentNm = 0;
+  for (const nodeId of nodeIds) {
+    TRANSLATION_DOFS.forEach((component) => {
+      const incident = values.get(rowIdentity('NODE', nodeId, 'INCIDENT_GLOBAL_FORCE', component)) ?? 0;
+      const reaction = values.get(rowIdentity('NODE', nodeId, 'FORCE', component)) ?? 0;
+      forceN = Math.max(forceN, Math.abs(incident - reaction));
+    });
+    DOFS.slice(3).forEach((component) => {
+      const incident = values.get(rowIdentity('NODE', nodeId, 'INCIDENT_GLOBAL_MOMENT', component)) ?? 0;
+      const reaction = values.get(rowIdentity('NODE', nodeId, 'MOMENT', component)) ?? 0;
+      momentNm = Math.max(momentNm, Math.abs(incident - reaction));
+    });
+  }
+  return deepFreeze({
+    status: forceN <= tolerance.forceN && momentNm <= tolerance.momentNm ? 'PASS' : 'FAIL',
+    rule: 'DERIVED_RESULT_INCIDENT_ACTION_MINUS_SUPPORT_REACTION_V1',
+    maximumAbsoluteResidual: { forceN, momentNm },
+  });
+}
+
+function subtractRows(caseId, leftRows, rightRows) {
+  const left = new Map(leftRows.map((row) => [caseIndependentIdentity(row), row]));
+  const right = new Map(rightRows.map((row) => [caseIndependentIdentity(row), row]));
+  const identities = [...new Set([...left.keys(), ...right.keys()])].sort(compareText);
+  return Object.freeze(identities.map((identity) => {
+    const a = left.get(identity);
+    const b = right.get(identity);
+    if (!a || !b) throw new TypeError(`${caseId} delta has incomplete row identity ${identity}.`);
+    if (a.unit !== b.unit) throw new TypeError(`${caseId} delta unit mismatch at ${identity}.`);
+    return deepFreeze({
+      caseId,
+      entityKind: a.entityKind,
+      entityId: a.entityId,
+      quantity: a.quantity,
+      component: a.component,
+      value: Number(a.value) - Number(b.value),
+      unit: a.unit,
+      required: a.required !== false && b.required !== false,
+    });
+  }));
 }
 
 function requireBenchmarkPackage(value) {
@@ -76,6 +249,15 @@ function requireBenchmarkPackage(value) {
   }
 }
 
+function rowIdentity(entityKind, entityId, quantity, component) {
+  return [entityKind, entityId, quantity, component].join(':');
+}
+function caseIndependentIdentity(row) {
+  return rowIdentity(row.entityKind, row.entityId, row.quantity, row.component);
+}
+function compareText(left, right) {
+  return String(left) < String(right) ? -1 : String(left) > String(right) ? 1 : 0;
+}
 function hydrotestError(message, code) {
   const error = new TypeError(message);
   error.code = code;

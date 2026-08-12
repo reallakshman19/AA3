@@ -38,8 +38,7 @@ export function buildLfeaNativeB31CaseChains(
     .map((row) => [row.caseId, row]));
   const recoveryById = new Map(batch.caseRecoveries.map((row) => [row.caseId, row]));
   const frameProfile = inputXmlStiffnessFrameElementProfile();
-
-  return Object.freeze(raw.caseExecutions.map((rawCase) => {
+  const chains = raw.caseExecutions.map((rawCase) => {
     const physical = physicalById.get(rawCase.caseId);
     const recovered = recoveryById.get(rawCase.caseId);
     if (!physical || !recovered) {
@@ -74,7 +73,9 @@ export function buildLfeaNativeB31CaseChains(
         elements.frameElements.map((row) => [row.elementId, row]),
       )),
     });
-  }));
+  });
+  requireCheckCaseCoverage(chains, b31Authority.checks);
+  return Object.freeze(chains);
 }
 
 export function lfeaNativeB31PublicationCurrentnessReasons(
@@ -99,6 +100,18 @@ export function lfeaNativeB31PublicationParent(executionState, resultsState, aut
     recoveryBatchSemanticHash: resultsState.results.semanticHash,
     b31AuthoritySemanticHash: authority.semanticHash,
   });
+}
+
+function requireCheckCaseCoverage(chains, checks) {
+  const currentCaseIds = new Set(chains.map((row) => row.caseId));
+  for (const check of checks) {
+    if (!currentCaseIds.has(check.actionSource.caseId)) {
+      throw lfeaNativeB31Error(
+        'LFEA_NATIVE_B31_CURRENT_CASE_EXECUTION_REQUIRED',
+        `B31 check ${check.checkId} requires current execution/recovery for ${check.actionSource.caseId}.`,
+      );
+    }
+  }
 }
 
 function deriveCodeRecovery(baseRecoveryRecord, compilation, stationAuthority, tolerance) {

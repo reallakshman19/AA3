@@ -1,5 +1,7 @@
 import { semanticHash } from '../core/shared-piping-model/canonical-json.js';
 import { deepFreeze } from '../core/shared-piping-model/immutable.js';
+import { requireLfeaNativeB31Authorization } from './native-b31-authorization.js';
+import { requireLfeaNativeSupportAuthorization } from './native-support-authorization.js';
 
 export const LFEA_NATIVE_RUN_EVIDENCE_LEDGER_SCHEMA = 'lfea-native-run-evidence-ledger/v1';
 export const LFEA_NATIVE_RUN_EVIDENCE_ATTACHMENT_SCHEMA = 'lfea-native-run-evidence-attachment/v1';
@@ -52,11 +54,11 @@ export function createLfeaNativeRunEvidenceLedger() {
 
 function sealSupportAttachment(run, state) {
   requireCurrentPublicationState(state, 'SUPPORT_ACTIONS');
+  requireReviewedSupportState(state);
   requireParentRunMatch(run, state.publicationParent, 'support');
-  if (state.publicationParent.supportAuthoritySemanticHash !== state.authority.semanticHash
-    || state.authorization.supportAuthoritySemanticHash !== state.authority.semanticHash) {
+  if (state.publicationParent.supportAuthoritySemanticHash !== state.authority.semanticHash) {
     throw ledgerError('LFEA_RUN_EVIDENCE_SUPPORT_AUTHORITY_MISMATCH',
-      'Support publication authority/review identity does not match its retained publication parent.');
+      'Support publication authority identity does not match its retained publication parent.');
   }
   const evidence = deepFreeze({
     authority: state.authority,
@@ -72,11 +74,11 @@ function sealSupportAttachment(run, state) {
 
 function sealB31Attachment(run, state) {
   requireCurrentPublicationState(state, 'B31_CODE');
+  requireReviewedB31State(state);
   requireParentRunMatch(run, state.publicationParent, 'B31');
-  if (state.publicationParent.b31AuthoritySemanticHash !== state.authority.semanticHash
-    || state.authorization.b31AuthoritySemanticHash !== state.authority.semanticHash) {
+  if (state.publicationParent.b31AuthoritySemanticHash !== state.authority.semanticHash) {
     throw ledgerError('LFEA_RUN_EVIDENCE_B31_AUTHORITY_MISMATCH',
-      'B31 publication authority/review identity does not match its retained publication parent.');
+      'B31 publication authority identity does not match its retained publication parent.');
   }
   if (!state.application || !Array.isArray(state.codeRecoveries)) {
     throw ledgerError('LFEA_RUN_EVIDENCE_B31_PUBLICATION_INCOMPLETE',
@@ -109,6 +111,24 @@ function sealAttachment(run, kind, evidence, summary) {
     evidence,
   };
   return deepFreeze({ ...base, semanticHash: semanticHash(base) });
+}
+
+function requireReviewedSupportState(state) {
+  try {
+    requireLfeaNativeSupportAuthorization(state.authorization, state.authority);
+  } catch (cause) {
+    throw ledgerError('LFEA_RUN_EVIDENCE_SUPPORT_REVIEW_INVALID',
+      `Support review authorization is invalid: ${cause?.code ?? 'UNKNOWN_REVIEW_ERROR'}`);
+  }
+}
+
+function requireReviewedB31State(state) {
+  try {
+    requireLfeaNativeB31Authorization(state.authorization, state.authority);
+  } catch (cause) {
+    throw ledgerError('LFEA_RUN_EVIDENCE_B31_REVIEW_INVALID',
+      `B31 review authorization is invalid: ${cause?.code ?? 'UNKNOWN_REVIEW_ERROR'}`);
+  }
 }
 
 function requireCurrentPublicationState(state, label) {

@@ -28,6 +28,12 @@ param(
 $ErrorActionPreference = 'Stop'
 $ProviderProgId = 'Microsoft.ACE.OLEDB.12.0'
 $SourceAuthorityRule = 'PINNED_COMMON_COMMIT_AND_ZIP_SHA256_DEFINE_ACCDB_MEMBER_BYTES'
+$RetainedRowProjectionByTable = @{
+  INPUT_RESTRAINTS = @(
+    'REST_PTR','NODE_NUM','RES_TYPEID','STIFFNESS','GAP','FRIC_COEF',
+    'CNODE','XCOSINE','YCOSINE','ZCOSINE','RES_TAG'
+  )
+}
 
 function Get-FileSha256 {
   param([Parameter(Mandatory = $true)][string]$Path)
@@ -122,7 +128,20 @@ function Read-TableEvidence {
       $fieldValues[$name] = [System.Collections.Generic.List[string]]::new()
     }
 
+    $retainedColumns = if ($RetainedRowProjectionByTable.ContainsKey($TableName)) {
+      @($RetainedRowProjectionByTable[$TableName])
+    }
+    else {
+      @()
+    }
+    foreach ($name in $retainedColumns) {
+      if (-not $fieldValues.Contains($name)) {
+        throw "ACCDB table $TableName is missing retained row-projection field $name."
+      }
+    }
+
     $rowStrings = [System.Collections.Generic.List[string]]::new()
+    $retainedRows = [System.Collections.Generic.List[object]]::new()
     $rowCount = 0
     while (-not $recordset.EOF) {
       $row = [ordered]@{}
@@ -133,6 +152,13 @@ function Read-TableEvidence {
         $fieldValues[$name].Add((Convert-CanonicalValueJson -Value $value))
       }
       $rowStrings.Add(($row | ConvertTo-Json -Compress -Depth 12))
+      if ($retainedColumns.Count -gt 0) {
+        $projection = [ordered]@{}
+        foreach ($name in $retainedColumns) {
+          $projection[$name] = $row[$name]
+        }
+        $retainedRows.Add($projection)
+      }
       $rowCount += 1
       $recordset.MoveNext()
     }
@@ -147,7 +173,7 @@ function Read-TableEvidence {
     }
     $schemaJson = $columns | ConvertTo-Json -Compress -Depth 12
     $tablePayload = $schemaJson + "`n" + [string]::Join("`n", $rowStrings)
-    return [ordered]@{
+    $result = [ordered]@{
       name = $TableName
       rowCount = $rowCount
       schemaSha256 = Get-TextSha256 -Text $schemaJson
@@ -155,6 +181,18 @@ function Read-TableEvidence {
       columns = $columns.ToArray()
       fieldValueMultisetSha256 = $fieldHashes
     }
+    if ($retainedRows.Count -gt 0) {
+      $sortedRows = @($retainedRows.ToArray() | Sort-Object { [int]$_.REST_PTR })
+      $rowPayloads = @($sortedRows | ForEach-Object { $_ | ConvertTo-Json -Compress -Depth 12 })
+      $result['retainedRowProjection'] = [ordered]@{
+        schema = 'lfea-bm4l-accdb-row-projection/v1'
+        columns = $retainedColumns
+        rowCount = $sortedRows.Count
+        rowsSha256 = Get-TextSha256 -Text ([string]::Join("`n", $rowPayloads))
+        rows = $sortedRows
+      }
+    }
+    return $result
   }
   finally {
     if ($recordset.State -ne 0) { $recordset.Close() }

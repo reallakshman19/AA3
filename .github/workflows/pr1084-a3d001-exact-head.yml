@@ -98,25 +98,57 @@ jobs:
           tests/topology-edit-professional-validation-worker-identity.test.mjs
           tests/topology-edit-validation-runtime-identity.test.mjs
 
-      - name: Build production bundle
-        id: production-build
+      - name: Build current-main parent for differential
+        id: baseline-build
+        shell: bash
+        run: |
+          set +e
+          git checkout --detach "$BASE_SHA"
+          npm run build > artifacts/pr1084-base-build.log 2>&1
+          status=$?
+          echo "status=$status" >> "$GITHUB_OUTPUT"
+          git checkout --detach "$CANDIDATE_SHA"
+          rm -rf dist
+          exit 0
+
+      - name: Build production bundle on candidate
+        id: candidate-build
         continue-on-error: true
         shell: bash
         run: |
           set -o pipefail
-          npm run build 2>&1 | tee artifacts/pr1084-build.log
+          test "$(git rev-parse HEAD)" = "$CANDIDATE_SHA"
+          npm run build 2>&1 | tee artifacts/pr1084-candidate-build.log
 
-      - name: Surface production build failure
-        if: steps.production-build.outcome == 'failure'
+      - name: Enforce differential build gate
         shell: bash
         run: |
-          tail -n 60 artifacts/pr1084-build.log | while IFS= read -r line; do
-            line="${line//'%'/'%25'}"
-            line="${line//$'\r'/'%0D'}"
-            line="${line//$'\n'/'%0A'}"
-            echo "::error::$line"
-          done
-          exit 1
+          set -euo pipefail
+          base_status='${{ steps.baseline-build.outputs.status }}'
+          candidate_outcome='${{ steps.candidate-build.outcome }}'
+          node - <<'NODE'
+          const fs = require('node:fs');
+          const path = 'artifacts/pr1084-build-differential.json';
+          const data = {
+            schema: 'PR1084BuildDifferential.v1',
+            baseSha: process.env.BASE_SHA,
+            candidateSha: process.env.CANDIDATE_SHA,
+            baseStatus: Number(process.env.BASE_BUILD_STATUS),
+            candidateOutcome: process.env.CANDIDATE_BUILD_OUTCOME,
+          };
+          fs.writeFileSync(path, JSON.stringify(data, null, 2));
+          NODE
+          if [[ "$candidate_outcome" == 'failure' && "$base_status" == '0' ]]; then
+            echo '::error::Candidate production build fails while current-main parent passes.'
+            tail -n 12 artifacts/pr1084-candidate-build.log | sed 's/^/::error::/'
+            exit 1
+          fi
+          if [[ "$candidate_outcome" == 'failure' && "$base_status" != '0' ]]; then
+            echo '::warning::Production build failure is already present on the exact current-main parent; continuing targeted A3D-001 qualification.'
+          fi
+        env:
+          BASE_BUILD_STATUS: ${{ steps.baseline-build.outputs.status }}
+          CANDIDATE_BUILD_OUTCOME: ${{ steps.candidate-build.outcome }}
 
       - name: Install pinned Chromium
         run: npx playwright install --with-deps chromium

@@ -4,15 +4,6 @@ const MIN_UPPER_HEIGHT_PX = 120;
 const SPLITTER_HEIGHT_PX = 8;
 const KEYBOARD_STEP_PX = 24;
 
-export function initializeTopologyEditTableSplitterState(runtime) {
-  runtime.tableDetailPaneHeightPx = finite(runtime.tableDetailPaneHeightPx)
-    ? runtime.tableDetailPaneHeightPx
-    : DEFAULT_DETAIL_HEIGHT_PX;
-  runtime.tableSplitterDrag = null;
-  runtime.tableSplitterResizeObserver?.disconnect?.();
-  runtime.tableSplitterResizeObserver = null;
-}
-
 export function topologyEditTableSplitterBounds(metrics = {}) {
   const container = nonNegative(metrics.containerHeightPx);
   const header = nonNegative(metrics.headerHeightPx);
@@ -52,6 +43,7 @@ export function applyTopologyEditTableSplitterLayout(runtime) {
   const root = runtime.element?.querySelector?.('.topology-edit-table--populated');
   const separator = root?.querySelector?.('[data-table-splitter]');
   if (!root || !separator) return null;
+  bindSeparator(runtime, separator);
   const bounds = boundsFor(root);
   const height = clampTopologyEditTableDetailHeight(runtime.tableDetailPaneHeightPx, bounds);
   runtime.tableDetailPaneHeightPx = height;
@@ -60,7 +52,6 @@ export function applyTopologyEditTableSplitterLayout(runtime) {
   separator.setAttribute('aria-valuemax', String(Math.round(bounds.max)));
   separator.setAttribute('aria-valuenow', String(Math.round(height)));
   separator.setAttribute('aria-valuetext', `${Math.round(height)} pixels for engineering details`);
-  observeContainer(runtime, root);
   return Object.freeze({ height, bounds });
 }
 
@@ -123,10 +114,24 @@ export function handleTopologyEditTableSplitterKeyDown(runtime, event) {
   return true;
 }
 
-export function destroyTopologyEditTableSplitterState(runtime) {
-  runtime.tableSplitterResizeObserver?.disconnect?.();
-  runtime.tableSplitterResizeObserver = null;
-  runtime.tableSplitterDrag = null;
+function bindSeparator(runtime, separator) {
+  if (separator.dataset.tableSplitterBound === 'true') return;
+  separator.dataset.tableSplitterBound = 'true';
+  separator.addEventListener('pointerdown', (event) => (
+    handleTopologyEditTableSplitterPointerDown(runtime, event)
+  ));
+  separator.addEventListener('pointermove', (event) => (
+    handleTopologyEditTableSplitterPointerMove(runtime, event)
+  ));
+  separator.addEventListener('pointerup', (event) => (
+    handleTopologyEditTableSplitterPointerUp(runtime, event)
+  ));
+  separator.addEventListener('pointercancel', (event) => (
+    handleTopologyEditTableSplitterPointerUp(runtime, event)
+  ));
+  separator.addEventListener('keydown', (event) => (
+    handleTopologyEditTableSplitterKeyDown(runtime, event)
+  ));
 }
 
 function boundsFor(root) {
@@ -134,18 +139,6 @@ function boundsFor(root) {
   const header = root.querySelector?.('.topology-edit-table__header');
   const headerHeightPx = header?.getBoundingClientRect?.().height || header?.offsetHeight || 0;
   return topologyEditTableSplitterBounds({ containerHeightPx, headerHeightPx });
-}
-
-function observeContainer(runtime, root) {
-  if (runtime.tableSplitterObservedRoot === root && runtime.tableSplitterResizeObserver) return;
-  runtime.tableSplitterResizeObserver?.disconnect?.();
-  runtime.tableSplitterObservedRoot = root;
-  const ResizeObserverClass = root.ownerDocument?.defaultView?.ResizeObserver;
-  if (!ResizeObserverClass) return;
-  runtime.tableSplitterResizeObserver = new ResizeObserverClass(() => {
-    if (runtime.element?.contains(root)) applyTopologyEditTableSplitterLayout(runtime);
-  });
-  runtime.tableSplitterResizeObserver.observe(root);
 }
 
 function finite(value) { return Number.isFinite(Number(value)); }

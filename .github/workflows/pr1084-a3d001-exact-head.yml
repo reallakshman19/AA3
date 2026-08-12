@@ -61,6 +61,25 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
+      - name: Record exact run identity
+        shell: bash
+        run: |
+          mkdir -p artifacts
+          node - <<'NODE'
+          const fs = require('node:fs');
+          const data = {
+            schema: 'PR1084A3D001RunIdentity.v1',
+            candidateHead: process.env.CANDIDATE_SHA,
+            baseHead: process.env.BASE_SHA,
+            pr: Number(process.env.PR_NUMBER),
+            runId: process.env.GITHUB_RUN_ID,
+            runAttempt: Number(process.env.GITHUB_RUN_ATTEMPT),
+            workflowRef: process.env.GITHUB_WORKFLOW_REF,
+            repository: process.env.GITHUB_REPOSITORY,
+          };
+          fs.writeFileSync('artifacts/pr1084-run-identity.json', JSON.stringify(data, null, 2));
+          NODE
+
       - name: Syntax-check changed JavaScript
         shell: bash
         run: |
@@ -80,29 +99,27 @@ jobs:
           tests/topology-edit-validation-runtime-identity.test.mjs
 
       - name: Build production bundle
-        run: npm run build
+        id: production-build
+        continue-on-error: true
+        shell: bash
+        run: |
+          set -o pipefail
+          npm run build 2>&1 | tee artifacts/pr1084-build.log
+
+      - name: Surface production build failure
+        if: steps.production-build.outcome == 'failure'
+        shell: bash
+        run: |
+          tail -n 60 artifacts/pr1084-build.log | while IFS= read -r line; do
+            line="${line//'%'/'%25'}"
+            line="${line//$'\r'/'%0D'}"
+            line="${line//$'\n'/'%0A'}"
+            echo "::error::$line"
+          done
+          exit 1
 
       - name: Install pinned Chromium
         run: npx playwright install --with-deps chromium
-
-      - name: Record exact run identity
-        shell: bash
-        run: |
-          mkdir -p artifacts
-          node - <<'NODE'
-          const fs = require('node:fs');
-          const data = {
-            schema: 'PR1084A3D001RunIdentity.v1',
-            candidateHead: process.env.CANDIDATE_SHA,
-            baseHead: process.env.BASE_SHA,
-            pr: Number(process.env.PR_NUMBER),
-            runId: process.env.GITHUB_RUN_ID,
-            runAttempt: Number(process.env.GITHUB_RUN_ATTEMPT),
-            workflowRef: process.env.GITHUB_WORKFLOW_REF,
-            repository: process.env.GITHUB_REPOSITORY,
-          };
-          fs.writeFileSync('artifacts/pr1084-run-identity.json', JSON.stringify(data, null, 2));
-          NODE
 
       - name: Run real Chromium stale-race qualification
         env:

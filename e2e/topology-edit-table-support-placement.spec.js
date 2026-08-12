@@ -116,7 +116,12 @@ async function openXyzTable(page) {
   const host = page.locator('[data-role="topology-edit-render-host"]');
   await expect(host).toBeVisible();
   await expect.poll(() => host.getAttribute('data-topology-edit-canonical-hash')).toBeTruthy();
-  await page.locator('[data-action="open-engineering-table"]').click();
+  const tableWindow = page.locator('[data-role="topology-edit-table-window"]');
+  await expect(tableWindow).toBeAttached();
+  const trigger = page.locator('[data-action="open-engineering-table"]');
+  await expect(trigger).toHaveAttribute('aria-expanded', 'false');
+  await trigger.click();
+  await expect(trigger).toHaveAttribute('aria-expanded', 'true');
   await expect(page.locator('[data-role="topology-edit-table"]')).toBeVisible();
   return host;
 }

@@ -63,6 +63,12 @@ the capped support force is
 
 That vector is inserted as a nodal load in the next active-set iteration. The slide checks include cap magnitude and anti-parallel direction.
 
+A stable SLIDE classification is not enough to converge. The capped vector actually assembled in the solved right-hand side must match the vector implied by the newly recovered `N` and slip direction. The controller records
+
+`r_assembly = ||F_t,assembled - F_t,recovered||`
+
+and requires `r_assembly <= assemblyLoadResidualN`. If the cap or direction changes, another solve is mandatory even when displacement and state labels are stationary. This closes the CAESAR next-iteration constant-force rule explicitly.
+
 ## ACCDB extraction engine
 
 Stage 2 no longer requires Microsoft ACE/OLE DB for its production command. `scripts/lfea-caesar-accdb-mdb-export.mjs` adapts the raw named-table extraction boundary from `reallaksh19/XML_Compare_Utilities`:
@@ -112,13 +118,25 @@ Paired-delta evidence is emitted for:
 - `L15-L14`;
 - identity residual `(L15-L14)-((L7-L5)-(L13-L6))`.
 
+## Direct CAESAR comparison
+
+The same production run compares every emitted actual case against the ACCDB reference rows using the governed benchmark tolerances. It records the full component comparison, restraint-component counts, restraint failures, and the maximum nonzero-reference percentage error per case.
+
+The friction restraint acceptance set is L13, L7, L15 and L1. Missing cases are reported as `NOT_READY`; they are not silently omitted. Overall acceptance is separated into:
+
+- `mechanicsStatus` — nonlinear convergence/equilibrium/determinism status;
+- `benchmarkRestraintAccuracyStatus` — direct CAESAR restraint comparison status;
+- `overallStatus` — may be `PASS` only when both preceding gates pass.
+
+Thus a converged nonlinear solution cannot be reported overall PASS while its CAESAR restraint components fail the benchmark criterion.
+
 ## Convergence and evidence
 
-The versioned nominal profile records all-stick initialization, no nominal load stepping, unit relaxation, maximum iterations, update tolerances, cap/stick/slide tolerances, direction tolerance, physical equilibrium caps, repeat count, and 0.5x/1x/2x stiffness sensitivity points.
+The versioned nominal profile records all-stick initialization, no nominal load stepping, unit relaxation, maximum iterations, update tolerances, cap/stick/slide tolerances, assembled-load closure tolerance, direction tolerance, physical equilibrium caps, repeat count, and 0.5x/1x/2x stiffness sensitivity points.
 
-Each friction iteration records restraint identity, normal direction, relative tangential displacement, signed/magnitude normal reaction, effective coefficient, stiffness, Coulomb cap, trial spring force, state, state change, applied friction vector, slip direction, residuals, and assembly mode.
+Each friction iteration records restraint identity, normal direction, relative tangential displacement, signed/magnitude normal reaction, effective coefficient, stiffness, Coulomb cap, trial spring force, state, state change, applied friction vector, slip direction, residuals, assembly mode, and the maximum assembled-vs-recovered capped-load residual.
 
-A state is not accepted from displacement stationarity alone. The gates require active-set stability, displacement/reaction update closure, cap and constitutive closure, opposing slide direction, equation equilibrium, recovered physical equilibrium, and deterministic repeated-run evidence.
+A state is not accepted from displacement stationarity alone. The gates require active-set stability, displacement/reaction update closure, cap and constitutive closure, assembled friction-load closure, opposing slide direction, equation equilibrium, recovered physical equilibrium, and deterministic repeated-run evidence.
 
 ## Local production command
 
@@ -133,7 +151,7 @@ node scripts/lfea-m047-bm4l-friction.mjs `
   --evidence-out reports/m047-bm4l-friction-evidence.json
 ```
 
-The emitted actual-result package remains compatible with the standard ACCDB benchmark comparison contract.
+The emitted actual-result package remains compatible with the standard ACCDB benchmark comparison contract, while the evidence file already contains the direct Stage 2 accuracy comparison.
 
 ## Current qualification boundary
 
@@ -144,7 +162,7 @@ Accordingly this PR must remain draft and must not claim full issue acceptance u
 1. WW and HP load construction are independently source-authorized and qualified;
 2. the pinned BM4_L production run is executed with the mdb-reader extraction engine;
 3. L2-L6/L14 regression evidence remains passing;
-4. L13/L7/L1 restraint components and all required result families are compared to the pinned ACCDB;
+4. L13/L7/L1 restraint components and all required result families are compared to the pinned ACCDB, with the L15 literal combination report retained;
 5. nominal repeat and stiffness-sensitivity artifacts are published.
 
 ## Tests available in this branch
@@ -155,7 +173,8 @@ Accordingly this PR must remain draft and must not claim full issue acceptance u
 - rejection of a stationary state with invalid friction direction;
 - algebraic L15 construction;
 - active-set load carry-forward;
+- rejection of stable-SLIDE convergence until the capped load assembled in the solved RHS matches the newly recovered cap/direction;
 - repeated-run state determinism;
 - scoped solver-interceptor lifetime and exception cleanup.
 
-The isolated friction-kernel test set was exercised during authoring and passed 9/9. The cross-platform mdb-reader production extraction itself has not been executed in this authoring runtime because it has no repository Playwright installation/browser and outbound module loading is network-isolated; the pinned BM4_L production result is therefore still not claimed here.
+The original isolated friction-kernel test set was exercised during authoring and passed 9/9. The new assembled-load closure reproducer was also executed locally against the current controller source and passed. The cross-platform mdb-reader production extraction itself has not been executed in this authoring runtime because it has no repository Playwright installation/browser and outbound module loading is network-isolated; the pinned BM4_L production result is therefore still not claimed here.

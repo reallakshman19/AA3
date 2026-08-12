@@ -1,0 +1,99 @@
+{
+  "schema": "m047-bm4l-f26-restraint-semantic-reconciliation/v1",
+  "benchmarkId": "BM4_L",
+  "status": "PASS_WITH_GAP_MAGNITUDE_SOURCE_SPLIT",
+  "authorityScope": "BM4_L_ONLY",
+  "extraction": {
+    "workflowRunId": 31587484308,
+    "artifactId": 9137722839,
+    "artifactDigestSha256": "53382d0d8618e99e4088cdaa9b0384f22222f07ab5981c262ef6374c709d9545",
+    "exactHeadSha": "5b72b4a48c9b82fb4a9783b017286e5e28202b42",
+    "sourceAccdbSha256": "64c05a50e9ed0452622ff5880335460486f24ac8e6adecc9a300b549c9aa82f8",
+    "inputRestraintsTableSha256": "08460f1ef574ec6d6c95c46155d5ad4c1acee42e336a7b7e300ed08e0878866a",
+    "resTypeIdMultisetSha256": "a5190ce01187f72428a6e4a0a3861cdda5b04e288d10ff63f8fe42cf8e9ee80f",
+    "rowProjectionSha256": "7af58e11640346880910a2bd0a54fcae6b7f8ee418be26fe0165fbc018732bc5",
+    "rowCount": 46,
+    "sourceBytesUnchanged": true,
+    "status": "PASS"
+  },
+  "sourceDomainRule": {
+    "accdb": "INPUT_RESTRAINTS.RES_TYPEID_USED_DIRECTLY_NO_MUTATION",
+    "inputXml": "RESTRAINT.TYPE_MUTATED_EXACTLY_ONCE_BEFORE_CLASSIFICATION",
+    "numericNamespaceEqualityAssumed": false
+  },
+  "classMapping": {
+    "rule": "EXACT_NODE_SET_IDENTITY_AGAINST_CORRECTED_INPUTXML_V1",
+    "mappings": [
+      {
+        "accdbResTypeId": 1,
+        "correctedInputXmlClass": "ANC",
+        "rowCount": 1,
+        "nodeIds": ["22490"],
+        "exactNodeSetMatch": true
+      },
+      {
+        "accdbResTypeId": 3,
+        "correctedInputXmlClass": "+Y",
+        "rowCount": 29,
+        "nodeIds": ["20030","20090","20170","20250","20300","20350","20390","20440","20520","20550","20580","20640","20710","21470","21480","21610","21640","21740","21800","21860","21930","22020","22070","22120","22140","22220","22260","22310","22370"],
+        "exactNodeSetMatch": true
+      },
+      {
+        "accdbResTypeId": 8,
+        "correctedInputXmlClass": "LIM",
+        "rowCount": 6,
+        "nodeIds": ["20030","20390","20580","21480","21860","22020"],
+        "exactNodeSetMatch": true
+      },
+      {
+        "accdbResTypeId": 9,
+        "correctedInputXmlClass": "GUI",
+        "rowCount": 10,
+        "nodeIds": ["20030","20250","20390","20550","20710","21480","21640","21930","22140","22310"],
+        "exactNodeSetMatch": true
+      }
+    ],
+    "allMappingsExact": true
+  },
+  "frictionReconciliation": {
+    "accdbResTypeId": 3,
+    "class": "+Y",
+    "positiveFrictionRowCount": 26,
+    "coefficientRaw": 0.30000001192092896,
+    "targetCoefficient": 0.3,
+    "absoluteFloatDifference": 1.1920928966180355e-8,
+    "frictionNodeIds": ["20030","20090","20170","20250","20350","20390","20440","20520","20550","20580","20710","21470","21480","21610","21740","21800","21860","21930","22020","22070","22120","22140","22220","22260","22310","22370"],
+    "nonFrictionPlusYNodeIds": ["20300","20640","21640"],
+    "matchesCorrectedInputXmlFrictionInventory": true
+  },
+  "directionReconciliation": {
+    "plusYAllGlobalY": true,
+    "positiveGapRows": [
+      {"nodeId":"20030","class":"LIM","accdbResTypeId":8,"inputXmlGap":25,"direction":[0,0,-1],"directionMatch":true,"frictionNode":true},
+      {"nodeId":"20390","class":"GUI","accdbResTypeId":9,"inputXmlGap":5,"direction":[-1,0,0],"directionMatch":true,"frictionNode":true},
+      {"nodeId":"21480","class":"LIM","accdbResTypeId":8,"inputXmlGap":25,"direction":[0,0,1],"directionMatch":true,"frictionNode":true},
+      {"nodeId":"21480","class":"GUI","accdbResTypeId":9,"inputXmlGap":10,"direction":[1,0,0],"directionMatch":true,"frictionNode":true},
+      {"nodeId":"21640","class":"GUI","accdbResTypeId":9,"inputXmlGap":10,"direction":[1,0,0],"directionMatch":true,"frictionNode":false},
+      {"nodeId":"22310","class":"GUI","accdbResTypeId":9,"inputXmlGap":10,"direction":[0,0,-1],"directionMatch":true,"frictionNode":true}
+    ],
+    "allPositiveGapDirectionsMatch": true
+  },
+  "gapCustody": {
+    "accdbGapDistinctRawValues": [-1.01010000705719],
+    "accdbAllGapFieldsUnsetSentinel": true,
+    "accdbPositiveGapMagnitudeCount": 0,
+    "correctedInputXmlPositiveGapMagnitudeCount": 6,
+    "conclusion": "ACCDB_CLOSES_CLASS_DIRECTION_FRICTION_BUT_NOT_POSITIVE_GAP_MAGNITUDES"
+  },
+  "fileLevelAuthority": {
+    "restraintDirectionalBehavior": "BIDIRECTIONAL",
+    "sourceStatus": "USER_VERIFIED_BM4_L_FILE_SETTING_RETAINED_FROM_F2_5"
+  },
+  "decision": {
+    "f26TypeDirectionFrictionMappingClosed": true,
+    "f26GapMagnitudeSourceSplitIdentified": true,
+    "productionNonlinearMechanicsAuthorized": false,
+    "l13RescoreAuthorized": false,
+    "nextRequiredStage": "F2.7_EXACT_BUILD_ACTIVE_BOUNDARY_CONDITIONS_AND_STATE_HISTORY"
+  }
+}

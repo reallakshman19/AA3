@@ -1,0 +1,73 @@
+name: M047 BM4_L F2.8b BM4_NL case catalog
+
+on:
+  push:
+    branches:
+      - agent/m047-bm4l-f28b-final-state-extraction-temp
+    paths:
+      - 'benchmarks/LFEA/CAESAR_ACCDB/m047-bm4l-f28b-case-catalog-intent.json'
+
+permissions:
+  contents: read
+
+jobs:
+  extract-case-catalog:
+    runs-on: windows-latest
+    timeout-minutes: 20
+    env:
+      COMMON_COMMIT: '179c4831cf521cf797c13699cfbbd118315c9244'
+      BM4_NL_ZIP_BLOB: '86a803ed27ebdbd2836452dc2e874c3458aa204c'
+      BM4_NL_ACCDB_SHA256: '85d39463296e569da811d8572e2eff680b858097f76fdf0f47d1755f0b161c21'
+      ACE_INSTALLER_URL: 'https://download.microsoft.com/download/3/5/C/35C84C36-661A-44E6-9324-8786B8DBE231/accessdatabaseengine_X64.exe'
+      ACE_INSTALLER_SHA256: '04e96c9f1a1f7d251a88aececf1dc10ff65950392787427c00814a43308003de'
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.sha }}
+      - name: Install authenticated ACE
+        shell: pwsh
+        run: |
+          $ErrorActionPreference='Stop'
+          New-Item -ItemType Directory -Force -Path artifacts/cases | Out-Null
+          $installer=Join-Path $PWD 'artifacts/cases/accessdatabaseengine_X64.exe'
+          Invoke-WebRequest -Uri $env:ACE_INSTALLER_URL -OutFile $installer
+          $hash=(Get-FileHash $installer -Algorithm SHA256).Hash.ToLowerInvariant()
+          if($hash -ne $env:ACE_INSTALLER_SHA256){throw "ACE hash mismatch $hash"}
+          $signature=Get-AuthenticodeSignature $installer
+          if($signature.Status -ne 'Valid' -or $signature.SignerCertificate.Subject -notmatch 'Microsoft'){throw 'ACE signature invalid'}
+          $p=Start-Process $installer -ArgumentList '/quiet','/norestart' -Wait -PassThru
+          if($p.ExitCode -notin @(0,3010)){throw "ACE install failed $($p.ExitCode)"}
+      - name: Fetch authenticated BM4_NL
+        id: source
+        shell: pwsh
+        run: |
+          $ErrorActionPreference='Stop'
+          $zip=Join-Path $PWD 'artifacts/cases/BM4_NL.zip'
+          Invoke-WebRequest -Uri "https://raw.githubusercontent.com/reallaksh19/Common/$env:COMMON_COMMIT/LFEA/BM4/BM4_NL.zip" -OutFile $zip
+          $blob=(& git hash-object -- $zip).Trim().ToLowerInvariant()
+          if($blob -ne $env:BM4_NL_ZIP_BLOB){throw "zip blob mismatch $blob"}
+          Expand-Archive $zip -DestinationPath artifacts/cases/source -Force
+          $accdb=(Get-ChildItem artifacts/cases/source -File -Recurse | Where-Object Name -eq 'BM4_NL.ACCDB').FullName
+          $sha=(Get-FileHash $accdb -Algorithm SHA256).Hash.ToLowerInvariant()
+          if($sha -ne $env:BM4_NL_ACCDB_SHA256){throw "ACCDB hash mismatch $sha"}
+          "accdb=$accdb" >> $env:GITHUB_OUTPUT
+      - name: Query exact case catalog and endpoints
+        shell: pwsh
+        run: |
+          $ErrorActionPreference='Stop'
+          function Convert-DbValue([object]$Value){if($null -eq $Value -or $Value -is [DBNull]){return $null}; return $Value}
+          function Rows([object]$C,[string]$Sql){$rs=New-Object -ComObject ADODB.Recordset; try{$rs.Open($Sql,$C,0,1);$a=@();while(-not $rs.EOF){$r=[ordered]@{};for($i=0;$i -lt $rs.Fields.Count;$i++){$f=$rs.Fields.Item($i);$r[[string]$f.Name]=Convert-DbValue $f.Value};$a+=$r;$rs.MoveNext()};return @($a)}finally{if($rs.State -ne 0){$rs.Close()};[void][Runtime.InteropServices.Marshal]::ReleaseComObject($rs)}}
+          $c=New-Object -ComObject ADODB.Connection
+          try{
+            $c.Open("Provider=Microsoft.ACE.OLEDB.12.0;Data Source=${{ steps.source.outputs.accdb }};Mode=Read;Persist Security Info=False;")
+            $catalog=@(Rows $c 'SELECT DISTINCT LCASE_NUM,[CASE],LCASE_NAME FROM OUTPUT_DISPLACEMENTS ORDER BY LCASE_NUM')
+            $disp=@(Rows $c 'SELECT NODE,LCASE_NUM,[CASE],LCASE_NAME,DX,DY,DZ,RX,RY,RZ FROM OUTPUT_DISPLACEMENTS ORDER BY LCASE_NUM,NODE')
+            $forces=@(Rows $c 'SELECT LCASE_NUM,[CASE],LCASE_NAME,FROM_NODE,TO_NODE,FXF,FYF,FZF,FXT,FYT,FZT,MXF,MYF,MZF,MXT,MYT,MZT,ELEMENT_NAME FROM OUTPUT_GLOBAL_ELEMENT_FORCES ORDER BY LCASE_NUM,FROM_NODE,TO_NODE')
+            [ordered]@{schema='m047-bm4l-f28b-case-catalog/v1';commonCommit=$env:COMMON_COMMIT;accdbSha256=$env:BM4_NL_ACCDB_SHA256;catalog=$catalog;outputDisplacements=$disp;outputGlobalElementForces=$forces;policy=[ordered]@{readOnly=$true;bm4lScoreUsedToSelectCase=$false}} | ConvertTo-Json -Depth 64 | Set-Content -Encoding utf8 artifacts/cases/bm4nl-case-catalog.json
+          }finally{if($c.State -ne 0){$c.Close()};[void][Runtime.InteropServices.Marshal]::ReleaseComObject($c)}
+      - uses: actions/upload-artifact@v4
+        with:
+          name: m047-bm4l-f28b-case-catalog-${{ github.sha }}
+          path: artifacts/cases/bm4nl-case-catalog.json
+          retention-days: 14
+          if-no-files-found: error

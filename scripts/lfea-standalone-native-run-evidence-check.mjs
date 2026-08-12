@@ -5,19 +5,29 @@ import { createLfeaNativeRunEvidenceLedger } from '../src/lfea/native-run-eviden
 
 const rawHash = semanticHash({ fixture: 'raw-run-evidence' });
 const recoveryHash = semanticHash({ fixture: 'recovery-run-evidence' });
+const runIdentity = Object.freeze({
+  rawExecution: Object.freeze({ semanticHash: rawHash }),
+  recovery: Object.freeze({ semanticHash: recoveryHash }),
+});
+const runSemanticHash = semanticHash(runIdentity);
 const run = Object.freeze({
   schema: 'lfea-native-run-record/v1',
-  runId: 'LFEA-RUN-EVIDENCE-FIXTURE',
-  semanticHash: semanticHash({ fixture: 'run-record' }),
-  identity: Object.freeze({
-    rawExecution: Object.freeze({ semanticHash: rawHash }),
-    recovery: Object.freeze({ semanticHash: recoveryHash }),
-  }),
+  runId: `LFEA-RUN-${runSemanticHash.slice('fnv1a64:'.length).toUpperCase()}`,
+  semanticHash: runSemanticHash,
+  identity: runIdentity,
 });
 const originalRunJson = JSON.stringify(run);
 const ledger = createLfeaNativeRunEvidenceLedger();
 assert.deepEqual(ledger.getSnapshot().attachments, []);
 console.log('LFEA-RUN-EVIDENCE-01 PASS empty ledger fabricates no post-run engineering evidence');
+
+const forgedRun = Object.freeze({ ...run, runId: `${run.runId}-FORGED` });
+assert.throws(
+  () => ledger.attachSupport(forgedRun, supportState(run)),
+  (error) => error?.code === 'LFEA_RUN_EVIDENCE_RUN_IDENTITY_MISMATCH',
+);
+assert.equal(ledger.getSnapshot().attachments.length, 0);
+console.log('LFEA-RUN-EVIDENCE-02 PASS forged run ID/hash identity cannot receive publication evidence');
 
 const support = supportState(run);
 const supportAttachment = ledger.attachSupport(run, support);
@@ -28,12 +38,12 @@ assert.equal(supportAttachment.parentRecoveryBatchSemanticHash, recoveryHash);
 assert.equal(supportAttachment.summary.authoritySemanticHash, support.authority.semanticHash);
 assert.equal(supportAttachment.evidence.publications, support.publications);
 assert.equal(JSON.stringify(run), originalRunJson);
-console.log('LFEA-RUN-EVIDENCE-02 PASS support evidence attaches to exact run without mutating run identity');
+console.log('LFEA-RUN-EVIDENCE-03 PASS support evidence attaches to exact run without mutating run identity');
 
 const duplicate = ledger.attachSupport(run, support);
 assert.equal(duplicate, supportAttachment);
 assert.equal(ledger.getForRun(run.runId).length, 1);
-console.log('LFEA-RUN-EVIDENCE-03 PASS duplicate retained publication attachment is idempotent');
+console.log('LFEA-RUN-EVIDENCE-04 PASS duplicate retained publication attachment is idempotent');
 
 const wrongSupport = supportState(run, {
   rawExecutionSemanticHash: semanticHash({ fixture: 'other-raw' }),
@@ -43,7 +53,7 @@ assert.throws(
   (error) => error?.code === 'LFEA_RUN_EVIDENCE_PARENT_RUN_MISMATCH',
 );
 assert.equal(ledger.getForRun(run.runId).length, 1);
-console.log('LFEA-RUN-EVIDENCE-04 PASS publication from another raw/recovery run cannot be laundered into History');
+console.log('LFEA-RUN-EVIDENCE-05 PASS publication from another raw/recovery run cannot be laundered into History');
 
 const b31 = b31State(run);
 const b31Attachment = ledger.attachB31(run, b31);
@@ -52,7 +62,7 @@ assert.equal(b31Attachment.summary.applicationSemanticHash, b31.application.sema
 assert.equal(b31Attachment.summary.applicationEvidenceHash, b31.application.evidenceHash);
 assert.equal(b31Attachment.evidence.application, b31.application);
 assert.deepEqual(ledger.getForRun(run.runId).map((row) => row.kind), ['SUPPORT_ACTIONS', 'B31_CODE']);
-console.log('LFEA-RUN-EVIDENCE-05 PASS B31 application/recovery evidence is retained separately against the same exact run');
+console.log('LFEA-RUN-EVIDENCE-06 PASS B31 application/recovery evidence is retained separately against the same exact run');
 
 const snapshotBeforeContextMove = ledger.getSnapshot();
 const unrelatedCurrentContext = Object.freeze({
@@ -60,23 +70,24 @@ const unrelatedCurrentContext = Object.freeze({
   recoveryBatchSemanticHash: semanticHash({ fixture: 'new-current-recovery' }),
 });
 assert.notEqual(unrelatedCurrentContext.rawExecutionSemanticHash, rawHash);
-assert.equal(ledger.getSnapshot(), snapshotBeforeContextMove);
+assert.deepEqual(ledger.getSnapshot(), snapshotBeforeContextMove);
 assert.equal(ledger.getForRun(run.runId).length, 2);
-console.log('LFEA-RUN-EVIDENCE-06 PASS later current-model movement does not erase retained historical publication evidence');
+console.log('LFEA-RUN-EVIDENCE-07 PASS later current-model movement does not erase retained historical publication evidence');
 
 assert.throws(
   () => ledger.attachB31(run, { ...b31, publicationCurrentness: 'STALE' }),
   (error) => error?.code === 'LFEA_RUN_EVIDENCE_CURRENT_PUBLICATION_REQUIRED',
 );
-console.log('LFEA-RUN-EVIDENCE-07 PASS stale publication state cannot create a new history attachment');
+console.log('LFEA-RUN-EVIDENCE-08 PASS stale publication state cannot create a new history attachment');
 
 sourceGuards();
-console.log('LFEA-RUN-EVIDENCE-08 PASS History/runtime integration is append-only and contains no engineering recalculation path');
+console.log('LFEA-RUN-EVIDENCE-09 PASS History/runtime integration is append-only and contains no engineering recalculation path');
 console.log(JSON.stringify({
   check: 'lfea-standalone-native-run-evidence',
   status: 'PASS',
   attachmentCount: ledger.getForRun(run.runId).length,
   runRecordMutated: false,
+  forgedRunBlocked: true,
   wrongRunBlocked: true,
   staleAttachmentBlocked: true,
   historicEvidenceRetained: true,
@@ -150,7 +161,9 @@ function sourceGuards() {
   assert.match(runtimeSource, /attachB31Evidence/u);
   assert.match(runtimeSource, /getCurrentRecord/u);
   assert.match(viewSource, /append-only attachments/u);
+  assert.match(viewSource, /changes this view only/u);
   assert.match(apiSource, /getNativeRunEvidence/u);
+  assert.match(ledgerSource, /RUN_IDENTITY_MISMATCH/u);
   assert.doesNotMatch(ledgerSource, /compileSolverExecution|compileResultRecovery|recoverComponentCodePoint|compileLinearPipingB31Application|forceLocal|fAxial|calculatedStress\s*=/u);
   for (const [name, source] of Object.entries({
     ledgerSource, historySource, runtimeSource, viewSource,

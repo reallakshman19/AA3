@@ -2,7 +2,8 @@ import { nativeB31ResultsPanel } from './native-b31-results-view.js';
 import { mountLfeaNativeResultsView } from './native-results-view.js';
 
 /** Compose read-only downstream B31 publication into the existing Results surface. */
-export function mountLfeaNativeResultsCompositeView(root) {
+export function mountLfeaNativeResultsCompositeView(root, options = {}) {
+  const onExportResultsCsv = typeof options.onExportResultsCsv === 'function' ? options.onExportResultsCsv : null;
   const base = mountLfeaNativeResultsView(root);
   let current = null;
   function update(
@@ -26,6 +27,9 @@ export function mountLfeaNativeResultsCompositeView(root) {
       b31PublicationState,
     };
     const section = root.firstElementChild;
+    if (section && resultsState?.currentness === 'CURRENT' && resultsState.results) {
+      section.append(exportBar(root.ownerDocument, onExportResultsCsv));
+    }
     if (section && b31PublicationState) {
       section.append(nativeB31ResultsPanel(root.ownerDocument, b31PublicationState));
     }
@@ -39,4 +43,17 @@ export function mountLfeaNativeResultsCompositeView(root) {
       base.destroy();
     },
   });
+}
+
+function exportBar(doc, onExportResultsCsv) {
+  const wrapper = doc.createElement('div');
+  wrapper.className = 'lfea-analysis-actions';
+  const button = doc.createElement('button');
+  button.type = 'button';
+  button.dataset.role = 'lfea-export-results-csv';
+  button.textContent = 'Export results (CSV)';
+  button.disabled = typeof onExportResultsCsv !== 'function';
+  button.addEventListener('click', () => onExportResultsCsv?.());
+  wrapper.append(button);
+  return wrapper;
 }

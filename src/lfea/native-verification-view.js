@@ -1,6 +1,7 @@
 export function mountLfeaNativeVerificationView(root, options = {}) {
   if (!root?.ownerDocument) throw new TypeError('Native Verification root is required.');
   const onCreateDossier = typeof options.onCreateDossier === 'function' ? options.onCreateDossier : null;
+  const onDownloadDossier = typeof options.onDownloadDossier === 'function' ? options.onDownloadDossier : null;
 
   function update(verification, dossier) {
     const doc = root.ownerDocument;
@@ -16,7 +17,7 @@ export function mountLfeaNativeVerificationView(root, options = {}) {
     section.append(identityTable(doc, verification));
     section.append(caseEvidence(doc, verification.cases));
     section.append(publicationLimitations(doc, verification.publicationReadiness));
-    section.append(dossierPanel(doc, verification, dossier, onCreateDossier));
+    section.append(dossierPanel(doc, verification, dossier, onCreateDossier, onDownloadDossier));
     root.replaceChildren(section);
   }
 
@@ -114,7 +115,7 @@ function publicationLimitations(doc, readiness) {
   return section;
 }
 
-function dossierPanel(doc, verification, dossier, onCreateDossier) {
+function dossierPanel(doc, verification, dossier, onCreateDossier, onDownloadDossier) {
   const section = doc.createElement('section');
   section.className = 'lfea-native-dossier';
   const heading = doc.createElement('h3');
@@ -125,8 +126,17 @@ function dossierPanel(doc, verification, dossier, onCreateDossier) {
   button.textContent = 'Create current evidence dossier';
   button.disabled = verification.status !== 'CURRENT';
   button.addEventListener('click', () => onCreateDossier?.());
+  const downloadButton = doc.createElement('button');
+  downloadButton.type = 'button';
+  downloadButton.dataset.role = 'lfea-download-evidence-dossier';
+  downloadButton.textContent = 'Download dossier (JSON)';
+  downloadButton.disabled = !dossier;
+  downloadButton.addEventListener('click', () => onDownloadDossier?.());
+  const actions = doc.createElement('div');
+  actions.className = 'lfea-analysis-actions';
+  actions.append(button, downloadButton);
   section.append(heading, paragraph(doc,
-    'The dossier records current retained evidence only. It does not grant engineering issue or project release authority.'), button);
+    'The dossier records current retained evidence only. It does not grant engineering issue or project release authority.'), actions);
   if (dossier) {
     section.append(facts(doc, [
       ['Dossier status', dossier.dossierStatus],

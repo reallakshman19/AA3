@@ -5,6 +5,7 @@ import { LfeaStandaloneInputXmlSourceController } from './inputxml-source-contro
 import { createLfeaNativeB31PublicationAuthority } from './native-b31-publication-authority.js';
 import { createLfeaNativeComparisonController } from './native-comparison-controller.js';
 import { createLfeaNativeExecutionAuthority } from './native-execution-authority.js';
+import { downloadLfeaNativeResultsCsv } from './native-export.js';
 import { mountLfeaNativeHistoryView } from './native-history-view.js';
 import { createLfeaNativePublicationReadiness } from './native-publication-readiness.js';
 import { createLfeaNativeResultsAuthority } from './native-results-authority.js';
@@ -55,7 +56,7 @@ class LfeaStandaloneRuntime {
       reviewRoot: this.layout.reviewRoot, modelRoot: this.layout.modelRoot,
       analysisRoot: this.layout.analysisRoot, onRunNativeAnalysis: () => this.executeNativeAnalysis(),
     });
-    this.resultsView = mountLfeaNativeResultsCompositeView(this.layout.resultsRoot);
+    this.resultsView = mountLfeaNativeResultsCompositeView(this.layout.resultsRoot, { onExportResultsCsv: () => this.downloadNativeResultsCsv() });
     this.historyView = mountLfeaNativeHistoryView(this.layout.historyRoot, {
       onSelectRun: (runId) => this.selectHistoryRun(runId),
     });
@@ -188,10 +189,7 @@ class LfeaStandaloneRuntime {
     this.#assertAuthorityUnchanged(before, 'Run comparison');
     return comparison;
   }
-  createNativeEvidenceDossier() {
-    this.requireActive();
-    return this.verificationController.createDossier();
-  }
+  createNativeEvidenceDossier() { this.requireActive(); return this.verificationController.createDossier(); }
   stageNativeSupportAuthority(input) { return this.#stage(this.supportPublicationAuthority, input); }
   authorizeNativeSupportAuthority(approval) { return this.#authorize(this.supportPublicationAuthority, approval); }
   stageNativeB31Authority(input) { return this.#stage(this.b31PublicationAuthority, input); }
@@ -260,6 +258,7 @@ class LfeaStandaloneRuntime {
     this.layout.activate('results');
     return state;
   }
+  downloadNativeResultsCsv() { this.requireActive(); return downloadLfeaNativeResultsCsv(this.rootElement.ownerDocument, this.executionAuthority.getState(), this.resultsAuthority.getState()); }
   applicationState() {
     this.requireActive();
     return Object.freeze({

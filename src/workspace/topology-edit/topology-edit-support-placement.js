@@ -21,16 +21,28 @@ export function topologyEditSupportPlacementContext(topology, supportInput) {
   const override = certifiedOverride(support.placementOverride);
   const declaredStation = finiteNonNegative(support.stationMm);
   const attachmentParameter = finiteUnitInterval(support.attachmentSegmentParameter);
+  const attachmentStation = attachmentParameter === null ? null : attachmentParameter * host.lengthMm;
+  if (!override && declaredStation !== null && declaredStation > host.lengthMm + EPSILON_MM) {
+    throw new RangeError(
+      `TopologyEditSupportPlacement: support ${support.id} declared station exceeds host length.`,
+    );
+  }
+  if (!override && declaredStation !== null && attachmentStation !== null
+      && Math.abs(declaredStation - attachmentStation) > EPSILON_MM) {
+    throw new RangeError(
+      `TopologyEditSupportPlacement: support ${support.id} has conflicting station and attachment evidence.`,
+    );
+  }
   let currentStationMm = null;
   let stationAuthority = 'UNRESOLVED';
   if (override) {
     currentStationMm = override.stationMm;
     stationAuthority = CERTIFIED_SUPPORT_PLACEMENT_AUTHORITY;
-  } else if (declaredStation !== null && declaredStation <= host.lengthMm + EPSILON_MM) {
+  } else if (declaredStation !== null) {
     currentStationMm = Math.min(declaredStation, host.lengthMm);
     stationAuthority = 'DECLARED_SUPPORT_STATION';
-  } else if (attachmentParameter !== null) {
-    currentStationMm = attachmentParameter * host.lengthMm;
+  } else if (attachmentStation !== null) {
+    currentStationMm = attachmentStation;
     stationAuthority = 'ATTACHMENT_SEGMENT_PARAMETER';
   }
   const currentOrigin = override?.origin

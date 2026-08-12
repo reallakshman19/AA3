@@ -14,27 +14,28 @@ jobs:
     timeout-minutes: 45
     env:
       BASE_SHA: e977bd15a0fbe30492514d7ad29ae52c998c50c8
-      CANDIDATE_SHA: 023a8148df53266c356e019033ec971db7522339
+      CANDIDATE_SHA: f402aa7234b4962b0565dada5aaf03d174adf441
       PLAYWRIGHT_BROWSERS_PATH: '0'
-      TOPOLOGY_EDIT_TARGET_HEAD_SHA: 023a8148df53266c356e019033ec971db7522339
+      TOPOLOGY_EDIT_TARGET_HEAD_SHA: f402aa7234b4962b0565dada5aaf03d174adf441
     steps:
       - name: Checkout exact candidate
         uses: actions/checkout@v4
         with:
-          ref: 023a8148df53266c356e019033ec971db7522339
+          ref: f402aa7234b4962b0565dada5aaf03d174adf441
           fetch-depth: 0
-      - name: Verify exact five-file ledger
+      - name: Verify exact six-file ledger
         shell: bash
         run: |
           set -euo pipefail
           test "$(git rev-parse HEAD)" = "$CANDIDATE_SHA"
-          expected=$'e2e/helpers/topology-edit-ghost-applied-differential.js\ne2e/topology-edit-a3d004-ghost-applied.spec.js\nsrc/workspace/topology-edit-3d-authoring-controller.js\nsrc/workspace/topology-edit/authoring/topology-edit-authored-bend-geometry.js\ntests/topology-edit-authored-bend-typed-projection.test.mjs'
+          expected=$'e2e/helpers/topology-edit-ghost-applied-differential.js\ne2e/topology-edit-a3d004-ghost-applied.spec.js\nsrc/workspace/topology-edit-3d-authoring-controller.js\nsrc/workspace/topology-edit/authoring/topology-edit-authored-bend-geometry.js\nsrc/workspace/topology-edit/topology-edit-navigation-hud-viewport-backend.js\ntests/topology-edit-authored-bend-typed-projection.test.mjs'
           test "$(git diff --name-only "$BASE_SHA" "$CANDIDATE_SHA")" = "$expected"
           git diff --check "$BASE_SHA" "$CANDIDATE_SHA"
           node --check e2e/helpers/topology-edit-ghost-applied-differential.js
           node --check e2e/topology-edit-a3d004-ghost-applied.spec.js
           node --check src/workspace/topology-edit-3d-authoring-controller.js
           node --check src/workspace/topology-edit/authoring/topology-edit-authored-bend-geometry.js
+          node --check src/workspace/topology-edit/topology-edit-navigation-hud-viewport-backend.js
           node --check tests/topology-edit-authored-bend-typed-projection.test.mjs
       - name: Set up Node
         uses: actions/setup-node@v4

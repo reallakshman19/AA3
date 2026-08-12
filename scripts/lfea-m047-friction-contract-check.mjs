@@ -190,6 +190,31 @@ assert.match(
   /CAESAR_INCLUDE_INSULATION_IN_HYDROTEST_DEFAULT_FALSE/u,
   'Hydrotest insulation exclusion authority must be explicit.',
 );
+assert.match(
+  governedFrictionSource,
+  /solveRawCaesarAccdbFrictionBenchmark\(benchmarkPackage, dependencyIds, options\)/u,
+  'L13/L7 primitive dependencies must be solved before the derived L15 construction.',
+);
+assert.match(
+  governedFrictionSource,
+  /buildGovernedDerivedL15\(benchmarkPackage, preDerived\.cases\.L7, preDerived\.cases\.L13\)/u,
+  'L15 must be built outside the nonlinear kernel from converged L7/L13 cases.',
+);
+assert.match(
+  governedFrictionSource,
+  /solveRawCaesarAccdbFrictionBenchmark\(benchmarkPackage, \['L1'\], options\)/u,
+  'L1 must be invoked only as the final independent primitive friction state.',
+);
+assert.match(
+  governedFrictionSource,
+  /equilibriumQualificationUse: 'REPORT_ONLY_DERIVED_CASE_PRIMITIVE_OPERANDS_GOVERN_NONLINEAR_EQUILIBRIUM_ACCEPTANCE'/u,
+  'L15 derived equilibrium must remain report-only while primitive equilibrium remains hard-gated.',
+);
+assert.match(
+  governedFrictionSource,
+  /algebraicIdentityStatus: 'PASS'/u,
+  'The governed L15 result must publish an explicit exact algebraic identity gate.',
+);
 
 const assessmentSource = readFileSync(resolve(
   'src/core/fea-benchmarks/qualification-engineering-assessment.js',
@@ -232,6 +257,21 @@ assert.match(
   benchmarkSource,
   /hydrotestAuthority,/u,
   'The resolved-configuration artifact must retain the governed hydrotest authority.',
+);
+assert.match(
+  benchmarkSource,
+  /l15Evidence\?\.independentNonlinearSolve !== false/u,
+  'The Stage 2 gate must reject any independently solved L15 state.',
+);
+assert.match(
+  benchmarkSource,
+  /l15Evidence\?\.algebraicIdentityStatus !== 'PASS'/u,
+  'The Stage 2 gate must hard-check L15 algebraic identity.',
+);
+assert.match(
+  benchmarkSource,
+  /l15DerivedEquilibriumStatus:/u,
+  'L15 derived equilibrium status must be retained separately as report evidence.',
 );
 assert.match(
   benchmarkSource,

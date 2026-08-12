@@ -18,6 +18,7 @@ const FORBIDDEN_EXACT = new Set([
   'src/workspace/lafea-workbench.js',
   'src/workspace/fea-benchmark-panel.js',
   'src/workspace/advanced-mock-data.js',
+  'src/workspace/lafea-simulated-source-provider.js',
 ]);
 const FORBIDDEN_PREFIXES = [
   'src/lfea/',
@@ -60,6 +61,7 @@ console.log(JSON.stringify({
   entry: repoRelative(ENTRY),
   localModulesInspected: visited.size,
   combinedWorkspaceRequired: false,
+  combinedBuildConfigRequired: false,
   compatibilityFacadeRequired: false,
   lfeaRuntimeDependency: false,
   sharedPrimitiveProductDependency: false,
@@ -145,6 +147,8 @@ function assertStandaloneConfig() {
     'Standalone LAFEA build must use isolated dist-lafea output.');
   assert(source.includes("new URL('./lafea.html'"),
     'Standalone LAFEA build must use lafea.html as its input.');
+  assert(!source.includes("from './vite.config.js'"),
+    'Standalone LAFEA build config must not import the combined Vite config.');
   for (const forbidden of ['./index.html', './analyze.html', './lfea.html']) {
     assert(!source.includes(`new URL('${forbidden}'`),
       `Standalone LAFEA build must not include ${forbidden}.`);

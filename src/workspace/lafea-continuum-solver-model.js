@@ -13,7 +13,7 @@ import { sourceAuthorityDocument, validateLafeaSourceAuthority } from './lafea-s
 
 export const LAFEA_CONTINUUM_SOLVER_MODEL_SCHEMA = 'lafea-continuum-solver-model/v1';
 export const LAFEA_CONTINUUM_SOLVER_COMPILER_ID = 'LAFEA.3/DOMAIN_FIRST_SOLVER_COMPILER';
-export const LAFEA_CONTINUUM_SOLVER_COMPILER_REVISION = '12A.2';
+export const LAFEA_CONTINUUM_SOLVER_COMPILER_REVISION = '12B.1';
 
 const STAGE_ID = 'LAFEA.3';
 
@@ -108,7 +108,10 @@ function requireParentChain(authority, source, canonical, domain, geometryEviden
   if (meshEvidence.status !== 'CURRENT' || meshEvidence.qualification !== 'PASS') {
     fail('LAFEA_CONTINUUM_SOLVER_MESH_NOT_CURRENT_PASS');
   }
-  if (domain.formulation !== canonical.formulation) fail('LAFEA_CONTINUUM_SOLVER_FORMULATION_MISMATCH');
+  if (domain.formulation !== canonical.formulation) {
+    fail('LAFEA_CONTINUUM_SOLVER_FORMULATION_MISMATCH');
+  }
+  requireLengthUnitBoundary(canonical, domain, geometryEvidence.geometry);
   const domainCases = domain.physicalCases.map((row) => row.caseId).sort();
   const canonicalCases = canonical.loadCases.map((row) => row.loadCaseId).sort();
   if (JSON.stringify(domainCases) !== JSON.stringify(canonicalCases)) {
@@ -118,6 +121,15 @@ function requireParentChain(authority, source, canonical, domain, geometryEviden
     if (domain.units[key] !== canonical.units.declared[key]) {
       fail('LAFEA_CONTINUUM_SOLVER_UNIT_SYSTEM_MISMATCH');
     }
+  }
+}
+
+function requireLengthUnitBoundary(canonical, domain, geometry) {
+  if (geometry.lengthUnit !== domain.units.length) {
+    fail('LAFEA_CONTINUUM_SOLVER_GEOMETRY_UNIT_SYSTEM_MISMATCH');
+  }
+  if (geometry.lengthUnit !== canonical.units.canonical.length) {
+    fail('LAFEA_CONTINUUM_SOLVER_NONCANONICAL_GEOMETRY_UNITS_UNSUPPORTED');
   }
 }
 

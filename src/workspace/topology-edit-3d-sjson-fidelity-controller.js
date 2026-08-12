@@ -133,16 +133,12 @@ export class TopologyEdit3DViewController extends ProfessionalController {
 
   buildWorkspaceCanonical(dataset, graph) {
     const attachmentModel = SupportRestraintStore.getAttachmentModel();
-    const canonical = isGovernedSjsonEditDraftSourceHash(
-      dataset?.sourceSnapshot?.sourceSemanticHash,
-    )
-      ? buildDispatchedCanonicalTopology(
-        dataset,
-        graph,
-        attachmentModel,
-        SupportRestraintStore.getRestraintModel(),
-      )
-      : super.buildWorkspaceCanonical(dataset, graph);
+    const canonical = buildDispatchedCanonicalTopology(
+      dataset,
+      graph,
+      attachmentModel,
+      SupportRestraintStore.getRestraintModel(),
+    );
     if (!this.isGovernedSjsonCanonical(canonical)) return canonical;
     return enrichCanonicalSupportsWithExactOrigins(canonical, dataset, attachmentModel);
   }

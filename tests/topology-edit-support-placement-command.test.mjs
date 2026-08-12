@@ -20,6 +20,7 @@ import {
   effectiveTopologyEditSupportOrigin,
   effectiveTopologyEditSupportStationMm,
   topologyEditSupportNonPlacementMaterial,
+  topologyEditSupportPlacementContext,
 } from '../src/workspace/topology-edit/topology-edit-support-placement.js';
 
 function fixture({ hostEntityId = 'pipe:p1', hostType = 'PIPE', support = {} } = {}) {
@@ -129,6 +130,23 @@ test('UPDATE_SUPPORT_PLACEMENT changes only placement override and preserves imp
   assert.equal(after.attachmentId, before.attachmentId);
   assert.equal(after.attachmentSegmentParameter, before.attachmentSegmentParameter);
   assert.deepEqual(after.origin, before.origin);
+});
+
+test('projected attachment point is exact station authority when no segment parameter exists', () => {
+  const base = fixture({ support: { attachmentSegmentParameter: null } });
+  const context = topologyEditSupportPlacementContext(base, base.supports[0]);
+  assert.equal(context.currentStationMm, 250);
+  assert.equal(context.stationAuthority, 'ATTACHMENT_PROJECTED_POINT');
+  assert.throws(() => resolved(base, { stationMm: 250 }), /placement is a no-op/);
+});
+
+test('conflicting attachment segment and projected-point evidence fails closed', () => {
+  const base = fixture({ support: { attachmentSegmentParameter: 0.3 } });
+  assert.throws(
+    () => topologyEditSupportPlacementContext(base, base.supports[0]),
+    /conflicting attachment segment and projected-point evidence/,
+  );
+  assert.throws(() => resolved(base), /conflicting attachment segment and projected-point evidence/);
 });
 
 test('UPDATE_SUPPORT_PLACEMENT rejects invalid station, no-op, host drift, and non-straight host', () => {

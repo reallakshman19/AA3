@@ -15,14 +15,43 @@ export function effectiveTopologyEditSupportOrigin(support) {
   return certifiedTopologyEditSupportPlacementOrigin(support) ?? finitePoint(support?.origin);
 }
 
+export function topologyEditSupportPlacementContext(topology, supportInput) {
+  const support = exact(topology?.supports, supportInput?.id, 'support');
+  const host = resolveSupportHostGeometry(topology, support);
+  const override = certifiedOverride(support.placementOverride);
+  const declaredStation = finiteNonNegative(support.stationMm);
+  const attachmentParameter = finiteUnitInterval(support.attachmentSegmentParameter);
+  let currentStationMm = null;
+  let stationAuthority = 'UNRESOLVED';
+  if (override) {
+    currentStationMm = override.stationMm;
+    stationAuthority = CERTIFIED_SUPPORT_PLACEMENT_AUTHORITY;
+  } else if (declaredStation !== null && declaredStation <= host.lengthMm + EPSILON_MM) {
+    currentStationMm = Math.min(declaredStation, host.lengthMm);
+    stationAuthority = 'DECLARED_SUPPORT_STATION';
+  } else if (attachmentParameter !== null) {
+    currentStationMm = attachmentParameter * host.lengthMm;
+    stationAuthority = 'ATTACHMENT_SEGMENT_PARAMETER';
+  }
+  const currentOrigin = override?.origin
+    ?? finitePoint(support.origin)
+    ?? (currentStationMm === null ? null : interpolate(host.from.position, host.to.position, currentStationMm / host.lengthMm));
+  return deepFreeze({
+    supportId: support.id,
+    hostEdgeId: host.edge.id,
+    hostEntityId: host.edge.componentKey ?? support.hostEntityId ?? null,
+    hostType: stringValue(host.edge.entityType).toUpperCase(),
+    hostLengthMm: host.lengthMm,
+    fromNodeId: host.from.id,
+    toNodeId: host.to.id,
+    currentStationMm,
+    stationAuthority,
+    currentOrigin,
+  });
+}
+
 export function effectiveTopologyEditSupportStationMm(topology, support) {
-  const resolved = resolveSupportHostGeometry(topology, support);
-  const override = certifiedOverride(support?.placementOverride);
-  if (override) return override.stationMm;
-  const station = finiteNonNegative(support?.stationMm);
-  if (station !== null && station <= resolved.lengthMm + EPSILON_MM) return station;
-  const parameter = finiteUnitInterval(support?.attachmentSegmentParameter);
-  return parameter === null ? null : parameter * resolved.lengthMm;
+  return topologyEditSupportPlacementContext(topology, support).currentStationMm;
 }
 
 export function resolveTopologyEditSupportPlacement(topology, supportInput, stationInput, expectedHostEdgeId = null) {
@@ -44,10 +73,14 @@ export function resolveTopologyEditSupportPlacement(topology, supportInput, stat
     );
   }
   const boundedStationMm = Math.min(stationMm, host.lengthMm);
+  const context = topologyEditSupportPlacementContext(topology, support);
+  if (context.currentStationMm !== null
+      && Math.abs(context.currentStationMm - boundedStationMm) <= EPSILON_MM) {
+    throw new RangeError(`TopologyEditSupportPlacement: support ${support.id} placement is a no-op.`);
+  }
   const segmentParameter = boundedStationMm / host.lengthMm;
   const origin = interpolate(host.from.position, host.to.position, segmentParameter);
-  const currentOrigin = effectiveTopologyEditSupportOrigin(support);
-  if (currentOrigin && distance(currentOrigin, origin) <= EPSILON_MM) {
+  if (context.currentOrigin && distance(context.currentOrigin, origin) <= EPSILON_MM) {
     throw new RangeError(`TopologyEditSupportPlacement: support ${support.id} placement is a no-op.`);
   }
   return deepFreeze({

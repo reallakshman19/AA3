@@ -35,3 +35,7 @@ export {
   replayCaesarFrictionMicroModelEvidence,
   summarizeIndependentSlidePlateauEvidence,
 } from './caesar-friction-evidence-measurement-replay.js';
+export {
+  BM4L_L13_STATE_TRACE_EVIDENCE_STATUS,
+  assessBm4lL13StateTraceEvidence,
+} from './caesar-bm4l-l13-state-trace-evidence-gate.js';

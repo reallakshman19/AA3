@@ -139,8 +139,15 @@ function requireSolverModel(value) {
 }
 
 function requireExecution(value, solverModel) {
+  const parents = solverModel.parents ?? {};
   if (!value || value.stageId !== STAGE_ID || value.status !== 'QUALIFIED'
     || value.route !== ROUTE || value.solverModelHash !== solverModel.solverModelHash
+    || value.sourceHash !== parents.sourceHash
+    || value.analysisDomainHash !== parents.analysisDomainHash
+    || value.analysisGeometryHash !== parents.analysisGeometryHash
+    || value.meshHash !== parents.meshHash
+    || value.meshProfileHash !== parents.meshProfileHash
+    || value.releaseQualified !== false
     || typeof value.compiledExecutionHash !== 'string'
     || !/^sha256:[0-9a-f]{64}$/u.test(value.compiledExecutionHash)
     || value.result?.qualification?.state !== 'ACCEPTED'

@@ -85,9 +85,38 @@ export class TopologyEditNavigationHudViewportBackend extends TopologyEditSuppor
   }
 
   renderGhost(ghost, markerSize) {
-    const result = super.renderGhost(ghost, markerSize);
+    const primitives = Array.isArray(ghost?.primitives) ? ghost.primitives : [];
+    if (!primitives.length) {
+      const result = super.renderGhost(ghost, markerSize);
+      this.gpuPicker?.invalidateScene?.();
+      return result;
+    }
+
+    this.clearGroup(this.groups.ghostGroup);
+    const resolvedMarkerSize = resolveGhostMarkerSize(markerSize, this.engineeringBounds);
+    const elements = Array.isArray(ghost?.elements) ? ghost.elements : [];
+    const segments = Array.isArray(ghost?.segments) ? ghost.segments : [];
+    const projection = { elements, segments, primitives };
+    this.renderProjection(
+      this.groups.ghostGroup,
+      projection,
+      0xf59e0b,
+      0.38,
+      resolvedMarkerSize * 1.2,
+    );
+    // Typed projection uses invisible node pick proxies. Keep the established
+    // visible ghost markers without making them engineering authority.
+    this.buildMeshGroup(
+      this.groups.ghostGroup,
+      elements.filter((row) => row?.type === 'node'),
+      0xf59e0b,
+      0.38,
+      resolvedMarkerSize * 1.2,
+    );
+    this.applySectionPlanesToGroup(this.groups.ghostGroup);
+    this.invalidate('typed-ghost-replacement');
     this.gpuPicker?.invalidateScene?.();
-    return result;
+    return undefined;
   }
 
   clearGhost() {
@@ -182,6 +211,14 @@ export class TopologyEditNavigationHudViewportBackend extends TopologyEditSuppor
 export function engineeringBasisQuaternion() {
   const matrix = new THREE.Matrix4().fromArray([...ENGINEERING_TO_RENDER_MATRIX4_ELEMENTS]);
   return new THREE.Quaternion().setFromRotationMatrix(matrix).normalize();
+}
+
+function resolveGhostMarkerSize(markerSize, bounds) {
+  const explicit = Number(markerSize);
+  if (Number.isFinite(explicit) && explicit > 0) return explicit;
+  return !bounds || bounds.isEmpty()
+    ? 10
+    : Math.max(bounds.getSize(new THREE.Vector3()).length() * 0.008, 5);
 }
 
 function isExactGpuSample(hit) {

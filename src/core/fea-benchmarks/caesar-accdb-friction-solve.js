@@ -159,7 +159,8 @@ export function solveCaesarAccdbFrictionBenchmark(benchmarkPackage, options = {}
         'The nonlinear adapter changes only tangential support stiffness/load terms; qualified element, W/T1/P1, restraint-normal and recovery mechanics are reused unchanged.',
         'Friction surfaces are selected only from positive-FRIC_COEF ACCDB type-Y rows; GUI/LIM/ANC rows remain ordinary qualified restraints and cannot create friction surfaces.',
         'Each Coulomb cap binds to exactly one qualified Y-normal spring; co-located GUI/LIM reactions cannot enter mu|N|.',
-        'Every nonlinear linearization uses the same dense direct residual-refinement policy as the qualified linear solver.',
+        'Every nonlinear linearization uses the same dense direct residual-refinement, residual, energy and conditioning policies as the qualified linear solver.',
+        'The nonlinear stiffnessStateHash binds the frozen base stiffness hash to the converged stick/slide tangent state.',
         'Supports are bidirectional and remain active; no lift-off or one-directional contact logic is introduced.',
         'L15 is algebraic only and never enters the nonlinear iteration.',
         'L1 WW+HP is blocked until hydrotest weight/pressure construction is independently qualified in the ACCDB mechanics.',
@@ -198,7 +199,10 @@ function solvePrimitiveFrictionCase(input) {
     }
     const legacyEvidence = legacy.mechanics.cases[input.caseId];
     const physicalEquilibrium = legacyEvidence.recoveredEquilibrium;
-    const runStatus = nonlinearRun.status === 'CONVERGED' && physicalEquilibrium.status === 'PASS'
+    const numericalQualificationStatus = finalIteration.refinement?.numericalQualification?.status ?? 'BLOCK';
+    const runStatus = nonlinearRun.status === 'CONVERGED'
+      && physicalEquilibrium.status === 'PASS'
+      && numericalQualificationStatus === 'PASS'
       ? 'PASS'
       : 'FAIL';
     runs.push(deepFreeze({
@@ -206,6 +210,7 @@ function solvePrimitiveFrictionCase(input) {
       status: runStatus,
       activeSet: nonlinearRun,
       physicalEquilibrium,
+      numericalQualificationStatus,
       finalEquationResidual: finalIteration.equilibrium,
       finalIterativeRefinement: finalIteration.refinement,
     }));
@@ -327,10 +332,24 @@ function solveCapturedNonlinearSystem(input) {
     dof: entry.dof,
     value: clean(finalIteration.displacementVector[index]),
   }));
+  const nonlinearStiffnessStateHash = semanticHash({
+    schema: 'm047-bm4l-nonlinear-stiffness-state/v1',
+    baseStiffnessStateHash: compilation.stiffnessStateHash,
+    frictionStates: finalStates.map((state) => {
+      const restraint = input.restraints.find((entry) => entry.restraintId === state.restraintId);
+      return {
+        restraintId: state.restraintId,
+        nodeId: restraint?.nodeId ?? null,
+        state: state.state,
+        frictionStiffnessNPerM: restraint?.frictionStiffnessNPerM ?? null,
+      };
+    }),
+  });
   const identity = semanticHash({
     caseId: input.caseId,
     displacement,
     reactions,
+    nonlinearStiffnessStateHash,
     activeSet: run.ledger.map((row) => row.states.map((state) => ({
       restraintId: state.restraintId,
       state: state.state,
@@ -340,7 +359,7 @@ function solveCapturedNonlinearSystem(input) {
   const execution = deepFreeze({
     semanticHash: identity,
     evidenceHash: semanticHash({ identity, runStatus: run.status }),
-    stiffnessStateHash: compilation.stiffnessStateHash,
+    stiffnessStateHash: nonlinearStiffnessStateHash,
     status: run.status === 'CONVERGED' ? 'QUALIFIED' : 'BLOCKED',
     displacement,
     reactions,
@@ -348,6 +367,8 @@ function solveCapturedNonlinearSystem(input) {
       nonlinearFriction: {
         status: run.status,
         iterations: run.iterations,
+        baseStiffnessStateHash: compilation.stiffnessStateHash,
+        nonlinearStiffnessStateHash,
         finalEquationResidual: finalIteration.equilibrium,
         finalIterativeRefinement: finalIteration.refinement,
       },

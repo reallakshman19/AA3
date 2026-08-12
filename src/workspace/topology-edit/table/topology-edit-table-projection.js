@@ -1,5 +1,6 @@
 import { deepFreeze, semanticHash, stringValue } from '../../../core/shared-piping-model/index.js';
 import { assertCanonicalTopologyHash } from '../topology-edit-canonical-state.js';
+import { CERTIFIED_SUPPORT_PLACEMENT_AUTHORITY } from '../topology-edit-support-placement.js';
 import { topologyEditTableColumnKeysFor } from './topology-edit-table-columns.js';
 import { buildTopologyEditTableCustody } from './topology-edit-table-custody.js';
 
@@ -89,8 +90,14 @@ function supportRow(record, context) {
   const entity = context.entities.get(record.entityId) ?? null;
   const custody = buildTopologyEditTableCustody({ dataset: context.dataset, entity, canonicalRecord: record });
   const packed = commonFields(record, entity, 'SUPPORT', custody);
-  add(packed, 'hostEntityId', record.hostEntityId ?? null, 'CANONICAL');
-  addSourceField(packed, 'stationMm', record.stationMm, entity, ['STATION_MM', 'STATION']);
+  const override = record.placementOverride?.authority === CERTIFIED_SUPPORT_PLACEMENT_AUTHORITY
+    ? record.placementOverride : null;
+  add(packed, 'hostEntityId', override?.hostEntityId ?? record.hostEntityId ?? null, 'CANONICAL');
+  if (override && Number.isFinite(Number(override.stationMm))) {
+    add(packed, 'stationMm', Number(override.stationMm), CERTIFIED_SUPPORT_PLACEMENT_AUTHORITY);
+  } else {
+    addSourceField(packed, 'stationMm', record.stationMm, entity, ['STATION_MM', 'STATION']);
+  }
   addSourceField(packed, 'supportType', record.restraint?.type, entity, ['SUPPORT_TYPE', 'RESTRAINT_TYPE']);
   add(packed, 'direction', record.restraint?.direction ?? record.restraint?.vector ?? null, 'CANONICAL');
   addSourceField(packed, 'gapMm', record.restraint?.gapMm, entity, ['GAP_MM', 'GAP']);

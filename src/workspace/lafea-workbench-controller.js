@@ -1,6 +1,5 @@
 /** Controller for the independent guided LAFEA workbench. */
 import { createLafeaWorkbenchOrchestratorStore } from './lafea-workbench-orchestrator-store.js';
-import { FeaBenchmarkPanel } from './fea-benchmark-panel.js';
 import {
   createLafeaAccessoryPanelManager,
   lafeaAccessoryPanelConfigurationRequiresHost,
@@ -29,10 +28,17 @@ const DESTROYED_CONTROLLERS = new WeakSet();
 export class LafeaWorkbenchController {
   constructor(rootElement, options) {
     const configuration = isLafeaRecord(options) ? options : {};
-    const { accessoryPanels, THREE, ...storeOptions } = configuration;
+    const {
+      accessoryPanels,
+      benchmarkPanelFactory,
+      mockDocumentFactory,
+      THREE,
+      ...storeOptions
+    } = configuration;
     this.rootElement = rootElement;
     this.documentRef = rootElement?.ownerDocument ?? globalThis.document;
     this.store = createLafeaWorkbenchOrchestratorStore(storeOptions);
+    this.mockDocumentFactory = typeof mockDocumentFactory === 'function' ? mockDocumentFactory : null;
     initializeLafeaWorkbenchRenderEvidence(this, THREE ?? null);
     this.view = new LafeaWorkbenchView(rootElement, {
       getRenderPacket: (stageId) => lafeaWorkbenchDisplayRenderPacket(this, stageId),
@@ -40,8 +46,10 @@ export class LafeaWorkbenchController {
     });
     this.benchmarkHost = this.documentRef.createElement('div');
     this.benchmarkHost.dataset.role = 'lafea-benchmark-host';
-    this.benchmarkPanel = new FeaBenchmarkPanel(this.benchmarkHost, { surface: 'LAFEA' });
-    this.view.setBenchmarkHost(this.benchmarkHost);
+    this.benchmarkPanel = typeof benchmarkPanelFactory === 'function'
+      ? benchmarkPanelFactory(this.benchmarkHost)
+      : null;
+    if (this.benchmarkPanel) this.view.setBenchmarkHost(this.benchmarkHost);
     if (lafeaAccessoryPanelConfigurationRequiresHost(configuration)) {
       ACCESSORY_PANEL_MANAGERS.set(
         this,
@@ -77,7 +85,7 @@ export class LafeaWorkbenchController {
       onGenerateMesh: (overrides) => this.generateAnalysisMesh(overrides),
       onRefineMesh: (request) => this.refineAnalysisMesh(request),
     });
-    this.benchmarkPanel.render();
+    this.benchmarkPanel?.render();
     this.unsubscribe = this.store.subscribe((state) => this.view.render(state));
     this.view.render(this.store.getState());
     const accessoryPanelManager = ACCESSORY_PANEL_MANAGERS.get(this);
@@ -88,8 +96,8 @@ export class LafeaWorkbenchController {
     return this;
   }
 
-  runBenchmark() { return this.benchmarkPanel.run(); }
-  getBenchmarkReport() { return this.benchmarkPanel.getReport(); }
+  runBenchmark() { return this.benchmarkPanel?.run() ?? null; }
+  getBenchmarkReport() { return this.benchmarkPanel?.getReport() ?? null; }
 
   async loadFile(file) {
     if (!file) return this.getState();
@@ -116,8 +124,18 @@ export class LafeaWorkbenchController {
   }
 
   async loadMockData(stageId) {
-    const { createLafeaMockDocument } = await import('./advanced-mock-data.js');
-    return this.importDocument(createLafeaMockDocument(stageId), stageId);
+    if (!this.mockDocumentFactory) {
+      return this.store.reportEditError(
+        'document',
+        null,
+        new TypeError('LAFEA_SIMULATED_SOURCE_NOT_CONFIGURED'),
+      );
+    }
+    try {
+      return this.importDocument(await this.mockDocumentFactory(stageId), stageId);
+    } catch (error) {
+      return this.store.reportEditError('document', null, error);
+    }
   }
 
   exportDocument() { return this.store.exportDocument(); }
@@ -270,7 +288,7 @@ export class LafeaWorkbenchController {
     const accessoryPanelManager = ACCESSORY_PANEL_MANAGERS.get(this);
     accessoryPanelManager?.destroy();
     ACCESSORY_PANEL_MANAGERS.delete(this);
-    this.benchmarkPanel.destroy();
+    this.benchmarkPanel?.destroy();
     this.unsubscribe?.();
     this.unsubscribe = null;
     this.store.destroy();

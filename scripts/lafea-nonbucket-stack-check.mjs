@@ -30,6 +30,7 @@ const CHECKS = Object.freeze([
   { scope: 'MESH_IDENTITY', path: 'scripts/lafea-continuum-mesh-identity-check.mjs' },
   { scope: 'REVALIDATION', path: 'scripts/lafea-continuum-revalidation-check.mjs' },
   { scope: 'SOLVER_MODEL', path: 'scripts/lafea-continuum-solver-model-check.mjs' },
+  { scope: 'COMPILED_EXECUTION', path: 'scripts/lafea-continuum-compiled-execution-check.mjs' },
   { scope: 'U1', path: 'scripts/lafea-u1-stage-registry-check.mjs' },
   { scope: 'U1', path: 'scripts/lafea-u1b-registry-consumer-check.mjs' },
   { scope: 'U2', path: 'scripts/lafea-u2a-input-command-check.mjs' },
@@ -100,7 +101,7 @@ for (const row of CHECKS) {
 }
 
 const report = Object.freeze({
-  schema: 'lafea-nonbucket-stack-report/v20',
+  schema: 'lafea-nonbucket-stack-report/v21',
   check: 'lafea-nonbucket-stack-certification',
   status: failures.length ? 'FAIL' : 'PASS',
   exactHead: gitHead(),
@@ -128,6 +129,11 @@ const report = Object.freeze({
   continuumSolverModelCompilerIntegrated: true,
   continuumSolverModelRunsSolver: false,
   continuumSolverModelReleaseAuthorityChanged: false,
+  continuumCompiledParityExecutionIntegrated: true,
+  continuumCompiledParityUsesExistingKernel: true,
+  continuumCompiledParityPublishesLifecycleExecution: false,
+  continuumCompiledParityReleaseAuthorityChanged: false,
+  authoritativeContinuumRunChanged: false,
   registryV2Implemented: true,
   compositionRootIntegrated: true,
   analyticalProductEvidenceIntegrated: true,

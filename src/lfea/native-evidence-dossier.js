@@ -10,7 +10,11 @@ export const LFEA_NATIVE_DOSSIER_STATUS = Object.freeze({
 /** Create deterministic current-run evidence. This is not engineering-release authority. */
 export function createLfeaNativeEvidenceDossier(verification) {
   requireCurrentVerification(verification);
-  const limitationCodes = dossierLimitations(verification.publicationReadiness);
+  const limitationCodes = dossierLimitations(
+    verification.publicationReadiness,
+    verification.supportPublication,
+    verification.b31Publication,
+  );
   const evidence = deepFreeze({
     runId: verification.runId,
     source: verification.source,
@@ -18,6 +22,8 @@ export function createLfeaNativeEvidenceDossier(verification) {
     application: verification.application,
     cases: verification.cases,
     publicationReadiness: verification.publicationReadiness,
+    supportPublication: verification.supportPublication,
+    b31Publication: verification.b31Publication,
     limitationCodes,
   });
   const dossierSemanticHash = semanticHash({
@@ -49,13 +55,15 @@ function requireCurrentVerification(verification) {
     throw dossierError('LFEA_DOSSIER_CURRENT_EVIDENCE_INCOMPLETE',
       'CURRENT native evidence is incomplete.');
   }
-  if (!verification.cases.every((row) => ['QUALIFIED', 'CONDITIONAL'].includes(row.execution.status))) {
+  if (!verification.cases.every((row) => (
+    ['QUALIFIED', 'CONDITIONAL'].includes(row.execution.status)
+  ))) {
     throw dossierError('LFEA_DOSSIER_QUALIFIED_EXECUTION_REQUIRED',
       'Native evidence dossier requires qualified or conditional solver execution for every retained case.');
   }
 }
 
-function dossierLimitations(readiness) {
+function dossierLimitations(readiness, supportPublication, b31Publication) {
   const limitations = ['ENGINEERING_ISSUE_NOT_AUTHORIZED_BY_EVIDENCE_DOSSIER'];
   if (!readiness) limitations.push('PUBLICATION_READINESS_UNAVAILABLE');
   for (const [stage, projection] of Object.entries({
@@ -65,6 +73,13 @@ function dossierLimitations(readiness) {
     if (projection?.status === 'READY') continue;
     limitations.push(`${stage}_PUBLICATION_BLOCKED`);
     for (const reason of projection?.reasonCodes ?? []) limitations.push(`${stage}:${reason}`);
+  }
+  if (readiness?.supportActions?.status === 'READY'
+    && supportPublication?.status !== 'CURRENT') {
+    limitations.push('SUPPORT_ACTIONS_NOT_PUBLISHED');
+  }
+  if (readiness?.b31Code?.status === 'READY' && b31Publication?.status !== 'CURRENT') {
+    limitations.push('B31_CODE_NOT_PUBLISHED');
   }
   return Object.freeze([...new Set(limitations)].sort(compareAscii));
 }

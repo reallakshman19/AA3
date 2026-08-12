@@ -6,114 +6,81 @@
 |---|---|
 | PR | #1061 — `feat(3d-edit): certify explicit support station relocation` |
 | Branch | `agent/certified-support-placement-semantics` |
-| Base | stacked on PR #1054 at `7d3002df5915027f607a7db10b2f75049fe14c94` |
-| Bootstrap | `da0fb665a3ca58788fad83c96ca27b0938d8d083` — empty tree-equivalent commit |
-| Final source/test candidate before this report-only sync | `d08cd53d4f79c346a83ee44e2a2a6b9ee4f4291f` |
-| Mission | Certify explicit relocation of a support along its already-resolved exact straight host, without host rebinding or automatic parent-geometry follow. |
-| Engineering state | SOURCE COMPLETE / static review clean |
-| Empirical execution | **NOT_RUN** — repository workflows are retired and this agent has no exact-head local runner. |
-| Merge state at source candidate | GitHub `mergeable: true`, draft; zero workflow runs and zero commit statuses. |
+| Current merged base | `main@4482dcc481939c3af1068aea2e2db47baec63984` — qualified PR #1054 merged |
+| Deterministic integration commit | `8d36d7779d86cba4c1729427fc725b242c55dcfb` |
+| Qualified feature/test head | `911d8c85a0734c1c43e2eaea1fb3faf974e21ba8` |
+| Mission | Certify explicit relocation of a support along its already-resolved exact straight host without host rebinding or automatic parent-geometry follow. |
+| Engineering state | **FEATURE/TEST CURRENT-MAIN INTEGRATION QUALIFIED; FINAL REPORT-ONLY HEAD REQUALIFICATION REQUIRED** |
+| Empirical execution | Run `31581095610`, job `94064177677`: exact checkout/source/line gates PASS; focused Node **28/28 PASS**; real Chromium **2/2 PASS**, one worker, zero retries. |
+| Evidence artifact | `9135220193` — `pr1061-post1054-911d8c85a0734c1c43e2eaea1fb3faf974e21ba8-1`; SHA256 `69f636558027890bcdd54914ee418763b08e8129c6ef046497eab040ef364e79`. |
+| Merge state | Draft / unmerged. The report-only head created by this report update must pass the same exact-head gate before closure audit. |
 
 ## Authority Flow
 
-`exact SUPPORT selection -> placement eligibility -> transient station draft -> governed SUPPORT_PLACEMENT intent -> deterministic operation plan -> candidate Preview ghost -> validation -> certified atomic transaction -> canonical placement override -> existing journal Undo/Redo -> support/Three projection -> committed workspace writeback`
+`exact SUPPORT selection -> placement eligibility -> transient station draft -> governed SUPPORT_PLACEMENT intent -> deterministic plan -> candidate Preview ghost -> validation -> certified atomic transaction -> canonical placement override -> existing journal Undo/Redo -> support/Three projection -> committed workspace writeback`
 
-Canonical topology remains engineering authority. Three meshes, support glyphs, and workspace entities remain projections/writeback only.
+Canonical topology remains engineering authority. Three/workspace objects remain projection/writeback only.
 
 ## Certified Semantics
 
-This PR authorizes exactly one placement operation: **explicit same-host station relocation**.
+Only explicit same-host station relocation is authorized: exact shared host resolution, straight host only, finite bounded station from canonical FROM, exact no-op rejection, deterministic interpolation, one-support delta, support/host/both endpoint revision custody, imported attachment evidence retained separately from `placementOverride`, existing journal only. Host rebinding, arbitrary XYZ movement, node proxy movement, automatic follow/restation, curved-host approximation, direct Three authority and support-specific history remain prohibited. `SUPPORT_GEOMETRY_POLICY_REQUIRED` remains fail closed.
 
-- Host identity is resolved only by `resolveTopologyEditSupportHostEdge()`.
-- Station is finite millimetres from the canonical host edge `FROM` node.
-- Initial host classes are straight `PIPE`, `STRAIGHT`, or `STRAIGHT_ELEMENT` only.
-- `0 <= stationMm <= hostLengthMm`; exact no-op is rejected.
-- Origin is deterministic interpolation on the canonical host centerline.
-- One command changes one canonical support record only.
-- Support, host edge, and both host endpoint node revisions enter stale/dependency custody.
-- Existing exact attachment projected-point/segment/distance evidence is retained; certified placement is a separate `placementOverride`.
-- Existing certified journal remains the only engineering Undo/Redo authority.
+## Empirical Issue Register
 
-Still prohibited: host rebinding, arbitrary support XYZ movement, moving pipe nodes as a proxy for support relocation, direct Three/entity mutation as authority, automatic support follow/restation during PIPE length/NODE_POSITION/valve/slope/split/trim/connected-run, weakening `SUPPORT_GEOMETRY_POLICY_REQUIRED`, or adding a support-specific history stack.
+| ID | Status | Finding / resolution |
+|---|---|---|
+| ISS-1061-01..12 | RESOLVED / prior exact-head PASS | Original placement authority, evidence, writeback/reopen, Table lifecycle, production row selection and parent support-policy issues were resolved and qualified before final #1054 merge. |
+| ISS-1061-13 | RESOLVED / RUN 31581095610 PASS | #1054 restraint Preview and #1061 placement Preview are composed in one transient ghost: generic changed topology + explicit placement support marker + governed changed-support restraint projection; placement suppresses duplicate support markers. |
+| ISS-1061-14 | RESOLVED / RUN 31581095610 PASS | Placement marker policy is required only after at least one changed support has a finite certified placement override. Restraint-only Preview does not enter placement-marker-specific policy; actual placement remains fail closed if marker policy is missing. |
+| ISS-1061-15 | RESOLVED / RUN 31581095610 PASS | Restraint Undo asserts exact equality to the complete pre-transaction support record, preserving imported restraint/host/station/support custody independent of imported representation. |
+| ISS-1061-16 | RESOLVED / RUN 31581095610 PASS | Integrated station capability assertions now match certified placement semantics: `stationMm` is `NEEDS_INPUT/EXPLICIT_SUPPORT_STATION_REQUIRED` with `details.intentKind === 'SUPPORT_PLACEMENT'`; `hostEntityId` remains `BLOCKED/READ_ONLY_PROPERTY`. No production capability widening was introduced. |
+| RISK-1061-01 | CLOSED FOR FEATURE/TEST HEAD | Combined placement + restraint Node and both real Chromium lifecycles passed on exact head `911d8c85a0734c1c43e2eaea1fb3faf974e21ba8`. Final report-only exact-head rerun remains mandatory before merge. |
 
-Parent geometry therefore remains fail-closed after this PR.
+## Preview Composition Contract
 
-## Root Cause and Resolved Issues
+Preview combines:
+1. generic candidate topology projection for changed non-support objects;
+2. certified placement marker at `placementOverride.origin` for changed placement supports;
+3. governed restraint projection through #1054 `deriveAllSupportRestraintGeometry()` -> `projectSupportGeometryToViewport()`.
 
-| ID | Type | Status | Finding / resolution |
-|---|---|---|---|
-| ISS-1061-01 | Correctness | RESOLVED IN SOURCE | Live canonical support construction previously discarded exact attachment `attachmentId`, `projectedPointCanonical`, `segmentParameter`, and `distanceCanonical`, leaving an approximate endpoint `nodeId`. The dispatch adapter now retains those already-resolved facts; governed SJSON canonical build/rebuild uses that same dispatch path. No second attachment inference algorithm was introduced. |
-| ISS-1061-02 | Preview correctness | RESOLVED IN SOURCE | SJSON supports use a separate governed support projection, so generic Table ghost filtering could omit support relocation and candidate derivation could momentarily publish candidate support as the normal glyph. Table Preview now restores current canonical support projection and renders an explicit candidate support ghost at the certified candidate origin. |
+Placement is the sole support-marker authority when present; restraint direction segments may coexist. Restraint-only Preview does not require placement-specific marker policy unless an actual placement marker exists. Preview never mutates canonical/journal/source authority.
 
-## Architecture Decisions
+## Deterministic Main Integration
 
-| Decision | Result |
-|---|---|
-| Exact placement basis | Declared station, retained attachment segment, and retained projected point must agree when multiple authorities exist; disagreement fails closed. |
-| Projected-point station | If segment/station is absent, a retained `ATTACHMENT_PROJECTED_POINT` may define station only when it lies exactly on the resolved straight host segment. |
-| Curved host | Fail closed; no chord-based approximation. |
-| Durable writeback | Committed support center plus explicit `TOPOLOGY_EDIT_SUPPORT_*` audit attributes. Original source `STATION_MM`, source attributes, vendor fields, and immutable source snapshot are not overwritten. |
-| Reopen | Audit station/segment/host/center/hash are revalidated against current canonical host geometry before `placementOverride` is rehydrated. Malformed audit fails closed. |
-| SJSON live projection | Only an ephemeral governed projection-dataset clone receives certified APOS. Actual workspace/source dataset stays unchanged. |
-| Table authority | Displayed station changes to `CERTIFIED_TABLE_OVERRIDE` only after Apply; original source/vendor evidence remains separately visible. |
-| Parent geometry | #1036 `SUPPORT_GEOMETRY_POLICY_REQUIRED` remains intact and is explicitly regression-tested. |
+A direct retarget to merged main was dirty because #1054 and #1061 overlapped the Table workflow. Integration was materialized deterministically: current-main tree as base, PR1061 feature blobs overlaid, reconciled workflow used for the overlapping feature path. Tree `7f0ad400b26cccd32e390939e5e3de454b2d9846`; two-parent commit `8d36d7779d86cba4c1729427fc725b242c55dcfb` with merged main as second parent. GitHub then reported clean.
 
-## Implemented Contracts
+## Current Dual Qualification
 
-### Pure command authority
+Isolated base `qualification/pr1061-post1054-exact-head` contains only a temporary workflow. It exact-checks `github.event.pull_request.head.sha`, exports both `TARGET_HEAD_SHA` and `TOPOLOGY_EDIT_TARGET_HEAD_SHA`, checks source/syntax/line/`git diff --check`, runs the six focused Node files, then both placement and restraint production Chromium specs with one worker, zero retries and trace-on, and uploads both JSON evidence reports plus traces.
 
-`UPDATE_SUPPORT_PLACEMENT` is registered through:
+### Run 31581095610 — current-main feature/test integration PASS
 
-`command request -> exact target resolution -> pure reducer -> candidate delta validation -> certified session/transaction`
+Exact head `911d8c85a0734c1c43e2eaea1fb3faf974e21ba8`, job `94064177677`:
+- exact checkout/setup/source/syntax/line/`git diff --check`: PASS;
+- focused Node: **28 tests, 28 pass, 0 fail, 0 skipped/cancelled/todo**;
+- real Chromium: **2 tests, 2 pass**, one worker, zero retries;
+- placement lifecycle: PASS;
+- restraint lifecycle regression on the same exact head: PASS;
+- evidence upload: PASS.
 
-The payload is `{ supportId, hostEdgeId, stationMm }`. Target resolution captures the support, exact host edge, host FROM node and host TO node. Effect validation requires exactly one changed support, no node/edge/junction/boundary/rigid/bend delta, preserved non-placement support material, and a valid certified override.
+Artifact `9135220193`, name `pr1061-post1054-911d8c85a0734c1c43e2eaea1fb3faf974e21ba8-1`, digest `sha256:69f636558027890bcdd54914ee418763b08e8129c6ef046497eab040ef364e79`.
 
-### Engineering Table
+Both uploaded JSON reports self-identify candidate head `911d8c85a0734c1c43e2eaea1fb3faf974e21ba8`.
 
-`stationMm` is a compound `SUPPORT_PLACEMENT` editor. Stage re-derives current canonical placement capability immediately before intent construction. The editor exposes exact host, host length, current station authority and bounded station input. Placement and restraint editing remain separate certified intents.
+Placement evidence records XYZ fixture support `S-007` on host `P-011`, station `400 -> 500` mm over an `800` mm straight host. Stage/Preview/Validate leave canonical/source/journal unchanged; Preview reports `ghostChildCount: 2`; Validate reports `READY_TO_APPLY`; Apply creates one `CERTIFIED_TABLE_OVERRIDE` placement with segment parameter `0.625`, origin `{x:6960,y:1650,z:3450}`, and placement hash `fnv1a64:02c87186a14aae96`; imported origin remains `{x:6860,y:1650,z:3450}`; source semantic/byte hashes remain unchanged; Undo restores exact baseline and Redo restores exact applied state; renderer count is one.
 
-### Projection and writeback
+Restraint evidence on the same exact head records requested `LINE_STOP`, `+X`, gap `5` mm, travel `20` mm. Stage/Preview/Validate leave canonical/source/journal unchanged; Preview reports `ghostChildCount: 2`; Validate reports `READY_TO_APPLY`; Apply creates one certified restraint override; source hashes remain unchanged; Undo restores exact baseline and Redo restores exact applied state; renderer count is one.
 
-- Generic support glyph origin: certified override first, then legacy fallback for untouched supports.
-- SJSON governed support projection: candidate/live certified APOS supplied only through an ephemeral dataset clone.
-- Preview: explicit support ghost; canonical/live support projection restored before ghost rendering.
-- Commit: support geometry center/start/end moves only after accepted canonical transaction/writeback.
-- Reopen: explicit placement audit is revalidated and rehydrated.
+## Prior Qualification / Repair History
 
-## Qualification Source Authored — NOT EXECUTED
-
-### `tests/topology-edit-support-placement-command.test.mjs`
-
-Covers exact support/host/endpoint revisions, one-support-only delta, retained evidence, bounded station, no-op, host drift, non-straight host, unresolved host, stale support/host revisions, projected-point-only station authority, conflicting attachment evidence, and repeat-command no-op rejection.
-
-### `tests/topology-edit-table-support-placement.test.mjs`
-
-Covers Table capability, deterministic one-command plan, support/host/node dependency revisions, non-mutating Preview/Validate, exact Apply, certified Table station projection, exact Undo/Redo, stale host rebase conflict, and preservation of `SUPPORT_GEOMETRY_POLICY_REQUIRED` for parent PIPE movement.
-
-### `tests/topology-edit-support-placement-writeback.test.mjs`
-
-Covers exact attachment fact retention, committed center relocation, unchanged source `STATION_MM`/vendor/source-byte custody, reopen override/hash restoration, tampered center rejection, and tampered audit-hash rejection.
-
-### `e2e/topology-edit-table-support-placement.spec.js`
-
-Production visible-user source path on XYZ `S-007` hosted by straight `P-011`:
-
-`Workspace -> XYZ fixture -> 3D Edit -> Engineering Table -> select S-007 -> type station -> Stage -> Preview -> Validate -> Apply -> Undo -> Redo -> select P-011 -> verify parent movement remains support-policy blocked`
-
-Assertions include typing/Stage/Preview/Validate canonical no-op, real ghost existence, exact certified station after Apply, source semantic/byte custody, singular renderer, journal ledger restoration, and the P-011 support-dependency block. Controller access is read-only evidence only; no direct controller invocation is used as UI coverage.
-
-## Static Closure Audit
-
-- Exact changed-file ledger: **28 files**, all inside the registered envelope.
-- No geometry planner or #1036 support-dependency authority changed.
-- No legacy source adapter or large SJSON restraint-validator implementation changed.
-- New/tight production and E2E modules checked against the repository `<300` physical-line guard; checked files remain below the ceiling.
-- No submitted reviews, inline review threads, or PR conversation comments at source candidate.
-- GitHub reports PR mergeable against its stacked base at source candidate.
-- Exact source candidate has **zero workflow runs** and **zero commit statuses**.
-- Repository search found no test fixture pinning an exact SJSON canonical hash to the prior support-record shape; existing surfaces derive hashes at runtime.
+- Pre-final-#1054 placement head `a1056c1b9807095be806e67038a1ddfc43b7f770` passed Node + real Chromium in run `31570325923`; artifact `9131076959`, SHA256 `0c2509a450b67a968bcff36bc4ac26eace05f27a2522cc958bcf77048beb5717`. Report head `f0a66d9d2157285adca5557ed820b045128b4134` passed run `31570553278`. Those remain prior feature evidence, not current-main integration evidence.
+- Run `31579891323` found eager placement-marker policy entry during restraint-only Preview and a representation-specific restraint Undo assertion.
+- Run `31580658197` cleared those defects and exposed exactly two stale merged-#1054 station-capability expectations.
+- Run `31581095610` cleared all bounded integration repairs and passed combined Node plus both real Chromium lifecycles.
 
 ## Exact Changed-File Ledger
+
+The authorized post-#1054 integration ledger is exactly **30** paths:
 
 1. `agents/PR1061_workreport.md`
 2. `e2e/topology-edit-table-support-placement.spec.js`
@@ -143,23 +110,18 @@ Assertions include typing/Stage/Preview/Validate canonical no-op, real ghost exi
 26. `tests/topology-edit-support-placement-command.test.mjs`
 27. `tests/topology-edit-support-placement-writeback.test.mjs`
 28. `tests/topology-edit-table-support-placement.test.mjs`
+29. `tests/topology-edit-table-support-restraint.test.mjs`
+30. `tests/topology-edit-capability-authority.test.mjs`
 
-Any future discrepancy is a closure blocker until this report is updated before the change.
+Temporary qualification workflows remain isolated and are not feature files.
 
-## Explicitly Not Validated
+## Final Gate
 
-| Item | Status | Reason |
-|---|---|---|
-| Focused Node tests on PR1061 exact head | NOT_RUN | No exact-head execution mechanism available. |
-| Production Chromium/WebGL S-007 lifecycle | NOT_RUN | Authored source only; retired workflows and unavailable local checkout prevent execution. |
-| Combined stack after #1054 merge | NOT_RUN | #1061 remains stacked/draft; must re-evaluate against the eventual merged base. |
-| Automatic support-follow on parent geometry | NOT_APPLICABLE | Deliberately prohibited and remains fail-closed. |
-| Curved-host relocation | NOT_APPLICABLE | Deliberately unrepresentable in this slice. |
+This report update is intentionally report-only and creates the final merge-candidate head. Do not edit the report again after the final exact-head run.
 
-## Handover / Next Gate
-
-1. Execute the three focused Node files and `e2e/topology-edit-table-support-placement.spec.js` on the exact PR1061 head in a real Chromium/WebGL runner.
-2. Preserve fixture SHA, candidate SHA, screenshot/trace and qualification JSON evidence.
-3. If execution is green, re-check stacked-base integration, reviews, ledger and mergeability before marking ready.
-4. Do **not** merge based only on source review or GitHub mergeability.
-5. Only after this placement slice is empirically qualified should a separate PR consider coordinated parent-geometry/support-follow semantics.
+1. Require the same exact-head qualification on this report-only head: source/syntax/line/`git diff --check` PASS, focused Node 28/28 PASS, real Chromium 2/2 PASS, evidence upload PASS.
+2. Restore PR base to `main`.
+3. Closure-audit current main SHA, raw mergeable/rebaseable/mergeable-state, exact 30-file ledger, submitted reviews, review threads and comments, and absence of temporary qualification workflow leakage.
+4. Update stale PR description without changing head; mark ready only after closure audit is clean.
+5. Merge only with the exact qualified report-only head SHA pinned as expected head.
+6. Verify the resulting `main` merge commit, then reconcile/requalify #1066.

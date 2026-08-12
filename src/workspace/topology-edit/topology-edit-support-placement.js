@@ -105,10 +105,10 @@ export function topologyEditSupportPlacementAtStation(
   const boundedStationMm = Math.min(stationMm, host.lengthMm);
   const segmentParameter = boundedStationMm / host.lengthMm;
   return deepFreeze({
-    support,
-    hostEdge: host.edge,
-    fromNode: host.from,
-    toNode: host.to,
+    support: { id: support.id, hostEntityId: support.hostEntityId ?? null },
+    hostEdge: { id: host.edge.id, componentKey: host.edge.componentKey ?? null },
+    fromNode: { id: host.from.id },
+    toNode: { id: host.to.id },
     hostLengthMm: host.lengthMm,
     stationMm: boundedStationMm,
     segmentParameter,
@@ -221,13 +221,20 @@ function finitePoint(value) {
     ? deepFreeze({ x: value.x, y: value.y, z: value.z })
     : null;
 }
-function finiteNonNegative(value) {
+function finiteNumber(value) {
+  if (value === null || value === undefined) return null;
+  if (typeof value !== 'number' && typeof value !== 'string') return null;
+  if (typeof value === 'string' && !value.trim()) return null;
   const number = Number(value);
-  return Number.isFinite(number) && number >= 0 ? number : null;
+  return Number.isFinite(number) ? number : null;
+}
+function finiteNonNegative(value) {
+  const number = finiteNumber(value);
+  return number !== null && number >= 0 ? number : null;
 }
 function finiteUnitInterval(value) {
-  const number = Number(value);
-  return Number.isFinite(number) && number >= 0 && number <= 1 ? number : null;
+  const number = finiteNumber(value);
+  return number !== null && number >= 0 && number <= 1 ? number : null;
 }
 function distance(left, right) {
   return Math.hypot(right.x - left.x, right.y - left.y, right.z - left.z);

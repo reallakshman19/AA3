@@ -152,6 +152,8 @@ test('conflicting attachment segment and projected-point evidence fails closed',
 test('UPDATE_SUPPORT_PLACEMENT rejects invalid station, no-op, host drift, and non-straight host', () => {
   const base = fixture();
   assert.throws(() => request(base, { stationMm: -1 }), /stationMm must be finite and non-negative/);
+  assert.throws(() => request(base, { stationMm: null }), /stationMm must be finite and non-negative/);
+  assert.throws(() => request(base, { stationMm: ' ' }), /stationMm must be finite and non-negative/);
   assert.throws(() => resolved(base, { stationMm: 1001 }), /exceeds host length/);
   assert.throws(() => resolved(base, { stationMm: 250 }), /placement is a no-op/);
   assert.throws(() => resolved(base, { hostEdgeId: 'edge:other' }), /host changed from edge:other to edge:p1/);

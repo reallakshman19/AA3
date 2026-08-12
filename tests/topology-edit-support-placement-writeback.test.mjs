@@ -58,7 +58,9 @@ function supportEntity() {
       identity: { entityId: 'support:s1', sourceEntityId: 'support:s1', name: 'S-1', entityType: 'SUPPORT' },
       geometry: { start: point, end: point, center: point },
       sourceAttributes: { STATION_MM: 250 },
-      attributes: { TYPE: 'SUPPORT', SUPPORT_TYPE: 'REST', STATION_MM: 250, VENDOR_TOKEN: 'KEEP-ME' },
+      attributes: {
+        TYPE: 'SUPPORT', SUPPORT_TYPE: 'REST', STATION_MM: 250, VENDOR_TOKEN: 'KEEP-ME',
+      },
       enrichedAttributes: {}, nativeParams: {}, diagnostics: [],
     },
   };

@@ -93,6 +93,9 @@ test('SUPPORT station cell exposes exact same-host placement evidence', () => {
   assert.equal(capability.details.hostLengthMm, 1000);
   assert.equal(capability.details.currentStationMm, 250);
   assert.equal(capability.details.stationAuthority, 'DECLARED_SUPPORT_STATION');
+  assert.equal(capability.details.currentOriginX, 250);
+  assert.equal(capability.details.currentOriginY, 0);
+  assert.equal(capability.details.currentOriginZ, 0);
 });
 
 test('SUPPORT_PLACEMENT plan captures support, host edge, and both host endpoints', () => {
@@ -101,6 +104,7 @@ test('SUPPORT_PLACEMENT plan captures support, host edge, and both host endpoint
   const { intent, batchPlan } = planned(session, topology);
 
   assert.deepEqual(batchPlan.operationPlan.commandIntents, [{
+    sequence: 0,
     commandType: 'UPDATE_SUPPORT_PLACEMENT', payload: intent.requestedValue,
   }]);
   for (const id of ['support:s1', 'edge:p1', 'node:n1', 'node:n2']) {

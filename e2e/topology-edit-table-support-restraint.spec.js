@@ -1,7 +1,7 @@
 import { mkdir, writeFile } from 'node:fs/promises';
 import { expect, test } from '@playwright/test';
 
-const REPORT = 'reports/qualification/topology-edit-table-support-placement.json';
+const REPORT = 'reports/qualification/topology-edit-table-support-restraint.json';
 
 test.beforeEach(async ({ page }) => {
   test.setTimeout(180_000);
@@ -9,30 +9,36 @@ test.beforeEach(async ({ page }) => {
   await page.addInitScript(() => globalThis.localStorage?.clear());
 });
 
-test('S-007 support station follows the full certified Table lifecycle and keeps P-011 movement blocked', async ({ page }, testInfo) => {
+test('S-007 restraint follows the certified Table lifecycle without moving support authority', async ({ page }, testInfo) => {
   const diagnostics = collectDiagnostics(page);
   const host = await openXyzTable(page);
   const baseline = await authorityEvidence(page);
-  const supportId = await selectTableRowByTag(page, 'S-007', 'SUPPORT');
+  const supportId = await selectTableSupport(page, 'S-007');
+  const before = await supportEvidence(page, supportId);
+  expect(before.override).toBeNull();
+  expect(before.restraintAuthority).not.toBe('CERTIFIED_TABLE_OVERRIDE');
 
-  const editor = page.locator(`[data-table-support-placement-editor="${supportId}"]`);
+  const editor = page.locator(`[data-table-support-restraint-editor="${supportId}"]`);
   await expect(editor).toBeVisible();
-  await expect(editor).toHaveAttribute('data-table-support-placement-status', 'NEEDS_INPUT');
-  const station = editor.locator('[data-table-edit-support-station]');
-  await expect(station).toBeEnabled();
-  const currentStation = Number(await station.inputValue());
-  const hostLength = Number(await station.getAttribute('max'));
-  expect(Number.isFinite(currentStation)).toBe(true);
-  expect(Number.isFinite(hostLength)).toBe(true);
-  expect(currentStation).toBeGreaterThanOrEqual(0);
-  expect(currentStation).toBeLessThan(hostLength);
-  const requestedStation = Math.min(hostLength, currentStation + Math.min(100, (hostLength - currentStation) / 2));
-  expect(requestedStation).toBeGreaterThan(currentStation);
+  const family = editor.locator('[data-table-edit-support-family]');
+  const direction = editor.locator('[data-table-edit-support-direction]');
+  const gap = editor.locator('[data-table-edit-support-gap]');
+  const travel = editor.locator('[data-table-edit-support-travel]');
 
-  await station.fill(String(requestedStation));
+  const requested = {
+    family: (await family.inputValue()) === 'GUIDE' ? 'LINE_STOP' : 'GUIDE',
+    direction: (await direction.inputValue()) === '+X' ? '+Y' : '+X',
+    gapMm: Number(await gap.inputValue()) === 5 ? 6 : 5,
+    travelMm: Number(await travel.inputValue()) === 20 ? 25 : 20,
+  };
+  await family.selectOption(requested.family);
+  await direction.selectOption(requested.direction);
+  await gap.fill(String(requested.gapMm));
+  await travel.fill(String(requested.travelMm));
   expectAuthorityNoop(await authorityEvidence(page), baseline);
+  expect((await supportEvidence(page, supportId)).override).toBeNull();
 
-  await editor.locator('[data-table-support-placement-stage]').click();
+  await editor.locator('[data-table-support-restraint-stage]').click();
   await expect.poll(() => authorityEvidence(page).then((row) => row.intentCount)).toBe(1);
   const staged = await authorityEvidence(page);
   expectAuthorityNoop(staged, baseline);
@@ -43,8 +49,17 @@ test('S-007 support station follows the full certified Table lifecycle and keeps
   const previewed = await authorityEvidence(page);
   expectAuthorityNoop(previewed, baseline);
   expect(previewed.ghostChildCount).toBeGreaterThan(0);
-  const previewPlacement = await supportEvidence(page, supportId);
-  expect(previewPlacement.canonicalPlacementOverride).toBeNull();
+  const preview = await supportEvidence(page, supportId);
+  expect(preview.override).toBeNull();
+  expect(preview.declaredRestraint).toEqual(before.declaredRestraint);
+  expect(preview.previewOverride).toMatchObject({
+    type: requested.family,
+    direction: requested.direction,
+    gapMm: requested.gapMm,
+    travelMm: requested.travelMm,
+    authority: 'CERTIFIED_TABLE_OVERRIDE',
+  });
+  expect(preview.importedRestraints).toEqual(before.importedRestraints);
 
   await page.locator('[data-table-action="validate"]').click();
   await expect(host).toHaveAttribute('data-topology-edit-table-validation-status', 'READY_TO_APPLY');
@@ -55,11 +70,24 @@ test('S-007 support station follows the full certified Table lifecycle and keeps
   await expect.poll(() => authorityEvidence(page).then((row) => row.canonicalHash))
     .not.toBe(baseline.canonicalHash);
   const applied = await authorityEvidence(page);
-  const placement = await supportEvidence(page, supportId);
-  expect(placement.canonicalPlacementOverride?.authority).toBe('CERTIFIED_TABLE_OVERRIDE');
-  expect(placement.canonicalPlacementOverride?.stationMm).toBeCloseTo(requestedStation, 9);
-  expect(placement.tableStationMm).toBeCloseTo(requestedStation, 9);
-  expect(placement.tableStationAuthority).toBe('CERTIFIED_TABLE_OVERRIDE');
+  const after = await supportEvidence(page, supportId);
+  expect(after.restraintAuthority).toBe('CERTIFIED_TABLE_OVERRIDE');
+  expect(after.override).toMatchObject({
+    type: requested.family,
+    direction: requested.direction,
+    gapMm: requested.gapMm,
+    travelMm: requested.travelMm,
+    authority: 'CERTIFIED_TABLE_OVERRIDE',
+  });
+  expect(after.importedRestraints).toEqual(before.importedRestraints);
+  expect(after.tableFields).toMatchObject({
+    supportType: requested.family,
+    direction: requested.direction,
+    gapMm: requested.gapMm,
+    travelMm: requested.travelMm,
+  });
+  expect(after.hostEntityId).toBe(before.hostEntityId);
+  expect(after.stationMm).toBe(before.stationMm);
   expect(applied.sourceHash).toBe(baseline.sourceHash);
   expect(applied.sourceByteHash).toBe(baseline.sourceByteHash);
   expect(applied.rendererCount).toBe(1);
@@ -69,41 +97,37 @@ test('S-007 support station follows the full certified Table lifecycle and keeps
   await expect.poll(() => authorityEvidence(page).then((row) => row.canonicalHash))
     .toBe(baseline.canonicalHash);
   const undone = await authorityEvidence(page);
+  const undoSupport = await supportEvidence(page, supportId);
   expect(undone.activeLedgerHash).toBe(baseline.activeLedgerHash);
   expect(undone.activeCommandIds).toEqual(baseline.activeCommandIds);
-  expect((await supportEvidence(page, supportId)).canonicalPlacementOverride).toBeNull();
+  expect(undoSupport.override).toBeNull();
+  expect(undoSupport.declaredRestraint).toEqual(before.declaredRestraint);
+  expect(undoSupport.importedRestraints).toEqual(before.importedRestraints);
+  expect(undoSupport.hostEntityId).toBe(before.hostEntityId);
+  expect(undoSupport.stationMm).toBe(before.stationMm);
 
   await page.locator('[data-action="redo"]').click();
   await expect.poll(() => authorityEvidence(page).then((row) => row.canonicalHash))
     .toBe(applied.canonicalHash);
   const redone = await authorityEvidence(page);
+  const redoSupport = await supportEvidence(page, supportId);
   expect(redone.activeLedgerHash).toBe(applied.activeLedgerHash);
   expect(redone.activeCommandIds).toEqual(applied.activeCommandIds);
-
-  const pipeId = await selectTableRowByTag(page, 'P-011', 'PIPE');
-  const pipeEditor = page.locator('[data-table-node-endpoint="FROM"]');
-  await expect(pipeEditor.locator('[data-table-node-capability="FROM"]'))
-    .toHaveAttribute('data-table-capability-status', 'UNREPRESENTABLE');
-  await expect(pipeEditor.locator('[data-table-node-capability="FROM"]'))
-    .toContainText('support movement policy must be certified');
-  await expect(pipeEditor.locator('[data-table-node-position-stage="FROM"]')).toBeDisabled();
-  expect(pipeId).toBeTruthy();
+  expect(redoSupport.override).toEqual(after.override);
+  expect(redoSupport.importedRestraints).toEqual(before.importedRestraints);
 
   await assertDiagnostics(diagnostics);
-  await testInfo.attach('support-placement-s007', {
+  await testInfo.attach('support-restraint-s007', {
     body: await page.screenshot({ fullPage: true }), contentType: 'image/png',
   });
-  const evidence = {
-    schema: 'TopologyEditTableSupportPlacementQualification.v1',
-    status: 'SOURCE_ASSERTIONS_AUTHORED',
-    candidateHead: process.env.TOPOLOGY_EDIT_TARGET_HEAD_SHA || null,
-    fixture: 'public/fixtures/topology-edit-20-element-demo.staged.json#XYZ-10-COMPONENT-BRANCH',
-    supportTag: 'S-007', hostTag: 'P-011', supportId, pipeId,
-    currentStation, requestedStation, hostLength,
-    baseline, staged, previewed, validated, applied, undone, redone, placement,
-  };
   await mkdir('reports/qualification', { recursive: true });
-  await writeFile(REPORT, `${JSON.stringify(evidence, null, 2)}\n`);
+  await writeFile(REPORT, `${JSON.stringify({
+    schema: 'TopologyEditTableSupportRestraintQualification.v1',
+    candidateHead: process.env.TARGET_HEAD_SHA || process.env.TOPOLOGY_EDIT_TARGET_HEAD_SHA || null,
+    fixture: 'public/fixtures/topology-edit-20-element-demo.staged.json#XYZ-10-COMPONENT-BRANCH',
+    supportTag: 'S-007', supportId, requested,
+    baseline, staged, previewed, validated, applied, undone, redone, before, after,
+  }, null, 2)}\n`);
 });
 
 async function openXyzTable(page) {
@@ -126,16 +150,15 @@ async function openXyzTable(page) {
   return host;
 }
 
-async function selectTableRowByTag(page, tag, expectedElementType) {
+async function selectTableSupport(page, tag) {
   const filter = page.locator('[data-table-filter]');
   await filter.fill(tag);
   await expect(filter).toHaveValue(tag);
-  const rows = page.locator('[data-role="topology-edit-table"] tbody tr[data-canonical-id]');
-  await expect(rows.first()).toBeVisible();
   const row = page.locator(
-    `[data-role="topology-edit-table"] tbody tr[data-canonical-id][data-element-type="${expectedElementType}"]`,
+    '[data-role="topology-edit-table"] tbody tr[data-canonical-id][data-element-type="SUPPORT"]',
   );
   await expect(row).toHaveCount(1);
+  await expect(row).toBeVisible();
   const canonicalId = await row.getAttribute('data-canonical-id');
   expect(canonicalId).toBeTruthy();
   await row.locator('[data-table-select]').click();
@@ -147,7 +170,8 @@ async function authorityEvidence(page) {
   return page.evaluate(() => {
     const host = document.querySelector('[data-role="topology-edit-render-host"]');
     const controller = host?.__topologyEditAuthoringController;
-    const runtime = controller?.tableAdapter?.runtime; const journal = controller?.session?.journal;
+    const runtime = controller?.tableAdapter?.runtime;
+    const journal = controller?.session?.journal;
     return {
       canonicalHash: controller?.session?.currentTopology?.()?.canonicalTopologyHash ?? null,
       sourceHash: controller?.workspaceDataset?.sourceSnapshot?.sourceSemanticHash ?? null,
@@ -159,8 +183,10 @@ async function authorityEvidence(page) {
       sessionVersion: journal?.sessionVersion ?? null,
       rendererCount: controller?.viewportBackend?.renderer?.domElement ? 1 : 0,
       ghostChildCount: controller?.viewportBackend?.groups?.ghostGroup?.children?.length ?? 0,
-      batchHash: runtime?.batch?.batchHash ?? '', previewHash: runtime?.preview?.previewHash ?? '',
-      validationStatus: runtime?.validation?.status ?? '', intentCount: runtime?.batch?.intentCount ?? 0,
+      batchHash: runtime?.batch?.batchHash ?? '',
+      previewHash: runtime?.preview?.previewHash ?? '',
+      validationStatus: runtime?.validation?.status ?? '',
+      intentCount: runtime?.batch?.intentCount ?? 0,
     };
   });
 }
@@ -169,17 +195,29 @@ async function supportEvidence(page, supportId) {
   return page.evaluate((id) => {
     const controller = document.querySelector('[data-role="topology-edit-render-host"]')
       ?.__topologyEditAuthoringController;
-    const support = controller.session.currentTopology().supports.find((row) => row.id === id);
-    const tableRow = controller.tableAdapter.runtime.projection.rows.find(
+    const topology = controller?.session?.currentTopology?.();
+    const support = topology?.supports?.find((row) => row.id === id);
+    const previewSupport = controller?.tableAdapter?.runtime?.preview?.candidate?.canonicalTopology
+      ?.supports?.find((row) => row.id === id);
+    const tableRow = controller?.tableAdapter?.runtime?.projection?.rows?.find(
       (row) => row.identity.canonicalId === id,
     );
+    const isOverride = support?.restraintAuthority === 'CERTIFIED_TABLE_OVERRIDE';
+    const previewIsOverride = previewSupport?.restraintAuthority === 'CERTIFIED_TABLE_OVERRIDE';
     return {
-      canonicalPlacementOverride: support?.placementOverride ?? null,
-      importedOrigin: support?.origin ?? null,
-      attachmentId: support?.attachmentId ?? null,
-      attachmentSegmentParameter: support?.attachmentSegmentParameter ?? null,
-      tableStationMm: Number(tableRow?.fields?.stationMm),
-      tableStationAuthority: tableRow?.fieldAuthority?.stationMm ?? null,
+      override: isOverride ? structuredClone(support.restraint) : null,
+      previewOverride: previewIsOverride ? structuredClone(previewSupport.restraint) : null,
+      declaredRestraint: structuredClone(support?.restraint ?? null),
+      restraintAuthority: support?.restraintAuthority ?? null,
+      importedRestraints: structuredClone(support?.restraints ?? []),
+      hostEntityId: support?.hostEntityId ?? null,
+      stationMm: support?.stationMm ?? null,
+      tableFields: {
+        supportType: tableRow?.fields?.supportType ?? null,
+        direction: tableRow?.fields?.direction ?? null,
+        gapMm: tableRow?.fields?.gapMm ?? null,
+        travelMm: tableRow?.fields?.travelMm ?? null,
+      },
     };
   }, supportId);
 }
@@ -195,10 +233,13 @@ function expectAuthorityNoop(actual, expected) {
   expect(actual.sourceByteHash).toBe(expected.sourceByteHash);
   expect(actual.rendererCount).toBe(expected.rendererCount);
 }
+
 function collectDiagnostics(page) {
   const pageErrors = []; const consoleErrors = [];
   page.on('pageerror', (error) => pageErrors.push(error.message));
-  page.on('console', (message) => { if (message.type() === 'error') consoleErrors.push(message.text()); });
+  page.on('console', (message) => {
+    if (message.type() === 'error') consoleErrors.push(message.text());
+  });
   return { pageErrors, consoleErrors };
 }
 async function assertDiagnostics(diagnostics) {

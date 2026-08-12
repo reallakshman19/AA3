@@ -7,7 +7,11 @@ import {
 } from './topology-edit-support-placement.js';
 
 export function normalizeTopologyEditSupportPlacementPayload(value = {}) {
-  const stationMm = Number(value.stationMm);
+  const rawStationMm = value.stationMm;
+  const stationMm = (typeof rawStationMm === 'number' || typeof rawStationMm === 'string')
+    && !(typeof rawStationMm === 'string' && !rawStationMm.trim())
+    ? Number(rawStationMm)
+    : Number.NaN;
   if (!Number.isFinite(stationMm) || stationMm < 0) {
     throw new RangeError('TopologyEditSupportPlacementCommand: stationMm must be finite and non-negative.');
   }

@@ -38,7 +38,9 @@ export class TopologyEdit3DViewController extends AuthoringController {
   }
 
   async mountTableAdapter() {
-    if (this.tableAdapter || this.tableAdapterPromise || !this.hostElement) return this.tableAdapter;
+    if (this.tableAdapter) return this.tableAdapter;
+    if (this.tableAdapterPromise) return this.tableAdapterPromise;
+    if (!this.hostElement) return null;
     const activationHost = this.hostElement;
     this.tableAdapterPromise = import(
       './viewport-productivity/topology-edit-table-productivity-adapter.js'
@@ -167,7 +169,13 @@ export class TopologyEdit3DViewController extends AuthoringController {
   handleHostClick(event) {
     const action = event.target.closest('[data-action]')?.dataset.action;
     if (this.cleanShellRuntime.handleAction(action)) {
-      if (action === 'open-engineering-table') this.tableAdapter?.runtime.render();
+      if (action === 'open-engineering-table') {
+        if (this.tableAdapter) {
+          this.tableAdapter.showWindow();
+        } else {
+          void this.mountTableAdapter().then((adapter) => adapter?.showWindow());
+        }
+      }
       return;
     }
     return super.handleHostClick(event);

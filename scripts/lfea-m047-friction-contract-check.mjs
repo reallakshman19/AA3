@@ -92,6 +92,26 @@ assert.match(
   /signedNormalReactionN = dot\(normalReactionGlobal, support\.normalDirection\)/u,
   'Signed normal reaction evidence must respect the declared restraint direction.',
 );
+assert.match(
+  frictionSource,
+  /const displacementUpdate = updateMetric\([\s\S]*?translationalDofValues\(U\)[\s\S]*?'TRANSLATIONAL_DOFS_ONLY',[\s\S]*?'m'/u,
+  'Displacement convergence must use translations only and retain metre units.',
+);
+assert.match(
+  frictionSource,
+  /const reactionUpdate = updateMetric\([\s\S]*?translationalDofValues\(reactions\)[\s\S]*?'TRANSLATIONAL_DOFS_ONLY',[\s\S]*?'N'/u,
+  'Reaction convergence must use translational forces only and retain newton units.',
+);
+assert.match(
+  frictionSource,
+  /reactionChangeRule: 'FORCE_AND_MOMENT_REACTION_NORMS_REPORTED_SEPARATELY_NO_MIXED_UNITS'/u,
+  'Sensitivity must not combine force and moment reactions in one norm.',
+);
+assert.match(
+  frictionSource,
+  /translationReactionVectorRelativeChange:[\s\S]*?momentReactionVectorRelativeChange:/u,
+  'Sensitivity must report translation-force and moment-reaction changes separately.',
+);
 
 const assessmentSource = readFileSync(resolve(
   'src/core/fea-benchmarks/qualification-engineering-assessment.js',

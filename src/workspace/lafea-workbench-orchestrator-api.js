@@ -1,8 +1,11 @@
 /** Public method-surface assembly for the canonical orchestrator; owns no state or listeners. */
+import { compileLafeaContinuumSolverModel } from './lafea-continuum-solver-model.js';
 import {
   buildLafeaMeshGenerationIntentV2FromStage,
   buildLafeaPreparationRequestV2FromStage,
 } from './lafea-domain-first-requests.js';
+import { requireLafeaStageComposition } from './lafea-stage-composition-root.js';
+import { issueLafeaSourceAuthority } from './lafea-source-authority.js';
 
 export function createLafeaWorkbenchOrchestratorApi(context) {
   const c = requireContext(context);
@@ -38,6 +41,7 @@ export function createLafeaWorkbenchOrchestratorApi(context) {
     registerLifecycleArtifact: (...args) => c.delegate('registerLifecycleArtifact', args),
     revalidateLifecycleBinding: (...args) => c.delegate('revalidateLifecycleBinding', args),
     revalidateContinuumGeometryMesh: c.revalidateContinuumGeometryMesh,
+    compileContinuumSolverModel: () => compileContinuumSolverModel(c, activeStageId()),
     registerTemplateReleaseRecord: c.registerTemplateReleaseRecord,
     selectRetainedTemplateReleaseRecord: (stageId = activeStageId()) => c.release.select(stageId),
     buildReleaseBindingProjection: (stageId = activeStageId()) =>
@@ -141,6 +145,50 @@ export function createLafeaWorkbenchOrchestratorApi(context) {
       c.listeners.clear();
     },
   });
+}
+
+function compileContinuumSolverModel(c, stageId) {
+  if (stageId !== 'LAFEA.3') throw apiError('LAFEA_CONTINUUM_SOLVER_STAGE_NOT_AUTHORIZED');
+  const stage = c.readStageState(stageId);
+  requireCompilerReadiness(stage);
+  const composition = requireLafeaStageComposition(stageId);
+  if (!composition.executionSupported || typeof composition.canonicalize !== 'function') {
+    throw apiError('LAFEA_CONTINUUM_SOLVER_CANONICALIZER_NOT_AVAILABLE');
+  }
+  const source = composition.normalizeDocument(c.retained.exportDocument());
+  const authority = issueLafeaSourceAuthority(
+    stageId, source, 'COMPILE_SOLVER_MODEL/SOURCE_AUTHORITY',
+  );
+  if (stage.lifecycle?.source?.sourceHash !== authority.sourceHash) {
+    throw apiError('LAFEA_CONTINUUM_SOLVER_SOURCE_PARENT_STALE');
+  }
+  return compileLafeaContinuumSolverModel({
+    sourceAuthority: authority,
+    source,
+    canonicalInput: composition.canonicalize(source),
+    analysisDomain: c.geometry.selectDomain(stageId),
+    geometryEvidence: c.geometry.selectGeometryEvidence(stageId),
+    meshEvidence: c.meshGeneration.selectEvidence(stageId),
+  });
+}
+
+function requireCompilerReadiness(stage) {
+  if (stage.domainFirstProfileActive !== true || stage.shellMidsurfaceProfileActive === true) {
+    throw apiError('LAFEA_CONTINUUM_SOLVER_DOMAIN_FIRST_PROFILE_REQUIRED');
+  }
+  if (stage.lifecycleBinding?.status !== 'CURRENT') {
+    throw apiError('LAFEA_CONTINUUM_SOLVER_SOURCE_BINDING_NOT_CURRENT');
+  }
+  if (stage.analysisDomainProjection?.state !== 'CURRENT_PASS') {
+    throw apiError('LAFEA_CONTINUUM_SOLVER_ANALYSIS_DOMAIN_NOT_CURRENT');
+  }
+  if (stage.analysisGeometryProjection?.state !== 'CURRENT_PASS') {
+    throw apiError('LAFEA_CONTINUUM_SOLVER_ANALYSIS_GEOMETRY_NOT_CURRENT');
+  }
+  if (stage.analysisMeshCustodyProjection?.state !== 'CURRENT_PASS'
+    || stage.analysisMeshCustodyProjection?.usableForRun !== true) {
+    throw apiError('LAFEA_CONTINUUM_SOLVER_ANALYSIS_MESH_NOT_CURRENT_PASS');
+  }
 }
 
 function apiError(code) { const error = new TypeError(code); error.code = code; return error; }

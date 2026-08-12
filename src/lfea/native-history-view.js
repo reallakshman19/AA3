@@ -35,7 +35,7 @@ function buildHeader(documentRef) {
   const title = documentRef.createElement('h2');
   title.textContent = 'Native run History';
   const note = paragraph(documentRef,
-    'Retained runs are immutable evidence. Later governed support/B31 publications are append-only attachments to the exact run; selecting history never changes current engineering authority.',
+    'Retained runs are immutable evidence. Later governed support/B31 publications are append-only attachments to the exact run. Selecting a historic run changes this view only; it does not change current engineering authority.',
     'lfea-native-history-note');
   header.append(title, note);
   return header;

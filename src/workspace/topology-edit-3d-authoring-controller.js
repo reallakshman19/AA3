@@ -233,6 +233,9 @@ function renderAuthoringCandidateGhost(controller, candidate) {
   const segments = Array.isArray(projection.compactSegments)
     ? projection.compactSegments
     : (projection.segments || []);
+  const primitives = Array.isArray(projection.primitives)
+    ? projection.primitives
+    : [];
   const changedIds = candidate.changedCanonicalIds
     ?? Object.values(candidate.operationBindings ?? {});
   const changed = new Set(changedIds);
@@ -242,6 +245,7 @@ function renderAuthoringCandidateGhost(controller, candidate) {
   controller.viewportBackend?.renderGhost({
     elements: elements.filter(accepted),
     segments: segments.filter(accepted),
+    primitives: primitives.filter((primitive) => changed.has(primitive.canonicalEntityId)),
   });
 }
 

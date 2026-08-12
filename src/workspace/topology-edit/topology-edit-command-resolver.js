@@ -22,6 +22,9 @@ import {
   resolvePipeSegmentCommandTargets,
 } from './topology-edit-pipe-segment-resolver.js';
 import {
+  resolveTopologyEditSupportPlacementTargets,
+} from './topology-edit-support-placement-command.js';
+import {
   resolveTopologyEditSupportRestraintTargets,
 } from './topology-edit-support-restraint-command.js';
 
@@ -246,6 +249,7 @@ const TARGET_RESOLVERS = Object.freeze({
   INSERT_INLINE_COMPONENT: resolveInline,
   REPLACE_INLINE_COMPONENT: resolveReplacement,
   UPDATE_JUNCTION_BRANCH_RELATION: resolveJunctionRelation,
+  UPDATE_SUPPORT_PLACEMENT: resolveTopologyEditSupportPlacementTargets,
   UPDATE_SUPPORT_RESTRAINT: resolveTopologyEditSupportRestraintTargets,
   INSERT_BRANCH_COMPONENT: resolveBranchComponent,
   INSERT_PIPE_SEGMENT: resolvePipeSegmentCommandTargets,

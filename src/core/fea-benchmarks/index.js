@@ -62,6 +62,12 @@ export {
   resolveCaesarFrictionCaseSettings,
   runDeterministicCaesarFrictionActiveSet,
 } from './caesar-friction-active-set.js';
+export {
+  BM4L_FRICTION_EXECUTION_ORDER,
+  BM4L_FRICTION_MULTIPLIERS,
+  BM4L_FRICTION_PRIMITIVE_CASE_IDS,
+  solveCaesarAccdbFrictionBenchmark,
+} from './caesar-accdb-friction-solve.js';
 export { solveCaesarAccdbLinearBenchmark } from './caesar-accdb-linear-solve.js';
 export {
   BM4_QUALIFICATION_ADAPTER_ID,

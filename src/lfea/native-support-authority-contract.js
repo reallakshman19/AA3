@@ -1,5 +1,6 @@
 import { semanticHash } from '../core/shared-piping-model/canonical-json.js';
 import { deepFreeze } from '../core/shared-piping-model/immutable.js';
+import { validateSharedPipingModel } from '../core/shared-piping-model/index.js';
 import { requireLinearPipingInputXmlPreFlight } from '../workspace/linear-piping-inputxml-prefea.js';
 
 export const LFEA_NATIVE_SUPPORT_AUTHORITY_SCHEMA = 'lfea-native-support-authority/v1';
@@ -12,6 +13,7 @@ export const LFEA_NATIVE_SUPPORT_CURRENTNESS = Object.freeze({
 const INPUT_KEYS = Object.freeze([
   'parentSourceBundleSemanticHash',
   'parentModelSemanticHash',
+  'supportSharedModel',
   'supportAttachmentModel',
   'restraintCapabilityModel',
   'definitions',
@@ -26,13 +28,8 @@ export function requireLfeaNativeSupportAuthorityInput(preFlightRecord, input) {
   exactKeys(input, INPUT_KEYS, 'supportAuthorityInput');
   requireHash(input.parentSourceBundleSemanticHash, 'parentSourceBundleSemanticHash');
   requireHash(input.parentModelSemanticHash, 'parentModelSemanticHash');
-  if (input.parentSourceBundleSemanticHash !== preFlight.preparation.sourceBundleSemanticHash
-    || input.parentModelSemanticHash !== preFlight.preparation.modelSemanticHash) {
-    throw supportError(
-      'LFEA_NATIVE_SUPPORT_PARENT_MISMATCH',
-      'Support authority does not belong to the current source/model preparation.',
-    );
-  }
+  requireCurrentParents(preFlight, input);
+  requireSupportSharedModel(preFlight, input);
   if (!Array.isArray(input.definitions) || input.definitions.length === 0) {
     throw supportError(
       'LFEA_NATIVE_SUPPORT_DEFINITIONS_REQUIRED',
@@ -58,6 +55,7 @@ export function sealLfeaNativeSupportAuthority(preFlight, input, interfaceSet) {
     parentModelSemanticHash: preFlight.preparation.modelSemanticHash,
     parentCompilationSemanticHash:
       preFlight.preparation.structuralPreparation.compilation.semanticHash,
+    supportSharedModelSemanticHash: input.supportSharedModel.semanticHash,
     supportAttachmentModelSemanticHash: input.supportAttachmentModel.semanticHash,
     restraintCapabilityModelSemanticHash: input.restraintCapabilityModel.semanticHash,
     interfaceSet,
@@ -78,24 +76,12 @@ export function lfeaNativeSupportAuthorityCurrentnessReasons(preFlightRecord, au
     return Object.freeze(['CURRENT_PREFLIGHT_INVALID']);
   }
   const reasons = [];
-  compare(
-    reasons,
-    'SOURCE_CHANGED',
-    authority.parentSourceBundleSemanticHash,
-    preFlight.preparation.sourceBundleSemanticHash,
-  );
-  compare(
-    reasons,
-    'MODEL_CHANGED',
-    authority.parentModelSemanticHash,
-    preFlight.preparation.modelSemanticHash,
-  );
-  compare(
-    reasons,
-    'COMPILATION_CHANGED',
-    authority.parentCompilationSemanticHash,
-    preFlight.preparation.structuralPreparation.compilation.semanticHash,
-  );
+  compare(reasons, 'SOURCE_CHANGED', authority.parentSourceBundleSemanticHash,
+    preFlight.preparation.sourceBundleSemanticHash);
+  compare(reasons, 'MODEL_CHANGED', authority.parentModelSemanticHash,
+    preFlight.preparation.modelSemanticHash);
+  compare(reasons, 'COMPILATION_CHANGED', authority.parentCompilationSemanticHash,
+    preFlight.preparation.structuralPreparation.compilation.semanticHash);
   return Object.freeze(uniqueAscii(reasons));
 }
 
@@ -110,12 +96,47 @@ export function lfeaNativeSupportError(code, message) {
   return error;
 }
 
+function requireCurrentParents(preFlight, input) {
+  if (input.parentSourceBundleSemanticHash !== preFlight.preparation.sourceBundleSemanticHash
+    || input.parentModelSemanticHash !== preFlight.preparation.modelSemanticHash) {
+    throw supportError(
+      'LFEA_NATIVE_SUPPORT_PARENT_MISMATCH',
+      'Support authority does not belong to the current source/model preparation.',
+    );
+  }
+}
+
+function requireSupportSharedModel(preFlight, input) {
+  const validation = validateSharedPipingModel(input.supportSharedModel);
+  if (!validation.ok) {
+    throw supportError(
+      'LFEA_NATIVE_SUPPORT_SHARED_MODEL_INVALID',
+      `Support shared model is invalid: ${validation.errors.join(' ')}`,
+    );
+  }
+  if (input.supportSharedModel.sourceSnapshotRef.sourceSemanticHash
+    !== preFlight.preparation.sourceBundleSemanticHash) {
+    throw supportError(
+      'LFEA_NATIVE_SUPPORT_SOURCE_CUSTODY_MISMATCH',
+      'Support shared model source identity does not match the current InputXML source bundle.',
+    );
+  }
+  if (input.supportAttachmentModel.sharedModelSemanticHash
+    !== input.supportSharedModel.semanticHash) {
+    throw supportError(
+      'LFEA_NATIVE_SUPPORT_ATTACHMENT_PARENT_MISMATCH',
+      'Support attachment model does not belong to the supplied shared piping model.',
+    );
+  }
+}
+
 function authoritySemanticProjection(record) {
   return {
     schema: record.schema,
     parentSourceBundleSemanticHash: record.parentSourceBundleSemanticHash,
     parentModelSemanticHash: record.parentModelSemanticHash,
     parentCompilationSemanticHash: record.parentCompilationSemanticHash,
+    supportSharedModelSemanticHash: record.supportSharedModelSemanticHash,
     supportAttachmentModelSemanticHash: record.supportAttachmentModelSemanticHash,
     restraintCapabilityModelSemanticHash: record.restraintCapabilityModelSemanticHash,
     interfaceSetSemanticHash: record.interfaceSet.semanticHash,
@@ -218,7 +239,6 @@ function nonEmpty(value, field) {
   }
   return text;
 }
-
 function compare(reasons, code, expected, actual) {
   if (expected !== actual) reasons.push(code);
 }

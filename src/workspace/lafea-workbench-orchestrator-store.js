@@ -13,6 +13,9 @@ import { createLafeaWorkbenchGeometryState } from './lafea-workbench-geometry-st
 import { buildLafeaDomainFirstMeshCustodyProjection } from './lafea-domain-first-mesh-custody.js';
 import { buildLafeaDomainPreparationProjection } from './lafea-domain-first-requests.js';
 import { createLafeaWorkbenchOrchestratorApi } from './lafea-workbench-orchestrator-api.js';
+import { createLafeaWorkbenchContinuumPreflightState } from './lafea-workbench-continuum-preflight-state.js';
+import { createLafeaWorkbenchDomainFirstExecutionState } from './lafea-workbench-domain-first-execution-state.js';
+import { createLafeaWorkbenchDomainFirstRunActions } from './lafea-workbench-domain-first-run-actions.js';
 import { createLafeaWorkbenchMeshState } from './lafea-workbench-mesh-state.js';
 import { createLafeaWorkbenchMeshGenerationState } from './lafea-workbench-mesh-generation-state.js';
 import { createLafeaMeshGenerationActions } from './lafea-workbench-mesh-generation-actions.js';
@@ -50,25 +53,21 @@ export function createLafeaWorkbenchOrchestratorStore(options) {
   let orchestratorDiagnostics = null;
   const listeners = new Set();
   const stageIds = Object.keys(retainedState.stages);
+  const continuumPreflight = createLafeaWorkbenchContinuumPreflightState(stageIds);
+  const domainFirstExecution = createLafeaWorkbenchDomainFirstExecutionState(stageIds);
   const source = createLafeaWorkbenchSourceState(stageIds, {
     getRetainedState: () => retainedState,
     getActiveStageId: () => retainedState.activeStageId,
     invokeRetained,
   });
   const release = createLafeaWorkbenchReleaseState(stageIds, {
-    currentCandidateHeadSha,
-    authorizedReleaseEvidenceHashes,
+    currentCandidateHeadSha, authorizedReleaseEvidenceHashes,
   });
   const verification = createLafeaWorkbenchVerificationState(stageIds);
-  const t6Geometry = createLafeaT6GeometryQualificationState(stageIds, {
-    currentCandidateHeadSha,
-  });
+  const t6Geometry = createLafeaT6GeometryQualificationState(stageIds, { currentCandidateHeadSha });
   const geometry = createLafeaWorkbenchGeometryState(stageIds);
   const mesh = createLafeaWorkbenchMeshState(stageIds, {
-    getActiveStageId: () => retainedState.activeStageId,
-    readStageState,
-    invokeRetained,
-    publish,
+    getActiveStageId: () => retainedState.activeStageId, readStageState, invokeRetained, publish,
   });
   const meshGeneration = createLafeaWorkbenchMeshGenerationState(stageIds);
   const preparation = createLafeaWorkbenchPreparationState(stageIds);
@@ -85,38 +84,33 @@ export function createLafeaWorkbenchOrchestratorStore(options) {
       ...verification.fields(stageId), ...t6Geometry.fields(stageId),
       ...mesh.fields(stageId), ...meshGeneration.fields(stageId),
       ...preparation.fields(stageId), ...geometry.fields(stageId),
+      ...continuumPreflight.fields(stageId), ...domainFirstExecution.fields(stageId),
     });
   }
 
   function readStageState(stageId) {
     const raw = rawStage(stageId);
     const withGeometry = freeze({ ...raw, ...geometry.buildProjections(raw) });
-    const lifecycleReadiness = projectLafeaWorkbenchReadiness(stageId, withGeometry);
-    const withReadiness = freeze({ ...withGeometry, lifecycleReadiness });
     const legacyCustody = mesh.buildAnalysisMeshCustodyProjection(
-      withReadiness, withReadiness.retainedAnalysisMeshEvidence,
+      withGeometry, withGeometry.retainedAnalysisMeshEvidence,
     );
-    const v2MeshRoute = withReadiness.domainFirstProfileActive
-      || withReadiness.shellMidsurfaceProfileActive;
-    const analysisMeshCustodyProjection = v2MeshRoute
-      ? buildLafeaDomainFirstMeshCustodyProjection(
-        withReadiness, withReadiness.retainedAnalysisMeshEvidenceV2,
-      )
+    const governedV2 = withGeometry.domainFirstProfileActive || withGeometry.shellMidsurfaceProfileActive;
+    const analysisMeshCustodyProjection = governedV2
+      ? buildLafeaDomainFirstMeshCustodyProjection(withGeometry, withGeometry.retainedAnalysisMeshEvidenceV2)
       : legacyCustody;
-    const withMesh = freeze({ ...withReadiness, analysisMeshCustodyProjection });
+    const withMesh = freeze({ ...withGeometry, analysisMeshCustodyProjection });
     const preparationProjection = withMesh.domainFirstProfileActive
       ? buildLafeaDomainPreparationProjection(withMesh)
       : preparation.buildProjection(withMesh);
-    const numericalVerificationProjection = projectLafeaWorkbenchVerificationBinding(
-      withMesh,
-      withMesh.retainedNumericalVerificationEvidence,
-    );
-    const t6GeometryQualificationProjection = t6Geometry.project(withMesh);
+    const withPreparation = freeze({ ...withMesh, preparationProjection });
+    const lifecycleReadiness = projectLafeaWorkbenchReadiness(stageId, withPreparation);
+    const withReadiness = freeze({ ...withPreparation, lifecycleReadiness });
     return freeze({
-      ...withMesh,
-      preparationProjection,
-      numericalVerificationProjection,
-      t6GeometryQualificationProjection,
+      ...withReadiness,
+      numericalVerificationProjection: projectLafeaWorkbenchVerificationBinding(
+        withReadiness, withReadiness.retainedNumericalVerificationEvidence,
+      ),
+      t6GeometryQualificationProjection: t6Geometry.project(withReadiness),
     });
   }
 
@@ -124,7 +118,6 @@ export function createLafeaWorkbenchOrchestratorStore(options) {
     const stage = readStageState(stageId);
     return freeze({ ...stage, orchestration: buildLafeaWorkbenchOrchestrationProjection(stage) });
   }
-
   function deriveState() {
     return freeze({
       ...retainedState,
@@ -133,7 +126,6 @@ export function createLafeaWorkbenchOrchestratorStore(options) {
       diagnostics: orchestratorDiagnostics ?? retainedState.diagnostics,
     });
   }
-
   function publish() {
     const state = deriveState();
     for (const listener of listeners) {
@@ -141,7 +133,6 @@ export function createLafeaWorkbenchOrchestratorStore(options) {
     }
     return state;
   }
-
   function invokeRetained(method, args = []) {
     if (typeof retained[method] !== 'function') throw storeError(`LAFEA_RETAINED_METHOD_NOT_FOUND:${method}`);
     suppressRetainedPublish = true;
@@ -152,6 +143,13 @@ export function createLafeaWorkbenchOrchestratorStore(options) {
     } finally { suppressRetainedPublish = false; }
   }
 
+  function clearDomainFirstExecution(stageId = retainedState.activeStageId) {
+    return domainFirstExecution.clear(stageId);
+  }
+  function clearDomainFirstAuthority(stageId = retainedState.activeStageId) {
+    continuumPreflight.clear(stageId);
+    clearDomainFirstExecution(stageId);
+  }
   function mutateDocument(originRef, method, args, explicitClass = null) {
     const before = retainedState;
     const stageId = before.activeStageId;
@@ -163,6 +161,7 @@ export function createLafeaWorkbenchOrchestratorStore(options) {
     if (documentDigest(beforeDocument) !== documentDigest(afterDocument)) {
       geometry.invalidate(stageId);
       meshGeneration.invalidate(stageId);
+      clearDomainFirstAuthority(stageId);
     }
     clearOrchestratorDiagnostic();
     return publish();
@@ -170,20 +169,23 @@ export function createLafeaWorkbenchOrchestratorStore(options) {
 
   function run() {
     const stageId = retainedState.activeStageId;
-    if (rawStage(stageId).domainFirstProfileActive) {
-      failOrchestrator(storeError('LAFEA_DOMAIN_FIRST_SOLVER_MODEL_NOT_COMPILED'), 'LAFEA_DOMAIN_FIRST_SOLVER_MODEL_NOT_COMPILED');
-      return publish();
-    }
+    if (rawStage(stageId).domainFirstProfileActive) return domainFirstRun.run(stageId);
     invokeRetained('run');
     let stage = retainedState.stages[stageId];
     try {
       if (stage.execution?.status === 'QUALIFIED') {
         const authority = source.ensureRunAuthority(stageId, 'RUN_CALCULATION/SOURCE_AUTHORITY');
         stage = retainedState.stages[stageId];
-        const batch = createLafeaLifecycleProducerBatch({ stageId, sourceAuthority: authority, execution: stage.execution });
+        const batch = createLafeaLifecycleProducerBatch({
+          stageId, sourceAuthority: authority, execution: stage.execution,
+        });
         for (let index = 0; index < batch.records.length; index += 1) {
-          invokeRetained('registerLifecycleArtifact', [batch.records[index], batch.registrations[index].registrationId]);
-          if (retainedState.status === 'FAILED') throw storeError(retainedState.diagnostics?.[0]?.code ?? 'LAFEA_PRODUCER_REGISTRATION_REJECTED');
+          invokeRetained('registerLifecycleArtifact', [
+            batch.records[index], batch.registrations[index].registrationId,
+          ]);
+          if (retainedState.status === 'FAILED') {
+            throw storeError(retainedState.diagnostics?.[0]?.code ?? 'LAFEA_PRODUCER_REGISTRATION_REJECTED');
+          }
         }
       }
       clearOrchestratorDiagnostic();
@@ -194,61 +196,58 @@ export function createLafeaWorkbenchOrchestratorStore(options) {
   function importDocument(value, stageId = retainedState.activeStageId, sourceHash = null) {
     invokeRetained('importDocument', [value, stageId, sourceHash]);
     if (retainedState.status !== 'FAILED') {
-      source.clear(stageId);
-      geometry.clear(stageId);
-      meshGeneration.clear(stageId);
-      clearOrchestratorDiagnostic();
+      source.clear(stageId); geometry.clear(stageId); meshGeneration.clear(stageId);
+      clearDomainFirstAuthority(stageId); clearOrchestratorDiagnostic();
     }
     return publish();
   }
-
   function initializeLifecycle(sourceHash, originRef = 'EXTERNAL_SOURCE_AUTHORITY') {
     const stageId = retainedState.activeStageId;
-    source.clear(stageId);
+    source.clear(stageId); clearDomainFirstAuthority(stageId);
     invokeRetained('initializeLifecycle', [sourceHash, originRef]);
     if (retainedState.status !== 'FAILED') {
-      geometry.invalidate(stageId);
-      meshGeneration.invalidate(stageId);
+      geometry.invalidate(stageId); meshGeneration.invalidate(stageId);
     }
     clearOrchestratorDiagnosticIfReady();
     return publish();
   }
-
   function applyLifecycleEvent(event) {
     invokeRetained('applyLifecycleEvent', [event]);
     const succeeded = retainedState.status !== 'FAILED';
-    source.afterLifecycleEvent(event, succeeded);
-    mesh.afterLifecycleEvent(event, succeeded);
-    if (succeeded && SOURCE_CHANGE_CLASSES.has(event?.changeClass)) {
-      geometry.invalidate(retainedState.activeStageId);
-      meshGeneration.invalidate(retainedState.activeStageId);
+    source.afterLifecycleEvent(event, succeeded); mesh.afterLifecycleEvent(event, succeeded);
+    if (succeeded && (SOURCE_CHANGE_CLASSES.has(event?.changeClass)
+      || event?.changeClass === 'ANALYSIS_MESH_PROFILE')) {
+      const stageId = retainedState.activeStageId;
+      if (SOURCE_CHANGE_CLASSES.has(event?.changeClass)) {
+        geometry.invalidate(stageId); meshGeneration.invalidate(stageId);
+      }
+      clearDomainFirstAuthority(stageId);
     }
     if (succeeded) clearOrchestratorDiagnostic();
     return publish();
   }
-
   function delegate(method, args = []) {
-    invokeRetained(method, args);
-    clearOrchestratorDiagnosticIfReady();
-    return publish();
+    invokeRetained(method, args); clearOrchestratorDiagnosticIfReady(); return publish();
   }
 
   const meshGenerationActions = createLafeaMeshGenerationActions({
-    meshGeneration, mesh, rawStage, readStageState, deriveStage, publish,
+    meshGeneration, mesh, continuumPreflight, rawStage, readStageState, deriveStage, publish,
     invokeRetained, storeError, clearOrchestratorDiagnostic, failOrchestrator,
-    getRetainedState: () => retainedState,
+    clearDomainFirstExecution, getRetainedState: () => retainedState,
   });
   const evidenceActions = createLafeaWorkbenchEvidenceActions({
-    retained, release, verification, t6Geometry, preparation, geometry,
-    meshGeneration, mesh, rawStage, readStageState, deriveStage, deriveState,
-    publish, invokeRetained, storeError, clearOrchestratorDiagnostic,
+    retained, release, verification, t6Geometry, preparation, geometry, continuumPreflight,
+    meshGeneration, mesh, rawStage, readStageState, deriveStage, deriveState, publish,
+    invokeRetained, storeError, clearOrchestratorDiagnostic, clearDomainFirstExecution,
     getRetainedState: () => retainedState,
+  });
+  const domainFirstRun = createLafeaWorkbenchDomainFirstRunActions({
+    ...routeContext(), source, domainFirstExecution,
   });
 
   function subscribe(listener) {
     if (typeof listener !== 'function') throw new TypeError('LAFEA subscriber must be a function.');
-    listeners.add(listener);
-    return () => listeners.delete(listener);
+    listeners.add(listener); return () => listeners.delete(listener);
   }
   function clearOrchestratorDiagnosticIfReady() { if (retainedState.status !== 'FAILED') clearOrchestratorDiagnostic(); }
   function clearOrchestratorDiagnostic() { orchestratorStatus = null; orchestratorDiagnostics = null; }
@@ -260,16 +259,17 @@ export function createLafeaWorkbenchOrchestratorStore(options) {
       message: error instanceof Error ? error.message : String(error),
     })];
   }
-
-  return createLafeaWorkbenchOrchestratorApi({
-    retained, release, verification, t6Geometry, mesh, meshGeneration,
-    preparation, geometry, listeners, unsubscribe,
-    ...meshGenerationActions, ...evidenceActions,
-    getRetainedState: () => retainedState,
-    readStageState, deriveStage, deriveState, publish, delegate, mutateDocument,
-    importDocument, run, initializeLifecycle, applyLifecycleEvent,
-    subscribe,
-  });
+  function routeContext() {
+    return {
+      retained, release, verification, t6Geometry, mesh, meshGeneration, preparation,
+      geometry, continuumPreflight, listeners, unsubscribe, ...meshGenerationActions,
+      ...evidenceActions, getRetainedState: () => retainedState, readStageState, deriveStage,
+      deriveState, publish, delegate, mutateDocument, importDocument, run, initializeLifecycle,
+      applyLifecycleEvent, clearDomainFirstExecution, subscribe, invokeRetained,
+      clearOrchestratorDiagnostic, failOrchestrator, storeError,
+    };
+  }
+  return createLafeaWorkbenchOrchestratorApi(routeContext());
 }
 
 function documentDigest(value) { return value ? lafeaDocumentDigest(value) : null; }

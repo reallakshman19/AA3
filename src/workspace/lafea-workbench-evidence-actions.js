@@ -1,4 +1,7 @@
 /** Registration/export actions extracted from the canonical orchestrator store. */
+import {
+  createLafeaContinuumDomainFirstPreflight,
+} from './lafea-continuum-domain-first-preflight.js';
 import { requireLafeaStageComposition } from './lafea-stage-composition-root.js';
 import {
   LAFEA_CONTINUUM_REVALIDATION_RESULT_SCHEMA,
@@ -6,10 +9,27 @@ import {
   registerLafeaContinuumRevalidationBatch,
 } from './lafea-continuum-revalidation.js';
 
+const WORKBENCH_DOCUMENT_SCHEMA = 'lafea-workbench-document/v1';
+
 export function createLafeaWorkbenchEvidenceActions(context) {
   const c = requireContext(context);
 
   function activeStageId() { return c.getRetainedState().activeStageId; }
+
+  function prepareContinuumForRun(stageId = activeStageId()) {
+    if (stageId !== 'LAFEA.3' || c.rawStage(stageId).domainFirstProfileActive !== true) {
+      throw c.storeError('LAFEA_CONTINUUM_PREFLIGHT_DOMAIN_FIRST_STAGE_REQUIRED');
+    }
+    const evidence = createLafeaContinuumDomainFirstPreflight(c, stageId);
+    const result = c.continuumPreflight.register(evidence);
+    if (result.changed) c.clearDomainFirstExecution(stageId);
+    c.clearOrchestratorDiagnostic();
+    const state = result.changed ? c.publish() : c.deriveState();
+    return freeze({
+      ...result,
+      projection: state.stages[stageId].preparationProjection,
+    });
+  }
 
   function registerTemplateReleaseRecord(value, stageId = activeStageId()) {
     const result = c.release.register(value, c.readStageState(stageId));
@@ -86,7 +106,7 @@ export function createLafeaWorkbenchEvidenceActions(context) {
     if (!composition.executionSupported || typeof composition.canonicalize !== 'function') {
       throw c.storeError('LAFEA_CONTINUUM_REVALIDATION_CANONICALIZER_NOT_AVAILABLE');
     }
-    const source = composition.normalizeDocument(c.retained.exportDocument());
+    const source = composition.normalizeDocument(exportedStageDocument(c, stageId));
     const canonicalInput = composition.canonicalize(source);
     const batch = createLafeaContinuumRevalidationBatch({
       stageId,
@@ -96,7 +116,6 @@ export function createLafeaWorkbenchEvidenceActions(context) {
       lifecycle: stage.lifecycle,
     });
 
-    // Dry-run the complete batch before the first mutable registration.
     const predicted = registerLafeaContinuumRevalidationBatch(stage.lifecycle, batch);
     for (let index = 0; index < batch.records.length; index += 1) {
       c.invokeRetained('registerLifecycleArtifact', [
@@ -137,14 +156,22 @@ export function createLafeaWorkbenchEvidenceActions(context) {
 
   function activateDomainFirstProfile(stageId = activeStageId()) {
     const result = c.geometry.activate(c.rawStage(stageId));
-    if (result.changed) c.clearOrchestratorDiagnostic();
+    if (result.changed) {
+      c.continuumPreflight.clear(stageId);
+      c.clearDomainFirstExecution(stageId);
+      c.clearOrchestratorDiagnostic();
+    }
     return freeze({ ...result, stage: c.publish().stages[stageId] });
   }
 
   function registerAnalysisDomain(value) {
     const stageId = value?.stageId ?? activeStageId();
     const result = c.geometry.registerDomain(value, c.readStageState(stageId));
-    if (result.changed) c.meshGeneration.invalidate(stageId);
+    if (result.changed) {
+      c.meshGeneration.invalidate(stageId);
+      c.continuumPreflight.clear(stageId);
+      c.clearDomainFirstExecution(stageId);
+    }
     const state = result.changed ? c.publish() : c.deriveState();
     return freeze({
       ...result,
@@ -158,7 +185,11 @@ export function createLafeaWorkbenchEvidenceActions(context) {
       value,
       c.readStageState(stageId),
     );
-    if (result.changed) c.meshGeneration.invalidate(stageId);
+    if (result.changed) {
+      c.meshGeneration.invalidate(stageId);
+      c.continuumPreflight.clear(stageId);
+      c.clearDomainFirstExecution(stageId);
+    }
     const state = result.changed ? c.publish() : c.deriveState();
     return freeze({
       ...result,
@@ -188,6 +219,7 @@ export function createLafeaWorkbenchEvidenceActions(context) {
       numericalVerification: stage.numericalVerificationProjection,
       t6GeometryQualification: stage.retainedT6GeometryQualification,
       t6GeometryQualificationProjection: stage.t6GeometryQualificationProjection,
+      continuumPreflightEvidence: stage.retainedContinuumPreflightEvidence,
       readiness: stage.lifecycleReadiness,
       preparation: stage.preparationProjection,
       domainFirstLifecycle: stage.domainFirstLifecycle,
@@ -199,6 +231,7 @@ export function createLafeaWorkbenchEvidenceActions(context) {
   }
 
   return Object.freeze({
+    prepareContinuumForRun,
     registerTemplateReleaseRecord,
     registerNumericalVerificationEvidence,
     registerT6GeometryQualification,
@@ -211,6 +244,16 @@ export function createLafeaWorkbenchEvidenceActions(context) {
     registerAnalysisMeshEvidence,
     exportLifecycle,
   });
+}
+
+function exportedStageDocument(c, stageId) {
+  const exported = c.retained.exportDocument();
+  if (exported?.schema !== WORKBENCH_DOCUMENT_SCHEMA || exported.stageId !== stageId
+    || !exported.document || typeof exported.document !== 'object'
+    || Array.isArray(exported.document)) {
+    throw c.storeError('LAFEA_WORKBENCH_EXPORTED_DOCUMENT_INVALID');
+  }
+  return exported.document;
 }
 
 function requireContext(value) {

@@ -128,13 +128,16 @@
         "schema": { "const": "caesar-configuration-authority/v1" },
         "caesarVersion": { "type": "string", "minLength": 1 },
         "precedence": {
+          "description": "Authority layers written lowest authority first: overall/global default < individual-file setting < load-case setting < model input.",
           "const": [
-            "LOAD_CASE_SETTING",
+            "OVERALL_GLOBAL_DEFAULT",
             "INDIVIDUAL_FILE_SETTING",
-            "MODEL_INPUT",
-            "OVERALL_GLOBAL_DEFAULT"
+            "LOAD_CASE_SETTING",
+            "MODEL_INPUT"
           ]
         },
+        "precedenceDirection": { "const": "LOWEST_TO_HIGHEST_AUTHORITY" },
+        "precedenceSource": { "type": "string", "minLength": 1 },
         "layers": {
           "type": "object",
           "additionalProperties": false,

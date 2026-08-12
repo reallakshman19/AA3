@@ -39,10 +39,38 @@ export { convertCaesarValue, normalizeCaesarUnitToken, temperatureToKelvin } fro
 export {
   CAESAR_CONFIGURATION_AUTHORITY_SCHEMA,
   CAESAR_CONFIGURATION_PRECEDENCE,
+  CAESAR_CONFIGURATION_PRECEDENCE_DIRECTION,
   normalizeCaesarConfigurationAuthority,
+  resolveCaesarConfigurationLedger,
   resolveCaesarConfigurationSetting,
 } from './caesar-configuration-authority.js';
-export { solveCaesarAccdbLinearBenchmark } from './caesar-accdb-linear-solve.js';
+export {
+  CAESAR_FRICTION_AUTHORITY_SCHEMA,
+  classifyCaesarCaseFormula,
+  resolveCaesarFrictionAuthority,
+  resolveCaesarFrictionAuthorityTable,
+  resolveCaesarFrictionStiffness,
+} from './caesar-friction-authority.js';
+export {
+  CAESAR_ACCDB_CASE_GATES,
+  executeCaesarAccdbCaseState,
+  prepareCaesarAccdbCaseState,
+  solveCaesarAccdbLinearBenchmark,
+} from './caesar-accdb-linear-solve.js';
+export {
+  CAESAR_FRICTION_EVIDENCE_SCHEMA,
+  CAESAR_FRICTION_SOLVER_PROFILE,
+  buildFrictionPairedDeltaRca,
+  runCaesarAccdbFrictionStiffnessSensitivity,
+  solveCaesarAccdbFrictionBenchmark,
+  verifyCaesarAccdbFrictionDeterminism,
+} from './caesar-accdb-friction-solve.js';
+export {
+  FRICTION_FIXTURE_CASE_IDS,
+  buildFrictionFixture,
+  buildFrictionFixtureProfile,
+  buildFrictionFixtureRawExport,
+} from './caesar-accdb-friction-fixture.js';
 export {
   BM4_QUALIFICATION_ADAPTER_ID,
   BM4_QUALIFICATION_CASE_IDS,

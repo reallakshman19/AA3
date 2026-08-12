@@ -1,0 +1,2547 @@
+{
+  "benchmarkId": "BM4_L",
+  "caesarVersion": "14.000",
+  "caseSource": "DECLARED_FROM_PINNED_LOAD_CASE_REPORT_NOT_READ_FROM_ACCDB_IN_THIS_RUN",
+  "cases": {
+    "L1": {
+      "caseClass": "HYD",
+      "caseKind": "PRIMITIVE",
+      "formula": "WW+HP",
+      "friction": {
+        "constituents": null,
+        "effectiveCoefficient": 0.3,
+        "effectiveRule": "EFFECTIVE_MU_EQUALS_MODEL_MU_TIMES_LOAD_CASE_FRICTION_MULTIPLIER_V1",
+        "frictionActive": true,
+        "frictionMultiplier": {
+          "level": "LOAD_CASE_SETTING",
+          "reason": null,
+          "source": "USER_VERIFIED_BM4_L_CASE_SETTINGS_2026-08-10_PLUS_ISSUE_1083_LOADCASEREPORT_FRICTION_MULTIPLIERS",
+          "value": 1
+        },
+        "frictionStiffness": {
+          "conversionFactor": 100,
+          "conversionRule": "N_PER_CM_TO_N_PER_M_TIMES_100",
+          "displayedUnit": "N./cm.",
+          "displayedValue": 1000000,
+          "level": "OVERALL_GLOBAL_DEFAULT",
+          "setting": "FRICT_STIF",
+          "siUnit": "N/m",
+          "siValue": 100000000,
+          "source": "USER_SUPPLIED_CAESAR_14_GLOBAL_SETTINGS_2026-08-09_RECONFIRMED_FOR_BM4_L_2026-08-10"
+        },
+        "modelCoefficientOfFriction": {
+          "level": "MODEL_INPUT",
+          "reason": null,
+          "source": "BM4_L_ACCDB_MODEL_INPUT_HIGHEST_AUTHORITY_COEFFICIENT",
+          "value": 0.3
+        }
+      },
+      "lcaseNumber": 1,
+      "meaninglessForThisCase": [],
+      "meaninglessReason": null,
+      "settings": {
+        "BOURDON_PRESSURE": {
+          "candidates": [
+            {
+              "applicable": true,
+              "declared": true,
+              "level": "OVERALL_GLOBAL_DEFAULT",
+              "source": "USER_SUPPLIED_CAESAR_14_GLOBAL_SETTINGS_2026-08-09_RECONFIRMED_FOR_BM4_L_2026-08-10",
+              "value": "NONE"
+            },
+            {
+              "applicable": true,
+              "declared": true,
+              "level": "INDIVIDUAL_FILE_SETTING",
+              "source": "USER_VERIFIED_BM4_L_FILE_SETTINGS_2026-08-10",
+              "value": "TRANSLATION_AND_ROTATION"
+            },
+            {
+              "applicable": true,
+              "declared": false,
+              "level": "LOAD_CASE_SETTING",
+              "source": "USER_VERIFIED_BM4_L_CASE_SETTINGS_2026-08-10_PLUS_ISSUE_1083_LOADCASEREPORT_FRICTION_MULTIPLIERS",
+              "value": null
+            },
+            {
+              "applicable": true,
+              "declared": false,
+              "level": "MODEL_INPUT",
+              "source": "BM4_L_ACCDB_MODEL_INPUT_HIGHEST_AUTHORITY_COEFFICIENT",
+              "value": null
+            }
+          ],
+          "resolvedLevel": "INDIVIDUAL_FILE_SETTING",
+          "resolvedSource": "USER_VERIFIED_BM4_L_FILE_SETTINGS_2026-08-10",
+          "resolvedValue": "TRANSLATION_AND_ROTATION",
+          "status": "RESOLVED"
+        },
+        "COEFFICIENT_OF_FRICTION_MU": {
+          "candidates": [
+            {
+              "applicable": true,
+              "declared": true,
+              "level": "OVERALL_GLOBAL_DEFAULT",
+              "source": "USER_SUPPLIED_CAESAR_14_GLOBAL_SETTINGS_2026-08-09_RECONFIRMED_FOR_BM4_L_2026-08-10",
+              "value": 0
+            },
+            {
+              "applicable": true,
+              "declared": false,
+              "level": "INDIVIDUAL_FILE_SETTING",
+              "source": "USER_VERIFIED_BM4_L_FILE_SETTINGS_2026-08-10",
+              "value": null
+            },
+            {
+              "applicable": true,
+              "declared": false,
+              "level": "LOAD_CASE_SETTING",
+              "source": "USER_VERIFIED_BM4_L_CASE_SETTINGS_2026-08-10_PLUS_ISSUE_1083_LOADCASEREPORT_FRICTION_MULTIPLIERS",
+              "value": null
+            },
+            {
+              "applicable": true,
+              "declared": true,
+              "level": "MODEL_INPUT",
+              "source": "BM4_L_ACCDB_MODEL_INPUT_HIGHEST_AUTHORITY_COEFFICIENT",
+              "value": 0.3
+            }
+          ],
+          "resolvedLevel": "MODEL_INPUT",
+          "resolvedSource": "BM4_L_ACCDB_MODEL_INPUT_HIGHEST_AUTHORITY_COEFFICIENT",
+          "resolvedValue": 0.3,
+          "status": "RESOLVED"
+        },
+        "FLEXIBILITY_ELASTIC_MODULUS": {
+          "candidates": [
+            {
+              "applicable": true,
+              "declared": true,
+              "level": "OVERALL_GLOBAL_DEFAULT",
+              "source": "USER_SUPPLIED_CAESAR_14_GLOBAL_SETTINGS_2026-08-09_RECONFIRMED_FOR_BM4_L_2026-08-10",
+              "value": "EC"
+            },
+            {
+              "applicable": true,
+              "declared": false,
+              "level": "INDIVIDUAL_FILE_SETTING",
+              "source": "USER_VERIFIED_BM4_L_FILE_SETTINGS_2026-08-10",
+              "value": null
+            },
+            {
+              "applicable": true,
+              "declared": false,
+              "level": "LOAD_CASE_SETTING",
+              "source": "USER_VERIFIED_BM4_L_CASE_SETTINGS_2026-08-10_PLUS_ISSUE_1083_LOADCASEREPORT_FRICTION_MULTIPLIERS",
+              "value": null
+            },
+            {
+              "applicable": true,
+              "declared": false,
+              "level": "MODEL_INPUT",
+              "source": "BM4_L_ACCDB_MODEL_INPUT_HIGHEST_AUTHORITY_COEFFICIENT",
+              "value": null
+            }
+          ],
+          "resolvedLevel": "OVERALL_GLOBAL_DEFAULT",
+          "resolvedSource": "USER_SUPPLIED_CAESAR_14_GLOBAL_SETTINGS_2026-08-09_RECONFIRMED_FOR_BM4_L_2026-08-10",
+          "resolvedValue": "EC",
+          "status": "RESOLVED"
+        },
+        "FRICTION_MULTIPLIER": {
+          "candidates": [
+            {
+              "applicable": true,
+              "declared": false,
+              "level": "OVERALL_GLOBAL_DEFAULT",
+              "source": "USER_SUPPLIED_CAESAR_14_GLOBAL_SETTINGS_2026-08-09_RECONFIRMED_FOR_BM4_L_2026-08-10",
+              "value": null
+            },
+            {
+              "applicable": true,
+              "declared": false,
+              "level": "INDIVIDUAL_FILE_SETTING",
+              "source": "USER_VERIFIED_BM4_L_FILE_SETTINGS_2026-08-10",
+              "value": null
+            },
+            {
+              "applicable": true,
+              "declared": true,
+              "level": "LOAD_CASE_SETTING",
+              "source": "USER_VERIFIED_BM4_L_CASE_SETTINGS_2026-08-10_PLUS_ISSUE_1083_LOADCASEREPORT_FRICTION_MULTIPLIERS",
+              "value": 1
+            },
+            {
+              "applicable": true,
+              "declared": false,
+              "level": "MODEL_INPUT",
+              "source": "BM4_L_ACCDB_MODEL_INPUT_HIGHEST_AUTHORITY_COEFFICIENT",
+              "value": null
+            }
+          ],
+          "resolvedLevel": "LOAD_CASE_SETTING",
+          "resolvedSource": "USER_VERIFIED_BM4_L_CASE_SETTINGS_2026-08-10_PLUS_ISSUE_1083_LOADCASEREPORT_FRICTION_MULTIPLIERS",
+          "resolvedValue": 1,
+          "status": "RESOLVED"
+        },
+        "RESTRAINT_DIRECTIONAL_BEHAVIOR": {
+          "candidates": [
+            {
+              "applicable": true,
+              "declared": false,
+              "level": "OVERALL_GLOBAL_DEFAULT",
+              "source": "USER_SUPPLIED_CAESAR_14_GLOBAL_SETTINGS_2026-08-09_RECONFIRMED_FOR_BM4_L_2026-08-10",
+              "value": null
+            },
+            {
+              "applicable": true,
+              "declared": true,
+              "level": "INDIVIDUAL_FILE_SETTING",
+              "source": "USER_VERIFIED_BM4_L_FILE_SETTINGS_2026-08-10",
+              "value": "BIDIRECTIONAL"
+            },
+            {
+              "applicable": true,
+              "declared": false,
+              "level": "LOAD_CASE_SETTING",
+              "source": "USER_VERIFIED_BM4_L_CASE_SETTINGS_2026-08-10_PLUS_ISSUE_1083_LOADCASEREPORT_FRICTION_MULTIPLIERS",
+              "value": null
+            },
+            {
+              "applicable": true,
+              "declared": false,
+              "level": "MODEL_INPUT",
+              "source": "BM4_L_ACCDB_MODEL_INPUT_HIGHEST_AUTHORITY_COEFFICIENT",
+              "value": null
+            }
+          ],
+          "resolvedLevel": "INDIVIDUAL_FILE_SETTING",
+          "resolvedSource": "USER_VERIFIED_BM4_L_FILE_SETTINGS_2026-08-10",
+          "resolvedValue": "BIDIRECTIONAL",
+          "status": "RESOLVED"
+        }
+      }
+    },
+    "L13": {
+      "caseClass": "SUS",
+      "caseKind": "PRIMITIVE",
+      "formula": "W+P1",
+      "friction": {
+        "constituents": null,
+        "effectiveCoefficient": 0.3,
+        "effectiveRule": "EFFECTIVE_MU_EQUALS_MODEL_MU_TIMES_LOAD_CASE_FRICTION_MULTIPLIER_V1",
+        "frictionActive": true,
+        "frictionMultiplier": {
+          "level": "LOAD_CASE_SETTING",
+          "reason": null,
+          "source": "USER_VERIFIED_BM4_L_CASE_SETTINGS_2026-08-10_PLUS_ISSUE_1083_LOADCASEREPORT_FRICTION_MULTIPLIERS",
+          "value": 1
+        },
+        "frictionStiffness": {
+          "conversionFactor": 100,
+          "conversionRule": "N_PER_CM_TO_N_PER_M_TIMES_100",
+          "displayedUnit": "N./cm.",
+          "displayedValue": 1000000,
+          "level": "OVERALL_GLOBAL_DEFAULT",
+          "setting": "FRICT_STIF",
+          "siUnit": "N/m",
+          "siValue": 100000000,
+          "source": "USER_SUPPLIED_CAESAR_14_GLOBAL_SETTINGS_2026-08-09_RECONFIRMED_FOR_BM4_L_2026-08-10"
+        },
+        "modelCoefficientOfFriction": {
+          "level": "MODEL_INPUT",
+          "reason": null,
+          "source": "BM4_L_ACCDB_MODEL_INPUT_HIGHEST_AUTHORITY_COEFFICIENT",
+          "value": 0.3
+        }
+      },
+      "lcaseNumber": 13,
+      "meaninglessForThisCase": [],
+      "meaninglessReason": null,
+      "settings": {
+        "BOURDON_PRESSURE": {
+          "candidates": [
+            {
+              "applicable": true,
+              "declared": true,
+              "level": "OVERALL_GLOBAL_DEFAULT",
+              "source": "USER_SUPPLIED_CAESAR_14_GLOBAL_SETTINGS_2026-08-09_RECONFIRMED_FOR_BM4_L_2026-08-10",
+              "value": "NONE"
+            },
+            {
+              "applicable": true,
+              "declared": true,
+              "level": "INDIVIDUAL_FILE_SETTING",
+              "source": "USER_VERIFIED_BM4_L_FILE_SETTINGS_2026-08-10",
+              "value": "TRANSLATION_AND_ROTATION"
+            },
+            {
+              "applicable": true,
+              "declared": false,
+              "level": "LOAD_CASE_SETTING",
+              "source": "USER_VERIFIED_BM4_L_CASE_SETTINGS_2026-08-10_PLUS_ISSUE_1083_LOADCASEREPORT_FRICTION_MULTIPLIERS",
+              "value": null
+            },
+            {
+              "applicable": true,
+              "declared": false,
+              "level": "MODEL_INPUT",
+              "source": "BM4_L_ACCDB_MODEL_INPUT_HIGHEST_AUTHORITY_COEFFICIENT",
+              "value": null
+            }
+          ],
+          "resolvedLevel": "INDIVIDUAL_FILE_SETTING",
+          "resolvedSource": "USER_VERIFIED_BM4_L_FILE_SETTINGS_2026-08-10",
+          "resolvedValue": "TRANSLATION_AND_ROTATION",
+          "status": "RESOLVED"
+        },
+        "COEFFICIENT_OF_FRICTION_MU": {
+          "candidates": [
+            {
+              "applicable": true,
+              "declared": true,
+              "level": "OVERALL_GLOBAL_DEFAULT",
+              "source": "USER_SUPPLIED_CAESAR_14_GLOBAL_SETTINGS_2026-08-09_RECONFIRMED_FOR_BM4_L_2026-08-10",
+              "value": 0
+            },
+            {
+              "applicable": true,
+              "declared": false,
+              "level": "INDIVIDUAL_FILE_SETTING",
+              "source": "USER_VERIFIED_BM4_L_FILE_SETTINGS_2026-08-10",
+              "value": null
+            },
+            {
+              "applicable": true,
+              "declared": false,
+              "level": "LOAD_CASE_SETTING",
+              "source": "USER_VERIFIED_BM4_L_CASE_SETTINGS_2026-08-10_PLUS_ISSUE_1083_LOADCASEREPORT_FRICTION_MULTIPLIERS",
+              "value": null
+            },
+            {
+              "applicable": true,
+              "declared": true,
+              "level": "MODEL_INPUT",
+              "source": "BM4_L_ACCDB_MODEL_INPUT_HIGHEST_AUTHORITY_COEFFICIENT",
+              "value": 0.3
+            }
+          ],
+          "resolvedLevel": "MODEL_INPUT",
+          "resolvedSource": "BM4_L_ACCDB_MODEL_INPUT_HIGHEST_AUTHORITY_COEFFICIENT",
+          "resolvedValue": 0.3,
+          "status": "RESOLVED"
+        },
+        "FLEXIBILITY_ELASTIC_MODULUS": {
+          "candidates": [
+            {
+              "applicable": true,
+              "declared": true,
+              "level": "OVERALL_GLOBAL_DEFAULT",
+              "source": "USER_SUPPLIED_CAESAR_14_GLOBAL_SETTINGS_2026-08-09_RECONFIRMED_FOR_BM4_L_2026-08-10",
+              "value": "EC"
+            },
+            {
+              "applicable": true,
+              "declared": false,
+              "level": "INDIVIDUAL_FILE_SETTING",
+              "source": "USER_VERIFIED_BM4_L_FILE_SETTINGS_2026-08-10",
+              "value": null
+            },
+            {
+              "applicable": true,
+              "declared": false,
+              "level": "LOAD_CASE_SETTING",
+              "source": "USER_VERIFIED_BM4_L_CASE_SETTINGS_2026-08-10_PLUS_ISSUE_1083_LOADCASEREPORT_FRICTION_MULTIPLIERS",
+              "value": null
+            },
+            {
+              "applicable": true,
+              "declared": false,
+              "level": "MODEL_INPUT",
+              "source": "BM4_L_ACCDB_MODEL_INPUT_HIGHEST_AUTHORITY_COEFFICIENT",
+              "value": null
+            }
+          ],
+          "resolvedLevel": "OVERALL_GLOBAL_DEFAULT",
+          "resolvedSource": "USER_SUPPLIED_CAESAR_14_GLOBAL_SETTINGS_2026-08-09_RECONFIRMED_FOR_BM4_L_2026-08-10",
+          "resolvedValue": "EC",
+          "status": "RESOLVED"
+        },
+        "FRICTION_MULTIPLIER": {
+          "candidates": [
+            {
+              "applicable": true,
+              "declared": false,
+              "level": "OVERALL_GLOBAL_DEFAULT",
+              "source": "USER_SUPPLIED_CAESAR_14_GLOBAL_SETTINGS_2026-08-09_RECONFIRMED_FOR_BM4_L_2026-08-10",
+              "value": null
+            },
+            {
+              "applicable": true,
+              "declared": false,
+              "level": "INDIVIDUAL_FILE_SETTING",
+              "source": "USER_VERIFIED_BM4_L_FILE_SETTINGS_2026-08-10",
+              "value": null
+            },
+            {
+              "applicable": true,
+              "declared": true,
+              "level": "LOAD_CASE_SETTING",
+              "source": "USER_VERIFIED_BM4_L_CASE_SETTINGS_2026-08-10_PLUS_ISSUE_1083_LOADCASEREPORT_FRICTION_MULTIPLIERS",
+              "value": 1
+            },
+            {
+              "applicable": true,
+              "declared": false,
+              "level": "MODEL_INPUT",
+              "source": "BM4_L_ACCDB_MODEL_INPUT_HIGHEST_AUTHORITY_COEFFICIENT",
+              "value": null
+            }
+          ],
+          "resolvedLevel": "LOAD_CASE_SETTING",
+          "resolvedSource": "USER_VERIFIED_BM4_L_CASE_SETTINGS_2026-08-10_PLUS_ISSUE_1083_LOADCASEREPORT_FRICTION_MULTIPLIERS",
+          "resolvedValue": 1,
+          "status": "RESOLVED"
+        },
+        "RESTRAINT_DIRECTIONAL_BEHAVIOR": {
+          "candidates": [
+            {
+              "applicable": true,
+              "declared": false,
+              "level": "OVERALL_GLOBAL_DEFAULT",
+              "source": "USER_SUPPLIED_CAESAR_14_GLOBAL_SETTINGS_2026-08-09_RECONFIRMED_FOR_BM4_L_2026-08-10",
+              "value": null
+            },
+            {
+              "applicable": true,
+              "declared": true,
+              "level": "INDIVIDUAL_FILE_SETTING",
+              "source": "USER_VERIFIED_BM4_L_FILE_SETTINGS_2026-08-10",
+              "value": "BIDIRECTIONAL"
+            },
+            {
+              "applicable": true,
+              "declared": false,
+              "level": "LOAD_CASE_SETTING",
+              "source": "USER_VERIFIED_BM4_L_CASE_SETTINGS_2026-08-10_PLUS_ISSUE_1083_LOADCASEREPORT_FRICTION_MULTIPLIERS",
+              "value": null
+            },
+            {
+              "applicable": true,
+              "declared": false,
+              "level": "MODEL_INPUT",
+              "source": "BM4_L_ACCDB_MODEL_INPUT_HIGHEST_AUTHORITY_COEFFICIENT",
+              "value": null
+            }
+          ],
+          "resolvedLevel": "INDIVIDUAL_FILE_SETTING",
+          "resolvedSource": "USER_VERIFIED_BM4_L_FILE_SETTINGS_2026-08-10",
+          "resolvedValue": "BIDIRECTIONAL",
+          "status": "RESOLVED"
+        }
+      }
+    },
+    "L14": {
+      "caseClass": "EXP",
+      "caseKind": "DERIVED_COMBINATION",
+      "formula": "L14=L5-L6",
+      "friction": {
+        "constituents": {
+          "combination": "DIFFERENCE",
+          "minuendCaseId": "L5",
+          "minuendKind": "PRIMITIVE",
+          "subtrahendCaseId": "L6",
+          "subtrahendKind": "PRIMITIVE"
+        },
+        "effectiveCoefficient": 0,
+        "effectiveRule": "DERIVED_EFFECTIVE_MU_INHERITED_FROM_BOTH_PRIMITIVE_CONSTITUENTS_V1",
+        "frictionActive": false,
+        "frictionMultiplier": {
+          "level": "NOT_APPLICABLE",
+          "reason": "MEANINGLESS_FOR_DERIVED_COMBINATION",
+          "source": "DERIVED_COMBINATION_HAS_NO_INDEPENDENT_FRICTION_MULTIPLIER",
+          "value": null
+        },
+        "frictionStiffness": {
+          "conversionFactor": 100,
+          "conversionRule": "N_PER_CM_TO_N_PER_M_TIMES_100",
+          "displayedUnit": "N./cm.",
+          "displayedValue": 1000000,
+          "level": "OVERALL_GLOBAL_DEFAULT",
+          "setting": "FRICT_STIF",
+          "siUnit": "N/m",
+          "siValue": 100000000,
+          "source": "USER_SUPPLIED_CAESAR_14_GLOBAL_SETTINGS_2026-08-09_RECONFIRMED_FOR_BM4_L_2026-08-10"
+        },
+        "modelCoefficientOfFriction": {
+          "level": "MODEL_INPUT",
+          "reason": null,
+          "source": "BM4_L_ACCDB_MODEL_INPUT_HIGHEST_AUTHORITY_COEFFICIENT",
+          "value": 0.3
+        }
+      },
+      "lcaseNumber": 14,
+      "meaninglessForThisCase": [
+        "FRICTION_MULTIPLIER",
+        "FRICT_STIF"
+      ],
+      "meaninglessReason": "A difference combination performs no nonlinear solve, so no friction multiplier or friction stiffness acts on it; its friction state is inherited from both constituents.",
+      "settings": {
+        "BOURDON_PRESSURE": {
+          "candidates": [
+            {
+              "applicable": true,
+              "declared": true,
+              "level": "OVERALL_GLOBAL_DEFAULT",
+              "source": "USER_SUPPLIED_CAESAR_14_GLOBAL_SETTINGS_2026-08-09_RECONFIRMED_FOR_BM4_L_2026-08-10",
+              "value": "NONE"
+            },
+            {
+              "applicable": true,
+              "declared": true,
+              "level": "INDIVIDUAL_FILE_SETTING",
+              "source": "USER_VERIFIED_BM4_L_FILE_SETTINGS_2026-08-10",
+              "value": "TRANSLATION_AND_ROTATION"
+            },
+            {
+              "applicable": true,
+              "declared": false,
+              "level": "LOAD_CASE_SETTING",
+              "source": "USER_VERIFIED_BM4_L_CASE_SETTINGS_2026-08-10_PLUS_ISSUE_1083_LOADCASEREPORT_FRICTION_MULTIPLIERS",
+              "value": null
+            },
+            {
+              "applicable": true,
+              "declared": false,
+              "level": "MODEL_INPUT",
+              "source": "BM4_L_ACCDB_MODEL_INPUT_HIGHEST_AUTHORITY_COEFFICIENT",
+              "value": null
+            }
+          ],
+          "resolvedLevel": "INDIVIDUAL_FILE_SETTING",
+          "resolvedSource": "USER_VERIFIED_BM4_L_FILE_SETTINGS_2026-08-10",
+          "resolvedValue": "TRANSLATION_AND_ROTATION",
+          "status": "RESOLVED"
+        },
+        "COEFFICIENT_OF_FRICTION_MU": {
+          "candidates": [
+            {
+              "applicable": true,
+              "declared": true,
+              "level": "OVERALL_GLOBAL_DEFAULT",
+              "source": "USER_SUPPLIED_CAESAR_14_GLOBAL_SETTINGS_2026-08-09_RECONFIRMED_FOR_BM4_L_2026-08-10",
+              "value": 0
+            },
+            {
+              "applicable": true,
+              "declared": false,
+              "level": "INDIVIDUAL_FILE_SETTING",
+              "source": "USER_VERIFIED_BM4_L_FILE_SETTINGS_2026-08-10",
+              "value": null
+            },
+            {
+              "applicable": true,
+              "declared": false,
+              "level": "LOAD_CASE_SETTING",
+              "source": "USER_VERIFIED_BM4_L_CASE_SETTINGS_2026-08-10_PLUS_ISSUE_1083_LOADCASEREPORT_FRICTION_MULTIPLIERS",
+              "value": null
+            },
+            {
+              "applicable": true,
+              "declared": true,
+              "level": "MODEL_INPUT",
+              "source": "BM4_L_ACCDB_MODEL_INPUT_HIGHEST_AUTHORITY_COEFFICIENT",
+              "value": 0.3
+            }
+          ],
+          "resolvedLevel": "MODEL_INPUT",
+          "resolvedSource": "BM4_L_ACCDB_MODEL_INPUT_HIGHEST_AUTHORITY_COEFFICIENT",
+          "resolvedValue": 0.3,
+          "status": "RESOLVED"
+        },
+        "FLEXIBILITY_ELASTIC_MODULUS": {
+          "candidates": [
+            {
+              "applicable": true,
+              "declared": true,
+              "level": "OVERALL_GLOBAL_DEFAULT",
+              "source": "USER_SUPPLIED_CAESAR_14_GLOBAL_SETTINGS_2026-08-09_RECONFIRMED_FOR_BM4_L_2026-08-10",
+              "value": "EC"
+            },
+            {
+              "applicable": true,
+              "declared": false,
+              "level": "INDIVIDUAL_FILE_SETTING",
+              "source": "USER_VERIFIED_BM4_L_FILE_SETTINGS_2026-08-10",
+              "value": null
+            },
+            {
+              "applicable": true,
+              "declared": false,
+              "level": "LOAD_CASE_SETTING",
+              "source": "USER_VERIFIED_BM4_L_CASE_SETTINGS_2026-08-10_PLUS_ISSUE_1083_LOADCASEREPORT_FRICTION_MULTIPLIERS",
+              "value": null
+            },
+            {
+              "applicable": true,
+              "declared": false,
+              "level": "MODEL_INPUT",
+              "source": "BM4_L_ACCDB_MODEL_INPUT_HIGHEST_AUTHORITY_COEFFICIENT",
+              "value": null
+            }
+          ],
+          "resolvedLevel": "OVERALL_GLOBAL_DEFAULT",
+          "resolvedSource": "USER_SUPPLIED_CAESAR_14_GLOBAL_SETTINGS_2026-08-09_RECONFIRMED_FOR_BM4_L_2026-08-10",
+          "resolvedValue": "EC",
+          "status": "RESOLVED"
+        },
+        "FRICTION_MULTIPLIER": {
+          "candidates": [
+            {
+              "applicable": true,
+              "declared": false,
+              "level": "OVERALL_GLOBAL_DEFAULT",
+              "source": "USER_SUPPLIED_CAESAR_14_GLOBAL_SETTINGS_2026-08-09_RECONFIRMED_FOR_BM4_L_2026-08-10",
+              "value": null
+            },
+            {
+              "applicable": true,
+              "declared": false,
+              "level": "INDIVIDUAL_FILE_SETTING",
+              "source": "USER_VERIFIED_BM4_L_FILE_SETTINGS_2026-08-10",
+              "value": null
+            },
+            {
+              "applicable": true,
+              "declared": false,
+              "level": "LOAD_CASE_SETTING",
+              "source": "USER_VERIFIED_BM4_L_CASE_SETTINGS_2026-08-10_PLUS_ISSUE_1083_LOADCASEREPORT_FRICTION_MULTIPLIERS",
+              "value": null
+            },
+            {
+              "applicable": true,
+              "declared": false,
+              "level": "MODEL_INPUT",
+              "source": "BM4_L_ACCDB_MODEL_INPUT_HIGHEST_AUTHORITY_COEFFICIENT",
+              "value": null
+            }
+          ],
+          "resolvedLevel": null,
+          "resolvedSource": null,
+          "resolvedValue": null,
+          "status": "UNDECLARED"
+        },
+        "RESTRAINT_DIRECTIONAL_BEHAVIOR": {
+          "candidates": [
+            {
+              "applicable": true,
+              "declared": false,
+              "level": "OVERALL_GLOBAL_DEFAULT",
+              "source": "USER_SUPPLIED_CAESAR_14_GLOBAL_SETTINGS_2026-08-09_RECONFIRMED_FOR_BM4_L_2026-08-10",
+              "value": null
+            },
+            {
+              "applicable": true,
+              "declared": true,
+              "level": "INDIVIDUAL_FILE_SETTING",
+              "source": "USER_VERIFIED_BM4_L_FILE_SETTINGS_2026-08-10",
+              "value": "BIDIRECTIONAL"
+            },
+            {
+              "applicable": true,
+              "declared": false,
+              "level": "LOAD_CASE_SETTING",
+              "source": "USER_VERIFIED_BM4_L_CASE_SETTINGS_2026-08-10_PLUS_ISSUE_1083_LOADCASEREPORT_FRICTION_MULTIPLIERS",
+              "value": null
+            },
+            {
+              "applicable": true,
+              "declared": false,
+              "level": "MODEL_INPUT",
+              "source": "BM4_L_ACCDB_MODEL_INPUT_HIGHEST_AUTHORITY_COEFFICIENT",
+              "value": null
+            }
+          ],
+          "resolvedLevel": "INDIVIDUAL_FILE_SETTING",
+          "resolvedSource": "USER_VERIFIED_BM4_L_FILE_SETTINGS_2026-08-10",
+          "resolvedValue": "BIDIRECTIONAL",
+          "status": "RESOLVED"
+        }
+      }
+    },
+    "L15": {
+      "caseClass": "EXP",
+      "caseKind": "DERIVED_COMBINATION",
+      "formula": "L15=L7-L13",
+      "friction": {
+        "constituents": {
+          "combination": "DIFFERENCE",
+          "minuendCaseId": "L7",
+          "minuendKind": "PRIMITIVE",
+          "subtrahendCaseId": "L13",
+          "subtrahendKind": "PRIMITIVE"
+        },
+        "effectiveCoefficient": 0.3,
+        "effectiveRule": "DERIVED_EFFECTIVE_MU_INHERITED_FROM_BOTH_PRIMITIVE_CONSTITUENTS_V1",
+        "frictionActive": true,
+        "frictionMultiplier": {
+          "level": "NOT_APPLICABLE",
+          "reason": "MEANINGLESS_FOR_DERIVED_COMBINATION",
+          "source": "DERIVED_COMBINATION_HAS_NO_INDEPENDENT_FRICTION_MULTIPLIER",
+          "value": null
+        },
+        "frictionStiffness": {
+          "conversionFactor": 100,
+          "conversionRule": "N_PER_CM_TO_N_PER_M_TIMES_100",
+          "displayedUnit": "N./cm.",
+          "displayedValue": 1000000,
+          "level": "OVERALL_GLOBAL_DEFAULT",
+          "setting": "FRICT_STIF",
+          "siUnit": "N/m",
+          "siValue": 100000000,
+          "source": "USER_SUPPLIED_CAESAR_14_GLOBAL_SETTINGS_2026-08-09_RECONFIRMED_FOR_BM4_L_2026-08-10"
+        },
+        "modelCoefficientOfFriction": {
+          "level": "MODEL_INPUT",
+          "reason": null,
+          "source": "BM4_L_ACCDB_MODEL_INPUT_HIGHEST_AUTHORITY_COEFFICIENT",
+          "value": 0.3
+        }
+      },
+      "lcaseNumber": 15,
+      "meaninglessForThisCase": [
+        "FRICTION_MULTIPLIER",
+        "FRICT_STIF"
+      ],
+      "meaninglessReason": "A difference combination performs no nonlinear solve, so no friction multiplier or friction stiffness acts on it; its friction state is inherited from both constituents.",
+      "settings": {
+        "BOURDON_PRESSURE": {
+          "candidates": [
+            {
+              "applicable": true,
+              "declared": true,
+              "level": "OVERALL_GLOBAL_DEFAULT",
+              "source": "USER_SUPPLIED_CAESAR_14_GLOBAL_SETTINGS_2026-08-09_RECONFIRMED_FOR_BM4_L_2026-08-10",
+              "value": "NONE"
+            },
+            {
+              "applicable": true,
+              "declared": true,
+              "level": "INDIVIDUAL_FILE_SETTING",
+              "source": "USER_VERIFIED_BM4_L_FILE_SETTINGS_2026-08-10",
+              "value": "TRANSLATION_AND_ROTATION"
+            },
+            {
+              "applicable": true,
+              "declared": false,
+              "level": "LOAD_CASE_SETTING",
+              "source": "USER_VERIFIED_BM4_L_CASE_SETTINGS_2026-08-10_PLUS_ISSUE_1083_LOADCASEREPORT_FRICTION_MULTIPLIERS",
+              "value": null
+            },
+            {
+              "applicable": true,
+              "declared": false,
+              "level": "MODEL_INPUT",
+              "source": "BM4_L_ACCDB_MODEL_INPUT_HIGHEST_AUTHORITY_COEFFICIENT",
+              "value": null
+            }
+          ],
+          "resolvedLevel": "INDIVIDUAL_FILE_SETTING",
+          "resolvedSource": "USER_VERIFIED_BM4_L_FILE_SETTINGS_2026-08-10",
+          "resolvedValue": "TRANSLATION_AND_ROTATION",
+          "status": "RESOLVED"
+        },
+        "COEFFICIENT_OF_FRICTION_MU": {
+          "candidates": [
+            {
+              "applicable": true,
+              "declared": true,
+              "level": "OVERALL_GLOBAL_DEFAULT",
+              "source": "USER_SUPPLIED_CAESAR_14_GLOBAL_SETTINGS_2026-08-09_RECONFIRMED_FOR_BM4_L_2026-08-10",
+              "value": 0
+            },
+            {
+              "applicable": true,
+              "declared": false,
+              "level": "INDIVIDUAL_FILE_SETTING",
+              "source": "USER_VERIFIED_BM4_L_FILE_SETTINGS_2026-08-10",
+              "value": null
+            },
+            {
+              "applicable": true,
+              "declared": false,
+              "level": "LOAD_CASE_SETTING",
+              "source": "USER_VERIFIED_BM4_L_CASE_SETTINGS_2026-08-10_PLUS_ISSUE_1083_LOADCASEREPORT_FRICTION_MULTIPLIERS",
+              "value": null
+            },
+            {
+              "applicable": true,
+              "declared": true,
+              "level": "MODEL_INPUT",
+              "source": "BM4_L_ACCDB_MODEL_INPUT_HIGHEST_AUTHORITY_COEFFICIENT",
+              "value": 0.3
+            }
+          ],
+          "resolvedLevel": "MODEL_INPUT",
+          "resolvedSource": "BM4_L_ACCDB_MODEL_INPUT_HIGHEST_AUTHORITY_COEFFICIENT",
+          "resolvedValue": 0.3,
+          "status": "RESOLVED"
+        },
+        "FLEXIBILITY_ELASTIC_MODULUS": {
+          "candidates": [
+            {
+              "applicable": true,
+              "declared": true,
+              "level": "OVERALL_GLOBAL_DEFAULT",
+              "source": "USER_SUPPLIED_CAESAR_14_GLOBAL_SETTINGS_2026-08-09_RECONFIRMED_FOR_BM4_L_2026-08-10",
+              "value": "EC"
+            },
+            {
+              "applicable": true,
+              "declared": false,
+              "level": "INDIVIDUAL_FILE_SETTING",
+              "source": "USER_VERIFIED_BM4_L_FILE_SETTINGS_2026-08-10",
+              "value": null
+            },
+            {
+              "applicable": true,
+              "declared": false,
+              "level": "LOAD_CASE_SETTING",
+              "source": "USER_VERIFIED_BM4_L_CASE_SETTINGS_2026-08-10_PLUS_ISSUE_1083_LOADCASEREPORT_FRICTION_MULTIPLIERS",
+              "value": null
+            },
+            {
+              "applicable": true,
+              "declared": false,
+              "level": "MODEL_INPUT",
+              "source": "BM4_L_ACCDB_MODEL_INPUT_HIGHEST_AUTHORITY_COEFFICIENT",
+              "value": null
+            }
+          ],
+          "resolvedLevel": "OVERALL_GLOBAL_DEFAULT",
+          "resolvedSource": "USER_SUPPLIED_CAESAR_14_GLOBAL_SETTINGS_2026-08-09_RECONFIRMED_FOR_BM4_L_2026-08-10",
+          "resolvedValue": "EC",
+          "status": "RESOLVED"
+        },
+        "FRICTION_MULTIPLIER": {
+          "candidates": [
+            {
+              "applicable": true,
+              "declared": false,
+              "level": "OVERALL_GLOBAL_DEFAULT",
+              "source": "USER_SUPPLIED_CAESAR_14_GLOBAL_SETTINGS_2026-08-09_RECONFIRMED_FOR_BM4_L_2026-08-10",
+              "value": null
+            },
+            {
+              "applicable": true,
+              "declared": false,
+              "level": "INDIVIDUAL_FILE_SETTING",
+              "source": "USER_VERIFIED_BM4_L_FILE_SETTINGS_2026-08-10",
+              "value": null
+            },
+            {
+              "applicable": true,
+              "declared": false,
+              "level": "LOAD_CASE_SETTING",
+              "source": "USER_VERIFIED_BM4_L_CASE_SETTINGS_2026-08-10_PLUS_ISSUE_1083_LOADCASEREPORT_FRICTION_MULTIPLIERS",
+              "value": null
+            },
+            {
+              "applicable": true,
+              "declared": false,
+              "level": "MODEL_INPUT",
+              "source": "BM4_L_ACCDB_MODEL_INPUT_HIGHEST_AUTHORITY_COEFFICIENT",
+              "value": null
+            }
+          ],
+          "resolvedLevel": null,
+          "resolvedSource": null,
+          "resolvedValue": null,
+          "status": "UNDECLARED"
+        },
+        "RESTRAINT_DIRECTIONAL_BEHAVIOR": {
+          "candidates": [
+            {
+              "applicable": true,
+              "declared": false,
+              "level": "OVERALL_GLOBAL_DEFAULT",
+              "source": "USER_SUPPLIED_CAESAR_14_GLOBAL_SETTINGS_2026-08-09_RECONFIRMED_FOR_BM4_L_2026-08-10",
+              "value": null
+            },
+            {
+              "applicable": true,
+              "declared": true,
+              "level": "INDIVIDUAL_FILE_SETTING",
+              "source": "USER_VERIFIED_BM4_L_FILE_SETTINGS_2026-08-10",
+              "value": "BIDIRECTIONAL"
+            },
+            {
+              "applicable": true,
+              "declared": false,
+              "level": "LOAD_CASE_SETTING",
+              "source": "USER_VERIFIED_BM4_L_CASE_SETTINGS_2026-08-10_PLUS_ISSUE_1083_LOADCASEREPORT_FRICTION_MULTIPLIERS",
+              "value": null
+            },
+            {
+              "applicable": true,
+              "declared": false,
+              "level": "MODEL_INPUT",
+              "source": "BM4_L_ACCDB_MODEL_INPUT_HIGHEST_AUTHORITY_COEFFICIENT",
+              "value": null
+            }
+          ],
+          "resolvedLevel": "INDIVIDUAL_FILE_SETTING",
+          "resolvedSource": "USER_VERIFIED_BM4_L_FILE_SETTINGS_2026-08-10",
+          "resolvedValue": "BIDIRECTIONAL",
+          "status": "RESOLVED"
+        }
+      }
+    },
+    "L2": {
+      "caseClass": "OPE",
+      "caseKind": "PRIMITIVE",
+      "formula": "W",
+      "friction": {
+        "constituents": null,
+        "effectiveCoefficient": 0,
+        "effectiveRule": "EFFECTIVE_MU_EQUALS_MODEL_MU_TIMES_LOAD_CASE_FRICTION_MULTIPLIER_V1",
+        "frictionActive": false,
+        "frictionMultiplier": {
+          "level": "LOAD_CASE_SETTING",
+          "reason": null,
+          "source": "USER_VERIFIED_BM4_L_CASE_SETTINGS_2026-08-10_PLUS_ISSUE_1083_LOADCASEREPORT_FRICTION_MULTIPLIERS",
+          "value": 0
+        },
+        "frictionStiffness": {
+          "conversionFactor": 100,
+          "conversionRule": "N_PER_CM_TO_N_PER_M_TIMES_100",
+          "displayedUnit": "N./cm.",
+          "displayedValue": 1000000,
+          "level": "OVERALL_GLOBAL_DEFAULT",
+          "setting": "FRICT_STIF",
+          "siUnit": "N/m",
+          "siValue": 100000000,
+          "source": "USER_SUPPLIED_CAESAR_14_GLOBAL_SETTINGS_2026-08-09_RECONFIRMED_FOR_BM4_L_2026-08-10"
+        },
+        "modelCoefficientOfFriction": {
+          "level": "MODEL_INPUT",
+          "reason": null,
+          "source": "BM4_L_ACCDB_MODEL_INPUT_HIGHEST_AUTHORITY_COEFFICIENT",
+          "value": 0.3
+        }
+      },
+      "lcaseNumber": 2,
+      "meaninglessForThisCase": [],
+      "meaninglessReason": null,
+      "settings": {
+        "BOURDON_PRESSURE": {
+          "candidates": [
+            {
+              "applicable": true,
+              "declared": true,
+              "level": "OVERALL_GLOBAL_DEFAULT",
+              "source": "USER_SUPPLIED_CAESAR_14_GLOBAL_SETTINGS_2026-08-09_RECONFIRMED_FOR_BM4_L_2026-08-10",
+              "value": "NONE"
+            },
+            {
+              "applicable": true,
+              "declared": true,
+              "level": "INDIVIDUAL_FILE_SETTING",
+              "source": "USER_VERIFIED_BM4_L_FILE_SETTINGS_2026-08-10",
+              "value": "TRANSLATION_AND_ROTATION"
+            },
+            {
+              "applicable": true,
+              "declared": false,
+              "level": "LOAD_CASE_SETTING",
+              "source": "USER_VERIFIED_BM4_L_CASE_SETTINGS_2026-08-10_PLUS_ISSUE_1083_LOADCASEREPORT_FRICTION_MULTIPLIERS",
+              "value": null
+            },
+            {
+              "applicable": true,
+              "declared": false,
+              "level": "MODEL_INPUT",
+              "source": "BM4_L_ACCDB_MODEL_INPUT_HIGHEST_AUTHORITY_COEFFICIENT",
+              "value": null
+            }
+          ],
+          "resolvedLevel": "INDIVIDUAL_FILE_SETTING",
+          "resolvedSource": "USER_VERIFIED_BM4_L_FILE_SETTINGS_2026-08-10",
+          "resolvedValue": "TRANSLATION_AND_ROTATION",
+          "status": "RESOLVED"
+        },
+        "COEFFICIENT_OF_FRICTION_MU": {
+          "candidates": [
+            {
+              "applicable": true,
+              "declared": true,
+              "level": "OVERALL_GLOBAL_DEFAULT",
+              "source": "USER_SUPPLIED_CAESAR_14_GLOBAL_SETTINGS_2026-08-09_RECONFIRMED_FOR_BM4_L_2026-08-10",
+              "value": 0
+            },
+            {
+              "applicable": true,
+              "declared": false,
+              "level": "INDIVIDUAL_FILE_SETTING",
+              "source": "USER_VERIFIED_BM4_L_FILE_SETTINGS_2026-08-10",
+              "value": null
+            },
+            {
+              "applicable": true,
+              "declared": false,
+              "level": "LOAD_CASE_SETTING",
+              "source": "USER_VERIFIED_BM4_L_CASE_SETTINGS_2026-08-10_PLUS_ISSUE_1083_LOADCASEREPORT_FRICTION_MULTIPLIERS",
+              "value": null
+            },
+            {
+              "applicable": true,
+              "declared": true,
+              "level": "MODEL_INPUT",
+              "source": "BM4_L_ACCDB_MODEL_INPUT_HIGHEST_AUTHORITY_COEFFICIENT",
+              "value": 0.3
+            }
+          ],
+          "resolvedLevel": "MODEL_INPUT",
+          "resolvedSource": "BM4_L_ACCDB_MODEL_INPUT_HIGHEST_AUTHORITY_COEFFICIENT",
+          "resolvedValue": 0.3,
+          "status": "RESOLVED"
+        },
+        "FLEXIBILITY_ELASTIC_MODULUS": {
+          "candidates": [
+            {
+              "applicable": true,
+              "declared": true,
+              "level": "OVERALL_GLOBAL_DEFAULT",
+              "source": "USER_SUPPLIED_CAESAR_14_GLOBAL_SETTINGS_2026-08-09_RECONFIRMED_FOR_BM4_L_2026-08-10",
+              "value": "EC"
+            },
+            {
+              "applicable": true,
+              "declared": false,
+              "level": "INDIVIDUAL_FILE_SETTING",
+              "source": "USER_VERIFIED_BM4_L_FILE_SETTINGS_2026-08-10",
+              "value": null
+            },
+            {
+              "applicable": true,
+              "declared": false,
+              "level": "LOAD_CASE_SETTING",
+              "source": "USER_VERIFIED_BM4_L_CASE_SETTINGS_2026-08-10_PLUS_ISSUE_1083_LOADCASEREPORT_FRICTION_MULTIPLIERS",
+              "value": null
+            },
+            {
+              "applicable": true,
+              "declared": false,
+              "level": "MODEL_INPUT",
+              "source": "BM4_L_ACCDB_MODEL_INPUT_HIGHEST_AUTHORITY_COEFFICIENT",
+              "value": null
+            }
+          ],
+          "resolvedLevel": "OVERALL_GLOBAL_DEFAULT",
+          "resolvedSource": "USER_SUPPLIED_CAESAR_14_GLOBAL_SETTINGS_2026-08-09_RECONFIRMED_FOR_BM4_L_2026-08-10",
+          "resolvedValue": "EC",
+          "status": "RESOLVED"
+        },
+        "FRICTION_MULTIPLIER": {
+          "candidates": [
+            {
+              "applicable": true,
+              "declared": false,
+              "level": "OVERALL_GLOBAL_DEFAULT",
+              "source": "USER_SUPPLIED_CAESAR_14_GLOBAL_SETTINGS_2026-08-09_RECONFIRMED_FOR_BM4_L_2026-08-10",
+              "value": null
+            },
+            {
+              "applicable": true,
+              "declared": false,
+              "level": "INDIVIDUAL_FILE_SETTING",
+              "source": "USER_VERIFIED_BM4_L_FILE_SETTINGS_2026-08-10",
+              "value": null
+            },
+            {
+              "applicable": true,
+              "declared": true,
+              "level": "LOAD_CASE_SETTING",
+              "source": "USER_VERIFIED_BM4_L_CASE_SETTINGS_2026-08-10_PLUS_ISSUE_1083_LOADCASEREPORT_FRICTION_MULTIPLIERS",
+              "value": 0
+            },
+            {
+              "applicable": true,
+              "declared": false,
+              "level": "MODEL_INPUT",
+              "source": "BM4_L_ACCDB_MODEL_INPUT_HIGHEST_AUTHORITY_COEFFICIENT",
+              "value": null
+            }
+          ],
+          "resolvedLevel": "LOAD_CASE_SETTING",
+          "resolvedSource": "USER_VERIFIED_BM4_L_CASE_SETTINGS_2026-08-10_PLUS_ISSUE_1083_LOADCASEREPORT_FRICTION_MULTIPLIERS",
+          "resolvedValue": 0,
+          "status": "RESOLVED"
+        },
+        "RESTRAINT_DIRECTIONAL_BEHAVIOR": {
+          "candidates": [
+            {
+              "applicable": true,
+              "declared": false,
+              "level": "OVERALL_GLOBAL_DEFAULT",
+              "source": "USER_SUPPLIED_CAESAR_14_GLOBAL_SETTINGS_2026-08-09_RECONFIRMED_FOR_BM4_L_2026-08-10",
+              "value": null
+            },
+            {
+              "applicable": true,
+              "declared": true,
+              "level": "INDIVIDUAL_FILE_SETTING",
+              "source": "USER_VERIFIED_BM4_L_FILE_SETTINGS_2026-08-10",
+              "value": "BIDIRECTIONAL"
+            },
+            {
+              "applicable": true,
+              "declared": false,
+              "level": "LOAD_CASE_SETTING",
+              "source": "USER_VERIFIED_BM4_L_CASE_SETTINGS_2026-08-10_PLUS_ISSUE_1083_LOADCASEREPORT_FRICTION_MULTIPLIERS",
+              "value": null
+            },
+            {
+              "applicable": true,
+              "declared": false,
+              "level": "MODEL_INPUT",
+              "source": "BM4_L_ACCDB_MODEL_INPUT_HIGHEST_AUTHORITY_COEFFICIENT",
+              "value": null
+            }
+          ],
+          "resolvedLevel": "INDIVIDUAL_FILE_SETTING",
+          "resolvedSource": "USER_VERIFIED_BM4_L_FILE_SETTINGS_2026-08-10",
+          "resolvedValue": "BIDIRECTIONAL",
+          "status": "RESOLVED"
+        }
+      }
+    },
+    "L3": {
+      "caseClass": "OPE",
+      "caseKind": "PRIMITIVE",
+      "formula": "T1",
+      "friction": {
+        "constituents": null,
+        "effectiveCoefficient": 0,
+        "effectiveRule": "EFFECTIVE_MU_EQUALS_MODEL_MU_TIMES_LOAD_CASE_FRICTION_MULTIPLIER_V1",
+        "frictionActive": false,
+        "frictionMultiplier": {
+          "level": "LOAD_CASE_SETTING",
+          "reason": null,
+          "source": "USER_VERIFIED_BM4_L_CASE_SETTINGS_2026-08-10_PLUS_ISSUE_1083_LOADCASEREPORT_FRICTION_MULTIPLIERS",
+          "value": 0
+        },
+        "frictionStiffness": {
+          "conversionFactor": 100,
+          "conversionRule": "N_PER_CM_TO_N_PER_M_TIMES_100",
+          "displayedUnit": "N./cm.",
+          "displayedValue": 1000000,
+          "level": "OVERALL_GLOBAL_DEFAULT",
+          "setting": "FRICT_STIF",
+          "siUnit": "N/m",
+          "siValue": 100000000,
+          "source": "USER_SUPPLIED_CAESAR_14_GLOBAL_SETTINGS_2026-08-09_RECONFIRMED_FOR_BM4_L_2026-08-10"
+        },
+        "modelCoefficientOfFriction": {
+          "level": "MODEL_INPUT",
+          "reason": null,
+          "source": "BM4_L_ACCDB_MODEL_INPUT_HIGHEST_AUTHORITY_COEFFICIENT",
+          "value": 0.3
+        }
+      },
+      "lcaseNumber": 3,
+      "meaninglessForThisCase": [],
+      "meaninglessReason": null,
+      "settings": {
+        "BOURDON_PRESSURE": {
+          "candidates": [
+            {
+              "applicable": true,
+              "declared": true,
+              "level": "OVERALL_GLOBAL_DEFAULT",
+              "source": "USER_SUPPLIED_CAESAR_14_GLOBAL_SETTINGS_2026-08-09_RECONFIRMED_FOR_BM4_L_2026-08-10",
+              "value": "NONE"
+            },
+            {
+              "applicable": true,
+              "declared": true,
+              "level": "INDIVIDUAL_FILE_SETTING",
+              "source": "USER_VERIFIED_BM4_L_FILE_SETTINGS_2026-08-10",
+              "value": "TRANSLATION_AND_ROTATION"
+            },
+            {
+              "applicable": true,
+              "declared": false,
+              "level": "LOAD_CASE_SETTING",
+              "source": "USER_VERIFIED_BM4_L_CASE_SETTINGS_2026-08-10_PLUS_ISSUE_1083_LOADCASEREPORT_FRICTION_MULTIPLIERS",
+              "value": null
+            },
+            {
+              "applicable": true,
+              "declared": false,
+              "level": "MODEL_INPUT",
+              "source": "BM4_L_ACCDB_MODEL_INPUT_HIGHEST_AUTHORITY_COEFFICIENT",
+              "value": null
+            }
+          ],
+          "resolvedLevel": "INDIVIDUAL_FILE_SETTING",
+          "resolvedSource": "USER_VERIFIED_BM4_L_FILE_SETTINGS_2026-08-10",
+          "resolvedValue": "TRANSLATION_AND_ROTATION",
+          "status": "RESOLVED"
+        },
+        "COEFFICIENT_OF_FRICTION_MU": {
+          "candidates": [
+            {
+              "applicable": true,
+              "declared": true,
+              "level": "OVERALL_GLOBAL_DEFAULT",
+              "source": "USER_SUPPLIED_CAESAR_14_GLOBAL_SETTINGS_2026-08-09_RECONFIRMED_FOR_BM4_L_2026-08-10",
+              "value": 0
+            },
+            {
+              "applicable": true,
+              "declared": false,
+              "level": "INDIVIDUAL_FILE_SETTING",
+              "source": "USER_VERIFIED_BM4_L_FILE_SETTINGS_2026-08-10",
+              "value": null
+            },
+            {
+              "applicable": true,
+              "declared": false,
+              "level": "LOAD_CASE_SETTING",
+              "source": "USER_VERIFIED_BM4_L_CASE_SETTINGS_2026-08-10_PLUS_ISSUE_1083_LOADCASEREPORT_FRICTION_MULTIPLIERS",
+              "value": null
+            },
+            {
+              "applicable": true,
+              "declared": true,
+              "level": "MODEL_INPUT",
+              "source": "BM4_L_ACCDB_MODEL_INPUT_HIGHEST_AUTHORITY_COEFFICIENT",
+              "value": 0.3
+            }
+          ],
+          "resolvedLevel": "MODEL_INPUT",
+          "resolvedSource": "BM4_L_ACCDB_MODEL_INPUT_HIGHEST_AUTHORITY_COEFFICIENT",
+          "resolvedValue": 0.3,
+          "status": "RESOLVED"
+        },
+        "FLEXIBILITY_ELASTIC_MODULUS": {
+          "candidates": [
+            {
+              "applicable": true,
+              "declared": true,
+              "level": "OVERALL_GLOBAL_DEFAULT",
+              "source": "USER_SUPPLIED_CAESAR_14_GLOBAL_SETTINGS_2026-08-09_RECONFIRMED_FOR_BM4_L_2026-08-10",
+              "value": "EC"
+            },
+            {
+              "applicable": true,
+              "declared": false,
+              "level": "INDIVIDUAL_FILE_SETTING",
+              "source": "USER_VERIFIED_BM4_L_FILE_SETTINGS_2026-08-10",
+              "value": null
+            },
+            {
+              "applicable": true,
+              "declared": true,
+              "level": "LOAD_CASE_SETTING",
+              "source": "USER_VERIFIED_BM4_L_CASE_SETTINGS_2026-08-10_PLUS_ISSUE_1083_LOADCASEREPORT_FRICTION_MULTIPLIERS",
+              "value": "EC"
+            },
+            {
+              "applicable": true,
+              "declared": false,
+              "level": "MODEL_INPUT",
+              "source": "BM4_L_ACCDB_MODEL_INPUT_HIGHEST_AUTHORITY_COEFFICIENT",
+              "value": null
+            }
+          ],
+          "resolvedLevel": "LOAD_CASE_SETTING",
+          "resolvedSource": "USER_VERIFIED_BM4_L_CASE_SETTINGS_2026-08-10_PLUS_ISSUE_1083_LOADCASEREPORT_FRICTION_MULTIPLIERS",
+          "resolvedValue": "EC",
+          "status": "RESOLVED"
+        },
+        "FRICTION_MULTIPLIER": {
+          "candidates": [
+            {
+              "applicable": true,
+              "declared": false,
+              "level": "OVERALL_GLOBAL_DEFAULT",
+              "source": "USER_SUPPLIED_CAESAR_14_GLOBAL_SETTINGS_2026-08-09_RECONFIRMED_FOR_BM4_L_2026-08-10",
+              "value": null
+            },
+            {
+              "applicable": true,
+              "declared": false,
+              "level": "INDIVIDUAL_FILE_SETTING",
+              "source": "USER_VERIFIED_BM4_L_FILE_SETTINGS_2026-08-10",
+              "value": null
+            },
+            {
+              "applicable": true,
+              "declared": true,
+              "level": "LOAD_CASE_SETTING",
+              "source": "USER_VERIFIED_BM4_L_CASE_SETTINGS_2026-08-10_PLUS_ISSUE_1083_LOADCASEREPORT_FRICTION_MULTIPLIERS",
+              "value": 0
+            },
+            {
+              "applicable": true,
+              "declared": false,
+              "level": "MODEL_INPUT",
+              "source": "BM4_L_ACCDB_MODEL_INPUT_HIGHEST_AUTHORITY_COEFFICIENT",
+              "value": null
+            }
+          ],
+          "resolvedLevel": "LOAD_CASE_SETTING",
+          "resolvedSource": "USER_VERIFIED_BM4_L_CASE_SETTINGS_2026-08-10_PLUS_ISSUE_1083_LOADCASEREPORT_FRICTION_MULTIPLIERS",
+          "resolvedValue": 0,
+          "status": "RESOLVED"
+        },
+        "RESTRAINT_DIRECTIONAL_BEHAVIOR": {
+          "candidates": [
+            {
+              "applicable": true,
+              "declared": false,
+              "level": "OVERALL_GLOBAL_DEFAULT",
+              "source": "USER_SUPPLIED_CAESAR_14_GLOBAL_SETTINGS_2026-08-09_RECONFIRMED_FOR_BM4_L_2026-08-10",
+              "value": null
+            },
+            {
+              "applicable": true,
+              "declared": true,
+              "level": "INDIVIDUAL_FILE_SETTING",
+              "source": "USER_VERIFIED_BM4_L_FILE_SETTINGS_2026-08-10",
+              "value": "BIDIRECTIONAL"
+            },
+            {
+              "applicable": true,
+              "declared": false,
+              "level": "LOAD_CASE_SETTING",
+              "source": "USER_VERIFIED_BM4_L_CASE_SETTINGS_2026-08-10_PLUS_ISSUE_1083_LOADCASEREPORT_FRICTION_MULTIPLIERS",
+              "value": null
+            },
+            {
+              "applicable": true,
+              "declared": false,
+              "level": "MODEL_INPUT",
+              "source": "BM4_L_ACCDB_MODEL_INPUT_HIGHEST_AUTHORITY_COEFFICIENT",
+              "value": null
+            }
+          ],
+          "resolvedLevel": "INDIVIDUAL_FILE_SETTING",
+          "resolvedSource": "USER_VERIFIED_BM4_L_FILE_SETTINGS_2026-08-10",
+          "resolvedValue": "BIDIRECTIONAL",
+          "status": "RESOLVED"
+        }
+      }
+    },
+    "L4": {
+      "caseClass": "OPE",
+      "caseKind": "PRIMITIVE",
+      "formula": "P1",
+      "friction": {
+        "constituents": null,
+        "effectiveCoefficient": 0,
+        "effectiveRule": "EFFECTIVE_MU_EQUALS_MODEL_MU_TIMES_LOAD_CASE_FRICTION_MULTIPLIER_V1",
+        "frictionActive": false,
+        "frictionMultiplier": {
+          "level": "LOAD_CASE_SETTING",
+          "reason": null,
+          "source": "USER_VERIFIED_BM4_L_CASE_SETTINGS_2026-08-10_PLUS_ISSUE_1083_LOADCASEREPORT_FRICTION_MULTIPLIERS",
+          "value": 0
+        },
+        "frictionStiffness": {
+          "conversionFactor": 100,
+          "conversionRule": "N_PER_CM_TO_N_PER_M_TIMES_100",
+          "displayedUnit": "N./cm.",
+          "displayedValue": 1000000,
+          "level": "OVERALL_GLOBAL_DEFAULT",
+          "setting": "FRICT_STIF",
+          "siUnit": "N/m",
+          "siValue": 100000000,
+          "source": "USER_SUPPLIED_CAESAR_14_GLOBAL_SETTINGS_2026-08-09_RECONFIRMED_FOR_BM4_L_2026-08-10"
+        },
+        "modelCoefficientOfFriction": {
+          "level": "MODEL_INPUT",
+          "reason": null,
+          "source": "BM4_L_ACCDB_MODEL_INPUT_HIGHEST_AUTHORITY_COEFFICIENT",
+          "value": 0.3
+        }
+      },
+      "lcaseNumber": 4,
+      "meaninglessForThisCase": [],
+      "meaninglessReason": null,
+      "settings": {
+        "BOURDON_PRESSURE": {
+          "candidates": [
+            {
+              "applicable": true,
+              "declared": true,
+              "level": "OVERALL_GLOBAL_DEFAULT",
+              "source": "USER_SUPPLIED_CAESAR_14_GLOBAL_SETTINGS_2026-08-09_RECONFIRMED_FOR_BM4_L_2026-08-10",
+              "value": "NONE"
+            },
+            {
+              "applicable": true,
+              "declared": true,
+              "level": "INDIVIDUAL_FILE_SETTING",
+              "source": "USER_VERIFIED_BM4_L_FILE_SETTINGS_2026-08-10",
+              "value": "TRANSLATION_AND_ROTATION"
+            },
+            {
+              "applicable": true,
+              "declared": false,
+              "level": "LOAD_CASE_SETTING",
+              "source": "USER_VERIFIED_BM4_L_CASE_SETTINGS_2026-08-10_PLUS_ISSUE_1083_LOADCASEREPORT_FRICTION_MULTIPLIERS",
+              "value": null
+            },
+            {
+              "applicable": true,
+              "declared": false,
+              "level": "MODEL_INPUT",
+              "source": "BM4_L_ACCDB_MODEL_INPUT_HIGHEST_AUTHORITY_COEFFICIENT",
+              "value": null
+            }
+          ],
+          "resolvedLevel": "INDIVIDUAL_FILE_SETTING",
+          "resolvedSource": "USER_VERIFIED_BM4_L_FILE_SETTINGS_2026-08-10",
+          "resolvedValue": "TRANSLATION_AND_ROTATION",
+          "status": "RESOLVED"
+        },
+        "COEFFICIENT_OF_FRICTION_MU": {
+          "candidates": [
+            {
+              "applicable": true,
+              "declared": true,
+              "level": "OVERALL_GLOBAL_DEFAULT",
+              "source": "USER_SUPPLIED_CAESAR_14_GLOBAL_SETTINGS_2026-08-09_RECONFIRMED_FOR_BM4_L_2026-08-10",
+              "value": 0
+            },
+            {
+              "applicable": true,
+              "declared": false,
+              "level": "INDIVIDUAL_FILE_SETTING",
+              "source": "USER_VERIFIED_BM4_L_FILE_SETTINGS_2026-08-10",
+              "value": null
+            },
+            {
+              "applicable": true,
+              "declared": false,
+              "level": "LOAD_CASE_SETTING",
+              "source": "USER_VERIFIED_BM4_L_CASE_SETTINGS_2026-08-10_PLUS_ISSUE_1083_LOADCASEREPORT_FRICTION_MULTIPLIERS",
+              "value": null
+            },
+            {
+              "applicable": true,
+              "declared": true,
+              "level": "MODEL_INPUT",
+              "source": "BM4_L_ACCDB_MODEL_INPUT_HIGHEST_AUTHORITY_COEFFICIENT",
+              "value": 0.3
+            }
+          ],
+          "resolvedLevel": "MODEL_INPUT",
+          "resolvedSource": "BM4_L_ACCDB_MODEL_INPUT_HIGHEST_AUTHORITY_COEFFICIENT",
+          "resolvedValue": 0.3,
+          "status": "RESOLVED"
+        },
+        "FLEXIBILITY_ELASTIC_MODULUS": {
+          "candidates": [
+            {
+              "applicable": true,
+              "declared": true,
+              "level": "OVERALL_GLOBAL_DEFAULT",
+              "source": "USER_SUPPLIED_CAESAR_14_GLOBAL_SETTINGS_2026-08-09_RECONFIRMED_FOR_BM4_L_2026-08-10",
+              "value": "EC"
+            },
+            {
+              "applicable": true,
+              "declared": false,
+              "level": "INDIVIDUAL_FILE_SETTING",
+              "source": "USER_VERIFIED_BM4_L_FILE_SETTINGS_2026-08-10",
+              "value": null
+            },
+            {
+              "applicable": true,
+              "declared": false,
+              "level": "LOAD_CASE_SETTING",
+              "source": "USER_VERIFIED_BM4_L_CASE_SETTINGS_2026-08-10_PLUS_ISSUE_1083_LOADCASEREPORT_FRICTION_MULTIPLIERS",
+              "value": null
+            },
+            {
+              "applicable": true,
+              "declared": false,
+              "level": "MODEL_INPUT",
+              "source": "BM4_L_ACCDB_MODEL_INPUT_HIGHEST_AUTHORITY_COEFFICIENT",
+              "value": null
+            }
+          ],
+          "resolvedLevel": "OVERALL_GLOBAL_DEFAULT",
+          "resolvedSource": "USER_SUPPLIED_CAESAR_14_GLOBAL_SETTINGS_2026-08-09_RECONFIRMED_FOR_BM4_L_2026-08-10",
+          "resolvedValue": "EC",
+          "status": "RESOLVED"
+        },
+        "FRICTION_MULTIPLIER": {
+          "candidates": [
+            {
+              "applicable": true,
+              "declared": false,
+              "level": "OVERALL_GLOBAL_DEFAULT",
+              "source": "USER_SUPPLIED_CAESAR_14_GLOBAL_SETTINGS_2026-08-09_RECONFIRMED_FOR_BM4_L_2026-08-10",
+              "value": null
+            },
+            {
+              "applicable": true,
+              "declared": false,
+              "level": "INDIVIDUAL_FILE_SETTING",
+              "source": "USER_VERIFIED_BM4_L_FILE_SETTINGS_2026-08-10",
+              "value": null
+            },
+            {
+              "applicable": true,
+              "declared": true,
+              "level": "LOAD_CASE_SETTING",
+              "source": "USER_VERIFIED_BM4_L_CASE_SETTINGS_2026-08-10_PLUS_ISSUE_1083_LOADCASEREPORT_FRICTION_MULTIPLIERS",
+              "value": 0
+            },
+            {
+              "applicable": true,
+              "declared": false,
+              "level": "MODEL_INPUT",
+              "source": "BM4_L_ACCDB_MODEL_INPUT_HIGHEST_AUTHORITY_COEFFICIENT",
+              "value": null
+            }
+          ],
+          "resolvedLevel": "LOAD_CASE_SETTING",
+          "resolvedSource": "USER_VERIFIED_BM4_L_CASE_SETTINGS_2026-08-10_PLUS_ISSUE_1083_LOADCASEREPORT_FRICTION_MULTIPLIERS",
+          "resolvedValue": 0,
+          "status": "RESOLVED"
+        },
+        "RESTRAINT_DIRECTIONAL_BEHAVIOR": {
+          "candidates": [
+            {
+              "applicable": true,
+              "declared": false,
+              "level": "OVERALL_GLOBAL_DEFAULT",
+              "source": "USER_SUPPLIED_CAESAR_14_GLOBAL_SETTINGS_2026-08-09_RECONFIRMED_FOR_BM4_L_2026-08-10",
+              "value": null
+            },
+            {
+              "applicable": true,
+              "declared": true,
+              "level": "INDIVIDUAL_FILE_SETTING",
+              "source": "USER_VERIFIED_BM4_L_FILE_SETTINGS_2026-08-10",
+              "value": "BIDIRECTIONAL"
+            },
+            {
+              "applicable": true,
+              "declared": false,
+              "level": "LOAD_CASE_SETTING",
+              "source": "USER_VERIFIED_BM4_L_CASE_SETTINGS_2026-08-10_PLUS_ISSUE_1083_LOADCASEREPORT_FRICTION_MULTIPLIERS",
+              "value": null
+            },
+            {
+              "applicable": true,
+              "declared": false,
+              "level": "MODEL_INPUT",
+              "source": "BM4_L_ACCDB_MODEL_INPUT_HIGHEST_AUTHORITY_COEFFICIENT",
+              "value": null
+            }
+          ],
+          "resolvedLevel": "INDIVIDUAL_FILE_SETTING",
+          "resolvedSource": "USER_VERIFIED_BM4_L_FILE_SETTINGS_2026-08-10",
+          "resolvedValue": "BIDIRECTIONAL",
+          "status": "RESOLVED"
+        }
+      }
+    },
+    "L5": {
+      "caseClass": "OPE",
+      "caseKind": "PRIMITIVE",
+      "formula": "W+T1+P1",
+      "friction": {
+        "constituents": null,
+        "effectiveCoefficient": 0,
+        "effectiveRule": "EFFECTIVE_MU_EQUALS_MODEL_MU_TIMES_LOAD_CASE_FRICTION_MULTIPLIER_V1",
+        "frictionActive": false,
+        "frictionMultiplier": {
+          "level": "LOAD_CASE_SETTING",
+          "reason": null,
+          "source": "USER_VERIFIED_BM4_L_CASE_SETTINGS_2026-08-10_PLUS_ISSUE_1083_LOADCASEREPORT_FRICTION_MULTIPLIERS",
+          "value": 0
+        },
+        "frictionStiffness": {
+          "conversionFactor": 100,
+          "conversionRule": "N_PER_CM_TO_N_PER_M_TIMES_100",
+          "displayedUnit": "N./cm.",
+          "displayedValue": 1000000,
+          "level": "OVERALL_GLOBAL_DEFAULT",
+          "setting": "FRICT_STIF",
+          "siUnit": "N/m",
+          "siValue": 100000000,
+          "source": "USER_SUPPLIED_CAESAR_14_GLOBAL_SETTINGS_2026-08-09_RECONFIRMED_FOR_BM4_L_2026-08-10"
+        },
+        "modelCoefficientOfFriction": {
+          "level": "MODEL_INPUT",
+          "reason": null,
+          "source": "BM4_L_ACCDB_MODEL_INPUT_HIGHEST_AUTHORITY_COEFFICIENT",
+          "value": 0.3
+        }
+      },
+      "lcaseNumber": 5,
+      "meaninglessForThisCase": [],
+      "meaninglessReason": null,
+      "settings": {
+        "BOURDON_PRESSURE": {
+          "candidates": [
+            {
+              "applicable": true,
+              "declared": true,
+              "level": "OVERALL_GLOBAL_DEFAULT",
+              "source": "USER_SUPPLIED_CAESAR_14_GLOBAL_SETTINGS_2026-08-09_RECONFIRMED_FOR_BM4_L_2026-08-10",
+              "value": "NONE"
+            },
+            {
+              "applicable": true,
+              "declared": true,
+              "level": "INDIVIDUAL_FILE_SETTING",
+              "source": "USER_VERIFIED_BM4_L_FILE_SETTINGS_2026-08-10",
+              "value": "TRANSLATION_AND_ROTATION"
+            },
+            {
+              "applicable": true,
+              "declared": false,
+              "level": "LOAD_CASE_SETTING",
+              "source": "USER_VERIFIED_BM4_L_CASE_SETTINGS_2026-08-10_PLUS_ISSUE_1083_LOADCASEREPORT_FRICTION_MULTIPLIERS",
+              "value": null
+            },
+            {
+              "applicable": true,
+              "declared": false,
+              "level": "MODEL_INPUT",
+              "source": "BM4_L_ACCDB_MODEL_INPUT_HIGHEST_AUTHORITY_COEFFICIENT",
+              "value": null
+            }
+          ],
+          "resolvedLevel": "INDIVIDUAL_FILE_SETTING",
+          "resolvedSource": "USER_VERIFIED_BM4_L_FILE_SETTINGS_2026-08-10",
+          "resolvedValue": "TRANSLATION_AND_ROTATION",
+          "status": "RESOLVED"
+        },
+        "COEFFICIENT_OF_FRICTION_MU": {
+          "candidates": [
+            {
+              "applicable": true,
+              "declared": true,
+              "level": "OVERALL_GLOBAL_DEFAULT",
+              "source": "USER_SUPPLIED_CAESAR_14_GLOBAL_SETTINGS_2026-08-09_RECONFIRMED_FOR_BM4_L_2026-08-10",
+              "value": 0
+            },
+            {
+              "applicable": true,
+              "declared": false,
+              "level": "INDIVIDUAL_FILE_SETTING",
+              "source": "USER_VERIFIED_BM4_L_FILE_SETTINGS_2026-08-10",
+              "value": null
+            },
+            {
+              "applicable": true,
+              "declared": false,
+              "level": "LOAD_CASE_SETTING",
+              "source": "USER_VERIFIED_BM4_L_CASE_SETTINGS_2026-08-10_PLUS_ISSUE_1083_LOADCASEREPORT_FRICTION_MULTIPLIERS",
+              "value": null
+            },
+            {
+              "applicable": true,
+              "declared": true,
+              "level": "MODEL_INPUT",
+              "source": "BM4_L_ACCDB_MODEL_INPUT_HIGHEST_AUTHORITY_COEFFICIENT",
+              "value": 0.3
+            }
+          ],
+          "resolvedLevel": "MODEL_INPUT",
+          "resolvedSource": "BM4_L_ACCDB_MODEL_INPUT_HIGHEST_AUTHORITY_COEFFICIENT",
+          "resolvedValue": 0.3,
+          "status": "RESOLVED"
+        },
+        "FLEXIBILITY_ELASTIC_MODULUS": {
+          "candidates": [
+            {
+              "applicable": true,
+              "declared": true,
+              "level": "OVERALL_GLOBAL_DEFAULT",
+              "source": "USER_SUPPLIED_CAESAR_14_GLOBAL_SETTINGS_2026-08-09_RECONFIRMED_FOR_BM4_L_2026-08-10",
+              "value": "EC"
+            },
+            {
+              "applicable": true,
+              "declared": false,
+              "level": "INDIVIDUAL_FILE_SETTING",
+              "source": "USER_VERIFIED_BM4_L_FILE_SETTINGS_2026-08-10",
+              "value": null
+            },
+            {
+              "applicable": true,
+              "declared": true,
+              "level": "LOAD_CASE_SETTING",
+              "source": "USER_VERIFIED_BM4_L_CASE_SETTINGS_2026-08-10_PLUS_ISSUE_1083_LOADCASEREPORT_FRICTION_MULTIPLIERS",
+              "value": "EC"
+            },
+            {
+              "applicable": true,
+              "declared": false,
+              "level": "MODEL_INPUT",
+              "source": "BM4_L_ACCDB_MODEL_INPUT_HIGHEST_AUTHORITY_COEFFICIENT",
+              "value": null
+            }
+          ],
+          "resolvedLevel": "LOAD_CASE_SETTING",
+          "resolvedSource": "USER_VERIFIED_BM4_L_CASE_SETTINGS_2026-08-10_PLUS_ISSUE_1083_LOADCASEREPORT_FRICTION_MULTIPLIERS",
+          "resolvedValue": "EC",
+          "status": "RESOLVED"
+        },
+        "FRICTION_MULTIPLIER": {
+          "candidates": [
+            {
+              "applicable": true,
+              "declared": false,
+              "level": "OVERALL_GLOBAL_DEFAULT",
+              "source": "USER_SUPPLIED_CAESAR_14_GLOBAL_SETTINGS_2026-08-09_RECONFIRMED_FOR_BM4_L_2026-08-10",
+              "value": null
+            },
+            {
+              "applicable": true,
+              "declared": false,
+              "level": "INDIVIDUAL_FILE_SETTING",
+              "source": "USER_VERIFIED_BM4_L_FILE_SETTINGS_2026-08-10",
+              "value": null
+            },
+            {
+              "applicable": true,
+              "declared": true,
+              "level": "LOAD_CASE_SETTING",
+              "source": "USER_VERIFIED_BM4_L_CASE_SETTINGS_2026-08-10_PLUS_ISSUE_1083_LOADCASEREPORT_FRICTION_MULTIPLIERS",
+              "value": 0
+            },
+            {
+              "applicable": true,
+              "declared": false,
+              "level": "MODEL_INPUT",
+              "source": "BM4_L_ACCDB_MODEL_INPUT_HIGHEST_AUTHORITY_COEFFICIENT",
+              "value": null
+            }
+          ],
+          "resolvedLevel": "LOAD_CASE_SETTING",
+          "resolvedSource": "USER_VERIFIED_BM4_L_CASE_SETTINGS_2026-08-10_PLUS_ISSUE_1083_LOADCASEREPORT_FRICTION_MULTIPLIERS",
+          "resolvedValue": 0,
+          "status": "RESOLVED"
+        },
+        "RESTRAINT_DIRECTIONAL_BEHAVIOR": {
+          "candidates": [
+            {
+              "applicable": true,
+              "declared": false,
+              "level": "OVERALL_GLOBAL_DEFAULT",
+              "source": "USER_SUPPLIED_CAESAR_14_GLOBAL_SETTINGS_2026-08-09_RECONFIRMED_FOR_BM4_L_2026-08-10",
+              "value": null
+            },
+            {
+              "applicable": true,
+              "declared": true,
+              "level": "INDIVIDUAL_FILE_SETTING",
+              "source": "USER_VERIFIED_BM4_L_FILE_SETTINGS_2026-08-10",
+              "value": "BIDIRECTIONAL"
+            },
+            {
+              "applicable": true,
+              "declared": false,
+              "level": "LOAD_CASE_SETTING",
+              "source": "USER_VERIFIED_BM4_L_CASE_SETTINGS_2026-08-10_PLUS_ISSUE_1083_LOADCASEREPORT_FRICTION_MULTIPLIERS",
+              "value": null
+            },
+            {
+              "applicable": true,
+              "declared": false,
+              "level": "MODEL_INPUT",
+              "source": "BM4_L_ACCDB_MODEL_INPUT_HIGHEST_AUTHORITY_COEFFICIENT",
+              "value": null
+            }
+          ],
+          "resolvedLevel": "INDIVIDUAL_FILE_SETTING",
+          "resolvedSource": "USER_VERIFIED_BM4_L_FILE_SETTINGS_2026-08-10",
+          "resolvedValue": "BIDIRECTIONAL",
+          "status": "RESOLVED"
+        }
+      }
+    },
+    "L6": {
+      "caseClass": "SUS",
+      "caseKind": "PRIMITIVE",
+      "formula": "W+P1",
+      "friction": {
+        "constituents": null,
+        "effectiveCoefficient": 0,
+        "effectiveRule": "EFFECTIVE_MU_EQUALS_MODEL_MU_TIMES_LOAD_CASE_FRICTION_MULTIPLIER_V1",
+        "frictionActive": false,
+        "frictionMultiplier": {
+          "level": "LOAD_CASE_SETTING",
+          "reason": null,
+          "source": "USER_VERIFIED_BM4_L_CASE_SETTINGS_2026-08-10_PLUS_ISSUE_1083_LOADCASEREPORT_FRICTION_MULTIPLIERS",
+          "value": 0
+        },
+        "frictionStiffness": {
+          "conversionFactor": 100,
+          "conversionRule": "N_PER_CM_TO_N_PER_M_TIMES_100",
+          "displayedUnit": "N./cm.",
+          "displayedValue": 1000000,
+          "level": "OVERALL_GLOBAL_DEFAULT",
+          "setting": "FRICT_STIF",
+          "siUnit": "N/m",
+          "siValue": 100000000,
+          "source": "USER_SUPPLIED_CAESAR_14_GLOBAL_SETTINGS_2026-08-09_RECONFIRMED_FOR_BM4_L_2026-08-10"
+        },
+        "modelCoefficientOfFriction": {
+          "level": "MODEL_INPUT",
+          "reason": null,
+          "source": "BM4_L_ACCDB_MODEL_INPUT_HIGHEST_AUTHORITY_COEFFICIENT",
+          "value": 0.3
+        }
+      },
+      "lcaseNumber": 6,
+      "meaninglessForThisCase": [],
+      "meaninglessReason": null,
+      "settings": {
+        "BOURDON_PRESSURE": {
+          "candidates": [
+            {
+              "applicable": true,
+              "declared": true,
+              "level": "OVERALL_GLOBAL_DEFAULT",
+              "source": "USER_SUPPLIED_CAESAR_14_GLOBAL_SETTINGS_2026-08-09_RECONFIRMED_FOR_BM4_L_2026-08-10",
+              "value": "NONE"
+            },
+            {
+              "applicable": true,
+              "declared": true,
+              "level": "INDIVIDUAL_FILE_SETTING",
+              "source": "USER_VERIFIED_BM4_L_FILE_SETTINGS_2026-08-10",
+              "value": "TRANSLATION_AND_ROTATION"
+            },
+            {
+              "applicable": true,
+              "declared": false,
+              "level": "LOAD_CASE_SETTING",
+              "source": "USER_VERIFIED_BM4_L_CASE_SETTINGS_2026-08-10_PLUS_ISSUE_1083_LOADCASEREPORT_FRICTION_MULTIPLIERS",
+              "value": null
+            },
+            {
+              "applicable": true,
+              "declared": false,
+              "level": "MODEL_INPUT",
+              "source": "BM4_L_ACCDB_MODEL_INPUT_HIGHEST_AUTHORITY_COEFFICIENT",
+              "value": null
+            }
+          ],
+          "resolvedLevel": "INDIVIDUAL_FILE_SETTING",
+          "resolvedSource": "USER_VERIFIED_BM4_L_FILE_SETTINGS_2026-08-10",
+          "resolvedValue": "TRANSLATION_AND_ROTATION",
+          "status": "RESOLVED"
+        },
+        "COEFFICIENT_OF_FRICTION_MU": {
+          "candidates": [
+            {
+              "applicable": true,
+              "declared": true,
+              "level": "OVERALL_GLOBAL_DEFAULT",
+              "source": "USER_SUPPLIED_CAESAR_14_GLOBAL_SETTINGS_2026-08-09_RECONFIRMED_FOR_BM4_L_2026-08-10",
+              "value": 0
+            },
+            {
+              "applicable": true,
+              "declared": false,
+              "level": "INDIVIDUAL_FILE_SETTING",
+              "source": "USER_VERIFIED_BM4_L_FILE_SETTINGS_2026-08-10",
+              "value": null
+            },
+            {
+              "applicable": true,
+              "declared": false,
+              "level": "LOAD_CASE_SETTING",
+              "source": "USER_VERIFIED_BM4_L_CASE_SETTINGS_2026-08-10_PLUS_ISSUE_1083_LOADCASEREPORT_FRICTION_MULTIPLIERS",
+              "value": null
+            },
+            {
+              "applicable": true,
+              "declared": true,
+              "level": "MODEL_INPUT",
+              "source": "BM4_L_ACCDB_MODEL_INPUT_HIGHEST_AUTHORITY_COEFFICIENT",
+              "value": 0.3
+            }
+          ],
+          "resolvedLevel": "MODEL_INPUT",
+          "resolvedSource": "BM4_L_ACCDB_MODEL_INPUT_HIGHEST_AUTHORITY_COEFFICIENT",
+          "resolvedValue": 0.3,
+          "status": "RESOLVED"
+        },
+        "FLEXIBILITY_ELASTIC_MODULUS": {
+          "candidates": [
+            {
+              "applicable": true,
+              "declared": true,
+              "level": "OVERALL_GLOBAL_DEFAULT",
+              "source": "USER_SUPPLIED_CAESAR_14_GLOBAL_SETTINGS_2026-08-09_RECONFIRMED_FOR_BM4_L_2026-08-10",
+              "value": "EC"
+            },
+            {
+              "applicable": true,
+              "declared": false,
+              "level": "INDIVIDUAL_FILE_SETTING",
+              "source": "USER_VERIFIED_BM4_L_FILE_SETTINGS_2026-08-10",
+              "value": null
+            },
+            {
+              "applicable": true,
+              "declared": false,
+              "level": "LOAD_CASE_SETTING",
+              "source": "USER_VERIFIED_BM4_L_CASE_SETTINGS_2026-08-10_PLUS_ISSUE_1083_LOADCASEREPORT_FRICTION_MULTIPLIERS",
+              "value": null
+            },
+            {
+              "applicable": true,
+              "declared": false,
+              "level": "MODEL_INPUT",
+              "source": "BM4_L_ACCDB_MODEL_INPUT_HIGHEST_AUTHORITY_COEFFICIENT",
+              "value": null
+            }
+          ],
+          "resolvedLevel": "OVERALL_GLOBAL_DEFAULT",
+          "resolvedSource": "USER_SUPPLIED_CAESAR_14_GLOBAL_SETTINGS_2026-08-09_RECONFIRMED_FOR_BM4_L_2026-08-10",
+          "resolvedValue": "EC",
+          "status": "RESOLVED"
+        },
+        "FRICTION_MULTIPLIER": {
+          "candidates": [
+            {
+              "applicable": true,
+              "declared": false,
+              "level": "OVERALL_GLOBAL_DEFAULT",
+              "source": "USER_SUPPLIED_CAESAR_14_GLOBAL_SETTINGS_2026-08-09_RECONFIRMED_FOR_BM4_L_2026-08-10",
+              "value": null
+            },
+            {
+              "applicable": true,
+              "declared": false,
+              "level": "INDIVIDUAL_FILE_SETTING",
+              "source": "USER_VERIFIED_BM4_L_FILE_SETTINGS_2026-08-10",
+              "value": null
+            },
+            {
+              "applicable": true,
+              "declared": true,
+              "level": "LOAD_CASE_SETTING",
+              "source": "USER_VERIFIED_BM4_L_CASE_SETTINGS_2026-08-10_PLUS_ISSUE_1083_LOADCASEREPORT_FRICTION_MULTIPLIERS",
+              "value": 0
+            },
+            {
+              "applicable": true,
+              "declared": false,
+              "level": "MODEL_INPUT",
+              "source": "BM4_L_ACCDB_MODEL_INPUT_HIGHEST_AUTHORITY_COEFFICIENT",
+              "value": null
+            }
+          ],
+          "resolvedLevel": "LOAD_CASE_SETTING",
+          "resolvedSource": "USER_VERIFIED_BM4_L_CASE_SETTINGS_2026-08-10_PLUS_ISSUE_1083_LOADCASEREPORT_FRICTION_MULTIPLIERS",
+          "resolvedValue": 0,
+          "status": "RESOLVED"
+        },
+        "RESTRAINT_DIRECTIONAL_BEHAVIOR": {
+          "candidates": [
+            {
+              "applicable": true,
+              "declared": false,
+              "level": "OVERALL_GLOBAL_DEFAULT",
+              "source": "USER_SUPPLIED_CAESAR_14_GLOBAL_SETTINGS_2026-08-09_RECONFIRMED_FOR_BM4_L_2026-08-10",
+              "value": null
+            },
+            {
+              "applicable": true,
+              "declared": true,
+              "level": "INDIVIDUAL_FILE_SETTING",
+              "source": "USER_VERIFIED_BM4_L_FILE_SETTINGS_2026-08-10",
+              "value": "BIDIRECTIONAL"
+            },
+            {
+              "applicable": true,
+              "declared": false,
+              "level": "LOAD_CASE_SETTING",
+              "source": "USER_VERIFIED_BM4_L_CASE_SETTINGS_2026-08-10_PLUS_ISSUE_1083_LOADCASEREPORT_FRICTION_MULTIPLIERS",
+              "value": null
+            },
+            {
+              "applicable": true,
+              "declared": false,
+              "level": "MODEL_INPUT",
+              "source": "BM4_L_ACCDB_MODEL_INPUT_HIGHEST_AUTHORITY_COEFFICIENT",
+              "value": null
+            }
+          ],
+          "resolvedLevel": "INDIVIDUAL_FILE_SETTING",
+          "resolvedSource": "USER_VERIFIED_BM4_L_FILE_SETTINGS_2026-08-10",
+          "resolvedValue": "BIDIRECTIONAL",
+          "status": "RESOLVED"
+        }
+      }
+    },
+    "L7": {
+      "caseClass": "OPE",
+      "caseKind": "PRIMITIVE",
+      "formula": "W+T1+P1",
+      "friction": {
+        "constituents": null,
+        "effectiveCoefficient": 0.3,
+        "effectiveRule": "EFFECTIVE_MU_EQUALS_MODEL_MU_TIMES_LOAD_CASE_FRICTION_MULTIPLIER_V1",
+        "frictionActive": true,
+        "frictionMultiplier": {
+          "level": "LOAD_CASE_SETTING",
+          "reason": null,
+          "source": "USER_VERIFIED_BM4_L_CASE_SETTINGS_2026-08-10_PLUS_ISSUE_1083_LOADCASEREPORT_FRICTION_MULTIPLIERS",
+          "value": 1
+        },
+        "frictionStiffness": {
+          "conversionFactor": 100,
+          "conversionRule": "N_PER_CM_TO_N_PER_M_TIMES_100",
+          "displayedUnit": "N./cm.",
+          "displayedValue": 1000000,
+          "level": "OVERALL_GLOBAL_DEFAULT",
+          "setting": "FRICT_STIF",
+          "siUnit": "N/m",
+          "siValue": 100000000,
+          "source": "USER_SUPPLIED_CAESAR_14_GLOBAL_SETTINGS_2026-08-09_RECONFIRMED_FOR_BM4_L_2026-08-10"
+        },
+        "modelCoefficientOfFriction": {
+          "level": "MODEL_INPUT",
+          "reason": null,
+          "source": "BM4_L_ACCDB_MODEL_INPUT_HIGHEST_AUTHORITY_COEFFICIENT",
+          "value": 0.3
+        }
+      },
+      "lcaseNumber": 7,
+      "meaninglessForThisCase": [],
+      "meaninglessReason": null,
+      "settings": {
+        "BOURDON_PRESSURE": {
+          "candidates": [
+            {
+              "applicable": true,
+              "declared": true,
+              "level": "OVERALL_GLOBAL_DEFAULT",
+              "source": "USER_SUPPLIED_CAESAR_14_GLOBAL_SETTINGS_2026-08-09_RECONFIRMED_FOR_BM4_L_2026-08-10",
+              "value": "NONE"
+            },
+            {
+              "applicable": true,
+              "declared": true,
+              "level": "INDIVIDUAL_FILE_SETTING",
+              "source": "USER_VERIFIED_BM4_L_FILE_SETTINGS_2026-08-10",
+              "value": "TRANSLATION_AND_ROTATION"
+            },
+            {
+              "applicable": true,
+              "declared": false,
+              "level": "LOAD_CASE_SETTING",
+              "source": "USER_VERIFIED_BM4_L_CASE_SETTINGS_2026-08-10_PLUS_ISSUE_1083_LOADCASEREPORT_FRICTION_MULTIPLIERS",
+              "value": null
+            },
+            {
+              "applicable": true,
+              "declared": false,
+              "level": "MODEL_INPUT",
+              "source": "BM4_L_ACCDB_MODEL_INPUT_HIGHEST_AUTHORITY_COEFFICIENT",
+              "value": null
+            }
+          ],
+          "resolvedLevel": "INDIVIDUAL_FILE_SETTING",
+          "resolvedSource": "USER_VERIFIED_BM4_L_FILE_SETTINGS_2026-08-10",
+          "resolvedValue": "TRANSLATION_AND_ROTATION",
+          "status": "RESOLVED"
+        },
+        "COEFFICIENT_OF_FRICTION_MU": {
+          "candidates": [
+            {
+              "applicable": true,
+              "declared": true,
+              "level": "OVERALL_GLOBAL_DEFAULT",
+              "source": "USER_SUPPLIED_CAESAR_14_GLOBAL_SETTINGS_2026-08-09_RECONFIRMED_FOR_BM4_L_2026-08-10",
+              "value": 0
+            },
+            {
+              "applicable": true,
+              "declared": false,
+              "level": "INDIVIDUAL_FILE_SETTING",
+              "source": "USER_VERIFIED_BM4_L_FILE_SETTINGS_2026-08-10",
+              "value": null
+            },
+            {
+              "applicable": true,
+              "declared": false,
+              "level": "LOAD_CASE_SETTING",
+              "source": "USER_VERIFIED_BM4_L_CASE_SETTINGS_2026-08-10_PLUS_ISSUE_1083_LOADCASEREPORT_FRICTION_MULTIPLIERS",
+              "value": null
+            },
+            {
+              "applicable": true,
+              "declared": true,
+              "level": "MODEL_INPUT",
+              "source": "BM4_L_ACCDB_MODEL_INPUT_HIGHEST_AUTHORITY_COEFFICIENT",
+              "value": 0.3
+            }
+          ],
+          "resolvedLevel": "MODEL_INPUT",
+          "resolvedSource": "BM4_L_ACCDB_MODEL_INPUT_HIGHEST_AUTHORITY_COEFFICIENT",
+          "resolvedValue": 0.3,
+          "status": "RESOLVED"
+        },
+        "FLEXIBILITY_ELASTIC_MODULUS": {
+          "candidates": [
+            {
+              "applicable": true,
+              "declared": true,
+              "level": "OVERALL_GLOBAL_DEFAULT",
+              "source": "USER_SUPPLIED_CAESAR_14_GLOBAL_SETTINGS_2026-08-09_RECONFIRMED_FOR_BM4_L_2026-08-10",
+              "value": "EC"
+            },
+            {
+              "applicable": true,
+              "declared": false,
+              "level": "INDIVIDUAL_FILE_SETTING",
+              "source": "USER_VERIFIED_BM4_L_FILE_SETTINGS_2026-08-10",
+              "value": null
+            },
+            {
+              "applicable": true,
+              "declared": true,
+              "level": "LOAD_CASE_SETTING",
+              "source": "USER_VERIFIED_BM4_L_CASE_SETTINGS_2026-08-10_PLUS_ISSUE_1083_LOADCASEREPORT_FRICTION_MULTIPLIERS",
+              "value": "EC"
+            },
+            {
+              "applicable": true,
+              "declared": false,
+              "level": "MODEL_INPUT",
+              "source": "BM4_L_ACCDB_MODEL_INPUT_HIGHEST_AUTHORITY_COEFFICIENT",
+              "value": null
+            }
+          ],
+          "resolvedLevel": "LOAD_CASE_SETTING",
+          "resolvedSource": "USER_VERIFIED_BM4_L_CASE_SETTINGS_2026-08-10_PLUS_ISSUE_1083_LOADCASEREPORT_FRICTION_MULTIPLIERS",
+          "resolvedValue": "EC",
+          "status": "RESOLVED"
+        },
+        "FRICTION_MULTIPLIER": {
+          "candidates": [
+            {
+              "applicable": true,
+              "declared": false,
+              "level": "OVERALL_GLOBAL_DEFAULT",
+              "source": "USER_SUPPLIED_CAESAR_14_GLOBAL_SETTINGS_2026-08-09_RECONFIRMED_FOR_BM4_L_2026-08-10",
+              "value": null
+            },
+            {
+              "applicable": true,
+              "declared": false,
+              "level": "INDIVIDUAL_FILE_SETTING",
+              "source": "USER_VERIFIED_BM4_L_FILE_SETTINGS_2026-08-10",
+              "value": null
+            },
+            {
+              "applicable": true,
+              "declared": true,
+              "level": "LOAD_CASE_SETTING",
+              "source": "USER_VERIFIED_BM4_L_CASE_SETTINGS_2026-08-10_PLUS_ISSUE_1083_LOADCASEREPORT_FRICTION_MULTIPLIERS",
+              "value": 1
+            },
+            {
+              "applicable": true,
+              "declared": false,
+              "level": "MODEL_INPUT",
+              "source": "BM4_L_ACCDB_MODEL_INPUT_HIGHEST_AUTHORITY_COEFFICIENT",
+              "value": null
+            }
+          ],
+          "resolvedLevel": "LOAD_CASE_SETTING",
+          "resolvedSource": "USER_VERIFIED_BM4_L_CASE_SETTINGS_2026-08-10_PLUS_ISSUE_1083_LOADCASEREPORT_FRICTION_MULTIPLIERS",
+          "resolvedValue": 1,
+          "status": "RESOLVED"
+        },
+        "RESTRAINT_DIRECTIONAL_BEHAVIOR": {
+          "candidates": [
+            {
+              "applicable": true,
+              "declared": false,
+              "level": "OVERALL_GLOBAL_DEFAULT",
+              "source": "USER_SUPPLIED_CAESAR_14_GLOBAL_SETTINGS_2026-08-09_RECONFIRMED_FOR_BM4_L_2026-08-10",
+              "value": null
+            },
+            {
+              "applicable": true,
+              "declared": true,
+              "level": "INDIVIDUAL_FILE_SETTING",
+              "source": "USER_VERIFIED_BM4_L_FILE_SETTINGS_2026-08-10",
+              "value": "BIDIRECTIONAL"
+            },
+            {
+              "applicable": true,
+              "declared": false,
+              "level": "LOAD_CASE_SETTING",
+              "source": "USER_VERIFIED_BM4_L_CASE_SETTINGS_2026-08-10_PLUS_ISSUE_1083_LOADCASEREPORT_FRICTION_MULTIPLIERS",
+              "value": null
+            },
+            {
+              "applicable": true,
+              "declared": false,
+              "level": "MODEL_INPUT",
+              "source": "BM4_L_ACCDB_MODEL_INPUT_HIGHEST_AUTHORITY_COEFFICIENT",
+              "value": null
+            }
+          ],
+          "resolvedLevel": "INDIVIDUAL_FILE_SETTING",
+          "resolvedSource": "USER_VERIFIED_BM4_L_FILE_SETTINGS_2026-08-10",
+          "resolvedValue": "BIDIRECTIONAL",
+          "status": "RESOLVED"
+        }
+      }
+    }
+  },
+  "fileLevelSettings": {
+    "AMBIENT_TEMPERATURE": {
+      "candidates": [
+        {
+          "applicable": true,
+          "declared": true,
+          "level": "OVERALL_GLOBAL_DEFAULT",
+          "source": "USER_SUPPLIED_CAESAR_14_GLOBAL_SETTINGS_2026-08-09_RECONFIRMED_FOR_BM4_L_2026-08-10",
+          "value": {
+            "unit": "F",
+            "value": 70
+          }
+        },
+        {
+          "applicable": true,
+          "declared": true,
+          "level": "INDIVIDUAL_FILE_SETTING",
+          "source": "USER_VERIFIED_BM4_L_FILE_SETTINGS_2026-08-10",
+          "value": {
+            "unit": "C",
+            "value": 21
+          }
+        },
+        {
+          "applicable": false,
+          "declared": false,
+          "level": "LOAD_CASE_SETTING",
+          "source": "USER_VERIFIED_BM4_L_CASE_SETTINGS_2026-08-10_PLUS_ISSUE_1083_LOADCASEREPORT_FRICTION_MULTIPLIERS",
+          "value": null
+        },
+        {
+          "applicable": true,
+          "declared": false,
+          "level": "MODEL_INPUT",
+          "source": "BM4_L_ACCDB_MODEL_INPUT_HIGHEST_AUTHORITY_COEFFICIENT",
+          "value": null
+        }
+      ],
+      "resolvedLevel": "INDIVIDUAL_FILE_SETTING",
+      "resolvedSource": "USER_VERIFIED_BM4_L_FILE_SETTINGS_2026-08-10",
+      "resolvedValue": {
+        "unit": "C",
+        "value": 21
+      },
+      "status": "RESOLVED"
+    },
+    "BEND_AXIAL_SHAPE": {
+      "candidates": [
+        {
+          "applicable": true,
+          "declared": true,
+          "level": "OVERALL_GLOBAL_DEFAULT",
+          "source": "USER_SUPPLIED_CAESAR_14_GLOBAL_SETTINGS_2026-08-09_RECONFIRMED_FOR_BM4_L_2026-08-10",
+          "value": "YES"
+        },
+        {
+          "applicable": true,
+          "declared": false,
+          "level": "INDIVIDUAL_FILE_SETTING",
+          "source": "USER_VERIFIED_BM4_L_FILE_SETTINGS_2026-08-10",
+          "value": null
+        },
+        {
+          "applicable": false,
+          "declared": false,
+          "level": "LOAD_CASE_SETTING",
+          "source": "USER_VERIFIED_BM4_L_CASE_SETTINGS_2026-08-10_PLUS_ISSUE_1083_LOADCASEREPORT_FRICTION_MULTIPLIERS",
+          "value": null
+        },
+        {
+          "applicable": true,
+          "declared": false,
+          "level": "MODEL_INPUT",
+          "source": "BM4_L_ACCDB_MODEL_INPUT_HIGHEST_AUTHORITY_COEFFICIENT",
+          "value": null
+        }
+      ],
+      "resolvedLevel": "OVERALL_GLOBAL_DEFAULT",
+      "resolvedSource": "USER_SUPPLIED_CAESAR_14_GLOBAL_SETTINGS_2026-08-09_RECONFIRMED_FOR_BM4_L_2026-08-10",
+      "resolvedValue": "YES",
+      "status": "RESOLVED"
+    },
+    "DEFAULT_CODE": {
+      "candidates": [
+        {
+          "applicable": true,
+          "declared": true,
+          "level": "OVERALL_GLOBAL_DEFAULT",
+          "source": "USER_SUPPLIED_CAESAR_14_GLOBAL_SETTINGS_2026-08-09_RECONFIRMED_FOR_BM4_L_2026-08-10",
+          "value": "B31.3_2022"
+        },
+        {
+          "applicable": true,
+          "declared": false,
+          "level": "INDIVIDUAL_FILE_SETTING",
+          "source": "USER_VERIFIED_BM4_L_FILE_SETTINGS_2026-08-10",
+          "value": null
+        },
+        {
+          "applicable": false,
+          "declared": false,
+          "level": "LOAD_CASE_SETTING",
+          "source": "USER_VERIFIED_BM4_L_CASE_SETTINGS_2026-08-10_PLUS_ISSUE_1083_LOADCASEREPORT_FRICTION_MULTIPLIERS",
+          "value": null
+        },
+        {
+          "applicable": true,
+          "declared": false,
+          "level": "MODEL_INPUT",
+          "source": "BM4_L_ACCDB_MODEL_INPUT_HIGHEST_AUTHORITY_COEFFICIENT",
+          "value": null
+        }
+      ],
+      "resolvedLevel": "OVERALL_GLOBAL_DEFAULT",
+      "resolvedSource": "USER_SUPPLIED_CAESAR_14_GLOBAL_SETTINGS_2026-08-09_RECONFIRMED_FOR_BM4_L_2026-08-10",
+      "resolvedValue": "B31.3_2022",
+      "status": "RESOLVED"
+    },
+    "DEFAULT_ROT_RESTRAINT_STIFF": {
+      "candidates": [
+        {
+          "applicable": true,
+          "declared": true,
+          "level": "OVERALL_GLOBAL_DEFAULT",
+          "source": "USER_SUPPLIED_CAESAR_14_GLOBAL_SETTINGS_2026-08-09_RECONFIRMED_FOR_BM4_L_2026-08-10",
+          "value": {
+            "unit": "DISPLAYED_CAESAR_UNITS",
+            "value": 1000000000000
+          }
+        },
+        {
+          "applicable": true,
+          "declared": false,
+          "level": "INDIVIDUAL_FILE_SETTING",
+          "source": "USER_VERIFIED_BM4_L_FILE_SETTINGS_2026-08-10",
+          "value": null
+        },
+        {
+          "applicable": false,
+          "declared": false,
+          "level": "LOAD_CASE_SETTING",
+          "source": "USER_VERIFIED_BM4_L_CASE_SETTINGS_2026-08-10_PLUS_ISSUE_1083_LOADCASEREPORT_FRICTION_MULTIPLIERS",
+          "value": null
+        },
+        {
+          "applicable": true,
+          "declared": false,
+          "level": "MODEL_INPUT",
+          "source": "BM4_L_ACCDB_MODEL_INPUT_HIGHEST_AUTHORITY_COEFFICIENT",
+          "value": null
+        }
+      ],
+      "resolvedLevel": "OVERALL_GLOBAL_DEFAULT",
+      "resolvedSource": "USER_SUPPLIED_CAESAR_14_GLOBAL_SETTINGS_2026-08-09_RECONFIRMED_FOR_BM4_L_2026-08-10",
+      "resolvedValue": {
+        "unit": "DISPLAYED_CAESAR_UNITS",
+        "value": 1000000000000
+      },
+      "status": "RESOLVED"
+    },
+    "DEFAULT_TRANS_RESTRAINT_STIFF": {
+      "candidates": [
+        {
+          "applicable": true,
+          "declared": true,
+          "level": "OVERALL_GLOBAL_DEFAULT",
+          "source": "USER_SUPPLIED_CAESAR_14_GLOBAL_SETTINGS_2026-08-09_RECONFIRMED_FOR_BM4_L_2026-08-10",
+          "value": {
+            "unit": "DISPLAYED_CAESAR_UNITS",
+            "value": 1000000000000
+          }
+        },
+        {
+          "applicable": true,
+          "declared": false,
+          "level": "INDIVIDUAL_FILE_SETTING",
+          "source": "USER_VERIFIED_BM4_L_FILE_SETTINGS_2026-08-10",
+          "value": null
+        },
+        {
+          "applicable": false,
+          "declared": false,
+          "level": "LOAD_CASE_SETTING",
+          "source": "USER_VERIFIED_BM4_L_CASE_SETTINGS_2026-08-10_PLUS_ISSUE_1083_LOADCASEREPORT_FRICTION_MULTIPLIERS",
+          "value": null
+        },
+        {
+          "applicable": true,
+          "declared": false,
+          "level": "MODEL_INPUT",
+          "source": "BM4_L_ACCDB_MODEL_INPUT_HIGHEST_AUTHORITY_COEFFICIENT",
+          "value": null
+        }
+      ],
+      "resolvedLevel": "OVERALL_GLOBAL_DEFAULT",
+      "resolvedSource": "USER_SUPPLIED_CAESAR_14_GLOBAL_SETTINGS_2026-08-09_RECONFIRMED_FOR_BM4_L_2026-08-10",
+      "resolvedValue": {
+        "unit": "DISPLAYED_CAESAR_UNITS",
+        "value": 1000000000000
+      },
+      "status": "RESOLVED"
+    },
+    "FRICT_STIF": {
+      "candidates": [
+        {
+          "applicable": true,
+          "declared": true,
+          "level": "OVERALL_GLOBAL_DEFAULT",
+          "source": "USER_SUPPLIED_CAESAR_14_GLOBAL_SETTINGS_2026-08-09_RECONFIRMED_FOR_BM4_L_2026-08-10",
+          "value": {
+            "unit": "DISPLAYED_CAESAR_UNITS",
+            "value": 1000000
+          }
+        },
+        {
+          "applicable": true,
+          "declared": false,
+          "level": "INDIVIDUAL_FILE_SETTING",
+          "source": "USER_VERIFIED_BM4_L_FILE_SETTINGS_2026-08-10",
+          "value": null
+        },
+        {
+          "applicable": false,
+          "declared": false,
+          "level": "LOAD_CASE_SETTING",
+          "source": "USER_VERIFIED_BM4_L_CASE_SETTINGS_2026-08-10_PLUS_ISSUE_1083_LOADCASEREPORT_FRICTION_MULTIPLIERS",
+          "value": null
+        },
+        {
+          "applicable": true,
+          "declared": false,
+          "level": "MODEL_INPUT",
+          "source": "BM4_L_ACCDB_MODEL_INPUT_HIGHEST_AUTHORITY_COEFFICIENT",
+          "value": null
+        }
+      ],
+      "resolvedLevel": "OVERALL_GLOBAL_DEFAULT",
+      "resolvedSource": "USER_SUPPLIED_CAESAR_14_GLOBAL_SETTINGS_2026-08-09_RECONFIRMED_FOR_BM4_L_2026-08-10",
+      "resolvedValue": {
+        "unit": "DISPLAYED_CAESAR_UNITS",
+        "value": 1000000
+      },
+      "status": "RESOLVED"
+    },
+    "USE_PRESSURE_STIFFENING": {
+      "candidates": [
+        {
+          "applicable": true,
+          "declared": true,
+          "level": "OVERALL_GLOBAL_DEFAULT",
+          "source": "USER_SUPPLIED_CAESAR_14_GLOBAL_SETTINGS_2026-08-09_RECONFIRMED_FOR_BM4_L_2026-08-10",
+          "value": "DEFAULT"
+        },
+        {
+          "applicable": true,
+          "declared": false,
+          "level": "INDIVIDUAL_FILE_SETTING",
+          "source": "USER_VERIFIED_BM4_L_FILE_SETTINGS_2026-08-10",
+          "value": null
+        },
+        {
+          "applicable": false,
+          "declared": false,
+          "level": "LOAD_CASE_SETTING",
+          "source": "USER_VERIFIED_BM4_L_CASE_SETTINGS_2026-08-10_PLUS_ISSUE_1083_LOADCASEREPORT_FRICTION_MULTIPLIERS",
+          "value": null
+        },
+        {
+          "applicable": true,
+          "declared": false,
+          "level": "MODEL_INPUT",
+          "source": "BM4_L_ACCDB_MODEL_INPUT_HIGHEST_AUTHORITY_COEFFICIENT",
+          "value": null
+        }
+      ],
+      "resolvedLevel": "OVERALL_GLOBAL_DEFAULT",
+      "resolvedSource": "USER_SUPPLIED_CAESAR_14_GLOBAL_SETTINGS_2026-08-09_RECONFIRMED_FOR_BM4_L_2026-08-10",
+      "resolvedValue": "DEFAULT",
+      "status": "RESOLVED"
+    },
+    "Z_AXIS_UP": {
+      "candidates": [
+        {
+          "applicable": true,
+          "declared": true,
+          "level": "OVERALL_GLOBAL_DEFAULT",
+          "source": "USER_SUPPLIED_CAESAR_14_GLOBAL_SETTINGS_2026-08-09_RECONFIRMED_FOR_BM4_L_2026-08-10",
+          "value": "NO"
+        },
+        {
+          "applicable": true,
+          "declared": false,
+          "level": "INDIVIDUAL_FILE_SETTING",
+          "source": "USER_VERIFIED_BM4_L_FILE_SETTINGS_2026-08-10",
+          "value": null
+        },
+        {
+          "applicable": false,
+          "declared": false,
+          "level": "LOAD_CASE_SETTING",
+          "source": "USER_VERIFIED_BM4_L_CASE_SETTINGS_2026-08-10_PLUS_ISSUE_1083_LOADCASEREPORT_FRICTION_MULTIPLIERS",
+          "value": null
+        },
+        {
+          "applicable": true,
+          "declared": false,
+          "level": "MODEL_INPUT",
+          "source": "BM4_L_ACCDB_MODEL_INPUT_HIGHEST_AUTHORITY_COEFFICIENT",
+          "value": null
+        }
+      ],
+      "resolvedLevel": "OVERALL_GLOBAL_DEFAULT",
+      "resolvedSource": "USER_SUPPLIED_CAESAR_14_GLOBAL_SETTINGS_2026-08-09_RECONFIRMED_FOR_BM4_L_2026-08-10",
+      "resolvedValue": "NO",
+      "status": "RESOLVED"
+    }
+  },
+  "precedence": [
+    "OVERALL_GLOBAL_DEFAULT",
+    "INDIVIDUAL_FILE_SETTING",
+    "LOAD_CASE_SETTING",
+    "MODEL_INPUT"
+  ],
+  "precedenceDirection": "LOWEST_TO_HIGHEST_AUTHORITY",
+  "precedenceSource": "OWNER_DIRECTED_ISSUE_1083_OVERALL_GLOBAL_DEFAULT_LT_INDIVIDUAL_FILE_LT_LOAD_CASE_LT_MODEL_INPUT",
+  "precedenceStatement": "overall/global default < individual-file setting < load-case setting < model input",
+  "profileId": "BM4L-VALIDATION-V1",
+  "resolvedConfigurationSemanticHash": "fnv1a64:cc7ca526255d16a0",
+  "schema": "m047-bm4l-stage2-resolved-configuration/v1",
+  "translationalStiffnessUnit": "N./cm.",
+  "translationalStiffnessUnitSource": "GOVERNED_BM4_L_INPUT_UNITS_ENFORCED_BY_THE_RESTRAINT_STIFFNESS_GATE"
+}
+

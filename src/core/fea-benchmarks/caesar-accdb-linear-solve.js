@@ -81,6 +81,7 @@ import {
 import { semanticHash } from '../shared-piping-model/canonical-json.js';
 import { deepFreeze } from '../shared-piping-model/immutable.js';
 import { resolveCaesarConfigurationSetting } from './caesar-configuration-authority.js';
+import { resolveCaesarFrictionAuthority } from './caesar-friction-authority.js';
 
 const PROFILE_SOURCE = 'CAESAR_ACCDB_LINEAR_SOLVE_PROFILE_V1';
 const FACTOR_PROFILE_ID = 'B31_3_2022_B31J_2017';
@@ -94,6 +95,25 @@ const KG_PER_CM3_TO_KG_PER_M3 = 1e6;
 const CELSIUS_TO_KELVIN = 273.15;
 const POSITION_TOLERANCE_M = 1e-7;
 const CAESAR_WELDING_TEE_TYPE = 3;
+
+/**
+ * Configuration gates a prepared ACCDB case state may be assembled under.
+ *
+ * The gate is always explicit at the call site. The linear entry point accepts
+ * only cases whose governed effective friction is exactly zero; the separate
+ * nonlinear friction solver declares the friction gate. Neither mode is
+ * selected implicitly from case text or from a mutable flag.
+ */
+export const CAESAR_ACCDB_CASE_GATES = Object.freeze({
+  LINEAR_ZERO_EFFECTIVE_FRICTION: 'LINEAR_ZERO_EFFECTIVE_FRICTION',
+  NONLINEAR_EFFECTIVE_FRICTION: 'NONLINEAR_EFFECTIVE_FRICTION',
+});
+
+const EMPTY_OVERLAY = Object.freeze({
+  overlayId: 'NONE',
+  constraints: Object.freeze([]),
+  nodalLoads: Object.freeze([]),
+});
 
 /** Solve an explicit subset of selected physical cases and retain mechanics evidence. */
 export function solveCaesarAccdbLinearBenchmark(benchmarkPackage, selectedCaseIds) {
@@ -125,13 +145,14 @@ export function solveCaesarAccdbLinearBenchmark(benchmarkPackage, selectedCaseId
     sourceAccdbSha256: benchmarkPackage.source.sha256,
     cases,
     mechanics: {
-      schema: 'lfea-accdb-linear-solve-evidence/v1',
+      schema: 'lfea-accdb-linear-solve-evidence/v2',
       sourceModelSemanticHash: benchmarkPackage.model.semanticHash,
       profile: solveProfile,
       cases: caseEvidence,
       limitations: [
         'Blank BM4_L restraints use the governed CAESAR default finite stiffness after explicit INPUT_UNITS conversion to SI.',
-        'Only cases whose governed effective coefficient of friction is zero are accepted by this linear solver; friction-enabled cases remain reference-only until a nonlinear solver is qualified.',
+        'Evidence schema v2 adds the resolved friction authority (model mu, load-case friction multiplier, effective mu, friction stiffness conversion) and the case overlay record; result rows are unchanged by that addition.',
+        'Only cases whose governed effective coefficient of friction (model mu x load-case friction multiplier) is zero are accepted by this linear solver; friction-enabled cases are solved by the separate nonlinear friction solver.',
         'The explicit Bourdon job mode resolves from the individual-file layer because CAESAR existing-job settings are absent from ACCDB exports.',
         'Translation-and-rotation mode applies closed-end axial pressure strain to non-bend spans and one MEC-21 equation (2.25) bend-level free field sampled at all discretized bend stations.',
         'Reducer stiffness, gravity, thermal load and closed-end pressure elongation use the governed ten-cylinder midpoint-sampling candidate.',
@@ -145,17 +166,53 @@ export function solveCaesarAccdbLinearBenchmark(benchmarkPackage, selectedCaseId
 }
 
 function solveCase(benchmarkPackage, caseRecord, solveProfile) {
+  const prepared = prepareCaesarAccdbCaseState({
+    benchmarkPackage,
+    caseRecord,
+    solveProfile,
+    gate: CAESAR_ACCDB_CASE_GATES.LINEAR_ZERO_EFFECTIVE_FRICTION,
+    frictionDofKeys: [],
+  });
+  return executeCaesarAccdbCaseState({ prepared, overlay: EMPTY_OVERLAY });
+}
+
+/**
+ * Compile every iteration-invariant part of one ACCDB physical case.
+ *
+ * The returned state carries the qualified element assembly, material, section,
+ * bend, tee, restraint and thermal-shift decisions. It is shared verbatim by the
+ * linear entry point and by the nonlinear friction solver so friction can never
+ * introduce a second copy of the qualified mechanics.
+ *
+ * @param {object} input Preparation input.
+ * @param {Record<string, unknown>} input.benchmarkPackage Canonical ACCDB package.
+ * @param {Record<string, unknown>} input.caseRecord Selected ACCDB case record.
+ * @param {Record<string, unknown>} input.solveProfile Profile linearSolve authorities.
+ * @param {string} input.gate One of CAESAR_ACCDB_CASE_GATES.
+ * @param {Array<string>} input.frictionDofKeys `node:dof` keys carrying friction springs.
+ * @returns {Record<string, unknown>} Prepared case state.
+ */
+export function prepareCaesarAccdbCaseState(input) {
+  const { benchmarkPackage, caseRecord, solveProfile } = input;
+  const gate = requireCaseGate(input.gate);
   const caseMode = resolveSupportedLinearCaseMode(benchmarkPackage, caseRecord);
   const effectiveConfiguration = resolveCaseConfiguration(
     benchmarkPackage.profile.configurationAuthority,
     caseRecord.caseId,
   );
+  const frictionAuthority = resolveCaesarFrictionAuthority({
+    authority: benchmarkPackage.profile.configurationAuthority,
+    cases: benchmarkPackage.cases,
+    caseId: caseRecord.caseId,
+    inputUnitRows: benchmarkPackage.model.tables.INPUT_UNITS.rows,
+  });
   requireSupportedLinearConfiguration(
     benchmarkPackage.profile.configurationAuthority,
     solveProfile,
     effectiveConfiguration,
     caseRecord.caseId,
   );
+  requireSupportedFrictionGate(gate, frictionAuthority, caseRecord.caseId);
   const modelInput = benchmarkPackage.model;
   const sourceRows = sortedElements(modelInput.tables.INPUT_BASIC_ELEMENT_DATA.rows);
   const material = buildMaterial(sourceRows, solveProfile, benchmarkPackage, effectiveConfiguration);
@@ -207,14 +264,55 @@ function solveCase(benchmarkPackage, caseRecord, solveProfile) {
   const shiftedAnalysis = applyUniformThermalNumericalShift({
     analysis,
     constraints,
+    frictionDofKeys: input.frictionDofKeys ?? [],
     caseMode,
     benchmarkPackage,
     solveProfile,
   });
+  return {
+    gate,
+    benchmarkPackage,
+    caseRecord,
+    solveProfile,
+    caseMode,
+    effectiveConfiguration,
+    frictionAuthority,
+    material,
+    sectionResolutions: sectionRegistry.values(),
+    sourceRows,
+    bendDefinitions,
+    teeJunctions,
+    constraints,
+    conditioned,
+    analysis: shiftedAnalysis,
+  };
+}
+
+/**
+ * Solve one prepared ACCDB case state, optionally with a declared overlay.
+ *
+ * The overlay is the only mechanism by which a nonlinear iteration may add
+ * grounded tangential springs or capped opposing nodal loads. An empty overlay
+ * reproduces the qualified linear result exactly, including its hashes.
+ *
+ * @param {object} input Execution input.
+ * @param {Record<string, unknown>} input.prepared Output of prepareCaesarAccdbCaseState.
+ * @param {Record<string, unknown>} [input.overlay] Declared constraint/load overlay.
+ * @returns {Record<string, unknown>} Execution, rows, recovery and evidence.
+ */
+export function executeCaesarAccdbCaseState(input) {
+  const prepared = input.prepared;
+  const overlay = normalizeCaseOverlay(input.overlay ?? EMPTY_OVERLAY);
+  const {
+    benchmarkPackage, caseRecord, solveProfile, caseMode, effectiveConfiguration, frictionAuthority,
+    material, sectionResolutions, sourceRows, bendDefinitions, teeJunctions, conditioned,
+  } = prepared;
+  const shiftedAnalysis = prepared.analysis;
+  const constraints = mergeOverlayConstraints(prepared.constraints, overlay.constraints);
   const compilation = compileAnalysisModel({
     benchmarkPackage,
     material,
-    sectionResolutions: sectionRegistry.values(),
+    sectionResolutions,
     analysis: shiftedAnalysis,
     conditioned,
     constraints,
@@ -226,6 +324,7 @@ function solveCase(benchmarkPackage, caseRecord, solveProfile) {
     compilation,
     analysis: shiftedAnalysis,
     solveProfile,
+    overlayNodalLoads: overlay.nodalLoads,
   });
   const execution = compileSolverExecution({
     compilation,
@@ -246,14 +345,21 @@ function solveCase(benchmarkPackage, caseRecord, solveProfile) {
     analysisNodeIds: [...shiftedAnalysis.positions.keys()],
     execution,
     recovered,
+    appliedNodalLoads: appliedNodalLoadMap(overlay.nodalLoads),
     tolerance: benchmarkPackage.profile.equilibriumTolerance,
   });
   return {
     execution,
+    recovered,
+    recoveredEquilibrium,
+    overlay,
+    displacementShiftByNode: shiftedAnalysis.numericalDisplacementShift.byNode,
     rows: resultRows({ benchmarkPackage, execution, recovered, analysis: shiftedAnalysis }),
     evidence: {
       formula: caseRecord.formula,
       effectiveConfiguration,
+      frictionAuthority,
+      caseOverlay: overlay.evidence,
       gravityIncluded: caseMode.gravity,
       thermalIncluded: caseMode.thermal,
       pressureIncluded: caseMode.pressure,
@@ -398,6 +504,10 @@ function buildAnalysisElements(input) {
  * total displacement, end actions and reactions with less cancellation.
  */
 function applyUniformThermalNumericalShift(input) {
+  const groundedKeys = new Set([
+    ...input.constraints.map((constraint) => `${constraint.nodeId}:${constraint.dof}`),
+    ...input.frictionDofKeys,
+  ]);
   const byNode = new Map([...input.analysis.positions.keys()].map((nodeId) => [nodeId, zero6()]));
   const temperatures = uniqueNumbers(input.benchmarkPackage.model.tables.INPUT_BASIC_ELEMENT_DATA.rows
     .map((row) => Number(row.TEMP_EXP_C1)));
@@ -421,8 +531,14 @@ function applyUniformThermalNumericalShift(input) {
         0,
       ]);
     }
-    for (const constraint of input.constraints) {
-      byNode.get(constraint.nodeId)[DOFS.indexOf(constraint.dof)] = 0;
+    // A grounded spring contributes -k*u_total, but only element stiffness is
+    // subtracted from the shifted load vector, so every grounded DOF - restraint
+    // or friction - must carry a zero shift component.
+    for (const key of groundedKeys) {
+      const [nodeId, dof] = splitDofKey(key);
+      const vector = byNode.get(nodeId);
+      if (vector === undefined) throw new TypeError(`Grounded DOF ${key} has no analysis node.`);
+      vector[DOFS.indexOf(dof)] = 0;
     }
   } else if (input.caseMode.thermal) {
     mode = 'DISABLED_NONUNIFORM_ELEMENT_TEMPERATURES';
@@ -1304,6 +1420,7 @@ function compileCaseDeclaration(input) {
       });
     }
   }
+  for (const nodalLoad of input.overlayNodalLoads ?? []) primitives.push(nodalLoad);
   return compilePhysicalLoadCase({
     loadCaseId: `ACCDB-${input.caseRecord.caseId}`,
     loadCaseClass: 'MIXED_PHYSICAL',
@@ -1312,6 +1429,104 @@ function compileCaseDeclaration(input) {
     primitives,
     profile: loadCaseProfile(input.solveProfile.gravityAcceleration),
   });
+}
+
+function requireCaseGate(value) {
+  const gate = String(value ?? '');
+  if (!Object.values(CAESAR_ACCDB_CASE_GATES).includes(gate)) {
+    throw new TypeError(`Unsupported ACCDB case gate ${gate || '<empty>'}.`);
+  }
+  return gate;
+}
+
+/** Bind the requested gate to the governed effective friction of the case. */
+function requireSupportedFrictionGate(gate, frictionAuthority, caseId) {
+  const effective = frictionAuthority.effectiveCoefficient;
+  if (gate === CAESAR_ACCDB_CASE_GATES.LINEAR_ZERO_EFFECTIVE_FRICTION && effective !== 0) {
+    throw new TypeError(
+      `${caseId} governed effective friction is ${effective} `
+      + `(model mu ${frictionAuthority.coefficient.value} from ${frictionAuthority.coefficient.level} `
+      + `x friction multiplier ${String(frictionAuthority.frictionMultiplier.value)}); `
+      + 'nonzero effective friction is outside the linear benchmark solver.',
+    );
+  }
+  if (gate === CAESAR_ACCDB_CASE_GATES.NONLINEAR_EFFECTIVE_FRICTION && !(effective > 0)) {
+    throw new TypeError(
+      `${caseId} governed effective friction is ${effective}; `
+      + 'a zero-friction case must be solved by the qualified linear solver, not the friction solver.',
+    );
+  }
+}
+
+/** Validate a declared constraint/load overlay and retain its evidence. */
+function normalizeCaseOverlay(value) {
+  if (!value || typeof value !== 'object') throw new TypeError('An ACCDB case overlay must be an object.');
+  const constraints = value.constraints ?? [];
+  const nodalLoads = value.nodalLoads ?? [];
+  if (!Array.isArray(constraints) || !Array.isArray(nodalLoads)) {
+    throw new TypeError('An ACCDB case overlay must declare constraint and nodal-load arrays.');
+  }
+  for (const constraint of constraints) {
+    if (constraint.kind !== 'PARTIAL_RELEASE_SPRING' || !(Number(constraint.stiffness) > 0)) {
+      throw new TypeError('Overlay constraints must be positive grounded partial-release springs.');
+    }
+  }
+  for (const nodalLoad of nodalLoads) {
+    if (nodalLoad.kind !== 'NODAL_FORCE_MOMENT') {
+      throw new TypeError('Overlay nodal loads must be NODAL_FORCE_MOMENT primitives.');
+    }
+  }
+  return Object.freeze({
+    overlayId: String(value.overlayId ?? 'NONE'),
+    constraints: Object.freeze([...constraints]),
+    nodalLoads: Object.freeze([...nodalLoads]),
+    evidence: Object.freeze({
+      overlayId: String(value.overlayId ?? 'NONE'),
+      springCount: constraints.length,
+      nodalLoadCount: nodalLoads.length,
+      springDofs: Object.freeze(constraints
+        .map((constraint) => `${constraint.nodeId}:${constraint.dof}`)
+        .sort(compareText)),
+      nodalLoadNodeIds: Object.freeze([...new Set(nodalLoads.map((load) => String(load.nodeId)))].sort(compareText)),
+    }),
+  });
+}
+
+/** Merge overlay springs into the base restraint constraint list. */
+function mergeOverlayConstraints(base, overlayConstraints) {
+  if (overlayConstraints.length === 0) return base;
+  const byKey = new Map(base.map((constraint) => [`${constraint.nodeId}:${constraint.dof}`, constraint]));
+  for (const constraint of overlayConstraints) {
+    const key = `${constraint.nodeId}:${constraint.dof}`;
+    if (byKey.has(key)) {
+      throw new TypeError(`Overlay spring ${key} collides with a declared ACCDB restraint component.`);
+    }
+    byKey.set(key, constraint);
+  }
+  return [...byKey.values()].sort((left, right) => compareText(left.declarationId, right.declarationId));
+}
+
+/** Collapse declared overlay nodal loads into one six-component vector per node. */
+function appliedNodalLoadMap(nodalLoads) {
+  const byNode = new Map();
+  for (const load of nodalLoads) {
+    const nodeId = String(load.nodeId);
+    const vector = byNode.get(nodeId) ?? zero6();
+    vector[0] += Number(load.force.fx);
+    vector[1] += Number(load.force.fy);
+    vector[2] += Number(load.force.fz);
+    vector[3] += Number(load.moment.mx);
+    vector[4] += Number(load.moment.my);
+    vector[5] += Number(load.moment.mz);
+    byNode.set(nodeId, vector);
+  }
+  return byNode;
+}
+
+function splitDofKey(key) {
+  const index = String(key).lastIndexOf(':');
+  if (index <= 0) throw new TypeError(`Invalid DOF key ${String(key)}.`);
+  return [String(key).slice(0, index), String(key).slice(index + 1)];
 }
 
 function recoverActions(execution, elements) {
@@ -1363,23 +1578,30 @@ function recoverActions(execution, elements) {
  * analysis node. The supported W/T1/P1 formula grammar carries no point-force
  * primitive, so a free-node action is an absolute assembly/recovery residual
  * and is never normalized by a larger initial-strain vector.
+ *
+ * A nonlinear friction iteration does apply nodal loads at sliding supports.
+ * Those declared overlay loads enter the balance explicitly, so the physical
+ * equilibrium statement stays `incident action = support reaction + applied load`
+ * instead of being widened to absorb the friction force.
  */
 function buildRecoveredEquilibrium(input) {
   const reactionIndex = new Map(input.execution.reactions
     .map((entry) => [`${entry.nodeId}:${entry.dof}`, entry.value]));
+  const appliedNodalLoads = input.appliedNodalLoads ?? new Map();
   const rows = [];
   for (const nodeId of [...input.analysisNodeIds].map(String).sort(compareText)) {
     const incident = input.recovered.incident.get(nodeId) ?? zero6();
+    const applied = appliedNodalLoads.get(nodeId) ?? zero6();
     DOFS.forEach((dof, index) => {
       const reaction = reactionIndex.get(`${nodeId}:${dof}`) ?? 0;
-      const residual = incident[index] - reaction;
+      const residual = incident[index] - reaction - applied[index];
       const limit = dof.startsWith('U') ? input.tolerance.forceN : input.tolerance.momentNm;
       rows.push(Object.freeze({
         nodeId,
         dof,
         incidentAction: clean(incident[index]),
         reaction: clean(reaction),
-        appliedNodalLoad: 0,
+        appliedNodalLoad: clean(applied[index]),
         residual: clean(residual),
         limit,
         status: Math.abs(residual) <= limit ? 'PASS' : 'FAIL',
@@ -2098,7 +2320,7 @@ function requireFormulaCase(byNumber, lcaseNumber, owner) {
 }
 
 function resolveCaseConfiguration(authority, caseId) {
-  const friction = resolveCaesarConfigurationSetting(
+  const modelCoefficientOfFriction = resolveCaesarConfigurationSetting(
     authority,
     'COEFFICIENT_OF_FRICTION_MU',
     caseId,
@@ -2113,15 +2335,16 @@ function resolveCaseConfiguration(authority, caseId) {
     'RESTRAINT_DIRECTIONAL_BEHAVIOR',
     caseId,
   );
-  return deepFreeze({ friction, flexibilityElasticModulus, restraintDirectionalBehavior });
+  return deepFreeze({
+    modelCoefficientOfFriction,
+    flexibilityElasticModulus,
+    restraintDirectionalBehavior,
+  });
 }
 
 function requireSupportedLinearConfiguration(authority, solveProfile, effectiveConfiguration, caseId) {
   const axis = resolveCaesarConfigurationSetting(authority, 'Z_AXIS_UP', null);
   if (axis.value !== 'NO') throw new TypeError('The current ACCDB solver requires Z_AXIS_UP=NO.');
-  if (effectiveConfiguration.friction.value !== 0) {
-    throw new TypeError(`${caseId} nonlinear friction is outside the current linear benchmark solver.`);
-  }
   if (effectiveConfiguration.flexibilityElasticModulus.value !== 'EC') {
     throw new TypeError(`${caseId} flexibility must use cold modulus EC.`);
   }

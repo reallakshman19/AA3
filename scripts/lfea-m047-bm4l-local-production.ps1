@@ -10,7 +10,8 @@ Set-StrictMode -Version Latest
 $ErrorActionPreference = 'Stop'
 $PSNativeCommandUseErrorActionPreference = $true
 
-$COMMON = '45d51ea18624f5775805f399110c1738301c0d90'
+$COMMON = 'f4d49f2a47d970ae0abf913b537193e324556177'
+$COMMON_PRIOR = '45d51ea18624f5775805f399110c1738301c0d90'
 $ZIP_SHA = '978617cba50fa0b1a16c2fa71dc1e0d38e55ac834b191f887d100c6951abd8b9'
 $ZIP_BYTES = 582488
 $ACCDB_SHA = '64c05a50e9ed0452622ff5880335460486f24ac8e6adecc9a300b549c9aa82f8'
@@ -67,10 +68,18 @@ if (-not $SkipNpmCi) { Invoke-Checked { npm ci } 'npm ci' }
   'scripts/lfea-m047-bm4l-tee-stiffness-authority.mjs',
   'scripts/lfea-m047-bm4l-numeric-operator-proof.mjs',
   'scripts/lfea-m047-bm4l-bend-effective-stiffness.mjs',
-  'src/core/fea-benchmarks/caesar-accdb-linear-solve.js'
+  'scripts/lfea-m047-stage2-friction-check.mjs',
+  'scripts/lfea-m047-stage2-friction-rca.mjs',
+  'scripts/lfea-m047-stage2-source-custody-manifest.mjs',
+  'scripts/lfea-m047-stage2-resolved-configuration-report.mjs',
+  'src/core/fea-benchmarks/caesar-accdb-linear-solve.js',
+  'src/core/fea-benchmarks/caesar-accdb-friction-solve.js',
+  'src/core/fea-benchmarks/caesar-friction-authority.js'
 ) | ForEach-Object { Invoke-Checked { node --check $_ } "node --check $_" }
 [void][scriptblock]::Create((Get-Content -Raw 'scripts/lfea-m047-bm4l-accdb-provenance.ps1'))
 @(
+  'scripts/lfea-m047-stage2-friction-check.mjs',
+  'scripts/lfea-caesar-configuration-authority-check.mjs',
   'scripts/lfea-b3.3-solver-check.mjs',
   'scripts/lfea-b3.4-recovery-check.mjs',
   'scripts/lfea-b3.6-sparse-assembly-check.mjs',
@@ -115,6 +124,7 @@ Copy-Item $pristine $workAccdb -Force
 [ordered]@{
   schema='bm4l-source-custody/v3'; authorityRule='PINNED_COMMON_COMMIT_AND_ZIP_SHA256_DEFINE_ACCDB_MEMBER_BYTES'; commonCommit=$COMMON
   zip=[ordered]@{byteLength=$zip.Length; sha256=$zipHash; expectedSha256=$ZIP_SHA; exactMatch=$true}
+  commonPriorCommit=$COMMON_PRIOR
   accdb=[ordered]@{
     fileName='BM4_L.ACCDB'; byteLength=$members[0].Length; authorizedPinnedMemberSha256=$pristineHash
     declaredConflictingSha256=$DECLARED_ACCDB_SHA; declaredHashMatchesPinnedMember=($pristineHash -eq $DECLARED_ACCDB_SHA)
@@ -166,13 +176,50 @@ $tables = @(
   -ExpectedAccdbSha256 $ACCDB_SHA -DeclaredAccdbSha256 $DECLARED_ACCDB_SHA `
   -ExpectedAccdbBytes ([int64]$ACCDB_BYTES) -OutPath (Join-Path $artifacts 'bm4l-provenance.json')
 
+$custody = Join-Path $artifacts 'bm4l-stage2-source-custody-manifest.json'
+$resolvedConfig = Join-Path $artifacts 'bm4l-stage2-resolved-configuration.json'
+Invoke-Checked {
+  node scripts/lfea-m047-stage2-resolved-configuration-report.mjs --profile $PROFILE --out $resolvedConfig
+} 'stage 2 resolved configuration report'
+
 $actual = Join-Path $artifacts 'bm4l-actual.json'
 $report = Join-Path $artifacts 'bm4l-report.json'
+$frictionEvidence = Join-Path $artifacts 'bm4l-stage2-friction-run-evidence.json'
 Invoke-Checked {
   node scripts/lfea-caesar-accdb-benchmark.mjs `
     --accdb $workAccdb --profile $PROFILE --solve-linear true --solve-cases L2,L3,L4,L5,L6,L14 `
     --actual-out $actual --out $report --summary-out (Join-Path $artifacts 'bm4l-summary.md')
-} 'BM4_L six-case production solve'
+} 'BM4_L six-case non-friction control solve'
+
+$frictionActual = Join-Path $artifacts 'bm4l-stage2-actual.json'
+$frictionReport = Join-Path $artifacts 'bm4l-stage2-report.json'
+Invoke-Checked {
+  node scripts/lfea-caesar-accdb-benchmark.mjs `
+    --accdb $workAccdb --profile $PROFILE --solve-linear true `
+    --solve-cases L2,L3,L4,L5,L6,L14 --solve-friction-cases L13,L7,L15 `
+    --actual-out $frictionActual --friction-evidence-out $frictionEvidence `
+    --out $frictionReport --summary-out (Join-Path $artifacts 'bm4l-stage2-summary.md')
+} 'BM4_L stage 2 friction qualification solve'
+Invoke-Checked {
+  node scripts/lfea-m047-stage2-friction-rca.mjs --actual $frictionActual --report $frictionReport `
+    --pairs L13:L6,L7:L5,L15:L14 --out (Join-Path $artifacts 'bm4l-stage2-friction-rca.json')
+} 'stage 2 four-layer friction RCA'
+Invoke-Checked {
+  node scripts/lfea-m047-stage2-source-custody-manifest.mjs --report $frictionReport `
+    --provenance (Join-Path $artifacts 'bm4l-provenance.json') --out $custody
+} 'stage 2 source custody manifest'
+
+$stage2 = Get-Content -Raw $frictionActual | ConvertFrom-Json
+foreach ($caseId in @('L13','L7')) {
+  $caseEvidence = $stage2.mechanics.friction.cases.$caseId
+  if ($caseEvidence.convergenceGates.status -ne 'CONVERGED') { throw "$caseId friction active set did not converge." }
+  if ($caseEvidence.recoveredEquilibrium.status -ne 'PASS') { throw "$caseId friction equilibrium gate failed." }
+}
+if ($stage2.mechanics.friction.cases.L15.independentNonlinearSolve -ne $false) {
+  throw 'L15 must be rebuilt algebraically, not iterated.'
+}
+$frictionEvidenceJson = Get-Content -Raw $frictionEvidence | ConvertFrom-Json
+if ($frictionEvidenceJson.determinism.status -ne 'PASS') { throw 'Repeated nominal friction runs are not deterministic.' }
 $actualJson = Get-Content -Raw $actual | ConvertFrom-Json
 if ($actualJson.sourceAccdbSha256 -ne $ACCDB_SHA) { throw 'Solver actual package source hash is not the pinned ACCDB.' }
 
@@ -196,8 +243,11 @@ if ($bend.status -ne 'PASS' -or $bend.scope.bendCount -ne 12) { throw '12-bend e
   ForEach-Object { Invoke-Checked { npm run $_ } "npm run $_" }
 
 $reportJson = Get-Content -Raw $report | ConvertFrom-Json
+$stage2ReportJson = Get-Content -Raw $frictionReport | ConvertFrom-Json
 $caseFailures = [ordered]@{}
 foreach ($case in $reportJson.qualification.cases) { $caseFailures[[string]$case.caseId] = [int]$case.comparison.counts.failed }
+$stage2CaseFailures = [ordered]@{}
+foreach ($case in $stage2ReportJson.qualification.cases) { $stage2CaseFailures[[string]$case.caseId] = [int]$case.comparison.counts.failed }
 $receipt = [ordered]@{
   schema='m047-bm4l-local-production-qualification/v1'; status=[string]$reportJson.qualification.status
   exactHead=$head; worktreeCleanAtStart=$true; nodeVersion=$nodeVersion; powershellVersion=[string]$PSVersionTable.PSVersion; profile=$PROFILE
@@ -208,6 +258,21 @@ $receipt = [ordered]@{
     productVersion=$providerFile.VersionInfo.ProductVersion
   }
   qualification=[ordered]@{caseFailures=$caseFailures; totals=$reportJson.qualification.totals; semanticHash=$reportJson.qualification.semanticHash}
+  stage2Friction=[ordered]@{
+    status=[string]$stage2ReportJson.qualification.status
+    caseFailures=$stage2CaseFailures
+    totals=$stage2ReportJson.qualification.totals
+    semanticHash=$stage2ReportJson.qualification.semanticHash
+    frictionSolverProfileId=[string]$stage2.mechanics.friction.frictionSolverProfile.profileId
+    nominalRun=$stage2.mechanics.friction.nominalRun
+    determinismStatus=[string]$frictionEvidenceJson.determinism.status
+    convergedStates=[ordered]@{
+      L13=$stage2.mechanics.friction.cases.L13.convergedStates
+      L7=$stage2.mechanics.friction.cases.L7.convergedStates
+    }
+    resolvedConfigurationSemanticHash=[string]((Get-Content -Raw $resolvedConfig | ConvertFrom-Json).resolvedConfigurationSemanticHash)
+    sourceCustodyManifestSemanticHash=[string]((Get-Content -Raw $custody | ConvertFrom-Json).manifestSemanticHash)
+  }
   artifactsRoot=$ArtifactsRoot
 }
 $receiptPath = Join-Path $artifacts 'bm4l-local-production-receipt.json'

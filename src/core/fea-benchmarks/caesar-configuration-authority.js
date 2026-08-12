@@ -1,10 +1,18 @@
 /**
  * Normalize and resolve layered CAESAR configuration authority.
  *
- * Profiles carry raw settings at their original scope. Resolution always uses
- * the declared CAESAR precedence: load case, individual file, model input,
- * then overall/global default. Unsupported or unresolved settings raise
- * explicit errors; callers never infer an effective value from CASE text.
+ * Profiles carry raw settings at their original scope. The declaration is
+ * written lowest-to-highest authority exactly as governed:
+ *
+ *   overall/global default < individual-file setting < load-case setting < model input
+ *
+ * Resolution therefore starts at the global default and lets each higher layer
+ * replace it, so the model input is the final authority. The resolver walks the
+ * declared array itself rather than a second hard-coded order, which keeps the
+ * executed precedence and the published declaration from drifting apart.
+ *
+ * Unsupported or unresolved settings raise explicit errors; callers never infer
+ * an effective value from CASE text.
  */
 
 import { deepFreeze } from '../shared-piping-model/immutable.js';
@@ -12,12 +20,22 @@ import { deepFreeze } from '../shared-piping-model/immutable.js';
 export const CAESAR_CONFIGURATION_AUTHORITY_SCHEMA =
   'caesar-configuration-authority/v1';
 
+/** Declared authority layers, lowest authority first. */
 export const CAESAR_CONFIGURATION_PRECEDENCE = Object.freeze([
-  'LOAD_CASE_SETTING',
-  'INDIVIDUAL_FILE_SETTING',
-  'MODEL_INPUT',
   'OVERALL_GLOBAL_DEFAULT',
+  'INDIVIDUAL_FILE_SETTING',
+  'LOAD_CASE_SETTING',
+  'MODEL_INPUT',
 ]);
+
+export const CAESAR_CONFIGURATION_PRECEDENCE_DIRECTION = 'LOWEST_TO_HIGHEST_AUTHORITY';
+
+const LAYER_BY_LEVEL = Object.freeze({
+  OVERALL_GLOBAL_DEFAULT: 'overallGlobalDefault',
+  INDIVIDUAL_FILE_SETTING: 'individualFile',
+  LOAD_CASE_SETTING: 'loadCase',
+  MODEL_INPUT: 'modelInput',
+});
 
 /** Validate and freeze one reusable CAESAR configuration authority record. */
 export function normalizeCaesarConfigurationAuthority(input) {
@@ -30,7 +48,14 @@ export function normalizeCaesarConfigurationAuthority(input) {
   const precedence = stringArray(input.precedence, 'configurationAuthority.precedence');
   if (!sameStrings(precedence, CAESAR_CONFIGURATION_PRECEDENCE)) {
     throw new TypeError(
-      `configurationAuthority.precedence must be ${CAESAR_CONFIGURATION_PRECEDENCE.join(' > ')}.`,
+      'configurationAuthority.precedence must be declared lowest authority first as '
+      + `${CAESAR_CONFIGURATION_PRECEDENCE.join(' < ')}.`,
+    );
+  }
+  if (input.precedenceDirection !== undefined
+    && input.precedenceDirection !== CAESAR_CONFIGURATION_PRECEDENCE_DIRECTION) {
+    throw new TypeError(
+      `configurationAuthority.precedenceDirection must be ${CAESAR_CONFIGURATION_PRECEDENCE_DIRECTION}.`,
     );
   }
   const layers = input.layers;
@@ -41,6 +66,10 @@ export function normalizeCaesarConfigurationAuthority(input) {
     schema: CAESAR_CONFIGURATION_AUTHORITY_SCHEMA,
     caesarVersion: nonempty(input.caesarVersion, 'configurationAuthority.caesarVersion'),
     precedence,
+    precedenceDirection: CAESAR_CONFIGURATION_PRECEDENCE_DIRECTION,
+    precedenceSource: input.precedenceSource === undefined || input.precedenceSource === null
+      ? null
+      : nonempty(input.precedenceSource, 'configurationAuthority.precedenceSource'),
     layers: {
       overallGlobalDefault: normalizeLayer(
         layers.overallGlobalDefault,
@@ -66,6 +95,28 @@ export function normalizeCaesarConfigurationAuthority(input) {
 
 /** Resolve one effective setting using the frozen precedence declaration. */
 export function resolveCaesarConfigurationSetting(authorityInput, settingInput, caseIdInput) {
+  const ledger = resolveCaesarConfigurationLedger(authorityInput, settingInput, caseIdInput);
+  if (ledger.resolved === null) {
+    throw new TypeError(
+      `CAESAR setting ${ledger.setting}${ledger.caseId === null ? '' : ` for ${ledger.caseId}`} has no declared authority value.`,
+    );
+  }
+  return ledger.resolved;
+}
+
+/**
+ * Resolve one setting and retain every declared layer candidate.
+ *
+ * The ledger is the per-case resolved-configuration evidence: it shows which
+ * layers declared the setting, which layer won, and why, without the caller
+ * re-deriving the precedence.
+ *
+ * @param {Record<string, unknown>} authorityInput Raw configuration authority.
+ * @param {string} settingInput Setting name.
+ * @param {string|null} caseIdInput Load case, or null for file-level resolution.
+ * @returns {Record<string, unknown>} Frozen ledger record; `resolved` is null when undeclared.
+ */
+export function resolveCaesarConfigurationLedger(authorityInput, settingInput, caseIdInput) {
   const authority = normalizeCaesarConfigurationAuthority(authorityInput);
   const setting = nonempty(settingInput, 'setting');
   const caseId = caseIdInput === null ? null : nonempty(caseIdInput, 'caseId');
@@ -76,30 +127,37 @@ export function resolveCaesarConfigurationSetting(authorityInput, settingInput, 
       `CAESAR setting ${setting}${caseId === null ? '' : ` for ${caseId}`} is unresolved: ${unresolved.reason}`,
     );
   }
-  const candidates = caseId === null
-    ? []
-    : [[
-        'LOAD_CASE_SETTING',
-        authority.layers.loadCase.cases[caseId]?.[setting],
-        authority.layers.loadCase.source,
-      ]];
-  candidates.push(
-    ['INDIVIDUAL_FILE_SETTING', authority.layers.individualFile.settings[setting], authority.layers.individualFile.source],
-    ['MODEL_INPUT', authority.layers.modelInput.settings[setting], authority.layers.modelInput.source],
-    ['OVERALL_GLOBAL_DEFAULT', authority.layers.overallGlobalDefault.settings[setting], authority.layers.overallGlobalDefault.source],
-  );
-  const resolved = candidates.find((entry) => entry[1] !== undefined);
-  if (!resolved) {
-    throw new TypeError(
-      `CAESAR setting ${setting}${caseId === null ? '' : ` for ${caseId}`} has no declared authority value.`,
-    );
-  }
+  const candidates = authority.precedence.map((level) => {
+    const layer = authority.layers[LAYER_BY_LEVEL[level]];
+    const settings = level === 'LOAD_CASE_SETTING'
+      ? (caseId === null ? undefined : layer.cases[caseId])
+      : layer.settings;
+    const declared = settings !== undefined && settings[setting] !== undefined;
+    return {
+      level,
+      source: layer.source,
+      applicable: level !== 'LOAD_CASE_SETTING' || caseId !== null,
+      declared,
+      value: declared ? settings[setting] : null,
+    };
+  });
+  // The declaration is lowest-to-highest authority, so the winner is the last
+  // declared candidate in declared order.
+  const winner = [...candidates].reverse().find((entry) => entry.declared) ?? null;
   return deepFreeze({
+    schema: 'caesar-configuration-resolution-ledger/v1',
     setting,
     caseId,
-    level: resolved[0],
-    value: resolved[1],
-    source: resolved[2],
+    precedence: authority.precedence,
+    precedenceDirection: CAESAR_CONFIGURATION_PRECEDENCE_DIRECTION,
+    candidates,
+    resolved: winner === null ? null : {
+      setting,
+      caseId,
+      level: winner.level,
+      value: winner.value,
+      source: winner.source,
+    },
   });
 }
 

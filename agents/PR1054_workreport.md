@@ -14,16 +14,17 @@
 | Browser qualification source head | `57df6f795a8ca82a3d3b0f794284871d929b5f76` |
 | First exact-head qualification candidate | `ff96666fccb8ff6bc25be9231228fd750485022d` |
 | Second exact-head qualification candidate | `1aba6173983c7b0b090a0a67e11eac3e06ed7ca2` |
+| Third exact-head qualification candidate | `20630072aa59f274b538335c7a6c5f4d534f617a` |
 | Mission | Recover certified support restraint-property editing while keeping support placement/movement fail closed. |
-| Engineering state | **EMPIRICAL E2E REPAIR IN PROGRESS** |
-| Current execution truth | Run `31576547806` checked out exact head `1aba6173…`; setup/source/line-budget checks PASS; focused Node qualification **13/13 PASS**; production Chromium started and failed before editing because the new E2E misclassified S-007's imported active restraint object as a certified override. Test-only evidence repair is authorized below. |
+| Engineering state | **EMPIRICAL PRODUCTION REPAIR IN PROGRESS** |
+| Current execution truth | Run `31576864213` checked out exact head `20630072…`; setup/source/line-budget checks PASS; focused Node qualification **13/13 PASS**; production Chromium reached real Stage and Preview, then proved the Table restraint Preview emits no visible ghost. Production Preview repair is authorized below. |
 | Merge state | Draft / unmerged until exact-head Node + Chromium evidence is green and the final report-sync head is requalified. |
 
 ## Preserved Authority
 
 The recovered operation is intentionally narrow:
 
-`exact SUPPORT row -> exact support + node + host custody -> explicit full restraint override -> governed SUPPORT_RESTRAINT intent -> UPDATE_SUPPORT_RESTRAINT command -> candidate Preview -> validation -> certified transaction -> canonical topology -> existing journal Undo/Redo`
+`exact SUPPORT row -> exact support + node + host custody -> explicit full restraint override -> governed SUPPORT_RESTRAINT intent -> UPDATE_SUPPORT_RESTRAINT command -> candidate Preview ghost -> validation -> certified transaction -> canonical topology -> existing journal Undo/Redo`
 
 Still prohibited:
 
@@ -76,9 +77,10 @@ The command writes a separate canonical `support.restraint` marked `CERTIFIED_TA
 | DEC-1054-04 | Evidence | ACCEPTED | Imported restraints retained; only marked override becomes active. |
 | ISS-1054-01 | Current-main regression | RESOLVED IN SOURCE | Explicit unresolved host token rejects before override. |
 | ISS-1054-02 | Qualification | E2E AUTHORED / EXECUTION IN PROGRESS | `e2e/topology-edit-table-support-restraint.spec.js` uses the real Workspace -> XYZ fixture -> 3D Edit -> Engineering Table path, selects S-007 through a typed filter and visible Select action, edits real restraint controls, and drives Stage/Preview/Validate/Apply/Undo/Redo. Controller access is read-only evidence only. |
-| ISS-1054-03 | Test expectation | **RESOLVED / RUN 2 NODE PASS** | Run `31576192230` showed `LOCAL_Y` derives `{x:0,y:1,z:0}` while the recovered test expected `y:-1`. Test expectation now matches the unchanged deterministic `hostFrame()` cross-product convention; run `31576547806` passes this test. |
-| ISS-1054-04 | Test expectation | **RESOLVED / RUN 2 NODE PASS** | The recovered Table test omitted established deterministic `sequence: 0`; the expectation now includes it without changing planner behavior. Run `31576547806` passes this test. |
-| ISS-1054-05 | Browser evidence interpretation | **OPEN / E2E-ONLY REPAIR AUTHORIZED** | Run `31576547806` reached the real XYZ Table and selected S-007, then failed at the E2E baseline assertion because `support.restraint` already contains the imported active restraint model. Production `supportRestraintRows()` intentionally treats `support.restraint` as a certified override only when `support.restraintAuthority === 'CERTIFIED_TABLE_OVERRIDE'`; otherwise imported restraint rows remain authoritative display evidence. Repair only the E2E evidence helper so `override` is non-null exclusively under that explicit authority marker; keep the imported baseline object and `support.restraints` evidence intact. |
+| ISS-1054-03 | Test expectation | **RESOLVED / RUN 2+ NODE PASS** | `LOCAL_Y` test expectation now matches the unchanged deterministic `hostFrame()` cross-product convention. |
+| ISS-1054-04 | Test expectation | **RESOLVED / RUN 2+ NODE PASS** | Table plan expectation now includes established deterministic `sequence: 0`; planner behavior was not changed. |
+| ISS-1054-05 | Browser evidence interpretation | **RESOLVED / RUN 3 PROGRESSED** | E2E evidence now classifies an override only when `restraintAuthority === 'CERTIFIED_TABLE_OVERRIDE'`, preserving the imported baseline restraint. Run `31576864213` progressed beyond this assertion through input, Stage and Preview. |
+| ISS-1054-06 | Preview correctness | **OPEN / PRODUCTION REPAIR AUTHORIZED** | Run `31576864213` proved the governed restraint candidate reaches Table Preview while `ghostGroup.children.length` remains zero. `renderTopologyEditTablePreviewGhost()` currently builds ghost content only from `controller.deriveVisual(candidateTopology)`, but ordinary `refreshView()` derives restraint glyphs separately through `deriveAllSupportRestraintGeometry()` -> `projectSupportGeometryToViewport()`. A restraint-only edit therefore has no changed topology geometry to place in the generic ghost. Repair `src/workspace/viewport-productivity/topology-edit-table-workflow.js` so Preview combines existing changed topology projection with the governed support-restraint projection for changed support IDs only, using the already-approved `supportMarkerSize` policy. Add a regression assertion to the existing `tests/topology-edit-table-support-restraint.test.mjs`. Do not mutate canonical state, do not render all supports as ghost, and do not invent a second restraint geometry algorithm. |
 | RISK-1054-01 | Current-head execution | OPEN | Exact-head Chromium lifecycle must reach Apply/Undo/Redo before merge. |
 | RISK-1054-02 | Sibling overlap | OPEN / MANAGEABLE | #1051 overlaps small Table wiring and must reconcile whichever merges second. |
 
@@ -90,7 +92,7 @@ The E2E proves or fails on all of the following without guard weakening:
 2. typed `S-007` filtering selects exactly one canonical SUPPORT row through its visible Select action;
 3. family/direction/gap/travel input changes are transient and preserve canonical hash, journal/ledger, active command IDs, session version, source hashes, and renderer count;
 4. Stage produces one governed intent while canonical authority remains unchanged;
-5. Preview produces a changed-support ghost/candidate without canonical mutation;
+5. Preview produces a visible governed changed-support restraint ghost without canonical mutation;
 6. Validate reaches `READY_TO_APPLY` without canonical mutation;
 7. Apply changes the target support to a `CERTIFIED_TABLE_OVERRIDE` restraint while imported restraint evidence remains unchanged;
 8. support host identity and station remain unchanged;
@@ -102,51 +104,43 @@ The E2E proves or fails on all of the following without guard weakening:
 
 ## Qualification Harness
 
-The isolated base branch `qualification/pr1054-exact-head` contains only `.github/workflows/pr1054-exact-head-qualification.yml`. The workflow:
-
-- checks out `github.event.pull_request.head.sha` exactly;
-- provisions Node 22 and real Chromium;
-- syntax-checks the three focused Node files and browser spec;
-- enforces `<300` physical lines on the new E2E;
-- runs `git diff --check`;
-- executes the three focused Node files;
-- executes the production Chromium support-restraint lifecycle with trace-on and zero retries;
-- uploads Playwright/test evidence plus the authored JSON qualification record.
-
-The workflow file is not part of the PR1054 feature diff.
+The isolated base branch `qualification/pr1054-exact-head` contains only `.github/workflows/pr1054-exact-head-qualification.yml`. The workflow checks out `github.event.pull_request.head.sha`, provisions Node 22 and real Chromium, syntax-checks qualification sources, enforces the new E2E `<300` physical-line guard, runs `git diff --check`, executes the three focused Node files, executes the production Chromium lifecycle with trace-on and zero retries, and uploads Playwright/evidence output. The workflow file is not part of the PR1054 feature diff.
 
 ### First executed exact-head gate — Node FAIL, Chromium skipped
 
 Run `31576192230`, job `94048733399`, exact head `ff96666fccb8ff6bc25be9231228fd750485022d`:
 
-- exact checkout: PASS
-- Node 22 setup: PASS
-- `npm ci` + real Chromium install: PASS
-- exact-head assertion: PASS
-- all four `node --check` checks: PASS
-- new E2E `<300` physical-line gate: PASS
-- `git diff --check`: PASS
+- setup/source/syntax/line-budget/`git diff --check`: PASS
 - focused Node: **13 tests / 11 pass / 2 fail**
-- failure 1: stale `LOCAL_Y` sign expectation; actual deterministic production vector is +Y
-- failure 2: stale Table plan expectation omitted deterministic `sequence: 0`
-- Chromium: SKIPPED because Node gate failed.
+- stale failures: `LOCAL_Y` sign expectation and omitted deterministic `sequence: 0`
+- Chromium: SKIPPED.
 
 ### Second executed exact-head gate — Node PASS, Chromium FAIL before edit
 
 Run `31576547806`, job `94049913490`, exact head `1aba6173983c7b0b090a0a67e11eac3e06ed7ca2`:
 
-- exact checkout/setup/source/syntax/line-budget/`git diff --check`: PASS
-- focused Node: **13 tests / 13 pass / 0 fail**
-- production Chromium launched the real application, loaded the XYZ fixture, opened Engineering Table, filtered to and selected S-007
-- Chromium then FAIL before any restraint editing because the E2E asserted `support.restraint === null`; the live imported S-007 restraint object is valid baseline evidence and lacks `CERTIFIED_TABLE_OVERRIDE` authority
-- Playwright evidence upload: PASS
-- artifact ID `9133425605`
-- artifact name `pr1054-support-restraint-1aba6173983c7b0b090a0a67e11eac3e06ed7ca2-1`
-- artifact size `2,012,202` bytes
-- artifact SHA256 `787bf6d1d578c424a15442cee5046a46b241d3da5ab57c8028273c88221143dc`
-- artifact contains failure screenshot, error context, and trace.
+- setup/source/syntax/line-budget/`git diff --check`: PASS
+- focused Node: **13/13 PASS**
+- Chromium loaded XYZ fixture, opened Engineering Table, filtered to and selected S-007
+- FAIL before edit on incorrect baseline override interpretation
+- artifact ID `9133425605`, size `2,012,202` bytes, SHA256 `787bf6d1d578c424a15442cee5046a46b241d3da5ab57c8028273c88221143dc`.
 
-This is a real Node PASS but not a Chromium lifecycle PASS. The next change is restricted to ISS-1054-05 in the E2E evidence helper.
+### Third executed exact-head gate — Node PASS, Chromium exposed missing Preview ghost
+
+Run `31576864213`, job `94050832026`, exact head `20630072aa59f274b538335c7a6c5f4d534f617a`:
+
+- exact checkout/setup/source/syntax/line-budget/`git diff --check`: PASS
+- focused Node: **13/13 PASS**
+- production Chromium loaded the real XYZ fixture, opened Engineering Table, filtered/select S-007, edited the real restraint controls, staged one governed intent and entered non-mutating Preview
+- candidate/preview exists, but `ghostGroup.children.length` was **0**; the E2E failed at the required visible ghost assertion before Validate/Apply
+- static trace of production source confirms Table Preview uses only generic topology `deriveVisual()` while normal support-restraint rendering is a separate governed projection path
+- Playwright evidence upload: PASS
+- artifact ID `9133534883`
+- artifact name `pr1054-support-restraint-20630072aa59f274b538335c7a6c5f4d534f617a-1`
+- artifact size `2,336,877` bytes
+- artifact SHA256 `b906126882d1002552535fc3335ca28263fce9a6e0254071b818b5a822e3d53d`.
+
+This is a real Node PASS and a real production Preview defect. The next production change is restricted to ISS-1054-06.
 
 After a green feature/test run:
 
@@ -158,7 +152,7 @@ After a green feature/test run:
 
 ## Exact Changed-File Ledger
 
-The current feature diff is exactly **22** paths:
+The current feature diff is 22 paths; the authorized Preview repair adds one existing production path, making the final ledger exactly **23** paths:
 
 1. `agents/PR1054_workreport.md`
 2. `e2e/topology-edit-table-support-restraint.spec.js`
@@ -179,20 +173,21 @@ The current feature diff is exactly **22** paths:
 17. `src/workspace/viewport-productivity/topology-edit-table-properties-view.js`
 18. `src/workspace/viewport-productivity/topology-edit-table-cell-edit.js`
 19. `src/workspace/viewport-productivity/topology-edit-table-engineering-runtime.js`
-20. `tests/topology-edit-capability-authority.test.mjs`
-21. `tests/topology-edit-support-restraint-command.test.mjs`
-22. `tests/topology-edit-table-support-restraint.test.mjs`
+20. `src/workspace/viewport-productivity/topology-edit-table-workflow.js` — authorized ISS-1054-06 Preview projection repair
+21. `tests/topology-edit-capability-authority.test.mjs`
+22. `tests/topology-edit-support-restraint-command.test.mjs`
+23. `tests/topology-edit-table-support-restraint.test.mjs`
 
-The temporary qualification workflow is isolated on `qualification/pr1054-exact-head` and is not part of this ledger.
+The temporary qualification workflow remains isolated on `qualification/pr1054-exact-head` and is not part of this ledger.
 
 ## Static / Source Audit
 
 - manually reconciled current-main modules remain below the repository `<300` physical-line gate;
-- recovered production modules were byte-identical to tested #1033 where later merged work did not touch them;
-- `topology-edit-table-tee-reducer-contract.js` is extraction-only line-budget work;
+- new E2E line gate has passed every exact-head run;
 - current valve catalogue selector and target-DN fail-closed logic remain intact;
 - shared support-host resolver is imported, not duplicated;
-- no canonical topology mutation is authorized from DOM input or pointer movement.
+- restraint Preview repair must reuse the same pure support-restraint geometry/projection authority as normal rendering;
+- no canonical topology mutation is authorized from DOM input, Stage, Preview, Validate, renderer, or pointer movement.
 
 ## Validation Ledger
 
@@ -202,10 +197,11 @@ The temporary qualification workflow is isolated on `qualification/pr1054-exact-
 | `85e67606b588809c96b03c8801a783edaf09620d` | PR1054 pre-report source/test candidate; static review only |
 | `7d3002df5915027f607a7db10b2f75049fe14c94` | pre-qualification report-sync head; zero pull-request workflow runs |
 | `57df6f795a8ca82a3d3b0f794284871d929b5f76` | browser qualification source authored |
-| `ff96666fccb8ff6bc25be9231228fd750485022d` | run `31576192230`: setup/source/line gates PASS; Node 11/13 PASS, 2 stale expectation failures; Chromium skipped |
-| `1aba6173983c7b0b090a0a67e11eac3e06ed7ca2` | run `31576547806`: Node 13/13 PASS; Chromium reached S-007 and failed E2E baseline override interpretation before edit; artifact `9133425605` |
-| next E2E-repaired head | NOT_RUN until ISS-1054-05 is committed |
+| `ff96666fccb8ff6bc25be9231228fd750485022d` | run `31576192230`: Node 11/13, Chromium skipped |
+| `1aba6173983c7b0b090a0a67e11eac3e06ed7ca2` | run `31576547806`: Node 13/13; browser baseline evidence mismatch; artifact `9133425605` |
+| `20630072aa59f274b538335c7a6c5f4d534f617a` | run `31576864213`: Node 13/13; browser reached Preview and exposed missing restraint ghost; artifact `9133534883` |
+| next Preview-repaired head | NOT_RUN until ISS-1054-06 source + regression test are committed |
 
 ## Handover
 
-Repair only ISS-1054-05, re-run exact-head qualification, and diagnose any later browser result without weakening guards. Preserve imported restraint and parent-support-policy custody. Qualify the final report head, then promote the stack in order #1054 -> #1061 -> #1066.
+Repair only ISS-1054-06 by composing the changed candidate support-restraint projection into the existing Table Preview ghost. Re-run exact-head qualification and diagnose any later browser result without weakening guards. Preserve imported restraint and parent-support-policy custody. Qualify the final report head, then promote the stack in order #1054 -> #1061 -> #1066.

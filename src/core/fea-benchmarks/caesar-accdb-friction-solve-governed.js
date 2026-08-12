@@ -8,7 +8,10 @@
 import { semanticHash } from '../shared-piping-model/canonical-json.js';
 import { deepFreeze } from '../shared-piping-model/immutable.js';
 import { compareBenchmarkResultRows } from './qualification-comparison.js';
-import { solveCaesarAccdbLinearBenchmark } from './caesar-accdb-linear-solve-governed.js';
+import {
+  resolveCaesarEffectiveFriction,
+  solveCaesarAccdbLinearBenchmark,
+} from './caesar-accdb-linear-solve-governed.js';
 import {
   CAESAR_ACCDB_FRICTION_SOLVER_PROFILE,
   solveCaesarAccdbFrictionBenchmark as solveRawCaesarAccdbFrictionBenchmark,
@@ -78,6 +81,9 @@ export function solveCaesarAccdbFrictionBenchmark(benchmarkPackage, selectedCase
     throw new TypeError(`M047 governed friction solver accepts only L13, L7, L15 and L1; got ${unknown.join(', ')}.`);
   }
   if (requested.includes('L1')) resolveCaesarHydrotestQualificationAuthority(benchmarkPackage);
+  const l15FrictionAuthority = requested.includes('L15')
+    ? requireCompatibleL15FrictionAuthority(benchmarkPackage)
+    : null;
 
   const dependencyIds = [];
   if (requested.includes('L13') || requested.includes('L15')) dependencyIds.push('L13');
@@ -87,7 +93,12 @@ export function solveCaesarAccdbFrictionBenchmark(benchmarkPackage, selectedCase
     : null;
 
   const derived = requested.includes('L15')
-    ? buildGovernedDerivedL15(benchmarkPackage, preDerived.cases.L7, preDerived.cases.L13)
+    ? buildGovernedDerivedL15(
+      benchmarkPackage,
+      preDerived.cases.L7,
+      preDerived.cases.L13,
+      l15FrictionAuthority,
+    )
     : null;
 
   // L1 is intentionally invoked only after L15 has been constructed, preserving
@@ -143,7 +154,30 @@ export function solveCaesarAccdbFrictionBenchmark(benchmarkPackage, selectedCase
   });
 }
 
-function buildGovernedDerivedL15(benchmarkPackage, l7, l13) {
+function requireCompatibleL15FrictionAuthority(benchmarkPackage) {
+  const authority = resolveCaesarEffectiveFriction(benchmarkPackage, 'L15');
+  if (authority.kind !== 'DERIVED' || authority.combinationMethod !== 'ALG') {
+    throw derivedFrictionError('L15 must resolve as an algebraic derived-friction case.');
+  }
+  const dependencies = authority.dependencies;
+  const caseIds = dependencies.map((entry) => entry.caseId).sort(compareText);
+  if (dependencies.length !== 2 || caseIds[0] !== 'L13' || caseIds[1] !== 'L7') {
+    throw derivedFrictionError(`L15 friction dependencies must be exactly L7 and L13; got ${caseIds.join(',')}.`);
+  }
+  const effective = dependencies.map((entry) => Number(entry.effectiveCoefficient));
+  if (effective.some((value) => !Number.isFinite(value) || !(value > 0)) || effective[0] !== effective[1]) {
+    throw derivedFrictionError(
+      `L15 requires one common positive effective friction state; got L7/L13 values ${effective.join(',')}.`,
+    );
+  }
+  return deepFreeze({
+    ...authority,
+    commonEffectiveCoefficient: effective[0],
+    compatibilityRule: 'L7_AND_L13_MUST_SHARE_ONE_POSITIVE_EFFECTIVE_FRICTION_STATE_BEFORE_L15_SUBTRACTION',
+  });
+}
+
+function buildGovernedDerivedL15(benchmarkPackage, l7, l13, frictionAuthority) {
   if (!l7 || !l13) throw new TypeError('L15 requires independently converged L7 and L13 states.');
   const rows = subtractRows('L15', l7.rows, l13.rows);
   const recoveredEquilibrium = equilibriumFromResultRows(rows, benchmarkPackage.profile.equilibriumTolerance);
@@ -152,6 +186,7 @@ function buildGovernedDerivedL15(benchmarkPackage, l7, l13) {
     combinationMethod: 'ALG',
     independentNonlinearSolve: false,
     operandExecutionSemanticHashes: Object.freeze([l7.executionSemanticHash, l13.executionSemanticHash]),
+    governedFrictionAuthority: frictionAuthority,
     algebraicIdentityStatus: 'PASS',
     algebraicIdentityMaximumAbsoluteResidual: 0,
     executionStatus: 'PASS',
@@ -261,5 +296,10 @@ function compareText(left, right) {
 function hydrotestError(message, code) {
   const error = new TypeError(message);
   error.code = code;
+  return error;
+}
+function derivedFrictionError(message) {
+  const error = new TypeError(message);
+  error.code = 'CAESAR_ACCDB_DERIVED_FRICTION_AUTHORITY_MISMATCH';
   return error;
 }

@@ -23,7 +23,7 @@ export function buildLafeaWorkbenchOrchestrationProjection(stageValue) {
     PREPARATION: preparationSection(stage, adapter, readiness, preparation),
     DISCRETIZATION: discretizationSection(stage, adapter, custody),
     AUTHORIZATION: authorizationSection(stage, adapter, readiness, preparation, custody),
-    EXECUTION: executionSection(stage, readiness),
+    EXECUTION: executionSection(stage, readiness, preparation, custody),
     RESULTS: resultsSection(stage, readiness),
     RELEASE: releaseSection(readiness),
   };
@@ -82,9 +82,10 @@ function preparationSection(stage, adapter, readiness, projection) {
   }
   if (projection.state === 'ABSENT') {
     return section('BLOCKED', projection.reasons, refs,
-      stage.domainFirstProfileActive ? [] : ['REGISTER_PREPARATION_EVIDENCE']);
+      stage.domainFirstProfileActive ? ['RUN_PREFLIGHT'] : ['REGISTER_PREPARATION_EVIDENCE']);
   }
-  return section('BLOCKED', projection.reasons, refs, projection.evidenceHash ? ['VIEW_PREPARATION'] : []);
+  return section('BLOCKED', projection.reasons, refs,
+    stage.domainFirstProfileActive ? ['RUN_PREFLIGHT'] : projection.evidenceHash ? ['VIEW_PREPARATION'] : []);
 }
 
 function discretizationSection(stage, adapter, custody) {
@@ -130,9 +131,15 @@ function authorizationSection(stage, adapter, readiness, preparation, custody) {
   return section('READY', [], refs, ['AUTHORIZE_SOLVE']);
 }
 
-function executionSection(stage, readiness) {
+function executionSection(stage, readiness, preparation, custody) {
   const execution = stage.execution;
-  if (!execution) return section('NOT_STARTED', ['EXECUTION_NOT_RUN'], [], []);
+  if (!execution) {
+    const runnable = stage.domainFirstProfileActive
+      && readiness?.solverModelCurrent === true
+      && preparation?.usableForAuthorization === true
+      && custody?.usableForRun === true;
+    return section('NOT_STARTED', ['EXECUTION_NOT_RUN'], [], runnable ? ['RUN_SOLVE'] : []);
+  }
   if (execution.status === 'QUALIFIED') {
     if (stage.domainFirstProfileActive && readiness?.resultReady !== true) {
       return section('BLOCKED', domainExecutionReasons(readiness), [], ['VIEW']);

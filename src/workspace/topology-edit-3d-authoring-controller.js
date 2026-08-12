@@ -152,8 +152,8 @@ export class TopologyEdit3DViewController extends ProfessionalController {
         ?? authoredTarget?.objectId
         ?? null;
       const partRole = directTarget?.partRole
-        ?? authoredTarget?.partRole
-        ?? (authoredBendIds.has(canonicalId) ? 'authored-elbow-arc' : null);
+        || authoredTarget?.partRole
+        || (authoredBendIds.has(canonicalId) ? 'authored-elbow-arc' : null);
       if (!partRole) return;
       object.userData.partRole = partRole;
       if (String(partRole).startsWith('authored-')) authoredPartCount += 1;

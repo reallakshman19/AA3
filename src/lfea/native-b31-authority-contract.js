@@ -162,7 +162,12 @@ function canonicalSingleCase(value, field) {
 }
 
 function canonicalPressureContribution(value, field) {
-  if (value === null) return null;
+  if (value === null) {
+    throw b31Error(
+      'LFEA_NATIVE_B31_PRESSURE_STRESS_REQUIRED',
+      `${field} must be an explicit finite sourced contribution in the first native SUSTAINED boundary.`,
+    );
+  }
   exactKeys(value, ['value', 'source'], field);
   if (!Number.isFinite(value.value)) {
     throw b31Error('LFEA_NATIVE_B31_PRESSURE_STRESS_INVALID', `${field}.value must be finite.`);

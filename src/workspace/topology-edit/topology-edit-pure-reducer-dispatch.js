@@ -16,6 +16,9 @@ import {
   applyTopologyEditJunctionRelation,
 } from './topology-edit-junction-relation-command.js';
 import {
+  applyTopologyEditSupportPlacement,
+} from './topology-edit-support-placement-command.js';
+import {
   applyTopologyEditSupportRestraint,
 } from './topology-edit-support-restraint-command.js';
 
@@ -23,6 +26,7 @@ const EXTENDED_REDUCERS = Object.freeze({
   INSERT_PIPE_SEGMENT: applyPipeSegmentCommand,
   REPLACE_INLINE_COMPONENT: applyTopologyEditInlineReplacement,
   UPDATE_JUNCTION_BRANCH_RELATION: applyTopologyEditJunctionRelation,
+  UPDATE_SUPPORT_PLACEMENT: applyTopologyEditSupportPlacement,
   UPDATE_SUPPORT_RESTRAINT: applyTopologyEditSupportRestraint,
 });
 

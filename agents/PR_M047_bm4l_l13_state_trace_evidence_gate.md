@@ -104,9 +104,68 @@ contactState
 
 The trace must start at iteration 1, remain sequential, contain at least two iterations, and end in a converged iteration.
 
+## Optional precision evidence — product-observed only
+
+The generated worksheet also exposes two optional channels that can resolve finer F2.8 questions **only when the exact product or equivalent exact-build trace explicitly exposes them**.
+
+### First-transition direction reference
+
+Each friction row includes:
+
+```text
+firstTransitionReferenceDirectionGlobal = null | unit-vector-3
+```
+
+Populate it only at a first non-sliding -> sliding transition when the exact product explicitly exposes the direction reference used by that transition. The gate validates any populated value as a unit vector.
+
+It must never be reconstructed from the BM4_L residual or chosen to make the 15-degree rule appear to match.
+
+### Ordered sub-iteration state events
+
+Each iteration includes:
+
+```text
+stateEvents = []
+```
+
+When the exact product explicitly exposes an ordering inside one recorded nonlinear iteration, capture ordered events as:
+
+```json
+{
+  "ordinal": 1,
+  "restraintKey": "GAP:20030:0,0,-1:25",
+  "eventType": "CONTACT_STATE_CHANGE",
+  "from": "OPEN",
+  "to": "CLOSED"
+}
+```
+
+or:
+
+```json
+{
+  "ordinal": 2,
+  "restraintKey": "FRICTION:20030",
+  "eventType": "FRICTION_STATE_CHANGE",
+  "from": "STICK",
+  "to": "SLIDING"
+}
+```
+
+Supported event types are only:
+
+```text
+CONTACT_STATE_CHANGE
+FRICTION_STATE_CHANGE
+```
+
+The gate validates positive strictly increasing ordinals, known restraint keys, valid state endpoints, and real state changes. Empty `stateEvents` is valid when the product does not expose sub-iteration ordering.
+
+These optional channels are evidence opportunities, not new required assumptions.
+
 ## Executable operator capture workflow
 
-The repository now generates the capture worksheet rather than requiring hand-built keys.
+The repository generates the capture worksheet rather than requiring hand-built keys.
 
 Create a worksheet with one complete 32-row restraint inventory for every expected nonlinear iteration:
 
@@ -148,7 +207,7 @@ The capture helpers are regression-locked to exactly 26 friction rows + 6 gap ro
 
 ## Derived evidence — no fitting
 
-Once a trace passes custody/completeness, the gate derives only direct differences between observed consecutive iterations:
+Once a trace passes custody/completeness, the gate derives only direct differences between observed consecutive iterations plus any explicitly captured sub-iteration state events:
 
 ```text
 contact-state change iteration
@@ -156,6 +215,8 @@ STICK/SLIDING change iteration
 normal-force relative change
 friction-resistance relative change
 sliding-direction change angle
+optional product-observed first-transition direction reference
+optional product-observed ordered sub-iteration state events
 ```
 
 These measurements are intended to answer the exact unresolved questions:
@@ -163,7 +224,7 @@ These measurements are intended to answer the exact unresolved questions:
 1. when OPEN/CLOSED/REOPENED states commit;
 2. whether contact changes precede or follow friction-state changes;
 3. when STICK becomes SLIDING relative to the threshold-crossing iterate;
-4. how the first 15-degree transition rule is applied;
+4. how the first 15-degree transition rule is applied when its direction reference is observable;
 5. how later friction direction reversals are updated;
 6. whether the 0.15 normal-force rule is evaluated before or after the sliding-force update.
 
@@ -197,7 +258,7 @@ A state-trace capture/intake tool is not an accuracy improvement by itself.
 
 ## Files
 
-Relative to corrected Fix 1 / PR #1076 this stage now adds or modifies exactly seven files:
+Relative to corrected Fix 1 / PR #1076 this stage adds or modifies exactly seven files:
 
 ```text
 agents/PR_M047_bm4l_l13_state_trace_evidence_gate.md
@@ -213,4 +274,4 @@ No production nonlinear iteration kernel, linear solver, comparator, tolerance, 
 
 ## Decision
 
-**F2.7B STATE-TRACE CAPTURE AND INTAKE READY. THE REPOSITORY CAN NOW GENERATE THE EXACT 26-FRICTION/6-GAP ITERATION WORKSHEET, SEAL A COMPLETED TRACE TO IMMUTABLE RAW PRODUCT EVIDENCE, AND REDUCE THE EXACT-BUILD TRANSITIONS REQUIRED TO CLOSE THE TWO REMAINING NONLINEAR SEMANTIC BLOCKERS WITHOUT RESPONSE FITTING. L13 REMAINS 1719/1914 = 89.8119% UNTIL SUCH EVIDENCE IS CAPTURED, REVIEWED, AND THEN IMPLEMENTED IN A SEPARATE F2.8 BATCH.**
+**F2.7B STATE-TRACE CAPTURE AND INTAKE READY. THE REPOSITORY CAN GENERATE THE EXACT 26-FRICTION/6-GAP ITERATION WORKSHEET, OPTIONALLY RETAIN EXPLICIT FIRST-TRANSITION DIRECTION AND SUB-ITERATION EVENT EVIDENCE WHEN THE PRODUCT EXPOSES THEM, SEAL THE COMPLETED TRACE TO IMMUTABLE RAW PRODUCT EVIDENCE, AND REDUCE THE EXACT-BUILD TRANSITIONS WITHOUT RESPONSE FITTING. L13 REMAINS 1719/1914 = 89.8119% UNTIL SUCH EVIDENCE IS CAPTURED, REVIEWED, AND THEN IMPLEMENTED IN A SEPARATE F2.8 BATCH.**

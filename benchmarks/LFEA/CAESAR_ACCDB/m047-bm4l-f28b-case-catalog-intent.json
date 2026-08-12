@@ -1,0 +1,14 @@
+{
+  "schema": "m047-bm4l-f28b-case-catalog-intent/v1",
+  "benchmarkId": "BM4_L",
+  "source": {
+    "commonCommit": "179c4831cf521cf797c13699cfbbd118315c9244",
+    "bm4NlAccdbSha256": "85d39463296e569da811d8572e2eff680b858097f76fdf0f47d1755f0b161c21"
+  },
+  "purpose": "READ_ONLY_SOLVED_CASE_CATALOG_AND_ENDPOINT_EXTRACTION_FOR_RIGID_BOURDON_DISCRIMINATION",
+  "authorityFirewall": {
+    "bm4lScoreUsedToSelectCase": false,
+    "productionMechanicsAuthorized": false,
+    "toleranceFittingAllowed": false
+  }
+}

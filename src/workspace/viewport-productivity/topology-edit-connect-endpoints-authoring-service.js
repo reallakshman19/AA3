@@ -1,6 +1,9 @@
 import { semanticHash } from '../../core/shared-piping-model/index.js';
 import { createPipeSegmentCatalogueBinding } from '../topology-edit/topology-edit-pipe-segment-contract.js';
 import {
+  topologyEditValidationIdentityStaleFields,
+} from '../topology-edit/professional/topology-edit-validation-identity.js';
+import {
   assertGraphOpenEndpoint,
   routeContext,
 } from '../topology-edit/professional/topology-edit-route-operation-helpers.js';
@@ -23,6 +26,9 @@ import {
 import {
   createConnectEndpointsValidationOperationPlan,
 } from '../topology-edit/authoring/topology-edit-connect-endpoints-validation-plan.js';
+import {
+  createTopologyEditRuntimeValidationIdentity,
+} from './topology-edit-validation-runtime-identity.js';
 
 export function connectEndpointsPipeOptions(catalogue) {
   return (catalogue?.records ?? []).filter((row) => row.componentType === 'PIPE')
@@ -123,7 +129,14 @@ export async function validateConnectEndpointsAuthoring({
   controller, validationClient, operation, candidate,
 }) {
   const operationPlan = createConnectEndpointsValidationOperationPlan({ operation, candidate });
+  const currentIdentity = () => createTopologyEditRuntimeValidationIdentity({
+    controller,
+    operationPlan,
+  });
+  const identity = currentIdentity();
   const result = await validationClient.validate({
+    identity,
+    getCurrentIdentity: currentIdentity,
     operationPlan,
     canonicalTopology: candidate.canonicalTopology,
     previousDiagnostics: controller.issues ?? [],
@@ -134,6 +147,15 @@ export async function validateConnectEndpointsAuthoring({
     },
     blockingSeverities: ['HIGH'],
   });
+  const staleFields = topologyEditValidationIdentityStaleFields(
+    identity,
+    currentIdentity(),
+  );
+  if (staleFields.length) {
+    throw new RangeError(
+      `Connect Existing Ends validation completed against stale ${staleFields[0]}.`,
+    );
+  }
   const validation = createConnectEndpointsValidation({
     candidate,
     diagnostics: introducedDiagnostics(result.response.receipt),

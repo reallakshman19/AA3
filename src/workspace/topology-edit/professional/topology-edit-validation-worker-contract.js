@@ -9,18 +9,26 @@ import {
   assertTopologyEditIncrementalValidationReceipt,
   runTopologyEditIncrementalValidation,
 } from './topology-edit-incremental-validation.js';
+import {
+  assertTopologyEditValidationIdentity,
+  createTopologyEditValidationIdentity,
+} from './topology-edit-validation-identity.js';
 import { topologyEditDiagnosticsHash } from './topology-edit-validation-diagnostics.js';
 
 export const TOPOLOGY_EDIT_VALIDATION_WORKER_REQUEST_SCHEMA =
-  'TopologyEditValidationWorkerRequest.v1';
+  'TopologyEditValidationWorkerRequest.v2';
 export const TOPOLOGY_EDIT_VALIDATION_WORKER_RESPONSE_SCHEMA =
-  'TopologyEditValidationWorkerResponse.v1';
+  'TopologyEditValidationWorkerResponse.v2';
 
 export function createTopologyEditValidationWorkerRequest(input = {}) {
   const plan = assertTopologyEditOperationPlan(input.operationPlan);
+  const identity = assertTopologyEditValidationIdentity(input.identity);
+  if (identity.basisHash !== plan.basisHash) {
+    fail('identity basisHash differs from operation plan basisHash.', RangeError);
+  }
   const material = {
     schema: TOPOLOGY_EDIT_VALIDATION_WORKER_REQUEST_SCHEMA,
-    basisHash: plan.basisHash,
+    ...identityEnvelope(identity),
     planHash: plan.planHash,
     changedScopeHash: plan.changedScope.changedScopeHash,
     validatedTopologyHash: requiredText(
@@ -46,7 +54,7 @@ export function assertTopologyEditValidationWorkerRequest(value) {
   if (value.schema !== TOPOLOGY_EDIT_VALIDATION_WORKER_REQUEST_SCHEMA) {
     fail(`request must use ${TOPOLOGY_EDIT_VALIDATION_WORKER_REQUEST_SCHEMA}.`);
   }
-  requiredText(value.basisHash, 'basisHash');
+  assertEnvelopeIdentity(value);
   requiredText(value.planHash, 'planHash');
   requiredText(value.changedScopeHash, 'changedScopeHash');
   requiredText(value.validatedTopologyHash, 'validatedTopologyHash');
@@ -88,8 +96,8 @@ export function createTopologyEditValidationWorkerResponse(input = {}) {
   const partitions = issuePartitions(receipt.finalDiagnostics, request.blockingSeverities);
   const material = {
     schema: TOPOLOGY_EDIT_VALIDATION_WORKER_RESPONSE_SCHEMA,
+    ...identityEnvelope(request),
     requestId: request.requestId,
-    basisHash: request.basisHash,
     planHash: request.planHash,
     changedScopeHash: request.changedScopeHash,
     validatedTopologyHash: request.validatedTopologyHash,
@@ -109,8 +117,8 @@ export function assertTopologyEditValidationWorkerResponse(value) {
   if (value.schema !== TOPOLOGY_EDIT_VALIDATION_WORKER_RESPONSE_SCHEMA) {
     fail(`response must use ${TOPOLOGY_EDIT_VALIDATION_WORKER_RESPONSE_SCHEMA}.`);
   }
+  assertEnvelopeIdentity(value);
   requiredText(value.requestId, 'requestId');
-  requiredText(value.basisHash, 'basisHash');
   requiredText(value.planHash, 'planHash');
   requiredText(value.changedScopeHash, 'changedScopeHash');
   requiredText(value.validatedTopologyHash, 'validatedTopologyHash');
@@ -138,6 +146,27 @@ export function assertTopologyEditValidationWorkerResponse(value) {
   return value;
 }
 
+function identityEnvelope(input) {
+  const identity = createTopologyEditValidationIdentity(input);
+  return {
+    sourceHash: identity.sourceHash,
+    basisHash: identity.basisHash,
+    sessionId: identity.sessionId,
+    sessionVersion: identity.sessionVersion,
+    selectionRevision: identity.selectionRevision,
+    interactionId: identity.interactionId,
+    identityHash: identity.identityHash,
+  };
+}
+
+function assertEnvelopeIdentity(value) {
+  const identity = createTopologyEditValidationIdentity(value);
+  if (value.identityHash !== identity.identityHash) {
+    fail('identityHash does not match response/request identity authority.', RangeError);
+  }
+  return identity;
+}
+
 function assertRequestMatchesInputs(request, plan, canonical, previousDiagnostics) {
   const mismatches = [];
   if (request.basisHash !== plan.basisHash) mismatches.push('basisHash');
@@ -151,7 +180,9 @@ function assertRequestMatchesInputs(request, plan, canonical, previousDiagnostic
   if (request.previousIssueHash !== topologyEditDiagnosticsHash(previousDiagnostics)) {
     mismatches.push('previousIssueHash');
   }
-  if (mismatches.length) fail(`request differs from execution inputs: ${mismatches.join(', ')}.`, RangeError);
+  if (mismatches.length) {
+    fail(`request differs from execution inputs: ${mismatches.join(', ')}.`, RangeError);
+  }
 }
 
 function assertReceiptMatchesRequest(receipt, request) {
@@ -164,7 +195,9 @@ function assertReceiptMatchesRequest(receipt, request) {
   const mismatches = pairs.filter(([receiptField, requestField]) => (
     receipt[receiptField] !== request[requestField]
   )).map(([field]) => field);
-  if (mismatches.length) fail(`receipt differs from request: ${mismatches.join(', ')}.`, RangeError);
+  if (mismatches.length) {
+    fail(`receipt differs from request: ${mismatches.join(', ')}.`, RangeError);
+  }
 }
 
 function issuePartitions(diagnostics, blockingSeverities) {
@@ -218,7 +251,9 @@ function normalizeValue(value, path) {
     if (!Number.isFinite(value)) fail(`${path} must contain finite numbers.`, RangeError);
     return Object.is(value, -0) ? 0 : value;
   }
-  if (Array.isArray(value)) return value.map((row, index) => normalizeValue(row, `${path}[${index}]`));
+  if (Array.isArray(value)) {
+    return value.map((row, index) => normalizeValue(row, `${path}[${index}]`));
+  }
   if (isPlainRecord(value)) return normalizeRecord(value, path);
   fail(`${path} contains unsupported ${typeof value}.`);
 }
@@ -241,12 +276,16 @@ function sameList(left, right) {
 }
 function positive(value, label) {
   const number = Number(value);
-  if (!Number.isFinite(number) || number <= 0) fail(`${label} must be positive.`, RangeError);
+  if (!Number.isFinite(number) || number <= 0) {
+    fail(`${label} must be positive.`, RangeError);
+  }
   return number;
 }
 function nonNegative(value, label) {
   const number = Number(value);
-  if (!Number.isFinite(number) || number < 0) fail(`${label} must be non-negative.`, RangeError);
+  if (!Number.isFinite(number) || number < 0) {
+    fail(`${label} must be non-negative.`, RangeError);
+  }
   return number;
 }
 function requiredText(value, label) {

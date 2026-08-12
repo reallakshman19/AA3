@@ -10,15 +10,21 @@ import {
 } from './topology-edit-validation-worker-contract.js';
 
 export const TOPOLOGY_EDIT_VALIDATION_WORKER_STATE_SCHEMA =
-  'TopologyEditValidationWorkerState.v1';
+  'TopologyEditValidationWorkerState.v2';
 export const TOPOLOGY_EDIT_VALIDATION_WORKER_DISPOSITION_SCHEMA =
-  'TopologyEditValidationWorkerDisposition.v1';
+  'TopologyEditValidationWorkerDisposition.v2';
 
 const REJECTION_STATUSES = Object.freeze({
   CANCELLED: 'REJECTED_CANCELLED',
   SUPERSEDED: 'REJECTED_SUPERSEDED',
   NO_ACTIVE: 'REJECTED_NO_ACTIVE_REQUEST',
+  SOURCE: 'REJECTED_SOURCE_HASH',
   BASIS: 'REJECTED_BASIS_HASH',
+  SESSION_ID: 'REJECTED_SESSION_ID',
+  SESSION_VERSION: 'REJECTED_SESSION_VERSION',
+  SELECTION_REVISION: 'REJECTED_SELECTION_REVISION',
+  INTERACTION_ID: 'REJECTED_INTERACTION_ID',
+  REQUEST_ID: 'REJECTED_REQUEST_ID',
   PLAN: 'REJECTED_PLAN_HASH',
   SCOPE: 'REJECTED_CHANGED_SCOPE_HASH',
   TOPOLOGY: 'REJECTED_VALIDATED_TOPOLOGY_HASH',
@@ -125,15 +131,25 @@ function responseDisposition(state, response) {
     return REJECTION_STATUSES.SUPERSEDED;
   }
   if (!state.activeRequest) return REJECTION_STATUSES.NO_ACTIVE;
-  if (state.activeRequest.requestId !== response.requestId) {
-    return REJECTION_STATUSES.SUPERSEDED;
+  const active = state.activeRequest;
+  if (active.sourceHash !== response.sourceHash) return REJECTION_STATUSES.SOURCE;
+  if (active.basisHash !== response.basisHash) return REJECTION_STATUSES.BASIS;
+  if (active.sessionId !== response.sessionId) return REJECTION_STATUSES.SESSION_ID;
+  if (active.sessionVersion !== response.sessionVersion) {
+    return REJECTION_STATUSES.SESSION_VERSION;
   }
-  if (state.activeRequest.basisHash !== response.basisHash) return REJECTION_STATUSES.BASIS;
-  if (state.activeRequest.planHash !== response.planHash) return REJECTION_STATUSES.PLAN;
-  if (state.activeRequest.changedScopeHash !== response.changedScopeHash) {
+  if (active.selectionRevision !== response.selectionRevision) {
+    return REJECTION_STATUSES.SELECTION_REVISION;
+  }
+  if (active.interactionId !== response.interactionId) {
+    return REJECTION_STATUSES.INTERACTION_ID;
+  }
+  if (active.requestId !== response.requestId) return REJECTION_STATUSES.REQUEST_ID;
+  if (active.planHash !== response.planHash) return REJECTION_STATUSES.PLAN;
+  if (active.changedScopeHash !== response.changedScopeHash) {
     return REJECTION_STATUSES.SCOPE;
   }
-  if (state.activeRequest.validatedTopologyHash !== response.validatedTopologyHash) {
+  if (active.validatedTopologyHash !== response.validatedTopologyHash) {
     return REJECTION_STATUSES.TOPOLOGY;
   }
   return 'ACCEPTED';
@@ -168,7 +184,13 @@ function disposition(status, state, response, receipt) {
 function requestSummary(request) {
   return {
     requestId: request.requestId,
+    sourceHash: request.sourceHash,
     basisHash: request.basisHash,
+    sessionId: request.sessionId,
+    sessionVersion: request.sessionVersion,
+    selectionRevision: request.selectionRevision,
+    interactionId: request.interactionId,
+    identityHash: request.identityHash,
     planHash: request.planHash,
     changedScopeHash: request.changedScopeHash,
     validatedTopologyHash: request.validatedTopologyHash,
@@ -179,7 +201,19 @@ function assertRequestSummary(value) {
   if (!isPlainRecord(value)) fail('activeRequest must be an object.');
   return {
     requestId: requiredText(value.requestId, 'activeRequest.requestId'),
+    sourceHash: requiredText(value.sourceHash, 'activeRequest.sourceHash'),
     basisHash: requiredText(value.basisHash, 'activeRequest.basisHash'),
+    sessionId: requiredText(value.sessionId, 'activeRequest.sessionId'),
+    sessionVersion: nonNegativeInteger(
+      value.sessionVersion,
+      'activeRequest.sessionVersion',
+    ),
+    selectionRevision: nonNegativeInteger(
+      value.selectionRevision,
+      'activeRequest.selectionRevision',
+    ),
+    interactionId: requiredText(value.interactionId, 'activeRequest.interactionId'),
+    identityHash: requiredText(value.identityHash, 'activeRequest.identityHash'),
     planHash: requiredText(value.planHash, 'activeRequest.planHash'),
     changedScopeHash: requiredText(
       value.changedScopeHash,

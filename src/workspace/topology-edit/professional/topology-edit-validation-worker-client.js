@@ -5,6 +5,11 @@ import {
   assertTopologyEditValidationWorkerResponse,
   createTopologyEditValidationWorkerRequest,
 } from './topology-edit-validation-worker-contract.js';
+import {
+  assertTopologyEditValidationIdentity,
+  createTopologyEditValidationIdentity,
+  topologyEditValidationIdentityStaleFields,
+} from './topology-edit-validation-identity.js';
 import { topologyEditDiagnosticsHash } from './topology-edit-validation-diagnostics.js';
 import {
   acceptTopologyEditValidationWorkerResponse,
@@ -19,6 +24,16 @@ const DEFAULT_POLICY = Object.freeze({
   hysteresisMs: 4,
 });
 
+const RESPONSE_IDENTITY_FIELDS = Object.freeze([
+  'sourceHash',
+  'basisHash',
+  'sessionId',
+  'sessionVersion',
+  'selectionRevision',
+  'interactionId',
+  'requestId',
+]);
+
 export class TopologyEditValidationWorkerClient {
   constructor(options = {}) {
     this.WorkerCtor = options.WorkerCtor ?? null;
@@ -31,9 +46,15 @@ export class TopologyEditValidationWorkerClient {
   validate(input = {}) {
     this.assertAvailable();
     const plan = assertTopologyEditOperationPlan(input.operationPlan);
+    const identity = assertTopologyEditValidationIdentity(input.identity);
+    const getCurrentIdentity = requiredIdentityProvider(input.getCurrentIdentity);
+    const startIdentity = assertTopologyEditValidationIdentity(getCurrentIdentity());
+    const staleStartFields = topologyEditValidationIdentityStaleFields(identity, startIdentity);
+    if (staleStartFields.length) throw staleIdentityError(staleStartFields[0]);
     const canonicalTopology = input.canonicalTopology;
     const previousDiagnostics = input.previousDiagnostics ?? [];
     const request = input.request ?? createTopologyEditValidationWorkerRequest({
+      identity,
       operationPlan: plan,
       validatedTopologyHash: canonicalTopology?.canonicalTopologyHash,
       previousIssueHash: topologyEditDiagnosticsHash(previousDiagnostics),
@@ -41,6 +62,12 @@ export class TopologyEditValidationWorkerClient {
       performancePolicy: input.performancePolicy ?? DEFAULT_POLICY,
       blockingSeverities: input.blockingSeverities ?? ['HIGH'],
     });
+    const requestIdentity = createTopologyEditValidationIdentity(request);
+    const staleRequestFields = topologyEditValidationIdentityStaleFields(
+      identity,
+      requestIdentity,
+    );
+    if (staleRequestFields.length) throw staleIdentityError(staleRequestFields[0]);
     const worker = this.createWorker();
     const prior = this.active;
     this.state = beginTopologyEditValidationWorkerRequest(this.state, request);
@@ -52,6 +79,7 @@ export class TopologyEditValidationWorkerClient {
     return new Promise((resolve, reject) => {
       const active = {
         request,
+        getCurrentIdentity,
         worker,
         resolve,
         reject,
@@ -71,12 +99,7 @@ export class TopologyEditValidationWorkerClient {
           previousDiagnostics,
         });
       } catch (error) {
-        this.state = cancelTopologyEditValidationWorkerRequest(
-          this.state,
-          request.requestId,
-        );
-        this.cleanupActive(active);
-        reject(workerStartupFailure(error));
+        this.rejectActiveError(active, workerStartupFailure(error));
       }
     });
   }
@@ -104,13 +127,36 @@ export class TopologyEditValidationWorkerClient {
     const active = this.active;
     if (!active || active.settled) return;
     const payload = event.data;
-    if (payload?.requestId !== active.request.requestId) return;
-    if (payload.type === 'FAILED') {
+    if (payload?.type === 'FAILED') {
+      if (payload.requestId !== active.request.requestId) {
+        this.rejectActiveIdentity(active, 'requestId');
+        return;
+      }
       this.cleanupActive(active);
       active.reject(workerFailure(payload.error));
       return;
     }
-    if (payload.type !== 'VALIDATED') return;
+    if (payload?.type !== 'VALIDATED') return;
+    const responseStaleField = firstResponseIdentityMismatch(active.request, payload);
+    if (responseStaleField) {
+      this.rejectActiveIdentity(active, responseStaleField);
+      return;
+    }
+    let liveStaleFields;
+    try {
+      const liveIdentity = assertTopologyEditValidationIdentity(active.getCurrentIdentity());
+      liveStaleFields = topologyEditValidationIdentityStaleFields(
+        createTopologyEditValidationIdentity(active.request),
+        liveIdentity,
+      );
+    } catch (error) {
+      this.rejectActiveError(active, error);
+      return;
+    }
+    if (liveStaleFields.length) {
+      this.rejectActiveIdentity(active, liveStaleFields[0]);
+      return;
+    }
     try {
       const response = assertTopologyEditValidationWorkerResponse(payload.response);
       const disposition = acceptTopologyEditValidationWorkerResponse(this.state, response);
@@ -132,6 +178,19 @@ export class TopologyEditValidationWorkerClient {
       this.cleanupActive(active);
       active.reject(error);
     }
+  }
+
+  rejectActiveIdentity(active, field) {
+    this.rejectActiveError(active, staleIdentityError(field));
+  }
+
+  rejectActiveError(active, error) {
+    this.state = cancelTopologyEditValidationWorkerRequest(
+      this.state,
+      active.request.requestId,
+    );
+    this.cleanupActive(active);
+    active.reject(error);
   }
 
   handleWorkerError(event) {
@@ -157,10 +216,7 @@ export class TopologyEditValidationWorkerClient {
       if (typeof this.WorkerCtor === 'function') {
         return new this.WorkerCtor(
           this.workerUrl ?? new URL('./topology-edit-validation-worker.js', import.meta.url),
-          {
-            type: 'module',
-            name: 'topology-edit-professional-validation',
-          },
+          { type: 'module', name: 'topology-edit-professional-validation' },
         );
       }
       if (this.workerUrl) {
@@ -171,10 +227,7 @@ export class TopologyEditValidationWorkerClient {
       }
       return new Worker(
         new URL('./topology-edit-validation-worker.js', import.meta.url),
-        {
-          type: 'module',
-          name: 'topology-edit-professional-validation',
-        },
+        { type: 'module', name: 'topology-edit-professional-validation' },
       );
     } catch (error) {
       throw workerStartupFailure(error);
@@ -189,6 +242,35 @@ export class TopologyEditValidationWorkerClient {
       throw new Error('TopologyEditValidationWorkerClient: module Worker support is required.');
     }
   }
+}
+
+function firstResponseIdentityMismatch(request, payload) {
+  const response = payload?.response;
+  if (!response || typeof response !== 'object' || Array.isArray(response)) return 'response';
+  for (const field of RESPONSE_IDENTITY_FIELDS) {
+    const actual = field === 'requestId' ? payload.requestId : response[field];
+    if (actual !== request[field]) return field;
+    if (field === 'requestId' && response.requestId !== request.requestId) return field;
+  }
+  return null;
+}
+
+function requiredIdentityProvider(value) {
+  if (typeof value !== 'function') {
+    throw new TypeError(
+      'TopologyEditValidationWorkerClient: getCurrentIdentity function is required.',
+    );
+  }
+  return value;
+}
+
+function staleIdentityError(field) {
+  const error = new RangeError(
+    `TopologyEditValidationWorkerClient: stale validation response ${field}.`,
+  );
+  error.code = `STALE_VALIDATION_${String(field)
+    .replace(/([a-z])([A-Z])/g, '$1_$2').toUpperCase()}`;
+  return error;
 }
 
 function cancellationError(reason, requestId) {

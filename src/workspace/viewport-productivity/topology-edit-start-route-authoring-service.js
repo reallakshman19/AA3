@@ -1,5 +1,8 @@
 import { semanticHash } from '../../core/shared-piping-model/index.js';
 import { createPipeSegmentCatalogueBinding } from '../topology-edit/topology-edit-pipe-segment-contract.js';
+import {
+  topologyEditValidationIdentityStaleFields,
+} from '../topology-edit/professional/topology-edit-validation-identity.js';
 import { topologyEditDiagnosticFingerprint } from '../topology-edit/professional/topology-edit-validation-diagnostics.js';
 import {
   compileTypedStartRouteIntent,
@@ -16,6 +19,9 @@ import {
   undoStartRouteTransaction,
 } from '../topology-edit/authoring/topology-edit-start-route-transaction.js';
 import { createStartRouteValidationOperationPlan } from '../topology-edit/authoring/topology-edit-start-route-validation-plan.js';
+import {
+  createTopologyEditRuntimeValidationIdentity,
+} from './topology-edit-validation-runtime-identity.js';
 
 export function startRouteCoordinateDatumHash(controller) {
   const dataset = controller.workspaceDataset;
@@ -96,7 +102,14 @@ export async function validateStartRouteAuthoring({
   controller, validationClient, plan, candidate,
 }) {
   const workerPlan = createStartRouteValidationOperationPlan({ plan, candidate });
+  const currentIdentity = () => createTopologyEditRuntimeValidationIdentity({
+    controller,
+    operationPlan: workerPlan,
+  });
+  const identity = currentIdentity();
   const result = await validationClient.validate({
+    identity,
+    getCurrentIdentity: currentIdentity,
     operationPlan: workerPlan,
     canonicalTopology: candidate.canonicalTopology,
     previousDiagnostics: controller.issues ?? [],
@@ -107,6 +120,15 @@ export async function validateStartRouteAuthoring({
     },
     blockingSeverities: ['HIGH'],
   });
+  const staleFields = topologyEditValidationIdentityStaleFields(
+    identity,
+    currentIdentity(),
+  );
+  if (staleFields.length) {
+    throw new RangeError(
+      `Start Route validation completed against stale ${staleFields[0]}.`,
+    );
+  }
   const validation = createStartRouteValidation({
     candidate,
     diagnostics: introducedDiagnostics(result.response.receipt),

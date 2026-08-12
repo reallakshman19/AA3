@@ -9,6 +9,9 @@ import {
   executeTopologyEditValidationWorkerRequest,
 } from '../src/workspace/topology-edit/professional/topology-edit-validation-worker-contract.js';
 import {
+  createTopologyEditValidationIdentity,
+} from '../src/workspace/topology-edit/professional/topology-edit-validation-identity.js';
+import {
   acceptTopologyEditValidationWorkerResponse,
   assertTopologyEditValidationWorkerDisposition,
   beginTopologyEditValidationWorkerRequest,
@@ -55,9 +58,23 @@ function plan(base = topology()) {
   });
 }
 
+function validationIdentity(operationPlan, overrides = {}) {
+  return createTopologyEditValidationIdentity({
+    sourceHash: 'source:engineering-worker',
+    basisHash: operationPlan.basisHash,
+    sessionId: 'validation-session:engineering-worker',
+    sessionVersion: 0,
+    selectionRevision: 2,
+    interactionId: 'validation-interaction:engineering-worker',
+    ...overrides,
+  });
+}
+
 function request(base, postHash, previousDiagnostics = []) {
+  const operationPlan = plan(base);
   return createTopologyEditValidationWorkerRequest({
-    operationPlan: plan(base),
+    identity: validationIdentity(operationPlan),
+    operationPlan,
     validatedTopologyHash: postHash,
     previousIssueHash: topologyEditDiagnosticsHash(previousDiagnostics),
     checkerOptions: { shortElementThresholdMm: 6 },
@@ -127,6 +144,8 @@ test('worker execution delegates to P5 and classifies blocking and warning IDs',
   const response = execute(requestValue, base);
 
   assert.equal(response.requestId, requestValue.requestId);
+  assert.equal(response.sourceHash, requestValue.sourceHash);
+  assert.equal(response.selectionRevision, requestValue.selectionRevision);
   assert.deepEqual(response.issueIds, ['issue:blocking', 'issue:warning']);
   assert.deepEqual(response.blockingIssueIds, ['issue:blocking']);
   assert.deepEqual(response.warningIssueIds, ['issue:warning']);
@@ -197,9 +216,14 @@ test('state rejects a recomputed response whose basis differs from active reques
   const base = topology();
   const requestValue = request(base, 'fnv1a64:worker-post');
   const response = execute(requestValue, base);
-  const material = {
+  const changedIdentity = createTopologyEditValidationIdentity({
     ...response,
     basisHash: 'fnv1a64:wrong-basis',
+  });
+  const material = {
+    ...response,
+    basisHash: changedIdentity.basisHash,
+    identityHash: changedIdentity.identityHash,
   };
   delete material.responseHash;
   const mismatched = {

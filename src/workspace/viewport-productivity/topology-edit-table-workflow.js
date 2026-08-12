@@ -1,4 +1,7 @@
 import {
+  topologyEditValidationIdentityStaleFields,
+} from '../topology-edit/professional/topology-edit-validation-identity.js';
+import {
   deriveAllSupportRestraintGeometry,
   projectSupportGeometryToViewport,
 } from '../topology-edit/support-restraint-family.js';
@@ -9,6 +12,9 @@ import {
   undoTopologyEditTableTransaction,
   validateTopologyEditTablePreview,
 } from '../topology-edit/table/topology-edit-table-transaction.js';
+import {
+  createTopologyEditRuntimeValidationIdentity,
+} from './topology-edit-validation-runtime-identity.js';
 
 export async function previewTopologyEditTableRuntime(runtime) {
   if (runtime.pending || !runtime.batchPlan || runtime.staleResult) return true;
@@ -34,16 +40,33 @@ export async function previewTopologyEditTableRuntime(runtime) {
 export async function validateTopologyEditTableRuntime(runtime) {
   if (runtime.pending || !runtime.preview || !runtime.batchPlan) return true;
   const preview = runtime.preview;
+  const operationPlan = runtime.batchPlan.operationPlan;
+  const currentIdentity = () => createTopologyEditRuntimeValidationIdentity({
+    controller: runtime.controller,
+    operationPlan,
+  });
+  const identity = currentIdentity();
   try {
     runtime.pending = true;
     runtime.error = null;
     const result = await runtime.validationClient.validate({
-      operationPlan: runtime.batchPlan.operationPlan,
+      identity,
+      getCurrentIdentity: currentIdentity,
+      operationPlan,
       canonicalTopology: preview.candidate.canonicalTopology,
       previousDiagnostics: runtime.controller.issues ?? [],
       performancePolicy: { fastPathBudgetMs: 16, warningBudgetMs: 100, hysteresisMs: 4 },
       blockingSeverities: ['HIGH'],
     });
+    const staleIdentityFields = topologyEditValidationIdentityStaleFields(
+      identity,
+      currentIdentity(),
+    );
+    if (staleIdentityFields.length) {
+      throw new RangeError(
+        `TopologyEditTableWorkflow: validation completed against stale ${staleIdentityFields[0]}.`,
+      );
+    }
     if (runtime.preview?.previewHash !== preview.previewHash
       || runtime.controller.session.currentTopology().canonicalTopologyHash !== preview.priorCanonicalHash) {
       throw new RangeError('TopologyEditTableWorkflow: validation completed against a stale Preview.');

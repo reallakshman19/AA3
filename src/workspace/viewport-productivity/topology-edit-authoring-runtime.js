@@ -28,11 +28,17 @@ import {
   deriveTopologyEditAuthoredBendProjection,
 } from '../topology-edit/authoring/topology-edit-authored-bend-geometry.js';
 import {
+  topologyEditValidationIdentityStaleFields,
+} from '../topology-edit/professional/topology-edit-validation-identity.js';
+import {
   TopologyEditValidationWorkerClient,
 } from '../topology-edit/professional/topology-edit-validation-worker-client.js';
 import {
   ensureTopologyEditAuthoringStyles,
 } from './topology-edit-authoring-styles.js';
+import {
+  createTopologyEditRuntimeValidationIdentity,
+} from './topology-edit-validation-runtime-identity.js';
 
 const IMPLEMENTED_TOOLS = Object.freeze([
   { id: 'MOVE', label: 'Move' },
@@ -172,6 +178,11 @@ export class TopologyEditAuthoringRuntime {
     if (this.pending || !this.plan || !this.candidate) return true;
     const plan = this.plan;
     const candidate = this.candidate;
+    const currentIdentity = () => createTopologyEditRuntimeValidationIdentity({
+      controller: this.controller,
+      operationPlan: plan,
+    });
+    const identity = currentIdentity();
     this.pending = true;
     this.error = null;
     this.state = beginTopologyEditAuthoringValidation(this.state);
@@ -179,6 +190,8 @@ export class TopologyEditAuthoringRuntime {
     this.publish();
     try {
       const result = await this.validationClient.validate({
+        identity,
+        getCurrentIdentity: currentIdentity,
         operationPlan: plan,
         canonicalTopology: candidate.canonicalTopology,
         previousDiagnostics: this.controller.issues ?? [],
@@ -189,6 +202,15 @@ export class TopologyEditAuthoringRuntime {
         },
         blockingSeverities: ['HIGH'],
       });
+      const staleIdentityFields = topologyEditValidationIdentityStaleFields(
+        identity,
+        currentIdentity(),
+      );
+      if (staleIdentityFields.length) {
+        throw new RangeError(
+          `Authoring validation completed against stale ${staleIdentityFields[0]}.`,
+        );
+      }
       if (this.plan?.planHash !== plan.planHash
         || this.candidate?.candidateHash !== candidate.candidateHash
         || this.controller.session?.currentTopology()?.canonicalTopologyHash

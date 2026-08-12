@@ -5,6 +5,9 @@ import {
   prepareTopologyEditOperationCandidate,
 } from '../topology-edit/professional/topology-edit-operation-candidate.js';
 import {
+  topologyEditValidationIdentityStaleFields,
+} from '../topology-edit/professional/topology-edit-validation-identity.js';
+import {
   executeTopologyEditOperationTransaction,
   previewTopologyEditOperationTransaction,
   redoTopologyEditOperationTransaction,
@@ -13,6 +16,9 @@ import {
 import {
   readTopologyEditProfessionalOperationValues,
 } from './topology-edit-professional-operation-panel.js';
+import {
+  createTopologyEditRuntimeValidationIdentity,
+} from './topology-edit-validation-runtime-identity.js';
 
 export function planTopologyEditProfessionalOperation(runtime) {
   const session = runtime.controller.session;
@@ -50,6 +56,11 @@ export async function validateTopologyEditProfessionalOperation(runtime) {
   if (!session || !runtime.plan || !runtime.candidate) return true;
   const plan = runtime.plan;
   const candidate = runtime.candidate;
+  const currentIdentity = () => createTopologyEditRuntimeValidationIdentity({
+    controller: runtime.controller,
+    operationPlan: plan,
+  });
+  const identity = currentIdentity();
   runtime.validationPending = true;
   runtime.validation = null;
   runtime.transactionPreview = null;
@@ -58,6 +69,8 @@ export async function validateTopologyEditProfessionalOperation(runtime) {
   runtime.render();
   try {
     const result = await runtime.validationClient.validate({
+      identity,
+      getCurrentIdentity: currentIdentity,
       operationPlan: plan,
       canonicalTopology: candidate.canonicalTopology,
       previousDiagnostics: runtime.controller.issues ?? [],
@@ -68,6 +81,15 @@ export async function validateTopologyEditProfessionalOperation(runtime) {
       },
       blockingSeverities: ['HIGH'],
     });
+    const staleIdentityFields = topologyEditValidationIdentityStaleFields(
+      identity,
+      currentIdentity(),
+    );
+    if (staleIdentityFields.length) {
+      throw new RangeError(
+        `Validation completed against stale ${staleIdentityFields[0]}.`,
+      );
+    }
     if (!runtime.controller.session
       || runtime.plan?.planHash !== plan.planHash
       || runtime.candidate?.candidateHash !== candidate.candidateHash

@@ -9,186 +9,62 @@
   "caseSelection": {
     "mode": "EXPLICIT",
     "cases": [
-      {
-        "caseId": "L1",
-        "lcaseNumber": 1
-      },
-      {
-        "caseId": "L2",
-        "lcaseNumber": 2
-      },
-      {
-        "caseId": "L3",
-        "lcaseNumber": 3
-      },
-      {
-        "caseId": "L4",
-        "lcaseNumber": 4
-      },
-      {
-        "caseId": "L5",
-        "lcaseNumber": 5
-      },
-      {
-        "caseId": "L6",
-        "lcaseNumber": 6
-      },
-      {
-        "caseId": "L7",
-        "lcaseNumber": 7
-      },
-      {
-        "caseId": "L13",
-        "lcaseNumber": 13
-      },
-      {
-        "caseId": "L14",
-        "lcaseNumber": 14
-      },
-      {
-        "caseId": "L15",
-        "lcaseNumber": 15
-      }
+      {"caseId":"L1","lcaseNumber":1},
+      {"caseId":"L2","lcaseNumber":2},
+      {"caseId":"L3","lcaseNumber":3},
+      {"caseId":"L4","lcaseNumber":4},
+      {"caseId":"L5","lcaseNumber":5},
+      {"caseId":"L6","lcaseNumber":6},
+      {"caseId":"L7","lcaseNumber":7},
+      {"caseId":"L13","lcaseNumber":13},
+      {"caseId":"L14","lcaseNumber":14},
+      {"caseId":"L15","lcaseNumber":15}
     ]
   },
   "nodeSelection": "INPUT_ENDPOINT_NODES",
-  "resultFamilies": [
-    "DISPLACEMENT",
-    "RESTRAINT_REACTION",
-    "GLOBAL_ELEMENT_END_ACTION",
-    "NODAL_EQUILIBRIUM"
-  ],
-  "conventions": {
-    "restraintReaction": "CAESAR_FORCE_ON_SUPPORT"
-  },
-  "equilibriumTolerance": {
-    "forceN": 5,
-    "momentNm": 0.5
-  },
+  "resultFamilies": ["DISPLACEMENT","RESTRAINT_REACTION","GLOBAL_ELEMENT_END_ACTION","NODAL_EQUILIBRIUM"],
+  "conventions": {"restraintReaction":"CAESAR_FORCE_ON_SUPPORT"},
+  "equilibriumTolerance": {"forceN":5,"momentNm":0.5},
   "engineeringAssessment": {
     "vectorRelativeTolerance": 0.1,
-    "equilibriumOnlyQuantities": [
-      "INCIDENT_GLOBAL_FORCE",
-      "INCIDENT_GLOBAL_MOMENT"
-    ],
+    "equilibriumOnlyQuantities": ["INCIDENT_GLOBAL_FORCE","INCIDENT_GLOBAL_MOMENT"],
     "linearCaseConditioning": {
       "mode": "FORMULA_SUPERPOSITION",
       "superpositionRelativeTolerance": 0.000001,
-      "caseIds": [
-        "L2",
-        "L3",
-        "L4",
-        "L5",
-        "L6",
-        "L14"
-      ]
+      "caseIds": ["L2","L3","L4","L5","L6","L14"]
     }
   },
   "tolerances": {
-    "DISPLACEMENT": {
-      "absolute": 0,
-      "relative": 0.1,
-      "scaleFloor": 0,
-      "comparisonMode": "LITERAL_RELATIVE_WITH_ZERO_ABSOLUTE",
-      "zeroReferenceAbsolute": 1e-07
-    },
-    "ROTATION": {
-      "absolute": 0,
-      "relative": 0.1,
-      "scaleFloor": 0,
-      "comparisonMode": "LITERAL_RELATIVE_WITH_ZERO_ABSOLUTE",
-      "zeroReferenceAbsolute": 0.0000017453292519943296
-    },
-    "FORCE": {
-      "absolute": 0,
-      "relative": 0.1,
-      "scaleFloor": 0,
-      "comparisonMode": "LITERAL_RELATIVE_WITH_ZERO_ABSOLUTE",
-      "zeroReferenceAbsolute": 5
-    },
-    "MOMENT": {
-      "absolute": 0,
-      "relative": 0.1,
-      "scaleFloor": 0,
-      "comparisonMode": "LITERAL_RELATIVE_WITH_ZERO_ABSOLUTE",
-      "zeroReferenceAbsolute": 0.5
-    },
-    "GLOBAL_END_FORCE_FROM": {
-      "absolute": 0,
-      "relative": 0.1,
-      "scaleFloor": 0,
-      "comparisonMode": "LITERAL_RELATIVE_WITH_ZERO_ABSOLUTE",
-      "zeroReferenceAbsolute": 5
-    },
-    "GLOBAL_END_FORCE_TO": {
-      "absolute": 0,
-      "relative": 0.1,
-      "scaleFloor": 0,
-      "comparisonMode": "LITERAL_RELATIVE_WITH_ZERO_ABSOLUTE",
-      "zeroReferenceAbsolute": 5
-    },
-    "GLOBAL_END_MOMENT_FROM": {
-      "absolute": 0,
-      "relative": 0.1,
-      "scaleFloor": 0,
-      "comparisonMode": "LITERAL_RELATIVE_WITH_ZERO_ABSOLUTE",
-      "zeroReferenceAbsolute": 0.5
-    },
-    "GLOBAL_END_MOMENT_TO": {
-      "absolute": 0,
-      "relative": 0.1,
-      "scaleFloor": 0,
-      "comparisonMode": "LITERAL_RELATIVE_WITH_ZERO_ABSOLUTE",
-      "zeroReferenceAbsolute": 0.5
-    },
-    "INCIDENT_GLOBAL_FORCE": {
-      "absolute": 0,
-      "relative": 0.1,
-      "scaleFloor": 0,
-      "comparisonMode": "LITERAL_RELATIVE_WITH_ZERO_ABSOLUTE",
-      "zeroReferenceAbsolute": 5
-    },
-    "INCIDENT_GLOBAL_MOMENT": {
-      "absolute": 0,
-      "relative": 0.1,
-      "scaleFloor": 0,
-      "comparisonMode": "LITERAL_RELATIVE_WITH_ZERO_ABSOLUTE",
-      "zeroReferenceAbsolute": 0.5
-    }
+    "DISPLACEMENT":{"absolute":0,"relative":0.1,"scaleFloor":0,"comparisonMode":"LITERAL_RELATIVE_WITH_ZERO_ABSOLUTE","zeroReferenceAbsolute":1e-7},
+    "ROTATION":{"absolute":0,"relative":0.1,"scaleFloor":0,"comparisonMode":"LITERAL_RELATIVE_WITH_ZERO_ABSOLUTE","zeroReferenceAbsolute":1.7453292519943296e-6},
+    "FORCE":{"absolute":0,"relative":0.1,"scaleFloor":0,"comparisonMode":"LITERAL_RELATIVE_WITH_ZERO_ABSOLUTE","zeroReferenceAbsolute":5},
+    "MOMENT":{"absolute":0,"relative":0.1,"scaleFloor":0,"comparisonMode":"LITERAL_RELATIVE_WITH_ZERO_ABSOLUTE","zeroReferenceAbsolute":0.5},
+    "GLOBAL_END_FORCE_FROM":{"absolute":0,"relative":0.1,"scaleFloor":0,"comparisonMode":"LITERAL_RELATIVE_WITH_ZERO_ABSOLUTE","zeroReferenceAbsolute":5},
+    "GLOBAL_END_FORCE_TO":{"absolute":0,"relative":0.1,"scaleFloor":0,"comparisonMode":"LITERAL_RELATIVE_WITH_ZERO_ABSOLUTE","zeroReferenceAbsolute":5},
+    "GLOBAL_END_MOMENT_FROM":{"absolute":0,"relative":0.1,"scaleFloor":0,"comparisonMode":"LITERAL_RELATIVE_WITH_ZERO_ABSOLUTE","zeroReferenceAbsolute":0.5},
+    "GLOBAL_END_MOMENT_TO":{"absolute":0,"relative":0.1,"scaleFloor":0,"comparisonMode":"LITERAL_RELATIVE_WITH_ZERO_ABSOLUTE","zeroReferenceAbsolute":0.5},
+    "INCIDENT_GLOBAL_FORCE":{"absolute":0,"relative":0.1,"scaleFloor":0,"comparisonMode":"LITERAL_RELATIVE_WITH_ZERO_ABSOLUTE","zeroReferenceAbsolute":5},
+    "INCIDENT_GLOBAL_MOMENT":{"absolute":0,"relative":0.1,"scaleFloor":0,"comparisonMode":"LITERAL_RELATIVE_WITH_ZERO_ABSOLUTE","zeroReferenceAbsolute":0.5}
   },
   "configurationAuthority": {
     "schema": "caesar-configuration-authority/v1",
     "caesarVersion": "14.000",
-    "precedence": [
-      "LOAD_CASE_SETTING",
-      "INDIVIDUAL_FILE_SETTING",
-      "MODEL_INPUT",
-      "OVERALL_GLOBAL_DEFAULT"
-    ],
+    "precedence": ["LOAD_CASE_SETTING","INDIVIDUAL_FILE_SETTING","MODEL_INPUT","OVERALL_GLOBAL_DEFAULT"],
     "layers": {
       "overallGlobalDefault": {
-        "source": "USER_SUPPLIED_CAESAR_14_GLOBAL_SETTINGS_2026-08-09_RECONFIRMED_FOR_BM4_L_2026-08-10",
+        "source": "USER_SUPPLIED_CAESAR_14_GLOBAL_SETTINGS_2026-08-09_RECONFIRMED_FOR_BM4_L_2026-08-10_AND_CFG_2026-08-12",
         "settings": {
           "Z_AXIS_UP": "NO",
           "USE_PRESSURE_STIFFENING": "DEFAULT",
           "BEND_AXIAL_SHAPE": "YES",
-          "DEFAULT_TRANS_RESTRAINT_STIFF": {
-            "value": 1000000000000,
-            "unit": "DISPLAYED_CAESAR_UNITS"
-          },
-          "DEFAULT_ROT_RESTRAINT_STIFF": {
-            "value": 1000000000000,
-            "unit": "DISPLAYED_CAESAR_UNITS"
-          },
-          "FRICT_STIF": {
-            "value": 1000000,
-            "unit": "DISPLAYED_CAESAR_UNITS"
-          },
+          "DEFAULT_TRANS_RESTRAINT_STIFF": {"value":1000000000000,"unit":"DISPLAYED_CAESAR_UNITS"},
+          "DEFAULT_ROT_RESTRAINT_STIFF": {"value":1000000000000,"unit":"DISPLAYED_CAESAR_UNITS"},
+          "FRICT_STIF": {"value":1000000,"unit":"CAESAR_STATIC_CONFIGURATION_SOURCE_VALUE"},
+          "FRICT_NORM_FORCE_VAR": 0.15,
+          "FRICT_ANGLE_VAR": {"value":15,"unit":"deg"},
+          "FRICT_SLIDE_MULT": 1.0,
           "MIN_WALL_MILL_TOLERANCE_PERCENT": 12.5,
-          "AMBIENT_TEMPERATURE": {
-            "value": 70,
-            "unit": "F"
-          },
+          "AMBIENT_TEMPERATURE": {"value":70,"unit":"F"},
           "BOURDON_PRESSURE": "NONE",
           "COEFFICIENT_OF_FRICTION_MU": 0,
           "FLEXIBILITY_ELASTIC_MODULUS": "EC",
@@ -205,20 +81,12 @@
           "CONNECT_GEOMETRY_THRU_CNODES": "YES"
         }
       },
-      "modelInput": {
-        "source": "BM4_L_ACCDB_MODEL_INPUT",
-        "settings": {
-          "COEFFICIENT_OF_FRICTION_MU": 0.3
-        }
-      },
+      "modelInput": {"source":"BM4_L_ACCDB_MODEL_INPUT","settings":{"COEFFICIENT_OF_FRICTION_MU":0.3}},
       "individualFile": {
         "source": "USER_VERIFIED_BM4_L_FILE_SETTINGS_2026-08-10",
         "settings": {
           "BOURDON_PRESSURE": "TRANSLATION_AND_ROTATION",
-          "AMBIENT_TEMPERATURE": {
-            "value": 21,
-            "unit": "C"
-          },
+          "AMBIENT_TEMPERATURE": {"value":21,"unit":"C"},
           "RESTRAINT_DIRECTIONAL_BEHAVIOR": "BIDIRECTIONAL"
         }
       },
@@ -226,32 +94,40 @@
         "source": "USER_VERIFIED_BM4_L_CASE_SETTINGS_2026-08-10",
         "cases": {
           "L1": {},
-          "L2": {
-            "COEFFICIENT_OF_FRICTION_MU": 0
-          },
-          "L3": {
-            "COEFFICIENT_OF_FRICTION_MU": 0,
-            "FLEXIBILITY_ELASTIC_MODULUS": "EC"
-          },
-          "L4": {
-            "COEFFICIENT_OF_FRICTION_MU": 0
-          },
-          "L5": {
-            "COEFFICIENT_OF_FRICTION_MU": 0,
-            "FLEXIBILITY_ELASTIC_MODULUS": "EC"
-          },
-          "L6": {
-            "COEFFICIENT_OF_FRICTION_MU": 0
-          },
-          "L7": {
-            "FLEXIBILITY_ELASTIC_MODULUS": "EC"
-          },
+          "L2": {"COEFFICIENT_OF_FRICTION_MU":0},
+          "L3": {"COEFFICIENT_OF_FRICTION_MU":0,"FLEXIBILITY_ELASTIC_MODULUS":"EC"},
+          "L4": {"COEFFICIENT_OF_FRICTION_MU":0},
+          "L5": {"COEFFICIENT_OF_FRICTION_MU":0,"FLEXIBILITY_ELASTIC_MODULUS":"EC"},
+          "L6": {"COEFFICIENT_OF_FRICTION_MU":0},
+          "L7": {"FLEXIBILITY_ELASTIC_MODULUS":"EC"},
           "L13": {},
-          "L14": {
-            "COEFFICIENT_OF_FRICTION_MU": 0
-          },
+          "L14": {"COEFFICIENT_OF_FRICTION_MU":0},
           "L15": {}
         }
+      }
+    },
+    "overrideBoundary": {
+      "source": "USER_SUPPLIED_CFG_SCOPE_INSTRUCTION_2026-08-12",
+      "globalDefaultsNotGoverningForBM4L": ["AMBIENT_TEMPERATURE","BOURDON_PRESSURE","COEFFICIENT_OF_FRICTION_MU","FLEXIBILITY_ELASTIC_MODULUS"],
+      "reason": "OVERRIDDEN_BY_MODEL_INDIVIDUAL_FILE_OR_LOAD_CASE_AUTHORITY"
+    },
+    "nonlinearFrictionAuthority": {
+      "source": "USER_SUPPLIED_CAESAR_14_CFG_2026-08-12",
+      "resolved": {
+        "frictionStiffness": {
+          "status": "RESOLVED",
+          "cfgValue": 1000000,
+          "cfgKey": "FRICT_STIF",
+          "normalizedValueNPerM": 175126835.24647635,
+          "normalizationAuthority": "CAESAR_STATIC_DEFAULT_1E6_LB_PER_IN_PLUS_INDEPENDENT_BM1_PRODUCT_VALIDATION"
+        },
+        "frictionNormalForceVariation": {"status":"RESOLVED","value":0.15,"cfgKey":"FRICT_NORM_FORCE_VAR"},
+        "frictionAngleVariationDeg": {"status":"RESOLVED","value":15,"cfgKey":"FRICT_ANGLE_VAR"},
+        "frictionSlideMultiplier": {"status":"RESOLVED","value":1.0,"cfgKey":"FRICT_SLIDE_MULT"}
+      },
+      "remainingSemantics": {
+        "frictionStateHistorySemantics": "UNRESOLVED_EXACT_UPDATE_AND_CONVERGENCE_ORDER",
+        "gapContactStateSemantics": "UNRESOLVED_EXACT_ACTIVE_SET_AND_CONVERGENCE_ORDER"
       }
     },
     "unresolvedSettings": []
@@ -263,32 +139,13 @@
       "source": "BM4_L_L3_54_NON_TEE_STRAIGHT_ENDPOINT_KINEMATICS_AND_AXIAL_END_FORCE_RECONSTRUCTION_COMMON_179C4831_MISC_ROUNDING_PARITY_2026-08-11"
     },
     "gravityAcceleration": 9.80665,
-    "bourdonPressureEffects": {
-      "mode": "TRANSLATION_AND_ROTATION",
-      "source": "USER_VERIFIED_BM4_L_FILE_SETTING_2026-08-10"
-    },
+    "bourdonPressureEffects": {"mode":"TRANSLATION_AND_ROTATION","source":"USER_VERIFIED_BM4_L_FILE_SETTING_2026-08-10"},
     "directionalB31JTeeFlexibility": true,
     "teeNominalDiameterRelativeTolerance": 0.001,
     "reducerCondensation": true,
-    "b31jSmooth90FlexibilityCorrection": {
-      "enabled": true,
-      "authorityStatus": "RESOLVED",
-      "source": "HEXAGON_CAESAR_II_14_B31_3_2022_DEFAULT_B31J_METHOD_SMOOTH_90_1_3_OVER_H"
-    },
-    "bendPressureStiffening": {
-      "pressureSource": "P1",
-      "authorityStatus": "RESOLVED",
-      "source": "COMMON_179C4831_MISC_BEND_REPORT_P1_STIFFENED_TO_UNPRESSURIZED_FACTOR_PAIR"
-    },
-    "restraintRepresentation": {
-      "mode": "CAESAR_DEFAULT_FINITE_STIFFNESS",
-      "authorityStatus": "RESOLVED",
-      "source": "HEXAGON_CAESAR_II_V14_DEFAULT_RESTRAINT_STIFFNESS_PLUS_BM4L_INPUT_UNITS"
-    },
-    "bendAxialShape": {
-      "enabled": true,
-      "method": "DISCRETIZED_CURVED_CENTRELINE_AXIAL_DOF_V1",
-      "source": "BM4_L_CONFIGURATION_AUTHORITY:BEND_AXIAL_SHAPE"
-    }
+    "b31jSmooth90FlexibilityCorrection": {"enabled":true,"authorityStatus":"RESOLVED","source":"HEXAGON_CAESAR_II_14_B31_3_2022_DEFAULT_B31J_METHOD_SMOOTH_90_1_3_OVER_H"},
+    "bendPressureStiffening": {"pressureSource":"P1","authorityStatus":"RESOLVED","source":"COMMON_179C4831_MISC_BEND_REPORT_P1_STIFFENED_TO_UNPRESSURIZED_FACTOR_PAIR"},
+    "restraintRepresentation": {"mode":"CAESAR_DEFAULT_FINITE_STIFFNESS","authorityStatus":"RESOLVED","source":"HEXAGON_CAESAR_II_V14_DEFAULT_RESTRAINT_STIFFNESS_PLUS_BM4L_INPUT_UNITS"},
+    "bendAxialShape": {"enabled":true,"method":"DISCRETIZED_CURVED_CENTRELINE_AXIAL_DOF_V1","source":"BM4_L_CONFIGURATION_AUTHORITY:BEND_AXIAL_SHAPE"}
   }
 }

@@ -99,18 +99,21 @@ export function createLafeaWorkbenchEvidenceActions(context) {
     // Dry-run the complete batch before the first mutable registration.
     const predicted = registerLafeaContinuumRevalidationBatch(stage.lifecycle, batch);
     for (let index = 0; index < batch.records.length; index += 1) {
-      const state = c.retained.registerLifecycleArtifact(
+      c.invokeRetained('registerLifecycleArtifact', [
         batch.records[index],
         batch.registrations[index].registrationId,
-      );
-      if (state.status === 'FAILED') {
+      ]);
+      const retainedState = c.getRetainedState();
+      if (retainedState.status === 'FAILED') {
         throw c.storeError(
-          state.diagnostics?.[0]?.code ?? 'LAFEA_CONTINUUM_REVALIDATION_REGISTRATION_REJECTED',
+          retainedState.diagnostics?.[0]?.code
+            ?? 'LAFEA_CONTINUUM_REVALIDATION_REGISTRATION_REJECTED',
         );
       }
     }
 
-    const state = c.deriveState();
+    c.clearOrchestratorDiagnostic();
+    const state = c.publish();
     const current = state.stages[stageId];
     for (const kind of ['CANONICAL_MODEL', 'ANALYSIS_GEOMETRY', 'ANALYSIS_MESH']) {
       if (current.lifecycle.artifacts[kind].artifactHash !== predicted.artifacts[kind].artifactHash
@@ -118,7 +121,6 @@ export function createLafeaWorkbenchEvidenceActions(context) {
         throw c.storeError('LAFEA_CONTINUUM_REVALIDATION_COMMIT_DIVERGED');
       }
     }
-    c.clearOrchestratorDiagnostic();
     return freeze({
       schema: LAFEA_CONTINUUM_REVALIDATION_RESULT_SCHEMA,
       stageId,

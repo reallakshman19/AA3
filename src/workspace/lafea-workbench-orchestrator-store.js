@@ -241,7 +241,7 @@ export function createLafeaWorkbenchOrchestratorStore(options) {
   const evidenceActions = createLafeaWorkbenchEvidenceActions({
     retained, release, verification, t6Geometry, preparation, geometry,
     meshGeneration, mesh, rawStage, readStageState, deriveStage, deriveState,
-    publish, storeError, clearOrchestratorDiagnostic,
+    publish, invokeRetained, storeError, clearOrchestratorDiagnostic,
     getRetainedState: () => retainedState,
   });
 

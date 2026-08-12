@@ -64,4 +64,52 @@ assert.equal(CAESAR_ACCDB_FRICTION_SOLVER_PROFILE.relaxationFactor, 1);
 assert.equal(CAESAR_ACCDB_FRICTION_SOLVER_PROFILE.loadSteps, 1);
 assert.deepEqual(CAESAR_ACCDB_FRICTION_SOLVER_PROFILE.sensitivityMultipliers, [0.5, 1, 2]);
 
+const frictionSource = readFileSync(resolve(
+  'src/core/fea-benchmarks/caesar-accdb-friction-solve.js',
+), 'utf8');
+assert.match(
+  frictionSource,
+  /isTranslation \? 'FORCE' : 'MOMENT', dof/u,
+  'Nonlinear nodal reactions must retain the frozen/reference DOF component identity.',
+);
+assert.match(
+  frictionSource,
+  /isTranslation \? 'INCIDENT_GLOBAL_FORCE' : 'INCIDENT_GLOBAL_MOMENT',[\s\S]*?dof,/u,
+  'Nonlinear incident nodal actions must retain the frozen/reference DOF component identity.',
+);
+assert.match(
+  frictionSource,
+  /TRANSLATION_DOFS\.forEach\(\(component\) => \{[\s\S]*?'INCIDENT_GLOBAL_FORCE', component/u,
+  'L15 equilibrium must evaluate actual UX/UY/UZ nodal rows.',
+);
+assert.match(
+  frictionSource,
+  /combinedLimit = absoluteTolerance \+ relativeTolerance \* scale/u,
+  'Iteration updates must enforce the declared combined absolute-relative tolerance.',
+);
+assert.match(
+  frictionSource,
+  /signedNormalReactionN = dot\(normalReactionGlobal, support\.normalDirection\)/u,
+  'Signed normal reaction evidence must respect the declared restraint direction.',
+);
+
+const assessmentSource = readFileSync(resolve(
+  'src/core/fea-benchmarks/qualification-engineering-assessment.js',
+), 'utf8');
+assert.match(
+  assessmentSource,
+  /FORCE: Object\.freeze\(\['UX', 'UY', 'UZ'\]\)/u,
+  'Coordinate-invariant nodal force vectors must use UX/UY/UZ benchmark components.',
+);
+assert.match(
+  assessmentSource,
+  /MOMENT: Object\.freeze\(\['RX', 'RY', 'RZ'\]\)/u,
+  'Coordinate-invariant nodal moment vectors must use RX/RY/RZ benchmark components.',
+);
+assert.match(
+  assessmentSource,
+  /GLOBAL_END_FORCE_FROM: Object\.freeze\(\['FX', 'FY', 'FZ'\]\)/u,
+  'Element-end force vectors must retain FX/FY/FZ action components.',
+);
+
 process.stdout.write('M047 BM4_L friction contract: PASS\n');

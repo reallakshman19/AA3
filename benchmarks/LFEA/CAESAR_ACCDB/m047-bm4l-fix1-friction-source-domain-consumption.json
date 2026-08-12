@@ -1,0 +1,102 @@
+{
+  "schema": "m047-bm4l-fix1-friction-source-domain-consumption/v1",
+  "benchmarkId": "BM4_L",
+  "fixId": "FIX1_INPUTXML_FRICTION_SITE_SOURCE_DOMAIN_CONSUMPTION",
+  "stackBase": {
+    "pr": 1074,
+    "head": "d60fd3d34be4f94968818daa653b02f5b6476d26"
+  },
+  "authority": {
+    "f26Status": "PASS_WITH_GAP_MAGNITUDE_SOURCE_SPLIT",
+    "inputXmlRule": "RESTRAINT.TYPE_MUTATED_EXACTLY_ONCE_BEFORE_CLASSIFICATION",
+    "accdbRule": "INPUT_RESTRAINTS.RES_TYPEID_USED_DIRECTLY_NO_MUTATION",
+    "bm4lMutation": [
+      {"label": "+Y", "from": "17", "to": "14"},
+      {"label": "LIM", "from": "7", "to": "8"},
+      {"label": "GUI", "from": "10", "to": "9"},
+      {"label": "X", "from": "1", "to": "2"},
+      {"label": "Y", "from": "2", "to": "3"},
+      {"label": "Z", "from": "3", "to": "5"},
+      {"label": "", "from": "18", "to": "15"}
+    ],
+    "frictionInventory": {
+      "frictionSiteCount": 26,
+      "rawInputXmlType": 17,
+      "correctedInputXmlType": 14,
+      "correctedClass": "+Y",
+      "normalUnit": [0, 1, 0],
+      "coefficientOfFriction": 0.3
+    },
+    "gapInventory": {
+      "frictionCoupledPositiveGapRows": 5,
+      "totalPositiveGapRows": 6,
+      "additionalNonFrictionGapNode": "21640",
+      "gapMagnitudeAuthority": "CORRECTED_INPUTXML",
+      "accdbGapFields": "UNSET_SENTINEL"
+    }
+  },
+  "implementation": {
+    "target": "src/core/nonlinear-restraint-friction/inputxml-friction-site-map.js",
+    "rawTypeRetainedAsSourceEvidence": true,
+    "correctedTypeCarriedWhenExplicitMutationConfigSupplied": true,
+    "governedFrictionRowsRequiredToClassifyAsPlusY": true,
+    "legacySourceOnlyModeRetained": true,
+    "legacySourceOnlyModeMayClassifyRawTypeAsMechanics": false,
+    "productionNonlinearMechanicsChanged": false,
+    "contactStatePolicyChanged": false,
+    "frictionStateHistoryChanged": false,
+    "comparisonToleranceChanged": false,
+    "referenceRowsChanged": false
+  },
+  "accuracySideBySide": {
+    "denominatorRule": "UNCHANGED_CANONICAL_L13_1914_GOVERNED_ROWS",
+    "present": {
+      "label": "PRESENT_F2_4_FIXED_CONTACT_COULOMB_DIAGNOSTIC",
+      "passed": 1719,
+      "failed": 195,
+      "total": 1914,
+      "passRatePercent": 89.81191222570533,
+      "byQuantity": {
+        "DISPLACEMENT": {"passed": 279, "failed": 12, "total": 291},
+        "ROTATION": {"passed": 264, "failed": 27, "total": 291},
+        "FORCE": {"passed": 77, "failed": 13, "total": 90},
+        "MOMENT": {"passed": 90, "failed": 0, "total": 90},
+        "GLOBAL_END_FORCE_FROM": {"passed": 256, "failed": 32, "total": 288},
+        "GLOBAL_END_FORCE_TO": {"passed": 255, "failed": 33, "total": 288},
+        "GLOBAL_END_MOMENT_FROM": {"passed": 249, "failed": 39, "total": 288},
+        "GLOBAL_END_MOMENT_TO": {"passed": 249, "failed": 39, "total": 288}
+      }
+    },
+    "revised": {
+      "label": "FIX1_SOURCE_DOMAIN_CORRECTED_FRICTION_SITE_CONSUMPTION",
+      "passed": 1719,
+      "failed": 195,
+      "total": 1914,
+      "passRatePercent": 89.81191222570533,
+      "byQuantity": {
+        "DISPLACEMENT": {"passed": 279, "failed": 12, "total": 291},
+        "ROTATION": {"passed": 264, "failed": 27, "total": 291},
+        "FORCE": {"passed": 77, "failed": 13, "total": 90},
+        "MOMENT": {"passed": 90, "failed": 0, "total": 90},
+        "GLOBAL_END_FORCE_FROM": {"passed": 256, "failed": 32, "total": 288},
+        "GLOBAL_END_FORCE_TO": {"passed": 255, "failed": 33, "total": 288},
+        "GLOBAL_END_MOMENT_FROM": {"passed": 249, "failed": 39, "total": 288},
+        "GLOBAL_END_MOMENT_TO": {"passed": 249, "failed": 39, "total": 288}
+      }
+    },
+    "deltaPassedRows": 0,
+    "deltaFailedRows": 0,
+    "deltaPercentagePoints": 0,
+    "reason": "F2.6 source-domain correction preserves the exact 26 friction-node set, +Y normal vectors, mu=0.3, fixed contact state, friction law and comparator. This fix removes semantic misclassification risk but does not change the numerical equations."
+  },
+  "remainingBoundary": {
+    "f27StillRequired": true,
+    "blockers": [
+      "GAP_CONTACT_STATE_SEMANTICS_AUTHORITY_REQUIRED",
+      "FRICTION_STATE_HISTORY_SEMANTICS_AUTHORITY_REQUIRED"
+    ],
+    "nextNumericalAccuracyChangeAuthorizedOnlyAfter": "EXACT_BUILD_ACTIVE_BOUNDARY_AND_STATE_HISTORY_AUTHORITY",
+    "l13QualifiedAccuracyAuthorized": false,
+    "productionNonlinearMechanicsAuthorized": false
+  }
+}

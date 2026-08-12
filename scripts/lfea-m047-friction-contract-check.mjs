@@ -6,24 +6,26 @@ import {
   CAESAR_ACCDB_FRICTION_SOLVER_PROFILE,
   CAESAR_CONFIGURATION_PRECEDENCE,
   resolveCaesarEffectiveFriction,
+  resolveCaesarHydrotestQualificationAuthority,
 } from '../src/core/fea-benchmarks/index.js';
 
 const profile = JSON.parse(readFileSync(resolve(
   'benchmarks/LFEA/CAESAR_ACCDB/bm4l-validation.profile.json',
 ), 'utf8'));
 const benchmarkPackage = {
+  schema: 'caesar-accdb-benchmark-package/v1',
   profile,
   cases: [
-    { caseId: 'L1', lcaseNumber: 1, formula: 'WW+HP' },
-    { caseId: 'L2', lcaseNumber: 2, formula: 'W' },
-    { caseId: 'L3', lcaseNumber: 3, formula: 'T1' },
-    { caseId: 'L4', lcaseNumber: 4, formula: 'P1' },
-    { caseId: 'L5', lcaseNumber: 5, formula: 'W+T1+P1' },
-    { caseId: 'L6', lcaseNumber: 6, formula: 'W+P1' },
-    { caseId: 'L7', lcaseNumber: 7, formula: 'W+T1+P1' },
-    { caseId: 'L13', lcaseNumber: 13, formula: 'W+P1' },
-    { caseId: 'L14', lcaseNumber: 14, formula: 'L14=L5-L6' },
-    { caseId: 'L15', lcaseNumber: 15, formula: 'L15=L7-L13' },
+    { caseId: 'L1', lcaseNumber: 1, caseClass: 'HYD', formula: 'WW+HP' },
+    { caseId: 'L2', lcaseNumber: 2, caseClass: 'OPE', formula: 'W' },
+    { caseId: 'L3', lcaseNumber: 3, caseClass: 'OPE', formula: 'T1' },
+    { caseId: 'L4', lcaseNumber: 4, caseClass: 'OPE', formula: 'P1' },
+    { caseId: 'L5', lcaseNumber: 5, caseClass: 'OPE', formula: 'W+T1+P1' },
+    { caseId: 'L6', lcaseNumber: 6, caseClass: 'SUS', formula: 'W+P1' },
+    { caseId: 'L7', lcaseNumber: 7, caseClass: 'OPE', formula: 'W+T1+P1' },
+    { caseId: 'L13', lcaseNumber: 13, caseClass: 'SUS', formula: 'W+P1' },
+    { caseId: 'L14', lcaseNumber: 14, caseClass: 'EXP', formula: 'L14=L5-L6' },
+    { caseId: 'L15', lcaseNumber: 15, caseClass: 'EXP', formula: 'L15=L7-L13' },
   ],
 };
 
@@ -56,6 +58,24 @@ assert.equal(l15.kind, 'DERIVED');
 assert.deepEqual(l15.dependencies.map((row) => [row.caseId, row.effectiveCoefficient]), [
   ['L7', 0.3], ['L13', 0.3],
 ]);
+const hydro = resolveCaesarHydrotestQualificationAuthority(benchmarkPackage);
+assert.equal(hydro.sourceCaseClass, 'HYD');
+assert.equal(hydro.sourceFormula, 'WW+HP');
+assert.equal(hydro.weightTerm, 'WW');
+assert.equal(hydro.waterDensityKgPerM3, 1000);
+assert.equal(hydro.insulationIncluded, false);
+assert.equal(hydro.pressureTerm, 'HP');
+assert.equal(hydro.pressureField, 'HYDRO_PRESSURE');
+assert.equal(hydro.frozenPrimitiveFormula, 'W+P1');
+assert.throws(
+  () => resolveCaesarHydrotestQualificationAuthority({
+    ...benchmarkPackage,
+    cases: benchmarkPackage.cases.map((row) => row.caseId === 'L1' ? { ...row, formula: 'W+P1' } : row),
+  }),
+  (error) => error?.code === 'CAESAR_ACCDB_HYDROTEST_CASE_UNQUALIFIED',
+  'The governed L1 entrypoint must reject any source formula other than pinned HYD WW+HP.',
+);
+
 const displayedFrictionStiffness = profile.configurationAuthority.layers.overallGlobalDefault.settings.FRICT_STIF.value;
 assert.equal(displayedFrictionStiffness, 1e6);
 assert.equal(displayedFrictionStiffness * 100, 1e8);
@@ -147,6 +167,30 @@ assert.match(
   'Friction force scale floor must come from the versioned solver profile.',
 );
 
+const governedFrictionSource = readFileSync(resolve(
+  'src/core/fea-benchmarks/caesar-accdb-friction-solve-governed.js',
+), 'utf8');
+assert.match(
+  governedFrictionSource,
+  /caseClass !== 'HYD' \|\| formula !== 'WW\+HP'/u,
+  'The governed nonlinear entrypoint must fail closed unless L1 remains exact HYD WW+HP.',
+);
+assert.match(
+  governedFrictionSource,
+  /CAESAR_WW_MEANS_PIPE_PLUS_WATER_AS_FLUID/u,
+  'WW water-filled weight authority must be explicit.',
+);
+assert.match(
+  governedFrictionSource,
+  /CAESAR_HP_MEANS_HYDROSTATIC_TEST_PRESSURE/u,
+  'HP hydrostatic pressure authority must be explicit.',
+);
+assert.match(
+  governedFrictionSource,
+  /CAESAR_INCLUDE_INSULATION_IN_HYDROTEST_DEFAULT_FALSE/u,
+  'Hydrotest insulation exclusion authority must be explicit.',
+);
+
 const assessmentSource = readFileSync(resolve(
   'src/core/fea-benchmarks/qualification-engineering-assessment.js',
 ), 'utf8');
@@ -178,6 +222,16 @@ assert.match(
   benchmarkSource,
   /caseClass: caseRecord\.caseClass/u,
   'Resolved Stage 2 configuration must publish the canonical OPE/SUS/EXP/HYD case class.',
+);
+assert.match(
+  benchmarkSource,
+  /hydrotestAuthority = resolveCaesarHydrotestQualificationAuthority\(benchmarkPackage\)/u,
+  'Hydrotest authority must resolve before the first Stage 2 solve.',
+);
+assert.match(
+  benchmarkSource,
+  /hydrotestAuthority,/u,
+  'The resolved-configuration artifact must retain the governed hydrotest authority.',
 );
 assert.match(
   benchmarkSource,

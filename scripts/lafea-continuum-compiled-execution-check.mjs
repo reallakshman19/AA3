@@ -75,6 +75,8 @@ expectCode(
   () => executeLafeaContinuumCompiledForParity(authorityTamper),
   'LAFEA_CONTINUUM_COMPILED_AUTHORITY_STATE_INVALID',
 );
+const compilerTamper = clone(fixture.compiled); compilerTamper.compilerRevision = 'INCOMPATIBLE'; reseal(compilerTamper);
+expectCode(() => executeLafeaContinuumCompiledForParity(compilerTamper), 'LAFEA_CONTINUUM_COMPILED_COMPILER_IDENTITY_INVALID');
 
 const temperatureDelta = clone(fixture.compiled);
 temperatureDelta.attachments.push({
@@ -108,6 +110,7 @@ console.log(JSON.stringify({
   existingNumericalKernelReused: true,
   legacyCompiledNumericalParity: true,
   deterministicCompiledExecution: true,
+  compilerIdentityFailsClosed: true,
   temperatureDeltaFailsClosedWithoutThermalExpansionAuthority: true,
   workbenchParityConsumerIntegrated: true,
   authoritativeRunChanged: false,

@@ -3,25 +3,63 @@ import { expect, test } from '@playwright/test';
 
 const FIXTURE = resolve('public/fixtures/topology-edit-table-q3-exact.staged.json');
 const FIXTURE_ID = 'topology-edit-table-q3-exact.staged.json';
-const WORKER_PATTERN = '**/topology-edit-validation-worker.js';
 
 test.beforeEach(async ({ page }) => {
-  test.setTimeout(180_000);
+  test.setTimeout(120_000);
   await page.setViewportSize({ width: 1720, height: 1080 });
-  await page.addInitScript(() => globalThis.localStorage?.clear());
+  await page.addInitScript(() => {
+    globalThis.localStorage?.clear();
+    const NativeWorker = globalThis.Worker;
+    globalThis.__a3d001HoldValidationMessages = true;
+    globalThis.__a3d001ValidationResponsePending = false;
+    globalThis.__a3d001ValidationWorkers = [];
+    class ControlledWorker {
+      constructor(url, options) {
+        this.native = new NativeWorker(url, options);
+        this.controlled = String(url).includes('topology-edit-validation-worker.js');
+        this.listeners = new Map([
+          ['message', new Set()],
+          ['error', new Set()],
+        ]);
+        this.pendingMessages = [];
+        this.native.addEventListener('message', (event) => {
+          if (this.controlled && globalThis.__a3d001HoldValidationMessages) {
+            this.pendingMessages.push(event);
+            globalThis.__a3d001ValidationResponsePending = true;
+            return;
+          }
+          this.dispatch('message', event);
+        });
+        this.native.addEventListener('error', (event) => this.dispatch('error', event));
+        if (this.controlled) globalThis.__a3d001ValidationWorkers.push(this);
+      }
+
+      addEventListener(type, listener) {
+        if (!this.listeners.has(type)) this.listeners.set(type, new Set());
+        this.listeners.get(type).add(listener);
+      }
+
+      removeEventListener(type, listener) {
+        this.listeners.get(type)?.delete(listener);
+      }
+
+      postMessage(...args) { return this.native.postMessage(...args); }
+      terminate() { return this.native.terminate(); }
+
+      dispatch(type, event) {
+        for (const listener of this.listeners.get(type) ?? []) listener.call(this, event);
+      }
+
+      release() {
+        const messages = this.pendingMessages.splice(0);
+        messages.forEach((event) => this.dispatch('message', event));
+      }
+    }
+    globalThis.Worker = ControlledWorker;
+  });
 });
 
 test('late validation result cannot authorize Apply after visible selection changes', async ({ page }, testInfo) => {
-  let releaseWorker;
-  let reportWorkerRequest;
-  const workerRelease = new Promise((resolveRelease) => { releaseWorker = resolveRelease; });
-  const workerRequested = new Promise((resolveRequest) => { reportWorkerRequest = resolveRequest; });
-  await page.route(WORKER_PATTERN, async (route) => {
-    reportWorkerRequest();
-    await workerRelease;
-    await route.continue();
-  });
-
   const diagnostics = collectBrowserDiagnostics(page);
   const host = await openQ3(page);
   const ids = await q3CanonicalIds(page);
@@ -38,7 +76,7 @@ test('late validation result cannot authorize Apply after visible selection chan
   expect((await authorityEvidence(page)).canonicalHash).toBe(before.canonicalHash);
 
   await page.locator('[data-table-action="validate"]').click();
-  await workerRequested;
+  await page.waitForFunction(() => globalThis.__a3d001ValidationResponsePending === true);
   const request = await activeValidationRequest(page);
   expect(request.requestId).toBeTruthy();
   expect(request.sourceHash).toBe(before.sourceHash);
@@ -54,7 +92,10 @@ test('late validation result cannot authorize Apply after visible selection chan
   expect(changedSelection.canonicalHash).toBe(before.canonicalHash);
   expect(changedSelection.journalHash).toBe(before.journalHash);
 
-  releaseWorker();
+  await page.evaluate(() => {
+    globalThis.__a3d001HoldValidationMessages = false;
+    globalThis.__a3d001ValidationWorkers.forEach((worker) => worker.release());
+  });
   await expect.poll(() => tableEvidence(page).then((row) => row.pending)).toBe(false);
 
   const after = await authorityEvidence(page);
@@ -85,9 +126,9 @@ test('late validation result cannot authorize Apply after visible selection chan
       'TABLE_SELECT_PIPE',
       'STAGE',
       'PREVIEW',
-      'VALIDATE_PENDING',
+      'VALIDATE_RESPONSE_HELD',
       'TABLE_SELECT_VALVE',
-      'RELEASE_OLD_VALIDATION',
+      'RELEASE_OLD_VALIDATION_RESPONSE',
       'ASSERT_STALE_REJECTION',
     ],
     canonicalIds: ids,

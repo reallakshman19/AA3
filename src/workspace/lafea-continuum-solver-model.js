@@ -13,7 +13,7 @@ import { sourceAuthorityDocument, validateLafeaSourceAuthority } from './lafea-s
 
 export const LAFEA_CONTINUUM_SOLVER_MODEL_SCHEMA = 'lafea-continuum-solver-model/v1';
 export const LAFEA_CONTINUUM_SOLVER_COMPILER_ID = 'LAFEA.3/DOMAIN_FIRST_SOLVER_COMPILER';
-export const LAFEA_CONTINUUM_SOLVER_COMPILER_REVISION = '12A.1';
+export const LAFEA_CONTINUUM_SOLVER_COMPILER_REVISION = '12A.2';
 
 const STAGE_ID = 'LAFEA.3';
 
@@ -51,6 +51,7 @@ export function compileLafeaContinuumSolverModel(options) {
     units: freeze({ ...canonical.units.canonical }),
     declaredUnits: freeze({ ...canonical.units.declared }),
     coordinateSystemId: geometryEvidence.geometry.coordinateSystemId,
+    sourceModel: compileSourceModel(canonical),
     dofPolicy: freeze({
       dofsPerNode: adapter.discretization.dofsPerNode,
       dofOrder: ['UX', 'UY'],
@@ -149,6 +150,15 @@ function compileParents(authority, canonical, domain, geometryEvidence, meshEvid
     meshArtifactHash: meshEvidence.artifactHash,
     meshHash: meshEvidence.meshHash,
     meshProfileHash: meshEvidence.meshProfileHash,
+  });
+}
+
+function compileSourceModel(canonical) {
+  return freeze({
+    modelIdentity: canonical.modelIdentity,
+    modelVersion: canonical.modelVersion,
+    sourceAncestry: freeze({ ...canonical.sourceEvidence.sourceAncestry }),
+    elementTypePolicy: freeze({ ...canonical.elementTypePolicy }),
   });
 }
 

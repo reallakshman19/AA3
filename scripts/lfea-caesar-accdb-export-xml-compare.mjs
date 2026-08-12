@@ -1,13 +1,45 @@
 #!/usr/bin/env node
 import { createHash } from 'node:crypto';
 import { readFile, stat } from 'node:fs/promises';
-import { basename, resolve } from 'node:path';
+import { createRequire } from 'node:module';
+import { basename, isAbsolute, relative, resolve } from 'node:path';
 import { pathToFileURL } from 'node:url';
 
 const args = parseArguments(process.argv.slice(2));
 const accdbPath = resolve(args.accdb);
 const xmlCompareRoot = resolve(args.xmlCompareRoot);
 const parserPath = resolve(xmlCompareRoot, 'parser/accdb-mdb.js');
+const expectedReaderRoot = resolve(xmlCompareRoot, 'node_modules/mdb-reader');
+const parserRequire = createRequire(pathToFileURL(parserPath));
+let mdbReaderEntrypoint;
+try {
+  mdbReaderEntrypoint = parserRequire.resolve('mdb-reader');
+} catch (error) {
+  throw new Error(
+    `The XML Compare parser cannot resolve the required local mdb-reader runtime from ${parserPath}: ${error.message}`,
+    { cause: error },
+  );
+}
+const relativeReaderEntrypoint = relative(expectedReaderRoot, mdbReaderEntrypoint);
+if (relativeReaderEntrypoint.startsWith('..') || isAbsolute(relativeReaderEntrypoint)) {
+  throw new Error(
+    `XML Compare mdb-reader resolved outside the pinned local runtime: ${mdbReaderEntrypoint}.`,
+  );
+}
+const readerPackagePath = resolve(expectedReaderRoot, 'package.json');
+const readerPackage = JSON.parse(await readFile(readerPackagePath, 'utf8'));
+if (String(readerPackage.name) !== 'mdb-reader' || String(readerPackage.version) !== args.mdbReaderVersion) {
+  throw new Error(
+    `Local mdb-reader identity mismatch: ${String(readerPackage.name)}@${String(readerPackage.version)} != mdb-reader@${args.mdbReaderVersion}.`,
+  );
+}
+const readerRepository = typeof readerPackage.repository === 'string'
+  ? readerPackage.repository
+  : readerPackage.repository?.url;
+if (!String(readerRepository ?? '').includes('github.com/andipaetzold/mdb-reader')) {
+  throw new Error(`Unexpected mdb-reader repository identity: ${String(readerRepository)}.`);
+}
+
 const parserModule = await import(pathToFileURL(parserPath).href);
 if (typeof parserModule.readAccdbNamedTables !== 'function') {
   throw new TypeError(`${parserPath} does not export readAccdbNamedTables().`);
@@ -46,6 +78,12 @@ const output = {
     source: 'XML_Compare_Utilities/parser/accdb-mdb.js:readAccdbNamedTables',
     xmlCompareRoot,
     parserPath,
+    runtimePolicy: 'LOCAL_MDB_READER_ONLY_NO_CDN_FALLBACK',
+    mdbReaderPackagePath: readerPackagePath,
+    mdbReaderEntrypoint,
+    mdbReaderName: readerPackage.name,
+    mdbReaderVersion: readerPackage.version,
+    mdbReaderRepository: readerRepository,
     requestedTables: args.tables,
     log,
   },
@@ -103,17 +141,21 @@ function parseArguments(argv) {
   const accdb = values.get('--accdb');
   const tablesText = values.get('--tables');
   const xmlCompareRoot = values.get('--xml-compare-root');
-  if (!accdb || !tablesText || !xmlCompareRoot) {
-    throw new TypeError('Usage: --accdb <file.accdb> --tables <A,B,C> --xml-compare-root <XML_Compare_Utilities checkout>.');
+  const mdbReaderVersion = values.get('--mdb-reader-version');
+  if (!accdb || !tablesText || !xmlCompareRoot || !mdbReaderVersion) {
+    throw new TypeError(
+      'Usage: --accdb <file.accdb> --tables <A,B,C> --xml-compare-root <XML_Compare_Utilities checkout> --mdb-reader-version <version>.',
+    );
   }
-  const unknown = [...values.keys()].filter((key) => !['--accdb', '--tables', '--xml-compare-root'].includes(key));
+  const known = ['--accdb', '--tables', '--xml-compare-root', '--mdb-reader-version'];
+  const unknown = [...values.keys()].filter((key) => !known.includes(key));
   if (unknown.length > 0) throw new TypeError(`Unknown arguments: ${unknown.join(', ')}.`);
   const tables = [...new Set(tablesText.split(',').map((entry) => entry.trim().toUpperCase()).filter(Boolean))].sort();
   if (tables.length === 0) throw new TypeError('--tables must contain at least one table name.');
   for (const tableName of tables) {
     if (!/^[A-Z0-9_]+$/u.test(tableName)) throw new TypeError(`Unsafe ACCDB table name ${tableName}.`);
   }
-  return Object.freeze({ accdb, tables: Object.freeze(tables), xmlCompareRoot });
+  return Object.freeze({ accdb, tables: Object.freeze(tables), xmlCompareRoot, mdbReaderVersion });
 }
 
 function formatLog(log) {

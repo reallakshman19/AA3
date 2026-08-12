@@ -20,6 +20,9 @@ import {
   undoTopologyEditTableTransaction,
   validateTopologyEditTablePreview,
 } from '../src/workspace/topology-edit/table/topology-edit-table-transaction.js';
+import {
+  renderTopologyEditTablePreviewGhost,
+} from '../src/workspace/viewport-productivity/topology-edit-table-workflow.js';
 
 function fixture() {
   return finalizeCanonicalTopology({
@@ -97,12 +100,47 @@ test('SUPPORT_RESTRAINT plan captures support, node, and host dependencies with 
   assert.equal(intent.requestedValue.supportId, 'support:s1');
   assert.equal(intent.requestedValue.authority, 'CERTIFIED_TABLE_OVERRIDE');
   assert.deepEqual(batchPlan.operationPlan.commandIntents, [{
+    sequence: 0,
     commandType: 'UPDATE_SUPPORT_RESTRAINT',
     payload: intent.requestedValue,
   }]);
   assert.ok(batchPlan.dependencyRevisions['support:s1']);
   assert.ok(batchPlan.dependencyRevisions['node:n1']);
   assert.ok(batchPlan.dependencyRevisions['edge:p1']);
+});
+
+test('SUPPORT_RESTRAINT Preview renders only the governed candidate support glyph without mutation', async () => {
+  const topology = fixture();
+  const session = new TopologyEditCertifiedSession(topology);
+  const { batchPlan } = planned(session, topology);
+  const prior = session.snapshot();
+  const preview = await prepareTopologyEditTablePreview({ session, batchPlan });
+  let ghost = null;
+
+  renderTopologyEditTablePreviewGhost({
+    preview,
+    controller: {
+      deriveVisual: () => ({ projection: { elements: [], segments: [] } }),
+      viewportBackend: {
+        navigationConfiguration: { supportMarkerSize: 24 },
+        renderGhost: (value) => { ghost = value; },
+      },
+    },
+  });
+
+  assert.equal(session.currentTopology().canonicalTopologyHash, prior.activeCanonicalTopologyHash);
+  assert.ok(ghost);
+  assert.equal(ghost.elements.length, 1);
+  assert.equal(ghost.segments.length, 1);
+  assert.equal(ghost.elements[0].pickTarget.objectKind, 'support');
+  assert.equal(ghost.elements[0].pickTarget.objectId, 'support:s1');
+  assert.equal(ghost.segments[0].type, 'RESTRAINT_DIRECTION');
+  assert.equal(ghost.segments[0].pickTarget.objectKind, 'restraint');
+  assert.equal(ghost.segments[0].pickTarget.supportId, 'support:s1');
+  assert.equal(
+    ghost.segments[0].pickTarget.objectId,
+    ghost.segments[0].pickTarget.restraintId,
+  );
 });
 
 test('SUPPORT_RESTRAINT Preview → Validate → Apply is atomic and journal undo/redo is exact', async () => {

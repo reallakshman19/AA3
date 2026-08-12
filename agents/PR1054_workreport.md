@@ -6,184 +6,171 @@
 |---|---|
 | PR | #1054 — `feat(3d-edit): recover certified support restraint editing` |
 | Branch | `agent/certified-support-movement-semantics` |
-| Base | `main@271d04fa2674ab68367808d05f2429ec5e236a6e` |
+| Original base | `main@271d04fa2674ab68367808d05f2429ec5e236a6e` |
+| Qualification base | `qualification/pr1054-exact-head@1f5dbae1613723840a09ecbf1ef2d5283d825369` — isolated workflow only |
 | Bootstrap | `4140ffbd147b9cc73655d00e8264f8fb774869ff` — empty tree-equivalent commit |
-| Implementation/test head | `85e67606b588809c96b03c8801a783edaf09620d` |
-| Mission | Recover the already-qualified support **restraint-property** edit onto current main while keeping support placement/movement fail closed. |
-| Status | DRAFT / source recovery complete / static audit complete / exact-head execution unavailable |
-| Pending siblings | #1051 TEE/reducer and #1053 NODE_POSITION remain draft/unmerged with exact-head empirical execution `NOT_RUN`; this PR does not depend on their source. |
+| Preview production repair source | `414985e617bd90024d993f11961cec353af515a8` |
+| Final qualified feature/test head | `bef97eb80fe4ca1020b5071259895996a8104684` |
+| Mission | Recover certified support restraint-property editing while keeping support placement/movement fail closed. |
+| Engineering state | **FEATURE/TEST QUALIFIED; FINAL REPORT-HEAD QUALIFICATION PENDING** |
+| Empirical execution | Run `31578119806` on exact head `bef97eb8…`: source/line checks PASS, focused Node **14/14 PASS**, production Chromium **1/1 PASS**, evidence upload PASS, and embedded JSON self-identifies the exact head. |
+| Merge state | Draft / unmerged. This report-only head must pass the same exact-head gate before restoring the PR to `main` and merging. |
 
 ## Preserved Authority
 
-The recovered operation is intentionally narrow:
+`exact SUPPORT row -> exact support + node + host custody -> transient restraint draft -> governed SUPPORT_RESTRAINT intent -> UPDATE_SUPPORT_RESTRAINT command -> candidate Preview ghost -> validation -> certified transaction -> canonical topology/journal -> Three projection`
 
-`exact SUPPORT row -> exact support + node + host custody -> explicit full restraint override -> governed SUPPORT_RESTRAINT intent -> UPDATE_SUPPORT_RESTRAINT command -> candidate Preview -> validation -> certified transaction -> canonical topology -> existing journal Undo/Redo`
+Still prohibited: station/host editing, support placement movement, implicit support follow/restation, direct DOM/renderer canonical writes, replacement of imported evidence, mutation during input/Stage/Preview/Validate, a second support history stack, weakening `SUPPORT_GEOMETRY_POLICY_REQUIRED`, or bypassing planner/certification.
 
-Still prohibited:
+## Certified SUPPORT_RESTRAINT Contract
 
-- editing `stationMm` or host attachment;
-- moving a support node or support placement;
-- implicit support follow/restation when parent geometry moves;
-- direct support/canonical writes from Table/DOM/renderer;
-- replacing imported `support.restraints` evidence;
-- mutation during input, Stage, Preview or Validate;
-- a second support-specific history stack;
-- weakening `SUPPORT_GEOMETRY_POLICY_REQUIRED`;
-- depending on unmerged #1051/#1053 source.
+Requested fields:
 
-## S1 Audit — COMPLETE
+- `family` — required certified family token;
+- `direction` — required except `ANCHOR`;
+- `gapMm` — optional finite non-negative mm;
+- `travelMm` — optional finite non-negative mm.
 
-### Tested predecessor
+Dependency custody: exact support revision, its canonical node revision when present, and exactly one shared-resolver host-edge revision. Invalid family/direction/gap/travel, unresolved/ambiguous host, stale revisions, non-target deltas, or evidence loss fail closed.
 
-PR #1033 (`feat(3d-edit): certify support restraint editing`) implemented the same narrow operation. Its exact head `68444777aeb01f165c987975ef1555bb1b7a9a1b` triggered **17 workflows and all 17 completed successfully**, including main-gate, Table Slices 1/2/3/6/7/8, R1 reachability, Tool Audit, SJSON render/interaction, authoring suites, non-FEA, and catalogue exact-head qualification.
-
-PR #1033 was stacked on an older node-position branch and never merged. Its boundary remains correct: `UPDATE_SUPPORT_RESTRAINT` changes family/direction/gap/travel only and **does not change station, host attachment, or node geometry**.
-
-### Current-main reconciliation
-
-Merged #1036 introduced shared support-host authority `resolveTopologyEditSupportHostEdge()` and the final `SUPPORT_GEOMETRY_POLICY_REQUIRED` backstop. PR1054 therefore does **not** recover #1033's private host lookup. The current command requires the #1036 resolver to return exact `RESOLVED` host custody before command resolution/planning.
-
-Merged #1041 later strengthened valve catalogue and target-DN custody. Those current-main changes are preserved in the manually merged Table intent/runtime files. PR1054 does not widen or replace valve authority.
-
-### Canonical/source custody
-
-The Table support projection exposes:
-
-- `hostEntityId` — read-only;
-- `stationMm` — canonical/source-observed and read-only;
-- `supportType`, `direction`, `gapMm`, `travelMm` — one compound certified restraint edit.
-
-The command writes a separate canonical `support.restraint` marked `CERTIFIED_TABLE_OVERRIDE` while retaining imported `support.restraints`. `supportRestraintRows()` prefers the override only when that marker is present.
-
-## S2 Semantic Decision — COMPLETE
-
-### Authorized operation: SUPPORT_RESTRAINT
-
-Exact requested fields:
-
-- `family` — explicit certified family token;
-- `direction` — explicit direction token; optional only for `ANCHOR`;
-- `gapMm` — optional finite non-negative number;
-- `travelMm` — optional finite non-negative number.
-
-Exact target custody:
-
-- one canonical support revision;
-- its canonical node revision when `nodeId` is present;
-- exactly one shared-resolver host edge revision.
-
-Fail closed on non-SUPPORT target, unsupported family/direction, missing direction outside ANCHOR, negative/non-finite gap/travel, unresolved/ambiguous host authority, stale support/node/host revision, candidate delta outside the target support, or loss/replacement of imported restraint evidence.
-
-### Explicitly deferred
-
-- support station editing/restationing;
-- host rebinding;
-- support world-position relocation;
-- parent-geometry host-follow translation;
-- automatic support movement during NODE_POSITION/PIPE_LENGTH/other geometry edits.
-
-Merged #1036 remains final for all geometry-dependent support movement: parent geometry fails closed until a separate placement policy is certified.
+A committed override is recognized only when `support.restraintAuthority === 'CERTIFIED_TABLE_OVERRIDE'`; imported restraint evidence remains distinct and retained.
 
 ## Engineering Register
 
 | ID | Type | Status | Finding / decision |
 |---|---|---|---|
-| DEC-1054-01 | Safety | ACCEPTED | Existing support-dependent parent geometry blocking remains final. |
-| DEC-1054-02 | Scope | ACCEPTED NARROW | Recover restraint-property editing only; no placement semantics. |
-| DEC-1054-03 | Integration | ACCEPTED | Build from current main only; #1051/#1053 remain independent drafts. |
-| DEC-1054-04 | Predecessor | ACCEPTED | Reuse byte-identical tested #1033 modules where later merged PRs did not touch them. |
-| DEC-1054-05 | Host authority | ACCEPTED | Current command uses #1036 `resolveTopologyEditSupportHostEdge()` and requires `RESOLVED`. |
-| DEC-1054-06 | Evidence | ACCEPTED | Imported restraint evidence remains; only marked override becomes active. |
-| ISS-1054-01 | Current-main regression | RESOLVED IN SOURCE | Added focused rejection when an explicit support host token is unresolved; no override is written. |
-| RISK-1054-01 | Current-head execution | OPEN | Historical predecessor is green; current-main adaptation has no exact-head runner. |
-| RISK-1054-02 | Sibling overlap | OPEN / MANAGEABLE | #1051 also edits Table cell/runtime wiring. Whichever merges second must rebase the small overlap. |
+| DEC-1054-01 | Safety | ACCEPTED | Parent geometry remains fail closed under #1036 support policy. |
+| DEC-1054-02 | Scope | ACCEPTED NARROW | Restraint properties only; no placement semantics. |
+| DEC-1054-03 | Host authority | ACCEPTED | Shared #1036 resolver only; exact `RESOLVED` required. |
+| DEC-1054-04 | Evidence | ACCEPTED | Imported restraints retained; only marked override becomes active. |
+| ISS-1054-01 | Current-main regression | RESOLVED | Explicit unresolved host token rejects before override. |
+| ISS-1054-02 | Qualification | RESOLVED | Production visible-user Chromium lifecycle passes on exact feature/test head. |
+| ISS-1054-03 | Test expectation | RESOLVED | `LOCAL_Y` expectation matches unchanged deterministic host frame. |
+| ISS-1054-04 | Test expectation | RESOLVED | Deterministic planner `sequence: 0` expectation restored; planner unchanged. |
+| ISS-1054-05 | Browser evidence interpretation | RESOLVED | Imported active restraint is not mislabeled as certified override. |
+| ISS-1054-06 | Preview correctness | RESOLVED | Changed support restraint Preview reuses existing restraint geometry/projection authority and renders only changed-support ghost content. |
+| ISS-1054-07 | Regression expectation | RESOLVED | Support marker retains support pick identity; restraint-direction segment retains deterministic restraint pick identity plus support cross-reference. |
+| ISS-1054-08 | Evidence lineage | **RESOLVED / RUN 6 PASS** | Qualification JSON now reads `TARGET_HEAD_SHA` and records exact `candidateHead: bef97eb80fe4ca1020b5071259895996a8104684`, matching workflow checkout and artifact name. |
+| RISK-1054-01 | Stack integration | OPEN | #1061 also touches Table workflow and must reconcile/requalify after #1054 promotion. |
 
-## Stage Roadmap
+## Production Preview Repair
 
-### S0 — Report-first custody — COMPLETE
+`src/workspace/viewport-productivity/topology-edit-table-workflow.js` composes the normal changed topology ghost with support-restraint projection for changed support IDs only:
 
-PR opened from current main with an empty bootstrap; this numbered report was the first changed file.
+- derives candidate support glyphs with existing `deriveAllSupportRestraintGeometry()`;
+- projects with existing `projectSupportGeometryToViewport()`;
+- uses approved viewport `supportMarkerSize` policy;
+- includes only overlays whose `supportId` is in `candidate.changedCanonicalIds`;
+- merges projected elements/segments into the existing one-shot ghost payload;
+- never mutates canonical topology during Preview.
 
-### S1 — Canonical/support authority audit — COMPLETE
+The focused regression test proves one support marker plus one restraint-direction segment, correct support/restraint pick identity, and unchanged canonical hash.
 
-Recovered #1033 authority and reconciled it with merged #1036/#1041.
+## Production Browser Qualification
 
-### S2 — Semantic decision — COMPLETE
+Visible operation path only:
 
-Only SUPPORT_RESTRAINT is authorized; placement remains deferred.
+`Workspace -> XYZ fixture -> 3D Edit -> Engineering Table -> type S-007 -> visible Select -> family/direction/gap/travel -> Stage -> Preview -> Validate -> Apply -> Undo -> Redo`
 
-### S3 — Current-main contract recovery — COMPLETE
+Controller access is read-only evidence only. No controller operation method is invoked as UI coverage.
 
-Recovered command contract/resolver/reducer/effect dispatch, restraint-family geometry, Table columns/planner/batch authority, and added the current-main shared-host strengthening.
+### Final feature/test gate — Run 6 PASS
 
-### S4 — UI/test recovery — COMPLETE IN SOURCE
+Run `31578119806`, job `94054827376`, exact head `bef97eb80fe4ca1020b5071259895996a8104684`:
 
-Recovered the compound support editor and focused command/Table transaction tests. Current #1036 capability coverage now expects restraint fields to require explicit compound input while station remains read-only. Added shared-host unresolved regression.
+- exact checkout: PASS;
+- Node 22 / dependency / real Chromium provisioning: PASS;
+- exact-head assertion: PASS;
+- four `node --check` checks: PASS;
+- E2E `<300` physical-line gate: PASS;
+- `git diff --check`: PASS;
+- focused Node: **14 tests / 14 pass / 0 fail**;
+- production Chromium: **1 test / 1 pass / 0 fail**, zero retries, 20.9 s;
+- evidence upload: PASS;
+- artifact ID `9134026212`;
+- artifact name `pr1054-support-restraint-bef97eb80fe4ca1020b5071259895996a8104684-1`;
+- artifact size `2,808,762` bytes;
+- artifact SHA256 `4152f74e1fb025f704cf71f6de0df8d817d2f9fa4320129c8c822b662208d056`.
 
-### S5 — execution/merge custody — BLOCKED ON EXACT-HEAD EXECUTION
+Downloaded artifact JSON was inspected and records:
 
-The current implementation/test candidate `85e67606b588809c96b03c8801a783edaf09620d` is mergeable against unchanged main, has zero reviews/threads/comments, zero workflow runs, and zero commit statuses. Historical #1033 execution is retained as predecessor evidence only; it is not represented as current-head PASS.
+- `candidateHead: bef97eb80fe4ca1020b5071259895996a8104684` — exact self-identification PASS;
+- fixture `topology-edit-demo-20-v1-XYZ-10-COMPONENT-BRANCH-v1` via repository fixture path;
+- support `support:S-007` on exact host `P-011`;
+- requested certified override `LINE_STOP`, `+X`, gap `5 mm`, travel `20 mm`;
+- baseline canonical `fnv1a64:20f31e91953113ff`;
+- Stage retains baseline canonical/journal/source authority and creates exactly one intent;
+- Preview retains baseline authority and creates **2 ghost children**;
+- Validate reaches `READY_TO_APPLY` with baseline authority unchanged;
+- Apply canonical `fnv1a64:1a286953bd2c23bd`, active command `command:0:0f55244f044b26e4`, session version 1;
+- source semantic `fnv1a64:805bd0142552c16a` and source byte `fnv1a64:da6a34816255a850` unchanged throughout;
+- Undo restores exact baseline canonical, active ledger `fnv1a64:2f92bebe1af0a67d`, and empty active command IDs;
+- Redo restores exact applied canonical, active ledger `fnv1a64:c7a7460b9375b3ac`, and exact command ID;
+- renderer count remains exactly 1;
+- host remains `P-011`; support station evidence remains unchanged;
+- committed override authority is `CERTIFIED_TABLE_OVERRIDE` and Table fields match requested values.
 
-## Changed-File Ledger
+Run 6 supersedes Run 5 for final feature/test evidence because its embedded JSON is self-identifying.
 
-Actual PR diff is exactly these 21 paths:
+## Earlier Diagnostic Runs
+
+- Run `31576192230`: setup/source PASS; Node 11/13; stale LOCAL_Y and sequence test expectations; Chromium skipped.
+- Run `31576547806`: Node 13/13 PASS; browser exposed imported-restraint/override evidence mismatch; artifact `9133425605`.
+- Run `31576864213`: Node 13/13 PASS; browser reached real Stage/Preview and exposed missing restraint ghost; artifact `9133534883`.
+- Run `31577391318`: source gates PASS; Node 13/14; only new ghost pick-identity expectation failed; Chromium skipped.
+- Run `31577803188`: Node 14/14 and Chromium 1/1 PASS; artifact `9133902966`; embedded JSON head field null, prompting ISS-1054-08 metadata-only correction.
+
+## Isolated Exact-Head Harness
+
+`qualification/pr1054-exact-head` contains only `.github/workflows/pr1054-exact-head-qualification.yml`. It checks out `github.event.pull_request.head.sha`, installs Node 22 and real Chromium, runs syntax/line/`git diff --check`, executes the focused Node suite, executes Chromium with zero retries and trace-on, and uploads evidence. The workflow file is not in the PR feature diff.
+
+## Exact Changed-File Ledger
+
+Feature diff is exactly **23** paths:
 
 1. `agents/PR1054_workreport.md`
-2. `src/workspace/topology-edit/support-restraint-family.js`
-3. `src/workspace/topology-edit/topology-edit-support-restraint-command.js`
-4. `src/workspace/topology-edit/topology-edit-command-contract.js`
-5. `src/workspace/topology-edit/topology-edit-command-resolver.js`
-6. `src/workspace/topology-edit/topology-edit-pure-reducer-dispatch.js`
-7. `src/workspace/topology-edit/topology-edit-command-effect-dispatch.js`
-8. `src/workspace/topology-edit/table/topology-edit-table-support-restraint-contract.js`
-9. `src/workspace/topology-edit/table/topology-edit-table-tee-reducer-contract.js` — extraction-only line-budget move; no M10 semantic change
-10. `src/workspace/topology-edit/table/topology-edit-table-intent.js`
-11. `src/workspace/topology-edit/table/topology-edit-table-columns.js`
-12. `src/workspace/topology-edit/table/topology-edit-table-edit-capability.js`
-13. `src/workspace/topology-edit/table/topology-edit-table-engineering-planner.js`
-14. `src/workspace/topology-edit/table/topology-edit-table-batch-planner.js`
-15. `src/workspace/viewport-productivity/topology-edit-table-support-restraint-editor.js`
-16. `src/workspace/viewport-productivity/topology-edit-table-properties-view.js`
-17. `src/workspace/viewport-productivity/topology-edit-table-cell-edit.js`
-18. `src/workspace/viewport-productivity/topology-edit-table-engineering-runtime.js`
-19. `tests/topology-edit-capability-authority.test.mjs`
-20. `tests/topology-edit-support-restraint-command.test.mjs`
-21. `tests/topology-edit-table-support-restraint.test.mjs`
+2. `e2e/topology-edit-table-support-restraint.spec.js`
+3. `src/workspace/topology-edit/support-restraint-family.js`
+4. `src/workspace/topology-edit/topology-edit-support-restraint-command.js`
+5. `src/workspace/topology-edit/topology-edit-command-contract.js`
+6. `src/workspace/topology-edit/topology-edit-command-resolver.js`
+7. `src/workspace/topology-edit/topology-edit-pure-reducer-dispatch.js`
+8. `src/workspace/topology-edit/topology-edit-command-effect-dispatch.js`
+9. `src/workspace/topology-edit/table/topology-edit-table-support-restraint-contract.js`
+10. `src/workspace/topology-edit/table/topology-edit-table-tee-reducer-contract.js`
+11. `src/workspace/topology-edit/table/topology-edit-table-intent.js`
+12. `src/workspace/topology-edit/table/topology-edit-table-columns.js`
+13. `src/workspace/topology-edit/table/topology-edit-table-edit-capability.js`
+14. `src/workspace/topology-edit/table/topology-edit-table-engineering-planner.js`
+15. `src/workspace/topology-edit/table/topology-edit-table-batch-planner.js`
+16. `src/workspace/viewport-productivity/topology-edit-table-support-restraint-editor.js`
+17. `src/workspace/viewport-productivity/topology-edit-table-properties-view.js`
+18. `src/workspace/viewport-productivity/topology-edit-table-cell-edit.js`
+19. `src/workspace/viewport-productivity/topology-edit-table-engineering-runtime.js`
+20. `src/workspace/viewport-productivity/topology-edit-table-workflow.js`
+21. `tests/topology-edit-capability-authority.test.mjs`
+22. `tests/topology-edit-support-restraint-command.test.mjs`
+23. `tests/topology-edit-table-support-restraint.test.mjs`
 
-`src/workspace/topology-edit/professional/topology-edit-support-geometry-dependency.js` was reused as authority and **not modified**.
+The temporary qualification workflow remains isolated and is not in this ledger.
 
-## Static / Source Audit
+## Static / Architecture Audit
 
-- Manually merged current-main modules (`topology-edit-table-intent.js`, `topology-edit-table-edit-capability.js`, Table cell/runtime wiring, support command) are directly confirmed below 300 physical lines.
-- Other recovered production files are byte-identical to the #1033 exact head that passed the repository guard/workflow matrix.
-- `topology-edit-table-tee-reducer-contract.js` is an extraction-only move required to preserve the Table-intent line budget; TEE reducer semantics are unchanged.
-- Properties view renders both existing NODE_POSITION and recovered SUPPORT_RESTRAINT editors.
-- Current valve catalogue selector and exact target-DN fail-closed logic remain intact.
-- Shared support host resolver is imported, not duplicated.
+- E2E remains below `<300` physical lines and exact-head line gate passes;
+- shared #1036 host resolver remains authoritative;
+- parent support geometry still fails closed;
+- valve catalogue/target-DN guards remain intact;
+- Preview reuses normal support-restraint geometry/projection authority;
+- no canonical mutation occurs during input/Stage/Preview/Validate;
+- no second history stack exists;
+- no mesh or Three object becomes engineering authority.
 
-## Validation Ledger
+## Final Closure Gate
 
-| Candidate | Evidence |
-|---|---|
-| `main@271d04fa2674ab68367808d05f2429ec5e236a6e` | current integration base, unchanged during PR1054 source recovery |
-| `4140ffbd147b9cc73655d00e8264f8fb774869ff` | empty bootstrap, zero changed files |
-| `PR1033@68444777aeb01f165c987975ef1555bb1b7a9a1b` | predecessor exact head; 17/17 triggered workflows PASS |
-| `85e67606b588809c96b03c8801a783edaf09620d` | current-main source/test candidate; static audit complete; empirical execution NOT_RUN |
-| report-sync head | report-only change after implementation candidate |
+This report update is report-only. Before merge:
 
-## Explicitly Not Validated
-
-| Item | Status | Reason |
-|---|---|---|
-| exact PR1054 Node/browser execution | NOT_RUN | `.github/workflows` retired by #1043; no local checkout/runner available |
-| support station/host relocation | NOT_AUTHORIZED | separate placement semantics required |
-| parent-geometry support follow | NOT_AUTHORIZED | #1036 fail-closed policy remains final |
-| #1051/#1053 combined state | NOT_RUN | sibling drafts remain unmerged |
-
-## Handover
-
-1. Keep PR1054 draft/unmerged until exact-head execution is available or the qualification limitation is explicitly accepted.
-2. Do not interpret historical #1033 PASS as current-head PASS.
-3. If #1051 merges before #1054, rebase the small Table cell/runtime overlap and retain both feature additions.
-4. If #1054 merges before #1051, #1051 must perform the reciprocal rebase.
-5. Future support **placement/movement** semantics must be a separate report/PR; do not extend SUPPORT_RESTRAINT into station/host mutation.
+1. exact-head qualify this resulting report-only head with the same Node + real Chromium gate;
+2. restore PR #1054 from the isolated qualification base to `main`;
+3. re-read current `main`, raw PR mergeability/rebaseability, reviews/comments, and exact 23-file ledger;
+4. merge only with `expected_head_sha` pinned to the final qualified report head;
+5. then reconcile/requalify upper stack in order #1061 -> #1066.

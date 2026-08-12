@@ -5,10 +5,12 @@ const sourceMap = JSON.parse(fs.readFileSync(new URL('../benchmarks/LFEA/CAESAR_
 const snap = JSON.parse(fs.readFileSync(new URL('../benchmarks/LFEA/CAESAR_ACCDB/m047-bm4l-friction-readiness-snapshot.json', import.meta.url), 'utf8'));
 const authority = {
   ...snap.resolvedAuthority,
-  frictionSlideMultiplier: { status: 'BLOCKED', source: snap.unresolvedAuthority.frictionSlideMultiplier },
   frictionStateHistorySemantics: { status: 'BLOCKED', source: snap.unresolvedAuthority.frictionStateHistorySemantics },
   gapContactStateSemantics: { status: 'BLOCKED', source: snap.unresolvedAuthority.gapContactStateSemantics },
 };
+
+check(snap.schema === 'm047-bm4l-friction-readiness-snapshot/v2', 'readiness snapshot v2');
+check(authority.frictionSlideMultiplier.status === 'RESOLVED' && authority.frictionSlideMultiplier.value === 1, 'exact cfg slide multiplier');
 
 for (const caseId of ['L2','L3','L4','L5','L6']) {
   const row = assess({ caseId, frictionMultiplier: 0 });
@@ -18,12 +20,12 @@ for (const caseId of ['L2','L3','L4','L5','L6']) {
 for (const caseId of ['L7','L13']) {
   const row = assess({ caseId, frictionMultiplier: 1, sourceMap, authority });
   check(row.status === S.BLOCKED_AUTHORITY, `${caseId} must block`);
-  for (const code of [B.SLIDE, B.STATE_HISTORY, B.GAP_CONTACT]) check(row.blockerCodes.includes(code), `${caseId} missing ${code}`);
+  for (const code of [B.STATE_HISTORY, B.GAP_CONTACT]) check(row.blockerCodes.includes(code), `${caseId} missing ${code}`);
+  check(!row.blockerCodes.includes(B.SLIDE), `${caseId} slide multiplier blocker must be resolved`);
 }
 
 const resolved = {
   ...authority,
-  frictionSlideMultiplier: scalar(0.9),
   frictionStateHistorySemantics: semantics('FIXTURE_STATE_HISTORY'),
   gapContactStateSemantics: semantics('FIXTURE_GAP_CONTACT'),
 };
@@ -33,8 +35,7 @@ check(fitted.status === S.BLOCKED_AUTHORITY && fitted.blockerCodes.includes(B.RE
 check(assess({ caseId:'NO-MAP', frictionMultiplier:1, sourceMap:null, authority:resolved }).blockerCodes.includes(B.SOURCE_MAP), 'source-map blocker');
 check(snap.policy.productionFrictionAuthorized === false && snap.policy.newMechanicsAuthorized === false, 'snapshot policy');
 
-console.log(JSON.stringify({ check:'m047-friction-execution-readiness', status:'PASS', linearBypassCases:['L2','L3','L4','L5','L6'], blockedPrimaryFrictionCases:['L7','L13'], currentBlockers:[B.SLIDE,B.STATE_HISTORY,B.GAP_CONTACT], responseFittingRejected:true, bm4lProductionFrictionAuthorized:false }, null, 2));
+console.log(JSON.stringify({ check:'m047-friction-execution-readiness', status:'PASS', linearBypassCases:['L2','L3','L4','L5','L6'], blockedPrimaryFrictionCases:['L7','L13'], resolvedSlideMultiplier:1, currentBlockers:[B.STATE_HISTORY,B.GAP_CONTACT], responseFittingRejected:true, bm4lProductionFrictionAuthorized:false }, null, 2));
 
-function scalar(value) { return { status:'RESOLVED', value, source:'INDEPENDENT_FIXTURE', provenanceClass:'INDEPENDENT_AUTHORITY' }; }
 function semantics(method) { return { status:'RESOLVED', method, source:'INDEPENDENT_FIXTURE', provenanceClass:'INDEPENDENT_AUTHORITY' }; }
 function check(value, message) { if (!value) throw new Error(message); }

@@ -2,7 +2,6 @@ import {
   B31_APPLICATION_REQUEST_SCHEMA,
   compileLinearPipingB31Application,
 } from '../core/linear-piping-code-application/index.js';
-import { semanticHash } from '../core/shared-piping-model/canonical-json.js';
 import { deepFreeze } from '../core/shared-piping-model/immutable.js';
 import {
   LFEA_NATIVE_B31_CURRENTNESS,
@@ -14,6 +13,10 @@ import {
   sealLfeaNativeB31Authority,
 } from './native-b31-authority-contract.js';
 import {
+  buildLfeaNativeB31ApplicationChecks,
+  lfeaNativeB31ApplicationId,
+} from './native-b31-application-checks.js';
+import {
   requireLfeaNativeB31Authorization,
   sealLfeaNativeB31Authorization,
 } from './native-b31-authorization.js';
@@ -22,10 +25,7 @@ import {
   lfeaNativeB31PublicationCurrentnessReasons,
   lfeaNativeB31PublicationParent,
 } from './native-b31-case-chain.js';
-import {
-  codeStationFor,
-  createLfeaNativeStraightCodeStationAuthority,
-} from './native-b31-code-stations.js';
+import { createLfeaNativeStraightCodeStationAuthority } from './native-b31-code-stations.js';
 
 /** Own reviewed straight-pipe code-point authority and governed B31 output. */
 export function createLfeaNativeB31PublicationAuthority() {
@@ -138,14 +138,7 @@ export function createLfeaNativeB31PublicationAuthority() {
 
   function publish(preFlightRecord, executionState, resultsState) {
     reconcile(preFlightRecord, executionState, resultsState);
-    if (state.authorityCurrentness !== LFEA_NATIVE_B31_CURRENTNESS.CURRENT) {
-      throw lfeaNativeB31Error(
-        state.authorityCurrentness === LFEA_NATIVE_B31_REVIEW_REQUIRED
-          ? 'LFEA_NATIVE_B31_REVIEW_REQUIRED'
-          : 'LFEA_NATIVE_B31_AUTHORITY_CURRENT_REQUIRED',
-        'Reviewed current B31 authority is required before publication.',
-      );
-    }
+    requirePublishableState(state);
     requireLfeaNativeB31Authorization(state.authorization, state.authority);
     const preFlight = requireRunnableB31PreFlight(preFlightRecord);
     const chains = buildLfeaNativeB31CaseChains(
@@ -156,7 +149,10 @@ export function createLfeaNativeB31PublicationAuthority() {
     );
     const application = compileLinearPipingB31Application({
       schema: B31_APPLICATION_REQUEST_SCHEMA,
-      applicationId: applicationId(state.authority, resultsState.results.semanticHash),
+      applicationId: lfeaNativeB31ApplicationId(
+        state.authority,
+        resultsState.results.semanticHash,
+      ),
       codeProfile: state.authority.codeProfile,
       editionDataset: state.authority.editionDataset,
       cases: chains.map((row) => ({
@@ -164,7 +160,7 @@ export function createLfeaNativeB31PublicationAuthority() {
         loadCase: row.loadCase,
         recovery: row.codeRecovery.augmentedRecovery,
       })),
-      checks: buildApplicationChecks(preFlight, chains, state.authority),
+      checks: buildLfeaNativeB31ApplicationChecks(preFlight, chains, state.authority),
     });
     state = deepFreeze({
       ...state,
@@ -208,52 +204,14 @@ export function createLfeaNativeB31PublicationAuthority() {
   });
 }
 
-function buildApplicationChecks(preFlight, chains, authority) {
-  const structural = preFlight.preparation.structuralPreparation;
-  const materials = new Map(structural.materialResolutions.map((row) => [row.semanticHash, row]));
-  const sections = new Map(structural.sectionResolutions.map((row) => [row.semanticHash, row]));
-  const chainById = new Map(chains.map((row) => [row.caseId, row]));
-  return authority.checks.map((check) => {
-    const { component, station } = codeStationFor(
-      authority.codeStationAuthority,
-      check.elementId,
-      check.end,
-    );
-    const evaluationCase = chainById.get(check.evaluationCaseId);
-    const frameElementRecord = evaluationCase?.frameElementById?.[check.elementId];
-    const sectionResolution = sections.get(component.analysisSectionSemanticHash);
-    const materialResolution = materials.get(component.materialResolutionSemanticHash);
-    if (!evaluationCase || !frameElementRecord || !sectionResolution || !materialResolution) {
-      throw lfeaNativeB31Error(
-        'LFEA_NATIVE_B31_CHECK_PARENT_MISSING',
-        `B31 check ${check.checkId} lacks exact frame/section/material authority.`,
-      );
-    }
-    return {
-      checkId: check.checkId,
-      category: check.category,
-      codePointId: station.stationId,
-      componentId: component.componentId,
-      combinationId: check.combinationId,
-      actionSource: check.actionSource,
-      frameElementRecord,
-      sectionResolution,
-      sustainedSectionResolution: null,
-      materialResolution,
-      stressFactorSet: check.stressFactorSet,
-      pressureStressContribution: check.pressureStressContribution,
-      coldTemperature: check.coldTemperature,
-      sustainedStress: check.sustainedStress,
-      occasionalCategoryId: check.occasionalCategoryId,
-    };
-  });
-}
-
-function applicationId(authority, recoveryBatchHash) {
-  return `LFEA-B31-${semanticHash({
-    authority: authority.semanticHash,
-    recoveryBatchHash,
-  }).slice('fnv1a64:'.length).toUpperCase()}`;
+function requirePublishableState(state) {
+  if (state.authorityCurrentness === LFEA_NATIVE_B31_CURRENTNESS.CURRENT) return;
+  throw lfeaNativeB31Error(
+    state.authorityCurrentness === LFEA_NATIVE_B31_REVIEW_REQUIRED
+      ? 'LFEA_NATIVE_B31_REVIEW_REQUIRED'
+      : 'LFEA_NATIVE_B31_AUTHORITY_CURRENT_REQUIRED',
+    'Reviewed current B31 authority is required before publication.',
+  );
 }
 function nextAuthorityCurrentness(state, reasons) {
   if (state.authorityCurrentness === LFEA_NATIVE_B31_CURRENTNESS.STALE) return LFEA_NATIVE_B31_CURRENTNESS.STALE;

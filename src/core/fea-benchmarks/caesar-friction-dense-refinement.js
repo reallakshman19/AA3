@@ -1,4 +1,10 @@
-import { norm2, solveCholesky, solveLdlt } from '../linear-fea-solver/linear-algebra.js';
+import {
+  dot,
+  matVec,
+  norm2,
+  solveCholesky,
+  solveLdlt,
+} from '../linear-fea-solver/linear-algebra.js';
 import { applyDiagonalScalingToVector } from '../linear-fea-solver/scaling.js';
 
 /**
@@ -10,10 +16,10 @@ import { applyDiagonalScalingToVector } from '../linear-fea-solver/scaling.js';
  * factorization, and retain the best finite iterate. Stage 2 must not accept a
  * numerically weaker nonlinear linearization than the frozen linear controls.
  *
- * The helper also applies the same normalized-residual and conditioning
- * thresholds as the qualified solver. A base-solver BLOCK is a hard failure for
- * a friction iteration; WARN is retained as conditional evidence, matching the
- * existing linear execution contract.
+ * The helper also applies the same normalized-residual, energy-balance and
+ * conditioning thresholds as the qualified solver. A base-solver BLOCK is a
+ * hard failure for a friction iteration; WARN is retained as conditional
+ * evidence, matching the existing linear execution contract.
  */
 export function solveCaesarFrictionRefinedDenseSystem({ factorization, matrix, rhs, policies }) {
   if (!factorization || !Number.isInteger(factorization.m) || factorization.m < 0) {
@@ -68,11 +74,14 @@ export function solveCaesarFrictionRefinedDenseSystem({ factorization, matrix, r
     }
   }
 
-  const numericalQualification = qualifyDenseLinearization(
+  const numericalQualification = qualifyDenseLinearization({
     factorization,
-    bestRelativeResidual,
+    matrix,
+    rhs,
+    solution: bestSolution,
+    relativeResidual: bestRelativeResidual,
     policies,
-  );
+  });
   if (numericalQualification.status === 'BLOCK') {
     const error = new Error(
       `M047 friction linearization failed base-solver numerical qualification: ${JSON.stringify(numericalQualification)}.`,
@@ -99,11 +108,19 @@ export function solveCaesarFrictionRefinedDenseSystem({ factorization, matrix, r
   });
 }
 
-function qualifyDenseLinearization(factorization, relativeResidual, policies) {
+function qualifyDenseLinearization({
+  factorization,
+  matrix,
+  rhs,
+  solution,
+  relativeResidual,
+  policies,
+}) {
   const residualPass = policyNumber(policies, 'normalizedResidualLimit', { nonnegative: true });
   const residualWarn = policyNumber(policies, 'normalizedResidualWarnLimit', { nonnegative: true });
   const conditionWarn = policyNumber(policies, 'conditionWarning', { nonnegative: true });
   const conditionBlock = policyNumber(policies, 'conditionBlock', { nonnegative: true });
+  const energyLimit = policyNumber(policies, 'energyBalanceLimit', { nonnegative: true });
   if (residualWarn < residualPass) {
     throw new TypeError('normalizedResidualWarnLimit must be greater than or equal to normalizedResidualLimit.');
   }
@@ -116,8 +133,9 @@ function qualifyDenseLinearization(factorization, relativeResidual, policies) {
     conditionWarn,
     conditionBlock,
   );
+  const energy = freePartitionEnergyBalance(matrix, factorization.m, solution, rhs, energyLimit);
   return Object.freeze({
-    status: worstQualificationStatus(residualStatus, conditionStatus),
+    status: worstQualificationStatus(residualStatus, conditionStatus, energy.status),
     residual: Object.freeze({
       checkId: 'ALGEBRAIC_RESIDUAL_NORMALIZED',
       value: relativeResidual,
@@ -126,6 +144,10 @@ function qualifyDenseLinearization(factorization, relativeResidual, policies) {
       status: residualStatus,
       limitSource: policies.normalizedResidualLimit.source,
       warnLimitSource: policies.normalizedResidualWarnLimit.source,
+    }),
+    energyBalance: Object.freeze({
+      ...energy,
+      limitSource: policies.energyBalanceLimit.source,
     }),
     conditioning: Object.freeze({
       checkId: 'CONDITION_ESTIMATE',
@@ -137,6 +159,29 @@ function qualifyDenseLinearization(factorization, relativeResidual, policies) {
       blockLimitSource: policies.conditionBlock.source,
     }),
   });
+}
+
+/**
+ * BM4_L has no nonzero prescribed displacement. Therefore the qualified
+ * solver's full-system energy identity reduces exactly to this free-partition
+ * form: grounded normal/friction springs are already in Kff and constrained
+ * DOFs contribute zero work.
+ */
+function freePartitionEnergyBalance(matrix, size, solution, rhs, limit) {
+  const predicted = matVec(matrix, size, solution);
+  const residual = predicted.map((value, index) => value - rhs[index]);
+  const internalEnergy = 0.5 * dot(solution, predicted);
+  const externalWork = 0.5 * dot(solution, rhs) + 0.5 * dot(solution, residual);
+  const reference = Math.max(Math.abs(internalEnergy), Math.abs(externalWork), Number.MIN_VALUE);
+  const relativeMismatch = Math.abs(internalEnergy - externalWork) / reference;
+  return {
+    checkId: 'ENERGY_BALANCE_RELATIVE',
+    value: relativeMismatch,
+    limit,
+    status: Number.isFinite(relativeMismatch) && relativeMismatch <= limit ? 'PASS' : 'BLOCK',
+    internalEnergy,
+    externalWork,
+  };
 }
 
 function thresholdStatus(value, passLimit, blockLimit) {

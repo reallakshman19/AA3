@@ -44,8 +44,8 @@ walk(ENTRY, []);
 
 if (!requestedEntry) {
   const entrySource = fs.readFileSync(ENTRY, 'utf8');
-  assert(entrySource.includes("../workspace/lafea-workbench-controller.js"),
-    'Standalone LAFEA entry must construct the LAFEA-owned controller directly.');
+  assert(entrySource.includes("./standalone-controller.js"),
+    'Standalone LAFEA entry must construct the standalone LAFEA controller.');
   assert(!entrySource.includes('../workspace/lafea-workbench.js'),
     'Standalone LAFEA entry must not load the compatibility workbench facade.');
   assert(!entrySource.includes('bootstrapAnalysisWorkspace'),

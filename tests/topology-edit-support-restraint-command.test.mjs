@@ -20,7 +20,7 @@ import {
   supportRestraintRows,
 } from '../src/workspace/topology-edit/support-restraint-family.js';
 
-function fixture() {
+function fixture({ hostEntityId = 'pipe:p1' } = {}) {
   return finalizeCanonicalTopology({
     schema: 'topology-edit-canonical-topology/v1',
     datasetId: 'support-command', datasetVersion: 1,
@@ -36,7 +36,7 @@ function fixture() {
     }],
     junctions: [], boundaries: [], rigids: [], bends: [],
     supports: [{
-      id: 'support:s1', nodeId: 'node:n1', hostEntityId: 'pipe:p1',
+      id: 'support:s1', nodeId: 'node:n1', hostEntityId,
       stationMm: 0, resolved: true,
       restraints: [{
         id: 'restraint:source:1', type: 'REST', direction: '+Z', gapMm: 1,
@@ -142,4 +142,14 @@ test('UPDATE_SUPPORT_RESTRAINT rejects invalid engineering input and stale suppo
     canonicalTopology: base,
     authority: basis(base),
   }), /stale target revision for support:s1/);
+});
+
+test('UPDATE_SUPPORT_RESTRAINT fails closed when shared host authority is unresolved', () => {
+  const base = fixture({ hostEntityId: 'pipe:missing' });
+  assert.throws(() => resolveTopologyEditCommand({
+    request: request(base),
+    canonicalTopology: base,
+    authority: basis(base),
+  }), /support support:s1 host authority is UNRESOLVED/);
+  assert.equal(base.supports[0].restraint, undefined);
 });

@@ -124,16 +124,19 @@ function recoveryEvidence(row) {
 
 function supportPublicationEvidence(state) {
   const status = state?.publicationCurrentness ?? 'NONE';
+  const authorization = state?.authorization ?? null;
+  const base = {
+    status,
+    authorityStatus: state?.authorityCurrentness ?? 'NONE',
+    authoritySemanticHash: state?.authority?.semanticHash ?? null,
+    authorizationSemanticHash: authorization?.semanticHash ?? null,
+    reviewerIdentity: authorization?.reviewerIdentity ?? null,
+  };
   if (status !== 'CURRENT' || !Array.isArray(state?.publications)) {
-    return deepFreeze({
-      status,
-      authoritySemanticHash: state?.authority?.semanticHash ?? null,
-      cases: Object.freeze([]),
-    });
+    return deepFreeze({ ...base, cases: Object.freeze([]) });
   }
   return deepFreeze({
-    status: 'CURRENT',
-    authoritySemanticHash: state.authority?.semanticHash ?? null,
+    ...base,
     cases: Object.freeze(state.publications.map((row) => deepFreeze({
       caseId: row.caseId,
       analysisResultSemanticHash: row.analysisResultSemanticHash,

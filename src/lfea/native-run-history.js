@@ -1,6 +1,7 @@
 import { semanticHash } from '../core/shared-piping-model/canonical-json.js';
 import { deepFreeze } from '../core/shared-piping-model/immutable.js';
 import { requireLinearPipingInputXmlPreFlight } from '../workspace/linear-piping-inputxml-prefea.js';
+import { createLfeaNativeRunEvidenceLedger } from './native-run-evidence-ledger.js';
 
 export const LFEA_NATIVE_RUN_HISTORY_SCHEMA = 'lfea-native-run-history/v1';
 export const LFEA_NATIVE_RUN_RECORD_SCHEMA = 'lfea-native-run-record/v1';
@@ -14,6 +15,7 @@ export const LFEA_NATIVE_RUN_RELATION = Object.freeze({
 export function createLfeaNativeRunHistory() {
   let records = Object.freeze([]);
   let selectedRunId = null;
+  const evidenceLedger = createLfeaNativeRunEvidenceLedger();
 
   function archive(input) {
     const candidate = createRunRecord(input);
@@ -40,6 +42,7 @@ export function createLfeaNativeRunHistory() {
   function clear() {
     records = Object.freeze([]);
     selectedRunId = null;
+    evidenceLedger.clear();
   }
 
   function getSnapshot(context = {}) {
@@ -47,6 +50,7 @@ export function createLfeaNativeRunHistory() {
       runId: record.runId,
       relation: relationToCurrent(record, context),
       record,
+      evidenceAttachments: evidenceLedger.getForRun(record.runId),
     }));
     return deepFreeze({
       schema: LFEA_NATIVE_RUN_HISTORY_SCHEMA,
@@ -56,12 +60,21 @@ export function createLfeaNativeRunHistory() {
     });
   }
 
+  function getCurrentRecord(context = {}) {
+    return records.find((record) => relationToCurrent(record, context) === LFEA_NATIVE_RUN_RELATION.CURRENT) ?? null;
+  }
+
   return Object.freeze({
     archive,
     selectRun,
     clearSelection,
     clear,
     getSnapshot,
+    getCurrentRecord,
+    attachSupportEvidence: (runRecord, state) => evidenceLedger.attachSupport(runRecord, state),
+    attachB31Evidence: (runRecord, state) => evidenceLedger.attachB31(runRecord, state),
+    getEvidenceForRun: (runId) => evidenceLedger.getForRun(runId),
+    getEvidenceLedger: () => evidenceLedger.getSnapshot(),
     getRecord: (runId) => records.find((record) => record.runId === String(runId ?? '')) ?? null,
     getSelectedRecord: () => records.find((record) => record.runId === selectedRunId) ?? null,
   });

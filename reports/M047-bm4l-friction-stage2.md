@@ -36,6 +36,8 @@ Therefore L2-L6 remain zero-friction through multiplier `0`, while L13, L7, and 
 - repeated nominal run must produce the same semantic fingerprint;
 - 0.5x and 2x stiffness runs are diagnostic only; 1x remains the qualification result.
 
+Friction state is owned per ACCDB directional-restraint row. Before solving, the Stage 2 command records the restraint topology and fails closed on duplicate anchors, anchor-plus-directional overlap, duplicate directional restraint DOFs, or skew normals rather than silently merging or double-counting contacts.
+
 No bend, tee/B31J, reducer, rigid, Bourdon, pressure-stiffening, thermal-strain, finite-restraint, or global recovery calibration is introduced in the friction path.
 
 ## Case execution
@@ -63,14 +65,18 @@ Literal component comparisons remain unchanged. Coordinate-invariant vectors, al
 
 ## Comparison-driven technical repairs
 
-The initial Stage 2 implementation was compared against the frozen solver and CAESAR reference-normalization contracts before accepting any real-data friction result. That comparison exposed and repaired four blocking integration defects without changing the frozen linear mechanics:
+The Stage 2 implementation is being compared continuously against the frozen solver and CAESAR reference-normalization contracts before any real-data friction result is accepted. That comparison has exposed and repaired the following blocking integration defects without changing the frozen linear mechanics:
 
 1. **Nodal result identity mismatch.** The CAESAR reference and frozen solver normalize nodal force/moment components as `UX/UY/UZ` and `RX/RY/RZ`; only element-end actions use `FX/FY/FZ` and `MX/MY/MZ`. The nonlinear recovery now reproduces those exact nodal identities instead of creating incompatible `FX/MX` keys.
 2. **L15 equilibrium false-pass.** The original derived-case equilibrium lookup used the nonexistent nodal `FX/MX` identities and defaulted missing values to zero. L15 now evaluates the actual `UX/UY/UZ` and `RX/RY/RZ` incident/reaction rows.
 3. **Iteration-update tolerance contract.** The declared absolute update tolerances previously acted only as a denominator floor while convergence checked relative error alone. Updates now pass a declared combined absolute-plus-relative limit and retain the full evidence in the iteration ledger.
 4. **Signed normal reaction evidence.** Signed normal reaction is now the global normal restraint reaction projected onto the declared restraint direction; the Coulomb cap continues to use its magnitude.
+5. **Coordinate-invariant restraint vectors.** Nodal force/moment vectors now use the same benchmark DOF component identities as the reference and frozen solver, while element-end action vectors retain global action component names.
+6. **Reference-equilibrium propagation.** The Stage 2 runner now passes each selected CAESAR reference case's independent equilibrium evidence into the engineering assessment. Without this, a real production run would throw before producing its physical-equilibrium report.
+7. **Restraint-topology preflight.** The real ACCDB restraint rows are checked before nonlinear assembly; state scope is explicitly `PER_ACCDB_DIRECTIONAL_RESTRAINT_ROW`, and ambiguous duplicate/anchor/skew declarations fail closed.
+8. **Resolved case-class reporting.** The pre-solve configuration artifact now emits the canonical ACCDB `caseClass` (`OPE`, `SUS`, `EXP`, `HYD`) instead of reading a nonexistent `caseType` field.
 
-The generic coordinate-invariant vector assessment was also corrected so nodal force/moment vectors use the same benchmark DOF component identities, while element-end action vectors retain global action component names. The local preflight contract checker now fails if any of these mappings regress.
+The M047 preflight contract checker guards these mappings.
 
 ## Local ACCDB extraction — no ACE and no GitHub Actions
 
@@ -101,10 +107,14 @@ The harness fails closed unless it receives the immutable Issue #1083 custody se
 - load-case report Git blob `be62eeb08af26dddcd59146e21188c108c4600dd`;
 - miscellaneous report Git blob `ef23d224925e4568185a360ecbe1ee62503f15ff`.
 
-It emits source custody, resolved configuration, nonlinear actuals, per-iteration state evidence, qualification/RCA report, summary, and immutable receipt. It also fails if the frozen non-friction result changes from 46 literal external failures / 0 restraint failures, or if any L13/L7/L1 restraint component fails the literal qualification tolerance.
+The obsolete Stage 1 ACCDB member hash is not an alternative Stage 2 authority.
+
+The local run emits source custody, resolved configuration, restraint topology, nonlinear actuals, per-iteration state evidence, qualification/RCA report, summary, and immutable receipt. It fails if the frozen non-friction result changes from 46 literal external failures / 0 restraint failures, if any L13/L7/L1 restraint component fails the literal qualification tolerance, if nonlinear/equilibrium/determinism gates fail, or if L15 is not algebraic.
 
 ## Current verification status
 
-The comparison-driven source repairs are committed on the Stage 2 branch with `[skip ci]`; read-only checks show no workflow runs associated with those repair commits. The local harness performs syntax checks and the strengthened M047 source/configuration contract check before extracting or solving.
+The comparison-driven source repairs are committed on the Stage 2 branch with `[skip ci]`; read-only checks show no workflow runs associated with those repair commits. The current baseline comparison is 28 commits ahead of exact #1046 head and 0 behind, and the frozen `caesar-accdb-linear-solve.js` remains absent from the changed-file set.
 
-The pinned BM4_L binary cannot be materialized into the current ChatGPT execution container through the available GitHub connector, so this session has not produced or claimed numerical CAESAR II friction parity. The next acceptance step is the local pinned-data command above; review the resulting literal, vector, equilibrium, active-set, paired-delta, repeatability, and sensitivity evidence before moving the draft to ready-for-review.
+The local harness performs syntax checks and the strengthened M047 source/configuration contract check before extracting or solving.
+
+The pinned BM4_L binary cannot be materialized into the current ChatGPT execution container through the available connector, so this session has not produced or claimed numerical CAESAR II friction parity. The next acceptance step is the local pinned-data command above; review the resulting literal, vector, equilibrium, active-set, paired-delta, repeatability, and sensitivity evidence before moving the draft to ready-for-review.

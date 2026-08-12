@@ -1,0 +1,86 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "caesar-configuration-authority/v2",
+  "title": "CAESAR configuration authority v2",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema", "caesarVersion", "precedence", "layers", "unresolvedSettings"],
+  "properties": {
+    "schema": { "const": "caesar-configuration-authority/v2" },
+    "caesarVersion": { "type": "string", "minLength": 1 },
+    "precedence": {
+      "const": [
+        "OVERALL_GLOBAL_DEFAULT",
+        "INDIVIDUAL_FILE_SETTING",
+        "LOAD_CASE_SETTING",
+        "MODEL_INPUT"
+      ]
+    },
+    "layers": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["overallGlobalDefault", "individualFile", "loadCase", "modelInput"],
+      "properties": {
+        "overallGlobalDefault": { "$ref": "#/$defs/configurationLayer" },
+        "individualFile": { "$ref": "#/$defs/configurationLayer" },
+        "modelInput": { "$ref": "#/$defs/configurationLayer" },
+        "loadCase": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["source", "cases"],
+          "properties": {
+            "source": { "type": "string", "minLength": 1 },
+            "cases": {
+              "type": "object",
+              "additionalProperties": { "$ref": "#/$defs/configurationSettings" }
+            }
+          }
+        }
+      }
+    },
+    "unresolvedSettings": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["setting", "caseId", "reason"],
+        "properties": {
+          "setting": { "type": "string", "minLength": 1 },
+          "caseId": { "type": ["string", "null"] },
+          "reason": { "type": "string", "minLength": 1 }
+        }
+      }
+    }
+  },
+  "$defs": {
+    "configurationLayer": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["source", "settings"],
+      "properties": {
+        "source": { "type": "string", "minLength": 1 },
+        "settings": { "$ref": "#/$defs/configurationSettings" }
+      }
+    },
+    "configurationSettings": {
+      "type": "object",
+      "additionalProperties": { "$ref": "#/$defs/configurationValue" }
+    },
+    "configurationValue": {
+      "oneOf": [
+        { "type": "string", "minLength": 1 },
+        { "type": "number" },
+        { "type": "boolean" },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["value", "unit"],
+          "properties": {
+            "value": { "type": "number" },
+            "unit": { "type": "string", "minLength": 1 }
+          }
+        }
+      ]
+    }
+  }
+}

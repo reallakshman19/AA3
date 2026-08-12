@@ -43,3 +43,7 @@ export {
   buildBm4lL13StateTraceCaptureTemplate,
   sealBm4lL13StateTraceCapture,
 } from './caesar-bm4l-l13-state-trace-capture.js';
+export {
+  BM4L_L13_STATE_TRACE_REVIEW_STATUS,
+  reviewBm4lL13StateTraceEvidence,
+} from './caesar-bm4l-l13-state-trace-engineering-review.js';

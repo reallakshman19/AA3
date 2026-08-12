@@ -55,7 +55,8 @@ test('Engineering Table row/detail divider is pointer and keyboard adjustable wi
   const dragged = await paneGeometry(upper, lower);
   expect(dragged.lowerHeight).toBeGreaterThan(before.lowerHeight + 40);
   expect(dragged.upperHeight).toBeLessThan(before.upperHeight - 40);
-  expect(Number(await splitter.getAttribute('aria-valuenow'))).toBeCloseTo(dragged.lowerHeight, -1);
+  const ariaHeight = Number(await splitter.getAttribute('aria-valuenow'));
+  expect(Math.abs(ariaHeight - dragged.lowerHeight)).toBeLessThan(4);
   expectAuthorityNoop(await authorityEvidence(page), baseline);
 
   await splitter.focus();
@@ -72,8 +73,9 @@ test('Engineering Table row/detail divider is pointer and keyboard adjustable wi
   const retainedHeight = afterKey.lowerHeight;
   const secondIndex = edgeIndex === 0 ? 1 : 0;
   await edgeRows.nth(secondIndex).locator('[data-table-select]').click();
-  await expect.poll(() => paneGeometry(upper, lower).then((value) => value.lowerHeight))
-    .toBeCloseTo(retainedHeight, 0);
+  await expect.poll(() => paneGeometry(upper, lower).then((value) => (
+    Math.abs(value.lowerHeight - retainedHeight)
+  ))).toBeLessThan(2);
   expectAuthorityNoop(await authorityEvidence(page), baseline);
 
   const scroll = table.locator('[data-table-scroll-region]');

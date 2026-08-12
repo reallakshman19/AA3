@@ -19,6 +19,17 @@ import {
 
 const DOFS = Object.freeze(['UX', 'UY', 'UZ', 'RX', 'RY', 'RZ']);
 const TRANSLATION_DOFS = Object.freeze(['UX', 'UY', 'UZ']);
+const GOVERNED_CASE_SEMANTICS = deepFreeze({
+  L13: { lcaseNumber: 13, caseClass: 'SUS', formula: 'W+P1' },
+  L7: { lcaseNumber: 7, caseClass: 'OPE', formula: 'W+T1+P1' },
+  L15: { lcaseNumber: 15, caseClass: 'EXP', formula: 'L15=L7-L13' },
+  L1: { lcaseNumber: 1, caseClass: 'HYD', formula: 'WW+HP' },
+});
+const DERIVED_FRICTION_SETTINGS = Object.freeze([
+  'COEFFICIENT_OF_FRICTION_MU',
+  'FRICTION_MULTIPLIER',
+  'FRICT_STIF',
+]);
 
 export { CAESAR_ACCDB_FRICTION_SOLVER_PROFILE };
 
@@ -33,16 +44,17 @@ export function resolveCaesarHydrotestQualificationAuthority(benchmarkPackage) {
     throw hydrotestError('BM4_L Stage 2 requires selected case L1.', 'CAESAR_ACCDB_HYDROTEST_CASE_MISSING');
   }
   const caseClass = String(sourceCase.caseClass ?? '').trim().toUpperCase();
-  const formula = String(sourceCase.formula ?? '').replace(/\s+/gu, '').toUpperCase();
-  if (caseClass !== 'HYD' || formula !== 'WW+HP') {
+  const formula = normalizeFormula(sourceCase.formula);
+  if (Number(sourceCase.lcaseNumber) !== 1 || caseClass !== 'HYD' || formula !== 'WW+HP') {
     throw hydrotestError(
-      `L1 hydrotest qualification requires exact HYD WW+HP; got ${String(sourceCase.caseClass)} ${String(sourceCase.formula)}.`,
+      `L1 hydrotest qualification requires exact L1 HYD WW+HP; got L${String(sourceCase.lcaseNumber)} ${String(sourceCase.caseClass)} ${String(sourceCase.formula)}.`,
       'CAESAR_ACCDB_HYDROTEST_CASE_UNQUALIFIED',
     );
   }
   return deepFreeze({
     schema: CAESAR_ACCDB_HYDROTEST_AUTHORITY_SCHEMA,
     caseId: 'L1',
+    sourceLcaseNumber: 1,
     sourceCaseClass: caseClass,
     sourceFormula: formula,
     weightTerm: 'WW',
@@ -72,14 +84,28 @@ export function resolveCaesarHydrotestQualificationAuthority(benchmarkPackage) {
  */
 export function solveCaesarAccdbFrictionBenchmark(benchmarkPackage, selectedCaseIds, options = {}) {
   requireBenchmarkPackage(benchmarkPackage);
+  if (selectedCaseIds !== undefined && !Array.isArray(selectedCaseIds)) {
+    throw new TypeError('M047 governed friction case selection must be an array.');
+  }
   const requested = selectedCaseIds === undefined
     ? ['L13', 'L7', 'L15', 'L1']
     : [...new Set(selectedCaseIds.map(String))];
-  const allowed = new Set(['L13', 'L7', 'L15', 'L1']);
+  if (requested.length === 0) {
+    throw new TypeError('At least one governed ACCDB friction case is required.');
+  }
+  const allowed = new Set(Object.keys(GOVERNED_CASE_SEMANTICS));
   const unknown = requested.filter((caseId) => !allowed.has(caseId));
   if (unknown.length > 0) {
     throw new TypeError(`M047 governed friction solver accepts only L13, L7, L15 and L1; got ${unknown.join(', ')}.`);
   }
+
+  const semanticCaseIds = new Set(requested);
+  if (requested.includes('L15')) {
+    semanticCaseIds.add('L13');
+    semanticCaseIds.add('L7');
+  }
+  for (const caseId of semanticCaseIds) requireGovernedCaseSemantics(benchmarkPackage, caseId);
+  if (requested.includes('L15')) requireNoIndependentDerivedFrictionSettings(benchmarkPackage, 'L15');
   if (requested.includes('L1')) resolveCaesarHydrotestQualificationAuthority(benchmarkPackage);
   const l15FrictionAuthority = requested.includes('L15')
     ? requireCompatibleL15FrictionAuthority(benchmarkPackage)
@@ -145,6 +171,9 @@ export function solveCaesarAccdbFrictionBenchmark(benchmarkPackage, selectedCase
         ...(requested.includes('L1') ? ['L1'] : []),
       ]),
       dependencyExecution: Object.freeze(dependencyIds),
+      governedCaseSemantics: Object.freeze(Object.fromEntries(
+        [...semanticCaseIds].map((caseId) => [caseId, GOVERNED_CASE_SEMANTICS[caseId]]),
+      )),
       cases: mechanicsCases,
       pairedDeltas,
       repeatedRuns,
@@ -152,6 +181,37 @@ export function solveCaesarAccdbFrictionBenchmark(benchmarkPackage, selectedCase
       limitations: sourceMechanics?.limitations ?? Object.freeze([]),
     },
   });
+}
+
+function requireGovernedCaseSemantics(benchmarkPackage, caseId) {
+  const expected = GOVERNED_CASE_SEMANTICS[caseId];
+  const record = benchmarkPackage.cases.find((entry) => entry.caseId === caseId);
+  if (!record) throw caseAuthorityError(`${caseId} is missing from the selected ACCDB package.`);
+  const actual = {
+    lcaseNumber: Number(record.lcaseNumber),
+    caseClass: String(record.caseClass ?? '').trim().toUpperCase(),
+    formula: normalizeFormula(record.formula),
+  };
+  if (actual.lcaseNumber !== expected.lcaseNumber
+    || actual.caseClass !== expected.caseClass
+    || actual.formula !== expected.formula) {
+    throw caseAuthorityError(
+      `${caseId} must remain L${expected.lcaseNumber} ${expected.caseClass} ${expected.formula}; `
+      + `got L${String(record.lcaseNumber)} ${String(record.caseClass)} ${String(record.formula)}.`,
+    );
+  }
+  return deepFreeze({ caseId, ...actual });
+}
+
+function requireNoIndependentDerivedFrictionSettings(benchmarkPackage, caseId) {
+  const caseSettings = benchmarkPackage.profile.configurationAuthority.layers.loadCase.cases[caseId] ?? {};
+  const declared = DERIVED_FRICTION_SETTINGS.filter((setting) =>
+    Object.prototype.hasOwnProperty.call(caseSettings, setting));
+  if (declared.length > 0) {
+    throw derivedFrictionError(
+      `${caseId} is algebraic and may not declare independent friction settings: ${declared.join(', ')}.`,
+    );
+  }
 }
 
 function requireCompatibleL15FrictionAuthority(benchmarkPackage) {
@@ -284,6 +344,9 @@ function requireBenchmarkPackage(value) {
   }
 }
 
+function normalizeFormula(value) {
+  return String(value ?? '').replace(/\s+/gu, '').toUpperCase();
+}
 function rowIdentity(entityKind, entityId, quantity, component) {
   return [entityKind, entityId, quantity, component].join(':');
 }
@@ -292,6 +355,11 @@ function caseIndependentIdentity(row) {
 }
 function compareText(left, right) {
   return String(left) < String(right) ? -1 : String(left) > String(right) ? 1 : 0;
+}
+function caseAuthorityError(message) {
+  const error = new TypeError(message);
+  error.code = 'CAESAR_ACCDB_FRICTION_CASE_AUTHORITY_MISMATCH';
+  return error;
 }
 function hydrotestError(message, code) {
   const error = new TypeError(message);

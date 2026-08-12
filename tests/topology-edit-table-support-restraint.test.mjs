@@ -69,10 +69,25 @@ test('SUPPORT_RESTRAINT Preview renders only the governed candidate support glyp
   const preview = await prepareTopologyEditTablePreview({ session, batchPlan }); let ghost = null;
   renderTopologyEditTablePreviewGhost({ preview, controller: { deriveVisual: () => ({ projection: { elements: [], segments: [] } }), viewportBackend: { navigationConfiguration: { supportMarkerSize: 24 }, renderGhost: (value) => { ghost = value; } } } });
   assert.equal(session.currentTopology().canonicalTopologyHash, prior.activeCanonicalTopologyHash);
-  assert.ok(ghost); assert.equal(ghost.elements.length, 1); assert.equal(ghost.segments.length, 1);
-  assert.equal(ghost.elements[0].pickTarget.objectKind, 'support'); assert.equal(ghost.elements[0].pickTarget.objectId, 'support:s1');
-  assert.equal(ghost.segments[0].type, 'RESTRAINT_DIRECTION'); assert.equal(ghost.segments[0].pickTarget.objectKind, 'restraint');
-  assert.equal(ghost.segments[0].pickTarget.supportId, 'support:s1'); assert.equal(ghost.segments[0].pickTarget.objectId, ghost.segments[0].pickTarget.restraintId);
+  assert.ok(ghost);
+  assert.equal(ghost.elements.length, 0);
+  assert.equal(ghost.segments.length, 0);
+  const supportProjection = ghost.engineeringSupportProjection;
+  assert.ok(supportProjection);
+  assert.equal(supportProjection.elements.length, 1);
+  assert.equal(supportProjection.segments.length, 1);
+  assert.equal(supportProjection.glyphOverlays.length, 1);
+  assert.equal(supportProjection.elements[0].pickTarget.objectKind, 'support');
+  assert.equal(supportProjection.elements[0].pickTarget.objectId, 'support:s1');
+  assert.equal(supportProjection.segments[0].type, 'RESTRAINT_DIRECTION');
+  assert.equal(supportProjection.segments[0].pickTarget.objectKind, 'restraint');
+  assert.equal(supportProjection.segments[0].pickTarget.supportId, 'support:s1');
+  assert.equal(
+    supportProjection.segments[0].pickTarget.objectId,
+    supportProjection.segments[0].pickTarget.restraintId,
+  );
+  assert.equal(supportProjection.glyphOverlays[0].supportId, 'support:s1');
+  assert.equal(supportProjection.glyphOverlays[0].restraint.type, 'GUIDE');
 });
 
 test('SUPPORT_RESTRAINT Preview → Validate → Apply is atomic and journal undo/redo is exact', async () => {

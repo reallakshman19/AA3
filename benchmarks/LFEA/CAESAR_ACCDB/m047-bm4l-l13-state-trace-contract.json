@@ -1,0 +1,93 @@
+{
+  "schema": "m047-bm4l-l13-state-trace-contract/v1",
+  "benchmarkId": "BM4_L",
+  "caseId": "L13",
+  "stage": "F2.7B_EXACT_BUILD_STATE_TRACE_EVIDENCE_GATE",
+  "stackBase": {
+    "pr": 1076,
+    "head": "97c2de08ed2e83ec77d68e61823fe0f2e9a0a34a"
+  },
+  "product": {
+    "name": "CAESAR II",
+    "version": "14.00.00.0910",
+    "build": "231113"
+  },
+  "inputCustody": {
+    "accdbSha256": "64c05a50e9ed0452622ff5880335460486f24ac8e6adecc9a300b549c9aa82f8",
+    "governedRows": 1914,
+    "historicalDiagnosticPass": 1719,
+    "historicalDiagnosticFail": 195,
+    "historicalDiagnosticAccuracyPercent": 89.81191222570533
+  },
+  "officialObservability": {
+    "incoreSolverShowsIterationCount": true,
+    "incoreSolverShowsNonlinearRestraintStatus": true,
+    "individualNonlinearRestraintStatusCanBeStepped": true,
+    "activeBoundaryConditionsShowsDirectionalSupportStatus": true,
+    "activeBoundaryConditionsShowsClosedGapAssumptions": true,
+    "activeBoundaryConditionsShowsFrictionResistanceModeling": true,
+    "finalOutputAloneSufficientForStateHistory": false
+  },
+  "requiredCaptureMode": [
+    "INCORE_SOLVER_AND_ACTIVE_BOUNDARY_CONDITIONS",
+    "EQUIVALENT_EXACT_BUILD_PRODUCT_TRACE"
+  ],
+  "friction": {
+    "siteCount": 26,
+    "normalDirection": [0, 1, 0],
+    "coefficientOfFriction": 0.3,
+    "frictionStiffnessNPerM": 175126835.24647635,
+    "frictionSlideMultiplier": 1.0,
+    "frictionAngleVariationDeg": 15,
+    "frictionNormalForceVariation": 0.15,
+    "nodeIds": [
+      "20030","20090","20170","20250","20350","20390","20440","20520","20550",
+      "20580","20710","21470","21480","21610","21740","21800","21860","21930",
+      "22020","22070","22120","22140","22220","22260","22310","22370"
+    ]
+  },
+  "positiveGapRows": [
+    {"restraintKey":"GAP:20030:0,0,-1:25","nodeId":"20030","direction":[0,0,-1],"gapMm":25,"frictionCoupled":true},
+    {"restraintKey":"GAP:20390:-1,0,0:5","nodeId":"20390","direction":[-1,0,0],"gapMm":5,"frictionCoupled":true},
+    {"restraintKey":"GAP:21480:0,0,1:25","nodeId":"21480","direction":[0,0,1],"gapMm":25,"frictionCoupled":true},
+    {"restraintKey":"GAP:21480:1,0,0:10","nodeId":"21480","direction":[1,0,0],"gapMm":10,"frictionCoupled":true},
+    {"restraintKey":"GAP:21640:1,0,0:10","nodeId":"21640","direction":[1,0,0],"gapMm":10,"frictionCoupled":false},
+    {"restraintKey":"GAP:22310:0,0,-1:10","nodeId":"22310","direction":[0,0,-1],"gapMm":10,"frictionCoupled":true}
+  ],
+  "requiredPerIterationEvidence": {
+    "iteration": "SEQUENTIAL_FROM_1",
+    "converged": "BOOLEAN",
+    "unconvergedRestraintCount": "NONNEGATIVE_INTEGER",
+    "all26FrictionSites": true,
+    "all6PositiveGapRows": true,
+    "frictionFields": [
+      "restraintKey",
+      "contactState",
+      "frictionState",
+      "normalReactionN",
+      "frictionResistanceN",
+      "frictionDirectionGlobal_when_sliding"
+    ],
+    "gapFields": [
+      "restraintKey",
+      "contactState"
+    ]
+  },
+  "derivedWithoutFitting": [
+    "CONTACT_STATE_CHANGE_ITERATION",
+    "STICK_TO_SLIDING_CHANGE_ITERATION",
+    "NORMAL_FORCE_RELATIVE_CHANGE_BY_ITERATION",
+    "FRICTION_RESISTANCE_RELATIVE_CHANGE_BY_ITERATION",
+    "SLIDING_DIRECTION_CHANGE_DEG_BY_ITERATION"
+  ],
+  "authorityFirewall": {
+    "finalResponseUsedToSelectStatePermitted": false,
+    "bm4lResidualUsedToChooseOrderingPermitted": false,
+    "parameterFittingPermitted": false,
+    "toleranceFittingPermitted": false,
+    "gateMayAuthorizeProductionMechanics": false,
+    "gateMayAuthorizeL13Rescore": false,
+    "engineeringReviewRequiredAfterPassingGate": true
+  },
+  "remainingDecision": "PASSING_TRACE_GATE_ENABLES_F2_8_ENGINEERING_REVIEW_NOT_AUTOMATIC_MECHANICS_PROMOTION"
+}

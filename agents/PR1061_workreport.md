@@ -6,15 +6,16 @@
 |---|---|
 | PR | #1061 — `feat(3d-edit): certify explicit support station relocation` |
 | Branch | `agent/certified-support-placement-semantics` |
-| Base | stacked on PR #1054 at `7d3002df5915027f607a7db10b2f75049fe14c94`; temporarily retargeted to isolated qualification base `qualification/pr1061-exact-head` while exact-head execution is repaired |
+| Base | stacked on PR #1054 at `7d3002df5915027f607a7db10b2f75049fe14c94`; temporarily retargeted to isolated qualification base `qualification/pr1061-exact-head` for exact-head execution |
 | Bootstrap | `da0fb665a3ca58788fad83c96ca27b0938d8d083` — empty tree-equivalent commit |
 | Final source/test candidate before empirical repair | `d08cd53d4f79c346a83ee44e2a2a6b9ee4f4291f` |
-| First exact-head qualification candidate | `66b76dcba5027d737f5ce805e07861b717ee9450` — tree-equivalent synchronization commit over the prior report head |
-| Second exact-head qualification candidate | `1a8c40967e42a559c0998189a60a11dbb638600a` — tree-equivalent synchronization commit over repaired source tree `06726b042fbc59c1e73f06aa08bdc06261192fff` |
+| First exact-head qualification candidate | `66b76dcba5027d737f5ce805e07861b717ee9450` |
+| Second exact-head qualification candidate | `1a8c40967e42a559c0998189a60a11dbb638600a` |
+| Third exact-head qualification candidate | `1747775aedcaac6879e894e0d41a42a9f31df738` |
 | Mission | Certify explicit relocation of a support along its already-resolved exact straight host, without host rebinding or automatic parent-geometry follow. |
 | Engineering state | EMPIRICAL REPAIR IN PROGRESS |
-| Empirical execution | **FAIL** on run `31567986663`: exact-head checkout/setup/source verification passed; focused Node qualification improved to 13 pass / 1 fail; Chromium lifecycle was skipped because Node gate failed. |
-| Merge state | Draft / unmerged. Qualification failure is a merge blocker. |
+| Empirical execution | **PARTIAL PASS / BROWSER FAIL** on run `31568210108`: exact-head/source checks PASS; focused Node qualification PASS 14/14; production Chromium started but failed at the E2E row-discovery assertion before support editing. |
+| Merge state | Draft / unmerged. Browser qualification failure remains a merge blocker. |
 
 ## Authority Flow
 
@@ -46,11 +47,12 @@ Parent geometry therefore remains fail-closed after this PR.
 |---|---|---|---|
 | ISS-1061-01 | Correctness | RESOLVED IN SOURCE | Live canonical support construction previously discarded exact attachment `attachmentId`, `projectedPointCanonical`, `segmentParameter`, and `distanceCanonical`, leaving an approximate endpoint `nodeId`. The dispatch adapter retains those already-resolved facts; governed SJSON canonical build/rebuild uses that same dispatch path. No second attachment inference algorithm was introduced. |
 | ISS-1061-02 | Preview correctness | RESOLVED IN SOURCE | SJSON supports use a separate governed support projection, so generic Table ghost filtering could omit support relocation and candidate derivation could momentarily publish candidate support as the normal glyph. Table Preview restores current canonical support projection and renders an explicit candidate support ghost at the certified candidate origin. |
-| ISS-1061-03 | Reducer immutability | RESOLVED / RUN 2 PASS | Run 1 proved placement resolution recursively froze live candidate records. Placement resolution now freezes detached support/host/node descriptors, leaving the reducer-owned candidate clone mutable until final canonical freeze. Command/reducer/writeback tests pass on run 2. |
-| ISS-1061-04 | Nullable evidence semantics | RESOLVED / RUN 2 PASS | Null/undefined/blank attachment/station evidence now remains absent instead of coercing through `Number(null) === 0`; numeric zero remains valid. Projected-point-only and conflicting-evidence tests pass on run 2. |
-| ISS-1061-05 | Qualification expectation | RESOLVED / RUN 2 PASS | Table test now explicitly asserts the established deterministic `sequence: 0` command envelope instead of omitting it. Planner/dependency test passes on run 2. |
-| ISS-1061-06 | Authoring certification | RESOLVED AS DOWNSTREAM / RUN 2 PASS | The prior `CERTIFICATION_REGENERATION_REJECTED` was downstream of the frozen reducer defect. With ISS-1061-03 repaired, Preview → Validate → Apply plus exact Undo/Redo passes without weakening certification. |
-| ISS-1061-07 | Capability receipt shape | OPEN / REPAIR AUTHORIZED | Run `31567986663` leaves one failure: direct support placement capability returns `UNREPRESENTABLE` while the normal station cell capability succeeds. Root cause is the helper spreading object-valued `currentOrigin` into capability `details`, while `TopologyEditCapabilityReceipt.v1` correctly permits only scalar values or string arrays. Repair is limited to flattening exact origin evidence into scalar coordinates (or omitting it if unused); capability/certification guards must remain unchanged. |
+| ISS-1061-03 | Reducer immutability | RESOLVED / RUN 2+ PASS | Placement resolution now freezes detached support/host/node descriptors rather than live candidate records. Reducer/writeback tests pass. |
+| ISS-1061-04 | Nullable evidence semantics | RESOLVED / RUN 2+ PASS | Null/undefined/blank attachment/station evidence remains absent; numeric zero remains valid. Projected-point-only and conflict guards pass. |
+| ISS-1061-05 | Qualification expectation | RESOLVED / RUN 2+ PASS | Table test explicitly asserts the established deterministic `sequence: 0` command envelope. |
+| ISS-1061-06 | Authoring certification | RESOLVED AS DOWNSTREAM / RUN 2+ PASS | Prior certification regeneration failure was downstream of the frozen reducer defect. Preview → Validate → Apply and exact Undo/Redo pass without weakening certification. |
+| ISS-1061-07 | Capability receipt shape | RESOLVED / RUN 3 NODE PASS | Object-valued `currentOrigin` was removed from receipt details and represented as scalar `currentOriginX/Y/Z`, preserving `TopologyEditCapabilityReceipt.v1`. Run 3 focused Node gate passes 14/14. |
+| ISS-1061-08 | Browser row discovery | OPEN / E2E REPAIR AUTHORIZED | Run `31568210108` reached the production Engineering Table after loading the intended XYZ fixture. Typing source tag `S-007` visibly filters the Table to exactly one SUPPORT row labeled with the human-facing tag `Support 07 — XYZ …`, but the E2E then incorrectly required the row's rendered text itself to contain `S-007`. Table filtering intentionally searches canonical/component/entity/source identities and fields, while row rendering exposes projected human fields plus exact `data-canonical-id`. Repair may select the unique visible row returned by the real filter interaction and retain exact canonical-ID assertions; it must not bypass the visible filter/row click path or invoke controller methods as UI coverage. |
 
 ## Architecture Decisions
 
@@ -64,7 +66,7 @@ Parent geometry therefore remains fail-closed after this PR.
 | SJSON live projection | Only an ephemeral governed projection-dataset clone receives certified APOS. Actual workspace/source dataset stays unchanged. |
 | Table authority | Displayed station changes to `CERTIFIED_TABLE_OVERRIDE` only after Apply; original source/vendor evidence remains separately visible. |
 | Parent geometry | #1036 `SUPPORT_GEOMETRY_POLICY_REQUIRED` remains intact and is explicitly regression-tested. |
-| Empirical repair boundary | Repair demonstrated defects only. Do not weaken planner, capability, certification, effect, stale-revision, source-custody, or parent support-geometry guards to obtain a green run. |
+| Empirical repair boundary | Repair demonstrated defects only. Do not weaken planner, capability, certification, effect, stale-revision, source-custody, parent support-geometry, or visible-browser interaction guards to obtain a green run. |
 
 ## Implemented Contracts
 
@@ -100,37 +102,47 @@ The payload is `{ supportId, hostEdgeId, stationMm }`. Target resolution capture
 
 `e2e/topology-edit-table-support-placement.spec.js` uses the visible-user XYZ path:
 
-`Workspace -> XYZ fixture -> 3D Edit -> Engineering Table -> select S-007 -> type station -> Stage -> Preview -> Validate -> Apply -> Undo -> Redo -> select P-011 -> verify parent movement remains support-policy blocked`
+`Workspace -> XYZ fixture -> 3D Edit -> Engineering Table -> filter/select S-007 -> type station -> Stage -> Preview -> Validate -> Apply -> Undo -> Redo -> filter/select P-011 -> verify parent movement remains support-policy blocked`
 
 Controller access is read-only evidence only; no direct controller invocation is used as UI coverage.
 
 ### First executed exact-head gate — FAIL
 
-Run `31567646893` checked out exact head `66b76dcba5027d737f5ce805e07861b717ee9450` and established:
+Run `31567646893` checked out exact head `66b76dcba5027d737f5ce805e07861b717ee9450`:
 
-- exact-head checkout: PASS
-- Node 22 setup / `npm ci` / Playwright Chromium install: PASS
-- exact-head assertion, `node --check` for all four qualification files, and `git diff --check`: PASS
-- focused Node qualification: **FAIL — 14 tests, 5 pass, 9 fail**
-- production Chromium lifecycle: SKIPPED because the Node gate failed
-- no Playwright evidence artifact was produced because browser execution never started
+- exact-head/source setup checks: PASS
+- focused Node qualification: **5 pass / 9 fail**
+- Chromium: SKIPPED after Node failure.
 
 ### Second executed exact-head gate — FAIL, NARROWED
 
-Run `31567986663` checked out exact head `1a8c40967e42a559c0998189a60a11dbb638600a` and established:
+Run `31567986663` checked out exact head `1a8c40967e42a559c0998189a60a11dbb638600a`:
+
+- exact-head/source setup checks: PASS
+- focused Node qualification: **13 pass / 1 fail**
+- only residual Node failure: ISS-1061-07
+- Chromium: SKIPPED after Node failure.
+
+### Third executed exact-head gate — NODE PASS / CHROMIUM FAIL
+
+Run `31568210108` checked out exact head `1747775aedcaac6879e894e0d41a42a9f31df738`:
 
 - exact-head checkout: PASS
-- Node 22 setup / `npm ci` / Playwright Chromium install: PASS
+- Node 22 setup / `npm ci` / Chromium installation: PASS
 - exact-head assertion, all four `node --check` checks, and `git diff --check`: PASS
-- focused Node qualification: **FAIL — 14 tests, 13 pass, 1 fail**
-- command authority, exact host/node revisions, one-support delta, null evidence, conflict/no-op/stale/curved guards: PASS
-- durable writeback/reopen/tamper/source-custody checks: PASS
+- focused Node qualification: **PASS — 14 tests, 14 pass, 0 fail**
+- command authority, exact revisions, one-support delta, null/conflict/no-op/stale/curved guards: PASS
+- durable writeback/reopen/tamper/source-custody: PASS
 - deterministic Table plan/dependencies: PASS
+- capability receipt contract: PASS
 - Preview → Validate → Apply and exact Undo/Redo: PASS
-- stale-host rebase and `SUPPORT_GEOMETRY_POLICY_REQUIRED` parent guard: PASS
-- only residual failure: direct placement capability receipt shape, ISS-1061-07
-- production Chromium lifecycle: SKIPPED because the Node gate failed
-- no Playwright evidence artifact was produced because browser execution never started
+- stale-host rebase and `SUPPORT_GEOMETRY_POLICY_REQUIRED`: PASS
+- production Chromium launched the real application, loaded `topology-edit-demo-20-v1-XYZ-10-COMPONENT-BRANCH-v1`, confirmed 7 supports, entered 3D Edit, opened Engineering Table, typed `S-007` into the visible filter, and displayed one SUPPORT row
+- production Chromium then **FAIL** before row selection because the E2E required `tbody tr` rendered text to contain the source tag `S-007`; screenshot proves the unique filtered row is rendered as `Support 07 — XYZ …`
+- Playwright evidence artifact uploaded successfully as ID `9130325213`, name `pr1061-support-placement-1747775aedcaac6879e894e0d41a42a9f31df738-1`, size `2,055,005` bytes, artifact SHA256 `88de77d8ef802f84cf5c2a0e0a832536133633f0063a9de744785c85906a3b98`
+- artifact contains failure screenshot, `error-context.md`, and `trace.zip`
+
+This run is not a Chromium qualification PASS; no support editing occurred after the failed row-text assertion.
 
 ## Static Closure Audit
 
@@ -177,16 +189,16 @@ Any future discrepancy is a closure blocker until this report is updated before 
 
 | Item | Status | Reason |
 |---|---|---|
-| Focused Node tests on fully repaired exact head | FAIL / 13 OF 14 PASS | Run 2 leaves ISS-1061-07 only. |
-| Production Chromium/WebGL S-007 lifecycle | NOT_RUN | Run 2 correctly skipped browser execution after Node failure. |
+| Focused Node tests on run-3 exact head | PASS — 14/14 | Executed in run `31568210108` on exact head `1747775aedcaac6879e894e0d41a42a9f31df738`. |
+| Production Chromium/WebGL S-007 lifecycle | FAIL BEFORE EDIT | Real Chromium reached the filtered Table row, then failed the E2E's incorrect source-tag-in-rendered-text assertion. |
 | Combined stack after #1054 merge | NOT_RUN | #1061 remains stacked/draft; re-evaluate against the eventual merged base. |
 | Automatic support-follow on parent geometry | NOT_APPLICABLE | Deliberately prohibited and remains fail-closed. |
 | Curved-host relocation | NOT_APPLICABLE | Deliberately unrepresentable in this slice. |
 
 ## Handover / Next Gate
 
-1. Repair ISS-1061-07 by keeping `TopologyEditCapabilityReceipt.v1` details scalar-only; do not broaden the capability schema.
-2. Re-run all three focused Node files on the new exact head.
-3. Only after Node PASS, execute `e2e/topology-edit-table-support-placement.spec.js` in real Chromium/WebGL and preserve run/trace evidence.
-4. Update this report with exact successful run evidence, then re-run the report-sync exact head so final evidence is truly exact-head.
+1. Repair ISS-1061-08 in the E2E only: keep the real visible filter interaction, assert it returns exactly one non-spacer row with exact `data-canonical-id`, click the real Select control, and do not require the human-rendered label to repeat the source tag.
+2. Re-run all three focused Node files plus the production Chromium lifecycle on the new exact head.
+3. Diagnose any new browser failure from trace/screenshot evidence; do not weaken assertions unrelated to the demonstrated mismatch.
+4. Once the full lifecycle is green, update this report with exact run/artifact evidence, then execute a report-sync exact-head qualification so the final report commit itself is empirically qualified.
 5. Restore PR #1061 to its original stacked base after qualification and re-check integration/mergeability; do **not** merge based on source review alone.

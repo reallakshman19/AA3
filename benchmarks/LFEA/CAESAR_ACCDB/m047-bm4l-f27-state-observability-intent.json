@@ -2,12 +2,17 @@
   "schema": "m047-bm4l-f27-state-observability-intent/v1",
   "benchmarkId": "BM4_L",
   "scope": "READ_ONLY_EXACT_BUILD_NONLINEAR_STATE_OBSERVABILITY",
-  "auditRevision": 3,
+  "auditRevision": 4,
   "commonCommit": "179c4831cf521cf797c13699cfbbd118315c9244",
   "objects": [
     {"path":"LFEA/BM4/Output_BM4.xml","gitBlobSha":"d36be50bc8e272c2ab29e279f25bba55b2ccc392"},
     {"path":"LFEA/BM4/InputXML_BM4.xml","gitBlobSha":"3423d220374a17f67addd3c8c0c44300ffa46251"},
-    {"path":"LFEA/BM4/BM4_NL.zip","gitBlobSha":"86a803ed27ebdbd2836452dc2e874c3458aa204c"}
+    {"path":"LFEA/BM4/BM4_NL.zip","gitBlobSha":"86a803ed27ebdbd2836452dc2e874c3458aa204c","member":"BM4_NL.ACCDB","memberSha256":"85d39463296e569da811d8572e2eff680b858097f76fdf0f47d1755f0b161c21"}
+  ],
+  "auditIncludes": [
+    "OUTPUT_AND_INPUT_XML_TAG_ATTRIBUTE_KEYWORD_INVENTORY",
+    "BM4_NL_ZIP_MEMBER_INVENTORY",
+    "BM4_NL_ACCDB_TABLE_COLUMN_AND_STATE_LIKE_ROW_AUDIT"
   ],
   "requiredStateEvidence": [
     "GAP_CONTACT_OPEN_CLOSED_REOPENED_ORDERING",

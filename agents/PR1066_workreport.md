@@ -8,6 +8,7 @@
 | Branch | `agent/engineering-table-adjustable-divider` |
 | Current merged base | `main@48ee18125e01bd3efab0ac0b3f8e9d1f5b1041e6` — qualified PR #1061 merged |
 | Deterministic current-main integration | `7f85b42e9d0f03a5107a23e7601ccf62364c2265` |
+| Isolated qualification base | `qualification/pr1066-exact-head@6d8f5d4f817cec2bff529e656b96216963baab8d` — workflow only; not a feature diff path |
 | Original source/test candidate | `8fd5229a7c65931c14fefaa3b725fcd97d777e88` |
 | Mission | Make the internal horizontal boundary between the Engineering Table row-list pane and engineering/detail pane adjustable without acquiring engineering authority. |
 | Engineering state | **CURRENT-MAIN INTEGRATED / QUALIFICATION PENDING** |
@@ -131,8 +132,8 @@ Controller access in the browser spec is read-only evidence only; no direct cont
 1. Run source/syntax/physical-line/`git diff --check` gates on the exact PR head.
 2. Run the focused splitter Node test.
 3. Run the real Playwright Chromium splitter lifecycle with one worker, zero retries and trace-on.
-4. Prefer a relevant Engineering Table lifecycle smoke/regression on the same head if it can reuse already-qualified production UI paths without widening feature scope.
-5. Upload machine-readable evidence + traces tied to the exact candidate head.
+4. Run the existing support-placement and support-restraint production Chromium lifecycles on the same exact head as Engineering Table regressions.
+5. Upload machine-readable Playwright JSON, exact run identity, and traces tied to the exact candidate head.
 6. If any defect appears, register it here **before** changing production or test source, then repair narrowly without weakening assertions.
 7. After a green feature/test head, update this report with exact evidence and re-run the same gate on the resulting final report-only head.
 8. Do not modify this report again after the final report-only head is green.

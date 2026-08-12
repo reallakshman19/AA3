@@ -1,0 +1,168 @@
+name: M047 BM4_L F2.7 NL ACCDB schema
+
+on:
+  pull_request:
+    branches:
+      - agent/m047-bm4l-f27-observability-base
+    paths:
+      - 'benchmarks/LFEA/CAESAR_ACCDB/m047-bm4l-f27-state-observability-intent.json'
+
+permissions:
+  contents: read
+
+jobs:
+  audit-nonlinear-accdb-schema:
+    runs-on: windows-latest
+    timeout-minutes: 25
+    env:
+      COMMON_COMMIT: '179c4831cf521cf797c13699cfbbd118315c9244'
+      BM4_NL_ZIP_BLOB: '86a803ed27ebdbd2836452dc2e874c3458aa204c'
+      BM4_NL_ACCDB_SHA256: '85d39463296e569da811d8572e2eff680b858097f76fdf0f47d1755f0b161c21'
+      ACE_INSTALLER_URL: 'https://download.microsoft.com/download/3/5/C/35C84C36-661A-44E6-9324-8786B8DBE231/accessdatabaseengine_X64.exe'
+      ACE_INSTALLER_SHA256: '04e96c9f1a1f7d251a88aececf1dc10ff65950392787427c00814a43308003de'
+
+    steps:
+      - name: Checkout exact PR head
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+
+      - name: Authenticate and install Microsoft ACE
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          New-Item -ItemType Directory -Force -Path artifacts/f27nl/provider | Out-Null
+          $installer = Join-Path $PWD 'artifacts/f27nl/provider/accessdatabaseengine_X64.exe'
+          Invoke-WebRequest -Uri $env:ACE_INSTALLER_URL -OutFile $installer
+          $hash = (Get-FileHash -LiteralPath $installer -Algorithm SHA256).Hash.ToLowerInvariant()
+          if ($hash -ne $env:ACE_INSTALLER_SHA256) { throw "ACE installer hash mismatch: $hash" }
+          $signature = Get-AuthenticodeSignature -LiteralPath $installer
+          if ($signature.Status -ne 'Valid' -or $signature.SignerCertificate.Subject -notmatch 'Microsoft') {
+            throw "ACE installer signature invalid: $($signature.Status), $($signature.SignerCertificate.Subject)"
+          }
+          $process = Start-Process -FilePath $installer -ArgumentList '/quiet','/norestart' -Wait -PassThru
+          if ($process.ExitCode -notin @(0,3010)) { throw "ACE installer exited $($process.ExitCode)." }
+
+      - name: Fetch and authenticate BM4_NL ACCDB
+        id: source
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          New-Item -ItemType Directory -Force -Path artifacts/f27nl/source | Out-Null
+          $zip = Join-Path $PWD 'artifacts/f27nl/BM4_NL.zip'
+          $url = "https://raw.githubusercontent.com/reallaksh19/Common/$env:COMMON_COMMIT/LFEA/BM4/BM4_NL.zip"
+          Invoke-WebRequest -Uri $url -OutFile $zip
+          $blob = (& git hash-object -- $zip).Trim().ToLowerInvariant()
+          if ($blob -ne $env:BM4_NL_ZIP_BLOB) { throw "BM4_NL.zip Git blob mismatch: $blob" }
+          Expand-Archive -LiteralPath $zip -DestinationPath artifacts/f27nl/source -Force
+          $members = @(Get-ChildItem artifacts/f27nl/source -File -Recurse)
+          if ($members.Count -ne 1 -or $members[0].Name -ne 'BM4_NL.ACCDB') {
+            throw "BM4_NL.zip must contain exactly BM4_NL.ACCDB; found $($members.Count) files."
+          }
+          $accdb = $members[0].FullName
+          $sha = (Get-FileHash -LiteralPath $accdb -Algorithm SHA256).Hash.ToLowerInvariant()
+          if ($sha -ne $env:BM4_NL_ACCDB_SHA256) { throw "BM4_NL.ACCDB SHA-256 mismatch: $sha" }
+          "accdb_path=$accdb" >> $env:GITHUB_OUTPUT
+
+      - name: Inspect exact BM4_NL ACCDB tables and state-like fields
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $accdb = "${{ steps.source.outputs.accdb_path }}"
+          $candidatePattern = '(?i)(ACTIVE|BOUND|STATUS|STICK|SLID|FRIC|CONTACT|ITER|CONVERG|GAP|RESTRAINT|STATE|OPEN|CLOSED)'
+
+          function Convert-DbValue {
+            param([object]$Value)
+            if ($null -eq $Value -or $Value -is [System.DBNull]) { return $null }
+            if ($Value -is [byte[]]) { return [Convert]::ToBase64String($Value) }
+            if ($Value -is [DateTime]) { return $Value.ToUniversalTime().ToString('o') }
+            return $Value
+          }
+
+          function Safe-TableName {
+            param([string]$Name)
+            return '[' + $Name.Replace(']',']]') + ']'
+          }
+
+          $connection = New-Object -ComObject ADODB.Connection
+          try {
+            $connection.Open("Provider=Microsoft.ACE.OLEDB.12.0;Data Source=$accdb;Mode=Read;Persist Security Info=False;")
+            $schema = $connection.OpenSchema(20)
+            $tableNames = @()
+            try {
+              while (-not $schema.EOF) {
+                if ([string]$schema.Fields.Item('TABLE_TYPE').Value -eq 'TABLE') {
+                  $tableNames += [string]$schema.Fields.Item('TABLE_NAME').Value
+                }
+                $schema.MoveNext()
+              }
+            } finally {
+              $schema.Close()
+              [void][System.Runtime.InteropServices.Marshal]::ReleaseComObject($schema)
+            }
+            $tableNames = @($tableNames | Sort-Object -Unique)
+            $tables = @()
+            foreach ($tableName in $tableNames) {
+              $quoted = Safe-TableName -Name $tableName
+              $rs = New-Object -ComObject ADODB.Recordset
+              try {
+                $rs.Open("SELECT * FROM $quoted", $connection, 0, 1)
+                $columns = @()
+                for ($i=0; $i -lt $rs.Fields.Count; $i += 1) {
+                  $field = $rs.Fields.Item($i)
+                  $columns += [ordered]@{ name=[string]$field.Name; adoType=[int]$field.Type; definedSize=[int]$field.DefinedSize }
+                }
+                $candidateColumns = @($columns | Where-Object { $_.name -match $candidatePattern } | ForEach-Object { $_.name })
+                $tableCandidate = ($tableName -match $candidatePattern) -or ($candidateColumns.Count -gt 0)
+                $rows = @()
+                $rowCount = 0
+                while (-not $rs.EOF) {
+                  if ($tableCandidate -and $rows.Count -lt 200) {
+                    $row = [ordered]@{}
+                    foreach ($column in $columns) {
+                      $row[$column.name] = Convert-DbValue -Value $rs.Fields.Item($column.name).Value
+                    }
+                    $rows += $row
+                  }
+                  $rowCount += 1
+                  $rs.MoveNext()
+                }
+                $tables += [ordered]@{
+                  name=$tableName
+                  rowCount=$rowCount
+                  columns=$columns
+                  candidateColumns=$candidateColumns
+                  stateLikeCandidate=$tableCandidate
+                  sampledRowCount=$rows.Count
+                  sampledRows=$rows
+                }
+              } finally {
+                if ($rs.State -ne 0) { $rs.Close() }
+                [void][System.Runtime.InteropServices.Marshal]::ReleaseComObject($rs)
+              }
+            }
+            $result = [ordered]@{
+              schema='m047-bm4l-f27-nl-accdb-schema-audit/v1'
+              exactHead='${{ github.event.pull_request.head.sha }}'
+              commonCommit=$env:COMMON_COMMIT
+              zipGitBlobSha=$env:BM4_NL_ZIP_BLOB
+              accdbSha256=$env:BM4_NL_ACCDB_SHA256
+              tableCount=$tables.Count
+              stateLikeTableCount=@($tables | Where-Object { $_.stateLikeCandidate }).Count
+              tables=$tables
+              policy=[ordered]@{ responseFittingAllowed=$false; productionMechanicsAuthorized=$false; l13RescoreAuthorized=$false }
+            }
+            New-Item -ItemType Directory -Force -Path artifacts/f27nl/out | Out-Null
+            $result | ConvertTo-Json -Depth 64 | Set-Content -Encoding utf8 artifacts/f27nl/out/nl-accdb-schema-observability.json
+          } finally {
+            if ($connection.State -ne 0) { $connection.Close() }
+            [void][System.Runtime.InteropServices.Marshal]::ReleaseComObject($connection)
+          }
+
+      - name: Upload F2.7 NL ACCDB schema evidence
+        uses: actions/upload-artifact@v4
+        with:
+          name: m047-bm4l-f27-nl-accdb-schema-${{ github.event.pull_request.head.sha }}
+          path: artifacts/f27nl/out/*
+          if-no-files-found: error
+          retention-days: 14

@@ -23,6 +23,7 @@ import {
   solveCaesarAccdbLinearBenchmark,
 } from '../src/core/fea-benchmarks/index.js';
 import { selectBm4lAccdbFrictionRows } from '../src/core/fea-benchmarks/caesar-accdb-friction-restraint-selection.js';
+import { runBm4lFrictionStiffnessSensitivity } from '../src/core/fea-benchmarks/caesar-friction-sensitivity.js';
 import { canonicalPrettyStringify, semanticHash } from '../src/core/shared-piping-model/canonical-json.js';
 
 const SCRIPT_DIR = dirname(fileURLToPath(import.meta.url));
@@ -50,6 +51,11 @@ export function runBm4lFrictionProduction(input) {
     caseIds: FRICTION_CASE_IDS,
     frictionSolverProfile,
     repeatCount: frictionSolverProfile.repeatCount ?? 2,
+  });
+  const stiffnessSensitivity = runBm4lFrictionStiffnessSensitivity({
+    benchmarkPackage,
+    frictionSolverProfile,
+    nominalResult: friction,
   });
 
   const successfulFrictionIds = FRICTION_CASE_IDS.filter((caseId) =>
@@ -107,6 +113,7 @@ export function runBm4lFrictionProduction(input) {
     },
     accuracy,
     friction,
+    stiffnessSensitivity,
     pairedDeltas: pairedDeltaEvidence,
     acceptance: {
       nonFrictionControlsExecutedFirst: true,
@@ -114,6 +121,9 @@ export function runBm4lFrictionProduction(input) {
         friction.mechanics.cases[caseId]?.status === 'PASS'),
       l15IndependentSolvePerformed: false,
       directReferenceComparisonEmitted: true,
+      nominalFrictionStiffnessMultiplier: frictionSolverProfile.qualificationStiffnessMultiplier,
+      sensitivityDiagnosticOnly: true,
+      sensitivityMultipliersExecuted: frictionSolverProfile.stiffnessSensitivityMultipliers,
       mechanicsStatus: friction.status,
       frictionRestraintSourceCustodyStatus: restraintCustody.status,
       benchmarkRestraintAccuracyStatus: accuracy.frictionRestraintGateStatus,

@@ -22,6 +22,7 @@ import {
 import { solveCaesarAccdbLinearBenchmark } from './caesar-accdb-linear-solve.js';
 import { selectBm4lAccdbFrictionRows } from './caesar-accdb-friction-restraint-selection.js';
 import { solveCaesarFrictionRefinedDenseSystem } from './caesar-friction-dense-refinement.js';
+import { buildCaesarFrictionStiffnessState } from './caesar-friction-stiffness-state.js';
 import {
   combineCaesarAlgebraicResultRows,
   compareDeterministicCaesarFrictionRuns,
@@ -157,8 +158,8 @@ export function solveCaesarAccdbFrictionBenchmark(benchmarkPackage, options = {}
       cases: evidence,
       limitations: [
         'The nonlinear adapter changes only tangential support stiffness/load terms; qualified element, W/T1/P1, restraint-normal and recovery mechanics are reused unchanged.',
-        'Friction surfaces are selected only from positive-FRIC_COEF ACCDB type-Y rows; GUI/LIM/ANC rows remain ordinary qualified restraints and cannot create friction surfaces.',
-        'Each Coulomb cap binds to exactly one qualified Y-normal spring; co-located GUI/LIM reactions cannot enter mu|N|.',
+        'Friction surfaces are selected from positive-FRIC_COEF non-anchor directional ACCDB rows; historical restraint-type, direction and node patterns are not production rules.',
+        'Each Coulomb cap binds to exactly one qualified normal spring aligned with its source restraint; co-located orthogonal restraint reactions cannot enter mu|N|.',
         'Every nonlinear linearization uses the same dense direct residual-refinement, residual, energy and conditioning policies as the qualified linear solver.',
         'The nonlinear stiffnessStateHash binds the frozen base stiffness hash to the converged stick/slide tangent state.',
         'Supports are bidirectional and remain active; no lift-off or one-directional contact logic is introduced.',
@@ -332,19 +333,12 @@ function solveCapturedNonlinearSystem(input) {
     dof: entry.dof,
     value: clean(finalIteration.displacementVector[index]),
   }));
-  const nonlinearStiffnessStateHash = semanticHash({
-    schema: 'm047-bm4l-nonlinear-stiffness-state/v1',
+  const nonlinearStiffnessState = buildCaesarFrictionStiffnessState({
     baseStiffnessStateHash: compilation.stiffnessStateHash,
-    frictionStates: finalStates.map((state) => {
-      const restraint = input.restraints.find((entry) => entry.restraintId === state.restraintId);
-      return {
-        restraintId: state.restraintId,
-        nodeId: restraint?.nodeId ?? null,
-        state: state.state,
-        frictionStiffnessNPerM: restraint?.frictionStiffnessNPerM ?? null,
-      };
-    }),
+    finalStates,
+    restraints: input.restraints,
   });
+  const nonlinearStiffnessStateHash = nonlinearStiffnessState.semanticHash;
   const identity = semanticHash({
     caseId: input.caseId,
     displacement,
@@ -368,7 +362,7 @@ function solveCapturedNonlinearSystem(input) {
         status: run.status,
         iterations: run.iterations,
         baseStiffnessStateHash: compilation.stiffnessStateHash,
-        nonlinearStiffnessStateHash,
+        nonlinearStiffnessState,
         finalEquationResidual: finalIteration.equilibrium,
         finalIterativeRefinement: finalIteration.refinement,
       },

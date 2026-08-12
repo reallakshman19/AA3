@@ -1,0 +1,83 @@
+name: A3D-004 current-main exact-head
+
+on:
+  push:
+    branches:
+      - qualification/a3d004-current-5da94ba8
+
+permissions:
+  contents: read
+
+jobs:
+  qualify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    env:
+      BASE_SHA: def0bdf96caf2110d65ed016ab79cf8356726779
+      CANDIDATE_SHA: 5da94ba815639472ffe0db967f5732b768347d68
+      PLAYWRIGHT_BROWSERS_PATH: '0'
+      TOPOLOGY_EDIT_TARGET_HEAD_SHA: 5da94ba815639472ffe0db967f5732b768347d68
+    steps:
+      - name: Checkout exact candidate
+        uses: actions/checkout@v4
+        with:
+          ref: 5da94ba815639472ffe0db967f5732b768347d68
+          fetch-depth: 0
+      - name: Verify exact ten-file ledger
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$(git rev-parse HEAD)" = "$CANDIDATE_SHA"
+          expected=$'e2e/helpers/topology-edit-ghost-applied-differential.js\ne2e/topology-edit-a3d004-ghost-applied.spec.js\nsrc/workspace/topology-edit-3d-authoring-controller.js\nsrc/workspace/topology-edit-3d-productivity-controller.js\nsrc/workspace/topology-edit/authoring/topology-edit-authored-bend-geometry.js\nsrc/workspace/topology-edit/topology-edit-navigation-hud-viewport-backend.js\nsrc/workspace/topology-edit/topology-edit-sjson-governed-viewport-backend-v2.js\nsrc/workspace/viewport-productivity/topology-edit-table-workflow.js\ntests/topology-edit-authored-bend-typed-projection.test.mjs\ntests/topology-edit-sjson-support-ghost-parity.test.mjs'
+          test "$(git diff --name-only "$BASE_SHA" "$CANDIDATE_SHA")" = "$expected"
+          git diff --check "$BASE_SHA" "$CANDIDATE_SHA"
+          while IFS= read -r file; do node --check "$file"; done <<< "$expected"
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+      - name: Install dependencies
+        run: npm ci
+      - name: Run focused governed candidate tests
+        run: >-
+          node --test
+          tests/topology-edit-authored-bend-geometry.test.mjs
+          tests/topology-edit-authored-bend-typed-projection.test.mjs
+          tests/topology-edit-authoring-planner.test.mjs
+          tests/topology-edit-table-m04-m06-m10.test.mjs
+          tests/topology-edit-table-support-restraint.test.mjs
+          tests/topology-edit-validation-runtime-identity.test.mjs
+          tests/topology-edit-sjson-support-ghost-parity.test.mjs
+          tests/topology-edit-sjson-governed-viewport-v2.test.mjs
+      - name: Install pinned Chromium
+        run: npx playwright install --with-deps chromium
+      - name: Run A3D-004 semantic ghost applied matrix
+        env:
+          PLAYWRIGHT_JSON_OUTPUT_NAME: artifacts/a3d004-playwright.json
+        run: >-
+          node scripts/run-playwright.mjs
+          e2e/topology-edit-a3d004-ghost-applied.spec.js
+          --workers=1
+          --retries=0
+          --trace=on
+          --reporter=line,json
+      - name: Record exact-head identity
+        if: always()
+        shell: bash
+        run: |
+          mkdir -p artifacts
+          printf '{"schema":"A3D004RunIdentity.v1","baseSha":"%s","candidateSha":"%s","runId":"%s","attempt":%s,"workers":1,"retries":0,"trace":"on"}\n' \
+            "$BASE_SHA" "$CANDIDATE_SHA" "$GITHUB_RUN_ID" "$GITHUB_RUN_ATTEMPT" > artifacts/a3d004-run-identity.json
+      - name: Upload exact-head evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: a3d004-${{ env.CANDIDATE_SHA }}-${{ github.run_attempt }}
+          path: |
+            artifacts
+            reports/qualification/topology-edit-a3d004-ghost-applied.json
+            test-results
+            playwright-report
+          if-no-files-found: warn
+          retention-days: 30

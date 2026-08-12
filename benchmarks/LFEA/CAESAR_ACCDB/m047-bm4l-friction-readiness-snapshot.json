@@ -6,7 +6,15 @@
     "sha": "449750b260c98b935901033d8689b697d3349561"
   },
   "resolvedAuthority": {
-    "frictionStiffness": {"status":"RESOLVED","value":1000000,"source":"HEXAGON_CAESAR_II_V14_FRICTION_STIFFNESS","provenanceClass":"INDEPENDENT_AUTHORITY"},
+    "frictionStiffness": {
+      "status": "RESOLVED",
+      "value": 1000000000,
+      "unit": "N/m",
+      "displayedValue": 1000000,
+      "displayedUnit": "N/mm",
+      "source": "M047_BM4L_FRICTION_UNIT_AUTHORITY_V1",
+      "provenanceClass": "INDEPENDENT_AUTHORITY"
+    },
     "frictionAngleVariationDeg": {"status":"RESOLVED","value":15,"source":"HEXAGON_CAESAR_II_V14_FRICTION_ANGLE_VARIATION","provenanceClass":"INDEPENDENT_AUTHORITY"},
     "frictionNormalForceVariation": {"status":"RESOLVED","value":0.15,"source":"HEXAGON_CAESAR_II_V14_FRICTION_NORMAL_FORCE_VARIATION","provenanceClass":"INDEPENDENT_AUTHORITY"}
   },
@@ -26,6 +34,7 @@
   ],
   "policy": {
     "zeroFrictionInspectsNonlinearAuthority": false,
+    "positiveFrictionRequiresExplicitSIStiffness": true,
     "responseFittedAuthorityPermitted": false,
     "productionFrictionAuthorized": false,
     "newMechanicsAuthorized": false

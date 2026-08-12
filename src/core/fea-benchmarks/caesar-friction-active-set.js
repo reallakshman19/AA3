@@ -248,6 +248,11 @@ export function runDeterministicCaesarFrictionActiveSet(input) {
       boundaryForceN,
       previousState: states.get(restraint.restraintId).state,
     }));
+    const assemblyLoadResidualN = frictionAssemblyLoadResidualN({
+      restraints,
+      assemblyTerms,
+      states: nextStates,
+    });
     const convergence = evaluateCaesarFrictionConvergence({
       profile: input.profile,
       states: nextStates,
@@ -255,6 +260,7 @@ export function runDeterministicCaesarFrictionActiveSet(input) {
       reactionUpdateNorm: solved.reactionUpdateNorm,
       equilibriumForceResidualN: solved.equilibriumForceResidualN,
       equilibriumMomentResidualNm: solved.equilibriumMomentResidualNm,
+      assemblyLoadResidualN,
     });
     const row = deepFreeze({
       iteration,
@@ -308,6 +314,34 @@ export function frictionAssemblyTerm(restraintInput, stateInput) {
   });
 }
 
+/**
+ * Compare the friction load actually assembled into the solved iteration with
+ * the load implied by the newly recovered state. For a stable sliding state,
+ * CAESAR's next-iteration constant-force rule is not closed until these match.
+ */
+export function frictionAssemblyLoadResidualN(input) {
+  if (!Array.isArray(input?.restraints) || !Array.isArray(input?.assemblyTerms) || !Array.isArray(input?.states)) {
+    throw new TypeError('frictionAssemblyLoadResidualN requires restraints, assemblyTerms and states arrays.');
+  }
+  const termById = new Map(input.assemblyTerms.map((term) => [nonempty(term.restraintId, 'assemblyTerm.restraintId'), term]));
+  const stateById = new Map(input.states.map((state) => [nonempty(state.restraintId, 'state.restraintId'), state]));
+  if (termById.size !== input.restraints.length || stateById.size !== input.restraints.length) {
+    throw new TypeError('Friction assembly/state closure requires one unique term and state per restraint.');
+  }
+  let maximumResidual = 0;
+  for (const restraint of input.restraints) {
+    const restraintId = nonempty(restraint.restraintId, 'restraint.restraintId');
+    const actual = termById.get(restraintId);
+    const state = stateById.get(restraintId);
+    if (!actual || !state) throw new TypeError(`Friction assembly/state closure is missing restraint ${restraintId}.`);
+    const expected = frictionAssemblyTerm(restraint, state);
+    const actualLoad = vector3(actual.cappedLoadVectorN, `${restraintId}.assembledCappedLoadVectorN`);
+    const expectedLoad = vector3(expected.cappedLoadVectorN, `${restraintId}.expectedCappedLoadVectorN`);
+    maximumResidual = Math.max(maximumResidual, norm3(add3(actualLoad, scale3(expectedLoad, -1))));
+  }
+  return clean(maximumResidual);
+}
+
 export function compareDeterministicCaesarFrictionRuns(leftInput, rightInput) {
   const left = requireConvergedRun(leftInput, 'left');
   const right = requireConvergedRun(rightInput, 'right');
@@ -336,6 +370,7 @@ export function evaluateCaesarFrictionConvergence(input) {
     input.equilibriumMomentResidualNm,
     'equilibriumMomentResidualNm',
   );
+  const assemblyLoadResidualN = finiteNonnegative(input.assemblyLoadResidualN ?? 0, 'assemblyLoadResidualN');
   const gates = {
     activeSetStable: states.every((state) => state.stateChanged === false),
     displacementUpdate: displacementUpdateNorm <= profile.displacementUpdateNorm,
@@ -345,6 +380,7 @@ export function evaluateCaesarFrictionConvergence(input) {
       || state.residuals.stickConstitutiveNormN <= profile.stickResidualN),
     slideMagnitude: states.every((state) => state.state !== 'SLIDE'
       || state.residuals.slideMagnitudeResidualN <= profile.slideResidualN),
+    assembledFrictionLoad: assemblyLoadResidualN <= profile.assemblyLoadResidualN,
     slideDirection: states.every((state) => state.state !== 'SLIDE'
       || (state.residuals.directionOpposesSlip
         && state.residuals.directionCosine <= -1 + profile.directionCosineTolerance)),
@@ -363,6 +399,7 @@ export function evaluateCaesarFrictionConvergence(input) {
       reactionUpdateNorm,
       equilibriumForceResidualN,
       equilibriumMomentResidualNm,
+      assemblyLoadResidualN,
     }),
   });
 }
@@ -399,12 +436,17 @@ function normalizeConvergenceProfile(value) {
   if (!value || value.schema !== CAESAR_FRICTION_SOLVER_PROFILE_SCHEMA) {
     throw new TypeError(`Unsupported friction solver profile ${String(value?.schema)}.`);
   }
+  const slideResidualN = finiteNonnegative(value.slideResidualN, 'slideResidualN');
   return deepFreeze({
     displacementUpdateNorm: finiteNonnegative(value.displacementUpdateNorm, 'displacementUpdateNorm'),
     reactionUpdateNorm: finiteNonnegative(value.reactionUpdateNorm, 'reactionUpdateNorm'),
     capResidualN: finiteNonnegative(value.capResidualN, 'capResidualN'),
     stickResidualN: finiteNonnegative(value.stickResidualN, 'stickResidualN'),
-    slideResidualN: finiteNonnegative(value.slideResidualN, 'slideResidualN'),
+    slideResidualN,
+    assemblyLoadResidualN: finiteNonnegative(
+      value.assemblyLoadResidualN ?? slideResidualN,
+      'assemblyLoadResidualN',
+    ),
     directionCosineTolerance: finiteNonnegative(
       value.directionCosineTolerance,
       'directionCosineTolerance',

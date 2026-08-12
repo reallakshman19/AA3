@@ -1,0 +1,87 @@
+name: A3D-001 ghost race rebased exact-head
+
+on:
+  push:
+    branches:
+      - qualification/a3d001-ghost-race-d5a9
+
+permissions:
+  contents: read
+
+jobs:
+  qualify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    env:
+      BASE_SHA: 478e2182062ba70248ff9be8fbfae8fb4c73f6c0
+      CANDIDATE_SHA: d5a9c5c770a0fb312655f24462462470e70b7a01
+      PLAYWRIGHT_BROWSERS_PATH: '0'
+    steps:
+      - name: Checkout exact candidate
+        uses: actions/checkout@v4
+        with:
+          ref: d5a9c5c770a0fb312655f24462462470e70b7a01
+          fetch-depth: 0
+      - name: Verify exact one-file ledger
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$(git rev-parse HEAD)" = "$CANDIDATE_SHA"
+          test "$(git diff --name-only "$BASE_SHA" "$CANDIDATE_SHA")" = 'e2e/topology-edit-validation-identity-race.spec.js'
+          git diff --check "$BASE_SHA" "$CANDIDATE_SHA"
+          node --check e2e/topology-edit-validation-identity-race.spec.js
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+      - name: Install dependencies
+        run: npm ci
+      - name: Run focused authority tests
+        run: >-
+          node --test
+          tests/topology-edit-professional-engineering-worker.test.mjs
+          tests/topology-edit-professional-validation-worker-client.test.mjs
+          tests/topology-edit-professional-validation-worker-identity.test.mjs
+          tests/topology-edit-validation-runtime-identity.test.mjs
+      - name: Install pinned Chromium
+        run: npx playwright install --with-deps chromium
+      - name: Run real Chromium stale-race qualification
+        env:
+          PLAYWRIGHT_JSON_OUTPUT_NAME: artifacts/a3d001-ghost-race-playwright.json
+        run: >-
+          node scripts/run-playwright.mjs
+          e2e/topology-edit-validation-identity-race.spec.js
+          --workers=1
+          --retries=0
+          --trace=on
+          --reporter=line,json
+      - name: Record exact-head ledger
+        if: always()
+        shell: bash
+        run: |
+          mkdir -p artifacts
+          node - <<'NODE'
+          const fs = require('node:fs');
+          fs.writeFileSync('artifacts/a3d001-ghost-race-run.json', JSON.stringify({
+            schema: 'A3D001GhostRaceQualification.v1',
+            baseSha: process.env.BASE_SHA,
+            candidateSha: process.env.CANDIDATE_SHA,
+            runId: process.env.GITHUB_RUN_ID,
+            attempt: Number(process.env.GITHUB_RUN_ATTEMPT),
+            workers: 1,
+            retries: 0,
+            trace: 'on',
+          }, null, 2));
+          NODE
+      - name: Upload exact-head evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: a3d001-ghost-race-${{ env.CANDIDATE_SHA }}-${{ github.run_attempt }}
+          path: |
+            artifacts
+            test-results
+            playwright-report
+          if-no-files-found: warn
+          retention-days: 30

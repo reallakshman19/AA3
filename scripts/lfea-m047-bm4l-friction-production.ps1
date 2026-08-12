@@ -3,7 +3,9 @@ param(
   [ValidatePattern('^[0-9a-fA-F]{40}$')]
   [string]$ExpectedHead,
   [string]$ArtifactsRoot = 'artifacts/bm4l-friction-stage2',
-  [switch]$SkipNpmCi
+  [string]$XmlCompareUtilitiesPath = '',
+  [switch]$SkipNpmCi,
+  [switch]$SkipExtractorInstall
 )
 
 Set-StrictMode -Version Latest
@@ -18,7 +20,11 @@ $ACCDB_BYTES = 5136384
 $LOADCASE_GIT_BLOB = 'be62eeb08af26dddcd59146e21188c108c4600dd'
 $MISC_GIT_BLOB = 'ef23d224925e4568185a360ecbe1ee62503f15ff'
 $PROFILE = 'benchmarks/LFEA/CAESAR_ACCDB/bm4l-validation.profile.json'
-$PROVIDER = 'Microsoft.ACE.OLEDB.12.0'
+$EXTRACTOR_PROVIDER = 'XML_COMPARE_UTILITIES_MDB_READER_V1'
+$XML_COMPARE_REPO = 'https://github.com/reallaksh19/XML_Compare_Utilities.git'
+$XML_COMPARE_COMMIT = 'd83c62214b7a6486c17698225ea4e11bc3121cb6'
+$XML_COMPARE_PARSER_BLOB = '2ea596b6e9fb65e386e5cbb256f4141ce7bb595b'
+$MDB_READER_VERSION = '2.2.6'
 
 function Require-Command([string]$Name) {
   if (-not (Get-Command $Name -ErrorAction SilentlyContinue)) { throw "Required command '$Name' is unavailable." }
@@ -45,7 +51,6 @@ function Assert-Git-Blob([string]$Path, [string]$Expected, [string]$Label) {
   if ($actual -ne $Expected) { throw "$Label git-blob mismatch: $actual != $Expected" }
 }
 
-if ([Environment]::OSVersion.Platform -ne [PlatformID]::Win32NT) { throw 'Windows is required for the ACE ACCDB production harness.' }
 if ($PSVersionTable.PSVersion.Major -lt 7) { throw 'PowerShell 7+ is required.' }
 'git','node','npm' | ForEach-Object { Require-Command $_ }
 $repoRoot = (& git rev-parse --show-toplevel).Trim()
@@ -61,20 +66,55 @@ if (-not $SkipNpmCi) { Invoke-Checked { npm ci } 'npm ci' }
 
 $artifacts = Join-Path $repoRoot $ArtifactsRoot
 $sourceDir = Join-Path $artifacts 'source'
+$xmlCompareCheckout = Join-Path $artifacts 'xml-compare-extractor'
+$readerRuntime = Join-Path $artifacts 'mdb-reader-runtime'
 New-Item -ItemType Directory -Force -Path $artifacts, $sourceDir | Out-Null
 
 @(
   'src/core/fea-benchmarks/caesar-configuration-authority.js',
   'src/core/fea-benchmarks/caesar-accdb-linear-solve-governed.js',
   'src/core/fea-benchmarks/caesar-accdb-friction-solve.js',
+  'scripts/lfea-caesar-accdb-export-xml-compare.mjs',
   'scripts/lfea-m047-friction-contract-check.mjs',
   'scripts/lfea-m047-bm4l-friction-benchmark.mjs'
 ) | ForEach-Object { Invoke-Checked { node --check $_ } "node --check $_" }
 Invoke-Checked { node scripts/lfea-caesar-configuration-authority-check.mjs } 'configuration authority check'
 Invoke-Checked { node scripts/lfea-m047-friction-contract-check.mjs } 'friction contract check'
 
-$providerKey = "Registry::HKEY_CLASSES_ROOT\$PROVIDER\CLSID"
-if (-not (Test-Path -LiteralPath $providerKey)) { throw "$PROVIDER is required; no provider fallback is permitted." }
+# Materialize the exact XML Compare Utilities ACCDB reader without modifying the user's checkout.
+Remove-Item $xmlCompareCheckout -Force -Recurse -ErrorAction SilentlyContinue
+$xmlCompareSource = $XML_COMPARE_REPO
+if ($XmlCompareUtilitiesPath) {
+  $xmlCompareSource = (Resolve-Path -LiteralPath $XmlCompareUtilitiesPath).Path
+} else {
+  $sibling = Join-Path (Split-Path $repoRoot -Parent) 'XML_Compare_Utilities'
+  if (Test-Path -LiteralPath $sibling) { $xmlCompareSource = (Resolve-Path -LiteralPath $sibling).Path }
+}
+Invoke-Checked { git clone --quiet --no-checkout $xmlCompareSource $xmlCompareCheckout } 'clone XML Compare Utilities extractor source'
+Invoke-Checked { git -C $xmlCompareCheckout checkout --quiet --detach $XML_COMPARE_COMMIT } 'checkout pinned XML Compare Utilities extractor commit'
+$xmlHead = (& git -C $xmlCompareCheckout rev-parse HEAD).Trim().ToLowerInvariant()
+if ($xmlHead -ne $XML_COMPARE_COMMIT) { throw "XML Compare Utilities commit mismatch: $xmlHead != $XML_COMPARE_COMMIT" }
+$parserPath = Join-Path $xmlCompareCheckout 'parser/accdb-mdb.js'
+$parserBlob = (& git -C $xmlCompareCheckout hash-object 'parser/accdb-mdb.js').Trim().ToLowerInvariant()
+if ($parserBlob -ne $XML_COMPARE_PARSER_BLOB) { throw "XML Compare ACCDB parser blob mismatch: $parserBlob != $XML_COMPARE_PARSER_BLOB" }
+
+if (-not $SkipExtractorInstall) {
+  Remove-Item $readerRuntime -Force -Recurse -ErrorAction SilentlyContinue
+  New-Item -ItemType Directory -Force -Path $readerRuntime | Out-Null
+  Invoke-Checked {
+    npm install --prefix $readerRuntime --no-save --package-lock=false --ignore-scripts "mdb-reader@$MDB_READER_VERSION"
+  } 'install pinned mdb-reader runtime'
+  Remove-Item (Join-Path $xmlCompareCheckout 'node_modules') -Force -Recurse -ErrorAction SilentlyContinue
+  Copy-Item -LiteralPath (Join-Path $readerRuntime 'node_modules') -Destination $xmlCompareCheckout -Recurse -Force
+}
+$readerPackagePath = Join-Path $xmlCompareCheckout 'node_modules/mdb-reader/package.json'
+if (-not (Test-Path -LiteralPath $readerPackagePath)) {
+  throw "Pinned mdb-reader runtime is unavailable at $readerPackagePath. Rerun without -SkipExtractorInstall."
+}
+$readerPackage = Get-Content -Raw $readerPackagePath | ConvertFrom-Json
+if ([string]$readerPackage.version -ne $MDB_READER_VERSION) {
+  throw "mdb-reader version mismatch: $($readerPackage.version) != $MDB_READER_VERSION"
+}
 
 $zip = Join-Path $artifacts 'BM4_L.zip'
 Invoke-WebRequest -Uri "https://raw.githubusercontent.com/reallaksh19/Common/$COMMON/LFEA/BM4/BM4_L.zip" -OutFile $zip
@@ -95,11 +135,14 @@ $tables = @(
   'OUTPUT_DISPLACEMENTS','OUTPUT_RESTRAINTS_SUMMARY','OUTPUT_GLOBAL_ELEMENT_FORCES'
 ) -join ','
 $rawExport = Join-Path $artifacts 'bm4l-raw-export.json'
-& .\scripts\lfea-caesar-accdb-export.ps1 -AccdbPath $accdb -TablesCsv $tables |
-  Set-Content -LiteralPath $rawExport -Encoding utf8
-if ($LASTEXITCODE -ne 0) { throw 'ACCDB read-only export failed.' }
+Invoke-Checked {
+  node scripts/lfea-caesar-accdb-export-xml-compare.mjs `
+    --accdb $accdb --tables $tables --xml-compare-root $xmlCompareCheckout |
+    Set-Content -LiteralPath $rawExport -Encoding utf8
+} 'XML Compare Utilities ACCDB read-only export'
 $exportObject = Get-Content -Raw $rawExport | ConvertFrom-Json -Depth 100
 if ($exportObject.source.sha256 -ne $ACCDB_SHA256) { throw 'Raw export is not bound to the pinned ACCDB SHA-256.' }
+if ($exportObject.provider -ne $EXTRACTOR_PROVIDER) { throw "Unexpected ACCDB extractor provider: $($exportObject.provider)" }
 
 $loadCaseReport = Join-Path $artifacts 'Loadcasereport_BM4_L.txt'
 $miscReport = Join-Path $artifacts 'Miscdata_BM4_L.txt'
@@ -109,7 +152,7 @@ Assert-Git-Blob $loadCaseReport $LOADCASE_GIT_BLOB 'Loadcasereport_BM4_L.txt'
 Assert-Git-Blob $miscReport $MISC_GIT_BLOB 'Miscdata_BM4_L.txt'
 
 $manifest = [ordered]@{
-  schema='lfea-m047-bm4l-stage2-source-custody/v1'
+  schema='lfea-m047-bm4l-stage2-source-custody/v2'
   code=[ordered]@{head=$head; cleanWorktree=$true}
   commonCommit=$COMMON
   zip=[ordered]@{url="https://github.com/reallaksh19/Common/blob/$COMMON/LFEA/BM4/BM4_L.zip"; gitBlob=$ZIP_GIT_BLOB; byteLength=(Get-Item $zip).Length; sha256=(File-Sha256 $zip)}
@@ -117,7 +160,17 @@ $manifest = [ordered]@{
   loadCaseReport=[ordered]@{gitBlob=$LOADCASE_GIT_BLOB; byteLength=(Get-Item $loadCaseReport).Length; sha256=(File-Sha256 $loadCaseReport)}
   miscReport=[ordered]@{gitBlob=$MISC_GIT_BLOB; byteLength=(Get-Item $miscReport).Length; sha256=(File-Sha256 $miscReport)}
   profile=[ordered]@{path=$PROFILE; byteLength=(Get-Item $PROFILE).Length; sha256=(File-Sha256 $PROFILE)}
-  provider=$PROVIDER
+  extractor=[ordered]@{
+    provider=$EXTRACTOR_PROVIDER
+    repository=$XML_COMPARE_REPO
+    source=$xmlCompareSource
+    commit=$XML_COMPARE_COMMIT
+    parserPath='parser/accdb-mdb.js'
+    parserGitBlob=$XML_COMPARE_PARSER_BLOB
+    entrypoint='readAccdbNamedTables'
+    mdbReaderVersion=$MDB_READER_VERSION
+    mdbReaderPackageSha256=File-Sha256 $readerPackagePath
+  }
 }
 $manifest | ConvertTo-Json -Depth 12 | Set-Content -LiteralPath (Join-Path $artifacts 'source-custody.json') -Encoding utf8
 
@@ -163,11 +216,14 @@ $l15RestraintFailures = @($reportJson.qualification.cases | Where-Object caseId 
 })
 
 $receipt = [ordered]@{
-  schema='lfea-m047-bm4l-stage2-production-receipt/v1'
+  schema='lfea-m047-bm4l-stage2-production-receipt/v2'
   head=$head
   nodeVersion=$nodeVersion
   sourceAccdbSha256=$ACCDB_SHA256
-  command='pwsh ./scripts/lfea-m047-bm4l-friction-production.ps1 -ExpectedHead <HEAD>'
+  extractorProvider=$EXTRACTOR_PROVIDER
+  xmlCompareUtilitiesCommit=$XML_COMPARE_COMMIT
+  mdbReaderVersion=$MDB_READER_VERSION
+  command='pwsh ./scripts/lfea-m047-bm4l-friction-production.ps1 -ExpectedHead <HEAD> [-XmlCompareUtilitiesPath <path>]'
   reportStatus=$reportJson.status
   nonlinearGate=$reportJson.nonlinearGate.status
   nonFrictionLiteralExternalFailures=$controlFailures.Count
@@ -184,4 +240,4 @@ $receipt = [ordered]@{
   }
 }
 $receipt | ConvertTo-Json -Depth 12 | Set-Content -LiteralPath (Join-Path $artifacts 'production-receipt.json') -Encoding utf8
-Write-Output "M047 BM4_L friction Stage 2 production run complete: $($reportJson.status)"
+Write-Output "M047 BM4_L friction Stage 2 local production run complete: $($reportJson.status)"

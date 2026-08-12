@@ -15,6 +15,14 @@ assert.equal(baseline.caesarAuthority.l13.definition, 'W+P1');
 assert.equal(baseline.caesarAuthority.l13.frictionMultiplier, 1);
 assert.equal(baseline.caesarAuthority.frictionCoefficient, 0.3);
 
+const cfg = baseline.caesarAuthority.cfgFrictionControls;
+assert.equal(cfg.status, 'RESOLVED_CFG_AUTHORITY');
+assert.equal(cfg.frictionStiffnessRaw, 1_000_000);
+assert.equal(cfg.frictionNormalForceVariation, 0.15);
+assert.equal(cfg.frictionAngleVariationDeg, 15);
+assert.equal(cfg.frictionSlideMultiplier, 1);
+assert.equal(cfg.overrideBoundary, 'CFG_AMBIENT_MU_BOURDON_AND_EC_EH_NOT_GOVERNING_FOR_BM4_L');
+
 const stiffness = baseline.caesarAuthority.staticFrictionStiffness;
 assert.equal(stiffness.documentedSourceValue, 1_000_000);
 assert.equal(stiffness.documentedSourceUnit, 'lb/in');
@@ -37,6 +45,8 @@ const candidate = baseline.l13DiagnosticCandidate;
 assert.equal(candidate.status, 'DIAGNOSTIC_ONLY_NOT_CAESAR_PARITY_AUTHORIZED');
 assert.equal(candidate.frictionStiffnessNPerM, stiffness.siValueNPerM);
 assert.equal(candidate.coefficientOfFriction, 0.3);
+assert.equal(candidate.frictionSlideMultiplier, 1);
+assert.equal(candidate.frictionSlideMultiplierAuthority, 'USER_SUPPLIED_CAESAR_14_CFG_2026-08-12');
 assert.equal(candidate.finalFrictionStates.stickCount + candidate.finalFrictionStates.slidingCount, 26);
 assert.equal(new Set([
   ...candidate.finalFrictionStates.stickNodes,
@@ -66,7 +76,6 @@ assert.ok(Math.abs(gap.passRatePercent - 100 * gap.passed / gap.total) < 1e-12);
 assert.ok(gap.passRatePercent < canonical.passRatePercent);
 
 assert.deepEqual([...baseline.remainingAuthorityBlockers].sort(), [
-  'FRICTION_SLIDE_MULTIPLIER_AUTHORITY_REQUIRED',
   'FRICTION_STATE_HISTORY_SEMANTICS_AUTHORITY_REQUIRED',
   'GAP_CONTACT_STATE_SEMANTICS_AUTHORITY_REQUIRED',
 ].sort());
@@ -81,9 +90,11 @@ console.log(JSON.stringify({
   check: 'm047-bm4l-l13-friction-diagnostic-baseline',
   status: 'PASS',
   frictionStiffnessNPerM: stiffness.siValueNPerM,
+  frictionSlideMultiplier: cfg.frictionSlideMultiplier,
   zeroFrictionReconstruction: reconstruction.status,
   l13DiagnosticPassRatePercent: canonical.passRatePercent,
   l13DiagnosticFailures: canonical.failed,
+  remainingAuthorityBlockers: baseline.remainingAuthorityBlockers,
   gapOpeningFalsificationPassRatePercent: gap.passRatePercent,
   qualifiedAccuracyClaimed: false,
   productionFrictionAuthorized: false,

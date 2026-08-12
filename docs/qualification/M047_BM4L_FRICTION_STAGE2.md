@@ -18,7 +18,7 @@ Issue #1083 is the production source authority. The production gate requires the
 - member byte length: `5,136,384`;
 - member SHA-256: `e21b0862851ea2bb6f20d55e4a3a94f501537b618b98dd46afa9f6777ee38d3c`.
 
-A historical Windows/ACE extraction available in repository evidence came from a different ACCDB SHA (`64c05a50...`). Its 46 restraint rows are therefore retained only as a diagnostic/negative-control fixture. They are not production authority and their node list is never used by the solver. `m047-bm4l-friction-restraint-authority.json` records this distinction explicitly.
+A historical Windows/ACE extraction available in repository evidence came from a different ACCDB SHA (`64c05a50...`). Its 46 restraint rows are therefore retained only as a diagnostic/negative-control fixture. They are not production authority; its node list, restraint type, and direction pattern are never used by the production selector. `m047-bm4l-friction-restraint-authority.json` records this distinction explicitly.
 
 Production friction-site membership remains row-driven from the pinned ACCDB itself.
 
@@ -43,19 +43,23 @@ The checked-in `m047-bm4l-friction-authority.json` records the migrated authorit
 
 ## Friction-surface selection
 
-Friction is not applied to every non-anchor translational restraint. A physical friction surface is selected only when the pinned `INPUT_RESTRAINTS` row satisfies all Stage 2 source-domain rules:
+Friction is not assigned by node list, historical restraint type, or historical direction. A physical friction surface is selected from the issue-pinned `INPUT_RESTRAINTS` rows when all Stage 2 source-domain rules hold:
 
-1. `RES_TYPEID = 3` (ACCDB type `Y`);
-2. `FRIC_COEF > 0`;
+1. `FRIC_COEF > 0` on that source row;
+2. the row is not an anchor (`RES_TYPEID != 1`);
 3. `Math.fround(FRIC_COEF) = Math.fround(model mu)`;
-4. the normalized restraint direction is global `+Y` within `1e-9`;
-5. only one friction-bearing Y surface is present at a node.
+4. the source restraint direction is axis-aligned within `1e-9`, matching the already-qualified Stage 1 restraint representation;
+5. only one positive-friction surface is present at a node; multi-plane friction at one node remains fail-closed in this stage.
 
 The model-level `mu=0.3` remains the governed coefficient magnitude. `FRIC_COEF` identifies which physical restraint row carries friction and corroborates the database's single-precision storage; it does not override model authority.
 
-GUI/LIM/ANC rows remain fully active in the qualified mechanical model. They can constrain tangential motion, but they cannot create friction surfaces and their reactions cannot enter the Y-surface Coulomb normal force. Each friction surface must bind exactly one qualified Y-normal spring before the active-set solve is allowed to proceed.
+A non-anchor type 3, 8, 9, or another directional restraint type is therefore not accepted or rejected merely because of its historical label. A positive `FRIC_COEF` row from the pinned ACCDB is the source declaration. Rows with nonpositive/sentinel `FRIC_COEF` remain ordinary qualified mechanical constraints and do not independently create a friction surface.
 
-The historical `64c05a50...` diagnostic fixture happens to contain 26 positive-friction Y rows and three non-friction Y rows (`20300`, `20640`, `21640`). Those observations exercise negative controls only; they are not node hardcodes and do not define the pinned `e21b...` production topology.
+Each selected surface must bind exactly one qualified base `LINEAR_SPRING` on its aligned normal DOF before the active-set solve is allowed to proceed. The Coulomb cap uses only that source surface's normal reaction. Orthogonal co-located restraint reactions remain in the mechanical solution but cannot contaminate `mu|N|` for the selected surface.
+
+The friction law still acts in the full plane tangent to that selected surface, `P_t = I - n n^T`. Orthogonal guide/limit restraints remain in the base stiffness and naturally suppress the corresponding tangential motion; their presence does not redefine the surface tangent plane.
+
+The historical `64c05a50...` diagnostic fixture happens to contain 26 positive-friction type-3/+Y rows and three non-friction Y rows (`20300`, `20640`, `21640`). Those observations exercise negative controls only; they are not production type, direction, or node hardcodes and do not define the pinned `e21b...` topology.
 
 ## Friction law
 
@@ -175,7 +179,7 @@ The production run now executes the issue-governed stiffness sensitivity points 
 - `1x` — the governed nominal two-repeat qualification result is reused;
 - `2x` — diagnostic-only independent L13/L7 solves, then algebraic L15.
 
-Only the declared `FRICT_STIF` value is scaled. Model `mu`, load-case friction multipliers, source identity and all qualified non-friction mechanics remain unchanged. The nominal package is not mutated.
+Only the declared `FRICT_STIF` value is scaled. Model `mu`, load-case friction multipliers, source identity and all qualified non-friction mechanics remain unchanged. Diagnostic packages receive distinct recomputed package semantic hashes; they cannot retain nominal authority identity. The nominal package is not mutated.
 
 Sensitivity is diagnostic only. A 0.5x/2x diagnostic failure is recorded but cannot be used to retune the nominal solver or replace the 1x qualification result. Conversely, a diagnostic PASS cannot rescue a failing nominal 1x run.
 
@@ -240,12 +244,14 @@ The historical `64c05a50...` extraction cannot satisfy item 2.
 - rejection of stable-SLIDE convergence until the capped load assembled in the solved RHS matches the newly recovered cap/direction;
 - repeated-run state determinism;
 - scoped solver-interceptor lifetime and exception cleanup;
-- positive-`FRIC_COEF` type-Y source selection and GUI/LIM/ANC exclusion;
+- positive-`FRIC_COEF` non-anchor row selection without historical restraint-type/direction/node hardcodes;
+- acceptance of valid non-historical directional restraint types declared by the pinned row;
 - parser-normalized `0.3` versus expanded float32 coefficient equivalence;
+- positive-friction anchor, skew, and multi-plane-at-one-node fail-closed controls;
 - historical 46-row topology retained only as a non-authoritative negative-control fixture;
 - exact issue-pinned ACCDB filename/length/SHA custody gates;
 - dense iterative-refinement behavior and residual/energy/conditioning qualification;
-- 0.5x/2x sensitivity isolation from nominal `FRICT_STIF` and model `mu`;
+- 0.5x/2x sensitivity isolation from nominal `FRICT_STIF` and model `mu`, including diagnostic package hash separation;
 - nonlinear tangent-state identity changes on STICK/SLIDE and ignores capped-load magnitude.
 
 The original isolated friction-kernel test set was exercised during authoring and passed 9/9. The assembled-load closure reproducer was also executed locally against the controller source and passed. The newer repository-integrated tests have been committed but a full repository test run is not claimed from this network-isolated authoring runtime.

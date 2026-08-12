@@ -97,6 +97,7 @@ test('SUPPORT_RESTRAINT plan captures support, node, and host dependencies with 
   assert.equal(intent.requestedValue.supportId, 'support:s1');
   assert.equal(intent.requestedValue.authority, 'CERTIFIED_TABLE_OVERRIDE');
   assert.deepEqual(batchPlan.operationPlan.commandIntents, [{
+    sequence: 0,
     commandType: 'UPDATE_SUPPORT_RESTRAINT',
     payload: intent.requestedValue,
   }]);

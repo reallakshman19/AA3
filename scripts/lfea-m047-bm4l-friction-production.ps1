@@ -150,6 +150,18 @@ $controlRestraintFailures = @($controlFailures | Where-Object { $_.entityKind -e
 if ($controlFailures.Count -ne 46) { throw "Frozen non-friction control regression changed: expected 46 literal external failures, found $($controlFailures.Count)." }
 if ($controlRestraintFailures.Count -ne 0) { throw "Frozen non-friction restraint regression changed: found $($controlRestraintFailures.Count) failures." }
 
+$frictionPrimitiveIds = @('L13','L7','L1')
+$frictionPrimitiveRows = @($reportJson.qualification.cases | Where-Object { $frictionPrimitiveIds -contains $_.caseId } | ForEach-Object { $_.comparison.rows })
+$frictionPrimitiveRestraintFailures = @($frictionPrimitiveRows | Where-Object {
+  $_.status -eq 'FAIL' -and $_.entityKind -eq 'NODE' -and $_.quantity -in @('FORCE','MOMENT')
+})
+if ($frictionPrimitiveRestraintFailures.Count -ne 0) {
+  throw "Primitive friction restraint literal gate failed: $($frictionPrimitiveRestraintFailures.Count) components exceed tolerance."
+}
+$l15RestraintFailures = @($reportJson.qualification.cases | Where-Object caseId -eq 'L15' | ForEach-Object { $_.comparison.rows } | Where-Object {
+  $_.status -eq 'FAIL' -and $_.entityKind -eq 'NODE' -and $_.quantity -in @('FORCE','MOMENT')
+})
+
 $receipt = [ordered]@{
   schema='lfea-m047-bm4l-stage2-production-receipt/v1'
   head=$head
@@ -160,6 +172,8 @@ $receipt = [ordered]@{
   nonlinearGate=$reportJson.nonlinearGate.status
   nonFrictionLiteralExternalFailures=$controlFailures.Count
   nonFrictionRestraintFailures=$controlRestraintFailures.Count
+  primitiveFrictionRestraintFailures=$frictionPrimitiveRestraintFailures.Count
+  l15DerivedRestraintFailures=$l15RestraintFailures.Count
   artifacts=[ordered]@{
     sourceCustodySha256=File-Sha256 (Join-Path $artifacts 'source-custody.json')
     rawExportSha256=File-Sha256 $rawExport

@@ -1,4 +1,4 @@
-/** Parity-only execution bridge from a compiled LAFEA.3 solver model to the existing continuum kernel. */
+/** Governed execution bridges from a compiled LAFEA.3 solver model to the existing continuum kernel. */
 import {
   CANONICAL_UNITS,
   calculateLocalContinuum,
@@ -17,6 +17,9 @@ import {
 export const LAFEA_CONTINUUM_COMPILED_EXECUTION_SCHEMA =
   'lafea-continuum-compiled-execution/v1';
 export const LAFEA_CONTINUUM_COMPILED_EXECUTION_MODE = 'PARITY_ONLY_NOT_RETAINED';
+export const LAFEA_CONTINUUM_AUTHORITATIVE_EXECUTION_SCHEMA =
+  'lafea-continuum-compiled-authoritative-execution/v1';
+export const LAFEA_CONTINUUM_AUTHORITATIVE_EXECUTION_MODE = 'AUTHORITATIVE_WORKBENCH_RUN';
 
 const STAGE_ID = 'LAFEA.3';
 const KINDS = new Set([
@@ -25,21 +28,15 @@ const KINDS = new Set([
 ]);
 
 export function executeLafeaContinuumCompiledForParity(value) {
-  const solverModel = validateSolverModel(value);
-  const executionInput = buildLafeaContinuumCompiledExecutionInput(solverModel);
-  const canonicalInput = createCanonicalLocalContinuumModel(executionInput);
-  const executionResult = calculateLocalContinuum(canonicalInput);
+  const run = executeCompiled(value);
   const base = freeze({
     schema: LAFEA_CONTINUUM_COMPILED_EXECUTION_SCHEMA,
     stageId: STAGE_ID,
     mode: LAFEA_CONTINUUM_COMPILED_EXECUTION_MODE,
-    solverModelHash: solverModel.solverModelHash,
-    canonicalExecutionInputHash: canonicalLafeaSha256({
-      schema: 'lafea-continuum-compiled-execution-input-hash/v1',
-      canonicalInput,
-    }),
-    qualificationState: executionResult.qualification?.state ?? null,
-    executionResult,
+    solverModelHash: run.solverModel.solverModelHash,
+    canonicalExecutionInputHash: run.canonicalExecutionInputHash,
+    qualificationState: run.executionResult.qualification?.state ?? null,
+    executionResult: run.executionResult,
     lifecycleExecutionPublished: false,
     lifecycleRecoveryPublished: false,
     releaseQualified: false,
@@ -51,6 +48,42 @@ export function executeLafeaContinuumCompiledForParity(value) {
       evidence: base,
     }),
   });
+}
+
+export function executeLafeaContinuumCompiledAuthoritatively(value) {
+  const run = executeCompiled(value);
+  const qualificationState = run.executionResult.qualification?.state ?? null;
+  const base = freeze({
+    schema: LAFEA_CONTINUUM_AUTHORITATIVE_EXECUTION_SCHEMA,
+    stageId: STAGE_ID,
+    mode: LAFEA_CONTINUUM_AUTHORITATIVE_EXECUTION_MODE,
+    solverModelHash: run.solverModel.solverModelHash,
+    canonicalExecutionInputHash: run.canonicalExecutionInputHash,
+    qualificationState,
+    canonicalInput: run.canonicalInput,
+    executionResult: run.executionResult,
+    lifecyclePublicationAuthorized: qualificationState === 'ACCEPTED',
+    releaseQualified: false,
+  });
+  return freeze({
+    ...base,
+    executionEvidenceHash: canonicalLafeaSha256({
+      schema: 'lafea-continuum-authoritative-execution-hash-input/v1',
+      evidence: base,
+    }),
+  });
+}
+
+function executeCompiled(value) {
+  const solverModel = validateSolverModel(value);
+  const executionInput = buildLafeaContinuumCompiledExecutionInput(solverModel);
+  const canonicalInput = createCanonicalLocalContinuumModel(executionInput);
+  const executionResult = calculateLocalContinuum(canonicalInput);
+  const canonicalExecutionInputHash = canonicalLafeaSha256({
+    schema: 'lafea-continuum-compiled-execution-input-hash/v1',
+    canonicalInput,
+  });
+  return freeze({ solverModel, canonicalInput, executionResult, canonicalExecutionInputHash });
 }
 
 function validateSolverModel(value) {
@@ -134,13 +167,7 @@ function requireSolverModelHash(value) {
 function text(value) {
   return typeof value === 'string' && value.trim() ? value.trim() : null;
 }
-
-function fail(code) {
-  const error = new TypeError(code);
-  error.code = code;
-  throw error;
-}
-
+function fail(code) { const error = new TypeError(code); error.code = code; throw error; }
 function freeze(value) {
   if (!value || typeof value !== 'object' || Object.isFrozen(value)) return value;
   Object.values(value).forEach(freeze);

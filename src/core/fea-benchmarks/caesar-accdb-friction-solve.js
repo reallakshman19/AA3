@@ -407,16 +407,20 @@ function solvePrimitiveActiveSet(input) {
     const recovered = recoverGlobalActions(base, U);
     const equilibrium = recoveredEquilibrium(base, recovered, reactions, input.benchmarkPackage.profile.equilibriumTolerance);
     const displacementUpdate = updateMetric(
-      U,
-      previousU,
+      translationalDofValues(U),
+      previousU === null ? null : translationalDofValues(previousU),
       profile.displacementUpdateAbsoluteToleranceM,
       profile.displacementUpdateRelativeTolerance,
+      'TRANSLATIONAL_DOFS_ONLY',
+      'm',
     );
     const reactionUpdate = updateMetric(
-      reactions,
-      previousReaction,
+      translationalDofValues(reactions),
+      previousReaction === null ? null : translationalDofValues(previousReaction),
       profile.reactionUpdateAbsoluteToleranceN,
       profile.reactionUpdateRelativeTolerance,
+      'TRANSLATIONAL_DOFS_ONLY',
+      'N',
     );
     const physics = frictionPhysicsGate(classified.rows, profile);
     const signature = classified.rows.map((row) => `${row.supportId}:${row.nextState}`).join('|');
@@ -900,19 +904,29 @@ function buildPairedDeltaRca({ benchmarkPackage, controls, cases }) {
 
 function summarizeSensitivity(nominal, runs) {
   const nominalStates = new Map(nominal.stateMap.map((row) => [row.supportId, row.state]));
-  const nominalReactionNorm = Math.max(norm2(nominal.finalReactionVector), Number.MIN_VALUE);
+  const nominalTranslationReaction = translationalDofValues(nominal.finalReactionVector);
+  const nominalMomentReaction = rotationalDofValues(nominal.finalReactionVector);
   return deepFreeze({
     nominalMultiplier: 1,
+    reactionChangeRule: 'FORCE_AND_MOMENT_REACTION_NORMS_REPORTED_SEPARATELY_NO_MIXED_UNITS',
     runs: Object.freeze(runs.map((run) => {
       const stateFlips = run.stateMap.filter((row) => nominalStates.get(row.supportId) !== row.state);
-      const reactionDifference = run.finalReactionVector.map((value, index) => value - nominal.finalReactionVector[index]);
+      const translationReaction = translationalDofValues(run.finalReactionVector);
+      const momentReaction = rotationalDofValues(run.finalReactionVector);
       return deepFreeze({
         stiffnessMultiplier: run.evidence.stiffnessMultiplier,
         convergenceStatus: run.evidence.executionStatus,
         iterationCount: run.evidence.iterationCount,
         stateFlipCount: stateFlips.length,
         stateFlipSupportIds: Object.freeze(stateFlips.map((row) => row.supportId)),
-        reactionVectorRelativeChange: norm2(reactionDifference) / nominalReactionNorm,
+        translationReactionVectorRelativeChange: relativeVectorChange(
+          translationReaction,
+          nominalTranslationReaction,
+        ),
+        momentReactionVectorRelativeChange: relativeVectorChange(
+          momentReaction,
+          nominalMomentReaction,
+        ),
         fingerprint: primitiveFingerprint(run),
         qualificationUse: run.evidence.stiffnessMultiplier === 1 ? 'NOMINAL' : 'DIAGNOSTIC_ONLY',
       });
@@ -1018,9 +1032,11 @@ function primitiveFingerprint(run) {
   });
 }
 
-function updateMetric(current, previous, absoluteTolerance, relativeTolerance) {
+function updateMetric(current, previous, absoluteTolerance, relativeTolerance, scope, unit) {
   if (previous === null) {
     return deepFreeze({
+      scope,
+      unit,
       absolute: Infinity,
       relative: Infinity,
       scale: 0,
@@ -1030,12 +1046,17 @@ function updateMetric(current, previous, absoluteTolerance, relativeTolerance) {
       status: 'NOT_EVALUATED',
     });
   }
+  if (current.length !== previous.length) {
+    throw new TypeError(`${scope} update vectors have inconsistent lengths.`);
+  }
   const difference = current.map((value, index) => value - previous[index]);
   const absolute = maxAbs(difference);
   const scale = Math.max(maxAbs(current), maxAbs(previous));
   const relative = scale === 0 ? (absolute === 0 ? 0 : Infinity) : absolute / scale;
   const combinedLimit = absoluteTolerance + relativeTolerance * scale;
   return deepFreeze({
+    scope,
+    unit,
     absolute,
     relative,
     scale,
@@ -1044,6 +1065,35 @@ function updateMetric(current, previous, absoluteTolerance, relativeTolerance) {
     relativeTolerance,
     status: absolute <= combinedLimit ? 'PASS' : 'FAIL',
   });
+}
+
+function translationalDofValues(vector) {
+  if (!Array.isArray(vector) || vector.length % DOFS.length !== 0) {
+    throw new TypeError('A complete six-DOF vector is required for translational projection.');
+  }
+  const values = [];
+  for (let offset = 0; offset < vector.length; offset += DOFS.length) {
+    values.push(vector[offset], vector[offset + 1], vector[offset + 2]);
+  }
+  return values;
+}
+
+function rotationalDofValues(vector) {
+  if (!Array.isArray(vector) || vector.length % DOFS.length !== 0) {
+    throw new TypeError('A complete six-DOF vector is required for rotational projection.');
+  }
+  const values = [];
+  for (let offset = 0; offset < vector.length; offset += DOFS.length) {
+    values.push(vector[offset + 3], vector[offset + 4], vector[offset + 5]);
+  }
+  return values;
+}
+
+function relativeVectorChange(current, baseline) {
+  if (current.length !== baseline.length) throw new TypeError('Sensitivity vectors have inconsistent lengths.');
+  const difference = current.map((value, index) => value - baseline[index]);
+  const scale = Math.max(norm2(baseline), Number.MIN_VALUE);
+  return norm2(difference) / scale;
 }
 
 function sortedSourceRows(base, recoveredActions) {

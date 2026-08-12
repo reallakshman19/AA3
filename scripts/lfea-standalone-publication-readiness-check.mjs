@@ -7,22 +7,16 @@ import {
 
 const preFlight = {
   preparation: {
-    structural: { compilation: { schema: 'fea-mechanical-model-compilation/v1' } },
+    structuralPreparation: { compilation: { schema: 'fea-mechanical-model-compilation/v1' } },
   },
 };
 const recoveryBatch = {
   schema: 'fea-inputxml-linear-recovery-batch/v1',
-  caseRecoveries: [{
-    caseId: 'CASE-A',
-    recovery: { componentResultants: [] },
-  }],
+  caseRecoveries: [{ caseId: 'CASE-A', recovery: { componentResultants: [] } }],
 };
 const currentResults = { currentness: 'CURRENT', results: recoveryBatch };
 
-const blocked = createLfeaNativePublicationReadiness({
-  preFlight,
-  resultsState: currentResults,
-});
+const blocked = createLfeaNativePublicationReadiness({ preFlight, resultsState: currentResults });
 assert.equal(blocked.schema, 'lfea-native-publication-readiness/v1');
 assert.equal(blocked.supportActions.status, LFEA_PUBLICATION_STATUS.BLOCKED);
 assert.deepEqual(blocked.supportActions.producerChain, [
@@ -39,7 +33,10 @@ assert.deepEqual(blocked.supportActions.reasonCodes, [
 console.log('LFEA-PUBLICATION-01 PASS current B-3.4 evidence does not fabricate missing support/interface authority');
 
 assert.equal(blocked.b31Code.status, LFEA_PUBLICATION_STATUS.BLOCKED);
-assert.deepEqual(blocked.b31Code.producerChain, ['compileLinearPipingB31Application']);
+assert.deepEqual(blocked.b31Code.producerChain, [
+  'recoverComponentCodePoint',
+  'compileLinearPipingB31Application',
+]);
 assert.deepEqual(blocked.b31Code.reasonCodes, [
   'COMPONENT_CODE_POINT_RECOVERY_REQUIRED',
   'GOVERNED_B31_CHECK_SET_REQUIRED',
@@ -63,7 +60,6 @@ console.log('LFEA-PUBLICATION-04 PASS missing governed mechanical compilation re
 
 sourceAndSizeGuards();
 console.log('LFEA-PUBLICATION-05 PASS Stage-10 composition is bounded and application code does not re-derive support/B31 quantities');
-
 console.log(JSON.stringify({
   check: 'lfea-standalone-publication-readiness',
   status: 'PASS',
@@ -84,18 +80,19 @@ function sourceAndSizeGuards() {
   assert.ok(lineCount(api) < 120, `standalone-runtime-api.js is ${lineCount(api)} lines`);
   assert.match(bootstrap, /createLfeaStandaloneRuntime/u);
   assert.doesNotMatch(bootstrap, /LfeaWorkbenchController|createLfeaNativeExecutionAuthority|createLfeaNativeResultsAuthority/u);
+  assert.match(readiness, /structuralPreparation/u);
   assert.match(readiness, /compileLinearPipingInterfaceSet/u);
   assert.match(readiness, /recoverLinearPipingInterfaceLoads/u);
   assert.match(readiness, /createLinearPipingSupportActionsPublication/u);
+  assert.match(readiness, /recoverComponentCodePoint/u);
   assert.match(readiness, /compileLinearPipingB31Application/u);
   for (const source of [readiness, resultsView, runtime]) {
     assert.doesNotMatch(source, /forceLocal\s*\.|fAxial\s*=|fLateral\s*=|fVertical\s*=|calculatedStress\s*=|utilization\s*=/u);
     assert.doesNotMatch(source, /localStorage|sessionStorage/u);
   }
-  assert.doesNotMatch(readiness, /DEFAULT.*UP|upGlobal\s*:\s*\[0\s*,\s*0\s*,\s*1\]/u);
+  assert.doesNotMatch(readiness, /DEFAULT.*UP|upGlobal\s*:\s*\{\s*x\s*:\s*0/u);
   assert.doesNotMatch(readiness, /parallelTolerance\s*:\s*[0-9]/u);
-  assert.match(resultsView, /existing governed producer chains have complete inputs/u);
+  assert.match(resultsView, /support-action projections and code-applied quantities are separate engineering authorities/u);
 }
-
 function read(file) { return fs.readFileSync(file, 'utf8'); }
 function lineCount(source) { return source.split(/\r?\n/u).length; }

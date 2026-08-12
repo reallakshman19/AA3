@@ -102,10 +102,10 @@ test('extend operation is blocked when selected endpoint is not graph-open', () 
   assert.equal(receipt.reasonCode, 'ENDPOINT_NOT_GRAPH_OPEN');
 });
 
-test('Table exposes certified editors and fails closed for uncertified bend/support fields', () => {
+test('Table exposes certified editors and keeps support placement read-only', () => {
   const pipe = row('PIPE', 'EDGE', { lengthMm: 1000 });
   const bend = row('ELBOW', 'BEND', { radiusMm: 250 });
-  const support = row('SUPPORT', 'SUPPORT', { gapMm: 2 });
+  const support = row('SUPPORT', 'SUPPORT', { gapMm: 2, stationMm: 40 });
 
   assert.equal(deriveTopologyEditTableCellCapability({ row: pipe, columnKey: 'lengthMm' }).status, 'AVAILABLE');
 
@@ -114,8 +114,15 @@ test('Table exposes certified editors and fails closed for uncertified bend/supp
   assert.equal(bendCapability.reasonCode, 'TABLE_INTENT_NOT_CERTIFIED');
 
   const supportCapability = deriveTopologyEditTableCellCapability({ row: support, columnKey: 'gapMm' });
-  assert.equal(supportCapability.status, 'UNREPRESENTABLE');
-  assert.equal(supportCapability.reasonCode, 'SUPPORT_EDIT_NOT_CERTIFIED');
+  assert.equal(supportCapability.status, 'NEEDS_INPUT');
+  assert.equal(supportCapability.reasonCode, 'EXPLICIT_SUPPORT_RESTRAINT_REQUIRED');
+  assert.equal(supportCapability.details.intentKind, 'SUPPORT_RESTRAINT');
+
+  const stationCapability = deriveTopologyEditTableCellCapability({
+    row: support, columnKey: 'stationMm',
+  });
+  assert.equal(stationCapability.status, 'BLOCKED');
+  assert.equal(stationCapability.reasonCode, 'READ_ONLY_PROPERTY');
 });
 
 function row(elementType, canonicalKind, fields) {

@@ -1,4 +1,8 @@
 import {
+  deriveAllSupportRestraintGeometry,
+  projectSupportGeometryToViewport,
+} from '../topology-edit/support-restraint-family.js';
+import {
   applyTopologyEditTableTransaction,
   prepareTopologyEditTablePreview,
   redoTopologyEditTableTransaction,
@@ -124,10 +128,33 @@ export function renderTopologyEditTablePreviewGhost(runtime) {
   const accepted = (row) => changed.has(
     row.pickTarget?.objectId ?? row.entityId ?? row.id,
   );
+  const supportGhost = changedSupportRestraintGhost(runtime, candidate, changed);
   runtime.controller.viewportBackend?.renderGhost({
-    elements: (projection.compactElements ?? projection.elements ?? []).filter(accepted),
-    segments: (projection.compactSegments ?? projection.segments ?? []).filter(accepted),
+    elements: [
+      ...(projection.compactElements ?? projection.elements ?? []).filter(accepted),
+      ...supportGhost.elements,
+    ],
+    segments: [
+      ...(projection.compactSegments ?? projection.segments ?? []).filter(accepted),
+      ...supportGhost.segments,
+    ],
   });
+}
+
+function changedSupportRestraintGhost(runtime, candidate, changed) {
+  const overlays = deriveAllSupportRestraintGeometry({
+    canonicalTopology: candidate.canonicalTopology,
+    verticalAxis: 'Z',
+  }).filter((overlay) => changed.has(overlay.supportId));
+  if (!overlays.length) return { elements: [], segments: [] };
+  const markerSizeMm = Number(
+    runtime.controller.viewportBackend?.navigationConfiguration?.supportMarkerSize,
+  );
+  if (!Number.isFinite(markerSizeMm) || markerSizeMm <= 0) {
+    throw new Error('TOPOLOGY_EDIT_SUPPORT_MARKER_POLICY_MISSING: Approved supportMarkerSize is required.');
+  }
+  const projection = projectSupportGeometryToViewport(overlays, { markerSizeMm });
+  return { elements: projection.elements, segments: projection.segments };
 }
 
 function errorMessage(error) {

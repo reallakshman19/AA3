@@ -6,6 +6,9 @@ import {
   assertTopologyEditJunctionRelationTarget,
 } from '../topology-edit-junction-relation-command.js';
 import {
+  resolveTopologyEditSupportRestraintTargets,
+} from '../topology-edit-support-restraint-command.js';
+import {
   deriveTopologyEditChangedScope,
 } from '../professional/topology-edit-change-scope.js';
 import {
@@ -22,6 +25,9 @@ export function compileTopologyEditTableEngineeringIntent(intent, topology) {
   if (intent.intentKind === 'NODE_POSITION') {
     return compileTopologyEditTableNodePosition(intent, topology);
   }
+  if (intent.intentKind === 'SUPPORT_RESTRAINT') {
+    return compileSupportRestraint(intent, topology);
+  }
   if (intent.intentKind === 'VALVE_REPLACEMENT') {
     return compileValveReplacement(intent, topology);
   }
@@ -31,6 +37,35 @@ export function compileTopologyEditTableEngineeringIntent(intent, topology) {
   throw new RangeError(
     `TopologyEditTableEngineeringPlanner: unsupported intent ${intent.intentKind}.`,
   );
+}
+
+function compileSupportRestraint(intent, topology) {
+  const payload = intent.requestedValue;
+  const targets = resolveTopologyEditSupportRestraintTargets(topology, { payload });
+  const nodeIds = (targets.nodes ?? []).map((target) => target.id);
+  const edgeIds = (targets.edges ?? []).map((target) => target.id);
+  const supportIds = (targets.supports ?? []).map((target) => target.id);
+  const changedScope = deriveTopologyEditChangedScope(topology, {
+    basisHash: topology.canonicalTopologyHash,
+    nodeIds,
+    edgeIds,
+    supportIds,
+  });
+  return createTopologyEditOperationPlan({
+    operationType: 'COMPOSITE_ENGINEERING_EDIT',
+    basisHash: topology.canonicalTopologyHash,
+    targetIds: uniqueSorted([...nodeIds, ...edgeIds, ...supportIds]),
+    parameters: {
+      aggregateKind: 'TABLE_SUPPORT_RESTRAINT',
+      supportId: payload.supportId,
+      restraintId: payload.restraintId,
+      family: payload.family,
+      direction: payload.direction,
+    },
+    commandIntents: [{ commandType: 'UPDATE_SUPPORT_RESTRAINT', payload }],
+    changedScope,
+    unresolvedEvidence: [],
+  });
 }
 
 function compileValveReplacement(intent, topology) {

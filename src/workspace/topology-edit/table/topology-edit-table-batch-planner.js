@@ -11,6 +11,11 @@ import { assertTopologyEditTableProjection } from './topology-edit-table-project
 
 export const TOPOLOGY_EDIT_TABLE_BATCH_PLAN_SCHEMA = 'TopologyEditTableBatchPlan.v1';
 const EPSILON_MM = 1e-9;
+const COMPOSITE_COMMANDS = new Set([
+  'REPLACE_INLINE_COMPONENT',
+  'UPDATE_JUNCTION_BRANCH_RELATION',
+  'UPDATE_SUPPORT_RESTRAINT',
+]);
 
 export function planTopologyEditTableBatch({
   batch: batchInput,
@@ -149,7 +154,7 @@ function materializeCompositeEngineeringCommands(plans, topology) {
   const moveDeltas = new Map();
   for (const plan of plans) for (const intent of plan.commandIntents) {
     if (intent.commandType !== 'MOVE_NODE') {
-      if (!['REPLACE_INLINE_COMPONENT', 'UPDATE_JUNCTION_BRANCH_RELATION'].includes(intent.commandType)) {
+      if (!COMPOSITE_COMMANDS.has(intent.commandType)) {
         throw new RangeError(
           `TopologyEditTableBatchPlanner: unsupported composite engineering command ${intent.commandType}.`,
         );

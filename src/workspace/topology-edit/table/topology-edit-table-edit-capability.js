@@ -10,11 +10,9 @@ const CERTIFIED_EDITOR_TO_INTENT = Object.freeze({
   PIPE_LENGTH: 'PIPE_LENGTH',
   VALVE_REPLACE: 'VALVE_REPLACEMENT',
   BRANCH_RECONFIGURE: 'TEE_REDUCER_RELATION',
+  SUPPORT_RESTRAINT: 'SUPPORT_RESTRAINT',
 });
 
-const SUPPORT_MUTATION_KEYS = new Set([
-  'stationMm', 'supportType', 'direction', 'gapMm', 'travelMm',
-]);
 const UNCERTIFIED_PROPERTIES = Object.freeze({
   PIPE: new Set(['slopePercent']),
   ELBOW: new Set(['angleDeg', 'radiusMm', 'turnIntent']),
@@ -38,16 +36,6 @@ export function deriveTopologyEditTableCellCapability(input = {}) {
   }
   const descriptor = topologyEditTableColumnsFor(row.elementType)
     .find((column) => column.key === columnKey);
-  if (row.elementType === 'SUPPORT' && SUPPORT_MUTATION_KEYS.has(columnKey)) {
-    return receipt(
-      'UNREPRESENTABLE',
-      'SUPPORT_EDIT_NOT_CERTIFIED',
-      'Support editing is not certified in this recovery slice.',
-      row,
-      columnKey,
-      context,
-    );
-  }
   if (UNCERTIFIED_PROPERTIES[row.elementType]?.has(columnKey)) {
     return receipt(
       'UNREPRESENTABLE',
@@ -81,6 +69,21 @@ export function deriveTopologyEditTableCellCapability(input = {}) {
     return available
       ? receipt('AVAILABLE', 'READY', 'Certified PIPE_LENGTH intent is available.', row, columnKey, context, { intentKind })
       : receipt('BLOCKED', 'TABLE_TARGET_KIND_INVALID', 'PIPE_LENGTH requires an exact PIPE edge row.', row, columnKey, context, { intentKind });
+  }
+  if (intentKind === 'SUPPORT_RESTRAINT') {
+    if (row.elementType !== 'SUPPORT' || row.identity?.canonicalKind !== 'SUPPORT') {
+      return receipt('BLOCKED', 'TABLE_TARGET_KIND_INVALID', 'SUPPORT_RESTRAINT requires an exact canonical SUPPORT row.', row, columnKey, context, { intentKind });
+    }
+    return receipt(
+      'NEEDS_INPUT',
+      'EXPLICIT_SUPPORT_RESTRAINT_REQUIRED',
+      'Choose the full restraint family, direction, gap, and travel policy before staging.',
+      row,
+      columnKey,
+      context,
+      { intentKind },
+      ['family', 'direction', 'gapMm', 'travelMm'],
+    );
   }
   if (intentKind === 'VALVE_REPLACEMENT') {
     if (row.elementType !== 'VALVE' || row.identity?.canonicalKind !== 'EDGE') {

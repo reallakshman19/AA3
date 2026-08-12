@@ -16,6 +16,10 @@ export {
 } from './contracts.js';
 
 export { runLinearPipingAnalysis } from './consumer.js';
+export {
+  collectLinearPipingLimitations,
+  composeLinearPipingAnalysisResult,
+} from './retained-result-chain.js';
 
 export {
   GRAVITY_MASS_SOURCE_NOT_IMPLEMENTED_CODE,

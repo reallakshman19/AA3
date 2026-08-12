@@ -39,10 +39,29 @@ export {
 export { convertCaesarValue, normalizeCaesarUnitToken, temperatureToKelvin } from './caesar-accdb-units.js';
 export {
   CAESAR_CONFIGURATION_AUTHORITY_SCHEMA,
+  CAESAR_CONFIGURATION_AUTHORITY_V2_SCHEMA,
   CAESAR_CONFIGURATION_PRECEDENCE,
+  CAESAR_CONFIGURATION_PRECEDENCE_LOW_TO_HIGH,
+  migrateCaesarFrictionAuthorityV1ToV2,
   normalizeCaesarConfigurationAuthority,
   resolveCaesarConfigurationSetting,
+  resolveCaesarConfigurationSettingTrace,
 } from './caesar-configuration-authority.js';
+export {
+  CAESAR_FRICTION_DERIVED_CASES,
+  CAESAR_FRICTION_SOLVER_PROFILE_SCHEMA,
+  CAESAR_FRICTION_STATE_SCHEMA,
+  CAESAR_FRICTION_STATES,
+  combineCaesarAlgebraicResultRows,
+  compareDeterministicCaesarFrictionRuns,
+  convertCaesarFrictionStiffnessToSi,
+  evaluateCaesarFrictionConvergence,
+  evaluateCaesarFrictionRestraint,
+  frictionAssemblyTerm,
+  frictionResiduals,
+  resolveCaesarFrictionCaseSettings,
+  runDeterministicCaesarFrictionActiveSet,
+} from './caesar-friction-active-set.js';
 export { solveCaesarAccdbLinearBenchmark } from './caesar-accdb-linear-solve.js';
 export {
   BM4_QUALIFICATION_ADAPTER_ID,

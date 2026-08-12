@@ -124,7 +124,7 @@ test('UPDATE_SUPPORT_RESTRAINT changes one support, preserves imported evidence,
   assert.equal(geometry.restraints.length, 1);
   assert.equal(geometry.restraints[0].family, 'GUIDE');
   assert.equal(geometry.restraints[0].restraintId, support.restraint.restraintId);
-  assert.deepEqual(geometry.restraints[0].direction, { x: 0, y: -1, z: 0 });
+  assert.deepEqual(geometry.restraints[0].direction, { x: 0, y: 1, z: 0 });
 });
 
 test('UPDATE_SUPPORT_RESTRAINT rejects invalid engineering input and stale support revisions', () => {

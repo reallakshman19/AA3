@@ -48,6 +48,10 @@ export {
   solveCaesarAccdbLinearBenchmark,
 } from './caesar-accdb-linear-solve-governed.js';
 export {
+  CAESAR_ACCDB_FRICTION_SOLVER_PROFILE,
+  solveCaesarAccdbFrictionBenchmark,
+} from './caesar-accdb-friction-solve.js';
+export {
   BM4_QUALIFICATION_ADAPTER_ID,
   BM4_QUALIFICATION_CASE_IDS,
   createBm4QualificationAdapter,

@@ -1,0 +1,96 @@
+{
+  "schema": "m047-bm4l-restraint-code-authority-snapshot/v1",
+  "benchmarkId": "BM4_L",
+  "scope": "EXPORTED_RESTRAINT_CODE_SOURCE_AUTHORITY_ONLY",
+  "source": {
+    "commonCommit": "179c4831cf521cf797c13699cfbbd118315c9244",
+    "inputXmlPath": "LFEA/BM4/InputXML_BM4.xml",
+    "inputXmlGitBlobSha": "3423d220374a17f67addd3c8c0c44300ffa46251",
+    "loadCaseReportPath": "LFEA/BM4/Loadcasereport_BM4_L.txt",
+    "caesarVersion": "14.00.00.0910",
+    "caesarBuild": 231113
+  },
+  "productAuthority": {
+    "inputExportTypeField": "RESTRAINT.TYPE is the exported CAESAR Restraint Code (INPUT_RESTRAINTS.RES_TYPEID)",
+    "restraintCodes": {
+      "1": {"abbreviation":"ANC","family":"ANCHOR"},
+      "7": {"abbreviation":"RZ","family":"ROTATIONAL_DOUBLE_ACTING","gapUnit":"deg"},
+      "10": {"abbreviation":"XSNB","family":"STATIC_SNUBBER_TRANSLATIONAL_DOUBLE_ACTING","activation":"SNUBBERS_ACTIVE_LOAD_CASE_OPTION"},
+      "17": {"abbreviation":"-Y","family":"TRANSLATIONAL_DIRECTIONAL","freeDirection":"-Y","restrainedDirection":"+Y"}
+    }
+  },
+  "sourceInventory": {
+    "activeRestraintRowCount": 46,
+    "activeRestraintNodeCount": 30,
+    "byType": [
+      {"typeCode":1,"abbreviation":"ANC","rowCount":1,"nodeIds":["22490"]},
+      {"typeCode":7,"abbreviation":"RZ","rowCount":3,"nodeIds":["20030","20390","21480"]},
+      {"typeCode":10,"abbreviation":"XSNB","rowCount":13,"nodeIds":["20030","20250","20390","20550","20580","20710","21480","21640","21860","21930","22020","22140","22310"]},
+      {"typeCode":17,"abbreviation":"-Y","rowCount":29,"nodeIds":["20030","20090","20170","20250","20300","20350","20390","20440","20520","20550","20580","20640","20710","21470","21480","21610","21640","21740","21800","21860","21930","22020","22070","22120","22140","22220","22260","22310","22370"]}
+    ]
+  },
+  "frictionSources": {
+    "count": 26,
+    "typeCode": 17,
+    "abbreviation": "-Y",
+    "coefficientOfFriction": 0.3,
+    "nodeIds": ["20030","20090","20170","20250","20350","20390","20440","20520","20550","20580","20710","21470","21480","21610","21740","21800","21860","21930","22020","22070","22120","22140","22220","22260","22310","22370"],
+    "nonFrictionDirectionalNodeIds": ["20300","20640","21640"],
+    "semanticCorrection": "These rows are -Y directional restraints carrying friction, not bilateral +Y-normal springs. The exported TYPE code and friction coefficient must both be preserved."
+  },
+  "rotationalRzRows": [
+    {"nodeId":"20030","typeCode":7,"gapSourceValue":25,"gapUnit":"deg"},
+    {"nodeId":"20390","typeCode":7,"gapSourceValue":null,"gapUnit":"deg"},
+    {"nodeId":"21480","typeCode":7,"gapSourceValue":25,"gapUnit":"deg"}
+  ],
+  "staticXSnubberRows": [
+    {"nodeId":"20030","typeCode":10,"sourceGapField":null},
+    {"nodeId":"20250","typeCode":10,"sourceGapField":null},
+    {"nodeId":"20390","typeCode":10,"sourceGapField":5},
+    {"nodeId":"20550","typeCode":10,"sourceGapField":null},
+    {"nodeId":"20580","typeCode":10,"sourceGapField":null},
+    {"nodeId":"20710","typeCode":10,"sourceGapField":null},
+    {"nodeId":"21480","typeCode":10,"sourceGapField":10},
+    {"nodeId":"21640","typeCode":10,"sourceGapField":null},
+    {"nodeId":"21860","typeCode":10,"sourceGapField":null},
+    {"nodeId":"21930","typeCode":10,"sourceGapField":null},
+    {"nodeId":"22020","typeCode":10,"sourceGapField":null},
+    {"nodeId":"22140","typeCode":10,"sourceGapField":null},
+    {"nodeId":"22310","typeCode":10,"sourceGapField":10}
+  ],
+  "l13CaseAuthority": {
+    "caseId": "L13",
+    "caseType": "SUS",
+    "formula": "W+P1",
+    "frictionMultiplier": 1,
+    "snubberDefaultBehavior": "INACTIVE_FOR_NON_OCC_CASE_UNLESS_EXPLICITLY_ACTIVATED",
+    "exactSnubberOptionCapturedInLoadCaseReport": false,
+    "productionSnubberStateAuthorized": false
+  },
+  "supersededSourceMapInterpretation": {
+    "path": "benchmarks/LFEA/CAESAR_ACCDB/m047-bm4l-friction-source-map-snapshot.json",
+    "invalidProxy": "positiveGapCompanionCount",
+    "reason": "Positive GAP fields on Type 7/Type 10 companion rows were previously treated as generic translational contact gaps. Type 7 is RZ rotational and Type 10 is XSNB, so that proxy is not mechanics authority."
+  },
+  "currentSolverAudit": {
+    "linearRestraintCompilerBehavior": "NON_ANCHOR_ROWS_COLLAPSED_TO_DOMINANT_TRANSLATION_DOF",
+    "knownSemanticLosses": [
+      "TYPE_7_RZ_MAPPED_AS_TRANSLATION",
+      "TYPE_10_XSNB_MAPPED_AS_ALWAYS_PRESENT_TRANSLATION",
+      "TYPE_17_MINUS_Y_MAPPED_AS_BILATERAL_TRANSLATION"
+    ],
+    "productionSolverChangeAuthorizedByThisSnapshot": false
+  },
+  "remainingAuthority": [
+    "DIRECTIONAL_RESTRAINT_STATE_SEMANTICS_AUTHORITY_REQUIRED",
+    "STATIC_SNUBBER_LOAD_CASE_ACTIVATION_AUTHORITY_REQUIRED",
+    "ROTATIONAL_GAP_STATE_SEMANTICS_AUTHORITY_REQUIRED",
+    "FRICTION_STATE_HISTORY_SEMANTICS_AUTHORITY_REQUIRED"
+  ],
+  "policy": {
+    "responseFittingUsed": false,
+    "caesarReferenceAccuracyMaySelectRestraintState": false,
+    "productionMechanicsAuthorized": false,
+    "l13ProductionSolveAuthorized": false
+  }
+}

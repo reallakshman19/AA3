@@ -49,8 +49,10 @@ export {
 } from './caesar-accdb-linear-solve-governed.js';
 export {
   CAESAR_ACCDB_FRICTION_SOLVER_PROFILE,
+  CAESAR_ACCDB_HYDROTEST_AUTHORITY_SCHEMA,
+  resolveCaesarHydrotestQualificationAuthority,
   solveCaesarAccdbFrictionBenchmark,
-} from './caesar-accdb-friction-solve.js';
+} from './caesar-accdb-friction-solve-governed.js';
 export {
   BM4_QUALIFICATION_ADAPTER_ID,
   BM4_QUALIFICATION_CASE_IDS,

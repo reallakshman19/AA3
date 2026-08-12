@@ -1,6 +1,13 @@
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import {
+  PIPE_SECTION_FORMULATION_ID,
+  PIPE_SECTION_PROFILE,
+  PIPE_SECTION_REQUEST_SCHEMA,
+  computePipeSectionRequestSemanticHash,
+  resolvePipeSection,
+} from '../src/core/linear-fea-section/index.js';
+import {
   LINEAR_PIPING_INPUTXML_DEFAULT_CASE_ID,
   createLinearPipingInputXmlIntake,
 } from '../src/workspace/linear-piping-inputxml-intake.js';
@@ -13,11 +20,7 @@ import { createLfeaNativeResultsAuthority } from '../src/lfea/native-results-aut
 import { createLfeaNativeB31PublicationAuthority } from '../src/lfea/native-b31-publication-authority.js';
 import { createLfeaNativeStraightCodeStationAuthority } from '../src/lfea/native-b31-code-stations.js';
 import { createLfeaNativePublicationReadiness } from '../src/lfea/native-publication-readiness.js';
-import {
-  codeProfile,
-  editionDataset,
-  stressFactorSet,
-} from './lfea-b4.0-code-engine-fixtures.mjs';
+import { codeProfile, editionDataset, stressFactorSet } from './lfea-b4.0-code-engine-fixtures.mjs';
 
 const preFlight = authorizedPreFlight(fixtureXml(1000));
 const executionAuthority = createLfeaNativeExecutionAuthority();
@@ -31,10 +34,40 @@ console.log('LFEA-B31-PUB-01 PASS base native B-3.4 remains bare-frame recovery'
 const target = targetAuthority(preFlight);
 const input = b31Input(preFlight, target);
 const authority = createLfeaNativeB31PublicationAuthority();
+assert.throws(
+  () => authority.stage(preFlight, {
+    ...input,
+    editionDataset: editionDataset({ materialId: 'WRONG-MATERIAL-FIXTURE' }),
+  }),
+  (error) => error?.code === 'LFEA_NATIVE_B31_EDITION_MATERIAL_MISMATCH',
+);
+assert.throws(
+  () => authority.stage(preFlight, {
+    ...input,
+    checks: [{ ...input.checks[0], category: 'OCCASIONAL' }],
+  }),
+  (error) => error?.code === 'LFEA_NATIVE_B31_CATEGORY_UNSUPPORTED',
+);
+const tooThick = pipeSection(
+  'SEC-NATIVE-B31-TOO-THICK',
+  target.nominalSection.dimensions.outerDiameter,
+  target.nominalSection.dimensions.wallThickness * 1.01,
+);
+assert.throws(
+  () => authority.stage(preFlight, {
+    ...input,
+    checks: [{ ...input.checks[0], sustainedSectionResolution: tooThick }],
+  }),
+  (error) => error?.code === 'LFEA_NATIVE_B31_SUSTAINED_SECTION_WALL_INVALID',
+);
+console.log('LFEA-B31-PUB-02 PASS material mismatch, unsupported category and invalid sustained wall fail before review');
+
 const staged = authority.stage(preFlight, input);
 assert.equal(staged.authorityCurrentness, 'REVIEW_REQUIRED');
 assert.equal(staged.publicationCurrentness, 'NONE');
 assert.equal(staged.authority.codeStationAuthority.components.length, 1);
+assert.equal(staged.authority.checks[0].sustainedSectionResolution.semanticHash,
+  target.nominalSection.semanticHash);
 assert.throws(
   () => authority.publish(preFlight, executionState, resultsState),
   (error) => error?.code === 'LFEA_NATIVE_B31_REVIEW_REQUIRED',
@@ -47,7 +80,7 @@ assert.throws(
   }),
   (error) => error?.code === 'LFEA_NATIVE_B31_REVIEW_AUTHORITY_MISMATCH',
 );
-console.log('LFEA-B31-PUB-02 PASS stage is review-only and direct publication/review-hash bypasses fail closed');
+console.log('LFEA-B31-PUB-03 PASS sustained section is explicit; stage is review-only and bypasses fail closed');
 
 const reviewed = authority.authorize(preFlight, {
   reviewerIdentity: 'B31-QUALIFICATION-REVIEWER',
@@ -64,7 +97,7 @@ const readiness = createLfeaNativePublicationReadiness({
 });
 assert.equal(readiness.b31Code.status, 'READY');
 assert.ok(readinessAuthority.codeRecoveryByCase[LINEAR_PIPING_INPUTXML_DEFAULT_CASE_ID]);
-console.log('LFEA-B31-PUB-03 PASS reviewed exact-straight authority produces governed code-point readiness');
+console.log('LFEA-B31-PUB-04 PASS reviewed exact-straight authority produces governed code-point readiness');
 
 const derived = readinessAuthority.codeRecoveryByCase[LINEAR_PIPING_INPUTXML_DEFAULT_CASE_ID];
 const augmented = derived.augmentedRecovery;
@@ -75,7 +108,7 @@ assert.deepEqual(pointI.local, baseAction.local.I);
 assert.equal(derived.parentBaseRecoverySemanticHash, baseRecovery.semanticHash);
 assert.strictEqual(resultsAuthority.getState(), resultsState);
 assert.equal(resultsState.results.caseRecoveries[0].recovery.componentResultants.length, 0);
-console.log('LFEA-B31-PUB-04 PASS code point is the retained B-3.4 end action; base Results are not rewritten/recovered');
+console.log('LFEA-B31-PUB-05 PASS code point is retained B-3.4 end action; base Results are not rewritten/recovered');
 
 const published = authority.publish(preFlight, executionState, resultsState);
 assert.equal(published.publicationCurrentness, 'CURRENT');
@@ -88,7 +121,7 @@ assert.equal(codeResult.category, 'SUSTAINED');
 assert.ok(Number.isFinite(codeResult.calculatedStress));
 assert.ok(Number.isFinite(codeResult.allowableStress));
 assert.ok(Number.isFinite(codeResult.utilization));
-console.log('LFEA-B31-PUB-05 PASS existing governed B31 compiler publishes a sealed straight-pipe code result');
+console.log('LFEA-B31-PUB-06 PASS existing governed B31 compiler publishes sealed sustained straight-pipe result');
 
 const fakePreFlight = structuredClone(preFlight);
 fakePreFlight.preparation.structuralPreparation.segmentBindings[0].componentKind = 'BEND';
@@ -96,7 +129,7 @@ assert.throws(
   () => createLfeaNativeStraightCodeStationAuthority(fakePreFlight, staged.authority.checks),
   (error) => error?.code === 'LFEA_NATIVE_B31_TARGET_NOT_EXACT_STRAIGHT_PIPE',
 );
-console.log('LFEA-B31-PUB-06 PASS non-straight/approximate component semantics cannot enter first native B31 population');
+console.log('LFEA-B31-PUB-07 PASS fitting/approximate semantics cannot enter first native B31 population');
 
 const moved = authorizedPreFlight(fixtureXml(1200));
 const stale = authority.reconcile(moved, executionState, resultsState);
@@ -105,14 +138,16 @@ assert.equal(stale.publicationCurrentness, 'STALE');
 assert.equal(authority.getCurrentApplication(), null);
 authority.reconcile(preFlight, executionState, resultsState);
 assert.equal(authority.getState().authorityCurrentness, 'STALE');
-console.log('LFEA-B31-PUB-07 PASS source/model movement is sticky-stale and cannot auto-reactivate code authority');
+console.log('LFEA-B31-PUB-08 PASS source/model movement is sticky-stale and cannot reactivate code authority');
 
 sourceGuards();
-console.log('LFEA-B31-PUB-08 PASS B31 composition retains layer ownership and source-size guards');
+console.log('LFEA-B31-PUB-09 PASS B31 composition retains layer ownership and source-size guards');
 console.log(JSON.stringify({
   check: 'lfea-standalone-native-b31-publication',
   status: 'PASS',
   straightPipeOnly: true,
+  sustainedOnly: true,
+  explicitSustainedSection: true,
   secondSolve: false,
   secondB34Recovery: false,
   reviewRequired: true,
@@ -126,8 +161,15 @@ function targetAuthority(record) {
   assert.ok(binding);
   const material = structural.materialResolutions
     .find((row) => row.semanticHash === binding.materialResolutionSemanticHash);
+  const nominalSection = structural.sectionResolutions
+    .find((row) => row.semanticHash === binding.analysisSectionSemanticHash);
   assert.ok(material);
-  return { elementId: binding.elementId, materialId: material.materialState.materialId };
+  assert.ok(nominalSection);
+  return {
+    elementId: binding.elementId,
+    materialId: material.materialState.materialId,
+    nominalSection,
+  };
 }
 function b31Input(record, target) {
   const caseId = LINEAR_PIPING_INPUTXML_DEFAULT_CASE_ID;
@@ -148,6 +190,8 @@ function b31Input(record, target) {
         factorSetId: 'SF-NATIVE-STRAIGHT-FIXTURE',
         componentId: target.elementId,
       }),
+      sectionBasisReason: 'Qualification source has no retained allowance applied here; reviewer explicitly selects the sealed nominal B-2.3 section as sustained basis.',
+      sustainedSectionResolution: target.nominalSection,
       pressureStressContribution: { value: 0, source: 'FIXTURE-NATIVE-B31-NOT-ASME' },
       coldTemperature: null,
       sustainedStress: null,
@@ -155,8 +199,28 @@ function b31Input(record, target) {
     }],
   };
 }
+function pipeSection(sectionStateId, outerDiameter, wallThickness) {
+  const base = {
+    schema: PIPE_SECTION_REQUEST_SCHEMA,
+    sectionStateId,
+    formulationId: PIPE_SECTION_FORMULATION_ID,
+    outerDiameter,
+    wallThickness,
+    sourceEvidence: {
+      sourceId: 'LFEA-NATIVE-B31-QUALIFICATION',
+      sourceRevision: '00',
+      sourceSemanticHash: 'fnv1a64:bbbbbbbbbbbbbbbb',
+    },
+  };
+  return resolvePipeSection({
+    request: { ...base, semanticHash: computePipeSectionRequestSemanticHash(base) },
+    profile: PIPE_SECTION_PROFILE,
+  });
+}
 function sourceGuards() {
   const authority = read('src/lfea/native-b31-publication-authority.js');
+  const contract = read('src/lfea/native-b31-authority-contract.js');
+  const checks = read('src/lfea/native-b31-application-checks.js');
   const chain = read('src/lfea/native-b31-case-chain.js');
   const stations = read('src/lfea/native-b31-code-stations.js');
   const resultView = read('src/lfea/native-b31-results-view.js');
@@ -165,12 +229,15 @@ function sourceGuards() {
   assert.doesNotMatch(`${authority}\n${chain}`, /compileSolverExecution|compileResultRecovery/u);
   assert.match(chain, /recoverComponentCodePoint/u);
   assert.match(authority, /compileLinearPipingB31Application/u);
+  assert.match(contract, /sustainedSectionResolution/u);
+  assert.match(checks, /EDITION_MATERIAL_MISMATCH/u);
+  assert.match(checks, /SUSTAINED_SECTION_WALL_INVALID/u);
   assert.match(stations, /IMPLEMENTED_EXACTLY/u);
   assert.match(stations, /STRAIGHT_PIPE/u);
   assert.doesNotMatch(resultView, /calculatedStress\s*=|utilization\s*=|compileCodeResult/u);
   assert.ok(lines(runtime) < 300, `standalone runtime is ${lines(runtime)} lines`);
   assert.ok(lines(api) < 120, `standalone runtime API is ${lines(api)} lines`);
-  for (const source of [authority, chain, stations]) {
+  for (const source of [authority, contract, checks, chain, stations]) {
     assert.ok(lines(source) < 300, `native B31 module exceeds 299 lines (${lines(source)})`);
   }
 }

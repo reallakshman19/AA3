@@ -13,6 +13,14 @@ assertForbiddenFixture(
   'scripts/fixtures/lafea-stage16-forbidden-combined-import.js',
   'FORBIDDEN_PRODUCT_OR_COMBINED_DEPENDENCY',
 );
+assertForbiddenFixture(
+  'scripts/fixtures/lafea-stage16-forbidden-lfea-topic.js',
+  'LFEA_RUNTIME_OR_TOPIC_REFERENCE',
+);
+assertForbiddenFixture(
+  'scripts/fixtures/lafea-stage16-forbidden-storage.js',
+  'CROSS_PRODUCT_STORAGE_KEY',
+);
 
 console.log(JSON.stringify({
   schema: 'lafea-standalone-boundary-self-test/v1',
@@ -21,6 +29,8 @@ console.log(JSON.stringify({
   allowedFixtureAccepted: true,
   forbiddenLfeaImportRejected: true,
   forbiddenCombinedImportRejected: true,
+  forbiddenLfeaTopicRejected: true,
+  crossProductStorageKeyRejected: true,
 }));
 
 function run(entry) {

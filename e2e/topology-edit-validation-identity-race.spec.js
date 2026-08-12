@@ -75,8 +75,8 @@ test('late validation result cannot authorize Apply after visible selection chan
   await page.locator('[data-table-action="preview"]').click();
   await expect.poll(() => tableEvidence(page).then((row) => row.previewHash)).toBeTruthy();
   const previewEvidence = await tableEvidence(page);
-  const ghostCountBefore = await ghostCount(page);
-  expect(ghostCountBefore).toBeGreaterThan(0);
+  const ghostCountBeforeSelection = await ghostCount(page);
+  expect(ghostCountBeforeSelection).toBeGreaterThan(0);
   assertEngineeringAuthorityUnchanged(expect, initial, await authorityEvidence(page));
 
   await page.locator('[data-table-action="validate"]').click();
@@ -92,8 +92,14 @@ test('late validation result cannot authorize Apply after visible selection chan
   await selectTableRow(page, ids.valveId);
   await expect(host).toHaveAttribute('data-topology-edit-selection-primary-id', ids.valveId);
   const changedSelection = await authorityEvidence(page);
+  const tableAfterSelectionChange = await tableEvidence(page);
+  const ghostCountAfterSelectionChange = await ghostCount(page);
   expect(changedSelection.selectionRevision).toBeGreaterThan(request.selectionRevision);
   assertEngineeringAuthorityUnchanged(expect, initial, changedSelection);
+  expect(tableAfterSelectionChange.pending).toBe(true);
+  expect(tableAfterSelectionChange.acceptedResponse).toBeNull();
+  expect(tableAfterSelectionChange.activeRequest?.requestId).toBe(request.requestId);
+  await expect(page.locator('[data-table-action="apply"]')).toBeDisabled();
 
   await page.evaluate(() => {
     globalThis.__a3d001HoldValidationMessages = false;
@@ -103,19 +109,19 @@ test('late validation result cannot authorize Apply after visible selection chan
 
   const after = await authorityEvidence(page);
   const table = await tableEvidence(page);
-  const ghostCountAfter = await ghostCount(page);
+  const ghostCountAfterLateResponse = await ghostCount(page);
   assertEngineeringAuthorityUnchanged(expect, initial, after);
   expect(after.webglContextLost).toBe(false);
   expect(table.validationStatus).toBe('');
   expect(table.acceptedResponse).toBeNull();
   expect(table.activeRequest).toBeNull();
   expect(table.error).toMatch(/stale validation response selectionRevision/i);
-  expect(ghostCountAfter).toBe(ghostCountBefore);
+  expect(ghostCountAfterLateResponse).toBe(ghostCountAfterSelectionChange);
   await expect(page.locator('[data-table-action="apply"]')).toBeDisabled();
 
   await assertBrowserDiagnostics(diagnostics);
   const ledger = {
-    schema: 'TopologyEditA3D001RaceEvidence.v1',
+    schema: 'TopologyEditA3D001RaceEvidence.v2',
     fixture: FIXTURE_ID,
     visibleFlow: [
       'WORKSPACE',
@@ -126,21 +132,29 @@ test('late validation result cannot authorize Apply after visible selection chan
       'PREVIEW',
       'VALIDATE_RESPONSE_HELD',
       'TABLE_SELECT_VALVE',
+      'CAPTURE_POST_SELECTION_TRANSIENT_STATE',
       'RELEASE_OLD_VALIDATION_RESPONSE',
-      'ASSERT_STALE_REJECTION',
+      'ASSERT_STALE_REJECTION_WITHOUT_TRANSIENT_MUTATION',
     ],
     canonicalIds: ids,
     initialAuthority: initial,
     frozenValidationBasis: before,
     preview: {
       previewHash: previewEvidence.previewHash,
-      ghostCount: ghostCountBefore,
+      ghostCountBeforeSelection,
     },
     frozenValidationRequest: request,
-    afterVisibleSelectionChange: changedSelection,
-    afterLateResponse: after,
-    validationState: table,
-    ghostCountAfter,
+    afterVisibleSelectionChange: {
+      authority: changedSelection,
+      validationState: tableAfterSelectionChange,
+      ghostCount: ghostCountAfterSelectionChange,
+    },
+    afterLateResponse: {
+      authority: after,
+      validationState: table,
+      ghostCount: ghostCountAfterLateResponse,
+    },
+    lateResponseGhostMutationCount: ghostCountAfterLateResponse - ghostCountAfterSelectionChange,
     canonicalMutationCount: after.activeCommandCount - initial.activeCommandCount,
   };
   await testInfo.attach('a3d-001-stale-validation-ledger', {

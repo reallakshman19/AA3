@@ -142,62 +142,79 @@ export function renderTopologyEditTablePreviewGhost(runtime) {
   if (!candidate) return;
   const projection = runtime.controller.deriveVisual(candidate.canonicalTopology, 'DRAFT').projection;
   const changed = new Set(candidate.changedCanonicalIds ?? []);
-  const placementElements = supportPlacementGhostElements(runtime, candidate, changed);
-  const placementIds = new Set(placementElements.map((row) => row.pickTarget.supportId));
-  const restraintGhost = changedSupportRestraintGhost(runtime, candidate, changed);
-  if (placementElements.length) {
+  const governedSupportProjection = changedGovernedSupportProjection(
+    runtime.controller.sjsonSupportBundle?.supportProjection,
+    changed,
+  );
+  const engineeringSupportProjection = governedSupportProjection
+    ? null
+    : changedEngineeringSupportProjection(runtime, candidate, changed);
+  const supportIds = supportProjectionIds(
+    governedSupportProjection ?? engineeringSupportProjection,
+  );
+  if (governedSupportProjection) {
+    // SJSON deriveVisual owns a transient support-projection cache on the viewport.
+    // Restore the mounted canonical projection after capturing the candidate packet;
+    // only the ghost group may show the candidate before Apply.
     runtime.controller.deriveVisual(runtime.controller.session.currentTopology(), 'DRAFT');
   }
   const accepted = (row) => changed.has(row.pickTarget?.objectId ?? row.entityId ?? row.id);
-  const representedByPlacement = (row) => placementIds.has(
-    row.pickTarget?.supportId ?? row.pickTarget?.objectId ?? row.entityId ?? row.id,
+  const representedBySupport = (row) => supportIds.has(
+    row.pickTarget?.supportId
+      ?? row.pickTarget?.objectId
+      ?? row.canonicalEntityId
+      ?? row.entityId
+      ?? row.id,
   );
   runtime.controller.viewportBackend?.renderGhost({
-    elements: [
-      ...(projection.compactElements ?? projection.elements ?? [])
-        .filter((row) => accepted(row) && !representedByPlacement(row)),
-      ...restraintGhost.elements.filter((row) => !representedByPlacement(row)),
-      ...placementElements,
-    ],
-    segments: [
-      ...(projection.compactSegments ?? projection.segments ?? []).filter(accepted),
-      ...restraintGhost.segments,
-    ],
+    elements: (projection.compactElements ?? projection.elements ?? [])
+      .filter((row) => accepted(row) && !representedBySupport(row)),
+    segments: (projection.compactSegments ?? projection.segments ?? [])
+      .filter((row) => accepted(row) && !representedBySupport(row)),
+    primitives: (projection.primitives ?? [])
+      .filter((row) => changed.has(row.canonicalEntityId) && !representedBySupport(row)),
+    governedSupportProjection,
+    engineeringSupportProjection,
   });
 }
 
-function supportPlacementGhostElements(runtime, candidate, changed) {
-  const supports = (candidate.canonicalTopology.supports ?? []).filter((support) => {
-    const origin = support.placementOverride?.origin;
-    return changed.has(support.id)
-      && support.placementOverride?.authority === 'CERTIFIED_TABLE_OVERRIDE'
-      && origin
-      && [origin.x, origin.y, origin.z].every(Number.isFinite);
+function changedGovernedSupportProjection(projection, changed) {
+  if (!projection || !changed.size) return null;
+  const belongsToChangedSupport = (row) => changed.has(
+    row?.pickTarget?.supportId ?? row?.pickTarget?.objectId ?? row?.entityId ?? row?.id,
+  );
+  const elements = (projection.elements ?? []).filter(belongsToChangedSupport);
+  const segments = (projection.segments ?? []).filter(belongsToChangedSupport);
+  if (!elements.length && !segments.length) return null;
+  const glyphOverlays = (projection.glyphOverlays ?? [])
+    .filter((overlay) => changed.has(overlay?.supportId));
+  return Object.freeze({
+    ...projection,
+    elements: Object.freeze(elements),
+    segments: Object.freeze(segments),
+    glyphOverlays: Object.freeze(glyphOverlays),
   });
-  if (!supports.length) return [];
-  const sizeMm = supportMarkerSizeMm(runtime);
-  return supports.map((support) => ({
-    id: support.id,
-    entityId: support.id,
-    type: 'SUPPORT',
-    x: support.placementOverride.origin.x,
-    y: support.placementOverride.origin.y,
-    z: support.placementOverride.origin.z,
-    sizeMm,
-    pickTarget: { objectKind: 'support', objectId: support.id, supportId: support.id },
-  }));
 }
 
-function changedSupportRestraintGhost(runtime, candidate, changed) {
+function changedEngineeringSupportProjection(runtime, candidate, changed) {
   const overlays = deriveAllSupportRestraintGeometry({
     canonicalTopology: candidate.canonicalTopology,
     verticalAxis: 'Z',
   }).filter((overlay) => changed.has(overlay.supportId));
-  if (!overlays.length) return { elements: [], segments: [] };
-  const projection = projectSupportGeometryToViewport(overlays, {
+  if (!overlays.length) return null;
+  return projectSupportGeometryToViewport(overlays, {
     markerSizeMm: supportMarkerSizeMm(runtime),
   });
-  return { elements: projection.elements, segments: projection.segments };
+}
+
+function supportProjectionIds(projection) {
+  if (!projection) return new Set();
+  return new Set([
+    ...(projection.glyphOverlays ?? []).map((overlay) => overlay?.supportId),
+    ...(projection.elements ?? []).map((row) => (
+      row?.pickTarget?.supportId ?? row?.pickTarget?.objectId ?? row?.entityId ?? row?.id
+    )),
+  ].filter(Boolean));
 }
 
 function supportMarkerSizeMm(runtime) {

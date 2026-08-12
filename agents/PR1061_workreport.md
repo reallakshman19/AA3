@@ -9,12 +9,12 @@
 | Base | stacked on PR #1054 at `7d3002df5915027f607a7db10b2f75049fe14c94` |
 | Bootstrap | `da0fb665a3ca58788fad83c96ca27b0938d8d083` — empty tree-equivalent commit |
 | Mission | Certify one explicit support placement operation along the support's already-resolved host edge, without authorizing automatic parent-geometry follow or host rebinding. |
-| Status | DRAFT / report-first / architecture audit in progress |
+| Status | DRAFT / pure command + Table integration in progress |
 | Empirical execution | NOT_RUN until an exact-head runner is available; retired workflows are not to be restored solely for this slice. |
 
 ## Required Authority Path
 
-`exact SUPPORT row -> exact shared host resolution -> explicit station draft -> governed SUPPORT_STATION intent -> deterministic same-host placement plan -> candidate Preview -> validation -> certified transaction -> canonical support placement override -> existing journal Undo/Redo -> Three/support projection`
+`exact SUPPORT row -> exact shared host resolution -> explicit station draft -> governed SUPPORT_PLACEMENT intent -> deterministic same-host placement plan -> candidate Preview -> validation -> certified transaction -> canonical support placement override -> existing journal Undo/Redo -> Three/support projection`
 
 Canonical topology remains the engineering authority. The support entity/mesh is projection only.
 
@@ -30,7 +30,7 @@ Canonical topology remains the engineering authority. The support entity/mesh is
 - The effective origin is deterministically interpolated on the exact host centerline.
 - The command changes exactly one canonical support record and no node/edge/junction/boundary/rigid/bend record.
 - Imported attachment origin, segment parameter, source geometry and source attachment evidence remain retained as prior/source authority; certified placement is a distinct marked override.
-- Host edge/support revisions are captured and stale changes fail closed.
+- Host edge, both host endpoint nodes and support revisions are captured and stale changes fail closed.
 - Undo/Redo uses the existing journal only.
 
 ### Still prohibited
@@ -53,7 +53,9 @@ Parent geometry therefore remains fail-closed even after this PR. A later coordi
 3. `resolveTopologyEditSupportHostEdge()` is the merged #1036 shared host authority and must remain the sole host resolver.
 4. Current source writeback translates support entities using `support.nodeId`. This is unsuitable for certified mid-span relocation because geometric attachments can use an approximate endpoint node; explicit placement must instead project from the certified support placement override.
 5. Support glyph materialization consumes an explicit overlay origin; the engineering change therefore belongs upstream in canonical/support projection, never in Three.
-6. Table currently exposes `stationMm` but PR #1054 deliberately leaves it read-only. This PR may make only that field editable through a compound governed support-placement intent.
+6. Table currently exposes `stationMm`; this PR may make only that field editable through a compound governed support-placement intent while host identity remains read-only.
+7. Generic support rendering currently prefers the canonical support node, so accepted placement must override only that projection origin while untouched support behavior remains unchanged.
+8. Table projection must display the certified station after Apply rather than continuing to show stale source station evidence.
 
 ## Engineering Register
 
@@ -64,7 +66,8 @@ Parent geometry therefore remains fail-closed even after this PR. A later coordi
 | DEC-1061-03 | Authority | ACCEPTED | Imported origin/attachment evidence is retained; placement uses a marked certified override. |
 | DEC-1061-04 | Host | ACCEPTED | Shared #1036 host resolver must return exactly `RESOLVED`; no alternate lookup. |
 | DEC-1061-05 | Coordinates | ACCEPTED | Station is measured from canonical host `FROM`; origin is deterministic linear interpolation on that exact edge. |
-| RISK-1061-01 | Curved hosts | OPEN / FAIL-CLOSED | A two-node canonical edge does not encode an independent support centerline parameterization for elbow arcs. Initial operation must reject non-straight/non-representable host types rather than project by chord. |
+| DEC-1061-06 | Evidence conflict | ACCEPTED | Conflicting declared-station vs attachment-segment evidence fails closed instead of selecting one authority. |
+| RISK-1061-01 | Curved hosts | OPEN / FAIL-CLOSED | A two-node canonical edge does not encode an independent support centerline parameterization for elbow arcs. Initial operation rejects non-straight/non-representable host types rather than projecting by chord. |
 | RISK-1061-02 | Source writeback | OPEN | Existing support writeback uses resolved node and must be made override-aware without changing imported source authority before Apply. |
 | RISK-1061-03 | SJSON grouped projection | OPEN | Source-validator support grouping can prefer source positions; edit projection must display certified override without rewriting source-only validation authority. |
 | RISK-1061-04 | Execution | OPEN | No exact-head runner currently available. |
@@ -75,21 +78,21 @@ Parent geometry therefore remains fail-closed even after this PR. A later coordi
 
 This report is the first changed file after the empty bootstrap.
 
-### S1 — Placement/projection audit — IN PROGRESS
+### S1 — Placement/projection audit — COMPLETE
 
-Trace canonical support placement, shared host resolution, support overlay projection, source writeback, Table station projection and transaction changed-scope rules.
+Canonical source placement, shared host resolution, support overlays, writeback, Table station projection and changed-scope semantics have been traced. Mid-span node identity is explicitly not placement authority.
 
-### S2 — Pure command + placement authority — PENDING
+### S2 — Pure command + placement authority — IN PROGRESS
 
-Introduce a small pure placement authority and governed command. Required failures: missing/ambiguous host, non-straight host, stale target, negative/out-of-range/no-op station, non-finite geometry, imported-evidence mutation, and any topology delta outside one support.
+Pure placement context, command contract, resolver targets, reducer and effect validation are implemented in source. Focused command tests are authored. Required failures include missing/ambiguous host, non-straight host, conflicting source evidence, stale support/host, negative/out-of-range/no-op station, non-finite geometry and any topology delta outside one support.
 
-### S3 — Table intent/planner/UI — PENDING
+### S3 — Table intent/planner/UI — IN PROGRESS
 
-Expose station editing only for exactly eligible SUPPORT rows. Input/Stage/Preview/Validate remain non-mutating. Stage re-resolves current host authority before creating the intent.
+`SUPPORT_PLACEMENT` Table intent, planner, exact capability, station editor and Stage-time revalidation are implemented in source. Input and Stage remain canonical no-ops.
 
-### S4 — Projection/writeback — PENDING
+### S4 — Projection/writeback — IN PROGRESS
 
-Three/support overlay consumes effective certified placement from canonical topology. Workspace source entity is patched only after accepted canonical transaction/writeback. Imported attachment/source evidence remains separately retained.
+Three/support overlay must consume only an accepted certified placement override; untouched supports retain prior behavior. Workspace source entity is patched only after accepted canonical transaction/writeback. Table projection must expose certified station authority after Apply. Imported attachment/source evidence remains separately retained.
 
 ### S5 — Qualification/closure — PENDING
 
@@ -109,13 +112,16 @@ Production files may be modified only within this declared envelope unless this 
 - `src/workspace/topology-edit/topology-edit-source-adapter.js`
 - `src/workspace/topology-edit/support-restraint-family.js`
 - `src/workspace/topology-edit/topology-edit-sjson-visual-authority.js`
+- `src/workspace/topology-edit/topology-edit-sjson-restraint-projection.js`
 - new `src/workspace/topology-edit/table/topology-edit-table-support-placement-contract.js`
 - `src/workspace/topology-edit/table/topology-edit-table-columns.js`
 - `src/workspace/topology-edit/table/topology-edit-table-edit-capability.js`
 - `src/workspace/topology-edit/table/topology-edit-table-intent.js`
 - `src/workspace/topology-edit/table/topology-edit-table-engineering-planner.js`
 - `src/workspace/topology-edit/table/topology-edit-table-batch-planner.js`
+- `src/workspace/topology-edit/table/topology-edit-table-projection.js`
 - new `src/workspace/viewport-productivity/topology-edit-table-support-placement-editor.js`
+- `src/workspace/viewport-productivity/topology-edit-table-support-restraint-editor.js`
 - `src/workspace/viewport-productivity/topology-edit-table-properties-view.js`
 - `src/workspace/viewport-productivity/topology-edit-table-cell-edit.js`
 - `src/workspace/viewport-productivity/topology-edit-table-engineering-runtime.js`
@@ -130,11 +136,11 @@ No geometry planner or #1036 dependency module is authorized for weakening/modif
 |---|---|
 | PR1054 base `7d3002df5915027f607a7db10b2f75049fe14c94` | restraint-edit source complete; current-head execution NOT_RUN |
 | `da0fb665a3ca58788fad83c96ca27b0938d8d083` | empty placement bootstrap, zero changed files |
-| report-first head | report only; no production behavior change |
+| current implementation heads | source-only review in progress; no empirical PASS claimed |
 
 ## Next
 
-1. Finish projection/writeback audit.
-2. Implement pure effective-placement authority + command first.
-3. Add Table operation only after pure contract is fail-closed.
-4. Preserve `SUPPORT_GEOMETRY_POLICY_REQUIRED` for every parent geometry path.
+1. Make generic/SJSON support projection and source writeback consume certified override only after Apply.
+2. Make Table projection expose the certified station/current authority.
+3. Add Table transaction/rebase/Undo/Redo focused tests.
+4. Add production Playwright source qualification while preserving `NOT_RUN` until an actual runner executes it.

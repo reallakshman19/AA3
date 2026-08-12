@@ -9,7 +9,7 @@
 | Base | stacked on PR #1054 at `7d3002df5915027f607a7db10b2f75049fe14c94` |
 | Bootstrap | `da0fb665a3ca58788fad83c96ca27b0938d8d083` — empty tree-equivalent commit |
 | Mission | Certify one explicit support placement operation along the support's already-resolved host edge, without authorizing automatic parent-geometry follow or host rebinding. |
-| Status | DRAFT / pure command + Table integration in progress |
+| Status | DRAFT / implementation + source qualification in progress |
 | Empirical execution | NOT_RUN until an exact-head runner is available; retired workflows are not to be restored solely for this slice. |
 
 ## Required Authority Path
@@ -48,23 +48,25 @@ Parent geometry therefore remains fail-closed even after this PR. A later coordi
 
 ## Architecture Audit Findings
 
-1. `enrichCanonicalSupportsWithExactOrigins()` retains attachment-projected support origin plus attachment ID/segment/distance. This imported placement evidence must not be overwritten silently.
+1. `buildSupports()` receives the existing exact attachment model but currently discards `attachmentId`, `projectedPointCanonical`, `distanceCanonical`, and `segmentParameter`, retaining only host identity/evidence type plus an intentionally approximate endpoint `nodeId` for mid-span attachments.
 2. `resolveTopologyEditSupportHostEdge()` remains the sole host authority.
 3. Legacy source writeback translates support entities through approximate `support.nodeId`; certified mid-span relocation therefore requires an override-aware dispatch layer.
 4. Generic support rendering prefers the canonical support node, so accepted placement may override only the projection origin while untouched support behavior remains unchanged.
 5. Table projection must display the certified station after Apply while source/vendor fields retain original source evidence.
-6. The governed SJSON validator projection intentionally groups support records by source APOS/POS before canonical origin. The edit runtime may supply a projection-only dataset clone whose APOS is replaced only for certified placement overrides; the actual workspace/source dataset and validator implementation remain untouched.
+6. The governed SJSON validator projection intentionally groups support records by source APOS/POS before canonical origin. The edit runtime supplies a projection-only dataset clone whose APOS is replaced only for certified placement overrides; the actual workspace/source dataset and validator implementation remain untouched.
+7. The production demo and XYZ embedded supports contain no `STATION_MM`; exact attachment projected-point/segment evidence is therefore required for a truthful real-user station editor.
 
 ## Engineering Register
 
 | ID | Type | Status | Finding / decision |
 |---|---|---|---|
+| ISS-1061-01 | Correctness | OPEN / FIX AUTHORIZED | Canonical `buildSupports()` drops already-resolved attachment placement facts. This makes a real support such as XYZ S-007 unrepresentable in the Table even though the support attachment authority has an exact projected point/segment. Retain those existing facts on the canonical support record; do not add a second inference algorithm. |
 | DEC-1061-01 | Semantics | ACCEPTED | First certified movement policy is explicit same-host station relocation. |
 | DEC-1061-02 | Safety | ACCEPTED | Parent geometry remains blocked; no automatic host-follow in this PR. |
 | DEC-1061-03 | Authority | ACCEPTED | Imported origin/attachment evidence is retained; placement uses a marked certified override. |
 | DEC-1061-04 | Host | ACCEPTED | Shared #1036 host resolver must return exactly `RESOLVED`; no alternate lookup. |
 | DEC-1061-05 | Coordinates | ACCEPTED | Station is measured from canonical host `FROM`; origin is deterministic linear interpolation on that exact edge. |
-| DEC-1061-06 | Evidence conflict | ACCEPTED | Conflicting declared-station vs attachment-segment evidence fails closed instead of selecting one authority. |
+| DEC-1061-06 | Evidence conflict | ACCEPTED | Conflicting declared-station vs attachment placement evidence fails closed instead of selecting one authority. |
 | DEC-1061-07 | Durable writeback | ACCEPTED | Persist certified placement as topology-edit audit attributes plus committed support geometry; rehydrate only from those explicit audit fields. Do not overwrite source `STATION_MM`/attachment evidence. |
 | DEC-1061-08 | SJSON edit projection | ACCEPTED | Overlay certified APOS only in an ephemeral governed edit-projection dataset; source dataset remains immutable. |
 | RISK-1061-01 | Curved hosts | OPEN / FAIL-CLOSED | Initial operation rejects non-straight/non-representable host types rather than projecting by chord. |
@@ -79,16 +81,16 @@ The numbered report was the first changed file after the empty bootstrap.
 Mid-span node identity is explicitly not placement authority; exact host/station/writeback/projection seams are identified.
 
 ### S2 — Pure command + placement authority — IN PROGRESS
-Pure placement context, command contract, resolver targets, reducer/effect validation and focused command tests are authored.
+Pure placement context, command contract, resolver targets, reducer/effect validation and focused command tests are authored. `ISS-1061-01` must be closed by retaining existing attachment placement facts in canonical support custody.
 
 ### S3 — Table intent/planner/UI — IN PROGRESS
 `SUPPORT_PLACEMENT` Table intent, planner, batch allowlist, capability, station editor and Stage-time revalidation are implemented. Input and Stage remain canonical no-ops.
 
 ### S4 — Projection/writeback — IN PROGRESS
-Generic support glyphs and Table projection consume certified override. Durable workspace writeback/rehydration is implemented through the dispatch wrapper. Governed SJSON edit projection remains to be overlaid without mutating source data.
+Generic support glyphs and Table projection consume certified override. Durable workspace writeback/rehydration is implemented. Governed SJSON edit projection uses a projection-only APOS clone and does not mutate source data.
 
 ### S5 — Qualification/closure — PENDING
-Focused transaction/round-trip tests are authored. Production Playwright source qualification and empirical execution remain pending; no PASS will be claimed until executed.
+Focused command/transaction/round-trip tests are authored. Production Playwright source qualification and empirical execution remain pending; no PASS will be claimed until executed.
 
 ## Authorized Changed-File Envelope
 
@@ -132,7 +134,7 @@ No geometry planner or #1036 dependency module is authorized for weakening/modif
 
 ## Next
 
-1. Overlay certified support APOS only in governed SJSON edit projection.
-2. Static-audit the authored command/Table/writeback tests and line budgets.
-3. Add focused Playwright source qualification.
-4. Seal changed-file/evidence ledger and keep draft if exact-head execution is still unavailable.
+1. Close `ISS-1061-01` by retaining exact attachment placement evidence in canonical support records and use it as current-station authority on straight hosts.
+2. Add the focused production Playwright S-007 same-host relocation path.
+3. Static-audit tests, changed-file ledger, line budgets and review state.
+4. Seal evidence and keep draft if exact-head execution is still unavailable.

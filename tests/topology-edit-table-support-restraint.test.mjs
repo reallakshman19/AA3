@@ -87,7 +87,7 @@ test('SUPPORT_RESTRAINT Preview renders only the governed candidate support glyp
     supportProjection.segments[0].pickTarget.restraintId,
   );
   assert.equal(supportProjection.glyphOverlays[0].supportId, 'support:s1');
-  assert.equal(supportProjection.glyphOverlays[0].restraint.type, 'GUIDE');
+  assert.equal(supportProjection.glyphOverlays[0].restraints[0].family, 'GUIDE');
 });
 
 test('SUPPORT_RESTRAINT Preview → Validate → Apply is atomic and journal undo/redo is exact', async () => {

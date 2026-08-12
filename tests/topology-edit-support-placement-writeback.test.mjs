@@ -69,8 +69,12 @@ function withSharedModel(dataset) {
 function attachmentModel() {
   return {
     attachments: [{
+      attachmentId: 'attachment:support:s1',
       supportKey: 'support:s1', attachedComponentKey: 'pipe:p1', attachedPortKey: null,
       evidenceType: 'GEOMETRIC',
+      projectedPointCanonical: { x: 250, y: 0, z: 0 },
+      segmentParameter: 0.25,
+      distanceCanonical: 0,
     }],
   };
 }
@@ -105,6 +109,12 @@ function editedTopology(base) {
 
 test('certified support placement writeback preserves source station and reopens exact override', () => {
   const { dataset, canonical: base } = canonicalFixture();
+  const baseSupport = base.supports.find((row) => row.entityId === 'support:s1');
+  assert.equal(baseSupport.attachmentId, 'attachment:support:s1');
+  assert.equal(baseSupport.attachmentSegmentParameter, 0.25);
+  assert.deepEqual(baseSupport.origin, { x: 250, y: 0, z: 0 });
+  assert.equal(baseSupport.originAuthority, 'ATTACHMENT_PROJECTED_POINT');
+
   const edited = editedTopology(base);
   const entities = applyCanonicalTopologyToWorkspaceEntities(
     dataset, base, edited, 'session:support-placement',
@@ -127,6 +137,8 @@ test('certified support placement writeback preserves source station and reopens
   const reopenedSupport = reopened.supports.find((row) => row.entityId === 'support:s1');
 
   assert.equal(reopened.sourceHash, base.sourceHash);
+  assert.equal(reopenedSupport.attachmentId, 'attachment:support:s1');
+  assert.equal(reopenedSupport.attachmentSegmentParameter, 0.25);
   assert.equal(reopenedSupport.placementOverride.stationMm, 600);
   assert.equal(reopenedSupport.placementOverride.hostEdgeId, edited.supports[0].placementOverride.hostEdgeId);
   assert.deepEqual(reopenedSupport.placementOverride.origin, { x: 600, y: 0, z: 0 });

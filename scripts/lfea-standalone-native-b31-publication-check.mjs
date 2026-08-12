@@ -56,6 +56,33 @@ assert.throws(
   }),
   (error) => error?.code === 'LFEA_NATIVE_B31_CATEGORY_UNSUPPORTED',
 );
+assert.throws(
+  () => authority.stage(preFlight, {
+    ...input, checks: [{ ...input.checks[0], pressureStressContribution: null }],
+  }),
+  (error) => error?.code === 'LFEA_NATIVE_B31_PRESSURE_STRESS_REQUIRED',
+);
+assert.throws(
+  () => authority.stage(preFlight, {
+    ...input, checks: [{ ...input.checks[0], combinationId: 'NOT-THE-PHYSICAL-CASE' }],
+  }),
+  (error) => error?.code === 'LFEA_NATIVE_B31_COMBINATION_CASE_MISMATCH',
+);
+const thermalCase = preFlight.preparation.physicalPreparation.physicalCases
+  .find((row) => row.caseRole === 'WEIGHT_TEMPERATURE');
+assert.ok(thermalCase, 'Fixture must expose a thermal physical case for sustained-role rejection.');
+assert.throws(
+  () => authority.stage(preFlight, {
+    ...input,
+    checks: [{
+      ...input.checks[0],
+      combinationId: thermalCase.caseId,
+      actionSource: { kind: 'SINGLE_CASE', caseId: thermalCase.caseId },
+      evaluationCaseId: thermalCase.caseId,
+    }],
+  }),
+  (error) => error?.code === 'LFEA_NATIVE_B31_SUSTAINED_CASE_ROLE_INVALID',
+);
 const tooThick = pipeSection(
   'SEC-NATIVE-B31-TOO-THICK',
   target.nominalSection.dimensions.outerDiameter,
@@ -67,7 +94,7 @@ assert.throws(
   }),
   (error) => error?.code === 'LFEA_NATIVE_B31_SUSTAINED_SECTION_WALL_INVALID',
 );
-console.log('LFEA-B31-PUB-02 PASS material mismatch, unsupported category and invalid sustained wall fail before review');
+console.log('LFEA-B31-PUB-02 PASS material/category/pressure/case-role/section custody fails before review');
 
 const staged = authority.stage(preFlight, input);
 assert.equal(staged.authorityCurrentness, 'REVIEW_REQUIRED');
@@ -171,6 +198,7 @@ console.log('LFEA-B31-PUB-11 PASS B31 composition retains layer ownership and so
 console.log(JSON.stringify({
   check: 'lfea-standalone-native-b31-publication', status: 'PASS',
   straightPipeOnly: true, sustainedOnly: true, explicitSustainedSection: true,
+  explicitPressureStress: true, sustainedCaseRolesOnly: true,
   secondSolve: false, secondB34Recovery: false, reviewRequired: true,
   baseRecoveryImmutable: true, evidenceOnlyDossier: true, codeData: 'FIXTURE-NOT-ASME',
 }));
@@ -189,8 +217,10 @@ function sourceGuards() {
   const api = read('src/lfea/standalone-runtime-api.js');
   assert.doesNotMatch(`${authoritySource}\n${chain}`, /compileSolverExecution|compileResultRecovery/u);
   assert.match(chain, /recoverComponentCodePoint/u);
+  assert.match(chain, /LFEA_NATIVE_B31_CURRENT_CASE_EXECUTION_REQUIRED/u);
   assert.match(authoritySource, /compileLinearPipingB31Application/u);
-  assert.match(contract, /sustainedSectionResolution/u);
+  assert.match(contract, /LFEA_NATIVE_B31_PRESSURE_STRESS_REQUIRED/u);
+  assert.match(contract, /LFEA_NATIVE_B31_SUSTAINED_CASE_ROLE_INVALID/u);
   assert.match(checks, /EDITION_MATERIAL_MISMATCH/u);
   assert.match(checks, /SUSTAINED_SECTION_WALL_INVALID/u);
   assert.match(stations, /IMPLEMENTED_EXACTLY/u);

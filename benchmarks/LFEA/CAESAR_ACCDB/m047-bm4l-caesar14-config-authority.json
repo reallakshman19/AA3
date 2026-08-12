@@ -1,0 +1,91 @@
+{
+  "schema": "m047-bm4l-caesar14-config-authority/v1",
+  "benchmarkId": "BM4_L",
+  "scope": "USER_SUPPLIED_EXACT_CAESAR14_GLOBAL_CONFIGURATION_WITH_OVERRIDE_PRECEDENCE",
+  "source": {
+    "provenanceClass": "USER_SUPPLIED_EXACT_CONFIGURATION",
+    "suppliedAtUtc": "2026-08-12T07:47:30Z",
+    "productVersion": "14.000",
+    "retainedPath": "benchmarks/LFEA/CAESAR_ACCDB/m047-bm4l-caesar14-user-supplied.cfg.txt"
+  },
+  "precedencePolicy": {
+    "rule": "LOAD_CASE_OR_FILE_LEVEL_OVERRIDE_BEATS_GLOBAL_CFG",
+    "excludedCfgSettings": [
+      {
+        "setting": "DEFAULT_AMBIENT_TEMPERATURE",
+        "cfgValue": 70,
+        "reason": "BM4_L ambient temperature is governed by file-level setting; do not source it from this cfg."
+      },
+      {
+        "setting": "BOURDON_PRESSURE",
+        "cfgValue": "NONE",
+        "reason": "BM4_L Bourdon mode is governed by file-level setting; do not source it from this cfg."
+      },
+      {
+        "setting": "COEFFICIENT_OF_FRICTION_(MU)",
+        "cfgValue": 0,
+        "reason": "BM4_L model/load-case friction coefficient overrides the global cfg; retain model mu=0.3 and load-case friction multiplier semantics."
+      },
+      {
+        "setting": "FLEXIBILITY_ELASTIC_MODULUS",
+        "cfgValue": null,
+        "reason": "Ec/Eh authority remains file/load-case specific and is not sourced from this cfg."
+      }
+    ]
+  },
+  "resolvedGlobalFrictionControls": {
+    "frictionStiffnessRawCfg": {
+      "setting": "FRICT_STIF",
+      "value": 1000000,
+      "status": "RESOLVED_CFG_VALUE",
+      "siAuthority": {
+        "valueNPerM": 175126835.24647635,
+        "basis": "INDEPENDENT_BM1_PRODUCT_VALIDATION_PLUS_CAESAR_STATIC_FRICTION_STIFFNESS_SOURCE_UNIT"
+      }
+    },
+    "frictionNormalForceVariation": {
+      "setting": "FRICT_NORM_FORCE_VAR",
+      "value": 0.15,
+      "status": "RESOLVED_EXACT_CFG"
+    },
+    "frictionAngleVariationDeg": {
+      "setting": "FRICT_ANGLE_VAR",
+      "value": 15,
+      "status": "RESOLVED_EXACT_CFG"
+    },
+    "frictionSlideMultiplier": {
+      "setting": "FRICT_SLIDE_MULT",
+      "value": 1,
+      "status": "RESOLVED_EXACT_CFG",
+      "provenanceClass": "INDEPENDENT_AUTHORITY"
+    }
+  },
+  "resolvedGeometryAndStiffnessControls": {
+    "connectGeometryThroughCnodes": true,
+    "minimumAllowedBendAngleDeg": 5,
+    "maximumAllowedBendAngleDeg": 95,
+    "bendLengthAttachmentPercent": 1,
+    "minimumAngleToAdjacentBendPointDeg": 5,
+    "bendAxialShape": true,
+    "defaultTranslationalRestraintStiffnessRawCfg": 1000000000000,
+    "defaultRotationalRestraintStiffnessRawCfg": 1000000000000,
+    "zAxisUp": false,
+    "usePressureStiffening": "DEFAULT"
+  },
+  "effectOnFrictionReadiness": {
+    "resolvedBlocker": "FRICTION_SLIDE_MULTIPLIER_AUTHORITY_REQUIRED",
+    "remainingBlockers": [
+      "FRICTION_STATE_HISTORY_SEMANTICS_AUTHORITY_REQUIRED",
+      "GAP_CONTACT_STATE_SEMANTICS_AUTHORITY_REQUIRED"
+    ],
+    "l13ProductionSolveAuthorized": false,
+    "l7ProductionSolveAuthorized": false
+  },
+  "f2DiagnosticInterpretation": {
+    "currentConvergedL13DiagnosticPassRate": 0.8981191222570533,
+    "currentConvergedL13DiagnosticPassed": 1719,
+    "currentConvergedL13DiagnosticTotal": 1914,
+    "numericalValueChangesFromSlideMultiplierAuthority": false,
+    "reason": "The F2 physical-Coulomb diagnostic already used a unit mu*N sliding magnitude. The cfg now independently authorizes that scalar; it does not supply the missing iteration ordering or gap/contact active-set algorithm."
+  }
+}

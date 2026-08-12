@@ -3,10 +3,11 @@
  *
  * The pinned BM4_L.ACCDB is a Windows/ACE-only binary source, so it cannot be
  * opened in a portable check. This fixture reproduces the exact table/column
- * contract the real extraction produces for a small three-span model with one
- * anchor and two bidirectional +Y supports. It is a plumbing and mechanics
- * fixture only: its OUTPUT_* rows are explicit zeros so no synthetic value can
- * ever be mistaken for CAESAR benchmark authority.
+ * contract the real extraction produces - including the per-restraint FRIC_COEF
+ * model input and CAESAR's negative blank sentinel - for a small three-span model
+ * with one anchor and three bidirectional +Y supports. It is a plumbing and
+ * mechanics fixture only: its OUTPUT_* rows are explicit zeros so no synthetic
+ * value can ever be mistaken for CAESAR benchmark authority.
  *
  * The friction declaration is selectable so the migration from the superseded
  * load-case COEFFICIENT_OF_FRICTION_MU override to the governed
@@ -35,6 +36,14 @@ const COORDINATE_COLUMNS = Object.freeze([
   'FROM_NODE_X', 'FROM_NODE_Y', 'FROM_NODE_Z',
   'TO_NODE_X', 'TO_NODE_Y', 'TO_NODE_Z',
 ]);
+
+const CAESAR_ANCHOR_TYPE = 1;
+const CAESAR_Y_TYPE = 3;
+const CAESAR_LIM_TYPE = 9;
+/** CAESAR writes a blank numeric restraint field as this negative sentinel. */
+const CAESAR_BLANK_SENTINEL = -1.01010000705719;
+/** 0.3 as CAESAR stores it: the float32 value read back as a double. */
+const FLOAT32_MU_0_3 = 0.30000001192092896;
 
 const NODES = deepFreeze({
   10: [0, 0, 0],
@@ -103,10 +112,19 @@ export function buildFrictionFixtureRawExport() {
     TO_NODE_Y: NODES[span.toNode][1],
     TO_NODE_Z: NODES[span.toNode][2],
   }));
+  // The restraint set mirrors the real BM4_L table contract, including CAESAR's
+  // negative blank sentinel and the per-restraint FRIC_COEF model input:
+  //   10  anchor, no friction;
+  //   20  Y support with friction and both tangential directions free;
+  //   30  Y support with friction and a line stop removing one tangential
+  //       direction;
+  //   40  Y support the model leaves frictionless.
   const restraintRows = [
-    { NODE_NUM: 10, RES_TYPEID: 1, XCOSINE: 0, YCOSINE: 0, ZCOSINE: 0 },
-    { NODE_NUM: 20, RES_TYPEID: 2, XCOSINE: 0, YCOSINE: 1, ZCOSINE: 0 },
-    { NODE_NUM: 30, RES_TYPEID: 2, XCOSINE: 0, YCOSINE: 1, ZCOSINE: 0 },
+    restraint({ node: 10, typeId: CAESAR_ANCHOR_TYPE, cosines: [0, 0, 0], pointer: 1 }),
+    restraint({ node: 20, typeId: CAESAR_Y_TYPE, cosines: [0, 1, 0], pointer: 2, friction: FLOAT32_MU_0_3 }),
+    restraint({ node: 30, typeId: CAESAR_Y_TYPE, cosines: [0, 1, 0], pointer: 3, friction: FLOAT32_MU_0_3 }),
+    restraint({ node: 30, typeId: CAESAR_LIM_TYPE, cosines: [0, 0, 1], pointer: 3 }),
+    restraint({ node: 40, typeId: CAESAR_Y_TYPE, cosines: [0, 1, 0], pointer: 4 }),
   ];
   return deepFreeze({
     schema: 'caesar-accdb-raw-export/v1',
@@ -122,7 +140,10 @@ export function buildFrictionFixtureRawExport() {
       INPUT_BASIC_ELEMENT_DATA: { columns: [...ELEMENT_COLUMNS], rows: elementRows },
       INPUT_NODAL_COORDINATES: { columns: [...COORDINATE_COLUMNS], rows: coordinateRows },
       INPUT_RESTRAINTS: {
-        columns: ['NODE_NUM', 'RES_TYPEID', 'XCOSINE', 'YCOSINE', 'ZCOSINE'],
+        columns: [
+          'REST_PTR', 'NODE_NUM', 'NODE_NAME', 'RES_TYPEID', 'STIFFNESS', 'GAP', 'FRIC_COEF',
+          'CNODE', 'XCOSINE', 'YCOSINE', 'ZCOSINE',
+        ],
         rows: restraintRows,
       },
       INPUT_UNITS: {
@@ -147,9 +168,9 @@ export function buildFrictionFixtureRawExport() {
       },
       OUTPUT_RESTRAINTS_SUMMARY: {
         columns: ['LCASE_NUM', 'CASE', 'LCASE_NAME', 'NODE', 'FX', 'FY', 'FZ', 'MX', 'MY', 'MZ', 'FUNITS', 'MUNITS'],
-        rows: CASES.flatMap((caseRow) => restraintRows.map((restraint) => ({
+        rows: CASES.flatMap((caseRow) => [...new Set(restraintRows.map((row) => row.NODE_NUM))].map((nodeNum) => ({
           ...caseDescriptorColumns(caseRow),
-          NODE: restraint.NODE_NUM,
+          NODE: nodeNum,
           FX: 0, FY: 0, FZ: 0, MX: 0, MY: 0, MZ: 0,
           FUNITS: 'N.', MUNITS: 'N.m.',
         }))),
@@ -303,6 +324,23 @@ export function buildFrictionFixture(frictionDeclaration) {
   return {
     profile: buildFrictionFixtureProfile(frictionDeclaration),
     rawExport: buildFrictionFixtureRawExport(),
+  };
+}
+
+/** One INPUT_RESTRAINTS row in the real ACCDB shape. */
+function restraint({ node, typeId, cosines, pointer, friction }) {
+  return {
+    REST_PTR: pointer,
+    NODE_NUM: node,
+    NODE_NAME: '',
+    RES_TYPEID: typeId,
+    STIFFNESS: CAESAR_BLANK_SENTINEL,
+    GAP: CAESAR_BLANK_SENTINEL,
+    FRIC_COEF: friction ?? CAESAR_BLANK_SENTINEL,
+    CNODE: CAESAR_BLANK_SENTINEL,
+    XCOSINE: cosines[0],
+    YCOSINE: cosines[1],
+    ZCOSINE: cosines[2],
   };
 }
 

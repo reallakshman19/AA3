@@ -176,6 +176,7 @@ function normalizeLinearSolve(value) {
       ['RESOLVED', 'PROVISIONAL'],
     ),
     bendAxialShape: normalizeBendAxialShape(value.bendAxialShape),
+    hydrotestBasis: normalizeHydrotestBasis(value.hydrotestBasis),
   };
   if (result.teeNominalDiameterRelativeTolerance > 0.01) {
     throw new TypeError('linearSolve.teeNominalDiameterRelativeTolerance must not exceed 0.01.');
@@ -201,6 +202,41 @@ function normalizeThermalExpansion(value) {
     ),
     authorityStatus,
     source: nonempty(value.source, 'linearSolve.thermalExpansion.source'),
+  });
+}
+
+/**
+ * Normalize the hydrotest weight/pressure basis.
+ *
+ * The test-fluid density is not stored in the ACCDB, so it is an explicit
+ * declared authority. When absent, hydrotest cases fail closed in the solver.
+ */
+function normalizeHydrotestBasis(value) {
+  if (value === undefined || value === null) return null;
+  if (typeof value !== 'object' || Array.isArray(value)) {
+    throw new TypeError('linearSolve.hydrotestBasis must be an object.');
+  }
+  const authorityStatus = nonempty(value.authorityStatus, 'linearSolve.hydrotestBasis.authorityStatus').toUpperCase();
+  if (!['RESOLVED', 'UNRESOLVED'].includes(authorityStatus)) {
+    throw new TypeError('linearSolve.hydrotestBasis.authorityStatus must be RESOLVED or UNRESOLVED.');
+  }
+  const temperatureBasis = nonempty(value.temperatureBasis, 'linearSolve.hydrotestBasis.temperatureBasis').toUpperCase();
+  if (temperatureBasis !== 'AMBIENT_INSTALLATION_TEMPERATURE') {
+    throw new TypeError('linearSolve.hydrotestBasis.temperatureBasis is unsupported.');
+  }
+  const pressureField = nonempty(value.pressureField, 'linearSolve.hydrotestBasis.pressureField').toUpperCase();
+  if (pressureField !== 'HYDRO_PRESSURE') {
+    throw new TypeError('linearSolve.hydrotestBasis.pressureField is unsupported.');
+  }
+  return deepFreeze({
+    testFluidDensityKgPerM3: positive(
+      value.testFluidDensityKgPerM3,
+      'linearSolve.hydrotestBasis.testFluidDensityKgPerM3',
+    ),
+    temperatureBasis,
+    pressureField,
+    authorityStatus,
+    source: nonempty(value.source, 'linearSolve.hydrotestBasis.source'),
   });
 }
 

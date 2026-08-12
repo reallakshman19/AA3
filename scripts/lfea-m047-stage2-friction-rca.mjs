@@ -224,6 +224,7 @@ function nonlinearStateLayer(evidence) {
       capacityUtilisation: support.capacityN === 0
         ? null
         : support.appliedFrictionForceMagnitudeN / support.capacityN,
+      capacityMarginN: support.capacityN - support.appliedFrictionForceMagnitudeN,
       oppositionCosine: support.oppositionCosine,
       stickResidualN: support.stickResidualN,
       slideResidualN: support.slideResidualN,

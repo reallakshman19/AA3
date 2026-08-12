@@ -20,9 +20,9 @@
   ],
   "cases": {
     "L14": {
-      "executionSemanticHash": "fnv1a64:cc33a28ff7b2504f",
+      "executionSemanticHash": "fnv1a64:36a62618d5f44ab4",
       "recoveredEquilibriumStatus": "PASS",
-      "rowCount": 138,
+      "rowCount": 144,
       "rows": [
         {
           "component": "UX",
@@ -355,6 +355,54 @@
         {
           "component": "RZ",
           "entityId": "30",
+          "entityKind": "NODE",
+          "quantity": "MOMENT",
+          "unit": "N*m",
+          "value": 0
+        },
+        {
+          "component": "UX",
+          "entityId": "40",
+          "entityKind": "NODE",
+          "quantity": "FORCE",
+          "unit": "N",
+          "value": 0
+        },
+        {
+          "component": "UY",
+          "entityId": "40",
+          "entityKind": "NODE",
+          "quantity": "FORCE",
+          "unit": "N",
+          "value": 0
+        },
+        {
+          "component": "UZ",
+          "entityId": "40",
+          "entityKind": "NODE",
+          "quantity": "FORCE",
+          "unit": "N",
+          "value": 0
+        },
+        {
+          "component": "RX",
+          "entityId": "40",
+          "entityKind": "NODE",
+          "quantity": "MOMENT",
+          "unit": "N*m",
+          "value": 0
+        },
+        {
+          "component": "RY",
+          "entityId": "40",
+          "entityKind": "NODE",
+          "quantity": "MOMENT",
+          "unit": "N*m",
+          "value": 0
+        },
+        {
+          "component": "RZ",
+          "entityId": "40",
           "entityKind": "NODE",
           "quantity": "MOMENT",
           "unit": "N*m",
@@ -1129,13 +1177,13 @@
           "value": 0
         }
       ],
-      "rowsSemanticHash": "fnv1a64:0dd928dca7b6537e",
-      "stiffnessStateHash": "fnv1a64:b5a2e2ef0b3daa9f"
+      "rowsSemanticHash": "fnv1a64:5573a95310dffec1",
+      "stiffnessStateHash": "fnv1a64:b5e3c98b66c7fc05"
     },
     "L5": {
-      "executionSemanticHash": "fnv1a64:6b89b5151afd0a49",
+      "executionSemanticHash": "fnv1a64:566ccfe1df2f6045",
       "recoveredEquilibriumStatus": "PASS",
-      "rowCount": 138,
+      "rowCount": 144,
       "rows": [
         {
           "component": "UX",
@@ -1151,7 +1199,7 @@
           "entityKind": "NODE",
           "quantity": "DISPLACEMENT",
           "unit": "m",
-          "value": -8.553352154893895e-12
+          "value": -8.553352163359457e-12
         },
         {
           "component": "UZ",
@@ -1167,7 +1215,7 @@
           "entityKind": "NODE",
           "quantity": "ROTATION",
           "unit": "rad",
-          "value": 6.423153668225318e-11
+          "value": 1.824101891562826e-12
         },
         {
           "component": "RY",
@@ -1183,7 +1231,7 @@
           "entityKind": "NODE",
           "quantity": "ROTATION",
           "unit": "rad",
-          "value": -9.208854088089388e-12
+          "value": -9.208854107664638e-12
         },
         {
           "component": "UX",
@@ -1199,7 +1247,7 @@
           "entityKind": "NODE",
           "quantity": "DISPLACEMENT",
           "unit": "m",
-          "value": -2.1014326509038706e-11
+          "value": -2.1014326494911528e-11
         },
         {
           "component": "UZ",
@@ -1215,7 +1263,7 @@
           "entityKind": "NODE",
           "quantity": "ROTATION",
           "unit": "rad",
-          "value": 0.00804619068778736
+          "value": 0.0002285025769517875
         },
         {
           "component": "RY",
@@ -1231,7 +1279,7 @@
           "entityKind": "NODE",
           "quantity": "ROTATION",
           "unit": "rad",
-          "value": -0.00007347818502486491
+          "value": -0.00007347818406365657
         },
         {
           "component": "UX",
@@ -1247,7 +1295,7 @@
           "entityKind": "NODE",
           "quantity": "DISPLACEMENT",
           "unit": "m",
-          "value": -2.5635260789059705e-11
+          "value": -1.6696054235360218e-11
         },
         {
           "component": "UZ",
@@ -1263,7 +1311,7 @@
           "entityKind": "NODE",
           "quantity": "ROTATION",
           "unit": "rad",
-          "value": 0.016092381311343183
+          "value": 0.0004570051520794731
         },
         {
           "component": "RY",
@@ -1279,7 +1327,7 @@
           "entityKind": "NODE",
           "quantity": "ROTATION",
           "unit": "rad",
-          "value": 0.00029672813078093655
+          "value": 0.00029672813364649286
         },
         {
           "component": "UX",
@@ -1287,7 +1335,7 @@
           "entityKind": "NODE",
           "quantity": "DISPLACEMENT",
           "unit": "m",
-          "value": 0.01278668457506253
+          "value": 0.01278668457506249
         },
         {
           "component": "UY",
@@ -1295,7 +1343,7 @@
           "entityKind": "NODE",
           "quantity": "DISPLACEMENT",
           "unit": "m",
-          "value": -0.07058508575066774
+          "value": -8.939206559361099e-12
         },
         {
           "component": "UZ",
@@ -1303,7 +1351,7 @@
           "entityKind": "NODE",
           "quantity": "DISPLACEMENT",
           "unit": "m",
-          "value": 0.006393342287531192
+          "value": 0.006393342287531245
         },
         {
           "component": "RX",
@@ -1311,7 +1359,7 @@
           "entityKind": "NODE",
           "quantity": "ROTATION",
           "unit": "rad",
-          "value": 0.018155507112254936
+          "value": -0.00048667214255805646
         },
         {
           "component": "RY",
@@ -1327,7 +1375,7 @@
           "entityKind": "NODE",
           "quantity": "ROTATION",
           "unit": "rad",
-          "value": 0.00029672813078093655
+          "value": 0.00029672813364649286
         },
         {
           "component": "UX",
@@ -1343,7 +1391,7 @@
           "entityKind": "NODE",
           "quantity": "FORCE",
           "unit": "N",
-          "value": 855.3352154893895
+          "value": 855.3352163359457
         },
         {
           "component": "UZ",
@@ -1359,7 +1407,7 @@
           "entityKind": "NODE",
           "quantity": "MOMENT",
           "unit": "N*m",
-          "value": -3680.1959635328376
+          "value": -104.51333978838008
         },
         {
           "component": "RY",
@@ -1367,7 +1415,7 @@
           "entityKind": "NODE",
           "quantity": "MOMENT",
           "unit": "N*m",
-          "value": -5.911548580489026e-12
+          "value": 0
         },
         {
           "component": "RZ",
@@ -1375,7 +1423,7 @@
           "entityKind": "NODE",
           "quantity": "MOMENT",
           "unit": "N*m",
-          "value": 527.6284733993164
+          "value": 527.6284745208956
         },
         {
           "component": "UX",
@@ -1391,7 +1439,7 @@
           "entityKind": "NODE",
           "quantity": "FORCE",
           "unit": "N",
-          "value": 2101.4326509038706
+          "value": 2101.432649491153
         },
         {
           "component": "UZ",
@@ -1439,7 +1487,7 @@
           "entityKind": "NODE",
           "quantity": "FORCE",
           "unit": "N",
-          "value": 2563.5260789059707
+          "value": 1669.6054235360218
         },
         {
           "component": "UZ",
@@ -1468,6 +1516,54 @@
         {
           "component": "RZ",
           "entityId": "30",
+          "entityKind": "NODE",
+          "quantity": "MOMENT",
+          "unit": "N*m",
+          "value": 0
+        },
+        {
+          "component": "UX",
+          "entityId": "40",
+          "entityKind": "NODE",
+          "quantity": "FORCE",
+          "unit": "N",
+          "value": 0
+        },
+        {
+          "component": "UY",
+          "entityId": "40",
+          "entityKind": "NODE",
+          "quantity": "FORCE",
+          "unit": "N",
+          "value": 893.9206559361099
+        },
+        {
+          "component": "UZ",
+          "entityId": "40",
+          "entityKind": "NODE",
+          "quantity": "FORCE",
+          "unit": "N",
+          "value": 0
+        },
+        {
+          "component": "RX",
+          "entityId": "40",
+          "entityKind": "NODE",
+          "quantity": "MOMENT",
+          "unit": "N*m",
+          "value": 0
+        },
+        {
+          "component": "RY",
+          "entityId": "40",
+          "entityKind": "NODE",
+          "quantity": "MOMENT",
+          "unit": "N*m",
+          "value": 0
+        },
+        {
+          "component": "RZ",
+          "entityId": "40",
           "entityKind": "NODE",
           "quantity": "MOMENT",
           "unit": "N*m",
@@ -1487,7 +1583,7 @@
           "entityKind": "NODE",
           "quantity": "INCIDENT_GLOBAL_FORCE",
           "unit": "N",
-          "value": 855.3352154893894
+          "value": 855.3352163359457
         },
         {
           "component": "UZ",
@@ -1503,7 +1599,7 @@
           "entityKind": "NODE",
           "quantity": "INCIDENT_GLOBAL_MOMENT",
           "unit": "N*m",
-          "value": -3680.1959635328376
+          "value": -104.51333978838008
         },
         {
           "component": "RY",
@@ -1511,7 +1607,7 @@
           "entityKind": "NODE",
           "quantity": "INCIDENT_GLOBAL_MOMENT",
           "unit": "N*m",
-          "value": -5.911548580489022e-12
+          "value": 0
         },
         {
           "component": "RZ",
@@ -1519,7 +1615,7 @@
           "entityKind": "NODE",
           "quantity": "INCIDENT_GLOBAL_MOMENT",
           "unit": "N*m",
-          "value": 527.6284733993164
+          "value": 527.6284745208956
         },
         {
           "component": "UX",
@@ -1535,7 +1631,7 @@
           "entityKind": "NODE",
           "quantity": "INCIDENT_GLOBAL_FORCE",
           "unit": "N",
-          "value": 2101.4326509038706
+          "value": 2101.432649491153
         },
         {
           "component": "UZ",
@@ -1583,7 +1679,7 @@
           "entityKind": "NODE",
           "quantity": "INCIDENT_GLOBAL_FORCE",
           "unit": "N",
-          "value": 2563.52607890597
+          "value": 1669.6054235360218
         },
         {
           "component": "UZ",
@@ -1591,7 +1687,7 @@
           "entityKind": "NODE",
           "quantity": "INCIDENT_GLOBAL_FORCE",
           "unit": "N",
-          "value": 0
+          "value": 1.8189894035458565e-12
         },
         {
           "component": "RX",
@@ -1599,7 +1695,7 @@
           "entityKind": "NODE",
           "quantity": "INCIDENT_GLOBAL_MOMENT",
           "unit": "N*m",
-          "value": 2.7284841053187847e-12
+          "value": 0
         },
         {
           "component": "RY",
@@ -1631,7 +1727,7 @@
           "entityKind": "NODE",
           "quantity": "INCIDENT_GLOBAL_FORCE",
           "unit": "N",
-          "value": 0
+          "value": 893.92065593611
         },
         {
           "component": "UZ",
@@ -1639,7 +1735,7 @@
           "entityKind": "NODE",
           "quantity": "INCIDENT_GLOBAL_FORCE",
           "unit": "N",
-          "value": 0
+          "value": -1.8189894035458565e-12
         },
         {
           "component": "RX",
@@ -1679,7 +1775,7 @@
           "entityKind": "ELEMENT",
           "quantity": "GLOBAL_END_FORCE_FROM",
           "unit": "N",
-          "value": 855.3352154893894
+          "value": 855.3352163359457
         },
         {
           "component": "FZ",
@@ -1695,7 +1791,7 @@
           "entityKind": "ELEMENT",
           "quantity": "GLOBAL_END_MOMENT_FROM",
           "unit": "N*m",
-          "value": -3680.1959635328376
+          "value": -104.51333978838008
         },
         {
           "component": "MY",
@@ -1703,7 +1799,7 @@
           "entityKind": "ELEMENT",
           "quantity": "GLOBAL_END_MOMENT_FROM",
           "unit": "N*m",
-          "value": -5.911548580489022e-12
+          "value": 0
         },
         {
           "component": "MZ",
@@ -1711,7 +1807,7 @@
           "entityKind": "ELEMENT",
           "quantity": "GLOBAL_END_MOMENT_FROM",
           "unit": "N*m",
-          "value": 527.6284733993164
+          "value": 527.6284745208956
         },
         {
           "component": "FX",
@@ -1727,7 +1823,7 @@
           "entityKind": "ELEMENT",
           "quantity": "GLOBAL_END_FORCE_TO",
           "unit": "N",
-          "value": 984.7627662770208
+          "value": 984.7627654304645
         },
         {
           "component": "FZ",
@@ -1743,7 +1839,7 @@
           "entityKind": "ELEMENT",
           "quantity": "GLOBAL_END_MOMENT_TO",
           "unit": "N*m",
-          "value": 3680.1959635328376
+          "value": 104.51333978838008
         },
         {
           "component": "MY",
@@ -1751,7 +1847,7 @@
           "entityKind": "ELEMENT",
           "quantity": "GLOBAL_END_MOMENT_TO",
           "unit": "N*m",
-          "value": 2.9557742902444997e-12
+          "value": 0
         },
         {
           "component": "MZ",
@@ -1759,7 +1855,7 @@
           "entityKind": "ELEMENT",
           "quantity": "GLOBAL_END_MOMENT_TO",
           "unit": "N*m",
-          "value": -786.4835749745789
+          "value": -786.4835727099331
         },
         {
           "component": "FX",
@@ -1775,7 +1871,7 @@
           "entityKind": "ELEMENT",
           "quantity": "GLOBAL_END_FORCE_FROM",
           "unit": "N",
-          "value": 1116.6698846268498
+          "value": 1116.6698840606884
         },
         {
           "component": "FZ",
@@ -1791,7 +1887,7 @@
           "entityKind": "ELEMENT",
           "quantity": "GLOBAL_END_MOMENT_FROM",
           "unit": "N*m",
-          "value": -3680.1959635328376
+          "value": -104.51333978838008
         },
         {
           "component": "MY",
@@ -1799,7 +1895,7 @@
           "entityKind": "ELEMENT",
           "quantity": "GLOBAL_END_MOMENT_FROM",
           "unit": "N*m",
-          "value": -2.955774290244507e-12
+          "value": 0
         },
         {
           "component": "MZ",
@@ -1807,7 +1903,7 @@
           "entityKind": "ELEMENT",
           "quantity": "GLOBAL_END_MOMENT_FROM",
           "unit": "N*m",
-          "value": 786.4835749745788
+          "value": 786.4835727099331
         },
         {
           "component": "FX",
@@ -1823,7 +1919,7 @@
           "entityKind": "ELEMENT",
           "quantity": "GLOBAL_END_FORCE_TO",
           "unit": "N",
-          "value": 723.4280971395604
+          "value": 723.4280977057217
         },
         {
           "component": "FZ",
@@ -1839,7 +1935,7 @@
           "entityKind": "ELEMENT",
           "quantity": "GLOBAL_END_MOMENT_TO",
           "unit": "N*m",
-          "value": 3680.1959635328376
+          "value": 104.51333978838008
         },
         {
           "component": "MY",
@@ -1871,7 +1967,7 @@
           "entityKind": "ELEMENT",
           "quantity": "GLOBAL_END_FORCE_FROM",
           "unit": "N",
-          "value": 1840.0979817664095
+          "value": 946.1773258303001
         },
         {
           "component": "FZ",
@@ -1879,7 +1975,7 @@
           "entityKind": "ELEMENT",
           "quantity": "GLOBAL_END_FORCE_FROM",
           "unit": "N",
-          "value": 0
+          "value": 1.8189894035458565e-12
         },
         {
           "component": "MX",
@@ -1887,7 +1983,7 @@
           "entityKind": "ELEMENT",
           "quantity": "GLOBAL_END_MOMENT_FROM",
           "unit": "N*m",
-          "value": -3680.195963532835
+          "value": -104.51333978838005
         },
         {
           "component": "MY",
@@ -1919,7 +2015,7 @@
           "entityKind": "ELEMENT",
           "quantity": "GLOBAL_END_FORCE_TO",
           "unit": "N",
-          "value": 0
+          "value": 893.92065593611
         },
         {
           "component": "FZ",
@@ -1927,7 +2023,7 @@
           "entityKind": "ELEMENT",
           "quantity": "GLOBAL_END_FORCE_TO",
           "unit": "N",
-          "value": 0
+          "value": -1.8189894035458565e-12
         },
         {
           "component": "MX",
@@ -1967,7 +2063,7 @@
           "entityKind": "ELEMENT",
           "quantity": "GLOBAL_END_FORCE_FROM",
           "unit": "N",
-          "value": 855.3352154893894
+          "value": 855.3352163359457
         },
         {
           "component": "FZ",
@@ -1983,7 +2079,7 @@
           "entityKind": "ELEMENT",
           "quantity": "GLOBAL_END_MOMENT_FROM",
           "unit": "N*m",
-          "value": -3680.1959635328376
+          "value": -104.51333978838008
         },
         {
           "component": "MY",
@@ -1991,7 +2087,7 @@
           "entityKind": "ELEMENT",
           "quantity": "GLOBAL_END_MOMENT_FROM",
           "unit": "N*m",
-          "value": -5.911548580489022e-12
+          "value": 0
         },
         {
           "component": "MZ",
@@ -1999,7 +2095,7 @@
           "entityKind": "ELEMENT",
           "quantity": "GLOBAL_END_MOMENT_FROM",
           "unit": "N*m",
-          "value": 527.6284733993164
+          "value": 527.6284745208956
         },
         {
           "component": "FX",
@@ -2015,7 +2111,7 @@
           "entityKind": "ELEMENT",
           "quantity": "GLOBAL_END_FORCE_TO",
           "unit": "N",
-          "value": 984.7627662770208
+          "value": 984.7627654304645
         },
         {
           "component": "FZ",
@@ -2031,7 +2127,7 @@
           "entityKind": "ELEMENT",
           "quantity": "GLOBAL_END_MOMENT_TO",
           "unit": "N*m",
-          "value": 3680.1959635328376
+          "value": 104.51333978838008
         },
         {
           "component": "MY",
@@ -2039,7 +2135,7 @@
           "entityKind": "ELEMENT",
           "quantity": "GLOBAL_END_MOMENT_TO",
           "unit": "N*m",
-          "value": 2.9557742902444997e-12
+          "value": 0
         },
         {
           "component": "MZ",
@@ -2047,7 +2143,7 @@
           "entityKind": "ELEMENT",
           "quantity": "GLOBAL_END_MOMENT_TO",
           "unit": "N*m",
-          "value": -786.4835749745789
+          "value": -786.4835727099331
         },
         {
           "component": "FX",
@@ -2063,7 +2159,7 @@
           "entityKind": "ELEMENT",
           "quantity": "GLOBAL_END_FORCE_FROM",
           "unit": "N",
-          "value": 1116.6698846268498
+          "value": 1116.6698840606884
         },
         {
           "component": "FZ",
@@ -2079,7 +2175,7 @@
           "entityKind": "ELEMENT",
           "quantity": "GLOBAL_END_MOMENT_FROM",
           "unit": "N*m",
-          "value": -3680.1959635328376
+          "value": -104.51333978838008
         },
         {
           "component": "MY",
@@ -2087,7 +2183,7 @@
           "entityKind": "ELEMENT",
           "quantity": "GLOBAL_END_MOMENT_FROM",
           "unit": "N*m",
-          "value": -2.955774290244507e-12
+          "value": 0
         },
         {
           "component": "MZ",
@@ -2095,7 +2191,7 @@
           "entityKind": "ELEMENT",
           "quantity": "GLOBAL_END_MOMENT_FROM",
           "unit": "N*m",
-          "value": 786.4835749745788
+          "value": 786.4835727099331
         },
         {
           "component": "FX",
@@ -2111,7 +2207,7 @@
           "entityKind": "ELEMENT",
           "quantity": "GLOBAL_END_FORCE_TO",
           "unit": "N",
-          "value": 723.4280971395604
+          "value": 723.4280977057217
         },
         {
           "component": "FZ",
@@ -2127,7 +2223,7 @@
           "entityKind": "ELEMENT",
           "quantity": "GLOBAL_END_MOMENT_TO",
           "unit": "N*m",
-          "value": 3680.1959635328376
+          "value": 104.51333978838008
         },
         {
           "component": "MY",
@@ -2159,7 +2255,7 @@
           "entityKind": "ELEMENT",
           "quantity": "GLOBAL_END_FORCE_FROM",
           "unit": "N",
-          "value": 1840.0979817664095
+          "value": 946.1773258303001
         },
         {
           "component": "FZ",
@@ -2167,7 +2263,7 @@
           "entityKind": "ELEMENT",
           "quantity": "GLOBAL_END_FORCE_FROM",
           "unit": "N",
-          "value": 0
+          "value": 1.8189894035458565e-12
         },
         {
           "component": "MX",
@@ -2175,7 +2271,7 @@
           "entityKind": "ELEMENT",
           "quantity": "GLOBAL_END_MOMENT_FROM",
           "unit": "N*m",
-          "value": -3680.195963532835
+          "value": -104.51333978838005
         },
         {
           "component": "MY",
@@ -2207,7 +2303,7 @@
           "entityKind": "ELEMENT",
           "quantity": "GLOBAL_END_FORCE_TO",
           "unit": "N",
-          "value": 0
+          "value": 893.92065593611
         },
         {
           "component": "FZ",
@@ -2215,7 +2311,7 @@
           "entityKind": "ELEMENT",
           "quantity": "GLOBAL_END_FORCE_TO",
           "unit": "N",
-          "value": 0
+          "value": -1.8189894035458565e-12
         },
         {
           "component": "MX",
@@ -2242,13 +2338,13 @@
           "value": 0
         }
       ],
-      "rowsSemanticHash": "fnv1a64:5612fe4fd93aa10a",
-      "stiffnessStateHash": "fnv1a64:b5a2e2ef0b3daa9f"
+      "rowsSemanticHash": "fnv1a64:2add8996a6f7655d",
+      "stiffnessStateHash": "fnv1a64:b5e3c98b66c7fc05"
     },
     "L6": {
-      "executionSemanticHash": "fnv1a64:86c935c451fe7328",
+      "executionSemanticHash": "fnv1a64:94356a9deb5a677d",
       "recoveredEquilibriumStatus": "PASS",
-      "rowCount": 138,
+      "rowCount": 144,
       "rows": [
         {
           "component": "UX",
@@ -2264,7 +2360,7 @@
           "entityKind": "NODE",
           "quantity": "DISPLACEMENT",
           "unit": "m",
-          "value": -8.553352154893893e-12
+          "value": -8.553352163359457e-12
         },
         {
           "component": "UZ",
@@ -2280,7 +2376,7 @@
           "entityKind": "NODE",
           "quantity": "ROTATION",
           "unit": "rad",
-          "value": 6.423153668225318e-11
+          "value": 1.824101891562826e-12
         },
         {
           "component": "RY",
@@ -2296,7 +2392,7 @@
           "entityKind": "NODE",
           "quantity": "ROTATION",
           "unit": "rad",
-          "value": -9.208854088089388e-12
+          "value": -9.208854107664638e-12
         },
         {
           "component": "UX",
@@ -2312,7 +2408,7 @@
           "entityKind": "NODE",
           "quantity": "DISPLACEMENT",
           "unit": "m",
-          "value": -2.1014326509038706e-11
+          "value": -2.1014326494911528e-11
         },
         {
           "component": "UZ",
@@ -2328,7 +2424,7 @@
           "entityKind": "NODE",
           "quantity": "ROTATION",
           "unit": "rad",
-          "value": 0.00804619068778736
+          "value": 0.0002285025769517875
         },
         {
           "component": "RY",
@@ -2344,7 +2440,7 @@
           "entityKind": "NODE",
           "quantity": "ROTATION",
           "unit": "rad",
-          "value": -0.00007347818502486491
+          "value": -0.00007347818406365657
         },
         {
           "component": "UX",
@@ -2360,7 +2456,7 @@
           "entityKind": "NODE",
           "quantity": "DISPLACEMENT",
           "unit": "m",
-          "value": -2.5635260789059705e-11
+          "value": -1.6696054235360218e-11
         },
         {
           "component": "UZ",
@@ -2376,7 +2472,7 @@
           "entityKind": "NODE",
           "quantity": "ROTATION",
           "unit": "rad",
-          "value": 0.016092381311343183
+          "value": 0.0004570051520794731
         },
         {
           "component": "RY",
@@ -2392,7 +2488,7 @@
           "entityKind": "NODE",
           "quantity": "ROTATION",
           "unit": "rad",
-          "value": 0.00029672813078093655
+          "value": 0.00029672813364649286
         },
         {
           "component": "UX",
@@ -2400,7 +2496,7 @@
           "entityKind": "NODE",
           "quantity": "DISPLACEMENT",
           "unit": "m",
-          "value": 0.0001632709005872803
+          "value": 0.00016327090058733865
         },
         {
           "component": "UY",
@@ -2408,7 +2504,7 @@
           "entityKind": "NODE",
           "quantity": "DISPLACEMENT",
           "unit": "m",
-          "value": -0.07058508575066774
+          "value": -8.939206559361099e-12
         },
         {
           "component": "UZ",
@@ -2416,7 +2512,7 @@
           "entityKind": "NODE",
           "quantity": "DISPLACEMENT",
           "unit": "m",
-          "value": 0.00008163545029374721
+          "value": 0.00008163545029366932
         },
         {
           "component": "RX",
@@ -2424,7 +2520,7 @@
           "entityKind": "NODE",
           "quantity": "ROTATION",
           "unit": "rad",
-          "value": 0.018155507112254936
+          "value": -0.00048667214255805646
         },
         {
           "component": "RY",
@@ -2440,7 +2536,7 @@
           "entityKind": "NODE",
           "quantity": "ROTATION",
           "unit": "rad",
-          "value": 0.00029672813078093655
+          "value": 0.00029672813364649286
         },
         {
           "component": "UX",
@@ -2448,7 +2544,7 @@
           "entityKind": "NODE",
           "quantity": "FORCE",
           "unit": "N",
-          "value": 0
+          "value": 2.0776577992628373e-12
         },
         {
           "component": "UY",
@@ -2456,7 +2552,7 @@
           "entityKind": "NODE",
           "quantity": "FORCE",
           "unit": "N",
-          "value": 855.3352154893893
+          "value": 855.3352163359457
         },
         {
           "component": "UZ",
@@ -2464,7 +2560,7 @@
           "entityKind": "NODE",
           "quantity": "FORCE",
           "unit": "N",
-          "value": -1.0845242983179526e-12
+          "value": 0
         },
         {
           "component": "RX",
@@ -2472,7 +2568,7 @@
           "entityKind": "NODE",
           "quantity": "MOMENT",
           "unit": "N*m",
-          "value": -3680.1959635328376
+          "value": -104.51333978838008
         },
         {
           "component": "RY",
@@ -2480,7 +2576,7 @@
           "entityKind": "NODE",
           "quantity": "MOMENT",
           "unit": "N*m",
-          "value": 8.676194386543652e-12
+          "value": 0
         },
         {
           "component": "RZ",
@@ -2488,7 +2584,7 @@
           "entityKind": "NODE",
           "quantity": "MOMENT",
           "unit": "N*m",
-          "value": 527.6284733993164
+          "value": 527.6284745208956
         },
         {
           "component": "UX",
@@ -2504,7 +2600,7 @@
           "entityKind": "NODE",
           "quantity": "FORCE",
           "unit": "N",
-          "value": 2101.4326509038706
+          "value": 2101.432649491153
         },
         {
           "component": "UZ",
@@ -2552,7 +2648,7 @@
           "entityKind": "NODE",
           "quantity": "FORCE",
           "unit": "N",
-          "value": 2563.5260789059707
+          "value": 1669.6054235360218
         },
         {
           "component": "UZ",
@@ -2588,6 +2684,54 @@
         },
         {
           "component": "UX",
+          "entityId": "40",
+          "entityKind": "NODE",
+          "quantity": "FORCE",
+          "unit": "N",
+          "value": 0
+        },
+        {
+          "component": "UY",
+          "entityId": "40",
+          "entityKind": "NODE",
+          "quantity": "FORCE",
+          "unit": "N",
+          "value": 893.9206559361099
+        },
+        {
+          "component": "UZ",
+          "entityId": "40",
+          "entityKind": "NODE",
+          "quantity": "FORCE",
+          "unit": "N",
+          "value": 0
+        },
+        {
+          "component": "RX",
+          "entityId": "40",
+          "entityKind": "NODE",
+          "quantity": "MOMENT",
+          "unit": "N*m",
+          "value": 0
+        },
+        {
+          "component": "RY",
+          "entityId": "40",
+          "entityKind": "NODE",
+          "quantity": "MOMENT",
+          "unit": "N*m",
+          "value": 0
+        },
+        {
+          "component": "RZ",
+          "entityId": "40",
+          "entityKind": "NODE",
+          "quantity": "MOMENT",
+          "unit": "N*m",
+          "value": 0
+        },
+        {
+          "component": "UX",
           "entityId": "10",
           "entityKind": "NODE",
           "quantity": "INCIDENT_GLOBAL_FORCE",
@@ -2600,7 +2744,7 @@
           "entityKind": "NODE",
           "quantity": "INCIDENT_GLOBAL_FORCE",
           "unit": "N",
-          "value": 855.3352154893894
+          "value": 855.3352163359457
         },
         {
           "component": "UZ",
@@ -2608,7 +2752,7 @@
           "entityKind": "NODE",
           "quantity": "INCIDENT_GLOBAL_FORCE",
           "unit": "N",
-          "value": -1.0845242983179518e-12
+          "value": 0
         },
         {
           "component": "RX",
@@ -2616,7 +2760,7 @@
           "entityKind": "NODE",
           "quantity": "INCIDENT_GLOBAL_MOMENT",
           "unit": "N*m",
-          "value": -3680.1959635328376
+          "value": -104.51333978838008
         },
         {
           "component": "RY",
@@ -2624,7 +2768,7 @@
           "entityKind": "NODE",
           "quantity": "INCIDENT_GLOBAL_MOMENT",
           "unit": "N*m",
-          "value": 8.67619438654365e-12
+          "value": 0
         },
         {
           "component": "RZ",
@@ -2632,7 +2776,7 @@
           "entityKind": "NODE",
           "quantity": "INCIDENT_GLOBAL_MOMENT",
           "unit": "N*m",
-          "value": 527.6284733993164
+          "value": 527.6284745208956
         },
         {
           "component": "UX",
@@ -2648,7 +2792,7 @@
           "entityKind": "NODE",
           "quantity": "INCIDENT_GLOBAL_FORCE",
           "unit": "N",
-          "value": 2101.4326509038706
+          "value": 2101.432649491153
         },
         {
           "component": "UZ",
@@ -2696,7 +2840,7 @@
           "entityKind": "NODE",
           "quantity": "INCIDENT_GLOBAL_FORCE",
           "unit": "N",
-          "value": 2563.52607890597
+          "value": 1669.6054235360218
         },
         {
           "component": "UZ",
@@ -2704,7 +2848,7 @@
           "entityKind": "NODE",
           "quantity": "INCIDENT_GLOBAL_FORCE",
           "unit": "N",
-          "value": 1.08452429831795e-12
+          "value": 0
         },
         {
           "component": "RX",
@@ -2712,7 +2856,7 @@
           "entityKind": "NODE",
           "quantity": "INCIDENT_GLOBAL_MOMENT",
           "unit": "N*m",
-          "value": 2.7284841053187847e-12
+          "value": 0
         },
         {
           "component": "RY",
@@ -2744,7 +2888,7 @@
           "entityKind": "NODE",
           "quantity": "INCIDENT_GLOBAL_FORCE",
           "unit": "N",
-          "value": 0
+          "value": 893.92065593611
         },
         {
           "component": "UZ",
@@ -2792,7 +2936,7 @@
           "entityKind": "ELEMENT",
           "quantity": "GLOBAL_END_FORCE_FROM",
           "unit": "N",
-          "value": 855.3352154893894
+          "value": 855.3352163359457
         },
         {
           "component": "FZ",
@@ -2800,7 +2944,7 @@
           "entityKind": "ELEMENT",
           "quantity": "GLOBAL_END_FORCE_FROM",
           "unit": "N",
-          "value": -1.0845242983179518e-12
+          "value": 0
         },
         {
           "component": "MX",
@@ -2808,7 +2952,7 @@
           "entityKind": "ELEMENT",
           "quantity": "GLOBAL_END_MOMENT_FROM",
           "unit": "N*m",
-          "value": -3680.1959635328376
+          "value": -104.51333978838008
         },
         {
           "component": "MY",
@@ -2816,7 +2960,7 @@
           "entityKind": "ELEMENT",
           "quantity": "GLOBAL_END_MOMENT_FROM",
           "unit": "N*m",
-          "value": 8.67619438654365e-12
+          "value": 0
         },
         {
           "component": "MZ",
@@ -2824,7 +2968,7 @@
           "entityKind": "ELEMENT",
           "quantity": "GLOBAL_END_MOMENT_FROM",
           "unit": "N*m",
-          "value": 527.6284733993164
+          "value": 527.6284745208956
         },
         {
           "component": "FX",
@@ -2840,7 +2984,7 @@
           "entityKind": "ELEMENT",
           "quantity": "GLOBAL_END_FORCE_TO",
           "unit": "N",
-          "value": 984.7627662770208
+          "value": 984.7627654304645
         },
         {
           "component": "FZ",
@@ -2848,7 +2992,7 @@
           "entityKind": "ELEMENT",
           "quantity": "GLOBAL_END_FORCE_TO",
           "unit": "N",
-          "value": 1.0845242983179518e-12
+          "value": 0
         },
         {
           "component": "MX",
@@ -2856,7 +3000,7 @@
           "entityKind": "ELEMENT",
           "quantity": "GLOBAL_END_MOMENT_TO",
           "unit": "N*m",
-          "value": 3680.1959635328376
+          "value": 104.51333978838008
         },
         {
           "component": "MY",
@@ -2864,7 +3008,7 @@
           "entityKind": "ELEMENT",
           "quantity": "GLOBAL_END_MOMENT_TO",
           "unit": "N*m",
-          "value": -4.338097193271838e-12
+          "value": 0
         },
         {
           "component": "MZ",
@@ -2872,7 +3016,7 @@
           "entityKind": "ELEMENT",
           "quantity": "GLOBAL_END_MOMENT_TO",
           "unit": "N*m",
-          "value": -786.4835749745789
+          "value": -786.4835727099331
         },
         {
           "component": "FX",
@@ -2888,7 +3032,7 @@
           "entityKind": "ELEMENT",
           "quantity": "GLOBAL_END_FORCE_FROM",
           "unit": "N",
-          "value": 1116.6698846268498
+          "value": 1116.6698840606884
         },
         {
           "component": "FZ",
@@ -2896,7 +3040,7 @@
           "entityKind": "ELEMENT",
           "quantity": "GLOBAL_END_FORCE_FROM",
           "unit": "N",
-          "value": -1.08452429831795e-12
+          "value": 0
         },
         {
           "component": "MX",
@@ -2904,7 +3048,7 @@
           "entityKind": "ELEMENT",
           "quantity": "GLOBAL_END_MOMENT_FROM",
           "unit": "N*m",
-          "value": -3680.1959635328376
+          "value": -104.51333978838008
         },
         {
           "component": "MY",
@@ -2912,7 +3056,7 @@
           "entityKind": "ELEMENT",
           "quantity": "GLOBAL_END_MOMENT_FROM",
           "unit": "N*m",
-          "value": 4.338097193271831e-12
+          "value": 0
         },
         {
           "component": "MZ",
@@ -2920,7 +3064,7 @@
           "entityKind": "ELEMENT",
           "quantity": "GLOBAL_END_MOMENT_FROM",
           "unit": "N*m",
-          "value": 786.4835749745788
+          "value": 786.4835727099331
         },
         {
           "component": "FX",
@@ -2936,7 +3080,7 @@
           "entityKind": "ELEMENT",
           "quantity": "GLOBAL_END_FORCE_TO",
           "unit": "N",
-          "value": 723.4280971395604
+          "value": 723.4280977057217
         },
         {
           "component": "FZ",
@@ -2944,7 +3088,7 @@
           "entityKind": "ELEMENT",
           "quantity": "GLOBAL_END_FORCE_TO",
           "unit": "N",
-          "value": 1.08452429831795e-12
+          "value": 0
         },
         {
           "component": "MX",
@@ -2952,7 +3096,7 @@
           "entityKind": "ELEMENT",
           "quantity": "GLOBAL_END_MOMENT_TO",
           "unit": "N*m",
-          "value": 3680.1959635328376
+          "value": 104.51333978838008
         },
         {
           "component": "MY",
@@ -2984,7 +3128,7 @@
           "entityKind": "ELEMENT",
           "quantity": "GLOBAL_END_FORCE_FROM",
           "unit": "N",
-          "value": 1840.0979817664095
+          "value": 946.1773258303001
         },
         {
           "component": "FZ",
@@ -3000,7 +3144,7 @@
           "entityKind": "ELEMENT",
           "quantity": "GLOBAL_END_MOMENT_FROM",
           "unit": "N*m",
-          "value": -3680.195963532835
+          "value": -104.51333978838005
         },
         {
           "component": "MY",
@@ -3032,7 +3176,7 @@
           "entityKind": "ELEMENT",
           "quantity": "GLOBAL_END_FORCE_TO",
           "unit": "N",
-          "value": 0
+          "value": 893.92065593611
         },
         {
           "component": "FZ",
@@ -3080,7 +3224,7 @@
           "entityKind": "ELEMENT",
           "quantity": "GLOBAL_END_FORCE_FROM",
           "unit": "N",
-          "value": 855.3352154893894
+          "value": 855.3352163359457
         },
         {
           "component": "FZ",
@@ -3088,7 +3232,7 @@
           "entityKind": "ELEMENT",
           "quantity": "GLOBAL_END_FORCE_FROM",
           "unit": "N",
-          "value": -1.0845242983179518e-12
+          "value": 0
         },
         {
           "component": "MX",
@@ -3096,7 +3240,7 @@
           "entityKind": "ELEMENT",
           "quantity": "GLOBAL_END_MOMENT_FROM",
           "unit": "N*m",
-          "value": -3680.1959635328376
+          "value": -104.51333978838008
         },
         {
           "component": "MY",
@@ -3104,7 +3248,7 @@
           "entityKind": "ELEMENT",
           "quantity": "GLOBAL_END_MOMENT_FROM",
           "unit": "N*m",
-          "value": 8.67619438654365e-12
+          "value": 0
         },
         {
           "component": "MZ",
@@ -3112,7 +3256,7 @@
           "entityKind": "ELEMENT",
           "quantity": "GLOBAL_END_MOMENT_FROM",
           "unit": "N*m",
-          "value": 527.6284733993164
+          "value": 527.6284745208956
         },
         {
           "component": "FX",
@@ -3128,7 +3272,7 @@
           "entityKind": "ELEMENT",
           "quantity": "GLOBAL_END_FORCE_TO",
           "unit": "N",
-          "value": 984.7627662770208
+          "value": 984.7627654304645
         },
         {
           "component": "FZ",
@@ -3136,7 +3280,7 @@
           "entityKind": "ELEMENT",
           "quantity": "GLOBAL_END_FORCE_TO",
           "unit": "N",
-          "value": 1.0845242983179518e-12
+          "value": 0
         },
         {
           "component": "MX",
@@ -3144,7 +3288,7 @@
           "entityKind": "ELEMENT",
           "quantity": "GLOBAL_END_MOMENT_TO",
           "unit": "N*m",
-          "value": 3680.1959635328376
+          "value": 104.51333978838008
         },
         {
           "component": "MY",
@@ -3152,7 +3296,7 @@
           "entityKind": "ELEMENT",
           "quantity": "GLOBAL_END_MOMENT_TO",
           "unit": "N*m",
-          "value": -4.338097193271838e-12
+          "value": 0
         },
         {
           "component": "MZ",
@@ -3160,7 +3304,7 @@
           "entityKind": "ELEMENT",
           "quantity": "GLOBAL_END_MOMENT_TO",
           "unit": "N*m",
-          "value": -786.4835749745789
+          "value": -786.4835727099331
         },
         {
           "component": "FX",
@@ -3176,7 +3320,7 @@
           "entityKind": "ELEMENT",
           "quantity": "GLOBAL_END_FORCE_FROM",
           "unit": "N",
-          "value": 1116.6698846268498
+          "value": 1116.6698840606884
         },
         {
           "component": "FZ",
@@ -3184,7 +3328,7 @@
           "entityKind": "ELEMENT",
           "quantity": "GLOBAL_END_FORCE_FROM",
           "unit": "N",
-          "value": -1.08452429831795e-12
+          "value": 0
         },
         {
           "component": "MX",
@@ -3192,7 +3336,7 @@
           "entityKind": "ELEMENT",
           "quantity": "GLOBAL_END_MOMENT_FROM",
           "unit": "N*m",
-          "value": -3680.1959635328376
+          "value": -104.51333978838008
         },
         {
           "component": "MY",
@@ -3200,7 +3344,7 @@
           "entityKind": "ELEMENT",
           "quantity": "GLOBAL_END_MOMENT_FROM",
           "unit": "N*m",
-          "value": 4.338097193271831e-12
+          "value": 0
         },
         {
           "component": "MZ",
@@ -3208,7 +3352,7 @@
           "entityKind": "ELEMENT",
           "quantity": "GLOBAL_END_MOMENT_FROM",
           "unit": "N*m",
-          "value": 786.4835749745788
+          "value": 786.4835727099331
         },
         {
           "component": "FX",
@@ -3224,7 +3368,7 @@
           "entityKind": "ELEMENT",
           "quantity": "GLOBAL_END_FORCE_TO",
           "unit": "N",
-          "value": 723.4280971395604
+          "value": 723.4280977057217
         },
         {
           "component": "FZ",
@@ -3232,7 +3376,7 @@
           "entityKind": "ELEMENT",
           "quantity": "GLOBAL_END_FORCE_TO",
           "unit": "N",
-          "value": 1.08452429831795e-12
+          "value": 0
         },
         {
           "component": "MX",
@@ -3240,7 +3384,7 @@
           "entityKind": "ELEMENT",
           "quantity": "GLOBAL_END_MOMENT_TO",
           "unit": "N*m",
-          "value": 3680.1959635328376
+          "value": 104.51333978838008
         },
         {
           "component": "MY",
@@ -3272,7 +3416,7 @@
           "entityKind": "ELEMENT",
           "quantity": "GLOBAL_END_FORCE_FROM",
           "unit": "N",
-          "value": 1840.0979817664095
+          "value": 946.1773258303001
         },
         {
           "component": "FZ",
@@ -3288,7 +3432,7 @@
           "entityKind": "ELEMENT",
           "quantity": "GLOBAL_END_MOMENT_FROM",
           "unit": "N*m",
-          "value": -3680.195963532835
+          "value": -104.51333978838005
         },
         {
           "component": "MY",
@@ -3320,7 +3464,7 @@
           "entityKind": "ELEMENT",
           "quantity": "GLOBAL_END_FORCE_TO",
           "unit": "N",
-          "value": 0
+          "value": 893.92065593611
         },
         {
           "component": "FZ",
@@ -3355,8 +3499,8 @@
           "value": 0
         }
       ],
-      "rowsSemanticHash": "fnv1a64:f1dd5e3b0cffcfa4",
-      "stiffnessStateHash": "fnv1a64:b5a2e2ef0b3daa9f"
+      "rowsSemanticHash": "fnv1a64:6114838bae1b3482",
+      "stiffnessStateHash": "fnv1a64:b5e3c98b66c7fc05"
     }
   },
   "purpose": "Frozen pre-migration non-friction result rows for the deterministic ACCDB-shaped friction fixture.",

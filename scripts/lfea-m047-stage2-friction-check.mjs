@@ -201,34 +201,72 @@ for (const caseId of ['L13', 'L7']) {
   assert.deepEqual(evidence.convergenceGates.failedGates, [], caseId);
   assert.equal(evidence.recoveredEquilibrium.status, 'PASS', caseId);
   assert.equal(evidence.frictionStiffness.appliedSiValue, 1e8, caseId);
-  assert.equal(evidence.frictionPlan.coefficientOfFriction, 0.3, caseId);
   assert.ok(evidence.iterationCount >= 2, `${caseId} must iterate an active set`);
-  assert.ok(
-    evidence.frictionPlan.excludedRestraints.some((row) => row.reason === 'ANCHOR_HAS_NO_FREE_TANGENTIAL_DIRECTION'),
-    `${caseId} must exclude anchors from friction explicitly`,
+  // Friction is a per-restraint model input read from the ACCDB row, stored as
+  // float32, so it is compared at storage precision and never rounded silently.
+  assert.equal(evidence.frictionPlan.fileCoefficientOfFriction, 0.3, caseId);
+  for (const support of evidence.frictionPlan.supports) {
+    assert.ok(Math.abs(support.coefficientOfFriction - 0.3) <= 1e-6, `${caseId} ${support.nodeId} mu`);
+    assert.equal(support.coefficientLevel, 'MODEL_INPUT', caseId);
+    assert.equal(support.coefficientSource, 'ACCDB:INPUT_RESTRAINTS:FRIC_COEF', caseId);
+  }
+  // 10 is an anchor, 40 is a support the model leaves frictionless, and 30 has a
+  // line stop that removes one tangential direction.
+  assert.deepEqual(
+    Object.fromEntries(evidence.frictionPlan.excludedRestraints.map((row) => [row.nodeId, row.reason])),
+    {
+      10: 'ANCHOR_DECLARES_NO_FRICTION_AND_HAS_NO_FREE_TANGENTIAL_DIRECTION',
+      40: 'MODEL_INPUT_DECLARES_NO_FRICTION_COEFFICIENT_AT_THIS_RESTRAINT',
+    },
+    caseId,
+  );
+  assert.deepEqual(
+    Object.fromEntries(evidence.frictionPlan.supports.map((row) => [row.nodeId, [...row.frictionDofs]])),
+    { 20: ['UX', 'UZ'], 30: ['UX'] },
+    caseId,
+  );
+  // Friction identity is the restraint row, not the node.
+  assert.deepEqual(
+    evidence.frictionPlan.supports.map((row) => row.restraintId),
+    ['20:REST_PTR2:TYPE3:UY', '30:REST_PTR3:TYPE3:UY'],
+    caseId,
+  );
+  assert.deepEqual(
+    evidence.frictionPlan.supports.find((row) => row.nodeId === '30').restrainedTangentialDofs,
+    ['UZ'],
+    caseId,
   );
   const supports = evidence.iterations.at(-1).supports;
   assert.equal(supports.length, evidence.frictionPlan.supportCount, caseId);
   for (const support of supports) {
-    assert.equal(support.stateChanged, false, `${caseId} ${support.nodeId} state still moving`);
-    assert.deepEqual(support.normalDofs, ['UY'], caseId);
-    assert.deepEqual(support.frictionDofs, ['UX', 'UZ'], caseId);
+    assert.equal(support.stateChanged, false, `${caseId} ${support.restraintId} state still moving`);
+    assert.equal(support.normalDof, 'UY', caseId);
+    assert.deepEqual(support.normalUnitVector, [0, 1, 0], caseId);
+    assert.equal(
+      Math.abs(support.signedNormalProjectionN),
+      support.normalReactionMagnitudeN,
+      `${caseId} ${support.restraintId} |N| must be the signed projection magnitude`,
+    );
+    assert.ok(support.restraintId.includes('REST_PTR'), caseId);
     assert.equal(support.frictionStiffnessNPerM, 1e8, caseId);
     assert.ok(
-      Math.abs(support.capacityN - 0.3 * support.normalReactionMagnitudeN) <= 1e-9,
+      Math.abs(support.capacityN - support.coefficientOfFriction * support.normalReactionMagnitudeN) <= 1e-9,
       `${caseId} ${support.nodeId} capacity must be mu times |N|`,
     );
-    if (support.state === 'SLIDE') {
+    if (support.regime === 'SLID') {
       assert.ok(
         Math.abs(support.appliedFrictionForceMagnitudeN - support.capacityN) <= 1e-6,
-        `${caseId} ${support.nodeId} sliding force must sit on the cap`,
+        `${caseId} ${support.restraintId} sliding force must sit on the cap`,
       );
-      assert.ok(support.oppositionCosine <= -0.999999, `${caseId} ${support.nodeId} friction must oppose slip`);
+      assert.ok(support.oppositionCosine <= -0.999999, `${caseId} friction must oppose motion`);
       assert.equal(support.stickResidualN, null, caseId);
+      assert.ok(support.slipUpdateM <= CAESAR_FRICTION_SOLVER_PROFILE.slipUpdateLimitM, caseId);
+      assert.ok(support.accumulatedSlipMagnitudeM > 0, caseId);
+      assert.ok(support.slipOppositionCosine <= -0.999999, caseId);
     } else {
       assert.ok(
         support.appliedFrictionForceMagnitudeN <= support.capacityN + 1e-6,
-        `${caseId} ${support.nodeId} sticking force must stay under the cap`,
+        `${caseId} ${support.restraintId} sticking force must stay under the cap`,
       );
       assert.ok(support.stickResidualN <= CAESAR_FRICTION_SOLVER_PROFILE.stickResidualLimitN, caseId);
       assert.equal(support.slideResidualN, null, caseId);
@@ -260,7 +298,7 @@ assert.equal(stickEvidence.convergenceGates.status, 'CONVERGED');
 assert.equal(stickDiagnostic.mechanics.nominalRun, false);
 const stickSupports = stickEvidence.iterations.at(-1).supports;
 assert.ok(
-  stickSupports.every((support) => support.state === 'STICK'),
+  stickSupports.every((support) => support.regime === 'STUCK'),
   'The low-stiffness diagnostic must converge with every support sticking.',
 );
 for (const support of stickSupports) {
@@ -333,7 +371,7 @@ assert.ok(
 assert.ok(expansionDelta.rows.some((row) => row.actualDelta !== 0));
 
 /* 14. The command boundary reports friction and non-friction cases together. */
-const report = runCaesarAccdbBenchmark({
+const report = await runCaesarAccdbBenchmark({
   profile: fixture.profile,
   rawExport: fixture.rawExport,
   solveLinear: true,
@@ -412,7 +450,13 @@ for (const caseId of ['L7', 'L13']) {
   const state = rcaReport.layers.nonlinearStateGate.cases[caseId];
   assert.equal(state.kind, 'PRIMITIVE', caseId);
   assert.equal(state.convergenceStatus, 'CONVERGED', caseId);
-  assert.ok(state.supports.every((support) => support.capacityUtilisation <= 1 + 1e-9), caseId);
+  // The Coulomb cap is checked on the same absolute basis as the solver gate.
+  assert.ok(
+    state.supports.every((support) => support.capacityMarginN
+      >= -Math.max(CAESAR_FRICTION_SOLVER_PROFILE.capViolationAbsoluteN,
+        CAESAR_FRICTION_SOLVER_PROFILE.capViolationRelative * support.capacityN)),
+    caseId,
+  );
 }
 assert.equal(rcaReport.layers.nonlinearStateGate.cases.L15.independentNonlinearSolve, false);
 assert.deepEqual(rcaReport.skippedPairs, []);
@@ -464,13 +508,56 @@ assert.throws(
 );
 assert.throws(
   () => solveCaesarAccdbFrictionBenchmark(contradictedCoefficientPackage(), ['L13']),
-  /contradicts the resolved model-input coefficient/u,
+  /contradicts the file-level model-input coefficient/u,
 );
 
-/* 18. Hydrotest primitives stop with a named unresolved authority, not a guess. */
+/* 18. A hydrotest case without a declared basis stops with a named authority. */
 assert.throws(
   () => solveCaesarAccdbFrictionBenchmark(hydrotestPackage(), ['L1']),
-  /needs hydrotest load mechanics \(WW, HP\)/u,
+  /needs hydrotest load mechanics/u,
+);
+// With the governed basis declared, the same case solves: hydrotest weight uses
+// the declared test-fluid density and pressure comes from the ACCDB HP field.
+const hydrotest = solveCaesarAccdbFrictionBenchmark(hydrotestPackage({
+  testFluidDensityKgPerM3: 1000,
+  temperatureBasis: 'AMBIENT_INSTALLATION_TEMPERATURE',
+  pressureField: 'HYDRO_PRESSURE',
+  authorityStatus: 'RESOLVED',
+  source: 'FIXTURE_OWNER_DECLARED_HYDROTEST_BASIS',
+}), ['L1']);
+const hydrotestEvidence = hydrotest.mechanics.cases.L1;
+assert.equal(hydrotestEvidence.convergenceGates.status, 'CONVERGED');
+assert.equal(hydrotestEvidence.recoveredEquilibrium.status, 'PASS');
+assert.equal(hydrotestEvidence.frictionAuthority.terms.join('+'), 'WW+HP');
+// The declared test-fluid density drives the hydrotest weight: doubling it must
+// raise the support normal reaction, so the declaration is load-bearing rather
+// than recorded and ignored.
+const hydrotestReaction = (density) => {
+  const run = solveCaesarAccdbFrictionBenchmark(hydrotestPackage({
+    testFluidDensityKgPerM3: density,
+    temperatureBasis: 'AMBIENT_INSTALLATION_TEMPERATURE',
+    pressureField: 'HYDRO_PRESSURE',
+    authorityStatus: 'RESOLVED',
+    source: `FIXTURE_HYDROTEST_BASIS_${density}`,
+  }), ['L1']);
+  return run.mechanics.cases.L1.iterations.at(-1)
+    .supports.find((support) => support.nodeId === '20').normalReactionMagnitudeN;
+};
+const declaredReaction = hydrotestReaction(1000);
+assert.ok(declaredReaction > 0 && Number.isFinite(declaredReaction));
+assert.ok(
+  hydrotestReaction(2000) > declaredReaction,
+  'A heavier declared test fluid must increase the hydrotest support reaction.',
+);
+assert.throws(
+  () => solveCaesarAccdbFrictionBenchmark(hydrotestPackage({
+    testFluidDensityKgPerM3: 1000,
+    temperatureBasis: 'AMBIENT_INSTALLATION_TEMPERATURE',
+    pressureField: 'HYDRO_PRESSURE',
+    authorityStatus: 'UNRESOLVED',
+    source: 'FIXTURE_UNRESOLVED_HYDROTEST_BASIS',
+  }), ['L1']),
+  /requires a RESOLVED linearSolve.hydrotestBasis/u,
 );
 
 process.stdout.write('PASS m047 stage 2 nonlinear friction contract\n');
@@ -502,7 +589,7 @@ function mutatedRestraintPackage(mutate) {
 
 function skewedPackage() {
   return mutatedRestraintPackage((table) => {
-    const support = table.rows.find((row) => Number(row.RES_TYPEID) !== 1);
+    const support = table.rows.find((row) => Number(row.FRIC_COEF) > 0);
     support.XCOSINE = 0.5;
     support.YCOSINE = 0.866;
   });
@@ -510,15 +597,14 @@ function skewedPackage() {
 
 function contradictedCoefficientPackage() {
   return mutatedRestraintPackage((table) => {
-    table.columns = [...table.columns, 'MU'];
-    for (const row of table.rows) row.MU = null;
-    table.rows.find((row) => Number(row.RES_TYPEID) !== 1).MU = 0.15;
+    table.rows.find((row) => Number(row.FRIC_COEF) > 0).FRIC_COEF = 0.15;
   });
 }
 
-function hydrotestPackage() {
+function hydrotestPackage(hydrotestBasis) {
   const raw = structuredClone(fixture.rawExport);
   const profile = structuredClone(fixture.profile);
+  if (hydrotestBasis !== undefined) profile.linearSolve.hydrotestBasis = hydrotestBasis;
   for (const tableName of ['OUTPUT_DISPLACEMENTS', 'OUTPUT_RESTRAINTS_SUMMARY', 'OUTPUT_GLOBAL_ELEMENT_FORCES']) {
     const table = raw.tables[tableName];
     const template = table.rows.filter((row) => Number(row.LCASE_NUM) === 13);

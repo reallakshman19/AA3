@@ -32,7 +32,10 @@ const TRANSLATION_DOFS = Object.freeze(['UX', 'UY', 'UZ']);
 const DOFS = Object.freeze(['UX', 'UY', 'UZ', 'RX', 'RY', 'RZ']);
 const CAESAR_ANCHOR_RESTRAINT_TYPE = 1;
 const AXIS_ALIGNMENT_TOLERANCE = 1e-9;
-const HYDROTEST_TERMS = Object.freeze(['WW', 'HP']);
+const FRICTION_COLUMN_PATTERN =
+  /^(?:MU|FRICTION|FRIC_COEF|FRICT(?:ION)?_?(?:COEF|COEFF|COEFFICIENT)?|COEF(?:F)?_?FRICT(?:ION)?)$/u;
+/** ACCDB friction coefficients are stored as float32, so 0.3 reads back as 0.30000001192092896. */
+const FLOAT32_COEFFICIENT_TOLERANCE = 1e-6;
 
 /**
  * Versioned nonlinear friction solver profile.
@@ -46,15 +49,34 @@ export const CAESAR_FRICTION_SOLVER_PROFILE = deepFreeze({
   schema: 'caesar-accdb-friction-solver-profile/v1',
   profileId: 'CAESAR-ACCDB-FRICTION-SOLVER-R1',
   frictionLaw: 'CAESAR_TANGENTIAL_SPRING_WITH_COULOMB_CAP_V1',
-  initialization: 'ALL_FRICTION_SUPPORTS_STICK_V1',
-  relaxation: 'NONE_FULL_STATE_UPDATE_V1',
+  /**
+   * Solution strategy for that law.
+   *
+   * CAESAR describes deleting the tangential spring at breakaway and applying a
+   * constant force. That form leaves the sliding DOF unsupported inside the
+   * iteration, and on a run with many coupled sliding supports the direction and
+   * capacity updates limit-cycle instead of contracting.
+   *
+   * This solver keeps the tangential spring assembled and adds the offset load
+   * `k_f * u_slip` that makes the net tangential force equal the capped Coulomb
+   * force. At the fixed point the two forms are indistinguishable - a spring force
+   * and an applied force of the same magnitude and direction are the same nodal
+   * force - so the governed converged state is unchanged while the iteration
+   * matrix stays positive definite.
+   */
+  solutionStrategy: 'RETAINED_TANGENTIAL_SPRING_WITH_RETURN_MAPPED_SLIP_OFFSET_V1',
+  fixedPointEquivalenceRule: 'NET_TANGENTIAL_FORCE_EQUALS_CAPPED_COULOMB_FORCE_AT_CONVERGENCE_V1',
+  initialization: 'ALL_FRICTION_SUPPORTS_STICK_ZERO_SLIP_V1',
+  relaxation: 'NONE_RETURN_MAPPING_IS_SELF_LIMITING_V1',
+  slipUpdateLimitM: 1e-12,
   loadStepping: 'NONE_SINGLE_STEP_V1',
-  stateScope: 'PER_SUPPORT_NODE_TANGENTIAL_RESULTANT_V1',
+  stateScope: 'PER_FRICTION_RESTRAINT_TANGENTIAL_RESULTANT_V1',
   slipDirectionRule: 'UNIT_RELATIVE_TANGENTIAL_DISPLACEMENT_V1',
+  normalDirectionRule: 'SIGNED_RESTRAINT_DIRECTION_COSINE_PROJECTION_V1',
   stateBoundaryRule: 'SLIDE_WHEN_TRIAL_RESULTANT_EXCEEDS_CAP_PLUS_DECLARED_BOUNDARY_V1',
   capacityRule: 'BIDIRECTIONAL_SUPPORT_USES_NORMAL_REACTION_MAGNITUDE_V1',
   liftOffRule: 'NOT_IMPLEMENTED_SUPPORTS_REMAIN_BIDIRECTIONAL_V1',
-  maximumIterations: 60,
+  maximumIterations: 400,
   stateBoundaryAbsoluteN: 1e-6,
   stateBoundaryRelative: 1e-9,
   displacementUpdateLimitM: 1e-11,
@@ -67,7 +89,7 @@ export const CAESAR_FRICTION_SOLVER_PROFILE = deepFreeze({
   oppositionCosineLimit: -0.999999,
   zeroTangentialMotionFloorM: 1e-15,
   determinismRepeatRuns: 2,
-  frictionCoefficientSourceRule: 'CONFIGURATION_MODEL_INPUT_APPLIES_TO_EVERY_NON_ANCHOR_TRANSLATIONAL_RESTRAINT_V1',
+  frictionCoefficientSourceRule: 'PER_RESTRAINT_ACCDB_MODEL_INPUT_COEFFICIENT_WITH_BLANK_RESOLVING_TO_LOWER_LAYERS_V1',
   source: 'HEXAGON_CAESAR_II_14_MODELING_FRICTION_EFFECTS_AND_FRICTION_STIFFNESS_PLUS_M047_STAGE2_DECLARED_NUMERICS',
 });
 
@@ -303,7 +325,6 @@ export function buildFrictionPairedDeltaRca(input) {
 
 function solvePrimitiveCase(input) {
   const { benchmarkPackage, caseRecord, solveProfile, frictionAuthority, profile, stiffnessScale } = input;
-  requireImplementedPrimitiveTerms(caseRecord, frictionAuthority);
   const plan = buildFrictionRestraintPlan({ benchmarkPackage, frictionAuthority, profile, stiffnessScale });
   const prepared = prepareCaesarAccdbCaseState({
     benchmarkPackage,
@@ -312,19 +333,24 @@ function solvePrimitiveCase(input) {
     gate: CAESAR_ACCDB_CASE_GATES.NONLINEAR_EFFECTIVE_FRICTION,
     frictionDofKeys: plan.frictionDofKeys,
   });
-  let states = new Map(plan.supports.map((support) => [support.nodeId, 'STICK']));
-  let slipDirections = new Map(plan.supports.map((support) => [support.nodeId, null]));
+  let states = new Map(plan.supports.map((support) => [support.restraintId, 'STICK']));
+  let slips = new Map(plan.supports.map((support) => [support.restraintId, support.frictionDofs.map(() => 0)]));
   const iterations = [];
   let previous = null;
   for (let iteration = 1; iteration <= profile.maximumIterations; iteration += 1) {
-    const overlay = buildOverlay({ plan, states, slipDirections, caseRecord, iteration, benchmarkPackage });
+    const overlay = buildOverlay({ plan, slips, caseRecord, iteration, benchmarkPackage });
     const executed = executeCaesarAccdbCaseState({ prepared, overlay });
-    const measured = measureSupports({ plan, executed, states, slipDirections, profile });
-    const nextStates = new Map(measured.map((entry) => [entry.nodeId, entry.nextState]));
-    const nextSlipDirections = new Map(measured.map((entry) => [entry.nodeId, entry.nextSlipDirection]));
+    const measured = measureSupports({ plan, executed, states, slips, overlay, profile });
+    const nextStates = new Map(measured.map((entry) => [entry.restraintId, entry.nextState]));
+    const nextSlips = new Map(measured.map((entry) => [entry.restraintId, entry.nextSlip]));
     const stateChanges = measured
       .filter((entry) => entry.state !== entry.nextState)
-      .map((entry) => ({ nodeId: entry.nodeId, from: entry.state, to: entry.nextState }));
+      .map((entry) => ({
+        restraintId: entry.restraintId,
+        nodeId: entry.nodeId,
+        from: entry.state,
+        to: entry.nextState,
+      }));
     const updates = updateNorms(previous, executed, measured);
     iterations.push(Object.freeze({
       iteration,
@@ -346,7 +372,7 @@ function solvePrimitiveCase(input) {
     }
     previous = executed;
     states = nextStates;
-    slipDirections = nextSlipDirections;
+    slips = nextSlips;
   }
   const error = new Error(
     `${caseRecord.caseId} friction active set did not converge within ${profile.maximumIterations} iterations.`,
@@ -385,7 +411,9 @@ function buildPrimitiveResult(input) {
       caseOverlay: executed.overlay.evidence,
       iterationCount: iterations.length,
       iterations: deepFreeze(iterations),
-      convergedStates: Object.fromEntries(measured.map((entry) => [entry.nodeId, entry.state])),
+      convergedStates: Object.fromEntries(measured.map((entry) => [entry.restraintId, entry.regime])),
+      convergedElasticStates: Object.fromEntries(measured.map((entry) => [entry.restraintId, entry.state])),
+      slidRestraintCount: measured.filter((entry) => entry.regime === 'SLID').length,
       convergenceGates: gates,
       solverProfileId: profile.profileId,
       executionStatus: executed.execution.status,
@@ -446,52 +474,103 @@ function combineDerivedCase(input) {
   };
 }
 
-/** Resolve which restraints carry friction and in which directions. */
+/**
+ * Resolve which restraints carry friction and in which directions.
+ *
+ * The coefficient is a per-restraint model input: CAESAR stores it in the
+ * restraint row (`FRIC_COEF`), which is the highest authority layer. A blank row
+ * carries CAESAR's blank sentinel and resolves to the layers below the model
+ * input, so a support the model leaves frictionless stays frictionless. A
+ * declared row value must agree with the file-level model-input declaration
+ * within single-precision storage, otherwise the run stops.
+ *
+ * Friction acts in the plane normal to the restraint that declares it. A
+ * tangential direction that is separately restrained at the same node (a guide or
+ * line stop) is not treated as a friction direction: its load is carried by that
+ * restraint's own stiffness, which is four orders of magnitude above the friction
+ * stiffness. Every such exclusion is recorded rather than left implicit.
+ */
 function buildFrictionRestraintPlan(input) {
   const { benchmarkPackage, frictionAuthority, profile, stiffnessScale } = input;
   const restraintRows = benchmarkPackage.model.tables.INPUT_RESTRAINTS.rows;
-  const mu = frictionAuthority.coefficient.value;
+  const fileCoefficient = frictionAuthority.coefficient.value;
   const frictionStiffnessSiValue = frictionAuthority.frictionStiffness.siValue;
   const appliedFrictionStiffnessSiValue = frictionStiffnessSiValue * stiffnessScale;
   const byNode = new Map();
-  const excluded = [];
   for (const row of restraintRows) {
     const nodeId = String(row.NODE_NUM);
-    const type = Number(row.RES_TYPEID);
-    const entry = byNode.get(nodeId) ?? { nodeId, rowCount: 0, anchor: false, restrainedDofs: new Set() };
+    const entry = byNode.get(nodeId) ?? {
+      nodeId, rowCount: 0, anchor: false, restrainedDofs: new Set(), frictionRows: [],
+    };
     entry.rowCount += 1;
-    if (type === CAESAR_ANCHOR_RESTRAINT_TYPE) {
+    if (Number(row.RES_TYPEID) === CAESAR_ANCHOR_RESTRAINT_TYPE) {
       entry.anchor = true;
       for (const dof of DOFS) entry.restrainedDofs.add(dof);
     } else {
       entry.restrainedDofs.add(axisAlignedTranslationDof(row));
     }
-    requireDeclaredRowCoefficient(row, mu);
+    const declared = resolveRowCoefficient(row, fileCoefficient);
+    if (declared.coefficient > 0) entry.frictionRows.push({ row, declared });
     byNode.set(nodeId, entry);
   }
   const supports = [];
+  const excluded = [];
   for (const entry of [...byNode.values()].sort((left, right) => compareText(left.nodeId, right.nodeId))) {
-    const normalDofs = TRANSLATION_DOFS.filter((dof) => entry.restrainedDofs.has(dof));
-    const frictionDofs = TRANSLATION_DOFS.filter((dof) => !entry.restrainedDofs.has(dof));
-    if (entry.anchor) {
-      excluded.push({ nodeId: entry.nodeId, reason: 'ANCHOR_HAS_NO_FREE_TANGENTIAL_DIRECTION' });
+    if (entry.frictionRows.length === 0) {
+      excluded.push({
+        nodeId: entry.nodeId,
+        reason: entry.anchor
+          ? 'ANCHOR_DECLARES_NO_FRICTION_AND_HAS_NO_FREE_TANGENTIAL_DIRECTION'
+          : 'MODEL_INPUT_DECLARES_NO_FRICTION_COEFFICIENT_AT_THIS_RESTRAINT',
+        coefficientLevel: 'NONE',
+      });
       continue;
     }
+    if (entry.frictionRows.length > 1) {
+      throw new TypeError(
+        `ACCDB node ${entry.nodeId} declares friction on ${entry.frictionRows.length} restraints; `
+        + 'multi-plane friction at one node is not implemented.',
+      );
+    }
+    const { row, declared } = entry.frictionRows[0];
+    if (entry.anchor) {
+      throw new TypeError(`ACCDB anchor node ${entry.nodeId} declares a friction coefficient; that is unsupported.`);
+    }
+    const normalDof = normalDofOf(row);
+    const candidates = TRANSLATION_DOFS.filter((dof) => dof !== normalDof);
+    const frictionDofs = candidates.filter((dof) => !entry.restrainedDofs.has(dof));
+    const restrainedTangentialDofs = candidates.filter((dof) => entry.restrainedDofs.has(dof));
     if (frictionDofs.length === 0) {
-      excluded.push({ nodeId: entry.nodeId, reason: 'ALL_TRANSLATIONS_RESTRAINED_NO_TANGENTIAL_DIRECTION' });
+      excluded.push({
+        nodeId: entry.nodeId,
+        reason: 'EVERY_TANGENTIAL_DIRECTION_IS_SEPARATELY_RESTRAINED_AT_THIS_NODE',
+        coefficientLevel: declared.level,
+        coefficientOfFriction: declared.coefficient,
+        restrainedTangentialDofs,
+      });
       continue;
     }
     supports.push(Object.freeze({
+      // A friction support is one ACCDB restraint row, not a node: identity,
+      // normal direction and coefficient all come from that row.
+      restraintId: `${entry.nodeId}:REST_PTR${Number(row.REST_PTR ?? 0)}:TYPE${Number(row.RES_TYPEID)}:${normalDofOf(row)}`,
       nodeId: entry.nodeId,
+      nodeName: String(row.NODE_NAME ?? '').trim(),
+      restraintPointer: Number(row.REST_PTR ?? 0),
       restraintRowCount: entry.rowCount,
-      normalDofs: Object.freeze(normalDofs),
+      restraintTypeId: Number(row.RES_TYPEID),
+      normalUnitVector: Object.freeze(signedNormalUnitVector(row)),
+      coefficientLevel: declared.level,
+      coefficientSource: declared.source,
+      normalDofs: Object.freeze([normalDof]),
       frictionDofs: Object.freeze(frictionDofs),
-      coefficientOfFriction: mu,
+      restrainedTangentialDofs: Object.freeze(restrainedTangentialDofs),
+      coefficientOfFriction: declared.coefficient,
       frictionStiffnessSiValue: appliedFrictionStiffnessSiValue,
     }));
   }
   if (supports.length === 0) {
-    throw new TypeError('No non-anchor translational restraint carries friction in this model.');
+    throw new TypeError('No restraint in this model carries an active friction direction.');
   }
   const frictionDofKeys = supports.flatMap((support) =>
     support.frictionDofs.map((dof) => `${support.nodeId}:${dof}`));
@@ -503,18 +582,34 @@ function buildFrictionRestraintPlan(input) {
     appliedFrictionStiffnessSiValue,
     evidence: deepFreeze({
       rule: profile.frictionCoefficientSourceRule,
-      coefficientLevel: frictionAuthority.coefficient.level,
-      coefficientSource: frictionAuthority.coefficient.source,
-      coefficientOfFriction: mu,
+      fileCoefficientLevel: frictionAuthority.coefficient.level,
+      fileCoefficientSource: frictionAuthority.coefficient.source,
+      fileCoefficientOfFriction: fileCoefficient,
+      coefficientOfFriction: maximum(supports.map((support) => support.coefficientOfFriction)),
       supportCount: supports.length,
       supports: deepFreeze(supports),
       excludedRestraints: deepFreeze(excluded),
       restraintRowCount: restraintRows.length,
+      restraintNodeCount: byNode.size,
+      activeFrictionDofCount: frictionDofKeys.length,
     }),
   };
 }
 
 /** Reject a skewed support: a rotated tangent plane is not implemented. */
+/** Signed unit normal of one axis-aligned restraint row. */
+function signedNormalUnitVector(row) {
+  const cosines = [Number(row.XCOSINE), Number(row.YCOSINE), Number(row.ZCOSINE)];
+  const dof = axisAlignedTranslationDof(row);
+  const index = TRANSLATION_DOFS.indexOf(dof);
+  const sign = cosines[index] >= 0 ? 1 : -1;
+  return [0, 1, 2].map((axis) => (axis === index ? sign : 0));
+}
+
+function normalDofOf(row) {
+  return axisAlignedTranslationDof(row);
+}
+
 function axisAlignedTranslationDof(row) {
   const cosines = [Number(row.XCOSINE), Number(row.YCOSINE), Number(row.ZCOSINE)];
   if (!cosines.every((value) => Number.isFinite(value))) {
@@ -523,61 +618,80 @@ function axisAlignedTranslationDof(row) {
   const magnitudes = cosines.map(Math.abs);
   const dominant = Math.max(...magnitudes);
   if (!(dominant > 0)) throw new TypeError(`Restraint at node ${row.NODE_NUM} has no direction cosine.`);
-  const offAxis = magnitudes.filter((value) => value !== dominant);
-  if (offAxis.some((value) => value > AXIS_ALIGNMENT_TOLERANCE * dominant)) {
+  const dominantIndex = magnitudes.indexOf(dominant);
+  const skewed = magnitudes
+    .some((value, index) => index !== dominantIndex && value > AXIS_ALIGNMENT_TOLERANCE * dominant);
+  if (skewed) {
     throw new TypeError(
       `Restraint at node ${row.NODE_NUM} is skewed; a rotated friction tangent plane is not implemented.`,
     );
   }
-  return TRANSLATION_DOFS[magnitudes.indexOf(dominant)];
+  return TRANSLATION_DOFS[dominantIndex];
 }
 
 /**
- * A per-restraint coefficient in the ACCDB is model input, the highest authority
- * layer. It may corroborate the resolved model coefficient but never silently
- * disagree with it.
+ * Resolve the coefficient of friction of one restraint row.
+ *
+ * CAESAR writes a blank numeric input field as a negative sentinel, so a negative
+ * value is "not declared at the model-input layer" rather than a coefficient. A
+ * declared value is the model input and therefore the highest authority; it is
+ * required to agree with the file-level declaration within single-precision
+ * storage, because the ACCDB stores these fields as float32.
  */
-function requireDeclaredRowCoefficient(row, mu) {
-  for (const [column, value] of Object.entries(row)) {
-    if (!/^(?:MU|FRICTION|FRICT(?:ION)?_?(?:COEF|COEFF|COEFFICIENT)?|COEF(?:F)?_?FRICT(?:ION)?)$/u.test(column)) continue;
-    if (value === null || value === '' || !Number.isFinite(Number(value))) continue;
-    if (Number(value) !== mu) {
+function resolveRowCoefficient(row, fileCoefficient) {
+  const columns = Object.keys(row)
+    .filter((column) => FRICTION_COLUMN_PATTERN.test(column))
+    .sort(compareText);
+  for (const column of columns) {
+    const value = Number(row[column]);
+    if (!Number.isFinite(value) || value < 0) continue;
+    if (value > 0 && Math.abs(value - fileCoefficient) > FLOAT32_COEFFICIENT_TOLERANCE) {
       throw new TypeError(
-        `ACCDB restraint node ${row.NODE_NUM} declares ${column}=${String(value)}, `
-        + `which contradicts the resolved model-input coefficient ${mu}; resolve the authority before solving.`,
+        `ACCDB restraint node ${row.NODE_NUM} declares ${column}=${value}, `
+        + `which contradicts the file-level model-input coefficient ${fileCoefficient}; `
+        + 'resolve the authority before solving.',
       );
     }
+    return {
+      coefficient: value,
+      level: 'MODEL_INPUT',
+      source: `ACCDB:INPUT_RESTRAINTS:${column}`,
+    };
   }
+  return {
+    coefficient: 0,
+    level: 'BLANK_MODEL_INPUT_RESOLVES_TO_LOWER_LAYERS',
+    source: 'ACCDB:INPUT_RESTRAINTS:BLANK_SENTINEL',
+  };
 }
 
 function buildOverlay(input) {
-  const { plan, states, slipDirections, caseRecord, iteration, benchmarkPackage } = input;
+  const { plan, slips, caseRecord, iteration, benchmarkPackage } = input;
   const constraints = [];
   const nodalLoads = [];
   for (const support of plan.supports) {
-    if (states.get(support.nodeId) === 'STICK') {
-      for (const dof of support.frictionDofs) {
-        constraints.push({
-          declarationId: `ACCDB-FRICTION-${support.nodeId}-${dof}`,
-          kind: 'PARTIAL_RELEASE_SPRING',
-          nodeId: support.nodeId,
-          dof,
-          stiffness: support.frictionStiffnessSiValue,
-        });
-      }
-      continue;
+    // The tangential spring is always assembled. Sliding is imposed by the offset
+    // load below, not by deleting stiffness from the system.
+    for (const dof of support.frictionDofs) {
+      constraints.push({
+        declarationId: `ACCDB-FRICTION-${support.nodeId}-${dof}`,
+        kind: 'PARTIAL_RELEASE_SPRING',
+        nodeId: support.nodeId,
+        dof,
+        stiffness: support.frictionStiffnessSiValue,
+      });
     }
-    const slip = slipDirections.get(support.nodeId);
-    if (slip === null) {
-      throw new TypeError(`Sliding support ${support.nodeId} has no declared slip direction.`);
-    }
+    const slip = slips.get(support.restraintId);
+    if (slip === undefined) throw new TypeError(`Friction restraint ${support.restraintId} has no slip state.`);
+    if (norm(slip) === 0) continue;
+    // Net tangential force = -k_f u_t + k_f u_slip = -k_f (u_t - u_slip).
     const force = { fx: 0, fy: 0, fz: 0 };
     support.frictionDofs.forEach((dof, index) => {
-      force[`f${dof.slice(1).toLowerCase()}`] = -slip.capacityN * slip.unit[index];
+      force[`f${dof.slice(1).toLowerCase()}`] = support.frictionStiffnessSiValue * slip[index];
     });
     nodalLoads.push({
       schema: 'fea-linear-load-primitive/v1',
-      primitiveId: `ACCDB-${caseRecord.caseId}-FRICTION-${support.nodeId}-IT${iteration}`,
+      primitiveId: `ACCDB-${caseRecord.caseId}-FRICTION-SLIP-${support.nodeId}-IT${iteration}`,
       kind: 'NODAL_FORCE_MOMENT',
       nodeId: support.nodeId,
       basis: { kind: 'GLOBAL' },
@@ -586,8 +700,8 @@ function buildOverlay(input) {
       units: { force: 'N', moment: 'N*m', length: 'm' },
       signConvention: 'APPLIED_TO_STRUCTURE',
       sourceEvidence: sourceEvidence(
-        `ACCDB:FRICTION:${support.nodeId}:${caseRecord.caseId}`,
-        `${benchmarkPackage.source.sha256}:${slip.capacityN}:${slip.unit.join(',')}`,
+        `ACCDB:FRICTION:${support.restraintId}:${caseRecord.caseId}`,
+        `${benchmarkPackage.source.sha256}:${slip.join(',')}`,
       ),
     });
   }
@@ -600,7 +714,7 @@ function buildOverlay(input) {
 
 /** Recover the friction state of every support from one executed iteration. */
 function measureSupports(input) {
-  const { plan, executed, states, slipDirections, profile } = input;
+  const { plan, executed, states, slips, overlay, profile } = input;
   const displacement = new Map(executed.execution.displacement.map((entry) => {
     const shift = executed.displacementShiftByNode.get(entry.nodeId) ?? null;
     const shiftValue = shift === null ? 0 : shift[DOFS.indexOf(entry.dof)];
@@ -608,91 +722,132 @@ function measureSupports(input) {
   }));
   const reactions = new Map(executed.execution.reactions
     .map((entry) => [`${entry.nodeId}:${entry.dof}`, entry.value]));
-  const appliedByNode = new Map(executed.overlay.nodalLoads.map((load) => [String(load.nodeId), load.force]));
+  const appliedByNode = new Map(overlay.nodalLoads.map((load) => [String(load.nodeId), load.force]));
   return plan.supports.map((support) => {
-    const state = states.get(support.nodeId);
+    const state = states.get(support.restraintId);
+    const slip = slips.get(support.restraintId);
+    const stiffness = support.frictionStiffnessSiValue;
     const tangentialDisplacement = support.frictionDofs
       .map((dof) => displacement.get(`${support.nodeId}:${dof}`) ?? 0);
     const tangentialMotion = norm(tangentialDisplacement);
-    const normalReactions = support.normalDofs
-      .map((dof) => reactions.get(`${support.nodeId}:${dof}`) ?? 0);
-    const normalMagnitude = norm(normalReactions);
+    // The Coulomb normal is this restraint's own reaction projected on its own
+    // signed direction cosine. A co-located guide or line stop is a different
+    // restraint and never contributes to this capacity.
+    const normalDof = support.normalDofs[0];
+    const normalIndex = TRANSLATION_DOFS.indexOf(normalDof);
+    const normalReaction = reactions.get(`${support.nodeId}:${normalDof}`) ?? 0;
+    const signedNormalProjection = normalReaction * support.normalUnitVector[normalIndex];
+    const normalMagnitude = Math.abs(signedNormalProjection);
     const capacityN = support.coefficientOfFriction * normalMagnitude;
-    const trialSpringForce = tangentialDisplacement
-      .map((value) => -support.frictionStiffnessSiValue * value);
-    const trialMagnitude = norm(trialSpringForce);
-    const appliedForce = state === 'STICK'
-      ? support.frictionDofs.map((dof) => reactions.get(`${support.nodeId}:${dof}`) ?? 0)
-      : support.frictionDofs.map((dof) => {
-        const force = appliedByNode.get(support.nodeId);
-        return force === undefined ? 0 : Number(force[`f${dof.slice(1).toLowerCase()}`]);
-      });
-    const appliedMagnitude = norm(appliedForce);
+    // Net tangential force actually carried this iteration: the retained spring
+    // reaction plus the declared slip offset load.
+    const springReaction = support.frictionDofs.map((dof) => reactions.get(`${support.nodeId}:${dof}`) ?? 0);
+    const appliedOffset = support.frictionDofs.map((dof) => {
+      const force = appliedByNode.get(support.nodeId);
+      return force === undefined ? 0 : Number(force[`f${dof.slice(1).toLowerCase()}`]);
+    });
+    const netForce = springReaction.map((value, index) => value + appliedOffset[index]);
+    const netMagnitude = norm(netForce);
+    // Elastic trial force of the return map, measured from the stored slip.
+    const elasticStretch = tangentialDisplacement.map((value, index) => value - slip[index]);
+    const trialForce = elasticStretch.map((value) => -stiffness * value);
+    const trialMagnitude = norm(trialForce);
     const boundary = Math.max(
       profile.stateBoundaryAbsoluteN,
       profile.stateBoundaryRelative * Math.max(capacityN, trialMagnitude),
     );
     const nextState = trialMagnitude > capacityN + boundary ? 'SLIDE' : 'STICK';
-    const slipUnit = tangentialMotion > profile.zeroTangentialMotionFloorM
-      ? tangentialDisplacement.map((value) => value / tangentialMotion)
+    // Return mapping: project the trial force onto the Coulomb cap and carry the
+    // difference as slip. A sticking support keeps its slip unchanged.
+    const nextSlip = nextState === 'SLIDE' && trialMagnitude > 0
+      ? tangentialDisplacement.map((value, index) =>
+        value + (capacityN / trialMagnitude) * trialForce[index] / stiffness)
+      : [...slip];
+    const slipUpdateM = norm(nextSlip.map((value, index) => value - slip[index]));
+    const slipIncrement = nextSlip.map((value, index) => value - slip[index]);
+    const slipIncrementMagnitude = norm(slipIncrement);
+    // Physical outcome of the return map. At convergence a support that slid sits
+    // exactly on the Coulomb surface, so its per-iteration elastic classification
+    // reads STICK; the accumulated slip is what says it moved.
+    const accumulatedSlipM = norm(slip);
+    const regime = accumulatedSlipM > 0 ? 'SLID' : 'STUCK';
+    const stickResidualN = norm(netForce
+      .map((value, index) => value + stiffness * elasticStretch[index]));
+    const slideResidualN = Math.abs(netMagnitude - capacityN);
+    const oppositionCosine = tangentialMotion > profile.zeroTangentialMotionFloorM && netMagnitude > 0
+      ? dot(netForce, tangentialDisplacement) / (netMagnitude * tangentialMotion)
       : null;
-    const nextSlipDirection = nextState === 'SLIDE'
-      ? {
-        unit: slipUnit ?? unitFromForce(trialSpringForce, trialMagnitude, support),
-        capacityN,
-      }
-      : null;
-    const stickResidualN = norm(appliedForce
-      .map((value, index) => value + support.frictionStiffnessSiValue * tangentialDisplacement[index]));
-    const slideResidualN = Math.abs(appliedMagnitude - capacityN);
-    const oppositionCosine = tangentialMotion > profile.zeroTangentialMotionFloorM && appliedMagnitude > 0
-      ? dot(appliedForce, tangentialDisplacement) / (appliedMagnitude * tangentialMotion)
+    const slipOppositionCosine = accumulatedSlipM > profile.zeroTangentialMotionFloorM && netMagnitude > 0
+      ? dot(netForce, slip) / (netMagnitude * accumulatedSlipM)
       : null;
     return {
+      restraintId: support.restraintId,
       nodeId: support.nodeId,
       support,
       state,
       nextState,
-      nextSlipDirection,
+      regime,
+      accumulatedSlipM,
+      nextSlip,
+      slipUpdateM,
       tangentialDisplacement,
       normalMagnitude,
       capacityN,
-      appliedForce,
-      appliedMagnitude,
+      appliedForce: netForce,
+      appliedMagnitude: netMagnitude,
       trialMagnitude,
       stickResidualN,
       slideResidualN,
       oppositionCosine,
+      slipOppositionCosine,
       ledger: Object.freeze({
+        restraintId: support.restraintId,
         nodeId: support.nodeId,
+        nodeName: support.nodeName,
+        restraintPointer: support.restraintPointer,
+        restraintTypeId: support.restraintTypeId,
         restraintRowCount: support.restraintRowCount,
-        normalDofs: support.normalDofs,
-        normalDirectionRule: 'RESTRAINED_TRANSLATION_COMPONENTS_V1',
+        normalDof,
+        normalUnitVector: support.normalUnitVector,
+        normalDirectionRule: profile.normalDirectionRule,
         frictionDofs: support.frictionDofs,
+        restrainedTangentialDofs: support.restrainedTangentialDofs,
         relativeTangentialDisplacementM: deepFreeze([...tangentialDisplacement]),
         relativeTangentialDisplacementRule: 'SUPPORT_NODE_MINUS_GROUND_NO_CNODE_V1',
-        signedNormalReactionsN: deepFreeze([...normalReactions]),
+        accumulatedSlipM: deepFreeze([...slip]),
+        elasticTangentialStretchM: deepFreeze([...elasticStretch]),
+        normalReactionComponentN: normalReaction,
+        signedNormalProjectionN: signedNormalProjection,
         normalReactionMagnitudeN: normalMagnitude,
         coefficientOfFriction: support.coefficientOfFriction,
-        frictionStiffnessNPerM: support.frictionStiffnessSiValue,
+        coefficientLevel: support.coefficientLevel,
+        coefficientSource: support.coefficientSource,
+        frictionStiffnessNPerM: stiffness,
         capacityN,
-        trialTangentialSpringForceN: deepFreeze([...trialSpringForce]),
+        trialTangentialSpringForceN: deepFreeze([...trialForce]),
         trialTangentialSpringForceMagnitudeN: trialMagnitude,
         state,
         nextState,
         stateChanged: state !== nextState,
-        appliedFrictionForceN: deepFreeze([...appliedForce]),
-        appliedFrictionForceMagnitudeN: appliedMagnitude,
-        appliedCapacityBasis: state === 'SLIDE'
-          ? 'CAPACITY_FROM_PREVIOUS_ITERATION_NORMAL_REACTION'
-          : 'TANGENTIAL_SPRING_REACTION_OF_THIS_ITERATION',
-        slipDirectionUnit: slipUnit === null ? null : deepFreeze([...slipUnit]),
-        previousSlipDirectionUnit: slipDirections.get(support.nodeId)?.unit ?? null,
+        regime,
+        regimeRule: 'SLID_WHEN_ACCUMULATED_RETURN_MAPPED_SLIP_IS_NONZERO',
+        accumulatedSlipMagnitudeM: accumulatedSlipM,
+        springReactionN: deepFreeze([...springReaction]),
+        slipOffsetLoadN: deepFreeze([...appliedOffset]),
+        appliedFrictionForceN: deepFreeze([...netForce]),
+        appliedFrictionForceMagnitudeN: netMagnitude,
+        appliedCapacityBasis: 'RETAINED_SPRING_REACTION_PLUS_RETURN_MAPPED_SLIP_OFFSET',
+        slipIncrementM: deepFreeze([...slipIncrement]),
+        slipUpdateM,
+        slipDirectionUnit: slipIncrementMagnitude > 0
+          ? deepFreeze(slipIncrement.map((value) => value / slipIncrementMagnitude))
+          : null,
         // Each residual is reported only where its law applies, so a sliding
         // support never publishes a stick residual that governs nothing.
-        stickResidualN: state === 'STICK' ? stickResidualN : null,
-        slideResidualN: state === 'SLIDE' ? slideResidualN : null,
+        stickResidualN: regime === 'STUCK' ? stickResidualN : null,
+        slideResidualN: regime === 'SLID' ? slideResidualN : null,
         oppositionCosine,
+        slipOppositionCosine,
       }),
     };
   });
@@ -726,36 +881,52 @@ function evaluateConvergenceGates(input) {
     + Math.max(profile.capViolationAbsoluteN, profile.capViolationRelative * entry.capacityN));
   gates.push(gate('COULOMB_CAP_COMPLEMENTARITY', capViolations.length === 0, {
     violations: capViolations.map((entry) => ({
-      nodeId: entry.nodeId,
+      restraintId: entry.restraintId,
       appliedMagnitudeN: entry.appliedMagnitude,
       capacityN: entry.capacityN,
     })),
   }));
   const stickFailures = measured.filter((entry) =>
-    entry.state === 'STICK' && entry.stickResidualN > profile.stickResidualLimitN);
+    entry.regime === 'STUCK' && entry.stickResidualN > profile.stickResidualLimitN);
   gates.push(gate('STICK_SPRING_RESIDUAL', stickFailures.length === 0, {
     limit: profile.stickResidualLimitN,
-    failures: stickFailures.map((entry) => ({ nodeId: entry.nodeId, residualN: entry.stickResidualN })),
+    failures: stickFailures.map((entry) => ({ restraintId: entry.restraintId, residualN: entry.stickResidualN })),
   }));
-  const slideFailures = measured.filter((entry) => entry.state === 'SLIDE'
+  const slideFailures = measured.filter((entry) => entry.regime === 'SLID'
     && entry.slideResidualN > Math.max(
       profile.slideResidualAbsoluteN,
       profile.slideResidualRelative * entry.capacityN,
     ));
   gates.push(gate('SLIDE_CAPACITY_RESIDUAL', slideFailures.length === 0, {
     failures: slideFailures.map((entry) => ({
-      nodeId: entry.nodeId,
+      restraintId: entry.restraintId,
       residualN: entry.slideResidualN,
       capacityN: entry.capacityN,
     })),
   }));
-  const directionFailures = measured.filter((entry) => entry.state === 'SLIDE'
-    && (entry.oppositionCosine === null || entry.oppositionCosine > profile.oppositionCosineLimit));
+  // The accumulated slip must itself have stopped moving, otherwise the iteration
+  // is still travelling even when the active set looks stable.
+  const slipFailures = measured.filter((entry) => entry.slipUpdateM > profile.slipUpdateLimitM);
+  gates.push(gate('SLIP_UPDATE_NORM', slipFailures.length === 0, {
+    limit: profile.slipUpdateLimitM,
+    failures: slipFailures.map((entry) => ({
+      restraintId: entry.restraintId,
+      slipUpdateM: entry.slipUpdateM,
+    })),
+  }));
+  // Friction must oppose the slip increment produced by the return map. The
+  // total-displacement cosine is reported alongside it but does not govern: a
+  // support can arrive at its final position along a path that is not parallel to
+  // its final slip increment.
+  const directionFailures = measured.filter((entry) => entry.regime === 'SLID'
+    && (entry.slipOppositionCosine === null || entry.slipOppositionCosine > profile.oppositionCosineLimit));
   gates.push(gate('FRICTION_OPPOSES_SLIP', directionFailures.length === 0, {
     limit: profile.oppositionCosineLimit,
+    rule: 'COSINE_BETWEEN_NET_FRICTION_FORCE_AND_ACCUMULATED_SLIP',
     failures: directionFailures.map((entry) => ({
-      nodeId: entry.nodeId,
-      oppositionCosine: entry.oppositionCosine,
+      restraintId: entry.restraintId,
+      slipOppositionCosine: entry.slipOppositionCosine,
+      totalDisplacementCosine: entry.oppositionCosine,
     })),
   }));
   gates.push(gate('RECOVERED_PHYSICAL_EQUILIBRIUM', executed.recoveredEquilibrium.status === 'PASS', {
@@ -794,17 +965,16 @@ function updateNorms(previous, executed, measured) {
 }
 
 /**
- * Report the friction force of a sliding support as a restraint load.
+ * Report the net friction force of every friction restraint as its restraint load.
  *
- * A sticking tangential spring already produces a solver reaction. A sliding
- * support carries its friction force as a declared load, so the reported
- * restraint component is taken from that same applied vector rather than left
- * at zero.
+ * The tangential spring reaction alone is not the reported load once a support
+ * slides: the declared slip offset carries part of that force. The reported
+ * component is therefore the net of both, which is exactly the force CAESAR prints
+ * for the friction direction.
  */
 function applyFrictionReactionRows(rows, measured) {
   const overrides = new Map();
   for (const entry of measured) {
-    if (entry.state !== 'SLIDE') continue;
     entry.support.frictionDofs.forEach((dof, index) => {
       overrides.set(`${entry.nodeId}:${dof}`, entry.appliedForce[index]);
     });
@@ -816,23 +986,6 @@ function applyFrictionReactionRows(rows, measured) {
     if (!overrides.has(key)) return { ...row };
     return { ...row, value: overrides.get(key) };
   });
-}
-
-function requireImplementedPrimitiveTerms(caseRecord, frictionAuthority) {
-  const classification = classifyCaesarCaseFormula(caseRecord);
-  const hydrotest = classification.terms.filter((term) => HYDROTEST_TERMS.includes(term));
-  if (hydrotest.length > 0) {
-    const error = new TypeError(
-      `${caseRecord.caseId} formula ${caseRecord.formula} needs hydrotest load mechanics (${hydrotest.join(', ')}). `
-      + 'The friction law is case-type independent, but the hydrotest weight basis (test-fluid density) is not '
-      + 'declared by any resolved authority in the pinned source, and HP must be bound to an explicit ACCDB '
-      + 'pressure field. Declare a governed hydrotestBasis authority before qualifying this case; no default is assumed.',
-    );
-    error.code = 'CAESAR_ACCDB_HYDROTEST_AUTHORITY_UNRESOLVED';
-    error.caseId = caseRecord.caseId;
-    error.effectiveCoefficient = frictionAuthority.effectiveCoefficient;
-    throw error;
-  }
 }
 
 function orderCasesByDependency(benchmarkPackage, selectedCaseIds) {
@@ -965,14 +1118,6 @@ function normalizeStiffnessScale(value) {
     throw new TypeError('Friction stiffness scale must be finite and positive.');
   }
   return scale;
-}
-
-function unitFromForce(trialSpringForce, trialMagnitude, support) {
-  if (!(trialMagnitude > 0)) {
-    throw new TypeError(`Sliding support ${support.nodeId} has no resolvable slip direction.`);
-  }
-  // The trial spring force already opposes motion, so the slip direction is its negation.
-  return trialSpringForce.map((value) => -value / trialMagnitude);
 }
 
 function gate(name, passed, evidence) {

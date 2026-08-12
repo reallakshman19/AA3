@@ -70,6 +70,7 @@ import {
 } from '../linear-fea-section/index.js';
 import {
   compileSolverExecution,
+  createFactorizationCache,
   requireElementContribution,
   sealSolverProfile,
 } from '../linear-fea-solver/index.js';
@@ -95,6 +96,13 @@ const KG_PER_CM3_TO_KG_PER_M3 = 1e6;
 const CELSIUS_TO_KELVIN = 273.15;
 const POSITION_TOLERANCE_M = 1e-7;
 const CAESAR_WELDING_TEE_TYPE = 3;
+/**
+ * Physical load terms the formula grammar implements.
+ *
+ * W/T1/P1 are the qualified operating primitives. WW/HP are the hydrotest weight
+ * and hydrotest pressure, both governed by a declared hydrotest basis.
+ */
+const PHYSICAL_LOAD_TERMS = Object.freeze(['W', 'WW', 'T1', 'P1', 'HP']);
 
 /**
  * Configuration gates a prepared ACCDB case state may be assembled under.
@@ -224,6 +232,7 @@ export function prepareCaesarAccdbCaseState(input) {
   const sourcePositions = buildSourcePositions(modelInput.tables.INPUT_NODAL_COORDINATES.rows);
   const bendDefinitions = buildBendDefinitions({
     benchmarkPackage,
+    caseMode,
     sourceRows,
     sourcePositions,
     sourceSections,
@@ -271,6 +280,12 @@ export function prepareCaesarAccdbCaseState(input) {
   });
   return {
     gate,
+    // A nonlinear iteration re-executes the same prepared state many times. The
+    // compilation depends only on the constraint set and the factorization only on
+    // the assembled partition, so both are reused across iterations that change
+    // loads alone. Reuse is excluded from the execution semantic hash, so a cached
+    // run and a cold run produce identical evidence.
+    cache: { compilations: new Map(), factorization: createFactorizationCache() },
     benchmarkPackage,
     caseRecord,
     solveProfile,
@@ -309,7 +324,11 @@ export function executeCaesarAccdbCaseState(input) {
   } = prepared;
   const shiftedAnalysis = prepared.analysis;
   const constraints = mergeOverlayConstraints(prepared.constraints, overlay.constraints);
-  const compilation = compileAnalysisModel({
+  const cache = prepared.cache ?? null;
+  const constraintSignature = constraints
+    .map((constraint) => `${constraint.nodeId}:${constraint.dof}:${constraint.kind}:${constraint.stiffness ?? ''}`)
+    .join('|');
+  const compilation = cache?.compilations.get(constraintSignature) ?? compileAnalysisModel({
     benchmarkPackage,
     material,
     sectionResolutions,
@@ -317,6 +336,9 @@ export function executeCaesarAccdbCaseState(input) {
     conditioned,
     constraints,
   });
+  if (cache !== null && !cache.compilations.has(constraintSignature)) {
+    cache.compilations.set(constraintSignature, compilation);
+  }
   const loadCase = compileCaseDeclaration({
     benchmarkPackage,
     caseRecord,
@@ -331,6 +353,7 @@ export function executeCaesarAccdbCaseState(input) {
     elementContributions: shiftedAnalysis.elements.map((entry) => entry.contribution),
     loadCase,
     solverProfile: solverProfile(),
+    cache: cache?.factorization,
   });
   if (execution.status === 'BLOCKED') {
     const error = new Error(
@@ -363,6 +386,10 @@ export function executeCaesarAccdbCaseState(input) {
       gravityIncluded: caseMode.gravity,
       thermalIncluded: caseMode.thermal,
       pressureIncluded: caseMode.pressure,
+      hydrotestIncluded: caseMode.hydrotest,
+      pressureField: caseMode.pressureField,
+      contentsDensityKgPerM3: caseMode.contentsDensityKgPerM3,
+      hydrotestBasis: caseMode.hydrotestBasis,
       executionStatus: execution.status,
       solverDiagnostics: execution.diagnostics,
       stiffnessStateHash: execution.stiffnessStateHash,
@@ -672,7 +699,12 @@ function buildFrameElement(input) {
   });
   const length = frame.geometry.length;
   const lineWeight = input.gravityLineWeight
-    ?? physicalLineWeight(input.row, input.section, input.solveProfile.gravityAcceleration);
+    ?? physicalLineWeight(
+      input.row,
+      input.section,
+      input.solveProfile.gravityAcceleration,
+      input.caseMode.contentsDensityKgPerM3,
+    );
   const gravityLineWeight = input.caseMode.gravity
     ? lineWeight * input.gravityLengthScale
     : 0;
@@ -686,7 +718,7 @@ function buildFrameElement(input) {
   const pressureStrain = input.caseMode.pressure
     && input.solveProfile.bourdonPressureEffects.mode !== 'DISABLED'
     ? (input.pressureAxialStrainOverride ?? (
-        closedEndPressureAxialStrain(input.row, frame.material.elasticModulus)
+        closedEndPressureAxialStrain(input.row, frame.material.elasticModulus, input.caseMode.pressureField)
         * input.pressureLengthScale))
     : 0;
   const axialInitialLocal = thermalInitialStrainVector({
@@ -700,6 +732,7 @@ function buildFrameElement(input) {
     && input.bourdonBendSegment !== null
     ? buildBourdonBendInitialLoad({
         row: input.row,
+        pressureField: input.caseMode.pressureField,
         section: input.section,
         frame,
         effectiveLocalStiffness: baseEffectiveLocalStiffness,
@@ -796,7 +829,7 @@ function buildRigidElement(input) {
     semanticHash: '',
   }));
   const pressureEffect = rigidElementBourdonPressureEffect(authority, {
-    pressure: Number(input.row.PRESSURE1) * KPA_TO_PA,
+    pressure: Number(input.row[input.caseMode.pressureField]) * KPA_TO_PA,
     poissonRatio: Number(input.row.POISSONS),
   });
   const rigidSection = input.sectionRegistry.resolve(
@@ -875,7 +908,7 @@ function buildReducerElement(input) {
       * closedEndPressureAxialStrainForGeometry({
         outerDiameter: segment.section.outerDiameter,
         innerDiameter: segment.section.innerDiameter,
-        pressure: Number(input.row.PRESSURE1) * KPA_TO_PA,
+        pressure: Number(input.row[input.caseMode.pressureField]) * KPA_TO_PA,
         poissonRatio: Number(input.row.POISSONS),
         elasticModulus: materialState.elasticModulus,
         context: `Reducer ${input.row.REDUCER_PTR} segment ${segment.index}`,
@@ -1207,6 +1240,7 @@ function buildBendDefinitions(input) {
         pressure: bendStiffeningPressurePa(
           row,
           input.solveProfile.bendPressureStiffening.pressureSource,
+          input.caseMode.pressureField,
         ),
         elasticModulus: input.material.materialState.elasticModulus,
         bendAngleDegrees: bendAngle * 180 / Math.PI,
@@ -1373,7 +1407,12 @@ function compileCaseDeclaration(input) {
       direction: { x: 0, y: -1, z: 0 },
       basis: 'GLOBAL',
       includedMassSources: ['PIPE_WALL', 'CONTENTS', 'INSULATION', 'COMPONENT'],
-      sourceEvidence: sourceEvidence('ACCDB:WEIGHT', input.benchmarkPackage.source.sha256),
+      sourceEvidence: sourceEvidence(
+        input.caseMode.contentsDensityKgPerM3 === null ? 'ACCDB:WEIGHT' : 'ACCDB:WEIGHT:HYDROTEST_CONTENTS',
+        input.caseMode.contentsDensityKgPerM3 === null
+          ? input.benchmarkPackage.source.sha256
+          : `${input.benchmarkPackage.source.sha256}:${input.caseMode.contentsDensityKgPerM3}`,
+      ),
     });
   }
   const sourceRows = new Map(input.benchmarkPackage.model.tables.INPUT_BASIC_ELEMENT_DATA.rows
@@ -1382,10 +1421,10 @@ function compileCaseDeclaration(input) {
     const row = sourceRows.get(element.sourceElementId);
     if (!row) throw new TypeError(`Analysis element ${element.elementId} has no ACCDB source row.`);
     if (input.caseMode.pressure) {
-      const pressure = Number(row.PRESSURE1) * KPA_TO_PA;
+      const pressure = Number(row[input.caseMode.pressureField]) * KPA_TO_PA;
       primitives.push({
         schema: 'fea-linear-load-primitive/v1',
-        primitiveId: `${element.elementId}-${input.caseRecord.caseId}-P1`,
+        primitiveId: `${element.elementId}-${input.caseRecord.caseId}-${input.caseMode.pressureField === 'HYDRO_PRESSURE' ? 'HP' : 'P1'}`,
         kind: 'PRESSURE',
         elementId: element.elementId,
         pressure,
@@ -1397,7 +1436,7 @@ function compileCaseDeclaration(input) {
           bourdon: input.solveProfile.bourdonPressureEffects.mode !== 'DISABLED',
         },
         sourceEvidence: sourceEvidence(
-          `ACCDB:ELEMENT:${element.sourceElementId}:PRESSURE1`,
+          `ACCDB:ELEMENT:${element.sourceElementId}:${input.caseMode.pressureField}`,
           `${input.benchmarkPackage.source.sha256}:${pressure}`,
         ),
       });
@@ -2048,10 +2087,19 @@ function reducerToSection(input) {
   return input.sectionRegistry.resolve(declaredDiameter, declaredThickness);
 }
 
-function physicalLineWeight(row, section, gravityAcceleration) {
+/**
+ * Distributed physical weight of one span.
+ *
+ * `contentsDensityKgPerM3` replaces the ACCDB operating fluid density for a
+ * hydrotest case, where the line carries test fluid instead of process fluid.
+ */
+function physicalLineWeight(row, section, gravityAcceleration, contentsDensityKgPerM3 = null) {
   const pipe = density(row.PIPE_DENSITY) * section.sectionState.area * gravityAcceleration;
   const fluidArea = Math.PI * section.dimensions.innerDiameter ** 2 / 4;
-  const contents = density(row.FLUID_DENSITY) * fluidArea * gravityAcceleration;
+  const contentsDensity = contentsDensityKgPerM3 === null
+    ? density(row.FLUID_DENSITY)
+    : Number(contentsDensityKgPerM3);
+  const contents = contentsDensity * fluidArea * gravityAcceleration;
   const insulationThickness = Number(row.INSUL_THICK) * MM_TO_M;
   const insulatedOd = section.dimensions.outerDiameter + 2 * insulationThickness;
   const insulationArea = Math.PI * (insulatedOd ** 2 - section.dimensions.outerDiameter ** 2) / 4;
@@ -2074,22 +2122,28 @@ function gravityVector(frame, lineWeight) {
   });
 }
 
-function closedEndPressureAxialStrain(row, elasticModulus) {
+function closedEndPressureAxialStrain(row, elasticModulus, pressureField = 'PRESSURE1') {
   const outerDiameter = Number(row.DIAMETER) * MM_TO_M;
   const wallThickness = Number(row.WALL_THICK) * MM_TO_M;
   const innerDiameter = outerDiameter - 2 * wallThickness;
   return closedEndPressureAxialStrainForGeometry({
     outerDiameter,
     innerDiameter,
-    pressure: Number(row.PRESSURE1) * KPA_TO_PA,
+    pressure: Number(row[pressureField]) * KPA_TO_PA,
     poissonRatio: Number(row.POISSONS),
     elasticModulus,
     context: `Element ${row.ELEMENTID}`,
   });
 }
 
-/** Resolve the profile-governed pressure used only for bend flexibility. */
-function bendStiffeningPressurePa(row, pressureSource) {
+/**
+ * Resolve the profile-governed pressure used only for bend flexibility.
+ *
+ * A hydrotest case stiffens its bends with the hydrotest pressure it is actually
+ * carrying, not with the operating pressure it does not.
+ */
+function bendStiffeningPressurePa(row, pressureSource, pressureField = 'PRESSURE1') {
+  if (pressureField === 'HYDRO_PRESSURE') return Number(row.HYDRO_PRESSURE) * KPA_TO_PA;
   if (pressureSource === 'P1') return Number(row.PRESSURE1) * KPA_TO_PA;
   if (pressureSource !== 'MAX_DEFINED') {
     throw new TypeError(`Unsupported bend pressure-stiffening source ${pressureSource}.`);
@@ -2125,7 +2179,7 @@ function closedEndPressureAxialStrainForGeometry(input) {
  */
 function buildBourdonBendInitialLoad(input) {
   const stateInput = {
-    pressure: Number(input.row.PRESSURE1) * KPA_TO_PA,
+    pressure: Number(input.row[input.pressureField ?? 'PRESSURE1']) * KPA_TO_PA,
     innerRadius: input.section.dimensions.innerDiameter / 2,
     bendRadius: input.segment.bendRadius,
     elasticModulus: input.frame.material.elasticModulus,
@@ -2265,18 +2319,71 @@ function resolveSupportedLinearCaseMode(benchmarkPackage, caseRecord) {
       );
     }
   }
+  if (coefficients.W === 1 && coefficients.WW === 1) {
+    throw new TypeError(`${caseRecord.caseId} combines operating weight W and hydrotest weight WW.`);
+  }
+  if (coefficients.P1 === 1 && coefficients.HP === 1) {
+    throw new TypeError(`${caseRecord.caseId} combines operating pressure P1 and hydrotest pressure HP.`);
+  }
+  const hydrotest = coefficients.WW === 1 || coefficients.HP === 1;
+  const basis = hydrotest
+    ? requireHydrotestBasis(benchmarkPackage.profile.linearSolve, caseRecord)
+    : null;
+  if (hydrotest && coefficients.T1 === 1) {
+    throw new TypeError(
+      `${caseRecord.caseId} combines a hydrotest term with thermal T1; the governed hydrotest basis is ambient.`,
+    );
+  }
   return deepFreeze({
-    gravity: coefficients.W === 1,
+    gravity: coefficients.W === 1 || coefficients.WW === 1,
     thermal: coefficients.T1 === 1,
-    pressure: coefficients.P1 === 1,
+    pressure: coefficients.P1 === 1 || coefficients.HP === 1,
+    hydrotest,
+    pressureField: coefficients.HP === 1 ? 'HYDRO_PRESSURE' : 'PRESSURE1',
+    contentsDensityKgPerM3: basis === null ? null : basis.testFluidDensityKgPerM3,
+    hydrotestBasis: basis,
     coefficients,
   });
+}
+
+/**
+ * Bind a hydrotest case to its declared weight and pressure basis.
+ *
+ * The test-fluid density is not stored in the ACCDB, so it must be declared as a
+ * resolved profile authority. Without that declaration the case fails closed
+ * rather than defaulting to a density.
+ */
+function requireHydrotestBasis(solveProfile, caseRecord) {
+  const basis = solveProfile.hydrotestBasis ?? null;
+  if (basis === null) {
+    const error = new TypeError(
+      `${caseRecord.caseId} formula ${caseRecord.formula} needs hydrotest load mechanics. `
+      + 'Declare linearSolve.hydrotestBasis with the governed test-fluid density, temperature basis and '
+      + 'ACCDB pressure field before qualifying this case; no default is assumed.',
+    );
+    error.code = 'CAESAR_ACCDB_HYDROTEST_AUTHORITY_UNRESOLVED';
+    throw error;
+  }
+  if (basis.authorityStatus !== 'RESOLVED') {
+    const error = new TypeError(
+      `${caseRecord.caseId} requires a RESOLVED linearSolve.hydrotestBasis; it is ${basis.authorityStatus}.`,
+    );
+    error.code = 'CAESAR_ACCDB_HYDROTEST_AUTHORITY_UNRESOLVED';
+    throw error;
+  }
+  if (basis.pressureField !== 'HYDRO_PRESSURE') {
+    throw new TypeError(`Unsupported hydrotest pressure field ${basis.pressureField}.`);
+  }
+  if (basis.temperatureBasis !== 'AMBIENT_INSTALLATION_TEMPERATURE') {
+    throw new TypeError(`Unsupported hydrotest temperature basis ${basis.temperatureBasis}.`);
+  }
+  return basis;
 }
 
 function resolveLinearFormula(caseRecord, byNumber, activeCaseNumbers) {
   const formula = String(caseRecord.formula).replace(/\s+/gu, '').toUpperCase();
   const directTerms = formula.split('+');
-  if (directTerms.length > 0 && directTerms.every((term) => ['W', 'T1', 'P1'].includes(term))) {
+  if (directTerms.length > 0 && directTerms.every((term) => PHYSICAL_LOAD_TERMS.includes(term))) {
     if (new Set(directTerms).size !== directTerms.length) {
       throw new TypeError(`${caseRecord.caseId} repeats a physical load term in ${caseRecord.formula}.`);
     }
@@ -2300,12 +2407,12 @@ function resolveLinearFormula(caseRecord, byNumber, activeCaseNumbers) {
 }
 
 function primitiveCoefficients(terms) {
-  return Object.freeze(Object.fromEntries(['W', 'T1', 'P1']
+  return Object.freeze(Object.fromEntries(PHYSICAL_LOAD_TERMS
     .map((term) => [term, terms.includes(term) ? 1 : 0])));
 }
 
 function subtractPrimitiveCoefficients(left, right) {
-  return Object.freeze(Object.fromEntries(['W', 'T1', 'P1']
+  return Object.freeze(Object.fromEntries(PHYSICAL_LOAD_TERMS
     .map((term) => [term, left[term] - right[term]])));
 }
 

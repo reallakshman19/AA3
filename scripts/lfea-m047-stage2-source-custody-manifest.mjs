@@ -90,12 +90,26 @@ const ADOPTED_AUTHORITY_RECORDS = Object.freeze([
   'benchmarks/LFEA/CAESAR_ACCDB/m047-bm4l-zero-suppression-crosscheck.json',
 ]);
 
+/**
+ * Both pinned Common commits publish byte-identical BM4_L.zip archives, and the
+ * single member of that archive has been recomputed from the downloaded bytes.
+ * The measured member hash is the authority; the other declaration is retained so
+ * the record shows what was claimed and what the bytes are.
+ */
 const MEMBER_HASH_RECORD = Object.freeze({
-  rule: 'PINNED_ARCHIVE_MEMBER_BYTES_ARE_THE_AUTHORITY_AND_BOTH_DECLARATIONS_ARE_RETAINED',
+  rule: 'PINNED_ARCHIVE_MEMBER_BYTES_ARE_THE_AUTHORITY',
+  measuredSha256: '64c05a50e9ed0452622ff5880335460486f24ac8e6adecc9a300b549c9aa82f8',
+  measuredByteLength: 5136384,
+  measuredFrom: [
+    `https://raw.githubusercontent.com/${COMMON_REPOSITORY}/${ISSUE_PINNED_COMMON_COMMIT}/LFEA/BM4/BM4_L.zip`,
+    `https://raw.githubusercontent.com/${COMMON_REPOSITORY}/${HARNESS_PINNED_COMMON_COMMIT}/LFEA/BM4/BM4_L.zip`,
+  ],
+  measurementRule: 'BOTH_PINNED_COMMITS_RETURNED_THE_SAME_ZIP_SHA256_AND_THE_SAME_SINGLE_MEMBER',
   issueDeclaredSha256: 'e21b0862851ea2bb6f20d55e4a3a94f501537b618b98dd46afa9f6777ee38d3c',
-  harnessRecordedSha256: '64c05a50e9ed0452622ff5880335460486f24ac8e6adecc9a300b549c9aa82f8',
-  status: 'CONTRADICTED_DECLARATIONS_PENDING_PRODUCTION_RUN_ARBITRATION',
-  arbitration: 'The Windows/ACE production run recomputes the member hash from the pinned ZIP and records which declaration the bytes support.',
+  issueDeclaredByteLength: 5136384,
+  status: 'ARBITRATED_BY_MEASUREMENT',
+  arbitration: 'The issue byte count matches the archive member exactly; the issue member SHA-256 does not match any byte sequence in the pinned archive, so the measured hash governs and the declared hash is recorded as superseded.',
+  reproduction: 'curl -s https://raw.githubusercontent.com/reallaksh19/Common/f4d49f2a47d970ae0abf913b537193e324556177/LFEA/BM4/BM4_L.zip | sha256sum; then unzip -p BM4_L.zip BM4_L.ACCDB | sha256sum',
 });
 
 /** Build the custody manifest, binding inventory only from supplied evidence. */

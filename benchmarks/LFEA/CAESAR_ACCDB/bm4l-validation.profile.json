@@ -275,6 +275,13 @@
       "enabled": true,
       "method": "DISCRETIZED_CURVED_CENTRELINE_AXIAL_DOF_V1",
       "source": "BM4_L_CONFIGURATION_AUTHORITY:BEND_AXIAL_SHAPE"
+    },
+    "hydrotestBasis": {
+      "testFluidDensityKgPerM3": 1000,
+      "temperatureBasis": "AMBIENT_INSTALLATION_TEMPERATURE",
+      "pressureField": "HYDRO_PRESSURE",
+      "authorityStatus": "RESOLVED",
+      "source": "OWNER_DECLARED_ISSUE_1083_FOLLOW_UP_HYDROTEST_FLUID_DENSITY_1000_KG_PER_M3_AT_AMBIENT_TEMPERATURE"
     }
   }
 }

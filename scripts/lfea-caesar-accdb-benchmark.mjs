@@ -20,6 +20,7 @@ import {
   solveCaesarAccdbLinearBenchmark,
   verifyCaesarAccdbFrictionDeterminism,
 } from '../src/core/fea-benchmarks/index.js';
+import { extractCaesarAccdbTables } from '../src/core/fea-benchmarks/caesar-accdb-reader.js';
 import { canonicalPrettyStringify, semanticHash } from '../src/core/shared-piping-model/canonical-json.js';
 
 const SCRIPT_DIR = dirname(fileURLToPath(import.meta.url));
@@ -32,10 +33,15 @@ const EXPORT_SCRIPT = resolve(SCRIPT_DIR, 'lfea-caesar-accdb-export.ps1');
  * qualification and reporting path with a deterministic fixture. Production runs
  * omit it and extract the pinned ACCDB through the ACE provider.
  */
-export function runCaesarAccdbBenchmark(input) {
+export async function runCaesarAccdbBenchmark(input) {
   const profile = input.profile ?? readJson(input.profilePath, 'benchmark profile');
   const tableNames = requiredCaesarAccdbTables(profile);
-  const rawExport = input.rawExport ?? extractAccdb(input.accdbPath, tableNames);
+  const rawExport = input.rawExport ?? await extractAccdbTables({
+    accdbPath: input.accdbPath,
+    tableNames,
+    extractor: input.extractor ?? 'js',
+    expectedSha256: input.expectedAccdbSha256 ?? undefined,
+  });
   const benchmarkPackage = buildCaesarAccdbBenchmarkPackage({ rawExport, profile });
   if (input.solveLinear === true && input.actualPath !== null) {
     throw new TypeError('--solve-linear and --actual are mutually exclusive.');
@@ -126,7 +132,23 @@ function buildFrictionRunEvidence(benchmarkPackage, frictionCaseIds) {
   });
 }
 
-function extractAccdb(accdbPath, tableNames) {
+/**
+ * Extract the profile's tables with the requested provider.
+ *
+ * `js` is the portable default and runs on any platform. `ace` keeps the
+ * Microsoft ACE OLE DB path available on Windows for provider cross-checks.
+ */
+async function extractAccdbTables({ accdbPath, tableNames, extractor, expectedSha256 }) {
+  if (!['js', 'ace'].includes(extractor)) {
+    throw new TypeError(`Unsupported ACCDB extractor ${String(extractor)}; use js or ace.`);
+  }
+  if (extractor === 'js') {
+    return extractCaesarAccdbTables({ accdbPath, tableNames, expectedSha256 });
+  }
+  return extractAccdbWithAce(accdbPath, tableNames);
+}
+
+function extractAccdbWithAce(accdbPath, tableNames) {
   if (process.platform !== 'win32') {
     throw new Error('Direct ACCDB extraction currently requires Windows and the Microsoft ACE OLE DB provider.');
   }
@@ -524,8 +546,8 @@ function parseArguments(argv) {
   }
   const accdbPath = accepted.get('--accdb');
   const profilePath = accepted.get('--profile');
-  if (!accdbPath || !profilePath) throw new TypeError('Usage: --accdb <file.accdb> --profile <profile.json> [--solve-linear true] [--solve-cases L2,L3] [--solve-friction-cases L13,L7,L15] [--actual <actual.json>] [--actual-out <actual.json>] [--friction-evidence-out <friction-evidence.json>] [--summary-out <summary.md>] [--out <report.json>].');
-  const known = new Set(['--accdb', '--profile', '--solve-linear', '--solve-cases', '--solve-friction-cases', '--actual', '--actual-out', '--friction-evidence-out', '--summary-out', '--out']);
+  if (!accdbPath || !profilePath) throw new TypeError('Usage: --accdb <file.accdb> --profile <profile.json> [--solve-linear true] [--solve-cases L2,L3] [--solve-friction-cases L13,L7,L15] [--actual <actual.json>] [--actual-out <actual.json>] [--friction-evidence-out <friction-evidence.json>] [--extractor js|ace] [--expected-accdb-sha256 <hex>] [--summary-out <summary.md>] [--out <report.json>].');
+  const known = new Set(['--accdb', '--profile', '--solve-linear', '--solve-cases', '--solve-friction-cases', '--actual', '--actual-out', '--friction-evidence-out', '--extractor', '--expected-accdb-sha256', '--summary-out', '--out']);
   const unknown = [...accepted.keys()].filter((key) => !known.has(key));
   if (unknown.length > 0) throw new TypeError(`Unknown command arguments: ${unknown.join(', ')}.`);
   const solveLinearValue = accepted.get('--solve-linear');
@@ -549,6 +571,8 @@ function parseArguments(argv) {
     actualPath: accepted.get('--actual') ?? null,
     actualOutPath: accepted.get('--actual-out') ?? null,
     frictionEvidenceOutPath: accepted.get('--friction-evidence-out') ?? null,
+    extractor: (accepted.get('--extractor') ?? 'js').toLowerCase(),
+    expectedAccdbSha256: accepted.get('--expected-accdb-sha256') ?? null,
     summaryOutPath: accepted.get('--summary-out') ?? null,
     outPath: accepted.get('--out') ?? null,
   });
@@ -693,7 +717,7 @@ function writeReport(report, outPath) {
 if (process.argv[1] && resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {
   try {
     const input = parseArguments(process.argv.slice(2));
-    const report = runCaesarAccdbBenchmark(input);
+    const report = await runCaesarAccdbBenchmark(input);
     if (input.summaryOutPath !== null) writeRestraintSummary(report, input.summaryOutPath);
     writeReport(report, input.outPath);
   } catch (error) {

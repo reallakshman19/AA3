@@ -1,4 +1,8 @@
 import {
+  deriveAllSupportRestraintGeometry,
+  projectSupportGeometryToViewport,
+} from '../topology-edit/support-restraint-family.js';
+import {
   applyTopologyEditTableTransaction,
   prepareTopologyEditTablePreview,
   redoTopologyEditTableTransaction,
@@ -121,27 +125,34 @@ export function renderTopologyEditTablePreviewGhost(runtime) {
     'DRAFT',
   ).projection;
   const changed = new Set(candidate.changedCanonicalIds ?? []);
-  const supportElements = supportPlacementGhostElements(runtime, candidate, changed);
-  const supportIds = new Set(supportElements.map((row) => row.id));
-  if (supportElements.length) {
+  const placementElements = supportPlacementGhostElements(runtime, candidate, changed);
+  const placementIds = new Set(placementElements.map((row) => row.pickTarget.supportId));
+  const restraintGhost = changedSupportRestraintGhost(runtime, candidate, changed);
+  if (placementElements.length) {
     runtime.controller.deriveVisual(runtime.controller.session.currentTopology(), 'DRAFT');
   }
   const accepted = (row) => changed.has(
     row.pickTarget?.objectId ?? row.entityId ?? row.id,
   );
+  const representedByPlacement = (row) => placementIds.has(
+    row.pickTarget?.supportId ?? row.pickTarget?.objectId ?? row.entityId ?? row.id,
+  );
   runtime.controller.viewportBackend?.renderGhost({
     elements: [
       ...(projection.compactElements ?? projection.elements ?? [])
-        .filter((row) => accepted(row) && !supportIds.has(row.pickTarget?.objectId ?? row.entityId ?? row.id)),
-      ...supportElements,
+        .filter((row) => accepted(row) && !representedByPlacement(row)),
+      ...restraintGhost.elements.filter((row) => !representedByPlacement(row)),
+      ...placementElements,
     ],
-    segments: (projection.compactSegments ?? projection.segments ?? []).filter(accepted),
+    segments: [
+      ...(projection.compactSegments ?? projection.segments ?? []).filter(accepted),
+      ...restraintGhost.segments,
+    ],
   });
 }
 
 function supportPlacementGhostElements(runtime, candidate, changed) {
-  const markerSize = Number(runtime.controller.viewportBackend?.navigationConfiguration?.supportMarkerSize);
-  const sizeMm = Number.isFinite(markerSize) && markerSize > 0 ? markerSize : 20;
+  const sizeMm = supportMarkerSizeMm(runtime);
   return (candidate.canonicalTopology.supports ?? []).flatMap((support) => {
     const origin = support.placementOverride?.origin;
     if (!changed.has(support.id) || support.placementOverride?.authority !== 'CERTIFIED_TABLE_OVERRIDE'
@@ -155,6 +166,28 @@ function supportPlacementGhostElements(runtime, candidate, changed) {
       pickTarget: { objectKind: 'support', objectId: support.id, supportId: support.id },
     }];
   });
+}
+
+function changedSupportRestraintGhost(runtime, candidate, changed) {
+  const overlays = deriveAllSupportRestraintGeometry({
+    canonicalTopology: candidate.canonicalTopology,
+    verticalAxis: 'Z',
+  }).filter((overlay) => changed.has(overlay.supportId));
+  if (!overlays.length) return { elements: [], segments: [] };
+  const projection = projectSupportGeometryToViewport(overlays, {
+    markerSizeMm: supportMarkerSizeMm(runtime),
+  });
+  return { elements: projection.elements, segments: projection.segments };
+}
+
+function supportMarkerSizeMm(runtime) {
+  const markerSizeMm = Number(
+    runtime.controller.viewportBackend?.navigationConfiguration?.supportMarkerSize,
+  );
+  if (!Number.isFinite(markerSizeMm) || markerSizeMm <= 0) {
+    throw new Error('TOPOLOGY_EDIT_SUPPORT_MARKER_POLICY_MISSING: Approved supportMarkerSize is required.');
+  }
+  return markerSizeMm;
 }
 
 function errorMessage(error) {

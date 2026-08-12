@@ -1,6 +1,9 @@
 import { deriveTopologyEditTableCellCapability } from '../topology-edit/table/topology-edit-table-edit-capability.js';
 import { topologyEditTableVisibleRows } from '../topology-edit/table/topology-edit-table-view-state.js';
-import { stageTopologyEditNodePosition } from './topology-edit-table-engineering-runtime.js';
+import {
+  stageTopologyEditNodePosition,
+  stageTopologyEditSupportRestraint,
+} from './topology-edit-table-engineering-runtime.js';
 import { stageTopologyEditTablePipeLength } from './topology-edit-table-pipe-length-runtime.js';
 import {
   TOPOLOGY_EDIT_TABLE_ROW_HEIGHT_PX,
@@ -13,6 +16,7 @@ const DEFAULT_POLICY = Object.freeze({ anchor: 'FROM', propagation: 'DOWNSTREAM'
 const COMPOUND_FOCUS = Object.freeze({
   VALVE_REPLACEMENT: '[data-table-edit-valve-catalogue-record]',
   TEE_REDUCER_RELATION: '[data-table-edit-tee-branch-port]',
+  SUPPORT_RESTRAINT: '[data-table-edit-support-family]',
 });
 
 export function topologyEditTableDirectCellHtml(runtime, row, column) {
@@ -39,6 +43,11 @@ export function handleTopologyEditTableCompoundCellClick(runtime, event) {
       nodeStage.dataset.canonicalId,
       nodeStage.dataset.tableNodePositionStage,
     );
+  }
+  const supportStage = event.target.closest?.('[data-table-support-restraint-stage]');
+  if (supportStage?.dataset?.tableSupportRestraintStage !== undefined
+      && runtime.element?.contains(supportStage)) {
+    return stageTopologyEditSupportRestraint(runtime, supportStage.dataset.canonicalId);
   }
   const button = event.target.closest?.('[data-table-compound-edit]');
   if (!button || !runtime.element?.contains(button)) return false;

@@ -33,10 +33,23 @@ assert.throws(
   () => ledger.attachSupport(forgedRun, supportState(run)),
   (error) => error?.code === 'LFEA_RUN_EVIDENCE_RUN_IDENTITY_MISMATCH',
 );
-assert.equal(ledger.getSnapshot().attachments.length, 0);
 console.log('LFEA-RUN-EVIDENCE-02 PASS forged run ID/hash identity cannot receive publication evidence');
 
 const support = supportState(run);
+const tamperedReview = Object.freeze({
+  ...support,
+  authorization: Object.freeze({
+    ...support.authorization,
+    reviewerIdentity: 'TAMPERED-REVIEWER',
+  }),
+});
+assert.throws(
+  () => ledger.attachSupport(run, tamperedReview),
+  (error) => error?.code === 'LFEA_RUN_EVIDENCE_SUPPORT_REVIEW_INVALID',
+);
+assert.equal(ledger.getSnapshot().attachments.length, 0);
+console.log('LFEA-RUN-EVIDENCE-03 PASS tampered reviewed authorization cannot be retained as governed evidence');
+
 const supportAttachment = ledger.attachSupport(run, support);
 assert.equal(supportAttachment.kind, 'SUPPORT_ACTIONS');
 assert.equal(supportAttachment.runId, run.runId);
@@ -45,12 +58,12 @@ assert.equal(supportAttachment.parentRecoveryBatchSemanticHash, recoveryHash);
 assert.equal(supportAttachment.summary.authoritySemanticHash, support.authority.semanticHash);
 assert.equal(supportAttachment.evidence.publications, support.publications);
 assert.equal(JSON.stringify(run), originalRunJson);
-console.log('LFEA-RUN-EVIDENCE-03 PASS support evidence attaches to exact run without mutating run identity');
+console.log('LFEA-RUN-EVIDENCE-04 PASS support evidence attaches to exact run without mutating run identity');
 
 const duplicate = ledger.attachSupport(run, support);
 assert.equal(duplicate, supportAttachment);
 assert.equal(ledger.getForRun(run.runId).length, 1);
-console.log('LFEA-RUN-EVIDENCE-04 PASS duplicate retained publication attachment is idempotent');
+console.log('LFEA-RUN-EVIDENCE-05 PASS duplicate retained publication attachment is idempotent');
 
 const wrongSupport = supportState(run, {
   rawExecutionSemanticHash: semanticHash({ fixture: 'other-raw' }),
@@ -60,7 +73,7 @@ assert.throws(
   (error) => error?.code === 'LFEA_RUN_EVIDENCE_PARENT_RUN_MISMATCH',
 );
 assert.equal(ledger.getForRun(run.runId).length, 1);
-console.log('LFEA-RUN-EVIDENCE-05 PASS publication from another raw/recovery run cannot be laundered into History');
+console.log('LFEA-RUN-EVIDENCE-06 PASS publication from another raw/recovery run cannot be laundered into History');
 
 const b31 = b31State(run);
 const b31Attachment = ledger.attachB31(run, b31);
@@ -69,7 +82,7 @@ assert.equal(b31Attachment.summary.applicationSemanticHash, b31.application.sema
 assert.equal(b31Attachment.summary.applicationEvidenceHash, b31.application.evidenceHash);
 assert.equal(b31Attachment.evidence.application, b31.application);
 assert.deepEqual(ledger.getForRun(run.runId).map((row) => row.kind), ['SUPPORT_ACTIONS', 'B31_CODE']);
-console.log('LFEA-RUN-EVIDENCE-06 PASS B31 application/recovery evidence is retained separately against the same exact run');
+console.log('LFEA-RUN-EVIDENCE-07 PASS B31 application/recovery evidence is retained separately against the same exact run');
 
 const snapshotBeforeContextMove = ledger.getSnapshot();
 const unrelatedCurrentContext = Object.freeze({
@@ -79,25 +92,26 @@ const unrelatedCurrentContext = Object.freeze({
 assert.notEqual(unrelatedCurrentContext.rawExecutionSemanticHash, rawHash);
 assert.deepEqual(ledger.getSnapshot(), snapshotBeforeContextMove);
 assert.equal(ledger.getForRun(run.runId).length, 2);
-console.log('LFEA-RUN-EVIDENCE-07 PASS later current-model movement does not erase retained historical publication evidence');
+console.log('LFEA-RUN-EVIDENCE-08 PASS later current-model movement does not erase retained historical publication evidence');
 
 assert.throws(
   () => ledger.attachB31(run, { ...b31, publicationCurrentness: 'STALE' }),
   (error) => error?.code === 'LFEA_RUN_EVIDENCE_CURRENT_PUBLICATION_REQUIRED',
 );
-console.log('LFEA-RUN-EVIDENCE-08 PASS stale publication state cannot create a new history attachment');
+console.log('LFEA-RUN-EVIDENCE-09 PASS stale publication state cannot create a new history attachment');
 
 historyIntegration();
-console.log('LFEA-RUN-EVIDENCE-09 PASS native History projects attached evidence beside the unchanged archived run record');
+console.log('LFEA-RUN-EVIDENCE-10 PASS native History projects attached evidence beside the unchanged archived run record');
 
 sourceGuards();
-console.log('LFEA-RUN-EVIDENCE-10 PASS History/runtime integration is append-only and contains no engineering recalculation path');
+console.log('LFEA-RUN-EVIDENCE-11 PASS History/runtime integration is append-only and contains no engineering recalculation path');
 console.log(JSON.stringify({
   check: 'lfea-standalone-native-run-evidence',
   status: 'PASS',
   attachmentCount: ledger.getForRun(run.runId).length,
   runRecordMutated: false,
   forgedRunBlocked: true,
+  tamperedReviewBlocked: true,
   wrongRunBlocked: true,
   staleAttachmentBlocked: true,
   historicEvidenceRetained: true,
@@ -137,6 +151,19 @@ function historyIntegration() {
 
 function supportState(record, overrides = {}) {
   const authorityHash = semanticHash({ fixture: 'support-authority' });
+  const parents = authorityParents('support');
+  const authority = Object.freeze({
+    schema: 'lfea-native-support-authority/v1',
+    ...parents,
+    semanticHash: authorityHash,
+  });
+  const authorizationBase = {
+    schema: 'lfea-native-support-authorization/v1',
+    supportAuthoritySemanticHash: authorityHash,
+    ...parents,
+    reviewerIdentity: 'RUN-EVIDENCE-SUPPORT-REVIEWER',
+    reason: 'Qualification-only reviewed support evidence.',
+  };
   const parent = {
     rawExecutionSemanticHash: record.identity.rawExecution.semanticHash,
     recoveryBatchSemanticHash: record.identity.recovery.semanticHash,
@@ -146,11 +173,10 @@ function supportState(record, overrides = {}) {
   return Object.freeze({
     authorityCurrentness: 'CURRENT',
     publicationCurrentness: 'CURRENT',
-    authority: Object.freeze({ semanticHash: authorityHash }),
+    authority,
     authorization: Object.freeze({
-      supportAuthoritySemanticHash: authorityHash,
-      reviewerIdentity: 'RUN-EVIDENCE-SUPPORT-REVIEWER',
-      semanticHash: semanticHash({ fixture: 'support-review' }),
+      ...authorizationBase,
+      semanticHash: semanticHash(authorizationBase),
     }),
     publicationParent: Object.freeze(parent),
     publications: Object.freeze([Object.freeze({
@@ -162,6 +188,22 @@ function supportState(record, overrides = {}) {
 
 function b31State(record) {
   const authorityHash = semanticHash({ fixture: 'b31-authority' });
+  const parents = authorityParents('b31');
+  const codeProfileSemanticHash = semanticHash({ fixture: 'code-profile' });
+  const editionDatasetSemanticHash = semanticHash({ fixture: 'edition-dataset' });
+  const authority = Object.freeze({
+    schema: 'lfea-native-b31-authority/v1', ...parents,
+    codeProfile: Object.freeze({ semanticHash: codeProfileSemanticHash }),
+    editionDataset: Object.freeze({ semanticHash: editionDatasetSemanticHash }),
+    semanticHash: authorityHash,
+  });
+  const authorizationBase = {
+    schema: 'lfea-native-b31-authorization/v1',
+    b31AuthoritySemanticHash: authorityHash, ...parents,
+    codeProfileSemanticHash, editionDatasetSemanticHash,
+    reviewerIdentity: 'RUN-EVIDENCE-B31-REVIEWER',
+    reason: 'Qualification-only reviewed B31 evidence.',
+  };
   const codeResult = Object.freeze({
     semanticHash: semanticHash({ fixture: 'code-result' }),
     evidenceHash: semanticHash({ fixture: 'code-result-evidence' }),
@@ -172,13 +214,10 @@ function b31State(record) {
     results: Object.freeze([Object.freeze({ checkId: 'B31-SUS-1', codeResult })]),
   });
   return Object.freeze({
-    authorityCurrentness: 'CURRENT',
-    publicationCurrentness: 'CURRENT',
-    authority: Object.freeze({ semanticHash: authorityHash }),
+    authorityCurrentness: 'CURRENT', publicationCurrentness: 'CURRENT', authority,
     authorization: Object.freeze({
-      b31AuthoritySemanticHash: authorityHash,
-      reviewerIdentity: 'RUN-EVIDENCE-B31-REVIEWER',
-      semanticHash: semanticHash({ fixture: 'b31-review' }),
+      ...authorizationBase,
+      semanticHash: semanticHash(authorizationBase),
     }),
     publicationParent: Object.freeze({
       rawExecutionSemanticHash: record.identity.rawExecution.semanticHash,
@@ -189,6 +228,14 @@ function b31State(record) {
       caseId: 'IXP-W', codeRecoverySemanticHash: semanticHash({ fixture: 'code-recovery' }),
     })]),
     application,
+  });
+}
+
+function authorityParents(label) {
+  return Object.freeze({
+    parentSourceBundleSemanticHash: semanticHash({ fixture: `${label}-source` }),
+    parentModelSemanticHash: semanticHash({ fixture: `${label}-model` }),
+    parentCompilationSemanticHash: semanticHash({ fixture: `${label}-compilation` }),
   });
 }
 
@@ -205,6 +252,8 @@ function sourceGuards() {
   assert.match(viewSource, /append-only attachments/u);
   assert.match(viewSource, /changes this view only/u);
   assert.match(apiSource, /getNativeRunEvidence/u);
+  assert.match(ledgerSource, /requireLfeaNativeSupportAuthorization/u);
+  assert.match(ledgerSource, /requireLfeaNativeB31Authorization/u);
   assert.match(ledgerSource, /RUN_IDENTITY_MISMATCH/u);
   assert.doesNotMatch(ledgerSource, /compileSolverExecution|compileResultRecovery|recoverComponentCodePoint|compileLinearPipingB31Application|forceLocal|fAxial|calculatedStress\s*=/u);
   for (const [name, source] of Object.entries({

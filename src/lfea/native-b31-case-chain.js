@@ -8,10 +8,7 @@ import { semanticHash } from '../core/shared-piping-model/canonical-json.js';
 import { deepFreeze } from '../core/shared-piping-model/immutable.js';
 import { compileInputXmlExecutionElementAuthorities } from '../core/linear-piping-analysis-consumer/inputxml-linear-execution-elements.js';
 import { inputXmlStiffnessFrameElementProfile } from '../core/linear-piping-analysis-consumer/inputxml-linear-stiffness-profile.js';
-import {
-  codeStationFor,
-  requireLfeaNativeStraightCodeStationAuthority,
-} from './native-b31-code-stations.js';
+import { requireLfeaNativeStraightCodeStationAuthority } from './native-b31-code-stations.js';
 import { lfeaNativeB31Error } from './native-b31-authority-contract.js';
 
 export const LFEA_NATIVE_B31_CODE_RECOVERY_SCHEMA =
@@ -29,6 +26,13 @@ export function buildLfeaNativeB31CaseChains(
   const stationAuthority = requireLfeaNativeStraightCodeStationAuthority(
     b31Authority.codeStationAuthority,
   );
+  const tolerance = batch.recoveryProfile?.codePointConsistencyTolerance?.value;
+  if (!Number.isFinite(tolerance) || !(tolerance > 0)) {
+    throw lfeaNativeB31Error(
+      'LFEA_NATIVE_B31_RECOVERY_TOLERANCE_REQUIRED',
+      'B31 code-point recovery requires the explicit retained B-3.4 consistency tolerance.',
+    );
+  }
   const preparation = preFlight.preparation;
   const physicalById = new Map(preparation.physicalPreparation.physicalCases
     .map((row) => [row.caseId, row]));
@@ -59,6 +63,7 @@ export function buildLfeaNativeB31CaseChains(
       recovered.recovery,
       preparation.structuralPreparation.compilation,
       stationAuthority,
+      tolerance,
     );
     return deepFreeze({
       caseId: rawCase.caseId,
@@ -96,7 +101,7 @@ export function lfeaNativeB31PublicationParent(executionState, resultsState, aut
   });
 }
 
-function deriveCodeRecovery(baseRecoveryRecord, compilation, stationAuthority) {
+function deriveCodeRecovery(baseRecoveryRecord, compilation, stationAuthority, tolerance) {
   const baseRecovery = requireResultRecovery(baseRecoveryRecord);
   if (baseRecovery.componentResultants.length !== 0) {
     throw lfeaNativeB31Error(
@@ -118,7 +123,7 @@ function deriveCodeRecovery(baseRecoveryRecord, compilation, stationAuthority) {
       modelElementsById,
       actionByElementId,
       nodalLoadByNode: new Map(),
-      tolerance: 1e-6,
+      tolerance,
     })),
   }));
   const draft = {
@@ -136,6 +141,7 @@ function deriveCodeRecovery(baseRecoveryRecord, compilation, stationAuthority) {
     schema: LFEA_NATIVE_B31_CODE_RECOVERY_SCHEMA,
     parentBaseRecoverySemanticHash: baseRecovery.semanticHash,
     codeStationAuthoritySemanticHash: stationAuthority.semanticHash,
+    codePointConsistencyTolerance: tolerance,
     augmentedRecoverySemanticHash: augmentedRecovery.semanticHash,
   };
   return deepFreeze({
@@ -164,9 +170,6 @@ function requireCurrentRecovery(state, raw) {
     );
   }
   return batch;
-}
-function codePoint(_authority, elementId, end) {
-  return codeStationFor(_authority, elementId, end);
 }
 function uniqueAscii(values) { return [...new Set(values)].sort(compareAscii); }
 function compareAscii(left, right) { return left < right ? -1 : left > right ? 1 : 0; }

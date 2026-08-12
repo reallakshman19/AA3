@@ -67,6 +67,10 @@ export {
   BM4L_FRICTION_DIRECTION_ALIGNMENT_TOLERANCE,
   selectBm4lAccdbFrictionRows,
 } from './caesar-accdb-friction-restraint-selection.js';
+export {
+  buildCaesarFrictionTangentialTranslationVector,
+  normalizedCaesarFrictionTranslationUpdate,
+} from './caesar-friction-convergence-metrics.js';
 export { solveCaesarFrictionRefinedDenseSystem } from './caesar-friction-dense-refinement.js';
 export {
   runBm4lFrictionStiffnessSensitivity,

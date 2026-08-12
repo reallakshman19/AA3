@@ -15,7 +15,7 @@ function policies(maximumIterations = 5, relativeTolerance = 1e-12, overrides = 
   };
 }
 
-test('residual refinement retains a better finite iterate and passes base numerical qualification', () => {
+test('residual refinement retains a better finite iterate and passes governing numerical qualification', () => {
   const approximate = Math.sqrt(0.9);
   const factorization = {
     m: 2,
@@ -38,14 +38,21 @@ test('residual refinement retains a better finite iterate and passes base numeri
   assert.ok(result.evidence.finalRelativeResidual < result.evidence.initialRelativeResidual);
   assert.equal(result.evidence.numericalQualification.status, 'PASS');
   assert.equal(result.evidence.numericalQualification.residual.status, 'PASS');
-  assert.equal(result.evidence.numericalQualification.energyBalance.status, 'PASS');
-  assert.equal(result.evidence.numericalQualification.energyBalance.checkId, 'ENERGY_BALANCE_RELATIVE');
   assert.equal(result.evidence.numericalQualification.conditioning.status, 'PASS');
+  assert.equal(result.evidence.numericalQualification.energyIdentity.status, 'INFORMATIONAL');
+  assert.equal(
+    result.evidence.numericalQualification.energyIdentity.checkId,
+    'ENERGY_IDENTITY_RELATIVE_INFORMATIONAL',
+  );
+  assert.equal(
+    result.evidence.numericalQualification.energyIdentity.qualificationContribution,
+    'NONE_INFORMATIONAL_ALGEBRAIC_IDENTITY',
+  );
   assert.ok(Math.abs(result.solution[0] - 1) < Math.abs((1 / 0.9) - 1));
   assert.ok(Math.abs(result.solution[1] + 2) < Math.abs((-2 / 0.9) + 2));
 });
 
-test('zero refinement iterations preserves the direct scaled solution and records the policy', () => {
+test('zero refinement iterations preserves the direct scaled solution and records informational energy parity', () => {
   const factorization = {
     m: 1,
     kind: 'CHOLESKY',
@@ -66,10 +73,10 @@ test('zero refinement iterations preserves the direct scaled solution and record
   assert.equal(result.evidence.bestIteration, 0);
   assert.equal(result.evidence.finalRelativeResidual, 0);
   assert.equal(result.evidence.numericalQualification.status, 'PASS');
-  assert.equal(result.evidence.numericalQualification.energyBalance.status, 'PASS');
+  assert.equal(result.evidence.numericalQualification.energyIdentity.status, 'INFORMATIONAL');
 });
 
-test('conditioning WARN is retained as evidence but does not hard-block the linearization', () => {
+test('conditioning WARN is retained as evidence and controls numerical qualification', () => {
   const result = solveCaesarFrictionRefinedDenseSystem({
     factorization: {
       m: 1,
@@ -87,7 +94,7 @@ test('conditioning WARN is retained as evidence but does not hard-block the line
   });
   assert.equal(result.evidence.numericalQualification.status, 'WARN');
   assert.equal(result.evidence.numericalQualification.conditioning.status, 'WARN');
-  assert.equal(result.evidence.numericalQualification.energyBalance.status, 'PASS');
+  assert.equal(result.evidence.numericalQualification.energyIdentity.status, 'INFORMATIONAL');
 });
 
 test('a base-solver conditioning BLOCK fails the friction linearization immediately', () => {

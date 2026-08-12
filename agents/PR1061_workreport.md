@@ -48,19 +48,20 @@ Parent geometry therefore remains fail-closed even after this PR. A later coordi
 
 ## Architecture Audit Findings
 
-1. `buildSupports()` receives the existing exact attachment model but currently discards `attachmentId`, `projectedPointCanonical`, `distanceCanonical`, and `segmentParameter`, retaining only host identity/evidence type plus an intentionally approximate endpoint `nodeId` for mid-span attachments.
-2. `resolveTopologyEditSupportHostEdge()` remains the sole host authority.
-3. Legacy source writeback translates support entities through approximate `support.nodeId`; certified mid-span relocation therefore requires an override-aware dispatch layer.
-4. Generic support rendering prefers the canonical support node, so accepted placement may override only the projection origin while untouched support behavior remains unchanged.
-5. Table projection must display the certified station after Apply while source/vendor fields retain original source evidence.
-6. The governed SJSON validator projection intentionally groups support records by source APOS/POS before canonical origin. The edit runtime supplies a projection-only dataset clone whose APOS is replaced only for certified placement overrides; the actual workspace/source dataset and validator implementation remain untouched.
-7. The production demo and XYZ embedded supports contain no `STATION_MM`; exact attachment projected-point/segment evidence is therefore required for a truthful real-user station editor.
+1. The legacy support reshape receives the existing exact attachment model but drops `attachmentId`, `projectedPointCanonical`, `distanceCanonical`, and `segmentParameter`, retaining only host identity/evidence type plus an intentionally approximate endpoint `nodeId` for mid-span attachments.
+2. Production commit/reopen already enters through `topology-edit-source-adapter-dispatch.js`, but initial `TopologyEdit3DViewController` session construction still imports the legacy adapter directly. Initial and committed canonical custody must use the same dispatch boundary.
+3. `resolveTopologyEditSupportHostEdge()` remains the sole host authority.
+4. Legacy source writeback translates support entities through approximate `support.nodeId`; certified mid-span relocation therefore requires override-aware writeback.
+5. Generic support rendering prefers the canonical support node, so accepted placement may override only the projection origin while untouched support behavior remains unchanged.
+6. Table projection must display the certified station after Apply while source/vendor fields retain original source evidence.
+7. The governed SJSON validator projection intentionally groups support records by source APOS/POS before canonical origin. The edit runtime supplies a projection-only dataset clone whose APOS is replaced only for certified placement overrides; the actual workspace/source dataset and validator implementation remain untouched.
+8. The production demo and XYZ embedded supports contain no `STATION_MM`; exact attachment projected-point/segment evidence is therefore required for a truthful real-user station editor.
 
 ## Engineering Register
 
 | ID | Type | Status | Finding / decision |
 |---|---|---|---|
-| ISS-1061-01 | Correctness | OPEN / FIX AUTHORIZED | Canonical `buildSupports()` drops already-resolved attachment placement facts. This makes a real support such as XYZ S-007 unrepresentable in the Table even though the support attachment authority has an exact projected point/segment. Retain those existing facts on the canonical support record; do not add a second inference algorithm. |
+| ISS-1061-01 | Correctness | FIX IN PROGRESS | Live canonical construction discarded already-resolved attachment placement facts and initial 3D session construction bypassed the dispatch wrapper that now retains them. The dispatch wrapper now retains projected point/segment/distance facts; the controller import boundary is authorized to switch to that same wrapper. No new attachment inference is introduced. |
 | DEC-1061-01 | Semantics | ACCEPTED | First certified movement policy is explicit same-host station relocation. |
 | DEC-1061-02 | Safety | ACCEPTED | Parent geometry remains blocked; no automatic host-follow in this PR. |
 | DEC-1061-03 | Authority | ACCEPTED | Imported origin/attachment evidence is retained; placement uses a marked certified override. |
@@ -69,6 +70,7 @@ Parent geometry therefore remains fail-closed even after this PR. A later coordi
 | DEC-1061-06 | Evidence conflict | ACCEPTED | Conflicting declared-station vs attachment placement evidence fails closed instead of selecting one authority. |
 | DEC-1061-07 | Durable writeback | ACCEPTED | Persist certified placement as topology-edit audit attributes plus committed support geometry; rehydrate only from those explicit audit fields. Do not overwrite source `STATION_MM`/attachment evidence. |
 | DEC-1061-08 | SJSON edit projection | ACCEPTED | Overlay certified APOS only in an ephemeral governed edit-projection dataset; source dataset remains immutable. |
+| DEC-1061-09 | Canonical entrypoint | ACCEPTED | Initial 3D session and commit/reopen construction must both use the dispatch adapter; legacy adapter remains the internal reshape only. |
 | RISK-1061-01 | Curved hosts | OPEN / FAIL-CLOSED | Initial operation rejects non-straight/non-representable host types rather than projecting by chord. |
 | RISK-1061-02 | Execution | OPEN | No exact-head runner currently available. |
 
@@ -81,7 +83,7 @@ The numbered report was the first changed file after the empty bootstrap.
 Mid-span node identity is explicitly not placement authority; exact host/station/writeback/projection seams are identified.
 
 ### S2 — Pure command + placement authority — IN PROGRESS
-Pure placement context, command contract, resolver targets, reducer/effect validation and focused command tests are authored. `ISS-1061-01` must be closed by retaining existing attachment placement facts in canonical support custody.
+Pure placement context, command contract, resolver targets, reducer/effect validation and focused command tests are authored. Dispatch canonical construction now retains existing exact attachment placement facts; initial controller entrypoint must be aligned to the same wrapper.
 
 ### S3 — Table intent/planner/UI — IN PROGRESS
 `SUPPORT_PLACEMENT` Table intent, planner, batch allowlist, capability, station editor and Stage-time revalidation are implemented. Input and Stage remain canonical no-ops.
@@ -95,6 +97,7 @@ Focused command/transaction/round-trip tests are authored. Production Playwright
 ## Authorized Changed-File Envelope
 
 - `agents/PR1061_workreport.md`
+- `src/workspace/topology-edit-3d-view-controller-core.js` — import-boundary switch only; no controller behavior rewrite
 - new `src/workspace/topology-edit/topology-edit-support-placement.js`
 - new `src/workspace/topology-edit/topology-edit-support-placement-command.js`
 - `src/workspace/topology-edit/topology-edit-command-contract.js`
@@ -134,7 +137,7 @@ No geometry planner or #1036 dependency module is authorized for weakening/modif
 
 ## Next
 
-1. Close `ISS-1061-01` by retaining exact attachment placement evidence in canonical support records and use it as current-station authority on straight hosts.
+1. Switch initial 3D canonical construction to the registered dispatch wrapper and verify exact attachment model is supplied.
 2. Add the focused production Playwright S-007 same-host relocation path.
 3. Static-audit tests, changed-file ledger, line budgets and review state.
 4. Seal evidence and keep draft if exact-head execution is still unavailable.

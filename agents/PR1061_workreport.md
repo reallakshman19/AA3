@@ -8,11 +8,12 @@
 | Branch | `agent/certified-support-placement-semantics` |
 | Current merged base | `main@4482dcc481939c3af1068aea2e2db47baec63984` — qualified PR #1054 merged |
 | Deterministic integration commit | `8d36d7779d86cba4c1729427fc725b242c55dcfb` |
-| Latest dual-gate candidate | `6225083733131775c475c2b504be4948d89f5f4d` |
+| Qualified feature/test head | `911d8c85a0734c1c43e2eaea1fb3faf974e21ba8` |
 | Mission | Certify explicit relocation of a support along its already-resolved exact straight host without host rebinding or automatic parent-geometry follow. |
-| Engineering state | **POST-#1054 INTEGRATION TEST RECONCILIATION IN PROGRESS** |
-| Empirical execution | Run `31580658197`, job `94062764867`: exact checkout/setup/source/line gates PASS; combined Node fails only two stale #1054 station-capability expectations; Chromium correctly skipped. |
-| Merge state | Draft / unmerged. Current-main dual Node + real Chromium qualification is mandatory. |
+| Engineering state | **FEATURE/TEST CURRENT-MAIN INTEGRATION QUALIFIED; FINAL REPORT-ONLY HEAD REQUALIFICATION REQUIRED** |
+| Empirical execution | Run `31581095610`, job `94064177677`: exact checkout/source/line gates PASS; focused Node **28/28 PASS**; real Chromium **2/2 PASS**, one worker, zero retries. |
+| Evidence artifact | `9135220193` — `pr1061-post1054-911d8c85a0734c1c43e2eaea1fb3faf974e21ba8-1`; SHA256 `69f636558027890bcdd54914ee418763b08e8129c6ef046497eab040ef364e79`. |
+| Merge state | Draft / unmerged. The report-only head created by this report update must pass the same exact-head gate before closure audit. |
 
 ## Authority Flow
 
@@ -29,11 +30,11 @@ Only explicit same-host station relocation is authorized: exact shared host reso
 | ID | Status | Finding / resolution |
 |---|---|---|
 | ISS-1061-01..12 | RESOLVED / prior exact-head PASS | Original placement authority, evidence, writeback/reopen, Table lifecycle, production row selection and parent support-policy issues were resolved and qualified before final #1054 merge. |
-| ISS-1061-13 | RESOLVED IN INTEGRATION SOURCE / REQUALIFICATION REQUIRED | #1054 restraint Preview and #1061 placement Preview are composed in one transient ghost: generic changed topology + explicit placement support marker + governed changed-support restraint projection; placement suppresses duplicate support markers. |
-| ISS-1061-14 | **RESOLVED / RUN 31580658197 PASSED THIS REGRESSION** | Placement marker policy is now required only after at least one changed support has a finite certified placement override. Restraint-only Preview no longer enters placement-marker-specific policy; actual placement remains fail closed if policy is missing. |
-| ISS-1061-15 | **RESOLVED / RUN 31580658197 PASSED THIS REGRESSION** | Restraint Undo regression now asserts exact equality to the complete pre-transaction support record, preserving imported restraint/host/station/support custody independent of imported representation. |
-| **ISS-1061-16** | **OPEN / TEST-ONLY INTEGRATION REPAIR AUTHORIZED** | Run `31580658197` now fails exactly two merged-#1054 expectations because #1061 intentionally certifies `stationMm`. `tests/topology-edit-capability-authority.test.mjs` and `tests/topology-edit-table-support-restraint.test.mjs` still expect support station capability `BLOCKED/READ_ONLY_PROPERTY`; actual integrated capability is correctly `NEEDS_INPUT/EXPLICIT_SUPPORT_STATION_REQUIRED` with `details.intentKind === 'SUPPORT_PLACEMENT'`. Update those tests to assert certified station relocation while continuing to assert `hostEntityId` remains `BLOCKED/READ_ONLY_PROPERTY`. Do not widen host rebinding or change production capability code. |
-| RISK-1061-01 | OPEN | Combined placement + restraint Node and both real Chromium lifecycles must pass on the same exact post-#1054 head. |
+| ISS-1061-13 | RESOLVED / RUN 31581095610 PASS | #1054 restraint Preview and #1061 placement Preview are composed in one transient ghost: generic changed topology + explicit placement support marker + governed changed-support restraint projection; placement suppresses duplicate support markers. |
+| ISS-1061-14 | RESOLVED / RUN 31581095610 PASS | Placement marker policy is required only after at least one changed support has a finite certified placement override. Restraint-only Preview does not enter placement-marker-specific policy; actual placement remains fail closed if marker policy is missing. |
+| ISS-1061-15 | RESOLVED / RUN 31581095610 PASS | Restraint Undo asserts exact equality to the complete pre-transaction support record, preserving imported restraint/host/station/support custody independent of imported representation. |
+| ISS-1061-16 | RESOLVED / RUN 31581095610 PASS | Integrated station capability assertions now match certified placement semantics: `stationMm` is `NEEDS_INPUT/EXPLICIT_SUPPORT_STATION_REQUIRED` with `details.intentKind === 'SUPPORT_PLACEMENT'`; `hostEntityId` remains `BLOCKED/READ_ONLY_PROPERTY`. No production capability widening was introduced. |
+| RISK-1061-01 | CLOSED FOR FEATURE/TEST HEAD | Combined placement + restraint Node and both real Chromium lifecycles passed on exact head `911d8c85a0734c1c43e2eaea1fb3faf974e21ba8`. Final report-only exact-head rerun remains mandatory before merge. |
 
 ## Preview Composition Contract
 
@@ -50,36 +51,36 @@ A direct retarget to merged main was dirty because #1054 and #1061 overlapped th
 
 ## Current Dual Qualification
 
-Isolated base `qualification/pr1061-post1054-exact-head` contains only a temporary workflow. It exact-checks the PR head, Node 22, real Chromium, syntax/line/`git diff --check`, six focused Node files, then both placement and restraint production Chromium specs with one worker, zero retries and trace-on.
+Isolated base `qualification/pr1061-post1054-exact-head` contains only a temporary workflow. It exact-checks `github.event.pull_request.head.sha`, exports both `TARGET_HEAD_SHA` and `TOPOLOGY_EDIT_TARGET_HEAD_SHA`, checks source/syntax/line/`git diff --check`, runs the six focused Node files, then both placement and restraint production Chromium specs with one worker, zero retries and trace-on, and uploads both JSON evidence reports plus traces.
 
-### Run 31579891323 — first post-#1054 dual gate
+### Run 31581095610 — current-main feature/test integration PASS
 
-Head `1f181f87a255026229112d33d0c6a3416923f4a2`, job `94060327966`:
-- checkout/setup/source/line PASS;
-- Node 20/22 PASS;
-- failures: eager placement marker policy on restraint-only Preview and representation-specific Undo assertion;
-- Chromium skipped.
-
-### Run 31580658197 — bounded repairs progressed
-
-Head `6225083733131775c475c2b504be4948d89f5f4d`, job `94062764867`:
+Exact head `911d8c85a0734c1c43e2eaea1fb3faf974e21ba8`, job `94064177677`:
 - exact checkout/setup/source/syntax/line/`git diff --check`: PASS;
-- ISS-1061-14 restraint Preview regression: PASS;
-- ISS-1061-15 exact support Undo restoration: PASS;
-- only failures are two stale station capability assertions:
-  - `tests/topology-edit-capability-authority.test.mjs`: expected `BLOCKED`, actual `NEEDS_INPUT`;
-  - `tests/topology-edit-table-support-restraint.test.mjs`: expected `BLOCKED`, actual `NEEDS_INPUT`;
-- production capability source explicitly maps `SUPPORT_PLACEMENT` to `NEEDS_INPUT`, reason `EXPLICIT_SUPPORT_STATION_REQUIRED`, intent `SUPPORT_PLACEMENT`;
-- Chromium skipped after Node failure;
-- no browser PASS claimed.
+- focused Node: **28 tests, 28 pass, 0 fail, 0 skipped/cancelled/todo**;
+- real Chromium: **2 tests, 2 pass**, one worker, zero retries;
+- placement lifecycle: PASS;
+- restraint lifecycle regression on the same exact head: PASS;
+- evidence upload: PASS.
 
-## Prior Qualification
+Artifact `9135220193`, name `pr1061-post1054-911d8c85a0734c1c43e2eaea1fb3faf974e21ba8-1`, digest `sha256:69f636558027890bcdd54914ee418763b08e8129c6ef046497eab040ef364e79`.
 
-Pre-final-#1054 placement head `a1056c1b9807095be806e67038a1ddfc43b7f770` passed Node + real Chromium in run `31570325923`; artifact `9131076959`, SHA256 `0c2509a450b67a968bcff36bc4ac26eace05f27a2522cc958bcf77048beb5717`. Report head `f0a66d9d2157285adca5557ed820b045128b4134` passed run `31570553278`. Those are feature evidence, not current-main integration evidence.
+Both uploaded JSON reports self-identify candidate head `911d8c85a0734c1c43e2eaea1fb3faf974e21ba8`.
+
+Placement evidence records XYZ fixture support `S-007` on host `P-011`, station `400 -> 500` mm over an `800` mm straight host. Stage/Preview/Validate leave canonical/source/journal unchanged; Preview reports `ghostChildCount: 2`; Validate reports `READY_TO_APPLY`; Apply creates one `CERTIFIED_TABLE_OVERRIDE` placement with segment parameter `0.625`, origin `{x:6960,y:1650,z:3450}`, and placement hash `fnv1a64:02c87186a14aae96`; imported origin remains `{x:6860,y:1650,z:3450}`; source semantic/byte hashes remain unchanged; Undo restores exact baseline and Redo restores exact applied state; renderer count is one.
+
+Restraint evidence on the same exact head records requested `LINE_STOP`, `+X`, gap `5` mm, travel `20` mm. Stage/Preview/Validate leave canonical/source/journal unchanged; Preview reports `ghostChildCount: 2`; Validate reports `READY_TO_APPLY`; Apply creates one certified restraint override; source hashes remain unchanged; Undo restores exact baseline and Redo restores exact applied state; renderer count is one.
+
+## Prior Qualification / Repair History
+
+- Pre-final-#1054 placement head `a1056c1b9807095be806e67038a1ddfc43b7f770` passed Node + real Chromium in run `31570325923`; artifact `9131076959`, SHA256 `0c2509a450b67a968bcff36bc4ac26eace05f27a2522cc958bcf77048beb5717`. Report head `f0a66d9d2157285adca5557ed820b045128b4134` passed run `31570553278`. Those remain prior feature evidence, not current-main integration evidence.
+- Run `31579891323` found eager placement-marker policy entry during restraint-only Preview and a representation-specific restraint Undo assertion.
+- Run `31580658197` cleared those defects and exposed exactly two stale merged-#1054 station-capability expectations.
+- Run `31581095610` cleared all bounded integration repairs and passed combined Node plus both real Chromium lifecycles.
 
 ## Exact Changed-File Ledger
 
-The authorized post-#1054 integration ledger becomes exactly **30** paths: the original 28 PR1061 paths plus two merged-main regression tests required to prove #1054 behavior survives while station relocation becomes certified.
+The authorized post-#1054 integration ledger is exactly **30** paths:
 
 1. `agents/PR1061_workreport.md`
 2. `e2e/topology-edit-table-support-placement.spec.js`
@@ -109,15 +110,18 @@ The authorized post-#1054 integration ledger becomes exactly **30** paths: the o
 26. `tests/topology-edit-support-placement-command.test.mjs`
 27. `tests/topology-edit-support-placement-writeback.test.mjs`
 28. `tests/topology-edit-table-support-placement.test.mjs`
-29. `tests/topology-edit-table-support-restraint.test.mjs` — post-#1054 integration regression and certified-station expectation.
-30. `tests/topology-edit-capability-authority.test.mjs` — post-#1054 capability regression; assert station certified while host remains read-only.
+29. `tests/topology-edit-table-support-restraint.test.mjs`
+30. `tests/topology-edit-capability-authority.test.mjs`
 
 Temporary qualification workflows remain isolated and are not feature files.
 
-## Next Gate
+## Final Gate
 
-1. Repair only ISS-1061-16 in the two test files: station `NEEDS_INPUT/EXPLICIT_SUPPORT_STATION_REQUIRED/SUPPORT_PLACEMENT`; host remains `BLOCKED/READ_ONLY_PROPERTY`.
-2. Re-run combined Node + dual real-Chromium exact-head gate.
-3. Record exact evidence and qualify the report-only final head again.
-4. Restore base to `main`; closure-audit mergeability/reviews/comments/30-file ledger; merge only with expected qualified head SHA.
-5. Reconcile/requalify #1066 afterward.
+This report update is intentionally report-only and creates the final merge-candidate head. Do not edit the report again after the final exact-head run.
+
+1. Require the same exact-head qualification on this report-only head: source/syntax/line/`git diff --check` PASS, focused Node 28/28 PASS, real Chromium 2/2 PASS, evidence upload PASS.
+2. Restore PR base to `main`.
+3. Closure-audit current main SHA, raw mergeable/rebaseable/mergeable-state, exact 30-file ledger, submitted reviews, review threads and comments, and absence of temporary qualification workflow leakage.
+4. Update stale PR description without changing head; mark ready only after closure audit is clean.
+5. Merge only with the exact qualified report-only head SHA pinned as expected head.
+6. Verify the resulting `main` merge commit, then reconcile/requalify #1066.

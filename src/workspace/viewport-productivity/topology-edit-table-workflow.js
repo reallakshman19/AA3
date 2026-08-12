@@ -48,10 +48,7 @@ export async function validateTopologyEditTableRuntime(runtime) {
       || runtime.controller.session.currentTopology().canonicalTopologyHash !== preview.priorCanonicalHash) {
       throw new RangeError('TopologyEditTableWorkflow: validation completed against a stale Preview.');
     }
-    runtime.validation = validateTopologyEditTablePreview({
-      preview,
-      workerReceipt: result.receipt,
-    });
+    runtime.validation = validateTopologyEditTablePreview({ preview, workerReceipt: result.receipt });
     runtime.message = runtime.validation.status === 'READY_TO_APPLY'
       ? 'Final-state validation passed; Apply is enabled.'
       : `${runtime.validation.blockingIssueCount} blocking validation issue(s).`;
@@ -120,10 +117,7 @@ export function redoTopologyEditTableRuntime(runtime) {
 export function renderTopologyEditTablePreviewGhost(runtime) {
   const candidate = runtime.preview?.candidate;
   if (!candidate) return;
-  const projection = runtime.controller.deriveVisual(
-    candidate.canonicalTopology,
-    'DRAFT',
-  ).projection;
+  const projection = runtime.controller.deriveVisual(candidate.canonicalTopology, 'DRAFT').projection;
   const changed = new Set(candidate.changedCanonicalIds ?? []);
   const placementElements = supportPlacementGhostElements(runtime, candidate, changed);
   const placementIds = new Set(placementElements.map((row) => row.pickTarget.supportId));
@@ -131,9 +125,7 @@ export function renderTopologyEditTablePreviewGhost(runtime) {
   if (placementElements.length) {
     runtime.controller.deriveVisual(runtime.controller.session.currentTopology(), 'DRAFT');
   }
-  const accepted = (row) => changed.has(
-    row.pickTarget?.objectId ?? row.entityId ?? row.id,
-  );
+  const accepted = (row) => changed.has(row.pickTarget?.objectId ?? row.entityId ?? row.id);
   const representedByPlacement = (row) => placementIds.has(
     row.pickTarget?.supportId ?? row.pickTarget?.objectId ?? row.entityId ?? row.id,
   );
@@ -152,20 +144,25 @@ export function renderTopologyEditTablePreviewGhost(runtime) {
 }
 
 function supportPlacementGhostElements(runtime, candidate, changed) {
-  const sizeMm = supportMarkerSizeMm(runtime);
-  return (candidate.canonicalTopology.supports ?? []).flatMap((support) => {
+  const supports = (candidate.canonicalTopology.supports ?? []).filter((support) => {
     const origin = support.placementOverride?.origin;
-    if (!changed.has(support.id) || support.placementOverride?.authority !== 'CERTIFIED_TABLE_OVERRIDE'
-      || !origin || ![origin.x, origin.y, origin.z].every(Number.isFinite)) return [];
-    return [{
-      id: support.id,
-      entityId: support.id,
-      type: 'SUPPORT',
-      x: origin.x, y: origin.y, z: origin.z,
-      sizeMm,
-      pickTarget: { objectKind: 'support', objectId: support.id, supportId: support.id },
-    }];
+    return changed.has(support.id)
+      && support.placementOverride?.authority === 'CERTIFIED_TABLE_OVERRIDE'
+      && origin
+      && [origin.x, origin.y, origin.z].every(Number.isFinite);
   });
+  if (!supports.length) return [];
+  const sizeMm = supportMarkerSizeMm(runtime);
+  return supports.map((support) => ({
+    id: support.id,
+    entityId: support.id,
+    type: 'SUPPORT',
+    x: support.placementOverride.origin.x,
+    y: support.placementOverride.origin.y,
+    z: support.placementOverride.origin.z,
+    sizeMm,
+    pickTarget: { objectKind: 'support', objectId: support.id, supportId: support.id },
+  }));
 }
 
 function changedSupportRestraintGhost(runtime, candidate, changed) {

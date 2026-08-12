@@ -13,7 +13,7 @@ const LENGTH_TO_M = Object.freeze({
   FT: 0.3048,
 });
 
-/** Parse the force/length display units from a CAESAR InputXML <UNITS> block. */
+/** Parse model display force/length units from a CAESAR InputXML <UNITS> block. */
 export function parseCaesarInputXmlForceLengthUnits(xmlText) {
   if (typeof xmlText !== 'string' || !xmlText.trim()) {
     throw new TypeError('xmlText must be a non-empty string.');
@@ -25,14 +25,12 @@ export function parseCaesarInputXmlForceLengthUnits(xmlText) {
   const force = parseUnitRow(unitsBlock, 'FORCE');
   const forceUnit = normalizeForceUnit(force.label);
   const lengthUnit = normalizeLengthUnit(length.label);
-  const stiffnessUnit = `${forceUnit}/${lengthUnit}`;
-  const scaleToNPerM = FORCE_TO_N[forceUnit] / LENGTH_TO_M[lengthUnit];
 
   return Object.freeze({
     forceUnit,
     lengthUnit,
-    stiffnessUnit,
-    scaleToNPerM,
+    stiffnessUnit: `${forceUnit}/${lengthUnit}`,
+    scaleToNPerM: FORCE_TO_N[forceUnit] / LENGTH_TO_M[lengthUnit],
     sourceRows: Object.freeze({
       force: Object.freeze(force),
       length: Object.freeze(length),
@@ -49,16 +47,18 @@ export function normalizeForcePerLengthToNPerM(value, unit) {
   return Number(value) * FORCE_TO_N[parsed.forceUnit] / LENGTH_TO_M[parsed.lengthUnit];
 }
 
-/** Normalize a CAESAR displayed friction-stiffness value using the model InputXML units. */
-export function normalizeDisplayedCaesarFrictionStiffnessToSI({ value, inputXml }) {
-  const unitSystem = parseCaesarInputXmlForceLengthUnits(inputXml);
+/**
+ * Normalize CAESAR's static friction-stiffness configuration value to SI.
+ * The source unit is mandatory. Model InputXML display units are deliberately
+ * not used to infer this configuration item's unit.
+ */
+export function normalizeCaesarStaticFrictionStiffnessToSI({ value, sourceUnit }) {
+  const normalizedUnit = canonicalForcePerLengthUnit(sourceUnit);
   return Object.freeze({
-    displayedValue: Number(value),
-    displayedUnit: unitSystem.stiffnessUnit,
-    value: normalizeForcePerLengthToNPerM(value, unitSystem.stiffnessUnit),
+    sourceValue: Number(value),
+    sourceUnit: normalizedUnit,
+    value: normalizeForcePerLengthToNPerM(value, normalizedUnit),
     unit: 'N/m',
-    scaleToSI: unitSystem.scaleToNPerM,
-    unitSystem,
   });
 }
 
@@ -69,6 +69,11 @@ function parseUnitRow(block, tag) {
   const factor = Number(match[2]);
   if (!Number.isFinite(factor) || factor <= 0) throw new TypeError(`${tag} FACTOR must be finite and > 0.`);
   return { label: match[1], factor };
+}
+
+function canonicalForcePerLengthUnit(unit) {
+  const parsed = parseForcePerLengthUnit(unit);
+  return `${parsed.forceUnit}/${parsed.lengthUnit}`;
 }
 
 function parseForcePerLengthUnit(unit) {

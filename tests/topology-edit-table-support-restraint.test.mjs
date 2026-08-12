@@ -96,7 +96,6 @@ test('SUPPORT_RESTRAINT plan captures support, node, and host dependencies with 
   const topology = fixture();
   const session = new TopologyEditCertifiedSession(topology);
   const { intent, batchPlan } = planned(session, topology);
-
   assert.equal(intent.requestedValue.supportId, 'support:s1');
   assert.equal(intent.requestedValue.authority, 'CERTIFIED_TABLE_OVERRIDE');
   assert.deepEqual(batchPlan.operationPlan.commandIntents, [{
@@ -116,7 +115,6 @@ test('SUPPORT_RESTRAINT Preview renders only the governed candidate support glyp
   const prior = session.snapshot();
   const preview = await prepareTopologyEditTablePreview({ session, batchPlan });
   let ghost = null;
-
   renderTopologyEditTablePreviewGhost({
     preview,
     controller: {
@@ -127,7 +125,6 @@ test('SUPPORT_RESTRAINT Preview renders only the governed candidate support glyp
       },
     },
   });
-
   assert.equal(session.currentTopology().canonicalTopologyHash, prior.activeCanonicalTopologyHash);
   assert.ok(ghost);
   assert.equal(ghost.elements.length, 1);
@@ -137,10 +134,7 @@ test('SUPPORT_RESTRAINT Preview renders only the governed candidate support glyp
   assert.equal(ghost.segments[0].type, 'RESTRAINT_DIRECTION');
   assert.equal(ghost.segments[0].pickTarget.objectKind, 'restraint');
   assert.equal(ghost.segments[0].pickTarget.supportId, 'support:s1');
-  assert.equal(
-    ghost.segments[0].pickTarget.objectId,
-    ghost.segments[0].pickTarget.restraintId,
-  );
+  assert.equal(ghost.segments[0].pickTarget.objectId, ghost.segments[0].pickTarget.restraintId);
 });
 
 test('SUPPORT_RESTRAINT Preview → Validate → Apply is atomic and journal undo/redo is exact', async () => {
@@ -148,7 +142,7 @@ test('SUPPORT_RESTRAINT Preview → Validate → Apply is atomic and journal und
   const session = new TopologyEditCertifiedSession(topology);
   const { batchPlan } = planned(session, topology);
   const prior = session.snapshot();
-
+  const priorSupport = structuredClone(support(session.currentTopology()));
   const preview = await prepareTopologyEditTablePreview({ session, batchPlan });
   assert.equal(session.currentTopology().canonicalTopologyHash, prior.activeCanonicalTopologyHash);
   assert.equal(support(preview.candidate.canonicalTopology).restraint.type, 'GUIDE');
@@ -159,7 +153,6 @@ test('SUPPORT_RESTRAINT Preview → Validate → Apply is atomic and journal und
     workerReceipt: validationReceipt(topology, preview, batchPlan),
   });
   assert.equal(tableValidation.status, 'READY_TO_APPLY');
-
   const transaction = await applyTopologyEditTableTransaction({
     session, batchPlan, preview, tableValidation,
   });
@@ -168,9 +161,7 @@ test('SUPPORT_RESTRAINT Preview → Validate → Apply is atomic and journal und
   assert.equal(support(session.currentTopology()).restraint.direction, 'LOCAL_Y');
   assert.equal(support(session.currentTopology()).restraints[0].id, 'restraint:source:1');
 
-  const appliedProjection = buildTopologyEditTableProjection({
-    canonicalTopology: session.currentTopology(),
-  });
+  const appliedProjection = buildTopologyEditTableProjection({ canonicalTopology: session.currentTopology() });
   const appliedRow = appliedProjection.rows.find((row) => row.identity.canonicalId === 'support:s1');
   assert.equal(appliedRow.fields.supportType, 'GUIDE');
   assert.equal(appliedRow.fields.direction, 'LOCAL_Y');
@@ -179,7 +170,7 @@ test('SUPPORT_RESTRAINT Preview → Validate → Apply is atomic and journal und
   undoTopologyEditTableTransaction(session, transaction);
   assert.equal(session.currentTopology().canonicalTopologyHash, prior.activeCanonicalTopologyHash);
   assert.equal(session.journal.activeLedgerHash, prior.activeLedgerHash);
-  assert.equal(support(session.currentTopology()).restraint, undefined);
+  assert.deepEqual(structuredClone(support(session.currentTopology())), priorSupport);
 
   redoTopologyEditTableTransaction(session, transaction);
   assert.equal(session.currentTopology().canonicalTopologyHash, transaction.resultingCanonicalHash);

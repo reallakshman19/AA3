@@ -1,5 +1,8 @@
 /** Domain-first LAFEA.3 preparation and mesh-generation requests. Both remain non-executable. */
 import { canonicalLafeaSha256 } from './lafea-canonical-sha256.js';
+import {
+  validateLafeaContinuumDomainFirstPreflight,
+} from './lafea-continuum-domain-first-preflight.js';
 import { lafeaMeshCapabilities } from './lafea-mesh-capabilities.js';
 import { requireLafeaPreparationProfile } from './lafea-preparation-profile.js';
 import { requireLafeaStageAnalysisAdapter } from './lafea-stage-analysis-adapter.js';
@@ -147,26 +150,58 @@ export function buildLafeaDomainPreparationProjection(stage) {
   if (!stage?.domainFirstProfileActive) return null;
   const domain = stage.analysisDomainProjection;
   const geometry = stage.analysisGeometryProjection;
+  const custody = stage.analysisMeshCustodyProjection;
   const reasons = [];
   if (domain?.state !== 'CURRENT_PASS') reasons.push(...(domain?.reasons ?? ['ANALYSIS_DOMAIN_NOT_CURRENT']));
   if (geometry?.state !== 'CURRENT_PASS') reasons.push(...(geometry?.reasons ?? ['ANALYSIS_GEOMETRY_NOT_CURRENT']));
+  if (custody?.state !== 'CURRENT_PASS' || custody?.usableForRun !== true) {
+    reasons.push('ANALYSIS_MESH_NOT_CURRENT_PASS');
+  }
   if (reasons.length) return projection('STALE', false, reasons);
-  return projection('ABSENT', false, [
-    'LAFEA_DOMAIN_PREPARATION_PRODUCER_NOT_QUALIFIED',
-    'LAFEA_PREPARATION_EVIDENCE_V2_ABSENT',
+
+  const retained = stage.retainedContinuumPreflightEvidence;
+  if (!retained) return projection('ABSENT', false, [
+    'LAFEA_CONTINUUM_DOMAIN_FIRST_PREFLIGHT_ABSENT',
   ]);
+  let evidence;
+  try {
+    evidence = validateLafeaContinuumDomainFirstPreflight(retained);
+  } catch (error) {
+    return projection('CURRENT_BLOCK', false, [
+      error?.code ?? 'LAFEA_CONTINUUM_PREFLIGHT_INVALID',
+    ]);
+  }
+  const stale = preflightStaleReasons(stage, evidence, custody);
+  if (stale.length) return projection('STALE', false, stale, evidence);
+  return projection('CURRENT_PASS', true, [], evidence);
 }
 
-function projection(state, usableForAuthorization, reasons) {
+function preflightStaleReasons(stage, evidence, custody) {
+  const reasons = [];
+  if (evidence.sourceHash !== currentSourceHash(stage)) reasons.push('LAFEA_CONTINUUM_PREFLIGHT_SOURCE_STALE');
+  if (evidence.analysisDomainHash !== stage.analysisDomainProjection.analysisDomainHash) {
+    reasons.push('LAFEA_CONTINUUM_PREFLIGHT_DOMAIN_STALE');
+  }
+  if (evidence.analysisGeometryHash !== stage.analysisGeometryProjection.analysisGeometryHash) {
+    reasons.push('LAFEA_CONTINUUM_PREFLIGHT_GEOMETRY_STALE');
+  }
+  if (evidence.meshHash !== custody.meshHash) reasons.push('LAFEA_CONTINUUM_PREFLIGHT_MESH_STALE');
+  if (evidence.meshProfileHash !== custody.meshProfileHash) {
+    reasons.push('LAFEA_CONTINUUM_PREFLIGHT_MESH_PROFILE_STALE');
+  }
+  return reasons;
+}
+
+function projection(state, usableForAuthorization, reasons, evidence = null) {
   return freeze({
     schema: 'lafea-preparation-projection/v2',
     stageId: 'LAFEA.3',
     state,
     usableForAuthorization,
     reasons: [...new Set(reasons)],
-    evidenceHash: null,
+    evidenceHash: evidence?.semanticHash ?? null,
     approvalHash: null,
-    producerRef: null,
+    producerRef: evidence?.producerRef ?? null,
     preparationProfileHash: null,
     warningFindingIds: [],
     blockingFindingIds: [],

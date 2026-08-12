@@ -13,7 +13,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 30
     env:
-      CANDIDATE_SHA: 1a1cee4b361bea4bdd09ecb1b57cfa0ddb1e8159
+      CANDIDATE_SHA: e8c9de8bbfd7ea45f98105457da947c6e4e8aab4
       BASE_SHA: f2b0f3594bb417fea0f4c3a520ffd52a1ceabd4e
       PR_NUMBER: '1084'
       PLAYWRIGHT_BROWSERS_PATH: '0'
@@ -21,7 +21,7 @@ jobs:
       - name: Checkout exact candidate
         uses: actions/checkout@v4
         with:
-          ref: 1a1cee4b361bea4bdd09ecb1b57cfa0ddb1e8159
+          ref: e8c9de8bbfd7ea45f98105457da947c6e4e8aab4
           fetch-depth: 0
 
       - name: Verify exact candidate and 15-file ledger

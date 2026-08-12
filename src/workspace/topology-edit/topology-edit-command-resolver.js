@@ -21,6 +21,9 @@ import {
 import {
   resolvePipeSegmentCommandTargets,
 } from './topology-edit-pipe-segment-resolver.js';
+import {
+  resolveTopologyEditSupportRestraintTargets,
+} from './topology-edit-support-restraint-command.js';
 
 function requiredText(value, label) {
   const text = String(value ?? '').trim();
@@ -243,6 +246,7 @@ const TARGET_RESOLVERS = Object.freeze({
   INSERT_INLINE_COMPONENT: resolveInline,
   REPLACE_INLINE_COMPONENT: resolveReplacement,
   UPDATE_JUNCTION_BRANCH_RELATION: resolveJunctionRelation,
+  UPDATE_SUPPORT_RESTRAINT: resolveTopologyEditSupportRestraintTargets,
   INSERT_BRANCH_COMPONENT: resolveBranchComponent,
   INSERT_PIPE_SEGMENT: resolvePipeSegmentCommandTargets,
   DISCONNECT_ENDPOINT: resolveDisconnect, DELETE_EDGE: resolveDelete,
@@ -259,6 +263,7 @@ function targetRevisionMap(resolvedTargets) {
     ...resolvedTargets.nodes,
     ...resolvedTargets.edges,
     ...(resolvedTargets.junctions ?? []),
+    ...(resolvedTargets.supports ?? []),
   ].map((target) => [target.id, target.revision]).sort(([left], [right]) => left.localeCompare(right)));
 }
 function assertExpectedRevisions(expected, actual) {

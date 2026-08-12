@@ -247,8 +247,13 @@ function explicitDirection(token, frame) {
   if (token === 'LOCAL_Z') return frame?.z || null;
   return token === 'GLOBAL_VERTICAL' ? frame?.up || null : null;
 }
-/** Returns the declared restraint records without inventing missing support capability. */
+/** Returns declared restraint evidence, preferring only an explicit certified override. */
 export function supportRestraintRows(support = {}) {
+  if (support.restraintAuthority === 'CERTIFIED_TABLE_OVERRIDE'
+      && support.restraint && typeof support.restraint === 'object'
+      && !Array.isArray(support.restraint)) {
+    return [support.restraint];
+  }
   if (Array.isArray(support.restraints)) return support.restraints;
   if (Array.isArray(support.restraint?.restraints)) return support.restraint.restraints;
   if (Array.isArray(support.restraint)) return support.restraint;

@@ -63,7 +63,7 @@ export async function engineeringEditorFixture(page) {
       && row.identity?.canonicalKind === 'EDGE'
       && row.custody?.catalogueAuthority === 'EXACT' && row.custody?.catalogue);
     const branchReducerCases = tee.identity.portBindings.map((branch) => {
-      const reducerIds = reducers.flatMap((reducer) => {
+      const reducerCandidates = reducers.flatMap((reducer) => {
         const from = reducer.identity.portBindings?.filter((item) => (
           item?.endpoint === 'FROM' && item?.nodeId
         )) ?? [];
@@ -78,13 +78,28 @@ export async function engineeringEditorFixture(page) {
         const dnOut = Number(reducer.fields?.dnOutMm);
         if (![dnIn, dnOut].every((value) => Number.isFinite(value) && value > 0)
           || Math.abs(dnIn - dnOut) <= 1e-9) return [];
-        const branchDn = endpoint === 'FROM' ? dnIn : dnOut;
-        const downstreamDn = endpoint === 'FROM' ? dnOut : dnIn;
-        return branchDn > downstreamDn + 1e-9 ? [reducer.identity.canonicalId] : [];
-      }).sort();
-      return { portKey: branch.portKey, nodeId: branch.nodeId, reducerIds };
-    }).filter((entry) => entry.reducerIds.length > 0)
+        const branchNominalSizeMm = endpoint === 'FROM' ? dnIn : dnOut;
+        const downstreamNominalSizeMm = endpoint === 'FROM' ? dnOut : dnIn;
+        if (branchNominalSizeMm <= downstreamNominalSizeMm + 1e-9) return [];
+        return [{
+          reducerId: reducer.identity.canonicalId,
+          branchEndpoint: endpoint,
+          branchNominalSizeMm,
+          downstreamNominalSizeMm,
+        }];
+      }).sort((left, right) => left.reducerId.localeCompare(right.reducerId));
+      return {
+        portKey: branch.portKey,
+        nodeId: branch.nodeId,
+        runNominalSizeMm: Number(tee.fields?.runDnMm),
+        reducerIds: reducerCandidates.map((candidate) => candidate.reducerId),
+        reducerCandidates,
+      };
+    }).filter((entry) => entry.reducerCandidates.length > 0)
       .sort((left, right) => left.portKey.localeCompare(right.portKey));
+    if (!branchReducerCases.length) {
+      throw new Error('Fixture must expose at least one directly connected exact reducing branch candidate.');
+    }
     return {
       gateId: valveAuthority.gate.identity.canonicalId,
       ballRecordIds: valveAuthority.records.map((record) => record.recordId).sort(),

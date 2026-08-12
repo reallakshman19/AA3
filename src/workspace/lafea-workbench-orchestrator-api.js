@@ -40,6 +40,9 @@ export function createLafeaWorkbenchOrchestratorApi(context) {
     registerLifecycleArtifact: (...args) => c.delegate('registerLifecycleArtifact', args),
     revalidateLifecycleBinding: (...args) => c.delegate('revalidateLifecycleBinding', args),
     revalidateContinuumGeometryMesh: c.revalidateContinuumGeometryMesh,
+    prepareContinuumForRun: c.prepareContinuumForRun,
+    selectRetainedContinuumPreflightEvidence: (stageId = activeStageId()) =>
+      c.continuumPreflight.select(stageId),
     compileContinuumSolverModel: () => compileLafeaContinuumWorkbenchContext(
       c, activeStageId(),
     ).solverModel,

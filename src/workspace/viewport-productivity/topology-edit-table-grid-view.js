@@ -12,6 +12,7 @@ import {
   topologyEditTableVisibleColumns,
 } from './topology-edit-table-properties-view.js';
 import { topologyEditTableRowWindow } from './topology-edit-table-row-window.js';
+import { applyTopologyEditTableSplitterLayout } from './topology-edit-table-splitter-runtime.js';
 
 export function renderTopologyEditTableGrid(runtime) {
   const element = runtime.element;
@@ -44,20 +45,23 @@ export function renderTopologyEditTableGrid(runtime) {
         <div><strong>Engineering table</strong><span>${rows.length} / ${runtime.projection.rows.length} rows · ${escapeHtml(typeSummary)}</span></div>
         <label>Filter <input type="search" data-table-filter value="${escapeHtml(runtime.viewState.query)}" placeholder="Tag, type, ID, property, source…"></label>
       </header>
-      <div class="topology-edit-table__scroll" data-table-scroll-region>
-        <table role="grid" aria-label="Certified canonical engineering table">
-          <thead><tr><th scope="col" data-table-column-key="select" data-table-frozen="select">Select</th>${columns.map((column) => sortHeader(column, runtime.viewState)).join('')}</tr></thead>
-          <tbody>${spacerRow('top', window.topSpacerPx, columnCount)}${renderedRows.map((row) => rowHtml(
-            runtime,
-            row,
-            columns,
-            selected.has(row.rowId),
-            staged.get(row.identity.canonicalId),
-          )).join('')}${spacerRow('bottom', window.bottomSpacerPx, columnCount)}</tbody>
-        </table>
+      <div class="topology-edit-table__upper" data-table-upper-region>
+        <div class="topology-edit-table__scroll" data-table-scroll-region>
+          <table role="grid" aria-label="Certified canonical engineering table">
+            <thead><tr><th scope="col" data-table-column-key="select" data-table-frozen="select">Select</th>${columns.map((column) => sortHeader(column, runtime.viewState)).join('')}</tr></thead>
+            <tbody>${spacerRow('top', window.topSpacerPx, columnCount)}${renderedRows.map((row) => rowHtml(
+              runtime,
+              row,
+              columns,
+              selected.has(row.rowId),
+              staged.get(row.identity.canonicalId),
+            )).join('')}${spacerRow('bottom', window.bottomSpacerPx, columnCount)}</tbody>
+          </table>
+        </div>
+        ${window.renderedRows < rows.length ? `<p class="topology-edit-table__notice topology-edit-table__window-notice" data-table-window-notice>Rendering rows ${window.start + 1}–${window.end} of ${rows.length} while scrolling.</p>` : ''}
       </div>
+      <div class="topology-edit-table__splitter" data-table-splitter role="separator" aria-orientation="horizontal" aria-label="Resize Engineering Table row list and detail pane" tabindex="0"><span aria-hidden="true"></span></div>
       <div class="topology-edit-table__lower" data-table-lower-region>
-        ${window.renderedRows < rows.length ? `<p class="topology-edit-table__notice" data-table-window-notice>Rendering rows ${window.start + 1}–${window.end} of ${rows.length} while scrolling.</p>` : ''}
         ${primary ? editorHtml(primary, staged.get(primary.identity.canonicalId), runtime) : '<p class="topology-edit-table__notice">Select an exact canonical row to inspect or edit it.</p>'}
         ${primary ? renderTopologyEditTableAllProperties(primary, runtime) : ''}
         ${stagedPanel(runtime)}
@@ -75,6 +79,7 @@ export function renderTopologyEditTableGrid(runtime) {
       </div>
     </section>`;
   restoreTableScroll(runtime, element);
+  applyTopologyEditTableSplitterLayout(runtime);
   publishEvidence(runtime, rows.length, renderedRows.length, window);
 }
 

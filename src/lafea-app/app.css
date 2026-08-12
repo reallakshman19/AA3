@@ -8,3 +8,8 @@ body,
 body {
   min-width: 320px;
 }
+
+#lafea-app-root [data-role="lafea-mock"],
+#lafea-app-root [data-role="lafea-benchmark"] {
+  display: none;
+}

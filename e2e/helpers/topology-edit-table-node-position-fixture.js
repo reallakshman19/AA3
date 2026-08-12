@@ -29,21 +29,25 @@ export async function rowAuthority(page, componentKey) {
   return page.evaluate((key) => {
     const host = document.querySelector('[data-role="topology-edit-render-host"]');
     const controller = host?.__topologyEditAuthoringController;
+    const topology = controller.session.currentTopology();
+    const position = (id) => {
+      const node = topology.nodes.find((item) => item.id === id);
+      if (!node) throw new Error(`Missing node ${id}.`);
+      return { ...node.position };
+    };
     const row = controller?.tableAdapter?.runtime?.projection?.rows?.find(
       (item) => item.identity?.componentKey === key,
     );
     if (!row) throw new Error(`Missing Table row for ${key}.`);
-    const edge = controller.session.currentTopology().edges.find(
-      (item) => item.id === row.identity.canonicalId,
-    );
+    const edge = topology.edges.find((item) => item.id === row.identity.canonicalId);
     if (!edge) throw new Error(`Missing canonical edge for ${key}.`);
     return {
       canonicalId: row.identity.canonicalId,
       componentKey: key,
       fromNodeId: edge.fromNodeId,
       toNodeId: edge.toNodeId,
-      fromPosition: point(controller.session.currentTopology(), edge.fromNodeId),
-      toPosition: point(controller.session.currentTopology(), edge.toNodeId),
+      fromPosition: position(edge.fromNodeId),
+      toPosition: position(edge.toNodeId),
     };
   }, componentKey);
 }
@@ -53,11 +57,33 @@ export async function q3ConnectedRunAuthority(page) {
     const host = document.querySelector('[data-role="topology-edit-render-host"]');
     const controller = host?.__topologyEditAuthoringController;
     const topology = controller.session.currentTopology();
+    const position = (id) => {
+      const node = topology.nodes.find((item) => item.id === id);
+      if (!node) throw new Error(`Missing node ${id}.`);
+      return { ...node.position };
+    };
+    const componentWithout = (startNodeId, blockedEdgeId) => {
+      const adjacency = new Map(topology.nodes.map((node) => [node.id, []]));
+      for (const candidate of topology.edges) {
+        if (candidate.id === blockedEdgeId) continue;
+        adjacency.get(candidate.fromNodeId)?.push(candidate.toNodeId);
+        adjacency.get(candidate.toNodeId)?.push(candidate.fromNodeId);
+      }
+      const visited = new Set([startNodeId]); const queue = [startNodeId];
+      while (queue.length) {
+        const current = queue.shift();
+        for (const peer of [...(adjacency.get(current) ?? [])].sort()) {
+          if (visited.has(peer)) continue;
+          visited.add(peer); queue.push(peer);
+        }
+      }
+      return [...visited].sort();
+    };
     const rows = controller.tableAdapter.runtime.projection.rows;
     const row = rows.find((item) => item.identity?.componentKey === 'P-M04');
     const edge = topology.edges.find((item) => item.id === row?.identity?.canonicalId);
     if (!edge) throw new Error('Q3 P-M04 canonical edge is unavailable.');
-    const movedNodeIds = componentWithoutEdge(topology, edge.toNodeId, edge.id);
+    const movedNodeIds = componentWithout(edge.toNodeId, edge.id);
     if (movedNodeIds.includes(edge.fromNodeId) || movedNodeIds.length < 2) {
       throw new Error('Q3 P-M04 TO must expose an acyclic multi-node moving side.');
     }
@@ -66,6 +92,7 @@ export async function q3ConnectedRunAuthority(page) {
       moved.has(candidate.fromNodeId) && moved.has(candidate.toNodeId)
     )).map((candidate) => candidate.id).sort();
     if (!internalEdgeIds.length) throw new Error('Q3 CONNECTED_RUN must contain an internal moving edge.');
+    const selected = position(edge.toNodeId);
     return {
       canonicalId: edge.id,
       endpoint: 'TO',
@@ -73,7 +100,7 @@ export async function q3ConnectedRunAuthority(page) {
       anchorNodeId: edge.fromNodeId,
       movedNodeIds,
       internalEdgeIds,
-      requestedPosition: add(point(topology, edge.toNodeId), { x: 60, y: 0, z: 40 }),
+      requestedPosition: { x: selected.x + 60, y: selected.y, z: selected.z + 40 },
     };
   });
 }
@@ -84,18 +111,22 @@ export async function q3ConcurrencyAuthority(page) {
       ?.__topologyEditAuthoringController;
     const topology = controller.session.currentTopology();
     const rows = controller.tableAdapter.runtime.projection.rows;
+    const position = (id) => {
+      const node = topology.nodes.find((item) => item.id === id);
+      if (!node) throw new Error(`Missing node ${id}.`);
+      return { ...node.position };
+    };
     const edgeFor = (componentKey) => {
       const row = rows.find((item) => item.identity?.componentKey === componentKey);
       return topology.edges.find((item) => item.id === row?.identity?.canonicalId);
     };
-    const target = edgeFor('P-R42');
-    const unrelated = edgeFor('P-TAIL');
+    const target = edgeFor('P-R42'); const unrelated = edgeFor('P-TAIL');
     if (!target || !unrelated) throw new Error('Q3 concurrency edges are unavailable.');
     return {
       targetEdgeId: target.id,
       targetFromNodeId: target.fromNodeId,
       targetToNodeId: target.toNodeId,
-      targetFromPosition: point(topology, target.fromNodeId),
+      targetFromPosition: position(target.fromNodeId),
       unrelatedNodeId: unrelated.toNodeId,
     };
   });
@@ -110,12 +141,7 @@ export async function selectTableRow(page, canonicalId) {
   await expect(page.locator('[data-table-all-properties]')).toBeVisible();
 }
 
-export async function stageNodePosition(page, {
-  canonicalId,
-  endpoint,
-  movementMode,
-  position,
-}) {
+export async function stageNodePosition(page, { canonicalId, endpoint, movementMode, position }) {
   await selectTableRow(page, canonicalId);
   const panel = page.locator(`[data-table-node-endpoint="${endpoint}"]`);
   await expect(panel).toBeVisible();
@@ -153,8 +179,7 @@ export async function authorityEvidence(page) {
   return page.evaluate(() => {
     const host = document.querySelector('[data-role="topology-edit-render-host"]');
     const controller = host?.__topologyEditAuthoringController;
-    const runtime = controller?.tableAdapter?.runtime;
-    const journal = controller?.session?.journal;
+    const runtime = controller?.tableAdapter?.runtime; const journal = controller?.session?.journal;
     return {
       canonicalHash: controller?.session?.currentTopology?.()?.canonicalTopologyHash ?? null,
       journalHash: journal?.journalHash ?? null,
@@ -183,10 +208,15 @@ export async function geometryEvidence(page, nodeIds, edgeIds = []) {
   return page.evaluate(({ nodeIds: nodes, edgeIds: edges }) => {
     const topology = document.querySelector('[data-role="topology-edit-render-host"]')
       ?.__topologyEditAuthoringController.session.currentTopology();
-    const positions = Object.fromEntries(nodes.map((id) => [id, point(topology, id)]));
+    const position = (id) => {
+      const node = topology.nodes.find((item) => item.id === id);
+      if (!node) throw new Error(`Missing node ${id}.`);
+      return { ...node.position };
+    };
+    const positions = Object.fromEntries(nodes.map((id) => [id, position(id)]));
     const lengths = Object.fromEntries(edges.map((id) => {
       const edge = topology.edges.find((row) => row.id === id);
-      const from = point(topology, edge.fromNodeId); const to = point(topology, edge.toNodeId);
+      const from = position(edge.fromNodeId); const to = position(edge.toNodeId);
       return [id, Math.hypot(to.x - from.x, to.y - from.y, to.z - from.z)];
     }));
     return { positions, lengths };
@@ -217,31 +247,4 @@ async function open3dTable(page) {
   if (!(await panel.evaluate((node) => node.open))) await panel.locator(':scope > summary').click();
   await expect.poll(() => host.getAttribute('data-topology-edit-table-projection-hash')).toBeTruthy();
   return host;
-}
-
-function point(topology, nodeId) {
-  const node = topology.nodes.find((row) => row.id === nodeId);
-  if (!node) throw new Error(`Missing node ${nodeId}.`);
-  return { ...node.position };
-}
-function add(left, right) {
-  return { x: left.x + right.x, y: left.y + right.y, z: left.z + right.z };
-}
-function componentWithoutEdge(topology, startNodeId, blockedEdgeId) {
-  const adjacency = new Map(topology.nodes.map((node) => [node.id, []]));
-  for (const edge of topology.edges) {
-    if (edge.id === blockedEdgeId) continue;
-    adjacency.get(edge.fromNodeId)?.push(edge.toNodeId);
-    adjacency.get(edge.toNodeId)?.push(edge.fromNodeId);
-  }
-  const visited = new Set([startNodeId]);
-  const queue = [startNodeId];
-  while (queue.length) {
-    const current = queue.shift();
-    for (const peer of [...(adjacency.get(current) ?? [])].sort()) {
-      if (visited.has(peer)) continue;
-      visited.add(peer); queue.push(peer);
-    }
-  }
-  return [...visited].sort();
 }

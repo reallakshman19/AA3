@@ -63,17 +63,21 @@ test('late validation result cannot authorize Apply after visible selection chan
   const diagnostics = collectBrowserDiagnostics(page);
   const host = await openQ3(page);
   const ids = await q3CanonicalIds(page);
-  const before = await authorityEvidence(page);
-  expect(before.webglContextType).toMatch(/WebGL/i);
-  expect(before.webglContextLost).toBe(false);
+  const initial = await authorityEvidence(page);
+  expect(initial.webglContextType).toMatch(/WebGL/i);
+  expect(initial.webglContextLost).toBe(false);
 
   await stagePipe(page, ids.pipeId, 2800);
+  const before = await authorityEvidence(page);
+  expect(before.selectionPrimaryId).toBe(ids.pipeId);
+  assertEngineeringAuthorityUnchanged(expect, initial, before);
+
   await page.locator('[data-table-action="preview"]').click();
   await expect.poll(() => tableEvidence(page).then((row) => row.previewHash)).toBeTruthy();
   const previewEvidence = await tableEvidence(page);
   const ghostCountBefore = await ghostCount(page);
   expect(ghostCountBefore).toBeGreaterThan(0);
-  expect((await authorityEvidence(page)).canonicalHash).toBe(before.canonicalHash);
+  assertEngineeringAuthorityUnchanged(expect, initial, await authorityEvidence(page));
 
   await page.locator('[data-table-action="validate"]').click();
   await page.waitForFunction(() => globalThis.__a3d001ValidationResponsePending === true);
@@ -89,8 +93,7 @@ test('late validation result cannot authorize Apply after visible selection chan
   await expect(host).toHaveAttribute('data-topology-edit-selection-primary-id', ids.valveId);
   const changedSelection = await authorityEvidence(page);
   expect(changedSelection.selectionRevision).toBeGreaterThan(request.selectionRevision);
-  expect(changedSelection.canonicalHash).toBe(before.canonicalHash);
-  expect(changedSelection.journalHash).toBe(before.journalHash);
+  assertEngineeringAuthorityUnchanged(expect, initial, changedSelection);
 
   await page.evaluate(() => {
     globalThis.__a3d001HoldValidationMessages = false;
@@ -101,17 +104,12 @@ test('late validation result cannot authorize Apply after visible selection chan
   const after = await authorityEvidence(page);
   const table = await tableEvidence(page);
   const ghostCountAfter = await ghostCount(page);
-  expect(after.canonicalHash).toBe(before.canonicalHash);
-  expect(after.journalHash).toBe(before.journalHash);
-  expect(after.activeLedgerHash).toBe(before.activeLedgerHash);
-  expect(after.sessionVersion).toBe(before.sessionVersion);
-  expect(after.sourceHash).toBe(before.sourceHash);
-  expect(after.activeCommandCount).toBe(before.activeCommandCount);
+  assertEngineeringAuthorityUnchanged(expect, initial, after);
   expect(after.webglContextLost).toBe(false);
   expect(table.validationStatus).toBe('');
   expect(table.acceptedResponse).toBeNull();
   expect(table.activeRequest).toBeNull();
-  expect(table.error).toMatch(/stale selectionRevision/i);
+  expect(table.error).toMatch(/stale validation response selectionRevision/i);
   expect(ghostCountAfter).toBe(ghostCountBefore);
   await expect(page.locator('[data-table-action="apply"]')).toBeDisabled();
 
@@ -132,7 +130,8 @@ test('late validation result cannot authorize Apply after visible selection chan
       'ASSERT_STALE_REJECTION',
     ],
     canonicalIds: ids,
-    before,
+    initialAuthority: initial,
+    frozenValidationBasis: before,
     preview: {
       previewHash: previewEvidence.previewHash,
       ghostCount: ghostCountBefore,
@@ -142,7 +141,7 @@ test('late validation result cannot authorize Apply after visible selection chan
     afterLateResponse: after,
     validationState: table,
     ghostCountAfter,
-    canonicalMutationCount: after.activeCommandCount - before.activeCommandCount,
+    canonicalMutationCount: after.activeCommandCount - initial.activeCommandCount,
   };
   await testInfo.attach('a3d-001-stale-validation-ledger', {
     body: JSON.stringify(ledger, null, 2),
@@ -255,6 +254,15 @@ async function ghostCount(page) {
     document.querySelector('[data-role="topology-edit-render-host"]')
       .__topologyEditAuthoringController.viewportBackend.groups.ghostGroup.children.length
   ));
+}
+
+function assertEngineeringAuthorityUnchanged(expectApi, baseline, current) {
+  expectApi(current.canonicalHash).toBe(baseline.canonicalHash);
+  expectApi(current.journalHash).toBe(baseline.journalHash);
+  expectApi(current.activeLedgerHash).toBe(baseline.activeLedgerHash);
+  expectApi(current.activeCommandCount).toBe(baseline.activeCommandCount);
+  expectApi(current.sessionVersion).toBe(baseline.sessionVersion);
+  expectApi(current.sourceHash).toBe(baseline.sourceHash);
 }
 
 function collectBrowserDiagnostics(page) {

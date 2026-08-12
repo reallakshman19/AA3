@@ -23,7 +23,7 @@ export function buildLafeaWorkbenchOrchestrationProjection(stageValue) {
     PREPARATION: preparationSection(stage, adapter, readiness, preparation),
     DISCRETIZATION: discretizationSection(stage, adapter, custody),
     AUTHORIZATION: authorizationSection(stage, adapter, readiness, preparation, custody),
-    EXECUTION: executionSection(stage),
+    EXECUTION: executionSection(stage, readiness),
     RESULTS: resultsSection(stage, readiness),
     RELEASE: releaseSection(readiness),
   };
@@ -130,20 +130,23 @@ function authorizationSection(stage, adapter, readiness, preparation, custody) {
   return section('READY', [], refs, ['AUTHORIZE_SOLVE']);
 }
 
-function executionSection(stage) {
-  if (stage.domainFirstProfileActive) return section('NOT_STARTED', ['CANONICAL_SOLVER_MODEL_NOT_COMPILED'], [], []);
+function executionSection(stage, readiness) {
   const execution = stage.execution;
   if (!execution) return section('NOT_STARTED', ['EXECUTION_NOT_RUN'], [], []);
-  if (execution.status === 'QUALIFIED') return section('COMPLETE', [], [ref('EXECUTION', executionHash(execution))], ['VIEW']);
+  if (execution.status === 'QUALIFIED') {
+    if (stage.domainFirstProfileActive && readiness?.resultReady !== true) {
+      return section('BLOCKED', domainExecutionReasons(readiness), [], ['VIEW']);
+    }
+    return section('COMPLETE', [], [ref('EXECUTION', executionHash(execution))], ['VIEW']);
+  }
   return section('BLOCKED', [`EXECUTION_${execution.status ?? 'UNKNOWN'}`], [], []);
 }
 
 function resultsSection(stage, readiness) {
-  if (stage.domainFirstProfileActive) return section('NOT_STARTED', ['EXECUTION_REQUIRED'], [], []);
   if (readiness?.resultReady) return section('COMPLETE', [], resultRefs(stage.lifecycle), ['VIEW_RESULTS', 'EXPORT_RESULTS']);
   const executed = stage.execution?.status === 'QUALIFIED';
   return section(executed ? 'BLOCKED' : 'NOT_STARTED',
-    [executed ? 'RESULT_EVIDENCE_NOT_CURRENT' : 'EXECUTION_REQUIRED'], [], []);
+    executed ? domainExecutionReasons(readiness) : ['EXECUTION_REQUIRED'], [], []);
 }
 
 function releaseSection(readiness) {
@@ -160,6 +163,11 @@ function releaseSection(readiness) {
   return section('BLOCKED', reasons, refs, refs.length ? ['VIEW_RELEASE'] : []);
 }
 
+function domainExecutionReasons(readiness) {
+  const reasons = readiness?.blockingReasons?.filter((reason) =>
+    reason.startsWith('DOMAIN_FIRST_')) ?? [];
+  return reasons.length ? reasons : ['RESULT_EVIDENCE_NOT_CURRENT'];
+}
 function preparationRefs(projection) {
   const refs = [];
   if (projection?.evidenceHash) refs.push(ref('PREPARATION_EVIDENCE', projection.evidenceHash));
@@ -197,7 +205,7 @@ function section(state, reasons, evidenceRefs, allowedActions) {
     allowedActions: unique(allowedActions),
   });
 }
-function executionHash(execution) { return execution.result?.semanticHash ?? execution.result?.artifactHash ?? execution.canonicalInput?.semanticHash ?? null; }
+function executionHash(execution) { return execution.compiledExecutionHash ?? execution.result?.semanticHash ?? execution.result?.artifactHash ?? execution.canonicalInput?.semanticHash ?? null; }
 function documentRef(stage) { return stage.lifecycleBinding?.currentDocumentDigest ?? stage.lifecycleBinding?.boundDocumentDigest ?? null; }
 function requireStage(value) { if (!value || typeof value !== 'object' || typeof value.stageId !== 'string') throw new TypeError('LAFEA_WORKBENCH_ORCHESTRATION_STAGE_REQUIRED'); return value; }
 function unique(values) { return [...new Set(values.filter((value) => value !== null && value !== undefined))]; }

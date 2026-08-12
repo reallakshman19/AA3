@@ -16,10 +16,10 @@ import { applyDiagonalScalingToVector } from '../linear-fea-solver/scaling.js';
  * factorization, and retain the best finite iterate. Stage 2 must not accept a
  * numerically weaker nonlinear linearization than the frozen linear controls.
  *
- * The helper also applies the same normalized-residual, energy-balance and
- * conditioning thresholds as the qualified solver. A base-solver BLOCK is a
- * hard failure for a friction iteration; WARN is retained as conditional
- * evidence, matching the existing linear execution contract.
+ * Normalized residual and conditioning are governing numerical gates. The
+ * base solver's energy expression is retained only as parity evidence because
+ * with R = K U - F its stated external-work form is algebraically identical to
+ * 0.5 U^T K U and therefore is not an independent qualification check.
  */
 export function solveCaesarFrictionRefinedDenseSystem({ factorization, matrix, rhs, policies }) {
   if (!factorization || !Number.isInteger(factorization.m) || factorization.m < 0) {
@@ -133,9 +133,9 @@ function qualifyDenseLinearization({
     conditionWarn,
     conditionBlock,
   );
-  const energy = freePartitionEnergyBalance(matrix, factorization.m, solution, rhs, energyLimit);
+  const energy = freePartitionEnergyIdentity(matrix, factorization.m, solution, rhs, energyLimit);
   return Object.freeze({
-    status: worstQualificationStatus(residualStatus, conditionStatus, energy.status),
+    status: worstQualificationStatus(residualStatus, conditionStatus),
     residual: Object.freeze({
       checkId: 'ALGEBRAIC_RESIDUAL_NORMALIZED',
       value: relativeResidual,
@@ -145,9 +145,11 @@ function qualifyDenseLinearization({
       limitSource: policies.normalizedResidualLimit.source,
       warnLimitSource: policies.normalizedResidualWarnLimit.source,
     }),
-    energyBalance: Object.freeze({
+    energyIdentity: Object.freeze({
       ...energy,
+      policyLimit: energyLimit,
       limitSource: policies.energyBalanceLimit.source,
+      qualificationContribution: 'NONE_INFORMATIONAL_ALGEBRAIC_IDENTITY',
     }),
     conditioning: Object.freeze({
       checkId: 'CONDITION_ESTIMATE',
@@ -162,12 +164,12 @@ function qualifyDenseLinearization({
 }
 
 /**
- * BM4_L has no nonzero prescribed displacement. Therefore the qualified
- * solver's full-system energy identity reduces exactly to this free-partition
- * form: grounded normal/friction springs are already in Kff and constrained
- * DOFs contribute zero work.
+ * Reproduce the base solver's energy expression as informational parity
+ * evidence only. Since externalWork = 0.5 U^T F + 0.5 U^T(KU-F), it reduces
+ * algebraically to internalEnergy = 0.5 U^T K U and cannot independently
+ * qualify the solved state.
  */
-function freePartitionEnergyBalance(matrix, size, solution, rhs, limit) {
+function freePartitionEnergyIdentity(matrix, size, solution, rhs, policyLimit) {
   const predicted = matVec(matrix, size, solution);
   const residual = predicted.map((value, index) => value - rhs[index]);
   const internalEnergy = 0.5 * dot(solution, predicted);
@@ -175,10 +177,10 @@ function freePartitionEnergyBalance(matrix, size, solution, rhs, limit) {
   const reference = Math.max(Math.abs(internalEnergy), Math.abs(externalWork), Number.MIN_VALUE);
   const relativeMismatch = Math.abs(internalEnergy - externalWork) / reference;
   return {
-    checkId: 'ENERGY_BALANCE_RELATIVE',
+    checkId: 'ENERGY_IDENTITY_RELATIVE_INFORMATIONAL',
     value: relativeMismatch,
-    limit,
-    status: Number.isFinite(relativeMismatch) && relativeMismatch <= limit ? 'PASS' : 'BLOCK',
+    policyLimit,
+    status: Number.isFinite(relativeMismatch) ? 'INFORMATIONAL' : 'INVALID_INFORMATIONAL',
     internalEnergy,
     externalWork,
   };

@@ -2,25 +2,19 @@ import { requireSolverExecution } from '../core/linear-fea-solver/index.js';
 import { deepFreeze } from '../core/shared-piping-model/immutable.js';
 
 export const LFEA_NATIVE_VERIFICATION_SCHEMA = 'lfea-native-verification/v1';
-export const LFEA_NATIVE_VERIFICATION_STATUS = Object.freeze({
-  CURRENT: 'CURRENT',
-  BLOCKED: 'BLOCKED',
-});
+export const LFEA_NATIVE_VERIFICATION_STATUS = Object.freeze({ CURRENT: 'CURRENT', BLOCKED: 'BLOCKED' });
 
 /** Project exact retained evidence for the current native run. No numerical quantity is recomputed. */
 export function createLfeaNativeVerification(context = {}) {
   const reasons = blockingReasons(context);
   if (reasons.length) return blockedVerification(context, reasons);
-
   const currentEntry = currentHistoryEntry(context.historySnapshot);
   const raw = context.executionState.execution;
   const recovery = context.resultsState.results;
   const recoveryByCase = new Map(recovery.caseRecoveries.map((row) => [row.caseId, row]));
   const cases = raw.caseExecutions.map((rawCase) => verificationCase(
-    rawCase,
-    recoveryByCase.get(rawCase.caseId),
+    rawCase, recoveryByCase.get(rawCase.caseId),
   ));
-
   return deepFreeze({
     schema: LFEA_NATIVE_VERIFICATION_SCHEMA,
     status: LFEA_NATIVE_VERIFICATION_STATUS.CURRENT,
@@ -31,6 +25,7 @@ export function createLfeaNativeVerification(context = {}) {
     application: applicationEvidence(context.applicationIdentity),
     publicationReadiness: context.publicationReadiness,
     supportPublication: supportPublicationEvidence(context.supportPublicationState),
+    b31Publication: b31PublicationEvidence(context.b31PublicationState),
     cases: Object.freeze(cases),
   });
 }
@@ -69,6 +64,7 @@ function blockedVerification(context, reasons) {
     application: applicationEvidence(context.applicationIdentity),
     publicationReadiness: context.publicationReadiness ?? null,
     supportPublication: supportPublicationEvidence(context.supportPublicationState),
+    b31Publication: b31PublicationEvidence(context.b31PublicationState),
     cases: Object.freeze([]),
   });
 }
@@ -111,7 +107,6 @@ function executionEvidence(execution) {
     diagnostics: deepFreeze({ ...execution.diagnostics }),
   });
 }
-
 function recoveryEvidence(row) {
   return deepFreeze({
     executionStatus: row.executionStatus,
@@ -149,15 +144,37 @@ function supportPublicationEvidence(state) {
   });
 }
 
-function sourceEvidence(snapshot, raw) {
+function b31PublicationEvidence(state) {
+  const status = state?.publicationCurrentness ?? 'NONE';
+  const authorization = state?.authorization ?? null;
+  const application = status === 'CURRENT' ? state?.application : null;
   return deepFreeze({
-    fileName: text(snapshot?.fileName),
-    contentSha256: text(snapshot?.contentSha256),
-    sourceUnit: text(snapshot?.sourceUnit),
-    sourceBundleSemanticHash: raw.sourceBundleSemanticHash,
+    status,
+    authorityStatus: state?.authorityCurrentness ?? 'NONE',
+    authoritySemanticHash: state?.authority?.semanticHash ?? null,
+    authorizationSemanticHash: authorization?.semanticHash ?? null,
+    reviewerIdentity: authorization?.reviewerIdentity ?? null,
+    codeProfileSemanticHash: state?.authority?.codeProfile?.semanticHash ?? null,
+    editionDatasetSemanticHash: state?.authority?.editionDataset?.semanticHash ?? null,
+    applicationSemanticHash: application?.semanticHash ?? null,
+    applicationEvidenceHash: application?.evidenceHash ?? null,
+    codeRecoveries: Object.freeze((status === 'CURRENT' ? state?.codeRecoveries : []) ?? []),
+    codeResults: Object.freeze((application?.results ?? []).map((row) => deepFreeze({
+      checkId: row.checkId,
+      codePointId: row.codeResult.codePointId,
+      category: row.codeResult.category,
+      semanticHash: row.codeResult.semanticHash,
+      evidenceHash: row.codeResult.evidenceHash,
+    }))),
   });
 }
 
+function sourceEvidence(snapshot, raw) {
+  return deepFreeze({
+    fileName: text(snapshot?.fileName), contentSha256: text(snapshot?.contentSha256),
+    sourceUnit: text(snapshot?.sourceUnit), sourceBundleSemanticHash: raw.sourceBundleSemanticHash,
+  });
+}
 function authorityEvidence(preFlight, raw, recovery) {
   return deepFreeze({
     preFlightSemanticHash: preFlight?.semanticHash ?? null,
@@ -175,27 +192,18 @@ function authorityEvidence(preFlight, raw, recovery) {
     recoveryProfileSemanticHash: recovery.recoveryProfileSemanticHash,
   });
 }
-
 function applicationEvidence(identity = {}) {
   return deepFreeze({
-    application: text(identity.application),
-    mode: text(identity.mode),
-    applicationVersion: text(identity.applicationVersion),
-    buildSha: text(identity.buildSha),
+    application: text(identity.application), mode: text(identity.mode),
+    applicationVersion: text(identity.applicationVersion), buildSha: text(identity.buildSha),
     buildTime: text(identity.buildTime),
   });
 }
-
 function currentHistoryEntry(snapshot) {
   return snapshot?.entries?.find((entry) => entry.relation === 'CURRENT') ?? null;
 }
-function text(value) {
-  const result = String(value ?? '').trim();
-  return result || null;
-}
-function compareAscii(left, right) {
-  return left < right ? -1 : left > right ? 1 : 0;
-}
+function text(value) { const result = String(value ?? '').trim(); return result || null; }
+function compareAscii(left, right) { return left < right ? -1 : left > right ? 1 : 0; }
 function verificationError(code, message) {
   const error = new TypeError(message);
   error.code = code;

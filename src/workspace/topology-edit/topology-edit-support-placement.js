@@ -7,9 +7,12 @@ export const CERTIFIED_SUPPORT_PLACEMENT_AUTHORITY = 'CERTIFIED_TABLE_OVERRIDE';
 const STRAIGHT_HOST_TYPES = new Set(['PIPE', 'STRAIGHT', 'STRAIGHT_ELEMENT']);
 const EPSILON_MM = 1e-9;
 
+export function certifiedTopologyEditSupportPlacementOrigin(support) {
+  return certifiedOverride(support?.placementOverride)?.origin ?? null;
+}
+
 export function effectiveTopologyEditSupportOrigin(support) {
-  const override = certifiedOverride(support?.placementOverride);
-  return override ? override.origin : finitePoint(support?.origin);
+  return certifiedTopologyEditSupportPlacementOrigin(support) ?? finitePoint(support?.origin);
 }
 
 export function effectiveTopologyEditSupportStationMm(topology, support) {

@@ -1,0 +1,75 @@
+{
+  "schema": "m047-bm4l-l13-friction-support-localization/v1",
+  "benchmarkId": "BM4_L",
+  "caseId": "L13",
+  "stage": "F2.1_SUPPORT_STATE_LOCALIZATION",
+  "baseline": {
+    "sourcePr": 1067,
+    "governedRows": 1914,
+    "passedRows": 1719,
+    "failedRows": 195,
+    "passRatePercent": 89.81191222570533,
+    "stateCounts": {"stick": 7, "sliding": 19},
+    "frictionStiffnessNPerM": 175126835.24647635,
+    "coefficientOfFriction": 0.3,
+    "contactAssumption": "RETAIN_L6_GROUNDED_RESTRAINT_STATE_DIAGNOSTIC_ONLY"
+  },
+  "failureBreakdown": {
+    "DISPLACEMENT": {"pass": 279, "total": 291, "fail": 12},
+    "FORCE": {"pass": 77, "total": 90, "fail": 13},
+    "GLOBAL_END_FORCE_FROM": {"pass": 256, "total": 288, "fail": 32},
+    "GLOBAL_END_FORCE_TO": {"pass": 255, "total": 288, "fail": 33},
+    "GLOBAL_END_MOMENT_FROM": {"pass": 249, "total": 288, "fail": 39},
+    "GLOBAL_END_MOMENT_TO": {"pass": 249, "total": 288, "fail": 39},
+    "MOMENT": {"pass": 90, "total": 90, "fail": 0},
+    "ROTATION": {"pass": 264, "total": 291, "fail": 27}
+  },
+  "restraintForceFailures": [
+    {"node":"20030","component":"UZ","diagnostic":8.041139756756746,"reference":16.215370178222656,"relativeError":0.5041038429356336,"absoluteErrorN":8.17423042146591},
+    {"node":"20170","component":"UZ","diagnostic":3076.23551500773,"reference":2767.187255859375,"relativeError":0.11168317521481841,"absoluteErrorN":309.0482591483551},
+    {"node":"20250","component":"UZ","diagnostic":-3098.4901938579046,"reference":-2809.860595703125,"relativeError":0.10272025544475613,"absoluteErrorN":288.6295981547796},
+    {"node":"20390","component":"UX","diagnostic":57.477454877935294,"reference":116.42897033691406,"relativeError":0.5063302998247684,"absoluteErrorN":58.95151545897877},
+    {"node":"20390","component":"UZ","diagnostic":-25.835720638324595,"reference":-18.070411682128906,"relativeError":0.4297250717245887,"absoluteErrorN":7.765308956195689},
+    {"node":"20440","component":"UX","diagnostic":470.90900886204423,"reference":415.6678466796875,"relativeError":0.13289736654787596,"absoluteErrorN":55.24116218235673},
+    {"node":"20550","component":"UZ","diagnostic":53.60638527343905,"reference":109.69990539550781,"relativeError":0.511336084747123,"absoluteErrorN":56.09352012206876},
+    {"node":"20710","component":"UZ","diagnostic":-559.8113609766077,"reference":-624.7383422851562,"relativeError":0.10392667924152027,"absoluteErrorN":64.92698130854853},
+    {"node":"21860","component":"UX","diagnostic":-24.98041367076458,"reference":-20.94451904296875,"relativeError":0.19269454789178908,"absoluteErrorN":4.03589462779583},
+    {"node":"21930","component":"UX","diagnostic":-3.1360465501259553,"reference":-4.958818435668945,"relativeError":0.36758189661305835,"absoluteErrorN":1.82277188554299},
+    {"node":"22020","component":"UX","diagnostic":-0.6955509417487271,"reference":-1.5089114904403687,"relativeError":0.5390379447997087,"absoluteErrorN":0.8133605486916415},
+    {"node":"22140","component":"UZ","diagnostic":701.479380018424,"reference":628.0620727539062,"relativeError":0.11689498610002015,"absoluteErrorN":73.41730726451772},
+    {"node":"22310","component":"UZ","diagnostic":117.38400061905969,"reference":84.60094451904297,"relativeError":0.38750224700668123,"absoluteErrorN":32.78305610001672}
+  ],
+  "localizationMethod": {
+    "supportReactionResidual": "EUCLIDEAN_NORM_OF_DIAGNOSTIC_MINUS_CAESAR_REFERENCE_FORCE_AT_SITE",
+    "nearestFailureBurden": "EACH_FAILED_GOVERNED_COMPONENT_ASSIGNED_TO_NEAREST_FRICTION_SITE_BY_ANALYSIS_GRAPH_EDGE_DISTANCE; TIES_SPLIT_EQUALLY",
+    "authority": "DIAGNOSTIC_LOCALIZATION_ONLY_NOT_MECHANICS_OR_STATE_AUTHORITY"
+  },
+  "summary": {
+    "failedRestraintForceComponents": 13,
+    "frictionSitesWithAtLeastOneFailedRestraintForceComponent": 12,
+    "gapSiteFailedRestraintForceComponents": 4,
+    "nonGapSiteFailedRestraintForceComponents": 9,
+    "nearestFailureBurdenAtGapSites": 12,
+    "nearestFailureBurdenAtNonGapSites": 183,
+    "nearestFailureBurdenSlidingSites": 154,
+    "nearestFailureBurdenStickSites": 41
+  },
+  "rankings": {
+    "topSupportForceResidualNodes": ["20170","20250","20090","20030","21740","22140","20710","21800","20390","20440"],
+    "topTopologicalBurdenNodes": ["20710","21930","21860","22020","20170","22140","21740","22070","21800","20440"]
+  },
+  "decision": {
+    "nextMechanicsTarget": "DOCUMENTED_FRICTION_STATE_HISTORY_CONTROLS_ON_L13_WITHOUT_PARAMETER_FITTING",
+    "gapContactFirst": false,
+    "reason": "Only 4 of 13 restraint-force failures and 12 of 195 weighted nearest-failure burden are at positive-gap friction sites; ordinary sliding-site behavior dominates the present diagnostic error surface.",
+    "l13QualifiedAccuracyAuthorized": false,
+    "l7ExecutionAuthorized": false
+  },
+  "prohibitions": [
+    "DO_NOT_USE_NEAREST_FAILURE_BURDEN_AS_PHYSICAL_CAUSAL_ATTRIBUTION",
+    "DO_NOT_SELECT_STICK_SLIDE_OR_GAP_STATE_FROM_REFERENCE_ERROR",
+    "DO_NOT_FIT_SLIDE_MULTIPLIER_FROM_SITE_RESIDUALS",
+    "DO_NOT_CHANGE_COMPARATOR_TOLERANCES"
+  ],
+  "siteLedgerFile": "m047-bm4l-l13-friction-support-localization-sites.csv"
+}

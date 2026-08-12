@@ -9,6 +9,11 @@ import { applyDiagonalScalingToVector } from '../linear-fea-solver/scaling.js';
  * product-error-compensated residual, solve residual corrections with the same
  * factorization, and retain the best finite iterate. Stage 2 must not accept a
  * numerically weaker nonlinear linearization than the frozen linear controls.
+ *
+ * The helper also applies the same normalized-residual and conditioning
+ * thresholds as the qualified solver. A base-solver BLOCK is a hard failure for
+ * a friction iteration; WARN is retained as conditional evidence, matching the
+ * existing linear execution contract.
  */
 export function solveCaesarFrictionRefinedDenseSystem({ factorization, matrix, rhs, policies }) {
   if (!factorization || !Number.isInteger(factorization.m) || factorization.m < 0) {
@@ -63,6 +68,20 @@ export function solveCaesarFrictionRefinedDenseSystem({ factorization, matrix, r
     }
   }
 
+  const numericalQualification = qualifyDenseLinearization(
+    factorization,
+    bestRelativeResidual,
+    policies,
+  );
+  if (numericalQualification.status === 'BLOCK') {
+    const error = new Error(
+      `M047 friction linearization failed base-solver numerical qualification: ${JSON.stringify(numericalQualification)}.`,
+    );
+    error.code = 'CAESAR_FRICTION_LINEARIZATION_NUMERICALLY_BLOCKED';
+    error.qualification = numericalQualification;
+    throw error;
+  }
+
   return Object.freeze({
     solution: Object.freeze([...bestSolution]),
     evidence: Object.freeze({
@@ -75,8 +94,62 @@ export function solveCaesarFrictionRefinedDenseSystem({ factorization, matrix, r
       initialRelativeResidual: history[0],
       finalRelativeResidual: bestRelativeResidual,
       history: Object.freeze(history),
+      numericalQualification,
     }),
   });
+}
+
+function qualifyDenseLinearization(factorization, relativeResidual, policies) {
+  const residualPass = policyNumber(policies, 'normalizedResidualLimit', { nonnegative: true });
+  const residualWarn = policyNumber(policies, 'normalizedResidualWarnLimit', { nonnegative: true });
+  const conditionWarn = policyNumber(policies, 'conditionWarning', { nonnegative: true });
+  const conditionBlock = policyNumber(policies, 'conditionBlock', { nonnegative: true });
+  if (residualWarn < residualPass) {
+    throw new TypeError('normalizedResidualWarnLimit must be greater than or equal to normalizedResidualLimit.');
+  }
+  if (conditionBlock < conditionWarn) {
+    throw new TypeError('conditionBlock must be greater than or equal to conditionWarning.');
+  }
+  const residualStatus = thresholdStatus(relativeResidual, residualPass, residualWarn);
+  const conditionStatus = thresholdStatus(
+    Number(factorization.conditionEstimate),
+    conditionWarn,
+    conditionBlock,
+  );
+  return Object.freeze({
+    status: worstQualificationStatus(residualStatus, conditionStatus),
+    residual: Object.freeze({
+      checkId: 'ALGEBRAIC_RESIDUAL_NORMALIZED',
+      value: relativeResidual,
+      passLimit: residualPass,
+      warnLimit: residualWarn,
+      status: residualStatus,
+      limitSource: policies.normalizedResidualLimit.source,
+      warnLimitSource: policies.normalizedResidualWarnLimit.source,
+    }),
+    conditioning: Object.freeze({
+      checkId: 'CONDITION_ESTIMATE',
+      value: Number(factorization.conditionEstimate),
+      passLimit: conditionWarn,
+      blockLimit: conditionBlock,
+      status: conditionStatus,
+      limitSource: policies.conditionWarning.source,
+      blockLimitSource: policies.conditionBlock.source,
+    }),
+  });
+}
+
+function thresholdStatus(value, passLimit, blockLimit) {
+  if (!Number.isFinite(value)) return 'BLOCK';
+  if (value <= passLimit) return 'PASS';
+  if (value <= blockLimit) return 'WARN';
+  return 'BLOCK';
+}
+
+function worstQualificationStatus(...statuses) {
+  if (statuses.includes('BLOCK')) return 'BLOCK';
+  if (statuses.includes('WARN')) return 'WARN';
+  return 'PASS';
 }
 
 function solveScaledDenseSystem(factorization, rhs) {

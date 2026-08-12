@@ -63,6 +63,23 @@ the capped support force is
 
 That vector is inserted as a nodal load in the next active-set iteration. The slide checks include cap magnitude and anti-parallel direction.
 
+## ACCDB extraction engine
+
+Stage 2 no longer requires Microsoft ACE/OLE DB for its production command. `scripts/lfea-caesar-accdb-mdb-export.mjs` adapts the raw named-table extraction boundary from `reallaksh19/XML_Compare_Utilities`:
+
+- source repository: `reallaksh19/XML_Compare_Utilities`;
+- source commit: `d83c62214b7a6486c17698225ea4e11bc3121cb6`;
+- source parser: `parser/accdb-mdb.js`;
+- source parser blob: `2ea596b6e9fb65e386e5cbb256f4141ce7bb595b`;
+- extraction engine: `mdb-reader@2.2.6`;
+- browser Buffer shim: `buffer@6.0.3`.
+
+The adapted boundary intentionally does only what Stage 2 needs: open the binary ACCDB, enumerate tables, resolve the exact requested table names case-insensitively, read their ordered columns and rows, normalize binary/date values for JSON transport, and emit the existing `caesar-accdb-raw-export/v1` contract.
+
+It does **not** copy the XML utility's higher-level CAESAR interpretation or fallback heuristics. Advanced_Analysis remains the authority for required tables, units, identities, configuration resolution, assembly, recovery and qualification. Missing required tables, unsafe table names, unsupported cell types and extraction failures remain fatal.
+
+The browser module versions are pinned rather than using the XML application's major-version CDN aliases. No silent ACE fallback is performed. The legacy PowerShell/ACE extractor remains in the repository as an independent earlier tool, not as the Stage 2 fallback path.
+
 ## Integration boundary
 
 The ACCDB adapter's private mechanics are deliberately not duplicated. `withSolverExecutionInterceptor()` provides a synchronous scoped boundary around the final linear equation solve. Ordinary linear calls delegate directly to the original `compileSolverExecution()`.
@@ -105,7 +122,7 @@ A state is not accepted from displacement stationarity alone. The gates require 
 
 ## Local production command
 
-On Windows with the pinned `BM4_L.ACCDB` and Microsoft ACE OLE DB provider:
+The command is now cross-platform. It requires Node, the repository dependencies, a Chromium/Chrome runtime usable by Playwright, network access to the pinned `esm.sh` browser modules, and the pinned `BM4_L.ACCDB`. Set `LFEA_ACCDB_BROWSER_CHANNEL` only when an explicit installed Playwright browser channel must be selected.
 
 ```powershell
 node scripts/lfea-m047-bm4l-friction.mjs `
@@ -116,7 +133,7 @@ node scripts/lfea-m047-bm4l-friction.mjs `
   --evidence-out reports/m047-bm4l-friction-evidence.json
 ```
 
-The standard ACCDB comparison command can then consume the emitted actual-result package.
+The emitted actual-result package remains compatible with the standard ACCDB benchmark comparison contract.
 
 ## Current qualification boundary
 
@@ -125,7 +142,7 @@ L13/L7/L15 mechanics are implemented. L1 is intentionally fail-closed with `CAES
 Accordingly this PR must remain draft and must not claim full issue acceptance until:
 
 1. WW and HP load construction are independently source-authorized and qualified;
-2. the pinned Windows/ACE production run is executed;
+2. the pinned BM4_L production run is executed with the mdb-reader extraction engine;
 3. L2-L6/L14 regression evidence remains passing;
 4. L13/L7/L1 restraint components and all required result families are compared to the pinned ACCDB;
 5. nominal repeat and stiffness-sensitivity artifacts are published.
@@ -141,4 +158,4 @@ Accordingly this PR must remain draft and must not claim full issue acceptance u
 - repeated-run state determinism;
 - scoped solver-interceptor lifetime and exception cleanup.
 
-The isolated friction-kernel test set was exercised during authoring and passed 9/9. Full repository and Windows/ACE production testing cannot be executed from the Linux/network-isolated authoring runtime and therefore are not claimed here.
+The isolated friction-kernel test set was exercised during authoring and passed 9/9. The cross-platform mdb-reader production extraction itself has not been executed in this authoring runtime because it has no repository Playwright installation/browser and outbound module loading is network-isolated; the pinned BM4_L production result is therefore still not claimed here.

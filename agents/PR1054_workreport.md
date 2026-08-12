@@ -8,12 +8,13 @@
 | Branch | `agent/certified-support-movement-semantics` |
 | Original base | `main@271d04fa2674ab68367808d05f2429ec5e236a6e` |
 | Current main observed | `6463b39866f68eb6476bfa41764538eb19f8b9f9` |
+| Qualification base | `qualification/pr1054-exact-head@1f5dbae1613723840a09ecbf1ef2d5283d825369` — isolated workflow only |
 | Bootstrap | `4140ffbd147b9cc73655d00e8264f8fb774869ff` — empty tree-equivalent commit |
 | Pre-qualification implementation/test head | `85e67606b588809c96b03c8801a783edaf09620d` |
-| Pre-qualification report-sync head | `7d3002df5915027f607a7db10b2f75049fe14c94` |
+| Browser qualification source head | `57df6f795a8ca82a3d3b0f794284871d929b5f76` |
 | Mission | Recover certified support restraint-property editing while keeping support placement/movement fail closed. |
-| Engineering state | **EMPIRICAL QUALIFICATION IN PROGRESS** |
-| Current execution truth | Predecessor #1033 had 17/17 workflow PASS, but PR1054 exact-head execution is still NOT_RUN. A production-browser qualification gap is now explicitly registered and authorized below. |
+| Engineering state | **EXACT-HEAD QUALIFICATION READY** |
+| Current execution truth | Production visible-user Chromium qualification is authored and the PR is temporarily retargeted to the isolated runner base. Exact-head Node + Chromium execution is not yet represented as PASS. |
 | Merge state | Draft / unmerged until exact-head Node + Chromium evidence is green and the final report-sync head is requalified. |
 
 ## Preserved Authority
@@ -42,7 +43,7 @@ Merged #1036 remains the sole support-host authority through `resolveTopologyEdi
 
 Merged #1041 catalogue/target-DN custody remains intact in manually reconciled Table modules. Support restraint editing does not widen valve or geometry authority.
 
-Current `main` has advanced 83 commits from the original PR base, but the observed intervening current-main file set is concentrated in LFEA/publication work and does not overlap PR1054's topology-edit paths. Raw GitHub PR state reports `mergeable: true`, `rebaseable: true`, `mergeable_state: clean`.
+Current `main` has advanced 83 commits from the original PR base, but the observed intervening current-main file set is concentrated in LFEA/publication work and does not overlap PR1054's topology-edit paths. Raw GitHub PR state before temporary retarget reported `mergeable: true`, `rebaseable: true`, `mergeable_state: clean`.
 
 ## Certified SUPPORT_RESTRAINT Contract
 
@@ -72,45 +73,57 @@ The command writes a separate canonical `support.restraint` marked `CERTIFIED_TA
 | DEC-1054-03 | Host authority | ACCEPTED | Shared #1036 resolver only; exact `RESOLVED` required. |
 | DEC-1054-04 | Evidence | ACCEPTED | Imported restraints retained; only marked override becomes active. |
 | ISS-1054-01 | Current-main regression | RESOLVED IN SOURCE | Explicit unresolved host token rejects before override. |
-| ISS-1054-02 | Qualification | **OPEN / E2E AUTHORIZED** | PR1054/predecessor source has no production visible-user browser test for the SUPPORT_RESTRAINT Table lifecycle. Add exactly `e2e/topology-edit-table-support-restraint.spec.js`; use the real Workspace -> XYZ fixture -> 3D Edit -> Engineering Table path; select a real SUPPORT row; edit real restraint controls; Stage/Preview/Validate/Apply/Undo/Redo through visible controls; controller access may be read-only evidence only. |
+| ISS-1054-02 | Qualification | **E2E AUTHORED / NOT_RUN** | `e2e/topology-edit-table-support-restraint.spec.js` uses the real Workspace -> XYZ fixture -> 3D Edit -> Engineering Table path, selects S-007 through a typed filter and visible Select action, edits real restraint controls, and drives Stage/Preview/Validate/Apply/Undo/Redo. Controller access is read-only evidence only. |
 | RISK-1054-01 | Current-head execution | OPEN | Exact-head Node + Chromium execution is required before merge. |
 | RISK-1054-02 | Sibling overlap | OPEN / MANAGEABLE | #1051 overlaps small Table wiring and must reconcile whichever merges second. |
 
 ## Browser Qualification Contract
 
-The new E2E must prove all of the following without weakening guards:
+The E2E proves or fails on all of the following without guard weakening:
 
 1. real production UI loads the XYZ engineering fixture and opens Engineering Table;
-2. a typed support tag filter selects exactly one canonical SUPPORT row through its visible Select action;
-3. family/direction/gap/travel input changes are transient and do not change canonical hash, journal/ledger, active command IDs, session version, source hashes, or renderer count;
+2. typed `S-007` filtering selects exactly one canonical SUPPORT row through its visible Select action;
+3. family/direction/gap/travel input changes are transient and preserve canonical hash, journal/ledger, active command IDs, session version, source hashes, and renderer count;
 4. Stage produces one governed intent while canonical authority remains unchanged;
-5. Preview produces a ghost/candidate without canonical mutation;
+5. Preview produces a changed-support ghost/candidate without canonical mutation;
 6. Validate reaches `READY_TO_APPLY` without canonical mutation;
-7. Apply changes exactly the target support to a `CERTIFIED_TABLE_OVERRIDE` restraint while imported restraint evidence remains semantically unchanged;
-8. source semantic/byte hashes remain unchanged;
-9. Undo restores the exact baseline canonical/ledger/command state and removes the override;
-10. Redo restores the exact applied canonical/ledger/command state;
-11. page/console error assertions remain clean except known favicon noise;
-12. no direct controller operation method is invoked as UI coverage.
+7. Apply changes the target support to a `CERTIFIED_TABLE_OVERRIDE` restraint while imported restraint evidence remains unchanged;
+8. support host identity and station remain unchanged;
+9. source semantic/byte hashes remain unchanged;
+10. Undo restores exact baseline canonical/ledger/command state and removes the override;
+11. Redo restores exact applied canonical/ledger/command state;
+12. page/console diagnostics remain clean except known favicon noise;
+13. no direct controller operation method is invoked as UI coverage.
 
-## Qualification Harness Plan
+## Qualification Harness
 
-Use an isolated base branch `qualification/pr1054-exact-head` containing only a temporary pull-request workflow. The workflow must checkout `github.event.pull_request.head.sha`, run deterministic dependency/Chromium provisioning, verify the exact head and qualification source syntax, execute the three existing focused Node files plus the new production Chromium spec, and upload Playwright evidence. The workflow file must never enter the PR1054 feature diff.
+The isolated base branch `qualification/pr1054-exact-head` contains only `.github/workflows/pr1054-exact-head-qualification.yml`. The workflow:
+
+- checks out `github.event.pull_request.head.sha` exactly;
+- provisions Node 22 and real Chromium;
+- syntax-checks the three focused Node files and browser spec;
+- enforces `<300` physical lines on the new E2E;
+- runs `git diff --check`;
+- executes the three focused Node files;
+- executes the production Chromium support-restraint lifecycle with trace-on and zero retries;
+- uploads Playwright/test evidence plus the authored JSON qualification record.
+
+The workflow file is not part of the PR1054 feature diff.
 
 After a feature/test green run:
 
 1. update this report with exact run/head/artifact evidence;
 2. run the same gate again on the report-only head;
-3. restore PR1054 to `main` if temporarily retargeted;
+3. restore PR1054 to `main`;
 4. re-check raw GitHub mergeability, reviews/comments, exact changed-file ledger, and current main;
 5. merge only with `expected_head_sha` pinned to the qualified final head.
 
 ## Exact Changed-File Ledger
 
-Current feature diff is 21 paths; the authorized E2E addition will make the final ledger exactly **22** paths:
+The current feature diff is exactly **22** paths:
 
 1. `agents/PR1054_workreport.md`
-2. `e2e/topology-edit-table-support-restraint.spec.js` — authorized next change; not present before this report update
+2. `e2e/topology-edit-table-support-restraint.spec.js`
 3. `src/workspace/topology-edit/support-restraint-family.js`
 4. `src/workspace/topology-edit/topology-edit-support-restraint-command.js`
 5. `src/workspace/topology-edit/topology-edit-command-contract.js`
@@ -150,7 +163,8 @@ The temporary qualification workflow is isolated on `qualification/pr1054-exact-
 | `PR1033@68444777aeb01f165c987975ef1555bb1b7a9a1b` | predecessor exact head; 17/17 triggered workflows PASS |
 | `85e67606b588809c96b03c8801a783edaf09620d` | PR1054 pre-report source/test candidate; static review only |
 | `7d3002df5915027f607a7db10b2f75049fe14c94` | pre-qualification report-sync head; zero pull-request workflow runs |
-| next feature/test head | NOT_RUN until focused Node + production Chromium execute |
+| `57df6f795a8ca82a3d3b0f794284871d929b5f76` | browser qualification source authored; exact-head execution NOT_RUN at report time |
+| current report-sync head | trigger exact-head Node + Chromium qualification |
 
 ## Handover
 

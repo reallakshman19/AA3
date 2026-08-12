@@ -1,5 +1,9 @@
 /** Stage 13 lifecycle producer for authoritative domain-first LAFEA.3 execution. */
 import {
+  LAFEA_CONTINUUM_AUTHORITATIVE_EXECUTION_MODE,
+  LAFEA_CONTINUUM_AUTHORITATIVE_EXECUTION_SCHEMA,
+} from './lafea-continuum-compiled-execution.js';
+import {
   createLafeaArtifactRecord,
   registerLafeaArtifact,
 } from './lafea-lifecycle.js';
@@ -135,6 +139,14 @@ function requireSolverModel(value) {
     || value.executionAuthorized !== false || value.releaseQualified !== false) {
     fail('LAFEA_CONTINUUM_DOMAIN_FIRST_SOLVER_MODEL_INVALID');
   }
+  const copy = structuredClone(value);
+  delete copy.solverModelHash;
+  const expected = canonicalLafeaSha256({
+    schema: 'lafea-continuum-solver-model-hash-input/v1', model: copy,
+  });
+  if (value.solverModelHash !== expected) {
+    fail('LAFEA_CONTINUUM_DOMAIN_FIRST_SOLVER_MODEL_HASH_INVALID');
+  }
   return value;
 }
 
@@ -150,9 +162,33 @@ function requireExecution(value, solverModel) {
     || value.releaseQualified !== false
     || typeof value.compiledExecutionHash !== 'string'
     || !/^sha256:[0-9a-f]{64}$/u.test(value.compiledExecutionHash)
+    || !value.canonicalInput || typeof value.canonicalInput !== 'object'
     || value.result?.qualification?.state !== 'ACCEPTED'
-    || !Array.isArray(value.result?.loadCaseResults) || !value.result.loadCaseResults.length) {
+    || !Array.isArray(value.result?.loadCaseResults) || !value.result.loadCaseResults.length
+    || !Array.isArray(value.result?.formulaTrace)) {
     fail('LAFEA_CONTINUUM_DOMAIN_FIRST_EXECUTION_INVALID');
+  }
+  const canonicalExecutionInputHash = canonicalLafeaSha256({
+    schema: 'lafea-continuum-compiled-execution-input-hash/v1',
+    canonicalInput: value.canonicalInput,
+  });
+  const evidence = {
+    schema: LAFEA_CONTINUUM_AUTHORITATIVE_EXECUTION_SCHEMA,
+    stageId: STAGE_ID,
+    mode: LAFEA_CONTINUUM_AUTHORITATIVE_EXECUTION_MODE,
+    solverModelHash: solverModel.solverModelHash,
+    canonicalExecutionInputHash,
+    qualificationState: 'ACCEPTED',
+    canonicalInput: value.canonicalInput,
+    executionResult: value.result,
+    lifecyclePublicationAuthorized: true,
+    releaseQualified: false,
+  };
+  const expected = canonicalLafeaSha256({
+    schema: 'lafea-continuum-authoritative-execution-hash-input/v1', evidence,
+  });
+  if (value.compiledExecutionHash !== expected) {
+    fail('LAFEA_CONTINUUM_DOMAIN_FIRST_EXECUTION_HASH_INVALID');
   }
   return value;
 }

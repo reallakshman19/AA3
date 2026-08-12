@@ -82,6 +82,7 @@ function makeIteration(iteration, contract) {
     normalReactionN: null,
     frictionResistanceN: null,
     frictionDirectionGlobal: null,
+    firstTransitionReferenceDirectionGlobal: null,
   }));
   const gapRows = contract.positiveGapRows.map((row) => ({
     restraintKey: row.restraintKey,
@@ -93,6 +94,7 @@ function makeIteration(iteration, contract) {
     converged: null,
     unconvergedRestraintCount: null,
     restraints: [...frictionRows, ...gapRows],
+    stateEvents: [],
   };
 }
 

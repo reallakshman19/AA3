@@ -1,9 +1,13 @@
+import * as THREE from 'three';
 import {
   TopologyEdit3DViewController as ProfessionalController,
 } from './topology-edit-3d-productivity-controller.js';
 import { EVENT_TOPICS } from './event-topics.js';
 import { SupportRestraintStore } from './support-restraint-store.js';
 import { semanticHash } from '../core/shared-piping-model/index.js';
+import {
+  buildCanonicalTopologyFromWorkspaceDataset as buildDispatchedCanonicalTopology,
+} from './topology-edit/topology-edit-source-adapter-dispatch.js';
 import {
   enrichCanonicalSupportsWithExactOrigins,
 } from './topology-edit/topology-edit-sjson-visual-authority.js';
@@ -128,13 +132,19 @@ export class TopologyEdit3DViewController extends ProfessionalController {
   }
 
   buildWorkspaceCanonical(dataset, graph) {
-    const canonical = super.buildWorkspaceCanonical(dataset, graph);
+    const attachmentModel = SupportRestraintStore.getAttachmentModel();
+    const canonical = isGovernedSjsonEditDraftSourceHash(
+      dataset?.sourceSnapshot?.sourceSemanticHash,
+    )
+      ? buildDispatchedCanonicalTopology(
+        dataset,
+        graph,
+        attachmentModel,
+        SupportRestraintStore.getRestraintModel(),
+      )
+      : super.buildWorkspaceCanonical(dataset, graph);
     if (!this.isGovernedSjsonCanonical(canonical)) return canonical;
-    return enrichCanonicalSupportsWithExactOrigins(
-      canonical,
-      dataset,
-      SupportRestraintStore.getAttachmentModel(),
-    );
+    return enrichCanonicalSupportsWithExactOrigins(canonical, dataset, attachmentModel);
   }
 
   deriveVisual(canonical, modelRole) {

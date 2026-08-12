@@ -24,6 +24,7 @@ const CHECK_KEYS = Object.freeze([
   'occasionalCategoryId',
 ]);
 const NATIVE_IMPLEMENTED_CATEGORY = 'SUSTAINED';
+const SUSTAINED_PHYSICAL_CASE_ROLES = Object.freeze(['WEIGHT_BASE', 'WEIGHT_PRESSURE']);
 
 export function requireLfeaNativeB31AuthorityInput(preFlightRecord, input) {
   const preFlight = requireRunnablePreFlight(preFlightRecord);
@@ -151,12 +152,20 @@ function canonicalSingleCase(value, field) {
 }
 
 function requireCaseCustody(preFlight, checks) {
-  const ids = new Set(preFlight.preparation.physicalPreparation.physicalCases.map((row) => row.caseId));
+  const caseById = new Map(preFlight.preparation.physicalPreparation.physicalCases
+    .map((row) => [row.caseId, row]));
   for (const check of checks) {
-    if (!ids.has(check.actionSource.caseId)) {
+    const physicalCase = caseById.get(check.actionSource.caseId);
+    if (!physicalCase) {
       throw b31Error(
         'LFEA_NATIVE_B31_CASE_MISSING',
         `B31 check ${check.checkId} references unavailable physical case ${check.actionSource.caseId}.`,
+      );
+    }
+    if (!SUSTAINED_PHYSICAL_CASE_ROLES.includes(physicalCase.caseRole)) {
+      throw b31Error(
+        'LFEA_NATIVE_B31_SUSTAINED_CASE_ROLE_INVALID',
+        `B31 SUSTAINED check ${check.checkId} cannot use physical role ${physicalCase.caseRole}.`,
       );
     }
   }

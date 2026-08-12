@@ -15,6 +15,9 @@ import {
   LAFEA_CONTINUUM_ANALYSIS_DOMAIN_SCHEMA,
   createLafeaContinuumAnalysisDomain,
 } from '../src/workspace/lafea-continuum-analysis-domain.js';
+import {
+  createLafeaContinuumDomainFirstLifecycleProducerBatch,
+} from '../src/workspace/lafea-continuum-domain-first-lifecycle-producers.js';
 import { requireLafeaStageComposition } from '../src/workspace/lafea-stage-composition-root.js';
 import { issueLafeaSourceAuthority } from '../src/workspace/lafea-source-authority.js';
 import { createLafeaWorkbenchStore } from '../src/workspace/lafea-workbench.js';
@@ -70,6 +73,32 @@ try {
   assert.equal(stage.lifecycle.artifacts.ANALYSIS_MESH.artifactHash, stage.analysisMeshCustodyProjection.meshHash);
   assert.equal(stage.lifecycle.artifacts.EXECUTION.artifactHash, stage.execution.compiledExecutionHash);
 
+  const solverModel = qualified.store.compileContinuumSolverModel();
+  for (const field of [
+    'sourceHash', 'analysisDomainHash', 'analysisGeometryHash', 'meshHash', 'meshProfileHash',
+  ]) {
+    const tampered = structuredClone(stage.execution);
+    tampered[field] = field === 'meshProfileHash' ? 'tampered-profile' : `sha256:${'f'.repeat(64)}`;
+    expectCode(
+      () => createLafeaContinuumDomainFirstLifecycleProducerBatch({
+        sourceAuthority: qualified.authority,
+        solverModel,
+        execution: tampered,
+      }),
+      'LAFEA_CONTINUUM_DOMAIN_FIRST_EXECUTION_INVALID',
+    );
+  }
+  const releaseTamper = structuredClone(stage.execution);
+  releaseTamper.releaseQualified = true;
+  expectCode(
+    () => createLafeaContinuumDomainFirstLifecycleProducerBatch({
+      sourceAuthority: qualified.authority,
+      solverModel,
+      execution: releaseTamper,
+    }),
+    'LAFEA_CONTINUUM_DOMAIN_FIRST_EXECUTION_INVALID',
+  );
+
   qualified.store.generateAnalysisMesh();
   stage = qualified.store.getState().stages['LAFEA.3'];
   assert.equal(stage.execution, null, 'mesh regeneration must revoke current execution');
@@ -99,7 +128,7 @@ try {
 }
 
 console.log(JSON.stringify({
-  schema: 'lafea-continuum-authoritative-run-check/v1',
+  schema: 'lafea-continuum-authoritative-run-check/v2',
   check: 'lafea-continuum-authoritative-run',
   status: 'PASS',
   stageId: 'LAFEA.3',
@@ -107,6 +136,7 @@ console.log(JSON.stringify({
   authoritativeCompiledRun: true,
   existingNumericalKernelReused: true,
   lifecycleExecutionRecoveryPublished: true,
+  lifecycleExecutionLineageFailsClosed: true,
   currentMeshLineageEnforced: true,
   remeshRevokesAuthority: true,
   temperatureDeltaFailsClosed: true,
@@ -192,4 +222,7 @@ function attachment(attachmentId, kind, targetType, targetId, physicalCaseIds, p
 }
 function line(segmentId, startVertexId, endVertexId) {
   return { segmentId, type: 'LINE', startVertexId, endVertexId };
+}
+function expectCode(action, code) {
+  assert.throws(action, (error) => error?.code === code, `expected ${code}`);
 }

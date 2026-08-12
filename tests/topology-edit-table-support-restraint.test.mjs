@@ -132,8 +132,15 @@ test('SUPPORT_RESTRAINT Preview renders only the governed candidate support glyp
   assert.ok(ghost);
   assert.equal(ghost.elements.length, 1);
   assert.equal(ghost.segments.length, 1);
+  assert.equal(ghost.elements[0].pickTarget.objectKind, 'support');
+  assert.equal(ghost.elements[0].pickTarget.objectId, 'support:s1');
   assert.equal(ghost.segments[0].type, 'RESTRAINT_DIRECTION');
-  assert.equal(ghost.segments[0].pickTarget.objectId, 'support:s1');
+  assert.equal(ghost.segments[0].pickTarget.objectKind, 'restraint');
+  assert.equal(ghost.segments[0].pickTarget.supportId, 'support:s1');
+  assert.equal(
+    ghost.segments[0].pickTarget.objectId,
+    ghost.segments[0].pickTarget.restraintId,
+  );
 });
 
 test('SUPPORT_RESTRAINT Preview → Validate → Apply is atomic and journal undo/redo is exact', async () => {

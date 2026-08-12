@@ -14,21 +14,21 @@ jobs:
     timeout-minutes: 45
     env:
       BASE_SHA: def0bdf96caf2110d65ed016ab79cf8356726779
-      CANDIDATE_SHA: 861fc066f5f80119a4d6d1f7bf90a723e0bc5a01
+      CANDIDATE_SHA: d7ae6efffaab8300bfcb5ad9590ad00aaa65e5f2
       PLAYWRIGHT_BROWSERS_PATH: '0'
-      TOPOLOGY_EDIT_TARGET_HEAD_SHA: 861fc066f5f80119a4d6d1f7bf90a723e0bc5a01
+      TOPOLOGY_EDIT_TARGET_HEAD_SHA: d7ae6efffaab8300bfcb5ad9590ad00aaa65e5f2
     steps:
       - name: Checkout exact candidate
         uses: actions/checkout@v4
         with:
-          ref: 861fc066f5f80119a4d6d1f7bf90a723e0bc5a01
+          ref: d7ae6efffaab8300bfcb5ad9590ad00aaa65e5f2
           fetch-depth: 0
-      - name: Verify exact twelve-file ledger
+      - name: Verify exact thirteen-file ledger
         shell: bash
         run: |
           set -euo pipefail
           test "$(git rev-parse HEAD)" = "$CANDIDATE_SHA"
-          expected=$'e2e/helpers/topology-edit-ghost-applied-differential.js\ne2e/topology-edit-a3d004-ghost-applied.spec.js\nsrc/workspace/topology-edit-3d-authoring-controller.js\nsrc/workspace/topology-edit-3d-productivity-controller.js\nsrc/workspace/topology-edit/authoring/topology-edit-authored-bend-geometry.js\nsrc/workspace/topology-edit/topology-edit-navigation-hud-viewport-backend.js\nsrc/workspace/topology-edit/topology-edit-sjson-governed-viewport-backend-v2.js\nsrc/workspace/topology-edit/topology-edit-support-viewport-backend.js\nsrc/workspace/viewport-productivity/topology-edit-table-workflow.js\ntests/topology-edit-authored-bend-typed-projection.test.mjs\ntests/topology-edit-sjson-support-ghost-parity.test.mjs\ntests/topology-edit-support-ghost-parity.test.mjs'
+          expected=$'e2e/helpers/topology-edit-ghost-applied-differential.js\ne2e/topology-edit-a3d004-ghost-applied.spec.js\nsrc/workspace/topology-edit-3d-authoring-controller.js\nsrc/workspace/topology-edit-3d-productivity-controller.js\nsrc/workspace/topology-edit/authoring/topology-edit-authored-bend-geometry.js\nsrc/workspace/topology-edit/topology-edit-navigation-hud-viewport-backend.js\nsrc/workspace/topology-edit/topology-edit-sjson-governed-viewport-backend-v2.js\nsrc/workspace/topology-edit/topology-edit-support-viewport-backend.js\nsrc/workspace/viewport-productivity/topology-edit-table-workflow.js\ntests/topology-edit-authored-bend-typed-projection.test.mjs\ntests/topology-edit-sjson-support-ghost-parity.test.mjs\ntests/topology-edit-support-ghost-parity.test.mjs\ntests/topology-edit-table-support-restraint.test.mjs'
           test "$(git diff --name-only "$BASE_SHA" "$CANDIDATE_SHA")" = "$expected"
           git diff --check "$BASE_SHA" "$CANDIDATE_SHA"
           while IFS= read -r file; do node --check "$file"; done <<< "$expected"

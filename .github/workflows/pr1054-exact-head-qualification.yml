@@ -1,0 +1,77 @@
+name: PR1054 Exact-Head Support Restraint Qualification
+
+on:
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: pr1054-exact-head-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  qualify-support-restraint:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    env:
+      TARGET_HEAD_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
+      PLAYWRIGHT_BROWSER_CHANNEL: chromium
+
+    steps:
+      - name: Checkout exact head
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ env.TARGET_HEAD_SHA }}
+          fetch-depth: 0
+
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+
+      - name: Install dependencies and Chromium
+        run: |
+          set -euo pipefail
+          npm ci
+          npx playwright install --with-deps chromium
+
+      - name: Verify exact head and qualification sources
+        run: |
+          set -euo pipefail
+          test "$(git rev-parse HEAD)" = "$TARGET_HEAD_SHA"
+          node --check tests/topology-edit-capability-authority.test.mjs
+          node --check tests/topology-edit-support-restraint-command.test.mjs
+          node --check tests/topology-edit-table-support-restraint.test.mjs
+          node --check e2e/topology-edit-table-support-restraint.spec.js
+          test "$(wc -l < e2e/topology-edit-table-support-restraint.spec.js)" -lt 300
+          git diff --check
+
+      - name: Execute focused support-restraint Node qualification
+        run: |
+          set -euo pipefail
+          node --test \
+            tests/topology-edit-capability-authority.test.mjs \
+            tests/topology-edit-support-restraint-command.test.mjs \
+            tests/topology-edit-table-support-restraint.test.mjs
+
+      - name: Execute production Chromium support-restraint lifecycle
+        run: |
+          set -euo pipefail
+          npx playwright test \
+            e2e/topology-edit-table-support-restraint.spec.js \
+            --project=chromium --workers=1 --retries=0 --trace=on --reporter=line
+
+      - name: Upload qualification evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: pr1054-support-restraint-${{ env.TARGET_HEAD_SHA }}-${{ github.run_attempt }}
+          path: |
+            playwright-report
+            test-results
+            reports/qualification/topology-edit-table-support-restraint.json
+          if-no-files-found: warn
+          retention-days: 30

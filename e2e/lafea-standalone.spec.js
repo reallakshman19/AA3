@@ -2,7 +2,7 @@ import { expect, test } from '@playwright/test';
 
 const HOST_URL = '/lafea.html';
 
-test('standalone LAFEA entry boots without combined or LFEA application authority', async ({ page }) => {
+test('standalone LAFEA entry boots without combined, LFEA, demo, or generic benchmark authority', async ({ page }) => {
   await page.goto(HOST_URL);
 
   const appRoot = page.locator('[data-lafea-app-root]');
@@ -11,6 +11,9 @@ test('standalone LAFEA entry boots without combined or LFEA application authorit
   await expect(workbench).toHaveCount(1);
   await expect(workbench.locator('.lafea-workbench__stages [data-stage-id]')).toHaveCount(6);
   await expect(workbench).toContainText('Release: NOT QUALIFIED');
+  await expect(workbench.locator('[data-role="lafea-mock"]')).toBeHidden();
+  await expect(workbench.locator('[data-role="lafea-benchmark"]')).toBeHidden();
+  await expect(workbench.locator('[data-role="lafea-benchmark-host"]')).toHaveCount(0);
 
   const authority = await page.evaluate(() => ({
     combinedWorkspacePublished: Object.hasOwn(globalThis, 'AnalysisWorkspace'),

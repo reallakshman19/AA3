@@ -109,10 +109,17 @@ function canonicalCheck(value, index) {
   }
   const actionSource = canonicalSingleCase(value.actionSource, `${field}.actionSource`);
   const evaluationCaseId = requiredText(value.evaluationCaseId, `${field}.evaluationCaseId`);
+  const combinationId = requiredText(value.combinationId, `${field}.combinationId`);
   if (evaluationCaseId !== actionSource.caseId) {
     throw b31Error(
       'LFEA_NATIVE_B31_EVALUATION_CASE_MISMATCH',
       'A native SUSTAINED check must evaluate section/material state from its cited physical case.',
+    );
+  }
+  if (combinationId !== actionSource.caseId) {
+    throw b31Error(
+      'LFEA_NATIVE_B31_COMBINATION_CASE_MISMATCH',
+      'A native single-case SUSTAINED combination identity must equal its cited physical case.',
     );
   }
   if (value.coldTemperature !== null || value.sustainedStress !== null
@@ -127,13 +134,16 @@ function canonicalCheck(value, index) {
     category,
     elementId: requiredText(value.elementId, `${field}.elementId`),
     end,
-    combinationId: requiredText(value.combinationId, `${field}.combinationId`),
+    combinationId,
     actionSource,
     evaluationCaseId,
     stressFactorSet: requireStressFactorSet(value.stressFactorSet),
     sectionBasisReason: requiredText(value.sectionBasisReason, `${field}.sectionBasisReason`),
     sustainedSectionResolution: requirePipeSectionResolution(value.sustainedSectionResolution),
-    pressureStressContribution: cloneNullable(value.pressureStressContribution),
+    pressureStressContribution: canonicalPressureContribution(
+      value.pressureStressContribution,
+      `${field}.pressureStressContribution`,
+    ),
     coldTemperature: null,
     sustainedStress: null,
     occasionalCategoryId: null,
@@ -149,6 +159,18 @@ function canonicalSingleCase(value, field) {
     );
   }
   return deepFreeze({ kind: value.kind, caseId: requiredText(value.caseId, `${field}.caseId`) });
+}
+
+function canonicalPressureContribution(value, field) {
+  if (value === null) return null;
+  exactKeys(value, ['value', 'source'], field);
+  if (!Number.isFinite(value.value)) {
+    throw b31Error('LFEA_NATIVE_B31_PRESSURE_STRESS_INVALID', `${field}.value must be finite.`);
+  }
+  return deepFreeze({
+    value: value.value,
+    source: requiredText(value.source, `${field}.source`),
+  });
 }
 
 function requireCaseCustody(preFlight, checks) {
@@ -193,7 +215,6 @@ function requireRunnablePreFlight(record) {
   }
   return preFlight;
 }
-function cloneNullable(value) { return value === null ? null : deepFreeze(structuredClone(value)); }
 function exactKeys(value, expectedKeys, field) {
   if (!value || typeof value !== 'object' || Array.isArray(value)) {
     throw b31Error('LFEA_NATIVE_B31_INPUT_INVALID', `${field} must be a record.`);

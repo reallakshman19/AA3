@@ -1,0 +1,112 @@
+{
+  "schema": "m047-bm4l-l13-friction-diagnostic-baseline/v1",
+  "benchmarkId": "BM4_L",
+  "scope": "NON_PRODUCTION_FRICTION_DIAGNOSTIC_BASELINE",
+  "stackBase": {
+    "pr": 1064,
+    "branch": "agent/m047-friction-evidence-measurement-replay",
+    "sha": "f3f079b77978ed7c532709cea91c2150a95f03d2"
+  },
+  "caesarAuthority": {
+    "commonCommit": "179c4831cf521cf797c13699cfbbd118315c9244",
+    "version": "14.00.00.0910",
+    "build": 231113,
+    "l13": {
+      "definition": "W+P1",
+      "frictionMultiplier": 1,
+      "referenceRowCount": 2496,
+      "canonicalGovernedRowCount": 1914
+    },
+    "frictionCoefficient": 0.3,
+    "staticFrictionStiffness": {
+      "documentedSourceValue": 1000000,
+      "documentedSourceUnit": "lb/in",
+      "siValueNPerM": 175126835.24647635,
+      "status": "RESOLVED_AND_PRODUCT_VALIDATED",
+      "independentWitness": {
+        "benchmark": "BM1",
+        "inputGitBlob": "ee88921c4ad80f0265fbed61336b1c896c15f9fa",
+        "outputGitBlob": "caa9645ba59e5106ee4243f41a2edf2d81b6e17e",
+        "nodes": [70, 80],
+        "observedSecantStiffnessNPerM": [175118536.91834342, 175144038.70050186],
+        "maximumAbsoluteRelativeDifferenceFromDocumented": 0.00009823425405532255
+      },
+      "supersedesDiagnosticInterpretation": "100000000_N_PER_M_FROM_BM4_INPUTXML_DISPLAY_UNIT"
+    }
+  },
+  "sourceArtifact": {
+    "workflowRun": 31513907633,
+    "artifactId": 9110308571,
+    "artifactDigest": "sha256:57684331169984e7770382a3d292fcb7c24bd30c2404fd487c2a5f66e8a907eb",
+    "reportSha256": "3bbdf58707d6384908021e07ed88ce2e046bf89df36398e4c703db4ca73eb55c",
+    "actualSha256": "8e33c9949812b27309149fceb689572e1cff41793dc01d2b8e9d86382ac3cd8a"
+  },
+  "l6SystemReconstruction": {
+    "analysisNodeCount": 323,
+    "dofCount": 1938,
+    "analysisElementCount": 322,
+    "groundedSpringCount": 51,
+    "maximumAbsoluteAssembledResidual": 0.0000012522214092314243,
+    "maximumAbsoluteSolvedDisplacementDifference": 1.852485395983927e-12,
+    "status": "PASS_ZERO_FRICTION_SYSTEM_RECONSTRUCTION"
+  },
+  "l13DiagnosticCandidate": {
+    "status": "DIAGNOSTIC_ONLY_NOT_CAESAR_PARITY_AUTHORIZED",
+    "structuralSystem": "EXACT_RECONSTRUCTED_L6_W_PLUS_P1_OPERATOR_AND_LOAD_VECTOR",
+    "frictionLaw": "FULLY_UPDATED_COULOMB_STIFFNESS_METHOD_DIAGNOSTIC",
+    "frictionStiffnessNPerM": 175126835.24647635,
+    "coefficientOfFriction": 0.3,
+    "slidingForceMagnitudeRule": "MU_TIMES_CURRENT_NORMAL_FORCE",
+    "contactStatePolicy": "RETAIN_L6_GROUNDED_RESTRAINT_STATE; NO_GAP_STATE_TRANSITION",
+    "iteration": {
+      "method": "FIXED_POINT_WITH_SLIDING_FORCE_UNDER_RELAXATION",
+      "underRelaxation": 0.2,
+      "iterations": 82,
+      "finalRelativeSlidingForceUpdate": 9.05510595249862e-9,
+      "finalMaximumDisplacementUpdate": 1.701802219110371e-12
+    },
+    "finalFrictionStates": {
+      "stickCount": 7,
+      "slidingCount": 19,
+      "stickNodes": ["20030", "20250", "20390", "20550", "21480", "21930", "22310"],
+      "slidingNodes": ["20090", "20170", "20350", "20440", "20520", "20580", "20710", "21470", "21610", "21740", "21800", "21860", "22020", "22070", "22120", "22140", "22220", "22260", "22370"]
+    },
+    "canonicalComparison": {
+      "passed": 1719,
+      "failed": 195,
+      "total": 1914,
+      "passRatePercent": 89.81191222570533,
+      "byQuantity": {
+        "DISPLACEMENT": {"passed": 279, "failed": 12, "total": 291},
+        "ROTATION": {"passed": 264, "failed": 27, "total": 291},
+        "FORCE": {"passed": 77, "failed": 13, "total": 90},
+        "MOMENT": {"passed": 90, "failed": 0, "total": 90},
+        "GLOBAL_END_FORCE_FROM": {"passed": 256, "failed": 32, "total": 288},
+        "GLOBAL_END_FORCE_TO": {"passed": 255, "failed": 33, "total": 288},
+        "GLOBAL_END_MOMENT_FROM": {"passed": 249, "failed": 39, "total": 288},
+        "GLOBAL_END_MOMENT_TO": {"passed": 249, "failed": 39, "total": 288}
+      }
+    }
+  },
+  "gapStateFalsification": {
+    "experiment": "OPEN_ALL_FIVE_POSITIVE_GAP_COMPANION_SPRINGS_WITH_SAME_COULOMB_DIAGNOSTIC",
+    "passed": 1583,
+    "failed": 331,
+    "total": 1914,
+    "passRatePercent": 82.70637408568443,
+    "disposition": "WORSE_DIAGNOSTIC_ONLY; MUST_NOT_SELECT_CONTACT_STATE_FROM_REFERENCE_ACCURACY"
+  },
+  "remainingAuthorityBlockers": [
+    "FRICTION_SLIDE_MULTIPLIER_AUTHORITY_REQUIRED",
+    "FRICTION_STATE_HISTORY_SEMANTICS_AUTHORITY_REQUIRED",
+    "GAP_CONTACT_STATE_SEMANTICS_AUTHORITY_REQUIRED"
+  ],
+  "policy": {
+    "responseFittingUsed": false,
+    "referenceValuesUsedToSelectParameters": false,
+    "diagnosticPassRateMayBeCalledQualifiedAccuracy": false,
+    "productionFrictionAuthorized": false,
+    "l13ProductionSolveAuthorized": false,
+    "newMechanicsAuthorized": false
+  }
+}

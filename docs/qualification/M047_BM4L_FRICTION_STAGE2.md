@@ -4,256 +4,247 @@ Issue: #1083
 
 ## Scope and base
 
-This change is stacked on exact Stage 1 head `0855afb22b76c4b7657a81641c7fbaa890474cd7` and preserves the existing BM4_L W/T1/P1 element assembly, load construction, finite normal restraints, recovery, bend/tee handling, Bourdon handling, reducer/rigid mechanics, and benchmark comparison.
+This work is stacked on exact Stage 1 head `0855afb22b76c4b7657a81641c7fbaa890474cd7` and preserves the qualified BM4_L element/load/recovery mechanics. Stage 2 adds only the friction state solution plus an assembly-only L1 hydrotest compatibility mapping.
 
-The nonlinear path changes only tangential support terms. It does not implement stress, lift-off, one-directional contact, or any BM4_NL/InputXML path.
+In scope:
+
+- L13 `SUS / W+P1` nonlinear friction state;
+- L7 `OPE / W+T1+P1` nonlinear friction state;
+- L15 `EXP / L7-L13` algebraic result construction;
+- L1 `HYD / WW+HP` nonlinear friction state;
+- restraint reactions, translations/rotations, global element-end actions and nodal equilibrium;
+- deterministic active-set evidence, direct CAESAR comparison and stiffness sensitivity.
+
+Out of scope: stress, EXP/HYD stress, lift-off, one-directional contact/gaps, BM4_NL, InputXML and universal CAESAR parity.
 
 ## Pinned source custody
 
-Issue #1083 is the production source authority. The production gate requires the exact embedded database identity declared by the issue:
+Issue #1083 is the production authority:
 
-- archive Git blob: `df119ae1b8272469b6204036ab1aff21e561dfb8`;
-- archive SHA-256: `978617cba50fa0b1a16c2fa71dc1e0d38e55ac834b191f887d100c6951abd8b9`;
-- member name: `BM4_L.ACCDB`;
-- member byte length: `5,136,384`;
-- member SHA-256: `e21b0862851ea2bb6f20d55e4a3a94f501537b618b98dd46afa9f6777ee38d3c`.
+- Common commit `f4d49f2a47d970ae0abf913b537193e324556177`;
+- BM4_L.zip Git blob `df119ae1b8272469b6204036ab1aff21e561dfb8`;
+- ZIP SHA-256 `978617cba50fa0b1a16c2fa71dc1e0d38e55ac834b191f887d100c6951abd8b9`;
+- member `BM4_L.ACCDB`;
+- member byte length `5,136,384`;
+- member SHA-256 `e21b0862851ea2bb6f20d55e4a3a94f501537b618b98dd46afa9f6777ee38d3c`.
 
-A historical Windows/ACE extraction available in repository evidence came from a different ACCDB SHA (`64c05a50...`). Its 46 restraint rows are therefore retained only as a diagnostic/negative-control fixture. They are not production authority; its node list, restraint type, and direction pattern are never used by the production selector. `m047-bm4l-friction-restraint-authority.json` records this distinction explicitly.
+A historical ACCDB with SHA `64c05a50...` is retained only as diagnostic topology evidence. Its node list, restraint type and direction pattern are not production solver authority.
 
-Production friction-site membership remains row-driven from the pinned ACCDB itself.
+## Configuration authority
 
-## Configuration authority migration
-
-Stage 2 introduces `caesar-configuration-authority/v2` with the issue-governed low-to-high order:
+Stage 2 uses the issue-governed low-to-high precedence:
 
 `OVERALL_GLOBAL_DEFAULT < INDIVIDUAL_FILE_SETTING < LOAD_CASE_SETTING < MODEL_INPUT`
 
-The v1 resolver remains supported for frozen earlier profiles. Migration removes case-level `COEFFICIENT_OF_FRICTION_MU` overrides and instead records a distinct `FRICTION_MULTIPLIER`.
+The model coefficient and case multiplier remain separate:
 
-For BM4_L:
+- model `mu = 0.3`;
+- L2-L6 multiplier `0`;
+- L7/L13/L1 multiplier `1`;
+- L14/L15 derived;
+- effective primitive coefficient `mu_eff = mu_model * multiplier`.
 
-- model coefficient: `mu = 0.3` from model input;
-- L2-L6 multiplier: `0`;
-- L7, L13, L1 multiplier: `1`;
-- L14/L15: derived, therefore no primitive friction multiplier;
-- effective primitive coefficient: `mu_eff = mu_model * multiplier`;
-- nominal `FRICT_STIF = 1.0E6 N/cm = 1.0E8 N/m`.
-
-The checked-in `m047-bm4l-friction-authority.json` records the migrated authority without modifying the frozen Stage 1 BM4_L profile.
+Nominal `FRICT_STIF = 1.0E6 N/cm = 1.0E8 N/m`.
 
 ## Friction-surface selection
 
-Friction is not assigned by node list, historical restraint type, or historical direction. A physical friction surface is selected from the issue-pinned `INPUT_RESTRAINTS` rows when all Stage 2 source-domain rules hold:
+Production friction membership is row-driven from the pinned `INPUT_RESTRAINTS` table. A row is a friction surface when:
 
-1. `FRIC_COEF > 0` on that source row;
-2. the row is not an anchor (`RES_TYPEID != 1`);
-3. `Math.fround(FRIC_COEF) = Math.fround(model mu)`;
-4. the source restraint direction is axis-aligned within `1e-9`, matching the already-qualified Stage 1 restraint representation;
-5. only one positive-friction surface is present at a node; multi-plane friction at one node remains fail-closed in this stage.
+1. `FRIC_COEF > 0`;
+2. it is not an anchor;
+3. `Math.fround(FRIC_COEF) == Math.fround(model mu)`;
+4. its normal is axis-aligned with the already-qualified Stage 1 directional-restraint representation;
+5. only one positive-friction surface exists at the node.
 
-The model-level `mu=0.3` remains the governed coefficient magnitude. `FRIC_COEF` identifies which physical restraint row carries friction and corroborates the database's single-precision storage; it does not override model authority.
+The selector does not hard-code the historical type-3/+Y/26-node pattern. Positive-friction anchors, skew normals and multi-plane friction at one node fail closed.
 
-A non-anchor type 3, 8, 9, or another directional restraint type is therefore not accepted or rejected merely because of its historical label. A positive `FRIC_COEF` row from the pinned ACCDB is the source declaration. Rows with nonpositive/sentinel `FRIC_COEF` remain ordinary qualified mechanical constraints and do not independently create a friction surface.
+Each selected surface must bind exactly one qualified base `LINEAR_SPRING` on its normal DOF. The Coulomb cap uses only that spring reaction; orthogonal co-located guide/limit reactions remain in the global system but cannot enter `mu|N|`.
 
-Each selected surface must bind exactly one qualified base `LINEAR_SPRING` on its aligned normal DOF before the active-set solve is allowed to proceed. The Coulomb cap uses only that source surface's normal reaction. Orthogonal co-located restraint reactions remain in the mechanical solution but cannot contaminate `mu|N|` for the selected surface.
-
-The friction law still acts in the full plane tangent to that selected surface, `P_t = I - n n^T`. Orthogonal guide/limit restraints remain in the base stiffness and naturally suppress the corresponding tangential motion; their presence does not redefine the surface tangent plane.
-
-The historical `64c05a50...` diagnostic fixture happens to contain 26 positive-friction type-3/+Y rows and three non-friction Y rows (`20300`, `20640`, `21640`). Those observations exercise negative controls only; they are not production type, direction, or node hardcodes and do not define the pinned `e21b...` topology.
+The tangent plane remains `P_t = I - nn^T`. Orthogonal base constraints naturally suppress components of tangent motion without redefining the friction surface.
 
 ## Friction law
 
-For support normal unit vector `n`, tangential projector and displacement are
+For a support normal `n`:
 
-`P_t = I - n n^T`
+`u_t = (I - nn^T)u`
 
-`u_t = P_t u`.
-
-With signed normal reaction `N`, the bidirectional Coulomb cap is
-
-`C = mu_eff |N|`.
-
-No contact activation/lift-off rule is introduced.
+`C = mu_eff |N|`
 
 ### Stick
 
-Trial friction is
+`F_trial = -k_f u_t`
 
-`F_trial = -k_f u_t`.
-
-The support remains sticking when `||F_trial|| <= C + boundary`. The tangential stiffness `k_f P_t` is inserted in the next global matrix. The constitutive residual is
-
-`r_stick = F_t + k_f u_t`.
+Stick is retained while `||F_trial||` is within the declared cap boundary. The next matrix receives the tangential stiffness block `k_f P_t`.
 
 ### Slide
 
-After breakaway, the tangential spring is removed. With slip direction
+For slip direction `s = u_t / ||u_t||`:
 
-`s = u_t / ||u_t||`,
+`F_t = -C s`
 
-the capped support force is
+The tangential spring is removed and the capped vector is applied in the next iteration.
 
-`F_t = -C s`.
+A stable SLIDE label is not sufficient for convergence. The capped vector actually assembled into the solved RHS must equal the vector implied by the newly recovered normal force and slip direction within `assemblyLoadResidualN`. A changed cap or direction therefore forces another solve even when displacement and state labels appear stationary.
 
-That vector is inserted as a nodal load in the next active-set iteration. The slide checks include cap magnitude and anti-parallel direction.
+## Deterministic active set and numerical qualification
 
-A stable SLIDE classification is not enough to converge. The capped vector actually assembled in the solved right-hand side must match the vector implied by the newly recovered `N` and slip direction. The controller records
+Primitive friction cases use:
 
-`r_assembly = ||F_t,assembled - F_t,recovered||`
+- deterministic all-stick initialization;
+- no nominal load stepping;
+- unit relaxation;
+- declared maximum iterations;
+- projected tangential-translation update convergence;
+- normal-reaction update convergence;
+- cap, stick/slide constitutive and slide-direction residuals;
+- assembled-load closure;
+- physical force/moment equilibrium;
+- repeated nominal-run determinism.
 
-and requires `r_assembly <= assemblyLoadResidualN`. If the cap or direction changes, another solve is mandatory even when displacement and state labels are stationary. This closes the CAESAR next-iteration constant-force rule explicitly.
+Each nonlinear linearization uses the qualified dense solver's diagonal scaling and compensated residual-refinement pattern. Normalized residual and conditioning are governing numerical gates. Numerical WARN is not accepted as nominal friction PASS.
 
-## ACCDB extraction engine
+The nonlinear stiffness-state identity binds the frozen base stiffness hash to each converged stick/slide tangent state. L15 has no independent stiffness state because it is algebraic.
 
-Stage 2 no longer requires Microsoft ACE/OLE DB for its production command. `scripts/lfea-caesar-accdb-mdb-export.mjs` adapts the raw named-table extraction boundary from `reallaksh19/XML_Compare_Utilities`:
+## Governed execution order
 
-- source repository: `reallaksh19/XML_Compare_Utilities`;
-- source commit: `d83c62214b7a6486c17698225ea4e11bc3121cb6`;
-- source parser: `parser/accdb-mdb.js`;
-- source parser blob: `2ea596b6e9fb65e386e5cbb256f4141ce7bb595b`;
-- extraction engine: `mdb-reader@2.2.6`;
-- browser Buffer shim: `buffer@6.0.3`.
+The local production command runs frozen controls L2-L6/L14 first, then:
 
-The adapted boundary intentionally does only what Stage 2 needs: open the binary ACCDB, enumerate tables, resolve the exact requested table names case-insensitively, read their ordered columns and rows, normalize binary/date values for JSON transport, and emit the existing `caesar-accdb-raw-export/v1` contract.
+1. L13 — nonlinear primitive `W+P1`, paired with L6;
+2. L7 — nonlinear primitive `W+T1+P1`, paired with L5;
+3. L15 — algebraic `L7-L13`, no nonlinear solve, paired with L14;
+4. L1 — nonlinear primitive `WW+HP`.
 
-It does **not** copy the XML utility's higher-level CAESAR interpretation or fallback heuristics. Advanced_Analysis remains the authority for required tables, units, identities, configuration resolution, assembly, recovery and qualification. Missing required tables, unsafe table names, unsupported cell types and extraction failures remain fatal.
-
-### Current runtime limitation
-
-The current adapter still loads pinned `mdb-reader@2.2.6` and `buffer@6.0.3` through an `esm.sh` browser import map and therefore requires a Playwright Chromium/Chrome runtime plus outbound module access. This is a known packaging limitation, not an engineering-result assumption. No silent ACE fallback is performed.
-
-Upstream `mdb-reader@2.2.6` has a native Node entry point, so an offline/local Node cutover is technically available. That cutover will not be claimed complete until `mdb-reader` and all transitives are represented reproducibly in this repository's npm lock; this branch does not invent package-integrity metadata merely to remove the browser requirement.
-
-## Integration boundary
-
-The ACCDB adapter's private mechanics are deliberately not duplicated. `withSolverExecutionInterceptor()` provides a synchronous scoped boundary around the final linear equation solve. Ordinary linear calls delegate directly to the original `compileSolverExecution()`.
-
-For L13/L7 the friction adapter:
-
-1. asks the qualified ACCDB adapter to construct the physical case with a temporary zero-friction bootstrap used only to reach the solve boundary;
-2. intercepts the compiled mechanical model, element contributions, physical load case and governed solver profile;
-3. assembles the exact qualified base matrix/load;
-4. adds only stick tangent blocks or slide capped-load vectors;
-5. solves each linearization with the same dense direct scaling and compensated residual-refinement policy used by the qualified linear solver;
-6. applies the same normalized-residual, energy-balance and conditioning thresholds to each final linearization;
-7. iterates deterministically;
-8. returns the converged displacement/reaction state to the original ACCDB recovery path;
-9. requires recovered physical nodal equilibrium to pass.
-
-A numerical `WARN` is retained in evidence but is not accepted as a nominal friction qualification PASS. The bootstrap linear result is never accepted as friction qualification evidence.
-
-## Nonlinear stiffness-state identity
-
-The base linear `stiffnessStateHash` is insufficient for friction because the converged tangent matrix depends on STICK/SLIDE state. Stage 2 therefore binds a nonlinear stiffness identity to:
-
-- the frozen base stiffness-state hash;
-- each friction restraint identity/node;
-- its converged STICK/SLIDE state;
-- its declared friction stiffness.
-
-Changing STICK to SLIDE changes the nonlinear tangent-state hash. Changing only a capped slide-force magnitude does not redefine tangent stiffness; that force remains part of the nonlinear load/state ledger and execution identity.
-
-L15 has no independent tangent state because it is an algebraic result combination, not a solve.
-
-## Execution order
-
-The local production command first runs frozen non-friction controls L2-L6/L14. It then runs:
-
-1. L13 — primitive nonlinear `W+P1`, paired with L6;
-2. L7 — primitive nonlinear `W+T1+P1`, paired with L5;
-3. L15 — algebraic `L7-L13`, no independent solve, paired with L14;
-4. L1 — intended primitive nonlinear `WW+HP`.
-
-Paired-delta evidence is emitted for:
+Paired evidence:
 
 - `L13-L6`;
 - `L7-L5`;
 - `L15-L14`;
-- identity residual `(L15-L14)-((L7-L5)-(L13-L6))`.
+- expansion identity `(L15-L14)-((L7-L5)-(L13-L6))`.
+
+## L15
+
+L15 is constructed only from already-converged L7 and L13 result rows. It is never passed through the nonlinear kernel. Evidence records `independentSolvePerformed=false` and the exact algebraic identity.
+
+## L1 hydrotest authority
+
+L1 is no longer blocked on the governed public path. The source case must remain exactly:
+
+`L1 / HYD / WW+HP`.
+
+CAESAR II's documented load semantics are represented explicitly:
+
+- `WW`: pipe plus water as the fluid;
+- water basis: SG=1, represented as `1000 kg/m3 = 0.001 kg/cm3` in the BM4_L ACCDB density convention;
+- the operating `FLUID_DENSITY` is not reused for WW;
+- `HP`: hydrostatic test pressure from ACCDB `HYDRO_PRESSURE`;
+- `Include Insulation in Hydrotest=False` is the documented default; an explicit True override fails closed because that branch has not been independently qualified.
+
+The frozen adapter already owns `W` and `P1`. L1 therefore uses an assembly-only compatibility model:
+
+- `FLUID_DENSITY = 0.001 kg/cm3`;
+- `INSUL_THICK = 0`;
+- `INSUL_DENSITY = 0`;
+- `PRESSURE1 = HYDRO_PRESSURE`;
+- frozen formula `W+P1`.
+
+The raw #1085 friction adapter blocks case ID L1 before assembly, so the compatibility model is temporarily exposed through its L13 assembly slot. The alias is not reference authority: source L1 semantics are validated first, L1 load-case settings replace L13 settings, the hydro-transformed model is used, and the output/evidence are relabelled and re-hashed as L1.
+
+Most importantly, the alias still uses #1085's row-driven positive-`FRIC_COEF` surface selection and exact normal-spring cap mechanics. It does not import the broader friction-site logic from any competing PR.
+
+Stored pinned ACCDB L1 output remains the only benchmark reference.
+
+Detailed authority and negative controls are documented in `M047_BM4L_L1_HYDROTEST_AUTHORITY.md`.
 
 ## FRICT_STIF sensitivity
 
-The production run now executes the issue-governed stiffness sensitivity points explicitly:
+The governed sensitivity set is `0.5x / 1x / 2x` for the primitive friction states L13, L7 and L1. L15 is rebuilt algebraically where needed.
 
-- `0.5x` — diagnostic-only independent L13/L7 solves, then algebraic L15;
-- `1x` — the governed nominal two-repeat qualification result is reused;
-- `2x` — diagnostic-only independent L13/L7 solves, then algebraic L15.
+Only `1x` governs qualification. `0.5x` and `2x` are diagnostic-only; they cannot tune, replace or rescue the nominal result. Diagnostic failures remain visible evidence.
 
-Only the declared `FRICT_STIF` value is scaled. Model `mu`, load-case friction multipliers, source identity and all qualified non-friction mechanics remain unchanged. Diagnostic packages receive distinct recomputed package semantic hashes; they cannot retain nominal authority identity. The nominal package is not mutated.
+## ACCDB extraction
 
-Sensitivity is diagnostic only. A 0.5x/2x diagnostic failure is recorded but cannot be used to retune the nominal solver or replace the 1x qualification result. Conversely, a diagnostic PASS cannot rescue a failing nominal 1x run.
+`scripts/lfea-caesar-accdb-mdb-export.mjs` adapts the pure-JavaScript named-table boundary from `reallaksh19/XML_Compare_Utilities/parser/accdb-mdb.js` at commit `d83c62214b7a6486c17698225ea4e11bc3121cb6`, parser blob `2ea596b6e9fb65e386e5cbb256f4141ce7bb595b`.
+
+The current adapter uses pinned browser modules `mdb-reader@2.2.6` and `buffer@6.0.3`, reads only the exact table allowlist and emits the existing `caesar-accdb-raw-export/v1` contract. Missing tables and unsupported values fail closed. No silent ACE fallback is used.
+
+Current packaging still requires a Playwright Chromium/Chrome runtime plus outbound access to the pinned browser modules. That is a packaging limitation, not an engineering-result assumption.
 
 ## Direct CAESAR comparison
 
-The same production run compares every emitted actual case against the ACCDB reference rows using the governed benchmark tolerances. It records the full component comparison, restraint-component counts, restraint failures, and the maximum nonzero-reference percentage error per case.
+The production run compares all emitted cases against the pinned ACCDB reference rows using the governed benchmark tolerances. It retains complete component rows, restraint failure counts and maximum nonzero-reference errors.
 
-The friction restraint acceptance set is L13, L7, L15 and L1. Missing cases are reported as `NOT_READY`; they are not silently omitted. Overall acceptance is separated into:
+The required friction comparison set is L13/L7/L15/L1. Missing cases are `NOT_READY`, never silently omitted.
 
-- `mechanicsStatus` — nonlinear convergence/equilibrium/determinism/numerical-qualification status;
-- `frictionRestraintSourceCustodyStatus` — exact pinned ACCDB identity plus row-driven friction-source checks;
-- `benchmarkRestraintAccuracyStatus` — direct CAESAR restraint comparison status;
-- `overallStatus` — may be `PASS` only when the governed gates pass.
+The hardened qualification boundary additionally requires all frozen controls L2/L3/L4/L5/L6/L14 to be present and to retain zero restraint-component failures.
 
-Thus a converged nonlinear solution cannot be reported overall PASS while its source custody or CAESAR restraint components fail.
+Final governed acceptance therefore requires:
 
-## Convergence and evidence
+- exact pinned source custody PASS;
+- nonlinear mechanics PASS;
+- zero restraint failures for every frozen control;
+- zero restraint failures for L13/L7/L15/L1.
 
-The versioned nominal profile records all-stick initialization, no nominal load stepping, unit relaxation, maximum iterations, update tolerances, cap/stick/slide tolerances, assembled-load closure tolerance, direction tolerance, physical equilibrium caps, repeat count, and 0.5x/1x/2x stiffness sensitivity points.
+Missing required evidence blocks qualification.
 
-Each friction iteration records restraint identity, normal direction, relative tangential displacement, signed/magnitude normal reaction, effective coefficient, stiffness, Coulomb cap, trial spring force, state, state change, applied friction vector, slip direction, residuals, assembly mode, and the maximum assembled-vs-recovered capped-load residual. Solver evidence also carries factorization kind, condition estimate and iterative-refinement history.
+## Independent exact-data corroboration
 
-A state is not accepted from displacement stationarity alone. The gates require active-set stability, displacement/reaction update closure, cap and constitutive closure, assembled friction-load closure, opposing slide direction, equation equilibrium, recovered physical equilibrium, deterministic repeated-run evidence, base-solver residual qualification, energy balance and conditioning.
+PR #1087 independently records a clean-current-head local production run against the exact pinned `e21b...` database. Its review receipt reports:
 
-## Local production command
+- L13: 0 literal failures; nonlinear state/equilibrium/repeatability PASS;
+- L7: 0 literal failures; nonlinear state/equilibrium/repeatability PASS;
+- L15: 0 literal failures; exact L7-L13; no independent nonlinear solve;
+- L1: 0 literal failures; governed HYD WW+HP; nonlinear state/equilibrium/repeatability PASS;
+- paired L13-L6, L7-L5, L15-L14: 0 failures;
+- sensitivity 0.5x/1x/2x: zero diagnostic solve failures;
+- frozen controls: exactly 46 retained external literal failures and 0 restraint failures.
 
-The command is cross-platform with the current browser-based extraction packaging. It requires Node, repository dependencies, a Chromium/Chrome runtime usable by Playwright, network access to the pinned `esm.sh` browser modules, and the exact pinned `BM4_L.ACCDB`. Set `LFEA_ACCDB_BROWSER_CHANNEL` only when an explicit installed Playwright browser channel must be selected.
+This is recorded in `m047-bm4l-independent-production-corroboration.json` as independent corroboration only. PR #1087 uses a different friction implementation, so its clean exact-data run does not qualify PR #1085.
+
+## Authoritative local command
+
+Use the hardened qualification entry point, not the lower-level raw production script:
 
 ```powershell
-node scripts/lfea-m047-bm4l-friction.mjs `
-  --accdb <path-to-BM4_L.ACCDB> `
+node scripts/lfea-m047-bm4l-friction-qualification.mjs `
+  --accdb "C:\path\to\BM4_L.ACCDB" `
   --profile benchmarks/LFEA/CAESAR_ACCDB/bm4l-validation.profile.json `
   --friction-profile benchmarks/LFEA/CAESAR_ACCDB/bm4l-friction-solver.profile.json `
   --actual-out reports/m047-bm4l-friction-actual.json `
   --evidence-out reports/m047-bm4l-friction-evidence.json
 ```
 
-The emitted actual-result package remains compatible with the standard ACCDB benchmark comparison contract. The evidence file contains direct Stage 2 accuracy comparison, pinned-source custody, active-set/repeat evidence, paired-delta RCA and 0.5x/1x/2x sensitivity.
+The hardened evidence schema is `m047-bm4l-friction-production-evidence/v2`.
 
 ## Current qualification boundary
 
-L13/L7/L15 mechanics are implemented. L1 is intentionally fail-closed with `CAESAR_ACCDB_HYDROTEST_LOAD_BASIS_NOT_QUALIFIED` because the frozen ACCDB solver implements W/T1/P1 but not `WW+HP`. This change does **not** infer hydrotest weight from operating `FLUID_DENSITY` or silently reuse P1 as HP.
+The L1 source/mechanics blocker is closed in code. This branch must remain draft until **its own** hardened qualification command is executed against the exact pinned `e21b...` ACCDB and the resulting receipt is published/reviewed.
 
-Accordingly this PR must remain draft and must not claim full issue acceptance until:
+This authoring environment cannot materialize the 5 MB binary from the GitHub connector into the execution container. Therefore no numerical PASS for PR #1085 is claimed here.
 
-1. WW and HP load construction are independently source-authorized and qualified;
-2. the exact issue-pinned `e21b0862...` BM4_L production run is executed;
-3. L2-L6/L14 regression evidence remains passing;
-4. L13/L7/L1 restraint components and all required result families are compared to the pinned ACCDB, with the L15 literal combination report retained;
-5. nominal repeat and stiffness-sensitivity artifacts are published.
+## Tests committed
 
-The historical `64c05a50...` extraction cannot satisfy item 2.
+Coverage includes:
 
-## Tests available in this branch
+- configuration migration and effective-friction authority;
+- friction stiffness conversion;
+- row-driven positive-`FRIC_COEF` selection;
+- float32 coefficient normalization;
+- positive-friction anchor, skew and multi-plane negative controls;
+- exact matching normal-spring cap binding;
+- stick/slide constitutive behavior and direction checks;
+- stale capped-slide-load closure;
+- dense iterative refinement and numerical qualification;
+- repeated-run determinism;
+- nonlinear tangent-state identity;
+- L15 algebraic construction;
+- 0.5x/1x/2x sensitivity isolation;
+- exact source-custody gates;
+- frozen-control acceptance gates;
+- L1 exact `HYD/WW+HP` authority;
+- explicit hydro-insulation=True negative control;
+- invalid `HYDRO_PRESSURE` negative control;
+- proof that WW replaces operating fluid density with SG=1 water;
+- proof that HP maps `HYDRO_PRESSURE -> PRESSURE1` and hydro insulation is removed;
+- public API wiring to the governed L1-enabled solver and sensitivity path.
 
-- friction authority migration and precedence;
-- `1.0E6 N/cm -> 1.0E8 N/m` conversion;
-- stick and slide constitutive behavior;
-- rejection of a stationary state with invalid friction direction;
-- algebraic L15 construction;
-- active-set load carry-forward;
-- rejection of stable-SLIDE convergence until the capped load assembled in the solved RHS matches the newly recovered cap/direction;
-- repeated-run state determinism;
-- scoped solver-interceptor lifetime and exception cleanup;
-- positive-`FRIC_COEF` non-anchor row selection without historical restraint-type/direction/node hardcodes;
-- acceptance of valid non-historical directional restraint types declared by the pinned row;
-- parser-normalized `0.3` versus expanded float32 coefficient equivalence;
-- positive-friction anchor, skew, and multi-plane-at-one-node fail-closed controls;
-- historical 46-row topology retained only as a non-authoritative negative-control fixture;
-- exact issue-pinned ACCDB filename/length/SHA custody gates;
-- dense iterative-refinement behavior and residual/energy/conditioning qualification;
-- 0.5x/2x sensitivity isolation from nominal `FRICT_STIF` and model `mu`, including diagnostic package hash separation;
-- nonlinear tangent-state identity changes on STICK/SLIDE and ignores capped-load magnitude.
-
-The original isolated friction-kernel test set was exercised during authoring and passed 9/9. The assembled-load closure reproducer was also executed locally against the controller source and passed. The newer repository-integrated tests have been committed but a full repository test run is not claimed from this network-isolated authoring runtime.
-
-The browser-based mdb-reader production extraction itself has not been executed in this authoring runtime because the pinned `e21b...` ACCDB is not materialized locally and outbound module loading/browser execution are unavailable. Fresh L13/L7/L15 CAESAR percentage agreement is therefore still not claimed here.
+The newly added repository-integrated L1 and wiring tests are committed but are not claimed as executed in this network-isolated authoring environment.

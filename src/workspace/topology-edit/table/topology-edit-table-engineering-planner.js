@@ -6,6 +6,9 @@ import {
   assertTopologyEditJunctionRelationTarget,
 } from '../topology-edit-junction-relation-command.js';
 import {
+  resolveTopologyEditSupportPlacementTargets,
+} from '../topology-edit-support-placement-command.js';
+import {
   resolveTopologyEditSupportRestraintTargets,
 } from '../topology-edit-support-restraint-command.js';
 import {
@@ -25,6 +28,9 @@ export function compileTopologyEditTableEngineeringIntent(intent, topology) {
   if (intent.intentKind === 'NODE_POSITION') {
     return compileTopologyEditTableNodePosition(intent, topology);
   }
+  if (intent.intentKind === 'SUPPORT_PLACEMENT') {
+    return compileSupportPlacement(intent, topology);
+  }
   if (intent.intentKind === 'SUPPORT_RESTRAINT') {
     return compileSupportRestraint(intent, topology);
   }
@@ -37,6 +43,35 @@ export function compileTopologyEditTableEngineeringIntent(intent, topology) {
   throw new RangeError(
     `TopologyEditTableEngineeringPlanner: unsupported intent ${intent.intentKind}.`,
   );
+}
+
+function compileSupportPlacement(intent, topology) {
+  const payload = intent.requestedValue;
+  const targets = resolveTopologyEditSupportPlacementTargets(topology, { payload });
+  const nodeIds = targets.nodes.map((target) => target.id);
+  const edgeIds = targets.edges.map((target) => target.id);
+  const supportIds = targets.supports.map((target) => target.id);
+  const changedScope = deriveTopologyEditChangedScope(topology, {
+    basisHash: topology.canonicalTopologyHash,
+    nodeIds,
+    edgeIds,
+    supportIds,
+  });
+  return createTopologyEditOperationPlan({
+    operationType: 'COMPOSITE_ENGINEERING_EDIT',
+    basisHash: topology.canonicalTopologyHash,
+    targetIds: uniqueSorted([...nodeIds, ...edgeIds, ...supportIds]),
+    parameters: {
+      aggregateKind: 'TABLE_SUPPORT_PLACEMENT',
+      supportId: payload.supportId,
+      hostEdgeId: payload.hostEdgeId,
+      priorStationMm: intent.priorValue.stationMm,
+      requestedStationMm: payload.stationMm,
+    },
+    commandIntents: [{ commandType: 'UPDATE_SUPPORT_PLACEMENT', payload }],
+    changedScope,
+    unresolvedEvidence: [],
+  });
 }
 
 function compileSupportRestraint(intent, topology) {

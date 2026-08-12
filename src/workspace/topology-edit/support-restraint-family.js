@@ -1,5 +1,8 @@
 import { deepFreeze, stringValue } from '../../core/shared-piping-model/index.js';
 import {
+  certifiedTopologyEditSupportPlacementOrigin,
+} from './topology-edit-support-placement.js';
+import {
   mergeEvidenceSourcePaths,
   mergeGovernedGap,
   normalizeCapabilityRestraintEvidence,
@@ -86,7 +89,8 @@ export function deriveSupportRestraintGeometry(input = {}) {
   }
   if (!support?.id) throw new TypeError('Support geometry requires stable support identity.');
   const nodes = new Map(topology.nodes.map((node) => [stringValue(node.id), finitePoint(node.position)]));
-  const origin = nodes.get(stringValue(support.nodeId)) || finitePoint(support.origin);
+  const origin = certifiedTopologyEditSupportPlacementOrigin(support)
+    || nodes.get(stringValue(support.nodeId)) || finitePoint(support.origin);
   const host = resolveHostEdge(topology.edges, support);
   const frame = host && origin ? hostFrame(host, nodes, input.verticalAxis || 'Z') : null;
   const diagnostics = [];

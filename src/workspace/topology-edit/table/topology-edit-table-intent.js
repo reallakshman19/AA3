@@ -7,6 +7,10 @@ import {
   topologyEditTableNodePositionPriorValue,
 } from './topology-edit-table-node-position-contract.js';
 import {
+  normalizeTopologyEditTableSupportPlacementPayload,
+  topologyEditTableSupportPlacementPriorValue,
+} from './topology-edit-table-support-placement-contract.js';
+import {
   normalizeTopologyEditTableSupportRestraintPayload,
   topologyEditTableSupportRestraintPriorValue,
 } from './topology-edit-table-support-restraint-contract.js';
@@ -22,6 +26,7 @@ export const TOPOLOGY_EDIT_TABLE_AUTHORITY_SCHEMA = 'TopologyEditTableEditAuthor
 const INTENT_KINDS = new Set([
   'PIPE_LENGTH',
   'NODE_POSITION',
+  'SUPPORT_PLACEMENT',
   'SUPPORT_RESTRAINT',
   'VALVE_REPLACEMENT',
   'TEE_REDUCER_RELATION',
@@ -138,6 +143,9 @@ function normalizeIntentPayload(kind, requestedValue, geometryPolicy, row, proje
   if (kind === 'NODE_POSITION') {
     return normalizeTopologyEditTableNodePositionPayload(requestedValue, geometryPolicy, row);
   }
+  if (kind === 'SUPPORT_PLACEMENT') {
+    return normalizeTopologyEditTableSupportPlacementPayload(requestedValue, row);
+  }
   if (kind === 'SUPPORT_RESTRAINT') {
     return normalizeTopologyEditTableSupportRestraintPayload(requestedValue, row);
   }
@@ -204,6 +212,7 @@ function normalizeGeometryPolicy(value) {
 function priorValue(kind, row, payload) {
   if (kind === 'PIPE_LENGTH') return deepFreeze({ lengthMm: row.fields.lengthMm });
   if (kind === 'NODE_POSITION') return topologyEditTableNodePositionPriorValue(payload);
+  if (kind === 'SUPPORT_PLACEMENT') return topologyEditTableSupportPlacementPriorValue(row);
   if (kind === 'SUPPORT_RESTRAINT') return topologyEditTableSupportRestraintPriorValue(row);
   if (kind === 'VALVE_REPLACEMENT') return deepFreeze({
     valveType: row.fields.valveType,

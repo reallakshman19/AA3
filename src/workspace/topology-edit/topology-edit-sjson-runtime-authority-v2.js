@@ -3,6 +3,9 @@ import {
   engineeringDirectionToRender,
   renderDirectionToEngineering,
 } from './topology-edit-coordinate-transform.js';
+import {
+  certifiedTopologyEditSupportPlacementOrigin,
+} from './topology-edit-support-placement.js';
 import { supportTopologyForExactOrigins } from './topology-edit-sjson-visual-authority.js';
 import {
   applySjsonParentBranchDiametersToSupportTopology,
@@ -58,7 +61,7 @@ export function deriveGovernedSjsonSupportBundle({ canonical, dataset, draftVisu
   }
   const supportAuthority = deriveSjsonTopoValidatorSupportProjection({
     canonicalTopology: supportTopology,
-    dataset,
+    dataset: supportProjectionDataset(dataset, supportTopology),
     verticalAxis: 'Z',
     markerSizeMm,
   });
@@ -110,6 +113,28 @@ export function applySjsonBenchmarkCameraFit(backend) {
     clipping: backend.governedCameraClippingSnapshot?.() || null,
     sourceHash: SJSON_BENCHMARK_SOURCE_HASH,
     engineeringDirection: renderDirectionToEngineering(cameraFit.renderDirection),
+  });
+}
+
+function supportProjectionDataset(dataset, supportTopology) {
+  const origins = new Map((supportTopology?.supports ?? []).flatMap((support) => {
+    const origin = certifiedTopologyEditSupportPlacementOrigin(support);
+    return origin && support.entityId ? [[String(support.entityId), origin]] : [];
+  }));
+  if (!origins.size) return dataset;
+  return Object.freeze({
+    ...dataset,
+    entities: dataset.entities.map((entity) => {
+      const origin = origins.get(String(entity.entityId));
+      if (!origin) return entity;
+      return Object.freeze({
+        ...entity,
+        properties: Object.freeze({
+          ...entity.properties,
+          attributes: Object.freeze({ ...entity.properties?.attributes, APOS: origin }),
+        }),
+      });
+    }),
   });
 }
 

@@ -8,6 +8,9 @@ import {
   renderTopologyEditTableNodePositionEditor,
 } from './topology-edit-table-engineering-editor.js';
 import {
+  renderTopologyEditTableSupportPlacementEditor,
+} from './topology-edit-table-support-placement-editor.js';
+import {
   renderTopologyEditTableSupportRestraintEditor,
 } from './topology-edit-table-support-restraint-editor.js';
 
@@ -59,7 +62,7 @@ export function renderTopologyEditTableAllProperties(row, runtime) {
   const custody = Object.entries(row.custody ?? {}).map(([key, value]) => [humanLabel(key), value]);
   const source = sourcePropertyRows(sourceEntityFor(runtime, row));
   const staged = stagedIntentFor(runtime, row);
-  return `${renderTopologyEditTableNodePositionEditor(row, staged, runtime)}${renderTopologyEditTableSupportRestraintEditor(row, staged)}<section class="topology-edit-table__all-properties" data-table-all-properties>
+  return `${renderTopologyEditTableNodePositionEditor(row, staged, runtime)}${renderTopologyEditTableSupportPlacementEditor(row, staged, runtime)}${renderTopologyEditTableSupportRestraintEditor(row, staged)}<section class="topology-edit-table__all-properties" data-table-all-properties>
     <header><strong>All properties</strong><span>${projected.length} projected · ${source.length} source/vendor</span></header>
     ${propertyTable('Identity', identity.map(([label, value]) => ({ label, value, authority: 'IDENTITY' })))}
     ${propertyTable('Engineering properties', projected, true)}

@@ -2,6 +2,7 @@ import { createTopologyEditTableBatch } from '../topology-edit/table/topology-ed
 import { planTopologyEditTableBatch } from '../topology-edit/table/topology-edit-table-batch-planner.js';
 import {
   deriveTopologyEditTableNodePositionCapability,
+  deriveTopologyEditTableSupportPlacementCapability,
 } from '../topology-edit/table/topology-edit-table-edit-capability.js';
 import { createTopologyEditTableIntent } from '../topology-edit/table/topology-edit-table-intent.js';
 import {
@@ -47,6 +48,31 @@ export function stageTopologyEditNodePosition(runtime, canonicalId, endpointInpu
           value(runtime, `[data-table-edit-node-mode="${endpoint}"]`),
           `${endpoint} movement mode`,
         ),
+      },
+    });
+  });
+}
+
+export function stageTopologyEditSupportPlacement(runtime, canonicalId) {
+  return stage(runtime, () => {
+    const row = exactRow(runtime.projection, canonicalId);
+    const topology = runtime.controller.session.currentTopology();
+    const capability = deriveTopologyEditTableSupportPlacementCapability({
+      row,
+      projection: runtime.projection,
+      canonicalTopology: topology,
+    });
+    if (capability.status !== 'NEEDS_INPUT' || !capability.details?.hostEdgeId) {
+      throw new RangeError(`TopologyEditTableEngineeringRuntime: ${capability.reason}`);
+    }
+    return createTopologyEditTableIntent({
+      projection: runtime.projection,
+      sessionSnapshot: runtime.controller.session.snapshot(),
+      canonicalId,
+      intentKind: 'SUPPORT_PLACEMENT',
+      requestedValue: {
+        hostEdgeId: capability.details.hostEdgeId,
+        stationMm: nonNegative(value(runtime, '[data-table-edit-support-station]'), 'support station'),
       },
     });
   });
@@ -178,6 +204,11 @@ function finite(input, label) {
   }
   return number;
 }
+function nonNegative(input, label) {
+  const number = finite(input, label);
+  if (number < 0) throw new RangeError(`TopologyEditTableEngineeringRuntime: ${label} must be non-negative.`);
+  return number;
+}
 function positive(input, label) {
   const number = Number(input);
   if (!Number.isFinite(number) || number <= 0) {
@@ -187,9 +218,5 @@ function positive(input, label) {
 }
 function optionalNonNegative(input, label) {
   if (String(input ?? '').trim() === '') return null;
-  const number = Number(input);
-  if (!Number.isFinite(number) || number < 0) {
-    throw new RangeError(`TopologyEditTableEngineeringRuntime: ${label} must be non-negative.`);
-  }
-  return number;
+  return nonNegative(input, label);
 }

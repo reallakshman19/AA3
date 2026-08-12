@@ -52,7 +52,7 @@ const BY_TYPE = Object.freeze({
   ],
   SUPPORT: [
     column('hostEntityId', 'Host', 'identity', { readOnly: true }),
-    column('stationMm', 'Station', 'length', { readOnly: true }),
+    column('stationMm', 'Station', 'length', { editor: 'SUPPORT_PLACEMENT' }),
     column('supportType', 'Support Type', 'enum', { editor: 'SUPPORT_RESTRAINT' }),
     column('direction', 'Direction', 'enum', { editor: 'SUPPORT_RESTRAINT' }),
     column('gapMm', 'Gap', 'length', { editor: 'SUPPORT_RESTRAINT' }),

@@ -16,24 +16,14 @@ function topology(edges) {
   }));
   return {
     canonicalTopologyHash: `canonical:${edges.length}:${nodes.length}`,
-    nodes,
-    edges,
-    junctions: [],
-    supports: [],
-    boundaries: [],
-    rigids: [],
-    bends: [],
+    nodes, edges, junctions: [], supports: [], boundaries: [], rigids: [], bends: [],
   };
 }
 
 test('exact-gap command is blocked for nodes in the same connected component', () => {
-  const model = topology([
-    { id: 'edge:a-b', fromNodeId: 'node:a', toNodeId: 'node:b' },
-  ]);
+  const model = topology([{ id: 'edge:a-b', fromNodeId: 'node:a', toNodeId: 'node:b' }]);
   const receipt = deriveTopologyEditCommandCapability({
-    actionId: 'set-gap-3',
-    selection: { nodeIds: ['node:a', 'node:b'], edgeId: null },
-    topology: model,
+    actionId: 'set-gap-3', selection: { nodeIds: ['node:a', 'node:b'], edgeId: null }, topology: model,
   });
   assert.equal(receipt.status, 'BLOCKED');
   assert.equal(receipt.reasonCode, 'EXACT_GAP_CONTEXT_INVALID');
@@ -45,9 +35,7 @@ test('exact-gap command is available for graph-open endpoints in separate compon
     { id: 'edge:b-y', fromNodeId: 'node:b', toNodeId: 'node:y' },
   ]);
   const receipt = deriveTopologyEditCommandCapability({
-    actionId: 'set-gap-3',
-    selection: { nodeIds: ['node:a', 'node:b'], edgeId: null },
-    topology: model,
+    actionId: 'set-gap-3', selection: { nodeIds: ['node:a', 'node:b'], edgeId: null }, topology: model,
   });
   assert.equal(receipt.status, 'AVAILABLE');
 });
@@ -75,8 +63,7 @@ test('professional offset without an isolated corner is unrepresentable, not a g
     { id: 'edge:b-y', fromNodeId: 'node:b', toNodeId: 'node:y' },
   ]);
   const receipt = deriveTopologyEditProfessionalCapability({
-    topology: model,
-    selection: { nodeIds: ['node:a', 'node:b'], edgeId: null },
+    topology: model, selection: { nodeIds: ['node:a', 'node:b'], edgeId: null },
     values: { operationType: 'CREATE_ORTHOGONAL_OFFSET' },
   });
   assert.equal(receipt.status, 'UNREPRESENTABLE');
@@ -89,46 +76,34 @@ test('extend operation is blocked when selected endpoint is not graph-open', () 
     { id: 'edge:b-c', fromNodeId: 'node:b', toNodeId: 'node:c' },
   ]);
   const receipt = deriveTopologyEditProfessionalCapability({
-    topology: model,
-    selection: { nodeIds: [], edgeId: 'edge:a-b' },
-    values: {
-      operationType: 'EXTEND_EDGE',
-      edgeId: 'edge:a-b',
-      endpoint: 'TO',
-      distanceMm: 100,
-    },
+    topology: model, selection: { nodeIds: [], edgeId: 'edge:a-b' },
+    values: { operationType: 'EXTEND_EDGE', edgeId: 'edge:a-b', endpoint: 'TO', distanceMm: 100 },
   });
   assert.equal(receipt.status, 'BLOCKED');
   assert.equal(receipt.reasonCode, 'ENDPOINT_NOT_GRAPH_OPEN');
 });
 
-test('Table exposes certified editors and keeps support placement read-only', () => {
+test('Table exposes certified restraint and station editors while host rebinding stays read-only', () => {
   const pipe = row('PIPE', 'EDGE', { lengthMm: 1000 });
   const bend = row('ELBOW', 'BEND', { radiusMm: 250 });
-  const support = row('SUPPORT', 'SUPPORT', { gapMm: 2, stationMm: 40 });
-
+  const support = row('SUPPORT', 'SUPPORT', { gapMm: 2, stationMm: 40, hostEntityId: 'pipe:p1' });
   assert.equal(deriveTopologyEditTableCellCapability({ row: pipe, columnKey: 'lengthMm' }).status, 'AVAILABLE');
-
   const bendCapability = deriveTopologyEditTableCellCapability({ row: bend, columnKey: 'radiusMm' });
   assert.equal(bendCapability.status, 'UNREPRESENTABLE');
   assert.equal(bendCapability.reasonCode, 'TABLE_INTENT_NOT_CERTIFIED');
-
-  const supportCapability = deriveTopologyEditTableCellCapability({ row: support, columnKey: 'gapMm' });
-  assert.equal(supportCapability.status, 'NEEDS_INPUT');
-  assert.equal(supportCapability.reasonCode, 'EXPLICIT_SUPPORT_RESTRAINT_REQUIRED');
-  assert.equal(supportCapability.details.intentKind, 'SUPPORT_RESTRAINT');
-
-  const stationCapability = deriveTopologyEditTableCellCapability({
-    row: support, columnKey: 'stationMm',
-  });
-  assert.equal(stationCapability.status, 'BLOCKED');
-  assert.equal(stationCapability.reasonCode, 'READ_ONLY_PROPERTY');
+  const restraint = deriveTopologyEditTableCellCapability({ row: support, columnKey: 'gapMm' });
+  assert.equal(restraint.status, 'NEEDS_INPUT');
+  assert.equal(restraint.reasonCode, 'EXPLICIT_SUPPORT_RESTRAINT_REQUIRED');
+  assert.equal(restraint.details.intentKind, 'SUPPORT_RESTRAINT');
+  const station = deriveTopologyEditTableCellCapability({ row: support, columnKey: 'stationMm' });
+  assert.equal(station.status, 'NEEDS_INPUT');
+  assert.equal(station.reasonCode, 'EXPLICIT_SUPPORT_STATION_REQUIRED');
+  assert.equal(station.details.intentKind, 'SUPPORT_PLACEMENT');
+  const host = deriveTopologyEditTableCellCapability({ row: support, columnKey: 'hostEntityId' });
+  assert.equal(host.status, 'BLOCKED');
+  assert.equal(host.reasonCode, 'READ_ONLY_PROPERTY');
 });
 
 function row(elementType, canonicalKind, fields) {
-  return {
-    elementType,
-    identity: { canonicalKind, canonicalId: `${elementType.toLowerCase()}:fixture` },
-    fields,
-  };
+  return { elementType, identity: { canonicalKind, canonicalId: `${elementType.toLowerCase()}:fixture` }, fields };
 }

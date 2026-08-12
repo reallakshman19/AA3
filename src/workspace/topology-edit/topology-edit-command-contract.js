@@ -10,6 +10,7 @@ import {
   normalizeTopologyEditInlineReplacementPayload,
 } from './topology-edit-inline-component-replacement.js';
 import { normalizePipeSegmentCommandPayload } from './topology-edit-pipe-segment-contract.js';
+import { normalizeTopologyEditSupportPlacementPayload } from './topology-edit-support-placement-command.js';
 import { normalizeTopologyEditSupportRestraintPayload } from './topology-edit-support-restraint-command.js';
 
 export const TOPOLOGY_EDIT_COMMAND_REQUEST_SCHEMA = 'TopologyEditCommandRequest.v1';
@@ -24,7 +25,7 @@ export const TOPOLOGY_EDIT_WAVE3_ENGINEERING_COMMANDS = Object.freeze([
 export const TOPOLOGY_EDIT_PROFESSIONAL_COMMANDS = Object.freeze([
   'INSERT_INLINE_COMPONENT',
   'REPLACE_INLINE_COMPONENT',
-  'UPDATE_JUNCTION_BRANCH_RELATION', 'UPDATE_SUPPORT_RESTRAINT',
+  'UPDATE_JUNCTION_BRANCH_RELATION', 'UPDATE_SUPPORT_PLACEMENT', 'UPDATE_SUPPORT_RESTRAINT',
   'INSERT_BRANCH_COMPONENT',
   'INSERT_PIPE_SEGMENT',
 ]);
@@ -379,7 +380,9 @@ const PAYLOAD_NORMALIZERS = Object.freeze({
   ADD_JUNCTION_DEFINITION: normalizeJunction, TRIM_EDGE: normalizeTrim,
   INSERT_INLINE_COMPONENT: normalizeInlineComponent,
   REPLACE_INLINE_COMPONENT: normalizeTopologyEditInlineReplacementPayload,
-  UPDATE_JUNCTION_BRANCH_RELATION: normalizeTopologyEditJunctionRelationPayload, UPDATE_SUPPORT_RESTRAINT: normalizeTopologyEditSupportRestraintPayload,
+  UPDATE_JUNCTION_BRANCH_RELATION: normalizeTopologyEditJunctionRelationPayload,
+  UPDATE_SUPPORT_PLACEMENT: normalizeTopologyEditSupportPlacementPayload,
+  UPDATE_SUPPORT_RESTRAINT: normalizeTopologyEditSupportRestraintPayload,
   INSERT_BRANCH_COMPONENT: normalizeTopologyEditBranchComponentRequest,
   INSERT_PIPE_SEGMENT: normalizePipeSegmentCommandPayload,
 });

@@ -48,10 +48,7 @@ export async function validateTopologyEditTableRuntime(runtime) {
       || runtime.controller.session.currentTopology().canonicalTopologyHash !== preview.priorCanonicalHash) {
       throw new RangeError('TopologyEditTableWorkflow: validation completed against a stale Preview.');
     }
-    runtime.validation = validateTopologyEditTablePreview({
-      preview,
-      workerReceipt: result.receipt,
-    });
+    runtime.validation = validateTopologyEditTablePreview({ preview, workerReceipt: result.receipt });
     runtime.message = runtime.validation.status === 'READY_TO_APPLY'
       ? 'Final-state validation passed; Apply is enabled.'
       : `${runtime.validation.blockingIssueCount} blocking validation issue(s).`;
@@ -120,25 +117,52 @@ export function redoTopologyEditTableRuntime(runtime) {
 export function renderTopologyEditTablePreviewGhost(runtime) {
   const candidate = runtime.preview?.candidate;
   if (!candidate) return;
-  const projection = runtime.controller.deriveVisual(
-    candidate.canonicalTopology,
-    'DRAFT',
-  ).projection;
+  const projection = runtime.controller.deriveVisual(candidate.canonicalTopology, 'DRAFT').projection;
   const changed = new Set(candidate.changedCanonicalIds ?? []);
-  const accepted = (row) => changed.has(
-    row.pickTarget?.objectId ?? row.entityId ?? row.id,
+  const placementElements = supportPlacementGhostElements(runtime, candidate, changed);
+  const placementIds = new Set(placementElements.map((row) => row.pickTarget.supportId));
+  const restraintGhost = changedSupportRestraintGhost(runtime, candidate, changed);
+  if (placementElements.length) {
+    runtime.controller.deriveVisual(runtime.controller.session.currentTopology(), 'DRAFT');
+  }
+  const accepted = (row) => changed.has(row.pickTarget?.objectId ?? row.entityId ?? row.id);
+  const representedByPlacement = (row) => placementIds.has(
+    row.pickTarget?.supportId ?? row.pickTarget?.objectId ?? row.entityId ?? row.id,
   );
-  const supportGhost = changedSupportRestraintGhost(runtime, candidate, changed);
   runtime.controller.viewportBackend?.renderGhost({
     elements: [
-      ...(projection.compactElements ?? projection.elements ?? []).filter(accepted),
-      ...supportGhost.elements,
+      ...(projection.compactElements ?? projection.elements ?? [])
+        .filter((row) => accepted(row) && !representedByPlacement(row)),
+      ...restraintGhost.elements.filter((row) => !representedByPlacement(row)),
+      ...placementElements,
     ],
     segments: [
       ...(projection.compactSegments ?? projection.segments ?? []).filter(accepted),
-      ...supportGhost.segments,
+      ...restraintGhost.segments,
     ],
   });
+}
+
+function supportPlacementGhostElements(runtime, candidate, changed) {
+  const supports = (candidate.canonicalTopology.supports ?? []).filter((support) => {
+    const origin = support.placementOverride?.origin;
+    return changed.has(support.id)
+      && support.placementOverride?.authority === 'CERTIFIED_TABLE_OVERRIDE'
+      && origin
+      && [origin.x, origin.y, origin.z].every(Number.isFinite);
+  });
+  if (!supports.length) return [];
+  const sizeMm = supportMarkerSizeMm(runtime);
+  return supports.map((support) => ({
+    id: support.id,
+    entityId: support.id,
+    type: 'SUPPORT',
+    x: support.placementOverride.origin.x,
+    y: support.placementOverride.origin.y,
+    z: support.placementOverride.origin.z,
+    sizeMm,
+    pickTarget: { objectKind: 'support', objectId: support.id, supportId: support.id },
+  }));
 }
 
 function changedSupportRestraintGhost(runtime, candidate, changed) {
@@ -147,14 +171,20 @@ function changedSupportRestraintGhost(runtime, candidate, changed) {
     verticalAxis: 'Z',
   }).filter((overlay) => changed.has(overlay.supportId));
   if (!overlays.length) return { elements: [], segments: [] };
+  const projection = projectSupportGeometryToViewport(overlays, {
+    markerSizeMm: supportMarkerSizeMm(runtime),
+  });
+  return { elements: projection.elements, segments: projection.segments };
+}
+
+function supportMarkerSizeMm(runtime) {
   const markerSizeMm = Number(
     runtime.controller.viewportBackend?.navigationConfiguration?.supportMarkerSize,
   );
   if (!Number.isFinite(markerSizeMm) || markerSizeMm <= 0) {
     throw new Error('TOPOLOGY_EDIT_SUPPORT_MARKER_POLICY_MISSING: Approved supportMarkerSize is required.');
   }
-  const projection = projectSupportGeometryToViewport(overlays, { markerSizeMm });
-  return { elements: projection.elements, segments: projection.segments };
+  return markerSizeMm;
 }
 
 function errorMessage(error) {

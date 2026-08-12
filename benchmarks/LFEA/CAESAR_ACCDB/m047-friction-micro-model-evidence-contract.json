@@ -14,18 +14,12 @@
   "requiredConfiguration": {
     "coefficientOfFriction": 0.3,
     "frictionMultiplier": 1,
-    "frictionStiffnessNPerM": 100000000
+    "frictionStiffnessNPerM": 175126835.24647635,
+    "authority": "HEXAGON_1E6_LB_PER_IN_PLUS_INDEPENDENT_BM1_PRODUCT_VALIDATION"
   },
   "observability": {
-    "finalStateSufficient": [
-      "MM1_STICK_STIFFNESS",
-      "MM2_SLIDE_PLATEAU"
-    ],
-    "iterationTraceRequired": [
-      "MM3_DIRECTION_CHANGE_TRACE",
-      "MM4_NORMAL_FORCE_UPDATE_TRACE",
-      "MM5_GAP_CONTACT_TRACE"
-    ],
+    "finalStateSufficient": ["MM1_STICK_STIFFNESS", "MM2_SLIDE_PLATEAU"],
+    "iterationTraceRequired": ["MM3_DIRECTION_CHANGE_TRACE", "MM4_NORMAL_FORCE_UPDATE_TRACE", "MM5_GAP_CONTACT_TRACE"],
     "basis": {
       "finalOutput": "CAESAR static output stores total system results after post-processing.",
       "iterationStatus": "CAESAR static solve UI reports nonlinear-restraint convergence status while solving; per-restraint status can be stepped through during the solution.",
@@ -40,51 +34,24 @@
       "CAESAR_PRODUCT_VERSION_BUILD",
       "POSITIVE_FRICTION_COEFFICIENT",
       "FRICTION_MULTIPLIER_ONE",
-      "PINNED_FRICTION_STIFFNESS_1E8_N_PER_M",
+      "PINNED_FRICTION_STIFFNESS_175126835_24647635_N_PER_M",
       "FINAL_DISPLACEMENT_VECTOR",
       "FINAL_RESTRAINT_REACTION_VECTOR"
     ],
-    "slidePlateauAdditional": [
-      "FINAL_GLOBAL_EQUILIBRIUM_PROOF"
-    ],
-    "stateSemanticsAdditional": [
-      "CAESAR_NONLINEAR_ITERATION_TRACE"
-    ],
-    "gapContactAdditional": [
-      "CAESAR_NONLINEAR_ITERATION_TRACE",
-      "FINAL_GLOBAL_EQUILIBRIUM_PROOF"
-    ]
+    "slidePlateauAdditional": ["FINAL_GLOBAL_EQUILIBRIUM_PROOF"],
+    "stateSemanticsAdditional": ["CAESAR_NONLINEAR_ITERATION_TRACE"],
+    "gapContactAdditional": ["CAESAR_NONLINEAR_ITERATION_TRACE", "FINAL_GLOBAL_EQUILIBRIUM_PROOF"]
   },
   "iterationTraceRow": {
-    "requiredFields": [
-      "iteration",
-      "restraintStatus",
-      "normalReactionN",
-      "tangentialDirection",
-      "frictionReactionMagnitudeN",
-      "converged"
-    ]
+    "requiredFields": ["iteration", "restraintStatus", "normalReactionN", "tangentialDirection", "frictionReactionMagnitudeN", "converged"]
   },
   "knownNonAuthoritySources": [
-    {
-      "source": "BM4_L",
-      "reason": "BM4_L L7/L13/L15 are final validation targets and are prohibited as parameter/state-rule authority."
-    },
-    {
-      "source": "BM4_NL L19/L20",
-      "accdbSha256": "85d39463296e569da811d8572e2eff680b858097f76fdf0f47d1755f0b161c21",
-      "cases": ["L19", "L20"],
-      "reason": "Existing governed BM4_NL qualification explicitly forced effective friction to zero and excluded friction/gap/nonlinear support state from its mechanics scope."
-    }
+    {"source":"BM4_L","reason":"BM4_L L7/L13/L15 are final validation targets and are prohibited as parameter/state-rule authority."},
+    {"source":"BM4_NL L19/L20","accdbSha256":"85d39463296e569da811d8572e2eff680b858097f76fdf0f47d1755f0b161c21","cases":["L19","L20"],"reason":"Existing governed BM4_NL qualification explicitly forced effective friction to zero and excluded friction/gap/nonlinear support state from its mechanics scope."}
   ],
   "authorityBoundary": {
     "measurementGateMayAuthorize": "MEASUREMENT_ONLY",
-    "measurementGateMayNotAuthorize": [
-      "PRODUCTION_MECHANICS",
-      "FRICTION_SLIDE_MULTIPLIER",
-      "FRICTION_STATE_HISTORY_SEMANTICS",
-      "GAP_CONTACT_STATE_SEMANTICS"
-    ],
+    "measurementGateMayNotAuthorize": ["PRODUCTION_MECHANICS", "FRICTION_SLIDE_MULTIPLIER", "FRICTION_STATE_HISTORY_SEMANTICS", "GAP_CONTACT_STATE_SEMANTICS"],
     "productionPromotionRequiresSeparateIndependentReview": true
   },
   "decision": {

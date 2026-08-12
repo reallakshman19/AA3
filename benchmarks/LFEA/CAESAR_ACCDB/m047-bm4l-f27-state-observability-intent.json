@@ -1,0 +1,22 @@
+{
+  "schema": "m047-bm4l-f27-state-observability-intent/v1",
+  "benchmarkId": "BM4_L",
+  "scope": "READ_ONLY_EXACT_BUILD_NONLINEAR_STATE_OBSERVABILITY",
+  "commonCommit": "179c4831cf521cf797c13699cfbbd118315c9244",
+  "objects": [
+    {"path":"LFEA/BM4/Output_BM4.xml","gitBlobSha":"f4474379b6835815690e51e57cde6fade70146f2"},
+    {"path":"LFEA/BM4/InputXML_BM4.xml","gitBlobSha":"3423d220374a17f67addd3c8c0c44300ffa46251"},
+    {"path":"LFEA/BM4/BM4_NL.zip","gitBlobSha":"86a803ed27ebdbd2836452dc2e874c3458aa204c"}
+  ],
+  "requiredStateEvidence": [
+    "GAP_CONTACT_OPEN_CLOSED_REOPENED_ORDERING",
+    "CONTACT_STATE_COMMIT_CONVERGENCE_ORDERING",
+    "STICK_TO_SLIDING_SCHEDULING",
+    "FIRST_SLIDE_15_DEGREE_HANDLING",
+    "SUBSEQUENT_DIRECTION_ZERO_CROSSING_HANDLING",
+    "NORMAL_FORCE_UPDATE_BASIS_AROUND_0_15_THRESHOLD"
+  ],
+  "responseFittingAllowed": false,
+  "productionMechanicsAuthorized": false,
+  "l13RescoreAuthorized": false
+}

@@ -1,15 +1,32 @@
 {
-  "schema": "m047-bm4l-fix1-friction-source-domain-consumption/v1",
+  "schema": "m047-bm4l-fix1-friction-source-domain-consumption/v2",
   "benchmarkId": "BM4_L",
   "fixId": "FIX1_INPUTXML_FRICTION_SITE_SOURCE_DOMAIN_CONSUMPTION",
   "stackBase": {
     "pr": 1074,
-    "head": "d60fd3d34be4f94968818daa653b02f5b6476d26"
+    "head": "b03e0c1d7277b6b9738303de33f70ac9982da9ba",
+    "status": "CORRECTED_F2_6_DIRECT_ACCDB_AUTHORITY"
   },
   "authority": {
-    "f26Status": "PASS_WITH_GAP_MAGNITUDE_SOURCE_SPLIT",
+    "f26Status": "PASS_DIRECT_ACCDB_LOOKUP_WITH_SOURCE_DOMAIN_CROSSWALK",
     "inputXmlRule": "RESTRAINT.TYPE_MUTATED_EXACTLY_ONCE_BEFORE_CLASSIFICATION",
-    "accdbRule": "INPUT_RESTRAINTS.RES_TYPEID_USED_DIRECTLY_NO_MUTATION",
+    "accdbRule": "INPUT_RESTRAINTS.RES_TYPEID_USED_DIRECTLY_WITH_RESTRAINT_TYPES_LOOKUP_NO_MUTATION",
+    "numericNamespaceEqualityAssumed": false,
+    "classLabelEqualityAssumed": false,
+    "directAccdbTypes": [
+      {"resTypeId": 1, "type": "ANC", "rowCount": 1},
+      {"resTypeId": 3, "type": "Y", "rowCount": 29},
+      {"resTypeId": 8, "type": "GUI", "rowCount": 6},
+      {"resTypeId": 9, "type": "LIM", "rowCount": 10}
+    ],
+    "correctedInputXmlCrosswalk": [
+      {"accdbResTypeId": 1, "accdbType": "ANC", "correctedInputXmlClass": "ANC", "rowCount": 1},
+      {"accdbResTypeId": 3, "accdbType": "Y", "correctedInputXmlClass": "+Y", "rowCount": 29},
+      {"accdbResTypeId": 8, "accdbType": "GUI", "correctedInputXmlClass": "LIM", "rowCount": 6},
+      {"accdbResTypeId": 9, "accdbType": "LIM", "correctedInputXmlClass": "GUI", "rowCount": 10}
+    ],
+    "withdrawnAccdbInference": "1=ANC,3=+Y,8=LIM,9=GUI",
+    "withdrawnAccdbInferenceStatus": "WITHDRAWN",
     "bm4lMutation": [
       {"label": "+Y", "from": "17", "to": "14"},
       {"label": "LIM", "from": "7", "to": "8"},
@@ -23,7 +40,9 @@
       "frictionSiteCount": 26,
       "rawInputXmlType": 17,
       "correctedInputXmlType": 14,
-      "correctedClass": "+Y",
+      "correctedInputXmlClass": "+Y",
+      "correspondingAccdbResTypeId": 3,
+      "correspondingAccdbType": "Y",
       "normalUnit": [0, 1, 0],
       "coefficientOfFriction": 0.3
     },
@@ -39,7 +58,8 @@
     "target": "src/core/nonlinear-restraint-friction/inputxml-friction-site-map.js",
     "rawTypeRetainedAsSourceEvidence": true,
     "correctedTypeCarriedWhenExplicitMutationConfigSupplied": true,
-    "governedFrictionRowsRequiredToClassifyAsPlusY": true,
+    "governedFrictionRowsRequiredToClassifyAsCorrectedInputXmlPlusY": true,
+    "accdbTypeLabelsConsumedOrRenamedByThisFix": false,
     "legacySourceOnlyModeRetained": true,
     "legacySourceOnlyModeMayClassifyRawTypeAsMechanics": false,
     "productionNonlinearMechanicsChanged": false,
@@ -51,7 +71,7 @@
   "accuracySideBySide": {
     "denominatorRule": "UNCHANGED_CANONICAL_L13_1914_GOVERNED_ROWS",
     "present": {
-      "label": "PRESENT_F2_4_FIXED_CONTACT_COULOMB_DIAGNOSTIC",
+      "label": "PRESENT_FIXED_CONTACT_COULOMB_DIAGNOSTIC",
       "passed": 1719,
       "failed": 195,
       "total": 1914,
@@ -68,7 +88,7 @@
       }
     },
     "revised": {
-      "label": "FIX1_SOURCE_DOMAIN_CORRECTED_FRICTION_SITE_CONSUMPTION",
+      "label": "FIX1_SOURCE_DOMAIN_CORRECTED_FRICTION_SITE_CONSUMPTION_ON_CORRECTED_F2_6",
       "passed": 1719,
       "failed": 195,
       "total": 1914,
@@ -87,15 +107,21 @@
     "deltaPassedRows": 0,
     "deltaFailedRows": 0,
     "deltaPercentagePoints": 0,
-    "reason": "F2.6 source-domain correction preserves the exact 26 friction-node set, +Y normal vectors, mu=0.3, fixed contact state, friction law and comparator. This fix removes semantic misclassification risk but does not change the numerical equations."
+    "reason": "Fix 1 changes InputXML semantic custody only. The exact 26 friction-node set, corrected +Y InputXML normals, mu=0.3, fixed contact state, physical friction law, comparator, tolerances, and CAESAR reference rows are unchanged. Direct ACCDB labels remain separately governed as 1=ANC,3=Y,8=GUI,9=LIM."
   },
-  "remainingBoundary": {
-    "f27StillRequired": true,
-    "blockers": [
-      "GAP_CONTACT_STATE_SEMANTICS_AUTHORITY_REQUIRED",
-      "FRICTION_STATE_HISTORY_SEMANTICS_AUTHORITY_REQUIRED"
+  "f27Boundary": {
+    "retainedSourceAuditStatus": "BLOCKED_NO_NONLINEAR_STATE_HISTORY_IN_RETAINED_PACKAGE",
+    "retainedSourceAuditPr": 1075,
+    "retainedSourceAuditHead": "4c4a85383a3219cd1175345d2f8be59c67a2782f",
+    "unresolvedSemantics": [
+      "GAP_CONTACT_OPEN_CLOSED_REOPENED_ORDERING",
+      "CONTACT_STATE_COMMIT_CONVERGENCE_ORDERING",
+      "FRICTION_STICK_TO_SLIDING_SCHEDULING",
+      "FIRST_SLIDE_15_DEGREE_HANDLING",
+      "SUBSEQUENT_DIRECTION_ZERO_CROSSING_HANDLING",
+      "NORMAL_FORCE_UPDATE_BASIS_AROUND_0_15_THRESHOLD"
     ],
-    "nextNumericalAccuracyChangeAuthorizedOnlyAfter": "EXACT_BUILD_ACTIVE_BOUNDARY_AND_STATE_HISTORY_AUTHORITY",
+    "nextExternalAuthorityRequired": "EXACT_BUILD_ACTIVE_BOUNDARY_CONDITIONS_AND_NONLINEAR_ITERATION_STATE_TRACE",
     "l13QualifiedAccuracyAuthorized": false,
     "productionNonlinearMechanicsAuthorized": false
   }

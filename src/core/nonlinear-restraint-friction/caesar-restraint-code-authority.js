@@ -41,24 +41,24 @@ const BM4L_ACCDB_CANONICAL = Object.freeze({
   }),
   3: Object.freeze({
     code: 3,
-    abbreviation: '+Y',
-    family: 'TRANSLATIONAL_DIRECTIONAL',
+    abbreviation: 'Y',
+    family: 'TRANSLATIONAL_AXIS',
     axisFromDirectionCosines: false,
     axisUnit: Object.freeze([0, 1, 0]),
-    directionLabel: '+Y',
+    directionLabel: 'Y',
     gapUnitClass: 'LENGTH',
   }),
   8: Object.freeze({
     code: 8,
-    abbreviation: 'LIM',
-    family: 'LIMIT',
+    abbreviation: 'GUI',
+    family: 'GUIDE',
     axisFromDirectionCosines: true,
     gapUnitClass: 'LENGTH',
   }),
   9: Object.freeze({
     code: 9,
-    abbreviation: 'GUI',
-    family: 'GUIDE',
+    abbreviation: 'LIM',
+    family: 'LIMIT',
     axisFromDirectionCosines: true,
     gapUnitClass: 'LENGTH',
   }),
@@ -83,9 +83,10 @@ export function retainAccdbRestraintTypeId(value) {
 }
 
 /**
- * Decode the exact BM4_L ACCDB restraint IDs established by F2.6 row-level
- * reconciliation against the independently corrected InputXML node sets.
- * This is benchmark-scoped authority and is not a generic CAESAR enum claim.
+ * Decode the exact BM4_L ACCDB restraint IDs from the database-published
+ * RESTRAINT_TYPES lookup. F2.7 independently confirmed the same lookup in the
+ * authenticated BM4_NL database. Corrected InputXML class labels remain a
+ * separate source-domain view and are not substituted for these ACCDB labels.
  */
 export function decodeBm4lAccdbRestraintType(value) {
   const code = requireIntegerCode(value, 'BM4_L ACCDB restraint RES_TYPEID');

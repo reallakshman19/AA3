@@ -16,7 +16,7 @@ test('A3D-002 visible support edit survives exact Undo Redo Save Exit Reopen Rel
   const baseline = await authorityEvidence(page);
   expect(baseline.webglContextType).toMatch(/WebGL/i);
   expect(baseline.webglContextLost).toBe(false);
-  expect(baseline.rendererObjectKeys.length).toBeGreaterThan(0);
+  expect(baseline.rendererSceneSignature.length).toBeGreaterThan(0);
 
   const supportId = await selectTableRowByTag(page, 'S-007', 'SUPPORT');
   const editor = page.locator(`[data-table-support-placement-editor="${supportId}"]`);
@@ -71,6 +71,7 @@ test('A3D-002 visible support edit survives exact Undo Redo Save Exit Reopen Rel
   expect(undone.activeLedgerHash).toBe(baseline.activeLedgerHash);
   expect(undone.activeCommandIds).toEqual(baseline.activeCommandIds);
   expect(undone.visualModelHash).toBe(baseline.visualModelHash);
+  expect(undone.rendererSceneSignature).toEqual(baseline.rendererSceneSignature);
   expect((await supportEvidence(page, supportId)).canonicalPlacementOverride).toBeNull();
 
   await page.locator('[data-action="redo"]').click();
@@ -83,7 +84,7 @@ test('A3D-002 visible support edit survives exact Undo Redo Save Exit Reopen Rel
   expect(redone.activeLedgerHash).toBe(applied.activeLedgerHash);
   expect(redone.activeCommandIds).toEqual(applied.activeCommandIds);
   expect(redone.visualModelHash).toBe(applied.visualModelHash);
-  expect(redone.rendererObjectKeys).toEqual(applied.rendererObjectKeys);
+  expect(redone.rendererSceneSignature).toEqual(applied.rendererSceneSignature);
   expect(redone.renderGroupCounts).toEqual(applied.renderGroupCounts);
   expect(redoneSupport).toEqual(appliedSupport);
 
@@ -97,6 +98,7 @@ test('A3D-002 visible support edit survives exact Undo Redo Save Exit Reopen Rel
   expect(saved.canonicalHash).toBe(redone.canonicalHash);
   expect(saved.journalHash).toBe(redone.journalHash);
   expect(saved.visualModelHash).toBe(redone.visualModelHash);
+  expect(saved.rendererSceneSignature).toEqual(redone.rendererSceneSignature);
 
   await host.getByRole('button', { name: 'Exit 3D Edit', exact: true }).click();
   await expect(host).toBeHidden();
@@ -115,6 +117,7 @@ test('A3D-002 visible support edit survives exact Undo Redo Save Exit Reopen Rel
   expect(remounted.activeCommandIds).toEqual(baseline.activeCommandIds);
   expect(remounted.activeLedgerHash).toBe(baseline.activeLedgerHash);
   expect(remounted.visualModelHash).toBe(baseline.visualModelHash);
+  expect(remounted.rendererSceneSignature).toEqual(baseline.rendererSceneSignature);
   expect(remounted.webglContextLost).toBe(false);
 
   const reloadButton = host.getByRole('button', { name: 'Reload draft', exact: true });
@@ -134,7 +137,7 @@ test('A3D-002 visible support edit survives exact Undo Redo Save Exit Reopen Rel
   expect(restored.activeCommandCount).toBe(redone.activeCommandCount);
   expect(restored.sessionVersion).toBe(redone.sessionVersion);
   expect(restored.visualModelHash).toBe(redone.visualModelHash);
-  expect(restored.rendererObjectKeys).toEqual(redone.rendererObjectKeys);
+  expect(restored.rendererSceneSignature).toEqual(redone.rendererSceneSignature);
   expect(restored.renderGroupCounts).toEqual(redone.renderGroupCounts);
   expect(restored.webglContextType).toMatch(/WebGL/i);
   expect(restored.webglContextLost).toBe(false);
@@ -149,7 +152,7 @@ test('A3D-002 visible support edit survives exact Undo Redo Save Exit Reopen Rel
 
   await assertDiagnostics(diagnostics);
   const evidence = {
-    schema: 'TopologyEditA3D002SaveReopenEvidence.v1',
+    schema: 'TopologyEditA3D002SaveReopenEvidence.v2',
     status: 'PASS',
     candidateHead: process.env.TOPOLOGY_EDIT_TARGET_HEAD_SHA || null,
     fixture: FIXTURE_ID,
@@ -192,7 +195,7 @@ test('A3D-002 visible support edit survives exact Undo Redo Save Exit Reopen Rel
     sourceRestoreExact: restored.sourceHash === redone.sourceHash
       && restored.sourceByteHash === redone.sourceByteHash,
     renderProjectionRestoreExact: restored.visualModelHash === redone.visualModelHash
-      && JSON.stringify(restored.rendererObjectKeys) === JSON.stringify(redone.rendererObjectKeys)
+      && JSON.stringify(restored.rendererSceneSignature) === JSON.stringify(redone.rendererSceneSignature)
       && JSON.stringify(restored.renderGroupCounts) === JSON.stringify(redone.renderGroupCounts),
   };
   await mkdir('reports/qualification', { recursive: true });
@@ -256,6 +259,45 @@ async function authorityEvidence(page) {
     const journal = controller?.session?.journal;
     const groups = controller?.viewportBackend?.groups;
     const context = controller?.viewportBackend?.renderer?.getContext?.();
+    const stableNumber = (value) => Number.isFinite(value) ? Number(value.toFixed(9)) : null;
+    const pickRecord = (input = {}) => ({
+      modelRole: String(input.modelRole || ''),
+      objectKind: String(input.objectKind || ''),
+      objectId: String(input.objectId || ''),
+      nodeId: String(input.nodeId || ''),
+      partRole: String(input.partRole || ''),
+      supportId: String(input.supportId || ''),
+      restraintId: String(input.restraintId || ''),
+      restraintFamily: String(input.restraintFamily || ''),
+    });
+    const sceneRows = [];
+    for (const [groupName, group] of [
+      ['source', groups?.sourceGroup],
+      ['draft', groups?.draftGroup],
+      ['supports', groups?.supportGroup],
+    ]) {
+      group?.traverse((object) => {
+        if (object === group) return;
+        const userData = object.userData || {};
+        const pick = userData.pickTarget || userData;
+        sceneRows.push({
+          group: groupName,
+          type: String(object.type || ''),
+          geometryType: String(object.geometry?.type || ''),
+          position: [stableNumber(object.position?.x), stableNumber(object.position?.y), stableNumber(object.position?.z)],
+          quaternion: [
+            stableNumber(object.quaternion?.x),
+            stableNumber(object.quaternion?.y),
+            stableNumber(object.quaternion?.z),
+            stableNumber(object.quaternion?.w),
+          ],
+          scale: [stableNumber(object.scale?.x), stableNumber(object.scale?.y), stableNumber(object.scale?.z)],
+          pick: pickRecord(pick),
+          pickTable: Array.isArray(userData.pickTable) ? userData.pickTable.map(pickRecord) : [],
+        });
+      });
+    }
+    sceneRows.sort((left, right) => JSON.stringify(left).localeCompare(JSON.stringify(right)));
     return {
       canonicalHash: controller?.session?.currentTopology?.()?.canonicalTopologyHash ?? null,
       sourceHash: controller?.workspaceDataset?.sourceSnapshot?.sourceSemanticHash ?? null,
@@ -266,7 +308,7 @@ async function authorityEvidence(page) {
       activeCommandCount: journal?.activeCommandIds?.length ?? 0,
       sessionVersion: journal?.sessionVersion ?? null,
       visualModelHash: controller?.visualModelHash ?? null,
-      rendererObjectKeys: [...(controller?.viewportBackend?.objects?.keys?.() ?? [])].sort(),
+      rendererSceneSignature: sceneRows,
       renderGroupCounts: {
         source: groups?.sourceGroup?.children?.length ?? 0,
         draft: groups?.draftGroup?.children?.length ?? 0,
@@ -325,7 +367,7 @@ function assertEngineeringAuthority(expectApi, actual, expected) {
   expectApi(actual.sourceHash).toBe(expected.sourceHash);
   expectApi(actual.sourceByteHash).toBe(expected.sourceByteHash);
   expectApi(actual.visualModelHash).toBe(expected.visualModelHash);
-  expectApi(actual.rendererObjectKeys).toEqual(expected.rendererObjectKeys);
+  expectApi(actual.rendererSceneSignature).toEqual(expected.rendererSceneSignature);
   expectApi(actual.renderGroupCounts).toEqual(expected.renderGroupCounts);
 }
 

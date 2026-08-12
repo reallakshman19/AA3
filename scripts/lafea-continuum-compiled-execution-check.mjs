@@ -145,8 +145,8 @@ function executeThroughWorkbench() {
       parity,
       executionBefore: before.execution,
       executionAfter: after.execution,
-      releaseBefore: before.lifecycleReadiness.releaseBinding.state,
-      releaseAfter: after.lifecycleReadiness.releaseBinding.state,
+      releaseBefore: before.lifecycleReadiness.releaseState,
+      releaseAfter: after.lifecycleReadiness.releaseState,
     };
   } finally {
     store.destroy();

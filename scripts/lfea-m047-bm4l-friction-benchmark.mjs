@@ -171,7 +171,7 @@ function buildResolvedConfiguration(benchmarkPackage, restraintTopology, hydrote
       frictionMultiplier: primitive
         ? resolveCaesarConfigurationSetting(authority, 'FRICTION_MULTIPLIER', caseId)
         : null,
-      effectiveFriction: primitive ? resolveCaesarEffectiveFriction(benchmarkPackage, caseId) : null,
+      effectiveFriction: resolveCaesarEffectiveFriction(benchmarkPackage, caseId),
     };
   }
   const frictStif = resolveCaesarConfigurationSetting(authority, 'FRICT_STIF', null);

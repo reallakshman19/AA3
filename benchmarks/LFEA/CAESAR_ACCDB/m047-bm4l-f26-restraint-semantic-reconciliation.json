@@ -1,8 +1,8 @@
 {
-  "schema": "m047-bm4l-f26-restraint-semantic-reconciliation/v1",
+  "schema": "m047-bm4l-f26-restraint-semantic-reconciliation/v2",
   "benchmarkId": "BM4_L",
-  "status": "PASS_WITH_GAP_MAGNITUDE_SOURCE_SPLIT",
-  "authorityScope": "BM4_L_ONLY",
+  "status": "PASS_DIRECT_ACCDB_LOOKUP_WITH_SOURCE_DOMAIN_CROSSWALK",
+  "authorityScope": "BM4_L_SOURCE_RECONCILIATION",
   "extraction": {
     "workflowRunId": 31587484308,
     "artifactId": 9137722839,
@@ -16,84 +16,118 @@
     "sourceBytesUnchanged": true,
     "status": "PASS"
   },
-  "sourceDomainRule": {
-    "accdb": "INPUT_RESTRAINTS.RES_TYPEID_USED_DIRECTLY_NO_MUTATION",
-    "inputXml": "RESTRAINT.TYPE_MUTATED_EXACTLY_ONCE_BEFORE_CLASSIFICATION",
-    "numericNamespaceEqualityAssumed": false
+  "directAccdbLookupAuthority": {
+    "rule": "DATABASE_RESTRAINT_TYPES_LOOKUP_OVERRIDES_NODE_SET_LABEL_INFERENCE",
+    "workflowRunId": 31590171146,
+    "artifactId": 9138785351,
+    "artifactDigestSha256": "5fddedddcc076f498ce3c1e2dd6ef7a5a035e8bc8739d2be3fdbe2166fc77eee",
+    "exactHeadSha": "76c2c0545d853b11a6c2dd79ffe7c87ce1faaaef",
+    "bm4lAccdbSha256": "64c05a50e9ed0452622ff5880335460486f24ac8e6adecc9a300b549c9aa82f8",
+    "independentBm4NlAccdbSha256": "85d39463296e569da811d8572e2eff680b858097f76fdf0f47d1755f0b161c21",
+    "activeMappings": [
+      {"accdbResTypeId":1,"accdbType":"ANC","rowCount":1},
+      {"accdbResTypeId":3,"accdbType":"Y","rowCount":29},
+      {"accdbResTypeId":8,"accdbType":"GUI","rowCount":6},
+      {"accdbResTypeId":9,"accdbType":"LIM","rowCount":10}
+    ],
+    "bm4lAndBm4NlLookupIdenticalForActiveIds": true
   },
-  "classMapping": {
-    "rule": "EXACT_NODE_SET_IDENTITY_AGAINST_CORRECTED_INPUTXML_V1",
+  "sourceDomainRule": {
+    "accdb": "INPUT_RESTRAINTS.RES_TYPEID_USED_DIRECTLY_WITH_RESTRAINT_TYPES_LOOKUP_NO_MUTATION",
+    "inputXml": "RESTRAINT.TYPE_MUTATED_EXACTLY_ONCE_BEFORE_CLASSIFICATION",
+    "numericNamespaceEqualityAssumed": false,
+    "classLabelEqualityAssumed": false
+  },
+  "rowSetCrosswalk": {
+    "rule": "EXACT_NODE_SET_CROSSWALK_DOES_NOT_RENAME_ACCDB_TYPES",
     "mappings": [
       {
-        "accdbResTypeId": 1,
-        "correctedInputXmlClass": "ANC",
-        "rowCount": 1,
-        "nodeIds": ["22490"],
-        "exactNodeSetMatch": true
+        "accdbResTypeId":1,
+        "accdbType":"ANC",
+        "correctedInputXmlClass":"ANC",
+        "rowCount":1,
+        "nodeIds":["22490"],
+        "exactNodeSetMatch":true,
+        "sameSourceLabel":true
       },
       {
-        "accdbResTypeId": 3,
-        "correctedInputXmlClass": "+Y",
-        "rowCount": 29,
-        "nodeIds": ["20030","20090","20170","20250","20300","20350","20390","20440","20520","20550","20580","20640","20710","21470","21480","21610","21640","21740","21800","21860","21930","22020","22070","22120","22140","22220","22260","22310","22370"],
-        "exactNodeSetMatch": true
+        "accdbResTypeId":3,
+        "accdbType":"Y",
+        "correctedInputXmlClass":"+Y",
+        "rowCount":29,
+        "nodeIds":["20030","20090","20170","20250","20300","20350","20390","20440","20520","20550","20580","20640","20710","21470","21480","21610","21640","21740","21800","21860","21930","22020","22070","22120","22140","22220","22260","22310","22370"],
+        "exactNodeSetMatch":true,
+        "sameSourceLabel":false
       },
       {
-        "accdbResTypeId": 8,
-        "correctedInputXmlClass": "LIM",
-        "rowCount": 6,
-        "nodeIds": ["20030","20390","20580","21480","21860","22020"],
-        "exactNodeSetMatch": true
+        "accdbResTypeId":8,
+        "accdbType":"GUI",
+        "correctedInputXmlClass":"LIM",
+        "rowCount":6,
+        "nodeIds":["20030","20390","20580","21480","21860","22020"],
+        "exactNodeSetMatch":true,
+        "sameSourceLabel":false
       },
       {
-        "accdbResTypeId": 9,
-        "correctedInputXmlClass": "GUI",
-        "rowCount": 10,
-        "nodeIds": ["20030","20250","20390","20550","20710","21480","21640","21930","22140","22310"],
-        "exactNodeSetMatch": true
+        "accdbResTypeId":9,
+        "accdbType":"LIM",
+        "correctedInputXmlClass":"GUI",
+        "rowCount":10,
+        "nodeIds":["20030","20250","20390","20550","20710","21480","21640","21930","22140","22310"],
+        "exactNodeSetMatch":true,
+        "sameSourceLabel":false
       }
     ],
-    "allMappingsExact": true
+    "allNodeSetsExact": true,
+    "allLabelsEquivalent": false
   },
   "frictionReconciliation": {
-    "accdbResTypeId": 3,
-    "class": "+Y",
-    "positiveFrictionRowCount": 26,
-    "coefficientRaw": 0.30000001192092896,
-    "targetCoefficient": 0.3,
-    "absoluteFloatDifference": 1.1920928966180355e-8,
-    "frictionNodeIds": ["20030","20090","20170","20250","20350","20390","20440","20520","20550","20580","20710","21470","21480","21610","21740","21800","21860","21930","22020","22070","22120","22140","22220","22260","22310","22370"],
-    "nonFrictionPlusYNodeIds": ["20300","20640","21640"],
-    "matchesCorrectedInputXmlFrictionInventory": true
+    "accdbResTypeId":3,
+    "accdbType":"Y",
+    "correctedInputXmlClass":"+Y",
+    "positiveFrictionRowCount":26,
+    "coefficientRaw":0.30000001192092896,
+    "targetCoefficient":0.3,
+    "absoluteFloatDifference":1.1920928966180355e-8,
+    "frictionNodeIds":["20030","20090","20170","20250","20350","20390","20440","20520","20550","20580","20710","21470","21480","21610","21740","21800","21860","21930","22020","22070","22120","22140","22220","22260","22310","22370"],
+    "nonFrictionNodeIds":["20300","20640","21640"],
+    "exactNodeSetMatch":true
   },
-  "directionReconciliation": {
-    "plusYAllGlobalY": true,
+  "directionAndGapCrosswalk": {
+    "accdbType3AllGlobalY": true,
     "positiveGapRows": [
-      {"nodeId":"20030","class":"LIM","accdbResTypeId":8,"inputXmlGap":25,"direction":[0,0,-1],"directionMatch":true,"frictionNode":true},
-      {"nodeId":"20390","class":"GUI","accdbResTypeId":9,"inputXmlGap":5,"direction":[-1,0,0],"directionMatch":true,"frictionNode":true},
-      {"nodeId":"21480","class":"LIM","accdbResTypeId":8,"inputXmlGap":25,"direction":[0,0,1],"directionMatch":true,"frictionNode":true},
-      {"nodeId":"21480","class":"GUI","accdbResTypeId":9,"inputXmlGap":10,"direction":[1,0,0],"directionMatch":true,"frictionNode":true},
-      {"nodeId":"21640","class":"GUI","accdbResTypeId":9,"inputXmlGap":10,"direction":[1,0,0],"directionMatch":true,"frictionNode":false},
-      {"nodeId":"22310","class":"GUI","accdbResTypeId":9,"inputXmlGap":10,"direction":[0,0,-1],"directionMatch":true,"frictionNode":true}
+      {"nodeId":"20030","accdbResTypeId":8,"accdbType":"GUI","correctedInputXmlClass":"LIM","inputXmlGap":25,"direction":[0,0,-1],"directionMatch":true,"frictionNode":true},
+      {"nodeId":"20390","accdbResTypeId":9,"accdbType":"LIM","correctedInputXmlClass":"GUI","inputXmlGap":5,"direction":[-1,0,0],"directionMatch":true,"frictionNode":true},
+      {"nodeId":"21480","accdbResTypeId":8,"accdbType":"GUI","correctedInputXmlClass":"LIM","inputXmlGap":25,"direction":[0,0,1],"directionMatch":true,"frictionNode":true},
+      {"nodeId":"21480","accdbResTypeId":9,"accdbType":"LIM","correctedInputXmlClass":"GUI","inputXmlGap":10,"direction":[1,0,0],"directionMatch":true,"frictionNode":true},
+      {"nodeId":"21640","accdbResTypeId":9,"accdbType":"LIM","correctedInputXmlClass":"GUI","inputXmlGap":10,"direction":[1,0,0],"directionMatch":true,"frictionNode":false},
+      {"nodeId":"22310","accdbResTypeId":9,"accdbType":"LIM","correctedInputXmlClass":"GUI","inputXmlGap":10,"direction":[0,0,-1],"directionMatch":true,"frictionNode":true}
     ],
     "allPositiveGapDirectionsMatch": true
   },
   "gapCustody": {
-    "accdbGapDistinctRawValues": [-1.01010000705719],
-    "accdbAllGapFieldsUnsetSentinel": true,
-    "accdbPositiveGapMagnitudeCount": 0,
-    "correctedInputXmlPositiveGapMagnitudeCount": 6,
-    "conclusion": "ACCDB_CLOSES_CLASS_DIRECTION_FRICTION_BUT_NOT_POSITIVE_GAP_MAGNITUDES"
+    "accdbGapDistinctRawValues":[-1.01010000705719],
+    "accdbAllGapFieldsUnsetSentinel":true,
+    "accdbPositiveGapMagnitudeCount":0,
+    "correctedInputXmlPositiveGapMagnitudeCount":6,
+    "conclusion":"ACCDB_PUBLISHES_TYPE_DIRECTION_FRICTION_BUT_NOT_POSITIVE_GAP_MAGNITUDES"
   },
   "fileLevelAuthority": {
-    "restraintDirectionalBehavior": "BIDIRECTIONAL",
-    "sourceStatus": "USER_VERIFIED_BM4_L_FILE_SETTING_RETAINED_FROM_F2_5"
+    "restraintDirectionalBehavior":"BIDIRECTIONAL",
+    "sourceStatus":"USER_VERIFIED_BM4_L_FILE_SETTING_RETAINED_FROM_F2_5"
+  },
+  "withdrawnInference": {
+    "claim":"ACCDB_1_ANC_3_PLUSY_8_LIM_9_GUI",
+    "reason":"DIRECT_RESTRAINT_TYPES_LOOKUP_PUBLISHES_1_ANC_3_Y_8_GUI_9_LIM",
+    "status":"WITHDRAWN"
   },
   "decision": {
-    "f26TypeDirectionFrictionMappingClosed": true,
-    "f26GapMagnitudeSourceSplitIdentified": true,
-    "productionNonlinearMechanicsAuthorized": false,
-    "l13RescoreAuthorized": false,
-    "nextRequiredStage": "F2.7_EXACT_BUILD_ACTIVE_BOUNDARY_CONDITIONS_AND_STATE_HISTORY"
+    "directAccdbTypeLookupClosed":true,
+    "crossDomainRowSetsReconciled":true,
+    "crossDomainClassLabelsMustRemainSeparate":true,
+    "gapMagnitudeSourceSplitIdentified":true,
+    "productionNonlinearMechanicsAuthorized":false,
+    "l13RescoreAuthorized":false,
+    "nextRequiredStage":"F2.7_EXACT_BUILD_ACTIVE_BOUNDARY_CONDITIONS_AND_STATE_HISTORY"
   }
 }

@@ -9,3 +9,8 @@ export {
 export {
   buildInputXmlFrictionSiteMap,
 } from './inputxml-friction-site-map.js';
+export {
+  FRICTION_EXECUTION_READINESS_STATUS,
+  FRICTION_EXECUTION_READINESS_BLOCKERS,
+  assessFrictionExecutionReadiness,
+} from './friction-execution-readiness.js';

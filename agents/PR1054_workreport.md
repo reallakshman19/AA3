@@ -13,9 +13,10 @@
 | Pre-qualification implementation/test head | `85e67606b588809c96b03c8801a783edaf09620d` |
 | Browser qualification source head | `57df6f795a8ca82a3d3b0f794284871d929b5f76` |
 | First exact-head qualification candidate | `ff96666fccb8ff6bc25be9231228fd750485022d` |
+| Second exact-head qualification candidate | `1aba6173983c7b0b090a0a67e11eac3e06ed7ca2` |
 | Mission | Recover certified support restraint-property editing while keeping support placement/movement fail closed. |
-| Engineering state | **EMPIRICAL TEST REPAIR IN PROGRESS** |
-| Current execution truth | Run `31576192230` checked out exact head `ff96666f…`; setup/source/line-budget checks PASS; focused Node qualification **11 pass / 2 fail**; Chromium correctly skipped. Both failures are stale test expectations against existing deterministic production behavior and are authorized for test-only repair below. |
+| Engineering state | **EMPIRICAL E2E REPAIR IN PROGRESS** |
+| Current execution truth | Run `31576547806` checked out exact head `1aba6173…`; setup/source/line-budget checks PASS; focused Node qualification **13/13 PASS**; production Chromium started and failed before editing because the new E2E misclassified S-007's imported active restraint object as a certified override. Test-only evidence repair is authorized below. |
 | Merge state | Draft / unmerged until exact-head Node + Chromium evidence is green and the final report-sync head is requalified. |
 
 ## Preserved Authority
@@ -63,7 +64,7 @@ Exact dependency custody:
 
 Fail closed on non-SUPPORT target, unsupported family/direction, missing non-ANCHOR direction, negative/non-finite gap/travel, unresolved/ambiguous host authority, stale support/node/host revision, candidate delta outside the target support, or loss/replacement of imported restraint evidence.
 
-The command writes a separate canonical `support.restraint` marked `CERTIFIED_TABLE_OVERRIDE`; imported `support.restraints` remains retained evidence.
+The command writes a separate canonical `support.restraint` marked `CERTIFIED_TABLE_OVERRIDE`; imported `support.restraints` remains retained evidence. A pre-existing imported `support.restraint` object is not a certified override unless `support.restraintAuthority === 'CERTIFIED_TABLE_OVERRIDE'`.
 
 ## Engineering Register
 
@@ -74,10 +75,11 @@ The command writes a separate canonical `support.restraint` marked `CERTIFIED_TA
 | DEC-1054-03 | Host authority | ACCEPTED | Shared #1036 resolver only; exact `RESOLVED` required. |
 | DEC-1054-04 | Evidence | ACCEPTED | Imported restraints retained; only marked override becomes active. |
 | ISS-1054-01 | Current-main regression | RESOLVED IN SOURCE | Explicit unresolved host token rejects before override. |
-| ISS-1054-02 | Qualification | E2E AUTHORED / NOT_YET_EXECUTED | `e2e/topology-edit-table-support-restraint.spec.js` uses the real Workspace -> XYZ fixture -> 3D Edit -> Engineering Table path, selects S-007 through a typed filter and visible Select action, edits real restraint controls, and drives Stage/Preview/Validate/Apply/Undo/Redo. Controller access is read-only evidence only. |
-| ISS-1054-03 | Test expectation | **OPEN / TEST-ONLY REPAIR AUTHORIZED** | Run `31576192230` showed `LOCAL_Y` derives `{x:0,y:1,z:0}` while the recovered test expected `y:-1`. Production `hostFrame()` deterministically defines local Y as `unit(cross(globalVertical, localX))`; for host `node:n1 -> node:n2`, that is +Y. Do not change production geometry to satisfy the stale predecessor assertion; repair only the expected vector. |
-| ISS-1054-04 | Test expectation | **OPEN / TEST-ONLY REPAIR AUTHORIZED** | Run `31576192230` showed the governed Table planner emits deterministic `sequence: 0` on the single `UPDATE_SUPPORT_RESTRAINT` command intent. The recovered test omitted this established command envelope field. Do not remove planner sequencing; repair only the expected plan object. |
-| RISK-1054-01 | Current-head execution | OPEN | Exact-head Node + Chromium execution is required before merge. |
+| ISS-1054-02 | Qualification | E2E AUTHORED / EXECUTION IN PROGRESS | `e2e/topology-edit-table-support-restraint.spec.js` uses the real Workspace -> XYZ fixture -> 3D Edit -> Engineering Table path, selects S-007 through a typed filter and visible Select action, edits real restraint controls, and drives Stage/Preview/Validate/Apply/Undo/Redo. Controller access is read-only evidence only. |
+| ISS-1054-03 | Test expectation | **RESOLVED / RUN 2 NODE PASS** | Run `31576192230` showed `LOCAL_Y` derives `{x:0,y:1,z:0}` while the recovered test expected `y:-1`. Test expectation now matches the unchanged deterministic `hostFrame()` cross-product convention; run `31576547806` passes this test. |
+| ISS-1054-04 | Test expectation | **RESOLVED / RUN 2 NODE PASS** | The recovered Table test omitted established deterministic `sequence: 0`; the expectation now includes it without changing planner behavior. Run `31576547806` passes this test. |
+| ISS-1054-05 | Browser evidence interpretation | **OPEN / E2E-ONLY REPAIR AUTHORIZED** | Run `31576547806` reached the real XYZ Table and selected S-007, then failed at the E2E baseline assertion because `support.restraint` already contains the imported active restraint model. Production `supportRestraintRows()` intentionally treats `support.restraint` as a certified override only when `support.restraintAuthority === 'CERTIFIED_TABLE_OVERRIDE'`; otherwise imported restraint rows remain authoritative display evidence. Repair only the E2E evidence helper so `override` is non-null exclusively under that explicit authority marker; keep the imported baseline object and `support.restraints` evidence intact. |
+| RISK-1054-01 | Current-head execution | OPEN | Exact-head Chromium lifecycle must reach Apply/Undo/Redo before merge. |
 | RISK-1054-02 | Sibling overlap | OPEN / MANAGEABLE | #1051 overlaps small Table wiring and must reconcile whichever merges second. |
 
 ## Browser Qualification Contract
@@ -93,7 +95,7 @@ The E2E proves or fails on all of the following without guard weakening:
 7. Apply changes the target support to a `CERTIFIED_TABLE_OVERRIDE` restraint while imported restraint evidence remains unchanged;
 8. support host identity and station remain unchanged;
 9. source semantic/byte hashes remain unchanged;
-10. Undo restores exact baseline canonical/ledger/command state and removes the override;
+10. Undo restores exact baseline canonical/ledger/command state and removes the certified override, revealing the original imported restraint state;
 11. Redo restores exact applied canonical/ledger/command state;
 12. page/console diagnostics remain clean except known favicon noise;
 13. no direct controller operation method is invoked as UI coverage.
@@ -127,10 +129,24 @@ Run `31576192230`, job `94048733399`, exact head `ff96666fccb8ff6bc25be9231228fd
 - focused Node: **13 tests / 11 pass / 2 fail**
 - failure 1: stale `LOCAL_Y` sign expectation; actual deterministic production vector is +Y
 - failure 2: stale Table plan expectation omitted deterministic `sequence: 0`
-- Chromium: SKIPPED because Node gate failed
-- no Playwright artifact existed because Chromium did not start; upload step correctly warned that no files were available.
+- Chromium: SKIPPED because Node gate failed.
 
-This is not a feature or browser PASS. The next source changes are restricted to the two demonstrated test expectations above.
+### Second executed exact-head gate — Node PASS, Chromium FAIL before edit
+
+Run `31576547806`, job `94049913490`, exact head `1aba6173983c7b0b090a0a67e11eac3e06ed7ca2`:
+
+- exact checkout/setup/source/syntax/line-budget/`git diff --check`: PASS
+- focused Node: **13 tests / 13 pass / 0 fail**
+- production Chromium launched the real application, loaded the XYZ fixture, opened Engineering Table, filtered to and selected S-007
+- Chromium then FAIL before any restraint editing because the E2E asserted `support.restraint === null`; the live imported S-007 restraint object is valid baseline evidence and lacks `CERTIFIED_TABLE_OVERRIDE` authority
+- Playwright evidence upload: PASS
+- artifact ID `9133425605`
+- artifact name `pr1054-support-restraint-1aba6173983c7b0b090a0a67e11eac3e06ed7ca2-1`
+- artifact size `2,012,202` bytes
+- artifact SHA256 `787bf6d1d578c424a15442cee5046a46b241d3da5ab57c8028273c88221143dc`
+- artifact contains failure screenshot, error context, and trace.
+
+This is a real Node PASS but not a Chromium lifecycle PASS. The next change is restricted to ISS-1054-05 in the E2E evidence helper.
 
 After a green feature/test run:
 
@@ -187,8 +203,9 @@ The temporary qualification workflow is isolated on `qualification/pr1054-exact-
 | `7d3002df5915027f607a7db10b2f75049fe14c94` | pre-qualification report-sync head; zero pull-request workflow runs |
 | `57df6f795a8ca82a3d3b0f794284871d929b5f76` | browser qualification source authored |
 | `ff96666fccb8ff6bc25be9231228fd750485022d` | run `31576192230`: setup/source/line gates PASS; Node 11/13 PASS, 2 stale expectation failures; Chromium skipped |
-| next repaired test head | NOT_RUN until the two authorized expectation repairs are committed |
+| `1aba6173983c7b0b090a0a67e11eac3e06ed7ca2` | run `31576547806`: Node 13/13 PASS; Chromium reached S-007 and failed E2E baseline override interpretation before edit; artifact `9133425605` |
+| next E2E-repaired head | NOT_RUN until ISS-1054-05 is committed |
 
 ## Handover
 
-Repair only ISS-1054-03 and ISS-1054-04, re-run exact-head qualification, and diagnose any browser result without weakening guards. Preserve imported restraint and parent-support-policy custody. Qualify the final report head, then promote the stack in order #1054 -> #1061 -> #1066.
+Repair only ISS-1054-05, re-run exact-head qualification, and diagnose any later browser result without weakening guards. Preserve imported restraint and parent-support-policy custody. Qualify the final report head, then promote the stack in order #1054 -> #1061 -> #1066.

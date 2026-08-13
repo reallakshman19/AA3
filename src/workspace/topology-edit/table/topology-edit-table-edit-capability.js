@@ -11,6 +11,7 @@ import {
 
 const CERTIFIED_EDITOR_TO_INTENT = Object.freeze({
   PIPE_LENGTH: 'PIPE_LENGTH',
+  NODE_POSITION: 'NODE_POSITION',
   VALVE_REPLACE: 'VALVE_REPLACEMENT',
   BRANCH_RECONFIGURE: 'TEE_REDUCER_RELATION',
   SUPPORT_PLACEMENT: 'SUPPORT_PLACEMENT',
@@ -67,6 +68,29 @@ export function deriveTopologyEditTableCellCapability(input = {}) {
       context,
       { editor: descriptor.editor },
     );
+  }
+  if (intentKind === 'NODE_POSITION') {
+    const endpoint = columnKey.startsWith('from') ? 'FROM'
+      : columnKey.startsWith('to') ? 'TO' : null;
+    if (!endpoint) {
+      return receipt(
+        'UNREPRESENTABLE',
+        'NODE_POSITION_COLUMN_INVALID',
+        'NODE_POSITION cell must identify FROM or TO endpoint.',
+        row,
+        columnKey,
+        context,
+        { intentKind },
+      );
+    }
+    return deriveTopologyEditTableNodePositionCapability({
+      row,
+      endpoint,
+      projection: input.projection,
+      canonicalTopology: input.canonicalTopology,
+      selectionHash: input.selectionHash,
+      selectionRevision: input.selectionRevision,
+    });
   }
   if (intentKind === 'PIPE_LENGTH') {
     const available = row.elementType === 'PIPE' && row.identity?.canonicalKind === 'EDGE';
@@ -235,10 +259,15 @@ export function deriveTopologyEditTableNodePositionCapability(input = {}) {
   );
 }
 
-export function topologyEditTableRowCapabilityMap(row, projection) {
+export function topologyEditTableRowCapabilityMap(row, projection, canonicalTopology = null) {
   const result = {};
   for (const column of topologyEditTableColumnsFor(row?.elementType)) {
-    result[column.key] = deriveTopologyEditTableCellCapability({ row, columnKey: column.key, projection });
+    result[column.key] = deriveTopologyEditTableCellCapability({
+      row,
+      columnKey: column.key,
+      projection,
+      canonicalTopology,
+    });
   }
   return Object.freeze(result);
 }

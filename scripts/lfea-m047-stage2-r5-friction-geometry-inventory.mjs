@@ -147,16 +147,22 @@ export async function runFrictionGeometryInventory(input) {
   if (rawExport.source.byteLength !== PINNED_ACCDB_BYTES) {
     throw new TypeError(`R5 ACCDB byte length ${rawExport.source.byteLength} does not match pinned ${PINNED_ACCDB_BYTES}.`);
   }
-  const record = buildFrictionGeometryInventory({
+  const inspection = buildFrictionGeometryInventory({
     iteration,
     basicElementRows: rawExport.tables.INPUT_BASIC_ELEMENT_DATA.rows,
     sifTeeRows: rawExport.tables.INPUT_SIFTEES.rows,
   });
-  return Object.freeze({
-    ...record,
+  const { semanticHash: inspectionSemanticHash, ...inspectionRecord } = inspection;
+  const complete = {
+    ...inspectionRecord,
+    inspectionSemanticHash,
     provider: rawExport.provider,
     custodyStatus: rawExport.source.postReadSha256 === PINNED_ACCDB_SHA256 ? 'PASS' : 'FAIL',
-  });
+  };
+  if (complete.custodyStatus !== 'PASS') {
+    throw new Error('R5 custody status is not PASS after the pinned ACCDB read.');
+  }
+  return Object.freeze({ ...complete, semanticHash: semanticHash(complete) });
 }
 
 if (process.argv[1] && resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {

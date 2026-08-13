@@ -17,25 +17,25 @@ export function topologyEditInteractionPanelMarkup({
   const anchor = context?.anchorPosition ?? { x: 0, y: 0, z: 0 };
   return `
     <header class="topology-edit-interaction__header">
-      <strong>Professional node interaction</strong>
-      <span title="Display-only preview; Apply delegates to the existing certified MOVE_NODE session path.">ⓘ</span>
+      <strong>Move selected node</strong>
+      <span title="The visible ghost is transient. Apply delegates to the existing certified MOVE_NODE journal path.">ⓘ</span>
     </header>
-    <div class="topology-edit-interaction__body">
-      ${error ? `<p role="alert"><strong>Interaction blocked:</strong> ${escapeHtml(error)}</p>` : ''}
+    <div class="topology-edit-interaction__body" data-role="topology-edit-contextual-move">
+      ${error ? `<p role="alert"><strong>Move blocked:</strong> ${escapeHtml(error)}</p>` : ''}
+      <p>${selected
+        ? `Editing <strong>${escapeHtml(context.nodeId)}</strong>. Change engineering values or use the nudge controls; the ghost preview does not modify canonical topology.`
+        : 'Select one node or visible endpoint in the model to edit its position.'}</p>
       <dl class="topology-edit-interaction__summary">
-        ${summaryRow('Selected node', context?.nodeId ?? 'Select one exact node')}
-        ${summaryRow('Basis', context?.basisHash ?? '—')}
-        ${summaryRow('Anchor X/Y/Z (mm)', pointText(anchor))}
-        ${summaryRow('Preview hash', preview?.previewHash ?? '—')}
-        ${summaryRow('Acceptance hash', acceptance?.acceptanceHash ?? '—')}
+        ${summaryRow('Selected node', context?.nodeId ?? 'None')}
+        ${summaryRow('Current X/Y/Z (mm)', pointText(anchor))}
       </dl>
       <fieldset${selected ? '' : ' disabled'}>
-        <legend>Exact numeric preview</legend>
-        <label>Entry mode
+        <legend>Position</legend>
+        <label>How to move
           <select data-role="interaction-entry-mode">
-            <option value="ABSOLUTE">Absolute X/Y/Z</option>
-            <option value="DELTA" selected>Delta X/Y/Z</option>
-            <option value="MAGNITUDE">Axis magnitude</option>
+            <option value="DELTA" selected>Move by ΔX / ΔY / ΔZ</option>
+            <option value="ABSOLUTE">Set absolute X / Y / Z</option>
+            <option value="MAGNITUDE">Move along one axis</option>
           </select>
         </label>
         <div class="topology-edit-interaction__xyz">
@@ -44,7 +44,7 @@ export function topologyEditInteractionPanelMarkup({
           ${numberInput('Z (mm)', 'interaction-value-z', 0)}
         </div>
         <div class="topology-edit-interaction__magnitude">
-          ${numberInput('Magnitude (mm)', 'interaction-magnitude', 0)}
+          ${numberInput('Distance (mm)', 'interaction-magnitude', 0)}
           <label>Axis
             <select data-role="interaction-axis">
               <option value="X">X</option>
@@ -53,41 +53,55 @@ export function topologyEditInteractionPanelMarkup({
             </select>
           </label>
         </div>
+        <p class="topology-edit-interaction__hint">Committed value changes refresh the ghost automatically. Use Preview only to refresh explicitly.</p>
         <button type="button" data-action="preview-professional-interaction">Preview</button>
       </fieldset>
       <fieldset${selected ? '' : ' disabled'}>
-        <legend>Keyboard and button nudge</legend>
+        <legend>Quick nudge</legend>
         ${numberInput('Increment (mm)', 'interaction-nudge-increment', nudgeIncrementMm)}
         <div class="topology-edit-interaction__nudges" role="group" aria-label="Node nudge controls">
           ${nudgeButton('−X', 'X', -1)}${nudgeButton('+X', 'X', 1)}
           ${nudgeButton('−Y', 'Y', -1)}${nudgeButton('+Y', 'Y', 1)}
           ${nudgeButton('−Z', 'Z', -1)}${nudgeButton('+Z', 'Z', 1)}
         </div>
-        <p class="topology-edit-interaction__hint">Keyboard: Left/Right nudges X, Down/Up nudges Y, Page Down/Page Up nudges Z. Shift uses 10× the stated increment. Escape cancels. Enter applies a current preview.</p>
+        <p class="topology-edit-interaction__hint">Arrow keys nudge X/Y, Page Down/Page Up nudges Z, Shift = 10×. Escape cancels the preview; Enter applies it.</p>
       </fieldset>
       ${previewMarkup(preview)}
       <div class="topology-edit-interaction__actions">
-        <button type="button" data-action="apply-professional-interaction"${applicable ? '' : ' disabled'}>Apply certified move</button>
-        <button type="button" data-action="cancel-professional-interaction"${preview ? '' : ' disabled'}>Cancel preview</button>
+        <button type="button" data-action="apply-professional-interaction"${applicable ? '' : ' disabled'}>Apply move</button>
+        <button type="button" data-action="cancel-professional-interaction"${preview ? '' : ' disabled'}>Cancel</button>
       </div>
+      ${engineeringEvidence(context, preview, acceptance)}
     </div>`;
 }
 
 function previewMarkup(preview) {
-  if (!preview) return '<p>No interaction preview is active.</p>';
+  if (!preview) return '<p>No move preview is active.</p>';
   return `
-    <section aria-label="Current display-only interaction preview">
-      <h4>Display-only preview</h4>
+    <section aria-label="Current move preview">
+      <h4>Move preview</h4>
       <dl>
-        ${summaryRow('Node', preview.nodeId)}
         ${summaryRow('Target X/Y/Z (mm)', pointText(preview.targetPosition))}
-        ${summaryRow('Delta X/Y/Z (mm)', pointText(preview.delta))}
-        ${summaryRow('Intent hash', preview.intentHash)}
-        ${summaryRow('Preview authority', preview.authority)}
-        ${summaryRow('Pickable', String(preview.pickable))}
+        ${summaryRow('Change ΔX/ΔY/ΔZ (mm)', pointText(preview.delta))}
       </dl>
     </section>`;
 }
+
+function engineeringEvidence(context, preview, acceptance) {
+  return `
+    <details data-role="interaction-engineering-evidence">
+      <summary>Engineering evidence</summary>
+      <dl>
+        ${summaryRow('Canonical basis', context?.basisHash ?? '—')}
+        ${summaryRow('Preview hash', preview?.previewHash ?? '—')}
+        ${summaryRow('Intent hash', preview?.intentHash ?? '—')}
+        ${summaryRow('Preview authority', preview?.authority ?? '—')}
+        ${summaryRow('Preview pickable', preview ? String(preview.pickable) : '—')}
+        ${summaryRow('Acceptance hash', acceptance?.acceptanceHash ?? '—')}
+      </dl>
+    </details>`;
+}
+
 function numberInput(label, role, value) {
   return `<label>${escapeHtml(label)}
     <input type="text" inputmode="decimal" autocomplete="off" data-role="${escapeHtml(role)}" value="${escapeHtml(formatTopologyEditMm(Number(value)))}">

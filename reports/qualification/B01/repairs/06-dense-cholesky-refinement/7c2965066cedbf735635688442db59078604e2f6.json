@@ -1,0 +1,28 @@
+{
+  "schema":"lafea-b01-repair-attempt/v1",
+  "issue":1100,
+  "attempt":6,
+  "exactHead":"7c2965066cedbf735635688442db59078604e2f6",
+  "hypothesis":"A one-shot dense Cholesky solve leaves a mesh-growing free-system residual under exact rigid-body cancellation.",
+  "singleMechanicsChange":"Apply at most three deterministic Cholesky iterative-refinement correction solves to the unchanged reduced dense system, accepting only strictly improving residuals and retaining the refinement evidence.",
+  "productionFilesChanged":["src/core/local-continuum/solver.js"],
+  "frozenBenchmarkChanged":false,
+  "tolerancesChanged":false,
+  "priorControls":"PASS",
+  "workflowRunId":31671216862,
+  "artifact":{"artifactId":9169764474,"sha256":"sha256:1935c1d2118d0dcdbe0740034f2d708d25545d032fb5b8a3dc02eef7349e2cc6"},
+  "matrix":{"passCount":46,"failCount":8,"status":"FAIL"},
+  "keyImprovement":"T6-M2 no longer fails the registered solver reaction-equilibrium gate; all 54 cases reach registered ACCEPTED calculation except the eight stricter B01 residual comparisons.",
+  "remainingRigidResiduals":[
+    {"family":"T3","meshId":"T3-M1","normalizedResidual":1.609237187949475e-10},
+    {"family":"T3","meshId":"T3-M2","normalizedResidual":3.710738383233547e-10},
+    {"family":"T6","meshId":"T6-M0","normalizedResidual":3.6817800719290975e-10},
+    {"family":"T6","meshId":"T6-M1","normalizedResidual":4.117900971323252e-10},
+    {"family":"T6","meshId":"T6-M2","normalizedResidual":4.437641837284902e-10},
+    {"family":"Q8","meshId":"Q8-M0","normalizedResidual":3.2014213502407074e-10},
+    {"family":"Q8","meshId":"Q8-M1","normalizedResidual":2.9695002012886107e-10},
+    {"family":"Q8","meshId":"Q8-M2","normalizedResidual":6.484697223640978e-10}
+  ],
+  "disposition":"PARTIAL_SUCCESS_RETAIN. The dense solve is materially more accurate and the former production reaction failure is removed without tolerance changes. Continue with one partition/equilibrium accumulation-consistency delta before considering any further solver algorithm change.",
+  "releaseAuthorityGrantedByProgram":false
+}

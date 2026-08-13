@@ -1,0 +1,168 @@
+name: M047 D1 deleted-spring sequential pinned measurement v2
+
+on:
+  push:
+    branches:
+      - agent/m047-stage2-measure-deleted-spring-20260813
+    paths:
+      - '.github/workflows/m047-d1-deleted-spring-measure-v2.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  measure:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    env:
+      SOURCE_HEAD: '649fb1fb14ecacf7e9b0228290b5d0a090097169'
+      EVIDENCE_HEAD: 'ec5d98713727b5d6e4acfe6ccdbc2336ee5f2392'
+      BM4L_COMMON_COMMIT: '45d51ea18624f5775805f399110c1738301c0d90'
+      BM4L_ZIP_SHA256: '978617cba50fa0b1a16c2fa71dc1e0d38e55ac834b191f887d100c6951abd8b9'
+      BM4L_ZIP_SIZE: '582488'
+      BM4L_ACCDB_SHA256: '64c05a50e9ed0452622ff5880335460486f24ac8e6adecc9a300b549c9aa82f8'
+      BM4L_ACCDB_SIZE: '5136384'
+    steps:
+      - name: Checkout exact PR 1101 source head
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ env.SOURCE_HEAD }}
+          persist-credentials: false
+      - name: Prove exact source custody
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$(git rev-parse HEAD)" = "$SOURCE_HEAD"
+          test -z "$(git status --porcelain)"
+      - name: Set up Node 22
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+      - name: Apply harness-only compatibility fixes
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p artifacts/measurement reports
+          python - <<'PY'
+          from pathlib import Path
+          path = Path('scripts/lfea-m047-stage2-r2-deleted-spring-experiment.mjs')
+          text = path.read_text()
+          replacements = [
+            ("""      restraintId: support.restraintId,\n      nodeId: support.nodeId,\n      state,\n      nextState,""",
+             """      restraintId: support.restraintId,\n      nodeId: support.nodeId,\n      support,\n      state,\n      nextState,"""),
+            ("`R2-FRICTION-${support.restraintId}-${dof}`", "`R2-FRICTION-${support.nodeId}-${dof}`"),
+            ("`R2-${caseRecord.caseId}-${support.restraintId}-IT${iteration}`", "`R2-${caseRecord.caseId}-${support.nodeId}-IT${iteration}`"),
+          ]
+          for old,new in replacements:
+              if text.count(old) != 1:
+                  raise SystemExit(f'expected exactly one harness-only target, found {text.count(old)} for {old[:60]}')
+              text = text.replace(old,new)
+          path.write_text(text)
+          PY
+          git diff -- scripts/lfea-m047-stage2-r2-deleted-spring-experiment.mjs \
+            > artifacts/measurement/harness-only-compatibility-fixes.diff
+          node --check scripts/lfea-m047-stage2-r2-deleted-spring-experiment.mjs
+      - name: Install dependencies
+        shell: bash
+        run: npm ci
+      - name: Fetch pinned D1 evidence and BM4_L
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p artifacts/measurement/evidence artifacts/bm4l-stage2/source
+          curl --fail --location --silent --show-error \
+            "https://raw.githubusercontent.com/reallaksh19/Advanced_Analysis/${EVIDENCE_HEAD}/reports/lfea-m047-stage2-real-d1-evidence.json" \
+            -o artifacts/measurement/evidence/real-d1.json
+          curl --fail --location --silent --show-error \
+            "https://raw.githubusercontent.com/reallaksh19/Common/${BM4L_COMMON_COMMIT}/LFEA/BM4/BM4_L.zip" \
+            -o artifacts/measurement/BM4_L.zip
+          test "$(stat -c '%s' artifacts/measurement/BM4_L.zip)" = "$BM4L_ZIP_SIZE"
+          echo "${BM4L_ZIP_SHA256}  artifacts/measurement/BM4_L.zip" | sha256sum -c -
+          unzip -q artifacts/measurement/BM4_L.zip -d artifacts/bm4l-stage2/source
+          test "$(stat -c '%s' artifacts/bm4l-stage2/source/BM4_L.ACCDB)" = "$BM4L_ACCDB_SIZE"
+          echo "${BM4L_ACCDB_SHA256}  artifacts/bm4l-stage2/source/BM4_L.ACCDB" | sha256sum -c -
+          node - <<'NODE'
+          const fs=require('fs'); const d1=JSON.parse(fs.readFileSync('artifacts/measurement/evidence/real-d1.json','utf8'));
+          if (d1.source?.accdbSha256!==process.env.BM4L_ACCDB_SHA256) throw new Error('D1 ACCDB custody mismatch');
+          if (d1.d1?.converged!==true || d1.d1?.summary?.tangentialVectorsWithinGoal!==13 || d1.d1?.summary?.normalWithinGoal!==23) throw new Error('not accepted D1 baseline');
+          NODE
+          sha256sum artifacts/measurement/evidence/real-d1.json artifacts/bm4l-stage2/source/BM4_L.ACCDB > artifacts/measurement/input-sha256.txt
+      - name: Run deleted-spring contract before measurement
+        shell: bash
+        run: |
+          set -euo pipefail
+          node scripts/lfea-m047-stage2-r2-deleted-spring-check.mjs > artifacts/measurement/preflight.stdout.txt 2> artifacts/measurement/preflight.stderr.txt
+      - name: Execute literal deleted-spring sequential strategy twice
+        id: experiment
+        shell: bash
+        run: |
+          set +e
+          node scripts/lfea-m047-stage2-r2-deleted-spring-experiment.mjs \
+            --accdb artifacts/bm4l-stage2/source/BM4_L.ACCDB --case L13 --max-iterations 400 \
+            --out reports/lfea-m047-stage2-d1-deleted-spring-run1.json \
+            > artifacts/measurement/run1.stdout.txt 2> artifacts/measurement/run1.stderr.txt
+          code1=$?
+          echo "$code1" > artifacts/measurement/run1-exit-code.txt
+          if [ "$code1" = "0" ]; then
+            node scripts/lfea-m047-stage2-r2-deleted-spring-experiment.mjs \
+              --accdb artifacts/bm4l-stage2/source/BM4_L.ACCDB --case L13 --max-iterations 400 \
+              --out reports/lfea-m047-stage2-d1-deleted-spring-run2.json \
+              > artifacts/measurement/run2.stdout.txt 2> artifacts/measurement/run2.stderr.txt
+            code2=$?
+          else
+            code2=99
+            echo 'run2 skipped because run1 harness failed' > artifacts/measurement/run2.stderr.txt
+          fi
+          echo "$code2" > artifacts/measurement/run2-exit-code.txt
+          echo "code1=$code1" >> "$GITHUB_OUTPUT"
+          echo "code2=$code2" >> "$GITHUB_OUTPUT"
+          exit 0
+      - name: Evaluate full D1 physics gates and accuracy
+        if: steps.experiment.outputs.code1 == '0' && steps.experiment.outputs.code2 == '0'
+        shell: bash
+        run: |
+          set -euo pipefail
+          node - <<'NODE'
+          const fs=require('fs');
+          const run1=JSON.parse(fs.readFileSync('reports/lfea-m047-stage2-d1-deleted-spring-run1.json','utf8'));
+          const run2=JSON.parse(fs.readFileSync('reports/lfea-m047-stage2-d1-deleted-spring-run2.json','utf8'));
+          const d1=JSON.parse(fs.readFileSync('artifacts/measurement/evidence/real-d1.json','utf8'));
+          const refs=new Map(d1.d1.restraints.map(r=>[r.id,r]));
+          const norm=xs=>Math.hypot(...xs.map(Number)); const dot=(a,b)=>a.reduce((s,x,i)=>s+x*b[i],0);
+          const med=xs=>{const a=[...xs].sort((x,y)=>x-y); if(!a.length)return null; const m=Math.floor(a.length/2); return a.length%2?a[m]:(a[m-1]+a[m])/2;};
+          const gate=it=>{const failed=[]; if(it.stateChangeCount!==0)failed.push('ACTIVE_SET'); if(!(it.displacementUpdateNormM!==null&&it.displacementUpdateNormM<=1e-10))failed.push('DISP'); if(!(it.reactionUpdateNormN!==null&&it.reactionUpdateNormN<=1e-2))failed.push('REACTION'); if(it.recoveredEquilibriumStatus!=='PASS')failed.push('EQUIL'); for(const r of it.supportRows){const cap=+r.capacityN, mag=+r.appliedFrictionForceMagnitudeN, tol=Math.max(1e-2,1e-9*Math.max(0,cap)); if(mag>cap+tol)failed.push('CAP:'+r.restraintId); if(r.state==='SLIDE'){if(Math.abs(mag-cap)>tol)failed.push('SLIDE:'+r.restraintId); const u=r.relativeTangentialDisplacementM.map(Number), f=r.appliedFrictionForceN.map(Number), um=norm(u), fm=norm(f); if(um>1e-15&&fm>0&&dot(f,u)/(fm*um)>-0.999999)failed.push('DIR:'+r.restraintId);}} return {pass:failed.length===0,failed};};
+          const summarize=it=>{const rows=it.supportRows.map(r=>{const ref=refs.get(r.restraintId); if(!ref)throw new Error('missing ref '+r.restraintId); const sol=r.appliedFrictionForceN.map(Number), rr=ref.ftRef.map(Number), rm=norm(rr), ve=rm===0?null:100*norm(sol.map((x,i)=>x-rr[i]))/rm, ne=ref.nRef===0?null:100*(+r.normalReactionMagnitudeN-+ref.nRef)/Math.abs(+ref.nRef); return {restraintId:r.restraintId,nodeId:r.nodeId,state:r.state,nextState:r.nextState,referenceState:ref.refState,solvedState:r.state==='SLIDE'?'SLID':'STUCK',vectorErrorPct:ve,normalErrorPct:ne,belowR1Floor:!!ref.belowR1Floor,referenceTangentialN:rr,solvedTangentialN:sol,capacityN:+r.capacityN,solvedMagnitudeN:+r.appliedFrictionForceMagnitudeN};}); const es=rows.map(r=>r.vectorErrorPct).filter(Number.isFinite), above=rows.filter(r=>!r.belowR1Floor&&Number.isFinite(r.vectorErrorPct)); return {vectorsWithin10Pct:rows.filter(r=>Number.isFinite(r.vectorErrorPct)&&r.vectorErrorPct<=10).length,vectorsCompared:es.length,normalsWithin10Pct:rows.filter(r=>Number.isFinite(r.normalErrorPct)&&Math.abs(r.normalErrorPct)<=10).length,stateMatches:rows.filter(r=>r.solvedState===r.referenceState).length,medianVectorErrorPct:med(es),worstVectorErrorPct:es.length?Math.max(...es):null,aboveR1VectorsWithin10Pct:above.filter(r=>r.vectorErrorPct<=10).length,aboveR1Count:above.length,aboveR1WorstVectorErrorPct:above.length?Math.max(...above.map(r=>r.vectorErrorPct)):null,rows};};
+          const inspect=run=>{const qualified=[]; for(const it of run.iterations){const g=gate(it); if(g.pass)qualified.push({iteration:it.iteration,summary:summarize(it)});} const fsnap=run.firstStateStable?{iteration:run.firstStateStable.iteration,displacementUpdateNormM:run.firstStateStable.displacementUpdateNormM,reactionUpdateNormN:run.firstStateStable.reactionUpdateNormN,equilibriumStatus:run.firstStateStable.equilibriumStatus,summary:summarize(run.iterations.find(x=>x.iteration===run.firstStateStable.iteration))}:null; const tail=run.iterations.slice(-12).map(it=>({iteration:it.iteration,stateChangeCount:it.stateChangeCount,displacementUpdateNormM:it.displacementUpdateNormM,reactionUpdateNormN:it.reactionUpdateNormN,equilibriumStatus:it.recoveredEquilibriumStatus,stateSignature:it.stateSignature})); const sig=run.iterations.slice(-48).map(it=>it.stateSignature); let period=null; for(let p=1;p<=12;p++){let ok=true;for(let i=p;i<sig.length;i++)if(sig[i]!==sig[i-p]){ok=false;break;}if(ok){period=p;break;}} return {semanticHash:run.semanticHash,iterationCount:run.iterations.length,firstStateStable:fsnap,fullPhysicsQualifiedIterationCount:qualified.length,firstFullPhysicsQualified:qualified[0]??null,lastFullPhysicsQualified:qualified.at(-1)??null,stateSignaturePeriodInLast48:period,tail};};
+          const a=inspect(run1), b=inspect(run2), deterministic=run1.semanticHash===run2.semanticHash, both=a.fullPhysicsQualifiedIterationCount>0&&b.fullPhysicsQualifiedIterationCount>0, cand=both?a.lastFullPhysicsQualified.summary:null;
+          const improved=cand&&cand.vectorsWithin10Pct>13&&cand.normalsWithin10Pct===23;
+          const disposition=!both?'REJECT_DELETED_SPRING_SEQUENTIAL_NONCONVERGED_KEEP_D1':deterministic&&improved?'CONVERGED_EVIDENCE_SUPPORTS_FURTHER_PROMOTION_REVIEW_NOT_AUTOMATIC_PRODUCTION_CHANGE':'REJECT_DELETED_SPRING_SEQUENTIAL_NO_GOVERNED_ACCURACY_IMPROVEMENT_KEEP_D1';
+          const result={schema:'m047-bm4l-stage2-d1-deleted-spring-sequential-measurement/v1',sourceHead:process.env.SOURCE_HEAD,evidenceHead:process.env.EVIDENCE_HEAD,sourceAccdbSha256:process.env.BM4L_ACCDB_SHA256,strategy:'DELETED_TANGENTIAL_SPRING_AFTER_BREAKAWAY_WITH_PREVIOUS_ITERATION_CONSTANT_COULOMB_FORCE_D1_TOTAL_DISPLACEMENT_DIRECTION',authorityBoundary:'PROJECT_RCA_OF_DOCUMENTED_DELETED_SPRING_CONSTANT_FORCE_SEQUENCE_NOT_A_CLAIM_OF_UNPUBLISHED_CAESAR_INTERNAL_CONVERGENCE_NUMERICS',baseline:{vectorsWithin10Pct:13,normalsWithin10Pct:23,stateMatches:d1.d1.constitutiveStateMatches,variant:d1.d1.variant},unchangedPolicies:{toleranceChanged:false,comparisonPolicyChanged:false,productionSolverModified:false,maximumIterations:400,displacementUpdateLimitM:1e-10,reactionUpdateLimitN:1e-2,forceResidualLimitN:1e-2,directionCosineLimit:-0.999999},harnessOnlyRuntimeFixes:['ADD_SUPPORT_REFERENCE_TO_INTERNAL_SNAPSHOT_ENTRY','CANONICALIZE_INTERNAL_SPRING_DECLARATION_ID','CANONICALIZE_INTERNAL_CONSTANT_FORCE_PRIMITIVE_ID'],deterministic,run1:a,run2:b,candidateQualifiedSummary:cand,disposition};
+          fs.writeFileSync('reports/lfea-m047-stage2-d1-deleted-spring-sequential-measurement.json',JSON.stringify(result,null,2)+'\n');
+          fs.writeFileSync('artifacts/measurement/summary.txt',[`deterministic ${deterministic}`,`run1 full-qualified ${a.fullPhysicsQualifiedIterationCount}`,`run2 full-qualified ${b.fullPhysicsQualifiedIterationCount}`,`run1 first-state-stable ${a.firstStateStable?.iteration??'none'} vectors ${a.firstStateStable?.summary?.vectorsWithin10Pct??'n/a'}/23 reactionUpdateN ${a.firstStateStable?.reactionUpdateNormN??'n/a'}`,`tail state period run1 ${a.stateSignaturePeriodInLast48??'none'}`,`disposition ${disposition}`].join('\n')+'\n');
+          console.log(fs.readFileSync('artifacts/measurement/summary.txt','utf8'));
+          NODE
+      - name: Upload governed measurement evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: m047-d1-deleted-spring-sequential-measurement-v2
+          if-no-files-found: error
+          retention-days: 7
+          path: |
+            artifacts/measurement/**
+            reports/lfea-m047-stage2-d1-deleted-spring-run1.json
+            reports/lfea-m047-stage2-d1-deleted-spring-run2.json
+            reports/lfea-m047-stage2-d1-deleted-spring-sequential-measurement.json
+      - name: Enforce harness success after evidence upload
+        if: always()
+        shell: bash
+        run: |
+          c1="$(cat artifacts/measurement/run1-exit-code.txt 2>/dev/null || echo 98)"
+          c2="$(cat artifacts/measurement/run2-exit-code.txt 2>/dev/null || echo 98)"
+          if [ "$c1" != "0" ] || [ "$c2" != "0" ]; then
+            echo 'deleted-spring harness failed; stderr uploaded as governed diagnostic evidence'
+            cat artifacts/measurement/run1.stderr.txt || true
+            cat artifacts/measurement/run2.stderr.txt || true
+            exit 1
+          fi

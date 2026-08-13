@@ -1,0 +1,12 @@
+{
+  "schema": "lafea-b01-fixed-probes/v1",
+  "probes": [
+    {"probeId":"P1","xOverW":"0.25","yOverH":"0.25"},
+    {"probeId":"P2","xOverW":"0.50","yOverH":"0.50"},
+    {"probeId":"P3","xOverW":"0.75","yOverH":"0.40"},
+    {"probeId":"P4","xOverW":"0.30","yOverH":"0.80"}
+  ],
+  "quantityIdentity": ["physical quantity","coordinate frame","physical location","load case","recovery method","representation","units"],
+  "requested": ["UX","UY","EPSILON_XX","EPSILON_YY","GAMMA_XY","SIGMA_XX","SIGMA_YY","TAU_XY"],
+  "authorityNote": "UX/UY are direct physical-coordinate probe quantities. Stress/strain at arbitrary probes may only be compared when the registered route exposes a governed direct recovery method; otherwise T6/Q8 acceptance is all integration points versus the exact constant oracle."
+}

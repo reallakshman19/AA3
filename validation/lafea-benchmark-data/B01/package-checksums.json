@@ -1,0 +1,18 @@
+{
+  "schema": "lafea-b01-package-checksums/v1",
+  "algorithm": "SHA-256",
+  "baselineCommit": "56b826d915c0ae8a390524736cbf27f5afa84d4d",
+  "selfExcluded": true,
+  "files": [
+    {"path":"README.md","sha256":"c30020d5b9a5f2fd018a46693ecc59e556d559aaabfc7480284f6e7b6f09cd77","bytes":2977},
+    {"path":"bucket-manifest.json","sha256":"121382701cbb4342b75622d1b2819c0981388a7ef991ed302a35128261cd925f","bytes":991},
+    {"path":"convergence/fixed-probes.json","sha256":"b1a5215adb72572b010f8340871c2456623de835f961edc463a5c377ce36a200","bytes":998},
+    {"path":"convergence/mesh-ladders.json","sha256":"ec3eb73c6f00775652b000e41462e059c4d3353cb8b83071a33ec2d7a4425fd4","bytes":2351},
+    {"path":"governance/fem-semantics.json","sha256":"1d80d5912f5dd3c6fa766b75672acddcfe960786714d8298c492dc9f6532c8a9","bytes":5443},
+    {"path":"governance/negative-cases.json","sha256":"267d9fb1b1b7cf4eefa3173db5967d61cbf5de5a8a792f8425b0338a6ebfa179","bytes":3720},
+    {"path":"oracle/cases.json","sha256":"d93d4fbab26112793d5bbcbcf364757e619a4357abfd7c901d969450f3e7dce6","bytes":4263},
+    {"path":"oracle/expected-values.json","sha256":"99c694bbfff6d4cc8f7cb0a176b4ac499e49ce83751ee80efc102c052b23c2ee","bytes":12036},
+    {"path":"oracle/independent-oracle.py","sha256":"bd5af92ce958c7624fbb624b1454e68a0ae7f560fda568aab55c40cd37e9a694","bytes":7024},
+    {"path":"sources/source-registry.json","sha256":"fca9ee2923e3df8642ffe464a09c629907cb0cf473b9f954893aedc9cac2682e","bytes":2462}
+  ]
+}

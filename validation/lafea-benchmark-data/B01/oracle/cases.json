@@ -1,0 +1,20 @@
+{
+  "schema": "lafea-b01-affine-cases/v1",
+  "baselineCommit": "56b826d915c0ae8a390524736cbf27f5afa84d4d",
+  "authority": {
+    "class": "INDEPENDENT_CLOSED_FORM",
+    "productionOutputUsed": false,
+    "source": "LAFEA/Bucket1_deep-research-report (2).md",
+    "materializationNote": "The committed research report freezes the six strain/material/geometry targets but does not contain the literal affine coefficient records from the missing sandbox ZIP. The coefficients below were selected deterministically before any new B01 production execution. They exactly reproduce the reported strain states and are independent of LAFEA output."
+  },
+  "units": {"length":"mm","force":"N","stress":"MPa","energy":"N*mm"},
+  "shearConvention": "ENGINEERING_GAMMA_XY_DU_DY_PLUS_DV_DX",
+  "cases": [
+    {"caseId":"LAFEA3-AFFINE-PS-01","formulation":"PLANE_STRESS","geometry":{"width":"200","height":"100","thickness":"8"},"material":{"elasticModulus":"210000","poissonRatio":"0.3"},"affine":{"u0":"0.37","ux":"0.0004","uy":"0.0004","v0":"-0.22","vx":"-0.00015","vy":"-0.00015"},"expectedStrain":{"epsilonXX":"0.0004","epsilonYY":"-0.00015","gammaXY":"0.00025"}},
+    {"caseId":"LAFEA3-AFFINE-PE-02","formulation":"PLANE_STRAIN","geometry":{"width":"120","height":"80","thickness":"5"},"material":{"elasticModulus":"70000","poissonRatio":"0.28"},"affine":{"u0":"-0.11","ux":"-0.0002","uy":"0.00008","v0":"0.19","vx":"-0.00020","vy":"0.0003"},"expectedStrain":{"epsilonXX":"-0.0002","epsilonYY":"0.0003","gammaXY":"-0.00012"}},
+    {"caseId":"LAFEA3-AFFINE-SHEAR-03","formulation":"PLANE_STRESS","geometry":{"width":"150","height":"90","thickness":"3"},"material":{"elasticModulus":"80000","poissonRatio":"0.25"},"affine":{"u0":"0.05","ux":"0","uy":"0.0007","v0":"-0.04","vx":"0.0005","vy":"0"},"expectedStrain":{"epsilonXX":"0","epsilonYY":"0","gammaXY":"0.0012"}},
+    {"caseId":"LAFEA3-AFFINE-RIGID-04","formulation":"PLANE_STRESS","geometry":{"width":"100","height":"70","thickness":"6"},"material":{"elasticModulus":"210000","poissonRatio":"0.3"},"affine":{"u0":"0.25","ux":"0","uy":"-0.0006","v0":"-0.35","vx":"0.0006","vy":"0"},"expectedStrain":{"epsilonXX":"0","epsilonYY":"0","gammaXY":"0"}},
+    {"caseId":"LAFEA3-AFFINE-UNIAX-05","formulation":"PLANE_STRESS","geometry":{"width":"100","height":"50","thickness":"4"},"material":{"elasticModulus":"200000","poissonRatio":"0.3"},"affine":{"u0":"-0.08","ux":"0.001","uy":"0.0002","v0":"0.12","vx":"-0.0002","vy":"-0.0003"},"expectedStrain":{"epsilonXX":"0.001","epsilonYY":"-0.0003","gammaXY":"0"}},
+    {"caseId":"LAFEA3-AFFINE-BIAX-06","formulation":"PLANE_STRESS","geometry":{"width":"160","height":"110","thickness":"2.5"},"material":{"elasticModulus":"210000","poissonRatio":"0.3"},"affine":{"u0":"0.14","ux":"0.0005","uy":"-0.00017","v0":"-0.09","vx":"0.00017","vy":"0.0005"},"expectedStrain":{"epsilonXX":"0.0005","epsilonYY":"0.0005","gammaXY":"0"}}
+  ]
+}

@@ -1,0 +1,81 @@
+{
+  "schema": "lafea-b01-fem-semantics/v1",
+  "frozenBeforeNewProductionExecution": true,
+  "baselineCommit": "56b826d915c0ae8a390524736cbf27f5afa84d4d",
+  "scope": {
+    "stageId": "LAFEA.3",
+    "authority": "T3_T6_Q8_LINEAR_CONTINUUM",
+    "productionFamilies": ["T3","T6","Q8"],
+    "researchOnlyFamilies": ["Q4"],
+    "releaseAuthorityGrantedByProgram": false,
+    "temperatureAuthorityGrantedByProgram": false
+  },
+  "kinematics": {
+    "analysis": "2D_SMALL_STRAIN_LINEAR_STATIC",
+    "strainVector": ["EPSILON_XX","EPSILON_YY","GAMMA_XY"],
+    "gammaXYDefinition": "du/dy + dv/dx",
+    "boundaryCondition": "Prescribe exact affine UX/UY at every exterior displacement node; all interior displacement DOFs remain free.",
+    "quadraticBoundaryNodeRule": "T6/Q8 boundary midside values are evaluated from the actual physical coordinate after every transformation."
+  },
+  "quantityAuthority": {
+    "T3": {"strainStress":"constant element/direct continuum quantities"},
+    "T6": {"strainStress":"all authoritative integration-point/direct continuum quantities"},
+    "Q8": {"strainStress":"all authoritative integration-point/direct continuum quantities"},
+    "projectedNodalStress": "DISPLAY_ONLY_NOT_ACCEPTANCE_AUTHORITY",
+    "arbitraryProbeStress": "UNAVAILABLE_UNLESS_A_GOVERNED_DIRECT_RECOVERY_METHOD_IS_EXPLICITLY_BOUND",
+    "probeDisplacement": "exact physical-coordinate affine field",
+    "planeStrainSigmaZZ": "compare to independent oracle if exposed by result contract; otherwise receipt must state OUTSIDE_CURRENT_RESULT_CONTRACT, never zero by implication"
+  },
+  "reactionConvention": {
+    "sign": "REACTION_ON_STRUCTURE",
+    "oracleBoundaryTraction": "t = sigma . n using outward boundary normal",
+    "globalChecks": ["net force X","net force Y","net moment Z about origin"],
+    "localChecks": "retain exact edge traction and edge force/moment resultants"
+  },
+  "integration": {
+    "T3": {"policy":"constant-strain T3 area integration as implemented by registered route"},
+    "T6": {
+      "formulaId": "T6_THREE_POINT_DEGREE_2_GAUSS_QUADRATURE_V1",
+      "points": [
+        {"xi":"1/6","eta":"1/6","weight":"1/6"},
+        {"xi":"2/3","eta":"1/6","weight":"1/6"},
+        {"xi":"1/6","eta":"2/3","weight":"1/6"}
+      ]
+    },
+    "Q8": {
+      "formulaId": "Q8_THREE_BY_THREE_GAUSS_QUADRATURE_V1",
+      "oneDimensionalPoints": ["-sqrt(3/5)","0","+sqrt(3/5)"],
+      "oneDimensionalWeights": ["5/9","8/9","5/9"],
+      "tensorProductPointCount": 9
+    }
+  },
+  "meshValidity": {
+    "T3Orientation": "registered canonicalizer may deterministically normalize triangle orientation",
+    "T6Q8Orientation": "corner node declaration must be counter-clockwise; reject rather than silently reorder",
+    "jacobian": "T6/Q8 detJ must be positive at every production quadrature point; any non-positive quadrature-point detJ is fail-closed",
+    "quadraticMidside": "B01 mesh definitions require each T6/Q8 midside node to be the exact physical midpoint of its parent edge; a violating negative case must not be silently repaired",
+    "topology": "duplicate identities, unresolved references, disconnected restrained islands, and governed interface violations are fail-closed according to negative-case definitions"
+  },
+  "metamorphic": {
+    "TRANSLATED": {"translationMm":["137.25","-84.5"],"relation":"strain/stress/energy invariant; displacement reevaluated on transformed physical field"},
+    "ROTATED_37_DEG": {"angleDegrees":"37","relation":"vectors and second-order tensors transform covariantly; energy invariant; engineering shear handled via tensor transform"},
+    "LOAD_SCALED_2P5": {"scale":"2.5","relation":"u/strain/stress/reaction x2.5; energy x6.25"},
+    "LOAD_REVERSED": {"scale":"-1","relation":"u/strain/stress/reaction reverse; energy invariant"},
+    "UNIT_SCALED_MM_TO_M": {"relation":"compare canonical physical values after unit conversion"}
+  },
+  "acceptance": {
+    "nonzeroDisplacement": {"absolute":"1e-10 mm","relative":"5e-9"},
+    "zeroDisplacement": {"absolute":"1e-10 mm","relative":"0"},
+    "strain": {"absolute":"1e-12","relative":"2e-9"},
+    "nonzeroStress": {"absolute":"1e-8 MPa","relative":"2e-9"},
+    "zeroStress": {"absolute":"1e-8 MPa","relative":"0"},
+    "strainEnergy": {"absolute":"1e-8 N*mm","relative":"5e-9"},
+    "netReaction": {"absolute":"1e-6 N","relative":"0"},
+    "normalizedFreeDofInfinityResidual": {"maximum":"1e-10"},
+    "nearZeroRule": "use absolute criterion; do not divide by a nearly zero reference"
+  },
+  "solverGovernance": {
+    "mechanismBehavior": "under-restrained rigid-body mechanism must fail; no accepted result",
+    "regularization": "any stiffness regularization/pivot modification that can mask a mechanism must be explicit in retained solver configuration; silent stabilization is forbidden"
+  }
+}

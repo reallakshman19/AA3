@@ -1,0 +1,23 @@
+{
+  "schema": "lafea-b01-negative-cases/v1",
+  "failClosedRule": "A warning followed by ACCEPTED fails the negative benchmark. Downstream authoritative result/evidence artifacts listed as forbidden must not exist.",
+  "cases": [
+    {"negativeId":"NEG-NONFINITE-E","mutation":"non-finite Young's modulus","firstBoundary":"SOURCE_CONTRACT","required":"reject before authoritative solve/result"},
+    {"negativeId":"NEG-PE-NU-0P5","mutation":"nu = 0.5 in plane strain","firstBoundary":"CONSTITUTIVE_OR_SOURCE_CONTRACT","required":"reject before authoritative result"},
+    {"negativeId":"NEG-THICKNESS-ZERO","mutation":"zero thickness","firstBoundary":"SOURCE_CONTRACT","required":"reject"},
+    {"negativeId":"NEG-THICKNESS-NEG","mutation":"negative thickness","firstBoundary":"SOURCE_CONTRACT","required":"reject"},
+    {"negativeId":"NEG-INVERTED-T3","mutation":"inverted T3 connectivity","firstBoundary":"MESH_QUALITY_OR_CANONICALIZATION","required":"if canonicalized, retain before/after connectivity and never hide non-positive element geometry"},
+    {"negativeId":"NEG-INVERTED-T6","mutation":"clockwise/inverted T6 connectivity or non-positive detJ","firstBoundary":"MESH_QUALITY","required":"reject"},
+    {"negativeId":"NEG-INVERTED-Q8","mutation":"clockwise/inverted Q8 connectivity or non-positive detJ","firstBoundary":"MESH_QUALITY","required":"reject"},
+    {"negativeId":"NEG-DUPLICATE-NODE","mutation":"duplicate node identity","firstBoundary":"TOPOLOGY","required":"reject"},
+    {"negativeId":"NEG-DISCONNECTED-ISLAND","mutation":"disconnected restrained mesh island","firstBoundary":"TOPOLOGY","required":"reject unless separately governed multi-component capability exists"},
+    {"negativeId":"NEG-COINCIDENT-INTERFACE","mutation":"coincident but independent internal interface nodes","firstBoundary":"TOPOLOGY","required":"reject or explicitly governed classification; never silently merge"},
+    {"negativeId":"NEG-T6-MIDSIDE","mutation":"T6 midside not exact parent-edge midpoint","firstBoundary":"MESH_QUALITY","required":"reject/classify; never silently snap"},
+    {"negativeId":"NEG-Q8-MIDSIDE","mutation":"Q8 midside not exact parent-edge midpoint","firstBoundary":"MESH_QUALITY","required":"reject/classify; never silently snap"},
+    {"negativeId":"NEG-MECHANISM","mutation":"under-restrained rigid-body mechanism","firstBoundary":"BC_ELIMINATION_OR_LINEAR_SOLVER","required":"singular/mechanism failure; no accepted result"},
+    {"negativeId":"NEG-FORMULATION","mutation":"unregistered formulation ID","firstBoundary":"SOURCE_CONTRACT_OR_WORKFLOW","required":"reject"},
+    {"negativeId":"NEG-Q4-PRODUCTION","mutation":"attempt Q4 as production B01 method","firstBoundary":"AUTHORITY_STATE","required":"must not contribute to B01 production qualification"},
+    {"negativeId":"NEG-STALE-RESULT","mutation":"source changes after mesh/result generation","firstBoundary":"AUTHORITY_STATE","required":"invalidate current authority"}
+  ],
+  "forbiddenAfterRejection": ["qualification.state=ACCEPTED","release authority","current authoritative result derived from rejected input"]
+}

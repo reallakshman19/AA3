@@ -1,0 +1,31 @@
+{
+  "schema": "lafea-b01-mesh-ladders/v1",
+  "baselineCommit": "56b826d915c0ae8a390524736cbf27f5afa84d4d",
+  "purpose": "Exact affine completeness ladder, not Richardson/GCI.",
+  "logicalLadders": {
+    "T3": [{"meshId":"T3-M0","nx":2,"ny":2,"elements":8},{"meshId":"T3-M1","nx":4,"ny":4,"elements":32},{"meshId":"T3-M2","nx":8,"ny":8,"elements":128}],
+    "T6": [{"meshId":"T6-M0","nx":2,"ny":2,"elements":8},{"meshId":"T6-M1","nx":4,"ny":4,"elements":32},{"meshId":"T6-M2","nx":8,"ny":8,"elements":128}],
+    "Q8": [{"meshId":"Q8-M0","nx":2,"ny":2,"elements":4},{"meshId":"Q8-M1","nx":4,"ny":4,"elements":16},{"meshId":"Q8-M2","nx":8,"ny":8,"elements":64}]
+  },
+  "cornerGrid": {
+    "boundary": "unperturbed rectangle boundary",
+    "interiorPerturbation": {
+      "appliesTo": "corner grid nodes only",
+      "maximumFractionOfLocalCell": "0.08",
+      "xMultiplier": "(((17*i + 13*j) mod 5) - 2) / 2",
+      "yMultiplier": "(((11*i + 19*j) mod 5) - 2) / 2",
+      "formula": "x = i*W/nx + 0.08*(W/nx)*xMultiplier; y = j*H/ny + 0.08*(H/ny)*yMultiplier",
+      "note": "i,j are interior logical indices; boundary nodes are never perturbed"
+    }
+  },
+  "triangulation": {
+    "rule": "alternate cell diagonal by parity (i+j) mod 2",
+    "orientation": "emit counter-clockwise triangles",
+    "T6": "create each midside node once per unique parent edge at exact physical midpoint"
+  },
+  "Q8": {
+    "rule": "one serendipity Q8 per logical quadrilateral cell",
+    "midsides": "exact physical midpoint of each corner edge; shared edge midsides reuse the same deterministic node ID"
+  },
+  "requiredEvidence": ["node coordinates","node IDs","element connectivity","element IDs","orientation","midside parent-edge identity","quadrature/Jacobian evidence","connected components","mesh semantic hash"]
+}

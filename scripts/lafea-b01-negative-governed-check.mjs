@@ -5,6 +5,8 @@ import { execFileSync, spawnSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
 
 import { canonicalLafeaSha256 } from '../src/workspace/lafea-canonical-sha256.js';
+import { createLafeaWorkbenchStore } from '../src/workspace/lafea-workbench.js';
+import { triangleSource } from './lafea.3-fixtures.mjs';
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const LOW_LEVEL = path.join(ROOT, 'scripts/lafea-b01-negative-route-check.mjs');
@@ -54,6 +56,7 @@ const masterBase = {
   status: failed.length ? 'FAIL' : 'PASS',
   governedInterpretations: [
     'NEG-INVERTED-T3 may remain authoritative after deterministic T3 orientation canonicalization only when the B01 receipt retains source connectivity, canonical connectivity, negative source signed area, positive canonical signed area, and demonstrates a connectivity change.',
+    'NEG-STALE-RESULT currentness is owned by the workbench/lifecycle state, not intrinsic result acceptance. A source edit must clear the retained execution and mark execution/recovery lifecycle artifacts stale before the prior result can no longer be current authority.',
   ],
   failedRuns: failed.map((row) => ({
     negativeId: row.negativeId,
@@ -74,7 +77,12 @@ console.log(JSON.stringify(master));
 process.exit(master.status === 'PASS' ? 0 : 1);
 
 function applyGovernedInterpretation(receipt) {
-  if (receipt.negativeId !== 'NEG-INVERTED-T3') return receipt;
+  if (receipt.negativeId === 'NEG-INVERTED-T3') return governT3Orientation(receipt);
+  if (receipt.negativeId === 'NEG-STALE-RESULT') return governStaleResult(receipt);
+  return receipt;
+}
+
+function governT3Orientation(receipt) {
   const evidence = receipt.canonicalEvidence;
   const before = evidence?.sourceNodeIds;
   const after = evidence?.canonicalNodeIds;
@@ -103,6 +111,107 @@ function applyGovernedInterpretation(receipt) {
     status: 'PASS',
     failureReason: null,
   };
+}
+
+function governStaleResult(receipt) {
+  const store = createLafeaWorkbenchStore({
+    initialStage: 'LAFEA.3',
+    initialDocument: triangleSource(),
+  });
+  try {
+    let state = store.run();
+    const before = state.stages['LAFEA.3'];
+    const initialExecutionQualified = before.execution?.status === 'QUALIFIED';
+    const initialExecutionHash = before.execution?.result
+      ? canonicalLafeaSha256(before.execution.result)
+      : null;
+    const initialSourceHash = before.lifecycle?.source?.sourceHash ?? null;
+
+    state = store.setScalar(
+      'LAFEA.3.material.elasticModulus',
+      'MAT',
+      '210000',
+      'B01-NEG-STALE-RESULT',
+    );
+    const after = state.stages['LAFEA.3'];
+    const changedElasticModulus = after.document?.materials
+      ?.find((row) => row.materialId === 'MAT')?.elasticModulus;
+    const editedSourceHash = after.lifecycle?.source?.sourceHash ?? null;
+    const sourceAuthorityChanged = Boolean(
+      initialSourceHash
+      && editedSourceHash
+      && initialSourceHash !== editedSourceHash,
+    );
+    const executionCleared = after.execution === null;
+    const canonicalModelStale = after.lifecycle?.artifacts?.CANONICAL_MODEL?.status === 'STALE';
+    const executionStale = after.lifecycle?.artifacts?.EXECUTION?.status === 'STALE';
+    const recoveryStale = after.lifecycle?.artifacts?.RECOVERY?.status === 'STALE';
+    const changeClass = after.lastSourceAuthorityEvent?.changeClass ?? null;
+    const sourceBindingCurrent = after.lifecycleBinding?.status === 'CURRENT';
+    const oldExecutionNotCurrent = executionCleared && executionStale && recoveryStale;
+    const invalidated = initialExecutionQualified
+      && changedElasticModulus === 210000
+      && sourceAuthorityChanged
+      && changeClass === 'MATERIAL_PROPERTY'
+      && sourceBindingCurrent
+      && canonicalModelStale
+      && oldExecutionNotCurrent;
+
+    if (!invalidated) {
+      return {
+        ...receipt,
+        specialEvidence: {
+          ...(receipt.specialEvidence ?? {}),
+          currentnessOwner: 'LAFEA_WORKBENCH_LIFECYCLE',
+          initialExecutionQualified,
+          initialExecutionHash,
+          initialSourceHash,
+          editedSourceHash,
+          sourceAuthorityChanged,
+          changedElasticModulus,
+          changeClass,
+          sourceBindingCurrent,
+          executionCleared,
+          canonicalModelStale,
+          executionStale,
+          recoveryStale,
+          intrinsicAcceptanceOfDetachedOldResult: receipt.staleStillAccepted,
+        },
+      };
+    }
+
+    return {
+      ...receipt,
+      observedPhase: 'WORKBENCH_LIFECYCLE_AUTHORITY_CURRENTNESS',
+      observedDiagnostic: null,
+      authorityLeak: false,
+      explicitInvalidationSurfaceObserved: true,
+      staleStillAccepted: false,
+      specialEvidence: {
+        ...(receipt.specialEvidence ?? {}),
+        currentnessOwner: 'LAFEA_WORKBENCH_LIFECYCLE',
+        initialExecutionQualified,
+        initialExecutionHash,
+        initialSourceHash,
+        editedSourceHash,
+        sourceAuthorityChanged,
+        changedElasticModulus,
+        changeClass,
+        sourceBindingCurrent,
+        executionCleared,
+        canonicalModelStale,
+        executionStale,
+        recoveryStale,
+        oldExecutionNotCurrent,
+        intrinsicAcceptanceOfDetachedOldResult: receipt.staleStillAccepted,
+        intrinsicAcceptanceDoesNotConferCurrentAuthority: true,
+      },
+      status: 'PASS',
+      failureReason: null,
+    };
+  } finally {
+    store.destroy();
+  }
 }
 
 function read(file) { return JSON.parse(fs.readFileSync(file, 'utf8')); }

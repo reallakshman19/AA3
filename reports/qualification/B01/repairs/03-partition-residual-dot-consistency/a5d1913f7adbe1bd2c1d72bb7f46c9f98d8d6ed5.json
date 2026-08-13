@@ -1,0 +1,28 @@
+{
+  "schema":"lafea-b01-repair-attempt/v1",
+  "issue":1100,
+  "attempt":3,
+  "exactHead":"a5d1913f7adbe1bd2c1d72bb7f46c9f98d8d6ed5",
+  "hypothesis":"Dense partition RHS and full equilibrium residual used different floating-point summation semantics, leaving an artificial free-system mismatch under rigid cancellation.",
+  "singleMechanicsBoundary":"DENSE_PARTITION_AND_RESIDUAL_DOT_ACCUMULATION",
+  "changes":["matrixVector uses compensated pair-product sum","vector dot uses the same compensated pair-product sum","dense partition coupling dotRow uses the shared dot implementation"],
+  "productionFilesChanged":["src/core/local-continuum/matrix.js","src/core/local-continuum/solver.js"],
+  "frozenBenchmarkChanged":false,
+  "tolerancesChanged":false,
+  "priorControls":"PASS",
+  "workflowRunId":31670532761,
+  "artifact":{"artifactId":9169515594,"sha256":"sha256:64872fdc387001feba7cadba54f3088ef83a62ecdbca7789161f9f7c20b6a6a3"},
+  "matrix":{"passCount":46,"failCount":8,"status":"FAIL"},
+  "remainingRigidFailures":[
+    {"family":"T3","meshId":"T3-M1","normalizedResidual":6.912159733474255e-10},
+    {"family":"T3","meshId":"T3-M2","normalizedResidual":1.1791598808486015e-9},
+    {"family":"T6","meshId":"T6-M0","normalizedResidual":6.307673174887896e-10},
+    {"family":"T6","meshId":"T6-M1","normalizedResidual":1.7077566008083522e-9},
+    {"family":"T6","meshId":"T6-M2","code":"REACTION_EQUILIBRIUM_FAILURE"},
+    {"family":"Q8","meshId":"Q8-M0","normalizedResidual":3.2014213502407074e-10},
+    {"family":"Q8","meshId":"Q8-M1","normalizedResidual":2.161982592951972e-9},
+    {"family":"Q8","meshId":"Q8-M2","normalizedResidual":3.0458977562375367e-9}
+  ],
+  "disposition":"PARTIAL_IMPROVEMENT_NOT_SUFFICIENT. Preserve consistent compensated dot semantics, then refine the dense Cholesky free-system solution and reaction aggregation without modifying the frozen acceptance criteria.",
+  "releaseAuthorityGrantedByProgram":false
+}

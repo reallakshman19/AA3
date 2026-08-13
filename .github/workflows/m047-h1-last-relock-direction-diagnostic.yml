@@ -1,0 +1,44 @@
+name: M047 H1 last-relock direction diagnostic
+on:
+  push:
+    branches: [agent/m047-stage2-measure-last-relock-20260813]
+    paths: ['.github/workflows/m047-h1-last-relock-direction-diagnostic.yml']
+permissions:
+  contents: read
+jobs:
+  diagnose:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    env:
+      SOURCE_HEAD: 'e3c605ba6fc0f33191ba6943d789f7c93f3da54d'
+      BM4L_COMMON_COMMIT: '45d51ea18624f5775805f399110c1738301c0d90'
+      BM4L_ZIP_SHA256: '978617cba50fa0b1a16c2fa71dc1e0d38e55ac834b191f887d100c6951abd8b9'
+      BM4L_ACCDB_SHA256: '64c05a50e9ed0452622ff5880335460486f24ac8e6adecc9a300b549c9aa82f8'
+    steps:
+      - uses: actions/checkout@v4
+        with: {ref: '${{ env.SOURCE_HEAD }}', persist-credentials: false}
+      - run: 'test "$(git rev-parse HEAD)" = "$SOURCE_HEAD"'
+      - uses: actions/setup-node@v4
+        with: {node-version: '22', cache: npm}
+      - run: npm ci
+      - name: Fetch pinned BM4_L
+        run: |
+          set -euo pipefail
+          mkdir -p artifacts/measurement artifacts/bm4l-stage2/source reports
+          curl --fail --location --silent --show-error "https://raw.githubusercontent.com/reallaksh19/Common/${BM4L_COMMON_COMMIT}/LFEA/BM4/BM4_L.zip" -o artifacts/measurement/BM4_L.zip
+          echo "${BM4L_ZIP_SHA256}  artifacts/measurement/BM4_L.zip" | sha256sum -c -
+          unzip -q artifacts/measurement/BM4_L.zip -d artifacts/bm4l-stage2/source
+          echo "${BM4L_ACCDB_SHA256}  artifacts/bm4l-stage2/source/BM4_L.ACCDB" | sha256sum -c -
+      - name: Reproduce H1 and classify last-relock direction
+        run: |
+          set -euo pipefail
+          node --check scripts/lfea-m047-stage2-h1-last-relock-direction-diagnostic.mjs
+          node scripts/lfea-m047-stage2-h1-last-relock-direction-diagnostic.mjs --accdb artifacts/bm4l-stage2/source/BM4_L.ACCDB --out reports/lfea-m047-stage2-h1-last-relock-direction-diagnostic.json > artifacts/measurement/diagnostic.stdout.txt 2> artifacts/measurement/diagnostic.stderr.txt
+      - uses: actions/upload-artifact@v4
+        with:
+          name: m047-h1-last-relock-direction-diagnostic
+          retention-days: 7
+          if-no-files-found: error
+          path: |
+            artifacts/measurement/**
+            reports/lfea-m047-stage2-h1-last-relock-direction-diagnostic.json

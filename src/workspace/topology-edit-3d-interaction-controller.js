@@ -21,6 +21,15 @@ import {
   installTopologyEditTangencyClockingSnapIndex,
 } from './viewport-interaction/topology-edit-tangency-clocking-snap-index.js';
 
+const AUTO_PREVIEW_ROLES = new Set([
+  'interaction-entry-mode',
+  'interaction-value-x',
+  'interaction-value-y',
+  'interaction-value-z',
+  'interaction-magnitude',
+  'interaction-axis',
+]);
+
 export class TopologyEdit3DViewController extends ReviewResponseController {
   constructor(eventBus, lifecycleOptions = {}) {
     super(eventBus, lifecycleOptions);
@@ -33,10 +42,12 @@ export class TopologyEdit3DViewController extends ReviewResponseController {
       new TopologyEditInteractionControllerRuntime(this);
     installTopologyEditTangencyClockingSnapIndex(this.interactionControllerRuntime);
     this.interactionKeyHandler = (event) => this.handleInteractionKey(event);
+    this.interactionChangeHandler = (event) => this.handleInteractionChange(event);
   }
 
   async activate() {
     await super.activate();
+    this.configureContextualMoveSurface();
     this.interactionControllerRuntime.mount();
   }
 
@@ -48,13 +59,14 @@ export class TopologyEdit3DViewController extends ReviewResponseController {
     }
     section.dataset.role = 'topology-edit-professional-interaction';
     section.className = 'topology-edit-professional-interaction';
-    section.setAttribute('aria-label', 'Professional node interaction');
+    section.setAttribute('aria-label', 'Move selected node');
     this.checkerElement.before(section);
     this.interactionElement = section;
     this.hostElement.tabIndex = this.hostElement.tabIndex >= 0
       ? this.hostElement.tabIndex
       : 0;
     this.hostElement.addEventListener('keydown', this.interactionKeyHandler);
+    this.interactionElement.addEventListener('change', this.interactionChangeHandler);
     this.renderInteractionPanel();
     this.updateInteractionEvidence();
   }
@@ -62,6 +74,7 @@ export class TopologyEdit3DViewController extends ReviewResponseController {
   deactivate() {
     this.interactionControllerRuntime.destroy();
     this.hostElement?.removeEventListener('keydown', this.interactionKeyHandler);
+    this.interactionElement?.removeEventListener('change', this.interactionChangeHandler);
     this.clearInteractionState(false, true);
     this.interactionElement = null;
     super.deactivate();
@@ -96,6 +109,21 @@ export class TopologyEdit3DViewController extends ReviewResponseController {
     return super.handleHostClick(event);
   }
 
+  handleInteractionChange(event) {
+    const role = event.target?.dataset?.role;
+    if (role === 'interaction-nudge-increment') {
+      const increment = Number(event.target.value);
+      if (Number.isFinite(increment) && increment > 0) this.nudgeIncrementMm = increment;
+      return;
+    }
+    if (!AUTO_PREVIEW_ROLES.has(role) || !this.session) return;
+    const nodeIds = Array.isArray(this.selection?.nodeIds)
+      ? this.selection.nodeIds
+      : [...(this.selection?.nodeIds ?? [])];
+    if (nodeIds.length !== 1) return;
+    this.previewNumericInteraction({ announce: false });
+  }
+
   handleInteractionKey(event) {
     if (event.defaultPrevented) return;
     if (event.key === 'Escape' && this.interactionPreview) {
@@ -122,7 +150,7 @@ export class TopologyEdit3DViewController extends ReviewResponseController {
     );
   }
 
-  previewNumericInteraction() {
+  previewNumericInteraction({ announce = true } = {}) {
     try {
       const entryMode = this.control('interaction-entry-mode')?.value;
       const axis = this.control('interaction-axis')?.value ?? 'X';
@@ -139,7 +167,7 @@ export class TopologyEdit3DViewController extends ReviewResponseController {
         direction: axisDirection(axis),
         transformMode: entryMode === 'MAGNITUDE' ? `AXIS_${axis}` : 'FREE',
       });
-      this.retainInteractionPreview(preview, 'Numeric interaction preview created');
+      this.retainInteractionPreview(preview, 'Move preview updated', announce);
     } catch (error) {
       this.rejectInteraction(error);
     }
@@ -221,7 +249,7 @@ export class TopologyEdit3DViewController extends ReviewResponseController {
     this.updateInteractionEvidence();
     this.interactionControllerRuntime.sync();
     if (hadPreview && announce) {
-      this.setStatus('Professional interaction preview cancelled; no journal or workspace change occurred.');
+      this.setStatus('Move preview cancelled; no journal or workspace change occurred.');
     }
   }
 
@@ -233,7 +261,7 @@ export class TopologyEdit3DViewController extends ReviewResponseController {
     this.renderInteractionPanel();
     this.updateInteractionEvidence();
     this.interactionControllerRuntime.sync();
-    if (announce && hadPreview) this.setStatus('Interaction preview cleared by review-state change.');
+    if (announce && hadPreview) this.setStatus('Move preview cleared by review-state change.');
   }
 
   rejectInteraction(error) {
@@ -241,7 +269,7 @@ export class TopologyEdit3DViewController extends ReviewResponseController {
     this.renderInteractionPanel();
     this.updateInteractionEvidence();
     this.interactionControllerRuntime.sync();
-    this.setStatus(`Professional interaction blocked: ${this.interactionError}`);
+    this.setStatus(`Move blocked: ${this.interactionError}`);
   }
 
   refreshFromWorkspace() { this.clearInteractionState(false, true); return super.refreshFromWorkspace(); }
@@ -270,6 +298,18 @@ export class TopologyEdit3DViewController extends ReviewResponseController {
       error: this.interactionError,
       nudgeIncrementMm: this.nudgeIncrementMm,
     });
+  }
+
+  configureContextualMoveSurface() {
+    const movePanel = this.interactionElement?.closest(
+      'details[data-panel-kind="topology-edit-professional-interaction"]',
+    );
+    const moveSummary = movePanel?.querySelector(':scope > summary');
+    if (moveSummary) moveSummary.textContent = 'Edit selected node';
+    if (movePanel) movePanel.dataset.contextualEdit = 'MOVE_NODE';
+    const commandPanel = this.hostElement?.querySelector('details[data-panel-kind="commands"]');
+    const commandSummary = commandPanel?.querySelector(':scope > summary');
+    if (commandSummary) commandSummary.textContent = 'Advanced commands';
   }
 
   updateInteractionEvidence() {

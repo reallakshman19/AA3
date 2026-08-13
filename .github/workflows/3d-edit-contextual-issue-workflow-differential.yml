@@ -1,0 +1,130 @@
+name: 3D Edit contextual issue workflow differential qualification
+
+on:
+  push:
+    branches:
+      - qualification/3d-edit-contextual-issue-workflow-differential-a9399ace
+
+permissions:
+  contents: read
+
+jobs:
+  qualify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    env:
+      BASE_SHA: 949ea1f7790b8148977765fd7e5976e955970bcc
+      CANDIDATE_SHA: a9399ace0d9f2c862be5620cc8125b46dce6c723
+      PLAYWRIGHT_BROWSERS_PATH: '0'
+      TOPOLOGY_EDIT_TARGET_HEAD_SHA: a9399ace0d9f2c862be5620cc8125b46dce6c723
+    steps:
+      - name: Checkout exact candidate
+        uses: actions/checkout@v4
+        with:
+          ref: a9399ace0d9f2c862be5620cc8125b46dce6c723
+          fetch-depth: 0
+
+      - name: Verify exact six-file ledger
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$(git rev-parse HEAD)" = "$CANDIDATE_SHA"
+          expected=$'e2e/topology-edit-20-element-demo-repair-flow.spec.js\ne2e/topology-edit-contextual-issue-workflow.spec.js\nsrc/workspace/topology-edit-3d-issue-controller.js\nsrc/workspace/topology-edit-3d-view-controller.js\nsrc/workspace/topology-edit/topology-edit-canvas-callout.js\ntests/topology-edit-contextual-issue-workflow.test.mjs'
+          actual="$(git diff --name-only "$BASE_SHA" "$CANDIDATE_SHA")"
+          test "$actual" = "$expected"
+          git diff --check "$BASE_SHA" "$CANDIDATE_SHA"
+          for file in $actual; do node --check "$file"; done
+
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run new contextual issue authority contracts
+        run: node --test tests/topology-edit-contextual-issue-workflow.test.mjs
+
+      - name: Prove legacy failure set is unchanged from exact base
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p artifacts
+          legacy=(
+            tests/topology-edit-wave3a-checker.test.mjs
+            tests/topology-edit-wave3b-autofix.test.mjs
+            tests/topology-edit-wave3c-autofix-ui.test.mjs
+            tests/topology-edit-c3d-wave4-issue-review.test.mjs
+            tests/topology-edit-20-element-demo-repairs.test.mjs
+          )
+          git worktree add --detach /tmp/contextual-issue-base "$BASE_SHA"
+          ln -s "$PWD/node_modules" /tmp/contextual-issue-base/node_modules
+          set +e
+          (cd /tmp/contextual-issue-base && node --test "${legacy[@]}") 2>&1 | tee artifacts/base-legacy.tap
+          base_status=${PIPESTATUS[0]}
+          node --test "${legacy[@]}" 2>&1 | tee artifacts/candidate-legacy.tap
+          candidate_status=${PIPESTATUS[0]}
+          set -e
+          test "$base_status" -ne 0
+          test "$candidate_status" -ne 0
+          grep '^not ok ' artifacts/base-legacy.tap | sed -E 's/^not ok [0-9]+ - //' | sort > artifacts/base-legacy-failures.txt
+          grep '^not ok ' artifacts/candidate-legacy.tap | sed -E 's/^not ok [0-9]+ - //' | sort > artifacts/candidate-legacy-failures.txt
+          test "$(wc -l < artifacts/base-legacy-failures.txt)" -eq 4
+          diff -u artifacts/base-legacy-failures.txt artifacts/candidate-legacy-failures.txt
+          printf '{\n  "schema": "TopologyEditLegacyDifferential.v1",\n  "baseSha": "%s",\n  "candidateSha": "%s",\n  "failureCount": 4,\n  "disposition": "IDENTICAL_PREEXISTING_FAILURE_SET"\n}\n' "$BASE_SHA" "$CANDIDATE_SHA" > artifacts/legacy-differential.json
+
+      - name: Install pinned Chromium
+        run: npx playwright install --with-deps chromium
+
+      - name: Run production contextual issue and regression workflows
+        env:
+          PLAYWRIGHT_JSON_OUTPUT_NAME: artifacts/contextual-issue-workflow-playwright.json
+        run: >-
+          node scripts/run-playwright.mjs
+          e2e/topology-edit-contextual-issue-workflow.spec.js
+          e2e/topology-edit-20-element-demo-repair-flow.spec.js
+          e2e/topology-edit-clean-layout.spec.js
+          e2e/topology-edit-component-placement-evidence.spec.js
+          --workers=1
+          --retries=0
+          --trace=on
+          --reporter=line,json
+
+      - name: Record exact-head identity
+        if: always()
+        shell: bash
+        run: |
+          mkdir -p artifacts
+          cat > artifacts/contextual-issue-workflow-run-identity.json <<EOF
+          {
+            "schema": "TopologyEditContextualIssueWorkflowRunIdentity.v2",
+            "baseSha": "$BASE_SHA",
+            "candidateSha": "$CANDIDATE_SHA",
+            "qualificationCommitSha": "$GITHUB_SHA",
+            "runId": "$GITHUB_RUN_ID",
+            "attempt": $GITHUB_RUN_ATTEMPT,
+            "workers": 1,
+            "retries": 0,
+            "trace": "on",
+            "changedFileCount": 6,
+            "productionWebglIssuePick": true,
+            "previewCanonicalMutation": "FORBIDDEN",
+            "legacyFailurePolicy": "EXACT_BASE_DIFFERENTIAL",
+            "acceptanceAuthority": "EXISTING_CERTIFIED_AUTOFIX_JOURNAL"
+          }
+          EOF
+
+      - name: Upload qualification evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: contextual-issue-workflow-${{ env.CANDIDATE_SHA }}-${{ github.run_attempt }}
+          path: |
+            artifacts
+            reports/qualification
+            test-results
+            playwright-report
+          if-no-files-found: warn
+          retention-days: 30

@@ -20,6 +20,8 @@ permissions:
 jobs:
   untouched-baseline:
     runs-on: ubuntu-latest
+    env:
+      B01_REPORT_DIR: ${{ runner.temp }}/lafea-b01-baseline
     steps:
       - uses: actions/checkout@v4
 
@@ -37,15 +39,15 @@ jobs:
         continue-on-error: true
         shell: bash
         run: |
-          mkdir -p reports/qualification/B01/baseline
+          mkdir -p "$B01_REPORT_DIR"
           set +e
           node scripts/lafea-b01-registered-route-check.mjs \
-            --report-dir reports/qualification/B01/baseline \
-            > reports/qualification/B01/baseline-driver.stdout \
-            2> reports/qualification/B01/baseline-driver.stderr
+            --report-dir "$B01_REPORT_DIR" \
+            > "$B01_REPORT_DIR/baseline-driver.stdout" \
+            2> "$B01_REPORT_DIR/baseline-driver.stderr"
           status=$?
           set -e
-          printf '%s\n' "$status" > reports/qualification/B01/baseline-driver.exit-code
+          printf '%s\n' "$status" > "$B01_REPORT_DIR/baseline-driver.exit-code"
           exit "$status"
 
       - name: Upload untouched baseline receipts
@@ -53,12 +55,17 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: lafea-b01-untouched-baseline-${{ github.sha }}
-          path: reports/qualification/B01/baseline
+          path: ${{ runner.temp }}/lafea-b01-baseline
           if-no-files-found: error
           retention-days: 30
 
-      - name: Propagate B01 baseline failure
-        if: steps.baseline.outcome == 'failure'
+      - name: Propagate B01 baseline result
+        if: always()
+        shell: bash
         run: |
-          echo "B01 untouched baseline contains one or more failures; artifact retained."
-          exit 1
+          status=$(cat "$B01_REPORT_DIR/baseline-driver.exit-code")
+          if [ "$status" -ne 0 ]; then
+            echo "B01 untouched baseline contains one or more failures; artifact retained."
+            exit "$status"
+          fi
+          echo "B01 untouched baseline base matrix passed; artifact retained."

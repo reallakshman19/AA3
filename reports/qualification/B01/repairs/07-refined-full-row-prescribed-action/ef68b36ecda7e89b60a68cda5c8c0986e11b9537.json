@@ -1,0 +1,18 @@
+{
+  "schema":"lafea-b01-repair-attempt/v1",
+  "issue":1100,
+  "attempt":7,
+  "exactHead":"ef68b36ecda7e89b60a68cda5c8c0986e11b9537",
+  "hypothesis":"After iterative refinement, using the same full-row accumulation for prescribed action and final equilibrium may remove the remaining partition cancellation floor.",
+  "singleMechanicsChange":"Reapply full-global-row prescribed action on top of retained Cholesky refinement.",
+  "productionFilesChanged":["src/core/local-continuum/solver.js"],
+  "frozenBenchmarkChanged":false,
+  "tolerancesChanged":false,
+  "priorControls":"PASS",
+  "workflowRunId":31671410239,
+  "artifact":{"artifactId":9169830989,"sha256":"sha256:1707680c93150d9082fb472df6addcf79231a99a12285c19e89ec258d39a328d"},
+  "matrix":{"passCount":46,"failCount":8,"status":"FAIL"},
+  "comparisonToAttempt6":"All eight remaining normalized rigid residuals are unchanged.",
+  "disposition":"HYPOTHESIS_NOT_CONFIRMED. Revert full-row partition action. Investigate pre-solve dense RHS canonicalization, which currently rounds the partition equation before Cholesky/refinement.",
+  "releaseAuthorityGrantedByProgram":false
+}

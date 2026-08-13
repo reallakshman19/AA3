@@ -172,6 +172,7 @@ test('3D Edit provides contextual numeric Move, persistent inspector, status bad
   await deltaX.fill('25');
   await deltaX.blur();
   await expect.poll(() => host.getAttribute('data-topology-edit-interaction-preview-hash')).not.toBe('');
+  await expect(deltaX).toHaveValue('25');
   await expect(host).toHaveAttribute('data-topology-edit-canonical-hash', baseHash);
   await expect(movePanel.getByRole('button', { name: 'Apply move', exact: true })).toBeEnabled();
   await expect(movePanel.locator('[data-role="interaction-engineering-evidence"]')).not.toHaveAttribute('open', '');

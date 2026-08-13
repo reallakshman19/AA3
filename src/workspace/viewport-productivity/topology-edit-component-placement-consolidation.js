@@ -70,12 +70,15 @@ function renderPlacementTarget(hud, tool) {
   const target = hud.querySelector('.topology-edit-authoring-hud__target');
   if (!target) return;
   const label = TOOL_LABELS[tool] ?? 'Component';
-  const span = target.querySelector('span');
-  if (span) {
-    span.textContent = tool === 'BLIND_FLANGE'
-      ? 'Select one graph-open pipe endpoint, choose an exact catalogue record, inspect the governed ghost, then apply.'
-      : 'Select one compatible straight pipe edge, choose exact placement and catalogue evidence, inspect the governed ghost, then apply.';
+  const guidance = tool === 'BLIND_FLANGE'
+    ? 'Select one graph-open pipe endpoint, choose an exact catalogue record, inspect the governed ghost, then apply.'
+    : 'Select one compatible straight pipe edge, choose exact placement and catalogue evidence, inspect the governed ghost, then apply.';
+  let span = target.querySelector('span');
+  if (!span) {
+    span = target.ownerDocument.createElement('span');
+    target.append(span);
   }
+  span.textContent = guidance;
   const strong = target.querySelector('strong');
   if (strong) strong.textContent = `PLACE ${label.toUpperCase()}`;
 }

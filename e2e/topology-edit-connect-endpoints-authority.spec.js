@@ -156,7 +156,8 @@ async function seedStartRoute(page, points) {
 }
 
 async function configureConnect(page, host, startNodeId, endNodeId) {
-  const clear = page.getByRole('button', { name: 'Clear', exact: true });
+  const clear = page.getByLabel('Canonical selection', { exact: true })
+    .getByRole('button', { name: 'Clear', exact: true });
   if (await clear.isEnabled()) await clear.click();
   await page.locator('[data-action="activate-authoring-connect-ends"]').click();
   await clickCanonicalNode(page, startNodeId);

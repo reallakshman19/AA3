@@ -34,6 +34,10 @@ import {
   validateTopologyEditTableRuntime,
 } from './topology-edit-table-workflow.js';
 
+const COLUMN_PROFILES = new Set([
+  'GEOMETRY', 'SPECIFICATION', 'SUPPORT', 'CONNECTIVITY', 'AUTHORITY', 'ALL',
+]);
+
 export class TopologyEditTableRuntime {
   constructor(controller) {
     this.controller = controller;
@@ -41,6 +45,7 @@ export class TopologyEditTableRuntime {
     this.coordinator = null;
     this.projection = null;
     this.viewState = createTopologyEditTableViewState();
+    this.columnProfile = 'GEOMETRY';
     this.intents = [];
     this.batch = null;
     this.batchPlan = null;
@@ -178,6 +183,8 @@ export class TopologyEditTableRuntime {
     if (select && this.element?.contains(select)) return this.selectRow(select.dataset.tableSelect, event);
     const sort = event.target.closest?.('[data-table-sort]');
     if (sort && this.element?.contains(sort)) return this.sortRows(sort.dataset.tableSort);
+    const profile = event.target.closest?.('[data-table-profile]');
+    if (profile && this.element?.contains(profile)) return this.setColumnProfile(profile.dataset.tableProfile);
     const action = event.target.closest?.('[data-table-action]');
     if (!action || !this.element?.contains(action)) return false;
     const kind = action.dataset.tableAction;
@@ -196,6 +203,15 @@ export class TopologyEditTableRuntime {
     if (kind === 'export-xlsx') return this.exportXlsx();
     if (kind.startsWith('empty-route-')) return this.runEmptyRouteAction(kind);
     return false;
+  }
+
+  setColumnProfile(profileInput) {
+    const profile = String(profileInput ?? '').trim().toUpperCase();
+    if (!COLUMN_PROFILES.has(profile)) return false;
+    this.columnProfile = profile;
+    this.tableScrollLeft = 0;
+    this.render();
+    return true;
   }
 
   emptyRoutePipeOptions() { return topologyEditTableEmptyRoutePipeOptions(this); }

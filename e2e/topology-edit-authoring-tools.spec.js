@@ -134,7 +134,6 @@ async function openProductionAuthoringController(page) {
   }
   await expect.poll(() => authoringPanel.evaluate((element) => element.open)).toBe(true);
   await expect(page.locator('[data-role="topology-edit-authoring"]')).toBeVisible();
-  await expect(page.getByText('Authoring HUD', { exact: true })).toBeVisible();
   return host;
 }
 

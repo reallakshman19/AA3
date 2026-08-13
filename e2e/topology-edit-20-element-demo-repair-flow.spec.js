@@ -110,9 +110,15 @@ async function runTrimScenario(page, testInfo) {
   await expect(overlap).toContainText('150.00mm');
 
   const beforePreview = await evidence(host);
-  await overlap.getByRole('button', { name: 'Preview TRIM_EDGE' }).click();
+  await overlap.getByRole('button', { name: 'Review fix', exact: true }).click();
   await expect(page.locator('[data-role="topology-edit-status"]'))
     .toContainText('TRIM_EDGE preview certified');
+  const review = page.locator('[data-role="topology-edit-issue-fix-review"]');
+  await expect(review).toBeVisible();
+  await expect(review.locator('[data-role="topology-edit-issue-fix-title"]'))
+    .toHaveText('Certified fix · TRIM_EDGE');
+  await expect(review.locator('[data-role="topology-edit-issue-fix-evidence"]')).toHaveCount(1);
+  await expect(review.getByRole('button', { name: 'Apply fix', exact: true })).toBeEnabled();
   const firstPreview = await evidence(host);
   expect(firstPreview.canonicalHash).toBe(beforePreview.canonicalHash);
   expect(firstPreview.journalHash).toBe(beforePreview.journalHash);
@@ -120,19 +126,21 @@ async function runTrimScenario(page, testInfo) {
   expect(firstPreview.previewCertificationHash).not.toBe('');
   await attachScreenshot(page, testInfo, '150mm-trim-preview');
 
-  await page.locator('[data-action="cancel-autofix"]').click();
+  await review.getByRole('button', { name: 'Cancel', exact: true }).click();
   const cancelled = await evidence(host);
   expect(cancelled.canonicalHash).toBe(beforePreview.canonicalHash);
   expect(cancelled.journalHash).toBe(beforePreview.journalHash);
   expect(cancelled.previewHash).toBe('');
+  await expect(review).toBeHidden();
   await expect(overlapIssue(page)).toHaveCount(1);
 
-  await overlapIssue(page).getByRole('button', { name: 'Preview TRIM_EDGE' }).click();
+  await overlapIssue(page).getByRole('button', { name: 'Review fix', exact: true }).click();
+  await expect(review).toBeVisible();
   const secondPreview = await evidence(host);
   expect(secondPreview.previewHash).toBe(firstPreview.previewHash);
   expect(secondPreview.previewCertificationHash)
     .toBe(firstPreview.previewCertificationHash);
-  await page.locator('[data-action="accept-autofix"]').click();
+  await review.getByRole('button', { name: 'Apply fix', exact: true }).click();
   await expect(page.locator('[data-role="topology-edit-status"]'))
     .toContainText('TRIM_EDGE accepted from the exact certified preview');
 

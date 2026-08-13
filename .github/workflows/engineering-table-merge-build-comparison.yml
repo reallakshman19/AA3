@@ -1,0 +1,37 @@
+name: Engineering Table merge build comparison
+on:
+  pull_request:
+    paths:
+      - 'src/workspace/topology-edit/table/**'
+      - 'src/workspace/topology-edit/draft/**'
+      - 'src/workspace/viewport-productivity/topology-edit-table-*.js'
+      - '.github/workflows/engineering-table-merge-build-comparison.yml'
+permissions:
+  contents: read
+jobs:
+  base-build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.base.sha }}
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - name: Build base
+        run: npm run build
+  merge-build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: refs/pull/${{ github.event.pull_request.number }}/merge
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - name: Build merge result
+        run: npm run build

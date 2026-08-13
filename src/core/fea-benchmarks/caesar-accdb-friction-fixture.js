@@ -147,8 +147,10 @@ export function buildFrictionFixtureRawExport() {
         rows: restraintRows,
       },
       INPUT_UNITS: {
-        columns: ['TRANS', 'ROT_STIFF'],
-        rows: [{ TRANS: 'N./cm.', ROT_STIFF: 'N.m./deg' }],
+        // CTRANS is CAESAR's own internal-English to displayed constant for
+        // translational stiffness: 1 lb/in = 1.751270055770874 N/cm.
+        columns: ['TRANS', 'ROT_STIFF', 'CTRANS'],
+        rows: [{ TRANS: 'N./cm.', ROT_STIFF: 'N.m./deg', CTRANS: 1.751270055770874 }],
       },
       INPUT_CONTROL: { columns: ['NUMELT', 'NUMBEND'], rows: [{ NUMELT: SPANS.length, NUMBEND: 0 }] },
       INPUT_BENDS: { columns: ['BEND_PTR', 'NODE1', 'NODE2', 'RADIUS'], rows: [] },
@@ -252,7 +254,7 @@ export function buildFrictionFixtureProfile(frictionDeclaration) {
             BEND_AXIAL_SHAPE: 'YES',
             BOURDON_PRESSURE: 'NONE',
             COEFFICIENT_OF_FRICTION_MU: 0,
-            FRICT_STIF: { value: 1000000, unit: 'DISPLAYED_CAESAR_UNITS' },
+            FRICT_STIF: { value: 1000000, unit: 'CAESAR_INTERNAL_ENGLISH_UNITS' },
             DEFAULT_TRANS_RESTRAINT_STIFF: { value: 1000000000000, unit: 'DISPLAYED_CAESAR_UNITS' },
             DEFAULT_ROT_RESTRAINT_STIFF: { value: 1000000000000, unit: 'DISPLAYED_CAESAR_UNITS' },
             AMBIENT_TEMPERATURE: { value: 70, unit: 'F' },

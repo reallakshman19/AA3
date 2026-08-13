@@ -121,10 +121,14 @@ for (const [caseId, expected] of Object.entries({
   assert.equal(row.coefficient.level, 'MODEL_INPUT', caseId);
   assert.equal(row.frictionMultiplier.value, expected.multiplier, caseId);
   assert.equal(row.effectiveCoefficient, expected.effective, caseId);
-  assert.equal(row.frictionStiffness.displayedValue, 1e6, caseId);
+  // FRICT_STIF is governed in CAESAR's internal English units and converted with
+  // the ACCDB's own CTRANS constant, which CAESAR's L13 output confirms: three
+  // restraints below their capacity imply exactly 1.751270055770874e8 N/m.
+  assert.equal(row.frictionStiffness.basis, 'CAESAR_INTERNAL_ENGLISH_LB_PER_IN', caseId);
+  assert.equal(row.frictionStiffness.declaredValue, 1e6, caseId);
+  assert.equal(row.frictionStiffness.internalToDisplayedConstant, 1.751270055770874, caseId);
   assert.equal(row.frictionStiffness.displayedUnit, 'N./cm.', caseId);
-  assert.equal(row.frictionStiffness.conversionFactor, 100, caseId);
-  assert.equal(row.frictionStiffness.siValue, 1e8, caseId);
+  assert.equal(row.frictionStiffness.siValue, 1.751270055770874e8, caseId);
   assert.equal(row.frictionStiffness.siUnit, 'N/m', caseId);
 }
 assert.equal(frictionTable.cases.L15.constituents.minuendCaseId, 'L7');
@@ -200,7 +204,7 @@ for (const caseId of ['L13', 'L7']) {
   assert.equal(evidence.convergenceGates.status, 'CONVERGED', caseId);
   assert.deepEqual(evidence.convergenceGates.failedGates, [], caseId);
   assert.equal(evidence.recoveredEquilibrium.status, 'PASS', caseId);
-  assert.equal(evidence.frictionStiffness.appliedSiValue, 1e8, caseId);
+  assert.equal(evidence.frictionStiffness.appliedSiValue, 1.751270055770874e8, caseId);
   assert.ok(evidence.iterationCount >= 2, `${caseId} must iterate an active set`);
   // Friction is a per-restraint model input read from the ACCDB row, stored as
   // float32, so it is compared at storage precision and never rounded silently.
@@ -248,7 +252,7 @@ for (const caseId of ['L13', 'L7']) {
       `${caseId} ${support.restraintId} |N| must be the signed projection magnitude`,
     );
     assert.ok(support.restraintId.includes('REST_PTR'), caseId);
-    assert.equal(support.frictionStiffnessNPerM, 1e8, caseId);
+    assert.equal(support.frictionStiffnessNPerM, 1.751270055770874e8, caseId);
     assert.ok(
       Math.abs(support.capacityN - support.coefficientOfFriction * support.normalReactionMagnitudeN) <= 1e-9,
       `${caseId} ${support.nodeId} capacity must be mu times |N|`,
@@ -357,7 +361,7 @@ for (const caseId of ['L13', 'L7']) {
     semanticHash(friction.cases[caseId].rows),
     `${caseId} nominal sensitivity run must reproduce the governed result`,
   );
-  assert.equal(nominalRun.cases[caseId].frictionStiffnessSiValue, 1e8, caseId);
+  assert.equal(nominalRun.cases[caseId].frictionStiffnessSiValue, 1.751270055770874e8, caseId);
 }
 assert.throws(
   () => runCaesarAccdbFrictionStiffnessSensitivity(benchmarkPackage, ['L13'], [0.5, 2]),
@@ -495,15 +499,34 @@ assert.throws(
   }),
   /did not converge within 1 iterations/u,
 );
+// An impossible residual width must break the run whatever regime the restraints
+// end in, so gate integrity is asserted without depending on the fixture's state.
 assert.throws(
   () => solveCaesarAccdbFrictionBenchmark(benchmarkPackage, ['L13'], {
-    profile: { ...CAESAR_FRICTION_SOLVER_PROFILE, oppositionCosineLimit: -2 },
+    profile: { ...CAESAR_FRICTION_SOLVER_PROFILE, stickResidualLimitN: -1 },
   }),
   /did not converge/u,
 );
+// The direction gate can only be exercised where a restraint ends on the cap.
+const slidingRestraints = friction.mechanics.cases.L13.iterations.at(-1)
+  .supports.filter((support) => support.regime === 'SLIDING');
+if (slidingRestraints.length > 0) {
+  assert.throws(
+    () => solveCaesarAccdbFrictionBenchmark(benchmarkPackage, ['L13'], {
+      profile: { ...CAESAR_FRICTION_SOLVER_PROFILE, oppositionCosineLimit: -2 },
+    }),
+    /did not converge/u,
+  );
+} else {
+  const gate = friction.mechanics.cases.L13.convergenceGates.gates
+    .find((entry) => entry.gate === 'FRICTION_OPPOSES_SLIP');
+  assert.deepEqual(gate.evidence.failures, [], 'the direction gate must report no candidates');
+}
 assert.throws(
   () => solveCaesarAccdbFrictionBenchmark(benchmarkPackage, ['L13'], {
-    profile: { ...CAESAR_FRICTION_SOLVER_PROFILE, capViolationAbsoluteN: -1, capViolationRelative: -1 },
+    // A negative width makes the Coulomb inequality unsatisfiable for any force,
+    // so the control does not depend on which regime the fixture settles in.
+    profile: { ...CAESAR_FRICTION_SOLVER_PROFILE, capViolationAbsoluteN: -1e9, capViolationRelative: -1e9 },
   }),
   /did not converge/u,
 );

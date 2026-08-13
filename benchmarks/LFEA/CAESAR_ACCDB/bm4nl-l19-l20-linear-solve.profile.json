@@ -131,7 +131,7 @@
           },
           "FRICT_STIF": {
             "value": 1000000,
-            "unit": "DISPLAYED_CAESAR_UNITS"
+            "unit": "CAESAR_INTERNAL_ENGLISH_UNITS"
           },
           "MIN_WALL_MILL_TOLERANCE_PERCENT": 12.5,
           "AMBIENT_TEMPERATURE": {

@@ -4,7 +4,7 @@
     "fixtureModule": "src/core/fea-benchmarks/caesar-accdb-friction-fixture.js",
     "fixtureSourceSha256": "00000000000000000000000000000000000000000000000000000000000000ff",
     "frictionDeclaration": "SUPERSEDED_LOAD_CASE_MU_OVERRIDE",
-    "gitHeadAtCapture": "c7080c2dd641e0035a4e61ea928187c2c32c8be7",
+    "gitHeadAtCapture": "e977bd15a0fbe30492514d7ad29ae52c998c50c8",
     "precedenceAtCapture": [
       "LOAD_CASE_SETTING",
       "INDIVIDUAL_FILE_SETTING",
@@ -20,7 +20,7 @@
   ],
   "cases": {
     "L14": {
-      "executionSemanticHash": "fnv1a64:36a62618d5f44ab4",
+      "executionSemanticHash": "fnv1a64:b059962cf7b1b943",
       "recoveredEquilibriumStatus": "PASS",
       "rowCount": 144,
       "rows": [
@@ -1181,7 +1181,7 @@
       "stiffnessStateHash": "fnv1a64:b5e3c98b66c7fc05"
     },
     "L5": {
-      "executionSemanticHash": "fnv1a64:566ccfe1df2f6045",
+      "executionSemanticHash": "fnv1a64:c3466e513bbcfae6",
       "recoveredEquilibriumStatus": "PASS",
       "rowCount": 144,
       "rows": [
@@ -2342,7 +2342,7 @@
       "stiffnessStateHash": "fnv1a64:b5e3c98b66c7fc05"
     },
     "L6": {
-      "executionSemanticHash": "fnv1a64:94356a9deb5a677d",
+      "executionSemanticHash": "fnv1a64:e13b6558269f93f8",
       "recoveredEquilibriumStatus": "PASS",
       "rowCount": 144,
       "rows": [

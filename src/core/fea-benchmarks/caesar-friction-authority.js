@@ -27,12 +27,41 @@ export const COEFFICIENT_SETTING = 'COEFFICIENT_OF_FRICTION_MU';
 export const MULTIPLIER_SETTING = 'FRICTION_MULTIPLIER';
 export const FRICTION_STIFFNESS_SETTING = 'FRICT_STIF';
 
-/** Displayed-CAESAR-unit to SI conversion for translational stiffness. */
+/**
+ * Accepted bases for the governed friction stiffness.
+ *
+ * CAESAR's configuration keeps friction stiffness in its internal English units
+ * (lb/in, default 1.0E6). A profile may instead declare the displayed value
+ * directly; the two are distinguished explicitly so no run silently applies the
+ * wrong factor.
+ */
+export const FRICTION_STIFFNESS_UNITS = Object.freeze([
+  'CAESAR_INTERNAL_ENGLISH_UNITS',
+  'DISPLAYED_CAESAR_UNITS',
+]);
+
+/**
+ * Displayed translational-stiffness unit to SI, used only as corroboration.
+ *
+ * The governed friction stiffness is not stored in displayed units: see
+ * resolveCaesarFrictionStiffness.
+ */
 const TRANSLATIONAL_STIFFNESS_CONVERSION = Object.freeze({
   'N./cm.': Object.freeze({ factor: 100, siUnit: 'N/m', rule: 'N_PER_CM_TO_N_PER_M_TIMES_100' }),
   'N./mm.': Object.freeze({ factor: 1000, siUnit: 'N/m', rule: 'N_PER_MM_TO_N_PER_M_TIMES_1000' }),
   'N./m.': Object.freeze({ factor: 1, siUnit: 'N/m', rule: 'N_PER_M_IDENTITY' }),
 });
+
+/**
+ * Displayed unit of the ACCDB translational-stiffness conversion constant.
+ *
+ * CAESAR stores one constant per unit family in INPUT_UNITS, converting its
+ * internal English quantity into the displayed unit: CLENGTH 25.4 for in -> mm,
+ * CFORCE 4.44822 for lb -> N, CTRANS 1.751270055770874 for lb/in -> N/cm. That
+ * constant is model input and therefore the highest authority available for the
+ * conversion.
+ */
+const INTERNAL_TO_DISPLAYED_CONSTANT_COLUMN = 'CTRANS';
 
 const DERIVED_FORMULA = /^L(\d+)=L(\d+)([+-])L(\d+)$/u;
 
@@ -122,8 +151,10 @@ export function resolveCaesarFrictionAuthorityTable(input) {
 export function resolveCaesarFrictionStiffness(authority, inputUnitRows) {
   const declared = resolveCaesarConfigurationSetting(authority, FRICTION_STIFFNESS_SETTING, null);
   const value = declared.value;
-  if (!value || typeof value !== 'object' || value.unit !== 'DISPLAYED_CAESAR_UNITS') {
-    throw new TypeError(`${FRICTION_STIFFNESS_SETTING} must be declared in DISPLAYED_CAESAR_UNITS.`);
+  if (!value || typeof value !== 'object' || !FRICTION_STIFFNESS_UNITS.includes(value.unit)) {
+    throw new TypeError(
+      `${FRICTION_STIFFNESS_SETTING} must be declared with unit ${FRICTION_STIFFNESS_UNITS.join(' or ')}.`,
+    );
   }
   if (!(Number(value.value) > 0)) {
     throw new TypeError(`${FRICTION_STIFFNESS_SETTING} must be positive.`);
@@ -132,22 +163,52 @@ export function resolveCaesarFrictionStiffness(authority, inputUnitRows) {
     throw new TypeError('Friction stiffness conversion requires exactly one ACCDB INPUT_UNITS row.');
   }
   const displayedUnit = String(inputUnitRows[0].TRANS ?? '').trim();
-  const conversion = TRANSLATIONAL_STIFFNESS_CONVERSION[displayedUnit];
-  if (!conversion) {
+  const displayedConversion = TRANSLATIONAL_STIFFNESS_CONVERSION[displayedUnit];
+  if (!displayedConversion) {
     throw new TypeError(
       `ACCDB INPUT_UNITS translational stiffness unit ${displayedUnit || '<empty>'} has no governed friction-stiffness conversion.`,
     );
   }
+  if (value.unit === 'DISPLAYED_CAESAR_UNITS') {
+    return deepFreeze({
+      setting: FRICTION_STIFFNESS_SETTING,
+      level: declared.level,
+      source: declared.source,
+      basis: 'DISPLAYED_CAESAR_UNITS',
+      declaredValue: Number(value.value),
+      displayedValue: Number(value.value),
+      displayedUnit,
+      internalToDisplayedConstant: null,
+      conversionFactor: displayedConversion.factor,
+      conversionRule: displayedConversion.rule,
+      siValue: Number(value.value) * displayedConversion.factor,
+      siUnit: displayedConversion.siUnit,
+    });
+  }
+  // Internal English basis: CAESAR's configuration default for friction stiffness
+  // is 1.0E6 lb/in, and the ACCDB's own INPUT_UNITS constant converts that into the
+  // displayed unit. Both steps are read from the source rather than assumed.
+  const constant = Number(inputUnitRows[0][INTERNAL_TO_DISPLAYED_CONSTANT_COLUMN]);
+  if (!Number.isFinite(constant) || constant <= 0) {
+    throw new TypeError(
+      `ACCDB INPUT_UNITS.${INTERNAL_TO_DISPLAYED_CONSTANT_COLUMN} is required to convert an internal-English `
+      + `${FRICTION_STIFFNESS_SETTING}; declare the setting in displayed units instead of assuming a factor.`,
+    );
+  }
+  const displayedValue = Number(value.value) * constant;
   return deepFreeze({
     setting: FRICTION_STIFFNESS_SETTING,
     level: declared.level,
     source: declared.source,
-    displayedValue: Number(value.value),
+    basis: 'CAESAR_INTERNAL_ENGLISH_LB_PER_IN',
+    declaredValue: Number(value.value),
+    displayedValue,
     displayedUnit,
-    conversionFactor: conversion.factor,
-    conversionRule: conversion.rule,
-    siValue: Number(value.value) * conversion.factor,
-    siUnit: conversion.siUnit,
+    internalToDisplayedConstant: constant,
+    conversionFactor: constant * displayedConversion.factor,
+    conversionRule: `INTERNAL_LB_PER_IN_TIMES_ACCDB_${INTERNAL_TO_DISPLAYED_CONSTANT_COLUMN}_THEN_${displayedConversion.rule}`,
+    siValue: displayedValue * displayedConversion.factor,
+    siUnit: displayedConversion.siUnit,
   });
 }
 

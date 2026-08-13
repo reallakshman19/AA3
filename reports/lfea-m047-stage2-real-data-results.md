@@ -51,84 +51,69 @@ Gating on the path was rejecting valid elasto-plastic states.
 
 ## 3. Measured status, real L13 (`W+P1`, friction multiplier 1.0)
 
-Converged in 64 s. 23 friction restraints (26 declare `FRIC_COEF`; three have all
+Converged in 30 s. 23 friction restraints (26 declare `FRIC_COEF`; three have all
 tangential directions taken by a guide or line stop).
 
-| Metric vs CAESAR | Result |
-|---|---|
-| normal reactions within ±10 % | **22 / 23** (most within 0.2 %) |
-| worst normal error | +131 % at 21610 |
-| tangential force **magnitudes** within ±10 % | **15 / 23** |
-| tangential force **vectors** within ±10 % | **4 / 23** |
-| regime matches | 3 / 23 |
-| CAESAR's own capacity utilisation | **0.004 … 1.106** |
+| Metric vs CAESAR | After A4 (k_f = 1.0e8) | After B0 (k_f = 1.7513e8) |
+|---|---|---|
+| normal reactions within ±10 % | 22 / 23 | **23 / 23** |
+| worst normal error | +131 % (21610) | **+7.5 %** |
+| tangential magnitudes within ±10 % | 15 / 23 | 8 / 23 |
+| tangential vectors within ±10 % | 4 / 23 | 4 / 23 |
+| regime matches | 3 / 23 | 3 / 23 |
+| CAESAR's own capacity utilisation | 0.004 … 1.106 | 0.004 … 1.106 |
 
-Worst rows (full table in `lfea-m047-stage2-friction-iteration-L13.json`):
+### B0 — the friction stiffness was wrong by 1.75x, and the file said so
 
-```
-restraint                    regime ref/solved     |N| ref   |N| solved  err%   |Ft| ref  |Ft| solved  vec err%
-21610:REST_PTR16:TYPE3:UY    SLID/SLIDING            852.3      1970.5  131.2      267.0       591.1     319.9
-21930:REST_PTR21:TYPE3:UY    STUCK/STUCK            4524.1      4530.6    0.1        5.0         7.3     247.8
-22020:REST_PTR22:TYPE3:UY    SLID/LOCKED_AFTER_SLIP 1311.8      1303.5   -0.6      394.2        17.5     104.4
-22370:REST_PTR29:TYPE3:UY    SLID/SLIDING           1816.9      1817.1    0.0      554.0       545.1      82.9
-20520:REST_PTR9:TYPE3:UY     STUCK/SLIDING          2327.3      2330.4    0.1      671.3       699.1      57.4
-…
-20580:REST_PTR11:TYPE3:UY    SLID/SLIDING           2197.9      2202.5    0.2      656.9       660.7       0.6
-```
-
-### What the drag comparison shows
-
-The global displacement solution agrees closely; the friction split does not:
+`FRICT_STIF = 1.0E6` is in CAESAR's **internal English units** (lb/in - CAESAR's
+documented configuration default), not in displayed N/cm. The ACCDB carries its own
+conversion constant, `INPUT_UNITS.CTRANS = 1.751270055770874`, which is exactly
+1 lb/in in N/cm. The governed SI stiffness is therefore
 
 ```
-restraint                    drag ref (mm)     drag solved (mm)
-21740:REST_PTR18:TYPE3:UY    -0.131/0.418      -0.131/0.418      <- exact
-20520:REST_PTR9:TYPE3:UY     -0.491/-0.347     -0.501/-0.348
-20350:REST_PTR6:TYPE3:UY      0.478/0.227       0.478/0.068      <- X exact, Z short
-20440:REST_PTR8:TYPE3:UY     -0.335/-0.292     -0.335/-0.101     <- X exact, Z short
-22070:REST_PTR23:TYPE3:UY     0.170/-0.245      0.037/-0.246     <- Z exact, X short
+1.0E6 lb/in x 1.751270055770874 (N/cm per lb/in) x 100 (cm per m) = 1.751270055770874e8 N/m
 ```
 
-At most restraints one tangential component matches CAESAR almost exactly and the
-other is short, which is the signature of the friction force being partitioned
-differently between the two tangential axes — not of a wrong load, a wrong normal
-force or a wrong displacement field.
+not the 1.0e8 N/m this issue declared. CAESAR's own L13 output proves it: at three
+restraints whose utilisation is well below the cap - so they carry their force
+elastically through the friction spring alone - the implied stiffness `|Ft| / |u_t|`
+is
 
-## 4. Why the states disagree, and what that means for ±10 %
+| restraint | reference utilisation | implied `k_f` |
+|---|---|---|
+| 20550 | 0.212 | 1.7513e8 N/m |
+| 22310 | 0.473 | 1.7513e8 N/m |
+| 20250 | 0.588 | 1.7513e8 N/m |
 
-Two measured facts bound what the friction law alone can achieve:
+Applying it took normal reactions to 23/23 within ±10 % and eliminated the 131 %
+outlier at 21610 outright. It is a unit-authority correction derived from the
+source, not a tuned parameter.
 
-1. **CAESAR's friction is only partially mobilised at most supports.** Its own
-   L13 utilisation `|Ft| / µ|N|` spans 0.004 to 1.106, with a cluster at
-   0.91–0.96. My converged solve puts those same supports exactly on the cap,
-   which alone is a 4–9 % error before any direction difference.
-2. **The stick/slide decision is a micron-scale decision.** At `k_f = 1e8 N/m` a
-   7 µm elastic stretch is already 700 N, i.e. a full capacity at a typical
-   support. CAESAR prints displacement to 0.01 mm, so its own state at 20 of
-   these supports is marginal within its own print resolution.
+### What the loop exposed next: the reference's own resolution
 
-One row is outside that picture and is a genuine mechanics discrepancy to chase
-first: **21610**, where friction reduces CAESAR's normal reaction from 2431.7 N
-(L6, frictionless) to 852.3 N, while this solve holds 1970.5 N. That is a
-load-path redistribution, not a cap or direction question.
+At `k_f = 1.75e8 N/m`, half of CAESAR's 0.001 mm print resolution is **±88 N** of
+tangential force. At 20550 the reference drag prints as −0.001 mm, so its 176.3 N is
+known to roughly ±50 %. Comparing such a restraint at ±10 % compares against print
+noise. On this run the floor is 88 N and 22 of 23 restraints sit above it, so this
+does not excuse the gap - but it must be declared before percentages are published,
+exactly as the exact-zero absolute limits already are.
 
-## 5. Next variants, in priority order
+### The systematic term that remains
 
-1. **B1 — 21610 normal-force attribution.** Paired delta `L13−L6` at that
-   restraint and its neighbours, to find which member action carries the
-   redistribution CAESAR shows.
-2. **B2 — partial mobilisation.** Implement the documented spring form as a
-   second *declared* strategy with CAESAR's own stopping rule (stop when states
-   stop changing, report the spring force reached), and compare tables. If it
-   reproduces the 0.91–0.96 cluster, the difference is the stopping rule, not the
-   law, and that is then a governed choice with evidence behind it.
-3. **B3 — per-axis versus resultant capping.** Test the two-axis partition
-   hypothesis the drag table points at: cap each tangential axis independently
-   versus capping the resultant. Both are defensible readings of the CAESAR
-   documentation; the reference data can decide it.
-4. **B4 — L7, then L1.** Only after L13 is understood, since L7's friction
-   redistribution reaches 50 kN at guided nodes and would mask a smaller L13
-   defect.
+CAESAR's utilisation clusters at **0.91-0.96** at many restraints (20520 0.961,
+22260 0.933, 22070 0.936, 21800 0.940) while the return map places them exactly on
+the cap. That alone is a 4-9 % error before direction is considered, and it is the
+largest remaining systematic difference. The drag table points at the second term:
+one tangential component matches almost exactly while the other is short, which is
+a partition signature, not a magnitude error.
 
-Each variant is one run of the loop and one row in the table above. None of them
-changes a tolerance, and none is selected by counting benchmark failures.
+## 5. Next variants
+
+The full prioritised programme, including the BM4_NL friction-plus-lift-off entry
+conditions and staging, is in `agents/M047_STAGE2_ROADMAP.md`. In short: declare
+the reference resolution floor (R1), then decide partial mobilisation by
+implementing CAESAR's documented spring form as a second declared strategy (R2),
+then per-axis versus resultant capping (R3), then load-path stepping for L7 (R4).
+
+Each is one loop run and one row in the table above. None changes a tolerance, and
+none is selected by counting benchmark failures.

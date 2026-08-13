@@ -177,27 +177,76 @@ async function configureConnect(page, host, startNodeId, endNodeId) {
 }
 
 async function clickCanonicalNode(page, nodeId) {
-  const point = await page.evaluate((id) => {
-    const host = document.querySelector('[data-role="topology-edit-render-host"]');
-    const controller = host?.__topologyEditAuthoringController;
+  await page.evaluate(async (id) => {
+    const controller = document.querySelector('[data-role="topology-edit-render-host"]')
+      ?.__topologyEditAuthoringController;
     controller.focusCanonicalIds?.([id]);
-    const node = controller.session.currentTopology().nodes.find((row) => row.id === id);
-    const camera = controller.viewportBackend.activeCamera;
-    const canvas = controller.viewportBackend.renderer.domElement;
-    const vector = camera.position.clone()
-      .set(node.position.x, node.position.y, node.position.z)
-      .project(camera);
-    const rect = canvas.getBoundingClientRect();
-    return {
-      x: rect.left + ((vector.x + 1) / 2) * rect.width,
-      y: rect.top + ((1 - vector.y) / 2) * rect.height,
-    };
+    await new Promise((resolve) => requestAnimationFrame(() => requestAnimationFrame(resolve))));
   }, nodeId);
-  await page.mouse.click(point.x, point.y);
+  const pick = await resolveVisibleNodePickPoint(page, nodeId);
+  await page.mouse.click(pick.point.x, pick.point.y);
   await expect.poll(() => page.evaluate(() => (
     document.querySelector('[data-role="topology-edit-render-host"]')
       ?.__topologyEditAuthoringController?.selection?.nodeIds?.[0] ?? null
   ))).toBe(nodeId);
+}
+
+async function resolveVisibleNodePickPoint(page, nodeId) {
+  return page.evaluate((targetNodeId) => {
+    const controller = document.querySelector('[data-role="topology-edit-render-host"]')
+      ?.__topologyEditAuthoringController;
+    const backend = controller.viewportBackend;
+    const topology = controller.session.currentTopology();
+    const node = topology.nodes.find((row) => row.id === targetNodeId);
+    if (!node) throw new Error(`Connect qualification: missing node ${targetNodeId}.`);
+    backend.engineeringRoot.updateMatrixWorld(true);
+    backend.activeCamera.updateMatrixWorld(true);
+    backend.activeCamera.updateProjectionMatrix();
+    const vector = backend.activeCamera.position.clone().set(
+      node.position.x, node.position.y, node.position.z,
+    );
+    vector.applyMatrix4(backend.engineeringRoot.matrixWorld).project(backend.activeCamera);
+    const rect = backend.renderer.domElement.getBoundingClientRect();
+    const center = {
+      x: rect.left + ((vector.x + 1) / 2) * rect.width,
+      y: rect.top + ((1 - vector.y) / 2) * rect.height,
+    };
+    const radii = [0, 2, 4, 6, 8, 10, 12, 16, 20, 24];
+    const directions = [
+      [1, 0], [0.9239, 0.3827], [0.7071, 0.7071], [0.3827, 0.9239],
+      [0, 1], [-0.3827, 0.9239], [-0.7071, 0.7071], [-0.9239, 0.3827],
+      [-1, 0], [-0.9239, -0.3827], [-0.7071, -0.7071], [-0.3827, -0.9239],
+      [0, -1], [0.3827, -0.9239], [0.7071, -0.7071], [0.9239, -0.3827],
+    ];
+    const observed = new Set();
+    let sampledCount = 0;
+    for (const radius of radii) {
+      const offsets = radius === 0 ? [[0, 0]] : directions.map(([x, y]) => [x * radius, y * radius]);
+      for (const [dx, dy] of offsets) {
+        const x = center.x + dx;
+        const y = center.y + dy;
+        if (x < rect.left || x > rect.right || y < rect.top || y > rect.bottom) continue;
+        const production = backend.pickAt(x, y);
+        sampledCount += 1;
+        if (production?.objectId) observed.add(production.objectId);
+        if (production?.objectId === targetNodeId) {
+          return {
+            point: { x, y },
+            projectedCenter: center,
+            radiusPx: radius,
+            sampledCount,
+            observedObjectIds: [...observed].sort(),
+          };
+        }
+      }
+    }
+    throw new Error(`CONNECT_VIEWPORT_NODE_PICK_UNREACHABLE: ${JSON.stringify({
+      nodeId: targetNodeId,
+      center,
+      sampledCount,
+      observedObjectIds: [...observed].sort(),
+    })}`);
+  }, nodeId);
 }
 
 async function controllerEvidence(page) {

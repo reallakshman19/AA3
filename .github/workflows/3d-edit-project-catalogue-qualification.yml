@@ -1,0 +1,100 @@
+name: 3D Edit project catalogue exact-head qualification
+
+on:
+  push:
+    branches:
+      - qualification/3d-edit-project-catalogue-246058c2
+
+permissions:
+  contents: read
+
+jobs:
+  qualify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    env:
+      BASE_SHA: abfb9a07a336b41b9849b92b27753685ef071da0
+      CANDIDATE_SHA: 246058c2fe75b48b3543c4a593d3bfe40c256bbc
+      PLAYWRIGHT_BROWSERS_PATH: '0'
+      TOPOLOGY_EDIT_TARGET_HEAD_SHA: 246058c2fe75b48b3543c4a593d3bfe40c256bbc
+    steps:
+      - name: Checkout exact candidate
+        uses: actions/checkout@v4
+        with:
+          ref: 246058c2fe75b48b3543c4a593d3bfe40c256bbc
+          fetch-depth: 0
+
+      - name: Verify exact four-file ledger
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$(git rev-parse HEAD)" = "$CANDIDATE_SHA"
+          expected=$'src/workspace/topology-edit/professional/topology-edit-project-catalogue-custody.js\nsrc/workspace/viewport-productivity/topology-edit-professional-operation-runtime.js\nsrc/workspace/viewport-productivity/topology-edit-project-catalogue-runtime.js\ntests/topology-edit-project-catalogue-custody.test.mjs'
+          actual="$(git diff --name-only "$BASE_SHA" "$CANDIDATE_SHA")"
+          test "$actual" = "$expected"
+          git diff --check "$BASE_SHA" "$CANDIDATE_SHA"
+          for file in $actual; do node --check "$file"; done
+
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run catalogue custody and HUD authority contracts
+        run: >-
+          node --test
+          tests/topology-edit-project-catalogue-custody.test.mjs
+          tests/topology-edit-component-hud-context.test.mjs
+
+      - name: Install pinned Chromium
+        run: npx playwright install --with-deps chromium
+
+      - name: Run production catalogue consumers
+        env:
+          PLAYWRIGHT_JSON_OUTPUT_NAME: artifacts/project-catalogue-playwright.json
+        run: >-
+          node scripts/run-playwright.mjs
+          e2e/topology-edit-component-hud-catalog.spec.js
+          e2e/topology-edit-component-authoring.spec.js
+          --workers=1
+          --retries=0
+          --trace=on
+          --reporter=line,json
+
+      - name: Record exact-head identity
+        if: always()
+        shell: bash
+        run: |
+          mkdir -p artifacts
+          cat > artifacts/project-catalogue-run-identity.json <<EOF
+          {
+            "schema": "TopologyEditProjectCatalogueRunIdentity.v1",
+            "baseSha": "$BASE_SHA",
+            "candidateSha": "$CANDIDATE_SHA",
+            "qualificationCommitSha": "$GITHUB_SHA",
+            "runId": "$GITHUB_RUN_ID",
+            "attempt": $GITHUB_RUN_ATTEMPT,
+            "workers": 1,
+            "retries": 0,
+            "trace": "on",
+            "changedFileCount": 4,
+            "catalogueMutationDuringAcceptedCommand": "FORBIDDEN"
+          }
+          EOF
+
+      - name: Upload qualification evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: project-catalogue-${{ env.CANDIDATE_SHA }}-${{ github.run_attempt }}
+          path: |
+            artifacts
+            reports/qualification
+            test-results
+            playwright-report
+          if-no-files-found: warn
+          retention-days: 30

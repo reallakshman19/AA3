@@ -2,9 +2,9 @@ name: LAFEA B01 untouched baseline
 on:
   push:
     branches: [agent/issue-1100-b01-freeze]
-    paths: ['validation/lafea-benchmark-data/B01/**','scripts/lafea-b01-registered-route-check.mjs','scripts/lafea-b01-rigid-solver-diagnostic.mjs','scripts/lafea-b01-triangular-substitution-diagnostic.mjs','scripts/lafea-b01-rigid-nullspace-diagnostic.mjs','scripts/lafea-b01-stiffness-construction-diagnostic.mjs','scripts/lafea-b01-rigid-nullspace-projection-diagnostic.mjs','src/core/local-continuum/**','.github/workflows/lafea-b01-baseline.yml']
+    paths: ['validation/lafea-benchmark-data/B01/**','scripts/lafea-b01-registered-route-check.mjs','scripts/lafea-b01-rigid-solver-diagnostic.mjs','scripts/lafea-b01-triangular-substitution-diagnostic.mjs','scripts/lafea-b01-rigid-nullspace-diagnostic.mjs','scripts/lafea-b01-stiffness-construction-diagnostic.mjs','scripts/lafea-b01-rigid-nullspace-projection-diagnostic.mjs','scripts/lafea-b01-rigid-nullspace-iteration-diagnostic.mjs','src/core/local-continuum/**','.github/workflows/lafea-b01-baseline.yml']
   pull_request:
-    paths: ['validation/lafea-benchmark-data/B01/**','scripts/lafea-b01-registered-route-check.mjs','scripts/lafea-b01-rigid-solver-diagnostic.mjs','scripts/lafea-b01-triangular-substitution-diagnostic.mjs','scripts/lafea-b01-rigid-nullspace-diagnostic.mjs','scripts/lafea-b01-stiffness-construction-diagnostic.mjs','scripts/lafea-b01-rigid-nullspace-projection-diagnostic.mjs','src/core/local-continuum/**','.github/workflows/lafea-b01-baseline.yml']
+    paths: ['validation/lafea-benchmark-data/B01/**','scripts/lafea-b01-registered-route-check.mjs','scripts/lafea-b01-rigid-solver-diagnostic.mjs','scripts/lafea-b01-triangular-substitution-diagnostic.mjs','scripts/lafea-b01-rigid-nullspace-diagnostic.mjs','scripts/lafea-b01-stiffness-construction-diagnostic.mjs','scripts/lafea-b01-rigid-nullspace-projection-diagnostic.mjs','scripts/lafea-b01-rigid-nullspace-iteration-diagnostic.mjs','src/core/local-continuum/**','.github/workflows/lafea-b01-baseline.yml']
 permissions: {contents: read}
 jobs:
   untouched-baseline:
@@ -18,41 +18,24 @@ jobs:
         run: python3 validation/lafea-benchmark-data/B01/mesh-generator.py --check
       - name: Check B01 runner and diagnostic syntax
         run: |
-          node --check scripts/lafea-b01-registered-route-check.mjs
-          node --check scripts/lafea-b01-rigid-solver-diagnostic.mjs
-          node --check scripts/lafea-b01-triangular-substitution-diagnostic.mjs
-          node --check scripts/lafea-b01-rigid-nullspace-diagnostic.mjs
-          node --check scripts/lafea-b01-stiffness-construction-diagnostic.mjs
-          node --check scripts/lafea-b01-rigid-nullspace-projection-diagnostic.mjs
+          for f in scripts/lafea-b01-registered-route-check.mjs scripts/lafea-b01-rigid-solver-diagnostic.mjs scripts/lafea-b01-triangular-substitution-diagnostic.mjs scripts/lafea-b01-rigid-nullspace-diagnostic.mjs scripts/lafea-b01-stiffness-construction-diagnostic.mjs scripts/lafea-b01-rigid-nullspace-projection-diagnostic.mjs scripts/lafea-b01-rigid-nullspace-iteration-diagnostic.mjs; do node --check "$f"; done
       - name: Run prior continuum controls
-        run: |
-          node scripts/lafea.3-solver-check.mjs
-          node scripts/lafea.3-loads-imposed-displacement-check.mjs
-          node scripts/lafea.3-t6-patch-check.mjs
-          node scripts/lafea.3-q8-patch-check.mjs
+        run: node scripts/lafea.3-solver-check.mjs && node scripts/lafea.3-loads-imposed-displacement-check.mjs && node scripts/lafea.3-t6-patch-check.mjs && node scripts/lafea.3-q8-patch-check.mjs
       - name: Execute B01 base matrix
         id: baseline
         continue-on-error: true
         shell: bash
         run: |
-          rm -rf "$B01_REPORT_DIR"; mkdir -p "$B01_REPORT_DIR"; set +e
-          node scripts/lafea-b01-registered-route-check.mjs --report-dir "$B01_REPORT_DIR" > "$B01_REPORT_DIR/baseline-driver.stdout" 2> "$B01_REPORT_DIR/baseline-driver.stderr"
-          status=$?; set -e; printf '%s\n' "$status" > "$B01_REPORT_DIR/baseline-driver.exit-code"; exit "$status"
-      - name: Capture rigid solver diagnostics
+          rm -rf "$B01_REPORT_DIR"; mkdir -p "$B01_REPORT_DIR"; set +e; node scripts/lafea-b01-registered-route-check.mjs --report-dir "$B01_REPORT_DIR" > "$B01_REPORT_DIR/baseline-driver.stdout" 2> "$B01_REPORT_DIR/baseline-driver.stderr"; status=$?; set -e; printf '%s\n' "$status" > "$B01_REPORT_DIR/baseline-driver.exit-code"; exit "$status"
+      - name: Capture diagnostics
         if: always()
-        run: node scripts/lafea-b01-rigid-solver-diagnostic.mjs > "$B01_REPORT_DIR/B01-rigid-solver-diagnostic.json"
-      - name: Capture triangular substitution diagnostics
-        if: always()
-        run: node scripts/lafea-b01-triangular-substitution-diagnostic.mjs > "$B01_REPORT_DIR/B01-triangular-substitution-diagnostic.json"
-      - name: Capture exact rigid nullspace diagnostics
-        if: always()
-        run: node scripts/lafea-b01-rigid-nullspace-diagnostic.mjs > "$B01_REPORT_DIR/B01-rigid-nullspace-diagnostic.json"
-      - name: Capture stiffness construction diagnostics
-        if: always()
-        run: node scripts/lafea-b01-stiffness-construction-diagnostic.mjs > "$B01_REPORT_DIR/B01-stiffness-construction-diagnostic.json"
-      - name: Capture rigid nullspace projection diagnostics
-        if: always()
-        run: node scripts/lafea-b01-rigid-nullspace-projection-diagnostic.mjs > "$B01_REPORT_DIR/B01-rigid-nullspace-projection-diagnostic.json"
+        run: |
+          node scripts/lafea-b01-rigid-solver-diagnostic.mjs > "$B01_REPORT_DIR/B01-rigid-solver-diagnostic.json"
+          node scripts/lafea-b01-triangular-substitution-diagnostic.mjs > "$B01_REPORT_DIR/B01-triangular-substitution-diagnostic.json"
+          node scripts/lafea-b01-rigid-nullspace-diagnostic.mjs > "$B01_REPORT_DIR/B01-rigid-nullspace-diagnostic.json"
+          node scripts/lafea-b01-stiffness-construction-diagnostic.mjs > "$B01_REPORT_DIR/B01-stiffness-construction-diagnostic.json"
+          node scripts/lafea-b01-rigid-nullspace-projection-diagnostic.mjs > "$B01_REPORT_DIR/B01-rigid-nullspace-projection-diagnostic.json"
+          node scripts/lafea-b01-rigid-nullspace-iteration-diagnostic.mjs > "$B01_REPORT_DIR/B01-rigid-nullspace-iteration-diagnostic.json"
       - name: Upload B01 base receipts
         if: always()
         uses: actions/upload-artifact@v4

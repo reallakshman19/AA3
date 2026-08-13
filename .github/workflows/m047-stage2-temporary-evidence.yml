@@ -1,0 +1,117 @@
+name: M047 Stage 2 temporary evidence
+
+on:
+  push:
+    branches:
+      - claude/issue-1083-analysis-fix-ey4v91
+
+permissions:
+  contents: read
+
+env:
+  BM4L_ACCDB_SHA256: 64c05a50e9ed0452622ff5880335460486f24ac8e6adecc9a300b549c9aa82f8
+  BASELINE_SHA: 101b3973fb24bba71d2f82f6e9e2c58a0fe6b538
+  COMMON_SHA: f4d49f2a47d970ae0abf913b537193e324556177
+
+jobs:
+  evidence:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    steps:
+      - name: Checkout experiment branch
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: Install locked dependencies
+        run: npm ci
+
+      - name: Fetch and verify pinned BM4_L ACCDB
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p /tmp/m047-bm4l
+          curl -fL "https://raw.githubusercontent.com/reallaksh19/Common/${COMMON_SHA}/LFEA/BM4/BM4_L.zip" -o /tmp/BM4_L.zip
+          unzip -q /tmp/BM4_L.zip -d /tmp/m047-bm4l
+          ACCDB="$(find /tmp/m047-bm4l -type f -iname '*.accdb' -print -quit)"
+          test -n "$ACCDB"
+          ACTUAL_SHA="$(sha256sum "$ACCDB" | awk '{print $1}')"
+          test "$ACTUAL_SHA" = "$BM4L_ACCDB_SHA256"
+          echo "M047_ACCDB=$ACCDB" >> "$GITHUB_ENV"
+          echo "Pinned ACCDB verified: $ACTUAL_SHA"
+
+      - name: Prepare exact pre-batch control checkout
+        shell: bash
+        run: |
+          set -euo pipefail
+          git worktree add --detach /tmp/m047-baseline "$BASELINE_SHA"
+          ln -s "$GITHUB_WORKSPACE/node_modules" /tmp/m047-baseline/node_modules
+
+      - name: Frozen non-friction control regression
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p reports/m047-stage2-actions
+          node scripts/lfea-m047-stage2-control-regression.mjs \
+            --accdb "$M047_ACCDB" \
+            --baseline-root /tmp/m047-baseline \
+            --out reports/m047-stage2-actions/control-regression.json
+          node -e "const r=require('./reports/m047-stage2-actions/control-regression.json'); if(r.status!=='PASS') process.exit(1); console.log('controls',r.status)"
+
+      - name: H1 full nonlinear hydrotest-insulation discriminator
+        shell: bash
+        run: |
+          set -euo pipefail
+          node scripts/lfea-m047-stage2-l1-hydrotest-insulation-experiment.mjs \
+            --accdb "$M047_ACCDB" \
+            --out reports/m047-stage2-actions/l1-h1-hydrotest-insulation.json \
+            > reports/m047-stage2-actions/l1-h1-console.json
+
+      - name: H2 full nonlinear rigid hydrotest-density routing discriminator
+        shell: bash
+        run: |
+          set -euo pipefail
+          node scripts/lfea-m047-stage2-l1-hydrotest-fluid-routing-experiment.mjs \
+            --accdb "$M047_ACCDB" \
+            --out reports/m047-stage2-actions/l1-h2-hydrotest-fluid-routing.json \
+            > reports/m047-stage2-actions/l1-h2-console.json
+
+      - name: Summarize evidence
+        if: always()
+        shell: bash
+        run: |
+          set -euo pipefail
+          node --input-type=module <<'NODE' > reports/m047-stage2-actions/summary.txt
+          import { existsSync, readFileSync } from 'node:fs';
+          for (const [label, path] of [
+            ['controls', 'reports/m047-stage2-actions/control-regression.json'],
+            ['H1', 'reports/m047-stage2-actions/l1-h1-hydrotest-insulation.json'],
+            ['H2', 'reports/m047-stage2-actions/l1-h2-hydrotest-fluid-routing.json'],
+          ]) {
+            if (!existsSync(path)) { console.log(label, 'NO_ARTIFACT'); continue; }
+            const r = JSON.parse(readFileSync(path, 'utf8'));
+            if (label === 'controls') { console.log(label, r.status); continue; }
+            console.log(label, JSON.stringify({
+              baselineConverged: r.baseline?.converged,
+              variantConverged: r.variant?.converged,
+              baselineSummary: r.baseline?.summary,
+              variantSummary: r.variant?.summary,
+              comparison: r.comparison ?? r.delta,
+            }));
+          }
+          NODE
+          cat reports/m047-stage2-actions/summary.txt
+
+      - name: Upload evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: m047-stage2-h1-h2-evidence
+          path: reports/m047-stage2-actions/
+          if-no-files-found: warn

@@ -59,7 +59,7 @@ function groupComponentFamilyActions(hud, activeTool) {
   if (summary) summary.textContent = activeLabel
     ? `Place component · ${activeLabel}`
     : 'Place component';
-  details.open = Boolean(activeLabel);
+  details.open = false;
   for (const action of COMPONENT_ACTIONS) {
     const button = tools.querySelector(`[data-action="${action}"]`);
     if (button && button.parentElement !== details) details.append(button);

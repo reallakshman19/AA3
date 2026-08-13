@@ -1,13 +1,20 @@
 import { deepFreeze } from '../../../core/shared-piping-model/index.js';
+import {
+  assertTopologyEditTransientNodeDraft,
+} from '../draft/topology-edit-transient-node-draft.js';
 
-export function topologyEditTableVirtualGeometryFields(row, canonicalTopology) {
+export function topologyEditTableVirtualGeometryFields(
+  row,
+  canonicalTopology,
+  transientDrafts = {},
+) {
   if (row?.identity?.canonicalKind !== 'EDGE') return deepFreeze({});
   const fromBinding = endpointBinding(row, 'FROM');
   const toBinding = endpointBinding(row, 'TO');
   const from = nodeById(canonicalTopology, fromBinding?.nodeId);
   const to = nodeById(canonicalTopology, toBinding?.nodeId);
-  const a = finitePoint(from?.position) ? from.position : null;
-  const b = finitePoint(to?.position) ? to.position : null;
+  const a = displayPoint(from, canonicalTopology, transientDrafts);
+  const b = displayPoint(to, canonicalTopology, transientDrafts);
   return deepFreeze({
     fromNodeId: fromBinding?.nodeId ?? null,
     fromPortKey: fromBinding?.portKey ?? null,
@@ -35,6 +42,20 @@ const VIRTUAL_KEYS = new Set([
   'deltaX', 'deltaY', 'deltaZ',
 ]);
 
+function displayPoint(node, topology, drafts) {
+  if (!finitePoint(node?.position)) return null;
+  const candidate = drafts?.[node.id];
+  if (!candidate) return node.position;
+  try {
+    const draft = assertTopologyEditTransientNodeDraft(candidate);
+    return draft.nodeId === node.id
+      && draft.basisHash === topology?.canonicalTopologyHash
+      ? draft.targetPosition
+      : node.position;
+  } catch {
+    return node.position;
+  }
+}
 function endpointBinding(row, endpoint) {
   const matches = (row?.identity?.portBindings ?? []).filter((entry) => (
     entry?.endpoint === endpoint && entry?.nodeId

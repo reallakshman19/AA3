@@ -10,9 +10,10 @@ import { q8ElementEvidence } from './q8-element.js';
 
 /**
  * Dispatches by `element.elementType`. T3 uses the original single-Gauss
- * -point (constant-strain) evidence path. T6/Q8 use the Gauss-integrated
- * formulations in `t6-element.js`/`q8-element.js`, normalized here to the
- * same physical-node-coordinate shape those formulations expect.
+ * -point (constant-strain) evidence path, byte-for-byte unchanged. T6/Q8
+ * use the Gauss-integrated formulations in `t6-element.js`/`q8-element.js`,
+ * normalized here to the same physical-node-coordinate shape those
+ * formulations expect.
  */
 export function buildElementEvidence(model) {
   const nodes = new Map(model.nodes.map((row) => [row.nodeId, row]));
@@ -46,33 +47,15 @@ function dispatchElementEvidence(element, nodeMap, material, model) {
 
 export function elementEvidence(element, nodeMap, material, model) {
   const coordinates = element.nodeIds.map((id) => nodeMap.get(id));
-  // The T3 formulation area is evaluated from local edge vectors rather than
-  // an absolute-coordinate shoelace sum. The two expressions are identical
-  // analytically, but the local form avoids translation-dependent cancellation
-  // on refined meshes and therefore gives B/K the same physical geometry with
-  // substantially better rigid-nullspace numerical custody.
-  const formulationArea = stableTriangleArea(coordinates);
-  const formulationElement = {
-    ...element,
-    canonicalArea: canonicalNumber(formulationArea, 'T3 formulation area'),
-  };
-  const b = bMatrix(coordinates, formulationElement.canonicalArea);
+  const b = bMatrix(coordinates, element.canonicalArea);
   const constitutive = constitutiveEvidence(material, model.formulation, model.qualificationProfile);
-  const stiffness = stiffnessMatrix(b, constitutive.matrix, formulationElement);
-  const stiffnessQualification = qualifyStiffness(stiffness, formulationElement, model.qualificationProfile);
+  const stiffness = stiffnessMatrix(b, constitutive.matrix, element);
+  const stiffnessQualification = qualifyStiffness(stiffness, element, model.qualificationProfile);
   const rigidBodyQualification = qualifyRigidBody(b, coordinates, model.qualificationProfile);
   const affinePatchQualification = qualifyAffinePatch(b, constitutive.matrix, coordinates, model.qualificationProfile);
-  return evidenceRecord(formulationElement, coordinates, material, b, constitutive, stiffness, {
+  return evidenceRecord(element, coordinates, material, b, constitutive, stiffness, {
     stiffnessQualification, rigidBodyQualification, affinePatchQualification,
   });
-}
-
-function stableTriangleArea(nodes) {
-  const [a, b, c] = nodes;
-  return Math.abs(
-    (b.x - a.x) * (c.y - a.y)
-      - (c.x - a.x) * (b.y - a.y),
-  ) / 2;
 }
 
 export function bMatrix(nodes, area) {

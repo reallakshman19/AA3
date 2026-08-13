@@ -61,7 +61,7 @@ test('production 3D Edit completes contextual Continue route through governed au
   expect(completed.authoredBendArcCount).toBeGreaterThanOrEqual(1);
   expect(completed.transactionHash).not.toBe('');
   expect(completed.commandTypes.slice(-5)).toEqual([
-    'CREATE_NODE', 'CREATE_NODE', 'INSERT_PIPE_SEGMENT', 'INSERT_PIPE_SEGMENT', 'ADD_BEND_DEFINITION',
+    'CREATE_NODE', 'CREATE_NODE', 'ADD_STRAIGHT_ELEMENT', 'ADD_STRAIGHT_ELEMENT', 'ADD_BEND_DEFINITION',
   ]);
 
   await testInfo.attach('topology-edit-contextual-continue-route', {

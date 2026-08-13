@@ -1,0 +1,83 @@
+name: M047 D1 deleted-spring harness diagnosis
+
+on:
+  push:
+    branches:
+      - agent/m047-stage2-measure-deleted-spring-20260813
+    paths:
+      - '.github/workflows/m047-d1-deleted-spring-diagnose.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  diagnose:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    env:
+      SOURCE_HEAD: '649fb1fb14ecacf7e9b0228290b5d0a090097169'
+      BM4L_COMMON_COMMIT: '45d51ea18624f5775805f399110c1738301c0d90'
+      BM4L_ZIP_SHA256: '978617cba50fa0b1a16c2fa71dc1e0d38e55ac834b191f887d100c6951abd8b9'
+      BM4L_ACCDB_SHA256: '64c05a50e9ed0452622ff5880335460486f24ac8e6adecc9a300b549c9aa82f8'
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ env.SOURCE_HEAD }}
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+      - shell: bash
+        run: npm ci
+      - name: Patch ledger-only snapshot record
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p artifacts/diagnose artifacts/bm4l-stage2/source reports
+          python - <<'PY'
+          from pathlib import Path
+          path=Path('scripts/lfea-m047-stage2-r2-deleted-spring-experiment.mjs')
+          text=path.read_text()
+          old="""      restraintId: support.restraintId,\n      nodeId: support.nodeId,\n      state,\n      nextState,"""
+          new="""      restraintId: support.restraintId,\n      nodeId: support.nodeId,\n      support,\n      state,\n      nextState,"""
+          if text.count(old)!=1: raise SystemExit(f'ledger patch target count {text.count(old)}')
+          path.write_text(text.replace(old,new))
+          PY
+          node --check scripts/lfea-m047-stage2-r2-deleted-spring-experiment.mjs
+      - name: Fetch pinned BM4_L
+        shell: bash
+        run: |
+          set -euo pipefail
+          curl --fail --location --silent --show-error \
+            "https://raw.githubusercontent.com/reallaksh19/Common/${BM4L_COMMON_COMMIT}/LFEA/BM4/BM4_L.zip" \
+            -o artifacts/diagnose/BM4_L.zip
+          echo "${BM4L_ZIP_SHA256}  artifacts/diagnose/BM4_L.zip" | sha256sum -c -
+          unzip -q artifacts/diagnose/BM4_L.zip -d artifacts/bm4l-stage2/source
+          echo "${BM4L_ACCDB_SHA256}  artifacts/bm4l-stage2/source/BM4_L.ACCDB" | sha256sum -c -
+      - name: Execute once and capture all failure evidence
+        shell: bash
+        run: |
+          set +e
+          node scripts/lfea-m047-stage2-r2-deleted-spring-experiment.mjs \
+            --accdb artifacts/bm4l-stage2/source/BM4_L.ACCDB \
+            --case L13 --max-iterations 400 \
+            --out reports/lfea-m047-stage2-d1-deleted-spring-diagnose.json \
+            > artifacts/diagnose/stdout.txt 2> artifacts/diagnose/stderr.txt
+          code=$?
+          echo "$code" > artifacts/diagnose/exit-code.txt
+          echo '--- stderr ---'
+          cat artifacts/diagnose/stderr.txt || true
+          echo '--- stdout ---'
+          cat artifacts/diagnose/stdout.txt || true
+          exit 0
+      - name: Upload diagnosis
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: m047-d1-deleted-spring-diagnosis
+          if-no-files-found: error
+          retention-days: 7
+          path: |
+            artifacts/diagnose/**
+            reports/lfea-m047-stage2-d1-deleted-spring-diagnose.json

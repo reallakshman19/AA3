@@ -12,6 +12,7 @@ export class TopologyEditReachableTypedViewportBackend extends TopologyEditTyped
   constructor(options = {}) {
     super(options);
     this.endpointAffordances = Object.freeze([]);
+    this.endpointPickObjects = [];
     this.hasDraftEndpointProjection = false;
     this.endpointRuntime = new TopologyEditEndpointAffordanceRuntime({
       onActivate: (affordance, event) => this.activateEndpointAffordance(affordance, event),
@@ -30,6 +31,7 @@ export class TopologyEditReachableTypedViewportBackend extends TopologyEditTyped
       projection,
       { modelRole: model?.draft ? 'draft' : 'source' },
     );
+    this.endpointPickObjects = [];
     super.renderSession(model);
     this.endpointRuntime.render(this.endpointAffordances);
     for (const host of endpointEvidenceHosts(this.hostElement)) {
@@ -80,20 +82,30 @@ export class TopologyEditReachableTypedViewportBackend extends TopologyEditTyped
         renderAuthority: 'CANONICAL_NODE_VISIBLE_AFFORDANCE',
       };
       group.add(mesh);
+      this.endpointPickObjects.push(mesh);
     }
   }
 
+  pickAt(clientX, clientY) {
+    const context = this.pickContext(clientX, clientY);
+    if (!context) return null;
+    return this.pickVisibleEndpoint(context.pointer)
+      ?? super.pickAt(clientX, clientY);
+  }
+
   pickVisibleEndpoint(pointer) {
-    if (!this.pickRaycaster || !this.activeCamera || !this.endpointAffordances?.length) {
+    if (!this.pickRaycaster || !this.activeCamera || !this.endpointPickObjects.length) {
       return null;
     }
     this.pickRaycaster.params.Line.threshold = this.navigationConfiguration.pickingRadius;
     this.pickRaycaster.setFromCamera(pointer, this.activeCamera);
-    const hit = this.pickRaycaster.intersectObjects(this.pickableGroups(), true).find((candidate) => (
-      candidate.object?.userData?.pickTarget?.objectId
+    const hit = this.pickRaycaster.intersectObjects(this.endpointPickObjects, false).find((candidate) => (
+      candidate.object?.userData?.endpointAffordance === true
+      && candidate.object?.userData?.pickTarget?.objectId
+      && candidate.object.visible !== false
       && this.isSectionHitAllowed(candidate.object, candidate.point)
     ));
-    return hit?.object?.userData?.endpointAffordance === true
+    return hit
       ? this.pickReceipt(hit.object.userData.pickTarget, hit.point)
       : null;
   }
@@ -111,6 +123,7 @@ export class TopologyEditReachableTypedViewportBackend extends TopologyEditTyped
   destroy() {
     this.endpointRuntime.destroy();
     this.endpointAffordances = Object.freeze([]);
+    this.endpointPickObjects = [];
     this.hasDraftEndpointProjection = false;
     super.destroy();
   }

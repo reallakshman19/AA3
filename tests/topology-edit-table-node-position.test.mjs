@@ -109,6 +109,7 @@ test('NODE_POSITION capability is exact and NODE_ONLY compiles to one governed M
     position: { x: 100, y: 50, z: 25 },
   });
   assert.deepEqual(plan.operationPlan.commandIntents, [{
+    sequence: 0,
     commandType: 'MOVE_NODE',
     payload: { nodeId: 'node:n1', position: { x: 100, y: 50, z: 25 } },
   }]);

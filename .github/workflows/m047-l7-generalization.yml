@@ -1,0 +1,78 @@
+name: M047 L7 D1 H1 generalization
+on:
+  push:
+    branches: [m047-l7-measure]
+    paths: ['.github/workflows/m047-l7-generalization.yml']
+permissions:
+  contents: read
+jobs:
+  measure:
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+    env:
+      SOURCE_BASE: '70fb5e08b4c390ebc432cea06ab2c0be14496a6a'
+      COMMON_COMMIT: '45d51ea18624f5775805f399110c1738301c0d90'
+      ZIP_SHA: '978617cba50fa0b1a16c2fa71dc1e0d38e55ac834b191f887d100c6951abd8b9'
+      ACCDB_SHA: '64c05a50e9ed0452622ff5880335460486f24ac8e6adecc9a300b549c9aa82f8'
+      SOLVER: 'src/core/fea-benchmarks/caesar-accdb-friction-solve.js'
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - name: Prove temporary branch isolation
+        shell: bash
+        run: |
+          set -euo pipefail
+          git merge-base --is-ancestor "$SOURCE_BASE" HEAD
+          git diff --name-only "$SOURCE_BASE"..HEAD | sort > /tmp/changed.txt
+          printf '%s\n' '.github/workflows/m047-l7-generalization.yml' 'scripts/m047-l7-apply-variant.mjs' | sort > /tmp/expected.txt
+          diff -u /tmp/expected.txt /tmp/changed.txt
+          sha256sum "$SOLVER" > /tmp/solver.sha256
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+      - run: npm ci
+      - name: Fetch pinned BM4_L
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p artifacts/source reports
+          curl -fLsS "https://raw.githubusercontent.com/reallaksh19/Common/${COMMON_COMMIT}/LFEA/BM4/BM4_L.zip" -o artifacts/BM4_L.zip
+          echo "${ZIP_SHA}  artifacts/BM4_L.zip" | sha256sum -c -
+          unzip -q artifacts/BM4_L.zip -d artifacts/source
+          echo "${ACCDB_SHA}  artifacts/source/BM4_L.ACCDB" | sha256sum -c -
+      - name: D1 L7 repeat 1 and 2
+        shell: bash
+        run: |
+          set -euo pipefail
+          node scripts/m047-l7-apply-variant.mjs D1
+          node --check "$SOLVER"
+          node scripts/lfea-m047-stage2-friction-tuning-loop.mjs --accdb artifacts/source/BM4_L.ACCDB --case L7 --variant D1-L7-GENERALIZATION --out reports/l7-d1-r1.json
+          node scripts/lfea-m047-stage2-friction-tuning-loop.mjs --accdb artifacts/source/BM4_L.ACCDB --case L7 --variant D1-L7-GENERALIZATION --out reports/l7-d1-r2.json
+          git checkout -- "$SOLVER"
+          sha256sum -c /tmp/solver.sha256
+      - name: H1 L7 repeat 1 and 2
+        shell: bash
+        run: |
+          set -euo pipefail
+          node scripts/m047-l7-apply-variant.mjs H1
+          node --check "$SOLVER"
+          node scripts/lfea-m047-stage2-friction-tuning-loop.mjs --accdb artifacts/source/BM4_L.ACCDB --case L7 --variant H1-L7-GENERALIZATION --out reports/l7-h1-r1.json
+          node scripts/lfea-m047-stage2-friction-tuning-loop.mjs --accdb artifacts/source/BM4_L.ACCDB --case L7 --variant H1-L7-GENERALIZATION --out reports/l7-h1-r2.json
+          git checkout -- "$SOLVER"
+          sha256sum -c /tmp/solver.sha256
+      - name: Prove solver restored
+        shell: bash
+        run: |
+          git diff --exit-code -- "$SOLVER"
+          cp /tmp/solver.sha256 reports/production-solver.sha256
+          printf '%s\n' "$SOURCE_BASE" > reports/source-base.txt
+          printf '%s\n' "$GITHUB_RUN_ID" > reports/run-id.txt
+      - uses: actions/upload-artifact@v4
+        with:
+          name: m047-l7-d1-h1-generalization
+          retention-days: 7
+          if-no-files-found: error
+          path: reports/**

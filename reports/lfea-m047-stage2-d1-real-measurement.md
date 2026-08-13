@@ -25,6 +25,8 @@ Control regression status: **PASS** on L2, L3, L4, L5, L6 and L14.
 - stiffness-state hashes match;
 - recovered physical equilibrium PASS.
 
+The compact control artifact is committed as `reports/lfea-m047-stage2-control-regression-D1.json`.
+
 ## D1 measured accuracy
 
 | metric | B0 | D1 |
@@ -81,14 +83,30 @@ Result: **NONCONVERGED after 400 iterations**.
 
 Decision: reject the no-relock S1 mechanic. The active set being stable is not sufficient; the force/slip fixed point does not converge. The next state-path experiment must use a different mechanism rather than weakening convergence gates.
 
-## Artifact hashes
+The sequential experiment harness is committed as `scripts/lfea-m047-stage2-friction-d1-s1-no-relock.mjs`.
 
-- `b673be01a3a245654d580a5202dcf98667121de66566f8a70b1ff20dedc9ba6d` — `reports/m047-stage2-next-batch/control-regression.json`
-- `44d58511281d4f17b636839f9983beccc1028a51df5b3b0947ea1e4acf216de8` — `reports/m047-stage2-next-batch/friction-iteration-L13-D1.json`
-- `07a6b93b740be03b3d761e7e89badb7936a1d586a4e07b6e4df1d56060406409` — `reports/m047-stage2-next-batch/accuracy-rca-L13-D1.json`
-- `2def10cc922fc9f2330c27e878f21c7140e74f90d0a269678a46912a0a773a3b` — `reports/m047-stage2-next-batch/capacity-basis-L13-vs-L6.json`
-- `d51c3f37d9c735ae69bfcc81ed5b3bf2ae6c3928d329bd595917876ce45f2005` — `reports/m047-stage2-next-batch/evidence-validation-L13-D1.json`
-- `44d136a12d09d94ecd6016f401679e853f74f037e6360e37e038f63af16a0571` — `reports/m047-stage2-next-batch/resolution-floor-L13-D1-provisional.json`
-- `a7dc005c9854f14ee70654ffbc3c9666f34690ac946449cc8b9abf66eb5a2791` — `reports/m047-stage2-next-batch/friction-iteration-L13-D1-S1.json`
+## Committed real-run evidence
 
-The accuracy RCA and provisional R1 report are reproducible from the committed D1 iteration using the checked-in diagnostic scripts.
+`reports/lfea-m047-stage2-real-d1-evidence.json` is the committed compact real-run artifact. It contains:
+
+- pinned source and exact current/baseline heads;
+- frozen control PASS evidence;
+- D1 solver/profile and transformed-source fingerprints;
+- **all 23** restraint normal and tangential reference/solved comparisons;
+- normalized constitutive states and R1 provisional-floor flags;
+- C1 summary;
+- evidence-validator PASS;
+- sequential D1→S1 failure ledger and experiment lineage;
+- SHA-256 identities of the full locally generated JSON artifacts.
+
+Full local artifact byte hashes are retained in that compact evidence:
+
+- `b673be01a3a245654d580a5202dcf98667121de66566f8a70b1ff20dedc9ba6d` — control regression
+- `44d58511281d4f17b636839f9983beccc1028a51df5b3b0947ea1e4acf216de8` — full D1 tuning iteration
+- `07a6b93b740be03b3d761e7e89badb7936a1d586a4e07b6e4df1d56060406409` — D1 accuracy RCA
+- `2def10cc922fc9f2330c27e878f21c7140e74f90d0a269678a46912a0a773a3b` — C1 capacity-basis diagnostic
+- `d51c3f37d9c735ae69bfcc81ed5b3bf2ae6c3928d329bd595917876ce45f2005` — evidence validation
+- `44d136a12d09d94ecd6016f401679e853f74f037e6360e37e038f63af16a0571` — provisional R1 resolution-floor report
+- `a7dc005c9854f14ee70654ffbc3c9666f34690ac946449cc8b9abf66eb5a2791` — sequential D1→S1 iteration
+
+The checked-in RCA, C1, R1 and validation scripts can regenerate the corresponding diagnostics from a full D1 tuning artifact. The compact committed evidence deliberately preserves the measured restraint table and full-artifact identities without pretending the larger local JSON files themselves were committed.

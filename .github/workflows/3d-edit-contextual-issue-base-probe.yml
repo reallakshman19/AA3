@@ -1,0 +1,39 @@
+name: 3D Edit contextual issue exact-base probe
+
+on:
+  push:
+    branches:
+      - qualification/3d-edit-contextual-issue-base-probe-949ea1f7
+
+permissions:
+  contents: read
+
+jobs:
+  probe:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    env:
+      BASE_SHA: 949ea1f7790b8148977765fd7e5976e955970bcc
+    steps:
+      - name: Checkout exact base
+        uses: actions/checkout@v4
+        with:
+          ref: 949ea1f7790b8148977765fd7e5976e955970bcc
+          fetch-depth: 0
+      - name: Verify exact base
+        run: test "$(git rev-parse HEAD)" = "$BASE_SHA"
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+      - name: Install dependencies
+        run: npm ci
+      - name: Run same legacy issue/autofix authority suite
+        run: >-
+          node --test
+          tests/topology-edit-wave3a-checker.test.mjs
+          tests/topology-edit-wave3b-autofix.test.mjs
+          tests/topology-edit-wave3c-autofix-ui.test.mjs
+          tests/topology-edit-c3d-wave4-issue-review.test.mjs
+          tests/topology-edit-20-element-demo-repairs.test.mjs

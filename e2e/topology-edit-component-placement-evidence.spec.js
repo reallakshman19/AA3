@@ -3,6 +3,7 @@ import { expect, test } from '@playwright/test';
 
 const REPORT = 'reports/qualification/component-placement-contextual-evidence.json';
 const FLANGE_RECORD_ID = 'FLANGE-DN100-600-RF-B';
+const PIPE_TYPES = new Set(['PIPE', 'STRAIGHT', 'STRAIGHT_ELEMENT']);
 
 test('component placement emits exact WebGL, catalogue, candidate, transaction, and replay evidence', async ({ page }, testInfo) => {
   test.setTimeout(240_000);
@@ -13,18 +14,13 @@ test('component placement emits exact WebGL, catalogue, candidate, transaction, 
   const before = await topologyLedger(page);
   const target = await eligibleHostEdge(page);
   await fitAllStable(page);
-  const pick = await selectEdgeFromCanvas(page, host, target.id);
+  const productionPick = await selectEdgeFromCanvas(page, host, target.id);
 
   await activateFlange(page);
   await page.locator('[data-authoring-field="catalogueRecordId"]').selectOption(FLANGE_RECORD_ID);
   await waitReady(page, host);
   const firstPreview = await engineeringEvidence(page);
-  expect(firstPreview.topology.canonicalHash).toBe(before.canonicalHash);
-  expect(firstPreview.topology.journalHash).toBe(before.journalHash);
-  expect(firstPreview.plan.planHash).toBeTruthy();
-  expect(firstPreview.candidate.candidateHash).toBeTruthy();
-  expect(firstPreview.validation.validationHash).toBeTruthy();
-  expect(firstPreview.catalogue.selectedRecord.recordId).toBe(FLANGE_RECORD_ID);
+  assertPreviewAuthority(firstPreview, before);
 
   await page.getByRole('button', { name: 'Cancel', exact: true }).click();
   await expect.poll(() => topologyLedger(page).then((row) => row.canonicalHash)).toBe(before.canonicalHash);
@@ -36,17 +32,18 @@ test('component placement emits exact WebGL, catalogue, candidate, transaction, 
   await page.locator('[data-authoring-field="catalogueRecordId"]').selectOption(FLANGE_RECORD_ID);
   await waitReady(page, host);
   const acceptedPreview = await engineeringEvidence(page);
-  expect(acceptedPreview.topology.canonicalHash).toBe(before.canonicalHash);
-  expect(acceptedPreview.topology.journalHash).toBe(before.journalHash);
+  assertPreviewAuthority(acceptedPreview, before);
 
   await page.getByRole('button', { name: 'Apply flange', exact: true }).click();
   await expect.poll(() => host.getAttribute('data-topology-edit-authoring-transaction-hash')).not.toBe('');
   const applied = await engineeringEvidence(page);
-  expect(applied.transaction.transactionHash).toBeTruthy();
+  expect(applied.transaction?.transactionHash).toBeTruthy();
+  expect(applied.transaction?.priorCanonicalHash).toBe(before.canonicalHash);
+  expect(applied.transaction?.priorJournalHash).toBe(before.journalHash);
+  expect(applied.transaction?.resultingCanonicalHash).toBe(applied.topology.canonicalHash);
+  expect(applied.transaction?.resultingJournalHash).toBe(applied.topology.journalHash);
   expect(applied.topology.canonicalHash).not.toBe(before.canonicalHash);
   expect(applied.topology.journalHash).not.toBe(before.journalHash);
-  expect(applied.transaction.priorCanonicalHash).toBe(before.canonicalHash);
-  expect(applied.transaction.resultingCanonicalHash).toBe(applied.topology.canonicalHash);
 
   await page.locator('[data-action="undo"]').click();
   await expect.poll(() => topologyLedger(page).then((row) => row.canonicalHash)).toBe(before.canonicalHash);
@@ -66,7 +63,7 @@ test('component placement emits exact WebGL, catalogue, candidate, transaction, 
     family: 'FLANGE',
     selectedRecordId: FLANGE_RECORD_ID,
     target,
-    productionPick: pick,
+    productionPick,
     before,
     firstPreview,
     cancelled,
@@ -86,6 +83,16 @@ test('component placement emits exact WebGL, catalogue, candidate, transaction, 
     contentType: 'image/png',
   });
 });
+
+function assertPreviewAuthority(preview, before) {
+  expect(preview.topology.canonicalHash).toBe(before.canonicalHash);
+  expect(preview.topology.journalHash).toBe(before.journalHash);
+  expect(preview.plan?.planHash).toBeTruthy();
+  expect(preview.candidate?.candidateHash).toBeTruthy();
+  expect(preview.validation?.validationHash).toBeTruthy();
+  expect(preview.validation?.status).toBe('READY_TO_APPLY');
+  expect(preview.catalogue.selectedRecord?.recordId).toBe(FLANGE_RECORD_ID);
+}
 
 async function openController(page) {
   await page.goto('/', { waitUntil: 'domcontentloaded' });
@@ -134,13 +141,13 @@ async function engineeringEvidence(page) {
     const controller = globalThis.__COMPONENT_PLACEMENT_EVIDENCE_CONTROLLER__;
     const runtime = controller.authoringRuntime;
     const professional = controller.professionalRuntime;
-    const custody = professional.catalogueCustody;
-    const selectedRecord = professional.catalogue.records.find((row) => row.recordId === recordId);
     const topology = controller.session.currentTopology();
     const journal = controller.session.journal;
+    const custody = professional.catalogueCustody;
+    const record = professional.catalogue.records.find((row) => row.recordId === recordId);
     const transaction = runtime.transaction;
     return {
-      topology: ledgerMaterial(topology, journal),
+      topology: ledger(topology, journal),
       catalogue: {
         custodyHash: custody?.custodyHash ?? null,
         dataset: custody?.dataset ?? null,
@@ -148,45 +155,56 @@ async function engineeringEvidence(page) {
         catalogueId: professional.catalogue.catalogueId,
         catalogueVersion: professional.catalogue.catalogueVersion,
         catalogueHash: professional.catalogue.catalogueHash,
-        catalogueSourceHash: professional.catalogue.authority.sourceHash,
-        selectedRecord: selectedRecord ? {
-          recordId: selectedRecord.recordId,
-          recordHash: selectedRecord.recordHash,
-          sourceReference: selectedRecord.sourceReference,
-          componentType: selectedRecord.componentType,
-          nominalSizeMm: selectedRecord.nominalSizeMm,
-          outsideDiameterMm: selectedRecord.outsideDiameterMm,
+        sourceHash: professional.catalogue.authority.sourceHash,
+        selectedRecord: record ? {
+          recordId: record.recordId,
+          recordHash: record.recordHash,
+          sourceReference: record.sourceReference,
+          componentType: record.componentType,
+          nominalSizeMm: record.nominalSizeMm,
+          outsideDiameterMm: record.outsideDiameterMm,
         } : null,
       },
       plan: runtime.plan ? {
         planHash: runtime.plan.planHash,
-        basisHash: runtime.plan.basisHash ?? runtime.plan.basis?.priorCanonicalHash ?? null,
-        operationType: runtime.plan.operationType ?? runtime.plan.tool ?? runtime.state.tool,
+        basisHash: runtime.plan.basisHash,
+        operationType: runtime.plan.operationType ?? runtime.state.tool,
       } : null,
       candidate: runtime.candidate ? {
         candidateHash: runtime.candidate.candidateHash,
+        planHash: runtime.candidate.planHash,
+        priorJournalHash: runtime.candidate.priorJournalHash,
         priorCanonicalHash: runtime.candidate.priorCanonicalHash,
+        resultingJournalHash: runtime.candidate.resultingJournalHash,
         resultingCanonicalHash: runtime.candidate.resultingCanonicalHash,
         commandCount: runtime.candidate.commandCount,
+        commandIds: runtime.candidate.commandIds,
         changedCanonicalIds: runtime.candidate.changedCanonicalIds,
       } : null,
       validation: runtime.validation ? {
         validationHash: runtime.validation.validationHash,
+        candidateHash: runtime.validation.candidateHash,
+        planHash: runtime.validation.planHash,
+        validatedTopologyHash: runtime.validation.validatedTopologyHash,
         status: runtime.validation.status,
         blockingIssueCount: runtime.validation.blockingIssueCount,
       } : null,
       transaction: transaction ? {
         transactionHash: transaction.transactionHash,
-        priorCanonicalHash: transaction.priorCanonicalHash,
-        resultingCanonicalHash: transaction.resultingCanonicalHash,
+        candidateHash: transaction.candidateHash,
+        planHash: transaction.planHash,
+        validationHash: transaction.validationHash,
         priorJournalHash: transaction.priorJournalHash,
+        priorCanonicalHash: transaction.priorCanonicalHash,
         resultingJournalHash: transaction.resultingJournalHash,
+        resultingCanonicalHash: transaction.resultingCanonicalHash,
         commandCount: transaction.commandCount,
-        commandIds: transaction.commandIds ?? transaction.appliedCommandIds ?? [],
+        commandIds: transaction.commandIds,
+        certificationHashes: transaction.certificationHashes,
       } : null,
     };
 
-    function ledgerMaterial(currentTopology, currentJournal) {
+    function ledger(currentTopology, currentJournal) {
       return {
         sourceHash: currentTopology.sourceHash,
         canonicalHash: currentTopology.canonicalTopologyHash,
@@ -222,7 +240,7 @@ async function topologyLedger(page) {
 }
 
 async function eligibleHostEdge(page) {
-  return page.evaluate(() => {
+  return page.evaluate((pipeTypes) => {
     const topology = globalThis.__COMPONENT_PLACEMENT_EVIDENCE_CONTROLLER__.session.currentTopology();
     const nodes = new Map(topology.nodes.map((node) => [node.id, node]));
     const dependent = new Set();
@@ -233,17 +251,18 @@ async function eligibleHostEdge(page) {
       }
     }
     const candidates = topology.edges.flatMap((edge) => {
+      if (!pipeTypes.includes(String(edge.entityType ?? '').toUpperCase())) return [];
       if (dependent.has(edge.id)) return [];
       if (Number(edge.diameterMm) !== 100 || Number(edge.outsideDiameterMm) !== 114.3) return [];
       const from = nodes.get(edge.fromNodeId)?.position;
       const to = nodes.get(edge.toNodeId)?.position;
       if (!from || !to) return [];
       const lengthMm = Math.hypot(to.x - from.x, to.y - from.y, to.z - from.z);
-      return lengthMm > 122 ? [{ id: edge.id, lengthMm }] : [];
+      return lengthMm > 122 ? [{ id: edge.id, lengthMm, componentKey: edge.componentKey }] : [];
     }).sort((left, right) => left.id.localeCompare(right.id));
-    if (!candidates.length) throw new Error('No dependency-free DN100 host edge accepts a 120 mm flange.');
+    if (!candidates.length) throw new Error('No dependency-free straight DN100 pipe accepts a 120 mm flange.');
     return candidates[0];
-  });
+  }, [...PIPE_TYPES]);
 }
 
 async function fitAllStable(page) {

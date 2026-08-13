@@ -34,26 +34,37 @@ const EDGE_GEOMETRY = [
   column('deltaZ', 'ΔZ', 'length', { readOnly: true }),
 ];
 
+const EDGE_SPECIFICATION = [
+  column('outsideDiameterMm', 'OD', 'length', { readOnly: true }),
+  column('wallThicknessMm', 'Wall', 'length', { readOnly: true }),
+  column('insideDiameterMm', 'ID', 'length', { readOnly: true }),
+  column('catalogueRecordId', 'Catalogue Record', 'identity', { readOnly: true }),
+];
+
 const BY_TYPE = Object.freeze({
   PIPE: [
     ...EDGE_GEOMETRY,
+    ...EDGE_SPECIFICATION,
     column('lengthMm', 'Length', 'length', { editor: 'PIPE_LENGTH' }),
     column('slopePercent', 'Slope %', 'number', { readOnly: true }),
   ],
   ELBOW: [
     ...EDGE_GEOMETRY,
+    ...EDGE_SPECIFICATION,
     column('angleDeg', 'Angle', 'angle', { readOnly: true }),
     column('radiusMm', 'Radius', 'length', { readOnly: true }),
     column('turnIntent', 'Turn Intent', 'enum', { readOnly: true }),
   ],
   FLANGE: [
     ...EDGE_GEOMETRY,
+    ...EDGE_SPECIFICATION,
     column('flangeType', 'Flange Type', 'enum', { readOnly: true }),
     column('flangeFacing', 'Facing', 'enum', { readOnly: true }),
     column('rating', 'Rating', 'text', { readOnly: true }),
   ],
   VALVE: [
     ...EDGE_GEOMETRY,
+    ...EDGE_SPECIFICATION,
     column('valveType', 'Valve Type', 'enum', { editor: 'VALVE_REPLACE' }),
     column('endConnectionFrom', 'From End', 'enum'),
     column('endConnectionTo', 'To End', 'enum'),
@@ -71,18 +82,23 @@ const BY_TYPE = Object.freeze({
   ],
   REDUCER: [
     ...EDGE_GEOMETRY,
+    ...EDGE_SPECIFICATION,
     column('reducerType', 'Reducer Type', 'enum', { readOnly: true }),
     column('reducerOrientation', 'Orientation', 'enum', { readOnly: true }),
   ],
   SUPPORT: [
     column('hostEntityId', 'Host', 'identity', { readOnly: true }),
+    column('hostEdgeId', 'Host Edge', 'identity', { readOnly: true }),
     column('stationMm', 'Station', 'length', { editor: 'SUPPORT_PLACEMENT' }),
+    column('supportX', 'X', 'length', { readOnly: true }),
+    column('supportY', 'Y', 'length', { readOnly: true }),
+    column('supportZ', 'Z', 'length', { readOnly: true }),
     column('supportType', 'Support Type', 'enum', { editor: 'SUPPORT_RESTRAINT' }),
     column('direction', 'Direction', 'enum', { editor: 'SUPPORT_RESTRAINT' }),
     column('gapMm', 'Gap', 'length', { editor: 'SUPPORT_RESTRAINT' }),
     column('travelMm', 'Travel', 'length', { editor: 'SUPPORT_RESTRAINT' }),
   ],
-  COMPONENT: [...EDGE_GEOMETRY],
+  COMPONENT: [...EDGE_GEOMETRY, ...EDGE_SPECIFICATION],
   JUNCTION: [],
 });
 

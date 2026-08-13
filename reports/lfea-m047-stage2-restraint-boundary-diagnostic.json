@@ -1,0 +1,39 @@
+{
+  "R5": {
+    "declaredBendStationNodes": ["20119","20329","20339","20499","20689","20698","20699","21429","21589","21599","21719","22249","22349"],
+    "declaredFrictionRowCount": 26,
+    "declaredPhysicalTeeNodes": ["20160","20295"],
+    "effectiveFrictionRestraintCount": 23,
+    "frictionAdjacentToBendSourceElement": [
+      {"bendAdjacentPointers":[11],"frictionDofs":["UX","UZ"],"nodeId":"22220","normalDof":"UY","onDeclaredBendStation":false,"onPhysicalTeeNode":false,"restraintId":"22220:REST_PTR26:TYPE3:UY"},
+      {"bendAdjacentPointers":[12],"frictionDofs":["UX"],"nodeId":"22310","normalDof":"UY","onDeclaredBendStation":false,"onPhysicalTeeNode":false,"restraintId":"22310:REST_PTR28:TYPE3:UY"},
+      {"bendAdjacentPointers":[11],"frictionDofs":["UX","UZ"],"nodeId":"22260","normalDof":"UY","onDeclaredBendStation":false,"onPhysicalTeeNode":false,"restraintId":"22260:REST_PTR27:TYPE3:UY"},
+      {"bendAdjacentPointers":[6],"frictionDofs":["UZ"],"nodeId":"20710","normalDof":"UY","onDeclaredBendStation":false,"onPhysicalTeeNode":false,"restraintId":"20710:REST_PTR13:TYPE3:UY"},
+      {"bendAdjacentPointers":[7],"frictionDofs":["UX","UZ"],"nodeId":"21470","normalDof":"UY","onDeclaredBendStation":false,"onPhysicalTeeNode":false,"restraintId":"21470:REST_PTR14:TYPE3:UY"},
+      {"bendAdjacentPointers":[1],"frictionDofs":["UX","UZ"],"nodeId":"20090","normalDof":"UY","onDeclaredBendStation":false,"onPhysicalTeeNode":false,"restraintId":"20090:REST_PTR2:TYPE3:UY"},
+      {"bendAdjacentPointers":[9],"frictionDofs":["UX","UZ"],"nodeId":"21610","normalDof":"UY","onDeclaredBendStation":false,"onPhysicalTeeNode":false,"restraintId":"21610:REST_PTR16:TYPE3:UY"},
+      {"bendAdjacentPointers":[3],"frictionDofs":["UX","UZ"],"nodeId":"20350","normalDof":"UY","onDeclaredBendStation":false,"onPhysicalTeeNode":false,"restraintId":"20350:REST_PTR6:TYPE3:UY"}
+    ],
+    "frictionOnDeclaredBendStation": [],
+    "frictionOnPhysicalTeeNode": [],
+    "interpretation": "A source support adjacent to a bend-bearing element is recorded but is not itself a generated discretised-arc station. Only coincidence with a declared bend station or physical tee node would require a local tangent-plane friction authority check."
+  },
+  "R6": {
+    "allDeclaredFrictionRowsBlank": true,
+    "allRestraintRowsBlank": true,
+    "blankRule": "NEGATIVE_NUMERIC_VALUE_IS_CAESAR_BLANK_SENTINEL",
+    "declaredFrictionRowCount": 26,
+    "effectiveFrictionRestraintCount": 23,
+    "fields": ["STIFFNESS","GAP","CNODE"],
+    "requiredFutureBehavior": "Any nonblank STIFFNESS, GAP or CNODE must fail the friction qualification boundary until that mechanic has an explicit governed implementation.",
+    "restraintRowCount": 46,
+    "uniqueValues": {"CNODE":[-1.01010000705719],"GAP":[-1.01010000705719],"STIFFNESS":[-1.01010000705719]},
+    "unsupportedRows": []
+  },
+  "diagnosticSemanticHash": "fnv1a64:167233bf9c1a30b1",
+  "iterationSemanticHash": "fnv1a64:c9512908c2409607",
+  "rule": "DATA_ONLY_R5_GEOMETRY_INVENTORY_AND_R6_BLANK_RESTRAINT_BOUNDARY_ASSERTION",
+  "schema": "m047-bm4l-stage2-restraint-boundary-diagnostic/v1",
+  "sourceAccdbSha256": "64c05a50e9ed0452622ff5880335460486f24ac8e6adecc9a300b549c9aa82f8",
+  "status": "PASS"
+}

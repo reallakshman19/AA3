@@ -1,0 +1,61 @@
+name: M047 L7 RCA2
+on:
+  push:
+    branches: [m047-l7-rca2]
+    paths: ['.github/workflows/m047-l7-rca2.yml']
+permissions:
+  contents: read
+jobs:
+  measure:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    env:
+      SOURCE: '2db6241420b4a2030f76adacadb03af8dab5cec7'
+      COMMON: '45d51ea18624f5775805f399110c1738301c0d90'
+      ZIP_SHA: '978617cba50fa0b1a16c2fa71dc1e0d38e55ac834b191f887d100c6951abd8b9'
+      ACCDB_SHA: '64c05a50e9ed0452622ff5880335460486f24ac8e6adecc9a300b549c9aa82f8'
+      SOLVER: 'src/core/fea-benchmarks/caesar-accdb-friction-solve.js'
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - name: Prove isolation and production solver custody
+        shell: bash
+        run: |
+          set -euo pipefail
+          git merge-base --is-ancestor "$SOURCE" HEAD
+          test "$(git diff --name-only "$SOURCE"...HEAD | grep -Fx "$SOLVER" || true)" = ""
+          sha256sum "$SOLVER" | tee solver-before.sha256
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+      - run: npm ci
+      - name: Fetch pinned BM4_L
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p artifacts/source reports
+          curl -fLsS "https://raw.githubusercontent.com/reallaksh19/Common/${COMMON}/LFEA/BM4/BM4_L.zip" -o artifacts/BM4_L.zip
+          echo "${ZIP_SHA}  artifacts/BM4_L.zip" | sha256sum -c -
+          unzip -q artifacts/BM4_L.zip -d artifacts/source
+          echo "${ACCDB_SHA}  artifacts/source/BM4_L.ACCDB" | sha256sum -c -
+      - name: Validate diagnostic
+        run: node --check scripts/lfea-m047-stage2-l7-b0-d1-branch-history.mjs
+      - name: Execute B0 to D1 L7 branch-history RCA
+        shell: bash
+        run: |
+          set -euo pipefail
+          node scripts/lfea-m047-stage2-l7-b0-d1-branch-history.mjs artifacts/source/BM4_L.ACCDB reports/l7-b0-d1-branch-history.json > reports/l7-b0-d1-branch-history.stdout.json
+          sha256sum "$SOLVER" | tee solver-after.sha256
+          cmp solver-before.sha256 solver-after.sha256
+      - uses: actions/upload-artifact@v4
+        with:
+          name: m047-l7-b0-d1-branch-history
+          retention-days: 7
+          path: |
+            reports/l7-b0-d1-branch-history.json
+            reports/l7-b0-d1-branch-history.stdout.json
+            solver-before.sha256
+            solver-after.sha256

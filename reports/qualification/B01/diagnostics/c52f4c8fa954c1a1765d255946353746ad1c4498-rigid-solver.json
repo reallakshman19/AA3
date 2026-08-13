@@ -1,0 +1,27 @@
+{
+  "schema":"lafea-b01-rigid-solver-diagnostic-receipt/v1",
+  "issue":1100,
+  "exactHead":"c52f4c8fa954c1a1765d255946353746ad1c4498",
+  "workflowRunId":31671979983,
+  "artifact":{"artifactId":9170039085,"sha256":"sha256:a29c25e639287e1aa3d9a8d878d73097071d3c41a7177921a120b71e08df1870"},
+  "frozenBenchmarkChanged":false,
+  "productionMechanicsChangedByDiagnostic":false,
+  "priorControls":"PASS",
+  "baseMatrix":{"passCount":46,"failCount":8,"status":"FAIL"},
+  "question":"Is the remaining rigid residual introduced mainly by the reduced dense solve or by reconstruction of the full K*u-f residual?",
+  "answer":"The reduced dense Cholesky system is itself above the frozen 1e-10 B01 gate for all eight remaining failures. Full-system reconstruction is of the same order and differs by only about 0.69x to 1.38x. Therefore full residual/reaction reconstruction is not the primary owner; the next repair boundary is dense Cholesky factorization/triangular-solve numerical accuracy.",
+  "rows":[
+    {"family":"T3","meshId":"T3-M0","reducedFinalResidualInfinity":0,"fullFreeResidualInfinity":9.458744898438454e-11,"normalizedFullResidual":9.458744898438454e-11,"status":"PASS"},
+    {"family":"T3","meshId":"T3-M1","refinementSteps":2,"reducedInitialResidualInfinity":6.83940015733242e-10,"reducedFinalResidualInfinity":1.1641532182693481e-10,"fullFreeResidualInfinity":1.609237187949475e-10,"reducedVsFullRatio":1.38232421875,"status":"FAIL"},
+    {"family":"T3","meshId":"T3-M2","refinementSteps":2,"reducedInitialResidualInfinity":1.1791598808486015e-9,"reducedFinalResidualInfinity":3.4924596548080444e-10,"fullFreeResidualInfinity":3.710738383233547e-10,"reducedVsFullRatio":1.0625,"status":"FAIL"},
+    {"family":"T6","meshId":"T6-M0","refinementSteps":1,"reducedInitialResidualInfinity":4.656612873077393e-10,"reducedFinalResidualInfinity":3.4924596548080444e-10,"fullFreeResidualInfinity":3.6817800719290975e-10,"reducedVsFullRatio":1.0542083333333334,"status":"FAIL"},
+    {"family":"T6","meshId":"T6-M1","refinementSteps":3,"reducedInitialResidualInfinity":1.7025740817189217e-9,"reducedFinalResidualInfinity":4.07053157687187e-10,"fullFreeResidualInfinity":4.117900971323252e-10,"reducedVsFullRatio":1.0116371519436251,"status":"FAIL"},
+    {"family":"T6","meshId":"T6-M2","refinementSteps":1,"reducedInitialResidualInfinity":5.950354607193732e-9,"reducedFinalResidualInfinity":4.437641837284902e-10,"fullFreeResidualInfinity":4.437641837284902e-10,"reducedVsFullRatio":1,"status":"FAIL"},
+    {"family":"Q8","meshId":"Q8-M0","refinementSteps":0,"reducedInitialResidualInfinity":4.656612873077393e-10,"reducedFinalResidualInfinity":4.656612873077393e-10,"fullFreeResidualInfinity":3.2014213502407074e-10,"reducedVsFullRatio":0.6875,"status":"FAIL"},
+    {"family":"Q8","meshId":"Q8-M1","refinementSteps":3,"reducedInitialResidualInfinity":2.0954757928848267e-9,"reducedFinalResidualInfinity":2.9103830456733704e-10,"fullFreeResidualInfinity":2.9695002012886107e-10,"reducedVsFullRatio":1.0203125,"status":"FAIL"},
+    {"family":"Q8","meshId":"Q8-M2","refinementSteps":2,"reducedInitialResidualInfinity":3.026798367500305e-9,"reducedFinalResidualInfinity":5.820766091346741e-10,"fullFreeResidualInfinity":6.484697223640978e-10,"reducedVsFullRatio":1.1140625,"status":"FAIL"}
+  ],
+  "nextBoundary":"DENSE_CHOLESKY_FACTORIZATION_NUMERICAL_ACCURACY",
+  "prohibitedNextActions":["loosen B01 tolerance","change rigid affine field","change mesh","change boundary conditions","replace residual metric"],
+  "releaseAuthorityGrantedByProgram":false
+}

@@ -184,7 +184,16 @@ async function clickCanonicalNode(page, nodeId) {
     await new Promise((resolve) => requestAnimationFrame(() => requestAnimationFrame(resolve)));
   }, nodeId);
   const pick = await resolveVisibleNodePickPoint(page, nodeId);
-  await page.mouse.click(pick.point.x, pick.point.y);
+  const canvas = page.locator('[data-role="topology-edit-render-host"] canvas').first();
+  await expect(canvas).toBeVisible();
+  const box = await canvas.boundingBox();
+  if (!box) throw new Error('Connect qualification: production canvas has no bounding box.');
+  await canvas.click({
+    position: {
+      x: pick.point.x - box.x,
+      y: pick.point.y - box.y,
+    },
+  });
   await expect.poll(() => page.evaluate(() => (
     document.querySelector('[data-role="topology-edit-render-host"]')
       ?.__topologyEditAuthoringController?.selection?.nodeIds?.[0] ?? null

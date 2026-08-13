@@ -60,11 +60,12 @@ export function mountLfeaPreflightPhase1ReviewSurface(applicationRoot, options =
     const source = options.getSource();
     const viewportModel = options.getViewportModel();
     const activeSession = ensureSession(source);
-    if (!source || source.blocked || activeSession === null || !viewportModel?.selection) {
-      renderEmpty(elements, source?.blocked ? source.reason : null);
+    const selection = viewportModel?.selection ?? null;
+    if (!source || source.blocked || activeSession === null || !reviewableSelection(selection)) {
+      renderEmpty(elements, source?.blocked ? source.reason : selectionBlockReason(selection));
       return;
     }
-    const { targetId, fieldOrdinal, fieldId } = viewportModel.selection;
+    const { targetId, fieldOrdinal, fieldId } = selection;
     const cell = getLfeaPreflightPhase1ReviewCell(source, targetId, fieldOrdinal);
     if (cell === null) {
       renderEmpty(elements, 'Selected engineering cell is no longer available.');
@@ -94,7 +95,12 @@ export function mountLfeaPreflightPhase1ReviewSurface(applicationRoot, options =
     const source = options.getSource();
     const viewportModel = options.getViewportModel();
     const activeSession = ensureSession(source);
-    if (!source || source.blocked || activeSession === null || !viewportModel?.selection) return;
+    const selection = viewportModel?.selection ?? null;
+    if (!source || source.blocked || activeSession === null || !reviewableSelection(selection)) {
+      elements.feedback.textContent = selectionBlockReason(selection);
+      elements.feedback.dataset.status = 'BLOCK';
+      return;
+    }
     const actor = elements.actor.value.trim();
     const reason = elements.reason.value.trim();
     if (!actor || !reason) {
@@ -102,7 +108,6 @@ export function mountLfeaPreflightPhase1ReviewSurface(applicationRoot, options =
       elements.feedback.dataset.status = 'BLOCK';
       return;
     }
-    const selection = viewportModel.selection;
     const review = getLfeaPreflightPhase1CellReview(
       activeSession,
       selection.targetId,
@@ -155,11 +160,16 @@ export function mountLfeaPreflightPhase1ReviewSurface(applicationRoot, options =
     const source = options.getSource();
     const viewportModel = options.getViewportModel();
     const activeSession = ensureSession(source);
-    if (!activeSession || !viewportModel?.selection) return;
+    const selection = viewportModel?.selection ?? null;
+    if (!activeSession || !reviewableSelection(selection)) {
+      elements.feedback.textContent = selectionBlockReason(selection);
+      elements.feedback.dataset.status = 'BLOCK';
+      return;
+    }
     const review = getLfeaPreflightPhase1CellReview(
       activeSession,
-      viewportModel.selection.targetId,
-      viewportModel.selection.fieldOrdinal,
+      selection.targetId,
+      selection.fieldOrdinal,
     );
     const candidate = [...review.events].reverse().find((event) => event.action !== LFEA_PREFLIGHT_REVIEW_ACTION.UNDO
       && !review.reviewState.compensatedEventIds.includes(event.eventId));
@@ -184,11 +194,12 @@ export function mountLfeaPreflightPhase1ReviewSurface(applicationRoot, options =
       const source = options.getSource();
       const viewportModel = options.getViewportModel();
       const activeSession = ensureSession(source);
-      if (!activeSession || !viewportModel?.selection) return null;
+      const selection = viewportModel?.selection ?? null;
+      if (!activeSession || !reviewableSelection(selection)) return null;
       return getLfeaPreflightPhase1CellReview(
         activeSession,
-        viewportModel.selection.targetId,
-        viewportModel.selection.fieldOrdinal,
+        selection.targetId,
+        selection.fieldOrdinal,
       );
     },
     destroy() {
@@ -280,6 +291,21 @@ function setActionAvailability(elements, state) {
   elements.overrideValue.disabled = !state.selected;
   elements.defer.disabled = !state.selected;
   elements.undo.disabled = !state.undoEligible;
+}
+
+function reviewableSelection(selection) {
+  return Boolean(selection && selection.inFilteredSet !== false && selection.inPreset !== false);
+}
+
+function selectionBlockReason(selection) {
+  if (!selection) return 'Select an engineering cell in the virtualized review grid.';
+  if (selection.inFilteredSet === false) {
+    return 'Selected engineering cell is outside the current indexed filter or exception queue. Review actions are disabled.';
+  }
+  if (selection.inPreset === false) {
+    return 'Selected engineering field is outside the current column preset. Review actions are disabled.';
+  }
+  return 'Selected engineering cell is unavailable for review.';
 }
 
 function addTrace(root, label, value) {

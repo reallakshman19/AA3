@@ -42,6 +42,25 @@ jobs:
           node-version: '22'
           cache: npm
 
+      - name: Apply execution-only syntax correction to continuation harness
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p artifacts/measurement
+          python - <<'PY'
+          from pathlib import Path
+          path = Path('scripts/lfea-m047-stage2-d1-load-path-experiment.mjs')
+          text = path.read_text()
+          old = """      const error = new Error(\n        `${caseRecord.caseId} project load-path substep lambda=${physicalLoadFraction} `\n        + `did not converge within ${profile.maximumIterations} iterations.`,\n      );"""
+          new = """      const error = new Error(\n        caseRecord.caseId + ' project load-path substep lambda=' + physicalLoadFraction + ' '\n        + 'did not converge within ' + profile.maximumIterations + ' iterations.',\n      );"""
+          if text.count(old) != 1:
+              raise SystemExit(f'expected exactly one generated-source syntax target, found {text.count(old)}')
+          path.write_text(text.replace(old, new))
+          PY
+          git diff -- scripts/lfea-m047-stage2-d1-load-path-experiment.mjs \
+            > artifacts/measurement/execution-only-syntax-fix.diff
+          node --check scripts/lfea-m047-stage2-d1-load-path-experiment.mjs
+
       - name: Install dependencies
         shell: bash
         run: npm ci
@@ -117,7 +136,8 @@ jobs:
           const read = (p) => fs.existsSync(p) ? JSON.parse(fs.readFileSync(p, 'utf8')) : null;
           const experiment = read('reports/lfea-m047-stage2-d1-load-path-L13.json');
           const finalization = read('reports/lfea-m047-stage2-d1-load-path-finalization.json');
-          const exitCode = Number(fs.readFileSync('artifacts/measurement/experiment-exit-code.txt', 'utf8').trim());
+          const exitPath = 'artifacts/measurement/experiment-exit-code.txt';
+          const exitCode = fs.existsSync(exitPath) ? Number(fs.readFileSync(exitPath, 'utf8').trim()) : null;
           const receipt = {
             schema: 'm047-d1-load-path-actions-receipt/v1',
             sourceHead: process.env.SOURCE_HEAD,
@@ -147,6 +167,10 @@ jobs:
         if: always()
         shell: bash
         run: |
+          if [ ! -f artifacts/measurement/experiment-exit-code.txt ]; then
+            echo 'Experiment did not run because a fail-closed pre-measurement step failed.'
+            exit 1
+          fi
           code="$(cat artifacts/measurement/experiment-exit-code.txt)"
           if [ "$code" != "0" ]; then
             echo "Measurement experiment failed with exit code $code; uploaded stderr/receipt are the governed evidence."

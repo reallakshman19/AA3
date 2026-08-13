@@ -1,0 +1,230 @@
+name: M047 publish verified D1 deleted-spring evidence
+
+on:
+  push:
+    branches:
+      - agent/m047-stage2-measure-deleted-spring-20260813
+    paths:
+      - '.github/workflows/m047-d1-deleted-spring-publish.yml'
+
+permissions:
+  contents: write
+  actions: read
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    env:
+      TARGET_BRANCH: 'agent/m047-stage2-r1-r3-evidence'
+      TARGET_HEAD: '649fb1fb14ecacf7e9b0228290b5d0a090097169'
+      EVIDENCE_HEAD: 'ec5d98713727b5d6e4acfe6ccdbc2336ee5f2392'
+      ACCDB_SHA256: '64c05a50e9ed0452622ff5880335460486f24ac8e6adecc9a300b549c9aa82f8'
+      MEASUREMENT_RUN_ID: '31686794315'
+      MEASUREMENT_ARTIFACT_ID: '9175994007'
+      MEASUREMENT_ARTIFACT_NAME: 'm047-d1-deleted-spring-sequential-measurement-v2'
+      MEASUREMENT_ARTIFACT_DIGEST: 'sha256:dee87508b40b800c6082e73d4d125e1da464c0e3af6445dc2615b7a4c3604328'
+      RAW_RUN_SHA256: '277423032c8238065c6e845316efc77e2db236499ce019e0ae289f00b7dfc09b'
+      COMPACT_MEASUREMENT_SHA256: 'c5d394466719510c8117fb8c84bf616149f8290dd4ed7b61a6b134472c5c3fa6'
+    steps:
+      - name: Checkout exact PR 1101 head
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ env.TARGET_BRANCH }}
+          fetch-depth: 0
+
+      - name: Prove target custody
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$(git rev-parse HEAD)" = "$TARGET_HEAD"
+          test -z "$(git status --porcelain)"
+
+      - name: Make harness-only runtime fixes permanent
+        shell: bash
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          from pathlib import Path
+          path = Path('scripts/lfea-m047-stage2-r2-deleted-spring-experiment.mjs')
+          text = path.read_text()
+          replacements = [
+            ("""      restraintId: support.restraintId,\n      nodeId: support.nodeId,\n      state,\n      nextState,""",
+             """      restraintId: support.restraintId,\n      nodeId: support.nodeId,\n      support,\n      state,\n      nextState,"""),
+            ("`R2-FRICTION-${support.restraintId}-${dof}`", "`R2-FRICTION-${support.nodeId}-${dof}`"),
+            ("`R2-${caseRecord.caseId}-${support.restraintId}-IT${iteration}`", "`R2-${caseRecord.caseId}-${support.nodeId}-IT${iteration}`"),
+          ]
+          for old,new in replacements:
+              if text.count(old) != 1:
+                  raise SystemExit(f'expected one harness-only target, found {text.count(old)} for {old[:60]}')
+              text = text.replace(old,new)
+          path.write_text(text)
+          PY
+          node --check scripts/lfea-m047-stage2-r2-deleted-spring-experiment.mjs
+
+      - name: Harden deleted-spring portable contract for runtime IDs
+        shell: bash
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          from pathlib import Path
+          path = Path('scripts/lfea-m047-stage2-r2-deleted-spring-check.mjs')
+          text = path.read_text()
+          marker = "process.stdout.write('M047 Stage 2 R2 deleted-spring isolation contract: PASS\\n');"
+          addition = """if (!source.includes('declarationId: `R2-FRICTION-${support.nodeId}-${dof}`')) {\n  throw new Error('R2 spring declaration IDs must use canonical node/dof identities.');\n}\n\nif (source.includes('declarationId: `R2-FRICTION-${support.restraintId}-${dof}`')) {\n  throw new Error('R2 must not place colon-bearing restraint IDs in kernel declaration identities.');\n}\n\nif (!source.includes('primitiveId: `R2-${caseRecord.caseId}-${support.nodeId}-IT${iteration}`')) {\n  throw new Error('R2 constant-force primitive IDs must use canonical case/node/iteration identities.');\n}\n\nif (!source.includes('nodeId: support.nodeId,\\n      support,\\n      state,')) {\n  throw new Error('R2 measured entries must retain support metadata for snapshot serialization.');\n}\n\n"""
+          if text.count(marker) != 1:
+              raise SystemExit('R2 check insertion marker drifted')
+          path.write_text(text.replace(marker, addition + marker))
+          PY
+          node scripts/lfea-m047-stage2-r2-deleted-spring-check.mjs
+
+      - name: Download governed real measurement artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: ${{ env.MEASUREMENT_ARTIFACT_NAME }}
+          path: .measurement-download
+          repository: reallaksh19/Advanced_Analysis
+          run-id: ${{ env.MEASUREMENT_RUN_ID }}
+          github-token: ${{ github.token }}
+
+      - name: Verify raw evidence hashes and stage compact measurement
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -f .measurement-download/reports/lfea-m047-stage2-d1-deleted-spring-run1.json
+          test -f .measurement-download/reports/lfea-m047-stage2-d1-deleted-spring-run2.json
+          test -f .measurement-download/reports/lfea-m047-stage2-d1-deleted-spring-sequential-measurement.json
+          echo "${RAW_RUN_SHA256}  .measurement-download/reports/lfea-m047-stage2-d1-deleted-spring-run1.json" | sha256sum -c -
+          echo "${RAW_RUN_SHA256}  .measurement-download/reports/lfea-m047-stage2-d1-deleted-spring-run2.json" | sha256sum -c -
+          echo "${COMPACT_MEASUREMENT_SHA256}  .measurement-download/reports/lfea-m047-stage2-d1-deleted-spring-sequential-measurement.json" | sha256sum -c -
+          node - <<'NODE'
+          const fs = require('fs');
+          const src = '.measurement-download/reports/lfea-m047-stage2-d1-deleted-spring-sequential-measurement.json';
+          const record = JSON.parse(fs.readFileSync(src,'utf8'));
+          if (record.sourceHead !== process.env.TARGET_HEAD) throw new Error('measurement source-head mismatch');
+          if (record.evidenceHead !== process.env.EVIDENCE_HEAD) throw new Error('measurement evidence-head mismatch');
+          if (record.sourceAccdbSha256 !== process.env.ACCDB_SHA256) throw new Error('measurement ACCDB custody mismatch');
+          if (record.deterministic !== true) throw new Error('deleted-spring repeats were not deterministic');
+          if (record.run1?.iterationCount !== 400 || record.run2?.iterationCount !== 400) throw new Error('deleted-spring fixed budget not completed');
+          if (record.run1?.fullPhysicsQualifiedIterationCount !== 0 || record.run2?.fullPhysicsQualifiedIterationCount !== 0) throw new Error('unexpected qualified iterate');
+          if (record.disposition !== 'REJECT_DELETED_SPRING_SEQUENTIAL_NONCONVERGED_KEEP_D1') throw new Error('unexpected deleted-spring disposition');
+          if (record.unchangedPolicies?.toleranceChanged !== false || record.unchangedPolicies?.comparisonPolicyChanged !== false || record.unchangedPolicies?.productionSolverModified !== false) throw new Error('forbidden policy/source mutation');
+          fs.writeFileSync('reports/lfea-m047-stage2-d1-deleted-spring-sequential-measurement.json', JSON.stringify(record,null,2) + '\n');
+          NODE
+
+      - name: Generate custody and two-cycle evidence
+        shell: bash
+        run: |
+          set -euo pipefail
+          node - <<'NODE'
+          const fs = require('fs');
+          const crypto = require('crypto');
+          const path = '.measurement-download/reports/';
+          const run1 = JSON.parse(fs.readFileSync(path+'lfea-m047-stage2-d1-deleted-spring-run1.json','utf8'));
+          const run2 = JSON.parse(fs.readFileSync(path+'lfea-m047-stage2-d1-deleted-spring-run2.json','utf8'));
+          const measured = JSON.parse(fs.readFileSync('reports/lfea-m047-stage2-d1-deleted-spring-sequential-measurement.json','utf8'));
+          const d1 = JSON.parse(fs.readFileSync('.measurement-download/artifacts/measurement/evidence/real-d1.json','utf8'));
+          const refs = new Map(d1.d1.restraints.map(r=>[r.id,r]));
+          const sha = p => crypto.createHash('sha256').update(fs.readFileSync(p)).digest('hex');
+          const norm = xs => Math.hypot(...xs.map(Number));
+          const median = xs => { const a=[...xs].sort((x,y)=>x-y); const m=Math.floor(a.length/2); return a.length%2?a[m]:(a[m-1]+a[m])/2; };
+          const summary = it => {
+            const rows=it.supportRows.map(r=>{const ref=refs.get(r.restraintId); const sol=r.appliedFrictionForceN.map(Number), rr=ref.ftRef.map(Number), rm=norm(rr); const ve=rm===0?null:100*norm(sol.map((x,i)=>x-rr[i]))/rm; const ne=ref.nRef===0?null:100*(+r.normalReactionMagnitudeN-+ref.nRef)/Math.abs(+ref.nRef); return {restraintId:r.restraintId,nodeId:r.nodeId,vectorErrorPct:ve,normalErrorPct:ne,solvedState:r.state==='SLIDE'?'SLID':'STUCK',referenceState:ref.refState,belowR1Floor:!!ref.belowR1Floor};});
+            const es=rows.map(r=>r.vectorErrorPct).filter(Number.isFinite); const above=rows.filter(r=>!r.belowR1Floor&&Number.isFinite(r.vectorErrorPct));
+            return {vectorsWithin10Pct:rows.filter(r=>Number.isFinite(r.vectorErrorPct)&&r.vectorErrorPct<=10).length,normalsWithin10Pct:rows.filter(r=>Number.isFinite(r.normalErrorPct)&&Math.abs(r.normalErrorPct)<=10).length,stateMatches:rows.filter(r=>r.solvedState===r.referenceState).length,medianVectorErrorPct:median(es),worstVectorErrorPct:Math.max(...es),aboveR1VectorsWithin10Pct:above.filter(r=>r.vectorErrorPct<=10).length,aboveR1Count:above.length,aboveR1WorstVectorErrorPct:Math.max(...above.map(r=>r.vectorErrorPct))};
+          };
+          const byId = it => new Map(it.supportRows.map(r=>[r.restraintId,r]));
+          const maxDiff = (a,b,key) => { const A=byId(a), B=byId(b); let m=0; for(const [id,x] of A){const y=B.get(id); const xv=x[key], yv=y[key]; if(Array.isArray(xv)){for(let i=0;i<xv.length;i++)m=Math.max(m,Math.abs(+xv[i]-+yv[i]));}else m=Math.max(m,Math.abs(+xv-+yv));} return m; };
+          const i398=run1.iterations[397], i399=run1.iterations[398], i400=run1.iterations[399];
+          const late=run1.iterations.slice(-12);
+          const custody={
+            schema:'m047-bm4l-stage2-d1-deleted-spring-sequential-custody/v1',
+            sourceHead:process.env.TARGET_HEAD,
+            evidenceHead:process.env.EVIDENCE_HEAD,
+            sourceAccdbSha256:process.env.ACCDB_SHA256,
+            actions:{runId:Number(process.env.MEASUREMENT_RUN_ID),artifactId:Number(process.env.MEASUREMENT_ARTIFACT_ID),artifactName:process.env.MEASUREMENT_ARTIFACT_NAME,artifactDigest:process.env.MEASUREMENT_ARTIFACT_DIGEST},
+            rawEvidence:{run1Sha256:sha(path+'lfea-m047-stage2-d1-deleted-spring-run1.json'),run2Sha256:sha(path+'lfea-m047-stage2-d1-deleted-spring-run2.json'),rawRunsByteIdentical:sha(path+'lfea-m047-stage2-d1-deleted-spring-run1.json')===sha(path+'lfea-m047-stage2-d1-deleted-spring-run2.json'),compactMeasurementArtifactSha256:process.env.COMPACT_MEASUREMENT_SHA256,runSemanticHash:run1.semanticHash},
+            baseline:{vectorsWithin10Pct:13,normalsWithin10Pct:23,stateMatches:19},
+            firstStateStable:{iteration:measured.run1.firstStateStable.iteration,displacementUpdateNormM:measured.run1.firstStateStable.displacementUpdateNormM,reactionUpdateNormN:measured.run1.firstStateStable.reactionUpdateNormN,equilibriumStatus:measured.run1.firstStateStable.equilibriumStatus,summary:{vectorsWithin10Pct:measured.run1.firstStateStable.summary.vectorsWithin10Pct,normalsWithin10Pct:measured.run1.firstStateStable.summary.normalsWithin10Pct,stateMatches:measured.run1.firstStateStable.summary.stateMatches,medianVectorErrorPct:measured.run1.firstStateStable.summary.medianVectorErrorPct,worstVectorErrorPct:measured.run1.firstStateStable.summary.worstVectorErrorPct}},
+            convergence:{maximumIterations:400,run1FullPhysicsQualifiedIterationCount:measured.run1.fullPhysicsQualifiedIterationCount,run2FullPhysicsQualifiedIterationCount:measured.run2.fullPhysicsQualifiedIterationCount,displacementUpdateLimitM:1e-10,reactionUpdateLimitN:1e-2,recoveredEquilibriumTailStatus:[...new Set(late.map(x=>x.recoveredEquilibriumStatus))]},
+            lateTwoCycle:{activeSetPeriod:1,numericPeriod:2,iteration399:summary(i399),iteration400:summary(i400),kVsKMinus1:{maximumAppliedFrictionComponentDifferenceN:maxDiff(i400,i399,'appliedFrictionForceN'),maximumTangentialDisplacementComponentDifferenceM:maxDiff(i400,i399,'relativeTangentialDisplacementM'),maximumNormalReactionDifferenceN:maxDiff(i400,i399,'normalReactionMagnitudeN')},kVsKMinus2:{maximumAppliedFrictionComponentDifferenceN:maxDiff(i400,i398,'appliedFrictionForceN'),maximumTangentialDisplacementComponentDifferenceM:maxDiff(i400,i398,'relativeTangentialDisplacementM'),maximumNormalReactionDifferenceN:maxDiff(i400,i398,'normalReactionMagnitudeN')},tailReactionUpdateNormN:{minimum:Math.min(...late.map(x=>x.reactionUpdateNormN)),maximum:Math.max(...late.map(x=>x.reactionUpdateNormN))},tailDisplacementUpdateNormM:{minimum:Math.min(...late.map(x=>x.displacementUpdateNormM)),maximum:Math.max(...late.map(x=>x.displacementUpdateNormM))}},
+            disposition:measured.disposition,
+            productionMechanicsChanged:false,
+            toleranceChanged:false,
+            comparisonPolicyChanged:false,
+          };
+          fs.writeFileSync('reports/lfea-m047-stage2-d1-deleted-spring-sequential-custody.json',JSON.stringify(custody,null,2)+'\n');
+          const f=x=>Number(x).toPrecision(6);
+          const lines=[
+            '# M047 Stage 2 — real D1 deleted-spring / constant-force sequential measurement','',
+            'Status: **REJECT — deterministic nonconverged two-cycle; keep D1 experimental baseline.**','',
+            'This is project RCA of the documented deleted-tangential-spring / next-iteration constant Coulomb-force sequence. It is not a claim about unpublished CAESAR II convergence numerics.','',
+            '## Custody','',
+            `- PR #1101 source head measured: \`${process.env.TARGET_HEAD}\``,
+            `- accepted D1 evidence head: \`${process.env.EVIDENCE_HEAD}\``,
+            `- pinned ACCDB SHA-256: \`${process.env.ACCDB_SHA256}\``,
+            `- Actions run: \`${process.env.MEASUREMENT_RUN_ID}\`; artifact ID: \`${process.env.MEASUREMENT_ARTIFACT_ID}\`; artifact digest: \`${process.env.MEASUREMENT_ARTIFACT_DIGEST}\``,
+            `- raw run 1 SHA-256: \`${custody.rawEvidence.run1Sha256}\``,
+            `- raw run 2 SHA-256: \`${custody.rawEvidence.run2Sha256}\``,
+            `- repeat raw files byte-identical: **${custody.rawEvidence.rawRunsByteIdentical}**`,
+            '', 'No production friction solver, tolerance, comparison rule, acceptance criterion, or node exception changed. Three harness-only compatibility fixes were required: preserve support metadata in the snapshot record, and use canonical node-based kernel IDs for the experimental spring and constant-force primitives.','',
+            '## Convergence result','',
+            '| evidence | value |','|---|---:|',
+            '| fixed iteration budget | 400 |',
+            `| full-physics-qualified iterates, run 1 | ${custody.convergence.run1FullPhysicsQualifiedIterationCount} |`,
+            `| full-physics-qualified iterates, run 2 | ${custody.convergence.run2FullPhysicsQualifiedIterationCount} |`,
+            `| first state-stable iterate | ${custody.firstStateStable.iteration} |`,
+            `| reaction update at first state-stable | ${f(custody.firstStateStable.reactionUpdateNormN)} N |`,
+            `| displacement update at first state-stable | ${f(custody.firstStateStable.displacementUpdateNormM)} m |`,
+            `| vectors within ±10% there | ${custody.firstStateStable.summary.vectorsWithin10Pct}/23 |`,
+            `| normals within ±10% there | ${custody.firstStateStable.summary.normalsWithin10Pct}/23 |`,
+            '',
+            'The first zero-state-change point is therefore a diagnostic snapshot only. It fails the unchanged displacement/reaction and constitutive gates by large margins and cannot be reported as a converged accuracy result.','',
+            '## Late deterministic two-cycle','',
+            'The active-set labels become constant (period 1), but the physical force/displacement solution alternates between two branches (period 2).','',
+            '| metric | iteration 399 | iteration 400 |','|---|---:|---:|',
+            `| vectors within ±10% | ${custody.lateTwoCycle.iteration399.vectorsWithin10Pct}/23 | ${custody.lateTwoCycle.iteration400.vectorsWithin10Pct}/23 |`,
+            `| normals within ±10% | ${custody.lateTwoCycle.iteration399.normalsWithin10Pct}/23 | ${custody.lateTwoCycle.iteration400.normalsWithin10Pct}/23 |`,
+            `| state matches | ${custody.lateTwoCycle.iteration399.stateMatches}/23 | ${custody.lateTwoCycle.iteration400.stateMatches}/23 |`,
+            `| median vector error | ${custody.lateTwoCycle.iteration399.medianVectorErrorPct.toFixed(2)}% | ${custody.lateTwoCycle.iteration400.medianVectorErrorPct.toFixed(2)}% |`,
+            `| worst above-R1 vector error | ${custody.lateTwoCycle.iteration399.aboveR1WorstVectorErrorPct.toFixed(2)}% | ${custody.lateTwoCycle.iteration400.aboveR1WorstVectorErrorPct.toFixed(2)}% |`,
+            '',
+            `Iteration 400 versus 399 changes a friction-force component by up to **${custody.lateTwoCycle.kVsKMinus1.maximumAppliedFrictionComponentDifferenceN.toFixed(2)} N**, a tangential displacement component by **${custody.lateTwoCycle.kVsKMinus1.maximumTangentialDisplacementComponentDifferenceM.toExponential(3)} m**, and a normal reaction by **${custody.lateTwoCycle.kVsKMinus1.maximumNormalReactionDifferenceN.toFixed(2)} N**.`,
+            `Iteration 400 versus 398 returns to the same branch to numerical precision: max friction-component difference **${custody.lateTwoCycle.kVsKMinus2.maximumAppliedFrictionComponentDifferenceN.toExponential(3)} N**, tangential displacement **${custody.lateTwoCycle.kVsKMinus2.maximumTangentialDisplacementComponentDifferenceM.toExponential(3)} m**, normal reaction **${custody.lateTwoCycle.kVsKMinus2.maximumNormalReactionDifferenceN.toExponential(3)} N**.`,
+            `The final 12 reaction-update norms remain ${custody.lateTwoCycle.tailReactionUpdateNormN.minimum.toFixed(3)}–${custody.lateTwoCycle.tailReactionUpdateNormN.maximum.toFixed(3)} N versus the unchanged 0.01 N gate; displacement updates remain about ${custody.lateTwoCycle.tailDisplacementUpdateNormM.maximum.toExponential(3)} m versus 1e-10 m.`,
+            '', '## Engineering disposition','',
+            '**`REJECT_DELETED_SPRING_SEQUENTIAL_NONCONVERGED_KEEP_D1`**','',
+            '- The literal deleted-spring / previous-iteration constant-force sequence is not a converged replacement for D1 on real BM4_L L13 under the unchanged gates.',
+            '- Do not stop at the first state-stable iterate; state stability does not imply nonlinear equilibrium convergence here.',
+            '- Do not select either late two-cycle phase by benchmark error.',
+            '- Retain D1 at 13/23 vectors and 23/23 normals as the experimental baseline.',
+            '- Keep the independent 20710 one-axis capacity/path signal open.',
+            '- L7 and BM4_NL remain blocked.',
+            ''
+          ];
+          fs.writeFileSync('reports/lfea-m047-stage2-d1-deleted-spring-sequential-measurement.md',lines.join('\n'));
+          NODE
+
+      - name: Re-run hardened deleted-spring contract
+        shell: bash
+        run: |
+          set -euo pipefail
+          node scripts/lfea-m047-stage2-r2-deleted-spring-check.mjs
+          node --check scripts/lfea-m047-stage2-r2-deleted-spring-experiment.mjs
+
+      - name: Commit verified evidence to PR 1101 only
+        shell: bash
+        run: |
+          set -euo pipefail
+          rm -rf .measurement-download
+          git config user.name 'reallaksh19'
+          git config user.email 'reallaksh19@gmail.com'
+          git add \
+            scripts/lfea-m047-stage2-r2-deleted-spring-experiment.mjs \
+            scripts/lfea-m047-stage2-r2-deleted-spring-check.mjs \
+            reports/lfea-m047-stage2-d1-deleted-spring-sequential-measurement.json \
+            reports/lfea-m047-stage2-d1-deleted-spring-sequential-custody.json \
+            reports/lfea-m047-stage2-d1-deleted-spring-sequential-measurement.md
+          git diff --cached --check
+          git commit -m 'M047 Stage 2: record real D1 deleted-spring sequential rejection'
+          git push origin HEAD:${TARGET_BRANCH}

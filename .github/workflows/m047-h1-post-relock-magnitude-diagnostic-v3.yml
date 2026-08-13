@@ -1,0 +1,66 @@
+name: M047 H1 post-relock magnitude diagnostic v3
+on:
+  push:
+    branches: [agent/m047-stage2-measure-post-relock-mag-v3-20260813]
+    paths: ['.github/workflows/m047-h1-post-relock-magnitude-diagnostic-v3.yml']
+permissions:
+  contents: read
+jobs:
+  diagnose:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    env:
+      SOURCE_HEAD: 'fd993f6bada46663125744bd33ee3632a0f292d8'
+      BM4L_COMMON_COMMIT: '45d51ea18624f5775805f399110c1738301c0d90'
+      BM4L_ZIP_SHA256: '978617cba50fa0b1a16c2fa71dc1e0d38e55ac834b191f887d100c6951abd8b9'
+      BM4L_ACCDB_SHA256: '64c05a50e9ed0452622ff5880335460486f24ac8e6adecc9a300b549c9aa82f8'
+    steps:
+      - uses: actions/checkout@v4
+        with: {ref: '${{ env.SOURCE_HEAD }}', persist-credentials: false}
+      - run: 'test "$(git rev-parse HEAD)" = "$SOURCE_HEAD"'
+      - uses: actions/setup-node@v4
+        with: {node-version: '22', cache: npm}
+      - run: npm ci
+      - name: Fetch pinned BM4_L
+        run: |
+          set -euo pipefail
+          mkdir -p artifacts/measurement artifacts/bm4l-stage2/source reports
+          curl --fail --location --silent --show-error "https://raw.githubusercontent.com/reallaksh19/Common/${BM4L_COMMON_COMMIT}/LFEA/BM4/BM4_L.zip" -o artifacts/measurement/BM4_L.zip
+          echo "${BM4L_ZIP_SHA256}  artifacts/measurement/BM4_L.zip" | sha256sum -c -
+          unzip -q artifacts/measurement/BM4_L.zip -d artifacts/bm4l-stage2/source
+          echo "${BM4L_ACCDB_SHA256}  artifacts/bm4l-stage2/source/BM4_L.ACCDB" | sha256sum -c -
+      - name: Reproduce exact H1 and evaluate guarded corrected magnitude counterfactuals
+        run: |
+          set -euo pipefail
+          node --check scripts/lfea-m047-stage2-h1-post-relock-magnitude-diagnostic.mjs
+          node scripts/lfea-m047-stage2-h1-post-relock-magnitude-diagnostic.mjs \
+            --accdb artifacts/bm4l-stage2/source/BM4_L.ACCDB \
+            --out reports/lfea-m047-stage2-h1-post-relock-magnitude-diagnostic-v3.json \
+            > artifacts/measurement/diagnostic.stdout.txt \
+            2> artifacts/measurement/diagnostic.stderr.txt
+          node - <<'NODE'
+          const fs=require('fs');
+          const d=JSON.parse(fs.readFileSync('reports/lfea-m047-stage2-h1-post-relock-magnitude-diagnostic-v3.json','utf8'));
+          if(d.schema!=='m047-bm4l-stage2-h1-post-relock-magnitude-diagnostic/v3') throw new Error('expected corrected v3 schema');
+          if(d.h1RowsSemanticHash!=='fnv1a64:77eea847870b228b') throw new Error('H1 reproduction hash mismatch');
+          const norm=v=>Math.hypot(...v.map(Number));
+          const err=(a,b)=>100*norm(a.map((x,i)=>x-b[i]))/norm(b);
+          for(const r of d.rows){
+            const dir=r.relockForceDirection.map(Number);
+            if(Math.abs(norm(dir)-1)>1e-12) throw new Error(`non-unit relock direction ${r.nodeId}`);
+            const signed=dir.map(x=>x*Number(r.signedScalarMagnitudeN));
+            const norev=dir.map(x=>x*Math.abs(Number(r.signedScalarMagnitudeN)));
+            const e1=err(signed,r.referenceFinalForceN.map(Number));
+            const e2=err(norev,r.referenceFinalForceN.map(Number));
+            if(Math.abs(e1-Number(r.scalarDirectionMemorySignedVectorErrorPct))>1e-9) throw new Error(`signed scalar vector error mismatch ${r.nodeId}: ${e1}`);
+            if(Math.abs(e2-Number(r.scalarDirectionMemoryNoReverseVectorErrorPct))>1e-9) throw new Error(`no-reverse scalar vector error mismatch ${r.nodeId}: ${e2}`);
+          }
+          NODE
+      - uses: actions/upload-artifact@v4
+        with:
+          name: m047-h1-post-relock-magnitude-diagnostic-v3
+          retention-days: 7
+          if-no-files-found: error
+          path: |
+            artifacts/measurement/**
+            reports/lfea-m047-stage2-h1-post-relock-magnitude-diagnostic-v3.json

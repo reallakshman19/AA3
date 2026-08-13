@@ -30,7 +30,7 @@ export function buildLafeaContinuumCompiledExecutionInput(model) {
     modelIdentity: model.sourceModel.modelIdentity,
     modelVersion: model.sourceModel.modelVersion,
     sourceAncestry: { ...model.sourceModel.sourceAncestry },
-    units: { ...model.units },
+    units: executionUnits(model.units),
     formulation: model.formulation,
     materials: materialInputs(model),
     nodes: nodeInputs(model),
@@ -44,6 +44,15 @@ export function buildLafeaContinuumCompiledExecutionInput(model) {
       ...model.limitations,
       'DOMAIN_FIRST_COMPILED_PARITY_EXECUTION_ONLY',
     ])].sort(compare),
+  };
+}
+
+function executionUnits(units) {
+  return {
+    length: units.length,
+    force: units.force,
+    stress: units.stress,
+    modulus: units.modulus,
   };
 }
 

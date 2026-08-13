@@ -206,8 +206,10 @@ function choleskySolve(matrix, rightHandSide, profile) {
   const minimum = Math.min(...pivots);
   const maximum = Math.max(...pivots);
   return {
-    solution: solution.map((value) =>
-      canonicalNumber(value, 'solved displacement')),
+    // Keep full Number precision through equilibrium/reaction evaluation.
+    // solutionRecord() performs the governed canonicalization at the output
+    // boundary; rounding here was an unnecessary pre-residual precision loss.
+    solution,
     evidence: pivotEvidence(scale, limit, pivots, minimum, maximum),
   };
 }

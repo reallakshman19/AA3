@@ -49,12 +49,14 @@ export function normalizeNodes(values) {
 }
 
 export function normalizeElements(values, nodes) {
+  rejectCoincidentIndependentNodes(nodes);
   const nodeMap = new Map(nodes.map((row) => [row.nodeId, row]));
   const rows = arrayValue(values, 'elements').map((value, index) => (
     normalizeElement(value, index, nodeMap)
   ));
   uniqueIdentities(rows, 'elementId', 'elements');
   rejectDuplicateTriangles(rows);
+  rejectDisconnectedElementComponents(rows);
   return rows.sort((left, right) => codeUnitCompare(left.elementId, right.elementId));
 }
 
@@ -144,6 +146,77 @@ function rejectDuplicateTriangles(rows) {
     }
     sets.add(key);
   });
+}
+
+function rejectCoincidentIndependentNodes(nodes) {
+  const coordinates = new Map();
+  for (const node of nodes) {
+    const key = `${Object.is(node.x, -0) ? 0 : node.x}\0${Object.is(node.y, -0) ? 0 : node.y}`;
+    const prior = coordinates.get(key);
+    if (prior) {
+      throw modelError(
+        'COINCIDENT_INDEPENDENT_NODE',
+        'nodes',
+        `Nodes ${prior.nodeId} and ${node.nodeId} occupy the same declared coordinate but have independent identities.`,
+      );
+    }
+    coordinates.set(key, node);
+  }
+}
+
+function rejectDisconnectedElementComponents(rows) {
+  if (rows.length <= 1) return;
+  const nodeToElements = new Map();
+  rows.forEach((row, elementIndex) => {
+    row.nodeIds.forEach((nodeId) => {
+      const connected = nodeToElements.get(nodeId) ?? [];
+      connected.push(elementIndex);
+      nodeToElements.set(nodeId, connected);
+    });
+  });
+  const visited = new Set([0]);
+  const pending = [0];
+  while (pending.length) {
+    const elementIndex = pending.pop();
+    for (const nodeId of rows[elementIndex].nodeIds) {
+      for (const neighbor of nodeToElements.get(nodeId) ?? []) {
+        if (!visited.has(neighbor)) {
+          visited.add(neighbor);
+          pending.push(neighbor);
+        }
+      }
+    }
+  }
+  if (visited.size !== rows.length) {
+    throw modelError(
+      'DISCONNECTED_MESH_COMPONENT',
+      'elements',
+      `Continuum mesh contains ${countElementComponents(rows, nodeToElements)} disconnected element components; current authority requires one connected component.`,
+    );
+  }
+}
+
+function countElementComponents(rows, nodeToElements) {
+  const visited = new Set();
+  let count = 0;
+  for (let start = 0; start < rows.length; start += 1) {
+    if (visited.has(start)) continue;
+    count += 1;
+    visited.add(start);
+    const pending = [start];
+    while (pending.length) {
+      const elementIndex = pending.pop();
+      for (const nodeId of rows[elementIndex].nodeIds) {
+        for (const neighbor of nodeToElements.get(nodeId) ?? []) {
+          if (!visited.has(neighbor)) {
+            visited.add(neighbor);
+            pending.push(neighbor);
+          }
+        }
+      }
+    }
+  }
+  return count;
 }
 
 function canonicalTriangleIds(nodeIds, nodeMap) {

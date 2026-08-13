@@ -27,7 +27,7 @@ export function topologyEditTableDirectCellHtml(runtime, row, column) {
     row,
     columnKey: column.key,
     projection: runtime.projection,
-    canonicalTopology: runtime.controller.session?.currentTopology?.(),
+    canonicalTopology: runtime.controller?.session?.currentTopology?.(),
   });
   const intentKind = capability.details?.intentKind;
   if (capability.status === 'AVAILABLE' && intentKind === CELL_KIND) {
@@ -154,7 +154,7 @@ function compoundCellHtml(runtime, row, column, capability) {
   const intentKind = capability.details.intentKind;
   const virtual = topologyEditTableVirtualGeometryFields(
     row,
-    runtime.controller.session?.currentTopology?.(),
+    runtime.controller?.session?.currentTopology?.(),
     runtime.transientNodeDrafts ?? {},
   );
   const rawValue = Object.prototype.hasOwnProperty.call(virtual, column.key)

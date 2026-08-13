@@ -89,11 +89,22 @@ test('A17 failure: conflicting current mesh evidence is rejected', async ({ page
       commandId: 'A17-CONFLICT-REFINE', targetType: 'ELEMENT', targetIds: [firstId],
       targetElementLength: 12.5, lengthUnit: 'mm', reason: 'A17 conflict fixture',
     });
-    let code = null;
-    try { controller.store.recoverAnalysisMeshEvidenceV2(original); } catch (error) { code = error.code; }
-    return { code, release: controller.getState().stages['LAFEA.3'].lifecycleReadiness.releaseState };
+    const refinedHash = controller.selectRetainedAnalysisMeshEvidenceV2()?.meshHash ?? null;
+    const returned = controller.store.recoverAnalysisMeshEvidenceV2(original);
+    const state = controller.getState();
+    const retainedHash = controller.selectRetainedAnalysisMeshEvidenceV2()?.meshHash ?? null;
+    return {
+      returnedIsNull: returned === null,
+      status: state.status,
+      code: state.diagnostics?.[0]?.code ?? null,
+      retainedUnchanged: retainedHash === refinedHash,
+      release: state.stages['LAFEA.3'].lifecycleReadiness.releaseState,
+    };
   });
+  expect(result.returnedIsNull).toBe(true);
+  expect(result.status).toBe('FAILED');
   expect(result.code).toBe('LAFEA_ANALYSIS_MESH_V2_RECOVERY_CONFLICTING_REPLAY');
+  expect(result.retainedUnchanged).toBe(true);
   expect(result.release).toBe('RELEASE_NOT_QUALIFIED');
   await destroyStage17(page);
 });

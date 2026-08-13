@@ -1,0 +1,26 @@
+{
+  "schema": "lafea-b01-repair-attempt/v1",
+  "issue": 1100,
+  "attempt": 22,
+  "attemptedBoundary": "T3_FACTORIZED_DEFORMATION_STIFFNESS_ACTION",
+  "branchHead": "d4fa2e4f947315e5388120d51403a451b6665056",
+  "workflowExecutionHead": "b73969672699788b263fcf722c591c4960162f7d",
+  "workflowRunId": 31680128851,
+  "artifactId": 9173140373,
+  "artifactDigest": "sha256:182e9f179ce5920ee8ecdccf3ac910213faa542f847bf517919695fb078bf364",
+  "productionMechanicsChanged": false,
+  "frozenBenchmarkChanged": false,
+  "tolerancesChanged": false,
+  "evaluatedT3Runs": 18,
+  "currentPassCount": 16,
+  "factorizedPassCount": 15,
+  "rigidComparison": [
+    {"meshId":"T3-M0","currentSolved":9.458744898438454e-11,"factorizedSolved":1.3293689517364858e-10,"factorizedExact":4.540249400461902e-11},
+    {"meshId":"T3-M1","currentSolved":1.609237187949475e-10,"factorizedSolved":5.428513137021206e-10,"factorizedExact":1.4271667506078645e-10},
+    {"meshId":"T3-M2","currentSolved":3.710738383233547e-10,"factorizedSolved":6.269982079794681e-10,"factorizedExact":1.6931982954605244e-10}
+  ],
+  "maximumObservedEnergyRelativeDifference": 3.0126559174448207e-10,
+  "disposition": "REJECTED. Elementwise B^T D epsilon A t action with strain formed from normalized edge displacement differences reduces the exact rigid-field action but makes the actual solved rigid residual worse on every T3 mesh and loses one existing T3 pass. The exact-vs-solved split indicates the remaining owner is introduced by prescribed-displacement partition solve/RHS conditioning rather than post-solve stiffness-action reconstruction.",
+  "nextBoundary": "PRE_SOLVE_RIGID_REFERENCE_PARTITION_CONDITIONING",
+  "releaseAuthorityGrantedByProgram": false
+}

@@ -1,0 +1,112 @@
+name: 3D Edit duplicate operation retirement exact-head qualification
+
+on:
+  push:
+    branches:
+      - qualification/3d-edit-duplicate-operation-retirement-949ea1f7
+
+permissions:
+  contents: read
+
+jobs:
+  qualify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    env:
+      BASE_SHA: 7a31c234247eba79658037412fc8ea30103c12d7
+      CANDIDATE_SHA: 949ea1f7790b8148977765fd7e5976e955970bcc
+      PLAYWRIGHT_BROWSERS_PATH: '0'
+      TOPOLOGY_EDIT_TARGET_HEAD_SHA: 949ea1f7790b8148977765fd7e5976e955970bcc
+    steps:
+      - name: Checkout exact candidate
+        uses: actions/checkout@v4
+        with:
+          ref: 949ea1f7790b8148977765fd7e5976e955970bcc
+          fetch-depth: 0
+
+      - name: Verify exact three-file ledger
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$(git rev-parse HEAD)" = "$CANDIDATE_SHA"
+          expected=$'e2e/topology-edit-duplicate-operation-retirement.spec.js\nsrc/workspace/viewport-productivity/topology-edit-professional-operation-panel.js\ntests/topology-edit-professional-operation-ui-retirement.test.mjs'
+          actual="$(git diff --name-only "$BASE_SHA" "$CANDIDATE_SHA")"
+          test "$actual" = "$expected"
+          git diff --check "$BASE_SHA" "$CANDIDATE_SHA"
+          for file in $actual; do node --check "$file"; done
+
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run focused UI-retirement and authority contracts
+        run: >-
+          node --test
+          tests/topology-edit-professional-operation-ui-retirement.test.mjs
+          tests/topology-edit-component-hud-context.test.mjs
+          tests/topology-edit-component-authoring.test.mjs
+          tests/topology-edit-inline-component-insertion.test.mjs
+          tests/topology-edit-valve-assembly-authoring.test.mjs
+          tests/topology-edit-authoring-branch-catalogue.test.mjs
+          tests/topology-edit-branch-authoring.test.mjs
+          tests/topology-edit-blind-flange-authoring.test.mjs
+          tests/topology-edit-route-connect-consolidation.test.mjs
+
+      - name: Install pinned Chromium
+        run: npx playwright install --with-deps chromium
+
+      - name: Run production duplicate-retirement and replacement workflows
+        env:
+          PLAYWRIGHT_JSON_OUTPUT_NAME: artifacts/duplicate-operation-retirement-playwright.json
+        run: >-
+          node scripts/run-playwright.mjs
+          e2e/topology-edit-duplicate-operation-retirement.spec.js
+          e2e/topology-edit-component-hud-catalog.spec.js
+          e2e/topology-edit-component-placement-evidence.spec.js
+          e2e/topology-edit-connect-contextual.spec.js
+          --workers=1
+          --retries=0
+          --trace=on
+          --reporter=line,json
+
+      - name: Record exact-head identity
+        if: always()
+        shell: bash
+        run: |
+          mkdir -p artifacts
+          cat > artifacts/duplicate-operation-retirement-run-identity.json <<EOF
+          {
+            "schema": "TopologyEditDuplicateOperationRetirementRunIdentity.v1",
+            "baseSha": "$BASE_SHA",
+            "candidateSha": "$CANDIDATE_SHA",
+            "qualificationCommitSha": "$GITHUB_SHA",
+            "runId": "$GITHUB_RUN_ID",
+            "attempt": $GITHUB_RUN_ATTEMPT,
+            "workers": 1,
+            "retries": 0,
+            "trace": "on",
+            "changedFileCount": 3,
+            "retiredOperations": ["INSERT_INLINE_COMPONENT", "RECONNECT_ENDPOINTS"],
+            "replacementEntryPoints": ["Place component", "Connect ends"],
+            "componentCatalogueEvidence": "PRESERVED_READ_ONLY",
+            "canonicalMutationDuringUiMigration": "FORBIDDEN"
+          }
+          EOF
+
+      - name: Upload qualification evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: duplicate-operation-retirement-${{ env.CANDIDATE_SHA }}-${{ github.run_attempt }}
+          path: |
+            artifacts
+            reports/qualification
+            test-results
+            playwright-report
+          if-no-files-found: warn
+          retention-days: 30

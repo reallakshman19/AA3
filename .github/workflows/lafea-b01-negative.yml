@@ -6,6 +6,7 @@ on:
       - 'validation/lafea-benchmark-data/B01/**'
       - 'scripts/lafea-b01-*.mjs'
       - 'scripts/lafea-stage15-neutral-shared-primitives-check.mjs'
+      - 'scripts/lafea-continuum-revalidation-check.mjs'
       - 'src/core/local-continuum/**'
       - 'src/core/shared-primitives/**'
       - 'src/workspace/lafea-stage-*.js'
@@ -17,6 +18,7 @@ on:
       - 'validation/lafea-benchmark-data/B01/**'
       - 'scripts/lafea-b01-*.mjs'
       - 'scripts/lafea-stage15-neutral-shared-primitives-check.mjs'
+      - 'scripts/lafea-continuum-revalidation-check.mjs'
       - 'src/core/local-continuum/**'
       - 'src/core/shared-primitives/**'
       - 'src/workspace/lafea-stage-*.js'
@@ -39,6 +41,8 @@ jobs:
         run: node --check scripts/lafea-b01-registered-route-check.mjs && node --check scripts/lafea-b01-metamorphic-route-check.mjs && node --check scripts/lafea-b01-negative-route-check.mjs && node --check scripts/lafea-b01-negative-governed-check.mjs
       - name: Check shared unit contract
         run: node scripts/lafea-stage15-neutral-shared-primitives-check.mjs
+      - name: Check workbench lifecycle currentness
+        run: node scripts/lafea-continuum-revalidation-check.mjs
       - name: Run prior continuum controls
         run: node scripts/lafea.3-solver-check.mjs && node scripts/lafea.3-loads-imposed-displacement-check.mjs && node scripts/lafea.3-t6-patch-check.mjs && node scripts/lafea.3-q8-patch-check.mjs
       - name: Reconfirm qualified B01 base matrix

@@ -26,7 +26,7 @@ export function matrixVector(matrix, vector) {
     return sparseMatrixVector(matrix, vector);
   }
   return matrix.map((row) => canonicalNumber(
-    compensatedProductSum(row, vector),
+    compensatedDot(row, vector),
     'matrix-vector product',
   ));
 }
@@ -36,10 +36,7 @@ export function scaleMatrix(matrix, factor) {
 }
 
 export function dot(left, right) {
-  return canonicalNumber(
-    left.reduce((sum, value, index) => sum + value * right[index], 0),
-    'vector dot product',
-  );
+  return canonicalNumber(compensatedDot(left, right), 'vector dot product');
 }
 
 export function symmetryResidual(matrix) {
@@ -61,15 +58,8 @@ export function canonicalMatrix(matrix) {
     canonicalNumber(value, 'matrix value')));
 }
 
-/**
- * Neumaier-compensated sum of pairwise products. The B01 nonzero rigid-body
- * field exposed cancellation loss in dense `K*u`: the displacement/strain/
- * stress field was already at machine precision while the residual grew with
- * row width. Preserve the exact same matrix and solution; improve only the
- * deterministic floating-point accumulation used to evaluate the dense
- * stiffness action.
- */
-function compensatedProductSum(left, right) {
+/** Neumaier-compensated sum of pairwise products. */
+function compensatedDot(left, right) {
   let sum = 0;
   let compensation = 0;
   for (let index = 0; index < left.length; index += 1) {

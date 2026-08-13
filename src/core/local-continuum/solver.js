@@ -1,7 +1,7 @@
 import { FORMULA_IDS } from './constants.js';
 import { numericalError, singularError } from './errors.js';
 import { resolveImposedDisplacementIndices } from './imposed-displacement-loads.js';
-import { matrixVector, zeros } from './matrix.js';
+import { dot, matrixVector, zeros } from './matrix.js';
 import { canonicalNumber, maxAbs, tolerance } from './numeric.js';
 import {
   restrictSymmetricCsr,
@@ -192,7 +192,7 @@ function submatrix(matrix, rows, columns) {
 }
 
 function dotRow(row, vector) {
-  return row.reduce((sum, value, index) => sum + value * vector[index], 0);
+  return dot(row, vector);
 }
 
 function choleskySolve(matrix, rightHandSide, profile) {

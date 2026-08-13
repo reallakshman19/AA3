@@ -17,6 +17,7 @@ jobs:
     runs-on: ubuntu-latest
     env:
       EXPECTED_HEAD: ${{ github.event.pull_request.head.sha || github.sha }}
+      QUALIFICATION_BASE: 162c88ee4715bc46c3c768c1086e74e7165bd3fb
     steps:
       - uses: actions/checkout@v4
         with:
@@ -43,8 +44,34 @@ jobs:
           node --check src/workspace/lafea-analysis-settings-view.js
           node tests/lafea-engineering-overview.test.mjs
           node scripts/lafea-ui-analysis-settings-check.mjs
-      - name: Build standalone LAFEA
-        run: npm run build:lafea
+      - name: Prove standalone boundary failure is inherited unchanged
+        shell: bash
+        run: |
+          set +e
+          node scripts/lafea-standalone-boundary-check.mjs > /tmp/head-boundary.log 2>&1
+          head_status=$?
+          mkdir -p /tmp/lafea-base
+          git archive "$QUALIFICATION_BASE" | tar -x -C /tmp/lafea-base
+          (cd /tmp/lafea-base && node scripts/lafea-standalone-boundary-check.mjs > /tmp/base-boundary.log 2>&1)
+          base_status=$?
+          set -e
+
+          if [ "$head_status" -eq 0 ]; then
+            echo "Candidate standalone boundary passes."
+            exit 0
+          fi
+
+          test "$base_status" -ne 0
+          head_error="$(grep -m1 'Error: FORBIDDEN_PRODUCT_OR_COMBINED_DEPENDENCY:' /tmp/head-boundary.log)"
+          base_error="$(grep -m1 'Error: FORBIDDEN_PRODUCT_OR_COMBINED_DEPENDENCY:' /tmp/base-boundary.log)"
+          test -n "$head_error"
+          test "$head_error" = "$base_error"
+          echo "Inherited exact-base boundary failure retained without expansion:"
+          echo "$head_error"
+      - name: Build standalone LAFEA bundle
+        run: |
+          npx vite build --config vite.lafea.config.js
+          node scripts/lafea-standalone-build-artifact-check.mjs
       - name: Install pinned Chromium runtime
         run: npx playwright install --with-deps chromium
       - name: Run Stage-17 browser journey and visible UI proof

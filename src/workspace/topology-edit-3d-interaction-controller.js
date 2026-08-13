@@ -1,12 +1,12 @@
 import { TopologyEdit3DViewController as ReviewResponseController } from './topology-edit-3d-review-response-controller.js';
 import { axisDirection, isTopologyEditTextControl, topologyEditKeyboardNudge, TopologyEditInteractionControllerRuntime } from './viewport-productivity/topology-edit-interaction-controller-runtime.js';
 import { assertCurrentTopologyEditInteractionPreview, createTopologyEditNudgeSessionPreview, createTopologyEditNumericSessionPreview, selectedTopologyEditNodeContext, verifyTopologyEditInteractionAcceptance } from './viewport-productivity/topology-edit-interaction-session.js';
-import { renderTopologyEditInteractionPanel } from './viewport-productivity/topology-edit-interaction-panel.js';
+import { readTopologyEditInteractionValues, renderTopologyEditInteractionPanel, topologyEditInteractionModeValues, updateTopologyEditInteractionPanelState } from './viewport-productivity/topology-edit-interaction-panel.js';
 import { installTopologyEditTangencyClockingSnapIndex } from './viewport-interaction/topology-edit-tangency-clocking-snap-index.js';
 
 const AUTO_PREVIEW_ROLES = new Set([
-  'interaction-entry-mode', 'interaction-value-x', 'interaction-value-y',
-  'interaction-value-z', 'interaction-magnitude', 'interaction-axis',
+  'interaction-value-x', 'interaction-value-y', 'interaction-value-z',
+  'interaction-magnitude', 'interaction-axis',
 ]);
 
 export class TopologyEdit3DViewController extends ReviewResponseController {
@@ -16,6 +16,8 @@ export class TopologyEdit3DViewController extends ReviewResponseController {
     this.interactionPreview = null;
     this.interactionAcceptance = null;
     this.interactionError = null;
+    this.interactionValues = topologyEditInteractionModeValues();
+    this.interactionValueNodeId = null;
     this.nudgeIncrementMm = 1;
     this.interactionControllerRuntime = new TopologyEditInteractionControllerRuntime(this);
     installTopologyEditTangencyClockingSnapIndex(this.interactionControllerRuntime);
@@ -32,9 +34,7 @@ export class TopologyEdit3DViewController extends ReviewResponseController {
   buildShell() {
     super.buildShell();
     const section = this.hostElement?.ownerDocument.createElement('section');
-    if (!section || !this.checkerElement) {
-      throw new Error('TopologyEditInteractionController: panel host is unavailable.');
-    }
+    if (!section || !this.checkerElement) throw new Error('TopologyEditInteractionController: panel host is unavailable.');
     section.dataset.role = 'topology-edit-professional-interaction';
     section.className = 'topology-edit-professional-interaction';
     section.setAttribute('aria-label', 'Move selected node');
@@ -51,7 +51,7 @@ export class TopologyEdit3DViewController extends ReviewResponseController {
     this.interactionControllerRuntime.destroy();
     this.hostElement?.removeEventListener('keydown', this.interactionKeyHandler);
     this.interactionElement?.removeEventListener('change', this.interactionChangeHandler);
-    this.clearInteractionState(false, true);
+    this.clearInteractionState(false, true, true);
     this.interactionElement = null;
     super.deactivate();
   }
@@ -67,10 +67,7 @@ export class TopologyEdit3DViewController extends ReviewResponseController {
     if (event.topologyEditInteractionHandled) return;
     const before = selectionKey(this.selection);
     super.handleCanvasPointer(event);
-    if (selectionKey(this.selection) !== before) {
-      this.clearInteractionState(false, true);
-      this.interactionControllerRuntime.sync();
-    }
+    if (selectionKey(this.selection) !== before) this.clearInteractionState(false, true, true);
   }
 
   handleHostClick(event) {
@@ -92,23 +89,33 @@ export class TopologyEdit3DViewController extends ReviewResponseController {
       if (Number.isFinite(increment) && increment > 0) this.nudgeIncrementMm = increment;
       return;
     }
-    if (!AUTO_PREVIEW_ROLES.has(role) || !this.session) return;
-    const nodeIds = Array.isArray(this.selection?.nodeIds)
-      ? this.selection.nodeIds : [...(this.selection?.nodeIds ?? [])];
-    if (nodeIds.length === 1) this.previewNumericInteraction({ announce: false });
+    this.interactionValues = readTopologyEditInteractionValues(this.interactionElement, this.interactionValues);
+    if (role === 'interaction-entry-mode') {
+      this.interactionValues = topologyEditInteractionModeValues(this.interactionContext(), this.interactionValues.entryMode);
+      this.interactionPreview = null;
+      this.interactionError = null;
+      this.renderInteractionPanel();
+      this.updateInteractionEvidence();
+      this.interactionControllerRuntime.sync();
+      return;
+    }
+    if (!AUTO_PREVIEW_ROLES.has(role) || !this.session || !this.shouldAutoPreview(role)) return;
+    const nodeIds = Array.isArray(this.selection?.nodeIds) ? this.selection.nodeIds : [...(this.selection?.nodeIds ?? [])];
+    if (nodeIds.length === 1) this.previewNumericInteraction({ announce: false, render: false });
+  }
+
+  shouldAutoPreview(role) {
+    if (role === 'interaction-axis' || role === 'interaction-magnitude') return this.interactionValues.entryMode === 'MAGNITUDE';
+    return this.interactionValues.entryMode !== 'MAGNITUDE';
   }
 
   handleInteractionKey(event) {
     if (event.defaultPrevented) return;
     if (event.key === 'Escape' && this.interactionPreview) {
-      event.preventDefault();
-      this.cancelInteractionPreview();
-      return;
+      event.preventDefault(); this.cancelInteractionPreview(); return;
     }
     if (event.key === 'Enter' && this.interactionPreview && !isTopologyEditTextControl(event.target)) {
-      event.preventDefault();
-      this.applyInteractionPreview();
-      return;
+      event.preventDefault(); this.applyInteractionPreview(); return;
     }
     if (isTopologyEditTextControl(event.target) || event.ctrlKey || event.metaKey || event.altKey) return;
     const nudge = topologyEditKeyboardNudge(event.key);
@@ -117,27 +124,17 @@ export class TopologyEdit3DViewController extends ReviewResponseController {
     this.nudgeInteraction(nudge.axis, nudge.directionSign, event.shiftKey ? 10 : 1);
   }
 
-  previewNumericInteraction({ announce = true } = {}) {
+  previewNumericInteraction({ announce = true, render = true } = {}) {
     try {
-      const entryMode = this.control('interaction-entry-mode')?.value;
-      const axis = this.control('interaction-axis')?.value ?? 'X';
+      this.interactionValues = readTopologyEditInteractionValues(this.interactionElement, this.interactionValues);
+      const { entryMode, x, y, z, magnitude, axis } = this.interactionValues;
       const preview = createTopologyEditNumericSessionPreview({
-        topology: this.session?.currentTopology(),
-        selection: this.selection,
-        entryMode,
-        values: {
-          x: this.control('interaction-value-x')?.value,
-          y: this.control('interaction-value-y')?.value,
-          z: this.control('interaction-value-z')?.value,
-        },
-        magnitudeMm: this.control('interaction-magnitude')?.value,
-        direction: axisDirection(axis),
+        topology: this.session?.currentTopology(), selection: this.selection, entryMode,
+        values: { x, y, z }, magnitudeMm: magnitude, direction: axisDirection(axis),
         transformMode: entryMode === 'MAGNITUDE' ? `AXIS_${axis}` : 'FREE',
       });
-      this.retainInteractionPreview(preview, 'Move preview updated', announce);
-    } catch (error) {
-      this.rejectInteraction(error);
-    }
+      this.retainInteractionPreview(preview, 'Move preview updated', announce, render);
+    } catch (error) { this.rejectInteraction(error); }
   }
 
   nudgeInteraction(axis, directionSign, incrementMultiplier = 1) {
@@ -145,29 +142,23 @@ export class TopologyEdit3DViewController extends ReviewResponseController {
       const baseIncrement = Number(this.control('interaction-nudge-increment')?.value ?? this.nudgeIncrementMm);
       const multiplier = Number(incrementMultiplier);
       const preview = createTopologyEditNudgeSessionPreview({
-        topology: this.session?.currentTopology(),
-        selection: this.selection,
-        preview: this.interactionPreview,
-        axis,
-        directionSign,
-        incrementMm: baseIncrement * multiplier,
+        topology: this.session?.currentTopology(), selection: this.selection, preview: this.interactionPreview,
+        axis, directionSign, incrementMm: baseIncrement * multiplier,
       });
       this.nudgeIncrementMm = baseIncrement;
       const prefix = multiplier === 1 ? '' : `${multiplier}× `;
-      this.retainInteractionPreview(
-        preview,
-        `${prefix}${directionSign < 0 ? 'negative' : 'positive'} ${axis} nudge preview created`,
-      );
-    } catch (error) {
-      this.rejectInteraction(error);
-    }
+      this.retainInteractionPreview(preview, `${prefix}${directionSign < 0 ? 'negative' : 'positive'} ${axis} nudge preview created`);
+    } catch (error) { this.rejectInteraction(error); }
   }
 
-  retainInteractionPreview(preview, prefix, announce = true) {
+  retainInteractionPreview(preview, prefix, announce = true, render = true) {
     this.interactionPreview = preview;
     this.interactionAcceptance = null;
     this.interactionError = null;
-    this.renderInteractionPanel();
+    if (render) this.renderInteractionPanel();
+    else updateTopologyEditInteractionPanelState(this.interactionElement, {
+      context: this.interactionContext(), preview, acceptance: null,
+    });
     this.updateInteractionEvidence();
     this.interactionControllerRuntime.sync();
     if (announce) this.setStatus(`${prefix}: ${preview.previewHash.slice(0, 12)}; display-only and not journaled.`);
@@ -178,46 +169,37 @@ export class TopologyEdit3DViewController extends ReviewResponseController {
     const preview = this.interactionPreview;
     const priorVersion = this.session.journal.sessionVersion;
     try {
-      assertCurrentTopologyEditInteractionPreview({
-        preview,
-        topology: this.session.currentTopology(),
-        selection: this.selection,
-      });
+      assertCurrentTopologyEditInteractionPreview({ preview, topology: this.session.currentTopology(), selection: this.selection });
       const transition = this.session.execute('MOVE_NODE', preview.movePayload);
-      if (transition.disposition !== 'ACCEPTED') {
-        throw new Error(`Certified MOVE_NODE rejected: ${transition.reason || 'candidate validation failed'}.`);
-      }
-      const acceptance = verifyTopologyEditInteractionAcceptance({
-        preview,
-        transition,
-        priorSessionVersion: priorVersion,
-      });
+      if (transition.disposition !== 'ACCEPTED') throw new Error(`Certified MOVE_NODE rejected: ${transition.reason || 'candidate validation failed'}.`);
+      const acceptance = verifyTopologyEditInteractionAcceptance({ preview, transition, priorSessionVersion: priorVersion });
       this.interactionPreview = null;
       this.interactionAcceptance = acceptance;
       this.interactionError = null;
+      this.resetInteractionValues();
       this.refreshView(this.session.currentTopology());
       this.autosaveAfterTransition?.(priorVersion);
       this.setStatus(`MOVE_NODE accepted from exact preview ${acceptance.previewHash.slice(0, 12)} at session version ${acceptance.sessionVersion}.`);
-    } catch (error) {
-      this.rejectInteraction(error);
-    }
+    } catch (error) { this.rejectInteraction(error); }
   }
 
   cancelInteractionPreview(announce = true) {
     const hadPreview = Boolean(this.interactionPreview);
     this.interactionPreview = null;
     this.interactionError = null;
+    this.resetInteractionValues();
     this.renderInteractionPanel();
     this.updateInteractionEvidence();
     this.interactionControllerRuntime.sync();
     if (hadPreview && announce) this.setStatus('Move preview cancelled; no journal or workspace change occurred.');
   }
 
-  clearInteractionState(announce = false, clearAcceptance = false) {
+  clearInteractionState(announce = false, clearAcceptance = false, resetValues = false) {
     const hadPreview = Boolean(this.interactionPreview);
     this.interactionPreview = null;
     this.interactionError = null;
     if (clearAcceptance) this.interactionAcceptance = null;
+    if (resetValues) this.resetInteractionValues();
     this.renderInteractionPanel();
     this.updateInteractionEvidence();
     this.interactionControllerRuntime.sync();
@@ -232,28 +214,32 @@ export class TopologyEdit3DViewController extends ReviewResponseController {
     this.setStatus(`Move blocked: ${this.interactionError}`);
   }
 
-  refreshFromWorkspace() { this.clearInteractionState(false, true); return super.refreshFromWorkspace(); }
-  activateSearchResult(result, options = {}) { this.clearInteractionState(false, true); return super.activateSearchResult(result, options); }
-  focusIssue(entry) { this.clearInteractionState(false, true); return super.focusIssue(entry); }
-  runCommandAction(actionId) { this.clearInteractionState(false, true); return super.runCommandAction(actionId); }
-  undo() { this.clearInteractionState(false, true); return super.undo(); }
-  redo() { this.clearInteractionState(false, true); return super.redo(); }
-  acceptAutofix() { this.clearInteractionState(false, true); return super.acceptAutofix(); }
+  refreshFromWorkspace() { this.clearInteractionState(false, true, true); return super.refreshFromWorkspace(); }
+  activateSearchResult(result, options = {}) { this.clearInteractionState(false, true, true); return super.activateSearchResult(result, options); }
+  focusIssue(entry) { this.clearInteractionState(false, true, true); return super.focusIssue(entry); }
+  runCommandAction(actionId) { this.clearInteractionState(false, true, true); return super.runCommandAction(actionId); }
+  undo() { this.clearInteractionState(false, true, true); return super.undo(); }
+  redo() { this.clearInteractionState(false, true, true); return super.redo(); }
+  acceptAutofix() { this.clearInteractionState(false, true, true); return super.acceptAutofix(); }
+
+  interactionContext() {
+    try { return selectedTopologyEditNodeContext(this.session?.currentTopology(), this.selection); }
+    catch { return null; }
+  }
+
+  resetInteractionValues() {
+    const context = this.interactionContext();
+    this.interactionValueNodeId = context?.nodeId ?? null;
+    this.interactionValues = topologyEditInteractionModeValues(context);
+  }
 
   renderInteractionPanel() {
     if (!this.interactionElement) return;
-    let context = null;
-    try {
-      context = selectedTopologyEditNodeContext(this.session?.currentTopology(), this.selection);
-    } catch {
-      context = null;
-    }
+    const context = this.interactionContext();
+    if ((context?.nodeId ?? null) !== this.interactionValueNodeId) this.resetInteractionValues();
     renderTopologyEditInteractionPanel(this.interactionElement, {
-      context,
-      preview: this.interactionPreview,
-      acceptance: this.interactionAcceptance,
-      error: this.interactionError,
-      nudgeIncrementMm: this.nudgeIncrementMm,
+      context, values: this.interactionValues, preview: this.interactionPreview,
+      acceptance: this.interactionAcceptance, error: this.interactionError, nudgeIncrementMm: this.nudgeIncrementMm,
     });
   }
 
@@ -281,6 +267,4 @@ export class TopologyEdit3DViewController extends ReviewResponseController {
   control(role) { return this.interactionElement?.querySelector(`[data-role="${role}"]`) ?? null; }
 }
 
-function selectionKey(selection) {
-  return `${(selection?.nodeIds ?? []).join('|')}::${selection?.edgeId ?? ''}`;
-}
+function selectionKey(selection) { return `${(selection?.nodeIds ?? []).join('|')}::${selection?.edgeId ?? ''}`; }

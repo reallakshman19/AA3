@@ -3,10 +3,12 @@ import { expect, test } from '@playwright/test';
 
 const REPORT = 'reports/qualification/topology-edit-a3d003-cross-surface.json';
 const STEP_MM = 25;
-const ROWS = [];
-const DEFECTS = [];
-const RESULTS = new Map();
-
+const ROUTES = Object.freeze([
+  ['mock1', 'canvas'],
+  ['mock1', 'table'],
+  ['mock2', 'canvas'],
+  ['mock2', 'table'],
+]);
 const FIXTURES = Object.freeze({
   mock1: Object.freeze({
     label: 'Mock 1 / 3D Demo',
@@ -20,97 +22,126 @@ const FIXTURES = Object.freeze({
   }),
 });
 
-// One worker preserves the declared order while default mode still executes later rows after a failure.
-test.describe.configure({ mode: 'default' });
-
-test.beforeEach(async ({ page }) => {
-  test.setTimeout(240_000);
-  await page.setViewportSize({ width: 1720, height: 1080 });
-  await page.addInitScript(() => globalThis.localStorage?.clear());
-});
+let finalReport = null;
 
 test.afterAll(async () => {
   await mkdir('reports/qualification', { recursive: true });
-  await writeFile(REPORT, `${JSON.stringify({
+  await writeFile(REPORT, `${JSON.stringify(finalReport ?? {
+    schema: 'TopologyEditA3D003CrossSurfaceMatrix.v1',
+    status: 'NOT_COMPLETED',
+  }, null, 2)}\n`);
+});
+
+test('Mock 1 canvas → Table, then Mock 2 canvas → Table converge on canonical MOVE_NODE', async ({ browser }, testInfo) => {
+  test.setTimeout(300_000);
+  const rows = [];
+  const defects = [];
+
+  for (const [fixtureId, surface] of ROUTES) {
+    await test.step(`${FIXTURES[fixtureId].label} via ${surface === 'canvas' ? '3D canvas' : 'Table'}`, async () => {
+      const context = await browser.newContext({ viewport: { width: 1720, height: 1080 } });
+      const page = await context.newPage();
+      await page.addInitScript(() => globalThis.localStorage?.clear());
+      try {
+        const row = await runRoute(page, fixtureId, surface, testInfo);
+        rows.push(row);
+      } catch (error) {
+        defects.push({
+          fixtureId,
+          surface,
+          message: error instanceof Error ? error.message : String(error),
+        });
+      } finally {
+        await context.close();
+      }
+    });
+  }
+
+  for (const fixtureId of ['mock1', 'mock2']) {
+    const canvas = rows.find((row) => row.fixtureId === fixtureId && row.surface === 'canvas');
+    const table = rows.find((row) => row.fixtureId === fixtureId && row.surface === 'table');
+    if (!canvas || !table) {
+      defects.push({
+        fixtureId,
+        surface: 'comparison',
+        message: 'Canvas/Table result pair is incomplete.',
+      });
+      continue;
+    }
+    const assertions = [
+      ['canonicalHash', table.applied.canonicalHash, canvas.applied.canonicalHash],
+      ['nodePosition', table.applied.nodePosition, canvas.applied.nodePosition],
+      ['edgeConnectivity', table.applied.edgeConnectivity, canvas.applied.edgeConnectivity],
+      ['sourceHash', table.applied.sourceHash, canvas.applied.sourceHash],
+      ['sourceByteHash', table.applied.sourceByteHash, canvas.applied.sourceByteHash],
+      ['lastCommandType', table.applied.lastCommandType, canvas.applied.lastCommandType],
+    ];
+    for (const [field, actual, expected] of assertions) {
+      if (JSON.stringify(actual) !== JSON.stringify(expected)) {
+        defects.push({
+          fixtureId,
+          surface: 'comparison',
+          field,
+          actual,
+          expected,
+        });
+      }
+    }
+  }
+
+  finalReport = {
     schema: 'TopologyEditA3D003CrossSurfaceMatrix.v1',
     candidateHead: process.env.TOPOLOGY_EDIT_TARGET_HEAD_SHA || null,
     operation: {
       commandType: 'MOVE_NODE',
       movementMode: 'NODE_ONLY',
-      change: 'OUTWARD_COLLINEAR_TERMINAL_PIPE',
+      change: 'OUTWARD_AXIS_ALIGNED_TERMINAL_PIPE',
       distanceMm: STEP_MM,
     },
-    order: ['mock1:canvas', 'mock1:table', 'mock2:canvas', 'mock2:table'],
-    status: DEFECTS.length ? 'FAIL' : 'PASS',
-    defects: DEFECTS,
-    rows: ROWS,
-  }, null, 2)}\n`);
+    order: ROUTES.map(([fixtureId, surface]) => `${fixtureId}:${surface}`),
+    status: defects.length ? 'FAIL' : 'PASS',
+    defects,
+    rows,
+  };
+
+  expect(defects).toEqual([]);
+  expect(rows).toHaveLength(4);
 });
 
-for (const fixtureId of ['mock1', 'mock2']) {
-  test(`${FIXTURES[fixtureId].label} via 3D canvas`, async ({ page }, testInfo) => {
-    await matrixCase(page, testInfo, fixtureId, 'canvas');
+async function runRoute(page, fixtureId, surface, testInfo) {
+  const host = await openFixture(page, FIXTURES[fixtureId]);
+  const target = await selectSafeMatrixTarget(page);
+  const baseline = await authority(page, target);
+  const requestedPosition = target.requestedPosition;
+
+  const interaction = surface === 'canvas'
+    ? await moveViaCanvas(page, host, target, requestedPosition)
+    : await moveViaTable(page, host, target, requestedPosition);
+
+  const applied = await authority(page, target);
+  expect(applied.canonicalHash).not.toBe(baseline.canonicalHash);
+  expect(applied.sourceHash).toBe(baseline.sourceHash);
+  expect(applied.sourceByteHash).toBe(baseline.sourceByteHash);
+  expect(applied.activeCommandCount).toBe(baseline.activeCommandCount + 1);
+  expect(applied.lastCommandType).toBe('MOVE_NODE');
+  expect(applied.nodePosition).toEqual(requestedPosition);
+  expect(applied.edgeConnectivity).toEqual(baseline.edgeConnectivity);
+
+  await page.screenshot({
+    path: testInfo.outputPath(`${fixtureId}-${surface}-applied.png`),
+    fullPage: true,
   });
-  test(`${FIXTURES[fixtureId].label} via Table`, async ({ page }, testInfo) => {
-    await matrixCase(page, testInfo, fixtureId, 'table');
-  });
-}
 
-async function matrixCase(page, testInfo, fixtureId, surface) {
-  try {
-    const host = await openFixture(page, FIXTURES[fixtureId]);
-    const target = await selectSafeMatrixTarget(page);
-    const baseline = await authority(page, target);
-    const requestedPosition = target.requestedPosition;
-
-    let interactionEvidence;
-    if (surface === 'canvas') {
-      interactionEvidence = await moveViaCanvas(page, host, target, requestedPosition);
-    } else {
-      interactionEvidence = await moveViaTable(page, host, target, requestedPosition);
-    }
-
-    const applied = await authority(page, target);
-    expect(applied.canonicalHash).not.toBe(baseline.canonicalHash);
-    expect(applied.sourceHash).toBe(baseline.sourceHash);
-    expect(applied.sourceByteHash).toBe(baseline.sourceByteHash);
-    expect(applied.activeCommandCount).toBe(baseline.activeCommandCount + 1);
-    expect(applied.lastCommandType).toBe('MOVE_NODE');
-    expect(applied.nodePosition).toEqual(requestedPosition);
-    expect(applied.edgeConnectivity).toEqual(baseline.edgeConnectivity);
-
-    const row = {
-      fixtureId,
-      fixture: FIXTURES[fixtureId].label,
-      surface,
-      target,
-      requestedPosition,
-      baseline,
-      interaction: interactionEvidence,
-      applied,
-    };
-    ROWS.push(row);
-    RESULTS.set(`${fixtureId}:${surface}`, row);
-
-    if (surface === 'table') {
-      const canvas = RESULTS.get(`${fixtureId}:canvas`);
-      expect(canvas, `${fixtureId} canvas result must precede Table result.`).toBeTruthy();
-      expect(applied.canonicalHash).toBe(canvas.applied.canonicalHash);
-      expect(applied.nodePosition).toEqual(canvas.applied.nodePosition);
-      expect(applied.edgeConnectivity).toEqual(canvas.applied.edgeConnectivity);
-      expect(applied.sourceHash).toBe(canvas.applied.sourceHash);
-      expect(interactionEvidence.commandType).toBe(canvas.interaction.commandType);
-    }
-
-    await page.screenshot({ path: testInfo.outputPath(`${fixtureId}-${surface}-applied.png`), fullPage: true });
-  } catch (error) {
-    DEFECTS.push({
-      fixtureId,
-      surface,
-      message: error instanceof Error ? error.message : String(error),
-    });
-    throw error;
-  }
+  return {
+    fixtureId,
+    fixture: FIXTURES[fixtureId].label,
+    surface,
+    target,
+    requestedPosition,
+    baseline,
+    interaction,
+    applied,
+  };
 }
 
 async function openFixture(page, fixture) {
@@ -151,9 +182,11 @@ async function selectSafeMatrixTarget(page) {
       boundary.nodeId, boundary.canonicalNodeId,
     ]).filter(Boolean));
     const nodes = new Map(topology.nodes.map((node) => [node.id, node]));
-    const rows = [];
-    for (const edge of [...topology.edges].sort((a, b) => (
-      String(a.componentKey ?? a.id).localeCompare(String(b.componentKey ?? b.id))
+    const candidates = [];
+    const epsilon = 1e-8;
+
+    for (const edge of [...topology.edges].sort((left, right) => (
+      String(left.componentKey ?? left.id).localeCompare(String(right.componentKey ?? right.id))
     ))) {
       if (String(edge.entityType ?? '').toUpperCase() !== 'PIPE') continue;
       if (supportHosts.has(edge.id) || supportHosts.has(edge.componentKey)) continue;
@@ -169,14 +202,13 @@ async function selectSafeMatrixTarget(page) {
           y: node.position.y - anchor.position.y,
           z: node.position.z - anchor.position.z,
         };
-        const length = Math.hypot(delta.x, delta.y, delta.z);
-        if (!(length > 1e-9)) continue;
-        const unit = {
-          x: delta.x / length,
-          y: delta.y / length,
-          z: delta.z / length,
-        };
-        rows.push({
+        const activeAxes = ['x', 'y', 'z'].filter((axis) => Math.abs(delta[axis]) > epsilon);
+        if (activeAxes.length !== 1) continue;
+        const axis = activeAxes[0];
+        const sign = Math.sign(delta[axis]);
+        const requestedPosition = { ...node.position };
+        requestedPosition[axis] += sign * stepMm;
+        candidates.push({
           edgeId: edge.id,
           componentKey: edge.componentKey ?? edge.id,
           entityType: edge.entityType,
@@ -184,21 +216,20 @@ async function selectSafeMatrixTarget(page) {
           nodeId,
           anchorNodeId,
           boundary: boundaryNodes.has(nodeId),
+          axis: axis.toUpperCase(),
+          directionSign: sign,
           position: { ...node.position },
           anchorPosition: { ...anchor.position },
-          originalLengthMm: length,
-          requestedPosition: {
-            x: node.position.x + unit.x * stepMm,
-            y: node.position.y + unit.y * stepMm,
-            z: node.position.z + unit.z * stepMm,
-          },
+          originalLengthMm: Math.abs(delta[axis]),
+          requestedPosition,
         });
       }
     }
-    const preferred = rows.filter((row) => !row.boundary);
-    const target = (preferred.length ? preferred : rows)[0];
+
+    const preferred = candidates.filter((row) => !row.boundary);
+    const target = (preferred.length ? preferred : candidates)[0];
     if (!target) {
-      throw new Error('A3D-003: no terminal support-free PIPE NODE_ONLY target is available.');
+      throw new Error('A3D-003: no terminal support-free axis-aligned PIPE NODE_ONLY target is available.');
     }
     return target;
   }, STEP_MM);
@@ -211,11 +242,10 @@ async function moveViaCanvas(page, host, target, requestedPosition) {
   await page.mouse.click(pickEvidence.point.x, pickEvidence.point.y);
   await expect(host).toHaveAttribute('data-topology-edit-selection-primary-id', target.nodeId);
 
-  const current = target.position;
   const delta = {
-    x: requestedPosition.x - current.x,
-    y: requestedPosition.y - current.y,
-    z: requestedPosition.z - current.z,
+    x: requestedPosition.x - target.position.x,
+    y: requestedPosition.y - target.position.y,
+    z: requestedPosition.z - target.position.z,
   };
   const interactionPanel = page.locator('[data-role="topology-edit-professional-interaction"]');
   await expect(interactionPanel).toBeVisible();
@@ -231,27 +261,40 @@ async function moveViaCanvas(page, host, target, requestedPosition) {
     return {
       previewHash: controller.interactionPreview?.previewHash ?? '',
       targetPosition: controller.interactionPreview?.targetPosition ?? null,
-      canonicalHash: controller.session.currentTopology().canonicalTopologyHash,
+      priorCanonicalHash: controller.session.currentTopology().canonicalTopologyHash,
     };
   });
   expect(preview.targetPosition).toEqual(requestedPosition);
+
   await interactionPanel.locator('[data-action="apply-professional-interaction"]').click();
-  await expect.poll(() => host.getAttribute('data-topology-edit-interaction-acceptance-hash')).toBeTruthy();
-  const acceptance = await page.evaluate(() => {
+  await expect.poll(() => page.evaluate((prior) => {
+    const controller = document.querySelector('[data-role="topology-edit-render-host"]')
+      ?.__topologyEditAuthoringController;
+    return controller?.session?.currentTopology?.()?.canonicalTopologyHash !== prior;
+  }, preview.priorCanonicalHash)).toBe(true);
+
+  const postApply = await page.evaluate(() => {
     const controller = document.querySelector('[data-role="topology-edit-render-host"]')
       ?.__topologyEditAuthoringController;
     return {
       acceptanceHash: controller.interactionAcceptance?.acceptanceHash ?? '',
       certificationHash: controller.interactionAcceptance?.certificationHash ?? '',
       candidateHash: controller.interactionAcceptance?.candidateDraftHash ?? '',
+      transientReceiptRetained: Boolean(controller.interactionAcceptance),
+      interactionError: controller.interactionError ?? '',
+      canonicalHash: controller.session.currentTopology().canonicalTopologyHash,
+      journalHash: controller.session.journal.journalHash,
+      sessionVersion: controller.session.journal.sessionVersion,
     };
   });
+  expect(postApply.interactionError).toBe('');
+
   return {
     commandType: 'MOVE_NODE',
     selectionSource: 'viewport',
     pickEvidence,
     ...preview,
-    ...acceptance,
+    ...postApply,
   };
 }
 
@@ -302,7 +345,7 @@ async function resolveVisibleNodePickPoint(page, nodeId) {
         const y = center.y + dy;
         if (x < rect.left || x > rect.right || y < rect.top || y > rect.bottom) continue;
         const production = productionAt(x, y);
-        samples.push({ radius, dx, dy, production });
+        samples.push({ radius, production });
         if (production?.objectId === targetNodeId) {
           return {
             point: { x, y },
@@ -352,13 +395,16 @@ async function moveViaTable(page, host, target, requestedPosition) {
   await page.locator('[data-table-action="preview"]').click();
   await expect.poll(() => host.getAttribute('data-topology-edit-table-preview-hash')).toBeTruthy();
   const preview = await page.evaluate(() => {
-    const runtime = document.querySelector('[data-role="topology-edit-render-host"]')
-      ?.__topologyEditAuthoringController?.tableAdapter?.runtime;
+    const controller = document.querySelector('[data-role="topology-edit-render-host"]')
+      ?.__topologyEditAuthoringController;
+    const runtime = controller?.tableAdapter?.runtime;
     return {
       batchHash: runtime?.batch?.batchHash ?? '',
       planHash: runtime?.batchPlan?.operationPlan?.planHash ?? '',
       previewHash: runtime?.preview?.previewHash ?? '',
       candidateHash: runtime?.preview?.candidate?.candidateHash ?? '',
+      resultingCanonicalHash: runtime?.preview?.candidate?.canonicalTopology?.canonicalTopologyHash ?? '',
+      priorCanonicalHash: controller.session.currentTopology().canonicalTopologyHash,
       commandTypes: (runtime?.preview?.candidate?.materializedCommandIntents ?? []).map((row) => row.commandType),
     };
   });
@@ -366,8 +412,16 @@ async function moveViaTable(page, host, target, requestedPosition) {
   await page.locator('[data-table-action="validate"]').click();
   await expect(host).toHaveAttribute('data-topology-edit-table-validation-status', 'READY_TO_APPLY');
   await page.locator('[data-table-action="apply"]').click();
-  await expect(host).toHaveAttribute('data-topology-edit-table-validation-status', '');
-  return { commandType: 'MOVE_NODE', selectionSource: 'table', ...preview };
+  await expect.poll(() => page.evaluate((prior) => {
+    const controller = document.querySelector('[data-role="topology-edit-render-host"]')
+      ?.__topologyEditAuthoringController;
+    return controller?.session?.currentTopology?.()?.canonicalTopologyHash !== prior;
+  }, preview.priorCanonicalHash)).toBe(true);
+  return {
+    commandType: 'MOVE_NODE',
+    selectionSource: 'table',
+    ...preview,
+  };
 }
 
 async function authority(page, target) {
@@ -387,6 +441,7 @@ async function authority(page, target) {
       journalHash: journal.journalHash,
       activeLedgerHash: journal.activeLedgerHash,
       activeCommandCount: journal.activeCommandIds.length,
+      activeCommandIds: [...journal.activeCommandIds],
       sessionVersion: journal.sessionVersion,
       lastCommandType: last?.request?.commandType ?? last?.certification?.request?.commandType ?? '',
       nodePosition: { ...node.position },

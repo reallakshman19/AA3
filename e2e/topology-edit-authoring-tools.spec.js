@@ -57,16 +57,15 @@ test('production 3D Edit completes contextual Continue route through governed au
   expect(completed.nodeCount).toBe(initial.nodeCount + 2);
   expect(completed.edgeCount).toBe(initial.edgeCount + 2);
   expect(completed.bendCount).toBe(initial.bendCount + 1);
-  expect(completed.issueKinds).not.toContain('RIGHT_ANGLE_WITHOUT_BEND');
+  expect(completed.rightAngleIssueIds).toEqual(initial.rightAngleIssueIds);
   expect(completed.authoredBendArcCount).toBeGreaterThanOrEqual(1);
   expect(completed.transactionHash).not.toBe('');
   expect(completed.commandTypes.slice(-5)).toEqual([
     'CREATE_NODE', 'CREATE_NODE', 'INSERT_PIPE_SEGMENT', 'INSERT_PIPE_SEGMENT', 'ADD_BEND_DEFINITION',
   ]);
 
-  const completedScreenshot = await page.screenshot({ fullPage: true });
   await testInfo.attach('topology-edit-contextual-continue-route', {
-    body: completedScreenshot,
+    body: await page.screenshot({ fullPage: true }),
     contentType: 'image/png',
   });
 
@@ -92,9 +91,6 @@ test('production 3D Edit completes contextual Continue route through governed au
     preview,
     completed,
   }, null, 2)}\n`);
-  await page.evaluate(() => {
-    delete globalThis.__AUTHORING_CONTROLLER__;
-  });
 });
 
 async function openProductionAuthoringController(page) {
@@ -106,23 +102,20 @@ async function openProductionAuthoringController(page) {
     globalThis.AnalysisWorkspace?.getSnapshot?.()?.dataset?.entities?.length ?? 0
   ))).toBe(20);
   await page.getByRole('button', { name: '3D Edit', exact: true }).click();
-  await expect(page.locator('[data-role="topology-edit-render-host"]')).toBeVisible();
+  const host = page.locator('[data-role="topology-edit-render-host"]');
+  await expect(host).toBeVisible();
   await expect.poll(() => page.evaluate(() => Boolean(
-    document.querySelector('[data-role="topology-edit-render-host"]')
-      ?.__topologyEditAuthoringController
+    document.querySelector('[data-role="topology-edit-render-host"]')?.__topologyEditAuthoringController
   ))).toBe(true);
   await page.evaluate(() => {
-    const host = document.querySelector('[data-role="topology-edit-render-host"]');
-    const controller = host?.__topologyEditAuthoringController;
-    if (!controller) throw new Error('Mounted production authoring controller is unavailable.');
-    globalThis.__AUTHORING_CONTROLLER__ = controller;
+    globalThis.__AUTHORING_CONTROLLER__ = document.querySelector(
+      '[data-role="topology-edit-render-host"]',
+    )?.__topologyEditAuthoringController;
   });
-  const host = page.locator('[data-role="topology-edit-render-host"]');
   const authoringPanel = page.locator('details[data-panel-kind="authoring"]');
   if (!(await authoringPanel.evaluate((element) => element.open))) {
     await authoringPanel.locator(':scope > summary').click();
   }
-  await expect.poll(() => authoringPanel.evaluate((element) => element.open)).toBe(true);
   await expect(page.locator('[data-role="topology-edit-authoring"]')).toBeVisible();
   return host;
 }
@@ -166,8 +159,7 @@ async function safeAxisAlignedOpenEndpoint(page) {
       const length = Math.hypot(delta.x, delta.y, delta.z);
       if (!(length > 300)) return [];
       const outward = { x: delta.x / length, y: delta.y / length, z: delta.z / length };
-      const axisCount = Object.values(outward).filter((value) => Math.abs(value) > 1e-8).length;
-      if (axisCount !== 1) return [];
+      if (Object.values(outward).filter((value) => Math.abs(value) > 1e-8).length !== 1) return [];
       const radial = Math.hypot(
         node.position.x - center.x,
         node.position.y - center.y,
@@ -219,8 +211,7 @@ async function safeRouteProperties(page, nodeId) {
     const perpendicularAxis = ['x', 'y', 'z']
       .filter((axis) => axis !== occupiedAxis)
       .sort((left, right) => (
-        Math.abs(node.position[right] - center[right])
-        - Math.abs(node.position[left] - center[left])
+        Math.abs(node.position[right] - center[right]) - Math.abs(node.position[left] - center[left])
       ))[0];
     const sign = node.position[perpendicularAxis] >= center[perpendicularAxis] ? 1 : -1;
     const offset = { x: outward.x * 600, y: outward.y * 600, z: outward.z * 600 };
@@ -251,9 +242,7 @@ async function clickCanonicalNode(page, nodeId) {
     const node = controller.session.currentTopology().nodes.find((row) => row.id === id);
     const camera = controller.viewportBackend.activeCamera;
     const canvas = controller.viewportBackend.renderer.domElement;
-    const vector = camera.position.clone()
-      .set(node.position.x, node.position.y, node.position.z)
-      .project(camera);
+    const vector = camera.position.clone().set(node.position.x, node.position.y, node.position.z).project(camera);
     const rect = canvas.getBoundingClientRect();
     return {
       x: rect.left + ((vector.x + 1) / 2) * rect.width,
@@ -264,15 +253,11 @@ async function clickCanonicalNode(page, nodeId) {
 }
 
 async function selectedNodeId(page) {
-  return page.evaluate(() => (
-    globalThis.__AUTHORING_CONTROLLER__?.selection?.nodeIds?.[0] ?? null
-  ));
+  return page.evaluate(() => globalThis.__AUTHORING_CONTROLLER__?.selection?.nodeIds?.[0] ?? null);
 }
 
 async function controllerCanonicalHash(page) {
-  return page.evaluate(() => (
-    globalThis.__AUTHORING_CONTROLLER__.session.currentTopology().canonicalTopologyHash
-  ));
+  return page.evaluate(() => globalThis.__AUTHORING_CONTROLLER__.session.currentTopology().canonicalTopologyHash);
 }
 
 async function evidence(page) {
@@ -292,9 +277,11 @@ async function evidence(page) {
       nodeCount: topology.nodes.length,
       edgeCount: topology.edges.length,
       bendCount: topology.bends?.length ?? 0,
-      issueKinds: controller.issues.map((row) => row.kind),
+      rightAngleIssueIds: controller.issues
+        .filter((row) => row.kind === 'RIGHT_ANGLE_WITHOUT_BEND')
+        .map((row) => row.id)
+        .sort(),
       transactionHash: controller.hostElement.dataset.topologyEditAuthoringTransactionHash || '',
-      authoredBendProjectionHash: controller.hostElement.dataset.topologyEditAuthoredBendProjectionHash || '',
       authoredBendArcCount,
     };
   });

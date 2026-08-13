@@ -54,7 +54,9 @@ jobs:
       - name: Run Engineering Table contract tests
         shell: bash
         run: |
-          node --test tests/topology-edit-table-*.test.mjs tests/topology-edit-transient-node-draft.test.mjs
+          set -o pipefail
+          mkdir -p reports/qualification
+          node --test tests/topology-edit-table-*.test.mjs tests/topology-edit-transient-node-draft.test.mjs 2>&1 | tee reports/qualification/engineering-table-node-tests.log
       - name: Build production bundle
         run: npm run build
       - name: Install pinned Chromium runtime
@@ -69,6 +71,7 @@ jobs:
         with:
           name: engineering-table-${{ github.event.pull_request.head.sha || github.sha }}
           path: |
+            reports/qualification/engineering-table-node-tests.log
             reports/qualification/topology-edit-table-*.json
             test-results/**
             playwright-report/**

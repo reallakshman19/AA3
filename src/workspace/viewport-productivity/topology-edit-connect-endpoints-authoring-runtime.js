@@ -1,4 +1,7 @@
 import { CONNECT_ENDPOINTS_TRANSACTION_SCHEMA } from '../topology-edit/authoring/topology-edit-connect-endpoints-transaction.js';
+import {
+  updateTopologyEditAuthoringProperties,
+} from '../topology-edit/authoring/topology-edit-authoring-session.js';
 import { TopologyEditStartRouteAuthoringRuntime } from './topology-edit-start-route-authoring-runtime.js';
 import {
   applyConnectEndpointsAuthoring,
@@ -24,6 +27,14 @@ import {
   refreshConnectEndpointsElbowOptions,
   transitionConnectEndpointsHistory,
 } from './topology-edit-connect-endpoints-runtime-support.js';
+import {
+  applyConnectWorkflowDefaults,
+  applyStartRouteWorkflowDefaults,
+  connectWorkflowReadyForPlanning,
+  continueRouteWorkflowActive,
+  renderRouteConnectConsolidation,
+  startRouteWorkflowReady,
+} from './topology-edit-route-connect-consolidation.js';
 
 export class TopologyEditConnectEndpointsAuthoringRuntime
   extends TopologyEditStartRouteAuthoringRuntime {
@@ -38,6 +49,7 @@ export class TopologyEditConnectEndpointsAuthoringRuntime
     this.connectOperation = null;
     this.connectElbowOptions = [];
     this.connectWorkerReceipt = null;
+    this.routeConnectWorkflowRevision = 0;
   }
 
   handleAction(action) {
@@ -61,21 +73,48 @@ export class TopologyEditConnectEndpointsAuthoringRuntime
     return actions[action]?.() ?? false;
   }
 
+  activateTool(tool) {
+    const handled = super.activateTool(tool);
+    if (handled && tool === 'ROUTE_ELBOW') {
+      this.routeConnectWorkflowRevision += 1;
+      this.message = 'Continue route: select one graph-open pipe end and enter the route offset.';
+      this.publish();
+    }
+    return handled;
+  }
+
+  activateStartRoute() {
+    const handled = super.activateStartRoute();
+    applyStartRouteWorkflowDefaults(this);
+    this.routeConnectWorkflowRevision += 1;
+    this.message = 'Start Route: set start and end from exact viewport snaps, then choose the governed pipe.';
+    this.publish();
+    return handled;
+  }
+
   activateConnectEndpoints() {
     super.clear(false, false);
     this.connectEndpointsActive = true;
     this.connectValues = createConnectEndpointsHudValues();
+    applyConnectWorkflowDefaults(this);
     this.connectStartEndpoint = null;
     this.connectEndEndpoint = null;
     clearConnectEndpointsPlanning(this);
+    this.routeConnectWorkflowRevision += 1;
     this.error = null;
-    this.message = 'Connect Existing Ends: capture two exact graph-open canonical pipe endpoints.';
+    this.message = 'Connect Ends: select the first graph-open pipe endpoint, then the second.';
+    this.captureSelectedConnectEndpoint(false);
     this.publish();
+    this.queueConnectQualification();
     return true;
   }
 
   selectionChanged() {
-    return this.connectEndpointsActive ? this.publish() : super.selectionChanged();
+    if (!this.connectEndpointsActive) return super.selectionChanged();
+    this.captureSelectedConnectEndpoint(true);
+    this.publish();
+    this.queueConnectQualification();
+    return true;
   }
   reconcileSelection() {
     if (!this.connectEndpointsActive) return super.reconcileSelection();
@@ -87,6 +126,7 @@ export class TopologyEditConnectEndpointsAuthoringRuntime
       this.connectStartEndpoint = null;
       this.connectEndEndpoint = null;
       clearConnectEndpointsPlanning(this);
+      this.routeConnectWorkflowRevision += 1;
       this.message = 'Connect plan cleared because its exact canonical endpoint basis changed.';
     }
     this.render();
@@ -94,6 +134,30 @@ export class TopologyEditConnectEndpointsAuthoringRuntime
   }
 
   handleFieldChange(event) {
+    if (this.startRouteActive) {
+      const handled = super.handleFieldChange(event);
+      this.routeConnectWorkflowRevision += 1;
+      this.queueStartRouteQualification();
+      return handled;
+    }
+    if (continueRouteWorkflowActive(this)) {
+      try {
+        this.state = updateTopologyEditAuthoringProperties(
+          this.state,
+          this.readProperties(),
+          'USER_INPUT',
+        );
+        this.clearCandidateState();
+        this.error = null;
+        this.message = 'Continue route values changed; updating the governed ghost and validation.';
+      } catch (error) {
+        this.reject(error, 'Continue route inputs are not valid.');
+      }
+      this.routeConnectWorkflowRevision += 1;
+      this.publish();
+      this.queueContinueRouteQualification();
+      return;
+    }
     if (!this.connectEndpointsActive) return super.handleFieldChange(event);
     this.connectValues = readConnectEndpointsHud(this.element, this.connectValues);
     const alternativeChanged = event.target?.dataset?.connectField === 'alternativeId';
@@ -101,16 +165,25 @@ export class TopologyEditConnectEndpointsAuthoringRuntime
     if (alternativeChanged && this.connectPlan) {
       clearConnectEndpointsCandidate(this, false);
       refreshConnectEndpointsElbowOptions(this);
-      this.message = 'Ranked Connect alternative selected; review governed fitting evidence.';
+      this.message = 'Ranked route selected; updating the governed ghost and validation.';
     } else if (elbowChanged) {
       clearConnectEndpointsCandidate(this, false);
-      this.message = 'Governed elbow selection changed; create a new preview.';
+      this.message = 'Governed elbow selection changed; updating the route preview.';
     } else {
       clearConnectEndpointsPlanning(this);
-      this.message = 'Connect planning inputs changed; plan alternatives again.';
+      this.message = 'Connection inputs changed; updating deterministic route alternatives.';
     }
+    this.routeConnectWorkflowRevision += 1;
     this.error = null;
     this.publish();
+    this.queueConnectQualification();
+  }
+
+  captureSnap(role) {
+    const handled = super.captureSnap(role);
+    this.routeConnectWorkflowRevision += 1;
+    this.queueStartRouteQualification();
+    return handled;
   }
 
   captureEndpoint(role) {
@@ -119,13 +192,41 @@ export class TopologyEditConnectEndpointsAuthoringRuntime
       if (role === 'start') this.connectStartEndpoint = endpoint;
       else this.connectEndEndpoint = endpoint;
       clearConnectEndpointsPlanning(this);
+      this.routeConnectWorkflowRevision += 1;
       this.error = null;
       this.message = `Exact ${role} endpoint ${endpoint.nodeId} captured from canonical selection.`;
     } catch (error) {
       this.reject(error, `Connect ${role} endpoint capture blocked.`);
     }
     this.publish();
+    this.queueConnectQualification();
     return true;
+  }
+
+  captureSelectedConnectEndpoint(announce) {
+    let endpoint;
+    try {
+      endpoint = captureConnectEndpoint(this.controller);
+    } catch {
+      return false;
+    }
+    if (this.connectStartEndpoint?.nodeId === endpoint.nodeId
+      || this.connectEndEndpoint?.nodeId === endpoint.nodeId) return false;
+    if (!this.connectStartEndpoint) {
+      this.connectStartEndpoint = endpoint;
+      clearConnectEndpointsPlanning(this);
+      this.routeConnectWorkflowRevision += 1;
+      if (announce) this.message = `Start endpoint ${endpoint.nodeId} captured; select the second endpoint.`;
+      return true;
+    }
+    if (!this.connectEndEndpoint) {
+      this.connectEndEndpoint = endpoint;
+      clearConnectEndpointsPlanning(this);
+      this.routeConnectWorkflowRevision += 1;
+      this.message = `End endpoint ${endpoint.nodeId} captured; choose the governed pipe.`;
+      return true;
+    }
+    return false;
   }
 
   planAlternatives() {
@@ -144,9 +245,16 @@ export class TopologyEditConnectEndpointsAuthoringRuntime
       this.connectValues.alternativeId = '';
       clearConnectEndpointsCandidate(this, false);
       this.connectElbowOptions = [];
+      const viable = prepared.plan.alternatives.filter((row) => !row.blockerCodes.length);
+      if (viable.length === 1) {
+        this.connectValues.alternativeId = viable[0].alternativeId;
+        refreshConnectEndpointsElbowOptions(this);
+      }
       this.error = null;
       this.message = prepared.plan.compatibilityStatus === 'COMPATIBLE'
-        ? `${prepared.plan.alternatives.length} deterministic route alternative(s) ranked; choose one explicitly.`
+        ? viable.length === 1
+          ? 'One deterministic compatible route found; updating its ghost and validation.'
+          : `${prepared.plan.alternatives.length} deterministic route alternative(s) ranked; choose one.`
         : `Connection requires a governed transition: ${prepared.plan.compatibilityDifferences.join(', ')}.`;
     } catch (error) {
       this.reject(error, 'Connect route planning blocked.');
@@ -204,7 +312,7 @@ export class TopologyEditConnectEndpointsAuthoringRuntime
       this.validation = result.validation;
       this.connectWorkerReceipt = result.workerReceipt;
       this.message = this.validation.status === 'READY_TO_APPLY'
-        ? `Final-state validation passed; ${candidate.commandCount} certified commands are ready.`
+        ? `Route is ready to apply; ${candidate.commandCount} certified commands passed final-state validation.`
         : `Connect blocked by ${this.validation.blockingIssueCount} new high-severity issue(s).`;
     } catch (error) {
       if (error?.name !== 'AbortError') this.reject(error, 'Connect validation blocked.');
@@ -234,6 +342,7 @@ export class TopologyEditConnectEndpointsAuthoringRuntime
       this.connectStartEndpoint = null;
       this.connectEndEndpoint = null;
       clearConnectEndpointsPlanning(this);
+      this.routeConnectWorkflowRevision += 1;
       this.controller.refreshView(this.controller.session.currentTopology());
       this.controller.autosaveAfterTransition?.(priorVersion);
       this.message = `Atomic ${commandCount}-command Connect Existing Ends operation accepted.`;
@@ -245,6 +354,48 @@ export class TopologyEditConnectEndpointsAuthoringRuntime
       this.publish();
     }
     return true;
+  }
+
+  queueStartRouteQualification() {
+    const revision = this.routeConnectWorkflowRevision;
+    queueMicrotask(() => this.runAutomaticQualification('START_ROUTE', revision));
+  }
+  queueConnectQualification() {
+    const revision = this.routeConnectWorkflowRevision;
+    queueMicrotask(() => this.runAutomaticQualification('CONNECT_ENDS', revision));
+  }
+  queueContinueRouteQualification() {
+    const revision = this.routeConnectWorkflowRevision;
+    queueMicrotask(() => this.runAutomaticQualification('CONTINUE_ROUTE', revision));
+  }
+
+  async runAutomaticQualification(kind, revision) {
+    if (revision !== this.routeConnectWorkflowRevision || this.pending) return;
+    if (kind === 'START_ROUTE') {
+      if (!this.startRouteActive || !startRouteWorkflowReady(this)) return;
+    } else if (kind === 'CONNECT_ENDS') {
+      if (!this.connectEndpointsActive || !connectWorkflowReadyForPlanning(this)) return;
+      if (!this.connectPlan) this.planAlternatives();
+      if (revision !== this.routeConnectWorkflowRevision || !this.connectPlan) return;
+      if (!this.connectValues.alternativeId) return;
+    } else if (!continueRouteWorkflowActive(this) || !this.state.target) return;
+
+    await this.previewOperation();
+    if (revision !== this.routeConnectWorkflowRevision) {
+      this.discardStaleAutomaticCandidate(kind);
+      return;
+    }
+    if (!this.candidate) return;
+    await this.validateOperation();
+    if (revision !== this.routeConnectWorkflowRevision) this.discardStaleAutomaticCandidate(kind);
+  }
+
+  discardStaleAutomaticCandidate(kind) {
+    if (kind === 'START_ROUTE') this.clearStartRouteCandidate();
+    else if (kind === 'CONNECT_ENDS') clearConnectEndpointsCandidate(this);
+    else this.clearCandidateState();
+    this.message = 'Route inputs changed while qualification was running; the stale ghost was discarded.';
+    this.publish();
   }
 
   undoOperation() {
@@ -261,6 +412,7 @@ export class TopologyEditConnectEndpointsAuthoringRuntime
   }
 
   clear(announce = false, clearTransaction = false) {
+    this.routeConnectWorkflowRevision += 1;
     if (!this.connectEndpointsActive) return super.clear(announce, clearTransaction);
     this.cancelPendingValidation();
     try { cancelConnectEndpointsAuthoring(this.controller, this.preview); } catch { /* non-authoritative */ }
@@ -273,6 +425,7 @@ export class TopologyEditConnectEndpointsAuthoringRuntime
   render() {
     super.render();
     renderConnectEndpointsRuntime(this, connectEndpointsPipeOptions(this.catalogue()));
+    renderRouteConnectConsolidation(this);
   }
   updateEvidence() {
     super.updateEvidence();

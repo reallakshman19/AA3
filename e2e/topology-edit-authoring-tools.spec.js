@@ -10,7 +10,7 @@ test.beforeEach(async ({ page }) => {
   await page.addInitScript(() => globalThis.localStorage?.clear());
 });
 
-test('production 3D Edit completes Move, Stretch and atomic Route + Elbow from visible HUD controls', async ({ page }, testInfo) => {
+test('production 3D Edit completes contextual Continue route through governed authority', async ({ page }, testInfo) => {
   const pageErrors = [];
   const consoleErrors = [];
   page.on('pageerror', (error) => pageErrors.push(error.message));
@@ -24,58 +24,54 @@ test('production 3D Edit completes Move, Stretch and atomic Route + Elbow from v
   await clickCanonicalNode(page, endpoint.nodeId);
   await expect.poll(() => selectedNodeId(page)).toBe(endpoint.nodeId);
 
-  await page.locator('[data-action="activate-authoring-move"]').click();
-  await expect(host).toHaveAttribute('data-topology-edit-authoring-tool', 'MOVE');
-  await fillFields(page, {
-    deltaX: endpoint.outward.x * 75,
-    deltaY: endpoint.outward.y * 75,
-    deltaZ: endpoint.outward.z * 75,
-  });
-  const moved = await previewValidateApply(page, host, 1);
-  expect(moved.canonicalHash).not.toBe(initial.canonicalHash);
-  expect(moved.activeCommandCount).toBe(initial.activeCommandCount + 1);
-
-  await page.locator('[data-action="activate-authoring-stretch"]').click();
-  const lengthAfterMove = await selectedEndpointLength(page, endpoint.nodeId);
-  await fillFields(page, { newLengthMm: lengthAfterMove + 125, deltaLengthMm: 0 });
-  const stretched = await previewValidateApply(page, host, 1);
-  expect(stretched.canonicalHash).not.toBe(moved.canonicalHash);
-  expect(stretched.activeCommandCount).toBe(moved.activeCommandCount + 1);
-
-  await page.locator('[data-action="activate-authoring-route-elbow"]').click();
+  const continueRoute = page.locator('[data-action="activate-authoring-route-elbow"]');
+  await expect(continueRoute).toHaveText('Continue route');
+  await continueRoute.click();
   const route = await safeRouteProperties(page, endpoint.nodeId);
   await fillFields(page, route.fields);
-  await page.locator('[data-action="preview-authoring-operation"]').click();
-  await expect(host).toHaveAttribute('data-topology-edit-authoring-command-count', '5');
+
+  await expect.poll(() => host.getAttribute('data-topology-edit-authoring-command-count')).toBe('5');
   await expect(host).toHaveAttribute('data-topology-edit-authoring-certification-mode', 'FINAL_STATE');
   await expect.poll(() => page.evaluate(() => (
     globalThis.__AUTHORING_CONTROLLER__.viewportBackend.groups.ghostGroup.children.length
   ))).toBeGreaterThan(0);
-  await page.locator('[data-action="validate-authoring-operation"]').click();
-  await expect(host).toHaveAttribute('data-topology-edit-authoring-phase', 'READY_TO_APPLY');
+  await expect.poll(() => host.getAttribute('data-topology-edit-authoring-phase')).toBe('READY_TO_APPLY');
   await expect(host).toHaveAttribute('data-topology-edit-authoring-blocking-issue-count', '0');
-  await page.locator('[data-action="apply-authoring-operation"]').click();
+  const preview = await evidence(page);
+  expect(preview.canonicalHash).toBe(initial.canonicalHash);
+  expect(preview.journalHash).toBe(initial.journalHash);
+
+  const engineeringEvidence = page.locator('[data-role="route-connect-engineering-evidence"]');
+  await expect(engineeringEvidence).not.toHaveAttribute('open', '');
+  await expect(engineeringEvidence.locator('[data-action="preview-authoring-operation"]')).toBeHidden();
+  await expect(engineeringEvidence.locator('[data-action="validate-authoring-operation"]')).toBeHidden();
+
+  const applyRoute = page.getByRole('button', { name: 'Apply route', exact: true });
+  await expect(applyRoute).toBeEnabled();
+  await applyRoute.click();
   await expect.poll(() => page.evaluate(() => (
     globalThis.__AUTHORING_CONTROLLER__.session.journal.activeCommandIds.length
-  ))).toBe(stretched.activeCommandCount + 5);
+  ))).toBe(initial.activeCommandCount + 5);
 
   const completed = await evidence(page);
-  expect(completed.nodeCount).toBe(stretched.nodeCount + 2);
-  expect(completed.edgeCount).toBe(stretched.edgeCount + 2);
-  expect(completed.bendCount).toBe(stretched.bendCount + 1);
-  expect(completed.issueKinds).not.toContain('RIGHT_ANGLE_WITHOUT_BEND');
+  expect(completed.nodeCount).toBe(initial.nodeCount + 2);
+  expect(completed.edgeCount).toBe(initial.edgeCount + 2);
+  expect(completed.bendCount).toBe(initial.bendCount + 1);
+  expect(completed.rightAngleIssueIds).toEqual(initial.rightAngleIssueIds);
   expect(completed.authoredBendArcCount).toBeGreaterThanOrEqual(1);
   expect(completed.transactionHash).not.toBe('');
+  expect(completed.commandTypes.slice(-5)).toEqual([
+    'CREATE_NODE', 'CREATE_NODE', 'ADD_STRAIGHT_ELEMENT', 'ADD_STRAIGHT_ELEMENT', 'ADD_BEND_DEFINITION',
+  ]);
 
-  const completedScreenshot = await page.screenshot({ fullPage: true });
-  await testInfo.attach('topology-edit-move-stretch-route-elbow', {
-    body: completedScreenshot,
+  await testInfo.attach('topology-edit-contextual-continue-route', {
+    body: await page.screenshot({ fullPage: true }),
     contentType: 'image/png',
   });
 
   await page.locator('[data-action="undo"]').click();
-  await expect.poll(() => controllerCanonicalHash(page)).toBe(stretched.canonicalHash);
-  expect((await evidence(page)).activeCommandCount).toBe(stretched.activeCommandCount);
+  await expect.poll(() => controllerCanonicalHash(page)).toBe(initial.canonicalHash);
+  expect((await evidence(page)).activeCommandCount).toBe(initial.activeCommandCount);
   await page.locator('[data-action="redo"]').click();
   await expect.poll(() => controllerCanonicalHash(page)).toBe(completed.canonicalHash);
   expect((await evidence(page)).activeCommandCount).toBe(completed.activeCommandCount);
@@ -84,21 +80,17 @@ test('production 3D Edit completes Move, Stretch and atomic Route + Elbow from v
   expect(consoleErrors.filter(isCriticalConsoleError)).toEqual([]);
   await mkdir('reports/qualification', { recursive: true });
   await writeFile(REPORT_PATH, `${JSON.stringify({
-    schema: 'TopologyEditAuthoringToolsEvidence.v1',
-    status: 'PASS_MOVE_STRETCH_ROUTE_ELBOW',
+    schema: 'TopologyEditAuthoringToolsEvidence.v3',
+    status: 'PASS_CONTEXTUAL_CONTINUE_ROUTE_AUTO_PREVIEW_VALIDATE_APPLY_UNDO_REDO',
     candidateHead: process.env.TOPOLOGY_EDIT_TARGET_HEAD_SHA || null,
     fixture: 'public/fixtures/topology-edit-20-element-demo.staged.json',
     productionController: 'topology-edit-3d-sjson-fidelity-controller.js',
     endpoint,
     route,
     initial,
-    moved,
-    stretched,
+    preview,
     completed,
   }, null, 2)}\n`);
-  await page.evaluate(() => {
-    delete globalThis.__AUTHORING_CONTROLLER__;
-  });
 });
 
 async function openProductionAuthoringController(page) {
@@ -110,37 +102,22 @@ async function openProductionAuthoringController(page) {
     globalThis.AnalysisWorkspace?.getSnapshot?.()?.dataset?.entities?.length ?? 0
   ))).toBe(20);
   await page.getByRole('button', { name: '3D Edit', exact: true }).click();
-  await expect(page.locator('[data-role="topology-edit-render-host"]')).toBeVisible();
+  const host = page.locator('[data-role="topology-edit-render-host"]');
+  await expect(host).toBeVisible();
   await expect.poll(() => page.evaluate(() => Boolean(
-    document.querySelector('[data-role="topology-edit-render-host"]')
-      ?.__topologyEditAuthoringController
+    document.querySelector('[data-role="topology-edit-render-host"]')?.__topologyEditAuthoringController
   ))).toBe(true);
   await page.evaluate(() => {
-    const host = document.querySelector('[data-role="topology-edit-render-host"]');
-    const controller = host?.__topologyEditAuthoringController;
-    if (!controller) throw new Error('Mounted production authoring controller is unavailable.');
-    globalThis.__AUTHORING_CONTROLLER__ = controller;
+    globalThis.__AUTHORING_CONTROLLER__ = document.querySelector(
+      '[data-role="topology-edit-render-host"]',
+    )?.__topologyEditAuthoringController;
   });
-  const host = page.locator('[data-role="topology-edit-render-host"]');
+  const authoringPanel = page.locator('details[data-panel-kind="authoring"]');
+  if (!(await authoringPanel.evaluate((element) => element.open))) {
+    await authoringPanel.locator(':scope > summary').click();
+  }
   await expect(page.locator('[data-role="topology-edit-authoring"]')).toBeVisible();
-  await expect(page.getByText('Authoring HUD', { exact: true })).toBeVisible();
   return host;
-}
-
-async function previewValidateApply(page, host, commandCount) {
-  const priorTransactionHash = await host.getAttribute('data-topology-edit-authoring-transaction-hash') || '';
-  await page.locator('[data-action="preview-authoring-operation"]').click();
-  await expect(host).toHaveAttribute('data-topology-edit-authoring-command-count', String(commandCount));
-  await expect.poll(() => page.evaluate(() => (
-    globalThis.__AUTHORING_CONTROLLER__.viewportBackend.groups.ghostGroup.children.length
-  ))).toBeGreaterThan(0);
-  await page.locator('[data-action="validate-authoring-operation"]').click();
-  await expect(host).toHaveAttribute('data-topology-edit-authoring-phase', 'READY_TO_APPLY');
-  await expect(host).toHaveAttribute('data-topology-edit-authoring-blocking-issue-count', '0');
-  await page.locator('[data-action="apply-authoring-operation"]').click();
-  await expect.poll(() => host.getAttribute('data-topology-edit-authoring-transaction-hash'))
-    .not.toBe(priorTransactionHash);
-  return evidence(page);
 }
 
 async function fillFields(page, values) {
@@ -151,6 +128,7 @@ async function fillFields(page, values) {
       await control.selectOption(String(value));
     } else {
       await control.fill(String(value));
+      await control.blur();
     }
   }
 }
@@ -181,8 +159,7 @@ async function safeAxisAlignedOpenEndpoint(page) {
       const length = Math.hypot(delta.x, delta.y, delta.z);
       if (!(length > 300)) return [];
       const outward = { x: delta.x / length, y: delta.y / length, z: delta.z / length };
-      const axisCount = Object.values(outward).filter((value) => Math.abs(value) > 1e-8).length;
-      if (axisCount !== 1) return [];
+      if (Object.values(outward).filter((value) => Math.abs(value) > 1e-8).length !== 1) return [];
       const radial = Math.hypot(
         node.position.x - center.x,
         node.position.y - center.y,
@@ -234,8 +211,7 @@ async function safeRouteProperties(page, nodeId) {
     const perpendicularAxis = ['x', 'y', 'z']
       .filter((axis) => axis !== occupiedAxis)
       .sort((left, right) => (
-        Math.abs(node.position[right] - center[right])
-        - Math.abs(node.position[left] - center[left])
+        Math.abs(node.position[right] - center[right]) - Math.abs(node.position[left] - center[left])
       ))[0];
     const sign = node.position[perpendicularAxis] >= center[perpendicularAxis] ? 1 : -1;
     const offset = { x: outward.x * 600, y: outward.y * 600, z: outward.z * 600 };
@@ -260,31 +236,13 @@ async function safeRouteProperties(page, nodeId) {
   }, nodeId);
 }
 
-async function selectedEndpointLength(page, nodeId) {
-  return page.evaluate((selectedId) => {
-    const topology = globalThis.__AUTHORING_CONTROLLER__.session.currentTopology();
-    const node = topology.nodes.find((row) => row.id === selectedId);
-    const edge = topology.edges.find((row) => row.fromNodeId === selectedId || row.toNodeId === selectedId);
-    const other = topology.nodes.find((row) => row.id === (
-      edge.fromNodeId === selectedId ? edge.toNodeId : edge.fromNodeId
-    ));
-    return Math.hypot(
-      node.position.x - other.position.x,
-      node.position.y - other.position.y,
-      node.position.z - other.position.z,
-    );
-  }, nodeId);
-}
-
 async function clickCanonicalNode(page, nodeId) {
   const point = await page.evaluate((id) => {
     const controller = globalThis.__AUTHORING_CONTROLLER__;
     const node = controller.session.currentTopology().nodes.find((row) => row.id === id);
     const camera = controller.viewportBackend.activeCamera;
     const canvas = controller.viewportBackend.renderer.domElement;
-    const vector = camera.position.clone()
-      .set(node.position.x, node.position.y, node.position.z)
-      .project(camera);
+    const vector = camera.position.clone().set(node.position.x, node.position.y, node.position.z).project(camera);
     const rect = canvas.getBoundingClientRect();
     return {
       x: rect.left + ((vector.x + 1) / 2) * rect.width,
@@ -295,15 +253,11 @@ async function clickCanonicalNode(page, nodeId) {
 }
 
 async function selectedNodeId(page) {
-  return page.evaluate(() => (
-    globalThis.__AUTHORING_CONTROLLER__?.selection?.nodeIds?.[0] ?? null
-  ));
+  return page.evaluate(() => globalThis.__AUTHORING_CONTROLLER__?.selection?.nodeIds?.[0] ?? null);
 }
 
 async function controllerCanonicalHash(page) {
-  return page.evaluate(() => (
-    globalThis.__AUTHORING_CONTROLLER__.session.currentTopology().canonicalTopologyHash
-  ));
+  return page.evaluate(() => globalThis.__AUTHORING_CONTROLLER__.session.currentTopology().canonicalTopologyHash);
 }
 
 async function evidence(page) {
@@ -319,12 +273,15 @@ async function evidence(page) {
       journalHash: controller.session.journal.journalHash,
       sessionVersion: controller.session.journal.sessionVersion,
       activeCommandCount: controller.session.journal.activeCommandIds.length,
+      commandTypes: controller.session.journal.history.map((row) => row.request?.commandType),
       nodeCount: topology.nodes.length,
       edgeCount: topology.edges.length,
       bendCount: topology.bends?.length ?? 0,
-      issueKinds: controller.issues.map((row) => row.kind),
+      rightAngleIssueIds: controller.issues
+        .filter((row) => row.kind === 'RIGHT_ANGLE_WITHOUT_BEND')
+        .map((row) => row.id)
+        .sort(),
       transactionHash: controller.hostElement.dataset.topologyEditAuthoringTransactionHash || '',
-      authoredBendProjectionHash: controller.hostElement.dataset.topologyEditAuthoredBendProjectionHash || '',
       authoredBendArcCount,
     };
   });

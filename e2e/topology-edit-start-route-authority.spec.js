@@ -13,7 +13,7 @@ const ROUTE_VALUES = Object.freeze({
 
 test.describe.configure({ mode: 'serial' });
 
-test('production HUD completes certified Start Route lifecycle', async ({ page }, testInfo) => {
+test('production HUD completes contextual certified Start Route lifecycle', async ({ page }, testInfo) => {
   const pageErrors = [];
   const consoleErrors = [];
   page.on('pageerror', (error) => pageErrors.push(error.message));
@@ -27,14 +27,20 @@ test('production HUD completes certified Start Route lifecycle', async ({ page }
 
   await openAuthoringPanel(page);
   await activateAndConfigure(page);
-  await page.locator('[data-action="preview-authoring-operation"]').click();
   await expect.poll(() => host.getAttribute('data-topology-edit-start-route-preview-hash'))
     .toBeTruthy();
+  await expect.poll(() => host.getAttribute('data-topology-edit-authoring-phase'))
+    .toBe('READY_TO_APPLY');
   const preview = await controllerEvidence(page);
   expect(preview.canonicalHash).toBe(before.canonicalHash);
   expect(preview.journalHash).toBe(before.journalHash);
   expect(preview.ghostChildCount).toBeGreaterThan(0);
-  expect(preview.startRoutePhase).toBe('PREVIEW_READY');
+  expect(preview.startRoutePhase).toBe('READY_TO_APPLY');
+  await expect(page.getByRole('button', { name: 'Apply route', exact: true })).toBeEnabled();
+  const engineeringEvidence = page.locator('[data-role="route-connect-engineering-evidence"]');
+  await expect(engineeringEvidence).not.toHaveAttribute('open', '');
+  await expect(engineeringEvidence.locator('[data-action="preview-authoring-operation"]')).toBeHidden();
+  await expect(engineeringEvidence.locator('[data-action="validate-authoring-operation"]')).toBeHidden();
 
   await page.locator('[data-action="cancel-authoring-operation"]').click();
   await expect.poll(() => controllerEvidence(page).then((row) => row.canonicalHash))
@@ -44,16 +50,12 @@ test('production HUD completes certified Start Route lifecycle', async ({ page }
   expect(cancelled.ghostChildCount).toBe(0);
 
   await activateAndConfigure(page);
-  await page.locator('[data-action="preview-authoring-operation"]').click();
-  await expect.poll(() => host.getAttribute('data-topology-edit-start-route-preview-hash'))
-    .toBeTruthy();
-  await page.locator('[data-action="validate-authoring-operation"]').click();
   await expect.poll(() => host.getAttribute('data-topology-edit-authoring-phase'))
     .toBe('READY_TO_APPLY');
   await expect.poll(() => host.getAttribute('data-topology-edit-start-route-validation-hash'))
     .toBeTruthy();
 
-  await page.locator('[data-action="apply-authoring-operation"]').click();
+  await page.getByRole('button', { name: 'Apply route', exact: true }).click();
   await expect.poll(() => controllerEvidence(page).then((row) => row.activeCommandCount))
     .toBe(before.activeCommandCount + 3);
   const applied = await controllerEvidence(page);
@@ -88,15 +90,15 @@ test('production HUD completes certified Start Route lifecycle', async ({ page }
   expect(pageErrors).toEqual([]);
   expect(consoleErrors.filter((message) => !message.includes('favicon'))).toEqual([]);
   const screenshot = await page.screenshot({ fullPage: true });
-  await testInfo.attach('start-route-production-hud', {
+  await testInfo.attach('start-route-contextual-hud', {
     body: screenshot,
     contentType: 'image/png',
   });
   await mkdir('reports/qualification', { recursive: true });
   await writeFile(REPORT, `${JSON.stringify({
-    schema: 'TopologyEditStartRouteProductionHudEvidence.v3',
+    schema: 'TopologyEditStartRouteProductionHudEvidence.v4',
     candidateHead: process.env.TOPOLOGY_EDIT_TARGET_HEAD_SHA || null,
-    status: 'PASS_PRODUCTION_HUD_CERTIFIED_WORKER_APPLY_UNDO_REDO',
+    status: 'PASS_CONTEXTUAL_AUTO_PREVIEW_VALIDATE_APPLY_UNDO_REDO',
     evidence: { before, preview, cancelled, applied, undone, redone },
   }, null, 2)}\n`);
 });
@@ -147,6 +149,8 @@ async function activateAndConfigure(page) {
   }, ROUTE_VALUES);
   await expect(page.locator('[data-start-route-field="catalogueRecordId"]'))
     .toHaveValue(PIPE_RECORD);
+  await expect(page.locator('[data-role="start-route-engineering-inputs"]'))
+    .toHaveAttribute('open', '');
 }
 
 async function controllerEvidence(page) {

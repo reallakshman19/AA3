@@ -1,0 +1,20 @@
+name: Route Connect unchanged base probe
+on:
+  push:
+    branches:
+      - qualification/route-connect-base-probe-a25f6ef1
+permissions:
+  contents: read
+jobs:
+  probe:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: a25f6ef1a1c44c01b1cd920b3dba7e747fc89923
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+      - run: npm ci
+      - run: node --test tests/topology-edit-connect-endpoints-production-adapter.test.mjs

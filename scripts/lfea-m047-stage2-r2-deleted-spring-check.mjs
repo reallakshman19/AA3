@@ -34,4 +34,20 @@ if (!source.includes('iterations.slice(-12)')) {
   throw new Error('R2 must preserve a diagnostic iteration tail for limit-cycle review.');
 }
 
+if (!source.includes('declarationId: `R2-FRICTION-${support.nodeId}-${dof}`')) {
+  throw new Error('R2 spring declaration IDs must use canonical node/dof identities.');
+}
+
+if (source.includes('declarationId: `R2-FRICTION-${support.restraintId}-${dof}`')) {
+  throw new Error('R2 must not place colon-bearing restraint IDs in kernel declaration identities.');
+}
+
+if (!source.includes('primitiveId: `R2-${caseRecord.caseId}-${support.nodeId}-IT${iteration}`')) {
+  throw new Error('R2 constant-force primitive IDs must use canonical case/node/iteration identities.');
+}
+
+if (!source.includes('nodeId: support.nodeId,\n      support,\n      state,')) {
+  throw new Error('R2 measured entries must retain support metadata for snapshot serialization.');
+}
+
 process.stdout.write('M047 Stage 2 R2 deleted-spring isolation contract: PASS\n');

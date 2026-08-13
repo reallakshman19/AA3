@@ -221,7 +221,7 @@ function buildOverlay({ benchmarkPackage, caseRecord, plan, states, slipDirectio
     if (states.get(support.restraintId) === 'STICK') {
       for (const dof of support.frictionDofs) {
         constraints.push({
-          declarationId: `R2-FRICTION-${support.restraintId}-${dof}`,
+          declarationId: `R2-FRICTION-${support.nodeId}-${dof}`,
           kind: 'PARTIAL_RELEASE_SPRING',
           nodeId: support.nodeId,
           dof,
@@ -238,7 +238,7 @@ function buildOverlay({ benchmarkPackage, caseRecord, plan, states, slipDirectio
     });
     nodalLoads.push({
       schema: 'fea-linear-load-primitive/v1',
-      primitiveId: `R2-${caseRecord.caseId}-${support.restraintId}-IT${iteration}`,
+      primitiveId: `R2-${caseRecord.caseId}-${support.nodeId}-IT${iteration}`,
       kind: 'NODAL_FORCE_MOMENT',
       nodeId: support.nodeId,
       basis: { kind: 'GLOBAL' },
@@ -294,6 +294,7 @@ function measureSupports({ plan, states, slipDirections, executed }) {
     return {
       restraintId: support.restraintId,
       nodeId: support.nodeId,
+      support,
       state,
       nextState,
       nextSlipDirection,

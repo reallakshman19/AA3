@@ -48,12 +48,14 @@ test('component placement emits exact WebGL, catalogue, candidate, transaction, 
   await page.locator('[data-action="undo"]').click();
   await expect.poll(() => topologyLedger(page).then((row) => row.canonicalHash)).toBe(before.canonicalHash);
   const undone = await topologyLedger(page);
-  expect(undone.journalHash).toBe(before.journalHash);
+  expect(undone.activeLedgerHash).toBe(before.activeLedgerHash);
+  expect(undone.activeCommandIds).toEqual(before.activeCommandIds);
 
   await page.locator('[data-action="redo"]').click();
   await expect.poll(() => topologyLedger(page).then((row) => row.canonicalHash)).toBe(applied.topology.canonicalHash);
   const redone = await topologyLedger(page);
-  expect(redone.journalHash).toBe(applied.topology.journalHash);
+  expect(redone.activeLedgerHash).toBe(applied.topology.activeLedgerHash);
+  expect(redone.activeCommandIds).toEqual(applied.topology.activeCommandIds);
 
   const report = {
     schema: 'TopologyEditComponentPlacementEvidence.v1',

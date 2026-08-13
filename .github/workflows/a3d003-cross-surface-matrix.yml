@@ -14,25 +14,24 @@ jobs:
     timeout-minutes: 45
     env:
       BASE_SHA: 48e5f228cb3b01835c0f6ec22e11ff292cf07ba0
-      CANDIDATE_SHA: f861bee064fb787ad7036a903fe7d6e7b2f267ad
+      CANDIDATE_SHA: bb24c485004fe35312d0e7f6af9544b30b056813
       PLAYWRIGHT_BROWSERS_PATH: '0'
-      TOPOLOGY_EDIT_TARGET_HEAD_SHA: f861bee064fb787ad7036a903fe7d6e7b2f267ad
+      TOPOLOGY_EDIT_TARGET_HEAD_SHA: bb24c485004fe35312d0e7f6af9544b30b056813
     steps:
       - name: Checkout exact candidate
         uses: actions/checkout@v4
         with:
-          ref: f861bee064fb787ad7036a903fe7d6e7b2f267ad
+          ref: bb24c485004fe35312d0e7f6af9544b30b056813
           fetch-depth: 0
-      - name: Verify exact two-file ledger
+      - name: Verify exact four-file ledger
         shell: bash
         run: |
           set -euo pipefail
           test "$(git rev-parse HEAD)" = "$CANDIDATE_SHA"
-          expected=$'e2e/topology-edit-a3d003-cross-surface-matrix.spec.js\ntests/topology-edit-table-node-position.test.mjs'
+          expected=$'e2e/topology-edit-a3d003-cross-surface-matrix.spec.js\nsrc/workspace/topology-edit/topology-edit-reachable-typed-viewport-backend.js\ntests/topology-edit-endpoint-affordance.test.mjs\ntests/topology-edit-table-node-position.test.mjs'
           test "$(git diff --name-only "$BASE_SHA" "$CANDIDATE_SHA")" = "$expected"
           git diff --check "$BASE_SHA" "$CANDIDATE_SHA"
-          node --check e2e/topology-edit-a3d003-cross-surface-matrix.spec.js
-          node --check tests/topology-edit-table-node-position.test.mjs
+          while IFS= read -r file; do node --check "$file"; done <<< "$expected"
       - name: Set up Node
         uses: actions/setup-node@v4
         with:
@@ -40,9 +39,10 @@ jobs:
           cache: npm
       - name: Install dependencies
         run: npm ci
-      - name: Run shared MOVE_NODE contracts
+      - name: Run shared selection and MOVE_NODE contracts
         run: >-
           node --test
+          tests/topology-edit-endpoint-affordance.test.mjs
           tests/topology-edit-table-node-position.test.mjs
           tests/topology-edit-professional-interaction.test.mjs
           tests/topology-edit-command-contract.test.mjs

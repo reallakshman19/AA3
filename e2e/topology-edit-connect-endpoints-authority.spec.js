@@ -10,7 +10,7 @@ const PIPE_POLICY = Object.freeze({
 
 test.describe.configure({ mode: 'serial' });
 
-test('production HUD connects two exact existing ends through certified worker authority', async ({ page }, testInfo) => {
+test('production HUD connects two canvas-picked ends through automatic governed qualification', async ({ page }, testInfo) => {
   const pageErrors = []; const consoleErrors = [];
   page.on('pageerror', (error) => pageErrors.push(error.message));
   page.on('console', (message) => {
@@ -29,16 +29,21 @@ test('production HUD connects two exact existing ends through certified worker a
   });
   const before = await controllerEvidence(page);
 
-  await configureConnect(page, startNodeId, endNodeId);
-  await page.locator('[data-action="preview-authoring-operation"]').click();
+  await configureConnect(page, host, startNodeId, endNodeId);
   await expect.poll(() => host.getAttribute('data-topology-edit-connect-preview-hash')).toBeTruthy();
+  await expect.poll(() => host.getAttribute('data-topology-edit-authoring-phase')).toBe('READY_TO_APPLY');
   const preview = await controllerEvidence(page);
   expect(preview.canonicalHash).toBe(before.canonicalHash);
   expect(preview.journalHash).toBe(before.journalHash);
   expect(preview.ghostChildCount).toBeGreaterThan(0);
-  expect(preview.connectPhase).toBe('PREVIEW_READY');
+  expect(preview.connectPhase).toBe('READY_TO_APPLY');
   expect(preview.connectOperationHash).toBeTruthy();
   expect(preview.connectElbowBindingHashes).toBeTruthy();
+  const engineeringEvidence = page.locator('[data-role="route-connect-engineering-evidence"]');
+  await expect(engineeringEvidence).not.toHaveAttribute('open', '');
+  await expect(engineeringEvidence.locator('[data-action="plan-connect-alternatives"]')).toBeHidden();
+  await expect(engineeringEvidence.locator('[data-action="preview-authoring-operation"]')).toBeHidden();
+  await expect(engineeringEvidence.locator('[data-action="validate-authoring-operation"]')).toBeHidden();
 
   await page.locator('[data-action="cancel-authoring-operation"]').click();
   await expect.poll(() => controllerEvidence(page).then((row) => row.canonicalHash)).toBe(before.canonicalHash);
@@ -46,14 +51,11 @@ test('production HUD connects two exact existing ends through certified worker a
   expect(cancelled.journalHash).toBe(before.journalHash);
   expect(cancelled.ghostChildCount).toBe(0);
 
-  await configureConnect(page, startNodeId, endNodeId);
-  await page.locator('[data-action="preview-authoring-operation"]').click();
-  await expect.poll(() => host.getAttribute('data-topology-edit-connect-preview-hash')).toBeTruthy();
-  await page.locator('[data-action="validate-authoring-operation"]').click();
+  await configureConnect(page, host, startNodeId, endNodeId);
   await expect.poll(() => host.getAttribute('data-topology-edit-authoring-phase')).toBe('READY_TO_APPLY');
   await expect.poll(() => host.getAttribute('data-topology-edit-connect-validation-hash')).toBeTruthy();
 
-  await page.locator('[data-action="apply-authoring-operation"]').click();
+  await page.getByRole('button', { name: 'Apply connection', exact: true }).click();
   await expect.poll(() => controllerEvidence(page).then((row) => row.activeCommandCount))
     .toBe(before.activeCommandCount + 4);
   const applied = await controllerEvidence(page);
@@ -86,12 +88,12 @@ test('production HUD connects two exact existing ends through certified worker a
   expect(pageErrors).toEqual([]);
   expect(consoleErrors.filter((message) => !message.includes('favicon'))).toEqual([]);
   const screenshot = await page.screenshot({ fullPage: true });
-  await testInfo.attach('connect-existing-ends-production-hud', { body: screenshot, contentType: 'image/png' });
+  await testInfo.attach('connect-ends-contextual-canvas-workflow', { body: screenshot, contentType: 'image/png' });
   await mkdir('reports/qualification', { recursive: true });
   await writeFile(REPORT, `${JSON.stringify({
-    schema: 'TopologyEditConnectExistingEndsProductionHudEvidence.v1',
+    schema: 'TopologyEditConnectExistingEndsProductionHudEvidence.v2',
     candidateHead: process.env.TOPOLOGY_EDIT_TARGET_HEAD_SHA || null,
-    status: 'PASS_PRODUCTION_HUD_CERTIFIED_WORKER_APPLY_UNDO_REDO',
+    status: 'PASS_CANVAS_PICK_AUTO_PLAN_PREVIEW_VALIDATE_APPLY_UNDO_REDO',
     evidence: { startNodeId, endNodeId, before, preview, cancelled, applied, undone, redone },
   }, null, 2)}\n`);
 });
@@ -141,11 +143,9 @@ async function seedStartRoute(page, points) {
     document.querySelector('[data-start-route-field="overlapToleranceMm"]')
       ?.dispatchEvent(new Event('change', { bubbles: true }));
   }, values);
-  await page.locator('[data-action="preview-authoring-operation"]').click();
-  await page.locator('[data-action="validate-authoring-operation"]').click();
-  await expect.poll(() => page.locator('[data-role="topology-edit-render-host"]')
-    .getAttribute('data-topology-edit-authoring-phase')).toBe('READY_TO_APPLY');
-  await page.locator('[data-action="apply-authoring-operation"]').click();
+  const host = page.locator('[data-role="topology-edit-render-host"]');
+  await expect.poll(() => host.getAttribute('data-topology-edit-authoring-phase')).toBe('READY_TO_APPLY');
+  await page.getByRole('button', { name: 'Apply route', exact: true }).click();
   return page.evaluate(() => {
     const controller = document.querySelector('[data-role="topology-edit-render-host"]')
       ?.__topologyEditAuthoringController;
@@ -155,39 +155,48 @@ async function seedStartRoute(page, points) {
   });
 }
 
-async function configureConnect(page, startNodeId, endNodeId) {
+async function configureConnect(page, host, startNodeId, endNodeId) {
+  const clear = page.getByRole('button', { name: 'Clear', exact: true });
+  if (await clear.isEnabled()) await clear.click();
   await page.locator('[data-action="activate-authoring-connect-ends"]').click();
-  await setControllerSelection(page, startNodeId);
-  await page.locator('[data-action="capture-connect-start"]').click();
-  await setControllerSelection(page, endNodeId);
-  await page.locator('[data-action="capture-connect-end"]').click();
-  await expect.poll(() => page.locator('[data-connect-field="catalogueRecordId"] option').count())
-    .toBeGreaterThan(1);
-  await page.evaluate((policy) => {
-    for (const [key, value] of Object.entries(policy)) {
-      const control = document.querySelector(`[data-connect-field="${key}"]`);
-      if (!control) throw new Error(`Missing Connect field ${key}.`);
-      if (control.type === 'checkbox') control.checked = Boolean(value);
-      else control.value = String(value);
-    }
-    document.querySelector('[data-connect-field="maxAlternatives"]')
-      ?.dispatchEvent(new Event('change', { bubbles: true }));
-  }, { ...PIPE_POLICY, allowDirect: true, allowOrthogonal: true, maxAlternatives: 5 });
-  await page.locator('[data-action="plan-connect-alternatives"]').click();
+  await clickCanonicalNode(page, startNodeId);
+  await expect.poll(() => host.getAttribute('data-topology-edit-connect-start-endpoint-hash')).toBeTruthy();
+  await clickCanonicalNode(page, endNodeId);
+  await expect.poll(() => host.getAttribute('data-topology-edit-connect-end-endpoint-hash')).toBeTruthy();
+  const pipe = page.locator('[data-connect-field="catalogueRecordId"]');
+  await expect.poll(() => pipe.locator('option').count()).toBeGreaterThan(1);
+  await pipe.selectOption(PIPE_RECORD);
   await expect.poll(() => page.locator('[data-connect-field="alternativeId"] option').count()).toBeGreaterThan(1);
   const alternativeId = await page.locator('[data-connect-field="alternativeId"] option')
     .filter({ hasText: 'x>y' }).first().getAttribute('value');
   expect(alternativeId).toBeTruthy();
   await page.locator('[data-connect-field="alternativeId"]').selectOption(alternativeId);
   await expect(page.getByText('UNIQUE EXACT')).toBeVisible();
+  await expect.poll(() => host.getAttribute('data-topology-edit-authoring-phase')).toBe('READY_TO_APPLY');
 }
-async function setControllerSelection(page, nodeId) {
-  await page.evaluate((id) => {
-    const controller = document.querySelector('[data-role="topology-edit-render-host"]')
-      ?.__topologyEditAuthoringController;
-    controller.selection = { nodeIds: [id], edgeId: null };
-    controller.authoringRuntime.selectionChanged();
+
+async function clickCanonicalNode(page, nodeId) {
+  const point = await page.evaluate((id) => {
+    const host = document.querySelector('[data-role="topology-edit-render-host"]');
+    const controller = host?.__topologyEditAuthoringController;
+    controller.focusCanonicalIds?.([id]);
+    const node = controller.session.currentTopology().nodes.find((row) => row.id === id);
+    const camera = controller.viewportBackend.activeCamera;
+    const canvas = controller.viewportBackend.renderer.domElement;
+    const vector = camera.position.clone()
+      .set(node.position.x, node.position.y, node.position.z)
+      .project(camera);
+    const rect = canvas.getBoundingClientRect();
+    return {
+      x: rect.left + ((vector.x + 1) / 2) * rect.width,
+      y: rect.top + ((1 - vector.y) / 2) * rect.height,
+    };
   }, nodeId);
+  await page.mouse.click(point.x, point.y);
+  await expect.poll(() => page.evaluate(() => (
+    document.querySelector('[data-role="topology-edit-render-host"]')
+      ?.__topologyEditAuthoringController?.selection?.nodeIds?.[0] ?? null
+  ))).toBe(nodeId);
 }
 
 async function controllerEvidence(page) {

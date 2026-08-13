@@ -1,0 +1,35 @@
+{
+  "schema": "lafea-b01-repair-attempt/v1",
+  "issue": 1100,
+  "attempt": 19,
+  "exactHead": "6c4bd1b5e7577f4d55f6b9448ed7db48be0d5297",
+  "hypothesis": "Refinement-dependent rigid-nullspace leakage is driven by translation-sensitive geometry arithmetic: global-coordinate polygon area for T3 and absolute-coordinate isoparametric Jacobian sums for T6/Q8.",
+  "singleMechanicsChange": "NONE_DIAGNOSTIC_ONLY",
+  "diagnostic": "scripts/lafea-b01-local-coordinate-geometry-diagnostic.mjs",
+  "productionFilesChanged": [],
+  "frozenBenchmarkChanged": false,
+  "tolerancesChanged": false,
+  "priorControls": "PASS",
+  "workflowRunId": 31678791625,
+  "artifact": {
+    "artifactId": 9172621183,
+    "sha256": "sha256:71cb813d727c9d0b3caba2a3af3c05fcdf6405df7c1fbbfb8d400de4c2d8bba1"
+  },
+  "matrix": {
+    "localizedSolvedRigidPassCount": 1,
+    "localizedSolvedRigidFailCount": 8
+  },
+  "comparison": [
+    {"meshId":"T3-M0","currentExact":9.458744898438454e-11,"localizedExact":9.458744898438454e-11,"localizedSolved":9.458744898438454e-11,"maxRelativeStiffnessChange":0,"maxAffineEnergyRelativeChange":0},
+    {"meshId":"T3-M1","currentExact":5.550191417569295e-10,"localizedExact":5.807123670820147e-10,"localizedSolved":2.6557245291769505e-10,"maxRelativeStiffnessChange":1.2539531720245977e-15,"maxAffineEnergyRelativeChange":6.924090421879543e-15},
+    {"meshId":"T3-M2","currentExact":4.970388545189053e-10,"localizedExact":5.384208634495735e-10,"localizedSolved":2.9740476747974753e-10,"maxRelativeStiffnessChange":5.7053470480029095e-15,"maxAffineEnergyRelativeChange":4.392632551474281e-14},
+    {"meshId":"T6-M0","currentExact":7.149792509153486e-10,"localizedExact":3.7233985494822263e-10,"localizedSolved":3.625423414632678e-10,"maxRelativeStiffnessChange":8.464219285316796e-16,"maxAffineEnergyRelativeChange":9.501101518744576e-15},
+    {"meshId":"T6-M1","currentExact":8.462691039312631e-10,"localizedExact":8.976417302619666e-10,"localizedSolved":4.354781412985175e-10,"maxRelativeStiffnessChange":2.1816993830442482e-15,"maxAffineEnergyRelativeChange":6.050373879596187e-14},
+    {"meshId":"T6-M2","currentExact":9.054825932253153e-10,"localizedExact":1.0683057553251273e-9,"localizedSolved":5.442564361146651e-10,"maxRelativeStiffnessChange":5.356739124112601e-15,"maxAffineEnergyRelativeChange":2.544493902296785e-13},
+    {"meshId":"Q8-M0","currentExact":4.1654857341200113e-10,"localizedExact":5.538822733797133e-10,"localizedSolved":2.9831426218152046e-10,"maxRelativeStiffnessChange":7.417290553356454e-16,"maxAffineEnergyRelativeChange":3.774410192377967e-15},
+    {"meshId":"Q8-M1","currentExact":1.070930011337623e-9,"localizedExact":9.757741281646304e-10,"localizedSolved":5.293259164318442e-10,"maxRelativeStiffnessChange":2.3500685958078344e-15,"maxAffineEnergyRelativeChange":2.5228713719597884e-14},
+    {"meshId":"Q8-M2","currentExact":1.2478267308324575e-9,"localizedExact":9.240466170012951e-10,"localizedSolved":7.494236342608929e-10,"maxRelativeStiffnessChange":4.02545616851376e-15,"maxAffineEnergyRelativeChange":1.6400996088826496e-13}
+  ],
+  "disposition": "PARTIAL_NOT_QUALIFYING. Translation-stable local geometry reduces the solved rigid residual on every previously failing mesh, with only roundoff-scale stiffness/energy changes, but eight meshes remain above 1e-10. The effect is real but insufficient alone. Test affine-completeness closure on the localized B/Jacobian representation before any production edit.",
+  "releaseAuthorityGrantedByProgram": false
+}

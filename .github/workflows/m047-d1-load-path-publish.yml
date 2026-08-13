@@ -1,0 +1,180 @@
+name: M047 publish measured D1 load-path evidence
+
+on:
+  push:
+    branches:
+      - agent/m047-stage2-measure-load-path-20260813
+    paths:
+      - '.github/workflows/m047-d1-load-path-publish.yml'
+
+permissions:
+  contents: write
+  actions: read
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    env:
+      TARGET_BRANCH: 'agent/m047-stage2-r1-r3-evidence'
+      TARGET_HEAD: '862fa28f328ce279aca421044bee486246427583'
+      MEASUREMENT_RUN_ID: '31682260399'
+      MEASUREMENT_ARTIFACT_ID: '9175161189'
+      MEASUREMENT_ARTIFACT_DIGEST: 'sha256:2498b5ce9fa8d730c47730a587bb00786beb654d0303de1553f04e38c2675caf'
+      EVIDENCE_HEAD: 'ee777d92c6fa833e33639de58e16637855b2402f'
+      ACCDB_SHA256: '64c05a50e9ed0452622ff5880335460486f24ac8e6adecc9a300b549c9aa82f8'
+    steps:
+      - name: Checkout exact PR 1101 head
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ env.TARGET_BRANCH }}
+          fetch-depth: 0
+
+      - name: Prove target head
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$(git rev-parse HEAD)" = "$TARGET_HEAD"
+          test -z "$(git status --porcelain)"
+
+      - name: Make measured-run syntax correction permanent
+        shell: bash
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          from pathlib import Path
+          path = Path('scripts/lfea-m047-stage2-d1-load-path-experiment.mjs')
+          text = path.read_text()
+          old = """      const error = new Error(\n        `${caseRecord.caseId} project load-path substep lambda=${physicalLoadFraction} `\n        + `did not converge within ${profile.maximumIterations} iterations.`,\n      );"""
+          new = """      const error = new Error(\n        caseRecord.caseId + ' project load-path substep lambda=' + physicalLoadFraction + ' '\n        + 'did not converge within ' + profile.maximumIterations + ' iterations.',\n      );"""
+          if text.count(old) != 1:
+              raise SystemExit(f'expected exactly one syntax target, found {text.count(old)}')
+          path.write_text(text.replace(old, new))
+          PY
+          node --check scripts/lfea-m047-stage2-d1-load-path-experiment.mjs
+
+      - name: Download governed measurement artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: m047-d1-load-path-measurement
+          path: .measurement-download
+          repository: reallaksh19/Advanced_Analysis
+          run-id: ${{ env.MEASUREMENT_RUN_ID }}
+          github-token: ${{ github.token }}
+
+      - name: Verify and stage real reports
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -f .measurement-download/reports/lfea-m047-stage2-d1-load-path-L13.json
+          test -f .measurement-download/reports/lfea-m047-stage2-d1-load-path-finalization.json
+          node - <<'NODE'
+          const fs = require('fs');
+          const experiment = JSON.parse(fs.readFileSync('.measurement-download/reports/lfea-m047-stage2-d1-load-path-L13.json','utf8'));
+          const finalization = JSON.parse(fs.readFileSync('.measurement-download/reports/lfea-m047-stage2-d1-load-path-finalization.json','utf8'));
+          if (experiment.sourceAccdbSha256 !== process.env.ACCDB_SHA256) throw new Error('experiment ACCDB custody mismatch');
+          if (finalization.sourceAccdbSha256 !== process.env.ACCDB_SHA256) throw new Error('finalization ACCDB custody mismatch');
+          if (experiment.n1Reproduction?.status !== 'PASS') throw new Error('N1 did not reproduce D1');
+          if (!experiment.runs?.every((r) => r.converged === true && r.deterministic === true)) throw new Error('run convergence/determinism mismatch');
+          if (finalization.status !== 'NO_CONTINUATION_PROMOTION_KEEP_D1_EXPERIMENTAL_BASELINE') throw new Error('unexpected final disposition');
+          if (experiment.toleranceChanged !== false || experiment.comparisonPolicyChanged !== false || experiment.productionSourceModified !== false) throw new Error('forbidden policy/source mutation');
+          if (finalization.toleranceChanged !== false || finalization.comparisonPolicyChanged !== false) throw new Error('finalization policy mutation');
+          NODE
+          cp .measurement-download/reports/lfea-m047-stage2-d1-load-path-L13.json reports/
+          cp .measurement-download/reports/lfea-m047-stage2-d1-load-path-finalization.json reports/
+
+      - name: Generate measured accuracy summary
+        shell: bash
+        run: |
+          set -euo pipefail
+          node - <<'NODE'
+          const fs = require('fs');
+          const e = JSON.parse(fs.readFileSync('reports/lfea-m047-stage2-d1-load-path-L13.json','utf8'));
+          const f = JSON.parse(fs.readFileSync('reports/lfea-m047-stage2-d1-load-path-finalization.json','utf8'));
+          const runs = Object.fromEntries(e.runs.map(r => [r.runId, r]));
+          const row = (run,node) => runs[run].restraints.find(r => r.nodeId === node);
+          const fmt = x => Number(x).toFixed(2);
+          const lines = [
+            '# M047 Stage 2 D1 physical-load continuation — real pinned-ACCDB measurement',
+            '',
+            'This report records the completed real `BM4_L.ACCDB` measurement for the project-declared D1 physical-load continuation RCA. It is not a claim that CAESAR II internally performs static load stepping.',
+            '',
+            '## Custody',
+            '',
+            `- PR #1101 measured source head: \`${process.env.TARGET_HEAD}\``,
+            `- sibling measured-evidence head: \`${process.env.EVIDENCE_HEAD}\``,
+            `- pinned ACCDB SHA-256: \`${process.env.ACCDB_SHA256}\``,
+            `- GitHub Actions measurement run: \`${process.env.MEASUREMENT_RUN_ID}\``,
+            `- uploaded artifact ID: \`${process.env.MEASUREMENT_ARTIFACT_ID}\``,
+            `- uploaded artifact digest: \`${process.env.MEASUREMENT_ARTIFACT_DIGEST}\``,
+            `- experiment semantic hash: \`${e.semanticHash}\``,
+            `- finalization semantic hash: \`${f.semanticHash}\``,
+            `- production solver SHA-256: \`${f.sourceFingerprints.productionSolverSha256}\``,
+            `- ephemeral continuation candidate SHA-256: \`${f.sourceFingerprints.ephemeralCandidateSha256}\``,
+            '',
+            'The pinned ZIP and ACCDB member byte length/SHA-256 checks passed before the nonlinear solve, and the Stage 2 preflight passed. No tolerance or comparison policy changed and the production friction solver was not modified by the experiment.',
+            '',
+            '## Accuracy result',
+            '',
+            '| run | converged / deterministic | vectors within ±10% | normals within ±10% | state matches | median vector error | worst above-R1 vector error | total nonlinear iterations |',
+            '|---|---|---:|---:|---:|---:|---:|---:|',
+            ...e.runs.map(r => `| ${r.runId} | ${r.converged}/${r.deterministic} | ${r.summary.tangentialVectorsWithinGoal}/23 | ${r.summary.normalWithinGoal}/23 | ${r.summary.constitutiveStateMatches}/23 | ${fmt(r.summary.tangentialMedianVectorErrorPct)}% | ${fmt(r.summary.aboveR1WorstVectorErrorPct)}% | ${r.totalIterationCount} |`),
+            '',
+            `N1 reproduction: **${e.n1Reproduction.status}**. It reproduced the accepted D1 396-iteration endpoint with maximum normal difference ${e.n1Reproduction.maximumNormalDifferenceN.toExponential(3)} N and maximum tangential-component difference ${e.n1Reproduction.maximumTangentialComponentDifferenceN.toExponential(3)} N.`,
+            '',
+            'Both continuation refinements reduce the very large local errors at 22140/22220, but neither improves the overall pass count over D1, and they do not converge to the same nonlinear branch:',
+            '',
+            '| node | D1 / N1 vector error | N5 vector error | N10 vector error | N5 raw state | N10 raw state |',
+            '|---|---:|---:|---:|---|---|',
+            ...['20710','22140','22220','20440','22370','22120'].map(n => {
+              const a=row('D1-L13-PATH-N1',n), b=row('D1-L13-PATH-N5',n), c=row('D1-L13-PATH-N10',n);
+              return `| ${n} | ${fmt(a.vectorErrorPct)}% | ${fmt(b.vectorErrorPct)}% | ${fmt(c.vectorErrorPct)}% | ${b.state.solvedRaw} | ${c.state.solvedRaw} |`;
+            }),
+            '',
+            '## Refinement decision',
+            '',
+            `N5-vs-N10 refinement: **${e.refinement.status}**.`,
+            '',
+            `- maximum normal difference: ${fmt(e.refinement.maximumNormalDifferenceN)} N`,
+            `- maximum tangential-component difference: ${fmt(e.refinement.maximumTangentialComponentDifferenceN)} N`,
+            `- existing force-difference limit used by the gate: ${e.refinement.forceDifferenceLimitN} N`,
+            `- raw-state mismatches: ${e.refinement.stateMismatchRestraintIds.join(', ')}`,
+            '',
+            'The differing N5/N10 branch states mean the result is not refinement-stable. The experiment therefore cannot establish a unique path-continuation solution merely by increasing the fixed continuation count from 5 to 10.',
+            '',
+            '## Engineering disposition',
+            '',
+            `**${f.status}**`,
+            '',
+            '- Retain D1 total-relative-tangential-displacement direction as the experimental L13 baseline.',
+            '- Do not promote physical-load continuation into production mechanics.',
+            '- Do not unlock L7 or BM4_NL from this result.',
+            '- Keep the independent 20710 one-axis over-cap capacity/path signal open.',
+            '- No accuracy tolerance, convergence gate, comparator, or node exception was changed.',
+            '',
+          ];
+          fs.writeFileSync('reports/lfea-m047-stage2-d1-load-path-real-measurement.md', lines.join('\n'));
+          NODE
+
+      - name: Re-run continuation contracts after permanent syntax fix
+        shell: bash
+        run: |
+          set -euo pipefail
+          node scripts/lfea-m047-stage2-d1-load-path-plan-check.mjs
+          node scripts/lfea-m047-stage2-d1-load-path-experiment-check.mjs
+          node scripts/lfea-m047-stage2-d1-load-path-finalize-check.mjs
+
+      - name: Commit measured reports to PR 1101 only
+        shell: bash
+        run: |
+          set -euo pipefail
+          rm -rf .measurement-download
+          git config user.name 'reallaksh19'
+          git config user.email 'reallaksh19@gmail.com'
+          git add scripts/lfea-m047-stage2-d1-load-path-experiment.mjs \
+            reports/lfea-m047-stage2-d1-load-path-L13.json \
+            reports/lfea-m047-stage2-d1-load-path-finalization.json \
+            reports/lfea-m047-stage2-d1-load-path-real-measurement.md
+          git diff --cached --check
+          git commit -m 'M047 Stage 2: record real D1 load-path measurement'
+          git push origin HEAD:${TARGET_BRANCH}

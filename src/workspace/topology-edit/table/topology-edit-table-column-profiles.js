@@ -6,13 +6,15 @@ export const TOPOLOGY_EDIT_TABLE_COLUMN_PROFILE_SCHEMA = 'TopologyEditTableColum
 const PROFILE_KEYS = Object.freeze({
   GEOMETRY: Object.freeze([
     'tag', 'elementType', 'line',
+    'fromX', 'fromY', 'fromZ', 'toX', 'toY', 'toZ',
+    'deltaX', 'deltaY', 'deltaZ',
     'lengthMm', 'slopePercent', 'componentLengthMm', 'angleDeg', 'radiusMm',
   ]),
   SPECIFICATION: Object.freeze([
     'tag', 'elementType', 'line',
     'dnInMm', 'dnOutMm', 'schedule', 'material', 'pipingClass', 'pressureClass',
     'flangeType', 'flangeFacing', 'rating', 'valveType',
-    'reducerType', 'reducerOrientation', 'runDnMm', 'branchDnMm',
+    'reducerType', 'reducerOrientation', 'runDnMm', 'branchDnMm', 'downstreamDnMm',
   ]),
   SUPPORT: Object.freeze([
     'tag', 'elementType', 'line',
@@ -20,7 +22,9 @@ const PROFILE_KEYS = Object.freeze({
   ]),
   CONNECTIVITY: Object.freeze([
     'tag', 'elementType', 'line',
-    'connectFrom', 'connectTo', 'endConnectionFrom', 'endConnectionTo', 'flowDirection',
+    'fromNodeId', 'fromPortKey', 'toNodeId', 'toPortKey',
+    'connectFrom', 'connectTo', 'branchPortKey', 'reducerCanonicalId',
+    'endConnectionFrom', 'endConnectionTo', 'flowDirection',
   ]),
   AUTHORITY: Object.freeze([
     'tag', 'elementType', 'line', 'catalogueAuthority', 'sourceStatus',

@@ -175,6 +175,7 @@ export class TopologyEditProfessionalOperationRuntime {
     this.catalogue = null;
     this.catalogueCustody = null;
     this.componentContext = null;
+    this.values = { ...this.values, catalogueRecordId: '' };
     this.plan = null;
     this.candidate = null;
     this.validation = null;

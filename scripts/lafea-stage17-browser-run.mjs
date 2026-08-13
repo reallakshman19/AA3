@@ -12,6 +12,7 @@ if (!fs.existsSync(cli)) {
 const result = spawnSync(process.execPath, [
   cli,
   'test',
+  '--config=playwright.lafea-visible.config.js',
   'e2e/lafea-standalone.spec.js',
   'e2e/lafea-standalone-golden-journey.spec.js',
   'e2e/lafea-standalone-failures.spec.js',

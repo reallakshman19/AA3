@@ -1,0 +1,90 @@
+name: M047 H2 H1 sequential relocked-direction pinned measurement
+
+on:
+  push:
+    branches:
+      - agent/m047-stage2-measure-h2-20260813
+    paths:
+      - '.github/workflows/m047-h2-measure.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  measure:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    env:
+      SOURCE_HEAD: 'f087bed5578640c13d063a855b094146a2ded203'
+      BM4L_COMMON_COMMIT: '45d51ea18624f5775805f399110c1738301c0d90'
+      BM4L_ZIP_SHA256: '978617cba50fa0b1a16c2fa71dc1e0d38e55ac834b191f887d100c6951abd8b9'
+      BM4L_ACCDB_SHA256: '64c05a50e9ed0452622ff5880335460486f24ac8e6adecc9a300b549c9aa82f8'
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ env.SOURCE_HEAD }}
+          persist-credentials: false
+      - name: Prove source custody
+        run: |
+          set -euo pipefail
+          test "$(git rev-parse HEAD)" = "$SOURCE_HEAD"
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+      - run: npm ci
+      - name: Fetch pinned BM4_L
+        run: |
+          set -euo pipefail
+          mkdir -p artifacts/measurement artifacts/bm4l-stage2/source reports
+          curl --fail --location --silent --show-error "https://raw.githubusercontent.com/reallaksh19/Common/${BM4L_COMMON_COMMIT}/LFEA/BM4/BM4_L.zip" -o artifacts/measurement/BM4_L.zip
+          echo "${BM4L_ZIP_SHA256}  artifacts/measurement/BM4_L.zip" | sha256sum -c -
+          unzip -q artifacts/measurement/BM4_L.zip -d artifacts/bm4l-stage2/source
+          echo "${BM4L_ACCDB_SHA256}  artifacts/bm4l-stage2/source/BM4_L.ACCDB" | sha256sum -c -
+      - name: Validate H2 isolation contract
+        run: |
+          set -euo pipefail
+          node --check scripts/lfea-m047-stage2-h1-relocked-total-direction-experiment.mjs
+          node --check scripts/lfea-m047-stage2-h1-relocked-total-direction-experiment-check.mjs
+          node scripts/lfea-m047-stage2-h1-relocked-total-direction-experiment-check.mjs > artifacts/measurement/preflight.stdout.txt 2> artifacts/measurement/preflight.stderr.txt
+      - name: Execute real H2 nonlinear experiment twice
+        id: experiment
+        run: |
+          set +e
+          node scripts/lfea-m047-stage2-h1-relocked-total-direction-experiment.mjs \
+            --accdb artifacts/bm4l-stage2/source/BM4_L.ACCDB \
+            --out reports/lfea-m047-stage2-h1-relocked-total-direction-L13.json \
+            > artifacts/measurement/experiment.stdout.txt \
+            2> artifacts/measurement/experiment.stderr.txt
+          code=$?
+          echo "$code" > artifacts/measurement/experiment-exit-code.txt
+          echo "exit_code=$code" >> "$GITHUB_OUTPUT"
+          exit 0
+      - name: Emit receipt
+        if: always()
+        run: |
+          node - <<'NODE'
+          const fs=require('fs'); const p='reports/lfea-m047-stage2-h1-relocked-total-direction-L13.json';
+          const result=fs.existsSync(p)?JSON.parse(fs.readFileSync(p,'utf8')):null;
+          const code=fs.existsSync('artifacts/measurement/experiment-exit-code.txt')?Number(fs.readFileSync('artifacts/measurement/experiment-exit-code.txt','utf8').trim()):null;
+          fs.writeFileSync('artifacts/measurement/receipt.json',JSON.stringify({schema:'m047-h2-actions-receipt/v1',sourceHead:process.env.SOURCE_HEAD,accdbSha256:process.env.BM4L_ACCDB_SHA256,experimentExitCode:code,result},null,2)+'\n');
+          NODE
+      - name: Upload governed evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: m047-h2-measurement
+          retention-days: 7
+          if-no-files-found: error
+          path: |
+            artifacts/measurement/**
+            reports/lfea-m047-stage2-h1-relocked-total-direction-L13.json
+      - name: Enforce experiment success after upload
+        if: always()
+        run: |
+          test -f artifacts/measurement/experiment-exit-code.txt
+          code="$(cat artifacts/measurement/experiment-exit-code.txt)"
+          if [ "$code" != "0" ]; then
+            echo "H2 experiment failed with exit code $code; uploaded evidence is authoritative."
+            exit "$code"
+          fi

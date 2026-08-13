@@ -4,7 +4,9 @@
  * D2/S2/R2/R3/N1/N2 batch: physical L13 load-path continuation on accepted D1.
  *
  * Planning only. This file does not solve, alter production mechanics, choose an
- * increment count from benchmark error, or unlock L7/BM4_NL.
+ * increment count from benchmark error, or unlock L7/BM4_NL. The continuation is
+ * project-declared numerical RCA, not a claim that CAESAR II internally performs
+ * static load stepping.
  */
 import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
@@ -45,6 +47,11 @@ export function buildD1LoadPathContinuationPlan(nextAccuracyEvidence) {
     caseClass: 'SUS',
     formula: 'W+P1',
     sourceAccdbSha256: intake.sourceAccdbSha256,
+    authority: {
+      kind: 'PROJECT_DECLARED_NUMERICAL_CONTINUATION_RCA',
+      caesarInternalLoadSteppingClaimed: false,
+      finalEquationIdentityRule: 'LAMBDA_1_MUST_REPRODUCE_ACCEPTED_D1_EXACTLY',
+    },
     baseline: {
       variant: intake.retainedBaseline.variant,
       measuredTangentialVectorsWithinGoal: intake.retainedBaseline.tangentialVectorsWithinGoal,
@@ -53,8 +60,10 @@ export function buildD1LoadPathContinuationPlan(nextAccuracyEvidence) {
     },
     isolatedMechanic: 'PHYSICAL_LOAD_PATH_CONTINUATION_FROM_ZERO_TO_FULL_L13',
     physicalLoadScaling: {
-      rule: 'SCALE_ALL_L13_PHYSICAL_LOAD_PRIMITIVES_BY_COMMON_FRACTION_LAMBDA',
+      rule: 'SCALE_ASSEMBLED_ELEMENT_EQUIVALENT_AND_INITIAL_STRAIN_LOAD_VECTORS_BY_COMMON_LAMBDA',
       terms: Object.freeze(['W', 'P1']),
+      fullL13StiffnessStateFrozenAtEveryFraction: true,
+      pressureDependentStiffnessRecomputedPerFraction: false,
       frictionStateLoadsScaledAsExternalPhysicalLoads: false,
       finalFraction: 1,
       simultaneousTermScalingRequired: true,
@@ -64,13 +73,14 @@ export function buildD1LoadPathContinuationPlan(nextAccuracyEvidence) {
       'FRICTION_STIFFNESS_1_751270055770874E8_N_PER_M',
       'COULOMB_CAP_MU_TIMES_OWN_CURRENT_CASE_NORMAL_REACTION',
       'MODEL_MU_0_3_AND_LOAD_CASE_MULTIPLIER_1_0',
+      'FULL_L13_PRESSURE_STIFFENED_STIFFNESS_STATE',
       'BREAKAWAY_AND_RELOCK_STATE_BOUNDARIES',
       'STATE_HYSTERESIS_0_001',
       'RETURN_MAPPED_SLIP_OFFSET_FORM',
       'COMPONENTWISE_SECANT_ACCELERATION_WITHIN_EACH_SUBSTEP',
       'MAXIMUM_ITERATIONS_400_PER_SUBSTEP',
       'DISPLACEMENT_REACTION_CONSTITUTIVE_DIRECTION_AND_EQUILIBRIUM_GATES',
-      'QUALIFIED_LINEAR_ELEMENT_LOAD_RESTRAINT_AND_RECOVERY_MECHANICS',
+      'QUALIFIED_LINEAR_ELEMENT_LOAD_RESTRAINT_AND_RECOVERY_MECHANICS_AT_FINAL_LAMBDA_1',
       'CAESAR_REFERENCE_ROWS_AND_10_PERCENT_COMPARISON_GOAL',
     ]),
     runs,
@@ -89,9 +99,9 @@ export function buildD1LoadPathContinuationPlan(nextAccuracyEvidence) {
         'ALL_23_NORMALIZED_CONSTITUTIVE_STATES_REPORTED',
       ]),
       continuationUsefulOnlyIf: Object.freeze([
-        'N5_OR_N10_CONVERGES_WITHOUT_GATE_OR_TOLERANCE_CHANGE',
-        'FINAL_STATE_DIFFERS_FROM_SINGLE_STEP_D1_BY_PHYSICAL_PATH_NOT_COMPARISON_POLICY',
-        'N10_IS_REFINEMENT_STABLE_RELATIVE_TO_N5_IN_STATE_AND_RESPONSE',
+        'N5_AND_N10_CONVERGE_WITHOUT_GATE_OR_TOLERANCE_CHANGE',
+        'N1_REPRODUCES_ACCEPTED_D1_BEFORE_N5_OR_N10_IS_INTERPRETED',
+        'N10_IS_REFINEMENT_STABLE_RELATIVE_TO_N5_IN_RAW_STATE_AND_FORCE_RESPONSE',
       ]),
       prohibitedSelectionRule:
         'DO_NOT_SELECT_N_FROM_BENCHMARK_ERROR_ALONE_AND_DO_NOT_ADD_ADAPTIVE_SUBSTEPS_TO_REPAIR_A_FAILURE',

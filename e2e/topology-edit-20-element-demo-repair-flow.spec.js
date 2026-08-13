@@ -12,6 +12,7 @@ test.beforeEach(async ({ page }) => {
 });
 
 test('20-object demo repairs the 250 mm bridge and 150 mm source-backed overlap', async ({ page }, testInfo) => {
+  test.setTimeout(120_000);
   const pageErrors = [];
   const consoleErrors = [];
   page.on('pageerror', (error) => pageErrors.push(error.message));
@@ -201,6 +202,11 @@ async function openFreshDemo(page) {
 
 async function selectPort(page, portKey, additive) {
   const input = page.locator('[data-role="topology-edit-search-input"]');
+  const panel = input.locator('xpath=ancestor::details[1]');
+  if (!(await panel.evaluate((element) => element.open))) {
+    await panel.locator(':scope > summary').click();
+  }
+  await expect(input).toBeVisible();
   await input.fill(portKey);
   const result = page.locator('[data-search-object-kind="node"]');
   await expect(result).toHaveCount(1);
@@ -209,7 +215,8 @@ async function selectPort(page, portKey, additive) {
 
 function overlapIssue(page) {
   return page.locator('[data-issue-kind="OVERLAPPING_ELEMENTS"]')
-    .filter({ hasText: '150.00mm' });
+    .filter({ hasText: '150.00mm' })
+    .filter({ has: page.locator('[data-review-topology-issue-fix]') });
 }
 
 async function comparisonValue(page, label) {

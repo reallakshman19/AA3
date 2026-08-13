@@ -1,0 +1,53 @@
+name: M047 L7 B0
+on:
+  push:
+    branches: [m047-l7-measure]
+    paths: ['.github/workflows/m047-l7-b0.yml']
+permissions:
+  contents: read
+jobs:
+  measure:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    env:
+      COMMON: '45d51ea18624f5775805f399110c1738301c0d90'
+      ZIP_SHA: '978617cba50fa0b1a16c2fa71dc1e0d38e55ac834b191f887d100c6951abd8b9'
+      ACCDB_SHA: '64c05a50e9ed0452622ff5880335460486f24ac8e6adecc9a300b549c9aa82f8'
+      SOLVER: 'src/core/fea-benchmarks/caesar-accdb-friction-solve.js'
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - name: Record solver SHA
+        run: sha256sum "$SOLVER" | tee solver-before.sha256
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+      - run: npm ci
+      - name: Fetch pinned BM4_L
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p artifacts/source reports
+          curl -fLsS "https://raw.githubusercontent.com/reallaksh19/Common/${COMMON}/LFEA/BM4/BM4_L.zip" -o artifacts/BM4_L.zip
+          echo "${ZIP_SHA}  artifacts/BM4_L.zip" | sha256sum -c -
+          unzip -q artifacts/BM4_L.zip -d artifacts/source
+          echo "${ACCDB_SHA}  artifacts/source/BM4_L.ACCDB" | sha256sum -c -
+      - name: Run B0 L7 twice
+        shell: bash
+        run: |
+          set -euo pipefail
+          node scripts/lfea-m047-stage2-friction-tuning-loop.mjs --accdb artifacts/source/BM4_L.ACCDB --case L7 --variant B0-L7 --out reports/l7-b0-r1.json
+          node scripts/lfea-m047-stage2-friction-tuning-loop.mjs --accdb artifacts/source/BM4_L.ACCDB --case L7 --variant B0-L7 --out reports/l7-b0-r2.json
+          sha256sum "$SOLVER" | tee solver-after.sha256
+          cmp solver-before.sha256 solver-after.sha256
+      - uses: actions/upload-artifact@v4
+        with:
+          name: m047-l7-b0
+          retention-days: 7
+          path: |
+            reports/l7-b0-r1.json
+            reports/l7-b0-r2.json
+            solver-before.sha256
+            solver-after.sha256

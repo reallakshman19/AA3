@@ -36,6 +36,7 @@ export function topologyEditProfessionalOperationUiDisposition(operationType) {
 
 export function renderTopologyEditProfessionalOperationPanel(element, state = {}) {
   if (!element) throw new TypeError('TopologyEditProfessionalOperationPanel: element is required.');
+  syncPipeGeometryShell(element);
   const values = state.values ?? {};
   const plan = state.plan;
   const candidate = state.candidate;
@@ -140,6 +141,13 @@ export function readTopologyEditProfessionalOperationValues(element) {
     direction: value('professional-direction'),
     catalogueRecordId: value('professional-catalogue-record'),
   });
+}
+
+function syncPipeGeometryShell(element) {
+  element?.setAttribute?.('aria-label', 'Advanced pipe geometry operation');
+  const wrapper = element?.closest?.('details[data-panel-kind="topology-edit-professional-operation"]');
+  const summary = wrapper?.querySelector?.(':scope > summary');
+  if (summary) summary.textContent = 'Pipe geometry';
 }
 
 function renderOperationOptions(state, disposition) {

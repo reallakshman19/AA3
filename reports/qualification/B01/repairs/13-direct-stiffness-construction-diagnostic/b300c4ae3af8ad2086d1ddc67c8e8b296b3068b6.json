@@ -1,0 +1,17 @@
+{
+  "schema":"lafea-b01-repair-attempt/v1",
+  "attempt":13,
+  "issue":1100,
+  "attemptedBoundary":"ELEMENT_STIFFNESS_BTDB_NUMERICAL_CONSTRUCTION",
+  "branchHead":"b300c4ae3af8ad2086d1ddc67c8e8b296b3068b6",
+  "workflowRunId":31674263502,
+  "artifactId":9170890270,
+  "artifactDigest":"sha256:133e3e007d32328ebd21bef5ade7ed158730b4344b576afe910ab560d91ad823",
+  "productionMechanicsChanged":false,
+  "variants":["CURRENT","DIRECT_COMPENSATED","DIRECT_COMPENSATED_SYMMETRIC"],
+  "disposition":"MIXED_DO_NOT_PROMOTE",
+  "reason":"Direct compensated B^T D B entry evaluation improves some T6/Q8 exact-rigid residuals but does not bring any remaining failing mesh below 1e-10, has no effect on T3, and worsens T6-M2. Exact symmetry mirroring is likewise insufficient and can worsen T3/T6 cases.",
+  "keyExamples":{"T6-M1":{"current":8.462691039312631e-10,"directCompensated":5.356397014111281e-10},"T6-M2":{"current":9.054825932253153e-10,"directCompensated":1.2214844537083991e-9},"Q8-M1":{"current":1.070930011337623e-9,"directCompensated":8.417373464908451e-10}},
+  "nextBoundary":"ELEMENT_RIGID_NULLSPACE_PRESERVATION",
+  "releaseAuthorityGrantedByProgram":false
+}

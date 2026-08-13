@@ -1,0 +1,45 @@
+{
+  "schema": "lafea-b01-untouched-baseline-summary/v1",
+  "issue": 1100,
+  "exactHead": "9c9275c82aca0453d6cff7a585b5c31fa2739fbf",
+  "cleanTreeAtStart": true,
+  "productionMechanicsChangedBeforeBaseline": false,
+  "workflow": {
+    "runId": 31669760205,
+    "jobId": 94351770333,
+    "artifactId": 9169257075,
+    "artifactName": "lafea-b01-untouched-baseline-9c9275c82aca0453d6cff7a585b5c31fa2739fbf",
+    "artifactSha256": "sha256:29ed838ef8152d3b4eb09e3b1c65cab8fb03168da508fcbf09c25ec19d2f56b9",
+    "artifactSizeBytes": 259648
+  },
+  "masterEvidenceHash": "sha256:950a43227f50bcc627cf0abe5e70e4bd574cf3c3ca6a1a3d143af8d119d1e1c8",
+  "route": {
+    "compositionRootId": "LAFEA.COMPOSITION.CONTINUUM_2D/V1",
+    "registryAuthority": "T3_T6_Q8_LINEAR_CONTINUUM",
+    "enginePackage": "local-continuum",
+    "sequence": ["normalizeDocument", "canonicalize", "calculate", "acceptResult", "presentResult"]
+  },
+  "custody": [
+    {"path":"validation/lafea-benchmark-data/B01/oracle/cases.json","sha256":"sha256:94a53a8b01e1770c809aa6bd166ea1cc2efe4f885caec7e5b9b8827dd8607499"},
+    {"path":"validation/lafea-benchmark-data/B01/oracle/expected-values.json","sha256":"sha256:99c694bbfff6d4cc8f7cb0a176b4ac499e49ce83751ee80efc102c052b23c2ee"},
+    {"path":"validation/lafea-benchmark-data/B01/governance/fem-semantics.json","sha256":"sha256:c51489e9a58e8a776d5c43b2633962b18f22b89d1da7aaf7676ab990514ee165"},
+    {"path":"validation/lafea-benchmark-data/B01/mesh-generator.py","sha256":"sha256:e1262b02b2b7430c1241926daff20d63c2deeb85f8780f2dfa99bd3ab86af90e"},
+    {"path":"validation/lafea-benchmark-data/B01/meshes/mesh-generation-summary.json","sha256":"sha256:7ffaa20ca7722c34d5b459f3d2011ce944a7f1207ab48813dcb91591acc37168"}
+  ],
+  "matrix": {"selectedRunCount":54,"passCount":45,"failCount":9,"status":"FAIL"},
+  "failurePattern": "Only LAFEA3-AFFINE-RIGID-04 failed. The other five physical cases passed for T3/T6/Q8 at M0/M1/M2.",
+  "failures": [
+    {"family":"T3","meshId":"T3-M0","receiptSha256":"sha256:686afd8c4202d04637d59f48ef840b2cd2a2f79f87f5be8e072c6fc0277d790b","firstFailedBoundary":"EVIDENCE_COMPARISON","code":"FREE_DOF_RESIDUAL_MISMATCH","normalizedFreeDofInfinityResidual":1.2369127944111824e-10,"maxNodalDisplacementAbsoluteError":2.7755575615628914e-17,"maxStrainAbsoluteError":1.734723475976807e-18,"maxStressAbsoluteErrorMPa":4.003208021484939e-13},
+    {"family":"T3","meshId":"T3-M1","receiptSha256":"sha256:ea8e467111272a7cd7d4bc034126d547b9900858c148285d6875f97332c4eaed","firstFailedBoundary":"EVIDENCE_COMPARISON","code":"FREE_DOF_RESIDUAL_MISMATCH","normalizedFreeDofInfinityResidual":6.402842700481415e-10,"maxNodalDisplacementAbsoluteError":2.7755575615628914e-16,"maxStrainAbsoluteError":1.3877787807814457e-17,"maxStressAbsoluteErrorMPa":3.2025664171879513e-12},
+    {"family":"T3","meshId":"T3-M2","receiptSha256":"sha256:2d2f86a759b7bce27d4e332e790fd85e790d584d3b0b227070f98775b16e7879","firstFailedBoundary":"EVIDENCE_COMPARISON","code":"FREE_DOF_RESIDUAL_MISMATCH","normalizedFreeDofInfinityResidual":1.0695657692849636e-9,"maxNodalDisplacementAbsoluteError":6.106226635438361e-16,"maxStrainAbsoluteError":4.85722573273506e-17,"maxStressAbsoluteErrorMPa":9.607699251563854e-12},
+    {"family":"T6","meshId":"T6-M0","receiptSha256":"sha256:eacf526a81ddeac471211a50165d85f675d41b4048480322db4942de3b4d1efc","firstFailedBoundary":"EVIDENCE_COMPARISON","code":"FREE_DOF_RESIDUAL_MISMATCH","normalizedFreeDofInfinityResidual":6.402842700481415e-10,"maxNodalDisplacementAbsoluteError":2.220446049250313e-16,"maxStrainAbsoluteError":2.7755575615628914e-17,"maxStressAbsoluteErrorMPa":3.763015540195843e-12},
+    {"family":"T6","meshId":"T6-M1","receiptSha256":"sha256:ec925ac1662dc89f915226ddcf6e194b8f0d8f45a2db5156cc896c39a451a50c","firstFailedBoundary":"EVIDENCE_COMPARISON","code":"FREE_DOF_RESIDUAL_MISMATCH","normalizedFreeDofInfinityResidual":1.862645149230957e-9,"maxNodalDisplacementAbsoluteError":7.771561172376096e-16,"maxStrainAbsoluteError":9.627715291671279e-17,"maxStressAbsoluteErrorMPa":2.2097708278596862e-11},
+    {"family":"T6","meshId":"T6-M2","receiptSha256":"sha256:7aafc44a6b377708336755d2b5a76f90f180091169397159a0e01db2b4872e16","firstFailedBoundary":"LINEAR_SOLVER","code":"REACTION_EQUILIBRIUM_FAILURE","registeredQualificationState":"NUMERICAL_FAILURE"},
+    {"family":"Q8","meshId":"Q8-M0","receiptSha256":"sha256:d95f9995db1875907f66c4e2f372e04eeb865a33a09fe74ddf247fca36458309","firstFailedBoundary":"EVIDENCE_COMPARISON","code":"FREE_DOF_RESIDUAL_MISMATCH","normalizedFreeDofInfinityResidual":8.440110832452774e-10,"maxNodalDisplacementAbsoluteError":4.440892098500626e-16,"maxStrainAbsoluteError":3.122502256758253e-17,"maxStressAbsoluteErrorMPa":7.385918799639712e-12},
+    {"family":"Q8","meshId":"Q8-M1","receiptSha256":"sha256:8ab1d3dbdf47952652217215a0293e0aca4d02d45b6768d9221221cedca5d7aa","firstFailedBoundary":"EVIDENCE_COMPARISON","code":"FREE_DOF_RESIDUAL_MISMATCH","normalizedFreeDofInfinityResidual":2.1100277081131935e-9,"maxNodalDisplacementAbsoluteError":8.326672684688674e-16,"maxStrainAbsoluteError":9.71445146547012e-17,"maxStressAbsoluteErrorMPa":1.4871917799816548e-11},
+    {"family":"Q8","meshId":"Q8-M2","receiptSha256":"sha256:736f9636d0dae81cdba350c2f4c29ca7bf99e4c2753cfd4efbd5d3d566823236","firstFailedBoundary":"EVIDENCE_COMPARISON","code":"FREE_DOF_RESIDUAL_MISMATCH","normalizedFreeDofInfinityResidual":4.423782229423523e-9,"maxNodalDisplacementAbsoluteError":3.0531133177191805e-15,"maxStrainAbsoluteError":3.7643499428696714e-16,"maxStressAbsoluteErrorMPa":6.445164914590752e-11}
+  ],
+  "engineeringInterpretation": "The exact rigid field is recovered to near machine precision in displacement/strain/stress. Residual error grows with mesh size, and T6-M2 crosses the existing registered reaction-equilibrium gate. The first common owner is dense partitioned-solver/equilibrium floating-point accuracy, not element kinematics, constitutive response, mesh semantics, or tolerance definition.",
+  "releaseAuthorityGrantedByProgram": false,
+  "temperatureAuthorityGrantedByProgram": false
+}

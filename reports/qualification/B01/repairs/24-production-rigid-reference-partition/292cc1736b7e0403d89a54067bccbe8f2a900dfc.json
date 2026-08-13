@@ -1,0 +1,46 @@
+{
+  "schema": "lafea-b01-repair-attempt/v1",
+  "issue": 1100,
+  "attempt": 24,
+  "attemptedBoundary": "PRODUCTION_PARTITION_RIGID_REFERENCE_CONDITIONING",
+  "branchHead": "292cc1736b7e0403d89a54067bccbe8f2a900dfc",
+  "workflowExecutionHead": "505c67edb8eda5157966b599bd4e68b563d1c8c8",
+  "workflowRunId": 31681143183,
+  "artifactId": 9173525189,
+  "artifactDigest": "sha256:e65e45990784101fbfe99727983fa7789b6d2d3069f9fb4bb593eafdfea84f6f",
+  "masterEvidenceHash": "sha256:1c758c19246d358468ae5a98e3efad40bacb1d701c98226697b3530b405d04a0",
+  "productionMechanicsChanged": true,
+  "productionFilesChanged": [
+    "src/core/local-continuum/rigid-reference-conditioning.js",
+    "src/core/local-continuum/solver.js"
+  ],
+  "singleMechanicsChange": "When prescribed scalar displacement constraints span all three in-plane rigid modes, fit a best-fit translation/rotation, subtract it before the existing partition solve, solve the deformational correction with the existing dense/sparse solver, evaluate equilibrium on that correction, then add the rigid reference back to the reported displacement. Rank-deficient or zero-reference constraint sets retain the legacy path.",
+  "frozenBenchmarkChanged": false,
+  "tolerancesChanged": false,
+  "priorControls": "PASS",
+  "baseMatrix": {
+    "selectedRunCount": 54,
+    "passCount": 54,
+    "failCount": 0,
+    "status": "PASS",
+    "failedRuns": []
+  },
+  "rigidNormalizedFreeResiduals": {
+    "T3-M0": 2.8272774843121063e-27,
+    "T3-M1": 4.079357513078896e-26,
+    "T3-M2": 2.253744051780222e-25,
+    "T6-M0": 4.6448130099413175e-26,
+    "T6-M1": 1.5059140801856037e-25,
+    "T6-M2": 2.548097806308356e-25,
+    "Q8-M0": 1.51713729292105e-26,
+    "Q8-M1": 1.232894931551815e-25,
+    "Q8-M2": 2.4915382830500437e-25
+  },
+  "maximumRigidNodalDisplacementAbsoluteErrorMm": 5.551115123125783e-17,
+  "maximumRigidStrainAbsoluteError": 6.407634839389331e-17,
+  "maximumRigidStressAbsoluteErrorMPa": 1.3274387598742716e-11,
+  "maximumRigidStrainEnergyAbsoluteErrorNmm": 9.954146402257893e-10,
+  "disposition": "QUALIFIED_AND_RETAINED. The first owning production boundary was prescribed-displacement partition conditioning. The exact same frozen 54-run B01 base matrix now passes for T3/T6/Q8 with prior controls green and no benchmark, mesh, probe, tolerance, constitutive, element, recovery, presenter or authority change.",
+  "nextBoundary": "B01D_METAMORPHIC_QUALIFICATION",
+  "releaseAuthorityGrantedByProgram": false
+}

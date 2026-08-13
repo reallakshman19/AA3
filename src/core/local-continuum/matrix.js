@@ -26,7 +26,7 @@ export function matrixVector(matrix, vector) {
     return sparseMatrixVector(matrix, vector);
   }
   return matrix.map((row) => canonicalNumber(
-    row.reduce((sum, value, index) => sum + value * vector[index], 0),
+    compensatedDot(row, vector),
     'matrix-vector product',
   ));
 }
@@ -36,10 +36,7 @@ export function scaleMatrix(matrix, factor) {
 }
 
 export function dot(left, right) {
-  return canonicalNumber(
-    left.reduce((sum, value, index) => sum + value * right[index], 0),
-    'vector dot product',
-  );
+  return canonicalNumber(compensatedDot(left, right), 'vector dot product');
 }
 
 export function symmetryResidual(matrix) {
@@ -59,4 +56,19 @@ export function matrixScale(matrix) {
 export function canonicalMatrix(matrix) {
   return matrix.map((row) => row.map((value) =>
     canonicalNumber(value, 'matrix value')));
+}
+
+/** Neumaier-compensated sum of pairwise products. */
+function compensatedDot(left, right) {
+  let sum = 0;
+  let compensation = 0;
+  for (let index = 0; index < left.length; index += 1) {
+    const term = left[index] * right[index];
+    const next = sum + term;
+    compensation += Math.abs(sum) >= Math.abs(term)
+      ? (sum - next) + term
+      : (term - next) + sum;
+    sum = next;
+  }
+  return sum + compensation;
 }

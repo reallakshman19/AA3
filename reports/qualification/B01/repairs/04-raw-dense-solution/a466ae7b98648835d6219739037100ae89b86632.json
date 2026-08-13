@@ -1,0 +1,18 @@
+{
+  "schema":"lafea-b01-repair-attempt/v1",
+  "issue":1100,
+  "attempt":4,
+  "exactHead":"a466ae7b98648835d6219739037100ae89b86632",
+  "hypothesis":"Canonicalizing the dense Cholesky solution before equilibrium evaluation causes the rigid residual floor.",
+  "singleMechanicsChange":"Preserve raw Number precision from dense Cholesky through K*u-f; retain existing result-boundary displacement canonicalization.",
+  "productionFilesChanged":["src/core/local-continuum/solver.js"],
+  "frozenBenchmarkChanged":false,
+  "tolerancesChanged":false,
+  "priorControls":"PASS",
+  "workflowRunId":31670727564,
+  "artifact":{"artifactId":9169588053,"sha256":"sha256:9330795e832a2189853de543e4782e1e5391800b4ac5e98d247fa420c92520a4"},
+  "matrix":{"passCount":46,"failCount":8,"status":"FAIL"},
+  "comparisonToAttempt3":"No material change in pass/fail set or rigid residual magnitudes.",
+  "disposition":"HYPOTHESIS_NOT_CONFIRMED. Retain raw precision because output canonicalization still occurs at the governed result boundary, but proceed to deterministic dense Cholesky iterative refinement.",
+  "releaseAuthorityGrantedByProgram":false
+}

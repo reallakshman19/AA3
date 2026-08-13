@@ -1,0 +1,78 @@
+name: LAFEA B01 fail-closed qualification
+on:
+  push:
+    branches: [agent/issue-1100-b01-freeze]
+    paths:
+      - 'validation/lafea-benchmark-data/B01/**'
+      - 'scripts/lafea-b01-*.mjs'
+      - 'scripts/lafea-stage15-neutral-shared-primitives-check.mjs'
+      - 'src/core/local-continuum/**'
+      - 'src/core/shared-primitives/**'
+      - 'src/workspace/lafea-stage-*.js'
+      - 'src/workspace/lafea-lifecycle-*.js'
+      - 'src/workspace/lafea-workbench-*.js'
+      - '.github/workflows/lafea-b01-negative.yml'
+  pull_request:
+    paths:
+      - 'validation/lafea-benchmark-data/B01/**'
+      - 'scripts/lafea-b01-*.mjs'
+      - 'scripts/lafea-stage15-neutral-shared-primitives-check.mjs'
+      - 'src/core/local-continuum/**'
+      - 'src/core/shared-primitives/**'
+      - 'src/workspace/lafea-stage-*.js'
+      - 'src/workspace/lafea-lifecycle-*.js'
+      - 'src/workspace/lafea-workbench-*.js'
+      - '.github/workflows/lafea-b01-negative.yml'
+permissions: {contents: read}
+jobs:
+  fail-closed:
+    runs-on: ubuntu-latest
+    env:
+      B01_NEGATIVE_DIR: /tmp/lafea-b01-negative
+    steps:
+      - uses: actions/checkout@v4
+      - name: Check frozen independent oracle
+        run: python3 validation/lafea-benchmark-data/B01/oracle/independent-oracle.py --check
+      - name: Check deterministic mesh artifacts
+        run: python3 validation/lafea-benchmark-data/B01/mesh-generator.py --check
+      - name: Check B01 runner syntax
+        run: node --check scripts/lafea-b01-registered-route-check.mjs && node --check scripts/lafea-b01-metamorphic-route-check.mjs && node --check scripts/lafea-b01-negative-route-check.mjs && node --check scripts/lafea-b01-negative-governed-check.mjs
+      - name: Check shared unit contract
+        run: node scripts/lafea-stage15-neutral-shared-primitives-check.mjs
+      - name: Run prior continuum controls
+        run: node scripts/lafea.3-solver-check.mjs && node scripts/lafea.3-loads-imposed-displacement-check.mjs && node scripts/lafea.3-t6-patch-check.mjs && node scripts/lafea.3-q8-patch-check.mjs
+      - name: Reconfirm qualified B01 base matrix
+        run: |
+          rm -rf "$B01_NEGATIVE_DIR"; mkdir -p "$B01_NEGATIVE_DIR/base" "$B01_NEGATIVE_DIR/metamorphic" "$B01_NEGATIVE_DIR/negative"
+          node scripts/lafea-b01-registered-route-check.mjs --report-dir "$B01_NEGATIVE_DIR/base"
+      - name: Reconfirm qualified B01 metamorphic matrix
+        run: node scripts/lafea-b01-metamorphic-route-check.mjs --report-dir "$B01_NEGATIVE_DIR/metamorphic"
+      - name: Execute frozen B01 governed negative matrix
+        id: negative
+        continue-on-error: true
+        shell: bash
+        run: |
+          set +e
+          node scripts/lafea-b01-negative-governed-check.mjs --report-dir "$B01_NEGATIVE_DIR/negative" > "$B01_NEGATIVE_DIR/negative-driver.stdout" 2> "$B01_NEGATIVE_DIR/negative-driver.stderr"
+          status=$?
+          set -e
+          printf '%s\n' "$status" > "$B01_NEGATIVE_DIR/negative-driver.exit-code"
+          exit "$status"
+      - name: Upload B01 fail-closed receipts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: 'lafea-b01-negative-${{ github.sha }}'
+          path: /tmp/lafea-b01-negative
+          if-no-files-found: error
+          retention-days: 30
+      - name: Propagate B01 negative result
+        if: always()
+        shell: bash
+        run: |
+          status=$(cat "$B01_NEGATIVE_DIR/negative-driver.exit-code")
+          if [ "$status" -ne 0 ]; then
+            echo 'B01 negative matrix contains one or more fail-closed gaps; artifact retained.'
+            exit "$status"
+          fi
+          echo 'B01 negative matrix passed; artifact retained.'

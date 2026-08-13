@@ -1,0 +1,10 @@
+{
+  "schema":"lafea-b01-repair-attempt/v1","attempt":14,"issue":1100,
+  "attemptedBoundary":"ELEMENT_RIGID_NULLSPACE_PRESERVATION_ONE_PASS_PROJECTION",
+  "branchHead":"3127062e14fcc7e4e7d67cc0a11d9817ee909217","workflowRunId":31674414661,"artifactId":9170945026,"artifactDigest":"sha256:bea51e9d7228793b7dea3df9ee1a74280da9d226d637f2820135df1f0834d52f",
+  "productionMechanicsChanged":false,"disposition":"IMPROVES_MOST_BUT_DO_NOT_PROMOTE",
+  "reason":"A symmetric P^T K P projection onto the complement of the three exact 2D rigid modes reduces most residuals with only roundoff-scale stiffness/affine-energy changes, but no remaining failing mesh meets 1e-10 and T3-M0 regresses from 9.46e-11 to 1.47e-10.",
+  "relativeElementStiffnessChangeRange":[1.3306849482524309e-16,1.0042950414432467e-15],
+  "affineEnergyRelativeChangeRange":[2.3895921080020605e-15,2.562368988359636e-13],
+  "nextBoundary":"NUMERICAL_IDEMPOTENCE_OF_RIGID_NULLSPACE_PROJECTION","releaseAuthorityGrantedByProgram":false
+}

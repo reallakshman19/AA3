@@ -78,7 +78,7 @@ const unitCases = [
   ['force', 'N', 1], ['force', 'kN', 1000],
   ['moment', 'N·mm', 1], ['moment', 'N*m', 1000], ['moment', 'kN*m', 1_000_000],
   ['pressure', 'Pa', 1e-6], ['pressure', 'MPa', 1],
-  ['stress', 'kPa', 1e-3], ['modulus', 'GPa', 1000],
+  ['stress', 'kPa', 1e-3], ['modulus', 'Pa', 1e-6], ['modulus', 'GPa', 1000],
 ];
 for (const [dimension, unit, factor] of unitCases) {
   assert.equal(neutral.unitFactor(dimension, unit), factor);
@@ -86,8 +86,8 @@ for (const [dimension, unit, factor] of unitCases) {
 }
 assert.equal(neutral.unitFactor('temperature', 'K'), null);
 assert.equal(lafeaUnitFactor('temperature', 'K'), null);
-assert.deepEqual(neutral.supportedUnits('modulus'), ['MPa', 'GPa']);
-assert.deepEqual(lafeaSupportedUnits('modulus'), ['MPa', 'GPa']);
+assert.deepEqual(neutral.supportedUnits('modulus'), ['Pa', 'MPa', 'GPa']);
+assert.deepEqual(lafeaSupportedUnits('modulus'), ['Pa', 'MPa', 'GPa']);
 assert.ok(Object.isFrozen(neutral.supportedUnits('stress')));
 
 const canonicalWrapper = fs.readFileSync(path.join(ROOT, 'src/workspace/lafea-canonical-sha256.js'), 'utf8');

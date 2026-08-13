@@ -1,0 +1,27 @@
+{
+  "schema":"lafea-b01-repair-attempt/v1",
+  "issue":1100,
+  "attempt":10,
+  "exactHead":"4bd49bb257b2b8858f48e2869b897a1982a33475",
+  "hypothesis":"Naive repeated subtraction in dense Cholesky factorization is the dominant source of the reduced rigid residual floor.",
+  "singleMechanicsChange":"Compute each Cholesky factorization inner product with Neumaier-compensated product summation before the pivot/off-diagonal update.",
+  "productionFilesChanged":["src/core/local-continuum/solver.js"],
+  "frozenBenchmarkChanged":false,
+  "tolerancesChanged":false,
+  "priorControls":"PASS",
+  "workflowRunId":31672229645,
+  "artifact":{"artifactId":9170139687,"sha256":"sha256:6e5eae4d17fb5c04e790ee5904c5ea0275813d7b83a53a3637c7b728af092337"},
+  "matrix":{"passCount":46,"failCount":8,"status":"FAIL"},
+  "diagnosticComparison":{
+    "T3-M1":{"beforeFull":1.609237187949475e-10,"afterFull":1.4455281416303478e-10,"afterReduced":1.1641532182693481e-10},
+    "T3-M2":{"beforeFull":3.710738383233547e-10,"afterFull":3.211653165635653e-10,"afterReduced":3.4924596548080444e-10},
+    "T6-M0":{"beforeFull":3.6817800719290975e-10,"afterFull":1.95359461940825e-10,"afterReduced":2.3283064365386963e-10},
+    "T6-M1":{"beforeFull":4.117900971323252e-10,"afterFull":5.105565651319921e-10,"afterReduced":4.656612873077393e-10},
+    "T6-M2":{"beforeFull":4.437641837284902e-10,"afterFull":4.58610593341291e-10,"afterReduced":4.58610593341291e-10},
+    "Q8-M0":{"beforeFull":3.2014213502407074e-10,"afterFull":3.356035449542105e-10,"afterReduced":4.656612873077393e-10},
+    "Q8-M1":{"beforeFull":2.9695002012886107e-10,"afterFull":3.1104718800634146e-10,"afterReduced":3.055902197957039e-10},
+    "Q8-M2":{"beforeFull":6.484697223640978e-10,"afterFull":5.547917680814862e-10,"afterReduced":5.547917680814862e-10}
+  },
+  "disposition":"MIXED_NOT_QUALIFYING. Some meshes improve materially while others worsen; do not retain this factorization change as active production mechanics. Revert and test triangular substitution accumulation independently.",
+  "releaseAuthorityGrantedByProgram":false
+}

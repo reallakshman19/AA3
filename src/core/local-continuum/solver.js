@@ -1,30 +1,47 @@
 import { FORMULA_IDS } from './constants.js';
 import { numericalError, singularError } from './errors.js';
 import { resolveImposedDisplacementIndices } from './imposed-displacement-loads.js';
-import { matrixVector, zeros } from './matrix.js';
+import { dot, matrixVector, zeros } from './matrix.js';
 import { canonicalNumber, maxAbs, tolerance } from './numeric.js';
+import { rigidReferenceConditioning } from './rigid-reference-conditioning.js';
 import {
   restrictSymmetricCsr,
   sparseMatrixVector,
   sparseMatrixVectorRaw,
 } from './sparse-matrix.js';
 
+const DENSE_CHOLESKY_REFINEMENT_STEPS = 3;
+
 export function solvePartitioned(model, mesh, load) {
   const constraints = constraintData(model, mesh.dofOrdering, load);
   const free = freeIndices(mesh.dofOrdering.length, constraints.indexSet);
-  const displacement = prescribedVector(mesh.dofOrdering.length, constraints);
+  const conditioning = rigidReferenceConditioning(
+    model,
+    mesh.dofOrdering,
+    constraints,
+  );
+  const correction = prescribedVector(
+    mesh.dofOrdering.length,
+    conditioning.constraints,
+  );
   const solved = solveFreeSystem(
     model,
     mesh,
     load.forceVector,
     free,
-    constraints,
-    displacement,
+    conditioning.constraints,
+    correction,
   );
   solved.solution.forEach((value, position) => {
-    displacement[free[position]] = value;
+    correction[free[position]] = value;
   });
-  const residual = equilibriumResidual(mesh, displacement, load.forceVector);
+  const displacement = correction.map((value, index) => (
+    value + conditioning.referenceVector[index]
+  ));
+  constraints.indices.forEach((index, position) => {
+    displacement[index] = constraints.values[position];
+  });
+  const residual = equilibriumResidual(mesh, correction, load.forceVector);
   const qualification = qualifyResiduals(
     model,
     mesh.dofOrdering,
@@ -66,9 +83,8 @@ function solveFreeSystem(model, mesh, force, free, constraints, prescribed) {
       free,
       constraints.indices,
     );
-    const rightHandSide = free.map((index, row) => canonicalNumber(
-      force[index] - dotRow(coupling[row], constraints.values),
-      'partition rhs',
+    const rightHandSide = free.map((index, row) => (
+      force[index] - dotRow(coupling[row], constraints.values)
     ));
     return choleskySolve(
       freeStiffness,
@@ -161,13 +177,6 @@ function solutionRecord(
   };
 }
 
-/**
- * Merges the model's restraint-level `constraints` with this load case's own
- * `imposedDisplacements` (spec §7.1: a per-load-case prescribed motion,
- * distinct from a model-wide restraint). `source-loads.js` already rejects
- * an imposed displacement declared on the same DOF as a model constraint, so
- * no index can appear in both sets here.
- */
 function constraintData(model, dofs, load) {
   const index = new Map(dofs.map((identity, position) => [identity, position]));
   const modelRows = model.constraints.map((row) => ({
@@ -192,7 +201,7 @@ function submatrix(matrix, rows, columns) {
 }
 
 function dotRow(row, vector) {
-  return row.reduce((sum, value, index) => sum + value * vector[index], 0);
+  return compensatedProductSumRaw(row, vector);
 }
 
 function choleskySolve(matrix, rightHandSide, profile) {
@@ -202,14 +211,86 @@ function choleskySolve(matrix, rightHandSide, profile) {
   const limit = tolerance(profile, 'choleskyPivot', scale);
   const pivots = [];
   factorCholesky(matrix, lower, pivots, limit);
-  const solution = backward(lower, forward(lower, rightHandSide));
+  const initialSolution = backward(lower, forward(lower, rightHandSide));
+  const refined = refineDenseCholesky(
+    matrix,
+    lower,
+    rightHandSide,
+    initialSolution,
+  );
   const minimum = Math.min(...pivots);
   const maximum = Math.max(...pivots);
   return {
-    solution: solution.map((value) =>
-      canonicalNumber(value, 'solved displacement')),
-    evidence: pivotEvidence(scale, limit, pivots, minimum, maximum),
+    solution: refined.solution,
+    evidence: {
+      ...pivotEvidence(scale, limit, pivots, minimum, maximum),
+      iterativeRefinement: refined.evidence,
+    },
   };
+}
+
+function refineDenseCholesky(matrix, lower, rightHandSide, initialSolution) {
+  let solution = [...initialSolution];
+  let residual = denseSystemResidual(matrix, rightHandSide, solution);
+  let currentInfinity = maxAbs(residual);
+  const residualHistory = [currentInfinity];
+  let stepsPerformed = 0;
+  for (let step = 0; step < DENSE_CHOLESKY_REFINEMENT_STEPS; step += 1) {
+    if (currentInfinity === 0) break;
+    const correction = backward(lower, forward(lower, residual));
+    if (correction.some((value) => !Number.isFinite(value))) {
+      throw numericalError(
+        'CHOLESKY_REFINEMENT_NONFINITE_CORRECTION',
+        'solver',
+        'Dense Cholesky iterative refinement produced a non-finite correction.',
+      );
+    }
+    const candidate = solution.map((value, index) => value + correction[index]);
+    const candidateResidual = denseSystemResidual(
+      matrix,
+      rightHandSide,
+      candidate,
+    );
+    const candidateInfinity = maxAbs(candidateResidual);
+    if (!(candidateInfinity < currentInfinity)) break;
+    solution = candidate;
+    residual = candidateResidual;
+    currentInfinity = candidateInfinity;
+    stepsPerformed += 1;
+    residualHistory.push(candidateInfinity);
+  }
+  return {
+    solution,
+    evidence: {
+      method: 'DETERMINISTIC_CHOLESKY_ITERATIVE_REFINEMENT',
+      maximumSteps: DENSE_CHOLESKY_REFINEMENT_STEPS,
+      stepsPerformed,
+      initialResidualInfinity: canonicalNumber(residualHistory[0]),
+      finalResidualInfinity: canonicalNumber(currentInfinity),
+      residualHistory: residualHistory.map((value) => canonicalNumber(value)),
+      accepted: true,
+    },
+  };
+}
+
+function denseSystemResidual(matrix, rightHandSide, solution) {
+  return matrix.map((row, index) => (
+    rightHandSide[index] - compensatedProductSumRaw(row, solution)
+  ));
+}
+
+function compensatedProductSumRaw(left, right) {
+  let sum = 0;
+  let compensation = 0;
+  for (let index = 0; index < left.length; index += 1) {
+    const term = left[index] * right[index];
+    const next = sum + term;
+    compensation += Math.abs(sum) >= Math.abs(term)
+      ? (sum - next) + term
+      : (term - next) + sum;
+    sum = next;
+  }
+  return sum + compensation;
 }
 
 function conjugateGradientSolve(matrix, rightHandSide, profile) {

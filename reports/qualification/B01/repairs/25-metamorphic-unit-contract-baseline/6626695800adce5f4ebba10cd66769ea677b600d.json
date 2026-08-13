@@ -1,0 +1,40 @@
+{
+  "schema": "lafea-b01-repair-attempt/v1",
+  "issue": 1100,
+  "attempt": 25,
+  "attemptedBoundary": "B01D_METAMORPHIC_BASELINE",
+  "branchHead": "6626695800adce5f4ebba10cd66769ea677b600d",
+  "workflowExecutionHead": "64eb7372f97f2b872af15e008ffaa4b95fd8fcfa",
+  "workflowRunId": 31681714393,
+  "artifactId": 9173769280,
+  "artifactDigest": "sha256:cb9f8e47efb7514b50e1844e09fdafdc2729a1ba7346890842d94ee181f7ef4b",
+  "masterEvidenceHash": "sha256:a66e6a806ceee7c8c546a33b75744d3370576d59c375c87dec44620fcf7a4979",
+  "productionMechanicsChanged": false,
+  "frozenBenchmarkChanged": false,
+  "tolerancesChanged": false,
+  "baseMatrixReconfirmed": "54/54 PASS",
+  "metamorphicMatrix": {
+    "selectedVariantRunCount": 270,
+    "passCount": 216,
+    "failCount": 54,
+    "status": "FAIL"
+  },
+  "passingVariants": {
+    "TRANSLATED": "54/54",
+    "ROTATED_37_DEG": "54/54",
+    "LOAD_SCALED_2P5": "54/54",
+    "LOAD_REVERSED": "54/54"
+  },
+  "failingVariant": {
+    "variant": "UNIT_SCALED_MM_TO_M",
+    "passCount": 0,
+    "failCount": 54,
+    "firstFailedBoundary": "SOURCE_CONTRACT_OR_NORMALIZATION",
+    "diagnosticCode": "UNSUPPORTED_UNIT",
+    "diagnosticPath": "units.modulus",
+    "message": "Unsupported modulus unit."
+  },
+  "disposition": "BASELINE_FAILURE_RETAINED. Every non-unit metamorphic relation qualifies across all six cases and all T3/T6/Q8 mesh levels. The unit-scaled m/N/Pa source is rejected before canonical mechanics because the product-neutral modulus vocabulary omits Pa. No LAFEA mechanics output was observed for the 54 failed unit runs. Repair only the shared modulus-unit contract, then rerun the identical frozen 270-run matrix.",
+  "nextBoundary": "SOURCE_UNIT_CONTRACT_MODULUS_PA",
+  "releaseAuthorityGrantedByProgram": false
+}

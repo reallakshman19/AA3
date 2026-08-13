@@ -1,0 +1,29 @@
+{
+  "schema": "lafea-b01-repair-attempt/v1",
+  "issue": 1100,
+  "attempt": 23,
+  "attemptedBoundary": "PRE_SOLVE_RIGID_REFERENCE_PARTITION_CONDITIONING",
+  "branchHead": "13bab83a1fdb20f131befca935a66fe572386612",
+  "workflowExecutionHead": "2b3b4df52909e7fb6cfc52e13e315477f68fdc98",
+  "workflowRunId": 31680572145,
+  "artifactId": 9173310917,
+  "artifactDigest": "sha256:fb55d19879d3bdfb4180ad892460cd2c249ba5e62d8cf52ab0a4926841b1222c",
+  "productionMechanicsChanged": false,
+  "frozenBenchmarkChanged": false,
+  "tolerancesChanged": false,
+  "evaluatedT3Runs": 18,
+  "currentPassCount": 16,
+  "conditionedPassCount": 18,
+  "rigidComparison": [
+    {"meshId":"T3-M0","current":9.458744898438454e-11,"conditioned":0.0,"maximumShiftedBoundaryMagnitude":5.551115123125783e-17},
+    {"meshId":"T3-M1","current":1.609237187949475e-10,"conditioned":1.666074231826777e-26,"maximumShiftedBoundaryMagnitude":5.551115123125783e-17},
+    {"meshId":"T3-M2","current":3.710738383233547e-10,"conditioned":2.2700261408639836e-26,"maximumShiftedBoundaryMagnitude":5.551115123125783e-17}
+  ],
+  "maximumReconstructedDisplacementError": 5.551115123125783e-17,
+  "maximumNonRigidReactionRelativeDifference": 1.1770697510057535e-13,
+  "maximumObservedEnergyRelativeDifference": 3.0126559174448166e-10,
+  "maximumRigidEnergyAbsoluteScaleNote": "The reported maximum relative metric occurs on the zero-energy rigid case and remains below the frozen 1e-8 N*mm absolute energy gate.",
+  "disposition": "QUALIFIES_DIAGNOSTIC. Fitting a rigid reference from prescribed boundary values, solving only the deformational correction, and evaluating equilibrium on that correction yields 18/18 T3 affine passes with roundoff-scale displacement/strain/reaction differences. Promote the same owner into the shared partition solver with rank-safe fallback and rerun all prior controls plus the full T3/T6/Q8 base matrix.",
+  "nextBoundary": "PRODUCTION_PARTITION_RIGID_REFERENCE_CONDITIONING",
+  "releaseAuthorityGrantedByProgram": false
+}

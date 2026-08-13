@@ -1,0 +1,40 @@
+{
+  "schema": "lafea-b01-repair-attempt/v1",
+  "issue": 1100,
+  "attempt": 26,
+  "attemptedBoundary": "SOURCE_UNIT_CONTRACT_MODULUS_PA",
+  "branchHead": "98203f1a55ee4c0b7b3b2b3b11d1f9a18f2189d7",
+  "workflowExecutionHead": "6925d3379036e35479386f6e653406635ded5507",
+  "workflowRunId": 31682034044,
+  "artifactId": 9173897460,
+  "artifactDigest": "sha256:d6adbfdd0812b72650763fc34f66abf73d9b89b8e3a13cc68782b89bd4f7d97d",
+  "metamorphicEvidenceHash": "sha256:8f6b5785df2d4937d0c5c7ae6eab84a29d68946df58b54ef88db0bb77047f377",
+  "productionMechanicsChanged": false,
+  "productionContractChanged": true,
+  "productionFilesChanged": ["src/core/shared-primitives/units.js"],
+  "controlFilesChanged": ["scripts/lafea-stage15-neutral-shared-primitives-check.mjs", ".github/workflows/lafea-b01-metamorphic.yml"],
+  "singleEngineeringChange": "Add Pa as a supported elastic-modulus source unit with factor 1e-6 to canonical MPa; no constitutive or solver formula changes.",
+  "frozenBenchmarkChanged": false,
+  "tolerancesChanged": false,
+  "sharedUnitContractCheck": "PASS",
+  "priorContinuumControls": "PASS",
+  "baseMatrix": "54/54 PASS",
+  "metamorphicMatrix": {
+    "selectedVariantRunCount": 270,
+    "passCount": 270,
+    "failCount": 0,
+    "status": "PASS"
+  },
+  "variantPassCounts": {
+    "TRANSLATED": "54/54",
+    "ROTATED_37_DEG": "54/54",
+    "LOAD_SCALED_2P5": "54/54",
+    "LOAD_REVERSED": "54/54",
+    "UNIT_SCALED_MM_TO_M": "54/54"
+  },
+  "maximumObservedNormalizedFreeDofResidual": 1.310066074398763e-14,
+  "maximumObservedReactionRelationErrorN": 8.076312951743603e-10,
+  "disposition": "QUALIFIED_AND_RETAINED. The frozen m/N/Pa metamorphic family identified the source-unit vocabulary as the sole first failed boundary. Adding the physically exact Pa-to-MPa modulus conversion closes that boundary; the identical 270-run metamorphic matrix now passes across all six cases, T3/T6/Q8 families and M0/M1/M2 levels, with the 54-run base and prior controls also green.",
+  "nextBoundary": "B01E_FAIL_CLOSED_AND_GOVERNANCE",
+  "releaseAuthorityGrantedByProgram": false
+}

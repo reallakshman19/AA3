@@ -1,0 +1,32 @@
+{
+  "schema": "lafea-b01-repair-attempt/v1",
+  "issue": 1100,
+  "attempt": 1,
+  "exactHead": "7397be8dccde30275dbf282c30baaf9558b0954b",
+  "parentBeforeReceipt": "reports/qualification/B01/baseline/9c9275c82aca0453d6cff7a585b5c31fa2739fbf/baseline-summary.json",
+  "hypothesis": "Naive dense matrix-vector accumulation in K*u loses rigid-null cancellation as row width grows.",
+  "singleMechanicsChange": "Use Neumaier-compensated pair-product summation only in dense matrixVector().",
+  "productionFilesChanged": ["src/core/local-continuum/matrix.js"],
+  "frozenBenchmarkChanged": false,
+  "tolerancesChanged": false,
+  "priorControls": "PASS",
+  "workflowRunId": 31670180731,
+  "artifact": {
+    "artifactId": 9169399073,
+    "sha256": "sha256:bf5f8563fa1ab7965d095028e003bff432cd63edac5e09a767c7d0a4ac56deab"
+  },
+  "matrix": {"passCount":46,"failCount":8,"status":"FAIL"},
+  "rigidResidualComparison": [
+    {"family":"T3","meshId":"T3-M0","before":1.2369127944111824e-10,"after":9.458744898438454e-11,"afterStatus":"PASS"},
+    {"family":"T3","meshId":"T3-M1","before":6.402842700481415e-10,"after":6.912159733474255e-10,"afterStatus":"FAIL"},
+    {"family":"T3","meshId":"T3-M2","before":1.0695657692849636e-9,"after":1.179614628199488e-9,"afterStatus":"FAIL"},
+    {"family":"T6","meshId":"T6-M0","before":6.402842700481415e-10,"after":6.049958756193519e-10,"afterStatus":"FAIL"},
+    {"family":"T6","meshId":"T6-M1","before":1.862645149230957e-9,"after":1.7629307694733142e-9,"afterStatus":"FAIL"},
+    {"family":"T6","meshId":"T6-M2","before":null,"after":null,"afterStatus":"FAIL","code":"REACTION_EQUILIBRIUM_FAILURE"},
+    {"family":"Q8","meshId":"Q8-M0","before":8.440110832452774e-10,"after":7.639755494892597e-10,"afterStatus":"FAIL"},
+    {"family":"Q8","meshId":"Q8-M1","before":2.1100277081131935e-9,"after":1.7001866581267677e-9,"afterStatus":"FAIL"},
+    {"family":"Q8","meshId":"Q8-M2","before":4.423782229423523e-9,"after":3.798049874603748e-9,"afterStatus":"FAIL"}
+  ],
+  "disposition": "PARTIAL_IMPROVEMENT_NOT_SUFFICIENT. Retain change because it improves deterministic dense K*u evaluation without tolerance changes, but continue boundary-first RCA upstream to global stiffness assembly before altering the solver algorithm.",
+  "releaseAuthorityGrantedByProgram": false
+}

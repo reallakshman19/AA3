@@ -1,0 +1,24 @@
+{
+  "schema": "lafea-b01-source-registry/v1",
+  "baselineCommit": "56b826d915c0ae8a390524736cbf27f5afa84d4d",
+  "baselineTree": "3e9c79cdc0029bd4d5ae1c0308655dab2c97b172",
+  "sources": [
+    {"role":"researchReport","path":"LAFEA/Bucket1_deep-research-report (2).md","blobSha":"e7bce4aded6d2d7db6585f3333dae7344933466f"},
+    {"role":"stageRegistry","path":"src/workspace/lafea-stage-registry.js","blobSha":"bb0d506fbf3a6d8291943d6a1da12fdd164c2484"},
+    {"role":"stageComponents","path":"src/workspace/lafea-stage-components.js","blobSha":"374558b16b5323c28a55f7029d54806d55cbc364"},
+    {"role":"benchmarkProgram","path":"validation/lafea-benchmark-program/program.json","blobSha":"c41dad7c240a506e6d6d324f1deeeff26e3a692c"},
+    {"role":"legacyT3Oracle","path":"validation/bucket-01/04-t3-patch-oracle.json","blobSha":"38cdab72f181eb4407a16aaa0753f8770d5989d8"},
+    {"role":"legacyT3RouteCheck","path":"scripts/lafea-bucket-01-t3-patch-check.mjs","blobSha":"47cecae5a5a159ea1ee0e28a0d92990a88f1824e"},
+    {"role":"T6ComponentCheck","path":"scripts/lafea.3-t6-patch-check.mjs","blobSha":"6409e671a01fb4196658bdf7423352b013c7ee82"},
+    {"role":"Q8ComponentCheck","path":"scripts/lafea.3-q8-patch-check.mjs","blobSha":"a7d51b1048eb62b605e864afa2f35052984f221b"},
+    {"role":"elementDispatch","path":"src/core/local-continuum/element.js","blobSha":"001df9a03a50e498cbc475b303a0c04af89c7e59"},
+    {"role":"T6Formulation","path":"src/core/local-continuum/t6-element.js","blobSha":"bdd06bffb1b5ca6ac12c3e6130ab8e5c25e67fad"},
+    {"role":"Q8Formulation","path":"src/core/local-continuum/q8-element.js","blobSha":"3687b482841080dec2079dfffe967492f4a9e23c"},
+    {"role":"sourceMeshCanonicalization","path":"src/core/local-continuum/source-mesh.js","blobSha":"5b155bf1d43eeaa0623fd42e5ef162623e1d0765"}
+  ],
+  "missingResearchArtifact": {
+    "reportedArchiveSha256": "f1e99f15dece59536ea8f879f69b743d1a8f16b7ceb4cb49d74c697d64c98f01",
+    "repositoryArtifactPresentAtBaseline": false,
+    "policy": "DO_NOT_CLAIM_ARCHIVE_VERIFIED; materialize repository-native equivalent from committed report definitions"
+  }
+}

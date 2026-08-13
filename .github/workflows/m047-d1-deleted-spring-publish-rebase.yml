@@ -1,0 +1,146 @@
+name: M047 publish deleted-spring harness fixes with non-force rebase
+
+on:
+  push:
+    branches:
+      - agent/m047-stage2-measure-deleted-spring-20260813
+    paths:
+      - '.github/workflows/m047-d1-deleted-spring-publish-rebase.yml'
+
+permissions:
+  contents: write
+  actions: read
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    env:
+      TARGET_BRANCH: 'agent/m047-stage2-r1-r3-evidence'
+      EVIDENCE_HEAD: 'ec5d98713727b5d6e4acfe6ccdbc2336ee5f2392'
+      ACCDB_SHA256: '64c05a50e9ed0452622ff5880335460486f24ac8e6adecc9a300b549c9aa82f8'
+      MEASUREMENT_RUN_ID: '31686794315'
+      MEASUREMENT_ARTIFACT_ID: '9175994007'
+      MEASUREMENT_ARTIFACT_NAME: 'm047-d1-deleted-spring-sequential-measurement-v2'
+      MEASUREMENT_ARTIFACT_DIGEST: 'sha256:dee87508b40b800c6082e73d4d125e1da464c0e3af6445dc2615b7a4c3604328'
+      RAW_RUN_SHA256: '277423032c8238065c6e845316efc77e2db236499ce019e0ae289f00b7dfc09b'
+      MEASURED_SOURCE_HEAD: '649fb1fb14ecacf7e9b0228290b5d0a090097169'
+    steps:
+      - name: Checkout current PR 1101 branch
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ env.TARGET_BRANCH }}
+          fetch-depth: 0
+
+      - name: Record starting custody
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -z "$(git status --porcelain)"
+          git rev-parse HEAD | tee /tmp/pr1101-start-head.txt
+
+      - name: Apply harness-only compatibility fixes
+        shell: bash
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          from pathlib import Path
+          path = Path('scripts/lfea-m047-stage2-r2-deleted-spring-experiment.mjs')
+          text = path.read_text()
+          replacements = [
+            ("""      restraintId: support.restraintId,\n      nodeId: support.nodeId,\n      state,\n      nextState,""",
+             """      restraintId: support.restraintId,\n      nodeId: support.nodeId,\n      support,\n      state,\n      nextState,"""),
+            ("`R2-FRICTION-${support.restraintId}-${dof}`", "`R2-FRICTION-${support.nodeId}-${dof}`"),
+            ("`R2-${caseRecord.caseId}-${support.restraintId}-IT${iteration}`", "`R2-${caseRecord.caseId}-${support.nodeId}-IT${iteration}`"),
+          ]
+          for old,new in replacements:
+              count = text.count(old)
+              if count == 1:
+                  text = text.replace(old,new)
+              elif count == 0 and new in text:
+                  pass
+              else:
+                  raise SystemExit(f'harness target drift/conflict: old={count}, new={text.count(new)} for {old[:60]}')
+          path.write_text(text)
+          PY
+          node --check scripts/lfea-m047-stage2-r2-deleted-spring-experiment.mjs
+
+      - name: Harden portable contract against runtime-ID regression
+        shell: bash
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          from pathlib import Path
+          path = Path('scripts/lfea-m047-stage2-r2-deleted-spring-check.mjs')
+          text = path.read_text()
+          guard = "R2 spring declaration IDs must use canonical node/dof identities."
+          if guard not in text:
+              marker = "process.stdout.write('M047 Stage 2 R2 deleted-spring isolation contract: PASS\\n');"
+              addition = """if (!source.includes('declarationId: `R2-FRICTION-${support.nodeId}-${dof}`')) {\n  throw new Error('R2 spring declaration IDs must use canonical node/dof identities.');\n}\n\nif (source.includes('declarationId: `R2-FRICTION-${support.restraintId}-${dof}`')) {\n  throw new Error('R2 must not place colon-bearing restraint IDs in kernel declaration identities.');\n}\n\nif (!source.includes('primitiveId: `R2-${caseRecord.caseId}-${support.nodeId}-IT${iteration}`')) {\n  throw new Error('R2 constant-force primitive IDs must use canonical case/node/iteration identities.');\n}\n\nif (!source.includes('nodeId: support.nodeId,\\n      support,\\n      state,')) {\n  throw new Error('R2 measured entries must retain support metadata for snapshot serialization.');\n}\n\n"""
+              if text.count(marker) != 1:
+                  raise SystemExit('R2 check insertion marker drift/conflict')
+              text = text.replace(marker, addition + marker)
+              path.write_text(text)
+          PY
+          node scripts/lfea-m047-stage2-r2-deleted-spring-check.mjs
+
+      - name: Download exact governed measurement artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: ${{ env.MEASUREMENT_ARTIFACT_NAME }}
+          path: .measurement-download
+          repository: reallaksh19/Advanced_Analysis
+          run-id: ${{ env.MEASUREMENT_RUN_ID }}
+          github-token: ${{ github.token }}
+
+      - name: Revalidate current committed adjudication against raw artifact
+        shell: bash
+        run: |
+          set -euo pipefail
+          echo "${RAW_RUN_SHA256}  .measurement-download/reports/lfea-m047-stage2-d1-deleted-spring-run1.json" | sha256sum -c -
+          echo "${RAW_RUN_SHA256}  .measurement-download/reports/lfea-m047-stage2-d1-deleted-spring-run2.json" | sha256sum -c -
+          node - <<'NODE'
+          const fs = require('fs');
+          const raw = JSON.parse(fs.readFileSync('.measurement-download/reports/lfea-m047-stage2-d1-deleted-spring-sequential-measurement.json','utf8'));
+          const adj = JSON.parse(fs.readFileSync('reports/lfea-m047-stage2-d1-deleted-spring-sequential-adjudication.json','utf8'));
+          if (raw.sourceHead !== process.env.MEASURED_SOURCE_HEAD) throw new Error('raw measured-source mismatch');
+          if (raw.evidenceHead !== process.env.EVIDENCE_HEAD || raw.sourceAccdbSha256 !== process.env.ACCDB_SHA256) throw new Error('raw custody mismatch');
+          if (raw.deterministic !== true || raw.run1?.iterationCount !== 400 || raw.run2?.iterationCount !== 400) throw new Error('raw repeat/budget mismatch');
+          if (raw.run1?.fullPhysicsQualifiedIterationCount !== 0 || raw.run2?.fullPhysicsQualifiedIterationCount !== 0) throw new Error('raw unexpectedly qualified');
+          if (raw.disposition !== 'REJECT_DELETED_SPRING_SEQUENTIAL_NONCONVERGED_KEEP_D1') throw new Error('raw disposition mismatch');
+          if (adj.status !== raw.disposition || adj.source?.pr1101SourceHead !== process.env.MEASURED_SOURCE_HEAD) throw new Error('committed adjudication source/disposition mismatch');
+          if (adj.execution?.workflowRunId !== Number(process.env.MEASUREMENT_RUN_ID) || adj.execution?.artifactId !== Number(process.env.MEASUREMENT_ARTIFACT_ID) || adj.execution?.artifactDigest !== process.env.MEASUREMENT_ARTIFACT_DIGEST) throw new Error('committed adjudication Actions custody mismatch');
+          if (adj.execution?.deterministic !== true || adj.result?.fullPhysicsQualifiedIterationsRun1 !== 0 || adj.result?.fullPhysicsQualifiedIterationsRun2 !== 0 || adj.result?.tailFullResponsePeriod !== 2) throw new Error('committed adjudication result mismatch');
+          if (adj.unchangedGates?.toleranceChanged !== false || adj.unchangedGates?.comparisonPolicyChanged !== false) throw new Error('committed adjudication policy mutation');
+          NODE
+          rm -rf .measurement-download
+
+      - name: Commit and non-force rebase onto any concurrent evidence commits
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name 'reallaksh19'
+          git config user.email 'reallaksh19@gmail.com'
+          git add scripts/lfea-m047-stage2-r2-deleted-spring-experiment.mjs scripts/lfea-m047-stage2-r2-deleted-spring-check.mjs
+          git diff --cached --check
+          if git diff --cached --quiet; then
+            echo 'Harness fixes already present on current PR head.'
+            exit 0
+          fi
+          git commit -m 'M047 Stage 2: make measured deleted-spring harness executable'
+          for attempt in 1 2 3; do
+            git fetch origin "$TARGET_BRANCH"
+            remote="$(git rev-parse FETCH_HEAD)"
+            local="$(git rev-parse HEAD)"
+            if ! git merge-base --is-ancestor "$remote" "$local"; then
+              git rebase "$remote"
+              node scripts/lfea-m047-stage2-r2-deleted-spring-check.mjs
+              node --check scripts/lfea-m047-stage2-r2-deleted-spring-experiment.mjs
+            fi
+            if git push origin HEAD:"$TARGET_BRANCH"; then
+              exit 0
+            fi
+            echo "non-force push raced concurrent update on attempt $attempt; retrying via fetch/rebase"
+          done
+          echo 'Could not publish after three non-force rebase attempts.' >&2
+          exit 1

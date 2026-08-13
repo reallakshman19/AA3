@@ -12,8 +12,9 @@ export function planTopologyEditTableDraft({
   canonicalTopology,
 } = {}) {
   const intent = assertTopologyEditTableIntent(intentInput);
+  const slot = topologyEditTableDraftIntentKey(intent);
   const intents = [
-    ...currentIntents.filter((entry) => !sameIntentSlot(entry, intent)),
+    ...currentIntents.filter((entry) => topologyEditTableDraftIntentKey(entry) !== slot),
     intent,
   ];
   const batch = createTopologyEditTableBatch({ intents });
@@ -33,11 +34,8 @@ export function planTopologyEditTableDraft({
 
 export function topologyEditTableDraftIntentKey(intentInput) {
   const intent = assertTopologyEditTableIntent(intentInput);
-  return `${intent.target.canonicalId}\u0000${intent.intentKind}`;
-}
-
-function sameIntentSlot(leftInput, right) {
-  const left = assertTopologyEditTableIntent(leftInput);
-  return left.target.canonicalId === right.target.canonicalId
-    && left.intentKind === right.intentKind;
+  const subtarget = intent.intentKind === 'NODE_POSITION'
+    ? String(intent.requestedValue?.endpoint ?? '').trim().toUpperCase()
+    : '';
+  return `${intent.target.canonicalId}\u0000${intent.intentKind}\u0000${subtarget}`;
 }

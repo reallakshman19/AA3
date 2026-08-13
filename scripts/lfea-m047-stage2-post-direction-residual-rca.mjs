@@ -238,7 +238,12 @@ function requireR3(value, baseline) {
   if (value?.schema !== 'm047-bm4l-stage2-r3-capacity-diagnostics/v1') {
     throw new TypeError('R3 capacity diagnostics must use the governed schema.');
   }
-  requireSameCustody(baseline, value, 'baseline', 'R3');
+  if (baseline.sourceAccdbSha256 !== value.sourceAccdbSha256) {
+    throw new TypeError('baseline/R3 ACCDB custody mismatch.');
+  }
+  if (String(value.frictionCaseId) !== String(baseline.caseId)) {
+    throw new TypeError(`baseline/R3 case mismatch: ${baseline.caseId} != ${value.frictionCaseId}.`);
+  }
 }
 
 function requireSameCustody(left, right, leftLabel, rightLabel) {

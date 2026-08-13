@@ -128,6 +128,11 @@ async function openProductionAuthoringController(page) {
     globalThis.__AUTHORING_CONTROLLER__ = controller;
   });
   const host = page.locator('[data-role="topology-edit-render-host"]');
+  const authoringPanel = page.locator('details[data-panel-kind="authoring"]');
+  if (!(await authoringPanel.evaluate((element) => element.open))) {
+    await authoringPanel.locator(':scope > summary').click();
+  }
+  await expect.poll(() => authoringPanel.evaluate((element) => element.open)).toBe(true);
   await expect(page.locator('[data-role="topology-edit-authoring"]')).toBeVisible();
   await expect(page.getByText('Authoring HUD', { exact: true })).toBeVisible();
   return host;

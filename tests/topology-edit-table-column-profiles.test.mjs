@@ -13,10 +13,22 @@ test('engineering table column profiles expose focused existing columns', () => 
 
   const geometry = topologyEditTableColumnProfile('GEOMETRY', ['PIPE', 'VALVE']);
   assert.equal(geometry.profile, 'GEOMETRY');
-  assert.equal(geometry.columnKeys.includes('lengthMm'), true);
-  assert.equal(geometry.columnKeys.includes('slopePercent'), true);
-  assert.equal(geometry.columnKeys.includes('componentLengthMm'), true);
+  for (const key of [
+    'fromX', 'fromY', 'fromZ', 'toX', 'toY', 'toZ',
+    'deltaX', 'deltaY', 'deltaZ', 'lengthMm', 'slopePercent', 'componentLengthMm',
+  ]) assert.equal(geometry.columnKeys.includes(key), true, `missing geometry profile field ${key}`);
   assert.equal(geometry.columnKeys.includes('material'), false);
+
+  const connectivity = topologyEditTableColumnProfile('CONNECTIVITY', ['PIPE', 'TEE']);
+  for (const key of [
+    'fromNodeId', 'fromPortKey', 'toNodeId', 'toPortKey',
+    'branchPortKey', 'reducerCanonicalId',
+  ]) assert.equal(connectivity.columnKeys.includes(key), true, `missing connectivity profile field ${key}`);
+
+  const specification = topologyEditTableColumnProfile('SPECIFICATION', ['TEE']);
+  for (const key of ['runDnMm', 'branchDnMm', 'downstreamDnMm']) {
+    assert.equal(specification.columnKeys.includes(key), true, `missing TEE specification field ${key}`);
+  }
 
   const support = topologyEditTableColumnProfile('SUPPORT', ['SUPPORT']);
   for (const key of ['stationMm', 'supportType', 'direction', 'gapMm', 'travelMm']) {
@@ -24,10 +36,15 @@ test('engineering table column profiles expose focused existing columns', () => 
   }
 });
 
-test('profiles explicitly disclose the next field coverage gaps', () => {
+test('profile gap register contains only not-yet-integrated field families', () => {
   const all = topologyEditTableColumnProfile('ALL');
-  for (const key of ['fromX', 'toZ', 'outsideDiameterMm', 'wallThicknessMm', 'hostEdgeId']) {
+  for (const key of ['outsideDiameterMm', 'wallThicknessMm', 'insideDiameterMm', 'catalogueRecordId', 'hostEdgeId']) {
     assert.equal(all.targetFieldGaps.includes(key), true, `missing target field gap ${key}`);
   }
-  assert.deepEqual(TOPOLOGY_EDIT_TABLE_TARGET_FIELD_GAPS.TEE, ['downstreamDnMm']);
+  for (const key of ['fromX', 'toZ', 'branchPortKey', 'reducerCanonicalId', 'downstreamDnMm']) {
+    assert.equal(all.targetFieldGaps.includes(key), false, `implemented field still reported as gap ${key}`);
+  }
+  assert.deepEqual(TOPOLOGY_EDIT_TABLE_TARGET_FIELD_GAPS.GEOMETRY, []);
+  assert.deepEqual(TOPOLOGY_EDIT_TABLE_TARGET_FIELD_GAPS.CONNECTIVITY, []);
+  assert.deepEqual(TOPOLOGY_EDIT_TABLE_TARGET_FIELD_GAPS.TEE, []);
 });

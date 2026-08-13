@@ -92,7 +92,7 @@ export async function runRestraintSentinelPreflight(input) {
   const rawExport = await extractCaesarAccdbTables({
     accdbPath: input.accdbPath,
     tableNames: requiredCaesarAccdbTables(profile),
-    expectedSha256: input.expectedSha256 ?? PINNED_ACCDB_SHA256,
+    expectedSha256: PINNED_ACCDB_SHA256,
   });
   if (rawExport.source.byteLength !== PINNED_ACCDB_BYTES) {
     throw new TypeError(
@@ -102,14 +102,19 @@ export async function runRestraintSentinelPreflight(input) {
   const table = rawExport.tables.INPUT_RESTRAINTS;
   if (!table) throw new TypeError('R6 requires INPUT_RESTRAINTS from the real ACCDB.');
   const inspection = inspectRestraintSentinels(table);
+  const { semanticHash: inspectionSemanticHash, ...inspectionRecord } = inspection;
   const complete = {
-    ...inspection,
+    ...inspectionRecord,
+    inspectionSemanticHash,
     sourceAccdbSha256: rawExport.source.sha256,
     sourceAccdbByteLength: rawExport.source.byteLength,
     provider: rawExport.provider,
     custodyStatus: rawExport.source.sha256 === PINNED_ACCDB_SHA256
       && rawExport.source.postReadSha256 === PINNED_ACCDB_SHA256 ? 'PASS' : 'FAIL',
   };
+  if (complete.custodyStatus !== 'PASS') {
+    throw new Error('R6 custody status is not PASS after the pinned ACCDB read.');
+  }
   return Object.freeze({ ...complete, semanticHash: semanticHash(complete) });
 }
 

@@ -1,0 +1,72 @@
+{
+  "baselineD1": {
+    "iterationSemanticHash": "fnv1a64:c9512908c2409607",
+    "normalizedConstitutiveMatches": 19,
+    "normalsWithin10": 23,
+    "vectorsWithin10": 13
+  },
+  "boundary": "STATE_STABLE_PROXY_IS_DIAGNOSTIC_ONLY; QUALIFICATION_REQUIRES_EXISTING_PHYSICAL_AND_FIXED_POINT_GATES",
+  "ephemeralSolverSha256": "7e9f2563df9cd22ed3c7fef9c70db3417512ffbd7dee60fb21b590dc24b8703a",
+  "finalIterationSummary": {
+    "frictionRestraintCount": 23,
+    "normalWithinGoal": 21,
+    "normalWorstPercentError": 86.9978709621041,
+    "regimeMatches": 12,
+    "regimeMismatches": 11,
+    "tangentialMeanRelativeError": 2.559140126171039,
+    "tangentialVectorsCompared": 23,
+    "tangentialVectorsWithinGoal": 5,
+    "tangentialWorstRelativeError": 47.82373685281862
+  },
+  "fullLocalArtifactSha256": "4160259a8b092448c0a1f73b4c5665cfc53246624fb4505e172213ed6e133a93",
+  "partialMobilisationTargets": {
+    "20520": {"d1": 0.9740479646889897, "reference": 0.9614990688120213, "stateStable": 1.0007538671698066},
+    "21800": {"d1": 0.9916358323624859, "reference": 0.9395337430482974, "stateStable": 1.0158851895527394},
+    "22070": {"d1": 0.915083482035359, "reference": 0.9362256859958026, "stateStable": 1.1448107862488894},
+    "22260": {"d1": 0.9955538830196907, "reference": 0.9325806311646732, "stateStable": 0.9999253133271377}
+  },
+  "productionSolverModified": false,
+  "qualification": {
+    "constantForceUpdateTailN": [3570.856973880201,3570.8569738801984,3570.856973880203,3570.856973880203,3570.8569738802016,3570.856973880202,3570.856973880192,3570.8569738801866,3570.8569738801834,3570.8569738801843,3570.856973880194,3570.8569738801975],
+    "converged": false,
+    "iterations": 400,
+    "lastFailedGates": ["DISPLACEMENT_UPDATE_NORM","REACTION_UPDATE_NORM","COULOMB_CAP_COMPLEMENTARITY","SLIDE_CAPACITY_RESIDUAL","SLIP_UPDATE_NORM","FRICTION_OPPOSES_SLIP"],
+    "reactionUpdateTailN": [2067.478399605473,2067.4783996054775,2067.4783996054457,2067.4783996054634,2067.478399605458,2067.4783996054553,2067.478399605472,2067.478399605445,2067.4783996054193,2067.4783996054366,2067.4783996054357,2067.4783996054384]
+  },
+  "schema": "m047-bm4l-stage2-ds1-compact-evidence/v1",
+  "solutionStrategy": "DELETED_SPRING_WITH_CONSTANT_FORCE_AND_STATE_STABLE_STOP_PROXY_V1",
+  "solverProfileId": "CAESAR-ACCDB-FRICTION-SOLVER-R1-D1-DELETED-SPRING-CONSTANT-FORCE",
+  "sourceAccdbSha256": "64c05a50e9ed0452622ff5880335460486f24ac8e6adecc9a300b549c9aa82f8",
+  "stateStableProxy": {
+    "failedQualificationGates": ["DISPLACEMENT_UPDATE_NORM","REACTION_UPDATE_NORM","COULOMB_CAP_COMPLEMENTARITY","SLIDE_CAPACITY_RESIDUAL","SLIP_UPDATE_NORM","FRICTION_OPPOSES_SLIP"],
+    "iteration": 2,
+    "qualificationGateStatus": "NOT_CONVERGED",
+    "rows": [
+      {"id":"21930:REST_PTR21:TYPE3:UY","node":"21930","normalErrPct":-0.01183934494385236,"refRegime":"STUCK","refUtil":0.003653619560161685,"solvedRegime":"STUCK","solvedUtil":0.0223001952520575,"vecErrRel":5.10286722190411},
+      {"id":"21610:REST_PTR16:TYPE3:UY","node":"21610","normalErrPct":97.52625809059651,"refRegime":"SLID","refUtil":1.0443251471943515,"solvedRegime":"SLID","solvedUtil":0.6352757855366473,"vecErrRel":1.3682070512830238},
+      {"id":"22310:REST_PTR28:TYPE3:UY","node":"22310","normalErrPct":0.007416703172898839,"refRegime":"STUCK","refUtil":0.4731506498620168,"solvedRegime":"SLID","solvedUtil":0.9937453075703094,"vecErrRel":1.100428290650959},
+      {"id":"22220:REST_PTR26:TYPE3:UY","node":"22220","normalErrPct":-0.12409495555817962,"refRegime":"STUCK","refUtil":0.9570318542600503,"solvedRegime":"SLID","solvedUtil":1.0116311103159308,"vecErrRel":0.8878313439138115},
+      {"id":"20520:REST_PTR9:TYPE3:UY","node":"20520","normalErrPct":-0.36640372739773863,"refRegime":"STUCK","refUtil":0.9614990688120213,"solvedRegime":"SLID","solvedUtil":1.0007538671698066,"vecErrRel":0.8680674801734302},
+      {"id":"22260:REST_PTR27:TYPE3:UY","node":"22260","normalErrPct":0.04159310969446136,"refRegime":"STUCK","refUtil":0.9325806311646732,"solvedRegime":"SLID","solvedUtil":0.9999253133271377,"vecErrRel":0.7340258582649197},
+      {"id":"20440:REST_PTR8:TYPE3:UY","node":"20440","normalErrPct":0.18022052660325746,"refRegime":"STUCK","refUtil":0.9076623601256832,"solvedRegime":"SLID","solvedUtil":0.9997149546689921,"vecErrRel":0.7172702130529766},
+      {"id":"20170:REST_PTR3:TYPE3:UY","node":"20170","normalErrPct":-14.402182839560421,"refRegime":"STUCK","refUtil":0.9327705475445592,"solvedRegime":"SLID","solvedUtil":1.379363681381686,"vecErrRel":0.6931571694626109},
+      {"id":"22070:REST_PTR23:TYPE3:UY","node":"22070","normalErrPct":-0.4563420446292764,"refRegime":"STUCK","refUtil":0.9362256859958026,"solvedRegime":"SLID","solvedUtil":1.1448107862488894,"vecErrRel":0.6618203679768481},
+      {"id":"22370:REST_PTR29:TYPE3:UY","node":"22370","normalErrPct":0.006880237208502179,"refRegime":"SLID","refUtil":1.016486453611979,"solvedRegime":"SLID","solvedUtil":1.0026053310770944,"vecErrRel":0.5696255489405425},
+      {"id":"20250:REST_PTR4:TYPE3:UY","node":"20250","normalErrPct":-0.07002174323220142,"refRegime":"STUCK","refUtil":0.5878682929356948,"solvedRegime":"STUCK","solvedUtil":0.8846927985958424,"vecErrRel":0.5038629092600546},
+      {"id":"20350:REST_PTR6:TYPE3:UY","node":"20350","normalErrPct":6.804405403736068,"refRegime":"SLID","refUtil":0.9864468972055566,"solvedRegime":"SLID","solvedUtil":0.9087916472775343,"vecErrRel":0.421936773226639},
+      {"id":"22120:REST_PTR24:TYPE3:UY","node":"22120","normalErrPct":-0.03911041200737618,"refRegime":"SLID","refUtil":0.9954411228556276,"solvedRegime":"SLID","solvedUtil":0.955220663329505,"vecErrRel":0.42076980424952787},
+      {"id":"22020:REST_PTR22:TYPE3:UY","node":"22020","normalErrPct":0.0783658473249442,"refRegime":"SLID","refUtil":1.0016444981184767,"solvedRegime":"SLID","solvedUtil":1.2730724227711216,"vecErrRel":0.27197831082339424},
+      {"id":"21740:REST_PTR18:TYPE3:UY","node":"21740","normalErrPct":-0.2999040119391015,"refRegime":"STUCK","refUtil":0.9190783509901178,"solvedRegime":"SLID","solvedUtil":0.9665222341818183,"vecErrRel":0.2563781864824363},
+      {"id":"20550:REST_PTR10:TYPE3:UY","node":"20550","normalErrPct":0.4287944174168205,"refRegime":"STUCK","refUtil":0.21159066008432792,"solvedRegime":"STUCK","solvedUtil":0.26019680432485426,"vecErrRel":0.23499077696507017},
+      {"id":"21470:REST_PTR14:TYPE3:UY","node":"21470","normalErrPct":7.795902964114696,"refRegime":"SLID","refUtil":1.013611569447551,"solvedRegime":"SLID","solvedUtil":0.8146948206464285,"vecErrRel":0.2285879365939223},
+      {"id":"20090:REST_PTR2:TYPE3:UY","node":"20090","normalErrPct":-15.235236422666706,"refRegime":"STUCK","refUtil":0.9376072966470415,"solvedRegime":"SLID","solvedUtil":1.2675240753988273,"vecErrRel":0.18815212220837943},
+      {"id":"21800:REST_PTR19:TYPE3:UY","node":"21800","normalErrPct":0.032032254378781634,"refRegime":"STUCK","refUtil":0.9395337430482974,"solvedRegime":"SLID","solvedUtil":1.0158851895527394,"vecErrRel":0.1421552250934563},
+      {"id":"22140:REST_PTR25:TYPE3:UY","node":"22140","normalErrPct":0.4319811934221717,"refRegime":"STUCK","refUtil":0.8951530882523876,"solvedRegime":"SLID","solvedUtil":0.9929109771076537,"vecErrRel":0.1139995816168412},
+      {"id":"20710:REST_PTR13:TYPE3:UY","node":"20710","normalErrPct":1.531178963532511,"refRegime":"SLID","refUtil":1.106335582585517,"solvedRegime":"SLID","solvedUtil":1.15004712978396,"vecErrRel":0.05542696798840829},
+      {"id":"20580:REST_PTR11:TYPE3:UY","node":"20580","normalErrPct":-0.4332226693845449,"refRegime":"SLID","refUtil":0.9961908789132611,"solvedRegime":"SLID","solvedUtil":0.9689742801547865,"vecErrRel":0.0315345338584918},
+      {"id":"21860:REST_PTR20:TYPE3:UY","node":"21860","normalErrPct":-0.006027372360311634,"refRegime":"SLID","refUtil":1.001821059675356,"solvedRegime":"SLID","solvedUtil":0.986530547031381,"vecErrRel":0.015322072105838084}
+    ],
+    "summary": {"frictionRestraintCount":23,"normalWithinGoal":20,"normalWorstPercentError":97.52625809059651,"regimeMatches":12,"regimeMismatches":11,"tangentialMeanRelativeError":0.6777563367867692,"tangentialVectorsCompared":23,"tangentialVectorsWithinGoal":3,"tangentialWorstRelativeError":5.10286722190411}
+  },
+  "variant": "DS1-d1-deleted-spring-constant-force-state-stable-proxy"
+}

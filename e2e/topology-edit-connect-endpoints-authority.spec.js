@@ -29,7 +29,7 @@ test('production HUD connects two canvas-picked ends through automatic governed 
   });
   const before = await controllerEvidence(page);
 
-  await configureConnect(page, host, startNodeId, endNodeId);
+  const firstPick = await configureConnect(page, host, startNodeId, endNodeId);
   await expect.poll(() => host.getAttribute('data-topology-edit-connect-preview-hash')).toBeTruthy();
   await expect.poll(() => host.getAttribute('data-topology-edit-authoring-phase')).toBe('READY_TO_APPLY');
   const preview = await controllerEvidence(page);
@@ -51,7 +51,7 @@ test('production HUD connects two canvas-picked ends through automatic governed 
   expect(cancelled.journalHash).toBe(before.journalHash);
   expect(cancelled.ghostChildCount).toBe(0);
 
-  await configureConnect(page, host, startNodeId, endNodeId);
+  const secondPick = await configureConnect(page, host, startNodeId, endNodeId);
   await expect.poll(() => host.getAttribute('data-topology-edit-authoring-phase')).toBe('READY_TO_APPLY');
   await expect.poll(() => host.getAttribute('data-topology-edit-connect-validation-hash')).toBeTruthy();
 
@@ -87,13 +87,15 @@ test('production HUD connects two canvas-picked ends through automatic governed 
 
   expect(pageErrors).toEqual([]);
   expect(consoleErrors.filter((message) => !message.includes('favicon'))).toEqual([]);
-  const screenshot = await page.screenshot({ fullPage: true });
-  await testInfo.attach('connect-ends-contextual-canvas-workflow', { body: screenshot, contentType: 'image/png' });
+  await testInfo.attach('connect-ends-contextual-canvas-workflow', {
+    body: await page.screenshot({ fullPage: true }), contentType: 'image/png',
+  });
   await mkdir('reports/qualification', { recursive: true });
   await writeFile(REPORT, `${JSON.stringify({
-    schema: 'TopologyEditConnectExistingEndsProductionHudEvidence.v2',
+    schema: 'TopologyEditConnectExistingEndsProductionHudEvidence.v3',
     candidateHead: process.env.TOPOLOGY_EDIT_TARGET_HEAD_SHA || null,
     status: 'PASS_CANVAS_PICK_AUTO_PLAN_PREVIEW_VALIDATE_APPLY_UNDO_REDO',
+    pointerEvidence: { firstPick, secondPick },
     evidence: { startNodeId, endNodeId, before, preview, cancelled, applied, undone, redone },
   }, null, 2)}\n`);
 });
@@ -118,6 +120,7 @@ async function openProductionController(page) {
   ))).toBe(true);
   return host;
 }
+
 async function openAuthoringPanel(page) {
   const details = page.locator('details[data-panel-kind="authoring"]');
   if (!(await details.evaluate((element) => element.open))) await details.locator(':scope > summary').click();
@@ -160,9 +163,9 @@ async function configureConnect(page, host, startNodeId, endNodeId) {
     .getByRole('button', { name: 'Clear', exact: true });
   if (await clear.isEnabled()) await clear.click();
   await page.locator('[data-action="activate-authoring-connect-ends"]').click();
-  await clickCanonicalNode(page, startNodeId);
+  const first = await clickCanonicalNode(page, startNodeId);
   await expect.poll(() => host.getAttribute('data-topology-edit-connect-start-endpoint-hash')).toBeTruthy();
-  await clickCanonicalNode(page, endNodeId);
+  const second = await clickCanonicalNode(page, endNodeId);
   await expect.poll(() => host.getAttribute('data-topology-edit-connect-end-endpoint-hash')).toBeTruthy();
   const pipe = page.locator('[data-connect-field="catalogueRecordId"]');
   await expect.poll(() => pipe.locator('option').count()).toBeGreaterThan(1);
@@ -174,6 +177,7 @@ async function configureConnect(page, host, startNodeId, endNodeId) {
   await page.locator('[data-connect-field="alternativeId"]').selectOption(alternativeId);
   await expect(page.getByText('UNIQUE EXACT')).toBeVisible();
   await expect.poll(() => host.getAttribute('data-topology-edit-authoring-phase')).toBe('READY_TO_APPLY');
+  return { first, second };
 }
 
 async function clickCanonicalNode(page, nodeId) {
@@ -183,21 +187,35 @@ async function clickCanonicalNode(page, nodeId) {
     controller.focusCanonicalIds?.([id]);
     await new Promise((resolve) => requestAnimationFrame(() => requestAnimationFrame(resolve)));
   }, nodeId);
-  const pick = await resolveVisibleNodePickPoint(page, nodeId);
-  const canvas = page.locator('[data-role="topology-edit-render-host"] canvas').first();
-  await expect(canvas).toBeVisible();
+  const prePick = await resolveVisibleNodePickPoint(page, nodeId);
+  const canvas = page.locator(
+    '[data-role="topology-edit-canvas-mount"] canvas[data-viewport-backend="topology-edit-webgl"]',
+  );
+  await expect(canvas).toHaveCount(1);
   const box = await canvas.boundingBox();
-  if (!box) throw new Error('Connect qualification: production canvas has no bounding box.');
+  if (!box) throw new Error('Connect qualification: production WebGL canvas has no bounding box.');
   await canvas.click({
-    position: {
-      x: pick.point.x - box.x,
-      y: pick.point.y - box.y,
-    },
+    position: { x: prePick.point.x - box.x, y: prePick.point.y - box.y },
   });
-  await expect.poll(() => page.evaluate(() => (
-    document.querySelector('[data-role="topology-edit-render-host"]')
-      ?.__topologyEditAuthoringController?.selection?.nodeIds?.[0] ?? null
-  ))).toBe(nodeId);
+  const after = await page.evaluate(() => {
+    const controller = document.querySelector('[data-role="topology-edit-render-host"]')
+      ?.__topologyEditAuthoringController;
+    return {
+      actualPickId: controller?.viewportBackend?.lastSelectionPick?.objectId ?? null,
+      actualPickKind: controller?.viewportBackend?.lastSelectionPick?.objectKind ?? null,
+      selectedPrimaryId: controller?.editorStore?.getState?.().selection?.primaryId ?? null,
+      legacyNodeId: controller?.selection?.nodeIds?.[0] ?? null,
+      selectionRevision: controller?.editorStore?.getState?.().selection?.revision ?? null,
+    };
+  });
+  if (after.legacyNodeId !== nodeId) {
+    throw new Error(`CONNECT_POINTER_SELECTION_DIVERGENCE: ${JSON.stringify({
+      expectedNodeId: nodeId,
+      prePick,
+      after,
+    })}`);
+  }
+  return { nodeId, prePick, after };
 }
 
 async function resolveVisibleNodePickPoint(page, nodeId) {
@@ -232,28 +250,21 @@ async function resolveVisibleNodePickPoint(page, nodeId) {
     for (const radius of radii) {
       const offsets = radius === 0 ? [[0, 0]] : directions.map(([x, y]) => [x * radius, y * radius]);
       for (const [dx, dy] of offsets) {
-        const x = center.x + dx;
-        const y = center.y + dy;
+        const x = center.x + dx; const y = center.y + dy;
         if (x < rect.left || x > rect.right || y < rect.top || y > rect.bottom) continue;
         const production = backend.pickAt(x, y);
         sampledCount += 1;
         if (production?.objectId) observed.add(production.objectId);
         if (production?.objectId === targetNodeId) {
           return {
-            point: { x, y },
-            projectedCenter: center,
-            radiusPx: radius,
-            sampledCount,
+            point: { x, y }, projectedCenter: center, radiusPx: radius, sampledCount,
             observedObjectIds: [...observed].sort(),
           };
         }
       }
     }
     throw new Error(`CONNECT_VIEWPORT_NODE_PICK_UNREACHABLE: ${JSON.stringify({
-      nodeId: targetNodeId,
-      center,
-      sampledCount,
-      observedObjectIds: [...observed].sort(),
+      nodeId: targetNodeId, center, sampledCount, observedObjectIds: [...observed].sort(),
     })}`);
   }, nodeId);
 }

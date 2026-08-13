@@ -41,21 +41,32 @@ jobs:
           echo "${ZIP_SHA}  artifacts/BM4_L.zip" | sha256sum -c -
           unzip -q artifacts/BM4_L.zip -d artifacts/source
           echo "${ACCDB_SHA}  artifacts/source/BM4_L.ACCDB" | sha256sum -c -
-      - name: Validate diagnostic
-        run: node --check scripts/lfea-m047-stage2-l7-b0-d1-branch-history.mjs
-      - name: Execute B0 to D1 L7 branch-history RCA
+      - name: Validate fresh-process trace tools
+        run: |
+          node --check scripts/lfea-m047-stage2-l7-single-trace.mjs
+          node --check scripts/m047-l7-rca2-apply-d1.mjs
+      - name: Capture B0 trace in fresh process
+        run: node scripts/lfea-m047-stage2-l7-single-trace.mjs B0 artifacts/source/BM4_L.ACCDB reports/l7-b0-trace.json
+      - name: Apply exact successful D1 transform
+        run: |
+          node scripts/m047-l7-rca2-apply-d1.mjs
+          node --check "$SOLVER"
+      - name: Capture D1 trace in fresh process
+        run: node scripts/lfea-m047-stage2-l7-single-trace.mjs D1 artifacts/source/BM4_L.ACCDB reports/l7-d1-trace.json
+      - name: Restore production solver
         shell: bash
         run: |
           set -euo pipefail
-          node scripts/lfea-m047-stage2-l7-b0-d1-branch-history.mjs artifacts/source/BM4_L.ACCDB reports/l7-b0-d1-branch-history.json > reports/l7-b0-d1-branch-history.stdout.json
+          git checkout -- "$SOLVER"
           sha256sum "$SOLVER" | tee solver-after.sha256
           cmp solver-before.sha256 solver-after.sha256
       - uses: actions/upload-artifact@v4
         with:
-          name: m047-l7-b0-d1-branch-history
+          name: m047-l7-b0-d1-fresh-process-traces
           retention-days: 7
+          if-no-files-found: error
           path: |
-            reports/l7-b0-d1-branch-history.json
-            reports/l7-b0-d1-branch-history.stdout.json
+            reports/l7-b0-trace.json
+            reports/l7-d1-trace.json
             solver-before.sha256
             solver-after.sha256

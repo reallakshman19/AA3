@@ -47,6 +47,7 @@ function r2(decision) {
 function r3({ singleAxis = false, perAxis = false, l6Closer = false } = {}) {
   return {
     schema: 'm047-bm4l-stage2-r3-capacity-diagnostics/v1',
+    frictionCaseId: 'L13',
     sourceAccdbSha256: sha,
     summary: {
       l13NormalCloserToUnityCount: l6Closer ? 0 : 2,
@@ -110,6 +111,17 @@ result = buildPostDirectionResidualRca({
   r3: r3({ perAxis: true }),
 });
 assert.equal(result.next.decision, 'PER_AXIS_CAPACITY_PARTITION_EXPERIMENT_JUSTIFIED');
+
+assert.throws(
+  () => buildPostDirectionResidualRca({
+    baseline,
+    direction: direction(),
+    r2: r2('EVIDENCE_FAVOURS_RETURN_MAP_FOR_PARTIAL_MOBILISATION'),
+    r3: { ...r3(), frictionCaseId: 'L7' },
+  }),
+  /baseline\/R3 case mismatch/u,
+  'R3 artifact for another load case must fail closed',
+);
 
 assert.equal(result.mechanicsChanged, false);
 assert.equal(result.toleranceChanged, false);

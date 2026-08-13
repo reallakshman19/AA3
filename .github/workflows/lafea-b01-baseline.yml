@@ -7,11 +7,13 @@ on:
     paths:
       - 'validation/lafea-benchmark-data/B01/**'
       - 'scripts/lafea-b01-registered-route-check.mjs'
+      - 'src/core/local-continuum/**'
       - '.github/workflows/lafea-b01-baseline.yml'
   pull_request:
     paths:
       - 'validation/lafea-benchmark-data/B01/**'
       - 'scripts/lafea-b01-registered-route-check.mjs'
+      - 'src/core/local-continuum/**'
       - '.github/workflows/lafea-b01-baseline.yml'
 
 permissions:
@@ -34,7 +36,14 @@ jobs:
       - name: Check registered-route runner syntax
         run: node --check scripts/lafea-b01-registered-route-check.mjs
 
-      - name: Execute untouched B01 base matrix
+      - name: Run prior continuum controls
+        run: |
+          node scripts/lafea.3-solver-check.mjs
+          node scripts/lafea.3-loads-imposed-displacement-check.mjs
+          node scripts/lafea.3-t6-patch-check.mjs
+          node scripts/lafea.3-q8-patch-check.mjs
+
+      - name: Execute B01 base matrix
         id: baseline
         continue-on-error: true
         shell: bash
@@ -51,22 +60,22 @@ jobs:
           printf '%s\n' "$status" > "$B01_REPORT_DIR/baseline-driver.exit-code"
           exit "$status"
 
-      - name: Upload untouched baseline receipts
+      - name: Upload B01 base receipts
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: lafea-b01-untouched-baseline-${{ github.sha }}
+          name: lafea-b01-base-${{ github.sha }}
           path: /tmp/lafea-b01-baseline
           if-no-files-found: error
           retention-days: 30
 
-      - name: Propagate B01 baseline result
+      - name: Propagate B01 base result
         if: always()
         shell: bash
         run: |
           status=$(cat "$B01_REPORT_DIR/baseline-driver.exit-code")
           if [ "$status" -ne 0 ]; then
-            echo "B01 untouched baseline contains one or more failures; artifact retained."
+            echo "B01 base matrix contains one or more failures; artifact retained."
             exit "$status"
           fi
-          echo "B01 untouched baseline base matrix passed; artifact retained."
+          echo "B01 base matrix passed; artifact retained."

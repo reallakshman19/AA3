@@ -10,6 +10,7 @@ import { buildLafeaGuidedWorkflow } from './lafea-guided-workflow.js';
 import { renderLafeaGuidedWorkflow } from './lafea-guided-workflow-view.js';
 import { renderLafeaAnalysisSettings } from './lafea-analysis-settings-view.js';
 import { renderLafeaNumericalVerification } from './lafea-numerical-verification-view.js';
+import { renderLafeaEngineeringOverview } from './lafea-engineering-overview.js';
 import { lafeaWorkbenchReasonLabels } from './lafea-workbench-reason-labels.js';
 import { renderLafeaNcPlaceholderPanel } from './lafea-nc-placeholder-panel.js';
 import { focusLafeaRetainedMeshElement } from './lafea-canvas/retained-mesh-overlay.js';
@@ -33,8 +34,22 @@ export function renderLafeaWorkbenchContent(root, state, stage, options) {
     options.onNavigateTarget?.(step.focusTarget);
   });
 
-  const sourceCard = card(root, `Source and stage inputs — ${state.activeStageId}`);
+  const engineeringOverview = renderLafeaEngineeringOverview(
+    root,
+    stage,
+    options.registryEntry,
+    { onRun: options.handlers.onRun },
+  );
+  engineeringOverview.dataset.guidedTarget = 'engineering-overview';
+
+  const sourceCard = card(root, `Model inputs — ${state.activeStageId}`);
   sourceCard.section.dataset.guidedTarget = 'source';
+  sourceCard.body.append(element(
+    root,
+    'p',
+    'lafea-workbench__section-intro',
+    'Define the governed geometry, material, restraints, load cases and units here. Advanced raw JSON remains available for whole-document inspection.',
+  ));
   sourceCard.body.append(renderDocumentTableEditor(
     sourceCard.body,
     state.activeStageId,
@@ -45,11 +60,11 @@ export function renderLafeaWorkbenchContent(root, state, stage, options) {
     },
   ));
 
-  const profileCard = card(root, 'Analysis profile and settings');
+  const profileCard = card(root, 'Solver and analysis settings');
   profileCard.section.dataset.guidedTarget = 'profile';
   profileCard.body.append(renderLafeaAnalysisSettings(profileCard.body, stage));
 
-  const viewportCard = card(root, `Governed engineering viewport — ${state.activeStageId}`);
+  const viewportCard = card(root, `Engineering viewport — ${state.activeStageId}`);
   viewportCard.section.dataset.guidedTarget = 'viewport';
   const reusedViewport = validReusableViewport(options.reusedViewport);
   const preview = reusedViewport?.element ?? element(root, 'div', 'lafea-workbench__svg');
@@ -80,7 +95,10 @@ export function renderLafeaWorkbenchContent(root, state, stage, options) {
     focusedMeshElementId: options.focusedMeshElementId,
     onFocusMeshElement: options.onMeshFocusChange,
   });
-  viewportCard.body.append(preview);
+  viewportCard.body.append(
+    viewportModePanel(root, activeViewport.getState(), retainedMeshEvidence, stage),
+    preview,
+  );
   if (!activeViewport.scene.sourcePrimitives.length) {
     viewportCard.body.append(element(
       root,
@@ -91,7 +109,7 @@ export function renderLafeaWorkbenchContent(root, state, stage, options) {
   }
   viewportCard.body.append(truthPanel(root, options.registryEntry));
 
-  const discretizationCard = card(root, `Discretization — ${state.activeStageId}`);
+  const discretizationCard = card(root, `Meshing and discretization — ${state.activeStageId}`);
   discretizationCard.section.dataset.guidedTarget = 'discretization';
   const discretizationHost = element(root, 'div');
   renderLafeaDiscretizationPanel(discretizationHost, discretization, {
@@ -114,7 +132,7 @@ export function renderLafeaWorkbenchContent(root, state, stage, options) {
   numericalCard.section.dataset.guidedTarget = 'numerical-verification';
   numericalCard.body.append(renderLafeaNumericalVerification(numericalCard.body, stage));
 
-  const preflightCard = card(root, `Pre-FEA and authorization — ${state.activeStageId}`);
+  const preflightCard = card(root, `Solve readiness — ${state.activeStageId}`);
   preflightCard.section.dataset.guidedTarget = 'findings';
   preflightCard.body.append(workflowSummary(root, workflow, [
     'MODEL_DIAGNOSTICS', 'AUTHORIZATION', 'RUN',
@@ -123,7 +141,7 @@ export function renderLafeaWorkbenchContent(root, state, stage, options) {
     preflightCard.body.append(diagnosticList(root, state.diagnostics));
   }
 
-  const evidenceCard = card(root, `Results and evidence — ${state.activeStageId}`);
+  const evidenceCard = card(root, `Analysis results — ${state.activeStageId}`);
   evidenceCard.section.dataset.guidedTarget = 'results';
   evidenceCard.body.append(renderLafeaEvidence(
     root,
@@ -133,7 +151,7 @@ export function renderLafeaWorkbenchContent(root, state, stage, options) {
     stage.execution,
   ));
 
-  const lifecycleCard = card(root, `Lifecycle and lineage — ${state.activeStageId}`);
+  const lifecycleCard = card(root, `Engineering evidence and lineage — ${state.activeStageId}`);
   lifecycleCard.section.dataset.guidedTarget = 'lineage';
   lifecycleCard.body.append(renderLafeaLifecyclePanel(
     lifecycleCard.body,
@@ -145,6 +163,7 @@ export function renderLafeaWorkbenchContent(root, state, stage, options) {
   ncCard.body.append(renderLafeaNcPlaceholderPanel(ncCard.body));
 
   main.append(
+    engineeringOverview,
     sourceCard.section,
     profileCard.section,
     viewportCard.section,
@@ -179,6 +198,34 @@ export function renderLafeaWorkbenchContent(root, state, stage, options) {
     workflow,
     discretization,
   });
+}
+
+function viewportModePanel(root, viewportState, retainedMeshEvidence, stage) {
+  const panel = element(root, 'div', 'lafea-viewport-mode-panel');
+  panel.dataset.role = 'lafea-viewport-mode-panel';
+  const mode = viewportState?.mode ?? 'SOURCE_AUTHORING';
+  const renderer = viewportState?.renderer ?? 'SVG';
+  const meshCount = Array.isArray(retainedMeshEvidence?.mesh?.elements)
+    ? retainedMeshEvidence.mesh.elements.length
+    : 0;
+  panel.append(
+    viewportMode(root, 'Geometry', stage.document ? 'VISIBLE' : 'EMPTY', mode === 'SOURCE_AUTHORING'),
+    viewportMode(root, 'Mesh', meshCount ? `${meshCount} ELEMENTS` : 'NOT RETAINED', meshCount > 0),
+    viewportMode(
+      root,
+      'Result contour',
+      mode === 'QUALIFIED_RESULT' ? `READY · ${renderer}` : 'WAITING FOR QUALIFIED RESULT',
+      mode === 'QUALIFIED_RESULT',
+    ),
+  );
+  return panel;
+}
+
+function viewportMode(root, label, value, active) {
+  const item = element(root, 'div', 'lafea-viewport-mode-panel__item');
+  item.dataset.active = String(active);
+  item.append(element(root, 'strong', null, label), element(root, 'span', null, value));
+  return item;
 }
 
 function validReusableViewport(value) {
@@ -228,9 +275,9 @@ function diagnosticList(root, diagnostics) {
 }
 
 function truthPanel(root, registryEntry) {
-  const section = element(root, 'section', 'lafea-workbench__truth');
+  const section = element(root, 'details', 'lafea-workbench__truth');
+  section.append(element(root, 'summary', null, 'Solver authority and current limitations'));
   section.append(
-    element(root, 'h3', null, 'Current authority and limitations'),
     element(
       root,
       'p',

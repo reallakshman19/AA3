@@ -56,7 +56,7 @@ test('A17 failure: near-zero convergence is explicit and not relative-GCI qualif
       schema: LAFEA_BUCKET_01_CONVERGENCE_INPUT_SCHEMA,
       quantityId: 'SIGMA_YY', samplingAuthority: 'FIXED_PHYSICAL_PROBE',
       locationId: 'A17-NEAR-ZERO', locationDefinitionHash: `sha256:${'b'.repeat(64)}`,
-      units: 'MPa', meshSizes: [0.4, 0.2, 0.1], observations: [4e-12, 1e-12, 0.25e-12],
+      units: 'MPa', meshSizes: [0.4, 0.2, 0.1], observations: [4, 1, 0.25e-12],
       gciTolerance: 0.005, minimumObservedOrder: 1.5,
       asymptoticRatioBounds: { minimum: 0.85, maximum: 1.15 },
     });

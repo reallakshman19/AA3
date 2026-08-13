@@ -9,7 +9,7 @@ export async function mountStage17(page, options = {}) {
     globalThis.__A17__ = { ...mounted, api };
     const stage = mounted.controller.getState().stages['LAFEA.3'];
     return {
-      sourceHash: stage.sourceAuthority.sourceHash,
+      sourceHash: mounted.authority.sourceHash,
       lifecycleBinding: stage.lifecycleBinding.status,
       profileId: stage.lifecycle.profileId,
       meshState: stage.analysisMeshCustodyProjection.state,

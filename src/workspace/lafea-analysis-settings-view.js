@@ -1,61 +1,75 @@
-/** Read-only projection of analysis profile/settings already retained by the active stage. */
+/** Read-only projection of analysis and solver settings already retained by the active stage. */
 import { element } from './lafea-workbench-dom.js';
 
 export const LAFEA_ANALYSIS_SETTINGS_VIEW_SCHEMA = 'lafea-analysis-settings-view/v1';
 
-export function buildLafeaAnalysisSettingsViewModel(stageValue) {
+export function buildLafeaAnalysisSettingsViewModel(stageValue, registryEntryValue = null) {
   const stage = requireStage(stageValue);
+  const registry = registryEntry(registryEntryValue);
   const documentValue = stage.document ?? null;
   const profile = documentValue?.qualificationProfile ?? null;
   const requests = documentValue?.resultRequests ?? null;
-  const rows = [
-    row('Lifecycle profile', stage.lifecycle?.profileId ?? 'Not initialized'),
-    row('Lifecycle source binding', stage.lifecycleBinding?.status ?? 'UNINITIALIZED'),
-    row('Source schema', textOr(documentValue?.schema)),
+  const modelRows = [
     row('Model identity', textOr(documentValue?.modelIdentity)),
     row('Model version', textOr(documentValue?.modelVersion)),
     row('Formulation', textOr(documentValue?.formulation)),
-    row('Qualification profile', textOr(profile?.identity)),
     row('Thickness policy', textOr(documentValue?.thicknessBasis?.policy)),
     row('Requested analyses / cases', requestSummary(requests)),
     row('Unit basis', unitSummary(documentValue?.units)),
     row('Code / allowable basis', codeBasisSummary(documentValue)),
   ];
+  const solverRows = [
+    row('Registered engine', registry.enginePackage ? `src/core/${registry.enginePackage}` : 'Provided by workbench registry'),
+    row('Registered authority', registry.authority ?? 'Provided by workbench registry'),
+    row('Engine state', registry.engineState ?? 'Provided by workbench registry'),
+    row('Result presenter', registry.presenterRole ?? 'Provided by workbench registry'),
+    row('Lifecycle profile', stage.lifecycle?.profileId ?? 'Not initialized'),
+    row('Lifecycle source binding', stage.lifecycleBinding?.status ?? 'UNINITIALIZED'),
+    row('Qualification profile', textOr(profile?.identity)),
+    row('Source schema', textOr(documentValue?.schema)),
+  ];
   return freeze({
     schema: LAFEA_ANALYSIS_SETTINGS_VIEW_SCHEMA,
     stageId: stage.stageId,
     readOnly: true,
-    rows,
+    modelRows,
+    solverRows,
+    rows: [...modelRows, ...solverRows],
+    recoveryDisclosure: recoveryDisclosure(stage.stageId, documentValue),
     qualificationDetails: qualificationDetails(profile),
-    limitations: stringArray(documentValue?.limitations),
+    limitations: [...registry.limitations, ...stringArray(documentValue?.limitations)],
   });
 }
 
-export function renderLafeaAnalysisSettings(root, stageValue) {
+export function renderLafeaAnalysisSettings(root, stageValue, registryEntryValue = null) {
   if (!root?.ownerDocument) throw new TypeError('LAFEA_ANALYSIS_SETTINGS_ROOT_REQUIRED');
-  const model = buildLafeaAnalysisSettingsViewModel(stageValue);
+  const model = buildLafeaAnalysisSettingsViewModel(stageValue, registryEntryValue);
   const section = element(root, 'section', 'lafea-analysis-settings');
   section.dataset.role = 'lafea-analysis-settings';
   section.dataset.readOnly = 'true';
   section.append(element(
     root,
     'p',
-    null,
-    'Read-only engineering settings retained by the active source and lifecycle. Missing settings are not inferred from solver output or release evidence.',
+    'lafea-analysis-settings__intro',
+    'The first group comes from the active engineering model. The second group is governed solver authority and is locked here; this view never invents or edits qualification-controlled values.',
   ));
 
-  const list = element(root, 'dl', 'lafea-analysis-settings__list');
-  for (const item of model.rows) {
-    list.append(
-      element(root, 'dt', null, item.label),
-      element(root, 'dd', null, item.value),
-    );
+  const groups = element(root, 'div', 'lafea-analysis-settings__groups');
+  groups.append(
+    settingsGroup(root, 'Model-declared analysis settings', 'MODEL_SOURCE', model.modelRows),
+    settingsGroup(root, 'Governed solver settings', 'GOVERNED_SOLVER', model.solverRows),
+  );
+  section.append(groups);
+
+  if (model.recoveryDisclosure) {
+    const recovery = element(root, 'p', 'lafea-analysis-settings__recovery', model.recoveryDisclosure);
+    recovery.dataset.role = 'lafea-solver-recovery-policy';
+    section.append(recovery);
   }
-  section.append(list);
 
   if (model.qualificationDetails.length) {
-    const details = element(root, 'details');
-    details.append(element(root, 'summary', null, 'Qualification profile details'));
+    const details = element(root, 'details', 'lafea-analysis-settings__details');
+    details.append(element(root, 'summary', null, `Locked qualification tolerances (${model.qualificationDetails.length})`));
     const qualificationList = element(root, 'ul');
     model.qualificationDetails.forEach((value) => qualificationList.append(element(root, 'li', null, value)));
     details.append(qualificationList);
@@ -63,8 +77,8 @@ export function renderLafeaAnalysisSettings(root, stageValue) {
   }
 
   if (model.limitations.length) {
-    const limitations = element(root, 'details');
-    limitations.append(element(root, 'summary', null, `Retained limitations (${model.limitations.length})`));
+    const limitations = element(root, 'details', 'lafea-analysis-settings__details');
+    limitations.append(element(root, 'summary', null, `Current solver/stage limitations (${model.limitations.length})`));
     const limitationList = element(root, 'ul');
     model.limitations.forEach((value) => limitationList.append(element(root, 'li', null, value)));
     limitations.append(limitationList);
@@ -73,16 +87,54 @@ export function renderLafeaAnalysisSettings(root, stageValue) {
   return section;
 }
 
+function settingsGroup(root, title, authority, rows) {
+  const group = element(root, 'section', 'lafea-analysis-settings__group');
+  group.dataset.authority = authority;
+  const heading = element(root, 'div', 'lafea-analysis-settings__group-heading');
+  heading.append(
+    element(root, 'h3', null, title),
+    element(root, 'span', 'lafea-analysis-settings__lock', authority === 'GOVERNED_SOLVER' ? 'LOCKED' : 'SOURCE'),
+  );
+  const list = element(root, 'dl', 'lafea-analysis-settings__list');
+  for (const item of rows) {
+    list.append(
+      element(root, 'dt', null, item.label),
+      element(root, 'dd', null, item.value),
+    );
+  }
+  group.append(heading, list);
+  return group;
+}
+
+function registryEntry(value) {
+  if (!value || typeof value !== 'object') {
+    return { enginePackage: null, authority: null, engineState: null, presenterRole: null, limitations: [] };
+  }
+  return {
+    enginePackage: typeof value.enginePackage === 'string' ? value.enginePackage : null,
+    authority: typeof value.authority === 'string' ? value.authority : null,
+    engineState: typeof value.engineState === 'string' ? value.engineState : null,
+    presenterRole: typeof value.presenterRole === 'string' ? value.presenterRole : null,
+    limitations: stringArray(value.limitations),
+  };
+}
+
+function recoveryDisclosure(stageId, documentValue) {
+  if (stageId !== 'LAFEA.3') return null;
+  const families = [...new Set((documentValue?.elements ?? [])
+    .map((row) => row?.elementType)
+    .filter((value) => typeof value === 'string'))];
+  if (families.some((value) => value === 'T6' || value === 'Q8')) {
+    return 'Recovery authority: T6/Q8 integration-point stress is authoritative; projected nodal stress is display-only.';
+  }
+  return 'Recovery authority follows the registered LAFEA.3 continuum result contract.';
+}
+
 function requestSummary(value) {
   if (!value || typeof value !== 'object') return 'Not declared';
-  if (Array.isArray(value.requestedAnalyses) && value.requestedAnalyses.length) {
-    return value.requestedAnalyses.join(', ');
-  }
-  if (Array.isArray(value.loadCaseIds) && value.loadCaseIds.length) {
-    return `Load cases: ${value.loadCaseIds.join(', ')}`;
-  }
-  if (Array.isArray(value.transformedLoadCaseIdentities)
-    && value.transformedLoadCaseIdentities.length) {
+  if (Array.isArray(value.requestedAnalyses) && value.requestedAnalyses.length) return value.requestedAnalyses.join(', ');
+  if (Array.isArray(value.loadCaseIds) && value.loadCaseIds.length) return `Load cases: ${value.loadCaseIds.join(', ')}`;
+  if (Array.isArray(value.transformedLoadCaseIdentities) && value.transformedLoadCaseIdentities.length) {
     return `Load cases: ${value.transformedLoadCaseIdentities.join(', ')}`;
   }
   return 'Not declared';
@@ -110,9 +162,7 @@ function qualificationDetails(profile) {
   const rows = [];
   if (typeof profile.schema === 'string') rows.push(`Schema: ${profile.schema}`);
   if (Number.isFinite(profile.frameMinimumSine)) rows.push(`Frame minimum sine: ${profile.frameMinimumSine}`);
-  if (Number.isFinite(profile.handednessMinimumAlignment)) {
-    rows.push(`Handedness minimum alignment: ${profile.handednessMinimumAlignment}`);
-  }
+  if (Number.isFinite(profile.handednessMinimumAlignment)) rows.push(`Handedness minimum alignment: ${profile.handednessMinimumAlignment}`);
   if (profile.tolerances && typeof profile.tolerances === 'object') {
     for (const [quantity, rule] of Object.entries(profile.tolerances)) {
       if (!rule || typeof rule !== 'object') continue;
@@ -136,13 +186,9 @@ function displayValue(value) {
 
 function row(label, value) { return freeze({ label, value }); }
 function textOr(value) { return typeof value === 'string' && value ? value : 'Not declared'; }
-function stringArray(value) {
-  return Array.isArray(value) ? value.filter((item) => typeof item === 'string' && item) : [];
-}
+function stringArray(value) { return Array.isArray(value) ? value.filter((item) => typeof item === 'string' && item) : []; }
 function requireStage(value) {
-  if (!value || typeof value !== 'object' || typeof value.stageId !== 'string') {
-    throw new TypeError('LAFEA_ANALYSIS_SETTINGS_STAGE_REQUIRED');
-  }
+  if (!value || typeof value !== 'object' || typeof value.stageId !== 'string') throw new TypeError('LAFEA_ANALYSIS_SETTINGS_STAGE_REQUIRED');
   return value;
 }
 function freeze(value) {

@@ -15,6 +15,7 @@ export function renderLafeaDiscretizationPanel(root, model, handlers = {}) {
   host.dataset.stepStatus = model.stepStatus;
 
   host.append(
+    meshWorkspaceSummary(doc, model),
     configurationSection(doc, model),
     generationSection(doc, model, handlers),
     previewSection(doc, model),
@@ -23,6 +24,44 @@ export function renderLafeaDiscretizationPanel(root, model, handlers = {}) {
   );
   root.replaceChildren(host);
   return host;
+}
+
+function meshWorkspaceSummary(doc, model) {
+  const section = node(doc, 'section', 'lafea-mesh-workspace-summary');
+  section.dataset.role = 'lafea-mesh-workspace-summary';
+  const heading = node(doc, 'div', 'lafea-mesh-workspace-summary__heading');
+  heading.append(
+    node(doc, 'div'),
+    node(doc, 'strong', 'lafea-mesh-workspace-summary__state', model.state),
+  );
+  heading.firstElementChild.append(
+    node(doc, 'h3', null, 'Mesh workspace'),
+    node(doc, 'p', null, 'Choose the governed element family and target size, generate the mesh, then review quality and focus any problem element in the engineering viewport.'),
+  );
+  section.append(heading);
+
+  const grid = node(doc, 'div', 'lafea-mesh-workspace-summary__grid');
+  const values = [
+    ['Element family', model.evidence.elementFamily ?? model.generation.declaredElementFamily ?? 'Not selected'],
+    ['Target size', targetSize(model)],
+    ['Nodes', model.evidence.present ? String(model.evidence.nodeCount) : String(model.preview.retainedNodeCount ?? 0)],
+    ['Elements', model.evidence.present ? String(model.evidence.elementCount) : String(model.preview.retainedElementCount ?? 0)],
+    ['Warnings', String(model.evidence.warningElementIds?.length ?? 0)],
+    ['Blocking', String(model.evidence.blockingElementIds?.length ?? 0)],
+  ];
+  values.forEach(([label, value]) => {
+    const item = node(doc, 'div', 'lafea-mesh-workspace-summary__metric');
+    item.append(node(doc, 'span', null, label), node(doc, 'strong', null, value));
+    grid.append(item);
+  });
+  section.append(grid);
+  return section;
+}
+
+function targetSize(model) {
+  const value = model.generation.targetElementLength;
+  if (!Number.isFinite(value)) return 'Not bound';
+  return `${value}${model.generation.lengthUnit ? ` ${model.generation.lengthUnit}` : ''}`;
 }
 
 function configurationSection(doc, model) {
@@ -49,15 +88,10 @@ function configurationSection(doc, model) {
   profile.dataset.role = 'lafea-discretization-profile';
   section.append(profile);
 
-  const legacy = node(doc, 'div', 'lafea-discretization__legacy');
+  const legacy = node(doc, 'details', 'lafea-discretization__legacy');
   legacy.dataset.role = 'lafea-mesh-config-preference';
   legacy.dataset.status = model.configuration.legacyMeshConfigStatus;
-  legacy.append(node(
-    doc,
-    'strong',
-    null,
-    `Legacy meshConfig: ${model.configuration.legacyMeshConfigStatus}`,
-  ));
+  legacy.append(node(doc, 'summary', null, `Legacy meshConfig — ${model.configuration.legacyMeshConfigStatus}`));
   legacy.append(node(
     doc,
     'p',
@@ -210,6 +244,3 @@ function evidenceFacts(value) {
     ['Elements', String(value.elementCount)],
   ];
 }
-
-
-

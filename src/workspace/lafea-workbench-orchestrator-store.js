@@ -79,12 +79,16 @@ export function createLafeaWorkbenchOrchestratorStore(options) {
   function rawStage(stageId) {
     const stage = retainedState.stages[stageId];
     if (!stage) throw storeError('LAFEA_WORKBENCH_STAGE_NOT_FOUND');
+    const geometryFields = geometry.fields(stageId);
+    const executionFields = geometryFields.domainFirstProfileActive
+      ? { execution: domainFirstExecution.select(stageId) }
+      : domainFirstExecution.fields(stageId);
     return freeze({
       ...stage, stageId, ...source.fields(stageId), ...release.fields(stageId),
       ...verification.fields(stageId), ...t6Geometry.fields(stageId),
       ...mesh.fields(stageId), ...meshGeneration.fields(stageId),
-      ...preparation.fields(stageId), ...geometry.fields(stageId),
-      ...continuumPreflight.fields(stageId), ...domainFirstExecution.fields(stageId),
+      ...preparation.fields(stageId), ...geometryFields,
+      ...continuumPreflight.fields(stageId), ...executionFields,
     });
   }
 

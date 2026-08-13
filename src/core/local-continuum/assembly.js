@@ -27,8 +27,11 @@ export function assembleMesh(model, elementEvidence) {
     );
   } else {
     denseStiffness = zeros(dofOrdering.length, dofOrdering.length);
+    const denseCompensation = zeros(dofOrdering.length, dofOrdering.length);
     elementEvidence.forEach((element) =>
-      assembleDenseElement(denseStiffness, element, dofIndex));
+      assembleDenseElement(denseStiffness, denseCompensation, element, dofIndex));
+    denseStiffness = denseStiffness.map((row, i) => row.map((value, j) =>
+      value + denseCompensation[i][j]));
   }
   const residual = sparse
     ? sparseSymmetryResidual(globalStiffnessCsr)
@@ -66,10 +69,16 @@ export function assembleMesh(model, elementEvidence) {
   };
 }
 
-function assembleDenseElement(global, element, dofIndex) {
+function assembleDenseElement(global, compensation, element, dofIndex) {
   const indices = element.localDofOrdering.map((id) => dofIndex.get(id));
   indices.forEach((row, i) => indices.forEach((column, j) => {
-    global[row][column] += element.localStiffnessMatrix[i][j];
+    const term = element.localStiffnessMatrix[i][j];
+    const sum = global[row][column];
+    const next = sum + term;
+    compensation[row][column] += Math.abs(sum) >= Math.abs(term)
+      ? (sum - next) + term
+      : (term - next) + sum;
+    global[row][column] = next;
   }));
 }
 

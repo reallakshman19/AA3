@@ -9,6 +9,7 @@ on:
       - 'scripts/lafea-b01-registered-route-check.mjs'
       - 'scripts/lafea-b01-rigid-solver-diagnostic.mjs'
       - 'scripts/lafea-b01-triangular-substitution-diagnostic.mjs'
+      - 'scripts/lafea-b01-rigid-nullspace-diagnostic.mjs'
       - 'src/core/local-continuum/**'
       - '.github/workflows/lafea-b01-baseline.yml'
   pull_request:
@@ -17,6 +18,7 @@ on:
       - 'scripts/lafea-b01-registered-route-check.mjs'
       - 'scripts/lafea-b01-rigid-solver-diagnostic.mjs'
       - 'scripts/lafea-b01-triangular-substitution-diagnostic.mjs'
+      - 'scripts/lafea-b01-rigid-nullspace-diagnostic.mjs'
       - 'src/core/local-continuum/**'
       - '.github/workflows/lafea-b01-baseline.yml'
 
@@ -30,26 +32,22 @@ jobs:
       B01_REPORT_DIR: /tmp/lafea-b01-baseline
     steps:
       - uses: actions/checkout@v4
-
       - name: Check frozen independent oracle
         run: python3 validation/lafea-benchmark-data/B01/oracle/independent-oracle.py --check
-
       - name: Check deterministic mesh artifacts
         run: python3 validation/lafea-benchmark-data/B01/mesh-generator.py --check
-
       - name: Check B01 runner and diagnostic syntax
         run: |
           node --check scripts/lafea-b01-registered-route-check.mjs
           node --check scripts/lafea-b01-rigid-solver-diagnostic.mjs
           node --check scripts/lafea-b01-triangular-substitution-diagnostic.mjs
-
+          node --check scripts/lafea-b01-rigid-nullspace-diagnostic.mjs
       - name: Run prior continuum controls
         run: |
           node scripts/lafea.3-solver-check.mjs
           node scripts/lafea.3-loads-imposed-displacement-check.mjs
           node scripts/lafea.3-t6-patch-check.mjs
           node scripts/lafea.3-q8-patch-check.mjs
-
       - name: Execute B01 base matrix
         id: baseline
         continue-on-error: true
@@ -58,23 +56,20 @@ jobs:
           rm -rf "$B01_REPORT_DIR"
           mkdir -p "$B01_REPORT_DIR"
           set +e
-          node scripts/lafea-b01-registered-route-check.mjs \
-            --report-dir "$B01_REPORT_DIR" \
-            > "$B01_REPORT_DIR/baseline-driver.stdout" \
-            2> "$B01_REPORT_DIR/baseline-driver.stderr"
+          node scripts/lafea-b01-registered-route-check.mjs --report-dir "$B01_REPORT_DIR" > "$B01_REPORT_DIR/baseline-driver.stdout" 2> "$B01_REPORT_DIR/baseline-driver.stderr"
           status=$?
           set -e
           printf '%s\n' "$status" > "$B01_REPORT_DIR/baseline-driver.exit-code"
           exit "$status"
-
       - name: Capture rigid solver diagnostics
         if: always()
         run: node scripts/lafea-b01-rigid-solver-diagnostic.mjs > "$B01_REPORT_DIR/B01-rigid-solver-diagnostic.json"
-
       - name: Capture triangular substitution diagnostics
         if: always()
         run: node scripts/lafea-b01-triangular-substitution-diagnostic.mjs > "$B01_REPORT_DIR/B01-triangular-substitution-diagnostic.json"
-
+      - name: Capture exact rigid nullspace diagnostics
+        if: always()
+        run: node scripts/lafea-b01-rigid-nullspace-diagnostic.mjs > "$B01_REPORT_DIR/B01-rigid-nullspace-diagnostic.json"
       - name: Upload B01 base receipts
         if: always()
         uses: actions/upload-artifact@v4
@@ -83,7 +78,6 @@ jobs:
           path: /tmp/lafea-b01-baseline
           if-no-files-found: error
           retention-days: 30
-
       - name: Propagate B01 base result
         if: always()
         shell: bash

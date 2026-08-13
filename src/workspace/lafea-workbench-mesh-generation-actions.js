@@ -21,6 +21,12 @@ export function createLafeaMeshGenerationActions(context) {
   function bindAnalysisMeshProfile(value, stageId = getRetainedState().activeStageId) {
     const result = meshGeneration.bindMeshProfile(value, stageId);
     if (!result.changed) return freeze({ ...result, stage: deriveStage(stageId) });
+
+    // Profile custody changed immediately. Current preflight/execution is stale
+    // even if the subsequent lifecycle event itself fails closed.
+    continuumPreflight.clear(stageId);
+    clearDomainFirstExecution(stageId);
+
     const event = {
       changeClass: 'ANALYSIS_MESH_PROFILE',
       profileHash: result.meshProfile.semanticHash,
@@ -28,11 +34,7 @@ export function createLafeaMeshGenerationActions(context) {
     invokeRetained('applyLifecycleEvent', [event]);
     const succeeded = getRetainedState().status !== 'FAILED';
     mesh.afterLifecycleEvent(event, succeeded);
-    if (succeeded) {
-      continuumPreflight.clear(stageId);
-      clearDomainFirstExecution(stageId);
-      clearOrchestratorDiagnostic();
-    }
+    if (succeeded) clearOrchestratorDiagnostic();
     return freeze({ ...result, stage: publish().stages[stageId] });
   }
 
@@ -78,8 +80,9 @@ export function createLafeaMeshGenerationActions(context) {
 
   /**
    * Recover portable governed-v2 evidence through the same trust boundary as
-   * generation. The embedded profile is reconstructed first and explicitly
-   * rebound so imported evidence never depends on an unrelated prior profile.
+   * generation. Rebind only when the embedded semantic profile differs from
+   * the currently retained profile; identical recovery must not manufacture a
+   * lifecycle change before conflict detection.
    */
   function recoverAnalysisMeshEvidenceV2(
     value,
@@ -91,7 +94,10 @@ export function createLafeaMeshGenerationActions(context) {
       if (validated.stageId !== stageId) {
         throw storeError('LAFEA_ANALYSIS_MESH_V2_RECOVERY_STAGE_MISMATCH');
       }
-      const binding = bindAnalysisMeshProfile(validated.meshProfile, stageId);
+      const currentProfile = meshGeneration.selectMeshProfile(stageId);
+      const binding = currentProfile?.semanticHash === validated.meshProfileHash
+        ? freeze({ changed: false, meshProfile: currentProfile })
+        : bindAnalysisMeshProfile(validated.meshProfile, stageId);
       if (getRetainedState().status === 'FAILED') return null;
       const result = meshGeneration.recoverEvidence(validated, stageId);
       continuumPreflight.clear(stageId);

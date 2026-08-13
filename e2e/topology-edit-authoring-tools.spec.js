@@ -10,7 +10,7 @@ test.beforeEach(async ({ page }) => {
   await page.addInitScript(() => globalThis.localStorage?.clear());
 });
 
-test('production 3D Edit completes Move, Stretch and atomic Route + Elbow from visible HUD controls', async ({ page }, testInfo) => {
+test('production 3D Edit completes Move, Stretch and contextual Continue route through governed authority', async ({ page }, testInfo) => {
   const pageErrors = [];
   const consoleErrors = [];
   page.on('pageerror', (error) => pageErrors.push(error.message));
@@ -42,19 +42,25 @@ test('production 3D Edit completes Move, Stretch and atomic Route + Elbow from v
   expect(stretched.canonicalHash).not.toBe(moved.canonicalHash);
   expect(stretched.activeCommandCount).toBe(moved.activeCommandCount + 1);
 
-  await page.locator('[data-action="activate-authoring-route-elbow"]').click();
+  const continueRoute = page.locator('[data-action="activate-authoring-route-elbow"]');
+  await expect(continueRoute).toHaveText('Continue route');
+  await continueRoute.click();
   const route = await safeRouteProperties(page, endpoint.nodeId);
   await fillFields(page, route.fields);
-  await page.locator('[data-action="preview-authoring-operation"]').click();
   await expect(host).toHaveAttribute('data-topology-edit-authoring-command-count', '5');
   await expect(host).toHaveAttribute('data-topology-edit-authoring-certification-mode', 'FINAL_STATE');
   await expect.poll(() => page.evaluate(() => (
     globalThis.__AUTHORING_CONTROLLER__.viewportBackend.groups.ghostGroup.children.length
   ))).toBeGreaterThan(0);
-  await page.locator('[data-action="validate-authoring-operation"]').click();
   await expect(host).toHaveAttribute('data-topology-edit-authoring-phase', 'READY_TO_APPLY');
   await expect(host).toHaveAttribute('data-topology-edit-authoring-blocking-issue-count', '0');
-  await page.locator('[data-action="apply-authoring-operation"]').click();
+  const engineeringEvidence = page.locator('[data-role="route-connect-engineering-evidence"]');
+  await expect(engineeringEvidence).not.toHaveAttribute('open', '');
+  await expect(engineeringEvidence.locator('[data-action="preview-authoring-operation"]')).toBeHidden();
+  await expect(engineeringEvidence.locator('[data-action="validate-authoring-operation"]')).toBeHidden();
+  const applyRoute = page.getByRole('button', { name: 'Apply route', exact: true });
+  await expect(applyRoute).toBeEnabled();
+  await applyRoute.click();
   await expect.poll(() => page.evaluate(() => (
     globalThis.__AUTHORING_CONTROLLER__.session.journal.activeCommandIds.length
   ))).toBe(stretched.activeCommandCount + 5);
@@ -68,7 +74,7 @@ test('production 3D Edit completes Move, Stretch and atomic Route + Elbow from v
   expect(completed.transactionHash).not.toBe('');
 
   const completedScreenshot = await page.screenshot({ fullPage: true });
-  await testInfo.attach('topology-edit-move-stretch-route-elbow', {
+  await testInfo.attach('topology-edit-move-stretch-continue-route', {
     body: completedScreenshot,
     contentType: 'image/png',
   });
@@ -84,8 +90,8 @@ test('production 3D Edit completes Move, Stretch and atomic Route + Elbow from v
   expect(consoleErrors.filter(isCriticalConsoleError)).toEqual([]);
   await mkdir('reports/qualification', { recursive: true });
   await writeFile(REPORT_PATH, `${JSON.stringify({
-    schema: 'TopologyEditAuthoringToolsEvidence.v1',
-    status: 'PASS_MOVE_STRETCH_ROUTE_ELBOW',
+    schema: 'TopologyEditAuthoringToolsEvidence.v2',
+    status: 'PASS_MOVE_STRETCH_CONTEXTUAL_CONTINUE_ROUTE',
     candidateHead: process.env.TOPOLOGY_EDIT_TARGET_HEAD_SHA || null,
     fixture: 'public/fixtures/topology-edit-20-element-demo.staged.json',
     productionController: 'topology-edit-3d-sjson-fidelity-controller.js',
@@ -151,6 +157,7 @@ async function fillFields(page, values) {
       await control.selectOption(String(value));
     } else {
       await control.fill(String(value));
+      await control.blur();
     }
   }
 }

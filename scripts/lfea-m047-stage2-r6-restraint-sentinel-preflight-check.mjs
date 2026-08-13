@@ -50,6 +50,12 @@ assert.match(source, /value !== null/u,
   'R6 must accept exact canonical null only; truthiness or numeric-sentinel heuristics are forbidden');
 assert.match(source, /BLANK_MEANS_NO_DECLARED_GAP/u);
 assert.match(source, /BLANK_MEANS_GROUNDED_RESTRAINT_NO_CONNECTING_NODE/u);
+assert.match(source, /64c05a50e9ed0452622ff5880335460486f24ac8e6adecc9a300b549c9aa82f8/u,
+  'R6 must pin the corrected BM4_L ACCDB member hash');
+assert.match(source, /expectedSha256: PINNED_ACCDB_SHA256/u,
+  'R6 must pass the pinned hash directly to the portable reader');
+assert.doesNotMatch(source, /input\.expectedSha256/u,
+  'R6 custody must not be caller-overridable for the BM4_L-specific preflight');
 assert.doesNotMatch(source, /caesar-accdb-friction-solve/u,
   'R6 is a source preflight and must not import/change the nonlinear solver');
 

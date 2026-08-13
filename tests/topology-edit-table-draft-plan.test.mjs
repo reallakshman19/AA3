@@ -55,7 +55,7 @@ function lengthIntent(context, lengthMm) {
   });
 }
 
-test('NODE_POSITION draft slots distinguish FROM and TO on the same canonical edge', () => {
+test('NODE_POSITION draft keys distinguish FROM and TO while certified batch authority stays fail-closed', () => {
   const context = fixture();
   const from = nodeIntent(context, 'FROM', { x: -100, y: 0, z: 0 });
   const to = nodeIntent(context, 'TO', { x: 1100, y: 0, z: 0 });
@@ -65,42 +65,33 @@ test('NODE_POSITION draft slots distinguish FROM and TO on the same canonical ed
   const first = planTopologyEditTableDraft({
     intents: [], intent: from, projection: context.projection, canonicalTopology: context.topology,
   });
-  const second = planTopologyEditTableDraft({
-    intents: first.intents, intent: to, projection: context.projection, canonicalTopology: context.topology,
-  });
+  assert.equal(first.intents.length, 1);
+  assert.equal(first.intents[0].requestedValue.endpoint, 'FROM');
 
-  assert.equal(second.intents.length, 2);
-  assert.deepEqual(second.intents.map((intent) => intent.requestedValue.endpoint).sort(), ['FROM', 'TO']);
-  assert.equal(second.batch.intentCount, 2);
-  assert.deepEqual(second.batchPlan.operationPlan.commandIntents.map((intent) => intent.payload.nodeId).sort(), [
-    'node:a', 'node:b',
-  ]);
+  assert.throws(() => planTopologyEditTableDraft({
+    intents: first.intents, intent: to, projection: context.projection, canonicalTopology: context.topology,
+  }), /duplicate intent target edge:pipe \/ NODE_POSITION/);
 });
 
-test('restaging one endpoint replaces only that endpoint slot', () => {
+test('restaging one endpoint replaces that endpoint slot deterministically', () => {
   const context = fixture();
   const from1 = nodeIntent(context, 'FROM', { x: -100, y: 0, z: 0 });
-  const to = nodeIntent(context, 'TO', { x: 1100, y: 0, z: 0 });
   const from2 = nodeIntent(context, 'FROM', { x: -200, y: 0, z: 0 });
 
   const first = planTopologyEditTableDraft({
     intents: [], intent: from1, projection: context.projection, canonicalTopology: context.topology,
   });
   const second = planTopologyEditTableDraft({
-    intents: first.intents, intent: to, projection: context.projection, canonicalTopology: context.topology,
-  });
-  const third = planTopologyEditTableDraft({
-    intents: second.intents, intent: from2, projection: context.projection, canonicalTopology: context.topology,
+    intents: first.intents, intent: from2, projection: context.projection, canonicalTopology: context.topology,
   });
 
-  assert.equal(third.intents.length, 2);
-  const from = third.intents.find((intent) => intent.requestedValue.endpoint === 'FROM');
-  const retainedTo = third.intents.find((intent) => intent.requestedValue.endpoint === 'TO');
-  assert.equal(from.requestedValue.position.x, -200);
-  assert.equal(retainedTo.requestedValue.position.x, 1100);
+  assert.equal(second.intents.length, 1);
+  assert.equal(second.intents[0].requestedValue.endpoint, 'FROM');
+  assert.equal(second.intents[0].requestedValue.position.x, -200);
+  assert.equal(second.batch.intentCount, 1);
 });
 
-test('different intent kinds on one canonical edge occupy different draft slots', () => {
+test('different intent kinds on one canonical edge occupy different draft keys', () => {
   const context = fixture();
   const length = lengthIntent(context, 1200);
   const from = nodeIntent(context, 'FROM', { x: -100, y: 0, z: 0 });

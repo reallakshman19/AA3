@@ -178,8 +178,8 @@ function loadPathSolvePrimitiveSource() {
 
     if (!converged) {
       const error = new Error(
-        `${caseRecord.caseId} project load-path substep lambda=${physicalLoadFraction} `
-        + `did not converge within ${profile.maximumIterations} iterations.`,
+        caseRecord.caseId + ' project load-path substep lambda=' + physicalLoadFraction + ' '
+        + 'did not converge within ' + profile.maximumIterations + ' iterations.',
       );
       error.code = 'CAESAR_ACCDB_FRICTION_LOAD_PATH_SUBSTEP_NOT_CONVERGED';
       error.failedPhysicalLoadFraction = physicalLoadFraction;

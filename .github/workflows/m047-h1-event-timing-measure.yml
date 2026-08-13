@@ -1,0 +1,96 @@
+name: M047 H1 event timing diagnostic
+
+on:
+  push:
+    branches:
+      - m047-h1-event-timing-measure-20260813
+    paths:
+      - '.github/workflows/m047-h1-event-timing-measure.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  diagnose:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    env:
+      SOURCE_HEAD: 'f4391a634d4e8b040c5fdd394abb9f8843ad6274'
+      EVIDENCE_HEAD: 'f301d4e62ae5174556c490613fe20f10b5d451c3'
+      BM4L_COMMON_COMMIT: '45d51ea18624f5775805f399110c1738301c0d90'
+      BM4L_ZIP_SHA256: '978617cba50fa0b1a16c2fa71dc1e0d38e55ac834b191f887d100c6951abd8b9'
+      BM4L_ZIP_SIZE: '582488'
+      BM4L_ACCDB_SHA256: '64c05a50e9ed0452622ff5880335460486f24ac8e6adecc9a300b549c9aa82f8'
+      BM4L_ACCDB_SIZE: '5136384'
+    steps:
+      - name: Checkout exact PR 1101 diagnostic source
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ env.SOURCE_HEAD }}
+          persist-credentials: false
+      - name: Prove source custody
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$(git rev-parse HEAD)" = "$SOURCE_HEAD"
+          test -z "$(git status --porcelain)"
+      - name: Set up Node 22
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+      - name: Install dependencies
+        run: npm ci
+      - name: Fetch accepted D1 evidence and pinned BM4_L
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p artifacts/measurement/evidence artifacts/bm4l-stage2/source reports
+          curl --fail --location --silent --show-error \
+            "https://raw.githubusercontent.com/reallaksh19/Advanced_Analysis/${EVIDENCE_HEAD}/reports/lfea-m047-stage2-real-d1-evidence.json" \
+            -o artifacts/measurement/evidence/real-d1.json
+          curl --fail --location --silent --show-error \
+            "https://raw.githubusercontent.com/reallaksh19/Common/${BM4L_COMMON_COMMIT}/LFEA/BM4/BM4_L.zip" \
+            -o artifacts/measurement/BM4_L.zip
+          test "$(stat -c '%s' artifacts/measurement/BM4_L.zip)" = "$BM4L_ZIP_SIZE"
+          echo "${BM4L_ZIP_SHA256}  artifacts/measurement/BM4_L.zip" | sha256sum -c -
+          unzip -q artifacts/measurement/BM4_L.zip -d artifacts/bm4l-stage2/source
+          test "$(stat -c '%s' artifacts/bm4l-stage2/source/BM4_L.ACCDB)" = "$BM4L_ACCDB_SIZE"
+          echo "${BM4L_ACCDB_SHA256}  artifacts/bm4l-stage2/source/BM4_L.ACCDB" | sha256sum -c -
+          sha256sum artifacts/measurement/evidence/real-d1.json artifacts/bm4l-stage2/source/BM4_L.ACCDB \
+            > artifacts/measurement/input-sha256.txt
+      - name: Validate diagnostic syntax
+        shell: bash
+        run: |
+          set -euo pipefail
+          node --check scripts/lfea-m047-stage2-h1-event-timing-diagnostic.mjs
+      - name: Execute exact-H1 event timing diagnostic
+        shell: bash
+        run: |
+          set -euo pipefail
+          node scripts/lfea-m047-stage2-h1-event-timing-diagnostic.mjs \
+            --accdb artifacts/bm4l-stage2/source/BM4_L.ACCDB \
+            --d1-evidence artifacts/measurement/evidence/real-d1.json \
+            --out reports/lfea-m047-stage2-h1-event-timing-diagnostic.json \
+            > artifacts/measurement/diagnostic.stdout.txt \
+            2> artifacts/measurement/diagnostic.stderr.txt
+      - name: Emit receipt
+        if: always()
+        shell: bash
+        run: |
+          node - <<'NODE'
+          const fs=require('fs');
+          const p='reports/lfea-m047-stage2-h1-event-timing-diagnostic.json';
+          const result=fs.existsSync(p)?JSON.parse(fs.readFileSync(p,'utf8')):null;
+          fs.writeFileSync('artifacts/measurement/receipt.json',JSON.stringify({schema:'m047-h1-event-timing-actions-receipt/v1',sourceHead:process.env.SOURCE_HEAD,evidenceHead:process.env.EVIDENCE_HEAD,accdbSha256:process.env.BM4L_ACCDB_SHA256,result},null,2)+'\n');
+          NODE
+      - name: Upload governed diagnostic evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: m047-h1-event-timing-diagnostic
+          retention-days: 7
+          if-no-files-found: error
+          path: |
+            artifacts/measurement/**
+            reports/lfea-m047-stage2-h1-event-timing-diagnostic.json

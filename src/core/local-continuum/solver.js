@@ -278,20 +278,6 @@ function compensatedProductSumRaw(left, right) {
   return sum + compensation;
 }
 
-function compensatedProductSumPrefix(left, right, count) {
-  let sum = 0;
-  let compensation = 0;
-  for (let index = 0; index < count; index += 1) {
-    const term = left[index] * right[index];
-    const next = sum + term;
-    compensation += Math.abs(sum) >= Math.abs(term)
-      ? (sum - next) + term
-      : (term - next) + sum;
-    sum = next;
-  }
-  return sum + compensation;
-}
-
 function conjugateGradientSolve(matrix, rightHandSide, profile) {
   const diagonalScale = Math.max(
     1,
@@ -473,8 +459,10 @@ function pivotEvidence(scale, limit, pivots, minimum, maximum) {
 function factorCholesky(matrix, lower, pivots, limit) {
   for (let row = 0; row < matrix.length; row += 1) {
     for (let column = 0; column <= row; column += 1) {
-      const value = matrix[row][column]
-        - compensatedProductSumPrefix(lower[row], lower[column], column);
+      let value = matrix[row][column];
+      for (let index = 0; index < column; index += 1) {
+        value -= lower[row][index] * lower[column][index];
+      }
       if (row === column) setPivot(lower, pivots, row, value, limit);
       else lower[row][column] = value / lower[column][column];
     }

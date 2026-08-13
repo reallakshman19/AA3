@@ -1,0 +1,28 @@
+{
+  "schema": "lafea-b01-repair-attempt/v1",
+  "issue": 1100,
+  "attempt": 20,
+  "exactHead": "897de2b3dca1c01009cd642b3fdf99b7c7d878e8",
+  "hypothesis": "T3 rigid residual leakage is dominated by cancellation in the absolute-coordinate canonical polygon area consumed by the CST B/stiffness formulation.",
+  "singleMechanicsChange": "Evaluate the T3 formulation area from local edge-vector cross products inside src/core/local-continuum/element.js; leave all other mechanics unchanged.",
+  "productionFilesChanged": ["src/core/local-continuum/element.js"],
+  "frozenBenchmarkChanged": false,
+  "tolerancesChanged": false,
+  "priorControls": "PASS",
+  "workflowRunId": 31679118120,
+  "artifact": {
+    "artifactId": 9172742201,
+    "sha256": "sha256:e8b83df8bf993d2312311f8d3d2c8556f04205f312ece9d446863ac17046d1d4"
+  },
+  "matrix": {
+    "passCount": 46,
+    "failCount": 8,
+    "status": "FAIL"
+  },
+  "diagnosticComparison": {
+    "T3-M1": {"before": 1.609237187949475e-10, "after": 2.6557245291769505e-10, "disposition": "REGRESSED"},
+    "T3-M2": {"before": 3.710738383233547e-10, "after": 2.9740476747974753e-10, "disposition": "IMPROVED"}
+  },
+  "disposition": "MIXED_NOT_QUALIFYING. The local-edge area formulation improves T3-M2 but materially worsens T3-M1 and does not change the 46/54 matrix status. Do not retain this production mechanics change; revert exactly and continue diagnosis at the stiffness/operator representation boundary.",
+  "releaseAuthorityGrantedByProgram": false
+}

@@ -20,7 +20,8 @@ const FIXTURES = Object.freeze({
   }),
 });
 
-test.describe.configure({ mode: 'serial' });
+// One worker preserves the declared order while default mode still executes later rows after a failure.
+test.describe.configure({ mode: 'default' });
 
 test.beforeEach(async ({ page }) => {
   test.setTimeout(240_000);
@@ -179,26 +180,8 @@ async function selectSafeMatrixTarget(page) {
 async function moveViaCanvas(page, host, target, requestedPosition) {
   const canvas = page.locator('canvas[data-viewport-backend="topology-edit-webgl"]');
   await expect(canvas).toBeVisible();
-  const point = await page.evaluate((nodeId) => {
-    const controller = document.querySelector('[data-role="topology-edit-render-host"]')
-      ?.__topologyEditAuthoringController;
-    const backend = controller.viewportBackend;
-    const topology = controller.session.currentTopology();
-    const node = topology.nodes.find((row) => row.id === nodeId);
-    if (!node) throw new Error(`A3D-003: missing node ${nodeId}.`);
-    backend.engineeringRoot.updateMatrixWorld(true);
-    backend.activeCamera.updateMatrixWorld(true);
-    const vector = backend.activeCamera.position.clone().set(
-      node.position.x, node.position.y, node.position.z,
-    );
-    vector.applyMatrix4(backend.engineeringRoot.matrixWorld).project(backend.activeCamera);
-    const rect = backend.renderer.domElement.getBoundingClientRect();
-    return {
-      x: rect.left + ((vector.x + 1) / 2) * rect.width,
-      y: rect.top + ((1 - vector.y) / 2) * rect.height,
-    };
-  }, target.nodeId);
-  await page.mouse.click(point.x, point.y);
+  const pickEvidence = await resolveVisibleNodePickPoint(page, target.nodeId);
+  await page.mouse.click(pickEvidence.point.x, pickEvidence.point.y);
   await expect(host).toHaveAttribute('data-topology-edit-selection-primary-id', target.nodeId);
 
   const increment = page.locator('[data-role="interaction-nudge-increment"]');
@@ -227,7 +210,87 @@ async function moveViaCanvas(page, host, target, requestedPosition) {
       candidateHash: controller.interactionAcceptance?.candidateDraftHash ?? '',
     };
   });
-  return { commandType: 'MOVE_NODE', selectionSource: 'viewport', point, ...preview, ...acceptance };
+  return {
+    commandType: 'MOVE_NODE',
+    selectionSource: 'viewport',
+    pickEvidence,
+    ...preview,
+    ...acceptance,
+  };
+}
+
+async function resolveVisibleNodePickPoint(page, nodeId) {
+  return page.evaluate((targetNodeId) => {
+    const controller = document.querySelector('[data-role="topology-edit-render-host"]')
+      ?.__topologyEditAuthoringController;
+    const backend = controller.viewportBackend;
+    const topology = controller.session.currentTopology();
+    const node = topology.nodes.find((row) => row.id === targetNodeId);
+    if (!node) throw new Error(`A3D-003: missing node ${targetNodeId}.`);
+    backend.engineeringRoot.updateMatrixWorld(true);
+    backend.activeCamera.updateMatrixWorld(true);
+    backend.activeCamera.updateProjectionMatrix();
+    const vector = backend.activeCamera.position.clone().set(
+      node.position.x, node.position.y, node.position.z,
+    );
+    vector.applyMatrix4(backend.engineeringRoot.matrixWorld).project(backend.activeCamera);
+    const rect = backend.renderer.domElement.getBoundingClientRect();
+    const center = {
+      x: rect.left + ((vector.x + 1) / 2) * rect.width,
+      y: rect.top + ((1 - vector.y) / 2) * rect.height,
+    };
+    const summarize = (pick) => pick ? {
+      objectId: pick.objectId ?? '',
+      objectKind: pick.objectKind ?? pick.kind ?? '',
+      componentKey: pick.componentKey ?? '',
+    } : null;
+    const productionAt = (x, y) => summarize(backend.pickAt(x, y));
+    const rayAt = (x, y) => {
+      const context = backend.pickContext(x, y);
+      return summarize(context ? backend.pickWithRaycaster(context.pointer) : null);
+    };
+    const centerProduction = productionAt(center.x, center.y);
+    const centerRaycaster = rayAt(center.x, center.y);
+    const radii = [0, 2, 4, 6, 8, 10, 12, 16, 20, 24];
+    const directions = [
+      [1, 0], [0.9239, 0.3827], [0.7071, 0.7071], [0.3827, 0.9239],
+      [0, 1], [-0.3827, 0.9239], [-0.7071, 0.7071], [-0.9239, 0.3827],
+      [-1, 0], [-0.9239, -0.3827], [-0.7071, -0.7071], [-0.3827, -0.9239],
+      [0, -1], [0.3827, -0.9239], [0.7071, -0.7071], [0.9239, -0.3827],
+    ];
+    const samples = [];
+    for (const radius of radii) {
+      const offsets = radius === 0 ? [[0, 0]] : directions.map(([x, y]) => [x * radius, y * radius]);
+      for (const [dx, dy] of offsets) {
+        const x = center.x + dx;
+        const y = center.y + dy;
+        if (x < rect.left || x > rect.right || y < rect.top || y > rect.bottom) continue;
+        const production = productionAt(x, y);
+        samples.push({ radius, dx, dy, production });
+        if (production?.objectId === targetNodeId) {
+          return {
+            point: { x, y },
+            projectedCenter: center,
+            centerProduction,
+            centerRaycaster,
+            chosenProduction: production,
+            chosenRaycaster: rayAt(x, y),
+            radiusPx: radius,
+            sampledCount: samples.length,
+            observedObjectIds: [...new Set(samples.map((row) => row.production?.objectId).filter(Boolean))].sort(),
+          };
+        }
+      }
+    }
+    throw new Error(`A3D-003_VIEWPORT_NODE_PICK_UNREACHABLE: ${JSON.stringify({
+      nodeId: targetNodeId,
+      center,
+      centerProduction,
+      centerRaycaster,
+      sampledCount: samples.length,
+      observedObjectIds: [...new Set(samples.map((row) => row.production?.objectId).filter(Boolean))].sort(),
+    })}`);
+  }, nodeId);
 }
 
 async function moveViaTable(page, host, target, requestedPosition) {

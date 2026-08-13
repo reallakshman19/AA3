@@ -46,6 +46,23 @@ test('production WebGL selection route delegates issue picks before canonical se
   assert.match(issue, /showIssueById\([\s\S]*event\?\.clientX[\s\S]*event\?\.clientY/);
 });
 
+test('source-backed issue pick proxy stays centered on the exact marker and owns no engineering authority', async () => {
+  const renderer = await source('src/workspace/topology-edit/topology-edit-issue-renderer.js');
+  assert.match(renderer, /const SOURCE_BACKED_PICK_SCALE = 1\.65/);
+  assert.match(renderer, /if \(entry\.suggestionHash\) \{[\s\S]*sourceBackedPickProxy/);
+  assert.match(renderer, /marker\.add\(sourceBackedPickProxy/);
+  assert.match(renderer, /issuePickProxy: true/);
+  assert.match(renderer, /sourceBackedSuggestionHash: entry\.suggestionHash/);
+  assert.match(renderer, /material\.colorWrite = false/);
+  assert.doesNotMatch(renderer, /position\.set\(|position\.add|position\.x|position\.y|position\.z/, 'pick proxy must inherit the exact marker anchor without a visual offset');
+  for (const prohibited of [
+    'canonicalTopologyHash =',
+    'acceptTopologyEditCommand',
+    'certifyTopologyEditCommand',
+    'WorkspaceState.',
+  ]) assert.equal(renderer.includes(prohibited), false, `renderer must not acquire ${prohibited}`);
+});
+
 test('issue callout presents review intent while retaining the existing certified preview callback', async () => {
   const callout = await source('src/workspace/topology-edit/topology-edit-canvas-callout.js');
   assert.match(callout, /'Review fix',[\s\S]*'preview-callout-fix'/);

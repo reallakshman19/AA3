@@ -5,13 +5,19 @@ on:
     paths:
       - 'validation/lafea-benchmark-data/B01/**'
       - 'scripts/lafea-b01-*.mjs'
+      - 'scripts/lafea-stage15-neutral-shared-primitives-check.mjs'
       - 'src/core/local-continuum/**'
+      - 'src/core/shared-primitives/units.js'
+      - 'src/core/lafea-common-input/units.js'
       - '.github/workflows/lafea-b01-metamorphic.yml'
   pull_request:
     paths:
       - 'validation/lafea-benchmark-data/B01/**'
       - 'scripts/lafea-b01-*.mjs'
+      - 'scripts/lafea-stage15-neutral-shared-primitives-check.mjs'
       - 'src/core/local-continuum/**'
+      - 'src/core/shared-primitives/units.js'
+      - 'src/core/lafea-common-input/units.js'
       - '.github/workflows/lafea-b01-metamorphic.yml'
 permissions: {contents: read}
 jobs:
@@ -27,6 +33,8 @@ jobs:
         run: python3 validation/lafea-benchmark-data/B01/mesh-generator.py --check
       - name: Check B01 runner syntax
         run: node --check scripts/lafea-b01-registered-route-check.mjs && node --check scripts/lafea-b01-metamorphic-route-check.mjs
+      - name: Check shared unit contract
+        run: node scripts/lafea-stage15-neutral-shared-primitives-check.mjs
       - name: Run prior continuum controls
         run: node scripts/lafea.3-solver-check.mjs && node scripts/lafea.3-loads-imposed-displacement-check.mjs && node scripts/lafea.3-t6-patch-check.mjs && node scripts/lafea.3-q8-patch-check.mjs
       - name: Reconfirm qualified B01 base matrix

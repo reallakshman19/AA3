@@ -80,6 +80,7 @@ for (const path of [
   resolve('scripts/lfea-m047-stage2-next-accuracy-evidence-intake.mjs'),
   resolve('scripts/lfea-m047-stage2-d1-load-path-plan.mjs'),
   resolve('scripts/lfea-m047-stage2-d1-load-path-experiment.mjs'),
+  resolve('scripts/lfea-m047-stage2-d1-load-path-finalize.mjs'),
 ]) {
   const syntax = spawnSync(process.execPath, ['--check', path], { encoding: 'utf8' });
   assert.equal(syntax.status, 0, `${path} must parse: ${syntax.stderr}`);
@@ -90,6 +91,7 @@ for (const contract of [
   'scripts/lfea-m047-stage2-accuracy-review-check.mjs',
   'scripts/lfea-m047-stage2-d1-load-path-plan-check.mjs',
   'scripts/lfea-m047-stage2-d1-load-path-experiment-check.mjs',
+  'scripts/lfea-m047-stage2-d1-load-path-finalize-check.mjs',
 ]) {
   const result = spawnSync(process.execPath, [contract], { encoding: 'utf8' });
   assert.equal(result.status, 0, `${contract} must pass: ${result.stderr}`);

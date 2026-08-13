@@ -73,6 +73,8 @@ jobs:
           npx vite build --config vite.lafea.config.js
           node scripts/lafea-standalone-build-artifact-check.mjs
       - name: Install pinned Chromium runtime
+        env:
+          PLAYWRIGHT_BROWSERS_PATH: '0'
         run: npx playwright install --with-deps chromium
       - name: Run Stage-17 browser journey and visible UI proof
         run: node scripts/lafea-stage17-browser-run.mjs

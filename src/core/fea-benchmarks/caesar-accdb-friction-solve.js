@@ -47,7 +47,7 @@ const FLOAT32_COEFFICIENT_TOLERANCE = 1e-6;
  */
 export const CAESAR_FRICTION_SOLVER_PROFILE = deepFreeze({
   schema: 'caesar-accdb-friction-solver-profile/v1',
-  profileId: 'CAESAR-ACCDB-FRICTION-SOLVER-R1',
+  profileId: 'CAESAR-ACCDB-FRICTION-SOLVER-R2',
   frictionLaw: 'CAESAR_TANGENTIAL_SPRING_WITH_COULOMB_CAP_V1',
   /**
    * Solution strategy for that law.
@@ -932,11 +932,23 @@ function measureSupports(input) {
       : trialMagnitude < capacityN - boundary - band
         ? 'STICK'
         : state;
-    // Return mapping: project the trial force onto the Coulomb cap and carry the
-    // difference as slip. A sticking support keeps its slip unchanged.
-    const nextSlip = nextState === 'SLIDE' && trialMagnitude > 0
-      ? tangentialDisplacement.map((value, index) =>
-        value + (capacityN / trialMagnitude) * trialForce[index] / stiffness)
+    // Return mapping: project onto the Coulomb cap and carry the difference as
+    // slip. A sticking support keeps its slip unchanged. The capped force is
+    // oriented opposite the current *total* relative tangential displacement
+    // (D1), not the return-map elastic stretch used through R1: on real BM4_L
+    // L13, CAESAR's own reference friction vectors are anti-parallel to u_t at
+    // multiple two-direction restraints, while the elastic-stretch direction
+    // u_t - u_slip is anti-parallel to a quantity CAESAR does not report. This
+    // is a real-file-measured direction-law correction (13/23 vs 4/23 real L13
+    // tangential vectors within +-10%, normals and all frozen controls held) -
+    // see reports/lfea-m047-stage2-d1-real-measurement.md - not a numerics
+    // retune: the cap magnitude, normal basis, stiffness and state boundary are
+    // unchanged.
+    const cappedForce = nextState === 'SLIDE' && tangentialMotion > profile.zeroTangentialMotionFloorM
+      ? tangentialDisplacement.map((value) => -capacityN * value / tangentialMotion)
+      : null;
+    const nextSlip = cappedForce !== null
+      ? tangentialDisplacement.map((value, index) => value + cappedForce[index] / stiffness)
       : [...slip];
     const slipUpdateM = norm(nextSlip.map((value, index) => value - slip[index]));
     const slipIncrement = nextSlip.map((value, index) => value - slip[index]);
@@ -962,25 +974,31 @@ function measureSupports(input) {
       ? dot(netForce, slip) / (netMagnitude * accumulatedSlipM)
       : null;
     /**
-     * Direction of the friction force.
+     * Direction of the friction force (D1, real-file measured — see
+     * reports/lfea-m047-stage2-d1-real-measurement.md).
      *
-     * Coulomb friction opposes relative sliding, and in a return-mapped step the
-     * discrete stand-in for the sliding direction is the current elastic stretch:
-     * the direction the support is being dragged right now. That is the governed
-     * quantity.
+     * Coulomb friction opposes relative sliding. R1 used the current elastic
+     * stretch u_t - u_slip (the discrete return-map stand-in for "sliding right
+     * now") as the governed direction; on real BM4_L L13 that under-measured
+     * CAESAR's own reference friction vectors at multiple two-direction
+     * restraints. CAESAR's reference vectors are instead anti-parallel to the
+     * current *total* relative tangential displacement u_t, so that is the
+     * governed quantity here: `oppositionCosine`, already computed above against
+     * `tangentialDisplacement`.
      *
      * The accumulated slip is a path integral. On a two-directional friction plane
      * its direction is the average of increments whose direction rotated as other
      * supports broke away, so a converged force can sit at a wide angle to it - on
      * BM4_L L13 up to 145 degrees, and at one support nearly parallel - while still
-     * exactly opposing the current drag. Both the accumulated-slip and the
-     * total-displacement cosines are retained as diagnostics, but neither governs.
+     * exactly opposing u_t. The accumulated-slip and elastic-stretch cosines are
+     * retained as diagnostics (the latter is the superseded R1 rule), but neither
+     * governs.
      */
     const stretchMagnitude = norm(elasticStretch);
     const stretchCosine = stretchMagnitude > profile.zeroTangentialMotionFloorM && netMagnitude > 0
       ? dot(netForce, elasticStretch) / (netMagnitude * stretchMagnitude)
       : null;
-    const frictionDirectionCosine = stretchCosine;
+    const frictionDirectionCosine = oppositionCosine;
     return {
       restraintId: support.restraintId,
       nodeId: support.nodeId,
@@ -1001,6 +1019,7 @@ function measureSupports(input) {
       slideResidualN,
       oppositionCosine,
       slipOppositionCosine,
+      stretchCosine,
       frictionDirectionCosine,
       ledger: Object.freeze({
         restraintId: support.restraintId,
@@ -1055,6 +1074,8 @@ function measureSupports(input) {
         frictionDirectionCosine,
         oppositionCosine,
         slipOppositionCosine,
+        // Superseded R1 governing quantity, retained as an RCA diagnostic only.
+        stretchCosine,
       }),
     };
   });
@@ -1132,26 +1153,27 @@ function evaluateConvergenceGates(input) {
       slipUpdateM: entry.slipUpdateM,
     })),
   }));
-  // Friction must oppose the slip increment produced by the return map. The
-  // total-displacement cosine is reported alongside it but does not govern: a
-  // support can arrive at its final position along a path that is not parallel to
-  // its final slip increment.
+  // Friction must oppose the current total relative tangential displacement u_t
+  // (D1, real-file measured). The accumulated-slip and elastic-stretch cosines
+  // are reported alongside it but do not govern: a support can arrive at its
+  // final position along a path, and be sitting at a stretch, that are not
+  // parallel to u_t while still exactly opposing it, and the real BM4_L L13
+  // reference vectors are anti-parallel to u_t, not to those other quantities.
   // Only a restraint currently on the Coulomb surface has a plastic flow
-  // direction to oppose. A restraint locked below the cap after earlier slip is
-  // elastic again: its force opposes the current elastic stretch, which need not be
-  // parallel to the slip it accumulated earlier in the load path, so requiring
-  // opposition to the total slip there would reject valid elasto-plastic states.
+  // direction to oppose; a restraint locked below the cap after earlier slip is
+  // exempt (regime !== 'SLIDING'), so a legitimately unloaded support is never
+  // rejected for a stretch or slip direction it no longer governs.
   const directionFailures = measured.filter((entry) => entry.regime === 'SLIDING'
     && (entry.frictionDirectionCosine === null
       || entry.frictionDirectionCosine > profile.oppositionCosineLimit));
   gates.push(gate('FRICTION_OPPOSES_SLIP', directionFailures.length === 0, {
     limit: profile.oppositionCosineLimit,
-    rule: 'COSINE_BETWEEN_NET_FRICTION_FORCE_AND_CURRENT_ELASTIC_TANGENTIAL_STRETCH',
+    rule: 'COSINE_BETWEEN_NET_FRICTION_FORCE_AND_CURRENT_TOTAL_RELATIVE_TANGENTIAL_DISPLACEMENT_D1',
     failures: directionFailures.map((entry) => ({
       restraintId: entry.restraintId,
       frictionDirectionCosine: entry.frictionDirectionCosine,
       slipOppositionCosine: entry.slipOppositionCosine,
-      totalDisplacementCosine: entry.oppositionCosine,
+      elasticStretchCosine: entry.stretchCosine,
     })),
   }));
   gates.push(gate('RECOVERED_PHYSICAL_EQUILIBRIUM', executed.recoveredEquilibrium.status === 'PASS', {

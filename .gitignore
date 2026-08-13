@@ -32,3 +32,8 @@ slice-r-final.patch
 # Claude Code harness-internal state (e.g. background-agent worktrees under
 # .claude/worktrees/) - not project source.
 .claude/
+
+# Locally fetched pinned ACCDB source material for M047 Stage 2 local
+# measurement runs - third-party binary, not project source. Re-fetched
+# reproducibly per scripts/lfea-m047-stage2-source-custody-manifest.mjs.
+artifacts/

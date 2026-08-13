@@ -1,0 +1,113 @@
+name: 3D Edit component placement exact-head qualification
+
+on:
+  push:
+    branches:
+      - qualification/3d-edit-component-placement-14982b52
+
+permissions:
+  contents: read
+
+jobs:
+  qualify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    env:
+      BASE_SHA: 246058c2fe75b48b3543c4a593d3bfe40c256bbc
+      CANDIDATE_SHA: 14982b52edfe6080b527cb360652dcebd7562fba
+      PLAYWRIGHT_BROWSERS_PATH: '0'
+      TOPOLOGY_EDIT_TARGET_HEAD_SHA: 14982b52edfe6080b527cb360652dcebd7562fba
+    steps:
+      - name: Checkout exact candidate
+        uses: actions/checkout@v4
+        with:
+          ref: 14982b52edfe6080b527cb360652dcebd7562fba
+          fetch-depth: 0
+
+      - name: Verify exact twelve-file ledger
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$(git rev-parse HEAD)" = "$CANDIDATE_SHA"
+          expected=$'e2e/topology-edit-blind-flange-authoring.spec.js\ne2e/topology-edit-branch-authoring.spec.js\ne2e/topology-edit-component-authoring.spec.js\ne2e/topology-edit-component-placement-evidence.spec.js\ne2e/topology-edit-valve-assembly-authoring.spec.js\nsrc/workspace/viewport-productivity/topology-edit-blind-flange-authoring-runtime.js\nsrc/workspace/viewport-productivity/topology-edit-component-authoring-runtime.js\nsrc/workspace/viewport-productivity/topology-edit-component-placement-consolidation.js\nsrc/workspace/viewport-productivity/topology-edit-professional-operation-runtime.js\nsrc/workspace/viewport-productivity/topology-edit-project-catalogue-runtime.js\ntests/topology-edit-component-placement-consolidation.test.mjs\ntests/topology-edit-project-catalogue-custody.test.mjs'
+          actual="$(git diff --name-only "$BASE_SHA" "$CANDIDATE_SHA")"
+          test "$actual" = "$expected"
+          git diff --check "$BASE_SHA" "$CANDIDATE_SHA"
+          for file in $actual; do node --check "$file"; done
+
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run component placement authority contracts
+        run: >-
+          node --test
+          tests/topology-edit-project-catalogue-custody.test.mjs
+          tests/topology-edit-component-placement-consolidation.test.mjs
+          tests/topology-edit-component-authoring.test.mjs
+          tests/topology-edit-inline-component-insertion.test.mjs
+          tests/topology-edit-valve-assembly-authoring.test.mjs
+          tests/topology-edit-authoring-branch-catalogue.test.mjs
+          tests/topology-edit-branch-authoring.test.mjs
+          tests/topology-edit-blind-flange-authoring.test.mjs
+          tests/topology-edit-component-hud-context.test.mjs
+
+      - name: Install pinned Chromium
+        run: npx playwright install --with-deps chromium
+
+      - name: Run production component placement workflows
+        env:
+          PLAYWRIGHT_JSON_OUTPUT_NAME: artifacts/component-placement-playwright.json
+        run: >-
+          node scripts/run-playwright.mjs
+          e2e/topology-edit-component-authoring.spec.js
+          e2e/topology-edit-component-placement-evidence.spec.js
+          e2e/topology-edit-valve-assembly-authoring.spec.js
+          e2e/topology-edit-branch-authoring.spec.js
+          e2e/topology-edit-blind-flange-authoring.spec.js
+          e2e/topology-edit-component-hud-catalog.spec.js
+          --workers=1
+          --retries=0
+          --trace=on
+          --reporter=line,json
+
+      - name: Record exact-head identity
+        if: always()
+        shell: bash
+        run: |
+          mkdir -p artifacts
+          cat > artifacts/component-placement-run-identity.json <<EOF
+          {
+            "schema": "TopologyEditComponentPlacementRunIdentity.v1",
+            "baseSha": "$BASE_SHA",
+            "candidateSha": "$CANDIDATE_SHA",
+            "qualificationCommitSha": "$GITHUB_SHA",
+            "runId": "$GITHUB_RUN_ID",
+            "attempt": $GITHUB_RUN_ATTEMPT,
+            "workers": 1,
+            "retries": 0,
+            "trace": "on",
+            "changedFileCount": 12,
+            "projectCatalogueBasisPolicy": "EXACT_ID_VERSION_CONTENT_SHA256_SOURCE_SHA256",
+            "canonicalMutationBeforeApply": "FORBIDDEN",
+            "structuredEvidence": "reports/qualification/component-placement-contextual-evidence.json"
+          }
+          EOF
+
+      - name: Upload qualification evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: component-placement-${{ env.CANDIDATE_SHA }}-${{ github.run_attempt }}
+          path: |
+            artifacts
+            reports/qualification
+            test-results
+            playwright-report
+          if-no-files-found: warn
+          retention-days: 30

@@ -78,6 +78,7 @@ test('3D Edit keeps the left model tree visible while the canvas remains primary
 
   const editPanel = sidecar.locator('details[data-panel-kind="commands"]');
   const displayPanel = sidecar.locator('details[data-panel-kind="display"]');
+  await expect(editPanel.locator(':scope > summary')).toHaveText('Advanced commands');
   await expect(editPanel).not.toHaveAttribute('open', '');
   await expect(displayPanel).not.toHaveAttribute('open', '');
   await expect(page.getByRole('button', { name: 'Move +Z 100 mm', exact: true })).toBeHidden();
@@ -102,7 +103,7 @@ test('3D Edit keeps the left model tree visible while the canvas remains primary
   await expect(propertiesPanel).not.toHaveClass(/workspace-panel--collapsed/);
 });
 
-test('3D Edit provides resizable persistent inspector, selection focus, status badges, and keyboard help', async ({ page }) => {
+test('3D Edit provides contextual numeric Move, persistent inspector, status badges, and keyboard help', async ({ page }) => {
   const host = await openProductionDemo(page);
   const canvas = host.locator('canvas');
   const sidecar = host.locator('[data-role="topology-edit-sidecar"]');
@@ -110,11 +111,14 @@ test('3D Edit provides resizable persistent inspector, selection focus, status b
   const fitSelection = host.getByRole('button', { name: 'Fit selection', exact: true });
   const clearSelection = host.getByRole('button', { name: 'Clear', exact: true });
   const shortcuts = host.locator('[data-role="topology-edit-shortcuts"]');
+  const movePanel = host.locator('details[data-panel-kind="topology-edit-professional-interaction"]');
 
   await expect(resizer).toBeVisible();
   await expect(fitSelection).toBeDisabled();
   await expect(clearSelection).toBeDisabled();
   await expect(host.locator('[data-role="topology-edit-draft-state"]')).toHaveText('Clean · 0 edits');
+  await expect(movePanel.locator(':scope > summary')).toHaveText('Edit selected node');
+  await expect(movePanel).toHaveAttribute('data-contextual-edit', 'MOVE_NODE');
 
   await resizer.focus();
   await page.keyboard.press('ArrowLeft');
@@ -141,7 +145,7 @@ test('3D Edit provides resizable persistent inspector, selection focus, status b
   await expect(fitSelection).toBeEnabled();
   await expect(clearSelection).toBeEnabled();
   await expect(host.locator('details[data-panel-kind="topology-edit-inspection"]')).toHaveAttribute('open', '');
-  await expect(host.locator('details[data-panel-kind="topology-edit-professional-interaction"]')).toHaveAttribute('open', '');
+  await expect(movePanel).toHaveAttribute('open', '');
 
   await canvas.dispatchEvent('dblclick');
   await expect(host.locator('[data-role="topology-edit-status"]'))
@@ -157,21 +161,23 @@ test('3D Edit provides resizable persistent inspector, selection focus, status b
   if (!(await displayPanel.evaluate((element) => element.open))) {
     await displayPanel.locator(':scope > summary').click();
   }
-  const commandPanel = host.locator('details[data-panel-kind="commands"]');
-  if (!(await commandPanel.evaluate((element) => element.open))) {
-    await commandPanel.locator(':scope > summary').click();
-  }
   await expect(host).toHaveAttribute('data-topology-edit-source-visual-cache', /MISS|HIT/);
-  const move = host.locator('[data-command-action="move-positive-z"]');
-  await expect(move).toBeDisabled();
   await expect(host).toHaveAttribute('data-topology-edit-active-command-count', '0');
   await expect(host).toHaveAttribute('data-topology-edit-draft-state', 'clean');
 
   const safeNodeId = await selectUnrestrainedNode(page);
   await expect(host.locator('[data-role="topology-edit-selection-summary"]')).toHaveAttribute('title', safeNodeId);
-  await expect(move).toBeEnabled();
-  await move.click();
+  const baseHash = await host.getAttribute('data-topology-edit-canonical-hash');
+  const deltaX = movePanel.locator('[data-role="interaction-value-x"]');
+  await deltaX.fill('25');
+  await deltaX.blur();
+  await expect.poll(() => host.getAttribute('data-topology-edit-interaction-preview-hash')).not.toBe('');
+  await expect(host).toHaveAttribute('data-topology-edit-canonical-hash', baseHash);
+  await expect(movePanel.getByRole('button', { name: 'Apply move', exact: true })).toBeEnabled();
+  await expect(movePanel.locator('[data-role="interaction-engineering-evidence"]')).not.toHaveAttribute('open', '');
+  await movePanel.getByRole('button', { name: 'Apply move', exact: true }).click();
   await expect(host).toHaveAttribute('data-topology-edit-active-command-count', '1');
+  await expect(host).not.toHaveAttribute('data-topology-edit-canonical-hash', baseHash);
   await expect(host).toHaveAttribute('data-topology-edit-draft-state', 'saved');
   await expect(host).toHaveAttribute('data-topology-edit-source-visual-cache', 'HIT');
   await expect(host.locator('[data-role="topology-edit-draft-state"]')).toHaveText('Saved · 1 edit');

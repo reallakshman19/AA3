@@ -56,6 +56,20 @@ assert.doesNotMatch(source, /lfea-m047-stage2-production-run\.mjs/u,
 assert.doesNotMatch(source, /caesar-accdb-friction-solve/u,
   'batch runner is orchestration only and must not import the nonlinear solver');
 
+const manifestSource = readFileSync(resolve('scripts/lfea-m047-stage2-rca-evidence-manifest-check.mjs'), 'utf8');
+assert.match(manifestSource, /worktreeCleanAtStart/u,
+  'citation verifier must require a clean worktree at evidence-batch start');
+assert.match(manifestSource, /exactHeadAtStart/u,
+  'citation verifier must bind the exact source head');
+assert.match(manifestSource, /verifyAccdbBinding/u,
+  'citation verifier must re-hash the actual pinned ACCDB file');
+assert.match(manifestSource, /verifyBaselineBinding/u,
+  'citation verifier must re-hash and validate the converged L13 baseline');
+assert.match(manifestSource, /artifactSemanticHash/u,
+  'citation verifier must cross-check recorded artifact semantic hashes');
+assert.match(manifestSource, /5_136_384/u,
+  'citation verifier must enforce the pinned ACCDB byte length');
+
 for (const path of [
   scriptPath,
   resolve('scripts/lfea-m047-stage2-rca-decision-gate.mjs'),

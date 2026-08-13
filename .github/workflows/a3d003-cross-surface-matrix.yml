@@ -13,15 +13,15 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 45
     env:
-      BASE_SHA: 48e5f228cb3b01835c0f6ec22e11ff292cf07ba0
-      CANDIDATE_SHA: bb24c485004fe35312d0e7f6af9544b30b056813
+      BASE_SHA: f67aca96de41f59ee39e1f395d3032379870d34e
+      CANDIDATE_SHA: 37370f6a0449ed6fbcd281376177e78fb6349ea7
       PLAYWRIGHT_BROWSERS_PATH: '0'
-      TOPOLOGY_EDIT_TARGET_HEAD_SHA: bb24c485004fe35312d0e7f6af9544b30b056813
+      TOPOLOGY_EDIT_TARGET_HEAD_SHA: 37370f6a0449ed6fbcd281376177e78fb6349ea7
     steps:
       - name: Checkout exact candidate
         uses: actions/checkout@v4
         with:
-          ref: bb24c485004fe35312d0e7f6af9544b30b056813
+          ref: 37370f6a0449ed6fbcd281376177e78fb6349ea7
           fetch-depth: 0
       - name: Verify exact four-file ledger
         shell: bash

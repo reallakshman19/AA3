@@ -1,0 +1,83 @@
+name: 3D Edit contextual move exact-head qualification
+
+on:
+  push:
+    branches:
+      - qualification/3d-edit-contextual-move-e39f61fd
+
+permissions:
+  contents: read
+
+jobs:
+  qualify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    env:
+      BASE_SHA: 56b826d915c0ae8a390524736cbf27f5afa84d4d
+      CANDIDATE_SHA: e39f61fd813d6661d71ffb8dff68b9b4880caea8
+      PLAYWRIGHT_BROWSERS_PATH: '0'
+      TOPOLOGY_EDIT_TARGET_HEAD_SHA: e39f61fd813d6661d71ffb8dff68b9b4880caea8
+    steps:
+      - name: Checkout exact candidate
+        uses: actions/checkout@v4
+        with:
+          ref: e39f61fd813d6661d71ffb8dff68b9b4880caea8
+          fetch-depth: 0
+      - name: Verify exact four-file ledger
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$(git rev-parse HEAD)" = "$CANDIDATE_SHA"
+          expected=$'e2e/topology-edit-clean-layout.spec.js\nsrc/workspace/topology-edit-3d-interaction-controller.js\nsrc/workspace/viewport-productivity/topology-edit-interaction-panel.js\ntests/topology-edit-professional-interaction-controller.test.mjs'
+          test "$(git diff --name-only "$BASE_SHA" "$CANDIDATE_SHA")" = "$expected"
+          git diff --check "$BASE_SHA" "$CANDIDATE_SHA"
+          node --check src/workspace/topology-edit-3d-interaction-controller.js
+          node --check src/workspace/viewport-productivity/topology-edit-interaction-panel.js
+          node --check tests/topology-edit-professional-interaction-controller.test.mjs
+          node --check e2e/topology-edit-clean-layout.spec.js
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+      - name: Install dependencies
+        run: npm ci
+      - name: Run focused interaction and shared MOVE_NODE contracts
+        run: >-
+          node --test
+          tests/topology-edit-professional-interaction-controller.test.mjs
+          tests/topology-edit-endpoint-affordance.test.mjs
+          tests/topology-edit-table-node-position.test.mjs
+          tests/topology-edit-command-contract.test.mjs
+      - name: Install pinned Chromium
+        run: npx playwright install --with-deps chromium
+      - name: Run production contextual move and canvas-table convergence
+        env:
+          PLAYWRIGHT_JSON_OUTPUT_NAME: artifacts/contextual-move-playwright.json
+        run: >-
+          node scripts/run-playwright.mjs
+          e2e/topology-edit-clean-layout.spec.js
+          e2e/topology-edit-a3d003-cross-surface-matrix.spec.js
+          --workers=1
+          --retries=0
+          --trace=on
+          --reporter=line,json
+      - name: Record exact-head identity
+        if: always()
+        shell: bash
+        run: |
+          mkdir -p artifacts
+          printf '{"schema":"TopologyEditContextualMoveRunIdentity.v1","baseSha":"%s","candidateSha":"%s","runId":"%s","attempt":%s,"workers":1,"retries":0,"trace":"on"}\n' \
+            "$BASE_SHA" "$CANDIDATE_SHA" "$GITHUB_RUN_ID" "$GITHUB_RUN_ATTEMPT" > artifacts/contextual-move-run-identity.json
+      - name: Upload qualification evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: contextual-move-${{ env.CANDIDATE_SHA }}-${{ github.run_attempt }}
+          path: |
+            artifacts
+            reports/qualification/topology-edit-a3d003-cross-surface-matrix.json
+            test-results
+            playwright-report
+          if-no-files-found: warn
+          retention-days: 30

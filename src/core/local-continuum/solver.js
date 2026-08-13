@@ -63,13 +63,9 @@ function solveFreeSystem(model, mesh, force, free, constraints, prescribed) {
   if (!free.length) return { solution: [], evidence: emptySolverEvidence() };
   if (mesh.globalStiffnessStorage === 'DENSE') {
     const freeStiffness = submatrix(mesh.globalStiffnessMatrix, free, free);
-    const coupling = submatrix(
-      mesh.globalStiffnessMatrix,
-      free,
-      constraints.indices,
-    );
-    const rightHandSide = free.map((index, row) => canonicalNumber(
-      force[index] - dotRow(coupling[row], constraints.values),
+    const prescribedAction = matrixVector(mesh.globalStiffnessMatrix, prescribed);
+    const rightHandSide = free.map((index) => canonicalNumber(
+      force[index] - prescribedAction[index],
       'partition rhs',
     ));
     return choleskySolve(

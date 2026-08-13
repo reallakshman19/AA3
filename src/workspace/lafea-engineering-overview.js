@@ -17,6 +17,9 @@ export function buildLafeaEngineeringOverview(stageValue, registryEntryValue) {
     ...(array(source?.elements).map((row) => row?.elementType)),
     ...(array(mesh?.elements).map((row) => row?.elementType)),
   ]);
+  const runAuthorized = Boolean(source)
+    && registry.engineState === 'QUALIFIED_ROUTE_REGISTERED'
+    && stage.orchestration?.sections?.AUTHORIZATION?.state === 'READY';
 
   return freeze({
     schema: LAFEA_ENGINEERING_OVERVIEW_SCHEMA,
@@ -50,10 +53,11 @@ export function buildLafeaEngineeringOverview(stageValue, registryEntryValue) {
     },
     execution: {
       status: text(execution?.status, 'NOT_RUN'),
+      authorized: runAuthorized,
       accepted: execution?.status === 'QUALIFIED' && result?.qualification?.state === 'ACCEPTED',
       loadCaseCount: array(result?.loadCaseResults).length,
       qualificationState: text(result?.qualification?.state, 'NOT_RUN'),
-      metrics: continuumMetrics(result),
+      metrics: continuumMetrics(result, source?.units),
     },
     qualification: registry.stageId === 'LAFEA.3' ? {
       program: 'B01',
@@ -75,9 +79,7 @@ export function renderLafeaEngineeringOverview(root, stageValue, registryEntryVa
   host.dataset.executionStatus = model.execution.status;
 
   const heading = element(root, 'div', 'lafea-engineering-overview__heading');
-  heading.append(
-    element(root, 'div', null, undefined),
-  );
+  heading.append(element(root, 'div'));
   heading.firstElementChild.append(
     element(root, 'span', 'panel-eyebrow', 'Engineering workspace'),
     element(root, 'h2', null, 'Model → mesh → solve → results'),
@@ -86,7 +88,10 @@ export function renderLafeaEngineeringOverview(root, stageValue, registryEntryVa
   const run = element(root, 'button', 'lafea-engineering-overview__run', 'Run analysis');
   run.type = 'button';
   run.dataset.role = 'lafea-overview-run';
-  run.disabled = typeof handlers.onRun !== 'function' || !stageValue.document;
+  run.disabled = typeof handlers.onRun !== 'function' || !model.execution.authorized;
+  run.title = model.execution.authorized
+    ? 'Run the canonically authorized registered stage calculation.'
+    : 'Analysis is not yet authorized. Complete the source, mesh and preflight gates first.';
   run.addEventListener('click', () => handlers.onRun?.());
   heading.append(run);
   host.append(heading);
@@ -173,9 +178,10 @@ function qualificationBar(root, value) {
   return details;
 }
 
-function continuumMetrics(resultValue) {
+function continuumMetrics(resultValue, unitsValue) {
   const result = record(resultValue);
   if (!result) return [];
+  const units = record(unitsValue) ?? {};
   const loadCases = array(result.loadCaseResults);
   let maxDisplacement = null;
   let maxVonMises = null;
@@ -211,10 +217,13 @@ function continuumMetrics(resultValue) {
   }
 
   const metrics = [];
-  if (maxDisplacement !== null) metrics.push(metric('Max displacement', maxDisplacement, 'length'));
-  if (maxVonMises !== null) metrics.push(metric('Max von Mises', maxVonMises, 'stress'));
-  if (maxSigmaX !== null) metrics.push(metric('Max |σx|', maxSigmaX, 'stress'));
-  if (hasEnergy) metrics.push(metric('Total strain energy', totalEnergy, 'energy'));
+  if (maxDisplacement !== null) metrics.push(metric('Max displacement', maxDisplacement, units.length ?? 'length-unit'));
+  if (maxVonMises !== null) metrics.push(metric('Max von Mises', maxVonMises, units.stress ?? 'stress-unit'));
+  if (maxSigmaX !== null) metrics.push(metric('Max |σx|', maxSigmaX, units.stress ?? 'stress-unit'));
+  if (hasEnergy) {
+    const energyUnit = units.force && units.length ? `${units.force}·${units.length}` : 'energy-unit';
+    metrics.push(metric('Total strain energy', totalEnergy, energyUnit));
+  }
   return metrics;
 }
 
@@ -225,9 +234,7 @@ function recoveryLabel(registry, elementFamilies) {
   return registry.presenterRole ?? 'Registered stage result';
 }
 
-function metric(label, value, kind) {
-  return { label, value, unit: kind };
-}
+function metric(label, value, unit) { return { label, value, unit }; }
 function finite(value) { return Number.isFinite(value) ? value : null; }
 function maxFinite(current, value) {
   if (value === null) return current;

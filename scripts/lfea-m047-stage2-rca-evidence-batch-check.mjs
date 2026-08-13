@@ -44,8 +44,10 @@ assert.match(source, /RCA batch refuses stale\/previous output/u,
   'batch must fail closed on stale owned outputs unless overwrite is explicit');
 assert.match(source, /--max-iterations', '60'/u,
   'R2 deleted-spring iteration budget must remain declared and fixed in the batch');
-assert.match(source, /NO_STATE_STABLE/u,
-  'batch must explicitly handle the no-state-stable R2 branch');
+assert.match(source, /firstStateStable !== null/u,
+  'batch must branch on whether the R2 experiment actually produced a state-stable snapshot');
+assert.match(source, /no first state-stable snapshot; mobilisation comparison has no admissible snapshot/u,
+  'batch must explicitly skip, not fabricate, R2 mobilisation when no snapshot exists');
 assert.match(source, /productionMechanicsChanged: false/u);
 assert.match(source, /toleranceChanged: false/u);
 assert.match(source, /comparisonPolicyChanged: false/u);

@@ -181,7 +181,7 @@ async function clickCanonicalNode(page, nodeId) {
     const controller = document.querySelector('[data-role="topology-edit-render-host"]')
       ?.__topologyEditAuthoringController;
     controller.focusCanonicalIds?.([id]);
-    await new Promise((resolve) => requestAnimationFrame(() => requestAnimationFrame(resolve))));
+    await new Promise((resolve) => requestAnimationFrame(() => requestAnimationFrame(resolve)));
   }, nodeId);
   const pick = await resolveVisibleNodePickPoint(page, nodeId);
   await page.mouse.click(pick.point.x, pick.point.y);

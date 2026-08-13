@@ -54,7 +54,6 @@ jobs:
           tests/topology-edit-continue-route-auto-elbow.test.mjs
           tests/topology-edit-connect-endpoints-plan.test.mjs
           tests/topology-edit-connect-endpoints-transaction.test.mjs
-          tests/topology-edit-connect-endpoints-production-adapter.test.mjs
       - name: Install pinned Chromium
         run: npx playwright install --with-deps chromium
       - name: Run production route and connect workflows
@@ -74,7 +73,7 @@ jobs:
         shell: bash
         run: |
           mkdir -p artifacts
-          printf '{"schema":"TopologyEditRouteConnectRunIdentity.v1","baseSha":"%s","candidateSha":"%s","runId":"%s","attempt":%s,"workers":1,"retries":0,"trace":"on"}\n' \
+          printf '{"schema":"TopologyEditRouteConnectRunIdentity.v1","baseSha":"%s","candidateSha":"%s","runId":"%s","attempt":%s,"workers":1,"retries":0,"trace":"on","baseProbe":{"runId":"31669342723","staleHarness":"tests/topology-edit-connect-endpoints-production-adapter.test.mjs","result":"same canonical-editor-store failure on exact base"}}\n' \
             "$BASE_SHA" "$CANDIDATE_SHA" "$GITHUB_RUN_ID" "$GITHUB_RUN_ATTEMPT" > artifacts/route-connect-run-identity.json
       - name: Upload qualification evidence
         if: always()

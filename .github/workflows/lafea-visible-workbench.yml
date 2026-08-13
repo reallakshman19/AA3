@@ -1,0 +1,61 @@
+name: LAFEA visible workbench qualification
+on:
+  pull_request:
+    paths:
+      - 'src/workspace/lafea-*.js'
+      - 'src/lafea-app/**'
+      - 'e2e/lafea-*.spec.js'
+      - 'e2e/helpers/lafea-stage17-playwright.js'
+      - 'e2e/fixtures/lafea-stage17-browser-fixture.js'
+      - 'scripts/lafea-*.mjs'
+      - '.github/workflows/lafea-visible-workbench.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  visible-workbench:
+    runs-on: ubuntu-latest
+    env:
+      EXPECTED_HEAD: ${{ github.event.pull_request.head.sha || github.sha }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+          fetch-depth: 0
+      - name: Verify exact head and clean tree
+        shell: bash
+        run: |
+          test "$(git rev-parse HEAD)" = "$EXPECTED_HEAD"
+          test -z "$(git status --porcelain=v1 --untracked-files=all)"
+          git diff --check
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - name: Install dependencies
+        run: npm ci
+      - name: Static and projection checks
+        run: |
+          node --check src/workspace/lafea-engineering-overview.js
+          node --check src/workspace/lafea-workbench-content.js
+          node --check src/workspace/lafea-results-view.js
+          node --check src/workspace/lafea-discretization-panel.js
+          node --check src/workspace/lafea-analysis-settings-view.js
+          node tests/lafea-engineering-overview.test.mjs
+          node scripts/lafea-ui-analysis-settings-check.mjs
+      - name: Build standalone LAFEA
+        run: npm run build:lafea
+      - name: Install pinned Chromium runtime
+        run: npx playwright install --with-deps chromium
+      - name: Run Stage-17 browser journey and visible UI proof
+        run: node scripts/lafea-stage17-browser-run.mjs
+      - name: Upload visible browser evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: lafea-visible-workbench-${{ github.event.pull_request.head.sha || github.sha }}
+          path: |
+            test-results/**
+            playwright-report/**
+          if-no-files-found: warn
+          retention-days: 30

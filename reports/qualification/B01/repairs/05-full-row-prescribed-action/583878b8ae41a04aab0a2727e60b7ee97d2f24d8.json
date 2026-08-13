@@ -1,0 +1,18 @@
+{
+  "schema":"lafea-b01-repair-attempt/v1",
+  "issue":1100,
+  "attempt":5,
+  "exactHead":"583878b8ae41a04aab0a2727e60b7ee97d2f24d8",
+  "hypothesis":"Using a reduced coupling submatrix for the dense prescribed-displacement action changes accumulation order relative to the full-row equilibrium action.",
+  "singleMechanicsChange":"Form dense prescribed action with the full global stiffness matrix and full prescribed vector, then restrict to free rows.",
+  "productionFilesChanged":["src/core/local-continuum/solver.js"],
+  "frozenBenchmarkChanged":false,
+  "tolerancesChanged":false,
+  "priorControls":"PASS",
+  "workflowRunId":31670960642,
+  "artifact":{"artifactId":9169676943,"sha256":"sha256:a6d8ca94821b4051f1bb631f37e823fd73517802cde759b0f16ca90e7bba25f5"},
+  "matrix":{"passCount":46,"failCount":8,"status":"FAIL"},
+  "comparisonToAttempt4":"No material change in pass/fail set or remaining rigid residual values.",
+  "disposition":"HYPOTHESIS_NOT_CONFIRMED. Restore the prior partition implementation before the next repair. The unresolved owner remains dense free-system solve/equilibrium numerical accuracy.",
+  "releaseAuthorityGrantedByProgram":false
+}

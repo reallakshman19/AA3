@@ -1,35 +1,15 @@
 name: LAFEA B01 untouched baseline
-
 on:
   push:
-    branches:
-      - agent/issue-1100-b01-freeze
-    paths:
-      - 'validation/lafea-benchmark-data/B01/**'
-      - 'scripts/lafea-b01-registered-route-check.mjs'
-      - 'scripts/lafea-b01-rigid-solver-diagnostic.mjs'
-      - 'scripts/lafea-b01-triangular-substitution-diagnostic.mjs'
-      - 'scripts/lafea-b01-rigid-nullspace-diagnostic.mjs'
-      - 'src/core/local-continuum/**'
-      - '.github/workflows/lafea-b01-baseline.yml'
+    branches: [agent/issue-1100-b01-freeze]
+    paths: ['validation/lafea-benchmark-data/B01/**','scripts/lafea-b01-registered-route-check.mjs','scripts/lafea-b01-rigid-solver-diagnostic.mjs','scripts/lafea-b01-triangular-substitution-diagnostic.mjs','scripts/lafea-b01-rigid-nullspace-diagnostic.mjs','scripts/lafea-b01-stiffness-construction-diagnostic.mjs','src/core/local-continuum/**','.github/workflows/lafea-b01-baseline.yml']
   pull_request:
-    paths:
-      - 'validation/lafea-benchmark-data/B01/**'
-      - 'scripts/lafea-b01-registered-route-check.mjs'
-      - 'scripts/lafea-b01-rigid-solver-diagnostic.mjs'
-      - 'scripts/lafea-b01-triangular-substitution-diagnostic.mjs'
-      - 'scripts/lafea-b01-rigid-nullspace-diagnostic.mjs'
-      - 'src/core/local-continuum/**'
-      - '.github/workflows/lafea-b01-baseline.yml'
-
-permissions:
-  contents: read
-
+    paths: ['validation/lafea-benchmark-data/B01/**','scripts/lafea-b01-registered-route-check.mjs','scripts/lafea-b01-rigid-solver-diagnostic.mjs','scripts/lafea-b01-triangular-substitution-diagnostic.mjs','scripts/lafea-b01-rigid-nullspace-diagnostic.mjs','scripts/lafea-b01-stiffness-construction-diagnostic.mjs','src/core/local-continuum/**','.github/workflows/lafea-b01-baseline.yml']
+permissions: {contents: read}
 jobs:
   untouched-baseline:
     runs-on: ubuntu-latest
-    env:
-      B01_REPORT_DIR: /tmp/lafea-b01-baseline
+    env: {B01_REPORT_DIR: /tmp/lafea-b01-baseline}
     steps:
       - uses: actions/checkout@v4
       - name: Check frozen independent oracle
@@ -42,6 +22,7 @@ jobs:
           node --check scripts/lafea-b01-rigid-solver-diagnostic.mjs
           node --check scripts/lafea-b01-triangular-substitution-diagnostic.mjs
           node --check scripts/lafea-b01-rigid-nullspace-diagnostic.mjs
+          node --check scripts/lafea-b01-stiffness-construction-diagnostic.mjs
       - name: Run prior continuum controls
         run: |
           node scripts/lafea.3-solver-check.mjs
@@ -53,14 +34,9 @@ jobs:
         continue-on-error: true
         shell: bash
         run: |
-          rm -rf "$B01_REPORT_DIR"
-          mkdir -p "$B01_REPORT_DIR"
-          set +e
+          rm -rf "$B01_REPORT_DIR"; mkdir -p "$B01_REPORT_DIR"; set +e
           node scripts/lafea-b01-registered-route-check.mjs --report-dir "$B01_REPORT_DIR" > "$B01_REPORT_DIR/baseline-driver.stdout" 2> "$B01_REPORT_DIR/baseline-driver.stderr"
-          status=$?
-          set -e
-          printf '%s\n' "$status" > "$B01_REPORT_DIR/baseline-driver.exit-code"
-          exit "$status"
+          status=$?; set -e; printf '%s\n' "$status" > "$B01_REPORT_DIR/baseline-driver.exit-code"; exit "$status"
       - name: Capture rigid solver diagnostics
         if: always()
         run: node scripts/lafea-b01-rigid-solver-diagnostic.mjs > "$B01_REPORT_DIR/B01-rigid-solver-diagnostic.json"
@@ -70,21 +46,15 @@ jobs:
       - name: Capture exact rigid nullspace diagnostics
         if: always()
         run: node scripts/lafea-b01-rigid-nullspace-diagnostic.mjs > "$B01_REPORT_DIR/B01-rigid-nullspace-diagnostic.json"
+      - name: Capture stiffness construction diagnostics
+        if: always()
+        run: node scripts/lafea-b01-stiffness-construction-diagnostic.mjs > "$B01_REPORT_DIR/B01-stiffness-construction-diagnostic.json"
       - name: Upload B01 base receipts
         if: always()
         uses: actions/upload-artifact@v4
-        with:
-          name: lafea-b01-base-${{ github.sha }}
-          path: /tmp/lafea-b01-baseline
-          if-no-files-found: error
-          retention-days: 30
+        with: {name: 'lafea-b01-base-${{ github.sha }}', path: /tmp/lafea-b01-baseline, if-no-files-found: error, retention-days: 30}
       - name: Propagate B01 base result
         if: always()
         shell: bash
         run: |
-          status=$(cat "$B01_REPORT_DIR/baseline-driver.exit-code")
-          if [ "$status" -ne 0 ]; then
-            echo "B01 base matrix contains one or more failures; artifact retained."
-            exit "$status"
-          fi
-          echo "B01 base matrix passed; artifact retained."
+          status=$(cat "$B01_REPORT_DIR/baseline-driver.exit-code"); if [ "$status" -ne 0 ]; then echo 'B01 base matrix contains one or more failures; artifact retained.'; exit "$status"; fi; echo 'B01 base matrix passed; artifact retained.'

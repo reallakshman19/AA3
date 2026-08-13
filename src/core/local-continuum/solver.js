@@ -9,6 +9,8 @@ import {
   sparseMatrixVectorRaw,
 } from './sparse-matrix.js';
 
+const DENSE_CHOLESKY_REFINEMENT_STEPS = 3;
+
 export function solvePartitioned(model, mesh, load) {
   const constraints = constraintData(model, mesh.dofOrdering, load);
   const free = freeIndices(mesh.dofOrdering.length, constraints.indexSet);
@@ -202,16 +204,86 @@ function choleskySolve(matrix, rightHandSide, profile) {
   const limit = tolerance(profile, 'choleskyPivot', scale);
   const pivots = [];
   factorCholesky(matrix, lower, pivots, limit);
-  const solution = backward(lower, forward(lower, rightHandSide));
+  const initialSolution = backward(lower, forward(lower, rightHandSide));
+  const refined = refineDenseCholesky(
+    matrix,
+    lower,
+    rightHandSide,
+    initialSolution,
+  );
   const minimum = Math.min(...pivots);
   const maximum = Math.max(...pivots);
   return {
-    // Keep full Number precision through equilibrium/reaction evaluation.
-    // solutionRecord() performs the governed canonicalization at the output
-    // boundary; rounding here was an unnecessary pre-residual precision loss.
-    solution,
-    evidence: pivotEvidence(scale, limit, pivots, minimum, maximum),
+    solution: refined.solution,
+    evidence: {
+      ...pivotEvidence(scale, limit, pivots, minimum, maximum),
+      iterativeRefinement: refined.evidence,
+    },
   };
+}
+
+function refineDenseCholesky(matrix, lower, rightHandSide, initialSolution) {
+  let solution = [...initialSolution];
+  let residual = denseSystemResidual(matrix, rightHandSide, solution);
+  let currentInfinity = maxAbs(residual);
+  const residualHistory = [currentInfinity];
+  let stepsPerformed = 0;
+  for (let step = 0; step < DENSE_CHOLESKY_REFINEMENT_STEPS; step += 1) {
+    if (currentInfinity === 0) break;
+    const correction = backward(lower, forward(lower, residual));
+    if (correction.some((value) => !Number.isFinite(value))) {
+      throw numericalError(
+        'CHOLESKY_REFINEMENT_NONFINITE_CORRECTION',
+        'solver',
+        'Dense Cholesky iterative refinement produced a non-finite correction.',
+      );
+    }
+    const candidate = solution.map((value, index) => value + correction[index]);
+    const candidateResidual = denseSystemResidual(
+      matrix,
+      rightHandSide,
+      candidate,
+    );
+    const candidateInfinity = maxAbs(candidateResidual);
+    if (!(candidateInfinity < currentInfinity)) break;
+    solution = candidate;
+    residual = candidateResidual;
+    currentInfinity = candidateInfinity;
+    stepsPerformed += 1;
+    residualHistory.push(candidateInfinity);
+  }
+  return {
+    solution,
+    evidence: {
+      method: 'DETERMINISTIC_CHOLESKY_ITERATIVE_REFINEMENT',
+      maximumSteps: DENSE_CHOLESKY_REFINEMENT_STEPS,
+      stepsPerformed,
+      initialResidualInfinity: canonicalNumber(residualHistory[0]),
+      finalResidualInfinity: canonicalNumber(currentInfinity),
+      residualHistory: residualHistory.map((value) => canonicalNumber(value)),
+      accepted: true,
+    },
+  };
+}
+
+function denseSystemResidual(matrix, rightHandSide, solution) {
+  return matrix.map((row, index) => (
+    rightHandSide[index] - compensatedProductSumRaw(row, solution)
+  ));
+}
+
+function compensatedProductSumRaw(left, right) {
+  let sum = 0;
+  let compensation = 0;
+  for (let index = 0; index < left.length; index += 1) {
+    const term = left[index] * right[index];
+    const next = sum + term;
+    compensation += Math.abs(sum) >= Math.abs(term)
+      ? (sum - next) + term
+      : (term - next) + sum;
+    sum = next;
+  }
+  return sum + compensation;
 }
 
 function conjugateGradientSolve(matrix, rightHandSide, profile) {

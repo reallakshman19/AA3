@@ -1,0 +1,36 @@
+{
+  "schema": "lafea-b01-repair-attempt/v1",
+  "issue": 1100,
+  "attempt": 27,
+  "attemptedBoundary": "B01E_FAIL_CLOSED_BASELINE",
+  "branchHead": "d22fb3f04c477b244c9ebccb8ac36589608e16a0",
+  "workflowExecutionHead": "02e8f8216b6afb0846ea6abbcecb8e7e817ae1f6",
+  "workflowRunId": 31683027261,
+  "artifactId": 9174306359,
+  "artifactDigest": "sha256:58479e236797a4f0a8b408ccb09e5cb3cb77a2d0679324ab68fe5e887f5fb49a",
+  "negativeEvidenceHash": "sha256:aeb8da566dfe5532f101b5eea772aa4bda23cdb0c59efe82600bbcf8969639ca",
+  "productionMechanicsChanged": false,
+  "frozenBenchmarkChanged": false,
+  "negativeDefinitionsChanged": false,
+  "tolerancesChanged": false,
+  "priorContinuumControls": "PASS",
+  "baseMatrix": "54/54 PASS",
+  "metamorphicMatrix": "270/270 PASS",
+  "negativeMatrix": {
+    "selectedRunCount": 16,
+    "passCount": 10,
+    "failCount": 6,
+    "status": "FAIL"
+  },
+  "failedNegatives": [
+    {"negativeId":"NEG-INVERTED-T3","boundary":"MESH_QUALITY_OR_CANONICALIZATION","observation":"T3 inversion canonicalized to ACCEPTED without governed before/after connectivity and negative source-geometry evidence."},
+    {"negativeId":"NEG-DISCONNECTED-ISLAND","boundary":"TOPOLOGY","observation":"Disconnected component accepted without governed multi-component capability."},
+    {"negativeId":"NEG-COINCIDENT-INTERFACE","boundary":"TOPOLOGY","observation":"Coincident independent interface accepted without governed classification."},
+    {"negativeId":"NEG-T6-MIDSIDE","boundary":"MESH_QUALITY","observation":"Displaced T6 midside accepted."},
+    {"negativeId":"NEG-Q8-MIDSIDE","boundary":"MESH_QUALITY","observation":"Displaced Q8 midside accepted."},
+    {"negativeId":"NEG-STALE-RESULT","boundary":"AUTHORITY_STATE","observation":"Previously accepted result remains accepted after canonical source mutation; no currentness invalidation surface was found."}
+  ],
+  "disposition": "BASELINE_FAILURE_RETAINED. Ten frozen fail-closed controls already qualify. The first unresolved owner by the frozen RCA order is topology: disconnected components and coincident independent nodes are accepted under an authority that has no governed multi-component/contact capability. Repair only source topology validation, then rerun the identical base, metamorphic, and 16-case negative matrices.",
+  "nextBoundary": "SOURCE_TOPOLOGY_CONNECTEDNESS_AND_COINCIDENT_NODE_IDENTITY",
+  "releaseAuthorityGrantedByProgram": false
+}

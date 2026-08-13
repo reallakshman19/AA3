@@ -14,23 +14,25 @@ jobs:
     timeout-minutes: 45
     env:
       BASE_SHA: 48e5f228cb3b01835c0f6ec22e11ff292cf07ba0
-      CANDIDATE_SHA: 22714fb769994afe6d3e5da381405d047e25c514
+      CANDIDATE_SHA: f828558805a086e4b0044e8502eae1bfe650350b
       PLAYWRIGHT_BROWSERS_PATH: '0'
-      TOPOLOGY_EDIT_TARGET_HEAD_SHA: 22714fb769994afe6d3e5da381405d047e25c514
+      TOPOLOGY_EDIT_TARGET_HEAD_SHA: f828558805a086e4b0044e8502eae1bfe650350b
     steps:
       - name: Checkout exact candidate
         uses: actions/checkout@v4
         with:
-          ref: 22714fb769994afe6d3e5da381405d047e25c514
+          ref: f828558805a086e4b0044e8502eae1bfe650350b
           fetch-depth: 0
-      - name: Verify exact test-only ledger
+      - name: Verify exact two-file ledger
         shell: bash
         run: |
           set -euo pipefail
           test "$(git rev-parse HEAD)" = "$CANDIDATE_SHA"
-          test "$(git diff --name-only "$BASE_SHA" "$CANDIDATE_SHA")" = 'e2e/topology-edit-a3d003-cross-surface-matrix.spec.js'
+          expected=$'e2e/topology-edit-a3d003-cross-surface-matrix.spec.js\ntests/topology-edit-table-node-position.test.mjs'
+          test "$(git diff --name-only "$BASE_SHA" "$CANDIDATE_SHA")" = "$expected"
           git diff --check "$BASE_SHA" "$CANDIDATE_SHA"
           node --check e2e/topology-edit-a3d003-cross-surface-matrix.spec.js
+          node --check tests/topology-edit-table-node-position.test.mjs
       - name: Set up Node
         uses: actions/setup-node@v4
         with:

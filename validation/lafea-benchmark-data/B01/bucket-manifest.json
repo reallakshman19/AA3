@@ -4,25 +4,13 @@
   "issue": 1100,
   "stageId": "LAFEA.3",
   "baselineCommit": "56b826d915c0ae8a390524736cbf27f5afa84d4d",
-  "state": "FROZEN_ORACLE_READY_PRODUCTION_NOT_YET_EXECUTED",
-  "authority": {
-    "registered": "T3_T6_Q8_LINEAR_CONTINUUM",
-    "productionFamilies": ["T3", "T6", "Q8"],
-    "researchOnly": ["Q4"],
-    "releaseAuthorityGrantedByProgram": false,
-    "temperatureAuthorityGrantedByProgram": false
-  },
-  "frozenArtifacts": [
-    "README.md",
-    "sources/source-registry.json",
-    "oracle/cases.json",
-    "oracle/independent-oracle.py",
-    "oracle/expected-values.json",
-    "governance/fem-semantics.json",
-    "governance/negative-cases.json",
-    "convergence/mesh-ladders.json",
-    "convergence/fixed-probes.json"
-  ],
+  "state": "FROZEN_MESH_AND_REGISTERED_ROUTE_RUNNER_READY_PRODUCTION_NOT_YET_EXECUTED",
+  "authority": {"registered":"T3_T6_Q8_LINEAR_CONTINUUM","productionFamilies":["T3","T6","Q8"],"researchOnly":["Q4"],"releaseAuthorityGrantedByProgram":false,"temperatureAuthorityGrantedByProgram":false},
+  "frozenArtifacts": ["README.md","sources/source-registry.json","oracle/cases.json","oracle/independent-oracle.py","oracle/expected-values.json","governance/fem-semantics.json","governance/negative-cases.json","convergence/mesh-ladders.json","convergence/fixed-probes.json","mesh-generator.py","meshes/mesh-generation-summary.json"],
+  "baseExecutionMatrix": {"cases":6,"families":3,"meshLevels":3,"runCount":54},
+  "registeredRouteSequence": ["normalizeDocument","canonicalize","calculate","acceptResult","presentResult"],
   "passGate": "NOT_ELIGIBLE_UNTIL_T3_T6_Q8_BASE_METAMORPHIC_NEGATIVE_AND_EXACT_HEAD_RECEIPTS_PASS",
-  "productionOutputUsedToDefineExpectedValues": false
+  "productionOutputUsedToDefineExpectedValues": false,
+  "executionHarness": "scripts/lafea-b01-registered-route-check.mjs",
+  "meshDefinitionMode": "DETERMINISTIC_GENERATOR_WITH_PER_RUN_EXPLICIT_PHYSICAL_MESH_RECEIPT"
 }

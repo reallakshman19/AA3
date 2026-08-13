@@ -1,0 +1,64 @@
+name: LAFEA B01 untouched baseline
+
+on:
+  push:
+    branches:
+      - agent/issue-1100-b01-freeze
+    paths:
+      - 'validation/lafea-benchmark-data/B01/**'
+      - 'scripts/lafea-b01-registered-route-check.mjs'
+      - '.github/workflows/lafea-b01-baseline.yml'
+  pull_request:
+    paths:
+      - 'validation/lafea-benchmark-data/B01/**'
+      - 'scripts/lafea-b01-registered-route-check.mjs'
+      - '.github/workflows/lafea-b01-baseline.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  untouched-baseline:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Check frozen independent oracle
+        run: python3 validation/lafea-benchmark-data/B01/oracle/independent-oracle.py --check
+
+      - name: Check deterministic mesh artifacts
+        run: python3 validation/lafea-benchmark-data/B01/mesh-generator.py --check
+
+      - name: Check registered-route runner syntax
+        run: node --check scripts/lafea-b01-registered-route-check.mjs
+
+      - name: Execute untouched B01 base matrix
+        id: baseline
+        continue-on-error: true
+        shell: bash
+        run: |
+          mkdir -p reports/qualification/B01/baseline
+          set +e
+          node scripts/lafea-b01-registered-route-check.mjs \
+            --report-dir reports/qualification/B01/baseline \
+            > reports/qualification/B01/baseline-driver.stdout \
+            2> reports/qualification/B01/baseline-driver.stderr
+          status=$?
+          set -e
+          printf '%s\n' "$status" > reports/qualification/B01/baseline-driver.exit-code
+          exit "$status"
+
+      - name: Upload untouched baseline receipts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: lafea-b01-untouched-baseline-${{ github.sha }}
+          path: reports/qualification/B01/baseline
+          if-no-files-found: error
+          retention-days: 30
+
+      - name: Propagate B01 baseline failure
+        if: steps.baseline.outcome == 'failure'
+        run: |
+          echo "B01 untouched baseline contains one or more failures; artifact retained."
+          exit 1

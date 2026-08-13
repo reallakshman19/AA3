@@ -1,0 +1,18 @@
+{
+  "schema": "lafea-b01-mesh-generation-summary/v1",
+  "sourcePolicy": "validation/lafea-benchmark-data/B01/convergence/mesh-ladders.json",
+  "generator": "validation/lafea-benchmark-data/B01/mesh-generator.py",
+  "meshCount": 9,
+  "meshes": [
+    {"meshId":"T3-M0","family":"T3","meshSemanticHash":"sha256:49141fa24212cd1028e993a20df0a0e12ae480f866b28999d7a3a08f12b02b12","nodeCount":9,"elementCount":8,"midsideNodeCount":0,"connectedComponentCount":1},
+    {"meshId":"T3-M1","family":"T3","meshSemanticHash":"sha256:9f61090a6983c4fdfcbf1f663bc92046a7f7fb70f06ed403905b49a6cd12c02c","nodeCount":25,"elementCount":32,"midsideNodeCount":0,"connectedComponentCount":1},
+    {"meshId":"T3-M2","family":"T3","meshSemanticHash":"sha256:f55b4cf30d72f3e1f10f9dd0d841f380bfd8850b90d02af0f4c3ebe10f96d7c8","nodeCount":81,"elementCount":128,"midsideNodeCount":0,"connectedComponentCount":1},
+    {"meshId":"T6-M0","family":"T6","meshSemanticHash":"sha256:290d5141ac97b4cd94bb79cbcf190c7f0ef1280236a28b5c784fea62fca90cc2","nodeCount":25,"elementCount":8,"midsideNodeCount":16,"connectedComponentCount":1},
+    {"meshId":"T6-M1","family":"T6","meshSemanticHash":"sha256:1be8b52774782ab0f2321ff0f4b14efcec919b11e920742945b1701e5eeb9edf","nodeCount":81,"elementCount":32,"midsideNodeCount":56,"connectedComponentCount":1},
+    {"meshId":"T6-M2","family":"T6","meshSemanticHash":"sha256:ac739e6705a8358cc208e0b8b0abb53e611b0f0e9de205af14fe009e8a8394db","nodeCount":289,"elementCount":128,"midsideNodeCount":208,"connectedComponentCount":1},
+    {"meshId":"Q8-M0","family":"Q8","meshSemanticHash":"sha256:f7c9f93046a5af20b5841ea11d1a605bcc32e515c2953600c317f8f77a5761f6","nodeCount":21,"elementCount":4,"midsideNodeCount":12,"connectedComponentCount":1},
+    {"meshId":"Q8-M1","family":"Q8","meshSemanticHash":"sha256:76eb2bd78b47daea919e8f5898783193c63c085999c9227fe232ff5f1d0287ca","nodeCount":65,"elementCount":16,"midsideNodeCount":40,"connectedComponentCount":1},
+    {"meshId":"Q8-M2","family":"Q8","meshSemanticHash":"sha256:e2fac6930c51c32970e5f1ecf018941a7f66cf5104df37adf7c84ac68ea645f4","nodeCount":225,"elementCount":64,"midsideNodeCount":144,"connectedComponentCount":1}
+  ],
+  "retentionPolicy": "The registered-route execution receipt retains the full physical node coordinates, element connectivity, midside parent edges, topology evidence and both normalized/physical mesh hashes for every run."
+}

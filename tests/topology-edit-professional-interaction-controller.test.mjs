@@ -14,9 +14,11 @@ const FILES = [
   'src/workspace/viewport-productivity/topology-edit-interaction-session.js',
 ];
 const LINE_CEILINGS = Object.freeze({
-  // This adapter already measured 361 split lines on the exact base. Preserve
-  // that baseline without allowing this UX slice to grow the presentation adapter.
+  // These presentation/runtime files already exceeded the historical 300-line
+  // ceiling on the exact base. Preserve their measured baselines as no-growth
+  // ceilings while retaining 300 lines for the rest of this interaction slice.
   [FILES[2]]: 361,
+  [FILES[3]]: 573,
 });
 
 async function sources() {

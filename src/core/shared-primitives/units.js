@@ -11,7 +11,7 @@ const UNIT_FACTORS = deepFreeze({
   },
   pressure: { Pa: 1e-6, kPa: 1e-3, MPa: 1 },
   stress: { Pa: 1e-6, kPa: 1e-3, MPa: 1 },
-  modulus: { MPa: 1, GPa: 1000 },
+  modulus: { Pa: 1e-6, MPa: 1, GPa: 1000 },
 });
 
 export function unitFactor(dimension, unit) {

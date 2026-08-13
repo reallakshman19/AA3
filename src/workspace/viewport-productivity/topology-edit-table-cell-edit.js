@@ -1,5 +1,6 @@
 import { deriveTopologyEditTableCellCapability } from '../topology-edit/table/topology-edit-table-edit-capability.js';
 import { topologyEditTableVisibleRows } from '../topology-edit/table/topology-edit-table-view-state.js';
+import { topologyEditTableVirtualGeometryFields } from '../topology-edit/table/topology-edit-table-virtual-geometry.js';
 import {
   stageTopologyEditNodePosition,
   stageTopologyEditSupportPlacement,
@@ -26,10 +27,14 @@ export function topologyEditTableDirectCellHtml(runtime, row, column) {
     row,
     columnKey: column.key,
     projection: runtime.projection,
+    canonicalTopology: runtime.controller.session?.currentTopology?.(),
   });
   const intentKind = capability.details?.intentKind;
   if (capability.status === 'AVAILABLE' && intentKind === CELL_KIND) {
     return directPipeCellHtml(runtime, row, column);
+  }
+  if (capability.status === 'AVAILABLE' && intentKind === 'NODE_POSITION') {
+    return compoundCellHtml(runtime, row, column, capability);
   }
   if (capability.status === 'NEEDS_INPUT' && COMPOUND_FOCUS[intentKind]) {
     return compoundCellHtml(runtime, row, column, capability);
@@ -61,7 +66,9 @@ export function handleTopologyEditTableCompoundCellClick(runtime, event) {
   const canonicalId = button.dataset.tableCellCanonicalId;
   const intentKind = button.dataset.tableCompoundEdit;
   const row = runtime.projection?.rows.find((candidate) => candidate.identity?.canonicalId === canonicalId);
-  const focusSelector = COMPOUND_FOCUS[intentKind];
+  const focusSelector = intentKind === 'NODE_POSITION'
+    ? `[data-table-edit-node-x="${button.dataset.tableCellEndpoint}"]`
+    : COMPOUND_FOCUS[intentKind];
   if (!row || !focusSelector || !runtime.coordinator) {
     runtime.error = 'Engineering Table: exact compound editor authority is unavailable.';
     runtime.render();
@@ -143,12 +150,21 @@ function directPipeCellHtml(runtime, row, column) {
 function compoundCellHtml(runtime, row, column, capability) {
   const canonicalId = row.identity.canonicalId;
   const staged = stagedIntent(runtime, canonicalId);
-  const state = runtime.staleResult && staged ? 'stale' : staged ? 'staged' : 'needs-input';
+  const state = runtime.staleResult && staged ? 'stale' : staged ? 'staged' : capability.status === 'AVAILABLE' ? 'available' : 'needs-input';
   const intentKind = capability.details.intentKind;
-  const value = displayValue(column.key === 'elementType' ? row.elementType : row.fields?.[column.key]);
+  const virtual = topologyEditTableVirtualGeometryFields(
+    row,
+    runtime.controller.session?.currentTopology?.(),
+    runtime.transientNodeDrafts ?? {},
+  );
+  const rawValue = Object.prototype.hasOwnProperty.call(virtual, column.key)
+    ? virtual[column.key]
+    : column.key === 'elementType' ? row.elementType : row.fields?.[column.key];
+  const value = displayValue(rawValue);
+  const endpoint = capability.details?.endpoint ?? '';
   const label = `Edit ${column.label} for ${row.fields?.tag ?? canonicalId}`;
   return `<td data-table-property="${escapeHtml(column.key)}" data-table-column-key="${escapeHtml(column.key)}" data-table-cell-state="${state}">
-    <button type="button" data-table-compound-edit="${escapeHtml(intentKind)}" data-table-cell-canonical-id="${escapeHtml(canonicalId)}" data-table-cell-column-key="${escapeHtml(column.key)}" aria-label="${escapeHtml(label)}" title="${escapeHtml(capability.reason)}">${escapeHtml(value)} ↗</button>
+    <button type="button" data-table-compound-edit="${escapeHtml(intentKind)}" data-table-cell-endpoint="${escapeHtml(endpoint)}" data-table-cell-canonical-id="${escapeHtml(canonicalId)}" data-table-cell-column-key="${escapeHtml(column.key)}" aria-label="${escapeHtml(label)}" title="${escapeHtml(capability.reason)}">${escapeHtml(value)} ↗</button>
   </td>`;
 }
 

@@ -39,7 +39,7 @@ test('LAFEA.3 visibly presents governed model mesh solver and computed results',
   await expect(results).toContainText('Max displacement');
   await expect(results).toContainText('Max von Mises');
   await expect(results).toContainText('Total strain energy');
-  await expect(results).toContainText('Integration-point stress is authoritative');
+  await expect(results).toContainText('integration-point stress is authoritative');
 
   const retained = await page.evaluate(() => {
     const result = globalThis.__A17__.controller.getState().stages['LAFEA.3'].execution?.result;

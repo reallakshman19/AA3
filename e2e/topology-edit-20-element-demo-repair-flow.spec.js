@@ -53,6 +53,7 @@ async function runBridgeScenario(page, testInfo) {
   await selectPort(page, 'R-001:port:start', true);
 
   const bridgeButton = page.locator('[data-command-action="bridge-gap"]');
+  await revealAction(bridgeButton);
   await expect(bridgeButton).toBeEnabled();
   await expect(bridgeButton).toHaveAttribute('title', /diameter remains unresolved/i);
   await bridgeButton.click();
@@ -69,6 +70,7 @@ async function runBridgeScenario(page, testInfo) {
   await selectPort(page, 'P-003:port:end', false);
   await selectPort(page, 'R-001:port:start', true);
   const traceButton = page.locator('[data-action="build-route-trace"]');
+  await revealAction(traceButton);
   await expect(traceButton).toBeEnabled();
   await traceButton.click();
   const routePanel = page.locator('[data-role="topology-edit-route-trace"]');
@@ -211,6 +213,16 @@ async function selectPort(page, portKey, additive) {
   const result = page.locator('[data-search-object-kind="node"]');
   await expect(result).toHaveCount(1);
   await result.click({ modifiers: additive ? ['Shift'] : [] });
+}
+
+async function revealAction(action) {
+  const panel = action.locator('xpath=ancestor::details[1]');
+  if (await panel.count()) {
+    if (!(await panel.evaluate((element) => element.open))) {
+      await panel.locator(':scope > summary').click();
+    }
+  }
+  await expect(action).toBeVisible();
 }
 
 function overlapIssue(page) {

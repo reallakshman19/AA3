@@ -3,9 +3,9 @@
  * M047 Stage 2 — post-direction residual RCA gate.
  *
  * This command does not solve or change mechanics. It consumes the governed L13
- * baseline, the isolated direction-only experiment, and (when available) the R2
- * mobilisation and R3 capacity diagnostics. It decides the next single mechanic
- * without mixing direction, state-path and capacity-partition hypotheses.
+ * baseline, the isolated direction-only experiment, and optional R5/R6/R2/R3
+ * evidence. It decides the next single mechanic without mixing source-boundary,
+ * geometry, direction, state-path and capacity hypotheses.
  */
 import { mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { dirname, resolve } from 'node:path';
@@ -21,12 +21,16 @@ const SINGLE_AXIS_OVERCAP_SIGNAL = 1.01;
 export function buildPostDirectionResidualRca(input) {
   const baseline = input.baseline;
   const direction = input.direction;
+  const r5 = input.r5 ?? null;
+  const r6 = input.r6 ?? null;
   const r2 = input.r2 ?? null;
   const r3 = input.r3 ?? null;
 
   requireBaseline(baseline);
   requireDirection(direction);
   requireSameCustody(baseline, direction, 'baseline', 'direction');
+  if (r5 !== null) requireR5(r5, baseline);
+  if (r6 !== null) requireR6(r6, baseline);
   if (r2 !== null) requireR2(r2, baseline);
   if (r3 !== null) requireR3(r3, baseline);
 
@@ -45,16 +49,29 @@ export function buildPostDirectionResidualRca(input) {
   };
 
   const capacity = r3 === null ? null : summarizeCapacity(r3);
-  const next = decideNext({ direction, r2, r3, summary, capacity });
+  const geometry = r5 === null ? null : {
+    geometrySensitiveFrictionCount: r5.geometrySensitiveFrictionCount,
+    bendCoincidentFrictionCount: r5.bendCoincidentFrictionCount,
+    teeCoincidentFrictionCount: r5.teeCoincidentFrictionCount,
+    decision: r5.decision,
+  };
+  const restraintSentinels = r6 === null ? null : {
+    status: r6.status,
+    failureCount: r6.failureCount,
+    blankRule: r6.blankRule,
+  };
+  const next = decideNext({ direction, r5, r6, r2, r3, summary, capacity });
 
   const result = {
     schema: 'm047-bm4l-stage2-post-direction-residual-rca/v1',
     caseId: baseline.caseId,
     sourceAccdbSha256: baseline.sourceAccdbSha256,
-    rule: 'ONE_MECHANIC_AT_A_TIME_DIRECTION_THEN_STATE_PATH_THEN_CAPACITY_BASIS_THEN_PARTITION_THEN_L7_V1',
+    rule: 'ONE_MECHANIC_AT_A_TIME_R6_SOURCE_BOUNDARY_THEN_R5_GEOMETRY_THEN_DIRECTION_THEN_STATE_PATH_THEN_CAPACITY_BASIS_THEN_PARTITION_THEN_L7_V2',
     directionPromotionStatus: direction.promotion.status,
     summary,
     residuals,
+    r6: restraintSentinels,
+    r5: geometry,
     r2: r2 === null ? null : {
       decision: r2.decision,
       referenceClusterCount: r2.referenceClusterCount,
@@ -132,7 +149,35 @@ function summarizeCapacity(r3) {
   };
 }
 
-function decideNext({ direction, r2, r3, summary, capacity }) {
+function decideNext({ direction, r5, r6, r2, r3, summary, capacity }) {
+  if (r6 === null) {
+    return {
+      decision: 'RUN_R6_RESTRAINT_SENTINEL_PREFLIGHT',
+      reason: 'STIFFNESS/GAP/CNODE must be proven blank on the pinned source before a friction mechanic is promoted.',
+      l7LoadSteppingAllowed: false,
+    };
+  }
+  if (r6.status !== 'PASS' || Number(r6.failureCount) !== 0) {
+    return {
+      decision: 'HALT_R6_RESTRAINT_SOURCE_BOUNDARY_CHANGED',
+      reason: 'At least one restraint STIFFNESS/GAP/CNODE field is nonblank; current grounded/no-gap/default-stiffness mechanics are not admissible.',
+      l7LoadSteppingAllowed: false,
+    };
+  }
+  if (r5 === null) {
+    return {
+      decision: 'RUN_R5_FRICTION_GEOMETRY_INVENTORY',
+      reason: 'Bend/tee station coincidence must be inventoried before promoting a global tangent-plane direction rule.',
+      l7LoadSteppingAllowed: false,
+    };
+  }
+  if (r5.decision?.directionPromotionBlockedByR5 === true) {
+    return {
+      decision: 'R5_LOCAL_TANGENT_VERIFICATION_REQUIRED',
+      reason: 'At least one friction restraint coincides with a bend/tee source station; verify the friction plane against the local arc/leg tangent before direction promotion.',
+      l7LoadSteppingAllowed: false,
+    };
+  }
   if (direction.promotion.status !== 'EVIDENCE_SUPPORTS_PROMOTION_TO_GOVERNED_DIRECTION_RULE') {
     return {
       decision: 'HALT_DIRECTION_CANDIDATE_NOT_PROMOTABLE',
@@ -150,7 +195,7 @@ function decideNext({ direction, r2, r3, summary, capacity }) {
   if (r2 === null) {
     return {
       decision: 'RUN_R2_MOBILISATION_NEXT',
-      reason: 'Direction is isolated; state-path/partial-mobilisation evidence is now the next single-mechanic gate.',
+      reason: 'Source, geometry and direction are isolated; state-path/partial-mobilisation evidence is now the next single-mechanic gate.',
       l7LoadSteppingAllowed: false,
     };
   }
@@ -198,7 +243,7 @@ function decideNext({ direction, r2, r3, summary, capacity }) {
   }
   return {
     decision: 'L13_RCA_CLEARED_FOR_L7_LOAD_STEPPING',
-    reason: 'Direction, state-path and capacity diagnostics leave no above-goal L13 friction residual.',
+    reason: 'R6 source boundary, R5 geometry, direction, state-path and capacity diagnostics leave no above-goal L13 friction residual.',
     l7LoadSteppingAllowed: true,
   };
 }
@@ -224,6 +269,22 @@ function requireBaseline(value) {
 function requireDirection(value) {
   if (value?.schema !== 'm047-bm4l-stage2-direction-only-nonlinear-experiment/v1') {
     throw new TypeError('A direction-only nonlinear experiment artifact is required.');
+  }
+}
+
+function requireR5(value, baseline) {
+  if (value?.schema !== 'm047-bm4l-stage2-r5-friction-geometry-inventory/v1') {
+    throw new TypeError('R5 geometry inventory must use the governed schema.');
+  }
+  requireSameCustody(baseline, value, 'baseline', 'R5');
+}
+
+function requireR6(value, baseline) {
+  if (value?.schema !== 'm047-bm4l-stage2-r6-restraint-sentinel-preflight/v1') {
+    throw new TypeError('R6 restraint sentinel preflight must use the governed schema.');
+  }
+  if (value.sourceAccdbSha256 !== baseline.sourceAccdbSha256) {
+    throw new TypeError('baseline/R6 ACCDB custody mismatch.');
   }
 }
 
@@ -262,12 +323,17 @@ if (process.argv[1] && resolve(process.argv[1]) === fileURLToPath(import.meta.ur
   const baselinePath = args.get('--baseline');
   const directionPath = args.get('--direction');
   if (!baselinePath || !directionPath) {
-    throw new TypeError('Usage: --baseline <L13-iteration.json> --direction <direction-only.json> [--r2 <r2.json>] [--r3 <r3.json>] [--out <json>]');
+    throw new TypeError(
+      'Usage: --baseline <L13-iteration.json> --direction <direction-only.json> '
+      + '[--r6 <r6.json>] [--r5 <r5.json>] [--r2 <r2.json>] [--r3 <r3.json>] [--out <json>]',
+    );
   }
   const read = (path) => JSON.parse(readFileSync(resolve(path), 'utf8'));
   const record = buildPostDirectionResidualRca({
     baseline: read(baselinePath),
     direction: read(directionPath),
+    r6: args.get('--r6') ? read(args.get('--r6')) : null,
+    r5: args.get('--r5') ? read(args.get('--r5')) : null,
     r2: args.get('--r2') ? read(args.get('--r2')) : null,
     r3: args.get('--r3') ? read(args.get('--r3')) : null,
   });
@@ -278,6 +344,8 @@ if (process.argv[1] && resolve(process.argv[1]) === fileURLToPath(import.meta.ur
   }
   process.stdout.write(`${canonicalPrettyStringify({
     caseId: record.caseId,
+    r6: record.r6,
+    r5: record.r5,
     directionPromotionStatus: record.directionPromotionStatus,
     residuals: record.summary,
     r2Decision: record.r2?.decision ?? null,

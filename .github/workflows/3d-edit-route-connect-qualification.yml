@@ -14,28 +14,28 @@ jobs:
     timeout-minutes: 45
     env:
       BASE_SHA: a25f6ef1a1c44c01b1cd920b3dba7e747fc89923
-      CANDIDATE_SHA: 4c32e15d9762d7a9e3d8ea4917091654e95468d8
+      CANDIDATE_SHA: ca9cfda30011656c95941839c30e3ff0f8f0c96c
       PLAYWRIGHT_BROWSERS_PATH: '0'
-      TOPOLOGY_EDIT_TARGET_HEAD_SHA: 4c32e15d9762d7a9e3d8ea4917091654e95468d8
+      TOPOLOGY_EDIT_TARGET_HEAD_SHA: ca9cfda30011656c95941839c30e3ff0f8f0c96c
     steps:
       - name: Checkout exact candidate
         uses: actions/checkout@v4
         with:
-          ref: 4c32e15d9762d7a9e3d8ea4917091654e95468d8
+          ref: ca9cfda30011656c95941839c30e3ff0f8f0c96c
           fetch-depth: 0
       - name: Verify exact six-file ledger
         shell: bash
         run: |
           set -euo pipefail
           test "$(git rev-parse HEAD)" = "$CANDIDATE_SHA"
-          expected=$'e2e/topology-edit-authoring-tools.spec.js\ne2e/topology-edit-connect-endpoints-authority.spec.js\ne2e/topology-edit-start-route-authority.spec.js\nsrc/workspace/viewport-productivity/topology-edit-connect-endpoints-authoring-runtime.js\nsrc/workspace/viewport-productivity/topology-edit-route-connect-consolidation.js\ntests/topology-edit-route-connect-consolidation.test.mjs'
+          expected=$'e2e/topology-edit-authoring-tools.spec.js\ne2e/topology-edit-connect-contextual.spec.js\ne2e/topology-edit-start-route-authority.spec.js\nsrc/workspace/viewport-productivity/topology-edit-connect-endpoints-authoring-runtime.js\nsrc/workspace/viewport-productivity/topology-edit-route-connect-consolidation.js\ntests/topology-edit-route-connect-consolidation.test.mjs'
           test "$(git diff --name-only "$BASE_SHA" "$CANDIDATE_SHA")" = "$expected"
           git diff --check "$BASE_SHA" "$CANDIDATE_SHA"
           node --check src/workspace/viewport-productivity/topology-edit-connect-endpoints-authoring-runtime.js
           node --check src/workspace/viewport-productivity/topology-edit-route-connect-consolidation.js
           node --check tests/topology-edit-route-connect-consolidation.test.mjs
           node --check e2e/topology-edit-authoring-tools.spec.js
-          node --check e2e/topology-edit-connect-endpoints-authority.spec.js
+          node --check e2e/topology-edit-connect-contextual.spec.js
           node --check e2e/topology-edit-start-route-authority.spec.js
       - name: Set up Node
         uses: actions/setup-node@v4
@@ -63,7 +63,7 @@ jobs:
           node scripts/run-playwright.mjs
           e2e/topology-edit-start-route-authority.spec.js
           e2e/topology-edit-authoring-tools.spec.js
-          e2e/topology-edit-connect-endpoints-authority.spec.js
+          e2e/topology-edit-connect-contextual.spec.js
           --workers=1
           --retries=0
           --trace=on
@@ -84,7 +84,7 @@ jobs:
             artifacts
             reports/qualification/start-route-authoring-core.json
             reports/qualification/topology-edit-authoring-tools.json
-            reports/qualification/connect-existing-ends-authoring.json
+            reports/qualification/connect-contextual-workflow.json
             test-results
             playwright-report
           if-no-files-found: warn

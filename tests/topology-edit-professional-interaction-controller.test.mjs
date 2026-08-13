@@ -70,12 +70,14 @@ test('keyboard nudges use axis direction and Shift changes increment only', asyn
   assert.doesNotMatch(controller, /event\.shiftKey \? -1 : 1/);
 });
 
-test('contextual move auto-previews committed engineering value changes', async () => {
+test('contextual move auto-preview preserves the transient form while refreshing ghost state', async () => {
   const files = await sources();
   const controller = files[FILES[0]];
   assert.match(controller, /interactionElement\.addEventListener\('change', this\.interactionChangeHandler\)/);
   assert.match(controller, /AUTO_PREVIEW_ROLES/);
-  assert.match(controller, /previewNumericInteraction\(\{ announce: false \}\)/);
+  assert.match(controller, /readTopologyEditInteractionValues/);
+  assert.match(controller, /previewNumericInteraction\(\{ announce: false, render: false \}\)/);
+  assert.match(controller, /updateTopologyEditInteractionPanelState/);
   assert.match(controller, /Edit selected node/);
   assert.match(controller, /Advanced commands/);
   assert.doesNotMatch(controller, /Date\.now|Math\.random|randomUUID/);
@@ -142,5 +144,7 @@ test('panel keeps engineering values primary and moves authority hashes behind e
   assert.match(panel, /interaction-engineering-evidence/);
   assert.match(panel, /Engineering evidence/);
   assert.match(panel, /ghost preview does not modify canonical topology/);
+  assert.match(panel, /readTopologyEditInteractionValues/);
+  assert.match(panel, /updateTopologyEditInteractionPanelState/);
   assert.match(panel, /escapeHtml/);
 });

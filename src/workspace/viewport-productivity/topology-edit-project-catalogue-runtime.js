@@ -110,7 +110,10 @@ export function createTopologyEditDatasetCatalogueProvider(input = {}) {
     async load(context = {}) {
       const dataset = input.getDataset();
       const basis = topologyEditDatasetCatalogueBasis(dataset);
-      const loaded = await fallback.load(context);
+      const loaded = await fallback.load({
+        ...context,
+        requireContentSha256: Boolean(basis),
+      });
       if (!basis) return loaded;
       const catalogue = createTopologyEditSpecificationCatalogue(loaded.catalogue);
       assertProjectCatalogueBasis(basis, catalogue, loaded.contentSha256);
@@ -152,13 +155,21 @@ export function createTopologyEditRepositoryFixtureCatalogueProvider(input = {})
   const catalogueUrl = stringValue(input.catalogueUrl)
     || TOPOLOGY_EDIT_REPOSITORY_FIXTURE_CATALOGUE_URL;
   return Object.freeze({
-    async load({ baseURI } = {}) {
+    async load({ baseURI, requireContentSha256 = false } = {}) {
       const url = new URL(catalogueUrl, requiredText(baseURI, 'baseURI'));
       const response = await fetch(url, { cache: 'no-store' });
       if (!response.ok) {
         throw new Error(
           `TopologyEditProjectCatalogueRuntime: catalogue request returned ${response.status}.`,
         );
+      }
+      if (!requireContentSha256) {
+        return {
+          catalogue: await response.json(),
+          contentSha256: null,
+          sourceKind: 'REPOSITORY_FIXTURE',
+          sourceLocator: catalogueUrl,
+        };
       }
       const bytes = new Uint8Array(await response.arrayBuffer());
       const text = new TextDecoder('utf-8', { fatal: true }).decode(bytes);

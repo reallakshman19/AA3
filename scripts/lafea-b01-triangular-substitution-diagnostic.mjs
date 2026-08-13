@@ -4,10 +4,7 @@ import path from 'node:path';
 import { execFileSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
 
-import {
-  MODEL_SCHEMA,
-  QUALIFICATION_PROFILE,
-} from '../src/core/local-continuum/index.js';
+import { MODEL_SCHEMA, QUALIFICATION_PROFILE } from '../src/core/local-continuum/index.js';
 import { assembleMesh } from '../src/core/local-continuum/assembly.js';
 import { buildElementEvidence } from '../src/core/local-continuum/element.js';
 import { assembleLoadCase } from '../src/core/local-continuum/loads.js';
@@ -34,9 +31,9 @@ if (!rigid) throw new Error(`Missing frozen rigid case ${RIGID_CASE_ID}.`);
 const meshRows = readJson(MESH_SUMMARY_PATH).meshes;
 const composition = requireLafeaStageComposition('LAFEA.3');
 const exactHead = git(['rev-parse', 'HEAD']);
-
 const diagnostics = meshRows.map((meshRow) => diagnose(meshRow));
-const payload = {
+
+process.stdout.write(`${JSON.stringify({
   schema: 'lafea-b01-triangular-substitution-diagnostic/v1',
   issue: 1100,
   exactHead,
@@ -48,13 +45,10 @@ const payload = {
   fullResidual: 'Current production matrixVector over the same assembled global stiffness matrix.',
   refinementSteps: REFINEMENT_STEPS,
   variants: VARIANTS.map(([variant, compensatedForward, compensatedBackward]) => ({
-    variant,
-    compensatedForward,
-    compensatedBackward,
+    variant, compensatedForward, compensatedBackward,
   })),
   diagnostics,
-};
-process.stdout.write(`${JSON.stringify(payload, null, 2)}\n`);
+}, null, 2)}\n`);
 
 function diagnose(meshRow) {
   try {
@@ -87,10 +81,11 @@ function diagnose(meshRow) {
     const freeStiffness = submatrix(mesh.globalStiffnessMatrix, partition.free, partition.free);
     const coupling = submatrix(mesh.globalStiffnessMatrix, partition.free, partition.constrained);
     const rightHandSide = partition.free.map((globalIndex, row) => (
-      load.forceVector[globalIndex] - compensatedProductSum(coupling[row], partition.prescribedValues)
+      load.forceVector[globalIndex]
+        - compensatedProductSum(coupling[row], partition.prescribedValues)
     ));
     const lower = factorCholeskyNaive(freeStiffness);
-    const rows = VARIANTS.map(([variant, compensatedForward, compensatedBackward]) => (
+    const variants = VARIANTS.map(([variant, compensatedForward, compensatedBackward]) => (
       evaluateVariant({
         variant,
         compensatedForward,
@@ -99,6 +94,7 @@ function diagnose(meshRow) {
         lower,
         rightHandSide,
         mesh,
+        model,
         load,
         partition,
       })
@@ -110,8 +106,8 @@ function diagnose(meshRow) {
       globalStiffnessStorage: mesh.globalStiffnessStorage,
       freeDofCount: partition.free.length,
       constrainedDofCount: partition.constrained.length,
-      variants: rows,
-      bestByFullNormalizedResidual: [...rows]
+      variants,
+      bestByFullNormalizedResidual: [...variants]
         .sort((left, right) => left.fullNormalizedFreeResidual - right.fullNormalizedFreeResidual)[0].variant,
     };
   } catch (error) {
@@ -136,6 +132,7 @@ function evaluateVariant({
   lower,
   rightHandSide,
   mesh,
+  model,
   load,
   partition,
 }) {
@@ -181,6 +178,7 @@ function evaluateVariant({
     normalizationScale: scale,
     fullNormalizedFreeResidual: maxAbs(freeFullResidual) / scale,
     maximumFreeDisplacementDifferenceFromExactRigidField: maximumRigidFreeDofError(
+      model,
       mesh,
       partition.free,
       displacement,
@@ -192,12 +190,10 @@ function partitionData(model, mesh, load) {
   const dofIndex = new Map(mesh.dofOrdering.map((identity, index) => [identity, index]));
   const rows = [
     ...model.constraints.map((row) => ({
-      index: dofIndex.get(`${row.nodeId}:${row.dof}`),
-      value: row.value,
+      index: dofIndex.get(`${row.nodeId}:${row.dof}`), value: row.value,
     })),
     ...load.imposedDisplacements.map((row) => ({
-      index: dofIndex.get(`${row.nodeId}:${row.dof}`),
-      value: row.value,
+      index: dofIndex.get(`${row.nodeId}:${row.dof}`), value: row.value,
     })),
   ].sort((left, right) => left.index - right.index);
   const constrained = rows.map((row) => row.index);
@@ -235,10 +231,10 @@ function forward(lower, rightHandSide, compensated) {
   const output = Array(rightHandSide.length).fill(0);
   for (let row = 0; row < rightHandSide.length; row += 1) {
     if (compensated) {
-      const products = Array.from({ length: row }, (_, column) => (
+      const terms = Array.from({ length: row }, (_, column) => (
         lower[row][column] * output[column]
       ));
-      output[row] = (rightHandSide[row] - compensatedSum(products)) / lower[row][row];
+      output[row] = (rightHandSide[row] - compensatedSum(terms)) / lower[row][row];
     } else {
       let value = rightHandSide[row];
       for (let column = 0; column < row; column += 1) {
@@ -254,11 +250,11 @@ function backward(lower, rightHandSide, compensated) {
   const output = Array(rightHandSide.length).fill(0);
   for (let row = rightHandSide.length - 1; row >= 0; row -= 1) {
     if (compensated) {
-      const products = [];
+      const terms = [];
       for (let column = row + 1; column < rightHandSide.length; column += 1) {
-        products.push(lower[column][row] * output[column]);
+        terms.push(lower[column][row] * output[column]);
       }
-      output[row] = (rightHandSide[row] - compensatedSum(products)) / lower[row][row];
+      output[row] = (rightHandSide[row] - compensatedSum(terms)) / lower[row][row];
     } else {
       let value = rightHandSide[row];
       for (let column = row + 1; column < rightHandSide.length; column += 1) {
@@ -303,28 +299,21 @@ function compensatedSum(values) {
   return sum + compensation;
 }
 
-function maximumRigidFreeDofError(mesh, free, displacement) {
+function maximumRigidFreeDofError(model, mesh, free, displacement) {
   const affine = numericRecord(rigid.affine);
-  const nodeById = new Map(mesh.dofOrdering.map((identity, index) => {
-    const split = identity.lastIndexOf(':');
-    return [index, { nodeId: identity.slice(0, split), dof: identity.slice(split + 1) }];
-  }));
-  const coordinates = new Map(mesh.dofOrdering.map((identity) => identity.slice(0, identity.lastIndexOf(':'))))
-  void coordinates;
-  const modelNodeById = new Map(currentDiagnosticNodes.map((node) => [node.nodeId, node]));
+  const nodeById = new Map(model.nodes.map((node) => [node.nodeId, node]));
   return free.reduce((maximum, index) => {
-    const identity = nodeById.get(index);
-    const node = modelNodeById.get(identity.nodeId);
+    const dofIdentity = mesh.dofOrdering[index];
+    const split = dofIdentity.lastIndexOf(':');
+    const node = nodeById.get(dofIdentity.slice(0, split));
+    const dof = dofIdentity.slice(split + 1);
     const exact = affineAt(affine, node.x, node.y);
-    const expected = identity.dof === 'UX' ? exact.ux : exact.uy;
+    const expected = dof === 'UX' ? exact.ux : exact.uy;
     return Math.max(maximum, Math.abs(displacement[index] - expected));
   }, 0);
 }
 
-let currentDiagnosticNodes = [];
-
 function createSource(caseDef, physicalMesh) {
-  currentDiagnosticNodes = physicalMesh.nodes;
   const affine = numericRecord(caseDef.affine);
   const imposedDisplacements = physicalMesh.nodes
     .filter((node) => node.boundarySides.length)
@@ -369,10 +358,7 @@ function materializeMesh(mesh, caseDef) {
 function submatrix(matrix, rows, columns) {
   return rows.map((row) => columns.map((column) => matrix[row][column]));
 }
-
-function numericRecord(value) {
-  return Object.fromEntries(Object.entries(value).map(([key, item]) => [key, Number(item)]));
-}
+function numericRecord(value) { return Object.fromEntries(Object.entries(value).map(([key, item]) => [key, Number(item)])); }
 function affineAt(a, x, y) { return { ux: a.u0 + a.ux * x + a.uy * y, uy: a.v0 + a.vx * x + a.vy * y }; }
 function maxAbs(values) { return values.reduce((maximum, value) => Math.max(maximum, Math.abs(value ?? 0)), 0); }
 function readJson(file) { return JSON.parse(fs.readFileSync(file, 'utf8')); }

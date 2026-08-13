@@ -68,9 +68,8 @@ function solveFreeSystem(model, mesh, force, free, constraints, prescribed) {
       free,
       constraints.indices,
     );
-    const rightHandSide = free.map((index, row) => canonicalNumber(
-      force[index] - dotRow(coupling[row], constraints.values),
-      'partition rhs',
+    const rightHandSide = free.map((index, row) => (
+      force[index] - dotRow(coupling[row], constraints.values)
     ));
     return choleskySolve(
       freeStiffness,
@@ -163,13 +162,6 @@ function solutionRecord(
   };
 }
 
-/**
- * Merges the model's restraint-level `constraints` with this load case's own
- * `imposedDisplacements` (spec §7.1: a per-load-case prescribed motion,
- * distinct from a model-wide restraint). `source-loads.js` already rejects
- * an imposed displacement declared on the same DOF as a model constraint, so
- * no index can appear in both sets here.
- */
 function constraintData(model, dofs, load) {
   const index = new Map(dofs.map((identity, position) => [identity, position]));
   const modelRows = model.constraints.map((row) => ({

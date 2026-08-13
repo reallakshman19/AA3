@@ -51,17 +51,26 @@ Gating on the path was rejecting valid elasto-plastic states.
 
 ## 3. Measured status, real L13 (`W+P1`, friction multiplier 1.0)
 
-Converged in 30 s. 23 friction restraints (26 declare `FRIC_COEF`; three have all
-tangential directions taken by a guide or line stop).
+23 friction restraints (26 declare `FRIC_COEF`; three have all tangential
+directions taken by a guide or line stop).
 
-| Metric vs CAESAR | After A4 (k_f = 1.0e8) | After B0 (k_f = 1.7513e8) |
-|---|---|---|
-| normal reactions within ±10 % | 22 / 23 | **23 / 23** |
-| worst normal error | +131 % (21610) | **+7.5 %** |
-| tangential magnitudes within ±10 % | 15 / 23 | 8 / 23 |
-| tangential vectors within ±10 % | 4 / 23 | 4 / 23 |
-| regime matches | 3 / 23 | 3 / 23 |
-| CAESAR's own capacity utilisation | 0.004 … 1.106 | 0.004 … 1.106 |
+| Metric vs CAESAR | After A4 (k_f=1.0e8) | After B0 (k_f=1.7513e8) | After D1 — **production (R2)** |
+|---|---|---|---|
+| convergence time | 64 s | 30 s | ~345 s |
+| normal reactions within ±10 % | 22 / 23 | 23 / 23 | **23 / 23** |
+| worst normal error | +131 % (21610) | +7.5 % | **1.8 %** |
+| tangential magnitudes within ±10 % | 15 / 23 | 8 / 23 | — |
+| tangential vectors within ±10 % | 4 / 23 | 4 / 23 | **13 / 23** |
+| regime matches | 3 / 23 | 3 / 23 | 3 / 23 |
+| CAESAR's own capacity utilisation | 0.004 … 1.106 | 0.004 … 1.106 | 0.004 … 1.106 |
+
+**D1 is now the production solver profile** (`CAESAR-ACCDB-FRICTION-SOLVER-R2`,
+promoted after real-file measurement met its own declared acceptance bar — see
+§4). It changes exactly one mechanic: the capped sliding force is oriented
+opposite the current *total* relative tangential displacement `u_t` instead of
+the return-map elastic stretch `u_t - u_slip`. Full derivation and acceptance
+evidence: `reports/lfea-m047-stage2-d1-real-measurement.md`,
+`agents/M047_STAGE2_D1_DIRECTION_VARIANT.md`.
 
 ### B0 — the friction stiffness was wrong by 1.75x, and the file said so
 
@@ -98,22 +107,67 @@ noise. On this run the floor is 88 N and 22 of 23 restraints sit above it, so th
 does not excuse the gap - but it must be declared before percentages are published,
 exactly as the exact-zero absolute limits already are.
 
-### The systematic term that remains
+### The systematic term that remains — now named R7 (case-history dependence)
 
-CAESAR's utilisation clusters at **0.91-0.96** at many restraints (20520 0.961,
-22260 0.933, 22070 0.936, 21800 0.940) while the return map places them exactly on
-the cap. That alone is a 4-9 % error before direction is considered, and it is the
-largest remaining systematic difference. The drag table points at the second term:
-one tangential component matches almost exactly while the other is short, which is
-a partition signature, not a magnitude error.
+CAESAR's utilisation clusters at **0.91-0.96** at many restraints while the
+return map places them exactly on the cap. This is *not* a stopping-rule
+artifact (the deleted-spring form that would produce it was measured and
+rejected: 3/23 vectors, nonconverged) and *not* a capping-shape artifact
+(per-axis capping was measured and rejected: 6/23 vectors, worse than
+resultant). The leading evidence-bounded hypothesis is that CAESAR's friction
+result is dependent on its own internal load-case solve order/history, which
+the pinned ACCDB structurally cannot record (it has only `INPUT_*`/`OUTPUT_*`
+tables, no case-list or execution-log table). At node 20710, the two cases
+missing thermal expansion (L13, L1) sit ~10-11 % over their own final-normal
+Coulomb cap while the one case with thermal expansion (L7) sits at 1.004 —
+essentially dead on it. Full derivation: `agents/M047_STAGE2_ROADMAP.md` §R7,
+`reports/lfea-m047-stage2-20710-forensic.json`.
 
-## 5. Next variants
+## 4. L7 and L1 under production D1 (R2)
 
-The full prioritised programme, including the BM4_NL friction-plus-lift-off entry
-conditions and staging, is in `agents/M047_STAGE2_ROADMAP.md`. In short: declare
-the reference resolution floor (R1), then decide partial mobilisation by
-implementing CAESAR's documented spring form as a second declared strategy (R2),
-then per-axis versus resultant capping (R3), then load-path stepping for L7 (R4).
+| Metric vs CAESAR | L7 (`W+T1+P1`) | L1 (`WW+HP`) |
+|---|---|---|
+| convergence | converged, ~138 s, single step | converged, ~330 s, needed the doubled (400→800) iteration budget — see below |
+| normal reactions within ±10 % | 22 / 23 (sole failure: 20350, −24.9 %) | **8 / 23 only**, worst 159 % — unresolved, see below |
+| tangential vectors within ±10 % | 10 / 23, worst 110.3 % | 4 / 23, worst 585 % |
 
-Each is one loop run and one row in the table above. None changes a tolerance, and
-none is selected by counting benchmark failures.
+**L7**: proportional physical load continuation (N=1/5/10) was tested and
+rejected as a fix — N=1 reproduces the single-step result to exactly zero
+difference (validates the harness), but N=5 and N=10 both fail to converge
+within the unchanged 400-iteration per-step budget, with the residual
+concentrated at restraint 20550 in both, and N=10 failing *earlier* than N=5.
+Finer stepping does not rescue L7; see R7.
+
+**L1 iteration budget**: at iteration 400, every gate had closed except
+displacement update, whose own tail decayed monotonically and geometrically
+(ratio ≈0.992/iteration, 1.27e-10 m → 1.19e-10 m against the 1e-10 m limit) —
+a genuine slow-converging tail, not an oscillation. The loop returns the
+instant it converges, so raising the ceiling cannot affect any case that
+already converges below it (confirmed: L13/L7 reproduce their exact D1 numbers
+under the higher ceiling). The budget was doubled to 800 — a round margin, not
+a value fitted to make L1 pass — and L1 now converges.
+
+**L1 normal reactions — new, unresolved, higher priority than the tangential
+gap.** Only 8/23 within ±10%, several by 100%+. This is a linear-mechanics
+(weight/pressure) discrepancy, not a friction-law one: L13/L7 have excellent
+normals (22-23/23) through the identical friction machinery, so the defect is
+most likely in the `WW`/`HP` hydrotest weight-and-pressure basis feeding this
+case, not in this solver. No frictionless HYD twin exists in this file to
+isolate it by subtraction. This needs its own dedicated audit before any
+further friction-law tuning on L1 is meaningful — tuning the nonlinear layer
+against a case whose linear input is already wrong would misattribute the
+error. See `agents/M047_STAGE2_ROADMAP.md` §1c.
+
+## 5. Next steps
+
+The full prioritised programme, including the BM4_NL friction-plus-lift-off
+entry conditions and staging, is in `agents/M047_STAGE2_ROADMAP.md`. R1-R6
+are now all measured (R1 declared and in force, R2-R6 tested and rejected as
+fixes for the remaining gap); **R7** (case-history dependence, evidence-bounded
+by what this file can and cannot record) is where the next real investigation
+into the L13/L7 tangential gap should start. Independently, and at higher
+priority since it blocks even reporting L1's own reactions honestly, the **L1
+hydrotest weight/pressure basis** needs a dedicated linear-mechanics audit.
+
+Each step is one loop run and one row in a table. None changes a tolerance,
+and none is selected by counting benchmark failures.

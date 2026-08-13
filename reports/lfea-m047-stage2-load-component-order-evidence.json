@@ -1,0 +1,101 @@
+{
+  "P1_FIRST": {
+    "converged": false,
+    "ephemeralSolverSha256": "21c506d2a91c2e7f19f268deca30ee4ae0b58b93de25e9be0e37b24ea377715f",
+    "failedGateHistogram": {
+      "ACTIVE_SET_STABILITY": 197,
+      "COULOMB_CAP_COMPLEMENTARITY": 400,
+      "DISPLACEMENT_UPDATE_NORM": 400,
+      "FRICTION_OPPOSES_SLIP": 399,
+      "REACTION_UPDATE_NORM": 400,
+      "SLIDE_CAPACITY_RESIDUAL": 400,
+      "SLIP_UPDATE_NORM": 400
+    },
+    "failedStage": 1,
+    "failedStageFormula": "P1",
+    "finalDisplacementUpdateNormM": 9.12200896307884e-10,
+    "finalReactionUpdateNormN": 0.0631082604668336,
+    "finalStateChangeCount": 2,
+    "iterationCount": 400,
+    "lastFailedGates": [
+      "ACTIVE_SET_STABILITY",
+      "DISPLACEMENT_UPDATE_NORM",
+      "REACTION_UPDATE_NORM",
+      "COULOMB_CAP_COMPLEMENTARITY",
+      "SLIDE_CAPACITY_RESIDUAL",
+      "SLIP_UPDATE_NORM",
+      "FRICTION_OPPOSES_SLIP"
+    ]
+  },
+  "W_FIRST": {
+    "converged": true,
+    "ephemeralSolverSha256": "ca98a16109b1298e2b2f742a4b7dd0c61dff39df0383aa60a26ad526d6df009c",
+    "finalRestraintsExactlyEqualToD1": true,
+    "maximumNumericDifferenceFromD1": 0,
+    "normalCount": 23,
+    "normalsWithin10Percent": 23,
+    "summaryExactlyEqualToD1": true,
+    "vectorsCompared": 23,
+    "vectorsWithin10Percent": 13,
+    "worstVectorRelativeError": 7.219148663680088
+  },
+  "decision": {
+    "baselineAfterBatch": "D1",
+    "nextRoadmapChecks": [
+      "R5_BEND_TEE_FRICTION_PLANE_AUTHORITY",
+      "R6_RESTRAINT_STIFFNESS_GAP_CNODE_BLANK_GUARDS"
+    ],
+    "promoteP1First": false,
+    "promoteWFirst": false,
+    "rule": "DO_NOT_INTRODUCE_OR_SELECT_AN_UNDOCUMENTED_INTERMEDIATE_LOAD_FRACTION_TO_IMPROVE_BENCHMARK_ACCURACY",
+    "simpleComponentOrderExplainsProportionalContinuationGain": false
+  },
+  "discardedSetup": {
+    "countedAsMeasurement": false,
+    "description": "Direct PRESSURE1=0 representation of W-only stage",
+    "reason": "Qualified linear compiler correctly rejected an inconsistent zero-pressure factor set versus declared pressure-stiffening component profile.",
+    "rejectionCode": "PIPING_COMPONENT_PRESSURE_STIFFENING_RULE_MISMATCH"
+  },
+  "experiment": {
+    "baseline": "D1-total-relative-tangential-displacement-direction",
+    "changedMechanic": "PHYSICAL_LOAD_COMPONENT_ORDER_ONLY",
+    "frozenMechanics": [
+      "D1_TOTAL_RELATIVE_TANGENTIAL_DIRECTION",
+      "FRICTION_STIFFNESS",
+      "COULOMB_CAP_MAGNITUDE",
+      "NORMAL_REACTION_BASIS",
+      "STATE_BOUNDARIES_AND_HYSTERESIS",
+      "RETURN_MAPPED_SLIP_OFFSET_FORM",
+      "SECANT_ACCELERATION",
+      "CONVERGENCE_GATES_AND_LIMITS",
+      "COMPARISON_GOAL"
+    ],
+    "intermediateStateImplementation": "NATIVE_PRIMITIVE_FORMULA_ON_L13_CASE_ID_TO_PRESERVE_L13_FRICTION_AUTHORITY",
+    "orders": {
+      "P1_FIRST": [
+        "P1",
+        "W+P1"
+      ],
+      "W_FIRST": [
+        "W",
+        "W+P1"
+      ]
+    },
+    "perStageMaximumIterations": 400,
+    "productionSolverModified": false
+  },
+  "fullLocalArtifactSha256": {
+    "D1": "44d58511281d4f17b636839f9983beccc1028a51df5b3b0947ea1e4acf216de8",
+    "P1_FIRST": "b294c20b21ae637fc23fc7eaf68e8dc3a9c7b6032c6e81f22d562d5879d38386",
+    "W_FIRST": "4b6306f354807124da968942cfa7ad5d8d141d0adb8187c5d377497fbadcac80",
+    "harness": "a71457f3aada617f138f56e0f72159560d345a0e3394a8d44b5f1add68929052"
+  },
+  "schema": "m047-bm4l-stage2-load-component-order-evidence/v1",
+  "source": {
+    "accdbByteLength": 5136384,
+    "accdbSha256": "64c05a50e9ed0452622ff5880335460486f24ac8e6adecc9a300b549c9aa82f8",
+    "pr1090FrozenHead": "12c695a9ed9a3dedada1d45024712df911069a80",
+    "pr1102HeadBeforeBatch": "8e12a60068695804a8e42a77d4d435431d36121e"
+  },
+  "status": "MEASURED_REAL_PINNED_ACCDB"
+}

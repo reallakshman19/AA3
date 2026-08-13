@@ -34,7 +34,12 @@ test.afterAll(async () => {
   await writeFile(REPORT, `${JSON.stringify({
     schema: 'TopologyEditA3D003CrossSurfaceMatrix.v1',
     candidateHead: process.env.TOPOLOGY_EDIT_TARGET_HEAD_SHA || null,
-    operation: { commandType: 'MOVE_NODE', movementMode: 'NODE_ONLY', delta: { x: 0, y: 0, z: STEP_MM } },
+    operation: {
+      commandType: 'MOVE_NODE',
+      movementMode: 'NODE_ONLY',
+      change: 'OUTWARD_COLLINEAR_TERMINAL_PIPE',
+      distanceMm: STEP_MM,
+    },
     order: ['mock1:canvas', 'mock1:table', 'mock2:canvas', 'mock2:table'],
     status: DEFECTS.length ? 'FAIL' : 'PASS',
     defects: DEFECTS,
@@ -56,11 +61,7 @@ async function matrixCase(page, testInfo, fixtureId, surface) {
     const host = await openFixture(page, FIXTURES[fixtureId]);
     const target = await selectSafeMatrixTarget(page);
     const baseline = await authority(page, target);
-    const requestedPosition = {
-      x: baseline.nodePosition.x,
-      y: baseline.nodePosition.y,
-      z: baseline.nodePosition.z + STEP_MM,
-    };
+    const requestedPosition = target.requestedPosition;
 
     let interactionEvidence;
     if (surface === 'canvas') {
@@ -131,7 +132,7 @@ async function openFixture(page, fixture) {
 }
 
 async function selectSafeMatrixTarget(page) {
-  return page.evaluate(() => {
+  return page.evaluate((stepMm) => {
     const controller = document.querySelector('[data-role="topology-edit-render-host"]')
       ?.__topologyEditAuthoringController;
     const topology = controller.session.currentTopology();
@@ -154,27 +155,53 @@ async function selectSafeMatrixTarget(page) {
     for (const edge of [...topology.edges].sort((a, b) => (
       String(a.componentKey ?? a.id).localeCompare(String(b.componentKey ?? b.id))
     ))) {
+      if (String(edge.entityType ?? '').toUpperCase() !== 'PIPE') continue;
       if (supportHosts.has(edge.id) || supportHosts.has(edge.componentKey)) continue;
       for (const endpoint of ['FROM', 'TO']) {
         const nodeId = endpoint === 'FROM' ? edge.fromNodeId : edge.toNodeId;
+        const anchorNodeId = endpoint === 'FROM' ? edge.toNodeId : edge.fromNodeId;
         if ((degree.get(nodeId) ?? 0) !== 1 || supportNodes.has(nodeId)) continue;
         const node = nodes.get(nodeId);
-        if (!node) continue;
+        const anchor = nodes.get(anchorNodeId);
+        if (!node || !anchor) continue;
+        const delta = {
+          x: node.position.x - anchor.position.x,
+          y: node.position.y - anchor.position.y,
+          z: node.position.z - anchor.position.z,
+        };
+        const length = Math.hypot(delta.x, delta.y, delta.z);
+        if (!(length > 1e-9)) continue;
+        const unit = {
+          x: delta.x / length,
+          y: delta.y / length,
+          z: delta.z / length,
+        };
         rows.push({
           edgeId: edge.id,
           componentKey: edge.componentKey ?? edge.id,
+          entityType: edge.entityType,
           endpoint,
           nodeId,
+          anchorNodeId,
           boundary: boundaryNodes.has(nodeId),
           position: { ...node.position },
+          anchorPosition: { ...anchor.position },
+          originalLengthMm: length,
+          requestedPosition: {
+            x: node.position.x + unit.x * stepMm,
+            y: node.position.y + unit.y * stepMm,
+            z: node.position.z + unit.z * stepMm,
+          },
         });
       }
     }
     const preferred = rows.filter((row) => !row.boundary);
     const target = (preferred.length ? preferred : rows)[0];
-    if (!target) throw new Error('A3D-003: no terminal support-free NODE_ONLY target is available.');
+    if (!target) {
+      throw new Error('A3D-003: no terminal support-free PIPE NODE_ONLY target is available.');
+    }
     return target;
-  });
+  }, STEP_MM);
 }
 
 async function moveViaCanvas(page, host, target, requestedPosition) {
@@ -184,10 +211,19 @@ async function moveViaCanvas(page, host, target, requestedPosition) {
   await page.mouse.click(pickEvidence.point.x, pickEvidence.point.y);
   await expect(host).toHaveAttribute('data-topology-edit-selection-primary-id', target.nodeId);
 
-  const increment = page.locator('[data-role="interaction-nudge-increment"]');
-  await expect(increment).toBeEnabled();
-  await increment.fill(String(STEP_MM));
-  await page.locator('[data-action="nudge-professional-interaction"][data-axis="Z"][data-sign="1"]').click();
+  const current = target.position;
+  const delta = {
+    x: requestedPosition.x - current.x,
+    y: requestedPosition.y - current.y,
+    z: requestedPosition.z - current.z,
+  };
+  const interactionPanel = page.locator('[data-role="topology-edit-professional-interaction"]');
+  await expect(interactionPanel).toBeVisible();
+  await interactionPanel.locator('[data-role="interaction-entry-mode"]').selectOption('DELTA');
+  await interactionPanel.locator('[data-role="interaction-value-x"]').fill(String(delta.x));
+  await interactionPanel.locator('[data-role="interaction-value-y"]').fill(String(delta.y));
+  await interactionPanel.locator('[data-role="interaction-value-z"]').fill(String(delta.z));
+  await interactionPanel.locator('[data-action="preview-professional-interaction"]').click();
   await expect.poll(() => host.getAttribute('data-topology-edit-interaction-preview-hash')).toBeTruthy();
   const preview = await page.evaluate(() => {
     const controller = document.querySelector('[data-role="topology-edit-render-host"]')
@@ -199,7 +235,7 @@ async function moveViaCanvas(page, host, target, requestedPosition) {
     };
   });
   expect(preview.targetPosition).toEqual(requestedPosition);
-  await page.locator('[data-action="apply-professional-interaction"]').click();
+  await interactionPanel.locator('[data-action="apply-professional-interaction"]').click();
   await expect.poll(() => host.getAttribute('data-topology-edit-interaction-acceptance-hash')).toBeTruthy();
   const acceptance = await page.evaluate(() => {
     const controller = document.querySelector('[data-role="topology-edit-render-host"]')

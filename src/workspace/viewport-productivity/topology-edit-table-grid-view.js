@@ -30,7 +30,7 @@ export function renderTopologyEditTableGrid(runtime) {
   }
   const window = topologyEditTableRowWindow(rows.length, runtime.tableWindowStart);
   const renderedRows = rows.slice(window.start, window.end);
-  const columns = topologyEditTableVisibleColumns(runtime.projection);
+  const columns = topologyEditTableVisibleColumns(runtime.projection, runtime.columnProfile);
   const primary = runtime.projection.rows.find((row) => row.rowId === runtime.viewState.primaryRowId) ?? null;
   const selected = new Set(runtime.viewState.selectedRowIds);
   const staged = new Map((runtime.batch?.intents ?? []).map((intent) => [intent.target.canonicalId, intent]));
@@ -40,9 +40,10 @@ export function renderTopologyEditTableGrid(runtime) {
   const typeSummary = topologyEditTableTypeSummary(runtime.projection.rows);
   const columnCount = columns.length + 1;
   element.innerHTML = `
-    <section class="topology-edit-table topology-edit-table--populated" data-table-phase="${escapeHtml(runtime.phase())}">
+    <section class="topology-edit-table topology-edit-table--populated" data-table-phase="${escapeHtml(runtime.phase())}" data-table-profile-active="${escapeHtml(runtime.columnProfile)}">
       <header class="topology-edit-table__header">
         <div><strong>Engineering table</strong><span>${rows.length} / ${runtime.projection.rows.length} rows · ${escapeHtml(typeSummary)}</span></div>
+        <nav class="topology-edit-table__profiles" aria-label="Engineering Table column profile">${profileButtons(runtime.columnProfile)}</nav>
         <label>Filter <input type="search" data-table-filter value="${escapeHtml(runtime.viewState.query)}" placeholder="Tag, type, ID, property, source…"></label>
       </header>
       <div class="topology-edit-table__upper" data-table-upper-region>
@@ -192,6 +193,17 @@ function sortHeader(column, state) {
   const frozen = column.frozen ? ` data-table-frozen="${escapeHtml(column.key)}"` : '';
   return `<th scope="col" data-table-column-key="${escapeHtml(column.key)}"${frozen}><button type="button" data-table-sort="${escapeHtml(column.key)}">${escapeHtml(column.label)}${marker}</button></th>`;
 }
+function profileButtons(activeInput) {
+  const active = String(activeInput ?? 'GEOMETRY').trim().toUpperCase();
+  return [
+    ['GEOMETRY', 'Geometry'],
+    ['SPECIFICATION', 'Specification'],
+    ['SUPPORT', 'Supports'],
+    ['CONNECTIVITY', 'Connectivity'],
+    ['AUTHORITY', 'Authority'],
+    ['ALL', 'All'],
+  ].map(([key, label]) => `<button type="button" data-table-profile="${key}" aria-pressed="${String(key === active)}">${label}</button>`).join('');
+}
 function value(row, key) { return key === 'elementType' ? row.elementType : row.fields?.[key] ?? null; }
 function displayValue(valueInput) {
   if (valueInput === null || valueInput === undefined || valueInput === '') return '—';
@@ -226,6 +238,7 @@ function publishEvidence(runtime, visibleCount, renderedCount, window) {
   host.dataset.topologyEditTableWindowStart = String(window?.start ?? 0);
   host.dataset.topologyEditTableWindowEnd = String(window?.end ?? renderedCount);
   host.dataset.topologyEditTableSelectedRowIds = runtime.viewState.selectedRowIds.join(',');
+  host.dataset.topologyEditTableProfile = runtime.columnProfile ?? 'GEOMETRY';
   host.dataset.topologyEditTableBatchHash = runtime.batch?.batchHash ?? '';
   host.dataset.topologyEditTablePlanHash = runtime.batchPlan?.planHash ?? '';
   host.dataset.topologyEditTablePreviewHash = runtime.preview?.previewHash ?? '';

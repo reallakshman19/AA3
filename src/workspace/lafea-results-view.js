@@ -16,7 +16,7 @@ export function renderLafeaEvidence(root, stageId, documentValue, state, executi
   if (diagnostics.length) wrapper.append(diagnosticsView(root, diagnostics));
 
   if (!execution) {
-    wrapper.append(create(root, 'p', null, 'No calculation has been run for this stage.'));
+    wrapper.append(emptyResultState(root));
     return wrapper;
   }
 
@@ -26,12 +26,18 @@ export function renderLafeaEvidence(root, stageId, documentValue, state, executi
     'p',
     'lafea-workbench__authority',
     accepted
-      ? 'Retained result evidence accepted by the current stage result contract.'
+      ? 'Analysis completed. Retained result evidence is accepted by the current stage result contract.'
       : 'No authoritative result is available for this execution.',
   ));
 
   if (accepted && execution.result) {
     const units = resolveLafeaUnits(stageId, documentValue);
+    const highlights = buildEngineeringHighlights(
+      stageId,
+      execution.result,
+      documentValue?.units ?? units,
+    );
+    if (highlights) wrapper.append(engineeringHighlightsView(root, highlights));
     const presentation = presentLafeaResult(stageId, execution.result, units);
     wrapper.append(presentationView(root, presentation));
     if (stageId === 'LAFEA.4') {
@@ -43,6 +49,172 @@ export function renderLafeaEvidence(root, stageId, documentValue, state, executi
 
   if (execution.result) wrapper.append(rawEvidence(root, execution.result));
   return wrapper;
+}
+
+function emptyResultState(root) {
+  const section = create(root, 'section', 'lafea-result-empty');
+  section.dataset.role = 'lafea-result-empty';
+  section.append(
+    create(root, 'strong', null, 'No analysis result yet'),
+    create(root, 'p', null, 'Complete the model, mesh and authorization gates, then run the registered analysis. Computed displacements, stresses, reactions and energy will appear here.'),
+  );
+  return section;
+}
+
+function engineeringHighlightsView(root, model) {
+  const section = create(root, 'section', 'lafea-result-highlights');
+  section.dataset.role = 'lafea-result-highlights';
+  const heading = create(root, 'div', 'lafea-result-highlights__heading');
+  heading.append(
+    create(root, 'div', null, undefined),
+    create(root, 'strong', 'lafea-result-highlights__status', 'COMPUTED'),
+  );
+  heading.firstElementChild.append(
+    create(root, 'h3', null, 'Engineering result summary'),
+    create(root, 'p', null, `${model.loadCaseCount} retained load case${model.loadCaseCount === 1 ? '' : 's'} · values below are derived from the retained solver result.`),
+  );
+  section.append(heading);
+
+  const grid = create(root, 'div', 'lafea-result-highlights__grid');
+  model.metrics.forEach((metric) => {
+    const item = create(root, 'article', 'lafea-result-highlight');
+    item.dataset.metric = metric.id;
+    item.append(
+      create(root, 'span', 'lafea-result-highlight__label', metric.label),
+      create(root, 'strong', 'lafea-result-highlight__value', `${format(metric.value)}${metric.unit ? ` ${metric.unit}` : ''}`),
+      create(root, 'span', 'lafea-result-highlight__location', metric.location),
+    );
+    grid.append(item);
+  });
+  section.append(grid);
+
+  if (model.solverMethods.length) {
+    section.append(create(
+      root,
+      'p',
+      'lafea-result-highlights__solver',
+      `Solver evidence: ${model.solverMethods.join(' • ')}`,
+    ));
+  }
+  if (model.recoveryDisclosure) {
+    section.append(create(root, 'p', 'lafea-result-highlights__recovery', model.recoveryDisclosure));
+  }
+  return section;
+}
+
+function buildEngineeringHighlights(stageId, result, unitsValue) {
+  if (stageId !== 'LAFEA.3' || !result || typeof result !== 'object') return null;
+  const units = unitsValue && typeof unitsValue === 'object' ? unitsValue : {};
+  const loadCases = Array.isArray(result.loadCaseResults) ? result.loadCaseResults : [];
+  const lengthUnit = units.length ?? '';
+  const stressUnit = units.stress ?? '';
+  const forceUnit = units.force ?? '';
+  const energyUnit = forceUnit && lengthUnit ? `${forceUnit}·${lengthUnit}` : '';
+  const metrics = [];
+  let maxDisplacement = null;
+  let maxVonMises = null;
+  let maxSigmaX = null;
+  let maxReaction = null;
+  let maxResidual = null;
+  let totalEnergy = 0;
+  let energySeen = false;
+  const solverMethods = new Set();
+
+  for (const loadCase of loadCases) {
+    const loadCaseId = String(loadCase?.loadCaseId ?? 'load case');
+    for (const row of array(loadCase?.nodalDisplacements)) {
+      if (!Number.isFinite(row?.ux) || !Number.isFinite(row?.uy)) continue;
+      const value = Math.hypot(row.ux, row.uy);
+      maxDisplacement = larger(maxDisplacement, {
+        value,
+        location: `${loadCaseId} · node ${row.nodeId ?? 'UNKNOWN'}`,
+      });
+    }
+    if (Number.isFinite(loadCase?.totalStrainEnergy)) {
+      totalEnergy += loadCase.totalStrainEnergy;
+      energySeen = true;
+    }
+    if (typeof loadCase?.solverEvidence?.method === 'string') {
+      solverMethods.add(loadCase.solverEvidence.method);
+    }
+    for (const row of array(loadCase?.reactions)) {
+      if (!Number.isFinite(row?.value)) continue;
+      maxReaction = larger(maxReaction, {
+        value: Math.abs(row.value),
+        location: `${loadCaseId} · ${row.dofIdentity ?? 'constrained DOF'}`,
+      });
+    }
+    for (const row of array(loadCase?.freeDofResiduals)) {
+      if (!Number.isFinite(row?.value)) continue;
+      maxResidual = larger(maxResidual, {
+        value: Math.abs(row.value),
+        location: `${loadCaseId} · ${row.dofIdentity ?? 'free DOF'}`,
+      });
+    }
+    for (const elementResult of array(loadCase?.elementResults)) {
+      const elementId = String(elementResult?.elementId ?? 'UNKNOWN');
+      if (Number.isFinite(elementResult?.vonMises)) {
+        maxVonMises = larger(maxVonMises, {
+          value: elementResult.vonMises,
+          location: `${loadCaseId} · element ${elementId}`,
+        });
+      }
+      if (Number.isFinite(elementResult?.stress?.sigmaX)) {
+        maxSigmaX = larger(maxSigmaX, {
+          value: Math.abs(elementResult.stress.sigmaX),
+          location: `${loadCaseId} · element ${elementId}`,
+        });
+      }
+      array(elementResult?.gaussPointResults).forEach((point, pointIndex) => {
+        const sx = finite(point?.stress?.sigmaX);
+        const sy = finite(point?.stress?.sigmaY);
+        const txy = finite(point?.stress?.tauXY);
+        if (sx !== null) {
+          maxSigmaX = larger(maxSigmaX, {
+            value: Math.abs(sx),
+            location: `${loadCaseId} · element ${elementId} · IP ${pointIndex + 1}`,
+          });
+        }
+        if (sx !== null && sy !== null && txy !== null) {
+          const vonMises = Math.sqrt(Math.max(0, sx * sx - sx * sy + sy * sy + 3 * txy * txy));
+          maxVonMises = larger(maxVonMises, {
+            value: vonMises,
+            location: `${loadCaseId} · element ${elementId} · IP ${pointIndex + 1}`,
+          });
+        }
+      });
+    }
+  }
+
+  pushMetric(metrics, 'max-displacement', 'Max displacement', maxDisplacement, lengthUnit);
+  pushMetric(metrics, 'max-von-mises', 'Max von Mises', maxVonMises, stressUnit);
+  pushMetric(metrics, 'max-sigma-x', 'Max |σx|', maxSigmaX, stressUnit);
+  pushMetric(metrics, 'max-reaction', 'Max reaction', maxReaction, forceUnit);
+  pushMetric(metrics, 'max-free-residual', 'Max free-DOF residual', maxResidual, forceUnit);
+  if (energySeen) metrics.push({
+    id: 'total-strain-energy',
+    label: 'Total strain energy',
+    value: totalEnergy,
+    unit: energyUnit,
+    location: `Sum across ${loadCases.length} retained load case${loadCases.length === 1 ? '' : 's'}`,
+  });
+
+  return {
+    loadCaseCount: loadCases.length,
+    metrics,
+    solverMethods: [...solverMethods].sort(),
+    recoveryDisclosure: 'T6/Q8 integration-point stress is authoritative; projected nodal contour values are display-only.',
+  };
+}
+
+function pushMetric(metrics, id, label, candidate, unit) {
+  if (!candidate) return;
+  metrics.push({ id, label, value: candidate.value, unit, location: candidate.location });
+}
+
+function larger(current, candidate) {
+  if (!candidate || !Number.isFinite(candidate.value)) return current;
+  return !current || candidate.value > current.value ? candidate : current;
 }
 
 function presentationView(root, presentation) {
@@ -253,6 +425,8 @@ function humanizeIdentity(value) {
   if (!value) return 'UNRESOLVED_FORMULA_IDENTITY';
   return String(value).replace(/_/g, ' ');
 }
+function array(value) { return Array.isArray(value) ? value : []; }
+function finite(value) { return Number.isFinite(value) ? value : null; }
 
 function format(value) {
   if (typeof value !== 'number') return String(value ?? '');

@@ -1,9 +1,8 @@
-import { createTopologyEditTableBatch } from '../topology-edit/table/topology-edit-table-batch.js';
-import { planTopologyEditTableBatch } from '../topology-edit/table/topology-edit-table-batch-planner.js';
 import {
   deriveTopologyEditTableNodePositionCapability,
   deriveTopologyEditTableSupportPlacementCapability,
 } from '../topology-edit/table/topology-edit-table-edit-capability.js';
+import { planTopologyEditTableDraft } from '../topology-edit/table/topology-edit-table-draft-plan.js';
 import { createTopologyEditTableIntent } from '../topology-edit/table/topology-edit-table-intent.js';
 import {
   resolveTopologyEditTableValveCatalogueSelection,
@@ -152,24 +151,19 @@ export function stageTopologyEditTeeReducerRelation(runtime, canonicalId) {
 function stage(runtime, intentFactory) {
   try {
     const intent = intentFactory();
-    const canonicalId = intent.target.canonicalId;
-    const intents = [
-      ...runtime.intents.filter((row) => row.target.canonicalId !== canonicalId),
+    const draft = planTopologyEditTableDraft({
+      intents: runtime.intents,
       intent,
-    ];
-    const batch = createTopologyEditTableBatch({ intents });
-    const batchPlan = planTopologyEditTableBatch({
-      batch,
       projection: runtime.projection,
       canonicalTopology: runtime.controller.session.currentTopology(),
     });
-    runtime.intents = intents;
-    runtime.batch = batch;
-    runtime.batchPlan = batchPlan;
+    runtime.intents = [...draft.intents];
+    runtime.batch = draft.batch;
+    runtime.batchPlan = draft.batchPlan;
     runtime.staleResult = null;
     runtime.clearCandidate();
     runtime.error = null;
-    runtime.message = `${batch.intentCount} table change(s) staged against the exact certified revision.`;
+    runtime.message = `${draft.batch.intentCount} table change(s) staged against the exact certified revision.`;
   } catch (error) {
     runtime.error = error instanceof Error ? error.message : String(error);
   }

@@ -8,8 +8,9 @@ import { spawnSync } from 'node:child_process';
 import { buildCandidateSource } from './lfea-m047-stage2-direction-only-experiment.mjs';
 
 const solverPath = resolve('src/core/fea-benchmarks/caesar-accdb-friction-solve.js');
+const experimentPath = resolve('scripts/lfea-m047-stage2-direction-only-experiment.mjs');
 const production = readFileSync(solverPath, 'utf8');
-const experimentSource = readFileSync(resolve('scripts/lfea-m047-stage2-direction-only-experiment.mjs'), 'utf8');
+const experimentSource = readFileSync(experimentPath, 'utf8');
 const baselineRule = "slipDirectionRule: 'UNIT_RELATIVE_TANGENTIAL_DISPLACEMENT_V1',";
 const candidateRule = "slipDirectionRule: 'UNIT_TOTAL_RELATIVE_TANGENTIAL_DISPLACEMENT_V1_EXPERIMENTAL',";
 
@@ -39,6 +40,9 @@ assert.match(experimentSource, /reactionUpdateTailN/u,
   'nonconvergence evidence must retain reaction-update tail history');
 assert.match(experimentSource, /PHYSICS_AND_DETERMINISM_FIRST_THEN_ACCURACY/u,
   'promotion must gate on physics and determinism before accuracy');
+
+const runnerSyntax = spawnSync(process.execPath, ['--check', experimentPath], { encoding: 'utf8' });
+assert.equal(runnerSyntax.status, 0, `direction experiment runner must parse: ${runnerSyntax.stderr}`);
 
 const tempPath = resolve(tmpdir(), `m047-direction-only-check-${process.pid}.mjs`);
 writeFileSync(tempPath, candidate, 'utf8');

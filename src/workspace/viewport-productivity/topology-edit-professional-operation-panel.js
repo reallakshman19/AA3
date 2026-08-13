@@ -59,7 +59,11 @@ export function renderTopologyEditProfessionalOperationPanel(element, state = {}
       <output aria-live="polite">${html(state.error || state.message || 'Ready.')}</output>
     </header>
     ${contextualMigrationCallout(disposition)}
-    ${componentHud(state.componentContext)}
+    ${componentHud(
+      state.componentContext,
+      state.catalogue?.records ?? [],
+      values.catalogueRecordId,
+    )}
     ${capabilityCallout(capability)}
     <div class="topology-edit-professional-operation__grid">
       ${field('Operation', select('professional-operation-type', operationOptions))}
@@ -180,7 +184,7 @@ function capabilityCallout(capability) {
   </section>`;
 }
 
-function componentHud(context) {
+function componentHud(context, catalogueRecords, selectedRecordId) {
   if (!context || context.status === 'NO_SELECTION') return '';
   const fields = (context.fieldSchema ?? []).map((row) => `
     <div data-field-key="${attr(row.key)}">
@@ -188,6 +192,10 @@ function componentHud(context) {
       <dd>${html(formatFieldValue(row.value, row.unit))}<small>${html(row.source)}</small></dd>
     </div>`).join('');
   const diagnostic = context.diagnostics?.[0]?.message ?? '';
+  const candidates = componentCatalogueRecords(catalogueRecords, context);
+  const catalogueOptions = candidates.map((record) => (
+    `<option value="${attr(record.recordId)}"${record.recordId === selectedRecordId ? ' selected' : ''}>${html(catalogueRecordLabel(record))}</option>`
+  )).join('');
   return `
     <section class="topology-edit-component-hud" data-role="topology-edit-component-hud" data-component-type="${attr(context.componentType)}" data-context-status="${attr(context.status)}" aria-label="Selected component engineering context">
       <header>
@@ -196,9 +204,27 @@ function componentHud(context) {
       </header>
       <p>${html(diagnostic)}</p>
       <dl>${fields}</dl>
+      <label><span>Governed catalogue candidates</span><select data-role="professional-catalogue-record" disabled aria-readonly="true"><option value="">${candidates.length ? 'No exact record selected' : 'No exact record for current context'}</option>${catalogueOptions}</select></label>
       <small>${context.candidateRecordIds.length} governed catalogue candidate(s)</small>
       <details><summary>Canonical custody evidence</summary><code>${html(context.selectedCanonicalId)}</code></details>
     </section>`;
+}
+
+function componentCatalogueRecords(records, context) {
+  const ids = new Set(context?.candidateRecordIds ?? []);
+  return records.filter((record) => ids.has(record.recordId));
+}
+
+function catalogueRecordLabel(record) {
+  const details = {
+    FLANGE: [record.flangeClass, record.flangeFacing],
+    VALVE: [record.valveType, `${record.valveFaceToFaceMm} mm F2F`],
+    REDUCER: [
+      `${record.nominalSizeMm}→${record.secondaryNominalSizeMm} mm`,
+      record.reducerOrientation,
+    ],
+  }[record.componentType] ?? [record.componentType];
+  return [record.recordId, ...details.filter(Boolean)].join(' · ');
 }
 
 function humanTarget(context) {

@@ -3,6 +3,7 @@ import { numericalError, singularError } from './errors.js';
 import { resolveImposedDisplacementIndices } from './imposed-displacement-loads.js';
 import { dot, matrixVector, zeros } from './matrix.js';
 import { canonicalNumber, maxAbs, tolerance } from './numeric.js';
+import { rigidReferenceConditioning } from './rigid-reference-conditioning.js';
 import {
   restrictSymmetricCsr,
   sparseMatrixVector,
@@ -14,19 +15,33 @@ const DENSE_CHOLESKY_REFINEMENT_STEPS = 3;
 export function solvePartitioned(model, mesh, load) {
   const constraints = constraintData(model, mesh.dofOrdering, load);
   const free = freeIndices(mesh.dofOrdering.length, constraints.indexSet);
-  const displacement = prescribedVector(mesh.dofOrdering.length, constraints);
+  const conditioning = rigidReferenceConditioning(
+    model,
+    mesh.dofOrdering,
+    constraints,
+  );
+  const correction = prescribedVector(
+    mesh.dofOrdering.length,
+    conditioning.constraints,
+  );
   const solved = solveFreeSystem(
     model,
     mesh,
     load.forceVector,
     free,
-    constraints,
-    displacement,
+    conditioning.constraints,
+    correction,
   );
   solved.solution.forEach((value, position) => {
-    displacement[free[position]] = value;
+    correction[free[position]] = value;
   });
-  const residual = equilibriumResidual(mesh, displacement, load.forceVector);
+  const displacement = correction.map((value, index) => (
+    value + conditioning.referenceVector[index]
+  ));
+  constraints.indices.forEach((index, position) => {
+    displacement[index] = constraints.values[position];
+  });
+  const residual = equilibriumResidual(mesh, correction, load.forceVector);
   const qualification = qualifyResiduals(
     model,
     mesh.dofOrdering,

@@ -55,15 +55,19 @@ export class TopologyEditProjectCatalogueRuntime {
   async load() {
     const requestSequence = ++this.requestSequence;
     const datasetIdentity = normalizeDatasetIdentity(this.getDatasetIdentity());
-    const loaded = await this.provider.load({
-      datasetIdentity,
-      baseURI: this.getBaseURI(),
-    });
-    const currentIdentity = normalizeDatasetIdentity(this.getDatasetIdentity());
-    if (
-      requestSequence !== this.requestSequence
-      || !sameDatasetIdentity(datasetIdentity, currentIdentity)
-    ) {
+    let loaded;
+    try {
+      loaded = await this.provider.load({
+        datasetIdentity,
+        baseURI: this.getBaseURI(),
+      });
+    } catch (error) {
+      if (this.isStaleRequest(requestSequence, datasetIdentity)) {
+        return { status: 'STALE', custody: null };
+      }
+      throw error;
+    }
+    if (this.isStaleRequest(requestSequence, datasetIdentity)) {
       return { status: 'STALE', custody: null };
     }
     const catalogue = createTopologyEditSpecificationCatalogue(loaded?.catalogue);
@@ -74,8 +78,17 @@ export class TopologyEditProjectCatalogueRuntime {
       sourceLocator: loaded?.sourceLocator,
       catalogue,
     });
+    if (this.isStaleRequest(requestSequence, datasetIdentity)) {
+      return { status: 'STALE', custody: null };
+    }
     this.custody = custody;
     return { status: 'CURRENT', custody };
+  }
+
+  isStaleRequest(requestSequence, datasetIdentity) {
+    if (requestSequence !== this.requestSequence) return true;
+    const currentIdentity = normalizeDatasetIdentity(this.getDatasetIdentity());
+    return !sameDatasetIdentity(datasetIdentity, currentIdentity);
   }
 
   destroy() {

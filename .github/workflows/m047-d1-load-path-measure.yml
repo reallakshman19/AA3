@@ -1,0 +1,154 @@
+name: M047 D1 load-path pinned measurement
+
+on:
+  push:
+    branches:
+      - agent/m047-stage2-measure-load-path-20260813
+    paths:
+      - '.github/workflows/m047-d1-load-path-measure.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  measure:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    env:
+      SOURCE_HEAD: '862fa28f328ce279aca421044bee486246427583'
+      EVIDENCE_HEAD: 'ee777d92c6fa833e33639de58e16637855b2402f'
+      BM4L_COMMON_COMMIT: '45d51ea18624f5775805f399110c1738301c0d90'
+      BM4L_ZIP_SHA256: '978617cba50fa0b1a16c2fa71dc1e0d38e55ac834b191f887d100c6951abd8b9'
+      BM4L_ZIP_SIZE: '582488'
+      BM4L_ACCDB_SHA256: '64c05a50e9ed0452622ff5880335460486f24ac8e6adecc9a300b549c9aa82f8'
+      BM4L_ACCDB_SIZE: '5136384'
+    steps:
+      - name: Checkout exact measurement source
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ env.SOURCE_HEAD }}
+          persist-credentials: false
+
+      - name: Prove exact source head
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$(git rev-parse HEAD)" = "$SOURCE_HEAD"
+          test -z "$(git status --porcelain)"
+
+      - name: Set up Node 22
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+
+      - name: Install dependencies
+        shell: bash
+        run: npm ci
+
+      - name: Fetch immutable measured evidence and pinned BM4_L
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p artifacts/measurement/evidence artifacts/bm4l-stage2/source reports
+          curl --fail --location --silent --show-error \
+            "https://raw.githubusercontent.com/reallaksh19/Advanced_Analysis/${EVIDENCE_HEAD}/reports/lfea-m047-stage2-real-d1-evidence.json" \
+            -o artifacts/measurement/evidence/real-d1.json
+          curl --fail --location --silent --show-error \
+            "https://raw.githubusercontent.com/reallaksh19/Advanced_Analysis/${EVIDENCE_HEAD}/reports/lfea-m047-stage2-next-accuracy-batch-evidence.json" \
+            -o artifacts/measurement/evidence/next-accuracy.json
+          curl --fail --location --silent --show-error \
+            "https://raw.githubusercontent.com/reallaksh19/Common/${BM4L_COMMON_COMMIT}/LFEA/BM4/BM4_L.zip" \
+            -o artifacts/measurement/BM4_L.zip
+          test "$(stat -c '%s' artifacts/measurement/BM4_L.zip)" = "$BM4L_ZIP_SIZE"
+          echo "${BM4L_ZIP_SHA256}  artifacts/measurement/BM4_L.zip" | sha256sum -c -
+          unzip -q artifacts/measurement/BM4_L.zip -d artifacts/bm4l-stage2/source
+          test -f artifacts/bm4l-stage2/source/BM4_L.ACCDB
+          test "$(stat -c '%s' artifacts/bm4l-stage2/source/BM4_L.ACCDB)" = "$BM4L_ACCDB_SIZE"
+          echo "${BM4L_ACCDB_SHA256}  artifacts/bm4l-stage2/source/BM4_L.ACCDB" | sha256sum -c -
+          sha256sum artifacts/measurement/evidence/*.json artifacts/bm4l-stage2/source/BM4_L.ACCDB \
+            > artifacts/measurement/input-sha256.txt
+
+      - name: Run Stage 2 contracts before measurement
+        shell: bash
+        run: |
+          set -euo pipefail
+          node scripts/lfea-m047-stage2-rca-evidence-batch-check.mjs \
+            > artifacts/measurement/preflight.stdout.txt \
+            2> artifacts/measurement/preflight.stderr.txt
+
+      - name: Execute N1 N5 N10 pinned measurement twice each
+        id: experiment
+        shell: bash
+        run: |
+          set +e
+          node scripts/lfea-m047-stage2-d1-load-path-experiment.mjs \
+            --accdb artifacts/bm4l-stage2/source/BM4_L.ACCDB \
+            --d1-evidence artifacts/measurement/evidence/real-d1.json \
+            --next-accuracy-evidence artifacts/measurement/evidence/next-accuracy.json \
+            --out reports/lfea-m047-stage2-d1-load-path-L13.json \
+            > artifacts/measurement/experiment.stdout.txt \
+            2> artifacts/measurement/experiment.stderr.txt
+          code=$?
+          echo "$code" > artifacts/measurement/experiment-exit-code.txt
+          echo "exit_code=$code" >> "$GITHUB_OUTPUT"
+          exit 0
+
+      - name: Finalize successful measurement
+        if: steps.experiment.outputs.exit_code == '0'
+        shell: bash
+        run: |
+          set -euo pipefail
+          node scripts/lfea-m047-stage2-d1-load-path-finalize.mjs \
+            --experiment reports/lfea-m047-stage2-d1-load-path-L13.json \
+            --d1-evidence artifacts/measurement/evidence/real-d1.json \
+            --next-accuracy-evidence artifacts/measurement/evidence/next-accuracy.json \
+            --out reports/lfea-m047-stage2-d1-load-path-finalization.json \
+            > artifacts/measurement/finalize.stdout.txt \
+            2> artifacts/measurement/finalize.stderr.txt
+
+      - name: Emit measurement receipt
+        if: always()
+        shell: bash
+        run: |
+          set -euo pipefail
+          node - <<'NODE'
+          const fs = require('fs');
+          const read = (p) => fs.existsSync(p) ? JSON.parse(fs.readFileSync(p, 'utf8')) : null;
+          const experiment = read('reports/lfea-m047-stage2-d1-load-path-L13.json');
+          const finalization = read('reports/lfea-m047-stage2-d1-load-path-finalization.json');
+          const exitCode = Number(fs.readFileSync('artifacts/measurement/experiment-exit-code.txt', 'utf8').trim());
+          const receipt = {
+            schema: 'm047-d1-load-path-actions-receipt/v1',
+            sourceHead: process.env.SOURCE_HEAD,
+            evidenceHead: process.env.EVIDENCE_HEAD,
+            commonCommit: process.env.BM4L_COMMON_COMMIT,
+            accdbSha256: process.env.BM4L_ACCDB_SHA256,
+            experimentExitCode: exitCode,
+            experiment,
+            finalization,
+          };
+          fs.writeFileSync('artifacts/measurement/receipt.json', JSON.stringify(receipt, null, 2) + '\n');
+          NODE
+
+      - name: Upload measurement evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: m047-d1-load-path-measurement
+          if-no-files-found: error
+          retention-days: 7
+          path: |
+            artifacts/measurement/**
+            reports/lfea-m047-stage2-d1-load-path-L13.json
+            reports/lfea-m047-stage2-d1-load-path-finalization.json
+
+      - name: Enforce experiment success after evidence upload
+        if: always()
+        shell: bash
+        run: |
+          code="$(cat artifacts/measurement/experiment-exit-code.txt)"
+          if [ "$code" != "0" ]; then
+            echo "Measurement experiment failed with exit code $code; uploaded stderr/receipt are the governed evidence."
+            exit "$code"
+          fi

@@ -4,6 +4,9 @@ import {
   buildTopologyEditRenderPacket,
 } from '../src/workspace/topology-edit/topology-edit-render-packet.js';
 import {
+  TopologyEditReachableTypedViewportBackend,
+} from '../src/workspace/topology-edit/topology-edit-reachable-typed-viewport-backend.js';
+import {
   deriveTopologyEditEndpointAffordances,
 } from '../src/workspace/viewport-interaction/topology-edit-endpoint-affordance-model.js';
 
@@ -44,6 +47,61 @@ test('endpoint affordance carries exact pickTarget and human accessible label', 
   assert.equal(endpoint.pickTarget.objectId, 'node:b');
   assert.equal(endpoint.editable, true);
   assert.equal(endpoint.pickPriority, 100);
+});
+
+test('normal production pickAt gives explicit endpoint affordance custody before component fallback', () => {
+  const backend = Object.create(TopologyEditReachableTypedViewportBackend.prototype);
+  const endpointPick = Object.freeze({ objectKind: 'node', objectId: 'node:b' });
+  backend.pickContext = () => ({ pointer: { x: 0, y: 0 } });
+  backend.pickVisibleEndpoint = (pointer) => {
+    assert.deepEqual(pointer, { x: 0, y: 0 });
+    return endpointPick;
+  };
+
+  assert.equal(backend.pickAt(100, 200), endpointPick);
+});
+
+test('dedicated endpoint picker raycasts only retained endpoint affordance meshes', () => {
+  const endpointObject = {
+    visible: true,
+    userData: {
+      endpointAffordance: true,
+      pickTarget: { objectKind: 'node', objectId: 'node:b' },
+    },
+  };
+  const componentObject = {
+    visible: true,
+    userData: {
+      pickTarget: { objectKind: 'edge', objectId: 'edge:P-001' },
+    },
+  };
+  const backend = Object.create(TopologyEditReachableTypedViewportBackend.prototype);
+  backend.endpointPickObjects = [endpointObject];
+  backend.endpointAffordances = [{ canonicalId: 'node:b' }];
+  backend.activeCamera = {};
+  backend.navigationConfiguration = { pickingRadius: 7 };
+  backend.isSectionHitAllowed = () => true;
+  backend.pickReceipt = (target, point) => ({ ...target, point });
+  backend.pickRaycaster = {
+    params: { Line: {} },
+    setFromCamera(pointer, camera) {
+      assert.deepEqual(pointer, { x: 0, y: 0 });
+      assert.equal(camera, backend.activeCamera);
+    },
+    intersectObjects(objects, recursive) {
+      assert.deepEqual(objects, [endpointObject]);
+      assert.equal(objects.includes(componentObject), false);
+      assert.equal(recursive, false);
+      return [{ object: endpointObject, point: { x: 100, y: 0, z: 0 } }];
+    },
+  };
+
+  assert.deepEqual(backend.pickVisibleEndpoint({ x: 0, y: 0 }), {
+    objectKind: 'node',
+    objectId: 'node:b',
+    point: { x: 100, y: 0, z: 0 },
+  });
+  assert.equal(backend.pickRaycaster.params.Line.threshold, 7);
 });
 
 test('typed primitive presentation evidence supplies human labels without supplying identity', () => {

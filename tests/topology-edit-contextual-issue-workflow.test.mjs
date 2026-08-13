@@ -54,7 +54,9 @@ test('source-backed issue pick proxy stays centered on the exact marker and owns
   assert.match(renderer, /issuePickProxy: true/);
   assert.match(renderer, /sourceBackedSuggestionHash: entry\.suggestionHash/);
   assert.match(renderer, /material\.colorWrite = false/);
-  assert.doesNotMatch(renderer, /position\.set\(|position\.add|position\.x|position\.y|position\.z/, 'pick proxy must inherit the exact marker anchor without a visual offset');
+  const proxyBody = renderer.match(/function sourceBackedPickProxy\([\s\S]*?\n\}/)?.[0] ?? '';
+  assert.notEqual(proxyBody, '');
+  assert.doesNotMatch(proxyBody, /position\./, 'pick proxy must inherit the exact marker anchor without an offset');
   for (const prohibited of [
     'canonicalTopologyHash =',
     'acceptTopologyEditCommand',

@@ -348,7 +348,7 @@ export class TopologyEdit3DViewController extends SearchController {
     if (entityIds.length) {
       this.eventBus.publish(EVENT_TOPICS.VIEWPORT_SELECTION_REQUESTED, {
         entityId: entityIds[0],
-        source: 'topology-edit-issue-review',
+        source: 'viewport',
       });
     }
     this.setStatus(

@@ -6,6 +6,7 @@
  * turn a producer/refinement/recovery rejection into an orchestrator diagnostic
  * rather than an exception escaping into the view.
  */
+import { createLafeaLifecycleEvent } from './lafea-lifecycle.js';
 
 export function createLafeaMeshGenerationActions(context) {
   const {
@@ -27,10 +28,15 @@ export function createLafeaMeshGenerationActions(context) {
     continuumPreflight.clear(stageId);
     clearDomainFirstExecution(stageId);
 
-    const event = {
+    const event = createLafeaLifecycleEvent({
+      eventId: `MESH_PROFILE_BIND/${result.meshProfile.semanticHash}`,
+      stageId,
       changeClass: 'ANALYSIS_MESH_PROFILE',
+      previousSourceHash: null,
+      currentSourceHash: null,
       profileHash: result.meshProfile.semanticHash,
-    };
+      originRef: 'LAFEA_WORKBENCH/MESH_PROFILE_BIND',
+    });
     invokeRetained('applyLifecycleEvent', [event]);
     const succeeded = getRetainedState().status !== 'FAILED';
     mesh.afterLifecycleEvent(event, succeeded);

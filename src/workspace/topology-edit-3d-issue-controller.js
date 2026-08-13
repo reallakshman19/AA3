@@ -116,11 +116,19 @@ export class TopologyEdit3DViewController extends SearchController {
   handleCanvasPointer(event) {
     const pick = this.viewportBackend?.pickAt(event.clientX, event.clientY);
     if (!pick?.objectId || !this.session) return;
-    if (pick.objectKind === 'issue') {
-      this.showIssueById(pick.objectId, event.clientX, event.clientY);
-      return;
-    }
+    if (this.handleIssuePick(pick, event)) return;
     this.applyCanonicalPick(pick, event.shiftKey);
+  }
+
+  handleIssuePick(pick, event) {
+    if (pick?.objectKind !== 'issue' || !pick.objectId || !this.session) return false;
+    this.showIssueById(
+      pick.objectId,
+      event?.clientX,
+      event?.clientY,
+      this.issueOverlay?.overlayHash ?? null,
+    );
+    return true;
   }
 
   handleHostClick(event) {

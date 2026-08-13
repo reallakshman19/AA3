@@ -1,15 +1,14 @@
 /** Read-only projection of analysis and solver settings already retained by the active stage. */
 import { element } from './lafea-workbench-dom.js';
-import { requireLafeaStageRegistryEntry } from './lafea-stage-registry.js';
 
 export const LAFEA_ANALYSIS_SETTINGS_VIEW_SCHEMA = 'lafea-analysis-settings-view/v1';
 
-export function buildLafeaAnalysisSettingsViewModel(stageValue) {
+export function buildLafeaAnalysisSettingsViewModel(stageValue, registryEntryValue = null) {
   const stage = requireStage(stageValue);
+  const registry = registryEntry(registryEntryValue);
   const documentValue = stage.document ?? null;
   const profile = documentValue?.qualificationProfile ?? null;
   const requests = documentValue?.resultRequests ?? null;
-  const registry = requireLafeaStageRegistryEntry(stage.stageId);
   const modelRows = [
     row('Model identity', textOr(documentValue?.modelIdentity)),
     row('Model version', textOr(documentValue?.modelVersion)),
@@ -20,10 +19,10 @@ export function buildLafeaAnalysisSettingsViewModel(stageValue) {
     row('Code / allowable basis', codeBasisSummary(documentValue)),
   ];
   const solverRows = [
-    row('Registered engine', registry.enginePackage ? `src/core/${registry.enginePackage}` : 'Not implemented'),
-    row('Registered authority', registry.authority),
-    row('Engine state', registry.engineState),
-    row('Result presenter', registry.presenterRole ?? 'Not registered'),
+    row('Registered engine', registry.enginePackage ? `src/core/${registry.enginePackage}` : 'Provided by workbench registry'),
+    row('Registered authority', registry.authority ?? 'Provided by workbench registry'),
+    row('Engine state', registry.engineState ?? 'Provided by workbench registry'),
+    row('Result presenter', registry.presenterRole ?? 'Provided by workbench registry'),
     row('Lifecycle profile', stage.lifecycle?.profileId ?? 'Not initialized'),
     row('Lifecycle source binding', stage.lifecycleBinding?.status ?? 'UNINITIALIZED'),
     row('Qualification profile', textOr(profile?.identity)),
@@ -42,9 +41,9 @@ export function buildLafeaAnalysisSettingsViewModel(stageValue) {
   });
 }
 
-export function renderLafeaAnalysisSettings(root, stageValue) {
+export function renderLafeaAnalysisSettings(root, stageValue, registryEntryValue = null) {
   if (!root?.ownerDocument) throw new TypeError('LAFEA_ANALYSIS_SETTINGS_ROOT_REQUIRED');
-  const model = buildLafeaAnalysisSettingsViewModel(stageValue);
+  const model = buildLafeaAnalysisSettingsViewModel(stageValue, registryEntryValue);
   const section = element(root, 'section', 'lafea-analysis-settings');
   section.dataset.role = 'lafea-analysis-settings';
   section.dataset.readOnly = 'true';
@@ -107,6 +106,19 @@ function settingsGroup(root, title, authority, rows) {
   return group;
 }
 
+function registryEntry(value) {
+  if (!value || typeof value !== 'object') {
+    return { enginePackage: null, authority: null, engineState: null, presenterRole: null, limitations: [] };
+  }
+  return {
+    enginePackage: typeof value.enginePackage === 'string' ? value.enginePackage : null,
+    authority: typeof value.authority === 'string' ? value.authority : null,
+    engineState: typeof value.engineState === 'string' ? value.engineState : null,
+    presenterRole: typeof value.presenterRole === 'string' ? value.presenterRole : null,
+    limitations: stringArray(value.limitations),
+  };
+}
+
 function recoveryDisclosure(stageId, documentValue) {
   if (stageId !== 'LAFEA.3') return null;
   const families = [...new Set((documentValue?.elements ?? [])
@@ -120,14 +132,9 @@ function recoveryDisclosure(stageId, documentValue) {
 
 function requestSummary(value) {
   if (!value || typeof value !== 'object') return 'Not declared';
-  if (Array.isArray(value.requestedAnalyses) && value.requestedAnalyses.length) {
-    return value.requestedAnalyses.join(', ');
-  }
-  if (Array.isArray(value.loadCaseIds) && value.loadCaseIds.length) {
-    return `Load cases: ${value.loadCaseIds.join(', ')}`;
-  }
-  if (Array.isArray(value.transformedLoadCaseIdentities)
-    && value.transformedLoadCaseIdentities.length) {
+  if (Array.isArray(value.requestedAnalyses) && value.requestedAnalyses.length) return value.requestedAnalyses.join(', ');
+  if (Array.isArray(value.loadCaseIds) && value.loadCaseIds.length) return `Load cases: ${value.loadCaseIds.join(', ')}`;
+  if (Array.isArray(value.transformedLoadCaseIdentities) && value.transformedLoadCaseIdentities.length) {
     return `Load cases: ${value.transformedLoadCaseIdentities.join(', ')}`;
   }
   return 'Not declared';
@@ -155,9 +162,7 @@ function qualificationDetails(profile) {
   const rows = [];
   if (typeof profile.schema === 'string') rows.push(`Schema: ${profile.schema}`);
   if (Number.isFinite(profile.frameMinimumSine)) rows.push(`Frame minimum sine: ${profile.frameMinimumSine}`);
-  if (Number.isFinite(profile.handednessMinimumAlignment)) {
-    rows.push(`Handedness minimum alignment: ${profile.handednessMinimumAlignment}`);
-  }
+  if (Number.isFinite(profile.handednessMinimumAlignment)) rows.push(`Handedness minimum alignment: ${profile.handednessMinimumAlignment}`);
   if (profile.tolerances && typeof profile.tolerances === 'object') {
     for (const [quantity, rule] of Object.entries(profile.tolerances)) {
       if (!rule || typeof rule !== 'object') continue;
@@ -181,13 +186,9 @@ function displayValue(value) {
 
 function row(label, value) { return freeze({ label, value }); }
 function textOr(value) { return typeof value === 'string' && value ? value : 'Not declared'; }
-function stringArray(value) {
-  return Array.isArray(value) ? value.filter((item) => typeof item === 'string' && item) : [];
-}
+function stringArray(value) { return Array.isArray(value) ? value.filter((item) => typeof item === 'string' && item) : []; }
 function requireStage(value) {
-  if (!value || typeof value !== 'object' || typeof value.stageId !== 'string') {
-    throw new TypeError('LAFEA_ANALYSIS_SETTINGS_STAGE_REQUIRED');
-  }
+  if (!value || typeof value !== 'object' || typeof value.stageId !== 'string') throw new TypeError('LAFEA_ANALYSIS_SETTINGS_STAGE_REQUIRED');
   return value;
 }
 function freeze(value) {

@@ -2,8 +2,15 @@ import {
   topologyEditTableColumnsFor,
 } from '../topology-edit/table/topology-edit-table-columns.js';
 import {
+  topologyEditTableColumnProfile,
+} from '../topology-edit/table/topology-edit-table-column-profiles.js';
+import {
   deriveTopologyEditTableCellCapability,
 } from '../topology-edit/table/topology-edit-table-edit-capability.js';
+import {
+  isTopologyEditTableVirtualGeometryKey,
+  topologyEditTableVirtualGeometryFields,
+} from '../topology-edit/table/topology-edit-table-virtual-geometry.js';
 import {
   renderTopologyEditTableNodePositionEditor,
 } from './topology-edit-table-engineering-editor.js';
@@ -16,7 +23,7 @@ import {
 
 const TYPE_ORDER = ['PIPE', 'ELBOW', 'FLANGE', 'VALVE', 'TEE', 'REDUCER', 'SUPPORT', 'COMPONENT', 'JUNCTION'];
 
-export function topologyEditTableVisibleColumns(projection) {
+export function topologyEditTableVisibleColumns(projection, profileInput = 'ALL') {
   const rows = projection?.rows ?? [];
   const seen = new Map();
   addDescriptors(seen, topologyEditTableColumnsFor('COMPONENT'));
@@ -32,21 +39,34 @@ export function topologyEditTableVisibleColumns(projection) {
       if (!seen.has(key)) seen.set(key, fallbackDescriptor(key));
     }
   }
-  return [...seen.values()];
+  const all = [...seen.values()];
+  const profile = String(profileInput ?? 'ALL').trim().toUpperCase();
+  if (profile === 'ALL') return all;
+  const allowed = new Set(topologyEditTableColumnProfile(profile, [...present]).columnKeys);
+  return all.filter((column) => allowed.has(column.key));
 }
 
 export function renderTopologyEditTableAllProperties(row, runtime) {
   if (!row) return '';
   const descriptors = descriptorMap(row.elementType);
   const fieldKeys = orderedFieldKeys(row, descriptors);
+  const topology = runtime?.controller?.session?.currentTopology?.();
+  const virtual = topologyEditTableVirtualGeometryFields(
+    row,
+    topology,
+    runtime?.transientNodeDrafts ?? {},
+  );
   const projected = fieldKeys.map((key) => ({
     label: descriptors.get(key)?.label ?? humanLabel(key),
-    value: row.fields?.[key],
-    authority: row.fieldAuthority?.[key] ?? 'UNRESOLVED',
+    value: isTopologyEditTableVirtualGeometryKey(key) ? virtual[key] : row.fields?.[key],
+    authority: isTopologyEditTableVirtualGeometryKey(key)
+      ? virtualAuthority(key, virtual[key])
+      : row.fieldAuthority?.[key] ?? 'UNRESOLVED',
     capability: deriveTopologyEditTableCellCapability({
       row,
       columnKey: key,
       projection: runtime?.projection,
+      canonicalTopology: topology,
     }),
   }));
   const identity = [
@@ -151,6 +171,10 @@ function orderedFieldKeys(row, descriptors) {
   return result;
 }
 
+function virtualAuthority(key, value) {
+  if (value === null || value === undefined) return 'UNRESOLVED';
+  return key.startsWith('delta') ? 'DERIVED_DISPLAY' : 'CANONICAL';
+}
 function capabilityText(capability) {
   if (!capability) return 'READ_ONLY';
   if (capability.status === 'AVAILABLE') return 'AVAILABLE';

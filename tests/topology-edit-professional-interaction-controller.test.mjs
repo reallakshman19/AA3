@@ -57,6 +57,17 @@ test('keyboard nudges use axis direction and Shift changes increment only', asyn
   assert.doesNotMatch(controller, /event\.shiftKey \? -1 : 1/);
 });
 
+test('contextual move auto-previews committed engineering value changes', async () => {
+  const source = await sources();
+  const controller = source[FILES[0]];
+  assert.match(controller, /interactionElement\.addEventListener\('change', this\.interactionChangeHandler\)/);
+  assert.match(controller, /AUTO_PREVIEW_ROLES/);
+  assert.match(controller, /previewNumericInteraction\(\{ announce: false \}\)/);
+  assert.match(controller, /Edit selected node/);
+  assert.match(controller, /Advanced commands/);
+  assert.doesNotMatch(controller, /Date\.now|Math\.random|randomUUID/);
+});
+
 test('gizmo adapter owns explicit capture, release and non-pickable overlay lifecycle', async () => {
   const source = await sources();
   const adapter = source[FILES[2]];
@@ -102,9 +113,10 @@ test('controller package stays bounded and outside prohibited authority', async 
   }
 });
 
-test('panel exposes exact numeric, nudge, apply and cancel controls safely', async () => {
+test('panel keeps engineering values primary and moves authority hashes behind evidence disclosure', async () => {
   const source = await sources();
   const panel = source[FILES[4]];
+  assert.match(panel, /Move selected node/);
   assert.match(panel, /interaction-entry-mode/);
   assert.match(panel, /interaction-value-x/);
   assert.match(panel, /interaction-value-y/);
@@ -113,6 +125,8 @@ test('panel exposes exact numeric, nudge, apply and cancel controls safely', asy
   assert.match(panel, /interaction-nudge-increment/);
   assert.match(panel, /apply-professional-interaction/);
   assert.match(panel, /cancel-professional-interaction/);
+  assert.match(panel, /interaction-engineering-evidence/);
+  assert.match(panel, /Engineering evidence/);
+  assert.match(panel, /ghost preview does not modify canonical topology/);
   assert.match(panel, /escapeHtml/);
-  assert.match(panel, /Display-only preview/);
 });

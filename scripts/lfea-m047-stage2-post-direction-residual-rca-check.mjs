@@ -36,6 +36,33 @@ function direction(status = 'EVIDENCE_SUPPORTS_PROMOTION_TO_GOVERNED_DIRECTION_R
   };
 }
 
+function r6(pass = true) {
+  return {
+    schema: 'm047-bm4l-stage2-r6-restraint-sentinel-preflight/v1',
+    sourceAccdbSha256: sha,
+    status: pass ? 'PASS' : 'FAIL',
+    failureCount: pass ? 0 : 1,
+    blankRule: 'PORTABLE_ACCDB_READER_CANONICAL_NULL_ONLY_V1',
+  };
+}
+
+function r5(block = false) {
+  return {
+    schema: 'm047-bm4l-stage2-r5-friction-geometry-inventory/v1',
+    caseId: 'L13',
+    sourceAccdbSha256: sha,
+    geometrySensitiveFrictionCount: block ? 1 : 0,
+    bendCoincidentFrictionCount: block ? 1 : 0,
+    teeCoincidentFrictionCount: 0,
+    decision: {
+      status: block
+        ? 'BEND_OR_TEE_TANGENT_VERIFICATION_REQUIRED'
+        : 'NO_FRICTION_RESTRAINT_ON_BEND_OR_TEE_SOURCE_STATION',
+      directionPromotionBlockedByR5: block,
+    },
+  };
+}
+
 function r2(decision) {
   return {
     schema: 'm047-bm4l-stage2-r2-mobilisation-diagnostics/v1',
@@ -67,28 +94,47 @@ function r3({ singleAxis = false, perAxis = false, l6Closer = false } = {}) {
   };
 }
 
-let result = buildPostDirectionResidualRca({
+let result = buildPostDirectionResidualRca({ baseline, direction: direction() });
+assert.equal(result.next.decision, 'RUN_R6_RESTRAINT_SENTINEL_PREFLIGHT');
+
+result = buildPostDirectionResidualRca({ baseline, direction: direction(), r6: r6(false) });
+assert.equal(result.next.decision, 'HALT_R6_RESTRAINT_SOURCE_BOUNDARY_CHANGED');
+
+result = buildPostDirectionResidualRca({ baseline, direction: direction(), r6: r6() });
+assert.equal(result.next.decision, 'RUN_R5_FRICTION_GEOMETRY_INVENTORY');
+
+result = buildPostDirectionResidualRca({ baseline, direction: direction(), r6: r6(), r5: r5(true) });
+assert.equal(result.next.decision, 'R5_LOCAL_TANGENT_VERIFICATION_REQUIRED');
+assert.equal(result.next.l7LoadSteppingAllowed, false);
+
+result = buildPostDirectionResidualRca({
   baseline,
   direction: direction('DO_NOT_PROMOTE_FROM_THIS_RUN'),
+  r6: r6(),
+  r5: r5(),
 });
 assert.equal(result.next.decision, 'HALT_DIRECTION_CANDIDATE_NOT_PROMOTABLE');
 
-result = buildPostDirectionResidualRca({ baseline, direction: direction() });
+result = buildPostDirectionResidualRca({ baseline, direction: direction(), r6: r6(), r5: r5() });
 assert.equal(result.next.decision, 'RUN_R2_MOBILISATION_NEXT');
 
 result = buildPostDirectionResidualRca({
-  baseline, direction: direction(), r2: r2('EVIDENCE_FAVOURS_DELETED_SPRING_STATE_STABLE_STOP'),
+  baseline, direction: direction(), r6: r6(), r5: r5(),
+  r2: r2('EVIDENCE_FAVOURS_DELETED_SPRING_STATE_STABLE_STOP'),
 });
 assert.equal(result.next.decision, 'R2_DELETED_SPRING_STATE_PATH_IS_NEXT_MECHANICS_CANDIDATE');
 
 result = buildPostDirectionResidualRca({
-  baseline, direction: direction(), r2: r2('EVIDENCE_FAVOURS_RETURN_MAP_FOR_PARTIAL_MOBILISATION'),
+  baseline, direction: direction(), r6: r6(), r5: r5(),
+  r2: r2('EVIDENCE_FAVOURS_RETURN_MAP_FOR_PARTIAL_MOBILISATION'),
 });
 assert.equal(result.next.decision, 'RUN_R3_CAPACITY_BASIS_NEXT');
 
 result = buildPostDirectionResidualRca({
   baseline,
   direction: direction(),
+  r6: r6(),
+  r5: r5(),
   r2: r2('EVIDENCE_FAVOURS_RETURN_MAP_FOR_PARTIAL_MOBILISATION'),
   r3: r3({ singleAxis: true, perAxis: true }),
 });
@@ -99,6 +145,8 @@ assert.equal(result.next.l7LoadSteppingAllowed, false);
 result = buildPostDirectionResidualRca({
   baseline,
   direction: direction(),
+  r6: r6(),
+  r5: r5(),
   r2: r2('EVIDENCE_FAVOURS_RETURN_MAP_FOR_PARTIAL_MOBILISATION'),
   r3: r3({ l6Closer: true }),
 });
@@ -107,6 +155,8 @@ assert.equal(result.next.decision, 'TEST_FRICTIONLESS_TWIN_NORMAL_CAPACITY_BASIS
 result = buildPostDirectionResidualRca({
   baseline,
   direction: direction(),
+  r6: r6(),
+  r5: r5(),
   r2: r2('EVIDENCE_FAVOURS_RETURN_MAP_FOR_PARTIAL_MOBILISATION'),
   r3: r3({ perAxis: true }),
 });
@@ -116,11 +166,24 @@ assert.throws(
   () => buildPostDirectionResidualRca({
     baseline,
     direction: direction(),
+    r6: r6(),
+    r5: r5(),
     r2: r2('EVIDENCE_FAVOURS_RETURN_MAP_FOR_PARTIAL_MOBILISATION'),
     r3: { ...r3(), frictionCaseId: 'L7' },
   }),
   /baseline\/R3 case mismatch/u,
   'R3 artifact for another load case must fail closed',
+);
+
+assert.throws(
+  () => buildPostDirectionResidualRca({
+    baseline,
+    direction: direction(),
+    r6: r6(),
+    r5: { ...r5(), caseId: 'L7' },
+  }),
+  /baseline\/R5 case mismatch/u,
+  'R5 artifact for another load case must fail closed',
 );
 
 assert.equal(result.mechanicsChanged, false);

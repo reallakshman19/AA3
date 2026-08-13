@@ -69,6 +69,36 @@ export async function runDirectionOnlyExperiment(input) {
 
   const first = runCandidate(candidateModule, benchmarkPackage, caseId);
   const second = runCandidate(candidateModule, benchmarkPackage, caseId);
+  if (first.error !== null || second.error !== null) {
+    const record = {
+      schema: 'm047-bm4l-stage2-direction-only-nonlinear-experiment/v1',
+      caseId,
+      sourceAccdbSha256: benchmarkPackage.source.sha256,
+      baselineArtifact: basename(baselinePath),
+      baselineDirectionRule: BASELINE_DIRECTION_RULE,
+      candidateDirectionRule: CANDIDATE_DIRECTION_RULE,
+      isolatedMechanic:
+        'RETURN_MAP_SLIDING_PROJECTION_DIRECTION_ELASTIC_STRETCH_TO_TOTAL_RELATIVE_TANGENTIAL_DISPLACEMENT',
+      productionSourceModified: false,
+      toleranceChanged: false,
+      comparisonPolicyChanged: false,
+      candidate: {
+        converged: false,
+        firstRunFailure: first.error,
+        repeatRunFailure: second.error,
+      },
+      baselineSummary: summarizeBaseline(baseline.restraints),
+      candidateSummary: null,
+      promotion: {
+        status: 'DO_NOT_PROMOTE_FROM_THIS_RUN',
+        rule: 'NONCONVERGENCE_IS_EVIDENCE_AND_MUST_NOT_BE_HIDDEN_BY_A_BENCHMARK_ACCURACY_COMPARISON_V1',
+        gates: { candidateConverged: false },
+      },
+      restraints: null,
+    };
+    return Object.freeze({ ...record, recordSemanticHash: semanticHash(record) });
+  }
+
   const candidate = first.actual;
   const evidence = candidate.mechanics.cases[caseId];
   const repeatEvidence = second.actual.mechanics.cases[caseId];
@@ -76,12 +106,7 @@ export async function runDirectionOnlyExperiment(input) {
   const repeatRowsHash = semanticHash(second.actual.cases[caseId].rows);
   const deterministic = rowsHash === repeatRowsHash;
 
-  const restraints = compareCandidate({
-    benchmarkPackage,
-    candidate,
-    baseline,
-    caseId,
-  });
+  const restraints = compareCandidate({ benchmarkPackage, candidate, baseline, caseId });
   const baselineSummary = summarizeBaseline(baseline.restraints);
   const candidateSummary = summarizeCandidate(restraints);
   const equilibriumPass = evidence.recoveredEquilibrium?.status === 'PASS'
@@ -107,7 +132,7 @@ export async function runDirectionOnlyExperiment(input) {
       : 'DO_NOT_PROMOTE_FROM_THIS_RUN',
     rule: 'PHYSICS_AND_DETERMINISM_FIRST_THEN_ACCURACY_MUST_IMPROVE_WITHOUT_NORMAL_REACTION_REGRESSION_V1',
     gates: {
-      candidateConverged: first.error === null && second.error === null,
+      candidateConverged: true,
       deterministic,
       equilibriumPass,
       unchangedPhysicsGates,
@@ -141,8 +166,7 @@ export async function runDirectionOnlyExperiment(input) {
     toleranceChanged: false,
     comparisonPolicyChanged: false,
     candidate: {
-      converged: first.error === null,
-      error: first.error,
+      converged: true,
       iterationCount: evidence.iterationCount,
       rowsSemanticHash: rowsHash,
       repeatRowsSemanticHash: repeatRowsHash,
@@ -171,15 +195,19 @@ function runCandidate(candidateModule, benchmarkPackage, caseId) {
       error: null,
     };
   } catch (error) {
-    const compact = {
-      message: error.message,
-      code: error.code ?? null,
-      iterationCount: error.iterations?.length ?? null,
-      lastFailedGates: error.iterations?.at(-1)?.failedGates ?? null,
+    return {
+      actual: null,
+      error: {
+        message: error.message,
+        code: error.code ?? null,
+        iterationCount: error.iterations?.length ?? null,
+        stateChangesTail: (error.iterations ?? []).slice(-8).map((entry) => entry.stateChangeCount),
+        reactionUpdateTailN: (error.iterations ?? []).slice(-8).map((entry) => entry.reactionUpdateNormN),
+        displacementUpdateTailM: (error.iterations ?? []).slice(-8).map((entry) => entry.displacementUpdateNormM),
+        lastFailedGates: error.iterations?.at(-1)?.failedGates ?? null,
+        lastFailedGateEvidence: error.iterations?.at(-1)?.failedGateEvidence ?? null,
+      },
     };
-    const wrapped = new Error(`Candidate direction solve failed: ${compact.message}`);
-    wrapped.candidateEvidence = compact;
-    throw wrapped;
   }
 }
 
@@ -364,10 +392,19 @@ function textReport(record) {
     `baseline rule        ${record.baselineDirectionRule}`,
     `candidate rule       ${record.candidateDirectionRule}`,
     `candidate converged  ${record.candidate.converged}`,
+    `promotion            ${record.promotion.status}`,
+  ];
+  if (!record.candidate.converged) {
+    lines.push(
+      `first failure        ${record.candidate.firstRunFailure?.message ?? 'none'}`,
+      `repeat failure       ${record.candidate.repeatRunFailure?.message ?? 'none'}`,
+    );
+    return lines.join('\n');
+  }
+  lines.push(
     `deterministic        ${record.candidate.determinismPass}`,
     `equilibrium          ${record.candidate.recoveredEquilibriumStatus}`,
     `direction failures   ${record.candidate.totalDirectionFailureCount}`,
-    `promotion            ${record.promotion.status}`,
     '',
     `vectors within +-10% baseline ${b.tangentialVectorsWithinGoal}/${b.tangentialVectorsCompared}`,
     `vectors within +-10% candidate ${c.tangentialVectorsWithinGoal}/${c.tangentialVectorsCompared}`,
@@ -378,7 +415,7 @@ function textReport(record) {
     `normal within +-10% candidate  ${c.normalWithinGoal}/${c.frictionRestraintCount}`,
     '',
     'restraint                    base err%  cand err%  delta pp  cos(ref)',
-  ];
+  );
   for (const row of record.restraints) {
     lines.push([
       row.restraintId.padEnd(28),

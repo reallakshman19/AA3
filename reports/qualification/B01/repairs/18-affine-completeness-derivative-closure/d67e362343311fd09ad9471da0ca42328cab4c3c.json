@@ -1,0 +1,36 @@
+{
+  "schema": "lafea-b01-repair-attempt/v1",
+  "issue": 1100,
+  "attempt": 18,
+  "exactHead": "d67e362343311fd09ad9471da0ca42328cab4c3c",
+  "hypothesis": "Roundoff violation of derivative partition-of-unity and linear-reproduction identities is the dominant cause of rigid-nullspace leakage in element stiffness.",
+  "singleMechanicsChange": "NONE_DIAGNOSTIC_ONLY",
+  "diagnostic": "scripts/lafea-b01-affine-completeness-stiffness-diagnostic.mjs",
+  "productionFilesChanged": [],
+  "frozenBenchmarkChanged": false,
+  "tolerancesChanged": false,
+  "priorControls": "PASS",
+  "workflowRunId": 31678434308,
+  "artifact": {
+    "artifactId": 9172481405,
+    "sha256": "sha256:8948f44c5a40470d6f22bc8137eedd327d96b202e0cb15d420af40f0cf16ca6f"
+  },
+  "matrix": {
+    "baseMatrixStillFails": true,
+    "correctedSolvedRigidPassCount": 1,
+    "correctedSolvedRigidFailCount": 8
+  },
+  "comparison": [
+    {"meshId":"T3-M0","currentExact":9.458744898438454e-11,"correctedExact":8.080003388588609e-11,"correctedSolved":8.080003388588608e-11,"maxDerivativeChange":6.938893903907228e-18,"maxRelativeStiffnessChange":6.49752716223399e-16,"maxAffineEnergyRelativeChange":3.0976193992619162e-15},
+    {"meshId":"T3-M1","currentExact":5.550191417569295e-10,"correctedExact":4.053290467709303e-10,"correctedSolved":1.8604850993142463e-10,"maxDerivativeChange":6.245004513516506e-17,"maxRelativeStiffnessChange":2.2679318953577285e-15,"maxAffineEnergyRelativeChange":1.3848180843759045e-14},
+    {"meshId":"T3-M2","currentExact":4.970388545189053e-10,"correctedExact":4.383764462545514e-10,"correctedSolved":3.3651303965598345e-10,"maxDerivativeChange":7.494005416219807e-16,"maxRelativeStiffnessChange":1.15645665409295e-14,"maxAffineEnergyRelativeChange":5.622569665887345e-14},
+    {"meshId":"T6-M0","currentExact":7.149792509153486e-10,"correctedExact":6.318296073004603e-10,"correctedSolved":2.6812369693743693e-10,"maxDerivativeChange":2.9949220646096886e-17,"maxRelativeStiffnessChange":4.616378695527308e-16,"maxAffineEnergyRelativeChange":3.123649814381774e-15},
+    {"meshId":"T6-M1","currentExact":8.462691039312631e-10,"correctedExact":5.002418765798212e-10,"correctedSolved":4.358591104391969e-10,"maxDerivativeChange":1.5265566588595902e-16,"maxRelativeStiffnessChange":8.947227752639688e-16,"maxAffineEnergyRelativeChange":2.0694180020279058e-14},
+    {"meshId":"T6-M2","currentExact":9.054825932253153e-10,"correctedExact":7.539302532677537e-10,"correctedSolved":5.307557876221829e-10,"maxDerivativeChange":7.008282842946301e-16,"maxRelativeStiffnessChange":2.1278214576697034e-15,"maxAffineEnergyRelativeChange":1.147548982346728e-13},
+    {"meshId":"Q8-M0","currentExact":4.1654857341200113e-10,"correctedExact":2.9740476747974753e-10,"correctedSolved":1.8098944565281272e-10,"maxDerivativeChange":4.423544863740858e-17,"maxRelativeStiffnessChange":2.6613698965048617e-16,"maxAffineEnergyRelativeChange":1.1807396298363108e-15},
+    {"meshId":"Q8-M1","currentExact":1.070930011337623e-9,"correctedExact":6.775735528208315e-10,"correctedSolved":3.9250380723387934e-10,"maxDerivativeChange":2.1510571102112408e-16,"maxRelativeStiffnessChange":9.791952482532642e-16,"maxAffineEnergyRelativeChange":1.434926633481609e-14},
+    {"meshId":"Q8-M2","currentExact":1.2478267308324575e-9,"correctedExact":1.0159055818803608e-9,"correctedSolved":4.911271389573812e-10,"maxDerivativeChange":7.389922007661198e-16,"maxRelativeStiffnessChange":1.6619821868394412e-15,"maxAffineEnergyRelativeChange":1.277276741910091e-13}
+  ],
+  "disposition": "PARTIAL_NOT_QUALIFYING. Closing affine derivative identities improves every rigid mesh and leaves stiffness/affine energy changes at roundoff scale, but eight of nine corrected solved residuals remain above the frozen 1e-10 gate. Do not promote. The refinement-dependent growth points to cancellation in absolute-coordinate geometry evaluation; test translation-stable element-local area/Jacobian arithmetic next.",
+  "releaseAuthorityGrantedByProgram": false
+}

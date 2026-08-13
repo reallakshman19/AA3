@@ -57,6 +57,7 @@ assert.doesNotMatch(source, /caesar-accdb-friction-solve/u,
 for (const path of [
   scriptPath,
   resolve('scripts/lfea-m047-stage2-rca-decision-gate.mjs'),
+  resolve('scripts/lfea-m047-stage2-rca-evidence-manifest-check.mjs'),
 ]) {
   const syntax = spawnSync(process.execPath, ['--check', path], { encoding: 'utf8' });
   assert.equal(syntax.status, 0, `${path} must parse: ${syntax.stderr}`);

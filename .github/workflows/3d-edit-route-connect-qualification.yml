@@ -1,0 +1,92 @@
+name: 3D Edit route connect exact-head qualification
+
+on:
+  push:
+    branches:
+      - qualification/3d-edit-route-connect-674f2439
+
+permissions:
+  contents: read
+
+jobs:
+  qualify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    env:
+      BASE_SHA: a25f6ef1a1c44c01b1cd920b3dba7e747fc89923
+      CANDIDATE_SHA: 674f243934b1dbfc8b6960d7902a988da5240ad5
+      PLAYWRIGHT_BROWSERS_PATH: '0'
+      TOPOLOGY_EDIT_TARGET_HEAD_SHA: 674f243934b1dbfc8b6960d7902a988da5240ad5
+    steps:
+      - name: Checkout exact candidate
+        uses: actions/checkout@v4
+        with:
+          ref: 674f243934b1dbfc8b6960d7902a988da5240ad5
+          fetch-depth: 0
+      - name: Verify exact six-file ledger
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$(git rev-parse HEAD)" = "$CANDIDATE_SHA"
+          expected=$'e2e/topology-edit-authoring-tools.spec.js\ne2e/topology-edit-connect-endpoints-authority.spec.js\ne2e/topology-edit-start-route-authority.spec.js\nsrc/workspace/viewport-productivity/topology-edit-connect-endpoints-authoring-runtime.js\nsrc/workspace/viewport-productivity/topology-edit-route-connect-consolidation.js\ntests/topology-edit-route-connect-consolidation.test.mjs'
+          test "$(git diff --name-only "$BASE_SHA" "$CANDIDATE_SHA")" = "$expected"
+          git diff --check "$BASE_SHA" "$CANDIDATE_SHA"
+          node --check src/workspace/viewport-productivity/topology-edit-connect-endpoints-authoring-runtime.js
+          node --check src/workspace/viewport-productivity/topology-edit-route-connect-consolidation.js
+          node --check tests/topology-edit-route-connect-consolidation.test.mjs
+          node --check e2e/topology-edit-authoring-tools.spec.js
+          node --check e2e/topology-edit-connect-endpoints-authority.spec.js
+          node --check e2e/topology-edit-start-route-authority.spec.js
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+      - name: Install dependencies
+        run: npm ci
+      - name: Run route and connect authority contracts
+        run: >-
+          node --test
+          tests/topology-edit-route-connect-consolidation.test.mjs
+          tests/topology-edit-start-route-authoring.test.mjs
+          tests/topology-edit-start-route-production-adapter.test.mjs
+          tests/topology-edit-continue-route-authoring.test.mjs
+          tests/topology-edit-continue-route-auto-elbow.test.mjs
+          tests/topology-edit-connect-endpoints-plan.test.mjs
+          tests/topology-edit-connect-endpoints-transaction.test.mjs
+          tests/topology-edit-connect-endpoints-production-adapter.test.mjs
+      - name: Install pinned Chromium
+        run: npx playwright install --with-deps chromium
+      - name: Run production route and connect workflows
+        env:
+          PLAYWRIGHT_JSON_OUTPUT_NAME: artifacts/route-connect-playwright.json
+        run: >-
+          node scripts/run-playwright.mjs
+          e2e/topology-edit-start-route-authority.spec.js
+          e2e/topology-edit-authoring-tools.spec.js
+          e2e/topology-edit-connect-endpoints-authority.spec.js
+          --workers=1
+          --retries=0
+          --trace=on
+          --reporter=line,json
+      - name: Record exact-head identity
+        if: always()
+        shell: bash
+        run: |
+          mkdir -p artifacts
+          printf '{"schema":"TopologyEditRouteConnectRunIdentity.v1","baseSha":"%s","candidateSha":"%s","runId":"%s","attempt":%s,"workers":1,"retries":0,"trace":"on"}\n' \
+            "$BASE_SHA" "$CANDIDATE_SHA" "$GITHUB_RUN_ID" "$GITHUB_RUN_ATTEMPT" > artifacts/route-connect-run-identity.json
+      - name: Upload qualification evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: route-connect-${{ env.CANDIDATE_SHA }}-${{ github.run_attempt }}
+          path: |
+            artifacts
+            reports/qualification/start-route-authoring-core.json
+            reports/qualification/topology-edit-authoring-tools.json
+            reports/qualification/connect-existing-ends-authoring.json
+            test-results
+            playwright-report
+          if-no-files-found: warn
+          retention-days: 30

@@ -1,5 +1,4 @@
-import { createTopologyEditTableBatch } from '../topology-edit/table/topology-edit-table-batch.js';
-import { planTopologyEditTableBatch } from '../topology-edit/table/topology-edit-table-batch-planner.js';
+import { planTopologyEditTableDraft } from '../topology-edit/table/topology-edit-table-draft-plan.js';
 import { createTopologyEditTableIntent } from '../topology-edit/table/topology-edit-table-intent.js';
 
 export function stageTopologyEditTablePipeLength(runtime, input = {}) {
@@ -16,24 +15,20 @@ export function stageTopologyEditTablePipeLength(runtime, input = {}) {
         propagation: input.propagation,
       },
     });
-    const intents = [
-      ...runtime.intents.filter((row) => row.target.canonicalId !== canonicalId),
+    const draft = planTopologyEditTableDraft({
+      intents: runtime.intents,
       intent,
-    ];
-    const batch = createTopologyEditTableBatch({ intents });
-    const batchPlan = planTopologyEditTableBatch({
-      batch,
       projection: runtime.projection,
       canonicalTopology: runtime.controller.session.currentTopology(),
     });
-    runtime.intents = intents;
-    runtime.batch = batch;
-    runtime.batchPlan = batchPlan;
+    runtime.intents = [...draft.intents];
+    runtime.batch = draft.batch;
+    runtime.batchPlan = draft.batchPlan;
     runtime.staleResult = null;
     runtime.clearCandidate();
     runtime.error = null;
-    runtime.message = `${batch.intentCount} table change(s) staged against the exact certified revision.`;
-    return Object.freeze({ ok: true, intent });
+    runtime.message = `${draft.batch.intentCount} table change(s) staged against the exact certified revision.`;
+    return Object.freeze({ ok: true, intent: draft.intent });
   } catch (error) {
     runtime.error = errorMessage(error);
     return Object.freeze({ ok: false, error: runtime.error });

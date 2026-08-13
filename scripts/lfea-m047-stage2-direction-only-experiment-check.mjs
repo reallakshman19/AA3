@@ -9,6 +9,7 @@ import { buildCandidateSource } from './lfea-m047-stage2-direction-only-experime
 
 const solverPath = resolve('src/core/fea-benchmarks/caesar-accdb-friction-solve.js');
 const production = readFileSync(solverPath, 'utf8');
+const experimentSource = readFileSync(resolve('scripts/lfea-m047-stage2-direction-only-experiment.mjs'), 'utf8');
 const baselineRule = "slipDirectionRule: 'UNIT_RELATIVE_TANGENTIAL_DISPLACEMENT_V1',";
 const candidateRule = "slipDirectionRule: 'UNIT_TOTAL_RELATIVE_TANGENTIAL_DISPLACEMENT_V1_EXPERIMENTAL',";
 
@@ -29,6 +30,15 @@ assert.doesNotMatch(candidate,
   'candidate module must not keep elastic-stretch direction as the governing direction cosine');
 assert.equal(readFileSync(solverPath, 'utf8'), production,
   'building the candidate source must not modify the production solver');
+
+assert.match(experimentSource, /NONCONVERGENCE_IS_EVIDENCE_AND_MUST_NOT_BE_HIDDEN/u,
+  'candidate nonconvergence must be recorded as evidence rather than thrown away');
+assert.match(experimentSource, /stateChangesTail/u,
+  'nonconvergence evidence must retain active-set tail history');
+assert.match(experimentSource, /reactionUpdateTailN/u,
+  'nonconvergence evidence must retain reaction-update tail history');
+assert.match(experimentSource, /PHYSICS_AND_DETERMINISM_FIRST_THEN_ACCURACY/u,
+  'promotion must gate on physics and determinism before accuracy');
 
 const tempPath = resolve(tmpdir(), `m047-direction-only-check-${process.pid}.mjs`);
 writeFileSync(tempPath, candidate, 'utf8');

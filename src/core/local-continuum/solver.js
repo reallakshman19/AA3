@@ -186,7 +186,7 @@ function submatrix(matrix, rows, columns) {
 }
 
 function dotRow(row, vector) {
-  return dot(row, vector);
+  return compensatedProductSumRaw(row, vector);
 }
 
 function choleskySolve(matrix, rightHandSide, profile) {

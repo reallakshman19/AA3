@@ -1,0 +1,19 @@
+{
+  "schema":"lafea-b01-repair-attempt/v1",
+  "issue":1100,
+  "attempt":8,
+  "exactHead":"2b833efd759edf80f4116c68885c8f43b798991e",
+  "hypothesis":"The outer canonicalNumber applied to the dense partition RHS before Cholesky creates the remaining rigid residual floor.",
+  "singleMechanicsChange":"Remove the outer dense partition RHS canonicalNumber wrapper while retaining Cholesky refinement and all governed output canonicalization.",
+  "productionFilesChanged":["src/core/local-continuum/solver.js"],
+  "frozenBenchmarkChanged":false,
+  "tolerancesChanged":false,
+  "priorControls":"PASS",
+  "workflowRunId":31671565578,
+  "artifact":{"artifactId":9169887225,"sha256":"sha256:4087e29e3c4dbd77788ca0525dc954302243e3a5e0a2e9decfa38cb1bf0d4822"},
+  "matrix":{"passCount":46,"failCount":8,"status":"FAIL"},
+  "comparisonToAttempt6":"All remaining normalized rigid residuals are unchanged.",
+  "rootCauseUpdate":"The outer wrapper was neutral because dotRow() still calls matrix.dot(), whose return value is itself canonicalized to 15 significant digits. The coupling action therefore remains rounded before Cholesky.",
+  "disposition":"NEUTRAL_BUT_RETAIN_AS_PART_OF_THE_INTERNAL_PRECISION_REPAIR. Next change replaces only the dense coupling dot with the existing raw compensated product sum.",
+  "releaseAuthorityGrantedByProgram":false
+}

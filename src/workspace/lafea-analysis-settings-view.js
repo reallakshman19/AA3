@@ -10,29 +10,32 @@ export function buildLafeaAnalysisSettingsViewModel(stageValue) {
   const profile = documentValue?.qualificationProfile ?? null;
   const requests = documentValue?.resultRequests ?? null;
   const registry = requireLafeaStageRegistryEntry(stage.stageId);
+  const modelRows = [
+    row('Model identity', textOr(documentValue?.modelIdentity)),
+    row('Model version', textOr(documentValue?.modelVersion)),
+    row('Formulation', textOr(documentValue?.formulation)),
+    row('Thickness policy', textOr(documentValue?.thicknessBasis?.policy)),
+    row('Requested analyses / cases', requestSummary(requests)),
+    row('Unit basis', unitSummary(documentValue?.units)),
+    row('Code / allowable basis', codeBasisSummary(documentValue)),
+  ];
+  const solverRows = [
+    row('Registered engine', registry.enginePackage ? `src/core/${registry.enginePackage}` : 'Not implemented'),
+    row('Registered authority', registry.authority),
+    row('Engine state', registry.engineState),
+    row('Result presenter', registry.presenterRole ?? 'Not registered'),
+    row('Lifecycle profile', stage.lifecycle?.profileId ?? 'Not initialized'),
+    row('Lifecycle source binding', stage.lifecycleBinding?.status ?? 'UNINITIALIZED'),
+    row('Qualification profile', textOr(profile?.identity)),
+    row('Source schema', textOr(documentValue?.schema)),
+  ];
   return freeze({
     schema: LAFEA_ANALYSIS_SETTINGS_VIEW_SCHEMA,
     stageId: stage.stageId,
     readOnly: true,
-    modelRows: [
-      row('Model identity', textOr(documentValue?.modelIdentity)),
-      row('Model version', textOr(documentValue?.modelVersion)),
-      row('Formulation', textOr(documentValue?.formulation)),
-      row('Thickness policy', textOr(documentValue?.thicknessBasis?.policy)),
-      row('Requested analyses / cases', requestSummary(requests)),
-      row('Unit basis', unitSummary(documentValue?.units)),
-      row('Code / allowable basis', codeBasisSummary(documentValue)),
-    ],
-    solverRows: [
-      row('Registered engine', registry.enginePackage ? `src/core/${registry.enginePackage}` : 'Not implemented'),
-      row('Registered authority', registry.authority),
-      row('Engine state', registry.engineState),
-      row('Result presenter', registry.presenterRole ?? 'Not registered'),
-      row('Lifecycle profile', stage.lifecycle?.profileId ?? 'Not initialized'),
-      row('Lifecycle source binding', stage.lifecycleBinding?.status ?? 'UNINITIALIZED'),
-      row('Qualification profile', textOr(profile?.identity)),
-      row('Source schema', textOr(documentValue?.schema)),
-    ],
+    modelRows,
+    solverRows,
+    rows: [...modelRows, ...solverRows],
     recoveryDisclosure: recoveryDisclosure(stage.stageId, documentValue),
     qualificationDetails: qualificationDetails(profile),
     limitations: [...registry.limitations, ...stringArray(documentValue?.limitations)],

@@ -1,0 +1,114 @@
+name: M047 H1E1 first-locked timing measurement
+
+on:
+  push:
+    branches:
+      - m047-h1e1-measure-20260813
+    paths:
+      - '.github/workflows/m047-h1e1-measure.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  measure:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    env:
+      SOURCE_HEAD: '7668bc046ff271bf6df00f55e4e1a1940edb0c41'
+      BM4L_COMMON_COMMIT: '45d51ea18624f5775805f399110c1738301c0d90'
+      BM4L_ZIP_SHA256: '978617cba50fa0b1a16c2fa71dc1e0d38e55ac834b191f887d100c6951abd8b9'
+      BM4L_ZIP_SIZE: '582488'
+      BM4L_ACCDB_SHA256: '64c05a50e9ed0452622ff5880335460486f24ac8e6adecc9a300b549c9aa82f8'
+      BM4L_ACCDB_SIZE: '5136384'
+    steps:
+      - name: Checkout exact PR 1101 H1E1 source
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ env.SOURCE_HEAD }}
+          persist-credentials: false
+      - name: Prove source custody
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$(git rev-parse HEAD)" = "$SOURCE_HEAD"
+          test -z "$(git status --porcelain)"
+      - name: Set up Node 22
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+      - name: Install dependencies
+        run: npm ci
+      - name: Fetch pinned BM4_L
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p artifacts/measurement artifacts/bm4l-stage2/source reports
+          curl --fail --location --silent --show-error \
+            "https://raw.githubusercontent.com/reallaksh19/Common/${BM4L_COMMON_COMMIT}/LFEA/BM4/BM4_L.zip" \
+            -o artifacts/measurement/BM4_L.zip
+          test "$(stat -c '%s' artifacts/measurement/BM4_L.zip)" = "$BM4L_ZIP_SIZE"
+          echo "${BM4L_ZIP_SHA256}  artifacts/measurement/BM4_L.zip" | sha256sum -c -
+          unzip -q artifacts/measurement/BM4_L.zip -d artifacts/bm4l-stage2/source
+          test "$(stat -c '%s' artifacts/bm4l-stage2/source/BM4_L.ACCDB)" = "$BM4L_ACCDB_SIZE"
+          echo "${BM4L_ACCDB_SHA256}  artifacts/bm4l-stage2/source/BM4_L.ACCDB" | sha256sum -c -
+      - name: Validate H1E1 isolation contract
+        shell: bash
+        run: |
+          set -euo pipefail
+          node --check scripts/lfea-m047-stage2-h1-first-locked-finalization-experiment.mjs
+          node --input-type=module - <<'NODE'
+          import {readFileSync} from 'node:fs';
+          import {buildCandidateSource} from './scripts/lfea-m047-stage2-h1-first-locked-finalization-experiment.mjs';
+          const p='src/core/fea-benchmarks/caesar-accdb-friction-solve.js';
+          const s=buildCandidateSource(readFileSync(p,'utf8'),p);
+          if(!s.includes('CAESAR-ACCDB-FRICTION-SOLVER-R1-D1-H1E1-FIRST-LOCKED-FINALIZATION')) throw new Error('profile missing');
+          if(!s.includes('pendingFirstLockedFinalization')) throw new Error('pending timing state missing');
+          if(!s.includes('firstLockedFinalizations')) throw new Error('exercise evidence missing');
+          if(s.includes("const finalizingRelock = state === 'SLIDE' && nextState === 'STICK';")) throw new Error('H1 same-iteration finalization still present');
+          console.log('H1E1 isolation PASS');
+          NODE
+      - name: Execute real H1E1 nonlinear candidate twice
+        id: experiment
+        shell: bash
+        run: |
+          set +e
+          node scripts/lfea-m047-stage2-h1-first-locked-finalization-experiment.mjs \
+            --accdb artifacts/bm4l-stage2/source/BM4_L.ACCDB \
+            --h1-evidence reports/lfea-m047-stage2-d1-relock-final-return-map-measurement.json \
+            --out reports/lfea-m047-stage2-h1e1-first-locked-finalization.json \
+            > artifacts/measurement/experiment.stdout.txt \
+            2> artifacts/measurement/experiment.stderr.txt
+          code=$?
+          echo "$code" > artifacts/measurement/experiment-exit-code.txt
+          echo "exit_code=$code" >> "$GITHUB_OUTPUT"
+          exit 0
+      - name: Emit receipt
+        if: always()
+        shell: bash
+        run: |
+          node - <<'NODE'
+          const fs=require('fs');
+          const p='reports/lfea-m047-stage2-h1e1-first-locked-finalization.json';
+          const result=fs.existsSync(p)?JSON.parse(fs.readFileSync(p,'utf8')):null;
+          const code=fs.existsSync('artifacts/measurement/experiment-exit-code.txt')?Number(fs.readFileSync('artifacts/measurement/experiment-exit-code.txt','utf8').trim()):null;
+          fs.writeFileSync('artifacts/measurement/receipt.json',JSON.stringify({schema:'m047-h1e1-actions-receipt/v1',sourceHead:process.env.SOURCE_HEAD,accdbSha256:process.env.BM4L_ACCDB_SHA256,experimentExitCode:code,result},null,2)+'\n');
+          NODE
+      - name: Upload governed measurement evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: m047-h1e1-measurement
+          retention-days: 7
+          if-no-files-found: error
+          path: |
+            artifacts/measurement/**
+            reports/lfea-m047-stage2-h1e1-first-locked-finalization.json
+      - name: Enforce experiment success after upload
+        if: always()
+        shell: bash
+        run: |
+          test -f artifacts/measurement/experiment-exit-code.txt
+          code="$(cat artifacts/measurement/experiment-exit-code.txt)"
+          if [ "$code" != "0" ]; then exit "$code"; fi

@@ -33,23 +33,15 @@ const PROFILE_KEYS = Object.freeze({
 });
 
 export const TOPOLOGY_EDIT_TABLE_TARGET_FIELD_GAPS = deepFreeze({
-  GEOMETRY: [
-    'fromX', 'fromY', 'fromZ', 'toX', 'toY', 'toZ',
-    'deltaX', 'deltaY', 'deltaZ',
-  ],
+  GEOMETRY: [],
   SPECIFICATION: [
     'outsideDiameterMm', 'wallThicknessMm', 'insideDiameterMm', 'catalogueRecordId',
   ],
   SUPPORT: [
     'hostEdgeId', 'supportX', 'supportY', 'supportZ',
   ],
-  CONNECTIVITY: [
-    'fromNodeId', 'toNodeId', 'fromPortKey', 'toPortKey',
-    'branchPortKey', 'reducerCanonicalId',
-  ],
-  TEE: [
-    'downstreamDnMm',
-  ],
+  CONNECTIVITY: [],
+  TEE: [],
 });
 
 export function topologyEditTableColumnProfile(profileInput, elementTypes = []) {

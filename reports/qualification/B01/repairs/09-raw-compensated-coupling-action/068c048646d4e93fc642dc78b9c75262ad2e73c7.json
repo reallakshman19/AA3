@@ -1,0 +1,18 @@
+{
+  "schema":"lafea-b01-repair-attempt/v1",
+  "issue":1100,
+  "attempt":9,
+  "exactHead":"068c048646d4e93fc642dc78b9c75262ad2e73c7",
+  "hypothesis":"matrix.dot() canonicalizes the compensated coupling action before the dense partition solve, preserving a hidden 15-significant-digit RHS rounding boundary.",
+  "singleMechanicsChange":"Use the existing raw Neumaier compensated product sum for the dense coupling action before Cholesky/refinement.",
+  "productionFilesChanged":["src/core/local-continuum/solver.js"],
+  "frozenBenchmarkChanged":false,
+  "tolerancesChanged":false,
+  "priorControls":"PASS",
+  "workflowRunId":31671717878,
+  "artifact":{"artifactId":9169942734,"sha256":"sha256:eb63c902cba4ce8eba0f826fc7a84b6933c61c2d8b8f75a48ce84a380d06ae73"},
+  "matrix":{"passCount":46,"failCount":8,"status":"FAIL"},
+  "comparisonToAttempt8":"All eight remaining normalized rigid residuals are unchanged.",
+  "disposition":"HYPOTHESIS_NOT_CONFIRMED. Pause mechanics changes and retain direct solver-refinement/equilibrium diagnostics before the next repair.",
+  "releaseAuthorityGrantedByProgram":false
+}

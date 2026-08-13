@@ -61,13 +61,9 @@ function solveFreeSystem(model, mesh, force, free, constraints, prescribed) {
   if (!free.length) return { solution: [], evidence: emptySolverEvidence() };
   if (mesh.globalStiffnessStorage === 'DENSE') {
     const freeStiffness = submatrix(mesh.globalStiffnessMatrix, free, free);
-    const coupling = submatrix(
-      mesh.globalStiffnessMatrix,
-      free,
-      constraints.indices,
-    );
-    const rightHandSide = free.map((index, row) => canonicalNumber(
-      force[index] - dotRow(coupling[row], constraints.values),
+    const prescribedAction = matrixVector(mesh.globalStiffnessMatrix, prescribed);
+    const rightHandSide = free.map((index) => canonicalNumber(
+      force[index] - prescribedAction[index],
       'partition rhs',
     ));
     return choleskySolve(
@@ -161,13 +157,6 @@ function solutionRecord(
   };
 }
 
-/**
- * Merges the model's restraint-level `constraints` with this load case's own
- * `imposedDisplacements` (spec §7.1: a per-load-case prescribed motion,
- * distinct from a model-wide restraint). `source-loads.js` already rejects
- * an imposed displacement declared on the same DOF as a model constraint, so
- * no index can appear in both sets here.
- */
 function constraintData(model, dofs, load) {
   const index = new Map(dofs.map((identity, position) => [identity, position]));
   const modelRows = model.constraints.map((row) => ({
@@ -206,9 +195,6 @@ function choleskySolve(matrix, rightHandSide, profile) {
   const minimum = Math.min(...pivots);
   const maximum = Math.max(...pivots);
   return {
-    // Keep full Number precision through equilibrium/reaction evaluation.
-    // solutionRecord() performs the governed canonicalization at the output
-    // boundary; rounding here was an unnecessary pre-residual precision loss.
     solution,
     evidence: pivotEvidence(scale, limit, pivots, minimum, maximum),
   };

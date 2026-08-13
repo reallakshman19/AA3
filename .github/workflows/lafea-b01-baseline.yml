@@ -8,6 +8,7 @@ on:
       - 'validation/lafea-benchmark-data/B01/**'
       - 'scripts/lafea-b01-registered-route-check.mjs'
       - 'scripts/lafea-b01-rigid-solver-diagnostic.mjs'
+      - 'scripts/lafea-b01-triangular-substitution-diagnostic.mjs'
       - 'src/core/local-continuum/**'
       - '.github/workflows/lafea-b01-baseline.yml'
   pull_request:
@@ -15,6 +16,7 @@ on:
       - 'validation/lafea-benchmark-data/B01/**'
       - 'scripts/lafea-b01-registered-route-check.mjs'
       - 'scripts/lafea-b01-rigid-solver-diagnostic.mjs'
+      - 'scripts/lafea-b01-triangular-substitution-diagnostic.mjs'
       - 'src/core/local-continuum/**'
       - '.github/workflows/lafea-b01-baseline.yml'
 
@@ -39,6 +41,7 @@ jobs:
         run: |
           node --check scripts/lafea-b01-registered-route-check.mjs
           node --check scripts/lafea-b01-rigid-solver-diagnostic.mjs
+          node --check scripts/lafea-b01-triangular-substitution-diagnostic.mjs
 
       - name: Run prior continuum controls
         run: |
@@ -67,6 +70,10 @@ jobs:
       - name: Capture rigid solver diagnostics
         if: always()
         run: node scripts/lafea-b01-rigid-solver-diagnostic.mjs > "$B01_REPORT_DIR/B01-rigid-solver-diagnostic.json"
+
+      - name: Capture triangular substitution diagnostics
+        if: always()
+        run: node scripts/lafea-b01-triangular-substitution-diagnostic.mjs > "$B01_REPORT_DIR/B01-triangular-substitution-diagnostic.json"
 
       - name: Upload B01 base receipts
         if: always()

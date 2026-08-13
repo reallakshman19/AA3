@@ -6,6 +6,12 @@ import {
   arrayValue, codeUnitCompare, enumValue, exactRecord, nonEmptyString, uniqueIdentities,
 } from './validation.js';
 
+const QUADRATIC_MIDSIDE_EDGES = Object.freeze({
+  [ELEMENT_TYPES.T6]: Object.freeze([[0, 1, 3], [1, 2, 4], [2, 0, 5]]),
+  [ELEMENT_TYPES.Q8]: Object.freeze([[0, 1, 4], [1, 2, 5], [2, 3, 6], [3, 0, 7]]),
+});
+const MIDSIDE_ROUNDOFF_FACTOR = 64;
+
 export function normalizeMaterials(values) {
   const rows = arrayValue(values, 'materials').map((value, index) => {
     const path = `materials[${index}]`;
@@ -87,17 +93,21 @@ function normalizeElement(value, index, nodeMap) {
     );
   }
   nodeIds.forEach((id) => assertNodeReference(id, nodeMap, path));
+  const canonicalNodeIds = elementType === ELEMENT_TYPES.T3
+    ? canonicalTriangleIds(nodeIds, nodeMap)
+    : requireCounterClockwiseCorners(nodeIds, elementType, nodeMap, path);
+  if (elementType === ELEMENT_TYPES.T6 || elementType === ELEMENT_TYPES.Q8) {
+    requireQuadraticMidsideMidpoints(canonicalNodeIds, elementType, nodeMap, path);
+  }
   return {
     elementId: nonEmptyString(row.elementId, `${path}.elementId`),
     elementType,
     // T3's declared node order is not semantically meaningful (any rotation/
     // reflection is the same triangle) and is canonicalized for determinism.
-    // T6/Q8 node order IS meaningful (corner/midside position) and is
-    // preserved exactly as declared, with a required-CCW check that rejects
-    // rather than silently repairs a clockwise declaration.
-    nodeIds: elementType === ELEMENT_TYPES.T3
-      ? canonicalTriangleIds(nodeIds, nodeMap)
-      : requireCounterClockwiseCorners(nodeIds, elementType, nodeMap, path),
+    // T6/Q8 node order IS meaningful (corner/midside position), so it is
+    // preserved exactly, required CCW, and its midsides must remain on the
+    // exact parent-edge midpoint policy rather than being silently snapped.
+    nodeIds: canonicalNodeIds,
     materialId: nonEmptyString(row.materialId, `${path}.materialId`),
     thickness: positiveNumber(row.thickness, `${path}.thickness`),
     sourceReference: nonEmptyString(row.sourceReference, `${path}.sourceReference`),
@@ -115,6 +125,31 @@ function requireCounterClockwiseCorners(nodeIds, elementType, nodeMap, path) {
     );
   }
   return nodeIds;
+}
+
+function requireQuadraticMidsideMidpoints(nodeIds, elementType, nodeMap, path) {
+  const edges = QUADRATIC_MIDSIDE_EDGES[elementType];
+  for (const [leftIndex, rightIndex, midsideIndex] of edges) {
+    const left = nodeMap.get(nodeIds[leftIndex]);
+    const right = nodeMap.get(nodeIds[rightIndex]);
+    const midside = nodeMap.get(nodeIds[midsideIndex]);
+    const residualX = 2 * midside.x - left.x - right.x;
+    const residualY = 2 * midside.y - left.y - right.y;
+    const scale = Math.max(
+      1,
+      Math.abs(left.x), Math.abs(left.y),
+      Math.abs(right.x), Math.abs(right.y),
+      Math.abs(midside.x), Math.abs(midside.y),
+    );
+    const limit = Number.EPSILON * MIDSIDE_ROUNDOFF_FACTOR * scale;
+    if (Math.max(Math.abs(residualX), Math.abs(residualY)) > limit) {
+      throw modelError(
+        'QUADRATIC_MIDSIDE_NOT_PARENT_MIDPOINT',
+        `${path}.nodeIds[${midsideIndex}]`,
+        `${elementType} midside node ${midside.nodeId} must be the parent-edge midpoint; snapping or silent repair is not permitted.`,
+      );
+    }
+  }
 }
 
 function polygonSignedArea(cornerIds, nodeMap) {

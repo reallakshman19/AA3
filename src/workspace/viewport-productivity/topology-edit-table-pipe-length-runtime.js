@@ -1,5 +1,6 @@
 import { planTopologyEditTableDraft } from '../topology-edit/table/topology-edit-table-draft-plan.js';
 import { createTopologyEditTableIntent } from '../topology-edit/table/topology-edit-table-intent.js';
+import { requestTopologyEditTableAutoPreview } from './topology-edit-table-workflow.js';
 
 export function stageTopologyEditTablePipeLength(runtime, input = {}) {
   try {
@@ -27,7 +28,8 @@ export function stageTopologyEditTablePipeLength(runtime, input = {}) {
     runtime.staleResult = null;
     runtime.clearCandidate();
     runtime.error = null;
-    runtime.message = `${draft.batch.intentCount} table change(s) staged against the exact certified revision.`;
+    runtime.message = `${draft.batch.intentCount} table change(s) staged against the exact certified revision; governed Preview refresh queued.`;
+    requestTopologyEditTableAutoPreview(runtime);
     return Object.freeze({ ok: true, intent: draft.intent });
   } catch (error) {
     runtime.error = errorMessage(error);

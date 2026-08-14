@@ -1,6 +1,10 @@
 #!/usr/bin/env node
 import assert from 'node:assert/strict';
-import { canonicalProfile, PROFILE_KINDS } from '../src/core/lafea-profile-contract/index.js';
+import {
+  canonicalProfile,
+  defaultProfileFields,
+  PROFILE_KINDS,
+} from '../src/core/lafea-profile-contract/index.js';
 import {
   LAFEA_ANALYSIS_GEOMETRY_EVIDENCE_PROFILE,
   LAFEA_ANALYSIS_GEOMETRY_EVIDENCE_SCHEMA,
@@ -49,6 +53,14 @@ try {
   assert.equal(stage.orchestration.sections.AUTHORIZATION.state, 'READY');
   assert.ok(stage.orchestration.sections.EXECUTION.allowedActions.includes('RUN_SOLVE'));
   assert.equal(stage.retainedContinuumPreflightEvidence.solverExecuted, false);
+  assert.match(stage.retainedContinuumPreflightEvidence.topologyQualificationHash, /^sha256:[0-9a-f]{64}$/u);
+  assert.match(stage.retainedContinuumPreflightEvidence.highOrderJacobianQualificationHash, /^sha256:[0-9a-f]{64}$/u);
+  assert.deepEqual(stage.retainedContinuumPreflightEvidence.highOrderJacobianPolicy, {
+    minimumDeterminant: 0,
+    maximumDepth: 12,
+    maximumSubregions: 8192,
+    authority: 'SOURCE_CONTROLLED_FAIL_CLOSED_CERTIFICATION_RESOURCE_POLICY',
+  });
 
   const compilerTamper = structuredClone(stage.retainedContinuumPreflightEvidence);
   compilerTamper.compilerRevision = 'INCOMPATIBLE'; resealPreflight(compilerTamper);
@@ -67,6 +79,18 @@ try {
   expectCode(
     () => validateLafeaContinuumDomainFirstPreflight(capabilityTamper),
     'LAFEA_CONTINUUM_PREFLIGHT_INVALID',
+  );
+  const policyTamper = structuredClone(stage.retainedContinuumPreflightEvidence);
+  policyTamper.highOrderJacobianPolicy.maximumDepth = 1; resealPreflight(policyTamper);
+  expectCode(
+    () => validateLafeaContinuumDomainFirstPreflight(policyTamper),
+    'LAFEA_CONTINUUM_PREFLIGHT_INVALID',
+  );
+  const topologyHashTamper = structuredClone(stage.retainedContinuumPreflightEvidence);
+  topologyHashTamper.topologyQualificationHash = `sha256:${'f'.repeat(64)}`;
+  expectCode(
+    () => validateLafeaContinuumDomainFirstPreflight(topologyHashTamper),
+    'LAFEA_CONTINUUM_PREFLIGHT_TAMPERED',
   );
 
   const lifecycleBeforeParity = structuredClone(stage.lifecycle);
@@ -182,12 +206,15 @@ try {
 }
 
 console.log(JSON.stringify({
-  schema: 'lafea-continuum-authoritative-run-check/v4',
+  schema: 'lafea-continuum-authoritative-run-check/v5',
   check: 'lafea-continuum-authoritative-run',
   status: 'PASS',
   stageId: 'LAFEA.3',
   explicitPreflightRequired: true,
   compiledInputLoweringQualifiedByPreflight: true,
+  globalTopologyQualifiedByPreflight: true,
+  fullParentJacobianQualifiedByPreflight: true,
+  jacobianProofPolicySourceControlled: true,
   preflightIdentityFailsClosed: true,
   authoritativeCompiledRun: true,
   existingNumericalKernelReused: true,
@@ -264,14 +291,15 @@ function triangleGeometry() {
 }
 
 function meshProfile() {
+  const defaults = defaultProfileFields(PROFILE_KINDS.MESH);
   return canonicalProfile(PROFILE_KINDS.MESH, {
     schema: 'lafea-mesh-profile/v1', profileIdentity: 'STAGE13-AUTHORITATIVE-T6',
-    sourceRevision: '13.1', semanticHash: undefined,
+    sourceRevision: '13.3', semanticHash: undefined,
     fields: {
-      continuumElement: 'T6', shellElement: 'CST_DKT_TRI3_THIN_SHELL_V1',
-      globalTargetSize: 25, adjacentSizeRatioMax: 1.5, aspectRatioWarn: 4,
-      aspectRatioBlock: 8, scaledJacobianWarn: 0.25, scaledJacobianBlock: 0.05,
-      adaptiveLevels: 3,
+      ...defaults,
+      continuumElement: 'T6',
+      shellElement: 'CST_DKT_TRI3_THIN_SHELL_V1',
+      globalTargetSize: 25,
     },
   });
 }

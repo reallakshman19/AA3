@@ -415,7 +415,7 @@ function quantityValue(quantityId, displacement, strain, stress, principal, vonM
 }
 function expectedUnits(quantityId) {
   if (DISPLACEMENT_QUANTITIES.has(quantityId)) return CANONICAL_UNITS.length;
-  if (STRAIN_QUANTITIES.has(quantityId)) return '1';
+  if (STRAIN_QUANTITIES.has(quantityId)) return CANONICAL_UNITS.strain;
   if (STRESS_QUANTITIES.has(quantityId)) return CANONICAL_UNITS.stress;
   fail('LAFEA_G4_PROBE_QUANTITY_UNSUPPORTED');
 }

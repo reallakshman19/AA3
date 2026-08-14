@@ -1,6 +1,6 @@
 import { expect, test } from '@playwright/test';
 
-test('direct XYZ cell stages certified NODE_POSITION without canonical mutation', async ({ page }) => {
+test('direct XYZ cell auto-previews certified NODE_POSITION without canonical mutation', async ({ page }) => {
   const pageErrors = [];
   const consoleErrors = [];
   page.on('pageerror', (error) => pageErrors.push(error.message));
@@ -43,6 +43,8 @@ test('direct XYZ cell stages certified NODE_POSITION without canonical mutation'
 
   await input.press('Enter');
   await expect.poll(() => host.getAttribute('data-topology-edit-table-batch-hash')).toBeTruthy();
+  await expect.poll(() => host.getAttribute('data-topology-edit-table-preview-hash')).toBeTruthy();
+  await expect.poll(() => ghostChildCount(page)).toBeGreaterThan(0);
   expect(await canonicalHash(page)).toBe(beforeHash);
 
   const staged = await page.evaluate(() => {
@@ -54,6 +56,9 @@ test('direct XYZ cell stages certified NODE_POSITION without canonical mutation'
       endpoint: intent.requestedValue?.endpoint ?? null,
       position: intent.requestedValue?.position ?? null,
       movementMode: intent.geometryPolicy?.movementMode ?? null,
+      planHash: runtime?.batchPlan?.planHash ?? null,
+      previewPlanHash: runtime?.preview?.batchPlanHash ?? null,
+      validationHash: runtime?.validation?.tableValidationHash ?? null,
     } : null;
   });
   expect(staged).not.toBeNull();
@@ -61,9 +66,15 @@ test('direct XYZ cell stages certified NODE_POSITION without canonical mutation'
   expect(staged.endpoint).toBe(meta.endpoint);
   expect(staged.movementMode).toBe('NODE_ONLY');
   expect(staged.position[meta.axis.toLowerCase()]).toBe(nextValue);
+  expect(staged.previewPlanHash).toBe(staged.planHash);
+  expect(staged.validationHash).toBeNull();
+  await expect(page.locator('[data-table-action="validate"]')).toBeEnabled();
+  expect(await canonicalHash(page)).toBe(beforeHash);
 
   await page.locator('[data-table-action="discard"]').click();
   await expect.poll(() => host.getAttribute('data-topology-edit-table-batch-hash')).toBe('');
+  await expect.poll(() => host.getAttribute('data-topology-edit-table-preview-hash')).toBe('');
+  await expect.poll(() => ghostChildCount(page)).toBe(0);
   expect(await canonicalHash(page)).toBe(beforeHash);
   expect(pageErrors).toEqual([]);
   expect(consoleErrors.filter((message) => !message.includes('favicon'))).toEqual([]);
@@ -94,4 +105,9 @@ async function openProductionController(page) {
 async function canonicalHash(page) {
   return page.evaluate(() => document.querySelector('[data-role="topology-edit-render-host"]')
     ?.__topologyEditAuthoringController?.session?.currentTopology?.()?.canonicalTopologyHash ?? null);
+}
+
+async function ghostChildCount(page) {
+  return page.evaluate(() => document.querySelector('[data-role="topology-edit-render-host"]')
+    ?.__topologyEditAuthoringController?.viewportBackend?.groups?.ghostGroup?.children?.length ?? 0);
 }

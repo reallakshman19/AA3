@@ -76,7 +76,7 @@ test('production application LAFEA.3 stage mounts the engineering workbench', as
 
   const productionView = page.locator('[data-application-view="LAFEA"]');
   await expect(productionView).toBeVisible();
-  await productionView.locator('[data-stage-id="LAFEA.3"]').click();
+  await productionView.locator('.lafea-workbench__stages [data-stage-id="LAFEA.3"]').click();
   const overview = productionView.locator('[data-role="lafea-engineering-overview"]');
   await expect(overview).toBeVisible();
   await expect(overview).toContainText('Model → mesh → solve → results');
@@ -97,7 +97,7 @@ test('production LAFEA.1 is TBA with no fake FE or mesh surface', async ({ page 
   await openProductionLafea(page);
 
   const workbench = page.locator('[data-role="lafea-workbench"]');
-  await workbench.locator('[data-stage-id="LAFEA.1"]').click();
+  await workbench.locator('.lafea-workbench__stages [data-stage-id="LAFEA.1"]').click();
 
   await expect(workbench.locator('[data-role="lafea-tba-stage"]')).toBeVisible();
   await expect(workbench.locator('.lafea-workbench__status')).toHaveText('TBA');

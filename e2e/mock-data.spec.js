@@ -1,6 +1,6 @@
 import { expect, test } from '@playwright/test';
 
-const LAFEA_STAGE_TABS_WITH_DEMO_SOURCE = ['LAFEA.1', 'LAFEA.3', 'LAFEA.4', 'LAFEA.5', 'LAFEA.6'];
+const LAFEA_STAGE_TABS_WITH_DEMO_SOURCE = ['LAFEA.2', 'LAFEA.3', 'LAFEA.4', 'LAFEA.5', 'LAFEA.6'];
 
 test.beforeEach(async ({ page }) => {
   await page.addInitScript(() => {
@@ -37,7 +37,7 @@ test('every Advanced tab loads deterministic [SIMULATED] input through its UI', 
     expect(stage.execution).toBeNull();
   }
 
-  await page.locator('[data-stage-id="LAFEA.2"]').click();
+  await page.locator('[data-stage-id="LAFEA.1"]').click();
   await expect(page.locator('[data-role="lafea-tba-stage"]')).toBeVisible();
   await expect(page.locator('.lafea-workbench__status')).toHaveText('TBA');
   await expect(page.locator('[data-role="lafea-mock"]')).toHaveCount(0);
@@ -46,7 +46,7 @@ test('every Advanced tab loads deterministic [SIMULATED] input through its UI', 
   await page.locator('[data-role="lafea-mock"]').click();
   await expect(page.locator('.lafea-workbench__status')).toHaveText('READY');
   const analyticalStage = await page.evaluate(
-    () => AnalysisWorkspace.getLafeaWorkbenchState().stages['LAFEA.2'],
+    () => AnalysisWorkspace.getLafeaWorkbenchState().stages['LAFEA.1'],
   );
   expect(analyticalStage.document).not.toBeNull();
   expect(analyticalStage.execution).toBeNull();

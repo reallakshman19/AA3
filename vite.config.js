@@ -129,6 +129,12 @@ export function manualChunk(id) {
     || source.endsWith('/src/workspace/lfea-support-actions-panel.js')) {
     return 'workspace-event-presentation-contracts';
   }
+  // Import-free static shell CSS is a safe presentation leaf. Keep the
+  // application controller/layout graph under Rollup ownership while moving
+  // only this large string literal out of the entry chunk.
+  if (source.endsWith('/src/workspace/workspace-shell-styles.js')) {
+    return 'application-shell-static-styles';
+  }
   // PR #1016 adds a bounded set of read-only views, immutable qualification
   // custody, and derived readiness/release projections. These modules export
   // functions/contracts only; they own no workbench controller, store, mounted

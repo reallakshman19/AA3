@@ -49,15 +49,30 @@ function normalizedLabel(value) {
     .toUpperCase()
     .replace(/\bBARS\b/gu, 'BAR')
     .replace(/\bINCHES\b/gu, 'IN')
-    .replace(/\bLBS?\.?\b/gu, 'LBF')
+    // Compound density labels are normalized BEFORE the bare `LB -> LBF` rule
+    // below, which would otherwise rewrite the `LB` of "lb. / cu.in." into
+    // "LBF" and leave the imperial density label permanently unmatchable.
+    // (That ordering bug made the LB/CUIN registry entry dead: every
+    // US-units CAESAR export blocked on PDENS/IDENS/FDENS.)
+    //
+    // CAESAR writes these labels two ways and both occur in real exports:
+    // slash-separated ("kg. / cu.cm.", BM1/BM2/BM3) and dot-separated
+    // ("kg.cu.cm.", BM4), so the separator is optional. This does not weaken
+    // validation: `declaredUnit` still cross-checks the declared FACTOR
+    // against the registry factor, so a label that normalizes to the wrong
+    // unit fails closed on INPUTXML_UNIT_FACTOR_MISMATCH rather than
+    // silently converting with a wrong scale.
+    .replace(/KG\.?\s*[/.]?\s*CU\.?\s*CM\.?/gu, 'KG/CUCM')
+    .replace(/KG\.?\s*[/.]?\s*M(?:\^?3|3)\.?/gu, 'KG/M3')
+    .replace(/LB\.?\s*[/.]?\s*CU\.?\s*IN\.?/gu, 'LB/CUIN')
+    // The lookahead keeps this rule from re-corrupting an already-normalized
+    // `LB/CUIN` token produced immediately above.
+    .replace(/\bLBS?\.?\b(?!\/CUIN)/gu, 'LBF')
     .replace(/LBF\.?[-·*\s]*IN\.?/gu, 'LBFIN')
     .replace(/LBF\.?[-·*\s]*FT\.?/gu, 'LBFFT')
     .replace(/KN\.?[-·*\s]*M\.?/gu, 'KNM')
     .replace(/N\.?[-·*\s]*M\.?/gu, 'NM')
     .replace(/N\.?\s*\/\s*SQ\.?\s*MM\.?/gu, 'N/SQMM')
-    .replace(/KG\.?\s*\/\s*CU\.?\s*CM\.?/gu, 'KG/CUCM')
-    .replace(/KG\.?\s*\/\s*M(?:\^?3|3)\.?/gu, 'KG/M3')
-    .replace(/LB\.?\s*\/\s*CU\.?\s*IN\.?/gu, 'LB/CUIN')
     .replace(/[.\s]/gu, '');
 }
 

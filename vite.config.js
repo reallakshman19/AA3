@@ -45,6 +45,29 @@ const PURE_LAFEA_WORKBENCH_GOVERNANCE_MODULES = new Set([
  * imports. The narrow workspace exceptions below contain only stateless pure
  * contract/projection helpers and own no runtime singleton.
  */
+/**
+ * The `mdb-reader` stack, reached only by dynamic import when a user selects
+ * an .accdb file. Listed explicitly so it stays out of the eager vendor chunk.
+ */
+const ACCDB_READER_PACKAGE_PATHS = Object.freeze([
+  '/node_modules/mdb-reader/',
+  '/node_modules/buffer/',
+  '/node_modules/pako/',
+  '/node_modules/browserify-aes/',
+  '/node_modules/create-hash/',
+  '/node_modules/cipher-base/',
+  '/node_modules/evp_bytestokey/',
+  '/node_modules/md5.js/',
+  '/node_modules/ripemd160/',
+  '/node_modules/sha.js/',
+  '/node_modules/hash-base/',
+  '/node_modules/readable-stream/',
+  '/node_modules/base64-js/',
+  '/node_modules/ieee754/',
+  '/node_modules/safe-buffer/',
+  '/node_modules/inherits/',
+]);
+
 export function manualChunk(id) {
   const source = id.replaceAll('\\', '/');
   if (source.includes('vite/preload-helper')) return 'runtime';
@@ -53,6 +76,12 @@ export function manualChunk(id) {
   // Keep xlsx on Rollup's existing dynamic-import boundary; it is already a
   // large isolated chunk and must not be folded into the generic leaf vendor.
   if (source.includes('/node_modules/xlsx/')) return undefined;
+  // Same treatment for the ACCDB reader stack. It is reached only through the
+  // dynamic import in caesar-accdb-reader-core.js, i.e. only once a user
+  // actually picks an .accdb file. Folding it into the eager `vendor` chunk
+  // would ship ~230 KB of Access parsing to every page load; leaving it on
+  // Rollup's dynamic boundary keeps it lazy.
+  if (ACCDB_READER_PACKAGE_PATHS.some((path) => source.includes(path))) return undefined;
   // Dependency-only partition. Workspace modules remain graph-owned below so
   // this cannot create controller/store evaluation-order cycles.
   if (source.includes('/node_modules/')) return 'vendor';

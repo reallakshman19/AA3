@@ -1,0 +1,18 @@
+/* Production layout support for the interactive LAFEA analysis workflow. */
+.lafea-guided-shell:has(.lafea-analysis-workflow-panel) {
+  grid-template-columns: minmax(330px, 360px) minmax(0, 1fr) !important;
+}
+
+.lafea-guided-shell:has(.lafea-analysis-workflow-panel) > .lafea-guided-shell__nav {
+  min-width: 330px;
+}
+
+@media (max-width: 1100px) {
+  .lafea-guided-shell:has(.lafea-analysis-workflow-panel) {
+    grid-template-columns: minmax(0, 1fr) !important;
+  }
+
+  .lafea-guided-shell:has(.lafea-analysis-workflow-panel) > .lafea-guided-shell__nav {
+    min-width: 0;
+  }
+}

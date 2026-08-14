@@ -7,7 +7,7 @@ import { mountLafeaLiveWorkbenchViewport } from './lafea-live-workbench-viewport
 import { buildLafeaDiscretizationViewModel } from './lafea-discretization-view-model.js';
 import { renderLafeaDiscretizationPanel } from './lafea-discretization-panel.js';
 import { buildLafeaGuidedWorkflow } from './lafea-guided-workflow.js';
-import { renderLafeaGuidedWorkflow } from './lafea-guided-workflow-view.js';
+import { renderLafeaAnalysisWorkflowPanel } from './lafea-analysis-workflow-panel.js';
 import { renderLafeaAnalysisSettings } from './lafea-analysis-settings-view.js';
 import { renderLafeaNumericalVerification } from './lafea-numerical-verification-view.js';
 import { renderLafeaEngineeringOverview } from './lafea-engineering-overview.js';
@@ -24,7 +24,7 @@ export function renderLafeaWorkbenchContent(root, state, stage, options) {
   shell.append(navHost, main);
 
   let activeViewport = null;
-  renderLafeaGuidedWorkflow(navHost, workflow, (step) => {
+  const navigateStep = (step) => {
     const target = shell.querySelector(`[data-guided-target="${step.focusTarget}"]`);
     if (target) {
       target.scrollIntoView?.({ behavior: 'smooth', block: 'start' });
@@ -32,6 +32,13 @@ export function renderLafeaWorkbenchContent(root, state, stage, options) {
       return;
     }
     options.onNavigateTarget?.(step.focusTarget);
+  };
+  renderLafeaAnalysisWorkflowPanel(navHost, {
+    workflow,
+    stage,
+    discretization,
+    handlers: options.handlers,
+    onNavigate: navigateStep,
   });
 
   const engineeringOverview = renderLafeaEngineeringOverview(
@@ -48,7 +55,7 @@ export function renderLafeaWorkbenchContent(root, state, stage, options) {
     root,
     'p',
     'lafea-workbench__section-intro',
-    'Define the governed geometry, material, restraints, load cases and units here. Advanced raw JSON remains available for whole-document inspection.',
+    'Define the governed geometry, material, restraints, load cases and units here. The left Analysis Workflow provides a structured LAFEA.3 starter/model form; this detailed surface exposes every registered editable descriptor. Advanced raw JSON remains available for whole-document inspection.',
   ));
   sourceCard.body.append(renderDocumentTableEditor(
     sourceCard.body,
@@ -104,7 +111,7 @@ export function renderLafeaWorkbenchContent(root, state, stage, options) {
       root,
       'p',
       'lafea-workbench-svg__empty',
-      'No explicit source geometry is available for this stage. No geometry or mesh has been synthesized.',
+      'No explicit source geometry is available for this stage. Use the left Model input workflow, import a stage JSON document, or load an explicit demonstration source.',
     ));
   }
   viewportCard.body.append(truthPanel(root, options.registryEntry));
@@ -210,7 +217,7 @@ function viewportModePanel(root, viewportState, retainedMeshEvidence, stage) {
     : 0;
   panel.append(
     viewportMode(root, 'Geometry', stage.document ? 'VISIBLE' : 'EMPTY', mode === 'SOURCE_AUTHORING'),
-    viewportMode(root, 'Mesh', meshCount ? `${meshCount} ELEMENTS` : 'NOT RETAINED', meshCount > 0),
+    viewportMode(root, 'Mesh', meshCount ? `${meshCount} ELEMENTS · SVG` : 'NOT RETAINED', meshCount > 0),
     viewportMode(
       root,
       'Result contour',
@@ -263,6 +270,7 @@ function diagnosticList(root, diagnostics) {
   section.append(element(root, 'h3', null, 'Current findings'));
   const list = element(root, 'ul');
   diagnostics.forEach((item) => {
+    section.append();
     list.append(element(
       root,
       'li',

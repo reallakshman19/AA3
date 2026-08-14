@@ -12,6 +12,7 @@ import { assertTopologyEditTableProjection } from './topology-edit-table-project
 export const TOPOLOGY_EDIT_TABLE_BATCH_PLAN_SCHEMA = 'TopologyEditTableBatchPlan.v1';
 const EPSILON_MM = 1e-9;
 const COMPOSITE_COMMANDS = new Set([
+  'REBIND_PIPE_SPECIFICATION',
   'REPLACE_INLINE_COMPONENT',
   'UPDATE_JUNCTION_BRANCH_RELATION',
   'UPDATE_SUPPORT_PLACEMENT',

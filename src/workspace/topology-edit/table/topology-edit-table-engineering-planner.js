@@ -3,6 +3,9 @@ import {
   assertTopologyEditInlineReplacementTarget,
 } from '../topology-edit-inline-component-replacement.js';
 import {
+  assertTopologyEditPipeSpecificationRebindTarget,
+} from '../topology-edit-pipe-specification-rebind.js';
+import {
   assertTopologyEditJunctionRelationTarget,
 } from '../topology-edit-junction-relation-command.js';
 import {
@@ -28,6 +31,9 @@ export function compileTopologyEditTableEngineeringIntent(intent, topology) {
   if (intent.intentKind === 'NODE_POSITION') {
     return compileTopologyEditTableNodePosition(intent, topology);
   }
+  if (intent.intentKind === 'PIPE_SPECIFICATION') {
+    return compilePipeSpecification(intent, topology);
+  }
   if (intent.intentKind === 'SUPPORT_PLACEMENT') {
     return compileSupportPlacement(intent, topology);
   }
@@ -43,6 +49,37 @@ export function compileTopologyEditTableEngineeringIntent(intent, topology) {
   throw new RangeError(
     `TopologyEditTableEngineeringPlanner: unsupported intent ${intent.intentKind}.`,
   );
+}
+
+function compilePipeSpecification(intent, topology) {
+  const payload = {
+    edgeId: intent.target.canonicalId,
+    catalogueBinding: intent.requestedValue.catalogueBinding,
+  };
+  const target = assertTopologyEditPipeSpecificationRebindTarget(topology, payload);
+  const nodeIds = [target.from.id, target.to.id];
+  const edgeIds = [target.edge.id];
+  const changedScope = deriveTopologyEditChangedScope(topology, {
+    basisHash: topology.canonicalTopologyHash,
+    nodeIds,
+    edgeIds,
+  });
+  return createTopologyEditOperationPlan({
+    operationType: 'COMPOSITE_ENGINEERING_EDIT',
+    basisHash: topology.canonicalTopologyHash,
+    targetIds: uniqueSorted([...nodeIds, ...edgeIds]),
+    parameters: {
+      aggregateKind: 'TABLE_PIPE_SPECIFICATION',
+      priorRecordId: intent.priorValue.catalogueRecordId ?? null,
+      priorRecordHash: intent.priorValue.catalogueRecordHash ?? null,
+      requestedRecordId: payload.catalogueBinding.recordId,
+      requestedRecordHash: payload.catalogueBinding.recordHash,
+      requestedBindingHash: payload.catalogueBinding.bindingHash,
+    },
+    commandIntents: [{ commandType: 'REBIND_PIPE_SPECIFICATION', payload }],
+    changedScope,
+    unresolvedEvidence: [],
+  });
 }
 
 function compileSupportPlacement(intent, topology) {

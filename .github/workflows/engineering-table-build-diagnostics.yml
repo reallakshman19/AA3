@@ -1,0 +1,43 @@
+name: Engineering Table build diagnostics
+on:
+  pull_request:
+    paths:
+      - 'src/workspace/topology-edit/table/**'
+      - 'src/workspace/topology-edit/draft/**'
+      - 'src/workspace/viewport-productivity/topology-edit-table-*.js'
+      - '.github/workflows/engineering-table-build-diagnostics.yml'
+permissions:
+  contents: read
+jobs:
+  build-diagnostics:
+    runs-on: ubuntu-latest
+    env:
+      EXPECTED_HEAD: ${{ github.event.pull_request.head.sha }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - name: Capture production build
+        shell: bash
+        continue-on-error: true
+        run: |
+          mkdir -p reports/qualification
+          set -o pipefail
+          npm run build 2>&1 | tee reports/qualification/engineering-table-build.log
+          echo $? > reports/qualification/engineering-table-build.exit
+      - name: Upload build diagnostics
+        uses: actions/upload-artifact@v4
+        with:
+          name: engineering-table-build-${{ github.event.pull_request.head.sha }}
+          path: reports/qualification/engineering-table-build.*
+          if-no-files-found: error
+          retention-days: 30
+      - name: Enforce build result
+        shell: bash
+        run: test "$(cat reports/qualification/engineering-table-build.exit)" = "0"

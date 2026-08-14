@@ -47,12 +47,20 @@ export function rebaseTopologyEditTableBatch(batchInput, projection, sessionSnap
   return createTopologyEditTableBatch({ intents });
 }
 
+export function topologyEditTableBatchIntentKey(intentInput) {
+  const intent = assertTopologyEditTableIntent(intentInput);
+  return `${intent.target.canonicalId}\u0000${intent.intentKind}\u0000${intentSubtarget(intent)}`;
+}
+
 function assertUniqueTargets(intents) {
   const seen = new Set();
   for (const intent of intents) {
-    const key = `${intent.target.canonicalId}\u0000${intent.intentKind}`;
+    const key = topologyEditTableBatchIntentKey(intent);
     if (seen.has(key)) {
-      throw new RangeError(`TopologyEditTableBatch: duplicate intent target ${intent.target.canonicalId} / ${intent.intentKind}.`);
+      const subtarget = intentSubtarget(intent);
+      throw new RangeError(
+        `TopologyEditTableBatch: duplicate intent target ${intent.target.canonicalId} / ${intent.intentKind}${subtarget ? ` / ${subtarget}` : ''}.`,
+      );
     }
     seen.add(key);
   }
@@ -60,5 +68,14 @@ function assertUniqueTargets(intents) {
 function compareIntents(left, right) {
   return left.target.canonicalId.localeCompare(right.target.canonicalId)
     || left.intentKind.localeCompare(right.intentKind)
+    || intentSubtarget(left).localeCompare(intentSubtarget(right))
     || left.intentHash.localeCompare(right.intentHash);
+}
+function intentSubtarget(intent) {
+  if (intent.intentKind !== 'NODE_POSITION') return '';
+  const endpoint = String(intent.requestedValue?.endpoint ?? '').trim().toUpperCase();
+  if (!['FROM', 'TO'].includes(endpoint)) {
+    throw new RangeError(`TopologyEditTableBatch: NODE_POSITION endpoint ${endpoint || '(blank)'} is unsupported.`);
+  }
+  return endpoint;
 }

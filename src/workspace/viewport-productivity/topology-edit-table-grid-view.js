@@ -30,19 +30,20 @@ export function renderTopologyEditTableGrid(runtime) {
   }
   const window = topologyEditTableRowWindow(rows.length, runtime.tableWindowStart);
   const renderedRows = rows.slice(window.start, window.end);
-  const columns = topologyEditTableVisibleColumns(runtime.projection);
+  const columns = topologyEditTableVisibleColumns(runtime.projection, runtime.columnProfile);
   const primary = runtime.projection.rows.find((row) => row.rowId === runtime.viewState.primaryRowId) ?? null;
   const selected = new Set(runtime.viewState.selectedRowIds);
-  const staged = new Map((runtime.batch?.intents ?? []).map((intent) => [intent.target.canonicalId, intent]));
+  const staged = stagedByCanonicalId(runtime.batch?.intents ?? []);
   const exportDisabled = runtime.pending || Boolean(
     runtime.batch || runtime.batchPlan || runtime.preview || runtime.validation || runtime.staleResult,
   );
   const typeSummary = topologyEditTableTypeSummary(runtime.projection.rows);
   const columnCount = columns.length + 1;
   element.innerHTML = `
-    <section class="topology-edit-table topology-edit-table--populated" data-table-phase="${escapeHtml(runtime.phase())}">
+    <section class="topology-edit-table topology-edit-table--populated" data-table-phase="${escapeHtml(runtime.phase())}" data-table-profile-active="${escapeHtml(runtime.columnProfile)}">
       <header class="topology-edit-table__header">
         <div><strong>Engineering table</strong><span>${rows.length} / ${runtime.projection.rows.length} rows · ${escapeHtml(typeSummary)}</span></div>
+        <nav class="topology-edit-table__profiles" aria-label="Engineering Table column profile">${profileButtons(runtime.columnProfile)}</nav>
         <label>Filter <input type="search" data-table-filter value="${escapeHtml(runtime.viewState.query)}" placeholder="Tag, type, ID, property, source…"></label>
       </header>
       <div class="topology-edit-table__upper" data-table-upper-region>
@@ -83,8 +84,8 @@ export function renderTopologyEditTableGrid(runtime) {
   publishEvidence(runtime, rows.length, renderedRows.length, window);
 }
 
-function rowHtml(runtime, row, columns, isSelected, stagedIntent) {
-  const staged = stagedIntent ? ' data-staged="true"' : '';
+function rowHtml(runtime, row, columns, isSelected, stagedIntents) {
+  const staged = stagedIntents?.length ? ' data-staged="true"' : '';
   return `<tr data-table-row-id="${escapeHtml(row.rowId)}" data-canonical-id="${escapeHtml(row.identity.canonicalId)}" data-element-type="${escapeHtml(row.elementType)}" data-selected="${String(isSelected)}"${staged}>
     <td data-table-column-key="select" data-table-frozen="select"><button type="button" data-table-select="${escapeHtml(row.rowId)}" aria-pressed="${String(isSelected)}" aria-label="${isSelected ? 'Deselect' : 'Select'} ${escapeHtml(row.identity.canonicalId)}">${isSelected ? 'Selected' : 'Select'}</button></td>
     ${columns.map((column) => cellHtml(runtime, row, column)).join('')}
@@ -140,31 +141,17 @@ function pointInputs(role, values) {
   }).join('');
 }
 
-function editorHtml(row, stagedIntent, runtime) {
+function editorHtml(row, stagedIntents, runtime) {
   const engineering = renderTopologyEditTableEngineeringEditor(
     row,
-    stagedIntent,
+    stagedIntents,
     runtime.projection,
     runtime.controller.professionalRuntime?.catalogue ?? null,
+    runtime.controller.session?.currentTopology?.() ?? null,
   );
   if (engineering) return engineering;
   const identity = `<div class="topology-edit-table__identity"><strong>${escapeHtml(row.fields.tag ?? row.identity.canonicalId)}</strong><code>${escapeHtml(row.identity.canonicalId)}</code><span>${escapeHtml(row.elementType)}</span></div>`;
-  if (row.elementType !== 'PIPE' || row.identity.canonicalKind !== 'EDGE') {
-    return `<section class="topology-edit-table__editor">${identity}<p>This row is read-only in the current implementation slice. Its exact identity, engineering properties and custody remain visible below.</p></section>`;
-  }
-  const length = stagedIntent?.requestedValue?.lengthMm ?? row.fields.lengthMm ?? '';
-  const anchor = stagedIntent?.geometryPolicy?.anchor ?? 'FROM';
-  const propagation = stagedIntent?.geometryPolicy?.propagation ?? 'DOWNSTREAM';
-  return `<section class="topology-edit-table__editor" data-table-editor-id="${escapeHtml(row.identity.canonicalId)}">
-    ${identity}
-    <div class="topology-edit-table__editor-grid">
-      <label>Length (mm)<input type="number" step="any" min="0" data-table-edit-length value="${escapeHtml(length)}"></label>
-      <label>Anchor<select data-table-edit-anchor><option ${anchor === 'FROM' ? 'selected' : ''}>FROM</option><option ${anchor === 'TO' ? 'selected' : ''}>TO</option></select></label>
-      <label>Propagation<select data-table-edit-propagation><option ${propagation === 'DOWNSTREAM' ? 'selected' : ''}>DOWNSTREAM</option><option ${propagation === 'UPSTREAM' ? 'selected' : ''}>UPSTREAM</option></select></label>
-      <button type="button" data-table-action="stage-pipe-length" data-canonical-id="${escapeHtml(row.identity.canonicalId)}">Stage change</button>
-    </div>
-    <div class="topology-edit-table__custody"><span>Source ${escapeHtml(row.custody.sourceStatus)}</span><span>Catalogue ${escapeHtml(row.custody.catalogueAuthority)}</span><span>Revision ${escapeHtml(shortHash(row.targetRevision))}</span></div>
-  </section>`;
+  return `<section class="topology-edit-table__editor">${identity}<p>This row is read-only in the current implementation slice. Its exact identity, engineering properties and custody remain visible below.</p></section>`;
 }
 
 function stagedPanel(runtime) {
@@ -185,12 +172,34 @@ function validationPanel(runtime) {
   return `<section class="topology-edit-table__conflict" data-table-validation-blockers><strong>${blockers.length} blocking validation issue(s)</strong><ul>${blockers.map((row) => `<li>${escapeHtml(diagnosticCode(row))}: ${escapeHtml(row.message ?? row.details?.message ?? 'Candidate introduces a blocking HIGH finding.')}</li>`).join('')}</ul></section>`;
 }
 
+function stagedByCanonicalId(intents) {
+  const map = new Map();
+  for (const intent of intents) {
+    const id = intent?.target?.canonicalId;
+    if (!id) continue;
+    const entries = map.get(id) ?? [];
+    entries.push(intent);
+    map.set(id, entries);
+  }
+  return map;
+}
 function diagnosticCode(row) { return row.issueKind ?? row.kind ?? row.code ?? row.diagnosticKind ?? 'HIGH'; }
 function sortHeader(column, state) {
   const active = state.sortKey === column.key;
   const marker = active ? (state.sortDirection === 'ASC' ? ' ▲' : ' ▼') : '';
   const frozen = column.frozen ? ` data-table-frozen="${escapeHtml(column.key)}"` : '';
   return `<th scope="col" data-table-column-key="${escapeHtml(column.key)}"${frozen}><button type="button" data-table-sort="${escapeHtml(column.key)}">${escapeHtml(column.label)}${marker}</button></th>`;
+}
+function profileButtons(activeInput) {
+  const active = String(activeInput ?? 'GEOMETRY').trim().toUpperCase();
+  return [
+    ['GEOMETRY', 'Geometry'],
+    ['SPECIFICATION', 'Specification'],
+    ['SUPPORT', 'Supports'],
+    ['CONNECTIVITY', 'Connectivity'],
+    ['AUTHORITY', 'Authority'],
+    ['ALL', 'All'],
+  ].map(([key, label]) => `<button type="button" data-table-profile="${key}" aria-pressed="${String(key === active)}">${label}</button>`).join('');
 }
 function value(row, key) { return key === 'elementType' ? row.elementType : row.fields?.[key] ?? null; }
 function displayValue(valueInput) {
@@ -226,6 +235,7 @@ function publishEvidence(runtime, visibleCount, renderedCount, window) {
   host.dataset.topologyEditTableWindowStart = String(window?.start ?? 0);
   host.dataset.topologyEditTableWindowEnd = String(window?.end ?? renderedCount);
   host.dataset.topologyEditTableSelectedRowIds = runtime.viewState.selectedRowIds.join(',');
+  host.dataset.topologyEditTableProfile = runtime.columnProfile ?? 'GEOMETRY';
   host.dataset.topologyEditTableBatchHash = runtime.batch?.batchHash ?? '';
   host.dataset.topologyEditTablePlanHash = runtime.batchPlan?.planHash ?? '';
   host.dataset.topologyEditTablePreviewHash = runtime.preview?.previewHash ?? '';

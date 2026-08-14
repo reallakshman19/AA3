@@ -55,7 +55,7 @@ function lengthIntent(context, lengthMm) {
   });
 }
 
-test('NODE_POSITION draft keys distinguish FROM and TO while certified batch authority stays fail-closed', () => {
+test('NODE_POSITION draft and certified batch keys distinguish FROM and TO on one edge', () => {
   const context = fixture();
   const from = nodeIntent(context, 'FROM', { x: -100, y: 0, z: 0 });
   const to = nodeIntent(context, 'TO', { x: 1100, y: 0, z: 0 });
@@ -65,12 +65,16 @@ test('NODE_POSITION draft keys distinguish FROM and TO while certified batch aut
   const first = planTopologyEditTableDraft({
     intents: [], intent: from, projection: context.projection, canonicalTopology: context.topology,
   });
-  assert.equal(first.intents.length, 1);
-  assert.equal(first.intents[0].requestedValue.endpoint, 'FROM');
-
-  assert.throws(() => planTopologyEditTableDraft({
+  const second = planTopologyEditTableDraft({
     intents: first.intents, intent: to, projection: context.projection, canonicalTopology: context.topology,
-  }), /duplicate intent target edge:pipe \/ NODE_POSITION/);
+  });
+
+  assert.equal(second.intents.length, 2);
+  assert.deepEqual(second.intents.map((intent) => intent.requestedValue.endpoint), ['FROM', 'TO']);
+  assert.equal(second.batch.intentCount, 2);
+  assert.deepEqual(second.batchPlan.operationPlan.commandIntents.map((intent) => intent.payload.nodeId), [
+    'node:a', 'node:b',
+  ]);
 });
 
 test('restaging one endpoint replaces that endpoint slot deterministically', () => {

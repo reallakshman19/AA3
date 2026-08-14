@@ -115,6 +115,7 @@ export class TopologyEditSupportHostDragRuntime {
       this.clearGuide();
       return null;
     }
+    this.supportPositionRuntime.clearStageEvidence?.();
     try {
       const draft = createTopologyEditTransientSupportPlacementDraft({
         topology,

@@ -4,157 +4,137 @@
 
 - WORK_INTENT: IMPLEMENT
 - REPOSITORY_STATE: NEW_PR_REQUIRED
-- MUTATION_AUTHORITY: WRITE_ALLOWED (explicit owner request: start LAFEA.3 v3 vertical slice)
+- MUTATION_AUTHORITY: WRITE_ALLOWED — owner requested LAFEA.3 v3 vertical slice
 - CRITICALITY: ENGINEERING_CRITICAL
-- TAKEOVER_AUTHORITY: NOT_APPLICABLE — new WIP from current main; no inherited implementation PR
-- SOURCE_TASK: Advanced_Analysis issue #1119 follow-on
-- PREDECESSOR: PR #1126 merged; Mesh Workspace v3 foundation
+- TAKEOVER_AUTHORITY: NOT_APPLICABLE — new WIP from live main
+- SOURCE_TASK: issue #1119 follow-on
+- PREDECESSOR: PR #1126 merged (Mesh Workspace v3 foundation)
 - BRANCH: `agent/lafea3-v3-vertical-slice`
-- LIVE_MAIN: `9e3cc21760f14f2dd65e27c8e48a3e74a2cb1e08`
-- REPORT_BASIS_HEAD: `9e3cc21760f14f2dd65e27c8e48a3e74a2cb1e08`
+- LIVE_MAIN_AT_GROUNDING: `9e3cc21760f14f2dd65e27c8e48a3e74a2cb1e08`
+- REPORT_BASIS_HEAD: `0ce161ceb26fddae6294f05b977baa539a3b472e`
 - PR: NONE
 
 ## Handover in 60 seconds
 
-Mission: wire the existing qualified LAFEA.3 planar continuum mesher into the merged Mesh Workspace v3 contracts without replacing the numerical kernel. Produce real v3 dependency, adapter, mesh identity, topology/domain/high-order validation, artifact lifecycle and CAS custody from the actual generated T3/T6/Q8 mesh. Keep trusted authority fail-closed: no v3 CURRENT_PASS or solver execution authority is permitted until an independently verified authority receipt exists.
+Mission: wire the existing qualified LAFEA.3 planar continuum mesher into Mesh Workspace v3 without replacing the numerical kernel. The first safe production slice now exists as an additive callable bridge: real v2 T3/T6/Q8 output -> semantic dependency -> v3 adapter payload -> numerical identity -> topology/domain/high-order/local-quality/resource gates -> sealed validation/evidence -> quarantine/validated/retained artifact lifecycle -> CAS `CURRENT_BLOCK` pending trusted authority.
 
-Current state: repository grounding complete; no production file has yet been changed on this branch. Active B02 PRs own run/execution/currentness/API files, so this WIP is intentionally constrained to the mesh-generation seam and new additive v3 modules/checks.
+Three implementation files are committed. No existing production file has yet been edited, so v1/v2 behavior and the active B02 run/recovery stack are untouched. Local `node --check` syntax validation passed for both new production modules and the new checker; full module execution is NOT_RUN because this environment cannot resolve/clone GitHub. No workflow run is attached to the branch head yet.
 
-EXACT_NEXT_ACTION: add a self-contained LAFEA.3 v3 candidate builder and adversarial checker; integrate its retained candidate into `lafea-workbench-mesh-generation-state.js` only. Do not edit run/execution/currentness/API/workflow files.
+EXACT_NEXT_ACTION: open a draft PR to trigger repository qualification, inspect runtime failures, then—only after focused checker evidence is available—integrate the retained candidate into `lafea-workbench-mesh-generation-state.js`. Do not edit run/execution/currentness/API/workflow files.
 
-## Live ground truth
+## Live ground truth / coordination
 
-- Default/base branch: `main`
-- Main/base SHA at grounding: `9e3cc21760f14f2dd65e27c8e48a3e74a2cb1e08`
-- Working branch: `agent/lafea3-v3-vertical-slice`
-- Branch head at grounding: same as main; 0 implementation commits ahead
-- Merge base: current main SHA above
-- Source task: issue #1119 architecture follow-on, owner explicitly requested the LAFEA.3 v3 end-to-end slice
-- Repository policy: root `AGENTS.md` + `reallaksh19/Common/skills/engineering-pr-delivery/SKILL.md`
-- `agents/MASTER_INDEX.md`: absent
-- `agents/status/`: absent
-- `agents/claims/`: absent
+- Base/default branch: `main`; merge base at WIP creation `9e3cc217...`.
+- `agents/MASTER_INDEX.md`, `agents/status/`, `agents/claims/`: absent at grounding.
+- #1128 AUTO MODE policy: SAFE.
+- #1122 currentness/store: COORDINATION_REQUIRED if touching orchestrator store; avoided.
+- #1123 run transaction/solver custody: BLOCKED_BY_ACTIVE_CLAIM for authoritative run/result wiring; avoided.
+- #1124 recovery/probe API: COORDINATION_REQUIRED for orchestrator API; avoided.
+- #1125 benchmark definition freeze: SAFE only while benchmark/tolerance/convergence definitions remain untouched.
+- #1118 workbench UI: SAFE for this non-UI production bridge.
 
-## Coordination / overlap
+## Current implementation
 
-### PR #1128 — AUTO MODE policy
-- Exact/path overlap: none with intended production files
-- Authority overlap: policy only
-- Classification: SAFE
+### `src/workspace/lafea-continuum-mesh-domain-conformance-v3.js`
+- independent actual-mesh area integration: T3 exact triangle area; T6 3-point triangle quadrature; Q8 3x3 Gauss integration;
+- requires global topology PASS and full-domain high-order Jacobian PASS;
+- proves complete one-to-one boundary-path coverage against exact LINE geometry;
+- uses the existing production geometry-feature attachment compiler as the BC/load mapping gate;
+- binds analytic topology `netArea` as expected domain measure;
+- initial proof scope is deliberately `PLANAR_SINGLE_REGION_STRAIGHT_BOUNDARY`;
+- circular-arc boundaries fail closed with `CURVED_BOUNDARY_NOT_QUALIFIED` rather than receiving sampled/uncertified authority.
 
-### PR #1122 — B02 G2 currentness custody
-- Changed production paths include `lafea-workbench-orchestrator-store.js`, readiness/evidence/currentness
-- Classification: COORDINATION_REQUIRED if this WIP touches orchestrator store/currentness. This WIP will not touch those files in the first slice.
+### `src/workspace/lafea-continuum-mesh-v3-production.js`
+- consumes the exact qualified v2 producer plan/output/evidence;
+- derives semantic dependency and strict LAFEA.3 adapter payload;
+- separates v3 mesh content/artifact identity;
+- binds domain, global topology, local element quality, structural runtime-resource counts and T6/Q8 high-order mapping gates;
+- seals v3 validation bundle + hash-only mesh evidence;
+- exercises `TEMPORARY -> QUARANTINED -> VALIDATED -> RETAINED` when validation passes;
+- uses generic workspace CAS to retain only `CURRENT_BLOCK` with `retainedAuthorityReceiptHash=null`;
+- never grants engineering/execution authority;
+- blocked validation remains quarantined and is not CAS-retained.
 
-### PR #1123 — B02 G3 run transaction / solver custody
-- Changed production paths include `lafea-continuum-authoritative-workbench-run.js`, `lafea-workbench-domain-first-run-actions.js`, execution state and runtime diagnostics
-- Engineering authority overlap: exact authoritative run/result boundary
-- Classification: BLOCKED_BY_ACTIVE_CLAIM for v3 solver dispatch/result integration. This WIP will not touch those files until the stack resolves or owner coordinates explicitly.
+### `scripts/lafea-continuum-mesh-v3-production-check.mjs`
+- T3/T6/Q8 straight-boundary generation through the real qualified producer;
+- required v3 gates and deterministic replay;
+- exact 100x100 area closure;
+- quarantine/retention/CAS custody;
+- proof that `CURRENT_PASS` cannot be constructed without an authority receipt;
+- curved T6 remains v2 PASS but v3 BLOCK/QUARANTINED, proving no regression-by-force.
 
-### PR #1124 — B02 G4 physical probes/recovery
-- Changed production path includes `lafea-workbench-orchestrator-api.js` and recovery/convergence helpers
-- Classification: COORDINATION_REQUIRED for public API changes. This WIP will not touch orchestrator API in the first slice.
+## Active decisions / risks
 
-### PR #1125 — B02A-E definition freeze
-- Benchmark/convergence authority only; no intended benchmark/tolerance changes here
-- Classification: SAFE provided this WIP does not modify benchmark definitions/convergence acceptance.
-
-### PR #1118 — visible workbench UI
-- UI/controller paths only; no mesh-generation-state ownership
-- Classification: SAFE for the non-UI mesh-generation slice.
-
-## Mission / scope / acceptance
-
-### In scope now
-1. Derive v3 semantic mesh dependency from retained current LAFEA.3 domain/geometry/profile.
-2. Bind LAFEA.3 v3 continuum adapter capability/payload.
-3. Reuse the existing qualified v2 producer output as the numerical mesh generation engine.
-4. Derive v3 numerical/artifact mesh identities from the actual retained mesh.
-5. Run global topology qualification.
-6. Run independent domain/feature conformance evidence using analytic geometry authority and actual generated mesh.
-7. Run full-domain T6/Q8 Jacobian certification where applicable.
-8. Seal required v3 validation bundle and v3 mesh evidence.
-9. Exercise quarantine -> validated -> retained storage lifecycle.
-10. Retain the candidate through v3 CAS as `CURRENT_BLOCK` pending trusted authority.
-11. Expose the retained v3 candidate in mesh-generation state, without changing existing v2 run authority.
-12. Add adversarial executable checks for T3/T6/Q8 and stale/tamper/fail-closed cases.
-
-### Explicitly deferred / blocked by active claims
-- changing authoritative `run()` or domain-first execution state
-- public orchestrator API mutation
-- production result publication/recovery/currentness changes
-- claiming v3 CURRENT_PASS without trusted signature verification
-- client-side authority issuance
-- workflow YAML changes
-- benchmark/tolerance/probe/convergence-definition changes
-
-## Active issues / risks / decisions / questions
-
-### DEC-001 — numerical kernel reuse
-The existing LAFEA.3 v2 producer/solver remain the numerical computation authority. V3 wraps identity, semantic dependencies, validation and custody; it does not fork meshing or FE formulation.
+### DEC-001 — reuse qualified numerical kernel
+No mesher/formulation/solver mechanics are forked. V3 governs identity, validation and custody around the existing numerical producer.
 
 ### DEC-002 — trust remains external
-A structurally valid receipt is not trusted authority. Until a protected verifier exists, the v3 mesh candidate must remain `CURRENT_BLOCK` / pending authority even when every engineering validation gate passes.
+A structural receipt is not trusted authority. This slice cannot become `CURRENT_PASS` or solver-authorized until a protected verifier exists.
 
-### DEC-003 — avoid active B02 ownership
-First commit is restricted to new v3 bridge/check files plus `lafea-workbench-mesh-generation-state.js`. No run/currentness/API files.
+### DEC-003 — initial domain proof scope is straight-boundary only
+Curved boundary authority is deferred rather than approximated with sampled deviation.
 
-### RISK-001 — domain overlap/outside proof
-Area equality alone cannot prove no overlap/outside coverage. The conformance operator must combine positive mapping, global topology, exact boundary feature conformity and independent mapped area closure; any unproven condition blocks rather than assuming zero.
+### RISK-001 — global overlap proof
+The straight-boundary operator relies on connected conforming 2-manifold topology + injective complete line boundary + positive element mapping + area closure. This assumption must be reviewed during PR qualification; if contradicted by an adversarial crossing case, the operator must add an explicit intersection/global-injectivity proof before PASS.
 
-### RISK-002 — runtime-resource evidence
-The current producer exposes actual node/element/DOF counts but not authoritative peak memory/time. The first LAFEA.3 validation gate must not fabricate memory/time measurements; it will bind actual structural counts to the qualified producer ceilings and disclose the narrower resource oracle.
+### RISK-002 — resource oracle is intentionally narrow
+Current producer qualification exposes runtime node/element/DOF ceilings but not authoritative peak memory/time measurements. The v3 gate records only those actual measured structural dimensions and explicitly records memory/time as unmeasured.
 
-### RISK-003 — active B02 run stack
-#1123/#1124 can alter exact solver/run APIs before this branch is ready for post-trust dispatch/result wiring.
+### RISK-003 — B02 run stack owns the post-trust seam
+#1123/#1124 can change run/recovery APIs. No authoritative solver/result wiring is attempted in this WIP while those claims are active.
 
-### ISS-001 — v2 sourceHash invalidation remains in current run authority
-This slice must not silently replace existing v2 custody semantics. V3 semantic dependency runs in parallel until trusted authority + coordinated migration is implemented.
+### ISS-001 — current v2 authority remains active
+The new v3 candidate is parallel evidence only until explicit trusted-authority migration. Existing v2 sourceHash/current-run semantics are unchanged.
 
-### QST-001 — protected receipt verifier
-No protected trust service exists in the current client code. Solver authorization must stay non-executing until that boundary is supplied.
+### QST-001 — protected authority verifier
+No trusted signature verification service is present in current client code.
 
-## Current technical hypothesis and falsifier
+## Hypothesis / falsifier
 
-Hypothesis: the existing deterministic LAFEA.3 v2 producer output contains enough exact mesh/plan/capability lineage to construct a complete fail-closed v3 engineering candidate without changing the mesher or solver.
+Hypothesis: exact existing producer output is sufficient to derive a complete fail-closed v3 pre-authority continuum mesh candidate without changing numerical mechanics.
 
-Falsifier: any required v3 gate can only be satisfied by inventing a measurement, trusting producer self-assertion as an independent oracle, weakening a current FEM gate, or modifying a file claimed by the active B02 run/recovery stack. If observed, stop and classify the affected stage as blocked rather than manufacturing authority.
+Falsifier: required PASS depends on fabricated measurements, producer self-assertion presented as independent proof, weakened quality/geometry thresholds, or edits to files actively owned by B02. Any such finding blocks the stage instead of being worked around.
 
-## Authority / invariants
+## Authority / negative assurance
 
-- T3/T6/Q8 formulation and existing numerical solver behavior must remain byte/semantically unchanged in this slice.
-- Existing v1/v2 authority remains current and unchanged until explicit migration.
-- `meshContentHash` is numerical execution identity; `meshIdentity`/artifact provenance cannot substitute for it.
-- T6/Q8 mapping positivity must be certified over the complete parent domain, not sample-only.
-- Global topology and domain conformance are blocking gates, not warnings.
-- No CURRENT_PASS without independently verified authority receipt.
-- No execution/result publication authority is added in the first slice.
-- No tolerance/benchmark/probe/expected-value changes.
+- No T3/T6/Q8 formulation, stiffness, load assembly, recovery, or solver change.
+- No v1/v2 authority change.
+- No benchmark/tolerance/probe/expected-value change.
+- No workflow YAML change.
+- No `CURRENT_PASS` without independently verified receipt.
+- No run/result publication authority added.
+- T6/Q8 positivity remains a full-parent-domain certificate, not sample-only.
 
 ## Validation ledger
 
 | Check | Status | Observation | Oracle | Basis / limitation |
 |---|---|---|---|---|
-| Live main/branch SHA grounding | PASS | REMOTE_EXECUTION | AUTHORITATIVE_REFERENCE | GitHub refs at `9e3cc217...` |
-| Active PR overlap inspection | PASS | REMOTE_EXECUTION | AUTHORITATIVE_REFERENCE | GitHub changed-file ledgers #1118/#1122/#1123/#1124 |
-| Repository policy read | PASS | SOURCE_INSPECTION | AUTHORITATIVE_REFERENCE | root `AGENTS.md` + Common delivery skill |
-| Production LAFEA.3 v3 implementation | NOT_RUN | NOT_OBSERVED | NONE | no production mutation yet |
-| Existing LAFEA.3 regressions on this branch | NOT_RUN | NOT_OBSERVED | NONE | branch equals main before implementation |
-| New v3 adversarial checker | NOT_RUN | NOT_OBSERVED | NONE | not written yet |
+| Live main/branch grounding | PASS | REMOTE_EXECUTION | AUTHORITATIVE_REFERENCE | GitHub refs at WIP creation |
+| Active PR overlap | PASS | REMOTE_EXECUTION | AUTHORITATIVE_REFERENCE | exact changed-file ledgers #1118/#1122/#1123/#1124 |
+| Policy/protocol read | PASS | SOURCE_INSPECTION | AUTHORITATIVE_REFERENCE | root `AGENTS.md` + Common delivery skill |
+| New domain-conformance module syntax | PASS | LOCAL_EXECUTION | IMPLEMENTATION_COUPLED | `node --check`; syntax only |
+| New production bridge syntax | PASS | LOCAL_EXECUTION | IMPLEMENTATION_COUPLED | `node --check`; syntax only |
+| New adversarial checker syntax | PASS | LOCAL_EXECUTION | IMPLEMENTATION_COUPLED | `node --check`; syntax only |
+| T3/T6/Q8 v3 checker runtime | NOT_RUN | NOT_OBSERVED | NONE | local environment cannot clone/resolve GitHub |
+| Existing LAFEA.3 regressions on current head | NOT_RUN | NOT_OBSERVED | NONE | awaiting repository CI / real checkout |
+| Repository workflow | NOT_RUN | REMOTE_EXECUTION | NONE | no workflow runs attached to head as of checkpoint |
 
 ## Changed-file ledger
 
-- `agents/WIP-L3V3-20260814_workreport.md` — durable WIP recovery artifact only.
+- `agents/WIP-L3V3-20260814_workreport.md` — durable recovery/coordination record.
+- `src/workspace/lafea-continuum-mesh-domain-conformance-v3.js` — straight-boundary independent domain proof.
+- `src/workspace/lafea-continuum-mesh-v3-production.js` — real-producer-to-v3 candidate/custody bridge.
+- `scripts/lafea-continuum-mesh-v3-production-check.mjs` — T3/T6/Q8 + trust/curved-boundary adversarial checks.
 
 ## Review / CI state
 
-- PR: none
-- Review threads: not applicable
-- Branch CI: none yet
+- PR: NONE
+- Branch head at checkpoint: `0ce161ceb26fddae6294f05b977baa539a3b472e`
 - Workflow changes authorized: NO
+- Merge authority: NO (owner has not authorized this future PR merge)
 
 ## Exact continuation state
 
-Safe work location: additive v3 bridge under `src/workspace/` plus focused script under `scripts/`, then narrow integration into `src/workspace/lafea-workbench-mesh-generation-state.js` if no live ownership changes appear.
+Safe next files after validation: `src/workspace/lafea-workbench-mesh-generation-state.js` only, to retain/expose the v3 candidate additively. Files owned by #1122/#1123/#1124 remain off-limits absent coordination.
 
-EXACT_NEXT_ACTION: implement candidate builder + checker, execute/inspect focused checks if available, update this report, then open a draft PR and migrate this report to `agents/PR<NUMBER>_workreport.md`.
+EXACT_NEXT_ACTION: create draft PR, inspect triggered CI/runtime evidence, fix only introduced failures, then decide whether the workbench-generation-state integration is qualified to proceed.

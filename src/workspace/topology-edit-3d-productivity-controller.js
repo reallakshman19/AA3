@@ -5,9 +5,6 @@ import {
   TopologyEditCleanShellRuntime,
 } from './viewport-productivity/topology-edit-clean-shell-runtime.js';
 import {
-  TopologyEditSupportHostDragRuntime,
-} from './viewport-productivity/topology-edit-support-host-drag-runtime.js';
-import {
   TopologyEditSupportPositionRuntime,
 } from './viewport-productivity/topology-edit-support-position-runtime.js';
 import './topology-edit-productivity.css';
@@ -18,10 +15,9 @@ export class TopologyEdit3DViewController extends AuthoringController {
     super(eventBus, lifecycleOptions);
     this.cleanShellRuntime = new TopologyEditProductivityCleanShellRuntime(this);
     this.supportPositionRuntime = new TopologyEditSupportPositionRuntime(this);
-    this.supportHostDragRuntime = new TopologyEditSupportHostDragRuntime(
-      this,
-      this.supportPositionRuntime,
-    );
+    this.supportHostDragRuntime = null;
+    this.supportHostDragPromise = null;
+    this.supportHostDragGeneration = 0;
     this.iconPresentationRuntime = null;
     this.iconReferenceRuntime = null;
     this.iconRuntimePromise = null;
@@ -41,16 +37,17 @@ export class TopologyEdit3DViewController extends AuthoringController {
   async activate() {
     await super.activate();
     if (!this.hostElement) return;
-    this.supportHostDragRuntime.mount();
+    const supportDragPromise = this.mountSupportHostDragRuntime();
     this.mountIconRuntimes();
     await Promise.all([
       this.iconRuntimePromise,
       this.mountTableAdapter(),
+      supportDragPromise,
     ]);
     this.supportPositionRuntime.selectionChanged({
       selection: this.editorStore?.getState?.().selection,
     });
-    this.supportHostDragRuntime.selectionChanged();
+    this.supportHostDragRuntime?.selectionChanged();
   }
 
   async mountTableAdapter() {
@@ -67,6 +64,53 @@ export class TopologyEdit3DViewController extends AuthoringController {
       return adapter;
     }).finally(() => { this.tableAdapterPromise = null; });
     return this.tableAdapterPromise;
+  }
+
+  mountSupportHostDragRuntime() {
+    if (this.supportHostDragRuntime) return Promise.resolve(this.supportHostDragRuntime);
+    if (this.supportHostDragPromise) return this.supportHostDragPromise;
+    if (!this.hostElement) return Promise.resolve(null);
+    const activationHost = this.hostElement;
+    const activationGeneration = ++this.supportHostDragGeneration;
+    let runtime = null;
+    const isCurrentActivation = () => (
+      this.supportHostDragGeneration === activationGeneration
+      && this.hostElement === activationHost
+    );
+    const promise = import(
+      './viewport-productivity/topology-edit-support-host-drag-runtime.js'
+    ).then(({ TopologyEditSupportHostDragRuntime }) => {
+      if (!isCurrentActivation()) return null;
+      runtime = new TopologyEditSupportHostDragRuntime(
+        this,
+        this.supportPositionRuntime,
+      ).mount();
+      if (!isCurrentActivation()) {
+        runtime.destroy();
+        runtime = null;
+        return null;
+      }
+      this.supportHostDragRuntime = runtime;
+      activationHost.dataset.topologyEditSupportDragRuntimeStatus = 'READY';
+      delete activationHost.dataset.topologyEditSupportDragRuntimeError;
+      return runtime;
+    }).catch((error) => {
+      runtime?.destroy();
+      if (this.supportHostDragRuntime === runtime) this.supportHostDragRuntime = null;
+      if (isCurrentActivation()) {
+        activationHost.dataset.topologyEditSupportDragRuntimeStatus = 'ERROR';
+        activationHost.dataset.topologyEditSupportDragRuntimeError =
+          error instanceof Error ? error.message : String(error);
+      }
+      return null;
+    }).finally(() => {
+      if (this.supportHostDragGeneration === activationGeneration
+          && this.supportHostDragPromise === promise) {
+        this.supportHostDragPromise = null;
+      }
+    });
+    this.supportHostDragPromise = promise;
+    return promise;
   }
 
   mountIconRuntimes() {
@@ -165,11 +209,14 @@ export class TopologyEdit3DViewController extends AuthoringController {
     super.refreshView(canonical);
     this.tableAdapter?.canonicalChanged(canonical);
     this.supportPositionRuntime.canonicalChanged(canonical);
-    this.supportHostDragRuntime.canonicalChanged(canonical);
+    this.supportHostDragRuntime?.canonicalChanged(canonical);
   }
 
   deactivate() {
-    this.supportHostDragRuntime.destroy();
+    this.supportHostDragGeneration += 1;
+    this.supportHostDragRuntime?.destroy();
+    this.supportHostDragRuntime = null;
+    this.supportHostDragPromise = null;
     this.supportPositionRuntime.destroy();
     this.tableAdapter?.destroy();
     this.tableAdapter = null;
@@ -220,7 +267,7 @@ export class TopologyEdit3DViewController extends AuthoringController {
     super.handleUnifiedSelectionChanged(payload);
     this.tableAdapter?.selectionChanged(payload);
     this.supportPositionRuntime.selectionChanged(payload);
-    this.supportHostDragRuntime.selectionChanged(payload);
+    this.supportHostDragRuntime?.selectionChanged(payload);
     this.cleanShellRuntime.selectionChanged(payload);
   }
 

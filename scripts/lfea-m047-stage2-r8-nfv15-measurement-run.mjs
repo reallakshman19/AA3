@@ -14,11 +14,12 @@ import { canonicalPrettyStringify, semanticHash } from '../src/core/shared-pipin
 import { runR8Nfv15Experiment } from './lfea-m047-stage2-r8-nfv15-experiment.mjs';
 import { assessR8Nfv15 } from './lfea-m047-stage2-r8-nfv15-assess.mjs';
 import { reconstructR8L15 } from './lfea-m047-stage2-r8-nfv15-l15.mjs';
+import { decideR8Nfv15Sequence } from './lfea-m047-stage2-r8-nfv15-sequence.mjs';
 
 const DEFAULT_OUT = 'reports/lfea-m047-stage2-r8-nfv15-measurement';
 const DEFAULT_BASELINE_ROOT = 'reports/lfea-m047-stage2-r2-rebaseline';
 const EXPECTED_SHA = '64c05a50e9ed0452622ff5880335460486f24ac8e6adecc9a300b549c9aa82f8';
-const NOMINATION = 'R8_NFV15_DIRECTIONALLY_NOMINATED_REQUIRES_NEXT_GOVERNED_GATE';
+const COMPLETE_DECISION = 'R8_CANDIDATE_MEASURED_THROUGH_L13_L7_L15;_L1_INTENTIONALLY_BLOCKED';
 
 export async function runR8Nfv15Measurement(input) {
   if (!input?.zipPath || !input?.accdbPath) throw new TypeError('R8 measurement requires zipPath and accdbPath.');
@@ -29,28 +30,33 @@ export async function runR8Nfv15Measurement(input) {
   mkdirSync(root, { recursive: true });
 
   const l13 = await runPrimitive({ caseId: 'L13', root, baselineRoot, repeatRuns, input });
-  if (l13.assessment.nomination !== NOMINATION) {
+  const afterL13 = decideR8Nfv15Sequence({ l13Assessment: l13.assessment });
+  if (afterL13.decision !== 'RUN_R8_L7') {
     return finish(root, {
       stage: 'L13',
       sourceAccdbSha256: EXPECTED_SHA,
       l13: receiptCase(l13),
       l7: null,
       l15: null,
-      decision: 'STOP_R8_AFTER_L13_NOT_NOMINATED_OR_PHYSICS_GATE_FAILED',
-      nextAction: 'DO_NOT_RUN_L7_OR_ANY_NEW_FRICTION_MECHANIC;_DIAGNOSE_COMMITTED_L13_ARTIFACT',
+      decision: afterL13.decision,
+      nextAction: afterL13.nextAction,
     });
   }
 
   const l7 = await runPrimitive({ caseId: 'L7', root, baselineRoot, repeatRuns, input });
-  if (l7.assessment.nomination !== NOMINATION) {
+  const afterL7 = decideR8Nfv15Sequence({
+    l13Assessment: l13.assessment,
+    l7Assessment: l7.assessment,
+  });
+  if (afterL7.decision !== 'RECONSTRUCT_R8_L15') {
     return finish(root, {
       stage: 'L7',
       sourceAccdbSha256: EXPECTED_SHA,
       l13: receiptCase(l13),
       l7: receiptCase(l7),
       l15: null,
-      decision: 'STOP_R8_AFTER_L7_NOT_NOMINATED_OR_PHYSICS_GATE_FAILED',
-      nextAction: 'DO_NOT_RECONSTRUCT_L15_OR_RUN_L1;_DIAGNOSE_COMMITTED_L7_ARTIFACT',
+      decision: afterL7.decision,
+      nextAction: afterL7.nextAction,
     });
   }
 
@@ -63,15 +69,20 @@ export async function runR8Nfv15Measurement(input) {
     profilePath: input.profilePath,
   });
   write(l15Path, l15);
-  if (l15.identity?.status !== 'PASS' || l15.independentNonlinearSolve !== false) {
+  const afterL15 = decideR8Nfv15Sequence({
+    l13Assessment: l13.assessment,
+    l7Assessment: l7.assessment,
+    l15,
+  });
+  if (afterL15.decision !== COMPLETE_DECISION) {
     return finish(root, {
       stage: 'L15',
       sourceAccdbSha256: EXPECTED_SHA,
       l13: receiptCase(l13),
       l7: receiptCase(l7),
       l15: receiptL15(l15, l15Path),
-      decision: 'STOP_R8_L15_DERIVATION_GATE_FAILED',
-      nextAction: 'DO_NOT_RUN_L1_OR_PROMOTE_R8;_RECONCILE_L15_ALGEBRAIC_IDENTITY',
+      decision: afterL15.decision,
+      nextAction: afterL15.nextAction,
     });
   }
 
@@ -81,8 +92,8 @@ export async function runR8Nfv15Measurement(input) {
     l13: receiptCase(l13),
     l7: receiptCase(l7),
     l15: receiptL15(l15, l15Path),
-    decision: 'R8_CANDIDATE_MEASURED_THROUGH_L13_L7_L15;_L1_INTENTIONALLY_BLOCKED',
-    nextAction: 'RESOLVE_AND_MEASURE_SEPARATE_L1_HYDROTEST_WW_BASIS_BEFORE_USING_L1_AS_AN_R8_SIGNAL',
+    decision: afterL15.decision,
+    nextAction: afterL15.nextAction,
   });
 }
 
@@ -132,7 +143,7 @@ function receiptL15(value, path) {
 
 function finish(root, fields) {
   const base = {
-    schema: 'm047-stage2-r8-nfv15-measurement-receipt/v1',
+    schema: 'm047-stage2-r8-nfv15-measurement-receipt/v2',
     measurementBoundary: 'CUSTODY_VERIFIED_REAL_ACCDB_R8_CANDIDATE_SEQUENCE',
     ...fields,
     l1Run: false,

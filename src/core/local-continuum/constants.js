@@ -10,11 +10,13 @@ export const FORMULATIONS = Object.freeze({
 });
 
 /**
- * Qualification envelope for the current displacement-only plane-strain
- * formulation. The block limit is deliberately source-controlled: users may
- * change the material Poisson ratio, but they may not relax this qualification
- * boundary to make a nearly-incompressible model pass. A mixed/B-bar or other
- * locking-resistant formulation requires an independent authority upgrade.
+ * Conservative interim guard for the current displacement-only plane-strain
+ * formulation. These values do not prove absence of volumetric locking below
+ * the block boundary; they prevent the clearly near-incompressible regime from
+ * being accepted without a separately qualified locking-resistant formulation.
+ * The boundary is source-controlled and may not be relaxed through solver/UI
+ * tolerances. Mesh-sensitivity/convergence evidence remains independently
+ * required for engineering release.
  */
 export const FORMULATION_GUARDS = Object.freeze({
   planeStrainPoissonWarning: 0.40,
@@ -72,11 +74,11 @@ export const FORMULA_IDS = Object.freeze({
   SIGMA_Z: 'FORMULATION_CORRECT_SIGMA_Z_RECOVERY_V1',
   PRINCIPAL: 'IN_PLANE_PRINCIPAL_STRESS_RECOVERY_V1',
   VON_MISES: 'THREE_DIMENSIONAL_VON_MISES_RECOVERY_V1',
-  ENERGY: 'LINEAR_ELASTIC_STRAIN_ENERGY_RECONSTRUCTION_V1',
+  ENERGY: 'THERMOELASTIC_PHYSICAL_STRAIN_ENERGY_RECONSTRUCTION_V2',
   EQUILIBRIUM: 'FREE_DOF_AND_REACTION_EQUILIBRIUM_V1',
   PRESSURE_LOAD: 'BOUNDARY_EDGE_NORMAL_PRESSURE_CONSISTENT_LOAD_V1',
   BODY_FORCE_LOAD: 'ELEMENT_BODY_FORCE_CONSISTENT_LOAD_V1',
-  THERMAL_STRAIN_LOAD: 'ISOTROPIC_THERMAL_STRAIN_EQUIVALENT_NODAL_LOAD_V1',
+  THERMAL_STRAIN_LOAD: 'FORMULATION_CORRECT_ISOTROPIC_THERMAL_STRAIN_LOAD_V2',
   IMPOSED_DISPLACEMENT_LOAD: 'LOAD_CASE_IMPOSED_DISPLACEMENT_PARTITION_V1',
 });
 export const QUALIFICATION_PROFILE = Object.freeze({

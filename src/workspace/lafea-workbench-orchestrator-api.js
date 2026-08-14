@@ -1,5 +1,6 @@
 /** Public method-surface assembly for the canonical orchestrator; owns no state or listeners. */
 import { executeLafeaContinuumCompiledForParity } from './lafea-continuum-compiled-execution.js';
+import { evaluateLafeaContinuumPhysicalProbe } from './lafea-continuum-physical-probe.js';
 import { compileLafeaContinuumWorkbenchContext } from './lafea-continuum-workbench-route.js';
 import {
   buildLafeaMeshGenerationIntentV2FromStage,
@@ -49,6 +50,8 @@ export function createLafeaWorkbenchOrchestratorApi(context) {
     executeContinuumCompiledForParity: () => executeLafeaContinuumCompiledForParity(
       compileLafeaContinuumWorkbenchContext(c, activeStageId()).solverModel,
     ),
+    evaluateContinuumPhysicalProbe: (probe, stageId = activeStageId()) =>
+      evaluateLafeaContinuumPhysicalProbe(c.deriveStage(stageId), probe),
     registerTemplateReleaseRecord: c.registerTemplateReleaseRecord,
     selectRetainedTemplateReleaseRecord: (stageId = activeStageId()) => c.release.select(stageId),
     buildReleaseBindingProjection: (stageId = activeStageId()) =>

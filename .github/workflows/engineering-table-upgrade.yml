@@ -60,7 +60,9 @@ jobs:
           node --check src/workspace/topology-edit/table/topology-edit-table-batch-planner.js
           node --check src/workspace/topology-edit/table/topology-edit-table-projection.js
           node --check src/workspace/topology-edit/table/topology-edit-table-virtual-geometry.js
+          node --check src/workspace/topology-edit/table/topology-edit-table-transient-support-bridge.js
           node --check src/workspace/topology-edit/draft/topology-edit-transient-node-draft.js
+          node --check src/workspace/topology-edit/draft/topology-edit-transient-support-placement-draft.js
           node --check src/workspace/viewport-productivity/topology-edit-table-cell-edit.js
           node --check src/workspace/viewport-productivity/topology-edit-table-engineering-editor.js
           node --check src/workspace/viewport-productivity/topology-edit-table-engineering-runtime.js

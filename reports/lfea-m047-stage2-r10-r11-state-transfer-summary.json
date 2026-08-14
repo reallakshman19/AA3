@@ -1,0 +1,137 @@
+{
+  "schema": "m047-bm4l-stage2-r10-r11-state-transfer-summary/v1",
+  "source": {
+    "frozenBaseCommit": "101b3973fb24bba71d2f82f6e9e2c58a0fe6b538",
+    "sourceAccdbSha256": "64c05a50e9ed0452622ff5880335460486f24ac8e6adecc9a300b549c9aa82f8",
+    "sourceAccdbBytes": 5136384,
+    "productionFrictionSolverGitBlob": "5b3ba1ce89f6ff7509bf8be82361993a32497ad2",
+    "productionProfileId": "CAESAR-ACCDB-FRICTION-SOLVER-R2"
+  },
+  "R10": {
+    "changedMechanics": false,
+    "singleStepL7": {
+      "converged": true,
+      "iterations": 161,
+      "localArtifactSha256": "94953332629c0d9e89e843e82a8c82c1fac12abd97fb041da0887bb3c0de1d2f"
+    },
+    "N5": {
+      "converged": false,
+      "totalIterations": 695,
+      "failureLoadStep": 2,
+      "failureLoadFactor": 0.4,
+      "localArtifactSha256": "8b58d6e7654304b938b85ce8b8d7527e8b12d7ce0e928f243ea726d2d984e7c8",
+      "step1GlobalSlipResidualM": 7.264095788337138e-11,
+      "restraint20550TransferSlipDeltaM": 0,
+      "terminal20550SlideResidualN": 0.023675205567712965
+    },
+    "N10": {
+      "converged": false,
+      "totalIterations": 603,
+      "failureLoadStep": 2,
+      "failureLoadFactor": 0.2,
+      "localArtifactSha256": "598e399601aa7bb2f9fc6323dbc0af31f43f5859a2b5392ede01f5c5e1a971cc",
+      "step1GlobalSlipResidualM": 6.415328079038754e-11,
+      "restraint20550TransferSlipDeltaM": 0,
+      "terminal20550SlideResidualN": 0.06966209805872836
+    },
+    "selection": "TEST_ONLY_GLOBAL_CONVERGED_MAPPED_SLIP_TRANSFER"
+  },
+  "R11": {
+    "changedMechanic": "COMMIT_CONVERGED_MAPPED_SLIP_VECTOR_AT_NONFINAL_PHYSICAL_STEP_BOUNDARY",
+    "unchanged": [
+      "D1_DIRECTION",
+      "MU",
+      "FRICTION_STIFFNESS",
+      "CURRENT_OWN_NORMAL_CAPACITY",
+      "STATE_BOUNDARY_AND_HYSTERESIS",
+      "RETURN_MAP_INSIDE_ITERATION",
+      "SECANT_ACCELERATION_LAW",
+      "PHYSICAL_LOAD_FACTORS",
+      "CONVERGENCE_LIMITS",
+      "ACCURACY_COMPARISON_RULES",
+      "QUALIFIED_LINEAR_MECHANICS"
+    ],
+    "L7": {
+      "N5": {
+        "experimentSourceSha256": "a78024d63cc0b244acbb5a1f141e2d0a5fa877528cb39870e8a5db3cb1f69322",
+        "converged": false,
+        "totalIterations": 695,
+        "failureLoadStep": 2,
+        "failureLoadFactor": 0.4,
+        "localArtifactSha256": "39420bb38ad6d31e35181c6afad3210338fdda55b09cc794c6904238a5c0bf11",
+        "terminal20550SlideResidualN": 0.02367520558493652
+      },
+      "N10": {
+        "experimentSourceSha256": "5a965bdd5bc47ed09a269114661eda5fb6b928f689c59c0615ac6151ce59b1b2",
+        "converged": false,
+        "totalIterations": 603,
+        "failureLoadStep": 2,
+        "failureLoadFactor": 0.2,
+        "localArtifactSha256": "4e6535fb7df836a48820d78f1f1dbcbf2e8c30173bcff70e4aa071533361d1e9",
+        "terminal20550SlideResidualN": 0.06966209812532043
+      },
+      "decision": "REJECTED_NO_CONVERGENCE_TRAJECTORY_CHANGE"
+    },
+    "L13Accuracy": {
+      "productionR2SingleStep": {
+        "normalWithinGoal": 23,
+        "tangentialWithinGoal": 13,
+        "tangentialCompared": 23,
+        "worstTangentialVectorRelativeError": 7.219148663680088
+      },
+      "N5": {
+        "R10": {
+          "converged": true,
+          "elapsedMs": 262059,
+          "profileId": "CAESAR-ACCDB-FRICTION-SOLVER-R2-R10-L13-CONTINUATION-N5",
+          "iterationSemanticHash": "fnv1a64:b4083fd648967796",
+          "normalWithinGoal": 23,
+          "tangentialWithinGoal": 14,
+          "tangentialCompared": 23,
+          "worstNormalPercentError": 1.5082453697092628,
+          "worstTangentialVectorRelativeError": 6.660452860624643
+        },
+        "R11": {
+          "converged": true,
+          "elapsedMs": 229637,
+          "profileId": "CAESAR-ACCDB-FRICTION-SOLVER-R2-R11-L13-CONTINUATION-N5",
+          "iterationSemanticHash": "fnv1a64:e681ee9a8d5eff1e",
+          "normalWithinGoal": 23,
+          "tangentialWithinGoal": 14,
+          "tangentialCompared": 23,
+          "worstNormalPercentError": 1.5082453501097315,
+          "worstTangentialVectorRelativeError": 6.660408558627143
+        }
+      },
+      "N10": {
+        "R10": {
+          "converged": true,
+          "elapsedMs": 690332,
+          "profileId": "CAESAR-ACCDB-FRICTION-SOLVER-R2-R10-L13-CONTINUATION-N10",
+          "iterationSemanticHash": "fnv1a64:5fde87c10b5557b7",
+          "normalWithinGoal": 23,
+          "tangentialWithinGoal": 13,
+          "tangentialCompared": 23,
+          "worstNormalPercentError": 1.5066237414006074,
+          "worstTangentialVectorRelativeError": 2.292783980539465,
+          "localArtifactSha256": "b1165549124fb9ef910ae1819dec0bfa5787e5a8d32a7328bedf764f6e97f216"
+        },
+        "R11": {
+          "converged": true,
+          "elapsedMs": 678414,
+          "profileId": "CAESAR-ACCDB-FRICTION-SOLVER-R2-R11-L13-CONTINUATION-N10",
+          "iterationSemanticHash": "fnv1a64:264f3eeca3a3f96b",
+          "normalWithinGoal": 23,
+          "tangentialWithinGoal": 13,
+          "tangentialCompared": 23,
+          "worstNormalPercentError": 1.5066237457376999,
+          "worstTangentialVectorRelativeError": 2.2927839826812546,
+          "localArtifactSha256": "8d23dd5dfa5536adca3bae9713b1927ea0b8997096c631be271b2931e625e00e"
+        }
+      },
+      "stepCountSensitivity": "N5_14_OF_23_VS_N10_13_OF_23_TANGENTIAL_WITHIN_GOAL",
+      "R11AccuracyNomination": false
+    },
+    "productionPromotionAuthorized": false
+  }
+}

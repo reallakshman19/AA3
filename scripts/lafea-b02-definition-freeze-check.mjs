@@ -43,6 +43,8 @@ assert.deepEqual(definitions.B02E.methods, pickMethods(matrixById.get('B02E')));
 
 for (const id of ['B02A','B02B','B02C']) validateRegisteredLadder(definitions[id].meshLadder, definitions[id].meshLadder.methods);
 validateRegisteredLadder(definitions.B02D.globalResponseLadder, definitions.B02D.globalResponseLadder.methods);
+validateRouteExpressibleCantilever(definitions.B02A);
+validateRouteExpressibleCantilever(definitions.B02B);
 assert.deepEqual(definitions.B02D.globalResponseLadder.levels.map((row) => row.historicalT6ControlElementCount), [64,256,1024,4096]);
 assert.deepEqual(definitions.B02D.globalResponseLadder.evaluatedConvergenceLevels, ['L2','L3','L4']);
 assert.equal(definitions.B02D.globalResponseLadder.historicalCountsAreControlsNotProducerGuarantees, true);
@@ -72,7 +74,7 @@ assert.deepEqual(e.subBucketBindings.B02C.h, definitions.B02C.meshLadder.levels.
 assert.deepEqual(e.subBucketBindings.B02D.h, definitions.B02D.globalResponseLadder.levels.slice(1).map((row) => row.h));
 for (const binding of Object.values(e.subBucketBindings)) assertRatio2(binding.h.map((h, index) => ({levelId:binding.levelIds[index],h})));
 
-assert.equal(definitions.B02B.independentOracle.authority, 'EXACT_2D_PLANE_STRESS_SAINT_VENANT_SHEAR_FLEXURE');
+assert.equal(definitions.B02B.independentOracle.authority, 'TIMOSHENKO_CANTILEVER_PLUS_JOURAWSKI_RECTANGULAR_SHEAR_ENGINEERING_THEORY');
 assert.ok(definitions.B02B.independentOracle.shearEnergyFraction > 0.70);
 assert.equal(definitions.B02B.title.toUpperCase().includes('PURE SHEAR PATCH'), false);
 
@@ -84,25 +86,14 @@ const hashes = Object.fromEntries(Object.entries(manifest.definitionFiles).map((
   const bytes = fs.readFileSync(path.join(ROOT, relative));
   return [id, `sha256:${crypto.createHash('sha256').update(bytes).digest('hex')}`];
 }));
-console.log(JSON.stringify({schema:'lafea-b02-definition-freeze-receipt/v1',status:'PASS',adoptedG4ParentExactHead:manifest.adoptedG4ParentExactHead,definitionHashes:hashes,methodsMatchGate0Matrix:true,registeredMeshIntentContractSatisfied:true,b02bIsGenuinelyNonUniformShear:true,historicalResultsPromotedToQualification:false,productionOutputUsedToChooseDefinitions:false,releaseAuthorityGranted:false,temperatureAuthorityGranted:false}));
+console.log(JSON.stringify({schema:'lafea-b02-definition-freeze-receipt/v1',status:'PASS',adoptedG4ParentExactHead:manifest.adoptedG4ParentExactHead,definitionHashes:hashes,methodsMatchGate0Matrix:true,registeredMeshIntentContractSatisfied:true,routeAttachmentContractSatisfiedForAAndB:true,b02bIsGenuinelyNonUniformShear:true,historicalResultsPromotedToQualification:false,productionOutputUsedToChooseDefinitions:false,releaseAuthorityGranted:false,temperatureAuthorityGranted:false}));
 
 function read(name){return JSON.parse(fs.readFileSync(path.join(DIR,name),'utf8'));}
 function pickMethods(row){return {T3:row.T3,T6:row.T6,Q8:row.Q8};}
 function assertRatio2(levels){assert.ok(levels.length>=3);for(let i=1;i<levels.length;i+=1)assert.ok(Math.abs(levels[i-1].h/levels[i].h-2)<1e-12,'frozen h ratio must equal 2');}
 function validateRegisteredLadder(ladder, methods){
-  assert.equal(ladder.requestSchema,'REGISTERED_LAFEA_MESH_GENERATION_INTENT_V2');
-  assertRatio2(ladder.levels);
-  for(const level of ladder.levels){
-    assert.equal(level.h,level.targetElementLength);
-    for(const [elementFamily,applicability] of Object.entries(methods)){
-      if(applicability==='NOT_APPLICABLE') continue;
-      const policy=ladder.familyRequestPolicy[elementFamily];
-      const common=ladder.commonRequestPolicy;
-      const intent=createLafeaMeshGenerationIntentV2({schema:'lafea-mesh-generation-intent/v2',stageId:'LAFEA.3',sourceHash:`sha256:${'1'.repeat(64)}`,analysisDomainHash:`sha256:${'2'.repeat(64)}`,analysisGeometryHash:`sha256:${'3'.repeat(64)}`,meshProfileHash:'freeze-contract-profile',targetElementLength:level.targetElementLength,lengthUnit:common.lengthUnit,elementFamily,curvatureToleranceDegrees:level.curvatureToleranceDegrees,growthLimit:common.growthLimit,maximumNodes:common.maximumNodes,maximumElements:common.maximumElements,maximumEstimatedDofs:common.maximumEstimatedDofs,refinementFeatureIds:common.refinementFeatureIds,allowT3Fallback:policy.allowT3Fallback,stageAdapterId:'LAFEA.3:FREEZE_CHECK',stageAdapterRevision:'FREEZE_CHECK'});
-      assert.equal(intent.status,'EXECUTABLE_INTENT');
-      assert.equal(intent.executionAuthorized,true);
-      assert.ok(intent.producerRef);
-    }
-  }
+  assert.equal(ladder.requestSchema,'REGISTERED_LAFEA_MESH_GENERATION_INTENT_V2'); assertRatio2(ladder.levels);
+  for(const level of ladder.levels){assert.equal(level.h,level.targetElementLength);for(const [elementFamily,applicability] of Object.entries(methods)){if(applicability==='NOT_APPLICABLE')continue;const policy=ladder.familyRequestPolicy[elementFamily],common=ladder.commonRequestPolicy;const intent=createLafeaMeshGenerationIntentV2({schema:'lafea-mesh-generation-intent/v2',stageId:'LAFEA.3',sourceHash:`sha256:${'1'.repeat(64)}`,analysisDomainHash:`sha256:${'2'.repeat(64)}`,analysisGeometryHash:`sha256:${'3'.repeat(64)}`,meshProfileHash:'freeze-contract-profile',targetElementLength:level.targetElementLength,lengthUnit:common.lengthUnit,elementFamily,curvatureToleranceDegrees:level.curvatureToleranceDegrees,growthLimit:common.growthLimit,maximumNodes:common.maximumNodes,maximumElements:common.maximumElements,maximumEstimatedDofs:common.maximumEstimatedDofs,refinementFeatureIds:common.refinementFeatureIds,allowT3Fallback:policy.allowT3Fallback,stageAdapterId:'LAFEA.3:FREEZE_CHECK',stageAdapterRevision:'FREEZE_CHECK'});assert.equal(intent.status,'EXECUTABLE_INTENT');assert.equal(intent.executionAuthorized,true);assert.ok(intent.producerRef);}}
 }
+function validateRouteExpressibleCantilever(definition){const rows=definition.loadCase.routeAttachmentSemantics;assert.equal(rows.length,2);const restraint=rows.find((row)=>row.kind==='RESTRAINT'),traction=rows.find((row)=>row.kind==='TRACTION');assert.equal(restraint.targetType,'EDGE');assert.deepEqual(restraint.payload,{ux:true,uy:true});assert.equal(traction.targetType,'EDGE');assert.deepEqual(Object.keys(traction.payload).sort(),['tx','ty','unit']);assert.equal(traction.payload.tx,0);assert.ok(Number.isFinite(traction.payload.ty));assert.equal(traction.payload.unit,'MPa');}
 function validateProbeSet(probes){assert.ok(Array.isArray(probes)&&probes.length>0);for(const probe of probes){for(const key of ['probeId','physicalCoordinate','coordinateFrame','loadCaseId','quantityId','representation','recoveryMethod','units','singularityClassification'])assert.ok(probe[key]!==undefined,`${probe.probeId} missing ${key}`);assert.equal(probe.coordinateFrame,'GLOBAL_XY');assert.equal(probe.representation,'PHYSICAL_POINT_DIRECT');assert.ok(Number.isFinite(probe.physicalCoordinate.x)&&Number.isFinite(probe.physicalCoordinate.y));}}

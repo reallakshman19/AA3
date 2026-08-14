@@ -9,57 +9,64 @@ const definition = JSON.parse(fs.readFileSync(
 const E = definition.material.elasticModulus;
 const nu = definition.material.poissonRatio;
 const G = E / (2 * (1 + nu));
-const P = definition.loadCase.shearResultant;
+const P = Math.abs(definition.loadCase.loadResultant.y);
 const L = definition.geometry.xMaximum - definition.geometry.xMinimum;
-const c = definition.geometry.yMaximum;
+const depth = definition.geometry.yMaximum - definition.geometry.yMinimum;
+const c = depth / 2;
 const t = definition.geometry.thickness;
-const I = 2 * t * c ** 3 / 3;
+const A = depth * t;
+const I = t * depth ** 3 / 12;
+const kappa = definition.independentOracle.shearCorrectionFactor;
 assert.ok(Math.abs(G - definition.material.shearModulus) < 1e-10);
+assert.ok(Math.abs(A - definition.independentOracle.area) < 1e-12);
 assert.ok(Math.abs(I - definition.independentOracle.secondMomentOfArea) < 1e-10);
 
-const sigmaX = (x, y) => P * x * y / I;
-const tauXY = (y) => P * (c ** 2 - y ** 2) / (2 * I);
+const moment = (x) => -P * (L - x);
+const sigmaX = (x, y) => -moment(x) * y / I;
+const tauXY = (y) => 3 * P / (2 * A) * (1 - (y / c) ** 2);
 const gammaXY = (y) => tauXY(y) / G;
-const ux = (x, y) => P * x ** 2 * y / (2 * E * I)
-  + P * y ** 3 * (nu / E - 1 / G) / (6 * I);
-const uy = (x, y) => P * c ** 2 * x / (2 * I * G)
-  - P * x ** 3 / (6 * E * I)
-  - nu * P * x * y ** 2 / (2 * E * I);
-
-for (const y of [-0.7 * c, -0.2 * c, 0, 0.4 * c, 0.8 * c]) {
-  const dSigmaDx = P * y / I;
-  const dTauDy = -P * y / I;
-  assert.ok(Math.abs(dSigmaDx + dTauDy) < 1e-14, '2D equilibrium must be exact');
-}
+const uyMagnitude = (x) => P * x ** 2 * (3 * L - x) / (6 * E * I)
+  + P * x / (kappa * G * A);
 assert.equal(tauXY(c), 0);
 assert.equal(tauXY(-c), 0);
-const shearResultant = 2 * P * c ** 3 / (3 * I);
-assert.ok(Math.abs(shearResultant - P / t) < 1e-12);
+assert.ok(tauXY(0) > tauXY(0.5 * c));
 
-const probeStress = definition.fixedProbes.find((row) => row.probeId === 'B02B-PROBE-TAU-01');
-const probeDisp = definition.fixedProbes.find((row) => row.probeId === 'B02B-PROBE-UY-01');
-assert.ok(Math.abs(tauXY(probeStress.physicalCoordinate.y) - probeStress.expectedValue) < 1e-12);
-assert.ok(Math.abs(uy(probeDisp.physicalCoordinate.x, probeDisp.physicalCoordinate.y) - probeDisp.expectedValue) < 1e-15);
-assert.ok(Math.abs(sigmaX(7.3, 4.7) - 0.6433125) < 1e-12);
-assert.ok(Math.abs(gammaXY(4.7) - 4.605778125e-5) < 1e-16);
-assert.ok(Math.abs(ux(7.3, 4.7) - 8.0093140625e-6) < 1e-16);
+const loadTraction = definition.loadCase.routeAttachmentSemantics.find((row) => row.kind === 'TRACTION');
+assert.equal(loadTraction.payload.ty, -P / A / t * t); // -P/(depth*thickness)
+assert.ok(Math.abs(loadTraction.payload.ty * depth * t + P) < 1e-12);
+const restraint = definition.loadCase.routeAttachmentSemantics.find((row) => row.kind === 'RESTRAINT');
+assert.deepEqual(restraint.payload, { ux: true, uy: true });
 
-const bendingEnergy = P ** 2 * L ** 3 / (6 * E * I);
-const shearEnergy = 2 * P ** 2 * L * t * c ** 5 / (15 * G * I ** 2);
-const totalEnergy = bendingEnergy + shearEnergy;
+const stressProbe = definition.fixedProbes.find((row) => row.probeId === 'B02B-PROBE-TAU-01');
+const displacementProbe = definition.fixedProbes.find((row) => row.probeId === 'B02B-PROBE-UY-01');
+assert.ok(Math.abs(tauXY(stressProbe.physicalCoordinate.y) - stressProbe.expectedValue) < 1e-12);
+assert.ok(Math.abs(gammaXY(stressProbe.physicalCoordinate.y) - 4.605778125e-5) < 1e-16);
+assert.ok(Math.abs(sigmaX(stressProbe.physicalCoordinate.x, stressProbe.physicalCoordinate.y) - 1.1191875) < 1e-12);
+assert.ok(Math.abs(-uyMagnitude(displacementProbe.physicalCoordinate.x) - displacementProbe.expectedValue) < 1e-15);
+
+const bendingTip = P * L ** 3 / (3 * E * I);
+const shearTip = P * L / (kappa * G * A);
+const tip = bendingTip + shearTip;
+const bendingEnergy = 0.5 * P * bendingTip;
+const shearEnergy = 0.5 * P * shearTip;
+const totalEnergy = 0.5 * P * tip;
+assert.ok(Math.abs(bendingTip - definition.independentOracle.tipBendingDeflectionMagnitude) < 1e-15);
+assert.ok(Math.abs(shearTip - definition.independentOracle.tipShearDeflectionMagnitude) < 1e-15);
+assert.ok(Math.abs(tip - definition.independentOracle.tipDeflectionMagnitude) < 1e-15);
 assert.ok(Math.abs(bendingEnergy - definition.independentOracle.bendingStrainEnergy) < 1e-14);
 assert.ok(Math.abs(shearEnergy - definition.independentOracle.shearStrainEnergy) < 1e-14);
 assert.ok(Math.abs(totalEnergy - definition.independentOracle.totalStrainEnergy) < 1e-14);
 assert.ok(Math.abs(shearEnergy / totalEnergy - definition.independentOracle.shearEnergyFraction) < 1e-14);
-assert.ok(shearEnergy / totalEnergy > 0.70, 'case must remain shear dominated');
+assert.ok(shearEnergy / totalEnergy > 0.70, 'frozen case must remain shear dominated');
 assert.equal(definition.productionOutputUsedToChooseDefinition, false);
 assert.equal(definition.authority.benchmarkQualified, false);
 
 console.log(JSON.stringify({
-  schema: 'lafea-b02b-saint-venant-independent-oracle-check/v1',
+  schema: 'lafea-b02b-independent-engineering-oracle-check/v1',
   status: 'PASS',
-  exact2dEquilibrium: true,
-  tractionFreeTopBottom: true,
+  oracle: 'TIMOSHENKO_PLUS_JOURAWSKI_RECTANGULAR_CANTILEVER',
+  constantRouteExpressibleEndTraction: true,
+  fixedEdgeRouteExpressibleRestraint: true,
   nonUniformParabolicShear: true,
   shearEnergyFraction: shearEnergy / totalEnergy,
   productionOutputUsed: false,

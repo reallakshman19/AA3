@@ -8,12 +8,12 @@ const COMMON = [
   column('line', 'Line', 'text'),
   column('connectFrom', 'Connect From', 'identity', { frozen: true }),
   column('connectTo', 'Connect To', 'identity', { frozen: true }),
-  column('dnInMm', 'DN In', 'length'),
-  column('dnOutMm', 'DN Out', 'length'),
-  column('schedule', 'Schedule', 'text'),
-  column('material', 'Material', 'text'),
-  column('pipingClass', 'Piping Class', 'text'),
-  column('pressureClass', 'Pressure Class', 'text'),
+  column('dnInMm', 'DN In', 'length', { editor: 'PIPE_SPECIFICATION' }),
+  column('dnOutMm', 'DN Out', 'length', { editor: 'PIPE_SPECIFICATION' }),
+  column('schedule', 'Schedule', 'text', { editor: 'PIPE_SPECIFICATION' }),
+  column('material', 'Material', 'text', { editor: 'PIPE_SPECIFICATION' }),
+  column('pipingClass', 'Piping Class', 'text', { editor: 'PIPE_SPECIFICATION' }),
+  column('pressureClass', 'Pressure Class', 'text', { editor: 'PIPE_SPECIFICATION' }),
   column('catalogueAuthority', 'Catalogue', 'status', { readOnly: true }),
   column('sourceStatus', 'Source', 'status', { readOnly: true }),
 ];
@@ -38,7 +38,7 @@ const EDGE_SPECIFICATION = [
   column('outsideDiameterMm', 'OD', 'length', { readOnly: true }),
   column('wallThicknessMm', 'Wall', 'length', { readOnly: true }),
   column('insideDiameterMm', 'ID', 'length', { readOnly: true }),
-  column('catalogueRecordId', 'Catalogue Record', 'identity', { readOnly: true }),
+  column('catalogueRecordId', 'Catalogue Record', 'identity', { editor: 'PIPE_SPECIFICATION' }),
 ];
 
 const BY_TYPE = Object.freeze({

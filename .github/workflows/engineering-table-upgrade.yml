@@ -72,6 +72,7 @@ jobs:
           node --check src/workspace/viewport-productivity/topology-edit-table-engineering-runtime.js
           node --check src/workspace/viewport-productivity/topology-edit-table-grid-view.js
           node --check src/workspace/viewport-productivity/topology-edit-table-pipe-length-runtime.js
+          node --check src/workspace/viewport-productivity/topology-edit-table-pipe-length-clipboard.js
           node --check src/workspace/viewport-productivity/topology-edit-table-prepared-intent-runtime.js
           node --check src/workspace/viewport-productivity/topology-edit-table-properties-view.js
           node --check src/workspace/viewport-productivity/topology-edit-table-runtime.js
@@ -93,7 +94,7 @@ jobs:
           PLAYWRIGHT_BROWSERS_PATH: '0'
         run: npx playwright install --with-deps chromium
       - name: Run Engineering Table authority browser journey
-        run: node scripts/run-playwright.mjs e2e/topology-edit-table-authority.spec.js e2e/topology-edit-table-direct-xyz.spec.js e2e/topology-edit-table-xyz-paste.spec.js e2e/topology-edit-table-pipe-specification.spec.js e2e/topology-edit-support-position-productivity.spec.js e2e/topology-edit-support-host-drag.spec.js
+        run: node scripts/run-playwright.mjs e2e/topology-edit-table-authority.spec.js e2e/topology-edit-table-direct-xyz.spec.js e2e/topology-edit-table-xyz-paste.spec.js e2e/topology-edit-table-pipe-length-paste.spec.js e2e/topology-edit-table-pipe-specification.spec.js e2e/topology-edit-support-position-productivity.spec.js e2e/topology-edit-support-host-drag.spec.js
       - name: Upload Engineering Table evidence
         if: always()
         uses: actions/upload-artifact@v4

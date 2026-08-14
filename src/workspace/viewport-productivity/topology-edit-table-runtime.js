@@ -19,6 +19,7 @@ import {
   writeTopologyEditTableEmptyRouteToAuthoring,
 } from './topology-edit-table-empty-route-runtime.js';
 import {
+  stageTopologyEditPipeSpecification,
   stageTopologyEditTeeReducerRelation,
   stageTopologyEditValveReplacement,
 } from './topology-edit-table-engineering-runtime.js';
@@ -28,11 +29,17 @@ import { handleTopologyEditTableScroll, initializeTopologyEditTableScrollState, 
 import { ensureTopologyEditTableStyles } from './topology-edit-table-styles.js';
 import {
   applyTopologyEditTableRuntime,
+  invalidateTopologyEditTablePreviewRequests,
   previewTopologyEditTableRuntime,
   redoTopologyEditTableRuntime,
+  requestTopologyEditTableAutoPreview,
   undoTopologyEditTableRuntime,
   validateTopologyEditTableRuntime,
 } from './topology-edit-table-workflow.js';
+
+const COLUMN_PROFILES = new Set([
+  'GEOMETRY', 'SPECIFICATION', 'SUPPORT', 'CONNECTIVITY', 'AUTHORITY', 'ALL',
+]);
 
 export class TopologyEditTableRuntime {
   constructor(controller) {
@@ -41,12 +48,16 @@ export class TopologyEditTableRuntime {
     this.coordinator = null;
     this.projection = null;
     this.viewState = createTopologyEditTableViewState();
+    this.columnProfile = 'GEOMETRY';
     this.intents = [];
     this.batch = null;
     this.batchPlan = null;
     this.staleResult = null;
     this.preview = null;
     this.validation = null;
+    this.previewGenerationRevision = 0;
+    this.autoPreviewRequest = null;
+    this.autoPreviewQueuedRequest = null;
     this.transaction = null;
     this.redoTransaction = null;
     this.lastExport = null;
@@ -125,7 +136,8 @@ export class TopologyEditTableRuntime {
       this.batchPlan = result.rebasedPlan;
       this.intents = [...result.rebasedBatch.intents];
       this.staleResult = null;
-      this.message = 'Staged edits rebased safely; Preview must be regenerated.';
+      this.message = 'Staged edits rebased safely; governed Preview refresh queued.';
+      requestTopologyEditTableAutoPreview(this);
     } else {
       this.batch = priorBatch;
       this.batchPlan = priorPlan;
@@ -178,10 +190,15 @@ export class TopologyEditTableRuntime {
     if (select && this.element?.contains(select)) return this.selectRow(select.dataset.tableSelect, event);
     const sort = event.target.closest?.('[data-table-sort]');
     if (sort && this.element?.contains(sort)) return this.sortRows(sort.dataset.tableSort);
+    const profile = event.target.closest?.('[data-table-profile]');
+    if (profile && this.element?.contains(profile)) return this.setColumnProfile(profile.dataset.tableProfile);
     const action = event.target.closest?.('[data-table-action]');
     if (!action || !this.element?.contains(action)) return false;
     const kind = action.dataset.tableAction;
     if (kind === 'stage-pipe-length') return this.stagePipeLength(action.dataset.canonicalId);
+    if (kind === 'stage-pipe-specification') {
+      return stageTopologyEditPipeSpecification(this, action.dataset.canonicalId);
+    }
     if (kind === 'stage-valve-replacement') {
       return stageTopologyEditValveReplacement(this, action.dataset.canonicalId);
     }
@@ -196,6 +213,15 @@ export class TopologyEditTableRuntime {
     if (kind === 'export-xlsx') return this.exportXlsx();
     if (kind.startsWith('empty-route-')) return this.runEmptyRouteAction(kind);
     return false;
+  }
+
+  setColumnProfile(profileInput) {
+    const profile = String(profileInput ?? '').trim().toUpperCase();
+    if (!COLUMN_PROFILES.has(profile)) return false;
+    this.columnProfile = profile;
+    this.tableScrollLeft = 0;
+    this.render();
+    return true;
   }
 
   emptyRoutePipeOptions() { return topologyEditTableEmptyRoutePipeOptions(this); }
@@ -275,12 +301,14 @@ export class TopologyEditTableRuntime {
   }
 
   resetStaged(clearGhost = true) {
+    invalidateTopologyEditTablePreviewRequests(this);
     this.intents = []; this.batch = null; this.batchPlan = null; this.staleResult = null;
     this.preview = null; this.validation = null;
     resetTopologyEditTableCellEditing(this);
     if (clearGhost) this.controller.viewportBackend?.clearGhost();
   }
   clearCandidate() {
+    invalidateTopologyEditTablePreviewRequests(this);
     this.validationClient.cancel(); this.preview = null; this.validation = null;
     this.controller.viewportBackend?.clearGhost();
   }

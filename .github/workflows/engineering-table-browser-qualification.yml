@@ -1,0 +1,51 @@
+name: Engineering Table browser authority
+on:
+  pull_request:
+    paths:
+      - 'src/workspace/topology-edit/table/**'
+      - 'src/workspace/topology-edit/draft/**'
+      - 'src/workspace/viewport-productivity/topology-edit-table-*.js'
+      - 'e2e/topology-edit-table-*.spec.js'
+      - 'e2e/helpers/topology-edit-table-*.js'
+      - '.github/workflows/engineering-table-browser-qualification.yml'
+permissions:
+  contents: read
+jobs:
+  browser-authority:
+    runs-on: ubuntu-latest
+    env:
+      EXPECTED_HEAD: ${{ github.event.pull_request.head.sha }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+          fetch-depth: 0
+      - name: Verify exact head
+        run: test "$(git rev-parse HEAD)" = "$EXPECTED_HEAD"
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - name: Install pinned Chromium runtime
+        env:
+          PLAYWRIGHT_BROWSERS_PATH: '0'
+        run: npx playwright install --with-deps chromium
+      - name: Run Engineering Table authority browser journey
+        shell: bash
+        run: |
+          set -o pipefail
+          mkdir -p reports/qualification
+          node scripts/run-playwright.mjs e2e/topology-edit-table-authority.spec.js e2e/topology-edit-table-direct-xyz.spec.js e2e/topology-edit-table-pipe-specification.spec.js 2>&1 | tee reports/qualification/engineering-table-browser.log
+      - name: Upload browser evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: engineering-table-browser-${{ github.event.pull_request.head.sha }}
+          path: |
+            reports/qualification/engineering-table-browser.log
+            reports/qualification/topology-edit-table-*.json
+            test-results/**
+            playwright-report/**
+          if-no-files-found: warn
+          retention-days: 30

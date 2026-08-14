@@ -1,0 +1,96 @@
+name: Engineering Table upgrade qualification
+on:
+  pull_request:
+    paths:
+      - 'src/workspace/topology-edit/table/**'
+      - 'src/workspace/topology-edit/draft/**'
+      - 'src/workspace/viewport-productivity/topology-edit-table-*.js'
+      - 'src/workspace/topology-edit-3d-*.js'
+      - 'src/workspace/topology-edit/topology-edit-pipe-specification-rebind.js'
+      - 'src/workspace/topology-edit/topology-edit-command-contract.js'
+      - 'src/workspace/topology-edit/topology-edit-command-resolver.js'
+      - 'src/workspace/topology-edit/topology-edit-command-effect-dispatch.js'
+      - 'src/workspace/topology-edit/topology-edit-pure-reducer-dispatch.js'
+      - 'src/workspace/topology-edit/topology-edit-source-adapter-dispatch.js'
+      - 'tests/topology-edit-table-*.test.mjs'
+      - 'tests/topology-edit-transient-node-draft.test.mjs'
+      - 'e2e/topology-edit-table-*.spec.js'
+      - 'e2e/helpers/topology-edit-table-*.js'
+      - '.github/workflows/engineering-table-upgrade.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  engineering-table:
+    runs-on: ubuntu-latest
+    env:
+      EXPECTED_HEAD: ${{ github.event.pull_request.head.sha || github.sha }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+          fetch-depth: 0
+      - name: Verify exact head and clean diff
+        shell: bash
+        run: |
+          test "$(git rev-parse HEAD)" = "$EXPECTED_HEAD"
+          test -z "$(git status --porcelain=v1 --untracked-files=all)"
+          git diff --check
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - name: Install dependencies
+        run: npm ci
+      - name: Syntax-check upgraded Table modules
+        run: |
+          node --check src/workspace/topology-edit/topology-edit-pipe-specification-rebind.js
+          node --check src/workspace/topology-edit/topology-edit-command-contract.js
+          node --check src/workspace/topology-edit/topology-edit-command-resolver.js
+          node --check src/workspace/topology-edit/topology-edit-command-effect-dispatch.js
+          node --check src/workspace/topology-edit/topology-edit-pure-reducer-dispatch.js
+          node --check src/workspace/topology-edit/topology-edit-source-adapter-dispatch.js
+          node --check src/workspace/topology-edit/table/topology-edit-table-pipe-catalogue.js
+          node --check src/workspace/topology-edit/table/topology-edit-table-column-profiles.js
+          node --check src/workspace/topology-edit/table/topology-edit-table-columns.js
+          node --check src/workspace/topology-edit/table/topology-edit-table-draft-plan.js
+          node --check src/workspace/topology-edit/table/topology-edit-table-edit-capability.js
+          node --check src/workspace/topology-edit/table/topology-edit-table-intent.js
+          node --check src/workspace/topology-edit/table/topology-edit-table-engineering-planner.js
+          node --check src/workspace/topology-edit/table/topology-edit-table-batch-planner.js
+          node --check src/workspace/topology-edit/table/topology-edit-table-projection.js
+          node --check src/workspace/topology-edit/table/topology-edit-table-virtual-geometry.js
+          node --check src/workspace/topology-edit/draft/topology-edit-transient-node-draft.js
+          node --check src/workspace/viewport-productivity/topology-edit-table-cell-edit.js
+          node --check src/workspace/viewport-productivity/topology-edit-table-engineering-editor.js
+          node --check src/workspace/viewport-productivity/topology-edit-table-engineering-runtime.js
+          node --check src/workspace/viewport-productivity/topology-edit-table-grid-view.js
+          node --check src/workspace/viewport-productivity/topology-edit-table-pipe-length-runtime.js
+          node --check src/workspace/viewport-productivity/topology-edit-table-properties-view.js
+          node --check src/workspace/viewport-productivity/topology-edit-table-runtime.js
+      - name: Run Engineering Table contract tests
+        shell: bash
+        run: |
+          set -o pipefail
+          mkdir -p reports/qualification
+          node --test tests/topology-edit-table-*.test.mjs tests/topology-edit-transient-node-draft.test.mjs 2>&1 | tee reports/qualification/engineering-table-node-tests.log
+      - name: Build production bundle
+        run: npm run build
+      - name: Install pinned Chromium runtime
+        env:
+          PLAYWRIGHT_BROWSERS_PATH: '0'
+        run: npx playwright install --with-deps chromium
+      - name: Run Engineering Table authority browser journey
+        run: node scripts/run-playwright.mjs e2e/topology-edit-table-authority.spec.js e2e/topology-edit-table-direct-xyz.spec.js e2e/topology-edit-table-pipe-specification.spec.js
+      - name: Upload Engineering Table evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: engineering-table-${{ github.event.pull_request.head.sha || github.sha }}
+          path: |
+            reports/qualification/engineering-table-node-tests.log
+            reports/qualification/topology-edit-table-*.json
+            test-results/**
+            playwright-report/**
+          if-no-files-found: warn
+          retention-days: 30

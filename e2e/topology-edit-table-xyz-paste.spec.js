@@ -71,13 +71,47 @@ test('TSV paste drafts direct XYZ cells atomically before certified endpoint sta
   }, meta[0].canonicalId);
   expect(staged).toEqual({ x: pasted[0], y: pasted[1], z: pasted[2] });
 
+  const toInputs = row.locator('[data-table-cell-edit="NODE_POSITION"][data-table-cell-endpoint="TO"]');
+  await expect(toInputs).toHaveCount(3);
+  const toMeta = await toInputs.evaluateAll((nodes) => nodes.map((node) => ({
+    axis: node.dataset.tableCellAxis,
+    value: Number(node.value),
+  })));
+  const toPasted = toMeta.map((item, index) => item.value + ((index + 1) * 7));
+  await dispatchPaste(toInputs.first(), toPasted.join('\t'));
+  await toInputs.first().press('Enter');
+  await expect.poll(() => page.evaluate(() => {
+    const runtime = document.querySelector('[data-role="topology-edit-render-host"]')
+      ?.__topologyEditAuthoringController?.tableAdapter?.runtime;
+    return runtime?.batch?.intentCount ?? 0;
+  })).toBe(2);
+  await expect.poll(() => host.getAttribute('data-topology-edit-table-preview-hash')).toBeTruthy();
+  const dual = await page.evaluate((canonicalId) => {
+    const runtime = document.querySelector('[data-role="topology-edit-render-host"]')
+      ?.__topologyEditAuthoringController?.tableAdapter?.runtime;
+    return {
+      endpoints: (runtime?.intents ?? [])
+        .filter((candidate) => candidate.intentKind === 'NODE_POSITION' && candidate.target?.canonicalId === canonicalId)
+        .map((candidate) => candidate.requestedValue?.endpoint),
+      positions: Object.fromEntries((runtime?.intents ?? [])
+        .filter((candidate) => candidate.intentKind === 'NODE_POSITION' && candidate.target?.canonicalId === canonicalId)
+        .map((candidate) => [candidate.requestedValue?.endpoint, candidate.requestedValue?.position])),
+      commandNodeIds: runtime?.batchPlan?.operationPlan?.commandIntents?.map((intent) => intent.payload?.nodeId) ?? [],
+    };
+  }, meta[0].canonicalId);
+  expect(dual.endpoints).toEqual(['FROM', 'TO']);
+  expect(dual.positions.FROM).toEqual({ x: pasted[0], y: pasted[1], z: pasted[2] });
+  expect(dual.positions.TO).toEqual({ x: toPasted[0], y: toPasted[1], z: toPasted[2] });
+  expect(new Set(dual.commandNodeIds).size).toBe(2);
+  expectAuthorityNoop(await authorityEvidence(page), before);
+
   await page.locator('[data-table-action="discard"]').click();
   await expect.poll(() => host.getAttribute('data-topology-edit-table-batch-hash')).toBe('');
   expectAuthorityNoop(await authorityEvidence(page), before);
 
-  const toInputs = row.locator('[data-table-cell-edit="NODE_POSITION"][data-table-cell-endpoint="TO"]');
-  await expect(toInputs).toHaveCount(3);
-  const last = toInputs.nth(2);
+  const refreshedTo = row.locator('[data-table-cell-edit="NODE_POSITION"][data-table-cell-endpoint="TO"]');
+  await expect(refreshedTo).toHaveCount(3);
+  const last = refreshedTo.nth(2);
   const lastKey = await last.getAttribute('data-table-cell-draft-key');
   await dispatchPaste(last, '123\t456');
   await expect(table.locator('.topology-edit-table__status')).toContainText('not an editable XYZ cell');

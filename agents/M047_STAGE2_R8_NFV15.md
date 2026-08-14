@@ -41,7 +41,35 @@ node scripts/lfea-m047-stage2-r8-nfv15-experiment.mjs \
   --out reports/lfea-m047-stage2-r8-nfv15-L13.json
 ```
 
-A nomination repeat uses the same command with `--repeat 2`; repeat count is never used to choose a better result.
+Assess it only against the committed production R2 artifact for the same case:
+
+```bash
+node scripts/lfea-m047-stage2-r8-nfv15-assess.mjs \
+  --baseline reports/lfea-m047-stage2-r2-rebaseline/L13.json \
+  --experiment reports/lfea-m047-stage2-r8-nfv15-L13.json \
+  --out reports/lfea-m047-stage2-r8-nfv15-L13-assessment.json
+```
+
+The assessor consumes the real experiment schema directly, requires pinned custody, production unchanged, state-contract PASS, convergence, recovered equilibrium and the `NFV15_RETAINED_NORMAL_STATE` gate, and compares only frozen normal/tangential accuracy metrics. It deliberately does **not** infer CAESAR stick/slide regime from `mu*|N_final|`, because NFV15 makes that final-normal surface diagnostic rather than governing.
+
+If L13 is directionally nominated, run L7 with the identical harness and assess it against `reports/lfea-m047-stage2-r2-rebaseline/L7.json`. Do not jump from L7 directly to L1.
+
+## L15 algebraic gate
+
+After separately converged and physics-valid R8 L13 and L7 artifacts, reconstruct L15 exactly as `L7-L13`:
+
+```bash
+node scripts/lfea-m047-stage2-r8-nfv15-l15.mjs \
+  --l13 reports/lfea-m047-stage2-r8-nfv15-L13.json \
+  --l7 reports/lfea-m047-stage2-r8-nfv15-L7.json \
+  --zip artifacts/bm4l-stage2/source/BM4_L.zip \
+  --accdb artifacts/bm4l-stage2/source/BM4_L.ACCDB \
+  --out reports/lfea-m047-stage2-r8-nfv15-L15.json
+```
+
+The L15 harness performs no nonlinear solve. It requires both constituent artifacts to be converged with equilibrium/nonlinear gates passing, subtracts every result row by exact identity, proves zero algebraic deviation, reads the pinned ACCDB L15 reference locally, and records L15 normal/tangential accuracy. Only after this gate may the sequence proceed to L1.
+
+A nomination repeat uses the primitive experiment command with `--repeat 2`; repeat count is never used to choose a better result.
 
 ## When accuracy is measured
 
@@ -56,4 +84,4 @@ There are two distinct boundaries:
 
 ## Acceptance boundary
 
-No production code is changed on this branch. R8 cannot be promoted without a fresh custody-verified real `BM4_L.ACCDB` solve, committed evidence, unchanged convergence/equilibrium gates, and subsequent frozen-control regression if the experiment is nominated.
+No production code is changed on this branch. R8 cannot be promoted without a fresh custody-verified real `BM4_L.ACCDB` solve, committed evidence, unchanged convergence/equilibrium gates, exact L15 reconstruction, deterministic nominal repeats, and frozen-control regression if the experiment is nominated.

@@ -38,6 +38,9 @@ export function projectLafeaWorkbenchCurrentness(stage) {
   const binding = stage.lifecycleBinding ?? null;
   const artifacts = lifecycle?.artifacts ?? {};
   const execution = stage.execution ?? null;
+  const transaction = execution?.runTransaction ?? null;
+  const transactionReceipt = execution?.runTransactionReceipt ?? null;
+  const runtimeDiagnostics = execution?.runtimeSolverDiagnostics ?? null;
   const resultArtifacts = RESULT_ARTIFACT_KINDS
     .map((kind) => artifacts[kind] ?? null)
     .filter(hasRetainedArtifact);
@@ -75,7 +78,9 @@ export function projectLafeaWorkbenchCurrentness(stage) {
           : 'NONE';
   const currentAuthority = computationalState === 'CURRENT_RESULT'
     && qualificationState === 'PASS'
-    && binding?.status === 'CURRENT';
+    && binding?.status === 'CURRENT'
+    && transactionReceipt?.status !== 'REJECTED'
+    && transactionReceipt?.status !== 'SUPERSEDED';
 
   return freeze({
     schema: LAFEA_WORKBENCH_CURRENTNESS_SCHEMA,
@@ -96,6 +101,13 @@ export function projectLafeaWorkbenchCurrentness(stage) {
         ?? artifactHash(artifacts.ANALYSIS_MESH),
       meshProfileHash: execution?.meshProfileHash ?? null,
       solverModelHash: execution?.solverModelHash ?? null,
+      solverConfigHash: transaction?.solverConfigHash ?? transactionReceipt?.solverConfigHash ?? null,
+      runTransactionId: transaction?.transactionId ?? transactionReceipt?.transactionId ?? null,
+      runTransactionHash: transaction?.transactionHash ?? transactionReceipt?.transactionHash ?? null,
+      runTransactionReceiptHash: transactionReceipt?.semanticHash ?? null,
+      runtimeDiagnosticsHash: runtimeDiagnostics?.semanticHash
+        ?? transactionReceipt?.runtimeDiagnosticsHash
+        ?? null,
       executionHash: execution?.compiledExecutionHash
         ?? artifactHash(artifacts.EXECUTION),
       recoveryHash: artifactHash(artifacts.RECOVERY),

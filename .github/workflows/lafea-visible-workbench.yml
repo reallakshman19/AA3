@@ -9,6 +9,7 @@ on:
       - 'e2e/fixtures/lafea-stage17-browser-fixture.js'
       - 'scripts/lafea-*.mjs'
       - '.github/workflows/lafea-visible-workbench.yml'
+      - '.github/workflows/pages-vite-deploy.yml'
   workflow_dispatch:
 permissions:
   contents: read
@@ -72,11 +73,13 @@ jobs:
         run: |
           npx vite build --config vite.lafea.config.js
           node scripts/lafea-standalone-build-artifact-check.mjs
+      - name: Build production Pages bundle
+        run: npm run build
       - name: Install pinned Chromium runtime
         env:
           PLAYWRIGHT_BROWSERS_PATH: '0'
         run: npx playwright install --with-deps chromium
-      - name: Run Stage-17 browser journey and visible UI proof
+      - name: Run Stage-17 and production-shell visible UI proof
         run: node scripts/lafea-stage17-browser-run.mjs
       - name: Upload visible browser evidence
         if: always()

@@ -20,7 +20,7 @@ assert.equal(lafeaUnitFactor('stress', 'Pa'), 1e-6);
 assert.equal(lafeaUnitFactor('modulus', 'GPa'), 1000);
 assert.equal(lafeaUnitFactor('temperature', 'K'), null);
 assert.equal(lafeaUnitFactor('length', 'ft'), null);
-assert.deepEqual(lafeaSupportedUnits('modulus'), ['MPa', 'GPa']);
+assert.deepEqual(lafeaSupportedUnits('modulus'), ['Pa', 'MPa', 'GPa']);
 assert.ok(Object.isFrozen(lafeaSupportedUnits('stress')));
 
 const foundation = canonicalizeFoundationUnits({

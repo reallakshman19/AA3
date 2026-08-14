@@ -13,6 +13,13 @@ const lafea4Source = () => cylindricalSource(12, { override: { modelIdentity: 'C
 import { workflowSource as lafea5Source } from '../../scripts/lafea.5-fixtures.mjs';
 import { rectangularQ4Package } from '../../scripts/lfea-005-fixtures.mjs';
 import { lafeaPreviewGeometry } from './lafea-stage-preview.js';
+import { createLafeaAnalysisGeometry } from './lafea-analysis-geometry-contract.js';
+import { createLafeaContinuumAnalysisDomain } from './lafea-continuum-analysis-domain.js';
+import {
+  createLafeaAnalysisGeometryEvidence,
+  LAFEA_ANALYSIS_GEOMETRY_EVIDENCE_PROFILE,
+  LAFEA_ANALYSIS_GEOMETRY_EVIDENCE_SCHEMA,
+} from './lafea-analysis-geometry-evidence.js';
 
 function lafea6Source() {
   return {
@@ -221,4 +228,63 @@ function support(id, position, attachedPortId) {
       VERTICAL_CAPABILITY: 'RESTRAINED',
     },
   };
+}
+
+export function createLafeaMockDomainAndGeometryEvidence(stageId, sourceHash) {
+  if (stageId !== 'LAFEA.3') return null;
+
+  const geometry = createLafeaAnalysisGeometry({
+    schema: 'lafea-analysis-geometry/v1',
+    stageId: 'LAFEA.3', geometryId: 'SIMULATED-PAD-DOMAIN', coordinateSystemId: 'GLOBAL_XY',
+    lengthUnit: 'mm', orientationPolicy: 'OUTER_CCW_HOLES_CW_V1',
+    vertices: [
+      { vertexId: 'N01', x: 60, y: 40 },
+      { vertexId: 'N04', x: 300, y: 40 },
+      { vertexId: 'N08', x: 300, y: 90 },
+      { vertexId: 'N12', x: 220, y: 135 },
+      { vertexId: 'N14', x: 200, y: 230 },
+      { vertexId: 'N13', x: 160, y: 230 },
+      { vertexId: 'N09', x: 140, y: 135 },
+      { vertexId: 'N05', x: 60, y: 90 },
+    ],
+    segments: [
+      { segmentId: 'S1', type: 'LINE', startVertexId: 'N01', endVertexId: 'N04' },
+      { segmentId: 'S2', type: 'LINE', startVertexId: 'N04', endVertexId: 'N08' },
+      { segmentId: 'S3', type: 'LINE', startVertexId: 'N08', endVertexId: 'N12' },
+      { segmentId: 'S4', type: 'LINE', startVertexId: 'N12', endVertexId: 'N14' },
+      { segmentId: 'S5', type: 'LINE', startVertexId: 'N14', endVertexId: 'N13' },
+      { segmentId: 'S6', type: 'LINE', startVertexId: 'N13', endVertexId: 'N09' },
+      { segmentId: 'S7', type: 'LINE', startVertexId: 'N09', endVertexId: 'N05' },
+      { segmentId: 'S8', type: 'LINE', startVertexId: 'N05', endVertexId: 'N01' },
+    ],
+    loops: [{ loopId: 'OUTER', role: 'OUTER', segmentIds: ['S1', 'S2', 'S3', 'S4', 'S5', 'S6', 'S7', 'S8'] }],
+  });
+
+  const domain = createLafeaContinuumAnalysisDomain({
+    schema: 'lafea-continuum-analysis-domain/v1',
+    stageId: 'LAFEA.3', sourceHash,
+    applicationRef: 'SIMULATED-PAD-DOMAIN',
+    units: { length: 'mm', force: 'N', stress: 'MPa', temperature: 'C' },
+    formulation: 'PLANE_STRESS',
+    region: { regionId: 'REGION-1', materialRef: 'MAT' },
+    physicalCases: [{ caseId: 'CASE-A' }, { caseId: 'CASE-B' }],
+    attachments: [
+      { attachmentId: 'FIX-A', kind: 'RESTRAINT', targetType: 'VERTEX', targetId: 'N01', physicalCaseIds: ['CASE-A', 'CASE-B'], payload: { ux: true, uy: true } },
+      { attachmentId: 'FIX-B', kind: 'RESTRAINT', targetType: 'VERTEX', targetId: 'N04', physicalCaseIds: ['CASE-A', 'CASE-B'], payload: { uy: true } },
+      { attachmentId: 'F1', kind: 'CONCENTRATED_LOAD', targetType: 'VERTEX', targetId: 'N13', physicalCaseIds: ['CASE-A'], payload: { fx: 8500, fy: -24000, unit: 'N' } },
+      { attachmentId: 'F2', kind: 'CONCENTRATED_LOAD', targetType: 'VERTEX', targetId: 'N14', physicalCaseIds: ['CASE-A'], payload: { fx: -4500, fy: -24000, unit: 'N' } },
+      { attachmentId: 'F3', kind: 'CONCENTRATED_LOAD', targetType: 'VERTEX', targetId: 'N09', physicalCaseIds: ['CASE-A'], payload: { fx: 2000, fy: -6000, unit: 'N' } },
+      { attachmentId: 'F4', kind: 'CONCENTRATED_LOAD', targetType: 'VERTEX', targetId: 'N12', physicalCaseIds: ['CASE-A'], payload: { fx: -2000, fy: -6000, unit: 'N' } },
+    ],
+  }, geometry);
+
+  const geometryEvidence = createLafeaAnalysisGeometryEvidence({
+    schema: LAFEA_ANALYSIS_GEOMETRY_EVIDENCE_SCHEMA,
+    stageId: 'LAFEA.3', sourceHash,
+    analysisDomain: domain, geometry,
+    producerRef: 'SIMULATED/GEOMETRY',
+    profileId: LAFEA_ANALYSIS_GEOMETRY_EVIDENCE_PROFILE,
+  });
+
+  return { domain, geometryEvidence };
 }

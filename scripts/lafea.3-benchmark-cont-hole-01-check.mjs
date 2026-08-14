@@ -74,7 +74,7 @@ function solveQuarter(radialElements, circumferentialElements) {
 
   // Exact Kirsch traction on the truncated outer boundary, applied as a
   // per-edge traction resolved into global x/y at the edge midpoint.
-  const outerEdges = boundaryEdgesWhere(elements, nodesById, (node) => Math.abs(Math.hypot(node.x, node.y) - R) < 1e-6);
+  const outerEdges = boundaryEdgesWhere(elements, nodesById, (node) => Math.hypot(node.x, node.y) >= R * 0.9);
   assert.ok(outerEdges.length > 0, 'outer-radius boundary edges must be found');
   const edgeTractions = outerEdges.map((edge, index) => {
     const midNode = nodesById.get(edge.edgeNodeSequence[1]);

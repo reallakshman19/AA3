@@ -1,5 +1,6 @@
 /** Automatic generation and retained-mesh refinement controls for Discretization. */
 import { PROFILE_KINDS, defaultProfileFields } from '../core/lafea-profile-contract/index.js';
+import { semanticHash } from '../core/shared-primitives/canonical-json.js';
 import { button, node, region } from './lafea-discretization-dom.js';
 
 const PROFILE_SOURCE_REVISION = 'lafea-discretization-ui-mesh-profile/v1';
@@ -89,12 +90,12 @@ function profileBindingControls(doc, generation, handlers) {
   const defaults = defaultProfileFields(PROFILE_KINDS.MESH);
   const host = node(doc, 'fieldset', 'lafea-discretization__profile-binding');
   host.dataset.role = 'lafea-mesh-profile-binding';
-  host.append(node(doc, 'legend', null, 'Bind governed LAFEA.3 mesh profile'));
+  host.append(node(doc, 'legend', null, 'Mesh Generation'));
   host.append(node(
     doc,
     'p',
     'lafea-discretization__disclosure',
-    'Choose the element family and target length explicitly. Quality-gate values below are the source-controlled profile defaults and remain visible before binding.',
+    'Generate the finite element mesh using standard qualified defaults, or expand advanced settings to override quality thresholds.',
   ));
 
   const family = selectControl(
@@ -104,7 +105,15 @@ function profileBindingControls(doc, generation, handlers) {
     generation.elementFamilies,
     null,
   );
+  if (generation.elementFamilies.includes('T6_QUADRATIC_TRIANGLE')) {
+    family.input.value = 'T6_QUADRATIC_TRIANGLE';
+  }
   const target = numberControl(doc, 'Target element length', 'lafea-profile-target-length', '', 0);
+  target.input.value = '15';
+
+  const advanced = node(doc, 'details', 'lafea-discretization__advanced');
+  advanced.append(node(doc, 'summary', null, 'Advanced Quality Gates'));
+  
   const ratio = numberControl(
     doc, 'Adjacent size ratio max', 'lafea-profile-adjacent-ratio', defaults.adjacentSizeRatioMax, 1,
   );
@@ -121,10 +130,12 @@ function profileBindingControls(doc, generation, handlers) {
     doc, 'Scaled Jacobian block', 'lafea-profile-jacobian-block', defaults.scaledJacobianBlock, 0,
   );
   const adaptive = numberControl(
-    doc, 'Adaptive levels', 'lafea-profile-adaptive-levels', defaults.adaptiveLevels, 1, '1', true,
+    doc, 'Adaptive levels', 'lafea-profile-adaptive-levels', defaults.adaptiveLevels, 3, '1', true,
   );
 
-  const bind = button(doc, 'Bind mesh profile', () => {
+  advanced.append(ratio.label, aspectWarn.label, aspectBlock.label, jacWarn.label, jacBlock.label, adaptive.label);
+
+  const bind = button(doc, 'Generate Mesh', () => {
     const selectedFamily = family.input.value;
     if (!generation.elementFamilies.includes(selectedFamily)) {
       family.input.setCustomValidity('Select an authorized element family.');
@@ -139,11 +150,10 @@ function profileBindingControls(doc, generation, handlers) {
       return;
     }
     target.input.setCustomValidity('');
-    handlers.onBindMeshProfile?.({
+    const profileEnvelope = {
       schema: 'lafea-mesh-profile/v1',
       profileIdentity: `LAFEA3_UI_${selectedFamily}_MESH_PROFILE_V1`,
       sourceRevision: PROFILE_SOURCE_REVISION,
-      semanticHash: undefined,
       fields: {
         continuumElement: selectedFamily,
         shellElement: SHELL_ELEMENT_PLACEHOLDER,
@@ -155,19 +165,21 @@ function profileBindingControls(doc, generation, handlers) {
         scaledJacobianBlock: Number(jacBlock.input.value),
         adaptiveLevels: Number(adaptive.input.value),
       },
-    });
+    };
+    profileEnvelope.semanticHash = semanticHash(profileEnvelope);
+    handlers.onBindMeshProfile?.(profileEnvelope);
+    // Trigger generation after binding
+    setTimeout(() => {
+      handlers.onGenerateAnalysisMesh?.();
+    }, 50);
   });
   bind.dataset.role = 'lafea-profile-bind';
+  bind.className = 'lafea-button lafea-button--primary';
 
   host.append(
     family.label,
     target.label,
-    ratio.label,
-    aspectWarn.label,
-    aspectBlock.label,
-    jacWarn.label,
-    jacBlock.label,
-    adaptive.label,
+    advanced,
     bind,
   );
   return host;

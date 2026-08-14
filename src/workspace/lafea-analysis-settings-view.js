@@ -17,6 +17,9 @@ export function buildLafeaAnalysisSettingsViewModel(stageValue, registryEntryVal
     row('Requested analyses / cases', requestSummary(requests)),
     row('Unit basis', unitSummary(documentValue?.units)),
     row('Code / allowable basis', codeBasisSummary(documentValue)),
+    row('Load combinations', loadCombinationSummary(documentValue)),
+    row('Stress quantity', textOr(documentValue?.analysisSettings?.stressQuantity) ?? 'Not declared'),
+    row('Allowable value', allowableValueSummary(documentValue)),
   ];
   const solverRows = [
     row('Registered engine', registry.enginePackage ? `src/core/${registry.enginePackage}` : 'Provided by workbench registry'),
@@ -155,6 +158,22 @@ function codeBasisSummary(documentValue) {
   const settings = documentValue.analysisSettings;
   const nested = settings && typeof settings === 'object' ? displayValue(settings.codeBasis) : null;
   return nested ?? 'Not declared by the active stage source contract';
+}
+
+function loadCombinationSummary(documentValue) {
+  const factors = documentValue?.analysisSettings?.loadCombinationFactors;
+  if (!factors || typeof factors !== 'object' || Array.isArray(factors)) return 'Not declared';
+  const rows = Object.entries(factors)
+    .map(([caseId, factor]) => `${caseId}: ${factor}`);
+  return rows.length ? rows.join(', ') : 'Not declared';
+}
+
+function allowableValueSummary(documentValue) {
+  const val = documentValue?.analysisSettings?.allowableValue;
+  if (typeof val === 'number') return String(val);
+  if (!val || typeof val !== 'object') return 'Not declared';
+  if (typeof val.value === 'number') return `${val.value} ${val.unit ?? ''}`.trim();
+  return 'Not declared';
 }
 
 function qualificationDetails(profile) {

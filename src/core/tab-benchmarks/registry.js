@@ -1,5 +1,5 @@
 import { deepFreeze, semanticHash } from '../shared-piping-model/index.js';
-import { APPLICATION_NAVIGATION_ORDER_V11 } from '../workspace-consumers/index.js';
+import { APPLICATION_NAVIGATION_ORDER_V12 } from '../workspace-consumers/index.js';
 import {
   ADVANCED_ANALYSIS_APP_ID,
   TAB_BENCHMARK_REGISTRY_SCHEMA,
@@ -37,6 +37,11 @@ const CASES = Object.freeze({
     benchmarkCase('lfea-editor-review-export', 'EDITOR_TO_EVIDENCE', '[SIMULATED]'),
     benchmarkCase('lfea-browser-workflow', 'BROWSER_WORKFLOW', '[SIMULATED]'),
   ]),
+  EMPIRICAL: Object.freeze([
+    benchmarkCase('empirical-stage-1-foundation', 'LAFEA_1', 'ANALYTICAL'),
+    benchmarkCase('empirical-stage-2-screening', 'LAFEA_2', 'ANALYTICAL'),
+    benchmarkCase('empirical-browser-workflow', 'BROWSER_WORKFLOW', '[SIMULATED]'),
+  ]),
 });
 
 /**
@@ -45,14 +50,14 @@ const CASES = Object.freeze({
  * @returns {Readonly<object>} Canonical advanced-tab benchmark registry.
  */
 export function createAdvancedTabBenchmarkRegistry() {
-  const tabs = APPLICATION_NAVIGATION_ORDER_V11.map((tabId) => ({
+  const tabs = APPLICATION_NAVIGATION_ORDER_V12.map((tabId) => ({
     tabId,
     requiredCases: CASES[tabId],
   }));
   const base = {
     schema: TAB_BENCHMARK_REGISTRY_SCHEMA,
     appId: ADVANCED_ANALYSIS_APP_ID,
-    tabIds: [...APPLICATION_NAVIGATION_ORDER_V11],
+    tabIds: [...APPLICATION_NAVIGATION_ORDER_V12],
     tabs,
   };
   return deepFreeze({ ...base, semanticHash: semanticHash(base) });

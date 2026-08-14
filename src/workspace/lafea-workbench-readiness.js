@@ -65,8 +65,9 @@ export function projectLafeaWorkbenchReadiness(stageId, stage) {
     : [];
   const authoritativeDomainResultCurrent = domainFirst
     && base.resultReady && domainExecutionReasons.length === 0;
+  const isDomainRoute = stage?.execution?.route === DOMAIN_FIRST_ROUTE;
   const resultReady = domainFirst
-    ? authoritativeDomainResultCurrent
+    ? (stage.execution ? (isDomainRoute ? authoritativeDomainResultCurrent : (current && base.resultReady)) : false)
     : current && base.resultReady;
   const codeReady = !domainFirst && current && base.codeReady;
   const blockingReasons = current

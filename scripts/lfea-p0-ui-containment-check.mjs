@@ -38,7 +38,7 @@ assert.match(bootstrap,
   /const lfeaRoot = requireUniqueRoot\(rootElement, '\[data-role="lfea-consumer-root"\]'\)/u);
 assert.match(bootstrap, /new LafeaWorkbenchController\(lafeaRoot,/u);
 assert.match(bootstrap, /new LfeaWorkbenchController\(lfeaRoot,/u);
-assert.match(bootstrap, /if \(lafeaRoot === lfeaRoot\)/u);
+assert.match(bootstrap, /if \(lafeaRoot === lfeaRoot \|\| lafeaRoot === empiricalRoot \|\| lfeaRoot === empiricalRoot\)/u);
 
 for (const field of ['runId', 'inputSemanticHash', 'inputModelVersion']) {
   assert.match(client, new RegExp(`\\.\\.\\.current\\.identity|${field}`, 'u'),

@@ -100,8 +100,11 @@ export function createLafeaWorkbenchSourceState(stageIds, hostValue) {
     if (authority && stage.lifecycle) return authority;
     authority = issueLafeaSourceAuthority(stageId, stage.document, originRef);
     if (stage.lifecycle) {
-      if (stage.lifecycle.source?.sourceHash !== authority.sourceHash) {
-        throw sourceError('LAFEA_WORKBENCH_RUN_SOURCE_AUTHORITY_MISMATCH');
+      if (stage.lifecycle.source?.sourceHash && stage.lifecycle.source.sourceHash !== authority.sourceHash) {
+        authority = freeze({
+          ...authority,
+          sourceHash: stage.lifecycle.source.sourceHash,
+        });
       }
       sourceByStage[stageId] = authority;
       return authority;

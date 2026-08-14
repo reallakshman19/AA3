@@ -227,8 +227,10 @@ function createLiveController(projectionValue, executionValue, bridgeValue) {
     controller.view.activeViewport = null;
     root.replaceChildren();
   };
-  controller.benchmarkPanel.render = () => {};
-  controller.benchmarkPanel.destroy = () => {};
+  if (controller.benchmarkPanel) {
+    controller.benchmarkPanel.render = () => {};
+    controller.benchmarkPanel.destroy = () => {};
+  }
   controller.init();
 
   const lifecycle = executionValue.controllerResult.lifecycle;

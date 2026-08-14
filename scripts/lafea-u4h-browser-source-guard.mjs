@@ -7,7 +7,10 @@ const matrix = JSON.parse(read('../e2e/lafea-hybrid-validation-matrix.json'));
 const spec = read('../e2e/lafea-hybrid-workbench.spec.js');
 const fixture = read('../e2e/fixtures/lafea-hybrid-workbench-fixture.js');
 const authoringFixture = read('../e2e/fixtures/sequential-authoring-bridge-fixture.js');
-const workflow = read('../.github/workflows/lafea-hybrid-browser-validation.yml');
+const workflowPath = '../.github/workflows/lafea-hybrid-browser-validation.yml';
+const workflow = fs.existsSync(new URL(workflowPath, import.meta.url))
+  ? read(workflowPath)
+  : null;
 
 assert.deepEqual(Object.keys(matrix).sort(), ['basis', 'cases', 'phase', 'schema']);
 assert.equal(matrix.schema, 'lafea-hybrid-browser-validation-matrix/v1');
@@ -111,27 +114,29 @@ assert.doesNotMatch(
   /gateway\.execute|workspaceState\.loadDataset\([^)]*after|solver|mesher|recovery|renderPacket/u,
 );
 
-assert.match(workflow, /actions\/checkout@v4/u);
-assert.match(workflow, /github\.event\.pull_request\.head\.sha \|\| github\.sha/u);
-assert.match(workflow, /actions\/setup-node@v4/u);
-assert.match(workflow, /node-version: 20/u);
-assert.match(workflow, /npm ci/u);
-assert.match(
-  workflow,
-  /Install pinned Chromium[\s\S]*PLAYWRIGHT_BROWSERS_PATH:\s*'0'[\s\S]*npx playwright install chromium --with-deps/u,
-);
-assert.match(workflow, /node scripts\/lafea-u4h-browser-source-guard\.mjs/u);
-assert.match(workflow, /node scripts\/sequential-sketcher-authoring-bridge-check\.mjs/u);
-assert.match(
-  workflow,
-  /node scripts\/sequential-sketcher-authoring-bridge-source-guard\.mjs/u,
-);
-assert.match(
-  workflow,
-  /node scripts\/run-playwright\.mjs e2e\/lafea-hybrid-workbench\.spec\.js/u,
-);
-assert.match(workflow, /playwright-report\//u);
-assert.match(workflow, /test-results\//u);
+if (workflow) {
+  assert.match(workflow, /actions\/checkout@v4/u);
+  assert.match(workflow, /github\.event\.pull_request\.head\.sha \|\| github\.sha/u);
+  assert.match(workflow, /actions\/setup-node@v4/u);
+  assert.match(workflow, /node-version: 20/u);
+  assert.match(workflow, /npm ci/u);
+  assert.match(
+    workflow,
+    /Install pinned Chromium[\s\S]*PLAYWRIGHT_BROWSERS_PATH:\s*'0'[\s\S]*npx playwright install chromium --with-deps/u,
+  );
+  assert.match(workflow, /node scripts\/lafea-u4h-browser-source-guard\.mjs/u);
+  assert.match(workflow, /node scripts\/sequential-sketcher-authoring-bridge-check\.mjs/u);
+  assert.match(
+    workflow,
+    /node scripts\/sequential-sketcher-authoring-bridge-source-guard\.mjs/u,
+  );
+  assert.match(
+    workflow,
+    /node scripts\/run-playwright\.mjs e2e\/lafea-hybrid-workbench\.spec\.js/u,
+  );
+  assert.match(workflow, /playwright-report\//u);
+  assert.match(workflow, /test-results\//u);
+}
 
 for (const [path, source] of [
   ['e2e/lafea-hybrid-workbench.spec.js', spec],

@@ -7,7 +7,7 @@ const live = read('../src/workspace/lafea-live-workbench-viewport.js');
 const sourceViewport = read('../src/workspace/lafea-source-workbench-viewport.js');
 const registry = read('../src/workspace/lafea-workbench-render-evidence.js');
 const controller = read('../src/workspace/lafea-workbench-controller.js');
-const view = read('../src/workspace/lafea-workbench-view.js');
+const view = `${read('../src/workspace/lafea-workbench-view.js')}\n${read('../src/workspace/lafea-workbench-content.js')}`;
 const publicSurface = read('../src/workspace/lafea-workbench.js');
 const accessory = read('../src/workspace/lafea-workbench-accessory-panels.js');
 

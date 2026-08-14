@@ -1,5 +1,6 @@
 /** Guided content composition for the standalone LAFEA workbench. */
 import { card, element } from './lafea-workbench-dom.js';
+import { semanticHash } from '../core/shared-primitives/canonical-json.js';
 import { renderLafeaEvidence } from './lafea-results-view.js';
 import { renderDocumentTableEditor } from './lafea-document-table.js';
 import { renderLafeaLifecyclePanel } from './lafea-lifecycle-panel.js';
@@ -42,7 +43,9 @@ export function renderLafeaWorkbenchContent(root, state, stage, options) {
   );
   engineeringOverview.dataset.guidedTarget = 'engineering-overview';
 
-  const sourceCard = card(root, `Model inputs — ${state.activeStageId}`);
+  const nextActionBanner = renderNextActionBanner(root, stage, discretization, options);
+
+  const sourceCard = card(root, `Model inputs`);
   sourceCard.section.dataset.guidedTarget = 'source';
   sourceCard.body.append(element(
     root,
@@ -64,7 +67,7 @@ export function renderLafeaWorkbenchContent(root, state, stage, options) {
   profileCard.section.dataset.guidedTarget = 'profile';
   profileCard.body.append(renderLafeaAnalysisSettings(profileCard.body, stage));
 
-  const viewportCard = card(root, `Engineering viewport — ${state.activeStageId}`);
+  const viewportCard = card(root, `Engineering viewport`);
   viewportCard.section.dataset.guidedTarget = 'viewport';
   const reusedViewport = validReusableViewport(options.reusedViewport);
   const preview = reusedViewport?.element ?? element(root, 'div', 'lafea-workbench__svg');
@@ -109,7 +112,7 @@ export function renderLafeaWorkbenchContent(root, state, stage, options) {
   }
   viewportCard.body.append(truthPanel(root, options.registryEntry));
 
-  const discretizationCard = card(root, `Meshing and discretization — ${state.activeStageId}`);
+  const discretizationCard = card(root, `Meshing and discretization`);
   discretizationCard.section.dataset.guidedTarget = 'discretization';
   const discretizationHost = element(root, 'div');
   renderLafeaDiscretizationPanel(discretizationHost, discretization, {
@@ -128,11 +131,11 @@ export function renderLafeaWorkbenchContent(root, state, stage, options) {
   });
   discretizationCard.body.append(discretizationHost);
 
-  const numericalCard = card(root, `Numerical verification — ${state.activeStageId}`);
+  const numericalCard = card(root, `Numerical verification`);
   numericalCard.section.dataset.guidedTarget = 'numerical-verification';
   numericalCard.body.append(renderLafeaNumericalVerification(numericalCard.body, stage));
 
-  const preflightCard = card(root, `Solve readiness — ${state.activeStageId}`);
+  const preflightCard = card(root, `Solve readiness`);
   preflightCard.section.dataset.guidedTarget = 'findings';
   preflightCard.body.append(workflowSummary(root, workflow, [
     'MODEL_DIAGNOSTICS', 'AUTHORIZATION', 'RUN',
@@ -141,7 +144,7 @@ export function renderLafeaWorkbenchContent(root, state, stage, options) {
     preflightCard.body.append(diagnosticList(root, state.diagnostics));
   }
 
-  const evidenceCard = card(root, `Analysis results — ${state.activeStageId}`);
+  const evidenceCard = card(root, `Analysis results`);
   evidenceCard.section.dataset.guidedTarget = 'results';
   evidenceCard.body.append(renderLafeaEvidence(
     root,
@@ -151,7 +154,7 @@ export function renderLafeaWorkbenchContent(root, state, stage, options) {
     stage.execution,
   ));
 
-  const lifecycleCard = card(root, `Engineering evidence and lineage — ${state.activeStageId}`);
+  const lifecycleCard = card(root, `Engineering evidence and lineage`);
   lifecycleCard.section.dataset.guidedTarget = 'lineage';
   lifecycleCard.body.append(renderLafeaLifecyclePanel(
     lifecycleCard.body,
@@ -163,6 +166,7 @@ export function renderLafeaWorkbenchContent(root, state, stage, options) {
   ncCard.body.append(renderLafeaNcPlaceholderPanel(ncCard.body));
 
   main.append(
+    nextActionBanner,
     engineeringOverview,
     sourceCard.section,
     profileCard.section,
@@ -226,6 +230,105 @@ function viewportMode(root, label, value, active) {
   item.dataset.active = String(active);
   item.append(element(root, 'strong', null, label), element(root, 'span', null, value));
   return item;
+}
+
+function renderNextActionBanner(root, stage, discretization, options) {
+  const doc = root.ownerDocument;
+  const banner = element(root, 'div', 'lafea-next-action-banner');
+  banner.dataset.role = 'lafea-next-action-banner';
+  banner.style.padding = '16px';
+  banner.style.margin = '16px 0';
+  banner.style.background = '#e3f2fd';
+  banner.style.border = '1px solid #90caf9';
+  banner.style.borderRadius = '8px';
+  banner.style.display = 'flex';
+  banner.style.alignItems = 'center';
+  banner.style.justifyContent = 'space-between';
+  banner.style.color = '#0d47a1';
+
+  if (!stage.document) {
+    banner.append(element(root, 'strong', null, 'Step 1: Load a model to begin'));
+    return banner;
+  }
+
+  if (!discretization.evidence.present) {
+    banner.append(element(root, 'strong', null, 'Step 2: Mesh Generation Required'));
+    const btn = element(root, 'button', 'lafea-next-action-banner__button', 'Generate Mesh (T6 Quadratic)');
+    btn.type = 'button';
+    btn.style.padding = '8px 16px';
+    btn.style.background = '#1976d2';
+    btn.style.color = 'white';
+    btn.style.border = 'none';
+    btn.style.borderRadius = '4px';
+    btn.style.cursor = 'pointer';
+    btn.style.fontWeight = 'bold';
+    btn.onclick = () => {
+      const profileEnvelope = {
+        schema: 'lafea-mesh-profile/v1',
+        profileIdentity: 'LAFEA3_UI_T6_QUADRATIC_TRIANGLE_MESH_PROFILE_V1',
+        sourceRevision: 'lafea-discretization-ui-mesh-profile/v1',
+        fields: {
+          continuumElement: 'T6_QUADRATIC_TRIANGLE',
+          shellElement: 'CST_DKT_TRI3_THIN_SHELL_V1',
+          globalTargetSize: 15,
+          adjacentSizeRatioMax: 2.5,
+          aspectRatioWarn: 5,
+          aspectRatioBlock: 15,
+          scaledJacobianWarn: 0.5,
+          scaledJacobianBlock: 0.1,
+          adaptiveLevels: 3,
+        },
+      };
+      profileEnvelope.semanticHash = semanticHash(profileEnvelope);
+      options.handlers.onBindMeshProfile?.(profileEnvelope);
+      setTimeout(() => options.handlers.onGenerateAnalysisMesh?.(), 50);
+    };
+    banner.append(btn);
+    return banner;
+  }
+
+  if (stage.execution?.status !== 'QUALIFIED') {
+    banner.style.background = '#e8f5e9';
+    banner.style.border = '1px solid #a5d6a7';
+    banner.style.color = '#1b5e20';
+    banner.append(element(root, 'strong', null, 'Step 3: Ready to Solve'));
+    const btn = element(root, 'button', 'lafea-next-action-banner__button', 'Run Analysis & View Contours');
+    btn.type = 'button';
+    btn.style.padding = '8px 16px';
+    btn.style.background = '#2e7d32';
+    btn.style.color = 'white';
+    btn.style.border = 'none';
+    btn.style.borderRadius = '4px';
+    btn.style.cursor = 'pointer';
+    btn.style.fontWeight = 'bold';
+    btn.onclick = () => {
+      options.handlers.onRun?.();
+    };
+    banner.append(btn);
+    return banner;
+  }
+
+  banner.style.background = '#f3e5f5';
+  banner.style.border = '1px solid #ce93d8';
+  banner.style.color = '#4a148c';
+  banner.append(element(root, 'strong', null, 'Analysis Complete'));
+  const btnGroup = element(root, 'div', 'lafea-next-action-banner__group');
+  btnGroup.style.display = 'flex';
+  btnGroup.style.gap = '8px';
+  ['Von Mises Stress', 'Displacement', 'Deformed Shape'].forEach(label => {
+    const btn = element(root, 'button', 'lafea-next-action-banner__button', label);
+    btn.type = 'button';
+    btn.style.padding = '6px 12px';
+    btn.style.background = '#7b1fa2';
+    btn.style.color = 'white';
+    btn.style.border = 'none';
+    btn.style.borderRadius = '4px';
+    btn.style.cursor = 'pointer';
+    btnGroup.append(btn);
+  });
+  banner.append(btnGroup);
+
+  return banner;
 }
 
 function validReusableViewport(value) {

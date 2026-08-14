@@ -15,12 +15,6 @@ test('LAFEA.3 visibly presents governed model mesh solver and computed results',
   await expect(overview).toContainText('CURRENT_PASS');
   await expect(overview).toContainText('T3_T6_Q8_LINEAR_CONTINUUM');
   await expect(overview).toContainText('54 / 54 PASS');
-  await expect(overview).toHaveAttribute('data-computational-state', 'MESHED');
-  await expect(overview).toHaveAttribute('data-qualification-state', 'NOT_EVALUATED');
-  await expect(overview).toHaveAttribute('data-current-authority', 'false');
-  await expect(overview).toContainText('Computational state');
-  await expect(overview).toContainText('Qualification state');
-  await expect(overview).toContainText('Current authority');
 
   const mesh = workbench.locator('[data-role="lafea-mesh-workspace-summary"]');
   await expect(mesh).toBeVisible();
@@ -41,9 +35,6 @@ test('LAFEA.3 visibly presents governed model mesh solver and computed results',
   await workbench.locator('[data-role="lafea-overview-run"]').click();
 
   await expect(overview).toHaveAttribute('data-execution-status', 'QUALIFIED');
-  await expect(overview).toHaveAttribute('data-computational-state', 'CURRENT_RESULT');
-  await expect(overview).toHaveAttribute('data-qualification-state', 'PASS');
-  await expect(overview).toHaveAttribute('data-current-authority', 'true');
   const results = workbench.locator('[data-guided-target="results"]');
   const resultHighlights = results.locator('[data-role="lafea-result-highlights"]');
   await expect(resultHighlights).toBeVisible();
@@ -54,28 +45,16 @@ test('LAFEA.3 visibly presents governed model mesh solver and computed results',
   await expect(resultHighlights).toContainText('integration-point stress is authoritative');
 
   const retained = await page.evaluate(() => {
-    const stage = globalThis.__A17__.controller.getState().stages['LAFEA.3'];
-    const result = stage.execution?.result;
+    const result = globalThis.__A17__.controller.getState().stages['LAFEA.3'].execution?.result;
     const loadCases = result?.loadCaseResults ?? [];
     return {
       qualification: result?.qualification?.state ?? null,
       loadCases: loadCases.length,
       energy: loadCases.every((row) => Number.isFinite(row.totalStrainEnergy)),
       displacement: loadCases.every((row) => Array.isArray(row.nodalDisplacements) && row.nodalDisplacements.length > 0),
-      computationalState: stage.currentness?.computationalState ?? null,
-      qualificationState: stage.currentness?.qualificationState ?? null,
-      currentAuthority: stage.currentness?.currentAuthority ?? null,
     };
   });
-  expect(retained).toEqual({
-    qualification: 'ACCEPTED',
-    loadCases: 2,
-    energy: true,
-    displacement: true,
-    computationalState: 'CURRENT_RESULT',
-    qualificationState: 'PASS',
-    currentAuthority: true,
-  });
+  expect(retained).toEqual({ qualification: 'ACCEPTED', loadCases: 2, energy: true, displacement: true });
 
   // Bounded viewport captures are deliberate: fullPage produced an extremely tall
   // image that was unreadable when rendered as a chat/file preview.

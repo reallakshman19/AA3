@@ -126,7 +126,6 @@ function stage(type, options = {}) {
     nodeIds: nodes.map((row) => row.nodeId),
     materialId: 'M1',
   };
-  if (type === 'T3') element.canonicalArea = 0.5;
   const canonicalInput = {
     formulation: 'PLANE_STRESS',
     materials: [{ materialId: 'M1', elasticModulus: E, poissonRatio: NU }],

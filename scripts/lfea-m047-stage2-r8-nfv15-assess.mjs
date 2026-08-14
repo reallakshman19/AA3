@@ -5,6 +5,7 @@ import { fileURLToPath } from 'node:url';
 
 const SHA = '64c05a50e9ed0452622ff5880335460486f24ac8e6adecc9a300b549c9aa82f8';
 const BASELINE_SOLVER = 'CAESAR-ACCDB-FRICTION-SOLVER-R2';
+const EXPERIMENT_SOLVER = 'CAESAR-ACCDB-FRICTION-SOLVER-R2-R8-NFV15-EXPERIMENT';
 const THRESHOLD = 0.15;
 const GOAL = 0.10;
 const CASES = ['L13', 'L7', 'L1'];
@@ -14,120 +15,167 @@ export function assessR8Nfv15({ baseline, experiment }) {
   record(experiment, 'experiment');
   const caseId = String(experiment.caseId ?? '');
   if (!CASES.includes(caseId) || baseline.caseId !== caseId) throw new TypeError('Baseline/experiment case mismatch.');
-  if (baseline.sourceAccdbSha256 !== SHA || experiment.sourceAccdbSha256 !== SHA) throw new TypeError('Pinned ACCDB SHA required.');
+  if (baseline.sourceAccdbSha256 !== SHA) throw new TypeError('Baseline must use the pinned ACCDB SHA.');
   if (baseline.solverProfileId !== BASELINE_SOLVER) throw new TypeError('Baseline must be production R2.');
-  if (experiment.productionPromotionAuthorized !== false || experiment.benchmarkAuthority === true) {
-    throw new TypeError('R8 measurement artifact must remain non-promotional.');
+  if (experiment.custody?.status !== 'PASS' || experiment.custody?.accdb?.sha256 !== SHA) {
+    throw new TypeError('R8 experiment must carry PASS custody for the pinned ACCDB.');
   }
-  const nfv = experiment.nfv15 ?? experiment.mechanic ?? null;
-  record(nfv, 'experiment.nfv15');
-  if (Number(nfv.threshold ?? nfv.relativeThreshold) !== THRESHOLD) throw new TypeError('R8 must use NFV=0.15 exactly.');
-  if (String(nfv.capacityNormalSource ?? '') !== 'CURRENT_OWN_RESTRAINT_NORMAL_WITH_RETAINED_SLIDING_BASIS') {
-    throw new TypeError('R8 capacity normal source declaration mismatch.');
+  if (experiment.measurementBoundary !== 'REAL_PINNED_ACCDB_NONPRODUCTION_ONE_MECHANIC_EXPERIMENT') {
+    throw new TypeError('R8 experiment measurement boundary mismatch.');
   }
-  if (nfv.refreshRule !== 'REFRESH_ONLY_WHEN_RELATIVE_VARIATION_GT_THRESHOLD') {
-    throw new TypeError('R8 refresh rule declaration mismatch.');
+  if (experiment.productionBoundary?.productionMechanicsChanged !== false) {
+    throw new TypeError('R8 experiment must prove productionMechanicsChanged=false.');
   }
-  if (experiment.oneMechanicOnly !== true) throw new TypeError('R8 artifact must declare oneMechanicOnly=true.');
+  if (experiment.stateContract?.status !== 'PASS') throw new TypeError('R8 state contract must be PASS.');
+  const profile = experiment.experimentalProfile;
+  record(profile, 'experiment.experimentalProfile');
+  if (profile.profileId !== EXPERIMENT_SOLVER) throw new TypeError('Unexpected R8 solver profile.');
+  if (Number(profile.normalForceVariationRelative) !== THRESHOLD) throw new TypeError('R8 must use NFV=0.15 exactly.');
+  if (profile.normalForceVariationRule !== 'SEED_ON_BREAKAWAY_RETAIN_LE_15_PERCENT_REFRESH_GT_15_PERCENT_DISCARD_ON_STICK_V1') {
+    throw new TypeError('R8 retained-normal rule declaration mismatch.');
+  }
 
-  const before = mapRows(baseline.restraints);
-  const after = mapRows(experiment.restraints);
+  const run = firstRun(experiment);
+  const before = mapRows(baseline.restraints, 'baseline.restraints');
+  const after = mapRows(run.frictionRestraints, 'experiment.runs[0].frictionRestraints');
   const ids = [...new Set([...before.keys(), ...after.keys()])].sort(text);
   const perRestraint = ids.map((id) => compareRow(id, before.get(id), after.get(id)));
-  const comparable = perRestraint.filter((r) => r.comparable);
-  const normalWithinGoal = comparable.filter((r) => r.experimentNormalRelativeError !== null && r.experimentNormalRelativeError <= GOAL).length;
-  const tangentWithinGoal = comparable.filter((r) => r.experimentTangentialRelativeError !== null && r.experimentTangentialRelativeError <= GOAL).length;
-  const regimeMatches = comparable.filter((r) => r.experimentRegimeMatch === true).length;
-  const baselineNormalWithinGoal = comparable.filter((r) => r.baselineNormalRelativeError !== null && r.baselineNormalRelativeError <= GOAL).length;
-  const baselineTangentWithinGoal = comparable.filter((r) => r.baselineTangentialRelativeError !== null && r.baselineTangentialRelativeError <= GOAL).length;
-  const baselineRegimeMatches = comparable.filter((r) => r.baselineRegimeMatch === true).length;
+  const comparable = perRestraint.filter((row) => row.comparable);
 
+  const baselineNormalWithinGoal = comparable.filter((row) => row.baselineNormalRelativeError !== null
+    && row.baselineNormalRelativeError <= GOAL).length;
+  const experimentNormalWithinGoal = comparable.filter((row) => row.experimentNormalRelativeError !== null
+    && row.experimentNormalRelativeError <= GOAL).length;
+  const baselineTangentialWithinGoal = comparable.filter((row) => row.baselineTangentialRelativeError !== null
+    && row.baselineTangentialRelativeError <= GOAL).length;
+  const experimentTangentialWithinGoal = comparable.filter((row) => row.experimentTangentialRelativeError !== null
+    && row.experimentTangentialRelativeError <= GOAL).length;
+
+  const nfvGate = convergenceGate(run.convergenceGates, 'NFV15_RETAINED_NORMAL_STATE');
   const gates = {
-    custody: experiment.sourceAccdbSha256 === SHA,
-    converged: experiment.converged === true,
-    equilibrium: experiment.equilibriumStatus === 'PASS' || experiment.recoveredEquilibriumStatus === 'PASS',
-    nonlinearGates: experiment.nonlinearGateStatus === 'PASS' || experiment.gates?.status === 'CONVERGED',
-    nfvRefreshRule: experiment.nfvRefreshGateStatus === 'PASS' || nfv.refreshGateStatus === 'PASS',
+    custody: experiment.custody.status === 'PASS' && experiment.custody.accdb.sha256 === SHA,
+    stateContract: experiment.stateContract.status === 'PASS',
+    productionUnchanged: experiment.productionBoundary.productionMechanicsChanged === false,
+    converged: run.converged === true,
+    equilibrium: run.recoveredEquilibriumStatus === 'PASS',
+    nonlinearGates: run.convergenceGates?.status === 'CONVERGED',
+    nfvRefreshRule: nfvGate?.status === 'PASS',
     completeRestraintSet: before.size > 0 && after.size === before.size && comparable.length === before.size,
   };
   const physicsPass = Object.values(gates).every(Boolean);
   const summary = {
     comparedRestraints: comparable.length,
     baselineNormalWithinGoal,
-    experimentNormalWithinGoal: normalWithinGoal,
-    normalWithinGoalDelta: normalWithinGoal - baselineNormalWithinGoal,
-    baselineTangentialWithinGoal: baselineTangentWithinGoal,
-    experimentTangentialWithinGoal: tangentWithinGoal,
-    tangentialWithinGoalDelta: tangentWithinGoal - baselineTangentWithinGoal,
-    baselineRegimeMatches,
-    experimentRegimeMatches: regimeMatches,
-    regimeMatchDelta: regimeMatches - baselineRegimeMatches,
-    worstExperimentNormalRelativeError: max(comparable.map((r) => r.experimentNormalRelativeError)),
-    worstExperimentTangentialRelativeError: max(comparable.map((r) => r.experimentTangentialRelativeError)),
+    experimentNormalWithinGoal,
+    normalWithinGoalDelta: experimentNormalWithinGoal - baselineNormalWithinGoal,
+    baselineTangentialWithinGoal,
+    experimentTangentialWithinGoal,
+    tangentialWithinGoalDelta: experimentTangentialWithinGoal - baselineTangentialWithinGoal,
+    worstExperimentNormalRelativeError: max(comparable.map((row) => row.experimentNormalRelativeError)),
+    worstExperimentTangentialRelativeError: max(comparable.map((row) => row.experimentTangentialRelativeError)),
+    regimeComparison: 'NOT_GOVERNED_FROM_FINAL_NORMAL_UNDER_NFV15',
   };
   const nomination = !physicsPass
     ? 'REJECT_R8_MEASUREMENT_PHYSICS_OR_CUSTODY_GATE_FAILED'
     : summary.tangentialWithinGoalDelta > 0 && summary.normalWithinGoalDelta >= 0
-      ? 'R8_NFV15_DIRECTIONALLY_NOMINATED_REQUIRES_NEXT_CASE_AND_CONTROLS'
+      ? 'R8_NFV15_DIRECTIONALLY_NOMINATED_REQUIRES_NEXT_GOVERNED_GATE'
       : 'R8_NFV15_NOT_NOMINATED_BY_FROZEN_ACCURACY_METRICS';
+
   return Object.freeze({
-    schema: 'm047-bm4l-stage2-r8-nfv15-assessment/v1',
+    schema: 'm047-bm4l-stage2-r8-nfv15-assessment/v2',
     caseId,
     sourceAccdbSha256: SHA,
     baselineSolverProfileId: BASELINE_SOLVER,
+    candidateSolverProfileId: EXPERIMENT_SOLVER,
     candidate: 'R8_NFV15',
     threshold: THRESHOLD,
     goalRelative: GOAL,
     gates,
     summary,
     nomination,
+    determinism: experiment.determinism,
     productionPromotionAuthorized: false,
-    nextCase: caseId === 'L13' && nomination.startsWith('R8_NFV15_DIRECTIONALLY') ? 'L7'
-      : caseId === 'L7' && nomination.startsWith('R8_NFV15_DIRECTIONALLY') ? 'L1'
-        : null,
+    nextGate: nextGate(caseId, nomination),
     perRestraint,
   });
 }
 
-function compareRow(restraintId, b, e) {
-  const bn = rel(b?.normal?.percentError);
-  const en = rel(e?.normal?.percentError);
-  const bt = finite(b?.tangential?.vectorRelativeError);
-  const et = finite(e?.tangential?.vectorRelativeError);
+function nextGate(caseId, nomination) {
+  if (!nomination.startsWith('R8_NFV15_DIRECTIONALLY')) return null;
+  if (caseId === 'L13') return 'RUN_R8_L7_REAL_PINNED_ACCDB';
+  if (caseId === 'L7') return 'RECONSTRUCT_R8_L15_EXACTLY_AS_L7_MINUS_L13';
+  if (caseId === 'L1') return 'RUN_DETERMINISM_AND_FROZEN_CONTROLS_BEFORE_ANY_PROMOTION';
+  return null;
+}
+
+function firstRun(experiment) {
+  if (!Array.isArray(experiment.runs) || experiment.runs.length === 0) throw new TypeError('R8 experiment must contain at least one run.');
+  const run = experiment.runs[0];
+  record(run, 'experiment.runs[0]');
+  return run;
+}
+
+function convergenceGate(gates, name) {
+  if (!gates || !Array.isArray(gates.gates)) return null;
+  return gates.gates.find((entry) => entry.gate === name) ?? null;
+}
+
+function compareRow(restraintId, baseline, experiment) {
+  const baselineNormal = relPercent(baseline?.normal?.percentError);
+  const experimentNormal = finite(experiment?.normal?.relativeError);
+  const baselineTangential = finite(baseline?.tangential?.vectorRelativeError);
+  const experimentTangential = finite(experiment?.tangential?.vectorRelativeError);
+  const retained = experiment?.retainedNormalMechanic ?? null;
   return {
     restraintId,
-    nodeId: e?.nodeId ?? b?.nodeId ?? null,
-    comparable: Boolean(b && e),
-    baselineNormalRelativeError: bn,
-    experimentNormalRelativeError: en,
-    normalAbsoluteErrorDelta: bn === null || en === null ? null : en - bn,
-    baselineTangentialRelativeError: bt,
-    experimentTangentialRelativeError: et,
-    tangentialErrorDelta: bt === null || et === null ? null : et - bt,
-    baselineRegimeMatch: b?.regime?.match ?? null,
-    experimentRegimeMatch: e?.regime?.match ?? null,
-    retainedNormalBasisN: finite(e?.nfv15?.retainedNormalBasisN ?? e?.retainedNormalBasisN),
-    currentNormalN: finite(e?.nfv15?.currentNormalN ?? e?.currentNormalN),
-    finalVariationRatio: finite(e?.nfv15?.variationRatio ?? e?.normalVariationRatio),
-    refreshCount: finite(e?.nfv15?.refreshCount ?? e?.nfvRefreshCount),
+    nodeId: experiment?.nodeId ?? baseline?.nodeId ?? null,
+    comparable: Boolean(baseline && experiment),
+    baselineNormalRelativeError: baselineNormal,
+    experimentNormalRelativeError: experimentNormal,
+    normalAbsoluteErrorDelta: baselineNormal === null || experimentNormal === null ? null : experimentNormal - baselineNormal,
+    baselineTangentialRelativeError: baselineTangential,
+    experimentTangentialRelativeError: experimentTangential,
+    tangentialErrorDelta: baselineTangential === null || experimentTangential === null ? null : experimentTangential - baselineTangential,
+    retainedNormalEnteringN: finite(retained?.retainedNormalEnteringN),
+    currentNormalN: finite(retained?.currentNormalN),
+    capacityBasisNormalN: finite(retained?.capacityBasisNormalN),
+    variationRelative: finite(retained?.variationRelative),
+    refreshedFinalIteration: retained?.refreshed ?? null,
+    governedRetainedCapacityN: finite(retained?.governedRetainedCapacityN),
+    currentNormalDiagnosticCapacityN: finite(retained?.currentNormalDiagnosticCapacityN),
   };
 }
-function mapRows(rows) { if (!Array.isArray(rows)) throw new TypeError('restraints must be an array.'); return new Map(rows.map((r) => [r.restraintId, r])); }
-function rel(v) { const n = finite(v); return n === null ? null : Math.abs(n) / 100; }
-function finite(v) { const n = Number(v); return Number.isFinite(n) ? n : null; }
-function max(values) { const clean = values.filter((v) => v !== null); return clean.length ? Math.max(...clean) : null; }
-function record(v, label) { if (!v || typeof v !== 'object') throw new TypeError(`${label} must be an object.`); }
-function text(a, b) { return String(a).localeCompare(String(b), 'en'); }
+
+function mapRows(rows, label) {
+  if (!Array.isArray(rows)) throw new TypeError(`${label} must be an array.`);
+  return new Map(rows.map((row) => [row.restraintId, row]));
+}
+function relPercent(value) { const number = finite(value); return number === null ? null : Math.abs(number) / 100; }
+function finite(value) { const number = Number(value); return Number.isFinite(number) ? number : null; }
+function max(values) { const clean = values.filter((value) => value !== null); return clean.length ? Math.max(...clean) : null; }
+function record(value, label) { if (!value || typeof value !== 'object') throw new TypeError(`${label} must be an object.`); }
+function text(left, right) { return String(left).localeCompare(String(right), 'en'); }
 
 function parse(argv) {
-  const a = new Map(); for (let i = 0; i < argv.length; i += 2) a.set(argv[i], argv[i + 1]);
-  if (!a.get('--baseline') || !a.get('--experiment')) throw new TypeError('Usage: --baseline <R2.json> --experiment <R8.json> [--out <json>]');
-  return { baseline: a.get('--baseline'), experiment: a.get('--experiment'), out: a.get('--out') ?? null };
+  const args = new Map();
+  for (let index = 0; index < argv.length; index += 2) args.set(argv[index], argv[index + 1]);
+  if (!args.get('--baseline') || !args.get('--experiment')) {
+    throw new TypeError('Usage: --baseline <R2.json> --experiment <R8.json> [--out <json>]');
+  }
+  return { baseline: args.get('--baseline'), experiment: args.get('--experiment'), out: args.get('--out') ?? null };
 }
+
 if (process.argv[1] && resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {
-  const a = parse(process.argv.slice(2));
-  const result = assessR8Nfv15({ baseline: JSON.parse(readFileSync(resolve(a.baseline), 'utf8')), experiment: JSON.parse(readFileSync(resolve(a.experiment), 'utf8')) });
-  const textOut = `${JSON.stringify(result, null, 2)}\n`;
-  if (a.out) { const p = resolve(a.out); mkdirSync(dirname(p), { recursive: true }); writeFileSync(p, textOut, 'utf8'); }
-  process.stdout.write(textOut);
+  const args = parse(process.argv.slice(2));
+  const result = assessR8Nfv15({
+    baseline: JSON.parse(readFileSync(resolve(args.baseline), 'utf8')),
+    experiment: JSON.parse(readFileSync(resolve(args.experiment), 'utf8')),
+  });
+  const output = `${JSON.stringify(result, null, 2)}\n`;
+  if (args.out) {
+    const path = resolve(args.out);
+    mkdirSync(dirname(path), { recursive: true });
+    writeFileSync(path, output, 'utf8');
+  }
+  process.stdout.write(output);
 }

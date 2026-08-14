@@ -3,6 +3,7 @@
   "programId": "LAFEA-BENCHMARK-VALIDATION-PROGRAM",
   "repository": "reallaksh19/Advanced_Analysis",
   "definitionBaseSha": "258f567afa350f6f2d6ffa93bd80756596444596",
+  "adoptedB02ParentSha": "18fe0ffc790ca89f5db56180587c14c19fc47cc9",
   "executionPolicy": {
     "mode": "SEQUENTIAL_CASE_THEN_METHOD",
     "advanceOnlyAfterCurrentCasePass": true,
@@ -10,10 +11,15 @@
     "trackedCleanTreeRequired": true,
     "exactHeadRecorded": true,
     "failedMethodsRetained": true,
-    "performanceIsInformational": true
+    "performanceIsInformational": true,
+    "freezeBeforeFirstProductionObservation": true,
+    "repairOneOwningBoundaryPerIteration": true
   },
   "evidencePolicy": {
     "productionOutputMayGenerateExpectedValues": false,
+    "productionOutputMayGenerateTolerances": false,
+    "productionOutputMayGenerateProbes": false,
+    "productionOutputMayGenerateMeshDefinitions": false,
     "independentOraclesRemainAuthoritative": true,
     "stdoutAndStderrRetainedAndHashed": true,
     "referencedInputsAndOraclesHashed": true,
@@ -21,16 +27,40 @@
     "releaseAuthorityGrantedByProgram": false,
     "temperatureAuthorityGrantedByProgram": false
   },
-  "activeCaseId": "B01",
+  "gate0": {
+    "state": "FROZEN",
+    "contractRefs": [
+      "validation/lafea-b02-contracts/gate0-contracts.json",
+      "validation/lafea-b02-contracts/edit-invalidation-matrix.json",
+      "validation/lafea-b02-contracts/method-benchmark-applicability.json"
+    ],
+    "executableCheck": "scripts/lafea-b02-gate0-contract-check.mjs"
+  },
+  "activeCaseId": "B02",
   "cases": [
     {
       "caseId": "B01",
-      "definitionState": "READY",
+      "definitionState": "QUALIFIED",
+      "qualificationState": "PASS",
       "title": "2D continuum affine patch — cross-method formulation gate",
       "stageId": "LAFEA.3",
       "benchmarkClass": "AFFINE_CONSTANT_STRAIN_PATCH",
       "comparisonPolicy": "CROSS_METHOD_INVARIANTS_NOT_DIRECT_NUMERICAL_PARITY",
       "purpose": "Exercise every currently implemented LAFEA.3 continuum element route against rigid-body, affine/constant-strain, Jacobian and deterministic qualification expectations before advancing to engineering-response benchmarks.",
+      "qualificationReceipt": {
+        "adoptedMainSha": "18fe0ffc790ca89f5db56180587c14c19fc47cc9",
+        "workflowRunId": 31768225701,
+        "artifactId": 9207151103,
+        "artifactDigest": "sha256:9e9d42051d32ec8ed4357dc4641b90a110999f547a0cf240842529cf94c0d99e",
+        "receiptEvidenceHash": "sha256:dc8b730076ec8e251bd0582c7a2ef19397a78ef8c640ea647b8e98ee0fbcb669",
+        "exactHeadMatchesExpectation": true,
+        "cleanTreeAtStart": true,
+        "cleanTreeAtEnd": true,
+        "basePassCount": 54,
+        "metamorphicPassCount": 270,
+        "failClosedPassCount": 16,
+        "auditRef": "validation/lafea-benchmark-program/01-b02-adoption-audit.json"
+      },
       "methods": [
         {
           "methodId": "T3",
@@ -65,16 +95,75 @@
         }
       ],
       "passCriteria": [
-        "all three method commands exit zero",
-        "T3 governed evidence is retained when produced",
-        "all referenced benchmark definitions are hash-bound in the audit record",
+        "registered-route integrated exact-head receipt passes",
+        "base 54/54 passes",
+        "metamorphic 270/270 passes",
+        "fail-closed 16/16 passes",
+        "all referenced benchmark definitions are hash-bound in retained evidence",
         "no expected value is generated from observed production output",
         "release and temperature authority remain false"
+      ]
+    },
+    {
+      "caseId": "B02",
+      "definitionState": "ACTIVE",
+      "qualificationState": "NOT_EVALUATED",
+      "executionState": "BENCHMARK_DEFINITION_FREEZE_REQUIRED",
+      "title": "2D continuum engineering response — bending, shear, hole and lug progression",
+      "stageId": "LAFEA.3",
+      "benchmarkClass": "NON_UNIFORM_2D_ENGINEERING_RESPONSE",
+      "authorityBoundary": "REGISTERED_LAFEA3_SMALL_STRAIN_LINEAR_2D_CONTINUUM_WITHIN_FROZEN_B02_ENVELOPE",
+      "purpose": "Qualify non-uniform 2D engineering response through the registered LAFEA.3 route without broadening B01 authority.",
+      "contracts": {
+        "gate0": "validation/lafea-b02-contracts/gate0-contracts.json",
+        "editInvalidation": "validation/lafea-b02-contracts/edit-invalidation-matrix.json",
+        "methodApplicability": "validation/lafea-b02-contracts/method-benchmark-applicability.json",
+        "checker": "scripts/lafea-b02-gate0-contract-check.mjs"
+      },
+      "executionOrder": ["B02A", "B02B", "B02C", "B02D", "B02E"],
+      "subBuckets": [
+        {"caseId": "B02A", "title": "Non-uniform bending", "definitionState": "FREEZE_REQUIRED", "executionState": "BLOCKED_UNTIL_FROZEN"},
+        {"caseId": "B02B", "title": "Non-uniform shear-dominated response", "definitionState": "FREEZE_REQUIRED", "executionState": "BLOCKED_UNTIL_B02A_PASS"},
+        {"caseId": "B02C", "title": "Kirsch circular-hole fixed-probe response", "definitionState": "FREEZE_REQUIRED", "executionState": "BLOCKED_UNTIL_B02B_PASS"},
+        {"caseId": "B02D", "title": "Lug/pinhole engineering response", "definitionState": "FREEZE_REQUIRED", "executionState": "BLOCKED_UNTIL_B02C_PASS"},
+        {"caseId": "B02E", "title": "Numerical verification and convergence", "definitionState": "FREEZE_REQUIRED", "executionState": "BLOCKED_UNTIL_REQUIRED_PRECURSOR_DATA_EXISTS"}
+      ],
+      "methods": [
+        {"methodId": "T3", "authorityClass": "REGISTERED_PRODUCTION_ROUTE_FALLBACK"},
+        {"methodId": "T6", "authorityClass": "REGISTERED_PRODUCTION_ROUTE"},
+        {"methodId": "Q8", "authorityClass": "REGISTERED_PRODUCTION_ROUTE"}
+      ],
+      "prohibitedAcceptanceSources": [
+        "MOVING_MAXIMUM",
+        "SMOOTHED_CONTOUR",
+        "NODAL_AVERAGE_AS_SOLE_AUTHORITY",
+        "DISPLAY_INTERPOLATION_AS_SOLE_AUTHORITY",
+        "SCREEN_PICKED_STRESS_AS_SOLE_AUTHORITY"
+      ],
+      "requiredRetainedEvidence": [
+        "solver configuration and storage route",
+        "termination state and normalized free-DOF residual",
+        "reactions and force/moment equilibrium",
+        "total strain energy",
+        "deterministic replay hash",
+        "authoritative recovery identity",
+        "fixed physical probe identity",
+        "mesh semantic hashes and retained levels",
+        "exact-head and clean-tree custody"
+      ],
+      "passCriteria": [
+        "B02A through B02E pass in frozen order",
+        "T3/T6/Q8 applicability matrix is satisfied",
+        "singular quantities are classified before execution",
+        "fail-closed and governance cases pass",
+        "production output did not generate targets, tolerances, probes or mesh definitions",
+        "final exact-head integrated B01+B02 receipt passes",
+        "release authority remains false",
+        "temperature authority remains false"
       ]
     }
   ],
   "futureQueue": [
-    {"caseId": "B02", "title": "2D continuum engineering response — bending, shear, hole and lug progression", "activation": "AFTER_B01_PASS"},
     {"caseId": "B03", "title": "Thin-shell patch and bending — authoritative route plus explicitly non-production method checks", "activation": "AFTER_B02_PASS"},
     {"caseId": "B04", "title": "Trunnion footprint — load distribution and shell-result custody", "activation": "AFTER_B03_PASS"},
     {"caseId": "B05", "title": "Foundation and pipe-section analytical screening", "activation": "AFTER_B04_PASS"},

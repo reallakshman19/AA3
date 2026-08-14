@@ -72,17 +72,7 @@ test('LAFEA.3 visibly presents governed model mesh solver and computed results',
 
 test('production application LAFEA tab mounts the engineering workbench', async ({ page }, testInfo) => {
   await page.setViewportSize({ width: 1440, height: 1000 });
-  await page.addInitScript(() => {
-    globalThis.__WORKSPACE_VIEWPORT_BACKEND__ = 'canvas2d';
-  });
-  await page.goto('/');
-
-  const nav = page.locator('[data-application-nav="LAFEA"]');
-  await expect(nav).toBeVisible();
-  await nav.click();
-  await expect.poll(() => page.evaluate(
-    () => globalThis.AnalysisWorkspace?.getApplicationViewState?.().activeViewId ?? null,
-  )).toBe('LAFEA');
+  await openProductionLafea(page);
 
   const productionView = page.locator('[data-application-view="LAFEA"]');
   await expect(productionView).toBeVisible();
@@ -100,3 +90,72 @@ test('production application LAFEA tab mounts the engineering workbench', async 
   await page.screenshot({ path: screenshotPath, fullPage: false });
   await testInfo.attach('lafea-production-tab', { path: screenshotPath, contentType: 'image/png' });
 });
+
+test('production LAFEA.2 is TBA with no fake FE or mesh surface', async ({ page }, testInfo) => {
+  await page.setViewportSize({ width: 1440, height: 1000 });
+  await openProductionLafea(page);
+
+  const workbench = page.locator('[data-role="lafea-workbench"]');
+  await workbench.locator('[data-stage-id="LAFEA.2"]').click();
+
+  await expect(workbench.locator('[data-role="lafea-tba-stage"]')).toBeVisible();
+  await expect(workbench.locator('.lafea-workbench__status')).toHaveText('TBA');
+  await expect(workbench.locator('h1')).toHaveText('LAFEA.2 — TBA');
+  await expect(workbench.locator('[data-role="lafea-tba-stage"]')).toContainText(
+    'no finite-element geometry, mesh, element controls, viewport, solver controls, contours, convergence, results, or simulated FE content',
+  );
+  await expect(workbench.locator('[data-guided-target="viewport"]')).toHaveCount(0);
+  await expect(workbench.locator('[data-guided-target="discretization"]')).toHaveCount(0);
+  await expect(workbench.locator('[data-guided-target="numerical-verification"]')).toHaveCount(0);
+  await expect(workbench.locator('[data-role="lafea-run"]')).toHaveCount(0);
+  await expect(workbench.locator('[data-role="lafea-import"]')).toHaveCount(0);
+  await expect(workbench.locator('[data-role="lafea-mock"]')).toHaveCount(0);
+  await expect(workbench.locator('.lafea-workbench__svg')).toHaveCount(0);
+
+  const screenshotPath = testInfo.outputPath('lafea-2-tba.png');
+  await page.screenshot({ path: screenshotPath, fullPage: false });
+  await testInfo.attach('lafea-2-tba', { path: screenshotPath, contentType: 'image/png' });
+});
+
+test('production Analytical Calc owns analytical content without FE chrome', async ({ page }, testInfo) => {
+  await page.setViewportSize({ width: 1440, height: 1000 });
+  await openProductionLafea(page);
+
+  const workbench = page.locator('[data-role="lafea-workbench"]');
+  await workbench.locator('[data-lafea-tab="ANALYTICAL_CALC"]').click();
+
+  const analytical = workbench.locator('[data-role="lafea-analytical-calc"]');
+  await expect(analytical).toBeVisible();
+  await expect(workbench.locator('h1')).toHaveText('Analytical Calc');
+  await expect(analytical).toContainText(
+    'This tab is not a finite-element stage and does not create or display an FE mesh.',
+  );
+  await expect(analytical).toContainText('Analytical inputs');
+  await expect(analytical).toContainText('Analytical results');
+  await expect(analytical).toContainText('FE mesh');
+  await expect(analytical).toContainText('NOT APPLICABLE');
+  await expect(workbench.locator('[data-guided-target="viewport"]')).toHaveCount(0);
+  await expect(workbench.locator('[data-guided-target="discretization"]')).toHaveCount(0);
+  await expect(workbench.locator('[data-guided-target="numerical-verification"]')).toHaveCount(0);
+  await expect(workbench.locator('.lafea-workbench__svg')).toHaveCount(0);
+
+  const state = await page.evaluate(() => globalThis.AnalysisWorkspace.getLafeaWorkbenchState());
+  expect(state.activeStageId).toBe('LAFEA.2');
+
+  const screenshotPath = testInfo.outputPath('analytical-calc.png');
+  await page.screenshot({ path: screenshotPath, fullPage: false });
+  await testInfo.attach('analytical-calc', { path: screenshotPath, contentType: 'image/png' });
+});
+
+async function openProductionLafea(page) {
+  await page.addInitScript(() => {
+    globalThis.__WORKSPACE_VIEWPORT_BACKEND__ = 'canvas2d';
+  });
+  await page.goto('/');
+  const nav = page.locator('[data-application-nav="LAFEA"]');
+  await expect(nav).toBeVisible();
+  await nav.click();
+  await expect.poll(() => page.evaluate(
+    () => globalThis.AnalysisWorkspace?.getApplicationViewState?.().activeViewId ?? null,
+  )).toBe('LAFEA');
+}

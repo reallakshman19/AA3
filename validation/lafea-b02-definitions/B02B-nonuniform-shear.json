@@ -26,16 +26,7 @@
     "sourceRefs":["scripts/lafea-b02b-saint-venant-oracle-check.mjs"],
     "halfDepth":20,
     "secondMomentOfArea":5333.333333333333,
-    "equations": {
-      "sigmaX":"P*x*y/I",
-      "sigmaY":0,
-      "tauXY":"P*(c^2-y^2)/(2*I)",
-      "epsilonX":"sigmaX/E",
-      "epsilonY":"-nu*sigmaX/E",
-      "gammaXY":"tauXY/G",
-      "ux":"P*x^2*y/(2*E*I)+P*y^3*(nu/E-1/G)/(6*I)",
-      "uy":"P*c^2*x/(2*I*G)-P*x^3/(6*E*I)-nu*P*x*y^2/(2*E*I)"
-    },
+    "equations": {"sigmaX":"P*x*y/I","sigmaY":0,"tauXY":"P*(c^2-y^2)/(2*I)","epsilonX":"sigmaX/E","epsilonY":"-nu*sigmaX/E","gammaXY":"tauXY/G","ux":"P*x^2*y/(2*E*I)+P*y^3*(nu/E-1/G)/(6*I)","uy":"P*c^2*x/(2*I*G)-P*x^3/(6*E*I)-nu*P*x*y^2/(2*E*I)"},
     "bendingStrainEnergy":0.0125,
     "shearStrainEnergy":0.039,
     "totalStrainEnergy":0.0515,
@@ -44,54 +35,22 @@
     "productionOutputUsed":false
   },
   "fixedProbes":[
-    {
-      "probeId":"B02B-PROBE-TAU-01",
-      "physicalCoordinate":{"x":7.3,"y":4.7},
-      "coordinateFrame":"GLOBAL_XY",
-      "loadCaseId":"B02B-LC1",
-      "quantityId":"STRESS_TAU_XY",
-      "representation":"PHYSICAL_POINT_DIRECT",
-      "recoveryMethod":"ELEMENT_LOCAL_DIRECT_DISPLACEMENT_GRADIENT",
-      "units":"MPa",
-      "singularityClassification":"NON_SINGULAR_ANALYTICAL",
-      "expectedValue":3.54290625
-    },
-    {
-      "probeId":"B02B-PROBE-UY-01",
-      "physicalCoordinate":{"x":7.3,"y":4.7},
-      "coordinateFrame":"GLOBAL_XY",
-      "loadCaseId":"B02B-LC1",
-      "quantityId":"DISPLACEMENT_Y",
-      "representation":"PHYSICAL_POINT_DIRECT",
-      "recoveryMethod":"ELEMENT_SHAPE_INTERPOLATION",
-      "units":"mm",
-      "singularityClassification":"NOT_APPLICABLE",
-      "expectedValue":0.0003475289328125
-    }
+    {"probeId":"B02B-PROBE-TAU-01","physicalCoordinate":{"x":7.3,"y":4.7},"coordinateFrame":"GLOBAL_XY","loadCaseId":"B02B-LC1","quantityId":"STRESS_TAU_XY","representation":"PHYSICAL_POINT_DIRECT","recoveryMethod":"ELEMENT_LOCAL_DIRECT_DISPLACEMENT_GRADIENT","units":"MPa","singularityClassification":"NON_SINGULAR_ANALYTICAL","expectedValue":3.54290625},
+    {"probeId":"B02B-PROBE-UY-01","physicalCoordinate":{"x":7.3,"y":4.7},"coordinateFrame":"GLOBAL_XY","loadCaseId":"B02B-LC1","quantityId":"DISPLACEMENT_Y","representation":"PHYSICAL_POINT_DIRECT","recoveryMethod":"ELEMENT_SHAPE_INTERPOLATION","units":"mm","singularityClassification":"NOT_APPLICABLE","expectedValue":0.0003475289328125}
   ],
   "meshLadder": {
+    "requestSchema":"REGISTERED_LAFEA_MESH_GENERATION_INTENT_V2",
     "refinementRatio":2,
     "levels":[
-      {"levelId":"L1","nx":4,"ny":4,"h":10},
-      {"levelId":"L2","nx":8,"ny":8,"h":5},
-      {"levelId":"L3","nx":16,"ny":16,"h":2.5}
+      {"levelId":"L1","h":10,"targetElementLength":10,"curvatureToleranceDegrees":30},
+      {"levelId":"L2","h":5,"targetElementLength":5,"curvatureToleranceDegrees":30},
+      {"levelId":"L3","h":2.5,"targetElementLength":2.5,"curvatureToleranceDegrees":30}
     ],
-    "familyRules": {
-      "T3":"structured cells split on deterministic lower-left to upper-right diagonal",
-      "T6":"same T3 topology with exact midpoint quadratic nodes",
-      "Q8":"structured serendipity quadrilaterals with exact midside nodes"
-    },
-    "methods":{"T3":"REQUIRED","T6":"REQUIRED","Q8":"REQUIRED"}
+    "commonRequestPolicy":{"lengthUnit":"mm","growthLimit":1.5,"maximumNodes":200000,"maximumElements":100000,"maximumEstimatedDofs":400000,"refinementFeatureIds":[]},
+    "methods":{"T3":"REQUIRED","T6":"REQUIRED","Q8":"REQUIRED"},
+    "familyRequestPolicy":{"T3":{"allowT3Fallback":true},"T6":{"allowT3Fallback":false},"Q8":{"allowT3Fallback":false}},
+    "meshSemanticHashMustBeRetained":true
   },
-  "acceptance": {
-    "fixedProbeRelativeErrorMaximum":0.05,
-    "strainEnergyRelativeErrorMaximum":0.05,
-    "forceEquilibriumRelativeMaximum":0.000001,
-    "momentEquilibriumRelativeMaximum":0.000001,
-    "probeMappingResidualMaximum":1e-8,
-    "convergence":"B02E_FROZEN_RULES",
-    "movingMaximumAllowed":false,
-    "smoothedOrNodalAveragedStressAllowedAsSoleAuthority":false
-  },
+  "acceptance": {"fixedProbeRelativeErrorMaximum":0.05,"strainEnergyRelativeErrorMaximum":0.05,"forceEquilibriumRelativeMaximum":0.000001,"momentEquilibriumRelativeMaximum":0.000001,"probeMappingResidualMaximum":1e-8,"convergence":"B02E_FROZEN_RULES","movingMaximumAllowed":false,"smoothedOrNodalAveragedStressAllowedAsSoleAuthority":false},
   "authority":{"benchmarkQualified":false,"releaseAuthorityGranted":false,"temperatureAuthorityGranted":false}
 }

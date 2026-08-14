@@ -25,65 +25,27 @@
     "sourceRefs":["validation/bucket-01/03-pure-bending-panel-oracle.json"],
     "secondMomentOfArea":6666.666666666667,
     "curvature":0.000075,
-    "equations": {
-      "ux":"-kappa*x*y",
-      "uy":"kappa*(x^2+nu*y^2)/2",
-      "sigmaX":"-M*y/I",
-      "sigmaY":0,
-      "tauXY":0
-    },
+    "equations": {"ux":"-kappa*x*y","uy":"kappa*(x^2+nu*y^2)/2","sigmaX":"-M*y/I","sigmaY":0,"tauXY":0},
     "totalStrainEnergy":375,
     "productionOutputUsed":false
   },
   "fixedProbes": [
-    {
-      "probeId":"B02A-PROBE-STRESS-01",
-      "physicalCoordinate":{"x":73,"y":6},
-      "coordinateFrame":"GLOBAL_XY",
-      "loadCaseId":"B02A-LC1",
-      "quantityId":"STRESS_SIGMA_X",
-      "representation":"PHYSICAL_POINT_DIRECT",
-      "recoveryMethod":"ELEMENT_LOCAL_DIRECT_DISPLACEMENT_GRADIENT",
-      "units":"MPa",
-      "singularityClassification":"NON_SINGULAR_ANALYTICAL",
-      "expectedValue":-90
-    },
-    {
-      "probeId":"B02A-PROBE-UY-01",
-      "physicalCoordinate":{"x":73,"y":6},
-      "coordinateFrame":"GLOBAL_XY",
-      "loadCaseId":"B02A-LC1",
-      "quantityId":"DISPLACEMENT_Y",
-      "representation":"PHYSICAL_POINT_DIRECT",
-      "recoveryMethod":"ELEMENT_SHAPE_INTERPOLATION",
-      "units":"mm",
-      "singularityClassification":"NOT_APPLICABLE",
-      "expectedValue":0.2002425
-    }
+    {"probeId":"B02A-PROBE-STRESS-01","physicalCoordinate":{"x":73,"y":6},"coordinateFrame":"GLOBAL_XY","loadCaseId":"B02A-LC1","quantityId":"STRESS_SIGMA_X","representation":"PHYSICAL_POINT_DIRECT","recoveryMethod":"ELEMENT_LOCAL_DIRECT_DISPLACEMENT_GRADIENT","units":"MPa","singularityClassification":"NON_SINGULAR_ANALYTICAL","expectedValue":-90},
+    {"probeId":"B02A-PROBE-UY-01","physicalCoordinate":{"x":73,"y":6},"coordinateFrame":"GLOBAL_XY","loadCaseId":"B02A-LC1","quantityId":"DISPLACEMENT_Y","representation":"PHYSICAL_POINT_DIRECT","recoveryMethod":"ELEMENT_SHAPE_INTERPOLATION","units":"mm","singularityClassification":"NOT_APPLICABLE","expectedValue":0.2002425}
   ],
   "meshLadder": {
+    "requestSchema":"REGISTERED_LAFEA_MESH_GENERATION_INTENT_V2",
     "refinementRatio":2,
     "levels":[
-      {"levelId":"L1","nx":4,"ny":2,"h":25},
-      {"levelId":"L2","nx":8,"ny":4,"h":12.5},
-      {"levelId":"L3","nx":16,"ny":8,"h":6.25}
+      {"levelId":"L1","h":25,"targetElementLength":25,"curvatureToleranceDegrees":30},
+      {"levelId":"L2","h":12.5,"targetElementLength":12.5,"curvatureToleranceDegrees":30},
+      {"levelId":"L3","h":6.25,"targetElementLength":6.25,"curvatureToleranceDegrees":30}
     ],
-    "familyRules": {
-      "T3":"structured cells split on deterministic lower-left to upper-right diagonal",
-      "T6":"same T3 topology with exact midpoint quadratic nodes",
-      "Q8":"structured serendipity quadrilaterals with exact midside nodes"
-    },
-    "methods":{"T3":"REQUIRED","T6":"REQUIRED","Q8":"REQUIRED"}
+    "commonRequestPolicy":{"lengthUnit":"mm","growthLimit":1.5,"maximumNodes":200000,"maximumElements":100000,"maximumEstimatedDofs":400000,"refinementFeatureIds":[]},
+    "methods":{"T3":"REQUIRED","T6":"REQUIRED","Q8":"REQUIRED"},
+    "familyRequestPolicy":{"T3":{"allowT3Fallback":true},"T6":{"allowT3Fallback":false},"Q8":{"allowT3Fallback":false}},
+    "meshSemanticHashMustBeRetained":true
   },
-  "acceptance": {
-    "fixedProbeRelativeErrorMaximum":0.05,
-    "strainEnergyRelativeErrorMaximum":0.05,
-    "forceEquilibriumRelativeMaximum":0.000001,
-    "momentEquilibriumRelativeMaximum":0.000001,
-    "probeMappingResidualMaximum":1e-8,
-    "convergence":"B02E_FROZEN_RULES",
-    "movingMaximumAllowed":false,
-    "smoothedOrNodalAveragedStressAllowedAsSoleAuthority":false
-  },
+  "acceptance": {"fixedProbeRelativeErrorMaximum":0.05,"strainEnergyRelativeErrorMaximum":0.05,"forceEquilibriumRelativeMaximum":0.000001,"momentEquilibriumRelativeMaximum":0.000001,"probeMappingResidualMaximum":1e-8,"convergence":"B02E_FROZEN_RULES","movingMaximumAllowed":false,"smoothedOrNodalAveragedStressAllowedAsSoleAuthority":false},
   "authority":{"benchmarkQualified":false,"releaseAuthorityGranted":false,"temperatureAuthorityGranted":false}
 }

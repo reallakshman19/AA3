@@ -36,6 +36,8 @@ export function assessR8Nfv15({ baseline, experiment }) {
   }
 
   const run = firstRun(experiment);
+  if (run.converged !== true) return rejectedNonconverged({ caseId, experiment, run });
+
   const before = mapRows(baseline.restraints, 'baseline.restraints');
   const after = mapRows(run.frictionRestraints, 'experiment.runs[0].frictionRestraints');
   const ids = [...new Set([...before.keys(), ...after.keys()])].sort(text);
@@ -52,15 +54,29 @@ export function assessR8Nfv15({ baseline, experiment }) {
     && row.experimentTangentialRelativeError <= GOAL).length;
 
   const nfvGate = convergenceGate(run.convergenceGates, 'NFV15_RETAINED_NORMAL_STATE');
+  const completeRestraintSet = before.size > 0 && after.size === before.size && comparable.length === before.size;
+  const completeMetricSet = completeRestraintSet && comparable.every((row) =>
+    row.baselineNormalRelativeError !== null
+    && row.experimentNormalRelativeError !== null
+    && row.baselineTangentialRelativeError !== null
+    && row.experimentTangentialRelativeError !== null);
+  const nfvLedgerComplete = completeRestraintSet && comparable.every((row) =>
+    row.currentNormalN !== null
+    && row.capacityBasisNormalN !== null
+    && row.governedRetainedCapacityN !== null
+    && row.currentNormalDiagnosticCapacityN !== null
+    && typeof row.refreshedFinalIteration === 'boolean');
   const gates = {
     custody: experiment.custody.status === 'PASS' && experiment.custody.accdb.sha256 === SHA,
     stateContract: experiment.stateContract.status === 'PASS',
     productionUnchanged: experiment.productionBoundary.productionMechanicsChanged === false,
-    converged: run.converged === true,
+    converged: true,
     equilibrium: run.recoveredEquilibriumStatus === 'PASS',
     nonlinearGates: run.convergenceGates?.status === 'CONVERGED',
     nfvRefreshRule: nfvGate?.status === 'PASS',
-    completeRestraintSet: before.size > 0 && after.size === before.size && comparable.length === before.size,
+    completeRestraintSet,
+    completeMetricSet,
+    nfvLedgerComplete,
   };
   const physicsPass = Object.values(gates).every(Boolean);
   const summary = {
@@ -82,7 +98,7 @@ export function assessR8Nfv15({ baseline, experiment }) {
       : 'R8_NFV15_NOT_NOMINATED_BY_FROZEN_ACCURACY_METRICS';
 
   return Object.freeze({
-    schema: 'm047-bm4l-stage2-r8-nfv15-assessment/v2',
+    schema: 'm047-bm4l-stage2-r8-nfv15-assessment/v3',
     caseId,
     sourceAccdbSha256: SHA,
     baselineSolverProfileId: BASELINE_SOLVER,
@@ -94,9 +110,53 @@ export function assessR8Nfv15({ baseline, experiment }) {
     summary,
     nomination,
     determinism: experiment.determinism,
+    failure: null,
     productionPromotionAuthorized: false,
     nextGate: nextGate(caseId, nomination),
     perRestraint,
+  });
+}
+
+function rejectedNonconverged({ caseId, experiment, run }) {
+  return Object.freeze({
+    schema: 'm047-bm4l-stage2-r8-nfv15-assessment/v3',
+    caseId,
+    sourceAccdbSha256: SHA,
+    baselineSolverProfileId: BASELINE_SOLVER,
+    candidateSolverProfileId: EXPERIMENT_SOLVER,
+    candidate: 'R8_NFV15',
+    threshold: THRESHOLD,
+    goalRelative: GOAL,
+    gates: {
+      custody: experiment.custody.status === 'PASS' && experiment.custody.accdb.sha256 === SHA,
+      stateContract: experiment.stateContract.status === 'PASS',
+      productionUnchanged: experiment.productionBoundary.productionMechanicsChanged === false,
+      converged: false,
+      equilibrium: false,
+      nonlinearGates: false,
+      nfvRefreshRule: false,
+      completeRestraintSet: false,
+      completeMetricSet: false,
+      nfvLedgerComplete: false,
+    },
+    summary: {
+      comparedRestraints: 0,
+      baselineNormalWithinGoal: null,
+      experimentNormalWithinGoal: null,
+      normalWithinGoalDelta: null,
+      baselineTangentialWithinGoal: null,
+      experimentTangentialWithinGoal: null,
+      tangentialWithinGoalDelta: null,
+      worstExperimentNormalRelativeError: null,
+      worstExperimentTangentialRelativeError: null,
+      regimeComparison: 'NOT_AVAILABLE_NONCONVERGED',
+    },
+    nomination: 'REJECT_R8_MEASUREMENT_PHYSICS_OR_CUSTODY_GATE_FAILED',
+    determinism: experiment.determinism,
+    failure: run.failure ?? { message: 'R8 run did not converge.' },
+    productionPromotionAuthorized: false,
+    nextGate: null,
+    perRestraint: [],
   });
 }
 
@@ -136,11 +196,11 @@ function compareRow(restraintId, baseline, experiment) {
     baselineTangentialRelativeError: baselineTangential,
     experimentTangentialRelativeError: experimentTangential,
     tangentialErrorDelta: baselineTangential === null || experimentTangential === null ? null : experimentTangential - baselineTangential,
-    retainedNormalEnteringN: finite(retained?.retainedNormalEnteringN),
+    retainedNormalEnteringN: nullableFinite(retained?.retainedNormalEnteringN),
     currentNormalN: finite(retained?.currentNormalN),
     capacityBasisNormalN: finite(retained?.capacityBasisNormalN),
-    variationRelative: finite(retained?.variationRelative),
-    refreshedFinalIteration: retained?.refreshed ?? null,
+    variationRelative: nullableFinite(retained?.variationRelative),
+    refreshedFinalIteration: typeof retained?.refreshed === 'boolean' ? retained.refreshed : null,
     governedRetainedCapacityN: finite(retained?.governedRetainedCapacityN),
     currentNormalDiagnosticCapacityN: finite(retained?.currentNormalDiagnosticCapacityN),
   };
@@ -152,6 +212,7 @@ function mapRows(rows, label) {
 }
 function relPercent(value) { const number = finite(value); return number === null ? null : Math.abs(number) / 100; }
 function finite(value) { const number = Number(value); return Number.isFinite(number) ? number : null; }
+function nullableFinite(value) { return value === null || value === undefined ? null : finite(value); }
 function max(values) { const clean = values.filter((value) => value !== null); return clean.length ? Math.max(...clean) : null; }
 function record(value, label) { if (!value || typeof value !== 'object') throw new TypeError(`${label} must be an object.`); }
 function text(left, right) { return String(left).localeCompare(String(right), 'en'); }

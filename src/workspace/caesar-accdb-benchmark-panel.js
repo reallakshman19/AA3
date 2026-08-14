@@ -21,6 +21,7 @@ import {
   CAESAR_ACCDB_SNAPSHOT_CASE_IDS,
   loadCaesarAccdbSnapshot,
 } from '../core/fea-benchmarks/caesar-accdb-benchmark-snapshot.js';
+import { importCaesarAccdbInBrowser } from '../core/fea-benchmarks/caesar-accdb-browser-reader.js';
 import {
   benchmarkElement as create,
   formatBenchmarkNumber as formatNumber,
@@ -36,6 +37,10 @@ export class CaesarAccdbBenchmarkPanel {
     this.caseId = CAESAR_ACCDB_SNAPSHOT_CASE_IDS.includes(options.initialCaseId)
       ? options.initialCaseId
       : CAESAR_ACCDB_SNAPSHOT_CASE_IDS[0];
+    this.importReader = options.importReader ?? importCaesarAccdbInBrowser;
+    this.imported = null;
+    this.importError = '';
+    this.importing = false;
   }
 
   render() {
@@ -46,11 +51,121 @@ export class CaesarAccdbBenchmarkPanel {
     section.append(
       this.header(snapshot),
       this.caseSelector(),
+      this.importControls(),
+      this.importedSection(),
       this.custodyNotice(snapshot),
       this.normalReactionsSection(snapshot),
       this.frictionDiagnosticSection(snapshot),
     );
     this.hostElement.replaceChildren(section);
+  }
+
+  importControls() {
+    const bar = create(this.hostElement, 'div', 'caesar-accdb-benchmark__controls');
+    const documentRef = this.hostElement?.ownerDocument ?? globalThis.document;
+
+    const input = documentRef.createElement('input');
+    input.type = 'file';
+    input.accept = '.accdb,.mdb';
+    input.hidden = true;
+    input.dataset.role = 'caesar-accdb-import-file';
+    input.addEventListener('change', () => {
+      const file = input.files?.[0] ?? null;
+      if (file) this.importFile(file);
+    });
+
+    const button = create(this.hostElement, 'button', null,
+      this.importing ? 'Reading ACCDB…' : 'Import ACCDB…');
+    button.type = 'button';
+    button.dataset.role = 'caesar-accdb-import-button';
+    button.disabled = this.importing;
+    button.addEventListener('click', () => input.click());
+
+    bar.append(button, input);
+    if (this.imported) {
+      const clear = create(this.hostElement, 'button', null, 'Clear imported file');
+      clear.type = 'button';
+      clear.dataset.role = 'caesar-accdb-import-clear';
+      clear.addEventListener('click', () => {
+        this.imported = null;
+        this.importError = '';
+        this.render();
+      });
+      bar.append(clear);
+    }
+    return bar;
+  }
+
+  /**
+   * Read one user-selected ACCDB entirely in this tab.
+   *
+   * This inventories the database the user supplied; it deliberately does not
+   * solve it. The nonlinear friction solve takes minutes of blocking compute
+   * per case and would freeze the tab, so solving stays an offline step.
+   */
+  async importFile(file) {
+    this.importing = true;
+    this.importError = '';
+    this.render();
+    try {
+      this.imported = await this.importReader(file);
+    } catch (error) {
+      this.imported = null;
+      this.importError = error instanceof Error ? error.message : String(error);
+    } finally {
+      this.importing = false;
+      this.render();
+    }
+    return this.imported;
+  }
+
+  importedSection() {
+    const section = create(this.hostElement, 'div', 'caesar-accdb-benchmark__imported');
+    section.dataset.role = 'caesar-accdb-imported';
+    if (this.importError) {
+      const failure = create(this.hostElement, 'p', 'caesar-accdb-benchmark__import-error',
+        `ACCDB import failed: ${this.importError}`);
+      failure.dataset.role = 'caesar-accdb-import-error';
+      section.append(failure);
+      return section;
+    }
+    if (!this.imported) {
+      section.append(create(this.hostElement, 'p', 'caesar-accdb-benchmark__section-note',
+        'No ACCDB imported. The tables below come from the frozen snapshot. '
+        + 'Importing your own file reads it in this tab only — nothing is uploaded.'));
+      return section;
+    }
+    const { source, inventory } = this.imported;
+    section.append(create(this.hostElement, 'h3', null, `Imported ACCDB — ${source.fileName}`));
+    const rows = [
+      ['SHA-256', source.sha256],
+      ['Size', `${source.byteLength.toLocaleString()} bytes`],
+      ['Tables', String(this.imported.tableNames.length)],
+      ['Restraint rows', String(inventory.restraintRowCount)],
+      ['Rows declaring FRIC_COEF', `${inventory.frictionRestraintRowCount} (${inventory.blankFrictionRowCount} blank)`],
+      ['Declared µ', inventory.declaredFrictionCoefficients.length > 0
+        ? inventory.declaredFrictionCoefficients.join(', ')
+        : 'none'],
+      ['Elements', String(inventory.elementCount)],
+      ['Read time', `${this.imported.elapsedMs} ms`],
+    ];
+    if (inventory.unitConstants?.CTRANS != null) {
+      rows.push(['INPUT_UNITS.CTRANS', String(inventory.unitConstants.CTRANS)]);
+    }
+    const table = create(this.hostElement, 'table');
+    for (const [label, value] of rows) {
+      const tr = create(this.hostElement, 'tr');
+      const th = create(this.hostElement, 'th', null, label);
+      th.scope = 'row';
+      tr.append(th, create(this.hostElement, 'td', null, value));
+      table.append(tr);
+    }
+    section.append(this.scroll(table));
+    section.append(create(this.hostElement, 'p', 'caesar-accdb-benchmark__section-note',
+      'Read-only inventory of the file you selected. Solving it is a separate offline step — '
+      + 'the nonlinear friction solve takes minutes per case and is not run in the browser. '
+      + 'The comparison tables below still show the frozen snapshot, not this file.'));
+    return section;
   }
 
   header(snapshot) {

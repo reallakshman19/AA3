@@ -55,9 +55,7 @@ export class TopologyEditSupportHostDragRuntime {
     if (event.button !== 0 || this.active || !this.canvas) return;
     const context = this.supportPositionRuntime.context();
     if (!context?.supportId || !context.hostEdgeId || !Number.isFinite(context.hostLengthMm)) return;
-    const pick = this.controller.viewportBackend?.pickAt(event.clientX, event.clientY);
-    if (pick?.objectKind !== 'support'
-      || (pick.supportId ?? pick.objectId) !== context.supportId) return;
+    if (!this.selectedSupportHit(event.clientX, event.clientY, context.supportId)) return;
     markHandled(event);
     this.canvas.focus?.({ preventScroll: true });
     this.canvas.setPointerCapture?.(event.pointerId);
@@ -72,6 +70,37 @@ export class TopologyEditSupportHostDragRuntime {
       `Dragging support ${context.supportId} along ${context.hostEdgeId}; transient only until Stage + Preview.`,
     );
     this.syncEvidence();
+  }
+
+  selectedSupportHit(clientX, clientY, supportId) {
+    const backend = this.controller.viewportBackend;
+    const camera = backend?.activeCamera;
+    const supportGroup = backend?.groups?.supportGroup;
+    if (!this.setPointerFromClient(clientX, clientY) || !camera || !supportGroup) return false;
+    this.raycaster.setFromCamera(this.pointer, camera);
+    const hits = this.raycaster.intersectObject(supportGroup, true);
+    for (const hit of hits) {
+      let object = hit.object;
+      while (object) {
+        const direct = object.userData?.pickTarget;
+        if (isSelectedSupportTarget(direct, supportId)) {
+          this.syncHitEvidence('SUPPORT_GROUP');
+          return true;
+        }
+        const table = object.userData?.pickTable;
+        if (Array.isArray(table) && Number.isInteger(hit.instanceId)) {
+          const target = table[hit.instanceId];
+          if (isSelectedSupportTarget(target, supportId)) {
+            this.syncHitEvidence('SUPPORT_GROUP_INSTANCE');
+            return true;
+          }
+        }
+        if (object === supportGroup) break;
+        object = object.parent;
+      }
+    }
+    this.syncHitEvidence('MISS');
+    return false;
   }
 
   handlePointerMove(event) {
@@ -151,18 +180,12 @@ export class TopologyEditSupportHostDragRuntime {
   }
 
   pointerTarget(event) {
-    const canvas = this.canvas;
     const backend = this.controller.viewportBackend;
     const camera = backend?.activeCamera;
     const context = this.supportPositionRuntime.context();
     const topology = this.controller.session?.currentTopology?.();
-    if (!canvas || !camera || !context?.fromNodeId || !context?.toNodeId || !topology) return null;
-    const rect = canvas.getBoundingClientRect();
-    if (!rect.width || !rect.height) return null;
-    this.pointer.set(
-      ((event.clientX - rect.left) / rect.width) * 2 - 1,
-      -((event.clientY - rect.top) / rect.height) * 2 + 1,
-    );
+    if (!camera || !context?.fromNodeId || !context?.toNodeId || !topology
+        || !this.setPointerFromClient(event.clientX, event.clientY)) return null;
     this.raycaster.setFromCamera(this.pointer, camera);
     const from = exactNode(topology, context.fromNodeId).position;
     const to = exactNode(topology, context.toNodeId).position;
@@ -182,6 +205,17 @@ export class TopologyEditSupportHostDragRuntime {
       z: pointOnSegment.z,
     });
     return { x: engineering.x, y: engineering.y, z: engineering.z };
+  }
+
+  setPointerFromClient(clientX, clientY) {
+    if (!this.canvas) return false;
+    const rect = this.canvas.getBoundingClientRect();
+    if (!rect.width || !rect.height) return false;
+    this.pointer.set(
+      ((clientX - rect.left) / rect.width) * 2 - 1,
+      -((clientY - rect.top) / rect.height) * 2 + 1,
+    );
+    return true;
   }
 
   updatePanelControls(stationMm) {
@@ -268,6 +302,12 @@ export class TopologyEditSupportHostDragRuntime {
     return true;
   }
 
+  syncHitEvidence(source) {
+    if (this.controller.hostElement) {
+      this.controller.hostElement.dataset.topologyEditSupportDragHitSource = source;
+    }
+  }
+
   syncEvidence(draft = this.supportPositionRuntime.draft) {
     const host = this.controller.hostElement;
     if (!host) return;
@@ -298,6 +338,10 @@ export class TopologyEditSupportHostDragRuntime {
   }
 }
 
+function isSelectedSupportTarget(target, supportId) {
+  return target?.objectKind === 'support'
+    && (target.supportId ?? target.objectId) === supportId;
+}
 function renderVector(point) {
   const mapped = engineeringPointToRender(point);
   return new THREE.Vector3(mapped.x, mapped.y, mapped.z);

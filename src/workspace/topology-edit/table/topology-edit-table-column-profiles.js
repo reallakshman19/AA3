@@ -5,7 +5,7 @@ export const TOPOLOGY_EDIT_TABLE_COLUMN_PROFILE_SCHEMA = 'TopologyEditTableColum
 
 const PROFILE_KEYS = Object.freeze({
   GEOMETRY: Object.freeze([
-    'tag', 'elementType', 'line',
+    'tag', 'elementType', 'line', 'connectFrom', 'connectTo',
     'fromX', 'fromY', 'fromZ', 'toX', 'toY', 'toZ',
     'deltaX', 'deltaY', 'deltaZ',
     'lengthMm', 'slopePercent', 'componentLengthMm', 'angleDeg', 'radiusMm',

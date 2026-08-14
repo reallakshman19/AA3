@@ -133,14 +133,12 @@ function resolveSetting(profile) {
 
 function compare(pkg, actual, baseline) {
   const ref = vectors(pkg.references.L1.rows);
-  const got = vectors(actual.cases.L1.rows);
   const prior = uniqueByRestraint(baseline.restraints, 'baseline.restraints');
   const supports = actual.mechanics.cases.L1.iterations.at(-1).supports;
   const rows = supports.map((support) => {
     const r = ref.get(support.nodeId) ?? {};
-    const g = got.get(support.nodeId) ?? {};
     const rn = Math.abs(r[support.normalDof] ?? 0);
-    const solved = Math.abs(g[support.normalDof] ?? support.normalReactionMagnitudeN);
+    const solved = support.normalReactionMagnitudeN;
     const error = rn === 0 ? null : 100 * (solved - rn) / rn;
     const oldRow = prior.get(support.restraintId);
     if (!oldRow) throw new TypeError(`L1 insulation experiment has no baseline row for restraint ${support.restraintId}.`);

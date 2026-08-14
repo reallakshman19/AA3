@@ -69,7 +69,9 @@ export class LafeaWorkbenchController {
       onStage: (stageId) => this.store.selectStage(stageId),
       onMock: (stageId) => this.loadMockData(stageId),
       onFile: (file) => this.loadFile(file),
+      onCreateDocument: (value, stageId) => this.importDocument(value, stageId),
       onRun: () => this.run(),
+      onPrepare: () => this.prepareContinuumForRun(),
       onExport: () => this.downloadDocument(),
       onUndo: () => this.undo(),
       onRedo: () => this.redo(),
@@ -149,6 +151,12 @@ export class LafeaWorkbenchController {
   }
   revalidateLifecycleBinding(sourceHash, originRef) {
     return this.store.revalidateLifecycleBinding(sourceHash, originRef);
+  }
+  revalidateContinuumGeometryMesh() {
+    return this.store.revalidateContinuumGeometryMesh();
+  }
+  prepareContinuumForRun() {
+    return this.store.prepareContinuumForRun();
   }
   registerTemplateReleaseRecord(value, stageId = this.getState().activeStageId) {
     return this.store.registerTemplateReleaseRecord(value, stageId);

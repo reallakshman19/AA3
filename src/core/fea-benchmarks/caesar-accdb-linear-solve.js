@@ -70,6 +70,7 @@ import {
 } from '../linear-fea-section/index.js';
 import {
   compileSolverExecution,
+  createFactorizationCache,
   requireElementContribution,
   sealSolverProfile,
 } from '../linear-fea-solver/index.js';
@@ -81,6 +82,7 @@ import {
 import { semanticHash } from '../shared-piping-model/canonical-json.js';
 import { deepFreeze } from '../shared-piping-model/immutable.js';
 import { resolveCaesarConfigurationSetting } from './caesar-configuration-authority.js';
+import { resolveCaesarFrictionAuthority } from './caesar-friction-authority.js';
 
 const PROFILE_SOURCE = 'CAESAR_ACCDB_LINEAR_SOLVE_PROFILE_V1';
 const FACTOR_PROFILE_ID = 'B31_3_2022_B31J_2017';
@@ -94,6 +96,32 @@ const KG_PER_CM3_TO_KG_PER_M3 = 1e6;
 const CELSIUS_TO_KELVIN = 273.15;
 const POSITION_TOLERANCE_M = 1e-7;
 const CAESAR_WELDING_TEE_TYPE = 3;
+/**
+ * Physical load terms the formula grammar implements.
+ *
+ * W/T1/P1 are the qualified operating primitives. WW/HP are the hydrotest weight
+ * and hydrotest pressure, both governed by a declared hydrotest basis.
+ */
+const PHYSICAL_LOAD_TERMS = Object.freeze(['W', 'WW', 'T1', 'P1', 'HP']);
+
+/**
+ * Configuration gates a prepared ACCDB case state may be assembled under.
+ *
+ * The gate is always explicit at the call site. The linear entry point accepts
+ * only cases whose governed effective friction is exactly zero; the separate
+ * nonlinear friction solver declares the friction gate. Neither mode is
+ * selected implicitly from case text or from a mutable flag.
+ */
+export const CAESAR_ACCDB_CASE_GATES = Object.freeze({
+  LINEAR_ZERO_EFFECTIVE_FRICTION: 'LINEAR_ZERO_EFFECTIVE_FRICTION',
+  NONLINEAR_EFFECTIVE_FRICTION: 'NONLINEAR_EFFECTIVE_FRICTION',
+});
+
+const EMPTY_OVERLAY = Object.freeze({
+  overlayId: 'NONE',
+  constraints: Object.freeze([]),
+  nodalLoads: Object.freeze([]),
+});
 
 /** Solve an explicit subset of selected physical cases and retain mechanics evidence. */
 export function solveCaesarAccdbLinearBenchmark(benchmarkPackage, selectedCaseIds) {
@@ -125,13 +153,14 @@ export function solveCaesarAccdbLinearBenchmark(benchmarkPackage, selectedCaseId
     sourceAccdbSha256: benchmarkPackage.source.sha256,
     cases,
     mechanics: {
-      schema: 'lfea-accdb-linear-solve-evidence/v1',
+      schema: 'lfea-accdb-linear-solve-evidence/v2',
       sourceModelSemanticHash: benchmarkPackage.model.semanticHash,
       profile: solveProfile,
       cases: caseEvidence,
       limitations: [
         'Blank BM4_L restraints use the governed CAESAR default finite stiffness after explicit INPUT_UNITS conversion to SI.',
-        'Only cases whose governed effective coefficient of friction is zero are accepted by this linear solver; friction-enabled cases remain reference-only until a nonlinear solver is qualified.',
+        'Evidence schema v2 adds the resolved friction authority (model mu, load-case friction multiplier, effective mu, friction stiffness conversion) and the case overlay record; result rows are unchanged by that addition.',
+        'Only cases whose governed effective coefficient of friction (model mu x load-case friction multiplier) is zero are accepted by this linear solver; friction-enabled cases are solved by the separate nonlinear friction solver.',
         'The explicit Bourdon job mode resolves from the individual-file layer because CAESAR existing-job settings are absent from ACCDB exports.',
         'Translation-and-rotation mode applies closed-end axial pressure strain to non-bend spans and one MEC-21 equation (2.25) bend-level free field sampled at all discretized bend stations.',
         'Reducer stiffness, gravity, thermal load and closed-end pressure elongation use the governed ten-cylinder midpoint-sampling candidate.',
@@ -145,17 +174,53 @@ export function solveCaesarAccdbLinearBenchmark(benchmarkPackage, selectedCaseId
 }
 
 function solveCase(benchmarkPackage, caseRecord, solveProfile) {
+  const prepared = prepareCaesarAccdbCaseState({
+    benchmarkPackage,
+    caseRecord,
+    solveProfile,
+    gate: CAESAR_ACCDB_CASE_GATES.LINEAR_ZERO_EFFECTIVE_FRICTION,
+    frictionDofKeys: [],
+  });
+  return executeCaesarAccdbCaseState({ prepared, overlay: EMPTY_OVERLAY });
+}
+
+/**
+ * Compile every iteration-invariant part of one ACCDB physical case.
+ *
+ * The returned state carries the qualified element assembly, material, section,
+ * bend, tee, restraint and thermal-shift decisions. It is shared verbatim by the
+ * linear entry point and by the nonlinear friction solver so friction can never
+ * introduce a second copy of the qualified mechanics.
+ *
+ * @param {object} input Preparation input.
+ * @param {Record<string, unknown>} input.benchmarkPackage Canonical ACCDB package.
+ * @param {Record<string, unknown>} input.caseRecord Selected ACCDB case record.
+ * @param {Record<string, unknown>} input.solveProfile Profile linearSolve authorities.
+ * @param {string} input.gate One of CAESAR_ACCDB_CASE_GATES.
+ * @param {Array<string>} input.frictionDofKeys `node:dof` keys carrying friction springs.
+ * @returns {Record<string, unknown>} Prepared case state.
+ */
+export function prepareCaesarAccdbCaseState(input) {
+  const { benchmarkPackage, caseRecord, solveProfile } = input;
+  const gate = requireCaseGate(input.gate);
   const caseMode = resolveSupportedLinearCaseMode(benchmarkPackage, caseRecord);
   const effectiveConfiguration = resolveCaseConfiguration(
     benchmarkPackage.profile.configurationAuthority,
     caseRecord.caseId,
   );
+  const frictionAuthority = resolveCaesarFrictionAuthority({
+    authority: benchmarkPackage.profile.configurationAuthority,
+    cases: benchmarkPackage.cases,
+    caseId: caseRecord.caseId,
+    inputUnitRows: benchmarkPackage.model.tables.INPUT_UNITS.rows,
+  });
   requireSupportedLinearConfiguration(
     benchmarkPackage.profile.configurationAuthority,
     solveProfile,
     effectiveConfiguration,
     caseRecord.caseId,
   );
+  requireSupportedFrictionGate(gate, frictionAuthority, caseRecord.caseId);
   const modelInput = benchmarkPackage.model;
   const sourceRows = sortedElements(modelInput.tables.INPUT_BASIC_ELEMENT_DATA.rows);
   const material = buildMaterial(sourceRows, solveProfile, benchmarkPackage, effectiveConfiguration);
@@ -167,6 +232,7 @@ function solveCase(benchmarkPackage, caseRecord, solveProfile) {
   const sourcePositions = buildSourcePositions(modelInput.tables.INPUT_NODAL_COORDINATES.rows);
   const bendDefinitions = buildBendDefinitions({
     benchmarkPackage,
+    caseMode,
     sourceRows,
     sourcePositions,
     sourceSections,
@@ -207,18 +273,72 @@ function solveCase(benchmarkPackage, caseRecord, solveProfile) {
   const shiftedAnalysis = applyUniformThermalNumericalShift({
     analysis,
     constraints,
+    frictionDofKeys: input.frictionDofKeys ?? [],
     caseMode,
     benchmarkPackage,
     solveProfile,
   });
-  const compilation = compileAnalysisModel({
+  return {
+    gate,
+    // A nonlinear iteration re-executes the same prepared state many times. The
+    // compilation depends only on the constraint set and the factorization only on
+    // the assembled partition, so both are reused across iterations that change
+    // loads alone. Reuse is excluded from the execution semantic hash, so a cached
+    // run and a cold run produce identical evidence.
+    cache: { compilations: new Map(), factorization: createFactorizationCache() },
     benchmarkPackage,
+    caseRecord,
+    solveProfile,
+    caseMode,
+    effectiveConfiguration,
+    frictionAuthority,
     material,
     sectionResolutions: sectionRegistry.values(),
+    sourceRows,
+    bendDefinitions,
+    teeJunctions,
+    constraints,
+    conditioned,
+    analysis: shiftedAnalysis,
+  };
+}
+
+/**
+ * Solve one prepared ACCDB case state, optionally with a declared overlay.
+ *
+ * The overlay is the only mechanism by which a nonlinear iteration may add
+ * grounded tangential springs or capped opposing nodal loads. An empty overlay
+ * reproduces the qualified linear result exactly, including its hashes.
+ *
+ * @param {object} input Execution input.
+ * @param {Record<string, unknown>} input.prepared Output of prepareCaesarAccdbCaseState.
+ * @param {Record<string, unknown>} [input.overlay] Declared constraint/load overlay.
+ * @returns {Record<string, unknown>} Execution, rows, recovery and evidence.
+ */
+export function executeCaesarAccdbCaseState(input) {
+  const prepared = input.prepared;
+  const overlay = normalizeCaseOverlay(input.overlay ?? EMPTY_OVERLAY);
+  const {
+    benchmarkPackage, caseRecord, solveProfile, caseMode, effectiveConfiguration, frictionAuthority,
+    material, sectionResolutions, sourceRows, bendDefinitions, teeJunctions, conditioned,
+  } = prepared;
+  const shiftedAnalysis = prepared.analysis;
+  const constraints = mergeOverlayConstraints(prepared.constraints, overlay.constraints);
+  const cache = prepared.cache ?? null;
+  const constraintSignature = constraints
+    .map((constraint) => `${constraint.nodeId}:${constraint.dof}:${constraint.kind}:${constraint.stiffness ?? ''}`)
+    .join('|');
+  const compilation = cache?.compilations.get(constraintSignature) ?? compileAnalysisModel({
+    benchmarkPackage,
+    material,
+    sectionResolutions,
     analysis: shiftedAnalysis,
     conditioned,
     constraints,
   });
+  if (cache !== null && !cache.compilations.has(constraintSignature)) {
+    cache.compilations.set(constraintSignature, compilation);
+  }
   const loadCase = compileCaseDeclaration({
     benchmarkPackage,
     caseRecord,
@@ -226,12 +346,14 @@ function solveCase(benchmarkPackage, caseRecord, solveProfile) {
     compilation,
     analysis: shiftedAnalysis,
     solveProfile,
+    overlayNodalLoads: overlay.nodalLoads,
   });
   const execution = compileSolverExecution({
     compilation,
     elementContributions: shiftedAnalysis.elements.map((entry) => entry.contribution),
     loadCase,
     solverProfile: solverProfile(),
+    cache: cache?.factorization,
   });
   if (execution.status === 'BLOCKED') {
     const error = new Error(
@@ -246,17 +368,28 @@ function solveCase(benchmarkPackage, caseRecord, solveProfile) {
     analysisNodeIds: [...shiftedAnalysis.positions.keys()],
     execution,
     recovered,
+    appliedNodalLoads: appliedNodalLoadMap(overlay.nodalLoads),
     tolerance: benchmarkPackage.profile.equilibriumTolerance,
   });
   return {
     execution,
+    recovered,
+    recoveredEquilibrium,
+    overlay,
+    displacementShiftByNode: shiftedAnalysis.numericalDisplacementShift.byNode,
     rows: resultRows({ benchmarkPackage, execution, recovered, analysis: shiftedAnalysis }),
     evidence: {
       formula: caseRecord.formula,
       effectiveConfiguration,
+      frictionAuthority,
+      caseOverlay: overlay.evidence,
       gravityIncluded: caseMode.gravity,
       thermalIncluded: caseMode.thermal,
       pressureIncluded: caseMode.pressure,
+      hydrotestIncluded: caseMode.hydrotest,
+      pressureField: caseMode.pressureField,
+      contentsDensityKgPerM3: caseMode.contentsDensityKgPerM3,
+      hydrotestBasis: caseMode.hydrotestBasis,
       executionStatus: execution.status,
       solverDiagnostics: execution.diagnostics,
       stiffnessStateHash: execution.stiffnessStateHash,
@@ -398,6 +531,10 @@ function buildAnalysisElements(input) {
  * total displacement, end actions and reactions with less cancellation.
  */
 function applyUniformThermalNumericalShift(input) {
+  const groundedKeys = new Set([
+    ...input.constraints.map((constraint) => `${constraint.nodeId}:${constraint.dof}`),
+    ...input.frictionDofKeys,
+  ]);
   const byNode = new Map([...input.analysis.positions.keys()].map((nodeId) => [nodeId, zero6()]));
   const temperatures = uniqueNumbers(input.benchmarkPackage.model.tables.INPUT_BASIC_ELEMENT_DATA.rows
     .map((row) => Number(row.TEMP_EXP_C1)));
@@ -421,8 +558,14 @@ function applyUniformThermalNumericalShift(input) {
         0,
       ]);
     }
-    for (const constraint of input.constraints) {
-      byNode.get(constraint.nodeId)[DOFS.indexOf(constraint.dof)] = 0;
+    // A grounded spring contributes -k*u_total, but only element stiffness is
+    // subtracted from the shifted load vector, so every grounded DOF - restraint
+    // or friction - must carry a zero shift component.
+    for (const key of groundedKeys) {
+      const [nodeId, dof] = splitDofKey(key);
+      const vector = byNode.get(nodeId);
+      if (vector === undefined) throw new TypeError(`Grounded DOF ${key} has no analysis node.`);
+      vector[DOFS.indexOf(dof)] = 0;
     }
   } else if (input.caseMode.thermal) {
     mode = 'DISABLED_NONUNIFORM_ELEMENT_TEMPERATURES';
@@ -556,7 +699,12 @@ function buildFrameElement(input) {
   });
   const length = frame.geometry.length;
   const lineWeight = input.gravityLineWeight
-    ?? physicalLineWeight(input.row, input.section, input.solveProfile.gravityAcceleration);
+    ?? physicalLineWeight(
+      input.row,
+      input.section,
+      input.solveProfile.gravityAcceleration,
+      input.caseMode.contentsDensityKgPerM3,
+    );
   const gravityLineWeight = input.caseMode.gravity
     ? lineWeight * input.gravityLengthScale
     : 0;
@@ -570,7 +718,7 @@ function buildFrameElement(input) {
   const pressureStrain = input.caseMode.pressure
     && input.solveProfile.bourdonPressureEffects.mode !== 'DISABLED'
     ? (input.pressureAxialStrainOverride ?? (
-        closedEndPressureAxialStrain(input.row, frame.material.elasticModulus)
+        closedEndPressureAxialStrain(input.row, frame.material.elasticModulus, input.caseMode.pressureField)
         * input.pressureLengthScale))
     : 0;
   const axialInitialLocal = thermalInitialStrainVector({
@@ -584,6 +732,7 @@ function buildFrameElement(input) {
     && input.bourdonBendSegment !== null
     ? buildBourdonBendInitialLoad({
         row: input.row,
+        pressureField: input.caseMode.pressureField,
         section: input.section,
         frame,
         effectiveLocalStiffness: baseEffectiveLocalStiffness,
@@ -680,7 +829,7 @@ function buildRigidElement(input) {
     semanticHash: '',
   }));
   const pressureEffect = rigidElementBourdonPressureEffect(authority, {
-    pressure: Number(input.row.PRESSURE1) * KPA_TO_PA,
+    pressure: Number(input.row[input.caseMode.pressureField]) * KPA_TO_PA,
     poissonRatio: Number(input.row.POISSONS),
   });
   const rigidSection = input.sectionRegistry.resolve(
@@ -759,7 +908,7 @@ function buildReducerElement(input) {
       * closedEndPressureAxialStrainForGeometry({
         outerDiameter: segment.section.outerDiameter,
         innerDiameter: segment.section.innerDiameter,
-        pressure: Number(input.row.PRESSURE1) * KPA_TO_PA,
+        pressure: Number(input.row[input.caseMode.pressureField]) * KPA_TO_PA,
         poissonRatio: Number(input.row.POISSONS),
         elasticModulus: materialState.elasticModulus,
         context: `Reducer ${input.row.REDUCER_PTR} segment ${segment.index}`,
@@ -1091,6 +1240,7 @@ function buildBendDefinitions(input) {
         pressure: bendStiffeningPressurePa(
           row,
           input.solveProfile.bendPressureStiffening.pressureSource,
+          input.caseMode.pressureField,
         ),
         elasticModulus: input.material.materialState.elasticModulus,
         bendAngleDegrees: bendAngle * 180 / Math.PI,
@@ -1257,7 +1407,12 @@ function compileCaseDeclaration(input) {
       direction: { x: 0, y: -1, z: 0 },
       basis: 'GLOBAL',
       includedMassSources: ['PIPE_WALL', 'CONTENTS', 'INSULATION', 'COMPONENT'],
-      sourceEvidence: sourceEvidence('ACCDB:WEIGHT', input.benchmarkPackage.source.sha256),
+      sourceEvidence: sourceEvidence(
+        input.caseMode.contentsDensityKgPerM3 === null ? 'ACCDB:WEIGHT' : 'ACCDB:WEIGHT:HYDROTEST_CONTENTS',
+        input.caseMode.contentsDensityKgPerM3 === null
+          ? input.benchmarkPackage.source.sha256
+          : `${input.benchmarkPackage.source.sha256}:${input.caseMode.contentsDensityKgPerM3}`,
+      ),
     });
   }
   const sourceRows = new Map(input.benchmarkPackage.model.tables.INPUT_BASIC_ELEMENT_DATA.rows
@@ -1266,10 +1421,10 @@ function compileCaseDeclaration(input) {
     const row = sourceRows.get(element.sourceElementId);
     if (!row) throw new TypeError(`Analysis element ${element.elementId} has no ACCDB source row.`);
     if (input.caseMode.pressure) {
-      const pressure = Number(row.PRESSURE1) * KPA_TO_PA;
+      const pressure = Number(row[input.caseMode.pressureField]) * KPA_TO_PA;
       primitives.push({
         schema: 'fea-linear-load-primitive/v1',
-        primitiveId: `${element.elementId}-${input.caseRecord.caseId}-P1`,
+        primitiveId: `${element.elementId}-${input.caseRecord.caseId}-${input.caseMode.pressureField === 'HYDRO_PRESSURE' ? 'HP' : 'P1'}`,
         kind: 'PRESSURE',
         elementId: element.elementId,
         pressure,
@@ -1281,7 +1436,7 @@ function compileCaseDeclaration(input) {
           bourdon: input.solveProfile.bourdonPressureEffects.mode !== 'DISABLED',
         },
         sourceEvidence: sourceEvidence(
-          `ACCDB:ELEMENT:${element.sourceElementId}:PRESSURE1`,
+          `ACCDB:ELEMENT:${element.sourceElementId}:${input.caseMode.pressureField}`,
           `${input.benchmarkPackage.source.sha256}:${pressure}`,
         ),
       });
@@ -1304,6 +1459,7 @@ function compileCaseDeclaration(input) {
       });
     }
   }
+  for (const nodalLoad of input.overlayNodalLoads ?? []) primitives.push(nodalLoad);
   return compilePhysicalLoadCase({
     loadCaseId: `ACCDB-${input.caseRecord.caseId}`,
     loadCaseClass: 'MIXED_PHYSICAL',
@@ -1312,6 +1468,104 @@ function compileCaseDeclaration(input) {
     primitives,
     profile: loadCaseProfile(input.solveProfile.gravityAcceleration),
   });
+}
+
+function requireCaseGate(value) {
+  const gate = String(value ?? '');
+  if (!Object.values(CAESAR_ACCDB_CASE_GATES).includes(gate)) {
+    throw new TypeError(`Unsupported ACCDB case gate ${gate || '<empty>'}.`);
+  }
+  return gate;
+}
+
+/** Bind the requested gate to the governed effective friction of the case. */
+function requireSupportedFrictionGate(gate, frictionAuthority, caseId) {
+  const effective = frictionAuthority.effectiveCoefficient;
+  if (gate === CAESAR_ACCDB_CASE_GATES.LINEAR_ZERO_EFFECTIVE_FRICTION && effective !== 0) {
+    throw new TypeError(
+      `${caseId} governed effective friction is ${effective} `
+      + `(model mu ${frictionAuthority.coefficient.value} from ${frictionAuthority.coefficient.level} `
+      + `x friction multiplier ${String(frictionAuthority.frictionMultiplier.value)}); `
+      + 'nonzero effective friction is outside the linear benchmark solver.',
+    );
+  }
+  if (gate === CAESAR_ACCDB_CASE_GATES.NONLINEAR_EFFECTIVE_FRICTION && !(effective > 0)) {
+    throw new TypeError(
+      `${caseId} governed effective friction is ${effective}; `
+      + 'a zero-friction case must be solved by the qualified linear solver, not the friction solver.',
+    );
+  }
+}
+
+/** Validate a declared constraint/load overlay and retain its evidence. */
+function normalizeCaseOverlay(value) {
+  if (!value || typeof value !== 'object') throw new TypeError('An ACCDB case overlay must be an object.');
+  const constraints = value.constraints ?? [];
+  const nodalLoads = value.nodalLoads ?? [];
+  if (!Array.isArray(constraints) || !Array.isArray(nodalLoads)) {
+    throw new TypeError('An ACCDB case overlay must declare constraint and nodal-load arrays.');
+  }
+  for (const constraint of constraints) {
+    if (constraint.kind !== 'PARTIAL_RELEASE_SPRING' || !(Number(constraint.stiffness) > 0)) {
+      throw new TypeError('Overlay constraints must be positive grounded partial-release springs.');
+    }
+  }
+  for (const nodalLoad of nodalLoads) {
+    if (nodalLoad.kind !== 'NODAL_FORCE_MOMENT') {
+      throw new TypeError('Overlay nodal loads must be NODAL_FORCE_MOMENT primitives.');
+    }
+  }
+  return Object.freeze({
+    overlayId: String(value.overlayId ?? 'NONE'),
+    constraints: Object.freeze([...constraints]),
+    nodalLoads: Object.freeze([...nodalLoads]),
+    evidence: Object.freeze({
+      overlayId: String(value.overlayId ?? 'NONE'),
+      springCount: constraints.length,
+      nodalLoadCount: nodalLoads.length,
+      springDofs: Object.freeze(constraints
+        .map((constraint) => `${constraint.nodeId}:${constraint.dof}`)
+        .sort(compareText)),
+      nodalLoadNodeIds: Object.freeze([...new Set(nodalLoads.map((load) => String(load.nodeId)))].sort(compareText)),
+    }),
+  });
+}
+
+/** Merge overlay springs into the base restraint constraint list. */
+function mergeOverlayConstraints(base, overlayConstraints) {
+  if (overlayConstraints.length === 0) return base;
+  const byKey = new Map(base.map((constraint) => [`${constraint.nodeId}:${constraint.dof}`, constraint]));
+  for (const constraint of overlayConstraints) {
+    const key = `${constraint.nodeId}:${constraint.dof}`;
+    if (byKey.has(key)) {
+      throw new TypeError(`Overlay spring ${key} collides with a declared ACCDB restraint component.`);
+    }
+    byKey.set(key, constraint);
+  }
+  return [...byKey.values()].sort((left, right) => compareText(left.declarationId, right.declarationId));
+}
+
+/** Collapse declared overlay nodal loads into one six-component vector per node. */
+function appliedNodalLoadMap(nodalLoads) {
+  const byNode = new Map();
+  for (const load of nodalLoads) {
+    const nodeId = String(load.nodeId);
+    const vector = byNode.get(nodeId) ?? zero6();
+    vector[0] += Number(load.force.fx);
+    vector[1] += Number(load.force.fy);
+    vector[2] += Number(load.force.fz);
+    vector[3] += Number(load.moment.mx);
+    vector[4] += Number(load.moment.my);
+    vector[5] += Number(load.moment.mz);
+    byNode.set(nodeId, vector);
+  }
+  return byNode;
+}
+
+function splitDofKey(key) {
+  const index = String(key).lastIndexOf(':');
+  if (index <= 0) throw new TypeError(`Invalid DOF key ${String(key)}.`);
+  return [String(key).slice(0, index), String(key).slice(index + 1)];
 }
 
 function recoverActions(execution, elements) {
@@ -1363,23 +1617,30 @@ function recoverActions(execution, elements) {
  * analysis node. The supported W/T1/P1 formula grammar carries no point-force
  * primitive, so a free-node action is an absolute assembly/recovery residual
  * and is never normalized by a larger initial-strain vector.
+ *
+ * A nonlinear friction iteration does apply nodal loads at sliding supports.
+ * Those declared overlay loads enter the balance explicitly, so the physical
+ * equilibrium statement stays `incident action = support reaction + applied load`
+ * instead of being widened to absorb the friction force.
  */
 function buildRecoveredEquilibrium(input) {
   const reactionIndex = new Map(input.execution.reactions
     .map((entry) => [`${entry.nodeId}:${entry.dof}`, entry.value]));
+  const appliedNodalLoads = input.appliedNodalLoads ?? new Map();
   const rows = [];
   for (const nodeId of [...input.analysisNodeIds].map(String).sort(compareText)) {
     const incident = input.recovered.incident.get(nodeId) ?? zero6();
+    const applied = appliedNodalLoads.get(nodeId) ?? zero6();
     DOFS.forEach((dof, index) => {
       const reaction = reactionIndex.get(`${nodeId}:${dof}`) ?? 0;
-      const residual = incident[index] - reaction;
+      const residual = incident[index] - reaction - applied[index];
       const limit = dof.startsWith('U') ? input.tolerance.forceN : input.tolerance.momentNm;
       rows.push(Object.freeze({
         nodeId,
         dof,
         incidentAction: clean(incident[index]),
         reaction: clean(reaction),
-        appliedNodalLoad: 0,
+        appliedNodalLoad: clean(applied[index]),
         residual: clean(residual),
         limit,
         status: Math.abs(residual) <= limit ? 'PASS' : 'FAIL',
@@ -1826,10 +2087,19 @@ function reducerToSection(input) {
   return input.sectionRegistry.resolve(declaredDiameter, declaredThickness);
 }
 
-function physicalLineWeight(row, section, gravityAcceleration) {
+/**
+ * Distributed physical weight of one span.
+ *
+ * `contentsDensityKgPerM3` replaces the ACCDB operating fluid density for a
+ * hydrotest case, where the line carries test fluid instead of process fluid.
+ */
+function physicalLineWeight(row, section, gravityAcceleration, contentsDensityKgPerM3 = null) {
   const pipe = density(row.PIPE_DENSITY) * section.sectionState.area * gravityAcceleration;
   const fluidArea = Math.PI * section.dimensions.innerDiameter ** 2 / 4;
-  const contents = density(row.FLUID_DENSITY) * fluidArea * gravityAcceleration;
+  const contentsDensity = contentsDensityKgPerM3 === null
+    ? density(row.FLUID_DENSITY)
+    : Number(contentsDensityKgPerM3);
+  const contents = contentsDensity * fluidArea * gravityAcceleration;
   const insulationThickness = Number(row.INSUL_THICK) * MM_TO_M;
   const insulatedOd = section.dimensions.outerDiameter + 2 * insulationThickness;
   const insulationArea = Math.PI * (insulatedOd ** 2 - section.dimensions.outerDiameter ** 2) / 4;
@@ -1852,22 +2122,28 @@ function gravityVector(frame, lineWeight) {
   });
 }
 
-function closedEndPressureAxialStrain(row, elasticModulus) {
+function closedEndPressureAxialStrain(row, elasticModulus, pressureField = 'PRESSURE1') {
   const outerDiameter = Number(row.DIAMETER) * MM_TO_M;
   const wallThickness = Number(row.WALL_THICK) * MM_TO_M;
   const innerDiameter = outerDiameter - 2 * wallThickness;
   return closedEndPressureAxialStrainForGeometry({
     outerDiameter,
     innerDiameter,
-    pressure: Number(row.PRESSURE1) * KPA_TO_PA,
+    pressure: Number(row[pressureField]) * KPA_TO_PA,
     poissonRatio: Number(row.POISSONS),
     elasticModulus,
     context: `Element ${row.ELEMENTID}`,
   });
 }
 
-/** Resolve the profile-governed pressure used only for bend flexibility. */
-function bendStiffeningPressurePa(row, pressureSource) {
+/**
+ * Resolve the profile-governed pressure used only for bend flexibility.
+ *
+ * A hydrotest case stiffens its bends with the hydrotest pressure it is actually
+ * carrying, not with the operating pressure it does not.
+ */
+function bendStiffeningPressurePa(row, pressureSource, pressureField = 'PRESSURE1') {
+  if (pressureField === 'HYDRO_PRESSURE') return Number(row.HYDRO_PRESSURE) * KPA_TO_PA;
   if (pressureSource === 'P1') return Number(row.PRESSURE1) * KPA_TO_PA;
   if (pressureSource !== 'MAX_DEFINED') {
     throw new TypeError(`Unsupported bend pressure-stiffening source ${pressureSource}.`);
@@ -1903,7 +2179,7 @@ function closedEndPressureAxialStrainForGeometry(input) {
  */
 function buildBourdonBendInitialLoad(input) {
   const stateInput = {
-    pressure: Number(input.row.PRESSURE1) * KPA_TO_PA,
+    pressure: Number(input.row[input.pressureField ?? 'PRESSURE1']) * KPA_TO_PA,
     innerRadius: input.section.dimensions.innerDiameter / 2,
     bendRadius: input.segment.bendRadius,
     elasticModulus: input.frame.material.elasticModulus,
@@ -2043,18 +2319,71 @@ function resolveSupportedLinearCaseMode(benchmarkPackage, caseRecord) {
       );
     }
   }
+  if (coefficients.W === 1 && coefficients.WW === 1) {
+    throw new TypeError(`${caseRecord.caseId} combines operating weight W and hydrotest weight WW.`);
+  }
+  if (coefficients.P1 === 1 && coefficients.HP === 1) {
+    throw new TypeError(`${caseRecord.caseId} combines operating pressure P1 and hydrotest pressure HP.`);
+  }
+  const hydrotest = coefficients.WW === 1 || coefficients.HP === 1;
+  const basis = hydrotest
+    ? requireHydrotestBasis(benchmarkPackage.profile.linearSolve, caseRecord)
+    : null;
+  if (hydrotest && coefficients.T1 === 1) {
+    throw new TypeError(
+      `${caseRecord.caseId} combines a hydrotest term with thermal T1; the governed hydrotest basis is ambient.`,
+    );
+  }
   return deepFreeze({
-    gravity: coefficients.W === 1,
+    gravity: coefficients.W === 1 || coefficients.WW === 1,
     thermal: coefficients.T1 === 1,
-    pressure: coefficients.P1 === 1,
+    pressure: coefficients.P1 === 1 || coefficients.HP === 1,
+    hydrotest,
+    pressureField: coefficients.HP === 1 ? 'HYDRO_PRESSURE' : 'PRESSURE1',
+    contentsDensityKgPerM3: basis === null ? null : basis.testFluidDensityKgPerM3,
+    hydrotestBasis: basis,
     coefficients,
   });
+}
+
+/**
+ * Bind a hydrotest case to its declared weight and pressure basis.
+ *
+ * The test-fluid density is not stored in the ACCDB, so it must be declared as a
+ * resolved profile authority. Without that declaration the case fails closed
+ * rather than defaulting to a density.
+ */
+function requireHydrotestBasis(solveProfile, caseRecord) {
+  const basis = solveProfile.hydrotestBasis ?? null;
+  if (basis === null) {
+    const error = new TypeError(
+      `${caseRecord.caseId} formula ${caseRecord.formula} needs hydrotest load mechanics. `
+      + 'Declare linearSolve.hydrotestBasis with the governed test-fluid density, temperature basis and '
+      + 'ACCDB pressure field before qualifying this case; no default is assumed.',
+    );
+    error.code = 'CAESAR_ACCDB_HYDROTEST_AUTHORITY_UNRESOLVED';
+    throw error;
+  }
+  if (basis.authorityStatus !== 'RESOLVED') {
+    const error = new TypeError(
+      `${caseRecord.caseId} requires a RESOLVED linearSolve.hydrotestBasis; it is ${basis.authorityStatus}.`,
+    );
+    error.code = 'CAESAR_ACCDB_HYDROTEST_AUTHORITY_UNRESOLVED';
+    throw error;
+  }
+  if (basis.pressureField !== 'HYDRO_PRESSURE') {
+    throw new TypeError(`Unsupported hydrotest pressure field ${basis.pressureField}.`);
+  }
+  if (basis.temperatureBasis !== 'AMBIENT_INSTALLATION_TEMPERATURE') {
+    throw new TypeError(`Unsupported hydrotest temperature basis ${basis.temperatureBasis}.`);
+  }
+  return basis;
 }
 
 function resolveLinearFormula(caseRecord, byNumber, activeCaseNumbers) {
   const formula = String(caseRecord.formula).replace(/\s+/gu, '').toUpperCase();
   const directTerms = formula.split('+');
-  if (directTerms.length > 0 && directTerms.every((term) => ['W', 'T1', 'P1'].includes(term))) {
+  if (directTerms.length > 0 && directTerms.every((term) => PHYSICAL_LOAD_TERMS.includes(term))) {
     if (new Set(directTerms).size !== directTerms.length) {
       throw new TypeError(`${caseRecord.caseId} repeats a physical load term in ${caseRecord.formula}.`);
     }
@@ -2078,12 +2407,12 @@ function resolveLinearFormula(caseRecord, byNumber, activeCaseNumbers) {
 }
 
 function primitiveCoefficients(terms) {
-  return Object.freeze(Object.fromEntries(['W', 'T1', 'P1']
+  return Object.freeze(Object.fromEntries(PHYSICAL_LOAD_TERMS
     .map((term) => [term, terms.includes(term) ? 1 : 0])));
 }
 
 function subtractPrimitiveCoefficients(left, right) {
-  return Object.freeze(Object.fromEntries(['W', 'T1', 'P1']
+  return Object.freeze(Object.fromEntries(PHYSICAL_LOAD_TERMS
     .map((term) => [term, left[term] - right[term]])));
 }
 
@@ -2098,7 +2427,7 @@ function requireFormulaCase(byNumber, lcaseNumber, owner) {
 }
 
 function resolveCaseConfiguration(authority, caseId) {
-  const friction = resolveCaesarConfigurationSetting(
+  const modelCoefficientOfFriction = resolveCaesarConfigurationSetting(
     authority,
     'COEFFICIENT_OF_FRICTION_MU',
     caseId,
@@ -2113,15 +2442,16 @@ function resolveCaseConfiguration(authority, caseId) {
     'RESTRAINT_DIRECTIONAL_BEHAVIOR',
     caseId,
   );
-  return deepFreeze({ friction, flexibilityElasticModulus, restraintDirectionalBehavior });
+  return deepFreeze({
+    modelCoefficientOfFriction,
+    flexibilityElasticModulus,
+    restraintDirectionalBehavior,
+  });
 }
 
 function requireSupportedLinearConfiguration(authority, solveProfile, effectiveConfiguration, caseId) {
   const axis = resolveCaesarConfigurationSetting(authority, 'Z_AXIS_UP', null);
   if (axis.value !== 'NO') throw new TypeError('The current ACCDB solver requires Z_AXIS_UP=NO.');
-  if (effectiveConfiguration.friction.value !== 0) {
-    throw new TypeError(`${caseId} nonlinear friction is outside the current linear benchmark solver.`);
-  }
   if (effectiveConfiguration.flexibilityElasticModulus.value !== 'EC') {
     throw new TypeError(`${caseId} flexibility must use cold modulus EC.`);
   }

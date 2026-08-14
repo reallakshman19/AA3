@@ -1,4 +1,5 @@
-import { deepFreeze, semanticHash } from '../shared-piping-model/index.js';
+import { deepFreeze } from '../shared-primitives/immutable.js';
+import { semanticHash } from '../shared-primitives/canonical-json.js';
 import {
   ENVELOPE_QUANTITIES, PROFILE_SCHEMA, QUALIFICATION_PROFILE, RADIUS_BASES,
   REQUEST_SCHEMA, SECTION_BASIS,

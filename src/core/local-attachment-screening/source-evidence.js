@@ -1,4 +1,5 @@
-import { deepFreeze, semanticHash } from '../shared-piping-model/index.js';
+import { deepFreeze } from '../shared-primitives/immutable.js';
+import { semanticHash } from '../shared-primitives/canonical-json.js';
 import {
   ENGINEERING_LEVEL as FOUNDATION_ENGINEERING_LEVEL,
   QUALIFICATION_STATES as FOUNDATION_STATES,

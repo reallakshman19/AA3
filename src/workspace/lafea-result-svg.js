@@ -4,12 +4,12 @@
  * Values are selected from qualified surface-stress evidence. Geometry is
  * explicitly undeformed and every element exposes its numeric value and unit.
  */
-import { selectShellSurfaceField } from './lfea-field-adapter.js';
+import { selectShellSurfaceField } from './mesh-field-adapter.js';
 import {
   createLockedColourScale,
   createPlotDescriptor,
   GEOMETRY_STATES,
-} from './lfea-plot-descriptor.js';
+} from './mesh-plot-descriptor.js';
 
 const SVG_NS = 'http://www.w3.org/2000/svg';
 const WIDTH = 700;

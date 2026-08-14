@@ -1,4 +1,4 @@
-import { isPlainRecord } from '../shared-piping-model/index.js';
+import { isPlainRecord } from '../shared-primitives/immutable.js';
 import { modelError } from './errors.js';
 
 export function codeUnitCompare(left, right) { return left < right ? -1 : left > right ? 1 : 0; }

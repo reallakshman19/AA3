@@ -1,0 +1,67 @@
+{
+  "decision": {
+    "baselineAfterBatch": "D1",
+    "nextDiscriminator": "LOAD_COMPONENT_ORDER_CONTINUATION_W_THEN_P1_VS_P1_THEN_W_WITH_D1_OTHERWISE_FROZEN",
+    "promoteFixedStepCount": false,
+    "proportionalContinuationPathSensitivityConfirmed": true,
+    "reasons": [
+      "N5 raises vector pass count from 13/23 to 14/23 but creates a severe new 22260 regression.",
+      "N10 returns to 13/23 while reducing mean and raw worst error, demonstrating material step-count branch sensitivity.",
+      "22140 and 22220 improve strongly under both N5 and N10, confirming equilibrium/path selection as a real root-cause dimension.",
+      "A fixed step count is an undocumented numerical knob and is not selected by benchmark pass count."
+    ]
+  },
+  "experiment": {
+    "baseline": "D1-total-relative-tangential-displacement-direction",
+    "changedMechanic": "PHYSICAL_LOAD_PATH_ONLY",
+    "frozenMechanics": [
+      "D1_TOTAL_RELATIVE_TANGENTIAL_DIRECTION",
+      "FRICTION_STIFFNESS",
+      "COULOMB_CAP_MAGNITUDE",
+      "NORMAL_REACTION_BASIS",
+      "STATE_BOUNDARIES_AND_HYSTERESIS",
+      "RETURN_MAPPED_SLIP_OFFSET_FORM",
+      "SECANT_ACCELERATION",
+      "CONVERGENCE_GATES_AND_LIMITS",
+      "COMPARISON_GOAL"
+    ],
+    "pathRule": "PROPORTIONAL_ZERO_TO_FULL_W_PLUS_P1",
+    "perStepMaximumIterations": 400,
+    "productionSolverModified": false,
+    "stepCounts": [1,5,10]
+  },
+  "fullLocalArtifactSha256": {
+    "D1": "44d58511281d4f17b636839f9983beccc1028a51df5b3b0947ea1e4acf216de8",
+    "N1": "fb5baafe418dafaa66026419a0124acee79518a3470a3c12f0992a31060abbbe",
+    "N10": "3fe6180eea8cce76a4593105164764ade4386dd8b13622ab4c839231f04ac315",
+    "N10_RCA": "b2ac27f4a5a10a23322d68bf800c7ca46c33ff90c065d20e48bad6e66a3969a4",
+    "N5": "f9f80c5e4ad63fc6cc8f78cfb3ca948a2415ab3d21cd6d22d8999f02516fc26b",
+    "N5_RCA": "375f39dd03576bb711d4698f26d33811dfb94c60136ddccbab6a8a41ec8f6381",
+    "harness": "c095df71fb8dd216fe7e229301d093e73ddaeaa27e20a29f155293d76b1a3b1f"
+  },
+  "keyRows": {
+    "20710": {"D1":{"normalPercentError":0.6424626482670256,"solvedRegime":"SLIDING","vectorRelativeError":0.09030800109380419},"N10":{"normalPercentError":-0.8328976509666541,"solvedRegime":"LOCKED_AFTER_SLIP","vectorRelativeError":0.1054103305274984},"N5":{"normalPercentError":-0.18789523157089877,"solvedRegime":"LOCKED_AFTER_SLIP","vectorRelativeError":0.09991459551480024},"referenceMagnitudeN":624.7383422851562,"referenceRegime":"SLID"},
+    "21610": {"D1":{"normalPercentError":-1.577945047704669,"solvedRegime":"SLIDING","vectorRelativeError":0.05761912438557913},"N10":{"normalPercentError":0.8849266857772029,"solvedRegime":"LOCKED_AFTER_SLIP","vectorRelativeError":0.10636234177139249},"N5":{"normalPercentError":-1.4162335364833218,"solvedRegime":"LOCKED_AFTER_SLIP","vectorRelativeError":0.05739084804221598},"referenceMagnitudeN":267.014956064353,"referenceRegime":"SLID"},
+    "21740": {"D1":{"normalPercentError":-0.1114812228159954,"solvedRegime":"LOCKED_AFTER_SLIP","vectorRelativeError":0.3527777071855672},"N10":{"normalPercentError":0.18449434458751912,"solvedRegime":"LOCKED_AFTER_SLIP","vectorRelativeError":0.09527224671082915},"N5":{"normalPercentError":0.04893664341415816,"solvedRegime":"LOCKED_AFTER_SLIP","vectorRelativeError":0.19907052910377834},"referenceMagnitudeN":1233.2528585105686,"referenceRegime":"STUCK"},
+    "21860": {"D1":{"normalPercentError":0.05811327112390517,"solvedRegime":"LOCKED_AFTER_SLIP","vectorRelativeError":0.7176763698730769},"N10":{"normalPercentError":-0.001271387997109132,"solvedRegime":"LOCKED_AFTER_SLIP","vectorRelativeError":0.08088703304956046},"N5":{"normalPercentError":0.0013063418849732175,"solvedRegime":"LOCKED_AFTER_SLIP","vectorRelativeError":0.12222120542715735},"referenceMagnitudeN":2333.0087890625,"referenceRegime":"SLID"},
+    "21930": {"D1":{"normalPercentError":0.26587935146439073,"solvedRegime":"STUCK","vectorRelativeError":7.219148663680088},"N10":{"normalPercentError":0.004976054301072326,"solvedRegime":"STUCK","vectorRelativeError":2.292783980539465},"N5":{"normalPercentError":0.027078463086013062,"solvedRegime":"STUCK","vectorRelativeError":6.660452860624643},"referenceMagnitudeN":4.958818435668945,"referenceRegime":"STUCK"},
+    "22140": {"D1":{"normalPercentError":0.7757133775249642,"solvedRegime":"LOCKED_AFTER_SLIP","vectorRelativeError":1.7621881317667505},"N10":{"normalPercentError":-0.09561221717539495,"solvedRegime":"LOCKED_AFTER_SLIP","vectorRelativeError":0.11488061988768693},"N5":{"normalPercentError":-0.027219487656606513,"solvedRegime":"SLIDING","vectorRelativeError":0.11683875458569602},"referenceMagnitudeN":628.0620727539062,"referenceRegime":"STUCK"},
+    "22220": {"D1":{"normalPercentError":-0.2269848018510933,"solvedRegime":"LOCKED_AFTER_SLIP","vectorRelativeError":1.1157329837235288},"N10":{"normalPercentError":-0.05319100760615862,"solvedRegime":"LOCKED_AFTER_SLIP","vectorRelativeError":0.1360215957649986},"N5":{"normalPercentError":-0.0584572359768703,"solvedRegime":"LOCKED_AFTER_SLIP","vectorRelativeError":0.20240315780774543},"referenceMagnitudeN":409.7393492169647,"referenceRegime":"STUCK"},
+    "22260": {"D1":{"normalPercentError":0.04763188695843346,"solvedRegime":"LOCKED_AFTER_SLIP","vectorRelativeError":0.11261244073543603},"N10":{"normalPercentError":0.03186218340360074,"solvedRegime":"LOCKED_AFTER_SLIP","vectorRelativeError":1.6798338546936493},"N5":{"normalPercentError":0.03314445802037499,"solvedRegime":"LOCKED_AFTER_SLIP","vectorRelativeError":1.5423556918924533},"referenceMagnitudeN":500.9995362554062,"referenceRegime":"STUCK"},
+    "22310": {"D1":{"normalPercentError":0.05116039421765607,"solvedRegime":"LOCKED_AFTER_SLIP","vectorRelativeError":0.23288303055903742},"N10":{"normalPercentError":-0.010652124577801172,"solvedRegime":"LOCKED_AFTER_SLIP","vectorRelativeError":0.5634858976275684},"N5":{"normalPercentError":-0.010523316350020354,"solvedRegime":"LOCKED_AFTER_SLIP","vectorRelativeError":0.5473421428263401},"referenceMagnitudeN":330.2308654785156,"referenceRegime":"STUCK"},
+    "22370": {"D1":{"normalPercentError":-0.01126448575899314,"solvedRegime":"LOCKED_AFTER_SLIP","vectorRelativeError":0.6923253359515136},"N10":{"normalPercentError":0.014275174696758335,"solvedRegime":"LOCKED_AFTER_SLIP","vectorRelativeError":0.29209227070345717},"N5":{"normalPercentError":0.014239209822259995,"solvedRegime":"LOCKED_AFTER_SLIP","vectorRelativeError":0.43589350267307847},"referenceMagnitudeN":554.0442771058258,"referenceRegime":"SLID"}
+  },
+  "metrics": {
+    "D1": {"aboveProvisionalR1Floor":{"forceFloorN":87.5635027885437,"meanVectorRelativeError":0.30349846894155863,"vectorsCompared":22,"vectorsWithin10Percent":13,"worstVectorRelativeError":1.7621881317667505},"converged":true,"meanVectorRelativeError":0.6041789121910599,"medianVectorRelativeError":0.0877048607961271,"normalCount":23,"normalsWithin10Percent":23,"vectorsCompared":23,"vectorsWithin10Percent":13,"worstNormalPercentError":1.7946419675746734,"worstVectorRelativeError":7.219148663680088},
+    "N10": {"aboveProvisionalR1Floor":{"forceFloorN":87.5635027885437,"meanVectorRelativeError":0.17466354765232703,"vectorsCompared":22,"vectorsWithin10Percent":13,"worstVectorRelativeError":1.6798338546936493},"converged":true,"meanVectorRelativeError":0.2667557403865504,"medianVectorRelativeError":0.08329957569649343,"normalCount":23,"normalsWithin10Percent":23,"vectorsCompared":23,"vectorsWithin10Percent":13,"worstNormalPercentError":1.5066237414006074,"worstVectorRelativeError":2.292783980539465},
+    "N5": {"aboveProvisionalR1Floor":{"forceFloorN":87.5635027885437,"meanVectorRelativeError":0.18487777381934348,"vectorsCompared":22,"vectorsWithin10Percent":14,"worstVectorRelativeError":1.5423556918924533},"converged":true,"meanVectorRelativeError":0.4664245167239217,"medianVectorRelativeError":0.08203655900673908,"normalCount":23,"normalsWithin10Percent":23,"vectorsCompared":23,"vectorsWithin10Percent":14,"worstNormalPercentError":1.5082453697092628,"worstVectorRelativeError":6.660452860624643}
+  },
+  "n1Reproduction": {"maximumNumericDifference":0,"restraintsAndSummaryExactlyEqualToD1":true},
+  "rca": {
+    "N10": {"belowR1FloorRestraintIds":["21930:REST_PTR21:TYPE3:UY"],"constitutiveRegimeMatchCount":13,"directionDominatedRestraintIds":["22260:REST_PTR27:TYPE3:UY","22370:REST_PTR29:TYPE3:UY","22070:REST_PTR23:TYPE3:UY","21610:REST_PTR16:TYPE3:UY"],"genuineRegimeMismatchCount":10,"overMobilizedRestraintIds":["20440:REST_PTR8:TYPE3:UY","20090:REST_PTR2:TYPE3:UY","21800:REST_PTR19:TYPE3:UY"],"prematureRelockRestraintIds":["22370:REST_PTR29:TYPE3:UY","21610:REST_PTR16:TYPE3:UY","20710:REST_PTR13:TYPE3:UY","21860:REST_PTR20:TYPE3:UY","20580:REST_PTR11:TYPE3:UY","21470:REST_PTR14:TYPE3:UY","20350:REST_PTR6:TYPE3:UY"],"singleAxisReferenceOverCapRestraintIds":["20710:REST_PTR13:TYPE3:UY"],"vectorsWithin10Percent":13},
+    "N5": {"belowR1FloorRestraintIds":["21930:REST_PTR21:TYPE3:UY"],"constitutiveRegimeMatchCount":16,"directionDominatedRestraintIds":["22260:REST_PTR27:TYPE3:UY","21740:REST_PTR18:TYPE3:UY"],"genuineRegimeMismatchCount":7,"overMobilizedRestraintIds":["20520:REST_PTR9:TYPE3:UY"],"prematureRelockRestraintIds":["22370:REST_PTR29:TYPE3:UY","21860:REST_PTR20:TYPE3:UY","20710:REST_PTR13:TYPE3:UY","21610:REST_PTR16:TYPE3:UY","21470:REST_PTR14:TYPE3:UY"],"singleAxisReferenceOverCapRestraintIds":["20710:REST_PTR13:TYPE3:UY"],"vectorsWithin10Percent":14}
+  },
+  "schema": "m047-bm4l-stage2-load-continuation-evidence/v1",
+  "source": {"accdbByteLength":5136384,"accdbSha256":"64c05a50e9ed0452622ff5880335460486f24ac8e6adecc9a300b549c9aa82f8","pr1090FrozenHead":"12c695a9ed9a3dedada1d45024712df911069a80","pr1102HeadBeforeBatch":"ee777d92c6fa833e33639de58e16637855b2402f","productionSolverGitBlobSha":"aa4cc0402659d132e4012b8d8d7d84d9943428c7","productionSolverSha256":"9976cda40cdfd3214ce125d71a3ce5c5f30b33b7f5a9835231705d49b68dfbfa"},
+  "status": "MEASURED_REAL_PINNED_ACCDB"
+}

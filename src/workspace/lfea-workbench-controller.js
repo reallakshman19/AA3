@@ -7,6 +7,7 @@
 import { createLfeaWorkbenchStore } from './lfea-workbench-store.js';
 import { LfeaWorkbenchView } from './lfea-workbench-view.js';
 import { FeaBenchmarkPanel } from './fea-benchmark-panel.js';
+import { CaesarAccdbBenchmarkPanel } from './caesar-accdb-benchmark-panel.js';
 import {
   createLfeaWorkbenchAdapterProfile,
   createLfeaWorkbenchReviewProfile,
@@ -61,8 +62,12 @@ export class LfeaWorkbenchController {
         },
       },
     );
+    this.caesarAccdbBenchmarkHost = this.documentRef.createElement('div');
+    this.caesarAccdbBenchmarkHost.dataset.role = 'lfea-caesar-accdb-benchmark-host';
+    this.caesarAccdbBenchmarkPanel = new CaesarAccdbBenchmarkPanel(this.caesarAccdbBenchmarkHost);
     this.view.setBenchmarkHost(this.benchmarkHost);
     this.view.setConvergenceHost(this.convergenceHost);
+    this.view.setCaesarAccdbBenchmarkHost(this.caesarAccdbBenchmarkHost);
     this.unsubscribe = null;
   }
 
@@ -91,6 +96,7 @@ export class LfeaWorkbenchController {
       onBenchmark: () => this.runBenchmark(),
     });
     this.benchmarkPanel.render();
+    this.caesarAccdbBenchmarkPanel.render();
     this.convergenceController.init();
     this.unsubscribe = this.store.subscribe((state) => this.view.render(state));
     this.view.render(this.store.getState());
@@ -294,6 +300,7 @@ export class LfeaWorkbenchController {
     this.convergenceController.destroy();
     this.workerClient?.destroy();
     this.benchmarkPanel.destroy();
+    this.caesarAccdbBenchmarkPanel.destroy();
     this.unsubscribe?.();
     this.unsubscribe = null;
     this.store.destroy();

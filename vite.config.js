@@ -158,6 +158,13 @@ export function manualChunk(id) {
     return 'lafea-preflight-phase1';
   }
 
+  // Pure CSS-string leaf: a single exported function returning a template
+  // literal, no top-level state, no DOM access, no singleton. Its only
+  // consumer (workspace-layout.js) calls it and inserts the returned string,
+  // so splitting it changes nothing about evaluation order.
+  if (source.endsWith('/src/workspace/workspace-shell-styles.js')) {
+    return 'application-shell-css';
+  }
   // Rollup must own the complete stateful workspace graph so evaluation order
   // follows static dependency analysis rather than filename-based partitions.
   if (source.includes('/src/workspace/')) return undefined;

@@ -1,4 +1,4 @@
-import { semanticHash } from '../shared-piping-model/index.js';
+import { semanticHash } from '../shared-primitives/canonical-json.js';
 export function reconstructResultHashes(result) {
   const payload = { ...result };
   delete payload.semanticHashes;

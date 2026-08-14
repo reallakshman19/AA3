@@ -94,12 +94,21 @@ function buildLoadCaseParity(actual, parsedCases) {
     if (!printed) throw new Error(`Pinned Load Case Report is missing ${caseId}.`);
     const mechanics = actual.mechanics?.cases?.[caseId];
     if (!mechanics) throw new Error(`Actual mechanics evidence is missing ${caseId}.`);
-    const actualFriction = mechanics.effectiveConfiguration?.friction?.value ?? null;
+    // The printed report supplies a friction multiplier, not a coefficient. It is
+    // compared against the resolved load-case multiplier; the model coefficient is
+    // a separate governed quantity and the two must never be equated.
+    const frictionAuthority = mechanics.frictionAuthority ?? null;
+    const actualFriction = frictionAuthority?.frictionMultiplier?.value ?? null;
+    const actualModelCoefficient = frictionAuthority?.coefficient?.value ?? null;
+    const actualEffective = frictionAuthority?.effectiveCoefficient ?? null;
     const actualElastic = mechanics.effectiveConfiguration?.flexibilityElasticModulus?.value ?? null;
     const expressionPass = normalizedExpression(mechanics.formula) === expected.expression
       && printed.expression === expected.expression;
-    const frictionPass = expected.frictionMultiplier === undefined
-      || (printed.frictionMultiplier === expected.frictionMultiplier && actualFriction === expected.frictionMultiplier);
+    const productPass = frictionAuthority === null
+      || actualEffective === (actualModelCoefficient ?? 0) * (actualFriction ?? 0)
+      || frictionAuthority.kind === 'DERIVED_COMBINATION';
+    const frictionPass = productPass && (expected.frictionMultiplier === undefined
+      || (printed.frictionMultiplier === expected.frictionMultiplier && actualFriction === expected.frictionMultiplier));
     const elasticPass = expected.elasticModulus === undefined
       || (printed.elasticModulus === expected.elasticModulus && actualElastic === expected.elasticModulus);
     const combinationPass = expected.combinationMethod === undefined
@@ -111,6 +120,8 @@ function buildLoadCaseParity(actual, parsedCases) {
       actual: Object.freeze({
         formula: normalizedExpression(mechanics.formula),
         frictionMultiplier: actualFriction,
+        modelCoefficientOfFriction: actualModelCoefficient,
+        effectiveCoefficientOfFriction: actualEffective,
         elasticModulus: actualElastic,
       }),
       status: expressionPass && frictionPass && elasticPass && combinationPass ? 'PASS' : 'FAIL',

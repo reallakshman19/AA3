@@ -10,7 +10,9 @@ import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import {
   CAESAR_CONFIGURATION_PRECEDENCE,
+  CAESAR_CONFIGURATION_PRECEDENCE_DIRECTION,
   normalizeCaesarConfigurationAuthority,
+  resolveCaesarConfigurationLedger,
   resolveCaesarConfigurationSetting,
 } from '../src/core/fea-benchmarks/caesar-configuration-authority.js';
 
@@ -43,18 +45,30 @@ assert.equal(
   resolveCaesarConfigurationSetting(authority, 'DEFAULT_ROT_RESTRAINT_STIFF', null).value.value,
   1e12,
 );
+assert.equal(authority.precedenceDirection, CAESAR_CONFIGURATION_PRECEDENCE_DIRECTION);
 for (const caseId of ['L19', 'L20']) {
-  const friction = resolveCaesarConfigurationSetting(
+  // The model input is the highest-authority coefficient; a load case scales it
+  // with a separate multiplier and never replaces it.
+  const coefficient = resolveCaesarConfigurationSetting(
     authority,
     'COEFFICIENT_OF_FRICTION_MU',
     caseId,
   );
-  assert.equal(friction.level, 'LOAD_CASE_SETTING');
-  assert.equal(friction.value, 0);
+  assert.equal(coefficient.level, 'MODEL_INPUT');
+  assert.equal(coefficient.value, 0.3);
+  const multiplier = resolveCaesarConfigurationSetting(authority, 'FRICTION_MULTIPLIER', caseId);
+  assert.equal(multiplier.level, 'LOAD_CASE_SETTING');
+  assert.equal(multiplier.value, 0);
   assert.equal(
     resolveCaesarConfigurationSetting(authority, 'FLEXIBILITY_ELASTIC_MODULUS', caseId).value,
     'EC',
   );
+  const ledger = resolveCaesarConfigurationLedger(authority, 'COEFFICIENT_OF_FRICTION_MU', caseId);
+  assert.deepEqual(
+    ledger.candidates.filter((entry) => entry.declared).map((entry) => entry.level),
+    ['OVERALL_GLOBAL_DEFAULT', 'MODEL_INPUT'],
+  );
+  assert.equal(ledger.resolved.level, 'MODEL_INPUT');
 }
 assert.throws(
   () => resolveCaesarConfigurationSetting(authority, 'B31J_SMOOTH_90_CORRECTION', null),
@@ -65,7 +79,14 @@ assert.throws(
     ...profile.configurationAuthority,
     precedence: [...CAESAR_CONFIGURATION_PRECEDENCE].reverse(),
   }),
-  /precedence must be/u,
+  /precedence must be declared lowest authority first/u,
+);
+assert.throws(
+  () => normalizeCaesarConfigurationAuthority({
+    ...profile.configurationAuthority,
+    precedenceDirection: 'HIGHEST_TO_LOWEST_AUTHORITY',
+  }),
+  /precedenceDirection must be/u,
 );
 
 process.stdout.write('CAESAR configuration authority: PASS\n');

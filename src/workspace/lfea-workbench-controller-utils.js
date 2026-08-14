@@ -1,11 +1,12 @@
 import { FEA_BENCHMARK_STYLES } from './fea-benchmark-styles.js';
 import { LFEA_WORKBENCH_STYLES } from './lfea-workbench-styles.js';
+import { CAESAR_ACCDB_BENCHMARK_STYLES } from './caesar-accdb-benchmark-styles.js';
 
 export function installLfeaWorkbenchStyles(documentRef) {
   if (!documentRef || documentRef.querySelector('[data-lfea-workbench-styles]')) return;
   const style = documentRef.createElement('style');
   style.dataset.lfeaWorkbenchStyles = 'true';
-  style.textContent = `${LFEA_WORKBENCH_STYLES}\n${FEA_BENCHMARK_STYLES}`;
+  style.textContent = `${LFEA_WORKBENCH_STYLES}\n${FEA_BENCHMARK_STYLES}\n${CAESAR_ACCDB_BENCHMARK_STYLES}`;
   documentRef.head?.append(style);
 }
 

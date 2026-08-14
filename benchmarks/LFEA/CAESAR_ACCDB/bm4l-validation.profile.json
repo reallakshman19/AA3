@@ -78,7 +78,7 @@
       "relative": 0.1,
       "scaleFloor": 0,
       "comparisonMode": "LITERAL_RELATIVE_WITH_ZERO_ABSOLUTE",
-      "zeroReferenceAbsolute": 0.0000017453292519943296
+      "zeroReferenceAbsolute": 1.7453292519943296e-06
     },
     "FORCE": {
       "absolute": 0,
@@ -141,10 +141,10 @@
     "schema": "caesar-configuration-authority/v1",
     "caesarVersion": "14.000",
     "precedence": [
-      "LOAD_CASE_SETTING",
+      "OVERALL_GLOBAL_DEFAULT",
       "INDIVIDUAL_FILE_SETTING",
-      "MODEL_INPUT",
-      "OVERALL_GLOBAL_DEFAULT"
+      "LOAD_CASE_SETTING",
+      "MODEL_INPUT"
     ],
     "layers": {
       "overallGlobalDefault": {
@@ -163,7 +163,7 @@
           },
           "FRICT_STIF": {
             "value": 1000000,
-            "unit": "DISPLAYED_CAESAR_UNITS"
+            "unit": "CAESAR_INTERNAL_ENGLISH_UNITS"
           },
           "MIN_WALL_MILL_TOLERANCE_PERCENT": 12.5,
           "AMBIENT_TEMPERATURE": {
@@ -187,7 +187,7 @@
         }
       },
       "modelInput": {
-        "source": "BM4_L_ACCDB_MODEL_INPUT",
+        "source": "BM4_L_ACCDB_MODEL_INPUT_HIGHEST_AUTHORITY_COEFFICIENT",
         "settings": {
           "COEFFICIENT_OF_FRICTION_MU": 0.3
         }
@@ -204,42 +204,47 @@
         }
       },
       "loadCase": {
-        "source": "USER_VERIFIED_BM4_L_CASE_SETTINGS_2026-08-10",
+        "source": "USER_VERIFIED_BM4_L_CASE_SETTINGS_2026-08-10_PLUS_ISSUE_1083_LOADCASEREPORT_FRICTION_MULTIPLIERS",
         "cases": {
-          "L1": {},
+          "L1": {
+            "FRICTION_MULTIPLIER": 1.0
+          },
           "L2": {
-            "COEFFICIENT_OF_FRICTION_MU": 0
+            "FRICTION_MULTIPLIER": 0
           },
           "L3": {
-            "COEFFICIENT_OF_FRICTION_MU": 0,
-            "FLEXIBILITY_ELASTIC_MODULUS": "EC"
+            "FLEXIBILITY_ELASTIC_MODULUS": "EC",
+            "FRICTION_MULTIPLIER": 0
           },
           "L4": {
-            "COEFFICIENT_OF_FRICTION_MU": 0
+            "FRICTION_MULTIPLIER": 0
           },
           "L5": {
-            "COEFFICIENT_OF_FRICTION_MU": 0,
-            "FLEXIBILITY_ELASTIC_MODULUS": "EC"
+            "FLEXIBILITY_ELASTIC_MODULUS": "EC",
+            "FRICTION_MULTIPLIER": 0
           },
           "L6": {
-            "COEFFICIENT_OF_FRICTION_MU": 0
+            "FRICTION_MULTIPLIER": 0
           },
           "L7": {
-            "FLEXIBILITY_ELASTIC_MODULUS": "EC"
+            "FLEXIBILITY_ELASTIC_MODULUS": "EC",
+            "FRICTION_MULTIPLIER": 1.0
           },
-          "L13": {},
-          "L14": {
-            "COEFFICIENT_OF_FRICTION_MU": 0
+          "L13": {
+            "FRICTION_MULTIPLIER": 1.0
           },
+          "L14": {},
           "L15": {}
         }
       }
     },
-    "unresolvedSettings": []
+    "unresolvedSettings": [],
+    "precedenceDirection": "LOWEST_TO_HIGHEST_AUTHORITY",
+    "precedenceSource": "OWNER_DIRECTED_ISSUE_1083_OVERALL_GLOBAL_DEFAULT_LT_INDIVIDUAL_FILE_LT_LOAD_CASE_LT_MODEL_INPUT"
   },
   "linearSolve": {
     "thermalExpansion": {
-      "coefficientPerKelvin": 0.000012231989994646464,
+      "coefficientPerKelvin": 1.2231989994646464e-05,
       "authorityStatus": "RESOLVED",
       "source": "BM4_L_L3_54_NON_TEE_STRAIGHT_ENDPOINT_KINEMATICS_AND_AXIAL_END_FORCE_RECONSTRUCTION_COMMON_179C4831_MISC_ROUNDING_PARITY_2026-08-11"
     },
@@ -270,6 +275,13 @@
       "enabled": true,
       "method": "DISCRETIZED_CURVED_CENTRELINE_AXIAL_DOF_V1",
       "source": "BM4_L_CONFIGURATION_AUTHORITY:BEND_AXIAL_SHAPE"
+    },
+    "hydrotestBasis": {
+      "testFluidDensityKgPerM3": 1000,
+      "temperatureBasis": "AMBIENT_INSTALLATION_TEMPERATURE",
+      "pressureField": "HYDRO_PRESSURE",
+      "authorityStatus": "RESOLVED",
+      "source": "OWNER_DECLARED_ISSUE_1083_FOLLOW_UP_HYDROTEST_FLUID_DENSITY_1000_KG_PER_M3_AT_AMBIENT_TEMPERATURE"
     }
   }
 }

@@ -13,39 +13,142 @@ import {
   createCaesarAccdbQualificationAdapter,
   normalizeBenchmarkResultRows,
   requiredCaesarAccdbTables,
+  resolveCaesarFrictionAuthorityTable,
+  runCaesarAccdbFrictionStiffnessSensitivity,
   runGovernedBenchmarkQualification,
+  solveCaesarAccdbFrictionBenchmark,
   solveCaesarAccdbLinearBenchmark,
+  verifyCaesarAccdbFrictionDeterminism,
 } from '../src/core/fea-benchmarks/index.js';
+import { extractCaesarAccdbTables } from '../src/core/fea-benchmarks/caesar-accdb-reader.js';
 import { canonicalPrettyStringify, semanticHash } from '../src/core/shared-piping-model/canonical-json.js';
 
 const SCRIPT_DIR = dirname(fileURLToPath(import.meta.url));
 const EXPORT_SCRIPT = resolve(SCRIPT_DIR, 'lfea-caesar-accdb-export.ps1');
 
-/** Load, normalize and optionally compare one CAESAR ACCDB benchmark profile. */
-export function runCaesarAccdbBenchmark(input) {
-  const profile = readJson(input.profilePath, 'benchmark profile');
+/**
+ * Load, normalize and optionally compare one CAESAR ACCDB benchmark profile.
+ *
+ * `rawExport` is accepted so a portable check can drive the whole reference,
+ * qualification and reporting path with a deterministic fixture. Production runs
+ * omit it and extract the pinned ACCDB through the ACE provider.
+ */
+export async function runCaesarAccdbBenchmark(input) {
+  const profile = input.profile ?? readJson(input.profilePath, 'benchmark profile');
   const tableNames = requiredCaesarAccdbTables(profile);
-  const rawExport = extractAccdb(input.accdbPath, tableNames);
+  const rawExport = input.rawExport ?? await extractAccdbTables({
+    accdbPath: input.accdbPath,
+    tableNames,
+    extractor: input.extractor ?? 'js',
+    expectedSha256: input.expectedAccdbSha256 ?? undefined,
+  });
   const benchmarkPackage = buildCaesarAccdbBenchmarkPackage({ rawExport, profile });
   if (input.solveLinear === true && input.actualPath !== null) {
     throw new TypeError('--solve-linear and --actual are mutually exclusive.');
   }
+  const frictionCaseIds = input.solveFrictionCaseIds ?? [];
   const requestedSolveCaseIds = input.solveCaseIds ?? [];
   const solveCaseIds = requestedSolveCaseIds.length === 0
-    ? benchmarkPackage.cases.map((row) => row.caseId)
+    ? benchmarkPackage.cases.map((row) => row.caseId).filter((caseId) => !frictionCaseIds.includes(caseId))
     : requestedSolveCaseIds;
+  const overlap = solveCaseIds.filter((caseId) => frictionCaseIds.includes(caseId));
+  if (overlap.length > 0) {
+    throw new TypeError(`Cases cannot be solved by both solvers: ${overlap.join(', ')}.`);
+  }
   const actual = input.solveLinear === true
-    ? solveCaesarAccdbLinearBenchmark(benchmarkPackage, solveCaseIds)
+    ? mergeSolvedPackages(
+      solveCaesarAccdbLinearBenchmark(benchmarkPackage, solveCaseIds),
+      frictionCaseIds.length === 0
+        ? null
+        : solveCaesarAccdbFrictionBenchmark(benchmarkPackage, frictionCaseIds),
+    )
     : input.actualPath === null ? null : readJson(input.actualPath, 'actual solver result');
   if (input.actualOutPath !== null) {
     if (actual === null) throw new TypeError('--actual-out requires --solve-linear true or --actual.');
     writeJson(actual, input.actualOutPath);
   }
+  if ((input.frictionEvidenceOutPath ?? null) !== null) {
+    if (frictionCaseIds.length === 0) {
+      throw new TypeError('--friction-evidence-out requires --solve-friction-cases.');
+    }
+    writeJson(
+      buildFrictionRunEvidence(benchmarkPackage, frictionCaseIds),
+      input.frictionEvidenceOutPath,
+    );
+  }
   const qualification = actual === null ? null : qualifyActual(benchmarkPackage, actual);
   return buildReport(benchmarkPackage, qualification, actual);
 }
 
-function extractAccdb(accdbPath, tableNames) {
+/**
+ * Merge the linear and nonlinear friction result packages into one actual.
+ *
+ * The two solvers keep separate mechanics evidence blocks so a friction run can
+ * never be mistaken for the qualified linear evidence, while `mechanics.cases`
+ * stays a single per-case index for downstream reports.
+ */
+function mergeSolvedPackages(linear, friction) {
+  if (friction === null) return linear;
+  if (linear.sourceAccdbSha256 !== friction.sourceAccdbSha256) {
+    throw new TypeError('Linear and friction solver results are bound to different ACCDB sources.');
+  }
+  return Object.freeze({
+    schema: linear.schema,
+    sourceAccdbSha256: linear.sourceAccdbSha256,
+    cases: { ...linear.cases, ...friction.cases },
+    mechanics: {
+      schema: 'lfea-accdb-combined-solve-evidence/v1',
+      sourceModelSemanticHash: linear.mechanics.sourceModelSemanticHash,
+      linear: linear.mechanics,
+      friction: friction.mechanics,
+      cases: { ...linear.mechanics.cases, ...friction.mechanics.cases },
+      limitations: [...linear.mechanics.limitations, ...friction.mechanics.limitations],
+    },
+  });
+}
+
+/**
+ * Build the repeated-run and stiffness-sensitivity evidence for a friction run.
+ *
+ * Sensitivity covers the primitive cases only: a derived combination performs no
+ * nonlinear solve, so a stiffness scale has nothing to act on there.
+ */
+function buildFrictionRunEvidence(benchmarkPackage, frictionCaseIds) {
+  const table = resolveCaesarFrictionAuthorityTable({
+    authority: benchmarkPackage.profile.configurationAuthority,
+    cases: benchmarkPackage.cases,
+    inputUnitRows: benchmarkPackage.model.tables.INPUT_UNITS.rows,
+  });
+  const primitives = frictionCaseIds.filter((caseId) => table.cases[caseId].kind === 'PRIMITIVE');
+  return Object.freeze({
+    schema: 'm047-bm4l-stage2-friction-run-evidence/v1',
+    sourceAccdbSha256: benchmarkPackage.source.sha256,
+    frictionCaseIds: [...frictionCaseIds],
+    primitiveCaseIds: primitives,
+    determinism: verifyCaesarAccdbFrictionDeterminism(benchmarkPackage, frictionCaseIds),
+    stiffnessSensitivity: primitives.length === 0
+      ? null
+      : runCaesarAccdbFrictionStiffnessSensitivity(benchmarkPackage, primitives),
+  });
+}
+
+/**
+ * Extract the profile's tables with the requested provider.
+ *
+ * `js` is the portable default and runs on any platform. `ace` keeps the
+ * Microsoft ACE OLE DB path available on Windows for provider cross-checks.
+ */
+async function extractAccdbTables({ accdbPath, tableNames, extractor, expectedSha256 }) {
+  if (!['js', 'ace'].includes(extractor)) {
+    throw new TypeError(`Unsupported ACCDB extractor ${String(extractor)}; use js or ace.`);
+  }
+  if (extractor === 'js') {
+    return extractCaesarAccdbTables({ accdbPath, tableNames, expectedSha256 });
+  }
+  return extractAccdbWithAce(accdbPath, tableNames);
+}
+
+function extractAccdbWithAce(accdbPath, tableNames) {
   if (process.platform !== 'win32') {
     throw new Error('Direct ACCDB extraction currently requires Windows and the Microsoft ACE OLE DB provider.');
   }
@@ -226,12 +329,26 @@ function comparisonError(row) {
   };
 }
 
+/**
+ * Compare each single-term difference of solved cases against the same
+ * difference of the CAESAR reference.
+ *
+ * A pair is formed only between cases that share one governed effective
+ * friction state. Differencing a friction case against a non-friction case would
+ * label a friction change as a thermal or pressure term, and a nonlinear state
+ * has no valid linear decomposition.
+ */
 function buildDerivedLinearCases(benchmarkPackage, actual) {
   if (actual === null) return [];
   const referenceByCase = new Map(benchmarkPackage.cases.map((row) => [
     row.caseId,
     benchmarkPackage.references[row.caseId].rows,
   ]));
+  const frictionTable = resolveCaesarFrictionAuthorityTable({
+    authority: benchmarkPackage.profile.configurationAuthority,
+    cases: benchmarkPackage.cases,
+    inputUnitRows: benchmarkPackage.model.tables.INPUT_UNITS.rows,
+  });
   const results = [];
   for (const minuend of benchmarkPackage.cases) {
     if (!actual.cases[minuend.caseId]) continue;
@@ -239,6 +356,8 @@ function buildDerivedLinearCases(benchmarkPackage, actual) {
     for (const subtrahend of benchmarkPackage.cases) {
       if (minuend.caseId === subtrahend.caseId) continue;
       if (!actual.cases[subtrahend.caseId]) continue;
+      if (frictionTable.cases[minuend.caseId].effectiveCoefficient
+        !== frictionTable.cases[subtrahend.caseId].effectiveCoefficient) continue;
       const subtrahendTerms = formulaTerms(subtrahend.formula);
       if (!isProperSubset(subtrahendTerms, minuendTerms)) continue;
       const addedTerms = minuendTerms.filter((term) => !subtrahendTerms.includes(term));
@@ -427,8 +546,8 @@ function parseArguments(argv) {
   }
   const accdbPath = accepted.get('--accdb');
   const profilePath = accepted.get('--profile');
-  if (!accdbPath || !profilePath) throw new TypeError('Usage: --accdb <file.accdb> --profile <profile.json> [--solve-linear true] [--solve-cases L2,L3] [--actual <actual.json>] [--actual-out <actual.json>] [--summary-out <summary.md>] [--out <report.json>].');
-  const known = new Set(['--accdb', '--profile', '--solve-linear', '--solve-cases', '--actual', '--actual-out', '--summary-out', '--out']);
+  if (!accdbPath || !profilePath) throw new TypeError('Usage: --accdb <file.accdb> --profile <profile.json> [--solve-linear true] [--solve-cases L2,L3] [--solve-friction-cases L13,L7,L15] [--actual <actual.json>] [--actual-out <actual.json>] [--friction-evidence-out <friction-evidence.json>] [--extractor js|ace] [--expected-accdb-sha256 <hex>] [--summary-out <summary.md>] [--out <report.json>].');
+  const known = new Set(['--accdb', '--profile', '--solve-linear', '--solve-cases', '--solve-friction-cases', '--actual', '--actual-out', '--friction-evidence-out', '--extractor', '--expected-accdb-sha256', '--summary-out', '--out']);
   const unknown = [...accepted.keys()].filter((key) => !known.has(key));
   if (unknown.length > 0) throw new TypeError(`Unknown command arguments: ${unknown.join(', ')}.`);
   const solveLinearValue = accepted.get('--solve-linear');
@@ -439,13 +558,21 @@ function parseArguments(argv) {
   if (solveCaseIds.length > 0 && solveLinearValue?.toLowerCase() !== 'true') {
     throw new TypeError('--solve-cases requires --solve-linear true.');
   }
+  const solveFrictionCaseIds = parseCaseIds(accepted.get('--solve-friction-cases'));
+  if (solveFrictionCaseIds.length > 0 && solveLinearValue?.toLowerCase() !== 'true') {
+    throw new TypeError('--solve-friction-cases requires --solve-linear true.');
+  }
   return Object.freeze({
     accdbPath,
     profilePath,
     solveLinear: solveLinearValue?.toLowerCase() === 'true',
     solveCaseIds,
+    solveFrictionCaseIds,
     actualPath: accepted.get('--actual') ?? null,
     actualOutPath: accepted.get('--actual-out') ?? null,
+    frictionEvidenceOutPath: accepted.get('--friction-evidence-out') ?? null,
+    extractor: (accepted.get('--extractor') ?? 'js').toLowerCase(),
+    expectedAccdbSha256: accepted.get('--expected-accdb-sha256') ?? null,
     summaryOutPath: accepted.get('--summary-out') ?? null,
     outPath: accepted.get('--out') ?? null,
   });
@@ -469,8 +596,11 @@ function writeRestraintSummary(report, path) {
   if (report.restraintBasis === null) throw new TypeError('--summary-out requires actual solver results.');
   const authority = report.configurationAuthority;
   const caseBoundaries = Object.entries(report.mechanics?.cases ?? {}).map(([caseId, evidence]) => {
-    const friction = evidence.effectiveConfiguration?.friction;
-    return `${caseId} effective mu=${String(friction?.value)} (${String(friction?.level)})`;
+    const friction = evidence.frictionAuthority;
+    if (friction === undefined) return `${caseId} friction authority absent`;
+    return `${caseId} effective mu=${String(friction.effectiveCoefficient)} `
+      + `(model mu ${String(friction.coefficient.value)} from ${String(friction.coefficient.level)} `
+      + `x multiplier ${String(friction.frictionMultiplier.value)})`;
   });
   const lines = [
     `# ${report.benchmarkId} restraint, displacement, and global element benchmark basis`,
@@ -587,7 +717,7 @@ function writeReport(report, outPath) {
 if (process.argv[1] && resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {
   try {
     const input = parseArguments(process.argv.slice(2));
-    const report = runCaesarAccdbBenchmark(input);
+    const report = await runCaesarAccdbBenchmark(input);
     if (input.summaryOutPath !== null) writeRestraintSummary(report, input.summaryOutPath);
     writeReport(report, input.outPath);
   } catch (error) {

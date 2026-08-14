@@ -1,0 +1,3509 @@
+{
+  "authorityRule": "CONFIGURATION_PRECEDENCE_MIGRATION_MUST_NOT_CHANGE_ANY_NON_FRICTION_RESULT_ROW",
+  "capturedFrom": {
+    "fixtureModule": "src/core/fea-benchmarks/caesar-accdb-friction-fixture.js",
+    "fixtureSourceSha256": "00000000000000000000000000000000000000000000000000000000000000ff",
+    "frictionDeclaration": "SUPERSEDED_LOAD_CASE_MU_OVERRIDE",
+    "gitHeadAtCapture": "e977bd15a0fbe30492514d7ad29ae52c998c50c8",
+    "precedenceAtCapture": [
+      "LOAD_CASE_SETTING",
+      "INDIVIDUAL_FILE_SETTING",
+      "MODEL_INPUT",
+      "OVERALL_GLOBAL_DEFAULT"
+    ],
+    "solver": "solveCaesarAccdbLinearBenchmark"
+  },
+  "caseIds": [
+    "L5",
+    "L6",
+    "L14"
+  ],
+  "cases": {
+    "L14": {
+      "executionSemanticHash": "fnv1a64:b059962cf7b1b943",
+      "recoveredEquilibriumStatus": "PASS",
+      "rowCount": 144,
+      "rows": [
+        {
+          "component": "UX",
+          "entityId": "10",
+          "entityKind": "NODE",
+          "quantity": "DISPLACEMENT",
+          "unit": "m",
+          "value": 0
+        },
+        {
+          "component": "UY",
+          "entityId": "10",
+          "entityKind": "NODE",
+          "quantity": "DISPLACEMENT",
+          "unit": "m",
+          "value": 0
+        },
+        {
+          "component": "UZ",
+          "entityId": "10",
+          "entityKind": "NODE",
+          "quantity": "DISPLACEMENT",
+          "unit": "m",
+          "value": 0
+        },
+        {
+          "component": "RX",
+          "entityId": "10",
+          "entityKind": "NODE",
+          "quantity": "ROTATION",
+          "unit": "rad",
+          "value": 0
+        },
+        {
+          "component": "RY",
+          "entityId": "10",
+          "entityKind": "NODE",
+          "quantity": "ROTATION",
+          "unit": "rad",
+          "value": 0
+        },
+        {
+          "component": "RZ",
+          "entityId": "10",
+          "entityKind": "NODE",
+          "quantity": "ROTATION",
+          "unit": "rad",
+          "value": 0
+        },
+        {
+          "component": "UX",
+          "entityId": "20",
+          "entityKind": "NODE",
+          "quantity": "DISPLACEMENT",
+          "unit": "m",
+          "value": 0.0063117068372375755
+        },
+        {
+          "component": "UY",
+          "entityId": "20",
+          "entityKind": "NODE",
+          "quantity": "DISPLACEMENT",
+          "unit": "m",
+          "value": 0
+        },
+        {
+          "component": "UZ",
+          "entityId": "20",
+          "entityKind": "NODE",
+          "quantity": "DISPLACEMENT",
+          "unit": "m",
+          "value": 0
+        },
+        {
+          "component": "RX",
+          "entityId": "20",
+          "entityKind": "NODE",
+          "quantity": "ROTATION",
+          "unit": "rad",
+          "value": 0
+        },
+        {
+          "component": "RY",
+          "entityId": "20",
+          "entityKind": "NODE",
+          "quantity": "ROTATION",
+          "unit": "rad",
+          "value": 0
+        },
+        {
+          "component": "RZ",
+          "entityId": "20",
+          "entityKind": "NODE",
+          "quantity": "ROTATION",
+          "unit": "rad",
+          "value": 0
+        },
+        {
+          "component": "UX",
+          "entityId": "30",
+          "entityKind": "NODE",
+          "quantity": "DISPLACEMENT",
+          "unit": "m",
+          "value": 0.012623413674475151
+        },
+        {
+          "component": "UY",
+          "entityId": "30",
+          "entityKind": "NODE",
+          "quantity": "DISPLACEMENT",
+          "unit": "m",
+          "value": 0
+        },
+        {
+          "component": "UZ",
+          "entityId": "30",
+          "entityKind": "NODE",
+          "quantity": "DISPLACEMENT",
+          "unit": "m",
+          "value": 0
+        },
+        {
+          "component": "RX",
+          "entityId": "30",
+          "entityKind": "NODE",
+          "quantity": "ROTATION",
+          "unit": "rad",
+          "value": 0
+        },
+        {
+          "component": "RY",
+          "entityId": "30",
+          "entityKind": "NODE",
+          "quantity": "ROTATION",
+          "unit": "rad",
+          "value": 0
+        },
+        {
+          "component": "RZ",
+          "entityId": "30",
+          "entityKind": "NODE",
+          "quantity": "ROTATION",
+          "unit": "rad",
+          "value": 0
+        },
+        {
+          "component": "UX",
+          "entityId": "40",
+          "entityKind": "NODE",
+          "quantity": "DISPLACEMENT",
+          "unit": "m",
+          "value": 0.012623413674475151
+        },
+        {
+          "component": "UY",
+          "entityId": "40",
+          "entityKind": "NODE",
+          "quantity": "DISPLACEMENT",
+          "unit": "m",
+          "value": 0
+        },
+        {
+          "component": "UZ",
+          "entityId": "40",
+          "entityKind": "NODE",
+          "quantity": "DISPLACEMENT",
+          "unit": "m",
+          "value": 0.0063117068372375755
+        },
+        {
+          "component": "RX",
+          "entityId": "40",
+          "entityKind": "NODE",
+          "quantity": "ROTATION",
+          "unit": "rad",
+          "value": 0
+        },
+        {
+          "component": "RY",
+          "entityId": "40",
+          "entityKind": "NODE",
+          "quantity": "ROTATION",
+          "unit": "rad",
+          "value": 0
+        },
+        {
+          "component": "RZ",
+          "entityId": "40",
+          "entityKind": "NODE",
+          "quantity": "ROTATION",
+          "unit": "rad",
+          "value": 0
+        },
+        {
+          "component": "UX",
+          "entityId": "10",
+          "entityKind": "NODE",
+          "quantity": "FORCE",
+          "unit": "N",
+          "value": 0
+        },
+        {
+          "component": "UY",
+          "entityId": "10",
+          "entityKind": "NODE",
+          "quantity": "FORCE",
+          "unit": "N",
+          "value": 0
+        },
+        {
+          "component": "UZ",
+          "entityId": "10",
+          "entityKind": "NODE",
+          "quantity": "FORCE",
+          "unit": "N",
+          "value": 0
+        },
+        {
+          "component": "RX",
+          "entityId": "10",
+          "entityKind": "NODE",
+          "quantity": "MOMENT",
+          "unit": "N*m",
+          "value": 0
+        },
+        {
+          "component": "RY",
+          "entityId": "10",
+          "entityKind": "NODE",
+          "quantity": "MOMENT",
+          "unit": "N*m",
+          "value": 0
+        },
+        {
+          "component": "RZ",
+          "entityId": "10",
+          "entityKind": "NODE",
+          "quantity": "MOMENT",
+          "unit": "N*m",
+          "value": 0
+        },
+        {
+          "component": "UX",
+          "entityId": "20",
+          "entityKind": "NODE",
+          "quantity": "FORCE",
+          "unit": "N",
+          "value": 0
+        },
+        {
+          "component": "UY",
+          "entityId": "20",
+          "entityKind": "NODE",
+          "quantity": "FORCE",
+          "unit": "N",
+          "value": 0
+        },
+        {
+          "component": "UZ",
+          "entityId": "20",
+          "entityKind": "NODE",
+          "quantity": "FORCE",
+          "unit": "N",
+          "value": 0
+        },
+        {
+          "component": "RX",
+          "entityId": "20",
+          "entityKind": "NODE",
+          "quantity": "MOMENT",
+          "unit": "N*m",
+          "value": 0
+        },
+        {
+          "component": "RY",
+          "entityId": "20",
+          "entityKind": "NODE",
+          "quantity": "MOMENT",
+          "unit": "N*m",
+          "value": 0
+        },
+        {
+          "component": "RZ",
+          "entityId": "20",
+          "entityKind": "NODE",
+          "quantity": "MOMENT",
+          "unit": "N*m",
+          "value": 0
+        },
+        {
+          "component": "UX",
+          "entityId": "30",
+          "entityKind": "NODE",
+          "quantity": "FORCE",
+          "unit": "N",
+          "value": 0
+        },
+        {
+          "component": "UY",
+          "entityId": "30",
+          "entityKind": "NODE",
+          "quantity": "FORCE",
+          "unit": "N",
+          "value": 0
+        },
+        {
+          "component": "UZ",
+          "entityId": "30",
+          "entityKind": "NODE",
+          "quantity": "FORCE",
+          "unit": "N",
+          "value": 0
+        },
+        {
+          "component": "RX",
+          "entityId": "30",
+          "entityKind": "NODE",
+          "quantity": "MOMENT",
+          "unit": "N*m",
+          "value": 0
+        },
+        {
+          "component": "RY",
+          "entityId": "30",
+          "entityKind": "NODE",
+          "quantity": "MOMENT",
+          "unit": "N*m",
+          "value": 0
+        },
+        {
+          "component": "RZ",
+          "entityId": "30",
+          "entityKind": "NODE",
+          "quantity": "MOMENT",
+          "unit": "N*m",
+          "value": 0
+        },
+        {
+          "component": "UX",
+          "entityId": "40",
+          "entityKind": "NODE",
+          "quantity": "FORCE",
+          "unit": "N",
+          "value": 0
+        },
+        {
+          "component": "UY",
+          "entityId": "40",
+          "entityKind": "NODE",
+          "quantity": "FORCE",
+          "unit": "N",
+          "value": 0
+        },
+        {
+          "component": "UZ",
+          "entityId": "40",
+          "entityKind": "NODE",
+          "quantity": "FORCE",
+          "unit": "N",
+          "value": 0
+        },
+        {
+          "component": "RX",
+          "entityId": "40",
+          "entityKind": "NODE",
+          "quantity": "MOMENT",
+          "unit": "N*m",
+          "value": 0
+        },
+        {
+          "component": "RY",
+          "entityId": "40",
+          "entityKind": "NODE",
+          "quantity": "MOMENT",
+          "unit": "N*m",
+          "value": 0
+        },
+        {
+          "component": "RZ",
+          "entityId": "40",
+          "entityKind": "NODE",
+          "quantity": "MOMENT",
+          "unit": "N*m",
+          "value": 0
+        },
+        {
+          "component": "UX",
+          "entityId": "10",
+          "entityKind": "NODE",
+          "quantity": "INCIDENT_GLOBAL_FORCE",
+          "unit": "N",
+          "value": 0
+        },
+        {
+          "component": "UY",
+          "entityId": "10",
+          "entityKind": "NODE",
+          "quantity": "INCIDENT_GLOBAL_FORCE",
+          "unit": "N",
+          "value": 0
+        },
+        {
+          "component": "UZ",
+          "entityId": "10",
+          "entityKind": "NODE",
+          "quantity": "INCIDENT_GLOBAL_FORCE",
+          "unit": "N",
+          "value": 0
+        },
+        {
+          "component": "RX",
+          "entityId": "10",
+          "entityKind": "NODE",
+          "quantity": "INCIDENT_GLOBAL_MOMENT",
+          "unit": "N*m",
+          "value": 0
+        },
+        {
+          "component": "RY",
+          "entityId": "10",
+          "entityKind": "NODE",
+          "quantity": "INCIDENT_GLOBAL_MOMENT",
+          "unit": "N*m",
+          "value": 0
+        },
+        {
+          "component": "RZ",
+          "entityId": "10",
+          "entityKind": "NODE",
+          "quantity": "INCIDENT_GLOBAL_MOMENT",
+          "unit": "N*m",
+          "value": 0
+        },
+        {
+          "component": "UX",
+          "entityId": "20",
+          "entityKind": "NODE",
+          "quantity": "INCIDENT_GLOBAL_FORCE",
+          "unit": "N",
+          "value": 0
+        },
+        {
+          "component": "UY",
+          "entityId": "20",
+          "entityKind": "NODE",
+          "quantity": "INCIDENT_GLOBAL_FORCE",
+          "unit": "N",
+          "value": 0
+        },
+        {
+          "component": "UZ",
+          "entityId": "20",
+          "entityKind": "NODE",
+          "quantity": "INCIDENT_GLOBAL_FORCE",
+          "unit": "N",
+          "value": 0
+        },
+        {
+          "component": "RX",
+          "entityId": "20",
+          "entityKind": "NODE",
+          "quantity": "INCIDENT_GLOBAL_MOMENT",
+          "unit": "N*m",
+          "value": 0
+        },
+        {
+          "component": "RY",
+          "entityId": "20",
+          "entityKind": "NODE",
+          "quantity": "INCIDENT_GLOBAL_MOMENT",
+          "unit": "N*m",
+          "value": 0
+        },
+        {
+          "component": "RZ",
+          "entityId": "20",
+          "entityKind": "NODE",
+          "quantity": "INCIDENT_GLOBAL_MOMENT",
+          "unit": "N*m",
+          "value": 0
+        },
+        {
+          "component": "UX",
+          "entityId": "30",
+          "entityKind": "NODE",
+          "quantity": "INCIDENT_GLOBAL_FORCE",
+          "unit": "N",
+          "value": 0
+        },
+        {
+          "component": "UY",
+          "entityId": "30",
+          "entityKind": "NODE",
+          "quantity": "INCIDENT_GLOBAL_FORCE",
+          "unit": "N",
+          "value": 0
+        },
+        {
+          "component": "UZ",
+          "entityId": "30",
+          "entityKind": "NODE",
+          "quantity": "INCIDENT_GLOBAL_FORCE",
+          "unit": "N",
+          "value": 0
+        },
+        {
+          "component": "RX",
+          "entityId": "30",
+          "entityKind": "NODE",
+          "quantity": "INCIDENT_GLOBAL_MOMENT",
+          "unit": "N*m",
+          "value": 0
+        },
+        {
+          "component": "RY",
+          "entityId": "30",
+          "entityKind": "NODE",
+          "quantity": "INCIDENT_GLOBAL_MOMENT",
+          "unit": "N*m",
+          "value": 0
+        },
+        {
+          "component": "RZ",
+          "entityId": "30",
+          "entityKind": "NODE",
+          "quantity": "INCIDENT_GLOBAL_MOMENT",
+          "unit": "N*m",
+          "value": 0
+        },
+        {
+          "component": "UX",
+          "entityId": "40",
+          "entityKind": "NODE",
+          "quantity": "INCIDENT_GLOBAL_FORCE",
+          "unit": "N",
+          "value": 0
+        },
+        {
+          "component": "UY",
+          "entityId": "40",
+          "entityKind": "NODE",
+          "quantity": "INCIDENT_GLOBAL_FORCE",
+          "unit": "N",
+          "value": 0
+        },
+        {
+          "component": "UZ",
+          "entityId": "40",
+          "entityKind": "NODE",
+          "quantity": "INCIDENT_GLOBAL_FORCE",
+          "unit": "N",
+          "value": 0
+        },
+        {
+          "component": "RX",
+          "entityId": "40",
+          "entityKind": "NODE",
+          "quantity": "INCIDENT_GLOBAL_MOMENT",
+          "unit": "N*m",
+          "value": 0
+        },
+        {
+          "component": "RY",
+          "entityId": "40",
+          "entityKind": "NODE",
+          "quantity": "INCIDENT_GLOBAL_MOMENT",
+          "unit": "N*m",
+          "value": 0
+        },
+        {
+          "component": "RZ",
+          "entityId": "40",
+          "entityKind": "NODE",
+          "quantity": "INCIDENT_GLOBAL_MOMENT",
+          "unit": "N*m",
+          "value": 0
+        },
+        {
+          "component": "FX",
+          "entityId": "ACCDB.E1",
+          "entityKind": "ELEMENT",
+          "quantity": "GLOBAL_END_FORCE_FROM",
+          "unit": "N",
+          "value": 0
+        },
+        {
+          "component": "FY",
+          "entityId": "ACCDB.E1",
+          "entityKind": "ELEMENT",
+          "quantity": "GLOBAL_END_FORCE_FROM",
+          "unit": "N",
+          "value": 0
+        },
+        {
+          "component": "FZ",
+          "entityId": "ACCDB.E1",
+          "entityKind": "ELEMENT",
+          "quantity": "GLOBAL_END_FORCE_FROM",
+          "unit": "N",
+          "value": 0
+        },
+        {
+          "component": "MX",
+          "entityId": "ACCDB.E1",
+          "entityKind": "ELEMENT",
+          "quantity": "GLOBAL_END_MOMENT_FROM",
+          "unit": "N*m",
+          "value": 0
+        },
+        {
+          "component": "MY",
+          "entityId": "ACCDB.E1",
+          "entityKind": "ELEMENT",
+          "quantity": "GLOBAL_END_MOMENT_FROM",
+          "unit": "N*m",
+          "value": 0
+        },
+        {
+          "component": "MZ",
+          "entityId": "ACCDB.E1",
+          "entityKind": "ELEMENT",
+          "quantity": "GLOBAL_END_MOMENT_FROM",
+          "unit": "N*m",
+          "value": 0
+        },
+        {
+          "component": "FX",
+          "entityId": "ACCDB.E1",
+          "entityKind": "ELEMENT",
+          "quantity": "GLOBAL_END_FORCE_TO",
+          "unit": "N",
+          "value": 0
+        },
+        {
+          "component": "FY",
+          "entityId": "ACCDB.E1",
+          "entityKind": "ELEMENT",
+          "quantity": "GLOBAL_END_FORCE_TO",
+          "unit": "N",
+          "value": 0
+        },
+        {
+          "component": "FZ",
+          "entityId": "ACCDB.E1",
+          "entityKind": "ELEMENT",
+          "quantity": "GLOBAL_END_FORCE_TO",
+          "unit": "N",
+          "value": 0
+        },
+        {
+          "component": "MX",
+          "entityId": "ACCDB.E1",
+          "entityKind": "ELEMENT",
+          "quantity": "GLOBAL_END_MOMENT_TO",
+          "unit": "N*m",
+          "value": 0
+        },
+        {
+          "component": "MY",
+          "entityId": "ACCDB.E1",
+          "entityKind": "ELEMENT",
+          "quantity": "GLOBAL_END_MOMENT_TO",
+          "unit": "N*m",
+          "value": 0
+        },
+        {
+          "component": "MZ",
+          "entityId": "ACCDB.E1",
+          "entityKind": "ELEMENT",
+          "quantity": "GLOBAL_END_MOMENT_TO",
+          "unit": "N*m",
+          "value": 0
+        },
+        {
+          "component": "FX",
+          "entityId": "ACCDB.E2",
+          "entityKind": "ELEMENT",
+          "quantity": "GLOBAL_END_FORCE_FROM",
+          "unit": "N",
+          "value": 0
+        },
+        {
+          "component": "FY",
+          "entityId": "ACCDB.E2",
+          "entityKind": "ELEMENT",
+          "quantity": "GLOBAL_END_FORCE_FROM",
+          "unit": "N",
+          "value": 0
+        },
+        {
+          "component": "FZ",
+          "entityId": "ACCDB.E2",
+          "entityKind": "ELEMENT",
+          "quantity": "GLOBAL_END_FORCE_FROM",
+          "unit": "N",
+          "value": 0
+        },
+        {
+          "component": "MX",
+          "entityId": "ACCDB.E2",
+          "entityKind": "ELEMENT",
+          "quantity": "GLOBAL_END_MOMENT_FROM",
+          "unit": "N*m",
+          "value": 0
+        },
+        {
+          "component": "MY",
+          "entityId": "ACCDB.E2",
+          "entityKind": "ELEMENT",
+          "quantity": "GLOBAL_END_MOMENT_FROM",
+          "unit": "N*m",
+          "value": 0
+        },
+        {
+          "component": "MZ",
+          "entityId": "ACCDB.E2",
+          "entityKind": "ELEMENT",
+          "quantity": "GLOBAL_END_MOMENT_FROM",
+          "unit": "N*m",
+          "value": 0
+        },
+        {
+          "component": "FX",
+          "entityId": "ACCDB.E2",
+          "entityKind": "ELEMENT",
+          "quantity": "GLOBAL_END_FORCE_TO",
+          "unit": "N",
+          "value": 0
+        },
+        {
+          "component": "FY",
+          "entityId": "ACCDB.E2",
+          "entityKind": "ELEMENT",
+          "quantity": "GLOBAL_END_FORCE_TO",
+          "unit": "N",
+          "value": 0
+        },
+        {
+          "component": "FZ",
+          "entityId": "ACCDB.E2",
+          "entityKind": "ELEMENT",
+          "quantity": "GLOBAL_END_FORCE_TO",
+          "unit": "N",
+          "value": 0
+        },
+        {
+          "component": "MX",
+          "entityId": "ACCDB.E2",
+          "entityKind": "ELEMENT",
+          "quantity": "GLOBAL_END_MOMENT_TO",
+          "unit": "N*m",
+          "value": 0
+        },
+        {
+          "component": "MY",
+          "entityId": "ACCDB.E2",
+          "entityKind": "ELEMENT",
+          "quantity": "GLOBAL_END_MOMENT_TO",
+          "unit": "N*m",
+          "value": 0
+        },
+        {
+          "component": "MZ",
+          "entityId": "ACCDB.E2",
+          "entityKind": "ELEMENT",
+          "quantity": "GLOBAL_END_MOMENT_TO",
+          "unit": "N*m",
+          "value": 0
+        },
+        {
+          "component": "FX",
+          "entityId": "ACCDB.E3",
+          "entityKind": "ELEMENT",
+          "quantity": "GLOBAL_END_FORCE_FROM",
+          "unit": "N",
+          "value": 0
+        },
+        {
+          "component": "FY",
+          "entityId": "ACCDB.E3",
+          "entityKind": "ELEMENT",
+          "quantity": "GLOBAL_END_FORCE_FROM",
+          "unit": "N",
+          "value": 0
+        },
+        {
+          "component": "FZ",
+          "entityId": "ACCDB.E3",
+          "entityKind": "ELEMENT",
+          "quantity": "GLOBAL_END_FORCE_FROM",
+          "unit": "N",
+          "value": 0
+        },
+        {
+          "component": "MX",
+          "entityId": "ACCDB.E3",
+          "entityKind": "ELEMENT",
+          "quantity": "GLOBAL_END_MOMENT_FROM",
+          "unit": "N*m",
+          "value": 0
+        },
+        {
+          "component": "MY",
+          "entityId": "ACCDB.E3",
+          "entityKind": "ELEMENT",
+          "quantity": "GLOBAL_END_MOMENT_FROM",
+          "unit": "N*m",
+          "value": 0
+        },
+        {
+          "component": "MZ",
+          "entityId": "ACCDB.E3",
+          "entityKind": "ELEMENT",
+          "quantity": "GLOBAL_END_MOMENT_FROM",
+          "unit": "N*m",
+          "value": 0
+        },
+        {
+          "component": "FX",
+          "entityId": "ACCDB.E3",
+          "entityKind": "ELEMENT",
+          "quantity": "GLOBAL_END_FORCE_TO",
+          "unit": "N",
+          "value": 0
+        },
+        {
+          "component": "FY",
+          "entityId": "ACCDB.E3",
+          "entityKind": "ELEMENT",
+          "quantity": "GLOBAL_END_FORCE_TO",
+          "unit": "N",
+          "value": 0
+        },
+        {
+          "component": "FZ",
+          "entityId": "ACCDB.E3",
+          "entityKind": "ELEMENT",
+          "quantity": "GLOBAL_END_FORCE_TO",
+          "unit": "N",
+          "value": 0
+        },
+        {
+          "component": "MX",
+          "entityId": "ACCDB.E3",
+          "entityKind": "ELEMENT",
+          "quantity": "GLOBAL_END_MOMENT_TO",
+          "unit": "N*m",
+          "value": 0
+        },
+        {
+          "component": "MY",
+          "entityId": "ACCDB.E3",
+          "entityKind": "ELEMENT",
+          "quantity": "GLOBAL_END_MOMENT_TO",
+          "unit": "N*m",
+          "value": 0
+        },
+        {
+          "component": "MZ",
+          "entityId": "ACCDB.E3",
+          "entityKind": "ELEMENT",
+          "quantity": "GLOBAL_END_MOMENT_TO",
+          "unit": "N*m",
+          "value": 0
+        },
+        {
+          "component": "FX",
+          "entityId": "INPUT_ELEMENT:1|10->20|SPAN-1",
+          "entityKind": "ELEMENT",
+          "quantity": "GLOBAL_END_FORCE_FROM",
+          "unit": "N",
+          "value": 0
+        },
+        {
+          "component": "FY",
+          "entityId": "INPUT_ELEMENT:1|10->20|SPAN-1",
+          "entityKind": "ELEMENT",
+          "quantity": "GLOBAL_END_FORCE_FROM",
+          "unit": "N",
+          "value": 0
+        },
+        {
+          "component": "FZ",
+          "entityId": "INPUT_ELEMENT:1|10->20|SPAN-1",
+          "entityKind": "ELEMENT",
+          "quantity": "GLOBAL_END_FORCE_FROM",
+          "unit": "N",
+          "value": 0
+        },
+        {
+          "component": "MX",
+          "entityId": "INPUT_ELEMENT:1|10->20|SPAN-1",
+          "entityKind": "ELEMENT",
+          "quantity": "GLOBAL_END_MOMENT_FROM",
+          "unit": "N*m",
+          "value": 0
+        },
+        {
+          "component": "MY",
+          "entityId": "INPUT_ELEMENT:1|10->20|SPAN-1",
+          "entityKind": "ELEMENT",
+          "quantity": "GLOBAL_END_MOMENT_FROM",
+          "unit": "N*m",
+          "value": 0
+        },
+        {
+          "component": "MZ",
+          "entityId": "INPUT_ELEMENT:1|10->20|SPAN-1",
+          "entityKind": "ELEMENT",
+          "quantity": "GLOBAL_END_MOMENT_FROM",
+          "unit": "N*m",
+          "value": 0
+        },
+        {
+          "component": "FX",
+          "entityId": "INPUT_ELEMENT:1|10->20|SPAN-1",
+          "entityKind": "ELEMENT",
+          "quantity": "GLOBAL_END_FORCE_TO",
+          "unit": "N",
+          "value": 0
+        },
+        {
+          "component": "FY",
+          "entityId": "INPUT_ELEMENT:1|10->20|SPAN-1",
+          "entityKind": "ELEMENT",
+          "quantity": "GLOBAL_END_FORCE_TO",
+          "unit": "N",
+          "value": 0
+        },
+        {
+          "component": "FZ",
+          "entityId": "INPUT_ELEMENT:1|10->20|SPAN-1",
+          "entityKind": "ELEMENT",
+          "quantity": "GLOBAL_END_FORCE_TO",
+          "unit": "N",
+          "value": 0
+        },
+        {
+          "component": "MX",
+          "entityId": "INPUT_ELEMENT:1|10->20|SPAN-1",
+          "entityKind": "ELEMENT",
+          "quantity": "GLOBAL_END_MOMENT_TO",
+          "unit": "N*m",
+          "value": 0
+        },
+        {
+          "component": "MY",
+          "entityId": "INPUT_ELEMENT:1|10->20|SPAN-1",
+          "entityKind": "ELEMENT",
+          "quantity": "GLOBAL_END_MOMENT_TO",
+          "unit": "N*m",
+          "value": 0
+        },
+        {
+          "component": "MZ",
+          "entityId": "INPUT_ELEMENT:1|10->20|SPAN-1",
+          "entityKind": "ELEMENT",
+          "quantity": "GLOBAL_END_MOMENT_TO",
+          "unit": "N*m",
+          "value": 0
+        },
+        {
+          "component": "FX",
+          "entityId": "INPUT_ELEMENT:2|20->30|SPAN-2",
+          "entityKind": "ELEMENT",
+          "quantity": "GLOBAL_END_FORCE_FROM",
+          "unit": "N",
+          "value": 0
+        },
+        {
+          "component": "FY",
+          "entityId": "INPUT_ELEMENT:2|20->30|SPAN-2",
+          "entityKind": "ELEMENT",
+          "quantity": "GLOBAL_END_FORCE_FROM",
+          "unit": "N",
+          "value": 0
+        },
+        {
+          "component": "FZ",
+          "entityId": "INPUT_ELEMENT:2|20->30|SPAN-2",
+          "entityKind": "ELEMENT",
+          "quantity": "GLOBAL_END_FORCE_FROM",
+          "unit": "N",
+          "value": 0
+        },
+        {
+          "component": "MX",
+          "entityId": "INPUT_ELEMENT:2|20->30|SPAN-2",
+          "entityKind": "ELEMENT",
+          "quantity": "GLOBAL_END_MOMENT_FROM",
+          "unit": "N*m",
+          "value": 0
+        },
+        {
+          "component": "MY",
+          "entityId": "INPUT_ELEMENT:2|20->30|SPAN-2",
+          "entityKind": "ELEMENT",
+          "quantity": "GLOBAL_END_MOMENT_FROM",
+          "unit": "N*m",
+          "value": 0
+        },
+        {
+          "component": "MZ",
+          "entityId": "INPUT_ELEMENT:2|20->30|SPAN-2",
+          "entityKind": "ELEMENT",
+          "quantity": "GLOBAL_END_MOMENT_FROM",
+          "unit": "N*m",
+          "value": 0
+        },
+        {
+          "component": "FX",
+          "entityId": "INPUT_ELEMENT:2|20->30|SPAN-2",
+          "entityKind": "ELEMENT",
+          "quantity": "GLOBAL_END_FORCE_TO",
+          "unit": "N",
+          "value": 0
+        },
+        {
+          "component": "FY",
+          "entityId": "INPUT_ELEMENT:2|20->30|SPAN-2",
+          "entityKind": "ELEMENT",
+          "quantity": "GLOBAL_END_FORCE_TO",
+          "unit": "N",
+          "value": 0
+        },
+        {
+          "component": "FZ",
+          "entityId": "INPUT_ELEMENT:2|20->30|SPAN-2",
+          "entityKind": "ELEMENT",
+          "quantity": "GLOBAL_END_FORCE_TO",
+          "unit": "N",
+          "value": 0
+        },
+        {
+          "component": "MX",
+          "entityId": "INPUT_ELEMENT:2|20->30|SPAN-2",
+          "entityKind": "ELEMENT",
+          "quantity": "GLOBAL_END_MOMENT_TO",
+          "unit": "N*m",
+          "value": 0
+        },
+        {
+          "component": "MY",
+          "entityId": "INPUT_ELEMENT:2|20->30|SPAN-2",
+          "entityKind": "ELEMENT",
+          "quantity": "GLOBAL_END_MOMENT_TO",
+          "unit": "N*m",
+          "value": 0
+        },
+        {
+          "component": "MZ",
+          "entityId": "INPUT_ELEMENT:2|20->30|SPAN-2",
+          "entityKind": "ELEMENT",
+          "quantity": "GLOBAL_END_MOMENT_TO",
+          "unit": "N*m",
+          "value": 0
+        },
+        {
+          "component": "FX",
+          "entityId": "INPUT_ELEMENT:3|30->40|SPAN-3",
+          "entityKind": "ELEMENT",
+          "quantity": "GLOBAL_END_FORCE_FROM",
+          "unit": "N",
+          "value": 0
+        },
+        {
+          "component": "FY",
+          "entityId": "INPUT_ELEMENT:3|30->40|SPAN-3",
+          "entityKind": "ELEMENT",
+          "quantity": "GLOBAL_END_FORCE_FROM",
+          "unit": "N",
+          "value": 0
+        },
+        {
+          "component": "FZ",
+          "entityId": "INPUT_ELEMENT:3|30->40|SPAN-3",
+          "entityKind": "ELEMENT",
+          "quantity": "GLOBAL_END_FORCE_FROM",
+          "unit": "N",
+          "value": 0
+        },
+        {
+          "component": "MX",
+          "entityId": "INPUT_ELEMENT:3|30->40|SPAN-3",
+          "entityKind": "ELEMENT",
+          "quantity": "GLOBAL_END_MOMENT_FROM",
+          "unit": "N*m",
+          "value": 0
+        },
+        {
+          "component": "MY",
+          "entityId": "INPUT_ELEMENT:3|30->40|SPAN-3",
+          "entityKind": "ELEMENT",
+          "quantity": "GLOBAL_END_MOMENT_FROM",
+          "unit": "N*m",
+          "value": 0
+        },
+        {
+          "component": "MZ",
+          "entityId": "INPUT_ELEMENT:3|30->40|SPAN-3",
+          "entityKind": "ELEMENT",
+          "quantity": "GLOBAL_END_MOMENT_FROM",
+          "unit": "N*m",
+          "value": 0
+        },
+        {
+          "component": "FX",
+          "entityId": "INPUT_ELEMENT:3|30->40|SPAN-3",
+          "entityKind": "ELEMENT",
+          "quantity": "GLOBAL_END_FORCE_TO",
+          "unit": "N",
+          "value": 0
+        },
+        {
+          "component": "FY",
+          "entityId": "INPUT_ELEMENT:3|30->40|SPAN-3",
+          "entityKind": "ELEMENT",
+          "quantity": "GLOBAL_END_FORCE_TO",
+          "unit": "N",
+          "value": 0
+        },
+        {
+          "component": "FZ",
+          "entityId": "INPUT_ELEMENT:3|30->40|SPAN-3",
+          "entityKind": "ELEMENT",
+          "quantity": "GLOBAL_END_FORCE_TO",
+          "unit": "N",
+          "value": 0
+        },
+        {
+          "component": "MX",
+          "entityId": "INPUT_ELEMENT:3|30->40|SPAN-3",
+          "entityKind": "ELEMENT",
+          "quantity": "GLOBAL_END_MOMENT_TO",
+          "unit": "N*m",
+          "value": 0
+        },
+        {
+          "component": "MY",
+          "entityId": "INPUT_ELEMENT:3|30->40|SPAN-3",
+          "entityKind": "ELEMENT",
+          "quantity": "GLOBAL_END_MOMENT_TO",
+          "unit": "N*m",
+          "value": 0
+        },
+        {
+          "component": "MZ",
+          "entityId": "INPUT_ELEMENT:3|30->40|SPAN-3",
+          "entityKind": "ELEMENT",
+          "quantity": "GLOBAL_END_MOMENT_TO",
+          "unit": "N*m",
+          "value": 0
+        }
+      ],
+      "rowsSemanticHash": "fnv1a64:5573a95310dffec1",
+      "stiffnessStateHash": "fnv1a64:b5e3c98b66c7fc05"
+    },
+    "L5": {
+      "executionSemanticHash": "fnv1a64:c3466e513bbcfae6",
+      "recoveredEquilibriumStatus": "PASS",
+      "rowCount": 144,
+      "rows": [
+        {
+          "component": "UX",
+          "entityId": "10",
+          "entityKind": "NODE",
+          "quantity": "DISPLACEMENT",
+          "unit": "m",
+          "value": 0
+        },
+        {
+          "component": "UY",
+          "entityId": "10",
+          "entityKind": "NODE",
+          "quantity": "DISPLACEMENT",
+          "unit": "m",
+          "value": -8.553352163359457e-12
+        },
+        {
+          "component": "UZ",
+          "entityId": "10",
+          "entityKind": "NODE",
+          "quantity": "DISPLACEMENT",
+          "unit": "m",
+          "value": 0
+        },
+        {
+          "component": "RX",
+          "entityId": "10",
+          "entityKind": "NODE",
+          "quantity": "ROTATION",
+          "unit": "rad",
+          "value": 1.824101891562826e-12
+        },
+        {
+          "component": "RY",
+          "entityId": "10",
+          "entityKind": "NODE",
+          "quantity": "ROTATION",
+          "unit": "rad",
+          "value": 0
+        },
+        {
+          "component": "RZ",
+          "entityId": "10",
+          "entityKind": "NODE",
+          "quantity": "ROTATION",
+          "unit": "rad",
+          "value": -9.208854107664638e-12
+        },
+        {
+          "component": "UX",
+          "entityId": "20",
+          "entityKind": "NODE",
+          "quantity": "DISPLACEMENT",
+          "unit": "m",
+          "value": 0.006393342287531245
+        },
+        {
+          "component": "UY",
+          "entityId": "20",
+          "entityKind": "NODE",
+          "quantity": "DISPLACEMENT",
+          "unit": "m",
+          "value": -2.1014326494911528e-11
+        },
+        {
+          "component": "UZ",
+          "entityId": "20",
+          "entityKind": "NODE",
+          "quantity": "DISPLACEMENT",
+          "unit": "m",
+          "value": 0
+        },
+        {
+          "component": "RX",
+          "entityId": "20",
+          "entityKind": "NODE",
+          "quantity": "ROTATION",
+          "unit": "rad",
+          "value": 0.0002285025769517875
+        },
+        {
+          "component": "RY",
+          "entityId": "20",
+          "entityKind": "NODE",
+          "quantity": "ROTATION",
+          "unit": "rad",
+          "value": 0
+        },
+        {
+          "component": "RZ",
+          "entityId": "20",
+          "entityKind": "NODE",
+          "quantity": "ROTATION",
+          "unit": "rad",
+          "value": -0.00007347818406365657
+        },
+        {
+          "component": "UX",
+          "entityId": "30",
+          "entityKind": "NODE",
+          "quantity": "DISPLACEMENT",
+          "unit": "m",
+          "value": 0.01278668457506249
+        },
+        {
+          "component": "UY",
+          "entityId": "30",
+          "entityKind": "NODE",
+          "quantity": "DISPLACEMENT",
+          "unit": "m",
+          "value": -1.6696054235360218e-11
+        },
+        {
+          "component": "UZ",
+          "entityId": "30",
+          "entityKind": "NODE",
+          "quantity": "DISPLACEMENT",
+          "unit": "m",
+          "value": 0
+        },
+        {
+          "component": "RX",
+          "entityId": "30",
+          "entityKind": "NODE",
+          "quantity": "ROTATION",
+          "unit": "rad",
+          "value": 0.0004570051520794731
+        },
+        {
+          "component": "RY",
+          "entityId": "30",
+          "entityKind": "NODE",
+          "quantity": "ROTATION",
+          "unit": "rad",
+          "value": 0
+        },
+        {
+          "component": "RZ",
+          "entityId": "30",
+          "entityKind": "NODE",
+          "quantity": "ROTATION",
+          "unit": "rad",
+          "value": 0.00029672813364649286
+        },
+        {
+          "component": "UX",
+          "entityId": "40",
+          "entityKind": "NODE",
+          "quantity": "DISPLACEMENT",
+          "unit": "m",
+          "value": 0.01278668457506249
+        },
+        {
+          "component": "UY",
+          "entityId": "40",
+          "entityKind": "NODE",
+          "quantity": "DISPLACEMENT",
+          "unit": "m",
+          "value": -8.939206559361099e-12
+        },
+        {
+          "component": "UZ",
+          "entityId": "40",
+          "entityKind": "NODE",
+          "quantity": "DISPLACEMENT",
+          "unit": "m",
+          "value": 0.006393342287531245
+        },
+        {
+          "component": "RX",
+          "entityId": "40",
+          "entityKind": "NODE",
+          "quantity": "ROTATION",
+          "unit": "rad",
+          "value": -0.00048667214255805646
+        },
+        {
+          "component": "RY",
+          "entityId": "40",
+          "entityKind": "NODE",
+          "quantity": "ROTATION",
+          "unit": "rad",
+          "value": 0
+        },
+        {
+          "component": "RZ",
+          "entityId": "40",
+          "entityKind": "NODE",
+          "quantity": "ROTATION",
+          "unit": "rad",
+          "value": 0.00029672813364649286
+        },
+        {
+          "component": "UX",
+          "entityId": "10",
+          "entityKind": "NODE",
+          "quantity": "FORCE",
+          "unit": "N",
+          "value": 0
+        },
+        {
+          "component": "UY",
+          "entityId": "10",
+          "entityKind": "NODE",
+          "quantity": "FORCE",
+          "unit": "N",
+          "value": 855.3352163359457
+        },
+        {
+          "component": "UZ",
+          "entityId": "10",
+          "entityKind": "NODE",
+          "quantity": "FORCE",
+          "unit": "N",
+          "value": 0
+        },
+        {
+          "component": "RX",
+          "entityId": "10",
+          "entityKind": "NODE",
+          "quantity": "MOMENT",
+          "unit": "N*m",
+          "value": -104.51333978838008
+        },
+        {
+          "component": "RY",
+          "entityId": "10",
+          "entityKind": "NODE",
+          "quantity": "MOMENT",
+          "unit": "N*m",
+          "value": 0
+        },
+        {
+          "component": "RZ",
+          "entityId": "10",
+          "entityKind": "NODE",
+          "quantity": "MOMENT",
+          "unit": "N*m",
+          "value": 527.6284745208956
+        },
+        {
+          "component": "UX",
+          "entityId": "20",
+          "entityKind": "NODE",
+          "quantity": "FORCE",
+          "unit": "N",
+          "value": 0
+        },
+        {
+          "component": "UY",
+          "entityId": "20",
+          "entityKind": "NODE",
+          "quantity": "FORCE",
+          "unit": "N",
+          "value": 2101.432649491153
+        },
+        {
+          "component": "UZ",
+          "entityId": "20",
+          "entityKind": "NODE",
+          "quantity": "FORCE",
+          "unit": "N",
+          "value": 0
+        },
+        {
+          "component": "RX",
+          "entityId": "20",
+          "entityKind": "NODE",
+          "quantity": "MOMENT",
+          "unit": "N*m",
+          "value": 0
+        },
+        {
+          "component": "RY",
+          "entityId": "20",
+          "entityKind": "NODE",
+          "quantity": "MOMENT",
+          "unit": "N*m",
+          "value": 0
+        },
+        {
+          "component": "RZ",
+          "entityId": "20",
+          "entityKind": "NODE",
+          "quantity": "MOMENT",
+          "unit": "N*m",
+          "value": 0
+        },
+        {
+          "component": "UX",
+          "entityId": "30",
+          "entityKind": "NODE",
+          "quantity": "FORCE",
+          "unit": "N",
+          "value": 0
+        },
+        {
+          "component": "UY",
+          "entityId": "30",
+          "entityKind": "NODE",
+          "quantity": "FORCE",
+          "unit": "N",
+          "value": 1669.6054235360218
+        },
+        {
+          "component": "UZ",
+          "entityId": "30",
+          "entityKind": "NODE",
+          "quantity": "FORCE",
+          "unit": "N",
+          "value": 0
+        },
+        {
+          "component": "RX",
+          "entityId": "30",
+          "entityKind": "NODE",
+          "quantity": "MOMENT",
+          "unit": "N*m",
+          "value": 0
+        },
+        {
+          "component": "RY",
+          "entityId": "30",
+          "entityKind": "NODE",
+          "quantity": "MOMENT",
+          "unit": "N*m",
+          "value": 0
+        },
+        {
+          "component": "RZ",
+          "entityId": "30",
+          "entityKind": "NODE",
+          "quantity": "MOMENT",
+          "unit": "N*m",
+          "value": 0
+        },
+        {
+          "component": "UX",
+          "entityId": "40",
+          "entityKind": "NODE",
+          "quantity": "FORCE",
+          "unit": "N",
+          "value": 0
+        },
+        {
+          "component": "UY",
+          "entityId": "40",
+          "entityKind": "NODE",
+          "quantity": "FORCE",
+          "unit": "N",
+          "value": 893.9206559361099
+        },
+        {
+          "component": "UZ",
+          "entityId": "40",
+          "entityKind": "NODE",
+          "quantity": "FORCE",
+          "unit": "N",
+          "value": 0
+        },
+        {
+          "component": "RX",
+          "entityId": "40",
+          "entityKind": "NODE",
+          "quantity": "MOMENT",
+          "unit": "N*m",
+          "value": 0
+        },
+        {
+          "component": "RY",
+          "entityId": "40",
+          "entityKind": "NODE",
+          "quantity": "MOMENT",
+          "unit": "N*m",
+          "value": 0
+        },
+        {
+          "component": "RZ",
+          "entityId": "40",
+          "entityKind": "NODE",
+          "quantity": "MOMENT",
+          "unit": "N*m",
+          "value": 0
+        },
+        {
+          "component": "UX",
+          "entityId": "10",
+          "entityKind": "NODE",
+          "quantity": "INCIDENT_GLOBAL_FORCE",
+          "unit": "N",
+          "value": 1.8189894035458565e-12
+        },
+        {
+          "component": "UY",
+          "entityId": "10",
+          "entityKind": "NODE",
+          "quantity": "INCIDENT_GLOBAL_FORCE",
+          "unit": "N",
+          "value": 855.3352163359457
+        },
+        {
+          "component": "UZ",
+          "entityId": "10",
+          "entityKind": "NODE",
+          "quantity": "INCIDENT_GLOBAL_FORCE",
+          "unit": "N",
+          "value": 0
+        },
+        {
+          "component": "RX",
+          "entityId": "10",
+          "entityKind": "NODE",
+          "quantity": "INCIDENT_GLOBAL_MOMENT",
+          "unit": "N*m",
+          "value": -104.51333978838008
+        },
+        {
+          "component": "RY",
+          "entityId": "10",
+          "entityKind": "NODE",
+          "quantity": "INCIDENT_GLOBAL_MOMENT",
+          "unit": "N*m",
+          "value": 0
+        },
+        {
+          "component": "RZ",
+          "entityId": "10",
+          "entityKind": "NODE",
+          "quantity": "INCIDENT_GLOBAL_MOMENT",
+          "unit": "N*m",
+          "value": 527.6284745208956
+        },
+        {
+          "component": "UX",
+          "entityId": "20",
+          "entityKind": "NODE",
+          "quantity": "INCIDENT_GLOBAL_FORCE",
+          "unit": "N",
+          "value": 0
+        },
+        {
+          "component": "UY",
+          "entityId": "20",
+          "entityKind": "NODE",
+          "quantity": "INCIDENT_GLOBAL_FORCE",
+          "unit": "N",
+          "value": 2101.432649491153
+        },
+        {
+          "component": "UZ",
+          "entityId": "20",
+          "entityKind": "NODE",
+          "quantity": "INCIDENT_GLOBAL_FORCE",
+          "unit": "N",
+          "value": 0
+        },
+        {
+          "component": "RX",
+          "entityId": "20",
+          "entityKind": "NODE",
+          "quantity": "INCIDENT_GLOBAL_MOMENT",
+          "unit": "N*m",
+          "value": 0
+        },
+        {
+          "component": "RY",
+          "entityId": "20",
+          "entityKind": "NODE",
+          "quantity": "INCIDENT_GLOBAL_MOMENT",
+          "unit": "N*m",
+          "value": 0
+        },
+        {
+          "component": "RZ",
+          "entityId": "20",
+          "entityKind": "NODE",
+          "quantity": "INCIDENT_GLOBAL_MOMENT",
+          "unit": "N*m",
+          "value": 0
+        },
+        {
+          "component": "UX",
+          "entityId": "30",
+          "entityKind": "NODE",
+          "quantity": "INCIDENT_GLOBAL_FORCE",
+          "unit": "N",
+          "value": -1.8189894035458565e-12
+        },
+        {
+          "component": "UY",
+          "entityId": "30",
+          "entityKind": "NODE",
+          "quantity": "INCIDENT_GLOBAL_FORCE",
+          "unit": "N",
+          "value": 1669.6054235360218
+        },
+        {
+          "component": "UZ",
+          "entityId": "30",
+          "entityKind": "NODE",
+          "quantity": "INCIDENT_GLOBAL_FORCE",
+          "unit": "N",
+          "value": 1.8189894035458565e-12
+        },
+        {
+          "component": "RX",
+          "entityId": "30",
+          "entityKind": "NODE",
+          "quantity": "INCIDENT_GLOBAL_MOMENT",
+          "unit": "N*m",
+          "value": 0
+        },
+        {
+          "component": "RY",
+          "entityId": "30",
+          "entityKind": "NODE",
+          "quantity": "INCIDENT_GLOBAL_MOMENT",
+          "unit": "N*m",
+          "value": 0
+        },
+        {
+          "component": "RZ",
+          "entityId": "30",
+          "entityKind": "NODE",
+          "quantity": "INCIDENT_GLOBAL_MOMENT",
+          "unit": "N*m",
+          "value": 0
+        },
+        {
+          "component": "UX",
+          "entityId": "40",
+          "entityKind": "NODE",
+          "quantity": "INCIDENT_GLOBAL_FORCE",
+          "unit": "N",
+          "value": 0
+        },
+        {
+          "component": "UY",
+          "entityId": "40",
+          "entityKind": "NODE",
+          "quantity": "INCIDENT_GLOBAL_FORCE",
+          "unit": "N",
+          "value": 893.92065593611
+        },
+        {
+          "component": "UZ",
+          "entityId": "40",
+          "entityKind": "NODE",
+          "quantity": "INCIDENT_GLOBAL_FORCE",
+          "unit": "N",
+          "value": -1.8189894035458565e-12
+        },
+        {
+          "component": "RX",
+          "entityId": "40",
+          "entityKind": "NODE",
+          "quantity": "INCIDENT_GLOBAL_MOMENT",
+          "unit": "N*m",
+          "value": 0
+        },
+        {
+          "component": "RY",
+          "entityId": "40",
+          "entityKind": "NODE",
+          "quantity": "INCIDENT_GLOBAL_MOMENT",
+          "unit": "N*m",
+          "value": 0
+        },
+        {
+          "component": "RZ",
+          "entityId": "40",
+          "entityKind": "NODE",
+          "quantity": "INCIDENT_GLOBAL_MOMENT",
+          "unit": "N*m",
+          "value": 0
+        },
+        {
+          "component": "FX",
+          "entityId": "ACCDB.E1",
+          "entityKind": "ELEMENT",
+          "quantity": "GLOBAL_END_FORCE_FROM",
+          "unit": "N",
+          "value": 1.8189894035458565e-12
+        },
+        {
+          "component": "FY",
+          "entityId": "ACCDB.E1",
+          "entityKind": "ELEMENT",
+          "quantity": "GLOBAL_END_FORCE_FROM",
+          "unit": "N",
+          "value": 855.3352163359457
+        },
+        {
+          "component": "FZ",
+          "entityId": "ACCDB.E1",
+          "entityKind": "ELEMENT",
+          "quantity": "GLOBAL_END_FORCE_FROM",
+          "unit": "N",
+          "value": 0
+        },
+        {
+          "component": "MX",
+          "entityId": "ACCDB.E1",
+          "entityKind": "ELEMENT",
+          "quantity": "GLOBAL_END_MOMENT_FROM",
+          "unit": "N*m",
+          "value": -104.51333978838008
+        },
+        {
+          "component": "MY",
+          "entityId": "ACCDB.E1",
+          "entityKind": "ELEMENT",
+          "quantity": "GLOBAL_END_MOMENT_FROM",
+          "unit": "N*m",
+          "value": 0
+        },
+        {
+          "component": "MZ",
+          "entityId": "ACCDB.E1",
+          "entityKind": "ELEMENT",
+          "quantity": "GLOBAL_END_MOMENT_FROM",
+          "unit": "N*m",
+          "value": 527.6284745208956
+        },
+        {
+          "component": "FX",
+          "entityId": "ACCDB.E1",
+          "entityKind": "ELEMENT",
+          "quantity": "GLOBAL_END_FORCE_TO",
+          "unit": "N",
+          "value": -1.8189894035458565e-12
+        },
+        {
+          "component": "FY",
+          "entityId": "ACCDB.E1",
+          "entityKind": "ELEMENT",
+          "quantity": "GLOBAL_END_FORCE_TO",
+          "unit": "N",
+          "value": 984.7627654304645
+        },
+        {
+          "component": "FZ",
+          "entityId": "ACCDB.E1",
+          "entityKind": "ELEMENT",
+          "quantity": "GLOBAL_END_FORCE_TO",
+          "unit": "N",
+          "value": 0
+        },
+        {
+          "component": "MX",
+          "entityId": "ACCDB.E1",
+          "entityKind": "ELEMENT",
+          "quantity": "GLOBAL_END_MOMENT_TO",
+          "unit": "N*m",
+          "value": 104.51333978838008
+        },
+        {
+          "component": "MY",
+          "entityId": "ACCDB.E1",
+          "entityKind": "ELEMENT",
+          "quantity": "GLOBAL_END_MOMENT_TO",
+          "unit": "N*m",
+          "value": 0
+        },
+        {
+          "component": "MZ",
+          "entityId": "ACCDB.E1",
+          "entityKind": "ELEMENT",
+          "quantity": "GLOBAL_END_MOMENT_TO",
+          "unit": "N*m",
+          "value": -786.4835727099331
+        },
+        {
+          "component": "FX",
+          "entityId": "ACCDB.E2",
+          "entityKind": "ELEMENT",
+          "quantity": "GLOBAL_END_FORCE_FROM",
+          "unit": "N",
+          "value": 1.8189894035458565e-12
+        },
+        {
+          "component": "FY",
+          "entityId": "ACCDB.E2",
+          "entityKind": "ELEMENT",
+          "quantity": "GLOBAL_END_FORCE_FROM",
+          "unit": "N",
+          "value": 1116.6698840606884
+        },
+        {
+          "component": "FZ",
+          "entityId": "ACCDB.E2",
+          "entityKind": "ELEMENT",
+          "quantity": "GLOBAL_END_FORCE_FROM",
+          "unit": "N",
+          "value": 0
+        },
+        {
+          "component": "MX",
+          "entityId": "ACCDB.E2",
+          "entityKind": "ELEMENT",
+          "quantity": "GLOBAL_END_MOMENT_FROM",
+          "unit": "N*m",
+          "value": -104.51333978838008
+        },
+        {
+          "component": "MY",
+          "entityId": "ACCDB.E2",
+          "entityKind": "ELEMENT",
+          "quantity": "GLOBAL_END_MOMENT_FROM",
+          "unit": "N*m",
+          "value": 0
+        },
+        {
+          "component": "MZ",
+          "entityId": "ACCDB.E2",
+          "entityKind": "ELEMENT",
+          "quantity": "GLOBAL_END_MOMENT_FROM",
+          "unit": "N*m",
+          "value": 786.4835727099331
+        },
+        {
+          "component": "FX",
+          "entityId": "ACCDB.E2",
+          "entityKind": "ELEMENT",
+          "quantity": "GLOBAL_END_FORCE_TO",
+          "unit": "N",
+          "value": -1.8189894035458565e-12
+        },
+        {
+          "component": "FY",
+          "entityId": "ACCDB.E2",
+          "entityKind": "ELEMENT",
+          "quantity": "GLOBAL_END_FORCE_TO",
+          "unit": "N",
+          "value": 723.4280977057217
+        },
+        {
+          "component": "FZ",
+          "entityId": "ACCDB.E2",
+          "entityKind": "ELEMENT",
+          "quantity": "GLOBAL_END_FORCE_TO",
+          "unit": "N",
+          "value": 0
+        },
+        {
+          "component": "MX",
+          "entityId": "ACCDB.E2",
+          "entityKind": "ELEMENT",
+          "quantity": "GLOBAL_END_MOMENT_TO",
+          "unit": "N*m",
+          "value": 104.51333978838008
+        },
+        {
+          "component": "MY",
+          "entityId": "ACCDB.E2",
+          "entityKind": "ELEMENT",
+          "quantity": "GLOBAL_END_MOMENT_TO",
+          "unit": "N*m",
+          "value": 0
+        },
+        {
+          "component": "MZ",
+          "entityId": "ACCDB.E2",
+          "entityKind": "ELEMENT",
+          "quantity": "GLOBAL_END_MOMENT_TO",
+          "unit": "N*m",
+          "value": 0
+        },
+        {
+          "component": "FX",
+          "entityId": "ACCDB.E3",
+          "entityKind": "ELEMENT",
+          "quantity": "GLOBAL_END_FORCE_FROM",
+          "unit": "N",
+          "value": 0
+        },
+        {
+          "component": "FY",
+          "entityId": "ACCDB.E3",
+          "entityKind": "ELEMENT",
+          "quantity": "GLOBAL_END_FORCE_FROM",
+          "unit": "N",
+          "value": 946.1773258303001
+        },
+        {
+          "component": "FZ",
+          "entityId": "ACCDB.E3",
+          "entityKind": "ELEMENT",
+          "quantity": "GLOBAL_END_FORCE_FROM",
+          "unit": "N",
+          "value": 1.8189894035458565e-12
+        },
+        {
+          "component": "MX",
+          "entityId": "ACCDB.E3",
+          "entityKind": "ELEMENT",
+          "quantity": "GLOBAL_END_MOMENT_FROM",
+          "unit": "N*m",
+          "value": -104.51333978838005
+        },
+        {
+          "component": "MY",
+          "entityId": "ACCDB.E3",
+          "entityKind": "ELEMENT",
+          "quantity": "GLOBAL_END_MOMENT_FROM",
+          "unit": "N*m",
+          "value": 0
+        },
+        {
+          "component": "MZ",
+          "entityId": "ACCDB.E3",
+          "entityKind": "ELEMENT",
+          "quantity": "GLOBAL_END_MOMENT_FROM",
+          "unit": "N*m",
+          "value": 0
+        },
+        {
+          "component": "FX",
+          "entityId": "ACCDB.E3",
+          "entityKind": "ELEMENT",
+          "quantity": "GLOBAL_END_FORCE_TO",
+          "unit": "N",
+          "value": 0
+        },
+        {
+          "component": "FY",
+          "entityId": "ACCDB.E3",
+          "entityKind": "ELEMENT",
+          "quantity": "GLOBAL_END_FORCE_TO",
+          "unit": "N",
+          "value": 893.92065593611
+        },
+        {
+          "component": "FZ",
+          "entityId": "ACCDB.E3",
+          "entityKind": "ELEMENT",
+          "quantity": "GLOBAL_END_FORCE_TO",
+          "unit": "N",
+          "value": -1.8189894035458565e-12
+        },
+        {
+          "component": "MX",
+          "entityId": "ACCDB.E3",
+          "entityKind": "ELEMENT",
+          "quantity": "GLOBAL_END_MOMENT_TO",
+          "unit": "N*m",
+          "value": 0
+        },
+        {
+          "component": "MY",
+          "entityId": "ACCDB.E3",
+          "entityKind": "ELEMENT",
+          "quantity": "GLOBAL_END_MOMENT_TO",
+          "unit": "N*m",
+          "value": 0
+        },
+        {
+          "component": "MZ",
+          "entityId": "ACCDB.E3",
+          "entityKind": "ELEMENT",
+          "quantity": "GLOBAL_END_MOMENT_TO",
+          "unit": "N*m",
+          "value": 0
+        },
+        {
+          "component": "FX",
+          "entityId": "INPUT_ELEMENT:1|10->20|SPAN-1",
+          "entityKind": "ELEMENT",
+          "quantity": "GLOBAL_END_FORCE_FROM",
+          "unit": "N",
+          "value": 1.8189894035458565e-12
+        },
+        {
+          "component": "FY",
+          "entityId": "INPUT_ELEMENT:1|10->20|SPAN-1",
+          "entityKind": "ELEMENT",
+          "quantity": "GLOBAL_END_FORCE_FROM",
+          "unit": "N",
+          "value": 855.3352163359457
+        },
+        {
+          "component": "FZ",
+          "entityId": "INPUT_ELEMENT:1|10->20|SPAN-1",
+          "entityKind": "ELEMENT",
+          "quantity": "GLOBAL_END_FORCE_FROM",
+          "unit": "N",
+          "value": 0
+        },
+        {
+          "component": "MX",
+          "entityId": "INPUT_ELEMENT:1|10->20|SPAN-1",
+          "entityKind": "ELEMENT",
+          "quantity": "GLOBAL_END_MOMENT_FROM",
+          "unit": "N*m",
+          "value": -104.51333978838008
+        },
+        {
+          "component": "MY",
+          "entityId": "INPUT_ELEMENT:1|10->20|SPAN-1",
+          "entityKind": "ELEMENT",
+          "quantity": "GLOBAL_END_MOMENT_FROM",
+          "unit": "N*m",
+          "value": 0
+        },
+        {
+          "component": "MZ",
+          "entityId": "INPUT_ELEMENT:1|10->20|SPAN-1",
+          "entityKind": "ELEMENT",
+          "quantity": "GLOBAL_END_MOMENT_FROM",
+          "unit": "N*m",
+          "value": 527.6284745208956
+        },
+        {
+          "component": "FX",
+          "entityId": "INPUT_ELEMENT:1|10->20|SPAN-1",
+          "entityKind": "ELEMENT",
+          "quantity": "GLOBAL_END_FORCE_TO",
+          "unit": "N",
+          "value": -1.8189894035458565e-12
+        },
+        {
+          "component": "FY",
+          "entityId": "INPUT_ELEMENT:1|10->20|SPAN-1",
+          "entityKind": "ELEMENT",
+          "quantity": "GLOBAL_END_FORCE_TO",
+          "unit": "N",
+          "value": 984.7627654304645
+        },
+        {
+          "component": "FZ",
+          "entityId": "INPUT_ELEMENT:1|10->20|SPAN-1",
+          "entityKind": "ELEMENT",
+          "quantity": "GLOBAL_END_FORCE_TO",
+          "unit": "N",
+          "value": 0
+        },
+        {
+          "component": "MX",
+          "entityId": "INPUT_ELEMENT:1|10->20|SPAN-1",
+          "entityKind": "ELEMENT",
+          "quantity": "GLOBAL_END_MOMENT_TO",
+          "unit": "N*m",
+          "value": 104.51333978838008
+        },
+        {
+          "component": "MY",
+          "entityId": "INPUT_ELEMENT:1|10->20|SPAN-1",
+          "entityKind": "ELEMENT",
+          "quantity": "GLOBAL_END_MOMENT_TO",
+          "unit": "N*m",
+          "value": 0
+        },
+        {
+          "component": "MZ",
+          "entityId": "INPUT_ELEMENT:1|10->20|SPAN-1",
+          "entityKind": "ELEMENT",
+          "quantity": "GLOBAL_END_MOMENT_TO",
+          "unit": "N*m",
+          "value": -786.4835727099331
+        },
+        {
+          "component": "FX",
+          "entityId": "INPUT_ELEMENT:2|20->30|SPAN-2",
+          "entityKind": "ELEMENT",
+          "quantity": "GLOBAL_END_FORCE_FROM",
+          "unit": "N",
+          "value": 1.8189894035458565e-12
+        },
+        {
+          "component": "FY",
+          "entityId": "INPUT_ELEMENT:2|20->30|SPAN-2",
+          "entityKind": "ELEMENT",
+          "quantity": "GLOBAL_END_FORCE_FROM",
+          "unit": "N",
+          "value": 1116.6698840606884
+        },
+        {
+          "component": "FZ",
+          "entityId": "INPUT_ELEMENT:2|20->30|SPAN-2",
+          "entityKind": "ELEMENT",
+          "quantity": "GLOBAL_END_FORCE_FROM",
+          "unit": "N",
+          "value": 0
+        },
+        {
+          "component": "MX",
+          "entityId": "INPUT_ELEMENT:2|20->30|SPAN-2",
+          "entityKind": "ELEMENT",
+          "quantity": "GLOBAL_END_MOMENT_FROM",
+          "unit": "N*m",
+          "value": -104.51333978838008
+        },
+        {
+          "component": "MY",
+          "entityId": "INPUT_ELEMENT:2|20->30|SPAN-2",
+          "entityKind": "ELEMENT",
+          "quantity": "GLOBAL_END_MOMENT_FROM",
+          "unit": "N*m",
+          "value": 0
+        },
+        {
+          "component": "MZ",
+          "entityId": "INPUT_ELEMENT:2|20->30|SPAN-2",
+          "entityKind": "ELEMENT",
+          "quantity": "GLOBAL_END_MOMENT_FROM",
+          "unit": "N*m",
+          "value": 786.4835727099331
+        },
+        {
+          "component": "FX",
+          "entityId": "INPUT_ELEMENT:2|20->30|SPAN-2",
+          "entityKind": "ELEMENT",
+          "quantity": "GLOBAL_END_FORCE_TO",
+          "unit": "N",
+          "value": -1.8189894035458565e-12
+        },
+        {
+          "component": "FY",
+          "entityId": "INPUT_ELEMENT:2|20->30|SPAN-2",
+          "entityKind": "ELEMENT",
+          "quantity": "GLOBAL_END_FORCE_TO",
+          "unit": "N",
+          "value": 723.4280977057217
+        },
+        {
+          "component": "FZ",
+          "entityId": "INPUT_ELEMENT:2|20->30|SPAN-2",
+          "entityKind": "ELEMENT",
+          "quantity": "GLOBAL_END_FORCE_TO",
+          "unit": "N",
+          "value": 0
+        },
+        {
+          "component": "MX",
+          "entityId": "INPUT_ELEMENT:2|20->30|SPAN-2",
+          "entityKind": "ELEMENT",
+          "quantity": "GLOBAL_END_MOMENT_TO",
+          "unit": "N*m",
+          "value": 104.51333978838008
+        },
+        {
+          "component": "MY",
+          "entityId": "INPUT_ELEMENT:2|20->30|SPAN-2",
+          "entityKind": "ELEMENT",
+          "quantity": "GLOBAL_END_MOMENT_TO",
+          "unit": "N*m",
+          "value": 0
+        },
+        {
+          "component": "MZ",
+          "entityId": "INPUT_ELEMENT:2|20->30|SPAN-2",
+          "entityKind": "ELEMENT",
+          "quantity": "GLOBAL_END_MOMENT_TO",
+          "unit": "N*m",
+          "value": 0
+        },
+        {
+          "component": "FX",
+          "entityId": "INPUT_ELEMENT:3|30->40|SPAN-3",
+          "entityKind": "ELEMENT",
+          "quantity": "GLOBAL_END_FORCE_FROM",
+          "unit": "N",
+          "value": 0
+        },
+        {
+          "component": "FY",
+          "entityId": "INPUT_ELEMENT:3|30->40|SPAN-3",
+          "entityKind": "ELEMENT",
+          "quantity": "GLOBAL_END_FORCE_FROM",
+          "unit": "N",
+          "value": 946.1773258303001
+        },
+        {
+          "component": "FZ",
+          "entityId": "INPUT_ELEMENT:3|30->40|SPAN-3",
+          "entityKind": "ELEMENT",
+          "quantity": "GLOBAL_END_FORCE_FROM",
+          "unit": "N",
+          "value": 1.8189894035458565e-12
+        },
+        {
+          "component": "MX",
+          "entityId": "INPUT_ELEMENT:3|30->40|SPAN-3",
+          "entityKind": "ELEMENT",
+          "quantity": "GLOBAL_END_MOMENT_FROM",
+          "unit": "N*m",
+          "value": -104.51333978838005
+        },
+        {
+          "component": "MY",
+          "entityId": "INPUT_ELEMENT:3|30->40|SPAN-3",
+          "entityKind": "ELEMENT",
+          "quantity": "GLOBAL_END_MOMENT_FROM",
+          "unit": "N*m",
+          "value": 0
+        },
+        {
+          "component": "MZ",
+          "entityId": "INPUT_ELEMENT:3|30->40|SPAN-3",
+          "entityKind": "ELEMENT",
+          "quantity": "GLOBAL_END_MOMENT_FROM",
+          "unit": "N*m",
+          "value": 0
+        },
+        {
+          "component": "FX",
+          "entityId": "INPUT_ELEMENT:3|30->40|SPAN-3",
+          "entityKind": "ELEMENT",
+          "quantity": "GLOBAL_END_FORCE_TO",
+          "unit": "N",
+          "value": 0
+        },
+        {
+          "component": "FY",
+          "entityId": "INPUT_ELEMENT:3|30->40|SPAN-3",
+          "entityKind": "ELEMENT",
+          "quantity": "GLOBAL_END_FORCE_TO",
+          "unit": "N",
+          "value": 893.92065593611
+        },
+        {
+          "component": "FZ",
+          "entityId": "INPUT_ELEMENT:3|30->40|SPAN-3",
+          "entityKind": "ELEMENT",
+          "quantity": "GLOBAL_END_FORCE_TO",
+          "unit": "N",
+          "value": -1.8189894035458565e-12
+        },
+        {
+          "component": "MX",
+          "entityId": "INPUT_ELEMENT:3|30->40|SPAN-3",
+          "entityKind": "ELEMENT",
+          "quantity": "GLOBAL_END_MOMENT_TO",
+          "unit": "N*m",
+          "value": 0
+        },
+        {
+          "component": "MY",
+          "entityId": "INPUT_ELEMENT:3|30->40|SPAN-3",
+          "entityKind": "ELEMENT",
+          "quantity": "GLOBAL_END_MOMENT_TO",
+          "unit": "N*m",
+          "value": 0
+        },
+        {
+          "component": "MZ",
+          "entityId": "INPUT_ELEMENT:3|30->40|SPAN-3",
+          "entityKind": "ELEMENT",
+          "quantity": "GLOBAL_END_MOMENT_TO",
+          "unit": "N*m",
+          "value": 0
+        }
+      ],
+      "rowsSemanticHash": "fnv1a64:2add8996a6f7655d",
+      "stiffnessStateHash": "fnv1a64:b5e3c98b66c7fc05"
+    },
+    "L6": {
+      "executionSemanticHash": "fnv1a64:e13b6558269f93f8",
+      "recoveredEquilibriumStatus": "PASS",
+      "rowCount": 144,
+      "rows": [
+        {
+          "component": "UX",
+          "entityId": "10",
+          "entityKind": "NODE",
+          "quantity": "DISPLACEMENT",
+          "unit": "m",
+          "value": 0
+        },
+        {
+          "component": "UY",
+          "entityId": "10",
+          "entityKind": "NODE",
+          "quantity": "DISPLACEMENT",
+          "unit": "m",
+          "value": -8.553352163359457e-12
+        },
+        {
+          "component": "UZ",
+          "entityId": "10",
+          "entityKind": "NODE",
+          "quantity": "DISPLACEMENT",
+          "unit": "m",
+          "value": 0
+        },
+        {
+          "component": "RX",
+          "entityId": "10",
+          "entityKind": "NODE",
+          "quantity": "ROTATION",
+          "unit": "rad",
+          "value": 1.824101891562826e-12
+        },
+        {
+          "component": "RY",
+          "entityId": "10",
+          "entityKind": "NODE",
+          "quantity": "ROTATION",
+          "unit": "rad",
+          "value": 0
+        },
+        {
+          "component": "RZ",
+          "entityId": "10",
+          "entityKind": "NODE",
+          "quantity": "ROTATION",
+          "unit": "rad",
+          "value": -9.208854107664638e-12
+        },
+        {
+          "component": "UX",
+          "entityId": "20",
+          "entityKind": "NODE",
+          "quantity": "DISPLACEMENT",
+          "unit": "m",
+          "value": 0.00008163545029366932
+        },
+        {
+          "component": "UY",
+          "entityId": "20",
+          "entityKind": "NODE",
+          "quantity": "DISPLACEMENT",
+          "unit": "m",
+          "value": -2.1014326494911528e-11
+        },
+        {
+          "component": "UZ",
+          "entityId": "20",
+          "entityKind": "NODE",
+          "quantity": "DISPLACEMENT",
+          "unit": "m",
+          "value": 0
+        },
+        {
+          "component": "RX",
+          "entityId": "20",
+          "entityKind": "NODE",
+          "quantity": "ROTATION",
+          "unit": "rad",
+          "value": 0.0002285025769517875
+        },
+        {
+          "component": "RY",
+          "entityId": "20",
+          "entityKind": "NODE",
+          "quantity": "ROTATION",
+          "unit": "rad",
+          "value": 0
+        },
+        {
+          "component": "RZ",
+          "entityId": "20",
+          "entityKind": "NODE",
+          "quantity": "ROTATION",
+          "unit": "rad",
+          "value": -0.00007347818406365657
+        },
+        {
+          "component": "UX",
+          "entityId": "30",
+          "entityKind": "NODE",
+          "quantity": "DISPLACEMENT",
+          "unit": "m",
+          "value": 0.00016327090058733865
+        },
+        {
+          "component": "UY",
+          "entityId": "30",
+          "entityKind": "NODE",
+          "quantity": "DISPLACEMENT",
+          "unit": "m",
+          "value": -1.6696054235360218e-11
+        },
+        {
+          "component": "UZ",
+          "entityId": "30",
+          "entityKind": "NODE",
+          "quantity": "DISPLACEMENT",
+          "unit": "m",
+          "value": 0
+        },
+        {
+          "component": "RX",
+          "entityId": "30",
+          "entityKind": "NODE",
+          "quantity": "ROTATION",
+          "unit": "rad",
+          "value": 0.0004570051520794731
+        },
+        {
+          "component": "RY",
+          "entityId": "30",
+          "entityKind": "NODE",
+          "quantity": "ROTATION",
+          "unit": "rad",
+          "value": 0
+        },
+        {
+          "component": "RZ",
+          "entityId": "30",
+          "entityKind": "NODE",
+          "quantity": "ROTATION",
+          "unit": "rad",
+          "value": 0.00029672813364649286
+        },
+        {
+          "component": "UX",
+          "entityId": "40",
+          "entityKind": "NODE",
+          "quantity": "DISPLACEMENT",
+          "unit": "m",
+          "value": 0.00016327090058733865
+        },
+        {
+          "component": "UY",
+          "entityId": "40",
+          "entityKind": "NODE",
+          "quantity": "DISPLACEMENT",
+          "unit": "m",
+          "value": -8.939206559361099e-12
+        },
+        {
+          "component": "UZ",
+          "entityId": "40",
+          "entityKind": "NODE",
+          "quantity": "DISPLACEMENT",
+          "unit": "m",
+          "value": 0.00008163545029366932
+        },
+        {
+          "component": "RX",
+          "entityId": "40",
+          "entityKind": "NODE",
+          "quantity": "ROTATION",
+          "unit": "rad",
+          "value": -0.00048667214255805646
+        },
+        {
+          "component": "RY",
+          "entityId": "40",
+          "entityKind": "NODE",
+          "quantity": "ROTATION",
+          "unit": "rad",
+          "value": 0
+        },
+        {
+          "component": "RZ",
+          "entityId": "40",
+          "entityKind": "NODE",
+          "quantity": "ROTATION",
+          "unit": "rad",
+          "value": 0.00029672813364649286
+        },
+        {
+          "component": "UX",
+          "entityId": "10",
+          "entityKind": "NODE",
+          "quantity": "FORCE",
+          "unit": "N",
+          "value": 2.0776577992628373e-12
+        },
+        {
+          "component": "UY",
+          "entityId": "10",
+          "entityKind": "NODE",
+          "quantity": "FORCE",
+          "unit": "N",
+          "value": 855.3352163359457
+        },
+        {
+          "component": "UZ",
+          "entityId": "10",
+          "entityKind": "NODE",
+          "quantity": "FORCE",
+          "unit": "N",
+          "value": 0
+        },
+        {
+          "component": "RX",
+          "entityId": "10",
+          "entityKind": "NODE",
+          "quantity": "MOMENT",
+          "unit": "N*m",
+          "value": -104.51333978838008
+        },
+        {
+          "component": "RY",
+          "entityId": "10",
+          "entityKind": "NODE",
+          "quantity": "MOMENT",
+          "unit": "N*m",
+          "value": 0
+        },
+        {
+          "component": "RZ",
+          "entityId": "10",
+          "entityKind": "NODE",
+          "quantity": "MOMENT",
+          "unit": "N*m",
+          "value": 527.6284745208956
+        },
+        {
+          "component": "UX",
+          "entityId": "20",
+          "entityKind": "NODE",
+          "quantity": "FORCE",
+          "unit": "N",
+          "value": 0
+        },
+        {
+          "component": "UY",
+          "entityId": "20",
+          "entityKind": "NODE",
+          "quantity": "FORCE",
+          "unit": "N",
+          "value": 2101.432649491153
+        },
+        {
+          "component": "UZ",
+          "entityId": "20",
+          "entityKind": "NODE",
+          "quantity": "FORCE",
+          "unit": "N",
+          "value": 0
+        },
+        {
+          "component": "RX",
+          "entityId": "20",
+          "entityKind": "NODE",
+          "quantity": "MOMENT",
+          "unit": "N*m",
+          "value": 0
+        },
+        {
+          "component": "RY",
+          "entityId": "20",
+          "entityKind": "NODE",
+          "quantity": "MOMENT",
+          "unit": "N*m",
+          "value": 0
+        },
+        {
+          "component": "RZ",
+          "entityId": "20",
+          "entityKind": "NODE",
+          "quantity": "MOMENT",
+          "unit": "N*m",
+          "value": 0
+        },
+        {
+          "component": "UX",
+          "entityId": "30",
+          "entityKind": "NODE",
+          "quantity": "FORCE",
+          "unit": "N",
+          "value": 0
+        },
+        {
+          "component": "UY",
+          "entityId": "30",
+          "entityKind": "NODE",
+          "quantity": "FORCE",
+          "unit": "N",
+          "value": 1669.6054235360218
+        },
+        {
+          "component": "UZ",
+          "entityId": "30",
+          "entityKind": "NODE",
+          "quantity": "FORCE",
+          "unit": "N",
+          "value": 0
+        },
+        {
+          "component": "RX",
+          "entityId": "30",
+          "entityKind": "NODE",
+          "quantity": "MOMENT",
+          "unit": "N*m",
+          "value": 0
+        },
+        {
+          "component": "RY",
+          "entityId": "30",
+          "entityKind": "NODE",
+          "quantity": "MOMENT",
+          "unit": "N*m",
+          "value": 0
+        },
+        {
+          "component": "RZ",
+          "entityId": "30",
+          "entityKind": "NODE",
+          "quantity": "MOMENT",
+          "unit": "N*m",
+          "value": 0
+        },
+        {
+          "component": "UX",
+          "entityId": "40",
+          "entityKind": "NODE",
+          "quantity": "FORCE",
+          "unit": "N",
+          "value": 0
+        },
+        {
+          "component": "UY",
+          "entityId": "40",
+          "entityKind": "NODE",
+          "quantity": "FORCE",
+          "unit": "N",
+          "value": 893.9206559361099
+        },
+        {
+          "component": "UZ",
+          "entityId": "40",
+          "entityKind": "NODE",
+          "quantity": "FORCE",
+          "unit": "N",
+          "value": 0
+        },
+        {
+          "component": "RX",
+          "entityId": "40",
+          "entityKind": "NODE",
+          "quantity": "MOMENT",
+          "unit": "N*m",
+          "value": 0
+        },
+        {
+          "component": "RY",
+          "entityId": "40",
+          "entityKind": "NODE",
+          "quantity": "MOMENT",
+          "unit": "N*m",
+          "value": 0
+        },
+        {
+          "component": "RZ",
+          "entityId": "40",
+          "entityKind": "NODE",
+          "quantity": "MOMENT",
+          "unit": "N*m",
+          "value": 0
+        },
+        {
+          "component": "UX",
+          "entityId": "10",
+          "entityKind": "NODE",
+          "quantity": "INCIDENT_GLOBAL_FORCE",
+          "unit": "N",
+          "value": 0
+        },
+        {
+          "component": "UY",
+          "entityId": "10",
+          "entityKind": "NODE",
+          "quantity": "INCIDENT_GLOBAL_FORCE",
+          "unit": "N",
+          "value": 855.3352163359457
+        },
+        {
+          "component": "UZ",
+          "entityId": "10",
+          "entityKind": "NODE",
+          "quantity": "INCIDENT_GLOBAL_FORCE",
+          "unit": "N",
+          "value": 0
+        },
+        {
+          "component": "RX",
+          "entityId": "10",
+          "entityKind": "NODE",
+          "quantity": "INCIDENT_GLOBAL_MOMENT",
+          "unit": "N*m",
+          "value": -104.51333978838008
+        },
+        {
+          "component": "RY",
+          "entityId": "10",
+          "entityKind": "NODE",
+          "quantity": "INCIDENT_GLOBAL_MOMENT",
+          "unit": "N*m",
+          "value": 0
+        },
+        {
+          "component": "RZ",
+          "entityId": "10",
+          "entityKind": "NODE",
+          "quantity": "INCIDENT_GLOBAL_MOMENT",
+          "unit": "N*m",
+          "value": 527.6284745208956
+        },
+        {
+          "component": "UX",
+          "entityId": "20",
+          "entityKind": "NODE",
+          "quantity": "INCIDENT_GLOBAL_FORCE",
+          "unit": "N",
+          "value": 0
+        },
+        {
+          "component": "UY",
+          "entityId": "20",
+          "entityKind": "NODE",
+          "quantity": "INCIDENT_GLOBAL_FORCE",
+          "unit": "N",
+          "value": 2101.432649491153
+        },
+        {
+          "component": "UZ",
+          "entityId": "20",
+          "entityKind": "NODE",
+          "quantity": "INCIDENT_GLOBAL_FORCE",
+          "unit": "N",
+          "value": 0
+        },
+        {
+          "component": "RX",
+          "entityId": "20",
+          "entityKind": "NODE",
+          "quantity": "INCIDENT_GLOBAL_MOMENT",
+          "unit": "N*m",
+          "value": 0
+        },
+        {
+          "component": "RY",
+          "entityId": "20",
+          "entityKind": "NODE",
+          "quantity": "INCIDENT_GLOBAL_MOMENT",
+          "unit": "N*m",
+          "value": 0
+        },
+        {
+          "component": "RZ",
+          "entityId": "20",
+          "entityKind": "NODE",
+          "quantity": "INCIDENT_GLOBAL_MOMENT",
+          "unit": "N*m",
+          "value": 0
+        },
+        {
+          "component": "UX",
+          "entityId": "30",
+          "entityKind": "NODE",
+          "quantity": "INCIDENT_GLOBAL_FORCE",
+          "unit": "N",
+          "value": 0
+        },
+        {
+          "component": "UY",
+          "entityId": "30",
+          "entityKind": "NODE",
+          "quantity": "INCIDENT_GLOBAL_FORCE",
+          "unit": "N",
+          "value": 1669.6054235360218
+        },
+        {
+          "component": "UZ",
+          "entityId": "30",
+          "entityKind": "NODE",
+          "quantity": "INCIDENT_GLOBAL_FORCE",
+          "unit": "N",
+          "value": 0
+        },
+        {
+          "component": "RX",
+          "entityId": "30",
+          "entityKind": "NODE",
+          "quantity": "INCIDENT_GLOBAL_MOMENT",
+          "unit": "N*m",
+          "value": 0
+        },
+        {
+          "component": "RY",
+          "entityId": "30",
+          "entityKind": "NODE",
+          "quantity": "INCIDENT_GLOBAL_MOMENT",
+          "unit": "N*m",
+          "value": 0
+        },
+        {
+          "component": "RZ",
+          "entityId": "30",
+          "entityKind": "NODE",
+          "quantity": "INCIDENT_GLOBAL_MOMENT",
+          "unit": "N*m",
+          "value": 0
+        },
+        {
+          "component": "UX",
+          "entityId": "40",
+          "entityKind": "NODE",
+          "quantity": "INCIDENT_GLOBAL_FORCE",
+          "unit": "N",
+          "value": 0
+        },
+        {
+          "component": "UY",
+          "entityId": "40",
+          "entityKind": "NODE",
+          "quantity": "INCIDENT_GLOBAL_FORCE",
+          "unit": "N",
+          "value": 893.92065593611
+        },
+        {
+          "component": "UZ",
+          "entityId": "40",
+          "entityKind": "NODE",
+          "quantity": "INCIDENT_GLOBAL_FORCE",
+          "unit": "N",
+          "value": 0
+        },
+        {
+          "component": "RX",
+          "entityId": "40",
+          "entityKind": "NODE",
+          "quantity": "INCIDENT_GLOBAL_MOMENT",
+          "unit": "N*m",
+          "value": 0
+        },
+        {
+          "component": "RY",
+          "entityId": "40",
+          "entityKind": "NODE",
+          "quantity": "INCIDENT_GLOBAL_MOMENT",
+          "unit": "N*m",
+          "value": 0
+        },
+        {
+          "component": "RZ",
+          "entityId": "40",
+          "entityKind": "NODE",
+          "quantity": "INCIDENT_GLOBAL_MOMENT",
+          "unit": "N*m",
+          "value": 0
+        },
+        {
+          "component": "FX",
+          "entityId": "ACCDB.E1",
+          "entityKind": "ELEMENT",
+          "quantity": "GLOBAL_END_FORCE_FROM",
+          "unit": "N",
+          "value": 0
+        },
+        {
+          "component": "FY",
+          "entityId": "ACCDB.E1",
+          "entityKind": "ELEMENT",
+          "quantity": "GLOBAL_END_FORCE_FROM",
+          "unit": "N",
+          "value": 855.3352163359457
+        },
+        {
+          "component": "FZ",
+          "entityId": "ACCDB.E1",
+          "entityKind": "ELEMENT",
+          "quantity": "GLOBAL_END_FORCE_FROM",
+          "unit": "N",
+          "value": 0
+        },
+        {
+          "component": "MX",
+          "entityId": "ACCDB.E1",
+          "entityKind": "ELEMENT",
+          "quantity": "GLOBAL_END_MOMENT_FROM",
+          "unit": "N*m",
+          "value": -104.51333978838008
+        },
+        {
+          "component": "MY",
+          "entityId": "ACCDB.E1",
+          "entityKind": "ELEMENT",
+          "quantity": "GLOBAL_END_MOMENT_FROM",
+          "unit": "N*m",
+          "value": 0
+        },
+        {
+          "component": "MZ",
+          "entityId": "ACCDB.E1",
+          "entityKind": "ELEMENT",
+          "quantity": "GLOBAL_END_MOMENT_FROM",
+          "unit": "N*m",
+          "value": 527.6284745208956
+        },
+        {
+          "component": "FX",
+          "entityId": "ACCDB.E1",
+          "entityKind": "ELEMENT",
+          "quantity": "GLOBAL_END_FORCE_TO",
+          "unit": "N",
+          "value": 0
+        },
+        {
+          "component": "FY",
+          "entityId": "ACCDB.E1",
+          "entityKind": "ELEMENT",
+          "quantity": "GLOBAL_END_FORCE_TO",
+          "unit": "N",
+          "value": 984.7627654304645
+        },
+        {
+          "component": "FZ",
+          "entityId": "ACCDB.E1",
+          "entityKind": "ELEMENT",
+          "quantity": "GLOBAL_END_FORCE_TO",
+          "unit": "N",
+          "value": 0
+        },
+        {
+          "component": "MX",
+          "entityId": "ACCDB.E1",
+          "entityKind": "ELEMENT",
+          "quantity": "GLOBAL_END_MOMENT_TO",
+          "unit": "N*m",
+          "value": 104.51333978838008
+        },
+        {
+          "component": "MY",
+          "entityId": "ACCDB.E1",
+          "entityKind": "ELEMENT",
+          "quantity": "GLOBAL_END_MOMENT_TO",
+          "unit": "N*m",
+          "value": 0
+        },
+        {
+          "component": "MZ",
+          "entityId": "ACCDB.E1",
+          "entityKind": "ELEMENT",
+          "quantity": "GLOBAL_END_MOMENT_TO",
+          "unit": "N*m",
+          "value": -786.4835727099331
+        },
+        {
+          "component": "FX",
+          "entityId": "ACCDB.E2",
+          "entityKind": "ELEMENT",
+          "quantity": "GLOBAL_END_FORCE_FROM",
+          "unit": "N",
+          "value": 0
+        },
+        {
+          "component": "FY",
+          "entityId": "ACCDB.E2",
+          "entityKind": "ELEMENT",
+          "quantity": "GLOBAL_END_FORCE_FROM",
+          "unit": "N",
+          "value": 1116.6698840606884
+        },
+        {
+          "component": "FZ",
+          "entityId": "ACCDB.E2",
+          "entityKind": "ELEMENT",
+          "quantity": "GLOBAL_END_FORCE_FROM",
+          "unit": "N",
+          "value": 0
+        },
+        {
+          "component": "MX",
+          "entityId": "ACCDB.E2",
+          "entityKind": "ELEMENT",
+          "quantity": "GLOBAL_END_MOMENT_FROM",
+          "unit": "N*m",
+          "value": -104.51333978838008
+        },
+        {
+          "component": "MY",
+          "entityId": "ACCDB.E2",
+          "entityKind": "ELEMENT",
+          "quantity": "GLOBAL_END_MOMENT_FROM",
+          "unit": "N*m",
+          "value": 0
+        },
+        {
+          "component": "MZ",
+          "entityId": "ACCDB.E2",
+          "entityKind": "ELEMENT",
+          "quantity": "GLOBAL_END_MOMENT_FROM",
+          "unit": "N*m",
+          "value": 786.4835727099331
+        },
+        {
+          "component": "FX",
+          "entityId": "ACCDB.E2",
+          "entityKind": "ELEMENT",
+          "quantity": "GLOBAL_END_FORCE_TO",
+          "unit": "N",
+          "value": 0
+        },
+        {
+          "component": "FY",
+          "entityId": "ACCDB.E2",
+          "entityKind": "ELEMENT",
+          "quantity": "GLOBAL_END_FORCE_TO",
+          "unit": "N",
+          "value": 723.4280977057217
+        },
+        {
+          "component": "FZ",
+          "entityId": "ACCDB.E2",
+          "entityKind": "ELEMENT",
+          "quantity": "GLOBAL_END_FORCE_TO",
+          "unit": "N",
+          "value": 0
+        },
+        {
+          "component": "MX",
+          "entityId": "ACCDB.E2",
+          "entityKind": "ELEMENT",
+          "quantity": "GLOBAL_END_MOMENT_TO",
+          "unit": "N*m",
+          "value": 104.51333978838008
+        },
+        {
+          "component": "MY",
+          "entityId": "ACCDB.E2",
+          "entityKind": "ELEMENT",
+          "quantity": "GLOBAL_END_MOMENT_TO",
+          "unit": "N*m",
+          "value": 0
+        },
+        {
+          "component": "MZ",
+          "entityId": "ACCDB.E2",
+          "entityKind": "ELEMENT",
+          "quantity": "GLOBAL_END_MOMENT_TO",
+          "unit": "N*m",
+          "value": 0
+        },
+        {
+          "component": "FX",
+          "entityId": "ACCDB.E3",
+          "entityKind": "ELEMENT",
+          "quantity": "GLOBAL_END_FORCE_FROM",
+          "unit": "N",
+          "value": 0
+        },
+        {
+          "component": "FY",
+          "entityId": "ACCDB.E3",
+          "entityKind": "ELEMENT",
+          "quantity": "GLOBAL_END_FORCE_FROM",
+          "unit": "N",
+          "value": 946.1773258303001
+        },
+        {
+          "component": "FZ",
+          "entityId": "ACCDB.E3",
+          "entityKind": "ELEMENT",
+          "quantity": "GLOBAL_END_FORCE_FROM",
+          "unit": "N",
+          "value": 0
+        },
+        {
+          "component": "MX",
+          "entityId": "ACCDB.E3",
+          "entityKind": "ELEMENT",
+          "quantity": "GLOBAL_END_MOMENT_FROM",
+          "unit": "N*m",
+          "value": -104.51333978838005
+        },
+        {
+          "component": "MY",
+          "entityId": "ACCDB.E3",
+          "entityKind": "ELEMENT",
+          "quantity": "GLOBAL_END_MOMENT_FROM",
+          "unit": "N*m",
+          "value": 0
+        },
+        {
+          "component": "MZ",
+          "entityId": "ACCDB.E3",
+          "entityKind": "ELEMENT",
+          "quantity": "GLOBAL_END_MOMENT_FROM",
+          "unit": "N*m",
+          "value": 0
+        },
+        {
+          "component": "FX",
+          "entityId": "ACCDB.E3",
+          "entityKind": "ELEMENT",
+          "quantity": "GLOBAL_END_FORCE_TO",
+          "unit": "N",
+          "value": 0
+        },
+        {
+          "component": "FY",
+          "entityId": "ACCDB.E3",
+          "entityKind": "ELEMENT",
+          "quantity": "GLOBAL_END_FORCE_TO",
+          "unit": "N",
+          "value": 893.92065593611
+        },
+        {
+          "component": "FZ",
+          "entityId": "ACCDB.E3",
+          "entityKind": "ELEMENT",
+          "quantity": "GLOBAL_END_FORCE_TO",
+          "unit": "N",
+          "value": 0
+        },
+        {
+          "component": "MX",
+          "entityId": "ACCDB.E3",
+          "entityKind": "ELEMENT",
+          "quantity": "GLOBAL_END_MOMENT_TO",
+          "unit": "N*m",
+          "value": 0
+        },
+        {
+          "component": "MY",
+          "entityId": "ACCDB.E3",
+          "entityKind": "ELEMENT",
+          "quantity": "GLOBAL_END_MOMENT_TO",
+          "unit": "N*m",
+          "value": 0
+        },
+        {
+          "component": "MZ",
+          "entityId": "ACCDB.E3",
+          "entityKind": "ELEMENT",
+          "quantity": "GLOBAL_END_MOMENT_TO",
+          "unit": "N*m",
+          "value": 0
+        },
+        {
+          "component": "FX",
+          "entityId": "INPUT_ELEMENT:1|10->20|SPAN-1",
+          "entityKind": "ELEMENT",
+          "quantity": "GLOBAL_END_FORCE_FROM",
+          "unit": "N",
+          "value": 0
+        },
+        {
+          "component": "FY",
+          "entityId": "INPUT_ELEMENT:1|10->20|SPAN-1",
+          "entityKind": "ELEMENT",
+          "quantity": "GLOBAL_END_FORCE_FROM",
+          "unit": "N",
+          "value": 855.3352163359457
+        },
+        {
+          "component": "FZ",
+          "entityId": "INPUT_ELEMENT:1|10->20|SPAN-1",
+          "entityKind": "ELEMENT",
+          "quantity": "GLOBAL_END_FORCE_FROM",
+          "unit": "N",
+          "value": 0
+        },
+        {
+          "component": "MX",
+          "entityId": "INPUT_ELEMENT:1|10->20|SPAN-1",
+          "entityKind": "ELEMENT",
+          "quantity": "GLOBAL_END_MOMENT_FROM",
+          "unit": "N*m",
+          "value": -104.51333978838008
+        },
+        {
+          "component": "MY",
+          "entityId": "INPUT_ELEMENT:1|10->20|SPAN-1",
+          "entityKind": "ELEMENT",
+          "quantity": "GLOBAL_END_MOMENT_FROM",
+          "unit": "N*m",
+          "value": 0
+        },
+        {
+          "component": "MZ",
+          "entityId": "INPUT_ELEMENT:1|10->20|SPAN-1",
+          "entityKind": "ELEMENT",
+          "quantity": "GLOBAL_END_MOMENT_FROM",
+          "unit": "N*m",
+          "value": 527.6284745208956
+        },
+        {
+          "component": "FX",
+          "entityId": "INPUT_ELEMENT:1|10->20|SPAN-1",
+          "entityKind": "ELEMENT",
+          "quantity": "GLOBAL_END_FORCE_TO",
+          "unit": "N",
+          "value": 0
+        },
+        {
+          "component": "FY",
+          "entityId": "INPUT_ELEMENT:1|10->20|SPAN-1",
+          "entityKind": "ELEMENT",
+          "quantity": "GLOBAL_END_FORCE_TO",
+          "unit": "N",
+          "value": 984.7627654304645
+        },
+        {
+          "component": "FZ",
+          "entityId": "INPUT_ELEMENT:1|10->20|SPAN-1",
+          "entityKind": "ELEMENT",
+          "quantity": "GLOBAL_END_FORCE_TO",
+          "unit": "N",
+          "value": 0
+        },
+        {
+          "component": "MX",
+          "entityId": "INPUT_ELEMENT:1|10->20|SPAN-1",
+          "entityKind": "ELEMENT",
+          "quantity": "GLOBAL_END_MOMENT_TO",
+          "unit": "N*m",
+          "value": 104.51333978838008
+        },
+        {
+          "component": "MY",
+          "entityId": "INPUT_ELEMENT:1|10->20|SPAN-1",
+          "entityKind": "ELEMENT",
+          "quantity": "GLOBAL_END_MOMENT_TO",
+          "unit": "N*m",
+          "value": 0
+        },
+        {
+          "component": "MZ",
+          "entityId": "INPUT_ELEMENT:1|10->20|SPAN-1",
+          "entityKind": "ELEMENT",
+          "quantity": "GLOBAL_END_MOMENT_TO",
+          "unit": "N*m",
+          "value": -786.4835727099331
+        },
+        {
+          "component": "FX",
+          "entityId": "INPUT_ELEMENT:2|20->30|SPAN-2",
+          "entityKind": "ELEMENT",
+          "quantity": "GLOBAL_END_FORCE_FROM",
+          "unit": "N",
+          "value": 0
+        },
+        {
+          "component": "FY",
+          "entityId": "INPUT_ELEMENT:2|20->30|SPAN-2",
+          "entityKind": "ELEMENT",
+          "quantity": "GLOBAL_END_FORCE_FROM",
+          "unit": "N",
+          "value": 1116.6698840606884
+        },
+        {
+          "component": "FZ",
+          "entityId": "INPUT_ELEMENT:2|20->30|SPAN-2",
+          "entityKind": "ELEMENT",
+          "quantity": "GLOBAL_END_FORCE_FROM",
+          "unit": "N",
+          "value": 0
+        },
+        {
+          "component": "MX",
+          "entityId": "INPUT_ELEMENT:2|20->30|SPAN-2",
+          "entityKind": "ELEMENT",
+          "quantity": "GLOBAL_END_MOMENT_FROM",
+          "unit": "N*m",
+          "value": -104.51333978838008
+        },
+        {
+          "component": "MY",
+          "entityId": "INPUT_ELEMENT:2|20->30|SPAN-2",
+          "entityKind": "ELEMENT",
+          "quantity": "GLOBAL_END_MOMENT_FROM",
+          "unit": "N*m",
+          "value": 0
+        },
+        {
+          "component": "MZ",
+          "entityId": "INPUT_ELEMENT:2|20->30|SPAN-2",
+          "entityKind": "ELEMENT",
+          "quantity": "GLOBAL_END_MOMENT_FROM",
+          "unit": "N*m",
+          "value": 786.4835727099331
+        },
+        {
+          "component": "FX",
+          "entityId": "INPUT_ELEMENT:2|20->30|SPAN-2",
+          "entityKind": "ELEMENT",
+          "quantity": "GLOBAL_END_FORCE_TO",
+          "unit": "N",
+          "value": 0
+        },
+        {
+          "component": "FY",
+          "entityId": "INPUT_ELEMENT:2|20->30|SPAN-2",
+          "entityKind": "ELEMENT",
+          "quantity": "GLOBAL_END_FORCE_TO",
+          "unit": "N",
+          "value": 723.4280977057217
+        },
+        {
+          "component": "FZ",
+          "entityId": "INPUT_ELEMENT:2|20->30|SPAN-2",
+          "entityKind": "ELEMENT",
+          "quantity": "GLOBAL_END_FORCE_TO",
+          "unit": "N",
+          "value": 0
+        },
+        {
+          "component": "MX",
+          "entityId": "INPUT_ELEMENT:2|20->30|SPAN-2",
+          "entityKind": "ELEMENT",
+          "quantity": "GLOBAL_END_MOMENT_TO",
+          "unit": "N*m",
+          "value": 104.51333978838008
+        },
+        {
+          "component": "MY",
+          "entityId": "INPUT_ELEMENT:2|20->30|SPAN-2",
+          "entityKind": "ELEMENT",
+          "quantity": "GLOBAL_END_MOMENT_TO",
+          "unit": "N*m",
+          "value": 0
+        },
+        {
+          "component": "MZ",
+          "entityId": "INPUT_ELEMENT:2|20->30|SPAN-2",
+          "entityKind": "ELEMENT",
+          "quantity": "GLOBAL_END_MOMENT_TO",
+          "unit": "N*m",
+          "value": 0
+        },
+        {
+          "component": "FX",
+          "entityId": "INPUT_ELEMENT:3|30->40|SPAN-3",
+          "entityKind": "ELEMENT",
+          "quantity": "GLOBAL_END_FORCE_FROM",
+          "unit": "N",
+          "value": 0
+        },
+        {
+          "component": "FY",
+          "entityId": "INPUT_ELEMENT:3|30->40|SPAN-3",
+          "entityKind": "ELEMENT",
+          "quantity": "GLOBAL_END_FORCE_FROM",
+          "unit": "N",
+          "value": 946.1773258303001
+        },
+        {
+          "component": "FZ",
+          "entityId": "INPUT_ELEMENT:3|30->40|SPAN-3",
+          "entityKind": "ELEMENT",
+          "quantity": "GLOBAL_END_FORCE_FROM",
+          "unit": "N",
+          "value": 0
+        },
+        {
+          "component": "MX",
+          "entityId": "INPUT_ELEMENT:3|30->40|SPAN-3",
+          "entityKind": "ELEMENT",
+          "quantity": "GLOBAL_END_MOMENT_FROM",
+          "unit": "N*m",
+          "value": -104.51333978838005
+        },
+        {
+          "component": "MY",
+          "entityId": "INPUT_ELEMENT:3|30->40|SPAN-3",
+          "entityKind": "ELEMENT",
+          "quantity": "GLOBAL_END_MOMENT_FROM",
+          "unit": "N*m",
+          "value": 0
+        },
+        {
+          "component": "MZ",
+          "entityId": "INPUT_ELEMENT:3|30->40|SPAN-3",
+          "entityKind": "ELEMENT",
+          "quantity": "GLOBAL_END_MOMENT_FROM",
+          "unit": "N*m",
+          "value": 0
+        },
+        {
+          "component": "FX",
+          "entityId": "INPUT_ELEMENT:3|30->40|SPAN-3",
+          "entityKind": "ELEMENT",
+          "quantity": "GLOBAL_END_FORCE_TO",
+          "unit": "N",
+          "value": 0
+        },
+        {
+          "component": "FY",
+          "entityId": "INPUT_ELEMENT:3|30->40|SPAN-3",
+          "entityKind": "ELEMENT",
+          "quantity": "GLOBAL_END_FORCE_TO",
+          "unit": "N",
+          "value": 893.92065593611
+        },
+        {
+          "component": "FZ",
+          "entityId": "INPUT_ELEMENT:3|30->40|SPAN-3",
+          "entityKind": "ELEMENT",
+          "quantity": "GLOBAL_END_FORCE_TO",
+          "unit": "N",
+          "value": 0
+        },
+        {
+          "component": "MX",
+          "entityId": "INPUT_ELEMENT:3|30->40|SPAN-3",
+          "entityKind": "ELEMENT",
+          "quantity": "GLOBAL_END_MOMENT_TO",
+          "unit": "N*m",
+          "value": 0
+        },
+        {
+          "component": "MY",
+          "entityId": "INPUT_ELEMENT:3|30->40|SPAN-3",
+          "entityKind": "ELEMENT",
+          "quantity": "GLOBAL_END_MOMENT_TO",
+          "unit": "N*m",
+          "value": 0
+        },
+        {
+          "component": "MZ",
+          "entityId": "INPUT_ELEMENT:3|30->40|SPAN-3",
+          "entityKind": "ELEMENT",
+          "quantity": "GLOBAL_END_MOMENT_TO",
+          "unit": "N*m",
+          "value": 0
+        }
+      ],
+      "rowsSemanticHash": "fnv1a64:6114838bae1b3482",
+      "stiffnessStateHash": "fnv1a64:b5e3c98b66c7fc05"
+    }
+  },
+  "purpose": "Frozen pre-migration non-friction result rows for the deterministic ACCDB-shaped friction fixture.",
+  "schema": "m047-friction-configuration-migration-baseline/v1"
+}
+

@@ -1,0 +1,303 @@
+{
+  "crossCase": {
+    "closestPublishedFinalNormalToL13ImpliedNormal": {
+      "caseNumber": 1,
+      "normalY_N": 2001.05029296875
+    },
+    "frictionEnabledCases": [
+      {
+        "case": "CASE 1 (HYD) WW+HP",
+        "caseNumber": 1,
+        "finalNormalCapN": 600.3151117450034,
+        "finalNormalUtilisation": 1.1089723315242446,
+        "impliedCapacityNormalN": 2219.109408890827,
+        "normalY_N": 2001.05029296875,
+        "tangentZ_N": 665.7328491210938
+      },
+      {
+        "case": "CASE 7 (OPE) W+T1+P1",
+        "caseNumber": 7,
+        "finalNormalCapN": 915.2251828521548,
+        "finalNormalUtilisation": 1.0036500449385277,
+        "impliedCapacityNormalN": 3061.8858646597123,
+        "normalY_N": 3050.75048828125,
+        "tangentZ_N": 918.5657958984375
+      },
+      {
+        "case": "CASE 13 (SUS) W+P1",
+        "caseNumber": 13,
+        "finalNormalCapN": 564.6915385521061,
+        "finalNormalUtilisation": 1.106335582585517,
+        "impliedCapacityNormalN": 2082.461058200953,
+        "normalY_N": 1882.3050537109375,
+        "tangentZ_N": 624.7383422851562
+      }
+    ],
+    "frictionlessCases": [
+      {
+        "FY_N": -1736.3173828125,
+        "FZ_N": 0,
+        "case": "CASE 2 (SUS) W",
+        "caseNumber": 2
+      },
+      {
+        "FY_N": -1018.7301635742188,
+        "FZ_N": 0,
+        "case": "CASE 3 (OPE) T1",
+        "caseNumber": 3
+      },
+      {
+        "FY_N": 3.826773166656494,
+        "FZ_N": 0,
+        "case": "CASE 4 (SUS) P1",
+        "caseNumber": 4
+      },
+      {
+        "FY_N": -2751.220703125,
+        "FZ_N": 0,
+        "case": "CASE 5 (OPE) W+T1+P1",
+        "caseNumber": 5
+      },
+      {
+        "FY_N": -1732.4906005859375,
+        "FZ_N": 0,
+        "case": "CASE 6 (SUS) W+P1",
+        "caseNumber": 6
+      }
+    ],
+    "impliedL13NormalAppearsAsPublishedFinalNormal": false,
+    "interpretation": "L1 and L13 show ~1.11 utilisation while L7 is ~1.00; a fixed coefficient or load-case multiplier scaling error is therefore not supported by the raw outputs."
+  },
+  "diagnosticSemanticHash": "fnv1a64:26a25455cbafd031",
+  "exclusions": {
+    "bendTangentPlaneChangeAuthorized": false,
+    "coefficientOrMultiplierMismatchSupported": false,
+    "nodalDisequilibriumSupported": false,
+    "perAxisPartitionCanDirectlyExplain20710": false,
+    "summaryAggregationArtifactSupported": false
+  },
+  "l13Reference": {
+    "capFromFinalOwnNormalN": 564.6915385521061,
+    "coefficientOfFriction": 0.30000001192092896,
+    "finalNormalY_N": 1882.3050537109375,
+    "impliedNormalExcessOverFinalN": 200.15600449001568,
+    "impliedNormalExcessPercent": 10.633558258551716,
+    "impliedNormalRequiredForExactCapN": 2082.461058200953,
+    "individualRigidLim": {
+      "FUNITS": "N.",
+      "FX": 352.84710693359375,
+      "FY": 0,
+      "FZ": 0,
+      "RESULTANTF": 352.84710693359375,
+      "TYPE": "Rigid LIM"
+    },
+    "individualRigidY": {
+      "FUNITS": "N.",
+      "FX": 0,
+      "FY": -1882.3050537109375,
+      "FZ": 624.7383422851562,
+      "RESULTANTF": 1983.2725830078125,
+      "TYPE": "Rigid Y"
+    },
+    "nodeSummary": {
+      "FUNITS": "N.",
+      "FX": 352.84710693359375,
+      "FY": -1882.3050537109375,
+      "FZ": 624.7383422851562,
+      "RESULTANTF": 2014.4158935546875,
+      "TYPE": "Rigid Y; Rigid LIM"
+    },
+    "referenceTangentZ_N": 624.7383422851562,
+    "referenceUtilisationAgainstFinalOwnNormal": 1.106335582585517
+  },
+  "localGeometry": {
+    "adjacentBendPointer6": {
+      "BEND_PTR": 6,
+      "NODE1": 20699,
+      "NODE2": 20698,
+      "NODE3": -1.01010000705719,
+      "RADIUS": 228.59999084472656
+    },
+    "conclusion": "20710 is bend-adjacent but is not a declared bend station; R5 therefore does not authorize a rotated friction plane.",
+    "incidentInputElements": [
+      {
+        "bendPointer": 0,
+        "delta": [
+          -1843,
+          0,
+          0
+        ],
+        "elementId": 34,
+        "fromNode": 20700,
+        "restraintPointer": 13,
+        "toNode": 20710
+      },
+      {
+        "bendPointer": 0,
+        "delta": [
+          -1628,
+          0,
+          0
+        ],
+        "elementId": 35,
+        "fromNode": 20710,
+        "restraintPointer": 0,
+        "toNode": 20760
+      }
+    ],
+    "nearbyElements": [
+      {
+        "bendPointer": 5,
+        "delta": [
+          0,
+          0,
+          500
+        ],
+        "elementId": 32,
+        "fromNode": 20670,
+        "toNode": 20690
+      },
+      {
+        "bendPointer": 6,
+        "delta": [
+          0,
+          -1000,
+          0
+        ],
+        "elementId": 33,
+        "fromNode": 20690,
+        "toNode": 20700
+      },
+      {
+        "bendPointer": 0,
+        "delta": [
+          -1843,
+          0,
+          0
+        ],
+        "elementId": 34,
+        "fromNode": 20700,
+        "toNode": 20710
+      },
+      {
+        "bendPointer": 0,
+        "delta": [
+          -1628,
+          0,
+          0
+        ],
+        "elementId": 35,
+        "fromNode": 20710,
+        "toNode": 20760
+      },
+      {
+        "bendPointer": 10,
+        "delta": [
+          -229,
+          0,
+          0
+        ],
+        "elementId": 48,
+        "fromNode": 20760,
+        "toNode": 21720
+      }
+    ]
+  },
+  "nodalEquilibrium": {
+    "boundary": "DATA_ONLY_RAW_OUTPUT_ROW_ARITHMETIC_CHECK_NOT_A_SOLVER_QUALIFICATION_TOLERANCE",
+    "conclusion": "The over-cap Z reaction is required by the published L13 element-end equilibrium; it is not a detached reporting artifact.",
+    "incidentElementEnds": [
+      {
+        "forceN": [
+          78.16645050048828,
+          982.2467651367188,
+          -179.63180541992188
+        ],
+        "fromNode": 20700,
+        "nodeEnd": "TO",
+        "toNode": 20710
+      },
+      {
+        "forceN": [
+          -431.0135803222656,
+          900.0582885742188,
+          -445.10650634765625
+        ],
+        "fromNode": 20710,
+        "nodeEnd": "FROM",
+        "toNode": 20760
+      }
+    ],
+    "incidentSumN": {
+      "FX": -352.84712982177734,
+      "FY": 1882.3050537109375,
+      "FZ": -624.7383117675781
+    },
+    "maximumAbsoluteResidualN": 0.000030517578125,
+    "outputRoundoffRelativeLimit": 0.000001,
+    "reactionScaleN": 1882.3050537109375,
+    "relativeResidual": 1.6212875837970596e-8,
+    "residualIncidentPlusReactionN": {
+      "FX": -0.00002288818359375,
+      "FY": 0,
+      "FZ": 0.000030517578125
+    },
+    "restraintSummaryReactionN": {
+      "FX": 352.84710693359375,
+      "FY": -1882.3050537109375,
+      "FZ": 624.7383422851562
+    },
+    "status": "PASS_FLOAT32_ROUNDOFF"
+  },
+  "nodeId": "20710",
+  "outputMapping": {
+    "conclusion": "The 624.738 N Z force is present on the individual Rigid Y restraint row; it is not created by merging the co-located LIM into the summary.",
+    "rigidLimCarriesOnlyX": true,
+    "rigidYRowCarriesTangentZDirectly": true,
+    "summaryIsExactSumOfIndividualRows": true
+  },
+  "remainingHypothesis": {
+    "nextDiscriminator": "Instrument accepted D1 with a lagged-normal capacity update only, using previous-iteration own-restraint normal for mu|N| while keeping final equilibrium and all convergence gates unchanged.",
+    "status": "UNRESOLVED_DATA_SUPPORTED_DIRECTION",
+    "text": "The raw file leaves a case-dependent capacity-history/timing mechanism as the leading explanation: the force corresponds to an implied normal larger than the published final own normal, while no source field declares a larger coefficient or alternate normal. This is an inference, not yet a measured solver mechanic."
+  },
+  "schema": "m047-bm4l-stage2-20710-forensic/v1",
+  "sourceAccdbSha256": "64c05a50e9ed0452622ff5880335460486f24ac8e6adecc9a300b549c9aa82f8",
+  "sourceDeclarations": {
+    "freeTangentialAxes": [
+      "Z"
+    ],
+    "governedInterpretation": "Rigid Y carries mu=0.3 and is the friction restraint; co-located Rigid LIM is frictionless and removes X, leaving Z as the only free tangent.",
+    "rows": [
+      {
+        "cnode": -1.01010000705719,
+        "cosine": [
+          0,
+          1,
+          0
+        ],
+        "frictionCoefficient": 0.30000001192092896,
+        "gap": -1.01010000705719,
+        "restraintPointer": 13,
+        "restraintType": "Y",
+        "restraintTypeId": 3,
+        "stiffness": -1.01010000705719
+      },
+      {
+        "cnode": -1.01010000705719,
+        "cosine": [
+          -1,
+          0,
+          0
+        ],
+        "frictionCoefficient": -1.01010000705719,
+        "gap": -1.01010000705719,
+        "restraintPointer": 13,
+        "restraintType": "LIM",
+        "restraintTypeId": 9,
+        "stiffness": -1.01010000705719
+      }
+    ]
+  }
+}
+

@@ -1,4 +1,4 @@
-import { semanticHash } from '../shared-piping-model/index.js';
+import { semanticHash } from '../shared-primitives/canonical-json.js';
 export function reconstructContinuumResultHashes(result){const payload={...result};delete payload.semanticHashes;return {sourceEvidenceSemanticHash:result.sourceAncestry?.sourceEvidenceSemanticHash??null,canonicalModelSemanticHash:result.canonicalModelSemanticHash??null,loadCaseInputSemanticHash:loadCaseInputHash(result),resultPayloadSemanticHash:semanticHash(payload),executionEvidenceHash:semanticHash(executionEvidence(result)),qualificationEvidenceHash:semanticHash(qualificationEvidence(result))};}
 export function attachContinuumResultHashes(result){return {...result,semanticHashes:reconstructContinuumResultHashes(result)};}
 function loadCaseInputHash(result){if(!result.loadCaseResults)return null;return semanticHash(result.loadCaseResults.map((row)=>({loadCaseId:row.loadCaseId,loadCaseInputSemanticHash:row.loadCaseInputSemanticHash})));}

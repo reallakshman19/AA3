@@ -8,6 +8,8 @@ import {
 } from '../topology-edit/draft/topology-edit-transient-support-placement-draft.js';
 
 const NOOP_PATTERN = /placement is a no-op/u;
+const SUPPORT_DRAG_MIN_RADIUS_PX = 8;
+const SUPPORT_DRAG_MAX_RADIUS_PX = 48;
 
 /**
  * Pointer-only presentation adapter for support placement. It never owns
@@ -55,7 +57,7 @@ export class TopologyEditSupportHostDragRuntime {
     if (event.button !== 0 || this.active || !this.canvas) return;
     const context = this.supportPositionRuntime.context();
     if (!context?.supportId || !context.hostEdgeId || !Number.isFinite(context.hostLengthMm)) return;
-    if (!this.selectedSupportHit(event.clientX, event.clientY, context.supportId)) return;
+    if (!this.selectedSupportHit(event.clientX, event.clientY, context)) return;
     markHandled(event);
     this.canvas.focus?.({ preventScroll: true });
     this.canvas.setPointerCapture?.(event.pointerId);
@@ -72,11 +74,12 @@ export class TopologyEditSupportHostDragRuntime {
     this.syncEvidence();
   }
 
-  selectedSupportHit(clientX, clientY, supportId) {
+  selectedSupportHit(clientX, clientY, context) {
     const backend = this.controller.viewportBackend;
     const camera = backend?.activeCamera;
     const supportGroup = backend?.groups?.supportGroup;
-    if (!this.setPointerFromClient(clientX, clientY) || !camera || !supportGroup) return false;
+    const supportId = context?.supportId;
+    if (!supportId || !this.setPointerFromClient(clientX, clientY) || !camera || !supportGroup) return false;
     this.raycaster.setFromCamera(this.pointer, camera);
     const hits = this.raycaster.intersectObject(supportGroup, true);
     for (const hit of hits) {
@@ -99,8 +102,67 @@ export class TopologyEditSupportHostDragRuntime {
         object = object.parent;
       }
     }
-    this.syncHitEvidence('MISS');
+    const proximity = this.selectedSupportScreenProximity(clientX, clientY, context, camera);
+    if (proximity?.accepted) {
+      this.syncHitEvidence('SUPPORT_SCREEN_PROXIMITY', proximity);
+      return true;
+    }
+    this.syncHitEvidence('MISS', proximity);
     return false;
+  }
+
+  selectedSupportScreenProximity(clientX, clientY, context, camera) {
+    if (!finiteEngineeringPoint(context?.currentOrigin) || !this.canvas) return null;
+    const center = this.clientPointForEngineering(context.currentOrigin, camera);
+    if (!center) return null;
+    const markerSize = positive(
+      this.controller.viewportBackend?.navigationConfiguration?.supportMarkerSize,
+      10,
+    );
+    const extent = markerSize * 0.62;
+    const offsets = [
+      { x: extent, y: 0, z: 0 },
+      { x: -extent, y: 0, z: 0 },
+      { x: 0, y: extent, z: 0 },
+      { x: 0, y: -extent, z: 0 },
+      { x: 0, y: 0, z: extent },
+      { x: 0, y: 0, z: -extent },
+    ];
+    let projectedExtent = 0;
+    for (const offset of offsets) {
+      const point = this.clientPointForEngineering({
+        x: context.currentOrigin.x + offset.x,
+        y: context.currentOrigin.y + offset.y,
+        z: context.currentOrigin.z + offset.z,
+      }, camera);
+      if (!point) continue;
+      projectedExtent = Math.max(projectedExtent, Math.hypot(point.x - center.x, point.y - center.y));
+    }
+    const radiusPx = Math.min(
+      SUPPORT_DRAG_MAX_RADIUS_PX,
+      Math.max(SUPPORT_DRAG_MIN_RADIUS_PX, projectedExtent + 4),
+    );
+    const distancePx = Math.hypot(clientX - center.x, clientY - center.y);
+    return {
+      accepted: distancePx <= radiusPx,
+      distancePx,
+      radiusPx,
+      centerX: center.x,
+      centerY: center.y,
+    };
+  }
+
+  clientPointForEngineering(point, camera) {
+    if (!this.canvas || !camera || !finiteEngineeringPoint(point)) return null;
+    const rect = this.canvas.getBoundingClientRect();
+    if (!rect.width || !rect.height) return null;
+    const ndc = renderVector(point).project(camera);
+    if (![ndc.x, ndc.y, ndc.z].every(Number.isFinite)) return null;
+    return {
+      x: rect.left + ((ndc.x + 1) * 0.5 * rect.width),
+      y: rect.top + ((1 - ndc.y) * 0.5 * rect.height),
+      ndcZ: ndc.z,
+    };
   }
 
   handlePointerMove(event) {
@@ -302,10 +364,16 @@ export class TopologyEditSupportHostDragRuntime {
     return true;
   }
 
-  syncHitEvidence(source) {
-    if (this.controller.hostElement) {
-      this.controller.hostElement.dataset.topologyEditSupportDragHitSource = source;
-    }
+  syncHitEvidence(source, proximity = null) {
+    const host = this.controller.hostElement;
+    if (!host) return;
+    host.dataset.topologyEditSupportDragHitSource = source;
+    host.dataset.topologyEditSupportDragHitDistancePx = Number.isFinite(proximity?.distancePx)
+      ? String(proximity.distancePx)
+      : '';
+    host.dataset.topologyEditSupportDragHitRadiusPx = Number.isFinite(proximity?.radiusPx)
+      ? String(proximity.radiusPx)
+      : '';
   }
 
   syncEvidence(draft = this.supportPositionRuntime.draft) {
@@ -341,6 +409,9 @@ export class TopologyEditSupportHostDragRuntime {
 function isSelectedSupportTarget(target, supportId) {
   return target?.objectKind === 'support'
     && (target.supportId ?? target.objectId) === supportId;
+}
+function finiteEngineeringPoint(point) {
+  return point && [point.x, point.y, point.z].every(Number.isFinite);
 }
 function renderVector(point) {
   const mapped = engineeringPointToRender(point);

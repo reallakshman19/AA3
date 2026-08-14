@@ -137,8 +137,7 @@ test('production Analytical Calc owns both analytical routes without FE chrome',
   );
   await expect(analytical).toContainText('Analytical inputs');
   await expect(analytical).toContainText('Analytical results');
-  await expect(analytical).toContainText('FE mesh');
-  await expect(analytical).toContainText('NOT APPLICABLE');
+  await expect(workbench).toContainText('FE mesh: NOT APPLICABLE');
   await expect(workbench.locator('[data-guided-target="viewport"]')).toHaveCount(0);
   await expect(workbench.locator('[data-guided-target="discretization"]')).toHaveCount(0);
   await expect(workbench.locator('[data-guided-target="numerical-verification"]')).toHaveCount(0);

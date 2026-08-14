@@ -5,6 +5,9 @@ import {
 import { planTopologyEditTableDraft } from '../topology-edit/table/topology-edit-table-draft-plan.js';
 import { createTopologyEditTableIntent } from '../topology-edit/table/topology-edit-table-intent.js';
 import {
+  resolveTopologyEditTablePipeSpecificationSelection,
+} from '../topology-edit/table/topology-edit-table-pipe-catalogue.js';
+import {
   resolveTopologyEditTableValveCatalogueSelection,
 } from '../topology-edit/table/topology-edit-table-valve-catalogue.js';
 import { requestTopologyEditTableAutoPreview } from './topology-edit-table-workflow.js';
@@ -28,6 +31,26 @@ export function stageTopologyEditNodePosition(runtime, canonicalId, endpointInpu
 
 export function stageTopologyEditNodePositionValue(runtime, input = {}) {
   return stageResult(runtime, () => createNodePositionIntent(runtime, input));
+}
+
+export function stageTopologyEditPipeSpecification(runtime, canonicalId) {
+  return stage(runtime, () => {
+    const row = exactRow(runtime.projection, canonicalId);
+    const topology = runtime.controller.session.currentTopology();
+    const selection = resolveTopologyEditTablePipeSpecificationSelection({
+      catalogue: runtime.controller.professionalRuntime?.catalogue,
+      row,
+      canonicalTopology: topology,
+      recordId: value(runtime, '[data-table-edit-pipe-catalogue-record]'),
+    });
+    return createTopologyEditTableIntent({
+      projection: runtime.projection,
+      sessionSnapshot: runtime.controller.session.snapshot(),
+      canonicalId,
+      intentKind: 'PIPE_SPECIFICATION',
+      requestedValue: { catalogueBinding: selection.catalogueBinding },
+    });
+  });
 }
 
 export function stageTopologyEditSupportPlacement(runtime, canonicalId) {

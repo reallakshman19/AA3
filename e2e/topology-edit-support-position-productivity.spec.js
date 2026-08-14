@@ -17,19 +17,29 @@ test('3D support marker selection stages host-constrained support position throu
       throw new Error(`Expected one exact P-011 support; resolved ${supports.length}.`);
     }
     const support = supports[0];
-    const marker = (controller?.sjsonSupportBundle?.supportProjection?.elements ?? []).find((row) => (
-      row?.pickTarget?.objectKind === 'support'
-      && row?.pickTarget?.supportId === support.id
-    ));
-    if (!marker?.pickTarget) throw new Error(`No rendered support pick target for ${support.id}.`);
-    controller.handleViewportSelection(marker.pickTarget, {
+    let pickTarget = null;
+    controller?.viewportBackend?.groups?.supportGroup?.traverse?.((object) => {
+      if (pickTarget) return;
+      const direct = object?.userData?.pickTarget;
+      if (direct?.objectKind === 'support' && direct?.supportId === support.id) {
+        pickTarget = direct;
+        return;
+      }
+      const table = object?.userData?.pickTable;
+      if (!Array.isArray(table)) return;
+      pickTarget = table.find((target) => (
+        target?.objectKind === 'support' && target?.supportId === support.id
+      )) ?? null;
+    });
+    if (!pickTarget) throw new Error(`No mounted support pick target for ${support.id}.`);
+    controller.handleViewportSelection(pickTarget, {
       ctrlKey: false, metaKey: false, shiftKey: false,
     });
     const context = controller.supportPositionRuntime?.context?.();
     return {
       supportId: support.id,
-      pickObjectId: marker.pickTarget.objectId,
-      pickSupportId: marker.pickTarget.supportId,
+      pickObjectId: pickTarget.objectId,
+      pickSupportId: pickTarget.supportId,
       hostEdgeId: context?.hostEdgeId ?? null,
       currentStationMm: context?.currentStationMm ?? null,
       hostLengthMm: context?.hostLengthMm ?? null,
@@ -151,10 +161,10 @@ async function openProductionController(page) {
     document.querySelector('[data-role="topology-edit-render-host"]')
       ?.__topologyEditAuthoringController?.supportPositionRuntime?.element,
   ))).toBe(true);
-  await expect.poll(() => page.evaluate(() => Boolean(
+  await expect.poll(() => page.evaluate(() => (
     document.querySelector('[data-role="topology-edit-render-host"]')
-      ?.__topologyEditAuthoringController?.sjsonSupportBundle?.supportProjection?.elements?.length,
-  ))).toBe(true);
+      ?.__topologyEditAuthoringController?.viewportBackend?.groups?.supportGroup?.children?.length ?? 0
+  ))).toBeGreaterThan(0);
   return host;
 }
 

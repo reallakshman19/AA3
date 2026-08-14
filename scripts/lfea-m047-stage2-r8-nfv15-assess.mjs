@@ -67,6 +67,7 @@ export function assessR8Nfv15({ baseline, experiment }) {
     && row.governedRetainedCapacityN !== null
     && row.currentNormalDiagnosticCapacityN !== null
     && typeof row.refreshedFinalIteration === 'boolean');
+  const repeatGate = requestedRepeatGate(experiment.determinism);
   const gates = {
     custody: experiment.custody.status === 'PASS' && experiment.custody.accdb.sha256 === SHA,
     stateContract: experiment.stateContract.status === 'PASS',
@@ -78,6 +79,7 @@ export function assessR8Nfv15({ baseline, experiment }) {
     completeRestraintSet,
     completeMetricSet,
     nfvLedgerComplete,
+    requestedRepeatDeterminism: repeatGate.status === 'PASS',
   };
   const physicsPass = Object.values(gates).every(Boolean);
   const summary = {
@@ -99,7 +101,7 @@ export function assessR8Nfv15({ baseline, experiment }) {
       : 'R8_NFV15_NOT_NOMINATED_BY_FROZEN_ACCURACY_METRICS';
 
   return Object.freeze({
-    schema: 'm047-bm4l-stage2-r8-nfv15-assessment/v3',
+    schema: 'm047-bm4l-stage2-r8-nfv15-assessment/v4',
     caseId,
     sourceAccdbSha256: SHA,
     baselineSolverProfileId: BASELINE_SOLVER,
@@ -108,6 +110,7 @@ export function assessR8Nfv15({ baseline, experiment }) {
     threshold: THRESHOLD,
     goalRelative: GOAL,
     gates,
+    repeatGate,
     summary,
     nomination,
     determinism: experiment.determinism,
@@ -120,7 +123,7 @@ export function assessR8Nfv15({ baseline, experiment }) {
 
 function rejectedNonconverged({ caseId, experiment, run }) {
   return Object.freeze({
-    schema: 'm047-bm4l-stage2-r8-nfv15-assessment/v3',
+    schema: 'm047-bm4l-stage2-r8-nfv15-assessment/v4',
     caseId,
     sourceAccdbSha256: SHA,
     baselineSolverProfileId: BASELINE_SOLVER,
@@ -139,7 +142,9 @@ function rejectedNonconverged({ caseId, experiment, run }) {
       completeRestraintSet: false,
       completeMetricSet: false,
       nfvLedgerComplete: false,
+      requestedRepeatDeterminism: false,
     },
+    repeatGate: requestedRepeatGate(experiment.determinism),
     summary: {
       comparedRestraints: 0,
       baselineNormalWithinGoal: null,
@@ -158,6 +163,24 @@ function rejectedNonconverged({ caseId, experiment, run }) {
     productionPromotionAuthorized: false,
     nextGate: null,
     perRestraint: [],
+  });
+}
+
+function requestedRepeatGate(determinism) {
+  const requestedRuns = Number(determinism?.requestedRuns ?? 1);
+  const completedConvergedRuns = Number(determinism?.completedConvergedRuns ?? 0);
+  if (!Number.isInteger(requestedRuns) || requestedRuns < 1) {
+    return Object.freeze({ status: 'FAIL', requestedRuns, completedConvergedRuns, determinismStatus: determinism?.status ?? null });
+  }
+  if (requestedRuns === 1) {
+    return Object.freeze({ status: 'PASS', requestedRuns, completedConvergedRuns, determinismStatus: determinism?.status ?? 'NOT_RUN' });
+  }
+  const passed = determinism?.status === 'PASS' && completedConvergedRuns === requestedRuns;
+  return Object.freeze({
+    status: passed ? 'PASS' : 'FAIL',
+    requestedRuns,
+    completedConvergedRuns,
+    determinismStatus: determinism?.status ?? null,
   });
 }
 

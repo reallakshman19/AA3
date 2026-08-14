@@ -1,5 +1,6 @@
 #!/usr/bin/env node
 import assert from 'node:assert/strict';
+import { canonicalLafeaSha256 } from '../src/workspace/lafea-canonical-sha256.js';
 import {
   LAFEA_CONTINUUM_PROBE_CONVERGENCE_DEFINITION_SCHEMA,
   LAFEA_CONTINUUM_PROBE_CONVERGENCE_OBSERVATIONS_SCHEMA,
@@ -125,10 +126,9 @@ function study(values, overrides = {}, singular = false, frozenDefinition = null
   };
 }
 function evidence(value, h, suffix, singular = false) {
-  return {
+  const base = {
     schema: LAFEA_CONTINUUM_PHYSICAL_PROBE_EVIDENCE_SCHEMA,
     status: 'PASS',
-    semanticHash: `sha256:${suffix.repeat(64).slice(0, 64)}`,
     probeIdentityHash: P,
     quantityIdentityHash: Q,
     authoritativeUnits: 'MPa',
@@ -139,5 +139,12 @@ function evidence(value, h, suffix, singular = false) {
       executionHash: `sha256:${'d'.repeat(63)}${suffix.slice(0, 1)}`,
       recoveryHash: `sha256:${'e'.repeat(63)}${suffix.slice(0, 1)}`,
     },
+  };
+  return {
+    ...base,
+    semanticHash: canonicalLafeaSha256({
+      schema: 'lafea-b02-g4-synthetic-probe-observation/v1',
+      observation: base,
+    }),
   };
 }

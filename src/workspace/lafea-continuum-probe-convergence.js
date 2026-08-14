@@ -5,6 +5,8 @@ export const LAFEA_CONTINUUM_PROBE_COMPARISON_SCHEMA =
   'lafea-continuum-probe-comparison/v1';
 export const LAFEA_CONTINUUM_PROBE_CONVERGENCE_DEFINITION_SCHEMA =
   'lafea-continuum-probe-convergence-definition/v1';
+export const LAFEA_CONTINUUM_PROBE_CONVERGENCE_OBSERVATIONS_SCHEMA =
+  'lafea-continuum-probe-convergence-observations/v1';
 export const LAFEA_CONTINUUM_PROBE_CONVERGENCE_EVIDENCE_SCHEMA =
   'lafea-continuum-probe-convergence-evidence/v1';
 
@@ -38,14 +40,35 @@ export function compareLafeaContinuumPhysicalProbeEvidence(left, right) {
   });
 }
 
-export function evaluateLafeaContinuumProbeConvergence(definitionValue) {
+export function createLafeaContinuumProbeConvergenceDefinition(value) {
+  return normalizeDefinition(value);
+}
+
+export function createLafeaContinuumProbeConvergenceObservations(value) {
+  return normalizeObservations(value);
+}
+
+export function evaluateLafeaContinuumProbeConvergence(definitionValue, observationsValue) {
   const definition = normalizeDefinition(definitionValue);
+  const observations = normalizeObservations(observationsValue);
+  if (observations.studyId !== definition.studyId) {
+    fail('LAFEA_G4_CONVERGENCE_STUDY_ID_MISMATCH');
+  }
+  if (observations.definitionHash !== definition.semanticHash) {
+    fail('LAFEA_G4_CONVERGENCE_DEFINITION_HASH_MISMATCH');
+  }
+  const observationByLevel = new Map(observations.levels.map((row) => [row.levelId, row.evidence]));
+  if (observationByLevel.size !== definition.levels.length) {
+    fail('LAFEA_G4_CONVERGENCE_LEVEL_SET_MISMATCH');
+  }
   const rows = definition.levels.map((level) => {
-    requireProbeEvidence(level.evidence);
-    if (level.evidence.quantityIdentityHash !== definition.quantityIdentityHash) {
+    const evidence = observationByLevel.get(level.levelId);
+    if (!evidence) fail('LAFEA_G4_CONVERGENCE_LEVEL_SET_MISMATCH');
+    requireProbeEvidence(evidence);
+    if (evidence.quantityIdentityHash !== definition.quantityIdentityHash) {
       fail('LAFEA_G4_CONVERGENCE_QUANTITY_IDENTITY_MISMATCH');
     }
-    return level;
+    return { ...level, evidence };
   });
   for (let index = 1; index < rows.length; index += 1) {
     requireComparable(rows[index - 1].evidence, rows[index].evidence);
@@ -56,14 +79,13 @@ export function evaluateLafeaContinuumProbeConvergence(definitionValue) {
     }
   }
   const values = rows.map((row) => row.evidence.authoritativeValue);
-  const singularExcluded = rows.some(
-    (row) => row.evidence.pointwiseAcceptanceEligible === false,
-  );
+  const singularExcluded = rows.some((row) => row.evidence.pointwiseAcceptanceEligible === false);
   const sequence = classifySequence(values, definition);
   const base = {
     schema: LAFEA_CONTINUUM_PROBE_CONVERGENCE_EVIDENCE_SCHEMA,
     studyId: definition.studyId,
     definitionHash: definition.semanticHash,
+    observationsHash: observations.semanticHash,
     probeIdentityHash: rows[0].evidence.probeIdentityHash,
     quantityIdentityHash: definition.quantityIdentityHash,
     units: rows[0].evidence.authoritativeUnits,
@@ -83,6 +105,7 @@ export function evaluateLafeaContinuumProbeConvergence(definitionValue) {
     gciFineAbsolute: singularExcluded ? null : sequence.gciFineAbsolute,
     gciFinePercent: singularExcluded ? null : sequence.gciFinePercent,
     pointwiseAcceptanceEligible: !singularExcluded,
+    definitionWasFrozenBeforeObservations: true,
     globalConvergenceAuthorityGranted: false,
     benchmarkAcceptanceGranted: false,
     releaseAuthorityGranted: false,
@@ -94,10 +117,6 @@ export function evaluateLafeaContinuumProbeConvergence(definitionValue) {
       schema: 'lafea-continuum-probe-convergence-evidence-hash/v1', evidence: base,
     }),
   });
-}
-
-export function createLafeaContinuumProbeConvergenceDefinition(value) {
-  return normalizeDefinition(value);
 }
 
 function normalizeDefinition(value) {
@@ -112,13 +131,15 @@ function normalizeDefinition(value) {
     fail('LAFEA_G4_CONVERGENCE_REQUIRES_THREE_LEVELS');
   }
   const levels = value.levels.map((row) => {
-    exactKeys(row, ['levelId', 'h', 'evidence']);
+    exactKeys(row, ['levelId', 'h']);
     return {
       levelId: text(row.levelId, 'LAFEA_G4_CONVERGENCE_LEVEL_ID_INVALID'),
       h: positive(row.h, 'LAFEA_G4_CONVERGENCE_H_INVALID'),
-      evidence: row.evidence,
     };
   });
+  if (new Set(levels.map((row) => row.levelId)).size !== levels.length) {
+    fail('LAFEA_G4_CONVERGENCE_LEVEL_ID_DUPLICATE');
+  }
   for (let index = 1; index < levels.length; index += 1) {
     if (!(levels[index - 1].h > levels[index].h)) {
       fail('LAFEA_G4_CONVERGENCE_H_NOT_STRICTLY_REFINED');
@@ -141,6 +162,39 @@ function normalizeDefinition(value) {
     ...base,
     semanticHash: canonicalLafeaSha256({
       schema: 'lafea-continuum-probe-convergence-definition-hash/v1', definition: base,
+    }),
+  });
+}
+
+function normalizeObservations(value) {
+  exactKeys(value, ['schema', 'studyId', 'definitionHash', 'levels']);
+  if (value.schema !== LAFEA_CONTINUUM_PROBE_CONVERGENCE_OBSERVATIONS_SCHEMA) {
+    fail('LAFEA_G4_CONVERGENCE_OBSERVATIONS_SCHEMA_INVALID');
+  }
+  if (!Array.isArray(value.levels) || value.levels.length < 3) {
+    fail('LAFEA_G4_CONVERGENCE_OBSERVATIONS_REQUIRE_THREE_LEVELS');
+  }
+  const levels = value.levels.map((row) => {
+    exactKeys(row, ['levelId', 'evidence']);
+    requireProbeEvidence(row.evidence);
+    return {
+      levelId: text(row.levelId, 'LAFEA_G4_CONVERGENCE_LEVEL_ID_INVALID'),
+      evidence: row.evidence,
+    };
+  });
+  if (new Set(levels.map((row) => row.levelId)).size !== levels.length) {
+    fail('LAFEA_G4_CONVERGENCE_LEVEL_ID_DUPLICATE');
+  }
+  const base = {
+    schema: LAFEA_CONTINUUM_PROBE_CONVERGENCE_OBSERVATIONS_SCHEMA,
+    studyId: text(value.studyId, 'LAFEA_G4_CONVERGENCE_STUDY_ID_INVALID'),
+    definitionHash: sha(value.definitionHash, 'LAFEA_G4_CONVERGENCE_DEFINITION_HASH_INVALID'),
+    levels,
+  };
+  return deepFreeze({
+    ...base,
+    semanticHash: canonicalLafeaSha256({
+      schema: 'lafea-continuum-probe-convergence-observations-hash/v1', observations: base,
     }),
   });
 }
@@ -177,11 +231,8 @@ function classifySequence(values, definition) {
     const minimum = Math.min(...observedOrders);
     const maximum = Math.max(...observedOrders);
     const scale = Math.max(Math.abs(observedOrder), 1e-15);
-    if ((maximum - minimum) / scale > definition.orderStabilityRelativeTolerance) {
-      classification = 'PRE_ASYMPTOTIC';
-    } else {
-      classification = 'ASYMPTOTIC';
-    }
+    classification = (maximum - minimum) / scale > definition.orderStabilityRelativeTolerance
+      ? 'PRE_ASYMPTOTIC' : 'ASYMPTOTIC';
   }
   if (classification === 'PRE_ASYMPTOTIC') {
     return { ...emptySequence(classification), observedOrders, observedOrder };
@@ -189,7 +240,9 @@ function classifySequence(values, definition) {
   const fine = values.at(-1);
   const medium = values.at(-2);
   const denominator = definition.refinementRatio ** observedOrder - 1;
-  if (!(denominator > 0)) return { ...emptySequence('PRE_ASYMPTOTIC'), observedOrders, observedOrder };
+  if (!(denominator > 0)) {
+    return { ...emptySequence('PRE_ASYMPTOTIC'), observedOrders, observedOrder };
+  }
   const correction = (fine - medium) / denominator;
   const gciFineAbsolute = definition.gciSafetyFactor * Math.abs(fine - medium) / denominator;
   return {
@@ -229,7 +282,9 @@ function requireComparable(left, right) {
   }
 }
 function exactKeys(value, keys) {
-  if (!value || typeof value !== 'object' || Array.isArray(value)) fail('LAFEA_G4_CONVERGENCE_OBJECT_INVALID');
+  if (!value || typeof value !== 'object' || Array.isArray(value)) {
+    fail('LAFEA_G4_CONVERGENCE_OBJECT_INVALID');
+  }
   if (JSON.stringify(Object.keys(value).sort()) !== JSON.stringify([...keys].sort())) {
     fail('LAFEA_G4_CONVERGENCE_KEYS_INVALID');
   }

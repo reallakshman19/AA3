@@ -5,6 +5,7 @@ const buildTime = new Date().toISOString();
 
 const PURE_LAFEA_MESHING_WORKSPACE_MODULES = new Set([
   '/src/workspace/lafea-analysis-mesh-evidence-v2.js',
+  '/src/workspace/lafea-canvas/retained-mesh-overlay.js',
   '/src/workspace/lafea-domain-first-mesh-custody.js',
   '/src/workspace/lafea-mesh-capabilities.js',
   '/src/workspace/lafea-mesh-dof-policy.js',

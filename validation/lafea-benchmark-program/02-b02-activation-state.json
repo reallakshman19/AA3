@@ -1,0 +1,20 @@
+{
+  "schema": "lafea-b02-activation-state/v1",
+  "issue": 1112,
+  "caseId": "B02",
+  "stageId": "LAFEA.3",
+  "state": "ACTIVE_DEFINITION_FREEZE_REQUIRED",
+  "adoptedParentSha": "18fe0ffc790ca89f5db56180587c14c19fc47cc9",
+  "preChangeB01Attestation": "PASS",
+  "programLedgerB01": "QUALIFIED",
+  "subBuckets": {
+    "B02A": "BLOCKED_UNTIL_FROZEN",
+    "B02B": "BLOCKED_UNTIL_B02A_PASS",
+    "B02C": "BLOCKED_UNTIL_B02B_PASS",
+    "B02D": "BLOCKED_UNTIL_B02C_PASS",
+    "B02E": "BLOCKED_UNTIL_REQUIRED_PRECURSOR_DATA_EXISTS"
+  },
+  "productionMechanicsChanged": false,
+  "releaseAuthority": false,
+  "temperatureAuthority": false
+}

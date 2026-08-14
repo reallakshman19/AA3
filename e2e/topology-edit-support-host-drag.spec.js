@@ -71,7 +71,7 @@ test('support marker pointer drag projects to exact host and stages through SUPP
     };
     const start = toClient(engineeringToWorld(context.currentOrigin));
     const end = toClient(engineeringToWorld(target));
-    const pickedAtStart = backend.pickAt(start.x, start.y);
+    const genericPick = backend.pickAt(start.x, start.y);
     return {
       supportId: support.id,
       pickObjectId: pickTarget.objectId,
@@ -81,15 +81,13 @@ test('support marker pointer drag projects to exact host and stages through SUPP
       requestedStation,
       start,
       end,
-      startPickKind: pickedAtStart?.objectKind ?? null,
-      startPickSupportId: pickedAtStart?.supportId ?? pickedAtStart?.objectId ?? null,
+      genericPickKind: genericPick?.objectKind ?? null,
+      genericPickId: genericPick?.supportId ?? genericPick?.objectId ?? null,
     };
   });
 
   expect(setup.pickObjectId).toBe(setup.supportId);
   expect(setup.pickSupportId).toBe(setup.supportId);
-  expect(setup.startPickKind).toBe('support');
-  expect(setup.startPickSupportId).toBe(setup.supportId);
   await expect(host).toHaveAttribute('data-topology-edit-selection-primary-id', setup.supportId);
   const panel = page.locator('details[data-panel-kind="support-position"]');
   await expect(panel).toHaveAttribute('open', '');
@@ -98,6 +96,10 @@ test('support marker pointer drag projects to exact host and stages through SUPP
   await page.mouse.move(setup.start.x, setup.start.y);
   await page.mouse.down();
   await expect(host).toHaveAttribute('data-topology-edit-support-drag-active', 'true');
+  await expect(host).toHaveAttribute(
+    'data-topology-edit-support-drag-hit-source',
+    /SUPPORT_GROUP/u,
+  );
   await page.mouse.move(setup.end.x, setup.end.y, { steps: 12 });
   await page.mouse.up();
 

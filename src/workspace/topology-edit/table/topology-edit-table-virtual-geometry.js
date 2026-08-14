@@ -9,9 +9,6 @@ export function topologyEditTableVirtualGeometryFields(
   canonicalTopology,
   transientDrafts = {},
 ) {
-  if (row?.identity?.canonicalKind === 'SUPPORT') {
-    return supportFields(row, canonicalTopology);
-  }
   if (row?.identity?.canonicalKind !== 'EDGE') return deepFreeze({});
   const fromBinding = endpointBinding(row, 'FROM');
   const toBinding = endpointBinding(row, 'TO');
@@ -19,13 +16,6 @@ export function topologyEditTableVirtualGeometryFields(
   const to = nodeById(canonicalTopology, toBinding?.nodeId);
   const a = displayPoint(from, canonicalTopology, transientDrafts);
   const b = displayPoint(to, canonicalTopology, transientDrafts);
-  const edge = recordById(canonicalTopology?.edges, row.identity.canonicalId);
-  const outsideDiameterMm = finiteOrNull(edge?.outsideDiameterMm);
-  const wallThicknessMm = finiteOrNull(edge?.wallThicknessMm);
-  const insideDiameterMm = outsideDiameterMm !== null && wallThicknessMm !== null
-    && outsideDiameterMm > (2 * wallThicknessMm)
-    ? outsideDiameterMm - (2 * wallThicknessMm)
-    : null;
   return deepFreeze({
     fromNodeId: fromBinding?.nodeId ?? null,
     fromPortKey: fromBinding?.portKey ?? null,
@@ -40,45 +30,63 @@ export function topologyEditTableVirtualGeometryFields(
     deltaX: a && b ? b.x - a.x : null,
     deltaY: a && b ? b.y - a.y : null,
     deltaZ: a && b ? b.z - a.z : null,
-    outsideDiameterMm,
-    wallThicknessMm,
-    insideDiameterMm,
-    catalogueRecordId: row.custody?.catalogue?.recordId
-      ?? edge?.catalogueRecordId
-      ?? edge?.catalogueBinding?.recordId
-      ?? null,
   });
+}
+
+export function topologyEditTableResolvedEngineeringFields(row, canonicalTopology) {
+  if (row?.identity?.canonicalKind === 'SUPPORT') {
+    const support = recordById(canonicalTopology?.supports, row.identity.canonicalId);
+    if (!support) return deepFreeze({});
+    try {
+      const placement = topologyEditSupportPlacementContext(canonicalTopology, support);
+      return deepFreeze({
+        hostEdgeId: placement.hostEdgeId ?? null,
+        supportX: finiteOrNull(placement.currentOrigin?.x),
+        supportY: finiteOrNull(placement.currentOrigin?.y),
+        supportZ: finiteOrNull(placement.currentOrigin?.z),
+      });
+    } catch {
+      return deepFreeze({});
+    }
+  }
+  if (row?.identity?.canonicalKind !== 'EDGE') return deepFreeze({});
+  const edge = recordById(canonicalTopology?.edges, row.identity.canonicalId);
+  if (!edge) return deepFreeze({});
+  const outsideDiameterMm = finiteOrNull(edge.outsideDiameterMm);
+  const wallThicknessMm = finiteOrNull(edge.wallThicknessMm);
+  const result = {};
+  if (outsideDiameterMm !== null) result.outsideDiameterMm = outsideDiameterMm;
+  if (wallThicknessMm !== null) result.wallThicknessMm = wallThicknessMm;
+  if (outsideDiameterMm !== null && wallThicknessMm !== null
+      && outsideDiameterMm > (2 * wallThicknessMm)) {
+    result.insideDiameterMm = outsideDiameterMm - (2 * wallThicknessMm);
+  }
+  const recordId = row.custody?.catalogue?.recordId
+    ?? edge.catalogueRecordId
+    ?? edge.catalogueBinding?.recordId
+    ?? null;
+  if (recordId) result.catalogueRecordId = recordId;
+  return deepFreeze(result);
 }
 
 export function isTopologyEditTableVirtualGeometryKey(key) {
   return VIRTUAL_KEYS.has(String(key ?? ''));
 }
 
+export function isTopologyEditTableResolvedEngineeringKey(key) {
+  return RESOLVED_KEYS.has(String(key ?? ''));
+}
+
 const VIRTUAL_KEYS = new Set([
   'fromNodeId', 'fromPortKey', 'fromX', 'fromY', 'fromZ',
   'toNodeId', 'toPortKey', 'toX', 'toY', 'toZ',
   'deltaX', 'deltaY', 'deltaZ',
+]);
+const RESOLVED_KEYS = new Set([
   'outsideDiameterMm', 'wallThicknessMm', 'insideDiameterMm', 'catalogueRecordId',
   'hostEdgeId', 'supportX', 'supportY', 'supportZ',
 ]);
 
-function supportFields(row, topology) {
-  const support = recordById(topology?.supports, row.identity.canonicalId);
-  if (!support) return deepFreeze({});
-  try {
-    const placement = topologyEditSupportPlacementContext(topology, support);
-    return deepFreeze({
-      hostEdgeId: placement.hostEdgeId ?? null,
-      supportX: finiteOrNull(placement.currentOrigin?.x),
-      supportY: finiteOrNull(placement.currentOrigin?.y),
-      supportZ: finiteOrNull(placement.currentOrigin?.z),
-    });
-  } catch {
-    return deepFreeze({
-      hostEdgeId: null, supportX: null, supportY: null, supportZ: null,
-    });
-  }
-}
 function displayPoint(node, topology, drafts) {
   if (!finitePoint(node?.position)) return null;
   const candidate = drafts?.[node.id];

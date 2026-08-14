@@ -11,6 +11,7 @@ import {
 
 const CERTIFIED_EDITOR_TO_INTENT = Object.freeze({
   PIPE_LENGTH: 'PIPE_LENGTH',
+  PIPE_SPECIFICATION: 'PIPE_SPECIFICATION',
   NODE_POSITION: 'NODE_POSITION',
   VALVE_REPLACE: 'VALVE_REPLACEMENT',
   BRANCH_RECONFIGURE: 'TEE_REDUCER_RELATION',
@@ -91,6 +92,42 @@ export function deriveTopologyEditTableCellCapability(input = {}) {
       selectionHash: input.selectionHash,
       selectionRevision: input.selectionRevision,
     });
+  }
+  if (intentKind === 'PIPE_SPECIFICATION') {
+    if (row.elementType !== 'PIPE' || row.identity?.canonicalKind !== 'EDGE') {
+      return receipt(
+        'BLOCKED',
+        'TABLE_TARGET_KIND_INVALID',
+        'PIPE_SPECIFICATION requires an exact PIPE edge row.',
+        row,
+        columnKey,
+        context,
+        { intentKind },
+      );
+    }
+    if (!input.canonicalTopology
+      || input.canonicalTopology.canonicalTopologyHash
+        !== input.projection?.authority?.canonicalTopologyHash) {
+      return receipt(
+        'BLOCKED',
+        'CANONICAL_BASIS_STALE',
+        'Canonical topology differs from the Table projection.',
+        row,
+        columnKey,
+        context,
+        { intentKind },
+      );
+    }
+    return receipt(
+      'NEEDS_INPUT',
+      'EXACT_PIPE_CATALOGUE_RECORD_REQUIRED',
+      'Choose one exact compatible PIPE catalogue record; DN, schedule, material, class, OD and wall thickness are staged as one governed specification tuple.',
+      row,
+      columnKey,
+      context,
+      { intentKind },
+      ['catalogueBinding'],
+    );
   }
   if (intentKind === 'PIPE_LENGTH') {
     const available = row.elementType === 'PIPE' && row.identity?.canonicalKind === 'EDGE';

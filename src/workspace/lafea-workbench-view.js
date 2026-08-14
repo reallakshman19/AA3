@@ -3,9 +3,11 @@
  * through renderLafeaWorkbenchContent; the retained source path remains
  * mountLafeaSourceWorkbenchViewport. No geometry or mesh has been synthesized.
  *
- * LAFEA.1 is intentionally presented as TBA. Its retained analytical foundation
- * route is exposed separately through the Analytical Calc tab, which never
- * mounts FE viewport, mesh/discretization, contour, or convergence UI.
+ * LAFEA.1 and LAFEA.2 are analytical routes. Their retained calculation
+ * contracts are exposed through the Analytical Calc presentation, which never
+ * mounts FE viewport, mesh/discretization, contour, or convergence UI. The
+ * numbered LAFEA.1/LAFEA.2 stage surfaces are intentionally TBA so they cannot
+ * imply finite-element authority.
  */
 import {
   LAFEA_STAGE_REGISTRY,
@@ -30,7 +32,8 @@ import {
 } from './lafea-workbench-viewport-lifecycle.js';
 
 const VIEW_RENDER_DEPENDENCIES = new WeakMap();
-const ANALYTICAL_CALC_STAGE_ID = 'LAFEA.1';
+const ANALYTICAL_CALC_STAGE_IDS = Object.freeze(['LAFEA.1', 'LAFEA.2']);
+const DEFAULT_ANALYTICAL_CALC_STAGE_ID = ANALYTICAL_CALC_STAGE_IDS[0];
 const PRESENTATION_STAGE = 'STAGE';
 const PRESENTATION_ANALYTICAL = 'ANALYTICAL_CALC';
 
@@ -66,7 +69,7 @@ export class LafeaWorkbenchView {
   render(state) {
     if (!this.rootElement || !this.handlers) return;
     if (this.presentationMode === PRESENTATION_ANALYTICAL
-      && state.activeStageId !== ANALYTICAL_CALC_STAGE_ID) {
+      && !isAnalyticalCalcStage(state.activeStageId)) {
       this.presentationMode = PRESENTATION_STAGE;
     }
     this.lastState = state;
@@ -76,7 +79,7 @@ export class LafeaWorkbenchView {
     const registryEntry = requireLafeaStageRegistryEntry(stageId);
     const analyticalMode = this.presentationMode === PRESENTATION_ANALYTICAL;
     const tbaMode = this.presentationMode === PRESENTATION_STAGE
-      && stageId === ANALYTICAL_CALC_STAGE_ID;
+      && isAnalyticalCalcStage(stageId);
     const fePresentation = !analyticalMode && !tbaMode;
     const dependencies = VIEW_RENDER_DEPENDENCIES.get(this);
     const renderPacket = fePresentation ? dependencies.getRenderPacket(stageId) : null;
@@ -105,16 +108,17 @@ export class LafeaWorkbenchView {
     ));
     this.slots.navigation.replaceChildren(this.stageNavigation(state));
     this.slots.toolbar.replaceChildren(
-      tbaMode ? this.tbaToolbar() : this.toolbar(stageId, stage, analyticalMode),
+      tbaMode ? this.tbaToolbar(stageId) : this.toolbar(stageId, stage, analyticalMode),
     );
 
     let content;
     if (tbaMode) {
-      content = this.tbaContent();
+      content = this.tbaContent(stageId);
     } else if (analyticalMode) {
       content = renderLafeaAnalyticalCalcContent(this.rootElement, state, stage, {
         handlers: this.handlers,
         registryEntry,
+        onSelectRoute: (nextStageId) => this.selectAnalyticalRoute(nextStageId, state),
         benchmarkHost: this.benchmarkHost,
       });
     } else {
@@ -191,14 +195,14 @@ export class LafeaWorkbenchView {
 
     if (modes.tbaMode) {
       eyebrow = 'LAFEA standalone analysis • reserved stage';
-      title = 'LAFEA.1 — TBA';
-      purpose = 'Stage implementation is intentionally not presented yet. No FE geometry, mesh, solver, result, or demonstration state is exposed in LAFEA.1.';
+      title = `${stage.stageId} — TBA`;
+      purpose = `${definition.label} is an analytical calculation route and is intentionally not presented as an FE stage. Its governed analytical content is available under Analytical Calc.`;
       displayStatus = 'TBA';
     } else if (modes.analyticalMode) {
       eyebrow = 'Independent analytical calculation';
       title = 'Analytical Calc';
-      purpose = 'Attachment load transfer and elastic pressure baseline using the retained analytical calculation route. This is not a finite-element or mesh stage.';
-      custody = this.analyticalCustody(stage);
+      purpose = `${analyticalRoutePurpose(stage.stageId)} This presentation does not create or display an FE mesh.`;
+      custody = this.analyticalCustody(stage.stageId, stage);
     } else {
       eyebrow = `LAFEA standalone analysis • active stage ${definition.stageId}`;
       title = `${definition.stageId} — ${definition.label}`;
@@ -239,16 +243,17 @@ export class LafeaWorkbenchView {
     return row;
   }
 
-  analyticalCustody(stage) {
+  analyticalCustody(stageId, stage) {
     const row = element(this.rootElement, 'div', 'lafea-workbench__custody');
     const sections = stage.orchestration?.sections ?? {};
     const values = [
-      `Backing route: ${ANALYTICAL_CALC_STAGE_ID} analytical`,
+      `Backing route: ${stageId} analytical`,
       `Source binding: ${stage.lifecycleBinding?.status ?? 'UNINITIALIZED'}`,
       `Profile: ${stage.lifecycle?.profileId ?? 'UNINITIALIZED'}`,
       `Preparation: ${sections.PREPARATION?.state ?? 'UNAVAILABLE'}`,
       `Authorization: ${sections.AUTHORIZATION?.state ?? 'UNAVAILABLE'}`,
-      `FE mesh: NOT APPLICABLE`,
+      'FE mesh: NOT APPLICABLE',
+      'FE viewport: NOT APPLICABLE',
       `Release: ${sections.RELEASE?.state === 'COMPLETE' ? 'QUALIFIED' : 'NOT QUALIFIED'}`,
     ];
     values.forEach((value) => row.append(element(this.rootElement, 'span', null, value)));
@@ -257,9 +262,24 @@ export class LafeaWorkbenchView {
 
   stageNavigation(state) {
     const navigation = element(this.rootElement, 'nav', 'lafea-workbench__stages');
-    navigation.setAttribute('aria-label', 'LAFEA stages and analytical calculation');
+    navigation.setAttribute('aria-label', 'Analytical calculation and LAFEA stages');
+    navigation.dataset.architecture = 'ANALYTICAL_CALC_PLUS_FEA_STAGES';
+
+    const analytical = actionButton(
+      this.rootElement,
+      'Analytical Calc',
+      () => this.selectAnalyticalPresentation(state),
+    );
+    analytical.dataset.lafeaTab = PRESENTATION_ANALYTICAL;
+    analytical.dataset.backingStageIds = ANALYTICAL_CALC_STAGE_IDS.join(',');
+    analytical.setAttribute(
+      'aria-current',
+      this.presentationMode === PRESENTATION_ANALYTICAL ? 'step' : 'false',
+    );
+    navigation.append(analytical);
+
     for (const definition of LAFEA_STAGE_REGISTRY) {
-      const label = definition.stageId === ANALYTICAL_CALC_STAGE_ID
+      const label = isAnalyticalCalcStage(definition.stageId)
         ? `${definition.stageId} TBA`
         : `${definition.stageId} ${definition.label}`;
       const button = actionButton(
@@ -268,6 +288,7 @@ export class LafeaWorkbenchView {
         () => this.selectStagePresentation(definition.stageId, state),
       );
       button.dataset.stageId = definition.stageId;
+      button.dataset.routeFamily = isAnalyticalCalcStage(definition.stageId) ? 'ANALYTICAL' : 'STAGE';
       button.setAttribute(
         'aria-current',
         this.presentationMode === PRESENTATION_STAGE
@@ -276,20 +297,6 @@ export class LafeaWorkbenchView {
           : 'false',
       );
       navigation.append(button);
-      if (definition.stageId === ANALYTICAL_CALC_STAGE_ID) {
-        const analytical = actionButton(
-          this.rootElement,
-          'Analytical Calc',
-          () => this.selectAnalyticalPresentation(state),
-        );
-        analytical.dataset.lafeaTab = PRESENTATION_ANALYTICAL;
-        analytical.dataset.backingStageId = ANALYTICAL_CALC_STAGE_ID;
-        analytical.setAttribute(
-          'aria-current',
-          this.presentationMode === PRESENTATION_ANALYTICAL ? 'step' : 'false',
-        );
-        navigation.append(analytical);
-      }
     }
     return navigation;
   }
@@ -303,16 +310,27 @@ export class LafeaWorkbenchView {
 
   selectAnalyticalPresentation(state) {
     this.presentationMode = PRESENTATION_ANALYTICAL;
-    const result = this.handlers.onStage(ANALYTICAL_CALC_STAGE_ID);
-    if (state.activeStageId === ANALYTICAL_CALC_STAGE_ID) {
-      this.render(this.lastState ?? state);
+    const stageId = isAnalyticalCalcStage(state.activeStageId)
+      ? state.activeStageId
+      : DEFAULT_ANALYTICAL_CALC_STAGE_ID;
+    const result = this.handlers.onStage(stageId);
+    if (state.activeStageId === stageId) this.render(this.lastState ?? state);
+    return result;
+  }
+
+  selectAnalyticalRoute(stageId, state) {
+    if (!isAnalyticalCalcStage(stageId)) {
+      throw new TypeError(`LAFEA_ANALYTICAL_ROUTE_UNSUPPORTED:${stageId}`);
     }
+    this.presentationMode = PRESENTATION_ANALYTICAL;
+    const result = this.handlers.onStage(stageId);
+    if (state.activeStageId === stageId) this.render(this.lastState ?? state);
     return result;
   }
 
   toolbar(stageId, stage, analyticalMode = false) {
     const toolbar = element(this.rootElement, 'div', 'lafea-workbench__toolbar');
-    const displayName = analyticalMode ? 'Analytical Calc' : stageId;
+    const displayName = analyticalMode ? `Analytical Calc ${stageId}` : stageId;
     const mock = actionButton(
       this.rootElement,
       `[SIMULATED] Load ${displayName} demonstration source`,
@@ -326,9 +344,9 @@ export class LafeaWorkbenchView {
       this.rootElement,
       'label',
       null,
-      analyticalMode ? 'Import analytical JSON' : 'Import stage JSON',
+      analyticalMode ? `Import ${stageId} analytical JSON` : 'Import stage JSON',
     );
-    const fileId = `lafea-import-${analyticalMode ? 'analytical-calc' : stageId.replace('.', '-')}`;
+    const fileId = `lafea-import-${analyticalMode ? `analytical-${stageId.replace('.', '-')}` : stageId.replace('.', '-')}`;
     file.id = fileId;
     fileLabel.htmlFor = fileId;
     file.type = 'file';
@@ -358,7 +376,7 @@ export class LafeaWorkbenchView {
 
     const exportButton = actionButton(
       this.rootElement,
-      analyticalMode ? 'Export analytical source' : 'Export source document',
+      analyticalMode ? `Export ${stageId} analytical source` : 'Export source document',
       this.handlers.onExport,
     );
     exportButton.disabled = !stage.document;
@@ -370,26 +388,27 @@ export class LafeaWorkbenchView {
     return toolbar;
   }
 
-  tbaToolbar() {
+  tbaToolbar(stageId) {
     const toolbar = element(this.rootElement, 'div', 'lafea-workbench__toolbar');
     const notice = element(
       this.rootElement,
       'span',
       'lafea-workbench__section-intro',
-      'LAFEA.1 is TBA. No source import, demonstration data, meshing, calculation, or verification action is available from this stage tab.',
+      `${stageId} is TBA as a numbered stage surface. Its analytical calculation is available under Analytical Calc; no source import, demonstration data, meshing, calculation, or verification action is exposed here.`,
     );
     notice.dataset.role = 'lafea-tba-toolbar';
     toolbar.append(notice);
     return toolbar;
   }
 
-  tbaContent() {
+  tbaContent(stageId) {
+    const definition = requireLafeaStageRegistryEntry(stageId);
     const shell = element(this.rootElement, 'section', 'lafea-tba-stage');
     shell.dataset.role = 'lafea-tba-stage';
-    shell.dataset.stageId = ANALYTICAL_CALC_STAGE_ID;
+    shell.dataset.stageId = stageId;
     shell.append(
-      element(this.rootElement, 'span', 'panel-eyebrow', 'Reserved stage'),
-      element(this.rootElement, 'h2', null, 'LAFEA.1 — TBA'),
+      element(this.rootElement, 'span', 'panel-eyebrow', 'Reserved analytical stage surface'),
+      element(this.rootElement, 'h2', null, `${stageId} — TBA`),
       element(
         this.rootElement,
         'p',
@@ -400,7 +419,7 @@ export class LafeaWorkbenchView {
         this.rootElement,
         'p',
         null,
-        'The existing attachment-foundation analytical load-transfer and pressure-baseline capability has moved to the separate Analytical Calc tab.',
+        `${definition.label} remains a governed analytical calculation route and has moved to the separate Analytical Calc tab.`,
       ),
     );
     return Object.freeze({
@@ -433,6 +452,20 @@ export class LafeaWorkbenchView {
     if (target !== 'run') return;
     this.slots?.toolbar?.querySelector?.('[data-role="lafea-run"]')?.focus?.();
   }
+}
+
+function isAnalyticalCalcStage(stageId) {
+  return ANALYTICAL_CALC_STAGE_IDS.includes(stageId);
+}
+
+function analyticalRoutePurpose(stageId) {
+  if (stageId === 'LAFEA.1') {
+    return 'Attachment-foundation load transfer and elastic pressure baseline use the retained LAFEA.1 analytical route.';
+  }
+  if (stageId === 'LAFEA.2') {
+    return 'Nominal far-field pipe-section screening uses the retained LAFEA.2 analytical route.';
+  }
+  throw new TypeError(`LAFEA_ANALYTICAL_ROUTE_UNSUPPORTED:${stageId}`);
 }
 
 function runTitle(stage, executionSupported, authorization) {

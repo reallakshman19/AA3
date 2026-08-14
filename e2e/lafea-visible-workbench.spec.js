@@ -100,3 +100,58 @@ test('production application LAFEA tab mounts the engineering workbench', async 
   await page.screenshot({ path: screenshotPath, fullPage: false });
   await testInfo.attach('lafea-production-tab', { path: screenshotPath, contentType: 'image/png' });
 });
+
+test('production user can enter a continuum model and generate the retained SVG mesh', async ({ page }, testInfo) => {
+  await page.setViewportSize({ width: 1440, height: 1000 });
+  await page.addInitScript(() => {
+    globalThis.__WORKSPACE_VIEWPORT_BACKEND__ = 'canvas2d';
+  });
+  await page.goto('/');
+  await page.locator('[data-application-nav="LAFEA"]').click();
+
+  const productionView = page.locator('[data-application-view="LAFEA"]');
+  await expect(productionView).toBeVisible();
+  await productionView.locator('[data-stage-id="LAFEA.3"]').click();
+
+  const workflow = productionView.locator('[data-role="lafea-analysis-workflow-panel"]');
+  await expect(workflow).toHaveAttribute('data-stage-id', 'LAFEA.3');
+  const form = workflow.locator('[data-role="lafea-left-continuum-form"]');
+  await expect(form).toBeVisible();
+
+  await form.locator('[data-role="lafea-left-model-name"]').fill('USER_RECTANGLE');
+  await form.locator('[data-role="lafea-left-width"]').fill('160');
+  await form.locator('[data-role="lafea-left-height"]').fill('80');
+  await form.locator('[data-role="lafea-left-thickness"]').fill('8');
+  await form.locator('[data-role="lafea-left-modulus"]').fill('210000');
+  await form.locator('[data-role="lafea-left-poisson"]').fill('0.3');
+  await form.locator('[data-role="lafea-left-force-x"]').fill('1200');
+  await form.locator('[data-role="lafea-left-force-y"]').fill('-300');
+  await form.locator('[data-role="lafea-left-create-model"]').click();
+
+  await expect(productionView.locator('[data-role="lafea-engineering-overview"]')).toContainText('USER_RECTANGLE');
+  const viewport = productionView.locator('[data-guided-target="viewport"]');
+  await expect.poll(() => viewport.locator('svg [data-element-id]').count()).toBeGreaterThanOrEqual(2);
+
+  await workflow.locator('[data-role="lafea-left-mesh-family"]').selectOption('T6');
+  await workflow.locator('[data-role="lafea-left-mesh-target"]').fill('20');
+  await workflow.locator('[data-role="lafea-left-generate-mesh"]').click();
+
+  const miniMesh = workflow.locator('[data-role="lafea-left-retained-mesh-svg"]');
+  await expect(miniMesh).toBeVisible();
+  await expect.poll(() => miniMesh.locator('polygon').count()).toBeGreaterThan(2);
+  await expect(workflow.locator('[data-role="lafea-left-mesh-settings"]')).toContainText('CURRENT_PASS');
+  await expect(productionView.locator('[data-role="lafea-viewport-mode-panel"]')).toContainText('ELEMENTS · SVG');
+
+  const prepare = workflow.locator('[data-role="lafea-left-prepare"]');
+  await expect(prepare).toBeEnabled();
+  await prepare.click();
+  await expect(workflow.locator('[data-role="lafea-left-run"]')).toBeEnabled();
+
+  const workflowShot = testInfo.outputPath('lafea-production-input-workflow.png');
+  await workflow.screenshot({ path: workflowShot });
+  await testInfo.attach('lafea-production-input-workflow', { path: workflowShot, contentType: 'image/png' });
+
+  const viewportShot = testInfo.outputPath('lafea-production-svg-mesh.png');
+  await viewport.screenshot({ path: viewportShot });
+  await testInfo.attach('lafea-production-svg-mesh', { path: viewportShot, contentType: 'image/png' });
+});

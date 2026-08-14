@@ -8,7 +8,6 @@ import {
   createLafeaWorkbenchStore as createRetainedStore,
 } from './lafea-lifecycle-workbench-store-retained.js';
 import { buildLafeaWorkbenchOrchestrationProjection } from './lafea-workbench-orchestration-projection.js';
-import { projectLafeaWorkbenchCurrentness } from './lafea-workbench-currentness.js';
 import { createLafeaWorkbenchEvidenceActions } from './lafea-workbench-evidence-actions.js';
 import { createLafeaWorkbenchGeometryState } from './lafea-workbench-geometry-state.js';
 import { buildLafeaDomainFirstMeshCustodyProjection } from './lafea-domain-first-mesh-custody.js';
@@ -31,10 +30,6 @@ import {
 } from './lafea-workbench-verification-state.js';
 
 export { LAFEA_LIFECYCLE_BINDING_SCHEMA, LAFEA_LIFECYCLE_BINDING_STATUSES, LAFEA_WORKBENCH_STATE_SCHEMA };
-export {
-  LAFEA_COMPUTATIONAL_STATES,
-  LAFEA_WORKBENCH_QUALIFICATION_STATES,
-} from './lafea-workbench-currentness.js';
 export const LAFEA_CALCULATION_STATES = Object.freeze(['CALCULATION_NOT_RUN', 'CALCULATION_ACCEPTED_BY_STAGE_CONTRACT', 'CALCULATION_NOT_ACCEPTED_BY_STAGE_CONTRACT']);
 export const LAFEA_RESULT_STATES = Object.freeze(['RESULT_NOT_READY', 'RESULT_READY']);
 export const LAFEA_CODE_STATES = Object.freeze(['CODE_NOT_READY', 'CODE_READY']);
@@ -114,14 +109,12 @@ export function createLafeaWorkbenchOrchestratorStore(options) {
     const withPreparation = freeze({ ...withMesh, preparationProjection });
     const lifecycleReadiness = projectLafeaWorkbenchReadiness(stageId, withPreparation);
     const withReadiness = freeze({ ...withPreparation, lifecycleReadiness });
-    const currentness = projectLafeaWorkbenchCurrentness(withReadiness);
-    const withCurrentness = freeze({ ...withReadiness, currentness });
     return freeze({
-      ...withCurrentness,
+      ...withReadiness,
       numericalVerificationProjection: projectLafeaWorkbenchVerificationBinding(
-        withCurrentness, withCurrentness.retainedNumericalVerificationEvidence,
+        withReadiness, withReadiness.retainedNumericalVerificationEvidence,
       ),
-      t6GeometryQualificationProjection: t6Geometry.project(withCurrentness),
+      t6GeometryQualificationProjection: t6Geometry.project(withReadiness),
     });
   }
 

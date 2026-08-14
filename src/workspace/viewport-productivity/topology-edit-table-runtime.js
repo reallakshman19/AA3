@@ -19,6 +19,7 @@ import {
   writeTopologyEditTableEmptyRouteToAuthoring,
 } from './topology-edit-table-empty-route-runtime.js';
 import {
+  stageTopologyEditPipeSpecification,
   stageTopologyEditTeeReducerRelation,
   stageTopologyEditValveReplacement,
 } from './topology-edit-table-engineering-runtime.js';
@@ -195,6 +196,9 @@ export class TopologyEditTableRuntime {
     if (!action || !this.element?.contains(action)) return false;
     const kind = action.dataset.tableAction;
     if (kind === 'stage-pipe-length') return this.stagePipeLength(action.dataset.canonicalId);
+    if (kind === 'stage-pipe-specification') {
+      return stageTopologyEditPipeSpecification(this, action.dataset.canonicalId);
+    }
     if (kind === 'stage-valve-replacement') {
       return stageTopologyEditValveReplacement(this, action.dataset.canonicalId);
     }

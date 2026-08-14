@@ -39,7 +39,7 @@ assert.match(
 );
 assert.match(
   controllerSource,
-  /const accessoryPanelManager = ACCESSORY_PANEL_MANAGERS\.get\(this\);[\s\S]*accessoryPanelManager\?\.destroy\(\);[\s\S]*ACCESSORY_PANEL_MANAGERS\.delete\(this\);[\s\S]*this\.benchmarkPanel\.destroy\(\);[\s\S]*this\.view\.destroy\(\);/u,
+  /const accessoryPanelManager = ACCESSORY_PANEL_MANAGERS\.get\(this\);[\s\S]*accessoryPanelManager\?\.destroy\(\);[\s\S]*ACCESSORY_PANEL_MANAGERS\.delete\(this\);[\s\S]*this\.benchmarkPanel\?\.destroy\(\);[\s\S]*this\.view\.destroy\(\);/u,
 );
 assert.doesNotMatch(controllerSource, /setBenchmarkHost\(.*accessory/u);
 assert.doesNotMatch(controllerSource, /benchmarkHost.*accessory|accessory.*benchmarkHost/u);

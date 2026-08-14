@@ -37,3 +37,6 @@ slice-r-final.patch
 # measurement runs - third-party binary, not project source. Re-fetched
 # reproducibly per scripts/lfea-m047-stage2-source-custody-manifest.mjs.
 artifacts/
+
+# Temporary test directories
+.tmp/

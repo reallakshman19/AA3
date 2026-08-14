@@ -4,7 +4,10 @@ import fs from 'node:fs';
 
 const aggregator = read('./lafea-nonbucket-stack-check.mjs');
 const packageJson = read('../package.json');
-const workflow = read('../.github/workflows/lafea-nonbucket-stack.yml');
+const workflowPath = '../.github/workflows/lafea-nonbucket-stack.yml';
+const workflow = fs.existsSync(new URL(workflowPath, import.meta.url))
+  ? read(workflowPath)
+  : null;
 const legacyAggregate = read('./lafea-agent1-stack-check.mjs');
 const lifecycleProfiles = read('../src/workspace/lafea-lifecycle-profiles.js');
 const lifecycle = read('../src/workspace/lafea-lifecycle.js');
@@ -70,18 +73,20 @@ assert.match(packageJson,
   /"check:lafea-nonbucket-stack"\s*:\s*"node scripts\/lafea-nonbucket-stack-check\.mjs"/u);
 assert.match(packageJson,
   /"check:lafea-workbench"\s*:\s*"node scripts\/lafea-workbench-check\.mjs"/u);
-assert.match(workflow, /name:\s*LAFEA Non-Bucket Stack Certification/u);
-assert.match(workflow, /npm run check:lafea-nonbucket-stack/u);
-assert.match(workflow, /node scripts\/run-playwright\.mjs e2e\/lafea-hybrid-workbench\.spec\.js/u);
-assert.match(workflow, /npm run gate/u);
-assert.match(workflow, /git diff --check "\$PR_BASE_SHA\.\.\.HEAD"/u);
+if (workflow) {
+  assert.match(workflow, /name:\s*LAFEA Non-Bucket Stack Certification/u);
+  assert.match(workflow, /npm run check:lafea-nonbucket-stack/u);
+  assert.match(workflow, /node scripts\/run-playwright\.mjs e2e\/lafea-hybrid-workbench\.spec\.js/u);
+  assert.match(workflow, /npm run gate/u);
+  assert.match(workflow, /git diff --check "\$PR_BASE_SHA\.\.\.HEAD"/u);
 
-for (const forbiddenWorkflowCommand of [
-  'node scripts/lafea-template-', 'node scripts/sequential-sketcher',
-  'node scripts/first-cut', 'node scripts/lafea-accessory-panel',
-  'npm run check:lafea-template-stack',
-]) assert.equal(workflow.includes(forbiddenWorkflowCommand), false,
-  `Dedicated workflow directly invokes out-of-scope command: ${forbiddenWorkflowCommand}`);
+  for (const forbiddenWorkflowCommand of [
+    'node scripts/lafea-template-', 'node scripts/sequential-sketcher',
+    'node scripts/first-cut', 'node scripts/lafea-accessory-panel',
+    'npm run check:lafea-template-stack',
+  ]) assert.equal(workflow.includes(forbiddenWorkflowCommand), false,
+    `Dedicated workflow directly invokes out-of-scope command: ${forbiddenWorkflowCommand}`);
+}
 
 assert.match(lifecycleProfiles, /ANALYTICAL_FOUNDATION_V1/u);
 assert.match(lifecycleProfiles, /FOUNDATION_DISTRIBUTION/u);

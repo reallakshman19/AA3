@@ -28,13 +28,8 @@ const DESTROYED_CONTROLLERS = new WeakSet();
 export class LafeaWorkbenchController {
   constructor(rootElement, options) {
     const configuration = isLafeaRecord(options) ? options : {};
-    const {
-      accessoryPanels,
-      benchmarkPanelFactory,
-      mockDocumentFactory,
-      THREE,
-      ...storeOptions
-    } = configuration;
+    const { accessoryPanels, THREE, ...storeOptions } = configuration;
+    const { benchmarkPanelFactory, mockDocumentFactory, presentationMode, analyticalOnly } = configuration;
     this.rootElement = rootElement;
     this.documentRef = rootElement?.ownerDocument ?? globalThis.document;
     this.store = createLafeaWorkbenchOrchestratorStore(storeOptions);
@@ -43,6 +38,8 @@ export class LafeaWorkbenchController {
     this.view = new LafeaWorkbenchView(rootElement, {
       getRenderPacket: (stageId) => lafeaWorkbenchDisplayRenderPacket(this, stageId),
       THREE: lafeaWorkbenchThreeNamespace(this),
+      presentationMode,
+      analyticalOnly,
     });
     this.benchmarkHost = this.documentRef.createElement('div');
     this.benchmarkHost.dataset.role = 'lafea-benchmark-host';
@@ -80,7 +77,13 @@ export class LafeaWorkbenchController {
       onImportMeshEvidence: (file) => this.loadAnalysisMeshEvidenceFile(file),
       onValidateMeshEvidence: () => this.validateRetainedAnalysisMeshEvidence(),
       onExportMeshEvidence: () => this.downloadAnalysisMeshEvidence(),
-      onBindMeshProfile: (profile) => this.bindAnalysisMeshProfile(profile),
+      onBindMeshProfile: (profile) => {
+        const stageId = this.getState().activeStageId;
+        if (!this.getState().stages[stageId].domainFirstProfileActive) {
+          this.store.activateDomainFirstProfile(stageId);
+        }
+        return this.bindAnalysisMeshProfile(profile);
+      },
       onPlanMesh: (overrides) => this.planAnalysisMesh(overrides),
       onGenerateMesh: (overrides) => this.generateAnalysisMesh(overrides),
       onRefineMesh: (request) => this.refineAnalysisMesh(request),
@@ -132,7 +135,21 @@ export class LafeaWorkbenchController {
       );
     }
     try {
-      return this.importDocument(await this.mockDocumentFactory(stageId), stageId);
+      const result = this.importDocument(await this.mockDocumentFactory(stageId), stageId);
+      if (stageId === 'LAFEA.3') {
+        const { createLafeaMockDomainAndGeometryEvidence } = await import('./lafea-simulated-source-provider.js');
+        this.store.activateDomainFirstProfile();
+        const state = this.getState();
+        const hash = state.stages[stageId]?.lifecycle?.source?.sourceHash;
+        if (hash) {
+          const mockEv = await createLafeaMockDomainAndGeometryEvidence(stageId, hash);
+          if (mockEv) {
+            this.store.registerAnalysisDomain(mockEv.domain);
+            this.store.registerAnalysisGeometryEvidence(mockEv.geometryEvidence);
+          }
+        }
+      }
+      return result;
     } catch (error) {
       return this.store.reportEditError('document', null, error);
     }

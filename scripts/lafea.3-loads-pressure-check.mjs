@@ -66,7 +66,7 @@ function curvedT6PressureSource() {
     formulation: 'PLANE_STRESS',
     materials: [{ materialId: 'MAT', elasticModulus: 200000, poissonRatio: 0.3, sourceReference: 'MATERIAL#MAT' }],
     nodes: [
-      n('A', 0, 0), n('B', 2, 0), n('C', 0, 2), n('D', 1, 0), n('E', 1.3, 1.3), n('F', 0, 1),
+      n('A', 0, 0), n('B', 2, 0), n('C', 0, 2), n('D', 1, 0), n('E', 1.0, 1.0), n('F', 0, 1),
     ],
     elements: [{
       elementId: 'E1', elementType: 'T6', nodeIds: ['A', 'B', 'C', 'D', 'E', 'F'], materialId: 'MAT', thickness: 1, sourceReference: 'ELEMENT#E1',

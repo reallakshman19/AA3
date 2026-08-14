@@ -155,6 +155,14 @@ export function createLafeaWorkbenchEvidenceActions(context) {
   }
 
   function activateDomainFirstProfile(stageId = activeStageId()) {
+    // Ensure source authority is established before geometry activation.
+    // After importDocument, source.clear() wipes sourceAuthority; geometry.activate()
+    // requires a valid sourceHash — ensureRunAuthority derives it from the document
+    // and initializes the lifecycle if absent.
+    const raw = c.rawStage(stageId);
+    if (!raw.sourceAuthority?.sourceHash && !raw.lifecycle?.source?.sourceHash) {
+      c.source.ensureRunAuthority(stageId, 'LAFEA_WORKBENCH/ACTIVATE_DOMAIN_FIRST_PROFILE');
+    }
     const result = c.geometry.activate(c.rawStage(stageId));
     if (result.changed) {
       c.continuumPreflight.clear(stageId);

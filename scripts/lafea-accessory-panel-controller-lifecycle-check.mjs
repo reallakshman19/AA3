@@ -97,6 +97,12 @@ const failingPanel = Object.freeze({
 const controller = new LafeaWorkbenchController(root, {
   initialStage: 'LAFEA.3',
   accessoryPanels: [failingPanel, validPanel],
+  benchmarkPanelFactory: () => ({
+    render: () => {},
+    destroy: () => {
+      benchmarkDestroyCount += 1;
+    },
+  }),
 });
 
 // Preserve the real controller, store subscription and accessory manager while
@@ -108,10 +114,6 @@ controller.view.render = (state) => {
 controller.view.destroy = () => {
   viewDestroyCount += 1;
   root.replaceChildren();
-};
-controller.benchmarkPanel.render = () => {};
-controller.benchmarkPanel.destroy = () => {
-  benchmarkDestroyCount += 1;
 };
 
 assert.strictEqual(controller.init(), controller);

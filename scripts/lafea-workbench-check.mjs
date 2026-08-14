@@ -135,6 +135,7 @@ const read = (relativePath) => fs.readFileSync(path.join(workspace, relativePath
 const modelSource = read('lafea-workbench-model.js');
 const viewSource = read('lafea-workbench-view.js');
 const storeSource = read('lafea-workbench-store.js');
+const contentSource = read('lafea-workbench-content.js');
 const documentTableSource = [
   read('lafea-document-table.js'),
   read('lafea-document-table-form.js'),
@@ -157,9 +158,9 @@ assert.doesNotMatch(modelSource, /Qualified Weld Profile evaluation passed/u);
 assert.doesNotMatch(viewSource, /stage\.document(?:\.|\[)[^;\n]*=/u);
 assert.doesNotMatch(viewSource, /\bprompt\s*\(/u);
 assert.doesNotMatch(viewSource, /createHybridViewport|webgl:\s*\{\s*render:\s*\(\)\s*=>\s*\{\}/u);
-assert.match(viewSource, /No geometry or mesh has been synthesized/u);
+assert.match(contentSource, /No geometry or mesh has been synthesized/u);
 assert.match(viewSource, /Calculation not implemented/u);
-assert.match(viewSource, /onSetScalar/u);
+assert.match(contentSource, /onSetScalar/u);
 
 assert.match(storeSource, /applyLafeaStageEditCommand/u);
 assert.doesNotMatch(storeSource, /function updateRecord|function deleteRecord|rowIndex === index/u);

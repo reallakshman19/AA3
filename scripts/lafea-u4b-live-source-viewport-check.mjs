@@ -156,10 +156,16 @@ function run() {
     path.join(ROOT, 'src/workspace/lafea-source-workbench-viewport.js'),
     'utf8',
   );
-  const viewSource = fs.readFileSync(
+  const viewSource = `${fs.readFileSync(
     path.join(ROOT, 'src/workspace/lafea-workbench-view.js'),
     'utf8',
-  );
+  )}\n${fs.readFileSync(
+    path.join(ROOT, 'src/workspace/lafea-workbench-content.js'),
+    'utf8',
+  )}\n${fs.readFileSync(
+    path.join(ROOT, 'src/workspace/lafea-live-workbench-viewport.js'),
+    'utf8',
+  )}`;
   const svgSource = fs.readFileSync(
     path.join(ROOT, 'src/workspace/lafea-workbench-svg.js'),
     'utf8',

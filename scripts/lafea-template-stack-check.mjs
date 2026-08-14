@@ -158,7 +158,8 @@ function runRetainedEvidenceCheck(row, targetFailures, evidence) {
     return;
   }
 
-  const container = fs.mkdtempSync(path.join(os.tmpdir(), 'lafea-retained-evidence-'));
+  fs.mkdirSync(path.join(ROOT, '.tmp'), { recursive: true });
+  const container = fs.mkdtempSync(path.join(ROOT, '.tmp', 'lafea-retained-evidence-'));
   const worktree = path.join(container, 'checkout');
   let worktreeAdded = false;
   try {
@@ -174,12 +175,21 @@ function runRetainedEvidenceCheck(row, targetFailures, evidence) {
 
     const rootModules = path.join(ROOT, 'node_modules');
     const worktreeModules = path.join(worktree, 'node_modules');
-    if (fs.existsSync(rootModules)) fs.symlinkSync(rootModules, worktreeModules, 'dir');
+    if (fs.existsSync(rootModules)) {
+      try {
+        fs.symlinkSync(rootModules, worktreeModules, process.platform === 'win32' ? 'junction' : 'dir');
+      } catch {
+        // Continue if symlink not permitted
+      }
+    }
 
     const args = row.baseMode === 'ARG_BASE' ? ['--base', parent] : [];
-    const env = row.baseMode === 'ENV_BASE'
-      ? { ...process.env, PR_BASE_SHA: parent }
-      : process.env;
+    const env = {
+      ...process.env,
+      PAGER: 'cat',
+      GIT_PAGER: 'cat',
+      ...(row.baseMode === 'ENV_BASE' ? { PR_BASE_SHA: parent } : {}),
+    };
     const passed = runNode(row.scope, row.script, args, worktree, env, targetFailures);
     evidence.push(Object.freeze({
       scope: row.scope,
@@ -216,12 +226,16 @@ function runRetainedEvidenceCheck(row, targetFailures, evidence) {
         });
       }
     }
-    fs.rmSync(container, {
-      recursive: true,
-      force: true,
-      maxRetries: 5,
-      retryDelay: 50,
-    });
+    try {
+      fs.rmSync(container, {
+        recursive: true,
+        force: true,
+        maxRetries: 5,
+        retryDelay: 50,
+      });
+    } catch {
+      // Windows file lock tolerance
+    }
   }
 }
 

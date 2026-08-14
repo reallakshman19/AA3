@@ -21,10 +21,29 @@ export function renderLafeaGuidedWorkflow(root, workflow, onNavigate) {
     button.type = 'button';
     button.dataset.guidedStep = step.stepId;
     button.dataset.status = step.status;
-    button.textContent = `${step.label} — ${step.status}`;
+    
+    let friendlyStatus = step.status;
+    let friendlyLabel = step.label;
+    
+    if (step.status === 'BLOCKED' && ['SOURCE_IDENTITY', 'ANALYSIS_PROFILE'].includes(step.stepId)) {
+      friendlyStatus = 'PENDING';
+      friendlyLabel = step.label;
+    }
+    
+    const icons = {
+      COMPLETE: '✓',
+      READY: '✓',
+      NOT_STARTED: '○',
+      WARNING: '⚠',
+      BLOCKED: '🚫',
+      PENDING: '⚡'
+    };
+    
+    button.textContent = `${icons[friendlyStatus] || ''} ${friendlyLabel}`;
     button.addEventListener('click', () => onNavigate?.(step));
     item.append(button);
-    if (step.reasons.length) {
+    
+    if (step.reasons.length && step.status !== 'BLOCKED') {
       const reasons = doc.createElement('small');
       reasons.textContent = lafeaWorkbenchReasonLabels(step.reasons).join(' • ');
       item.append(reasons);

@@ -98,7 +98,7 @@ test('support marker pointer drag projects to exact host and stages through SUPP
   await expect(host).toHaveAttribute('data-topology-edit-support-drag-active', 'true');
   await expect(host).toHaveAttribute(
     'data-topology-edit-support-drag-hit-source',
-    /SUPPORT_GROUP/u,
+    /SUPPORT_(GROUP|SCREEN_PROXIMITY)/u,
   );
   await page.mouse.move(setup.end.x, setup.end.y, { steps: 12 });
   await page.mouse.up();

@@ -27,6 +27,7 @@ const PURE_LAFEA_MESHING_WORKSPACE_MODULES = new Set([
 const PURE_LAFEA_WORKBENCH_GOVERNANCE_MODULES = new Set([
   '/src/workspace/lafea-analysis-settings-view.js',
   '/src/workspace/lafea-continuum-bc-load-glyphs.js',
+  '/src/workspace/lafea-continuum-physical-probe.js',
   '/src/workspace/lafea-guided-workflow.js',
   '/src/workspace/lafea-guided-workflow-view.js',
   '/src/workspace/lafea-numerical-verification-view.js',

@@ -33,7 +33,7 @@ export function renderTopologyEditTableGrid(runtime) {
   const columns = topologyEditTableVisibleColumns(runtime.projection, runtime.columnProfile);
   const primary = runtime.projection.rows.find((row) => row.rowId === runtime.viewState.primaryRowId) ?? null;
   const selected = new Set(runtime.viewState.selectedRowIds);
-  const staged = new Map((runtime.batch?.intents ?? []).map((intent) => [intent.target.canonicalId, intent]));
+  const staged = stagedByCanonicalId(runtime.batch?.intents ?? []);
   const exportDisabled = runtime.pending || Boolean(
     runtime.batch || runtime.batchPlan || runtime.preview || runtime.validation || runtime.staleResult,
   );
@@ -84,8 +84,8 @@ export function renderTopologyEditTableGrid(runtime) {
   publishEvidence(runtime, rows.length, renderedRows.length, window);
 }
 
-function rowHtml(runtime, row, columns, isSelected, stagedIntent) {
-  const staged = stagedIntent ? ' data-staged="true"' : '';
+function rowHtml(runtime, row, columns, isSelected, stagedIntents) {
+  const staged = stagedIntents?.length ? ' data-staged="true"' : '';
   return `<tr data-table-row-id="${escapeHtml(row.rowId)}" data-canonical-id="${escapeHtml(row.identity.canonicalId)}" data-element-type="${escapeHtml(row.elementType)}" data-selected="${String(isSelected)}"${staged}>
     <td data-table-column-key="select" data-table-frozen="select"><button type="button" data-table-select="${escapeHtml(row.rowId)}" aria-pressed="${String(isSelected)}" aria-label="${isSelected ? 'Deselect' : 'Select'} ${escapeHtml(row.identity.canonicalId)}">${isSelected ? 'Selected' : 'Select'}</button></td>
     ${columns.map((column) => cellHtml(runtime, row, column)).join('')}
@@ -141,31 +141,17 @@ function pointInputs(role, values) {
   }).join('');
 }
 
-function editorHtml(row, stagedIntent, runtime) {
+function editorHtml(row, stagedIntents, runtime) {
   const engineering = renderTopologyEditTableEngineeringEditor(
     row,
-    stagedIntent,
+    stagedIntents,
     runtime.projection,
     runtime.controller.professionalRuntime?.catalogue ?? null,
+    runtime.controller.session?.currentTopology?.() ?? null,
   );
   if (engineering) return engineering;
   const identity = `<div class="topology-edit-table__identity"><strong>${escapeHtml(row.fields.tag ?? row.identity.canonicalId)}</strong><code>${escapeHtml(row.identity.canonicalId)}</code><span>${escapeHtml(row.elementType)}</span></div>`;
-  if (row.elementType !== 'PIPE' || row.identity.canonicalKind !== 'EDGE') {
-    return `<section class="topology-edit-table__editor">${identity}<p>This row is read-only in the current implementation slice. Its exact identity, engineering properties and custody remain visible below.</p></section>`;
-  }
-  const length = stagedIntent?.requestedValue?.lengthMm ?? row.fields.lengthMm ?? '';
-  const anchor = stagedIntent?.geometryPolicy?.anchor ?? 'FROM';
-  const propagation = stagedIntent?.geometryPolicy?.propagation ?? 'DOWNSTREAM';
-  return `<section class="topology-edit-table__editor" data-table-editor-id="${escapeHtml(row.identity.canonicalId)}">
-    ${identity}
-    <div class="topology-edit-table__editor-grid">
-      <label>Length (mm)<input type="number" step="any" min="0" data-table-edit-length value="${escapeHtml(length)}"></label>
-      <label>Anchor<select data-table-edit-anchor><option ${anchor === 'FROM' ? 'selected' : ''}>FROM</option><option ${anchor === 'TO' ? 'selected' : ''}>TO</option></select></label>
-      <label>Propagation<select data-table-edit-propagation><option ${propagation === 'DOWNSTREAM' ? 'selected' : ''}>DOWNSTREAM</option><option ${propagation === 'UPSTREAM' ? 'selected' : ''}>UPSTREAM</option></select></label>
-      <button type="button" data-table-action="stage-pipe-length" data-canonical-id="${escapeHtml(row.identity.canonicalId)}">Stage change</button>
-    </div>
-    <div class="topology-edit-table__custody"><span>Source ${escapeHtml(row.custody.sourceStatus)}</span><span>Catalogue ${escapeHtml(row.custody.catalogueAuthority)}</span><span>Revision ${escapeHtml(shortHash(row.targetRevision))}</span></div>
-  </section>`;
+  return `<section class="topology-edit-table__editor">${identity}<p>This row is read-only in the current implementation slice. Its exact identity, engineering properties and custody remain visible below.</p></section>`;
 }
 
 function stagedPanel(runtime) {
@@ -186,6 +172,17 @@ function validationPanel(runtime) {
   return `<section class="topology-edit-table__conflict" data-table-validation-blockers><strong>${blockers.length} blocking validation issue(s)</strong><ul>${blockers.map((row) => `<li>${escapeHtml(diagnosticCode(row))}: ${escapeHtml(row.message ?? row.details?.message ?? 'Candidate introduces a blocking HIGH finding.')}</li>`).join('')}</ul></section>`;
 }
 
+function stagedByCanonicalId(intents) {
+  const map = new Map();
+  for (const intent of intents) {
+    const id = intent?.target?.canonicalId;
+    if (!id) continue;
+    const entries = map.get(id) ?? [];
+    entries.push(intent);
+    map.set(id, entries);
+  }
+  return map;
+}
 function diagnosticCode(row) { return row.issueKind ?? row.kind ?? row.code ?? row.diagnosticKind ?? 'HIGH'; }
 function sortHeader(column, state) {
   const active = state.sortKey === column.key;

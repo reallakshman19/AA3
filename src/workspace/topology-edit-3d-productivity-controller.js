@@ -4,6 +4,9 @@ import {
 import {
   TopologyEditCleanShellRuntime,
 } from './viewport-productivity/topology-edit-clean-shell-runtime.js';
+import {
+  TopologyEditSupportPositionRuntime,
+} from './viewport-productivity/topology-edit-support-position-runtime.js';
 import './topology-edit-productivity.css';
 
 /** Adds presentation-only productivity behavior without acquiring topology authority. */
@@ -11,6 +14,7 @@ export class TopologyEdit3DViewController extends AuthoringController {
   constructor(eventBus, lifecycleOptions = {}) {
     super(eventBus, lifecycleOptions);
     this.cleanShellRuntime = new TopologyEditProductivityCleanShellRuntime(this);
+    this.supportPositionRuntime = new TopologyEditSupportPositionRuntime(this);
     this.iconPresentationRuntime = null;
     this.iconReferenceRuntime = null;
     this.iconRuntimePromise = null;
@@ -35,6 +39,9 @@ export class TopologyEdit3DViewController extends AuthoringController {
       this.iconRuntimePromise,
       this.mountTableAdapter(),
     ]);
+    this.supportPositionRuntime.selectionChanged({
+      selection: this.editorStore?.getState?.().selection,
+    });
   }
 
   async mountTableAdapter() {
@@ -121,6 +128,7 @@ export class TopologyEdit3DViewController extends AuthoringController {
     const sidecar = this.hostElement?.querySelector('[data-role="topology-edit-sidecar"]');
     if (!sidecar) throw new Error('TopologyEditProductivityController: sidecar is unavailable.');
     sidecar.tabIndex = -1;
+    this.supportPositionRuntime.mount(this.hostElement);
     this.cleanShellRuntime.mount(this.hostElement);
   }
 
@@ -147,9 +155,11 @@ export class TopologyEdit3DViewController extends AuthoringController {
   refreshView(canonical) {
     super.refreshView(canonical);
     this.tableAdapter?.canonicalChanged(canonical);
+    this.supportPositionRuntime.canonicalChanged(canonical);
   }
 
   deactivate() {
+    this.supportPositionRuntime.destroy();
     this.tableAdapter?.destroy();
     this.tableAdapter = null;
     this.tableAdapterPromise = null;
@@ -198,6 +208,7 @@ export class TopologyEdit3DViewController extends AuthoringController {
   handleUnifiedSelectionChanged(payload) {
     super.handleUnifiedSelectionChanged(payload);
     this.tableAdapter?.selectionChanged(payload);
+    this.supportPositionRuntime.selectionChanged(payload);
     this.cleanShellRuntime.selectionChanged(payload);
   }
 

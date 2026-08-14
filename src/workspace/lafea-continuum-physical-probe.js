@@ -282,10 +282,13 @@ function pointKinematics(located, elementEvidence) {
   const { element, nodes, mapped } = located;
   if (element.elementType === 'T3') {
     if (!isMatrix(elementEvidence.bMatrix, 3, 6)) fail('LAFEA_G4_PROBE_T3_B_MATRIX_MISSING');
+    const jacobianDeterminant = (nodes[1].x - nodes[0].x) * (nodes[2].y - nodes[0].y)
+      - (nodes[1].y - nodes[0].y) * (nodes[2].x - nodes[0].x);
+    if (!(jacobianDeterminant > 0)) fail('LAFEA_G4_PROBE_ELEMENT_ORIENTATION_INVALID');
     return {
       B: elementEvidence.bMatrix,
       shapeFunctions: [1 - mapped.xi - mapped.eta, mapped.xi, mapped.eta],
-      jacobianDeterminant: 2 * element.canonicalArea,
+      jacobianDeterminant,
     };
   }
   if (element.elementType === 'T6') {

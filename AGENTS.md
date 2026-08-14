@@ -197,3 +197,39 @@ Preserve known-good commits, benchmarks, independent evidence, decisions, invari
 - Do not modify workflow files unless explicitly authorized.
 - Keep the PR handover-ready while waiting for review/merge.
 - **Never merge without explicit owner authorization.**
+
+## 12. AUTO MODE — autonomous phase execution
+
+The exact owner keyword `AUTO MODE` sets:
+
+```text
+EXECUTION_MODE = AUTO
+AUTO_STATE = RUNNING
+SCOPE_AUTHORITY = LOCKED_TO_APPROVED_MISSION
+PHASE_PROGRESSION = AUTO
+MERGE_AUTHORITY = OWNER_ONLY
+```
+
+AUTO MODE authorizes automatic phase progression through the approved plan. It does not authorize scope expansion, changing engineering authority/formulation, weakening validation, destructive operations, or merge.
+
+For each phase the agent shall record the objective, expected files, engineering rationale, prediction, invariants, and validation; implement only that phase; validate; update the work report/status/claims/Appendix A as needed; create a durable checkpoint; evaluate hard stops; then continue automatically when none applies.
+
+Routine phase completion is not a reason to ask `Would you like me to continue?`.
+
+### Advanced_Analysis AUTO hard stops
+
+In addition to the universal hard stops, AUTO must stop when continuing requires an unapproved change to solver formulation, stiffness/load assembly, recovery convention, coordinate/sign/end convention, governing code methodology, benchmark authority, engineering master-data authority, or publication authority.
+
+An independent analytical/reference/cross-solver contradiction may trigger bounded automatic diagnosis, but the agent must not alter multiple mechanics or weaken expected values/tolerances to force agreement.
+
+If repeated diagnosis does not narrow the discrepancy, or the agent can no longer state a concrete hypothesis, falsifier, next isolating experiment, and protected invariants, stop production mutation and set:
+
+```text
+PR_RECOVERY_STATE = TAKEOVER_REQUIRED
+TAKEOVER_AUTHORITY = READ_ONLY
+AUTO_STATE = TAKEOVER_REQUIRED
+```
+
+Refresh the work report and Appendix A for the next qualified agent.
+
+`AUTO MODE` never implies `AUTO MERGE`; merge remains owner-only unless separately and explicitly authorized.

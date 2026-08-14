@@ -1,4 +1,4 @@
-name: M047 Stage 2 L1 source land transport
+name: M047 Stage 2 L1 committed-source runtime transport
 
 on:
   push:
@@ -6,47 +6,54 @@ on:
       - agent/m047-stage2-binary-transfer-20260813
 
 permissions:
-  contents: write
+  contents: read
 
 jobs:
-  land-exact-prehashed-source:
+  package-exact-committed-source:
     runs-on: ubuntu-latest
-    timeout-minutes: 10
+    timeout-minutes: 15
     steps:
-      - name: Checkout exact production-candidate branch
+      - name: Checkout exact committed L1 production-candidate source
         uses: actions/checkout@v4
         with:
           repository: reallaksh19/Advanced_Analysis
-          ref: agent/issue-1083-l1-hyd-insulation-production
-          fetch-depth: 0
+          ref: 2d01d78037b73f4cd3bde909488a7a4a644d74dc
+          path: candidate
 
-      - name: Apply and land exact pre-hashed source patch only
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+          cache-dependency-path: candidate/package-lock.json
+
+      - name: Install production-only dependencies
+        working-directory: candidate
+        run: npm ci --omit=dev --ignore-scripts --no-audit --no-fund
+
+      - name: Package exact committed runtime bytes only
         shell: bash
         run: |
           set -euo pipefail
-          TARGET_HEAD='7582b76410a1ac162dd81e095b9e9bc9a64fef41'
-          SOURCE='src/core/fea-benchmarks/caesar-accdb-linear-solve.js'
-          PATCH='patches/lfea-m047-stage2-l1-hyd-insulation-production.patch'
-          BASE_BLOB='d28e3c5e893cea3ae44e116daf18fcdca0d22107'
-          PATCH_BLOB='7e8774f46870bd607e14d37604d59a11aec662f3'
-          CANDIDATE_BLOB='06e1645cfd8a957f5a5ef787c159c0d8d9094508'
+          test "$(git -C candidate rev-parse HEAD)" = '2d01d78037b73f4cd3bde909488a7a4a644d74dc'
+          test "$(git -C candidate hash-object src/core/fea-benchmarks/caesar-accdb-linear-solve.js)" = '06e1645cfd8a957f5a5ef787c159c0d8d9094508'
+          test "$(git -C candidate hash-object src/core/fea-benchmarks/caesar-accdb-friction-solve.js)" = '5b3ba1ce89f6ff7509bf8be82361993a32497ad2'
+          mkdir -p transport
+          tar --exclude=.git --exclude=node_modules -C candidate -czf transport/source.tgz .
+          tar -C candidate -czf transport/prod-node-modules.tgz node_modules
+          cat > transport/manifest.txt <<'EOF'
+          boundary=BYTE_TRANSPORT_ONLY_NO_ACCDB_SOLVE_NO_ACCURACY
+          commit=2d01d78037b73f4cd3bde909488a7a4a644d74dc
+          linear_blob=06e1645cfd8a957f5a5ef787c159c0d8d9094508
+          friction_blob=5b3ba1ce89f6ff7509bf8be82361993a32497ad2
+          node=22
+          EOF
+          sha256sum transport/source.tgz transport/prod-node-modules.tgz > transport/sha256sums.txt
 
-          test "$(git rev-parse HEAD)" = "$TARGET_HEAD"
-          test "$(git hash-object "$SOURCE")" = "$BASE_BLOB"
-          test "$(git hash-object "$PATCH")" = "$PATCH_BLOB"
-          git apply --check "$PATCH"
-          git apply "$PATCH"
-          test "$(git hash-object "$SOURCE")" = "$CANDIDATE_BLOB"
-          node --check "$SOURCE"
-          test "$(git diff --name-only)" = "$SOURCE"
-
-          git config user.name 'M047 source transport'
-          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
-          git add "$SOURCE"
-          git commit -m 'fix(lfea): honor hydrotest insulation configuration'
-          git push origin HEAD:refs/heads/agent/issue-1083-l1-hyd-insulation-production
-
-      - name: Assert no benchmark execution occurred
-        shell: bash
-        run: |
-          echo 'TRANSPORT_ONLY: source object landed; no ACCDB solve or accuracy computation executed in this workflow.'
+      - name: Upload exact committed runtime transport
+        uses: actions/upload-artifact@v4
+        with:
+          name: m047-stage2-l1-committed-source-runtime
+          path: transport/
+          if-no-files-found: error
+          retention-days: 1

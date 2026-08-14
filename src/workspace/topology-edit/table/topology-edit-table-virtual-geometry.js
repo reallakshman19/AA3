@@ -59,7 +59,9 @@ export function topologyEditTableResolvedEngineeringFields(row, canonicalTopolog
   if (wallThicknessMm !== null) result.wallThicknessMm = wallThicknessMm;
   if (outsideDiameterMm !== null && wallThicknessMm !== null
       && outsideDiameterMm > (2 * wallThicknessMm)) {
-    result.insideDiameterMm = outsideDiameterMm - (2 * wallThicknessMm);
+    result.insideDiameterMm = normalizeDerivedNumber(
+      outsideDiameterMm - (2 * wallThicknessMm),
+    );
   }
   const recordId = row.custody?.catalogue?.recordId
     ?? edge.catalogueRecordId
@@ -118,6 +120,10 @@ function recordById(rows, id) {
 function finiteOrNull(value) {
   const number = Number(value);
   return Number.isFinite(number) ? number : null;
+}
+function normalizeDerivedNumber(value) {
+  const number = Number(value);
+  return Number.isFinite(number) ? Number(number.toPrecision(15)) : null;
 }
 function finitePoint(value) {
   return value && [value.x, value.y, value.z].every(Number.isFinite);

@@ -17,6 +17,7 @@ const PROFILE_PATH = 'benchmarks/LFEA/CAESAR_ACCDB/bm4l-validation.profile.json'
 const EXPECTED_SHA = '64c05a50e9ed0452622ff5880335460486f24ac8e6adecc9a300b549c9aa82f8';
 const CASE_ID = 'L1';
 const DENSITY_SCALE = 1e6;
+const TEST_FLUID_DENSITY_KG_PER_M3 = 1000;
 const GOAL = 0.1;
 
 export async function runL1UniformWwExperiment(input) {
@@ -27,14 +28,17 @@ export async function runL1UniformWwExperiment(input) {
     expectedSha256: EXPECTED_SHA,
   });
   const basis = profile.linearSolve?.hydrotestBasis;
-  if (!basis || basis.authorityStatus !== 'RESOLVED' || !(Number(basis.testFluidDensityKgPerM3) > 0)) {
-    throw new TypeError('Resolved hydrotest fluid density is required.');
+  if (!basis || basis.authorityStatus !== 'RESOLVED') {
+    throw new TypeError('Resolved hydrotest basis is required.');
+  }
+  if (Number(basis.testFluidDensityKgPerM3) !== TEST_FLUID_DENSITY_KG_PER_M3) {
+    throw new TypeError(`L1 hydrotest fluid density must remain exactly ${TEST_FLUID_DENSITY_KG_PER_M3} kg/m^3.`);
   }
   if (basis.pressureField !== 'HYDRO_PRESSURE') throw new TypeError('L1 must remain bound to HYDRO_PRESSURE.');
 
   const changedSources = [];
   const mutated = structuredClone(raw);
-  const storedDensity = Number(basis.testFluidDensityKgPerM3) / DENSITY_SCALE;
+  const storedDensity = TEST_FLUID_DENSITY_KG_PER_M3 / DENSITY_SCALE;
   for (const row of mutated.tables.INPUT_BASIC_ELEMENT_DATA.rows) {
     if (!(Number(row.RIGID_PTR) > 0 || Number(row.REDUCER_PTR) > 0)) continue;
     const before = Number(row.FLUID_DENSITY);
@@ -44,13 +48,17 @@ export async function runL1UniformWwExperiment(input) {
       sourceElementId: String(row.ELEMENTID),
       kind: Number(row.RIGID_PTR) > 0 ? 'RIGID' : 'REDUCER',
       operatingDensityKgPerM3: before * DENSITY_SCALE,
-      hydrotestDensityKgPerM3: Number(basis.testFluidDensityKgPerM3),
+      hydrotestDensityKgPerM3: TEST_FLUID_DENSITY_KG_PER_M3,
     });
   }
   mutated.provider = `${String(raw.provider)}:L1_UNIFORM_WW_EXPERIMENT`;
   mutated.source = { ...mutated.source, path: `${String(raw.source.path)}#l1-uniform-ww-experiment` };
 
   const pkg = buildCaesarAccdbBenchmarkPackage({ rawExport: mutated, profile });
+  const l1 = pkg.cases.find((row) => row.caseId === CASE_ID);
+  if (!l1 || l1.caseClass !== 'HYD' || !String(l1.formula).includes('WW') || !String(l1.formula).includes('HP')) {
+    throw new TypeError('L1 must remain the governed HYD WW+HP primitive.');
+  }
   let actual = null;
   let failure = null;
   const started = Date.now();
@@ -75,7 +83,7 @@ export async function runL1UniformWwExperiment(input) {
   const summary = comparisons === null ? null : summarize(comparisons);
   const evidence = actual?.mechanics.cases[CASE_ID] ?? null;
   const base = {
-    schema: 'm047-bm4l-stage2-l1-uniform-ww-experiment/v1',
+    schema: 'm047-bm4l-stage2-l1-uniform-ww-experiment/v2',
     variant: 'L1_UNIFORM_WW_SPECIAL_COMPONENT_DENSITY_ONLY',
     benchmarkAuthority: false,
     sourceAccdbSha256: raw.source.sha256,
@@ -83,9 +91,15 @@ export async function runL1UniformWwExperiment(input) {
     caseId: CASE_ID,
     solverProfileId: CAESAR_FRICTION_SOLVER_PROFILE.profileId,
     productionR2NumericsUnchanged: true,
+    hydrotestInvariant: {
+      authorityStatus: basis.authorityStatus,
+      testFluidDensityKgPerM3: TEST_FLUID_DENSITY_KG_PER_M3,
+      pressureField: basis.pressureField,
+      status: 'PASS',
+    },
     changedMechanic: {
       scope: 'WW_CONTENTS_DENSITY_ON_RIGID_AND_REDUCER_ONLY',
-      hydrotestDensityKgPerM3: Number(basis.testFluidDensityKgPerM3),
+      hydrotestDensityKgPerM3: TEST_FLUID_DENSITY_KG_PER_M3,
       pressureField: basis.pressureField,
       changedSourceCount: changedSources.length,
       changedSources,
@@ -152,6 +166,9 @@ function vectors(rows) {
 function summarize(rows) {
   const normal = rows.filter((row) => row.normal.percentError !== null);
   const tangent = rows.filter((row) => row.tangential.vectorRelativeError !== null);
+  if (normal.length !== rows.length || tangent.length !== rows.length || rows.length === 0) {
+    throw new TypeError('L1 density discriminator requires complete normal and tangential metrics for every friction restraint.');
+  }
   return {
     goalRelative: GOAL,
     frictionRestraintCount: rows.length,

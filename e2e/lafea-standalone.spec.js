@@ -10,9 +10,13 @@ test('standalone LAFEA entry boots without combined, LFEA, demo, or generic benc
   await expect(appRoot).toHaveCount(1);
   await expect(workbench).toHaveCount(1);
   await expect(workbench.locator('.lafea-workbench__stages [data-stage-id]')).toHaveCount(6);
-  await expect(workbench).toContainText('Release: NOT QUALIFIED');
-  await expect(workbench.locator('[data-role="lafea-mock"]')).toBeHidden();
-  await expect(workbench.locator('[data-role="lafea-benchmark"]')).toBeHidden();
+  await expect(workbench.locator('.lafea-workbench__status')).toHaveText('TBA');
+  await expect(workbench.locator('[data-role="lafea-tba-stage"]')).toBeVisible();
+  await expect(workbench.locator('[data-role="lafea-tba-stage"]')).toContainText(
+    'no finite-element geometry, mesh, element controls, viewport, solver controls, contours, convergence, results, or simulated FE content',
+  );
+  await expect(workbench.locator('[data-role="lafea-mock"]')).toHaveCount(0);
+  await expect(workbench.locator('[data-role="lafea-benchmark"]')).toHaveCount(0);
   await expect(workbench.locator('[data-role="lafea-benchmark-host"]')).toHaveCount(0);
 
   const authority = await page.evaluate(() => ({

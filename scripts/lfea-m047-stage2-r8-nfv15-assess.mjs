@@ -63,6 +63,7 @@ export function assessR8Nfv15({ baseline, experiment }) {
   const nfvLedgerComplete = completeRestraintSet && comparable.every((row) =>
     row.currentNormalN !== null
     && row.capacityBasisNormalN !== null
+    && row.variationRelative !== null
     && row.governedRetainedCapacityN !== null
     && row.currentNormalDiagnosticCapacityN !== null
     && typeof row.refreshedFinalIteration === 'boolean');
@@ -199,7 +200,7 @@ function compareRow(restraintId, baseline, experiment) {
     retainedNormalEnteringN: nullableFinite(retained?.retainedNormalEnteringN),
     currentNormalN: finite(retained?.currentNormalN),
     capacityBasisNormalN: finite(retained?.capacityBasisNormalN),
-    variationRelative: nullableFinite(retained?.variationRelative),
+    variationRelative: finite(retained?.variationRelative),
     refreshedFinalIteration: typeof retained?.refreshed === 'boolean' ? retained.refreshed : null,
     governedRetainedCapacityN: finite(retained?.governedRetainedCapacityN),
     currentNormalDiagnosticCapacityN: finite(retained?.currentNormalDiagnosticCapacityN),
@@ -208,10 +209,24 @@ function compareRow(restraintId, baseline, experiment) {
 
 function mapRows(rows, label) {
   if (!Array.isArray(rows)) throw new TypeError(`${label} must be an array.`);
-  return new Map(rows.map((row) => [row.restraintId, row]));
+  const mapped = new Map();
+  for (const row of rows) {
+    const restraintId = row?.restraintId;
+    if (restraintId === null || restraintId === undefined || String(restraintId).trim() === '') {
+      throw new TypeError(`${label} contains a row without restraintId.`);
+    }
+    if (mapped.has(restraintId)) throw new TypeError(`${label} contains duplicate restraintId ${String(restraintId)}.`);
+    mapped.set(restraintId, row);
+  }
+  return mapped;
 }
 function relPercent(value) { const number = finite(value); return number === null ? null : Math.abs(number) / 100; }
-function finite(value) { const number = Number(value); return Number.isFinite(number) ? number : null; }
+function finite(value) {
+  if (value === null || value === undefined || typeof value === 'boolean') return null;
+  if (typeof value === 'string' && value.trim() === '') return null;
+  const number = Number(value);
+  return Number.isFinite(number) ? number : null;
+}
 function nullableFinite(value) { return value === null || value === undefined ? null : finite(value); }
 function max(values) { const clean = values.filter((value) => value !== null); return clean.length ? Math.max(...clean) : null; }
 function record(value, label) { if (!value || typeof value !== 'object') throw new TypeError(`${label} must be an object.`); }

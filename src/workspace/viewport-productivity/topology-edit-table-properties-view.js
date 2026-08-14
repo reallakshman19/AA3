@@ -8,7 +8,9 @@ import {
   deriveTopologyEditTableCellCapability,
 } from '../topology-edit/table/topology-edit-table-edit-capability.js';
 import {
+  isTopologyEditTableResolvedEngineeringKey,
   isTopologyEditTableVirtualGeometryKey,
+  topologyEditTableResolvedEngineeringFields,
   topologyEditTableVirtualGeometryFields,
 } from '../topology-edit/table/topology-edit-table-virtual-geometry.js';
 import {
@@ -56,12 +58,11 @@ export function renderTopologyEditTableAllProperties(row, runtime) {
     topology,
     runtime?.transientNodeDrafts ?? {},
   );
+  const resolved = topologyEditTableResolvedEngineeringFields(row, topology);
   const projected = fieldKeys.map((key) => ({
     label: descriptors.get(key)?.label ?? humanLabel(key),
-    value: isTopologyEditTableVirtualGeometryKey(key) ? virtual[key] : row.fields?.[key],
-    authority: isTopologyEditTableVirtualGeometryKey(key)
-      ? virtualAuthority(key, virtual[key])
-      : row.fieldAuthority?.[key] ?? 'UNRESOLVED',
+    value: displayFieldValue(row, key, virtual, resolved),
+    authority: displayFieldAuthority(row, key, virtual, resolved),
     capability: deriveTopologyEditTableCellCapability({
       row,
       columnKey: key,
@@ -112,6 +113,22 @@ function propertyTable(title, rows, showCapability = false) {
   </details>`;
 }
 
+function displayFieldValue(row, key, virtual, resolved) {
+  if (isTopologyEditTableVirtualGeometryKey(key)) return virtual[key];
+  if (isTopologyEditTableResolvedEngineeringKey(key)) return resolved[key];
+  return row.fields?.[key];
+}
+function displayFieldAuthority(row, key, virtual, resolved) {
+  if (isTopologyEditTableVirtualGeometryKey(key)) return virtualAuthority(key, virtual[key]);
+  if (isTopologyEditTableResolvedEngineeringKey(key)) return resolvedAuthority(key, resolved[key]);
+  return row.fieldAuthority?.[key] ?? 'UNRESOLVED';
+}
+function resolvedAuthority(key, value) {
+  if (value === null || value === undefined) return 'UNRESOLVED';
+  if (key === 'insideDiameterMm') return 'DERIVED_DISPLAY';
+  if (key === 'catalogueRecordId') return 'EXACT_CATALOGUE';
+  return 'CANONICAL';
+}
 function stagedIntentFor(runtime, row) {
   return (runtime?.intents ?? []).find((intent) => intent.target?.canonicalId === row.identity?.canonicalId) ?? null;
 }

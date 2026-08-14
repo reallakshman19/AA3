@@ -9,7 +9,6 @@ import { t6ShapeFunctions, q8ShapeFunctions, jacobianAt } from '../core/lafea-me
 import { canonicalLafeaAnalysisMesh } from './lafea-analysis-mesh-contract.js';
 import { validateLafeaAnalysisGeometry } from './lafea-analysis-geometry-contract.js';
 import { validateLafeaContinuumAnalysisDomain } from './lafea-continuum-analysis-domain.js';
-import { compileLafeaContinuumAttachmentTargets } from './lafea-continuum-solver-mapping.js';
 import { canonicalLafeaSha256 } from './lafea-canonical-sha256.js';
 import { buildLafeaMeshTopology } from './lafea-mesh-geometry-topology-adapter.js';
 import { qualifyLafeaHighOrderJacobiansV3 } from './lafea-high-order-jacobian-qualification-v3.js';
@@ -60,7 +59,13 @@ export function qualifyLafeaContinuumGeneratedMeshDomainV3(options) {
   const domainMeasureAbsTolerance = 1e-8 * Math.max(1, expectedDomainMeasure);
 
   const boundary = proveLineBoundaryConformance(mesh, geometry, boundaryDeviationTolerance);
-  compileLafeaContinuumAttachmentTargets({ domain, geometry, mesh });
+  const attachmentSupport = proveAttachmentSupport(
+    domain,
+    geometry,
+    mesh,
+    boundary.mappedSegmentIds,
+    boundaryDeviationTolerance,
+  );
 
   const coveredDomainMeasure = integratedMeshArea(mesh);
   const closure = coveredDomainMeasure - expectedDomainMeasure;
@@ -74,6 +79,7 @@ export function qualifyLafeaContinuumGeneratedMeshDomainV3(options) {
     boundaryTypes: ['LINE'],
     boundaryToleranceRelativeToGeometryScale: 1e-8,
     areaClosureRelativeToExpectedArea: 1e-8,
+    attachmentSupportPolicy: 'EXACT_GEOMETRY_FEATURE_TO_RETAINED_MESH_V1',
     globalTopologyQualificationHash: topologyEvidence.qualificationHash,
     highOrderMappingQualificationHash: highOrderEvidence.qualificationHash,
   });
@@ -109,7 +115,8 @@ export function qualifyLafeaContinuumGeneratedMeshDomainV3(options) {
     highOrderMappingEvidenceHash: highOrderEvidence.qualificationHash,
     boundaryPathCount: boundary.boundaryPathCount,
     mappedSegmentIds: boundary.mappedSegmentIds,
-    attachmentCount: domain.attachments.length,
+    mappedVertexIds: attachmentSupport.mappedVertexIds,
+    attachmentCount: attachmentSupport.attachmentCount,
     proofScope: 'PLANAR_SINGLE_REGION_STRAIGHT_BOUNDARY',
     engineeringAuthority: false,
   });
@@ -162,6 +169,47 @@ function proveLineBoundaryConformance(mesh, geometry, tolerance) {
     boundaryPathCount: paths.length,
     mappedSegmentIds: freeze([...rowsBySegment.keys()].sort()),
     maximumBoundaryDeviation,
+  });
+}
+
+/**
+ * Feature support proof used by the mesh gate itself. It deliberately avoids the
+ * solver compiler so the meshing qualification remains a pure leaf and cannot
+ * acquire authority from a downstream workbench/run module.
+ */
+function proveAttachmentSupport(domain, geometry, mesh, mappedSegmentIds, tolerance) {
+  const mappedSegments = new Set(mappedSegmentIds);
+  const vertexById = new Map(geometry.vertices.map((vertex) => [vertex.vertexId, vertex]));
+  const mappedVertices = new Set();
+
+  for (const attachment of domain.attachments) {
+    if (attachment.targetType === 'VERTEX') {
+      const vertex = vertexById.get(attachment.targetId);
+      if (!vertex) fail('LAFEA_CONTINUUM_DOMAIN_CONFORMANCE_V3_ATTACHMENT_VERTEX_UNKNOWN');
+      const mapped = mesh.nodes.some((node) => Math.abs(node.z) <= tolerance
+        && Math.hypot(node.x - vertex.x, node.y - vertex.y) <= tolerance);
+      if (!mapped) fail('LAFEA_CONTINUUM_DOMAIN_CONFORMANCE_V3_ATTACHMENT_VERTEX_UNMAPPED');
+      mappedVertices.add(attachment.targetId);
+      continue;
+    }
+    if (attachment.targetType === 'SEGMENT') {
+      if (!mappedSegments.has(attachment.targetId)) {
+        fail('LAFEA_CONTINUUM_DOMAIN_CONFORMANCE_V3_ATTACHMENT_SEGMENT_UNMAPPED');
+      }
+      continue;
+    }
+    if (attachment.targetType === 'REGION') {
+      if (attachment.targetId !== domain.region.regionId) {
+        fail('LAFEA_CONTINUUM_DOMAIN_CONFORMANCE_V3_ATTACHMENT_REGION_UNMAPPED');
+      }
+      continue;
+    }
+    fail('LAFEA_CONTINUUM_DOMAIN_CONFORMANCE_V3_ATTACHMENT_TARGET_TYPE_INVALID');
+  }
+
+  return freeze({
+    attachmentCount: domain.attachments.length,
+    mappedVertexIds: freeze([...mappedVertices].sort()),
   });
 }
 

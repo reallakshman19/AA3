@@ -106,7 +106,7 @@ export class TopologyEditSupportPositionRuntime {
       : '[data-support-position-slider]';
     const other = this.element?.querySelector(otherSelector);
     if (other) other.value = station;
-    this.prepareNumericDraft(station, false);
+    this.prepareNumericDraft(station, true);
   }
 
   handleClick(event) {

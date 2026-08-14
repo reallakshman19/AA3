@@ -38,10 +38,6 @@ import {
   LAFEA_MESH_WORKSPACE_COMMAND_V3_SCHEMA,
   LAFEA_MESH_WORKSPACE_STATE_V3_SCHEMA,
 } from './lafea-mesh-workspace-v3.js';
-import {
-  lafeaCoreMeshProducerCapability,
-  lafeaCoreMeshProducerQualification,
-} from './lafea-mesh-producer-binding.js';
 import { estimateLafeaMeshDofs } from './lafea-mesh-dof-policy.js';
 import { buildLafeaMeshTopology } from './lafea-mesh-geometry-topology-adapter.js';
 
@@ -65,6 +61,7 @@ export function buildLafeaContinuumMeshCandidateV3({ stage, meshProfile, produce
   if (produced.output.meshProfileHash !== meshProfile?.semanticHash) {
     fail('LAFEA_CONTINUUM_MESH_V3_PROFILE_PARENT_INVALID');
   }
+  requireProducerParents(produced);
 
   const adapterTopology = buildLafeaMeshTopology(geometry);
   const dependency = dependencyProjection(stage, domain, geometryEvidence, meshProfile, adapterTopology);
@@ -89,18 +86,10 @@ export function buildLafeaContinuumMeshCandidateV3({ stage, meshProfile, produce
   }
 
   const identity = createLafeaAnalysisMeshIdentityV3(produced.output.mesh);
-  const producerCapability = lafeaCoreMeshProducerCapability();
-  const producerQualification = lafeaCoreMeshProducerQualification();
-  requireProducerParents(produced, producerCapability, producerQualification);
-
   const topology = qualifyLafeaMeshTopologyV3(produced.output.mesh);
   const highOrder = qualifyLafeaHighOrderJacobiansV3(produced.output.mesh);
   const localQuality = localQualityGate(produced.evidence, identity.meshContentHash);
-  const resources = structuralResourceGate(
-    produced.output.mesh,
-    producerCapability,
-    producerQualification,
-  );
+  const resources = structuralResourceGate(produced.output.mesh, produced);
   const domainGate = domainConformanceGate({
     domain,
     geometry,
@@ -151,7 +140,7 @@ export function buildLafeaContinuumMeshCandidateV3({ stage, meshProfile, produce
     dependency,
     adapterCapability,
     adapterPayload,
-    producerQualification,
+    produced.output.qualificationHash,
     evidenceV3,
     validation,
     identity,
@@ -260,23 +249,30 @@ function localQualityGate(v2Evidence, meshContentHash) {
   });
 }
 
-function structuralResourceGate(mesh, capability, qualification) {
+/**
+ * This gate binds only dimensions the qualified producer actually records on the
+ * generated artifact. Peak memory/time are not invented here and remain explicitly
+ * outside this first v3 resource oracle.
+ */
+function structuralResourceGate(mesh, produced) {
+  const intent = produced.planned?.intent;
+  if (!intent) fail('LAFEA_CONTINUUM_MESH_V3_RESOURCE_INTENT_REQUIRED');
   const observedDofs = estimateLafeaMeshDofs('LAFEA.3', mesh.nodes.length);
   const violations = freeze([
-    limit('NODES', mesh.nodes.length, qualification.maximumNodes),
-    limit('ELEMENTS', mesh.elements.length, qualification.maximumElements),
-    limit('DOFS', observedDofs, qualification.maximumEstimatedDofs),
+    limit('NODES', mesh.nodes.length, intent.maximumNodes),
+    limit('ELEMENTS', mesh.elements.length, intent.maximumElements),
+    limit('DOFS', observedDofs, intent.maximumEstimatedDofs),
   ].filter((row) => row.exceeded));
   const core = freeze({
     schema: 'lafea-continuum-runtime-structural-resource-gate/v3',
-    producerCapabilityHash: capability.capabilityHash,
-    producerQualificationHash: qualification.qualificationHash,
+    producerCapabilityHash: produced.output.capabilityHash,
+    producerQualificationHash: produced.output.qualificationHash,
     observedNodes: mesh.nodes.length,
     observedElements: mesh.elements.length,
     observedDofs,
-    maximumNodes: qualification.maximumNodes,
-    maximumElements: qualification.maximumElements,
-    maximumDofs: qualification.maximumEstimatedDofs,
+    maximumNodes: intent.maximumNodes,
+    maximumElements: intent.maximumElements,
+    maximumDofs: intent.maximumEstimatedDofs,
     measuredDimensions: freeze(['NODES', 'ELEMENTS', 'DOFS']),
     explicitlyUnmeasuredDimensions: freeze(['PEAK_RESIDENT_BYTES', 'ELAPSED_MILLISECONDS']),
     violations,
@@ -323,7 +319,7 @@ function workspaceScaffold(
   dependency,
   adapterCapability,
   adapterPayload,
-  producerQualification,
+  producerQualificationHash,
   evidence,
   validation,
   identity,
@@ -334,7 +330,7 @@ function workspaceScaffold(
     adapterId: adapterCapability.adapterId,
     adapterRevision: adapterCapability.adapterRevision,
     adapterCapabilityHash: adapterCapability.capabilityHash,
-    qualificationHash: producerQualification.qualificationHash,
+    qualificationHash: producerQualificationHash,
     allowedCommands: ['GENERATE', 'RETAIN', 'INSPECT', 'EXPORT'],
   });
   const initialState = createLafeaMeshWorkspaceStateV3({
@@ -347,7 +343,7 @@ function workspaceScaffold(
     retainedEvidenceHash: null,
     retainedAuthorityReceiptHash: null,
     capabilityHash: capability.capabilityHash,
-    qualificationHash: producerQualification.qualificationHash,
+    qualificationHash: producerQualificationHash,
     adapterId: adapterCapability.adapterId,
     adapterRevision: adapterCapability.adapterRevision,
     concurrencyVersion: 0,
@@ -458,15 +454,28 @@ function workspaceScaffold(
   });
 }
 
-function requireProducerParents(produced, capability, qualification) {
-  if (produced.output.capabilityHash !== capability.capabilityHash
-    || produced.output.qualificationHash !== qualification.qualificationHash
-    || produced.planned.plan.capabilityHash !== capability.capabilityHash
-    || produced.planned.plan.qualificationHash !== qualification.qualificationHash) {
+function requireProducerParents(produced) {
+  const plan = produced?.planned?.plan;
+  const intent = produced?.planned?.intent;
+  const output = produced?.output;
+  if (!plan || !intent || !output) fail('LAFEA_CONTINUUM_MESH_V3_PRODUCER_PARENT_INVALID');
+  if (output.capabilityHash !== plan.capabilityHash
+    || output.capabilityHash !== produced.planned.capabilityHash
+    || output.qualificationHash !== plan.qualificationHash
+    || output.qualificationHash !== produced.planned.qualificationHash
+    || output.producerId !== plan.producerId
+    || output.producerRevision !== plan.producerRevision) {
     fail('LAFEA_CONTINUUM_MESH_V3_PRODUCER_PARENT_INVALID');
   }
-  if (produced.output.planHash !== produced.planned.plan.planHash) {
+  if (output.planHash !== plan.planHash || output.intentHash !== intent.semanticHash) {
     fail('LAFEA_CONTINUUM_MESH_V3_PLAN_PARENT_INVALID');
+  }
+  if (output.sourceHash !== intent.sourceHash
+    || output.analysisDomainHash !== intent.analysisDomainHash
+    || output.analysisGeometryHash !== intent.analysisGeometryHash
+    || output.meshProfileHash !== intent.meshProfileHash
+    || output.elementFamily !== intent.elementFamily) {
+    fail('LAFEA_CONTINUUM_MESH_V3_INTENT_PARENT_INVALID');
   }
 }
 function requireStage(stage) {

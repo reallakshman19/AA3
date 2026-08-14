@@ -64,12 +64,12 @@ export function buildLafeaEngineeringOverview(stageValue, registryEntryValue) {
     },
     qualification: registry.stageId === 'LAFEA.3' ? {
       program: 'B01',
-      baseRuns: '54 / 54 PASS',
-      metamorphic: 'PASS',
-      failClosed: 'PASS',
-      exactHead: 'PASS',
+      baseRuns: 'NOT EMBEDDED IN WORKBENCH STATE',
+      metamorphic: 'EXTERNAL CI EVIDENCE REQUIRED',
+      failClosed: 'EXTERNAL CI EVIDENCE REQUIRED',
+      exactHead: 'EXTERNAL EXACT-HEAD CI REQUIRED',
       releaseAuthority: false,
-      scope: 'Registered linear 2D continuum benchmark behavior only',
+      scope: 'Workbench runtime state does not manufacture benchmark or exact-head qualification claims.',
     } : null,
   });
 }
@@ -236,7 +236,7 @@ function summaryCard(root, title, status, rows) {
 
 function qualificationBar(root, value) {
   const details = element(root, 'details', 'lafea-engineering-overview__qualification');
-  const summary = element(root, 'summary', null, `${value.program} continuum qualification — ${value.baseRuns}`);
+  const summary = element(root, 'summary', null, `${value.program} qualification evidence — external`);
   const grid = element(root, 'div', 'lafea-engineering-overview__qualification-grid');
   [
     ['Base benchmark', value.baseRuns],
@@ -244,7 +244,7 @@ function qualificationBar(root, value) {
     ['Fail-closed', value.failClosed],
     ['Exact-head integrated', value.exactHead],
     ['Release authority', value.releaseAuthority ? 'GRANTED' : 'NOT GRANTED'],
-    ['Qualified scope', value.scope],
+    ['Runtime scope', value.scope],
   ].forEach(([label, item]) => {
     const row = element(root, 'div');
     row.append(element(root, 'strong', null, label), element(root, 'span', null, String(item)));

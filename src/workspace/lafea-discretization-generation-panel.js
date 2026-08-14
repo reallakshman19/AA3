@@ -168,10 +168,7 @@ function profileBindingControls(doc, generation, handlers) {
     };
     profileEnvelope.semanticHash = semanticHash(profileEnvelope);
     handlers.onBindMeshProfile?.(profileEnvelope);
-    // Trigger generation after binding
-    setTimeout(() => {
-      handlers.onGenerateAnalysisMesh?.();
-    }, 50);
+    handlers.onGenerateMesh?.({});
   });
   bind.dataset.role = 'lafea-profile-bind';
   bind.className = 'lafea-button lafea-button--primary';

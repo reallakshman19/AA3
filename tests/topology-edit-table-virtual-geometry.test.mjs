@@ -1,7 +1,9 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {
+  isTopologyEditTableResolvedEngineeringKey,
   isTopologyEditTableVirtualGeometryKey,
+  topologyEditTableResolvedEngineeringFields,
   topologyEditTableVirtualGeometryFields,
 } from '../src/workspace/topology-edit/table/topology-edit-table-virtual-geometry.js';
 
@@ -47,8 +49,29 @@ test('ambiguous endpoint binding fails closed to unresolved presentation values'
   assert.equal(fields.toNodeId, 'node:b');
 });
 
-test('virtual geometry keys are explicit and do not claim unrelated fields', () => {
+test('resolved specification fields come from governed edge geometry and exact catalogue custody', () => {
+  const target = row();
+  target.custody = { catalogue: { recordId: 'PIPE-DN100-S40' } };
+  const fields = topologyEditTableResolvedEngineeringFields(target, {
+    ...topology,
+    edges: [{
+      id: 'edge:pipe',
+      outsideDiameterMm: 114.3,
+      wallThicknessMm: 6.02,
+    }],
+  });
+  assert.equal(fields.outsideDiameterMm, 114.3);
+  assert.equal(fields.wallThicknessMm, 6.02);
+  assert.equal(fields.insideDiameterMm, 102.26);
+  assert.equal(fields.catalogueRecordId, 'PIPE-DN100-S40');
+  assert.equal(Object.isFrozen(fields), true);
+});
+
+test('virtual and resolved engineering keys remain explicit', () => {
   assert.equal(isTopologyEditTableVirtualGeometryKey('fromX'), true);
   assert.equal(isTopologyEditTableVirtualGeometryKey('deltaZ'), true);
-  assert.equal(isTopologyEditTableVirtualGeometryKey('lengthMm'), false);
+  assert.equal(isTopologyEditTableVirtualGeometryKey('outsideDiameterMm'), false);
+  assert.equal(isTopologyEditTableResolvedEngineeringKey('outsideDiameterMm'), true);
+  assert.equal(isTopologyEditTableResolvedEngineeringKey('supportX'), true);
+  assert.equal(isTopologyEditTableResolvedEngineeringKey('lengthMm'), false);
 });

@@ -66,6 +66,7 @@ assert.equal(pass.summary.normalWithinGoalDelta, 0);
 assert.equal(pass.summary.regimeComparison, 'NOT_GOVERNED_FROM_FINAL_NORMAL_UNDER_NFV15');
 assert.equal(pass.gates.completeMetricSet, true);
 assert.equal(pass.gates.nfvLedgerComplete, true);
+assert.equal(pass.gates.requestedRepeatDeterminism, true);
 
 assert.throws(
   () => assessR8Nfv15({
@@ -179,6 +180,36 @@ assert.throws(
   /duplicate restraintId R1/,
 );
 
+const repeatedPass = assessR8Nfv15({
+  baseline,
+  experiment: {
+    ...candidate,
+    determinism: { status: 'PASS', requestedRuns: 2, completedConvergedRuns: 2 },
+  },
+});
+assert.equal(repeatedPass.gates.requestedRepeatDeterminism, true);
+assert.equal(repeatedPass.nomination, 'R8_NFV15_DIRECTIONALLY_NOMINATED_REQUIRES_NEXT_GOVERNED_GATE');
+
+const repeatedMismatch = assessR8Nfv15({
+  baseline,
+  experiment: {
+    ...candidate,
+    determinism: { status: 'FAIL', requestedRuns: 2, completedConvergedRuns: 2 },
+  },
+});
+assert.equal(repeatedMismatch.gates.requestedRepeatDeterminism, false);
+assert.equal(repeatedMismatch.nomination, 'REJECT_R8_MEASUREMENT_PHYSICS_OR_CUSTODY_GATE_FAILED');
+
+const repeatedIncomplete = assessR8Nfv15({
+  baseline,
+  experiment: {
+    ...candidate,
+    determinism: { status: 'NOT_RUN', requestedRuns: 2, completedConvergedRuns: 1 },
+  },
+});
+assert.equal(repeatedIncomplete.gates.requestedRepeatDeterminism, false);
+assert.equal(repeatedIncomplete.nomination, 'REJECT_R8_MEASUREMENT_PHYSICS_OR_CUSTODY_GATE_FAILED');
+
 const l7 = assessR8Nfv15({
   baseline: { ...baseline, caseId: 'L7' },
   experiment: { ...candidate, caseId: 'L7' },
@@ -186,7 +217,7 @@ const l7 = assessR8Nfv15({
 assert.equal(l7.nextGate, 'RECONSTRUCT_R8_L15_EXACTLY_AS_L7_MINUS_L13');
 
 process.stdout.write(`${JSON.stringify({
-  schema: 'm047-r8-nfv15-assessor-contract/v4',
+  schema: 'm047-r8-nfv15-assessor-contract/v5',
   status: 'PASS',
   checks: [
     'real_artifact_shape_positive_nomination',
@@ -198,6 +229,8 @@ process.stdout.write(`${JSON.stringify({
     'incomplete_nfv_ledger_fails_closed',
     'missing_nfv_variation_fails_closed',
     'duplicate_restraint_ids_fail_closed',
+    'single_run_discriminator_does_not_require_determinism',
+    'requested_repeat_determinism_passes_only_on_complete_identical_repeats',
     'governed_L13_to_L7_to_L15_sequence',
   ],
 }, null, 2)}\n`);

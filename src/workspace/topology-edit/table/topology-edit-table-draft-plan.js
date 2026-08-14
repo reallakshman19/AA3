@@ -1,5 +1,8 @@
 import { deepFreeze } from '../../../core/shared-piping-model/index.js';
-import { createTopologyEditTableBatch } from './topology-edit-table-batch.js';
+import {
+  createTopologyEditTableBatch,
+  topologyEditTableBatchIntentKey,
+} from './topology-edit-table-batch.js';
 import { planTopologyEditTableBatch } from './topology-edit-table-batch-planner.js';
 import { assertTopologyEditTableIntent } from './topology-edit-table-intent.js';
 
@@ -33,9 +36,5 @@ export function planTopologyEditTableDraft({
 }
 
 export function topologyEditTableDraftIntentKey(intentInput) {
-  const intent = assertTopologyEditTableIntent(intentInput);
-  const subtarget = intent.intentKind === 'NODE_POSITION'
-    ? String(intent.requestedValue?.endpoint ?? '').trim().toUpperCase()
-    : '';
-  return `${intent.target.canonicalId}\u0000${intent.intentKind}\u0000${subtarget}`;
+  return topologyEditTableBatchIntentKey(assertTopologyEditTableIntent(intentInput));
 }

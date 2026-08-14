@@ -6,10 +6,10 @@
  */
 import { validateMeshPackage } from '../core/element-fea/index.js';
 import { semanticHash } from '../core/shared-piping-model/canonical-json.js';
-import { FIELD_IDS, REDUCTIONS, selectElementField, selectProjectedField } from './lfea-field-adapter.js';
+import { FIELD_IDS, REDUCTIONS, selectElementField, selectProjectedField } from './mesh-field-adapter.js';
 import {
   GEOMETRY_STATES, createGeometryOnlyDescriptor, createPlotDescriptor,
-} from './lfea-plot-descriptor.js';
+} from './mesh-plot-descriptor.js';
 import {
   QUALITY_METRICS,
   selectQualityField,
@@ -91,7 +91,7 @@ export function lfeaPreviewPackage(packageInput, nodeDraft) {
  * the result mode: a stress plot is drawn on undeformed source coordinates
  * unless the caller asks for deformation and supplies a scale.
  *
- * Field values are SELECTED from kernel evidence through lfea-field-adapter.
+ * Field values are SELECTED from kernel evidence through mesh-field-adapter.
  * No physical quantity is computed in this module.
  *
  * @param {unknown} packageInput Current mesh package.

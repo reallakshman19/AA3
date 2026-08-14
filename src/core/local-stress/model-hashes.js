@@ -1,4 +1,4 @@
-import { semanticHash } from '../shared-piping-model/index.js';
+import { semanticHash } from '../shared-primitives/canonical-json.js';
 import { TRANSFORMATION_EVIDENCE_SCHEMA } from './constants.js';
 export function sourceSemanticHash(sourceEvidence) { return semanticHash(sourceEvidence); }
 export function transformationEvidence(model) {

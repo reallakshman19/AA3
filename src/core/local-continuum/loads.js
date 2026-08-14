@@ -1,4 +1,4 @@
-import { semanticHash } from '../shared-piping-model/index.js';
+import { semanticHash } from '../shared-primitives/canonical-json.js';
 import { FORMULA_IDS } from './constants.js';
 import { edgeKey } from './assembly.js';
 import { consistentBodyForceVector } from './body-force-loads.js';

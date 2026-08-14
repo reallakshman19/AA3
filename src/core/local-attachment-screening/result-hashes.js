@@ -1,4 +1,4 @@
-import { semanticHash } from '../shared-piping-model/index.js';
+import { semanticHash } from '../shared-primitives/canonical-json.js';
 export function attachResultHashes(base,request) {
   const result={...base};
   result.semanticHashes=reconstructScreeningResultHashes(result,request);

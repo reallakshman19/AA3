@@ -4,7 +4,7 @@
  * Raw stress uses retained solver evidence. Projected stress is colored only as
  * non-authoritative review data and is always labelled with its authority.
  */
-import { createLockedColourScale } from './lfea-plot-descriptor.js';
+import { createLockedColourScale } from './mesh-plot-descriptor.js';
 import { bindLfeaNodeEditor } from './lfea-svg-node-editor.js';
 import {
   createLfeaViewport,

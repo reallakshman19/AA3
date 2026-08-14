@@ -1,4 +1,4 @@
-import { isPlainRecord } from '../shared-piping-model/index.js';
+import { isPlainRecord } from '../shared-primitives/immutable.js';
 import { modelError } from './errors.js';
 import { finiteNumber } from './numeric.js';
 import { vector3 } from './vector-math.js';

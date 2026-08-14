@@ -1,4 +1,5 @@
-import { deepFreeze, semanticHash } from '../shared-piping-model/index.js';
+import { deepFreeze } from '../shared-primitives/immutable.js';
+import { semanticHash } from '../shared-primitives/canonical-json.js';
 import { BASE_LIMITATIONS, MODEL_SCHEMA } from './constants.js';
 import { modelError } from './errors.js';
 import {

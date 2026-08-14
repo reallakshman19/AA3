@@ -55,7 +55,7 @@ const PROJECTED_FIELDS = Object.freeze({
  * @returns {Readonly<Record<string, unknown>>} Immutable field descriptor.
  */
 export function selectElementField(result, fieldId, unit, ipReduction = REDUCTIONS.Q4_MAX_OVER_IP) {
-  if (!result) throw new TypeError('lfea-field-adapter requires a qualified continuum result.');
+  if (!result) throw new TypeError('mesh-field-adapter requires a qualified continuum result.');
   if (!Object.values(FIELD_IDS).includes(fieldId)) throw new TypeError(`Unsupported field identity: ${fieldId}.`);
   if (fieldId in PROJECTED_FIELDS) {
     throw new TypeError('Projected fields must be selected with selectProjectedField().');

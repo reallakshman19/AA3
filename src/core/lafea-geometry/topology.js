@@ -1,7 +1,7 @@
 import { LafeaGeometryError } from './errors.js';
 import { canonicalCurve, canonicalVertex, curveGreenContribution } from './vertex-curve.js';
 import { exactKeys, nonEmptyString, stringArray } from '../shared-analysis-contract/validation.js';
-import { semanticHash } from '../shared-piping-model/canonical-json.js';
+import { semanticHash } from '../shared-primitives/canonical-json.js';
 
 /**
  * Explicit planar topology (spec §10.1): vertices, analytic curves, closed

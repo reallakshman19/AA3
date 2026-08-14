@@ -20,6 +20,8 @@ const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const SHARED = path.join(ROOT, 'src/core/shared-primitives');
 const EXPECTED_FILES = [
   'canonical-json-sha256.js',
+  'canonical-json.js',
+  'immutable.js',
   'index.js',
   'units.js',
 ];

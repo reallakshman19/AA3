@@ -2,7 +2,7 @@ import { LafeaProfileContractError } from './errors.js';
 import { FIELD_VALIDATORS } from './field-schemas.js';
 import { PROFILE_ENVELOPE_FIELDS, PROFILE_KINDS, PROFILE_SCHEMA_IDS } from './constants.js';
 import { exactKeys, member, nonEmptyString } from '../shared-analysis-contract/validation.js';
-import { semanticHash } from '../shared-piping-model/canonical-json.js';
+import { semanticHash } from '../shared-primitives/canonical-json.js';
 
 /**
  * Canonicalize and qualify a `<kind>Profile` record against spec §15.

@@ -11,8 +11,8 @@ const WORKSPACE = path.join(ROOT, 'src', 'workspace');
 // explicit recomputation prohibitions retained in this check.
 const FEA_UI_PATTERN = /(?:^|[\\/])(?:lfea|lafea|fea-benchmark)[^\\/]*\.js$/u;
 const NUMERIC_AUTHORITY_FILES = new Set([
-  'lfea-field-adapter.js',
-  'lfea-plot-descriptor.js',
+  'mesh-field-adapter.js',
+  'mesh-plot-descriptor.js',
   'lfea-preflight.js',
 ]);
 

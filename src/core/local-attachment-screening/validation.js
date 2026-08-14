@@ -1,4 +1,4 @@
-import { isPlainRecord } from '../shared-piping-model/index.js';
+import { isPlainRecord } from '../shared-primitives/immutable.js';
 import { requestError } from './errors.js';
 export function exactRecord(value,keys,path){if(!isPlainRecord(value))throw requestError('RECORD_REQUIRED',path,`${path} must be a plain record.`);const actual=Object.keys(value).sort(),expected=[...keys].sort();if(JSON.stringify(actual)!==JSON.stringify(expected))throw requestError('EXACT_KEYS_REQUIRED',path,`${path} keys must be ${expected.join(', ')}.`);return value;}
 export function nonEmptyString(value,path){if(typeof value!=='string'||!value.trim())throw requestError('STRING_REQUIRED',path,`${path} must be a non-empty string.`);return value.trim();}

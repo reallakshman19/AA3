@@ -20,12 +20,16 @@ import {
 
 export function composeLinearPipingAnalysisResult({ request, execution, recovery }) {
   const accepted = validateLinearPipingAnalysisRequest(request);
-  const acceptedExecution = requireSolverExecution(execution);
-  const acceptedRecovery = requireResultRecovery(recovery);
-  const publicExecution = Object.fromEntries(
-    EXECUTION_RECORD_KEYS.map((key) => [key, acceptedExecution[key]]),
+  // `execution` is the solver's full in-process return value, which carries
+  // runtime-only fields (e.g. `factorizationHandle`) alongside the sealed
+  // contract keys. Project to the sealed shape before validating it, rather
+  // than validating the superset and rejecting a caller that (correctly)
+  // passed through the solver's actual return value.
+  const publicExecution = requireSolverExecution(
+    Object.fromEntries(EXECUTION_RECORD_KEYS.map((key) => [key, execution[key]])),
   );
-  const status = acceptedExecution.status === 'CONDITIONAL'
+  const acceptedRecovery = requireResultRecovery(recovery);
+  const status = publicExecution.status === 'CONDITIONAL'
     || accepted.pipingComponents.some((entry) => entry.acceptanceState === 'CONDITIONAL')
     ? 'CONDITIONAL'
     : 'QUALIFIED';

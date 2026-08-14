@@ -1,4 +1,4 @@
-import { deepFreeze } from '../shared-piping-model/index.js';
+import { deepFreeze } from '../shared-primitives/immutable.js';
 import {
   BASE_LIMITATIONS, ENGINEERING_LEVEL, QUALIFICATION_STATES, RESULT_SCHEMA,
 } from './constants.js';

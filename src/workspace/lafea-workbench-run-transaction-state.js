@@ -40,6 +40,12 @@ export function createLafeaWorkbenchRunTransactionState(stageIds) {
   return Object.freeze({ begin, assertCurrent, complete, invalidate, fields });
 }
 
+export function createLafeaRunningExecution(tx) {
+  return Object.freeze({ schema: 'lafea-domain-first-workbench-execution/v1', stageId: tx.stageId,
+    status: 'RUNNING', route: tx.executionRoute, ...tx.parents, compiledExecutionHash: null,
+    runTransaction: tx, releaseQualified: false });
+}
+
 function finish(state, tx, status, executionHash, runtimeDiagnosticsHash, reasonCode) {
   state.done += 1;
   const body = { schema: LAFEA_RUN_TRANSACTION_RECEIPT_SCHEMA, stageId: tx.stageId, transactionId: tx.transactionId, transactionHash: tx.transactionHash, startSequence: tx.startSequence, completionSequence: state.done, status, parents: tx.parents, solverConfigHash: tx.solverConfigHash, preflightHash: tx.preflightHash, executionRoute: tx.executionRoute, executionHash, runtimeDiagnosticsHash, reasonCode, releaseQualified: false };

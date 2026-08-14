@@ -1,9 +1,9 @@
 /**
- * Analytical-only presentation for the retained LAFEA.2 screening calculator.
+ * Analytical-only presentation for the retained LAFEA.1 foundation calculator.
  *
  * This view intentionally has no geometry viewport, FE mesh/discretization,
  * element controls, contour controls, or convergence UI. The underlying
- * LAFEA.2 analytical source/calculation/evidence contracts remain unchanged;
+ * LAFEA.1 analytical source/calculation/evidence contracts remain unchanged;
  * only their user-facing placement is separated from the FEA-stage workbench.
  */
 import { card, element } from './lafea-workbench-dom.js';
@@ -16,7 +16,7 @@ import { lafeaWorkbenchReasonLabels } from './lafea-workbench-reason-labels.js';
 export function renderLafeaAnalyticalCalcContent(root, state, stage, options) {
   const shell = element(root, 'div', 'lafea-analytical-calc');
   shell.dataset.role = 'lafea-analytical-calc';
-  shell.dataset.backingStageId = 'LAFEA.2';
+  shell.dataset.backingStageId = 'LAFEA.1';
 
   const scopeCard = card(root, 'Analytical calculation scope');
   scopeCard.section.dataset.guidedTarget = 'analytical-scope';
@@ -25,7 +25,7 @@ export function renderLafeaAnalyticalCalcContent(root, state, stage, options) {
       root,
       'p',
       'lafea-workbench__section-intro',
-      'Nominal far-field pipe-section screening is calculated by the retained analytical LAFEA.2 kernel. This tab is not a finite-element stage and does not create or display an FE mesh.',
+      'Attachment load transfer and elastic pressure baseline are calculated by the retained analytical LAFEA.1 kernel. This tab is not a finite-element stage and does not create or display an FE mesh.',
     ),
     analyticalScopeFacts(root, options.registryEntry),
   );
@@ -36,11 +36,11 @@ export function renderLafeaAnalyticalCalcContent(root, state, stage, options) {
     root,
     'p',
     'lafea-workbench__section-intro',
-    'Edit the governed screening cases, evaluation locations, units, material/section inputs and load references used by the analytical calculation. No display-only geometry is used as calculation input.',
+    'Edit the governed materials, pressure definitions, load-reference points, load cases and units used by the analytical foundation calculation. Display-only source points are not an FE mesh and carry no local attachment-stress authority.',
   ));
   sourceCard.body.append(renderDocumentTableEditor(
     sourceCard.body,
-    'LAFEA.2',
+    'LAFEA.1',
     stage.document,
     {
       onSetScalar: options.handlers.onSetScalar,
@@ -67,7 +67,7 @@ export function renderLafeaAnalyticalCalcContent(root, state, stage, options) {
   resultsCard.section.dataset.guidedTarget = 'results';
   resultsCard.body.append(renderLafeaEvidence(
     root,
-    'LAFEA.2',
+    'LAFEA.1',
     stage.document,
     state,
     stage.execution,
@@ -77,7 +77,7 @@ export function renderLafeaAnalyticalCalcContent(root, state, stage, options) {
   lineageCard.section.dataset.guidedTarget = 'lineage';
   lineageCard.body.append(renderLafeaLifecyclePanel(
     lineageCard.body,
-    'LAFEA.2',
+    'LAFEA.1',
     stage,
   ));
 
@@ -97,7 +97,7 @@ export function renderLafeaAnalyticalCalcContent(root, state, stage, options) {
         root,
         'p',
         null,
-        'Verification output remains evidence for the analytical screening route only. It does not establish finite-element, local-discontinuity, code, or release authority.',
+        'Verification output remains evidence for the analytical foundation route only. It does not establish finite-element, local attachment-stress, shell, weld, code, or release authority.',
       ),
       options.benchmarkHost,
     );
@@ -122,7 +122,7 @@ function analyticalScopeFacts(root, registryEntry) {
     ['Authority', registryEntry?.authority ?? 'Not declared'],
     ['FE mesh', 'NOT APPLICABLE'],
     ['FE viewport', 'NOT APPLICABLE'],
-    ['Local discontinuity stress', 'NOT AUTHORIZED'],
+    ['Local attachment stress', 'NOT AUTHORIZED'],
   ];
   rows.forEach(([label, value]) => {
     list.append(

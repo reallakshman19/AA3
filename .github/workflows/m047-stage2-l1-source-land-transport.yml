@@ -1,0 +1,52 @@
+name: M047 Stage 2 L1 source land transport
+
+on:
+  push:
+    branches:
+      - agent/m047-stage2-binary-transfer-20260813
+
+permissions:
+  contents: write
+
+jobs:
+  land-exact-prehashed-source:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Checkout exact production-candidate branch
+        uses: actions/checkout@v4
+        with:
+          repository: reallaksh19/Advanced_Analysis
+          ref: agent/issue-1083-l1-hyd-insulation-production
+          fetch-depth: 0
+
+      - name: Apply and land exact pre-hashed source patch only
+        shell: bash
+        run: |
+          set -euo pipefail
+          TARGET_HEAD='7582b76410a1ac162dd81e095b9e9bc9a64fef41'
+          SOURCE='src/core/fea-benchmarks/caesar-accdb-linear-solve.js'
+          PATCH='patches/lfea-m047-stage2-l1-hyd-insulation-production.patch'
+          BASE_BLOB='d28e3c5e893cea3ae44e116daf18fcdca0d22107'
+          PATCH_BLOB='7e8774f46870bd607e14d37604d59a11aec662f3'
+          CANDIDATE_BLOB='06e1645cfd8a957f5a5ef787c159c0d8d9094508'
+
+          test "$(git rev-parse HEAD)" = "$TARGET_HEAD"
+          test "$(git hash-object "$SOURCE")" = "$BASE_BLOB"
+          test "$(git hash-object "$PATCH")" = "$PATCH_BLOB"
+          git apply --check "$PATCH"
+          git apply "$PATCH"
+          test "$(git hash-object "$SOURCE")" = "$CANDIDATE_BLOB"
+          node --check "$SOURCE"
+          test "$(git diff --name-only)" = "$SOURCE"
+
+          git config user.name 'M047 source transport'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add "$SOURCE"
+          git commit -m 'fix(lfea): honor hydrotest insulation configuration'
+          git push origin HEAD:refs/heads/agent/issue-1083-l1-hyd-insulation-production
+
+      - name: Assert no benchmark execution occurred
+        shell: bash
+        run: |
+          echo 'TRANSPORT_ONLY: source object landed; no ACCDB solve or accuracy computation executed in this workflow.'

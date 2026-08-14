@@ -14,6 +14,10 @@
 import { canonicalLafeaAnalysisMeshProfile } from './lafea-analysis-mesh-contract.js';
 import { validateLafeaAnalysisMeshEvidenceV2 } from './lafea-analysis-mesh-evidence-v2.js';
 import {
+  buildLafeaContinuumMeshCandidateV3,
+  createLafeaContinuumMeshCandidateFailureV3,
+} from './lafea-continuum-mesh-v3-production.js';
+import {
   LAFEA_RETAINED_MESH_REFINEMENT_COMMAND_SCHEMA,
   createLafeaRetainedMeshRefinementCommand,
 } from './lafea-mesh-refinement-command.js';
@@ -32,6 +36,7 @@ import { validateLafeaAnyShellMidsurfaceEvidence } from './lafea-shell-midsurfac
 export function createLafeaWorkbenchMeshGenerationState(stageIds) {
   const profiles = new Map(stageIds.map((stageId) => [stageId, null]));
   const evidence = new Map(stageIds.map((stageId) => [stageId, null]));
+  const v3Candidates = new Map(stageIds.map((stageId) => [stageId, null]));
   const shellMidsurfaces = new Map(stageIds.map((stageId) => [stageId, null]));
   const lastPlan = new Map(stageIds.map((stageId) => [stageId, null]));
 
@@ -41,6 +46,7 @@ export function createLafeaWorkbenchMeshGenerationState(stageIds) {
     return freeze({
       retainedAnalysisMeshProfile: profiles.get(stageId),
       retainedAnalysisMeshEvidenceV2: evidence.get(stageId),
+      retainedAnalysisMeshCandidateV3: v3Candidates.get(stageId),
       shellMidsurfaceProfileActive: Boolean(shellMidsurface),
       retainedShellMidsurfaceEvidence: shellMidsurface,
       lastAnalysisMeshPlan: lastPlan.get(stageId),
@@ -61,6 +67,7 @@ export function createLafeaWorkbenchMeshGenerationState(stageIds) {
     }
     profiles.set(stageId, profile);
     evidence.set(stageId, null);
+    v3Candidates.set(stageId, null);
     lastPlan.set(stageId, null);
     return freeze({ changed: true, meshProfile: profile });
   }
@@ -85,6 +92,7 @@ export function createLafeaWorkbenchMeshGenerationState(stageIds) {
     }
     shellMidsurfaces.set(stageId, retained);
     evidence.set(stageId, null);
+    v3Candidates.set(stageId, null);
     lastPlan.set(stageId, null);
     return freeze({ changed: true, evidence: retained });
   }
@@ -124,13 +132,19 @@ export function createLafeaWorkbenchMeshGenerationState(stageIds) {
       });
       const validated = validateLafeaAnalysisMeshEvidenceV2(produced.evidence);
       evidence.set(stageId, validated);
+      v3Candidates.set(stageId, null);
       lastPlan.set(stageId, summarizeShell(produced.plan));
       return freeze({ changed: true, evidence: validated, summary: lastPlan.get(stageId) });
     }
-    const configuration = configurationFor(stageId, overrides);
+    const profile = requireProfile(stageId);
+    const configuration = lafeaMeshGenerationConfiguration(profile, overrides);
     const produced = produceLafeaAnalysisMeshEvidence(stage, configuration);
     const validated = validateLafeaAnalysisMeshEvidenceV2(produced.evidence);
+    const candidate = stageId === 'LAFEA.3'
+      ? buildContinuumV3Candidate(stage, profile, produced)
+      : null;
     evidence.set(stageId, validated);
+    v3Candidates.set(stageId, candidate);
     lastPlan.set(stageId, summarize(produced.planned));
     return freeze({
       changed: true,
@@ -173,6 +187,8 @@ export function createLafeaWorkbenchMeshGenerationState(stageIds) {
     });
     const validated = validateLafeaAnalysisMeshEvidenceV2(produced.evidence);
     evidence.set(stageId, validated);
+    // Local refinement has not yet crossed the v3 qualification boundary.
+    v3Candidates.set(stageId, null);
     lastPlan.set(stageId, summarizeRefinement(produced));
     return freeze({
       changed: true,
@@ -210,6 +226,8 @@ export function createLafeaWorkbenchMeshGenerationState(stageIds) {
     }
     if (retained) fail('LAFEA_ANALYSIS_MESH_V2_RECOVERY_CONFLICTING_REPLAY');
     evidence.set(stageId, validated);
+    // A portable v2 artifact lacks the full v3 producer/validation parent chain.
+    v3Candidates.set(stageId, null);
     lastPlan.set(stageId, null);
     return freeze({ changed: true, evidence: validated, meshProfile: profile });
   }
@@ -225,9 +243,11 @@ export function createLafeaWorkbenchMeshGenerationState(stageIds) {
   function invalidate(stageId) {
     requireStage(stageId);
     const changed = Boolean(
-      evidence.get(stageId) || lastPlan.get(stageId) || shellMidsurfaces.get(stageId),
+      evidence.get(stageId) || v3Candidates.get(stageId)
+      || lastPlan.get(stageId) || shellMidsurfaces.get(stageId),
     );
     evidence.set(stageId, null);
+    v3Candidates.set(stageId, null);
     lastPlan.set(stageId, null);
     if (shellMidsurfaces.get(stageId)) shellMidsurfaces.set(stageId, null);
     return changed;
@@ -237,6 +257,7 @@ export function createLafeaWorkbenchMeshGenerationState(stageIds) {
     requireStage(stageId);
     profiles.set(stageId, null);
     evidence.set(stageId, null);
+    v3Candidates.set(stageId, null);
     shellMidsurfaces.set(stageId, null);
     lastPlan.set(stageId, null);
   }
@@ -262,6 +283,19 @@ export function createLafeaWorkbenchMeshGenerationState(stageIds) {
   }
   function requireStage(stageId) {
     if (!profiles.has(stageId)) fail('LAFEA_ANALYSIS_MESH_GENERATION_STAGE_NOT_FOUND');
+  }
+}
+
+/**
+ * V3 candidate construction is deliberately parallel to the current v2 authority.
+ * A v3 validation defect records a fail-closed candidate diagnostic but does not
+ * retroactively revoke the already-qualified v2 producer route during migration.
+ */
+function buildContinuumV3Candidate(stage, profile, produced) {
+  try {
+    return buildLafeaContinuumMeshCandidateV3({ stage, meshProfile: profile, produced });
+  } catch (error) {
+    return createLafeaContinuumMeshCandidateFailureV3(stage, error);
   }
 }
 

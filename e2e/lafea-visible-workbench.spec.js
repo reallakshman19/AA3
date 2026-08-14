@@ -70,12 +70,13 @@ test('LAFEA.3 visibly presents governed model mesh solver and computed results',
   await testInfo.attach('lafea-visible-workbench-results', { path: resultScreenshotPath, contentType: 'image/png' });
 });
 
-test('production application LAFEA tab mounts the engineering workbench', async ({ page }, testInfo) => {
+test('production application LAFEA.3 stage mounts the engineering workbench', async ({ page }, testInfo) => {
   await page.setViewportSize({ width: 1440, height: 1000 });
   await openProductionLafea(page);
 
   const productionView = page.locator('[data-application-view="LAFEA"]');
   await expect(productionView).toBeVisible();
+  await productionView.locator('[data-stage-id="LAFEA.3"]').click();
   const overview = productionView.locator('[data-role="lafea-engineering-overview"]');
   await expect(overview).toBeVisible();
   await expect(overview).toContainText('Model → mesh → solve → results');

@@ -54,7 +54,7 @@ export function mountLafeaLiveWorkbenchViewport(root, input) {
       selection: mounted.getSelection(), focusedMeshElementId });
   }
   function refresh() { if (destroyed) throw liveViewportError('LAFEA_LIVE_VIEWPORT_DESTROYED'); if (model.mode === 'QUALIFIED_RESULT') { mounted.refresh(); renderResultOverlays(); } return currentState(); }
-  function focusRetainedMeshElement(elementId) { if (destroyed) throw liveViewportError('LAFEA_LIVE_VIEWPORT_DESTROYED'); focusedMeshElementId = elementId; renderResultOverlays(); const found = focusLafeaRetainedMeshElement(viewportHost, elementId); input.onFocusMeshElement?.(elementId, found); return found; }
+  function focusRetainedMeshElement(elementId) { if (destroyed) throw liveViewportError('LAFEA_LIVE_VIEWPORT_DESTROYED'); focusedMeshElementId = elementId; if (model.mode === 'QUALIFIED_RESULT') renderResultOverlays(); const found = focusLafeaRetainedMeshElement(viewportHost, elementId); input.onFocusMeshElement?.(elementId, found); return found; }
   function renderResultOverlays() {
     if (model.mode !== 'QUALIFIED_RESULT' || !input.retainedMeshEvidence) return null;
     const mesh = renderLafeaRetainedMeshOverlay({ target: viewportHost, evidence: input.retainedMeshEvidence,
@@ -76,8 +76,9 @@ function sourceInput(input, selection = input.selection ?? null) { return { stag
   selection, cssWidth: input.cssWidth, cssHeight: input.cssHeight, devicePixelRatio: input.devicePixelRatio,
   paddingRatio: input.paddingRatio, policy: input.policy, onMoveNode: input.onMoveNode,
   onSelectionChange: input.onSelectionChange, retainedMeshEvidence: input.retainedMeshEvidence ?? null,
-  analysisMeshCustodyState: input.analysisMeshCustodyState ?? null, focusedMeshElementId: input.focusedMeshElementId ?? null,
-  onFocusMeshElement: input.onFocusMeshElement }; }
+  analysisMeshCustodyState: input.analysisMeshCustodyState ?? null,
+  bcLoadGlyphProjection: input.bcLoadGlyphProjection ?? null, executionHash: input.executionHash ?? null,
+  focusedMeshElementId: input.focusedMeshElementId ?? null, onFocusMeshElement: input.onFocusMeshElement }; }
 function projectSelectionForSource(value, sceneRevision) { if (!isRecord(value) || value.sourceEntityId === null || value.meshEntityId === null || value.sceneRevision !== sceneRevision) return value; return { sceneRevision, sourceEntityId: value.sourceEntityId, meshEntityId: null, entityRole: 'SOURCE' }; }
 function resultViewport(sourceViewport, packet) { const value = structuredClone(sourceViewport); value.displayOptions = { sourceAuthoring: false, wireframe: false, fieldBounds: structuredClone(packet.field.bounds), colorMapId: packet.field.colorMapId, deformationScale: 0 }; return freeze(value); }
 function renderBlockedStatus(root, reasons) { const documentRef = root.ownerDocument, section = documentRef.createElement('section'); section.dataset.role = 'lafea-live-result-blocked-status'; section.setAttribute('aria-live', 'polite'); const title = documentRef.createElement('p'); title.textContent = 'Qualified result display is BLOCKED; source authoring remains active.'; const list = documentRef.createElement('ul'); reasons.forEach((reason) => { const item = documentRef.createElement('li'); item.textContent = reason; list.append(item); }); section.append(title, list); root.append(section); return section; }

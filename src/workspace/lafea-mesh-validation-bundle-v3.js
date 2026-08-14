@@ -13,12 +13,14 @@ export function lafeaMeshValidationPolicyV3(stageId, elementFamily) {
   let requiredGateIds;
   if (stageId === 'LAFEA.3') {
     if (!['T3', 'T6', 'Q8'].includes(elementFamily)) fail('LAFEA_MESH_VALIDATION_V3_ELEMENT_FAMILY_INVALID');
-    requiredGateIds = ['GLOBAL_TOPOLOGY', 'LOCAL_ELEMENT_QUALITY', 'RUNTIME_RESOURCES'];
+    requiredGateIds = [
+      'DOMAIN_CONFORMANCE', 'GLOBAL_TOPOLOGY', 'LOCAL_ELEMENT_QUALITY', 'RUNTIME_RESOURCES',
+    ];
     if (elementFamily === 'T6' || elementFamily === 'Q8') requiredGateIds.push('HIGH_ORDER_MAPPING');
   } else if (stageId === 'LAFEA.4' || stageId === 'LAFEA.5') {
     if (elementFamily !== SHELL_TRI3) fail('LAFEA_MESH_VALIDATION_V3_ELEMENT_FAMILY_INVALID');
     requiredGateIds = [
-      'GLOBAL_TOPOLOGY', 'LOCAL_ELEMENT_QUALITY', 'RUNTIME_RESOURCES',
+      'DOMAIN_CONFORMANCE', 'GLOBAL_TOPOLOGY', 'LOCAL_ELEMENT_QUALITY', 'RUNTIME_RESOURCES',
       'SHELL_MIDSURFACE_GEOMETRY', 'SHELL_ORIENTATION',
     ];
   } else {

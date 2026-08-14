@@ -8,6 +8,15 @@ export const TOPOLOGY_EDIT_PIPE_SPECIFICATION_REBIND_SCHEMA =
   'TopologyEditPipeSpecificationRebind.v1';
 
 const EPSILON = 1e-9;
+const SPECIFICATION_MUTABLE_KEYS = new Set([
+  'diameterMm', 'nominalSizeMm', 'outsideDiameterMm', 'diameterAuthority',
+  'schedule', 'wallThicknessMm', 'materialSpecification', 'pipingClass', 'pressureClass',
+  'endConnectionFrom', 'endConnectionTo',
+  'catalogueBinding', 'catalogueId', 'catalogueVersion', 'catalogueHash',
+  'catalogueSourceHash', 'catalogueRecordId', 'catalogueRecordHash',
+  'catalogueSourceReference', 'topologyOperation', 'lastModifiedByCommandId',
+  'engineeringEvidenceHash', 'editAncestry',
+]);
 
 export function normalizeTopologyEditPipeSpecificationRebindPayload(input = {}) {
   return deepFreeze({
@@ -46,11 +55,7 @@ export function applyTopologyEditPipeSpecificationRebind(topology, command) {
   const binding = target.payload.catalogueBinding;
   const edges = clone(topology.edges);
   const index = edges.findIndex((edge) => edge.id === target.edge.id);
-  const engineeringEvidenceHash = semanticHash({
-    edgeId: target.edge.id,
-    priorRevision: semanticHash({ kind: 'EDGE', record: target.edge }),
-    bindingHash: binding.bindingHash,
-  });
+  const engineeringEvidenceHash = specificationEvidenceHash(target.edge, binding);
   edges[index] = {
     ...target.edge,
     diameterMm: binding.nominalSizeMm,
@@ -82,6 +87,73 @@ export function applyTopologyEditPipeSpecificationRebind(topology, command) {
     ]),
   };
   return { ...topology, edges };
+}
+
+export function validateTopologyEditPipeSpecificationRebindEffect(candidate) {
+  if (candidate?.commandType !== REBIND_PIPE_SPECIFICATION) return [];
+  let payload;
+  try {
+    payload = normalizeTopologyEditPipeSpecificationRebindPayload(candidate.resolvedPayload);
+  } catch (error) {
+    return [finding(
+      'REBIND_PIPE_SPECIFICATION_PAYLOAD_INVALID',
+      error instanceof Error ? error.message : String(error),
+    )];
+  }
+  const prior = (candidate.resolvedTargets?.edges ?? [])
+    .find((target) => target?.id === payload.edgeId)?.record ?? null;
+  const edge = (candidate.canonicalTopology?.edges ?? [])
+    .find((record) => record?.id === payload.edgeId) ?? null;
+  if (!prior || !edge) {
+    return [finding(
+      'REBIND_PIPE_SPECIFICATION_TARGET_INVALID',
+      'REBIND_PIPE_SPECIFICATION requires one exact resolved prior edge and one resulting edge.',
+      [payload.edgeId],
+    )];
+  }
+  const delta = candidate.topologyDelta ?? {};
+  const unchangedCollections = ['nodes', 'junctions', 'supports', 'boundaries', 'rigids', 'bends'];
+  const exactDelta = unchangedCollections.every((key) => noChanges(delta[key]))
+    && (delta.edges?.addedIds ?? []).length === 0
+    && (delta.edges?.removedIds ?? []).length === 0
+    && semanticHash(delta.edges?.changedIds ?? []) === semanticHash([payload.edgeId]);
+  if (!exactDelta) {
+    return [finding(
+      'REBIND_PIPE_SPECIFICATION_DELTA_INVALID',
+      'REBIND_PIPE_SPECIFICATION must change exactly one existing PIPE edge and no node, geometry, junction, support, boundary, rigid, or bend record.',
+      [payload.edgeId, ...changedIds(delta)],
+    )];
+  }
+  if (semanticHash(stripSpecificationFields(edge)) !== semanticHash(stripSpecificationFields(prior))) {
+    return [finding(
+      'REBIND_PIPE_SPECIFICATION_NON_SPEC_FIELD_CHANGED',
+      'REBIND_PIPE_SPECIFICATION changed PIPE identity, geometry, connectivity, or another non-specification field.',
+      [payload.edgeId],
+    )];
+  }
+  const binding = payload.catalogueBinding;
+  const expectedAncestry = uniqueText([
+    ...(prior.editAncestry ?? []), prior.id, candidate.commandId,
+  ]);
+  const exactAuthority = sameSpecification(edge, binding)
+    && edge.diameterAuthority === 'OUTSIDE_DIAMETER'
+    && edge.catalogueBinding?.bindingHash === binding.bindingHash
+    && edge.catalogueId === binding.catalogueId
+    && edge.catalogueVersion === binding.catalogueVersion
+    && edge.catalogueHash === binding.catalogueHash
+    && edge.catalogueSourceHash === binding.catalogueSourceHash
+    && edge.catalogueRecordId === binding.recordId
+    && edge.catalogueRecordHash === binding.recordHash
+    && semanticHash(edge.catalogueSourceReference) === semanticHash(binding.sourceReference)
+    && edge.topologyOperation === REBIND_PIPE_SPECIFICATION
+    && edge.lastModifiedByCommandId === candidate.commandId
+    && edge.engineeringEvidenceHash === specificationEvidenceHash(prior, binding)
+    && semanticHash(edge.editAncestry ?? []) === semanticHash(expectedAncestry);
+  return exactAuthority ? [] : [finding(
+    'REBIND_PIPE_SPECIFICATION_AUTHORITY_INVALID',
+    'REBIND_PIPE_SPECIFICATION candidate differs from its exact catalogue binding or immutable engineering evidence.',
+    [payload.edgeId],
+  )];
 }
 
 function assertDiameterInterface(topology, edge, requestedNominalSizeMm) {
@@ -134,6 +206,32 @@ function sameSpecification(edge, binding) {
     && token(edge.pressureClass) === token(binding.pressureClass)
     && token(edge.endConnectionFrom) === token(binding.endConnectionFrom)
     && token(edge.endConnectionTo) === token(binding.endConnectionTo);
+}
+function specificationEvidenceHash(edge, binding) {
+  return semanticHash({
+    edgeId: edge.id,
+    priorRevision: semanticHash({ kind: 'EDGE', record: edge }),
+    bindingHash: binding.bindingHash,
+  });
+}
+function stripSpecificationFields(edge) {
+  return Object.fromEntries(Object.entries(edge ?? {})
+    .filter(([key]) => !SPECIFICATION_MUTABLE_KEYS.has(key)));
+}
+function noChanges(delta = {}) {
+  return [
+    ...(delta?.addedIds ?? []),
+    ...(delta?.removedIds ?? []),
+    ...(delta?.changedIds ?? []),
+  ].length === 0;
+}
+function changedIds(delta) {
+  return Object.values(delta ?? {}).flatMap((entry) => [
+    ...(entry?.addedIds ?? []), ...(entry?.removedIds ?? []), ...(entry?.changedIds ?? []),
+  ]).filter(Boolean);
+}
+function finding(code, message, targetIds = []) {
+  return { code, message, targetIds: [...new Set(targetIds.filter(Boolean))].sort() };
 }
 function assertKnownEndConnection(observed, requested, endpoint) {
   if (String(observed ?? '').trim() && token(observed) !== token(requested)) {

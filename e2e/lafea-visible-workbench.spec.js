@@ -91,16 +91,16 @@ test('production application LAFEA tab mounts the engineering workbench', async 
   await testInfo.attach('lafea-production-tab', { path: screenshotPath, contentType: 'image/png' });
 });
 
-test('production LAFEA.2 is TBA with no fake FE or mesh surface', async ({ page }, testInfo) => {
+test('production LAFEA.1 is TBA with no fake FE or mesh surface', async ({ page }, testInfo) => {
   await page.setViewportSize({ width: 1440, height: 1000 });
   await openProductionLafea(page);
 
   const workbench = page.locator('[data-role="lafea-workbench"]');
-  await workbench.locator('[data-stage-id="LAFEA.2"]').click();
+  await workbench.locator('[data-stage-id="LAFEA.1"]').click();
 
   await expect(workbench.locator('[data-role="lafea-tba-stage"]')).toBeVisible();
   await expect(workbench.locator('.lafea-workbench__status')).toHaveText('TBA');
-  await expect(workbench.locator('h1')).toHaveText('LAFEA.2 — TBA');
+  await expect(workbench.locator('h1')).toHaveText('LAFEA.1 — TBA');
   await expect(workbench.locator('[data-role="lafea-tba-stage"]')).toContainText(
     'no finite-element geometry, mesh, element controls, viewport, solver controls, contours, convergence, results, or simulated FE content',
   );
@@ -112,9 +112,9 @@ test('production LAFEA.2 is TBA with no fake FE or mesh surface', async ({ page 
   await expect(workbench.locator('[data-role="lafea-mock"]')).toHaveCount(0);
   await expect(workbench.locator('.lafea-workbench__svg')).toHaveCount(0);
 
-  const screenshotPath = testInfo.outputPath('lafea-2-tba.png');
+  const screenshotPath = testInfo.outputPath('lafea-1-tba.png');
   await page.screenshot({ path: screenshotPath, fullPage: false });
-  await testInfo.attach('lafea-2-tba', { path: screenshotPath, contentType: 'image/png' });
+  await testInfo.attach('lafea-1-tba', { path: screenshotPath, contentType: 'image/png' });
 });
 
 test('production Analytical Calc owns analytical content without FE chrome', async ({ page }, testInfo) => {
@@ -140,7 +140,7 @@ test('production Analytical Calc owns analytical content without FE chrome', asy
   await expect(workbench.locator('.lafea-workbench__svg')).toHaveCount(0);
 
   const state = await page.evaluate(() => globalThis.AnalysisWorkspace.getLafeaWorkbenchState());
-  expect(state.activeStageId).toBe('LAFEA.2');
+  expect(state.activeStageId).toBe('LAFEA.1');
 
   const screenshotPath = testInfo.outputPath('analytical-calc.png');
   await page.screenshot({ path: screenshotPath, fullPage: false });

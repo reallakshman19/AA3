@@ -210,7 +210,7 @@ export function createLafeaWorkbenchEvidenceActions(context) {
     const stage = c.deriveStage(activeStageId());
     return freeze({
       ...c.retained.exportLifecycle(),
-      schema: 'lafea-workbench-lifecycle-export/v2',
+      schema: 'lafea-workbench-lifecycle-export/v1',
       sourceAuthority: stage.sourceAuthority,
       lastSourceAuthorityEvent: stage.lastSourceAuthorityEvent,
       templateReleaseRecord: stage.retainedTemplateReleaseRecord,

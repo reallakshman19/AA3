@@ -55,7 +55,8 @@ export function normalizeElements(values, nodes) {
     normalizeElement(value, index, nodeMap)
   ));
   uniqueIdentities(rows, 'elementId', 'elements');
-  rejectDuplicateTriangles(rows);
+  rejectDuplicateElementNodeSets(rows);
+  requireConformingManifoldEdges(rows);
   rejectDisconnectedElementComponents(rows);
   return rows.sort((left, right) => codeUnitCompare(left.elementId, right.elementId));
 }
@@ -142,7 +143,7 @@ function assertNodeReference(nodeId, nodeMap, path) {
   }
 }
 
-function rejectDuplicateTriangles(rows) {
+function rejectDuplicateElementNodeSets(rows) {
   const sets = new Set();
   rows.forEach((row) => {
     const key = [...row.nodeIds].sort(codeUnitCompare).join('\0');
@@ -151,6 +152,46 @@ function rejectDuplicateTriangles(rows) {
     }
     sets.add(key);
   });
+}
+
+/**
+ * Continuum interfaces are edge-connected, conforming and manifold. Sharing a
+ * single corner node is not sufficient continuum connectivity. Two elements
+ * that own the same physical corner edge must use the same full edge topology
+ * (including the same quadratic midside identity) and traverse the edge in
+ * opposite directions because all elements are counter-clockwise. More than
+ * two owners is a non-manifold interface and is rejected before assembly.
+ */
+function requireConformingManifoldEdges(rows) {
+  const edgeUses = buildCornerEdgeUses(rows);
+  for (const [key, owners] of edgeUses) {
+    if (owners.length > 2) {
+      throw modelError(
+        'NON_MANIFOLD_CONTINUUM_EDGE',
+        'elements',
+        `Physical edge ${printableEdgeKey(key)} has ${owners.length} element owners; at most two are permitted.`,
+      );
+    }
+    if (owners.length !== 2) continue;
+    const [left, right] = owners;
+    if (fullEdgeKey(left.sequence) !== fullEdgeKey(right.sequence)) {
+      throw modelError(
+        'NONCONFORMING_SHARED_EDGE',
+        'elements',
+        `Elements ${left.elementId} and ${right.elementId} share the same corner edge but not the same complete edge topology/midside identity.`,
+      );
+    }
+    if (
+      left.sequence[0] !== right.sequence[right.sequence.length - 1]
+      || left.sequence[left.sequence.length - 1] !== right.sequence[0]
+    ) {
+      throw modelError(
+        'INCONSISTENT_SHARED_EDGE_ORIENTATION',
+        'elements',
+        `Elements ${left.elementId} and ${right.elementId} must traverse their shared edge in opposite directions.`,
+      );
+    }
+  }
 }
 
 function rejectCoincidentIndependentNodes(nodes) {
@@ -171,24 +212,22 @@ function rejectCoincidentIndependentNodes(nodes) {
 
 function rejectDisconnectedElementComponents(rows) {
   if (rows.length <= 1) return;
-  const nodeToElements = new Map();
-  rows.forEach((row, elementIndex) => {
-    row.nodeIds.forEach((nodeId) => {
-      const connected = nodeToElements.get(nodeId) ?? [];
-      connected.push(elementIndex);
-      nodeToElements.set(nodeId, connected);
-    });
-  });
+  const adjacency = Array.from({ length: rows.length }, () => new Set());
+  for (const owners of buildCornerEdgeUses(rows).values()) {
+    if (owners.length !== 2 || fullEdgeKey(owners[0].sequence) !== fullEdgeKey(owners[1].sequence)) {
+      continue;
+    }
+    adjacency[owners[0].elementIndex].add(owners[1].elementIndex);
+    adjacency[owners[1].elementIndex].add(owners[0].elementIndex);
+  }
   const visited = new Set([0]);
   const pending = [0];
   while (pending.length) {
     const elementIndex = pending.pop();
-    for (const nodeId of rows[elementIndex].nodeIds) {
-      for (const neighbor of nodeToElements.get(nodeId) ?? []) {
-        if (!visited.has(neighbor)) {
-          visited.add(neighbor);
-          pending.push(neighbor);
-        }
+    for (const neighbor of adjacency[elementIndex]) {
+      if (!visited.has(neighbor)) {
+        visited.add(neighbor);
+        pending.push(neighbor);
       }
     }
   }
@@ -196,27 +235,58 @@ function rejectDisconnectedElementComponents(rows) {
     throw modelError(
       'DISCONNECTED_MESH_COMPONENT',
       'elements',
-      `Continuum mesh contains ${countElementComponents(rows, nodeToElements)} disconnected element components; current authority requires one connected component.`,
+      `Continuum mesh contains ${countEdgeConnectedComponents(adjacency)} edge-disconnected element components; point-only node contact is not continuum connectivity.`,
     );
   }
 }
 
-function countElementComponents(rows, nodeToElements) {
+function buildCornerEdgeUses(rows) {
+  const uses = new Map();
+  rows.forEach((row, elementIndex) => {
+    topologyEdgeSequences(row).forEach((sequence) => {
+      const key = cornerEdgeKey(sequence);
+      const owners = uses.get(key) ?? [];
+      owners.push({ elementIndex, elementId: row.elementId, sequence });
+      uses.set(key, owners);
+    });
+  });
+  return uses;
+}
+
+function topologyEdgeSequences(row) {
+  const cornerCount = ELEMENT_TYPE_CORNER_COUNTS[row.elementType];
+  const corners = row.nodeIds.slice(0, cornerCount);
+  const midsides = row.nodeIds.slice(cornerCount);
+  return corners.map((corner, index) => {
+    const next = corners[(index + 1) % cornerCount];
+    return midsides.length ? [corner, midsides[index], next] : [corner, next];
+  });
+}
+
+function cornerEdgeKey(sequence) {
+  return [sequence[0], sequence[sequence.length - 1]].sort(codeUnitCompare).join('\0');
+}
+function fullEdgeKey(sequence) {
+  return [...sequence].sort(codeUnitCompare).join('\0');
+}
+function printableEdgeKey(key) {
+  return key.split('\0').join('–');
+}
+
+function countEdgeConnectedComponents(adjacency) {
   const visited = new Set();
   let count = 0;
-  for (let start = 0; start < rows.length; start += 1) {
+  for (let start = 0; start < adjacency.length; start += 1) {
     if (visited.has(start)) continue;
     count += 1;
     visited.add(start);
     const pending = [start];
     while (pending.length) {
-      const elementIndex = pending.pop();
-      for (const nodeId of rows[elementIndex].nodeIds) {
-        for (const neighbor of nodeToElements.get(nodeId) ?? []) {
-          if (!visited.has(neighbor)) {
-            visited.add(neighbor);
-            pending.push(neighbor);
-          }
+      const index = pending.pop();
+      for (const neighbor of adjacency[index]) {
+        if (!visited.has(neighbor)) {
+          visited.add(neighbor);
+          pending.push(neighbor);
         }
       }
     }

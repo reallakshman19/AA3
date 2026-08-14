@@ -56,15 +56,11 @@ test('LAFEA.3 visibly presents governed model mesh solver and computed results',
   });
   expect(retained).toEqual({ qualification: 'ACCEPTED', loadCases: 2, energy: true, displacement: true });
 
-  // Bounded viewport captures are deliberate: fullPage produced an extremely tall
-  // image that was unreadable when rendered as a chat/file preview.
   await overview.scrollIntoViewIfNeeded();
   const topScreenshotPath = testInfo.outputPath('lafea-visible-workbench-top.png');
   await page.screenshot({ path: topScreenshotPath, fullPage: false });
   await testInfo.attach('lafea-visible-workbench-top', { path: topScreenshotPath, contentType: 'image/png' });
 
-  // Capture the compact computed summary itself rather than the entire retained
-  // evidence table; this keeps numerical UI evidence legible at normal preview scale.
   const resultScreenshotPath = testInfo.outputPath('lafea-visible-workbench-results.png');
   await resultHighlights.screenshot({ path: resultScreenshotPath });
   await testInfo.attach('lafea-visible-workbench-results', { path: resultScreenshotPath, contentType: 'image/png' });
@@ -140,7 +136,8 @@ test('production user can enter a continuum model and generate the retained SVG 
   const miniMesh = workflow.locator('[data-role="lafea-left-retained-mesh-svg"]');
   await expect(miniMesh).toBeVisible();
   await expect.poll(() => miniMesh.locator('polygon').count()).toBeGreaterThan(2);
-  await expect(workflow.locator('[data-role="lafea-left-mesh-settings"]')).toContainText('CURRENT_PASS');
+  const meshSection = workflow.locator('[data-role="lafea-left-mesh-settings"]');
+  await expect(meshSection).toContainText('CURRENT_PASS');
   await expect(productionView.locator('[data-role="lafea-viewport-mode-panel"]')).toContainText('ELEMENTS · SVG');
 
   const prepare = workflow.locator('[data-role="lafea-left-prepare"]');
@@ -148,9 +145,14 @@ test('production user can enter a continuum model and generate the retained SVG 
   await prepare.click();
   await expect(workflow.locator('[data-role="lafea-left-run"]')).toBeEnabled();
 
-  const workflowShot = testInfo.outputPath('lafea-production-input-workflow.png');
-  await workflow.screenshot({ path: workflowShot });
-  await testInfo.attach('lafea-production-input-workflow', { path: workflowShot, contentType: 'image/png' });
+  const modelSection = workflow.locator('[data-role="lafea-left-model-input"]');
+  const inputShot = testInfo.outputPath('lafea-production-model-input.png');
+  await modelSection.screenshot({ path: inputShot });
+  await testInfo.attach('lafea-production-model-input', { path: inputShot, contentType: 'image/png' });
+
+  const meshSettingsShot = testInfo.outputPath('lafea-production-mesh-settings.png');
+  await meshSection.screenshot({ path: meshSettingsShot });
+  await testInfo.attach('lafea-production-mesh-settings', { path: meshSettingsShot, contentType: 'image/png' });
 
   const viewportShot = testInfo.outputPath('lafea-production-svg-mesh.png');
   await viewport.screenshot({ path: viewportShot });

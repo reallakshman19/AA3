@@ -135,6 +135,15 @@ export function manualChunk(id) {
   if (source.endsWith('/src/workspace/workspace-shell-styles.js')) {
     return 'application-shell-static-styles';
   }
+  // The interactive LAFEA workflow panel is a stateless DOM presentation leaf:
+  // it receives frozen/projected state plus callbacks and owns no controller,
+  // store, retained authority, renderer, event bus or module-level mutable state.
+  // Keep it isolated so user-facing authoring controls do not consume the hard
+  // production entry-chunk budget while all stateful orchestration remains
+  // graph-owned.
+  if (source.endsWith('/src/workspace/lafea-analysis-workflow-panel.js')) {
+    return 'lafea-analysis-workflow-ui';
+  }
   // PR #1016 adds a bounded set of read-only views, immutable qualification
   // custody, and derived readiness/release projections. These modules export
   // functions/contracts only; they own no workbench controller, store, mounted

@@ -5,6 +5,9 @@ import {
   TopologyEditCleanShellRuntime,
 } from './viewport-productivity/topology-edit-clean-shell-runtime.js';
 import {
+  TopologyEditSupportHostDragRuntime,
+} from './viewport-productivity/topology-edit-support-host-drag-runtime.js';
+import {
   TopologyEditSupportPositionRuntime,
 } from './viewport-productivity/topology-edit-support-position-runtime.js';
 import './topology-edit-productivity.css';
@@ -15,6 +18,10 @@ export class TopologyEdit3DViewController extends AuthoringController {
     super(eventBus, lifecycleOptions);
     this.cleanShellRuntime = new TopologyEditProductivityCleanShellRuntime(this);
     this.supportPositionRuntime = new TopologyEditSupportPositionRuntime(this);
+    this.supportHostDragRuntime = new TopologyEditSupportHostDragRuntime(
+      this,
+      this.supportPositionRuntime,
+    );
     this.iconPresentationRuntime = null;
     this.iconReferenceRuntime = null;
     this.iconRuntimePromise = null;
@@ -34,6 +41,7 @@ export class TopologyEdit3DViewController extends AuthoringController {
   async activate() {
     await super.activate();
     if (!this.hostElement) return;
+    this.supportHostDragRuntime.mount();
     this.mountIconRuntimes();
     await Promise.all([
       this.iconRuntimePromise,
@@ -42,6 +50,7 @@ export class TopologyEdit3DViewController extends AuthoringController {
     this.supportPositionRuntime.selectionChanged({
       selection: this.editorStore?.getState?.().selection,
     });
+    this.supportHostDragRuntime.selectionChanged();
   }
 
   async mountTableAdapter() {
@@ -156,9 +165,11 @@ export class TopologyEdit3DViewController extends AuthoringController {
     super.refreshView(canonical);
     this.tableAdapter?.canonicalChanged(canonical);
     this.supportPositionRuntime.canonicalChanged(canonical);
+    this.supportHostDragRuntime.canonicalChanged(canonical);
   }
 
   deactivate() {
+    this.supportHostDragRuntime.destroy();
     this.supportPositionRuntime.destroy();
     this.tableAdapter?.destroy();
     this.tableAdapter = null;
@@ -209,6 +220,7 @@ export class TopologyEdit3DViewController extends AuthoringController {
     super.handleUnifiedSelectionChanged(payload);
     this.tableAdapter?.selectionChanged(payload);
     this.supportPositionRuntime.selectionChanged(payload);
+    this.supportHostDragRuntime.selectionChanged(payload);
     this.cleanShellRuntime.selectionChanged(payload);
   }
 

@@ -221,6 +221,7 @@ export function createLafeaWorkbenchEvidenceActions(context) {
       t6GeometryQualificationProjection: stage.t6GeometryQualificationProjection,
       continuumPreflightEvidence: stage.retainedContinuumPreflightEvidence,
       readiness: stage.lifecycleReadiness,
+      currentness: stage.currentness,
       preparation: stage.preparationProjection,
       domainFirstLifecycle: stage.domainFirstLifecycle,
       analysisDomain: stage.analysisDomainProjection,

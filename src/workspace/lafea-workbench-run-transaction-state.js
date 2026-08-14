@@ -66,25 +66,18 @@ export function createLafeaWorkbenchRunTransactionState(stageIds) {
     return state.active;
   }
 
-  function complete(stageId, transactionId, stageValue, executionValue, runtimeDiagnosticsValue) {
+  function assertCurrent(stageId, transactionId, stageValue, executionValue = null) {
     const state = requireState(states, stageId);
     const active = requireActive(state, transactionId);
     assertCurrentParents(active.parents, stageValue);
+    if (executionValue) assertExecutionParents(active, executionValue, state);
+    return active;
+  }
+
+  function complete(stageId, transactionId, stageValue, executionValue, runtimeDiagnosticsValue) {
+    const state = requireState(states, stageId);
+    const active = assertCurrent(stageId, transactionId, stageValue, executionValue);
     const execution = requireExecution(executionValue, stageId);
-    if (execution.sourceHash !== active.parents.sourceHash
-      || execution.analysisDomainHash !== active.parents.analysisDomainHash
-      || execution.analysisGeometryHash !== active.parents.analysisGeometryHash
-      || execution.meshHash !== active.parents.meshHash
-      || execution.meshProfileHash !== active.parents.meshProfileHash
-      || execution.solverModelHash !== active.parents.solverModelHash) {
-      state.latestReceipt = terminalReceipt(state, active, 'REJECTED', {
-        reasonCode: 'LAFEA_RUN_TRANSACTION_EXECUTION_PARENT_MISMATCH',
-        executionHash: execution.compiledExecutionHash ?? null,
-        runtimeDiagnosticsHash: runtimeDiagnosticsValue?.semanticHash ?? null,
-      });
-      state.active = null;
-      fail('LAFEA_RUN_TRANSACTION_EXECUTION_PARENT_MISMATCH');
-    }
     const receipt = terminalReceipt(state, active, 'COMPLETED', {
       reasonCode: null,
       executionHash: execution.compiledExecutionHash,
@@ -95,7 +88,7 @@ export function createLafeaWorkbenchRunTransactionState(stageIds) {
     return receipt;
   }
 
-  function reject(stageId, transactionId, reasonCode, executionHash = null) {
+  function reject(stageId, transactionId, reasonCode, executionHash = null, runtimeDiagnosticsHash = null) {
     const state = requireState(states, stageId);
     if (!state.active) return state.latestReceipt;
     if (transactionId && state.active.transactionId !== transactionId) {
@@ -104,7 +97,7 @@ export function createLafeaWorkbenchRunTransactionState(stageIds) {
     const receipt = terminalReceipt(state, state.active, 'REJECTED', {
       reasonCode: text(reasonCode) ?? 'LAFEA_RUN_TRANSACTION_REJECTED',
       executionHash,
-      runtimeDiagnosticsHash: null,
+      runtimeDiagnosticsHash,
     });
     state.latestReceipt = receipt;
     state.active = null;
@@ -132,7 +125,7 @@ export function createLafeaWorkbenchRunTransactionState(stageIds) {
     });
   }
 
-  return Object.freeze({ begin, complete, reject, invalidate, fields });
+  return Object.freeze({ begin, assertCurrent, complete, reject, invalidate, fields });
 }
 
 export function solverConfigurationHash(preflightValue) {
@@ -172,6 +165,24 @@ function terminalReceipt(state, transaction, status, details) {
       receipt: base,
     }),
   });
+}
+
+function assertExecutionParents(active, executionValue, state) {
+  const execution = requireExecution(executionValue, active.stageId);
+  if (execution.sourceHash !== active.parents.sourceHash
+    || execution.analysisDomainHash !== active.parents.analysisDomainHash
+    || execution.analysisGeometryHash !== active.parents.analysisGeometryHash
+    || execution.meshHash !== active.parents.meshHash
+    || execution.meshProfileHash !== active.parents.meshProfileHash
+    || execution.solverModelHash !== active.parents.solverModelHash) {
+    state.latestReceipt = terminalReceipt(state, active, 'REJECTED', {
+      reasonCode: 'LAFEA_RUN_TRANSACTION_EXECUTION_PARENT_MISMATCH',
+      executionHash: execution.compiledExecutionHash ?? null,
+      runtimeDiagnosticsHash: null,
+    });
+    state.active = null;
+    fail('LAFEA_RUN_TRANSACTION_EXECUTION_PARENT_MISMATCH');
+  }
 }
 
 function assertCurrentParents(expected, stage) {

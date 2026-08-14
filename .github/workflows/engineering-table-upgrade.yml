@@ -6,6 +6,11 @@ on:
       - 'src/workspace/topology-edit/draft/**'
       - 'src/workspace/viewport-productivity/topology-edit-table-*.js'
       - 'src/workspace/topology-edit-3d-*.js'
+      - 'src/workspace/topology-edit/topology-edit-pipe-specification-rebind.js'
+      - 'src/workspace/topology-edit/topology-edit-command-contract.js'
+      - 'src/workspace/topology-edit/topology-edit-command-resolver.js'
+      - 'src/workspace/topology-edit/topology-edit-pure-reducer-dispatch.js'
+      - 'src/workspace/topology-edit/topology-edit-source-adapter-dispatch.js'
       - 'tests/topology-edit-table-*.test.mjs'
       - 'tests/topology-edit-transient-node-draft.test.mjs'
       - 'e2e/topology-edit-table-*.spec.js'
@@ -38,14 +43,24 @@ jobs:
         run: npm ci
       - name: Syntax-check upgraded Table modules
         run: |
+          node --check src/workspace/topology-edit/topology-edit-pipe-specification-rebind.js
+          node --check src/workspace/topology-edit/topology-edit-command-contract.js
+          node --check src/workspace/topology-edit/topology-edit-command-resolver.js
+          node --check src/workspace/topology-edit/topology-edit-pure-reducer-dispatch.js
+          node --check src/workspace/topology-edit/topology-edit-source-adapter-dispatch.js
+          node --check src/workspace/topology-edit/table/topology-edit-table-pipe-catalogue.js
           node --check src/workspace/topology-edit/table/topology-edit-table-column-profiles.js
           node --check src/workspace/topology-edit/table/topology-edit-table-columns.js
           node --check src/workspace/topology-edit/table/topology-edit-table-draft-plan.js
           node --check src/workspace/topology-edit/table/topology-edit-table-edit-capability.js
+          node --check src/workspace/topology-edit/table/topology-edit-table-intent.js
+          node --check src/workspace/topology-edit/table/topology-edit-table-engineering-planner.js
+          node --check src/workspace/topology-edit/table/topology-edit-table-batch-planner.js
           node --check src/workspace/topology-edit/table/topology-edit-table-projection.js
           node --check src/workspace/topology-edit/table/topology-edit-table-virtual-geometry.js
           node --check src/workspace/topology-edit/draft/topology-edit-transient-node-draft.js
           node --check src/workspace/viewport-productivity/topology-edit-table-cell-edit.js
+          node --check src/workspace/viewport-productivity/topology-edit-table-engineering-editor.js
           node --check src/workspace/viewport-productivity/topology-edit-table-engineering-runtime.js
           node --check src/workspace/viewport-productivity/topology-edit-table-grid-view.js
           node --check src/workspace/viewport-productivity/topology-edit-table-pipe-length-runtime.js
@@ -64,7 +79,7 @@ jobs:
           PLAYWRIGHT_BROWSERS_PATH: '0'
         run: npx playwright install --with-deps chromium
       - name: Run Engineering Table authority browser journey
-        run: node scripts/run-playwright.mjs e2e/topology-edit-table-authority.spec.js
+        run: node scripts/run-playwright.mjs e2e/topology-edit-table-authority.spec.js e2e/topology-edit-table-direct-xyz.spec.js e2e/topology-edit-table-pipe-specification.spec.js
       - name: Upload Engineering Table evidence
         if: always()
         uses: actions/upload-artifact@v4

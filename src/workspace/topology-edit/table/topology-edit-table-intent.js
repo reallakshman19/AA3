@@ -3,6 +3,9 @@ import {
   normalizeTopologyEditInlineReplacementPayload,
 } from '../topology-edit-inline-component-replacement.js';
 import {
+  normalizeTopologyEditPipeSpecificationRebindPayload,
+} from '../topology-edit-pipe-specification-rebind.js';
+import {
   normalizeTopologyEditTableNodePositionPayload,
   topologyEditTableNodePositionPriorValue,
 } from './topology-edit-table-node-position-contract.js';
@@ -25,6 +28,7 @@ export const TOPOLOGY_EDIT_TABLE_AUTHORITY_SCHEMA = 'TopologyEditTableEditAuthor
 
 const INTENT_KINDS = new Set([
   'PIPE_LENGTH',
+  'PIPE_SPECIFICATION',
   'NODE_POSITION',
   'SUPPORT_PLACEMENT',
   'SUPPORT_RESTRAINT',
@@ -140,6 +144,7 @@ function assertEditAuthority(value) {
 
 function normalizeIntentPayload(kind, requestedValue, geometryPolicy, row, projection) {
   if (kind === 'PIPE_LENGTH') return normalizePipeLength(requestedValue, geometryPolicy, row);
+  if (kind === 'PIPE_SPECIFICATION') return normalizePipeSpecification(requestedValue, row);
   if (kind === 'NODE_POSITION') {
     return normalizeTopologyEditTableNodePositionPayload(requestedValue, geometryPolicy, row);
   }
@@ -169,6 +174,20 @@ function normalizePipeLength(requestedValue, geometryPolicy, row) {
   return {
     requestedValue: { lengthMm },
     geometryPolicy: normalizeGeometryPolicy(geometryPolicy),
+  };
+}
+
+function normalizePipeSpecification(requestedValue, row) {
+  if (row.elementType !== 'PIPE' || row.identity.canonicalKind !== 'EDGE') {
+    throw new RangeError('TopologyEditTableIntent: PIPE_SPECIFICATION requires an exact canonical PIPE edge row.');
+  }
+  const normalized = normalizeTopologyEditPipeSpecificationRebindPayload({
+    edgeId: row.identity.canonicalId,
+    catalogueBinding: requestedValue?.catalogueBinding,
+  });
+  return {
+    requestedValue: { catalogueBinding: normalized.catalogueBinding },
+    geometryPolicy: null,
   };
 }
 
@@ -211,6 +230,17 @@ function normalizeGeometryPolicy(value) {
 }
 function priorValue(kind, row, payload) {
   if (kind === 'PIPE_LENGTH') return deepFreeze({ lengthMm: row.fields.lengthMm });
+  if (kind === 'PIPE_SPECIFICATION') return deepFreeze({
+    nominalSizeMm: row.fields.dnInMm,
+    outsideDiameterMm: row.fields.outsideDiameterMm,
+    wallThicknessMm: row.fields.wallThicknessMm,
+    schedule: row.fields.schedule,
+    materialSpecification: row.fields.material,
+    pipingClass: row.fields.pipingClass,
+    pressureClass: row.fields.pressureClass,
+    catalogueRecordId: row.fields.catalogueRecordId,
+    catalogueRecordHash: row.custody.catalogue?.recordHash ?? null,
+  });
   if (kind === 'NODE_POSITION') return topologyEditTableNodePositionPriorValue(payload);
   if (kind === 'SUPPORT_PLACEMENT') return topologyEditTableSupportPlacementPriorValue(row);
   if (kind === 'SUPPORT_RESTRAINT') return topologyEditTableSupportRestraintPriorValue(row);

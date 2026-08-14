@@ -8,62 +8,103 @@ const baseline = {
   sourceAccdbSha256: SHA,
   solverProfileId: 'CAESAR-ACCDB-FRICTION-SOLVER-R2',
   restraints: [{
-    restraintId: 'R1', nodeId: '1',
+    restraintId: 'R1',
+    nodeId: '1',
     normal: { percentError: 2 },
     tangential: { vectorRelativeError: 0.20 },
     regime: { match: false },
   }],
 };
+
 const candidate = {
+  schema: 'm047-stage2-r8-nfv15-real-file-experiment/v1',
+  measurementBoundary: 'REAL_PINNED_ACCDB_NONPRODUCTION_ONE_MECHANIC_EXPERIMENT',
   caseId: 'L13',
-  sourceAccdbSha256: SHA,
-  productionPromotionAuthorized: false,
-  benchmarkAuthority: false,
-  oneMechanicOnly: true,
-  converged: true,
-  equilibriumStatus: 'PASS',
-  nonlinearGateStatus: 'PASS',
-  nfvRefreshGateStatus: 'PASS',
-  nfv15: {
-    threshold: 0.15,
-    capacityNormalSource: 'CURRENT_OWN_RESTRAINT_NORMAL_WITH_RETAINED_SLIDING_BASIS',
-    refreshRule: 'REFRESH_ONLY_WHEN_RELATIVE_VARIATION_GT_THRESHOLD',
-    refreshGateStatus: 'PASS',
+  custody: {
+    status: 'PASS',
+    accdb: { status: 'PASS', sha256: SHA },
   },
-  restraints: [{
-    restraintId: 'R1', nodeId: '1',
-    normal: { percentError: 2 },
-    tangential: { vectorRelativeError: 0.05 },
-    regime: { match: true },
-    nfv15: { retainedNormalBasisN: 100, currentNormalN: 95, variationRatio: 0.05, refreshCount: 1 },
+  productionBoundary: { productionMechanicsChanged: false },
+  stateContract: { status: 'PASS' },
+  experimentalProfile: {
+    profileId: 'CAESAR-ACCDB-FRICTION-SOLVER-R2-R8-NFV15-EXPERIMENT',
+    normalForceVariationRelative: 0.15,
+    normalForceVariationRule: 'SEED_ON_BREAKAWAY_RETAIN_LE_15_PERCENT_REFRESH_GT_15_PERCENT_DISCARD_ON_STICK_V1',
+  },
+  runs: [{
+    converged: true,
+    recoveredEquilibriumStatus: 'PASS',
+    convergenceGates: {
+      status: 'CONVERGED',
+      gates: [{ gate: 'NFV15_RETAINED_NORMAL_STATE', status: 'PASS' }],
+    },
+    frictionRestraints: [{
+      restraintId: 'R1',
+      nodeId: '1',
+      normal: { relativeError: 0.02 },
+      tangential: { vectorRelativeError: 0.05 },
+      retainedNormalMechanic: {
+        currentNormalN: 95,
+        retainedNormalEnteringN: 100,
+        capacityBasisNormalN: 100,
+        variationRelative: 0.05,
+        refreshed: false,
+        governedRetainedCapacityN: 30,
+        currentNormalDiagnosticCapacityN: 28.5,
+      },
+    }],
   }],
+  determinism: { status: 'NOT_RUN', requestedRuns: 1, completedConvergedRuns: 1 },
 };
 
 const pass = assessR8Nfv15({ baseline, experiment: candidate });
-assert.equal(pass.nomination, 'R8_NFV15_DIRECTIONALLY_NOMINATED_REQUIRES_NEXT_CASE_AND_CONTROLS');
-assert.equal(pass.nextCase, 'L7');
+assert.equal(pass.nomination, 'R8_NFV15_DIRECTIONALLY_NOMINATED_REQUIRES_NEXT_GOVERNED_GATE');
+assert.equal(pass.nextGate, 'RUN_R8_L7_REAL_PINNED_ACCDB');
 assert.equal(pass.productionPromotionAuthorized, false);
 assert.equal(pass.summary.tangentialWithinGoalDelta, 1);
 assert.equal(pass.summary.normalWithinGoalDelta, 0);
+assert.equal(pass.summary.regimeComparison, 'NOT_GOVERNED_FROM_FINAL_NORMAL_UNDER_NFV15');
 
 assert.throws(
-  () => assessR8Nfv15({ baseline, experiment: { ...candidate, nfv15: { ...candidate.nfv15, threshold: 0.10 } } }),
+  () => assessR8Nfv15({
+    baseline,
+    experiment: {
+      ...candidate,
+      experimentalProfile: { ...candidate.experimentalProfile, normalForceVariationRelative: 0.10 },
+    },
+  }),
   /NFV=0\.15/,
 );
 assert.throws(
-  () => assessR8Nfv15({ baseline, experiment: { ...candidate, oneMechanicOnly: false } }),
-  /oneMechanicOnly/,
+  () => assessR8Nfv15({
+    baseline,
+    experiment: { ...candidate, productionBoundary: { productionMechanicsChanged: true } },
+  }),
+  /productionMechanicsChanged=false/,
 );
-const noEq = assessR8Nfv15({ baseline, experiment: { ...candidate, equilibriumStatus: 'FAIL' } });
+const noEq = assessR8Nfv15({
+  baseline,
+  experiment: {
+    ...candidate,
+    runs: [{ ...candidate.runs[0], recoveredEquilibriumStatus: 'FAIL' }],
+  },
+});
 assert.equal(noEq.nomination, 'REJECT_R8_MEASUREMENT_PHYSICS_OR_CUSTODY_GATE_FAILED');
 
+const l7 = assessR8Nfv15({
+  baseline: { ...baseline, caseId: 'L7' },
+  experiment: { ...candidate, caseId: 'L7' },
+});
+assert.equal(l7.nextGate, 'RECONSTRUCT_R8_L15_EXACTLY_AS_L7_MINUS_L13');
+
 process.stdout.write(`${JSON.stringify({
-  schema: 'm047-r8-nfv15-assessor-contract/v1',
+  schema: 'm047-r8-nfv15-assessor-contract/v2',
   status: 'PASS',
   checks: [
-    'positive_nomination',
+    'real_artifact_shape_positive_nomination',
     'threshold_fail_closed',
-    'one_mechanic_fail_closed',
+    'production_boundary_fail_closed',
     'equilibrium_fail_closed',
+    'governed_L13_to_L7_to_L15_sequence',
   ],
 }, null, 2)}\n`);

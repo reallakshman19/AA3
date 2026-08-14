@@ -3,7 +3,7 @@
  * through renderLafeaWorkbenchContent; the retained source path remains
  * mountLafeaSourceWorkbenchViewport. No geometry or mesh has been synthesized.
  *
- * LAFEA.2 is intentionally presented as TBA. Its retained analytical screening
+ * LAFEA.1 is intentionally presented as TBA. Its retained analytical foundation
  * route is exposed separately through the Analytical Calc tab, which never
  * mounts FE viewport, mesh/discretization, contour, or convergence UI.
  */
@@ -30,7 +30,7 @@ import {
 } from './lafea-workbench-viewport-lifecycle.js';
 
 const VIEW_RENDER_DEPENDENCIES = new WeakMap();
-const ANALYTICAL_CALC_STAGE_ID = 'LAFEA.2';
+const ANALYTICAL_CALC_STAGE_ID = 'LAFEA.1';
 const PRESENTATION_STAGE = 'STAGE';
 const PRESENTATION_ANALYTICAL = 'ANALYTICAL_CALC';
 
@@ -191,13 +191,13 @@ export class LafeaWorkbenchView {
 
     if (modes.tbaMode) {
       eyebrow = 'LAFEA standalone analysis • reserved stage';
-      title = 'LAFEA.2 — TBA';
-      purpose = 'Stage implementation is intentionally not presented yet. No FE geometry, mesh, solver, result, or demonstration state is exposed in LAFEA.2.';
+      title = 'LAFEA.1 — TBA';
+      purpose = 'Stage implementation is intentionally not presented yet. No FE geometry, mesh, solver, result, or demonstration state is exposed in LAFEA.1.';
       displayStatus = 'TBA';
     } else if (modes.analyticalMode) {
       eyebrow = 'Independent analytical calculation';
       title = 'Analytical Calc';
-      purpose = 'Nominal far-field pipe-section screening using the retained analytical calculation route. This is not a finite-element or mesh stage.';
+      purpose = 'Attachment load transfer and elastic pressure baseline using the retained analytical calculation route. This is not a finite-element or mesh stage.';
       custody = this.analyticalCustody(stage);
     } else {
       eyebrow = `LAFEA standalone analysis • active stage ${definition.stageId}`;
@@ -376,7 +376,7 @@ export class LafeaWorkbenchView {
       this.rootElement,
       'span',
       'lafea-workbench__section-intro',
-      'LAFEA.2 is TBA. No source import, demonstration data, meshing, calculation, or verification action is available from this stage tab.',
+      'LAFEA.1 is TBA. No source import, demonstration data, meshing, calculation, or verification action is available from this stage tab.',
     );
     notice.dataset.role = 'lafea-tba-toolbar';
     toolbar.append(notice);
@@ -389,7 +389,7 @@ export class LafeaWorkbenchView {
     shell.dataset.stageId = ANALYTICAL_CALC_STAGE_ID;
     shell.append(
       element(this.rootElement, 'span', 'panel-eyebrow', 'Reserved stage'),
-      element(this.rootElement, 'h2', null, 'LAFEA.2 — TBA'),
+      element(this.rootElement, 'h2', null, 'LAFEA.1 — TBA'),
       element(
         this.rootElement,
         'p',
@@ -400,7 +400,7 @@ export class LafeaWorkbenchView {
         this.rootElement,
         'p',
         null,
-        'The existing nominal pipe-section analytical screening capability has moved to the separate Analytical Calc tab.',
+        'The existing attachment-foundation analytical load-transfer and pressure-baseline capability has moved to the separate Analytical Calc tab.',
       ),
     );
     return Object.freeze({

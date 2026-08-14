@@ -12,7 +12,6 @@ export function buildLafeaEngineeringOverview(stageValue, registryEntryValue) {
   const mesh = record(meshEvidence?.mesh);
   const execution = record(stage.execution);
   const result = record(execution?.result);
-  const currentness = record(stage.currentness) ?? {};
 
   const elementFamilies = uniqueStrings([
     ...(array(source?.elements).map((row) => row?.elementType)),
@@ -25,11 +24,6 @@ export function buildLafeaEngineeringOverview(stageValue, registryEntryValue) {
   return freeze({
     schema: LAFEA_ENGINEERING_OVERVIEW_SCHEMA,
     stageId: String(stage.stageId ?? registry.stageId ?? 'UNKNOWN'),
-    currentness: {
-      computationalState: text(currentness.computationalState, 'EDITED'),
-      qualificationState: text(currentness.qualificationState, 'NOT_EVALUATED'),
-      currentAuthority: currentness.currentAuthority === true,
-    },
     model: {
       status: source ? 'LOADED' : 'NOT_LOADED',
       identity: text(source?.modelIdentity, 'Not loaded'),
@@ -83,9 +77,6 @@ export function renderLafeaEngineeringOverview(root, stageValue, registryEntryVa
   const host = element(root, 'section', 'lafea-engineering-overview');
   host.dataset.role = 'lafea-engineering-overview';
   host.dataset.executionStatus = model.execution.status;
-  host.dataset.computationalState = model.currentness.computationalState;
-  host.dataset.qualificationState = model.currentness.qualificationState;
-  host.dataset.currentAuthority = String(model.currentness.currentAuthority);
 
   const heading = element(root, 'div', 'lafea-engineering-overview__heading');
   heading.append(element(root, 'div'));
@@ -137,9 +128,6 @@ export function renderLafeaEngineeringOverview(root, stageValue, registryEntryVa
 
 function resultCard(root, model) {
   const rows = [
-    ['Computational state', model.currentness.computationalState],
-    ['Qualification state', model.currentness.qualificationState],
-    ['Current authority', model.currentness.currentAuthority ? 'YES' : 'NO'],
     ['Status', model.execution.status],
     ['Load cases', model.execution.loadCaseCount],
   ];

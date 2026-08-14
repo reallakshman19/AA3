@@ -28,8 +28,10 @@ import { handleTopologyEditTableScroll, initializeTopologyEditTableScrollState, 
 import { ensureTopologyEditTableStyles } from './topology-edit-table-styles.js';
 import {
   applyTopologyEditTableRuntime,
+  invalidateTopologyEditTablePreviewRequests,
   previewTopologyEditTableRuntime,
   redoTopologyEditTableRuntime,
+  requestTopologyEditTableAutoPreview,
   undoTopologyEditTableRuntime,
   validateTopologyEditTableRuntime,
 } from './topology-edit-table-workflow.js';
@@ -52,6 +54,9 @@ export class TopologyEditTableRuntime {
     this.staleResult = null;
     this.preview = null;
     this.validation = null;
+    this.previewGenerationRevision = 0;
+    this.autoPreviewRequest = null;
+    this.autoPreviewQueuedRequest = null;
     this.transaction = null;
     this.redoTransaction = null;
     this.lastExport = null;
@@ -130,7 +135,8 @@ export class TopologyEditTableRuntime {
       this.batchPlan = result.rebasedPlan;
       this.intents = [...result.rebasedBatch.intents];
       this.staleResult = null;
-      this.message = 'Staged edits rebased safely; Preview must be regenerated.';
+      this.message = 'Staged edits rebased safely; governed Preview refresh queued.';
+      requestTopologyEditTableAutoPreview(this);
     } else {
       this.batch = priorBatch;
       this.batchPlan = priorPlan;
@@ -291,12 +297,14 @@ export class TopologyEditTableRuntime {
   }
 
   resetStaged(clearGhost = true) {
+    invalidateTopologyEditTablePreviewRequests(this);
     this.intents = []; this.batch = null; this.batchPlan = null; this.staleResult = null;
     this.preview = null; this.validation = null;
     resetTopologyEditTableCellEditing(this);
     if (clearGhost) this.controller.viewportBackend?.clearGhost();
   }
   clearCandidate() {
+    invalidateTopologyEditTablePreviewRequests(this);
     this.validationClient.cancel(); this.preview = null; this.validation = null;
     this.controller.viewportBackend?.clearGhost();
   }

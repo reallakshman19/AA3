@@ -7,6 +7,7 @@
 import {
   PROFILE_KINDS,
   canonicalProfile,
+  defaultProfileFields,
   reconstructProfileSemanticHash,
 } from '../core/lafea-profile-contract/index.js';
 import { canonicalLafeaSha256 } from './lafea-canonical-sha256.js';
@@ -53,6 +54,34 @@ export function canonicalLafeaAnalysisMeshProfile(value) {
     throw meshContractError('LAFEA_ANALYSIS_MESH_PROFILE_HASH_INVALID');
   }
   return profile;
+}
+
+/**
+ * LAFEA.3 production mesh acceptance may use a stricter user profile, but a
+ * user/API caller cannot weaken the source-controlled qualified quality
+ * envelope and still receive stage-authorized PASS evidence. This is an
+ * authority rule, not a hidden default: the baseline values are the visible,
+ * versioned mesh-profile defaults and remain exportable with the profile.
+ */
+export function requireLafeaAnalysisMeshQualifiedQualityPolicy(stageId, meshProfile) {
+  if (stageId !== 'LAFEA.3') return meshProfile;
+  const baseline = defaultProfileFields(PROFILE_KINDS.MESH);
+  const fields = meshProfile?.fields;
+  if (!fields) throw meshContractError('LAFEA_ANALYSIS_MESH_PROFILE_REQUIRED');
+  const weakened = (
+    fields.adjacentSizeRatioMax > baseline.adjacentSizeRatioMax
+    || fields.aspectRatioWarn > baseline.aspectRatioWarn
+    || fields.aspectRatioBlock > baseline.aspectRatioBlock
+    || fields.scaledJacobianWarn < baseline.scaledJacobianWarn
+    || fields.scaledJacobianBlock < baseline.scaledJacobianBlock
+  );
+  if (weakened) {
+    throw meshContractError(
+      'LAFEA3_MESH_QUALITY_POLICY_WEAKENING_NOT_QUALIFIED',
+      'LAFEA.3 mesh quality settings may tighten, but may not weaken, the qualified profile.',
+    );
+  }
+  return meshProfile;
 }
 
 export function canonicalLafeaAnalysisMesh(value) {

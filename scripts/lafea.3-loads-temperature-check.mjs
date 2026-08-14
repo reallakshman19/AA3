@@ -10,6 +10,7 @@ import { triangleSource } from './lafea.3-fixtures.mjs';
 const thermalStrain = 0.001;
 const elasticModulus = 200000;
 const poissonRatio = 0.3;
+const volume = 0.5 * 100 * 100 * 10;
 
 // Plane stress: a rigid-body-stabilized element under uniform free thermal
 // strain expands without elastic stress or stored elastic energy.
@@ -51,11 +52,56 @@ tiny(psnElement.stress.tauXY);
 close(psnElement.elasticStrain.epsilonX, poissonRatio * thermalStrain);
 close(psnElement.elasticStrain.epsilonY, poissonRatio * thermalStrain);
 close(psnElement.elasticStrain.epsilonZ, -thermalStrain);
-const volume = 0.5 * 100 * 100 * 10;
 const expectedPlaneStrainEnergy = 0.5 * elasticModulus * thermalStrain ** 2 * volume;
 close(psnElement.strainEnergy, expectedPlaneStrainEnergy);
 close(psnCase.totalStrainEnergy, expectedPlaneStrainEnergy);
 assert.equal(psnCase.energyQualification.accepted, true);
+
+// Fully restrained plane stress: epsilon_x=epsilon_y=0 and the exact biaxial
+// compressive thermal stress is -E*e/(1-nu). The physical elastic energy must
+// include both in-plane normal components and no sigma_z contribution.
+const restrainedStress = restrainedThermalTriangle(FORMULATIONS.PLANE_STRESS);
+const restrainedStressResult = calculateLocalContinuum(
+  createCanonicalLocalContinuumModel(restrainedStress),
+);
+assert.equal(restrainedStressResult.qualification.state, QUALIFICATION_STATES.ACCEPTED);
+const restrainedStressCase = restrainedStressResult.loadCaseResults[0];
+const restrainedStressElement = restrainedStressCase.elementResults[0];
+const expectedPlaneStressSigma = -elasticModulus * thermalStrain / (1 - poissonRatio);
+close(restrainedStressElement.strain.epsilonX, 0);
+close(restrainedStressElement.strain.epsilonY, 0);
+close(restrainedStressElement.stress.sigmaX, expectedPlaneStressSigma);
+close(restrainedStressElement.stress.sigmaY, expectedPlaneStressSigma);
+tiny(restrainedStressElement.stress.sigmaZ);
+const expectedRestrainedPlaneStressEnergy = (
+  elasticModulus * thermalStrain ** 2 / (1 - poissonRatio)
+) * volume;
+close(restrainedStressElement.strainEnergy, expectedRestrainedPlaneStressEnergy);
+close(restrainedStressCase.totalStrainEnergy, expectedRestrainedPlaneStressEnergy);
+assert.equal(restrainedStressCase.freeDofResiduals.length, 0);
+assert.equal(restrainedStressCase.energyQualification.accepted, true);
+
+// Fully restrained plane strain: all three normal thermal strains are blocked.
+// The exact triaxial stress is -E*e/(1-2nu) in x,y,z and the physical elastic
+// energy density is 3/2 * E*e^2/(1-2nu).
+const restrainedStrain = restrainedThermalTriangle(FORMULATIONS.PLANE_STRAIN);
+const restrainedStrainResult = calculateLocalContinuum(
+  createCanonicalLocalContinuumModel(restrainedStrain),
+);
+assert.equal(restrainedStrainResult.qualification.state, QUALIFICATION_STATES.ACCEPTED);
+const restrainedStrainCase = restrainedStrainResult.loadCaseResults[0];
+const restrainedStrainElement = restrainedStrainCase.elementResults[0];
+const expectedPlaneStrainSigma = -elasticModulus * thermalStrain / (1 - 2 * poissonRatio);
+close(restrainedStrainElement.stress.sigmaX, expectedPlaneStrainSigma);
+close(restrainedStrainElement.stress.sigmaY, expectedPlaneStrainSigma);
+close(restrainedStrainElement.stress.sigmaZ, expectedPlaneStrainSigma);
+const expectedRestrainedPlaneStrainEnergy = (
+  1.5 * elasticModulus * thermalStrain ** 2 / (1 - 2 * poissonRatio)
+) * volume;
+close(restrainedStrainElement.strainEnergy, expectedRestrainedPlaneStrainEnergy);
+close(restrainedStrainCase.totalStrainEnergy, expectedRestrainedPlaneStrainEnergy);
+assert.equal(restrainedStrainCase.freeDofResiduals.length, 0);
+assert.equal(restrainedStrainCase.energyQualification.accepted, true);
 
 // Same zero-stress / zero-elastic-energy free-expansion check for a T6 plane
 // stress element, exercising integration-point recovery and energy quadrature.
@@ -76,13 +122,22 @@ t6Element.gaussPointResults.forEach((gp) => {
 tiny(t6Element.strainEnergy);
 tiny(t6Case.totalStrainEnergy);
 
-console.log('LAFEA.3 thermoelastic load — plane-stress free expansion, plane-strain analytical sigma-z/energy and T6 IP recovery passed.');
+console.log('LAFEA.3 thermoelastic load — free and fully restrained plane-stress/plane-strain analytical stress-energy checks plus T6 IP recovery passed.');
 
 function thermalTriangle(formulation) {
   const model = triangleSource({ formulation, elasticModulus });
   model.materials[0].poissonRatio = poissonRatio;
   model.loadCases = [thermalLoadCase()];
   model.resultRequests = { loadCaseIds: ['THERMAL'] };
+  return model;
+}
+
+function restrainedThermalTriangle(formulation) {
+  const model = thermalTriangle(formulation);
+  model.constraints = model.nodes.flatMap((row) => [
+    c(row.nodeId, 'UX'),
+    c(row.nodeId, 'UY'),
+  ]);
   return model;
 }
 

@@ -36,11 +36,13 @@ test('LAFEA.3 visibly presents governed model mesh solver and computed results',
 
   await expect(overview).toHaveAttribute('data-execution-status', 'QUALIFIED');
   const results = workbench.locator('[data-guided-target="results"]');
-  await expect(results).toContainText('Engineering result summary');
-  await expect(results).toContainText('Max displacement');
-  await expect(results).toContainText('Max von Mises');
-  await expect(results).toContainText('Total strain energy');
-  await expect(results).toContainText('integration-point stress is authoritative');
+  const resultHighlights = results.locator('[data-role="lafea-result-highlights"]');
+  await expect(resultHighlights).toBeVisible();
+  await expect(resultHighlights).toContainText('Engineering result summary');
+  await expect(resultHighlights).toContainText('Max displacement');
+  await expect(resultHighlights).toContainText('Max von Mises');
+  await expect(resultHighlights).toContainText('Total strain energy');
+  await expect(resultHighlights).toContainText('integration-point stress is authoritative');
 
   const retained = await page.evaluate(() => {
     const result = globalThis.__A17__.controller.getState().stages['LAFEA.3'].execution?.result;
@@ -61,9 +63,10 @@ test('LAFEA.3 visibly presents governed model mesh solver and computed results',
   await page.screenshot({ path: topScreenshotPath, fullPage: false });
   await testInfo.attach('lafea-visible-workbench-top', { path: topScreenshotPath, contentType: 'image/png' });
 
-  await results.scrollIntoViewIfNeeded();
+  // Capture the compact computed summary itself rather than the entire retained
+  // evidence table; this keeps numerical UI evidence legible at normal preview scale.
   const resultScreenshotPath = testInfo.outputPath('lafea-visible-workbench-results.png');
-  await page.screenshot({ path: resultScreenshotPath, fullPage: false });
+  await resultHighlights.screenshot({ path: resultScreenshotPath });
   await testInfo.attach('lafea-visible-workbench-results', { path: resultScreenshotPath, contentType: 'image/png' });
 });
 

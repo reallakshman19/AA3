@@ -7,6 +7,7 @@ import { createTopologyEditTableIntent } from '../topology-edit/table/topology-e
 import {
   resolveTopologyEditTableValveCatalogueSelection,
 } from '../topology-edit/table/topology-edit-table-valve-catalogue.js';
+import { requestTopologyEditTableAutoPreview } from './topology-edit-table-workflow.js';
 
 export function stageTopologyEditNodePosition(runtime, canonicalId, endpointInput) {
   const endpoint = required(endpointInput, 'endpoint').toUpperCase();
@@ -185,7 +186,8 @@ function stageResult(runtime, intentFactory) {
     runtime.staleResult = null;
     runtime.clearCandidate();
     runtime.error = null;
-    runtime.message = `${draft.batch.intentCount} table change(s) staged against the exact certified revision.`;
+    runtime.message = `${draft.batch.intentCount} table change(s) staged against the exact certified revision; governed Preview refresh queued.`;
+    requestTopologyEditTableAutoPreview(runtime);
     return Object.freeze({ ok: true, intent: draft.intent, draft });
   } catch (error) {
     runtime.error = error instanceof Error ? error.message : String(error);

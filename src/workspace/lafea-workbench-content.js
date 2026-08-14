@@ -281,7 +281,7 @@ function renderNextActionBanner(root, stage, discretization, options) {
       };
       profileEnvelope.semanticHash = semanticHash(profileEnvelope);
       options.handlers.onBindMeshProfile?.(profileEnvelope);
-      setTimeout(() => options.handlers.onGenerateAnalysisMesh?.(), 50);
+      options.handlers.onGenerateMesh?.({});
     };
     banner.append(btn);
     return banner;

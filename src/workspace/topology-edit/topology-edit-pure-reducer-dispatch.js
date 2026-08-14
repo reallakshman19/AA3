@@ -10,9 +10,6 @@ import {
 } from './topology-edit-pure-reducer.js';
 import { applyPipeSegmentCommand } from './topology-edit-pipe-segment-reducer.js';
 import {
-  applyTopologyEditPipeSpecificationRebind,
-} from './topology-edit-pipe-specification-rebind.js';
-import {
   applyTopologyEditInlineReplacement,
 } from './topology-edit-inline-component-replacement.js';
 import {
@@ -27,7 +24,6 @@ import {
 
 const EXTENDED_REDUCERS = Object.freeze({
   INSERT_PIPE_SEGMENT: applyPipeSegmentCommand,
-  REBIND_PIPE_SPECIFICATION: applyTopologyEditPipeSpecificationRebind,
   REPLACE_INLINE_COMPONENT: applyTopologyEditInlineReplacement,
   UPDATE_JUNCTION_BRANCH_RELATION: applyTopologyEditJunctionRelation,
   UPDATE_SUPPORT_PLACEMENT: applyTopologyEditSupportPlacement,

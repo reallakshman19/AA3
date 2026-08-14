@@ -16,56 +16,23 @@ import {
   createTopologyEditRuntimeValidationIdentity,
 } from './topology-edit-validation-runtime-identity.js';
 
-export function invalidateTopologyEditTablePreviewRequests(runtime) {
-  runtime.previewGenerationRevision = (runtime.previewGenerationRevision ?? 0) + 1;
-  runtime.autoPreviewRequest = null;
-  runtime.autoPreviewQueuedRequest = null;
-}
-
-export function requestTopologyEditTableAutoPreview(runtime) {
-  const planHash = runtime.batchPlan?.planHash ?? null;
-  if (!planHash || runtime.staleResult) return false;
-  const request = Object.freeze({
-    planHash,
-    generationRevision: runtime.previewGenerationRevision ?? 0,
-  });
-  runtime.autoPreviewRequest = request;
-  queueTopologyEditTableAutoPreview(runtime, request);
-  return true;
-}
-
-export async function previewTopologyEditTableRuntime(runtime, options = {}) {
-  const batchPlan = runtime.batchPlan;
-  if (runtime.pending || !batchPlan || runtime.staleResult) return true;
-  const expectedPlanHash = options.expectedPlanHash ?? batchPlan.planHash;
-  const generationRevision = options.generationRevision ?? runtime.previewGenerationRevision ?? 0;
-  const automatic = options.automatic === true;
-  if (batchPlan.planHash !== expectedPlanHash) return true;
+export async function previewTopologyEditTableRuntime(runtime) {
+  if (runtime.pending || !runtime.batchPlan || runtime.staleResult) return true;
   try {
     runtime.pending = true;
     runtime.error = null;
-    const preview = await prepareTopologyEditTablePreview({
+    runtime.preview = await prepareTopologyEditTablePreview({
       session: runtime.controller.session,
-      batchPlan,
+      batchPlan: runtime.batchPlan,
     });
-    if (!previewRequestIsCurrent(runtime, batchPlan, generationRevision)) return true;
-    runtime.preview = preview;
     runtime.validation = null;
     renderTopologyEditTablePreviewGhost(runtime);
-    runtime.message = automatic
-      ? `${runtime.preview.candidate.commandCount} governed command(s) refreshed automatically in non-mutating Preview. Validate explicitly before Apply.`
-      : `${runtime.preview.candidate.commandCount} governed command(s) ready in non-mutating Preview.`;
+    runtime.message = `${runtime.preview.candidate.commandCount} governed command(s) ready in non-mutating Preview.`;
   } catch (error) {
-    if (previewRequestIsCurrent(runtime, batchPlan, generationRevision)) {
-      runtime.error = errorMessage(error);
-    }
+    runtime.error = errorMessage(error);
   } finally {
     runtime.pending = false;
-    if (runtime.preview?.batchPlanHash === runtime.autoPreviewRequest?.planHash) {
-      runtime.autoPreviewRequest = null;
-    }
     runtime.render();
-    flushTopologyEditTableAutoPreview(runtime);
   }
   return true;
 }
@@ -113,7 +80,6 @@ export async function validateTopologyEditTableRuntime(runtime) {
   } finally {
     runtime.pending = false;
     runtime.render();
-    flushTopologyEditTableAutoPreview(runtime);
   }
   return true;
 }
@@ -141,7 +107,6 @@ export async function applyTopologyEditTableRuntime(runtime) {
   } finally {
     runtime.pending = false;
     runtime.render();
-    flushTopologyEditTableAutoPreview(runtime);
   }
   return true;
 }
@@ -211,40 +176,6 @@ export function renderTopologyEditTablePreviewGhost(runtime) {
     governedSupportProjection,
     engineeringSupportProjection,
   });
-}
-
-function queueTopologyEditTableAutoPreview(runtime, request) {
-  if (!request || runtime.autoPreviewQueuedRequest === request) return;
-  runtime.autoPreviewQueuedRequest = request;
-  queueMicrotask(() => {
-    if (runtime.autoPreviewQueuedRequest === request) runtime.autoPreviewQueuedRequest = null;
-    if (runtime.autoPreviewRequest !== request || runtime.pending) return;
-    if (runtime.staleResult
-      || runtime.batchPlan?.planHash !== request.planHash
-      || (runtime.previewGenerationRevision ?? 0) !== request.generationRevision) return;
-    void previewTopologyEditTableRuntime(runtime, {
-      automatic: true,
-      expectedPlanHash: request.planHash,
-      generationRevision: request.generationRevision,
-    });
-  });
-}
-
-function flushTopologyEditTableAutoPreview(runtime) {
-  const request = runtime.autoPreviewRequest;
-  if (!request || runtime.pending) return;
-  if (runtime.preview?.batchPlanHash === request.planHash) {
-    runtime.autoPreviewRequest = null;
-    return;
-  }
-  queueTopologyEditTableAutoPreview(runtime, request);
-}
-
-function previewRequestIsCurrent(runtime, batchPlan, generationRevision) {
-  return runtime.batchPlan?.planHash === batchPlan.planHash
-    && !runtime.staleResult
-    && (runtime.previewGenerationRevision ?? 0) === generationRevision
-    && runtime.controller.session.currentTopology().canonicalTopologyHash === batchPlan.basisHash;
 }
 
 function changedGovernedSupportProjection(projection, changed) {

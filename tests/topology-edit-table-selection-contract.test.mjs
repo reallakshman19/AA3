@@ -32,35 +32,6 @@ function compoundRow(elementType, canonicalKind, canonicalId, fields = {}) {
   };
 }
 
-function nodeRow() {
-  return {
-    rowId: 'table:edge:E-010',
-    elementType: 'PIPE',
-    identity: {
-      canonicalKind: 'EDGE',
-      canonicalId: 'edge:E-010',
-      portBindings: [
-        { endpoint: 'FROM', nodeId: 'node:A', portKey: 'start' },
-        { endpoint: 'TO', nodeId: 'node:B', portKey: 'end' },
-      ],
-    },
-    fields: { tag: 'P-010', lengthMm: 100 },
-    custody: {},
-  };
-}
-
-function nodeTopology(hash = 'canonical-a') {
-  return {
-    canonicalTopologyHash: hash,
-    nodes: [
-      { id: 'node:A', position: { x: 10, y: 20, z: 30 } },
-      { id: 'node:B', position: { x: 110, y: 20, z: 30 } },
-    ],
-    edges: [{ id: 'edge:E-010', fromNodeId: 'node:A', toNodeId: 'node:B' }],
-    supports: [], junctions: [], boundaries: [], rigids: [], bends: [],
-  };
-}
-
 test('shared canonical selection contract authorizes Table origin explicitly', () => {
   assert.ok(TOPOLOGY_EDIT_SELECTION_SOURCES.includes('table'));
   assert.equal(normalizeTopologyEditSelectionSource('TABLE'), 'table');
@@ -133,33 +104,6 @@ test('NEEDS_INPUT valve and tee cells render governed compound affordances only'
   assert.match(teeHtml, /data-table-compound-edit="TEE_REDUCER_RELATION"/);
   assert.doesNotMatch(valveHtml, /data-canonical-id=/);
   assert.doesNotMatch(teeHtml, /data-canonical-id=/);
-});
-
-test('certified node coordinate renders direct input and stale basis remains visible read-only', () => {
-  const row = nodeRow();
-  const topology = nodeTopology();
-  const runtime = {
-    projection: { authority: { canonicalTopologyHash: 'canonical-a' }, rows: [row] },
-    controller: { session: { currentTopology: () => topology } },
-    intents: [],
-    staleResult: null,
-    cellDrafts: new Map(),
-    transientNodeDrafts: {},
-  };
-  const direct = topologyEditTableDirectCellHtml(runtime, row, { key: 'fromX', label: 'From X' });
-  assert.match(direct, /data-table-cell-edit="NODE_POSITION"/);
-  assert.match(direct, /data-table-cell-draft-key="NODE_POSITION:edge:E-010:FROM:X"/);
-  assert.match(direct, /value="10"/);
-  assert.doesNotMatch(direct, /data-table-compound-edit=/);
-
-  const staleRuntime = {
-    ...runtime,
-    controller: { session: { currentTopology: () => nodeTopology('canonical-b') } },
-  };
-  const readOnly = topologyEditTableDirectCellHtml(staleRuntime, row, { key: 'fromX', label: 'From X' });
-  assert.doesNotMatch(readOnly, /<input/);
-  assert.match(readOnly, /data-table-cell-state="blocked"/);
-  assert.match(readOnly, />10<\/td>/);
 });
 
 test('compound cell activation changes exact selection and focus only', async () => {

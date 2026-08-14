@@ -1,0 +1,74 @@
+{
+  "schema": "lafea-b02-edit-invalidation-matrix/v1",
+  "issue": 1112,
+  "stageId": "LAFEA.3",
+  "retentionRule": "Invalidation revokes current authority but never deletes historical mesh, execution, recovery, convergence or qualification receipts.",
+  "domains": [
+    "SOURCE_REVISION",
+    "CANONICAL_MODEL",
+    "MESH_BINDING",
+    "EXECUTION",
+    "RECOVERY",
+    "CONVERGENCE",
+    "CURRENT_EVIDENCE_AUTHORITY"
+  ],
+  "edits": [
+    {
+      "editType": "GEOMETRY",
+      "invalidate": ["SOURCE_REVISION", "CANONICAL_MODEL", "MESH_BINDING", "EXECUTION", "RECOVERY", "CONVERGENCE", "CURRENT_EVIDENCE_AUTHORITY"],
+      "staleHistoryRetained": true,
+      "meshObjectMayBeReused": false
+    },
+    {
+      "editType": "MATERIAL",
+      "invalidate": ["SOURCE_REVISION", "CANONICAL_MODEL", "MESH_BINDING", "EXECUTION", "RECOVERY", "CONVERGENCE", "CURRENT_EVIDENCE_AUTHORITY"],
+      "staleHistoryRetained": true,
+      "meshObjectMayBeReused": true,
+      "reuseRule": "A geometrically unchanged mesh may be rebound only through a new mesh receipt parented to the new source/canonical identities; the prior receipt is stale."
+    },
+    {
+      "editType": "LOAD",
+      "invalidate": ["SOURCE_REVISION", "CANONICAL_MODEL", "MESH_BINDING", "EXECUTION", "RECOVERY", "CONVERGENCE", "CURRENT_EVIDENCE_AUTHORITY"],
+      "staleHistoryRetained": true,
+      "meshObjectMayBeReused": true,
+      "reuseRule": "Rebinding is explicit; an old mesh receipt never silently becomes current for a new source revision."
+    },
+    {
+      "editType": "BOUNDARY_CONDITION",
+      "invalidate": ["SOURCE_REVISION", "CANONICAL_MODEL", "MESH_BINDING", "EXECUTION", "RECOVERY", "CONVERGENCE", "CURRENT_EVIDENCE_AUTHORITY"],
+      "staleHistoryRetained": true,
+      "meshObjectMayBeReused": true,
+      "reuseRule": "Rebinding is explicit and must preserve the canonical DOF/load identities used by assembly and viewport glyphs."
+    },
+    {
+      "editType": "UNITS",
+      "invalidate": ["SOURCE_REVISION", "CANONICAL_MODEL", "MESH_BINDING", "EXECUTION", "RECOVERY", "CONVERGENCE", "CURRENT_EVIDENCE_AUTHORITY"],
+      "staleHistoryRetained": true,
+      "meshObjectMayBeReused": false
+    },
+    {
+      "editType": "SOLVER_SETTINGS",
+      "invalidate": ["EXECUTION", "RECOVERY", "CONVERGENCE", "CURRENT_EVIDENCE_AUTHORITY"],
+      "preserveCurrent": ["SOURCE_REVISION", "CANONICAL_MODEL", "MESH_BINDING"],
+      "staleHistoryRetained": true
+    },
+    {
+      "editType": "MESH_SETTINGS",
+      "invalidate": ["MESH_BINDING", "EXECUTION", "RECOVERY", "CONVERGENCE", "CURRENT_EVIDENCE_AUTHORITY"],
+      "preserveCurrent": ["SOURCE_REVISION", "CANONICAL_MODEL"],
+      "staleHistoryRetained": true
+    },
+    {
+      "editType": "DISPLAY_ONLY_VIEWPORT",
+      "invalidate": [],
+      "preserveCurrent": ["SOURCE_REVISION", "CANONICAL_MODEL", "MESH_BINDING", "EXECUTION", "RECOVERY", "CONVERGENCE", "CURRENT_EVIDENCE_AUTHORITY"],
+      "staleHistoryRetained": true,
+      "authorityRule": "Camera, pan, zoom, visibility and display interpolation state may not mutate authoritative engineering state."
+    }
+  ],
+  "qualificationRule": {
+    "historicalPassReceiptRetained": true,
+    "historicalPassGrantsCurrentAuthorityAfterGoverningEdit": false,
+    "currentAuthorityRequiresCurrentParents": true
+  }
+}

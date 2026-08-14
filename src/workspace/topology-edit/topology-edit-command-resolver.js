@@ -13,9 +13,6 @@ import {
   assertTopologyEditInlineReplacementTarget,
 } from './topology-edit-inline-component-replacement.js';
 import {
-  assertTopologyEditPipeSpecificationRebindTarget,
-} from './topology-edit-pipe-specification-rebind.js';
-import {
   assertTopologyEditJunctionRelationTarget,
 } from './topology-edit-junction-relation-command.js';
 import {
@@ -147,13 +144,6 @@ function resolveReplacement(topology, request) {
     nodeTarget(topology, validated.to.id, 'TO'),
   ], [edgeTarget(topology, validated.edge.id, 'REPLACED_COMPONENT')]);
 }
-function resolvePipeSpecificationRebind(topology, request) {
-  const validated = assertTopologyEditPipeSpecificationRebindTarget(topology, request.payload);
-  return targets([
-    nodeTarget(topology, validated.from.id, 'FROM'),
-    nodeTarget(topology, validated.to.id, 'TO'),
-  ], [edgeTarget(topology, validated.edge.id, 'PIPE_SPECIFICATION')]);
-}
 function resolveJunctionRelation(topology, request) {
   const validated = assertTopologyEditJunctionRelationTarget(topology, request.payload);
   const nodeIds = [
@@ -258,7 +248,6 @@ const TARGET_RESOLVERS = Object.freeze({
   ADD_STRAIGHT_ELEMENT: resolveAddedEdge, SPLIT_EDGE: resolveSplit,
   INSERT_INLINE_COMPONENT: resolveInline,
   REPLACE_INLINE_COMPONENT: resolveReplacement,
-  REBIND_PIPE_SPECIFICATION: resolvePipeSpecificationRebind,
   UPDATE_JUNCTION_BRANCH_RELATION: resolveJunctionRelation,
   UPDATE_SUPPORT_PLACEMENT: resolveTopologyEditSupportPlacementTargets,
   UPDATE_SUPPORT_RESTRAINT: resolveTopologyEditSupportRestraintTargets,

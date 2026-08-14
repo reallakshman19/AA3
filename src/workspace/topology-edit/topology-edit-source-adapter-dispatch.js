@@ -1,9 +1,6 @@
 import { deepFreeze, semanticHash, stringValue } from '../../core/shared-piping-model/index.js';
 import { finalizeCanonicalTopology } from './topology-edit-canonical-state.js';
 import {
-  assertPipeSegmentCatalogueBinding,
-} from './topology-edit-pipe-segment-contract.js';
-import {
   applyCanonicalTopologyToWorkspaceEntities as applyLegacyWriteback,
   buildCanonicalTopologyFromWorkspaceDataset as buildLegacyCanonicalTopology,
 } from './topology-edit-source-adapter.js';
@@ -26,7 +23,6 @@ const AUDIT = Object.freeze({
   command: 'TOPOLOGY_EDIT_SUPPORT_PLACEMENT_COMMAND_ID',
   hash: 'TOPOLOGY_EDIT_SUPPORT_PLACEMENT_HASH',
 });
-const PIPE_SPECIFICATION_AUTHORITY = 'CERTIFIED_EXACT_PIPE_CATALOGUE_RECORD';
 const EPSILON = 1e-9;
 
 export function buildCanonicalTopologyFromWorkspaceDataset(
@@ -41,10 +37,7 @@ export function buildCanonicalTopologyFromWorkspaceDataset(
     attachmentModel,
     restraintModel,
   );
-  const canonical = retainExactPipeSpecificationRebind(
-    retainExactSupportAttachmentPlacement(legacyCanonical, attachmentModel),
-    dataset,
-  );
+  const canonical = retainExactSupportAttachmentPlacement(legacyCanonical, attachmentModel);
   const entities = new Map((dataset?.entities ?? []).map((entity) => [entity.entityId, entity]));
   const audited = (canonical.supports ?? []).filter((support) => (
     entityAttributes(entities.get(support.entityId))?.[AUDIT.authority]
@@ -88,65 +81,6 @@ export function buildCanonicalTopologyFromWorkspaceDataset(
     target.topologyOperation = 'UPDATE_SUPPORT_PLACEMENT';
   }
   return finalizeCanonicalTopology(draft);
-}
-
-function retainExactPipeSpecificationRebind(canonical, dataset) {
-  const entities = new Map((dataset?.entities ?? []).map((entity) => [entity.entityId, entity]));
-  let changed = false;
-  const edges = (canonical.edges ?? []).map((edge) => {
-    const entity = entities.get(edge.componentKey);
-    const audit = entity?.properties?.nativeParams?.pipeSpecificationRebind;
-    if (audit?.authority !== PIPE_SPECIFICATION_AUTHORITY) return edge;
-    const binding = assertPipeSegmentCatalogueBinding(audit.catalogueBinding);
-    assertPersistedPipeSpecification(entity, binding);
-    changed = true;
-    return {
-      ...edge,
-      diameterMm: binding.nominalSizeMm,
-      nominalSizeMm: binding.nominalSizeMm,
-      outsideDiameterMm: binding.outsideDiameterMm,
-      diameterAuthority: 'OUTSIDE_DIAMETER',
-      schedule: binding.schedule,
-      wallThicknessMm: binding.wallThicknessMm,
-      materialSpecification: binding.materialSpecification,
-      pipingClass: binding.pipingClass,
-      pressureClass: binding.pressureClass,
-      endConnectionFrom: binding.endConnectionFrom,
-      endConnectionTo: binding.endConnectionTo,
-      catalogueBinding: binding,
-      catalogueId: binding.catalogueId,
-      catalogueVersion: binding.catalogueVersion,
-      catalogueHash: binding.catalogueHash,
-      catalogueSourceHash: binding.catalogueSourceHash,
-      catalogueRecordId: binding.recordId,
-      catalogueRecordHash: binding.recordHash,
-      catalogueSourceReference: binding.sourceReference,
-      topologyOperation: 'REBIND_PIPE_SPECIFICATION',
-      lastModifiedByCommandId: requiredText(audit.commandId, 'pipe specification commandId'),
-    };
-  });
-  return changed ? finalizeCanonicalTopology({ ...canonical, edges }) : canonical;
-}
-
-function assertPersistedPipeSpecification(entity, binding) {
-  assertOptionalNumber(entity?.nominalDiameterMm, binding.nominalSizeMm, 'nominalDiameterMm');
-  assertOptionalNumber(entity?.outsideDiameterMm, binding.outsideDiameterMm, 'outsideDiameterMm');
-  const attributes = entityAttributes(entity) ?? {};
-  const numeric = [
-    ['NOMINAL_DIAMETER_MM', binding.nominalSizeMm],
-    ['OUTSIDE_DIAMETER_MM', binding.outsideDiameterMm],
-    ['WALL_THICKNESS_MM', binding.wallThicknessMm],
-  ];
-  for (const [key, expected] of numeric) assertOptionalNumber(attributes[key], expected, key);
-  const text = [
-    ['SCHEDULE', binding.schedule],
-    ['MATERIAL_SPECIFICATION', binding.materialSpecification],
-    ['PIPING_CLASS', binding.pipingClass],
-    ['PRESSURE_CLASS', binding.pressureClass],
-    ['END_CONNECTION_FROM', binding.endConnectionFrom],
-    ['END_CONNECTION_TO', binding.endConnectionTo],
-  ];
-  for (const [key, expected] of text) assertOptionalText(attributes[key], expected, key);
 }
 
 function retainExactSupportAttachmentPlacement(canonical, attachmentModel) {
@@ -207,25 +141,15 @@ export function applyCanonicalTopologyToWorkspaceEntities(
   );
   const result = new Map(legacy.map((entity) => [entity.entityId, entity]));
   for (const edge of editedCanonicalTopology.edges ?? []) {
-    if (isNewNativePipe(edge, dataset, baseCanonicalTopology)) {
-      result.delete(legacyEditEntityId(dataset, editSessionId, edge.id));
-      const nativeEntity = createNativePipeWorkspaceEntity(editedCanonicalTopology, edge.id);
-      if (result.has(nativeEntity.entityId)) {
-        throw new Error(
-          `TopologyEditSourceAdapterDispatch: duplicate native entity ${nativeEntity.entityId}.`,
-        );
-      }
-      result.set(nativeEntity.entityId, nativeEntity);
-      continue;
-    }
-    if (edge.topologyOperation !== 'REBIND_PIPE_SPECIFICATION') continue;
-    const entity = result.get(edge.componentKey);
-    if (!entity) {
+    if (!isNewNativePipe(edge, dataset, baseCanonicalTopology)) continue;
+    result.delete(legacyEditEntityId(dataset, editSessionId, edge.id));
+    const nativeEntity = createNativePipeWorkspaceEntity(editedCanonicalTopology, edge.id);
+    if (result.has(nativeEntity.entityId)) {
       throw new Error(
-        `TopologyEditSourceAdapterDispatch: PIPE entity ${edge.componentKey} is unavailable for specification writeback.`,
+        `TopologyEditSourceAdapterDispatch: duplicate native entity ${nativeEntity.entityId}.`,
       );
     }
-    result.set(entity.entityId, pipeSpecificationEntity(entity, edge, editSessionId));
+    result.set(nativeEntity.entityId, nativeEntity);
   }
   for (const support of editedCanonicalTopology.supports ?? []) {
     const override = support.placementOverride;
@@ -241,49 +165,6 @@ export function applyCanonicalTopologyToWorkspaceEntities(
     result.set(entity.entityId, supportPlacementEntity(entity, support, origin, editSessionId));
   }
   return [...result.values()];
-}
-
-function pipeSpecificationEntity(entity, edge, editSessionId) {
-  const binding = assertPipeSegmentCatalogueBinding(edge.catalogueBinding);
-  const commandId = requiredText(edge.lastModifiedByCommandId, 'pipe specification commandId');
-  return deepFreeze({
-    ...entity,
-    nominalDiameterMm: binding.nominalSizeMm,
-    outsideDiameterMm: binding.outsideDiameterMm,
-    properties: {
-      ...entity.properties,
-      nativeParams: {
-        ...entity.properties?.nativeParams,
-        catalogue: {
-          catalogueId: binding.catalogueId,
-          catalogueVersion: binding.catalogueVersion,
-          catalogueHash: binding.catalogueHash,
-          catalogueSourceHash: binding.catalogueSourceHash,
-          recordId: binding.recordId,
-          recordHash: binding.recordHash,
-          sourceReference: binding.sourceReference,
-        },
-        pipeSpecificationRebind: {
-          authority: PIPE_SPECIFICATION_AUTHORITY,
-          commandId,
-          catalogueBinding: binding,
-        },
-      },
-      attributes: {
-        ...entity.properties?.attributes,
-        TOPOLOGY_EDIT_SESSION_ID: editSessionId,
-        NOMINAL_DIAMETER_MM: binding.nominalSizeMm,
-        OUTSIDE_DIAMETER_MM: binding.outsideDiameterMm,
-        WALL_THICKNESS_MM: binding.wallThicknessMm,
-        SCHEDULE: binding.schedule,
-        MATERIAL_SPECIFICATION: binding.materialSpecification,
-        PIPING_CLASS: binding.pipingClass,
-        PRESSURE_CLASS: binding.pressureClass,
-        END_CONNECTION_FROM: binding.endConnectionFrom,
-        END_CONNECTION_TO: binding.endConnectionTo,
-      },
-    },
-  });
 }
 
 function supportPlacementEntity(entity, support, origin, editSessionId) {
@@ -343,19 +224,6 @@ function requiredText(value, label) {
   const text = stringValue(value);
   if (!text) throw new TypeError(`TopologyEditSourceAdapterDispatch: ${label} is required.`);
   return text;
-}
-function assertOptionalNumber(actual, expected, label) {
-  if (actual === null || actual === undefined || actual === '') return;
-  const number = Number(actual);
-  if (!Number.isFinite(number) || Math.abs(number - Number(expected)) > EPSILON) {
-    throw new Error(`TopologyEditSourceAdapterDispatch: persisted ${label} differs from exact PIPE catalogue binding.`);
-  }
-}
-function assertOptionalText(actual, expected, label) {
-  if (actual === null || actual === undefined || actual === '') return;
-  if (stringValue(actual).toUpperCase() !== stringValue(expected).toUpperCase()) {
-    throw new Error(`TopologyEditSourceAdapterDispatch: persisted ${label} differs from exact PIPE catalogue binding.`);
-  }
 }
 function pointDistance(left, right) {
   return Math.hypot(right.x - left.x, right.y - left.y, right.z - left.z);

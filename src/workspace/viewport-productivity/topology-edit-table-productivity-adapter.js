@@ -1,8 +1,5 @@
 import { TopologyEditTableRuntime } from './topology-edit-table-runtime.js';
 import { TopologyEditTableCanvasCoordinator } from './topology-edit-table-canvas-coordinator.js';
-import {
-  handleTopologyEditTableXyzPaste,
-} from './topology-edit-table-xyz-clipboard.js';
 
 const TABLE_Z_INDEX = 90;
 const MIN_VISIBLE_TITLE_PX = 44;
@@ -25,7 +22,6 @@ export class TopologyEditTableProductivityAdapter {
     this.onSummaryPointerUp = (event) => this.endDrag(event);
     this.onSummaryClick = (event) => this.handleSummaryClick(event);
     this.onToggle = () => this.handleToggle();
-    this.onPaste = (event) => handleTopologyEditTableXyzPaste(this.runtime, event);
   }
 
   mount() {
@@ -46,7 +42,6 @@ export class TopologyEditTableProductivityAdapter {
     this.summary.addEventListener('pointercancel', this.onSummaryPointerUp);
     this.summary.addEventListener('click', this.onSummaryClick, true);
     this.details.addEventListener('toggle', this.onToggle);
-    this.section.addEventListener('paste', this.onPaste);
     this.runtime.mount(this.section);
     const canonical = this.controller.session?.currentTopology?.();
     if (canonical) this.coordinator.canonicalChanged(canonical);
@@ -188,7 +183,6 @@ export class TopologyEditTableProductivityAdapter {
     this.summary?.removeEventListener('pointercancel', this.onSummaryPointerUp);
     this.summary?.removeEventListener('click', this.onSummaryClick, true);
     this.details?.removeEventListener('toggle', this.onToggle);
-    this.section?.removeEventListener('paste', this.onPaste);
     this.details?.remove();
     this.details = null;
     this.summary = null;

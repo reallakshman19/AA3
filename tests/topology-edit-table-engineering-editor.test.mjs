@@ -1,9 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {
-  createPipeSegmentCatalogueBinding,
-} from '../src/workspace/topology-edit/topology-edit-pipe-segment-contract.js';
-import {
   createTopologyEditSpecificationCatalogue,
 } from '../src/workspace/topology-edit/professional/topology-edit-spec-catalog.js';
 import {
@@ -24,13 +21,10 @@ const CATALOGUE = createTopologyEditSpecificationCatalogue({
   records: [
     valveRecord('BALL-DN80', 80, 'PCL-80', 300),
     valveRecord('BALL-DN100', 100, 'PCL-100', 400),
-    pipeRecord('PIPE-DN100-SCH40', 100, 114.3, 'SCH40', 6.02, 'A106-B', 'PCL-100'),
-    pipeRecord('PIPE-DN100-SCH80', 100, 114.3, 'SCH80', 8.56, 'A333-6', 'PCL-100'),
   ],
 });
 const BALL_RECORD = CATALOGUE.records.find((record) => record.recordId === 'BALL-DN80');
 const BALL = Object.freeze(topologyEditInlineCatalogueBinding(CATALOGUE, BALL_RECORD));
-const PIPE_BINDING = createPipeSegmentCatalogueBinding({ catalogue: CATALOGUE, recordId: 'PIPE-DN100-SCH80' });
 
 function valveRecord(recordId, nominalSizeMm, pipingClass, valveFaceToFaceMm) {
   return {
@@ -41,28 +35,6 @@ function valveRecord(recordId, nominalSizeMm, pipingClass, valveFaceToFaceMm) {
     endConnectionFrom: 'FLANGED', endConnectionTo: 'FLANGED',
     valveType: 'BALL', valveFaceToFaceMm, pipingClass,
     sourceReference: { documentId: 'EDITOR-SPEC', revision: '1', path: `/valve/${recordId}` },
-  };
-}
-function pipeRecord(recordId, nominalSizeMm, outsideDiameterMm, schedule, wallThicknessMm,
-  materialSpecification, pipingClass) {
-  return {
-    recordId, componentType: 'PIPE', nominalSizeMm, outsideDiameterMm,
-    schedule, wallThicknessMm, materialSpecification, pipingClass,
-    pressureClass: '150', endConnectionFrom: 'BW', endConnectionTo: 'BW',
-    sourceReference: { documentId: 'EDITOR-SPEC', revision: '1', path: `/pipe/${recordId}` },
-  };
-}
-function pipeRow() {
-  return {
-    elementType: 'PIPE', targetRevision: 'sha256:pipe-r1',
-    identity: { canonicalKind: 'EDGE', canonicalId: 'edge:pipe', nodeIds: [], portBindings: [] },
-    fields: {
-      tag: 'P-101', lengthMm: 1000, dnInMm: 100, dnOutMm: 100,
-      outsideDiameterMm: 114.3, wallThicknessMm: 6.02, insideDiameterMm: 102.26,
-      schedule: 'SCH40', material: 'A106-B', pipingClass: 'PCL-100', pressureClass: '150',
-      endConnectionFrom: 'BW', endConnectionTo: 'BW', catalogueRecordId: null,
-    },
-    custody: { sourceStatus: 'IMPORTED', catalogueAuthority: 'UNRESOLVED', catalogue: null },
   };
 }
 function valveRow(type = 'GATE') {
@@ -105,31 +77,6 @@ function reducerRow(exact = true) {
   };
 }
 
-test('PIPE editor uses one exact record for DN/schedule/material/class and never exposes OD/wall free text', () => {
-  const html = renderTopologyEditTableEngineeringEditor(pipeRow(), [], { rows: [] }, CATALOGUE, null);
-  assert.match(html, /data-table-edit-pipe-catalogue-record/);
-  assert.match(html, /PIPE-DN100-SCH40/);
-  assert.match(html, /PIPE-DN100-SCH80/);
-  assert.match(html, /Stage specification/);
-  assert.match(html, /OD 114\.3 mm · Wall 6\.02 mm · ID 102\.26 mm/);
-  assert.match(html, /OD, wall and derived ID are never free-typed/);
-  assert.doesNotMatch(html, /data-table-edit-(?:outside-diameter|wall-thickness)/);
-  assert.doesNotMatch(html, /textarea/);
-
-  const staged = renderTopologyEditTableEngineeringEditor(pipeRow(), [
-    {
-      intentKind: 'PIPE_LENGTH', requestedValue: { lengthMm: 1250 },
-      geometryPolicy: { anchor: 'TO', propagation: 'UPSTREAM' },
-    },
-    { intentKind: 'PIPE_SPECIFICATION', requestedValue: { catalogueBinding: PIPE_BINDING } },
-  ], { rows: [] }, CATALOGUE, null);
-  assert.match(staged, /data-table-edit-length value="1250"/);
-  assert.match(staged, /value="PIPE-DN100-SCH80" selected/);
-  assert.match(staged, /OD 114\.3 mm · Wall 8\.56 mm · ID 97\.18 mm/);
-  assert.match(staged, /<option selected>TO<\/option>/);
-  assert.match(staged, /<option selected>UPSTREAM<\/option>/);
-});
-
 test('M06 editor selects compatible immutable BALL records and exposes no catalogue free text', () => {
   const empty = renderTopologyEditTableEngineeringEditor(valveRow(), null, { rows: [] }, CATALOGUE);
   assert.match(empty, /data-table-edit-valve-catalogue-record/);
@@ -168,11 +115,7 @@ test('M10 editor exposes explicit branch ports and only exact-custody reducer ro
   assert.match(html, /No branch role or reducer size is guessed/);
 });
 
-test('staged descriptions disclose exact PIPE, M06 and M10 engineering intent', () => {
-  assert.match(describeTopologyEditTableIntent({
-    intentKind: 'PIPE_SPECIFICATION', priorValue: { catalogueRecordId: 'PIPE-DN100-SCH40' },
-    requestedValue: { catalogueBinding: PIPE_BINDING },
-  }), /PIPE-DN100-SCH40 → PIPE-DN100-SCH80 · DN 100 · SCH80 · A333-6 · PCL-100/);
+test('staged descriptions disclose exact M06 and M10 engineering intent', () => {
   assert.match(describeTopologyEditTableIntent({
     intentKind: 'VALVE_REPLACEMENT', priorValue: { valveType: 'GATE', lengthMm: 200 },
     requestedValue: { catalogueBinding: BALL }, geometryPolicy: { anchor: 'FROM', propagation: 'DOWNSTREAM' },

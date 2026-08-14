@@ -76,39 +76,8 @@ function junctionRow(record, context) {
   const bindings = junctionBindings(record, context);
   const custody = buildTopologyEditTableCustody({ dataset: context.dataset, entity, canonicalRecord: record });
   const packed = commonFields(record, entity, type, custody);
-  const relation = record.branchRelation ?? null;
-  addSourceField(
-    packed,
-    'runDnMm',
-    relation?.runNominalSizeMm ?? record.runDiameterMm ?? entity?.nominalDiameterMm,
-    entity,
-    ['RUN_DN', 'RUN_DIAMETER'],
-  );
-  addSourceField(
-    packed,
-    'branchDnMm',
-    relation?.teeBranchNominalSizeMm ?? record.branchDiameterMm,
-    entity,
-    ['BRANCH_DN', 'BRANCH_DIAMETER'],
-  );
-  add(
-    packed,
-    'downstreamDnMm',
-    relation?.downstreamNominalSizeMm ?? null,
-    relation?.downstreamNominalSizeMm != null ? 'CANONICAL' : 'UNRESOLVED',
-  );
-  add(
-    packed,
-    'branchPortKey',
-    relation?.branchPortKey ?? record.branchPortKey ?? null,
-    relation?.branchPortKey || record.branchPortKey ? 'CANONICAL' : 'UNRESOLVED',
-  );
-  add(
-    packed,
-    'reducerCanonicalId',
-    relation?.reducerEdgeId ?? null,
-    relation?.reducerEdgeId ? 'CANONICAL' : 'UNRESOLVED',
-  );
+  addSourceField(packed, 'runDnMm', entity?.nominalDiameterMm, entity, ['RUN_DN', 'RUN_DIAMETER']);
+  addSourceField(packed, 'branchDnMm', record.branchDiameterMm, entity, ['BRANCH_DN', 'BRANCH_DIAMETER']);
   addSourceField(packed, 'branchAngleDeg', record.branchAngleDeg, entity, ['BRANCH_ANGLE', 'ANGLE']);
   return rowRecord({
     canonicalKind: 'JUNCTION', canonicalId: record.id, type, entity, record,

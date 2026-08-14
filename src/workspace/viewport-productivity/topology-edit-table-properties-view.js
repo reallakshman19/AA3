@@ -2,17 +2,8 @@ import {
   topologyEditTableColumnsFor,
 } from '../topology-edit/table/topology-edit-table-columns.js';
 import {
-  topologyEditTableColumnProfile,
-} from '../topology-edit/table/topology-edit-table-column-profiles.js';
-import {
   deriveTopologyEditTableCellCapability,
 } from '../topology-edit/table/topology-edit-table-edit-capability.js';
-import {
-  isTopologyEditTableResolvedEngineeringKey,
-  isTopologyEditTableVirtualGeometryKey,
-  topologyEditTableResolvedEngineeringFields,
-  topologyEditTableVirtualGeometryFields,
-} from '../topology-edit/table/topology-edit-table-virtual-geometry.js';
 import {
   renderTopologyEditTableNodePositionEditor,
 } from './topology-edit-table-engineering-editor.js';
@@ -25,7 +16,7 @@ import {
 
 const TYPE_ORDER = ['PIPE', 'ELBOW', 'FLANGE', 'VALVE', 'TEE', 'REDUCER', 'SUPPORT', 'COMPONENT', 'JUNCTION'];
 
-export function topologyEditTableVisibleColumns(projection, profileInput = 'ALL') {
+export function topologyEditTableVisibleColumns(projection) {
   const rows = projection?.rows ?? [];
   const seen = new Map();
   addDescriptors(seen, topologyEditTableColumnsFor('COMPONENT'));
@@ -41,33 +32,21 @@ export function topologyEditTableVisibleColumns(projection, profileInput = 'ALL'
       if (!seen.has(key)) seen.set(key, fallbackDescriptor(key));
     }
   }
-  const all = [...seen.values()];
-  const profile = String(profileInput ?? 'ALL').trim().toUpperCase();
-  if (profile === 'ALL') return all;
-  const allowed = new Set(topologyEditTableColumnProfile(profile, [...present]).columnKeys);
-  return all.filter((column) => allowed.has(column.key));
+  return [...seen.values()];
 }
 
 export function renderTopologyEditTableAllProperties(row, runtime) {
   if (!row) return '';
   const descriptors = descriptorMap(row.elementType);
   const fieldKeys = orderedFieldKeys(row, descriptors);
-  const topology = runtime?.controller?.session?.currentTopology?.();
-  const virtual = topologyEditTableVirtualGeometryFields(
-    row,
-    topology,
-    runtime?.transientNodeDrafts ?? {},
-  );
-  const resolved = topologyEditTableResolvedEngineeringFields(row, topology);
   const projected = fieldKeys.map((key) => ({
     label: descriptors.get(key)?.label ?? humanLabel(key),
-    value: displayFieldValue(row, key, virtual, resolved),
-    authority: displayFieldAuthority(row, key, virtual, resolved),
+    value: row.fields?.[key],
+    authority: row.fieldAuthority?.[key] ?? 'UNRESOLVED',
     capability: deriveTopologyEditTableCellCapability({
       row,
       columnKey: key,
       projection: runtime?.projection,
-      canonicalTopology: topology,
     }),
   }));
   const identity = [
@@ -113,22 +92,6 @@ function propertyTable(title, rows, showCapability = false) {
   </details>`;
 }
 
-function displayFieldValue(row, key, virtual, resolved) {
-  if (isTopologyEditTableVirtualGeometryKey(key)) return virtual[key];
-  if (isTopologyEditTableResolvedEngineeringKey(key)) return resolved[key];
-  return row.fields?.[key];
-}
-function displayFieldAuthority(row, key, virtual, resolved) {
-  if (isTopologyEditTableVirtualGeometryKey(key)) return virtualAuthority(key, virtual[key]);
-  if (isTopologyEditTableResolvedEngineeringKey(key)) return resolvedAuthority(key, resolved[key]);
-  return row.fieldAuthority?.[key] ?? 'UNRESOLVED';
-}
-function resolvedAuthority(key, value) {
-  if (value === null || value === undefined) return 'UNRESOLVED';
-  if (key === 'insideDiameterMm') return 'DERIVED_DISPLAY';
-  if (key === 'catalogueRecordId') return 'EXACT_CATALOGUE';
-  return 'CANONICAL';
-}
 function stagedIntentFor(runtime, row) {
   return (runtime?.intents ?? []).find((intent) => intent.target?.canonicalId === row.identity?.canonicalId) ?? null;
 }
@@ -188,10 +151,6 @@ function orderedFieldKeys(row, descriptors) {
   return result;
 }
 
-function virtualAuthority(key, value) {
-  if (value === null || value === undefined) return 'UNRESOLVED';
-  return key.startsWith('delta') ? 'DERIVED_DISPLAY' : 'CANONICAL';
-}
 function capabilityText(capability) {
   if (!capability) return 'READ_ONLY';
   if (capability.status === 'AVAILABLE') return 'AVAILABLE';

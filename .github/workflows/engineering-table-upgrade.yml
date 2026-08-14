@@ -9,6 +9,7 @@ on:
       - 'src/workspace/topology-edit/topology-edit-pipe-specification-rebind.js'
       - 'src/workspace/topology-edit/topology-edit-command-contract.js'
       - 'src/workspace/topology-edit/topology-edit-command-resolver.js'
+      - 'src/workspace/topology-edit/topology-edit-command-effect-dispatch.js'
       - 'src/workspace/topology-edit/topology-edit-pure-reducer-dispatch.js'
       - 'src/workspace/topology-edit/topology-edit-source-adapter-dispatch.js'
       - 'tests/topology-edit-table-*.test.mjs'
@@ -46,6 +47,7 @@ jobs:
           node --check src/workspace/topology-edit/topology-edit-pipe-specification-rebind.js
           node --check src/workspace/topology-edit/topology-edit-command-contract.js
           node --check src/workspace/topology-edit/topology-edit-command-resolver.js
+          node --check src/workspace/topology-edit/topology-edit-command-effect-dispatch.js
           node --check src/workspace/topology-edit/topology-edit-pure-reducer-dispatch.js
           node --check src/workspace/topology-edit/topology-edit-source-adapter-dispatch.js
           node --check src/workspace/topology-edit/table/topology-edit-table-pipe-catalogue.js

@@ -12,7 +12,8 @@ const PROFILE_KEYS = Object.freeze({
   ]),
   SPECIFICATION: Object.freeze([
     'tag', 'elementType', 'line',
-    'dnInMm', 'dnOutMm', 'schedule', 'material', 'pipingClass', 'pressureClass',
+    'dnInMm', 'dnOutMm', 'outsideDiameterMm', 'wallThicknessMm', 'insideDiameterMm',
+    'schedule', 'material', 'pipingClass', 'pressureClass', 'catalogueRecordId',
     'flangeType', 'flangeFacing', 'rating', 'valveType',
     'reducerType', 'reducerOrientation', 'runDnMm', 'branchDnMm', 'downstreamDnMm',
   ]),
@@ -34,9 +35,7 @@ const PROFILE_KEYS = Object.freeze({
 
 export const TOPOLOGY_EDIT_TABLE_TARGET_FIELD_GAPS = deepFreeze({
   GEOMETRY: [],
-  SPECIFICATION: [
-    'outsideDiameterMm', 'wallThicknessMm', 'insideDiameterMm', 'catalogueRecordId',
-  ],
+  SPECIFICATION: [],
   SUPPORT: [
     'hostEdgeId', 'supportX', 'supportY', 'supportZ',
   ],

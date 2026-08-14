@@ -514,6 +514,8 @@ function renderSourceSummary(doc, root, controller) {
   }
   root.append(table);
 
+  renderUnitDiagnostics(doc, root, controller.inspection);
+
   if (controller.preFlight) {
     const findings = controller.preFlight.preparation.findings
       .filter((row) => row.disposition !== 'PASS');
@@ -540,6 +542,44 @@ function renderSourceSummary(doc, root, controller) {
   execution.dataset.role = 'linear-piping-inputxml-execution-boundary';
   execution.textContent = 'Execution custody: NOT CONNECTED in P-07/P-08. This source/pre-flight surface never fabricates a legacy run-request JSON or downstream load authority.';
   root.append(execution);
+}
+
+/**
+ * Render the per-tag unit diagnostics behind a BLOCK.
+ *
+ * Without this the panel says only "the unit declaration is invalid" and the
+ * reader has no way to learn WHICH `<UNITS>` tag failed, what label it
+ * carried, or what factor was expected — which makes an otherwise one-line
+ * source problem undiagnosable from the UI.
+ */
+function renderUnitDiagnostics(doc, root, inspection) {
+  const diagnostics = inspection?.unitDiagnostics ?? [];
+  if (diagnostics.length === 0) return;
+  const blocking = diagnostics.filter((row) => row.severity === 'error');
+  const section = doc.createElement('div');
+  section.dataset.role = 'linear-piping-inputxml-unit-diagnostics';
+
+  const heading = doc.createElement('strong');
+  heading.textContent = blocking.length > 0
+    ? `Blocking <UNITS> declarations — ${blocking.length}`
+    : `<UNITS> notes — ${diagnostics.length}`;
+  section.append(heading);
+
+  const list = doc.createElement('ul');
+  for (const row of diagnostics) {
+    const item = doc.createElement('li');
+    item.dataset.severity = row.severity;
+    const tag = row.data?.tagName ? `<${row.data.tagName}> ` : '';
+    const detail = [];
+    if (row.data?.label !== undefined) detail.push(`label ${JSON.stringify(row.data.label)}`);
+    if (row.data?.factor !== undefined) detail.push(`declared factor ${row.data.factor}`);
+    if (row.data?.expectedFactor !== undefined) detail.push(`expected ${row.data.expectedFactor}`);
+    item.textContent = `${row.severity.toUpperCase()} · ${tag}${row.code} — ${row.message}`
+      + (detail.length > 0 ? ` (${detail.join('; ')})` : '');
+    list.append(item);
+  }
+  section.append(list);
+  root.append(section);
 }
 
 function retainSourceInput(value) {

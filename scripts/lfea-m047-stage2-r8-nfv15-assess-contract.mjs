@@ -64,6 +64,8 @@ assert.equal(pass.productionPromotionAuthorized, false);
 assert.equal(pass.summary.tangentialWithinGoalDelta, 1);
 assert.equal(pass.summary.normalWithinGoalDelta, 0);
 assert.equal(pass.summary.regimeComparison, 'NOT_GOVERNED_FROM_FINAL_NORMAL_UNDER_NFV15');
+assert.equal(pass.gates.completeMetricSet, true);
+assert.equal(pass.gates.nfvLedgerComplete, true);
 
 assert.throws(
   () => assessR8Nfv15({
@@ -91,6 +93,54 @@ const noEq = assessR8Nfv15({
 });
 assert.equal(noEq.nomination, 'REJECT_R8_MEASUREMENT_PHYSICS_OR_CUSTODY_GATE_FAILED');
 
+const nonconverged = assessR8Nfv15({
+  baseline,
+  experiment: {
+    ...candidate,
+    runs: [{ converged: false, failure: { code: 'CAESAR_ACCDB_FRICTION_NOT_CONVERGED', iterationCount: 800 } }],
+    determinism: { status: 'NOT_RUN', requestedRuns: 1, completedConvergedRuns: 0 },
+  },
+});
+assert.equal(nonconverged.nomination, 'REJECT_R8_MEASUREMENT_PHYSICS_OR_CUSTODY_GATE_FAILED');
+assert.equal(nonconverged.gates.converged, false);
+assert.equal(nonconverged.summary.comparedRestraints, 0);
+assert.equal(nonconverged.failure.code, 'CAESAR_ACCDB_FRICTION_NOT_CONVERGED');
+
+const missingMetric = assessR8Nfv15({
+  baseline,
+  experiment: {
+    ...candidate,
+    runs: [{
+      ...candidate.runs[0],
+      frictionRestraints: [{
+        ...candidate.runs[0].frictionRestraints[0],
+        tangential: { vectorRelativeError: null },
+      }],
+    }],
+  },
+});
+assert.equal(missingMetric.gates.completeMetricSet, false);
+assert.equal(missingMetric.nomination, 'REJECT_R8_MEASUREMENT_PHYSICS_OR_CUSTODY_GATE_FAILED');
+
+const missingLedger = assessR8Nfv15({
+  baseline,
+  experiment: {
+    ...candidate,
+    runs: [{
+      ...candidate.runs[0],
+      frictionRestraints: [{
+        ...candidate.runs[0].frictionRestraints[0],
+        retainedNormalMechanic: {
+          ...candidate.runs[0].frictionRestraints[0].retainedNormalMechanic,
+          currentNormalDiagnosticCapacityN: null,
+        },
+      }],
+    }],
+  },
+});
+assert.equal(missingLedger.gates.nfvLedgerComplete, false);
+assert.equal(missingLedger.nomination, 'REJECT_R8_MEASUREMENT_PHYSICS_OR_CUSTODY_GATE_FAILED');
+
 const l7 = assessR8Nfv15({
   baseline: { ...baseline, caseId: 'L7' },
   experiment: { ...candidate, caseId: 'L7' },
@@ -98,13 +148,16 @@ const l7 = assessR8Nfv15({
 assert.equal(l7.nextGate, 'RECONSTRUCT_R8_L15_EXACTLY_AS_L7_MINUS_L13');
 
 process.stdout.write(`${JSON.stringify({
-  schema: 'm047-r8-nfv15-assessor-contract/v2',
+  schema: 'm047-r8-nfv15-assessor-contract/v3',
   status: 'PASS',
   checks: [
     'real_artifact_shape_positive_nomination',
     'threshold_fail_closed',
     'production_boundary_fail_closed',
     'equilibrium_fail_closed',
+    'nonconvergence_is_clean_rejection_not_assessor_crash',
+    'incomplete_accuracy_metrics_fail_closed',
+    'incomplete_nfv_ledger_fails_closed',
     'governed_L13_to_L7_to_L15_sequence',
   ],
 }, null, 2)}\n`);

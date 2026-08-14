@@ -21,7 +21,7 @@ test('PIPE length paste requires visible explicit geometry policy and stages wit
   expect(canonicalId).toBeTruthy();
   const select = row.locator('[data-table-select]');
   if ((await select.getAttribute('aria-pressed')) !== 'true') await select.click();
-  await expect(table.locator('[data-table-editor-id]').filter({ has: table.locator('[data-table-edit-length]') })).toBeVisible();
+  await expect(table.locator('[data-table-editor-id] [data-table-edit-length]')).toBeVisible();
 
   const anchor = table.locator('[data-table-edit-anchor]');
   const propagation = table.locator('[data-table-edit-propagation]');
@@ -64,7 +64,8 @@ test('PIPE length paste requires visible explicit geometry policy and stages wit
   await expect.poll(() => host.getAttribute('data-topology-edit-table-batch-hash')).toBe('');
   expectAuthorityNoop(await authorityEvidence(page), before);
 
-  const refreshedLengthInput = row.locator('[data-table-cell-edit="PIPE_LENGTH"]');
+  const refreshedRow = table.locator(`tbody tr[data-canonical-id="${canonicalId}"]`);
+  const refreshedLengthInput = refreshedRow.locator('[data-table-cell-edit="PIPE_LENGTH"]');
   await table.locator('[data-table-edit-anchor]').selectOption('FROM');
   await table.locator('[data-table-edit-propagation]').selectOption('UPSTREAM');
   await dispatchPaste(refreshedLengthInput, String(requestedLength + 50));

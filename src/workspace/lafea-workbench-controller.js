@@ -20,6 +20,7 @@ import {
   lafeaWorkbenchDisplayRenderPacket,
   lafeaWorkbenchThreeNamespace,
 } from './lafea-workbench-render-evidence.js';
+import { createLafeaQuickContinuumSetup } from './lafea-quick-continuum-setup.js';
 import { LafeaWorkbenchView } from './lafea-workbench-view.js';
 
 const ACCESSORY_PANEL_MANAGERS = new WeakMap();
@@ -69,7 +70,9 @@ export class LafeaWorkbenchController {
       onStage: (stageId) => this.store.selectStage(stageId),
       onMock: (stageId) => this.loadMockData(stageId),
       onFile: (file) => this.loadFile(file),
-      onCreateDocument: (value, stageId) => this.importDocument(value, stageId),
+      onCreateDocument: (value, stageId) => stageId === 'LAFEA.3'
+        ? this.createQuickContinuumModel(value)
+        : this.importDocument(value, stageId),
       onRun: () => this.run(),
       onPrepare: () => this.prepareContinuumForRun(),
       onExport: () => this.downloadDocument(),
@@ -123,6 +126,20 @@ export class LafeaWorkbenchController {
 
   importDocument(value, stageId, sourceHash = null) {
     return this.store.importDocument(value, stageId, sourceHash);
+  }
+
+  createQuickContinuumModel(value) {
+    try {
+      const setup = createLafeaQuickContinuumSetup(value);
+      this.store.importDocument(setup.source, setup.stageId, setup.authority.sourceHash);
+      if (this.store.getState().status === 'FAILED') return this.store.getState();
+      this.store.activateDomainFirstProfile(setup.stageId);
+      this.store.registerAnalysisDomain(setup.domain);
+      this.store.registerAnalysisGeometryEvidence(setup.geometryEvidence);
+      return this.store.getState();
+    } catch (error) {
+      return this.store.reportEditError('document', null, error);
+    }
   }
 
   async loadMockData(stageId) {

@@ -18,8 +18,9 @@ const CAPABILITY_KEYS = Object.freeze([
 ]);
 const STATE_KEYS = Object.freeze([
   'schema', 'stageId', 'authorityVersion', 'custodyState', 'meshDependencyHash',
-  'retainedMeshContentHash', 'retainedEvidenceHash', 'capabilityHash',
-  'qualificationHash', 'adapterId', 'adapterRevision', 'concurrencyVersion',
+  'retainedMeshContentHash', 'retainedEvidenceHash', 'retainedAuthorityReceiptHash',
+  'capabilityHash', 'qualificationHash', 'adapterId', 'adapterRevision',
+  'concurrencyVersion',
 ]);
 const COMMAND_KEYS = Object.freeze([
   'schema', 'commandId', 'commandKind', 'stageId', 'expectedParents',
@@ -27,7 +28,8 @@ const COMMAND_KEYS = Object.freeze([
 ]);
 const PARENT_KEYS = Object.freeze([
   'workspaceStateHash', 'meshDependencyHash', 'retainedMeshContentHash',
-  'retainedEvidenceHash', 'capabilityHash', 'qualificationHash', 'concurrencyVersion',
+  'retainedEvidenceHash', 'retainedAuthorityReceiptHash', 'capabilityHash',
+  'qualificationHash', 'concurrencyVersion',
 ]);
 
 export function createLafeaMeshWorkspaceCapabilityV3(value) {
@@ -63,6 +65,10 @@ export function createLafeaMeshWorkspaceStateV3(value) {
     meshDependencyHash: sha256(value.meshDependencyHash, 'MESH_DEPENDENCY_HASH'),
     retainedMeshContentHash: optionalSha256(value.retainedMeshContentHash, 'RETAINED_MESH_CONTENT_HASH'),
     retainedEvidenceHash: optionalSha256(value.retainedEvidenceHash, 'RETAINED_EVIDENCE_HASH'),
+    retainedAuthorityReceiptHash: optionalSha256(
+      value.retainedAuthorityReceiptHash,
+      'RETAINED_AUTHORITY_RECEIPT_HASH',
+    ),
     capabilityHash: sha256(value.capabilityHash, 'CAPABILITY_HASH'),
     qualificationHash: sha256(value.qualificationHash, 'QUALIFICATION_HASH'),
     adapterId: text(value.adapterId, 'ADAPTER_ID'),
@@ -72,11 +78,15 @@ export function createLafeaMeshWorkspaceStateV3(value) {
   if ((record.retainedMeshContentHash === null) !== (record.retainedEvidenceHash === null)) {
     fail('LAFEA_MESH_WORKSPACE_V3_RETAINED_PAIR_INVALID');
   }
-  if (record.custodyState === 'ABSENT' && record.retainedMeshContentHash !== null) {
+  if (record.custodyState === 'ABSENT'
+    && (record.retainedMeshContentHash !== null || record.retainedAuthorityReceiptHash !== null)) {
     fail('LAFEA_MESH_WORKSPACE_V3_ABSENT_RETAINED_INVALID');
   }
   if (record.custodyState !== 'ABSENT' && record.retainedMeshContentHash === null) {
     fail('LAFEA_MESH_WORKSPACE_V3_CUSTODY_REQUIRES_RETAINED');
+  }
+  if (record.custodyState === 'CURRENT_PASS' && record.retainedAuthorityReceiptHash === null) {
+    fail('LAFEA_MESH_WORKSPACE_V3_CURRENT_PASS_AUTHORITY_RECEIPT_REQUIRED');
   }
   return freeze({
     ...record,
@@ -115,6 +125,7 @@ export function expectedLafeaMeshCommandParentsV3(stateValue) {
     meshDependencyHash: state.meshDependencyHash,
     retainedMeshContentHash: state.retainedMeshContentHash,
     retainedEvidenceHash: state.retainedEvidenceHash,
+    retainedAuthorityReceiptHash: state.retainedAuthorityReceiptHash,
     capabilityHash: state.capabilityHash,
     qualificationHash: state.qualificationHash,
     concurrencyVersion: state.concurrencyVersion,
@@ -140,14 +151,18 @@ export function assertLafeaMeshCommandParentsV3(commandValue, stateValue) {
 export function validateLafeaMeshWorkspaceCapabilityV3(value) {
   const { capabilityHash, ...input } = value || {};
   const rebuilt = createLafeaMeshWorkspaceCapabilityV3(input);
-  if (capabilityHash !== rebuilt.capabilityHash) fail('LAFEA_MESH_WORKSPACE_V3_CAPABILITY_HASH_INVALID');
+  if (capabilityHash !== rebuilt.capabilityHash) {
+    fail('LAFEA_MESH_WORKSPACE_V3_CAPABILITY_HASH_INVALID');
+  }
   return rebuilt;
 }
 
 export function validateLafeaMeshWorkspaceStateV3(value) {
   const { workspaceStateHash, ...input } = value || {};
   const rebuilt = createLafeaMeshWorkspaceStateV3(input);
-  if (workspaceStateHash !== rebuilt.workspaceStateHash) fail('LAFEA_MESH_WORKSPACE_V3_STATE_HASH_INVALID');
+  if (workspaceStateHash !== rebuilt.workspaceStateHash) {
+    fail('LAFEA_MESH_WORKSPACE_V3_STATE_HASH_INVALID');
+  }
   return rebuilt;
 }
 
@@ -166,14 +181,24 @@ function parents(value) {
     meshDependencyHash: sha256(value.meshDependencyHash, 'MESH_DEPENDENCY_HASH'),
     retainedMeshContentHash: optionalSha256(value.retainedMeshContentHash, 'RETAINED_MESH_CONTENT_HASH'),
     retainedEvidenceHash: optionalSha256(value.retainedEvidenceHash, 'RETAINED_EVIDENCE_HASH'),
+    retainedAuthorityReceiptHash: optionalSha256(
+      value.retainedAuthorityReceiptHash,
+      'RETAINED_AUTHORITY_RECEIPT_HASH',
+    ),
     capabilityHash: sha256(value.capabilityHash, 'CAPABILITY_HASH'),
     qualificationHash: sha256(value.qualificationHash, 'QUALIFICATION_HASH'),
     concurrencyVersion: nonNegativeInteger(value.concurrencyVersion, 'CONCURRENCY_VERSION'),
   });
 }
 function commands(value) {
-  if (!Array.isArray(value) || !value.length) fail('LAFEA_MESH_WORKSPACE_V3_ALLOWED_COMMANDS_INVALID');
-  const out = [...new Set(value.map((row) => enumValue(row, LAFEA_MESH_WORKSPACE_COMMAND_KINDS, 'ALLOWED_COMMAND')))].sort();
+  if (!Array.isArray(value) || !value.length) {
+    fail('LAFEA_MESH_WORKSPACE_V3_ALLOWED_COMMANDS_INVALID');
+  }
+  const out = [...new Set(value.map((row) => enumValue(
+    row,
+    LAFEA_MESH_WORKSPACE_COMMAND_KINDS,
+    'ALLOWED_COMMAND',
+  )))].sort();
   if (out.length !== value.length) fail('LAFEA_MESH_WORKSPACE_V3_ALLOWED_COMMANDS_DUPLICATE');
   return Object.freeze(out);
 }
@@ -183,12 +208,37 @@ function exact(value, keys, code) {
     || Object.getPrototypeOf(value) !== Object.prototype
     || JSON.stringify(Object.keys(value).sort()) !== JSON.stringify([...keys].sort())) fail(code);
 }
-function text(value, field) { if (typeof value !== 'string' || !value.trim()) fail(`LAFEA_MESH_WORKSPACE_V3_${field}_INVALID`); return value.trim(); }
-function exactText(value, expected, field) { if (value !== expected) fail(`LAFEA_MESH_WORKSPACE_V3_${field}_INVALID`); return value; }
-function sha256(value, field) { const out = text(value, field); if (!/^sha256:[0-9a-f]{64}$/u.test(out)) fail(`LAFEA_MESH_WORKSPACE_V3_${field}_INVALID`); return out; }
+function text(value, field) {
+  if (typeof value !== 'string' || !value.trim()) {
+    fail(`LAFEA_MESH_WORKSPACE_V3_${field}_INVALID`);
+  }
+  return value.trim();
+}
+function exactText(value, expected, field) {
+  if (value !== expected) fail(`LAFEA_MESH_WORKSPACE_V3_${field}_INVALID`);
+  return value;
+}
+function sha256(value, field) {
+  const out = text(value, field);
+  if (!/^sha256:[0-9a-f]{64}$/u.test(out)) {
+    fail(`LAFEA_MESH_WORKSPACE_V3_${field}_INVALID`);
+  }
+  return out;
+}
 function optionalSha256(value, field) { return value === null ? null : sha256(value, field); }
-function nonNegativeInteger(value, field) { if (!Number.isInteger(value) || value < 0) fail(`LAFEA_MESH_WORKSPACE_V3_${field}_INVALID`); return value; }
-function enumValue(value, allowed, field) { if (!allowed.includes(value)) fail(`LAFEA_MESH_WORKSPACE_V3_${field}_INVALID`); return value; }
-function camelToCode(value) { return value.replace(/([a-z0-9])([A-Z])/gu, '$1_$2').toUpperCase(); }
+function nonNegativeInteger(value, field) {
+  if (!Number.isInteger(value) || value < 0) fail(`LAFEA_MESH_WORKSPACE_V3_${field}_INVALID`);
+  return value;
+}
+function enumValue(value, allowed, field) {
+  if (!allowed.includes(value)) fail(`LAFEA_MESH_WORKSPACE_V3_${field}_INVALID`);
+  return value;
+}
+function camelToCode(value) {
+  return value.replace(/([a-z0-9])([A-Z])/gu, '$1_$2').toUpperCase();
+}
 function fail(code) { const error = new TypeError(code); error.code = code; throw error; }
-function freeze(value) { if (!value || typeof value !== 'object' || Object.isFrozen(value)) return value; Object.values(value).forEach(freeze); return Object.freeze(value); }
+function freeze(value) {
+  if (!value || typeof value !== 'object' || Object.isFrozen(value)) return value;
+  Object.values(value).forEach(freeze); return Object.freeze(value);
+}

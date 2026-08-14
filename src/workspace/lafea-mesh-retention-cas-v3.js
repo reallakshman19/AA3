@@ -10,7 +10,7 @@ import {
 export const LAFEA_MESH_RETENTION_V3_SCHEMA = 'lafea-mesh-retention/v3';
 const RETENTION_KEYS = Object.freeze([
   'schema', 'stageId', 'commandHash', 'meshDependencyHash', 'meshContentHash',
-  'evidenceHash', 'validationHash', 'custodyState',
+  'evidenceHash', 'validationHash', 'authorityReceiptHash', 'custodyState',
 ]);
 
 export function commitLafeaMeshRetentionCasV3(commandValue, currentStateValue, retentionValue) {
@@ -29,8 +29,16 @@ export function commitLafeaMeshRetentionCasV3(commandValue, currentStateValue, r
     meshContentHash: sha256(retentionValue.meshContentHash, 'MESH_CONTENT_HASH'),
     evidenceHash: sha256(retentionValue.evidenceHash, 'EVIDENCE_HASH'),
     validationHash: sha256(retentionValue.validationHash, 'VALIDATION_HASH'),
-    custodyState: enumValue(retentionValue.custodyState, ['CURRENT_BLOCK', 'CURRENT_PASS'], 'CUSTODY_STATE'),
+    authorityReceiptHash: optionalSha256(retentionValue.authorityReceiptHash, 'AUTHORITY_RECEIPT_HASH'),
+    custodyState: enumValue(
+      retentionValue.custodyState,
+      ['CURRENT_BLOCK', 'CURRENT_PASS'],
+      'CUSTODY_STATE',
+    ),
   });
+  if (retention.custodyState === 'CURRENT_PASS' && retention.authorityReceiptHash === null) {
+    fail('LAFEA_MESH_RETENTION_V3_CURRENT_PASS_AUTHORITY_RECEIPT_REQUIRED');
+  }
   const next = createLafeaMeshWorkspaceStateV3({
     schema: LAFEA_MESH_WORKSPACE_STATE_V3_SCHEMA,
     stageId: state.stageId,
@@ -39,6 +47,7 @@ export function commitLafeaMeshRetentionCasV3(commandValue, currentStateValue, r
     meshDependencyHash: state.meshDependencyHash,
     retainedMeshContentHash: retention.meshContentHash,
     retainedEvidenceHash: retention.evidenceHash,
+    retainedAuthorityReceiptHash: retention.authorityReceiptHash,
     capabilityHash: state.capabilityHash,
     qualificationHash: state.qualificationHash,
     adapterId: state.adapterId,
@@ -50,6 +59,7 @@ export function commitLafeaMeshRetentionCasV3(commandValue, currentStateValue, r
     previousWorkspaceStateHash: state.workspaceStateHash,
     commandHash: command.commandHash,
     validationHash: retention.validationHash,
+    authorityReceiptHash: retention.authorityReceiptHash,
     nextState: next,
     commitHash: canonicalLafeaSha256({
       schema: 'lafea-mesh-retention-commit-hash-input/v3',
@@ -62,10 +72,31 @@ export function commitLafeaMeshRetentionCasV3(commandValue, currentStateValue, r
   });
 }
 
-function exact(value, keys, code) { if (!value || typeof value !== 'object' || Array.isArray(value) || Object.getPrototypeOf(value) !== Object.prototype || JSON.stringify(Object.keys(value).sort()) !== JSON.stringify([...keys].sort())) fail(code); }
-function exactText(value, expected, field) { if (value !== expected) fail(`LAFEA_MESH_RETENTION_V3_${field}_MISMATCH`); return value; }
-function text(value, field) { if (typeof value !== 'string' || !value.trim()) fail(`LAFEA_MESH_RETENTION_V3_${field}_INVALID`); return value.trim(); }
-function sha256(value, field) { const out = text(value, field); if (!/^sha256:[0-9a-f]{64}$/u.test(out)) fail(`LAFEA_MESH_RETENTION_V3_${field}_INVALID`); return out; }
-function enumValue(value, allowed, field) { if (!allowed.includes(value)) fail(`LAFEA_MESH_RETENTION_V3_${field}_INVALID`); return value; }
+function exact(value, keys, code) {
+  if (!value || typeof value !== 'object' || Array.isArray(value)
+    || Object.getPrototypeOf(value) !== Object.prototype
+    || JSON.stringify(Object.keys(value).sort()) !== JSON.stringify([...keys].sort())) fail(code);
+}
+function exactText(value, expected, field) {
+  if (value !== expected) fail(`LAFEA_MESH_RETENTION_V3_${field}_MISMATCH`);
+  return value;
+}
+function text(value, field) {
+  if (typeof value !== 'string' || !value.trim()) fail(`LAFEA_MESH_RETENTION_V3_${field}_INVALID`);
+  return value.trim();
+}
+function sha256(value, field) {
+  const out = text(value, field);
+  if (!/^sha256:[0-9a-f]{64}$/u.test(out)) fail(`LAFEA_MESH_RETENTION_V3_${field}_INVALID`);
+  return out;
+}
+function optionalSha256(value, field) { return value === null ? null : sha256(value, field); }
+function enumValue(value, allowed, field) {
+  if (!allowed.includes(value)) fail(`LAFEA_MESH_RETENTION_V3_${field}_INVALID`);
+  return value;
+}
 function fail(code) { const error = new TypeError(code); error.code = code; throw error; }
-function freeze(value) { if (!value || typeof value !== 'object' || Object.isFrozen(value)) return value; Object.values(value).forEach(freeze); return Object.freeze(value); }
+function freeze(value) {
+  if (!value || typeof value !== 'object' || Object.isFrozen(value)) return value;
+  Object.values(value).forEach(freeze); return Object.freeze(value);
+}

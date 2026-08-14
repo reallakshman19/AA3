@@ -34,6 +34,7 @@ const initial = createLafeaMeshWorkspaceStateV3({
   meshDependencyHash: hash('G1/P1'),
   retainedMeshContentHash: null,
   retainedEvidenceHash: null,
+  retainedAuthorityReceiptHash: null,
   capabilityHash: capability.capabilityHash,
   qualificationHash: hash('QUALIFICATION'),
   adapterId: 'LAFEA_MESH_ADAPTER:LAFEA.3:V3',
@@ -51,8 +52,6 @@ const retain = createLafeaMeshWorkspaceCommandV3({
   payloadHash: hash('M1_OUTPUT'),
 });
 assert.doesNotThrow(() => assertLafeaMeshCommandParentsV3(retain, initial));
-
-// G1/P1 command must not survive a G2/P1 or concurrent state transition.
 const { workspaceStateHash: ignoredInitialHash, ...initialInput } = initial;
 const geometryEdited = createLafeaMeshWorkspaceStateV3({
   ...initialInput,
@@ -64,33 +63,18 @@ assert.throws(
   (error) => error?.code?.endsWith('_MISMATCH'),
 );
 
-const committed = commitLafeaMeshRetentionCasV3(retain, initial, {
-  schema: LAFEA_MESH_RETENTION_V3_SCHEMA,
-  stageId: 'LAFEA.3',
-  commandHash: retain.commandHash,
-  meshDependencyHash: initial.meshDependencyHash,
-  meshContentHash: hash('M1'),
-  evidenceHash: hash('E1'),
-  validationHash: hash('VALIDATION1'),
-  custodyState: 'CURRENT_PASS',
-});
+assert.throws(
+  () => commitLafeaMeshRetentionCasV3(retain, initial, retention(null)),
+  (error) => error?.code === 'LAFEA_MESH_RETENTION_V3_CURRENT_PASS_AUTHORITY_RECEIPT_REQUIRED',
+);
+const receiptHash = hash('TRUSTED_RECEIPT');
+const committed = commitLafeaMeshRetentionCasV3(retain, initial, retention(receiptHash));
 assert.equal(committed.nextState.concurrencyVersion, 1);
 assert.equal(committed.nextState.retainedMeshContentHash, hash('M1'));
+assert.equal(committed.nextState.retainedAuthorityReceiptHash, receiptHash);
 assert.equal(committed.engineeringAuthority, false);
-
-// A previously valid retain command is single-snapshot only: replay after the
-// state advances fails before retention can replace current content.
 assert.throws(
-  () => commitLafeaMeshRetentionCasV3(retain, committed.nextState, {
-    schema: LAFEA_MESH_RETENTION_V3_SCHEMA,
-    stageId: 'LAFEA.3',
-    commandHash: retain.commandHash,
-    meshDependencyHash: initial.meshDependencyHash,
-    meshContentHash: hash('M2'),
-    evidenceHash: hash('E2'),
-    validationHash: hash('VALIDATION2'),
-    custodyState: 'CURRENT_PASS',
-  }),
+  () => commitLafeaMeshRetentionCasV3(retain, committed.nextState, retention(hash('OTHER_RECEIPT'))),
   (error) => error?.code?.endsWith('_MISMATCH'),
 );
 
@@ -100,13 +84,26 @@ console.log(JSON.stringify({
   genericEnvelopeContainsNoElementPolicy: true,
   geometryRaceRejected: true,
   retentionReplayRejected: true,
+  currentPassRequiresAuthorityReceipt: true,
   retentionIncrementsConcurrencyVersion: true,
   retentionDoesNotManufactureEngineeringAuthority: true,
 }));
 
+function retention(authorityReceiptHash) {
+  return {
+    schema: LAFEA_MESH_RETENTION_V3_SCHEMA,
+    stageId: 'LAFEA.3',
+    commandHash: retain.commandHash,
+    meshDependencyHash: initial.meshDependencyHash,
+    meshContentHash: hash('M1'),
+    evidenceHash: hash('E1'),
+    validationHash: hash('VALIDATION1'),
+    authorityReceiptHash,
+    custodyState: 'CURRENT_PASS',
+  };
+}
 function hash(value) {
   return canonicalLafeaSha256({
-    schema: 'lafea-mesh-workspace-v3-batch2-fixture/v1',
-    value,
+    schema: 'lafea-mesh-workspace-v3-batch2-fixture/v1', value,
   });
 }

@@ -13,6 +13,10 @@ export function qualifyLafeaShellOrientationV3(meshValue, value) {
   const midsurfaceEvidenceHash = sha256(value?.midsurfaceEvidenceHash, 'MIDSURFACE_EVIDENCE_HASH');
   const allowDisconnectedPatches = boolean(value?.allowDisconnectedPatches, 'ALLOW_DISCONNECTED_PATCHES');
   const anchors = canonicalAnchors(value?.anchors);
+  const knownElementIds = new Set(mesh.elements.map((element) => element.elementId));
+  const unknownAnchorIds = anchors.filter((anchor) => !knownElementIds.has(anchor.elementId))
+    .map((anchor) => anchor.elementId);
+  if (unknownAnchorIds.length) fail('LAFEA_SHELL_ORIENTATION_V3_ANCHOR_ELEMENT_UNKNOWN');
   const diagnosis = diagnoseOrientation(mesh.elements);
   const nodeById = new Map(mesh.nodes.map((node) => [node.nodeId, node]));
   const findings = [];
@@ -82,7 +86,9 @@ function canonicalAnchors(value) {
       || JSON.stringify(Object.keys(row).sort()) !== JSON.stringify(['elementId', 'expectedNormal'].sort())) {
       fail('LAFEA_SHELL_ORIENTATION_V3_ANCHOR_KEYS_INVALID');
     }
-    if (typeof row.elementId !== 'string' || !row.elementId.trim()) fail('LAFEA_SHELL_ORIENTATION_V3_ANCHOR_ELEMENT_INVALID');
+    if (typeof row.elementId !== 'string' || !row.elementId.trim()) {
+      fail('LAFEA_SHELL_ORIENTATION_V3_ANCHOR_ELEMENT_INVALID');
+    }
     if (!Array.isArray(row.expectedNormal) || row.expectedNormal.length !== 3
       || row.expectedNormal.some((component) => !Number.isFinite(component))) {
       fail('LAFEA_SHELL_ORIENTATION_V3_ANCHOR_NORMAL_INVALID');
@@ -90,7 +96,9 @@ function canonicalAnchors(value) {
     const expectedNormal = unit(row.expectedNormal);
     return freeze({ elementId: row.elementId.trim(), expectedNormal: freeze(expectedNormal) });
   }).sort((a, b) => a.elementId.localeCompare(b.elementId));
-  if (new Set(out.map((row) => row.elementId)).size !== out.length) fail('LAFEA_SHELL_ORIENTATION_V3_ANCHOR_DUPLICATE');
+  if (new Set(out.map((row) => row.elementId)).size !== out.length) {
+    fail('LAFEA_SHELL_ORIENTATION_V3_ANCHOR_DUPLICATE');
+  }
   return freeze(out);
 }
 function triangleUnitNormal(element, nodeById) {
@@ -103,10 +111,27 @@ function triangleUnitNormal(element, nodeById) {
     ab[0] * ac[1] - ab[1] * ac[0],
   ]);
 }
-function unit(value) { const length = Math.hypot(...value); if (!(length > 0)) fail('LAFEA_SHELL_ORIENTATION_V3_ZERO_NORMAL'); return value.map((component) => component / length); }
+function unit(value) {
+  const length = Math.hypot(...value);
+  if (!(length > 0)) fail('LAFEA_SHELL_ORIENTATION_V3_ZERO_NORMAL');
+  return value.map((component) => component / length);
+}
 function dot(a, b) { return a[0] * b[0] + a[1] * b[1] + a[2] * b[2]; }
-function finding(code, details) { return freeze({ code: `LAFEA_SHELL_ORIENTATION_V3_${code}`, details }); }
-function boolean(value, field) { if (typeof value !== 'boolean') fail(`LAFEA_SHELL_ORIENTATION_V3_${field}_INVALID`); return value; }
-function sha256(value, field) { if (typeof value !== 'string' || !/^sha256:[0-9a-f]{64}$/u.test(value)) fail(`LAFEA_SHELL_ORIENTATION_V3_${field}_INVALID`); return value; }
+function finding(code, details) {
+  return freeze({ code: `LAFEA_SHELL_ORIENTATION_V3_${code}`, details });
+}
+function boolean(value, field) {
+  if (typeof value !== 'boolean') fail(`LAFEA_SHELL_ORIENTATION_V3_${field}_INVALID`);
+  return value;
+}
+function sha256(value, field) {
+  if (typeof value !== 'string' || !/^sha256:[0-9a-f]{64}$/u.test(value)) {
+    fail(`LAFEA_SHELL_ORIENTATION_V3_${field}_INVALID`);
+  }
+  return value;
+}
 function fail(code) { const error = new TypeError(code); error.code = code; throw error; }
-function freeze(value) { if (!value || typeof value !== 'object' || Object.isFrozen(value)) return value; Object.values(value).forEach(freeze); return Object.freeze(value); }
+function freeze(value) {
+  if (!value || typeof value !== 'object' || Object.isFrozen(value)) return value;
+  Object.values(value).forEach(freeze); return Object.freeze(value);
+}

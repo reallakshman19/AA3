@@ -16,6 +16,20 @@ import {
 
 export const GATE_STATUSES = Object.freeze(['OK', 'WARNING', 'BLOCK']);
 
+const T6_INTEGRATION_NATURAL_POINTS = Object.freeze([
+  Object.freeze({ xi: 1 / 6, eta: 1 / 6 }),
+  Object.freeze({ xi: 2 / 3, eta: 1 / 6 }),
+  Object.freeze({ xi: 1 / 6, eta: 2 / 3 }),
+]);
+const Q8_GAUSS_COORDINATES = Object.freeze([
+  -Math.sqrt(3 / 5), 0, Math.sqrt(3 / 5),
+]);
+const Q8_INTEGRATION_NATURAL_POINTS = Object.freeze(
+  Q8_GAUSS_COORDINATES.flatMap((xi) => Q8_GAUSS_COORDINATES.map((eta) => (
+    Object.freeze({ xi, eta })
+  ))),
+);
+
 function classify(value, { warnAt, blockAt, worseIsHigher }) {
   const worse = worseIsHigher ? (a, b) => a > b : (a, b) => a < b;
   if (worse(value, blockAt) || value === blockAt) return 'BLOCK';
@@ -66,15 +80,26 @@ export function qualifyMinimumAngle(triangleCorners, { warn, block }) {
 }
 
 /**
- * The element's minimum scaled Jacobian, sampled at every corner natural
- * point (spec: "Positive at every integration point"). `nodeType` selects
- * T6 (6 nodes) or Q8 (8 nodes) shape functions.
+ * Minimum scaled Jacobian for a high-order element. The mesh-quality gate
+ * samples both the natural corners and every integration point used by the
+ * corresponding LAFEA.3 stiffness formulation. This keeps upstream mesh
+ * acceptance at least as strict as the downstream element-map requirement:
+ * a mesh cannot be retained as PASS while the solver later discovers a
+ * non-positive mapping at one of its own Gauss points.
  */
 export function minimumScaledJacobianOf(nodeType, physicalNodes) {
-  const { shapeFn, cornerPoints } = nodeType === 'T6'
-    ? { shapeFn: t6ShapeFunctions, cornerPoints: T6_CORNER_NATURAL_POINTS }
-    : { shapeFn: q8ShapeFunctions, cornerPoints: Q8_CORNER_NATURAL_POINTS };
-  const values = cornerPoints.map(({ xi, eta }) => scaledJacobianAt(shapeFn(xi, eta), physicalNodes));
+  const { shapeFn, samplePoints } = nodeType === 'T6'
+    ? {
+      shapeFn: t6ShapeFunctions,
+      samplePoints: [...T6_CORNER_NATURAL_POINTS, ...T6_INTEGRATION_NATURAL_POINTS],
+    }
+    : {
+      shapeFn: q8ShapeFunctions,
+      samplePoints: [...Q8_CORNER_NATURAL_POINTS, ...Q8_INTEGRATION_NATURAL_POINTS],
+    };
+  const values = samplePoints.map(({ xi, eta }) => (
+    scaledJacobianAt(shapeFn(xi, eta), physicalNodes)
+  ));
   return Math.min(...values);
 }
 

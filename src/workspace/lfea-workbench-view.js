@@ -63,6 +63,7 @@ export class LfeaWorkbenchView {
     this.modelIdentity = null;
     this.benchmarkHost = null;
     this.convergenceHost = null;
+    this.caesarAccdbBenchmarkHost = null;
     this.section = null;
     this.slots = null;
   }
@@ -79,6 +80,10 @@ export class LfeaWorkbenchView {
 
   setConvergenceHost(hostElement) {
     this.convergenceHost = hostElement;
+  }
+
+  setCaesarAccdbBenchmarkHost(hostElement) {
+    this.caesarAccdbBenchmarkHost = hostElement;
   }
 
   init(handlers) {
@@ -263,6 +268,15 @@ export class LfeaWorkbenchView {
       );
       convergenceCard.append(this.convergenceHost);
       grid.append(convergenceCard);
+    }
+    if (this.caesarAccdbBenchmarkHost) {
+      const caesarAccdbBenchmarkCard = element(
+        this.rootElement,
+        'div',
+        'lfea-workbench__caesar-accdb-benchmark',
+      );
+      caesarAccdbBenchmarkCard.append(this.caesarAccdbBenchmarkHost);
+      grid.append(caesarAccdbBenchmarkCard);
     }
     return grid;
   }

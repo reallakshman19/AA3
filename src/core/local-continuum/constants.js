@@ -2,12 +2,25 @@ export const MODEL_SCHEMA = 'local-continuum-model/v1';
 export const RESULT_SCHEMA = 'local-continuum-result/v1';
 export const SOURCE_EVIDENCE_SCHEMA = 'local-continuum-source-evidence/v1';
 export const QUALIFICATION_PROFILE_SCHEMA = 'local-continuum-qualification-profile/v1';
-export const ENGINEERING_LEVEL = 'LINEAR_2D_CONTINUUM_CST_ONLY';
+export const ENGINEERING_LEVEL = 'LINEAR_2D_CONTINUUM_T3_T6_Q8';
 
 export const FORMULATIONS = Object.freeze({
   PLANE_STRESS: 'PLANE_STRESS',
   PLANE_STRAIN: 'PLANE_STRAIN',
 });
+
+/**
+ * Qualification envelope for the current displacement-only plane-strain
+ * formulation. The block limit is deliberately source-controlled: users may
+ * change the material Poisson ratio, but they may not relax this qualification
+ * boundary to make a nearly-incompressible model pass. A mixed/B-bar or other
+ * locking-resistant formulation requires an independent authority upgrade.
+ */
+export const FORMULATION_GUARDS = Object.freeze({
+  planeStrainPoissonWarning: 0.40,
+  planeStrainPoissonBlock: 0.45,
+});
+
 export const DOFS = Object.freeze({ UX: 'UX', UY: 'UY' });
 /**
  * Spec §7: "Default T6 quadratic triangle and Q8 quadratic quadrilateral.
@@ -31,13 +44,13 @@ export const CANONICAL_UNITS = Object.freeze({
   bodyForceIntensity: 'N/mm^3',
 });
 export const BASE_LIMITATIONS = Object.freeze([
-  'NO_ADAPTIVE_MESHING', 'NO_AUTOMATIC_MESH_GENERATION', 'NO_BENDING_DOF',
+  'NO_ADAPTIVE_MESHING', 'NO_BENDING_DOF',
   'NO_BUCKLING', 'NO_CODE_COMPLIANCE', 'NO_CONTACT', 'NO_CRACK_OR_FRACTURE',
   'NO_DRILLING_DOF', 'NO_FATIGUE', 'NO_FRICTION', 'NO_LARGE_DISPLACEMENT',
   'NO_ATTACHMENT_SPECIFIC_LOCAL_STRESS', 'NO_CONTOUR_AUTHORITY',
   'NO_MATERIAL_NONLINEARITY', 'NO_NODAL_OR_SMOOTHED_STRESS', 'NO_NODAL_STRESS_AVERAGING', 'NO_PLASTICITY',
   'NO_SHELL_ELEMENTS', 'NO_STRESS_SINGULARITY_ACCEPTANCE',
-  'NO_UI_OR_APPLICATION_INTEGRATION', 'NO_WELD_STRESS',
+  'NO_WELD_STRESS',
 ]);
 export const FORMULA_IDS = Object.freeze({
   UNIT_CONVERSION: 'EXPLICIT_CONTINUUM_UNIT_CONVERSION_V1',

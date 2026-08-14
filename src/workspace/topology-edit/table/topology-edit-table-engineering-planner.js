@@ -70,8 +70,8 @@ function compilePipeSpecification(intent, topology) {
     targetIds: uniqueSorted([...nodeIds, ...edgeIds]),
     parameters: {
       aggregateKind: 'TABLE_PIPE_SPECIFICATION',
-      priorRecordId: intent.priorValue.catalogueRecordId,
-      priorRecordHash: intent.priorValue.catalogueRecordHash,
+      priorRecordId: intent.priorValue.catalogueRecordId ?? null,
+      priorRecordHash: intent.priorValue.catalogueRecordHash ?? null,
       requestedRecordId: payload.catalogueBinding.recordId,
       requestedRecordHash: payload.catalogueBinding.recordHash,
       requestedBindingHash: payload.catalogueBinding.bindingHash,

@@ -31,7 +31,7 @@ test('Specification profile stages one exact PIPE record and keeps OD/wall deriv
   expect(target.recordId).toBeTruthy();
   const filter = page.locator('[data-table-filter]');
   await filter.fill(target.canonicalId);
-  const row = table.locator(`[data-canonical-id="${target.canonicalId}"]`);
+  const row = table.locator(`tbody tr[data-canonical-id="${target.canonicalId}"]`);
   await expect(row).toBeVisible();
   await row.locator('[data-table-select]').click();
   await expect.poll(() => host.getAttribute('data-topology-edit-selection-primary-id')).toBe(target.canonicalId);
@@ -139,7 +139,7 @@ async function choosePipeWithSpecificationCandidate(page) {
   );
   for (const canonicalId of ids) {
     await filter.fill(canonicalId);
-    const row = table.locator(`[data-canonical-id="${canonicalId}"]`);
+    const row = table.locator(`tbody tr[data-canonical-id="${canonicalId}"]`);
     if (!(await row.count())) continue;
     await row.locator('[data-table-select]').click();
     const select = page.locator('[data-table-edit-pipe-catalogue-record]');

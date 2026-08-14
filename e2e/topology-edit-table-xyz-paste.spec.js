@@ -14,8 +14,9 @@ test('TSV paste drafts direct XYZ cells atomically before certified endpoint sta
   await page.locator('[data-table-profile="GEOMETRY"]').click();
   await page.locator('[data-table-filter]').fill('PIPE');
 
-  const row = table.locator('tbody tr').filter({ has: table.locator('[data-table-cell-edit="NODE_POSITION"]') }).first();
-  await expect(row).toBeVisible();
+  const firstXyz = table.locator('tbody [data-table-cell-edit="NODE_POSITION"]').first();
+  await expect(firstXyz).toBeVisible();
+  const row = firstXyz.locator('xpath=ancestor::tr[1]');
   const fromInputs = row.locator('[data-table-cell-edit="NODE_POSITION"][data-table-cell-endpoint="FROM"]');
   await expect(fromInputs).toHaveCount(3);
   const meta = await fromInputs.evaluateAll((nodes) => nodes.map((node) => ({
@@ -79,7 +80,7 @@ test('TSV paste drafts direct XYZ cells atomically before certified endpoint sta
   const last = toInputs.nth(2);
   const lastKey = await last.getAttribute('data-table-cell-draft-key');
   await dispatchPaste(last, '123\t456');
-  await expect(table.locator('[data-table-error]')).toContainText('not an editable XYZ cell');
+  await expect(table.locator('.topology-edit-table__status')).toContainText('not an editable XYZ cell');
   const rejected = await page.evaluate((draftKey) => {
     const runtime = document.querySelector('[data-role="topology-edit-render-host"]')
       ?.__topologyEditAuthoringController?.tableAdapter?.runtime;
@@ -121,7 +122,7 @@ async function openProductionController(page) {
   await page.getByRole('button', { name: '3D Edit', exact: true }).click();
   const host = page.locator('[data-role="topology-edit-render-host"]');
   await expect(host).toBeVisible();
-  await expect.poll(() => Boolean(host.getAttribute('data-topology-edit-table-projection-hash'))).toBeTruthy();
+  await expect.poll(() => host.getAttribute('data-topology-edit-table-projection-hash')).toBeTruthy();
   return host;
 }
 

@@ -14,19 +14,28 @@ test('support marker pointer drag projects to exact host and stages through SUPP
     const topology = controller?.session?.currentTopology?.();
     const support = (topology?.supports ?? []).find((row) => row.hostEntityId === 'P-011');
     if (!support) throw new Error('Expected exact P-011 support.');
-    let marker = null;
+    let pickTarget = null;
     controller.viewportBackend.groups.supportGroup.traverse((object) => {
-      if (marker) return;
-      const target = object?.userData?.pickTarget;
-      if (target?.objectKind === 'support' && target?.supportId === support.id) marker = object;
+      if (pickTarget) return;
+      const direct = object?.userData?.pickTarget;
+      if (direct?.objectKind === 'support' && direct?.supportId === support.id) {
+        pickTarget = direct;
+        return;
+      }
+      const table = object?.userData?.pickTable;
+      if (!Array.isArray(table)) return;
+      pickTarget = table.find((target) => (
+        target?.objectKind === 'support' && target?.supportId === support.id
+      )) ?? null;
     });
-    if (!marker?.userData?.pickTarget) throw new Error(`Mounted support marker ${support.id} not found.`);
-    controller.handleViewportSelection(marker.userData.pickTarget, {
+    if (!pickTarget) throw new Error(`Mounted support pick target ${support.id} not found.`);
+    controller.handleViewportSelection(pickTarget, {
       ctrlKey: false, metaKey: false, shiftKey: false,
     });
     const context = controller.supportPositionRuntime.context();
-    if (!Number.isFinite(context?.currentStationMm) || !Number.isFinite(context?.hostLengthMm)) {
-      throw new Error('Selected support has no certified station context.');
+    if (!Number.isFinite(context?.currentStationMm) || !Number.isFinite(context?.hostLengthMm)
+        || !context?.currentOrigin) {
+      throw new Error('Selected support has no certified station/origin context.');
     }
     const requestedStation = Math.min(
       context.hostLengthMm,
@@ -50,6 +59,9 @@ test('support marker pointer drag projects to exact host and stages through SUPP
     backend.engineeringRoot.updateMatrixWorld(true);
     camera.updateMatrixWorld(true);
     const rect = canvas.getBoundingClientRect();
+    const engineeringToWorld = (point) => backend.engineeringRoot.localToWorld(
+      camera.position.clone().set(point.x, point.y, point.z),
+    );
     const toClient = (world) => {
       const ndc = world.clone().project(camera);
       return {
@@ -57,19 +69,27 @@ test('support marker pointer drag projects to exact host and stages through SUPP
         y: rect.top + ((1 - ndc.y) * 0.5 * rect.height),
       };
     };
-    const startWorld = marker.getWorldPosition(marker.position.clone());
-    const targetLocal = marker.position.clone().set(target.x, target.y, target.z);
-    const targetWorld = backend.engineeringRoot.localToWorld(targetLocal);
+    const start = toClient(engineeringToWorld(context.currentOrigin));
+    const end = toClient(engineeringToWorld(target));
+    const pickedAtStart = backend.pickAt(start.x, start.y);
     return {
       supportId: support.id,
+      pickObjectId: pickTarget.objectId,
+      pickSupportId: pickTarget.supportId,
       hostEdgeId: context.hostEdgeId,
       currentStationMm: context.currentStationMm,
       requestedStation,
-      start: toClient(startWorld),
-      end: toClient(targetWorld),
+      start,
+      end,
+      startPickKind: pickedAtStart?.objectKind ?? null,
+      startPickSupportId: pickedAtStart?.supportId ?? pickedAtStart?.objectId ?? null,
     };
   });
 
+  expect(setup.pickObjectId).toBe(setup.supportId);
+  expect(setup.pickSupportId).toBe(setup.supportId);
+  expect(setup.startPickKind).toBe('support');
+  expect(setup.startPickSupportId).toBe(setup.supportId);
   await expect(host).toHaveAttribute('data-topology-edit-selection-primary-id', setup.supportId);
   const panel = page.locator('details[data-panel-kind="support-position"]');
   await expect(panel).toHaveAttribute('open', '');
@@ -108,6 +128,7 @@ test('support marker pointer drag projects to exact host and stages through SUPP
 
   await expect(panel.locator('[data-support-position-action="stage"]')).toBeEnabled();
   await panel.locator('[data-support-position-action="stage"]').click();
+  await expect.poll(() => host.getAttribute('data-topology-edit-support-position-bridge-hash')).toBeTruthy();
   await expect.poll(() => host.getAttribute('data-topology-edit-table-batch-hash')).toBeTruthy();
   await expect.poll(() => host.getAttribute('data-topology-edit-table-preview-hash')).toBeTruthy();
   expect(await host.getAttribute('data-topology-edit-table-validation-hash')).toBe('');

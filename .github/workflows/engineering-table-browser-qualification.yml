@@ -41,7 +41,7 @@ jobs:
         run: |
           set -o pipefail
           mkdir -p reports/qualification
-          node scripts/run-playwright.mjs e2e/topology-edit-table-authority.spec.js e2e/topology-edit-table-direct-xyz.spec.js e2e/topology-edit-table-pipe-specification.spec.js e2e/topology-edit-support-position-productivity.spec.js e2e/topology-edit-support-host-drag.spec.js 2>&1 | tee reports/qualification/engineering-table-browser.log
+          node scripts/run-playwright.mjs e2e/topology-edit-table-authority.spec.js e2e/topology-edit-table-direct-xyz.spec.js e2e/topology-edit-table-xyz-paste.spec.js e2e/topology-edit-table-pipe-specification.spec.js e2e/topology-edit-support-position-productivity.spec.js e2e/topology-edit-support-host-drag.spec.js 2>&1 | tee reports/qualification/engineering-table-browser.log
       - name: Upload browser evidence
         if: always()
         uses: actions/upload-artifact@v4

@@ -14,17 +14,13 @@
 import { canonicalLafeaAnalysisMeshProfile } from './lafea-analysis-mesh-contract.js';
 import { validateLafeaAnalysisMeshEvidenceV2 } from './lafea-analysis-mesh-evidence-v2.js';
 import {
-  buildLafeaContinuumMeshCandidateV3,
-  createLafeaContinuumMeshCandidateFailureV3,
-} from './lafea-continuum-mesh-v3-production.js';
-import {
   LAFEA_RETAINED_MESH_REFINEMENT_COMMAND_SCHEMA,
   createLafeaRetainedMeshRefinementCommand,
 } from './lafea-mesh-refinement-command.js';
 import {
   lafeaMeshGenerationConfiguration,
   planLafeaAnalysisMesh,
-  produceLafeaAnalysisMeshEvidence,
+  produceLafeaAnalysisMeshEvidenceWithV3Candidate,
 } from './lafea-mesh-producer-binding.js';
 import { produceLafeaRetainedMeshRefinement } from './lafea-retained-mesh-refinement.js';
 import {
@@ -138,13 +134,10 @@ export function createLafeaWorkbenchMeshGenerationState(stageIds) {
     }
     const profile = requireProfile(stageId);
     const configuration = lafeaMeshGenerationConfiguration(profile, overrides);
-    const produced = produceLafeaAnalysisMeshEvidence(stage, configuration);
+    const produced = produceLafeaAnalysisMeshEvidenceWithV3Candidate(stage, configuration);
     const validated = validateLafeaAnalysisMeshEvidenceV2(produced.evidence);
-    const candidate = stageId === 'LAFEA.3'
-      ? buildContinuumV3Candidate(stage, profile, produced)
-      : null;
     evidence.set(stageId, validated);
-    v3Candidates.set(stageId, candidate);
+    v3Candidates.set(stageId, stageId === 'LAFEA.3' ? produced.candidateV3 : null);
     lastPlan.set(stageId, summarize(produced.planned));
     return freeze({
       changed: true,
@@ -283,19 +276,6 @@ export function createLafeaWorkbenchMeshGenerationState(stageIds) {
   }
   function requireStage(stageId) {
     if (!profiles.has(stageId)) fail('LAFEA_ANALYSIS_MESH_GENERATION_STAGE_NOT_FOUND');
-  }
-}
-
-/**
- * V3 candidate construction is deliberately parallel to the current v2 authority.
- * A v3 validation defect records a fail-closed candidate diagnostic but does not
- * retroactively revoke the already-qualified v2 producer route during migration.
- */
-function buildContinuumV3Candidate(stage, profile, produced) {
-  try {
-    return buildLafeaContinuumMeshCandidateV3({ stage, meshProfile: profile, produced });
-  } catch (error) {
-    return createLafeaContinuumMeshCandidateFailureV3(stage, error);
   }
 }
 

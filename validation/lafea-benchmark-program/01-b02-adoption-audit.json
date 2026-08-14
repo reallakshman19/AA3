@@ -1,0 +1,87 @@
+{
+  "schema": "lafea-b02-adoption-audit/v1",
+  "issue": 1112,
+  "programId": "LAFEA-BENCHMARK-VALIDATION-PROGRAM",
+  "recordedAt": "2026-08-14T03:57:00Z",
+  "repository": "reallaksh19/Advanced_Analysis",
+  "adoptedMain": {
+    "commitSha": "18fe0ffc790ca89f5db56180587c14c19fc47cc9",
+    "treeSha": "e65954c9b0c0322765b61b23b03fdceade4d733b",
+    "qualificationBranch": "agent/issue-1100-b01-freeze",
+    "qualificationBranchFastForwardOnly": true
+  },
+  "b01ExactHeadAttestation": {
+    "state": "PASS",
+    "workflowName": "LAFEA B01 final exact-head qualification",
+    "workflowRunId": 31768225701,
+    "workflowRunNumber": 60,
+    "headSha": "18fe0ffc790ca89f5db56180587c14c19fc47cc9",
+    "artifactId": 9207151103,
+    "artifactName": "lafea-b01-final-18fe0ffc790ca89f5db56180587c14c19fc47cc9",
+    "artifactDigest": "sha256:9e9d42051d32ec8ed4357dc4641b90a110999f547a0cf240842529cf94c0d99e",
+    "receiptSchema": "lafea-b01-final-integrated-receipt/v1",
+    "receiptEvidenceHash": "sha256:dc8b730076ec8e251bd0582c7a2ef19397a78ef8c640ea647b8e98ee0fbcb669",
+    "exactHeadMatchesExpectation": true,
+    "cleanTreeAtStart": true,
+    "cleanTreeAtEnd": true,
+    "registeredRoute": {
+      "stageId": "LAFEA.3",
+      "authority": "T3_T6_Q8_LINEAR_CONTINUUM",
+      "enginePackage": "local-continuum",
+      "sequence": ["normalizeDocument", "canonicalize", "calculate", "acceptResult", "presentResult"]
+    },
+    "base": {
+      "status": "PASS",
+      "selectedRunCount": 54,
+      "passCount": 54,
+      "failCount": 0,
+      "evidenceHash": "sha256:c8ee5e1868be622bd2fbd944bbdfba62130f90f50bf392fc4d569607110ed4ac"
+    },
+    "metamorphic": {
+      "status": "PASS",
+      "selectedRunCount": 270,
+      "passCount": 270,
+      "failCount": 0,
+      "evidenceHash": "sha256:614474d2b13324c71cb2847994239821c132451a5a0abfe0776b7719d64873be"
+    },
+    "failClosed": {
+      "status": "PASS",
+      "selectedRunCount": 16,
+      "passCount": 16,
+      "failCount": 0,
+      "evidenceHash": "sha256:78417ffdc1e5bc3fe4d9e8a322acb8bc977e6314492ba4af104cc75c00818111",
+      "lowLevelEvidenceHash": "sha256:3edd82f506c2b1ac2fbcaee148dc56124ae527775d7b6bb4a817c8996634c39f"
+    }
+  },
+  "independentFailClosedWorkflow": {
+    "state": "PASS",
+    "workflowName": "LAFEA B01 fail-closed qualification",
+    "workflowRunId": 31768225685,
+    "headSha": "18fe0ffc790ca89f5db56180587c14c19fc47cc9"
+  },
+  "phase0Disposition": {
+    "B01_CURRENT_MAIN_EXACT_HEAD_PASS": true,
+    "B01_PROGRAM_LEDGER_QUALIFIED": true,
+    "B02_ACTIVE_AUTHORIZED": true,
+    "PRODUCTION_MECHANICS_UNCHANGED": true,
+    "releaseAuthority": false,
+    "temperatureAuthority": false
+  },
+  "gate0ContractRefs": [
+    "validation/lafea-b02-contracts/gate0-contracts.json",
+    "validation/lafea-b02-contracts/edit-invalidation-matrix.json",
+    "validation/lafea-b02-contracts/method-benchmark-applicability.json",
+    "scripts/lafea-b02-gate0-contract-check.mjs",
+    "scripts/lafea-b01-b02-gate0-diagnostic.mjs"
+  ],
+  "governance": {
+    "productionOutputGeneratedTargets": false,
+    "productionOutputGeneratedTolerances": false,
+    "productionOutputGeneratedProbes": false,
+    "productionOutputGeneratedMeshDefinitions": false,
+    "releaseAuthorityGranted": false,
+    "temperatureAuthorityGranted": false,
+    "workflowDefinitionsModified": false,
+    "productionMechanicsModified": false
+  }
+}

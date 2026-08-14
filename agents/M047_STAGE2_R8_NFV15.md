@@ -71,6 +71,23 @@ The L15 harness performs no nonlinear solve. It requires both constituent artifa
 
 A nomination repeat uses the primitive experiment command with `--repeat 2`; repeat count is never used to choose a better result.
 
+## Guarded dispatcher and pure sequence contract
+
+The single-command candidate dispatcher is `scripts/lfea-m047-stage2-r8-nfv15-measurement-run.mjs`. It runs only the presently admissible sequence: L13, immediate frozen-baseline assessment, L7 only if L13 is nominated, immediate L7 assessment, then exact algebraic L15 only if L7 is nominated. It always stops before L1 while the separate hydrotest-WW basis remains unresolved.
+
+Its stop/go decisions are owned by the pure `scripts/lfea-m047-stage2-r8-nfv15-sequence.mjs` module and are exercised by `scripts/lfea-m047-stage2-r8-nfv15-sequence-contract.mjs`. The exact committed git blobs `5289305c5511845bc6afc12beee50490075df81a` and `70e2d3693090e9235f4257d2450287b548b41aba` were executed locally under Node and PASS. Receipt: `reports/lfea-m047-stage2-r8-nfv15-sequence-contract.json`.
+
+The contract proves, without a benchmark solve: L13 rejection blocks L7; L13 nomination advances only to L7; L7 rejection blocks L15; L7 nomination advances only to algebraic L15; failed L15 identity or any independent nonlinear L15 solve stops the sequence; successful L15 still leaves `runL1=false`; and no path authorizes production promotion.
+
+First single-command real measurement:
+
+```bash
+node scripts/lfea-m047-stage2-r8-nfv15-measurement-run.mjs \
+  --zip artifacts/bm4l-stage2/source/BM4_L.zip \
+  --accdb artifacts/bm4l-stage2/source/BM4_L.ACCDB \
+  --out reports/lfea-m047-stage2-r8-nfv15-measurement
+```
+
 ## When accuracy is measured
 
 Accuracy is measured **immediately after each custody-verified primitive run reaches all nonlinear convergence and physical-equilibrium gates**. The artifact reports the CAESAR normal-reaction and coordinate-invariant tangential-vector errors at that point. A nonconverged or equilibrium-failing run gets no accuracy claim.

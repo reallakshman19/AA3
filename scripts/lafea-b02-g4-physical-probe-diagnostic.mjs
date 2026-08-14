@@ -70,6 +70,27 @@ assert.equal(new Set(evidence.map((row) => row.quantityIdentityHash)).size, 1,
   'mesh family must not mutate physical quantity identity');
 assert.deepEqual(evidence.map((row) => row.mapping.elementType), ['T3', 'T6', 'Q8']);
 
+const strainEvidence = evaluateLafeaContinuumPhysicalProbe(stage('Q8'), {
+  ...PROBE,
+  probeId: 'G4-AFFINE-STRAIN-PROBE-01',
+  quantityId: 'STRAIN_EPSILON_X',
+  units: 'dimensionless',
+});
+close(strainEvidence.authoritativeValue, STRAIN.epsilonX);
+assert.equal(strainEvidence.authoritativeUnits, 'dimensionless');
+assert.equal(strainEvidence.quantityIdentity.units, 'dimensionless');
+
+const displacementEvidence = evaluateLafeaContinuumPhysicalProbe(stage('T6'), {
+  ...PROBE,
+  probeId: 'G4-AFFINE-DISPLACEMENT-PROBE-01',
+  quantityId: 'DISPLACEMENT_X',
+  recoveryMethod: 'ELEMENT_SHAPE_INTERPOLATION',
+  units: 'mm',
+  singularityClassification: 'NOT_APPLICABLE',
+});
+close(displacementEvidence.authoritativeValue, 0.001 * 0.2 + 0.0005 * 0.3);
+assert.equal(displacementEvidence.authoritativeUnits, 'mm');
+
 const singular = evaluateLafeaContinuumPhysicalProbe(stage('T6'), {
   ...PROBE,
   probeId: 'G4-SINGULAR-CLASSIFICATION-CONTROL',
@@ -87,6 +108,8 @@ console.log(JSON.stringify({
   status: 'PASS',
   physicalProbeIdentityStableAcrossMeshFamilies: true,
   directT3T6Q8Recovery: true,
+  canonicalStrainUnits: 'dimensionless',
+  displacementShapeInterpolation: true,
   directStressTensorDerivedFromUnroundedComponents: true,
   displayProjectionUsedForAcceptance: false,
   crossElementAveragingUsed: false,

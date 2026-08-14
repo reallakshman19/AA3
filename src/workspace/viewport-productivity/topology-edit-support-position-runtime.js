@@ -27,6 +27,8 @@ export class TopologyEditSupportPositionRuntime {
     this.element = null;
     this.supportId = null;
     this.draft = null;
+    this.bridgeHash = null;
+    this.intentHash = null;
     this.message = 'Select one support glyph to edit its station on the certified host.';
     this.error = null;
     this.onInput = (event) => this.handleInput(event);
@@ -59,6 +61,7 @@ export class TopologyEditSupportPositionRuntime {
     if (nextSupportId !== this.supportId) {
       this.supportId = nextSupportId;
       this.draft = null;
+      this.clearStageEvidence();
       this.error = null;
       this.message = support
         ? 'Support selected. Adjust station along its exact certified host; canonical topology remains unchanged until Apply.'
@@ -69,18 +72,22 @@ export class TopologyEditSupportPositionRuntime {
   }
 
   canonicalChanged(canonical = this.controller.session?.currentTopology?.()) {
+    let authorityChanged = false;
     if (this.draft) {
       try {
         assertCurrentTopologyEditTransientSupportPlacementDraft(this.draft, canonical);
       } catch {
         this.draft = null;
+        authorityChanged = true;
         this.message = 'Support position draft cleared because canonical support/host authority changed.';
       }
     }
     if (this.supportId && !exactSupportOrNull(canonical, this.supportId)) {
       this.supportId = null;
       this.draft = null;
+      authorityChanged = true;
     }
+    if (authorityChanged) this.clearStageEvidence();
     this.render();
   }
 
@@ -114,6 +121,7 @@ export class TopologyEditSupportPositionRuntime {
     if (!action) return false;
     if (action === 'reset') {
       this.draft = null;
+      this.clearStageEvidence();
       this.error = null;
       this.message = 'Support position input reset to current canonical station; any already-staged Table transaction is unchanged.';
       this.render();
@@ -129,6 +137,7 @@ export class TopologyEditSupportPositionRuntime {
   prepareNumericDraft(stationInput, render = true) {
     const topology = this.controller.session?.currentTopology?.();
     if (!topology || !this.supportId) return null;
+    this.clearStageEvidence();
     try {
       const draft = createTopologyEditTransientSupportPlacementDraft({
         topology,
@@ -182,21 +191,27 @@ export class TopologyEditSupportPositionRuntime {
       });
       const staged = stageTopologyEditPreparedTableIntent(tableRuntime, bridge.intent);
       if (!staged.ok) throw new RangeError(staged.error);
+      this.bridgeHash = bridge.bridgeHash;
+      this.intentHash = bridge.intent.intentHash;
       this.error = null;
       this.message = `Support station ${format(draft.stationMm)} mm staged through SUPPORT_PLACEMENT; governed 3D Preview refresh queued. Validate remains explicit.`;
-      this.publishEvidence({ bridgeHash: bridge.bridgeHash, intentHash: bridge.intent.intentHash });
       this.render();
       return true;
     } catch (error) {
+      this.clearStageEvidence();
       this.error = error instanceof Error ? error.message : String(error);
       this.message = 'Support position staging was rejected by certified Table authority.';
-      this.publishEvidence();
       this.render();
       return false;
     }
   }
 
-  publishEvidence(extra = {}) {
+  clearStageEvidence() {
+    this.bridgeHash = null;
+    this.intentHash = null;
+  }
+
+  publishEvidence() {
     const host = this.controller.hostElement;
     if (!host) return;
     const context = this.context();
@@ -204,8 +219,8 @@ export class TopologyEditSupportPositionRuntime {
     host.dataset.topologyEditSupportPositionHostEdgeId = context?.hostEdgeId ?? '';
     host.dataset.topologyEditSupportPositionDraftHash = this.draft?.draftHash ?? '';
     host.dataset.topologyEditSupportPositionStationMm = this.draft ? String(this.draft.stationMm) : '';
-    host.dataset.topologyEditSupportPositionBridgeHash = extra.bridgeHash ?? '';
-    host.dataset.topologyEditSupportPositionIntentHash = extra.intentHash ?? '';
+    host.dataset.topologyEditSupportPositionBridgeHash = this.bridgeHash ?? '';
+    host.dataset.topologyEditSupportPositionIntentHash = this.intentHash ?? '';
     host.dataset.topologyEditSupportPositionError = this.error ?? '';
   }
 
@@ -246,6 +261,7 @@ export class TopologyEditSupportPositionRuntime {
     this.destroyPanel();
     this.supportId = null;
     this.draft = null;
+    this.clearStageEvidence();
     this.error = null;
     this.publishEvidence();
   }

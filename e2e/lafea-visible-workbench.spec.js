@@ -128,7 +128,8 @@ test('production user can enter a continuum model and generate the retained SVG 
   await form.locator('[data-role="lafea-left-force-y"]').fill('-300');
   await form.locator('[data-role="lafea-left-create-model"]').click();
 
-  await expect(productionView.locator('[data-role="lafea-engineering-overview"]')).toContainText('USER_RECTANGLE');
+  await expect(workflow.locator('[data-role="lafea-left-model-name"]')).toHaveValue('USER_RECTANGLE');
+  await expect(productionView.locator('[data-role="lafea-engineering-overview"]')).toContainText('LOADED');
   const viewport = productionView.locator('[data-guided-target="viewport"]');
   await expect.poll(() => viewport.locator('svg [data-element-id]').count()).toBeGreaterThanOrEqual(2);
 

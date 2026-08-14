@@ -12,30 +12,31 @@ test('PIPE length paste requires visible explicit geometry policy and stages wit
   }
   const table = page.locator('[data-role="topology-edit-table"]');
   await page.locator('[data-table-profile="GEOMETRY"]').click();
-  await page.locator('[data-table-filter]').fill('PIPE');
+  const filter = page.locator('[data-table-filter]');
+  await filter.fill('PIPE');
 
-  const lengthInput = table.locator('tbody [data-table-cell-edit="PIPE_LENGTH"]').first();
-  await expect(lengthInput).toBeVisible();
-  const row = lengthInput.locator('xpath=ancestor::tr[1]');
-  const canonicalId = await lengthInput.getAttribute('data-table-cell-canonical-id');
-  expect(canonicalId).toBeTruthy();
-  const select = row.locator('[data-table-select]');
-  if ((await select.getAttribute('aria-pressed')) !== 'true') await select.click();
+  const editable = await chooseSafeTerminalPipe(page);
+  await filter.fill(editable.tag);
+  const row = table.locator(`tbody tr[data-canonical-id="${editable.edgeId}"]`);
+  await expect(row).toBeVisible();
+  await row.locator('[data-table-select]').click();
+  await expect.poll(() => host.getAttribute('data-topology-edit-selection-primary-id')).toBe(editable.edgeId);
   await expect(table.locator('[data-table-editor-id] [data-table-edit-length]')).toBeVisible();
 
   const anchor = table.locator('[data-table-edit-anchor]');
   const propagation = table.locator('[data-table-edit-propagation]');
-  await anchor.selectOption('FROM');
-  await propagation.selectOption('DOWNSTREAM');
+  await anchor.selectOption(editable.anchor);
+  await propagation.selectOption(editable.propagation);
   const before = await authorityEvidence(page);
+  const lengthInput = row.locator('[data-table-cell-edit="PIPE_LENGTH"]');
   const priorLength = Number(await lengthInput.inputValue());
-  expect(Number.isFinite(priorLength)).toBe(true);
-  const requestedLength = priorLength + 125;
+  expect(priorLength).toBe(editable.currentLengthMm);
+  const requestedLength = editable.currentLengthMm - 120;
 
   await dispatchPaste(lengthInput, String(requestedLength));
   await expect(table).toHaveAttribute('data-table-pipe-length-paste-assignment-count', '1');
-  await expect(table).toHaveAttribute('data-table-pipe-length-paste-anchor', 'FROM');
-  await expect(table).toHaveAttribute('data-table-pipe-length-paste-propagation', 'DOWNSTREAM');
+  await expect(table).toHaveAttribute('data-table-pipe-length-paste-anchor', editable.anchor);
+  await expect(table).toHaveAttribute('data-table-pipe-length-paste-propagation', editable.propagation);
   await expect.poll(() => host.getAttribute('data-topology-edit-table-batch-hash')).toBeTruthy();
   await expect.poll(() => host.getAttribute('data-topology-edit-table-preview-hash')).toBeTruthy();
   expectAuthorityNoop(await authorityEvidence(page), before);
@@ -52,11 +53,11 @@ test('PIPE length paste requires visible explicit geometry policy and stages wit
       propagation: intent.geometryPolicy?.propagation,
       intentCount: runtime?.batch?.intentCount ?? 0,
     } : null;
-  }, canonicalId);
+  }, editable.edgeId);
   expect(staged).toEqual({
     lengthMm: requestedLength,
-    anchor: 'FROM',
-    propagation: 'DOWNSTREAM',
+    anchor: editable.anchor,
+    propagation: editable.propagation,
     intentCount: 1,
   });
 
@@ -64,12 +65,15 @@ test('PIPE length paste requires visible explicit geometry policy and stages wit
   await expect.poll(() => host.getAttribute('data-topology-edit-table-batch-hash')).toBe('');
   expectAuthorityNoop(await authorityEvidence(page), before);
 
-  const refreshedRow = table.locator(`tbody tr[data-canonical-id="${canonicalId}"]`);
+  const refreshedRow = table.locator(`tbody tr[data-canonical-id="${editable.edgeId}"]`);
   const refreshedLengthInput = refreshedRow.locator('[data-table-cell-edit="PIPE_LENGTH"]');
-  await table.locator('[data-table-edit-anchor]').selectOption('FROM');
-  await table.locator('[data-table-edit-propagation]').selectOption('UPSTREAM');
-  await dispatchPaste(refreshedLengthInput, String(requestedLength + 50));
-  await expect(table.locator('.topology-edit-table__status')).toContainText('explicit policy FROM / UPSTREAM is unsupported');
+  const unsupportedPropagation = editable.propagation === 'DOWNSTREAM' ? 'UPSTREAM' : 'DOWNSTREAM';
+  await table.locator('[data-table-edit-anchor]').selectOption(editable.anchor);
+  await table.locator('[data-table-edit-propagation]').selectOption(unsupportedPropagation);
+  await dispatchPaste(refreshedLengthInput, String(requestedLength - 40));
+  await expect(table.locator('.topology-edit-table__status')).toContainText(
+    `explicit policy ${editable.anchor} / ${unsupportedPropagation} is unsupported`,
+  );
   expect(await host.getAttribute('data-topology-edit-table-batch-hash')).toBe('');
   expectAuthorityNoop(await authorityEvidence(page), before);
 
@@ -102,6 +106,64 @@ async function openProductionController(page) {
   await expect(host).toBeVisible();
   await expect.poll(() => host.getAttribute('data-topology-edit-table-projection-hash')).toBeTruthy();
   return host;
+}
+
+async function chooseSafeTerminalPipe(page) {
+  return page.evaluate(() => {
+    const controller = document.querySelector('[data-role="topology-edit-render-host"]')
+      ?.__topologyEditAuthoringController;
+    const topology = controller?.session?.currentTopology?.();
+    const projection = controller?.tableAdapter?.runtime?.projection;
+    const dataset = controller?.workspaceDataset;
+    if (!topology || !projection || !dataset) {
+      throw new Error('Table production authority is unavailable.');
+    }
+    const excludedComponents = new Set(['P-001', 'P-003', 'P-006']);
+    for (const entity of dataset.entities ?? []) {
+      const type = String(entity.entityType ?? entity.type ?? '').toUpperCase();
+      if (!['REST', 'GUIDE', 'LINE_STOP', 'ANCHOR', 'SPRING', 'SUPPORT', 'RESTRAINT'].includes(type)) continue;
+      const attributes = entity.properties?.sourceAttributes ?? entity.properties?.attributes ?? {};
+      const attached = attributes.ATTACHED_COMPONENT_ID ?? attributes.SUPPORTED_COMPONENT_ID;
+      if (attached) excludedComponents.add(String(attached));
+    }
+    const degree = new Map((topology.nodes ?? []).map((node) => [node.id, 0]));
+    for (const edge of topology.edges ?? []) {
+      degree.set(edge.fromNodeId, (degree.get(edge.fromNodeId) ?? 0) + 1);
+      degree.set(edge.toNodeId, (degree.get(edge.toNodeId) ?? 0) + 1);
+    }
+    const candidates = (topology.edges ?? []).filter((edge) => (
+      String(edge.entityType ?? '').toUpperCase() === 'PIPE'
+      && !excludedComponents.has(String(edge.componentKey ?? '').replace(/^edge:/, ''))
+    ));
+    candidates.sort((left, right) => {
+      if (left.componentKey === 'P-007') return -1;
+      if (right.componentKey === 'P-007') return 1;
+      return left.id.localeCompare(right.id);
+    });
+    for (const edge of candidates) {
+      const row = projection.rows.find((candidate) => candidate.identity.canonicalId === edge.id);
+      if (!row || !(row.fields.lengthMm > 240)) continue;
+      if (degree.get(edge.toNodeId) === 1) {
+        return {
+          edgeId: edge.id,
+          tag: row.fields.tag,
+          currentLengthMm: row.fields.lengthMm,
+          anchor: 'FROM',
+          propagation: 'DOWNSTREAM',
+        };
+      }
+      if (degree.get(edge.fromNodeId) === 1) {
+        return {
+          edgeId: edge.id,
+          tag: row.fields.tag,
+          currentLengthMm: row.fields.lengthMm,
+          anchor: 'TO',
+          propagation: 'UPSTREAM',
+        };
+      }
+    }
+    throw new Error('No safe graph-terminal canonical PIPE is available outside intentional defect/support zones.');
+  });
 }
 
 async function authorityEvidence(page) {

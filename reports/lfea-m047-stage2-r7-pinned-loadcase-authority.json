@@ -1,0 +1,75 @@
+{
+  "schema": "m047-stage2-r7-pinned-loadcase-authority/v1",
+  "decision": {
+    "pinnedCaseListAuthorityFound": true,
+    "generalInterCaseFrictionStateCarryAuthorized": false,
+    "alternateSusPreviousOpeRestraintStatusDocumented": true,
+    "l13IsAlternateSus": false,
+    "r7MayResumeWithGenericPreviousCaseStateTransfer": false,
+    "productionPromotionAuthorized": false
+  },
+  "source": {
+    "commonCommit": "f4d49f2a47d970ae0abf913b537193e324556177",
+    "loadCaseReportPath": "LFEA/BM4/Loadcasereport_BM4_L.txt",
+    "loadCaseReportGitBlob": "be62eeb08af26dddcd59146e21188c108c4600dd",
+    "loadCaseReportBytes": 15122,
+    "inputXmlPath": "LFEA/BM4/InputXML_BM4.xml",
+    "inputXmlGitBlob": "3423d220374a17f67addd3c8c0c44300ffa46251",
+    "miscDataPath": "LFEA/BM4/Miscdata_BM4_L.txt",
+    "miscDataGitBlob": "ef23d224925e4568185a360ecbe1ee62503f15ff",
+    "caesarVersion": "14.00.00.0910",
+    "caesarBuild": "231113",
+    "reportDate": "2026-08-10",
+    "reportTime": "12:37"
+  },
+  "availablePinnedBm4Files": [
+    "LFEA/BM4/BM4 accdb.zip",
+    "LFEA/BM4/BM4_L.zip",
+    "LFEA/BM4/BM4_NL.zip",
+    "LFEA/BM4/InputXML_BM4.xml",
+    "LFEA/BM4/Loadcasereport_BM4_L.txt",
+    "LFEA/BM4/Miscdata_BM4_L.txt",
+    "LFEA/BM4/Output_BM4.xml"
+  ],
+  "nativeExecutionArtifactPresentAtPinnedCommit": false,
+  "nativeExecutionArtifactSearch": {
+    "treeWasEnumeratedRecursively": true,
+    "c2Present": false,
+    "underscoreJPresent": false,
+    "executionLogPresent": false
+  },
+  "basicCases": [
+    {"caseId":"L1","number":1,"type":"HYD","definition":"WW+HP","name":"HYDRO TEST CASE","frictionMultiplier":1.0,"alternateSusOcc":false},
+    {"caseId":"L2","number":2,"type":"SUS","definition":"W","frictionMultiplier":0.0,"alternateSusOcc":false},
+    {"caseId":"L3","number":3,"type":"OPE","definition":"T1","frictionMultiplier":0.0,"alternateSusOcc":false},
+    {"caseId":"L4","number":4,"type":"SUS","definition":"P1","frictionMultiplier":0.0,"alternateSusOcc":false},
+    {"caseId":"L5","number":5,"type":"OPE","definition":"W+T1+P1","frictionMultiplier":0.0,"alternateSusOcc":false},
+    {"caseId":"L6","number":6,"type":"SUS","definition":"W+P1","frictionMultiplier":0.0,"alternateSusOcc":false},
+    {"caseId":"L7","number":7,"type":"OPE","definition":"W+T1+P1","name":"OPERATING CASE CONDITION 1","frictionMultiplier":1.0,"alternateSusOcc":false},
+    {"caseId":"L8","number":8,"type":"Alt-SUS","definition":"W+P1","name":"ALTERNATE SUSTAINED STRESS BASED ON OPERATING CONDITION 1","frictionMultiplier":1.0,"alternateSusOcc":true,"relatedOpeCase":"L7"},
+    {"caseId":"L9","number":9,"type":"OPE","definition":"W+T2+P1","name":"OPERATING CASE CONDITION 2","frictionMultiplier":1.0,"alternateSusOcc":false},
+    {"caseId":"L10","number":10,"type":"Alt-SUS","definition":"W+P1","name":"ALTERNATE SUSTAINED STRESS BASED ON OPERATING CONDITION 2","frictionMultiplier":1.0,"alternateSusOcc":true,"relatedOpeCase":"L9"},
+    {"caseId":"L11","number":11,"type":"OPE","definition":"W+T3+P1","name":"OPERATING CASE CONDITION 3","frictionMultiplier":1.0,"alternateSusOcc":false},
+    {"caseId":"L12","number":12,"type":"Alt-SUS","definition":"W+P1","name":"ALTERNATE SUSTAINED STRESS BASED ON OPERATING CONDITION 3","frictionMultiplier":1.0,"alternateSusOcc":true,"relatedOpeCase":"L11"},
+    {"caseId":"L13","number":13,"type":"SUS","definition":"W+P1","name":"SUSTAINED CASE CONDITION 1","frictionMultiplier":1.0,"alternateSusOcc":false}
+  ],
+  "combinationCases": [
+    {"caseId":"L14","number":14,"type":"EXP","definition":"L5-L6","method":"ALG"},
+    {"caseId":"L15","number":15,"type":"EXP","definition":"L7-L13","method":"ALG"},
+    {"caseId":"L16","number":16,"type":"EXP","definition":"L9-L13","method":"ALG"},
+    {"caseId":"L17","number":17,"type":"EXP","definition":"L7-L9","method":"ALG"},
+    {"caseId":"L18","number":18,"type":"EXP","definition":"L11-L13","method":"ALG"},
+    {"caseId":"L19","number":19,"type":"EXP","definition":"L7-L11","method":"ALG"},
+    {"caseId":"L20","number":20,"type":"EXP","definition":"L9-L11","method":"ALG"}
+  ],
+  "documentedMechanismBoundary": {
+    "alternateSus": "CAESAR II uses the restraint status/stiffness configuration from the corresponding preceding OPE case for an explicitly designated alternate SUS/OCC case.",
+    "standardSusL13": "The pinned report designates L13 as standard SUS, not Alt-SUS; no pinned artifact or Version 14 documentation found authorizes importing L12/L11/L7 friction state into L13.",
+    "genericListOrder": "The case-list order is now source-authoritative, but list order alone is not evidence of general friction state/slip carry-over between ordinary basic load cases."
+  },
+  "r7Boundary": {
+    "newEvidence": "Actual CAESAR v14 load-case list and explicit alternate-SUS relationships are now known.",
+    "allowedNextExperiment": null,
+    "reasonNoExperiment": "Applying the documented alternate-SUS previous-OPE restraint-status rule to standard L13 would deliberately solve a different CAESAR load-case type. A generic previous-case slip/state transfer remains unsupported without a native execution log or other solver-specific authority."
+  }
+}

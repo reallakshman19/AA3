@@ -39,12 +39,6 @@ const ELEMENT_NODE_COUNTS = Object.freeze({
   Q8: 8,
   [SHELL_TRI3]: 3,
 });
-const ELEMENT_CORNER_COUNTS = Object.freeze({
-  T3: 3,
-  T6: 3,
-  Q8: 4,
-  [SHELL_TRI3]: 3,
-});
 const MESH_KEYS = Object.freeze(['schema', 'meshIdentity', 'nodes', 'elements']);
 const NODE_KEYS = Object.freeze(['nodeId', 'x', 'y', 'z']);
 const ELEMENT_KEYS = Object.freeze(['elementId', 'elementType', 'nodeIds']);
@@ -117,79 +111,12 @@ export function canonicalLafeaAnalysisMesh(value) {
       throw meshContractError('LAFEA_ANALYSIS_MESH_ELEMENT_NODE_MISSING');
     }
   }
-  requireConformingManifoldEdges(elements);
   return deepFreeze({
     schema: LAFEA_ANALYSIS_MESH_SCHEMA,
     meshIdentity: requireText(source.meshIdentity, 'mesh.meshIdentity'),
     nodes,
     elements,
   });
-}
-
-/**
- * A retained analysis mesh may contain separate physical components at this
- * generic contract layer, but each interface must still be a conforming
- * manifold edge. LAFEA.3's local-continuum model applies the stricter
- * single-edge-connected-component rule later. This avoids imposing a local
- * continuum body policy on shell stages while still rejecting hanging or
- * mismatched shared-edge topology before mesh evidence can become CURRENT.
- */
-function requireConformingManifoldEdges(elements) {
-  const uses = new Map();
-  elements.forEach((element) => {
-    analysisMeshEdgeSequences(element).forEach((sequence) => {
-      const key = cornerEdgeKey(sequence);
-      const owners = uses.get(key) ?? [];
-      owners.push({ elementId: element.elementId, sequence });
-      uses.set(key, owners);
-    });
-  });
-  for (const [key, owners] of uses) {
-    if (owners.length > 2) {
-      throw meshContractError(
-        'LAFEA_ANALYSIS_MESH_NON_MANIFOLD_EDGE',
-        `Physical edge ${printableEdgeKey(key)} has ${owners.length} owners.`,
-      );
-    }
-    if (owners.length !== 2) continue;
-    const [left, right] = owners;
-    if (fullEdgeKey(left.sequence) !== fullEdgeKey(right.sequence)) {
-      throw meshContractError(
-        'LAFEA_ANALYSIS_MESH_NONCONFORMING_SHARED_EDGE',
-        `Elements ${left.elementId} and ${right.elementId} disagree on their shared edge topology/midside identity.`,
-      );
-    }
-    if (
-      left.sequence[0] !== right.sequence[right.sequence.length - 1]
-      || left.sequence[left.sequence.length - 1] !== right.sequence[0]
-    ) {
-      throw meshContractError(
-        'LAFEA_ANALYSIS_MESH_SHARED_EDGE_ORIENTATION_INVALID',
-        `Elements ${left.elementId} and ${right.elementId} do not traverse the shared edge in opposite directions.`,
-      );
-    }
-  }
-}
-
-function analysisMeshEdgeSequences(element) {
-  const cornerCount = ELEMENT_CORNER_COUNTS[element.elementType];
-  if (!cornerCount) return [];
-  const corners = element.nodeIds.slice(0, cornerCount);
-  const midsides = element.nodeIds.slice(cornerCount);
-  return corners.map((corner, index) => {
-    const next = corners[(index + 1) % cornerCount];
-    return midsides.length ? [corner, midsides[index], next] : [corner, next];
-  });
-}
-
-function cornerEdgeKey(sequence) {
-  return [sequence[0], sequence[sequence.length - 1]].sort().join('\0');
-}
-function fullEdgeKey(sequence) {
-  return [...sequence].sort().join('\0');
-}
-function printableEdgeKey(key) {
-  return key.split('\0').join('–');
 }
 
 export function lafeaAnalysisMeshContentHash(value) {

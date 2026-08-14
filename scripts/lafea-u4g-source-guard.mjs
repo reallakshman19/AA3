@@ -8,6 +8,7 @@ const sourceViewport = read('../src/workspace/lafea-source-workbench-viewport.js
 const registry = read('../src/workspace/lafea-workbench-render-evidence.js');
 const controller = read('../src/workspace/lafea-workbench-controller.js');
 const view = `${read('../src/workspace/lafea-workbench-view.js')}\n${read('../src/workspace/lafea-workbench-content.js')}`;
+const generationPanel = read('../src/workspace/lafea-discretization-generation-panel.js');
 const publicSurface = read('../src/workspace/lafea-workbench.js');
 const accessory = read('../src/workspace/lafea-workbench-accessory-panels.js');
 
@@ -35,6 +36,11 @@ assert.match(
   sourceViewport,
   /return mountLafeaSourceWorkbenchViewportModel\(root, model, input\)/u,
 );
+
+const meshUiWiring = `${view}\n${generationPanel}`;
+assert.doesNotMatch(meshUiWiring, /onGenerateAnalysisMesh/u);
+assert.match(generationPanel, /onBindMeshProfile\?\.\(profileEnvelope\);\s*handlers\.onGenerateMesh\?\.\(\{\}\);/u);
+assert.match(view, /onBindMeshProfile\?\.\(profileEnvelope\);\s*options\.handlers\.onGenerateMesh\?\.\(\{\}\);/u);
 
 const forbiddenImports = /from\s+['"][^'"]*(?:src\/core|local-shell|mesher|solver|recovery|code-assessment|lafea-templates|benchmark-fixtures)[^'"]*['"]/u;
 assert.doesNotMatch(`${live}\n${registry}`, forbiddenImports);
@@ -99,6 +105,7 @@ console.log(JSON.stringify({
   fallbackRenderers: 0,
   accessoryFacadeExpanded: false,
   publicRawPacketGetter: false,
+  meshGenerationUiCallsAuthoritativeHandler: true,
   targetModuleLineLimit: 300,
   lafea6Enabled: false,
 }));

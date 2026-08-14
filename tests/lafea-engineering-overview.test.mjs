@@ -3,11 +3,6 @@ import { buildLafeaEngineeringOverview } from '../src/workspace/lafea-engineerin
 
 const stage = {
   stageId: 'LAFEA.3',
-  currentness: {
-    computationalState: 'CURRENT_RESULT',
-    qualificationState: 'PASS',
-    currentAuthority: true,
-  },
   document: {
     modelIdentity: 'VISIBLE_UI_TEST',
     formulation: 'PLANE_STRESS',
@@ -58,11 +53,6 @@ const registry = {
 
 const model = buildLafeaEngineeringOverview(stage, registry);
 assert.equal(model.schema, 'lafea-engineering-overview/v1');
-assert.deepEqual(model.currentness, {
-  computationalState: 'CURRENT_RESULT',
-  qualificationState: 'PASS',
-  currentAuthority: true,
-});
 assert.equal(model.model.nodeCount, 2);
 assert.equal(model.model.elementCount, 1);
 assert.deepEqual(model.model.elementFamilies, ['T6']);

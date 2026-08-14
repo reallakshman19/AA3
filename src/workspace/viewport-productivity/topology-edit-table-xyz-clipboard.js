@@ -1,3 +1,7 @@
+import {
+  handleTopologyEditTablePipeLengthPaste,
+} from './topology-edit-table-pipe-length-clipboard.js';
+
 const NODE_CELL_KIND = 'NODE_POSITION';
 
 export function parseTopologyEditTableXyzClipboard(textInput) {
@@ -81,6 +85,9 @@ export function planTopologyEditTableXyzDraftPaste({
 }
 
 export function handleTopologyEditTableXyzPaste(runtime, event) {
+  if (event.target?.closest?.('input[data-table-cell-edit="PIPE_LENGTH"]')) {
+    return handleTopologyEditTablePipeLengthPaste(runtime, event);
+  }
   const input = event.target?.closest?.('input[data-table-cell-edit="NODE_POSITION"]');
   if (!input || !runtime?.element?.contains(input)) return false;
   event.preventDefault();

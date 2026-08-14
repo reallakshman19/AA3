@@ -1,0 +1,62 @@
+name: M047 Stage 2 L1 exact-head transport
+
+on:
+  push:
+    branches:
+      - agent/issue-1083-l1-exacthead-transport-20260814
+
+permissions:
+  contents: read
+
+jobs:
+  transport:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Checkout exact L1 production head
+        uses: actions/checkout@v4
+        with:
+          repository: reallaksh19/Advanced_Analysis
+          ref: 80f158c6b7ece734a0c287f6fc56f4c0f81f4084
+          path: source
+
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+          cache-dependency-path: source/package-lock.json
+
+      - name: Install production-only dependencies
+        working-directory: source
+        run: npm ci --omit=dev --ignore-scripts --no-audit --no-fund
+
+      - name: Verify exact source blobs and package bytes
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$(git -C source rev-parse HEAD)" = "80f158c6b7ece734a0c287f6fc56f4c0f81f4084"
+          test "$(git -C source hash-object src/core/fea-benchmarks/caesar-accdb-linear-solve.js)" = "06e1645cfd8a957f5a5ef787c159c0d8d9094508"
+          test "$(git -C source hash-object src/core/fea-benchmarks/caesar-accdb-friction-solve.js)" = "5b3ba1ce89f6ff7509bf8be82361993a32497ad2"
+          mkdir -p runtime
+          tar --exclude=.git --exclude=node_modules -C source -czf runtime/source.tgz .
+          tar -C source -czf runtime/prod-node-modules.tgz node_modules
+          cat > runtime/manifest.txt <<'EOF'
+          head=80f158c6b7ece734a0c287f6fc56f4c0f81f4084
+          linear_blob=06e1645cfd8a957f5a5ef787c159c0d8d9094508
+          friction_blob=5b3ba1ce89f6ff7509bf8be82361993a32497ad2
+          node=22
+          install=npm ci --omit=dev --ignore-scripts --no-audit --no-fund
+          transport_only=true
+          EOF
+          sha256sum runtime/source.tgz runtime/prod-node-modules.tgz > runtime/sha256sums.txt
+          cat runtime/manifest.txt
+          cat runtime/sha256sums.txt
+
+      - name: Upload exact-head runtime
+        uses: actions/upload-artifact@v4
+        with:
+          name: m047-l1-exacthead-runtime-80f158c6
+          path: runtime/
+          if-no-files-found: error
+          retention-days: 1

@@ -75,7 +75,8 @@ test('3D support marker selection stages host-constrained support position throu
   expect(requestedStation).toBeGreaterThan(picked.currentStationMm);
   await station.fill(String(requestedStation));
   await expect.poll(() => host.getAttribute('data-topology-edit-support-position-draft-hash')).toBeTruthy();
-  await expect.poll(() => Number(host.getAttribute('data-topology-edit-support-position-station-mm')))
+  await expect.poll(() => host.getAttribute('data-topology-edit-support-position-station-mm')
+    .then((value) => Number(value)))
     .toBeCloseTo(requestedStation, 9);
   expectAuthorityNoop(await authorityEvidence(page), baseline);
   await expect(panel.locator('[data-support-position-action="stage"]')).toBeEnabled();

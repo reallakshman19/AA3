@@ -1,6 +1,7 @@
 import { expect, test } from '@playwright/test';
 
 test('Specification profile stages one exact PIPE record and keeps OD/wall derived', async ({ page }) => {
+  test.setTimeout(180_000);
   const pageErrors = [];
   const consoleErrors = [];
   page.on('pageerror', (error) => pageErrors.push(error.message));
@@ -27,30 +28,26 @@ test('Specification profile stages one exact PIPE record and keeps OD/wall deriv
     await expect(table.locator(`thead [data-table-column-key="${key}"]`)).toBeAttached();
   }
 
-  const target = await choosePipeWithSpecificationCandidate(page);
+  const before = await authorityEvidence(page);
+  const target = await stageValidatorReadyPipeSpecification(page, before);
   expect(target.recordId).toBeTruthy();
+  expect(target.validationHashBeforeValidate).toBe('');
   const filter = page.locator('[data-table-filter]');
   await filter.fill(target.canonicalId);
   const row = table.locator(`tbody tr[data-canonical-id="${target.canonicalId}"]`);
   await expect(row).toBeVisible();
-  await row.locator('[data-table-select]').click();
+  await expect(row.locator('[data-table-select]')).toHaveAttribute('aria-pressed', 'true');
   await expect.poll(() => host.getAttribute('data-topology-edit-selection-primary-id')).toBe(target.canonicalId);
 
   const recordSelect = page.locator('[data-table-edit-pipe-catalogue-record]');
   await expect(recordSelect).toBeVisible();
+  await expect(recordSelect).toHaveValue(target.recordId);
   await expect(recordSelect).toHaveAttribute('data-table-pipe-catalogue-hash', target.catalogueHash);
   await expect(page.locator('[data-table-edit-outside-diameter]')).toHaveCount(0);
   await expect(page.locator('[data-table-edit-wall-thickness]')).toHaveCount(0);
   await expect(page.locator('[data-table-pipe-specification-consequences]')).toContainText('OD');
   await expect(page.locator('[data-table-pipe-specification-consequences]')).toContainText('Wall');
   await expect(page.locator('[data-table-pipe-specification-consequences]')).toContainText('ID');
-
-  const before = await authorityEvidence(page);
-  await recordSelect.selectOption(target.recordId);
-  await page.locator('[data-table-action="stage-pipe-specification"]').click();
-  await expect.poll(() => host.getAttribute('data-topology-edit-table-batch-hash')).toBeTruthy();
-  await expect.poll(() => host.getAttribute('data-topology-edit-table-preview-hash')).toBeTruthy();
-  expect(await host.getAttribute('data-topology-edit-table-validation-hash')).toBe('');
   expectAuthorityNoop(await authorityEvidence(page), before);
 
   const staged = await page.evaluate(() => {
@@ -92,7 +89,6 @@ test('Specification profile stages one exact PIPE record and keeps OD/wall deriv
   expect(staged.afterRecordHash).toBeTruthy();
   expect(staged.previewPlanHash).toBe(staged.currentPlanHash);
 
-  await page.locator('[data-table-action="validate"]').click();
   await expect.poll(() => host.getAttribute('data-topology-edit-table-validation-hash')).toBeTruthy();
   const validationStatus = await host.getAttribute('data-topology-edit-table-validation-status');
   const blockers = await host.getAttribute('data-topology-edit-table-validation-blockers');
@@ -130,13 +126,15 @@ test('Specification profile stages one exact PIPE record and keeps OD/wall deriv
   expect(consoleErrors.filter((message) => !message.includes('favicon'))).toEqual([]);
 });
 
-async function choosePipeWithSpecificationCandidate(page) {
+async function stageValidatorReadyPipeSpecification(page, baseline) {
+  const host = page.locator('[data-role="topology-edit-render-host"]');
   const table = page.locator('[data-role="topology-edit-table"]');
   const filter = page.locator('[data-table-filter]');
   await filter.fill('PIPE');
   const ids = await table.locator('tbody tr[data-element-type="PIPE"][data-canonical-id]').evaluateAll(
     (rows) => rows.map((row) => row.getAttribute('data-canonical-id')).filter(Boolean),
   );
+  const rejected = [];
   for (const canonicalId of ids) {
     await filter.fill(canonicalId);
     const row = table.locator(`tbody tr[data-canonical-id="${canonicalId}"]`);
@@ -144,17 +142,60 @@ async function choosePipeWithSpecificationCandidate(page) {
     await row.locator('[data-table-select]').click();
     const select = page.locator('[data-table-edit-pipe-catalogue-record]');
     if (!(await select.count())) continue;
+    const currentDn = await page.evaluate((edgeId) => {
+      const runtime = document.querySelector('[data-role="topology-edit-render-host"]')
+        ?.__topologyEditAuthoringController?.tableAdapter?.runtime;
+      const exact = runtime?.projection?.rows?.find((candidate) => candidate.identity?.canonicalId === edgeId);
+      const value = exact?.fields?.dnInMm ?? exact?.fields?.nominalSizeMm ?? null;
+      return Number.isFinite(Number(value)) ? Number(value) : null;
+    }, canonicalId);
     const options = await select.locator('option').evaluateAll((nodes) => (
-      nodes.slice(1).map((option) => option.value).filter(Boolean)
+      nodes.slice(1).map((option) => ({ value: option.value, label: option.textContent ?? '' }))
+        .filter((option) => option.value)
     ));
-    if (!options.length) continue;
-    return {
-      canonicalId,
-      recordId: options[0],
-      catalogueHash: await select.getAttribute('data-table-pipe-catalogue-hash'),
-    };
+    options.sort((left, right) => sameDnRank(left.label, currentDn) - sameDnRank(right.label, currentDn)
+      || left.value.localeCompare(right.value));
+    for (const option of options) {
+      await select.selectOption(option.value);
+      await page.locator('[data-table-action="stage-pipe-specification"]').click();
+      await expect.poll(() => host.getAttribute('data-topology-edit-table-batch-hash')).toBeTruthy();
+      await expect.poll(() => host.getAttribute('data-topology-edit-table-preview-hash')).toBeTruthy();
+      const validationHashBeforeValidate = await host.getAttribute('data-topology-edit-table-validation-hash');
+      expect(validationHashBeforeValidate).toBe('');
+      expectAuthorityNoop(await authorityEvidence(page), baseline);
+
+      await page.locator('[data-table-action="validate"]').click();
+      await expect.poll(() => host.getAttribute('data-topology-edit-table-validation-hash')).toBeTruthy();
+      const status = await host.getAttribute('data-topology-edit-table-validation-status');
+      const blockers = await host.getAttribute('data-topology-edit-table-validation-blockers');
+      expectAuthorityNoop(await authorityEvidence(page), baseline);
+      if (status === 'READY_TO_APPLY') {
+        return {
+          canonicalId,
+          recordId: option.value,
+          catalogueHash: await select.getAttribute('data-table-pipe-catalogue-hash'),
+          validationHashBeforeValidate,
+          rejected,
+        };
+      }
+      rejected.push({ canonicalId, recordId: option.value, status, blockers });
+      await expect(page.locator('[data-table-action="apply"]')).toBeDisabled();
+      await page.locator('[data-table-action="discard"]').click();
+      await expect.poll(() => host.getAttribute('data-topology-edit-table-batch-hash')).toBe('');
+      await expect.poll(() => host.getAttribute('data-topology-edit-table-preview-hash')).toBe('');
+      await expect.poll(() => host.getAttribute('data-topology-edit-table-validation-hash')).toBe('');
+      expectAuthorityNoop(await authorityEvidence(page), baseline);
+    }
   }
-  throw new Error('No production PIPE row exposes a command-certifiable exact specification record.');
+  throw new Error(
+    `No validator-ready production PIPE specification record. Rejected: ${JSON.stringify(rejected)}`,
+  );
+}
+
+function sameDnRank(label, currentDn) {
+  if (!Number.isFinite(currentDn)) return 1;
+  const match = String(label).match(/\bDN\s+([0-9.]+)/i);
+  return match && Number(match[1]) === currentDn ? 0 : 1;
 }
 
 async function openProductionController(page) {

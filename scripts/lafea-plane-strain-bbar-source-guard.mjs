@@ -4,6 +4,7 @@ import fs from 'node:fs';
 
 const constants = read('src/core/local-continuum/constants.js');
 const normalization = read('src/core/local-continuum/source-normalization.js');
+const element = read('src/core/local-continuum/element.js');
 const bbar = read('src/core/local-continuum/bbar-plane-strain.js');
 const t6 = read('src/core/local-continuum/t6-element.js');
 const q8 = read('src/core/local-continuum/q8-element.js');
@@ -21,10 +22,16 @@ assert.match(constants, /planeStrainPoissonBlock:\s*0\.45/u);
 assert.match(constants, /PLANE_STRAIN_BBAR:\s*'PLANE_STRAIN_BBAR'/u);
 assert.match(normalization, /formulation !== FORMULATIONS\.PLANE_STRAIN\) return/u);
 assert.match(normalization, /PLANE_STRAIN_NEAR_INCOMPRESSIBLE_NOT_QUALIFIED/u);
-assert.match(normalization, /PLANE_STRAIN_BBAR_T3_NOT_QUALIFIED/u);
 assert.match(normalization, /PLANE_STRAIN_BBAR_TEMPERATURE_NOT_QUALIFIED/u);
 assert.equal(/planeStrainPoissonBlock\s*[:=]\s*(0\.[4-9][6-9]|[1-9])/u.test(constants), false,
   'Legacy plane-strain hard block must not be weakened above 0.45.');
+
+// Placeholder source connectivity may be T3, but actual B-bar solver elements may not.
+assert.equal(/validateFormulationElementAuthority/u.test(normalization), false,
+  'Source normalization must not confuse domain-first placeholder connectivity with solver mesh authority.');
+assert.match(element, /PLANE_STRAIN_BBAR_T3_NOT_QUALIFIED/u);
+assert.match(element, /isBbarPlaneStrain\(model\.formulation\)/u);
+assert.match(kernelCheck, /bbarT3ExecutionBlockedBeforeStiffnessAssembly:\s*true/u);
 
 // B-bar mechanics must be mean-dilatation, not tolerance or reduced-integration substitution.
 assert.match(bbar, /Bv_bar|meanVolumetricRow/u);
@@ -72,7 +79,9 @@ console.log(JSON.stringify({
   status: 'PASS',
   legacyPlaneStrainGuardPreserved: true,
   explicitBbarIdentityRequired: true,
+  placeholderT3SourceAllowedWithoutSolverAuthority: true,
   t3BbarAuthorityGranted: false,
+  t3BbarBlockedAtElementExecution: true,
   bbarTemperatureAuthorityGranted: false,
   retainedMeanDilatationRecoveryGuarded: true,
   solverToleranceRelaxationDetected: false,

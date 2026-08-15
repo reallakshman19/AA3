@@ -27,8 +27,10 @@ export const LAFEA_MESH_PRODUCER_REF =
  * Automatic generation plus retained-mesh refinement regeneration. Local
  * refinement remains qualified only for LAFEA.3 T3/T6 parents. The automatic
  * LAFEA.3 envelope additionally contains the frozen B02D probe-stable polar
- * strategy for T3/T6/Q8; that strategy is selected only by its reserved
- * governed feature ID and exact annular/frozen-level preconditions.
+ * strategy for T3/T6/Q8; that strategy is selected only by its qualified
+ * source-controlled mesh-profile identity plus exact annular/frozen-level
+ * preconditions. The registered B02D intent retains its frozen empty
+ * refinementFeatureIds list.
  */
 export const LAFEA_MESH_PRODUCER_GENERATION_MODES = Object.freeze([
   'AUTOMATIC_MESH', 'REFINEMENT_REGENERATION',

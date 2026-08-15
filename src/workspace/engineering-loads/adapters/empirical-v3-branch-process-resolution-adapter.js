@@ -45,7 +45,8 @@ export function adaptBranchProcessResolverOutput(input) {
     sourceSemanticHash,
   });
 
-  const wallExactMaster = row.wallThicknessSource === 'piping-class-master' && componentRowMasterExact;
+  const wallFromMaster = row.wallThicknessSource === 'piping-class-master';
+  const wallExactMaster = wallFromMaster && componentRowMasterExact;
   const wallAuthority = adaptLegacyNumericResolution({
     runId,
     quantityId: `Q:${componentId}:WT`,
@@ -55,7 +56,7 @@ export function adaptBranchProcessResolverOutput(input) {
     unit: 'mm',
     source: row.wallThicknessSource || 'unresolved',
     sourceReference: `${row.wallThicknessSource || 'unresolved'}:${row.wallThicknessKey || componentId}`,
-    sourceSemanticHash: wallExactMaster ? masterSemanticHash : sourceSemanticHash,
+    sourceSemanticHash: wallFromMaster ? masterSemanticHash : sourceSemanticHash,
     evidenceRef: wallExactMaster
       ? `piping-class-master:${row.wallThicknessKey || componentId}:wall-thickness`
       : null,
@@ -69,6 +70,7 @@ export function adaptBranchProcessResolverOutput(input) {
   // Corrosion is resolved by a second rating-aware master-row lookup in the
   // legacy resolver. That lookup's row method/reasons are not preserved in the
   // current output, so V3 cannot prove this numeric value exact from this seam.
+  const corrosionFromMaster = row.corrosionSource === 'piping-class-master';
   const corrosionExactMaster = false;
   const corrosionAuthority = adaptLegacyNumericResolution({
     runId,
@@ -79,7 +81,7 @@ export function adaptBranchProcessResolverOutput(input) {
     unit: 'mm',
     source: row.corrosionSource || 'unresolved',
     sourceReference: `${row.corrosionSource || 'unresolved'}:${row.corrosionKey || componentId}`,
-    sourceSemanticHash,
+    sourceSemanticHash: corrosionFromMaster ? masterSemanticHash : sourceSemanticHash,
     evidenceRef: null,
     evidenceHash: null,
     matchMethod: row.corrosionMatchMethod || 'legacy-rating-aware-match-evidence-not-preserved',
@@ -176,7 +178,8 @@ function classifyMaterialResolution({
   sourceSemanticHash,
 }) {
   const source = normalizeSource(row.materialSource);
-  const exactMaster = componentRowExact && source === 'PIPING_CLASS_MATERIAL_CODE' && Boolean(masterSemanticHash);
+  const fromPipingClassMaster = source === 'PIPING_CLASS_MATERIAL_CODE';
+  const exactMaster = componentRowExact && fromPipingClassMaster && Boolean(masterSemanticHash);
   const exactSource = source === 'LINE_LIST_MATERIAL_CODE' && Boolean(sourceSemanticHash);
   const inherentlyApproximate = [
     'PIPING_CLASS_MATERIAL_MAP',
@@ -193,7 +196,7 @@ function classifyMaterialResolution({
     kind: 'MATERIAL_MAPPING',
     ref: optionalText(row.materialCode),
     source: row.materialSource || 'unresolved',
-    sourceSemanticHash: exactMaster ? masterSemanticHash : sourceSemanticHash,
+    sourceSemanticHash: fromPipingClassMaster ? masterSemanticHash : sourceSemanticHash,
     matchMethod: exactMaster ? 'exact' : (row.materialCodeMatchMethod || row.materialSource || 'none'),
     needsReview: inherentlyApproximate || !(exactMaster || exactSource),
     exactMasterApproved: exactMaster,

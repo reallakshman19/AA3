@@ -1,0 +1,179 @@
+{
+  "schema": "lafea-plane-strain-bbar-qualification-definition/v1",
+  "programmeId": "LAFEA3-PS-BBAR-001",
+  "stageId": "LAFEA.3",
+  "definitionState": "FROZEN_BEFORE_PRODUCTION_OBSERVATION",
+  "productionOutputUsedToChooseDefinition": false,
+  "baselineMainSha": "543cd27c5d498390bacf4a3584ca70e30ee18641",
+  "formulations": {
+    "legacyControl": {
+      "identity": "PLANE_STRAIN",
+      "kinematics": "DISPLACEMENT_ONLY_FULL_INTEGRATION",
+      "poissonWarning": 0.4,
+      "poissonHardBlock": 0.45,
+      "guardMustRemainUnchanged": true
+    },
+    "candidate": {
+      "identity": "PLANE_STRAIN_BBAR",
+      "kinematics": "DISPLACEMENT_MEAN_DILATATION_BBAR",
+      "supportedFamilies": ["T6", "Q8"],
+      "t3Disposition": "CONTROL_ONLY_NO_LOCKING_RESISTANT_AUTHORITY",
+      "temperatureDisposition": "BLOCKED_UNTIL_SEPARATELY_QUALIFIED"
+    }
+  },
+  "poissonRatioLadder": [0.3, 0.45, 0.49, 0.499, 0.4999],
+  "material": {
+    "elasticModulus": 200000,
+    "elasticModulusUnit": "MPa"
+  },
+  "elementFamilies": {
+    "T3": "CONTROL",
+    "T6": "REQUIRED",
+    "Q8": "REQUIRED"
+  },
+  "mechanicsDefinition": {
+    "shearModulus": "mu=E/(2*(1+nu))",
+    "bulkModulus": "K=E/(3*(1-2*nu))",
+    "pointDilatation": "theta=epsilon_x+epsilon_y",
+    "volumetricRow": "Bv=[1,1,0]*B",
+    "meanVolumetricRow": "Bv_bar=(1/A)*integral_A(Bv dA)",
+    "deviatoricMatrix": "[[4mu/3,-2mu/3,0],[-2mu/3,4mu/3,0],[0,0,mu]]",
+    "stiffness": "Ke=integral_A(t*B^T*Ddev*B dA)+t*A*K*(Bv_bar^T*Bv_bar)",
+    "stressRecovery": {
+      "sigmaX": "2mu*(epsilon_x-theta/3)+K*theta_bar",
+      "sigmaY": "2mu*(epsilon_y-theta/3)+K*theta_bar",
+      "sigmaZ": "2mu*(-theta/3)+K*theta_bar",
+      "tauXY": "mu*gamma_xy"
+    },
+    "energy": "U=integral_A(t*mu*e_dev:e_dev dA)+0.5*t*A*K*theta_bar^2"
+  },
+  "benchmarks": {
+    "AFFINE": {
+      "benchmarkId": "PS-BBAR-AFFINE-01",
+      "purpose": "Rigid-body, isochoric and constant-dilatation patch identity",
+      "requiredNu": [0.3, 0.45, 0.49, 0.499, 0.4999],
+      "fields": [
+        {"fieldId": "RIGID_TX", "ux": "1", "uy": "0", "expectedStrain": [0,0,0]},
+        {"fieldId": "RIGID_TY", "ux": "0", "uy": "1", "expectedStrain": [0,0,0]},
+        {"fieldId": "RIGID_RZ", "ux": "-y", "uy": "x", "expectedStrain": [0,0,0]},
+        {"fieldId": "ISOCHORIC_NORMAL", "ux": "0.001*x", "uy": "-0.001*y", "expectedStrain": [0.001,-0.001,0]},
+        {"fieldId": "PURE_SHEAR", "ux": "0.0005*y", "uy": "0.0005*x", "expectedStrain": [0,0,0.001]},
+        {"fieldId": "CONSTANT_DILATATION", "ux": "0.001*x", "uy": "0.001*y", "expectedStrain": [0.001,0.001,0]}
+      ],
+      "acceptance": {
+        "existingRigidBodyToleranceMustPass": true,
+        "existingAffinePatchToleranceMustPass": true,
+        "bbarEqualsStandardForConstantDilatationRelativeMaximum": 1e-10,
+        "spuriousModeAllowed": false
+      }
+    },
+    "THICK_CYLINDER": {
+      "benchmarkId": "PS-BBAR-LAME-01",
+      "purpose": "Analytical near-incompressible plane-strain locking discriminator",
+      "geometry": {
+        "type": "QUARTER_ANNULUS",
+        "center": {"x": 0, "y": 0},
+        "innerRadius": 20,
+        "outerRadius": 100,
+        "thickness": 10,
+        "angleMinimumDegrees": 0,
+        "angleMaximumDegrees": 90,
+        "lengthUnit": "mm"
+      },
+      "load": {
+        "internalPressure": 10,
+        "externalPressure": 0,
+        "pressureUnit": "MPa",
+        "innerBoundaryNormalConvention": "OUTWARD_FROM_MATERIAL_INTO_HOLE",
+        "symmetryX": "UY_ZERO",
+        "symmetryY": "UX_ZERO"
+      },
+      "oracle": {
+        "authority": "CLASSICAL_LAME_THICK_CYLINDER_PLANE_STRAIN_CLOSED_FORM",
+        "A": "(pi*a^2-po*b^2)/(b^2-a^2)",
+        "B": "a^2*b^2*(pi-po)/(b^2-a^2)",
+        "sigmaR": "A-B/r^2",
+        "sigmaTheta": "A+B/r^2",
+        "sigmaZ": "2*nu*A",
+        "radialDisplacement": "((1+nu)/E)*((1-2*nu)*A*r+B/r)",
+        "cartesianTransform": {
+          "ux": "ur*cos(theta)",
+          "uy": "ur*sin(theta)",
+          "sigmaX": "sigmaR*cos(theta)^2+sigmaTheta*sin(theta)^2",
+          "sigmaY": "sigmaR*sin(theta)^2+sigmaTheta*cos(theta)^2",
+          "tauXY": "(sigmaR-sigmaTheta)*sin(theta)*cos(theta)"
+        },
+        "productionOutputUsed": false
+      },
+      "fixedPhysicalProbes": [
+        {"probeId":"LAME-R30-T30-UX","r":30,"thetaDegrees":30,"quantityId":"DISPLACEMENT_X","units":"mm","singularityClassification":"NON_SINGULAR_ANALYTICAL"},
+        {"probeId":"LAME-R30-T30-SX","r":30,"thetaDegrees":30,"quantityId":"STRESS_SIGMA_X","units":"MPa","singularityClassification":"NON_SINGULAR_ANALYTICAL"},
+        {"probeId":"LAME-R60-T30-UX","r":60,"thetaDegrees":30,"quantityId":"DISPLACEMENT_X","units":"mm","singularityClassification":"NON_SINGULAR_ANALYTICAL"},
+        {"probeId":"LAME-R60-T30-SX","r":60,"thetaDegrees":30,"quantityId":"STRESS_SIGMA_X","units":"MPa","singularityClassification":"NON_SINGULAR_ANALYTICAL"},
+        {"probeId":"LAME-R90-T30-UX","r":90,"thetaDegrees":30,"quantityId":"DISPLACEMENT_X","units":"mm","singularityClassification":"NON_SINGULAR_ANALYTICAL"},
+        {"probeId":"LAME-R90-T30-SX","r":90,"thetaDegrees":30,"quantityId":"STRESS_SIGMA_X","units":"MPa","singularityClassification":"NON_SINGULAR_ANALYTICAL"}
+      ],
+      "meshLadder": {
+        "refinementRatio": 2,
+        "levels": [
+          {"levelId":"L1","targetElementLength":20},
+          {"levelId":"L2","targetElementLength":10},
+          {"levelId":"L3","targetElementLength":5},
+          {"levelId":"L4","targetElementLength":2.5}
+        ],
+        "families": {"T6":"REQUIRED","Q8":"REQUIRED"},
+        "exactCircularBoundaryRequired": true,
+        "existingMeshQualityPolicyMustPass": true,
+        "fullParentJacobianQualificationMustPass": true
+      },
+      "acceptance": {
+        "forceEquilibriumRelativeMaximum": 0.000001,
+        "momentEquilibriumRelativeMaximum": 0.000001,
+        "fixedProbeMappingResidualMaximum": 1e-8,
+        "regularMeshFinestDisplacementRelativeErrorMaximum": 0.02,
+        "regularMeshFinestStressRelativeErrorMaximum": 0.03,
+        "moderateDistortionFinestDisplacementRelativeErrorMaximum": 0.03,
+        "moderateDistortionFinestStressRelativeErrorMaximum": 0.04,
+        "strongDistortionFinestDisplacementRelativeErrorMaximum": 0.05,
+        "strongDistortionFinestStressRelativeErrorMaximum": 0.06,
+        "regularMeshFineGciRelativeMaximum": 0.03,
+        "moderateDistortionFineGciRelativeMaximum": 0.04,
+        "strongDistortionFineGciRelativeMaximum": 0.06,
+        "maximumDisplacementErrorGrowthFromNu030ToNu04999": 0.03,
+        "maximumStiffnessInflationRelativeToAnalyticalCompliance": 0.05,
+        "movingMaximumAllowed": false,
+        "nodalOrSmoothedStressAllowedAsAcceptanceAuthority": false
+      }
+    }
+  },
+  "distortionMatrix": [
+    {
+      "distortionId": "REGULAR",
+      "radialAmplitudeTimesH": 0,
+      "angularAmplitudeTimesHOverR": 0
+    },
+    {
+      "distortionId": "MODERATE",
+      "radialAmplitudeTimesH": 0.15,
+      "angularAmplitudeTimesHOverR": 0.1
+    },
+    {
+      "distortionId": "STRONG_QUALIFIED",
+      "radialAmplitudeTimesH": 0.3,
+      "angularAmplitudeTimesHOverR": 0.2
+    }
+  ],
+  "distortionLaw": {
+    "scope": "INTERIOR_NODES_ONLY_BOUNDARY_AND_SYMMETRY_NODES_EXACT",
+    "radial": "r'=r+ar*h*sin(pi*(r-a)/(b-a))*sin(2*theta)",
+    "angular": "theta'=theta+atheta*(h/r)*sin(pi*(r-a)/(b-a))*sin(2*theta)",
+    "postCondition": "EXISTING_TOPOLOGY_MESH_QUALITY_AND_FULL_PARENT_JACOBIAN_GATES_MUST_PASS_OR_CASE_IS_BLOCKED"
+  },
+  "qualificationAuthority": {
+    "benchmarkQualified": false,
+    "releaseAuthorityGranted": false,
+    "temperatureAuthorityGranted": false,
+    "nonlinearAuthorityGranted": false,
+    "contactAuthorityGranted": false
+  }
+}

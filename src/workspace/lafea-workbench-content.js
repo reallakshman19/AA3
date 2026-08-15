@@ -77,7 +77,12 @@ export function renderLafeaWorkbenchContent(root, state, stage, options) {
 
   const profileCard = card(root, 'Solver and analysis settings');
   profileCard.section.dataset.guidedTarget = 'profile';
-  profileCard.body.append(renderLafeaAnalysisSettings(profileCard.body, stage));
+  profileCard.body.append(renderLafeaAnalysisSettings(
+    profileCard.body,
+    stage,
+    options.registryEntry,
+    options.handlers,
+  ));
 
   const viewportCard = card(root, `Engineering viewport`);
   viewportCard.section.dataset.guidedTarget = 'viewport';

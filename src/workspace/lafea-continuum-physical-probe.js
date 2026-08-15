@@ -1,8 +1,11 @@
 import {
   CANONICAL_UNITS,
+  bbarMeanDilatation,
+  isBbarPlaneStrain,
   principalStress,
   q8BMatrixAt,
   q8ShapeFunctionsAndDerivatives,
+  recoverBbarPlaneStrainStress,
   t6BMatrixAt,
   t6ShapeFunctionsAndDerivatives,
   vonMisesStress,
@@ -130,16 +133,18 @@ export function evaluateLafeaContinuumPhysicalProbe(stage, definitionValue) {
   const kinematics = pointKinematics(located, elementEvidence);
   const displacement = interpolateDisplacement(kinematics.shapeFunctions, supportingNodalDisplacements);
   const strainVector = matrixVector(kinematics.B, localVector);
-  const stressVector = matrixVector(elementEvidence.dMatrix, strainVector);
   const material = canonicalInput.materials.find((row) => row.materialId === located.element.materialId);
   if (!material || !Number.isFinite(material.poissonRatio)) fail('LAFEA_G4_PROBE_MATERIAL_EVIDENCE_MISSING');
-  const stress = {
-    sigmaX: zero(stressVector[0]),
-    sigmaY: zero(stressVector[1]),
-    sigmaZ: canonicalInput.formulation === 'PLANE_STRAIN'
-      ? zero(material.poissonRatio * (stressVector[0] + stressVector[1])) : 0,
-    tauXY: zero(stressVector[2]),
-  };
+  const bbar = isBbarPlaneStrain(canonicalInput.formulation);
+  if (bbar && !Array.isArray(elementEvidence.bbarEvidence?.meanVolumetricRow)) {
+    fail('LAFEA_G4_PROBE_BBAR_EVIDENCE_MISSING');
+  }
+  const meanDilatation = bbar
+    ? bbarMeanDilatation(elementEvidence.bbarEvidence.meanVolumetricRow, localVector)
+    : null;
+  const stress = bbar
+    ? recoverBbarPlaneStrainStress(strainVector, meanDilatation, material)
+    : standardStress(canonicalInput.formulation, elementEvidence.dMatrix, strainVector, material);
   const strain = {
     epsilonX: zero(strainVector[0]),
     epsilonY: zero(strainVector[1]),
@@ -192,6 +197,7 @@ export function evaluateLafeaContinuumPhysicalProbe(stage, definitionValue) {
     displacement,
     strain,
     stressTensor: stress,
+    ...(bbar ? { meanDilatation: zero(meanDilatation) } : {}),
     principalMaximum: principal.maximum,
     principalMinimum: principal.minimum,
     vonMises,
@@ -216,6 +222,17 @@ export function evaluateLafeaContinuumPhysicalProbe(stage, definitionValue) {
       schema: 'lafea-continuum-physical-probe-evidence-hash/v1', evidence: base,
     }),
   });
+}
+
+function standardStress(formulation, dMatrix, strainVector, material) {
+  const stressVector = matrixVector(dMatrix, strainVector);
+  const planeStrain = formulation === 'PLANE_STRAIN';
+  return {
+    sigmaX: zero(stressVector[0]),
+    sigmaY: zero(stressVector[1]),
+    sigmaZ: planeStrain ? zero(material.poissonRatio * (stressVector[0] + stressVector[1])) : 0,
+    tauXY: zero(stressVector[2]),
+  };
 }
 
 function requireCurrentExecution(stage) {

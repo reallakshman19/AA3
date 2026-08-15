@@ -3,6 +3,14 @@ import { numericalError } from './errors.js';
 import { dot, matrixVector } from './matrix.js';
 import { canonicalNumber, tolerance } from './numeric.js';
 import { reducedThermalStrainVector } from './temperature-strain-loads.js';
+import {
+  BBAR_FORMULA_IDS,
+  bbarElementElasticEnergy,
+  bbarMeanDilatation,
+  isBbarPlaneStrain,
+  isPlaneStrainFormulation,
+  recoverBbarPlaneStrainStress,
+} from './bbar-plane-strain.js';
 
 export function recoverLoadCase(model, mesh, elementEvidence, load, solution) {
   const dofIndex = new Map(mesh.dofOrdering.map((id, i) => [id, i]));
@@ -78,7 +86,9 @@ export function recoverLoadCase(model, mesh, elementEvidence, load, solution) {
       residual,
       tolerance: limit,
       accepted: true,
-      energyDefinition: 'PHYSICAL_ELASTIC_STRAIN_ENERGY',
+      energyDefinition: isBbarPlaneStrain(model.formulation)
+        ? 'MEAN_DILATATION_BBAR_PHYSICAL_ELASTIC_STRAIN_ENERGY'
+        : 'PHYSICAL_ELASTIC_STRAIN_ENERGY',
     },
     formulaIds: [...new Set([
       ...load.formulaIds,
@@ -163,6 +173,9 @@ function recoverElement(model, element, material, u, dofIndex, appliedThermalStr
 
 /**
  * T6/Q8 stress recovery: integration-point values remain numerical authority.
+ * For PLANE_STRAIN_BBAR, the deviatoric strain remains pointwise while the
+ * volumetric stress uses the exact retained element-mean dilatation row that
+ * generated the stiffness. Temperature is source-blocked for this formulation.
  */
 function recoverGaussPointElement(
   model,
@@ -174,33 +187,65 @@ function recoverGaussPointElement(
 ) {
   const indices = element.localDofOrdering.map((id) => dofIndex.get(id));
   const ue = indices.map((index) => u[index]);
-  let energy = 0;
+  const bbar = isBbarPlaneStrain(model.formulation);
+  if (bbar && appliedThermalStrain !== 0) {
+    throw numericalError(
+      'PLANE_STRAIN_BBAR_TEMPERATURE_RECOVERY_NOT_QUALIFIED',
+      `elements.${element.elementId}`,
+      'B-bar thermal/eigenstrain recovery is outside the qualified formulation envelope.',
+    );
+  }
+  if (bbar && !element.bbarEvidence?.meanVolumetricRow) {
+    throw numericalError(
+      'PLANE_STRAIN_BBAR_EVIDENCE_MISSING',
+      `elements.${element.elementId}`,
+      'B-bar recovery requires the retained mean-dilatation element evidence used for stiffness.',
+    );
+  }
+  const thetaBar = bbar
+    ? bbarMeanDilatation(element.bbarEvidence.meanVolumetricRow, ue)
+    : null;
+  let standardEnergy = 0;
   const gaussPointResults = element.gaussEvidence.map((gp) => {
     const strain = matrixVector(gp.B, ue);
-    const reducedThermal = reducedThermalStrainVector(
-      model.formulation,
-      material,
-      appliedThermalStrain,
+    let stress;
+    let elasticStrain;
+    if (bbar) {
+      stress = recoverBbarPlaneStrainStress(strain, thetaBar, material);
+      elasticStrain = physicalElasticStrain(model.formulation, strain, 0);
+    } else {
+      const reducedThermal = reducedThermalStrainVector(
+        model.formulation,
+        material,
+        appliedThermalStrain,
+      );
+      const constitutiveStrain = subtractVector(strain, reducedThermal);
+      const inPlane = matrixVector(element.dMatrix, constitutiveStrain);
+      const [sigmaX, sigmaY, tauXY] = inPlane;
+      const sigmaZ = recoverSigmaZ(
+        model.formulation,
+        material,
+        sigmaX,
+        sigmaY,
+        appliedThermalStrain,
+      );
+      stress = { sigmaX, sigmaY, sigmaZ, tauXY };
+      elasticStrain = physicalElasticStrain(model.formulation, strain, appliedThermalStrain);
+      const density = elasticEnergyDensity(
+        model.formulation,
+        strain,
+        stress,
+        appliedThermalStrain,
+      );
+      standardEnergy += density * gp.weight * gp.jacobianDeterminant * element.thickness;
+    }
+    const principal = principalStress(stress.sigmaX, stress.sigmaY, stress.tauXY);
+    const vonMises = vonMisesStress(
+      stress.sigmaX,
+      stress.sigmaY,
+      stress.sigmaZ,
+      stress.tauXY,
     );
-    const constitutiveStrain = subtractVector(strain, reducedThermal);
-    const inPlane = matrixVector(element.dMatrix, constitutiveStrain);
-    const [sigmaX, sigmaY, tauXY] = inPlane;
-    const sigmaZ = recoverSigmaZ(
-      model.formulation,
-      material,
-      sigmaX,
-      sigmaY,
-      appliedThermalStrain,
-    );
-    const principal = principalStress(sigmaX, sigmaY, tauXY);
-    const vonMises = vonMisesStress(sigmaX, sigmaY, sigmaZ, tauXY);
-    const density = elasticEnergyDensity(
-      model.formulation,
-      strain,
-      { sigmaX, sigmaY, sigmaZ, tauXY },
-      appliedThermalStrain,
-    );
-    energy += density * gp.weight * gp.jacobianDeterminant * element.thickness;
     return {
       pointId: gp.pointId,
       xi: gp.xi,
@@ -208,25 +253,43 @@ function recoverGaussPointElement(
       weight: gp.weight,
       jacobianDeterminant: gp.jacobianDeterminant,
       strain: { epsilonX: strain[0], epsilonY: strain[1], gammaXY: strain[2] },
-      elasticStrain: physicalElasticStrain(model.formulation, strain, appliedThermalStrain),
-      stress: { sigmaX, sigmaY, sigmaZ, tauXY },
+      elasticStrain,
+      stress,
+      ...(bbar ? { meanDilatation: thetaBar } : {}),
       principalMaximum: principal.maximum,
       principalMinimum: principal.minimum,
       maximumInPlaneShear: principal.radius,
       vonMises,
     };
   });
+  const bbarEnergy = bbar
+    ? bbarElementElasticEnergy(
+      element.gaussEvidence,
+      ue,
+      element.bbarEvidence.meanVolumetricRow,
+      material,
+      element.thickness,
+    )
+    : null;
   return {
     elementId: element.elementId,
     elementType: element.elementType,
     nodeIds: [...element.nodeIds],
     recoveryLayer: 'INTEGRATION_POINT',
     gaussPointResults,
-    strainEnergy: canonicalNumber(energy, 'element elastic strain energy'),
+    strainEnergy: bbarEnergy?.strainEnergy
+      ?? canonicalNumber(standardEnergy, 'element elastic strain energy'),
+    ...(bbarEnergy ? {
+      bbarEnergy: {
+        meanDilatation: bbarEnergy.meanDilatation,
+        deviatoricEnergy: bbarEnergy.deviatoricEnergy,
+        volumetricEnergy: bbarEnergy.volumetricEnergy,
+      },
+    } : {}),
     sourceReferences: element.sourceReferences,
     formulaIds: [
       FORMULA_IDS.STRAIN,
-      FORMULA_IDS.STRESS,
+      ...(bbar ? [BBAR_FORMULA_IDS.STRESS, BBAR_FORMULA_IDS.ENERGY] : [FORMULA_IDS.STRESS]),
       FORMULA_IDS.SIGMA_Z,
       FORMULA_IDS.PRINCIPAL,
       FORMULA_IDS.VON_MISES,
@@ -236,7 +299,7 @@ function recoverGaussPointElement(
 }
 
 function recoverSigmaZ(formulation, material, sigmaX, sigmaY, thermalStrain) {
-  if (formulation !== FORMULATIONS.PLANE_STRAIN) return 0;
+  if (!isPlaneStrainFormulation(formulation)) return 0;
   return canonicalNumber(
     material.poissonRatio * (sigmaX + sigmaY)
       - material.elasticModulus * thermalStrain,
@@ -248,7 +311,7 @@ function physicalElasticStrain(formulation, strain, thermalStrain) {
   return {
     epsilonX: canonicalNumber(strain[0] - thermalStrain, 'elastic strain x'),
     epsilonY: canonicalNumber(strain[1] - thermalStrain, 'elastic strain y'),
-    epsilonZ: formulation === FORMULATIONS.PLANE_STRAIN
+    epsilonZ: isPlaneStrainFormulation(formulation)
       ? canonicalNumber(-thermalStrain, 'elastic strain z')
       : null,
     gammaXY: canonicalNumber(strain[2], 'elastic shear strain'),
@@ -258,7 +321,7 @@ function physicalElasticStrain(formulation, strain, thermalStrain) {
 function elasticEnergyDensity(formulation, strain, stress, thermalStrain) {
   const epsilonX = strain[0] - thermalStrain;
   const epsilonY = strain[1] - thermalStrain;
-  const epsilonZ = formulation === FORMULATIONS.PLANE_STRAIN ? -thermalStrain : 0;
+  const epsilonZ = isPlaneStrainFormulation(formulation) ? -thermalStrain : 0;
   return 0.5 * (
     stress.sigmaX * epsilonX
     + stress.sigmaY * epsilonY

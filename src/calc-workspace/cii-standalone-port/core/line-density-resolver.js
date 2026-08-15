@@ -49,6 +49,27 @@ function readMappedRowValue(row, canonicalKey, aliases, fieldMap) {
   return readRowValue(row, [fieldMap?.[canonicalKey], canonicalKey, ...aliases]);
 }
 
+function readDirectDensity(row, fieldMap) {
+  if (!row || typeof row !== 'object') return '';
+  const raw = row._raw;
+  if (!raw || typeof raw !== 'object') {
+    return readRowValue(row, ['density', ...DENSITY_ALIASES.density]);
+  }
+
+  const mapped = fieldMap?.density;
+  const phaseSpecificHeaders = new Set([
+    fieldMap?.densityMixed,
+    fieldMap?.densityGas,
+    fieldMap?.densityLiquid,
+  ].filter(Boolean));
+  if (mapped && !phaseSpecificHeaders.has(mapped)) {
+    const mappedValue = text(raw[mapped]);
+    if (mappedValue) return mappedValue;
+  }
+
+  return readRowValue(raw, ['density', ...DENSITY_ALIASES.density]);
+}
+
 function readOverride(processOverride, key) {
   if (!processOverride || typeof processOverride !== 'object') return '';
   if (!Object.prototype.hasOwnProperty.call(processOverride, key)) return '';
@@ -104,7 +125,7 @@ export function resolveLineListDensity(row, processOverride = null, fieldMap = n
   const overrideDensity = readOverride(processOverride, 'density');
   if (overrideDensity) return densityResult(overrideDensity, 'override', '', 'density');
 
-  const direct = readMappedRowValue(row, 'density', DENSITY_ALIASES.density, fieldMap);
+  const direct = readDirectDensity(row, fieldMap);
   const mixed = readMappedRowValue(row, 'densityMixed', DENSITY_ALIASES.densityMixed, fieldMap);
   const gas = readMappedRowValue(row, 'densityGas', DENSITY_ALIASES.densityGas, fieldMap);
   const liquid = readMappedRowValue(row, 'densityLiquid', DENSITY_ALIASES.densityLiquid, fieldMap);

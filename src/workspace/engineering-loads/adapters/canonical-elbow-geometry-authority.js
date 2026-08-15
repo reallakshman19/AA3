@@ -18,6 +18,15 @@ const POINT_TOLERANCE_M = 1e-9;
 const TANGENT_COLLINEAR_TOLERANCE = 1e-10;
 const ELBOW_TYPES = new Set(['ELBOW', 'BEND', 'ELBO']);
 
+// The generic workspace geometry resolver can also expose a generic `center`
+// field. That is useful for rendering, but it is not automatically a bend
+// centre of curvature. This first mechanics qualification accepts only source
+// fields whose existing contract names the point as `centrePoint`.
+const QUALIFIED_CURVATURE_CENTER_SOURCE_PATHS = new Set([
+  'item.centrePoint',
+  'nativeParams.centrePoint',
+]);
+
 export function buildCanonicalElbowGeometryAuthority(input) {
   exactKeys(input, ['dataset', 'topologyGraph', 'componentKey'], 'canonical elbow geometry input');
   const dataset = requireDataset(input.dataset);
@@ -29,18 +38,7 @@ export function buildCanonicalElbowGeometryAuthority(input) {
     componentKey,
     'topology component',
   );
-  if (!ELBOW_TYPES.has(stringValue(topologyComponent.type).toUpperCase())) {
-    throw coded(
-      'EMPIRICAL_CANONICAL_ELBOW_COMPONENT_TYPE_UNSUPPORTED',
-      `Component ${componentKey} is ${topologyComponent.type || 'UNKNOWN'}, not an elbow/bend.`,
-    );
-  }
-  if (!Array.isArray(topologyComponent.portKeys) || topologyComponent.portKeys.length !== 2) {
-    throw coded(
-      'EMPIRICAL_CANONICAL_ELBOW_PORT_COUNT_INVALID',
-      `Elbow ${componentKey} must own exactly two topology ports.`,
-    );
-  }
+  requireElbowComponent(topologyComponent, componentKey);
 
   const entity = uniqueBy(
     dataset.entities,
@@ -60,6 +58,7 @@ export function buildCanonicalElbowGeometryAuthority(input) {
   const sourceStartM = scalePoint(sourceGeometry.start, sourceToM);
   const sourceEndM = scalePoint(sourceGeometry.end, sourceToM);
   const sourceCenterM = scalePoint(sourceGeometry.center, sourceToM);
+
   const portByKey = new Map(graph.ports.map((row) => [row.portKey, row]));
   const ports = topologyComponent.portKeys.map((portKey) => requiredMap(
     portByKey,
@@ -83,9 +82,13 @@ export function buildCanonicalElbowGeometryAuthority(input) {
   if (!(magnitude(crossRadials) > 0)) {
     throw coded(
       'EMPIRICAL_CANONICAL_ELBOW_PLANE_UNRESOLVED',
-      `Elbow ${componentKey} source start/center/end do not define a unique bend plane.`,
+      `Elbow ${componentKey} source start/centre/end do not define a unique bend plane.`,
     );
   }
+
+  // Plane sign is established by the source start→end ordering. The circular
+  // elbow kernel then independently proves equal radius, in-plane radials and
+  // a positive minor sweep below 180 degrees.
   const planeNormal = normalize(crossRadials);
   const geometry = normalizeCircularElbowGeometry({
     componentId: componentKey,
@@ -120,6 +123,7 @@ export function buildCanonicalElbowGeometryAuthority(input) {
       startSourcePath: sourceGeometry.sources.start,
       endSourcePath: sourceGeometry.sources.end,
       centerSourcePath: sourceGeometry.sources.center,
+      centerAuthorityClass: 'SOURCE_DECLARED_BEND_CENTRE_POINT',
       centerWasExplicit: true,
       sourceLengthUnit: graph.profile.lengthUnit,
       canonicalLengthUnit: 'mm',
@@ -129,12 +133,14 @@ export function buildCanonicalElbowGeometryAuthority(input) {
     tangentContinuity,
     policy: {
       sourceBackedEndpointsRequired: true,
-      explicitSourceCenterRequired: true,
+      explicitSourceCurvatureCenterRequired: true,
+      qualifiedCurvatureCenterSourcePaths: [...QUALIFIED_CURVATURE_CENTER_SOURCE_PATHS].sort(),
+      genericComponentCenterPermitted: false,
       derivedMidpointCenterPermitted: false,
       rendererGeometryConsumed: false,
       rendererLongRadiusFallbackPermitted: false,
       toleranceInferredTopologyConsumed: false,
-      bendPlaneAuthority: 'DERIVED_ONLY_FROM_SOURCE_BACKED_START_CENTER_END_POINTS',
+      bendPlaneAuthority: 'DERIVED_ONLY_FROM_SOURCE_BACKED_START_CURVATURE_CENTER_END_POINTS',
       sweepDomain: 'POSITIVE_MINOR_ARC_STRICTLY_BELOW_180_DEG',
       pointConsistencyToleranceM: POINT_TOLERANCE_M,
       tangentCollinearityTolerance: TANGENT_COLLINEAR_TOLERANCE,
@@ -157,6 +163,13 @@ export function requireCanonicalElbowGeometryAuthority(value) {
       'Canonical elbow geometry authority semantic hash mismatch.',
     );
   }
+  if (value.sourceGeometry?.centerAuthorityClass !== 'SOURCE_DECLARED_BEND_CENTRE_POINT'
+      || !QUALIFIED_CURVATURE_CENTER_SOURCE_PATHS.has(value.sourceGeometry?.centerSourcePath)) {
+    throw coded(
+      'EMPIRICAL_CANONICAL_ELBOW_CURVATURE_CENTER_AUTHORITY_INVALID',
+      'Canonical elbow geometry authority does not retain a qualified source-declared bend centre.',
+    );
+  }
   normalizeCircularElbowGeometry({
     componentId: value.geometry.componentId,
     startPointM: value.geometry.startPointM,
@@ -170,10 +183,21 @@ export function requireCanonicalElbowGeometryAuthority(value) {
 function requireDataset(value) {
   if (!value || value.schema !== 'analysis-workspace-dataset/v1'
       || !stringValue(value.datasetId) || !Array.isArray(value.entities)
-      || !value.sharedModel || !stringValue(value.sharedModel.semanticHash)) {
+      || !value.sharedModel || !stringValue(value.sharedModel.semanticHash)
+      || !value.sourceSnapshot || !stringValue(value.sourceSnapshot.sourceSemanticHash)) {
     throw coded(
       'EMPIRICAL_CANONICAL_ELBOW_DATASET_INVALID',
-      'Canonical elbow geometry requires an active analysis-workspace-dataset/v1 with shared-model custody.',
+      'Canonical elbow geometry requires an active analysis-workspace-dataset/v1 with source/shared-model custody.',
+    );
+  }
+  if (value.sharedModel.project?.datasetId !== value.datasetId
+      || value.sharedModel.sourceSnapshotRef?.datasetId !== value.datasetId
+      || value.sharedModel.sourceSnapshotRef?.sourceSemanticHash !== value.sourceSnapshot.sourceSemanticHash
+      || (value.sharedModel.sourceSnapshotRef?.sourceByteHash ?? null)
+        !== (value.sourceSnapshot.sourceByteHash ?? null)) {
+    throw coded(
+      'EMPIRICAL_CANONICAL_ELBOW_SOURCE_CHAIN_STALE',
+      'Workspace source snapshot and shared-model source custody do not match.',
     );
   }
   return value;
@@ -210,6 +234,21 @@ function requireExactTopology(value, dataset) {
   return value;
 }
 
+function requireElbowComponent(component, componentKey) {
+  if (!ELBOW_TYPES.has(stringValue(component.type).toUpperCase())) {
+    throw coded(
+      'EMPIRICAL_CANONICAL_ELBOW_COMPONENT_TYPE_UNSUPPORTED',
+      `Component ${componentKey} is ${component.type || 'UNKNOWN'}, not an elbow/bend.`,
+    );
+  }
+  if (!Array.isArray(component.portKeys) || component.portKeys.length !== 2) {
+    throw coded(
+      'EMPIRICAL_CANONICAL_ELBOW_PORT_COUNT_INVALID',
+      `Elbow ${componentKey} must own exactly two topology ports.`,
+    );
+  }
+}
+
 function requireExplicitSourceGeometry(entity, componentKey) {
   if (!ELBOW_TYPES.has(stringValue(entity?.entityType).toUpperCase())) {
     throw coded(
@@ -221,15 +260,20 @@ function requireExplicitSourceGeometry(entity, componentKey) {
   if (!geometry || !geometry.start || !geometry.end || !geometry.center) {
     throw coded(
       'EMPIRICAL_CANONICAL_ELBOW_SOURCE_GEOMETRY_MISSING',
-      `Elbow ${componentKey} requires source-backed start, end and center points.`,
+      `Elbow ${componentKey} requires source-backed start, end and bend-centre points.`,
     );
   }
-  if (geometry.explicitCenter !== true
-      || !stringValue(geometry.sources?.center)
-      || geometry.sources.center === 'derived.midpoint') {
+  const centerSourcePath = stringValue(geometry.sources?.center);
+  if (geometry.explicitCenter !== true || !centerSourcePath || centerSourcePath === 'derived.midpoint') {
     throw coded(
       'EMPIRICAL_CANONICAL_ELBOW_EXPLICIT_CENTER_REQUIRED',
-      `Elbow ${componentKey} requires an explicit source center; a derived midpoint is not mechanics authority.`,
+      `Elbow ${componentKey} requires an explicit source bend centre; a derived midpoint is not mechanics authority.`,
+    );
+  }
+  if (!QUALIFIED_CURVATURE_CENTER_SOURCE_PATHS.has(centerSourcePath)) {
+    throw coded(
+      'EMPIRICAL_CANONICAL_ELBOW_CENTER_SEMANTICS_UNQUALIFIED',
+      `Elbow ${componentKey} center source ${centerSourcePath} is not qualified as a centre of curvature.`,
     );
   }
   if (!stringValue(geometry.sources?.start) || !stringValue(geometry.sources?.end)) {
@@ -305,8 +349,8 @@ function evaluateTangentContinuity({ graph, topologyComponent, portByKey, bindin
     const peerPointM = canonicalPointToM(peer.positionCanonical, `${peer.portKey}.positionCanonical`);
     const otherPointM = canonicalPointToM(other.positionCanonical, `${other.portKey}.positionCanonical`);
     const outward = normalize(subtractPoint(otherPointM, peerPointM));
-    const absoluteDot = Math.abs(dot(row.tangent, outward));
-    const residual = 1 - absoluteDot;
+    const tangentDotNeighborOutward = dot(row.tangent, outward);
+    const residual = 1 - Math.abs(tangentDotNeighborOutward);
     if (residual > TANGENT_COLLINEAR_TOLERANCE) {
       throw coded(
         'EMPIRICAL_CANONICAL_ELBOW_TANGENT_DISCONTINUITY',
@@ -318,7 +362,7 @@ function evaluateTangentContinuity({ graph, topologyComponent, portByKey, bindin
       status: 'PASS_STRAIGHT_NEIGHBOR_COLLINEAR',
       neighborComponentKey: neighbor.componentKey,
       neighborPortKey: peer.portKey,
-      tangentDotNeighborOutward: dot(row.tangent, outward),
+      tangentDotNeighborOutward,
       collinearityResidual: residual,
     });
   });
@@ -333,7 +377,9 @@ function canonicalPointToM(value, label) {
   requirePoint(value, label);
   return { x: value.x / 1000, y: value.y / 1000, z: value.z / 1000 };
 }
-function scalePoint(value, factor) { return { x: value.x * factor, y: value.y * factor, z: value.z * factor }; }
+function scalePoint(value, factor) {
+  return { x: value.x * factor, y: value.y * factor, z: value.z * factor };
+}
 function requirePoint(value, label) {
   if (!value || !Number.isFinite(value.x) || !Number.isFinite(value.y) || !Number.isFinite(value.z)) {
     throw new TypeError(`${label} must be a finite point.`);
@@ -342,11 +388,21 @@ function requirePoint(value, label) {
 }
 function uniqueBy(values, keyOf, key, label) {
   const rows = (values || []).filter((row) => keyOf(row) === key);
-  if (rows.length !== 1) throw coded('EMPIRICAL_CANONICAL_ELBOW_IDENTITY_UNRESOLVED', `${label} ${key} resolved ${rows.length} times.`);
+  if (rows.length !== 1) {
+    throw coded(
+      'EMPIRICAL_CANONICAL_ELBOW_IDENTITY_UNRESOLVED',
+      `${label} ${key} resolved ${rows.length} times.`,
+    );
+  }
   return rows[0];
 }
 function requiredMap(map, key, label) {
-  if (!map.has(key)) throw coded('EMPIRICAL_CANONICAL_ELBOW_REFERENCE_MISSING', `${label} ${key || '<missing>'} is unresolved.`);
+  if (!map.has(key)) {
+    throw coded(
+      'EMPIRICAL_CANONICAL_ELBOW_REFERENCE_MISSING',
+      `${label} ${key || '<missing>'} is unresolved.`,
+    );
+  }
   return map.get(key);
 }
 function exactKeys(value, keys, label) {
@@ -356,7 +412,9 @@ function exactKeys(value, keys, label) {
   }
 }
 function requireRecord(value, label) {
-  if (!value || typeof value !== 'object' || Array.isArray(value)) throw new TypeError(`${label} must be an object.`);
+  if (!value || typeof value !== 'object' || Array.isArray(value)) {
+    throw new TypeError(`${label} must be an object.`);
+  }
 }
 function requiredText(value, label) {
   const text = stringValue(value);
@@ -364,9 +422,23 @@ function requiredText(value, label) {
   return text;
 }
 function subtractPoint(a, b) { return [a.x - b.x, a.y - b.y, a.z - b.z]; }
-function cross(a, b) { return [a[1] * b[2] - a[2] * b[1], a[2] * b[0] - a[0] * b[2], a[0] * b[1] - a[1] * b[0]]; }
+function cross(a, b) {
+  return [
+    a[1] * b[2] - a[2] * b[1],
+    a[2] * b[0] - a[0] * b[2],
+    a[0] * b[1] - a[1] * b[0],
+  ];
+}
 function dot(a, b) { return a[0] * b[0] + a[1] * b[1] + a[2] * b[2]; }
 function magnitude(v) { return Math.hypot(...v); }
-function normalize(v) { const m = magnitude(v); if (!(m > 0)) throw new RangeError('Cannot normalize zero vector.'); return v.map((x) => x / m); }
+function normalize(v) {
+  const m = magnitude(v);
+  if (!(m > 0)) throw new RangeError('Cannot normalize zero vector.');
+  return v.map((x) => x / m);
+}
 function distance(a, b) { return Math.hypot(a.x - b.x, a.y - b.y, a.z - b.z); }
-function coded(code, message) { const error = new Error(message); error.code = code; return error; }
+function coded(code, message) {
+  const error = new Error(message);
+  error.code = code;
+  return error;
+}

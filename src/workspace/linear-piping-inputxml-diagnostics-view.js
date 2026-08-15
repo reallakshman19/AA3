@@ -194,8 +194,8 @@ function normalizeModelHealthFinding(finding, category) {
 }
 
 /**
- * Raw topology/proximity findings (from diagnoseInputXmlTopologyGraph /
- * diagnoseInputXmlTopologyProximity) never carry a top-level `.disposition`
+ * Raw topology/proximity findings, as retained in diagnostics.topologyDiagnostics
+ * and diagnostics.proximityDiagnostics, never carry a top-level `.disposition`
  * or `.effect` field — their capability effect lives in `capabilityEffects`,
  * an array of `{capabilityId, effect}`. The old `finding.disposition ??
  * finding.effect ?? 'INFO'` fallback always missed both, so every topology

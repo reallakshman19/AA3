@@ -234,9 +234,39 @@ function validateQualificationProfiles(value, path, errors) {
   });
 }
 
+function isExplicitlyUninsulated(section) {
+  if (!isRecord(section)) return false;
+  return ['NONE', 'UNINSULATED'].includes(stringValue(section.insulationCode).toUpperCase());
+}
+
+function allowsZeroEngineeringLeaf(path, key, parent) {
+  if (key === 'insulationThicknessMm' && path.startsWith('loadCalculation.pipeSectionProperties.')) {
+    return isExplicitlyUninsulated(parent);
+  }
+  if (path === 'loadCalculation.insulationDensitiesKgPerM3') {
+    return ['NONE', 'UNINSULATED'].includes(String(key).trim().toUpperCase());
+  }
+  return false;
+}
+
 function validatePositiveLeaves(value, path, errors) {
-  if (Array.isArray(value)) { value.forEach((item, index) => validatePositiveLeaves(item, `${path}[${index}]`, errors)); return; }
-  if (isRecord(value)) { Object.entries(value).forEach(([key, item]) => validatePositiveLeaves(item, `${path}.${key}`, errors)); return; }
+  if (Array.isArray(value)) {
+    value.forEach((item, index) => validatePositiveLeaves(item, `${path}[${index}]`, errors));
+    return;
+  }
+  if (isRecord(value)) {
+    Object.entries(value).forEach(([key, item]) => {
+      const itemPath = `${path}.${key}`;
+      if (allowsZeroEngineeringLeaf(path, key, value) && typeof item === 'number') {
+        if (!Number.isFinite(item) || item < 0) {
+          errors.push(errorRow(itemPath, 'NEGATIVE_ENGINEERING_VALUE', 'Explicit uninsulated thickness or density must be finite and non-negative.'));
+        }
+        return;
+      }
+      validatePositiveLeaves(item, itemPath, errors);
+    });
+    return;
+  }
   if (typeof value === 'number' && value <= 0) errors.push(errorRow(path, 'NON_POSITIVE_ENGINEERING_VALUE', 'Engineering density, elastic, thermal, and section values must be greater than zero.'));
 }
 

@@ -1,3 +1,4 @@
+import { semanticHash } from '../../../core/empirical-piping-mechanics/identity.js';
 import { deepFreeze } from '../../../core/shared-primitives/immutable.js';
 import {
   adaptLegacyNumericResolution,
@@ -31,6 +32,7 @@ export function adaptBranchProcessResolverOutput(input) {
     exactMasterApproved: classExact,
     entityIds: [componentId],
   });
+  const pipingClassBasis = sealPipingClassBasis(row, classAdapted.record);
 
   const materialAuthority = classifyMaterialResolution({
     runId,
@@ -87,11 +89,12 @@ export function adaptBranchProcessResolverOutput(input) {
   return deepFreeze({
     componentId,
     classResolution: classAdapted.record,
+    pipingClassBasis,
     materialResolution: materialAuthority.record,
     wallQuantity: wallAuthority.quantity,
     corrosionQuantity: corrosionAuthority.quantity,
     branchCommonAuthorityRefs: [
-      branchCommonAuthorityRef('PIPING_CLASS', classAdapted.record),
+      { kind: 'PIPING_CLASS', ref: pipingClassBasis.ref, semanticHash: pipingClassBasis.semanticHash },
       branchCommonAuthorityRef('MATERIAL_MAPPING', materialAuthority.record),
     ],
     componentLocalAuthorityRefs: [
@@ -114,6 +117,26 @@ export function isExactPipingClassResolution(row) {
     && rowMethod !== 'AMBIGUOUS_BEST_SCORE'
     && rowMethod !== 'NONE'
   );
+}
+
+function sealPipingClassBasis(row, classRecord) {
+  const material = {
+    schema: 'empirical-v3-piping-class-basis/v1',
+    requestedPipingClass: optionalText(row.requestedPipingClass),
+    resolvedPipingClass: optionalText(row.resolvedPipingClass),
+    authorityClass: classRecord.authorityClass,
+    source: optionalText(row.pipingClassSource) || 'piping-class-resolver',
+    matchMethod: normalizeMethod(row.pipingClassMatchMethod || row.pipingClassRowMethod || 'none'),
+    rowMethod: normalizeMethod(row.pipingClassRowMethod || 'none'),
+    needsReview: row.pipingClassNeedsReview === true,
+    resolutionRef: { ref: classRecord.ref, semanticHash: classRecord.semanticHash },
+  };
+  const hash = semanticHash(material);
+  return deepFreeze({
+    ...material,
+    ref: `piping-class-basis:${hash.slice('fnv1a64:'.length)}`,
+    semanticHash: hash,
+  });
 }
 
 function classifyMaterialResolution({

@@ -1,7 +1,10 @@
 import {
   validateSolverResultContract,
 } from '../core/solvers/certification/solverResultContract.js';
-import { createAnalysisContext } from './analysis-context.js';
+import {
+  createAnalysisContext,
+  WORKSPACE_ANALYSIS_TARGET_ID,
+} from './analysis-context.js';
 import { AnalysisCapabilityError } from './analysis-capability-registry.js';
 import {
   assertSessionMatchesContext,
@@ -62,13 +65,14 @@ export class AnalysisCoordinator {
 
   async run({ analysisType, targetId, sessionId = '' }) {
     const requestId = `analysis-${++this.requestSequence}`;
-    const selectionVersion = this.selectionVersion;
+    const workspaceScoped = targetId === WORKSPACE_ANALYSIS_TARGET_ID;
+    const selectionVersion = workspaceScoped ? null : this.selectionVersion;
     const lifecycle = { requestId, analysisType, targetId, sessionId };
     this.eventBus.publish(EVENT_TOPICS.ANALYSIS_STARTED, lifecycle);
 
     try {
       const snapshot = this.workspaceState.getSnapshot();
-      if (snapshot.selectedEntityId !== targetId) {
+      if (!workspaceScoped && snapshot.selectedEntityId !== targetId) {
         throw new AnalysisCapabilityError(
           'STALE_ANALYSIS_TARGET',
           `Analysis target is not the active selection: ${targetId}.`,
@@ -118,8 +122,15 @@ export class AnalysisCoordinator {
   }
 
   shouldIgnore(selectionVersion, targetId, sessionId = '', allowMissingSession = false) {
-    if (this.destroyed || selectionVersion !== this.selectionVersion) return true;
-    if (this.workspaceState.getSnapshot().selectedEntityId !== targetId) return true;
+    if (this.destroyed) return true;
+    const workspaceScoped = targetId === WORKSPACE_ANALYSIS_TARGET_ID;
+    if (!workspaceScoped && selectionVersion !== this.selectionVersion) return true;
+    const snapshot = this.workspaceState.getSnapshot();
+    if (workspaceScoped) {
+      if (snapshot.status !== 'ready' || !snapshot.dataset) return true;
+    } else if (snapshot.selectedEntityId !== targetId) {
+      return true;
+    }
     if (sessionId && !allowMissingSession && !this.sessionStore.getSession(sessionId)) return true;
     return false;
   }

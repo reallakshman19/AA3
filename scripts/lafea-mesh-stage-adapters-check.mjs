@@ -10,6 +10,7 @@ import {
   buildLafeaMeshRefinementCommandFromStage,
 } from '../src/workspace/lafea-mesh-stage-request.js';
 import { requireLafeaStageAnalysisAdapter } from '../src/workspace/lafea-stage-analysis-adapter.js';
+import { lafeaMeshCapabilities } from '../src/workspace/lafea-mesh-capabilities.js';
 import * as guided from '../src/workspace/lafea-guided-workbench-contracts.js';
 
 const H = { source: sha('1'), model: sha('2'), geometry: sha('3'), geometry2: sha('4') };
@@ -51,16 +52,10 @@ for (const [stageId, families, sourceSurface, generation, refinement] of [
   assert(Object.isFrozen(adapter));
 }
 
-assert.deepEqual(
-  requireLafeaStageAnalysisAdapter('LAFEA.3').discretization.localRefinementElementFamilies,
-  ['T3', 'T6'],
-);
+assert.deepEqual(lafeaMeshCapabilities('LAFEA.3').localRefinementElementFamilies, ['T3', 'T6']);
 for (const stageId of ['LAFEA.4', 'LAFEA.5']) {
-  assert.deepEqual(
-    requireLafeaStageAnalysisAdapter(stageId).discretization.localRefinementElementFamilies,
-    [],
-    stageId,
-  );
+  assert.deepEqual(lafeaMeshCapabilities(stageId).localRefinementElementFamilies, [], stageId);
+  assert.equal(lafeaMeshCapabilities(stageId).manualRefinementQualified, false, stageId);
 }
 
 for (const stageId of ['LAFEA.1', 'LAFEA.2', 'LAFEA.6']) {
@@ -70,6 +65,7 @@ for (const stageId of ['LAFEA.1', 'LAFEA.2', 'LAFEA.6']) {
   assert.equal(canonical.discretization.applicable, false, stageId);
   assert.equal(canonical.discretization.generationAuthorized, false, stageId);
   assert.equal(canonical.discretization.refinementAuthorized, false, stageId);
+  assert.equal(lafeaMeshCapabilities(stageId).applicable, false, stageId);
 }
 
 for (const candidate of [stage3, stage4, stage5]) {

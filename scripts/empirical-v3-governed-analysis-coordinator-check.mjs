@@ -13,6 +13,7 @@ import { AnalysisSessionStore } from '../src/workspace/analysis-session-store.js
 
 const state = {
   version: 7,
+  engineeringVersion: 3,
   selectedEntityId: 'PIPE-1',
   dataset: Object.freeze({
     datasetId: 'DATASET-V3',
@@ -26,6 +27,7 @@ const workspaceState = {
       dataset: state.dataset,
       selectedEntityId: state.selectedEntityId,
       version: state.version,
+      engineeringVersion: state.engineeringVersion,
     };
   },
   getEntity(id) {
@@ -79,6 +81,7 @@ const workspaceContext = createAnalysisContext(workspaceState, WORKSPACE_ANALYSI
 assert.equal(workspaceContext.analysisScope, 'WORKSPACE');
 assert.equal(workspaceContext.entity, null);
 assert.equal(workspaceContext.dataset.datasetId, 'DATASET-V3');
+assert.equal(workspaceContext.version, state.engineeringVersion);
 
 const sessionStore = new AnalysisSessionStore();
 const inspection = registry.inspect('test-workspace-v3', workspaceContext);
@@ -86,7 +89,7 @@ const session = sessionStore.open({
   targetId: WORKSPACE_ANALYSIS_TARGET_ID,
   analysisType: 'test-workspace-v3',
   datasetId: 'DATASET-V3',
-  workspaceVersion: state.version,
+  workspaceVersion: workspaceContext.version,
   inspection,
 });
 assert.equal(session.status, 'ready');
@@ -98,24 +101,28 @@ const runPromise = coordinator.run({
   sessionId: session.sessionId,
 });
 
-// Viewport selection is presentation state for workspace-scoped coupled analysis.
+// Real viewport selection increments presentation version, but not engineering version.
 state.selectedEntityId = 'OTHER-VIEWPORT-SELECTION';
+state.version += 1;
+assert.equal(createAnalysisContext(workspaceState, WORKSPACE_ANALYSIS_TARGET_ID).version, session.workspaceVersion);
 releaseExecution();
 await runPromise;
 const completed = lifecycle.find((row) => row.topic === 'analysis:completed');
-assert.ok(completed, 'Workspace-scoped run should complete despite a display-only selection change.');
+assert.ok(completed, 'Workspace-scoped run should complete despite a display-only selection/version change.');
 assert.equal(completed.payload.result.results.targetId, WORKSPACE_ANALYSIS_TARGET_ID);
 
-// Dataset/workspace version custody remains fail-closed through the reviewed session.
-const staleInspection = registry.inspect('test-workspace-v3', createAnalysisContext(workspaceState, WORKSPACE_ANALYSIS_TARGET_ID));
+// Governing engineering-version custody remains fail-closed through the reviewed session.
+const currentContext = createAnalysisContext(workspaceState, WORKSPACE_ANALYSIS_TARGET_ID);
+const staleInspection = registry.inspect('test-workspace-v3', currentContext);
 const staleSession = sessionStore.open({
   targetId: WORKSPACE_ANALYSIS_TARGET_ID,
   analysisType: 'test-workspace-v3',
   datasetId: 'DATASET-V3',
-  workspaceVersion: state.version,
+  workspaceVersion: currentContext.version,
   inspection: staleInspection,
 });
 state.version += 1;
+state.engineeringVersion += 1;
 lifecycle.length = 0;
 await coordinator.run({
   analysisType: 'test-workspace-v3',
@@ -123,7 +130,7 @@ await coordinator.run({
   sessionId: staleSession.sessionId,
 });
 const failed = lifecycle.find((row) => row.topic === 'analysis:failed');
-assert.ok(failed, 'Stale workspace version must fail before capability execution.');
+assert.ok(failed, 'Changed engineering version must fail before capability execution.');
 assert.equal(failed.payload.code, 'ANALYSIS_SESSION_STALE');
 
 console.log('PASS empirical-v3 governed AnalysisCoordinator workspace-scope contract');

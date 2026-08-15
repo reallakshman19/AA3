@@ -21,13 +21,32 @@ const RESTRAINT_DOFS = Object.freeze(['UX', 'UY', 'UZ', 'RX', 'RY', 'RZ']);
 const GENERIC_LINEARIZED_UNILATERAL_CODES = new Set(['14', '15']);
 
 export function classifyRestraint(attributes, element, segment) {
-  const rawType = attribute(attributes, ['TYPE']);
+  // CAESAR exports a fixed-width restraint array per element and fills every
+  // field of an unused slot with the -1.0101 unset sentinel rather than
+  // omitting the record. Such a slot declares no restraint at all: it is
+  // NOT_ACTIVE, exactly like an omitted attribute, and must not be reported as
+  // invalid source data. (BM4 carries 180 <RESTRAINT> records of which 134 are
+  // empty slots; before this, each one raised MODEL_RESTRAINT_SOURCE_INVALID
+  // under both profiles for 268 phantom BLOCK findings that stalled the whole
+  // import.)
+  //
+  // Both TYPE and NODE must be unset for the row to count as an empty slot. A
+  // row that declares one but not the other is a genuinely malformed record and
+  // still falls through to MODEL_RESTRAINT_SOURCE_INVALID, so this does not
+  // weaken the fail-closed contract.
+  const declaredType = attribute(attributes, ['TYPE']);
+  const declaredNodeText = attribute(attributes, ['NODE']);
+  const typeUnset = isCaesarUnsetSentinelText(declaredType);
+  const nodeUnset = isCaesarUnsetSentinelText(declaredNodeText);
+  const unfilledSlot = typeUnset && nodeUnset;
+
+  const rawType = typeUnset ? null : declaredType;
   const mutation = resolveRestraintTypeMutation(rawType);
   const typeCode = mutation.typeCode;
-  const nodeId = normalizedNodeAttribute(attributes, ['NODE'])
-    ?? element.toNodeId
-    ?? element.fromNodeId
-    ?? null;
+  const declaredNodeId = nodeUnset ? null : normalizedNodeAttribute(attributes, ['NODE']);
+  const nodeId = unfilledSlot
+    ? null
+    : declaredNodeId ?? element.toNodeId ?? element.fromNodeId ?? null;
   const direction = directionOf(attributes);
   const gap = caesarOptionalNumber(attributes, ['GAP', 'GAP1']);
   const friction = caesarOptionalNumber(attributes, ['FRIC_COEF', 'FRICTION', 'MU']);
@@ -35,9 +54,10 @@ export function classifyRestraint(attributes, element, segment) {
   const stiffness = caesarOptionalNumber(attributes, ['STIFF', 'STIFFNESS', 'K']);
   const targetDofs = targetDofsOf(typeCode, direction);
   const targetDof = targetDofs.length === RESTRAINT_DOFS.length ? 'ALL' : targetDofs[0] ?? null;
-  const active = rawType !== null || nodeId !== null;
+  const active = !unfilledSlot && (rawType !== null || nodeId !== null);
   return Object.freeze({
     active,
+    unfilledSlot,
     rawType,
     typeCode,
     typeLabel: restraintTypeCodeLabel(typeCode),
@@ -155,12 +175,21 @@ export function numericAttribute(attributes, names) {
   return Number.isFinite(number) ? number : null;
 }
 
+function isCaesarUnsetSentinel(value) {
+  return typeof value === 'number'
+    && Number.isFinite(value)
+    && Math.abs(value - CAESAR_UNSET_SENTINEL) < CAESAR_SENTINEL_TOLERANCE;
+}
+
+/** True when an attribute's declared text is the CAESAR "field not set" sentinel. */
+function isCaesarUnsetSentinelText(text) {
+  if (text === null) return false;
+  return isCaesarUnsetSentinel(Number(text));
+}
+
 function caesarOptionalNumber(attributes, names) {
   const value = numericAttribute(attributes, names);
-  if (value === null) return null;
-  return Math.abs(value - CAESAR_UNSET_SENTINEL) < CAESAR_SENTINEL_TOLERANCE
-    ? null
-    : value;
+  return isCaesarUnsetSentinel(value) ? null : value;
 }
 
 export function normalizedNodeAttribute(attributes, names) {

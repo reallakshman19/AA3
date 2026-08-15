@@ -16,6 +16,7 @@ const ADAPTER_FILES = [
   'empirical-v3-source-authority-adapter.js',
   'empirical-v3-resolution-reference-adapter.js',
   'empirical-v3-branch-component-authority-builder.js',
+  'empirical-v3-stagedjson-process-basis-adapter.js',
 ];
 
 const forbiddenCorePatterns = [
@@ -79,6 +80,11 @@ const branchBuilder = sourceAt('../src/workspace/engineering-loads/adapters/empi
 assert.match(branchBuilder, /observedSourceBranchLabel/);
 assert.match(branchBuilder, /requireAllowedKeys/);
 assert.doesNotMatch(branchBuilder, /chainageDistribution|TopoFix|topologyEditConfidence/);
+
+const stagedProcessAdapter = sourceAt('../src/workspace/engineering-loads/adapters/empirical-v3-stagedjson-process-basis-adapter.js');
+assert.match(stagedProcessAdapter, /requireStagedJsonProcessAuthority/);
+assert.match(stagedProcessAdapter, /observedSourceBranchId/);
+assert.doesNotMatch(stagedProcessAdapter, /fallbackResolver|chainageDistribution|TopoFix/);
 
 function sourceAt(path) {
   return readFileSync(new URL(path, import.meta.url), 'utf8');

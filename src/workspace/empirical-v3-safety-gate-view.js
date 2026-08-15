@@ -3,7 +3,6 @@ import {
   actionButton,
   cell,
   displayValue,
-  findPresentationRecord,
   paragraph,
   textInput,
 } from './empirical-v3-view-primitives.js';
@@ -142,12 +141,7 @@ function confirmationStatus(packageValue, risk) {
 }
 
 function riskValueText(risk) {
-  if (!risk.valueSnapshot) {
-    return risk.authorityRefs.map((ref) => {
-      const entry = findPresentationRecord({ records: [] }, ref.ref, ref.semanticHash);
-      return entry?.record?.authorityClass ? `${ref.ref} · ${entry.record.authorityClass}` : ref.ref;
-    }).join(', ') || 'No scalar';
-  }
+  if (!risk.valueSnapshot) return risk.authorityRefs.map((ref) => ref.ref).join(', ') || 'No scalar';
   return `${displayValue(risk.valueSnapshot.value, risk.valueSnapshot.unit)} · ${risk.valueSnapshot.authorityClass}`;
 }
 

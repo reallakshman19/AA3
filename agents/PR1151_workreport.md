@@ -2,7 +2,7 @@
 
 # CURRENT RECOVERY STATE — READ FIRST
 
-## Recovery Header
+## 1. Recovery Header
 
 ```text
 HANDOVER_READINESS: READY
@@ -14,42 +14,44 @@ REPOSITORY: reallaksh19/Advanced_Analysis
 SOURCE_TASK: issue #1149
 PR_OR_WIP: PR1151
 BRANCH: agent/empirical-v3-safety-evidence-fresh-20260815
-PR_HEAD_OBSERVED: b62bc9ddab14fb392bc80c29873bd382feca3b28
-REPORT_BASIS_HEAD: b62bc9ddab14fb392bc80c29873bd382feca3b28
+PR_HEAD_OBSERVED: a8a41432ecf465730aa546981080ded93f0734e2
+REPORT_BASIS_HEAD: a8a41432ecf465730aa546981080ded93f0734e2
 MAIN_HEAD_LAST_CHECKED: 04328852dced9f5c4827da8afe8a82aeb8b1a1d3
 MERGE_BASE: edafbbccbc7572f65192a048550406d2257d3def
 REPORT_SYNC: CURRENT
 GROUNDING_EPOCH: GE-1149-002
-CURRENT_STAGE: PLAN
-LAST_COMPLETED_STAGE: FRESH_PR_ALLOCATION
-CURRENT_BLOCKER: NONE
-HIGHEST_RISK: authority laundering or stale/UI-owned authorization
-EXACT_NEXT_ACTION: implement pure domain workflow state/authorization projection and focused checker; no UI or mechanics changes
+CURRENT_STAGE: IMPLEMENT
+LAST_COMPLETED_STAGE: WORKFLOW_AND_QUANTITY_AUTHORITY_FOUNDATION
+CURRENT_BLOCKER: executable repository validation unavailable in this environment
+HIGHEST_RISK: upstream currentness/risk/confirmation validators must remain hash-bound so workflow facts cannot be fabricated
+EXACT_NEXT_ACTION: implement immutable risk finding + singular confirmation receipt/currentness contracts, then bind them into calculation authorization
 ```
 
-## Handover in 60 Seconds
+## 2. Handover in 60 Seconds
 
-Owner explicitly requested a new PR after #1150 had already been created. PR #1151 is the active fresh continuation, stacked directly on exact #1148 head `edafbbccbc7572f65192a048550406d2257d3def`; it does not inherit #1150 commits. #1150 remains untouched unless the owner separately directs closure.
+Owner explicitly requested a new PR after #1150 had already been created. PR #1151 is the active fresh continuation and is stacked directly on exact #1148 head `edafbbccbc7572f65192a048550406d2257d3def`; it inherits no #1150 commits. #1150 remains untouched unless the owner separately directs closure.
 
-Mission remains issue #1149: workflow/UI/evidence safety layer around the frozen #1145/#1147/#1148 ROM. Owner updates prioritize one domain-owned workflow state projection, Branch Basis, one Calculation Safety Gate, immutable events/evidence, read-only Explain Calculation, result review, then JSON/audit freeze.
+PR #1151 now contains the first two production-domain slices:
 
-No tolerance, quadrature, formula, response-multiplier, V1/V2, or workflow-YAML changes are authorized. HIGH_BLOCK is never confirmable; HIGH_CONFIRM is singular/hash-bound; exact topology remains required; UI/logging/viewport/chainage do not become engineering authority; Explain must consume sealed coupled evidence without re-solving.
+1. `workflow-state.js` — one deterministic owner-locked workflow projection, backward invalidation precedence, and action gates. `RUN_CALCULATION` is possible only from `CALCULATION_AUTHORIZED`, which in turn requires a present/current sealed authorization semantic hash. Unknown/presentation input is excluded from the workflow semantic identity.
+2. `quantity-authority.js` — immutable numeric engineering quantity authority with `SOURCE_EXACT / APPROVED_MASTER_EXACT / DERIVED_EXACT / INFERRED_REVIEW_REQUIRED / ASSUMED_CONFIRMED / UNRESOLVED`, semantic/evidence hashes, derivation parent hashes, risk lineage, confirmation lineage, and non-exact source-type anti-promotion guards.
 
-No executable validation has run in this environment. Source inspection is evidence; missing runtime remains NOT_RUN.
+Focused checker source is committed for both slices. Executable status is still NOT_RUN because this environment has no local repository execution path. Do not report source inspection as numerical/runtime PASS.
 
-## Ground Truth
+## 3. Repository Ground Truth
 
 - default branch `main` @ `04328852dced9f5c4827da8afe8a82aeb8b1a1d3`;
-- PR #1151 OPEN / DRAFT;
+- PR #1151 OPEN / DRAFT / mergeable at last check;
 - PR target `agent/empirical-rom-canonical-elbow-geometry-20260815`;
 - exact stack base `edafbbccbc7572f65192a048550406d2257d3def`;
-- stack dependency #1148 is OPEN / DRAFT / UNMERGED;
-- #1149 owner comments freeze numerical refinement and lock the workflow/UI/logging sequence;
-- owner explicitly instructed creation of a fresh PR and coding to begin.
+- #1148 remains OPEN / DRAFT / UNMERGED at the same exact head;
+- predecessor stack: #1148 -> #1147 -> #1145 -> main;
+- owner #1149 comments freeze numerical refinement and lock the workflow/UI/logging sequence;
+- no `.github/workflows/*` changes are authorized or present in this PR.
 
-Coordination state: `SAFE_WITH_STACK_DEPENDENCY`. The intended authority overlap is only the #1145/#1147/#1148 predecessor ROM/canonical geometry stack. No `.github/workflows/*` changes.
+Coordination state remains `SAFE_WITH_STACK_DEPENDENCY`.
 
-## Mission / Scope / Acceptance
+## 4. Mission / Scope / Acceptance
 
 Authority chain:
 
@@ -59,75 +61,172 @@ source/master/current model
 -> branch/component authority
 -> risk/confirmation
 -> sealed calculation authorization
--> unchanged existing ROM
+-> unchanged #1145/#1147/#1148 ROM
 -> sealed coupled evidence
 -> UI/audit/export
 ```
 
-Protected invariants: exact topology/currentness/source hashes; B31J flexibility separate from SIF; coupled `(F+S)R = target-reference`; frozen existing numerical tolerances; legacy V1/V2 behavior; UI never owns calculation authorization.
+Protected invariants:
+- exact topology/currentness/source hashes;
+- B31J flexibility remains separate from SIF;
+- coupled `(F+S)R = target-reference` equations unchanged;
+- existing numerical tolerances/quadrature unchanged;
+- no response multipliers;
+- legacy V1/V2 behavior unchanged;
+- UI/logging/viewport/chainage never become calculation authority;
+- merge remains owner-only.
 
-## Current Implementation State
+## 5. Current Implementation State
 
 | Work item | Implementation | Integration | Validation | Remaining |
 |---|---|---|---|---|
-| Workflow state projection | UNSTARTED | UNSTARTED | NOT_RUN | full |
-| Quantity authority | UNSTARTED | UNSTARTED | NOT_RUN | full |
+| Workflow state projection | IMPLEMENTED | core-only | source-inspected; runtime NOT_RUN | bind to later validators/UI |
+| Quantity authority | IMPLEMENTED | core-only | source-inspected; runtime NOT_RUN | adapters/currentness integration |
 | Branch/component authority | UNSTARTED | UNSTARTED | NOT_RUN | full |
 | Risk/confirmation | UNSTARTED | UNSTARTED | NOT_RUN | full |
-| Authorization/events | UNSTARTED | UNSTARTED | NOT_RUN | full |
+| Calculation authorization/events | UNSTARTED | UNSTARTED | NOT_RUN | full |
 | UI sequence | UNSTARTED | UNSTARTED | NOT_RUN | full |
 | Coupled evidence/audit | UNSTARTED | UNSTARTED | NOT_RUN | full |
 
-## Active Engineering Item Register
+## 6. Active Engineering Item Register
 
-- `RISK-001 HIGH OPEN`: inferred/default scalar laundering.
-- `RISK-002 HIGH OPEN`: stale authorization preserved by UI/navigation state.
-- `RISK-003 HIGH OPEN`: topology/chainage bypass.
-- `DEC-001`: workflow/authorization domain-owned, never UI boolean.
-- `DEC-002`: numerical ROM frozen for this slice.
-- `DEC-003`: UI and JSON audit consume the same sealed evidence identities.
+- `RISK-001 HIGH OPEN`: legacy assumed/inferred/default scalar laundering. Quantity contract now blocks exact promotion of named non-exact source categories; legacy adapter classification still required.
+- `RISK-002 HIGH OPEN`: stale authorization preserved by UI/navigation state. Workflow projection now gives upstream stale facts precedence over old downstream receipts/results; actual hash-currentness validators still required.
+- `RISK-003 HIGH OPEN`: topology/chainage bypass. Not yet implemented in this PR.
+- `DEC-001`: workflow/authorization is domain-owned, never UI boolean.
+- `DEC-002`: #1145/#1147/#1148 numerical ROM is frozen for this slice.
+- `DEC-003`: UI and JSON audit must consume the same sealed evidence identities.
+- `DEC-004`: a current calculation authorization must have an immutable semantic hash; `present/current` booleans alone cannot authorize Run.
+- `DEC-005`: derived physics inherits the least-exact parent authority; finite arithmetic never upgrades inference/assumption/unresolved lineage.
 
-## Current Technical Diagnosis
+## 7. Current Technical Diagnosis
 
 ```text
-Observed symptom: finite legacy defaults can lose their authority lineage before formulas consume them.
-Current hypothesis: first wrong boundary is authority loss before V3 mechanics, not the mechanics equations.
-Falsifier: a current complete domain-owned safety/authorization projection already enforcing #1149 before scalarization would make a new boundary unnecessary; inspected source has not shown one.
-Next isolating experiment: implement a pure workflow projection and illegal/stale action guard, source-inspect it, then add executable checks when an execution path is available.
+Observed symptom:
+finite legacy defaults can lose authority lineage before formulas consume them.
+
+Current hypothesis:
+the first wrong boundary is authority loss before V3 mechanics, not the mechanics equations.
+
+Supporting source:
+fallback/default and fuzzy resolution paths identified in #1149 investigation; owner explicitly prioritizes authority/workflow/evidence over numerical refinement.
+
+Falsifier:
+if a complete existing V3 domain boundary already sealed source/currentness/risk/confirmation and prevented scalar laundering before mechanics, these new contracts would be redundant. Inspected stack does not provide that complete boundary.
+
+Next isolating experiment:
+implement risk/confirmation/currentness contracts, then prove a stale changed binding rejects a previously valid confirmation and calculation authorization before any solver call.
 ```
 
-## Validation
+## 8. Authority and Invariants — Implemented Slice
 
-- `VAL-001 PASS / SOURCE_INSPECTION / NONE`: exact #1148 stack base observed.
-- `VAL-002 PASS / SOURCE_INSPECTION / AUTHORITATIVE_REFERENCE`: live #1149 owner workflow/UI updates observed.
-- `VAL-003 NOT_RUN / NOT_OBSERVED / NONE`: no local checkout/gh execution path.
+### Workflow
+`empirical-v3-workflow-projection/v1` contains the owner-locked state vocabulary and selects the earliest invalid state. It imports only core identity/immutability helpers; no workspace, fallback, chainage, renderer, React, or solver module.
 
-## Changed-File Ledger
+### Quantity authority
+`engineering-quantity-authority/v1` is numeric for the first safety slice. Exact source/master authorities require immutable source evidence reference/hash. `LEGACY_FALLBACK`, `DEFAULT_ZERO`, `HEURISTIC`, `FUZZY_MATCH`, service fallback, screening-table and unapproved interpolation/extrapolation source types cannot be promoted to exact source/master authority. `UNRESOLVED` carries no scalar and requires a blocking risk. Derived authority follows parent lineage.
+
+## 9. Current Validation
+
+`VAL-001`
+- Status: PASS
+- Observation: SOURCE_INSPECTION
+- Oracle: NONE
+- Basis: live GitHub #1148/#1151 state
+- Expected/actual: fresh PR remains stacked on exact #1148 head; actual matches.
+
+`VAL-002`
+- Status: PASS
+- Observation: SOURCE_INSPECTION
+- Oracle: AUTHORITATIVE_REFERENCE
+- Basis: issue #1149 owner comments
+- Expected/actual: workflow/UI/evidence priority and numerical freeze reflected in implementation boundaries.
+
+`VAL-003`
+- Status: PASS
+- Observation: SOURCE_INSPECTION
+- Oracle: IMPLEMENTATION_COUPLED
+- Tested HEAD: `a8a41432ecf465730aa546981080ded93f0734e2`
+- Evidence: workflow module/checker source inspection
+- Expected/actual: HIGH_BLOCK has no high-confirm/run action; run state requires sealed authorization hash; backward invalidation tests are committed; presentation input excluded from projection identity.
+- Limitation: checker NOT_RUN.
+
+`VAL-004`
+- Status: PASS
+- Observation: SOURCE_INSPECTION
+- Oracle: IMPLEMENTATION_COUPLED
+- Tested HEAD: `a8a41432ecf465730aa546981080ded93f0734e2`
+- Evidence: quantity module/checker source inspection
+- Expected/actual: legacy 7.11 heuristic cannot be SOURCE_EXACT; inferred 7.11 retains risk lineage through derived area; missing component weight is unresolved/null, not exact zero; exact OD/WT/density derivations can remain DERIVED_EXACT; semantic tamper check committed.
+- Limitation: checker NOT_RUN.
+
+`VAL-005`
+- Status: NOT_RUN
+- Observation: NOT_OBSERVED
+- Oracle: NONE
+- Command intended: `node scripts/empirical-v3-workflow-state-check.mjs`
+- Reason: no local checkout/execution path available.
+
+`VAL-006`
+- Status: NOT_RUN
+- Observation: NOT_OBSERVED
+- Oracle: NONE
+- Command intended: `node scripts/empirical-v3-quantity-authority-check.mjs`
+- Reason: no local checkout/execution path available.
+
+Negative assurance: no predecessor ROM mechanics/formula/tolerance/quadrature file is changed by this PR.
+
+## 10. Changed-File Ledger
+
+GitHub changed-file count at implementation checkpoint: **5**. Ledger count: **5**. Unexplained files: **0**.
 
 | File | Intended? | Purpose | Sensitive? | Validation |
 |---|---:|---|---:|---|
-| `agents/WIP-1149-empirical-v3-safety-evidence-fresh_workreport.md` | transitional | pre-PR recovery artifact, remove after migration | no | source inspection |
 | `agents/PR1151_workreport.md` | yes | durable recovery authority | no | source inspection |
+| `src/core/empirical-v3-safety/workflow-state.js` | yes | governed workflow projection/action gate | yes | VAL-003 / runtime NOT_RUN |
+| `scripts/empirical-v3-workflow-state-check.mjs` | yes | deterministic workflow/invalidation/source-boundary checks | yes | NOT_RUN |
+| `src/core/empirical-v3-safety/quantity-authority.js` | yes | quantity authority and anti-laundering contract | yes | VAL-004 / runtime NOT_RUN |
+| `scripts/empirical-v3-quantity-authority-check.mjs` | yes | 7.11/density/zero-weight/derivation/tamper fixtures | yes | NOT_RUN |
 
-## Review / CI State
+## 11. Review / CI State
 
-PR #1151 is draft. No new production code or executable validation yet. No review/CI claim. Merge remains owner-only.
+PR #1151 remains draft. No reviews/threads or executable CI are claimed for this implementation checkpoint. No workflow files were added or changed. Merge authority is not granted.
 
-## Continuation
+## 12. Repository Coordination / Overlap
 
 ```text
-Start here: src/core/empirical-v3-safety/workflow-state.js
-Do not redo: #1145/#1147/#1148 mechanics/canonical geometry.
-Do not change: formulas, tolerances, quadrature, V1/V2 behavior, workflow YAML.
-Validation still required: issue T1-T20, UI freeze tests, existing ROM regressions.
-Exact next action: create pure workflow-state.js plus focused checker.
+MASTER_INDEX_CHECKED: expected registry absent on stack base
+STATUS_RECORD: expected registry absent
+CLAIM_RECORD: expected registry absent
+LAST_OVERLAP_CHECK: before workflow/quantity stages
+FILE_OVERLAP: no unintended overlap observed
+AUTHORITY_OVERLAP: intentional hard dependency on #1145/#1147/#1148
+DEPENDENCY_OVERLAP: #1148 exact head remains stack base
+COORDINATION_STATE: SAFE_WITH_STACK_DEPENDENCY
 ```
 
-# APPENDIX A
+## 13. Continuation State
 
-New owner-authorized work, not an engineering-critical takeover. A future takeover must re-ground and regenerate Appendix A before production mutation.
+```text
+Start here: src/core/empirical-v3-safety/
+Exact next domain: risk-finding.js + confirmation-receipt.js + calculation-authorization.js
+Do not redo: workflow-state.js and quantity-authority.js except defects found by validation/review.
+Do not change: ROM formulas, tolerances, quadrature, V1/V2, workflow YAML.
+Validation still required: executable focused checks; T1-T20; UI freeze tests; existing ROM regressions.
+Highest-risk remaining item: immutable stale-confirmation rejection across relevant binding changes.
+Exact next action: implement risk finding and singular confirmation receipt/currentness with no batch API and no HIGH_BLOCK confirmation path.
+```
+
+## 14. Takeover / Custody Chain
+
+- `GE-1149-002`: fresh branch/PR grounded directly on #1148 after owner requested a new PR.
+- WIP report was migrated to PR1151 and removed from the active diff before production implementation.
+
+# APPENDIX A — IMPLEMENTATION TAKEOVER QUALIFICATION
+
+New owner-authorized work, not a takeover. A future incoming implementation agent must start READ_ONLY, re-ground live state, reconcile this report/diff, and regenerate Appendix A from then-current open risks/questions before production mutation.
 
 # HISTORICAL RECORD
 
-- `GE-1149-002`: fresh branch created directly from #1148 after owner explicitly requested a new PR.
-- PR #1151 allocated as the active fresh stack; #1150 is not inherited.
+- Initial draft #1150 exists but is not inherited by #1151.
+- First durable implementation checkpoint: workflow projection + quantity authority foundation at implementation HEAD `a8a41432ecf465730aa546981080ded93f0734e2`.

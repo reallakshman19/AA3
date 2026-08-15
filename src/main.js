@@ -40,6 +40,7 @@ const authorizedEnrichmentApi = createAuthorizedEnrichmentWorkspaceApi({
 const linearPipingInputXmlSource = mountLinearPipingInputXmlSourceWorkflow(applicationRoot, { documentRef: applicationRoot.ownerDocument });
 const linearPipingResults = mountLinearPipingResultsWorkbench(applicationRoot, { documentRef: applicationRoot.ownerDocument, urlApi: applicationRoot.ownerDocument.defaultView?.URL });
 let empiricalV3PreparedExecution = null;
+let empiricalV3ObservedDatasetBasis = null;
 const empiricalV3Safety = mountEmpiricalV3SafetyWorkbench(applicationRoot, {
   documentRef: applicationRoot.ownerDocument,
   urlApi: applicationRoot.ownerDocument.defaultView?.URL,
@@ -66,6 +67,20 @@ const empiricalV3Safety = mountEmpiricalV3SafetyWorkbench(applicationRoot, {
     return createEmpiricalV3LiveAuditExport({ packageValue, evidence, resultReview, auditReadiness });
   },
 });
+const empiricalV3SourceSubscriptions = [
+  EventBus.subscribe(EVENT_TOPICS.WORKSPACE_SNAPSHOT_CHANGED, ({ snapshot }) => {
+    const nextBasis = empiricalV3DatasetBasis(snapshot);
+    if (empiricalV3ObservedDatasetBasis !== null && nextBasis !== empiricalV3ObservedDatasetBasis) {
+      invalidateEmpiricalV3ForGoverningChange('WORKSPACE_DATASET_BASIS_CHANGED');
+    }
+    empiricalV3ObservedDatasetBasis = nextBasis;
+  }),
+  EventBus.subscribe(ENGINEERING_MODEL_EVENTS.CHANGED, ({ reason }) => {
+    if (reason === 'project-data-changed' || reason === 'master-data-changed') {
+      invalidateEmpiricalV3ForGoverningChange(reason);
+    }
+  }),
+];
 const linearPipingAnalyzerIntegration = retireStandaloneInputXmlAnalyzerEntry(applicationRoot);
 const preflightUi = mountLfeaPreflightUi(applicationRoot, { getModel: () => ({ sharedModel: coreWorkspace.getSharedModel() }) });
 const preflightSubscriptions = [EventBus.subscribe(EVENT_TOPICS.DATASET_LOADED, () => preflightUi.render()), EventBus.subscribe(EVENT_TOPICS.DATASET_CLEARED, () => preflightUi.render())];
@@ -139,7 +154,7 @@ const workspace = Object.freeze({
   },
   createEmpiricalV3AuditExportRecord() { return empiricalV3Safety.createAuditExport(); },
   getPreflightReviewModel() { return preflightUi.getProjection(); },
-  destroy() { preflightSubscriptions.forEach((unsubscribe) => unsubscribe()); empiricalV3PreparedExecution = null; empiricalV3Safety.destroy(); preflightUi.destroy(); linearPipingResults.destroy(); linearPipingInputXmlSource.destroy(); coreWorkspace.destroy(); },
+  destroy() { preflightSubscriptions.forEach((unsubscribe) => unsubscribe()); empiricalV3SourceSubscriptions.forEach((unsubscribe) => unsubscribe()); empiricalV3PreparedExecution = null; empiricalV3Safety.destroy(); preflightUi.destroy(); linearPipingResults.destroy(); linearPipingInputXmlSource.destroy(); coreWorkspace.destroy(); },
 });
 
 globalThis.AnalysisWorkspace = workspace;
@@ -151,4 +166,20 @@ function preparedExecutionMatchesPackage(prepared, packageValue) {
   return packageValue.calculationAuthorization.dependencies.some((row) => (
     row.kind === prepared.dependency.kind && row.ref === prepared.dependency.ref && row.semanticHash === prepared.dependency.semanticHash
   ));
+}
+
+function empiricalV3DatasetBasis(snapshot) {
+  const dataset = snapshot?.status === 'ready' ? snapshot.dataset : null;
+  if (!dataset) return 'NO_ACTIVE_DATASET';
+  return JSON.stringify([
+    dataset.datasetId ?? null,
+    dataset.version ?? null,
+    dataset.sourceSha256 ?? null,
+    dataset.sourceSnapshot?.sourceSemanticHash ?? null,
+  ]);
+}
+
+function invalidateEmpiricalV3ForGoverningChange() {
+  empiricalV3PreparedExecution = null;
+  if (empiricalV3Safety.getPackage() || empiricalV3Safety.getCalculationEvidence()) empiricalV3Safety.clear();
 }

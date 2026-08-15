@@ -17,6 +17,7 @@ const ADAPTER_FILES = [
   'empirical-v3-resolution-reference-adapter.js',
   'empirical-v3-branch-component-authority-builder.js',
   'empirical-v3-stagedjson-process-basis-adapter.js',
+  'empirical-v3-branch-process-resolution-adapter.js',
 ];
 
 const forbiddenCorePatterns = [
@@ -85,6 +86,12 @@ const stagedProcessAdapter = sourceAt('../src/workspace/engineering-loads/adapte
 assert.match(stagedProcessAdapter, /requireStagedJsonProcessAuthority/);
 assert.match(stagedProcessAdapter, /observedSourceBranchId/);
 assert.doesNotMatch(stagedProcessAdapter, /fallbackResolver|chainageDistribution|TopoFix/);
+
+const branchProcessAdapter = sourceAt('../src/workspace/engineering-loads/adapters/empirical-v3-branch-process-resolution-adapter.js');
+assert.match(branchProcessAdapter, /pipingClassNeedsReview/);
+assert.match(branchProcessAdapter, /pipingClassMatchMethod/);
+assert.match(branchProcessAdapter, /piping-class-master/);
+assert.doesNotMatch(branchProcessAdapter, /resolveBranchProcessData|findBestPipingClassRow/);
 
 function sourceAt(path) {
   return readFileSync(new URL(path, import.meta.url), 'utf8');

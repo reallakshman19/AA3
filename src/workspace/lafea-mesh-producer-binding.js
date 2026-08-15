@@ -1,21 +1,20 @@
 /**
- * The qualified-producer binding for the LAFEA core mesher.
+ * Qualified-producer binding for the registered LAFEA core mesher.
  *
- * This is the module the rest of the workbench asks "is a real mesh producer
- * bound, and what is it authorized to do?". It declares the producer's
- * capability and its qualification, and composes the governed chain:
- *
+ * Governing chain:
  *   analysis geometry -> intent v2 -> plan v2 -> engine -> output v2 -> evidence v2
  *
- * Qualification basis: the core meshing modules are covered by the
- * `check:lafea-meshing` suite (topology contract, healing preview, quality
- * gates, convergence quantities, three-level requirement, T6 generation, Q8
- * recombination, mapped MITC mesh, quality panel, determinism). The
- * qualification below is scoped to exactly what that suite exercises —
- * LAFEA.3 planar continuum, T3/T6/Q8, automatic generation only. Local
- * refinement is NOT qualified and is not claimed: `supportsLocalRefinement`
- * is false and `REFINEMENT_REGENERATION` is absent from the modes.
+ * The default route uses the general planar continuum mesher. The same
+ * registered producer also owns one narrowly qualified automatic strategy for
+ * B02D: a frozen probe-stable polar annulus selected only by its reserved
+ * refinement-feature identity. That strategy is rejected unless the retained
+ * analysis geometry is exactly the qualified 20/100 mm concentric annulus and
+ * the target h is one of the four frozen B02D levels.
  */
+import {
+  LAFEA_B02D_PROBE_STABLE_POLAR_FEATURE_ID,
+  generateLafeaB02dProbeStablePolarMesh,
+} from '../core/lafea-meshing/b02d-probe-stable-polar-mesh.js';
 import {
   createLafeaMeshProducerCapability,
   createLafeaMeshProducerQualification,
@@ -128,12 +127,7 @@ export function lafeaCoreMeshProducerQualification() {
   return cachedQualification;
 }
 
-/**
- * Derive the generation configuration from the bound mesh profile. Element
- * family, target size and quality thresholds are governed profile inputs; a
- * caller may not silently override the first two while retaining the same
- * profile hash. Changing either requires an explicit profile rebind.
- */
+/** Derive generation configuration from the canonical bound mesh profile. */
 export function lafeaMeshGenerationConfiguration(meshProfileValue, overrides = {}) {
   const meshProfile = canonicalLafeaAnalysisMeshProfile(meshProfileValue);
   const elementFamily = meshProfile.fields.continuumElement;
@@ -145,6 +139,7 @@ export function lafeaMeshGenerationConfiguration(meshProfileValue, overrides = {
     && overrides.targetElementLength !== targetElementLength) {
     fail('LAFEA_MESH_GENERATION_PROFILE_TARGET_LENGTH_OVERRIDE_MISMATCH');
   }
+  const refinementFeatureIds = canonicalFeatureIds(overrides.refinementFeatureIds ?? []);
   return Object.freeze({
     meshProfile,
     meshProfileHash: meshProfile.semanticHash,
@@ -155,24 +150,13 @@ export function lafeaMeshGenerationConfiguration(meshProfileValue, overrides = {
     maximumNodes: MAXIMUM_NODES,
     maximumElements: MAXIMUM_ELEMENTS,
     maximumEstimatedDofs: MAXIMUM_ESTIMATED_DOFS,
+    refinementFeatureIds,
   });
 }
 
-/**
- * Plan a mesh: build the intent, run the producer, and describe the result.
- *
- * The counts reported are actual, not forecast — the core mesher is
- * deterministic and cheap enough to run for the plan, so a "preview" that
- * disagreed with the eventual mesh would be a fiction. The generated mesh is
- * carried on the result so `produceLafeaAnalysisMeshEvidence` does not have
- * to regenerate it.
- */
+/** Run the deterministic producer during planning so plan counts are actual. */
 export function planLafeaAnalysisMesh(stage, configuration) {
   const geometryEvidence = requireGeometryEvidence(stage);
-  const adapter = buildLafeaMeshTopology(geometryEvidence.geometry);
-  if (!lafeaMeshTopologySupported(adapter)) {
-    fail('LAFEA_MESH_GENERATION_HOLES_NOT_SUPPORTED');
-  }
   const capability = lafeaCoreMeshProducerCapability();
   const qualification = lafeaCoreMeshProducerQualification();
   const intent = buildIntent(stage, configuration);
@@ -181,11 +165,25 @@ export function planLafeaAnalysisMesh(stage, configuration) {
     fail(readiness.reasons[0] ?? 'LAFEA_MESH_PRODUCER_CONTRACT_NOT_READY');
   }
 
-  const generated = generateLafeaAnalysisMesh(adapter, {
-    targetElementLength: intent.targetElementLength,
-    curvatureToleranceDegrees: intent.curvatureToleranceDegrees,
-    elementFamily: intent.elementFamily,
-  });
+  let generated;
+  if (usesB02dPolarStrategy(intent)) {
+    requireB02dPolarGeometry(geometryEvidence.geometry);
+    generated = generateLafeaB02dProbeStablePolarMesh({
+      targetElementLength: intent.targetElementLength,
+      elementFamily: intent.elementFamily,
+    });
+  } else {
+    const adapter = buildLafeaMeshTopology(geometryEvidence.geometry);
+    if (!lafeaMeshTopologySupported(adapter)) {
+      fail('LAFEA_MESH_GENERATION_HOLES_NOT_SUPPORTED');
+    }
+    generated = generateLafeaAnalysisMesh(adapter, {
+      targetElementLength: intent.targetElementLength,
+      curvatureToleranceDegrees: intent.curvatureToleranceDegrees,
+      elementFamily: intent.elementFamily,
+    });
+  }
+
   const exceeds = generated.nodeCount > intent.maximumNodes
     || generated.elementCount > intent.maximumElements
     || generated.estimatedDofs > intent.maximumEstimatedDofs;
@@ -226,11 +224,7 @@ export function planLafeaAnalysisMesh(stage, configuration) {
   });
 }
 
-/**
- * Turn a plan into registrable analysis-mesh evidence v2. The producer output
- * envelope is built first so the mesh content is bound to the plan,
- * capability and qualification before any custody-facing record exists.
- */
+/** Build registrable analysis-mesh evidence v2 after plan/output validation. */
 export function produceLafeaAnalysisMeshEvidence(stage, configuration) {
   const planned = configuration?.planned ?? planLafeaAnalysisMesh(stage, configuration);
   if (planned.plan.resourceDisposition === 'BLOCK') {
@@ -307,6 +301,51 @@ function buildIntent(stage, configuration) {
   });
 }
 
+function usesB02dPolarStrategy(intent) {
+  if (!intent.refinementFeatureIds.includes(LAFEA_B02D_PROBE_STABLE_POLAR_FEATURE_ID)) return false;
+  if (intent.refinementFeatureIds.length !== 1) {
+    fail('LAFEA_B02D_POLAR_RESERVED_FEATURE_COMBINATION_NOT_QUALIFIED');
+  }
+  return true;
+}
+
+function requireB02dPolarGeometry(geometry) {
+  const loops = new Map(geometry.loops.map((loop) => [loop.role, loop]));
+  const outer = loops.get('OUTER');
+  const hole = loops.get('HOLE');
+  if (!outer || !hole || geometry.loops.length !== 2) {
+    fail('LAFEA_B02D_POLAR_GEOMETRY_NOT_QUALIFIED');
+  }
+  const segments = new Map(geometry.segments.map((row) => [row.segmentId, row]));
+  requireCircularLoop(outer, segments, 100, 'CCW');
+  requireCircularLoop(hole, segments, 20, 'CW');
+  const owned = new Set([...outer.segmentIds, ...hole.segmentIds]);
+  if (owned.size !== geometry.segments.length) fail('LAFEA_B02D_POLAR_GEOMETRY_NOT_QUALIFIED');
+}
+
+function requireCircularLoop(loop, segments, radius, sweep) {
+  if (loop.segmentIds.length < 3) fail('LAFEA_B02D_POLAR_GEOMETRY_NOT_QUALIFIED');
+  for (const segmentId of loop.segmentIds) {
+    const segment = segments.get(segmentId);
+    if (!segment || segment.type !== 'CIRCULAR_ARC'
+      || segment.sweep !== sweep
+      || Math.abs(segment.centerX) > 1e-12
+      || Math.abs(segment.centerY) > 1e-12
+      || Math.abs(segment.radius - radius) > 1e-12) {
+      fail('LAFEA_B02D_POLAR_GEOMETRY_NOT_QUALIFIED');
+    }
+  }
+}
+
+function canonicalFeatureIds(value) {
+  if (!Array.isArray(value)) fail('LAFEA_MESH_GENERATION_REFINEMENT_FEATURE_IDS_INVALID');
+  const ids = value.map((id) => {
+    if (typeof id !== 'string' || !id.trim()) fail('LAFEA_MESH_GENERATION_REFINEMENT_FEATURE_IDS_INVALID');
+    return id.trim();
+  }).sort();
+  if (new Set(ids).size !== ids.length) fail('LAFEA_MESH_GENERATION_REFINEMENT_FEATURE_IDS_DUPLICATE');
+  return Object.freeze(ids);
+}
 function requireGeometryEvidence(stage) {
   const evidence = stage?.retainedAnalysisGeometryEvidence;
   if (!evidence?.geometry) fail('LAFEA_MESH_GENERATION_ANALYSIS_GEOMETRY_ABSENT');

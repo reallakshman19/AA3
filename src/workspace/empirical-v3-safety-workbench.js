@@ -38,15 +38,15 @@ export class EmpiricalV3SafetyWorkbenchController {
     this.restoreDownstream(next);this.message=`Loaded safety package for ${next.runId}. Workflow ${next.workflow.state}. Risk set ${next.riskSet.riskSetId}.`;this.render();return next;
   }
   restoreDownstream(packageValue){
-    const resultHash=packageValue.workflow.facts.calculationResult.semanticHash;
-    if(!resultHash){this.calculationEvidence=null;this.reviewAudit.clear();return;}
+    const resultFact=packageValue.workflow.facts.calculationResult;const resultHash=resultFact.semanticHash;
+    if(!resultFact.current||!resultHash){this.calculationEvidence=null;this.reviewAudit.clear();return;}
     const evidenceEntry=findRecord(packageValue,'CALCULATION_EVIDENCE',resultHash);
     if(evidenceEntry){const evidence=requireEmpiricalV3CoupledCalculationEvidence(evidenceEntry.record);this.calculationEvidence=evidenceMatchesPackage(evidence,packageValue)?evidence:null;}
     else if(this.calculationEvidence&&!evidenceMatchesPackage(this.calculationEvidence,packageValue))this.calculationEvidence=null;
     this.reviewAudit.clear();if(!this.calculationEvidence)return;
-    const reviewHash=packageValue.workflow.facts.resultReview.semanticHash;const reviewEntry=findRecord(packageValue,'RESULT_REVIEW',reviewHash);
+    const reviewHash=packageValue.workflow.facts.resultReview.semanticHash;const reviewEntry=packageValue.workflow.facts.resultReview.current?findRecord(packageValue,'RESULT_REVIEW',reviewHash):null;
     if(reviewEntry)this.reviewAudit.loadResultReview(reviewEntry.record,this.calculationEvidence);
-    const auditHash=packageValue.workflow.facts.audit.semanticHash;const auditEntry=findRecord(packageValue,'AUDIT_READINESS',auditHash);
+    const auditHash=packageValue.workflow.facts.audit.semanticHash;const auditEntry=packageValue.workflow.facts.audit.current?findRecord(packageValue,'AUDIT_READINESS',auditHash):null;
     if(auditEntry&&this.reviewAudit.resultReview)this.reviewAudit.loadAuditReadiness(auditEntry.record,this.calculationEvidence);
   }
   loadCalculationEvidence(value){const evidence=requireEmpiricalV3CoupledCalculationEvidence(value);if(!this.packageValue||!evidenceMatchesPackage(evidence,this.packageValue))throw new Error('Calculation evidence is stale or belongs to another safety package authorization.');this.calculationEvidence=evidence;this.reviewAudit.invalidateForEvidence(evidence);this.activeTab='EXPLAIN';this.explainMode='SUMMARY';this.error='';this.message=`Loaded sealed calculation evidence ${evidence.evidenceId}.`;this.render();return evidence;}

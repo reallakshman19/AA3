@@ -2,6 +2,8 @@ import { connectedPipeComponent } from './analysis-connectivity.js';
 import { hasOverride, overrideValue } from './analysis-input-evidence.js';
 import { freezeDeep, stringValue } from './dataset-utils.js';
 
+export const WORKSPACE_ANALYSIS_TARGET_ID = '@@WORKSPACE_ANALYSIS@@';
+
 const PIPE_REFERENCE_KEYS = [
   'PIPE_ID',
   'PARENT_PIPE_ID',
@@ -20,12 +22,26 @@ const SCREENING_ALIASES = Object.freeze({
 
 export function createAnalysisContext(workspaceState, targetId) {
   const snapshot = workspaceState.getSnapshot();
+  if (snapshot.status !== 'ready' || !snapshot.dataset) {
+    throw new Error(`Analysis target is not available in the active dataset: ${targetId}.`);
+  }
+  if (targetId === WORKSPACE_ANALYSIS_TARGET_ID) {
+    return freezeDeep({
+      targetId: WORKSPACE_ANALYSIS_TARGET_ID,
+      analysisScope: 'WORKSPACE',
+      entity: null,
+      dataset: snapshot.dataset,
+      selectedEntityId: snapshot.selectedEntityId,
+      version: snapshot.version,
+    });
+  }
   const entity = workspaceState.getEntity(targetId);
-  if (snapshot.status !== 'ready' || !snapshot.dataset || !entity) {
+  if (!entity) {
     throw new Error(`Analysis target is not available in the active dataset: ${targetId}.`);
   }
   return freezeDeep({
     targetId: entity.entityId,
+    analysisScope: 'ENTITY',
     entity,
     dataset: snapshot.dataset,
     selectedEntityId: snapshot.selectedEntityId,
@@ -33,7 +49,13 @@ export function createAnalysisContext(workspaceState, targetId) {
   });
 }
 
+export function isWorkspaceAnalysisContext(context) {
+  return context?.analysisScope === 'WORKSPACE'
+    && context?.targetId === WORKSPACE_ANALYSIS_TARGET_ID;
+}
+
 export function resolvePipeEntity(context) {
+  if (!context?.entity) return null;
   if (context.entity.category === 'pipe') return context.entity;
   if (context.entity.category !== 'support') return null;
 
@@ -73,7 +95,7 @@ export function toSupportLoadSource(pipeEntity) {
 }
 
 export function buildPipeScreeningInput(context) {
-  if (context.entity.category !== 'pipe') {
+  if (context?.entity?.category !== 'pipe') {
     return disabledScreening('Pipe flexibility screening requires a selected pipe.');
   }
 

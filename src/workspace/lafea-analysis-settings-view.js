@@ -1,7 +1,17 @@
-/** Read-only projection of analysis and solver settings already retained by the active stage. */
+/** Governed projection of analysis/solver settings with explicit source-authority controls. */
+import {
+  FORMULATION_GUARDS,
+  FORMULATIONS,
+} from '../core/local-continuum/index.js';
 import { element } from './lafea-workbench-dom.js';
 
 export const LAFEA_ANALYSIS_SETTINGS_VIEW_SCHEMA = 'lafea-analysis-settings-view/v1';
+
+const FORMULATION_LABELS = Object.freeze({
+  [FORMULATIONS.PLANE_STRESS]: 'Plane stress',
+  [FORMULATIONS.PLANE_STRAIN]: 'Plane strain — standard displacement',
+  [FORMULATIONS.PLANE_STRAIN_BBAR]: 'Plane strain — B-bar (locking resistant)',
+});
 
 export function buildLafeaAnalysisSettingsViewModel(stageValue, registryEntryValue = null) {
   const stage = requireStage(stageValue);
@@ -12,7 +22,7 @@ export function buildLafeaAnalysisSettingsViewModel(stageValue, registryEntryVal
   const modelRows = [
     row('Model identity', textOr(documentValue?.modelIdentity)),
     row('Model version', textOr(documentValue?.modelVersion)),
-    row('Formulation', textOr(documentValue?.formulation)),
+    row('Formulation', formulationLabel(documentValue?.formulation)),
     row('Thickness policy', textOr(documentValue?.thicknessBasis?.policy)),
     row('Requested analyses / cases', requestSummary(requests)),
     row('Unit basis', unitSummary(documentValue?.units)),
@@ -34,28 +44,40 @@ export function buildLafeaAnalysisSettingsViewModel(stageValue, registryEntryVal
   return freeze({
     schema: LAFEA_ANALYSIS_SETTINGS_VIEW_SCHEMA,
     stageId: stage.stageId,
-    readOnly: true,
+    readOnly: false,
     modelRows,
     solverRows,
     rows: [...modelRows, ...solverRows],
+    formulationControl: stage.stageId === 'LAFEA.3'
+      ? buildFormulationControl(stage, documentValue)
+      : null,
     recoveryDisclosure: recoveryDisclosure(stage.stageId, documentValue),
     qualificationDetails: qualificationDetails(profile),
     limitations: [...registry.limitations, ...stringArray(documentValue?.limitations)],
   });
 }
 
-export function renderLafeaAnalysisSettings(root, stageValue, registryEntryValue = null) {
+export function renderLafeaAnalysisSettings(
+  root,
+  stageValue,
+  registryEntryValue = null,
+  handlers = {},
+) {
   if (!root?.ownerDocument) throw new TypeError('LAFEA_ANALYSIS_SETTINGS_ROOT_REQUIRED');
   const model = buildLafeaAnalysisSettingsViewModel(stageValue, registryEntryValue);
   const section = element(root, 'section', 'lafea-analysis-settings');
   section.dataset.role = 'lafea-analysis-settings';
-  section.dataset.readOnly = 'true';
+  section.dataset.readOnly = 'false';
   section.append(element(
     root,
     'p',
     'lafea-analysis-settings__intro',
-    'The first group comes from the active engineering model. The second group is governed solver authority and is locked here; this view never invents or edits qualification-controlled values.',
+    'Model formulation is an explicit governed source input. Solver authority, qualification tolerances and release state remain locked; changing formulation invalidates downstream mesh/run evidence through the normal source-replacement transaction.',
   ));
+
+  if (model.formulationControl) {
+    section.append(formulationControl(root, stageValue, model.formulationControl, handlers));
+  }
 
   const groups = element(root, 'div', 'lafea-analysis-settings__groups');
   groups.append(
@@ -88,6 +110,133 @@ export function renderLafeaAnalysisSettings(root, stageValue, registryEntryValue
     section.append(limitations);
   }
   return section;
+}
+
+function formulationControl(root, stageValue, control, handlers) {
+  const card = element(root, 'section', 'lafea-analysis-settings__group');
+  card.dataset.role = 'lafea3-formulation-selector';
+  card.dataset.authority = 'MODEL_SOURCE';
+  card.dataset.status = control.status;
+  const heading = element(root, 'div', 'lafea-analysis-settings__group-heading');
+  heading.append(
+    element(root, 'h3', null, 'Continuum formulation'),
+    element(root, 'span', 'lafea-analysis-settings__lock', 'SOURCE'),
+  );
+  const select = element(root, 'select');
+  select.dataset.role = 'lafea3-formulation-select';
+  select.disabled = !control.editable || typeof handlers.onApplyJson !== 'function';
+  for (const optionValue of control.options) {
+    const option = element(root, 'option', null, optionValue.label);
+    option.value = optionValue.value;
+    option.selected = optionValue.value === control.current;
+    option.disabled = optionValue.disabled;
+    if (optionValue.reason) option.title = optionValue.reason;
+    select.append(option);
+  }
+  const status = element(root, 'p', 'lafea-analysis-settings__recovery', control.message);
+  status.dataset.role = 'lafea3-formulation-selector-status';
+  status.dataset.status = control.status;
+  select.addEventListener('change', () => {
+    if (typeof handlers.onApplyJson !== 'function' || !stageValue?.document) return;
+    const next = structuredClone(stageValue.document);
+    next.formulation = select.value;
+    handlers.onApplyJson(`${JSON.stringify(next, null, 2)}\n`);
+  });
+  const facts = element(root, 'dl', 'lafea-analysis-settings__list');
+  [
+    ['Current', formulationLabel(control.current)],
+    ['Poisson ratio(s)', control.poissonRatios || 'Not declared'],
+    ['Retained mesh families', control.retainedMeshFamilies || 'No retained mesh'],
+    ['B-bar element authority', 'T6 / Q8 only; actual T3 solver mesh blocks before stiffness assembly'],
+    ['B-bar temperature authority', 'Not granted — temperature/eigenstrain loads are blocked'],
+    ['Legacy plane-strain hard block', `ν ≥ ${FORMULATION_GUARDS.planeStrainPoissonBlock}`],
+    ['Qualification state', control.status],
+  ].forEach(([label, value]) => {
+    facts.append(element(root, 'dt', null, label), element(root, 'dd', null, String(value)));
+  });
+  card.append(heading, select, status, facts);
+  return card;
+}
+
+function buildFormulationControl(stage, documentValue) {
+  const current = typeof documentValue?.formulation === 'string'
+    ? documentValue.formulation
+    : FORMULATIONS.PLANE_STRESS;
+  const ratios = (documentValue?.materials ?? [])
+    .map((row) => Number.isFinite(row?.poissonRatio) ? row.poissonRatio : null)
+    .filter((value) => value !== null);
+  const maximumNu = ratios.length ? Math.max(...ratios) : null;
+  const hasTemperature = (documentValue?.loadCases ?? []).some(
+    (loadCase) => Array.isArray(loadCase?.temperatureLoads) && loadCase.temperatureLoads.length > 0,
+  );
+  const retainedMesh = stage.retainedAnalysisMeshEvidenceV2?.mesh
+    ?? stage.retainedAnalysisMeshEvidence?.mesh
+    ?? null;
+  const retainedFamilies = [...new Set((retainedMesh?.elements ?? [])
+    .map((row) => row?.elementType)
+    .filter((value) => typeof value === 'string'))].sort();
+  const retainedT3 = retainedFamilies.includes('T3');
+  const standardBlocked = maximumNu !== null
+    && maximumNu >= FORMULATION_GUARDS.planeStrainPoissonBlock;
+  const options = [
+    { value: FORMULATIONS.PLANE_STRESS, label: FORMULATION_LABELS[FORMULATIONS.PLANE_STRESS] },
+    {
+      value: FORMULATIONS.PLANE_STRAIN,
+      label: FORMULATION_LABELS[FORMULATIONS.PLANE_STRAIN],
+      disabled: standardBlocked && current !== FORMULATIONS.PLANE_STRAIN,
+      reason: standardBlocked
+        ? `Current material has ν ≥ ${FORMULATION_GUARDS.planeStrainPoissonBlock}; the displacement-only plane-strain formulation remains outside its qualified envelope.`
+        : null,
+    },
+    {
+      value: FORMULATIONS.PLANE_STRAIN_BBAR,
+      label: FORMULATION_LABELS[FORMULATIONS.PLANE_STRAIN_BBAR],
+      disabled: hasTemperature && current !== FORMULATIONS.PLANE_STRAIN_BBAR,
+      reason: hasTemperature
+        ? 'B-bar thermal/eigenstrain authority is not yet qualified. Remove temperature loads before selecting B-bar.'
+        : null,
+    },
+  ].map((row) => freeze({ ...row, disabled: Boolean(row.disabled) }));
+
+  let status = 'QUALIFIED_SOURCE_INPUT';
+  let message = 'Plane stress uses the existing qualified continuum route.';
+  if (current === FORMULATIONS.PLANE_STRAIN) {
+    if (standardBlocked) {
+      status = 'BLOCKED';
+      message = `Standard displacement plane strain is blocked for ν ≥ ${FORMULATION_GUARDS.planeStrainPoissonBlock}.`;
+    } else if (maximumNu !== null && maximumNu >= FORMULATION_GUARDS.planeStrainPoissonWarning) {
+      status = 'ADVISORY';
+      message = 'Standard displacement plane strain is inside the hard source envelope but near the incompressible limit; use B-bar for the separately qualified locking-resistant route.';
+    } else {
+      status = 'QUALIFIED_SOURCE_INPUT';
+      message = 'Standard displacement plane strain retains the existing source-controlled incompressibility guard.';
+    }
+  } else if (current === FORMULATIONS.PLANE_STRAIN_BBAR) {
+    if (hasTemperature) {
+      status = 'BLOCKED';
+      message = 'B-bar temperature/eigenstrain loading is not qualified.';
+    } else if (retainedT3) {
+      status = 'MESH_REGENERATION_REQUIRED';
+      message = 'The retained mesh contains T3. Regenerate a T6 or Q8 mesh before B-bar solve authorization; source placeholder T3 connectivity is not solver authority.';
+    } else if (retainedFamilies.length === 0) {
+      status = 'MESH_REQUIRED';
+      message = 'B-bar source selection is valid for mechanical loading; generate and qualify a T6 or Q8 mesh before solving.';
+    } else {
+      status = 'EXACT_HEAD_QUALIFICATION_REQUIRED';
+      message = 'T6/Q8 B-bar mechanical route is configured. Exact-head frozen ν/distortion qualification evidence is required before any broader release claim.';
+    }
+  }
+
+  return freeze({
+    current,
+    editable: Boolean(documentValue),
+    poissonRatios: ratios.join(', '),
+    retainedMeshFamilies: retainedFamilies.join(' / '),
+    hasTemperature,
+    status,
+    message,
+    options,
+  });
 }
 
 function settingsGroup(root, title, authority, rows) {
@@ -124,6 +273,9 @@ function registryEntry(value) {
 
 function recoveryDisclosure(stageId, documentValue) {
   if (stageId !== 'LAFEA.3') return null;
+  if (documentValue?.formulation === FORMULATIONS.PLANE_STRAIN_BBAR) {
+    return 'Recovery authority: B-bar T6/Q8 stress uses pointwise deviatoric strain plus the retained element-mean dilatation used by stiffness. Integration-point stress remains authoritative; projected nodal stress is display-only.';
+  }
   const families = [...new Set((documentValue?.elements ?? [])
     .map((row) => row?.elementType)
     .filter((value) => typeof value === 'string'))];
@@ -203,6 +355,9 @@ function displayValue(value) {
   return fields.length ? fields.join(' • ') : null;
 }
 
+function formulationLabel(value) {
+  return FORMULATION_LABELS[value] ?? textOr(value);
+}
 function row(label, value) { return freeze({ label, value }); }
 function textOr(value) { return typeof value === 'string' && value ? value : 'Not declared'; }
 function stringArray(value) { return Array.isArray(value) ? value.filter((item) => typeof item === 'string' && item) : []; }

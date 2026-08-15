@@ -43,10 +43,17 @@ export function buildEmpiricalV3SourceBoundMixedComponentRomInput(input) {
   const root = requireRoot(input.root, nodeIds);
   const rows = requireComponentRows(input.componentRows, route.components);
   const coordinates = requireCoordinates(input.coordinates, nodeIds);
+  if (coordinates.some((row) => row.nodeId === root.nodeId)) {
+    throw new Error('Solved restraint coordinates cannot bind the rooted anchor node.');
+  }
   const byId = new Map(rows.map((row) => [row.componentId, row]));
   const authorityRecords = [];
   const mechanicsComponents = route.components.map((component) => {
     const row = byId.get(component.componentId);
+    const requiredKinds = component.kind === 'CIRCULAR_ELBOW'
+      ? [...Object.keys(COMMON_QUANTITIES), ...Object.keys(ELBOW_BINDING_QUANTITIES)]
+      : Object.keys(COMMON_QUANTITIES);
+    requireExactQuantityKeys(row.quantities, requiredKinds, component.componentId);
     const common = requireQuantitySet(row.quantities, COMMON_QUANTITIES, component.componentId);
     authorityRecords.push(...Object.values(common));
     let flexibilityAuthority = null;
@@ -145,13 +152,15 @@ function requireComponentRows(value, components) {
   for (const component of components) if (!map.has(component.componentId)) throw new Error(`Missing component row ${component.componentId}.`);
   return [...map.values()];
 }
-function requireQuantitySet(value, definitions, componentId) {
-  if (!value || typeof value !== 'object' || Array.isArray(value)) throw new TypeError(`Quantities for ${componentId} must be an object.`);
-  const accepted = {};
-  for (const [kind, [unit]] of Object.entries(definitions)) {
-    const quantity = requireExactQuantity(value[kind], kind, componentId, unit);
-    accepted[kind] = quantity;
+function requireExactQuantityKeys(value, keys, componentId) {
+  if (!value || typeof value !== 'object' || Array.isArray(value)
+      || JSON.stringify(Object.keys(value).sort()) !== JSON.stringify([...keys].sort())) {
+    throw new TypeError(`Quantities for ${componentId} must contain exactly the qualified quantity kinds.`);
   }
+}
+function requireQuantitySet(value, definitions, componentId) {
+  const accepted = {};
+  for (const [kind, [unit]] of Object.entries(definitions)) accepted[kind] = requireExactQuantity(value[kind], kind, componentId, unit);
   return accepted;
 }
 function requireExactQuantity(value, kind, scopeRef, unit) {

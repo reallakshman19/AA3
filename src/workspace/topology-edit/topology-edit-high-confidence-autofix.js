@@ -77,7 +77,11 @@ export function applyHighConfidenceGapAutofix(
   const skipped = [];
   const attemptedIssueIds = new Set();
   const nodeCount = session.currentTopology()?.nodes?.length ?? 0;
-  const maxAttempts = Math.max(1, nodeCount);
+  // Accepted MERGE_NODES commands reduce node count, while several candidate
+  // open-endpoint pairs may independently fail certification. A quadratic
+  // bound covers every possible undirected endpoint pair without an unbounded
+  // UI loop if a malformed checker/session repeatedly returns fresh identities.
+  const maxAttempts = Math.max(1, nodeCount * nodeCount);
 
   for (let attempt = 0; attempt < maxAttempts; attempt += 1) {
     const current = currentHighConfidenceIssues(session, options, exactToleranceMm);

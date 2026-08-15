@@ -33,6 +33,8 @@ import { mountLinearPipingResultsWorkbench } from './workspace/linear-piping-res
 import { mountLfeaPreflightUi } from './workspace/lfea-preflight-ui.js';
 import { mountEmpiricalV3SafetyWorkbench } from './workspace/empirical-v3-safety-workbench.js';
 import { EVENT_TOPICS } from './workspace/event-topics.js';
+import { SUPPORT_RESTRAINT_EVENTS } from './workspace/support-restraint-events.js';
+import { TOPOLOGY_EVENTS } from './workspace/topology-events.js';
 
 const applicationRoot = document.getElementById('root');
 const coreWorkspace = bootstrapAnalysisWorkspace(applicationRoot);
@@ -76,6 +78,8 @@ const empiricalV3SourceSubscriptions = [
       invalidateEmpiricalV3ForGoverningChange();
     }
   }),
+  EventBus.subscribe(TOPOLOGY_EVENTS.CHANGED, () => invalidateEmpiricalV3ForGoverningChange()),
+  EventBus.subscribe(SUPPORT_RESTRAINT_EVENTS.CHANGED, () => invalidateEmpiricalV3ForGoverningChange()),
 ];
 const linearPipingAnalyzerIntegration = retireStandaloneInputXmlAnalyzerEntry(applicationRoot);
 const preflightUi = mountLfeaPreflightUi(applicationRoot, { getModel: () => ({ sharedModel: coreWorkspace.getSharedModel() }) });
@@ -260,21 +264,32 @@ function executionDependencyMatchesActiveWorkspace(dependency) {
   if (!dependency?.request?.dataset || !empiricalV3ObservedDatasetBasis || empiricalV3ObservedDatasetBasis === 'NO_ACTIVE_DATASET') return false;
   let active;
   try { active = JSON.parse(empiricalV3ObservedDatasetBasis); } catch { return false; }
-  const requestDataset = dependency.request.dataset;
+  const request = dependency.request;
+  const requestDataset = request.dataset;
   const activeSharedModelSemanticHash = coreWorkspace.getSharedModel()?.semanticHash ?? null;
+  const activeTopologySemanticHash = coreWorkspace.getTopologyGraph()?.semanticHash ?? null;
+  const activeAttachmentSemanticHash = coreWorkspace.getSupportAttachmentModel()?.semanticHash ?? null;
+  const activeRestraintSemanticHash = coreWorkspace.getRestraintCapabilityModel()?.semanticHash ?? null;
   return requestDataset.datasetId === active[0]
     && requestDataset.sourceSemanticHash === active[3]
     && Boolean(activeSharedModelSemanticHash)
-    && requestDataset.sharedModelSemanticHash === activeSharedModelSemanticHash;
+    && requestDataset.sharedModelSemanticHash === activeSharedModelSemanticHash
+    && request.topologyGraphSemanticHash === activeTopologySemanticHash
+    && request.supportAttachmentModelSemanticHash === activeAttachmentSemanticHash
+    && request.restraintCapabilityModelSemanticHash === activeRestraintSemanticHash;
 }
 
 function requireExecutionDependencyMatchesActiveWorkspace(dependency) {
   if (!executionDependencyMatchesActiveWorkspace(dependency)) {
-    throw new Error('Empirical V3 source-bound execution request does not match the active workspace dataset/shared-model authority.');
+    throw new Error('Empirical V3 source-bound execution request does not match the active workspace dataset/topology/support-restraint authority.');
   }
 }
 
 function invalidateEmpiricalV3ForGoverningChange() {
   clearEmpiricalV3GovernedPreparedExecution();
+  const session = coreWorkspace.getAnalysisSession()?.session;
+  if (session?.analysisType === EMPIRICAL_V3_ANALYSIS_CAPABILITY_ID) {
+    try { EventBus.publish(EVENT_TOPICS.ANALYSIS_SESSION_CLOSE_REQUESTED, {}); } catch { /* fail-closed cleanup only */ }
+  }
   if (empiricalV3Safety.getPackage() || empiricalV3Safety.getCalculationEvidence()) empiricalV3Safety.clear();
 }

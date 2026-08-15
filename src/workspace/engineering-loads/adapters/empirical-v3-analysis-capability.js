@@ -11,6 +11,44 @@ import {
 export const EMPIRICAL_V3_ANALYSIS_CAPABILITY_ID = 'empirical-v3-source-bound-rom';
 export const EMPIRICAL_V3_ANALYSIS_METHOD_ID = 'EMPIRICAL_V3_SOURCE_BOUND_THERMAL_ROM';
 
+let preparedExecution = null;
+
+export function setEmpiricalV3GovernedPreparedExecution(value) {
+  if (!value || typeof value !== 'object') throw new TypeError('Prepared V3 governed execution is required.');
+  for (const key of ['packageValue', 'currentAuthorization', 'romInput', 'dependency']) {
+    if (!value[key] || typeof value[key] !== 'object') throw new TypeError(`Prepared V3 execution ${key} is required.`);
+  }
+  if (!value.packageValue.runId || !value.authorizationSemanticHash || !value.datasetId) {
+    throw new TypeError('Prepared V3 execution identity is incomplete.');
+  }
+  if (!Number.isInteger(value.workspaceVersion) || value.workspaceVersion < 0) {
+    throw new TypeError('Prepared V3 execution workspaceVersion is invalid.');
+  }
+  preparedExecution = Object.freeze({
+    packageValue: value.packageValue,
+    currentAuthorization: value.currentAuthorization,
+    romInput: value.romInput,
+    auditMetadata: value.auditMetadata ?? null,
+    dependency: value.dependency,
+    authorizationSemanticHash: String(value.authorizationSemanticHash),
+    datasetId: String(value.datasetId),
+    workspaceVersion: value.workspaceVersion,
+  });
+  return preparedExecution;
+}
+
+export function clearEmpiricalV3GovernedPreparedExecution() {
+  preparedExecution = null;
+}
+
+export function getEmpiricalV3GovernedPreparedExecution() {
+  return preparedExecution;
+}
+
+export const empiricalV3AnalysisCapability = createEmpiricalV3AnalysisCapability({
+  getPreparedExecution: getEmpiricalV3GovernedPreparedExecution,
+});
+
 /**
  * Wraps the already-qualified V3 execution bridge in the repository's governed
  * AnalysisCoordinator capability boundary. This module does not resolve source
@@ -85,12 +123,7 @@ export function createEmpiricalV3AnalysisCapability({ getPreparedExecution } = {
         moduleId: 'empirical-v3-governed-analysis',
         methodId: EMPIRICAL_V3_ANALYSIS_METHOD_ID,
         formulaIds: formulaIds(liveResult.evidence?.formulaTrace),
-        unitSystem: Object.freeze({
-          length: 'm',
-          force: 'N',
-          stress: 'Pa',
-          moment: 'N·m',
-        }),
+        unitSystem: Object.freeze({ length: 'm', force: 'N', stress: 'Pa', moment: 'N·m' }),
         engineeringLevel: ENGINEERING_LEVEL.QUALIFIED_ANALYTICAL,
         status: 'CALCULATED',
         input: Object.freeze({

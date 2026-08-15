@@ -68,11 +68,25 @@ const torsion = calculatePrismaticVirtualWorkContribution({
 });
 close(torsion.total, L / (G * J), 'torsional member L/GJ');
 
+const tipForceY = action({ bendingMomentYNm: { i: L, j: 0 } });
+const cantileverTipForceY = calculatePrismaticVirtualWorkContribution({
+  segmentId: 'CANTILEVER-FORCE-Y',
+  lengthM: L,
+  properties,
+  actionA: tipForceY,
+  actionB: tipForceY,
+});
+close(
+  cantileverTipForceY.total,
+  (L ** 3) / (3 * E * IY),
+  'cantilever second-axis tip-force L^3/(3EIy)',
+);
+
 const tipForce = action({ bendingMomentZNm: { i: L, j: 0 } });
 const tipMoment = action({ bendingMomentZNm: { i: 1, j: 1 } });
 
 const cantileverTipForce = calculatePrismaticVirtualWorkContribution({
-  segmentId: 'CANTILEVER-FORCE',
+  segmentId: 'CANTILEVER-FORCE-Z',
   lengthM: L,
   properties,
   actionA: tipForce,
@@ -81,7 +95,7 @@ const cantileverTipForce = calculatePrismaticVirtualWorkContribution({
 close(
   cantileverTipForce.total,
   (L ** 3) / (3 * E * IZ),
-  'cantilever tip-force L^3/(3EI)',
+  'cantilever tip-force L^3/(3EIz)',
 );
 
 const cantileverTipMoment = calculatePrismaticVirtualWorkContribution({
@@ -94,7 +108,7 @@ const cantileverTipMoment = calculatePrismaticVirtualWorkContribution({
 close(
   cantileverTipMoment.total,
   L / (E * IZ),
-  'cantilever tip-moment L/EI',
+  'cantilever tip-moment L/EIz',
 );
 
 const crossForceMoment = calculatePrismaticVirtualWorkContribution({
@@ -140,6 +154,29 @@ assert.equal(matrix.reciprocity.satisfied, true);
 assert.equal(matrix.reciprocity.maximumResidual, 0);
 assert(Object.isFrozen(matrix));
 
+const splitMatrix = assembleUnitForceFlexibilityMatrix({
+  caseIds: ['FX'],
+  segments: [
+    {
+      segmentId: 'S1A',
+      lengthM: L / 2,
+      properties,
+      actionByCaseId: {
+        FX: action({ axialN: { i: 1, j: 1 } }),
+      },
+    },
+    {
+      segmentId: 'S1B',
+      lengthM: L / 2,
+      properties,
+      actionByCaseId: {
+        FX: action({ axialN: { i: 1, j: 1 } }),
+      },
+    },
+  ],
+});
+close(splitMatrix.matrix[0][0], L / (E * A), 'segment additivity');
+
 assert.throws(() => calculatePrismaticVirtualWorkContribution({
   segmentId: 'INVALID-TORSION',
   lengthM: L,
@@ -162,6 +199,7 @@ console.log('PASS: empirical flexibility kernel analytical checks');
 console.log(JSON.stringify({
   axialFlexibilityMPerN: axial.total,
   torsionalCoefficientRadPerNm: torsion.total,
+  cantileverSecondAxisTipForceFlexibilityMPerN: cantileverTipForceY.total,
   cantileverTipForceFlexibilityMPerN: cantileverTipForce.total,
   cantileverTipMomentFlexibilityRadPerNm: cantileverTipMoment.total,
   forceMomentCrossCoefficient: crossForceMoment.total,

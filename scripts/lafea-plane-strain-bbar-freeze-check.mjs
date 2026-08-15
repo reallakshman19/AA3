@@ -5,11 +5,10 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
-const CONTRACT_PATH = path.join(
-  ROOT,
-  'validation/lafea-incompressible/plane-strain-bbar-v1.json',
+const definition = readJson('validation/lafea-incompressible/plane-strain-bbar-v1.json');
+const convergence = readJson(
+  'validation/lafea-incompressible/plane-strain-bbar-convergence-v1.json',
 );
-const definition = JSON.parse(fs.readFileSync(CONTRACT_PATH, 'utf8'));
 
 assert.equal(definition.schema, 'lafea-plane-strain-bbar-qualification-definition/v1');
 assert.equal(definition.programmeId, 'LAFEA3-PS-BBAR-001');
@@ -17,6 +16,27 @@ assert.equal(definition.stageId, 'LAFEA.3');
 assert.equal(definition.definitionState, 'FROZEN_BEFORE_PRODUCTION_OBSERVATION');
 assert.equal(definition.productionOutputUsedToChooseDefinition, false);
 assert.equal(definition.baselineMainSha, '543cd27c5d498390bacf4a3584ca70e30ee18641');
+
+assert.equal(convergence.schema, 'lafea-plane-strain-bbar-convergence-policy/v1');
+assert.equal(convergence.programmeId, definition.programmeId);
+assert.equal(convergence.definitionState, 'FROZEN_BEFORE_PRODUCTION_OBSERVATION');
+assert.equal(convergence.productionOutputUsedToChooseDefinition, false);
+assert.equal(convergence.minimumUsefulLevels, 3);
+assert.equal(convergence.availableLevels, 4);
+assert.equal(convergence.refinementRatio, 2);
+assert.equal(convergence.gciSafetyFactor, 1.25);
+assert.equal(convergence.orderStabilityRelativeTolerance, 0.2);
+assert.deepEqual(convergence.acceptedForGciQualification, [
+  'ASYMPTOTIC', 'MONOTONIC_CONVERGING', 'NEAR_ZERO_FINE_DIFFERENCE',
+]);
+assert.equal(convergence.fixedPhysicalQuantityIdentityRequired, true);
+assert.equal(convergence.sameProbeIdentityHashRequiredAcrossLevels, true);
+assert.equal(convergence.sameQuantityIdentityHashRequiredAcrossLevels, true);
+assert.equal(convergence.sameUnitsRequiredAcrossLevels, true);
+assert.equal(convergence.movingMaximumForbidden, true);
+assert.equal(convergence.displayInterpolationForbiddenAsAcceptanceAuthority, true);
+assert.equal(convergence.nodalAveragingForbiddenAsAcceptanceAuthority, true);
+assert.equal(convergence.releaseAuthorityGranted, false);
 
 assert.equal(definition.formulations.legacyControl.identity, 'PLANE_STRAIN');
 assert.equal(definition.formulations.legacyControl.poissonWarning, 0.40);
@@ -41,7 +61,8 @@ assert.equal(definition.elementFamilies.Q8, 'REQUIRED');
 const cylinder = definition.benchmarks.THICK_CYLINDER;
 assert.equal(cylinder.oracle.authority, 'CLASSICAL_LAME_THICK_CYLINDER_PLANE_STRAIN_CLOSED_FORM');
 assert.equal(cylinder.oracle.productionOutputUsed, false);
-assert.equal(cylinder.meshLadder.refinementRatio, 2);
+assert.equal(cylinder.meshLadder.refinementRatio, convergence.refinementRatio);
+assert.equal(cylinder.meshLadder.levels.length, convergence.availableLevels);
 assert.deepEqual(
   cylinder.meshLadder.levels.map((row) => row.targetElementLength),
   [20, 10, 5, 2.5],
@@ -108,6 +129,13 @@ console.log(JSON.stringify({
   candidateFormulation: definition.formulations.candidate.identity,
   supportedFamilies: definition.formulations.candidate.supportedFamilies,
   poissonRatioLadder: definition.poissonRatioLadder,
+  convergencePolicy: {
+    minimumUsefulLevels: convergence.minimumUsefulLevels,
+    refinementRatio: convergence.refinementRatio,
+    gciSafetyFactor: convergence.gciSafetyFactor,
+    orderStabilityRelativeTolerance: convergence.orderStabilityRelativeTolerance,
+    acceptedClassifications: convergence.acceptedForGciQualification,
+  },
   oracle: {
     authority: cylinder.oracle.authority,
     analyticalCases: oracleEvidence,
@@ -175,6 +203,9 @@ function sigmaTheta(constants, r) { return constants.A + constants.B / (r * r); 
 function radialDisplacement(constants, material, r) {
   const { elasticModulus: E, poissonRatio: nu } = material;
   return ((1 + nu) / E) * ((1 - 2 * nu) * constants.A * r + constants.B / r);
+}
+function readJson(relativePath) {
+  return JSON.parse(fs.readFileSync(path.join(ROOT, relativePath), 'utf8'));
 }
 function close(actual, expected, relative, label) {
   const scale = Math.max(1, Math.abs(actual), Math.abs(expected));

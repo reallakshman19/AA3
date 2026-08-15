@@ -4,10 +4,15 @@ import {
   TopologyEdit3DViewController as SearchController,
 } from './topology-edit-3d-search-controller.js';
 import {
+  createTopologyEditSelection,
   topologyEditSelectionDescription,
   updateTopologyEditSelection,
 } from './topology-edit/topology-edit-command-ui.js';
 import { TopologyEditCanvasCallout } from './topology-edit/topology-edit-canvas-callout.js';
+import {
+  buildHighConfidenceGapAutofixPlan,
+  applyHighConfidenceGapAutofix as applyCertifiedHighConfidenceGapAutofix,
+} from './topology-edit/topology-edit-high-confidence-autofix.js';
 import {
   buildTopologyEditIssueOverlay,
 } from './topology-edit/topology-edit-issue-overlay.js';
@@ -65,6 +70,9 @@ export class TopologyEdit3DViewController extends SearchController {
   }
 
   handleHostClick(event) {
+    if (event.target.closest('[data-action="autofix-high-confidence-gaps"]')) {
+      return this.applyHighConfidenceGapFixes();
+    }
     const showButton = event.target.closest('[data-show-topology-issue]');
     if (showButton) {
       const rect = this.hostElement.getBoundingClientRect();
@@ -132,9 +140,38 @@ export class TopologyEdit3DViewController extends SearchController {
     ));
     const visualRows = visualIssues.slice(0, Math.max(0, 30 - rows.length))
       .map((issue) => `<li>${escapeHtml(issue.kind)}: ${escapeHtml(issue.message)}</li>`);
+    const topoFixPlan = buildHighConfidenceGapAutofixPlan(this.issues);
+    const topoFix = topoFixMarkup(topoFixPlan);
     this.checkerElement.innerHTML = `
       <strong>${total} issue(s); ${this.issueOverlay.anchoredIssueCount} spatial marker(s); ${this.autofixSuggestions.length} source-backed fix(es)</strong>
+      ${topoFix}
       <ul>${[...rows, ...visualRows].join('')}</ul>`;
+  }
+
+  applyHighConfidenceGapFixes() {
+    if (!this.session || this.session.staleReason) {
+      this.setStatus('TopoFix is unavailable while the topology edit session is stale.');
+      return null;
+    }
+    try {
+      this.cancelAutofix(true);
+      const result = applyCertifiedHighConfidenceGapAutofix(this.session, this.issues);
+      this.selection = createTopologyEditSelection();
+      this.refreshView(this.session.currentTopology());
+      const rejected = result.rejected.length;
+      const skipped = result.skipped.length;
+      const remaining = result.remainingHighConfidenceGapIssueIds.length;
+      this.setStatus(
+        `TopoFix accepted ${result.applied.length} high-confidence gap merge(s)`
+        + `${rejected ? `; ${rejected} rejected by certification` : ''}`
+        + `${skipped ? `; ${skipped} already resolved` : ''}`
+        + `${remaining ? `; ${remaining} <6 mm gap(s) remain` : '; no <6 mm gaps remain'}.`
+      );
+      return result;
+    } catch (error) {
+      this.setStatus(`TopoFix failed: ${error instanceof Error ? error.message : String(error)}`);
+      return null;
+    }
   }
 
   showIssueById(issueId, screenX, screenY, expectedOverlayHash = null) {
@@ -214,6 +251,19 @@ export class TopologyEdit3DViewController extends SearchController {
     if (result.status === 'FOCUSED') this.viewportBackend?.invalidate('canonical-selection-focus');
     return result;
   }
+}
+
+function topoFixMarkup(plan) {
+  const exactCount = plan.exactGapIssueIds.length;
+  const nearCount = plan.nearGapIssueIds.length;
+  if (!exactCount && !nearCount) return '';
+  const action = exactCount
+    ? `<button type="button" data-action="autofix-high-confidence-gaps">TopoFix — AutoFix &lt;6 mm gaps (${exactCount})</button>`
+    : '';
+  return `<div class="topology-edit-topofix-summary" data-role="topology-edit-topofix-summary">
+    ${action}
+    <span>${exactCount} high-confidence gap(s) &lt;6 mm; ${nearCount} gap(s) from 6–25 mm require individual review. AutoFix changes only the certified draft journal; Undo remains available.</span>
+  </div>`;
 }
 
 function issueRow(issue, entry, overlayHash) {

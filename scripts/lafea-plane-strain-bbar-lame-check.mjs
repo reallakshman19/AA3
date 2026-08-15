@@ -31,6 +31,9 @@ const definition = readJson('validation/lafea-incompressible/plane-strain-bbar-v
 const convergencePolicy = readJson(
   'validation/lafea-incompressible/plane-strain-bbar-convergence-v1.json',
 );
+const probeMeshPolicy = readJson(
+  'validation/lafea-incompressible/plane-strain-bbar-probe-mesh-policy-v1.json',
+);
 const benchmark = definition.benchmarks.THICK_CYLINDER;
 const A = benchmark.acceptance;
 const methods = ['T6', 'Q8'];
@@ -40,7 +43,15 @@ assert.equal(definition.definitionState, 'FROZEN_BEFORE_PRODUCTION_OBSERVATION')
 assert.equal(definition.productionOutputUsedToChooseDefinition, false);
 assert.equal(convergencePolicy.definitionState, 'FROZEN_BEFORE_PRODUCTION_OBSERVATION');
 assert.equal(convergencePolicy.productionOutputUsedToChooseDefinition, false);
+assert.equal(probeMeshPolicy.definitionState, 'FROZEN_BEFORE_PRODUCTION_OBSERVATION');
+assert.equal(probeMeshPolicy.productionOutputUsedToChooseDefinition, false);
+assert.equal(probeMeshPolicy.programmeId, definition.programmeId);
 assert.equal(convergencePolicy.refinementRatio, benchmark.meshLadder.refinementRatio);
+assert.equal(probeMeshPolicy.refinement.ratio, benchmark.meshLadder.refinementRatio);
+assert.ok(
+  Math.abs(probeMeshPolicy.radialAxis.targetPhase - probeMeshPolicy.angularAxis.targetPhase)
+    >= probeMeshPolicy.t6DiagonalAvoidance.minimumPhaseSeparation,
+);
 
 for (const method of methods) {
   assert.equal(benchmark.meshLadder.families[method], 'REQUIRED');
@@ -89,12 +100,19 @@ const body = {
   status: 'PASS',
   definitionHash: canonicalLafeaSha256(definition),
   convergencePolicyHash: canonicalLafeaSha256(convergencePolicy),
+  probeMeshPolicyHash: canonicalLafeaSha256(probeMeshPolicy),
   definitionFrozenBeforeProductionObservation: true,
   productionOutputUsedToChooseDefinition: false,
   formulation: definition.formulations.candidate.identity,
   methods,
   poissonRatioLadder: definition.poissonRatioLadder,
   distortionIds: definition.distortionMatrix.map((row) => row.distortionId),
+  protectedProbePhases: {
+    radial: probeMeshPolicy.radialAxis.targetPhase,
+    angular: probeMeshPolicy.angularAxis.targetPhase,
+    t6MinimumDiagonalPhaseSeparation:
+      probeMeshPolicy.t6DiagonalAvoidance.minimumPhaseSeparation,
+  },
   seriesCount: matrix.length,
   solveCount: matrix.reduce((sum, row) => sum + row.levels.length, 0),
   matrix: matrix.map(seriesSummary),
@@ -116,7 +134,7 @@ console.log(JSON.stringify({
 
 function runSeries(method, distortion, poissonRatio) {
   const levels = benchmark.meshLadder.levels.map((level) => {
-    const run = executeLameBbarQualificationCase(definition, {
+    const run = executeLameBbarQualificationCase(definition, probeMeshPolicy, {
       elementType: method,
       poissonRatio,
       level,
@@ -154,6 +172,14 @@ function runSeries(method, distortion, poissonRatio) {
       assert.equal(probe.pointwiseAcceptanceEligible, true);
       assert.ok(Number.isFinite(probe.meanDilatation));
     }
+    for (const placement of run.probeCellEvidence) {
+      assert.equal(placement.elementBoundaryPlacement, false);
+      assert.equal(placement.t6DiagonalPlacement, false);
+      assert.ok(
+        placement.diagonalPhaseSeparation
+          >= probeMeshPolicy.t6DiagonalAvoidance.minimumPhaseSeparation - 1e-12,
+      );
+    }
     return Object.freeze({
       levelId: level.levelId,
       h: level.targetElementLength,
@@ -176,6 +202,7 @@ function runSeries(method, distortion, poissonRatio) {
       ),
       equilibrium,
       strainEnergy: run.loadCase.totalStrainEnergy,
+      probeCellEvidence: run.probeCellEvidence,
       probes: run.probes,
     });
   });
@@ -407,6 +434,7 @@ function seriesSummary(row) {
       aspectRatio: level.quality.aspectRatio,
       scaledJacobian: level.quality.scaledJacobian,
       minimumCertifiedJacobianLowerBound: level.minimumCertifiedJacobianLowerBound,
+      probeCellEvidence: level.probeCellEvidence,
       equilibrium: level.equilibrium,
     })),
     probeMetrics: row.probeMetrics,

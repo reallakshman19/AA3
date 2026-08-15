@@ -40,28 +40,38 @@ const second = event({ actor: 'engineer:B', timestamp: '2026-08-15T09:51:00Z' },
   ],
   presentationState: { expanded: false, sortIndex: 1 },
 });
-
-// Actor/time and presentation state are not engineering authority.
 assert.equal(first.semanticHash, second.semanticHash);
 assert.equal(first.eventId, second.eventId);
 assert.notEqual(first.evidenceHash, second.evidenceHash);
 
-// Risk display severity is governed, not a generic warning bucket.
 assert.equal(empiricalV3SeverityForRiskClass('HIGH_BLOCK'), 'ERROR');
 assert.equal(empiricalV3SeverityForRiskClass('HIGH_CONFIRM'), 'REVIEW');
 assert.equal(empiricalV3SeverityForRiskClass('MEDIUM'), 'WARNING');
 assert.equal(empiricalV3SeverityForRiskClass('LOW'), 'INFO');
 assert.throws(() => empiricalV3SeverityForRiskClass('UNKNOWN'), /Unsupported engineering risk class/);
 
-// Meaningful engineering changes produce a different deterministic event identity.
 const stale = event({ actor: 'engineer:A', timestamp: '2026-08-15T09:50:00Z' }, {
-  eventType: 'CONFIRMATION_INVALIDATED',
-  severity: 'REVIEW',
-  fromWorkflowState: 'CALCULATION_AUTHORIZED',
-  toWorkflowState: 'HIGH_CONFIRM_PENDING',
+  eventType: 'CONFIRMATION_INVALIDATED', severity: 'REVIEW',
+  fromWorkflowState: 'CALCULATION_AUTHORIZED', toWorkflowState: 'HIGH_CONFIRM_PENDING',
   messageCode: 'CONFIRMATION_STALE_AFTER_BRANCH_CHANGE',
 });
 assert.notEqual(first.semanticHash, stale.semanticHash);
 assert.notEqual(first.eventId, stale.eventId);
+
+const reviewed = event(null, {
+  eventType: 'RESULT_REVIEWED', severity: 'INFO', branchId: null, entityIds: [], quantityIds: [],
+  fromWorkflowState: 'RESULT_REVIEW_REQUIRED', toWorkflowState: 'RESULT_REVIEWED',
+  authorityRefs: [], riskRefs: [], calculationEvidenceRefs: [{ ref: 'evidence:1', semanticHash: 'hash:evidence' }],
+  messageCode: 'EMP_V3_RESULT_REVIEWED', messageParameters: {},
+});
+const ready = event(null, {
+  eventType: 'AUDIT_READY', severity: 'INFO', branchId: null, entityIds: [], quantityIds: [],
+  fromWorkflowState: 'RESULT_REVIEWED', toWorkflowState: 'AUDIT_EXPORT_READY',
+  authorityRefs: [], riskRefs: [], calculationEvidenceRefs: [{ ref: 'evidence:1', semanticHash: 'hash:evidence' }],
+  messageCode: 'EMP_V3_AUDIT_READY', messageParameters: {},
+});
+assert.equal(reviewed.eventType, 'RESULT_REVIEWED');
+assert.equal(ready.eventType, 'AUDIT_READY');
+assert.notEqual(reviewed.semanticHash, ready.semanticHash);
 
 console.log('PASS empirical v3 engineering event contract');

@@ -2,6 +2,7 @@ import assert from 'node:assert/strict';
 import { semanticHash } from '../src/core/empirical-piping-mechanics/identity.js';
 import {
   adaptBranchProcessResolverOutput,
+  isExactPipingClassIdentity,
   isExactPipingClassResolution,
 } from '../src/workspace/engineering-loads/adapters/empirical-v3-branch-process-resolution-adapter.js';
 
@@ -16,7 +17,7 @@ function exactResolution() {
     pipingClassMatchedRow: { rowId: 'MASTER:31441C4:DN150' },
     pipingClassMatchMethod: 'exact',
     pipingClassRowMethod: 'best-score',
-    pipingClassRowReasons: ['class-exact', 'bore-exact', 'component-exact'],
+    pipingClassRowReasons: ['class-exact', 'bore-exact', 'component-exact', 'schedule-exact'],
     pipingClassNeedsReview: false,
     materialCode: 'A106B',
     materialSource: 'piping-class-material-code',
@@ -31,6 +32,7 @@ function exactResolution() {
 }
 
 const exactRow = exactResolution();
+assert.equal(isExactPipingClassIdentity(exactRow), true);
 assert.equal(isExactPipingClassResolution(exactRow), true);
 const exact = adaptBranchProcessResolverOutput({
   runId,
@@ -49,10 +51,11 @@ assert.equal(exact.materialResolution.authorityClass, 'APPROVED_MASTER_EXACT');
 assert.equal(exact.wallQuantity.authorityClass, 'APPROVED_MASTER_EXACT');
 assert.equal(exact.wallQuantity.sourceBinding.evidenceHash, h('approved-master'));
 assert.match(exact.wallQuantity.sourceBinding.evidenceRef, /wall-thickness$/);
-assert.equal(exact.corrosionQuantity.authorityClass, 'APPROVED_MASTER_EXACT');
-assert.equal(exact.corrosionQuantity.sourceBinding.evidenceHash, h('approved-master'));
-assert.match(exact.corrosionQuantity.sourceBinding.evidenceRef, /corrosion$/);
-assert.equal(exact.risks.length, 0);
+// Legacy corrosion uses a second rating-aware row lookup but does not preserve
+// its row-match evidence; V3 therefore refuses exact promotion at this seam.
+assert.equal(exact.corrosionQuantity.authorityClass, 'INFERRED_REVIEW_REQUIRED');
+assert.equal(exact.corrosionQuantity.sourceBinding.evidenceRef, null);
+assert.ok(exact.risks.some((risk) => risk.riskClass === 'HIGH_CONFIRM'));
 
 const missingMasterEvidence = adaptBranchProcessResolverOutput({
   runId,
@@ -69,9 +72,10 @@ assert.ok(missingMasterEvidence.risks.every((risk) => risk.riskClass === 'HIGH_C
 
 const componentMismatchRow = {
   ...exactRow,
-  pipingClassRowReasons: ['class-exact', 'bore-exact'],
+  pipingClassRowReasons: ['class-exact', 'bore-exact', 'schedule-exact'],
   pipingClassNeedsReview: false,
 };
+assert.equal(isExactPipingClassIdentity(componentMismatchRow), true);
 assert.equal(isExactPipingClassResolution(componentMismatchRow), false);
 const componentMismatch = adaptBranchProcessResolverOutput({
   runId,
@@ -80,7 +84,9 @@ const componentMismatch = adaptBranchProcessResolverOutput({
   masterSemanticHash: h('approved-master'),
   sourceSemanticHash: h('line-source'),
 });
-assert.equal(componentMismatch.classResolution.authorityClass, 'INFERRED_REVIEW_REQUIRED');
+// Branch-level class identity remains exact; component-row-derived values do not.
+assert.equal(componentMismatch.classResolution.authorityClass, 'APPROVED_MASTER_EXACT');
+assert.equal(componentMismatch.pipingClassBasis.authorityClass, 'APPROVED_MASTER_EXACT');
 assert.equal(componentMismatch.materialResolution.authorityClass, 'INFERRED_REVIEW_REQUIRED');
 assert.equal(componentMismatch.wallQuantity.authorityClass, 'INFERRED_REVIEW_REQUIRED');
 assert.equal(componentMismatch.corrosionQuantity.authorityClass, 'INFERRED_REVIEW_REQUIRED');
@@ -88,10 +94,19 @@ assert.ok(componentMismatch.risks.every((risk) => risk.riskClass === 'HIGH_CONFI
 
 const boreNearRow = {
   ...exactRow,
-  pipingClassRowReasons: ['class-exact', 'bore-near:0.500mm', 'component-exact'],
+  pipingClassRowReasons: ['class-exact', 'bore-near:0.500mm', 'component-exact', 'schedule-exact'],
   pipingClassNeedsReview: false,
 };
+assert.equal(isExactPipingClassIdentity(boreNearRow), true);
 assert.equal(isExactPipingClassResolution(boreNearRow), false);
+
+const scheduleUnprovenRow = {
+  ...exactRow,
+  pipingClassRowReasons: ['class-exact', 'bore-exact', 'component-exact'],
+  pipingClassNeedsReview: false,
+};
+assert.equal(isExactPipingClassIdentity(scheduleUnprovenRow), true);
+assert.equal(isExactPipingClassResolution(scheduleUnprovenRow), false);
 
 const fuzzyRow = {
   ...exactRow,
@@ -100,6 +115,7 @@ const fuzzyRow = {
   pipingClassNeedsReview: true,
   materialSource: 'piping-class-material-map',
 };
+assert.equal(isExactPipingClassIdentity(fuzzyRow), false);
 assert.equal(isExactPipingClassResolution(fuzzyRow), false);
 const fuzzy = adaptBranchProcessResolverOutput({
   runId,

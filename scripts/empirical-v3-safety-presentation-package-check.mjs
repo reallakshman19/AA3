@@ -24,8 +24,11 @@ const component=bindComponentToBranch({componentId:'P101',componentType:'PIPE',t
 const riskSet=sealEngineeringRiskSet({runId:'RUN-UI-1',risks:[]});
 assert.equal(riskSet.schema,ENGINEERING_RISK_SET_SCHEMA);
 const workflow=projectEmpiricalV3Workflow({
-  source:{bound:true,current:true},authorities:{built:true,current:true},branches:{built:true,current:true,reviewCurrent:true},
-  riskSet:{evaluated:true,current:true,highBlockCount:0,highConfirmPendingCount:0},calculationAuthorization:{present:false,current:false},
+  source:{bound:true,current:true,semanticHash:'fnv1a64:6666666666666666'},
+  authorities:{built:true,current:true,semanticHash:'fnv1a64:7777777777777777'},
+  branches:{built:true,current:true,reviewCurrent:true,semanticHash:branch.semanticHash,reviewSemanticHash:branch.reviewBasisHash},
+  riskSet:{evaluated:true,current:true,semanticHash:riskSet.semanticHash,highBlockCount:0,highConfirmPendingCount:0},
+  calculationAuthorization:{present:false,current:false},
   calculationResult:{present:false,current:false,reviewRequired:true},resultReview:{present:false,current:false},audit:{ready:false,current:false},
 });
 assert.equal(workflow.state,'SAFETY_CLEARED');

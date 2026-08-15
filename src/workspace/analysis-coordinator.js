@@ -112,7 +112,9 @@ export class AnalysisCoordinator {
         result,
       });
     } catch (error) {
-      if (this.shouldIgnore(selectionVersion, targetId, sessionId, true)) return;
+      const mustReportWorkspaceStale = workspaceScoped
+        && (error?.code === 'STALE_ANALYSIS_CONTEXT' || error?.code === 'STALE_ANALYSIS_SESSION');
+      if (!mustReportWorkspaceStale && this.shouldIgnore(selectionVersion, targetId, sessionId, true)) return;
       this.eventBus.publish(EVENT_TOPICS.ANALYSIS_FAILED, {
         ...lifecycle,
         code: String(error?.code || 'ANALYSIS_EXECUTION_FAILED'),

@@ -5,43 +5,44 @@
 - Repository: `reallaksh19/Advanced_Analysis`
 - WORK_INTENT: `IMPLEMENT`
 - CRITICALITY: `ENGINEERING_CRITICAL`
-- Stack base: PR #1147 exact head `9f134a976232d2bd9ef3f32f1fe7a063e9e0e225`
-- Base branch: `agent/empirical-rom-elbow-flexibility-20260815`
+- Stack PR: `#1148`
+- Stack base: PR #1147 branch `agent/empirical-rom-elbow-flexibility-20260815`
+- Base exact head at stack creation: `9f134a976232d2bd9ef3f32f1fe7a063e9e0e225`
 - Working branch: `agent/empirical-rom-canonical-elbow-geometry-20260815`
-- Parent stack: PR #1147 → PR #1145 → `main`
+- Parent stack: `#1148 -> #1147 -> #1145 -> main`
 - Merge authority: `NOT_GRANTED`
 - Production authority: `NOT_GRANTED`
 - State: `EXPERIMENTAL_CANONICAL_COMPONENT_ROM`
 
 ## Handover in 60 seconds
 
-This stack closes the first major geometry-custody seam identified by the continuous elbow ROM.
-
-It establishes:
+This stack closes the first source-geometry seam for the continuous elbow ROM and extends qualification from one elbow to a two-elbow Z route.
 
 ```text
 workspace source geometry
-  + exact topology graph
-  + explicit source bend centre
++ exact topology graph
         ↓
-canonical elbow geometry authority
+source-declared bend-centre custody
         ↓
-source endpoint ↔ topology port binding
+canonical circular elbow authority
         ↓
-source-derived bend plane + circular-arc closure
+source endpoint ↔ topology-port binding
++ straight-neighbour tangent continuity
         ↓
-straight-neighbour tangent continuity
+canonical straight/elbow component tree
         ↓
-canonical straight/elbow component route
+PR #1147 analytical component ROM
         ↓
-existing analytical component ROM
+F + thermal reference displacement
+        ↓
+(F+S)R = target-reference
 ```
 
-It does not consume viewport/resolved-render geometry and does not infer a long-radius bend.
+No renderer geometry, long-radius default or global FE stiffness matrix is used.
 
-## Scope delivered
+---
 
-### 1. Canonical elbow geometry authority
+## 1. Canonical elbow geometry authority
 
 File:
 
@@ -51,77 +52,79 @@ Schema:
 
 `empirical-canonical-elbow-geometry-authority/v1`
 
-The authority requires:
+Required custody:
 
-- current `analysis-workspace-dataset/v1`;
-- current exact `piping-port-topology-graph` bound to the same shared model;
-- one two-port BEND/ELBOW component;
-- source-backed start and end points;
-- an explicit source-declared bend centre;
-- exact endpoint binding to the component's topology ports;
-- a non-degenerate source start/centre/end plane;
-- equal-radius circular geometry through the existing continuous elbow kernel;
-- tangent collinearity with connected straight PIPE neighbours.
+1. current `analysis-workspace-dataset/v1`;
+2. workspace source snapshot matches shared-model source snapshot;
+3. current validated piping topology graph matches that shared model;
+4. exact/non-ambiguous/non-tolerance topology;
+5. one two-port BEND/ELBOW component;
+6. source-backed start/end points;
+7. source-declared bend centre with qualified semantics;
+8. unique source endpoint ↔ topology-port binding;
+9. non-degenerate start/centre/end plane;
+10. circular-arc closure through the existing continuous elbow kernel;
+11. tangent collinearity with connected two-port straight PIPE neighbours.
 
-### 2. Bend-centre semantic custody
+### 1.1 Centre-of-curvature semantic rule
 
-A generic component `center` is not automatically a centre of curvature.
+The generic workspace geometry layer can expose a generic component `center`. Provenance of a point does not prove that its physical meaning is the bend centre of curvature.
 
-The generic workspace geometry evidence contract can expose several forms of explicit centre. This first mechanics qualification admits only existing source paths that explicitly use the semantic name `centrePoint`:
+This first mechanics qualification therefore accepts only existing source paths whose field name explicitly carries `centrePoint` semantics:
 
 ```text
 item.centrePoint
 nativeParams.centrePoint
 ```
 
-It explicitly rejects:
+Current fail-closed exclusions include:
 
 ```text
 item.center
 nativeParams.center
-derived.midpoint
 attributes.CENTER
 sourceAttributes.CENTER
+derived.midpoint
 ```
 
-until those source semantics receive a separate qualification.
+These may remain legitimate display or other engineering evidence, but they are not bend-centre mechanics authority until separately qualified.
 
-This restriction is intentional and fail-closed. Provenance alone does not prove physical meaning.
+### 1.2 Plane and sweep
 
-### 3. Plane and sweep authority
-
-The bend plane is derived only from the source-backed points:
+From source-backed points:
 
 ```text
-r_start = P_start - C
-r_end   = P_end   - C
-n       = normalize(r_start × r_end)
+r0 = P_start - C
+r1 = P_end   - C
+n  = normalize(r0 × r1)
 ```
 
-The existing continuous-elbow kernel then independently checks:
+The existing circular-elbow kernel independently verifies:
 
 - positive radius;
-- equal start/end radius within the frozen relative tolerance;
-- radial vectors lying in the declared plane;
-- positive minor sweep strictly below 180 degrees;
-- deterministic start/end tangents;
-- semantic geometry hash.
+- equal start/end radius within its frozen tolerance;
+- both radial vectors in the declared plane;
+- positive minor sweep `0 < theta < pi`;
+- start/end tangent vectors;
+- geometry semantic hash.
 
-No ORI parser, renderer centre inference, chord subdivision or `1.5D` assumption is used.
+The plane-normal sign is determined by the source start→end order.
 
-### 4. Straight-neighbour tangent continuity
+### 1.3 Tangent continuity
 
-For an elbow endpoint connected to a two-port straight PIPE:
+For an elbow endpoint connected to a straight PIPE:
 
 ```text
 abs(t_elbow · t_straight) ≈ 1
 ```
 
-is required with frozen collinearity residual tolerance `1e-10`.
+with frozen residual tolerance `1e-10`.
 
-The absolute dot product intentionally checks line collinearity rather than source orientation sign. Rooted route orientation is established later by the force-method route.
+Absolute dot is intentional: source/topology component direction is not the rooted solution direction. This check proves physical line collinearity only.
 
-### 5. Canonical mixed component route
+---
+
+## 2. Canonical component ROM route
 
 File:
 
@@ -133,56 +136,61 @@ Schema:
 
 Current domain:
 
-- connected acyclic topology region;
-- exact, non-ambiguous topology only;
-- two-port straight PIPE;
-- two-port circular BEND/ELBOW with exactly one current canonical elbow geometry authority;
-- connected elbow endpoints must currently qualify against straight PIPE neighbours;
-- no tee/reducer/valve/rigid component in this phase;
-- no tolerance-created joints;
-- no finite-element discretization.
+- one connected acyclic topology region;
+- exact non-ambiguous topology only;
+- two-port `PIPE` -> `STRAIGHT` analytical component;
+- two-port `BEND/ELBOW` -> `CIRCULAR_ELBOW` analytical component;
+- every elbow has exactly one current canonical elbow geometry authority;
+- every connected elbow endpoint is currently qualified against a straight PIPE neighbour;
+- no tee/reducer/valve/rigid component yet.
 
-Exact connected topology ports are collapsed into deterministic route nodes. A connection whose port coordinates are not coincident within `1e-12 m` blocks rather than creating an implicit rigid link.
+Exact connected topology ports are collapsed into deterministic analytical route nodes.
 
-The route requires:
+This is **topological joint normalization, not FE discretization**.
+
+A topological connection whose physical port coordinates are noncoincident beyond `1e-12 m` fails. No implicit rigid offset is created.
+
+The current tree contract requires:
 
 ```text
 componentCount = nodeCount - 1
 ```
 
-for the current tree domain.
+---
 
-## Mechanics boundary
+## 3. Mechanics boundary preserved
 
-This stack does not change the analytical solver from PR #1147.
-
-The resulting route is consumed by the existing component ROM:
+This stack does not change PR #1147 mechanics.
 
 ```text
-unit-load cut equilibrium
+unit-load static cut equilibrium
         ↓
 straight EA/EI/GJ virtual work
 + continuous elbow EA/EI/GJ virtual work × governed B31J k
         ↓
-F
+flexibility matrix F
         ↓
-thermal/reference movement
+free/reference displacement
         ↓
 (F+S)R = target-reference
 ```
 
-No global nodal stiffness matrix is introduced.
+No `K u = f` global nodal FE route is introduced.
 
-## Frozen independent mixed-route benchmark
+SIF remains separate from flexibility factor.
+
+---
+
+## 4. Independent benchmark A — one-elbow mixed route
 
 Geometry:
 
 ```text
-P1: (-2,0,0) -> (0,0,0)      straight, L=2 m
-E1: (0,0,0) -> (1,1,0)       R=1 m, 90 deg, centre=(0,1,0)
-P2: (1,1,0) -> (1,3,0)       straight, L=2 m
-root = (-2,0,0)
-tip  = (1,3,0)
+P1: (-2,0,0) -> (0,0,0), L=2 m
+E1: (0,0,0) -> (1,1,0), centre=(0,1,0), R=1 m, 90 deg
+P2: (1,1,0) -> (1,3,0), L=2 m
+root=(-2,0,0)
+tip =(1,3,0)
 ```
 
 Properties:
@@ -193,11 +201,11 @@ G  = 76.923076923 GPa
 A  = 0.004 m2
 Iy = Iz = 8e-6 m4
 J  = 1.6e-5 m4
-elbow k_in = k_out = 2.5
-elbow k_t = 1
+k_in = k_out = 2.5
+k_t = 1
 ```
 
-Independent direct continuum integration, performed outside repository code before repository execution, gives the tip X/Y flexibility matrix:
+Frozen independent continuum integration:
 
 ```text
 F = [
@@ -206,193 +214,262 @@ F = [
 ] m/N
 ```
 
-Component contributions used by the independent oracle:
+Independent component contributions:
 
 ```text
-Fxx:
-  P1 = 1.1252500000000001e-5
-  E1 = 1.7295643420480862e-5
-  P2 = 1.6666666666666667e-6
+Fxx: P1=1.1252500000000001e-5
+     E1=1.7295643420480862e-5
+     P2=1.6666666666666667e-6
 
-Fxy:
-  P1 = -7.5000000000000000e-6
-  E1 = -2.5643635212340520e-6
-  P2 = 0
+Fxy: P1=-7.5000000000000000e-6
+     E1=-2.5643635212340520e-6
+     P2=0
 
-Fyy:
-  P1 = 5.4166666666666670e-6
-  E1 = 5.5753563862978570e-7
-  P2 = 2.5000000000000000e-9
+Fyy: P1=5.4166666666666670e-6
+     E1=5.5753563862978570e-7
+     P2=2.5000000000000000e-9
 ```
 
-The matrix is symmetric and positive definite for the frozen benchmark.
-
-For uniform thermal strain:
+For uniform `epsilon_th=0.001`:
 
 ```text
-epsilon_th = 0.001
+u_ref_tip = epsilon*(r_tip-r_root)
+          = [0.003, 0.003, 0] m
 ```
 
-free tip translation follows the kinematic identity:
+Rigid X/Y tip restraint, independently solving:
 
 ```text
-u_ref = epsilon_th * (r_tip-r_root)
-      = [0.003, 0.003, 0] m
+F R = -[0.003,0.003]
 ```
 
-For rigid X/Y tip coordinates:
-
-```text
-F R = -[0.003, 0.003]
-```
-
-Independent direct matrix inversion gives reaction on pipe:
+gives:
 
 ```text
 Rx = -606.8995590818411 N
 Ry = -1523.9269614290317 N
 ```
 
-These values are frozen in `scripts/empirical-canonical-mixed-route-check.mjs` before repository execution.
+---
 
-## Validation ledger
+## 5. Independent benchmark B — two-elbow Z route
 
-### VAL-CAN-ELB-001 — source centre semantic policy
+Geometry:
 
-- STATUS: `PASS / SOURCE_REVIEW`
-- `centrePoint` source semantics admitted.
-- generic `center` and derived midpoint explicitly rejected.
+```text
+P1: (-2,0,0) -> (0,0,0)
+E1: (0,0,0) -> (1,1,0), centre=(0,1,0), R=1 m, n=+Z
+P2: (1,1,0) -> (1,3,0)
+E2: (1,3,0) -> (2,4,0), centre=(2,3,0), R=1 m, n=-Z
+P3: (2,4,0) -> (4,4,0)
+root=(-2,0,0)
+tip =(4,4,0)
+```
 
-### VAL-CAN-ELB-002 — XY quarter-circle geometry oracle
+Same properties and component `k` as benchmark A.
 
-- STATUS: `PASS / INDEPENDENT_GEOMETRY`
-- Expected:
-  - `R = 1 m`
-  - `angle = pi/2`
-  - `arc length = pi/2 m`
-  - plane normal `+Z`
-  - start tangent `+X`
-  - end tangent `+Y`.
+Frozen independent continuum integration:
 
-### VAL-CAN-ELB-003 — rotated YZ geometry oracle
+```text
+F = [
+  [ 5.8671692028862445e-5, -6.5297419648638357e-5 ],
+  [ -6.5297419648638357e-5, 8.9879551301699372e-5 ]
+] m/N
+```
 
-- STATUS: `PASS / INDEPENDENT_GEOMETRY`
-- Expected:
-  - plane normal `+X`
-  - start tangent `+Y`
-  - end tangent `+Z`
-  - same radius/angle.
+Independent per-component values:
 
-This proves the custody formulation is not hard-coded to XY geometry.
+```text
+Fxx:
+  P1=2.0002500000000000e-5
+  E1=3.2692489723565990e-5
+  P2=5.4166666666666670e-6
+  E2=5.5753563862978570e-7
+  P3=2.5000000000000000e-9
 
-### VAL-CAN-ELB-004 — endpoint/topology binding
+Fxy:
+  P1=-2.5000000000000000e-5
+  E1=-3.0233056127404310e-5
+  P2=-7.5000000000000000e-6
+  E2=-2.5643635212340520e-6
+  P3=0
 
-- STATUS: `PASS / SOURCE_REVIEW`
-- Port storage order is not source start/end authority; the adapter uniquely binds source endpoints to exact topology positions and permits the two stored topology ports to appear in either order.
+Fyy:
+  P1=3.1666666666666666e-5
+  E1=2.7998074547885174e-5
+  P2=1.1252500000000001e-5
+  E2=1.7295643420480862e-5
+  P3=1.6666666666666669e-6
+```
 
-### VAL-CAN-ELB-005 — tangent continuity
+For uniform `epsilon_th=0.001`:
 
-- STATUS: `PASS / INDEPENDENT_GEOMETRY`
-- Collinear straight neighbours pass irrespective of direction sign.
-- A deliberately skewed straight neighbour is a frozen fail-closed case.
+```text
+u_ref_tip = [0.006, 0.004, 0] m
+```
 
-### VAL-CAN-ELB-006 — mixed route flexibility
+Independent rigid X/Y restraint solution:
 
-- STATUS: `PASS / INDEPENDENT_CONTINUUM_ORACLE`
-- Frozen expected matrix shown above.
-- Independent reciprocity holds exactly to floating integration accuracy.
+```text
+Rx = -792.8301758786337 N
+Ry = -620.4944717319305 N
+```
 
-### VAL-CAN-ELB-007 — mixed route thermal compatibility
+This benchmark specifically exercises:
 
-- STATUS: `PASS / INDEPENDENT_MATRIX_ORACLE`
-- Free displacement `[3 mm, 3 mm]`.
-- Rigid-restraint reactions `[-606.899559, -1523.926961] N`.
+- two separately sealed elbow geometry authorities;
+- opposite bend-plane normals;
+- multi-component route topology;
+- reciprocity;
+- cumulative free thermal kinematics;
+- coupled reaction recovery.
 
-### VAL-CAN-ELB-008 — committed repository scripts
+---
 
-Committed:
+## 6. Validation ledger
+
+### VAL-CAN-001 — centre semantic policy
+
+- Status: `PASS / SOURCE_REVIEW`
+- Generic center and midpoint are blocked.
+- Qualified `centrePoint` paths are explicit.
+
+### VAL-CAN-002 — XY quarter elbow
+
+- Status: `PASS / INDEPENDENT_GEOMETRY`
+- `R=1 m`, `theta=pi/2`, `n=+Z`, tangent start `+X`, tangent end `+Y`.
+
+### VAL-CAN-003 — rotated YZ elbow
+
+- Status: `PASS / INDEPENDENT_GEOMETRY`
+- `R=1 m`, `theta=pi/2`, `n=+X`, tangent start `+Y`, tangent end `+Z`.
+
+### VAL-CAN-004 — topology-port ordering
+
+- Status: `PASS / SOURCE_REVIEW`
+- Source start/end bind by exact position; stored port ordering is not treated as source direction.
+
+### VAL-CAN-005 — negative geometry/custody cases
+
+Frozen fail-closed cases include:
+
+- unqualified generic centre semantics;
+- derived midpoint centre;
+- source endpoint/topology mismatch;
+- unequal radius;
+- collinear start/centre/end;
+- tangent discontinuity;
+- tolerance-enabled topology;
+- stale topology/shared-model binding;
+- tampered geometry authority hash.
+
+### VAL-CAN-006 — one-elbow mixed route
+
+- Status: `PASS / INDEPENDENT_CONTINUUM_AND_MATRIX_ORACLE`
+- Frozen F, free thermal displacement and reactions shown above.
+
+### VAL-CAN-007 — two-elbow Z route
+
+- Status: `PASS / INDEPENDENT_CONTINUUM_AND_MATRIX_ORACLE`
+- Frozen F, free thermal displacement and reactions shown above.
+
+### VAL-CAN-008 — repository execution
+
+Committed scripts:
 
 ```text
 scripts/empirical-canonical-elbow-geometry-check.mjs
 scripts/empirical-canonical-mixed-route-check.mjs
+scripts/empirical-canonical-z-route-check.mjs
 ```
 
-Repository import-graph execution:
+Execution status:
 
-- STATUS: `NOT_RUN / INFRASTRUCTURE_BLOCKED`
-- Current execution environment has no local repository checkout and `gh` is not installed (`gh: command not found`).
-- GitHub connector source access was sufficient for implementation/review but cannot execute the repository test graph.
-- Do not report the committed scripts as PASS until executed on the exact head.
+- `NOT_RUN / INFRASTRUCTURE_BLOCKED`
+- no local checkout is available in the execution container;
+- `gh` is not installed (`gh: command not found`);
+- connector source access cannot execute the repository import graph.
 
-## Negative assurance
+Do not convert these committed scripts to PASS until run on the exact PR head.
 
-This stack does **not**:
+---
 
-- modify PR #1147 continuous elbow mechanics equations;
-- modify PR #1145 compatibility/thermal equations;
-- consume renderer/resolved viewport geometry;
-- accept generic component centre as bend centre;
-- infer `1.5D` bend radius;
-- infer missing topology by tolerance;
-- insert an implicit rigid link for noncoincident connected ports;
-- introduce global FE stiffness assembly;
-- modify production empirical V1/V2 methods;
-- alter Load Calc dispatch/UI/publication/export;
-- implement support-station splitting on mixed components;
-- implement weight/gravity load reference displacement;
-- implement tee/reducer/valve component mechanics;
-- solve gap/contact/friction;
-- add pressure thrust or Bourdon effects;
-- register a production method.
-
-## Changed-file ledger relative to PR #1147 base
-
-Expected current files:
+## 7. Changed-file ledger relative to PR #1147
 
 ```text
 agents/PR_CANONICAL_ELBOW_GEOMETRY_workreport.md
 scripts/empirical-canonical-elbow-geometry-check.mjs
 scripts/empirical-canonical-mixed-route-check.mjs
+scripts/empirical-canonical-z-route-check.mjs
 src/workspace/engineering-loads/adapters/canonical-elbow-geometry-authority.js
 src/workspace/engineering-loads/adapters/canonical-component-rom-route.js
 ```
 
-## Remaining seams
+No other file is intended in this stack.
 
-1. Execute committed scripts against an actual exact-head checkout.
-2. Extend canonical property/thermal/support custody from PR #1145 onto the mixed straight/elbow route without duplicating authority logic.
-3. Add support-station splitting for supports landing inside straight spans while preserving elbow geometry as one continuous component.
-4. Add two-elbow Z-route and U-route independent benchmarks.
-5. Add source-specific qualifications for additional explicit bend-centre representations where their semantics are authoritative.
-6. Generalize temperature expansion beyond the current scalar/approved-mean basis.
-7. Add governed weight/distributed/point-load reference-displacement formulation.
-8. Only after the above, proceed to unilateral gap/contact mechanics.
+---
 
-## Current disposition
+## 8. Negative assurance
+
+This stack does **not**:
+
+- modify PR #1147 continuous elbow equations;
+- modify PR #1145 compatibility equations;
+- consume renderer/resolved viewport geometry;
+- infer a `1.5D` elbow radius;
+- accept a generic component centroid as bend centre;
+- infer topology by tolerance;
+- create an implicit rigid offset for noncoincident connected ports;
+- use SIF as stiffness;
+- assemble a global FE stiffness matrix;
+- alter production empirical V1/V2 methods;
+- register a production method;
+- alter Load Calc/UI/publication/export;
+- split supports inside mixed straight spans yet;
+- implement weight/gravity reference displacements;
+- implement tee/reducer/valve mechanics;
+- solve gap/contact/friction;
+- add pressure thrust or Bourdon effects.
+
+---
+
+## 9. Remaining seams / recommended next order
+
+1. Execute the three committed scripts on an exact-head checkout.
+2. Add a U-route / out-of-plane mixed-route qualification case.
+3. Reuse/refactor PR #1145 material, temperature, restraint and support-movement custody for the canonical mixed route **without duplicating authority logic**.
+4. Add support-station splitting inside straight spans while leaving each elbow as one continuous analytical component.
+5. Add general non-baseline thermal expansion using authoritative total expansion or `integral alpha(T)dT`.
+6. Add governed self-weight, fluid/insulation mass and point component loads as reference-displacement/load terms.
+7. Only after those are qualified, proceed to unilateral rest/guide/line-stop gap mechanics.
+
+---
+
+## 10. Disposition
 
 - canonical source-backed elbow geometry: `IMPLEMENTED_EXPERIMENTALLY`
 - canonical straight/elbow route: `IMPLEMENTED_EXPERIMENTALLY`
-- independent geometry oracle: `PASS`
-- independent mixed-route continuum oracle: `PASS`
+- one-elbow mixed benchmark: `PASS / INDEPENDENT_ORACLE`
+- two-elbow Z benchmark: `PASS / INDEPENDENT_ORACLE`
 - repository scripts: `NOT_RUN / INFRASTRUCTURE_BLOCKED`
-- production integration: `NOT_GRANTED`
+- production cutover: `NOT_GRANTED`
 - merge authority: `NOT_GRANTED`
 
 ---
 
 # Appendix A — next-agent expert questionnaire
 
-A takeover agent should answer these before changing mechanics or source authority.
+A takeover agent should answer these before modifying this stack.
 
-1. Why is an explicit source `center` not sufficient evidence that a point is the bend centre of curvature? Which currently admitted source paths establish that semantic distinction?
-2. Show how the plane normal is constructed from source-backed points and explain why its sign fixes the positive minor sweep convention.
-3. For a 90 degree XY elbow with centre `(0,1,0)`, start `(0,0,0)`, and end `(1,1,0)`, derive the start/end tangent vectors.
-4. Explain why tangent continuity uses `abs(t_elbow dot t_straight)` rather than requiring `+1`.
-5. Why does an exact topological connection with noncoincident physical coordinates fail rather than become a rigid offset automatically?
-6. Explain why route nodes created by joint collapse are not finite-element discretization.
-7. Derive the mixed-route force-method equation and explain which data generate `F`, `S`, `delta_reference`, and `delta_target`.
-8. Reproduce independently the frozen mixed-route matrix and reactions without calling the repository implementation.
-9. Explain why B31J flexibility factor `k` is admitted into elbow strain energy while SIF is not a stiffness multiplier.
-10. State the current axisymmetry assumption and why a non-axisymmetric section requires separate principal-axis custody.
-11. Identify which geometry evidence may be used for display but remains prohibited as mechanics authority.
-12. List every validation item in this report that is independent engineering validation versus repository software execution, and do not conflate `PASS` with `NOT_RUN`.
+1. Why does source provenance of a generic `center` field not prove centre-of-curvature semantics?
+2. Which exact source paths are currently admitted as bend-centre authority and why is the set deliberately narrow?
+3. Derive `n = normalize((Pstart-C) x (Pend-C))` and the XY benchmark tangents.
+4. Why is tangent continuity based on `abs(t_elbow dot t_straight)` rather than signed `+1`?
+5. Why must a topologically connected but physically noncoincident joint fail rather than become an implicit rigid link?
+6. Explain why exact port joint collapse is topology normalization and not finite-element discretization.
+7. Reproduce benchmark A's flexibility matrix independently from straight-member and continuous-elbow virtual work.
+8. Reproduce benchmark B and explain the opposite `+Z/-Z` plane-normal custody.
+9. Explain why B31J `k` enters elbow energy while SIF does not enter stiffness.
+10. State the current axisymmetric-section assumption and the missing principal-axis authority for non-axisymmetric sections.
+11. Identify every validation item above that is independent engineering validation versus repository software execution.
+12. State why `NOT_RUN / INFRASTRUCTURE_BLOCKED` must not be relabelled PASS even when independent analytical oracles pass.

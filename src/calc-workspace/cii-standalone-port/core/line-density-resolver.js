@@ -100,6 +100,12 @@ const DENSITY_ALIASES = Object.freeze({
   phase: Object.freeze(['Phase', 'PHASE', 'Fluid Phase', 'Medium Phase', 'Medium', 'State', 'FLUID_PHASE']),
 });
 
+const PHASE_SOURCE = Object.freeze({
+  densityMixed: 'linelist-density-mixed',
+  densityGas: 'linelist-density-gas',
+  densityLiquid: 'linelist-density-liquid',
+});
+
 function phaseClass(phase) {
   if (phase.startsWith('M') || phase.includes('MIX')) return 'MIXED';
   if (phase.startsWith('G') || phase.includes('GAS')) return 'GAS';
@@ -118,7 +124,7 @@ function uniquePhaseCandidate(candidates, phase) {
     };
   }
   const [selected, value] = available[0];
-  return densityResult(value, `linelist-${selected}`, phase, selected);
+  return densityResult(value, PHASE_SOURCE[selected], phase, selected);
 }
 
 export function resolveLineListDensity(row, processOverride = null, fieldMap = null) {
@@ -136,17 +142,17 @@ export function resolveLineListDensity(row, processOverride = null, fieldMap = n
   const classified = phaseClass(phase);
   if (classified === 'MIXED') {
     return mixed
-      ? densityResult(mixed, 'linelist-density-mixed', phase, 'densityMixed')
+      ? densityResult(mixed, PHASE_SOURCE.densityMixed, phase, 'densityMixed')
       : { value: '', source: 'missing-phase-density', phase, selected: 'densityMixed' };
   }
   if (classified === 'GAS') {
     return gas
-      ? densityResult(gas, 'linelist-density-gas', phase, 'densityGas')
+      ? densityResult(gas, PHASE_SOURCE.densityGas, phase, 'densityGas')
       : { value: '', source: 'missing-phase-density', phase, selected: 'densityGas' };
   }
   if (classified === 'LIQUID') {
     return liquid
-      ? densityResult(liquid, 'linelist-density-liquid', phase, 'densityLiquid')
+      ? densityResult(liquid, PHASE_SOURCE.densityLiquid, phase, 'densityLiquid')
       : { value: '', source: 'missing-phase-density', phase, selected: 'densityLiquid' };
   }
 

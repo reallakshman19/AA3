@@ -51,7 +51,6 @@ function normalizeSource(input) {
   validateFormulationAuthority(formulation, materials);
   const nodes = normalizeNodes(input.nodes);
   const elements = normalizeElements(input.elements, nodes);
-  validateFormulationElementAuthority(formulation, elements);
   const elementTypePolicy = normalizeElementTypePolicy(input.elementTypePolicy, elements);
   const constraints = normalizeConstraints(input.constraints);
   const loadCases = normalizeLoadCases(input.loadCases);
@@ -93,17 +92,6 @@ function validateFormulationAuthority(formulation, materials) {
   });
 }
 
-function validateFormulationElementAuthority(formulation, elements) {
-  if (formulation !== FORMULATIONS.PLANE_STRAIN_BBAR) return;
-  const unsupported = elements.filter((element) => element.elementType === ELEMENT_TYPES.T3);
-  if (!unsupported.length) return;
-  throw modelError(
-    'PLANE_STRAIN_BBAR_T3_NOT_QUALIFIED',
-    'elements',
-    `PLANE_STRAIN_BBAR is qualified only for T6/Q8. T3 has constant dilatation within each element, so its element-mean B-bar operator is identical to the pointwise volumetric operator and does not provide locking-resistant authority. Unsupported elements: ${unsupported.map((row) => row.elementId).join(', ')}.`,
-  );
-}
-
 function validateFormulationLoadAuthority(formulation, loadCases) {
   if (formulation !== FORMULATIONS.PLANE_STRAIN_BBAR) return;
   const thermalCases = loadCases.filter((loadCase) => loadCase.temperatureLoads.length > 0);
@@ -121,6 +109,13 @@ function validateFormulationLoadAuthority(formulation, loadCases) {
  * acknowledge that with `allowT3Fallback: true` and a reason — never
  * silently allowed, and never blocked without an escape hatch for the
  * genuine benchmark/fallback use the spec itself names.
+ *
+ * This source contract deliberately does not reject T3 solely because a
+ * B-bar formulation is selected: domain-first source documents may retain
+ * non-authoritative placeholder connectivity while the retained analysis mesh
+ * supplies the actual T6/Q8 solver topology. The B-bar/T3 qualification block
+ * is therefore enforced at element execution where connectivity is numerical
+ * authority.
  */
 function normalizeElementTypePolicy(value, elements) {
   const row = exactRecord(value, ['allowT3Fallback', 'sourceReference'], 'elementTypePolicy');

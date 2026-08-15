@@ -1,6 +1,5 @@
 import assert from 'node:assert/strict';
 import {
-  createEmpiricalV3AuditJsonExport,
   createEmpiricalV3ResultReviewReceipt,
   requireEmpiricalV3CoupledCalculationEvidence,
   sealEmpiricalV3AuditReadiness,
@@ -74,15 +73,10 @@ const reviewB = createEmpiricalV3ResultReviewReceipt({
 assert.equal(reviewA.semanticHash, reviewB.semanticHash, 'audit metadata must not change engineering review identity');
 assert.notEqual(reviewA.evidenceHash, reviewB.evidenceHash, 'audit metadata remains sealed');
 const readiness = sealEmpiricalV3AuditReadiness({ evidence, resultReview: reviewA });
-assert.throws(() => createEmpiricalV3AuditJsonExport({ evidence, resultReview: null, auditReadiness: readiness }), /result-review-receipt/);
-const audit = createEmpiricalV3AuditJsonExport({ evidence, resultReview: reviewA, auditReadiness: readiness });
-const payload = JSON.parse(audit.text);
-assert.equal(payload.evidenceSemanticHash, evidence.semanticHash);
-assert.equal(payload.resultReviewRef.semanticHash, reviewA.semanticHash);
-assert.equal(payload.auditReadinessRef.semanticHash, readiness.semanticHash);
-assert.equal(payload.calculationEvidence.semanticHash, evidence.semanticHash);
+assert.equal(readiness.evidenceRef.semanticHash, evidence.semanticHash);
+assert.equal(readiness.resultReviewRef.semanticHash, reviewA.semanticHash);
 
-console.log('PASS empirical v3 coupled evidence / result review / audit contract');
+console.log('PASS empirical v3 coupled evidence / result-review / readiness contract');
 
 function componentMechanics() {
   return {

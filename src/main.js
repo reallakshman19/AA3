@@ -7,6 +7,7 @@ import './workspace/analysis-ledger.css';
 import './workspace/enrichment/first-cut-workbench.css';
 import './workspace/linear-piping-results-workbench.css';
 import './workspace/lfea-preflight-phase1.css';
+import './workspace/empirical-v3-safety-workbench.css';
 import { bootstrapAnalysisWorkspace } from './workspace/bootstrap.js';
 import { authorizedEnrichmentConsumerController } from './workspace/enrichment/authorized-enrichment-runtime.js';
 import { createAuthorizedEnrichmentWorkspaceApi } from './workspace/enrichment/authorized-enrichment-workspace-api.js';
@@ -16,6 +17,7 @@ import { retireStandaloneInputXmlAnalyzerEntry } from './workspace/linear-piping
 import { mountLinearPipingInputXmlSourceWorkflow } from './workspace/linear-piping-inputxml-source-workflow.js';
 import { mountLinearPipingResultsWorkbench } from './workspace/linear-piping-results-workbench.js';
 import { mountLfeaPreflightUi } from './workspace/lfea-preflight-ui.js';
+import { mountEmpiricalV3SafetyWorkbench } from './workspace/empirical-v3-safety-workbench.js';
 import { EVENT_TOPICS } from './workspace/event-topics.js';
 
 const applicationRoot = document.getElementById('root');
@@ -52,6 +54,12 @@ const linearPipingInputXmlSource = mountLinearPipingInputXmlSourceWorkflow(appli
 const linearPipingResults = mountLinearPipingResultsWorkbench(applicationRoot, {
   documentRef: applicationRoot.ownerDocument,
   urlApi: applicationRoot.ownerDocument.defaultView?.URL,
+});
+// Empirical V3 safety is a separate fail-closed presentation surface. It accepts
+// only sealed V3 safety packages and does not inherit the legacy WARN-acceptance
+// control or any solver/formula implementation from the linear piping workbench.
+const empiricalV3Safety = mountEmpiricalV3SafetyWorkbench(applicationRoot, {
+  documentRef: applicationRoot.ownerDocument,
 });
 // P-08 removes the standalone diagnostics detour from normal engineering flow.
 // analyze.html remains a fail-closed developer utility; the governed LFEA
@@ -115,11 +123,30 @@ const workspace = Object.freeze({
   createLinearPipingEngineeringExportRecords() {
     return linearPipingResults.createEngineeringExports();
   },
+  loadEmpiricalV3SafetyPresentationPackage(value) {
+    return empiricalV3Safety.loadPackage(value);
+  },
+  clearEmpiricalV3SafetyPresentationPackage() {
+    empiricalV3Safety.clear();
+  },
+  getEmpiricalV3SafetyState() {
+    return empiricalV3Safety.getSnapshot();
+  },
+  getEmpiricalV3SafetyPresentationPackage() {
+    return empiricalV3Safety.getPackage();
+  },
+  getEmpiricalV3LastConfirmationReceipt() {
+    return empiricalV3Safety.getLastConfirmationReceipt();
+  },
+  openEmpiricalV3SafetyRisk(riskId) {
+    return empiricalV3Safety.openRisk(riskId);
+  },
   getPreflightReviewModel() {
     return preflightUi.getProjection();
   },
   destroy() {
     preflightSubscriptions.forEach((unsubscribe) => unsubscribe());
+    empiricalV3Safety.destroy();
     preflightUi.destroy();
     linearPipingResults.destroy();
     linearPipingInputXmlSource.destroy();

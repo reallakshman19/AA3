@@ -1,67 +1,26 @@
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
-
-const CORE_FILES = [
-  'workflow-state.js','quantity-authority.js','risk-finding.js','confirmation-receipt.js',
-  'calculation-authorization.js','engineering-event.js','branch-authority.js','component-authority.js',
-  'presentation-package.js','coupled-calculation-evidence.js','result-review-receipt.js','audit-readiness.js','audit-export.js',
-];
-const ADAPTER_FILES = [
-  'empirical-v3-source-authority-adapter.js','empirical-v3-resolution-reference-adapter.js',
-  'empirical-v3-branch-component-authority-builder.js','empirical-v3-stagedjson-process-basis-adapter.js',
-  'empirical-v3-branch-process-resolution-adapter.js','empirical-v3-authorized-source-bound-execution.js',
-];
-const UI_FILES = [
-  'empirical-v3-safety-workbench.js','empirical-v3-safety-workbench-dom.js','empirical-v3-branch-basis-view.js',
-  'empirical-v3-safety-gate-view.js','empirical-v3-evidence-view.js','empirical-v3-explain-calculation-view.js',
-  'empirical-v3-result-review-view.js','empirical-v3-review-audit-controller.js','empirical-v3-view-primitives.js',
-];
-const forbiddenCorePatterns = [/fallbackResolver/i,/chainageDistribution/i,/linear-piping-results-workbench/i,/react\b/i,/acceptAll|confirmAll|bulkAccept|bulkConfirm/i];
-const forbiddenCoreMechanicsImports = [
-  /from\s+['"][^'"]*restraint-compatibility\.js['"]/i,/from\s+['"][^'"]*rooted-tree-component-flexibility\.js['"]/i,
-  /from\s+['"][^'"]*thermal-restraint-compatibility\.js['"]/i,/from\s+['"][^'"]*flexibility\.js['"]/i,
-];
-const forbiddenAdapterImports = [
-  /from\s+['"][^'"]*fallbackResolver\.js['"]/i,/from\s+['"][^'"]*chainageDistribution\.js['"]/i,
-  /from\s+['"][^'"]*topology-edit-high-confidence-autofix/i,/from\s+['"][^'"]*topology-edit-checker/i,
-  /from\s+['"][^'"]*linear-piping-results-workbench/i,/from\s+['"][^'"]*restraint-compatibility/i,
-  /from\s+['"][^'"]*rooted-tree-component-flexibility/i,
-];
-for (const fileName of CORE_FILES) {
-  const source = sourceAt(`../src/core/empirical-v3-safety/${fileName}`); assertBelowOwnerLineLimit(fileName, source);
-  for (const pattern of [...forbiddenCorePatterns, ...forbiddenCoreMechanicsImports]) assert.doesNotMatch(source, pattern, `${fileName} violates the Empirical V3 core authority boundary.`);
-}
-for (const fileName of ADAPTER_FILES) {
-  const source = sourceAt(`../src/workspace/engineering-loads/adapters/${fileName}`); assertBelowOwnerLineLimit(fileName, source);
-  for (const pattern of forbiddenAdapterImports) assert.doesNotMatch(source, pattern, `${fileName} imports a prohibited authority path.`);
-}
-for (const fileName of UI_FILES) assertBelowOwnerLineLimit(fileName, sourceAt(`../src/workspace/${fileName}`));
-
-const indexSource = sourceAt('../src/core/empirical-v3-safety/index.js');
-for (const fileName of CORE_FILES) assert.match(indexSource, new RegExp(`export \\* from './${fileName.replace('.', '\\.')}';`));
-const authorization = sourceAt('../src/core/empirical-v3-safety/calculation-authorization.js');
-assert.match(authorization,/HIGH_BLOCK/); assert.match(authorization,/pending HIGH_CONFIRM/); assert.match(authorization,/RISK_POLICY_CHANGED/); assert.match(authorization,/DEPENDENCY_IDENTITY_CHANGED/);
-const branch = sourceAt('../src/core/empirical-v3-safety/branch-authority.js'); assert.match(branch,/requires exact topology/); assert.match(branch,/Tolerance-inferred topology cannot define/);
-const presentation = sourceAt('../src/core/empirical-v3-safety/presentation-package.js'); assert.match(presentation,/not classify risks, resolve authorities, project workflow, or authorize a run/);
-
-const evidence = sourceAt('../src/core/empirical-v3-safety/coupled-calculation-evidence.js');
-assert.match(evidence,/\(F\+S\) R = delta_target - delta_reference/); assert.match(evidence,/delta_pipe,i = delta_reference,i \+ sum_j\(F_ij R_j\)/); assert.match(evidence,/F_ij = sum_m\(f_ij\^\(m\)\)/);
-assert.match(evidence,/mechanicsRecomputed:\s*false/); assert.match(evidence,/reactionRecomputed:\s*false/); assert.match(evidence,/uiOrReportMayResolveMechanics:\s*false/);
-assert.doesNotMatch(evidence,/solveLinear|solveRooted|calculatePrismatic|calculateCircular|assembleUnit/i);
-const review = sourceAt('../src/core/empirical-v3-safety/result-review-receipt.js'); assert.match(review,/REVIEWED_FOR_AUDIT/); assert.match(review,/evidenceRef/); assert.doesNotMatch(review,/reactionN|flexibilityMatrix|solve|calculate/i);
-const readiness = sourceAt('../src/core/empirical-v3-safety/audit-readiness.js'); assert.match(readiness,/requireCurrentEmpiricalV3ResultReview/); assert.match(readiness,/resultReviewRef/);
-const audit = sourceAt('../src/core/empirical-v3-safety/audit-export.js'); assert.match(audit,/calculationEvidence:\s*evidence/); assert.match(audit,/requireEmpiricalV3AuditReadiness/); assert.match(audit,/requireCurrentEmpiricalV3ResultReview/); assert.doesNotMatch(audit,/flexibilityMatrix|reactionN|thermalReference|solve|calculate/i);
-
-const sourceAdapter = sourceAt('../src/workspace/engineering-loads/adapters/empirical-v3-source-authority-adapter.js'); assert.match(sourceAdapter,/_deducedWallThickness/); assert.match(sourceAdapter,/_missingComponentWeight/); assert.match(sourceAdapter,/DEFAULT_ZERO_NOT_ENGINEERING_AUTHORITY/); assert.match(sourceAdapter,/INFERRED_REVIEW_REQUIRED/);
-const branchBuilder = sourceAt('../src/workspace/engineering-loads/adapters/empirical-v3-branch-component-authority-builder.js'); assert.match(branchBuilder,/observedSourceBranchLabel/); assert.match(branchBuilder,/requireAllowedKeys/); assert.doesNotMatch(branchBuilder,/chainageDistribution|TopoFix|topologyEditConfidence/);
-const staged = sourceAt('../src/workspace/engineering-loads/adapters/empirical-v3-stagedjson-process-basis-adapter.js'); assert.match(staged,/requireStagedJsonProcessAuthority/); assert.match(staged,/observedSourceBranchId/);
-const process = sourceAt('../src/workspace/engineering-loads/adapters/empirical-v3-branch-process-resolution-adapter.js'); assert.match(process,/pipingClassNeedsReview/); assert.match(process,/pipingClassMatchMethod/); assert.match(process,/piping-class-master/); assert.doesNotMatch(process,/resolveBranchProcessData|findBestPipingClassRow/);
-const bridge = sourceAt('../src/workspace/engineering-loads/adapters/empirical-v3-authorized-source-bound-execution.js');
-assert.match(bridge,/assessEmpiricalV3CalculationAuthorizationCurrent/); assert.match(bridge,/ROM_EXECUTION_REQUEST/); assert.match(bridge,/canonical-thermal-rom-source-bound-execution\.js/);
-assert.doesNotMatch(bridge,/canonical-thermal-rom-authority-adapter\.js|rooted-tree-component-flexibility|restraint-compatibility|calculateCircularElbow/i);
-const currentGate=bridge.indexOf('assessEmpiricalV3CalculationAuthorizationCurrent'), requestGate=bridge.indexOf('EMP_V3_EXECUTION_REQUEST_NOT_AUTHORIZED'), frozenCall=bridge.indexOf('executeCanonicalSourceBoundThermalRomCompatibility(input.romInput)');
-assert.ok(currentGate>=0&&requestGate>currentGate&&frozenCall>requestGate,'V3 gates must precede frozen ROM call.');
-
-function sourceAt(path){return readFileSync(new URL(path,import.meta.url),'utf8');}
-function assertBelowOwnerLineLimit(fileName,source){const lines=source.split(/\r?\n/).length;assert.ok(lines<300,`${fileName} has ${lines} physical lines; owner approval is required at >=300.`);}
-console.log('PASS empirical v3 source guards / anti-drift');
+const CORE_FILES=['workflow-state.js','quantity-authority.js','risk-finding.js','confirmation-receipt.js','calculation-authorization.js','engineering-event.js','branch-authority.js','component-authority.js','presentation-package.js','coupled-calculation-evidence.js','result-review-receipt.js','audit-readiness.js','audit-export.js'];
+const ADAPTER_FILES=['empirical-v3-source-authority-adapter.js','empirical-v3-resolution-reference-adapter.js','empirical-v3-branch-component-authority-builder.js','empirical-v3-stagedjson-process-basis-adapter.js','empirical-v3-branch-process-resolution-adapter.js','empirical-v3-authorized-source-bound-execution.js'];
+const UI_FILES=['empirical-v3-safety-workbench.js','empirical-v3-safety-workbench-dom.js','empirical-v3-branch-basis-view.js','empirical-v3-safety-gate-view.js','empirical-v3-evidence-view.js','empirical-v3-explain-calculation-view.js','empirical-v3-result-review-view.js','empirical-v3-review-audit-controller.js','empirical-v3-view-primitives.js'];
+const forbiddenCorePatterns=[/fallbackResolver/i,/chainageDistribution/i,/linear-piping-results-workbench/i,/react\b/i,/acceptAll|confirmAll|bulkAccept|bulkConfirm/i];
+const forbiddenCoreMechanicsImports=[/from\s+['"][^'"]*restraint-compatibility\.js['"]/i,/from\s+['"][^'"]*rooted-tree-component-flexibility\.js['"]/i,/from\s+['"][^'"]*thermal-restraint-compatibility\.js['"]/i,/from\s+['"][^'"]*flexibility\.js['"]/i];
+const forbiddenAdapterImports=[/from\s+['"][^'"]*fallbackResolver\.js['"]/i,/from\s+['"][^'"]*chainageDistribution\.js['"]/i,/from\s+['"][^'"]*topology-edit-high-confidence-autofix/i,/from\s+['"][^'"]*topology-edit-checker/i,/from\s+['"][^'"]*linear-piping-results-workbench/i,/from\s+['"][^'"]*restraint-compatibility/i,/from\s+['"][^'"]*rooted-tree-component-flexibility/i];
+for(const fileName of CORE_FILES){const source=sourceAt(`../src/core/empirical-v3-safety/${fileName}`);assertBelowOwnerLineLimit(fileName,source);for(const pattern of[...forbiddenCorePatterns,...forbiddenCoreMechanicsImports])assert.doesNotMatch(source,pattern,`${fileName} violates the Empirical V3 core authority boundary.`);}
+for(const fileName of ADAPTER_FILES){const source=sourceAt(`../src/workspace/engineering-loads/adapters/${fileName}`);assertBelowOwnerLineLimit(fileName,source);for(const pattern of forbiddenAdapterImports)assert.doesNotMatch(source,pattern,`${fileName} imports a prohibited authority path.`);}
+for(const fileName of UI_FILES)assertBelowOwnerLineLimit(fileName,sourceAt(`../src/workspace/${fileName}`));
+const indexSource=sourceAt('../src/core/empirical-v3-safety/index.js');for(const fileName of CORE_FILES)assert.match(indexSource,new RegExp(`export \\* from './${fileName.replace('.','\\.')}';`));
+const workflow=sourceAt('../src/core/empirical-v3-safety/workflow-state.js');assert.match(workflow,/requireEmpiricalV3WorkflowProjection/);assert.match(workflow,/facts,/);assert.match(workflow,/identity\/state mismatch/);
+const authorization=sourceAt('../src/core/empirical-v3-safety/calculation-authorization.js');assert.match(authorization,/HIGH_BLOCK/);assert.match(authorization,/pending HIGH_CONFIRM/);assert.match(authorization,/RISK_POLICY_CHANGED/);assert.match(authorization,/DEPENDENCY_IDENTITY_CHANGED/);
+const branch=sourceAt('../src/core/empirical-v3-safety/branch-authority.js');assert.match(branch,/requires exact topology/);assert.match(branch,/Tolerance-inferred topology cannot define/);
+const presentation=sourceAt('../src/core/empirical-v3-safety/presentation-package.js');assert.match(presentation,/requireEmpiricalV3WorkflowProjection/);assert.match(presentation,/requireEmpiricalV3CalculationAuthorization/);assert.doesNotMatch(presentation,/EMPIRICAL_V3_WORKFLOW_STATES/);
+const evidence=sourceAt('../src/core/empirical-v3-safety/coupled-calculation-evidence.js');assert.match(evidence,/\(F\+S\) R = delta_target - delta_reference/);assert.match(evidence,/delta_pipe,i = delta_reference,i \+ sum_j\(F_ij R_j\)/);assert.match(evidence,/F_ij = sum_m\(f_ij\^\(m\)\)/);assert.match(evidence,/mechanicsRecomputed:\s*false/);assert.match(evidence,/reactionRecomputed:\s*false/);assert.match(evidence,/uiOrReportMayResolveMechanics:\s*false/);assert.doesNotMatch(evidence,/solveLinear|solveRooted|calculatePrismatic|calculateCircular|assembleUnit/i);
+const review=sourceAt('../src/core/empirical-v3-safety/result-review-receipt.js');assert.match(review,/REVIEWED_FOR_AUDIT/);assert.match(review,/evidenceRef/);assert.doesNotMatch(review,/reactionN|flexibilityMatrix|solve|calculate/i);
+const readiness=sourceAt('../src/core/empirical-v3-safety/audit-readiness.js');assert.match(readiness,/requireCurrentEmpiricalV3ResultReview/);assert.match(readiness,/resultReviewRef/);
+const audit=sourceAt('../src/core/empirical-v3-safety/audit-export.js');assert.match(audit,/calculationEvidence:\s*evidence/);assert.match(audit,/requireEmpiricalV3AuditReadiness/);assert.match(audit,/requireCurrentEmpiricalV3ResultReview/);assert.doesNotMatch(audit,/flexibilityMatrix|reactionN|thermalReference|solve|calculate/i);
+const sourceAdapter=sourceAt('../src/workspace/engineering-loads/adapters/empirical-v3-source-authority-adapter.js');assert.match(sourceAdapter,/_deducedWallThickness/);assert.match(sourceAdapter,/_missingComponentWeight/);assert.match(sourceAdapter,/DEFAULT_ZERO_NOT_ENGINEERING_AUTHORITY/);assert.match(sourceAdapter,/INFERRED_REVIEW_REQUIRED/);
+const branchBuilder=sourceAt('../src/workspace/engineering-loads/adapters/empirical-v3-branch-component-authority-builder.js');assert.match(branchBuilder,/observedSourceBranchLabel/);assert.match(branchBuilder,/requireAllowedKeys/);assert.doesNotMatch(branchBuilder,/chainageDistribution|TopoFix|topologyEditConfidence/);
+const staged=sourceAt('../src/workspace/engineering-loads/adapters/empirical-v3-stagedjson-process-basis-adapter.js');assert.match(staged,/requireStagedJsonProcessAuthority/);assert.match(staged,/observedSourceBranchId/);
+const process=sourceAt('../src/workspace/engineering-loads/adapters/empirical-v3-branch-process-resolution-adapter.js');assert.match(process,/pipingClassNeedsReview/);assert.match(process,/pipingClassMatchMethod/);assert.match(process,/piping-class-master/);assert.doesNotMatch(process,/resolveBranchProcessData|findBestPipingClassRow/);
+const bridge=sourceAt('../src/workspace/engineering-loads/adapters/empirical-v3-authorized-source-bound-execution.js');assert.match(bridge,/assessEmpiricalV3CalculationAuthorizationCurrent/);assert.match(bridge,/ROM_EXECUTION_REQUEST/);assert.match(bridge,/canonical-thermal-rom-source-bound-execution\.js/);assert.doesNotMatch(bridge,/canonical-thermal-rom-authority-adapter\.js|rooted-tree-component-flexibility|restraint-compatibility|calculateCircularElbow/i);const currentGate=bridge.indexOf('assessEmpiricalV3CalculationAuthorizationCurrent'),requestGate=bridge.indexOf('EMP_V3_EXECUTION_REQUEST_NOT_AUTHORIZED'),frozenCall=bridge.indexOf('executeCanonicalSourceBoundThermalRomCompatibility(input.romInput)');assert.ok(currentGate>=0&&requestGate>currentGate&&frozenCall>requestGate,'V3 gates must precede frozen ROM call.');
+function sourceAt(path){return readFileSync(new URL(path,import.meta.url),'utf8');}function assertBelowOwnerLineLimit(fileName,source){const lines=source.split(/\r?\n/).length;assert.ok(lines<300,`${fileName} has ${lines} physical lines; owner approval is required at >=300.`);}console.log('PASS empirical v3 source guards / anti-drift');

@@ -16,6 +16,7 @@ function exactResolution() {
     pipingClassMatchedRow: { rowId: 'MASTER:31441C4:DN150' },
     pipingClassMatchMethod: 'exact',
     pipingClassRowMethod: 'best-score',
+    pipingClassRowReasons: ['class-exact', 'bore-exact', 'component-exact'],
     pipingClassNeedsReview: false,
     materialCode: 'A106B',
     materialSource: 'piping-class-material-code',
@@ -65,6 +66,32 @@ assert.equal(missingMasterEvidence.materialResolution.authorityClass, 'INFERRED_
 assert.equal(missingMasterEvidence.wallQuantity.authorityClass, 'INFERRED_REVIEW_REQUIRED');
 assert.equal(missingMasterEvidence.corrosionQuantity.authorityClass, 'INFERRED_REVIEW_REQUIRED');
 assert.ok(missingMasterEvidence.risks.every((risk) => risk.riskClass === 'HIGH_CONFIRM'));
+
+const componentMismatchRow = {
+  ...exactRow,
+  pipingClassRowReasons: ['class-exact', 'bore-exact'],
+  pipingClassNeedsReview: false,
+};
+assert.equal(isExactPipingClassResolution(componentMismatchRow), false);
+const componentMismatch = adaptBranchProcessResolverOutput({
+  runId,
+  componentId: 'P101',
+  resolution: componentMismatchRow,
+  masterSemanticHash: h('approved-master'),
+  sourceSemanticHash: h('line-source'),
+});
+assert.equal(componentMismatch.classResolution.authorityClass, 'INFERRED_REVIEW_REQUIRED');
+assert.equal(componentMismatch.materialResolution.authorityClass, 'INFERRED_REVIEW_REQUIRED');
+assert.equal(componentMismatch.wallQuantity.authorityClass, 'INFERRED_REVIEW_REQUIRED');
+assert.equal(componentMismatch.corrosionQuantity.authorityClass, 'INFERRED_REVIEW_REQUIRED');
+assert.ok(componentMismatch.risks.every((risk) => risk.riskClass === 'HIGH_CONFIRM'));
+
+const boreNearRow = {
+  ...exactRow,
+  pipingClassRowReasons: ['class-exact', 'bore-near:0.500mm', 'component-exact'],
+  pipingClassNeedsReview: false,
+};
+assert.equal(isExactPipingClassResolution(boreNearRow), false);
 
 const fuzzyRow = {
   ...exactRow,

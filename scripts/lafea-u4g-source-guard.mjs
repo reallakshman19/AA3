@@ -7,8 +7,10 @@ const live = read('../src/workspace/lafea-live-workbench-viewport.js');
 const sourceViewport = read('../src/workspace/lafea-source-workbench-viewport.js');
 const registry = read('../src/workspace/lafea-workbench-render-evidence.js');
 const controller = read('../src/workspace/lafea-workbench-controller.js');
-const view = `${read('../src/workspace/lafea-workbench-view.js')}\n${read('../src/workspace/lafea-workbench-content.js')}`;
+const content = read('../src/workspace/lafea-workbench-content.js');
+const view = `${read('../src/workspace/lafea-workbench-view.js')}\n${content}`;
 const generationPanel = read('../src/workspace/lafea-discretization-generation-panel.js');
+const engineeringOverview = read('../src/workspace/lafea-engineering-overview.js');
 const publicSurface = read('../src/workspace/lafea-workbench.js');
 const accessory = read('../src/workspace/lafea-workbench-accessory-panels.js');
 
@@ -41,6 +43,16 @@ const meshUiWiring = `${view}\n${generationPanel}`;
 assert.doesNotMatch(meshUiWiring, /onGenerateAnalysisMesh/u);
 assert.match(generationPanel, /onBindMeshProfile\?\.\(profileEnvelope\);\s*handlers\.onGenerateMesh\?\.\(\{\}\);/u);
 assert.match(view, /onBindMeshProfile\?\.\(profileEnvelope\);\s*options\.handlers\.onGenerateMesh\?\.\(\{\}\);/u);
+assert.match(content, /defaultProfileFields\(PROFILE_KINDS\.MESH\)/u);
+assert.match(content, /workflow\.runEligibleByCurrentUiGate === true/u);
+assert.match(content, /discretization\.actions\.canRun === true/u);
+assert.doesNotMatch(content, /adjacentSizeRatioMax:\s*2\.5/u);
+assert.doesNotMatch(content, /aspectRatioWarn:\s*5(?:\.0)?\b/u);
+assert.doesNotMatch(content, /aspectRatioBlock:\s*15(?:\.0)?\b/u);
+assert.doesNotMatch(content, /scaledJacobianBlock:\s*0\.1\b/u);
+assert.doesNotMatch(content, /\['Von Mises Stress', 'Displacement', 'Deformed Shape'\]/u);
+assert.doesNotMatch(engineeringOverview, /exactHead:\s*['"]PASS['"]/u);
+assert.match(engineeringOverview, /EXTERNAL EXACT-HEAD CI REQUIRED/u);
 
 const forbiddenImports = /from\s+['"][^'"]*(?:src\/core|local-shell|mesher|solver|recovery|code-assessment|lafea-templates|benchmark-fixtures)[^'"]*['"]/u;
 assert.doesNotMatch(`${live}\n${registry}`, forbiddenImports);
@@ -106,6 +118,10 @@ console.log(JSON.stringify({
   accessoryFacadeExpanded: false,
   publicRawPacketGetter: false,
   meshGenerationUiCallsAuthoritativeHandler: true,
+  quickMeshUsesQualifiedProfileDefaults: true,
+  runBannerUsesCanonicalAuthorization: true,
+  deadResultModeButtons: 0,
+  manufacturedExactHeadPassClaims: 0,
   targetModuleLineLimit: 300,
   lafea6Enabled: false,
 }));

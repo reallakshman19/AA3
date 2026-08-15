@@ -4,6 +4,7 @@ import fs from 'node:fs';
 import {
   PROFILE_KINDS,
   canonicalProfile,
+  defaultProfileFields,
 } from '../src/core/lafea-profile-contract/index.js';
 import {
   LAFEA_LUG_PINHOLE_T6_MESH_PACKAGE_SCHEMA,
@@ -226,20 +227,16 @@ function level(ordinal, radialDivisions, circumferentialDivisions,
 }
 
 function profile(identity, globalTargetSize, continuumElement) {
+  const defaults = defaultProfileFields(PROFILE_KINDS.MESH);
   return canonicalProfile(PROFILE_KINDS.MESH, {
     schema: 'lafea-mesh-profile/v1',
     profileIdentity: identity,
-    sourceRevision: '1',
+    sourceRevision: '2',
     fields: {
+      ...defaults,
       continuumElement,
       shellElement: 'CST_DKT_TRI3_THIN_SHELL_V1',
       globalTargetSize,
-      adjacentSizeRatioMax: 1.5,
-      aspectRatioWarn: 8,
-      aspectRatioBlock: 12,
-      scaledJacobianWarn: 0.2,
-      scaledJacobianBlock: 0.05,
-      adaptiveLevels: 3,
     },
     semanticHash: undefined,
   });

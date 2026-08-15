@@ -2,7 +2,11 @@
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
 
-import { canonicalProfile, PROFILE_KINDS } from '../src/core/lafea-profile-contract/index.js';
+import {
+  canonicalProfile,
+  defaultProfileFields,
+  PROFILE_KINDS,
+} from '../src/core/lafea-profile-contract/index.js';
 import { createLafeaAnalysisGeometry } from '../src/workspace/lafea-analysis-geometry-contract.js';
 import { createLafeaAnalysisGeometryEvidence } from '../src/workspace/lafea-analysis-geometry-evidence.js';
 import { createLafeaContinuumAnalysisDomain } from '../src/workspace/lafea-continuum-analysis-domain.js';
@@ -265,18 +269,16 @@ function line(segmentId, startVertexId, endVertexId) {
   return { segmentId, type: 'LINE', startVertexId, endVertexId };
 }
 function meshProfileFor(continuumElement, globalTargetSize) {
+  const defaults = defaultProfileFields(PROFILE_KINDS.MESH);
   return canonicalProfile(PROFILE_KINDS.MESH, {
     schema: 'lafea-mesh-profile/v1',
     profileIdentity: `P2_9_${continuumElement}_${globalTargetSize}`,
-    sourceRevision: 'R5', semanticHash: undefined,
+    sourceRevision: 'R6', semanticHash: undefined,
     fields: {
+      ...defaults,
       continuumElement,
       shellElement: 'CST_DKT_TRI3_THIN_SHELL_V1',
       globalTargetSize,
-      adjacentSizeRatioMax: 1.5,
-      aspectRatioWarn: 5, aspectRatioBlock: 10,
-      scaledJacobianWarn: 0.6, scaledJacobianBlock: 0.2,
-      adaptiveLevels: 3,
     },
   });
 }

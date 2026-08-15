@@ -61,8 +61,9 @@ export {
   EMPIRICAL_ROOTED_COMPONENT_FLEXIBILITY_SCHEMA,
   EMPIRICAL_ROOTED_COMPONENT_THERMAL_COMPATIBILITY_SCHEMA,
   assembleRootedTreeComponentFlexibility,
+  inspectRootedTreeComponentSectionCustody,
   solveRootedTreeComponentThermalCompatibility,
-} from './rooted-tree-component-flexibility.js';
+} from './rooted-tree-component-flexibility-gate.js';
 export { solveScaledDenseSystem } from './linear-system.js';
 export { assemblePlanarSystem, solveAssembledPlanarSystem, solvePlanarSystem } from './assembly.js';
 export { solveUnilateralActiveSet } from './contact.js';

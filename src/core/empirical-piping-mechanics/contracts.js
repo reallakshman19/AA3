@@ -39,6 +39,7 @@ export const EMPIRICAL_FORMULA_IDS = Object.freeze({
   thermalPathAccumulation: 'EMP-THM-004',
   thermalCoordinateProjection: 'EMP-THM-005',
   thermalReferenceCompatibility: 'EMP-THM-006',
+  circularElbowThermalChordExpansion: 'EMP-THM-007',
   segmentedElbow: 'EMP-BND-010',
   contactComplementarity: 'EMP-CNT-001',
   memberActionRecovery: 'EMP-ACT-001',
@@ -65,6 +66,11 @@ export const EMPIRICAL_FORMULA_IDS = Object.freeze({
   linearSupportFlexibility: 'EMP-FLX-011',
   restraintCompatibilityRecovery: 'EMP-FLX-012',
   restraintCompatibilityEnergy: 'EMP-FLX-013',
+  circularElbowGeometry: 'EMP-FLX-014',
+  circularElbowUnitLoadAction: 'EMP-FLX-015',
+  circularElbowVirtualWork: 'EMP-FLX-016',
+  codeComponentFlexibilityWeighting: 'EMP-FLX-017',
+  componentFlexibilityMatrixAssembly: 'EMP-FLX-018',
 });
 
 export const PLANAR_DOF_ORDER = Object.freeze(['UX', 'UY', 'RZ']);

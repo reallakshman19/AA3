@@ -22,6 +22,18 @@ export {
 } from './member.js';
 export { compileSegmentedPlanarElbow } from './elbow.js';
 export {
+  EMPIRICAL_CIRCULAR_ELBOW_NUMERICAL_POLICY,
+  EMPIRICAL_CIRCULAR_ELBOW_VIRTUAL_WORK_SCHEMA,
+  EMPIRICAL_ELBOW_FLEXIBILITY_AUTHORITY_SCHEMA,
+  buildCircularElbowThermalEndTranslation,
+  buildCircularElbowUnitLoadAction,
+  calculateCircularElbowVirtualWorkContribution,
+  createEmpiricalElbowFlexibilityAuthority,
+  normalizeCircularElbowGeometry,
+  requireEmpiricalElbowFlexibilityAuthority,
+  reverseCircularElbowGeometry,
+} from './circular-elbow-flexibility.js';
+export {
   assembleUnitForceFlexibilityMatrix,
   calculatePrismaticVirtualWorkContribution,
   integrateLinearEndFieldProduct,
@@ -45,6 +57,13 @@ export {
   EMPIRICAL_ROOTED_TREE_THERMAL_COMPATIBILITY_SCHEMA,
   solveRootedTreeThermalRestraintCompatibility,
 } from './thermal-restraint-compatibility.js';
+export {
+  EMPIRICAL_ROOTED_COMPONENT_FLEXIBILITY_SCHEMA,
+  EMPIRICAL_ROOTED_COMPONENT_THERMAL_COMPATIBILITY_SCHEMA,
+  assembleRootedTreeComponentFlexibility,
+  inspectRootedTreeComponentSectionCustody,
+  solveRootedTreeComponentThermalCompatibility,
+} from './rooted-tree-component-flexibility-gate.js';
 export { solveScaledDenseSystem } from './linear-system.js';
 export { assemblePlanarSystem, solveAssembledPlanarSystem, solvePlanarSystem } from './assembly.js';
 export { solveUnilateralActiveSet } from './contact.js';

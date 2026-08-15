@@ -7,7 +7,7 @@ export class WorkspaceStateStore {
 
   #ensureInit() {
     if (!this.#snapshot) {
-      this.#snapshot = emptySnapshot(0);
+      this.#snapshot = emptySnapshot(0, 0);
     }
   }
 
@@ -20,6 +20,7 @@ export class WorkspaceStateStore {
       dataset,
       selectedEntityId: '',
       version: this.#snapshot.version + 1,
+      engineeringVersion: this.#snapshot.engineeringVersion + 1,
     });
     return this.#snapshot;
   }
@@ -27,7 +28,10 @@ export class WorkspaceStateStore {
   clearDataset() {
     this.#ensureInit();
     this.#entities = new Map();
-    this.#snapshot = emptySnapshot(this.#snapshot.version + 1);
+    this.#snapshot = emptySnapshot(
+      this.#snapshot.version + 1,
+      this.#snapshot.engineeringVersion + 1,
+    );
     return this.#snapshot;
   }
 
@@ -39,6 +43,7 @@ export class WorkspaceStateStore {
       ...this.#snapshot,
       dataset: newDataset,
       version: this.#snapshot.version + 1,
+      engineeringVersion: this.#snapshot.engineeringVersion + 1,
     });
     return this.#snapshot;
   }
@@ -70,12 +75,13 @@ export class WorkspaceStateStore {
   }
 }
 
-function emptySnapshot(version) {
+function emptySnapshot(version, engineeringVersion) {
   return freezeDeep({
     status: 'empty',
     dataset: null,
     selectedEntityId: '',
     version,
+    engineeringVersion,
   });
 }
 

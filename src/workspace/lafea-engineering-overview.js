@@ -1,4 +1,5 @@
 /** User-facing engineering summary derived only from retained workbench state. */
+import { FORMULATION_GUARDS } from '../core/local-continuum/index.js';
 import { element } from './lafea-workbench-dom.js';
 
 export const LAFEA_ENGINEERING_OVERVIEW_SCHEMA = 'lafea-engineering-overview/v1';
@@ -20,6 +21,7 @@ export function buildLafeaEngineeringOverview(stageValue, registryEntryValue) {
   const runAuthorized = Boolean(source)
     && registry.engineState === 'QUALIFIED_ROUTE_REGISTERED'
     && stage.orchestration?.sections?.AUTHORIZATION?.state === 'READY';
+  const formulationAuthority = continuumFormulationAuthority(source);
 
   return freeze({
     schema: LAFEA_ENGINEERING_OVERVIEW_SCHEMA,
@@ -35,6 +37,7 @@ export function buildLafeaEngineeringOverview(stageValue, registryEntryValue) {
       loadCaseCount: array(source?.loadCases).length,
       elementFamilies,
       units: unitSummary(source?.units),
+      formulationAuthority,
     },
     mesh: {
       state: text(stage.analysisMeshCustodyProjection?.state, meshEvidence ? 'RETAINED' : 'NOT_RETAINED'),
@@ -61,12 +64,12 @@ export function buildLafeaEngineeringOverview(stageValue, registryEntryValue) {
     },
     qualification: registry.stageId === 'LAFEA.3' ? {
       program: 'B01',
-      baseRuns: '54 / 54 PASS',
-      metamorphic: 'PASS',
-      failClosed: 'PASS',
-      exactHead: 'PASS',
+      baseRuns: 'NOT EMBEDDED IN WORKBENCH STATE',
+      metamorphic: 'EXTERNAL CI EVIDENCE REQUIRED',
+      failClosed: 'EXTERNAL CI EVIDENCE REQUIRED',
+      exactHead: 'EXTERNAL EXACT-HEAD CI REQUIRED',
       releaseAuthority: false,
-      scope: 'Registered linear 2D continuum benchmark behavior only',
+      scope: 'Workbench runtime state does not manufacture benchmark or exact-head qualification claims.',
     } : null,
   });
 }
@@ -122,8 +125,81 @@ export function renderLafeaEngineeringOverview(root, stageValue, registryEntryVa
   );
   host.append(strip);
 
+  if (model.stageId === 'LAFEA.3') {
+    host.append(formulationAuthorityPanel(root, model.model.formulationAuthority));
+  }
   if (model.qualification) host.append(qualificationBar(root, model.qualification));
   return host;
+}
+
+function formulationAuthorityPanel(root, value) {
+  const details = element(root, 'details', 'lafea-engineering-overview__qualification');
+  details.dataset.role = 'lafea3-formulation-authority';
+  details.dataset.status = value.status;
+  const summary = element(
+    root,
+    'summary',
+    null,
+    `Formulation & material controls — ${value.status}`,
+  );
+  const grid = element(root, 'div', 'lafea-engineering-overview__qualification-grid');
+  [
+    ['Configured formulation', value.formulation],
+    ['Configured Poisson ratio(s)', value.poissonRatios || 'Not declared'],
+    ['Plane-strain advisory band', `ν ≥ ${FORMULATION_GUARDS.planeStrainPoissonWarning}`],
+    ['Plane-strain qualification block', `ν ≥ ${FORMULATION_GUARDS.planeStrainPoissonBlock}`],
+    ['Guard authority', 'Source-controlled; solver tolerances cannot override it'],
+    ['Tunable input', 'Material Poisson ratio is model input; use a separately qualified locking-resistant formulation outside this envelope'],
+  ].forEach(([label, item]) => {
+    const row = element(root, 'div');
+    row.append(element(root, 'strong', null, label), element(root, 'span', null, String(item)));
+    grid.append(row);
+  });
+  if (value.message) grid.append(element(root, 'p', null, value.message));
+  details.append(summary, grid);
+  return details;
+}
+
+function continuumFormulationAuthority(source) {
+  const formulation = text(source?.formulation, 'Not declared');
+  const ratios = array(source?.materials)
+    .map((row) => finite(row?.poissonRatio))
+    .filter((value) => value !== null);
+  if (formulation !== 'PLANE_STRAIN') {
+    return {
+      status: formulation === 'Not declared' ? 'NOT_DECLARED' : 'QUALIFIED',
+      formulation,
+      poissonRatios: ratios.join(', '),
+      message: formulation === 'PLANE_STRESS'
+        ? 'Near-incompressible plane-strain locking guard is not applicable to this plane-stress model.'
+        : null,
+    };
+  }
+  const maximum = ratios.length ? Math.max(...ratios) : null;
+  if (maximum === null) {
+    return {
+      status: 'NOT_DECLARED', formulation, poissonRatios: '', message: 'Material Poisson ratio is required.',
+    };
+  }
+  if (maximum >= FORMULATION_GUARDS.planeStrainPoissonBlock) {
+    return {
+      status: 'BLOCKED',
+      formulation,
+      poissonRatios: ratios.join(', '),
+      message: 'Current displacement-only plane-strain authority does not qualify this near-incompressible material. Choose a qualified material representation or a separately qualified locking-resistant formulation.',
+    };
+  }
+  if (maximum >= FORMULATION_GUARDS.planeStrainPoissonWarning) {
+    return {
+      status: 'ADVISORY',
+      formulation,
+      poissonRatios: ratios.join(', '),
+      message: 'Model is inside the hard qualification envelope but close to the incompressible limit. Review mesh sensitivity and locking evidence before relying on local stiffness-sensitive quantities.',
+    };
+  }
+  return {
+    status: 'QUALIFIED', formulation, poissonRatios: ratios.join(', '), message: null,
+  };
 }
 
 function resultCard(root, model) {
@@ -160,7 +236,7 @@ function summaryCard(root, title, status, rows) {
 
 function qualificationBar(root, value) {
   const details = element(root, 'details', 'lafea-engineering-overview__qualification');
-  const summary = element(root, 'summary', null, `${value.program} continuum qualification — ${value.baseRuns}`);
+  const summary = element(root, 'summary', null, `${value.program} qualification evidence — external`);
   const grid = element(root, 'div', 'lafea-engineering-overview__qualification-grid');
   [
     ['Base benchmark', value.baseRuns],
@@ -168,7 +244,7 @@ function qualificationBar(root, value) {
     ['Fail-closed', value.failClosed],
     ['Exact-head integrated', value.exactHead],
     ['Release authority', value.releaseAuthority ? 'GRANTED' : 'NOT GRANTED'],
-    ['Qualified scope', value.scope],
+    ['Runtime scope', value.scope],
   ].forEach(([label, item]) => {
     const row = element(root, 'div');
     row.append(element(root, 'strong', null, label), element(root, 'span', null, String(item)));
@@ -186,8 +262,7 @@ function continuumMetrics(resultValue, unitsValue) {
   let maxDisplacement = null;
   let maxVonMises = null;
   let maxSigmaX = null;
-  let totalEnergy = 0;
-  let hasEnergy = false;
+  let maxEnergy = null;
 
   for (const loadCase of loadCases) {
     for (const displacement of array(loadCase?.nodalDisplacements)) {
@@ -197,21 +272,14 @@ function continuumMetrics(resultValue, unitsValue) {
       maxDisplacement = maxFinite(maxDisplacement, Math.hypot(ux, uy));
     }
     if (Number.isFinite(loadCase?.totalStrainEnergy)) {
-      totalEnergy += loadCase.totalStrainEnergy;
-      hasEnergy = true;
+      maxEnergy = maxFinite(maxEnergy, loadCase.totalStrainEnergy);
     }
     for (const elementResult of array(loadCase?.elementResults)) {
       maxVonMises = maxFinite(maxVonMises, finite(elementResult?.vonMises));
       maxSigmaX = maxAbsFinite(maxSigmaX, finite(elementResult?.stress?.sigmaX));
       for (const point of array(elementResult?.gaussPointResults)) {
-        const sx = finite(point?.stress?.sigmaX);
-        const sy = finite(point?.stress?.sigmaY);
-        const txy = finite(point?.stress?.tauXY);
-        maxSigmaX = maxAbsFinite(maxSigmaX, sx);
-        if (sx !== null && sy !== null && txy !== null) {
-          const vm = Math.sqrt(Math.max(0, sx * sx - sx * sy + sy * sy + 3 * txy * txy));
-          maxVonMises = maxFinite(maxVonMises, vm);
-        }
+        maxSigmaX = maxAbsFinite(maxSigmaX, finite(point?.stress?.sigmaX));
+        maxVonMises = maxFinite(maxVonMises, finite(point?.vonMises));
       }
     }
   }
@@ -220,9 +288,9 @@ function continuumMetrics(resultValue, unitsValue) {
   if (maxDisplacement !== null) metrics.push(metric('Max displacement', maxDisplacement, units.length ?? 'length-unit'));
   if (maxVonMises !== null) metrics.push(metric('Max von Mises', maxVonMises, units.stress ?? 'stress-unit'));
   if (maxSigmaX !== null) metrics.push(metric('Max |σx|', maxSigmaX, units.stress ?? 'stress-unit'));
-  if (hasEnergy) {
+  if (maxEnergy !== null) {
     const energyUnit = units.force && units.length ? `${units.force}·${units.length}` : 'energy-unit';
-    metrics.push(metric('Total strain energy', totalEnergy, energyUnit));
+    metrics.push(metric('Max load-case elastic energy', maxEnergy, energyUnit));
   }
   return metrics;
 }

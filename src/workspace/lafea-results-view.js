@@ -71,7 +71,7 @@ function engineeringHighlightsView(root, model) {
   );
   heading.firstElementChild.append(
     create(root, 'h3', null, 'Engineering result summary'),
-    create(root, 'p', null, `${model.loadCaseCount} retained load case${model.loadCaseCount === 1 ? '' : 's'} · values below are derived from the retained solver result.`),
+    create(root, 'p', null, `${model.loadCaseCount} retained load case${model.loadCaseCount === 1 ? '' : 's'} · values below come directly from retained solver/recovery evidence.`),
   );
   section.append(heading);
 
@@ -111,13 +111,12 @@ function buildEngineeringHighlights(stageId, result, unitsValue) {
   const forceUnit = units.force ?? '';
   const energyUnit = forceUnit && lengthUnit ? `${forceUnit}·${lengthUnit}` : '';
   const metrics = [];
+  const energyMetrics = [];
   let maxDisplacement = null;
   let maxVonMises = null;
   let maxSigmaX = null;
   let maxReaction = null;
   let maxResidual = null;
-  let totalEnergy = 0;
-  let energySeen = false;
   const solverMethods = new Set();
 
   for (const loadCase of loadCases) {
@@ -131,13 +130,18 @@ function buildEngineeringHighlights(stageId, result, unitsValue) {
       });
     }
     if (Number.isFinite(loadCase?.totalStrainEnergy)) {
-      totalEnergy += loadCase.totalStrainEnergy;
-      energySeen = true;
+      energyMetrics.push({
+        id: `elastic-energy-${loadCaseId}`,
+        label: `Elastic strain energy · ${loadCaseId}`,
+        value: loadCase.totalStrainEnergy,
+        unit: energyUnit,
+        location: `${loadCaseId} · retained physical elastic energy`,
+      });
     }
     if (typeof loadCase?.solverEvidence?.method === 'string') {
       solverMethods.add(loadCase.solverEvidence.method);
     }
-    for (const row of array(loadCase?.reactions)) {
+    for (const row of array(loadCase?.supportReactions)) {
       if (!Number.isFinite(row?.value)) continue;
       maxReaction = larger(maxReaction, {
         value: Math.abs(row.value),
@@ -167,19 +171,16 @@ function buildEngineeringHighlights(stageId, result, unitsValue) {
       }
       array(elementResult?.gaussPointResults).forEach((point, pointIndex) => {
         const sx = finite(point?.stress?.sigmaX);
-        const sy = finite(point?.stress?.sigmaY);
-        const txy = finite(point?.stress?.tauXY);
         if (sx !== null) {
           maxSigmaX = larger(maxSigmaX, {
             value: Math.abs(sx),
-            location: `${loadCaseId} · element ${elementId} · IP ${pointIndex + 1}`,
+            location: `${loadCaseId} · element ${elementId} · ${integrationPointLabel(point, pointIndex)}`,
           });
         }
-        if (sx !== null && sy !== null && txy !== null) {
-          const vonMises = Math.sqrt(Math.max(0, sx * sx - sx * sy + sy * sy + 3 * txy * txy));
+        if (Number.isFinite(point?.vonMises)) {
           maxVonMises = larger(maxVonMises, {
-            value: vonMises,
-            location: `${loadCaseId} · element ${elementId} · IP ${pointIndex + 1}`,
+            value: point.vonMises,
+            location: `${loadCaseId} · element ${elementId} · ${integrationPointLabel(point, pointIndex)}`,
           });
         }
       });
@@ -191,20 +192,18 @@ function buildEngineeringHighlights(stageId, result, unitsValue) {
   pushMetric(metrics, 'max-sigma-x', 'Max |σx|', maxSigmaX, stressUnit);
   pushMetric(metrics, 'max-reaction', 'Max reaction', maxReaction, forceUnit);
   pushMetric(metrics, 'max-free-residual', 'Max free-DOF residual', maxResidual, forceUnit);
-  if (energySeen) metrics.push({
-    id: 'total-strain-energy',
-    label: 'Total strain energy',
-    value: totalEnergy,
-    unit: energyUnit,
-    location: `Sum across ${loadCases.length} retained load case${loadCases.length === 1 ? '' : 's'}`,
-  });
+  metrics.push(...energyMetrics);
 
   return {
     loadCaseCount: loadCases.length,
     metrics,
     solverMethods: [...solverMethods].sort(),
-    recoveryDisclosure: 'T6/Q8 integration-point stress is authoritative; projected nodal contour values are display-only.',
+    recoveryDisclosure: 'T6/Q8 integration-point stress and retained von Mises are authoritative. Nodal projection/averaging remains display-only and is never substituted into these highlights.',
   };
+}
+
+function integrationPointLabel(point, pointIndex) {
+  return point?.pointId ? `IP ${point.pointId}` : `IP ${pointIndex + 1}`;
 }
 
 function pushMetric(metrics, id, label, candidate, unit) {

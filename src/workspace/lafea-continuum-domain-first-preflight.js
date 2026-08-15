@@ -8,30 +8,58 @@ import {
   LAFEA_CONTINUUM_SOLVER_COMPILER_REVISION,
 } from './lafea-continuum-solver-model.js';
 import { compileLafeaContinuumWorkbenchContext } from './lafea-continuum-workbench-route.js';
+import { qualifyLafeaMeshTopologyV3 } from './lafea-mesh-topology-qualification-v3.js';
+import { qualifyLafeaHighOrderJacobiansV3 } from './lafea-high-order-jacobian-qualification-v3.js';
 
 export const LAFEA_CONTINUUM_DOMAIN_FIRST_PREFLIGHT_SCHEMA =
   'lafea-continuum-domain-first-preflight/v1';
 export const LAFEA_CONTINUUM_DOMAIN_FIRST_PREFLIGHT_PRODUCER =
-  'STAGE13/LAFEA.3/DOMAIN_FIRST_COMPILED_PREFLIGHT/13.2';
+  'STAGE13/LAFEA.3/DOMAIN_FIRST_COMPILED_PREFLIGHT/13.3';
 
 const STAGE_ID = 'LAFEA.3';
 const CAPABILITIES = Object.freeze([
-  'SOURCE', 'SCHEMA', 'UNIT', 'GEOMETRY', 'TOPOLOGY', 'MATERIAL', 'SECTION',
-  'RESTRAINT', 'LOAD', 'PHYSICAL_CASE', 'CONSTRAINT', 'MESH_CUSTODY',
-  'SOLVER_MODEL_COMPILATION', 'EXECUTION_INPUT_LOWERING',
+  'SOURCE', 'SCHEMA', 'UNIT', 'GEOMETRY', 'TOPOLOGY', 'GLOBAL_MESH_TOPOLOGY',
+  'FULL_PARENT_JACOBIAN', 'MATERIAL', 'SECTION', 'RESTRAINT', 'LOAD',
+  'PHYSICAL_CASE', 'CONSTRAINT', 'MESH_CUSTODY', 'SOLVER_MODEL_COMPILATION',
+  'EXECUTION_INPUT_LOWERING',
 ]);
+const HIGH_ORDER_JACOBIAN_POLICY = Object.freeze({
+  minimumDeterminant: 0,
+  maximumDepth: 12,
+  maximumSubregions: 8192,
+  authority: 'SOURCE_CONTROLLED_FAIL_CLOSED_CERTIFICATION_RESOURCE_POLICY',
+});
 const SEALED_KEYS = Object.freeze([
   'schema', 'stageId', 'producerRef', 'sourceHash', 'analysisDomainHash',
   'analysisGeometryHash', 'meshHash', 'meshProfileHash', 'solverModelHash',
   'compilerId', 'compilerRevision', 'requestedCaseIds', 'capabilityIds',
-  'status', 'findings', 'solverExecuted', 'executionAuthorized',
-  'releaseQualified', 'semanticHash',
+  'topologyQualificationHash', 'highOrderJacobianQualificationHash',
+  'highOrderJacobianPolicy', 'status', 'findings', 'solverExecuted',
+  'executionAuthorized', 'releaseQualified', 'semanticHash',
 ]);
 
 export function createLafeaContinuumDomainFirstPreflight(context, stageId = STAGE_ID) {
   if (stageId !== STAGE_ID) fail('LAFEA_CONTINUUM_PREFLIGHT_STAGE_NOT_AUTHORIZED');
   const compiled = compileLafeaContinuumWorkbenchContext(context, stageId);
   buildLafeaContinuumCompiledExecutionInput(compiled.solverModel);
+
+  // Additional fail-closed checks on the already-current stage mesh. These
+  // qualifiers can veto execution but never promote mesh or release authority.
+  const topology = qualifyLafeaMeshTopologyV3(
+    compiled.meshEvidence.mesh,
+    { requireSingleComponent: true },
+  );
+  if (topology.qualification !== 'PASS') {
+    fail('LAFEA_CONTINUUM_PREFLIGHT_GLOBAL_MESH_TOPOLOGY_BLOCKED');
+  }
+  const jacobian = qualifyLafeaHighOrderJacobiansV3(
+    compiled.meshEvidence.mesh,
+    HIGH_ORDER_JACOBIAN_POLICY,
+  );
+  if (jacobian.qualification !== 'PASS') {
+    fail('LAFEA_CONTINUUM_PREFLIGHT_FULL_PARENT_JACOBIAN_BLOCKED');
+  }
+
   const record = {
     schema: LAFEA_CONTINUUM_DOMAIN_FIRST_PREFLIGHT_SCHEMA,
     stageId,
@@ -46,6 +74,9 @@ export function createLafeaContinuumDomainFirstPreflight(context, stageId = STAG
     compilerRevision: compiled.solverModel.compilerRevision,
     requestedCaseIds: [...compiled.solverModel.requestedCaseIds],
     capabilityIds: [...CAPABILITIES],
+    topologyQualificationHash: topology.qualificationHash,
+    highOrderJacobianQualificationHash: jacobian.qualificationHash,
+    highOrderJacobianPolicy: { ...HIGH_ORDER_JACOBIAN_POLICY },
     status: 'PASS',
     findings: [],
     solverExecuted: false,
@@ -73,12 +104,14 @@ export function validateLafeaContinuumDomainFirstPreflight(value) {
     || !Array.isArray(value.findings) || value.findings.length !== 0
     || JSON.stringify(value.capabilityIds) !== JSON.stringify(CAPABILITIES)
     || !validCaseIds(value.requestedCaseIds)
-    || typeof value.meshProfileHash !== 'string' || !value.meshProfileHash.trim()) {
+    || typeof value.meshProfileHash !== 'string' || !value.meshProfileHash.trim()
+    || !validHighOrderJacobianPolicy(value.highOrderJacobianPolicy)) {
     fail('LAFEA_CONTINUUM_PREFLIGHT_INVALID');
   }
   for (const key of [
     'sourceHash', 'analysisDomainHash', 'analysisGeometryHash', 'meshHash',
-    'solverModelHash', 'semanticHash',
+    'solverModelHash', 'topologyQualificationHash',
+    'highOrderJacobianQualificationHash', 'semanticHash',
   ]) {
     if (!/^sha256:[0-9a-f]{64}$/u.test(value[key] ?? '')) {
       fail('LAFEA_CONTINUUM_PREFLIGHT_HASH_INVALID');
@@ -94,6 +127,17 @@ export function validateLafeaContinuumDomainFirstPreflight(value) {
   return freeze(structuredClone(value));
 }
 
+function validHighOrderJacobianPolicy(value) {
+  return value
+    && typeof value === 'object'
+    && !Array.isArray(value)
+    && JSON.stringify(Object.keys(value).sort())
+      === JSON.stringify(Object.keys(HIGH_ORDER_JACOBIAN_POLICY).sort())
+    && value.minimumDeterminant === HIGH_ORDER_JACOBIAN_POLICY.minimumDeterminant
+    && value.maximumDepth === HIGH_ORDER_JACOBIAN_POLICY.maximumDepth
+    && value.maximumSubregions === HIGH_ORDER_JACOBIAN_POLICY.maximumSubregions
+    && value.authority === HIGH_ORDER_JACOBIAN_POLICY.authority;
+}
 function exact(value, keys) {
   if (!value || typeof value !== 'object' || Array.isArray(value)
     || JSON.stringify(Object.keys(value).sort()) !== JSON.stringify([...keys].sort())) {

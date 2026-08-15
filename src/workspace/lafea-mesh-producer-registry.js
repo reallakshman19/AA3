@@ -7,17 +7,17 @@
  * its capability record — so the facts live here, where nothing can import a
  * cycle through them.
  *
- * Adding a stage to `BOUND_SCOPES` is a qualification claim. It is only
- * correct when the implementation for that stage is covered by the governance
- * reference below and scoped to exactly these element families.
+ * Adding or extending a bound strategy is a qualification claim. It is only
+ * correct when the implementation is covered by the governance reference and
+ * remains inside the declared stage/family envelope.
  */
 
 export const LAFEA_MESH_PRODUCER_REGISTRY_SCHEMA = 'lafea-mesh-producer-registry/v1';
 
 export const LAFEA_MESH_PRODUCER_ENGINE_ID = 'LAFEA_CORE_MESHER';
-export const LAFEA_MESH_PRODUCER_ENGINE_REVISION = 'LAFEA.10.T6Q8.SHELL.V9';
+export const LAFEA_MESH_PRODUCER_ENGINE_REVISION = 'LAFEA.10.T6Q8.SHELL.POLAR.V10';
 export const LAFEA_MESH_PRODUCER_QUALIFICATION_ID = 'LAFEA-MESH-Q1';
-export const LAFEA_MESH_PRODUCER_QUALIFICATION_REVISION = 'R10';
+export const LAFEA_MESH_PRODUCER_QUALIFICATION_REVISION = 'R11';
 export const LAFEA_MESH_PRODUCER_GOVERNANCE_REF = 'npm run check:lafea-meshing';
 export const LAFEA_MESH_PRODUCER_QUALITY_POLICY_ID = 'LAFEA_MESH_PROFILE_QUALITY_GATES_V1';
 export const LAFEA_MESH_PRODUCER_REF =
@@ -25,10 +25,12 @@ export const LAFEA_MESH_PRODUCER_REF =
 
 /**
  * Automatic generation plus retained-mesh refinement regeneration. Local
- * refinement remains qualified only for LAFEA.3 T3/T6 parents. Shell stages
- * have automatic mesh-independent midsurface generation for the qualified
- * planar/hole, non-wrapping cylindrical, curved-hole and full-cylinder
- * periodic envelopes, but no shell local-refinement claim.
+ * refinement remains qualified only for LAFEA.3 T3/T6 parents. The automatic
+ * LAFEA.3 envelope additionally contains the frozen B02D probe-stable polar
+ * strategy for T3/T6/Q8; that strategy is selected only by its qualified
+ * source-controlled mesh-profile identity plus exact annular/frozen-level
+ * preconditions. The registered B02D intent retains its frozen empty
+ * refinementFeatureIds list.
  */
 export const LAFEA_MESH_PRODUCER_GENERATION_MODES = Object.freeze([
   'AUTOMATIC_MESH', 'REFINEMENT_REGENERATION',

@@ -4,6 +4,10 @@ import {
   buildLafeaT6GeometryQualificationViewModel,
   renderLafeaT6GeometryQualification,
 } from './lafea-t6-geometry-qualification-view.js';
+import {
+  buildLafeaVerificationReleaseViewModel,
+  renderLafeaVerificationRelease,
+} from './lafea-verification-release-view.js';
 
 export const LAFEA_NUMERICAL_VERIFICATION_VIEW_SCHEMA =
   'lafea-numerical-verification-view/v1';
@@ -13,6 +17,8 @@ export function buildLafeaNumericalVerificationViewModel(stageValue) {
   return freeze({
     schema: LAFEA_NUMERICAL_VERIFICATION_VIEW_SCHEMA,
     stageId: stage.stageId,
+    preflight: preflightModel(stage.retainedContinuumPreflightEvidence),
+    release: buildLafeaVerificationReleaseViewModel(stage),
     convergence: convergenceModel(stage.numericalVerificationProjection),
     meshQuality: meshQualityModel(stage),
     t6GeometryQualification: buildLafeaT6GeometryQualificationViewModel(stage),
@@ -29,11 +35,38 @@ export function renderLafeaNumericalVerification(root, stageValue) {
   wrapper.append(
     element(root, 'p', null,
       'Read-only numerical verification from retained governed evidence. Missing detail is reported as unavailable rather than reconstructed from display data.'),
+    preflightSection(root, model.preflight),
+    renderLafeaVerificationRelease(root, stageValue),
     convergenceSection(root, model.convergence),
     meshSection(root, model.meshQuality),
     renderLafeaT6GeometryQualification(root, stageValue),
   );
   return wrapper;
+}
+
+function preflightModel(evidence) {
+  if (!evidence) {
+    return freeze({
+      status: 'ABSENT', rows: [],
+      note: 'No current continuum solve-preflight evidence is retained. Global topology and full-parent high-order Jacobian proof are therefore not claimed here.',
+    });
+  }
+  const policy = evidence.highOrderJacobianPolicy ?? null;
+  return freeze({
+    status: evidence.status ?? 'UNKNOWN',
+    rows: [
+      row('Preflight producer', evidence.producerRef),
+      row('Global topology qualification hash', evidence.topologyQualificationHash),
+      row('Full-parent Jacobian qualification hash', evidence.highOrderJacobianQualificationHash),
+      row('Jacobian minimum determinant', policy?.minimumDeterminant),
+      row('Jacobian proof maximum subdivision depth', policy?.maximumDepth),
+      row('Jacobian proof maximum subregions', policy?.maximumSubregions),
+      row('Jacobian proof policy authority', policy?.authority),
+      row('Execution authorized by preflight', String(evidence.executionAuthorized === true)),
+      row('Release qualified', String(evidence.releaseQualified === true)),
+    ],
+    note: 'Topology and full-parent T6/Q8 Jacobian checks are fail-closed execution blockers on the current retained mesh. Their proof-resource policy is source-controlled and cannot be relaxed from the UI; these checks do not by themselves grant mesh or release authority.',
+  });
 }
 
 function convergenceModel(projection) {
@@ -152,6 +185,14 @@ function meshQualityModel(stage) {
       ['CURRENT_PASS', 'CURRENT_BLOCK'].includes(stage.t6GeometryQualificationProjection?.state),
     note: 'General mesh custody reports aspect-ratio/scaled-Jacobian quality only. The separate T6 geometry section below owns area, curved perimeter, boundary deviation, midside placement, topology and dense-Jacobian qualification when governed custody is current.',
   });
+}
+
+function preflightSection(root, model) {
+  const section = element(root, 'section');
+  section.append(element(root, 'h3', null, `Solve preflight proofs — ${model.status}`));
+  if (model.rows.length) section.append(rows(root, model.rows));
+  section.append(element(root, 'p', null, model.note));
+  return section;
 }
 
 function convergenceSection(root, model) {

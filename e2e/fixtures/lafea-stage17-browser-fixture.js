@@ -1,4 +1,8 @@
-import { canonicalProfile, PROFILE_KINDS } from '/src/core/lafea-profile-contract/index.js';
+import {
+  canonicalProfile,
+  defaultProfileFields,
+  PROFILE_KINDS,
+} from '/src/core/lafea-profile-contract/index.js';
 import {
   LAFEA_ANALYSIS_GEOMETRY_EVIDENCE_PROFILE,
   LAFEA_ANALYSIS_GEOMETRY_EVIDENCE_SCHEMA,
@@ -108,14 +112,15 @@ export function changeSourceMaterial(controller) {
 }
 
 export function meshProfile(globalTargetSize) {
+  const defaults = defaultProfileFields(PROFILE_KINDS.MESH);
   return canonicalProfile(PROFILE_KINDS.MESH, {
     schema: 'lafea-mesh-profile/v1', profileIdentity: `A17-T6-${globalTargetSize}`,
-    sourceRevision: 'A17.1', semanticHash: undefined,
+    sourceRevision: 'A17.2', semanticHash: undefined,
     fields: {
-      continuumElement: 'T6', shellElement: 'CST_DKT_TRI3_THIN_SHELL_V1',
-      globalTargetSize, adjacentSizeRatioMax: 1.5, aspectRatioWarn: 4,
-      aspectRatioBlock: 8, scaledJacobianWarn: 0.25, scaledJacobianBlock: 0.05,
-      adaptiveLevels: 3,
+      ...defaults,
+      continuumElement: 'T6',
+      shellElement: 'CST_DKT_TRI3_THIN_SHELL_V1',
+      globalTargetSize,
     },
   });
 }

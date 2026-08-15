@@ -3,7 +3,11 @@ import assert from 'node:assert/strict';
 import {
   calculateLocalContinuum,
 } from '../src/core/local-continuum/index.js';
-import { canonicalProfile, PROFILE_KINDS } from '../src/core/lafea-profile-contract/index.js';
+import {
+  canonicalProfile,
+  defaultProfileFields,
+  PROFILE_KINDS,
+} from '../src/core/lafea-profile-contract/index.js';
 import {
   LAFEA_ANALYSIS_GEOMETRY_EVIDENCE_PROFILE,
   LAFEA_ANALYSIS_GEOMETRY_EVIDENCE_SCHEMA,
@@ -78,6 +82,11 @@ expectCode(
 const compilerTamper = clone(fixture.compiled); compilerTamper.compilerRevision = 'INCOMPATIBLE'; reseal(compilerTamper);
 expectCode(() => executeLafeaContinuumCompiledForParity(compilerTamper), 'LAFEA_CONTINUUM_COMPILED_COMPILER_IDENTITY_INVALID');
 
+// Domain-first TEMPERATURE attachments still provide a temperature delta, not
+// the already-authorized canonical thermalStrain. No governed alpha/reference-
+// temperature material mapping exists on this path yet, so it remains
+// deliberately fail-closed even though direct local-continuum thermalStrain is
+// independently qualified by the kernel tests.
 const temperatureDelta = clone(fixture.compiled);
 temperatureDelta.attachments.push({
   attachmentId: 'TEMP', kind: 'TEMPERATURE', targetType: 'REGION', targetId: 'REGION-1',
@@ -111,6 +120,7 @@ console.log(JSON.stringify({
   legacyCompiledNumericalParity: true,
   deterministicCompiledExecution: true,
   compilerIdentityFailsClosed: true,
+  directCanonicalThermalStrainKernelQualifiedSeparately: true,
   temperatureDeltaFailsClosedWithoutThermalExpansionAuthority: true,
   workbenchParityConsumerIntegrated: true,
   authoritativeRunChanged: false,
@@ -245,14 +255,15 @@ function meshEvidenceFor(sourceHash, domain, geometry, mesh, profile) {
 }
 
 function meshProfile(element, globalTargetSize) {
+  const defaults = defaultProfileFields(PROFILE_KINDS.MESH);
   return canonicalProfile(PROFILE_KINDS.MESH, {
     schema: 'lafea-mesh-profile/v1', profileIdentity: `STAGE12B-${element}`,
-    sourceRevision: '12B.1', semanticHash: undefined,
+    sourceRevision: '12B.2', semanticHash: undefined,
     fields: {
-      continuumElement: element, shellElement: 'CST_DKT_TRI3_THIN_SHELL_V1',
-      globalTargetSize, adjacentSizeRatioMax: 1.5, aspectRatioWarn: 4,
-      aspectRatioBlock: 8, scaledJacobianWarn: 0.25, scaledJacobianBlock: 0.05,
-      adaptiveLevels: 3,
+      ...defaults,
+      continuumElement: element,
+      shellElement: 'CST_DKT_TRI3_THIN_SHELL_V1',
+      globalTargetSize,
     },
   });
 }

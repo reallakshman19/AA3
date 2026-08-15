@@ -7,6 +7,7 @@ import {
   lafeaAnalysisMeshContentHash,
   qualifyLafeaAnalysisMesh,
   requireLafeaAnalysisMeshElementFamily,
+  requireLafeaAnalysisMeshQualifiedQualityPolicy,
 } from './lafea-analysis-mesh-contract.js';
 import { canonicalLafeaSha256 } from './lafea-canonical-sha256.js';
 
@@ -32,6 +33,7 @@ export function createLafeaAnalysisMeshEvidenceV2(value) {
   }
   const stageId = stage(value.stageId);
   const meshProfile = canonicalLafeaAnalysisMeshProfile(value.meshProfile);
+  requireLafeaAnalysisMeshQualifiedQualityPolicy(stageId, meshProfile);
   const mesh = canonicalLafeaAnalysisMesh(value.mesh);
   if (mesh.schema !== LAFEA_ANALYSIS_MESH_SCHEMA) fail('LAFEA_ANALYSIS_MESH_V2_MESH_SCHEMA_INVALID');
   requireLafeaAnalysisMeshElementFamily(stageId, meshProfile, mesh.elements);

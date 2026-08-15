@@ -7,6 +7,7 @@ import { fileURLToPath } from 'node:url';
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const CHECKS = Object.freeze([
+  'scripts/lafea3-qualified-mesh-policy-check.mjs',
   'scripts/lafea-u1-stage-registry-check.mjs',
   'scripts/lafea-u1b-registry-consumer-check.mjs',
   'scripts/lafea-u2a-input-command-check.mjs',

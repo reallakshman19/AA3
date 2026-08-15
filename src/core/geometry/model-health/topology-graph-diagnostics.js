@@ -17,6 +17,25 @@ const DEFAULT_TOLERANCES = Object.freeze({
   coordinateRelative: 1e-9,
 });
 
+/**
+ * CAESAR writes an unset numeric field as -1.0101, not as an empty attribute.
+ *
+ * An unset `DELTA_Y` therefore arrives as the literal number -1.0101 and, read
+ * as a declared offset, fabricates a ~1 m discrepancy against the element's
+ * real endpoints. The same constant and tolerance are already used by
+ * `inputxml-model-health-source.js` (which classifies such fields
+ * `SENTINEL_UNSET`), `inputXmlToCanonicalGeometry.js`, and the restraint
+ * inventory; the closure check below is the one reader that was missing it.
+ */
+const CAESAR_UNSET_SENTINEL = -1.0101;
+const CAESAR_UNSET_SENTINEL_TOLERANCE = 0.001;
+
+function isCaesarUnsetSentinel(value) {
+  return typeof value === 'number'
+    && Number.isFinite(value)
+    && Math.abs(value - CAESAR_UNSET_SENTINEL) < CAESAR_UNSET_SENTINEL_TOLERANCE;
+}
+
 export function diagnoseInputXmlTopologyGraph(sourceBundle, options = {}) {
   const accepted = requireInputXmlModelHealthSource(sourceBundle);
   const geometry = accepted.geometry;
@@ -273,6 +292,13 @@ function declaredDelta(record) {
       value[axis] = null;
       disposition[axis] = 'INVALID';
       reasons.push(`DECLARED_DELTA_${axis.toUpperCase()}_INVALID`);
+      continue;
+    }
+    // An unset axis carries the sentinel rather than being omitted, and means
+    // "no offset on this axis" — the same zero an absent attribute yields.
+    if (isCaesarUnsetSentinel(parsed)) {
+      value[axis] = 0;
+      disposition[axis] = 'SENTINEL_UNSET_DEFAULT_ZERO';
       continue;
     }
     value[axis] = parsed;

@@ -6,12 +6,15 @@
  * `t6-element.js` for the same rationale); reuses only this kernel's own
  * `matrix.js`/`numeric.js`/`constitutive.js` primitives.
  *
- * 3x3 Gauss quadrature (9 points) — exact for the biquadratic-times-
- * biquadratic integrand `B^T D B` arising from serendipity shape functions.
+ * 3x3 Gauss quadrature (9 points) is the standard full-integration rule used
+ * by this Q8 formulation. It is not claimed mathematically exact for an
+ * arbitrary distorted isoparametric mapping: B contains J^-1, so B^T D B detJ
+ * is generally not a fixed-degree biquadratic polynomial. Mapping positivity
+ * and distortion therefore remain independent mesh/formulation qualifications.
  *
- * Same disclosed scope as `t6-element.js`: this is the formulation and its
- * standalone patch-test qualification, not yet wired into the kernel's
- * existing single-T3-path dispatch.
+ * Q8 is wired through `element.js` into the public local-continuum calculation
+ * route. Integration-point stress is retained as numerical recovery authority;
+ * nodal projection, where provided by presentation layers, is display-only.
  */
 import { numericalError } from './errors.js';
 import {

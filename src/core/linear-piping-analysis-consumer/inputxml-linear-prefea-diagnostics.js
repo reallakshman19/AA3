@@ -43,14 +43,31 @@ export function diagnoseInputXmlLinearPreFea(request, options) {
     sourceBundle,
     resolvedOptions.proximityOptions ?? {},
   );
+  // diagnoseInputXmlModelHealthTopology/Proximity above are bare pass-throughs
+  // to the exact same diagnoseInputXmlTopologyGraph/Proximity functions that
+  // diagnoseInputXmlLinearModelHealth calls internally when it isn't handed a
+  // report. Passing the already-computed topology/proximity through here
+  // reuses that work instead of silently recomputing it — before this, the
+  // recompute produced a second, differently-identified copy of every
+  // topology/proximity finding (collectFindings below appends `topology` and
+  // `proximity` directly, then appends `representability.findings`, which
+  // duplicated the same real-world defects under the model-health layer's own
+  // finding-id scheme), so a genuine collinear-overlap or coincidence defect
+  // was counted, and BLOCKed on, twice.
   const representability = (resolvedOptions.diagnoseRepresentability ?? diagnoseInputXmlLinearModelHealth)(
     sourceBundle,
-    { ...(resolvedOptions.representabilityOptions ?? {}), analysisProfileId: accepted.requestedProfileId },
+    {
+      graphReport: topology,
+      proximityReport: proximity,
+      ...(resolvedOptions.representabilityOptions ?? {}),
+      analysisProfileId: accepted.requestedProfileId,
+    },
   );
   const engineeringSanity = (resolvedOptions.diagnoseEngineeringSanity
     ?? diagnoseInputXmlLinearPreFeaEngineeringSanity)(sourceBundle);
   const findings = collectFindings({
     sourceBundle, topology, proximity, representability, engineeringSanity,
+    requestedProfileId: accepted.requestedProfileId,
   });
   const folded = foldReadiness(findings, accepted.requestedCaseIds);
   const capabilities = normalizeCapabilities(representability.capabilities ?? []);

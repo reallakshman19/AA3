@@ -5,14 +5,20 @@ import { consistentBodyForceVector } from './body-force-loads.js';
 import { integrateEdgeLoad } from './edge-traction-loads.js';
 import { canonicalNumber } from './numeric.js';
 import { pressureConsistentForces } from './pressure-loads.js';
-import { thermalEquivalentNodalForces } from './temperature-strain-loads.js';
+import {
+  reducedThermalStrainVector,
+  thermalEquivalentNodalForces,
+  thermalInitialStrainEnergy,
+} from './temperature-strain-loads.js';
 
 export function assembleLoadCase(model, mesh, elementEvidence, loadCase) {
   const index = new Map(mesh.dofOrdering.map((id, i) => [id, i]));
   const forceVector = Array(mesh.dofOrdering.length).fill(0);
+  const thermalForceVector = Array(mesh.dofOrdering.length).fill(0);
   const contributions = [];
   const nodes = new Map(model.nodes.map((row) => [row.nodeId, row]));
   const elements = new Map(model.elements.map((row) => [row.elementId, row]));
+  const materials = new Map(model.materials.map((row) => [row.materialId, row]));
   const evidenceById = new Map(elementEvidence.map((row) => [row.elementId, row]));
   const boundaryByKey = new Map(mesh.boundaryEdges.map((row) => [row.edgeKey, row]));
 
@@ -26,9 +32,20 @@ export function assembleLoadCase(model, mesh, elementEvidence, loadCase) {
   loadCase.bodyForces.forEach((bodyForce) => (
     addBodyForce(forceVector, index, bodyForce, nodes, elements.get(bodyForce.elementId), contributions)
   ));
-  loadCase.temperatureLoads.forEach((temperatureLoad) => (
-    addTemperatureLoad(forceVector, index, temperatureLoad, evidenceById.get(temperatureLoad.elementId), contributions)
-  ));
+  let thermalInitialEnergy = 0;
+  loadCase.temperatureLoads.forEach((temperatureLoad) => {
+    const element = elements.get(temperatureLoad.elementId);
+    thermalInitialEnergy += addTemperatureLoad(
+      forceVector,
+      thermalForceVector,
+      index,
+      temperatureLoad,
+      evidenceById.get(temperatureLoad.elementId),
+      model.formulation,
+      materials.get(element.materialId),
+      contributions,
+    );
+  });
 
   const formulaIds = [];
   if (loadCase.nodalForces.length) formulaIds.push(FORMULA_IDS.NODAL_FORCE);
@@ -42,6 +59,8 @@ export function assembleLoadCase(model, mesh, elementEvidence, loadCase) {
     loadCaseId: loadCase.loadCaseId,
     loadCaseInputSemanticHash: semanticHash(loadCase),
     forceVector: forceVector.map((value) => canonicalNumber(value, 'assembled force')),
+    thermalForceVector: thermalForceVector.map((value) => canonicalNumber(value, 'assembled thermal force')),
+    thermalInitialStrainEnergy: canonicalNumber(thermalInitialEnergy, 'thermal initial strain energy total'),
     contributions: contributions.sort((a, b) => (a.identity < b.identity ? -1 : a.identity > b.identity ? 1 : 0)),
     imposedDisplacements: loadCase.imposedDisplacements,
     temperatureLoads: loadCase.temperatureLoads,
@@ -96,14 +115,45 @@ function addBodyForce(vector, index, bodyForce, nodes, element, contributions) {
   });
 }
 
-function addTemperatureLoad(vector, index, temperatureLoad, evidence, contributions) {
-  const forces = thermalEquivalentNodalForces(evidence, temperatureLoad.thermalStrain);
+function addTemperatureLoad(
+  vector,
+  thermalVector,
+  index,
+  temperatureLoad,
+  evidence,
+  formulation,
+  material,
+  contributions,
+) {
+  const forces = thermalEquivalentNodalForces(
+    evidence,
+    temperatureLoad.thermalStrain,
+    formulation,
+    material,
+  );
   applyEdgeForces(vector, index, evidence.nodeIds, forces);
+  applyEdgeForces(thermalVector, index, evidence.nodeIds, forces);
+  const initialEnergy = thermalInitialStrainEnergy(
+    evidence,
+    temperatureLoad.thermalStrain,
+    formulation,
+    material,
+  );
   contributions.push({
     type: 'ELEMENT_THERMAL_STRAIN', identity: temperatureLoad.temperatureLoadId, elementId: temperatureLoad.elementId,
-    nodeIds: evidence.nodeIds, thermalStrain: temperatureLoad.thermalStrain, forcePerNode: forces,
-    sourceReference: temperatureLoad.sourceReference, formulaId: FORMULA_IDS.THERMAL_STRAIN_LOAD,
+    nodeIds: evidence.nodeIds,
+    thermalStrain: temperatureLoad.thermalStrain,
+    reducedThermalStrain: reducedThermalStrainVector(
+      formulation,
+      material,
+      temperatureLoad.thermalStrain,
+    ),
+    thermalInitialStrainEnergy: initialEnergy,
+    forcePerNode: forces,
+    sourceReference: temperatureLoad.sourceReference,
+    formulaId: FORMULA_IDS.THERMAL_STRAIN_LOAD,
   });
+  return initialEnergy;
 }
 
 function applyEdgeForces(vector, index, nodeIds, forces) {

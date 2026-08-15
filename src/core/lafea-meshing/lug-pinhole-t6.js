@@ -250,7 +250,29 @@ function midpointNodeId(state, firstId, secondId) {
   return nodeId;
 }
 
-function midpointCoordinates(spec, first, second) {
+function midpointCoordinates(spec, first, second, firstMeta, secondMeta) {
+  if (firstMeta?.kind === 'CORNER' && secondMeta?.kind === 'CORNER'
+    && firstMeta.ring === secondMeta.ring
+    && sectorsAdjacent(
+      firstMeta.sector,
+      secondMeta.sector,
+      spec.circumferentialDivisions,
+    )) {
+    const radius = firstMeta.radius;
+    const ux = (first.x - spec.center.x) / radius
+      + (second.x - spec.center.x) / radius;
+    const uy = (first.y - spec.center.y) / radius
+      + (second.y - spec.center.y) / radius;
+    const norm = Math.hypot(ux, uy);
+    if (!(norm > 0)) {
+      throw meshError('LUG_PINHOLE_T6_CIRCUMFERENTIAL_MIDPOINT_INVALID');
+    }
+    return {
+      x: spec.center.x + radius * ux / norm,
+      y: spec.center.y + radius * uy / norm,
+      z: 0,
+    };
+  }
   return {
     x: (first.x + second.x) / 2,
     y: (first.y + second.y) / 2,

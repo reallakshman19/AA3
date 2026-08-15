@@ -45,6 +45,46 @@ const PURE_LAFEA_WORKBENCH_GOVERNANCE_MODULES = new Set([
  * imports. The narrow workspace exceptions below contain only stateless pure
  * contract/projection helpers and own no runtime singleton.
  */
+/**
+ * The `mdb-reader` stack, reached only by dynamic import when a user selects
+ * an .accdb file. Listed explicitly so it stays out of the eager vendor chunk.
+ */
+const ACCDB_READER_PACKAGE_PATHS = Object.freeze([
+  '/node_modules/mdb-reader/',
+  '/node_modules/buffer/',
+  '/node_modules/pako/',
+  '/node_modules/browserify-aes/',
+  '/node_modules/create-hash/',
+  '/node_modules/cipher-base/',
+  '/node_modules/evp_bytestokey/',
+  '/node_modules/md5.js/',
+  '/node_modules/ripemd160/',
+  '/node_modules/sha.js/',
+  '/node_modules/hash-base/',
+  '/node_modules/readable-stream/',
+  '/node_modules/base64-js/',
+  '/node_modules/ieee754/',
+  '/node_modules/safe-buffer/',
+  '/node_modules/inherits/',
+]);
+
+/**
+ * Style leaves: each exports only a static CSS string, or a stateless
+ * installer that builds one `<style>` element from one. None holds
+ * module-level mutable state, none is imported by another of them, and
+ * nothing imports a controller, store or view from them.
+ */
+const STYLE_LEAF_MODULES = Object.freeze([
+  '/src/workspace/workspace-shell-styles.js',
+  '/src/workspace/lafea-workbench-styles.js',
+  '/src/workspace/lfea-workbench-styles.js',
+  '/src/workspace/lafea-guided-workbench-styles.js',
+  '/src/workspace/viewport-productivity/topology-edit-table-styles.js',
+  '/src/workspace/viewport-productivity/topology-edit-object-tree-styles.js',
+  '/src/workspace/viewport-productivity/topology-edit-professional-operation-styles.js',
+  '/src/workspace/viewport-productivity/topology-edit-authoring-styles.js',
+]);
+
 export function manualChunk(id) {
   const source = id.replaceAll('\\', '/');
   if (source.includes('vite/preload-helper')) return 'runtime';
@@ -53,6 +93,12 @@ export function manualChunk(id) {
   // Keep xlsx on Rollup's existing dynamic-import boundary; it is already a
   // large isolated chunk and must not be folded into the generic leaf vendor.
   if (source.includes('/node_modules/xlsx/')) return undefined;
+  // Same treatment for the ACCDB reader stack. It is reached only through the
+  // dynamic import in caesar-accdb-reader-core.js, i.e. only once a user
+  // actually picks an .accdb file. Folding it into the eager `vendor` chunk
+  // would ship ~230 KB of Access parsing to every page load; leaving it on
+  // Rollup's dynamic boundary keeps it lazy.
+  if (ACCDB_READER_PACKAGE_PATHS.some((path) => source.includes(path))) return undefined;
   // Dependency-only partition. Workspace modules remain graph-owned below so
   // this cannot create controller/store evaluation-order cycles.
   if (source.includes('/node_modules/')) return 'vendor';
@@ -64,13 +110,13 @@ export function manualChunk(id) {
   if (source.includes('/src/core/local-trunnion-footprint/')) return 'core-local-trunnion-footprint';
   if (source.includes('/src/core/linear-fea-')) return 'core-linear-fea';
   if (source.includes('/src/core/linear-piping-')) return 'core-linear-piping';
-  if (source.includes('/src/core/support-')) return 'core-support-engineering';
+  if (source.includes('/src/core/support-')) return 'core-application';
   if (source.includes('/src/core/vertical-beam-solver/')
-    || source.includes('/src/core/centerline-beam-fea/')) return 'core-beam-analysis';
+    || source.includes('/src/core/centerline-beam-fea/')) return 'core-application';
   if (source.includes('/src/core/first-cut-load-estimation/')) return 'core-load-estimation';
-  if (source.includes('/src/core/model-calculation-package/')) return 'core-model-calculation';
+  if (source.includes('/src/core/model-calculation-package/')) return 'core-application';
   if (source.includes('/src/core/piping-topology/')
-    || source.includes('/src/core/shared-piping-model/')) return 'core-piping-model';
+    || source.includes('/src/core/shared-piping-model/')) return 'core-application';
   if (source.includes('/src/core/fea-benchmarks/')) return 'core-fea-benchmarks';
   if (source.includes('/src/core/')) return 'core-application';
   if (source.includes('/src/calc-workspace/cii-standalone-port/ui-adapted/')) {
@@ -79,7 +125,7 @@ export function manualChunk(id) {
   if (source.includes('/src/calc-workspace/cii-standalone-port/')) {
     return 'cii-standalone-core';
   }
-  if (source.includes('/src/calc-workspace/')) return 'calculation-workspaces';
+  if (source.includes('/src/calc-workspace/')) return 'cii-standalone-core';
   if (source.includes('/src/vendors/')) return 'vendor-integrations';
   if (source.includes('/src/utils/') || source.includes('/src/mocks/')) return 'application-support';
   // These exact paths are stateless LAFEA meshing contracts/producers. Keeping
@@ -87,7 +133,7 @@ export function manualChunk(id) {
   // singleton-bearing workspace modules into a forced chunk.
   if ([...PURE_LAFEA_MESHING_WORKSPACE_MODULES]
     .some((modulePath) => source.endsWith(modulePath))) {
-    return 'lafea-meshing-contracts';
+    return 'lafea-workbench-governance';
   }
   // This helper owns no controller/store/singleton state. Splitting its I/O and
   // style dependencies gives the graph a safe leaf boundary without forcing
@@ -162,8 +208,23 @@ export function manualChunk(id) {
   // literal, no top-level state, no DOM access, no singleton. Its only
   // consumer (workspace-layout.js) calls it and inserts the returned string,
   // so splitting it changes nothing about evaluation order.
-  if (source.endsWith('/src/workspace/workspace-shell-styles.js')) {
+  // Style leaves (see STYLE_LEAF_MODULES). Grouping them cannot reorder
+  // evaluation of a stateful workspace controller, and it keeps the entry
+  // chunk under the ceiling asserted by scripts/bundle-chunk-check.mjs.
+  if (STYLE_LEAF_MODULES.some((modulePath) => source.endsWith(modulePath))) {
     return 'application-shell-css';
+  }
+  // Largest module in the entry chunk, and a genuine leaf: no DOM, no
+  // module-level mutable state, no controller/store/view import.
+  //
+  // Splitting it was UNSAFE until the cyclic core-* chunks above were
+  // collapsed — with those cycles present the built app died on boot with
+  // "Cannot access '<binding>' before initialization" and rendered nothing,
+  // while bundle-chunk-check.mjs still reported PASS. Chunk SIZE is not
+  // evaluation ORDER: always verify a real browser boot after changing
+  // anything in this function.
+  if (source.endsWith('/src/workspace/engineering-loads/empirical-beam-contact-runtime.js')) {
+    return 'engineering-loads-beam-contact-runtime';
   }
   // Rollup must own the complete stateful workspace graph so evaluation order
   // follows static dependency analysis rather than filename-based partitions.

@@ -1,4 +1,8 @@
-import { PROFILE_KINDS, canonicalProfile } from '../src/core/lafea-profile-contract/index.js';
+import {
+  PROFILE_KINDS,
+  canonicalProfile,
+  defaultProfileFields,
+} from '../src/core/lafea-profile-contract/index.js';
 import {
   LAFEA_ANALYSIS_GEOMETRY_ORIENTATION_POLICY,
   LAFEA_ANALYSIS_GEOMETRY_SCHEMA,
@@ -36,20 +40,16 @@ export function mp2Attachment(attachmentId, kind, targetType, targetId, physical
   return { attachmentId, kind, targetType, targetId, physicalCaseIds, payload };
 }
 export function mp2MeshProfile(continuumElement) {
+  const defaults = defaultProfileFields(PROFILE_KINDS.MESH);
   return canonicalProfile(PROFILE_KINDS.MESH, {
     schema: 'lafea-mesh-profile/v1',
     profileIdentity: `MP2-${continuumElement}`,
-    sourceRevision: 'TEST-1',
+    sourceRevision: 'TEST-2',
     fields: {
+      ...defaults,
       continuumElement,
       shellElement: 'CST_DKT_TRI3_THIN_SHELL_V1',
       globalTargetSize: 5,
-      adjacentSizeRatioMax: 1.5,
-      aspectRatioWarn: 3,
-      aspectRatioBlock: 6,
-      scaledJacobianWarn: 0.3,
-      scaledJacobianBlock: 0.1,
-      adaptiveLevels: 3,
     },
     semanticHash: undefined,
   });

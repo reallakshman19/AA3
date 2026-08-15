@@ -1,5 +1,6 @@
 /** Guided content composition for the standalone LAFEA workbench. */
 import { card, element } from './lafea-workbench-dom.js';
+import { PROFILE_KINDS, defaultProfileFields } from '../core/lafea-profile-contract/index.js';
 import { semanticHash } from '../core/shared-primitives/canonical-json.js';
 import { renderLafeaEvidence } from './lafea-results-view.js';
 import { renderDocumentTableEditor } from './lafea-document-table.js';
@@ -15,6 +16,10 @@ import { renderLafeaEngineeringOverview } from './lafea-engineering-overview.js'
 import { lafeaWorkbenchReasonLabels } from './lafea-workbench-reason-labels.js';
 import { renderLafeaNcPlaceholderPanel } from './lafea-nc-placeholder-panel.js';
 import { focusLafeaRetainedMeshElement } from './lafea-canvas/retained-mesh-overlay.js';
+
+const QUICK_MESH_PROFILE_SOURCE_REVISION = 'lafea-workbench-quick-mesh-profile/v2';
+const QUICK_MESH_TARGET_LENGTH = 15;
+const SHELL_ELEMENT_PLACEHOLDER = 'CST_DKT_TRI3_THIN_SHELL_V1';
 
 export function renderLafeaWorkbenchContent(root, state, stage, options) {
   const workflow = buildLafeaGuidedWorkflow(state);
@@ -43,7 +48,14 @@ export function renderLafeaWorkbenchContent(root, state, stage, options) {
   );
   engineeringOverview.dataset.guidedTarget = 'engineering-overview';
 
-  const nextActionBanner = renderNextActionBanner(root, stage, discretization, options);
+  const nextActionBanner = renderNextActionBanner(
+    root,
+    stage,
+    discretization,
+    workflow,
+    options,
+    shell,
+  );
 
   const sourceCard = card(root, `Model inputs`);
   sourceCard.section.dataset.guidedTarget = 'source';
@@ -232,8 +244,7 @@ function viewportMode(root, label, value, active) {
   return item;
 }
 
-function renderNextActionBanner(root, stage, discretization, options) {
-  const doc = root.ownerDocument;
+function renderNextActionBanner(root, stage, discretization, workflow, options, shell) {
   const banner = element(root, 'div', 'lafea-next-action-banner');
   banner.dataset.role = 'lafea-next-action-banner';
   banner.style.padding = '16px';
@@ -252,8 +263,8 @@ function renderNextActionBanner(root, stage, discretization, options) {
   }
 
   if (!discretization.evidence.present) {
-    banner.append(element(root, 'strong', null, 'Step 2: Mesh Generation Required'));
-    const btn = element(root, 'button', 'lafea-next-action-banner__button', 'Generate Mesh (T6 Quadratic)');
+    banner.append(element(root, 'strong', null, 'Step 2: Mesh generation required'));
+    const btn = element(root, 'button', 'lafea-next-action-banner__button', 'Generate qualified mesh');
     btn.type = 'button';
     btn.style.padding = '8px 16px';
     btn.style.background = '#1976d2';
@@ -262,48 +273,49 @@ function renderNextActionBanner(root, stage, discretization, options) {
     btn.style.borderRadius = '4px';
     btn.style.cursor = 'pointer';
     btn.style.fontWeight = 'bold';
+    btn.disabled = !discretization.generation.producerQualified;
+    btn.title = btn.disabled
+      ? 'No qualified automatic mesh producer is available for this stage.'
+      : 'Bind the source-controlled qualified mesh profile and generate from it.';
     btn.onclick = () => {
-      const profileEnvelope = {
-        schema: 'lafea-mesh-profile/v1',
-        profileIdentity: 'LAFEA3_UI_T6_QUADRATIC_TRIANGLE_MESH_PROFILE_V1',
-        sourceRevision: 'lafea-discretization-ui-mesh-profile/v1',
-        fields: {
-          continuumElement: 'T6_QUADRATIC_TRIANGLE',
-          shellElement: 'CST_DKT_TRI3_THIN_SHELL_V1',
-          globalTargetSize: 15,
-          adjacentSizeRatioMax: 2.5,
-          aspectRatioWarn: 5,
-          aspectRatioBlock: 15,
-          scaledJacobianWarn: 0.5,
-          scaledJacobianBlock: 0.1,
-          adaptiveLevels: 3,
-        },
-      };
-      profileEnvelope.semanticHash = semanticHash(profileEnvelope);
+      const family = preferredQuickMeshFamily(discretization.generation.elementFamilies);
+      if (!family) return;
+      const profileEnvelope = quickMeshProfile(family);
       options.handlers.onBindMeshProfile?.(profileEnvelope);
-      setTimeout(() => options.handlers.onGenerateAnalysisMesh?.(), 50);
+      options.handlers.onGenerateMesh?.({});
     };
     banner.append(btn);
     return banner;
   }
 
   if (stage.execution?.status !== 'QUALIFIED') {
-    banner.style.background = '#e8f5e9';
-    banner.style.border = '1px solid #a5d6a7';
-    banner.style.color = '#1b5e20';
-    banner.append(element(root, 'strong', null, 'Step 3: Ready to Solve'));
-    const btn = element(root, 'button', 'lafea-next-action-banner__button', 'Run Analysis & View Contours');
+    const runStep = workflow.steps.find((step) => step.stepId === 'RUN');
+    const eligible = workflow.runEligibleByCurrentUiGate === true
+      && discretization.actions.canRun === true
+      && runStep?.status === 'READY';
+    banner.style.background = eligible ? '#e8f5e9' : '#fff8e1';
+    banner.style.border = eligible ? '1px solid #a5d6a7' : '1px solid #ffe082';
+    banner.style.color = eligible ? '#1b5e20' : '#6d4c00';
+    banner.append(element(
+      root,
+      'strong',
+      null,
+      eligible ? 'Step 3: Ready to solve' : 'Step 3: Solve checks pending',
+    ));
+    const btn = element(root, 'button', 'lafea-next-action-banner__button', 'Run analysis');
     btn.type = 'button';
     btn.style.padding = '8px 16px';
-    btn.style.background = '#2e7d32';
+    btn.style.background = eligible ? '#2e7d32' : '#9e9e9e';
     btn.style.color = 'white';
     btn.style.border = 'none';
     btn.style.borderRadius = '4px';
-    btn.style.cursor = 'pointer';
+    btn.style.cursor = eligible ? 'pointer' : 'not-allowed';
     btn.style.fontWeight = 'bold';
-    btn.onclick = () => {
-      options.handlers.onRun?.();
-    };
+    btn.disabled = !eligible;
+    btn.title = eligible
+      ? 'Run the canonically authorized registered stage calculation.'
+      : `Run is blocked until current authorization and mesh gates pass${runStep?.reasons?.length ? `: ${lafeaWorkbenchReasonLabels(runStep.reasons).join(' • ')}` : '.'}`;
+    btn.onclick = () => options.handlers.onRun?.();
     banner.append(btn);
     return banner;
   }
@@ -311,24 +323,43 @@ function renderNextActionBanner(root, stage, discretization, options) {
   banner.style.background = '#f3e5f5';
   banner.style.border = '1px solid #ce93d8';
   banner.style.color = '#4a148c';
-  banner.append(element(root, 'strong', null, 'Analysis Complete'));
-  const btnGroup = element(root, 'div', 'lafea-next-action-banner__group');
-  btnGroup.style.display = 'flex';
-  btnGroup.style.gap = '8px';
-  ['Von Mises Stress', 'Displacement', 'Deformed Shape'].forEach(label => {
-    const btn = element(root, 'button', 'lafea-next-action-banner__button', label);
-    btn.type = 'button';
-    btn.style.padding = '6px 12px';
-    btn.style.background = '#7b1fa2';
-    btn.style.color = 'white';
-    btn.style.border = 'none';
-    btn.style.borderRadius = '4px';
-    btn.style.cursor = 'pointer';
-    btnGroup.append(btn);
-  });
-  banner.append(btnGroup);
+  banner.append(element(root, 'strong', null, 'Analysis result retained'));
+  const review = element(root, 'button', 'lafea-next-action-banner__button', 'Review retained results');
+  review.type = 'button';
+  review.style.padding = '6px 12px';
+  review.style.background = '#7b1fa2';
+  review.style.color = 'white';
+  review.style.border = 'none';
+  review.style.borderRadius = '4px';
+  review.style.cursor = 'pointer';
+  review.title = 'Review retained solver/recovery evidence. Display contours are not substituted for numerical authority.';
+  review.onclick = () => navigateTo(shell, 'results');
+  banner.append(review);
 
   return banner;
+}
+
+function quickMeshProfile(family) {
+  const defaults = defaultProfileFields(PROFILE_KINDS.MESH);
+  const profileEnvelope = {
+    schema: 'lafea-mesh-profile/v1',
+    profileIdentity: `LAFEA3_QUICK_${family}_QUALIFIED_PROFILE_V2`,
+    sourceRevision: QUICK_MESH_PROFILE_SOURCE_REVISION,
+    fields: {
+      ...defaults,
+      continuumElement: family,
+      shellElement: SHELL_ELEMENT_PLACEHOLDER,
+      globalTargetSize: QUICK_MESH_TARGET_LENGTH,
+    },
+  };
+  profileEnvelope.semanticHash = semanticHash(profileEnvelope);
+  return profileEnvelope;
+}
+
+function preferredQuickMeshFamily(families) {
+  if (!Array.isArray(families) || !families.length) return null;
+  if (families.includes('T6_QUADRATIC_TRIANGLE')) return 'T6_QUADRATIC_TRIANGLE';
+  return families[0];
 }
 
 function validReusableViewport(value) {

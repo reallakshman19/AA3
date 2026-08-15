@@ -1,6 +1,10 @@
 #!/usr/bin/env node
 import assert from 'node:assert/strict';
-import { canonicalProfile, PROFILE_KINDS } from '../src/core/lafea-profile-contract/index.js';
+import {
+  canonicalProfile,
+  defaultProfileFields,
+  PROFILE_KINDS,
+} from '../src/core/lafea-profile-contract/index.js';
 import {
   LAFEA_ANALYSIS_GEOMETRY_EVIDENCE_PROFILE,
   LAFEA_ANALYSIS_GEOMETRY_EVIDENCE_SCHEMA,
@@ -260,14 +264,15 @@ function renamedT6Mesh(nonPlanarZ = 0) {
 }
 
 function meshProfile(element, globalTargetSize) {
+  const defaults = defaultProfileFields(PROFILE_KINDS.MESH);
   return canonicalProfile(PROFILE_KINDS.MESH, {
     schema: 'lafea-mesh-profile/v1', profileIdentity: `STAGE12-${element}`,
-    sourceRevision: '12B.1', semanticHash: undefined,
+    sourceRevision: '12B.2', semanticHash: undefined,
     fields: {
-      continuumElement: element, shellElement: 'CST_DKT_TRI3_THIN_SHELL_V1',
-      globalTargetSize, adjacentSizeRatioMax: 1.5, aspectRatioWarn: 4,
-      aspectRatioBlock: 8, scaledJacobianWarn: 0.25, scaledJacobianBlock: 0.05,
-      adaptiveLevels: 3,
+      ...defaults,
+      continuumElement: element,
+      shellElement: 'CST_DKT_TRI3_THIN_SHELL_V1',
+      globalTargetSize,
     },
   });
 }

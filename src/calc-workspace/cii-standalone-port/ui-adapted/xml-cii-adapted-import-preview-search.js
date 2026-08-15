@@ -1,5 +1,5 @@
+import { resolveLineListDensity } from '../core/line-density-resolver.js';
 import { normalizeLineListRow } from '../core/linelist-mapping.js';
-import { computeRowOperatingFluidDensity } from '../core/line-density-resolver.js';
 import { MASTER_FIELDS } from './xml-cii-adapted-fields-config.js';
 
 function text(value, fallback = '') {
@@ -30,13 +30,14 @@ function normalizePreviewSearchRow(row, masterKey, state, index) {
   const normalized = row?.lineNoKey || row?.lineNo || row?.lineKey || row?.lineSeqNo
     ? row : normalizeLineListRow(row, fieldMap, index);
   const raw = normalized?._raw || row;
-  const opDensity = computeRowOperatingFluidDensity(normalized || raw, fieldMap);
+  const densityInfo = resolveLineListDensity({ ...normalized, _raw: raw }, null, fieldMap);
   return {
     ...normalized,
     lineKey1: text(normalized?.lineKey1) || readMappedValue(raw, [fieldMap.lineKey1, 'lineKey1', 'Service', 'SERVICE']),
     lineKey2: text(normalized?.lineKey2) || readMappedValue(raw, [fieldMap.lineKey2, 'lineKey2', 'Line number', 'Line Number']),
     lineSeqNo: text(normalized?.lineSeqNo) || readMappedValue(raw, [fieldMap.lineSeqNo, 'lineSeqNo', 'Line number', 'Line Number']),
-    operatingFluidDensity: opDensity,
+    operatingFluidDensity: densityInfo.value || '',
+    densitySource: densityInfo.source || 'none',
   };
 }
 

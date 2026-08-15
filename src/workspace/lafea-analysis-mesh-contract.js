@@ -5,6 +5,7 @@
  * mesh, execute an engine or create lifecycle evidence.
  */
 import {
+  LAFEA3_QUALIFIED_MESH_QUALITY_POLICY,
   PROFILE_KINDS,
   canonicalProfile,
   reconstructProfileSemanticHash,
@@ -53,6 +54,35 @@ export function canonicalLafeaAnalysisMeshProfile(value) {
     throw meshContractError('LAFEA_ANALYSIS_MESH_PROFILE_HASH_INVALID');
   }
   return profile;
+}
+
+/**
+ * LAFEA.3 production mesh acceptance may use a stricter user profile, but a
+ * user/API caller cannot weaken the explicit source-controlled qualified
+ * quality policy and still receive stage-authorized PASS evidence. Generic
+ * profile defaults are deliberately not used as qualification authority.
+ */
+export function requireLafeaAnalysisMeshQualifiedQualityPolicy(stageId, meshProfile) {
+  if (stageId !== 'LAFEA.3') return meshProfile;
+  const policy = LAFEA3_QUALIFIED_MESH_QUALITY_POLICY;
+  const baseline = policy.fields;
+  const fields = meshProfile?.fields;
+  if (!fields) throw meshContractError('LAFEA_ANALYSIS_MESH_PROFILE_REQUIRED');
+  const weakened = (
+    fields.adjacentSizeRatioMax > baseline.adjacentSizeRatioMax
+    || fields.aspectRatioWarn > baseline.aspectRatioWarn
+    || fields.aspectRatioBlock > baseline.aspectRatioBlock
+    || fields.scaledJacobianWarn < baseline.scaledJacobianWarn
+    || fields.scaledJacobianBlock < baseline.scaledJacobianBlock
+    || fields.adaptiveLevels < baseline.adaptiveLevelsMinimum
+  );
+  if (weakened) {
+    throw meshContractError(
+      'LAFEA3_MESH_QUALITY_POLICY_WEAKENING_NOT_QUALIFIED',
+      `LAFEA.3 mesh quality settings may tighten but may not weaken ${policy.policyId}@${policy.revision}.`,
+    );
+  }
+  return meshProfile;
 }
 
 export function canonicalLafeaAnalysisMesh(value) {

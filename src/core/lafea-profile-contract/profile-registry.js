@@ -1,13 +1,19 @@
 import { canonicalProfile } from './schema.js';
 import { PROFILE_KINDS, PROFILE_SCHEMA_IDS } from './constants.js';
+import { LAFEA3_QUALIFIED_MESH_QUALITY_POLICY } from './stage-qualified-policies.js';
 
 /**
  * Visible, versioned, exportable default field values — spec §15.1: "Defaults
  * are visible, versioned and exportable; no browser-local hidden defaults."
- * These are the spec's own illustrative configuration values (§15), carried
- * here as source-controlled code, not a runtime/browser-local default.
+ * Generic defaults remain configuration defaults, not qualification evidence.
+ * The mesh-quality threshold defaults are deliberately aligned with the
+ * explicit LAFEA.3 qualified policy so a newly-created profile starts inside
+ * that stage's authority envelope without making the defaults themselves the
+ * source of qualification authority.
  */
 export const DEFAULT_PROFILE_SOURCE_REVISION = 'lafea-profile-defaults/v1';
+
+const LAFEA3_MESH_POLICY = LAFEA3_QUALIFIED_MESH_QUALITY_POLICY.fields;
 
 const DEFAULT_FIELDS = Object.freeze({
   [PROFILE_KINDS.GEOMETRY]: Object.freeze({
@@ -19,12 +25,12 @@ const DEFAULT_FIELDS = Object.freeze({
     continuumElement: 'T6_Q8_MIXED_V1',
     shellElement: 'MITC4_WITH_MITC3_TRANSITION_V1',
     globalTargetSize: 0.01,
-    adjacentSizeRatioMax: 1.5,
-    aspectRatioWarn: 3.0,
-    aspectRatioBlock: 10.0,
-    scaledJacobianWarn: 0.5,
-    scaledJacobianBlock: 0.2,
-    adaptiveLevels: 3,
+    adjacentSizeRatioMax: LAFEA3_MESH_POLICY.adjacentSizeRatioMax,
+    aspectRatioWarn: LAFEA3_MESH_POLICY.aspectRatioWarn,
+    aspectRatioBlock: LAFEA3_MESH_POLICY.aspectRatioBlock,
+    scaledJacobianWarn: LAFEA3_MESH_POLICY.scaledJacobianWarn,
+    scaledJacobianBlock: LAFEA3_MESH_POLICY.scaledJacobianBlock,
+    adaptiveLevels: LAFEA3_MESH_POLICY.adaptiveLevelsMinimum,
   }),
   [PROFILE_KINDS.SOLVER]: Object.freeze({
     backend: 'SPARSE_CHOLESKY_LDLT_V1',

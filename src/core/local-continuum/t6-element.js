@@ -6,20 +6,17 @@
  * `local-continuum`, preserving the existing "does not import element-fea"
  * kernel-isolation invariant) — this module reuses only this kernel's own
  * generic linear-algebra (`matrix.js`), numeric (`numeric.js`) and
- * constitutive (`constitutive.js`) primitives, the same ones the existing
- * T3/CST path already depends on.
+ * constitutive (`constitutive.js`) primitives, the same ones the T3/CST path
+ * depends on.
  *
  * Node order: corners 1(0,0), 2(1,0), 3(0,1) in natural (area) coordinates,
  * CCW; midsides 4(1-2), 5(2-3), 6(3-1). DOF order per node: UX, UY.
  *
- * Disclosed scope for this pass: this module provides the T6 stiffness
- * formulation and its patch-test qualification, verified standalone against
- * spec §17.4's 1e-10 relative tolerance. Wiring it into
- * `local-continuum`'s existing single-T3-path `canonical-model.js` /
- * `element.js` dispatch / `calculate.js` pipeline (so a T6 mesh flows
- * end-to-end through the kernel's public `calculateLocalContinuum` API) is
- * explicit next-increment follow-up, not done in this file — the existing,
- * already-qualified T3 dispatch is untouched.
+ * T6 is wired through `element.js` into the public local-continuum calculation
+ * route and is qualified by rigid-body/affine patch checks. Curved physical
+ * midside coordinates are valid isoparametric geometry; mapping admissibility
+ * is governed by Jacobian qualification, not by forcing midsides to chord
+ * midpoints. Integration-point stress remains the numerical recovery authority.
  */
 import { numericalError } from './errors.js';
 import {

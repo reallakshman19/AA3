@@ -1,21 +1,13 @@
 import { semanticHash } from '../shared-piping-model/canonical-json.js';
 import {
-  STRICT_INPUTXML_LINEAR_STATIC_PROFILE as STRICT,
-  DISCLOSED_GENERIC_ANALYZER_APPROXIMATION_PROFILE as APPROXIMATE,
-  exactDisposition,
-  approximationDisposition,
-  unsupportedDisposition,
-  codeOnlyDisposition,
-  invalidDisposition,
-  inactiveDisposition,
+  STRICT_INPUTXML_LINEAR_STATIC_PROFILE as STRICT, DISCLOSED_GENERIC_ANALYZER_APPROXIMATION_PROFILE as APPROXIMATE,
+  exactDisposition, approximationDisposition, unsupportedDisposition, codeOnlyDisposition,
+  invalidDisposition, inactiveDisposition,
 } from './inputxml-model-health-profile.js';
 import {
-  NUMERIC_TOLERANCE,
-  classifyRestraint,
-  restraintDispositions,
-  numericAttribute,
-  normalizedNodeAttribute,
+  NUMERIC_TOLERANCE, classifyRestraint, restraintDispositions, numericAttribute, normalizedNodeAttribute,
 } from './inputxml-feature-inventory-restraints.js';
+import { isSifSlotUnfilled, isForcesMomentsSlotUnfilled } from './inputxml-feature-inventory-slots.js';
 
 const SIF_TEE_CODES = new Set([3, 5]);
 
@@ -94,6 +86,7 @@ function childInventory({ element, feature, segment, componentInventoryId }) {
     });
   }
   if (kind === 'SIF') {
+    if (isSifSlotUnfilled(feature.rawAttributes)) return unfilledSlotRow(common, kind);
     const typeCode = numericAttribute(feature.rawAttributes, ['TYPE']);
     return inventoryRow({
       ...common,
@@ -120,6 +113,7 @@ function childInventory({ element, feature, segment, componentInventoryId }) {
     });
   }
   if (kind === 'FORCES_MOMENTS') {
+    if (isForcesMomentsSlotUnfilled(feature.rawAttributes)) return unfilledSlotRow(common, kind);
     return inventoryRow({
       ...common,
       classification: { kind },
@@ -240,6 +234,12 @@ function componentDispositions(componentKind, canonicalStatus) {
 function childNodeIds(attributes, element) {
   const nodeId = normalizedNodeAttribute(attributes, ['NODE', 'NODE_NUM']);
   return [nodeId, element.fromNodeId, element.toNodeId];
+}
+
+function unfilledSlotRow(common, kind) {
+  return inventoryRow({
+    ...common, active: false, classification: { kind, unfilledSlot: true }, dispositions: both(inactiveDisposition()),
+  });
 }
 
 function inventoryRow(value) {

@@ -1,0 +1,237 @@
+{
+  "schema": "lafea-b02-gate0-contracts/v1",
+  "issue": 1112,
+  "stageId": "LAFEA.3",
+  "scope": "SMALL_STRAIN_LINEAR_2D_CONTINUUM",
+  "authority": {
+    "releaseAuthorityGrantedByProgram": false,
+    "temperatureAuthorityGrantedByProgram": false,
+    "nonlinearAuthority": false,
+    "contactAuthority": false,
+    "shellAuthority": false
+  },
+  "stateModel": {
+    "computationalState": [
+      "EDITED",
+      "READY",
+      "MESHED",
+      "RUNNING",
+      "CURRENT_RESULT",
+      "STALE_RESULT",
+      "REJECTED"
+    ],
+    "qualificationState": [
+      "NOT_EVALUATED",
+      "FAIL",
+      "PASS"
+    ],
+    "rules": [
+      "qualificationState is orthogonal to computationalState",
+      "historical PASS receipts remain retained after a governing edit",
+      "historical PASS receipts never grant current authority after a governing edit",
+      "CURRENT_RESULT requires exact source, mesh, solver and execution parent identities",
+      "REJECTED evidence never grants current or release authority"
+    ]
+  },
+  "hashChain": {
+    "order": [
+      "sourceRevisionHash",
+      "canonicalModelHash",
+      "meshRevisionHash",
+      "solverConfigHash",
+      "executionHash",
+      "recoveryHash",
+      "convergenceEvidenceHash"
+    ],
+    "parents": {
+      "canonicalModelHash": ["sourceRevisionHash"],
+      "meshRevisionHash": ["sourceRevisionHash", "canonicalModelHash"],
+      "solverConfigHash": ["sourceRevisionHash"],
+      "executionHash": ["sourceRevisionHash", "canonicalModelHash", "meshRevisionHash", "solverConfigHash"],
+      "recoveryHash": ["executionHash", "meshRevisionHash"],
+      "convergenceEvidenceHash": ["recoveryHash"]
+    },
+    "rule": "A visible engineering claim must resolve to an immutable receipt in this chain; display-only state is never an authority parent."
+  },
+  "receiptSchemas": {
+    "sourceRevisionReceipt": {
+      "schema": "lafea-source-revision-receipt/v1",
+      "required": [
+        "receiptId",
+        "sourceRevisionHash",
+        "canonicalModelHash",
+        "unitsContractHash",
+        "createdAt",
+        "exactCodeSha"
+      ],
+      "immutable": true
+    },
+    "meshRevisionReceipt": {
+      "schema": "lafea-mesh-revision-receipt/v1",
+      "required": [
+        "receiptId",
+        "sourceRevisionHash",
+        "canonicalModelHash",
+        "meshRevisionHash",
+        "meshSemanticHash",
+        "topologyHash",
+        "elementFamily",
+        "nodeCount",
+        "elementCount",
+        "orientationPolicy",
+        "midsidePolicy",
+        "createdAt",
+        "exactCodeSha"
+      ],
+      "immutable": true,
+      "viewportRule": "The viewport consumes this retained mesh reference; it may not independently reconstruct FE geometry or connectivity."
+    },
+    "executionReceipt": {
+      "schema": "lafea-execution-receipt/v1",
+      "required": [
+        "receiptId",
+        "sourceRevisionHash",
+        "canonicalModelHash",
+        "meshRevisionHash",
+        "solverConfigHash",
+        "executionHash",
+        "loadCaseId",
+        "storageRoute",
+        "terminationState",
+        "freeDofResidual",
+        "reactionResultHash",
+        "forceEquilibrium",
+        "momentEquilibrium",
+        "totalStrainEnergy",
+        "deterministicReplayHash",
+        "createdAt",
+        "exactCodeSha"
+      ],
+      "immutable": true,
+      "allowedTerminationStates": ["CONVERGED", "REJECTED", "FAILED"]
+    },
+    "quantityIdentity": {
+      "schema": "lafea-quantity-identity/v1",
+      "required": [
+        "quantityId",
+        "component",
+        "coordinateFrame",
+        "physicalLocation",
+        "loadCaseId",
+        "recoveryMethod",
+        "representation",
+        "units",
+        "singularityClassification"
+      ],
+      "singularityClassifications": [
+        "NON_SINGULAR_ANALYTICAL",
+        "NON_SINGULAR_CONVERGENCE",
+        "HIGH_GRADIENT_CONVERGENCE",
+        "SINGULAR_EXCLUDED_FROM_POINTWISE_ACCEPTANCE"
+      ],
+      "rule": "Comparison is prohibited unless every required identity field is compatible."
+    },
+    "recoveryReceipt": {
+      "schema": "lafea-recovery-receipt/v1",
+      "required": [
+        "receiptId",
+        "executionHash",
+        "meshRevisionHash",
+        "recoveryHash",
+        "quantityIdentity",
+        "authoritativeRepresentation",
+        "unroundedTensorSourceHash",
+        "createdAt",
+        "exactCodeSha"
+      ],
+      "immutable": true,
+      "rules": [
+        "integration-point or direct recovery authority is distinct from projected or averaged display stress",
+        "principal and von Mises values derive from unrounded authoritative tensor components",
+        "display interpolation is non-authoritative unless a benchmark explicitly declares otherwise before execution"
+      ]
+    },
+    "physicalProbeIdentity": {
+      "schema": "lafea-physical-probe-identity/v1",
+      "required": [
+        "probeId",
+        "physicalCoordinate",
+        "coordinateFrame",
+        "loadCaseIdentity",
+        "quantityIdentity",
+        "representation",
+        "recoveryMethod",
+        "units"
+      ],
+      "forbiddenPermanentIdentityFields": ["elementId", "naturalCoordinates", "nodeId", "screenCoordinate"],
+      "resolvedExecutionMetadata": [
+        "meshRevisionHash",
+        "elementId",
+        "naturalCoordinates",
+        "mappingStatus",
+        "recoveredValue",
+        "recoveryHash"
+      ],
+      "rule": "Refinement may change resolved element and natural coordinates but never the permanent physical probe identity."
+    },
+    "convergenceReceipt": {
+      "schema": "lafea-convergence-receipt/v1",
+      "required": [
+        "receiptId",
+        "quantityIdentity",
+        "meshLevels",
+        "refinementDefinition",
+        "classification",
+        "convergenceEvidenceHash",
+        "createdAt",
+        "exactCodeSha"
+      ],
+      "minimumUsefulLevels": 3,
+      "classifications": [
+        "ASYMPTOTIC",
+        "PRE_ASYMPTOTIC",
+        "OSCILLATORY",
+        "DIVERGENT",
+        "SINGULAR_EXCLUDED",
+        "NEAR_ZERO_ABSOLUTE_RULE"
+      ],
+      "rules": [
+        "observed order is reported only where mathematically meaningful",
+        "Richardson extrapolation and GCI are permitted only for a sequence that supports them",
+        "global and local convergence remain separate evidence",
+        "moving maxima and screen-picked values are prohibited as sole acceptance quantities"
+      ]
+    }
+  },
+  "readinessContract": {
+    "schema": "lafea-b02-readiness/v1",
+    "requiredDomains": [
+      "SOURCE",
+      "UNITS",
+      "TOPOLOGY",
+      "MESH",
+      "BOUNDARY_CONDITIONS",
+      "MATERIAL",
+      "SOLVER",
+      "AUTHORITY"
+    ],
+    "domainStates": ["READY", "BLOCKED", "NOT_APPLICABLE"],
+    "requiredFieldsPerDomain": ["state", "owningBoundary", "reasonCodes"],
+    "runRule": "Run is authorized only when every applicable domain is READY and the exact current source/mesh/solver identities are bound."
+  },
+  "transactionContract": {
+    "schema": "lafea-run-transaction/v1",
+    "required": [
+      "transactionId",
+      "sourceRevisionHash",
+      "meshRevisionHash",
+      "solverConfigHash",
+      "startSequence",
+      "completionSequence"
+    ],
+    "rules": [
+      "A completed older transaction cannot overwrite a newer current source or result.",
+      "Progress must derive from real solver/assembly milestones; invented percentages are prohibited."
+    ]
+  }
+}

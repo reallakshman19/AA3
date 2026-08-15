@@ -2,62 +2,304 @@ import { ELEMENT_TYPES, FORMULA_IDS, FORMULATIONS } from './constants.js';
 import { numericalError } from './errors.js';
 import { dot, matrixVector } from './matrix.js';
 import { canonicalNumber, tolerance } from './numeric.js';
-export function recoverLoadCase(model,mesh,elementEvidence,load,solution){const dofIndex=new Map(mesh.dofOrdering.map((id,i)=>[id,i])),materialMap=new Map(model.materials.map((row)=>[row.materialId,row])),thermalStrainByElement=new Map(load.temperatureLoads.map((row)=>[row.elementId,row.thermalStrain])),elementResults=elementEvidence.map((element)=>dispatchRecoverElement(model,element,materialMap.get(element.materialId),solution.displacementVector,dofIndex,thermalStrainByElement.get(element.elementId)??0)),elementSum=canonicalNumber(elementResults.reduce((sum,row)=>sum+row.strainEnergy,0),'element energy sum'),globalEnergy=canonicalNumber(0.5*dot(solution.displacementVector,matrixVector(mesh.globalStiffnessMatrix,solution.displacementVector)),'global strain energy'),limit=tolerance(model.qualificationProfile,'strainEnergy',elementSum,globalEnergy),residual=canonicalNumber(elementSum-globalEnergy,'energy residual');if(Math.abs(residual)>limit)throw numericalError('STRAIN_ENERGY_RECONSTRUCTION_FAILURE',`loadCases.${load.loadCaseId}`,'Element and global strain energy do not reconstruct.');return {loadCaseId:load.loadCaseId,loadCaseInputSemanticHash:load.loadCaseInputSemanticHash,forceEvidence:{forceVector:load.forceVector,contributions:load.contributions,sourceReference:load.sourceReference},nodalDisplacements:displacements(model,solution,mesh),supportReactions:solution.reactions,freeDofResiduals:solution.freeDofResiduals,solverEvidence:{...solution.solverEvidence,freeDofIdentities:solution.freeDofIdentities,constrainedDofIdentities:solution.constrainedDofIdentities},equilibrium:solution.equilibrium,elementResults,totalStrainEnergy:globalEnergy,energyQualification:{scale:Math.max(1,Math.abs(elementSum),Math.abs(globalEnergy)),elementEnergySum:elementSum,globalEnergy,residual,tolerance:limit,accepted:true},formulaIds:[...new Set([...load.formulaIds,...solution.formulaIds,...elementResults.flatMap((row)=>row.formulaIds),FORMULA_IDS.ENERGY])].sort()};}
-function dispatchRecoverElement(model,element,material,u,dofIndex,appliedThermalStrain){if(element.elementType===ELEMENT_TYPES.T6||element.elementType===ELEMENT_TYPES.Q8)return recoverGaussPointElement(model,element,material,u,dofIndex,appliedThermalStrain);return recoverElement(model,element,material,u,dofIndex,appliedThermalStrain);}
-/**
- * Stress is elastic stress only: `D * (epsilon_total - epsilon_thermal)`,
- * not `D * epsilon_total` — a thermally-loaded element that is free to
- * expand develops geometric strain equal to its free thermal strain but
- * zero elastic stress, and reporting `D * epsilon_total` would silently
- * misrepresent that free expansion as real mechanical stress. `strain`
- * itself stays the measured total (geometric) strain, unaffected.
- *
- * Each recovered element retains its canonical `nodeIds`. Recovery values
- * therefore remain directly attachable to the exact mesh topology that
- * produced them; downstream evidence consumers do not have to infer
- * connectivity from ordering or source references.
- */
-function recoverElement(model,element,material,u,dofIndex,appliedThermalStrain){const indices=element.localDofOrdering.map((id)=>dofIndex.get(id)),ue=indices.map((index)=>u[index]),strain=matrixVector(element.bMatrix,ue),elasticStrain=subtractThermalStrain(strain,appliedThermalStrain),inPlane=matrixVector(element.dMatrix,elasticStrain),[sigmaX,sigmaY,tauXY]=inPlane,sigmaZ=model.formulation===FORMULATIONS.PLANE_STRAIN?canonicalNumber(material.poissonRatio*(sigmaX+sigmaY),'plane strain sigma z'):0,principal=principalStress(sigmaX,sigmaY,tauXY),vonMises=vonMisesStress(sigmaX,sigmaY,sigmaZ,tauXY),energy=canonicalNumber(0.5*dot(ue,matrixVector(element.localStiffnessMatrix,ue)),'element strain energy');return {elementId:element.elementId,nodeIds:[...element.nodeIds],strain:{epsilonX:strain[0],epsilonY:strain[1],gammaXY:strain[2]},stress:{sigmaX,sigmaY,sigmaZ,tauXY},principalMaximum:principal.maximum,principalMinimum:principal.minimum,maximumInPlaneShear:principal.radius,vonMises,strainEnergy:energy,sourceReferences:element.sourceReferences,formulaIds:[FORMULA_IDS.STRAIN,FORMULA_IDS.STRESS,FORMULA_IDS.SIGMA_Z,FORMULA_IDS.PRINCIPAL,FORMULA_IDS.VON_MISES,FORMULA_IDS.ENERGY]};}
-function subtractThermalStrain(strain,appliedThermalStrain){return appliedThermalStrain?[strain[0]-appliedThermalStrain,strain[1]-appliedThermalStrain,strain[2]]:strain;}
+import { reducedThermalStrainVector } from './temperature-strain-loads.js';
 
-/**
- * T6/Q8 stress recovery (spec §7.1/§12.1): "Stress is recovered at Gauss
- * points, retained before extrapolation and projected to nodes only for
- * display." This produces `gaussPointResults` — one entry per integration
- * point, each independently authoritative — and no single element-constant
- * `stress` field, since claiming one would misrepresent a non-constant
- * (quadratic) strain field as constant. Nodal projection for display is
- * explicit future scope (`nodal-projection-display.js` in the phased plan),
- * not silently implied here.
- */
-function recoverGaussPointElement(model,element,material,u,dofIndex,appliedThermalStrain){
-  const indices=element.localDofOrdering.map((id)=>dofIndex.get(id));
-  const ue=indices.map((index)=>u[index]);
-  const gaussPointResults=element.gaussEvidence.map((gp)=>{
-    const strain=matrixVector(gp.B,ue);
-    const elasticStrain=subtractThermalStrain(strain,appliedThermalStrain);
-    const inPlane=matrixVector(element.dMatrix,elasticStrain);
-    const [sigmaX,sigmaY,tauXY]=inPlane;
-    const sigmaZ=model.formulation===FORMULATIONS.PLANE_STRAIN?canonicalNumber(material.poissonRatio*(sigmaX+sigmaY),'plane strain sigma z'):0;
-    const principal=principalStress(sigmaX,sigmaY,tauXY);
-    const vonMises=vonMisesStress(sigmaX,sigmaY,sigmaZ,tauXY);
-    return {
-      pointId:gp.pointId,xi:gp.xi,eta:gp.eta,weight:gp.weight,jacobianDeterminant:gp.jacobianDeterminant,
-      strain:{epsilonX:strain[0],epsilonY:strain[1],gammaXY:strain[2]},
-      stress:{sigmaX,sigmaY,sigmaZ,tauXY},
-      principalMaximum:principal.maximum,principalMinimum:principal.minimum,maximumInPlaneShear:principal.radius,vonMises,
-    };
-  });
-  const energy=canonicalNumber(0.5*dot(ue,matrixVector(element.localStiffnessMatrix,ue)),'element strain energy');
+export function recoverLoadCase(model, mesh, elementEvidence, load, solution) {
+  const dofIndex = new Map(mesh.dofOrdering.map((id, i) => [id, i]));
+  const materialMap = new Map(model.materials.map((row) => [row.materialId, row]));
+  const thermalStrainByElement = new Map(
+    load.temperatureLoads.map((row) => [row.elementId, row.thermalStrain]),
+  );
+  const elementResults = elementEvidence.map((element) => dispatchRecoverElement(
+    model,
+    element,
+    materialMap.get(element.materialId),
+    solution.displacementVector,
+    dofIndex,
+    thermalStrainByElement.get(element.elementId) ?? 0,
+  ));
+  const elementSum = canonicalNumber(
+    elementResults.reduce((sum, row) => sum + row.strainEnergy, 0),
+    'element elastic energy sum',
+  );
+  const ku = matrixVector(mesh.globalStiffnessMatrix, solution.displacementVector);
+  const quadraticEnergy = 0.5 * dot(solution.displacementVector, ku);
+  const thermalWork = dot(
+    solution.displacementVector,
+    load.thermalForceVector ?? Array(solution.displacementVector.length).fill(0),
+  );
+  const thermalInitialEnergy = load.thermalInitialStrainEnergy ?? 0;
+  const globalEnergy = canonicalNumber(
+    quadraticEnergy - thermalWork + thermalInitialEnergy,
+    'global elastic strain energy',
+  );
+  const limit = tolerance(
+    model.qualificationProfile,
+    'strainEnergy',
+    elementSum,
+    globalEnergy,
+  );
+  const residual = canonicalNumber(elementSum - globalEnergy, 'energy residual');
+  if (Math.abs(residual) > limit) {
+    throw numericalError(
+      'STRAIN_ENERGY_RECONSTRUCTION_FAILURE',
+      `loadCases.${load.loadCaseId}`,
+      'Element and global elastic strain energy do not reconstruct.',
+    );
+  }
   return {
-    elementId:element.elementId,elementType:element.elementType,nodeIds:[...element.nodeIds],
-    recoveryLayer:'INTEGRATION_POINT',
-    gaussPointResults,
-    strainEnergy:energy,
-    sourceReferences:element.sourceReferences,
-    formulaIds:[FORMULA_IDS.STRAIN,FORMULA_IDS.STRESS,FORMULA_IDS.SIGMA_Z,FORMULA_IDS.PRINCIPAL,FORMULA_IDS.VON_MISES,FORMULA_IDS.ENERGY],
+    loadCaseId: load.loadCaseId,
+    loadCaseInputSemanticHash: load.loadCaseInputSemanticHash,
+    forceEvidence: {
+      forceVector: load.forceVector,
+      thermalForceVector: load.thermalForceVector,
+      thermalInitialStrainEnergy,
+      contributions: load.contributions,
+      sourceReference: load.sourceReference,
+    },
+    nodalDisplacements: displacements(model, solution, mesh),
+    supportReactions: solution.reactions,
+    freeDofResiduals: solution.freeDofResiduals,
+    solverEvidence: {
+      ...solution.solverEvidence,
+      freeDofIdentities: solution.freeDofIdentities,
+      constrainedDofIdentities: solution.constrainedDofIdentities,
+    },
+    equilibrium: solution.equilibrium,
+    elementResults,
+    totalStrainEnergy: globalEnergy,
+    energyQualification: {
+      scale: Math.max(1, Math.abs(elementSum), Math.abs(globalEnergy)),
+      elementEnergySum: elementSum,
+      globalEnergy,
+      quadraticDisplacementEnergy: canonicalNumber(quadraticEnergy, 'quadratic displacement energy'),
+      thermalEquivalentLoadWork: canonicalNumber(thermalWork, 'thermal equivalent load work'),
+      thermalInitialStrainEnergy,
+      residual,
+      tolerance: limit,
+      accepted: true,
+      energyDefinition: 'PHYSICAL_ELASTIC_STRAIN_ENERGY',
+    },
+    formulaIds: [...new Set([
+      ...load.formulaIds,
+      ...solution.formulaIds,
+      ...elementResults.flatMap((row) => row.formulaIds),
+      FORMULA_IDS.ENERGY,
+    ])].sort(),
   };
 }
-export function principalStress(sigmaX,sigmaY,tauXY){const average=(sigmaX+sigmaY)/2,radius=Math.hypot((sigmaX-sigmaY)/2,tauXY);return {maximum:canonicalNumber(average+radius,'principal maximum'),minimum:canonicalNumber(average-radius,'principal minimum'),radius:canonicalNumber(radius,'maximum in-plane shear')};}
-export function vonMisesStress(sigmaX,sigmaY,sigmaZ,tauXY){return canonicalNumber(Math.sqrt(0.5*((sigmaX-sigmaY)**2+(sigmaY-sigmaZ)**2+(sigmaZ-sigmaX)**2)+3*tauXY**2),'von Mises stress');}
-function displacements(model,solution,mesh){const index=new Map(mesh.dofOrdering.map((id,i)=>[id,i]));return model.nodes.map((node)=>({nodeId:node.nodeId,ux:solution.displacementVector[index.get(`${node.nodeId}:UX`)],uy:solution.displacementVector[index.get(`${node.nodeId}:UY`)],sourceReference:node.sourceReference}));}
+
+function dispatchRecoverElement(model, element, material, u, dofIndex, appliedThermalStrain) {
+  if (element.elementType === ELEMENT_TYPES.T6 || element.elementType === ELEMENT_TYPES.Q8) {
+    return recoverGaussPointElement(
+      model,
+      element,
+      material,
+      u,
+      dofIndex,
+      appliedThermalStrain,
+    );
+  }
+  return recoverElement(model, element, material, u, dofIndex, appliedThermalStrain);
+}
+
+/**
+ * Stress is elastic stress only. Plane strain uses the formulation-correct
+ * reduced thermal vector for the in-plane constitutive relation and retains
+ * the true out-of-plane thermal elastic strain in sigma_z and energy recovery.
+ */
+function recoverElement(model, element, material, u, dofIndex, appliedThermalStrain) {
+  const indices = element.localDofOrdering.map((id) => dofIndex.get(id));
+  const ue = indices.map((index) => u[index]);
+  const strain = matrixVector(element.bMatrix, ue);
+  const reducedThermal = reducedThermalStrainVector(
+    model.formulation,
+    material,
+    appliedThermalStrain,
+  );
+  const constitutiveStrain = subtractVector(strain, reducedThermal);
+  const inPlane = matrixVector(element.dMatrix, constitutiveStrain);
+  const [sigmaX, sigmaY, tauXY] = inPlane;
+  const sigmaZ = recoverSigmaZ(
+    model.formulation,
+    material,
+    sigmaX,
+    sigmaY,
+    appliedThermalStrain,
+  );
+  const principal = principalStress(sigmaX, sigmaY, tauXY);
+  const vonMises = vonMisesStress(sigmaX, sigmaY, sigmaZ, tauXY);
+  const energy = canonicalNumber(
+    elasticEnergyDensity(
+      model.formulation,
+      strain,
+      { sigmaX, sigmaY, sigmaZ, tauXY },
+      appliedThermalStrain,
+    ) * element.canonicalArea * element.thickness,
+    'element elastic strain energy',
+  );
+  return {
+    elementId: element.elementId,
+    nodeIds: [...element.nodeIds],
+    strain: { epsilonX: strain[0], epsilonY: strain[1], gammaXY: strain[2] },
+    elasticStrain: physicalElasticStrain(model.formulation, strain, appliedThermalStrain),
+    stress: { sigmaX, sigmaY, sigmaZ, tauXY },
+    principalMaximum: principal.maximum,
+    principalMinimum: principal.minimum,
+    maximumInPlaneShear: principal.radius,
+    vonMises,
+    strainEnergy: energy,
+    sourceReferences: element.sourceReferences,
+    formulaIds: [
+      FORMULA_IDS.STRAIN,
+      FORMULA_IDS.STRESS,
+      FORMULA_IDS.SIGMA_Z,
+      FORMULA_IDS.PRINCIPAL,
+      FORMULA_IDS.VON_MISES,
+      FORMULA_IDS.ENERGY,
+    ],
+  };
+}
+
+/**
+ * T6/Q8 stress recovery: integration-point values remain numerical authority.
+ */
+function recoverGaussPointElement(
+  model,
+  element,
+  material,
+  u,
+  dofIndex,
+  appliedThermalStrain,
+) {
+  const indices = element.localDofOrdering.map((id) => dofIndex.get(id));
+  const ue = indices.map((index) => u[index]);
+  let energy = 0;
+  const gaussPointResults = element.gaussEvidence.map((gp) => {
+    const strain = matrixVector(gp.B, ue);
+    const reducedThermal = reducedThermalStrainVector(
+      model.formulation,
+      material,
+      appliedThermalStrain,
+    );
+    const constitutiveStrain = subtractVector(strain, reducedThermal);
+    const inPlane = matrixVector(element.dMatrix, constitutiveStrain);
+    const [sigmaX, sigmaY, tauXY] = inPlane;
+    const sigmaZ = recoverSigmaZ(
+      model.formulation,
+      material,
+      sigmaX,
+      sigmaY,
+      appliedThermalStrain,
+    );
+    const principal = principalStress(sigmaX, sigmaY, tauXY);
+    const vonMises = vonMisesStress(sigmaX, sigmaY, sigmaZ, tauXY);
+    const density = elasticEnergyDensity(
+      model.formulation,
+      strain,
+      { sigmaX, sigmaY, sigmaZ, tauXY },
+      appliedThermalStrain,
+    );
+    energy += density * gp.weight * gp.jacobianDeterminant * element.thickness;
+    return {
+      pointId: gp.pointId,
+      xi: gp.xi,
+      eta: gp.eta,
+      weight: gp.weight,
+      jacobianDeterminant: gp.jacobianDeterminant,
+      strain: { epsilonX: strain[0], epsilonY: strain[1], gammaXY: strain[2] },
+      elasticStrain: physicalElasticStrain(model.formulation, strain, appliedThermalStrain),
+      stress: { sigmaX, sigmaY, sigmaZ, tauXY },
+      principalMaximum: principal.maximum,
+      principalMinimum: principal.minimum,
+      maximumInPlaneShear: principal.radius,
+      vonMises,
+    };
+  });
+  return {
+    elementId: element.elementId,
+    elementType: element.elementType,
+    nodeIds: [...element.nodeIds],
+    recoveryLayer: 'INTEGRATION_POINT',
+    gaussPointResults,
+    strainEnergy: canonicalNumber(energy, 'element elastic strain energy'),
+    sourceReferences: element.sourceReferences,
+    formulaIds: [
+      FORMULA_IDS.STRAIN,
+      FORMULA_IDS.STRESS,
+      FORMULA_IDS.SIGMA_Z,
+      FORMULA_IDS.PRINCIPAL,
+      FORMULA_IDS.VON_MISES,
+      FORMULA_IDS.ENERGY,
+    ],
+  };
+}
+
+function recoverSigmaZ(formulation, material, sigmaX, sigmaY, thermalStrain) {
+  if (formulation !== FORMULATIONS.PLANE_STRAIN) return 0;
+  return canonicalNumber(
+    material.poissonRatio * (sigmaX + sigmaY)
+      - material.elasticModulus * thermalStrain,
+    'plane strain sigma z',
+  );
+}
+
+function physicalElasticStrain(formulation, strain, thermalStrain) {
+  return {
+    epsilonX: canonicalNumber(strain[0] - thermalStrain, 'elastic strain x'),
+    epsilonY: canonicalNumber(strain[1] - thermalStrain, 'elastic strain y'),
+    epsilonZ: formulation === FORMULATIONS.PLANE_STRAIN
+      ? canonicalNumber(-thermalStrain, 'elastic strain z')
+      : null,
+    gammaXY: canonicalNumber(strain[2], 'elastic shear strain'),
+  };
+}
+
+function elasticEnergyDensity(formulation, strain, stress, thermalStrain) {
+  const epsilonX = strain[0] - thermalStrain;
+  const epsilonY = strain[1] - thermalStrain;
+  const epsilonZ = formulation === FORMULATIONS.PLANE_STRAIN ? -thermalStrain : 0;
+  return 0.5 * (
+    stress.sigmaX * epsilonX
+    + stress.sigmaY * epsilonY
+    + stress.sigmaZ * epsilonZ
+    + stress.tauXY * strain[2]
+  );
+}
+
+function subtractVector(left, right) {
+  return left.map((value, index) => value - right[index]);
+}
+
+export function principalStress(sigmaX, sigmaY, tauXY) {
+  const average = (sigmaX + sigmaY) / 2;
+  const radius = Math.hypot((sigmaX - sigmaY) / 2, tauXY);
+  return {
+    maximum: canonicalNumber(average + radius, 'principal maximum'),
+    minimum: canonicalNumber(average - radius, 'principal minimum'),
+    radius: canonicalNumber(radius, 'maximum in-plane shear'),
+  };
+}
+
+export function vonMisesStress(sigmaX, sigmaY, sigmaZ, tauXY) {
+  return canonicalNumber(
+    Math.sqrt(
+      0.5 * (
+        (sigmaX - sigmaY) ** 2
+        + (sigmaY - sigmaZ) ** 2
+        + (sigmaZ - sigmaX) ** 2
+      ) + 3 * tauXY ** 2,
+    ),
+    'von Mises stress',
+  );
+}
+
+function displacements(model, solution, mesh) {
+  const index = new Map(mesh.dofOrdering.map((id, i) => [id, i]));
+  return model.nodes.map((node) => ({
+    nodeId: node.nodeId,
+    ux: solution.displacementVector[index.get(`${node.nodeId}:UX`)],
+    uy: solution.displacementVector[index.get(`${node.nodeId}:UY`)],
+    sourceReference: node.sourceReference,
+  }));
+}

@@ -1,0 +1,46 @@
+import assert from 'node:assert/strict';
+import { readFileSync } from 'node:fs';
+
+const UI_FILES = [
+  'src/workspace/empirical-v3-safety-workbench.js','src/workspace/empirical-v3-safety-workbench-dom.js',
+  'src/workspace/empirical-v3-branch-basis-view.js','src/workspace/empirical-v3-safety-gate-view.js',
+  'src/workspace/empirical-v3-evidence-view.js','src/workspace/empirical-v3-explain-calculation-view.js',
+  'src/workspace/empirical-v3-result-review-view.js','src/workspace/empirical-v3-review-audit-controller.js',
+  'src/workspace/empirical-v3-view-primitives.js',
+];
+const forbidden = [
+  /from\s+['"][^'"]*empirical-piping-mechanics/i,/from\s+['"][^'"]*canonical-thermal-rom/i,
+  /restraint-compatibility\.js/i,/rooted-tree-component-flexibility\.js/i,/runLinearPipingWorkbenchAnalysis/,
+  /sealEmpiricalV3CalculationAuthorization/,/solveLinear|solveRooted|assembleUnit|calculatePrismatic|calculateCircular/i,
+  /acceptAll|confirmAll|bulkAccept|bulkConfirm|Accept all High/i,
+];
+for (const path of UI_FILES) {
+  const source=sourceAt(path), lines=source.split(/\r?\n/).length;
+  assert.ok(lines<300,`${path} has ${lines} physical lines; owner approval is required at >=300.`);
+  for(const pattern of forbidden) assert.doesNotMatch(source,pattern,`${path} violates the V3 UI authority boundary.`);
+}
+const safety=sourceAt('src/workspace/empirical-v3-safety-gate-view.js');
+assert.match(safety,/risk\.riskClass === 'HIGH_CONFIRM'/);assert.match(safety,/BLOCKED — no confirmation path/);assert.match(safety,/Create confirmation receipt/);assert.match(safety,/packageValue\.riskSet\.risks/);assert.match(safety,/workflow\.canRunCalculation/);assert.doesNotMatch(safety,/HIGH_BLOCK[^\n]{0,120}reviewAssumptionControl/);
+const branch=sourceAt('src/workspace/empirical-v3-branch-basis-view.js');assert.match(branch,/packageValue\.riskSet\.risks/);assert.match(branch,/commonAuthorityRefs/);assert.match(branch,/localAuthorityRefs/);assert.match(branch,/Open in Safety Gate/);
+const explain=sourceAt('src/workspace/empirical-v3-explain-calculation-view.js');for(const pattern of[/EMPIRICAL_V3_EXPLAIN_MODES/,/'SUMMARY'/,/'TRACE'/,/'FULL_AUDIT'/,/Result summary/,/Coupled equations/,/Sealed coupled system/,/Full audit references/,/evidence\.equations/,/evidence\.coupledSystem\.flexibilityMatrixMPerN/,/coordinate\.pairEvidence/,/componentContributions/,/evidencePolicy\.uiOrReportMayResolveMechanics/])assert.match(explain,pattern);assert.doesNotMatch(explain,/\.reduce\(|reactionN\s*[+*/-]|flexibilityRowMPerN\s*[+*/-]/);
+const reviewView=sourceAt('src/workspace/empirical-v3-result-review-view.js');assert.match(reviewView,/Record result review/);assert.match(reviewView,/Prepare audit/);assert.match(reviewView,/separate governed transition/);assert.match(reviewView,/does not change reactions, displacements, risks, or formulas/);
+const reviewController=sourceAt('src/workspace/empirical-v3-review-audit-controller.js');assert.match(reviewController,/createEmpiricalV3ResultReviewReceipt/);assert.match(reviewController,/prepareAudit\(evidence\)/);assert.match(reviewController,/sealEmpiricalV3AuditReadiness/);assert.match(reviewController,/workflowState !== 'AUDIT_EXPORT_READY'/);assert.match(reviewController,/safetyPackage/);
+const controller=sourceAt('src/workspace/empirical-v3-safety-workbench.js');for(const pattern of[/createEngineeringConfirmationReceipt/,/Safety Gate remains unchanged until a re-evaluated sealed package is supplied/,/VIEWPORT_SELECTION_REQUESTED/,/isRunReady\(\)/,/prepared execution custody/,/restoreDownstream/,/calculationResult;const resultHash=resultFact\.semanticHash/,/if\(!resultFact\.current\|\|!resultHash\)/,/packageValue\.workflow\.facts\.resultReview\.current/,/packageValue\.workflow\.facts\.audit\.current/,/CALCULATION_EVIDENCE/,/RESULT_REVIEW/,/AUDIT_READINESS/,/workflow\.state!=='RESULT_REVIEW_REQUIRED'/,/workflow\.state!=='RESULT_REVIEWED'/,/Audit readiness is a separate governed transition/,/onAuditExportRequested/,/evidence\.authorizationRef\.semanticHash===packageValue\.calculationAuthorization\.semanticHash/,/explainMode='SUMMARY'/,/setExplainMode\(mode\)/,/packageValue:this\.packageValue/])assert.match(controller,pattern);
+
+const main=sourceAt('src/main.js');
+for(const pattern of[/mountEmpiricalV3SafetyWorkbench/,/prepareEmpiricalV3SourceBoundExecution/,/buildEmpiricalV3SourceBoundExecutionDependency/,/applyEmpiricalV3LiveResultReview/,/applyEmpiricalV3LiveAuditReadiness/,/reconcileEmpiricalV3LiveAuthorization/,/onRunRequested/,/isRunReady/,/EMPIRICAL_V3_ANALYSIS_CAPABILITY_ID/,/WORKSPACE_ANALYSIS_TARGET_ID/,/ANALYSIS_SESSION_OPEN_REQUESTED/,/ANALYSIS_REQUESTED/,/ANALYSIS_COMPLETED/,/ANALYSIS_FAILED/,/runPreparedEmpiricalV3ThroughAnalysisCoordinator/,/authorizationSemanticHash:\s*packageValue\.calculationAuthorization\.semanticHash/,/Prepared source-bound execution request is not in the sealed calculation authorization/,/WORKSPACE_SNAPSHOT_CHANGED/,/project-data-changed/,/master-data-changed/,/TOPOLOGY_EVENTS\.CHANGED/,/SUPPORT_RESTRAINT_EVENTS\.CHANGED/,/invalidateEmpiricalV3ForGoverningChange/,/empiricalV3Safety\.clear\(\)/,/requireExecutionDependencyMatchesActiveWorkspace\(dependency\)/,/requestDataset\.datasetId === active\[0\]/,/requestDataset\.sourceSemanticHash === active\[3\]/,/requestDataset\.sharedModelSemanticHash === activeSharedModelSemanticHash/,/request\.topologyGraphSemanticHash === activeTopologySemanticHash/,/request\.supportAttachmentModelSemanticHash === activeAttachmentSemanticHash/,/request\.restraintCapabilityModelSemanticHash === activeRestraintSemanticHash/,/getSharedModel\(\)\?\.semanticHash/,/getTopologyGraph\(\)\?\.semanticHash/,/getSupportAttachmentModel\(\)\?\.semanticHash/,/getRestraintCapabilityModel\(\)\?\.semanticHash/,/workspaceVersion:\s*snapshot\.engineeringVersion/])assert.match(main,pattern);
+assert.doesNotMatch(main,/executeEmpiricalV3LiveSourceBoundRun/,'Browser shell must not execute V3 directly; AnalysisCoordinator owns Run lifecycle.');
+assert.doesNotMatch(main,/empirical-v3-(?:authorized-mixed-component-execution|live-mixed-run-orchestration)|source-bound-mixed-(?:component-producer|restraint-binding)|rooted-tree-component-flexibility|restraint-compatibility|calculateCircularElbow|solveRootedTree/i,'Mixed execution remains outside browser runtime until separately authorized for UI enablement.');
+
+const capability=sourceAt('src/workspace/engineering-loads/adapters/empirical-v3-analysis-capability.js');
+for(const pattern of[/EMPIRICAL_V3_ANALYSIS_CAPABILITY_ID/,/QUALIFIED_ANALYTICAL/,/WORKSPACE_ANALYSIS_TARGET_ID/,/executeEmpiricalV3LiveSourceBoundRun/,/createSolverResultContract/,/calculationAuthorizationSemanticHash/,/executionRequestSemanticHash/,/workspaceVersion/])assert.match(capability,pattern);
+assert.doesNotMatch(capability,/rooted-tree-component-flexibility|restraint-compatibility|calculatePrismatic|calculateCircularElbow|solveRootedTree/i,'Governed capability may call only the existing V3 live execution bridge, not mechanics directly.');
+
+const capabilities=sourceAt('src/workspace/analysis-capabilities.js');assert.match(capabilities,/register\(empiricalV3AnalysisCapability\)/);
+const coordinator=sourceAt('src/workspace/analysis-coordinator.js');for(const pattern of[/WORKSPACE_ANALYSIS_TARGET_ID/,/assertSessionMatchesContext/,/registry\.readiness/,/registry\.execute/,/validateSolverResultContract/,/assertWorkspaceResultStillCurrent/,/STALE_ANALYSIS_CONTEXT/,/STALE_ANALYSIS_SESSION/])assert.match(coordinator,pattern);
+const sessionController=sourceAt('src/workspace/analysis-session-controller.js');assert.match(sessionController,/session\.targetId !== WORKSPACE_ANALYSIS_TARGET_ID/);assert.match(sessionController,/workspaceVersion:\s*context\.version/);
+const analysisContext=sourceAt('src/workspace/analysis-context.js');assert.match(analysisContext,/WORKSPACE_ANALYSIS_TARGET_ID/);assert.match(analysisContext,/analysisScope: 'WORKSPACE'/);assert.match(analysisContext,/requireEngineeringVersion\(snapshot\)/);
+const workspaceState=sourceAt('src/workspace/workspace-state.js');assert.match(workspaceState,/engineeringVersion/);assert.match(workspaceState,/engineeringVersion:\s*this\.#snapshot\.engineeringVersion \+ 1/);assert.doesNotMatch(workspaceState,/selectEntity[\s\S]{0,700}engineeringVersion:\s*this\.#snapshot\.engineeringVersion \+ 1/,'Viewport selection must not advance engineeringVersion.');
+
+function sourceAt(path){return readFileSync(new URL(`../${path}`,import.meta.url),'utf8');}
+console.log('PASS empirical v3 safety / Explain modes / governed analysis UI source guard');

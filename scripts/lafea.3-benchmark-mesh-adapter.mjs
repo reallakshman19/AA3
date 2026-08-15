@@ -35,40 +35,24 @@ export function meshRegionToElements(topologySource, regionId, discretizationOpt
  * under test.
  */
 export function mappedAnnulusSectorQ8(innerRadius, outerRadius, sweepRadians, radialElements, circumferentialElements, radialBias = 1) {
+  const radialPoints = 2 * radialElements + 1;
+  const circumferentialPoints = 2 * circumferentialElements + 1;
   const polar = (radius, angle) => ({ x: radius * Math.cos(angle), y: radius * Math.sin(angle) });
   // `radialBias > 1` grades the radial spacing geometrically toward the inner
   // radius — necessary to resolve a steep near-bore boundary layer (e.g. the
   // Kirsch a^2/r^2 terms) rather than averaging straight through it.
   const radialFraction = (s) => (radialBias === 1 ? s : (radialBias ** s - 1) / (radialBias - 1));
-
-  const buildChainWithMidpoints = (corners) => {
-    const chain = [];
-    for (let i = 0; i < corners.length - 1; i += 1) {
-      chain.push(corners[i]);
-      chain.push({
-        x: 0.5 * (corners[i].x + corners[i + 1].x),
-        y: 0.5 * (corners[i].y + corners[i + 1].y),
-      });
-    }
-    chain.push(corners[corners.length - 1]);
-    return chain;
-  };
-
-  const arcCorners = (radius) => Array.from(
-    { length: circumferentialElements + 1 },
-    (_, i) => polar(radius, sweepRadians * (i / circumferentialElements)),
+  const arcChain = (radius) => Array.from(
+    { length: circumferentialPoints },
+    (_, i) => polar(radius, sweepRadians * (i / (circumferentialPoints - 1))),
   );
-  const radialCorners = (angle) => Array.from(
-    { length: radialElements + 1 },
+  const radialChain = (angle) => Array.from(
+    { length: radialPoints },
     (_, j) => polar(
-      innerRadius + (outerRadius - innerRadius) * radialFraction(j / radialElements),
+      innerRadius + (outerRadius - innerRadius) * radialFraction(j / (radialPoints - 1)),
       angle,
     ),
   );
-
-  const arcChain = (radius) => buildChainWithMidpoints(arcCorners(radius));
-  const radialChain = (angle) => buildChainWithMidpoints(radialCorners(angle));
-
   // u runs radially outward, v circumferentially: with u tangential instead,
   // the mesher's corner order (u0v0, u1v0, u1v1, u0v1) traverses clockwise in
   // polar coordinates, which `local-continuum` correctly rejects.

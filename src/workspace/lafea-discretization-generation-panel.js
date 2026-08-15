@@ -3,7 +3,7 @@ import { PROFILE_KINDS, defaultProfileFields } from '../core/lafea-profile-contr
 import { semanticHash } from '../core/shared-primitives/canonical-json.js';
 import { button, node, region } from './lafea-discretization-dom.js';
 
-const PROFILE_SOURCE_REVISION = 'lafea-discretization-ui-mesh-profile/v1';
+const PROFILE_SOURCE_REVISION = 'lafea-discretization-ui-mesh-profile/v2';
 const SHELL_ELEMENT_PLACEHOLDER = 'CST_DKT_TRI3_THIN_SHELL_V1';
 
 /**
@@ -80,11 +80,11 @@ export function generationSection(doc, model, handlers) {
 }
 
 /**
- * Profile binding is an explicit engineering action. Only quality-policy
- * defaults are prefilled, and those values are visible in editable controls.
- * Element family and target length are never inferred from the generic default
- * profile because that profile currently declares a mixed family outside the
- * bound producer's uniform-family contract.
+ * Profile binding is an explicit engineering action. Quality-policy defaults
+ * are visible and exportable, and the qualified baseline is enforced at both
+ * this UI and the mesh-evidence contract. Users may tighten the limits; a
+ * weaker profile cannot silently retain stage-qualified mesh authority.
+ * Element family and target length remain explicit caller choices.
  */
 function profileBindingControls(doc, generation, handlers) {
   const defaults = defaultProfileFields(PROFILE_KINDS.MESH);
@@ -95,7 +95,7 @@ function profileBindingControls(doc, generation, handlers) {
     doc,
     'p',
     'lafea-discretization__disclosure',
-    'Generate the finite element mesh using standard qualified defaults, or expand advanced settings to override quality thresholds.',
+    'Generate with the visible qualified profile, or expand Advanced Quality Gates to tighten engineering acceptance. Qualified limits cannot be weakened.',
   ));
 
   const family = selectControl(
@@ -113,27 +113,60 @@ function profileBindingControls(doc, generation, handlers) {
 
   const advanced = node(doc, 'details', 'lafea-discretization__advanced');
   advanced.append(node(doc, 'summary', null, 'Advanced Quality Gates'));
-  
+  advanced.append(qualifiedPolicyFacts(doc, defaults));
+  advanced.append(node(
+    doc,
+    'p',
+    'lafea-discretization__disclosure',
+    'Tightening direction: lower aspect/adjacent-ratio limits and higher scaled-Jacobian limits are stricter. The profile hash records every selected value.',
+  ));
+
   const ratio = numberControl(
     doc, 'Adjacent size ratio max', 'lafea-profile-adjacent-ratio', defaults.adjacentSizeRatioMax, 1,
   );
+  ratio.input.max = String(defaults.adjacentSizeRatioMax);
   const aspectWarn = numberControl(
     doc, 'Aspect ratio warning', 'lafea-profile-aspect-warn', defaults.aspectRatioWarn, 1,
   );
+  aspectWarn.input.max = String(defaults.aspectRatioWarn);
   const aspectBlock = numberControl(
     doc, 'Aspect ratio block', 'lafea-profile-aspect-block', defaults.aspectRatioBlock, 1,
   );
+  aspectBlock.input.max = String(defaults.aspectRatioBlock);
   const jacWarn = numberControl(
-    doc, 'Scaled Jacobian warning', 'lafea-profile-jacobian-warn', defaults.scaledJacobianWarn, 0,
+    doc, 'Scaled Jacobian warning', 'lafea-profile-jacobian-warn', defaults.scaledJacobianWarn, defaults.scaledJacobianWarn,
   );
+  jacWarn.input.max = '1';
   const jacBlock = numberControl(
-    doc, 'Scaled Jacobian block', 'lafea-profile-jacobian-block', defaults.scaledJacobianBlock, 0,
+    doc, 'Scaled Jacobian block', 'lafea-profile-jacobian-block', defaults.scaledJacobianBlock, defaults.scaledJacobianBlock,
   );
+  jacBlock.input.max = '1';
   const adaptive = numberControl(
     doc, 'Adaptive levels', 'lafea-profile-adaptive-levels', defaults.adaptiveLevels, 3, '1', true,
   );
 
-  advanced.append(ratio.label, aspectWarn.label, aspectBlock.label, jacWarn.label, jacBlock.label, adaptive.label);
+  const reset = button(doc, 'Reset qualified limits', () => {
+    ratio.input.value = String(defaults.adjacentSizeRatioMax);
+    aspectWarn.input.value = String(defaults.aspectRatioWarn);
+    aspectBlock.input.value = String(defaults.aspectRatioBlock);
+    jacWarn.input.value = String(defaults.scaledJacobianWarn);
+    jacBlock.input.value = String(defaults.scaledJacobianBlock);
+    adaptive.input.value = String(defaults.adaptiveLevels);
+    [ratio, aspectWarn, aspectBlock, jacWarn, jacBlock, adaptive]
+      .forEach((control) => control.input.setCustomValidity(''));
+  });
+  reset.dataset.role = 'lafea-profile-quality-reset';
+  reset.title = 'Restore the source-controlled qualified engineering limits.';
+
+  advanced.append(
+    ratio.label,
+    aspectWarn.label,
+    aspectBlock.label,
+    jacWarn.label,
+    jacBlock.label,
+    adaptive.label,
+    reset,
+  );
 
   const bind = button(doc, 'Generate Mesh', () => {
     const selectedFamily = family.input.value;
@@ -150,28 +183,35 @@ function profileBindingControls(doc, generation, handlers) {
       return;
     }
     target.input.setCustomValidity('');
+
+    const quality = {
+      adjacentSizeRatioMax: Number(ratio.input.value),
+      aspectRatioWarn: Number(aspectWarn.input.value),
+      aspectRatioBlock: Number(aspectBlock.input.value),
+      scaledJacobianWarn: Number(jacWarn.input.value),
+      scaledJacobianBlock: Number(jacBlock.input.value),
+      adaptiveLevels: Number(adaptive.input.value),
+    };
+    if (!validateQualifiedQualityControls(
+      quality,
+      defaults,
+      { ratio, aspectWarn, aspectBlock, jacWarn, jacBlock, adaptive },
+    )) return;
+
     const profileEnvelope = {
       schema: 'lafea-mesh-profile/v1',
-      profileIdentity: `LAFEA3_UI_${selectedFamily}_MESH_PROFILE_V1`,
+      profileIdentity: `LAFEA3_UI_${selectedFamily}_MESH_PROFILE_V2`,
       sourceRevision: PROFILE_SOURCE_REVISION,
       fields: {
         continuumElement: selectedFamily,
         shellElement: SHELL_ELEMENT_PLACEHOLDER,
         globalTargetSize: targetValue,
-        adjacentSizeRatioMax: Number(ratio.input.value),
-        aspectRatioWarn: Number(aspectWarn.input.value),
-        aspectRatioBlock: Number(aspectBlock.input.value),
-        scaledJacobianWarn: Number(jacWarn.input.value),
-        scaledJacobianBlock: Number(jacBlock.input.value),
-        adaptiveLevels: Number(adaptive.input.value),
+        ...quality,
       },
     };
     profileEnvelope.semanticHash = semanticHash(profileEnvelope);
     handlers.onBindMeshProfile?.(profileEnvelope);
-    // Trigger generation after binding
-    setTimeout(() => {
-      handlers.onGenerateAnalysisMesh?.();
-    }, 50);
+    handlers.onGenerateMesh?.({});
   });
   bind.dataset.role = 'lafea-profile-bind';
   bind.className = 'lafea-button lafea-button--primary';
@@ -183,6 +223,58 @@ function profileBindingControls(doc, generation, handlers) {
     bind,
   );
   return host;
+}
+
+function qualifiedPolicyFacts(doc, defaults) {
+  const facts = node(doc, 'dl', 'lafea-discretization__facts');
+  facts.dataset.role = 'lafea-qualified-quality-policy';
+  for (const [label, value] of [
+    ['Qualified adjacent size ratio max', `≤ ${defaults.adjacentSizeRatioMax}`],
+    ['Qualified aspect ratio warning', `≤ ${defaults.aspectRatioWarn}`],
+    ['Qualified aspect ratio block', `≤ ${defaults.aspectRatioBlock}`],
+    ['Qualified scaled Jacobian warning', `≥ ${defaults.scaledJacobianWarn}`],
+    ['Qualified scaled Jacobian block', `≥ ${defaults.scaledJacobianBlock}`],
+    ['Minimum adaptive levels', `≥ ${defaults.adaptiveLevels}`],
+  ]) {
+    facts.append(node(doc, 'dt', null, label), node(doc, 'dd', null, value));
+  }
+  return facts;
+}
+
+function validateQualifiedQualityControls(values, defaults, controls) {
+  const entries = Object.values(values);
+  if (entries.some((value) => !Number.isFinite(value))) {
+    controls.ratio.input.setCustomValidity('All quality-gate values must be finite numbers.');
+    controls.ratio.input.reportValidity?.();
+    return false;
+  }
+  if (values.adjacentSizeRatioMax > defaults.adjacentSizeRatioMax
+    || values.aspectRatioWarn > defaults.aspectRatioWarn
+    || values.aspectRatioBlock > defaults.aspectRatioBlock
+    || values.scaledJacobianWarn < defaults.scaledJacobianWarn
+    || values.scaledJacobianBlock < defaults.scaledJacobianBlock
+    || values.adaptiveLevels < defaults.adaptiveLevels) {
+    controls.ratio.input.setCustomValidity('Settings may tighten but may not weaken the qualified LAFEA.3 mesh-quality policy.');
+    controls.ratio.input.reportValidity?.();
+    return false;
+  }
+  if (!(values.aspectRatioBlock > values.aspectRatioWarn)) {
+    controls.aspectBlock.input.setCustomValidity('Aspect-ratio block threshold must exceed the warning threshold.');
+    controls.aspectBlock.input.reportValidity?.();
+    return false;
+  }
+  if (!(values.scaledJacobianWarn > values.scaledJacobianBlock)) {
+    controls.jacWarn.input.setCustomValidity('Scaled-Jacobian warning threshold must exceed the block threshold.');
+    controls.jacWarn.input.reportValidity?.();
+    return false;
+  }
+  if (!Number.isInteger(values.adaptiveLevels)) {
+    controls.adaptive.input.setCustomValidity('Adaptive levels must be an integer.');
+    controls.adaptive.input.reportValidity?.();
+    return false;
+  }
+  Object.values(controls).forEach((control) => control.input.setCustomValidity(''));
+  return true;
 }
 
 function refinementControls(doc, model, handlers) {

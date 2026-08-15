@@ -234,19 +234,36 @@ function validateQualificationProfiles(value, path, errors) {
   });
 }
 
+function isExplicitlyUninsulated(section) {
+  if (!isRecord(section)) return false;
+  return ['NONE', 'UNINSULATED'].includes(stringValue(section.insulationCode).toUpperCase());
+}
+
+function allowsZeroEngineeringLeaf(path, key, parent) {
+  if (key === 'insulationThicknessMm' && path.startsWith('loadCalculation.pipeSectionProperties.')) {
+    return isExplicitlyUninsulated(parent);
+  }
+  if (path === 'loadCalculation.insulationDensitiesKgPerM3') {
+    return ['NONE', 'UNINSULATED'].includes(String(key).trim().toUpperCase());
+  }
+  return false;
+}
+
 function validatePositiveLeaves(value, path, errors) {
-  if (Array.isArray(value)) { value.forEach((item, index) => validatePositiveLeaves(item, `${path}[${index}]`, errors)); return; }
+  if (Array.isArray(value)) {
+    value.forEach((item, index) => validatePositiveLeaves(item, `${path}[${index}]`, errors));
+    return;
+  }
   if (isRecord(value)) {
     Object.entries(value).forEach(([key, item]) => {
-      if (key === 'insulationThicknessMm' || key === 'insulationCode') {
-        if (typeof item === 'number' && item < 0) errors.push(errorRow(`${path}.${key}`, 'NON_POSITIVE_ENGINEERING_VALUE', 'Insulation thickness cannot be negative.'));
+      const itemPath = `${path}.${key}`;
+      if (allowsZeroEngineeringLeaf(path, key, value) && typeof item === 'number') {
+        if (!Number.isFinite(item) || item < 0) {
+          errors.push(errorRow(itemPath, 'NEGATIVE_ENGINEERING_VALUE', 'Explicit uninsulated thickness or density must be finite and non-negative.'));
+        }
         return;
       }
-      if (path.includes('insulationDensitiesKgPerM3') && (key === 'NONE' || key === 'UNINSULATED')) {
-        if (typeof item === 'number' && item < 0) errors.push(errorRow(`${path}.${key}`, 'NON_POSITIVE_ENGINEERING_VALUE', 'Insulation density cannot be negative.'));
-        return;
-      }
-      validatePositiveLeaves(item, `${path}.${key}`, errors);
+      validatePositiveLeaves(item, itemPath, errors);
     });
     return;
   }
@@ -268,12 +285,9 @@ function validateSourceHash(entry, path, activeHashes, errors, validateActiveSou
   const expected = stringValue(entry?.evidence?.sourceHash).toLowerCase();
   const sourceKey = stringValue(entry?.evidence?.sourceKey);
   const declared = stringValue(entry?.value?.sha256).toLowerCase();
-  
   if (declared && expected && declared !== expected) errors.push(errorRow(path, 'CROSS_DATASET_HASH_MISMATCH', 'Declared source hash differs from its evidence hash.'));
   if (!validateActiveSource || !expected || !sourceKey || !isRecord(activeHashes)) return;
-  
   const active = stringValue(activeHashes[sourceKey]).toLowerCase();
-  
   if (['dataset', 'lineList', 'pipingClass', 'componentWeight'].includes(sourceKey) && !active) {
     errors.push(errorRow(path, 'ACTIVE_SOURCE_HASH_MISSING', `Active ${sourceKey} source SHA-256 is required.`));
     return;

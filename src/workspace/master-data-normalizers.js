@@ -1,6 +1,6 @@
 import { MASTER_FIELDS } from '../calc-workspace/cii-standalone-port/ui-adapted/xml-cii-adapted-fields-config.js';
 import { computeLineNoKey } from '../calc-workspace/cii-standalone-port/core/linelist-mapping.js';
-import { computeRowOperatingFluidDensity } from '../calc-workspace/cii-standalone-port/core/line-density-resolver.js';
+import { resolveLineListDensity } from '../calc-workspace/cii-standalone-port/core/line-density-resolver.js';
 
 /**
  * Validates if the required fields in the mapping profile are met.
@@ -8,9 +8,9 @@ import { computeRowOperatingFluidDensity } from '../calc-workspace/cii-standalon
 export function validateMappingProfile(masterKey, fieldMap) {
   const schema = MASTER_FIELDS[masterKey];
   if (!schema) return { valid: false, errors: ['Unknown master key'] };
-  
+
   const errors = [];
-  schema.fields.forEach(field => {
+  schema.fields.forEach((field) => {
     if (field.required && !fieldMap[field.name]) {
       errors.push(`Required field missing: ${field.label}`);
     }
@@ -32,10 +32,10 @@ function normalizeRows(masterKey, rawRows, fieldMap) {
       _sourceRowIndex: index,
       _sourceRowNumber: rawRow._sourceRowNumber ?? null,
       _sourceSheet: rawRow._sourceSheet || '',
-      _sourceProvenance: rawRow
+      _sourceProvenance: rawRow,
     };
-    
-    schema.fields.forEach(field => {
+
+    schema.fields.forEach((field) => {
       const header = fieldMap[field.name];
       canonical[field.name] = header ? rawRow[header] : undefined;
     });
@@ -47,18 +47,19 @@ function normalizeRows(masterKey, rawRows, fieldMap) {
 export function normalizeLineList(rawRows, fieldMap) {
   const validation = validateMappingProfile('lineList', fieldMap);
   if (!validation.valid) throw new Error(`Mapping invalid: ${validation.errors.join(', ')}`);
-  
+
   const canonicalRows = normalizeRows('lineList', rawRows, fieldMap);
   return canonicalRows.map((row, idx) => {
     const rawRow = rawRows[idx];
     const key = computeLineNoKey(rawRow, fieldMap);
-    const opDensity = computeRowOperatingFluidDensity({ ...row, _raw: rawRow }, fieldMap);
+    const densityInfo = resolveLineListDensity({ ...row, _raw: rawRow }, null, fieldMap);
     return {
       ...row,
       lineKey: key,
       lineNoKey: key,
-      operatingFluidDensity: opDensity,
-      density: opDensity || row.density || ''
+      operatingFluidDensity: densityInfo.value || '',
+      density: densityInfo.value || '',
+      densitySource: densityInfo.source || 'none',
     };
   });
 }
@@ -66,20 +67,20 @@ export function normalizeLineList(rawRows, fieldMap) {
 export function normalizePipingClass(rawRows, fieldMap) {
   const validation = validateMappingProfile('pipingClass', fieldMap);
   if (!validation.valid) throw new Error(`Mapping invalid: ${validation.errors.join(', ')}`);
-  
+
   return normalizeRows('pipingClass', rawRows, fieldMap);
 }
 
 export function normalizeWeight(rawRows, fieldMap) {
   const validation = validateMappingProfile('weight', fieldMap);
   if (!validation.valid) throw new Error(`Mapping invalid: ${validation.errors.join(', ')}`);
-  
+
   return normalizeRows('weight', rawRows, fieldMap);
 }
 
 export function normalizeMaterialMap(rawRows, fieldMap) {
   const validation = validateMappingProfile('materialMap', fieldMap);
   if (!validation.valid) throw new Error(`Mapping invalid: ${validation.errors.join(', ')}`);
-  
+
   return normalizeRows('materialMap', rawRows, fieldMap);
 }

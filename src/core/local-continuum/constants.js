@@ -2,12 +2,27 @@ export const MODEL_SCHEMA = 'local-continuum-model/v1';
 export const RESULT_SCHEMA = 'local-continuum-result/v1';
 export const SOURCE_EVIDENCE_SCHEMA = 'local-continuum-source-evidence/v1';
 export const QUALIFICATION_PROFILE_SCHEMA = 'local-continuum-qualification-profile/v1';
-export const ENGINEERING_LEVEL = 'LINEAR_2D_CONTINUUM_CST_ONLY';
+export const ENGINEERING_LEVEL = 'LINEAR_2D_CONTINUUM_T3_T6_Q8';
 
 export const FORMULATIONS = Object.freeze({
   PLANE_STRESS: 'PLANE_STRESS',
   PLANE_STRAIN: 'PLANE_STRAIN',
 });
+
+/**
+ * Conservative interim guard for the current displacement-only plane-strain
+ * formulation. These values do not prove absence of volumetric locking below
+ * the block boundary; they prevent the clearly near-incompressible regime from
+ * being accepted without a separately qualified locking-resistant formulation.
+ * The boundary is source-controlled and may not be relaxed through solver/UI
+ * tolerances. Mesh-sensitivity/convergence evidence remains independently
+ * required for engineering release.
+ */
+export const FORMULATION_GUARDS = Object.freeze({
+  planeStrainPoissonWarning: 0.40,
+  planeStrainPoissonBlock: 0.45,
+});
+
 export const DOFS = Object.freeze({ UX: 'UX', UY: 'UY' });
 /**
  * Spec §7: "Default T6 quadratic triangle and Q8 quadratic quadrilateral.
@@ -31,13 +46,13 @@ export const CANONICAL_UNITS = Object.freeze({
   bodyForceIntensity: 'N/mm^3',
 });
 export const BASE_LIMITATIONS = Object.freeze([
-  'NO_ADAPTIVE_MESHING', 'NO_AUTOMATIC_MESH_GENERATION', 'NO_BENDING_DOF',
+  'NO_ADAPTIVE_MESHING', 'NO_BENDING_DOF',
   'NO_BUCKLING', 'NO_CODE_COMPLIANCE', 'NO_CONTACT', 'NO_CRACK_OR_FRACTURE',
   'NO_DRILLING_DOF', 'NO_FATIGUE', 'NO_FRICTION', 'NO_LARGE_DISPLACEMENT',
   'NO_ATTACHMENT_SPECIFIC_LOCAL_STRESS', 'NO_CONTOUR_AUTHORITY',
   'NO_MATERIAL_NONLINEARITY', 'NO_NODAL_OR_SMOOTHED_STRESS', 'NO_NODAL_STRESS_AVERAGING', 'NO_PLASTICITY',
   'NO_SHELL_ELEMENTS', 'NO_STRESS_SINGULARITY_ACCEPTANCE',
-  'NO_UI_OR_APPLICATION_INTEGRATION', 'NO_WELD_STRESS',
+  'NO_WELD_STRESS',
 ]);
 export const FORMULA_IDS = Object.freeze({
   UNIT_CONVERSION: 'EXPLICIT_CONTINUUM_UNIT_CONVERSION_V1',
@@ -59,11 +74,11 @@ export const FORMULA_IDS = Object.freeze({
   SIGMA_Z: 'FORMULATION_CORRECT_SIGMA_Z_RECOVERY_V1',
   PRINCIPAL: 'IN_PLANE_PRINCIPAL_STRESS_RECOVERY_V1',
   VON_MISES: 'THREE_DIMENSIONAL_VON_MISES_RECOVERY_V1',
-  ENERGY: 'LINEAR_ELASTIC_STRAIN_ENERGY_RECONSTRUCTION_V1',
+  ENERGY: 'THERMOELASTIC_PHYSICAL_STRAIN_ENERGY_RECONSTRUCTION_V2',
   EQUILIBRIUM: 'FREE_DOF_AND_REACTION_EQUILIBRIUM_V1',
   PRESSURE_LOAD: 'BOUNDARY_EDGE_NORMAL_PRESSURE_CONSISTENT_LOAD_V1',
   BODY_FORCE_LOAD: 'ELEMENT_BODY_FORCE_CONSISTENT_LOAD_V1',
-  THERMAL_STRAIN_LOAD: 'ISOTROPIC_THERMAL_STRAIN_EQUIVALENT_NODAL_LOAD_V1',
+  THERMAL_STRAIN_LOAD: 'FORMULATION_CORRECT_ISOTROPIC_THERMAL_STRAIN_LOAD_V2',
   IMPOSED_DISPLACEMENT_LOAD: 'LOAD_CASE_IMPOSED_DISPLACEMENT_PARTITION_V1',
 });
 export const QUALIFICATION_PROFILE = Object.freeze({

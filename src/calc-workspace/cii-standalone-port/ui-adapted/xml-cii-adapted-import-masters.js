@@ -3,7 +3,6 @@ import { createElement } from './xml-cii-adapted-dom.js';
 import { MASTER_FIELDS } from './xml-cii-adapted-fields-config.js';
 import { getSavedMappingsForMaster, findSmartMatchingMapping } from './xml-cii-adapted-state.js';
 import { buildPreviewSearchRows, previewSearchText } from './xml-cii-adapted-import-preview-search.js';
-import { computeRowOperatingFluidDensity } from '../core/line-density-resolver.js';
 
 export { buildPreviewSearchRows, previewSearchText } from './xml-cii-adapted-import-preview-search.js';
 
@@ -45,7 +44,6 @@ function fieldMapFor(masterKey, state) {
 }
 
 function getHeaderLabel(header, masterKey, state) {
-  if (header === 'operatingFluidDensity') return 'Operating Fluid Density';
   const fieldMap = fieldMapFor(masterKey, state);
   const fieldDef = MASTER_FIELDS[masterKey]?.fields.find((field) => field.name === header);
   if (fieldDef) return fieldMap[header] ? `${fieldDef.label} [${fieldMap[header]}]` : fieldDef.label;
@@ -79,10 +77,7 @@ function previewColumns(rows, masterKey, state) {
     }
   }
   for (const key of extraKeys) if (!sortedKeys.includes(key) && sortedKeys.length < 50) sortedKeys.push(key);
-  if (masterKey === 'lineList') {
-    if (!sortedKeys.includes('operatingFluidDensity')) sortedKeys.push('operatingFluidDensity');
-    if (!sortedKeys.includes('densitySource')) sortedKeys.push('densitySource');
-  }
+  if (masterKey === 'lineList' && !sortedKeys.includes('densitySource')) sortedKeys.push('densitySource');
   return sortedKeys;
 }
 
@@ -92,10 +87,10 @@ function tableHead(columns, masterKey, state) {
   for (const col of columns) {
     const labelText = getHeaderLabel(col, masterKey, state);
     const th = createElement('th');
-    if (col === 'operatingFluidDensity' && masterKey === 'lineList') {
+    if (col === 'density' && masterKey === 'lineList') {
       const span = createElement('span', labelText);
       const infoIcon = style(createElement('span', ' ℹ️', 'xml-cii-density-info-icon'), { cursor: 'pointer', color: '#60a5fa', marginLeft: '4px' });
-      infoIcon.title = "Operating Fluid Density Resolution Logic:\n• Phase = G (Gas): uses Gas Density\n• Phase = L (Liquid) or M (Mixed): uses Liquid Density\n• Fallback: Direct Density → Liquid Density → Gas Density → Mixed Density";
+      infoIcon.title = "Operating Density Resolution:\n1. Explicit process override, when supplied\n2. Direct/mapped operating density\n3. MIXED -> mixed density; GAS -> gas density; LIQUID -> liquid density\n4. Without a recognized phase, exactly one phase-specific candidate may be used\n5. Ambiguous or missing density remains unresolved; no liquid/water fallback";
       th.append(span, infoIcon);
     } else {
       th.textContent = labelText;
@@ -115,9 +110,6 @@ function tableBody(columns, rows, masterKey, state) {
       let val = item?.[col];
       if (val === undefined && fieldMap[col]) {
         val = item?.[fieldMap[col]];
-      }
-      if (col === 'operatingFluidDensity' && masterKey === 'lineList') {
-        val = computeRowOperatingFluidDensity(item, fieldMap);
       }
       tr.appendChild(createElement('td', text(val)));
     }
@@ -163,9 +155,6 @@ function appendPreview(parent, master, state) {
       for (const col of columns) {
         let val = item?.[col];
         if (val === undefined && fieldMap[col]) val = item?.[fieldMap[col]];
-        if (col === 'operatingFluidDensity' && masterKey === 'lineList') {
-          val = computeRowOperatingFluidDensity(item, fieldMap);
-        }
         tr.appendChild(createElement('td', text(val)));
       }
       tbodyEl.appendChild(tr);

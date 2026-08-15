@@ -1,0 +1,57 @@
+{
+  "schema": "lafea-b02-method-benchmark-applicability/v1",
+  "issue": 1112,
+  "stageId": "LAFEA.3",
+  "frozenBeforeProductionObservation": true,
+  "allowedStates": ["REQUIRED", "CONTROL", "NOT_APPLICABLE", "EXCLUDED_WITH_JUSTIFICATION"],
+  "methods": {
+    "T3": "REGISTERED_PRODUCTION_ROUTE_FALLBACK",
+    "T6": "REGISTERED_PRODUCTION_ROUTE",
+    "Q8": "REGISTERED_PRODUCTION_ROUTE"
+  },
+  "matrix": [
+    {
+      "benchmarkId": "B02A",
+      "title": "Non-uniform bending",
+      "T3": "REQUIRED",
+      "T6": "REQUIRED",
+      "Q8": "REQUIRED"
+    },
+    {
+      "benchmarkId": "B02B",
+      "title": "Non-uniform shear-dominated response",
+      "T3": "REQUIRED",
+      "T6": "REQUIRED",
+      "Q8": "REQUIRED"
+    },
+    {
+      "benchmarkId": "B02C",
+      "title": "Kirsch circular-hole fixed-probe response",
+      "T3": "REQUIRED",
+      "T6": "REQUIRED",
+      "Q8": "REQUIRED"
+    },
+    {
+      "benchmarkId": "B02D",
+      "title": "Lug/pinhole engineering response",
+      "T3": "CONTROL",
+      "T6": "REQUIRED",
+      "Q8": "REQUIRED",
+      "justification": "T3 remains the registered fallback control; higher-order production routes carry the required lug response qualification. This allocation is frozen before B02 production observations."
+    },
+    {
+      "benchmarkId": "B02E",
+      "title": "Numerical verification and convergence",
+      "T3": "REQUIRED",
+      "T6": "REQUIRED",
+      "Q8": "REQUIRED",
+      "justification": "Convergence evidence is required for each method across the qualified benchmark families where that method is applicable; B02E does not imply every method must be used for every B02D quantity."
+    }
+  ],
+  "rules": [
+    "No matrix cell may be downgraded because an observed B02 result is inconvenient.",
+    "Any later EXCLUDED_WITH_JUSTIFICATION entry requires an explicit pre-observation expert decision and retained rationale.",
+    "Q4 remains research-only and is outside this production qualification matrix unless separately reviewed.",
+    "Production output may not generate or calibrate benchmark targets, tolerances, probes, mesh definitions or acceptance rules."
+  ]
+}

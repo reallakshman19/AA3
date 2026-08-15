@@ -27,6 +27,15 @@ export const LINEAR_PIPING_INPUTXML_INTAKE_PROFILE_IDS = Object.freeze([
   STRICT_INPUTXML_LINEAR_STATIC_PROFILE,
   DISCLOSED_GENERIC_ANALYZER_APPROXIMATION_PROFILE,
 ]);
+// STRICT refuses any feature it can't model exactly (pressure stiffening, bend
+// flexibility, linearized unilateral restraints), which BLOCKs on real CAESAR
+// exports as a matter of course — those features have a disclosed, reviewable
+// approximation this profile exists to accept. APPROXIMATE is the default so a
+// first import shows what's genuinely unrepresentable (friction, gap, missing
+// compilation) rather than every feature STRICT declines on principle. Nothing
+// is hidden: features under this profile still surface as CONDITIONAL and
+// still require explicit authorization before a solve is authorized.
+export const LINEAR_PIPING_INPUTXML_DEFAULT_PROFILE_ID = DISCLOSED_GENERIC_ANALYZER_APPROXIMATION_PROFILE;
 export const LINEAR_PIPING_INPUTXML_FALLBACK_UNIT_IDS = Object.freeze(['mm', 'in']);
 export const LINEAR_PIPING_INPUTXML_DEFAULT_CASE_ROLE = 'W';
 export const LINEAR_PIPING_INPUTXML_DEFAULT_CASE_ID = 'IXP-W';
@@ -215,7 +224,7 @@ function normalizeFallbackUnit(value) {
 }
 
 function normalizeProfile(value) {
-  const profile = value ?? STRICT_INPUTXML_LINEAR_STATIC_PROFILE;
+  const profile = value ?? LINEAR_PIPING_INPUTXML_DEFAULT_PROFILE_ID;
   if (!LINEAR_PIPING_INPUTXML_INTAKE_PROFILE_IDS.includes(profile)) {
     failIntake('PIPING_INPUTXML_INTAKE_PROFILE_INVALID', 'Native InputXML profile is unsupported.');
   }

@@ -1,5 +1,6 @@
 import {
-  ELEMENT_TYPES, FORMULATIONS, MODEL_SCHEMA, QUALIFICATION_PROFILE_SCHEMA, SOURCE_EVIDENCE_SCHEMA,
+  ELEMENT_TYPES, FORMULATION_GUARDS, FORMULATIONS, MODEL_SCHEMA,
+  QUALIFICATION_PROFILE_SCHEMA, SOURCE_EVIDENCE_SCHEMA,
 } from './constants.js';
 import { modelError } from './errors.js';
 import { strictNumber } from './numeric.js';
@@ -45,7 +46,9 @@ function normalizeSource(input) {
   if (input.schema !== MODEL_SCHEMA) {
     throw modelError('SCHEMA_MISMATCH', 'schema', `schema must be ${MODEL_SCHEMA}.`);
   }
+  const formulation = enumValue(input.formulation, FORMULATIONS, 'formulation');
   const materials = normalizeMaterials(input.materials);
+  validateFormulationAuthority(formulation, materials);
   const nodes = normalizeNodes(input.nodes);
   const elements = normalizeElements(input.elements, nodes);
   const elementTypePolicy = normalizeElementTypePolicy(input.elementTypePolicy, elements);
@@ -60,7 +63,7 @@ function normalizeSource(input) {
     modelVersion: nonEmptyString(input.modelVersion, 'modelVersion'),
     sourceAncestry: normalizeAncestry(input.sourceAncestry),
     units: normalizeUnits(input.units),
-    formulation: enumValue(input.formulation, FORMULATIONS, 'formulation'),
+    formulation,
     materials,
     nodes,
     elements,
@@ -71,6 +74,19 @@ function normalizeSource(input) {
     qualificationProfile,
     limitations: normalizeLimitations(input.limitations),
   };
+}
+
+function validateFormulationAuthority(formulation, materials) {
+  if (formulation !== FORMULATIONS.PLANE_STRAIN) return;
+  materials.forEach((material, index) => {
+    if (material.poissonRatio >= FORMULATION_GUARDS.planeStrainPoissonBlock) {
+      throw modelError(
+        'PLANE_STRAIN_NEAR_INCOMPRESSIBLE_NOT_QUALIFIED',
+        `materials[${index}].poissonRatio`,
+        `Plane strain with nu >= ${FORMULATION_GUARDS.planeStrainPoissonBlock} is outside the qualified displacement-only formulation envelope. Use a lower qualified Poisson ratio or a separately qualified locking-resistant formulation; do not relax solver tolerances.`,
+      );
+    }
+  });
 }
 
 /**

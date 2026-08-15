@@ -99,6 +99,18 @@
   white-space: pre-wrap;
 }
 
+/*
+ * These message paragraphs are created up-front and filled in later, so on a
+ * clean surface they sit in the layout with error styling and no text — a
+ * full-width red bar that reads as a broken frame rather than as "no error".
+ * Collapsing them while empty keeps the styling for real messages only.
+ */
+.linear-piping-results-workbench__status:empty,
+.linear-piping-results-workbench__error:empty,
+.linear-piping-results-workbench__empty:empty {
+  display: none;
+}
+
 .linear-piping-results-workbench__empty {
   color: #94a3b8;
 }

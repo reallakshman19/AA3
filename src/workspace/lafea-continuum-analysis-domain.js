@@ -1,4 +1,5 @@
 /** Mesh-independent LAFEA.3 physical-domain contract with geometry-feature attachments. */
+import { FORMULATIONS } from '../core/local-continuum/index.js';
 import { canonicalLafeaSha256 } from './lafea-canonical-sha256.js';
 import {
   lafeaAnalysisGeometryFeatureInventory,
@@ -6,7 +7,11 @@ import {
 } from './lafea-analysis-geometry-contract.js';
 
 export const LAFEA_CONTINUUM_ANALYSIS_DOMAIN_SCHEMA = 'lafea-continuum-analysis-domain/v1';
-export const LAFEA_CONTINUUM_FORMULATIONS = Object.freeze(['PLANE_STRESS', 'PLANE_STRAIN']);
+export const LAFEA_CONTINUUM_FORMULATIONS = Object.freeze([
+  FORMULATIONS.PLANE_STRESS,
+  FORMULATIONS.PLANE_STRAIN,
+  FORMULATIONS.PLANE_STRAIN_BBAR,
+]);
 export const LAFEA_DOMAIN_ATTACHMENT_KINDS = Object.freeze([
   'RESTRAINT', 'IMPOSED_DISPLACEMENT', 'CONCENTRATED_LOAD', 'TRACTION',
   'PRESSURE', 'BODY_FORCE', 'TEMPERATURE',

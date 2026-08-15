@@ -10,7 +10,11 @@ import assert from 'node:assert/strict';
 import { createLafeaAnalysisGeometry } from '../src/workspace/lafea-analysis-geometry-contract.js';
 import { createLafeaContinuumAnalysisDomain } from '../src/workspace/lafea-continuum-analysis-domain.js';
 import { createLafeaAnalysisGeometryEvidence } from '../src/workspace/lafea-analysis-geometry-evidence.js';
-import { canonicalProfile, PROFILE_KINDS } from '../src/core/lafea-profile-contract/index.js';
+import {
+  canonicalProfile,
+  defaultProfileFields,
+  PROFILE_KINDS,
+} from '../src/core/lafea-profile-contract/index.js';
 import { lafeaMeshCapabilities } from '../src/workspace/lafea-mesh-capabilities.js';
 import { requireLafeaStageAnalysisAdapter } from '../src/workspace/lafea-stage-analysis-adapter.js';
 import {
@@ -153,18 +157,16 @@ function pentagon() {
 }
 
 function meshProfileFor(continuumElement, globalTargetSize) {
+  const defaults = defaultProfileFields(PROFILE_KINDS.MESH);
   return canonicalProfile(PROFILE_KINDS.MESH, {
     schema: 'lafea-mesh-profile/v1',
     profileIdentity: `CHECK_${continuumElement}_${globalTargetSize}`,
-    sourceRevision: 'R3', semanticHash: undefined,
+    sourceRevision: 'R4', semanticHash: undefined,
     fields: {
+      ...defaults,
       continuumElement,
       shellElement: SHELL_TRI3,
       globalTargetSize,
-      adjacentSizeRatioMax: 1.5,
-      aspectRatioWarn: 5, aspectRatioBlock: 10,
-      scaledJacobianWarn: 0.6, scaledJacobianBlock: 0.2,
-      adaptiveLevels: 3,
     },
   });
 }

@@ -22,6 +22,7 @@ import {
 } from './matrix.js';
 import { canonicalNumber, maxAbs, tolerance } from './numeric.js';
 import { constitutiveEvidence } from './constitutive.js';
+import { bbarStiffnessMatrix, isBbarPlaneStrain } from './bbar-plane-strain.js';
 
 export const Q8_FORMULA_IDS = Object.freeze({
   SHAPE_FUNCTIONS: 'Q8_SERENDIPITY_SHAPE_FUNCTIONS_V1',
@@ -125,7 +126,12 @@ export function q8StiffnessMatrix(nodes, dMatrix, thickness) {
 
 export function q8ElementEvidence(elementId, nodes, material, formulation, thickness, profile) {
   const constitutive = constitutiveEvidence(material, formulation, profile);
-  const { stiffness, gaussEvidence } = q8StiffnessMatrix(nodes, constitutive.matrix, thickness);
+  const standard = q8StiffnessMatrix(nodes, constitutive.matrix, thickness);
+  const bbar = isBbarPlaneStrain(formulation)
+    ? bbarStiffnessMatrix(standard.gaussEvidence, material, thickness)
+    : null;
+  const stiffness = bbar?.stiffness ?? standard.stiffness;
+  const gaussEvidence = standard.gaussEvidence;
   const stiffnessQualification = qualifyQ8Stiffness(stiffness, elementId, profile);
   const rigidBodyQualification = qualifyQ8RigidBody(nodes, gaussEvidence, profile);
   const affinePatchQualification = qualifyQ8AffinePatch(nodes, gaussEvidence, constitutive.matrix, profile);
@@ -135,10 +141,25 @@ export function q8ElementEvidence(elementId, nodes, material, formulation, thick
     dMatrix: constitutive.matrix,
     localStiffnessMatrix: stiffness,
     gaussEvidence,
+    ...(bbar ? {
+      bbarEvidence: Object.freeze({
+        integrationArea: bbar.meanDilatation.integrationArea,
+        meanVolumetricRow: bbar.meanDilatation.meanVolumetricRow,
+        integrationPointCount: bbar.meanDilatation.integrationPointCount,
+        shearModulus: bbar.moduli.shearModulus,
+        bulkModulus: bbar.moduli.bulkModulus,
+        formulaIds: bbar.formulaIds,
+      }),
+    } : {}),
     stiffnessSymmetry: stiffnessQualification,
     rigidBodyQualification,
     affinePatchQualification,
-    formulaIds: Object.freeze([Q8_FORMULA_IDS.SHAPE_FUNCTIONS, Q8_FORMULA_IDS.GAUSS_QUADRATURE, Q8_FORMULA_IDS.STIFFNESS, ...constitutive.formulaIds].sort()),
+    formulaIds: Object.freeze([
+      Q8_FORMULA_IDS.SHAPE_FUNCTIONS,
+      Q8_FORMULA_IDS.GAUSS_QUADRATURE,
+      ...(bbar ? bbar.formulaIds : [Q8_FORMULA_IDS.STIFFNESS]),
+      ...constitutive.formulaIds,
+    ].sort()),
   });
 }
 

@@ -9,4 +9,5 @@ import './lafea-b02-g4-probe-fail-closed-diagnostic.mjs';
 import './lafea-b02-g4-convergence-diagnostic.mjs';
 import './lafea-b02-definition-freeze-check.mjs';
 import './lafea-b02b-saint-venant-oracle-check.mjs';
+import './lafea-b02-production-source-guard.mjs';
 import './lafea-b02-production-sequence-check.mjs';

@@ -30,6 +30,21 @@ export {
   buildDeterministicMemberAxes,
   buildRootedTreeUnitForceActions,
 } from './rooted-tree-unit-load.js';
+export {
+  EMPIRICAL_RESTRAINT_COMPATIBILITY_SCHEMA,
+  EMPIRICAL_ROOTED_TREE_COMPATIBILITY_SCHEMA,
+  solveLinearRestraintCompatibility,
+  solveRootedTreeRestraintCompatibility,
+} from './restraint-compatibility.js';
+export {
+  EMPIRICAL_ROOTED_TREE_THERMAL_REFERENCE_SCHEMA,
+  THERMAL_EXPANSION_COEFFICIENT_BASES,
+  buildRootedTreeThermalReferenceDisplacements,
+} from './thermal-reference.js';
+export {
+  EMPIRICAL_ROOTED_TREE_THERMAL_COMPATIBILITY_SCHEMA,
+  solveRootedTreeThermalRestraintCompatibility,
+} from './thermal-restraint-compatibility.js';
 export { solveScaledDenseSystem } from './linear-system.js';
 export { assemblePlanarSystem, solveAssembledPlanarSystem, solvePlanarSystem } from './assembly.js';
 export { solveUnilateralActiveSet } from './contact.js';

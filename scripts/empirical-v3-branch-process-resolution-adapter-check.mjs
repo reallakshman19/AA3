@@ -42,11 +42,29 @@ assert.equal(exact.classResolution.authorityClass, 'APPROVED_MASTER_EXACT');
 assert.equal(exact.pipingClassBasis.requestedPipingClass, '31441C4');
 assert.equal(exact.pipingClassBasis.resolvedPipingClass, '31441C4');
 assert.equal(exact.pipingClassBasis.authorityClass, 'APPROVED_MASTER_EXACT');
+assert.equal(exact.pipingClassBasis.needsReview, false);
 assert.equal(exact.branchCommonAuthorityRefs.find((row) => row.kind === 'PIPING_CLASS').semanticHash, exact.pipingClassBasis.semanticHash);
 assert.equal(exact.materialResolution.authorityClass, 'APPROVED_MASTER_EXACT');
 assert.equal(exact.wallQuantity.authorityClass, 'APPROVED_MASTER_EXACT');
+assert.equal(exact.wallQuantity.sourceBinding.evidenceHash, h('approved-master'));
+assert.match(exact.wallQuantity.sourceBinding.evidenceRef, /wall-thickness$/);
 assert.equal(exact.corrosionQuantity.authorityClass, 'APPROVED_MASTER_EXACT');
+assert.equal(exact.corrosionQuantity.sourceBinding.evidenceHash, h('approved-master'));
+assert.match(exact.corrosionQuantity.sourceBinding.evidenceRef, /corrosion$/);
 assert.equal(exact.risks.length, 0);
+
+const missingMasterEvidence = adaptBranchProcessResolverOutput({
+  runId,
+  componentId: 'P101',
+  resolution: exactRow,
+  sourceSemanticHash: h('line-source'),
+});
+assert.equal(missingMasterEvidence.classResolution.authorityClass, 'INFERRED_REVIEW_REQUIRED');
+assert.equal(missingMasterEvidence.pipingClassBasis.needsReview, true);
+assert.equal(missingMasterEvidence.materialResolution.authorityClass, 'INFERRED_REVIEW_REQUIRED');
+assert.equal(missingMasterEvidence.wallQuantity.authorityClass, 'INFERRED_REVIEW_REQUIRED');
+assert.equal(missingMasterEvidence.corrosionQuantity.authorityClass, 'INFERRED_REVIEW_REQUIRED');
+assert.ok(missingMasterEvidence.risks.every((risk) => risk.riskClass === 'HIGH_CONFIRM'));
 
 const fuzzyRow = {
   ...exactRow,

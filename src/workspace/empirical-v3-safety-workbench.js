@@ -7,7 +7,7 @@ import { EventBus } from './event-bus.js';
 import { EVENT_TOPICS } from './event-topics.js';
 import { renderEmpiricalV3BranchBasis } from './empirical-v3-branch-basis-view.js';
 import { renderEmpiricalV3EvidenceInspector } from './empirical-v3-evidence-view.js';
-import { renderEmpiricalV3ExplainCalculation } from './empirical-v3-explain-calculation-view.js';
+import { EMPIRICAL_V3_EXPLAIN_MODES, renderEmpiricalV3ExplainCalculation } from './empirical-v3-explain-calculation-view.js';
 import { renderEmpiricalV3ResultReview } from './empirical-v3-result-review-view.js';
 import { EmpiricalV3ReviewAuditController } from './empirical-v3-review-audit-controller.js';
 import { focusEmpiricalV3Risk, renderEmpiricalV3SafetyGate } from './empirical-v3-safety-gate-view.js';
@@ -24,7 +24,7 @@ export class EmpiricalV3SafetyWorkbenchController {
   constructor(panelContainer, documentRef, options = {}) {
     this.panelContainer=panelContainer;this.documentRef=documentRef;this.options=options;
     this.urlApi=options.urlApi??documentRef.defaultView?.URL??globalThis.URL;this.packageValue=null;this.calculationEvidence=null;
-    this.activeTab='BRANCH_BASIS';this.lastConfirmationReceipt=null;this.message='No sealed Empirical V3 safety package is loaded.';this.error='';this.elements=null;
+    this.activeTab='BRANCH_BASIS';this.explainMode='SUMMARY';this.lastConfirmationReceipt=null;this.message='No sealed Empirical V3 safety package is loaded.';this.error='';this.elements=null;
     this.reviewAudit=new EmpiricalV3ReviewAuditController({
       onResultReviewCreated:(receipt)=>this.options.onResultReviewCreated?.(receipt,this.packageValue,this.calculationEvidence)??null,
       onAuditReadinessCreated:(readiness,resultReview)=>this.options.onAuditReadinessCreated?.(readiness,resultReview,this.packageValue,this.calculationEvidence)??null,
@@ -49,13 +49,14 @@ export class EmpiricalV3SafetyWorkbenchController {
     const auditHash=packageValue.workflow.facts.audit.semanticHash;const auditEntry=findRecord(packageValue,'AUDIT_READINESS',auditHash);
     if(auditEntry&&this.reviewAudit.resultReview)this.reviewAudit.loadAuditReadiness(auditEntry.record,this.calculationEvidence);
   }
-  loadCalculationEvidence(value){const evidence=requireEmpiricalV3CoupledCalculationEvidence(value);if(!this.packageValue||!evidenceMatchesPackage(evidence,this.packageValue))throw new Error('Calculation evidence is stale or belongs to another safety package authorization.');this.calculationEvidence=evidence;this.reviewAudit.invalidateForEvidence(evidence);this.activeTab='EXPLAIN';this.error='';this.message=`Loaded sealed calculation evidence ${evidence.evidenceId}.`;this.render();return evidence;}
+  loadCalculationEvidence(value){const evidence=requireEmpiricalV3CoupledCalculationEvidence(value);if(!this.packageValue||!evidenceMatchesPackage(evidence,this.packageValue))throw new Error('Calculation evidence is stale or belongs to another safety package authorization.');this.calculationEvidence=evidence;this.reviewAudit.invalidateForEvidence(evidence);this.activeTab='EXPLAIN';this.explainMode='SUMMARY';this.error='';this.message=`Loaded sealed calculation evidence ${evidence.evidenceId}.`;this.render();return evidence;}
   loadResultReviewReceipt(value){if(!this.calculationEvidence)throw new Error('Calculation evidence is required before result review.');const receipt=this.reviewAudit.loadResultReview(value,this.calculationEvidence);this.render();return receipt;}
   loadAuditReadiness(value){if(!this.calculationEvidence)throw new Error('Calculation evidence is required before audit readiness.');const readiness=this.reviewAudit.loadAuditReadiness(value,this.calculationEvidence);this.render();return readiness;}
 
-  clear(){this.packageValue=null;this.calculationEvidence=null;this.reviewAudit.clear();this.lastConfirmationReceipt=null;this.activeTab='BRANCH_BASIS';this.error='';this.message='Empirical V3 safety/evidence workbench cleared.';this.render();}
+  clear(){this.packageValue=null;this.calculationEvidence=null;this.reviewAudit.clear();this.lastConfirmationReceipt=null;this.activeTab='BRANCH_BASIS';this.explainMode='SUMMARY';this.error='';this.message='Empirical V3 safety/evidence workbench cleared.';this.render();}
   refresh(){this.render();return this.getSnapshot();}
   setTab(tab){if(!['BRANCH_BASIS','SAFETY_GATE','EXPLAIN'].includes(tab))throw new RangeError(`Unsupported Empirical V3 tab: ${tab}`);this.activeTab=tab;this.render();}
+  setExplainMode(mode){if(!EMPIRICAL_V3_EXPLAIN_MODES.includes(mode))throw new RangeError(`Unsupported Empirical V3 Explain mode: ${mode}`);this.explainMode=mode;this.render();return mode;}
   openRisk(riskId){this.activeTab='SAFETY_GATE';this.render();return focusEmpiricalV3Risk(this.elements.content,riskId);}
 
   locateEntities(entityIds){const ids=uniqueTexts(entityIds);if(!ids.length)return;if(typeof this.options.onLocateEntities==='function')return this.options.onLocateEntities(ids);EventBus.publish(EVENT_TOPICS.VIEWPORT_SELECTION_REQUESTED,{entityId:ids[0],source:'api'});this.message=ids.length===1?`Located ${ids[0]}.`:`Located ${ids[0]}; ${ids.length-1} additional governed entities remain linked.`;this.renderStatus();}
@@ -88,7 +89,7 @@ export class EmpiricalV3SafetyWorkbenchController {
   }
   downloadAuditExport(){try{const record=this.createAuditExport();downloadRecord(this.documentRef,this.urlApi,record);this.error='';this.message=`Downloaded ${record.fileName}.`;this.renderStatus();return record;}catch(error){return this.fail('Empirical V3 audit export was rejected.',error);}}
 
-  getSnapshot(){return Object.freeze({status:this.packageValue?'CURRENT':'EMPTY',runId:this.packageValue?.runId??null,workflowState:this.packageValue?.workflow.state??'NO_PACKAGE',packageSemanticHash:this.packageValue?.semanticHash??null,riskSetSemanticHash:this.packageValue?.riskSet.semanticHash??null,calculationEvidenceId:this.calculationEvidence?.evidenceId??null,calculationEvidenceSemanticHash:this.calculationEvidence?.semanticHash??null,resultReviewReceiptId:this.reviewAudit.resultReview?.receiptId??null,auditReadinessId:this.reviewAudit.auditReadiness?.readinessId??null,activeTab:this.activeTab,lastConfirmationReceiptId:this.lastConfirmationReceipt?.receiptId??null,message:this.message,error:this.error||null});}
+  getSnapshot(){return Object.freeze({status:this.packageValue?'CURRENT':'EMPTY',runId:this.packageValue?.runId??null,workflowState:this.packageValue?.workflow.state??'NO_PACKAGE',packageSemanticHash:this.packageValue?.semanticHash??null,riskSetSemanticHash:this.packageValue?.riskSet.semanticHash??null,calculationEvidenceId:this.calculationEvidence?.evidenceId??null,calculationEvidenceSemanticHash:this.calculationEvidence?.semanticHash??null,resultReviewReceiptId:this.reviewAudit.resultReview?.receiptId??null,auditReadinessId:this.reviewAudit.auditReadiness?.readinessId??null,activeTab:this.activeTab,explainMode:this.explainMode,lastConfirmationReceiptId:this.lastConfirmationReceipt?.receiptId??null,message:this.message,error:this.error||null});}
   getPackage(){return this.packageValue;}getCalculationEvidence(){return this.calculationEvidence;}getResultReviewReceipt(){return this.reviewAudit.resultReview;}getAuditReadiness(){return this.reviewAudit.auditReadiness;}getLastConfirmationReceipt(){return this.lastConfirmationReceipt;}
 
   render(){
@@ -100,7 +101,7 @@ export class EmpiricalV3SafetyWorkbenchController {
     const actions={locate:(ids)=>this.locateEntities(ids),showRecord:(ref,hash)=>this.showRecord(ref,hash),openRisk:(id)=>this.openRisk(id),review:(risk,review)=>this.reviewAssumption(risk,review),run:this.isRunReady()?()=>this.requestRun():null};
     if(this.activeTab==='BRANCH_BASIS')renderEmpiricalV3BranchBasis(this.elements.content,this.packageValue,actions);else renderEmpiricalV3SafetyGate(this.elements.content,this.packageValue,actions);
   }
-  renderExplain(){renderEmpiricalV3EvidenceInspector(this.elements.evidence,null);const explain=this.documentRef.createElement('div');const review=this.documentRef.createElement('div');renderEmpiricalV3ExplainCalculation(explain,this.calculationEvidence);renderEmpiricalV3ResultReview(review,{evidence:this.calculationEvidence,resultReview:this.reviewAudit.resultReview,auditReady:this.reviewAudit.auditReadiness},{review:this.packageValue.workflow.state==='RESULT_REVIEW_REQUIRED'?(value)=>this.reviewResult(value):null,prepareAudit:this.packageValue.workflow.state==='RESULT_REVIEWED'&&this.reviewAudit.resultReview&&!this.reviewAudit.auditReadiness?()=>this.prepareAudit():null});this.elements.content.replaceChildren(explain,review);}
+  renderExplain(){renderEmpiricalV3EvidenceInspector(this.elements.evidence,null);const explain=this.documentRef.createElement('div');const review=this.documentRef.createElement('div');renderEmpiricalV3ExplainCalculation(explain,this.calculationEvidence,{mode:this.explainMode,onModeChange:(mode)=>this.setExplainMode(mode),packageValue:this.packageValue});renderEmpiricalV3ResultReview(review,{evidence:this.calculationEvidence,resultReview:this.reviewAudit.resultReview,auditReady:this.reviewAudit.auditReadiness},{review:this.packageValue.workflow.state==='RESULT_REVIEW_REQUIRED'?(value)=>this.reviewResult(value):null,prepareAudit:this.packageValue.workflow.state==='RESULT_REVIEWED'&&this.reviewAudit.resultReview&&!this.reviewAudit.auditReadiness?()=>this.prepareAudit():null});this.elements.content.replaceChildren(explain,review);}
   renderStatus(){if(!this.elements)return;this.elements.status.textContent=this.message;this.elements.error.hidden=!this.error;this.elements.error.textContent=this.error;}
   fail(message,error){this.error=errorMessage(error);this.message=message;this.render();throw error;}
   destroy(){this.elements?.section.remove();this.elements=null;this.packageValue=null;this.calculationEvidence=null;this.reviewAudit.clear();this.lastConfirmationReceipt=null;}

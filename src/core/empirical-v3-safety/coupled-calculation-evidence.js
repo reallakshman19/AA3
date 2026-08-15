@@ -8,19 +8,13 @@ export const EMPIRICAL_V3_COUPLED_CALCULATION_EVIDENCE_SCHEMA =
 const COMPONENT_SCHEMA = 'empirical-rooted-component-thermal-compatibility/v1';
 const STRAIGHT_SCHEMA = 'empirical-rooted-tree-thermal-restraint-compatibility/v1';
 
-/**
- * Seals existing ROM outputs for Explain/audit. This module never solves,
- * assembles, sums contribution terms, or reconstructs engineering formulas.
- */
+/** Seals existing ROM outputs for Explain/audit without solving or recomputing. */
 export function sealEmpiricalV3CoupledCalculationEvidence(input) {
   const runId = requireText(input?.runId, 'runId');
   const authorization = requireEmpiricalV3CalculationAuthorization(input?.authorization);
   if (authorization.runId !== runId) throw new Error('Evidence runId must match calculation authorization.');
   const source = normalizeMechanicsSource(input?.mechanics);
-  const coordinateBindings = normalizeCoordinateBindings(
-    input?.coordinateBindings ?? [],
-    source.coordinateIds,
-  );
+  const coordinateBindings = normalizeCoordinateBindings(input?.coordinateBindings ?? [], source.coordinateIds);
   const authorityRefs = normalizeRefs(input?.authorityRefs ?? [], 'authorityRefs');
   const romOutputRef = normalizeRef(input?.romOutputRef, 'romOutputRef');
   const pairRows = normalizePairEvidence(source.flexibility.pairEvidence);
@@ -70,7 +64,7 @@ export function sealEmpiricalV3CoupledCalculationEvidence(input) {
     coordinates: compatibilityRows,
     thermalReference: clone(source.thermalReference),
     sourceEvidence: clone(source.sourceEvidence),
-    formulaTrace: uniqueTexts([
+    formulaTrace: uniqueSortedTexts([
       ...(source.flexibility.formulaTrace ?? []),
       ...(source.compatibility.formulaTrace ?? []),
       ...(source.sourceFormulaTrace ?? []),
@@ -85,11 +79,7 @@ export function sealEmpiricalV3CoupledCalculationEvidence(input) {
     },
   };
   const hash = semanticHash(material);
-  return deepFreeze({
-    ...material,
-    evidenceId: `calc-evidence:${hash.slice('fnv1a64:'.length)}`,
-    semanticHash: hash,
-  });
+  return deepFreeze({ ...material, evidenceId: `calc-evidence:${hash.slice('fnv1a64:'.length)}`, semanticHash: hash });
 }
 
 export function requireEmpiricalV3CoupledCalculationEvidence(value) {
@@ -108,35 +98,26 @@ export function requireEmpiricalV3CoupledCalculationEvidence(value) {
 function normalizeMechanicsSource(value) {
   requireRecord(value, 'mechanics');
   if (value.schema === COMPONENT_SCHEMA) {
-    requireRecord(value.flexibility, 'mechanics.flexibility');
-    requireRecord(value.compatibility, 'mechanics.compatibility');
+    const coordinateIds = requireCoordinateIds(value.coordinateIds, 'mechanics.coordinateIds');
+    requireSameOrder(coordinateIds, value.flexibility?.caseIds, 'component flexibility caseIds');
     return {
       schema: value.schema,
-      coordinateIds: requireCoordinateIds(value.coordinateIds),
-      flexibility: {
-        matrix: requireMatrix(value.flexibility.matrixMPerN, 'flexibility.matrixMPerN'),
-        pairEvidence: requireArray(value.flexibility.pairEvidence, 'flexibility.pairEvidence'),
-        formulaTrace: value.flexibility.evidence?.formulaTrace ?? [],
-      },
-      compatibility: requireCompatibility(value.compatibility),
+      coordinateIds,
+      flexibility: normalizeFlexibility(value.flexibility, 'matrixMPerN', coordinateIds.length),
+      compatibility: requireCompatibility(value.compatibility, coordinateIds),
       thermalReference: value.thermalReference,
       sourceEvidence: value.evidence,
       sourceFormulaTrace: value.evidence?.formulaTrace ?? [],
     };
   }
   if (value.schema === STRAIGHT_SCHEMA) {
-    requireRecord(value.compatibility, 'mechanics.compatibility');
-    requireRecord(value.compatibility.flexibility, 'mechanics.compatibility.flexibility');
-    requireRecord(value.compatibility.compatibility, 'mechanics.compatibility.compatibility');
+    const coordinateIds = requireCoordinateIds(value.coordinateIds, 'mechanics.coordinateIds');
+    requireSameOrder(coordinateIds, value.compatibility?.flexibility?.caseIds, 'straight flexibility caseIds');
     return {
       schema: value.schema,
-      coordinateIds: requireCoordinateIds(value.coordinateIds),
-      flexibility: {
-        matrix: requireMatrix(value.compatibility.flexibility.matrix, 'flexibility.matrix'),
-        pairEvidence: requireArray(value.compatibility.flexibility.pairEvidence, 'flexibility.pairEvidence'),
-        formulaTrace: value.compatibility.flexibility.formulaTrace ?? [],
-      },
-      compatibility: requireCompatibility(value.compatibility.compatibility),
+      coordinateIds,
+      flexibility: normalizeFlexibility(value.compatibility?.flexibility, 'matrix', coordinateIds.length),
+      compatibility: requireCompatibility(value.compatibility?.compatibility, coordinateIds),
       thermalReference: value.thermalReference,
       sourceEvidence: value.evidence,
       sourceFormulaTrace: value.evidence?.formulaTrace ?? [],
@@ -145,18 +126,30 @@ function normalizeMechanicsSource(value) {
   throw new TypeError(`Unsupported coupled mechanics schema: ${value.schema ?? '<missing>'}.`);
 }
 
-function requireCompatibility(value) {
+function normalizeFlexibility(value, matrixField, size) {
+  requireRecord(value, 'flexibility');
+  return {
+    matrix: requireMatrix(value[matrixField], `flexibility.${matrixField}`, size),
+    pairEvidence: requireArray(value.pairEvidence, 'flexibility.pairEvidence'),
+    formulaTrace: value.formulaTrace ?? value.evidence?.formulaTrace ?? [],
+  };
+}
+
+function requireCompatibility(value, coordinateIds) {
   requireRecord(value, 'compatibility');
-  const coordinateIds = requireCoordinateIds(value.coordinateIds);
+  requireSameOrder(coordinateIds, value.coordinateIds, 'compatibility coordinateIds');
   if (!Array.isArray(value.rows) || value.rows.length !== coordinateIds.length) {
     throw new TypeError('Compatibility rows must match coordinateIds.');
   }
+  requireSameOrder(coordinateIds, value.rows.map((row) => row.coordinateId), 'compatibility row order');
+  requireVector(value.supportFlexibilityMPerN, 'supportFlexibilityMPerN', coordinateIds.length);
+  requireVector(value.rhsDisplacementM, 'rhsDisplacementM', coordinateIds.length);
   return {
     coordinateIds,
     rows: value.rows,
-    supportFlexibilityMPerN: requireArray(value.supportFlexibilityMPerN, 'supportFlexibilityMPerN'),
-    systemMatrixMPerN: requireMatrix(value.systemMatrixMPerN, 'systemMatrixMPerN'),
-    rhsDisplacementM: requireArray(value.rhsDisplacementM, 'rhsDisplacementM'),
+    supportFlexibilityMPerN: value.supportFlexibilityMPerN,
+    systemMatrixMPerN: requireMatrix(value.systemMatrixMPerN, 'systemMatrixMPerN', coordinateIds.length),
+    rhsDisplacementM: value.rhsDisplacementM,
     numerical: value.numerical,
     reciprocity: value.reciprocity,
     positiveDefinite: value.positiveDefinite,
@@ -183,10 +176,8 @@ function normalizePairEvidence(value) {
         sourceEvidence: clone(row.evidence ?? row),
       })).sort((a, b) => a.componentId.localeCompare(b.componentId)),
     });
-  }).sort((a, b) => (
-    a.rowCoordinateId.localeCompare(b.rowCoordinateId)
-    || a.columnCoordinateId.localeCompare(b.columnCoordinateId)
-  ));
+  }).sort((a, b) => a.rowCoordinateId.localeCompare(b.rowCoordinateId)
+    || a.columnCoordinateId.localeCompare(b.columnCoordinateId));
 }
 
 function normalizeCoordinateBindings(value, coordinateIds) {
@@ -203,7 +194,7 @@ function normalizeCoordinateBindings(value, coordinateIds) {
       nodeId: optionalText(row.nodeId),
       supportId: optionalText(row.supportId),
       branchId: optionalText(row.branchId),
-      componentIds: uniqueTexts(row.componentIds ?? []),
+      componentIds: uniqueSortedTexts(row.componentIds ?? []),
     }));
   });
   return map;
@@ -216,20 +207,16 @@ function normalizeRefs(value, fieldName) {
     semanticHash: requireText(row?.semanticHash, `${fieldName}[${index}].semanticHash`),
   })).sort((a, b) => a.ref.localeCompare(b.ref) || a.semanticHash.localeCompare(b.semanticHash));
 }
-function normalizeRef(value, fieldName) {
-  requireRecord(value, fieldName);
-  return { ref: requireText(value.ref, `${fieldName}.ref`), semanticHash: requireText(value.semanticHash, `${fieldName}.semanticHash`) };
-}
-function requireMatrix(value, fieldName) {
-  if (!Array.isArray(value) || value.some((row) => !Array.isArray(row))) throw new TypeError(`${fieldName} must be a matrix.`);
-  return value;
-}
-function requireCoordinateIds(value) { return uniqueTexts(requireArray(value, 'coordinateIds')); }
+function normalizeRef(value, fieldName) { requireRecord(value, fieldName); return { ref: requireText(value.ref, `${fieldName}.ref`), semanticHash: requireText(value.semanticHash, `${fieldName}.semanticHash`) }; }
+function requireMatrix(value, fieldName, size) { if (!Array.isArray(value) || value.length !== size || value.some((row) => !Array.isArray(row) || row.length !== size || row.some((item) => !Number.isFinite(item)))) throw new TypeError(`${fieldName} must be a finite ${size}x${size} matrix.`); return value; }
+function requireVector(value, fieldName, size) { if (!Array.isArray(value) || value.length !== size || value.some((item) => !Number.isFinite(item))) throw new TypeError(`${fieldName} must contain ${size} finite values.`); return value; }
+function requireCoordinateIds(value, fieldName) { if (!Array.isArray(value) || value.length === 0) throw new TypeError(`${fieldName} must be non-empty.`); const ids = value.map((item, index) => requireText(item, `${fieldName}[${index}]`)); if (new Set(ids).size !== ids.length) throw new TypeError(`${fieldName} must be unique.`); return ids; }
+function requireSameOrder(expected, actual, fieldName) { const rows = requireCoordinateIds(actual, fieldName); if (JSON.stringify(expected) !== JSON.stringify(rows)) throw new Error(`${fieldName} must preserve the mechanics coordinate order.`); }
 function requireArray(value, fieldName) { if (!Array.isArray(value)) throw new TypeError(`${fieldName} must be an array.`); return value; }
 function finite(value, fieldName) { if (!Number.isFinite(value)) throw new TypeError(`${fieldName} must be finite.`); return Object.is(value, -0) ? 0 : value; }
 function nullableFinite(value, fieldName) { return value === null ? null : finite(value, fieldName); }
 function clone(value) { return JSON.parse(JSON.stringify(value)); }
 function requireRecord(value, fieldName) { if (!value || typeof value !== 'object' || Array.isArray(value)) throw new TypeError(`${fieldName} must be an object.`); }
-function uniqueTexts(value) { if (!Array.isArray(value)) throw new TypeError('Expected an array.'); return [...new Set(value.map((item) => requireText(item, 'array item')))].sort(); }
+function uniqueSortedTexts(value) { if (!Array.isArray(value)) throw new TypeError('Expected an array.'); return [...new Set(value.map((item) => requireText(item, 'array item')))].sort(); }
 function optionalText(value) { const text = String(value ?? '').trim(); return text || null; }
 function requireText(value, fieldName) { const text = String(value ?? '').trim(); if (!text) throw new TypeError(`${fieldName} is required.`); return text; }

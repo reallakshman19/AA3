@@ -1,5 +1,8 @@
 /** User-facing engineering summary derived only from retained workbench state. */
-import { FORMULATION_GUARDS } from '../core/local-continuum/index.js';
+import {
+  FORMULATION_GUARDS,
+  FORMULATIONS,
+} from '../core/local-continuum/index.js';
 import { element } from './lafea-workbench-dom.js';
 
 export const LAFEA_ENGINEERING_OVERVIEW_SCHEMA = 'lafea-engineering-overview/v1';
@@ -21,7 +24,7 @@ export function buildLafeaEngineeringOverview(stageValue, registryEntryValue) {
   const runAuthorized = Boolean(source)
     && registry.engineState === 'QUALIFIED_ROUTE_REGISTERED'
     && stage.orchestration?.sections?.AUTHORIZATION?.state === 'READY';
-  const formulationAuthority = continuumFormulationAuthority(source);
+  const formulationAuthority = continuumFormulationAuthority(source, mesh);
 
   return freeze({
     schema: LAFEA_ENGINEERING_OVERVIEW_SCHEMA,
@@ -52,7 +55,7 @@ export function buildLafeaEngineeringOverview(stageValue, registryEntryValue) {
       authority: text(registry.authority, 'UNREGISTERED'),
       engineState: text(registry.engineState, 'UNKNOWN'),
       qualificationProfile: text(source?.qualificationProfile?.identity, 'Not declared'),
-      recovery: recoveryLabel(registry, elementFamilies),
+      recovery: recoveryLabel(registry, elementFamilies, source?.formulation),
     },
     execution: {
       status: text(execution?.status, 'NOT_RUN'),
@@ -63,13 +66,14 @@ export function buildLafeaEngineeringOverview(stageValue, registryEntryValue) {
       metrics: continuumMetrics(result, source?.units),
     },
     qualification: registry.stageId === 'LAFEA.3' ? {
-      program: 'B01',
+      program: 'B01 + Plane-Strain B-bar',
       baseRuns: 'NOT EMBEDDED IN WORKBENCH STATE',
+      bbarMatrix: 'EXTERNAL EXACT-HEAD 120-SOLVE EVIDENCE REQUIRED',
       metamorphic: 'EXTERNAL CI EVIDENCE REQUIRED',
       failClosed: 'EXTERNAL CI EVIDENCE REQUIRED',
       exactHead: 'EXTERNAL EXACT-HEAD CI REQUIRED',
       releaseAuthority: false,
-      scope: 'Workbench runtime state does not manufacture benchmark or exact-head qualification claims.',
+      scope: 'Workbench runtime state does not manufacture benchmark, B-bar matrix, exact-head or release qualification claims.',
     } : null,
   });
 }
@@ -146,10 +150,7 @@ function formulationAuthorityPanel(root, value) {
   [
     ['Configured formulation', value.formulation],
     ['Configured Poisson ratio(s)', value.poissonRatios || 'Not declared'],
-    ['Plane-strain advisory band', `ν ≥ ${FORMULATION_GUARDS.planeStrainPoissonWarning}`],
-    ['Plane-strain qualification block', `ν ≥ ${FORMULATION_GUARDS.planeStrainPoissonBlock}`],
-    ['Guard authority', 'Source-controlled; solver tolerances cannot override it'],
-    ['Tunable input', 'Material Poisson ratio is model input; use a separately qualified locking-resistant formulation outside this envelope'],
+    ...value.details,
   ].forEach(([label, item]) => {
     const row = element(root, 'div');
     row.append(element(root, 'strong', null, label), element(root, 'span', null, String(item)));
@@ -160,45 +161,105 @@ function formulationAuthorityPanel(root, value) {
   return details;
 }
 
-function continuumFormulationAuthority(source) {
+function continuumFormulationAuthority(source, mesh) {
   const formulation = text(source?.formulation, 'Not declared');
   const ratios = array(source?.materials)
     .map((row) => finite(row?.poissonRatio))
     .filter((value) => value !== null);
-  if (formulation !== 'PLANE_STRAIN') {
+  const poissonRatios = ratios.join(', ');
+
+  if (formulation === FORMULATIONS.PLANE_STRAIN_BBAR) {
+    const hasTemperature = array(source?.loadCases).some(
+      (loadCase) => array(loadCase?.temperatureLoads).length > 0,
+    );
+    const meshFamilies = uniqueStrings(array(mesh?.elements).map((row) => row?.elementType));
+    const hasT3 = meshFamilies.includes('T3');
+    const hasUnsupported = meshFamilies.some((family) => family !== 'T6' && family !== 'Q8');
+    const details = [
+      ['Locking-resistant authority', 'Mean-dilatation B-bar; T6 / Q8 mechanical route only'],
+      ['Retained solver-mesh families', meshFamilies.join(' / ') || 'Not retained'],
+      ['Temperature / eigenstrain authority', 'NOT GRANTED'],
+      ['T3 B-bar authority', 'NOT GRANTED — actual T3 solver elements block before stiffness assembly'],
+      ['Qualification evidence', 'Frozen ν=0.30→0.4999 × distortion × h-refinement matrix requires external exact-head execution'],
+      ['Guard authority', 'Source-controlled mechanics; solver tolerances cannot substitute for locking qualification'],
+    ];
+    if (hasTemperature) {
+      return {
+        status: 'BLOCKED', formulation, poissonRatios, details,
+        message: 'B-bar thermal/eigenstrain loading is outside the qualified formulation envelope.',
+      };
+    }
+    if (!mesh) {
+      return {
+        status: 'MESH_REQUIRED', formulation, poissonRatios, details,
+        message: 'B-bar source selection is configured, but a retained qualified T6 or Q8 solver mesh is required before execution.',
+      };
+    }
+    if (hasT3 || hasUnsupported || meshFamilies.length === 0) {
+      return {
+        status: 'MESH_REGENERATION_REQUIRED', formulation, poissonRatios, details,
+        message: 'The retained solver mesh is outside B-bar T6/Q8 authority. Regenerate a qualified T6 or Q8 mesh; source placeholder connectivity is not solver-mesh authority.',
+      };
+    }
     return {
-      status: formulation === 'Not declared' ? 'NOT_DECLARED' : 'QUALIFIED',
-      formulation,
-      poissonRatios: ratios.join(', '),
-      message: formulation === 'PLANE_STRESS'
-        ? 'Near-incompressible plane-strain locking guard is not applicable to this plane-stress model.'
-        : null,
+      status: 'EXACT_HEAD_QUALIFICATION_REQUIRED', formulation, poissonRatios, details,
+      message: 'B-bar mechanical source and T6/Q8 mesh combination is structurally admissible. Workbench runtime state cannot claim the frozen 120-solve ν/distortion qualification or release authority.',
     };
   }
+
+  if (formulation === FORMULATIONS.PLANE_STRESS) {
+    return {
+      status: 'QUALIFIED',
+      formulation,
+      poissonRatios,
+      details: [
+        ['Near-incompressible plane-strain guard', 'Not applicable to plane stress'],
+        ['Guard authority', 'Source-controlled'],
+      ],
+      message: 'Near-incompressible plane-strain locking guard is not applicable to this plane-stress model.',
+    };
+  }
+
+  if (formulation !== FORMULATIONS.PLANE_STRAIN) {
+    return {
+      status: 'NOT_DECLARED', formulation, poissonRatios, details: [],
+      message: 'A registered continuum formulation is required.',
+    };
+  }
+
+  const details = [
+    ['Plane-strain advisory band', `ν ≥ ${FORMULATION_GUARDS.planeStrainPoissonWarning}`],
+    ['Plane-strain qualification block', `ν ≥ ${FORMULATION_GUARDS.planeStrainPoissonBlock}`],
+    ['Guard authority', 'Source-controlled; solver tolerances cannot override it'],
+    ['Locking-resistant alternative', 'PLANE_STRAIN_BBAR with separately qualified T6/Q8 mechanics'],
+  ];
   const maximum = ratios.length ? Math.max(...ratios) : null;
   if (maximum === null) {
     return {
-      status: 'NOT_DECLARED', formulation, poissonRatios: '', message: 'Material Poisson ratio is required.',
+      status: 'NOT_DECLARED', formulation, poissonRatios: '', details,
+      message: 'Material Poisson ratio is required.',
     };
   }
   if (maximum >= FORMULATION_GUARDS.planeStrainPoissonBlock) {
     return {
       status: 'BLOCKED',
       formulation,
-      poissonRatios: ratios.join(', '),
-      message: 'Current displacement-only plane-strain authority does not qualify this near-incompressible material. Choose a qualified material representation or a separately qualified locking-resistant formulation.',
+      poissonRatios,
+      details,
+      message: 'Current displacement-only plane-strain authority does not qualify this near-incompressible material. The ν≥0.45 boundary remains unchanged; solver tolerances may not override it.',
     };
   }
   if (maximum >= FORMULATION_GUARDS.planeStrainPoissonWarning) {
     return {
       status: 'ADVISORY',
       formulation,
-      poissonRatios: ratios.join(', '),
+      poissonRatios,
+      details,
       message: 'Model is inside the hard qualification envelope but close to the incompressible limit. Review mesh sensitivity and locking evidence before relying on local stiffness-sensitive quantities.',
     };
   }
   return {
-    status: 'QUALIFIED', formulation, poissonRatios: ratios.join(', '), message: null,
+    status: 'QUALIFIED', formulation, poissonRatios, details, message: null,
   };
 }
 
@@ -240,6 +301,7 @@ function qualificationBar(root, value) {
   const grid = element(root, 'div', 'lafea-engineering-overview__qualification-grid');
   [
     ['Base benchmark', value.baseRuns],
+    ['B-bar ν/distortion matrix', value.bbarMatrix],
     ['Metamorphic', value.metamorphic],
     ['Fail-closed', value.failClosed],
     ['Exact-head integrated', value.exactHead],
@@ -295,7 +357,10 @@ function continuumMetrics(resultValue, unitsValue) {
   return metrics;
 }
 
-function recoveryLabel(registry, elementFamilies) {
+function recoveryLabel(registry, elementFamilies, formulation) {
+  if (registry.stageId === 'LAFEA.3' && formulation === FORMULATIONS.PLANE_STRAIN_BBAR) {
+    return 'B-bar integration-point stress — retained mean dilatation (authoritative)';
+  }
   if (registry.stageId === 'LAFEA.3' && elementFamilies.some((value) => value === 'T6' || value === 'Q8')) {
     return 'Integration-point stress (authoritative)';
   }

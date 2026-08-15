@@ -3,15 +3,15 @@ import { access, readFile } from 'node:fs/promises';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import {
-  APPLICATION_NAVIGATION_ORDER_V11,
-  APPLICATION_VIEW_STATE_V11_SCHEMA,
+  APPLICATION_NAVIGATION_ORDER_V12,
+  APPLICATION_VIEW_STATE_V12_SCHEMA,
   CONSUMER_IDS,
-  createApplicationViewStateV11,
+  createApplicationViewStateV12,
   createWorkspaceConsumerContext,
   createWorkspaceConsumerReadinessRegistry,
-  createWorkspaceConsumerRegistryV11,
-  validateApplicationViewStateV11,
-  validateWorkspaceConsumerRegistryV11,
+  createWorkspaceConsumerRegistryV12,
+  validateApplicationViewStateV12,
+  validateWorkspaceConsumerRegistryV12,
 } from '../src/core/workspace-consumers/index.js';
 import {
   createAdvancedTabBenchmarkRegistry,
@@ -20,13 +20,13 @@ import {
 import { renderLoadCalcConsumer } from '../src/workspace/load-calc-consumer-view.js';
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
-const registry = createWorkspaceConsumerRegistryV11();
+const registry = createWorkspaceConsumerRegistryV12();
 const benchmarkRegistry = createAdvancedTabBenchmarkRegistry();
 
-assert.deepEqual(APPLICATION_NAVIGATION_ORDER_V11, ['WORKSPACE', 'LOAD_CALC', 'LAFEA', 'LFEA']);
-assert.deepEqual(registry.consumers.map((row) => row.consumerId), ['LAFEA', 'LFEA', 'LOAD_CALC', 'WORKSPACE']);
-assert.equal(validateWorkspaceConsumerRegistryV11(registry).ok, true);
-assert.equal(reconcileNavigationAndBenchmarkRegistry(APPLICATION_NAVIGATION_ORDER_V11, benchmarkRegistry).ok, true);
+assert.deepEqual(APPLICATION_NAVIGATION_ORDER_V12, ['WORKSPACE', 'LOAD_CALC', 'LAFEA', 'LFEA', 'EMPIRICAL']);
+assert.deepEqual(registry.consumers.map((row) => row.consumerId), ['EMPIRICAL', 'LAFEA', 'LFEA', 'LOAD_CALC', 'WORKSPACE']);
+assert.equal(validateWorkspaceConsumerRegistryV12(registry).ok, true);
+assert.equal(reconcileNavigationAndBenchmarkRegistry(APPLICATION_NAVIGATION_ORDER_V12, benchmarkRegistry).ok, true);
 
 const context = createWorkspaceConsumerContext({
   datasetId: null,
@@ -35,14 +35,14 @@ const context = createWorkspaceConsumerContext({
   contracts: {},
 });
 const readiness = createWorkspaceConsumerReadinessRegistry(registry, context, { workspaceBooted: true });
-const state = createApplicationViewStateV11(readiness, { activeViewId: CONSUMER_IDS.WORKSPACE, version: 0 });
-assert.equal(state.schema, APPLICATION_VIEW_STATE_V11_SCHEMA);
+const state = createApplicationViewStateV12(readiness, { activeViewId: CONSUMER_IDS.WORKSPACE, version: 0 });
+assert.equal(state.schema, APPLICATION_VIEW_STATE_V12_SCHEMA);
 assert.equal(state.activeViewId, CONSUMER_IDS.WORKSPACE);
-assert.equal(validateApplicationViewStateV11(state).ok, true);
+assert.equal(validateApplicationViewStateV12(state).ok, true);
 
 const layoutSource = await readFile(path.join(root, 'src/workspace/workspace-layout.js'), 'utf8');
 const viewIds = [...layoutSource.matchAll(/data-application-view="([A-Z_]+)"/g)].map((match) => match[1]);
-assert.deepEqual(viewIds, APPLICATION_NAVIGATION_ORDER_V11);
+assert.deepEqual(viewIds, APPLICATION_NAVIGATION_ORDER_V12);
 for (const forbidden of ['HOME', 'PCF', 'SKETCHER', 'THREE_D_CALC', 'PIPE_SOLVER', 'LOCAL_FEA', 'REPORTS', 'QA', 'SETTINGS', 'DEBUG']) {
   assert.equal(viewIds.includes(forbidden), false, `${forbidden} must not be mounted by the Advanced shell.`);
 }

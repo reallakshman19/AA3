@@ -55,8 +55,10 @@ controller.view.destroy = () => {
   controller.view.activeViewport = null;
   root.replaceChildren();
 };
-controller.benchmarkPanel.render = () => {};
-controller.benchmarkPanel.destroy = () => {};
+if (controller.benchmarkPanel) {
+  controller.benchmarkPanel.render = () => {};
+  controller.benchmarkPanel.destroy = () => {};
+}
 
 controller.init();
 assert.equal(renderCount, 1);

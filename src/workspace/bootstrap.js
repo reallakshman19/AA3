@@ -7,7 +7,9 @@ import { AnalysisSessions } from './analysis-session-store.js';
 import { ApplicationShellController } from './application-shell-controller.js';
 import { DatasetController } from './dataset-controller.js';
 import { EventBus } from './event-bus.js';
+import { FeaBenchmarkPanel } from './fea-benchmark-panel.js';
 import { FirstCutResultStore } from './first-cut-result-store.js';
+import { createLafeaMockDocument } from './lafea-simulated-source-provider.js';
 import { LafeaWorkbenchController } from './lafea-workbench-controller.js';
 import { LfeaWorkbenchController } from './lfea-workbench-controller.js';
 import { ModelCalculationController } from './model-calculation-controller.js';
@@ -156,12 +158,29 @@ export function bootstrapAnalysisWorkspace(rootElement) {
   const propertiesPanel = new PropertiesPanel(rootElement.querySelector('[data-panel="properties"]'), EventBus, WorkspaceState);
   const lafeaRoot = requireUniqueRoot(rootElement, '[data-role="lafea-consumer-root"]');
   const lfeaRoot = requireUniqueRoot(rootElement, '[data-role="lfea-consumer-root"]');
-  if (lafeaRoot === lfeaRoot) {
-    throw new TypeError('LAFEA and LFEA workbench roots must be different elements.');
+  const empiricalRoot = requireUniqueRoot(rootElement, '[data-role="empirical-lafea-consumer-root"]');
+  if (lafeaRoot === lfeaRoot || lafeaRoot === empiricalRoot || lfeaRoot === empiricalRoot) {
+    throw new TypeError('LAFEA, LFEA, and Empirical workbench roots must be different elements.');
   }
-  const lafeaWorkbenchController = new LafeaWorkbenchController(lafeaRoot,undefined);
+  const lafeaWorkbenchController = new LafeaWorkbenchController(lafeaRoot, {
+    initialStage: 'LAFEA.3',
+    mockDocumentFactory: createLafeaMockDocument,
+    benchmarkPanelFactory: (hostElement) => new FeaBenchmarkPanel(hostElement, { surface: 'LAFEA' }),
+  });
   const lfeaWorkbenchController = new LfeaWorkbenchController(lfeaRoot,undefined);
-  const applicationShellController = new ApplicationShellController(rootElement,workspaceConsumerController,EventBus,{ settingsController,lafeaController:lafeaWorkbenchController,lfeaController:lfeaWorkbenchController });
+  const empiricalWorkbenchController = new LafeaWorkbenchController(empiricalRoot, {
+    presentationMode: 'ANALYTICAL_CALC',
+    analyticalOnly: true,
+    initialStage: 'LAFEA.1',
+    mockDocumentFactory: createLafeaMockDocument,
+    benchmarkPanelFactory: (hostElement) => new FeaBenchmarkPanel(hostElement, { surface: 'LAFEA' }),
+  });
+  const applicationShellController = new ApplicationShellController(rootElement,workspaceConsumerController,EventBus,{
+    settingsController,
+    lafeaController:lafeaWorkbenchController,
+    lfeaController:lfeaWorkbenchController,
+    empiricalController:empiricalWorkbenchController,
+  });
   const benchmarkReportUrl = new URL(`${import.meta.env.BASE_URL}qualification/advanced-tab-benchmarks.json`,rootElement.ownerDocument.baseURI).href;
   const tabBenchmarkStatusController = new DeferredController(
     () => import('./tab-benchmark-status-controller.js'),
@@ -214,8 +233,9 @@ export function bootstrapAnalysisWorkspace(rootElement) {
     getSupportSiteModel(){return engineeringModelStore.getSupportSiteModel();},
     getRoutePartitionModel(){return engineeringModelStore.getRoutePartitionModel();},
     getEngineeringSupportLoadDistribution(){return engineeringModelStore.getDistribution();},
-    getLafeaWorkbenchState(){return applicationShellController.getLafeaWorkbenchState();},getLfeaWorkbenchState(){return applicationShellController.getLfeaWorkbenchState();},
+    getLafeaWorkbenchState(){return applicationShellController.getLafeaWorkbenchState();},getLfeaWorkbenchState(){return applicationShellController.getLfeaWorkbenchState();},getEmpiricalWorkbenchState(){return applicationShellController.getEmpiricalWorkbenchState();},
     importLafeaDocument(value,stageId){return lafeaWorkbenchController.importDocument(value,stageId);},exportLafeaDocument(){return lafeaWorkbenchController.exportDocument();},runLafea(){return lafeaWorkbenchController.run();},undoLafea(){return lafeaWorkbenchController.undo();},redoLafea(){return lafeaWorkbenchController.redo();},
+    importEmpiricalDocument(value,stageId){return empiricalWorkbenchController.importDocument(value,stageId);},exportEmpiricalDocument(){return empiricalWorkbenchController.exportDocument();},runEmpirical(){return empiricalWorkbenchController.run();},undoEmpirical(){return empiricalWorkbenchController.undo();},redoEmpirical(){return empiricalWorkbenchController.redo();},
     importLfeaDocument(value){return lfeaWorkbenchController.importDocument(value);},exportLfeaDocument(){return lfeaWorkbenchController.exportDocument();},exportLfeaEvidence(){return lfeaWorkbenchController.exportEvidence();},runLfea(){return lfeaWorkbenchController.run();},undoLfea(){return lfeaWorkbenchController.undo();},redoLfea(){return lfeaWorkbenchController.redo();},
     getTabBenchmarkSuite(){return tabBenchmarkStatusController.getCurrent()?.getSuite() ?? null;},
     getModelSupportLoadReadiness(){const snapshot=WorkspaceState.getSnapshot();return snapshot.status==='ready'&&snapshot.dataset?assessModelSupportLoadReadiness(snapshot.dataset):null;},

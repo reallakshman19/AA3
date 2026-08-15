@@ -11,6 +11,7 @@ import {
   createLafeaArtifactRecord,
   createLafeaLifecycleEvent,
   createLafeaWorkbenchStore,
+  issueLafeaSourceAuthority,
 } from '../src/workspace/lafea-workbench.js';
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
@@ -113,16 +114,17 @@ const manual = createLafeaWorkbenchStore({
   initialStage: stageId,
   initialDocument: continuumFixture(),
 });
-manual.initializeLifecycle('sha256:manual-browser-fixture', 'U3B-MANUAL');
+const manualAuthority = issueLafeaSourceAuthority(stageId, continuumFixture(), 'U3B-MANUAL');
+manual.initializeLifecycle(manualAuthority.sourceHash, 'U3B-MANUAL');
 stage = manual.getState().stages[stageId];
 assert.equal(stage.sourceAuthority, null);
-assert.equal(stage.lifecycle.source.sourceHash, 'sha256:manual-browser-fixture');
+assert.equal(stage.lifecycle.source.sourceHash, manualAuthority.sourceHash);
 manual.registerLifecycleArtifact(createLafeaArtifactRecord({
   stageId,
   kind: 'CANONICAL_MODEL',
   status: 'CURRENT',
   artifactHash: 'sha256:manual-model',
-  parentHashes: { sourceHash: 'sha256:manual-browser-fixture' },
+  parentHashes: { sourceHash: manualAuthority.sourceHash },
   qualification: 'PASS',
   producerRef: 'U3B-MANUAL-PRODUCER',
   diagnostics: [],

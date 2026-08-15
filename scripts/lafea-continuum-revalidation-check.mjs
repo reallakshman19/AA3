@@ -184,7 +184,8 @@ function assertTopologyEditRejected() {
   });
   try {
     store.run();
-    const document = structuredClone(store.exportDocument());
+    const payload = structuredClone(store.exportDocument());
+    const document = payload.document ?? payload;
     const nodeC = document.nodes.find((row) => row.nodeId === 'C');
     nodeC.nodeId = 'D';
     nodeC.sourceReference = 'NODE#D';

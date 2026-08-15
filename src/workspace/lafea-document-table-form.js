@@ -176,8 +176,29 @@ function renderScalarRow({
   );
   const state = documentRef.createElement('small');
   state.id = `${inputId}-state`;
-  state.textContent = `State: ${instance.state}`;
-  input.setAttribute('aria-describedby', state.id);
+  if (['MISSING', 'INVALID_NUMBER', 'PRESENT_NULL'].includes(instance.state)) {
+    state.textContent = `State: ${instance.state}`;
+    input.setAttribute('aria-describedby', state.id);
+  } else {
+    state.style.display = 'none';
+  }
+  
+  input.addEventListener('input', () => {
+    input.setCustomValidity('');
+    if (input.value.trim() !== '') {
+      const parsed = Number(input.value);
+      if (Number.isNaN(parsed)) {
+        input.setCustomValidity('Must be a valid number');
+      } else if (typeof descriptor.minimum === 'number' && parsed < descriptor.minimum) {
+        input.setCustomValidity(`Value must be >= ${descriptor.minimum}`);
+      } else if (typeof descriptor.minimumExclusive === 'number' && parsed <= descriptor.minimumExclusive) {
+        input.setCustomValidity(`Value must be > ${descriptor.minimumExclusive}`);
+      }
+    }
+    input.setAttribute('aria-invalid', input.checkValidity() ? 'false' : 'true');
+    input.style.borderColor = input.checkValidity() ? '' : 'red';
+  });
+  
   inputCell.append(input, state);
 
   const unitCell = documentRef.createElement('td');
@@ -196,7 +217,7 @@ function renderScalarRow({
     sourceRef = null;
   }
   const source = documentRef.createElement('code');
-  source.textContent = sourceRef ?? 'SOURCE REF NOT DECLARED';
+  source.textContent = sourceRef ?? '—';
   const sourceStatus = documentRef.createElement('small');
   sourceStatus.textContent = descriptor.authority.sourceStatus;
   sourceStatus.style.display = 'block';

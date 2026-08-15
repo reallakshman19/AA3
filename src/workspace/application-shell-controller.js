@@ -1,13 +1,13 @@
 import {
-  APPLICATION_NAVIGATION_ORDER_V11,
+  APPLICATION_NAVIGATION_ORDER_V12,
   CONSUMER_IDS,
   IMPLEMENTATION_STATUS,
   READINESS_STATES,
-  createApplicationViewStateV11,
+  createApplicationViewStateV12,
   createWorkspaceConsumerReadinessRegistry,
-  createWorkspaceConsumerRegistryV11,
-  refreshApplicationViewStateV11,
-  transitionApplicationViewStateV11,
+  createWorkspaceConsumerRegistryV12,
+  refreshApplicationViewStateV12,
+  transitionApplicationViewStateV12,
   workspaceConsumerDescriptor,
 } from '../core/workspace-consumers/index.js';
 import { EventBus } from './event-bus.js';
@@ -18,8 +18,8 @@ import { LoadCalcConsumerController } from './load-calc-consumer-controller.js';
  * Owns only Advanced Analysis top-level navigation and view lifecycle.
  *
  * Workspace remains the authoritative context owner. Load Calc receives that
- * context through its existing controller, while both FEA controllers remain
- * dataset-independent and are injected through explicit options.
+ * context through its existing controller, while both FEA controllers and
+ * Empirical controller remain dataset-independent and are injected through explicit options.
  */
 export class ApplicationShellController {
   constructor(rootElement, consumerController, eventBus, options) {
@@ -28,10 +28,11 @@ export class ApplicationShellController {
     this.settingsController = options.settingsController;
     this.lafeaController = options.lafeaController;
     this.lfeaController = options.lfeaController;
+    this.empiricalController = options.empiricalController ?? null;
     this.context = consumerController.getContext();
-    this.registry = createWorkspaceConsumerRegistryV11();
+    this.registry = createWorkspaceConsumerRegistryV12();
     this.readiness = this.buildReadiness();
-    this.state = createApplicationViewStateV11(this.readiness, {
+    this.state = createApplicationViewStateV12(this.readiness, {
       activeViewId: CONSUMER_IDS.WORKSPACE,
       version: 0,
     });
@@ -50,6 +51,7 @@ export class ApplicationShellController {
     this.loadCalcController.init();
     this.lafeaController?.init();
     this.lfeaController?.init();
+    this.empiricalController?.init();
     this.unsubscribeCallbacks = [
       this.eventBus.subscribe(APPLICATION_EVENTS.CONTEXT_CHANGED, ({ context }) => this.handleContext(context)),
       this.eventBus.subscribe(APPLICATION_EVENTS.CHANGE_REQUESTED, (payload) => this.handleRequest(payload)),
@@ -65,12 +67,12 @@ export class ApplicationShellController {
     this.context = context;
     if (readinessChanged) this.readiness = this.buildReadiness();
     if (datasetBoundary && previous === CONSUMER_IDS.LOAD_CALC) {
-      this.state = createApplicationViewStateV11(this.readiness, {
+      this.state = createApplicationViewStateV12(this.readiness, {
         activeViewId: CONSUMER_IDS.WORKSPACE,
         version: this.state.version + 1,
       });
     } else if (readinessChanged) {
-      this.state = refreshApplicationViewStateV11(this.state, this.readiness);
+      this.state = refreshApplicationViewStateV12(this.state, this.readiness);
     }
     if (datasetBoundary || readinessChanged) this.view.render(this.state, this.readiness);
     if (previous !== this.state.activeViewId) {
@@ -81,7 +83,7 @@ export class ApplicationShellController {
   handleDatasetReplacement() {
     if (this.state.activeViewId !== CONSUMER_IDS.LOAD_CALC) return;
     const previous = this.state.activeViewId;
-    this.state = createApplicationViewStateV11(this.readiness, {
+    this.state = createApplicationViewStateV12(this.readiness, {
       activeViewId: CONSUMER_IDS.WORKSPACE,
       version: this.state.version + 1,
     });
@@ -95,7 +97,7 @@ export class ApplicationShellController {
       const descriptor = workspaceConsumerDescriptor(this.registry, viewId);
       const readiness = this.getReadiness(viewId);
       assertImplementedAvailable(descriptor, readiness);
-      const result = transitionApplicationViewStateV11(this.state, viewId, this.readiness);
+      const result = transitionApplicationViewStateV12(this.state, viewId, this.readiness);
       if (!result.activated) throw viewError('VIEW_NOT_AVAILABLE', `${descriptor.label} is unavailable.`);
       this.state = result.state;
       this.view.render(this.state, this.readiness);
@@ -148,10 +150,12 @@ export class ApplicationShellController {
   getLoadCalculationReviewModel() { return this.loadCalcController.getReviewModel(); }
   getLafeaWorkbenchState() { return this.lafeaController?.getState() || null; }
   getLfeaWorkbenchState() { return this.lfeaController?.getState() || null; }
+  getEmpiricalWorkbenchState() { return this.empiricalController?.getState() || null; }
 
   destroy() {
     this.unsubscribeCallbacks.forEach((unsubscribe) => unsubscribe());
     this.unsubscribeCallbacks = [];
+    this.empiricalController?.destroy();
     this.lfeaController?.destroy();
     this.lafeaController?.destroy();
     this.loadCalcController.destroy();
@@ -159,6 +163,7 @@ export class ApplicationShellController {
     this.settingsController = null;
     this.lafeaController = null;
     this.lfeaController = null;
+    this.empiricalController = null;
     this.context = null;
     this.state = null;
     this.readiness = Object.freeze([]);
@@ -166,7 +171,7 @@ export class ApplicationShellController {
 }
 
 /**
- * Renders and keyboard-controls the exact v11 top-level navigation.
+ * Renders and keyboard-controls the exact v12 top-level navigation.
  */
 export class ApplicationShellView {
   constructor(rootElement, eventBus) {
@@ -174,7 +179,7 @@ export class ApplicationShellView {
     this.eventBus = eventBus;
     this.navElement = rootElement?.querySelector('[data-role="application-navigation"]') || null;
     this.statusElement = rootElement?.querySelector('[data-role="application-navigation-status"]') || null;
-    this.views = new Map(APPLICATION_NAVIGATION_ORDER_V11.map((id) => [
+    this.views = new Map(APPLICATION_NAVIGATION_ORDER_V12.map((id) => [
       id,
       rootElement?.querySelector(`[data-application-view="${id}"]`) || null,
     ]));
@@ -184,7 +189,7 @@ export class ApplicationShellView {
   init(registry) {
     if (!this.navElement) return;
     const byId = new Map(registry.consumers.map((row) => [row.consumerId, row]));
-    this.navElement.replaceChildren(...APPLICATION_NAVIGATION_ORDER_V11.map((id) => this.navigationItem(byId.get(id))));
+    this.navElement.replaceChildren(...APPLICATION_NAVIGATION_ORDER_V12.map((id) => this.navigationItem(byId.get(id))));
     this.navElement.addEventListener('keydown', this.keydownHandler);
   }
 
@@ -218,7 +223,7 @@ export class ApplicationShellView {
     const button = documentRef.createElement('button');
     button.type = 'button';
     button.dataset.applicationNav = descriptor.consumerId;
-    const icons = { WORKSPACE: 'W', LOAD_CALC: 'L', LAFEA: 'A', LFEA: 'F' };
+    const icons = { WORKSPACE: 'W', LOAD_CALC: 'L', LAFEA: 'A', LFEA: 'F', EMPIRICAL: 'E' };
     button.innerHTML = `<span class="nav-tab-icon" aria-hidden="true">${icons[descriptor.consumerId]}</span><span>${descriptor.label}</span>`;
     button.addEventListener('click', () => this.requestChange(descriptor.consumerId));
     const reason = documentRef.createElement('span');

@@ -41,9 +41,9 @@ const B = internalPressure * Ri ** 2 * Ro ** 2 / (Ro ** 2 - Ri ** 2);
 function lameSigmaR(r) { return A - B / r ** 2; }
 function lameSigmaTheta(r) { return A + B / r ** 2; }
 
-const coarse = solveSector(2, 3);
-const medium = solveSector(4, 6);
-const fine = solveSector(8, 12);
+const coarse = solveSector(2, 4);
+const medium = solveSector(4, 8);
+const fine = solveSector(8, 16);
 
 [coarse, medium, fine].forEach(({ result }) => {
   assert.equal(result.qualification.state, QUALIFICATION_STATES.ACCEPTED);
@@ -69,7 +69,7 @@ function solveSector(radialElements, circumferentialElements) {
     if (Math.abs(row.y) < 1e-6) constraints.push(constraint(row.nodeId, 'UY', 0));
     if (Math.abs(row.x) < 1e-6) constraints.push(constraint(row.nodeId, 'UX', 0));
   });
-  const innerEdges = boundaryEdgesWhere(elements, nodesById, (node) => Math.abs(Math.hypot(node.x, node.y) - Ri) < 1e-6);
+  const innerEdges = boundaryEdgesWhere(elements, nodesById, (node) => Math.hypot(node.x, node.y) <= Ri + 1e-6);
   assert.ok(innerEdges.length > 0, 'inner-radius boundary edges must be found');
   const pressureLoads = innerEdges.map((edge, index) => ({
     pressureLoadId: `P${index}`, elementId: edge.elementId, edgeNodeIds: edge.edgeNodeIds, pressure: internalPressure, sourceReference: `PRESSURE#P${index}`,

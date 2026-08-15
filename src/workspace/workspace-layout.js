@@ -27,6 +27,7 @@ function applicationMarkup() {
     <div data-application-view="LOAD_CALC" hidden aria-hidden="true"></div>
     <div class="application-view application-view--lafea" data-application-view="LAFEA" hidden aria-hidden="true"><div data-role="lafea-consumer-root"></div></div>
     <div class="application-view application-view--lfea" data-application-view="LFEA" hidden aria-hidden="true"><div data-role="linear-piping-consumer-root"></div><div data-role="lfea-preflight-root"></div><div data-role="lfea-consumer-root"></div></div>
+    <div class="application-view application-view--empirical" data-application-view="EMPIRICAL" hidden aria-hidden="true"><div data-role="empirical-lafea-consumer-root"></div></div>
     ${nativeModelDialogMarkup()}
   </div>`;
 }
@@ -166,6 +167,8 @@ function empiricalStyles() {
     .native-model-form__grid label{display:grid;gap:5px;color:#b8c7d9;font-size:12px}
     .native-model-form__grid input{min-width:0;padding:8px;border:1px solid #315070;border-radius:5px;background:#050c16;color:#f8fafc}
     .native-model-form__grid input[readonly]{color:#94a3b8;background:#0b1726}
+    .application-view--empirical{display:flex;flex-direction:column;height:100%;min-height:0;overflow:hidden}
+    .application-view--empirical[hidden]{display:none!important}
     @media(max-width:620px){.native-model-form__grid{grid-template-columns:1fr}}
   `;
 }

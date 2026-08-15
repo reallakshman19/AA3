@@ -11,6 +11,10 @@ import './workspace/empirical-v3-safety-workbench.css';
 import { bootstrapAnalysisWorkspace } from './workspace/bootstrap.js';
 import { authorizedEnrichmentConsumerController } from './workspace/enrichment/authorized-enrichment-runtime.js';
 import { createAuthorizedEnrichmentWorkspaceApi } from './workspace/enrichment/authorized-enrichment-workspace-api.js';
+import {
+  buildEmpiricalV3SourceBoundExecutionDependency,
+  executeAuthorizedEmpiricalV3SourceBoundThermalRom,
+} from './workspace/engineering-loads/adapters/empirical-v3-authorized-source-bound-execution.js';
 import { ENGINEERING_MODEL_EVENTS } from './workspace/engineering-model-controller.js';
 import { EventBus } from './workspace/event-bus.js';
 import { retireStandaloneInputXmlAnalyzerEntry } from './workspace/linear-piping-analyzer-integration.js';
@@ -45,9 +49,6 @@ const authorizedEnrichmentApi = createAuthorizedEnrichmentWorkspaceApi({
     });
   },
 });
-// Native InputXML is the normal Source → Pre-flight entry. It is mounted before
-// the legacy governed request Run/Results surface so source custody is visible
-// before any execution controls.
 const linearPipingInputXmlSource = mountLinearPipingInputXmlSourceWorkflow(applicationRoot, {
   documentRef: applicationRoot.ownerDocument,
 });
@@ -55,18 +56,12 @@ const linearPipingResults = mountLinearPipingResultsWorkbench(applicationRoot, {
   documentRef: applicationRoot.ownerDocument,
   urlApi: applicationRoot.ownerDocument.defaultView?.URL,
 });
-// Empirical V3 safety is a separate fail-closed presentation surface. It accepts
-// only sealed V3 safety packages and does not inherit the legacy WARN-acceptance
-// control or any solver/formula implementation from the linear piping workbench.
+// Separate V3 surface: no legacy WARN-acceptance or solver/formula implementation.
 const empiricalV3Safety = mountEmpiricalV3SafetyWorkbench(applicationRoot, {
   documentRef: applicationRoot.ownerDocument,
+  urlApi: applicationRoot.ownerDocument.defaultView?.URL,
 });
-// P-08 removes the standalone diagnostics detour from normal engineering flow.
-// analyze.html remains a fail-closed developer utility; the governed LFEA
-// Source/Pre-flight receipt is the normal diagnostics authority.
 const linearPipingAnalyzerIntegration = retireStandaloneInputXmlAnalyzerEntry(applicationRoot);
-// Read-only source-enrichment review. It reads the shared model and the saved
-// master Line List; it publishes nothing back into either.
 const preflightUi = mountLfeaPreflightUi(applicationRoot, {
   getModel: () => ({ sharedModel: coreWorkspace.getSharedModel() }),
 });
@@ -126,6 +121,9 @@ const workspace = Object.freeze({
   loadEmpiricalV3SafetyPresentationPackage(value) {
     return empiricalV3Safety.loadPackage(value);
   },
+  loadEmpiricalV3CalculationEvidence(value) {
+    return empiricalV3Safety.loadCalculationEvidence(value);
+  },
   clearEmpiricalV3SafetyPresentationPackage() {
     empiricalV3Safety.clear();
   },
@@ -135,11 +133,30 @@ const workspace = Object.freeze({
   getEmpiricalV3SafetyPresentationPackage() {
     return empiricalV3Safety.getPackage();
   },
+  getEmpiricalV3CalculationEvidence() {
+    return empiricalV3Safety.getCalculationEvidence();
+  },
   getEmpiricalV3LastConfirmationReceipt() {
     return empiricalV3Safety.getLastConfirmationReceipt();
   },
   openEmpiricalV3SafetyRisk(riskId) {
     return empiricalV3Safety.openRisk(riskId);
+  },
+  buildEmpiricalV3SourceBoundExecutionDependency(romInput) {
+    return buildEmpiricalV3SourceBoundExecutionDependency(romInput);
+  },
+  executeEmpiricalV3SourceBoundThermalRom(input) {
+    const packageValue = empiricalV3Safety.getPackage();
+    if (!packageValue?.calculationAuthorization
+        || packageValue.calculationAuthorization.semanticHash !== input?.authorization?.semanticHash) {
+      throw new Error('Workspace execution requires the matching current sealed Empirical V3 safety package.');
+    }
+    const execution = executeAuthorizedEmpiricalV3SourceBoundThermalRom(input);
+    empiricalV3Safety.loadCalculationEvidence(execution.evidence);
+    return execution;
+  },
+  createEmpiricalV3AuditExportRecord() {
+    return empiricalV3Safety.createAuditExport();
   },
   getPreflightReviewModel() {
     return preflightUi.getProjection();

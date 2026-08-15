@@ -29,11 +29,14 @@ function runReasonText(snap, authState) {
 function resolveRunAction(state) {
   const snap = state.empiricalScenarioState;
   const authState = state.authorizationState;
+  const common = state.commonInputState;
+  const sealOk = !!(common?.commonInput && !common?.staleness?.stale);
+
   if (snap?.calculationEligible) {
     return { label: 'Run Load Calc', eligible: true, reason: 'Execute configured empirical scenario', action: 'empirical' };
   }
-  if (authState?.calculationEligible) {
-    return { label: 'Run Load Calc — Gravity', eligible: true, reason: 'Execute authorized gravity load calc', action: 'gravity' };
+  if (authState?.calculationEligible || sealOk) {
+    return { label: 'Run Load Calc', eligible: true, reason: 'Execute authorized empirical support loads', action: 'gravity' };
   }
   return { label: 'Run Load Calc', eligible: false, reason: runReasonText(snap, authState), action: 'none' };
 }

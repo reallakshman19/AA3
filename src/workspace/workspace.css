@@ -775,3 +775,91 @@
 .xml-cii-master-preview-table tr:last-child td {
   border-bottom: none;
 }
+
+/* Engineering Loads & Scenario View Styles */
+.method-card-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: 16px;
+  margin: 16px 0;
+}
+
+.method-card {
+  background: var(--workspace-panel-strong);
+  border: 1px solid var(--workspace-border);
+  border-radius: 6px;
+  padding: 16px;
+  transition: border-color 0.2s, box-shadow 0.2s;
+  cursor: default;
+}
+
+.method-card--selected {
+  border-color: var(--workspace-accent);
+  box-shadow: 0 0 0 1px var(--workspace-accent);
+}
+
+.method-card__header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 8px;
+  font-size: 14px;
+}
+
+.method-card p {
+  font-size: 13px;
+  color: var(--workspace-muted);
+  margin: 0 0 12px 0;
+  line-height: 1.4;
+}
+
+.method-card dl {
+  margin: 0;
+  display: grid;
+  grid-template-columns: max-content 1fr;
+  gap: 4px 12px;
+  font-size: 12px;
+}
+
+.method-card dt {
+  color: var(--workspace-muted);
+}
+
+.method-card dd {
+  margin: 0;
+  color: var(--workspace-text);
+}
+
+.engineering-subcard {
+  background: var(--workspace-panel-strong);
+  border: 1px solid var(--workspace-border);
+  border-radius: 6px;
+  padding: 16px;
+  margin-bottom: 16px;
+}
+
+.engineering-subcard h4 {
+  margin: 0 0 12px 0;
+  font-size: 14px;
+  color: var(--workspace-text);
+}
+
+.engineering-fact-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: 12px;
+  margin: 0;
+}
+
+.engineering-fact-grid dt {
+  font-size: 12px;
+  color: var(--workspace-muted);
+  margin-bottom: 2px;
+}
+
+.engineering-fact-grid dd {
+  margin: 0;
+  font-size: 13px;
+  color: var(--workspace-text);
+  font-weight: 500;
+}

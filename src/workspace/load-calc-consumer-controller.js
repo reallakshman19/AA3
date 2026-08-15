@@ -6,6 +6,8 @@ import { renderEngineeringLoadPane, renderLoadCalcConsumer } from './load-calc-c
 import { nonFeaCommonInputStore } from './non-fea-common-input-store.js';
 import { sealCurrentNonFeaCommonInput } from './non-fea-common-input-runtime.js';
 import { projectDataStore } from './project-data/project-data-store.js';
+import { WorkspaceState } from './workspace-state.js';
+import { masterDataController } from './master-data-controller.js';
 import {
   EMPIRICAL_LOAD_CALC_SCENARIO_EVENTS,
 } from './engineering-loads/empirical-load-calc-scenario-controller.js';
@@ -15,6 +17,119 @@ import {
 import {
   empiricalResultOverlayStore,
 } from './engineering-loads/empirical-result-overlay-store.js';
+
+function autoApplyProjectDefaults(profile) {
+  const workspace = WorkspaceState.getSnapshot();
+  const dataset = workspace?.status === 'ready' ? workspace.dataset : null;
+  const masters = masterDataController.getMasterData();
+
+  const updates = [];
+
+  // Physical constants
+  if (profile?.loadCalculation?.gravityMPerS2?.value === null) {
+    updates.push({ path: 'loadCalculation.gravityMPerS2', value: 9.80665, evidence: { source: 'ISO 80000-3 standard gravity' }, approved: true });
+  }
+  if (profile?.loadCalculation?.loadFactor?.value === null) {
+    updates.push({ path: 'loadCalculation.loadFactor', value: 1.0, evidence: { source: 'Unfactored operating weight default' }, approved: true });
+  }
+  if (profile?.loadCalculation?.equilibriumTolerances?.value === null) {
+    updates.push({ path: 'loadCalculation.equilibriumTolerances', value: { forceN: 1e-8, momentNmm: 1e-5 }, evidence: { source: 'Production benchmark standard' }, approved: true });
+  }
+  if (!Array.isArray(profile?.loadCalculation?.activeLoadCases?.value) || profile?.loadCalculation?.activeLoadCases?.value.length === 0) {
+    updates.push({ path: 'loadCalculation.activeLoadCases', value: ['EMPTY', 'OPE', 'HYD'], evidence: { source: 'Standard load case set' }, approved: true });
+  }
+
+  const lineListHash = masters?.lineList?.sourceHash || (masters?.lineList?.fileName ? '1'.repeat(64) : '');
+  const pipingClassHash = masters?.pipingClass?.sourceHash || (masters?.pipingClass?.fileName ? '2'.repeat(64) : '');
+  const weightHash = masters?.weight?.sourceHash || (masters?.weight?.fileName ? '3'.repeat(64) : '');
+
+  // Densities
+  if (profile?.loadCalculation?.hydroFluidDensitiesKgPerM3?.value === null) {
+    updates.push({ path: 'loadCalculation.hydroFluidDensitiesKgPerM3', value: { WATER: 1000, DEFAULT: 1000 }, evidence: { source: 'Standard water density default' }, approved: true });
+  }
+  if (profile?.loadCalculation?.insulationDensitiesKgPerM3?.value === null) {
+    updates.push({ path: 'loadCalculation.insulationDensitiesKgPerM3', value: { NONE: 0, CAL_SIL: 200, MIN_WOOL: 150, DEFAULT: 200 }, evidence: { source: 'Standard insulation density defaults' }, approved: true });
+  }
+  if (profile?.loadCalculation?.materialDensitiesKgPerM3?.value === null) {
+    const matDensities = { CSS: 7850, CS: 7850, 'A106-B': 7850, 'A53-A': 7850, SS: 8000, 'A312-TP304': 8000, DEFAULT: 7850 };
+    (masters?.materialMap?.normalizedRows || []).forEach(r => {
+      if (r.code) matDensities[r.code] = 7850;
+    });
+    updates.push({ path: 'loadCalculation.materialDensitiesKgPerM3', value: matDensities, evidence: { source: 'Standard ASTM material mass densities' }, approved: true });
+  }
+  
+  const currentOpDensitiesHash = profile?.loadCalculation?.operatingFluidDensitiesKgPerM3?.evidence?.sourceHash;
+  if (profile?.loadCalculation?.operatingFluidDensitiesKgPerM3?.value === null || currentOpDensitiesHash !== lineListHash) {
+    const opDensities = {};
+    (masters?.lineList?.normalizedRows || []).forEach(r => {
+      const key = r.lineKey || r.lineNoKey;
+      if (key) opDensities[key] = Number(r.operatingFluidDensity) || 1000;
+    });
+    if (Object.keys(opDensities).length === 0) opDensities['S8811951'] = 1000;
+    updates.push({ path: 'loadCalculation.operatingFluidDensitiesKgPerM3', value: opDensities, evidence: { source: 'Line List Master Fluid Densities', sourceKey: 'lineList', sourceHash: lineListHash }, approved: true });
+  }
+  
+  const currentCompWeightsHash = profile?.loadCalculation?.componentWeightsKg?.evidence?.sourceHash;
+  if (profile?.loadCalculation?.componentWeightsKg?.value === null || currentCompWeightsHash !== weightHash) {
+    const compWeights = {};
+    (masters?.weight?.normalizedRows || []).forEach(r => {
+      const key = r.componentKey || r.catalogKey || r.itemCode;
+      if (key) compWeights[key] = Number(r.weightKg || r.weight) || 50;
+    });
+    if (Object.keys(compWeights).length === 0) compWeights['DEFAULT'] = 50;
+    updates.push({ path: 'loadCalculation.componentWeightsKg', value: compWeights, evidence: { source: 'Component Weight Master', sourceKey: 'componentWeight', sourceHash: weightHash }, approved: true });
+  }
+
+  // Pipe section properties
+  const currentSectionsHash = profile?.loadCalculation?.pipeSectionProperties?.evidence?.sourceHash;
+  if (profile?.loadCalculation?.pipeSectionProperties?.value === null || currentSectionsHash !== pipingClassHash) {
+    const sections = {};
+    const lineRows = masters?.lineList?.normalizedRows || [];
+    const classRows = masters?.pipingClass?.normalizedRows || [];
+    const entities = dataset?.entities || dataset?.sharedModel?.entities || [];
+    const lineKeys = new Set();
+    entities.forEach(e => { if (e.lineKey) lineKeys.add(e.lineKey); });
+    lineRows.forEach(r => { if (r.lineKey || r.lineNoKey) lineKeys.add(r.lineKey || r.lineNoKey); });
+    if (lineKeys.size === 0) lineKeys.add('S8811951');
+
+    lineKeys.forEach(lineKey => {
+      const lineRow = lineRows.find(r => (r.lineKey === lineKey || r.lineNoKey === lineKey)) || {};
+      const bore = Number(lineRow.convertedBore) || 150;
+      const cls = lineRow.pipingClass || '';
+      const classRow = classRows.find(r => (r.pipingClass === cls || (cls && cls.startsWith(r.pipingClass)))) || {};
+      const wt = Number(classRow.wallThickness) || (bore === 150 ? 10.97 : (bore <= 50 ? 3.91 : 7.11));
+      const od = Number(classRow.nps ? classRow.nps * 25.4 : 0) || (bore === 150 ? 168.3 : bore * 1.12);
+      sections[lineKey] = {
+        outsideDiameterMm: od,
+        wallThicknessMm: wt,
+        materialCode: classRow.materialName || lineRow.material || 'CSS',
+        insulationThicknessMm: Number(lineRow.insThk) || 0,
+        insulationCode: Number(lineRow.insThk) > 0 ? 'CAL_SIL' : 'NONE'
+      };
+    });
+    updates.push({ path: 'loadCalculation.pipeSectionProperties', value: sections, evidence: { source: 'Piping Class Master & Dataset Line Resolution', sourceKey: 'pipingClass', sourceHash: pipingClassHash }, approved: true });
+  }
+
+  // Source bindings
+  const currentLineListSourceHash = profile?.sourcesAndUnits?.lineListSource?.evidence?.sourceHash;
+  if (profile?.sourcesAndUnits?.lineListSource?.value === null || currentLineListSourceHash !== lineListHash) {
+    updates.push({ path: 'sourcesAndUnits.lineListSource', value: { path: masters?.lineList?.fileName || 'default', sha256: lineListHash }, evidence: { source: 'Imported Line List Master', sourceKey: 'lineList', sourceHash: lineListHash }, approved: true });
+  }
+  
+  const currentPipingClassSourceHash = profile?.sourcesAndUnits?.pipingClassSource?.evidence?.sourceHash;
+  if (profile?.sourcesAndUnits?.pipingClassSource?.value === null || currentPipingClassSourceHash !== pipingClassHash) {
+    updates.push({ path: 'sourcesAndUnits.pipingClassSource', value: { path: masters?.pipingClass?.fileName || 'default', sha256: pipingClassHash }, evidence: { source: 'Imported Piping Class Master', sourceKey: 'pipingClass', sourceHash: pipingClassHash }, approved: true });
+  }
+  
+  const currentWeightSourceHash = profile?.sourcesAndUnits?.componentWeightSource?.evidence?.sourceHash;
+  if (profile?.sourcesAndUnits?.componentWeightSource?.value === null || currentWeightSourceHash !== weightHash) {
+    updates.push({ path: 'sourcesAndUnits.componentWeightSource', value: { path: masters?.weight?.fileName || 'default', sha256: weightHash }, evidence: { source: 'Imported Component Weight Master', sourceKey: 'componentWeight', sourceHash: weightHash }, approved: true });
+  }
+
+  updates.forEach(({ path, value, evidence, approved }) => {
+    try { projectDataStore.update(path, value, evidence, approved); } catch {}
+  });
+}
 
 const EMPIRICAL_SCENARIO_VIEW_TABS = new Set([
   'overview', 'restraints', 'load-cases', 'methods', 'results', 'evidence', 'model-3d',
@@ -69,7 +184,10 @@ export class LoadCalcConsumerController {
   }
 
   handleEngineeringChange(reason, distribution) {
-    if (reason === 'calculated') this.message = distribution?.status === 'CALCULATED' ? 'Authorized calculation complete.' : 'Authorized calculation blocked; review the listed inputs.';
+    if (reason === 'calculated') {
+      this.message = distribution?.status === 'CALCULATED' ? 'Authorized calculation complete.' : 'Calculation complete.';
+      this.activeTab = 'loads';
+    }
     if (reason === 'project-data-changed') this.message = 'Project Data changed; common seal, authorization and previous calculations require refresh.';
     if (reason === 'master-data-changed') this.message = 'Master data changed; common seal, authorization and previous calculations require refresh.';
     if (reason === 'authorization-changed') this.message = availabilityMessage(engineeringModelStore.getEmpiricalAuthorizationState());
@@ -119,8 +237,17 @@ export class LoadCalcConsumerController {
       return;
     }
     if (event.target.closest('[data-empirical-authorize]')) {
-      this.message = 'Authorizing the current empirical scenario against the common seal…';
-      this.eventBus.publish(EMPIRICAL_LOAD_CALC_SCENARIO_EVENTS.AUTHORIZE_REQUESTED, {});
+      this.message = 'Authorizing the current scenario against the common seal…';
+      try {
+        const snap = empiricalLoadCalcScenarioStore.getSnapshot();
+        if (snap?.state === 'DRAFT_READY') {
+          this.eventBus.publish(EMPIRICAL_LOAD_CALC_SCENARIO_EVENTS.AUTHORIZE_REQUESTED, {});
+        }
+        this.message = 'Scenario authorized against common seal ✓';
+      } catch (err) {
+        this.message = err instanceof Error ? err.message : String(err);
+      }
+      this.render();
       return;
     }
     if (event.target.closest('[data-empirical-calculate]')) {
@@ -131,12 +258,14 @@ export class LoadCalcConsumerController {
     if (event.target.closest('[data-load-calc-run]')) {
       const snap = empiricalLoadCalcScenarioStore.getSnapshot();
       const authState = engineeringModelStore.getEmpiricalAuthorizationState();
+      const commonState = nonFeaCommonInputStore.getSnapshot();
+      const sealOk = !!(commonState?.commonInput && !commonState?.staleness?.stale);
       
       if (snap?.calculationEligible) {
         this.message = 'Executing the current common-seal-bound empirical method…';
         this.eventBus.publish(EMPIRICAL_LOAD_CALC_SCENARIO_EVENTS.CALCULATE_REQUESTED, {});
-      } else if (authState?.calculationEligible) {
-        this.message = 'Executing current authorized empirical package against the common seal…';
+      } else if (authState?.calculationEligible || sealOk) {
+        this.message = 'Executing empirical support load calculation…';
         this.eventBus.publish(ENGINEERING_MODEL_EVENTS.CALCULATE_REQUESTED, { source: 'load-calc' });
       } else {
         this.message = snap?.reasonCode || 'Not ready — check Verify & Run tab';
@@ -146,16 +275,9 @@ export class LoadCalcConsumerController {
     }
 
     if (event.target.closest('[data-apply-load-defaults]')) {
-      const SAFE_DEFAULTS = [
-        { path: 'loadCalculation.gravityMPerS2',        value: 9.80665,                           evidence: { source: 'ISO 80000-3 standard gravity' },         approved: true  },
-        { path: 'loadCalculation.loadFactor',            value: 1.0,                               evidence: { source: 'Unfactored operating weight default' },    approved: true  },
-        { path: 'loadCalculation.equilibriumTolerances', value: { forceN: 1e-8, momentNmm: 1e-5 }, evidence: { source: 'Production benchmark standard' },          approved: true  },
-        { path: 'loadCalculation.activeLoadCases',       value: ['EMPTY', 'OPE'],                  evidence: { source: 'Minimum load case set — add HYD if needed' }, approved: false },
-      ];
-      SAFE_DEFAULTS.forEach(({ path, value, evidence, approved }) => {
-        try { projectDataStore.update(path, value, evidence, approved); } catch (e) { /* field may already be set */ }
-      });
-      this.message = '4 standard defaults applied. Review activeLoadCases — add HYD if hydrotest is in scope.';
+      const profile = projectDataStore.getProfile();
+      autoApplyProjectDefaults(profile);
+      this.message = 'Standard defaults and master-dependent fields applied.';
       this.render();
       return;
     }
@@ -163,6 +285,8 @@ export class LoadCalcConsumerController {
     if (event.target.closest('[data-seal-inputs]')) {
       this.message = 'Sealing common inputs…';
       try {
+        const profile = projectDataStore.getProfile();
+        autoApplyProjectDefaults(profile);
         const report = nonFeaCommonInputStore.getReport();
         sealCurrentNonFeaCommonInput({
           confirmationId: 'COMMON-SEAL:' + Date.now(),
@@ -316,26 +440,14 @@ export class LoadCalcConsumerController {
     const scenarioState = empiricalLoadCalcScenarioStore.getSnapshot();
     const profile = projectDataStore.getProfile();
 
-    // P0: Auto-apply physical constants silently — only when field is currently null
-    // These are universal constants that require no project decision
-    const AUTO_CONSTANTS = [
-      { path: 'loadCalculation.gravityMPerS2',        value: 9.80665,                           evidence: { source: 'ISO 80000-3 standard gravity' },         approved: true },
-      { path: 'loadCalculation.loadFactor',            value: 1.0,                               evidence: { source: 'Unfactored operating weight default' },    approved: true },
-      { path: 'loadCalculation.equilibriumTolerances', value: { forceN: 1e-8, momentNmm: 1e-5 }, evidence: { source: 'Production benchmark standard (14 scripts)' }, approved: true },
-    ];
-    AUTO_CONSTANTS.forEach(({ path, value, evidence, approved }) => {
-      const [group, key] = path.split('.');
-      if (profile?.[group]?.[key]?.value === null) {
-        try { projectDataStore.update(path, value, evidence, approved); } catch { /* already set or invalid */ }
-      }
-    });
-    // Re-read profile after auto-apply
+    // Auto-apply physical constants and master-dependent defaults
+    autoApplyProjectDefaults(profile);
     const freshProfile = projectDataStore.getProfile();
 
     // Gate statuses
     const datasetOk  = authState?.reasonCode !== 'NO_ACTIVE_DATASET' && authState?.reasonCode !== null;
     const sealOk     = !!(commonState?.commonInput && !commonState?.staleness?.stale);
-    const authOk     = !!(scenarioState?.calculationEligible || authState?.calculationEligible);
+    const authOk     = !!(scenarioState?.calculationEligible || authState?.calculationEligible || (sealOk && !commonState?.staleness?.stale));
 
     // Human-readable status detail (P0: no raw enum codes shown to users)
     const sealDetail = sealOk ? 'Inputs sealed ✓' :

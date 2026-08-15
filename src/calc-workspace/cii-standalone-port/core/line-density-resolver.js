@@ -33,13 +33,23 @@ function upper(value) {
   return text(value).toUpperCase();
 }
 
-function readRowValue(row, keys = []) {
+function readRowValue(row, keys = [], fieldMap = null) {
   if (!row || typeof row !== 'object') return '';
+  const raw = row._raw || row;
   for (const key of keys) {
     if (!key) continue;
-    const value = row[key] ?? row._raw?.[key];
-    const cleaned = text(value);
-    if (cleaned) return cleaned;
+    if (row[key] !== undefined && row[key] !== null && String(row[key]).trim() !== '') {
+      const cleaned = text(row[key]);
+      if (cleaned) return cleaned;
+    }
+    if (raw[key] !== undefined && raw[key] !== null && String(raw[key]).trim() !== '') {
+      const cleaned = text(raw[key]);
+      if (cleaned) return cleaned;
+    }
+    if (fieldMap && fieldMap[key] && raw[fieldMap[key]] !== undefined && raw[fieldMap[key]] !== null && String(raw[fieldMap[key]]).trim() !== '') {
+      const cleaned = text(raw[fieldMap[key]]);
+      if (cleaned) return cleaned;
+    }
   }
   return '';
 }
@@ -58,33 +68,40 @@ function densityResult(value, source, phase, selected) {
 }
 
 const DENSITY_ALIASES = Object.freeze({
-  density: Object.freeze(['density', 'Density', 'DENSITY', 'FluidDensity', 'Fluid Density', 'Density kg/m3', 'kg/m3']),
-  densityMixed: Object.freeze(['densityMixed', 'Density Mixed', 'Mixed Density', 'Mixed kg/m3', 'Density (Mixed)', 'Mixed']),
-  densityGas: Object.freeze(['densityGas', 'Density Gas', 'Gas Density', 'Gas kg/m3', 'Density (Gas)', 'Gas']),
-  densityLiquid: Object.freeze(['densityLiquid', 'Density Liquid', 'Liquid Density', 'Liquid kg/m3', 'Density (Liquid)', 'Liquid', 'Liq Density']),
-  phase: Object.freeze(['phase', 'Phase', 'PHASE', 'Fluid Phase', 'Medium Phase', 'Medium', 'State']),
+  density: Object.freeze(['density', 'Density', 'DENSITY', 'FluidDensity', 'Fluid Density', 'Density kg/m3', 'kg/m3', 'Oper Density', 'Operating Density', 'OPERATING_DENSITY', 'Operating Fluid Density']),
+  densityMixed: Object.freeze(['densityMixed', 'Density Mixed', 'Mixed Density', 'Mixed kg/m3', 'Density (Mixed)', 'Mixed', 'MIXED_DENSITY']),
+  densityGas: Object.freeze(['densityGas', 'Density Gas', 'Gas Density', 'Gas kg/m3', 'Density (Gas)', 'Gas', 'GAS_DENSITY']),
+  densityLiquid: Object.freeze(['densityLiquid', 'Density Liquid', 'Liquid Density', 'Liquid kg/m3', 'Density (Liquid)', 'Liquid', 'Liq Density', 'LIQ_DENSITY']),
+  phase: Object.freeze(['phase', 'Phase', 'PHASE', 'Fluid Phase', 'Medium Phase', 'Medium', 'State', 'FLUID_PHASE']),
 });
 
-export function resolveLineListDensity(row, processOverride = null) {
+export function resolveLineListDensity(row, processOverride = null, fieldMap = null) {
   const overrideDensity = readOverride(processOverride, 'density');
   if (overrideDensity) return densityResult(overrideDensity, 'override', '', 'density');
 
-  const direct = readRowValue(row, DENSITY_ALIASES.density);
-  const mixed = readRowValue(row, DENSITY_ALIASES.densityMixed);
-  const gas = readRowValue(row, DENSITY_ALIASES.densityGas);
-  const liquid = readRowValue(row, DENSITY_ALIASES.densityLiquid);
-  const phase = upper(readRowValue(row, DENSITY_ALIASES.phase));
+  const direct = readRowValue(row, DENSITY_ALIASES.density, fieldMap);
+  const mixed = readRowValue(row, DENSITY_ALIASES.densityMixed, fieldMap);
+  const gas = readRowValue(row, DENSITY_ALIASES.densityGas, fieldMap);
+  const liquid = readRowValue(row, DENSITY_ALIASES.densityLiquid, fieldMap);
+  const phase = upper(readRowValue(row, DENSITY_ALIASES.phase, fieldMap));
 
   if (phase.startsWith('M') || phase.includes('MIX')) {
+    if (liquid) return densityResult(liquid, 'linelist-density-liquid', phase, 'densityLiquid');
     if (mixed) return densityResult(mixed, 'linelist-density-mixed', phase, 'densityMixed');
-    if (liquid) return densityResult(liquid, 'linelist-density-liquid-fallback', phase, 'densityLiquid');
   }
   if ((phase.startsWith('G') || phase.includes('GAS')) && gas) return densityResult(gas, 'linelist-density-gas', phase, 'densityGas');
   if ((phase.startsWith('L') || phase.includes('LIQ')) && liquid) return densityResult(liquid, 'linelist-density-liquid', phase, 'densityLiquid');
 
   if (direct) return densityResult(direct, 'linelist-density', phase, 'density');
-  if (mixed) return densityResult(mixed, 'linelist-density-mixed', phase, 'densityMixed');
-  if (gas) return densityResult(gas, 'linelist-density-gas', phase, 'densityGas');
   if (liquid) return densityResult(liquid, 'linelist-density-liquid', phase, 'densityLiquid');
+  if (gas) return densityResult(gas, 'linelist-density-gas', phase, 'densityGas');
+  if (mixed) return densityResult(mixed, 'linelist-density-mixed', phase, 'densityMixed');
   return { value: '', source: 'none', phase, selected: '' };
 }
+
+export function computeRowOperatingFluidDensity(row, fieldMap = null) {
+  if (!row || typeof row !== 'object') return '';
+  const result = resolveLineListDensity(row, null, fieldMap);
+  return result?.value || '';
+}
+

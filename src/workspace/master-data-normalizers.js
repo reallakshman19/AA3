@@ -1,5 +1,6 @@
 import { MASTER_FIELDS } from '../calc-workspace/cii-standalone-port/ui-adapted/xml-cii-adapted-fields-config.js';
 import { computeLineNoKey } from '../calc-workspace/cii-standalone-port/core/linelist-mapping.js';
+import { computeRowOperatingFluidDensity } from '../calc-workspace/cii-standalone-port/core/line-density-resolver.js';
 
 /**
  * Validates if the required fields in the mapping profile are met.
@@ -51,10 +52,13 @@ export function normalizeLineList(rawRows, fieldMap) {
   return canonicalRows.map((row, idx) => {
     const rawRow = rawRows[idx];
     const key = computeLineNoKey(rawRow, fieldMap);
+    const opDensity = computeRowOperatingFluidDensity({ ...row, _raw: rawRow }, fieldMap);
     return {
       ...row,
       lineKey: key,
-      lineNoKey: key
+      lineNoKey: key,
+      operatingFluidDensity: opDensity,
+      density: opDensity || row.density || ''
     };
   });
 }

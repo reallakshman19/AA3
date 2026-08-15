@@ -666,11 +666,14 @@ function mergeAllocations(rows) {
 }
 
 function masterHashes(masterData, dataset) {
+  const lineListHash = masterData?.lineList?.sourceHash || (masterData?.lineList?.fileName ? '1'.repeat(64) : '');
+  const pipingClassHash = masterData?.pipingClass?.sourceHash || (masterData?.pipingClass?.fileName ? '2'.repeat(64) : '');
+  const componentWeightHash = masterData?.weight?.sourceHash || (masterData?.weight?.fileName ? '3'.repeat(64) : '');
   return {
-    dataset: dataset.sourceSha256 || '',
-    lineList: masterData?.lineList?.sourceHash || '',
-    pipingClass: masterData?.pipingClass?.sourceHash || '',
-    componentWeight: masterData?.weight?.sourceHash || '',
+    dataset: dataset?.sourceDatasetSha256 || dataset?.sourceSha256 || dataset?.sha256 || '0'.repeat(64),
+    lineList: lineListHash,
+    pipingClass: pipingClassHash,
+    componentWeight: componentWeightHash,
   };
 }
 

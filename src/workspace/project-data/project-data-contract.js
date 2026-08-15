@@ -236,7 +236,20 @@ function validateQualificationProfiles(value, path, errors) {
 
 function validatePositiveLeaves(value, path, errors) {
   if (Array.isArray(value)) { value.forEach((item, index) => validatePositiveLeaves(item, `${path}[${index}]`, errors)); return; }
-  if (isRecord(value)) { Object.entries(value).forEach(([key, item]) => validatePositiveLeaves(item, `${path}.${key}`, errors)); return; }
+  if (isRecord(value)) {
+    Object.entries(value).forEach(([key, item]) => {
+      if (key === 'insulationThicknessMm' || key === 'insulationCode') {
+        if (typeof item === 'number' && item < 0) errors.push(errorRow(`${path}.${key}`, 'NON_POSITIVE_ENGINEERING_VALUE', 'Insulation thickness cannot be negative.'));
+        return;
+      }
+      if (path.includes('insulationDensitiesKgPerM3') && (key === 'NONE' || key === 'UNINSULATED')) {
+        if (typeof item === 'number' && item < 0) errors.push(errorRow(`${path}.${key}`, 'NON_POSITIVE_ENGINEERING_VALUE', 'Insulation density cannot be negative.'));
+        return;
+      }
+      validatePositiveLeaves(item, `${path}.${key}`, errors);
+    });
+    return;
+  }
   if (typeof value === 'number' && value <= 0) errors.push(errorRow(path, 'NON_POSITIVE_ENGINEERING_VALUE', 'Engineering density, elastic, thermal, and section values must be greater than zero.'));
 }
 
@@ -255,9 +268,12 @@ function validateSourceHash(entry, path, activeHashes, errors, validateActiveSou
   const expected = stringValue(entry?.evidence?.sourceHash).toLowerCase();
   const sourceKey = stringValue(entry?.evidence?.sourceKey);
   const declared = stringValue(entry?.value?.sha256).toLowerCase();
+  
   if (declared && expected && declared !== expected) errors.push(errorRow(path, 'CROSS_DATASET_HASH_MISMATCH', 'Declared source hash differs from its evidence hash.'));
   if (!validateActiveSource || !expected || !sourceKey || !isRecord(activeHashes)) return;
+  
   const active = stringValue(activeHashes[sourceKey]).toLowerCase();
+  
   if (['dataset', 'lineList', 'pipingClass', 'componentWeight'].includes(sourceKey) && !active) {
     errors.push(errorRow(path, 'ACTIVE_SOURCE_HASH_MISSING', `Active ${sourceKey} source SHA-256 is required.`));
     return;

@@ -68,6 +68,23 @@ const ACCDB_READER_PACKAGE_PATHS = Object.freeze([
   '/node_modules/inherits/',
 ]);
 
+/**
+ * Style leaves: each exports only a static CSS string, or a stateless
+ * installer that builds one `<style>` element from one. None holds
+ * module-level mutable state, none is imported by another of them, and
+ * nothing imports a controller, store or view from them.
+ */
+const STYLE_LEAF_MODULES = Object.freeze([
+  '/src/workspace/workspace-shell-styles.js',
+  '/src/workspace/lafea-workbench-styles.js',
+  '/src/workspace/lfea-workbench-styles.js',
+  '/src/workspace/lafea-guided-workbench-styles.js',
+  '/src/workspace/viewport-productivity/topology-edit-table-styles.js',
+  '/src/workspace/viewport-productivity/topology-edit-object-tree-styles.js',
+  '/src/workspace/viewport-productivity/topology-edit-professional-operation-styles.js',
+  '/src/workspace/viewport-productivity/topology-edit-authoring-styles.js',
+]);
+
 export function manualChunk(id) {
   const source = id.replaceAll('\\', '/');
   if (source.includes('vite/preload-helper')) return 'runtime';
@@ -93,13 +110,13 @@ export function manualChunk(id) {
   if (source.includes('/src/core/local-trunnion-footprint/')) return 'core-local-trunnion-footprint';
   if (source.includes('/src/core/linear-fea-')) return 'core-linear-fea';
   if (source.includes('/src/core/linear-piping-')) return 'core-linear-piping';
-  if (source.includes('/src/core/support-')) return 'core-support-engineering';
+  if (source.includes('/src/core/support-')) return 'core-application';
   if (source.includes('/src/core/vertical-beam-solver/')
-    || source.includes('/src/core/centerline-beam-fea/')) return 'core-beam-analysis';
+    || source.includes('/src/core/centerline-beam-fea/')) return 'core-application';
   if (source.includes('/src/core/first-cut-load-estimation/')) return 'core-load-estimation';
-  if (source.includes('/src/core/model-calculation-package/')) return 'core-model-calculation';
+  if (source.includes('/src/core/model-calculation-package/')) return 'core-application';
   if (source.includes('/src/core/piping-topology/')
-    || source.includes('/src/core/shared-piping-model/')) return 'core-piping-model';
+    || source.includes('/src/core/shared-piping-model/')) return 'core-application';
   if (source.includes('/src/core/fea-benchmarks/')) return 'core-fea-benchmarks';
   if (source.includes('/src/core/')) return 'core-application';
   if (source.includes('/src/calc-workspace/cii-standalone-port/ui-adapted/')) {
@@ -108,7 +125,7 @@ export function manualChunk(id) {
   if (source.includes('/src/calc-workspace/cii-standalone-port/')) {
     return 'cii-standalone-core';
   }
-  if (source.includes('/src/calc-workspace/')) return 'calculation-workspaces';
+  if (source.includes('/src/calc-workspace/')) return 'cii-standalone-core';
   if (source.includes('/src/vendors/')) return 'vendor-integrations';
   if (source.includes('/src/utils/') || source.includes('/src/mocks/')) return 'application-support';
   // These exact paths are stateless LAFEA meshing contracts/producers. Keeping
@@ -116,7 +133,7 @@ export function manualChunk(id) {
   // singleton-bearing workspace modules into a forced chunk.
   if ([...PURE_LAFEA_MESHING_WORKSPACE_MODULES]
     .some((modulePath) => source.endsWith(modulePath))) {
-    return 'lafea-meshing-contracts';
+    return 'lafea-workbench-governance';
   }
   // This helper owns no controller/store/singleton state. Splitting its I/O and
   // style dependencies gives the graph a safe leaf boundary without forcing
@@ -191,8 +208,23 @@ export function manualChunk(id) {
   // literal, no top-level state, no DOM access, no singleton. Its only
   // consumer (workspace-layout.js) calls it and inserts the returned string,
   // so splitting it changes nothing about evaluation order.
-  if (source.endsWith('/src/workspace/workspace-shell-styles.js')) {
+  // Style leaves (see STYLE_LEAF_MODULES). Grouping them cannot reorder
+  // evaluation of a stateful workspace controller, and it keeps the entry
+  // chunk under the ceiling asserted by scripts/bundle-chunk-check.mjs.
+  if (STYLE_LEAF_MODULES.some((modulePath) => source.endsWith(modulePath))) {
     return 'application-shell-css';
+  }
+  // Largest module in the entry chunk, and a genuine leaf: no DOM, no
+  // module-level mutable state, no controller/store/view import.
+  //
+  // Splitting it was UNSAFE until the cyclic core-* chunks above were
+  // collapsed — with those cycles present the built app died on boot with
+  // "Cannot access '<binding>' before initialization" and rendered nothing,
+  // while bundle-chunk-check.mjs still reported PASS. Chunk SIZE is not
+  // evaluation ORDER: always verify a real browser boot after changing
+  // anything in this function.
+  if (source.endsWith('/src/workspace/engineering-loads/empirical-beam-contact-runtime.js')) {
+    return 'engineering-loads-beam-contact-runtime';
   }
   // Rollup must own the complete stateful workspace graph so evaluation order
   // follows static dependency analysis rather than filename-based partitions.

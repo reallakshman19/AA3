@@ -98,7 +98,6 @@ export function requireLafeaStageAnalysisAdapter(stageId) {
       refinementAuthorized: meshApplicable
         && LAFEA_MESH_PRODUCER_LOCAL_REFINEMENT_AUTHORIZED
         && localRefinementFamilies.length > 0,
-      localRefinementElementFamilies: [...localRefinementFamilies],
     },
     execution: {
       adapterId: supported ? `ENGINE:${registry.enginePackage}` : null,

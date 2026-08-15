@@ -97,6 +97,7 @@ export class AnalysisCoordinator {
         );
       }
       const result = await this.registry.execute(analysisType, context);
+      if (workspaceScoped) assertWorkspaceResultStillCurrent(this.workspaceState, this.sessionStore, sessionId, analysisType);
       if (this.shouldIgnore(selectionVersion, targetId, sessionId)) return;
       const validation = validateSolverResultContract(result);
       if (!validation.ok) {
@@ -148,5 +149,34 @@ export class AnalysisCoordinator {
     this.selectionVersion += 1;
     this.unsubscribers.forEach((unsubscribe) => unsubscribe());
     this.unsubscribers = [];
+  }
+}
+
+function assertWorkspaceResultStillCurrent(workspaceState, sessionStore, sessionId, analysisType) {
+  const session = sessionStore.getSession(sessionId);
+  if (!session) {
+    throw new AnalysisCapabilityError(
+      'STALE_ANALYSIS_SESSION',
+      'Workspace analysis session disappeared before result publication.',
+    );
+  }
+  let currentContext;
+  try {
+    currentContext = createAnalysisContext(workspaceState, WORKSPACE_ANALYSIS_TARGET_ID);
+  } catch (error) {
+    throw new AnalysisCapabilityError(
+      'STALE_ANALYSIS_CONTEXT',
+      'Workspace analysis source changed or was cleared before result publication.',
+      { cause: error instanceof Error ? error.message : String(error) },
+    );
+  }
+  try {
+    assertSessionMatchesContext(session, currentContext, analysisType);
+  } catch (error) {
+    throw new AnalysisCapabilityError(
+      'STALE_ANALYSIS_CONTEXT',
+      'Workspace engineering authority changed before result publication.',
+      { cause: error instanceof Error ? error.message : String(error) },
+    );
   }
 }

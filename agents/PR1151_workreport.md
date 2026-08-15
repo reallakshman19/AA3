@@ -1,273 +1,264 @@
 # PR1151 — Empirical Calc V3 Safety & Evidence Work Report
 
-# CURRENT RECOVERY STATE — READ FIRST
-
-## Recovery Header
+## Recovery / release header
 
 ```text
 HANDOVER_READINESS: READY
-PR_RECOVERY_STATE: HEALTHY
+PR_RECOVERY_STATE: REVIEWED_AND_FIXED
 TAKEOVER_AUTHORITY: WRITE_ALLOWED
 EXECUTION_MODE: MANUAL
 AUTO_STATE: NOT_ACTIVE
 SCOPE_AUTHORITY: LOCKED_TO_ISSUE_1149_OWNER_MISSION
-MERGE_AUTHORITY: OWNER_ONLY
+MERGE_AUTHORITY: EXPLICIT_OWNER_AUTHORIZATION_RECEIVED_2026-08-15
 REPOSITORY: reallaksh19/Advanced_Analysis
 SOURCE_TASK: issue #1149
 PR: #1151
 BRANCH: agent/empirical-v3-safety-evidence-fresh-20260815
-PR_HEAD_OBSERVED: 0cb024d49a28510fe3b764b64b8b72fa47f84ae1
-REPORT_BASIS_HEAD: 0cb024d49a28510fe3b764b64b8b72fa47f84ae1
-MAIN_HEAD_LAST_CHECKED: 04328852dced9f5c4827da8afe8a82aeb8b1a1d3
 MERGE_BASE: edafbbccbc7572f65192a048550406d2257d3def
-GROUNDING_EPOCH: GE-1149-010
-CURRENT_STAGE: HANDOVER
-LAST_COMPLETED_STAGE: TARGETED_EXECUTABLE_QUALIFICATION_PLUS_NON_UI_MIXED_LIVE_RUN_TO_RESULT_REVIEW_REQUIRED
-CURRENT_BLOCKER: complete exact-head checkout/import-graph/browser execution unavailable in this session
-HIGHEST_RISK: mixed route is benchmark-qualified and package-orchestrated outside the UI, but browser Run wiring remains deliberately disabled pending complete source/UI guard + browser qualification
-LAST_DURABLE_CHECKPOINT: targeted core/authority/evidence checks PASS; three defects fixed; mixed producer/bridge benchmark PASS; mixed live run reaches RESULT_REVIEW_REQUIRED; main remains straight-only
-EXACT_NEXT_ACTION: run complete source/UI guards + committed mixed execution check + representative browser run/remount/stale-mutation; only if green wire tagged mixed preparation/execution into main/workbench
+CODE_HEAD_REVIEWED: 5235eea7385f49af98171a4d39788eb63355c35b
+TAKEOVER_BASE_HEAD: c57dc4237ea128ae7967fc6ab6ae8cd1c087405c
+TAKEOVER_QUALIFICATION_COMMENT: issuecomment-5302300784
+TAKEOVER_SCORE: 97/100 CONTINUE
+CURRENT_STAGE: STACK_SAFE_LANDING
+CURRENT_BLOCKER: none in reviewed code; exact-head CI/browser execution remains NOT_RUN/NOT_OBSERVED
 ```
 
-## Live repository truth
+The commit containing this report is intentionally allowed to follow `CODE_HEAD_REVIEWED`; no production source change is permitted after that code head without reopening exact-head review.
 
-At report basis:
+## Stack relationship
 
-- #1151: OPEN / DRAFT / mergeable / unmerged.
-- #1151 substantive head: `0cb024d49a28510fe3b764b64b8b72fa47f84ae1`.
-- Changed files: 54.
-- #1148 remains OPEN / DRAFT / unmerged at exact head `edafbbccbc7572f65192a048550406d2257d3def`.
-- #1150 remains untouched and outside this continuation.
-- Current #1151 diff contains no `.github/workflows/*` path and no frozen #1145/#1147/#1148 mechanics path.
-- GitHub Actions run lookup on `0cb024d...` returned no runs.
-- No merge performed; merge authority remains OWNER_ONLY.
+PR #1151 is a fresh stack directly on #1148:
 
-## Owner-locked implementation state
+```text
+#1145 source-bound straight thermal restraint ROM
+  -> #1147 continuous B31J elbow flexibility
+  -> #1148 canonical source-backed elbow geometry / mixed route
+  -> #1151 safety, workflow, evidence, straight live execution bridge
+```
+
+#1150 is superseded and remains untouched.
+
+At takeover review:
+
+- #1145, #1147, #1148 and #1151 were all OPEN / DRAFT / mergeable / unmerged;
+- exact stack identities were intact: #1147 base == #1145 head, #1148 base == #1147 head, #1151 base == #1148 head;
+- current `main` was `04328852dced9f5c4827da8afe8a82aeb8b1a1d3`;
+- main drift since #1145 base was confined to #1146 InputXML/geometry diagnostics and had zero path overlap with #1145's 12 ROM/custody files.
+
+## Owner-locked architecture preserved
 
 ```text
 source/master/current model
-→ quantity authority
-→ branch/component authority
-→ immutable risk set + singular HIGH_CONFIRM receipt
-→ sealed calculation authorization
-→ exact ROM execution request
-→ unchanged qualified ROM
-→ sealed coupled evidence
-→ RESULT_REVIEW_REQUIRED
-→ result review
-→ RESULT_REVIEWED
-→ audit readiness
-→ AUDIT_EXPORT_READY
-→ governed JSON export
+-> engineering quantity authority
+-> calculation branch/component authority
+-> risk + singular HIGH_CONFIRM receipt
+-> sealed calculation authorization
+-> exact ROM execution request
+-> unchanged qualified ROM
+-> sealed coupled evidence
+-> result review / audit readiness
+-> governed JSON audit
 ```
 
-The straight source-bound path is already integrated with the safety workbench. The mixed path is now qualified through a separate producer, request/authorization bridge and **non-UI** live-run orchestrator, but remains absent from `src/main.js`.
+Preserved invariants:
 
-## Validation method
+- no naked scalar is promoted to exact V3 engineering authority without provenance;
+- exact topology remains required;
+- HIGH_BLOCK has no confirmation route;
+- HIGH_CONFIRM is singular and hash-bound;
+- UI/report do not re-solve mechanics;
+- no chainage-as-connectivity;
+- no response multiplier or benchmark fitting;
+- no frozen #1145/#1147/#1148 equation/tolerance/quadrature change;
+- no V1/V2 production behavior change;
+- mixed straight/elbow browser execution remains deliberately unwired.
 
-A direct private-repo checkout remains unavailable because the local runtime cannot resolve GitHub and no cached checkout exists. The GitHub connector can fetch exact repository objects/files, so targeted dependency closures were reconstructed from connector-fetched source and executed under local Node.
+## Takeover review
 
-Validation truth rules for this report:
+A live independent takeover qualification was recorded before mutation in PR comment `5302300784`:
 
-- `LOCAL_EXECUTION / PASS` means code was actually executed in the reconstructed targeted closure.
-- This is not CI and not a complete repository/browser import graph.
-- Full source/UI guard scripts and the newly committed mixed execution script remain NOT_RUN as complete exact-file checks unless explicitly listed otherwise.
-- Source inspection is not represented as runtime PASS.
+- A1 production trace: 19/20;
+- A2 failure isolation: 20/20;
+- A3 authority/invariant: 20/20;
+- A4 independent validation design: 18/20;
+- A5 minimal patch: 20/20;
+- total: **97/100 — CONTINUE**.
 
-## Execution-discovered defects fixed
+## Defects confirmed and fixed during takeover
 
-### DEF-001 — presentation check fixture omitted current semantic hashes
+### DEF-004 — class-name exactness could launder a non-exact component master row
 
-Observed:
+The production `piping-class-resolver.js` can return `best-score` with `needsReview=false` while one or more row discriminators are missing, near or mismatched. The previous V3 bridge treated exact class name + non-ambiguous best-score as enough to promote component-derived wall/material/corrosion values.
+
+Fix:
+
+- split branch piping-class identity from component-row exactness;
+- branch class identity may remain exact when the class match itself is exact/current;
+- component-row exactness now additionally requires explicit row reasons:
+  - `CLASS_EXACT`;
+  - `BORE_EXACT`;
+  - `COMPONENT_EXACT`;
+  - `SCHEDULE_EXACT`;
+- any `MISMATCH`, `MISSING` or `NEAR` row evidence prevents exact component-row promotion;
+- wall/material authority uses component-row exactness, not class-name exactness.
+
+### DEF-005 — corrosion exactness lacked the rating-aware row evidence used by the legacy resolver
+
+`resolveBranchProcessData()` performs a second rating-aware master lookup for corrosion, but the returned record does not retain that lookup's row method/reasons. The previous bridge could call corrosion `APPROVED_MASTER_EXACT` using evidence from a different row decision.
+
+Fix:
+
+- corrosion from this legacy seam is now `INFERRED_REVIEW_REQUIRED / HIGH_CONFIRM`;
+- master provenance is retained when available;
+- exact corrosion may be restored only after the rating-aware lookup evidence is preserved and qualified.
+
+### DEF-006 — generic exact reference promotion did not require immutable source hash
+
+`adaptResolutionReference()` could promote a caller-declared exact master/source reference without a `sourceSemanticHash`.
+
+Fix:
+
+- `SOURCE_EXACT` / `APPROVED_MASTER_EXACT` require immutable source semantic hash;
+- missing exact evidence downgrades to `INFERRED_REVIEW_REQUIRED`;
+- exact records cannot remain `needsReview`;
+- non-exact records must remain `needsReview`;
+- rehydration validates these semantics, so a forged self-consistent exact record with null source hash is rejected.
+
+### DEF-007 — reviewed master values could point at the wrong provenance hash
+
+When a master-derived value was downgraded to review-required, some paths could bind the line/source hash instead of the master revision.
+
+Fix:
+
+- master-derived wall, piping-class material code and corrosion keep `masterSemanticHash` even when not exact;
+- exactness and provenance are independent dimensions.
+
+### DEF-008 — live straight V3 Run could retain stale package/preparation after governing workspace changes
+
+The contracts could reject stale current authorization when explicitly reconciled, but the live shell did not automatically invalidate a prepared request/package when dataset/model/master/project authority changed. A stale package could therefore remain operationally available.
+
+Fix in `src/main.js`:
+
+- subscribe to `WORKSPACE_SNAPSHOT_CHANGED` and invalidate V3 prepared/package/evidence state when dataset basis changes;
+- invalidate on `project-data-changed` / `master-data-changed` engineering-model events;
+- bind both preparation and direct execution to the current active workspace using the already-sealed execution dependency:
+  - dataset id;
+  - source snapshot semantic hash;
+  - active shared-model semantic hash;
+- `preparedExecutionMatchesPackage()` additionally requires the dependency to match the active workspace, so Run disables even before a downstream package refresh;
+- teardown unsubscribes the new listeners.
+
+This is fail-closed. Current UI clears stale state; preserving stale records visibly is a WP2/#1152 UX follow-on, not an authorization bypass.
+
+## Regression additions
+
+### `scripts/empirical-v3-branch-process-resolution-adapter-check.mjs`
+
+Added cases for:
+
+- exact class + exact bore/component/schedule row;
+- exact class but missing component discriminator;
+- bore-near row;
+- schedule-unproven row;
+- fuzzy class;
+- missing master evidence;
+- default-zero wall;
+- corrosion remaining review-required when rating-aware lookup evidence is absent.
+
+### `scripts/empirical-v3-source-authority-adapter-check.mjs`
+
+Added cases for:
+
+- exact reference with immutable source hash;
+- exact requested without source hash -> review-required;
+- forged exact record with null source hash -> rejected;
+- unresolved reference always review-required.
+
+### `scripts/empirical-v3-safety-ui-source-guard.mjs`
+
+Added source guards requiring:
+
+- workspace snapshot invalidation wiring;
+- project/master authority invalidation wiring;
+- prepared/package clearing on governing changes;
+- active dataset id/source/shared-model matching before preparation/run;
+- mixed execution remains absent from browser runtime.
+
+## Validation ledger
+
+### Previously observed targeted execution — PASS / LOCAL_EXECUTION
+
+The prior exact dependency-closure execution recorded in this PR remains valid for unchanged modules:
+
+- workflow state projection;
+- quantity authority core;
+- risk / confirmation / calculation authorization core;
+- engineering-event contract;
+- branch/component authority core;
+- coupled evidence;
+- result review / audit orchestration;
+- source-bound straight authorized execution bridge;
+- mixed producer / bridge frozen benchmark and non-UI orchestration;
+- StagedJSON process basis;
+- canonical #1148 mixed-route oracle.
+
+Frozen mixed benchmark previously observed:
 
 ```text
-TypeError: source.semanticHash is required for a current sealed record.
+Fxx =  3.0214810087147532e-5 m/N
+Fxy = -1.0064363521234054e-5 m/N
+Fyy =  5.976702305296452e-6 m/N
+Rx  = -606.8995590818411 N
+Ry  = -1523.926961429032 N
 ```
 
-Production workflow validation was correct. The fixture was repaired without weakening the gate. Targeted rerun PASS.
+No takeover patch touched those mechanics.
 
-### DEF-002 — mixed producer referenced undefined `restraintBinding`
+### Takeover exact-head checks — NOT_RUN / NOT_OBSERVED
 
-Observed:
+The updated files and committed regressions above have been source-reviewed but could not be executed in a complete checkout from this environment. Therefore the following are **not** called PASS:
 
-```text
-ReferenceError: restraintBinding is not defined
-```
+- updated `empirical-v3-branch-process-resolution-adapter-check.mjs`;
+- updated `empirical-v3-source-authority-adapter-check.mjs`;
+- updated `empirical-v3-safety-ui-source-guard.mjs`;
+- full `empirical-v3-source-guard-check.mjs`;
+- complete package/import/build/lint/test graph;
+- real browser straight Run -> review -> audit -> export -> stale mutation/remount;
+- real browser mixed path (still unwired intentionally);
+- GitHub Actions / commit status on reviewed head.
 
-`buildEmpiricalV3SourceBoundMixedComponentRomInput()` now seals the already validated `binding` as `restraintBinding: binding`. Targeted producer qualification rerun PASS.
+GitHub exact-head status lookup for `5235eea7385f49af98171a4d39788eb63355c35b` returned no statuses and no workflow runs: **NOT_RUN / NOT_OBSERVED**.
 
-### DEF-003 — exact master wall/corrosion lacked immutable evidence custody
+## Source review evidence for takeover fixes
 
-Observed:
+The fixes were grounded directly to live production source:
 
-```text
-APPROVED_MASTER_EXACT requires immutable source evidence reference and hash.
-```
+- `branch-process-resolver.js` preserves first row `pipingClassRowMethod` / `pipingClassRowReasons` and performs a separate rating-aware corrosion lookup;
+- `piping-class-resolver.js` uses score-based row selection, so `best-score` is not synonymous with exact component identity;
+- `canonical source-bound execution` already seals dataset id, source semantic hash and shared-model semantic hash into the ROM execution dependency;
+- `bootstrap.js` exposes the current shared model from the active workspace;
+- `engineering-model-controller.js` already identifies dataset/project/master changes as governing model-staleness events.
 
-The branch-process adapter now requires `masterSemanticHash` before exact-master promotion, binds deterministic master evidence refs/hashes for wall and corrosion, and downgrades missing-master evidence to `INFERRED_REVIEW_REQUIRED` / HIGH_CONFIRM. Targeted rerun PASS.
+## Changed files in takeover slice
 
-## Targeted executable validation ledger
+Exactly six production/regression paths changed between takeover base `c57dc423...` and code-reviewed head `5235eea...`:
 
-All rows in this table are `Status: PASS`, `Observation: LOCAL_EXECUTION`.
+1. `src/workspace/engineering-loads/adapters/empirical-v3-branch-process-resolution-adapter.js`
+2. `src/workspace/engineering-loads/adapters/empirical-v3-resolution-reference-adapter.js`
+3. `src/main.js`
+4. `scripts/empirical-v3-branch-process-resolution-adapter-check.mjs`
+5. `scripts/empirical-v3-source-authority-adapter-check.mjs`
+6. `scripts/empirical-v3-safety-ui-source-guard.mjs`
 
-| ID | Contract / harness | Important coverage |
-|---|---|---|
-| VAL-EXE-001 | `empirical-v3-workflow-state-check.mjs` | workflow progression, stale rollback precedence, HIGH_BLOCK/HIGH_CONFIRM, run gate, determinism |
-| VAL-EXE-002 | `empirical-v3-quantity-authority-check.mjs` | fallback 7.11 not exact, default-zero rejection, derived exact, unresolved weight, tamper rejection |
-| VAL-EXE-003 | `empirical-v3-risk-confirmation-authorization-check.mjs` | no HIGH_BLOCK confirmation, singular current HIGH_CONFIRM, duplicate/stale/policy/dependency rejection |
-| VAL-EXE-004 | `empirical-v3-engineering-event-check.mjs` | deterministic engineering identity, audit metadata separation, severity/event semantics |
-| VAL-EXE-005 | `empirical-v3-branch-component-authority-check.mjs` | exact topology, common/local separation, branch sharing, component-section invalidation |
-| VAL-EXE-006 | `empirical-v3-coupled-evidence-check.mjs` | F/R copied from ROM, pair/component evidence, deterministic order, tamper rejection |
-| VAL-EXE-007 | `empirical-v3-live-orchestration-check.mjs` | result review → audit readiness → export and governing dependency rollback |
-| VAL-EXE-008 | repaired `empirical-v3-safety-presentation-package-check.mjs` | package/workflow authenticity and ordering identity |
-| VAL-EXE-009 | repaired `empirical-v3-source-bound-mixed-component-producer-check.mjs` | exact mixed custody, stale route/B31J/tuning negatives, no solver/chainage |
-| VAL-EXE-010 | `empirical-v3-source-authority-adapter-check.mjs` | fallback/default/missing/fuzzy authority boundaries |
-| VAL-EXE-011 | `empirical-v3-authorized-execution-check.mjs` | stale/wrong straight request rejects before frozen ROM; tripwire solver not reached |
-| VAL-EXE-012 | repaired `empirical-v3-branch-process-resolution-adapter-check.mjs` | exact master evidence custody + missing-master downgrade |
-| VAL-EXE-013 | `empirical-v3-branch-component-adapter-check.mjs` | source label evidence-only, process split, DN/WT local, chainage/TopoFix rejection |
-| VAL-EXE-014 | `empirical-v3-stagedjson-process-basis-check.mjs` | value-based branch basis, temperature invalidation, missing operating temperature blocker |
-| VAL-MIX-001 | mixed bridge frozen benchmark harness | exact #1148 independent flexibility/reaction oracle reproduced; sealed evidence retains elbow contribution |
-| VAL-MIX-002 | mixed non-UI live orchestration harness | CALCULATION_AUTHORIZED → CALC_STARTED → frozen mixed bridge → CALC_COMPLETED → RESULT_REVIEW_REQUIRED package |
+No frozen mechanics source, tolerance, workflow YAML or V1/V2 profile changed.
 
-### Frozen mixed benchmark observation
+## Remaining limitations / roadmap boundary
 
-Local mixed execution produced:
+- exact-head full repository/browser CI evidence remains unavailable;
+- stale live V3 packages are cleared rather than retained visibly as stale — #1152 owns the richer stale-history UX;
+- mixed route execution remains non-UI and deliberately unwired until separately qualified;
+- weight/contact/pressure/Bourdon/tee/reducer physics remain out of scope.
 
-```text
-F = [
-  [ 3.0214810087147532e-5, -1.0064363521234054e-5 ],
-  [ -1.0064363521234054e-5, 5.976702305296452e-6 ]
-] m/N
+## Merge decision
 
-TIP-X reaction = -606.8995590818411 N
-TIP-Y reaction = -1523.926961429032 N
-```
-
-Frozen #1148 independent oracle:
-
-```text
-F = [
-  [ 3.0214810087147528e-5, -1.0064363521234052e-5 ],
-  [ -1.0064363521234052e-5, 5.9767023052964523e-6 ]
-] m/N
-
-TIP-X reaction = -606.8995590818411 N
-TIP-Y reaction = -1523.9269614290317 N
-```
-
-The evidence contains `E1` component contribution and reports mechanics/reaction/flexibility recomputation false.
-
-## Mixed source-bound execution architecture
-
-### 1. Restraint binding
-
-`empirical-v3-source-bound-mixed-restraint-binding.js` requires:
-
-- governed request `READY_FOR_RUNTIME_BRIDGE`;
-- valid current attachment/restraint chain;
-- selected restraints `qualification === EXPLICIT`;
-- rigid anchor root;
-- RESTRAINED/SPRING governed solved directions;
-- qualified source-backed support movements;
-- unique existing canonical route port/node attachment;
-- no support splitting, chainage, gap/contact or friction solve.
-
-### 2. Component producer
-
-`empirical-v3-source-bound-mixed-component-producer.js` requires:
-
-- exact canonical #1148 route;
-- exact/approved-master/derived SI quantity records only;
-- exact qualified scalar-key set;
-- non-benchmark ASME B31J elbow authority with exact radius/OD/WT/pressure/E binding;
-- frozen numerical defaults;
-- no mechanics solve;
-- policy retains `executionEnabled:false`.
-
-### 3. Authorized execution bridge
-
-`empirical-v3-authorized-mixed-component-execution.js`:
-
-- is below the 300-line owner limit;
-- validates current calculation authorization first;
-- requires an exact `ROM_EXECUTION_REQUEST` over producer/route/binding/authority identities;
-- only then imports/calls the unchanged #1148 **public** `rooted-tree-component-flexibility-gate.js` entrypoint;
-- does not import unchecked component solver, restraint compatibility, FE assembly, straight/elbow formula calculators, chainage, topology edit or fallback logic;
-- seals the ROM result into the existing coupled-evidence contract.
-
-### 4. Non-UI live mixed orchestration
-
-`empirical-v3-live-mixed-run-orchestration.js`:
-
-- is below the 300-line owner limit;
-- requires `RUN_CALCULATION` from the verified package workflow;
-- delegates only to the authorized mixed bridge;
-- emits immutable `CALC_STARTED`, `CALC_BLOCKED` or `CALC_COMPLETED` events;
-- seals calculation evidence/events back into the same safety package;
-- projects successful execution to `RESULT_REVIEW_REQUIRED`;
-- does not own result review/audit logic and does not solve mechanics.
-
-Existing shared result-review/audit orchestration remains the continuation after `RESULT_REVIEW_REQUIRED`.
-
-## Browser/runtime anti-drift
-
-The live source guards now require:
-
-- exact-master evidence custody in the branch-process adapter;
-- `restraintBinding: binding` in the mixed producer;
-- producer remains `executionEnabled:false`;
-- mixed bridge gates current authorization and exact request before the frozen public solver call;
-- mixed live orchestrator uses the mixed bridge and workflow action gate only;
-- mixed bridge/live orchestrator cannot import direct mechanics formula/assembly/contact/chainage paths;
-- `src/main.js` cannot import the mixed producer, binding, authorized mixed bridge **or mixed live orchestrator**.
-
-Source inspection at report basis confirms `src/main.js` still exposes only the previously qualified straight source-bound execution path.
-
-## Still NOT_RUN / NOT_OBSERVED
-
-The following remain unobserved as complete exact-checkout/browser executions:
-
-- committed `node scripts/empirical-v3-authorized-mixed-execution-check.mjs` from a complete checkout;
-- complete `node scripts/empirical-v3-source-guard-check.mjs`;
-- complete `node scripts/empirical-v3-safety-ui-source-guard.mjs`;
-- full package/build/lint/test/import graph;
-- real browser mixed Run path (not wired intentionally);
-- representative browser straight Run → review → audit → export → remount;
-- browser governing-mutation rollback;
-- GitHub Actions/CI on current head.
-
-Do not promote those items to PASS without observation.
-
-## Frozen/scope reconciliation
-
-- #1148 exact head unchanged: `edafbbccbc7572f65192a048550406d2257d3def`.
-- #1145/#1147/#1148 numerical mechanics unchanged.
-- V1/V2 unchanged.
-- No formula/tolerance/quadrature tuning.
-- No response multiplier.
-- No `.github/workflows/*` changes.
-- No merge.
-
-## Active items
-
-| ID | Severity | Status | Summary |
-|---|---:|---|---|
-| RISK-001 | HIGH | MITIGATED | fallback/default/fuzzy laundering blocked |
-| RISK-002 | HIGH | MITIGATED | safety risk/confirmation/authorization gates executable and green |
-| RISK-003 | HIGH | MITIGATED | Explain/audit use sealed coupled evidence only |
-| RISK-004 | HIGH | MITIGATED | result-review/audit/stale rollback targeted execution green |
-| RISK-005 | HIGH | MITIGATED | strict mixed source/restraint/quantity/B31J custody green |
-| RISK-006 | HIGH | MITIGATED_TARGETED | mixed bridge matches frozen #1148 independent oracle |
-| RISK-007 | HIGH | MITIGATED_TARGETED | non-UI mixed live run reaches RESULT_REVIEW_REQUIRED deterministically |
-| RISK-008 | HIGH | OPEN_VALIDATION | complete exact tree/source-guard/browser execution still unavailable |
-| DEC-001 | HIGH | ACTIVE | mixed producer remains inert; only bridge crosses into mechanics |
-| DEC-002 | HIGH | ACTIVE | mixed path remains absent from `main.js`/Run button until complete qualification |
-| DEC-003 | HIGH | ACTIVE | frozen mechanics/workflows/V1/V2/merge guardrails remain in force |
-
-## Exact continuation
-
-1. Run committed mixed execution, source guard and UI source guard scripts from a complete exact-head checkout.
-2. Run representative browser straight workflow through calculation → result review → audit export → remount, then governing mutation rollback.
-3. If 1–2 are green, add a **tagged prepared mixed execution** to the existing workspace preparation state and dispatch the Run callback to the mixed non-UI orchestrator without letting the UI construct producer inputs or calculation authorization.
-4. Run the same browser/remount/stale-mutation suite on the mixed route.
-5. Do not change frozen mechanics, workflow YAML, V1/V2 or merge without explicit owner instruction.
+Owner explicitly requested **review, fix and merge** in the current 2026-08-15 delivery turn. Code review found and corrected the release-critical custody/runtime defects above. Landing must remain stack-safe: resolve #1145 -> #1147 -> #1148 before retargeting/merging #1151 to `main`. #1150 remains untouched.

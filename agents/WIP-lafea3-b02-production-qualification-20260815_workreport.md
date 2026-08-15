@@ -1,126 +1,165 @@
-# LAFEA.3 B02 Production Qualification Integration — Work Report
+# LAFEA.3 B02 Production Qualification Integration — Final Work Report
 
 ## Recovery header
 
 - Repository: `reallaksh19/Advanced_Analysis`
-- Assignment: integrate B02 G3/G4/G5 production qualification onto post-PR #1134 `main`.
-- WORK_INTENT: `IMPLEMENT`
-- REPOSITORY_STATE: `NEW_PR_REQUIRED`
-- MUTATION_AUTHORITY: `WRITE_ALLOWED` by owner instruction on 2026-08-15.
+- Assignment: integrate B02 G3/G4/G5 production qualification onto post-PR #1134 LAFEA.3.
+- WORK_INTENT: `IMPLEMENT_AND_MERGE`
 - CRITICALITY: `ENGINEERING_CRITICAL`
-- EXECUTION_MODE: autonomous batches within approved mission; merge authority remains owner-only.
-- Base branch: `main`
-- Baseline SHA: `793f359c0bcb59296cf4541430855f79357c4329`
 - Working branch: `agent/lafea3-b02-production-qualification-20260815`
-- PR: not yet allocated.
-- Merge authority: NONE unless separately authorized by owner.
+- Pull request: `#1137`
+- Original post-#1134 baseline: `793f359c0bcb59296cf4541430855f79357c4329`
+- Current `main` re-grounded before merge: `2c95dd579c8dec6283eaeff5d470e352d03dd14f`
+- Owner merge authority: GRANTED on 2026-08-15.
+- No `.github/workflows/*` files changed.
 
-## Handover in 60 seconds
+## Final engineering disposition
 
-PR #1134 is merged and establishes the corrected LAFEA.3 continuum/mesh/result foundation. The next approved mission is to integrate the existing B02 production qualification stack onto this new main without blindly merging stale stacked branches.
+Implementation scope is complete. Exact-head executable qualification is infrastructure-blocked because the relevant GitHub Actions jobs are created but start with zero steps and no job logs. This is not classified as a numerical or assertion PASS, and it is not classified as a repository test failure.
 
-Source stacks:
-- #1123 — G3 immutable run transaction, runtime solver diagnostics, canonical BC/load glyph custody.
-- #1124 — G4 authoritative fixed-physical-probe recovery and quantity-bound convergence custody.
-- #1125 — G5/B02A-E pre-observation definition freeze and independent Saint-Venant oracle.
+The merge is therefore an owner-authorized infrastructure exception with the following fail-closed boundaries preserved:
 
-Coordination classification: `COORDINATION_REQUIRED`.
+- interactive/solver completion does not grant release authority;
+- B02 benchmark definitions, targets, tolerances, probes and mesh ladders are not calibrated from production output;
+- domain-first temperature remains outside B02 release authority;
+- moving maxima, nodal stress projection, cross-element averaging and integration-point extrapolation are not promoted to B02 acceptance authority;
+- production `releaseQualified` remains false unless separately qualified by retained release evidence.
 
-Reason: #1123 overlaps `src/workspace/lafea-workbench-content.js` and `vite.config.js`; #1124 overlaps `vite.config.js`; both were affected by later repository work. #1125 is primarily validation definitions/oracles. Integrate behavior file-by-file from the old stack against current main; do not cherry-pick stacked PRs wholesale.
+## Delivered batches
 
-## Live ground truth — grounding epoch 2026-08-15
+### Batch 1 — coordination and controlled integration
 
-- current `main`: `793f359c0bcb59296cf4541430855f79357c4329`
-- #1134: merged at that SHA; LAFEA.3 release authority deliberately remains false.
-- #1123: open, mergeable, G3 custody stack; based on an older stacked branch.
-- #1124: open, mergeable, G4 probe/convergence stack on #1123.
-- #1125: open draft, B02A-E frozen definitions on #1124.
-- #1129 and #1118 remain older overlapping work and are not direct merge sources for this mission.
-- Repository has no `agents/MASTER_INDEX.md` at current main.
+- Created draft PR #1137 from post-#1134 main.
+- Reconciled #1123/#1124/#1125 as source stacks rather than wholesale merges.
+- Avoided overwriting post-#1134 workbench, mesh-policy and result-authority corrections.
 
-## Mission / acceptance
+### Batch 2 — G3 run / solver / BC-load custody
 
-### Batch 1 — re-ground and establish integration branch
-- create fresh branch from post-#1134 main;
-- inspect exact G3/G4/G5 changed-file ownership;
-- create durable work report and draft PR.
+Delivered:
 
-### Batch 2 — G3 immutable run/solver custody integration
-- port immutable run transaction state and solver diagnostics;
-- bind accepted execution to exact canonical input and parent hashes;
-- preserve current post-#1134 solve-readiness and UI authority;
-- add/port focused diagnostics and browser route without weakening workflow/build policy.
+- immutable RUNNING -> completed run transaction custody;
+- currentness assertions before transaction completion;
+- canonical execution-input hash retained on accepted execution;
+- runtime solver diagnostics projection;
+- canonical restraint/load glyph custody;
+- execution-hash-bound display cache and viewport selection;
+- browser/source diagnostics for custody behavior.
 
-### Batch 3 — G4 physical-probe/recovery/convergence custody
-- port fixed physical probe identity and direct T3/T6/Q8 recovery;
-- reject temperature/singularity/ambiguous mappings where authority is not qualified;
-- port quantity-bound comparison/convergence contracts;
-- expose read-only orchestrator API.
+### Batch 3 — G4 fixed physical probe and convergence authority
 
-### Batch 4 — G5 B02 definition freeze
-- adopt B02A-E frozen definitions and manifest;
-- retain independent B02B Saint-Venant analytical oracle;
-- rebase freeze provenance to the integrated G4 head rather than stale historical parent SHA;
-- do not derive targets/tolerances/probes from current production output.
+Delivered:
 
-### Batch 5 — production B02 execution harness and Verification & Release UI
-- execute B02A -> B02E through the exact production path when prerequisites are qualified;
-- preserve fixed physical probe identity and frozen definitions;
-- add a Verification & Release UI projection showing benchmark/run/convergence custody and explicit blockers;
-- no release authority unless every required gate is current and PASS.
+- fixed physical-coordinate probe contract;
+- direct T3/T6/Q8 displacement-gradient recovery from the solved canonical model;
+- quantity identity hashing and recovery custody;
+- fail-closed stale/ambiguous/outside/nonpositive-Jacobian/temperature behavior;
+- convergence definition separated from observations;
+- explicit monotonic/asymptotic/near-zero/oscillatory/divergent classifications;
+- no moving-maximum acceptance path.
 
-### Batch 6 — exact-head validation / handoff
-- source guards and focused diagnostics;
-- B01 unaffected-baseline/fail-closed/metamorphic where available;
-- B02 definition/oracle/production checks;
-- visible-workbench/browser checks;
-- no `.github/workflows/*` changes;
-- if Actions budget prevents job start, classify as infrastructure blocked rather than PASS.
+### Batch 4 — G5 frozen B02 definition custody
 
-## Authority / invariants
+Delivered:
 
-- Do not change FEM formulation, stiffness/load assembly, solver mathematics, recovery convention, benchmark expected values, or quality thresholds merely to make B02 pass.
-- T6/Q8 integration-point/direct tensor recovery remains numerical authority.
-- Physical convergence probes remain fixed in physical coordinates; moving maxima are not a general convergence oracle.
-- Singular quantities must not be promoted to pointwise acceptance.
-- Frozen B02 targets/probes/mesh ladders must precede production observation.
-- G3/G4/G5 custody may block release; it cannot fabricate release authority.
-- Domain-first temperature remains outside B02 probe/release authority until independently qualified.
-- No workflow YAML modifications.
-- No merge without explicit owner authorization.
+- B02A, B02B, B02C, B02D and B02E frozen definitions;
+- method/benchmark applicability matrix and invalidation contracts;
+- independent Saint-Venant analytical oracle;
+- definition-freeze manifest/check preserving original pre-observation lineage;
+- integrated G4 lineage bound separately from the historical freeze lineage.
 
-## Initial technical diagnosis and falsifiers
+The benchmark definition JSON files were not modified to accommodate production output.
 
-### ISS-B02-01 — stale stacked integration risk
-Prediction: direct merge/cherry-pick of #1123/#1124 will conflict with or overwrite post-#1134 workbench/profile/readiness changes.
-Falsifier: exact per-file comparison proves the source files are unchanged/equivalent on main and can be adopted without semantic loss.
-Action: port each owned behavior against current source.
+### Batch 5 — production B02 routes
 
-### ISS-B02-02 — provenance freeze parent is stale
-Prediction: #1125 freeze gate hard-codes the old adopted G4 head and will reject the new integrated lineage even when definitions are unchanged.
-Falsifier: freeze manifest uses semantic definition hashes independent of historical parent SHA.
-Action: preserve frozen definition content/hashes and update only integration provenance after G4 integration is fixed.
+Delivered:
 
-### ISS-B02-03 — release UI must not self-promote
-Prediction: introducing a Verification & Release panel can accidentally map execution success to release PASS.
-Falsifier: UI consumes explicit retained release/convergence evidence and has no code path deriving release from solver completion alone.
+- strict ordered `B02A -> B02B -> B02C -> B02D -> B02E` aggregate;
+- B02A/B rectangle production route through domain-first geometry, registered meshing, preflight, authoritative run and fixed G4 probes;
+- exact EDGE -> governed SEGMENT attachment translation without changing frozen semantics;
+- B02C exact Kirsch analytical traction law, whitelisted and consistently integrated on the true curved outer boundary;
+- B02D probe-stable polar mesh strategy as a qualified registered core-mesher profile mode;
+- T3 control plus T6/Q8 release-critical B02D paths;
+- B02D exact physical radial load/restraint feature windows and consistent line-resultant distribution;
+- independent mechanical strain-energy reconstruction;
+- fixed-point and fixed-path B02D convergence evaluation;
+- Verification & Release read-only UI projection.
+
+### Batch 6 — closure defects found and fixed during static qualification
+
+The final source audit found defects that would have prevented the B02 production sequence from reaching physics acceptance:
+
+1. **B02A/B frozen probes contained oracle-only `expectedValue` and no G4 schema.**
+   - Fixed by constructing a strict `lafea-continuum-physical-probe/v1` recovery identity at the adapter boundary.
+   - Frozen oracle data remains only in acceptance comparison.
+
+2. **B02C frozen probes contained analytical acceptance fields and no G4 schema.**
+   - Fixed by constructing a strict G4 probe identity in the Kirsch production adapter.
+   - `analyticalReferenceValue` and `acceptanceMode` remain outside recovery identity.
+
+3. **B02D frozen fixed probes also lacked the G4 schema.**
+   - Fixed by constructing a strict G4 probe identity before recovery.
+   - Path probes already used an explicit physical-probe schema.
+
+4. **Production anti-drift source guard existed but was not executed by the aggregate.**
+   - Fixed by importing it into the existing B02 gate.
+   - Guard now protects run custody, canonical execution input, execution-bound glyph display, release fail-closed behavior, B02D frozen empty-refinement semantics, analytical-traction whitelisting, all three strict G4 probe adapters and ordered B02 execution.
+
+5. **B02D acceptance schema drift.**
+   - Corrected the production checker to consume the frozen flat acceptance fields and the exact `expectedMomentAboutCenter` / `expectedReactionMomentAboutCenter` names.
+
+6. **Registered mesher capability expansion.**
+   - Producer identity intentionally advanced from V9/R10 to `LAFEA.10.T6Q8.SHELL.POLAR.V10` / `R11`.
+   - Existing broad mesher binding qualification was preserved and updated only for the new governed identity.
+   - The B02D polar qualifier is bound into the meshing qualification path.
+
+## Current-main reconciliation
+
+Before merge, `main` was re-grounded at `2c95dd579c8dec6283eaeff5d470e352d03dd14f`.
+
+The 18 commits since the original #1134 baseline affect nine files limited to:
+
+- PR1136 engineering ledger/check;
+- CII operating-density resolver/import UI files;
+- master-data controller/normalizers;
+- Project Data contract.
+
+They do not overlap the LAFEA.3 B02 numerical/custody files changed by #1137. PR #1137 remains mergeable. The GitHub merge operation will reconcile the exact authorized PR head with current `main`; no force update is required.
 
 ## Validation ledger
 
-| Check | Status | Observation | Oracle | Notes |
-|---|---|---|---|---|
-| Post-#1134 main grounding | PASS | SOURCE_INSPECTION / GitHub live state | AUTHORITATIVE_REFERENCE | main = `793f359...` |
-| G3/G4/G5 changed-file coordination | PASS | SOURCE_INSPECTION | NONE | overlap identified; wholesale cherry-pick rejected |
-| Batch 2 G3 integration | NOT_RUN | NOT_OBSERVED | — | pending |
-| Batch 3 G4 integration | NOT_RUN | NOT_OBSERVED | — | pending |
-| Batch 4 definition freeze | NOT_RUN | NOT_OBSERVED | ANALYTICAL / AUTHORITATIVE_REFERENCE | pending |
-| Production B02 A-E | NOT_RUN | NOT_OBSERVED | ANALYTICAL / frozen definitions | pending |
-| Exact-head CI | NOT_RUN | NOT_OBSERVED | — | pending |
+| Gate | Disposition | Evidence |
+|---|---|---|
+| Post-#1134 architecture preservation | SOURCE-REVIEW PASS | file-by-file integration; stale stack wholesale merge rejected |
+| G3 custody implementation | SOURCE-REVIEW PASS | transaction/currentness/hash/glyph guards retained |
+| G4 probe/convergence implementation | SOURCE-REVIEW PASS | strict fixed physical probe contract and direct recovery |
+| G5 frozen definitions | SOURCE-REVIEW PASS | frozen definitions retained; provenance check integrated |
+| B02A/B adapter schema | FIXED | strict probe identity synthesized; oracle values separated |
+| B02C adapter schema | FIXED | strict probe identity synthesized; analytical oracle separated |
+| B02D adapter schema | FIXED | strict fixed-probe identity synthesized |
+| B02D frozen acceptance names | FIXED | production checker consumes frozen field names literally |
+| B02 production source guard | IN EXECUTED AGGREGATE | imported by `lafea-b01-b02-gate0-diagnostic.mjs` |
+| Exact-head GitHub Actions | INFRASTRUCTURE_BLOCKED | jobs created with zero steps and no logs |
+| Numerical B02A-E runtime PASS | NOT CLAIMED | Actions did not start; no fabricated result |
+| Release authority | NOT GRANTED | fail-closed by design |
 
-## Changed-file ledger
+### Observed Actions non-starts
 
-- `agents/WIP-lafea3-b02-production-qualification-20260815_workreport.md` — recovery authority for this assignment.
+On corrected implementation heads, the following workflows repeatedly produced jobs with no executed steps and no log URL:
 
-## EXACT_NEXT_ACTION
+- `LAFEA B01 final exact-head qualification`
+- `LAFEA visible workbench qualification`
+- `LAFEA B01 untouched baseline`
+- `LAFEA B01 metamorphic qualification`
+- `LAFEA B01 fail-closed qualification`
 
-Create the draft PR, then inspect G3 production files against post-#1134 main and port the smallest independent run-transaction/solver-diagnostics slice first.
+This is the same repository-level Actions-budget/non-start signature already observed on PR #1134. The engineering record therefore distinguishes `INFRASTRUCTURE_BLOCKED` from `PASS` and from a genuine assertion/test `FAIL`.
+
+## Merge authority and residual risk
+
+Owner explicitly instructed: **proceed, fix and merge**.
+
+Accepted residual risk is limited to executable qualification that GitHub Actions did not start. Source-level contract defects discovered during closure were corrected before merge. No safety threshold, FEM formulation, benchmark expected value or qualification tolerance was weakened to obtain this disposition.
+
+## Post-merge next action
+
+After merge, the next mechanics upgrade should be a separately scoped LAFEA.3 near-incompressible plane-strain formulation qualification (B-bar/selective integration candidate), while keeping the current standard displacement formulation fail-closed near the incompressibility boundary until that new formulation is independently benchmarked.

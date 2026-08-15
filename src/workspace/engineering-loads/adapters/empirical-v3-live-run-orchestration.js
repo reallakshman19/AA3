@@ -6,7 +6,6 @@ import {
   projectEmpiricalV3Workflow,
   requireCurrentEmpiricalV3ResultReview,
   requireEmpiricalV3AuditReadiness,
-  requireEmpiricalV3AuthorizedSourceBoundExecution,
   requireEmpiricalV3SafetyPresentationPackage,
   requireEmpiricalV3WorkflowAction,
   sealEmpiricalV3EngineeringEvent,
@@ -14,6 +13,7 @@ import {
 } from '../../../core/empirical-v3-safety/index.js';
 import {
   executeAuthorizedEmpiricalV3SourceBoundThermalRom,
+  requireEmpiricalV3AuthorizedSourceBoundExecution,
 } from './empirical-v3-authorized-source-bound-execution.js';
 
 /** Executes the already-qualified source-bound ROM and advances to RESULT_REVIEW_REQUIRED. */

@@ -7,10 +7,14 @@ export const ENGINEERING_LEVEL = 'LINEAR_2D_CONTINUUM_T3_T6_Q8';
 export const FORMULATIONS = Object.freeze({
   PLANE_STRESS: 'PLANE_STRESS',
   PLANE_STRAIN: 'PLANE_STRAIN',
+  // Separately qualified mean-dilatation formulation. This is intentionally a
+  // distinct source identity: selecting it must never reinterpret or weaken
+  // the legacy displacement-only PLANE_STRAIN contract.
+  PLANE_STRAIN_BBAR: 'PLANE_STRAIN_BBAR',
 });
 
 /**
- * Conservative interim guard for the current displacement-only plane-strain
+ * Conservative interim guard for the legacy displacement-only plane-strain
  * formulation. These values do not prove absence of volumetric locking below
  * the block boundary; they prevent the clearly near-incompressible regime from
  * being accepted without a separately qualified locking-resistant formulation.

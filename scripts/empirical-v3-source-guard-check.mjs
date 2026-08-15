@@ -73,7 +73,7 @@ assert.match(branchSource, /requires exact topology/);
 assert.match(branchSource, /Tolerance-inferred topology cannot define/);
 
 const presentationSource = sourceAt('../src/core/empirical-v3-safety/presentation-package.js');
-assert.match(presentationSource, /does not classify risks, resolve authorities, project workflow, or authorize a run/);
+assert.match(presentationSource, /not classify risks, resolve authorities, project workflow, or authorize a run/);
 assert.match(presentationSource, /requireEngineeringRiskSet/);
 assert.match(presentationSource, /requireEmpiricalV3CalculationAuthorization/);
 

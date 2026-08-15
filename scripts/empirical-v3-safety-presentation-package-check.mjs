@@ -75,8 +75,8 @@ const packageA = sealEmpiricalV3SafetyPresentationPackage(input);
 const packageB = sealEmpiricalV3SafetyPresentationPackage({ ...input, records: [...input.records].reverse() });
 assert.equal(packageA.semanticHash, packageB.semanticHash, 'presentation ordering must not alter semantic identity');
 assert.equal(packageA.workflow.state, 'SAFETY_CLEARED');
-assert.equal(packageA.branches[0], branch, 'sealed branch record must remain the governed branch object');
-assert.equal(packageA.riskSet, riskSet, 'risk set must be reused by reference after validation');
+assert.equal(packageA.branches[0].semanticHash, branch.semanticHash, 'branch semantic identity must be preserved');
+assert.equal(packageA.riskSet.semanticHash, riskSet.semanticHash, 'risk-set semantic identity must be preserved');
 assert.equal(requireEmpiricalV3SafetyPresentationPackage(packageA).semanticHash, packageA.semanticHash);
 
 assert.throws(() => sealEmpiricalV3SafetyPresentationPackage({

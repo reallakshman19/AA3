@@ -9,6 +9,7 @@ const displayCache = read('src/workspace/lafea-continuum-bc-load-glyph-display-c
 const verification = read('src/workspace/lafea-verification-release-view.js');
 const mesherBinding = read('src/workspace/lafea-mesh-producer-binding.js');
 const analyticalTraction = read('src/workspace/lafea-analytical-traction-lowering.js');
+const rectangleRoute = read('scripts/lib/lafea-b02-production-route.mjs');
 const sequence = read('scripts/lafea-b02-production-sequence-check.mjs');
 
 assert.match(runActions, /transactions\.begin\(stageId, preflight\)/u);
@@ -41,6 +42,13 @@ assert.match(analyticalTraction, /LAFEA_ANALYTICAL_TRACTION_LAW_INVALID/u);
 assert.equal(/eval\(|new Function/u.test(analyticalTraction), false,
   'Analytical traction laws must remain whitelisted serializable laws, not executable expressions.');
 
+assert.match(rectangleRoute, /schema: PHYSICAL_PROBE_SCHEMA/u);
+assert.match(rectangleRoute, /singularityClassification: probe\.singularityClassification/u);
+assert.equal(/evaluateContinuumPhysicalProbe\(probe\)/u.test(rectangleRoute), false,
+  'Frozen oracle fields must not be passed directly into G4 probe identity.');
+assert.equal(/expectedValue\s*:/u.test(rectangleRoute), false,
+  'Expected benchmark values must remain outside the production recovery adapter.');
+
 const ordered = ['B02A', 'B02B', 'B02C', 'B02D'];
 let previous = -1;
 for (const id of ordered) {
@@ -61,6 +69,7 @@ console.log(JSON.stringify({
   verificationReleaseFailClosedGuarded: true,
   frozenB02dEmptyRefinementFeaturesGuarded: true,
   analyticalTractionWhitelistGuarded: true,
+  oracleRecoveryIdentitySeparationGuarded: true,
   orderedProductionSequenceGuarded: true,
   releaseAuthorityGranted: false,
 }));

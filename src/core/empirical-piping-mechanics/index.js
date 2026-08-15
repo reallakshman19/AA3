@@ -26,6 +26,10 @@ export {
   calculatePrismaticVirtualWorkContribution,
   integrateLinearEndFieldProduct,
 } from './flexibility.js';
+export {
+  buildDeterministicMemberAxes,
+  buildRootedTreeUnitForceActions,
+} from './rooted-tree-unit-load.js';
 export { solveScaledDenseSystem } from './linear-system.js';
 export { assemblePlanarSystem, solveAssembledPlanarSystem, solvePlanarSystem } from './assembly.js';
 export { solveUnilateralActiveSet } from './contact.js';

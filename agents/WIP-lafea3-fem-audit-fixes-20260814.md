@@ -1,130 +1,151 @@
-# LAFEA.3 FEM Audit Fixes — Work Report
+# LAFEA.3 FEM Audit Fixes — Engineering Work Report
 
 ## Recovery header
 
 - Repository: `reallaksh19/Advanced_Analysis`
-- Assignment: implement the full LAFEA.3 engineering audit fixes from current main, preserving numerical authority and exposing safe tunable/configuration details through a modern UI.
-- Work intent: `IMPLEMENT`
-- Repository state: `NEW_PR_REQUIRED`
-- Mutation authority: `WRITE_ALLOWED` by owner instruction on 2026-08-14.
+- Assignment: remediate the 2026-08-14 full LAFEA.3 FEM audit while preserving fail-closed engineering authority and exposing legitimate configuration through modern profile-backed UI.
+- Work intent: `IMPLEMENT_AND_QUALIFY`
 - Criticality: `ENGINEERING_CRITICAL`
-- Base branch: `main`
-- Baseline SHA: `69f45d4b3b8bdc69309dab5fadc30e3e517a36ee`
+- Pull request: `#1134`
 - Working branch: `agent/lafea3-fem-audit-fixes-20260814`
-- PR: not yet allocated
-- Merge authority: NONE — owner authorization required.
+- Audited starting main: `69f45d4b3b8bdc69309dab5fadc30e3e517a36ee`
+- Reconciled main parent: `384786b2994c4e958c3654e64b7db92349e80677`
+- Main reconciliation merge commit: `6458150ae89fd7e316d7d4fed28c92324e820f86`
+- Merge authority: `NONE` — PR-to-main merge still requires explicit owner authorization.
 
-## Handover in 60 seconds
+## Disposition
 
-Audit of current main found a strong linear 2D continuum kernel but production blockers at shared subsystem seams. Primary fixes are: accept genuine curved T6/Q8 isoparametric geometry; unify high-order Jacobian quality with solver integration locations; prevent UI relaxation of qualified quality limits; add/retain guarded nearly-incompressible plane-strain policy; correct plane-strain von Mises summary, reaction and per-case energy presentation; correct thermoelastic stored energy and keep plane-strain temperature fail-closed until fully qualified; add conforming/manifold mesh checks; align LAFEA.3 authority metadata; and require convergence evidence before release authority.
+Implementation within PR #1134's ownership boundary is complete. Production **release qualification remains false** by design: convergence/recovery/run-custody work already owned by the active B02 stack is not duplicated here, and exact-head GitHub Actions execution is currently blocked by the repository Actions budget.
 
-Owner additionally requires every materially tunable/configurable stage to expose those settings through a modern UI. UI controls must be profile-backed, versioned, hash-retained, visible, and may tighten but not silently weaken qualified limits.
+This PR therefore remains draft/fail-closed until executable exact-head evidence is available.
 
-## Ground truth
+## Completed remediation
 
-Current main was re-read before mutation. Main head is merge commit `69f45d4b3b8bdc69309dab5fadc30e3e517a36ee` (PR #1133).
+### 1. Curved T6/Q8 isoparametric geometry
 
-Active LAFEA coordination discovered before implementation:
+- Removed the invalid requirement that every T6/Q8 midside node equal the arithmetic chord midpoint.
+- Preserved declared high-order node ordering and CCW corner authority.
+- Curved physical midsides are now treated as genuine isoparametric geometry.
+- Added curved T6/Q8 regressions; inverted mappings still reject through Jacobian qualification.
+- This unblocks the geometry contract required by circular-hole/Kirsch Q8 benchmarks without straightening analytic boundaries.
 
-- PR #1129 — v3 LAFEA.3 generated mesh custody/quality vertical slice; owns mesh-custody/quality seams and explicitly blocks curved v3 boundaries pending certified curved-edge conformance.
-- PR #1123 — immutable run transaction / solver custody.
-- PR #1124 — authoritative physical-probe recovery and convergence custody.
-- PR #1125 — B02 benchmark/convergence definition freeze.
-- PR #1118 — LAFEA interactive workflow/meshing UI.
+### 2. High-order mesh/Jacobian qualification
 
-Coordination classification: `COORDINATION_REQUIRED`, not assumed independent. New changes must be based on current main and avoid silently replacing active-claim semantics. Where this work overlaps, retain existing authority contracts and reconcile them explicitly.
+- High-order scaled-Jacobian sampling now includes the actual T6 Hammer and Q8 3x3 Gauss integration locations in addition to control/corner locations.
+- LAFEA.3 authoritative preflight additionally consumes the existing v3 topology qualifier and interval-certified full-parent high-order Jacobian positivity proof.
+- Those v3 artifacts may block a solve but cannot self-promote mesh or release authority.
+- Existing adversarial suites cover between-sample T6/Q8 inversions, duplicate/non-manifold cells and high-order interface midside mismatch.
 
-## Audit findings being remediated
+### 3. Explicit qualified mesh-quality policy + UI
 
-- ISS-01 P0: `local-continuum/source-mesh.js` requires T6/Q8 midsides to be exact arithmetic parent-edge midpoints, conflicting with analytic curved boundary nodes produced by the qualified mesher.
-- ISS-02 P0 qualification: Kirsch `CONT-HOLE-01` uses analytic circular Q8 edges and is incompatible with the midpoint restriction.
-- ISS-03 P1: retained mesh PASS does not fully align with solver Jacobian acceptance locations.
-- ISS-04 P1: UI/profile permits arbitrary weakening of mesh quality thresholds.
-- ISS-05 P1: nearly incompressible plane strain has no locking policy/guard.
-- ISS-06 P1: engineering-highlight von Mises re-derives a plane-stress invariant and is wrong for plane strain.
-- ISS-07 P1: thermal stored strain energy uses `0.5*u^T*K*u` instead of elastic strain energy.
-- ISS-08 P1 latent: plane-strain thermal reduction/recovery is not qualified and must remain fail-closed until corrected and independently benchmarked.
-- ISS-09 P1 qualification: successful single-mesh execution is stage-qualified without convergence being required for production release.
-- ISS-10 P2: retained mesh quality evidence is too narrow.
-- ISS-11 P2: conformity/manifold imported-mesh topology checks are incomplete.
-- ISS-12 P2: LAFEA.3 authority/limitation metadata is stale/contradictory.
-- ISS-13 P2: result summary reads `reactions` instead of retained `supportReactions`.
-- ISS-14 P2: result UI sums strain energy across independent load cases.
-- ISS-15 P2: Q8 documentation overclaims quadrature exactness for arbitrary distorted isoparametric mappings.
+- Added source-controlled `LAFEA3_MESH_QUALITY_POLICY_V1` with revision `2026-08-15`.
+- Qualified baseline:
+  - adjacent-size ratio max `1.5`
+  - aspect-ratio warning `3.0`
+  - aspect-ratio block `10.0`
+  - scaled-Jacobian warning `0.5`
+  - scaled-Jacobian block `0.2`
+  - adaptive levels minimum `3`
+- UI/API callers may tighten these values; weakening cannot retain LAFEA.3 qualified mesh authority.
+- Generic profile defaults are aligned to this policy but are no longer treated as the source of engineering authority.
+- Meshing UI exposes advanced quality gates, tightening direction, current/baseline values, profile hashing and reset-to-qualified behavior.
+- Quick-generate UI uses the same source-controlled defaults rather than a second hidden relaxed profile.
+- Added a focused regression that rejects each weakening direction and accepts a tightened profile.
 
-## Invariants / negative assurance
+### 4. Plane-strain material authority
 
-- Do not weaken numerical tolerances or benchmark acceptance criteria to obtain green tests.
-- Do not force curved quadratic midsides back to straight chord midpoints.
-- Integration-point stress remains numerical authority for T6/Q8; nodal projection stays display-only.
-- T3 remains benchmark/fallback only.
-- No material nonlinearity/contact/shell authority is introduced.
-- Plane-strain temperature remains release-ineligible until the formulation and independent benchmark are qualified.
-- A mesh-quality PASS never implies structural-response convergence.
-- No merge without explicit owner authorization.
-- No `.github/workflows/*` changes unless separately authorized.
+- Corrected authority metadata from stale CST-only language to T3/T6/Q8 linear continuum scope.
+- Added a fail-closed displacement-formulation envelope for near-incompressible plane strain:
+  - advisory at `nu >= 0.40`
+  - block at `nu >= 0.45`
+- The UI displays formulation, configured Poisson ratio, advisory/block bands and non-overridable source-controlled authority.
+- No B-bar/mixed/selective-integration formulation is falsely claimed.
 
-## Planned implementation stages
+### 5. Thermoelastic mechanics and energy
 
-### Stage 1 — Isoparametric geometry contract
+- Corrected plane-stress/plane-strain reduced thermal-strain semantics.
+- Corrected plane-strain out-of-plane stress recovery to include the thermal term.
+- Replaced deformation-only `0.5*u^T*K*u` reporting with physical elastic initial-strain energy accounting.
+- Retained thermal force vector and initial-strain energy evidence for reconstruction/qualification.
+- Added analytical regressions for:
+  - plane-stress free expansion: zero stress and zero stored elastic energy;
+  - plane-strain free in-plane expansion: analytical `sigma_z` and stored energy;
+  - T6 integration-point recovery;
+  - fully restrained plane-stress and plane-strain thermal stress/energy limits.
+- Duplicate temperature loads on one element in one case are already rejected by the canonical load contract, preventing ambiguous initial-strain superposition.
+- Domain-first `TEMPERATURE` attachment lowering remains intentionally fail-closed until alpha/reference-temperature mapping is separately qualified.
 
-1. Remove arithmetic-midpoint rejection for T6/Q8.
-2. Replace it with topological node-order/edge ownership checks plus element Jacobian validity.
-3. Add curved T6/Q8 canonicalization regressions and ensure Kirsch/circular-edge benchmark remains genuinely curved.
-4. Correct stale T6/Q8 formulation comments.
+### 6. Result/recovery authority
 
-### Stage 2 — Mesh authority + modern controls
+- Result highlights consume retained `vonMises` rather than recomputing a plane-stress formula in the UI.
+- Reaction summaries consume retained `supportReactions`.
+- Elastic energy is presented per load case; independent cases are not summed into a fictitious governing energy.
+- T6/Q8 integration-point stress remains numerical authority; nodal averaging/projection remains display-only.
 
-1. Retain integration-point Jacobian metrics and determinant ratio for high-order elements.
-2. Add triangle minimum angle and Q8 distortion metrics where contract-compatible.
-3. Add conforming/manifold edge ownership checks.
-4. Add qualified-policy floors: user can tighten thresholds; weakening requires explicit non-qualified/blocked state rather than silent PASS.
-5. Modern UI: grouped advanced quality controls with qualified default, current value, allowed direction/range, engineering explanation, live classification, and reset-to-qualified action.
+### 7. Workbench/readiness UI
 
-### Stage 3 — Continuum mechanics guards
+- Removed static/fabricated exact-head PASS text from engineering overview.
+- Run controls now follow current workflow/mesh authorization rather than simply detecting a retained mesh.
+- Removed dead result-mode buttons that had no numerical/view-state action.
+- Numerical Verification surfaces current preflight topology and full-parent Jacobian qualification evidence.
+- Existing convergence/release UI remains read-only/fail-closed and is not duplicated from #1124/#1125.
 
-1. Add explicit nearly-incompressible plane-strain warning/block policy with source-controlled tunable threshold, profile/hash custody and UI disclosure.
-2. Do not introduce B-bar/mixed mechanics in the same commit; that requires separate formulation qualification.
-3. Keep temperature plane-strain fail-closed until corrected/benchmarked.
+### 8. Documentation/authority cleanup
 
-### Stage 4 — Recovery/result fixes
+- Removed stale limitations claiming no automatic meshing/UI integration.
+- T6 documentation now reflects the actual integrated local-continuum route and curved-isoparametric semantics.
+- Q8 documentation no longer overclaims 3x3 Gauss quadrature as mathematically exact for arbitrary distorted isoparametric mappings.
 
-1. Use retained `point.vonMises` in highlights.
-2. Use `supportReactions`.
-3. Present strain energy per load case, never sum unrelated cases.
-4. Recover physical elastic thermal energy from `(epsilon - epsilon_theta)^T D (epsilon - epsilon_theta)`.
-5. Add free-expansion zero-elastic-energy regression.
+## Coordination boundary
 
-### Stage 5 — Convergence/release custody
+Active related work was re-read before mutation:
 
-1. Preserve successful solver execution as calculation acceptance.
-2. Require current convergence evidence before any release-qualified production state.
-3. Surface convergence configuration/probes as guarded modern UI controls where current workbench contracts permit, without duplicating #1124/#1125 authority.
+- #1129 — v3 mesh custody/quality production integration;
+- #1123 — immutable run transaction / solver custody;
+- #1124 — recovery/convergence custody;
+- #1125 — B02 benchmark/convergence definitions;
+- #1118 — interactive workflow/UI surfaces.
 
-### Stage 6 — Validation / handoff
-
-- focused T6/Q8 patch + curved-edge tests;
-- Kirsch CONT-HOLE-01;
-- load and thermoelastic regressions;
-- mesh-quality/topology fail-closed checks;
-- visible workbench/UI tests;
-- relevant LAFEA B01/B02/release suite available on exact head;
-- reconcile changed-file ledger and open a draft PR only.
+PR #1134 reuses existing topology/Jacobian primitives and does **not** introduce a competing convergence/release chain. Production convergence/release authority remains with the existing stack.
 
 ## Validation ledger
 
-No post-change validation has been executed yet.
+### Source and contract evidence
 
-| Check | Status | Observation | Oracle | Notes |
-|---|---|---|---|---|
-| Current-main source audit | PASS | SOURCE_INSPECTION | INDEPENDENT_REPRODUCTION / ANALYTICAL where applicable | Basis for findings above |
-| Post-change focused tests | NOT_RUN | NOT_OBSERVED | — | pending implementation |
-| Exact-head remote suite | NOT_RUN | NOT_OBSERVED | — | pending branch commits |
+- Current branch is reconciled to main commit `384786b2994c4e958c3654e64b7db92349e80677` and is `0 behind` after merge commit `6458150ae89fd7e316d7d4fed28c92324e820f86`.
+- Existing v3 topology adversarial check proves duplicate cells, non-manifold edges and high-order midside/interface mismatch block.
+- Existing v3 high-order Jacobian adversarial check proves between-sample T6/Q8 inversion blocks and ambiguous positivity fails closed.
+- New policy regression is included in `lafea-agent1-stack-check.mjs`.
+- Relevant behavioral mesh/solver/browser fixtures were migrated to the qualified policy-backed defaults rather than weakening production limits.
 
-## Changed-file ledger
+### Exact-head GitHub Actions
 
-- `agents/WIP-lafea3-fem-audit-fixes-20260814.md` — this recovery/work report only.
+At exact head `054f53618eb5f32b9d8ebf0a9da8f49fee1eaff1`, the following five PR workflows were triggered:
 
-## Exact continuation state
+1. LAFEA B01 final exact-head qualification
+2. LAFEA B01 fail-closed qualification
+3. LAFEA B01 metamorphic qualification
+4. LAFEA B01 untouched baseline
+5. LAFEA visible workbench qualification
 
-Next action: implement Stage 1 only, add focused regressions, then update this report before moving to Stage 2.
+All five created a job but executed **zero steps**. GitHub check annotation for the final exact-head and visible-workbench jobs states:
+
+`The job was not started because an Actions budget is preventing further use.`
+
+Classification: `CI_INFRASTRUCTURE_BLOCKED`, not a numerical/test assertion failure. No green exact-head qualification is claimed.
+
+## Remaining release blockers
+
+- GitHub Actions budget must permit the exact-head suites to execute.
+- B02 convergence/recovery/run-custody stack must provide its own integrated exact-head evidence before production release authority can become true.
+- Domain-first temperature attachment lowering remains deliberately unqualified/fail-closed pending independent mapping qualification.
+
+## Negative assurance
+
+- No numerical or benchmark tolerance was loosened to obtain a pass.
+- No curved quadratic edge was straightened to satisfy canonicalization.
+- No nonlinear/contact/shell authority was added.
+- No B-bar/mixed incompressible formulation was claimed.
+- No convergence/release authority was fabricated.
+- No `.github/workflows/*` file was changed.
+- PR #1134 has not been merged.

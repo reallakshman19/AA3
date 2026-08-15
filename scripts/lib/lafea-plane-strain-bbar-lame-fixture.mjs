@@ -18,13 +18,16 @@ const PROBE_SCHEMA = 'lafea-continuum-physical-probe/v1';
 const DIRECT_RECOVERY = 'ELEMENT_LOCAL_DIRECT_DISPLACEMENT_GRADIENT';
 const DISPLACEMENT_RECOVERY = 'ELEMENT_SHAPE_INTERPOLATION';
 
-export function executeLameBbarQualificationCase(definition, {
+export function executeLameBbarQualificationCase(definition, meshPolicy, {
   elementType,
   poissonRatio,
   level,
   distortion,
 }) {
   assert.equal(definition.programmeId, 'LAFEA3-PS-BBAR-001');
+  assert.equal(meshPolicy.programmeId, definition.programmeId);
+  assert.equal(meshPolicy.definitionState, 'FROZEN_BEFORE_PRODUCTION_OBSERVATION');
+  assert.equal(meshPolicy.productionOutputUsedToChooseDefinition, false);
   assert.ok(['T6', 'Q8'].includes(elementType));
   assert.ok(definition.poissonRatioLadder.includes(poissonRatio));
   assert.ok(definition.benchmarks.THICK_CYLINDER.meshLadder.levels.some(
@@ -33,7 +36,7 @@ export function executeLameBbarQualificationCase(definition, {
   ));
   assert.ok(definition.distortionMatrix.some((row) => row.distortionId === distortion.distortionId));
 
-  const meshData = createQuarterAnnulusMesh(definition, {
+  const meshData = createQuarterAnnulusMesh(definition, meshPolicy, {
     elementType,
     level,
     distortion,
@@ -122,6 +125,7 @@ export function executeLameBbarQualificationCase(definition, {
     loadCase,
     stage,
     probes,
+    probeCellEvidence: meshData.probeCellEvidence,
   });
 }
 
@@ -159,7 +163,7 @@ export function lameOracle(definition, poissonRatio, probe) {
   });
 }
 
-function createQuarterAnnulusMesh(definition, { elementType, level, distortion }) {
+function createQuarterAnnulusMesh(definition, meshPolicy, { elementType, level, distortion }) {
   const benchmark = definition.benchmarks.THICK_CYLINDER;
   const { innerRadius: a, outerRadius: b } = benchmark.geometry;
   const h = level.targetElementLength;
@@ -169,9 +173,50 @@ function createQuarterAnnulusMesh(definition, { elementType, level, distortion }
   const angularProbeAnchors = [...new Set(
     benchmark.fixedPhysicalProbes.map((probe) => probe.thetaDegrees * Math.PI / 180),
   )].sort((x, y) => x - y);
-  const radialBreaks = protectedAxis(a, b, h, radialProbeAnchors);
+  assert.deepEqual(radialProbeAnchors, meshPolicy.radialAxis.protectedProbeRadii);
+  assert.deepEqual(
+    angularProbeAnchors.map((value) => value * 180 / Math.PI),
+    meshPolicy.angularAxis.protectedProbeAnglesDegrees,
+  );
+  const radialPhase = meshPolicy.radialAxis.targetPhase;
+  const angularPhase = meshPolicy.angularAxis.targetPhase;
+  assert.ok(
+    Math.abs(radialPhase - angularPhase)
+      >= meshPolicy.t6DiagonalAvoidance.minimumPhaseSeparation,
+  );
+  const radialBreaks = protectedAxis(a, b, h, radialProbeAnchors, radialPhase);
   const angularTarget = h / ((a + b) / 2);
-  const angularBreaks = protectedAxis(0, Math.PI / 2, angularTarget, angularProbeAnchors);
+  const angularBreaks = protectedAxis(
+    0,
+    Math.PI / 2,
+    angularTarget,
+    angularProbeAnchors,
+    angularPhase,
+  );
+  const probeCellEvidence = benchmark.fixedPhysicalProbes.map((probe) => {
+    const theta = probe.thetaDegrees * Math.PI / 180;
+    const radial = containingCell(radialBreaks, probe.r);
+    const angular = containingCell(angularBreaks, theta);
+    const radialCellPhase = (probe.r - radial.left) / (radial.right - radial.left);
+    const angularCellPhase = (theta - angular.left) / (angular.right - angular.left);
+    close(radialCellPhase, radialPhase, 1e-12, `${probe.probeId} radial phase`);
+    close(angularCellPhase, angularPhase, 1e-12, `${probe.probeId} angular phase`);
+    const diagonalPhaseSeparation = Math.abs(radialCellPhase - angularCellPhase);
+    assert.ok(
+      diagonalPhaseSeparation >= meshPolicy.t6DiagonalAvoidance.minimumPhaseSeparation - 1e-12,
+      `${probe.probeId} is too close to the T6 cell diagonal`,
+    );
+    return Object.freeze({
+      probeId: probe.probeId,
+      radialCell: Object.freeze(radial),
+      angularCell: Object.freeze(angular),
+      radialCellPhase,
+      angularCellPhase,
+      diagonalPhaseSeparation,
+      elementBoundaryPlacement: false,
+      t6DiagonalPlacement: false,
+    });
+  });
 
   const nodes = new Map();
   const corners = Array.from({ length: radialBreaks.length }, () => []);
@@ -234,6 +279,7 @@ function createQuarterAnnulusMesh(definition, { elementType, level, distortion }
     innerBoundaryOwners: Object.freeze(innerBoundaryOwners.map(Object.freeze)),
     radialBreaks: Object.freeze(radialBreaks),
     angularBreaks: Object.freeze(angularBreaks),
+    probeCellEvidence: Object.freeze(probeCellEvidence),
   });
 }
 
@@ -270,7 +316,7 @@ function sourceModel(definition, { elementType, poissonRatio, mesh, innerBoundar
       sourceModelIdentity: definition.programmeId,
       sourceVersion: 'FROZEN-V1',
       adapterIdentity: 'LAFEA_BBAR_LAME_QUALIFICATION_FIXTURE',
-      adapterVersion: '1',
+      adapterVersion: '2',
     },
     units: { length: 'mm', force: 'N', stress: 'MPa', modulus: 'MPa' },
     formulation: FORMULATIONS.PLANE_STRAIN_BBAR,
@@ -328,13 +374,19 @@ function strictProbe(definition, probe) {
   };
 }
 
-function protectedAxis(minimum, maximum, target, anchors) {
+function protectedAxis(minimum, maximum, target, anchors, targetPhase) {
   assert.ok(target > 0 && maximum > minimum);
+  assert.ok(targetPhase > 0 && targetPhase < 1);
   const breaks = [minimum, maximum];
   for (const anchor of anchors) {
     assert.ok(anchor > minimum && anchor < maximum);
-    const half = Math.min(target / 2, anchor - minimum, maximum - anchor);
-    breaks.push(anchor - half, anchor + half);
+    const left = anchor - targetPhase * target;
+    const right = left + target;
+    assert.ok(
+      left >= minimum - 1e-12 && right <= maximum + 1e-12,
+      `Protected probe cell [${left}, ${right}] around ${anchor} exceeds axis [${minimum}, ${maximum}]`,
+    );
+    breaks.push(Math.max(minimum, left), Math.min(maximum, right));
   }
   const protectedBreaks = uniqueSorted(breaks);
   const output = [protectedBreaks[0]];
@@ -350,8 +402,21 @@ function protectedAxis(minimum, maximum, target, anchors) {
   for (const anchor of anchors) {
     assert.equal(canonical.some((value) => Math.abs(value - anchor) <= 1e-12), false,
       `Probe anchor ${anchor} must remain inside a cell, not on an interface.`);
+    const cell = containingCell(canonical, anchor);
+    const phase = (anchor - cell.left) / (cell.right - cell.left);
+    close(phase, targetPhase, 1e-12, `Probe anchor ${anchor} phase`);
+    close(cell.right - cell.left, target, 1e-12, `Probe anchor ${anchor} cell width`);
   }
   return canonical;
+}
+
+function containingCell(axis, value) {
+  for (let index = 0; index < axis.length - 1; index += 1) {
+    if (value > axis[index] + 1e-12 && value < axis[index + 1] - 1e-12) {
+      return Object.freeze({ left: axis[index], right: axis[index + 1], index });
+    }
+  }
+  throw new TypeError(`Frozen probe ${value} is not strictly inside one protected cell.`);
 }
 
 function distortedPolarPoint(r, theta, a, b, h, distortion) {
@@ -398,5 +463,12 @@ function unwrapMidAngle(left, right) {
 function uniqueSorted(values) {
   return [...values].sort((a, b) => a - b).filter(
     (value, index, rows) => index === 0 || Math.abs(value - rows[index - 1]) > 1e-12,
+  );
+}
+function close(actual, expected, relative, label) {
+  const scale = Math.max(1, Math.abs(actual), Math.abs(expected));
+  assert.ok(
+    Math.abs(actual - expected) <= relative * scale,
+    `${label}: ${actual} != ${expected}`,
   );
 }

@@ -5,9 +5,9 @@
  * mesh, execute an engine or create lifecycle evidence.
  */
 import {
+  LAFEA3_QUALIFIED_MESH_QUALITY_POLICY,
   PROFILE_KINDS,
   canonicalProfile,
-  defaultProfileFields,
   reconstructProfileSemanticHash,
 } from '../core/lafea-profile-contract/index.js';
 import { canonicalLafeaSha256 } from './lafea-canonical-sha256.js';
@@ -58,14 +58,14 @@ export function canonicalLafeaAnalysisMeshProfile(value) {
 
 /**
  * LAFEA.3 production mesh acceptance may use a stricter user profile, but a
- * user/API caller cannot weaken the source-controlled qualified quality
- * envelope and still receive stage-authorized PASS evidence. This is an
- * authority rule, not a hidden default: the baseline values are the visible,
- * versioned mesh-profile defaults and remain exportable with the profile.
+ * user/API caller cannot weaken the explicit source-controlled qualified
+ * quality policy and still receive stage-authorized PASS evidence. Generic
+ * profile defaults are deliberately not used as qualification authority.
  */
 export function requireLafeaAnalysisMeshQualifiedQualityPolicy(stageId, meshProfile) {
   if (stageId !== 'LAFEA.3') return meshProfile;
-  const baseline = defaultProfileFields(PROFILE_KINDS.MESH);
+  const policy = LAFEA3_QUALIFIED_MESH_QUALITY_POLICY;
+  const baseline = policy.fields;
   const fields = meshProfile?.fields;
   if (!fields) throw meshContractError('LAFEA_ANALYSIS_MESH_PROFILE_REQUIRED');
   const weakened = (
@@ -74,11 +74,12 @@ export function requireLafeaAnalysisMeshQualifiedQualityPolicy(stageId, meshProf
     || fields.aspectRatioBlock > baseline.aspectRatioBlock
     || fields.scaledJacobianWarn < baseline.scaledJacobianWarn
     || fields.scaledJacobianBlock < baseline.scaledJacobianBlock
+    || fields.adaptiveLevels < baseline.adaptiveLevelsMinimum
   );
   if (weakened) {
     throw meshContractError(
       'LAFEA3_MESH_QUALITY_POLICY_WEAKENING_NOT_QUALIFIED',
-      'LAFEA.3 mesh quality settings may tighten, but may not weaken, the qualified profile.',
+      `LAFEA.3 mesh quality settings may tighten but may not weaken ${policy.policyId}@${policy.revision}.`,
     );
   }
   return meshProfile;

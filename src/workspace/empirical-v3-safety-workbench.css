@@ -41,6 +41,9 @@
 .empirical-v3-safety__evidence pre{margin:6px 0 0;white-space:pre-wrap;overflow-wrap:anywhere;font-size:10px}
 .empirical-v3-explain__heading,.empirical-v3-explain__section{display:grid;gap:6px;padding:8px;border:1px solid #334155;border-radius:6px;background:#0f172a}
 .empirical-v3-explain__heading span{font-size:10px;color:#94a3b8;overflow-wrap:anywhere}
+.empirical-v3-explain__modes{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:4px;padding:4px;border:1px solid #334155;border-radius:6px;background:#08111f}
+.empirical-v3-explain__modes button{min-width:0;font-size:10px;font-weight:700;letter-spacing:.02em}
+.empirical-v3-explain__modes button[aria-selected="true"]{border-color:#38bdf8;background:#0c4a6e;color:#e0f2fe;box-shadow:inset 0 -2px #38bdf8}
 .empirical-v3-explain__section h4{margin:0;color:#bae6fd;font-size:12px}
 .empirical-v3-explain__section dl{display:grid;grid-template-columns:minmax(110px,max-content) minmax(0,1fr);gap:4px 8px;margin:0;font-size:10px}
 .empirical-v3-explain__section dd{margin:0;overflow-wrap:anywhere}

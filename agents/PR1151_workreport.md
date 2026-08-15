@@ -19,70 +19,61 @@ SOURCE_TASK: issue #1149
 PR_OR_WIP: PR1151
 BRANCH: agent/empirical-v3-safety-evidence-fresh-20260815
 
-PR_HEAD_OBSERVED: d28f378baa0f31cd886ff906a700f0a95bbc0926
-REPORT_BASIS_HEAD: d28f378baa0f31cd886ff906a700f0a95bbc0926
+PR_HEAD_OBSERVED: 72a398f3abe38468d36d8ea54a724d208e00cf00
+REPORT_BASIS_HEAD: 72a398f3abe38468d36d8ea54a724d208e00cf00
 MAIN_HEAD_LAST_CHECKED: 04328852dced9f5c4827da8afe8a82aeb8b1a1d3
 MERGE_BASE: edafbbccbc7572f65192a048550406d2257d3def
 REPORT_SYNC: CURRENT_THROUGH_IMPLEMENTATION_HEAD
 
 APPENDIX_A_STATUS: NOT_REQUIRED_NEW_OWNER_AUTHORIZED_WORK
-GROUNDING_EPOCH: GE-1149-003
+GROUNDING_EPOCH: GE-1149-004
 CURRENT_TAKEOVER: NONE
 
 CURRENT_STAGE: IMPLEMENT
-LAST_COMPLETED_STAGE: PRE_CALC_SAFETY_CORE
+LAST_COMPLETED_STAGE: BRANCH_COMPONENT_AUTHORITY_FOUNDATION
 CURRENT_BLOCKER: executable repository validation unavailable in this environment
-HIGHEST_RISK: branch/component authority adapters must preserve these domain identities without legacy fallback or UI shadow authority
-LAST_DURABLE_CHECKPOINT: workflow + quantity authority + risk + confirmation + authorization + structured event contracts committed
+HIGHEST_RISK: workspace adapters must classify legacy/fuzzy/default source data without laundering it into the new exact authority contracts
+LAST_DURABLE_CHECKPOINT: pre-calc safety core + branch/component authority + anti-drift/source guard committed
 
-EXACT_NEXT_ACTION: implement branch/component authority records and deterministic branch-basis grouping on exact topology; keep DN/WT component-local and process/class/material/insulation branch-common
+EXACT_NEXT_ACTION: implement source/workspace adapters that build branch/component records from exact topology and sealed source/master evidence; then begin Branch Basis / Safety Gate UI projections without UI-owned authority
 ```
 
 ## 2. Handover in 60 Seconds
 
-PR #1151 is the active fresh continuation for issue #1149. It is stacked directly on #1148 exact head `edafbbccbc7572f65192a048550406d2257d3def` and does not inherit #1150. #1150 remains untouched unless the owner separately directs closure.
+PR #1151 is the active fresh issue #1149 continuation. It is stacked directly on #1148 exact head `edafbbccbc7572f65192a048550406d2257d3def` and inherits no #1150 code. #1150 remains untouched unless the owner directs otherwise.
 
-The pre-calculation safety core is now present under `src/core/empirical-v3-safety/`:
+Implemented under `src/core/empirical-v3-safety/`:
 
-- `workflow-state.js` — deterministic owner-locked workflow projection and action gates; stale upstream facts move the workflow backward even if downstream UI state exists; Run requires a non-empty sealed calculation authorization hash.
-- `quantity-authority.js` — immutable numeric authority classes; finite arithmetic cannot upgrade inferred/assumed/unresolved lineage; named legacy/default/fuzzy/screening sources cannot be promoted to exact.
-- `risk-finding.js` — deterministic immutable HIGH_BLOCK / HIGH_CONFIRM / MEDIUM / LOW risk records and risk sets; ordering and IDs are presentation-independent.
-- `confirmation-receipt.js` — one receipt for one HIGH_CONFIRM risk; HIGH_BLOCK cannot be confirmed; actor/time/comment are audit metadata sealed separately from deterministic engineering identity.
-- `calculation-authorization.js` — sealed authorization derived from run/policy/dependency/risk-set/current confirmation identities; HIGH_BLOCK or pending/stale HIGH_CONFIRM blocks authorization; run/policy/dependency/risk changes invalidate the receipt.
-- `engineering-event.js` — structured owner-required event families with governed ERROR/REVIEW/WARNING/INFO semantics; actor/time are evidence metadata; message text is not authority.
-- `index.js` — core-only exports.
+- `workflow-state.js` — owner-locked workflow projection and fail-closed action gates.
+- `quantity-authority.js` — exact/derived/inferred/assumed/unresolved numeric authority with anti-laundering rules.
+- `risk-finding.js` — deterministic immutable HIGH_BLOCK/HIGH_CONFIRM/MEDIUM/LOW risks and risk sets.
+- `confirmation-receipt.js` — singular HIGH_CONFIRM receipt; HIGH_BLOCK has no confirmation path; stale risk identity invalidates old receipt.
+- `calculation-authorization.js` — sealed run/policy/dependency/risk/confirmation authorization and currentness assessment.
+- `engineering-event.js` — structured engineering event contract and governed severity mapping.
+- `branch-authority.js` — exact-topology calculation branch, branch-common process/class/material-mapping/insulation/load-participation authority once per branch, deterministic branch sameness/review basis.
+- `component-authority.js` — component-local NPS/OD/WT/section/geometry/material-at-temperature/flexibility/weight/COG authority linked to one branch; branch-common authority cannot be copied into the component record.
+- `index.js` — core exports only.
 
-Four focused checker scripts are committed. They remain **NOT_RUN** because this connector environment does not provide an executable repository checkout. Source inspection is recorded separately and must not be represented as runtime PASS.
+Focused scripts now cover workflow, quantity authority, risk/confirmation/authorization, engineering events, branch/component separation, and source/anti-drift rules. All executable checks are still **NOT_RUN** because this session has no executable repository checkout/runtime path.
 
 ## 3. Repository Ground Truth
 
-Grounding epoch `GE-1149-003`:
+Grounding epoch `GE-1149-004`:
 
-- default branch: `main`;
-- main head last observed: `04328852dced9f5c4827da8afe8a82aeb8b1a1d3`;
-- PR #1151: OPEN / DRAFT / mergeable at implementation checkpoint;
-- PR #1151 head before this report sync: `d28f378baa0f31cd886ff906a700f0a95bbc0926`;
-- PR target: `agent/empirical-rom-canonical-elbow-geometry-20260815`;
-- exact stack base: `edafbbccbc7572f65192a048550406d2257d3def`;
-- #1148 remains OPEN / DRAFT / UNMERGED at that same head;
+- default branch `main` last observed at `04328852dced9f5c4827da8afe8a82aeb8b1a1d3`;
+- PR #1151 remains OPEN / DRAFT / mergeable at last live check;
+- target branch is `agent/empirical-rom-canonical-elbow-geometry-20260815`;
+- exact stack base remains #1148 head `edafbbccbc7572f65192a048550406d2257d3def`;
+- #1148 remains OPEN / DRAFT / UNMERGED at that same exact head;
 - predecessor stack remains #1148 -> #1147 -> #1145 -> main;
-- no `.github/workflows/*` file is changed by PR #1151;
-- GitHub changed-file count at checkpoint: 12; ledger count below: 12; unexplained: 0.
+- no `.github/workflows/*` file is changed;
+- changed-file count at this checkpoint: 16; ledger count below: 16; unexplained: 0.
 
-Coordination classification: `SAFE_WITH_STACK_DEPENDENCY`.
+Coordination: `SAFE_WITH_STACK_DEPENDENCY`.
 
 ## 4. Mission / Scope / Acceptance
 
-Owner-priority implementation sequence remains:
-
-1. one domain-owned workflow state machine;
-2. Branch Basis authority/UI;
-3. one Calculation Safety Gate;
-4. immutable engineering events/evidence;
-5. Explain Calculation from sealed coupled evidence only;
-6. result review;
-7. JSON/audit contract;
-8. only then additional V3 physics.
+Owner priority remains workflow -> Branch Basis -> Safety Gate -> immutable events/evidence -> Explain -> result review -> JSON/audit -> later physics.
 
 Protected authority chain:
 
@@ -97,164 +88,148 @@ source/master/current model
 -> UI/audit/export
 ```
 
-Explicit non-goals/invariants:
+Explicit protected invariants:
 
-- no numerical tolerance, quadrature or formula tuning;
-- no response multipliers;
-- no SIF-as-flexibility;
-- no chainage-as-connectivity;
-- no tolerance topology admission;
-- no UI-side formula evaluation/re-solve;
-- no V1/V2 behavior change;
-- no workflow YAML change;
-- no merge without explicit owner authorization.
+- exact topology only; tolerance-inferred topology cannot define a V3 calculation branch;
+- chainage and TopoFix confidence are not calculation topology authority;
+- branch-common process/class/material mapping/insulation is not copied per node/component;
+- NPS/OD/WT/section remains component-local;
+- a component section change stales downstream calculation authorization without redefining the branch-common sameness basis;
+- process/class/material/insulation change changes branch sameness/review basis;
+- no formula/tolerance/quadrature tuning, response multipliers, SIF-as-flexibility, V1/V2 change, UI re-solve, workflow YAML change, or merge without owner authorization.
 
 ## 5. Current Implementation State
 
 | Work item | Implementation | Integration | Validation | Remaining |
 |---|---|---|---|---|
-| Workflow state projection | IMPLEMENTED | core-only | source-inspected; runtime NOT_RUN | bind domain adapters/UI later |
-| Quantity authority | IMPLEMENTED | core-only | source-inspected; runtime NOT_RUN | legacy/source adapters |
-| Risk findings / risk set | IMPLEMENTED | core-only | source-inspected; runtime NOT_RUN | policy classifier/adapters |
-| Singular confirmation | IMPLEMENTED | core-only | source-inspected; runtime NOT_RUN | UI transaction wiring |
+| Workflow state | IMPLEMENTED | core-only | source-inspected; runtime NOT_RUN | adapters/UI |
+| Quantity authority | IMPLEMENTED | core-only | source-inspected; runtime NOT_RUN | source adapters |
+| Risk / confirmation | IMPLEMENTED | core-only | source-inspected; runtime NOT_RUN | policy/UI transaction |
 | Calculation authorization | IMPLEMENTED | core-only | source-inspected; runtime NOT_RUN | execution bridge |
-| Structured engineering events | IMPLEMENTED | core-only | source-inspected; runtime NOT_RUN | event producer/log/audit consumers |
-| Branch/component authority | UNSTARTED | UNSTARTED | NOT_RUN | next stage |
-| Safety Gate / Branch Basis UI | UNSTARTED | UNSTARTED | NOT_RUN | after branch adapters |
-| Coupled result evidence / Explain | UNSTARTED | UNSTARTED | NOT_RUN | preserve existing mechanics |
-| Audit JSON/export | UNSTARTED | UNSTARTED | NOT_RUN | consume same records |
+| Structured events | IMPLEMENTED | core-only | source-inspected; runtime NOT_RUN | event producers/log/audit |
+| Branch authority | IMPLEMENTED | core-only | source-inspected; runtime NOT_RUN | exact-topology builder/workspace adapter |
+| Component authority | IMPLEMENTED | core-only | source-inspected; runtime NOT_RUN | source/master resolver adapter |
+| Anti-drift/source guard | IMPLEMENTED | script | runtime NOT_RUN | execute exact-head |
+| Branch Basis / Safety Gate UI | UNSTARTED | UNSTARTED | NOT_RUN | next product stage after adapters |
+| Coupled result evidence / Explain | UNSTARTED | UNSTARTED | NOT_RUN | preserve frozen mechanics |
+| Audit JSON/export | UNSTARTED | UNSTARTED | NOT_RUN | same immutable records |
 
 ## 6. Active Engineering Item Register
 
 | ID | Type | Severity | Status | Summary |
 |---|---|---|---|---|
-| RISK-001 | RISK | HIGH | PARTIALLY_MITIGATED | scalar laundering: core quantity contract prevents exact promotion; source adapters still required |
-| RISK-002 | RISK | HIGH | PARTIALLY_MITIGATED | stale/UI authorization: core workflow/auth receipt invalidation implemented; UI/execution bridge still required |
-| RISK-003 | RISK | HIGH | OPEN | topology/chainage bypass: exact topology adapter stage not yet implemented |
-| RISK-004 | RISK | HIGH | OPEN | branch grouping may accidentally use DN/component section as branch split or copy basis per node |
-| DEC-001 | DEC | HIGH | ACTIVE | workflow/authorization domain-owned, never UI boolean |
-| DEC-002 | DEC | HIGH | ACTIVE | #1145/#1147/#1148 numerical mechanics frozen |
-| DEC-003 | DEC | HIGH | ACTIVE | UI and audit consume same sealed identities |
-| DEC-004 | DEC | HIGH | ACTIVE | HIGH_BLOCK has no confirmation path; HIGH_CONFIRM confirmation is singular/current/hash-bound |
-| DEC-005 | DEC | HIGH | ACTIVE | event semantic identity excludes actor/time/presentation metadata; evidence hash seals audit metadata |
-| DEC-006 | DEC | HIGH | ACTIVE | policy/run/dependency/risk/confirmation identity changes stale calculation authorization |
+| RISK-001 | RISK | HIGH | PARTIALLY_MITIGATED | scalar laundering blocked in core; legacy/source classification adapters still required |
+| RISK-002 | RISK | HIGH | PARTIALLY_MITIGATED | stale/UI authorization blocked in core; product execution/UI bridge still required |
+| RISK-003 | RISK | HIGH | PARTIALLY_MITIGATED | branch contract requires exact non-tolerance topology; topology builder adapter still required |
+| RISK-004 | RISK | HIGH | PARTIALLY_MITIGATED | branch/component split contract now prevents PROCESS/class/insulation copy into component local authority |
+| RISK-005 | RISK | HIGH | OPEN | source/workspace adapter could incorrectly treat imported BRANCH/fuzzy class/default wall/zero weight as exact authority |
+| DEC-001 | DEC | HIGH | ACTIVE | workflow/authorization domain-owned; never UI boolean |
+| DEC-002 | DEC | HIGH | ACTIVE | #1145/#1147/#1148 mechanics numerically frozen |
+| DEC-003 | DEC | HIGH | ACTIVE | UI and audit consume same sealed records/IDs |
+| DEC-004 | DEC | HIGH | ACTIVE | HIGH_BLOCK unconfirmable; HIGH_CONFIRM singular/current/hash-bound |
+| DEC-005 | DEC | HIGH | ACTIVE | actor/time/presentation excluded from engineering semantic hashes but sealed in evidence hashes where applicable |
+| DEC-006 | DEC | HIGH | ACTIVE | branch ID follows exact branch topology membership; branch sameness follows common authority basis; component local section does not redefine branch sameness |
 
 ## 7. Current Technical Diagnosis
 
 ```text
 Observed symptom:
-legacy finite defaults/fuzzy matches can lose authority lineage before formulas; UI/pre-run state can also preserve obsolete authorization semantics.
+legacy finite defaults/fuzzy matches and imported branch labels can appear usable before their engineering authority is established.
 
 Current hypothesis:
-the first wrong boundary is authority/currentness custody before the existing ROM, not the frozen ROM equations.
+the remaining first-wrong boundary is now the workspace adapter: it must map current source/master/topology evidence into the new domain records without promoting fallback values or UI state.
 
 Supporting evidence:
-issue #1149 owner architecture; fallback/default/fuzzy source paths inspected before implementation; #1148 exact-topology fail-closed route.
+issue #1149 owner lock; previously inspected fallbackResolver, piping-class/process resolvers and chainage paths; #1148 exact-topology route.
 
-Alternative hypotheses rejected for this slice:
-numerical residual tuning; UI-only warnings; chainage/TopoFix confidence as calculation topology authority; bulk high-risk acceptance.
+Already ruled out:
+ROM numerical refinement; bulk high-risk acceptance; chainage/TopoFix as exact route; branch splitting solely because DN/WT changes.
 
 Falsifier:
-if branch/component adapters cannot construct these records without changing the frozen mechanics or inventing missing source authority, stop and record the missing authority rather than weakening the contracts.
+if existing sealed source/master authorities cannot support a requested branch/component value, adapter must emit inferred/assumed/unresolved risk state rather than invent a new exact source.
 
 Next isolating experiment:
-build branch/component authority records from current exact topology and existing sealed source/master records; prove DN/WT stays component-local while process/class/material/insulation changes alter branch sameness/currentness.
+build adapters against one exact mixed straight/elbow route and fixtures for exact class, fuzzy class, missing wall, missing weight, process temperature mutation and 3 mm topology gap.
 ```
 
-## 8. Authority and Invariants — Implemented Core
+## 8. Authority / Invariants — Current Core
 
-### Workflow
-`empirical-v3-workflow-projection/v1` projects the earliest invalid state. `CALCULATION_AUTHORIZED` is reachable only with a present/current sealed authorization semantic hash. Presentation fields are excluded.
+`engineering-quantity-authority/v1`: no unresolved scalar; derived authority inherits least-exact parent.
 
-### Quantity authority
-`engineering-quantity-authority/v1` carries value/unit/authority/source or derivation/risk/confirmation lineage. `UNRESOLVED` has no scalar. `DERIVED_EXACT` requires exact parents. Inferred/assumed parents cannot be upgraded by arithmetic.
+`engineering-risk-finding/v1`: deterministic risk ID/order independent of UI presentation.
 
-### Risk / confirmation
-`engineering-risk-finding/v1` and `engineering-risk-set/v1` use deterministic identities and governed class ordering. `engineering-confirmation-receipt/v1` accepts exactly one HIGH_CONFIRM risk. Source/dependency mutation changes the risk identity, making the old receipt stale but still auditable.
+`engineering-confirmation-receipt/v1`: one HIGH_CONFIRM risk per receipt; old receipt remains auditable when stale.
 
-### Calculation authorization
-`empirical-v3-calculation-authorization/v1` seals run ID, risk policy ID/version, governed dependency identities, current risk set and exact current confirmation identities. No UI boolean or navigation state is accepted.
+`empirical-v3-calculation-authorization/v1`: binds run, policy, dependencies, risk set and current confirmation identities.
 
-### Structured events
-`empirical-v3-engineering-event/v1` implements the required event family vocabulary. Risk display mapping is fixed: HIGH_BLOCK -> ERROR, HIGH_CONFIRM -> REVIEW, MEDIUM -> WARNING, LOW -> INFO. Rendered text is not authority.
+`empirical-v3-engineering-event/v1`: structured event families; HIGH_BLOCK=ERROR, HIGH_CONFIRM=REVIEW, MEDIUM=WARNING, LOW=INFO.
+
+`empirical-v3-calculation-branch-authority/v1`: exact topology required. `branchSamenessHash` is based on branch-common authority refs, not component-local WT/section.
+
+`empirical-v3-component-authority/v1`: component-local authority only and immutable branch reference. PROCESS/PIPING_CLASS/INSULATION cannot be inserted into `localAuthorityRefs`.
 
 ## 9. Current Validation
 
-### Source-inspection evidence
+### PASS — source inspection only
 
-`VAL-001`
-- Status: PASS
-- Observation: SOURCE_INSPECTION
-- Oracle: NONE
-- Tested basis: live #1148/#1151 metadata
-- Actual: #1151 remains a fresh draft stack directly on unchanged #1148 exact head.
+- `VAL-001`: live GitHub stack state observed; #1151 remains directly stacked on unchanged #1148 head.
+- `VAL-002`: issue #1149 owner workflow/UI/evidence freeze matches current implementation boundaries.
+- `VAL-003`: current source inspection finds no new-core imports of solver/UI/fallback/chainage implementations; no bulk high-risk API; branch contract explicitly blocks non-exact/tolerance topology.
+- `VAL-004`: branch/component checker source encodes T5/T6/T7/T16-style invariants: one branch ref for 30 nodes, component WT change does not change branch-common basis, process change changes branch review basis, component section change stales calculation authorization.
 
-`VAL-002`
-- Status: PASS
-- Observation: SOURCE_INSPECTION
-- Oracle: AUTHORITATIVE_REFERENCE
-- Basis: issue #1149 owner workflow/UI/logging freeze
-- Actual: implemented core boundaries match the owner-locked pre-calc flow and numerical freeze.
+These PASS entries are `SOURCE_INSPECTION`, not executable product evidence.
 
-`VAL-003`
-- Status: PASS
-- Observation: SOURCE_INSPECTION
-- Oracle: IMPLEMENTATION_COUPLED
-- Tested HEAD: `d28f378baa0f31cd886ff906a700f0a95bbc0926`
-- Evidence: committed workflow/quantity/risk/confirmation/authorization/event source and check scripts
-- Actual: no imported solver/workspace UI path in the new core; HIGH_BLOCK has no confirmation path; authorization requires exact current receipt identities; structured event severity is governed.
-- Limitation: source inspection does not prove executable behavior.
+### NOT_RUN — executable checks
 
-### Executable checks — NOT_RUN
+- `node scripts/empirical-v3-workflow-state-check.mjs`
+- `node scripts/empirical-v3-quantity-authority-check.mjs`
+- `node scripts/empirical-v3-risk-confirmation-authorization-check.mjs`
+- `node scripts/empirical-v3-engineering-event-check.mjs`
+- `node scripts/empirical-v3-branch-component-authority-check.mjs`
+- `node scripts/empirical-v3-source-guard-check.mjs`
 
-`VAL-010` `node scripts/empirical-v3-workflow-state-check.mjs` — NOT_RUN / NOT_OBSERVED.
+Observation: `NOT_OBSERVED`. Oracle: `NONE` until run. Reason: no executable repository checkout/runtime path is exposed in this session.
 
-`VAL-011` `node scripts/empirical-v3-quantity-authority-check.mjs` — NOT_RUN / NOT_OBSERVED.
-
-`VAL-012` `node scripts/empirical-v3-risk-confirmation-authorization-check.mjs` — NOT_RUN / NOT_OBSERVED.
-
-`VAL-013` `node scripts/empirical-v3-engineering-event-check.mjs` — NOT_RUN / NOT_OBSERVED.
-
-Reason for all: no executable repository checkout/runtime path is exposed in this session. Never convert these to PASS until actually executed against an exact head.
-
-### Negative assurance
-
-No #1145/#1147/#1148 mechanics file, tolerance, quadrature, formula, V1/V2 route or `.github/workflows/*` file is changed by PR #1151 at this checkpoint.
+Negative assurance: no predecessor ROM mechanics/formula/tolerance/quadrature file, V1/V2 route, or workflow YAML is changed.
 
 ## 10. Changed-File Ledger
 
-GitHub changed-file count: **12**. Ledger count: **12**. Unexplained: **0**.
+GitHub changed-file count at checkpoint: **16**. Ledger count: **16**. Unexplained: **0**.
 
-| File | Intended? | Purpose | Sensitive? | Validation |
-|---|---:|---|---:|---|
-| `agents/PR1151_workreport.md` | yes | durable recovery/validation ledger | no | source inspection |
-| `src/core/empirical-v3-safety/workflow-state.js` | yes | governed workflow projection/action gate | yes | VAL-003; runtime NOT_RUN |
-| `src/core/empirical-v3-safety/quantity-authority.js` | yes | numeric authority/anti-laundering | yes | VAL-003; runtime NOT_RUN |
-| `src/core/empirical-v3-safety/risk-finding.js` | yes | immutable deterministic risk/risk-set records | yes | VAL-003; runtime NOT_RUN |
-| `src/core/empirical-v3-safety/confirmation-receipt.js` | yes | singular HIGH_CONFIRM receipt/staleness | yes | VAL-003; runtime NOT_RUN |
-| `src/core/empirical-v3-safety/calculation-authorization.js` | yes | sealed pre-calc authorization/currentness | yes | VAL-003; runtime NOT_RUN |
-| `src/core/empirical-v3-safety/engineering-event.js` | yes | structured engineering event contract | yes | VAL-003; runtime NOT_RUN |
-| `src/core/empirical-v3-safety/index.js` | yes | core exports only | no | source inspection |
-| `scripts/empirical-v3-workflow-state-check.mjs` | yes | workflow/stale/presentation guards | yes | NOT_RUN |
-| `scripts/empirical-v3-quantity-authority-check.mjs` | yes | 7.11/default/derived authority fixtures | yes | NOT_RUN |
-| `scripts/empirical-v3-risk-confirmation-authorization-check.mjs` | yes | HIGH_BLOCK/HIGH_CONFIRM/stale/auth tests | yes | NOT_RUN |
-| `scripts/empirical-v3-engineering-event-check.mjs` | yes | event identity/severity/audit-metadata tests | yes | NOT_RUN |
+| File | Purpose | Validation |
+|---|---|---|
+| `agents/PR1151_workreport.md` | durable recovery ledger | source inspection |
+| `src/core/empirical-v3-safety/workflow-state.js` | workflow projection/action gate | NOT_RUN executable |
+| `src/core/empirical-v3-safety/quantity-authority.js` | quantity authority/anti-laundering | NOT_RUN executable |
+| `src/core/empirical-v3-safety/risk-finding.js` | risk/risk-set identity | NOT_RUN executable |
+| `src/core/empirical-v3-safety/confirmation-receipt.js` | singular confirmation/staleness | NOT_RUN executable |
+| `src/core/empirical-v3-safety/calculation-authorization.js` | sealed authorization/currentness | NOT_RUN executable |
+| `src/core/empirical-v3-safety/engineering-event.js` | structured event model | NOT_RUN executable |
+| `src/core/empirical-v3-safety/branch-authority.js` | branch-common authority/exact topology | NOT_RUN executable |
+| `src/core/empirical-v3-safety/component-authority.js` | component-local authority | NOT_RUN executable |
+| `src/core/empirical-v3-safety/index.js` | core exports | source inspection |
+| `scripts/empirical-v3-workflow-state-check.mjs` | workflow fixtures | NOT_RUN |
+| `scripts/empirical-v3-quantity-authority-check.mjs` | authority laundering fixtures | NOT_RUN |
+| `scripts/empirical-v3-risk-confirmation-authorization-check.mjs` | risk/receipt/auth fixtures | NOT_RUN |
+| `scripts/empirical-v3-engineering-event-check.mjs` | event identity/severity fixtures | NOT_RUN |
+| `scripts/empirical-v3-branch-component-authority-check.mjs` | branch/component separation/staleness fixtures | NOT_RUN |
+| `scripts/empirical-v3-source-guard-check.mjs` | `<300` line/source-boundary anti-drift guard | NOT_RUN |
 
-All newly added engineering-critical source modules are intentionally kept below the owner `<300 physical lines` anti-drift threshold by design; executable line-count enforcement still needs a repository-run check.
+The source guard enforces every current engineering-critical core module below 300 physical lines and rejects core references to legacy fallback, chainage, UI workbench, coupled solver implementations and bulk-confirm/accept APIs. Runtime enforcement remains NOT_RUN until executed.
 
 ## 11. Review / CI State
 
-PR #1151 remains draft. No review approval, executable CI or exact-head runtime PASS is claimed. No workflow file was introduced. Merge authority remains owner-only.
+PR #1151 remains draft. No submitted review approval or executable CI/runtime PASS is claimed. No workflow changes. Merge remains owner-only.
 
 ## 12. Repository Coordination / Overlap
 
 ```text
-MASTER_INDEX_CHECKED: expected newer registry absent on #1148 stack base
-STATUS_RECORD: expected newer registry absent
-CLAIM_RECORD: expected newer registry absent
-LAST_OVERLAP_CHECK: GE-1149-003
+MASTER_INDEX_CHECKED: newer registry absent on #1148 stack base
+STATUS_RECORD: newer registry absent
+CLAIM_RECORD: newer registry absent
+LAST_OVERLAP_CHECK: GE-1149-004
 FILE_OVERLAP: no unintended overlap observed
-AUTHORITY_OVERLAP: intentional hard dependency on #1145/#1147/#1148 mechanics/canonical geometry
+AUTHORITY_OVERLAP: intentional dependency on #1145/#1147/#1148
 DEPENDENCY_OVERLAP: #1148 exact head remains stack base
 COORDINATION_STATE: SAFE_WITH_STACK_DEPENDENCY
 ```
@@ -262,27 +237,28 @@ COORDINATION_STATE: SAFE_WITH_STACK_DEPENDENCY
 ## 13. Continuation State
 
 ```text
-Start here: src/core/empirical-v3-safety/ then workspace adapters.
-Exact next domain: calculation branch + component authority and branch-sameness hash.
-Do not redo: pre-calc safety core unless validation/review identifies a defect.
-Do not change: ROM formulas, tolerances, quadrature, V1/V2 behavior, workflow YAML.
-Validation still required: all four focused executable checks, T1-T20, UI freeze tests, source guards, existing ROM regressions.
-Highest-risk remaining item: branch/component grouping and legacy adapter classification without authority laundering.
-Exact next action: implement branch authority where common process/class/material/insulation is represented once per branch and component NPS/OD/WT/section remains component-local; prove process authority mutation invalidates branch/current authorization while DN/WT alone does not create a new branch-sameness basis.
+Start here: workspace adapter layer consuming current source/topology/master authorities.
+Exact next files: small empirical-v3 branch/component builder/resolver adapters, each <300 physical lines.
+Do not redo: current core contracts except defects found by review/execution.
+Do not change: ROM equations, tolerances, quadrature, V1/V2, workflow YAML.
+Validation still required: six focused checks above, issue T1-T20, UI freeze tests, existing ROM regressions.
+Highest-risk remaining item: legacy adapter authority classification and exact topology custody.
+Exact next action: build one fail-closed branch/component authority adapter for exact current topology; map exact source/master values to exact authorities, preserve fuzzy/default/inferred states as risks, and never use chainage or imported BRANCH labels as topology authority.
 ```
 
 ## 14. Takeover / Custody Chain
 
-- `GE-1149-002`: fresh branch/PR grounded directly on #1148 after owner requested a new PR.
-- `GE-1149-003`: #1151 and #1148 rechecked immediately before the risk/confirmation/authorization/event stage; #1148 head unchanged.
-- WIP report migrated to `agents/PR1151_workreport.md` before production implementation.
+- `GE-1149-002`: fresh PR created directly from #1148 after owner requested new PR.
+- `GE-1149-003`: #1151/#1148 rechecked before risk/confirmation/authorization stage.
+- `GE-1149-004`: branch/component and anti-drift stage checkpointed at implementation head `72a398f3abe38468d36d8ea54a724d208e00cf00`.
 
 # APPENDIX A — IMPLEMENTATION TAKEOVER QUALIFICATION
 
-Current work is new owner-authorized work, not a takeover. Any incoming implementation agent must begin READ_ONLY, re-ground live PR/main state, reconcile this report to the actual head/diff, inspect or reproduce critical evidence, and regenerate repository-specific Appendix A challenges before production mutation.
+This is new owner-authorized work, not a takeover. A future incoming implementation agent must begin READ_ONLY, re-ground live PR/main, reconcile this report with the actual diff/head, inspect or reproduce critical evidence, and regenerate repository-specific A1-A5 takeover challenges before production mutation.
 
 # HISTORICAL RECORD — NOT CURRENT AUTHORITY
 
-- Draft #1150 exists but is not inherited by #1151.
-- First implementation checkpoint: workflow + quantity authority foundation.
-- Second implementation checkpoint: immutable risk set + singular confirmation + sealed calculation authorization + structured event contracts, implementation head `d28f378baa0f31cd886ff906a700f0a95bbc0926`.
+- #1150 exists but is not inherited by #1151.
+- Checkpoint 1: workflow + quantity authority.
+- Checkpoint 2: risk + confirmation + authorization + events.
+- Checkpoint 3: branch + component authority and anti-drift/source guard.

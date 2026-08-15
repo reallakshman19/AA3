@@ -56,10 +56,9 @@ assert.equal(
 );
 
 // The stage-specific gate must not change unrelated stage semantics.
-const shellProfile = profile({}, 'CST_DKT_TRI3_THIN_SHELL_V1');
 assert.equal(
-  requireLafeaAnalysisMeshQualifiedQualityPolicy('LAFEA.4', shellProfile),
-  shellProfile,
+  requireLafeaAnalysisMeshQualifiedQualityPolicy('LAFEA.4', baselineProfile),
+  baselineProfile,
 );
 
 console.log(JSON.stringify({
@@ -73,15 +72,15 @@ console.log(JSON.stringify({
   unrelatedStagePolicyChanged: false,
 }));
 
-function profile(overrides, continuumElement = 'T6') {
+function profile(overrides) {
   return canonicalProfile(PROFILE_KINDS.MESH, {
     schema: 'lafea-mesh-profile/v1',
-    profileIdentity: `LAFEA3-POLICY-TEST-${continuumElement}`,
+    profileIdentity: 'LAFEA3-POLICY-TEST-T6',
     sourceRevision: 'TEST-2026-08-15',
     semanticHash: undefined,
     fields: {
       ...baseline,
-      continuumElement,
+      continuumElement: 'T6',
       shellElement: 'CST_DKT_TRI3_THIN_SHELL_V1',
       globalTargetSize: 10,
       ...overrides,

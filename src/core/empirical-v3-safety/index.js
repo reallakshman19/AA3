@@ -8,4 +8,6 @@ export * from './branch-authority.js';
 export * from './component-authority.js';
 export * from './presentation-package.js';
 export * from './coupled-calculation-evidence.js';
+export * from './result-review-receipt.js';
+export * from './audit-readiness.js';
 export * from './audit-export.js';

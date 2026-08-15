@@ -71,13 +71,13 @@ const empiricalV3SourceSubscriptions = [
   EventBus.subscribe(EVENT_TOPICS.WORKSPACE_SNAPSHOT_CHANGED, ({ snapshot }) => {
     const nextBasis = empiricalV3DatasetBasis(snapshot);
     if (empiricalV3ObservedDatasetBasis !== null && nextBasis !== empiricalV3ObservedDatasetBasis) {
-      invalidateEmpiricalV3ForGoverningChange('WORKSPACE_DATASET_BASIS_CHANGED');
+      invalidateEmpiricalV3ForGoverningChange();
     }
     empiricalV3ObservedDatasetBasis = nextBasis;
   }),
   EventBus.subscribe(ENGINEERING_MODEL_EVENTS.CHANGED, ({ reason }) => {
     if (reason === 'project-data-changed' || reason === 'master-data-changed') {
-      invalidateEmpiricalV3ForGoverningChange(reason);
+      invalidateEmpiricalV3ForGoverningChange();
     }
   }),
 ];
@@ -128,6 +128,7 @@ const workspace = Object.freeze({
     if (!packageValue?.workflow.canRunCalculation || !packageValue.calculationAuthorization) throw new Error('Prepare execution only from CALCULATION_AUTHORIZED workflow.');
     if (input?.currentAuthorization?.runId !== packageValue.runId) throw new Error('Prepared current authorization basis belongs to another run.');
     const dependency = buildEmpiricalV3SourceBoundExecutionDependency(input?.romInput);
+    requireExecutionDependencyMatchesActiveWorkspace(dependency);
     const authorized = packageValue.calculationAuthorization.dependencies.find((row) => row.kind === dependency.kind && row.ref === dependency.ref);
     if (!authorized || authorized.semanticHash !== dependency.semanticHash) throw new Error('Prepared source-bound execution request is not in the sealed calculation authorization.');
     empiricalV3PreparedExecution = {
@@ -144,6 +145,7 @@ const workspace = Object.freeze({
   getEmpiricalV3PreparedExecutionDependency() { return empiricalV3PreparedExecution?.dependency ?? null; },
   executeEmpiricalV3SourceBoundThermalRom(input) {
     const packageValue = empiricalV3Safety.getPackage();
+    requireExecutionDependencyMatchesActiveWorkspace(buildEmpiricalV3SourceBoundExecutionDependency(input?.romInput));
     const result = executeEmpiricalV3LiveSourceBoundRun({ packageValue, currentAuthorization: input?.currentAuthorization, romInput: input?.romInput, auditMetadata: input?.auditMetadata });
     empiricalV3PreparedExecution = null; empiricalV3Safety.loadPackage(result.nextPackage); empiricalV3Safety.loadCalculationEvidence(result.evidence); return result.execution;
   },
@@ -163,6 +165,7 @@ if (import.meta.hot) import.meta.hot.dispose(() => workspace.destroy());
 function preparedExecutionMatchesPackage(prepared, packageValue) {
   if (!prepared || !packageValue?.workflow.canRunCalculation || !packageValue.calculationAuthorization) return false;
   if (prepared.authorizationSemanticHash !== packageValue.calculationAuthorization.semanticHash) return false;
+  if (!executionDependencyMatchesActiveWorkspace(prepared.dependency)) return false;
   return packageValue.calculationAuthorization.dependencies.some((row) => (
     row.kind === prepared.dependency.kind && row.ref === prepared.dependency.ref && row.semanticHash === prepared.dependency.semanticHash
   ));
@@ -177,6 +180,24 @@ function empiricalV3DatasetBasis(snapshot) {
     dataset.sourceSha256 ?? null,
     dataset.sourceSnapshot?.sourceSemanticHash ?? null,
   ]);
+}
+
+function executionDependencyMatchesActiveWorkspace(dependency) {
+  if (!dependency?.request?.dataset || !empiricalV3ObservedDatasetBasis || empiricalV3ObservedDatasetBasis === 'NO_ACTIVE_DATASET') return false;
+  let active;
+  try { active = JSON.parse(empiricalV3ObservedDatasetBasis); } catch { return false; }
+  const requestDataset = dependency.request.dataset;
+  const activeSharedModelSemanticHash = coreWorkspace.getSharedModel()?.semanticHash ?? null;
+  return requestDataset.datasetId === active[0]
+    && requestDataset.sourceSemanticHash === active[3]
+    && Boolean(activeSharedModelSemanticHash)
+    && requestDataset.sharedModelSemanticHash === activeSharedModelSemanticHash;
+}
+
+function requireExecutionDependencyMatchesActiveWorkspace(dependency) {
+  if (!executionDependencyMatchesActiveWorkspace(dependency)) {
+    throw new Error('Empirical V3 source-bound execution request does not match the active workspace dataset/shared-model authority.');
+  }
 }
 
 function invalidateEmpiricalV3ForGoverningChange() {

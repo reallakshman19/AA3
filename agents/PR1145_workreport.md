@@ -1,4 +1,4 @@
-# PR #1145 — Empirical ROM Compatibility Solver Work Report
+# PR #1145 — Empirical ROM Compatibility + Thermal Reference Work Report
 
 ## Recovery header
 
@@ -9,218 +9,385 @@
 - Base branch: `main`
 - Baseline SHA: `c35ae6eb04cf819a2ed4f839f45b3e05fdeccff6`
 - Working branch: `agent/empirical-rom-compatibility-20260815`
-- ENGINEERING_BASIS_HEAD before report-only reconciliation: `0cbfd4eff25a003de87dcfc8ca5c8ad5b9b11bda`
+- Current engineering head after thermal custody fix: `e7c7fa285ef295fc59aa1a281952d565c78f92a5`
 - Merge authority: not granted; owner authorization required.
-- Grounding epoch: `GE-EMPROM-COMP-001`
-- Coordination: `SAFE` — open PR #1139 is LAFEA.3 B-bar and does not overlap this empirical ROM core path.
+- Grounding epoch: `GE-EMPROM-COMP-002`
+- Coordination: `SAFE` — open LAFEA/M047 streams do not overlap this empirical ROM core path.
 
 ## Handover in 60 Seconds
 
-Mission: implement the next P0 mechanics slice after merged PR #1143 — a first-principles force/reference-structure compatibility solver for multiple bilateral translational restraint coordinates.
+PR #1145 now contains two experimental ROM mechanics slices:
 
-Implemented:
+1. **Mechanics-derived restraint compatibility**
+   - classical force/reference-structure relation:
+     `(F + S) R = delta_target - delta_reference`;
+   - `F` comes from rooted-tree 1 N unit-load actions + exact virtual work;
+   - rigid or explicit finite-linear support flexibility only;
+   - reciprocity, positive-definiteness, conditioning, compatibility and energy gates.
 
-1. linear compatibility primitive using `(F + S) R = delta_target - delta_reference`;
-2. reciprocity/symmetry gate on the flexibility matrix;
-3. Cholesky-style positive-definiteness gate on structural `F` and assembled `(F+S)`;
-4. reuse of the existing scaled dense solver with pivot and reciprocal-condition evidence;
-5. compatibility residual recovery;
-6. structural/support strain-energy closure;
-7. rigid or explicitly finite positive support stiffness only;
-8. rooted-tree orchestrator that generates `F` from merged 1 N unit-load actions + virtual work;
-9. axisymmetric-section gate for the high-level route orchestrator;
-10. fail-closed rejection of dependent coordinates, non-reciprocal matrices, negative stiffness, and unsupported gap/contact fields.
+2. **Mechanics-derived thermal reference displacement**
+   - no direct thermal force is injected;
+   - per straight segment:
+     `epsilon_th = alpha * (T_analysis - T_reference)`;
+   - free expansion:
+     `DeltaL = epsilon_th * L`;
+   - vector increment:
+     `Delta u_th = DeltaL * tangent`;
+   - rooted path accumulation gives released/reference-structure node movement;
+   - projection onto each restraint coordinate gives `delta_reference`;
+   - the existing compatibility solver then converts prevented movement into reactions.
 
-No current production restraint-network runtime, profile multiplier, Load Calc dispatch, UI, export, or publication path is modified.
+This remains a **reduced-order analytical flexibility / force-method model**. It does **not** assemble or solve a global finite-element nodal stiffness matrix.
 
-Exact next engineering action after this PR: derive `delta_reference` from governed thermal/applied-load mechanics and bind the redundant coordinates to canonical support/restraint authority. Do not allow manually authored reference displacements into production authority.
+No current production restraint-network runtime, profile multiplier, Load Calc dispatch, UI, export, report publication path, or method registry is modified.
 
-## Governing mechanics
+## Architecture boundary — ROM, not FEA
 
-The force-method relation is:
+The governing solution chain is:
+
+```text
+canonical straight-pipe route
+  + explicit material/temperature data
+  -> segment thermal strain
+  -> free thermal expansion vectors
+  -> rooted reference-tree displacement
+  -> restraint-coordinate projection
+  -> delta_reference
+  + unit-load/virtual-work flexibility F
+  + explicit support flexibility S
+  + target/support movement
+  -> (F+S)R = target-reference
+  -> reactions + displacement + conditioning + energy evidence
+```
+
+Explicit negative assurance:
+
+```text
+global nodal stiffness K: NOT ASSEMBLED
+finite-element discretization: NOT USED
+Ku=f displacement solve: NOT USED
+direct EA*alpha*DeltaT thermal-force injection: NOT USED
+response curve fitting: NOT USED
+empirical compliance multiplier: NOT USED
+```
+
+## Governing compatibility mechanics
 
 ```text
 (F + S) R = delta_target - delta_reference
 ```
 
-with recovery:
+with:
 
 ```text
 delta_pipe = delta_reference + F R
-
 delta_support = S R
-
 delta_pipe + delta_support = delta_target
 ```
 
 where:
 
-- `F`: mechanics-derived structural flexibility matrix in `m/N`;
-- `S`: diagonal support flexibility, `0` for rigid and `1/k` for finite linear stiffness;
-- `R`: reaction on pipe, positive along declared coordinate direction;
-- `delta_reference`: released/reference-structure displacement from separately governed loading;
-- `delta_target`: prescribed support/ground movement.
+- `F`: analytical structural flexibility matrix in `m/N`;
+- `S`: diagonal support flexibility, `0` for rigid and `1/k` for explicit finite linear stiffness;
+- `R`: reaction on pipe positive along the declared coordinate direction;
+- `delta_reference`: released/reference-structure movement;
+- `delta_target`: support/ground target movement.
 
-The energy identity checked is:
+Energy closure:
 
 ```text
 0.5 R^T (F+S) R = 0.5 R^T (delta_target-delta_reference)
 ```
 
-## Authority trace
+## Governing thermal mechanics
+
+For the current qualified experimental domain, each segment has a uniform temperature and one explicitly declared coefficient basis:
 
 ```text
-rooted straight-pipe reference structure
-  + 1 N translational coordinate cases
-  -> static cut equilibrium + moment transport
-  -> N/My/Mz/T unit actions
-  -> exact virtual-work F
-  + explicit rigid/linear support flexibility S
-  + reference/target displacement vectors
-  -> compatibility solve
-  -> reactions + displacement + conditioning + energy evidence
+CONSTANT_OVER_TEMPERATURE_RANGE
+APPROVED_MEAN_BETWEEN_REFERENCE_AND_ANALYSIS
 ```
 
-### DEC-EMPROM-COMP-001 — Classical force method, no response fitting
+The segment strain is:
 
-The new solver adds support flexibility mechanically on the diagonal and solves the compatibility equations directly. It contains no axial, bending, topology, or component response multiplier.
+```text
+DeltaT = T_analysis - T_reference
+epsilon_th = alpha * DeltaT
+```
 
-### DEC-EMPROM-COMP-002 — Independent redundant coordinates required
+The free expansion increment is:
 
-The structural flexibility matrix must be reciprocal and positive definite. Duplicate/dependent coordinates are rejected rather than stabilized numerically.
+```text
+DeltaL_th = epsilon_th * L
+Delta_u_th = DeltaL_th * t
+```
 
-### DEC-EMPROM-COMP-003 — Contact remains outside this phase
+where `t` is the root-oriented undeformed member tangent.
 
-Only bilateral linear constraints are admitted. Gap/contact/friction fields are not accepted by the compatibility coordinate schema and are not silently converted to springs.
+For node `j`:
 
-### DEC-EMPROM-COMP-004 — Existing numerical solver retained
+```text
+u_ref_th(j) = sum(Delta_u_th) over the unique root->j path
+```
 
-The compatibility system uses `solveScaledDenseSystem`; existing pivot scaling and reciprocal-condition behavior are retained. This PR adds its own compatibility/energy acceptance evidence but does not change the linear solver.
+For restraint coordinate `i` with unit direction `d_i`:
 
-### DEC-EMPROM-COMP-005 — Section-axis authority remains restricted
+```text
+delta_reference_i = d_i dot u_ref_th(node_i)
+```
 
-The high-level rooted-tree orchestrator requires `Iy` and `Iz` to agree within `1e-10` relative difference. This enforces the current axisymmetric pipe-only authority because the merged unit-load generator's transverse basis is deterministic, not separately governed principal-axis data.
+That value is passed into the force-method compatibility solve. A fully restrained straight pipe therefore recovers:
 
-### DEC-EMPROM-COMP-006 — Reference displacement authority is intentionally not granted
+```text
+R = -EA alpha DeltaT
+```
 
-`delta_reference` is accepted by the experimental primitive/orchestrator only as an upstream reference-structure result. This PR does not establish production authority for manually entered reference displacements. The output evidence states:
+as a **result of compatibility**, not as an applied thermal load.
 
-`UPSTREAM_REFERENCE_STRUCTURE_RESULT_NOT_ESTABLISHED_BY_THIS_PR`
+## Thermal authority limits
+
+Current thermal authority is deliberately narrow:
+
+- uniform temperature per straight segment only;
+- explicit `T_reference` and `T_analysis`;
+- explicit scalar CTE with declared basis;
+- cooling/heating both supported by signed `DeltaT`;
+- infinitesimal free axial expansion along the undeformed member tangent.
+
+Not established in this PR:
+
+- temperature-dependent `alpha(T)` numerical integration;
+- code/material-table adapter authority for CTE selection;
+- through-wall or circumferential thermal gradients;
+- thermal bowing/curvature;
+- elbow/tee/reducer thermal component kinematics;
+- pressure stiffening, pressure thrust or Bourdon effects;
+- nonlinear geometry;
+- gaps/contact/friction;
+- closed-loop reference-structure release policy.
+
+No hidden default ambient temperature, CTE, or guessed material coefficient is permitted.
+
+## Key decisions
+
+### DEC-EMPROM-COMP-001 — Classical force method
+
+Reactions are solved from analytical flexibility and compatibility. No fitted response multipliers enter the new path.
+
+### DEC-EMPROM-COMP-002 — Independent coordinates required
+
+The structural flexibility matrix must be reciprocal and positive definite. Duplicate/dependent coordinates fail closed rather than being numerically stabilized.
+
+### DEC-EMPROM-COMP-003 — Contact remains separate
+
+Only bilateral linear coordinates are admitted. Gap/contact/friction are not approximated as linear springs.
+
+### DEC-EMPROM-COMP-004 — Existing scaled dense solver retained
+
+`solveScaledDenseSystem` remains the numerical linear-equation primitive; its pivot/rank/conditioning behavior is unchanged.
+
+### DEC-EMPROM-COMP-005 — Axisymmetric section authority
+
+The high-level compatibility route remains axisymmetric-section-only until separate principal-axis custody exists.
+
+### DEC-EMPROM-THM-001 — Thermal strain precedes thermal reaction
+
+The thermal ROM derives free strain/expansion first. `EA*alpha*DeltaT` is never injected as the primary thermal load.
+
+### DEC-EMPROM-THM-002 — Explicit coefficient basis
+
+A scalar CTE must be declared either constant over the exact temperature range or an approved mean between the declared reference and analysis temperatures. A guessed/generic coefficient basis is rejected.
+
+### DEC-EMPROM-THM-003 — No implicit alpha(T) claim
+
+This phase does not claim temperature-dependent CTE integration. That requires a separately governed material function/table and qualification.
+
+### DEC-EMPROM-THM-004 — No FEA route
+
+The thermal compatibility wrapper explicitly records:
+
+- `solutionClass: ANALYTICAL_FLEXIBILITY_FORCE_METHOD_ROM`;
+- `globalNodalStiffnessMatrixAssembled: false`;
+- `finiteElementRouteUsed: false`;
+- `directThermalForceInjected: false`.
+
+### DEC-EMPROM-THM-005 — Caller ownership preserved
+
+Wrapper preparation clones nested property, thermal and direction inputs before deep-freezing internal custody. Caller-owned inputs are not frozen/mutated.
 
 ## Changed-file ledger
 
-At engineering head `0cbfd4ef...`:
+Compared with baseline `c35ae6eb...`, current intended files are:
 
-- `src/core/empirical-piping-mechanics/restraint-compatibility.js` — new low-level compatibility primitive and rooted-tree orchestrator.
-- `src/core/empirical-piping-mechanics/contracts.js` — formula IDs `EMP-FLX-010` through `EMP-FLX-013`.
-- `src/core/empirical-piping-mechanics/index.js` — exports new schemas/solvers.
-- `scripts/empirical-restraint-compatibility-check.mjs` — analytical qualification and fail-closed cases.
-- `agents/PR1145_workreport.md` — durable handover ledger.
+- `src/core/empirical-piping-mechanics/restraint-compatibility.js`
+- `src/core/empirical-piping-mechanics/thermal-reference.js`
+- `src/core/empirical-piping-mechanics/thermal-restraint-compatibility.js`
+- `src/core/empirical-piping-mechanics/contracts.js`
+- `src/core/empirical-piping-mechanics/index.js`
+- `scripts/empirical-restraint-compatibility-check.mjs`
+- `scripts/empirical-thermal-reference-compatibility-check.mjs`
+- `agents/PR1145_workreport.md`
 
-The temporary `agents/WIP-empirical-rom-compatibility-20260815_workreport.md` is superseded by this report and is removed in a report-only commit.
-
-No `empirical-restraint-network-runtime.js`, coupled runtime/profile, method registry, Load Calc consumer, UI, or workflow file is changed.
+No existing production restraint-network runtime/profile file is changed.
 
 ## Validation ledger
 
-### VAL-EMPROM-COMP-001 — compatibility primitive analytical execution
+### VAL-EMPROM-COMP-001 — compatibility analytical execution
 
 - STATUS: `PASS`
 - OBSERVATION: `LOCAL_EXECUTION`
 - ORACLE: `ANALYTICAL / INDEPENDENT_REPRODUCTION`
-- Runtime: isolated Node harness using the published compatibility primitive logic and the repository's scaled-solver algorithm.
-- Result: `PASS: empirical restraint compatibility analytical checks`.
 
-Cases:
+Cases previously executed:
 
 1. rigid axial restraint:
-   - `L = 5 m`, `E = 200 GPa`, `A = 0.004 m²`, `delta_reference = 0.004 m`;
-   - `F = L/(EA)`;
-   - expected reaction `R = -delta/F = -640000 N`;
-   - observed exact expected reaction within numerical tolerance.
+   - `L=5 m`, `E=200 GPa`, `A=0.004 m2`, `delta_reference=0.004 m`;
+   - expected `R=-640000 N`;
+   - observed within numerical tolerance.
 2. finite support stiffness:
-   - `k = 1e8 N/m`;
-   - expected `R = -delta/(F + 1/k) = -246153.84615384616 N`;
-   - observed exact expected reaction within numerical tolerance.
-3. coupled 2-DOF analytical L-route:
-   - independent closed-form `Fxx`, `Fyy`, `Fxy`;
-   - imposed reference generalized loads `[1200, -450] N`;
-   - expected redundant reactions `[-1200, +450] N`;
-   - observed exact expected reactions within tolerance.
-4. coupled 3-DOF L-route:
-   - includes out-of-plane bending plus root-leg torsion;
-   - imposed reference generalized loads `[900, -300, 725] N`;
-   - expected reactions `[-900, +300, -725] N`;
-   - observed exact expected reactions within tolerance.
-5. prescribed settlement:
-   - independent closed-form 2x2 inverse oracle;
-   - recovered reactions matched independent inverse.
-6. reciprocity violation: rejected.
-7. dependent/singular coordinates: rejected by positive-definiteness gate.
-8. negative support stiffness: rejected.
-9. unsupported `gapM` field: rejected by exact schema.
-10. compatibility closure: PASS.
-11. energy closure: PASS.
+   - `k=1e8 N/m`;
+   - expected `R=-246153.84615384616 N`;
+   - observed within numerical tolerance.
+3. coupled 2-coordinate L-route;
+4. coupled 3-coordinate L-route with out-of-plane bending/torsion;
+5. prescribed settlement;
+6. reciprocity violation rejection;
+7. dependent/singular coordinate rejection;
+8. negative support-stiffness rejection;
+9. unsupported gap-field rejection;
+10. compatibility closure;
+11. energy closure.
 
-### VAL-EMPROM-COMP-002 — source syntax
+### VAL-EMPROM-THM-001 — thermal reference analytical execution
 
 - STATUS: `PASS`
 - OBSERVATION: `LOCAL_EXECUTION`
-- ORACLE: `NONE`
-- `node --check` passed on the new compatibility source and committed analytical check script content.
+- ORACLE: `ANALYTICAL / INDEPENDENT_REPRODUCTION`
+- Exact thermal-reference source logic was executed in an isolated ES-module harness.
 
-### VAL-EMPROM-COMP-003 — committed end-to-end route integration
+Cases:
 
-- STATUS: `NOT_RUN`
-- OBSERVATION: `NOT_OBSERVED`
-- ORACLE: `ANALYTICAL + IMPLEMENTATION_COUPLED`
-- The committed script exercises the actual repository path:
-  `rooted-tree unit actions -> virtual-work F -> compatibility solve`
-  for a 3 m + 2 m L-route with independent closed-form axial/bending/torsional coefficients.
-- Limitation: no full local repository checkout is available in this connector execution environment.
+1. straight route:
+   - `L=10 m`;
+   - `alpha=12e-6 /K`;
+   - `DeltaT=100 K`;
+   - expected free expansion `0.012 m`;
+   - observed `0.012 m`.
+2. fully restrained straight identity:
+   - `E=200 GPa`, `A=0.004 m2`;
+   - expected `R=-EA alpha DeltaT=-960000 N`;
+   - independent force-method oracle recovered `-960000 N`.
+3. L-route:
+   - `3 m` X leg + `2 m` Y leg;
+   - `epsilon=0.001`;
+   - expected tip vector `[0.003, 0.002, 0] m`;
+   - coordinate projections matched.
+4. branch isolation:
+   - sibling-branch thermal expansion did not enter the unrelated node path.
+5. nonuniform segment temperatures:
+   - path accumulation matched exact segment-by-segment sums.
+6. cooling:
+   - sign reversal recovered correctly.
+7. direct `thermalForceN` field:
+   - rejected by exact schema.
+8. guessed CTE basis:
+   - rejected.
+9. non-unit coordinate direction:
+   - rejected.
+10. cyclic route:
+   - rejected by tree-domain gate.
 
-### VAL-EMPROM-COMP-004 — source-scope negative assurance
+Observed result:
+
+```text
+PASS: rooted-tree thermal reference analytical checks
+```
+
+### VAL-EMPROM-THM-002 — source syntax
+
+- STATUS: `PASS`
+- OBSERVATION: `LOCAL_EXECUTION`
+
+`node --check` passed for:
+
+- `thermal-reference.js`;
+- `thermal-restraint-compatibility.js`;
+- `empirical-thermal-reference-compatibility-check.mjs`.
+
+### VAL-EMPROM-THM-003 — caller-custody review
 
 - STATUS: `PASS`
 - OBSERVATION: `SOURCE_INSPECTION`
-- ORACLE: `NONE`
-- Compare against baseline `c35ae6eb...` shows only intended mechanics/formula/export/check/report files.
-- No existing production restraint-network runtime/profile file is changed.
-- Branch was `behind_by: 0` immediately before draft PR allocation.
+- Initial wrapper review found nested caller objects would be frozen by internal deep-freeze.
+- Fixed before qualification by structured-cloning nested `properties`, `thermal`, and `direction` inputs.
+- No mechanics equation changed.
 
-### VAL-EMPROM-COMP-005 — full repository regression
+### VAL-EMPROM-COMP-003 — committed compatibility end-to-end script
 
 - STATUS: `NOT_RUN`
 - OBSERVATION: `NOT_OBSERVED`
-- ORACLE: `IMPLEMENTATION_COUPLED`
-- No full local checkout available.
+- The repository script exercises:
+  `rooted-tree unit actions -> virtual-work F -> compatibility solve`.
+- Full repository import-graph execution is not available in the current connector environment.
 
-### VAL-EMPROM-COMP-006 — exact-head GitHub Actions / statuses
+### VAL-EMPROM-THM-004 — committed thermal end-to-end script
 
-- STATUS: `NOT_RUN` pending final report-only reconciliation head inspection.
-- Empty workflow/status lists, if observed, must not be called PASS.
+- STATUS: `NOT_RUN`
+- OBSERVATION: `NOT_OBSERVED`
+- The committed script exercises:
+  `temperature/CTE -> thermal reference -> unit-load virtual-work F -> compatibility reaction`.
+- It includes the `-960000 N` fully restrained straight-pipe benchmark.
+- Full repository import-graph execution is not available in the current connector environment.
 
-## Risks / open work
+### VAL-EMPROM-SCOPE-001 — source-scope negative assurance
 
-### RISK-EMPROM-COMP-001 — upstream reference-displacement authority
+- STATUS: `PASS`
+- OBSERVATION: `SOURCE_INSPECTION`
+- Branch remained `behind_by: 0` at the thermal implementation checkpoint.
+- Delta is limited to the eight intended files listed above.
+- Existing V1/V2 production runtime/profile behavior is unchanged.
 
-The solver can consume `delta_reference`, but this PR does not derive it from thermal strain, weight, imposed movement, or other governed load mechanics. Production integration must close this authority seam first.
+### VAL-EMPROM-REG-001 — full repository regression
 
-### RISK-EMPROM-COMP-002 — contact/gap interaction
+- STATUS: `NOT_RUN`
+- OBSERVATION: `NOT_OBSERVED`
 
-The solver is bilateral linear only. A finite gap or unilateral restraint requires a separately qualified active-set/contact layer; it must not be represented as a linear spring by default.
+### VAL-EMPROM-CI-001 — exact-head GitHub Actions/statuses
 
-### RISK-EMPROM-COMP-003 — component flexibility absent
+- STATUS: `PENDING_RECONCILIATION`
+- Empty workflow/status lists must not be called PASS.
 
-The route orchestrator still uses straight prismatic mechanics only. Elbow/tee/reducer flexibility remains a separate qualification phase.
+## Remaining risks / authority seams
 
-### RISK-EMPROM-COMP-004 — closed geometric loops remain blocked
+### RISK-EMPROM-001 — canonical temperature/CTE custody
 
-The reference structure is a connected acyclic pipe tree. Closed piping geometry requires a deliberate reference-structure release formulation and independent qualification before acceptance.
+The thermal mechanics now derive `delta_reference`, but production authority still needs an adapter from canonical line/component/material/load-case sources to:
 
-### RISK-EMPROM-COMP-005 — production integration deliberately absent
+- reference temperature;
+- operating/analysis temperature;
+- approved CTE basis/value.
 
-The new solver is not registered as a calculation method and cannot publish engineering load results. This protects production authority while qualification remains incomplete.
+No manual/guessed scalar may be promoted to production authority.
+
+### RISK-EMPROM-002 — canonical support/restraint custody
+
+Compatibility coordinates must still be bound to canonical restraint IDs, axes, support stiffness and prescribed support/ground movements.
+
+### RISK-EMPROM-003 — contact/gaps
+
+Bilateral linear only. Gap/contact/friction requires a separately qualified active-set layer.
+
+### RISK-EMPROM-004 — component flexibility
+
+Straight prismatic members only in this new route. Elbow/tee/reducer flexibility remains separate.
+
+### RISK-EMPROM-005 — thermal gradients / alpha(T)
+
+No thermal-gradient bending or temperature-dependent CTE integration is established.
+
+### RISK-EMPROM-006 — production integration
+
+The new solver is not registered as a production calculation method and cannot publish authoritative engineering load results.
 
 ## PR / release disposition
 
@@ -229,4 +396,8 @@ The new solver is not registered as a calculation method and cannot publish engi
 - Production registration: `NOT_REQUESTED / NOT_GRANTED`.
 - Existing production behavior: unchanged.
 - Merge authority: not granted.
-- EXACT_NEXT_ACTION: close the upstream `delta_reference` authority seam using governed thermal/applied-load reference-structure mechanics, then bind coordinates to canonical restraint custody before any production qualification/cutover.
+- EXACT_NEXT_ACTION:
+  1. bind thermal inputs to canonical load-case/material authority;
+  2. bind compatibility coordinates to canonical support/restraint custody;
+  3. independently execute committed repository scripts/full regression when infrastructure permits;
+  4. only then plan gap/contact and component-flexibility phases.

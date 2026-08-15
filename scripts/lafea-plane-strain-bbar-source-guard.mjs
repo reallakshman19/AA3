@@ -18,7 +18,11 @@ const overview = read('src/workspace/lafea-engineering-overview.js');
 const workbenchContent = read('src/workspace/lafea-workbench-content.js');
 const freezeCheck = read('scripts/lafea-plane-strain-bbar-freeze-check.mjs');
 const kernelCheck = read('scripts/lafea-plane-strain-bbar-kernel-check.mjs');
+const lameFixture = read('scripts/lib/lafea-plane-strain-bbar-lame-fixture.mjs');
 const lameCheck = read('scripts/lafea-plane-strain-bbar-lame-check.mjs');
+const probeMeshPolicy = JSON.parse(read(
+  'validation/lafea-incompressible/plane-strain-bbar-probe-mesh-policy-v1.json',
+));
 
 // Existing displacement-only authority remains byte-semantically distinct.
 assert.match(constants, /planeStrainPoissonWarning:\s*0\.40/u);
@@ -89,6 +93,29 @@ assert.match(overview, /Temperature \/ eigenstrain authority', 'NOT GRANTED/u);
 assert.equal(/PLANE_STRAIN_BBAR[\s\S]{0,1000}status:\s*'QUALIFIED'/u.test(overview), false,
   'B-bar overview must not promote interactive state to qualification PASS.');
 
+// Fixed physical probes must remain strictly inside a single polar cell and
+// away from the deterministic T6 cell diagonal. These phases were frozen from
+// geometry before any production solve was observed.
+assert.equal(probeMeshPolicy.definitionState, 'FROZEN_BEFORE_PRODUCTION_OBSERVATION');
+assert.equal(probeMeshPolicy.productionOutputUsedToChooseDefinition, false);
+assert.equal(probeMeshPolicy.radialAxis.targetPhase, 0.5);
+assert.equal(probeMeshPolicy.angularAxis.targetPhase, 0.35);
+assert.equal(probeMeshPolicy.t6DiagonalAvoidance.minimumPhaseSeparation, 0.15);
+assert.equal(probeMeshPolicy.t6DiagonalAvoidance.mappingAmbiguityAllowed, false);
+assert.ok(
+  Math.abs(probeMeshPolicy.radialAxis.targetPhase - probeMeshPolicy.angularAxis.targetPhase)
+    >= probeMeshPolicy.t6DiagonalAvoidance.minimumPhaseSeparation,
+);
+assert.match(lameFixture, /probeCellEvidence/u);
+assert.match(lameFixture, /protectedAxis\([\s\S]*targetPhase/u);
+assert.match(lameFixture, /diagonalPhaseSeparation/u);
+assert.match(lameFixture, /elementBoundaryPlacement:\s*false/u);
+assert.match(lameFixture, /t6DiagonalPlacement:\s*false/u);
+assert.match(lameCheck, /plane-strain-bbar-probe-mesh-policy-v1\.json/u);
+assert.match(lameCheck, /probeMeshPolicyHash/u);
+assert.match(lameCheck, /protectedProbePhases/u);
+assert.match(lameCheck, /probeCellEvidence/u);
+
 // Definitions/oracles must remain frozen and production observations separate.
 assert.match(freezeCheck, /FROZEN_BEFORE_PRODUCTION_OBSERVATION/u);
 assert.match(freezeCheck, /productionOutputUsedToChooseDefinition/u);
@@ -111,6 +138,12 @@ console.log(JSON.stringify({
   retainedMeanDilatationRecoveryGuarded: true,
   domainFirstFormulationPropagationGuarded: true,
   governedSourceSelectorGuarded: true,
+  protectedProbeMeshPolicyGuarded: true,
+  protectedProbePhases: {
+    radial: probeMeshPolicy.radialAxis.targetPhase,
+    angular: probeMeshPolicy.angularAxis.targetPhase,
+    minimumDiagonalSeparation: probeMeshPolicy.t6DiagonalAvoidance.minimumPhaseSeparation,
+  },
   interactiveQualificationPromotionAllowed: false,
   solverToleranceRelaxationDetected: false,
   movingMaximumAcceptanceAllowed: false,

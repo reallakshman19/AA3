@@ -27,7 +27,15 @@ import {
   planLafeaShellAnalysisMesh,
   produceLafeaShellAnalysisMesh,
 } from './lafea-shell-mesh-producer.js';
-import { validateLafeaAnyShellMidsurfaceEvidence } from './lafea-shell-midsurface-dispatch.js';
+import {
+  planLafeaMultiPatchShellAnalysisMesh,
+  produceLafeaMultiPatchShellAnalysisMesh,
+} from './lafea-shell-multipatch-mesh-producer.js';
+import {
+  LAFEA_SHELL_SURFACE_KINDS,
+  shellMidsurfaceKind,
+  validateLafeaAnyShellMidsurfaceEvidence,
+} from './lafea-shell-midsurface-dispatch.js';
 
 export function createLafeaWorkbenchMeshGenerationState(stageIds) {
   const profiles = new Map(stageIds.map((stageId) => [stageId, null]));
@@ -95,10 +103,10 @@ export function createLafeaWorkbenchMeshGenerationState(stageIds) {
     if (shellMidsurfaces.get(stageId)) {
       requireNoShellOverrides(overrides);
       const profile = requireProfile(stageId);
-      const planned = planLafeaShellAnalysisMesh({
-        midsurfaceEvidence: requireShellMidsurface(stageId),
-        meshProfile: profile,
-      });
+      const parent = requireShellMidsurface(stageId);
+      const planned = shellMidsurfaceKind(parent) === LAFEA_SHELL_SURFACE_KINDS.PLANAR_MULTIPATCH
+        ? planLafeaMultiPatchShellAnalysisMesh({ midsurfaceEvidence: parent, meshProfile: profile })
+        : planLafeaShellAnalysisMesh({ midsurfaceEvidence: parent, meshProfile: profile });
       lastPlan.set(stageId, summarizeShell(planned));
       return freeze({
         configuration: shellConfiguration(profile, planned),
@@ -118,10 +126,10 @@ export function createLafeaWorkbenchMeshGenerationState(stageIds) {
     if (shellMidsurfaces.get(stageId)) {
       requireNoShellOverrides(overrides);
       const profile = requireProfile(stageId);
-      const produced = produceLafeaShellAnalysisMesh({
-        midsurfaceEvidence: requireShellMidsurface(stageId),
-        meshProfile: profile,
-      });
+      const parent = requireShellMidsurface(stageId);
+      const produced = shellMidsurfaceKind(parent) === LAFEA_SHELL_SURFACE_KINDS.PLANAR_MULTIPATCH
+        ? produceLafeaMultiPatchShellAnalysisMesh({ midsurfaceEvidence: parent, meshProfile: profile })
+        : produceLafeaShellAnalysisMesh({ midsurfaceEvidence: parent, meshProfile: profile });
       const validated = validateLafeaAnalysisMeshEvidenceV2(produced.evidence);
       evidence.set(stageId, validated);
       lastPlan.set(stageId, summarizeShell(produced.plan));

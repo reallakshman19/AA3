@@ -24,6 +24,7 @@ import { projectLafeaRuntimeSolverDiagnostics } from '../../src/workspace/lafea-
 
 const STAGE_ID = 'LAFEA.3';
 const CASE_ID = 'LC1';
+const PHYSICAL_PROBE_SCHEMA = 'lafea-continuum-physical-probe/v1';
 
 export function executeB02dProductionLevel(definition, method, level) {
   requireDefinition(definition, method, level);
@@ -108,7 +109,7 @@ export function executeB02dProductionLevel(definition, method, level) {
   });
   const runtimeSolverDiagnostics = projectLafeaRuntimeSolverDiagnostics(execution);
   const fixedProbes = definition.fixedProbes.map((probe) =>
-    evaluateLafeaContinuumPhysicalProbe(stage, probe));
+    evaluateLafeaContinuumPhysicalProbe(stage, physicalProbe(probe)));
   const pathProbes = definition.fixedPath.stations.map((station) =>
     evaluateLafeaContinuumPhysicalProbe(stage, pathProbe(definition, station)));
   const energyReconstruction = reconstructMechanicalEnergy(result, resultCase);
@@ -331,9 +332,24 @@ function stiffnessVector(meshEvidence, vector) {
   return output;
 }
 
+function physicalProbe(probe) {
+  return {
+    schema: PHYSICAL_PROBE_SCHEMA,
+    probeId: probe.probeId,
+    physicalCoordinate: structuredClone(probe.physicalCoordinate),
+    coordinateFrame: probe.coordinateFrame,
+    loadCaseId: probe.loadCaseId,
+    quantityId: probe.quantityId,
+    representation: probe.representation,
+    recoveryMethod: probe.recoveryMethod,
+    units: probe.units,
+    singularityClassification: probe.singularityClassification,
+  };
+}
+
 function pathProbe(definition, station) {
   return {
-    schema: 'lafea-continuum-physical-probe/v1',
+    schema: PHYSICAL_PROBE_SCHEMA,
     probeId: `${definition.fixedPath.pathId}/${station.stationId}`,
     physicalCoordinate: structuredClone(station.physicalCoordinate),
     coordinateFrame: 'GLOBAL_XY',

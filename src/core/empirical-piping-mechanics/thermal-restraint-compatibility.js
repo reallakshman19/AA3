@@ -100,8 +100,8 @@ function requireCombinedSegments(value) {
       segmentId: requireNonEmptyString(segment.segmentId, `segments[${index}].segmentId`),
       nodeAId: requireNonEmptyString(segment.nodeAId, `segments[${index}].nodeAId`),
       nodeBId: requireNonEmptyString(segment.nodeBId, `segments[${index}].nodeBId`),
-      properties: segment.properties,
-      thermal: segment.thermal,
+      properties: structuredClone(segment.properties),
+      thermal: structuredClone(segment.thermal),
     });
   });
   requireUnique(rows.map((row) => row.segmentId), 'segment ids');
@@ -131,7 +131,7 @@ function requireThermalCompatibilityCoordinates(value) {
         `coordinates[${index}].coordinateId`,
       ),
       nodeId: requireNonEmptyString(coordinate.nodeId, `coordinates[${index}].nodeId`),
-      direction: coordinate.direction,
+      direction: structuredClone(coordinate.direction),
       targetDisplacementM: coordinate.targetDisplacementM,
       supportStiffnessNPerM: coordinate.supportStiffnessNPerM,
     });

@@ -27,6 +27,8 @@ for (const required of [
   'STAGEDJSON_BASELINE_TEMPERATURE_K',
   'SOURCE_BACKED_SUPPORT_DISPLACEMENT',
   'freeExpansionMappingAcceptedAsSupportMovement: false',
+  'GLOBAL_XYZ_Z_UP_ONLY_IN_THIS_PHASE',
+  'coordinateFrameTransformationPerformed: false',
 ]) {
   assert.ok(combined.includes(required), `missing required custody marker: ${required}`);
 }
@@ -60,6 +62,10 @@ assert.match(
 assert.match(
   sourceGate,
   /free-expansion mapping cannot become support\/ground movement authority/u,
+);
+assert.match(
+  sourceGate,
+  /coordinate-frame transformation is not yet qualified/u,
 );
 
 console.log('PASS: canonical thermal ROM custody source guard');

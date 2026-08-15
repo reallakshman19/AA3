@@ -42,13 +42,10 @@ const ACTION_STATES = Object.freeze({
 });
 
 /**
- * Projects the owner-locked Empirical V3 workflow from already-verified domain
- * facts. This module deliberately does not inspect UI state, route selection,
- * viewport state, legacy scalar bags, or solver output.
- *
- * Currentness booleans here are not authorization. They are facts produced by
- * upstream hash/currentness validators. A later calculation authorization
- * receipt remains mandatory before RUN_CALCULATION can be admitted.
+ * Projects the owner-locked Empirical V3 workflow from sealed, already-verified
+ * domain facts. No UI, viewport, chainage, legacy scalar bag or solver state is
+ * inspected here. Currentness is upstream hash/currentness evidence; a present
+ * current record also has to carry its immutable semantic hash.
  */
 export function projectEmpiricalV3Workflow(input = {}) {
   const facts = normalizeVerifiedFacts(input);
@@ -89,7 +86,6 @@ export function requireEmpiricalV3WorkflowAction(projection, action) {
 function selectState(facts) {
   if (!facts.source.bound) return 'NO_SOURCE';
   if (!facts.source.current) return 'SOURCE_READY';
-
   if (!facts.authorities.built || !facts.authorities.current) return 'AUTHORITY_BUILD_REQUIRED';
 
   if (!facts.branches.built || !facts.branches.current || !facts.branches.reviewCurrent) {
@@ -109,11 +105,7 @@ function selectState(facts) {
   }
 
   if (!facts.calculationResult.reviewRequired) return 'CALCULATED';
-
-  if (!facts.resultReview.present || !facts.resultReview.current) {
-    return 'RESULT_REVIEW_REQUIRED';
-  }
-
+  if (!facts.resultReview.present || !facts.resultReview.current) return 'RESULT_REVIEW_REQUIRED';
   if (!facts.audit.ready || !facts.audit.current) return 'RESULT_REVIEWED';
   return 'AUDIT_EXPORT_READY';
 }
@@ -138,10 +130,14 @@ function reasonsForState(state, facts) {
 }
 
 function normalizeVerifiedFacts(input) {
-  const source = normalizeRecord(input.source, ['bound', 'current']);
-  const authorities = normalizeRecord(input.authorities, ['built', 'current']);
-  const branches = normalizeRecord(input.branches, ['built', 'current', 'reviewCurrent']);
-  const riskSet = normalizeRecord(input.riskSet, ['evaluated', 'current']);
+  const source = normalizeRecord(input.source, ['bound', 'current'], ['semanticHash']);
+  const authorities = normalizeRecord(input.authorities, ['built', 'current'], ['semanticHash']);
+  const branches = normalizeRecord(
+    input.branches,
+    ['built', 'current', 'reviewCurrent'],
+    ['semanticHash', 'reviewSemanticHash'],
+  );
+  const riskSet = normalizeRecord(input.riskSet, ['evaluated', 'current'], ['semanticHash']);
   const calculationAuthorization = normalizeRecord(
     input.calculationAuthorization,
     ['present', 'current'],
@@ -150,9 +146,28 @@ function normalizeVerifiedFacts(input) {
   const calculationResult = normalizeRecord(
     input.calculationResult,
     ['present', 'current', 'reviewRequired'],
+    ['semanticHash'],
   );
-  const resultReview = normalizeRecord(input.resultReview, ['present', 'current']);
-  const audit = normalizeRecord(input.audit, ['ready', 'current']);
+  const resultReview = normalizeRecord(input.resultReview, ['present', 'current'], ['semanticHash']);
+  const audit = normalizeRecord(input.audit, ['ready', 'current'], ['semanticHash']);
+
+  requireHashWhen(source, source.bound && source.current, 'source.semanticHash');
+  requireHashWhen(authorities, authorities.built && authorities.current, 'authorities.semanticHash');
+  requireHashWhen(branches, branches.built && branches.current, 'branches.semanticHash');
+  requireHashWhen(branches, branches.reviewCurrent, 'branches.reviewSemanticHash');
+  requireHashWhen(riskSet, riskSet.evaluated && riskSet.current, 'riskSet.semanticHash');
+  requireHashWhen(
+    calculationAuthorization,
+    calculationAuthorization.present && calculationAuthorization.current,
+    'calculationAuthorization.semanticHash',
+  );
+  requireHashWhen(
+    calculationResult,
+    calculationResult.present && calculationResult.current,
+    'calculationResult.semanticHash',
+  );
+  requireHashWhen(resultReview, resultReview.present && resultReview.current, 'resultReview.semanticHash');
+  requireHashWhen(audit, audit.ready && audit.current, 'audit.semanticHash');
 
   return deepFreeze({
     source,
@@ -179,6 +194,11 @@ function normalizeRecord(value, booleanFields, stringFields = []) {
   for (const field of booleanFields) normalized[field] = record[field] === true;
   for (const field of stringFields) normalized[field] = normalizeOptionalString(record[field]);
   return normalized;
+}
+
+function requireHashWhen(record, required, fieldName) {
+  const field = fieldName.split('.').at(-1);
+  if (required && !record[field]) throw new TypeError(`${fieldName} is required for a current sealed record.`);
 }
 
 function normalizeOptionalString(value) {

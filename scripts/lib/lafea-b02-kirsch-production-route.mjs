@@ -24,6 +24,7 @@ import { requireLafeaStageComposition } from '../../src/workspace/lafea-stage-co
 import { createLafeaWorkbenchStore } from '../../src/workspace/lafea-workbench.js';
 
 const STAGE_ID = 'LAFEA.3';
+const PHYSICAL_PROBE_SCHEMA = 'lafea-continuum-physical-probe/v1';
 
 export function executeB02KirschProductionLevel(definition, method, level) {
   requireDefinition(definition);
@@ -201,12 +202,18 @@ function assertCircularBoundary(mesh, definition) {
   assert.ok(arcNodes.length >= 4, 'Kirsch mesh must retain analytic circular-boundary nodes');
 }
 function stripAcceptance(probe) {
-  const {
-    analyticalReferenceValue: _reference,
-    acceptanceMode: _acceptance,
-    ...definition
-  } = probe;
-  return definition;
+  return {
+    schema: PHYSICAL_PROBE_SCHEMA,
+    probeId: probe.probeId,
+    physicalCoordinate: structuredClone(probe.physicalCoordinate),
+    coordinateFrame: probe.coordinateFrame,
+    loadCaseId: probe.loadCaseId,
+    quantityId: probe.quantityId,
+    representation: probe.representation,
+    recoveryMethod: probe.recoveryMethod,
+    units: probe.units,
+    singularityClassification: probe.singularityClassification,
+  };
 }
 function requireDefinition(definition) {
   assert.equal(definition.caseId, 'B02C');

@@ -17,10 +17,17 @@ export function renderEmpiricalV3ResultReview(root, state = {}, actions = {}) {
       paragraph(doc, `Current review: ${state.resultReview.receiptId}`),
       paragraph(doc, `Reviewer: ${state.resultReview.auditMetadata.actor ?? 'not recorded'}`),
       paragraph(doc, `Disposition: ${state.resultReview.disposition}`),
-      paragraph(doc, state.auditReady
-        ? `Audit readiness sealed: ${state.auditReady.readinessId}`
-        : 'Audit readiness has not been sealed.'),
     );
+    if (state.auditReady) {
+      section.append(paragraph(doc, `Audit readiness sealed: ${state.auditReady.readinessId}`));
+    } else {
+      const button = actionButton(doc, 'Prepare audit', () => actions.prepareAudit?.());
+      button.disabled = !actions.prepareAudit;
+      section.append(
+        paragraph(doc, 'Result review is current. Audit readiness is a separate governed transition.'),
+        button,
+      );
+    }
     root.replaceChildren(section);
     return;
   }

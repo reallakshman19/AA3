@@ -16,17 +16,28 @@ import {
 export const EMPIRICAL_V3_BRANCH_COMPONENT_BUNDLE_SCHEMA =
   'empirical-v3-branch-component-authority-bundle/v1';
 
+const BUNDLE_INPUT_KEYS = ['runId', 'route', 'componentBasisRows', 'componentLocalRows'];
+const BASIS_ROW_KEYS = [
+  'componentId',
+  'commonAuthorityRefs',
+  'sourceEvidenceRefs',
+  'riskRefs',
+  'observedSourceBranchLabel',
+];
+const LOCAL_ROW_KEYS = ['componentId', 'localAuthorityRefs', 'sourceEvidenceRefs', 'riskRefs'];
+
 /**
  * Derives calculation branches from exact route connectivity plus equal
  * branch-common authority identities. Imported BRANCH labels are retained only
  * in the evidence projection and never participate in branch identity.
  */
 export function buildEmpiricalV3BranchComponentAuthorityBundle(input) {
-  const runId = requireText(input?.runId, 'runId');
-  const route = requireCanonicalComponentRomRoute(input?.route);
+  requireAllowedKeys(input, BUNDLE_INPUT_KEYS, 'branch/component bundle input');
+  const runId = requireText(input.runId, 'runId');
+  const route = requireCanonicalComponentRomRoute(input.route);
   const routeIds = route.components.map((row) => row.componentId).sort();
-  const basisByComponent = normalizeBasisRows(input?.componentBasisRows, routeIds);
-  const localByComponent = normalizeLocalRows(input?.componentLocalRows, routeIds);
+  const basisByComponent = normalizeBasisRows(input.componentBasisRows, routeIds);
+  const localByComponent = normalizeLocalRows(input.componentLocalRows, routeIds);
   const adjacency = componentAdjacency(route.components);
   const dsu = createDisjointSet(routeIds);
 
@@ -122,6 +133,7 @@ export function buildEmpiricalV3BranchComponentAuthorityBundle(input) {
 
 function normalizeBasisRows(value, routeIds) {
   const rows = requireCoverage(value, routeIds, 'componentBasisRows').map((row, index) => {
+    requireAllowedKeys(row, BASIS_ROW_KEYS, `componentBasisRows[${index}]`);
     const commonAuthorityRefs = normalizeCommonRefs(row.commonAuthorityRefs, index);
     return {
       componentId: requireText(row.componentId, `componentBasisRows[${index}].componentId`),
@@ -136,12 +148,15 @@ function normalizeBasisRows(value, routeIds) {
 }
 
 function normalizeLocalRows(value, routeIds) {
-  const rows = requireCoverage(value, routeIds, 'componentLocalRows').map((row, index) => ({
-    componentId: requireText(row.componentId, `componentLocalRows[${index}].componentId`),
-    localAuthorityRefs: normalizeKindRefs(row.localAuthorityRefs, `componentLocalRows[${index}].localAuthorityRefs`),
-    sourceEvidenceRefs: normalizeRefs(row.sourceEvidenceRefs ?? [], `componentLocalRows[${index}].sourceEvidenceRefs`),
-    riskRefs: normalizeRefs(row.riskRefs ?? [], `componentLocalRows[${index}].riskRefs`),
-  }));
+  const rows = requireCoverage(value, routeIds, 'componentLocalRows').map((row, index) => {
+    requireAllowedKeys(row, LOCAL_ROW_KEYS, `componentLocalRows[${index}]`);
+    return {
+      componentId: requireText(row.componentId, `componentLocalRows[${index}].componentId`),
+      localAuthorityRefs: normalizeKindRefs(row.localAuthorityRefs, `componentLocalRows[${index}].localAuthorityRefs`),
+      sourceEvidenceRefs: normalizeRefs(row.sourceEvidenceRefs ?? [], `componentLocalRows[${index}].sourceEvidenceRefs`),
+      riskRefs: normalizeRefs(row.riskRefs ?? [], `componentLocalRows[${index}].riskRefs`),
+    };
+  });
   return new Map(rows.map((row) => [row.componentId, row]));
 }
 
@@ -234,6 +249,11 @@ function union(dsu, left, right) {
   if (dsu.rank.get(a) < dsu.rank.get(b)) [a, b] = [b, a];
   dsu.parent.set(b, a);
   if (dsu.rank.get(a) === dsu.rank.get(b)) dsu.rank.set(a, dsu.rank.get(a) + 1);
+}
+function requireAllowedKeys(value, allowed, fieldName) {
+  if (!value || typeof value !== 'object' || Array.isArray(value)) throw new TypeError(`${fieldName} must be an object.`);
+  const extras = Object.keys(value).filter((key) => !allowed.includes(key));
+  if (extras.length) throw new TypeError(`${fieldName} contains unsupported keys: ${extras.join(', ')}.`);
 }
 function optionalText(value) { const text = String(value ?? '').trim(); return text || null; }
 function requireText(value, fieldName) {

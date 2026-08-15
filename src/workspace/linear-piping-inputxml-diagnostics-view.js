@@ -189,8 +189,31 @@ function normalizeModelHealthFinding(finding, category) {
   return {
     ...finding,
     category,
-    disposition: finding.disposition ?? finding.effect ?? 'INFO',
+    disposition: findingDisposition(finding),
   };
+}
+
+/**
+ * Raw topology/proximity findings, as retained in diagnostics.topologyDiagnostics
+ * and diagnostics.proximityDiagnostics, never carry a top-level `.disposition`
+ * or `.effect` field — their capability effect lives in `capabilityEffects`,
+ * an array of `{capabilityId, effect}`. The old `finding.disposition ??
+ * finding.effect ?? 'INFO'` fallback always missed both, so every topology
+ * finding rendered here defaulted to the literal string 'INFO' regardless of
+ * whether it actually blocked — a genuine BLOCK-worthy collinear-overlap
+ * defect showed as merely informational in this section while the same
+ * finding correctly showed BLOCK in the main findings list above it.
+ */
+function findingDisposition(finding) {
+  const explicit = String(finding.disposition ?? finding.effect ?? '').trim().toUpperCase();
+  if (explicit) return explicit;
+  const effects = Array.isArray(finding.capabilityEffects) ? finding.capabilityEffects : [];
+  if (effects.some((row) => String(row?.effect ?? '').toUpperCase() === 'BLOCK')) return 'BLOCK';
+  if (effects.some((row) => String(row?.effect ?? '').toUpperCase() === 'ADVISORY')) return 'ADVISORY';
+  const severity = String(finding.severity ?? '').toUpperCase();
+  if (severity === 'ERROR' || severity === 'FATAL') return 'BLOCK';
+  if (severity === 'WARNING') return 'ADVISORY';
+  return 'INFO';
 }
 
 function countDispositions(findings) {

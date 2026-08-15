@@ -1,4 +1,7 @@
 import { makeFinding } from './inputxml-linear-prefea-contract.js';
+import {
+  requestedProfileFamily, capabilityAppliesToRequest, scopedDisposition, severityForScopedDisposition,
+} from './inputxml-linear-prefea-profile-scope.js';
 
 export function collectFindings({
   sourceBundle,
@@ -6,16 +9,35 @@ export function collectFindings({
   proximity,
   representability,
   engineeringSanity,
+  requestedProfileId,
 }) {
+  const requestedFamily = requestedProfileFamily(requestedProfileId);
   const rows = [];
   for (const diagnostic of sourceBundle.geometry?.diagnostics ?? []) {
-    rows.push(normalizeFinding(diagnostic, 'GEOMETRY', ['CANONICAL_GEOMETRY']));
+    rows.push(normalizeFinding(diagnostic, 'GEOMETRY', ['CANONICAL_GEOMETRY'], requestedFamily));
   }
-  appendReportFindings(rows, topology, 'TOPOLOGY', ['STRUCTURAL_GRAPH']);
-  appendReportFindings(rows, proximity, 'GEOMETRY', ['STRUCTURAL_GRAPH']);
-  appendReportFindings(rows, representability, 'COMPONENT', ['LINEAR_STRUCTURAL_MODEL']);
-  appendReportFindings(rows, engineeringSanity, 'SCHEMA', ['LINEAR_STRUCTURAL_MODEL']);
+  appendReportFindings(rows, topology, 'TOPOLOGY', ['STRUCTURAL_GRAPH'], requestedFamily);
+  appendReportFindings(rows, proximity, 'GEOMETRY', ['STRUCTURAL_GRAPH'], requestedFamily);
+  // diagnoseInputXmlLinearModelHealth (representability) folds the SAME
+  // topology-graph and topology-proximity findings into its own findings list
+  // (as category TOPOLOGY_GRAPH / TOPOLOGY_PROXIMITY) so it can fold their
+  // effect into the TOPOLOGY_ACCEPTANCE capability status — that fold already
+  // happened before this function ever saw representability.capabilities, so
+  // excluding them here changes nothing about capability status. What it does
+  // change: without this filter, every topology/proximity defect (a collinear
+  // overlap, a near-coincident node) was reported twice — once here under its
+  // correct TOPOLOGY/GEOMETRY category from the direct topology/proximity
+  // appends above, and again relabeled COMPONENT (TOPOLOGY_GRAPH/
+  // TOPOLOGY_PROXIMITY fail validCategory and fall back to the representability
+  // call's fallbackCategory) with a different findingId, so deduplicate()
+  // couldn't merge them. On BM4 this doubled every topology finding (7 became
+  // 14) and inflated the BLOCK count and Pre-flight noise to match.
+  const representabilityFindings = (representability.findings ?? [])
+    .filter((row) => row.category !== 'TOPOLOGY_GRAPH' && row.category !== 'TOPOLOGY_PROXIMITY');
+  appendReportFindings(rows, { findings: representabilityFindings }, 'COMPONENT', ['LINEAR_STRUCTURAL_MODEL'], requestedFamily);
+  appendReportFindings(rows, engineeringSanity, 'SCHEMA', ['LINEAR_STRUCTURAL_MODEL'], requestedFamily);
   for (const capability of representability.capabilities ?? []) {
+    if (!capabilityAppliesToRequest(capability.capabilityId, requestedFamily)) continue;
     if (capability.status === 'BLOCK') {
       rows.push(makeFinding({
         code: 'REQUIRED_CAPABILITY_BLOCKED',
@@ -65,17 +87,18 @@ export function collectFindings({
   return deduplicate(rows);
 }
 
-function appendReportFindings(target, report, fallbackCategory, effects) {
+function appendReportFindings(target, report, fallbackCategory, effects, requestedFamily) {
   for (const row of report?.findings ?? report?.diagnostics ?? []) {
-    target.push(normalizeFinding(row, fallbackCategory, effects));
+    target.push(normalizeFinding(row, fallbackCategory, effects, requestedFamily));
   }
 }
 
-function normalizeFinding(row, fallbackCategory, effects) {
-  const rawDisposition = String(row.disposition ?? row.status ?? '').toUpperCase();
-  const severity = normalizeSeverity(row.severity, rawDisposition);
-  const disposition = normalizeDisposition(rawDisposition, severity);
+function normalizeFinding(row, fallbackCategory, effects, requestedFamily) {
   const capabilityProjection = projectCapabilityEffects(row.capabilityEffects, effects);
+  const scoped = scopedDisposition(capabilityProjection.upstreamCapabilityEffects, requestedFamily ?? null);
+  const rawDisposition = String(row.disposition ?? row.status ?? '').toUpperCase();
+  const severity = scoped !== null ? severityForScopedDisposition(scoped) : normalizeSeverity(row.severity, rawDisposition);
+  const disposition = scoped !== null ? scoped : normalizeDisposition(rawDisposition, severity);
   return makeFinding({
     code: String(row.code ?? 'UNCLASSIFIED_INPUTXML_DIAGNOSTIC'),
     category: validCategory(row.category) ? row.category : fallbackCategory,

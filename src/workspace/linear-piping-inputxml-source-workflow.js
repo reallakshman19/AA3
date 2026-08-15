@@ -1,6 +1,7 @@
 import {
   LINEAR_PIPING_INPUTXML_DEFAULT_CASE_ID,
   LINEAR_PIPING_INPUTXML_DEFAULT_CASE_ROLE,
+  LINEAR_PIPING_INPUTXML_DEFAULT_PROFILE_ID,
   LINEAR_PIPING_INPUTXML_FALLBACK_UNIT_IDS,
   LINEAR_PIPING_INPUTXML_INTAKE_PROFILE_IDS,
   createLinearPipingInputXmlIntake,
@@ -290,7 +291,7 @@ export class LinearPipingInputXmlSourceWorkflowController {
 
   prepareSource(fallbackUnit) {
     this.fallbackUnit = fallbackUnit;
-    const profileId = this.elements?.profileSelect.value ?? LINEAR_PIPING_INPUTXML_INTAKE_PROFILE_IDS[0];
+    const profileId = this.elements?.profileSelect.value ?? LINEAR_PIPING_INPUTXML_DEFAULT_PROFILE_ID;
     this.intake = createLinearPipingInputXmlIntake(this.sourceInput, {
       fallbackUnit,
       requestedProfileId: profileId,
@@ -386,6 +387,7 @@ function createSourceWorkflowSection(doc) {
     option.textContent = profileId;
     profileSelect.append(option);
   }
+  profileSelect.value = LINEAR_PIPING_INPUTXML_DEFAULT_PROFILE_ID;
   profileLabel.append(profileSelect);
 
   const unitLabel = doc.createElement('label');

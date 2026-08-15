@@ -162,7 +162,7 @@ function prepareEmpiricalV3SourceBoundExecution(input) {
     dependency,
     packageValue,
     datasetId: snapshot.dataset.datasetId,
-    workspaceVersion: snapshot.version,
+    workspaceVersion: snapshot.engineeringVersion,
   });
   empiricalV3Safety.refresh();
   return dependency;

@@ -20,6 +20,7 @@ export function adaptBranchProcessResolverOutput(input) {
   const masterSemanticHash = optionalText(input?.masterSemanticHash);
   const sourceSemanticHash = optionalText(input?.sourceSemanticHash);
   const classExact = isExactPipingClassResolution(row);
+  const classMasterExact = classExact && Boolean(masterSemanticHash);
 
   const classAdapted = adaptResolutionReference({
     runId,
@@ -28,8 +29,8 @@ export function adaptBranchProcessResolverOutput(input) {
     source: 'piping-class-resolver',
     sourceSemanticHash: masterSemanticHash,
     matchMethod: row.pipingClassMatchMethod || row.pipingClassRowMethod || 'none',
-    needsReview: !classExact,
-    exactMasterApproved: classExact,
+    needsReview: !classMasterExact,
+    exactMasterApproved: classMasterExact,
     entityIds: [componentId],
   });
   const pipingClassBasis = sealPipingClassBasis(row, classAdapted.record);
@@ -38,11 +39,12 @@ export function adaptBranchProcessResolverOutput(input) {
     runId,
     componentId,
     row,
-    classExact,
+    classExact: classMasterExact,
     masterSemanticHash,
     sourceSemanticHash,
   });
 
+  const wallExactMaster = row.wallThicknessSource === 'piping-class-master' && classMasterExact;
   const wallAuthority = adaptLegacyNumericResolution({
     runId,
     quantityId: `Q:${componentId}:WT`,
@@ -52,15 +54,18 @@ export function adaptBranchProcessResolverOutput(input) {
     unit: 'mm',
     source: row.wallThicknessSource || 'unresolved',
     sourceReference: `${row.wallThicknessSource || 'unresolved'}:${row.wallThicknessKey || componentId}`,
-    sourceSemanticHash: row.wallThicknessSource === 'piping-class-master'
-      ? masterSemanticHash
-      : sourceSemanticHash,
+    sourceSemanticHash: wallExactMaster ? masterSemanticHash : sourceSemanticHash,
+    evidenceRef: wallExactMaster
+      ? `piping-class-master:${row.wallThicknessKey || componentId}:wall-thickness`
+      : null,
+    evidenceHash: wallExactMaster ? masterSemanticHash : null,
     matchMethod: row.pipingClassMatchMethod || row.pipingClassRowMethod || 'none',
-    needsReview: !(row.wallThicknessSource === 'piping-class-master' && classExact),
-    exactMasterApproved: row.wallThicknessSource === 'piping-class-master' && classExact,
+    needsReview: !wallExactMaster,
+    exactMasterApproved: wallExactMaster,
     required: true,
   });
 
+  const corrosionExactMaster = row.corrosionSource === 'piping-class-master' && classMasterExact;
   const corrosionAuthority = adaptLegacyNumericResolution({
     runId,
     quantityId: `Q:${componentId}:CORROSION`,
@@ -70,12 +75,14 @@ export function adaptBranchProcessResolverOutput(input) {
     unit: 'mm',
     source: row.corrosionSource || 'unresolved',
     sourceReference: `${row.corrosionSource || 'unresolved'}:${row.corrosionKey || componentId}`,
-    sourceSemanticHash: row.corrosionSource === 'piping-class-master'
-      ? masterSemanticHash
-      : sourceSemanticHash,
+    sourceSemanticHash: corrosionExactMaster ? masterSemanticHash : sourceSemanticHash,
+    evidenceRef: corrosionExactMaster
+      ? `piping-class-master:${row.corrosionKey || componentId}:corrosion`
+      : null,
+    evidenceHash: corrosionExactMaster ? masterSemanticHash : null,
     matchMethod: row.pipingClassMatchMethod || row.pipingClassRowMethod || 'none',
-    needsReview: !(row.corrosionSource === 'piping-class-master' && classExact),
-    exactMasterApproved: row.corrosionSource === 'piping-class-master' && classExact,
+    needsReview: !corrosionExactMaster,
+    exactMasterApproved: corrosionExactMaster,
     required: false,
   });
 
@@ -128,7 +135,7 @@ function sealPipingClassBasis(row, classRecord) {
     source: optionalText(row.pipingClassSource) || 'piping-class-resolver',
     matchMethod: normalizeMethod(row.pipingClassMatchMethod || row.pipingClassRowMethod || 'none'),
     rowMethod: normalizeMethod(row.pipingClassRowMethod || 'none'),
-    needsReview: row.pipingClassNeedsReview === true,
+    needsReview: row.pipingClassNeedsReview === true || classRecord.authorityClass === 'INFERRED_REVIEW_REQUIRED',
     resolutionRef: { ref: classRecord.ref, semanticHash: classRecord.semanticHash },
   };
   const hash = semanticHash(material);
@@ -148,7 +155,7 @@ function classifyMaterialResolution({
   sourceSemanticHash,
 }) {
   const source = normalizeSource(row.materialSource);
-  const exactMaster = classExact && source === 'PIPING_CLASS_MATERIAL_CODE';
+  const exactMaster = classExact && source === 'PIPING_CLASS_MATERIAL_CODE' && Boolean(masterSemanticHash);
   const exactSource = source === 'LINE_LIST_MATERIAL_CODE' && Boolean(sourceSemanticHash);
   const inherentlyApproximate = [
     'PIPING_CLASS_MATERIAL_MAP',

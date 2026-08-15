@@ -39,6 +39,7 @@ export class EmpiricalV3SafetyWorkbenchController {
   }
   restoreDownstream(packageValue){
     const resultHash=packageValue.workflow.facts.calculationResult.semanticHash;
+    if(!resultHash){this.calculationEvidence=null;this.reviewAudit.clear();return;}
     const evidenceEntry=findRecord(packageValue,'CALCULATION_EVIDENCE',resultHash);
     if(evidenceEntry){const evidence=requireEmpiricalV3CoupledCalculationEvidence(evidenceEntry.record);this.calculationEvidence=evidenceMatchesPackage(evidence,packageValue)?evidence:null;}
     else if(this.calculationEvidence&&!evidenceMatchesPackage(this.calculationEvidence,packageValue))this.calculationEvidence=null;

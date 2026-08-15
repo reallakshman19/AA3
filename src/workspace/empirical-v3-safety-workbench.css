@@ -39,4 +39,14 @@
 .empirical-v3-safety__evidence{max-height:260px;overflow:auto;padding:8px;border:1px solid #475569;border-radius:6px;background:#07101e}
 .empirical-v3-safety__evidence p{margin:4px 0;font-size:10px;color:#94a3b8}
 .empirical-v3-safety__evidence pre{margin:6px 0 0;white-space:pre-wrap;overflow-wrap:anywhere;font-size:10px}
+.empirical-v3-explain__heading,.empirical-v3-explain__section{display:grid;gap:6px;padding:8px;border:1px solid #334155;border-radius:6px;background:#0f172a}
+.empirical-v3-explain__heading span{font-size:10px;color:#94a3b8;overflow-wrap:anywhere}
+.empirical-v3-explain__section h4{margin:0;color:#bae6fd;font-size:12px}
+.empirical-v3-explain__section dl{display:grid;grid-template-columns:minmax(110px,max-content) minmax(0,1fr);gap:4px 8px;margin:0;font-size:10px}
+.empirical-v3-explain__section dd{margin:0;overflow-wrap:anywhere}
+.empirical-v3-explain__section table{width:100%;border-collapse:collapse;font-size:10px}
+.empirical-v3-explain__section th,.empirical-v3-explain__section td{padding:4px;border:1px solid #334155;text-align:left;vertical-align:top;white-space:pre-wrap;overflow-wrap:anywhere}
+.empirical-v3-explain__section caption{text-align:left;padding:4px 0;color:#94a3b8}
+.empirical-v3-explain__coordinate{border-top:1px solid #263548;padding-top:5px}
+.empirical-v3-explain__coordinate summary{cursor:pointer;font-size:10px;font-weight:700;color:#e2e8f0}
 .empirical-v3-safety button:disabled{opacity:.45;cursor:not-allowed}

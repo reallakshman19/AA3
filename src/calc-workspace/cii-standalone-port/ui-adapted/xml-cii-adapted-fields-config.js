@@ -15,11 +15,11 @@ export const MASTER_FIELDS = {
       { name: 't2', label: 'T2', aliases: ['T2', 'Temp', 'Temp. C', 'Temp C', 'Temp ºC', 'Temperature', 'Temperature2', 'Temperature 2', 'T2 (C)', 'T2 (ºC)'] },
       { name: 't3', label: 'T3', aliases: ['T3', 'Temp Min', 'Temp Min C', 'Temp Min °C', 'Min Temp', 'Minimum Temp', 'Min', 'Temperature3', 'Temperature 3', 'T3 (C)', 'T3 (ºC)'] },
       { name: 'insThk', label: 'InsThk', aliases: ['InsThk', 'Insulation', 'Ins Thk', 'Insulation thickness'] },
-      { name: 'density', label: 'Density', aliases: ['density', 'Density', 'DENSITY', 'FluidDensity', 'Fluid Density', 'Density kg/m3', 'kg/m3'] },
-      { name: 'densityMixed', label: 'Density Mixed', aliases: ['Mixed kg/m3', 'Density Mixed', 'Mixed Density', 'Density (Mixed)'] },
-      { name: 'densityGas', label: 'Density Gas', aliases: ['Gas kg/m3', 'Density Gas', 'Gas Density', 'Density (Gas)'] },
-      { name: 'densityLiquid', label: 'Density Liquid', aliases: ['Liquid kg/m3', 'Density Liquid', 'Liquid Density', 'Density (Liquid)'] },
-      { name: 'phase', label: 'Phase', aliases: ['Phase', 'Fluid Phase', 'Medium Phase'] },
+      { name: 'density', label: 'Operating Density', aliases: ['density', 'Density', 'DENSITY', 'FluidDensity', 'Fluid Density', 'Density kg/m3', 'kg/m3', 'Oper Density', 'Operating Density', 'OPERATING_DENSITY', 'Operating Fluid Density'] },
+      { name: 'densityMixed', label: 'Density Mixed', aliases: ['Mixed kg/m3', 'Density Mixed', 'Mixed Density', 'Density (Mixed)', 'MIXED_DENSITY'] },
+      { name: 'densityGas', label: 'Density Gas', aliases: ['Gas kg/m3', 'Density Gas', 'Gas Density', 'Density (Gas)', 'GAS_DENSITY'] },
+      { name: 'densityLiquid', label: 'Density Liquid', aliases: ['Liquid kg/m3', 'Density Liquid', 'Liquid Density', 'Density (Liquid)', 'LIQ_DENSITY'] },
+      { name: 'phase', label: 'Phase', aliases: ['Phase', 'Fluid Phase', 'Medium Phase', 'FLUID_PHASE'] },
       { name: 'from', label: 'From', aliases: ['From', 'FROM', 'From (Origin)', 'Origin', 'FROM_EQUIP', 'From Equipment'] },
       { name: 'to', label: 'To', aliases: ['To', 'TO', 'To (Destination)', 'Destination', 'TO_EQUIP', 'To Equipment'] }
     ]

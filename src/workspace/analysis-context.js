@@ -32,7 +32,7 @@ export function createAnalysisContext(workspaceState, targetId) {
       entity: null,
       dataset: snapshot.dataset,
       selectedEntityId: snapshot.selectedEntityId,
-      version: snapshot.version,
+      version: requireEngineeringVersion(snapshot),
     });
   }
   const entity = workspaceState.getEntity(targetId);
@@ -233,7 +233,7 @@ function findValue(value, wanted, depth, path) {
     const nested = findValue(child, wanted, depth + 1, `${path}.${key}`);
     if (nested.found) return nested;
   }
-  return { found: false };
+  return { found: false, value: null, path: '' };
 }
 
 function projectLineEntities(entities) {
@@ -282,6 +282,13 @@ function disabledScreening(reason, missing = [], details = {}) {
 
 function evidence(value, source, path) {
   return freezeDeep({ value, source: value == null ? 'missing' : source, sourcePath: path || '' });
+}
+
+function requireEngineeringVersion(snapshot) {
+  if (!Number.isInteger(snapshot.engineeringVersion) || snapshot.engineeringVersion < 0) {
+    throw new TypeError('Workspace analysis requires a non-negative engineeringVersion.');
+  }
+  return snapshot.engineeringVersion;
 }
 
 function normalizeKey(value) {

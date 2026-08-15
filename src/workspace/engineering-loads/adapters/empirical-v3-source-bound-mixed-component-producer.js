@@ -43,7 +43,7 @@ export function buildEmpiricalV3SourceBoundMixedComponentRomInput(input) {
   ]);
   const material={
     schema:EMPIRICAL_V3_SOURCE_BOUND_MIXED_COMPONENT_ROM_INPUT_SCHEMA,routeRef:{ref:route.connectedComponentId,semanticHash:route.semanticHash},
-    restraintBinding,bindingRef:{ref:binding.bindingId,semanticHash:binding.semanticHash},romInput,authorityRefs,authorityRecords:dedupeQuantities(authorityRecords),
+    restraintBinding:binding,bindingRef:{ref:binding.bindingId,semanticHash:binding.semanticHash},romInput,authorityRefs,authorityRecords:dedupeQuantities(authorityRecords),
     policy:{exactQuantityAuthorityOnly:true,governedRestraintBindingRequired:true,sourceBackedSupportMovementOnly:true,existingCanonicalRouteNodesOnly:true,supportStationSplittingPerformed:false,chainageConsumed:false,toleranceTopologyConsumed:false,benchmarkElbowFlexibilityAccepted:false,mechanicsSolved:false,numericalOptionsOverridden:false,executionEnabled:false},
   };
   const hash=semanticHash(material);return deepFreeze({...material,producerId:`mixed-rom-input:${hash.slice('fnv1a64:'.length)}`,semanticHash:hash});

@@ -200,7 +200,7 @@ function loadPolicyAudit(insulationDensities, section) {
     && row.code === 'NON_POSITIVE_ENGINEERING_VALUE'
   )));
 
-  const sectionAudit = loadPolicyAudit(
+  const wallAudit = loadPolicyAudit(
     { NONE: 0, CAL_SIL: 200 },
     {
       outsideDiameterMm: 168.3,
@@ -210,11 +210,26 @@ function loadPolicyAudit(insulationDensities, section) {
       insulationCode: 'NONE',
     },
   );
-  assert.ok(sectionAudit.errors.some((row) => (
+  assert.ok(wallAudit.errors.some((row) => (
     row.path === 'loadCalculation.pipeSectionProperties.L1.wallThicknessMm'
     && row.code === 'NON_POSITIVE_ENGINEERING_VALUE'
   )));
-  pass('V-002', 'zero positive-density insulation and zero pipe wall thickness remain blocked');
+
+  const inconsistentInsulationAudit = loadPolicyAudit(
+    { NONE: 0, CAL_SIL: 200 },
+    {
+      outsideDiameterMm: 168.3,
+      wallThicknessMm: 10.97,
+      materialCode: 'A106-B',
+      insulationThicknessMm: 0,
+      insulationCode: 'CAL_SIL',
+    },
+  );
+  assert.ok(inconsistentInsulationAudit.errors.some((row) => (
+    row.path === 'loadCalculation.pipeSectionProperties.L1.insulationThicknessMm'
+    && row.code === 'NON_POSITIVE_ENGINEERING_VALUE'
+  )));
+  pass('V-002', 'invalid zero insulation density, pipe wall, and insulated-section thickness remain blocked');
 }
 
 {

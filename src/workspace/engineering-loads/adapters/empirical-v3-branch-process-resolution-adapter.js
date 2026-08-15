@@ -116,13 +116,23 @@ export function isExactPipingClassResolution(row) {
   if (!row || typeof row !== 'object') return false;
   const classMethod = normalizeMethod(row.pipingClassMatchMethod);
   const rowMethod = normalizeMethod(row.pipingClassRowMethod);
+  const rowReasons = normalizeRowReasons(row.pipingClassRowReasons);
+  const exactReasonSet = new Set(rowReasons);
+  const hasExactDiscriminators = ['CLASS_EXACT', 'BORE_EXACT', 'COMPONENT_EXACT']
+    .every((reason) => exactReasonSet.has(reason));
+  const hasApproximateOrMissingEvidence = rowReasons.some((reason) => (
+    reason.includes('MISMATCH')
+    || reason.includes('MISSING')
+    || reason.startsWith('BORE_NEAR')
+  ));
   return Boolean(
     row.resolvedPipingClass
     && row.pipingClassMatchedRow
     && row.pipingClassNeedsReview !== true
     && classMethod === 'EXACT'
-    && rowMethod !== 'AMBIGUOUS_BEST_SCORE'
-    && rowMethod !== 'NONE'
+    && (rowMethod === 'BEST_SCORE' || rowMethod === 'EXACT')
+    && hasExactDiscriminators
+    && !hasApproximateOrMissingEvidence
   );
 }
 
@@ -181,6 +191,10 @@ function classifyMaterialResolution({
   });
 }
 
+function normalizeRowReasons(value) {
+  if (!Array.isArray(value)) return [];
+  return [...new Set(value.map(normalizeMethod).filter(Boolean))].sort();
+}
 function normalizeSource(value) {
   return String(value ?? '').trim().toUpperCase().replace(/[^A-Z0-9]+/g, '_');
 }

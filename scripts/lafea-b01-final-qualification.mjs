@@ -70,6 +70,7 @@ const custodyPaths = [
   'validation/lafea-benchmark-program/program.json',
   'validation/lafea-incompressible/plane-strain-bbar-v1.json',
   'validation/lafea-incompressible/plane-strain-bbar-convergence-v1.json',
+  'validation/lafea-incompressible/plane-strain-bbar-probe-mesh-policy-v1.json',
   'src/workspace/lafea-stage-registry.js',
   'src/workspace/lafea-stage-components.js',
   'src/core/local-continuum/bbar-plane-strain.js',
@@ -183,6 +184,7 @@ const receiptBase = {
   bbarCustody: {
     qualificationDefinitionSha256: fileCustody['validation/lafea-incompressible/plane-strain-bbar-v1.json'].sha256,
     convergenceDefinitionSha256: fileCustody['validation/lafea-incompressible/plane-strain-bbar-convergence-v1.json'].sha256,
+    probeMeshPolicySha256: fileCustody['validation/lafea-incompressible/plane-strain-bbar-probe-mesh-policy-v1.json'].sha256,
     mechanicsBlobSha: fileCustody['src/core/local-continuum/bbar-plane-strain.js'].gitBlobSha,
     expectedProductionSolveCount: 120,
   },

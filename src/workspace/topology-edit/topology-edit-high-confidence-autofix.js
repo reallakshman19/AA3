@@ -40,10 +40,23 @@ export function buildHighConfidenceGapAutofixPlan(
   });
 }
 
+function currentHighConfidenceIssues(session, options, exactToleranceMm) {
+  const issues = checkCanonicalTopology(session.currentTopology(), options);
+  const plan = buildHighConfidenceGapAutofixPlan(issues, exactToleranceMm);
+  const exactIds = new Set(plan.exactGapIssueIds);
+  return {
+    issues,
+    plan,
+    exactIssues: issues.filter((issue) => exactIds.has(issue.id)),
+  };
+}
+
 /**
- * Applies each initially selected high-confidence gap through the existing
- * preview -> certification -> journal acceptance boundary. No workspace commit
- * occurs here; accepted commands remain undoable draft edits.
+ * Repeatedly scans the current certified draft and applies one high-confidence
+ * SNAP_GAP at a time through preview -> certification -> journal acceptance.
+ * Re-scanning after every merge prevents stale issue identities from driving a
+ * later command. Rejected issue identities are not retried in the same run.
+ * No workspace commit occurs here; accepted commands remain undoable drafts.
  */
 export function applyHighConfidenceGapAutofix(
   session,
@@ -62,19 +75,17 @@ export function applyHighConfidenceGapAutofix(
   const applied = [];
   const rejected = [];
   const skipped = [];
+  const attemptedIssueIds = new Set();
+  const nodeCount = session.currentTopology()?.nodes?.length ?? 0;
+  const maxAttempts = Math.max(1, nodeCount);
 
-  for (const issueId of plan.exactGapIssueIds) {
-    const currentIssues = checkCanonicalTopology(session.currentTopology(), options);
-    const currentIssue = currentIssues.find((issue) => issue.id === issueId);
-    if (!currentIssue) {
-      skipped.push(Object.freeze({ issueId, reason: 'RESOLVED_BY_PRIOR_AUTOFIX' }));
-      continue;
-    }
-    const currentPlan = buildHighConfidenceGapAutofixPlan([currentIssue], exactToleranceMm);
-    if (!currentPlan.exactGapIssueIds.includes(issueId)) {
-      rejected.push(Object.freeze({ issueId, reason: 'NO_LONGER_HIGH_CONFIDENCE' }));
-      continue;
-    }
+  for (let attempt = 0; attempt < maxAttempts; attempt += 1) {
+    const current = currentHighConfidenceIssues(session, options, exactToleranceMm);
+    const currentIssue = current.exactIssues.find((issue) => !attemptedIssueIds.has(issue.id));
+    if (!currentIssue) break;
+    const issueId = currentIssue.id;
+    attemptedIssueIds.add(issueId);
+
     const suggestion = session.autofixSuggestions([currentIssue])[0];
     if (!suggestion) {
       rejected.push(Object.freeze({ issueId, reason: 'NO_CERTIFIED_SUGGESTION' }));
@@ -107,6 +118,14 @@ export function applyHighConfidenceGapAutofix(
 
   const finalIssues = checkCanonicalTopology(session.currentTopology(), options);
   const remaining = buildHighConfidenceGapAutofixPlan(finalIssues, exactToleranceMm);
+  for (const issueId of plan.exactGapIssueIds) {
+    if (!finalIssues.some((issue) => issue.id === issueId)) {
+      const appliedDirectly = applied.some((row) => row.issueId === issueId);
+      if (!appliedDirectly) {
+        skipped.push(Object.freeze({ issueId, reason: 'RESOLVED_BY_PRIOR_AUTOFIX' }));
+      }
+    }
+  }
   return Object.freeze({
     plan,
     applied: Object.freeze(applied),

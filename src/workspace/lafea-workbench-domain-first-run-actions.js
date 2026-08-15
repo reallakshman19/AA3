@@ -1,5 +1,6 @@
 /** Authoritative domain-first execution action for the canonical workbench orchestrator. */
 import { projectLafeaContinuumBcLoadGlyphs } from './lafea-continuum-bc-load-glyphs.js';
+import { retainLafeaBcLoadGlyphDisplayProjection } from './lafea-continuum-bc-load-glyph-display-cache.js';
 import { executeLafeaContinuumAuthoritativeWorkbenchRun } from './lafea-continuum-authoritative-workbench-run.js';
 import { registerLafeaContinuumDomainFirstLifecycleProducerBatch } from './lafea-continuum-domain-first-lifecycle-producers.js';
 import { projectLafeaRuntimeSolverDiagnostics } from './lafea-runtime-solver-diagnostics.js';
@@ -90,6 +91,7 @@ export function createLafeaWorkbenchDomainFirstRunActions(context) {
         outcome.execution,
         runtimeSolverDiagnostics,
       );
+      retainLafeaBcLoadGlyphDisplayProjection(bcLoadGlyphProjection);
       c.domainFirstExecution.retain(stageId, freeze({
         ...outcome.execution,
         runTransaction: transaction,

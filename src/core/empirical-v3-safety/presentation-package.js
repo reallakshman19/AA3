@@ -5,19 +5,15 @@ import { requireEmpiricalV3ComponentAuthority } from './component-authority.js';
 import { requireEngineeringRiskSet } from './risk-finding.js';
 import { requireEngineeringConfirmationReceipt } from './confirmation-receipt.js';
 import { requireEmpiricalV3CalculationAuthorization } from './calculation-authorization.js';
-import { EMPIRICAL_V3_WORKFLOW_SCHEMA, EMPIRICAL_V3_WORKFLOW_STATES } from './workflow-state.js';
+import { requireEmpiricalV3WorkflowProjection } from './workflow-state.js';
 
 export const EMPIRICAL_V3_SAFETY_PRESENTATION_PACKAGE_SCHEMA =
   'empirical-v3-safety-presentation-package/v1';
 
-/**
- * Seals a presentation envelope over already-governed records. The package
- * carries full records so UI/audit surfaces can render by reference; it does
- * not classify risks, resolve authorities, project workflow, or authorize a run.
- */
+/** Presentation envelope over already-governed records; no reclassification/authorization. */
 export function sealEmpiricalV3SafetyPresentationPackage(input) {
   const runId = requireText(input?.runId, 'runId');
-  const workflow = normalizeWorkflowProjection(input?.workflow);
+  const workflow = requireEmpiricalV3WorkflowProjection(input?.workflow);
   const branches = requireBranches(input?.branches, runId);
   const components = requireComponents(input?.components, runId, branches);
   const riskSet = requireEngineeringRiskSet(input?.riskSet);
@@ -26,7 +22,6 @@ export function sealEmpiricalV3SafetyPresentationPackage(input) {
   const calculationAuthorization = normalizeAuthorization(input?.calculationAuthorization, runId);
   requireWorkflowAuthorizationConsistency(workflow, calculationAuthorization);
   const records = normalizeRecords(input?.records ?? []);
-
   const semanticMaterial = {
     schema: EMPIRICAL_V3_SAFETY_PRESENTATION_PACKAGE_SCHEMA,
     runId,
@@ -54,7 +49,6 @@ export function sealEmpiricalV3SafetyPresentationPackage(input) {
     })),
   };
   const packageHash = semanticHash(semanticMaterial);
-
   return deepFreeze({
     ...semanticMaterial,
     workflow,
@@ -73,40 +67,13 @@ export function requireEmpiricalV3SafetyPresentationPackage(value) {
     throw new TypeError(`Expected schema ${EMPIRICAL_V3_SAFETY_PRESENTATION_PACKAGE_SCHEMA}.`);
   }
   const accepted = sealEmpiricalV3SafetyPresentationPackage(value);
-  if (value.semanticHash !== accepted.semanticHash) {
-    throw new Error('Empirical V3 safety presentation package hash mismatch.');
-  }
+  if (value.semanticHash !== accepted.semanticHash) throw new Error('Empirical V3 safety presentation package hash mismatch.');
   return accepted;
 }
 
 export function findEmpiricalV3PresentationRecord(packageValue, ref) {
   const value = requireEmpiricalV3SafetyPresentationPackage(packageValue);
   return value.records.find((entry) => entry.ref === ref) ?? null;
-}
-
-function normalizeWorkflowProjection(value) {
-  if (!value || value.schema !== EMPIRICAL_V3_WORKFLOW_SCHEMA) {
-    throw new TypeError(`Safety package requires ${EMPIRICAL_V3_WORKFLOW_SCHEMA}.`);
-  }
-  const state = requireText(value.state, 'workflow.state');
-  if (!EMPIRICAL_V3_WORKFLOW_STATES.includes(state)) throw new TypeError('workflow.state is invalid.');
-  const semanticHashValue = requireText(value.semanticHash, 'workflow.semanticHash');
-  const canRunCalculation = value.canRunCalculation === true;
-  if (canRunCalculation !== (state === 'CALCULATION_AUTHORIZED')) {
-    throw new Error('Workflow run flag does not match CALCULATION_AUTHORIZED state.');
-  }
-  const calculationAuthorizationRef = optionalText(value.calculationAuthorizationRef);
-  if (canRunCalculation && !calculationAuthorizationRef) {
-    throw new Error('Authorized workflow must reference the sealed calculation authorization.');
-  }
-  return deepFreeze({
-    schema: value.schema,
-    state,
-    reasonCodes: normalizeTexts(value.reasonCodes ?? [], 'workflow.reasonCodes'),
-    canRunCalculation,
-    calculationAuthorizationRef,
-    semanticHash: semanticHashValue,
-  });
 }
 
 function requireBranches(value, runId) {
@@ -116,7 +83,6 @@ function requireBranches(value, runId) {
   requireUnique(rows.map((row) => row.branchId), 'branchId');
   return rows.sort((a, b) => a.branchId.localeCompare(b.branchId));
 }
-
 function requireComponents(value, runId, branches) {
   if (!Array.isArray(value) || value.length === 0) throw new TypeError('components must be a nonempty array.');
   const branchHashes = new Map(branches.map((branch) => [branch.branchId, branch.semanticHash]));
@@ -130,43 +96,35 @@ function requireComponents(value, runId, branches) {
   requireUnique(rows.map((row) => row.componentId), 'componentId');
   return rows.sort((a, b) => a.componentId.localeCompare(b.componentId));
 }
-
 function requireConfirmations(value, riskSet) {
   if (!Array.isArray(value)) throw new TypeError('confirmations must be an array.');
   const riskIds = new Set(riskSet.risks.map((risk) => risk.riskId));
   const rows = value.map(requireEngineeringConfirmationReceipt);
   for (const receipt of rows) {
-    if (!riskIds.has(receipt.riskRef.riskId)) {
-      throw new Error(`Confirmation ${receipt.receiptId} is outside the current risk set.`);
-    }
+    if (!riskIds.has(receipt.riskRef.riskId)) throw new Error(`Confirmation ${receipt.receiptId} is outside the current risk set.`);
   }
   requireUnique(rows.map((row) => row.receiptId), 'receiptId');
   return rows.sort((a, b) => a.receiptId.localeCompare(b.receiptId));
 }
-
 function normalizeAuthorization(value, runId) {
   if (value === null || value === undefined) return null;
   const authorization = requireEmpiricalV3CalculationAuthorization(value);
   if (authorization.runId !== runId) throw new Error('Calculation authorization belongs to another run.');
   return authorization;
 }
-
 function requireWorkflowAuthorizationConsistency(workflow, authorization) {
   if (!workflow.canRunCalculation) return;
   if (!authorization || authorization.semanticHash !== workflow.calculationAuthorizationRef) {
     throw new Error('Workflow authorization reference does not match the supplied sealed authorization.');
   }
 }
-
 function normalizeRecords(value) {
   if (!Array.isArray(value)) throw new TypeError('records must be an array.');
   const rows = value.map((entry, index) => {
     if (!entry || typeof entry !== 'object') throw new TypeError(`records[${index}] must be an object.`);
     const record = cloneJson(entry.record);
     const semanticHashValue = requireText(entry.semanticHash, `records[${index}].semanticHash`);
-    if (record.semanticHash && record.semanticHash !== semanticHashValue) {
-      throw new Error(`records[${index}] semantic hash does not match its record.`);
-    }
+    if (record.semanticHash && record.semanticHash !== semanticHashValue) throw new Error(`records[${index}] semantic hash does not match its record.`);
     return {
       ref: requireText(entry.ref, `records[${index}].ref`),
       kind: requireText(entry.kind, `records[${index}].kind`),
@@ -178,24 +136,8 @@ function normalizeRecords(value) {
   requireUnique(rows.map((row) => `${row.kind}\u0000${row.ref}`), 'record ref');
   return rows.sort((a, b) => a.kind.localeCompare(b.kind) || a.ref.localeCompare(b.ref));
 }
-
-function referenceRecord(value) {
-  return { ref: value.branchId ?? value.componentId, semanticHash: value.semanticHash };
-}
-function cloneJson(value) {
-  if (!value || typeof value !== 'object') throw new TypeError('Presentation record must be an object.');
-  return JSON.parse(JSON.stringify(value));
-}
-function requireUnique(values, label) {
-  if (new Set(values).size !== values.length) throw new Error(`Safety package contains duplicate ${label}.`);
-}
-function normalizeTexts(value, fieldName) {
-  if (!Array.isArray(value)) throw new TypeError(`${fieldName} must be an array.`);
-  return value.map((item, index) => requireText(item, `${fieldName}[${index}]`));
-}
+function referenceRecord(value) { return { ref: value.branchId ?? value.componentId, semanticHash: value.semanticHash }; }
+function cloneJson(value) { if (!value || typeof value !== 'object') throw new TypeError('Presentation record must be an object.'); return JSON.parse(JSON.stringify(value)); }
+function requireUnique(values, label) { if (new Set(values).size !== values.length) throw new Error(`Safety package contains duplicate ${label}.`); }
 function optionalText(value) { const text = String(value ?? '').trim(); return text || null; }
-function requireText(value, fieldName) {
-  const text = String(value ?? '').trim();
-  if (!text) throw new TypeError(`${fieldName} is required.`);
-  return text;
-}
+function requireText(value, fieldName) { const text = String(value ?? '').trim(); if (!text) throw new TypeError(`${fieldName} is required.`); return text; }

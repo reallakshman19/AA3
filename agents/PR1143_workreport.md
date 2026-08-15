@@ -10,7 +10,7 @@
 - Baseline SHA: `dad2f1dbf8f200132c9669d275467611d51d6d3b`
 - Working branch: `agent/empirical-rom-flexibility-kernel-20260815`
 - REPORT_BASIS_HEAD: `258ff840df45da4049a6a2d670e22d60cb193545`
-- PR state at report creation: `OPEN / DRAFT`
+- PR state at latest reconciliation: `OPEN / DRAFT / MERGEABLE`
 - Merge authority: not granted; owner authorization is required.
 - Grounding epoch: `GE-EMPROM-001`
 
@@ -32,7 +32,7 @@ Exact next engineering action after this PR: build the governed route/unit-load 
 ## Live ground truth
 
 - Current `main` was rechecked immediately before PR creation and remained `dad2f1dbf8f200132c9669d275467611d51d6d3b`.
-- PR #1143 was opened as draft from this branch.
+- PR #1143 is open, draft and mergeable.
 - Open PR coordination: PR #1139 is the LAFEA.3 B-bar qualification stream and does not overlap these empirical piping mechanics paths.
 - Coordination classification: `SAFE` for this first slice.
 - `agents/MASTER_INDEX.md` is absent on current main; repository uses per-PR/WIP ledgers under `agents/`.
@@ -107,15 +107,15 @@ Explicitly outside this PR:
 
 ## Changed-file ledger
 
-Engineering basis head `258ff840...`:
+Engineering basis head `258ff840...` plus report-only reconciliation:
 
 - `src/core/empirical-piping-mechanics/flexibility.js` — new exact prismatic virtual-work and unit-force matrix kernel.
 - `src/core/empirical-piping-mechanics/contracts.js` — adds `EMP-FLX-001` through `EMP-FLX-005` formula identities.
 - `src/core/empirical-piping-mechanics/index.js` — exports the new mechanics functions.
 - `scripts/empirical-flexibility-kernel-check.mjs` — independent analytical qualification cases.
-- `agents/PR1143_workreport.md` — handover ledger (report-only commit after basis head).
+- `agents/PR1143_workreport.md` — durable PR-specific handover ledger.
 
-`agents/WIP-empirical-rom-flexibility-20260815.md` is superseded by this PR-specific report and should be removed.
+The temporary `agents/WIP-empirical-rom-flexibility-20260815.md` ledger was removed after PR allocation and is superseded by this report.
 
 ## Validation ledger
 
@@ -168,12 +168,15 @@ reciprocity residual       0
 - ORACLE: `IMPLEMENTATION_COUPLED`
 - Limitation: no full local repository checkout is available in this connector-only execution environment.
 
-### VAL-EMPROM-004 — exact-head GitHub Actions
+### VAL-EMPROM-004 — exact-head GitHub Actions / commit status
 
 - STATUS: `NOT_RUN`
-- OBSERVATION: `NOT_OBSERVED`
+- OBSERVATION: `REMOTE_EXECUTION / NOT_OBSERVED`
 - ORACLE: `NONE`
-- PR was just created; workflow state must be inspected separately. No PASS is claimed here.
+- Checked exact draft head `3a9baaea19ea73ab7b4d73c42ae384c34a1ae9c4` after PR/report cleanup.
+- GitHub Actions query returned `total_count: 0` and `workflow_runs: []`.
+- Commit status query returned `statuses: []`, `total_count: 0`; aggregate state was `pending` only because no statuses exist.
+- No exact-head CI PASS is claimed and no test failure is inferred.
 
 ## Risks / open work
 
@@ -195,7 +198,7 @@ For straight prismatic segments with linearly varying resultants, the integratio
 
 ## PR / release disposition
 
-- PR #1143: `DRAFT`.
+- PR #1143: `DRAFT / MERGEABLE`.
 - Production method registration: `NOT_REQUESTED / NOT_GRANTED`.
 - Existing production calculation behavior: intentionally unchanged.
 - Merge authority: not granted.

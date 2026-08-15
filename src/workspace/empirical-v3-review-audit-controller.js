@@ -46,10 +46,23 @@ export class EmpiricalV3ReviewAuditController {
       },
       auditMetadata: { actor, timestamp: new Date().toISOString(), comment },
     });
-    const readiness = sealEmpiricalV3AuditReadiness({ evidence, resultReview: receipt });
     this.resultReview = receipt;
+    this.auditReadiness = null;
+    return {
+      receipt,
+      nextPackage: this.options.onResultReviewCreated?.(receipt) ?? null,
+    };
+  }
+
+  prepareAudit(evidence) {
+    if (!this.resultReview) throw new Error('Current result review is required before audit readiness.');
+    const resultReview = requireCurrentEmpiricalV3ResultReview(this.resultReview, evidence);
+    const readiness = sealEmpiricalV3AuditReadiness({ evidence, resultReview });
     this.auditReadiness = readiness;
-    return { receipt, readiness, nextPackage: this.options.onResultReviewCreated?.(receipt, readiness) ?? null };
+    return {
+      readiness,
+      nextPackage: this.options.onAuditReadinessCreated?.(readiness, resultReview) ?? null,
+    };
   }
 
   loadResultReview(value, evidence) {
@@ -78,11 +91,12 @@ export class EmpiricalV3ReviewAuditController {
     }
   }
 
-  createAuditExport(workflowState, evidence) {
+  createAuditExport(workflowState, evidence, safetyPackage) {
     if (!this.canExport(workflowState, evidence)) {
       throw new Error('Audit export requires AUDIT_EXPORT_READY workflow, current result review, and current audit readiness.');
     }
     return createEmpiricalV3AuditJsonExport({
+      safetyPackage,
       evidence,
       resultReview: this.resultReview,
       auditReadiness: this.auditReadiness,

@@ -9,9 +9,6 @@ import {
   sealEngineeringRiskFinding,
 } from '../../../core/empirical-v3-safety/risk-finding.js';
 
-export const EMPIRICAL_V3_ADAPTED_RESOLUTION_SCHEMA =
-  'empirical-v3-adapted-resolution-reference/v1';
-
 const LEGACY_INFERENCE_SOURCES = new Set([
   'CONFIG_DEFAULT',
   'HEURISTIC',
@@ -123,10 +120,7 @@ export function adaptLegacyNumericResolution(input) {
   return deepFreeze({ quantity, risk, disposition: 'REVIEW_REQUIRED' });
 }
 
-/**
- * Adapts a current sealed DECLARED field. This is the narrow direct-source
- * route; inherited/missing or unsealed fields cannot be promoted here.
- */
+/** Narrow direct-source route for a current sealed DECLARED numeric field. */
 export function adaptSealedDeclaredNumericField(input) {
   const field = input?.field;
   const authorityRef = normalizeAuthorityRef(input?.authorityRef, 'authorityRef');
@@ -136,7 +130,6 @@ export function adaptSealedDeclaredNumericField(input) {
   if (!Array.isArray(field.evidence) || field.evidence.length === 0) {
     throw new Error('Declared source-exact field requires source evidence.');
   }
-  const evidenceHash = semanticHash(field.evidence);
   return sealEngineeringQuantityAuthority({
     schema: ENGINEERING_QUANTITY_AUTHORITY_SCHEMA,
     quantityId: requireText(input.quantityId, 'quantityId'),
@@ -150,68 +143,12 @@ export function adaptSealedDeclaredNumericField(input) {
       sourceReference: `${authorityRef.ref}:${requireText(input.fieldName, 'fieldName')}`,
       sourceSemanticHash: authorityRef.semanticHash,
       evidenceRef: `${authorityRef.ref}:evidence`,
-      evidenceHash,
+      evidenceHash: semanticHash(field.evidence),
     },
     derivation: null,
     riskRefs: [],
     confirmationRef: null,
   });
-}
-
-/**
- * Non-numeric branch/common resolver result (piping class, material mapping,
- * etc.). The semantic hash carries the authority class so downstream branch
- * identity changes when an approximate result is replaced by exact authority.
- */
-export function adaptResolutionReference(input) {
-  const basis = normalizeReferenceBasis(input);
-  let authorityClass = 'INFERRED_REVIEW_REQUIRED';
-  let risk = null;
-  if (!basis.ref) authorityClass = 'UNRESOLVED';
-  else if (basis.exactMasterApproved && !basis.needsReview) authorityClass = 'APPROVED_MASTER_EXACT';
-  else if (basis.exactSourceApproved && !basis.needsReview) authorityClass = 'SOURCE_EXACT';
-
-  const material = {
-    schema: EMPIRICAL_V3_ADAPTED_RESOLUTION_SCHEMA,
-    kind: basis.kind,
-    ref: basis.ref || `unresolved:${basis.kind.toLowerCase()}`,
-    authorityClass,
-    source: basis.source,
-    sourceSemanticHash: basis.sourceSemanticHash,
-    matchMethod: basis.matchMethod,
-    needsReview: basis.needsReview,
-  };
-  const record = deepFreeze({ ...material, semanticHash: semanticHash(material) });
-
-  if (authorityClass === 'UNRESOLVED' || authorityClass === 'INFERRED_REVIEW_REQUIRED') {
-    risk = sealEngineeringRiskFinding({
-      schema: ENGINEERING_RISK_FINDING_SCHEMA,
-      riskCode: authorityClass === 'UNRESOLVED'
-        ? 'EMP_V3_BRANCH_AUTHORITY_UNRESOLVED'
-        : 'EMP_V3_BRANCH_AUTHORITY_REVIEW_REQUIRED',
-      riskClass: authorityClass === 'UNRESOLVED' ? 'HIGH_BLOCK' : 'HIGH_CONFIRM',
-      runId: basis.runId,
-      scope: { branchId: null, entityIds: basis.entityIds, quantityIds: [] },
-      reasonCode: authorityClass === 'UNRESOLVED'
-        ? 'REQUIRED_BRANCH_AUTHORITY_MISSING'
-        : 'APPROXIMATE_OR_INFERRED_BRANCH_AUTHORITY',
-      messageParameters: {
-        kind: basis.kind,
-        source: basis.source,
-        matchMethod: basis.matchMethod,
-      },
-      valueSnapshot: null,
-      authorityRefs: [{ ref: record.ref, semanticHash: record.semanticHash }],
-      sourceRefs: basis.sourceSemanticHash
-        ? [{ ref: basis.source, semanticHash: basis.sourceSemanticHash }]
-        : [],
-      governingDependencyRefs: [{
-        ref: `resolution:${basis.kind}:${record.ref}`,
-        semanticHash: record.semanticHash,
-      }],
-    });
-  }
-  return deepFreeze({ record, risk, disposition: authorityClass });
 }
 
 function normalizeLegacyBasis(input) {
@@ -239,25 +176,10 @@ function normalizeLegacyBasis(input) {
   };
 }
 
-function normalizeReferenceBasis(input) {
-  return {
-    runId: requireText(input?.runId, 'runId'),
-    kind: requireText(input?.kind, 'kind').toUpperCase(),
-    ref: optionalText(input?.ref),
-    source: requireText(input?.source || 'unresolved', 'source'),
-    sourceSemanticHash: optionalText(input?.sourceSemanticHash),
-    matchMethod: normalizeToken(input?.matchMethod || 'none'),
-    needsReview: input?.needsReview !== false,
-    exactMasterApproved: input?.exactMasterApproved === true,
-    exactSourceApproved: input?.exactSourceApproved === true,
-    entityIds: uniqueTexts(input?.entityIds ?? []),
-  };
-}
-
 function classifyLegacySourceType(basis) {
   if (basis.flags.some((flag) => INFERENCE_FLAGS.has(flag))) return 'LEGACY_FALLBACK';
   if (basis.flags.some((flag) => MISSING_VALUE_FLAGS.has(flag))) return 'DEFAULT_ZERO';
-  if (basis.exactMasterApproved && basis.source === 'PIPING-CLASS-MASTER') return 'APPROVED_PIPING_CLASS_MASTER';
+  if (basis.exactMasterApproved && basis.source === 'PIPING_CLASS_MASTER') return 'APPROVED_PIPING_CLASS_MASTER';
   if (basis.exactSourceApproved) return 'SEALED_EXACT_SOURCE';
   if (basis.matchMethod.includes('FUZZY') || basis.matchMethod.includes('AMBIGUOUS')) return 'FUZZY_MATCH';
   const token = basis.source.replaceAll('-', '_');
@@ -328,14 +250,12 @@ function riskCodeForSource(sourceType) {
   if (sourceType === 'DEFAULT_ZERO') return 'EMP_V3_DEFAULT_ZERO_ASSUMPTION';
   return 'EMP_V3_INFERRED_ENGINEERING_QUANTITY';
 }
-
 function reasonCodeForSource(sourceType, basis) {
   if (sourceType === 'FUZZY_MATCH') return 'FUZZY_OR_AMBIGUOUS_MATCH_REQUIRES_REVIEW';
   if (sourceType === 'SERVICE_FALLBACK') return 'SERVICE_DERIVED_PROCESS_VALUE_REQUIRES_REVIEW';
   if (basis.flags.length) return 'LEGACY_DEDUCED_VALUE_REQUIRES_REVIEW';
   return 'NON_EXACT_SOURCE_REQUIRES_REVIEW';
 }
-
 function normalizeAuthorityRef(value, fieldName) {
   if (!value || typeof value !== 'object') throw new TypeError(`${fieldName} must be an object.`);
   return {
@@ -344,7 +264,6 @@ function normalizeAuthorityRef(value, fieldName) {
     evidenceHash: requireText(value.evidenceHash, `${fieldName}.evidenceHash`),
   };
 }
-
 function normalizeToken(value) {
   return String(value ?? '').trim().toUpperCase().replace(/[^A-Z0-9]+/g, '_');
 }

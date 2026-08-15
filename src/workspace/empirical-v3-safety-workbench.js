@@ -1,6 +1,5 @@
 import {
   createEngineeringConfirmationReceipt,
-  createEmpiricalV3AuditJsonExport,
   requireEmpiricalV3CoupledCalculationEvidence,
   requireEmpiricalV3SafetyPresentationPackage,
 } from '../core/empirical-v3-safety/index.js';
@@ -9,23 +8,16 @@ import { EVENT_TOPICS } from './event-topics.js';
 import { renderEmpiricalV3BranchBasis } from './empirical-v3-branch-basis-view.js';
 import { renderEmpiricalV3EvidenceInspector } from './empirical-v3-evidence-view.js';
 import { renderEmpiricalV3ExplainCalculation } from './empirical-v3-explain-calculation-view.js';
-import {
-  focusEmpiricalV3Risk,
-  renderEmpiricalV3SafetyGate,
-} from './empirical-v3-safety-gate-view.js';
+import { renderEmpiricalV3ResultReview } from './empirical-v3-result-review-view.js';
+import { EmpiricalV3ReviewAuditController } from './empirical-v3-review-audit-controller.js';
+import { focusEmpiricalV3Risk, renderEmpiricalV3SafetyGate } from './empirical-v3-safety-gate-view.js';
 import { createEmpiricalV3SafetyWorkbenchSection } from './empirical-v3-safety-workbench-dom.js';
 
 export function mountEmpiricalV3SafetyWorkbench(applicationRoot, options = {}) {
-  if (!applicationRoot || typeof applicationRoot.querySelector !== 'function') {
-    throw new TypeError('Empirical V3 safety workbench requires the application root.');
-  }
-  const panelContainer = applicationRoot.querySelector('[data-panel="properties"] .panel-collapsible-content');
-  if (!panelContainer) throw new TypeError('Empirical V3 safety workbench mount root is missing.');
-  return new EmpiricalV3SafetyWorkbenchController(
-    panelContainer,
-    options.documentRef ?? applicationRoot.ownerDocument,
-    options,
-  ).init();
+  if (!applicationRoot || typeof applicationRoot.querySelector !== 'function') throw new TypeError('Empirical V3 safety workbench requires the application root.');
+  const panel = applicationRoot.querySelector('[data-panel="properties"] .panel-collapsible-content');
+  if (!panel) throw new TypeError('Empirical V3 safety workbench mount root is missing.');
+  return new EmpiricalV3SafetyWorkbenchController(panel, options.documentRef ?? applicationRoot.ownerDocument, options).init();
 }
 
 export class EmpiricalV3SafetyWorkbenchController {
@@ -41,6 +33,11 @@ export class EmpiricalV3SafetyWorkbenchController {
     this.message = 'No sealed Empirical V3 safety package is loaded.';
     this.error = '';
     this.elements = null;
+    this.reviewAudit = new EmpiricalV3ReviewAuditController({
+      onResultReviewCreated: (receipt, readiness) => this.options.onResultReviewCreated?.(
+        receipt, readiness, this.packageValue, this.calculationEvidence,
+      ) ?? null,
+    });
   }
 
   init() {
@@ -52,237 +49,146 @@ export class EmpiricalV3SafetyWorkbenchController {
     this.elements.explainTab.addEventListener('click', () => this.setTab('EXPLAIN'));
     this.elements.auditButton.addEventListener('click', () => this.downloadAuditExport());
     this.elements.clearButton.addEventListener('click', () => this.clear());
-    this.render();
-    return this;
+    this.render(); return this;
   }
 
   loadPackage(value) {
     const next = requireEmpiricalV3SafetyPresentationPackage(value);
     if (this.calculationEvidence && !evidenceMatchesPackage(this.calculationEvidence, next)) {
-      this.calculationEvidence = null;
-    }
-    this.packageValue = next;
-    this.lastConfirmationReceipt = null;
-    this.error = '';
+      this.calculationEvidence = null; this.reviewAudit.clear();
+    } else this.reviewAudit.invalidateForEvidence(this.calculationEvidence);
+    this.packageValue = next; this.lastConfirmationReceipt = null; this.error = '';
     this.message = `Loaded safety package for ${next.runId}. Workflow ${next.workflow.state}. Risk set ${next.riskSet.riskSetId}.`;
-    this.render();
-    return next;
+    this.render(); return next;
   }
 
   loadCalculationEvidence(value) {
     const evidence = requireEmpiricalV3CoupledCalculationEvidence(value);
-    if (!this.packageValue) throw new Error('Load the current sealed safety package before calculation evidence.');
-    if (!evidenceMatchesPackage(evidence, this.packageValue)) {
-      throw new Error('Calculation evidence is stale or belongs to another safety package authorization.');
-    }
-    this.calculationEvidence = evidence;
-    this.activeTab = 'EXPLAIN';
-    this.error = '';
-    this.message = `Loaded sealed calculation evidence ${evidence.evidenceId}.`;
-    this.render();
-    return evidence;
+    if (!this.packageValue || !evidenceMatchesPackage(evidence, this.packageValue)) throw new Error('Calculation evidence is stale or belongs to another safety package authorization.');
+    this.calculationEvidence = evidence; this.reviewAudit.invalidateForEvidence(evidence); this.activeTab = 'EXPLAIN'; this.error = '';
+    this.message = `Loaded sealed calculation evidence ${evidence.evidenceId}.`; this.render(); return evidence;
+  }
+
+  loadResultReviewReceipt(value) {
+    if (!this.calculationEvidence) throw new Error('Calculation evidence is required before result review.');
+    const receipt = this.reviewAudit.loadResultReview(value, this.calculationEvidence); this.render(); return receipt;
+  }
+  loadAuditReadiness(value) {
+    if (!this.calculationEvidence) throw new Error('Calculation evidence is required before audit readiness.');
+    const readiness = this.reviewAudit.loadAuditReadiness(value, this.calculationEvidence); this.render(); return readiness;
   }
 
   clear() {
-    this.packageValue = null;
-    this.calculationEvidence = null;
-    this.lastConfirmationReceipt = null;
-    this.activeTab = 'BRANCH_BASIS';
-    this.error = '';
-    this.message = 'Empirical V3 safety/evidence workbench cleared.';
-    this.render();
+    this.packageValue = null; this.calculationEvidence = null; this.reviewAudit.clear(); this.lastConfirmationReceipt = null;
+    this.activeTab = 'BRANCH_BASIS'; this.error = ''; this.message = 'Empirical V3 safety/evidence workbench cleared.'; this.render();
   }
-
   setTab(tab) {
-    if (!['BRANCH_BASIS', 'SAFETY_GATE', 'EXPLAIN'].includes(tab)) {
-      throw new RangeError(`Unsupported Empirical V3 tab: ${tab}`);
-    }
-    this.activeTab = tab;
-    this.render();
+    if (!['BRANCH_BASIS', 'SAFETY_GATE', 'EXPLAIN'].includes(tab)) throw new RangeError(`Unsupported Empirical V3 tab: ${tab}`);
+    this.activeTab = tab; this.render();
   }
-
-  openRisk(riskId) {
-    this.activeTab = 'SAFETY_GATE';
-    this.render();
-    return focusEmpiricalV3Risk(this.elements.content, riskId);
-  }
+  openRisk(riskId) { this.activeTab = 'SAFETY_GATE'; this.render(); return focusEmpiricalV3Risk(this.elements.content, riskId); }
 
   locateEntities(entityIds) {
-    const ids = uniqueTexts(entityIds);
-    if (!ids.length) return;
-    if (typeof this.options.onLocateEntities === 'function') {
-      this.options.onLocateEntities(ids);
-      return;
-    }
+    const ids = uniqueTexts(entityIds); if (!ids.length) return;
+    if (typeof this.options.onLocateEntities === 'function') return this.options.onLocateEntities(ids);
     EventBus.publish(EVENT_TOPICS.VIEWPORT_SELECTION_REQUESTED, { entityId: ids[0], source: 'api' });
-    this.message = ids.length === 1
-      ? `Located ${ids[0]}.`
-      : `Located ${ids[0]}; ${ids.length - 1} additional governed entities remain linked.`;
-    this.renderStatus();
+    this.message = ids.length === 1 ? `Located ${ids[0]}.` : `Located ${ids[0]}; ${ids.length - 1} additional governed entities remain linked.`; this.renderStatus();
   }
-
   showRecord(ref, semanticHash) {
-    const entry = this.packageValue?.records.find((record) => (
-      record.ref === ref && (!semanticHash || record.semanticHash === semanticHash)
-    )) ?? null;
+    const entry = this.packageValue?.records.find((row) => row.ref === ref && (!semanticHash || row.semanticHash === semanticHash)) ?? null;
     renderEmpiricalV3EvidenceInspector(this.elements.evidence, entry);
-    if (!entry) this.error = `No sealed presentation record is available for ${ref}.`;
-    this.renderStatus();
-    return entry;
+    if (!entry) this.error = `No sealed presentation record is available for ${ref}.`; this.renderStatus(); return entry;
   }
 
   reviewAssumption(risk, review = {}) {
     if (!this.packageValue) throw new Error('A current safety package is required.');
-    const actor = requiredText(review.actor, 'Reviewer');
-    const comment = requiredText(review.comment, 'Review basis / comment');
     try {
       const receipt = createEngineeringConfirmationReceipt({
-        risk,
-        basisCode: 'ENGINEER_CONFIRMED_CURRENT_ASSUMPTION',
-        basisParameters: {
-          riskSemanticHash: risk.semanticHash,
-          reasonCode: risk.reasonCode,
-          valueSnapshot: risk.valueSnapshot,
-        },
+        risk, basisCode: 'ENGINEER_CONFIRMED_CURRENT_ASSUMPTION',
+        basisParameters: { riskSemanticHash: risk.semanticHash, reasonCode: risk.reasonCode, valueSnapshot: risk.valueSnapshot },
         authorityRefs: risk.authorityRefs.filter((ref) => ref.semanticHash),
-        auditMetadata: { actor, timestamp: new Date().toISOString(), comment },
+        auditMetadata: { actor: requiredText(review.actor, 'Reviewer'), timestamp: new Date().toISOString(), comment: requiredText(review.comment, 'Review basis / comment') },
       });
-      this.lastConfirmationReceipt = receipt;
-      this.error = '';
+      this.lastConfirmationReceipt = receipt; this.error = '';
       this.message = `Created singular confirmation ${receipt.receiptId}. The Safety Gate remains unchanged until a re-evaluated sealed package is supplied.`;
-      const nextPackage = this.options.onConfirmationCreated?.(receipt, this.packageValue) ?? null;
-      if (nextPackage) this.packageValue = requireEmpiricalV3SafetyPresentationPackage(nextPackage);
-      this.render();
-      return receipt;
-    } catch (error) {
-      this.error = errorMessage(error);
-      this.message = 'Engineering assumption confirmation was rejected.';
-      this.render();
-      throw error;
-    }
+      const next = this.options.onConfirmationCreated?.(receipt, this.packageValue) ?? null;
+      if (next) this.packageValue = requireEmpiricalV3SafetyPresentationPackage(next);
+      this.render(); return receipt;
+    } catch (error) { return this.fail('Engineering assumption confirmation was rejected.', error); }
+  }
+
+  reviewResult(review = {}) {
+    if (!this.calculationEvidence) throw new Error('Sealed calculation evidence is required for result review.');
+    if (this.packageValue?.workflow.state !== 'RESULT_REVIEW_REQUIRED') throw new Error('Result review requires current RESULT_REVIEW_REQUIRED workflow.');
+    try {
+      const result = this.reviewAudit.review(this.calculationEvidence, review);
+      if (result.nextPackage) this.packageValue = requireEmpiricalV3SafetyPresentationPackage(result.nextPackage);
+      this.error = ''; this.message = `Recorded result review ${result.receipt.receiptId}. Audit remains gated by AUDIT_EXPORT_READY workflow.`;
+      this.render(); return result.receipt;
+    } catch (error) { return this.fail('Empirical V3 result review was rejected.', error); }
   }
 
   requestRun() {
-    if (!this.packageValue?.workflow.canRunCalculation || !this.packageValue.calculationAuthorization) {
-      throw new Error('Empirical V3 calculation requires the current sealed calculation authorization.');
-    }
+    if (!this.packageValue?.workflow.canRunCalculation || !this.packageValue.calculationAuthorization) throw new Error('Empirical V3 calculation requires the current sealed calculation authorization.');
     if (typeof this.options.onRunRequested !== 'function') throw new Error('Empirical V3 execution bridge is not wired.');
-    const result = this.options.onRunRequested({
-      authorization: this.packageValue.calculationAuthorization,
-      packageValue: this.packageValue,
-    });
-    if (result && typeof result.then === 'function') {
-      return result.then((resolved) => this.acceptRunResult(resolved));
-    }
-    return this.acceptRunResult(result);
+    const result = this.options.onRunRequested({ authorization: this.packageValue.calculationAuthorization, packageValue: this.packageValue });
+    return result?.then ? result.then((value) => this.acceptRunResult(value)) : this.acceptRunResult(result);
   }
-
   acceptRunResult(result) {
+    if (result?.nextPackage) this.loadPackage(result.nextPackage);
     if (result?.evidence) this.loadCalculationEvidence(result.evidence);
     return result;
   }
 
-  createAuditExport() {
-    if (!this.calculationEvidence) throw new Error('Sealed calculation evidence is required for audit export.');
-    return createEmpiricalV3AuditJsonExport(this.calculationEvidence);
-  }
-
+  createAuditExport() { return this.reviewAudit.createAuditExport(this.packageValue?.workflow.state, this.calculationEvidence); }
   downloadAuditExport() {
-    try {
-      const record = this.createAuditExport();
-      downloadRecord(this.documentRef, this.urlApi, record);
-      this.error = '';
-      this.message = `Downloaded ${record.fileName}.`;
-      this.renderStatus();
-      return record;
-    } catch (error) {
-      this.error = errorMessage(error);
-      this.message = 'Empirical V3 audit export was rejected.';
-      this.renderStatus();
-      throw error;
-    }
+    try { const record = this.createAuditExport(); downloadRecord(this.documentRef, this.urlApi, record); this.error = ''; this.message = `Downloaded ${record.fileName}.`; this.renderStatus(); return record; }
+    catch (error) { return this.fail('Empirical V3 audit export was rejected.', error); }
   }
 
   getSnapshot() {
     return Object.freeze({
-      status: this.packageValue ? 'CURRENT' : 'EMPTY',
-      runId: this.packageValue?.runId ?? null,
-      workflowState: this.packageValue?.workflow.state ?? 'NO_PACKAGE',
-      packageSemanticHash: this.packageValue?.semanticHash ?? null,
-      riskSetSemanticHash: this.packageValue?.riskSet.semanticHash ?? null,
-      calculationEvidenceId: this.calculationEvidence?.evidenceId ?? null,
+      status: this.packageValue ? 'CURRENT' : 'EMPTY', runId: this.packageValue?.runId ?? null,
+      workflowState: this.packageValue?.workflow.state ?? 'NO_PACKAGE', packageSemanticHash: this.packageValue?.semanticHash ?? null,
+      riskSetSemanticHash: this.packageValue?.riskSet.semanticHash ?? null, calculationEvidenceId: this.calculationEvidence?.evidenceId ?? null,
       calculationEvidenceSemanticHash: this.calculationEvidence?.semanticHash ?? null,
-      activeTab: this.activeTab,
-      lastConfirmationReceiptId: this.lastConfirmationReceipt?.receiptId ?? null,
-      message: this.message,
-      error: this.error || null,
+      resultReviewReceiptId: this.reviewAudit.resultReview?.receiptId ?? null, auditReadinessId: this.reviewAudit.auditReadiness?.readinessId ?? null,
+      activeTab: this.activeTab, lastConfirmationReceiptId: this.lastConfirmationReceipt?.receiptId ?? null, message: this.message, error: this.error || null,
     });
   }
-
   getPackage() { return this.packageValue; }
   getCalculationEvidence() { return this.calculationEvidence; }
+  getResultReviewReceipt() { return this.reviewAudit.resultReview; }
+  getAuditReadiness() { return this.reviewAudit.auditReadiness; }
   getLastConfirmationReceipt() { return this.lastConfirmationReceipt; }
 
   render() {
-    if (!this.elements) return;
-    this.renderStatus();
-    const hasPackage = Boolean(this.packageValue);
-    const hasEvidence = Boolean(this.calculationEvidence);
-    this.elements.branchTab.setAttribute('aria-selected', String(this.activeTab === 'BRANCH_BASIS'));
-    this.elements.safetyTab.setAttribute('aria-selected', String(this.activeTab === 'SAFETY_GATE'));
-    this.elements.explainTab.setAttribute('aria-selected', String(this.activeTab === 'EXPLAIN'));
+    if (!this.elements) return; this.renderStatus();
+    const hasPackage = Boolean(this.packageValue); const hasEvidence = Boolean(this.calculationEvidence);
+    for (const [element, tab] of [[this.elements.branchTab, 'BRANCH_BASIS'], [this.elements.safetyTab, 'SAFETY_GATE'], [this.elements.explainTab, 'EXPLAIN']]) element.setAttribute('aria-selected', String(this.activeTab === tab));
     this.elements.explainTab.disabled = !hasEvidence;
-    this.elements.auditButton.disabled = !hasEvidence;
+    this.elements.auditButton.disabled = !this.reviewAudit.canExport(this.packageValue?.workflow.state, this.calculationEvidence);
     this.elements.clearButton.disabled = !hasPackage && !hasEvidence;
-    if (!hasPackage) {
-      this.elements.content.replaceChildren(emptyParagraph(this.documentRef));
-      renderEmpiricalV3EvidenceInspector(this.elements.evidence, null);
-      return;
-    }
-    if (this.activeTab === 'EXPLAIN') {
-      renderEmpiricalV3EvidenceInspector(this.elements.evidence, null);
-      renderEmpiricalV3ExplainCalculation(this.elements.content, this.calculationEvidence);
-      return;
-    }
-    const actions = {
-      locate: (ids) => this.locateEntities(ids),
-      showRecord: (ref, hash) => this.showRecord(ref, hash),
-      openRisk: (riskId) => this.openRisk(riskId),
-      review: (risk, review) => this.reviewAssumption(risk, review),
-      run: typeof this.options.onRunRequested === 'function' ? () => this.requestRun() : null,
-    };
+    if (!hasPackage) { this.elements.content.replaceChildren(emptyParagraph(this.documentRef)); renderEmpiricalV3EvidenceInspector(this.elements.evidence, null); return; }
+    if (this.activeTab === 'EXPLAIN') { this.renderExplain(); return; }
+    const actions = { locate: (ids) => this.locateEntities(ids), showRecord: (ref, hash) => this.showRecord(ref, hash), openRisk: (id) => this.openRisk(id), review: (risk, review) => this.reviewAssumption(risk, review), run: typeof this.options.onRunRequested === 'function' ? () => this.requestRun() : null };
     if (this.activeTab === 'BRANCH_BASIS') renderEmpiricalV3BranchBasis(this.elements.content, this.packageValue, actions);
     else renderEmpiricalV3SafetyGate(this.elements.content, this.packageValue, actions);
   }
-
-  renderStatus() {
-    if (!this.elements) return;
-    this.elements.status.textContent = this.message;
-    this.elements.error.hidden = !this.error;
-    this.elements.error.textContent = this.error;
+  renderExplain() {
+    renderEmpiricalV3EvidenceInspector(this.elements.evidence, null);
+    const explain = this.documentRef.createElement('div'); const review = this.documentRef.createElement('div');
+    renderEmpiricalV3ExplainCalculation(explain, this.calculationEvidence);
+    renderEmpiricalV3ResultReview(review, { evidence: this.calculationEvidence, resultReview: this.reviewAudit.resultReview, auditReady: this.reviewAudit.auditReadiness }, { review: this.packageValue.workflow.state === 'RESULT_REVIEW_REQUIRED' ? (value) => this.reviewResult(value) : null });
+    this.elements.content.replaceChildren(explain, review);
   }
-
-  destroy() {
-    this.elements?.section.remove();
-    this.elements = null;
-    this.packageValue = null;
-    this.calculationEvidence = null;
-    this.lastConfirmationReceipt = null;
-  }
+  renderStatus() { if (!this.elements) return; this.elements.status.textContent = this.message; this.elements.error.hidden = !this.error; this.elements.error.textContent = this.error; }
+  fail(message, error) { this.error = errorMessage(error); this.message = message; this.render(); throw error; }
+  destroy() { this.elements?.section.remove(); this.elements = null; this.packageValue = null; this.calculationEvidence = null; this.reviewAudit.clear(); this.lastConfirmationReceipt = null; }
 }
 
-function evidenceMatchesPackage(evidence, packageValue) {
-  return evidence.runId === packageValue.runId
-    && Boolean(packageValue.calculationAuthorization)
-    && evidence.authorizationRef.semanticHash === packageValue.calculationAuthorization.semanticHash;
-}
-function downloadRecord(doc, urlApi, record) {
-  if (!urlApi?.createObjectURL || !urlApi?.revokeObjectURL) throw new Error('Browser download URL API is unavailable.');
-  const BlobCtor = doc.defaultView?.Blob ?? globalThis.Blob;
-  const url = urlApi.createObjectURL(new BlobCtor([record.text], { type: record.mimeType }));
-  try { const link = doc.createElement('a'); link.href = url; link.download = record.fileName; link.click(); }
-  finally { urlApi.revokeObjectURL(url); }
-}
+function evidenceMatchesPackage(evidence, packageValue) { return evidence.runId === packageValue.runId && Boolean(packageValue.calculationAuthorization) && evidence.authorizationRef.semanticHash === packageValue.calculationAuthorization.semanticHash; }
+function downloadRecord(doc, urlApi, record) { if (!urlApi?.createObjectURL || !urlApi?.revokeObjectURL) throw new Error('Browser download URL API is unavailable.'); const BlobCtor = doc.defaultView?.Blob ?? globalThis.Blob; const url = urlApi.createObjectURL(new BlobCtor([record.text], { type: record.mimeType })); try { const link = doc.createElement('a'); link.href = url; link.download = record.fileName; link.click(); } finally { urlApi.revokeObjectURL(url); } }
 function emptyParagraph(doc) { const p = doc.createElement('p'); p.className = 'empirical-v3-safety__empty'; p.textContent = 'Load a sealed safety presentation package to review Branch Basis, the Safety Gate, and calculation evidence.'; return p; }
 function uniqueTexts(value) { if (!Array.isArray(value)) throw new TypeError('entityIds must be an array.'); return [...new Set(value.map((item) => requiredText(item, 'entityId')))]; }
 function errorMessage(error) { return error instanceof Error ? error.message : String(error); }

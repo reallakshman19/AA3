@@ -1,30 +1,31 @@
 import {
   createEngineeringConfirmationReceipt,
+  createEmpiricalV3AuditJsonExport,
+  requireEmpiricalV3CoupledCalculationEvidence,
   requireEmpiricalV3SafetyPresentationPackage,
 } from '../core/empirical-v3-safety/index.js';
 import { EventBus } from './event-bus.js';
 import { EVENT_TOPICS } from './event-topics.js';
 import { renderEmpiricalV3BranchBasis } from './empirical-v3-branch-basis-view.js';
+import { renderEmpiricalV3EvidenceInspector } from './empirical-v3-evidence-view.js';
+import { renderEmpiricalV3ExplainCalculation } from './empirical-v3-explain-calculation-view.js';
 import {
   focusEmpiricalV3Risk,
   renderEmpiricalV3SafetyGate,
 } from './empirical-v3-safety-gate-view.js';
-import { renderEmpiricalV3EvidenceInspector } from './empirical-v3-evidence-view.js';
+import { createEmpiricalV3SafetyWorkbenchSection } from './empirical-v3-safety-workbench-dom.js';
 
 export function mountEmpiricalV3SafetyWorkbench(applicationRoot, options = {}) {
   if (!applicationRoot || typeof applicationRoot.querySelector !== 'function') {
     throw new TypeError('Empirical V3 safety workbench requires the application root.');
   }
-  const panelContainer = applicationRoot.querySelector(
-    '[data-panel="properties"] .panel-collapsible-content',
-  );
+  const panelContainer = applicationRoot.querySelector('[data-panel="properties"] .panel-collapsible-content');
   if (!panelContainer) throw new TypeError('Empirical V3 safety workbench mount root is missing.');
-  const controller = new EmpiricalV3SafetyWorkbenchController(
+  return new EmpiricalV3SafetyWorkbenchController(
     panelContainer,
     options.documentRef ?? applicationRoot.ownerDocument,
     options,
-  );
-  return controller.init();
+  ).init();
 }
 
 export class EmpiricalV3SafetyWorkbenchController {
@@ -32,7 +33,9 @@ export class EmpiricalV3SafetyWorkbenchController {
     this.panelContainer = panelContainer;
     this.documentRef = documentRef;
     this.options = options;
+    this.urlApi = options.urlApi ?? documentRef.defaultView?.URL ?? globalThis.URL;
     this.packageValue = null;
+    this.calculationEvidence = null;
     this.activeTab = 'BRANCH_BASIS';
     this.lastConfirmationReceipt = null;
     this.message = 'No sealed Empirical V3 safety package is loaded.';
@@ -42,38 +45,58 @@ export class EmpiricalV3SafetyWorkbenchController {
 
   init() {
     if (this.elements) return this;
-    this.elements = createSection(this.documentRef);
+    this.elements = createEmpiricalV3SafetyWorkbenchSection(this.documentRef);
     this.panelContainer.append(this.elements.section);
     this.elements.branchTab.addEventListener('click', () => this.setTab('BRANCH_BASIS'));
     this.elements.safetyTab.addEventListener('click', () => this.setTab('SAFETY_GATE'));
+    this.elements.explainTab.addEventListener('click', () => this.setTab('EXPLAIN'));
+    this.elements.auditButton.addEventListener('click', () => this.downloadAuditExport());
     this.elements.clearButton.addEventListener('click', () => this.clear());
     this.render();
     return this;
   }
 
   loadPackage(value) {
-    this.packageValue = requireEmpiricalV3SafetyPresentationPackage(value);
+    const next = requireEmpiricalV3SafetyPresentationPackage(value);
+    if (this.calculationEvidence && !evidenceMatchesPackage(this.calculationEvidence, next)) {
+      this.calculationEvidence = null;
+    }
+    this.packageValue = next;
     this.lastConfirmationReceipt = null;
     this.error = '';
-    this.message = [
-      `Loaded safety package for ${this.packageValue.runId}.`,
-      `Workflow ${this.packageValue.workflow.state}.`,
-      `Risk set ${this.packageValue.riskSet.riskSetId}.`,
-    ].join(' ');
+    this.message = `Loaded safety package for ${next.runId}. Workflow ${next.workflow.state}. Risk set ${next.riskSet.riskSetId}.`;
     this.render();
-    return this.packageValue;
+    return next;
+  }
+
+  loadCalculationEvidence(value) {
+    const evidence = requireEmpiricalV3CoupledCalculationEvidence(value);
+    if (!this.packageValue) throw new Error('Load the current sealed safety package before calculation evidence.');
+    if (!evidenceMatchesPackage(evidence, this.packageValue)) {
+      throw new Error('Calculation evidence is stale or belongs to another safety package authorization.');
+    }
+    this.calculationEvidence = evidence;
+    this.activeTab = 'EXPLAIN';
+    this.error = '';
+    this.message = `Loaded sealed calculation evidence ${evidence.evidenceId}.`;
+    this.render();
+    return evidence;
   }
 
   clear() {
     this.packageValue = null;
+    this.calculationEvidence = null;
     this.lastConfirmationReceipt = null;
+    this.activeTab = 'BRANCH_BASIS';
     this.error = '';
-    this.message = 'Empirical V3 safety package cleared.';
+    this.message = 'Empirical V3 safety/evidence workbench cleared.';
     this.render();
   }
 
   setTab(tab) {
-    if (!['BRANCH_BASIS', 'SAFETY_GATE'].includes(tab)) throw new RangeError(`Unsupported Empirical V3 tab: ${tab}`);
+    if (!['BRANCH_BASIS', 'SAFETY_GATE', 'EXPLAIN'].includes(tab)) {
+      throw new RangeError(`Unsupported Empirical V3 tab: ${tab}`);
+    }
     this.activeTab = tab;
     this.render();
   }
@@ -91,13 +114,10 @@ export class EmpiricalV3SafetyWorkbenchController {
       this.options.onLocateEntities(ids);
       return;
     }
-    EventBus.publish(EVENT_TOPICS.VIEWPORT_SELECTION_REQUESTED, {
-      entityId: ids[0],
-      source: 'api',
-    });
+    EventBus.publish(EVENT_TOPICS.VIEWPORT_SELECTION_REQUESTED, { entityId: ids[0], source: 'api' });
     this.message = ids.length === 1
       ? `Located ${ids[0]}.`
-      : `Located ${ids[0]}; ${ids.length - 1} additional governed entities remain linked to this finding.`;
+      : `Located ${ids[0]}; ${ids.length - 1} additional governed entities remain linked.`;
     this.renderStatus();
   }
 
@@ -106,10 +126,8 @@ export class EmpiricalV3SafetyWorkbenchController {
       record.ref === ref && (!semanticHash || record.semanticHash === semanticHash)
     )) ?? null;
     renderEmpiricalV3EvidenceInspector(this.elements.evidence, entry);
-    if (!entry) {
-      this.error = `No sealed presentation record is available for ${ref}.`;
-      this.renderStatus();
-    }
+    if (!entry) this.error = `No sealed presentation record is available for ${ref}.`;
+    this.renderStatus();
     return entry;
   }
 
@@ -127,24 +145,17 @@ export class EmpiricalV3SafetyWorkbenchController {
           valueSnapshot: risk.valueSnapshot,
         },
         authorityRefs: risk.authorityRefs.filter((ref) => ref.semanticHash),
-        auditMetadata: {
-          actor,
-          timestamp: new Date().toISOString(),
-          comment,
-        },
+        auditMetadata: { actor, timestamp: new Date().toISOString(), comment },
       });
       this.lastConfirmationReceipt = receipt;
       this.error = '';
-      this.message = [
-        `Created singular confirmation ${receipt.receiptId}.`,
-        'The current Safety Gate remains unchanged until the domain supplies a re-evaluated sealed package.',
-      ].join(' ');
+      this.message = `Created singular confirmation ${receipt.receiptId}. The Safety Gate remains unchanged until a re-evaluated sealed package is supplied.`;
       const nextPackage = this.options.onConfirmationCreated?.(receipt, this.packageValue) ?? null;
       if (nextPackage) this.packageValue = requireEmpiricalV3SafetyPresentationPackage(nextPackage);
       this.render();
       return receipt;
     } catch (error) {
-      this.error = error instanceof Error ? error.message : String(error);
+      this.error = errorMessage(error);
       this.message = 'Engineering assumption confirmation was rejected.';
       this.render();
       throw error;
@@ -155,13 +166,41 @@ export class EmpiricalV3SafetyWorkbenchController {
     if (!this.packageValue?.workflow.canRunCalculation || !this.packageValue.calculationAuthorization) {
       throw new Error('Empirical V3 calculation requires the current sealed calculation authorization.');
     }
-    if (typeof this.options.onRunRequested !== 'function') {
-      throw new Error('Empirical V3 execution bridge is not wired.');
-    }
-    return this.options.onRunRequested({
+    if (typeof this.options.onRunRequested !== 'function') throw new Error('Empirical V3 execution bridge is not wired.');
+    const result = this.options.onRunRequested({
       authorization: this.packageValue.calculationAuthorization,
       packageValue: this.packageValue,
     });
+    if (result && typeof result.then === 'function') {
+      return result.then((resolved) => this.acceptRunResult(resolved));
+    }
+    return this.acceptRunResult(result);
+  }
+
+  acceptRunResult(result) {
+    if (result?.evidence) this.loadCalculationEvidence(result.evidence);
+    return result;
+  }
+
+  createAuditExport() {
+    if (!this.calculationEvidence) throw new Error('Sealed calculation evidence is required for audit export.');
+    return createEmpiricalV3AuditJsonExport(this.calculationEvidence);
+  }
+
+  downloadAuditExport() {
+    try {
+      const record = this.createAuditExport();
+      downloadRecord(this.documentRef, this.urlApi, record);
+      this.error = '';
+      this.message = `Downloaded ${record.fileName}.`;
+      this.renderStatus();
+      return record;
+    } catch (error) {
+      this.error = errorMessage(error);
+      this.message = 'Empirical V3 audit export was rejected.';
+      this.renderStatus();
+      throw error;
+    }
   }
 
   getSnapshot() {
@@ -171,6 +210,8 @@ export class EmpiricalV3SafetyWorkbenchController {
       workflowState: this.packageValue?.workflow.state ?? 'NO_PACKAGE',
       packageSemanticHash: this.packageValue?.semanticHash ?? null,
       riskSetSemanticHash: this.packageValue?.riskSet.semanticHash ?? null,
+      calculationEvidenceId: this.calculationEvidence?.evidenceId ?? null,
+      calculationEvidenceSemanticHash: this.calculationEvidence?.semanticHash ?? null,
       activeTab: this.activeTab,
       lastConfirmationReceiptId: this.lastConfirmationReceipt?.receiptId ?? null,
       message: this.message,
@@ -179,20 +220,28 @@ export class EmpiricalV3SafetyWorkbenchController {
   }
 
   getPackage() { return this.packageValue; }
+  getCalculationEvidence() { return this.calculationEvidence; }
   getLastConfirmationReceipt() { return this.lastConfirmationReceipt; }
 
   render() {
     if (!this.elements) return;
     this.renderStatus();
+    const hasPackage = Boolean(this.packageValue);
+    const hasEvidence = Boolean(this.calculationEvidence);
     this.elements.branchTab.setAttribute('aria-selected', String(this.activeTab === 'BRANCH_BASIS'));
     this.elements.safetyTab.setAttribute('aria-selected', String(this.activeTab === 'SAFETY_GATE'));
-    this.elements.clearButton.disabled = !this.packageValue;
-    if (!this.packageValue) {
-      const empty = this.documentRef.createElement('p');
-      empty.className = 'empirical-v3-safety__empty';
-      empty.textContent = 'Load a sealed safety presentation package to review Branch Basis and the Calculation Safety Gate.';
-      this.elements.content.replaceChildren(empty);
+    this.elements.explainTab.setAttribute('aria-selected', String(this.activeTab === 'EXPLAIN'));
+    this.elements.explainTab.disabled = !hasEvidence;
+    this.elements.auditButton.disabled = !hasEvidence;
+    this.elements.clearButton.disabled = !hasPackage && !hasEvidence;
+    if (!hasPackage) {
+      this.elements.content.replaceChildren(emptyParagraph(this.documentRef));
       renderEmpiricalV3EvidenceInspector(this.elements.evidence, null);
+      return;
+    }
+    if (this.activeTab === 'EXPLAIN') {
+      renderEmpiricalV3EvidenceInspector(this.elements.evidence, null);
+      renderEmpiricalV3ExplainCalculation(this.elements.content, this.calculationEvidence);
       return;
     }
     const actions = {
@@ -202,11 +251,8 @@ export class EmpiricalV3SafetyWorkbenchController {
       review: (risk, review) => this.reviewAssumption(risk, review),
       run: typeof this.options.onRunRequested === 'function' ? () => this.requestRun() : null,
     };
-    if (this.activeTab === 'BRANCH_BASIS') {
-      renderEmpiricalV3BranchBasis(this.elements.content, this.packageValue, actions);
-    } else {
-      renderEmpiricalV3SafetyGate(this.elements.content, this.packageValue, actions);
-    }
+    if (this.activeTab === 'BRANCH_BASIS') renderEmpiricalV3BranchBasis(this.elements.content, this.packageValue, actions);
+    else renderEmpiricalV3SafetyGate(this.elements.content, this.packageValue, actions);
   }
 
   renderStatus() {
@@ -220,59 +266,24 @@ export class EmpiricalV3SafetyWorkbenchController {
     this.elements?.section.remove();
     this.elements = null;
     this.packageValue = null;
+    this.calculationEvidence = null;
     this.lastConfirmationReceipt = null;
   }
 }
 
-function createSection(doc) {
-  const section = doc.createElement('section');
-  section.className = 'properties-accordion-section empirical-v3-safety';
-  section.dataset.role = 'empirical-v3-safety-workbench';
-  const header = doc.createElement('header');
-  header.className = 'accordion-section-header';
-  const title = doc.createElement('span');
-  title.className = 'accordion-section-title';
-  title.textContent = 'Empirical V3 Safety';
-  header.append(title);
-  const body = doc.createElement('div');
-  body.className = 'accordion-section-body';
-  const toolbar = doc.createElement('div');
-  toolbar.className = 'empirical-v3-safety__toolbar';
-  const branchTab = button(doc, 'Branch Basis', 'empirical-v3-branch-basis-tab');
-  const safetyTab = button(doc, 'Safety Gate', 'empirical-v3-safety-gate-tab');
-  branchTab.setAttribute('role', 'tab');
-  safetyTab.setAttribute('role', 'tab');
-  const clearButton = button(doc, 'Clear', 'empirical-v3-safety-clear');
-  toolbar.append(branchTab, safetyTab, clearButton);
-  const status = doc.createElement('output');
-  status.className = 'empirical-v3-safety__status';
-  status.setAttribute('aria-live', 'polite');
-  const error = doc.createElement('p');
-  error.className = 'empirical-v3-safety__error';
-  error.hidden = true;
-  const content = doc.createElement('div');
-  content.className = 'empirical-v3-safety__content';
-  const evidence = doc.createElement('aside');
-  evidence.className = 'empirical-v3-safety__evidence';
-  evidence.hidden = true;
-  body.append(toolbar, status, error, content, evidence);
-  section.append(header, body);
-  return { section, branchTab, safetyTab, clearButton, status, error, content, evidence };
+function evidenceMatchesPackage(evidence, packageValue) {
+  return evidence.runId === packageValue.runId
+    && Boolean(packageValue.calculationAuthorization)
+    && evidence.authorizationRef.semanticHash === packageValue.calculationAuthorization.semanticHash;
 }
-
-function button(doc, label, role) {
-  const value = doc.createElement('button');
-  value.type = 'button';
-  value.textContent = label;
-  value.dataset.role = role;
-  return value;
+function downloadRecord(doc, urlApi, record) {
+  if (!urlApi?.createObjectURL || !urlApi?.revokeObjectURL) throw new Error('Browser download URL API is unavailable.');
+  const BlobCtor = doc.defaultView?.Blob ?? globalThis.Blob;
+  const url = urlApi.createObjectURL(new BlobCtor([record.text], { type: record.mimeType }));
+  try { const link = doc.createElement('a'); link.href = url; link.download = record.fileName; link.click(); }
+  finally { urlApi.revokeObjectURL(url); }
 }
-function uniqueTexts(value) {
-  if (!Array.isArray(value)) throw new TypeError('entityIds must be an array.');
-  return [...new Set(value.map((item) => requiredText(item, 'entityId')))];
-}
-function requiredText(value, fieldName) {
-  const text = String(value ?? '').trim();
-  if (!text) throw new TypeError(`${fieldName} is required.`);
-  return text;
-}
+function emptyParagraph(doc) { const p = doc.createElement('p'); p.className = 'empirical-v3-safety__empty'; p.textContent = 'Load a sealed safety presentation package to review Branch Basis, the Safety Gate, and calculation evidence.'; return p; }
+function uniqueTexts(value) { if (!Array.isArray(value)) throw new TypeError('entityIds must be an array.'); return [...new Set(value.map((item) => requiredText(item, 'entityId')))]; }
+function errorMessage(error) { return error instanceof Error ? error.message : String(error); }
+function requiredText(value, fieldName) { const text = String(value ?? '').trim(); if (!text) throw new TypeError(`${fieldName} is required.`); return text; }

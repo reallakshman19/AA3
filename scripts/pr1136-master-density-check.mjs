@@ -102,13 +102,29 @@ const fieldMap = {
 }
 
 {
+  const customMap = {
+    density: 'Custom OpD',
+    densityGas: 'Gas Density',
+    phase: 'Phase',
+  };
+  const result = resolveLineListDensity({
+    'Custom OpD': '777',
+    'Gas Density': '42',
+    Phase: 'GAS',
+  }, null, customMap);
+  assert.equal(result.value, '777');
+  assert.equal(result.source, 'linelist-density');
+  pass('D-007', 'explicit custom operating-density mapping is honored as direct source authority');
+}
+
+{
   const raw = [{ 'Mixed Density': '300', 'Gas Density': '42', Phase: 'GAS' }];
   const detected = detectLineListFieldMap(raw);
   assert.equal(detected.density, detected.densityMixed, 'fixture must exercise the legacy promoted-density map');
   const normalized = normalizeLineListRow(raw[0], detected, 0);
   assert.equal(normalized.density, '42');
   assert.equal(normalized.densitySource, 'linelist-density-gas');
-  pass('D-007', 'legacy generic-density promotion cannot override the exact GAS phase source');
+  pass('D-008', 'legacy generic-density promotion cannot override the exact GAS phase source');
 }
 
 {
@@ -124,7 +140,7 @@ const fieldMap = {
   assert.equal(row.operatingFluidDensity, '845');
   assert.equal(row.density, '845');
   assert.equal(row.densitySource, 'linelist-density');
-  pass('D-008', 'normalized line-list row carries resolved operating density and provenance');
+  pass('D-009', 'normalized line-list row carries resolved operating density and provenance');
 }
 
 {

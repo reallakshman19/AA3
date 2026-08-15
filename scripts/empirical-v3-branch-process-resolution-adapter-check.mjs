@@ -10,7 +10,9 @@ const runId = 'RUN:BRANCH-PROCESS-ADAPTER';
 
 function exactResolution() {
   return {
+    requestedPipingClass: '31441C4',
     resolvedPipingClass: '31441C4',
+    pipingClassSource: 'line-list',
     pipingClassMatchedRow: { rowId: 'MASTER:31441C4:DN150' },
     pipingClassMatchMethod: 'exact',
     pipingClassRowMethod: 'best-score',
@@ -37,6 +39,10 @@ const exact = adaptBranchProcessResolverOutput({
   sourceSemanticHash: h('line-source'),
 });
 assert.equal(exact.classResolution.authorityClass, 'APPROVED_MASTER_EXACT');
+assert.equal(exact.pipingClassBasis.requestedPipingClass, '31441C4');
+assert.equal(exact.pipingClassBasis.resolvedPipingClass, '31441C4');
+assert.equal(exact.pipingClassBasis.authorityClass, 'APPROVED_MASTER_EXACT');
+assert.equal(exact.branchCommonAuthorityRefs.find((row) => row.kind === 'PIPING_CLASS').semanticHash, exact.pipingClassBasis.semanticHash);
 assert.equal(exact.materialResolution.authorityClass, 'APPROVED_MASTER_EXACT');
 assert.equal(exact.wallQuantity.authorityClass, 'APPROVED_MASTER_EXACT');
 assert.equal(exact.corrosionQuantity.authorityClass, 'APPROVED_MASTER_EXACT');
@@ -44,6 +50,7 @@ assert.equal(exact.risks.length, 0);
 
 const fuzzyRow = {
   ...exactRow,
+  requestedPipingClass: '31441C4-X',
   pipingClassMatchMethod: 'fuzzy-ratio',
   pipingClassNeedsReview: true,
   materialSource: 'piping-class-material-map',
@@ -56,6 +63,9 @@ const fuzzy = adaptBranchProcessResolverOutput({
   masterSemanticHash: h('approved-master'),
 });
 assert.equal(fuzzy.classResolution.authorityClass, 'INFERRED_REVIEW_REQUIRED');
+assert.equal(fuzzy.pipingClassBasis.requestedPipingClass, '31441C4-X');
+assert.equal(fuzzy.pipingClassBasis.authorityClass, 'INFERRED_REVIEW_REQUIRED');
+assert.notEqual(fuzzy.pipingClassBasis.semanticHash, exact.pipingClassBasis.semanticHash);
 assert.equal(fuzzy.wallQuantity.authorityClass, 'INFERRED_REVIEW_REQUIRED');
 assert.equal(fuzzy.materialResolution.authorityClass, 'INFERRED_REVIEW_REQUIRED');
 assert.ok(fuzzy.risks.every((risk) => risk.riskClass === 'HIGH_CONFIRM'));

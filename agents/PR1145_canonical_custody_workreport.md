@@ -1,5 +1,7 @@
 # PR #1145 — Canonical Thermal ROM Custody Phase
 
+> Current consolidated PR handover: `agents/PR1145_workreport.md`. This file retains the detailed canonical-custody phase ledger.
+
 ## Recovery header
 
 - Repository: `reallaksh19/Advanced_Analysis`
@@ -8,7 +10,7 @@
 - CRITICALITY: `ENGINEERING_CRITICAL`
 - Baseline main: `c35ae6eb04cf819a2ed4f839f45b3e05fdeccff6`
 - Phase start head: `ccdeeabdf1d19f73deaf5bd3d8db9115324f7a45`
-- Canonical-custody engineering head before this report-only reconciliation: `ef96112caca1aa2735a05f89b1794a11bcf53c6e`
+- Canonical-custody engineering head before report reconciliation: `ef96112caca1aa2735a05f89b1794a11bcf53c6e`
 - Working branch: `agent/empirical-rom-compatibility-20260815`
 - Merge authority: not granted.
 - Coordination: `SAFE` — active LAFEA work is disjoint from empirical piping ROM paths.
@@ -67,7 +69,7 @@ Added in this phase:
    - rejects finite-element solver/global-stiffness and old empirical multiplier markers.
 
 4. `agents/PR1145_canonical_custody_workreport.md`
-   - this continuous phase handover.
+   - this detailed phase handover.
 
 ## Frozen authority rules
 
@@ -222,19 +224,19 @@ Checks:
 
 - STATUS: `PASS`
 - OBSERVATION: `SOURCE_INSPECTION`
-- At engineering head `ef96112caca1aa2735a05f89b1794a11bcf53c6e`:
-  - branch is `behind_by: 0` relative to live main;
-  - main/merge base remains `c35ae6eb04cf819a2ed4f839f45b3e05fdeccff6`;
-  - PR delta is exactly 12 files;
-  - no production empirical restraint-network runtime/profile, method registry, Load Calc UI/dispatch/publication/export file is changed.
+- At canonical-custody engineering head `ef96112caca1aa2735a05f89b1794a11bcf53c6e` before report-only reconciliation:
+  - branch was `behind_by: 0` relative to live main;
+  - main/merge base remained `c35ae6eb04cf819a2ed4f839f45b3e05fdeccff6`;
+  - PR delta was exactly 12 files;
+  - no production empirical restraint-network runtime/profile, method registry, Load Calc UI/dispatch/publication/export file was changed.
 
 ### VAL-EMPROM-CUSTODY-007 — exact-head GitHub workflows/statuses
 
-- STATUS: `NOT_RUN / NOT_OBSERVED`
-- Exact head: `ef96112caca1aa2735a05f89b1794a11bcf53c6e`.
+- STATUS: `NOT_RUN / NOT_OBSERVED` at canonical-custody engineering head `ef96112caca1aa2735a05f89b1794a11bcf53c6e`.
 - GitHub workflow runs: `[]`.
 - GitHub commit statuses: `[]`.
 - Empty lists are not called PASS.
+- Final report-only head is reconciled in `agents/PR1145_workreport.md` / PR conversation.
 
 ## Remaining limitations / next authority work
 
@@ -259,7 +261,7 @@ Checks:
 
 ## PR / release disposition
 
-- PR #1145: `OPEN / DRAFT / MERGEABLE` at the engineering head above.
+- PR #1145 remains `OPEN / DRAFT`.
 - Canonical custody state: `EXPERIMENTAL_SOURCE_BOUND_ROM`.
 - Existing production behavior: unchanged.
 - Production registration/publication: `NOT_REQUESTED / NOT_GRANTED`.

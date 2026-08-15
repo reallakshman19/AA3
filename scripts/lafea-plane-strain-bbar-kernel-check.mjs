@@ -6,6 +6,7 @@ import {
   QUALIFICATION_PROFILE,
   bbarElementElasticEnergy,
   bbarMeanDilatation,
+  calculateLocalContinuum,
   createCanonicalLocalContinuumModel,
   q8ElementEvidence,
   recoverBbarPlaneStrainStress,
@@ -22,7 +23,7 @@ const FIELD_SET = Object.freeze([
 ]);
 
 checkLegacyGuardUnchanged();
-checkT3BbarRejected();
+checkT3BbarRejectedAtExecution();
 checkBbarTemperatureRejected();
 const affineEvidence = NU_LADDER.flatMap((nu) => [
   checkFamily('T6', nu),
@@ -33,7 +34,9 @@ console.log(JSON.stringify({
   schema: 'lafea-plane-strain-bbar-kernel-check/v1',
   status: 'PASS',
   legacyPlaneStrainNu045StillBlocked: true,
+  bbarT3CanonicalSourceMayExistAsNonAuthoritativePlaceholder: true,
   bbarT3ProductionAuthorityGranted: false,
+  bbarT3ExecutionBlockedBeforeStiffnessAssembly: true,
   bbarTemperatureAuthorityGranted: false,
   poissonRatioLadder: NU_LADDER,
   families: ['T6', 'Q8'],
@@ -52,13 +55,15 @@ function checkLegacyGuardUnchanged() {
   );
 }
 
-function checkT3BbarRejected() {
+function checkT3BbarRejectedAtExecution() {
+  const canonical = createCanonicalLocalContinuumModel(modelSource({
+    formulation: FORMULATIONS.PLANE_STRAIN_BBAR,
+    nu: 0.49,
+    elementType: 'T3',
+  }));
+  assert.equal(canonical.formulation, FORMULATIONS.PLANE_STRAIN_BBAR);
   assert.throws(
-    () => createCanonicalLocalContinuumModel(modelSource({
-      formulation: FORMULATIONS.PLANE_STRAIN_BBAR,
-      nu: 0.49,
-      elementType: 'T3',
-    })),
+    () => calculateLocalContinuum(canonical),
     (error) => error?.code === 'PLANE_STRAIN_BBAR_T3_NOT_QUALIFIED',
   );
 }

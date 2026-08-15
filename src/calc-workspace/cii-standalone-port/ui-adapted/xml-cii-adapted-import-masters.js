@@ -90,7 +90,7 @@ function tableHead(columns, masterKey, state) {
     if (col === 'density' && masterKey === 'lineList') {
       const span = createElement('span', labelText);
       const infoIcon = style(createElement('span', ' ℹ️', 'xml-cii-density-info-icon'), { cursor: 'pointer', color: '#60a5fa', marginLeft: '4px' });
-      infoIcon.title = "Density Resolution Logic:\n1. Manual Process Override density (if set)\n2. If Phase is MIXED: Mixed Density -> Liquid Density\n3. If Phase is GAS: Gas Density\n4. If Phase is LIQUID: Liquid Density\n5. Fallback: Density -> Mixed Density -> Gas Density -> Liquid Density";
+      infoIcon.title = "Operating Density Resolution:\n1. Explicit process override, when supplied\n2. Direct/mapped operating density\n3. MIXED -> mixed density; GAS -> gas density; LIQUID -> liquid density\n4. Without a recognized phase, exactly one phase-specific candidate may be used\n5. Ambiguous or missing density remains unresolved; no liquid/water fallback";
       th.append(span, infoIcon);
     } else {
       th.textContent = labelText;

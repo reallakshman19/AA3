@@ -48,6 +48,15 @@ export const EMPIRICAL_FORMULA_IDS = Object.freeze({
   forceClosure: 'EMP-EQ-001',
   momentClosure: 'EMP-EQ-002',
   bendConvergence: 'EMP-CONV-001',
+  virtualWorkAxial: 'EMP-FLX-001',
+  virtualWorkBendingY: 'EMP-FLX-002',
+  virtualWorkBendingZ: 'EMP-FLX-003',
+  virtualWorkTorsion: 'EMP-FLX-004',
+  flexibilityMatrixAssembly: 'EMP-FLX-005',
+  unitForceCutEquilibrium: 'EMP-FLX-006',
+  unitForceMomentTransport: 'EMP-FLX-007',
+  unitForceLocalProjection: 'EMP-FLX-008',
+  rootedTreePathSelection: 'EMP-FLX-009',
 });
 
 export const PLANAR_DOF_ORDER = Object.freeze(['UX', 'UY', 'RZ']);

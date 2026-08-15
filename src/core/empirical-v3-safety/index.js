@@ -3,3 +3,4 @@ export * from './quantity-authority.js';
 export * from './risk-finding.js';
 export * from './confirmation-receipt.js';
 export * from './calculation-authorization.js';
+export * from './engineering-event.js';

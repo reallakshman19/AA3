@@ -93,8 +93,7 @@ export function evaluateRiskClearance(riskSetValue, confirmationValues = []) {
       throw new Error(`Confirmation ${receipt.receiptId} targets non-confirmable ${risk.riskClass} risk.`);
     }
     requireCurrentEngineeringConfirmation(receipt, risk);
-    const existing = receiptsByRisk.get(risk.riskId);
-    if (existing && existing.receiptId !== receipt.receiptId) {
+    if (receiptsByRisk.has(risk.riskId)) {
       throw new Error(`Risk ${risk.riskId} has multiple active confirmation receipts.`);
     }
     receiptsByRisk.set(risk.riskId, receipt);
@@ -117,10 +116,14 @@ export function evaluateRiskClearance(riskSetValue, confirmationValues = []) {
 
 /**
  * Revalidates a sealed authorization against the current domain records.
- * Any dependency, risk-set or confirmation identity change makes it stale.
+ * Any run, policy, dependency, risk-set or confirmation identity change makes
+ * the authorization stale even if the user remains on a Results screen.
  */
 export function assessEmpiricalV3CalculationAuthorizationCurrent(value, current) {
   const authorization = requireEmpiricalV3CalculationAuthorization(value);
+  const runId = requireText(current?.runId, 'current.runId');
+  const policyId = requireText(current?.policyId, 'current.policyId');
+  const policyVersion = requireText(current?.policyVersion, 'current.policyVersion');
   const riskSet = requireEngineeringRiskSet(current?.riskSet);
   const confirmations = Array.isArray(current?.confirmations)
     ? current.confirmations.map(requireEngineeringConfirmationReceipt)
@@ -128,6 +131,11 @@ export function assessEmpiricalV3CalculationAuthorizationCurrent(value, current)
   const dependencies = normalizeDependencies(current?.dependencies);
   const reasons = [];
 
+  if (runId !== authorization.runId) reasons.push('RUN_ID_CHANGED');
+  if (policyId !== authorization.policyId || policyVersion !== authorization.policyVersion) {
+    reasons.push('RISK_POLICY_CHANGED');
+  }
+  if (riskSet.runId !== runId) reasons.push('RISK_SET_RUN_MISMATCH');
   if (semanticHash(dependencies) !== semanticHash(authorization.dependencies)) {
     reasons.push('DEPENDENCY_IDENTITY_CHANGED');
   }
@@ -152,12 +160,15 @@ export function assessEmpiricalV3CalculationAuthorizationCurrent(value, current)
 
 function normalizeAuthorizationBasis(input) {
   if (!input || typeof input !== 'object') throw new TypeError('Authorization basis must be an object.');
+  const runId = requireText(input.runId, 'runId');
+  const riskSet = requireEngineeringRiskSet(input.riskSet);
+  if (riskSet.runId !== runId) throw new Error('Authorization runId must match the current risk set runId.');
   return {
-    runId: requireText(input.runId, 'runId'),
+    runId,
     policyId: requireText(input.policyId, 'policyId'),
     policyVersion: requireText(input.policyVersion, 'policyVersion'),
     dependencies: normalizeDependencies(input.dependencies),
-    riskSet: requireEngineeringRiskSet(input.riskSet),
+    riskSet,
     confirmations: Array.isArray(input.confirmations)
       ? input.confirmations.map(requireEngineeringConfirmationReceipt)
       : [],

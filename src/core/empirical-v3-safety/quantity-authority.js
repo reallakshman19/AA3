@@ -150,6 +150,9 @@ function validateAuthoritySemantics(value) {
     if (NON_EXACT_SOURCE_TYPES.has(value.sourceBinding.sourceType)) {
       throw new Error(`${value.sourceBinding.sourceType} cannot be promoted to ${value.authorityClass}.`);
     }
+    if (!value.sourceBinding.evidenceRef || !value.sourceBinding.evidenceHash) {
+      throw new Error(`${value.authorityClass} requires immutable source evidence reference and hash.`);
+    }
     if (value.derivation) throw new Error(`${value.authorityClass} cannot also claim a derivation.`);
   }
 
@@ -170,6 +173,7 @@ function validateAuthoritySemantics(value) {
   if (value.authorityClass === 'UNRESOLVED') {
     if (value.value !== null) throw new Error('UNRESOLVED quantity must not carry a scalar value.');
     if (value.confirmationRef) throw new Error('UNRESOLVED quantity cannot carry a confirmation reference.');
+    if (value.riskRefs.length === 0) throw new Error('UNRESOLVED quantity requires at least one blocking risk reference.');
   }
 }
 
@@ -226,10 +230,11 @@ function deriveConfirmationRef(parents, explicit) {
     'parent confirmation refs',
   );
   const supplied = optionalText(explicit);
-  if (supplied) inherited.push(supplied);
-  const unique = [...new Set(inherited)].sort();
-  if (unique.length > 1) throw new Error('Derived assumed quantity cannot collapse multiple confirmation receipts into one reference.');
-  return unique[0] ?? null;
+  if (supplied) return supplied;
+  if (inherited.length > 1) {
+    throw new Error('Derived assumed quantity with multiple confirmations requires an explicit bundle confirmation reference.');
+  }
+  return inherited[0] ?? null;
 }
 
 function requireSchema(value) {

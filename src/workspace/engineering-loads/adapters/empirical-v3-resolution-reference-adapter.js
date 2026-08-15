@@ -18,8 +18,8 @@ export function adaptResolutionReference(input) {
   const basis = normalizeBasis(input);
   let authorityClass = 'INFERRED_REVIEW_REQUIRED';
   if (!basis.ref) authorityClass = 'UNRESOLVED';
-  else if (basis.exactMasterApproved && !basis.needsReview) authorityClass = 'APPROVED_MASTER_EXACT';
-  else if (basis.exactSourceApproved && !basis.needsReview) authorityClass = 'SOURCE_EXACT';
+  else if (basis.exactMasterApproved && basis.sourceSemanticHash && !basis.needsReview) authorityClass = 'APPROVED_MASTER_EXACT';
+  else if (basis.exactSourceApproved && basis.sourceSemanticHash && !basis.needsReview) authorityClass = 'SOURCE_EXACT';
 
   const material = {
     schema: EMPIRICAL_V3_ADAPTED_RESOLUTION_SCHEMA,
@@ -29,8 +29,11 @@ export function adaptResolutionReference(input) {
     source: basis.source,
     sourceSemanticHash: basis.sourceSemanticHash,
     matchMethod: basis.matchMethod,
-    needsReview: basis.needsReview,
+    needsReview: authorityClass === 'SOURCE_EXACT' || authorityClass === 'APPROVED_MASTER_EXACT'
+      ? false
+      : true,
   };
+  validateResolutionSemantics(material);
   const record = deepFreeze({ ...material, semanticHash: semanticHash(material) });
   const risk = buildRisk(record, basis);
   return deepFreeze({ record, risk, disposition: authorityClass });
@@ -50,6 +53,7 @@ export function requireAdaptedResolutionReference(value) {
     matchMethod: requireText(value.matchMethod, 'matchMethod'),
     needsReview: value.needsReview === true,
   };
+  validateResolutionSemantics(material);
   const expected = semanticHash(material);
   if (value.semanticHash !== expected) throw new Error('Adapted resolution reference hash mismatch.');
   return deepFreeze({ ...material, semanticHash: expected });
@@ -102,18 +106,35 @@ function buildRisk(record, basis) {
 }
 
 function normalizeBasis(input) {
+  const ref = optionalText(input?.ref);
+  const sourceSemanticHash = optionalText(input?.sourceSemanticHash);
+  const exactRequested = input?.exactMasterApproved === true || input?.exactSourceApproved === true;
+  const missingExactEvidence = exactRequested && !sourceSemanticHash;
   return {
     runId: requireText(input?.runId, 'runId'),
     kind: requireText(input?.kind, 'kind').toUpperCase(),
-    ref: optionalText(input?.ref),
+    ref,
     source: requireText(input?.source || 'unresolved', 'source'),
-    sourceSemanticHash: optionalText(input?.sourceSemanticHash),
+    sourceSemanticHash,
     matchMethod: normalizeMatchMethod(input?.matchMethod || 'none'),
-    needsReview: inferNeedsReview(input),
+    needsReview: !ref || missingExactEvidence || inferNeedsReview(input),
     exactMasterApproved: input?.exactMasterApproved === true,
     exactSourceApproved: input?.exactSourceApproved === true,
     entityIds: uniqueTexts(input?.entityIds ?? []),
   };
+}
+
+function validateResolutionSemantics(value) {
+  const exact = value.authorityClass === 'SOURCE_EXACT' || value.authorityClass === 'APPROVED_MASTER_EXACT';
+  if (exact && !value.sourceSemanticHash) {
+    throw new Error(`${value.authorityClass} requires an immutable source semantic hash.`);
+  }
+  if (exact && value.needsReview) {
+    throw new Error(`${value.authorityClass} cannot remain review-required.`);
+  }
+  if (!exact && value.needsReview !== true) {
+    throw new Error(`${value.authorityClass} must remain review-required.`);
+  }
 }
 
 function inferNeedsReview(input) {

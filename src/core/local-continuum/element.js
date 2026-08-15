@@ -7,15 +7,33 @@ import { canonicalNumber, maxAbs, tolerance } from './numeric.js';
 import { constitutiveEvidence } from './constitutive.js';
 import { t6ElementEvidence } from './t6-element.js';
 import { q8ElementEvidence } from './q8-element.js';
+import { isBbarPlaneStrain } from './bbar-plane-strain.js';
 
 /**
  * Dispatches by `element.elementType`. T3 uses the original single-Gauss
- * -point (constant-strain) evidence path, byte-for-byte unchanged. T6/Q8
- * use the Gauss-integrated formulations in `t6-element.js`/`q8-element.js`,
- * normalized here to the same physical-node-coordinate shape those
- * formulations expect.
+ * -point (constant-strain) evidence path, byte-for-byte unchanged for standard
+ * formulations. T6/Q8 use the Gauss-integrated formulations in
+ * `t6-element.js`/`q8-element.js`, normalized here to the same physical-node-
+ * coordinate shape those formulations expect.
+ *
+ * PLANE_STRAIN_BBAR deliberately blocks T3 here, where connectivity is
+ * numerical authority. This permits domain-first source documents to retain a
+ * non-authoritative T3 placeholder while ensuring an actual B-bar solver model
+ * can execute only T6/Q8.
  */
 export function buildElementEvidence(model) {
+  if (isBbarPlaneStrain(model.formulation)) {
+    const unsupported = model.elements.filter(
+      (element) => element.elementType === ELEMENT_TYPES.T3,
+    );
+    if (unsupported.length) {
+      throw numericalError(
+        'PLANE_STRAIN_BBAR_T3_NOT_QUALIFIED',
+        'elements',
+        `PLANE_STRAIN_BBAR is qualified only for T6/Q8 solver elements. T3 has constant element dilatation, so its element-mean B-bar operator is identical to the pointwise volumetric operator and does not provide locking-resistant authority. Unsupported elements: ${unsupported.map((row) => row.elementId).join(', ')}.`,
+      );
+    }
+  }
   const nodes = new Map(model.nodes.map((row) => [row.nodeId, row]));
   const materials = new Map(model.materials.map((row) => [row.materialId, row]));
   return model.elements.map((element) => (

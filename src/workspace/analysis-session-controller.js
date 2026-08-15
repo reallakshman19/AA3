@@ -48,7 +48,7 @@ export class AnalysisSessionController {
       targetId,
       analysisType,
       datasetId: snapshot.dataset.datasetId,
-      workspaceVersion: snapshot.version,
+      workspaceVersion: context.version,
       inspection,
     });
     this.publish();

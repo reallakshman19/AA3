@@ -7,6 +7,10 @@ import {
   resolveDensityRangeToMax,
   resolveLineListDensity,
 } from '../src/calc-workspace/cii-standalone-port/core/line-density-resolver.js';
+import {
+  detectLineListFieldMap,
+  normalizeLineListRow,
+} from '../src/calc-workspace/cii-standalone-port/core/linelist-mapping.js';
 import { MasterDataController } from '../src/workspace/master-data-controller.js';
 import { normalizeLineList } from '../src/workspace/master-data-normalizers.js';
 import {
@@ -72,6 +76,7 @@ const fieldMap = {
   const ambiguous = resolveLineListDensity({ 'Gas Density': '38', 'Liquid Density': '890' }, null, fieldMap);
   assert.equal(unique.value, '38');
   assert.equal(unique.selected, 'densityGas');
+  assert.equal(unique.source, 'linelist-density-gas');
   assert.equal(ambiguous.value, '');
   assert.equal(ambiguous.source, 'ambiguous-phase-density');
   pass('D-004', 'phase-free fallback is allowed only for one unambiguous candidate');
@@ -97,6 +102,16 @@ const fieldMap = {
 }
 
 {
+  const raw = [{ 'Mixed Density': '300', 'Gas Density': '42', Phase: 'GAS' }];
+  const detected = detectLineListFieldMap(raw);
+  assert.equal(detected.density, detected.densityMixed, 'fixture must exercise the legacy promoted-density map');
+  const normalized = normalizeLineListRow(raw[0], detected, 0);
+  assert.equal(normalized.density, '42');
+  assert.equal(normalized.densitySource, 'linelist-density-gas');
+  pass('D-007', 'legacy generic-density promotion cannot override the exact GAS phase source');
+}
+
+{
   const [row] = normalizeLineList([{
     Service: 'P',
     'Line number': '1001',
@@ -109,7 +124,7 @@ const fieldMap = {
   assert.equal(row.operatingFluidDensity, '845');
   assert.equal(row.density, '845');
   assert.equal(row.densitySource, 'linelist-density');
-  pass('D-007', 'normalized line-list row carries resolved operating density and provenance');
+  pass('D-008', 'normalized line-list row carries resolved operating density and provenance');
 }
 
 {

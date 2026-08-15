@@ -11,7 +11,11 @@ const q8 = read('src/core/local-continuum/q8-element.js');
 const recovery = read('src/core/local-continuum/recovery.js');
 const g4 = read('src/workspace/lafea-continuum-physical-probe.js');
 const domain = read('src/workspace/lafea-continuum-analysis-domain.js');
+const compiledInput = read('src/workspace/lafea-continuum-compiled-input.js');
 const temperature = read('src/core/local-continuum/temperature-strain-loads.js');
+const settings = read('src/workspace/lafea-analysis-settings-view.js');
+const overview = read('src/workspace/lafea-engineering-overview.js');
+const workbenchContent = read('src/workspace/lafea-workbench-content.js');
 const freezeCheck = read('scripts/lafea-plane-strain-bbar-freeze-check.mjs');
 const kernelCheck = read('scripts/lafea-plane-strain-bbar-kernel-check.mjs');
 const lameCheck = read('scripts/lafea-plane-strain-bbar-lame-check.mjs');
@@ -57,12 +61,33 @@ assert.match(g4, /elementEvidence\.bbarEvidence\.meanVolumetricRow/u);
 assert.match(g4, /recoverBbarPlaneStrainStress/u);
 assert.match(g4, /LAFEA_G4_PROBE_BBAR_EVIDENCE_MISSING/u);
 
-// Domain-first can carry the identity, while template compilers retain their own allow-lists.
+// Domain-first can carry the identity and compiled input must preserve it verbatim.
 assert.match(domain, /FORMULATIONS\.PLANE_STRAIN_BBAR/u);
+assert.match(compiledInput, /formulation:\s*model\.formulation/u);
 
 // Thermal assembler still exists for standard formulations, but B-bar is source-blocked.
 assert.match(temperature, /temperatureEquivalentNodalLoad/u);
 assert.match(normalization, /validateFormulationLoadAuthority/u);
+
+// Governed UI must edit source through the normal replacement transaction, never runtime state.
+assert.match(settings, /Plane strain — standard displacement/u);
+assert.match(settings, /Plane strain — B-bar \(locking resistant\)/u);
+assert.match(settings, /next\.formulation = select\.value/u);
+assert.match(settings, /handlers\.onApplyJson/u);
+assert.match(settings, /MESH_REGENERATION_REQUIRED/u);
+assert.match(settings, /EXACT_HEAD_QUALIFICATION_REQUIRED/u);
+assert.match(settings, /B-bar temperature\/eigenstrain loading is not qualified/u);
+assert.equal(/stage\.execution\s*=|stage\.retainedAnalysisMesh/u.test(settings), false,
+  'Formulation selector must not mutate solver/runtime custody directly.');
+assert.match(workbenchContent, /renderLafeaAnalysisSettings\([\s\S]*options\.registryEntry,[\s\S]*options\.handlers/u);
+
+// Overview must never manufacture a B-bar PASS from interactive state.
+assert.match(overview, /FORMULATIONS\.PLANE_STRAIN_BBAR/u);
+assert.match(overview, /EXACT_HEAD_QUALIFICATION_REQUIRED/u);
+assert.match(overview, /EXTERNAL EXACT-HEAD 120-SOLVE EVIDENCE REQUIRED/u);
+assert.match(overview, /Temperature \/ eigenstrain authority', 'NOT GRANTED/u);
+assert.equal(/PLANE_STRAIN_BBAR[\s\S]{0,1000}status:\s*'QUALIFIED'/u.test(overview), false,
+  'B-bar overview must not promote interactive state to qualification PASS.');
 
 // Definitions/oracles must remain frozen and production observations separate.
 assert.match(freezeCheck, /FROZEN_BEFORE_PRODUCTION_OBSERVATION/u);
@@ -84,6 +109,9 @@ console.log(JSON.stringify({
   t3BbarBlockedAtElementExecution: true,
   bbarTemperatureAuthorityGranted: false,
   retainedMeanDilatationRecoveryGuarded: true,
+  domainFirstFormulationPropagationGuarded: true,
+  governedSourceSelectorGuarded: true,
+  interactiveQualificationPromotionAllowed: false,
   solverToleranceRelaxationDetected: false,
   movingMaximumAcceptanceAllowed: false,
   releaseAuthorityGranted: false,

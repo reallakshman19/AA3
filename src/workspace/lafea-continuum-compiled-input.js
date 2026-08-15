@@ -1,6 +1,7 @@
 /** Pure lowering from a validated compiled LAFEA.3 solver model into the existing continuum input contract. */
 import { MODEL_SCHEMA } from '../core/local-continuum/index.js';
 import { lafeaUnitFactor } from '../core/lafea-common-input/units.js';
+import { integrateLafeaAnalyticalEdgeTraction } from './lafea-analytical-traction-lowering.js';
 
 export function buildLafeaContinuumCompiledExecutionInput(model) {
   const sections = new Map(model.sections.map((row) => [row.sectionId, row]));
@@ -21,10 +22,13 @@ export function buildLafeaContinuumCompiledExecutionInput(model) {
       continue;
     }
     for (const caseId of attachment.physicalCaseIds) {
-      appendCaseAttachment(caseMap.get(caseId), attachment, model);
+      appendCaseAttachment(caseMap.get(caseId), attachment, model, sections);
     }
   }
 
+  const hasAnalyticalTraction = model.attachments.some(
+    (row) => row.kind === 'TRACTION' && typeof row.payload?.law === 'string',
+  );
   return {
     schema: MODEL_SCHEMA,
     modelIdentity: model.sourceModel.modelIdentity,
@@ -43,6 +47,7 @@ export function buildLafeaContinuumCompiledExecutionInput(model) {
     limitations: [...new Set([
       ...model.limitations,
       'DOMAIN_FIRST_COMPILED_PARITY_EXECUTION_ONLY',
+      ...(hasAnalyticalTraction ? ['ANALYTICAL_TRACTION_CONSISTENT_NODAL_LOWERING_V1'] : []),
     ])].sort(compare),
   };
 }
@@ -112,10 +117,15 @@ function appendRestraints(output, attachment) {
   }
 }
 
-function appendCaseAttachment(loadCase, attachment, model) {
+function appendCaseAttachment(loadCase, attachment, model, sections) {
   if (attachment.kind === 'IMPOSED_DISPLACEMENT') return appendImposed(loadCase, attachment);
   if (attachment.kind === 'CONCENTRATED_LOAD') return appendForce(loadCase, attachment);
-  if (attachment.kind === 'TRACTION') return appendEdge(loadCase, attachment, 'TRACTION');
+  if (attachment.kind === 'TRACTION') {
+    if (typeof attachment.payload?.law === 'string') {
+      return appendAnalyticalTraction(loadCase, attachment, model, sections);
+    }
+    return appendEdge(loadCase, attachment, 'TRACTION');
+  }
   if (attachment.kind === 'PRESSURE') return appendEdge(loadCase, attachment, 'PRESSURE');
   if (attachment.kind === 'BODY_FORCE') return appendBodyForce(loadCase, attachment, model);
   if (attachment.kind === 'TEMPERATURE') {
@@ -188,6 +198,40 @@ function appendEdge(loadCase, attachment, kind) {
         ty: finite(payload.ty, 'LAFEA_CONTINUUM_COMPILED_TRACTION_VALUE_INVALID') * factor,
       });
     }
+  });
+}
+
+function appendAnalyticalTraction(loadCase, attachment, model, sections) {
+  const payload = attachment.payload;
+  const target = attachment.compiledTarget;
+  if (!target.edgeNodePaths.length || target.edgeNodePaths.length !== target.elementIds.length) {
+    fail('LAFEA_CONTINUUM_COMPILED_EDGE_OWNER_MAPPING_INVALID');
+  }
+  const factor = dimensionFactor('stress', payload.unit);
+  const nodeById = new Map(model.nodes.map((row) => [row.nodeId, row]));
+  const elementById = new Map(model.elements.map((row) => [row.elementId, row]));
+  target.edgeNodePaths.forEach((edgeNodeIds, edgeIndex) => {
+    const elementId = target.elementIds[edgeIndex];
+    const element = elementById.get(elementId);
+    const section = sections.get(element?.sectionId);
+    if (!element || !section) fail('LAFEA_CONTINUUM_COMPILED_SECTION_REFERENCE_MISSING');
+    const edgeNodes = edgeNodeIds.map((nodeId) => nodeById.get(nodeId));
+    if (edgeNodes.some((node) => !node)) fail('LAFEA_CONTINUUM_COMPILED_EDGE_NODE_REFERENCE_INVALID');
+    const integrated = integrateLafeaAnalyticalEdgeTraction({
+      payload,
+      edgeNodes,
+      thickness: section.thickness,
+      stressFactor: factor,
+    });
+    integrated.nodalForces.forEach((force, nodeIndex) => {
+      loadCase.nodalForces.push({
+        loadId: `${attachment.attachmentId}/${edgeIndex + 1}/${nodeIndex + 1}/${force.nodeId}`,
+        nodeId: force.nodeId,
+        fx: force.fx,
+        fy: force.fy,
+        sourceReference: `COMPILED_ANALYTICAL_TRACTION#${attachment.attachmentId}/${integrated.lawId}/${integrated.quadratureId}`,
+      });
+    });
   });
 }
 

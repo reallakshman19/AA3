@@ -94,6 +94,8 @@ function appendAuthorityBasis(doc, list, packageValue, authorityRef, actions) {
 
   if (entry?.record?.schema === 'empirical-v3-branch-common-basis/v1') {
     detail.append(basisFields(doc, entry.record.fieldStates));
+  } else if (entry?.record?.schema === 'empirical-v3-piping-class-basis/v1') {
+    detail.append(pipingClassBasis(doc, entry.record));
   } else if (entry?.record?.schema === 'empirical-v3-adapted-resolution-reference/v1') {
     detail.append(paragraph(doc, [
       entry.record.ref,
@@ -109,6 +111,27 @@ function appendAuthorityBasis(doc, list, packageValue, authorityRef, actions) {
     actions.showRecord?.(authorityRef.ref, authorityRef.semanticHash)
   )));
   list.append(term, detail);
+}
+
+function pipingClassBasis(doc, record) {
+  const table = doc.createElement('table');
+  table.className = 'empirical-v3-safety__basis-fields';
+  const body = doc.createElement('tbody');
+  const rows = [
+    ['Requested class', record.requestedPipingClass ?? 'UNRESOLVED'],
+    ['Resolved class', record.resolvedPipingClass ?? 'UNRESOLVED'],
+    ['Authority', record.authorityClass],
+    ['Match', record.matchMethod],
+    ['Row match', record.rowMethod],
+    ['Review', record.needsReview ? 'REQUIRED' : 'CURRENT'],
+  ];
+  rows.forEach(([label, value]) => {
+    const row = doc.createElement('tr');
+    row.append(tableCell(doc, label), tableCell(doc, value));
+    body.append(row);
+  });
+  table.append(body);
+  return table;
 }
 
 function basisFields(doc, fieldStates = {}) {
@@ -163,7 +186,8 @@ function branchRiskList(doc, packageValue, risks, actions) {
     const item = doc.createElement('li');
     item.dataset.riskId = risk.riskId;
     item.textContent = `${risk.riskClass} · ${risk.riskCode} · ${confirmationStatus(packageValue, risk)}`;
-    item.append(' ', actionButton(doc, 'Open in Safety Gate', () => actions.openRisk?.(risk.riskId)));
+    const label = risk.riskClass === 'HIGH_CONFIRM' ? 'Review assumption' : 'Open in Safety Gate';
+    item.append(' ', actionButton(doc, label, () => actions.openRisk?.(risk.riskId)));
     list.append(item);
   });
   details.append(summary, list);

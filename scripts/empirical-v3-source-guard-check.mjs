@@ -10,6 +10,7 @@ const CORE_FILES = [
   'engineering-event.js',
   'branch-authority.js',
   'component-authority.js',
+  'presentation-package.js',
 ];
 
 const ADAPTER_FILES = [
@@ -70,6 +71,11 @@ assert.match(authorizationSource, /DEPENDENCY_IDENTITY_CHANGED/);
 const branchSource = sourceAt('../src/core/empirical-v3-safety/branch-authority.js');
 assert.match(branchSource, /requires exact topology/);
 assert.match(branchSource, /Tolerance-inferred topology cannot define/);
+
+const presentationSource = sourceAt('../src/core/empirical-v3-safety/presentation-package.js');
+assert.match(presentationSource, /does not classify risks, resolve authorities, project workflow, or authorize a run/);
+assert.match(presentationSource, /requireEngineeringRiskSet/);
+assert.match(presentationSource, /requireEmpiricalV3CalculationAuthorization/);
 
 const sourceAdapter = sourceAt('../src/workspace/engineering-loads/adapters/empirical-v3-source-authority-adapter.js');
 assert.match(sourceAdapter, /_deducedWallThickness/);

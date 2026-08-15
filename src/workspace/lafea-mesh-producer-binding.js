@@ -6,13 +6,14 @@
  *
  * The default route uses the general planar continuum mesher. The same
  * registered producer also owns one narrowly qualified automatic strategy for
- * B02D: a frozen probe-stable polar annulus selected only by its reserved
- * refinement-feature identity. That strategy is rejected unless the retained
+ * B02D: a frozen probe-stable polar annulus selected by a source-controlled
+ * qualified mesh-profile identity. Selection is not encoded as a refinement
+ * feature because the frozen B02D request explicitly requires an empty
+ * refinementFeatureIds list. The strategy is rejected unless the retained
  * analysis geometry is exactly the qualified 20/100 mm concentric annulus and
- * the target h is one of the four frozen B02D levels.
+ * target h is one of the four frozen B02D levels.
  */
 import {
-  LAFEA_B02D_PROBE_STABLE_POLAR_FEATURE_ID,
   generateLafeaB02dProbeStablePolarMesh,
 } from '../core/lafea-meshing/b02d-probe-stable-polar-mesh.js';
 import {
@@ -67,6 +68,8 @@ export { lafeaMeshProducerBound, lafeaMeshProducerElementFamilies };
 export { LAFEA_MESH_PRODUCER_REF, LAFEA_MESH_PRODUCER_GOVERNANCE_REF };
 
 export const LAFEA_MESH_PRODUCER_BINDING_SCHEMA = 'lafea-mesh-producer-binding/v1';
+export const LAFEA_B02D_POLAR_PROFILE_PREFIX = 'B02D_PROBE_STABLE_POLAR_QUALIFIED';
+export const LAFEA_B02D_POLAR_PROFILE_SOURCE_REVISION = 'B02D-FROZEN-POLAR-V1';
 
 const MAXIMUM_NODES = LAFEA_MESH_PRODUCER_MAXIMUM_NODES;
 const MAXIMUM_ELEMENTS = LAFEA_MESH_PRODUCER_MAXIMUM_ELEMENTS;
@@ -127,7 +130,6 @@ export function lafeaCoreMeshProducerQualification() {
   return cachedQualification;
 }
 
-/** Derive generation configuration from the canonical bound mesh profile. */
 export function lafeaMeshGenerationConfiguration(meshProfileValue, overrides = {}) {
   const meshProfile = canonicalLafeaAnalysisMeshProfile(meshProfileValue);
   const elementFamily = meshProfile.fields.continuumElement;
@@ -139,7 +141,6 @@ export function lafeaMeshGenerationConfiguration(meshProfileValue, overrides = {
     && overrides.targetElementLength !== targetElementLength) {
     fail('LAFEA_MESH_GENERATION_PROFILE_TARGET_LENGTH_OVERRIDE_MISMATCH');
   }
-  const refinementFeatureIds = canonicalFeatureIds(overrides.refinementFeatureIds ?? []);
   return Object.freeze({
     meshProfile,
     meshProfileHash: meshProfile.semanticHash,
@@ -150,11 +151,10 @@ export function lafeaMeshGenerationConfiguration(meshProfileValue, overrides = {
     maximumNodes: MAXIMUM_NODES,
     maximumElements: MAXIMUM_ELEMENTS,
     maximumEstimatedDofs: MAXIMUM_ESTIMATED_DOFS,
-    refinementFeatureIds,
+    refinementFeatureIds: Object.freeze([]),
   });
 }
 
-/** Run the deterministic producer during planning so plan counts are actual. */
 export function planLafeaAnalysisMesh(stage, configuration) {
   const geometryEvidence = requireGeometryEvidence(stage);
   const capability = lafeaCoreMeshProducerCapability();
@@ -166,7 +166,7 @@ export function planLafeaAnalysisMesh(stage, configuration) {
   }
 
   let generated;
-  if (usesB02dPolarStrategy(intent)) {
+  if (usesB02dPolarStrategy(configuration, intent)) {
     requireB02dPolarGeometry(geometryEvidence.geometry);
     generated = generateLafeaB02dProbeStablePolarMesh({
       targetElementLength: intent.targetElementLength,
@@ -224,56 +224,37 @@ export function planLafeaAnalysisMesh(stage, configuration) {
   });
 }
 
-/** Build registrable analysis-mesh evidence v2 after plan/output validation. */
 export function produceLafeaAnalysisMeshEvidence(stage, configuration) {
   const planned = configuration?.planned ?? planLafeaAnalysisMesh(stage, configuration);
   if (planned.plan.resourceDisposition === 'BLOCK') {
     fail('LAFEA_MESH_GENERATION_RESOURCE_LIMIT_EXCEEDED');
   }
   const { intent, plan, generated } = planned;
-
   const output = createLafeaMeshProducerOutputV2({
     schema: LAFEA_MESH_PRODUCER_OUTPUT_V2_SCHEMA,
-    stageId: 'LAFEA.3',
-    intentHash: intent.semanticHash,
-    planHash: plan.planHash,
-    capabilityHash: plan.capabilityHash,
-    qualificationHash: plan.qualificationHash,
-    producerId: plan.producerId,
-    producerRevision: plan.producerRevision,
-    sourceHash: plan.sourceHash,
-    analysisDomainHash: plan.analysisDomainHash,
-    analysisGeometryHash: plan.analysisGeometryHash,
-    meshProfileHash: plan.meshProfileHash,
-    elementFamily: plan.elementFamily,
-    mesh: generated.mesh,
+    stageId: 'LAFEA.3', intentHash: intent.semanticHash, planHash: plan.planHash,
+    capabilityHash: plan.capabilityHash, qualificationHash: plan.qualificationHash,
+    producerId: plan.producerId, producerRevision: plan.producerRevision,
+    sourceHash: plan.sourceHash, analysisDomainHash: plan.analysisDomainHash,
+    analysisGeometryHash: plan.analysisGeometryHash, meshProfileHash: plan.meshProfileHash,
+    elementFamily: plan.elementFamily, mesh: generated.mesh,
   });
-
   const evidence = createLafeaAnalysisMeshEvidenceV2({
     schema: LAFEA_ANALYSIS_MESH_INTAKE_V2_SCHEMA,
-    stageId: 'LAFEA.3',
-    sourceHash: output.sourceHash,
+    stageId: 'LAFEA.3', sourceHash: output.sourceHash,
     analysisDomainHash: output.analysisDomainHash,
     analysisGeometryHash: output.analysisGeometryHash,
-    meshProfile: requireMeshProfile(configuration, planned),
-    mesh: output.mesh,
+    meshProfile: requireMeshProfile(configuration, planned), mesh: output.mesh,
     authority: {
       schema: LAFEA_ANALYSIS_MESH_AUTHORITY_V2_SCHEMA,
-      stageId: 'LAFEA.3',
-      authorityRole: LAFEA_ANALYSIS_MESH_AUTHORITY_V2_ROLE,
-      status: 'ACCEPTED_BY_STAGE_CONTRACT',
-      producerRef: LAFEA_MESH_PRODUCER_REF,
-      sourceHash: output.sourceHash,
-      analysisDomainHash: output.analysisDomainHash,
-      analysisGeometryHash: output.analysisGeometryHash,
-      meshProfileHash: output.meshProfileHash,
-      meshHash: output.meshHash,
-      capabilityHash: output.capabilityHash,
-      qualificationHash: output.qualificationHash,
-      planHash: output.planHash,
+      stageId: 'LAFEA.3', authorityRole: LAFEA_ANALYSIS_MESH_AUTHORITY_V2_ROLE,
+      status: 'ACCEPTED_BY_STAGE_CONTRACT', producerRef: LAFEA_MESH_PRODUCER_REF,
+      sourceHash: output.sourceHash, analysisDomainHash: output.analysisDomainHash,
+      analysisGeometryHash: output.analysisGeometryHash, meshProfileHash: output.meshProfileHash,
+      meshHash: output.meshHash, capabilityHash: output.capabilityHash,
+      qualificationHash: output.qualificationHash, planHash: output.planHash,
     },
   });
-
   return Object.freeze({ planned, output, evidence });
 }
 
@@ -281,17 +262,14 @@ function buildIntent(stage, configuration) {
   const adapter = requireLafeaStageAnalysisAdapter('LAFEA.3');
   return createLafeaMeshGenerationIntentV2({
     schema: LAFEA_MESH_GENERATION_INTENT_V2_SCHEMA,
-    stageId: 'LAFEA.3',
-    sourceHash: requireSourceHash(stage),
+    stageId: 'LAFEA.3', sourceHash: requireSourceHash(stage),
     analysisDomainHash: requireCurrent(stage.analysisDomainProjection, 'DOMAIN').analysisDomainHash,
     analysisGeometryHash: requireCurrent(stage.analysisGeometryProjection, 'GEOMETRY').analysisGeometryHash,
     meshProfileHash: configuration.meshProfileHash,
     targetElementLength: configuration.targetElementLength,
-    lengthUnit: configuration.lengthUnit ?? 'mm',
-    elementFamily: configuration.elementFamily,
+    lengthUnit: configuration.lengthUnit ?? 'mm', elementFamily: configuration.elementFamily,
     curvatureToleranceDegrees: configuration.curvatureToleranceDegrees,
-    growthLimit: configuration.growthLimit,
-    maximumNodes: configuration.maximumNodes,
+    growthLimit: configuration.growthLimit, maximumNodes: configuration.maximumNodes,
     maximumElements: configuration.maximumElements,
     maximumEstimatedDofs: configuration.maximumEstimatedDofs,
     refinementFeatureIds: configuration.refinementFeatureIds ?? [],
@@ -301,18 +279,26 @@ function buildIntent(stage, configuration) {
   });
 }
 
-function usesB02dPolarStrategy(intent) {
-  if (!intent.refinementFeatureIds.includes(LAFEA_B02D_PROBE_STABLE_POLAR_FEATURE_ID)) return false;
-  if (intent.refinementFeatureIds.length !== 1) {
-    fail('LAFEA_B02D_POLAR_RESERVED_FEATURE_COMBINATION_NOT_QUALIFIED');
+function usesB02dPolarStrategy(configuration, intent) {
+  const profile = configuration.meshProfile;
+  const selected = profile?.profileIdentity === b02dProfileIdentity(intent.elementFamily, intent.targetElementLength)
+    && profile?.sourceRevision === LAFEA_B02D_POLAR_PROFILE_SOURCE_REVISION;
+  if (!selected) return false;
+  if (intent.refinementFeatureIds.length !== 0) {
+    fail('LAFEA_B02D_POLAR_REFINEMENT_FEATURES_MUST_REMAIN_EMPTY');
   }
   return true;
 }
 
+export function b02dProfileIdentity(elementFamily, h) {
+  const encoded = Number.isInteger(h) ? String(h) : String(h).replace('.', '_');
+  return `${LAFEA_B02D_POLAR_PROFILE_PREFIX}_${elementFamily}_H${encoded}`;
+}
+
 function requireB02dPolarGeometry(geometry) {
-  const loops = new Map(geometry.loops.map((loop) => [loop.role, loop]));
-  const outer = loops.get('OUTER');
-  const hole = loops.get('HOLE');
+  const loopsByRole = new Map(geometry.loops.map((loop) => [loop.role, loop]));
+  const outer = loopsByRole.get('OUTER');
+  const hole = loopsByRole.get('HOLE');
   if (!outer || !hole || geometry.loops.length !== 2) {
     fail('LAFEA_B02D_POLAR_GEOMETRY_NOT_QUALIFIED');
   }
@@ -322,29 +308,16 @@ function requireB02dPolarGeometry(geometry) {
   const owned = new Set([...outer.segmentIds, ...hole.segmentIds]);
   if (owned.size !== geometry.segments.length) fail('LAFEA_B02D_POLAR_GEOMETRY_NOT_QUALIFIED');
 }
-
 function requireCircularLoop(loop, segments, radius, sweep) {
   if (loop.segmentIds.length < 3) fail('LAFEA_B02D_POLAR_GEOMETRY_NOT_QUALIFIED');
   for (const segmentId of loop.segmentIds) {
     const segment = segments.get(segmentId);
-    if (!segment || segment.type !== 'CIRCULAR_ARC'
-      || segment.sweep !== sweep
-      || Math.abs(segment.centerX) > 1e-12
-      || Math.abs(segment.centerY) > 1e-12
+    if (!segment || segment.type !== 'CIRCULAR_ARC' || segment.sweep !== sweep
+      || Math.abs(segment.centerX) > 1e-12 || Math.abs(segment.centerY) > 1e-12
       || Math.abs(segment.radius - radius) > 1e-12) {
       fail('LAFEA_B02D_POLAR_GEOMETRY_NOT_QUALIFIED');
     }
   }
-}
-
-function canonicalFeatureIds(value) {
-  if (!Array.isArray(value)) fail('LAFEA_MESH_GENERATION_REFINEMENT_FEATURE_IDS_INVALID');
-  const ids = value.map((id) => {
-    if (typeof id !== 'string' || !id.trim()) fail('LAFEA_MESH_GENERATION_REFINEMENT_FEATURE_IDS_INVALID');
-    return id.trim();
-  }).sort();
-  if (new Set(ids).size !== ids.length) fail('LAFEA_MESH_GENERATION_REFINEMENT_FEATURE_IDS_DUPLICATE');
-  return Object.freeze(ids);
 }
 function requireGeometryEvidence(stage) {
   const evidence = stage?.retainedAnalysisGeometryEvidence;

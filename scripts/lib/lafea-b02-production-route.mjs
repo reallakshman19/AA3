@@ -28,6 +28,7 @@ import { createLafeaWorkbenchStore } from '../../src/workspace/lafea-workbench.j
 
 const STAGE_ID = 'LAFEA.3';
 const SHELL_ELEMENT = 'CST_DKT_TRI3_THIN_SHELL_V1';
+const PHYSICAL_PROBE_SCHEMA = 'lafea-continuum-physical-probe/v1';
 
 export function executeB02RectangleProductionLevel(definition, method, level) {
   requireRectangleDefinition(definition);
@@ -81,7 +82,18 @@ export function executeB02RectangleProductionLevel(definition, method, level) {
     assert.equal(stage.lifecycle?.artifacts?.RECOVERY?.qualification, 'PASS');
     return {
       stage,
-      probes: definition.fixedProbes.map((probe) => store.evaluateContinuumPhysicalProbe(probe)),
+      probes: definition.fixedProbes.map((probe) => store.evaluateContinuumPhysicalProbe({
+        schema: PHYSICAL_PROBE_SCHEMA,
+        probeId: probe.probeId,
+        physicalCoordinate: structuredClone(probe.physicalCoordinate),
+        coordinateFrame: probe.coordinateFrame,
+        loadCaseId: probe.loadCaseId,
+        quantityId: probe.quantityId,
+        representation: probe.representation,
+        recoveryMethod: probe.recoveryMethod,
+        units: probe.units,
+        singularityClassification: probe.singularityClassification,
+      })),
       meshEvidence: generated.evidence,
       preflight: stage.retainedContinuumPreflightEvidence,
     };

@@ -6,6 +6,7 @@ import {
 } from '../src/workspace/engineering-loads/adapters/empirical-v3-source-authority-adapter.js';
 import {
   adaptResolutionReference,
+  requireAdaptedResolutionReference,
 } from '../src/workspace/engineering-loads/adapters/empirical-v3-resolution-reference-adapter.js';
 
 const runId = 'RUN:V3:SOURCE-ADAPTER';
@@ -108,6 +109,7 @@ const fuzzyClass = adaptResolutionReference({
   entityIds: ['P1'],
 });
 assert.equal(fuzzyClass.record.authorityClass, 'INFERRED_REVIEW_REQUIRED');
+assert.equal(fuzzyClass.record.needsReview, true);
 assert.equal(fuzzyClass.risk.riskClass, 'HIGH_CONFIRM');
 
 const exactClass = adaptResolutionReference({
@@ -122,7 +124,41 @@ const exactClass = adaptResolutionReference({
   entityIds: ['P1'],
 });
 assert.equal(exactClass.record.authorityClass, 'APPROVED_MASTER_EXACT');
+assert.equal(exactClass.record.needsReview, false);
 assert.equal(exactClass.risk, null);
+
+const exactWithoutSourceHash = adaptResolutionReference({
+  runId,
+  kind: 'PIPING_CLASS',
+  ref: '91261M7',
+  source: 'approved-piping-class-master',
+  matchMethod: 'exact',
+  needsReview: false,
+  exactMasterApproved: true,
+  entityIds: ['P1'],
+});
+assert.equal(exactWithoutSourceHash.record.authorityClass, 'INFERRED_REVIEW_REQUIRED');
+assert.equal(exactWithoutSourceHash.record.needsReview, true);
+assert.equal(exactWithoutSourceHash.risk.riskClass, 'HIGH_CONFIRM');
+
+const forgedExactMaterial = {
+  schema: exactClass.record.schema,
+  kind: exactClass.record.kind,
+  ref: exactClass.record.ref,
+  authorityClass: 'APPROVED_MASTER_EXACT',
+  source: exactClass.record.source,
+  sourceSemanticHash: null,
+  matchMethod: exactClass.record.matchMethod,
+  needsReview: false,
+};
+const forgedExact = {
+  ...forgedExactMaterial,
+  semanticHash: semanticHash(forgedExactMaterial),
+};
+assert.throws(
+  () => requireAdaptedResolutionReference(forgedExact),
+  /requires an immutable source semantic hash/,
+);
 
 const missingMaterial = adaptResolutionReference({
   runId,
@@ -130,10 +166,11 @@ const missingMaterial = adaptResolutionReference({
   ref: null,
   source: 'material-resolver',
   matchMethod: 'none',
-  needsReview: true,
+  needsReview: false,
   entityIds: ['P1'],
 });
 assert.equal(missingMaterial.record.authorityClass, 'UNRESOLVED');
+assert.equal(missingMaterial.record.needsReview, true);
 assert.equal(missingMaterial.risk.riskClass, 'HIGH_BLOCK');
 
 console.log('PASS empirical-v3-source-authority-adapter-check');

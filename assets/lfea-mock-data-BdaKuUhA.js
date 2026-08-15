@@ -1,0 +1,1 @@
+import{r}from"./lfea-005-fixtures-BNKjAntP.js";import"./core-application-k57a7o-N.js";import"./core-element-fea-BHxatkhe.js";function o(){return structuredClone(r({}))}export{o as createLfeaMockPackage};

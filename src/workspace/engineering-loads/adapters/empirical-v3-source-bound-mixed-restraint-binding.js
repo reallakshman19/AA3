@@ -32,8 +32,9 @@ export function buildEmpiricalV3SourceBoundMixedRestraintBinding(input) {
   assertCurrentChain(request, attachmentModel, restraintModel, route);
   const selection = requireSelection(input.selection, request);
   const occurrences = new Map(request.restraintOccurrences.map((row) => [row.restraintId, row]));
-  const rootOccurrence = requireOccurrence(occurrences, selection.rootRestraintId);
-  const coordinateOccurrences = selection.coordinateRestraintIds.map((id) => requireOccurrence(occurrences, id));
+  const rootOccurrence = requireExplicitOccurrence(requireOccurrence(occurrences, selection.rootRestraintId));
+  const coordinateOccurrences = selection.coordinateRestraintIds
+    .map((id) => requireExplicitOccurrence(requireOccurrence(occurrences, id)));
   requireRigidRoot(rootOccurrence);
   const attachmentById = new Map(attachmentModel.attachments.map((row) => [row.attachmentId, row]));
   const rootNodeId = routeNodeForOccurrence(rootOccurrence, attachmentById, route);
@@ -80,6 +81,7 @@ export function buildEmpiricalV3SourceBoundMixedRestraintBinding(input) {
     coordinates,
     movementRecords,
     policy: {
+      explicitRestraintQualificationOnly: true,
       sourceBackedSupportMovementOnly: true,
       qualifiedMovementOnly: true,
       existingCanonicalRouteNodesOnly: true,
@@ -108,6 +110,7 @@ export function requireEmpiricalV3SourceBoundMixedRestraintBinding(value) {
 }
 
 function assertCurrentChain(request, attachmentModel, restraintModel, route) {
+  if (request.status !== 'READY_FOR_RUNTIME_BRIDGE') throw new Error('Governed empirical request is not READY_FOR_RUNTIME_BRIDGE.');
   if (request.datasetId !== route.datasetId || attachmentModel.datasetId !== request.datasetId || restraintModel.datasetId !== request.datasetId) {
     throw new Error('Mixed restraint authorities must share one dataset.');
   }
@@ -131,6 +134,12 @@ function requireSelection(value, request) {
   const rootRestraintId = text(value.rootRestraintId, 'selection.rootRestraintId');
   if (!coordinateRestraintIds.length || coordinateRestraintIds.includes(rootRestraintId)) throw new Error('Mixed restraint selection requires distinct root and solved restraints.');
   return { loadCaseId, rootRestraintId, coordinateRestraintIds };
+}
+function requireExplicitOccurrence(occurrence) {
+  if (occurrence.qualification !== 'EXPLICIT') {
+    throw new Error(`Restraint ${occurrence.restraintId} must have EXPLICIT source qualification for mixed source-bound execution.`);
+  }
+  return occurrence;
 }
 function requireRigidRoot(occurrence) {
   if (!/ANCHOR|(^|_)ANC(HOR)?($|_)/.test(String(occurrence.effectiveCapability?.type || '').toUpperCase())) throw new Error(`Root ${occurrence.restraintId} must be a governed anchor.`);

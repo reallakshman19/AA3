@@ -14,12 +14,11 @@ REPOSITORY: reallaksh19/Advanced_Analysis
 PR: #1157
 BRANCH: agent/empirical-v3-wp2r-governed-execution-20260815
 BASE_HEAD: 3fe5d6a4131c795ed88e7875b785549f1b8e6f35
-PR_HEAD_OBSERVED: 525a8153b78cbe3b42ebbed8c618c799d6573615
-CURRENT_STAGE: WP2R_A_IMPLEMENTED_AWAITING_EXECUTABLE_QUALIFICATION
-LAST_COMPLETED_STAGE: GOVERNED_RUN_SOURCE_IMPLEMENTATION_PLUS_STALE_AUTHORITY_REVIEW
+REVIEWED_PRODUCTION_CODE_HEAD: 1968df5a39238a2ca9de55da4dfb568ebe9e7c4b
+CURRENT_STAGE: WP2R_A_AND_PRODUCT_FIXTURE_IMPLEMENTED_AWAITING_EXECUTABLE_QUALIFICATION
 CURRENT_BLOCKER: exact-head checkout/browser execution unavailable; GitHub Actions empty
-HIGHEST_RISK: source implementation is unexecuted; canonical browser source→audit→stale rollback remains unobserved
-EXACT_NEXT_ACTION: build the deterministic product acceptance fixture and execute U21/source guards when an exact-head runtime is available
+HIGHEST_RISK: committed governed execution + browser acceptance specifications remain unexecuted
+EXACT_NEXT_ACTION: execute committed core/source/E2E qualification in a complete exact-head runtime; fix observed failures only
 ```
 
 ## Mission
@@ -30,7 +29,7 @@ Priority:
 
 1. U01–U23 exact-head qualification matrix;
 2. governed Run-path ownership closure;
-3. deterministic canonical browser acceptance fixture;
+3. deterministic product acceptance fixture;
 4. close every observed productization defect;
 5. preserve frozen V3 mechanics and V1/V2 behavior.
 
@@ -45,20 +44,13 @@ No changes made to:
 - V1/V2 production method behavior;
 - mixed browser enablement.
 
-## Baseline architecture finding
+## Baseline U21 finding
 
-### U21 at baseline — MISSING
+At base `3fe5d6...`, Empirical V3 browser Run was called from `src/main.js` through `executeEmpiricalV3LiveSourceBoundRun(...)`, while `AnalysisCoordinator` separately owned the repository reviewed-session/capability lifecycle. U21 was therefore genuinely `MISSING`.
 
-At `main` head `3fe5d6...`:
+## WP2R-A governed execution implementation
 
-1. Empirical V3 browser Run was called from `src/main.js` through `executeEmpiricalV3LiveSourceBoundRun(...)` after V3-specific preparation checks.
-2. `src/workspace/analysis-coordinator.js` separately owned repository governed analysis execution, including reviewed-session binding, capability readiness, lifecycle events, stale-result suppression and result-contract validation.
-
-That was a genuine execution-ownership split.
-
-## WP2R-A implementation
-
-The source architecture is now:
+Current source architecture:
 
 ```text
 sealed V3 package + exact ROM request
@@ -82,140 +74,183 @@ ANALYSIS_COMPLETED / FAILED
 V3 result-review / Explain / audit workflow
 ```
 
-### Changed framework/custody modules
+Key changes:
 
 - `src/workspace/engineering-loads/adapters/empirical-v3-analysis-capability.js`
-  - V3 capability + prepared execution runtime custody;
-  - requires current sealed calculation authorization/request identities;
-  - calls only existing V3 live orchestration, never direct mechanics;
-  - wraps sealed V3 result in `solver-result-contract-v1`.
-
+  - registered qualified analytical V3 capability;
+  - prepared execution custody;
+  - calls existing live V3 bridge only, not mechanics modules.
 - `src/core/solvers/certification/solverResultContract.js`
-  - adds `QUALIFIED_ANALYTICAL` engineering level; no solver behavior changed.
-
+  - adds `QUALIFIED_ANALYTICAL`; solver behavior unchanged.
 - `src/workspace/analysis-context.js`
-  - adds reserved `@@WORKSPACE_ANALYSIS@@` target;
-  - workspace context has no fake physical entity;
-  - workspace analysis binds to `engineeringVersion`.
-
+  - reserved `@@WORKSPACE_ANALYSIS@@`; no fake physical entity.
 - `src/workspace/workspace-state.js`
-  - separates presentation `version` from `engineeringVersion`;
-  - dataset load/clear/shared-model changes advance engineering version;
-  - viewport selection does not.
-
+  - separates presentation `version` from governing `engineeringVersion`.
 - `src/workspace/analysis-session-controller.js`
-  - sessions bind to `context.version`;
-  - workspace-scoped session survives viewport selection changes;
-  - entity-scoped behavior is preserved.
-
+  - workspace sessions bind to context/engineering version and survive viewport selection.
 - `src/workspace/analysis-coordinator.js`
-  - accepts workspace-scoped target;
-  - retains reviewed-session/readiness/result validation;
-  - rechecks workspace authority after async capability return;
-  - emits governed `STALE_ANALYSIS_CONTEXT` / `STALE_ANALYSIS_SESSION` failure instead of publishing a stale completion.
-
+  - workspace target support;
+  - reviewed-session/readiness/result validation retained;
+  - post-execution currentness recheck prevents stale async completion.
 - `src/workspace/analysis-capabilities.js`
-  - registers the V3 capability alongside the existing support-load capability.
-
+  - V3 capability registered alongside existing support-load capability.
 - `src/main.js`
-  - no longer imports/calls `executeEmpiricalV3LiveSourceBoundRun(...)` directly;
-  - Run opens a workspace reviewed session and dispatches `ANALYSIS_REQUESTED`;
+  - no direct V3 live-ROM dispatch;
+  - opens reviewed session and dispatches `ANALYSIS_REQUESTED`;
   - waits for matching `ANALYSIS_COMPLETED / FAILED`;
-  - pre-Run dependency currentness now verifies dataset, shared model, exact topology, support attachment and restraint capability hashes;
-  - topology/support/project/master/dataset changes clear prepared V3 custody and close an active V3 analysis session.
+  - rechecks dataset/source/shared model/topology/support attachment/restraint hashes;
+  - dataset/project/master/topology/support changes invalidate V3 prepared/session/package custody.
 
-## Execution-discovered / review-discovered defects fixed
+## Product acceptance fixture
 
-### DEF-WP2R-001 — execution ownership split
+Added:
 
-Baseline browser V3 Run bypassed `AnalysisCoordinator`.
+- `e2e/fixtures/empirical-v3-wp2r-product-fixture.js`
+- `scripts/empirical-v3-wp2r-product-fixture-check.mjs`
+- `e2e/empirical-v3-wp2r-product.spec.js`
 
-**Fix:** one governed coordinator/capability lifecycle now owns browser Run.
+The sealed fixture deliberately separates **UI/evidence qualification** from **real solver/Run qualification**.
 
-### DEF-WP2R-002 — viewport selection and engineering version were conflated
+Fixture includes:
 
-`WorkspaceState.selectEntity()` incremented the same `version` used by analysis-session staleness. A workspace-coupled run would therefore become stale merely because the engineer clicked another entity.
+- two deterministic calculation branches with 180 °C / 210 °C process split;
+- common piping-class authority;
+- component-local WT/section authority;
+- `P101 → E102 → P203` component identities;
+- one `HIGH_BLOCK` topology/missing-component risk;
+- one `HIGH_CONFIRM` WT review risk;
+- one `MEDIUM` conservative-density warning;
+- one singular current confirmation receipt;
+- authorized package;
+- sealed two-coordinate coupled evidence using the frozen #1148 display oracle;
+- explicit fixture policy:
+  - `validatesMixedBrowserExecution:false`;
+  - `validatesSolverExecution:false`;
+  - `realRunQualificationRequiredSeparately:true`.
 
-**Fix:** separate `engineeringVersion`; workspace sessions bind to it while entity sessions keep existing selection/version behavior.
+The frozen display/evidence oracle is used only to prove UI coupled-trace behavior. It does **not** enable or claim mixed browser execution.
 
-### DEF-WP2R-003 — future async workspace result could publish after authority changed
+The Playwright spec is intended to prove:
 
-The existing stale-result suppression was selection-oriented. A future asynchronous workspace solver could finish after governing model change and still reach completion.
+- branch process basis shown once with component-local exceptions;
+- blocker/high-review/warning counts;
+- no approval path for `HIGH_BLOCK`;
+- no bulk High approval;
+- exact risk identity across surfaces;
+- authorization alone cannot enable Run without prepared execution custody;
+- `SUMMARY | TRACE | FULL AUDIT` Explain modes;
+- coupled off-diagonal evidence/component contributions;
+- display-only Explain changes preserve engineering hashes;
+- result review is a separate transaction;
+- audit readiness is a separate transaction;
+- audit JSON carries the same risk/confirmation/evidence identities;
+- governing dependency mutation rolls result/review/audit backward;
+- stale evidence remains archived but is not presented as current;
+- sealed result package can be reloaded without creating a confirmation.
 
-**Fix:** coordinator revalidates workspace session/context after capability return; stale workspace result becomes governed failure, never completion.
+## Review-discovered defects fixed
 
-### DEF-WP2R-004 — live request currentness did not include topology/support models
+### DEF-WP2R-001 — browser execution ownership split
 
-The sealed V3 execution request contains topology, support-attachment and restraint hashes, but the live shell previously rechecked only dataset/source/shared-model identity.
+**Fix:** one coordinator/capability lifecycle owns browser Run.
 
-**Fix:** live request currentness now also matches:
+### DEF-WP2R-002 — viewport selection and engineering version conflated
 
-```text
-topologyGraphSemanticHash
-supportAttachmentModelSemanticHash
-restraintCapabilityModelSemanticHash
-```
+`WorkspaceState.selectEntity()` advanced the same version used for engineering staleness.
 
-and topology/support change events invalidate the V3 browser package/custody.
+**Fix:** introduced `engineeringVersion`; display selection no longer invalidates a coupled workspace analysis.
+
+### DEF-WP2R-003 — future async workspace result could publish after authority change
+
+**Fix:** coordinator revalidates workspace authority after capability return; stale output becomes governed failure, never completion.
+
+### DEF-WP2R-004 — live request currentness omitted topology/support models
+
+**Fix:** pre-Run currentness additionally binds exact topology, support attachment and restraint capability hashes; matching change events invalidate V3 custody.
+
+### DEF-WP2R-005 — Explain Calculation lacked the owner-frozen three-level hierarchy
+
+Landed UI exposed the entire trace in one view.
+
+**Fix:** `SUMMARY`, `TRACE`, and `FULL AUDIT` are now explicit read-only presentation modes over the same sealed evidence. No calculation is performed in mode switching.
+
+### DEF-WP2R-006 — stale evidence could be re-presented as a current Explain result
+
+`restoreDownstream()` used the stored result hash but did not require `calculationResult.current`.
+
+**Fix:** current Explain evidence loads only when the workflow result fact is current. Stale evidence remains in sealed records for audit but is removed from the current-result projection. Current result-review/audit receipts are likewise restored only when their workflow facts are current.
 
 ## Committed qualification guards
 
 ### `scripts/empirical-v3-governed-analysis-coordinator-check.mjs`
 
-Uses the real `WorkspaceStateStore` and is intended to prove:
+Uses real `WorkspaceStateStore` and is intended to prove:
 
-1. workspace analysis context uses `engineeringVersion`;
-2. real viewport selection increases presentation version but not engineering version;
-3. workspace run completes across display-only selection change;
-4. engineering/shared-model change during asynchronous execution yields `STALE_ANALYSIS_CONTEXT` and no completion;
-5. a reviewed session already stale before Run yields `ANALYSIS_SESSION_STALE`.
+1. workspace context binds `engineeringVersion`;
+2. viewport selection changes presentation version only;
+3. workspace run survives display-only selection;
+4. engineering/shared-model change during async execution yields `STALE_ANALYSIS_CONTEXT`, no completion;
+5. stale reviewed session before Run yields `ANALYSIS_SESSION_STALE`.
 
-### Updated `scripts/empirical-v3-safety-ui-source-guard.mjs`
+### `scripts/empirical-v3-safety-ui-source-guard.mjs`
 
-Guards:
+Now guards:
 
-- no direct V3 live executor import in `main.js`;
-- coordinator/session lifecycle required;
-- V3 capability may not import mechanics directly;
-- workspace target + engineering-version custody;
-- topology/support currentness checks;
+- one governed Run owner;
+- no direct mechanics import/call from UI/capability;
+- workspace/engineering-version custody;
+- topology/support currentness;
 - no mixed browser execution;
-- existing HIGH_BLOCK / no-bulk-confirm / Explain purity boundaries.
+- `HIGH_BLOCK` no-confirm and no bulk High approval;
+- `SUMMARY | TRACE | FULL AUDIT` Explain modes;
+- no UI re-solve;
+- stale calculation/review/audit records cannot become current projection merely because a hash remains archived.
+
+### `scripts/empirical-v3-wp2r-product-fixture-check.mjs`
+
+Intended to prove fixture determinism, workflow/risk states, branch split, confirmation/authorization identity, two-coordinate coupled evidence and evidence non-recomputation policy.
 
 ## Validation truth
 
-At observed PR head `525a8153...`:
+At reviewed production-code head `1968df5...`:
 
 - source inspection/review: OBSERVED;
 - U21 source implementation: PRESENT;
 - U21 qualification status: **NOT_RUN**;
-- `empirical-v3-governed-analysis-coordinator-check.mjs`: committed, **NOT_RUN**;
+- governed coordinator check: committed, **NOT_RUN**;
 - updated UI/source guard: committed, **NOT_RUN**;
+- product fixture check: committed, **NOT_RUN**;
+- WP2R Playwright product spec: committed, **NOT_RUN**;
 - GitHub Actions: **NOT_OBSERVED** (`workflow_runs=[]`);
-- browser E2E: **NOT_RUN**;
 - full build/import graph: **NOT_RUN**;
-- U01–U20/U22/U23: remain **NOT_RUN** unless separately observed.
+- real straight source-bound browser Run through coordinator: **NOT_RUN**;
+- mixed browser Run: deliberately **NOT_ENABLED / NOT_RUN**;
+- U01–U20/U22/U23 remain `NOT_RUN` unless separately observed.
 
-Never convert those rows to PASS from source inspection.
+No source inspection result is represented as runtime PASS.
 
-## Repository caller compatibility check
+## Repository compatibility check
 
-Code search against landed `main` found no repository caller of `executeEmpiricalV3SourceBoundThermalRom(...)` outside `src/main.js`. The governed API is now asynchronous; no in-repository synchronous consumer was identified. External/manual API consumers remain an explicit browser-regression item.
+Code search against landed `main` found no repository caller of `executeEmpiricalV3SourceBoundThermalRom(...)` outside `src/main.js`. The public helper is now asynchronous; no in-repository synchronous consumer was identified. External/manual API compatibility remains a browser-regression item.
 
 ## Durable artifacts
 
-- `docs/empirical-v3-wp2r-qualification.md` — live U01–U23 matrix and owner-locked closure rules.
-- `agents/PR1157_workreport.md` — this recovery/validation ledger.
+- `docs/empirical-v3-wp2r-qualification.md`
+- `agents/PR1157_workreport.md`
+- `e2e/fixtures/empirical-v3-wp2r-product-fixture.js`
+- `scripts/empirical-v3-governed-analysis-coordinator-check.mjs`
+- `scripts/empirical-v3-wp2r-product-fixture-check.mjs`
+- `e2e/empirical-v3-wp2r-product.spec.js`
 
 ## Active items
 
 | ID | Severity | Status | Summary |
 |---|---:|---|---|
-| WP2R-001 | P0 | IMPLEMENTED_NOT_RUN | close U21 governed execution ownership |
-| WP2R-002 | P0 | ACTIVE_NEXT | canonical end-to-end browser fixture |
+| WP2R-001 | P0 | IMPLEMENTED_NOT_RUN | governed U21 execution ownership |
+| WP2R-002 | P0 | IMPLEMENTED_NOT_RUN | sealed product/UI acceptance fixture |
 | WP2R-003 | P0 | ACTIVE | U01–U23 exact-head qualification closure |
-| WP2R-004 | P1 | PLANNED | audit/remount/stale-mutation reconstruction |
-| WP2R-005 | P1 | PLANNED | product UI defects exposed by canonical fixture |
+| WP2R-004 | P0 | NEXT | real straight source-bound browser Run through coordinator |
+| WP2R-005 | P1 | ACTIVE | UI/product defects exposed by fixture |
 
 ## Merge rule
 

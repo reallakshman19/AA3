@@ -6,6 +6,7 @@
  * midsurface producer scopes.
  */
 import assert from 'node:assert/strict';
+import './lafea-b02d-probe-stable-polar-mesh-check.mjs';
 
 import { createLafeaAnalysisGeometry } from '../src/workspace/lafea-analysis-geometry-contract.js';
 import { createLafeaContinuumAnalysisDomain } from '../src/workspace/lafea-continuum-analysis-domain.js';
@@ -48,8 +49,8 @@ const SHELL_TRI3 = 'CST_DKT_TRI3_THIN_SHELL_V1';
 const capability = lafeaCoreMeshProducerCapability();
 const qualification = lafeaCoreMeshProducerQualification();
 assert.equal(capability.producerId, 'LAFEA_CORE_MESHER');
-assert.equal(capability.producerRevision, 'LAFEA.10.T6Q8.SHELL.V9');
-assert.equal(qualification.qualificationRevision, 'R10');
+assert.equal(capability.producerRevision, 'LAFEA.10.T6Q8.SHELL.POLAR.V10');
+assert.equal(qualification.qualificationRevision, 'R11');
 assert.deepEqual(capability.generationModes, ['AUTOMATIC_MESH', 'REFINEMENT_REGENERATION']);
 assert.equal(capability.supportsLocalRefinement, true);
 assert.equal(qualification.localRefinementAuthorized, true);
@@ -487,4 +488,4 @@ function arc(segmentId, startVertexId, endVertexId, centerX, centerY, radius, sw
   return { segmentId, type: 'CIRCULAR_ARC', startVertexId, endVertexId, centerX, centerY, radius, sweep };
 }
 
-console.log('LAFEA mesh-producer binding check PASS (P0 + P1-5 + P1-6 holes + P1-7 logical mapped chains + P2-8 planar/cylindrical/curved-hole/periodic shell automatic generation binding + P2-9 retained local refinement authority)');
+console.log('LAFEA mesh-producer binding check PASS (P0 + P1-5 + P1-6 holes + P1-7 logical mapped chains + P2-8 planar/cylindrical/curved-hole/periodic shell automatic generation binding + P2-9 retained local refinement authority + B02D registered probe-stable polar V10)');

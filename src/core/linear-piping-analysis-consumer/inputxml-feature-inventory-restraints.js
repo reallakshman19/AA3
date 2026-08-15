@@ -3,6 +3,10 @@ import {
   restraintTypeCodeLabel,
 } from '../geometry/adapters/inputxml-restraint-type-mutation.js';
 import {
+  isCaesarUnsetSentinel,
+  isUnfilledCaesarSlot,
+} from '../geometry/adapters/caesar-unset-sentinel.js';
+import {
   STRICT_INPUTXML_LINEAR_STATIC_PROFILE as STRICT,
   DISCLOSED_GENERIC_ANALYZER_APPROXIMATION_PROFILE as APPROXIMATE,
   exactDisposition,
@@ -15,38 +19,26 @@ import {
 
 export const NUMERIC_TOLERANCE = 1e-12;
 const DIRECTION_TOLERANCE = 1e-9;
-const CAESAR_UNSET_SENTINEL = -1.0101;
-const CAESAR_SENTINEL_TOLERANCE = 0.001;
 const RESTRAINT_DOFS = Object.freeze(['UX', 'UY', 'UZ', 'RX', 'RY', 'RZ']);
 const GENERIC_LINEARIZED_UNILATERAL_CODES = new Set(['14', '15']);
+// A RESTRAINT record is an unused fixed-width-array slot only when both its
+// identity attributes (which restraint, and on which node) carry the
+// sentinel. A row declaring one but not the other is genuinely malformed and
+// still falls through to MODEL_RESTRAINT_SOURCE_INVALID below, so this does
+// not weaken the fail-closed contract. See caesar-unset-sentinel.js for why
+// this can't be a blanket "every field is sentinel" test (BM4 alone has 56
+// unused slots that carry non-sentinel 0.000000 direction cosines).
+const RESTRAINT_SLOT_IDENTITY_ATTRIBUTES = Object.freeze(['TYPE', 'NODE']);
 
 export function classifyRestraint(attributes, element, segment) {
-  // CAESAR exports a fixed-width restraint array per element and fills every
-  // field of an unused slot with the -1.0101 unset sentinel rather than
-  // omitting the record. Such a slot declares no restraint at all: it is
-  // NOT_ACTIVE, exactly like an omitted attribute, and must not be reported as
-  // invalid source data. (BM4 carries 180 <RESTRAINT> records of which 134 are
-  // empty slots; before this, each one raised MODEL_RESTRAINT_SOURCE_INVALID
-  // under both profiles for 268 phantom BLOCK findings that stalled the whole
-  // import.)
-  //
-  // Both TYPE and NODE must be unset for the row to count as an empty slot. A
-  // row that declares one but not the other is a genuinely malformed record and
-  // still falls through to MODEL_RESTRAINT_SOURCE_INVALID, so this does not
-  // weaken the fail-closed contract.
+  const unfilledSlot = isUnfilledCaesarSlot(attributes, RESTRAINT_SLOT_IDENTITY_ATTRIBUTES);
   const declaredType = attribute(attributes, ['TYPE']);
-  const declaredNodeText = attribute(attributes, ['NODE']);
-  const typeUnset = isCaesarUnsetSentinelText(declaredType);
-  const nodeUnset = isCaesarUnsetSentinelText(declaredNodeText);
-  const unfilledSlot = typeUnset && nodeUnset;
-
-  const rawType = typeUnset ? null : declaredType;
+  const rawType = unfilledSlot ? null : declaredType;
   const mutation = resolveRestraintTypeMutation(rawType);
   const typeCode = mutation.typeCode;
-  const declaredNodeId = nodeUnset ? null : normalizedNodeAttribute(attributes, ['NODE']);
   const nodeId = unfilledSlot
     ? null
-    : declaredNodeId ?? element.toNodeId ?? element.fromNodeId ?? null;
+    : normalizedNodeAttribute(attributes, ['NODE']) ?? element.toNodeId ?? element.fromNodeId ?? null;
   const direction = directionOf(attributes);
   const gap = caesarOptionalNumber(attributes, ['GAP', 'GAP1']);
   const friction = caesarOptionalNumber(attributes, ['FRIC_COEF', 'FRICTION', 'MU']);
@@ -175,28 +167,28 @@ export function numericAttribute(attributes, names) {
   return Number.isFinite(number) ? number : null;
 }
 
-function isCaesarUnsetSentinel(value) {
-  return typeof value === 'number'
-    && Number.isFinite(value)
-    && Math.abs(value - CAESAR_UNSET_SENTINEL) < CAESAR_SENTINEL_TOLERANCE;
-}
-
-/** True when an attribute's declared text is the CAESAR "field not set" sentinel. */
-function isCaesarUnsetSentinelText(text) {
-  if (text === null) return false;
-  return isCaesarUnsetSentinel(Number(text));
-}
-
 function caesarOptionalNumber(attributes, names) {
   const value = numericAttribute(attributes, names);
   return isCaesarUnsetSentinel(value) ? null : value;
 }
 
+/**
+ * Node-id attribute, or null when absent or carrying the CAESAR unset
+ * sentinel. CNODE/CONNECTING_NODE/NODE2 in particular are declared on every
+ * restraint record and read -1.0101 to mean "no connecting node" — before
+ * this, that sentinel was returned as the literal node id "-1.0101", which
+ * made every restraint with no gap/friction declared but a filled (sentinel)
+ * CNODE resolve to connectingNodeActive=true and block on
+ * MODEL_RESTRAINT_CONNECTING_NODE_UNSUPPORTED. On BM4, 14 of 46 real
+ * restraints have no connecting node at all and were misrouted this way.
+ */
 export function normalizedNodeAttribute(attributes, names) {
   const value = attribute(attributes, names);
   if (value === null) return null;
   const number = Number(value);
-  return Number.isFinite(number) ? String(number) : value;
+  if (!Number.isFinite(number)) return value;
+  if (isCaesarUnsetSentinel(number)) return null;
+  return String(number);
 }
 
 function finitePositive(value) {

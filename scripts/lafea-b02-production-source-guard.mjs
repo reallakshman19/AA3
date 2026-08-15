@@ -10,6 +10,8 @@ const verification = read('src/workspace/lafea-verification-release-view.js');
 const mesherBinding = read('src/workspace/lafea-mesh-producer-binding.js');
 const analyticalTraction = read('src/workspace/lafea-analytical-traction-lowering.js');
 const rectangleRoute = read('scripts/lib/lafea-b02-production-route.mjs');
+const kirschRoute = read('scripts/lib/lafea-b02-kirsch-production-route.mjs');
+const b02dRoute = read('scripts/lib/lafea-b02d-production-route.mjs');
 const sequence = read('scripts/lafea-b02-production-sequence-check.mjs');
 
 assert.match(runActions, /transactions\.begin\(stageId, preflight\)/u);
@@ -42,12 +44,21 @@ assert.match(analyticalTraction, /LAFEA_ANALYTICAL_TRACTION_LAW_INVALID/u);
 assert.equal(/eval\(|new Function/u.test(analyticalTraction), false,
   'Analytical traction laws must remain whitelisted serializable laws, not executable expressions.');
 
-assert.match(rectangleRoute, /schema: PHYSICAL_PROBE_SCHEMA/u);
-assert.match(rectangleRoute, /singularityClassification: probe\.singularityClassification/u);
-assert.equal(/evaluateContinuumPhysicalProbe\(probe\)/u.test(rectangleRoute), false,
-  'Frozen oracle fields must not be passed directly into G4 probe identity.');
+for (const [label, route] of [
+  ['B02A/B', rectangleRoute],
+  ['B02C', kirschRoute],
+  ['B02D', b02dRoute],
+]) {
+  assert.match(route, /schema: PHYSICAL_PROBE_SCHEMA/u, `${label} strict probe schema missing`);
+  assert.match(route, /singularityClassification: probe\.singularityClassification/u,
+    `${label} singularity classification not retained`);
+  assert.equal(/evaluateContinuumPhysicalProbe\(stage,\s*probe\)/u.test(route), false,
+    `${label} must not pass frozen definition rows directly into G4 recovery.`);
+}
 assert.equal(/expectedValue\s*:/u.test(rectangleRoute), false,
-  'Expected benchmark values must remain outside the production recovery adapter.');
+  'Expected benchmark values must remain outside the rectangle production recovery adapter.');
+assert.equal(/analyticalReferenceValue\s*:/u.test(kirschRoute), false,
+  'Kirsch analytical reference values must remain outside production recovery identity.');
 
 const ordered = ['B02A', 'B02B', 'B02C', 'B02D'];
 let previous = -1;

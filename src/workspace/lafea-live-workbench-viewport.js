@@ -5,6 +5,9 @@ import {
   renderLafeaRetainedMeshOverlay,
 } from './lafea-canvas/retained-mesh-overlay.js';
 import {
+  selectLafeaBcLoadGlyphDisplayProjection,
+} from './lafea-continuum-bc-load-glyph-display-cache.js';
+import {
   createLafeaSourceWorkbenchViewportModel,
   mountLafeaSourceWorkbenchViewportModel,
 } from './lafea-source-workbench-viewport.js';
@@ -30,6 +33,7 @@ export function mountLafeaLiveWorkbenchViewport(root, input) {
   if (!root?.ownerDocument) throw liveViewportError('LAFEA_LIVE_VIEWPORT_ROOT_REQUIRED');
   const model = createLafeaLiveWorkbenchViewportModel(input), viewportHost = root.ownerDocument.createElement('div');
   viewportHost.dataset.role = 'lafea-live-workbench-viewport-host'; root.replaceChildren(viewportHost);
+  const glyphBinding = displayGlyphBinding(input);
   let mounted, blockedStatus = null, focusedMeshElementId = input.focusedMeshElementId ?? null, destroyed = false;
   if (model.mode === 'QUALIFIED_RESULT') {
     mounted = mountLafeaHybridResultViewport(viewportHost, { stageId: model.sourceModel.registryEntry.stageId,
@@ -61,8 +65,8 @@ export function mountLafeaLiveWorkbenchViewport(root, input) {
       viewport: model.sourceModel.viewport, focusedElementId: focusedMeshElementId,
       custodyState: input.analysisMeshCustodyState ?? 'UNKNOWN', onFocusElement: focusRetainedMeshElement });
     renderLafeaBcLoadGlyphOverlay({ target: viewportHost, evidence: input.retainedMeshEvidence,
-      viewport: model.sourceModel.viewport, projection: input.bcLoadGlyphProjection ?? null,
-      executionHash: input.executionHash ?? null });
+      viewport: model.sourceModel.viewport, projection: glyphBinding.projection,
+      executionHash: glyphBinding.executionHash });
     return mesh;
   }
   return Object.freeze({ schema: LAFEA_LIVE_WORKBENCH_VIEWPORT_SCHEMA, scene: model.sourceModel.scene,
@@ -71,14 +75,26 @@ export function mountLafeaLiveWorkbenchViewport(root, input) {
     destroy() { if (destroyed) return; destroyed = true; mounted.destroy(); blockedStatus?.remove?.(); root.replaceChildren(); root.dataset.liveViewportMode = 'DESTROYED'; } });
 }
 
-function sourceInput(input, selection = input.selection ?? null) { return { stageId: input.stageId, document: input.document,
-  lifecycle: input.lifecycle ?? null, lifecycleBinding: input.lifecycleBinding ?? null, sceneRevision: input.sceneRevision,
-  selection, cssWidth: input.cssWidth, cssHeight: input.cssHeight, devicePixelRatio: input.devicePixelRatio,
-  paddingRatio: input.paddingRatio, policy: input.policy, onMoveNode: input.onMoveNode,
-  onSelectionChange: input.onSelectionChange, retainedMeshEvidence: input.retainedMeshEvidence ?? null,
-  analysisMeshCustodyState: input.analysisMeshCustodyState ?? null,
-  bcLoadGlyphProjection: input.bcLoadGlyphProjection ?? null, executionHash: input.executionHash ?? null,
-  focusedMeshElementId: input.focusedMeshElementId ?? null, onFocusMeshElement: input.onFocusMeshElement }; }
+function sourceInput(input, selection = input.selection ?? null) {
+  const binding = displayGlyphBinding(input);
+  return { stageId: input.stageId, document: input.document,
+    lifecycle: input.lifecycle ?? null, lifecycleBinding: input.lifecycleBinding ?? null, sceneRevision: input.sceneRevision,
+    selection, cssWidth: input.cssWidth, cssHeight: input.cssHeight, devicePixelRatio: input.devicePixelRatio,
+    paddingRatio: input.paddingRatio, policy: input.policy, onMoveNode: input.onMoveNode,
+    onSelectionChange: input.onSelectionChange, retainedMeshEvidence: input.retainedMeshEvidence ?? null,
+    analysisMeshCustodyState: input.analysisMeshCustodyState ?? null,
+    bcLoadGlyphProjection: binding.projection, executionHash: binding.executionHash,
+    focusedMeshElementId: input.focusedMeshElementId ?? null, onFocusMeshElement: input.onFocusMeshElement };
+}
+function displayGlyphBinding(input) {
+  const executionHash = input.executionHash ?? input.renderPacket?.lineage?.executionHash ?? null;
+  const projection = input.bcLoadGlyphProjection
+    ?? selectLafeaBcLoadGlyphDisplayProjection(executionHash);
+  if (projection && projection.executionHash !== executionHash) {
+    throw liveViewportError('LAFEA_LIVE_VIEWPORT_BC_LOAD_GLYPH_EXECUTION_MISMATCH');
+  }
+  return Object.freeze({ executionHash, projection });
+}
 function projectSelectionForSource(value, sceneRevision) { if (!isRecord(value) || value.sourceEntityId === null || value.meshEntityId === null || value.sceneRevision !== sceneRevision) return value; return { sceneRevision, sourceEntityId: value.sourceEntityId, meshEntityId: null, entityRole: 'SOURCE' }; }
 function resultViewport(sourceViewport, packet) { const value = structuredClone(sourceViewport); value.displayOptions = { sourceAuthoring: false, wireframe: false, fieldBounds: structuredClone(packet.field.bounds), colorMapId: packet.field.colorMapId, deformationScale: 0 }; return freeze(value); }
 function renderBlockedStatus(root, reasons) { const documentRef = root.ownerDocument, section = documentRef.createElement('section'); section.dataset.role = 'lafea-live-result-blocked-status'; section.setAttribute('aria-live', 'polite'); const title = documentRef.createElement('p'); title.textContent = 'Qualified result display is BLOCKED; source authoring remains active.'; const list = documentRef.createElement('ul'); reasons.forEach((reason) => { const item = documentRef.createElement('li'); item.textContent = reason; list.append(item); }); section.append(title, list); root.append(section); return section; }

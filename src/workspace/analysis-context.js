@@ -2,6 +2,8 @@ import { connectedPipeComponent } from './analysis-connectivity.js';
 import { hasOverride, overrideValue } from './analysis-input-evidence.js';
 import { freezeDeep, stringValue } from './dataset-utils.js';
 
+export const WORKSPACE_ANALYSIS_TARGET_ID = '@@WORKSPACE_ANALYSIS@@';
+
 const PIPE_REFERENCE_KEYS = [
   'PIPE_ID',
   'PARENT_PIPE_ID',
@@ -20,12 +22,26 @@ const SCREENING_ALIASES = Object.freeze({
 
 export function createAnalysisContext(workspaceState, targetId) {
   const snapshot = workspaceState.getSnapshot();
+  if (snapshot.status !== 'ready' || !snapshot.dataset) {
+    throw new Error(`Analysis target is not available in the active dataset: ${targetId}.`);
+  }
+  if (targetId === WORKSPACE_ANALYSIS_TARGET_ID) {
+    return freezeDeep({
+      targetId: WORKSPACE_ANALYSIS_TARGET_ID,
+      analysisScope: 'WORKSPACE',
+      entity: null,
+      dataset: snapshot.dataset,
+      selectedEntityId: snapshot.selectedEntityId,
+      version: requireEngineeringVersion(snapshot),
+    });
+  }
   const entity = workspaceState.getEntity(targetId);
-  if (snapshot.status !== 'ready' || !snapshot.dataset || !entity) {
+  if (!entity) {
     throw new Error(`Analysis target is not available in the active dataset: ${targetId}.`);
   }
   return freezeDeep({
     targetId: entity.entityId,
+    analysisScope: 'ENTITY',
     entity,
     dataset: snapshot.dataset,
     selectedEntityId: snapshot.selectedEntityId,
@@ -33,7 +49,13 @@ export function createAnalysisContext(workspaceState, targetId) {
   });
 }
 
+export function isWorkspaceAnalysisContext(context) {
+  return context?.analysisScope === 'WORKSPACE'
+    && context?.targetId === WORKSPACE_ANALYSIS_TARGET_ID;
+}
+
 export function resolvePipeEntity(context) {
+  if (!context?.entity) return null;
   if (context.entity.category === 'pipe') return context.entity;
   if (context.entity.category !== 'support') return null;
 
@@ -73,7 +95,7 @@ export function toSupportLoadSource(pipeEntity) {
 }
 
 export function buildPipeScreeningInput(context) {
-  if (context.entity.category !== 'pipe') {
+  if (context?.entity?.category !== 'pipe') {
     return disabledScreening('Pipe flexibility screening requires a selected pipe.');
   }
 
@@ -211,7 +233,7 @@ function findValue(value, wanted, depth, path) {
     const nested = findValue(child, wanted, depth + 1, `${path}.${key}`);
     if (nested.found) return nested;
   }
-  return { found: false };
+  return { found: false, value: null, path: '' };
 }
 
 function projectLineEntities(entities) {
@@ -260,6 +282,13 @@ function disabledScreening(reason, missing = [], details = {}) {
 
 function evidence(value, source, path) {
   return freezeDeep({ value, source: value == null ? 'missing' : source, sourcePath: path || '' });
+}
+
+function requireEngineeringVersion(snapshot) {
+  if (!Number.isInteger(snapshot.engineeringVersion) || snapshot.engineeringVersion < 0) {
+    throw new TypeError('Workspace analysis requires a non-negative engineeringVersion.');
+  }
+  return snapshot.engineeringVersion;
 }
 
 function normalizeKey(value) {

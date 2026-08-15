@@ -1,7 +1,10 @@
 import {
   validateSolverResultContract,
 } from '../core/solvers/certification/solverResultContract.js';
-import { createAnalysisContext } from './analysis-context.js';
+import {
+  createAnalysisContext,
+  WORKSPACE_ANALYSIS_TARGET_ID,
+} from './analysis-context.js';
 import { AnalysisCapabilityError } from './analysis-capability-registry.js';
 import {
   assertSessionMatchesContext,
@@ -62,13 +65,14 @@ export class AnalysisCoordinator {
 
   async run({ analysisType, targetId, sessionId = '' }) {
     const requestId = `analysis-${++this.requestSequence}`;
-    const selectionVersion = this.selectionVersion;
+    const workspaceScoped = targetId === WORKSPACE_ANALYSIS_TARGET_ID;
+    const selectionVersion = workspaceScoped ? null : this.selectionVersion;
     const lifecycle = { requestId, analysisType, targetId, sessionId };
     this.eventBus.publish(EVENT_TOPICS.ANALYSIS_STARTED, lifecycle);
 
     try {
       const snapshot = this.workspaceState.getSnapshot();
-      if (snapshot.selectedEntityId !== targetId) {
+      if (!workspaceScoped && snapshot.selectedEntityId !== targetId) {
         throw new AnalysisCapabilityError(
           'STALE_ANALYSIS_TARGET',
           `Analysis target is not the active selection: ${targetId}.`,
@@ -93,6 +97,7 @@ export class AnalysisCoordinator {
         );
       }
       const result = await this.registry.execute(analysisType, context);
+      if (workspaceScoped) assertWorkspaceResultStillCurrent(this.workspaceState, this.sessionStore, sessionId, analysisType);
       if (this.shouldIgnore(selectionVersion, targetId, sessionId)) return;
       const validation = validateSolverResultContract(result);
       if (!validation.ok) {
@@ -107,7 +112,9 @@ export class AnalysisCoordinator {
         result,
       });
     } catch (error) {
-      if (this.shouldIgnore(selectionVersion, targetId, sessionId, true)) return;
+      const mustReportWorkspaceStale = workspaceScoped
+        && (error?.code === 'STALE_ANALYSIS_CONTEXT' || error?.code === 'STALE_ANALYSIS_SESSION');
+      if (!mustReportWorkspaceStale && this.shouldIgnore(selectionVersion, targetId, sessionId, true)) return;
       this.eventBus.publish(EVENT_TOPICS.ANALYSIS_FAILED, {
         ...lifecycle,
         code: String(error?.code || 'ANALYSIS_EXECUTION_FAILED'),
@@ -118,8 +125,15 @@ export class AnalysisCoordinator {
   }
 
   shouldIgnore(selectionVersion, targetId, sessionId = '', allowMissingSession = false) {
-    if (this.destroyed || selectionVersion !== this.selectionVersion) return true;
-    if (this.workspaceState.getSnapshot().selectedEntityId !== targetId) return true;
+    if (this.destroyed) return true;
+    const workspaceScoped = targetId === WORKSPACE_ANALYSIS_TARGET_ID;
+    if (!workspaceScoped && selectionVersion !== this.selectionVersion) return true;
+    const snapshot = this.workspaceState.getSnapshot();
+    if (workspaceScoped) {
+      if (snapshot.status !== 'ready' || !snapshot.dataset) return true;
+    } else if (snapshot.selectedEntityId !== targetId) {
+      return true;
+    }
     if (sessionId && !allowMissingSession && !this.sessionStore.getSession(sessionId)) return true;
     return false;
   }
@@ -137,5 +151,34 @@ export class AnalysisCoordinator {
     this.selectionVersion += 1;
     this.unsubscribers.forEach((unsubscribe) => unsubscribe());
     this.unsubscribers = [];
+  }
+}
+
+function assertWorkspaceResultStillCurrent(workspaceState, sessionStore, sessionId, analysisType) {
+  const session = sessionStore.getSession(sessionId);
+  if (!session) {
+    throw new AnalysisCapabilityError(
+      'STALE_ANALYSIS_SESSION',
+      'Workspace analysis session disappeared before result publication.',
+    );
+  }
+  let currentContext;
+  try {
+    currentContext = createAnalysisContext(workspaceState, WORKSPACE_ANALYSIS_TARGET_ID);
+  } catch (error) {
+    throw new AnalysisCapabilityError(
+      'STALE_ANALYSIS_CONTEXT',
+      'Workspace analysis source changed or was cleared before result publication.',
+      { cause: error instanceof Error ? error.message : String(error) },
+    );
+  }
+  try {
+    assertSessionMatchesContext(session, currentContext, analysisType);
+  } catch (error) {
+    throw new AnalysisCapabilityError(
+      'STALE_ANALYSIS_CONTEXT',
+      'Workspace engineering authority changed before result publication.',
+      { cause: error instanceof Error ? error.message : String(error) },
+    );
   }
 }

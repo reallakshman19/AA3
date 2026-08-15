@@ -4,6 +4,10 @@ import {
   buildLafeaT6GeometryQualificationViewModel,
   renderLafeaT6GeometryQualification,
 } from './lafea-t6-geometry-qualification-view.js';
+import {
+  buildLafeaVerificationReleaseViewModel,
+  renderLafeaVerificationRelease,
+} from './lafea-verification-release-view.js';
 
 export const LAFEA_NUMERICAL_VERIFICATION_VIEW_SCHEMA =
   'lafea-numerical-verification-view/v1';
@@ -14,6 +18,7 @@ export function buildLafeaNumericalVerificationViewModel(stageValue) {
     schema: LAFEA_NUMERICAL_VERIFICATION_VIEW_SCHEMA,
     stageId: stage.stageId,
     preflight: preflightModel(stage.retainedContinuumPreflightEvidence),
+    release: buildLafeaVerificationReleaseViewModel(stage),
     convergence: convergenceModel(stage.numericalVerificationProjection),
     meshQuality: meshQualityModel(stage),
     t6GeometryQualification: buildLafeaT6GeometryQualificationViewModel(stage),
@@ -31,6 +36,7 @@ export function renderLafeaNumericalVerification(root, stageValue) {
     element(root, 'p', null,
       'Read-only numerical verification from retained governed evidence. Missing detail is reported as unavailable rather than reconstructed from display data.'),
     preflightSection(root, model.preflight),
+    renderLafeaVerificationRelease(root, stageValue),
     convergenceSection(root, model.convergence),
     meshSection(root, model.meshQuality),
     renderLafeaT6GeometryQualification(root, stageValue),

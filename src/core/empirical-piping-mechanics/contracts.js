@@ -57,6 +57,10 @@ export const EMPIRICAL_FORMULA_IDS = Object.freeze({
   unitForceMomentTransport: 'EMP-FLX-007',
   unitForceLocalProjection: 'EMP-FLX-008',
   rootedTreePathSelection: 'EMP-FLX-009',
+  restraintCompatibilityForceMethod: 'EMP-FLX-010',
+  linearSupportFlexibility: 'EMP-FLX-011',
+  restraintCompatibilityRecovery: 'EMP-FLX-012',
+  restraintCompatibilityEnergy: 'EMP-FLX-013',
 });
 
 export const PLANAR_DOF_ORDER = Object.freeze(['UX', 'UY', 'RZ']);

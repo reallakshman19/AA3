@@ -1,5 +1,8 @@
 import { normalizeOverride } from './analysis-input-evidence.js';
-import { createAnalysisContext } from './analysis-context.js';
+import {
+  createAnalysisContext,
+  WORKSPACE_ANALYSIS_TARGET_ID,
+} from './analysis-context.js';
 import { withAnalysisSession } from './analysis-session-context.js';
 import { AnalysisSessions } from './analysis-session-store.js';
 import { EventBus } from './event-bus.js';
@@ -98,7 +101,11 @@ export class AnalysisSessionController {
 
   selectionChanged(entityId) {
     const session = this.sessionStore.getSnapshot().session;
-    if (session && session.targetId !== entityId) this.clear();
+    if (session
+      && session.targetId !== WORKSPACE_ANALYSIS_TARGET_ID
+      && session.targetId !== entityId) {
+      this.clear();
+    }
   }
 
   started(payload) {

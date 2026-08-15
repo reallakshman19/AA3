@@ -4,3 +4,5 @@ export * from './risk-finding.js';
 export * from './confirmation-receipt.js';
 export * from './calculation-authorization.js';
 export * from './engineering-event.js';
+export * from './branch-authority.js';
+export * from './component-authority.js';

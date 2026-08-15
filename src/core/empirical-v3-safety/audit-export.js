@@ -1,19 +1,33 @@
 import { semanticHash } from '../empirical-piping-mechanics/identity.js';
 import { deepFreeze } from '../shared-primitives/immutable.js';
-import {
-  requireEmpiricalV3CoupledCalculationEvidence,
-} from './coupled-calculation-evidence.js';
+import { requireEmpiricalV3AuditReadiness } from './audit-readiness.js';
+import { requireEmpiricalV3CoupledCalculationEvidence } from './coupled-calculation-evidence.js';
+import { requireCurrentEmpiricalV3ResultReview } from './result-review-receipt.js';
 
 export const EMPIRICAL_V3_AUDIT_EXPORT_SCHEMA = 'empirical-v3-audit-export/v1';
 
-/** JSON audit is a serialization of the sealed evidence, never a re-calculation. */
-export function createEmpiricalV3AuditJsonExport(evidenceValue) {
-  const evidence = requireEmpiricalV3CoupledCalculationEvidence(evidenceValue);
+/** JSON audit serializes sealed evidence only after current result review/readiness. */
+export function createEmpiricalV3AuditJsonExport(input) {
+  const evidence = requireEmpiricalV3CoupledCalculationEvidence(input?.evidence);
+  const resultReview = requireCurrentEmpiricalV3ResultReview(input?.resultReview, evidence);
+  const readiness = requireEmpiricalV3AuditReadiness(input?.auditReadiness, {
+    evidence,
+    resultReview,
+  });
   const payload = {
     schema: EMPIRICAL_V3_AUDIT_EXPORT_SCHEMA,
     runId: evidence.runId,
     evidenceId: evidence.evidenceId,
     evidenceSemanticHash: evidence.semanticHash,
+    resultReviewRef: {
+      receiptId: resultReview.receiptId,
+      semanticHash: resultReview.semanticHash,
+      evidenceHash: resultReview.evidenceHash,
+    },
+    auditReadinessRef: {
+      readinessId: readiness.readinessId,
+      semanticHash: readiness.semanticHash,
+    },
     calculationEvidence: evidence,
   };
   const exportSemanticHash = semanticHash(payload);

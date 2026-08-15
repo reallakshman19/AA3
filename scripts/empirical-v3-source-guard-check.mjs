@@ -12,6 +12,12 @@ const CORE_FILES = [
   'component-authority.js',
 ];
 
+const ADAPTER_FILES = [
+  'empirical-v3-source-authority-adapter.js',
+  'empirical-v3-resolution-reference-adapter.js',
+  'empirical-v3-branch-component-authority-builder.js',
+];
+
 const forbiddenCorePatterns = [
   /fallbackResolver/i,
   /chainageDistribution/i,
@@ -22,42 +28,67 @@ const forbiddenCorePatterns = [
   /acceptAll|confirmAll|bulkAccept|bulkConfirm/i,
 ];
 
+const forbiddenAdapterImports = [
+  /from\s+['"][^'"]*fallbackResolver\.js['"]/i,
+  /from\s+['"][^'"]*chainageDistribution\.js['"]/i,
+  /from\s+['"][^'"]*topology-edit-high-confidence-autofix/i,
+  /from\s+['"][^'"]*topology-edit-checker/i,
+  /from\s+['"][^'"]*linear-piping-results-workbench/i,
+  /from\s+['"][^'"]*restraint-compatibility/i,
+  /from\s+['"][^'"]*rooted-tree-component-flexibility/i,
+];
+
 for (const fileName of CORE_FILES) {
-  const url = new URL(`../src/core/empirical-v3-safety/${fileName}`, import.meta.url);
-  const source = readFileSync(url, 'utf8');
-  const physicalLines = source.split(/\r?\n/).length;
-  assert.ok(
-    physicalLines < 300,
-    `${fileName} has ${physicalLines} physical lines; owner approval is required at >=300.`,
-  );
+  const source = sourceAt(`../src/core/empirical-v3-safety/${fileName}`);
+  assertBelowOwnerLineLimit(fileName, source);
   for (const pattern of forbiddenCorePatterns) {
     assert.doesNotMatch(source, pattern, `${fileName} violates the Empirical V3 core authority boundary.`);
   }
 }
 
-const indexSource = readFileSync(
-  new URL('../src/core/empirical-v3-safety/index.js', import.meta.url),
-  'utf8',
-);
+for (const fileName of ADAPTER_FILES) {
+  const source = sourceAt(`../src/workspace/engineering-loads/adapters/${fileName}`);
+  assertBelowOwnerLineLimit(fileName, source);
+  for (const pattern of forbiddenAdapterImports) {
+    assert.doesNotMatch(source, pattern, `${fileName} imports a prohibited legacy/UI/mechanics authority path.`);
+  }
+}
+
+const indexSource = sourceAt('../src/core/empirical-v3-safety/index.js');
 for (const fileName of CORE_FILES) {
   assert.match(indexSource, new RegExp(`export \\* from './${fileName.replace('.', '\\.')}';`));
 }
 
-// Guard representative owner-locked failure modes in source vocabulary.
-const authorizationSource = readFileSync(
-  new URL('../src/core/empirical-v3-safety/calculation-authorization.js', import.meta.url),
-  'utf8',
-);
+const authorizationSource = sourceAt('../src/core/empirical-v3-safety/calculation-authorization.js');
 assert.match(authorizationSource, /HIGH_BLOCK/);
 assert.match(authorizationSource, /pending HIGH_CONFIRM/);
 assert.match(authorizationSource, /RISK_POLICY_CHANGED/);
 assert.match(authorizationSource, /DEPENDENCY_IDENTITY_CHANGED/);
 
-const branchSource = readFileSync(
-  new URL('../src/core/empirical-v3-safety/branch-authority.js', import.meta.url),
-  'utf8',
-);
+const branchSource = sourceAt('../src/core/empirical-v3-safety/branch-authority.js');
 assert.match(branchSource, /requires exact topology/);
 assert.match(branchSource, /Tolerance-inferred topology cannot define/);
+
+const sourceAdapter = sourceAt('../src/workspace/engineering-loads/adapters/empirical-v3-source-authority-adapter.js');
+assert.match(sourceAdapter, /_deducedWallThickness/);
+assert.match(sourceAdapter, /_missingComponentWeight/);
+assert.match(sourceAdapter, /DEFAULT_ZERO_NOT_ENGINEERING_AUTHORITY/);
+assert.match(sourceAdapter, /INFERRED_REVIEW_REQUIRED/);
+
+const branchBuilder = sourceAt('../src/workspace/engineering-loads/adapters/empirical-v3-branch-component-authority-builder.js');
+assert.match(branchBuilder, /observedSourceBranchLabel/);
+assert.match(branchBuilder, /requireAllowedKeys/);
+assert.doesNotMatch(branchBuilder, /chainageDistribution|TopoFix|topologyEditConfidence/);
+
+function sourceAt(path) {
+  return readFileSync(new URL(path, import.meta.url), 'utf8');
+}
+function assertBelowOwnerLineLimit(fileName, source) {
+  const physicalLines = source.split(/\r?\n/).length;
+  assert.ok(
+    physicalLines < 300,
+    `${fileName} has ${physicalLines} physical lines; owner approval is required at >=300.`,
+  );
+}
 
 console.log('PASS empirical v3 source guards / anti-drift');

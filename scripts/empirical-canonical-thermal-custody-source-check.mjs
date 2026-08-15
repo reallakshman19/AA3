@@ -1,10 +1,15 @@
 import fs from 'node:fs';
 import assert from 'node:assert/strict';
 
-const source = fs.readFileSync(
+const adapter = fs.readFileSync(
   new URL('../src/workspace/engineering-loads/adapters/canonical-thermal-rom-authority-adapter.js', import.meta.url),
   'utf8',
 );
+const sourceGate = fs.readFileSync(
+  new URL('../src/workspace/engineering-loads/adapters/canonical-thermal-rom-source-bound-execution.js', import.meta.url),
+  'utf8',
+);
+const combined = `${adapter}\n${sourceGate}`;
 
 for (const required of [
   'requireStagedJsonProcessAuthority',
@@ -20,8 +25,10 @@ for (const required of [
   'finiteElementSolverConsumed: false',
   'APPROVED_MEAN_BETWEEN_REFERENCE_AND_ANALYSIS',
   'STAGEDJSON_BASELINE_TEMPERATURE_K',
+  'SOURCE_BACKED_SUPPORT_DISPLACEMENT',
+  'freeExpansionMappingAcceptedAsSupportMovement: false',
 ]) {
-  assert.ok(source.includes(required), `missing required custody marker: ${required}`);
+  assert.ok(combined.includes(required), `missing required custody marker: ${required}`);
 }
 
 for (const prohibited of [
@@ -35,20 +42,24 @@ for (const prohibited of [
   'bendingComplianceMultiplier',
   'topologyInteractionMultiplier',
 ]) {
-  assert.ok(!source.includes(prohibited), `prohibited route/mechanism marker found: ${prohibited}`);
+  assert.ok(!combined.includes(prohibited), `prohibited route/mechanism marker found: ${prohibited}`);
 }
 
 assert.match(
-  source,
+  adapter,
   /Movement authority must cover exactly the root and solved restraint support sites; no missing movement becomes zero\./u,
 );
 assert.match(
-  source,
+  adapter,
   /reference temperature .* does not equal the current approved mean-CTE baseline/u,
 );
 assert.match(
-  source,
+  adapter,
   /Current phase requires explicit coverage of every governed restraint occurrence/u,
+);
+assert.match(
+  sourceGate,
+  /free-expansion mapping cannot become support\/ground movement authority/u,
 );
 
 console.log('PASS: canonical thermal ROM custody source guard');

@@ -115,7 +115,13 @@ const workspace = Object.freeze({
     const dependency = buildEmpiricalV3SourceBoundExecutionDependency(input?.romInput);
     const authorized = packageValue.calculationAuthorization.dependencies.find((row) => row.kind === dependency.kind && row.ref === dependency.ref);
     if (!authorized || authorized.semanticHash !== dependency.semanticHash) throw new Error('Prepared source-bound execution request is not in the sealed calculation authorization.');
-    empiricalV3PreparedExecution = { currentAuthorization: input.currentAuthorization, romInput: input.romInput, auditMetadata: input.auditMetadata ?? null, dependency };
+    empiricalV3PreparedExecution = {
+      authorizationSemanticHash: packageValue.calculationAuthorization.semanticHash,
+      currentAuthorization: input.currentAuthorization,
+      romInput: input.romInput,
+      auditMetadata: input.auditMetadata ?? null,
+      dependency,
+    };
     empiricalV3Safety.refresh();
     return dependency;
   },
@@ -141,6 +147,7 @@ if (import.meta.hot) import.meta.hot.dispose(() => workspace.destroy());
 
 function preparedExecutionMatchesPackage(prepared, packageValue) {
   if (!prepared || !packageValue?.workflow.canRunCalculation || !packageValue.calculationAuthorization) return false;
+  if (prepared.authorizationSemanticHash !== packageValue.calculationAuthorization.semanticHash) return false;
   return packageValue.calculationAuthorization.dependencies.some((row) => (
     row.kind === prepared.dependency.kind && row.ref === prepared.dependency.ref && row.semanticHash === prepared.dependency.semanticHash
   ));

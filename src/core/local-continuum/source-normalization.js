@@ -51,9 +51,11 @@ function normalizeSource(input) {
   validateFormulationAuthority(formulation, materials);
   const nodes = normalizeNodes(input.nodes);
   const elements = normalizeElements(input.elements, nodes);
+  validateFormulationElementAuthority(formulation, elements);
   const elementTypePolicy = normalizeElementTypePolicy(input.elementTypePolicy, elements);
   const constraints = normalizeConstraints(input.constraints);
   const loadCases = normalizeLoadCases(input.loadCases);
+  validateFormulationLoadAuthority(formulation, loadCases);
   const resultRequests = normalizeRequests(input.resultRequests, loadCases);
   const qualificationProfile = normalizeProfile(input.qualificationProfile);
   validateReferences({ materials, nodes, elements, constraints, loadCases });
@@ -77,6 +79,8 @@ function normalizeSource(input) {
 }
 
 function validateFormulationAuthority(formulation, materials) {
+  // Preserve the legacy displacement-only contract exactly. The new B-bar
+  // identity is qualified separately and must never relax this boundary.
   if (formulation !== FORMULATIONS.PLANE_STRAIN) return;
   materials.forEach((material, index) => {
     if (material.poissonRatio >= FORMULATION_GUARDS.planeStrainPoissonBlock) {
@@ -87,6 +91,28 @@ function validateFormulationAuthority(formulation, materials) {
       );
     }
   });
+}
+
+function validateFormulationElementAuthority(formulation, elements) {
+  if (formulation !== FORMULATIONS.PLANE_STRAIN_BBAR) return;
+  const unsupported = elements.filter((element) => element.elementType === ELEMENT_TYPES.T3);
+  if (!unsupported.length) return;
+  throw modelError(
+    'PLANE_STRAIN_BBAR_T3_NOT_QUALIFIED',
+    'elements',
+    `PLANE_STRAIN_BBAR is qualified only for T6/Q8. T3 has constant dilatation within each element, so its element-mean B-bar operator is identical to the pointwise volumetric operator and does not provide locking-resistant authority. Unsupported elements: ${unsupported.map((row) => row.elementId).join(', ')}.`,
+  );
+}
+
+function validateFormulationLoadAuthority(formulation, loadCases) {
+  if (formulation !== FORMULATIONS.PLANE_STRAIN_BBAR) return;
+  const thermalCases = loadCases.filter((loadCase) => loadCase.temperatureLoads.length > 0);
+  if (!thermalCases.length) return;
+  throw modelError(
+    'PLANE_STRAIN_BBAR_TEMPERATURE_NOT_QUALIFIED',
+    'loadCases',
+    `PLANE_STRAIN_BBAR thermal/eigenstrain authority is not qualified. Remove temperature loads or use a separately qualified thermal B-bar formulation. Affected load cases: ${thermalCases.map((row) => row.loadCaseId).join(', ')}.`,
+  );
 }
 
 /**

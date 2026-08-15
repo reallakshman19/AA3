@@ -10,8 +10,8 @@ import {
 
 /**
  * Binds the existing branch-process-resolver output to V3 authority classes.
- * Resolver confidence/review metadata is authoritative for whether a master
- * lookup may be called exact; manual/fallback paths remain review-required.
+ * Branch piping-class identity and component-row exactness are deliberately
+ * separate: an exact class does not make a best-score component row exact.
  */
 export function adaptBranchProcessResolverOutput(input) {
   const runId = requireText(input?.runId, 'runId');
@@ -19,8 +19,9 @@ export function adaptBranchProcessResolverOutput(input) {
   const row = requireRecord(input?.resolution, 'resolution');
   const masterSemanticHash = optionalText(input?.masterSemanticHash);
   const sourceSemanticHash = optionalText(input?.sourceSemanticHash);
-  const classExact = isExactPipingClassResolution(row);
-  const classMasterExact = classExact && Boolean(masterSemanticHash);
+  const classIdentityExact = isExactPipingClassIdentity(row);
+  const classMasterExact = classIdentityExact && Boolean(masterSemanticHash);
+  const componentRowMasterExact = isExactPipingClassResolution(row) && Boolean(masterSemanticHash);
 
   const classAdapted = adaptResolutionReference({
     runId,
@@ -28,7 +29,7 @@ export function adaptBranchProcessResolverOutput(input) {
     ref: optionalText(row.resolvedPipingClass),
     source: 'piping-class-resolver',
     sourceSemanticHash: masterSemanticHash,
-    matchMethod: row.pipingClassMatchMethod || row.pipingClassRowMethod || 'none',
+    matchMethod: row.pipingClassMatchMethod || 'none',
     needsReview: !classMasterExact,
     exactMasterApproved: classMasterExact,
     entityIds: [componentId],
@@ -39,12 +40,12 @@ export function adaptBranchProcessResolverOutput(input) {
     runId,
     componentId,
     row,
-    classExact: classMasterExact,
+    componentRowExact: componentRowMasterExact,
     masterSemanticHash,
     sourceSemanticHash,
   });
 
-  const wallExactMaster = row.wallThicknessSource === 'piping-class-master' && classMasterExact;
+  const wallExactMaster = row.wallThicknessSource === 'piping-class-master' && componentRowMasterExact;
   const wallAuthority = adaptLegacyNumericResolution({
     runId,
     quantityId: `Q:${componentId}:WT`,
@@ -59,13 +60,16 @@ export function adaptBranchProcessResolverOutput(input) {
       ? `piping-class-master:${row.wallThicknessKey || componentId}:wall-thickness`
       : null,
     evidenceHash: wallExactMaster ? masterSemanticHash : null,
-    matchMethod: row.pipingClassMatchMethod || row.pipingClassRowMethod || 'none',
+    matchMethod: row.pipingClassRowMethod || row.pipingClassMatchMethod || 'none',
     needsReview: !wallExactMaster,
     exactMasterApproved: wallExactMaster,
     required: true,
   });
 
-  const corrosionExactMaster = row.corrosionSource === 'piping-class-master' && classMasterExact;
+  // Corrosion is resolved by a second rating-aware master-row lookup in the
+  // legacy resolver. That lookup's row method/reasons are not preserved in the
+  // current output, so V3 cannot prove this numeric value exact from this seam.
+  const corrosionExactMaster = false;
   const corrosionAuthority = adaptLegacyNumericResolution({
     runId,
     quantityId: `Q:${componentId}:CORROSION`,
@@ -75,13 +79,11 @@ export function adaptBranchProcessResolverOutput(input) {
     unit: 'mm',
     source: row.corrosionSource || 'unresolved',
     sourceReference: `${row.corrosionSource || 'unresolved'}:${row.corrosionKey || componentId}`,
-    sourceSemanticHash: corrosionExactMaster ? masterSemanticHash : sourceSemanticHash,
-    evidenceRef: corrosionExactMaster
-      ? `piping-class-master:${row.corrosionKey || componentId}:corrosion`
-      : null,
-    evidenceHash: corrosionExactMaster ? masterSemanticHash : null,
-    matchMethod: row.pipingClassMatchMethod || row.pipingClassRowMethod || 'none',
-    needsReview: !corrosionExactMaster,
+    sourceSemanticHash,
+    evidenceRef: null,
+    evidenceHash: null,
+    matchMethod: row.corrosionMatchMethod || 'legacy-rating-aware-match-evidence-not-preserved',
+    needsReview: true,
     exactMasterApproved: corrosionExactMaster,
     required: false,
   });
@@ -112,25 +114,34 @@ export function adaptBranchProcessResolverOutput(input) {
   });
 }
 
-export function isExactPipingClassResolution(row) {
+export function isExactPipingClassIdentity(row) {
   if (!row || typeof row !== 'object') return false;
-  const classMethod = normalizeMethod(row.pipingClassMatchMethod);
+  return Boolean(
+    row.resolvedPipingClass
+    && normalizeMethod(row.pipingClassMatchMethod) === 'EXACT'
+    && row.pipingClassNeedsReview !== true
+  );
+}
+
+/**
+ * Exact component-row authority requires exact class, bore, component type and
+ * schedule evidence from the production row scorer. `best-score` alone is not
+ * authority: missing/mismatched/near evidence remains review-required.
+ */
+export function isExactPipingClassResolution(row) {
+  if (!isExactPipingClassIdentity(row) || !row.pipingClassMatchedRow) return false;
   const rowMethod = normalizeMethod(row.pipingClassRowMethod);
   const rowReasons = normalizeRowReasons(row.pipingClassRowReasons);
   const exactReasonSet = new Set(rowReasons);
-  const hasExactDiscriminators = ['CLASS_EXACT', 'BORE_EXACT', 'COMPONENT_EXACT']
+  const hasExactDiscriminators = ['CLASS_EXACT', 'BORE_EXACT', 'COMPONENT_EXACT', 'SCHEDULE_EXACT']
     .every((reason) => exactReasonSet.has(reason));
   const hasApproximateOrMissingEvidence = rowReasons.some((reason) => (
     reason.includes('MISMATCH')
     || reason.includes('MISSING')
-    || reason.startsWith('BORE_NEAR')
+    || reason.includes('NEAR')
   ));
   return Boolean(
-    row.resolvedPipingClass
-    && row.pipingClassMatchedRow
-    && row.pipingClassNeedsReview !== true
-    && classMethod === 'EXACT'
-    && (rowMethod === 'BEST_SCORE' || rowMethod === 'EXACT')
+    (rowMethod === 'BEST_SCORE' || rowMethod === 'EXACT')
     && hasExactDiscriminators
     && !hasApproximateOrMissingEvidence
   );
@@ -143,9 +154,9 @@ function sealPipingClassBasis(row, classRecord) {
     resolvedPipingClass: optionalText(row.resolvedPipingClass),
     authorityClass: classRecord.authorityClass,
     source: optionalText(row.pipingClassSource) || 'piping-class-resolver',
-    matchMethod: normalizeMethod(row.pipingClassMatchMethod || row.pipingClassRowMethod || 'none'),
+    matchMethod: normalizeMethod(row.pipingClassMatchMethod || 'none'),
     rowMethod: normalizeMethod(row.pipingClassRowMethod || 'none'),
-    needsReview: row.pipingClassNeedsReview === true || classRecord.authorityClass === 'INFERRED_REVIEW_REQUIRED',
+    needsReview: classRecord.authorityClass === 'INFERRED_REVIEW_REQUIRED',
     resolutionRef: { ref: classRecord.ref, semanticHash: classRecord.semanticHash },
   };
   const hash = semanticHash(material);
@@ -160,12 +171,12 @@ function classifyMaterialResolution({
   runId,
   componentId,
   row,
-  classExact,
+  componentRowExact,
   masterSemanticHash,
   sourceSemanticHash,
 }) {
   const source = normalizeSource(row.materialSource);
-  const exactMaster = classExact && source === 'PIPING_CLASS_MATERIAL_CODE' && Boolean(masterSemanticHash);
+  const exactMaster = componentRowExact && source === 'PIPING_CLASS_MATERIAL_CODE' && Boolean(masterSemanticHash);
   const exactSource = source === 'LINE_LIST_MATERIAL_CODE' && Boolean(sourceSemanticHash);
   const inherentlyApproximate = [
     'PIPING_CLASS_MATERIAL_MAP',

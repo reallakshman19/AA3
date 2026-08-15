@@ -9,6 +9,9 @@ const definition = readJson('validation/lafea-incompressible/plane-strain-bbar-v
 const convergence = readJson(
   'validation/lafea-incompressible/plane-strain-bbar-convergence-v1.json',
 );
+const probeMeshPolicy = readJson(
+  'validation/lafea-incompressible/plane-strain-bbar-probe-mesh-policy-v1.json',
+);
 
 assert.equal(definition.schema, 'lafea-plane-strain-bbar-qualification-definition/v1');
 assert.equal(definition.programmeId, 'LAFEA3-PS-BBAR-001');
@@ -37,6 +40,24 @@ assert.equal(convergence.movingMaximumForbidden, true);
 assert.equal(convergence.displayInterpolationForbiddenAsAcceptanceAuthority, true);
 assert.equal(convergence.nodalAveragingForbiddenAsAcceptanceAuthority, true);
 assert.equal(convergence.releaseAuthorityGranted, false);
+
+assert.equal(probeMeshPolicy.schema, 'lafea-plane-strain-bbar-probe-mesh-policy/v1');
+assert.equal(probeMeshPolicy.programmeId, definition.programmeId);
+assert.equal(probeMeshPolicy.definitionState, 'FROZEN_BEFORE_PRODUCTION_OBSERVATION');
+assert.equal(probeMeshPolicy.productionOutputUsedToChooseDefinition, false);
+assert.equal(probeMeshPolicy.radialAxis.targetPhase, 0.5);
+assert.equal(probeMeshPolicy.angularAxis.targetPhase, 0.35);
+assert.deepEqual(probeMeshPolicy.radialAxis.protectedProbeRadii, [30, 60, 90]);
+assert.deepEqual(probeMeshPolicy.angularAxis.protectedProbeAnglesDegrees, [30]);
+assert.equal(probeMeshPolicy.t6DiagonalAvoidance.minimumPhaseSeparation, 0.15);
+assert.ok(
+  Math.abs(probeMeshPolicy.radialAxis.targetPhase - probeMeshPolicy.angularAxis.targetPhase)
+    >= probeMeshPolicy.t6DiagonalAvoidance.minimumPhaseSeparation,
+);
+assert.equal(probeMeshPolicy.t6DiagonalAvoidance.mappingAmbiguityAllowed, false);
+assert.equal(probeMeshPolicy.boundaryPolicy.probeMustNotLieOnElementBoundary, true);
+assert.equal(probeMeshPolicy.refinement.ratio, convergence.refinementRatio);
+assert.equal(probeMeshPolicy.authority.releaseAuthorityGranted, false);
 
 assert.equal(definition.formulations.legacyControl.identity, 'PLANE_STRAIN');
 assert.equal(definition.formulations.legacyControl.poissonWarning, 0.40);
@@ -72,6 +93,14 @@ assert.equal(cylinder.meshLadder.existingMeshQualityPolicyMustPass, true);
 assert.equal(cylinder.meshLadder.fullParentJacobianQualificationMustPass, true);
 assert.equal(cylinder.acceptance.movingMaximumAllowed, false);
 assert.equal(cylinder.acceptance.nodalOrSmoothedStressAllowedAsAcceptanceAuthority, false);
+assert.deepEqual(
+  [...new Set(cylinder.fixedPhysicalProbes.map((row) => row.r))].sort((a, b) => a - b),
+  probeMeshPolicy.radialAxis.protectedProbeRadii,
+);
+assert.deepEqual(
+  [...new Set(cylinder.fixedPhysicalProbes.map((row) => row.thetaDegrees))].sort((a, b) => a - b),
+  probeMeshPolicy.angularAxis.protectedProbeAnglesDegrees,
+);
 
 assert.deepEqual(
   definition.distortionMatrix.map((row) => row.distortionId),
@@ -135,6 +164,14 @@ console.log(JSON.stringify({
     gciSafetyFactor: convergence.gciSafetyFactor,
     orderStabilityRelativeTolerance: convergence.orderStabilityRelativeTolerance,
     acceptedClassifications: convergence.acceptedForGciQualification,
+  },
+  probeMeshPolicy: {
+    radialPhase: probeMeshPolicy.radialAxis.targetPhase,
+    angularPhase: probeMeshPolicy.angularAxis.targetPhase,
+    minimumT6DiagonalPhaseSeparation:
+      probeMeshPolicy.t6DiagonalAvoidance.minimumPhaseSeparation,
+    exactFactorTwoLocalContraction:
+      probeMeshPolicy.refinement.localProbeCellWidthContraction,
   },
   oracle: {
     authority: cylinder.oracle.authority,

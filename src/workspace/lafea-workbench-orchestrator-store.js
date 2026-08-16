@@ -25,6 +25,7 @@ import { createLafeaMeshGenerationActions } from './lafea-workbench-mesh-generat
 import { createLafeaWorkbenchPreparationState } from './lafea-workbench-preparation-state.js';
 import { projectLafeaWorkbenchReadiness } from './lafea-workbench-readiness.js';
 import { createLafeaWorkbenchReleaseState } from './lafea-workbench-release-binding.js';
+import { buildLafeaShellPreparationProjection } from './lafea-shell-preparation-projection.js';
 import { projectLafeaShellSolverModelBinding } from './lafea-shell-solver-model.js';
 import { createLafeaWorkbenchShellExecutionState } from './lafea-workbench-shell-execution-state.js';
 import { createLafeaWorkbenchShellRunActions } from './lafea-workbench-shell-run-actions.js';
@@ -125,7 +126,9 @@ export function createLafeaWorkbenchOrchestratorStore(options) {
     });
     const preparationProjection = withMesh.domainFirstProfileActive
       ? buildLafeaDomainPreparationProjection(withMesh)
-      : preparation.buildProjection(withMesh);
+      : withMesh.shellMidsurfaceProfileActive === true
+        ? buildLafeaShellPreparationProjection(withMesh)
+        : preparation.buildProjection(withMesh);
     const withPreparation = freeze({ ...withMesh, preparationProjection });
     const lifecycleReadiness = projectLafeaWorkbenchReadiness(stageId, withPreparation);
     const withReadiness = freeze({ ...withPreparation, lifecycleReadiness });

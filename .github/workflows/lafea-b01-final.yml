@@ -47,7 +47,11 @@ jobs:
           test "$(git rev-parse HEAD)" = "$B01_EXPECTED_HEAD"
           test -z "$(git status --porcelain=v1 --untracked-files=all)"
       - name: Check final runner syntax
-        run: node --check scripts/lafea-b01-final-qualification.mjs
+        run: |
+          node --check scripts/lafea-b01-final-qualification.mjs
+          node --check scripts/lafea-b01-bbar-lame-diagnostic.mjs
+      - name: Retain B-bar Lamé convergence diagnostic
+        run: node scripts/lafea-b01-bbar-lame-diagnostic.mjs
       - name: Execute integrated B01 qualification
         id: final
         continue-on-error: true

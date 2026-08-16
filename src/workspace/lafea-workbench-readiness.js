@@ -2,6 +2,7 @@ import { lafeaLifecycleReadiness } from './lafea-lifecycle.js';
 import { projectLafeaWorkbenchReleaseBinding } from './lafea-workbench-release-binding.js';
 
 const DOMAIN_FIRST_ROUTE = 'DOMAIN_FIRST_COMPILED_SOLVER_MODEL';
+const SHELL_SOLVER_BINDING_REQUIRED = 'SHELL_RETAINED_MESH_NOT_BOUND_TO_SOLVER_MODEL';
 
 export function projectLafeaWorkbenchReadiness(stageId, stage) {
   const calculationState = stage.execution?.status === 'QUALIFIED'
@@ -10,11 +11,14 @@ export function projectLafeaWorkbenchReadiness(stageId, stage) {
   const lifecycle = stage.lifecycle;
   const binding = stage.lifecycleBinding;
   const domainFirst = stage.domainFirstProfileActive === true;
+  const shellMidsurface = stage.shellMidsurfaceProfileActive === true;
+  const governedMesh = domainFirst || shellMidsurface;
   const domainCurrent = domainFirst && stage.analysisDomainProjection?.state === 'CURRENT_PASS';
   const geometryCurrent = domainFirst && stage.analysisGeometryProjection?.state === 'CURRENT_PASS';
   const custody = stage.analysisMeshCustodyProjection;
   const domainMeshCurrent = domainFirst
     && custody?.state === 'CURRENT_PASS' && custody?.usableForRun === true;
+  const shellMeshCurrent = shellMidsurface && custody?.state === 'CURRENT_PASS';
   const releaseBinding = projectLafeaWorkbenchReleaseBinding(
     stage,
     stage.retainedTemplateReleaseRecord,
@@ -37,10 +41,11 @@ export function projectLafeaWorkbenchReadiness(stageId, stage) {
     modelCurrent: false,
     preMeshModelCurrent: false,
     domainFirstProfileActive: domainFirst,
+    shellMidsurfaceProfileActive: shellMidsurface,
     domainCurrent: false,
     geometryCurrent: false,
     solverModelCurrent: false,
-    meshApplicable: domainFirst,
+    meshApplicable: governedMesh,
     meshGenerated: Boolean(custody?.meshHash),
     meshQualified: false,
     resultReady: false,
@@ -59,23 +64,31 @@ export function projectLafeaWorkbenchReadiness(stageId, stage) {
   const current = binding.status === 'CURRENT';
   const solverModelCurrent = domainFirst
     ? current && domainCurrent && geometryCurrent && domainMeshCurrent
-    : current && base.modelCurrent;
+    : shellMidsurface
+      ? false
+      : current && base.modelCurrent;
   const domainExecutionReasons = domainFirst
     ? authoritativeDomainExecutionReasons(stage, lifecycle, custody, current)
+    : [];
+  const shellExecutionReasons = shellMidsurface
+    ? authoritativeShellExecutionReasons(stage, custody, current)
     : [];
   const authoritativeDomainResultCurrent = domainFirst
     && base.resultReady && domainExecutionReasons.length === 0;
   const isDomainRoute = stage?.execution?.route === DOMAIN_FIRST_ROUTE;
   const resultReady = domainFirst
     ? (stage.execution ? (isDomainRoute ? authoritativeDomainResultCurrent : (current && base.resultReady)) : false)
-    : current && base.resultReady;
-  const codeReady = !domainFirst && current && base.codeReady;
+    : shellMidsurface
+      ? false
+      : current && base.resultReady;
+  const codeReady = !governedMesh && current && base.codeReady;
   const blockingReasons = current
-    ? unique([...base.blockingReasons, ...domainExecutionReasons])
+    ? unique([...base.blockingReasons, ...domainExecutionReasons, ...shellExecutionReasons])
     : unique([
       `LIFECYCLE_SOURCE_BINDING_${binding.status}`,
       ...base.blockingReasons,
       ...domainExecutionReasons,
+      ...shellExecutionReasons,
     ]);
 
   return freeze({
@@ -93,19 +106,38 @@ export function projectLafeaWorkbenchReadiness(stageId, stage) {
     modelCurrent: current && base.modelCurrent,
     preMeshModelCurrent: domainFirst ? current && domainCurrent : current && base.modelCurrent,
     domainFirstProfileActive: domainFirst,
+    shellMidsurfaceProfileActive: shellMidsurface,
     domainCurrent: current && domainCurrent,
     geometryCurrent: current && geometryCurrent,
     solverModelCurrent,
-    meshGenerated: domainFirst ? Boolean(custody?.meshHash) : base.meshGenerated,
-    meshQualified: domainFirst ? current && domainMeshCurrent : current && base.meshQualified,
+    meshApplicable: governedMesh || base.meshApplicable,
+    meshGenerated: governedMesh ? Boolean(custody?.meshHash) : base.meshGenerated,
+    meshQualified: governedMesh
+      ? current && (domainFirst ? domainMeshCurrent : shellMeshCurrent)
+      : current && base.meshQualified,
     resultReady,
-    assessmentReady: !domainFirst && current && base.assessmentReady,
-    convergenceReady: !domainFirst && current && base.convergenceReady,
+    assessmentReady: !governedMesh && current && base.assessmentReady,
+    convergenceReady: !governedMesh && current && base.convergenceReady,
     codeReady,
-    reportCurrent: !domainFirst && current && base.reportCurrent,
-    reportQualified: !domainFirst && current && base.reportQualified,
+    reportCurrent: !governedMesh && current && base.reportCurrent,
+    reportQualified: !governedMesh && current && base.reportQualified,
     blockingReasons,
   });
+}
+
+function authoritativeShellExecutionReasons(stage, custody, currentBinding) {
+  const reasons = [];
+  if (!currentBinding) reasons.push('SHELL_EXECUTION_SOURCE_BINDING_NOT_CURRENT');
+  if (custody?.state !== 'CURRENT_PASS') reasons.push('SHELL_EXECUTION_MESH_NOT_CURRENT_PASS');
+  if (custody?.usableForRun !== true) {
+    reasons.push(...(custody?.runBlockingReasons?.length
+      ? custody.runBlockingReasons
+      : [SHELL_SOLVER_BINDING_REQUIRED]));
+  }
+  if (stage.execution?.status === 'QUALIFIED') {
+    reasons.push('SHELL_EXECUTION_ROUTE_NOT_BOUND_TO_RETAINED_MESH');
+  }
+  return unique(reasons);
 }
 
 function authoritativeDomainExecutionReasons(stage, lifecycle, custody, currentBinding) {

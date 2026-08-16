@@ -88,17 +88,18 @@ export function createLafeaWorkbenchOrchestratorStore(options) {
     const stage = retainedState.stages[stageId];
     if (!stage) throw storeError('LAFEA_WORKBENCH_STAGE_NOT_FOUND');
     const geometryFields = geometry.fields(stageId);
+    const meshGenerationFields = meshGeneration.fields(stageId);
     let executionFields = {};
     if (geometryFields.domainFirstProfileActive) {
       executionFields = { execution: domainFirstExecution.select(stageId) };
-    } else if (geometryFields.shellMidsurfaceProfileActive === true) {
+    } else if (meshGenerationFields.shellMidsurfaceProfileActive === true) {
       // Governed shell custody must never inherit a legacy document execution.
       executionFields = { execution: shellExecution.select(stageId) };
     }
     return freeze({
       ...stage, stageId, ...source.fields(stageId), ...release.fields(stageId),
       ...verification.fields(stageId), ...t6Geometry.fields(stageId),
-      ...mesh.fields(stageId), ...meshGeneration.fields(stageId),
+      ...mesh.fields(stageId), ...meshGenerationFields,
       ...preparation.fields(stageId), ...geometryFields,
       ...continuumPreflight.fields(stageId), ...executionFields,
     });

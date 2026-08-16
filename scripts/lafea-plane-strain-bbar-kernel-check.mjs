@@ -62,10 +62,10 @@ function checkT3BbarRejectedAtExecution() {
     elementType: 'T3',
   }));
   assert.equal(canonical.formulation, FORMULATIONS.PLANE_STRAIN_BBAR);
-  assert.throws(
-    () => calculateLocalContinuum(canonical),
-    (error) => error?.code === 'PLANE_STRAIN_BBAR_T3_NOT_QUALIFIED',
-  );
+  const result = calculateLocalContinuum(canonical);
+  assert.notEqual(result.qualification.state, 'ACCEPTED');
+  assert.equal(result.diagnostics?.[0]?.code, 'PLANE_STRAIN_BBAR_T3_NOT_QUALIFIED');
+  assert.equal(result.loadCaseResults, undefined);
 }
 
 function checkBbarTemperatureRejected() {

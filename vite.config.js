@@ -204,7 +204,7 @@ export function manualChunk(id) {
   // own no controller, store, mutable singleton, or runtime resource, so they
   // form a safe leaf boundary for the LFEA-to-3D-Edit integration.
   if (source.endsWith('/src/workspace/event-topics.js')
-    || source.endsWith('/src/workspace/lfea-support-actions-panel.js')) {
+    || source.endsWith('/src/workspace/lafea-support-actions-panel.js')) {
     return 'workspace-event-presentation-contracts';
   }
   // Import-free static shell CSS is a safe presentation leaf. Keep the

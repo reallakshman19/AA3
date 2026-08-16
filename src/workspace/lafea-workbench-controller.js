@@ -29,11 +29,23 @@ export class LafeaWorkbenchController {
   constructor(rootElement, options) {
     const configuration = isLafeaRecord(options) ? options : {};
     const { accessoryPanels, THREE, ...storeOptions } = configuration;
-    const { benchmarkPanelFactory, mockDocumentFactory, presentationMode, analyticalOnly } = configuration;
+    const {
+      benchmarkPanelFactory,
+      mockDocumentFactory,
+      mockDomainAndGeometryFactory,
+      presentationMode,
+      analyticalOnly,
+    } = configuration;
     this.rootElement = rootElement;
     this.documentRef = rootElement?.ownerDocument ?? globalThis.document;
     this.store = createLafeaWorkbenchOrchestratorStore(storeOptions);
     this.mockDocumentFactory = typeof mockDocumentFactory === 'function' ? mockDocumentFactory : null;
+    const companionMockDomainAndGeometryFactory = this.mockDocumentFactory?.domainAndGeometryFactory;
+    this.mockDomainAndGeometryFactory = typeof mockDomainAndGeometryFactory === 'function'
+      ? mockDomainAndGeometryFactory
+      : typeof companionMockDomainAndGeometryFactory === 'function'
+        ? companionMockDomainAndGeometryFactory
+        : null;
     initializeLafeaWorkbenchRenderEvidence(this, THREE ?? null);
     this.view = new LafeaWorkbenchView(rootElement, {
       getRenderPacket: (stageId) => lafeaWorkbenchDisplayRenderPacket(this, stageId),
@@ -141,10 +153,9 @@ export class LafeaWorkbenchController {
       const state = this.getState();
       const hash = state.stages[stageId]?.lifecycle?.source?.sourceHash;
       if (stageId === 'LAFEA.3') {
-        const { createLafeaMockDomainAndGeometryEvidence } = await import('./lafea-simulated-source-provider.js');
         this.store.activateDomainFirstProfile();
-        if (hash) {
-          const mockEv = await createLafeaMockDomainAndGeometryEvidence(stageId, hash);
+        if (hash && this.mockDomainAndGeometryFactory) {
+          const mockEv = await this.mockDomainAndGeometryFactory(stageId, hash);
           if (mockEv) {
             this.store.registerAnalysisDomain(mockEv.domain);
             this.store.registerAnalysisGeometryEvidence(mockEv.geometryEvidence);

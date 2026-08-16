@@ -63,22 +63,38 @@ jobs:
           set +e
           node scripts/lafea-standalone-boundary-check.mjs > /tmp/head-boundary.log 2>&1
           head_status=$?
+          rm -rf /tmp/lafea-base
           mkdir -p /tmp/lafea-base
           git archive "$QUALIFICATION_BASE" | tar -x -C /tmp/lafea-base
-          (cd /tmp/lafea-base && node scripts/lafea-standalone-boundary-check.mjs > /tmp/base-boundary.log 2>&1)
-          base_status=$?
+          archive_status=${PIPESTATUS[0]}
+          if [ "$archive_status" -eq 0 ]; then
+            (cd /tmp/lafea-base && node scripts/lafea-standalone-boundary-check.mjs > /tmp/base-boundary.log 2>&1)
+            base_status=$?
+          else
+            base_status=125
+            printf 'git archive failed for qualification base %s\n' "$QUALIFICATION_BASE" > /tmp/base-boundary.log
+          fi
           set -e
+
+          echo "Standalone boundary comparator: head_status=$head_status base_status=$base_status archive_status=$archive_status"
+          head_error="$(grep -m1 'Error: FORBIDDEN_PRODUCT_OR_COMBINED_DEPENDENCY:' /tmp/head-boundary.log || true)"
+          base_error="$(grep -m1 'Error: FORBIDDEN_PRODUCT_OR_COMBINED_DEPENDENCY:' /tmp/base-boundary.log || true)"
+          printf 'HEAD_FIRST_FORBIDDEN=%s\n' "$head_error"
+          printf 'BASE_FIRST_FORBIDDEN=%s\n' "$base_error"
 
           if [ "$head_status" -eq 0 ]; then
             echo "Candidate standalone boundary passes."
             exit 0
           fi
 
-          test "$base_status" -ne 0
-          head_error="$(grep -m1 'Error: FORBIDDEN_PRODUCT_OR_COMBINED_DEPENDENCY:' /tmp/head-boundary.log)"
-          base_error="$(grep -m1 'Error: FORBIDDEN_PRODUCT_OR_COMBINED_DEPENDENCY:' /tmp/base-boundary.log)"
-          test -n "$head_error"
-          test "$head_error" = "$base_error"
+          if [ "$archive_status" -ne 0 ] || [ "$base_status" -eq 0 ] || [ -z "$head_error" ] || [ -z "$base_error" ] || [ "$head_error" != "$base_error" ]; then
+            echo '--- candidate standalone boundary log ---'
+            cat /tmp/head-boundary.log
+            echo '--- exact-base standalone boundary log ---'
+            cat /tmp/base-boundary.log
+            exit 1
+          fi
+
           echo "Inherited exact-base boundary failure retained without expansion:"
           echo "$head_error"
       - name: Build standalone LAFEA bundle

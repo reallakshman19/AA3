@@ -11,3 +11,10 @@ export async function createLafeaMockDomainAndGeometryEvidence(stageId, sourceHa
   }
   return null;
 }
+
+Object.defineProperty(createLafeaMockDocument, 'domainAndGeometryFactory', {
+  value: createLafeaMockDomainAndGeometryEvidence,
+  enumerable: false,
+  configurable: false,
+  writable: false,
+});

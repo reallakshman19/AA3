@@ -173,7 +173,15 @@ export function createLafeaWorkbenchOrchestratorStore(options) {
 
   function run() {
     const stageId = retainedState.activeStageId;
-    if (rawStage(stageId).domainFirstProfileActive) return domainFirstRun.run(stageId);
+    const governedStage = readStageState(stageId);
+    if (governedStage.domainFirstProfileActive) return domainFirstRun.run(stageId);
+    if (governedStage.shellMidsurfaceProfileActive === true
+      && governedStage.analysisMeshCustodyProjection?.usableForRun !== true) {
+      const reason = governedStage.analysisMeshCustodyProjection?.runBlockingReasons?.[0]
+        ?? 'SHELL_RETAINED_MESH_NOT_BOUND_TO_SOLVER_MODEL';
+      failOrchestrator(storeError(reason), reason);
+      return publish();
+    }
     invokeRetained('run');
     let stage = retainedState.stages[stageId];
     try {

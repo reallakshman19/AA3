@@ -1,5 +1,7 @@
 import { expect, test } from '@playwright/test';
 
+const SHELL_RUN_BLOCK = 'SHELL_RETAINED_MESH_NOT_BOUND_TO_SOLVER_MODEL';
+
 test('production LAFEA.4 and LAFEA.5 Sample geometry drives the retained mesh', async ({ page }, testInfo) => {
   await page.setViewportSize({ width: 1440, height: 1000 });
   await page.addInitScript(() => {
@@ -81,6 +83,11 @@ test('production LAFEA.4 and LAFEA.5 Sample geometry drives the retained mesh', 
       const evidence = stage.retainedAnalysisMeshEvidenceV2;
       const result = {
         custody: stage.analysisMeshCustodyProjection.state,
+        usableForRun: stage.analysisMeshCustodyProjection.usableForRun,
+        runBlockingReasons: stage.analysisMeshCustodyProjection.runBlockingReasons,
+        authorizationState: stage.orchestration.sections.AUTHORIZATION.state,
+        authorizationReasons: stage.orchestration.sections.AUTHORIZATION.reasons,
+        orientationQualification: evidence.quality.shellOrientationTopology?.qualification ?? null,
         producerRef: evidence.authority.producerRef,
         nodes: evidence.mesh.nodes,
         elements: evidence.mesh.elements,
@@ -102,6 +109,13 @@ test('production LAFEA.4 and LAFEA.5 Sample geometry drives the retained mesh', 
     }, stageId);
 
     expect(retained.custody).toBe('CURRENT_PASS');
+    expect(retained.orientationQualification).toBe('PASS');
+    expect(retained.usableForRun).toBe(false);
+    expect(retained.runBlockingReasons).toContain(SHELL_RUN_BLOCK);
+    expect(retained.authorizationState).toBe('BLOCKED');
+    expect(retained.authorizationReasons).toContain(SHELL_RUN_BLOCK);
+    await expect(workbench.locator('[data-role="lafea-overview-run"]')).toBeDisabled();
+
     if (stageId === 'LAFEA.4') {
       expect(retained.nodes.length).toBeGreaterThan(0);
       expect(retained.elements.length).toBeGreaterThan(0);

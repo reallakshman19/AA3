@@ -19,7 +19,7 @@ const LAFEA_SHELL_MESH_QUALITY_FIELDS = Object.freeze({
   adjacentSizeRatioMax: 1.5,
   aspectRatioWarn: 5.0,
   aspectRatioBlock: 10.0,
-  scaledJacobianWarn: 0.6,
+  scaledJacobianWarn: 0.5,
   scaledJacobianBlock: 0.2,
   adaptiveLevelsMinimum: 3,
 });
@@ -34,9 +34,10 @@ export const LAFEA3_QUALIFIED_MESH_QUALITY_POLICY = Object.freeze({
 
 /**
  * LAFEA.4 shell quality authority is deliberately declared independently from
- * the LAFEA.3 continuum policy. The numerical limits reflect the established
- * shell qualification envelope and are combined with explicit shell
- * orientation/topology and midsurface-director checks.
+ * the LAFEA.3 continuum policy. The hard quality floor is combined with
+ * explicit shell orientation/topology and midsurface-director checks. Existing
+ * shell profiles that use a 0.6 scaled-Jacobian warning are a valid tightening
+ * above this 0.5 minimum warning authority; the blocking floor remains 0.2.
  */
 export const LAFEA4_QUALIFIED_MESH_QUALITY_POLICY = Object.freeze({
   policyId: 'LAFEA4_SHELL_MESH_QUALITY_POLICY_V1',

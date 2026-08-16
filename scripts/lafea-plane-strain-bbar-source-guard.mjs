@@ -70,7 +70,7 @@ assert.match(domain, /FORMULATIONS\.PLANE_STRAIN_BBAR/u);
 assert.match(compiledInput, /formulation:\s*model\.formulation/u);
 
 // Thermal assembler still exists for standard formulations, but B-bar is source-blocked.
-assert.match(temperature, /temperatureEquivalentNodalLoad/u);
+assert.match(temperature, /thermalEquivalentNodalForces/u);
 assert.match(normalization, /validateFormulationLoadAuthority/u);
 
 // Governed UI must edit source through the normal replacement transaction, never runtime state.

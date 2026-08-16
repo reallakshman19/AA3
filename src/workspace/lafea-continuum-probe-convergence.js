@@ -120,10 +120,14 @@ export function evaluateLafeaContinuumProbeConvergence(definitionValue, observat
 }
 
 function normalizeDefinition(value) {
-  exactKeys(value, [
+  const intakeKeys = [
     'schema', 'studyId', 'quantityIdentityHash', 'refinementRatio', 'gciSafetyFactor',
     'nearZeroAbsolute', 'orderStabilityRelativeTolerance', 'levels',
-  ]);
+  ];
+  const suppliedSemanticHash = Object.hasOwn(value ?? {}, 'semanticHash')
+    ? sha(value.semanticHash, 'LAFEA_G4_CONVERGENCE_DEFINITION_HASH_INVALID')
+    : null;
+  exactKeys(value, suppliedSemanticHash ? [...intakeKeys, 'semanticHash'] : intakeKeys);
   if (value.schema !== LAFEA_CONTINUUM_PROBE_CONVERGENCE_DEFINITION_SCHEMA) {
     fail('LAFEA_G4_CONVERGENCE_DEFINITION_SCHEMA_INVALID');
   }
@@ -158,16 +162,21 @@ function normalizeDefinition(value) {
     ),
     levels,
   };
-  return deepFreeze({
-    ...base,
-    semanticHash: canonicalLafeaSha256({
-      schema: 'lafea-continuum-probe-convergence-definition-hash/v1', definition: base,
-    }),
+  const semanticHash = canonicalLafeaSha256({
+    schema: 'lafea-continuum-probe-convergence-definition-hash/v1', definition: base,
   });
+  if (suppliedSemanticHash && suppliedSemanticHash !== semanticHash) {
+    fail('LAFEA_G4_CONVERGENCE_DEFINITION_TAMPERED');
+  }
+  return deepFreeze({ ...base, semanticHash });
 }
 
 function normalizeObservations(value) {
-  exactKeys(value, ['schema', 'studyId', 'definitionHash', 'levels']);
+  const intakeKeys = ['schema', 'studyId', 'definitionHash', 'levels'];
+  const suppliedSemanticHash = Object.hasOwn(value ?? {}, 'semanticHash')
+    ? sha(value.semanticHash, 'LAFEA_G4_CONVERGENCE_OBSERVATIONS_HASH_INVALID')
+    : null;
+  exactKeys(value, suppliedSemanticHash ? [...intakeKeys, 'semanticHash'] : intakeKeys);
   if (value.schema !== LAFEA_CONTINUUM_PROBE_CONVERGENCE_OBSERVATIONS_SCHEMA) {
     fail('LAFEA_G4_CONVERGENCE_OBSERVATIONS_SCHEMA_INVALID');
   }
@@ -191,12 +200,13 @@ function normalizeObservations(value) {
     definitionHash: sha(value.definitionHash, 'LAFEA_G4_CONVERGENCE_DEFINITION_HASH_INVALID'),
     levels,
   };
-  return deepFreeze({
-    ...base,
-    semanticHash: canonicalLafeaSha256({
-      schema: 'lafea-continuum-probe-convergence-observations-hash/v1', observations: base,
-    }),
+  const semanticHash = canonicalLafeaSha256({
+    schema: 'lafea-continuum-probe-convergence-observations-hash/v1', observations: base,
   });
+  if (suppliedSemanticHash && suppliedSemanticHash !== semanticHash) {
+    fail('LAFEA_G4_CONVERGENCE_OBSERVATIONS_TAMPERED');
+  }
+  return deepFreeze({ ...base, semanticHash });
 }
 
 function classifySequence(values, definition) {

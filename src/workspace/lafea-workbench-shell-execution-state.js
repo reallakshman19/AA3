@@ -7,7 +7,8 @@ export function createLafeaWorkbenchShellExecutionState(stageIds) {
   const retained = Object.fromEntries(stageIds.map((stageId) => [stageId, null]));
 
   function retain(stageId, value) {
-    requireStage(stageId);
+    requireKnownStage(stageId);
+    if (!STAGES.includes(stageId)) fail('LAFEA_SHELL_EXECUTION_STAGE_NOT_AUTHORIZED');
     if (!value || value.stageId !== stageId
       || value.schema !== LAFEA_SHELL_EXECUTION_STATE_SCHEMA
       || !['QUALIFIED', 'FAILED'].includes(value.status)) {
@@ -18,14 +19,16 @@ export function createLafeaWorkbenchShellExecutionState(stageIds) {
   }
 
   function clear(stageId) {
-    requireStage(stageId);
+    requireKnownStage(stageId);
+    if (!STAGES.includes(stageId)) return false;
     const changed = retained[stageId] !== null;
     retained[stageId] = null;
     return changed;
   }
 
   function select(stageId) {
-    requireStage(stageId);
+    requireKnownStage(stageId);
+    if (!STAGES.includes(stageId)) return null;
     return retained[stageId];
   }
 
@@ -34,11 +37,8 @@ export function createLafeaWorkbenchShellExecutionState(stageIds) {
     return execution ? freeze({ execution }) : freeze({});
   }
 
-  function requireStage(stageId) {
+  function requireKnownStage(stageId) {
     if (!Object.hasOwn(retained, stageId)) fail('LAFEA_SHELL_EXECUTION_STAGE_INVALID');
-    if (STAGES.includes(stageId) === false && retained[stageId] !== null) {
-      fail('LAFEA_SHELL_EXECUTION_STAGE_NOT_AUTHORIZED');
-    }
   }
 
   return Object.freeze({ retain, clear, select, fields });

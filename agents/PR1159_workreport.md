@@ -341,13 +341,55 @@ Protected invariants:
   1,190,476 bytes versus
   the existing 1,048,576-byte cap. This work does not weaken or bypass the cap.
 
+## Reconciliation and qualification checkpoint (2026-08-16)
+
+- Reconciled PR head `b49b74f58cc85b4f657ee88461819ede3c83f73f`
+  with `origin/main` at `58de05406baed8f83e49cf380d61ef5a3c5132e3`
+  in isolated worktree `F:/CODE-6/Advanced_Analysis_pr1159_ci`; merge checkpoint
+  is `26eb51a9`.
+- Active overlap audit: PR #1108 overlaps
+  `src/workspace/topology-edit-3d-issue-controller.js` but owns the separate 3D
+  operation-UI retirement scope. Classification: `COORDINATION_REQUIRED`, not
+  an observed exact-behavior conflict in this checkpoint.
+- GitHub `browser-authority` and `engineering-table`: `NOT_RUN`; both jobs were
+  prevented from starting by the account Actions budget. This remains an
+  external gate and is recorded as `KI-1159-001` in `knownissuea.md`.
+- Engineering Table syntax: `PASS` for all 33 workflow-listed modules plus the
+  three reconciliation files.
+- Engineering Table Node contracts: `PASS`, 94/94.
+- Focused real-data/checker/default tests: `PASS`, 19/19.
+- Targeted ESLint and diff whitespace: `PASS`.
+- Production build and bundle gate: `PASS`; 1,755 modules transformed. Largest
+  chunk is `main-CHYOzBQ4.js` at 1,045,786 bytes against the unchanged
+  1,048,576-byte hard limit. The reconciliation moves only audited stateless
+  empirical and linear-piping authority modules across explicit graph
+  boundaries; no UI controller, store, runtime state, or limit was changed.
+- Engineering Table browser journey on a prewarmed persistent local server:
+  `FAIL`, 8/9 passed. Support host drag requested 520 mm but prepared
+  500.436281198874 mm, exceeding the unchanged 10 mm oracle. Direct ray/segment
+  projection at the same calculated endpoint recovered 520 mm, isolating the
+  first wrong value to the pointer journey. Recorded as `KI-1159-003`.
+- Completely cold Windows/F-drive Vite navigation took 116,408 ms; the same
+  server after transform completion reached `DOMContentLoaded` with the public
+  workspace API in about 1,187 ms. No timeout was weakened. Recorded as
+  `KI-1159-002`.
+- Focused Load Calc browser journey on the prewarmed server: 3/4 pass. The
+  real-Sjson case reaches the grouped rendering-evidence UI, then its strict
+  summary locator resolves the parent and six grouped children. Recorded as
+  stale-locator issue `KI-1159-005`; product text and issue-count assertions
+  before that point pass.
+- Legacy W10.9 browser suite: 0/3 because it asserts the retired 12-button
+  navigation and uses two global locators that now match multiple valid
+  surfaces. Recorded as stale-suite issue `KI-1159-004`; it is not treated as
+  current-shell qualification evidence.
+- Owner direction changed from merge to: wait, record the failures as known
+  issues, and push. Merge is therefore not part of this checkpoint.
+
 ## EXACT_NEXT_ACTION
 
-PR owner/reviewer: reconcile draft PR #1159 with current `origin/main`, rerun
-the focused and repository gates from the reconciled head, and resolve the
-main-bundle cap and stale public TopoFix oracle without weakening either gate.
-Owner/user: provide or import an approved restraint-family master for the four
-remaining evidence-empty physical attachment records, plus exact material
-density and pipe-section masters. The separately approved empirical
-component-weight estimator must retain explicit estimated-result authority.
-Do not merge without explicit owner authorization.
+Push this checkpoint to PR #1159 without merging. Then capture pointer event
+coordinates at the `TopologyEditSupportHostDragRuntime` boundary, correct the
+first wrong pointer-to-station mapping without changing the 10 mm oracle, and
+rerun all nine Engineering Table browser journeys. After Actions capacity is
+restored, rerun `browser-authority` and `engineering-table` on the exact remote
+head. Do not classify either hosted check as PASS until it actually executes.

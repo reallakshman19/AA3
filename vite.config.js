@@ -39,6 +39,38 @@ const PURE_LAFEA_WORKBENCH_GOVERNANCE_MODULES = new Set([
 ]);
 
 /**
+ * Stateless empirical authority calculators and validators. Each module takes
+ * complete inputs, returns immutable evidence, and owns no controller, store,
+ * DOM resource, ambient fallback, or module-level mutable engineering state.
+ */
+const PURE_EMPIRICAL_AUTHORITY_WORKSPACE_MODULES = new Set([
+  '/src/workspace/engineering-loads/adapters/canonical-thermal-rom-authority-adapter.js',
+  '/src/workspace/engineering-loads/adapters/empirical-v3-authorized-source-bound-execution.js',
+  '/src/workspace/engineering-loads/adapters/empirical-v3-live-run-orchestration.js',
+  '/src/workspace/engineering-loads/authorized-empirical-load-execution-v2.js',
+  '/src/workspace/engineering-loads/authorized-empirical-load-execution.js',
+  '/src/workspace/engineering-loads/authorized-empirical-load-input.js',
+  '/src/workspace/engineering-loads/authorized-empirical-runtime-package.js',
+  '/src/workspace/engineering-loads/empirical-component-load-authority.js',
+  '/src/workspace/engineering-loads/empirical-result-overlay.js',
+  '/src/workspace/engineering-loads/preproduction-thermal-liftoff-displacement-authority.js',
+  '/src/workspace/engineering-loads/support-load-distribution-v3.js',
+  '/src/workspace/project-data/non-fea-configured-default-provider.js',
+]);
+
+/**
+ * Stateless linear-piping intake and run-gate contracts. These modules seal or
+ * validate complete caller-owned records, import only pure core authority, and
+ * own no controller, store, DOM resource, or module-level mutable state.
+ */
+const PURE_LINEAR_PIPING_AUTHORITY_WORKSPACE_MODULES = new Set([
+  '/src/workspace/linear-piping-inputxml-intake.js',
+  '/src/workspace/linear-piping-inputxml-prefea.js',
+  '/src/workspace/linear-piping-run-gate.js',
+  '/src/workspace/linear-piping-run-request.js',
+]);
+
+/**
  * Keep manual chunking limited to dependency-oriented or calculation-core
  * domains. Workspace modules remain graph-owned because they contain stores,
  * controllers, views, and top-level singleton instances with cross-feature
@@ -190,6 +222,14 @@ export function manualChunk(id) {
   if ([...PURE_LAFEA_WORKBENCH_GOVERNANCE_MODULES]
     .some((modulePath) => source.endsWith(modulePath))) {
     return 'lafea-workbench-governance';
+  }
+  if ([...PURE_EMPIRICAL_AUTHORITY_WORKSPACE_MODULES]
+    .some((modulePath) => source.endsWith(modulePath))) {
+    return 'empirical-engineering-authority';
+  }
+  if ([...PURE_LINEAR_PIPING_AUTHORITY_WORKSPACE_MODULES]
+    .some((modulePath) => source.endsWith(modulePath))) {
+    return 'linear-piping-authority';
   }
 
   // The Phase-1 pre-flight core is an indexed, DOM-free, clock-free leaf stack.

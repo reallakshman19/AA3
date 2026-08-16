@@ -44,6 +44,7 @@ jobs:
           node --check src/workspace/lafea-discretization-panel.js
           node --check src/workspace/lafea-analysis-settings-view.js
           node --check src/workspace/lafea-shell-solver-model.js
+          node --check src/workspace/lafea-shell-preparation-projection.js
           node --check src/workspace/lafea-workbench-shell-execution-state.js
           node --check src/workspace/lafea-workbench-shell-run-actions.js
           node --check scripts/lafea-shell-compiled-execution-check.mjs

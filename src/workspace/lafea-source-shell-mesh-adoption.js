@@ -32,6 +32,7 @@ const QUALIFICATION = freeze({
     'SOURCE_NODE_COORDINATES_PRESERVED',
     'SOURCE_ELEMENT_IDS_PRESERVED',
     'SOURCE_CONNECTIVITY_PRESERVED',
+    'SOURCE_WINDING_ALIGNED_WITH_DECLARED_NODE_DIRECTORS',
     'NO_REMESHING',
     'GOVERNED_MESH_QUALITY_EVALUATED_AT_ADOPTION',
   ],
@@ -45,6 +46,7 @@ export function createLafea5SourceShellParent({ sourceHash, shellTemplate }) {
   const shellTemplateSemanticHash = canonicalShellTemplateSemanticHash(shellTemplate);
   const lengthUnit = text(shellTemplate?.units?.length);
   const mesh = sourceShellMesh(shellTemplate);
+  assertSourceWindingAligned(shellTemplate, mesh);
   const analysisGeometryHash = canonicalLafeaSha256({
     schema: 'lafea5-source-shell-analysis-geometry/v1',
     stageId: 'LAFEA.5',
@@ -73,6 +75,7 @@ export function createLafea5SourceShellParent({ sourceHash, shellTemplate }) {
     qualification: 'PASS',
     limitations: [
       'LOSSLESS_SOURCE_MESH_ADOPTION_ONLY',
+      'SOURCE_WINDING_MUST_ALIGN_WITH_DECLARED_NODE_DIRECTORS',
       'NO_AUTOMATIC_REMESHING',
       'NO_NODE_OR_CONNECTIVITY_MUTATION',
       'NO_LOCAL_OR_ADAPTIVE_REFINEMENT',
@@ -224,6 +227,32 @@ function sourceShellMesh(shellTemplate) {
   });
 }
 
+/**
+ * Lossless adoption preserves the caller's connectivity byte-for-byte, so the
+ * caller's declared winding must already agree with the shell directors. The
+ * local-shell canonicalizer can choose an orientation for solver assembly; it
+ * is not authority to silently rewrite source connectivity during adoption.
+ */
+function assertSourceWindingAligned(shellTemplate, mesh) {
+  const sourceNodes = new Map(shellTemplate.nodes.map((node) => [text(node.nodeId), node]));
+  const meshNodes = new Map(mesh.nodes.map((node) => [node.nodeId, node]));
+  const minimum = finite(shellTemplate?.qualificationProfile
+    ?.elementNormalDirectorAlignment?.minimum);
+  if (!(minimum > 0 && minimum <= 1)) fail('LAFEA5_SOURCE_SHELL_DIRECTOR_ALIGNMENT_LIMIT_INVALID');
+  for (const element of mesh.elements) {
+    const points = element.nodeIds.map((nodeId) => meshNodes.get(nodeId));
+    const first = subtract3(points[1], points[0]);
+    const second = subtract3(points[2], points[0]);
+    const normal = unit3(cross3(first, second), 'ELEMENT_NORMAL');
+    for (const nodeId of element.nodeIds) {
+      const director = unitArray3(sourceNodes.get(nodeId)?.director, 'NODE_DIRECTOR');
+      if (dotArrayObject(director, normal) < minimum - 1e-12) {
+        fail('LAFEA5_SOURCE_SHELL_WINDING_DIRECTOR_MISMATCH');
+      }
+    }
+  }
+}
+
 function sourceMeshCanonical(mesh) {
   const nodes = [...mesh.nodes].map((row) => freeze({
     nodeId: text(row.nodeId), x: finite(row.x), y: finite(row.y), z: finite(row.z),
@@ -245,6 +274,11 @@ function assertIdentityPreserved(expected, actual) {
     fail('LAFEA5_SOURCE_SHELL_ADOPTION_NOT_LOSSLESS');
   }
 }
+function subtract3(left, right) { return { x: left.x - right.x, y: left.y - right.y, z: left.z - right.z }; }
+function cross3(left, right) { return { x: left.y * right.z - left.z * right.y, y: left.z * right.x - left.x * right.z, z: left.x * right.y - left.y * right.x }; }
+function unit3(value, field) { const length = Math.hypot(value.x, value.y, value.z); if (!(length > 0)) fail(`LAFEA5_SOURCE_SHELL_${field}_INVALID`); return { x: value.x / length, y: value.y / length, z: value.z / length }; }
+function unitArray3(value, field) { if (!Array.isArray(value) || value.length !== 3 || value.some((item) => !Number.isFinite(item))) fail(`LAFEA5_SOURCE_SHELL_${field}_INVALID`); const length = Math.hypot(...value); if (!(length > 0)) fail(`LAFEA5_SOURCE_SHELL_${field}_INVALID`); return value.map((item) => item / length); }
+function dotArrayObject(array, object) { return array[0] * object.x + array[1] * object.y + array[2] * object.z; }
 function text(value) { if (typeof value !== 'string' || !value.trim()) fail('LAFEA5_SOURCE_SHELL_TEXT_INVALID'); return value; }
 function finite(value) { if (!Number.isFinite(value)) fail('LAFEA5_SOURCE_SHELL_NUMBER_INVALID'); return Object.is(value, -0) ? 0 : value; }
 function requireHash(value, field) { if (typeof value !== 'string' || !/^sha256:[0-9a-f]{64}$/u.test(value)) fail(`LAFEA5_SOURCE_SHELL_${field}_INVALID`); }

@@ -54,6 +54,7 @@ function normalizeSource(input) {
   const elementTypePolicy = normalizeElementTypePolicy(input.elementTypePolicy, elements);
   const constraints = normalizeConstraints(input.constraints);
   const loadCases = normalizeLoadCases(input.loadCases);
+  validateFormulationLoadAuthority(formulation, loadCases);
   const resultRequests = normalizeRequests(input.resultRequests, loadCases);
   const qualificationProfile = normalizeProfile(input.qualificationProfile);
   validateReferences({ materials, nodes, elements, constraints, loadCases });
@@ -77,6 +78,8 @@ function normalizeSource(input) {
 }
 
 function validateFormulationAuthority(formulation, materials) {
+  // Preserve the legacy displacement-only contract exactly. The new B-bar
+  // identity is qualified separately and must never relax this boundary.
   if (formulation !== FORMULATIONS.PLANE_STRAIN) return;
   materials.forEach((material, index) => {
     if (material.poissonRatio >= FORMULATION_GUARDS.planeStrainPoissonBlock) {
@@ -89,12 +92,30 @@ function validateFormulationAuthority(formulation, materials) {
   });
 }
 
+function validateFormulationLoadAuthority(formulation, loadCases) {
+  if (formulation !== FORMULATIONS.PLANE_STRAIN_BBAR) return;
+  const thermalCases = loadCases.filter((loadCase) => loadCase.temperatureLoads.length > 0);
+  if (!thermalCases.length) return;
+  throw modelError(
+    'PLANE_STRAIN_BBAR_TEMPERATURE_NOT_QUALIFIED',
+    'loadCases',
+    `PLANE_STRAIN_BBAR thermal/eigenstrain authority is not qualified. Remove temperature loads or use a separately qualified thermal B-bar formulation. Affected load cases: ${thermalCases.map((row) => row.loadCaseId).join(', ')}.`,
+  );
+}
+
 /**
  * Spec §7: T3 "is benchmark/fallback only and cannot be the default
  * production mesh." A model containing any T3 element must explicitly
  * acknowledge that with `allowT3Fallback: true` and a reason — never
  * silently allowed, and never blocked without an escape hatch for the
  * genuine benchmark/fallback use the spec itself names.
+ *
+ * This source contract deliberately does not reject T3 solely because a
+ * B-bar formulation is selected: domain-first source documents may retain
+ * non-authoritative placeholder connectivity while the retained analysis mesh
+ * supplies the actual T6/Q8 solver topology. The B-bar/T3 qualification block
+ * is therefore enforced at element execution where connectivity is numerical
+ * authority.
  */
 function normalizeElementTypePolicy(value, elements) {
   const row = exactRecord(value, ['allowT3Fallback', 'sourceReference'], 'elementTypePolicy');

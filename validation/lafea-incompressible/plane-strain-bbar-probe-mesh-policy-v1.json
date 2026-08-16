@@ -1,0 +1,38 @@
+{
+  "schema": "lafea-plane-strain-bbar-probe-mesh-policy/v1",
+  "programmeId": "LAFEA3-PS-BBAR-001",
+  "definitionState": "FROZEN_BEFORE_PRODUCTION_OBSERVATION",
+  "productionOutputUsedToChooseDefinition": false,
+  "purpose": "Keep frozen physical probes strictly inside one T6/Q8 element while preserving exact local factor-two h refinement.",
+  "radialAxis": {
+    "targetPhase": 0.5,
+    "protectedProbeRadii": [30, 60, 90],
+    "cellWidthEqualsTargetH": true,
+    "boundaryFeasibilityBasis": "At the coarsest h=20 mm, phase 0.5 gives exact protected cells [20,40] around r=30 and [80,100] around r=90 without clipping the annulus boundary."
+  },
+  "angularAxis": {
+    "targetPhase": 0.35,
+    "protectedProbeAnglesDegrees": [30],
+    "localTargetLengthToAngleRule": "deltaThetaTarget=h/meanRadius",
+    "cellWidthEqualsTargetDeltaTheta": true
+  },
+  "t6DiagonalAvoidance": {
+    "cellDiagonalConvention": "LOWER_INNER_TO_UPPER_OUTER",
+    "requireDifferentRadialAndAngularProbePhases": true,
+    "minimumPhaseSeparation": 0.15,
+    "mappingAmbiguityAllowed": false
+  },
+  "boundaryPolicy": {
+    "innerOuterCircularBoundariesExact": true,
+    "symmetryAxesExact": true,
+    "probeMustNotLieOnElementBoundary": true
+  },
+  "refinement": {
+    "ratio": 2,
+    "localProbeCellWidthContraction": "EXACT_FACTOR_TWO_PER_LEVEL"
+  },
+  "authority": {
+    "benchmarkQualified": false,
+    "releaseAuthorityGranted": false
+  }
+}

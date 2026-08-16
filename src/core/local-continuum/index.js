@@ -10,6 +10,12 @@ export { constitutiveEvidence } from './constitutive.js';
 export { bMatrix, buildElementEvidence, elementEvidence } from './element.js';
 export { principalStress, vonMisesStress } from './recovery.js';
 export {
+  BBAR_FORMULA_IDS, bbarElementElasticEnergy, bbarMeanDilatation,
+  bbarStiffnessMatrix, isBbarPlaneStrain, isPlaneStrainFormulation,
+  meanDilatationEvidence, planeStrainDeviatoricMatrix, planeStrainIsotropicModuli,
+  recoverBbarPlaneStrainStress, volumetricRow,
+} from './bbar-plane-strain.js';
+export {
   T6_FORMULA_IDS, T6_GAUSS_POINTS, t6BMatrixAt, t6ElementEvidence,
   t6ShapeFunctionsAndDerivatives, t6StiffnessMatrix,
 } from './t6-element.js';

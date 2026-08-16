@@ -24,6 +24,7 @@ import {
 } from './matrix.js';
 import { canonicalNumber, maxAbs, tolerance } from './numeric.js';
 import { constitutiveEvidence } from './constitutive.js';
+import { bbarStiffnessMatrix, isBbarPlaneStrain } from './bbar-plane-strain.js';
 
 export const T6_FORMULA_IDS = Object.freeze({
   SHAPE_FUNCTIONS: 'T6_QUADRATIC_AREA_COORDINATE_SHAPE_FUNCTIONS_V1',
@@ -112,7 +113,12 @@ export function t6StiffnessMatrix(nodes, dMatrix, thickness) {
 /** Full T6 element evidence for one element: constitutive, stiffness, symmetry, rigid-body and affine-patch qualification. */
 export function t6ElementEvidence(elementId, nodes, material, formulation, thickness, profile) {
   const constitutive = constitutiveEvidence(material, formulation, profile);
-  const { stiffness, gaussEvidence } = t6StiffnessMatrix(nodes, constitutive.matrix, thickness);
+  const standard = t6StiffnessMatrix(nodes, constitutive.matrix, thickness);
+  const bbar = isBbarPlaneStrain(formulation)
+    ? bbarStiffnessMatrix(standard.gaussEvidence, material, thickness)
+    : null;
+  const stiffness = bbar?.stiffness ?? standard.stiffness;
+  const gaussEvidence = standard.gaussEvidence;
   const stiffnessQualification = qualifyT6Stiffness(stiffness, elementId, profile);
   const rigidBodyQualification = qualifyT6RigidBody(nodes, gaussEvidence, profile);
   const affinePatchQualification = qualifyT6AffinePatch(nodes, gaussEvidence, constitutive.matrix, profile);
@@ -122,10 +128,25 @@ export function t6ElementEvidence(elementId, nodes, material, formulation, thick
     dMatrix: constitutive.matrix,
     localStiffnessMatrix: stiffness,
     gaussEvidence,
+    ...(bbar ? {
+      bbarEvidence: Object.freeze({
+        integrationArea: bbar.meanDilatation.integrationArea,
+        meanVolumetricRow: bbar.meanDilatation.meanVolumetricRow,
+        integrationPointCount: bbar.meanDilatation.integrationPointCount,
+        shearModulus: bbar.moduli.shearModulus,
+        bulkModulus: bbar.moduli.bulkModulus,
+        formulaIds: bbar.formulaIds,
+      }),
+    } : {}),
     stiffnessSymmetry: stiffnessQualification,
     rigidBodyQualification,
     affinePatchQualification,
-    formulaIds: Object.freeze([T6_FORMULA_IDS.SHAPE_FUNCTIONS, T6_FORMULA_IDS.GAUSS_QUADRATURE, T6_FORMULA_IDS.STIFFNESS, ...constitutive.formulaIds].sort()),
+    formulaIds: Object.freeze([
+      T6_FORMULA_IDS.SHAPE_FUNCTIONS,
+      T6_FORMULA_IDS.GAUSS_QUADRATURE,
+      ...(bbar ? bbar.formulaIds : [T6_FORMULA_IDS.STIFFNESS]),
+      ...constitutive.formulaIds,
+    ].sort()),
   });
 }
 

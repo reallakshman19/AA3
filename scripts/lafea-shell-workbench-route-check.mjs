@@ -21,6 +21,7 @@ import { workflowSource as trunnionFixture } from './lafea.5-fixtures.mjs';
 const SOURCE_HASH = `sha256:${'e'.repeat(64)}`;
 const NEXT_SOURCE_HASH = `sha256:${'f'.repeat(64)}`;
 const ROOT2 = Math.sqrt(0.5);
+const SHELL_RUN_BLOCK = 'SHELL_RETAINED_MESH_NOT_BOUND_TO_SOLVER_MODEL';
 const fixtureByStage = { 'LAFEA.4': shellFixture, 'LAFEA.5': trunnionFixture };
 const rows = [];
 
@@ -71,15 +72,21 @@ for (const stageId of ['LAFEA.4', 'LAFEA.5']) {
 
   const generated = workbench.generateAnalysisMesh({}, stageId);
   assert.equal(generated?.evidence.qualification, 'PASS');
+  assert.equal(generated?.evidence.quality.shellOrientationTopology?.qualification, 'PASS');
   stage = workbench.getState().stages[stageId];
   assert.equal(stage.analysisMeshCustodyProjection.state, 'CURRENT_PASS');
-  assert.equal(stage.analysisMeshCustodyProjection.usableForRun, true);
+  assert.equal(stage.analysisMeshCustodyProjection.usableForAdvance, true);
+  assert.equal(stage.analysisMeshCustodyProjection.usableForAuthorization, true);
+  assert.equal(stage.analysisMeshCustodyProjection.usableForRun, false);
+  assert.deepEqual(stage.analysisMeshCustodyProjection.runBlockingReasons, [SHELL_RUN_BLOCK]);
+  assert.equal(stage.orchestration.sections.AUTHORIZATION.state, 'BLOCKED');
+  assert.ok(stage.orchestration.sections.AUTHORIZATION.reasons.includes(SHELL_RUN_BLOCK));
 
   const generatedVm = buildLafeaDiscretizationViewModel(stage);
   assert.equal(generatedVm.evidence.present, true);
   assert.equal(generatedVm.evidence.elementFamily, LAFEA_SHELL_ELEMENT);
   assert.equal(generatedVm.actions.canAdvance, true);
-  assert.equal(generatedVm.actions.canRun, true);
+  assert.equal(generatedVm.actions.canRun, false);
   assert.equal(generatedVm.actions.manualRefinementEnabled, false);
   assert.equal(generatedVm.actions.canRefineMesh, false);
   const refineMode = generatedVm.configuration.modes.find((row) => row.mode === 'MANUAL_REFINEMENT');
@@ -96,6 +103,16 @@ for (const stageId of ['LAFEA.4', 'LAFEA.5']) {
   assert.equal(workbench.getState().diagnostics?.[0]?.code, 'LAFEA_SHELL_LOCAL_REFINEMENT_NOT_QUALIFIED');
   assert.equal(workbench.selectRetainedAnalysisMeshEvidenceV2(stageId)?.artifactHash, retainedHash);
 
+  // P0 execution-custody gate: legacy shell documents must not be solved after
+  // a different governed mesh has been generated/adopted. Run is reopened only
+  // when a future compiler binds retained meshHash -> solverModelHash.
+  const beforeRunExecution = workbench.getState().stages[stageId].execution ?? null;
+  workbench.run();
+  stage = workbench.getState().stages[stageId];
+  assert.equal(workbench.getState().status, 'FAILED');
+  assert.equal(workbench.getState().diagnostics?.[0]?.code, SHELL_RUN_BLOCK);
+  assert.deepEqual(stage.execution ?? null, beforeRunExecution);
+
   workbench.initializeLifecycle(NEXT_SOURCE_HASH, `P2-8-${stageId}-SOURCE-CHANGE`);
   stage = workbench.getState().stages[stageId];
   assert.equal(stage.lifecycleBinding.status, 'CURRENT');
@@ -109,7 +126,9 @@ for (const stageId of ['LAFEA.4', 'LAFEA.5']) {
     artifactHash: retainedHash,
     nodeCount: generated.evidence.mesh.nodes.length,
     elementCount: generated.evidence.mesh.elements.length,
-    publicWorkbenchRouteQualified: true,
+    meshRouteQualified: true,
+    solverMeshBindingQualified: false,
+    shellRunFailClosed: true,
     shellLocalRefinementQualified: false,
     sourceChangeInvalidatesParentAndChild: true,
   });
@@ -117,10 +136,11 @@ for (const stageId of ['LAFEA.4', 'LAFEA.5']) {
 }
 
 console.log(JSON.stringify({
-  schema: 'lafea-shell-workbench-route-check/v1',
+  schema: 'lafea-shell-workbench-route-check/v2',
   status: 'PASS',
   rows,
   exclusions: [
+    'SHELL_RETAINED_MESH_TO_SOLVER_MODEL_COMPILER',
     'HOLES', 'MULTI_PATCH_SEAMS', 'CURVED_MIDSURFACE',
     'OFFSET_SURFACE_GENERATION', 'THICKNESS_TRANSITION_MESHING',
     'SHELL_LOCAL_REFINEMENT',
@@ -174,16 +194,16 @@ function shellProfile(stageId, globalTargetSize) {
   return canonicalProfile(PROFILE_KINDS.MESH, {
     schema: 'lafea-mesh-profile/v1',
     profileIdentity: `P2_8_${stageId.replace('.', '_')}_SHELL_${globalTargetSize}`,
-    sourceRevision: 'R6',
+    sourceRevision: 'R7',
     semanticHash: undefined,
     fields: {
       continuumElement: 'T3',
       shellElement: LAFEA_SHELL_ELEMENT,
       globalTargetSize,
       adjacentSizeRatioMax: 1.5,
-      aspectRatioWarn: 5,
+      aspectRatioWarn: 3,
       aspectRatioBlock: 10,
-      scaledJacobianWarn: 0.6,
+      scaledJacobianWarn: 0.5,
       scaledJacobianBlock: 0.2,
       adaptiveLevels: 3,
     },

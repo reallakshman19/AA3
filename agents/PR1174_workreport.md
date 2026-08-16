@@ -5,6 +5,7 @@
 - PR: #1174 — `LAFEA.3: reconcile Mesh Workspace v3 with governed current-main custody`
 - Branch: `agent/lafea3-mesh-v3-current-main-20260816-r2`
 - Base at creation: `16d1e58f728e72b04b761c02dce682aa189779f2`
+- Current coded head before this report update: `74bec10edac7e84be4a1f2a093757239a48c0eaf`
 - Status: DRAFT / NOT AUTHORIZED FOR MERGE
 - Source reference: stale PR #1129; changes are reconciled deliberately, not wholesale rebased/cherry-picked.
 
@@ -63,6 +64,8 @@ Behavior:
 - portable v2 recovery clears v3 candidate because full v3 producer/validation lineage is absent;
 - no Run authorization consumes the candidate in this PR.
 
+The current action layer passes `readStageState(stageId)` into generation, so candidate construction receives current source/domain/geometry projections rather than an incomplete raw retained stage.
+
 ### IMP-1174-004 — qualification wiring
 
 Files:
@@ -79,6 +82,17 @@ Checks cover:
 - profile and lifecycle invalidation;
 - existing shell compiler/execution qualification remains in the same exact-head job.
 
+### IMP-1174-005 — explicit authority isolation guard
+
+File:
+- `scripts/lafea-continuum-mesh-v3-authority-isolation-check.mjs`
+
+Behavior:
+- proves LAFEA.4 and LAFEA.5 are rejected before entering the continuum-v3 producer bridge;
+- proves initial v3 candidate custody is absent for LAFEA.3/.4/.5 until qualified LAFEA.3 generation occurs;
+- fails if `lafea-workbench-readiness.js`, `lafea-workbench-domain-first-run-actions.js`, or `lafea-workbench-shell-run-actions.js` begins consuming `retainedAnalysisMeshCandidateV3` in this pre-authority PR;
+- makes a future v3 authority cutover an explicit, separately reviewed change rather than an accidental field-consumption side effect.
+
 ## Authority boundary
 
 ### Preserved authority
@@ -86,7 +100,7 @@ Checks cover:
 - v2 retained mesh remains current run/solver authority.
 - LAFEA.4/.5 retained shell mesh/compiler route remains unchanged.
 - No v3 authority receipt is issued here.
-- No v3 candidate is consumed by `Run()`.
+- No v3 candidate is consumed by readiness or `Run()`.
 
 ### Explicit exclusions
 
@@ -107,29 +121,32 @@ Checks cover:
 | `src/workspace/lafea-workbench-mesh-generation-state.js` | parallel candidate custody + invalidation | read/pre-authority only |
 | `scripts/lafea-continuum-mesh-v3-production-check.mjs` | qualification checker | none |
 | `scripts/lafea-continuum-mesh-v3-workbench-state-check.mjs` | state/invalidation checker | none |
+| `scripts/lafea-continuum-mesh-v3-authority-isolation-check.mjs` | shell/run authority anti-drift guard | none |
 | `.github/workflows/lafea-visible-workbench.yml` | exact-head v3 checker wiring | CI only |
 | `agents/PR1174_workreport.md` | living work report | none |
 
 ## Validation ledger
 
 - GitHub Actions on first PR head `635639a4a89da79fb0333d9d236e250d7eb4b39f`: **NOT_RUN** — job concluded externally before checkout with `steps=null`.
-- Exact-head checks after subsequent commits: pending observation.
-- No browser PASS is claimed yet for PR1174.
+- GitHub Actions on coded head `cf3c954a51e87eb83279c5bffeb3d020722255d3`: visible-workbench, B01 final, and B01 fail-closed all concluded externally before checkout; visible-workbench job had `steps=null`. Classification: **NOT_RUN**, not engineering FAIL.
+- Exact-head qualification after authority-isolation wiring remains pending runner allocation.
+- No browser PASS is claimed for PR1174.
 - No local unreported test is treated as PASS.
 
 ## Risks / debt
 
 - RISK-1174-001: current GitHub hosted runner allocation may remain unavailable, so exact-head runtime/browser evidence can remain NOT_RUN.
 - RISK-1174-002: v3 straight-boundary conformance is intentionally narrower than current v2 meshing capability; curved cases remain BLOCKED rather than inheriting v2 authority.
+- RISK-1174-003: until the exact-head scripts execute, current-main compatibility of the restored pure v3 modules is source-reviewed but not runtime-qualified on this branch.
 - DEBT-1174-001: local refinement requires an independent v3 validation/lineage programme before a refined mesh can retain v3 candidate custody.
 - DEBT-1174-002: trusted authority-service receipt issuance and solver/run cutover are explicitly future work.
 
 ## Next implementation sequence
 
-1. Execute/read exact-head production + workbench-state checks when runner allocation resumes.
-2. Add a shell-isolation regression using current LAFEA.4/.5 Sample parents that proves shell generation/adoption leaves `retainedAnalysisMeshCandidateV3 === null`.
-3. Audit orchestrator/readiness projections to ensure no generic field enumeration accidentally interprets the v3 candidate as current solver authority.
-4. Only after those gates pass, design the independent trusted-authority receipt intake for LAFEA.3; do not wire Run to v3 in the same increment.
+1. Execute/read exact-head production, workbench-state, authority-isolation, shell and browser checks when runner allocation resumes.
+2. If a dedicated shell Sample assertion is still desired after CI recovery, add it inside the existing shell compiled-execution harness rather than duplicating the full Sample fixture in a parallel script.
+3. Audit portable v3 export/review UX separately; do not let presentation imply engineering authority while custody is `CURRENT_BLOCK`.
+4. Only after these gates pass, design the independent trusted-authority receipt intake for LAFEA.3; do not wire Run to v3 in the same increment.
 
 ## Appendix A — expert handover questionnaire
 

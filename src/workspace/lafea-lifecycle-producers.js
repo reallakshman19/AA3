@@ -24,6 +24,8 @@ import {
 export const LAFEA_PRODUCER_BATCH_SCHEMA = 'lafea-lifecycle-producer-batch/v1';
 export const LAFEA_PRODUCER_REVISION = 'NB-T2.1';
 
+const SHELL_COMPILED_ROUTE = 'SHELL_RETAINED_MESH_COMPILED_SOLVER_MODEL';
+
 export function createLafeaLifecycleProducerBatch(options) {
   const stageId = options?.stageId;
   const stage = requireLafeaStageRegistryEntry(stageId);
@@ -133,6 +135,11 @@ function analyticalRecords(stage, profile, authority, execution) {
 }
 
 function feaRecords(stage, profile, authority, execution) {
+  if ((stage.stageId === 'LAFEA.4' || stage.stageId === 'LAFEA.5')
+    && execution.route === SHELL_COMPILED_ROUTE) {
+    return governedShellFeaRecords(stage, profile, authority, execution);
+  }
+
   const producerRef = producerReference(stage, profile);
   const sourceHash = authority.sourceHash;
   const canonicalModelHash = engineeringHash(stage.stageId, 'CANONICAL_MODEL', {
@@ -202,6 +209,81 @@ function feaRecords(stage, profile, authority, execution) {
     }, producerRef),
     record(stage.stageId, 'RECOVERY', recoveryHash, {
       executionHash, meshHash, recoveryProfileHash,
+    }, producerRef),
+  ];
+}
+
+function governedShellFeaRecords(stage, profile, authority, execution) {
+  const producerRef = `${producerReference(stage, profile)}/GOVERNED-SHELL-COMPILED-V1`;
+  const sourceHash = authority.sourceHash;
+  for (const [field, value] of Object.entries({
+    sourceHash: execution.sourceHash,
+    analysisGeometryHash: execution.analysisGeometryHash,
+    meshHash: execution.meshHash,
+    solverModelHash: execution.solverModelHash,
+    compiledExecutionHash: execution.compiledExecutionHash,
+  })) {
+    if (typeof value !== 'string' || !/^sha256:[0-9a-f]{64}$/u.test(value)) {
+      throw producerError(`LAFEA_SHELL_COMPILED_${field.toUpperCase()}_INVALID`);
+    }
+  }
+  if (execution.sourceHash !== sourceHash) {
+    throw producerError('LAFEA_SHELL_COMPILED_SOURCE_AUTHORITY_MISMATCH');
+  }
+  const canonicalModelHash = engineeringHash(stage.stageId, 'CANONICAL_MODEL', {
+    sourceHash,
+    canonicalInput: execution.canonicalInput,
+  });
+  const analysisGeometryHash = execution.analysisGeometryHash;
+  const meshProfileHash = execution.meshProfileHash;
+  const meshHash = execution.meshHash;
+  const physicalLoadCaseHash = engineeringHash(stage.stageId, 'PHYSICAL_LOAD_CASE_INPUT',
+    physicalLoadPayload(stage.stageId, execution.canonicalInput));
+  const solverProfileHash = engineeringHash(stage.stageId, 'SOLVER_PROFILE', {
+    enginePackage: stage.enginePackage,
+    authority: stage.authority,
+    producerRevision: LAFEA_PRODUCER_REVISION,
+    route: execution.route,
+    solverModelHash: execution.solverModelHash,
+    solverModelBindingHash: execution.solverModelBindingHash,
+  });
+  const executionHash = execution.compiledExecutionHash;
+  const recoveryProfileHash = engineeringHash(stage.stageId, 'RECOVERY_PROFILE', {
+    resultContractRole: stage.resultContractRole,
+    authority: stage.authority,
+    producerRevision: LAFEA_PRODUCER_REVISION,
+    route: execution.route,
+  });
+  const recoveryEvidence = requireRecoveryEvidence(stage.stageId, execution.result);
+  const recoveryHash = engineeringHash(stage.stageId, 'RECOVERY', {
+    executionHash,
+    meshHash,
+    solverModelHash: execution.solverModelHash,
+    executionMeshBindingHash: execution.executionMeshBindingHash,
+    recoveryProfileHash,
+    retainedAcceptedRecoveryEvidence: recoveryEvidence,
+  });
+  return [
+    record(stage.stageId, 'CANONICAL_MODEL', canonicalModelHash, { sourceHash }, producerRef),
+    record(stage.stageId, 'ANALYSIS_GEOMETRY', analysisGeometryHash, {
+      sourceHash, canonicalModelHash,
+    }, producerRef),
+    record(stage.stageId, 'ANALYSIS_MESH', meshHash, {
+      analysisGeometryHash, meshProfileHash,
+    }, producerRef),
+    record(stage.stageId, 'EXECUTION', executionHash, {
+      canonicalModelHash,
+      meshHash,
+      physicalLoadCaseHash,
+      solverProfileHash,
+      solverModelHash: execution.solverModelHash,
+      executionMeshBindingHash: execution.executionMeshBindingHash,
+    }, producerRef),
+    record(stage.stageId, 'RECOVERY', recoveryHash, {
+      executionHash,
+      meshHash,
+      solverModelHash: execution.solverModelHash,
+      recoveryProfileHash,
     }, producerRef),
   ];
 }

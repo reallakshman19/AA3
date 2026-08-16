@@ -57,6 +57,17 @@ function modelSection(stage, readiness) {
     const state = projection?.state === 'ABSENT' ? 'NOT_STARTED' : 'BLOCKED';
     return section(state, projection?.reasons ?? ['ANALYSIS_DOMAIN_NOT_CURRENT'], refs, []);
   }
+  if (stage.shellMidsurfaceProfileActive === true) {
+    if (!stage.lifecycle) return section('NOT_STARTED', ['SOURCE_AUTHORITY_REQUIRED'], [], []);
+    const refs = sourceRefs(stage);
+    if (stage.shellSolverModelProjection?.solverModelHash) {
+      refs.push(ref('SOLVER_MODEL', stage.shellSolverModelProjection.solverModelHash));
+    }
+    if (readiness?.preMeshModelCurrent === true) {
+      return section('COMPLETE', [], refs, ['VIEW_MODEL']);
+    }
+    return section('BLOCKED', ['SHELL_SOURCE_MODEL_NOT_CURRENT'], refs, []);
+  }
   if (!stage.lifecycle) return section('NOT_STARTED', ['SOURCE_AUTHORITY_REQUIRED'], [], []);
   const record = stage.lifecycle.artifacts?.CANONICAL_MODEL;
   if (readiness?.modelCurrent === true && record?.status === 'CURRENT') {
@@ -70,7 +81,11 @@ function modelSection(stage, readiness) {
 function preparationSection(stage, adapter, readiness, projection) {
   if (!readiness?.preMeshModelCurrent) {
     return section('NOT_STARTED', [
-      stage.domainFirstProfileActive ? 'ANALYSIS_DOMAIN_NOT_CURRENT' : 'CANONICAL_MODEL_NOT_CURRENT',
+      stage.domainFirstProfileActive
+        ? 'ANALYSIS_DOMAIN_NOT_CURRENT'
+        : stage.shellMidsurfaceProfileActive
+          ? 'SHELL_SOURCE_MODEL_NOT_CURRENT'
+          : 'CANONICAL_MODEL_NOT_CURRENT',
     ], [], []);
   }
   if (!adapter.preparation.qualified) return section('BLOCKED', [adapter.preparation.reason], [], []);
@@ -81,11 +96,19 @@ function preparationSection(stage, adapter, readiness, projection) {
     return section('WARNING', projection.reasons, refs, ['VIEW_PREPARATION', 'VIEW_APPROVAL']);
   }
   if (projection.state === 'ABSENT') {
-    return section('BLOCKED', projection.reasons, refs,
-      stage.domainFirstProfileActive ? ['RUN_PREFLIGHT'] : ['REGISTER_PREPARATION_EVIDENCE']);
+    const actions = stage.domainFirstProfileActive
+      ? ['RUN_PREFLIGHT']
+      : stage.shellMidsurfaceProfileActive
+        ? []
+        : ['REGISTER_PREPARATION_EVIDENCE'];
+    return section('BLOCKED', projection.reasons, refs, actions);
   }
-  return section('BLOCKED', projection.reasons, refs,
-    stage.domainFirstProfileActive ? ['RUN_PREFLIGHT'] : projection.evidenceHash ? ['VIEW_PREPARATION'] : []);
+  const actions = stage.domainFirstProfileActive
+    ? ['RUN_PREFLIGHT']
+    : projection.evidenceHash
+      ? ['VIEW_PREPARATION']
+      : [];
+  return section('BLOCKED', projection.reasons, refs, actions);
 }
 
 function discretizationSection(stage, adapter, custody) {
@@ -115,7 +138,11 @@ function discretizationSection(stage, adapter, custody) {
 function authorizationSection(stage, adapter, readiness, preparation, custody) {
   const reasons = []; const refs = [];
   if (!readiness?.preMeshModelCurrent) {
-    reasons.push(stage.domainFirstProfileActive ? 'ANALYSIS_DOMAIN_NOT_CURRENT' : 'CANONICAL_MODEL_NOT_CURRENT');
+    reasons.push(stage.domainFirstProfileActive
+      ? 'ANALYSIS_DOMAIN_NOT_CURRENT'
+      : stage.shellMidsurfaceProfileActive
+        ? 'SHELL_SOURCE_MODEL_NOT_CURRENT'
+        : 'CANONICAL_MODEL_NOT_CURRENT');
   }
   if ((stage.domainFirstProfileActive || stage.shellMidsurfaceProfileActive)
     && !readiness?.solverModelCurrent) {

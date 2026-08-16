@@ -160,6 +160,15 @@ export class LafeaWorkbenchController {
           documentValue,
         );
         if (shellParent) this.store.registerShellMidsurfaceEvidence(shellParent);
+      } else if (stageId === 'LAFEA.5' && hash) {
+        const { createLafea5SourceShellParent } = await import(
+          './lafea-source-shell-mesh-adoption.js'
+        );
+        const shellParent = createLafea5SourceShellParent({
+          sourceHash: hash,
+          shellTemplate: documentValue.shellTemplate,
+        });
+        this.store.registerShellMidsurfaceEvidence(shellParent);
       }
       return result;
     } catch (error) {

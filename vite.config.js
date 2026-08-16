@@ -109,7 +109,7 @@ const ACCDB_READER_PACKAGE_PATHS = Object.freeze([
 const STYLE_LEAF_MODULES = Object.freeze([
   '/src/workspace/workspace-shell-styles.js',
   '/src/workspace/lafea-workbench-styles.js',
-  '/src/workspace/lfea-workbench-styles.js',
+  '/src/workspace/lafea-workbench-styles.js',
   '/src/workspace/lafea-guided-workbench-styles.js',
   '/src/workspace/viewport-productivity/topology-edit-table-styles.js',
   '/src/workspace/viewport-productivity/topology-edit-object-tree-styles.js',
@@ -173,6 +173,14 @@ export function manualChunk(id) {
   if (source.endsWith('/src/workspace/lafea-workbench-controller-io.js')) {
     return 'lafea-workbench-io';
   }
+  // The retained-shell compiler is a pure, fail-closed transformation. It owns
+  // no store, controller, DOM resource, or mutable singleton, and is large
+  // enough to form a useful leaf boundary without raising the 1 MiB entry cap.
+  // Browser qualification below remains mandatory because chunk size does not
+  // prove ESM evaluation-order safety.
+  if (source.endsWith('/src/workspace/lafea-shell-solver-model.js')) {
+    return 'lafea-shell-compiler';
+  }
   if (source.endsWith('/src/workspace/topology-edit/topology-edit-inline-component-replacement.js')
     || source.endsWith('/src/workspace/topology-edit/topology-edit-junction-relation-command.js')
     || source.endsWith('/src/workspace/topology-edit/topology-edit-engineering-edit-effect.js')) {
@@ -204,7 +212,7 @@ export function manualChunk(id) {
   // own no controller, store, mutable singleton, or runtime resource, so they
   // form a safe leaf boundary for the LFEA-to-3D-Edit integration.
   if (source.endsWith('/src/workspace/event-topics.js')
-    || source.endsWith('/src/workspace/lfea-support-actions-panel.js')) {
+    || source.endsWith('/src/workspace/lafea-support-actions-panel.js')) {
     return 'workspace-event-presentation-contracts';
   }
   // Import-free static shell CSS is a safe presentation leaf. Keep the

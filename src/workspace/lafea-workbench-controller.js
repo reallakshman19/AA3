@@ -79,7 +79,8 @@ export class LafeaWorkbenchController {
       onExportMeshEvidence: () => this.downloadAnalysisMeshEvidence(),
       onBindMeshProfile: (profile) => {
         const stageId = this.getState().activeStageId;
-        if (!this.getState().stages[stageId].domainFirstProfileActive) {
+        if (stageId === 'LAFEA.3'
+          && !this.getState().stages[stageId].domainFirstProfileActive) {
           this.store.activateDomainFirstProfile(stageId);
         }
         return this.bindAnalysisMeshProfile(profile);
@@ -135,12 +136,13 @@ export class LafeaWorkbenchController {
       );
     }
     try {
-      const result = this.importDocument(await this.mockDocumentFactory(stageId), stageId);
+      const documentValue = await this.mockDocumentFactory(stageId);
+      const result = this.importDocument(documentValue, stageId);
+      const state = this.getState();
+      const hash = state.stages[stageId]?.lifecycle?.source?.sourceHash;
       if (stageId === 'LAFEA.3') {
         const { createLafeaMockDomainAndGeometryEvidence } = await import('./lafea-simulated-source-provider.js');
         this.store.activateDomainFirstProfile();
-        const state = this.getState();
-        const hash = state.stages[stageId]?.lifecycle?.source?.sourceHash;
         if (hash) {
           const mockEv = await createLafeaMockDomainAndGeometryEvidence(stageId, hash);
           if (mockEv) {
@@ -148,6 +150,16 @@ export class LafeaWorkbenchController {
             this.store.registerAnalysisGeometryEvidence(mockEv.geometryEvidence);
           }
         }
+      } else if (stageId === 'LAFEA.4' && hash) {
+        const { createLafeaSimulatedShellMidsurfaceEvidence } = await import(
+          './lafea-simulated-shell-midsurface-provider.js'
+        );
+        const shellParent = createLafeaSimulatedShellMidsurfaceEvidence(
+          stageId,
+          hash,
+          documentValue,
+        );
+        if (shellParent) this.store.registerShellMidsurfaceEvidence(shellParent);
       }
       return result;
     } catch (error) {

@@ -220,7 +220,10 @@ function governedShellFeaRecords(stage, profile, authority, execution) {
     sourceHash: execution.sourceHash,
     analysisGeometryHash: execution.analysisGeometryHash,
     meshHash: execution.meshHash,
+    meshProfileHash: execution.meshProfileHash,
     solverModelHash: execution.solverModelHash,
+    solverModelBindingHash: execution.solverModelBindingHash,
+    executionMeshBindingHash: execution.executionMeshBindingHash,
     compiledExecutionHash: execution.compiledExecutionHash,
   })) {
     if (typeof value !== 'string' || !/^sha256:[0-9a-f]{64}$/u.test(value)) {
@@ -239,6 +242,9 @@ function governedShellFeaRecords(stage, profile, authority, execution) {
   const meshHash = execution.meshHash;
   const physicalLoadCaseHash = engineeringHash(stage.stageId, 'PHYSICAL_LOAD_CASE_INPUT',
     physicalLoadPayload(stage.stageId, execution.canonicalInput));
+  // FEA_MESH_RECOVERY_V1 has an exact parent-key contract. Solver-model and
+  // execution-mesh binding identities are therefore retained inside these
+  // opaque profile hashes, not appended as unauthorized parent keys.
   const solverProfileHash = engineeringHash(stage.stageId, 'SOLVER_PROFILE', {
     enginePackage: stage.enginePackage,
     authority: stage.authority,
@@ -246,6 +252,7 @@ function governedShellFeaRecords(stage, profile, authority, execution) {
     route: execution.route,
     solverModelHash: execution.solverModelHash,
     solverModelBindingHash: execution.solverModelBindingHash,
+    executionMeshBindingHash: execution.executionMeshBindingHash,
   });
   const executionHash = execution.compiledExecutionHash;
   const recoveryProfileHash = engineeringHash(stage.stageId, 'RECOVERY_PROFILE', {
@@ -253,13 +260,13 @@ function governedShellFeaRecords(stage, profile, authority, execution) {
     authority: stage.authority,
     producerRevision: LAFEA_PRODUCER_REVISION,
     route: execution.route,
+    solverModelHash: execution.solverModelHash,
+    executionMeshBindingHash: execution.executionMeshBindingHash,
   });
   const recoveryEvidence = requireRecoveryEvidence(stage.stageId, execution.result);
   const recoveryHash = engineeringHash(stage.stageId, 'RECOVERY', {
     executionHash,
     meshHash,
-    solverModelHash: execution.solverModelHash,
-    executionMeshBindingHash: execution.executionMeshBindingHash,
     recoveryProfileHash,
     retainedAcceptedRecoveryEvidence: recoveryEvidence,
   });
@@ -276,13 +283,10 @@ function governedShellFeaRecords(stage, profile, authority, execution) {
       meshHash,
       physicalLoadCaseHash,
       solverProfileHash,
-      solverModelHash: execution.solverModelHash,
-      executionMeshBindingHash: execution.executionMeshBindingHash,
     }, producerRef),
     record(stage.stageId, 'RECOVERY', recoveryHash, {
       executionHash,
       meshHash,
-      solverModelHash: execution.solverModelHash,
       recoveryProfileHash,
     }, producerRef),
   ];

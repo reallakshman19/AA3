@@ -94,7 +94,10 @@ function discretizationSection(stage, adapter, custody) {
   const refs = custody.meshHash
     ? [ref('ANALYSIS_MESH', custody.meshHash), ref('ANALYSIS_MESH_PROFILE', custody.meshProfileHash)]
     : [];
-  if (custody.state === 'CURRENT_PASS') return section('COMPLETE', [], refs, ['VIEW', 'EXPORT_EVIDENCE']);
+  if (custody.state === 'CURRENT_PASS') {
+    const reasons = custody.usableForRun === true ? [] : (custody.runBlockingReasons ?? []);
+    return section('COMPLETE', reasons, refs, ['VIEW', 'EXPORT_EVIDENCE']);
+  }
   if (custody.state === 'CURRENT_WARNING') {
     return section('WARNING', ['ANALYSIS_MESH_WARNING_REVIEW_REQUIRED'], refs, ['VIEW', 'FOCUS_FINDINGS', 'EXPORT_EVIDENCE']);
   }
@@ -126,6 +129,11 @@ function authorizationSection(stage, adapter, readiness, preparation, custody) {
   if (adapter.discretization.applicable && custody?.usableForAuthorization !== true) {
     reasons.push(`ANALYSIS_MESH_${custody?.state ?? 'ABSENT'}`);
   }
+  if (stage.shellMidsurfaceProfileActive === true && custody?.usableForRun !== true) {
+    reasons.push(...(custody?.runBlockingReasons?.length
+      ? custody.runBlockingReasons
+      : ['SHELL_RETAINED_MESH_NOT_BOUND_TO_SOLVER_MODEL']));
+  }
   if (custody?.meshHash) refs.push(ref('ANALYSIS_MESH', custody.meshHash));
   if (reasons.length) return section('BLOCKED', reasons, refs, []);
   return section('READY', [], refs, ['AUTHORIZE_SOLVE']);
@@ -134,11 +142,16 @@ function authorizationSection(stage, adapter, readiness, preparation, custody) {
 function executionSection(stage, readiness, preparation, custody) {
   const execution = stage.execution;
   if (!execution) {
-    const runnable = stage.domainFirstProfileActive
+    const governedMeshRoute = stage.domainFirstProfileActive === true
+      || stage.shellMidsurfaceProfileActive === true;
+    const runnable = governedMeshRoute
       && readiness?.solverModelCurrent === true
       && preparation?.usableForAuthorization === true
       && custody?.usableForRun === true;
-    return section('NOT_STARTED', ['EXECUTION_NOT_RUN'], [], runnable ? ['RUN_SOLVE'] : []);
+    const reasons = custody?.runBlockingReasons?.length
+      ? custody.runBlockingReasons
+      : ['EXECUTION_NOT_RUN'];
+    return section('NOT_STARTED', reasons, [], runnable ? ['RUN_SOLVE'] : []);
   }
   if (execution.status === 'QUALIFIED') {
     if (stage.domainFirstProfileActive && readiness?.resultReady !== true) {

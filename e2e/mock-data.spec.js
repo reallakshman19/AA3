@@ -36,6 +36,30 @@ test('every Advanced tab loads deterministic [SIMULATED] input through its UI', 
     const stage = await page.evaluate((id) => AnalysisWorkspace.getLafeaWorkbenchState().stages[id], stageId);
     expect(stage.document).not.toBeNull();
     expect(stage.execution).toBeNull();
+
+    if (stageId === 'LAFEA.4') {
+      expect(stage.domainFirstProfileActive).toBe(false);
+      expect(stage.shellMidsurfaceProfileActive).toBe(true);
+      expect(stage.document.modelIdentity).toBe('CYLINDRICAL_PIPE_SHELL_BENCHMARK');
+      expect(stage.document.nodes).toHaveLength(26);
+      expect(stage.document.elements).toHaveLength(24);
+      expect(stage.retainedShellMidsurfaceEvidence).toMatchObject({
+        stageId: 'LAFEA.4',
+        qualification: 'PASS',
+        geometry: {
+          surface: { kind: 'CYLINDER', radius: 100 },
+        },
+      });
+    }
+
+    if (stageId === 'LAFEA.5') {
+      expect(stage.domainFirstProfileActive).toBe(false);
+      expect(stage.shellMidsurfaceProfileActive).toBe(false);
+      expect(stage.document.workflowIdentity).toBe('TRUNNION-WORKFLOW-1');
+      expect(stage.document.shellTemplate.nodes).toHaveLength(24);
+      expect(stage.document.shellTemplate.elements).toHaveLength(24);
+      expect(stage.retainedShellMidsurfaceEvidence).toBeNull();
+    }
   }
 
   for (const stageId of ANALYTICAL_ROUTES) {

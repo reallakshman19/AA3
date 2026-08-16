@@ -61,8 +61,16 @@ export function projectLafeaWorkbenchReadiness(stageId, stage) {
 
   const base = lafeaLifecycleReadiness(lifecycle);
   const current = binding.status === 'CURRENT';
-  const shellSolverCurrent = shellMidsurface
+  // For shell stages, a current normalized source document is the pre-mesh
+  // model authority. Lifecycle CANONICAL_MODEL is an execution artifact and is
+  // intentionally published only after solve; requiring it here would create
+  // a first-run circular dependency (authorize -> solve -> publish model).
+  const shellPreMeshModelCurrent = shellMidsurface
     && current
+    && base.sourceCurrent
+    && Boolean(stage.document);
+  const shellSolverCurrent = shellMidsurface
+    && shellPreMeshModelCurrent
     && shellSolverProjection?.state === 'CURRENT_PASS'
     && shellSolverProjection?.usableForRun === true
     && shellSolverProjection?.meshHash === custody?.meshHash
@@ -122,7 +130,11 @@ export function projectLafeaWorkbenchReadiness(stageId, stage) {
     releaseBlockingReasons: [...releaseBinding.reasons],
     sourceCurrent: current && base.sourceCurrent,
     modelCurrent: current && base.modelCurrent,
-    preMeshModelCurrent: domainFirst ? current && domainCurrent : current && base.modelCurrent,
+    preMeshModelCurrent: domainFirst
+      ? current && domainCurrent
+      : shellMidsurface
+        ? shellPreMeshModelCurrent
+        : current && base.modelCurrent,
     domainFirstProfileActive: domainFirst,
     shellMidsurfaceProfileActive: shellMidsurface,
     domainCurrent: current && domainCurrent,

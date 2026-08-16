@@ -10,7 +10,10 @@ import {
 import { buildLafeaWorkbenchOrchestrationProjection } from './lafea-workbench-orchestration-projection.js';
 import { createLafeaWorkbenchEvidenceActions } from './lafea-workbench-evidence-actions.js';
 import { createLafeaWorkbenchGeometryState } from './lafea-workbench-geometry-state.js';
-import { buildLafeaDomainFirstMeshCustodyProjection } from './lafea-domain-first-mesh-custody.js';
+import {
+  bindLafeaShellMeshCustodyToSolverModel,
+  buildLafeaDomainFirstMeshCustodyProjection,
+} from './lafea-domain-first-mesh-custody.js';
 import { buildLafeaDomainPreparationProjection } from './lafea-domain-first-requests.js';
 import { createLafeaWorkbenchOrchestratorApi } from './lafea-workbench-orchestrator-api.js';
 import { createLafeaWorkbenchContinuumPreflightState } from './lafea-workbench-continuum-preflight-state.js';
@@ -22,6 +25,9 @@ import { createLafeaMeshGenerationActions } from './lafea-workbench-mesh-generat
 import { createLafeaWorkbenchPreparationState } from './lafea-workbench-preparation-state.js';
 import { projectLafeaWorkbenchReadiness } from './lafea-workbench-readiness.js';
 import { createLafeaWorkbenchReleaseState } from './lafea-workbench-release-binding.js';
+import { projectLafeaShellSolverModelBinding } from './lafea-shell-solver-model.js';
+import { createLafeaWorkbenchShellExecutionState } from './lafea-workbench-shell-execution-state.js';
+import { createLafeaWorkbenchShellRunActions } from './lafea-workbench-shell-run-actions.js';
 import { createLafeaWorkbenchSourceState } from './lafea-workbench-source-state.js';
 import { createLafeaT6GeometryQualificationState } from './lafea-t6-geometry-qualification-state.js';
 import {
@@ -55,6 +61,7 @@ export function createLafeaWorkbenchOrchestratorStore(options) {
   const stageIds = Object.keys(retainedState.stages);
   const continuumPreflight = createLafeaWorkbenchContinuumPreflightState(stageIds);
   const domainFirstExecution = createLafeaWorkbenchDomainFirstExecutionState(stageIds);
+  const shellExecution = createLafeaWorkbenchShellExecutionState(stageIds);
   const source = createLafeaWorkbenchSourceState(stageIds, {
     getRetainedState: () => retainedState,
     getActiveStageId: () => retainedState.activeStageId,
@@ -80,9 +87,13 @@ export function createLafeaWorkbenchOrchestratorStore(options) {
     const stage = retainedState.stages[stageId];
     if (!stage) throw storeError('LAFEA_WORKBENCH_STAGE_NOT_FOUND');
     const geometryFields = geometry.fields(stageId);
-    const executionFields = geometryFields.domainFirstProfileActive
-      ? { execution: domainFirstExecution.select(stageId) }
-      : domainFirstExecution.fields(stageId);
+    let executionFields = {};
+    if (geometryFields.domainFirstProfileActive) {
+      executionFields = { execution: domainFirstExecution.select(stageId) };
+    } else if (geometryFields.shellMidsurfaceProfileActive === true) {
+      // Governed shell custody must never inherit a legacy document execution.
+      executionFields = { execution: shellExecution.select(stageId) };
+    }
     return freeze({
       ...stage, stageId, ...source.fields(stageId), ...release.fields(stageId),
       ...verification.fields(stageId), ...t6Geometry.fields(stageId),
@@ -99,10 +110,19 @@ export function createLafeaWorkbenchOrchestratorStore(options) {
       withGeometry, withGeometry.retainedAnalysisMeshEvidence,
     );
     const governedV2 = withGeometry.domainFirstProfileActive || withGeometry.shellMidsurfaceProfileActive;
-    const analysisMeshCustodyProjection = governedV2
+    const baseCustody = governedV2
       ? buildLafeaDomainFirstMeshCustodyProjection(withGeometry, withGeometry.retainedAnalysisMeshEvidenceV2)
       : legacyCustody;
-    const withMesh = freeze({ ...withGeometry, analysisMeshCustodyProjection });
+    const withBaseMesh = freeze({ ...withGeometry, analysisMeshCustodyProjection: baseCustody });
+    const shellSolverModelProjection = projectLafeaShellSolverModelBinding(withBaseMesh);
+    const analysisMeshCustodyProjection = withGeometry.shellMidsurfaceProfileActive === true
+      ? bindLafeaShellMeshCustodyToSolverModel(baseCustody, shellSolverModelProjection)
+      : baseCustody;
+    const withMesh = freeze({
+      ...withGeometry,
+      analysisMeshCustodyProjection,
+      shellSolverModelProjection,
+    });
     const preparationProjection = withMesh.domainFirstProfileActive
       ? buildLafeaDomainPreparationProjection(withMesh)
       : preparation.buildProjection(withMesh);
@@ -148,7 +168,9 @@ export function createLafeaWorkbenchOrchestratorStore(options) {
   }
 
   function clearDomainFirstExecution(stageId = retainedState.activeStageId) {
-    return domainFirstExecution.clear(stageId);
+    const domainChanged = domainFirstExecution.clear(stageId);
+    const shellChanged = shellExecution.clear(stageId);
+    return domainChanged || shellChanged;
   }
   function clearDomainFirstAuthority(stageId = retainedState.activeStageId) {
     continuumPreflight.clear(stageId);
@@ -175,13 +197,7 @@ export function createLafeaWorkbenchOrchestratorStore(options) {
     const stageId = retainedState.activeStageId;
     const governedStage = readStageState(stageId);
     if (governedStage.domainFirstProfileActive) return domainFirstRun.run(stageId);
-    if (governedStage.shellMidsurfaceProfileActive === true
-      && governedStage.analysisMeshCustodyProjection?.usableForRun !== true) {
-      const reason = governedStage.analysisMeshCustodyProjection?.runBlockingReasons?.[0]
-        ?? 'SHELL_RETAINED_MESH_NOT_BOUND_TO_SOLVER_MODEL';
-      failOrchestrator(storeError(reason), reason);
-      return publish();
-    }
+    if (governedStage.shellMidsurfaceProfileActive === true) return shellRun.run(stageId);
     invokeRetained('run');
     let stage = retainedState.stages[stageId];
     try {
@@ -256,6 +272,9 @@ export function createLafeaWorkbenchOrchestratorStore(options) {
   const domainFirstRun = createLafeaWorkbenchDomainFirstRunActions({
     ...routeContext(), source, domainFirstExecution,
   });
+  const shellRun = createLafeaWorkbenchShellRunActions({
+    ...routeContext(), source, shellExecution,
+  });
 
   function subscribe(listener) {
     if (typeof listener !== 'function') throw new TypeError('LAFEA subscriber must be a function.');
@@ -274,7 +293,7 @@ export function createLafeaWorkbenchOrchestratorStore(options) {
   function routeContext() {
     return {
       retained, release, verification, t6Geometry, mesh, meshGeneration, preparation,
-      geometry, continuumPreflight, listeners, unsubscribe, ...meshGenerationActions,
+      geometry, continuumPreflight, shellExecution, listeners, unsubscribe, ...meshGenerationActions,
       ...evidenceActions, getRetainedState: () => retainedState, readStageState, deriveStage,
       deriveState, publish, delegate, mutateDocument, importDocument, run, initializeLifecycle,
       applyLifecycleEvent, clearDomainFirstExecution, subscribe, invokeRetained,

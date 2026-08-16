@@ -5,6 +5,7 @@ import { PROFILE_KINDS, canonicalProfile } from '../src/core/lafea-profile-contr
 import { createLafeaMockDocument } from '../src/workspace/advanced-mock-data.js';
 import { createLafeaSimulatedShellMidsurfaceEvidence } from '../src/workspace/lafea-simulated-shell-midsurface-provider.js';
 import { cylindricalShellUvAtPoint3d } from '../src/workspace/lafea-shell-curved-midsurface-contract.js';
+import { produceLafeaShellAnalysisMesh } from '../src/workspace/lafea-shell-mesh-producer.js';
 import {
   createLafea5SourceShellParent,
   planLafea5SourceShellMeshAdoption,
@@ -12,21 +13,22 @@ import {
 } from '../src/workspace/lafea-source-shell-mesh-adoption.js';
 
 const SOURCE_HASH = `sha256:${'c'.repeat(64)}`;
-const shellProfile = (stageId) => canonicalProfile(PROFILE_KINDS.MESH, {
+const shellProfile = (stageId, overrides = {}) => canonicalProfile(PROFILE_KINDS.MESH, {
   schema: 'lafea-mesh-profile/v1',
-  profileIdentity: `SAMPLE_${stageId.replace('.', '_')}_SHELL_MESH`,
-  sourceRevision: 'SAMPLE-PARENT-CHECK-V1',
+  profileIdentity: `SAMPLE_${stageId.replace('.', '_')}_SHELL_MESH_${overrides.profileSuffix ?? 'QUALIFIED'}`,
+  sourceRevision: 'SAMPLE-PARENT-CHECK-V2',
   semanticHash: undefined,
   fields: {
     continuumElement: 'T3',
     shellElement: 'CST_DKT_TRI3_THIN_SHELL_V1',
     globalTargetSize: 15,
     adjacentSizeRatioMax: 1.5,
-    aspectRatioWarn: 5,
+    aspectRatioWarn: 3,
     aspectRatioBlock: 10,
-    scaledJacobianWarn: 0.6,
+    scaledJacobianWarn: 0.5,
     scaledJacobianBlock: 0.2,
     adaptiveLevels: 3,
+    ...overrides.fields,
   },
 });
 
@@ -47,6 +49,21 @@ for (const node of lafea4.nodes) {
   assert.ok(Number.isFinite(uv.u));
   assert.ok(Number.isFinite(uv.v));
 }
+const produced4 = produceLafeaShellAnalysisMesh({
+  midsurfaceEvidence: parent4,
+  meshProfile: shellProfile('LAFEA.4'),
+});
+assert.equal(produced4.evidence.qualification, 'PASS');
+assert.equal(produced4.evidence.quality.shellOrientationTopology?.qualification, 'PASS');
+assert.throws(
+  () => produceLafeaShellAnalysisMesh({
+    midsurfaceEvidence: parent4,
+    meshProfile: shellProfile('LAFEA.4', {
+      profileSuffix: 'WEAKENED', fields: { scaledJacobianBlock: 0.1 },
+    }),
+  }),
+  (error) => error?.code === 'LAFEA4_MESH_QUALITY_POLICY_WEAKENING_NOT_QUALIFIED',
+);
 
 const lafea5 = createLafeaMockDocument('LAFEA.5');
 assert.equal(
@@ -75,6 +92,7 @@ assert.equal(plan5.topologyMutation, false);
 assert.equal(plan5.coordinateMutation, false);
 assert.equal(produced5.evidence.qualification, 'PASS');
 assert.equal(produced5.evidence.quality.blockingElementIds.length, 0);
+assert.equal(produced5.evidence.quality.shellOrientationTopology?.qualification, 'PASS');
 assert.equal(produced5.evidence.mesh.nodes.length, 24);
 assert.equal(produced5.evidence.mesh.elements.length, 24);
 assert.deepEqual(
@@ -93,8 +111,33 @@ assert.deepEqual(
   })).sort((a, b) => a.elementId.localeCompare(b.elementId)),
 );
 
+const reversedTemplate = structuredClone(lafea5.shellTemplate);
+reversedTemplate.elements[0].nodeIds = [
+  reversedTemplate.elements[0].nodeIds[0],
+  reversedTemplate.elements[0].nodeIds[2],
+  reversedTemplate.elements[0].nodeIds[1],
+];
+assert.throws(
+  () => createLafea5SourceShellParent({ sourceHash: SOURCE_HASH, shellTemplate: reversedTemplate }),
+  (error) => error?.code === 'LAFEA5_SOURCE_SHELL_WINDING_DIRECTOR_MISMATCH',
+  'Lossless source-mesh adoption must not preserve connectivity whose winding contradicts declared shell directors.',
+);
+
+const weakProfile5 = shellProfile('LAFEA.5', {
+  profileSuffix: 'WEAKENED', fields: { aspectRatioWarn: 4 },
+});
+const weakPlan5 = planLafea5SourceShellMeshAdoption({ parent: parent5, meshProfile: weakProfile5 });
+assert.throws(
+  () => produceLafea5SourceShellMeshAdoption({
+    parent: parent5,
+    meshProfile: weakProfile5,
+    plan: weakPlan5,
+  }),
+  (error) => error?.code === 'LAFEA5_MESH_QUALITY_POLICY_WEAKENING_NOT_QUALIFIED',
+);
+
 console.log(JSON.stringify({
-  schema: 'lafea-shell-sample-parent-check/v1',
+  schema: 'lafea-shell-sample-parent-check/v2',
   status: 'PASS',
   lafea4: {
     sampleGeometry: 'CYLINDRICAL_PIPE_SHELL_BENCHMARK',
@@ -106,6 +149,10 @@ console.log(JSON.stringify({
     angularSpanDegrees: 60,
     meshMode: 'AUTOMATIC_CYLINDRICAL_MIDSURFACE_TRIANGULATION',
     shellParentRegistered: true,
+    retainedNodes: produced4.evidence.mesh.nodes.length,
+    retainedElements: produced4.evidence.mesh.elements.length,
+    shellOrientationTopology: produced4.evidence.quality.shellOrientationTopology?.qualification,
+    weakenedPolicyRejected: true,
   },
   lafea5: {
     sampleGeometry: 'TRUNNION_FOOTPRINT_CALLER_AUTHORED_SHELL_TEMPLATE',
@@ -118,6 +165,9 @@ console.log(JSON.stringify({
     retainedElements: produced5.evidence.mesh.elements.length,
     warningElements: produced5.evidence.quality.warningElementIds.length,
     blockingElements: produced5.evidence.quality.blockingElementIds.length,
+    shellOrientationTopology: produced5.evidence.quality.shellOrientationTopology?.qualification,
+    reversedSourceWindingRejected: true,
+    weakenedPolicyRejected: true,
     topologyMutation: false,
     coordinateMutation: false,
   },

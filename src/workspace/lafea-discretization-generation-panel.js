@@ -3,25 +3,31 @@ import { PROFILE_KINDS, defaultProfileFields } from '../core/lafea-profile-contr
 import { semanticHash } from '../core/shared-primitives/canonical-json.js';
 import { button, node, region } from './lafea-discretization-dom.js';
 
-const PROFILE_SOURCE_REVISION = 'lafea-discretization-ui-mesh-profile/v2';
+const PROFILE_SOURCE_REVISION = 'lafea-discretization-ui-mesh-profile/v3';
 const SHELL_ELEMENT_PLACEHOLDER = 'CST_DKT_TRI3_THIN_SHELL_V1';
 
 /**
- * Automatic mesh generation. Rendered whenever the stage is mesh applicable,
- * so a stage without a bound producer still says plainly why the controls are
- * unavailable rather than hiding them.
+ * Governed mesh generation/adoption. Rendered whenever the stage is mesh
+ * applicable, so a stage without a bound producer still says plainly why the
+ * controls are unavailable rather than hiding them.
  */
 export function generationSection(doc, model, handlers) {
-  const section = region(doc, 'Automatic mesh generation', 'generation');
   const generation = model.generation;
+  const sourceAdoption = generation.generationMode === 'SOURCE_MESH_ADOPTION';
+  const section = region(
+    doc,
+    sourceAdoption ? 'Source mesh adoption' : 'Automatic mesh generation',
+    'generation',
+  );
   section.dataset.generationAvailable = String(generation.available);
+  section.dataset.generationMode = generation.generationMode ?? 'AUTOMATIC_MESH';
 
   if (!generation.producerQualified) {
     section.append(node(
       doc,
       'p',
       null,
-      'No qualified automatic mesh producer is bound for this stage. Proposed topology, quality forecasts and configuration hashes are intentionally not manufactured.',
+      'No qualified governed mesh producer is bound for this stage. Proposed topology, quality forecasts and configuration hashes are intentionally not manufactured.',
     ));
     return section;
   }
@@ -39,6 +45,15 @@ export function generationSection(doc, model, handlers) {
   }
   section.append(identity);
 
+  if (sourceAdoption) {
+    section.append(node(
+      doc,
+      'p',
+      'lafea-discretization__disclosure',
+      'LAFEA.5 preserves the caller-authored host-shell mesh exactly. The profile below supplies element-family and quality-gate custody only; target length does not remesh, move nodes, or change connectivity.',
+    ));
+  }
+
   if (!generation.meshProfileBound) {
     section.append(profileBindingControls(doc, generation, handlers));
   }
@@ -55,21 +70,40 @@ export function generationSection(doc, model, handlers) {
   governed.append(
     node(doc, 'dt', null, 'Governing element family'),
     node(doc, 'dd', null, generation.declaredElementFamily),
-    node(doc, 'dt', null, 'Governing target element length'),
-    node(doc, 'dd', null, formatLength(generation.targetElementLength, generation.lengthUnit)),
+    node(doc, 'dt', null, sourceAdoption ? 'Remesh target' : 'Governing target element length'),
+    node(
+      doc,
+      'dd',
+      null,
+      sourceAdoption
+        ? 'NOT APPLICABLE — caller-authored source mesh is preserved'
+        : formatLength(generation.targetElementLength, generation.lengthUnit),
+    ),
   );
   section.append(governed);
 
   const controls = node(doc, 'div', 'lafea-discretization__generation-controls');
-  const plan = button(doc, 'Plan mesh', () => handlers.onPlanMesh?.({}));
+  const plan = button(
+    doc,
+    sourceAdoption ? 'Review adoption plan' : 'Plan mesh',
+    () => handlers.onPlanMesh?.({}),
+  );
   plan.dataset.role = 'lafea-generation-plan';
   plan.disabled = !model.actions.canPlanMesh;
-  plan.title = 'Runs the producer from the bound profile and reports the result. Custody is not modified.';
+  plan.title = sourceAdoption
+    ? 'Checks the exact source mesh, quality policy and identity-preservation plan without changing custody.'
+    : 'Runs the producer from the bound profile and reports the result. Custody is not modified.';
 
-  const generate = button(doc, 'Generate and retain mesh', () => handlers.onGenerateMesh?.({}));
+  const generate = button(
+    doc,
+    sourceAdoption ? 'Adopt and retain source mesh' : 'Generate and retain mesh',
+    () => handlers.onGenerateMesh?.({}),
+  );
   generate.dataset.role = 'lafea-generation-generate';
   generate.disabled = !model.actions.canGenerateMesh;
-  generate.title = 'Generation uses the bound profile exactly; change family or size by binding a new profile.';
+  generate.title = sourceAdoption
+    ? 'Retains the exact caller-authored nodes and TRI3 connectivity after governed quality checks; no remeshing occurs.'
+    : 'Generation uses the bound profile exactly; change family or size by binding a new profile.';
 
   controls.append(plan, generate);
   section.append(controls);
@@ -84,18 +118,20 @@ export function generationSection(doc, model, handlers) {
  * are visible and exportable, and the qualified baseline is enforced at both
  * this UI and the mesh-evidence contract. Users may tighten the limits; a
  * weaker profile cannot silently retain stage-qualified mesh authority.
- * Element family and target length remain explicit caller choices.
  */
 function profileBindingControls(doc, generation, handlers) {
+  const sourceAdoption = generation.generationMode === 'SOURCE_MESH_ADOPTION';
   const defaults = defaultProfileFields(PROFILE_KINDS.MESH);
   const host = node(doc, 'fieldset', 'lafea-discretization__profile-binding');
   host.dataset.role = 'lafea-mesh-profile-binding';
-  host.append(node(doc, 'legend', null, 'Mesh Generation'));
+  host.append(node(doc, 'legend', null, sourceAdoption ? 'Source Mesh Adoption' : 'Mesh Generation'));
   host.append(node(
     doc,
     'p',
     'lafea-discretization__disclosure',
-    'Generate with the visible qualified profile, or expand Advanced Quality Gates to tighten engineering acceptance. Qualified limits cannot be weakened.',
+    sourceAdoption
+      ? 'Adopt the exact visible caller-authored shell mesh under the selected element family and quality gates. No topology or coordinate change is authorized.'
+      : 'Generate with the visible qualified profile, or expand Advanced Quality Gates to tighten engineering acceptance. Qualified limits cannot be weakened.',
   ));
 
   const family = selectControl(
@@ -108,7 +144,13 @@ function profileBindingControls(doc, generation, handlers) {
   if (generation.elementFamilies.includes('T6_QUADRATIC_TRIANGLE')) {
     family.input.value = 'T6_QUADRATIC_TRIANGLE';
   }
-  const target = numberControl(doc, 'Target element length', 'lafea-profile-target-length', '', 0);
+  const target = numberControl(
+    doc,
+    sourceAdoption ? 'Quality-profile reference length (no remesh effect)' : 'Target element length',
+    'lafea-profile-target-length',
+    '',
+    0,
+  );
   target.input.value = '15';
 
   const advanced = node(doc, 'details', 'lafea-discretization__advanced');
@@ -168,7 +210,7 @@ function profileBindingControls(doc, generation, handlers) {
     reset,
   );
 
-  const bind = button(doc, 'Generate Mesh', () => {
+  const bind = button(doc, sourceAdoption ? 'Adopt Source Mesh' : 'Generate Mesh', () => {
     const selectedFamily = family.input.value;
     if (!generation.elementFamilies.includes(selectedFamily)) {
       family.input.setCustomValidity('Select an authorized element family.');
@@ -178,7 +220,7 @@ function profileBindingControls(doc, generation, handlers) {
     family.input.setCustomValidity('');
     const targetValue = Number(target.input.value);
     if (!(targetValue > 0)) {
-      target.input.setCustomValidity('Target element length must be greater than zero.');
+      target.input.setCustomValidity('Profile reference/target length must be greater than zero.');
       target.input.reportValidity?.();
       return;
     }
@@ -200,7 +242,7 @@ function profileBindingControls(doc, generation, handlers) {
 
     const profileEnvelope = {
       schema: 'lafea-mesh-profile/v1',
-      profileIdentity: `LAFEA3_UI_${selectedFamily}_MESH_PROFILE_V2`,
+      profileIdentity: `LAFEA_UI_${selectedFamily}_MESH_PROFILE_V3`,
       sourceRevision: PROFILE_SOURCE_REVISION,
       fields: {
         continuumElement: selectedFamily,
@@ -254,7 +296,7 @@ function validateQualifiedQualityControls(values, defaults, controls) {
     || values.scaledJacobianWarn < defaults.scaledJacobianWarn
     || values.scaledJacobianBlock < defaults.scaledJacobianBlock
     || values.adaptiveLevels < defaults.adaptiveLevels) {
-    controls.ratio.input.setCustomValidity('Settings may tighten but may not weaken the qualified LAFEA.3 mesh-quality policy.');
+    controls.ratio.input.setCustomValidity('Settings may tighten but may not weaken the qualified mesh-quality policy.');
     controls.ratio.input.reportValidity?.();
     return false;
   }
@@ -289,7 +331,7 @@ function refinementControls(doc, model, handlers) {
       doc,
       'p',
       'lafea-discretization__disclosure',
-      'Generate or recover a current retained analysis mesh before selecting local refinement targets.',
+      'Generate, adopt, or recover a current retained analysis mesh before selecting local refinement targets.',
     ));
     return host;
   }
@@ -464,6 +506,14 @@ function planSummary(doc, plan) {
   }
   summary.append(facts);
 
+  if (plan.generationMode === 'SOURCE_MESH_ADOPTION') {
+    summary.append(node(
+      doc,
+      'p',
+      'lafea-discretization__disclosure',
+      'Source-mesh adoption is identity preserving: node IDs, coordinates, element IDs and TRI3 connectivity remain exactly caller-authored. Characteristic remesh size is intentionally not reported.',
+    ));
+  }
   if (plan.strategy === 'CONSTRAINED_DELAUNAY') {
     summary.append(node(
       doc,

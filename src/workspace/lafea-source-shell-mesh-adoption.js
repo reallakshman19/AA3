@@ -5,7 +5,10 @@ import {
   LAFEA_ANALYSIS_MESH_INTAKE_V2_SCHEMA,
   createLafeaAnalysisMeshEvidenceV2,
 } from './lafea-analysis-mesh-evidence-v2.js';
-import { canonicalLafeaAnalysisMeshProfile } from './lafea-analysis-mesh-contract.js';
+import {
+  canonicalLafeaAnalysisMeshProfile,
+  lafeaAnalysisMeshContentHash,
+} from './lafea-analysis-mesh-contract.js';
 import { canonicalLafeaSha256 } from './lafea-canonical-sha256.js';
 
 export const LAFEA5_SOURCE_SHELL_PARENT_SCHEMA = 'lafea5-source-shell-parent/v1';
@@ -177,6 +180,7 @@ export function produceLafea5SourceShellMeshAdoption(input) {
     || plan.meshProfileHash !== meshProfile.semanticHash) {
     fail('LAFEA5_SOURCE_SHELL_ADOPTION_PLAN_PARENT_MISMATCH');
   }
+  const meshHash = lafeaAnalysisMeshContentHash(parent.mesh);
   const evidence = createLafeaAnalysisMeshEvidenceV2({
     schema: LAFEA_ANALYSIS_MESH_INTAKE_V2_SCHEMA,
     stageId: 'LAFEA.5',
@@ -187,15 +191,18 @@ export function produceLafea5SourceShellMeshAdoption(input) {
     mesh: parent.mesh,
     authority: {
       schema: LAFEA_ANALYSIS_MESH_AUTHORITY_V2_SCHEMA,
-      role: LAFEA_ANALYSIS_MESH_AUTHORITY_V2_ROLE,
+      stageId: 'LAFEA.5',
+      authorityRole: LAFEA_ANALYSIS_MESH_AUTHORITY_V2_ROLE,
+      status: 'ACCEPTED_BY_STAGE_CONTRACT',
       producerRef: LAFEA5_SOURCE_SHELL_ADOPTION_PRODUCER_REF,
-      producerVersion: '1',
+      sourceHash: parent.sourceHash,
+      analysisDomainHash: parent.analysisDomainHash,
+      analysisGeometryHash: parent.analysisGeometryHash,
+      meshProfileHash: meshProfile.semanticHash,
+      meshHash,
       capabilityHash: LAFEA5_SOURCE_SHELL_ADOPTION_CAPABILITY_HASH,
       qualificationHash: LAFEA5_SOURCE_SHELL_ADOPTION_QUALIFICATION_HASH,
-      parentEvidenceHash: parent.semanticHash,
-      sourceAuthority: 'CALLER_AUTHORED_HOST_SHELL_FOOTPRINT_ONLY',
-      topologyMutation: false,
-      coordinateMutation: false,
+      planHash: plan.planHash,
     },
   });
   assertIdentityPreserved(parent.mesh, evidence.mesh);

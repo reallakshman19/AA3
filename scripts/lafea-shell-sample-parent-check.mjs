@@ -16,7 +16,7 @@ const SOURCE_HASH = `sha256:${'c'.repeat(64)}`;
 const shellProfile = (stageId, overrides = {}) => canonicalProfile(PROFILE_KINDS.MESH, {
   schema: 'lafea-mesh-profile/v1',
   profileIdentity: `SAMPLE_${stageId.replace('.', '_')}_SHELL_MESH_${overrides.profileSuffix ?? 'QUALIFIED'}`,
-  sourceRevision: 'SAMPLE-PARENT-CHECK-V2',
+  sourceRevision: 'SAMPLE-PARENT-CHECK-V3',
   semanticHash: undefined,
   fields: {
     continuumElement: 'T3',
@@ -25,7 +25,7 @@ const shellProfile = (stageId, overrides = {}) => canonicalProfile(PROFILE_KINDS
     adjacentSizeRatioMax: 1.5,
     aspectRatioWarn: 3,
     aspectRatioBlock: 10,
-    scaledJacobianWarn: 0.5,
+    scaledJacobianWarn: 0.6,
     scaledJacobianBlock: 0.2,
     adaptiveLevels: 3,
     ...overrides.fields,
@@ -137,7 +137,7 @@ assert.throws(
 );
 
 console.log(JSON.stringify({
-  schema: 'lafea-shell-sample-parent-check/v2',
+  schema: 'lafea-shell-sample-parent-check/v3',
   status: 'PASS',
   lafea4: {
     sampleGeometry: 'CYLINDRICAL_PIPE_SHELL_BENCHMARK',

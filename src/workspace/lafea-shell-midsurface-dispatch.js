@@ -44,6 +44,10 @@ import {
   validateLafeaMultiPatchShellMidsurfaceEvidence,
   validateLafeaMultiPatchShellMidsurfaceGeometry,
 } from './lafea-shell-multipatch-midsurface-contract.js';
+import {
+  LAFEA5_SOURCE_SHELL_PARENT_SCHEMA,
+  validateLafea5SourceShellParent,
+} from './lafea-source-shell-mesh-adoption.js';
 
 export const LAFEA_SHELL_SURFACE_KINDS = Object.freeze({
   PLANAR: 'PLANAR',
@@ -51,9 +55,13 @@ export const LAFEA_SHELL_SURFACE_KINDS = Object.freeze({
   CYLINDRICAL: 'CYLINDRICAL',
   CYLINDRICAL_HOLES: 'CYLINDRICAL_HOLES',
   CYLINDRICAL_PERIODIC: 'CYLINDRICAL_PERIODIC',
+  SOURCE_MESH: 'SOURCE_MESH',
 });
 
 export function validateLafeaAnyShellMidsurfaceEvidence(value) {
+  if (value?.schema === LAFEA5_SOURCE_SHELL_PARENT_SCHEMA) {
+    return validateLafea5SourceShellParent(value);
+  }
   if (value?.schema === LAFEA_SHELL_MULTIPATCH_MIDSURFACE_EVIDENCE_SCHEMA) {
     return validateLafeaMultiPatchShellMidsurfaceEvidence(value);
   }
@@ -74,6 +82,10 @@ export function validateLafeaAnyShellMidsurfaceEvidence(value) {
 
 export function shellMidsurfaceKind(value) {
   const geometry = value?.geometry ?? value;
+  if (geometry?.schema === LAFEA5_SOURCE_SHELL_PARENT_SCHEMA) {
+    validateLafea5SourceShellParent(geometry);
+    return LAFEA_SHELL_SURFACE_KINDS.SOURCE_MESH;
+  }
   if (geometry?.schema === LAFEA_SHELL_MULTIPATCH_MIDSURFACE_GEOMETRY_SCHEMA) {
     validateLafeaMultiPatchShellMidsurfaceGeometry(geometry);
     return LAFEA_SHELL_SURFACE_KINDS.PLANAR_MULTIPATCH;
@@ -99,6 +111,9 @@ export function shellMidsurfaceKind(value) {
 
 export function shellMidsurfacePoint3dAny(geometry, u, v) {
   const kind = shellMidsurfaceKind(geometry);
+  if (kind === LAFEA_SHELL_SURFACE_KINDS.SOURCE_MESH) {
+    fail('LAFEA5_SOURCE_SHELL_ADOPTION_HAS_NO_PARAMETRIC_MIDSURFACE');
+  }
   if (kind === LAFEA_SHELL_SURFACE_KINDS.CYLINDRICAL_PERIODIC) {
     return periodicCylindricalShellPoint3d(geometry, u, v);
   }
@@ -116,6 +131,9 @@ export function shellMidsurfacePoint3dAny(geometry, u, v) {
 
 export function shellMidsurfaceFrameAtUvAny(geometry, u, v) {
   const kind = shellMidsurfaceKind(geometry);
+  if (kind === LAFEA_SHELL_SURFACE_KINDS.SOURCE_MESH) {
+    fail('LAFEA5_SOURCE_SHELL_ADOPTION_HAS_NO_PARAMETRIC_MIDSURFACE');
+  }
   if (kind === LAFEA_SHELL_SURFACE_KINDS.CYLINDRICAL_PERIODIC) {
     return periodicCylindricalShellFrameAtUv(geometry, u, v);
   }
@@ -139,6 +157,9 @@ export function shellMidsurfaceFrameAtUvAny(geometry, u, v) {
 
 export function shellMidsurfaceFrameAtPoint3dAny(geometry, point) {
   const kind = shellMidsurfaceKind(geometry);
+  if (kind === LAFEA_SHELL_SURFACE_KINDS.SOURCE_MESH) {
+    fail('LAFEA5_SOURCE_SHELL_ADOPTION_HAS_NO_PARAMETRIC_MIDSURFACE');
+  }
   if (kind === LAFEA_SHELL_SURFACE_KINDS.CYLINDRICAL_PERIODIC) {
     return periodicCylindricalShellFrameAtPoint3d(geometry, physicalPoint(point));
   }
@@ -163,6 +184,9 @@ export function shellMidsurfaceParameterGeometry(value) {
   const evidence = value?.geometry ? validateLafeaAnyShellMidsurfaceEvidence(value) : null;
   const geometry = evidence?.geometry ?? value;
   const kind = shellMidsurfaceKind(geometry);
+  if (kind === LAFEA_SHELL_SURFACE_KINDS.SOURCE_MESH) {
+    fail('LAFEA5_SOURCE_SHELL_ADOPTION_HAS_NO_PARAMETRIC_MIDSURFACE');
+  }
   if (kind === LAFEA_SHELL_SURFACE_KINDS.CYLINDRICAL_PERIODIC) {
     return periodicCylindricalShellParameterGeometry(geometry);
   }

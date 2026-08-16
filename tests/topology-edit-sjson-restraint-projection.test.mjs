@@ -10,6 +10,7 @@ import {
 } from '../src/core/support-restraints/index.js';
 import { normalizeWorkspaceDataset } from '../src/workspace/dataset-adapter.js';
 import { finalizeCanonicalTopology } from '../src/workspace/topology-edit/topology-edit-canonical-state.js';
+import { checkCanonicalTopology } from '../src/workspace/topology-edit/topology-edit-checker.js';
 import { buildCanonicalTopologyFromWorkspaceDataset } from '../src/workspace/topology-edit/topology-edit-source-adapter.js';
 import {
   buildSjsonParentBranchDiameterIndex,
@@ -40,6 +41,17 @@ test('production Sjson matches Topo validator support anchors and restraint arra
   const baseCanonical = finalizeCanonicalTopology(
     buildCanonicalTopologyFromWorkspaceDataset(dataset, graph, attachments, restraints),
   );
+  const penetrationAttachments = baseCanonical.supports.filter((support) => (
+    support.restraintRole === 'PENETRATION_ATTACHMENT'
+  ));
+  assert.equal(penetrationAttachments.length, 2);
+  assert.ok(penetrationAttachments.every((support) => (
+    support.restraintRoleAuthority === 'NON_RESTRAINT_ATTACHMENT_DESCRIPTION'
+  )));
+  const penetrationSupportIds = new Set(penetrationAttachments.map((support) => support.id));
+  assert.ok(checkCanonicalTopology(baseCanonical).every((issue) => (
+    issue.kind !== 'UNKNOWN_RESTRAINT_FAMILY' || !penetrationSupportIds.has(issue.supportId)
+  )));
   const canonical = enrichCanonicalSupportsWithExactOrigins(
     baseCanonical,
     dataset,

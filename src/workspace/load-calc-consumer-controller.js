@@ -2,9 +2,15 @@ import { createLoadCalculationReviewModel, validateLoadCalculationReviewModel } 
 import { APPLICATION_EVENTS, EVENT_TOPICS } from './event-topics.js';
 import { ENGINEERING_MODEL_EVENTS } from './engineering-model-controller.js';
 import { engineeringModelStore } from './engineering-model-store.js';
-import { renderEngineeringLoadPane, renderLoadCalcConsumer } from './load-calc-consumer-view.js';
+import {
+  renderEngineeringLoadPane,
+  renderLoadCalcConsumer,
+  renderLoadCalcTopologyPane,
+} from './load-calc-consumer-view.js';
+import { masterDataController } from './master-data-controller.js';
 import { nonFeaCommonInputStore } from './non-fea-common-input-store.js';
 import { sealCurrentNonFeaCommonInput } from './non-fea-common-input-runtime.js';
+import { validateProjectDataProfile } from './project-data/project-data-contract.js';
 import { projectDataStore } from './project-data/project-data-store.js';
 import {
   EMPIRICAL_LOAD_CALC_SCENARIO_EVENTS,
@@ -15,10 +21,27 @@ import {
 import {
   empiricalResultOverlayStore,
 } from './engineering-loads/empirical-result-overlay-store.js';
+import {
+  topologyEditCheckSnapshotStore,
+} from './topology-edit/topology-edit-check-snapshot-store.js';
+import {
+  TOPOLOGY_EDIT_DEFAULT_AUTOFIX_GAP_MM,
+} from './topology-edit/topology-edit-gap-autofix-policy.js';
+import { SUPPORT_RESTRAINT_EVENTS } from './support-restraint-events.js';
+import { TOPOLOGY_EVENTS } from './topology-events.js';
 
 const EMPIRICAL_SCENARIO_VIEW_TABS = new Set([
   'overview', 'restraints', 'load-cases', 'methods', 'results', 'evidence', 'model-3d',
 ]);
+
+const WORKFLOW_STEP_BY_TAB = Object.freeze({
+  topology: 'topology',
+  'project-data': 'project-data',
+  masters: 'masters',
+  preflight: 'preflight',
+  verify: 'verify',
+  loads: 'loads',
+});
 
 /** Coordinates the real empirical load workflow without generating inputs. */
 export class LoadCalcConsumerController {
@@ -29,12 +52,19 @@ export class LoadCalcConsumerController {
     this.eventBus = eventBus;
     this.context = consumerController?.getContext() || null;
     this.reviewModel = buildReviewModel(this.context);
-    this.activeTab = 'verify';
+    this.activeTab = 'topology';
+    this.currentWorkflowStepId = this.context?.datasetId ? 'topology' : 'import';
     this.message = '';
     this.unsubscribers = [];
     this.renderRevision = 0;
     this.topologyEdit3DController = null;
     this.pending3dInvestigationEntityId = null;
+    this.pendingCertifiedTopologyAutofix = false;
+    this.topologyGapAutofixToleranceMm = TOPOLOGY_EDIT_DEFAULT_AUTOFIX_GAP_MM;
+    this.topologyPolicyFeedback = '';
+    this.topologyCheckRevision = 0;
+    this.topologyCheck = engineeringModelStore.getTopologyCheckSnapshot()
+      || pendingTopologyCheck(this.context);
     this.clickHandler = (event) => this.handleClick(event);
   }
 
@@ -43,10 +73,12 @@ export class LoadCalcConsumerController {
     this.rootElement.addEventListener('click', this.clickHandler);
     this.unsubscribers = [
       this.eventBus.subscribe(APPLICATION_EVENTS.CONTEXT_CHANGED, ({ context }) => this.handleContext(context)),
-      this.eventBus.subscribe(EVENT_TOPICS.WORKSPACE_SNAPSHOT_CHANGED, () => this.render()),
+      this.eventBus.subscribe(EVENT_TOPICS.WORKSPACE_SNAPSHOT_CHANGED, () => { void this.refreshTopologyCheck(); }),
+      this.eventBus.subscribe(TOPOLOGY_EVENTS.CHANGED, () => { void this.refreshTopologyCheck(); }),
+      this.eventBus.subscribe(SUPPORT_RESTRAINT_EVENTS.CHANGED, () => { void this.refreshTopologyCheck(); }),
       this.eventBus.subscribe(ENGINEERING_MODEL_EVENTS.CHANGED, ({ reason, distribution }) => this.handleEngineeringChange(reason, distribution)),
       this.eventBus.subscribe(ENGINEERING_MODEL_EVENTS.FAILED, ({ message }) => this.handleFailure(message)),
-      this.eventBus.subscribe(EVENT_TOPICS.LOAD_CALC_SUBTAB_REQUESTED, ({ tab }) => { this.activeTab = tab; this.render(); }),
+      this.eventBus.subscribe(EVENT_TOPICS.LOAD_CALC_SUBTAB_REQUESTED, ({ tab }) => { this.selectTab(tab); this.render(); }),
       this.eventBus.subscribe(EMPIRICAL_LOAD_CALC_SCENARIO_EVENTS.CHANGED, ({ snapshot }) => {
         this.message = empiricalScenarioMessage(snapshot);
         this.render();
@@ -60,25 +92,161 @@ export class LoadCalcConsumerController {
       this.eventBus.subscribe(EMPIRICAL_LOAD_CALC_SCENARIO_EVENTS.FAILED, ({ message }) => this.handleFailure(message)),
     ];
     this.render();
+    void this.refreshTopologyCheck();
   }
 
   handleContext(context) {
+    const datasetChanged = this.context?.datasetId !== context?.datasetId;
     this.context = context;
     this.reviewModel = buildReviewModel(context);
+    if (datasetChanged) {
+      this.activeTab = 'topology';
+      this.currentWorkflowStepId = context?.datasetId ? 'topology' : 'import';
+      this.topologyCheck = pendingTopologyCheck(context);
+      this.topologyPolicyFeedback = '';
+    }
     this.render();
+    if (datasetChanged) void this.refreshTopologyCheck();
   }
 
   handleEngineeringChange(reason, distribution) {
-    if (reason === 'calculated') this.message = distribution?.status === 'CALCULATED' ? 'Authorized calculation complete.' : 'Authorized calculation blocked; review the listed inputs.';
+    if (reason === 'calculated') {
+      this.message = distribution?.status === 'CALCULATED' ? 'Authorized calculation complete.' : 'Authorized calculation blocked; review the listed inputs.';
+      if (distribution?.status === 'CALCULATED') this.selectTab('loads');
+    }
     if (reason === 'project-data-changed') this.message = 'Project Data changed; common seal, authorization and previous calculations require refresh.';
     if (reason === 'master-data-changed') this.message = 'Master data changed; common seal, authorization and previous calculations require refresh.';
     if (reason === 'authorization-changed') this.message = availabilityMessage(engineeringModelStore.getEmpiricalAuthorizationState());
     this.render();
+    if (reason === 'project-data-changed' || reason === 'master-data-changed') {
+      void this.refreshTopologyCheck();
+    }
   }
 
   handleFailure(message) {
     this.message = message || 'Load calculation failed.';
     this.render();
+  }
+
+  /** Updates presentation progress only; engineering readiness remains store-owned. */
+  selectTab(tab) {
+    this.activeTab = tab;
+    const workflowStepId = WORKFLOW_STEP_BY_TAB[tab];
+    if (workflowStepId) this.currentWorkflowStepId = workflowStepId;
+  }
+
+  /** Lazily evaluates the heavy canonical checker and refreshes run authority. */
+  async refreshTopologyCheck() {
+    const revision = ++this.topologyCheckRevision;
+    const requestedDatasetId = this.context?.datasetId || null;
+    if (!requestedDatasetId) {
+      this.topologyCheck = pendingTopologyCheck(this.context);
+      this.render();
+      return;
+    }
+    try {
+      const { evaluateCurrentTopologyCheck } = await import(
+        './topology-edit/topology-edit-check-runtime.js'
+      );
+      const snapshot = evaluateCurrentTopologyCheck();
+      if (revision !== this.topologyCheckRevision
+          || requestedDatasetId !== this.context?.datasetId) return;
+      this.topologyCheck = snapshot;
+      this.topologyGapAutofixToleranceMm = snapshot.autoFix.exactToleranceMm;
+      topologyEditCheckSnapshotStore.setSnapshot(snapshot);
+      engineeringModelStore.refreshAuthorizedEmpiricalPackage(
+        masterDataController.getMasterData(),
+      );
+      this.render();
+    } catch (error) {
+      if (revision !== this.topologyCheckRevision) return;
+      this.message = error instanceof Error ? error.message : String(error);
+      this.topologyCheck = failedTopologyCheck(this.context, this.message);
+      this.render();
+    }
+  }
+
+  async applyTopologyGapTolerance(value) {
+    this.topologyPolicyFeedback = 'Updating the automatic gap-fix limit…';
+    this.render();
+    try {
+      const { topologyEditFindingReviewStore } = await import(
+        './topology-edit/topology-edit-finding-review-store.js'
+      );
+      this.topologyGapAutofixToleranceMm = topologyEditFindingReviewStore
+        .setGapAutofixToleranceMm(value);
+      await this.refreshTopologyCheck();
+      const candidateCount = this.topologyCheck.autoFix.certifiedExactGapCount;
+      this.topologyPolicyFeedback = candidateCount > 0
+        ? `Limit applied. ${candidateCount} certified gap fix candidate(s) are ready; select Prepare auto-fix.`
+        : `Limit applied. No certified source-backed endpoint gaps exist strictly below ${this.topologyGapAutofixToleranceMm} mm.`;
+      this.message = this.topologyPolicyFeedback;
+      this.render();
+    } catch (error) {
+      const message = error instanceof Error ? error.message : String(error);
+      this.topologyPolicyFeedback = `Limit not applied: ${message}`;
+      this.message = message;
+      this.render();
+    }
+  }
+
+  async recordTopologySkip(findingId, reason) {
+    try {
+      const { topologyEditFindingReviewStore } = await import(
+        './topology-edit/topology-edit-finding-review-store.js'
+      );
+      const receipt = topologyEditFindingReviewStore.skipFinding(
+        this.topologyCheck,
+        findingId,
+        reason,
+        new Date().toISOString(),
+      );
+      this.message = `Finding recorded as skipped under receipt ${receipt.receiptId}.`;
+      await this.refreshTopologyCheck();
+    } catch (error) {
+      this.message = error instanceof Error ? error.message : String(error);
+      this.render();
+    }
+  }
+
+  async restoreTopologyFinding(findingId) {
+    try {
+      const { topologyEditFindingReviewStore } = await import(
+        './topology-edit/topology-edit-finding-review-store.js'
+      );
+      topologyEditFindingReviewStore.restoreFinding(
+        this.topologyCheck,
+        findingId,
+        new Date().toISOString(),
+      );
+      this.message = 'Skipped finding restored as an active blocker.';
+      await this.refreshTopologyCheck();
+    } catch (error) {
+      this.message = error instanceof Error ? error.message : String(error);
+      this.render();
+    }
+  }
+
+  async downloadTopologyReview() {
+    try {
+      const { topologyEditFindingReviewStore } = await import(
+        './topology-edit/topology-edit-finding-review-store.js'
+      );
+      const report = topologyEditFindingReviewStore.createReport(
+        this.topologyCheck,
+        new Date().toISOString(),
+      );
+      downloadJson(
+        this.rootElement.ownerDocument,
+        `topology-review-${report.datasetId}.json`,
+        report,
+      );
+      this.message = `Topology review record exported with ${report.receipts.length} receipt(s).`;
+      this.render();
+    } catch (error) {
+      this.message = error instanceof Error ? error.message : String(error);
+      this.render();
+    }
   }
 
   handleClick(event) {
@@ -91,10 +259,50 @@ export class LoadCalcConsumerController {
       this.render();
       return;
     }
+    if (event.target.closest('[data-load-calc-import]')) {
+      this.eventBus.publish(APPLICATION_EVENTS.CHANGE_REQUESTED, { viewId: 'WORKSPACE', source: 'load-calc-workflow' });
+      return;
+    }
+    if (event.target.closest('[data-load-calc-topology-autofix]')) {
+      const topologyCheck = this.topologyCheck;
+      if (topologyCheck.autoFix.certifiedExactGapCount === 0) {
+        this.topologyPolicyFeedback = 'No certified source-backed endpoint gap is available to auto-fix.';
+        this.message = this.topologyPolicyFeedback;
+        this.render();
+        return;
+      }
+      this.pendingCertifiedTopologyAutofix = true;
+      this.topologyPolicyFeedback = 'Opening 3D Edit and preparing the certified gap-fix draft…';
+      this.message = 'Opening the certified 3D draft and applying source-backed gap fixes…';
+      this.activeTab = '3d';
+      this.render();
+      return;
+    }
+    if (event.target.closest('[data-load-calc-topology-gap-apply]')) {
+      const input = this.rootElement.querySelector('[data-load-calc-topology-gap-mm]');
+      void this.applyTopologyGapTolerance(input?.value);
+      return;
+    }
+    const skipButton = event.target.closest('[data-load-calc-topology-skip]');
+    if (skipButton) {
+      const row = skipButton.closest('[data-topology-finding-id]');
+      const reason = row?.querySelector('[data-load-calc-topology-skip-reason]')?.value;
+      void this.recordTopologySkip(skipButton.dataset.loadCalcTopologySkip, reason);
+      return;
+    }
+    const restoreButton = event.target.closest('[data-load-calc-topology-restore]');
+    if (restoreButton) {
+      void this.restoreTopologyFinding(restoreButton.dataset.loadCalcTopologyRestore);
+      return;
+    }
+    if (event.target.closest('[data-load-calc-topology-review-download]')) {
+      void this.downloadTopologyReview();
+      return;
+    }
     const tab = event.target.closest('[data-load-calc-tab]')?.dataset.loadCalcTab;
     if (tab) {
       this.pending3dInvestigationEntityId = null;
-      this.activeTab = tab;
+      this.selectTab(tab);
       this.render();
       return;
     }
@@ -130,33 +338,18 @@ export class LoadCalcConsumerController {
     }
     if (event.target.closest('[data-load-calc-run]')) {
       const snap = empiricalLoadCalcScenarioStore.getSnapshot();
-      const authState = engineeringModelStore.getEmpiricalAuthorizationState();
+      const authorization = engineeringModelStore.getEmpiricalAuthorizationState();
       
       if (snap?.calculationEligible) {
         this.message = 'Executing the current common-seal-bound empirical method…';
         this.eventBus.publish(EMPIRICAL_LOAD_CALC_SCENARIO_EVENTS.CALCULATE_REQUESTED, {});
-      } else if (authState?.calculationEligible) {
+      } else if (authorization.calculationEligible) {
         this.message = 'Executing current authorized empirical package against the common seal…';
         this.eventBus.publish(ENGINEERING_MODEL_EVENTS.CALCULATE_REQUESTED, { source: 'load-calc' });
       } else {
         this.message = snap?.reasonCode || 'Not ready — check Verify & Run tab';
         this.render();
       }
-      return;
-    }
-
-    if (event.target.closest('[data-apply-load-defaults]')) {
-      const SAFE_DEFAULTS = [
-        { path: 'loadCalculation.gravityMPerS2',        value: 9.80665,                           evidence: { source: 'ISO 80000-3 standard gravity' },         approved: true  },
-        { path: 'loadCalculation.loadFactor',            value: 1.0,                               evidence: { source: 'Unfactored operating weight default' },    approved: true  },
-        { path: 'loadCalculation.equilibriumTolerances', value: { forceN: 1e-8, momentNmm: 1e-5 }, evidence: { source: 'Production benchmark standard' },          approved: true  },
-        { path: 'loadCalculation.activeLoadCases',       value: ['EMPTY', 'OPE'],                  evidence: { source: 'Minimum load case set — add HYD if needed' }, approved: false },
-      ];
-      SAFE_DEFAULTS.forEach(({ path, value, evidence, approved }) => {
-        try { projectDataStore.update(path, value, evidence, approved); } catch (e) { /* field may already be set */ }
-      });
-      this.message = '4 standard defaults applied. Review activeLoadCases — add HYD if hydrotest is in scope.';
-      this.render();
       return;
     }
 
@@ -183,7 +376,7 @@ export class LoadCalcConsumerController {
     const gotoTab = event.target.closest('[data-goto-tab]')?.dataset.gotoTab;
     if (gotoTab) {
       this.pending3dInvestigationEntityId = null;
-      this.activeTab = gotoTab;
+      this.selectTab(gotoTab);
       this.render();
       return;
     }
@@ -198,8 +391,10 @@ export class LoadCalcConsumerController {
     this.renderRevision += 1;
     const revision = this.renderRevision;
     const authorizationState = engineeringModelStore.getEmpiricalAuthorizationState();
+    const topologyCheck = this.topologyCheck;
     const view = renderLoadCalcConsumer(this.rootElement.ownerDocument, {
       activeTab: this.activeTab,
+      currentWorkflowStepId: this.currentWorkflowStepId,
       message: this.message,
       distribution: engineeringModelStore.getDistribution(),
       authorizedExecution: engineeringModelStore.getAuthorizedExecution(),
@@ -208,6 +403,8 @@ export class LoadCalcConsumerController {
       routePartitionModel: engineeringModelStore.getRoutePartitionModel(),
       empiricalScenarioState: empiricalLoadCalcScenarioStore.getSnapshot(),
       commonInputState: nonFeaCommonInputStore.getSnapshot(),
+      workflowReadiness: createWorkflowReadiness(this.context, topologyCheck),
+      topologyCheck,
     });
     this.rootElement.replaceChildren(view);
     const pane = view.querySelector('[data-load-calc-pane]');
@@ -233,7 +430,15 @@ export class LoadCalcConsumerController {
         selectedEntityId: this.context?.selectedEntityId || null,
       };
       if (tab === 'verify' || !tab) {
-        if (revision === this.renderRevision) this.renderVerifyPane(pane, empiricalState);
+        if (revision === this.renderRevision) this.renderVerifyPane(pane);
+      } else if (tab === 'topology') {
+        if (revision === this.renderRevision) renderLoadCalcTopologyPane(
+          pane,
+          engineeringModelStore.getSupportSiteModel(),
+          engineeringModelStore.getRoutePartitionModel(),
+          this.topologyCheck,
+          this.topologyPolicyFeedback,
+        );
       } else if (EMPIRICAL_SCENARIO_VIEW_TABS.has(tab)) {
         const scenarioView = await import('./engineering-loads/empirical-load-calc-scenario-view.js');
         if (revision !== this.renderRevision) return;
@@ -272,6 +477,9 @@ export class LoadCalcConsumerController {
           resetTopologyEditCleanShell(this.rootElement.ownerDocument);
           const controller = new TopologyEdit3DViewController(this.eventBus);
           this.topologyEdit3DController = controller;
+          controller.setHighConfidenceGapToleranceMm(
+            this.topologyGapAutofixToleranceMm,
+          );
           await controller.activate();
           if (revision !== this.renderRevision) {
             const stillCurrent3D = this.activeTab === '3d'
@@ -301,6 +509,17 @@ export class LoadCalcConsumerController {
               this.message = `3D investigation target ${entityId} is not available in the current governed render projection.`;
             }
           }
+          if (this.pendingCertifiedTopologyAutofix) {
+            this.pendingCertifiedTopologyAutofix = false;
+            const result = this.topologyEdit3DController.applyHighConfidenceGapFixes(
+              this.topologyGapAutofixToleranceMm,
+            );
+            this.message = result
+              ? `Certified TopoFix prepared ${result.applied.length} gap merge(s) in the 3D draft. Review and Commit draft to update the workspace.`
+              : 'Certified TopoFix could not prepare a draft; review the 3D checker status.';
+            const output = this.rootElement.querySelector('[data-engineering-load-status]');
+            if (output) output.textContent = this.message;
+          }
         }
       } else {
         throw new RangeError(`Unknown Load Calc tab: ${tab}.`);
@@ -310,26 +529,10 @@ export class LoadCalcConsumerController {
     }
   }
 
-  renderVerifyPane(container, state) {
+  renderVerifyPane(container) {
     const authState = engineeringModelStore.getEmpiricalAuthorizationState();
     const commonState = nonFeaCommonInputStore.getSnapshot();
     const scenarioState = empiricalLoadCalcScenarioStore.getSnapshot();
-    const profile = projectDataStore.getProfile();
-
-    // P0: Auto-apply physical constants silently — only when field is currently null
-    // These are universal constants that require no project decision
-    const AUTO_CONSTANTS = [
-      { path: 'loadCalculation.gravityMPerS2',        value: 9.80665,                           evidence: { source: 'ISO 80000-3 standard gravity' },         approved: true },
-      { path: 'loadCalculation.loadFactor',            value: 1.0,                               evidence: { source: 'Unfactored operating weight default' },    approved: true },
-      { path: 'loadCalculation.equilibriumTolerances', value: { forceN: 1e-8, momentNmm: 1e-5 }, evidence: { source: 'Production benchmark standard (14 scripts)' }, approved: true },
-    ];
-    AUTO_CONSTANTS.forEach(({ path, value, evidence, approved }) => {
-      const [group, key] = path.split('.');
-      if (profile?.[group]?.[key]?.value === null) {
-        try { projectDataStore.update(path, value, evidence, approved); } catch { /* already set or invalid */ }
-      }
-    });
-    // Re-read profile after auto-apply
     const freshProfile = projectDataStore.getProfile();
 
     // Gate statuses
@@ -351,11 +554,6 @@ export class LoadCalcConsumerController {
       const entry = (group === 'lc' ? lc : su)[key];
       return entry?.value ?? null;
     }
-    function fieldApproved(group, key) {
-      const entry = (group === 'lc' ? lc : su)[key];
-      return entry?.approved === true;
-    }
-  
     const gravitySet   = fieldVal('lc', 'gravityMPerS2') !== null;
     const factorSet    = fieldVal('lc', 'loadFactor') !== null && fieldVal('lc', 'loadFactor') > 0;
     const equilSet     = fieldVal('lc', 'equilibriumTolerances') !== null;
@@ -416,7 +614,7 @@ export class LoadCalcConsumerController {
               ${gate(datasetOk, 'Dataset', datasetOk ? 'SJSON active' : 'No dataset loaded')}
               ${gate(loadsOk, 'Load calc fields', loadsDetail,
                 !loadsOk && !allSafeSet
-                  ? '<button class="verify-gate__action verify-gate__action--primary" data-apply-load-defaults>Apply 4 defaults</button>'
+                  ? '<button class="verify-gate__action verify-gate__action--primary" data-goto-tab="project-data">→ Open Project Data</button>'
                   : (!loadsOk ? '<button class="verify-gate__action verify-gate__action--secondary" data-goto-tab="masters">→ Open Masters</button>' : '')
               )}
               ${gate(sealOk, 'Common seal', sealDetail, sealBtn)}
@@ -431,16 +629,16 @@ export class LoadCalcConsumerController {
             <!-- Safe defaults card -->
             <div class="verify-card ${allSafeSet ? 'verify-card--ok' : 'verify-card--warn'}">
               <div class="verify-card__header">
-                <span>${allSafeSet ? '✅' : '⚠'} Standard defaults</span>
-                <span class="verify-card__subtitle">${allSafeSet ? 'All applied' : '4 physical constants'}</span>
+                <span>${allSafeSet ? '✅' : '⚠'} Project and method basis</span>
+                <span class="verify-card__subtitle">${allSafeSet ? 'Approved values loaded' : 'Configuration required'}</span>
               </div>
               <dl class="verify-defaults-dl">
-                <dt>Gravity</dt><dd>${gravitySet ? '9.80665 m/s²' : '<em>empty</em>'}</dd>
+                <dt>Gravity</dt><dd>${gravitySet ? `${esc(fieldVal('lc', 'gravityMPerS2'))} m/s²` : '<em>empty</em>'}</dd>
                 <dt>Load factor</dt><dd>${factorSet ? (fieldVal('lc','loadFactor') + ' (ratio)') : '<em>0 — invalid</em>'}</dd>
-                <dt>Equilibrium tolerances</dt><dd>${equilSet ? '{ forceN: 1e-8, momentNmm: 1e-5 }' : '<em>missing</em>'}</dd>
+                <dt>Equilibrium tolerances</dt><dd>${equilSet ? esc(JSON.stringify(fieldVal('lc', 'equilibriumTolerances'))) : '<em>missing</em>'}</dd>
                 <dt>Active load cases</dt><dd>${casesSet ? esc(JSON.stringify(fieldVal('lc','activeLoadCases'))) : '<em>missing</em>'}</dd>
               </dl>
-              ${!allSafeSet ? '<button class="verify-run-btn" data-apply-load-defaults>Apply 4 standard defaults</button><p class="engineering-note" style="margin-top:6px">activeLoadCases will be set to [EMPTY, OPE] — add HYD manually if hydrotest is in scope.</p>' : ''}
+              ${!allSafeSet ? '<p class="engineering-note">Configure and approve the missing project-owned values in Project Data.</p>' : ''}
             </div>
   
             <!-- Master-dependent fields card -->
@@ -497,6 +695,104 @@ export class LoadCalcConsumerController {
   }
 }
 
+/**
+ * Projects read-only progress for the guided UI. It never supplies missing
+ * values or changes the stores that own engineering readiness and authority.
+ */
+function createWorkflowReadiness(context, topologyCheck) {
+  const supportSites = engineeringModelStore.getSupportSiteModel();
+  const routes = engineeringModelStore.getRoutePartitionModel();
+  const distribution = engineeringModelStore.getDistribution();
+  const commonInput = nonFeaCommonInputStore.getSnapshot();
+  const topologyReady = supportSites?.status === 'READY' && routes?.status === 'READY';
+  const topologyBlockerCount = (supportSites?.blockers?.length || 0)
+    + (routes?.blockers?.length || 0)
+    + (topologyCheck?.blockingIssueCount || 0);
+  return Object.freeze({
+    datasetReady: Boolean(context?.datasetId),
+    topologyBlockerCount,
+    topologyReviewIssueCount: (topologyCheck?.reviewIssueCount || 0)
+      + (topologyCheck?.skippedIssueCount || 0),
+    topologyCheckReady: topologyReady
+      && topologyBlockerCount === 0
+      && topologyCheck?.state !== 'NOT_AVAILABLE',
+    projectDataReady: approvedProjectDataReady(projectDataStore.getProfile()),
+    masterDataReady: requiredMastersReady(masterDataController.getMasterData()),
+    validationReady: commonInput.report?.packageState === 'READY',
+    validationState: commonInput.report?.packageState || 'NOT_EVALUATED',
+    resultsCurrent: distribution?.freshness?.status === 'CURRENT',
+  });
+}
+
+function pendingTopologyCheck(context) {
+  const datasetLoaded = Boolean(context?.datasetId);
+  return topologyCheckPlaceholder(
+    datasetLoaded ? 'TOPOLOGY_CHECK_PENDING' : 'TOPOLOGY_DATASET_UNAVAILABLE',
+    datasetLoaded
+      ? 'Checking the current committed canonical topology…'
+      : 'Import a dataset before checking topology.',
+    datasetLoaded ? 'PENDING' : 'NOT_AVAILABLE',
+  );
+}
+
+function failedTopologyCheck(context, message) {
+  return topologyCheckPlaceholder(
+    'TOPOLOGY_CHECK_FAILED',
+    message || `Topology check failed for dataset ${context?.datasetId || 'NOT_AVAILABLE'}.`,
+    'BLOCKED',
+  );
+}
+
+function topologyCheckPlaceholder(kind, message, state) {
+  const finding = Object.freeze({
+    id: `system:${kind}`,
+    kind,
+    severity: 'HIGH',
+    disposition: 'BLOCK',
+    message,
+    nodeIds: Object.freeze([]),
+    edgeIds: Object.freeze([]),
+    suggestedAutofix: null,
+    distanceMm: null,
+    sourceScope: Object.freeze({
+      entityIds: Object.freeze([]),
+      branchIds: Object.freeze([]),
+      lineKeys: Object.freeze([]),
+    }),
+  });
+  return Object.freeze({
+    state,
+    issueCount: 1,
+    blockingIssueCount: 1,
+    reviewIssueCount: 0,
+    issues: Object.freeze([]),
+    findings: Object.freeze([finding]),
+    blockingFindings: Object.freeze([finding]),
+    reviewFindings: Object.freeze([]),
+    countsByKind: Object.freeze({ [kind]: 1 }),
+    countsBySeverity: Object.freeze({ HIGH: 1 }),
+    autoFix: Object.freeze({
+      certifiedExactGapCount: 0,
+      reviewOnlyNearGapCount: 0,
+      exactGapIssueIds: Object.freeze([]),
+      nearGapIssueIds: Object.freeze([]),
+    }),
+  });
+}
+
+function approvedProjectDataReady(profile) {
+  return validateProjectDataProfile(profile, 'loadCalcProjectBasis', null).valid;
+}
+
+function requiredMastersReady(masters) {
+  return [masters?.lineList, masters?.pipingClass, masters?.weight].every((master) => (
+    Array.isArray(master?.normalizedRows)
+    && master.normalizedRows.length > 0
+    && typeof master.sourceHash === 'string'
+    && master.sourceHash.length > 0
+  ));
+}
+
 /** Preserves the prior public W10.9 readiness contract. */
 export function createLoadCalcActionAvailability(context, reviewModel) {
   const contracts = context?.contracts || {};
@@ -551,6 +847,22 @@ function resetTopologyEditCleanShell(documentRef) {
   if (mountedWorkspace?.isConnected) return;
   delete host.dataset.topologyEditCleanShell;
   host.classList.remove('topology-edit-clean-shell');
+}
+
+function downloadJson(documentRef, fileName, value) {
+  const windowRef = documentRef?.defaultView;
+  if (!windowRef?.Blob || !windowRef?.URL?.createObjectURL) {
+    throw new Error('Browser download services are unavailable.');
+  }
+  const url = windowRef.URL.createObjectURL(new windowRef.Blob(
+    [JSON.stringify(value, null, 2)],
+    { type: 'application/json;charset=utf-8' },
+  ));
+  const anchor = documentRef.createElement('a');
+  anchor.href = url;
+  anchor.download = fileName;
+  anchor.click();
+  windowRef.URL.revokeObjectURL(url);
 }
 
 function buildReviewModel(context) {

@@ -6,6 +6,7 @@
  * they contain no command payload and cannot mutate a draft or workspace.
  */
 import {
+  deriveSupportRestraintGeometry,
   RESTRAINT_FAMILY_MAPPING,
   restraintFamily,
 } from './support-restraint-family.js';
@@ -111,7 +112,7 @@ function baseGraphIssues(canonical, graph, options) {
       continue;
     }
     const lengthMm = distance(from.position, to.position);
-    if (lengthMm > 0 && lengthMm <= shortThreshold) {
+    if (isPipe(edge) && lengthMm > 0 && lengthMm <= shortThreshold) {
       issues.push(createTopologyIssue('SHORT_ELEMENT', 'MEDIUM', {
         edgeId: edge.id,
         nodeIds: [edge.fromNodeId, edge.toNodeId],
@@ -132,19 +133,40 @@ function baseGraphIssues(canonical, graph, options) {
 
 function connectivityIssues(canonical, graph, options) {
   const tolerance = positive(options.snapGapToleranceMm, 25);
-  const components = connectedComponents(canonical.nodes.map((node) => node.id), canonical.edges);
-  const largest = [...components].sort((a, b) => b.length - a.length || a[0].localeCompare(b[0]))[0] || [];
+  const coincidenceTolerance = nonNegative(options.coincidentNodeToleranceMm, 1e-6);
+  const scopedEdges = groupBy(canonical.edges, connectivityScope);
+  const components = connectedComponents(
+    canonical.nodes.map((node) => node.id),
+    canonical.edges,
+    graph,
+    coincidenceTolerance,
+  );
   const componentByNode = new Map();
   components.forEach((nodes, index) => nodes.forEach((id) => componentByNode.set(id, index)));
-  const issues = components.filter((nodes) => nodes.length && nodes !== largest).map((nodes) => (
-    createTopologyIssue('BRANCH_DISCONNECTED', 'MEDIUM', { nodeIds: nodes },
-      `Isolated branch of ${nodes.length} node(s) is disconnected.`)
-  ));
+  const issues = [];
+  for (const [scope, edges] of scopedEdges) {
+    const nodeIds = sortedTopologyIds(edges.flatMap((edge) => [edge.fromNodeId, edge.toNodeId]));
+    const branchComponents = connectedComponents(
+      nodeIds,
+      edges,
+      graph,
+      coincidenceTolerance,
+    );
+    if (branchComponents.length > 1) {
+      issues.push(createTopologyIssue(
+        'BRANCH_DISCONNECTED',
+        'MEDIUM',
+        { nodeIds: branchComponents.flat() },
+        `${scope} contains ${branchComponents.length} disconnected segments.`,
+      ));
+    }
+  }
   const open = canonical.nodes.filter((node) => (graph.degree.get(node.id) || 0) === 1);
   for (let left = 0; left < open.length; left += 1) {
     for (let right = left + 1; right < open.length; right += 1) {
       const a = open[left]; const b = open[right];
       if (componentByNode.get(a.id) === componentByNode.get(b.id)) continue;
+      if (!sameNodeConnectivityScope(a.id, b.id, graph)) continue;
       const gap = distance(a.position, b.position);
       if (gap > 0 && gap <= tolerance) {
         issues.push(createTopologyIssue('SNAP_GAP', 'HIGH', {
@@ -206,16 +228,27 @@ export function planSafeAutofix(canonical, findings, options = {}) {
   });
 }
 
-function connectedComponents(nodeIds, edges) {
+function connectedComponents(nodeIds, edges, graph, coincidenceToleranceMm) {
   const neighbors = new Map(nodeIds.map((id) => [id, []]));
   for (const edge of edges) {
     if (!neighbors.has(edge.fromNodeId) || !neighbors.has(edge.toNodeId)) continue;
     neighbors.get(edge.fromNodeId).push(edge.toNodeId);
     neighbors.get(edge.toNodeId).push(edge.fromNodeId);
   }
+  const orderedIds = sortedTopologyIds(nodeIds);
+  for (let left = 0; left < orderedIds.length; left += 1) {
+    for (let right = left + 1; right < orderedIds.length; right += 1) {
+      const leftPoint = graph.nodesById.get(orderedIds[left])?.position;
+      const rightPoint = graph.nodesById.get(orderedIds[right])?.position;
+      if (!finitePoint(leftPoint) || !finitePoint(rightPoint)) continue;
+      if (distance(leftPoint, rightPoint) > coincidenceToleranceMm) continue;
+      neighbors.get(orderedIds[left]).push(orderedIds[right]);
+      neighbors.get(orderedIds[right]).push(orderedIds[left]);
+    }
+  }
   const seen = new Set();
   const groups = [];
-  for (const id of sortedTopologyIds(nodeIds)) {
+  for (const id of orderedIds) {
     if (seen.has(id)) continue;
     const queue = [id];
     const group = [];
@@ -235,6 +268,17 @@ function connectedComponents(nodeIds, edges) {
   return groups;
 }
 
+function connectivityScope(edge) {
+  const branchId = String(edge.branchId ?? '').trim();
+  return branchId ? `branch ${branchId}` : 'model scope';
+}
+
+function sameNodeConnectivityScope(leftNodeId, rightNodeId, graph) {
+  const scopes = (nodeId) => new Set((graph.incident.get(nodeId) || []).map(connectivityScope));
+  const leftScopes = scopes(leftNodeId);
+  return [...scopes(rightNodeId)].some((scope) => leftScopes.has(scope));
+}
+
 const KNOWN_FAMILIES = new Set(Object.values(RESTRAINT_FAMILY_MAPPING));
 const DIRECTIONAL_FAMILIES = new Set([
   'REST', 'HOLDOWN', 'GUIDE', 'LINE_STOP', 'LIMIT', 'U_BOLT',
@@ -251,7 +295,7 @@ function extendedTopologyIssues(canonical, graph, options = {}) {
   return [
     ...pairGeometryIssues(canonical, graph, policy),
     ...fittingIssues(canonical, graph, policy),
-    ...attachmentIssues(canonical, graph),
+    ...attachmentIssues(canonical, graph, options),
   ];
 }
 
@@ -264,16 +308,24 @@ function pairGeometryIssues(canonical, graph, policy) {
       if (shareNode(a, b)) continue;
       const aSegment = segment(a, graph); const bSegment = segment(b, graph);
       const separation = segmentDistance(aSegment.start, aSegment.end, bSegment.start, bSegment.end);
+      const endpointGap = closestEndpointDistance(aSegment, bSegment);
       const overlap = collinearOverlap(aSegment, bSegment, policy.overlapToleranceMm);
-      if (overlap > policy.overlapToleranceMm) {
+      if (overlap > policy.overlapToleranceMm
+          && !governedTopologyCarrierPair(a, b, aSegment, bSegment, policy.overlapToleranceMm)) {
         issues.push(pairIssue('OVERLAPPING_ELEMENTS', 'HIGH', a, b, overlap,
           `Edges ${a.id} and ${b.id} overlap by ${overlap.toFixed(2)}mm.`));
       }
-      if (separation <= policy.centerlineClashToleranceMm) {
+      // Endpoint contacts are connectivity evidence, not centerline clashes.
+      // connectivityIssues owns positive-gap SNAP_GAP findings and their
+      // governed MERGE_NODES repair; zero-gap identity mismatches remain
+      // visible through route connectivity. Interior crossings stay HIGH.
+      if (separation <= policy.centerlineClashToleranceMm
+          && endpointGap > policy.centerlineClashToleranceMm) {
         issues.push(pairIssue('CENTERLINE_CLASH', 'HIGH', a, b, separation,
           `Edge centerlines are ${separation.toFixed(2)}mm apart.`));
       }
-      const required = governedBranchMatingPair(a, b)
+      const required = endpointGap <= policy.centerlineClashToleranceMm
+        || governedBranchMatingPair(a, b)
         ? null
         : requiredPhysicalClearance(a, b, policy.physicalClearanceMm);
       if (required !== null && separation < required) {
@@ -329,6 +381,7 @@ function twoWayIssues(node, edges, graph, policy) {
   const angle = angleDegrees(directions[0], directions[1]);
   const target = { nodeIds: [node.id], edgeIds: edges.map((edge) => edge.id), angleDeg: angle };
   const bendDefined = edges.some(isBend) || edges.some((edge) => edge.bendDefinition);
+  if (edges.some(isFittingTurnGeometry)) return [];
   if (angle <= policy.angularToleranceDeg && edges.every(isPipe)) {
     return [createTopologyIssue('PIPE_BACKTRACK', 'HIGH', target,
       `Pipe route backtracks at node ${node.id}.`)];
@@ -345,7 +398,7 @@ function twoWayIssues(node, edges, graph, policy) {
   return [];
 }
 
-function attachmentIssues(canonical, graph) {
+function attachmentIssues(canonical, graph, options) {
   const issues = [];
   for (const support of canonical.supports || []) {
     if (!support.nodeId || !graph.nodesById.has(support.nodeId) || support.resolved === false) {
@@ -353,14 +406,28 @@ function attachmentIssues(canonical, graph) {
         supportId: support.id, nodeIds: support.nodeId ? [support.nodeId] : [],
       }, `Support ${support.id} has no resolved host node.`));
     }
-    restraintRows(support).forEach((restraint, index) => {
+    const rows = restraintRows(support);
+    const canDeriveGeometry = rows.every((restraint) => (
+      restraint.id || restraint.restraintId
+    ));
+    const derivedById = canDeriveGeometry
+      ? new Map(deriveSupportRestraintGeometry({
+        canonicalTopology: canonical,
+        support,
+        verticalAxis: options.verticalAxis || 'Z',
+      }).restraints.map((restraint) => [restraint.restraintId, restraint]))
+      : new Map();
+    rows.forEach((restraint, index) => {
       const family = restraintFamily(restraint);
       const restraintId = restraint.id || restraint.restraintId || `${support.id}:restraint:${index}`;
-      if (!KNOWN_FAMILIES.has(family)) {
+      const nonRestraintRole = ['REFERENCE_POINT', 'PENETRATION_ATTACHMENT']
+        .includes(support.restraintRole);
+      if (!KNOWN_FAMILIES.has(family) && !nonRestraintRole) {
         issues.push(createTopologyIssue('UNKNOWN_RESTRAINT_FAMILY', 'MEDIUM', {
           supportId: support.id, restraintId,
-        }, `Restraint ${restraintId} has unknown family ${family || '(blank)'}.`));
-      } else if (DIRECTIONAL_FAMILIES.has(family) && !hasResolvedDirection(restraint)) {
+        }, `Restraint ${restraintId} has no approved family classification (${family || 'blank source value'}).`));
+      } else if (DIRECTIONAL_FAMILIES.has(family)
+          && !hasResolvedDirection(restraint, derivedById.get(restraintId))) {
         issues.push(createTopologyIssue('UNRESOLVED_RESTRAINT_DIRECTION', 'HIGH', {
           supportId: support.id, restraintId,
         }, `Restraint ${restraintId} has unresolved direction evidence.`));
@@ -410,11 +477,11 @@ function explicitRadius(edge) {
   return diameter !== null && diameter > 0 ? diameter / 2 : null;
 }
 
-function hasResolvedDirection(restraint) {
+function hasResolvedDirection(restraint, derivedRestraint) {
   if (restraint.directionStatus === 'UNRESOLVED' || restraint.resolvedDirection === false) return false;
   const value = restraint.direction ?? restraint.axis ?? restraint.directionToken ?? restraint.vector;
   if (typeof value === 'string') return value.trim().length > 0;
-  return finitePoint(value);
+  return finitePoint(value) || finitePoint(derivedRestraint?.direction);
 }
 
 function restraintRows(support) {
@@ -437,6 +504,12 @@ function isPipe(edge) {
   return /PIPE|TUBE/.test(String(edge.entityType || edge.type || 'PIPE').toUpperCase());
 }
 
+function isFittingTurnGeometry(edge) {
+  return ['REDUCER', 'TEE', 'OLET'].includes(
+    String(edge.entityType || edge.type || '').toUpperCase(),
+  );
+}
+
 function shareNode(a, b) {
   return a.fromNodeId === b.fromNodeId || a.fromNodeId === b.toNodeId
     || a.toNodeId === b.fromNodeId || a.toNodeId === b.toNodeId;
@@ -453,6 +526,27 @@ function governedBranchMatingPair(a, b) {
   ]);
   return roles.has('BRANCH_PIPE')
     && (roles.has('HOST_FROM') || roles.has('HOST_TO'));
+}
+
+function governedTopologyCarrierPair(a, b, aSegment, bSegment, toleranceMm) {
+  if (Boolean(a.autoGenerated) === Boolean(b.autoGenerated)) return false;
+  return (
+    distance(aSegment.start, bSegment.start) <= toleranceMm
+      && distance(aSegment.end, bSegment.end) <= toleranceMm
+  ) || (
+    distance(aSegment.start, bSegment.end) <= toleranceMm
+      && distance(aSegment.end, bSegment.start) <= toleranceMm
+  );
+}
+
+function groupBy(rows, keyOf) {
+  const groups = new Map();
+  rows.forEach((row) => {
+    const key = keyOf(row);
+    if (!groups.has(key)) groups.set(key, []);
+    groups.get(key).push(row);
+  });
+  return groups;
 }
 
 function collinearOverlap(a, b, tolerance) {
@@ -484,6 +578,15 @@ function segmentDistance(p1, q1, p2, q2) {
     }
   }
   return distance(add(p1, scale(d1, s)), add(p2, scale(d2, t)));
+}
+
+function closestEndpointDistance(a, b) {
+  return Math.min(
+    distance(a.start, b.start),
+    distance(a.start, b.end),
+    distance(a.end, b.start),
+    distance(a.end, b.end),
+  );
 }
 
 function angleDegrees(a, b) {

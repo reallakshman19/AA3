@@ -11,7 +11,9 @@ import { TopologyEditCertifiedSession } from './topology-edit/topology-edit-cert
 import { createDimensionAuthority } from './topology-edit/dimension-authority.js';
 import { deriveAllSupportRestraintGeometry, projectSupportGeometryToViewport } from './topology-edit/support-restraint-family.js';
 import { deriveTopologyVisualGeometry, projectVisualGeometryToViewport, visualPolicySummary } from './topology-edit/topology-edit-render-model.js';
-import { checkCanonicalTopology } from './topology-edit/topology-edit-checker.js';
+import {
+  evaluateCanonicalTopologyCheck,
+} from './topology-edit/topology-edit-check-runtime.js';
 import {
   TOPOLOGY_EDIT_COMMAND_ACTIONS, canRunTopologyEditAction, createTopologyEditCommandIntent,
   createTopologyEditSelection, topologyEditSelectionDescription, updateTopologyEditSelection,
@@ -320,7 +322,13 @@ export class TopologyEdit3DViewController {
     this.reconcilePresentationVisibility(canonical);
     this.viewportBackend?.renderSession({ ...certifiedPacket, source: sourceVisual.projection, draft: draftVisual.projection, supports: supportProjection, ghost: this.autofixPreview?.ghost ?? null });
     this.presentationRuntime?.apply(this.presentationState);
-    this.issues = checkCanonicalTopology(canonical);
+    this.issues = evaluateCanonicalTopologyCheck({
+      dataset: this.workspaceDataset,
+      topologyGraph: TopologyStore.getGraph(),
+      canonicalTopology: canonical,
+      basisKey: null,
+      exactToleranceMm: this.highConfidenceGapToleranceMm,
+    }).issues;
     this.autofixSuggestions = this.session.autofixSuggestions(this.issues, buildAutofixPolicy(this.workspaceDataset, canonical, this.issues));
     this.renderCheckerPanel();
     this.updateActionButtons();
@@ -332,16 +340,18 @@ export class TopologyEdit3DViewController {
 
   renderCheckerPanel() {
     if (!this.checkerElement) return;
-    const visualIssues = this.visualDiagnostics.map((row) => ({ kind: row.code, message: row.message }));
-    const issues = [...this.issues, ...visualIssues];
-    if (!issues.length) { this.checkerElement.textContent = 'No topology or visual-evidence issues detected.'; return; }
+    const visualNotes = this.visualDiagnostics.map((row) => ({ kind: row.code, message: row.message }));
+    if (!this.issues.length && !visualNotes.length) { this.checkerElement.textContent = 'No topology findings or rendering evidence notes detected.'; return; }
     const suggestions = new Map(this.autofixSuggestions.map((row) => [row.issueId, row]));
-    const rows = issues.slice(0, 20).map((issue) => {
+    const rows = this.issues.slice(0, 20).map((issue) => {
       const fix = suggestions.get(issue.id);
       const button = fix ? ` <button type="button" data-autofix-suggestion="${escapeHtml(fix.suggestionHash)}">Preview ${escapeHtml(fix.commandType)}</button>` : '';
       return `<li data-issue-kind="${escapeHtml(issue.kind)}">${escapeHtml(issue.kind)}: ${escapeHtml(issue.message)}${button}</li>`;
     }).join('');
-    this.checkerElement.innerHTML = `<strong>${issues.length} issue(s); ${this.autofixSuggestions.length} source-backed fix(es)</strong><ul>${rows}</ul>`;
+    const visualRows = visualNotes.slice(0, 20).map((note) => (
+      `<li>${escapeHtml(note.kind)}: ${escapeHtml(note.message)}</li>`
+    )).join('');
+    this.checkerElement.innerHTML = `<strong>${this.issues.length} topology finding(s); ${this.autofixSuggestions.length} source-backed fix(es)</strong><ul>${rows}</ul>${visualNotes.length ? `<details data-role="topology-edit-visual-evidence"><summary>Rendering evidence notes (${visualNotes.length})</summary><p>Informational geometry-derivation provenance; not topology defects.</p><ul>${visualRows}</ul></details>` : ''}`;
   }
   updateActionButtons() {
     const blocked = !this.session || Boolean(this.session.staleReason);

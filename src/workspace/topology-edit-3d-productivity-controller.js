@@ -299,7 +299,7 @@ export class TopologyEdit3DViewController extends AuthoringController {
   renderCheckerPanel() {
     super.renderCheckerPanel();
     this.cleanShellRuntime.issuesChanged({
-      issueCount: (this.issues?.length ?? 0) + (this.visualDiagnostics?.length ?? 0),
+      issueCount: this.issues?.length ?? 0,
       suggestionCount: this.autofixSuggestions?.length ?? 0,
     });
   }

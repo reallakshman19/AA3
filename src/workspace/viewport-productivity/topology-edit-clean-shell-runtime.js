@@ -413,7 +413,7 @@ export class TopologyEditCleanShellRuntime {
   }
 
   currentIssueCount() {
-    return (this.controller.issues?.length ?? 0) + (this.controller.visualDiagnostics?.length ?? 0);
+    return this.controller.issues?.length ?? 0;
   }
 }
 

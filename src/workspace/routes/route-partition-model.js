@@ -24,6 +24,16 @@ export function buildRoutePartitionModel(dataset, profile) {
   if (!supportedRouteJoiningRules(routeJoiningRules)) {
     blockers.push({ code: 'UNSUPPORTED_ROUTE_JOINING_RULES', projectDataPath: 'topology.routeJoiningRules' });
   }
+  routes.filter((route) => route.status !== 'READY').forEach((route) => {
+    const routeBlockers = route.blockers?.length
+      ? route.blockers
+      : [{ code: 'ROUTE_NOT_READY' }];
+    blockers.push(...routeBlockers.map((blocker) => ({
+      ...blocker,
+      routeId: route.routeId,
+      branchId: route.branchId,
+    })));
+  });
   return freezeDeep({
     schema: ROUTE_PARTITION_MODEL_SCHEMA,
     datasetId: dataset.datasetId,

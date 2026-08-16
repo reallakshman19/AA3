@@ -1,4 +1,5 @@
 import { expect, test } from '@playwright/test';
+import { readFileSync } from 'node:fs';
 
 const STAGED_PACKAGE = {
   schema: 'inputxml-managed-stage/v1',
@@ -22,6 +23,36 @@ const STAGED_PACKAGE = {
   ],
 };
 
+const CERTIFIED_GAP_PACKAGE = {
+  schema: 'inputxml-managed-stage/v1',
+  packageHash: 'CERTIFIED-TOPOFIX-3MM',
+  unit: 'mm',
+  objects: [{
+    id: 'PIPES',
+    name: 'Pipes',
+    type: 'BRANCH',
+    children: [
+      pipe('PIPE-GAP-A', [0, 0, 0], [1000, 0, 0]),
+      pipe('PIPE-GAP-B', [1003, 0, 0], [2000, 0, 0]),
+    ],
+  }],
+};
+
+const CENTERLINE_CROSSING_PACKAGE = {
+  schema: 'inputxml-managed-stage/v1',
+  packageHash: 'CENTERLINE-CROSSING-REVIEW',
+  unit: 'mm',
+  objects: [{
+    id: 'PIPES',
+    name: 'Pipes',
+    type: 'BRANCH',
+    children: [
+      pipe('PIPE-X', [-100, 0, 0], [100, 0, 0]),
+      pipe('PIPE-Y', [0, -100, 0], [0, 100, 0]),
+    ],
+  }],
+};
+
 test.beforeEach(async ({ page }) => {
   await page.addInitScript(() => { globalThis.__WORKSPACE_VIEWPORT_BACKEND__ = 'canvas2d'; });
 });
@@ -34,6 +65,21 @@ test('integrates preflight, Project Data, enrichment, checker and explicit seal 
   await applicationNav.getByRole('button', { name: 'Edit, Topo fix and Load Calc', exact: true }).click();
   const consumer = page.locator('[data-role="load-calc-consumer"]');
   await expect(consumer).toHaveCount(1);
+  const workflow = consumer.getByRole('navigation', { name: 'Load calculation process' });
+  await expect(workflow.locator('button')).toHaveCount(7);
+  await expect(workflow).toContainText('Import JSON');
+  await expect(workflow).toContainText('Topology Fix');
+  await expect(workflow).not.toContainText('Error Check');
+  await expect(workflow).toContainText('Project Data');
+  await expect(workflow).toContainText('Import Masters');
+  await expect(workflow).toContainText('Validate Input');
+  await expect(workflow).toContainText('Run Calc');
+  await expect(workflow).toContainText('View Loads');
+  await expect(workflow.locator('.empirical-load-calc__workflow-status')).toHaveText([
+    'Done', 'Current', 'Next', 'Next', 'Next', 'Next', 'Next',
+  ]);
+  await expect(page.locator('[data-role="load-calc-topology"]')).toBeVisible();
+  await expect(consumer).not.toContainText('The certified 3D topology editor is active in the shared viewport.');
 
   await loadCalcTab(consumer, 'preflight').click();
   const inputCheck = page.locator('[data-role="non-fea-input-check"]');
@@ -41,6 +87,8 @@ test('integrates preflight, Project Data, enrichment, checker and explicit seal 
   await expect(inputCheck).toContainText('PHASE 1 · PREFLIGHT CONSOLIDATION');
   await expect(inputCheck).toContainText('NON-FEA ONLY');
   await expect(inputCheck).toContainText('EIGHT-GATE WORKFLOW');
+  await expect(inputCheck).toContainText('Validate Input');
+  await inputCheck.locator('.non-fea-input-check__advanced > summary').click();
   await expect(inputCheck.locator('[data-role="non-fea-project-audits"] [data-preflight-workflow]')).toHaveCount(3);
   await expect(inputCheck.locator('[data-role="non-fea-source-evidence"]')).toContainText('Shared piping model');
   const routeEvidence = inputCheck.locator('[data-role="non-fea-route-evidence"]');
@@ -65,11 +113,27 @@ test('integrates preflight, Project Data, enrichment, checker and explicit seal 
   await expect(inputCheck).toContainText('Historical legacy authority');
   await expect(inputCheck).not.toContainText('First Cut');
 
-  await inputCheck.getByRole('button', { name: 'Edit Project Data' }).click();
+  await loadCalcTab(consumer, 'project-data').click();
   const projectData = page.locator('[data-role="non-fea-project-data"]');
   await expect(projectData).toBeVisible();
   await expect(projectData).toHaveAttribute('data-phase', '2');
   await expect(projectData).toContainText('NON-FEA · PHASE 2');
+  await expect(projectData).toContainText('Project basis: READY');
+  await expect(projectData).toContainText('Import Masters: 2 field(s) checked in Step 4');
+  await expect(projectData).toContainText('Advanced method policy: 16 field(s) deferred');
+  await expect(projectData).toContainText('2 definitions · 0 uses');
+  await expect(projectData.locator('[data-project-value="loadCalculation.gravityMPerS2"]'))
+    .toHaveValue('9.80665');
+  await expect(projectData.locator('[data-project-value="loadCalculation.loadFactor"]'))
+    .toHaveValue('1');
+  await expect(projectData.locator('label.phase2-approval:has(input[data-project-approved="loadCalculation.gravityMPerS2"])'))
+    .toContainText('APPROVED');
+  await expect(projectData.locator('[data-project-value="loadCalculation.hydroFluidDensitiesKgPerM3"]'))
+    .toHaveValue(/"DEFAULT": 1000/);
+  await expect(projectData.locator('[data-project-value="loadCalculation.insulationDensitiesKgPerM3"]'))
+    .toHaveValue(/"DEFAULT": 210/);
+  await expect(projectData.locator('label.phase2-approval:has(input[data-project-approved="loadCalculation.pipeSectionProperties"])'))
+    .toContainText('STEP 4');
   await expect(projectData).toContainText('NO UNDOCUMENTED FALLBACK');
   await expect(projectData).toContainText('DETERMINISTIC STALENESS');
   const ownership = projectData.locator('[data-role="non-fea-field-ownership-matrix"]');
@@ -158,8 +222,143 @@ test('integrates preflight, Project Data, enrichment, checker and explicit seal 
   await expect(applicationNav.getByRole('button', { name: 'Seal & Export', exact: true })).toHaveCount(0);
 });
 
+test('prepares certified TopoFix for an exact source-backed 3 mm gap', async ({ page }) => {
+  await page.goto('/');
+  await uploadJson(page, 'certified-topofix-3mm.json', CERTIFIED_GAP_PACKAGE);
+  await page.getByRole('navigation', { name: 'Application views' })
+    .getByRole('button', { name: 'Edit, Topo fix and Load Calc', exact: true }).click();
+
+  const consumer = page.locator('[data-role="load-calc-consumer"]');
+  const topology = consumer.locator('[data-role="load-calc-topology"]');
+  await expect(topology).toContainText('SNAP_GAP');
+  const tolerance = topology.locator('[data-load-calc-topology-gap-mm]');
+  await expect(tolerance).toHaveValue('6');
+  await tolerance.fill('3');
+  await topology.locator('[data-load-calc-topology-gap-apply]').click();
+  const autoFix = topology.locator('[data-load-calc-topology-autofix]');
+  await expect(autoFix).toBeDisabled();
+  await expect(autoFix).toContainText('Prepare auto-fix (0)');
+  await expect(topology.locator('[data-load-calc-topology-policy-status]')).toContainText(
+    'No certified source-backed endpoint gaps exist strictly below 3 mm',
+  );
+  await tolerance.fill('4');
+  await topology.locator('[data-load-calc-topology-gap-apply]').click();
+  await expect(autoFix).toBeEnabled();
+  await expect(autoFix).toContainText('Prepare auto-fix (1)');
+  await autoFix.click();
+
+  await expect(page.locator('[data-role="topology-edit-status"]')).toContainText(
+    'TopoFix accepted 1 high-confidence gap merge',
+  );
+  await expect(consumer.locator('[data-engineering-load-status]')).toContainText(
+    'Certified TopoFix prepared 1 gap merge',
+  );
+  await expect(page.getByRole('button', { name: 'Commit draft' })).toBeEnabled();
+});
+
+test('groups blockers and retains reviewed skip receipts for later reporting', async ({ page }) => {
+  await page.goto('/');
+  await uploadJson(page, 'centerline-crossing-review.json', CENTERLINE_CROSSING_PACKAGE);
+  await page.getByRole('navigation', { name: 'Application views' })
+    .getByRole('button', { name: 'Edit, Topo fix and Load Calc', exact: true }).click();
+
+  const consumer = page.locator('[data-role="load-calc-consumer"]');
+  let topology = consumer.locator('[data-role="load-calc-topology"]');
+  const clashGroup = topology.locator('.load-calc-topology-group')
+    .filter({ hasText: 'HIGH CENTERLINE_CLASH' });
+  await expect(clashGroup).toHaveCount(1);
+  await clashGroup.locator('summary').click();
+  const finding = clashGroup.locator('[data-topology-finding-id]').first();
+  await finding.locator('[data-load-calc-topology-skip-reason]')
+    .selectOption('CONFIRMED_VALID_SOURCE_GEOMETRY');
+  await finding.locator('[data-load-calc-topology-skip]').click();
+
+  topology = consumer.locator('[data-role="load-calc-topology"]');
+  const skippedGroup = topology.locator('.load-calc-topology-group')
+    .filter({ hasText: 'HIGH CENTERLINE_CLASH' });
+  await expect(skippedGroup.locator('summary')).toContainText('1 skipped');
+  const downloadPromise = page.waitForEvent('download');
+  await topology.locator('[data-load-calc-topology-review-download]').click();
+  const download = await downloadPromise;
+  expect(download.suggestedFilename()).toContain('topology-review-');
+  const reportPath = await download.path();
+  const report = JSON.parse(readFileSync(reportPath, 'utf8'));
+  expect(report.schema).toBe('TopologyEditFindingReviewReport.v1');
+  expect(report.skippedFindingCount).toBe(1);
+  expect(report.receipts.at(-1).action).toBe('SKIP');
+  expect(report.receipts.at(-1).reason).toBe('CONFIRMED_VALID_SOURCE_GEOMETRY');
+
+  await page.reload();
+  await uploadJson(page, 'centerline-crossing-review.json', CENTERLINE_CROSSING_PACKAGE);
+  await page.getByRole('navigation', { name: 'Application views' })
+    .getByRole('button', { name: 'Edit, Topo fix and Load Calc', exact: true }).click();
+  topology = consumer.locator('[data-role="load-calc-topology"]');
+  const persistedGroup = topology.locator('.load-calc-topology-group')
+    .filter({ hasText: 'HIGH CENTERLINE_CLASH' });
+  await expect(persistedGroup.locator('summary')).toContainText('1 skipped');
+  await persistedGroup.locator('summary').click();
+  await persistedGroup.locator('[data-load-calc-topology-restore]').click();
+  await expect(consumer.locator('.load-calc-topology-group')
+    .filter({ hasText: 'HIGH CENTERLINE_CLASH' }).locator('summary')).toContainText('1 open');
+});
+
+test('keeps only source-evidence review findings for the real Sjson topology', async ({ page }) => {
+  await page.goto('/');
+  await page.locator('[data-role="dataset-file"]').setInputFiles({
+    name: 'Sjson.json',
+    mimeType: 'application/json',
+    buffer: readFileSync('benchmarks/Sjson.json'),
+  });
+  await page.getByRole('navigation', { name: 'Application views' })
+    .getByRole('button', { name: 'Edit, Topo fix and Load Calc', exact: true }).click();
+
+  const topology = page.locator('[data-role="load-calc-topology"]');
+  const canonicalCard = topology.locator('.load-calc-error-check__summary article')
+    .filter({ hasText: 'Canonical findings' });
+  await expect(canonicalCard).toContainText('4');
+  await expect(canonicalCard).toContainText('REVIEW_REQUIRED');
+  await expect(topology.locator('.load-calc-topology-group')).toHaveCount(1);
+  await expect(topology).toContainText('MEDIUM UNKNOWN_RESTRAINT_FAMILY');
+  await expect(topology).toContainText('4 finding(s)');
+  await expect(topology.locator('.load-calc-topology-group summary')).toContainText('4 open');
+  await expect(topology).toContainText('4 unresolved topology finding(s) (4 UNKNOWN_RESTRAINT_FAMILY)');
+  await expect(topology).not.toContainText('Review required: 0 disconnected-branch');
+  await expect(topology).not.toContainText('06fb37f9ed9478bd');
+  await expect(topology).toContainText('gap limit does not apply');
+  await expect(topology).not.toContainText('Model scope');
+  await expect(topology).not.toContainText('No automatic fix under the current limit');
+  await expect(topology).not.toContainText('BRANCH_DISCONNECTED');
+  await expect(topology).not.toContainText('SHORT_ELEMENT');
+  await expect(topology).not.toContainText('OVERLAPPING_ELEMENTS');
+  await expect(topology).not.toContainText('UNDEFINED_KINK');
+  await expect(topology).not.toContainText('UNRESOLVED_RESTRAINT_DIRECTION');
+  await expect(topology).not.toContainText('HIGH CENTERLINE_CLASH');
+  await expect(topology).not.toContainText('Edge centerlines are 0.00mm apart.');
+  await expect(topology.locator('[data-load-calc-topology-autofix]')).toBeDisabled();
+  await expect(topology.locator('[data-load-calc-topology-autofix]')).toContainText(
+    'Prepare auto-fix (0)',
+  );
+  await topology.getByRole('button', { name: 'Review findings in 3D' }).click();
+  const checker = page.locator('[data-role="topology-edit-checker"]');
+  await expect(checker).toContainText('4 topology finding(s)');
+  await expect(checker).not.toContainText('266 issue(s)');
+  await expect(checker.locator('[data-role="topology-edit-visual-evidence"] summary'))
+    .toContainText('Rendering evidence notes');
+});
+
 function loadCalcTab(consumer, tabId) {
-  return consumer.locator('.empirical-load-calc__tabs').locator(`[data-load-calc-tab="${tabId}"]`);
+  const primary = consumer.locator('.empirical-load-calc__workflow').locator(`[data-load-calc-tab="${tabId}"]`);
+  const advanced = consumer.locator('.empirical-load-calc__advanced');
+  return {
+    async click() {
+      if (await primary.count()) {
+        await primary.click();
+        return;
+      }
+      if (await advanced.getAttribute('open') === null) await advanced.locator('summary').click();
+      await advanced.locator('.empirical-load-calc__tabs').locator(`[data-load-calc-tab="${tabId}"]`).click();
+    },
+  };
 }
 
 async function uploadJson(page, name, payload) {

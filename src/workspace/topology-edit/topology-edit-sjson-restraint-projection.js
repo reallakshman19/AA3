@@ -3,19 +3,11 @@ import {
   deriveAllSupportRestraintGeometry,
   projectSupportGeometryToViewport,
 } from './support-restraint-family.js';
+import {
+  classifySjsonSupportProjection,
+} from './topology-edit-sjson-support-classification.js';
 
 const SUPPORT_TYPES = new Set(['ATTA', 'SUPPORT']);
-const EMPTY_MARKERS = new Set(['', '0', 'NONE', 'UNSET', 'FALSE', 'N/A', 'NA']);
-const EXPLICIT_RESTRAINT_FIELDS = Object.freeze([
-  'SUPPORT_KIND',
-  'SUPPORT_MAPPER_KIND',
-  'SUPPORT_TYPE',
-  'CMPSUPTYPE',
-  'MDSSUPPTYPE',
-  'CMPSTRESSN',
-]);
-const RESTRAINT_TEXT = /\b(ANCHOR|FIXED|GUIDE|LINE\s*STOP|LINESTOP|SPRING|HANGER|REST|SHOE|BASE\s*PLATE|PIPE\s*SUPPORT)\b/iu;
-const NON_RESTRAINT_ATTACHMENT_TEXT = /\b(FENCE|FLOOR|WALL|ROOF|SLAB)\b[\s\S]*\b(OPENING|PENETRATION|SLEEVE)\b|\b(OPENING|PENETRATION|SLEEVE)\b[\s\S]*\b(FENCE|FLOOR|WALL|ROOF|SLAB)\b/iu;
 const DEFAULT_FRICTION = 0.3;
 
 /**
@@ -159,7 +151,7 @@ function sourceRecord(entity, support, sourceOrder, verticalAxis) {
   const attributes = entityAttributes(entity);
   const componentType = normalizeComponentType(entity.entityType);
   const supportType = isSupportType(componentType);
-  const supportPolicy = supportType ? classifySupportProjection(attributes) : null;
+  const supportPolicy = supportType ? classifySjsonSupportProjection(attributes) : null;
   const projectedSupport = Boolean(support && isProjectedSupport(entity, support, supportPolicy));
   const position = bestPosition(attributes) || finitePoint(support?.origin);
   const restraint = supportType ? resolveTopoValidatorRestraint(attributes, verticalAxis) : null;
@@ -306,42 +298,6 @@ function compareMembers(left, right) {
   const rightResolved = right.support.resolved === true ? 0 : 1;
   if (leftResolved !== rightResolved) return leftResolved - rightResolved;
   return compareCodeUnits(stringValue(left.support.id), stringValue(right.support.id));
-}
-
-function classifySupportProjection(attributes) {
-  const explicit = explicitRestraintEvidence(attributes);
-  if (explicit) {
-    return Object.freeze({
-      disposition: 'EMIT_SUPPORT_ATTACHMENT',
-      authority: `ATTRIBUTE:${explicit.field}`,
-    });
-  }
-  const description = [attributes.DTXR, attributes.ISONOTE, attributes.DESCRIPTION]
-    .map(stringValue).filter(Boolean).join(' | ');
-  if (NON_RESTRAINT_ATTACHMENT_TEXT.test(description) && !RESTRAINT_TEXT.test(description)) {
-    return Object.freeze({
-      disposition: 'DEFER_SUPPORT',
-      authority: 'NON_RESTRAINT_ATTACHMENT_DESCRIPTION',
-    });
-  }
-  return Object.freeze({
-    disposition: 'EMIT_SUPPORT_ATTACHMENT',
-    authority: RESTRAINT_TEXT.test(description)
-      ? 'DESCRIPTION_RESTRAINT_SEMANTICS'
-      : 'LEGACY_ATTA_FALLBACK',
-  });
-}
-
-function explicitRestraintEvidence(attributes) {
-  for (const field of EXPLICIT_RESTRAINT_FIELDS) {
-    if (meaningful(attributes[field])) return { field, value: stringValue(attributes[field]) };
-  }
-  const nodeType = Number(attributes.NODETYPE);
-  if (Number.isFinite(nodeType) && nodeType > 0) return { field: 'NODETYPE', value: String(nodeType) };
-  const stiffness = numericAttribute(attributes, ['NODESTIFF']);
-  return stiffness !== null && stiffness > 0
-    ? { field: 'NODESTIFF', value: String(stiffness) }
-    : null;
 }
 
 function isProjectedSupport(entity, support, policy) {
@@ -506,10 +462,6 @@ function positionKey(point) {
 function stableRestraintId(supportId, type, index) {
   const token = stringValue(type).replace(/[^A-Za-z0-9+_-]+/gu, '_') || `R${index + 1}`;
   return `restraint:${stringValue(supportId)}:${token}`;
-}
-
-function meaningful(value) {
-  return !EMPTY_MARKERS.has(stringValue(value).toUpperCase());
 }
 
 function firstText(attributes, keys) {

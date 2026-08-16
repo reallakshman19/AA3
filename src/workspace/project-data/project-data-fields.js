@@ -97,6 +97,11 @@ export const PROJECT_DATA_REQUIREMENTS = Object.freeze({
     'topology.autoCarrierCoincidenceToleranceMm', 'topology.routeJoiningRules',
     'topology.supportTypeCapabilities',
   ]),
+  loadCalcProjectBasis: Object.freeze([
+    'loadCalculation.gravityMPerS2', 'loadCalculation.loadFactor',
+    'loadCalculation.equilibriumTolerances',
+    'loadCalculation.activeLoadCases',
+  ]),
   editing: Object.freeze([
     'editing.snapToleranceMm', 'editing.connectionToleranceMm',
     'editing.dimensionSourcePrecedence', 'editing.componentCatalogSelection',

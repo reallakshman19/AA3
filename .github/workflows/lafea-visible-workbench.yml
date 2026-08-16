@@ -47,10 +47,19 @@ jobs:
           node --check src/workspace/lafea-shell-preparation-projection.js
           node --check src/workspace/lafea-workbench-shell-execution-state.js
           node --check src/workspace/lafea-workbench-shell-run-actions.js
+          node --check src/workspace/lafea-continuum-mesh-domain-conformance-v3.js
+          node --check src/workspace/lafea-continuum-mesh-v3-production.js
+          node --check src/workspace/lafea-continuum-mesh-v3-producer-bridge.js
+          node --check scripts/lafea-continuum-mesh-v3-production-check.mjs
+          node --check scripts/lafea-continuum-mesh-v3-workbench-state-check.mjs
           node --check scripts/lafea-shell-compiled-execution-check.mjs
           node --check scripts/lafea-shell-response-acceptance-check.mjs
           node tests/lafea-engineering-overview.test.mjs
           node scripts/lafea-ui-analysis-settings-check.mjs
+      - name: Qualify LAFEA.3 Mesh v3 pre-authority custody
+        run: |
+          node scripts/lafea-continuum-mesh-v3-production-check.mjs
+          node scripts/lafea-continuum-mesh-v3-workbench-state-check.mjs
       - name: Qualify governed shell mesh compiler and execution custody
         run: |
           node scripts/lafea-shell-sample-parent-check.mjs

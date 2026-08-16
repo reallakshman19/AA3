@@ -20,6 +20,8 @@ export function buildLafeaDomainFirstMeshCustodyProjection(stage, retainedEviden
     runBlockingReasons: [],
     meshHash: null,
     meshProfileHash: null,
+    solverModelHash: null,
+    solverModelBindingHash: null,
   });
   if (!retainedEvidence) {
     return result(stage?.stageId ?? null, 'ABSENT', denied(), ['ANALYSIS_MESH_EVIDENCE_V2_ABSENT']);
@@ -44,9 +46,9 @@ export function buildLafeaDomainFirstMeshCustodyProjection(stage, retainedEviden
     return result(stage.stageId, 'CURRENT_BLOCK', denied(), ['ANALYSIS_MESH_QUALITY_BLOCK'], evidence);
   }
   if (shellMidsurface) {
-    // Mesh generation/adoption and engineering review are qualified here, but
-    // shell Run remains fail-closed until a governed compiler binds the exact
-    // retained meshHash to a solverModelHash and the execution/result lineage.
+    // Mesh generation/adoption and engineering review are qualified here. Run
+    // authority is promoted only by bindLafeaShellMeshCustodyToSolverModel
+    // after the non-executing compiler proves retained meshHash -> solverModelHash.
     return result(
       stage.stageId,
       'CURRENT_PASS',
@@ -57,6 +59,39 @@ export function buildLafeaDomainFirstMeshCustodyProjection(stage, retainedEviden
     );
   }
   return result(stage.stageId, 'CURRENT_PASS', allowed(), [], evidence);
+}
+
+/**
+ * Promote only the Run permission of an already-current shell mesh. The mesh
+ * qualification state remains independent from solver-model qualification.
+ */
+export function bindLafeaShellMeshCustodyToSolverModel(custodyValue, bindingValue) {
+  const custody = custodyValue;
+  const binding = bindingValue;
+  if (!custody || custody.state !== 'CURRENT_PASS' || !custody.meshHash) return custody;
+  if (!binding || binding.state !== 'CURRENT_PASS' || binding.usableForRun !== true
+    || binding.meshHash !== custody.meshHash || !binding.solverModelHash
+    || !binding.solverModelBindingHash) {
+    const reasons = binding?.reasons?.length
+      ? binding.reasons
+      : [LAFEA_SHELL_SOLVER_MESH_BINDING_REQUIRED];
+    return freeze({
+      ...custody,
+      usableForRun: false,
+      runPolicy: 'DENY',
+      runBlockingReasons: [...new Set(reasons)],
+      solverModelHash: null,
+      solverModelBindingHash: null,
+    });
+  }
+  return freeze({
+    ...custody,
+    usableForRun: true,
+    runPolicy: 'ALLOW',
+    runBlockingReasons: [],
+    solverModelHash: binding.solverModelHash,
+    solverModelBindingHash: binding.solverModelBindingHash,
+  });
 }
 
 function continuumParentReasons(stage, evidence) {
@@ -119,6 +154,8 @@ function result(stageId, state, permissions, reasons, evidence = null, runBlocki
     shellOrientationTopology: evidence?.quality?.shellOrientationTopology ?? null,
     warningElementIds: evidence?.quality?.warningElementIds ?? [],
     blockingElementIds: evidence?.quality?.blockingElementIds ?? [],
+    solverModelHash: null,
+    solverModelBindingHash: null,
   });
 }
 function allowed() { return { advance: true, authorization: true, run: true }; }

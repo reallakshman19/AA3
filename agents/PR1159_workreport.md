@@ -1,4 +1,4 @@
-# WIP-load-calc-guided work report
+# PR1159 work report
 
 ## Mission and scope
 
@@ -28,13 +28,17 @@ and density fallback policy without replacing exact master authority.
 
 - Worktree: `F:/CODE-6/Advanced_Analysis`
 - Active branch: `feat/master-data-persistence-and-load-calc-fixes`
-- Current HEAD: `fe77f3bc3b70abeef26b3975490a551c34f8fb4d`
+- Current implementation commit: `05c0379c9535ecf5ec84e43b27f40fea55a946d7`.
 - Current local `main`: `e553c0438402` (stale local reference; not mutated).
 - Current `origin/main`: `58de0540` after a live fetch on 2026-08-16.
-- Relative to current `origin/main`, this branch is 37 commits behind and two
-  commits ahead before the present Load Calc commit. Its existing remote branch
-  still points to `85c9b2ac`; prior PR #1136 is merged, so this delivery requires
-  a new draft PR and must not reuse the merged PR as evidence of review.
+- Relative to current `origin/main`, this branch was 37 commits behind and two
+  commits ahead before the Load Calc implementation commit. The remote branch
+  was advanced by a non-forced push from `85c9b2ac` to `05c0379c`; prior PR
+  #1136 remains merged and is not reused as evidence of review.
+- Current delivery: draft PR #1159,
+  `https://github.com/reallaksh19/Advanced_Analysis/pull/1159`, targeting `main`.
+  GitHub currently reports the draft as `UNSTABLE`; base reconciliation and
+  required checks remain pre-merge work.
 - Local Vite server on port 5173 is launched from this worktree.
 - PR #1157 is present on `origin/main`; this local branch predates its merge and
   contained unsafe calculation shortcuts in the files touched by this mission.
@@ -339,10 +343,11 @@ Protected invariants:
 
 ## EXACT_NEXT_ACTION
 
+PR owner/reviewer: reconcile draft PR #1159 with current `origin/main`, rerun
+the focused and repository gates from the reconciled head, and resolve the
+main-bundle cap and stale public TopoFix oracle without weakening either gate.
 Owner/user: provide or import an approved restraint-family master for the four
 remaining evidence-empty physical attachment records, plus exact material
-density and pipe-section masters. Engineering delivery: implement the separately
-approved empirical component-weight estimator with explicit estimated-result
-authority, then resolve the repository-wide main-bundle cap and stale public
-oracles as separate owner-approved work. Do not merge without explicit owner
-authorization.
+density and pipe-section masters. The separately approved empirical
+component-weight estimator must retain explicit estimated-result authority.
+Do not merge without explicit owner authorization.

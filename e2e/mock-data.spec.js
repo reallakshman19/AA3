@@ -54,11 +54,16 @@ test('every Advanced tab loads deterministic [SIMULATED] input through its UI', 
 
     if (stageId === 'LAFEA.5') {
       expect(stage.domainFirstProfileActive).toBe(false);
-      expect(stage.shellMidsurfaceProfileActive).toBe(false);
+      expect(stage.shellMidsurfaceProfileActive).toBe(true);
       expect(stage.document.workflowIdentity).toBe('TRUNNION-WORKFLOW-1');
       expect(stage.document.shellTemplate.nodes).toHaveLength(24);
       expect(stage.document.shellTemplate.elements).toHaveLength(24);
-      expect(stage.retainedShellMidsurfaceEvidence).toBeNull();
+      expect(stage.retainedShellMidsurfaceEvidence).toMatchObject({
+        schema: 'lafea5-source-shell-parent/v1',
+        stageId: 'LAFEA.5',
+        qualification: 'PASS',
+        lengthUnit: 'mm',
+      });
     }
   }
 

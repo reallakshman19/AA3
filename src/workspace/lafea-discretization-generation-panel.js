@@ -141,7 +141,9 @@ function profileBindingControls(doc, generation, handlers) {
     generation.elementFamilies,
     null,
   );
-  if (generation.elementFamilies.includes('T6_QUADRATIC_TRIANGLE')) {
+  if (generation.elementFamilies.length === 1) {
+    family.input.value = generation.elementFamilies[0];
+  } else if (generation.elementFamilies.includes('T6_QUADRATIC_TRIANGLE')) {
     family.input.value = 'T6_QUADRATIC_TRIANGLE';
   }
   const target = numberControl(
@@ -240,13 +242,14 @@ function profileBindingControls(doc, generation, handlers) {
       { ratio, aspectWarn, aspectBlock, jacWarn, jacBlock, adaptive },
     )) return;
 
+    const shellFamily = selectedFamily === SHELL_ELEMENT_PLACEHOLDER;
     const profileEnvelope = {
       schema: 'lafea-mesh-profile/v1',
       profileIdentity: `LAFEA_UI_${selectedFamily}_MESH_PROFILE_V3`,
       sourceRevision: PROFILE_SOURCE_REVISION,
       fields: {
-        continuumElement: selectedFamily,
-        shellElement: SHELL_ELEMENT_PLACEHOLDER,
+        continuumElement: shellFamily ? defaults.continuumElement : selectedFamily,
+        shellElement: shellFamily ? selectedFamily : SHELL_ELEMENT_PLACEHOLDER,
         globalTargetSize: targetValue,
         ...quality,
       },

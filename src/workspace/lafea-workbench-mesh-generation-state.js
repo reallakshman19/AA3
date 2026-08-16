@@ -4,7 +4,9 @@
  * The legacy v1 slice in `lafea-workbench-mesh-state.js` retains a mesh the
  * user imported. This slice retains the bound mesh profile and the mesh the
  * qualified producer generated. LAFEA.3 consumes domain-first continuum
- * geometry; LAFEA.4/.5 consume separately declared shell-midsurface evidence.
+ * geometry; LAFEA.4 consumes declared shell midsurface evidence; LAFEA.5 may
+ * consume declared shell midsurface evidence or losslessly adopt its
+ * caller-authored host-shell template as the governed analysis mesh.
  *
  * Custody is only mutated after evidence has been fully built and validated
  * (`NO_CUSTODY_MUTATION_UNTIL_FULL_EVIDENCE_ACCEPTED`): generation,
@@ -36,6 +38,10 @@ import {
   shellMidsurfaceKind,
   validateLafeaAnyShellMidsurfaceEvidence,
 } from './lafea-shell-midsurface-dispatch.js';
+import {
+  planLafea5SourceShellMeshAdoption,
+  produceLafea5SourceShellMeshAdoption,
+} from './lafea-source-shell-mesh-adoption.js';
 
 export function createLafeaWorkbenchMeshGenerationState(stageIds) {
   const profiles = new Map(stageIds.map((stageId) => [stageId, null]));
@@ -74,8 +80,9 @@ export function createLafeaWorkbenchMeshGenerationState(stageIds) {
   }
 
   /**
-   * Bind mesh-independent shell midsurface evidence as the parent of any
-   * LAFEA.4/.5 generated mesh. This never derives a surface from solver facets.
+   * Bind mesh-independent shell evidence as the parent of any LAFEA.4/.5
+   * analysis mesh. A LAFEA.5 caller-authored source-shell parent is accepted by
+   * the same source-binding boundary but is losslessly adopted, never remeshed.
    */
   function registerShellMidsurface(value, stage) {
     const stageId = stage?.stageId;
@@ -104,9 +111,12 @@ export function createLafeaWorkbenchMeshGenerationState(stageIds) {
       requireNoShellOverrides(overrides);
       const profile = requireProfile(stageId);
       const parent = requireShellMidsurface(stageId);
-      const planned = shellMidsurfaceKind(parent) === LAFEA_SHELL_SURFACE_KINDS.PLANAR_MULTIPATCH
-        ? planLafeaMultiPatchShellAnalysisMesh({ midsurfaceEvidence: parent, meshProfile: profile })
-        : planLafeaShellAnalysisMesh({ midsurfaceEvidence: parent, meshProfile: profile });
+      const kind = shellMidsurfaceKind(parent);
+      const planned = kind === LAFEA_SHELL_SURFACE_KINDS.SOURCE_MESH
+        ? planLafea5SourceShellMeshAdoption({ parent, meshProfile: profile })
+        : kind === LAFEA_SHELL_SURFACE_KINDS.PLANAR_MULTIPATCH
+          ? planLafeaMultiPatchShellAnalysisMesh({ midsurfaceEvidence: parent, meshProfile: profile })
+          : planLafeaShellAnalysisMesh({ midsurfaceEvidence: parent, meshProfile: profile });
       lastPlan.set(stageId, summarizeShell(planned));
       return freeze({
         configuration: shellConfiguration(profile, planned),
@@ -127,9 +137,12 @@ export function createLafeaWorkbenchMeshGenerationState(stageIds) {
       requireNoShellOverrides(overrides);
       const profile = requireProfile(stageId);
       const parent = requireShellMidsurface(stageId);
-      const produced = shellMidsurfaceKind(parent) === LAFEA_SHELL_SURFACE_KINDS.PLANAR_MULTIPATCH
-        ? produceLafeaMultiPatchShellAnalysisMesh({ midsurfaceEvidence: parent, meshProfile: profile })
-        : produceLafeaShellAnalysisMesh({ midsurfaceEvidence: parent, meshProfile: profile });
+      const kind = shellMidsurfaceKind(parent);
+      const produced = kind === LAFEA_SHELL_SURFACE_KINDS.SOURCE_MESH
+        ? produceLafea5SourceShellMeshAdoption({ parent, meshProfile: profile })
+        : kind === LAFEA_SHELL_SURFACE_KINDS.PLANAR_MULTIPATCH
+          ? produceLafeaMultiPatchShellAnalysisMesh({ midsurfaceEvidence: parent, meshProfile: profile })
+          : produceLafeaShellAnalysisMesh({ midsurfaceEvidence: parent, meshProfile: profile });
       const validated = validateLafeaAnalysisMeshEvidenceV2(produced.evidence);
       evidence.set(stageId, validated);
       lastPlan.set(stageId, summarizeShell(produced.plan));
@@ -302,7 +315,7 @@ function summarizeShell(plan) {
   return freeze({
     schema: 'lafea-analysis-mesh-plan-summary/v1',
     stageId: plan.stageId,
-    generationMode: 'AUTOMATIC_MESH',
+    generationMode: plan.generationMode ?? 'AUTOMATIC_MESH',
     elementFamily: plan.elementFamily,
     strategy: plan.strategy ?? 'PLANAR_SHELL_MIDSURFACE_TRIANGULATION',
     strategyReason: plan.scope,
@@ -353,11 +366,15 @@ function summarizeRefinement(produced) {
 }
 
 function shellConfiguration(profile, plan) {
-  const requestedTarget = plan.targetElementLength ?? plan.requestedTargetElementLength;
+  const requestedTarget = plan.generationMode === 'SOURCE_MESH_ADOPTION'
+    ? null
+    : plan.targetElementLength ?? plan.requestedTargetElementLength;
   return freeze({
     meshProfileHash: profile.semanticHash,
     targetElementLength: requestedTarget,
-    effectiveTargetElementLength: plan.effectiveTargetElementLength ?? requestedTarget,
+    effectiveTargetElementLength: plan.generationMode === 'SOURCE_MESH_ADOPTION'
+      ? null
+      : plan.effectiveTargetElementLength ?? requestedTarget,
     elementFamily: plan.elementFamily,
     lengthUnit: plan.lengthUnit,
   });

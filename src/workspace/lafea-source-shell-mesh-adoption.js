@@ -43,10 +43,12 @@ export const LAFEA5_SOURCE_SHELL_ADOPTION_QUALIFICATION_HASH = canonicalLafeaSha
 export function createLafea5SourceShellParent({ sourceHash, shellTemplate }) {
   requireHash(sourceHash, 'SOURCE_HASH');
   const shellTemplateSemanticHash = canonicalShellTemplateSemanticHash(shellTemplate);
+  const lengthUnit = text(shellTemplate?.units?.length);
   const mesh = sourceShellMesh(shellTemplate);
   const analysisGeometryHash = canonicalLafeaSha256({
     schema: 'lafea5-source-shell-analysis-geometry/v1',
     stageId: 'LAFEA.5',
+    lengthUnit,
     nodes: mesh.nodes,
     elements: mesh.elements,
   });
@@ -56,6 +58,7 @@ export function createLafea5SourceShellParent({ sourceHash, shellTemplate }) {
     sourceHash,
     shellTemplateSemanticHash,
     analysisGeometryHash,
+    lengthUnit,
     authority: 'CALLER_AUTHORED_HOST_SHELL_FOOTPRINT_ONLY',
   });
   return freeze({
@@ -65,6 +68,7 @@ export function createLafea5SourceShellParent({ sourceHash, shellTemplate }) {
     shellTemplateSemanticHash,
     analysisDomainHash,
     analysisGeometryHash,
+    lengthUnit,
     mesh,
     qualification: 'PASS',
     limitations: [
@@ -76,7 +80,7 @@ export function createLafea5SourceShellParent({ sourceHash, shellTemplate }) {
     semanticHash: canonicalLafeaSha256({
       schema: 'lafea5-source-shell-parent-hash-input/v1',
       stageId: 'LAFEA.5', sourceHash, shellTemplateSemanticHash,
-      analysisDomainHash, analysisGeometryHash,
+      analysisDomainHash, analysisGeometryHash, lengthUnit,
     }),
   });
 }
@@ -90,10 +94,11 @@ export function validateLafea5SourceShellParent(value) {
   requireHash(value.shellTemplateSemanticHash, 'SHELL_TEMPLATE_HASH');
   requireHash(value.analysisDomainHash, 'ANALYSIS_DOMAIN_HASH');
   requireHash(value.analysisGeometryHash, 'ANALYSIS_GEOMETRY_HASH');
+  const lengthUnit = text(value.lengthUnit);
   const mesh = sourceMeshCanonical(value.mesh);
   const geometryHash = canonicalLafeaSha256({
     schema: 'lafea5-source-shell-analysis-geometry/v1',
-    stageId: 'LAFEA.5', nodes: mesh.nodes, elements: mesh.elements,
+    stageId: 'LAFEA.5', lengthUnit, nodes: mesh.nodes, elements: mesh.elements,
   });
   if (geometryHash !== value.analysisGeometryHash) fail('LAFEA5_SOURCE_SHELL_GEOMETRY_HASH_INVALID');
   const domainHash = canonicalLafeaSha256({
@@ -102,6 +107,7 @@ export function validateLafea5SourceShellParent(value) {
     sourceHash: value.sourceHash,
     shellTemplateSemanticHash: value.shellTemplateSemanticHash,
     analysisGeometryHash: value.analysisGeometryHash,
+    lengthUnit,
     authority: 'CALLER_AUTHORED_HOST_SHELL_FOOTPRINT_ONLY',
   });
   if (domainHash !== value.analysisDomainHash) fail('LAFEA5_SOURCE_SHELL_DOMAIN_HASH_INVALID');
@@ -111,9 +117,10 @@ export function validateLafea5SourceShellParent(value) {
     shellTemplateSemanticHash: value.shellTemplateSemanticHash,
     analysisDomainHash: value.analysisDomainHash,
     analysisGeometryHash: value.analysisGeometryHash,
+    lengthUnit,
   });
   if (semanticHash !== value.semanticHash) fail('LAFEA5_SOURCE_SHELL_PARENT_HASH_INVALID');
-  return freeze({ ...value, mesh });
+  return freeze({ ...value, lengthUnit, mesh });
 }
 
 export function planLafea5SourceShellMeshAdoption({ parent: parentValue, meshProfile: profileValue }) {
@@ -127,16 +134,23 @@ export function planLafea5SourceShellMeshAdoption({ parent: parentValue, meshPro
     stageId: 'LAFEA.5',
     generationMode: 'SOURCE_MESH_ADOPTION',
     strategy: 'LOSSLESS_CALLER_AUTHORED_SHELL_TEMPLATE_ADOPTION',
+    scope: 'CALLER_AUTHORED_HOST_SHELL_FOOTPRINT_SOURCE_MESH_V1',
     sourceHash: parent.sourceHash,
     analysisDomainHash: parent.analysisDomainHash,
     analysisGeometryHash: parent.analysisGeometryHash,
     meshProfileHash: meshProfile.semanticHash,
     elementFamily: LAFEA5_SOURCE_SHELL_ADOPTION_ELEMENT,
+    lengthUnit: parent.lengthUnit,
     nodeCount: parent.mesh.nodes.length,
     elementCount: parent.mesh.elements.length,
     estimatedDofs: parent.mesh.nodes.length * 5,
+    characteristicLengthMin: null,
+    characteristicLengthMedian: null,
+    characteristicLengthMax: null,
+    resourceDisposition: 'WITHIN_LIMITS',
     sourceShellParentHash: parent.semanticHash,
     sourceShellTemplateHash: parent.shellTemplateSemanticHash,
+    midsurfaceEvidenceHash: parent.semanticHash,
     producerRef: LAFEA5_SOURCE_SHELL_ADOPTION_PRODUCER_REF,
     capabilityHash: LAFEA5_SOURCE_SHELL_ADOPTION_CAPABILITY_HASH,
     qualificationHash: LAFEA5_SOURCE_SHELL_ADOPTION_QUALIFICATION_HASH,

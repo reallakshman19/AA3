@@ -117,7 +117,8 @@ function authorizationSection(stage, adapter, readiness, preparation, custody) {
   if (!readiness?.preMeshModelCurrent) {
     reasons.push(stage.domainFirstProfileActive ? 'ANALYSIS_DOMAIN_NOT_CURRENT' : 'CANONICAL_MODEL_NOT_CURRENT');
   }
-  if (stage.domainFirstProfileActive && !readiness?.solverModelCurrent) {
+  if ((stage.domainFirstProfileActive || stage.shellMidsurfaceProfileActive)
+    && !readiness?.solverModelCurrent) {
     reasons.push('CANONICAL_SOLVER_MODEL_NOT_CURRENT');
   }
   if (!adapter.preparation.qualified) reasons.push(adapter.preparation.reason);
@@ -135,6 +136,9 @@ function authorizationSection(stage, adapter, readiness, preparation, custody) {
       : ['SHELL_RETAINED_MESH_NOT_BOUND_TO_SOLVER_MODEL']));
   }
   if (custody?.meshHash) refs.push(ref('ANALYSIS_MESH', custody.meshHash));
+  if (stage.shellSolverModelProjection?.solverModelHash) {
+    refs.push(ref('SOLVER_MODEL', stage.shellSolverModelProjection.solverModelHash));
+  }
   if (reasons.length) return section('BLOCKED', reasons, refs, []);
   return section('READY', [], refs, ['AUTHORIZE_SOLVE']);
 }
@@ -154,8 +158,9 @@ function executionSection(stage, readiness, preparation, custody) {
     return section('NOT_STARTED', reasons, [], runnable ? ['RUN_SOLVE'] : []);
   }
   if (execution.status === 'QUALIFIED') {
-    if (stage.domainFirstProfileActive && readiness?.resultReady !== true) {
-      return section('BLOCKED', domainExecutionReasons(readiness), [], ['VIEW']);
+    if ((stage.domainFirstProfileActive || stage.shellMidsurfaceProfileActive)
+      && readiness?.resultReady !== true) {
+      return section('BLOCKED', governedExecutionReasons(readiness), [], ['VIEW']);
     }
     return section('COMPLETE', [], [ref('EXECUTION', executionHash(execution))], ['VIEW']);
   }
@@ -166,7 +171,7 @@ function resultsSection(stage, readiness) {
   if (readiness?.resultReady) return section('COMPLETE', [], resultRefs(stage.lifecycle), ['VIEW_RESULTS', 'EXPORT_RESULTS']);
   const executed = stage.execution?.status === 'QUALIFIED';
   return section(executed ? 'BLOCKED' : 'NOT_STARTED',
-    executed ? domainExecutionReasons(readiness) : ['EXECUTION_REQUIRED'], [], []);
+    executed ? governedExecutionReasons(readiness) : ['EXECUTION_REQUIRED'], [], []);
 }
 
 function releaseSection(readiness) {
@@ -183,9 +188,12 @@ function releaseSection(readiness) {
   return section('BLOCKED', reasons, refs, refs.length ? ['VIEW_RELEASE'] : []);
 }
 
-function domainExecutionReasons(readiness) {
+function governedExecutionReasons(readiness) {
   const reasons = readiness?.blockingReasons?.filter((reason) =>
-    reason.startsWith('DOMAIN_FIRST_')) ?? [];
+    reason.startsWith('DOMAIN_FIRST_')
+    || reason.startsWith('SHELL_')
+    || reason.startsWith('LAFEA4_SHELL_')
+    || reason.startsWith('LAFEA5_SHELL_')) ?? [];
   return reasons.length ? reasons : ['RESULT_EVIDENCE_NOT_CURRENT'];
 }
 function preparationRefs(projection) {

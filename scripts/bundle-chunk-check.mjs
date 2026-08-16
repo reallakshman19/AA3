@@ -5,8 +5,16 @@
  *
  * 500 KiB remains the optimization target. It is not a correctness boundary:
  * forcing the statically imported workspace below that target produced cyclic
- * chunks and browser-startup failures. A 1 MiB hard ceiling prevents accidental
+ * chunks and browser-startup failures. The hard ceiling prevents accidental
  * bundle collapse while allowing Rollup to preserve safe evaluation order.
+ *
+ * Raised from 1 MiB to 1.125 MiB after the Empirical V3 governance wiring
+ * landed. A follow-up attempt to move the engineering-loads/adapters/ layer
+ * into its own chunk was verified with a real browser boot and reproduced
+ * "Cannot access '<binding>' before initialization" on load, so the entry
+ * chunk's stateful controller/store/view graph stays Rollup graph-owned
+ * (see vite.config.js manualChunk) and this ceiling absorbs the legitimate
+ * growth instead.
  */
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
@@ -16,7 +24,7 @@ import { fileURLToPath } from 'node:url';
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const assets = path.join(root, 'dist', 'assets');
 const targetBytes = 500 * 1024;
-const maximumBytes = 1024 * 1024;
+const maximumBytes = 1.125 * 1024 * 1024;
 const prohibitedForcedApplicationPrefixes = Object.freeze([
   'workspace-analysis-',
   'workspace-data-',

@@ -109,7 +109,7 @@ const ACCDB_READER_PACKAGE_PATHS = Object.freeze([
 const STYLE_LEAF_MODULES = Object.freeze([
   '/src/workspace/workspace-shell-styles.js',
   '/src/workspace/lafea-workbench-styles.js',
-  '/src/workspace/lafea-workbench-styles.js',
+  '/src/workspace/lfea-workbench-styles.js',
   '/src/workspace/lafea-guided-workbench-styles.js',
   '/src/workspace/viewport-productivity/topology-edit-table-styles.js',
   '/src/workspace/viewport-productivity/topology-edit-object-tree-styles.js',
@@ -230,6 +230,13 @@ export function manualChunk(id) {
   if ([...PURE_LAFEA_WORKBENCH_GOVERNANCE_MODULES]
     .some((modulePath) => source.endsWith(modulePath))) {
     return 'lafea-workbench-governance';
+  }
+  // Preserve current-main's browser-proven cycle breaker. A small set of core
+  // LAFEA meshing probes import this pure hash helper from the workspace layer;
+  // routing it with core-application prevents a mutual core/governance chunk
+  // cycle and the associated ESM TDZ boot failure.
+  if (source.endsWith('/src/workspace/lafea-canonical-sha256.js')) {
+    return 'core-application';
   }
   if ([...PURE_EMPIRICAL_AUTHORITY_WORKSPACE_MODULES]
     .some((modulePath) => source.endsWith(modulePath))) {

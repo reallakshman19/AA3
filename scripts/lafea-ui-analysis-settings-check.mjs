@@ -14,7 +14,7 @@ const analytical = buildLafeaAnalysisSettingsViewModel(stage(
   'ANALYTICAL_FOUNDATION_V1',
 ));
 assert.equal(analytical.schema, LAFEA_ANALYSIS_SETTINGS_VIEW_SCHEMA);
-assert.equal(analytical.readOnly, true);
+assert.equal(analytical.readOnly, false);
 assert.equal(value(analytical, 'Lifecycle profile'), 'ANALYTICAL_FOUNDATION_V1');
 assert.equal(value(analytical, 'Lifecycle source binding'), 'CURRENT');
 assert.equal(value(analytical, 'Model identity'), analyticalDocument.modelIdentity);
@@ -42,7 +42,8 @@ assert.equal(value(continuum, 'Code / allowable basis'), 'Not declared by the ac
 console.log(JSON.stringify({
   check: 'lafea-ui-analysis-settings',
   status: 'PASS',
-  readOnly: true,
+  sourceSettingsEditable: true,
+  governedSolverSettingsLocked: true,
   missingCodeBasisIsExplicit: true,
   githubActionsWorkflowAdded: false,
 }));

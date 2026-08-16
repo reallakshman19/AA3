@@ -40,9 +40,12 @@ export class LafeaWorkbenchController {
     this.documentRef = rootElement?.ownerDocument ?? globalThis.document;
     this.store = createLafeaWorkbenchOrchestratorStore(storeOptions);
     this.mockDocumentFactory = typeof mockDocumentFactory === 'function' ? mockDocumentFactory : null;
+    const companionMockDomainAndGeometryFactory = this.mockDocumentFactory?.domainAndGeometryFactory;
     this.mockDomainAndGeometryFactory = typeof mockDomainAndGeometryFactory === 'function'
       ? mockDomainAndGeometryFactory
-      : null;
+      : typeof companionMockDomainAndGeometryFactory === 'function'
+        ? companionMockDomainAndGeometryFactory
+        : null;
     initializeLafeaWorkbenchRenderEvidence(this, THREE ?? null);
     this.view = new LafeaWorkbenchView(rootElement, {
       getRenderPacket: (stageId) => lafeaWorkbenchDisplayRenderPacket(this, stageId),

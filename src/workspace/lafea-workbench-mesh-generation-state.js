@@ -12,6 +12,10 @@
  * (`NO_CUSTODY_MUTATION_UNTIL_FULL_EVIDENCE_ACCEPTED`): generation,
  * retained-mesh refinement, recovery, or shell-parent registration that throws
  * leaves the previously retained child mesh exactly as it was.
+ *
+ * LAFEA.3 may additionally retain a Mesh Workspace v3 candidate beside the
+ * authoritative v2 evidence. That candidate is pre-authority only: it cannot
+ * authorize execution and is invalidated whenever its v2/source parents change.
  */
 import { canonicalLafeaAnalysisMeshProfile } from './lafea-analysis-mesh-contract.js';
 import { validateLafeaAnalysisMeshEvidenceV2 } from './lafea-analysis-mesh-evidence-v2.js';
@@ -24,6 +28,9 @@ import {
   planLafeaAnalysisMesh,
   produceLafeaAnalysisMeshEvidence,
 } from './lafea-mesh-producer-binding.js';
+import {
+  produceLafea3AnalysisMeshEvidenceWithV3Candidate,
+} from './lafea-continuum-mesh-v3-producer-bridge.js';
 import { produceLafeaRetainedMeshRefinement } from './lafea-retained-mesh-refinement.js';
 import {
   planLafeaShellAnalysisMesh,
@@ -46,6 +53,7 @@ import {
 export function createLafeaWorkbenchMeshGenerationState(stageIds) {
   const profiles = new Map(stageIds.map((stageId) => [stageId, null]));
   const evidence = new Map(stageIds.map((stageId) => [stageId, null]));
+  const v3Candidates = new Map(stageIds.map((stageId) => [stageId, null]));
   const shellMidsurfaces = new Map(stageIds.map((stageId) => [stageId, null]));
   const lastPlan = new Map(stageIds.map((stageId) => [stageId, null]));
 
@@ -55,6 +63,7 @@ export function createLafeaWorkbenchMeshGenerationState(stageIds) {
     return freeze({
       retainedAnalysisMeshProfile: profiles.get(stageId),
       retainedAnalysisMeshEvidenceV2: evidence.get(stageId),
+      retainedAnalysisMeshCandidateV3: v3Candidates.get(stageId),
       shellMidsurfaceProfileActive: Boolean(shellMidsurface),
       retainedShellMidsurfaceEvidence: shellMidsurface,
       lastAnalysisMeshPlan: lastPlan.get(stageId),
@@ -75,6 +84,7 @@ export function createLafeaWorkbenchMeshGenerationState(stageIds) {
     }
     profiles.set(stageId, profile);
     evidence.set(stageId, null);
+    v3Candidates.set(stageId, null);
     lastPlan.set(stageId, null);
     return freeze({ changed: true, meshProfile: profile });
   }
@@ -100,6 +110,7 @@ export function createLafeaWorkbenchMeshGenerationState(stageIds) {
     }
     shellMidsurfaces.set(stageId, retained);
     evidence.set(stageId, null);
+    v3Candidates.set(stageId, null);
     lastPlan.set(stageId, null);
     return freeze({ changed: true, evidence: retained });
   }
@@ -145,17 +156,22 @@ export function createLafeaWorkbenchMeshGenerationState(stageIds) {
           : produceLafeaShellAnalysisMesh({ midsurfaceEvidence: parent, meshProfile: profile });
       const validated = validateLafeaAnalysisMeshEvidenceV2(produced.evidence);
       evidence.set(stageId, validated);
+      v3Candidates.set(stageId, null);
       lastPlan.set(stageId, summarizeShell(produced.plan));
       return freeze({ changed: true, evidence: validated, summary: lastPlan.get(stageId) });
     }
     const configuration = configurationFor(stageId, overrides);
-    const produced = produceLafeaAnalysisMeshEvidence(stage, configuration);
+    const produced = stageId === 'LAFEA.3'
+      ? produceLafea3AnalysisMeshEvidenceWithV3Candidate(stage, configuration)
+      : produceLafeaAnalysisMeshEvidence(stage, configuration);
     const validated = validateLafeaAnalysisMeshEvidenceV2(produced.evidence);
     evidence.set(stageId, validated);
+    v3Candidates.set(stageId, stageId === 'LAFEA.3' ? produced.candidateV3 : null);
     lastPlan.set(stageId, summarize(produced.planned));
     return freeze({
       changed: true,
       evidence: validated,
+      candidateV3: v3Candidates.get(stageId),
       summary: lastPlan.get(stageId),
     });
   }
@@ -164,6 +180,8 @@ export function createLafeaWorkbenchMeshGenerationState(stageIds) {
    * Refine the exact retained v2 parent. Parent artifact/mesh hashes are taken
    * from custody here rather than trusted from UI input. Shell local refinement
    * is deliberately outside the first shell qualification and fails closed.
+   * A refined v2 mesh does not inherit v3 authority: the candidate is cleared
+   * until refinement crosses its own v3 qualification boundary.
    */
   function refineMesh(stage, request = {}) {
     const stageId = stage.stageId;
@@ -194,6 +212,7 @@ export function createLafeaWorkbenchMeshGenerationState(stageIds) {
     });
     const validated = validateLafeaAnalysisMeshEvidenceV2(produced.evidence);
     evidence.set(stageId, validated);
+    v3Candidates.set(stageId, null);
     lastPlan.set(stageId, summarizeRefinement(produced));
     return freeze({
       changed: true,
@@ -214,6 +233,8 @@ export function createLafeaWorkbenchMeshGenerationState(stageIds) {
    * by the orchestrator action. Parent currentness is deliberately not guessed
    * here; the governed v2 custody projection classifies the retained evidence
    * as CURRENT_PASS/CURRENT_BLOCK/STALE after publication.
+   * A portable v2 artifact cannot manufacture its missing v3 producer/validation
+   * lineage, so any prior v3 candidate is cleared.
    */
   function recoverEvidence(value, stageId) {
     requireStage(stageId);
@@ -231,11 +252,13 @@ export function createLafeaWorkbenchMeshGenerationState(stageIds) {
     }
     if (retained) fail('LAFEA_ANALYSIS_MESH_V2_RECOVERY_CONFLICTING_REPLAY');
     evidence.set(stageId, validated);
+    v3Candidates.set(stageId, null);
     lastPlan.set(stageId, null);
     return freeze({ changed: true, evidence: validated, meshProfile: profile });
   }
 
   function selectEvidence(stageId) { requireStage(stageId); return evidence.get(stageId); }
+  function selectV3Candidate(stageId) { requireStage(stageId); return v3Candidates.get(stageId); }
   function selectMeshProfile(stageId) { requireStage(stageId); return profiles.get(stageId); }
   function selectPlan(stageId) { requireStage(stageId); return lastPlan.get(stageId); }
   function selectShellMidsurface(stageId) { requireStage(stageId); return shellMidsurfaces.get(stageId); }
@@ -246,9 +269,11 @@ export function createLafeaWorkbenchMeshGenerationState(stageIds) {
   function invalidate(stageId) {
     requireStage(stageId);
     const changed = Boolean(
-      evidence.get(stageId) || lastPlan.get(stageId) || shellMidsurfaces.get(stageId),
+      evidence.get(stageId) || v3Candidates.get(stageId)
+      || lastPlan.get(stageId) || shellMidsurfaces.get(stageId),
     );
     evidence.set(stageId, null);
+    v3Candidates.set(stageId, null);
     lastPlan.set(stageId, null);
     if (shellMidsurfaces.get(stageId)) shellMidsurfaces.set(stageId, null);
     return changed;
@@ -258,6 +283,7 @@ export function createLafeaWorkbenchMeshGenerationState(stageIds) {
     requireStage(stageId);
     profiles.set(stageId, null);
     evidence.set(stageId, null);
+    v3Candidates.set(stageId, null);
     shellMidsurfaces.set(stageId, null);
     lastPlan.set(stageId, null);
   }
@@ -265,7 +291,8 @@ export function createLafeaWorkbenchMeshGenerationState(stageIds) {
   return Object.freeze({
     fields, bindMeshProfile, registerShellMidsurface, planMesh, generateMesh, refineMesh,
     validateEvidence, recoverEvidence, exportEvidence, exportShellMidsurface,
-    selectEvidence, selectMeshProfile, selectPlan, selectShellMidsurface, invalidate, clear,
+    selectEvidence, selectV3Candidate, selectMeshProfile, selectPlan, selectShellMidsurface,
+    invalidate, clear,
   });
 
   function requireProfile(stageId) {

@@ -35,6 +35,8 @@ test('production LAFEA.4 and LAFEA.5 Sample retained mesh is the authoritative s
           workflowIdentity: stage.document.workflowIdentity,
           nodeCount: stage.document.shellTemplate.nodes.length,
           elementCount: stage.document.shellTemplate.elements.length,
+          constraintCount: stage.document.shellTemplate.constraints.length,
+          fixedNodeIds: [...new Set(stage.document.shellTemplate.constraints.map((row) => row.nodeId))].sort(),
           parentSchema: stage.retainedShellMidsurfaceEvidence?.schema ?? null,
           domainFirst: stage.domainFirstProfileActive,
           shellParentActive: stage.shellMidsurfaceProfileActive,
@@ -56,6 +58,8 @@ test('production LAFEA.4 and LAFEA.5 Sample retained mesh is the authoritative s
         workflowIdentity: 'TRUNNION-WORKFLOW-1',
         nodeCount: 24,
         elementCount: 24,
+        constraintCount: 60,
+        fixedNodeIds: Array.from({ length: 12 }, (_, index) => `O${String(index).padStart(2, '0')}`),
         parentSchema: 'lafea5-source-shell-parent/v1',
         domainFirst: false,
         shellParentActive: true,
@@ -162,6 +166,24 @@ test('production LAFEA.4 and LAFEA.5 Sample retained mesh is the authoritative s
     const executed = await page.evaluate((id) => {
       const stage = globalThis.AnalysisWorkspace.getLafeaWorkbenchState().stages[id];
       const execution = stage.execution;
+      const shellResult = id === 'LAFEA.5' ? execution.result?.rawShellResult : execution.result;
+      let maximumDisplacement = 0;
+      let maximumVonMises = 0;
+      for (const loadCase of shellResult?.loadCaseResults ?? []) {
+        for (const row of loadCase.nodalDisplacements ?? []) {
+          maximumDisplacement = Math.max(
+            maximumDisplacement,
+            Math.hypot(row.ux ?? 0, row.uy ?? 0, row.uz ?? 0),
+          );
+        }
+        for (const elementResult of loadCase.elementResults ?? []) {
+          for (const point of elementResult.integrationPoints ?? []) {
+            for (const surface of point.surfaces ?? []) {
+              maximumVonMises = Math.max(maximumVonMises, Math.abs(surface.vonMises ?? 0));
+            }
+          }
+        }
+      }
       return {
         workbenchStatus: globalThis.AnalysisWorkspace.getLafeaWorkbenchState().status,
         route: execution.route,
@@ -171,6 +193,14 @@ test('production LAFEA.4 and LAFEA.5 Sample retained mesh is the authoritative s
         executionMeshBindingHash: execution.executionMeshBindingHash,
         compiledExecutionHash: execution.compiledExecutionHash,
         resultAccepted: execution.result?.qualification?.accepted === true,
+        maximumDisplacement,
+        maximumVonMises,
+        forceEquilibriumAccepted: (shellResult?.loadCaseResults ?? []).every(
+          (row) => row.forceEquilibrium?.qualification?.accepted === true,
+        ),
+        momentEquilibriumAccepted: (shellResult?.loadCaseResults ?? []).every(
+          (row) => row.momentEquilibrium?.qualification?.accepted === true,
+        ),
         calculationState: stage.lifecycleReadiness.calculationState,
         resultReady: stage.lifecycleReadiness.resultReady,
         lifecycleMeshHash: stage.lifecycle.artifacts.ANALYSIS_MESH?.artifactHash ?? null,
@@ -190,6 +220,8 @@ test('production LAFEA.4 and LAFEA.5 Sample retained mesh is the authoritative s
     expect(executed.executionMeshBindingHash).toMatch(/^sha256:[0-9a-f]{64}$/);
     expect(executed.compiledExecutionHash).toMatch(/^sha256:[0-9a-f]{64}$/);
     expect(executed.resultAccepted).toBe(true);
+    expect(executed.forceEquilibriumAccepted).toBe(true);
+    expect(executed.momentEquilibriumAccepted).toBe(true);
     expect(executed.lifecycleMeshHash).toBe(retained.meshHash);
     expect(executed.lifecycleExecutionHash).toBe(executed.compiledExecutionHash);
     expect(executed.lifecycleRecoveryState).toBe('CURRENT');
@@ -198,6 +230,13 @@ test('production LAFEA.4 and LAFEA.5 Sample retained mesh is the authoritative s
     expect(executed.resultReady).toBe(true);
     expect(executed.orchestrationExecutionState).toBe('COMPLETE');
     expect(executed.orchestrationResultsState).toBe('COMPLETE');
+
+    if (stageId === 'LAFEA.5') {
+      expect(executed.maximumDisplacement).toBeGreaterThan(1e-6);
+      expect(executed.maximumDisplacement).toBeLessThan(0.01);
+      expect(executed.maximumVonMises).toBeGreaterThan(1e-3);
+      expect(executed.maximumVonMises).toBeLessThan(100);
+    }
 
     await viewport.scrollIntoViewIfNeeded();
     const screenshotPath = testInfo.outputPath(`${stageId.replace('.', '').toLowerCase()}-sample-mesh.png`);

@@ -34,7 +34,8 @@ const continuum = buildLafeaAnalysisSettingsViewModel(stage(
   continuumDocument,
   'FEA_MESH_RECOVERY_V1',
 ));
-assert.equal(value(continuum, 'Formulation'), continuumDocument.formulation);
+assert.equal(value(continuum, 'Formulation'), 'Plane stress');
+assert.equal(continuum.formulationControl.current, continuumDocument.formulation);
 assert.match(value(continuum, 'Requested analyses / cases'), /L1/u);
 assert.match(value(continuum, 'Unit basis'), /stress: MPa/u);
 assert.equal(value(continuum, 'Code / allowable basis'), 'Not declared by the active stage source contract');
@@ -44,6 +45,8 @@ console.log(JSON.stringify({
   status: 'PASS',
   sourceSettingsEditable: true,
   governedSolverSettingsLocked: true,
+  humanReadableFormulationProjection: true,
+  governedFormulationIdentityPreserved: true,
   missingCodeBasisIsExplicit: true,
   githubActionsWorkflowAdded: false,
 }));

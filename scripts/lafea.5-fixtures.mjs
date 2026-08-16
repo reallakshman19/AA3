@@ -19,7 +19,9 @@ import {
 export function clone(value) { return structuredClone(value); }
 
 export function workflowSource(options = {}) {
-  const shellTemplate = options.shellTemplate ?? stableShellTemplate();
+  const shellTemplate = options.shellTemplate ?? stableShellTemplate({
+    boundaryMode: options.shellBoundaryMode ?? 'OUTER_RING_FIXED',
+  });
   const attachment = options.attachment ?? attachmentEvidence();
   const footprintIds = shellTemplate.nodes.filter((node) => node.nodeId.startsWith('F')).map((node) => node.nodeId).sort();
   const elementIds = shellTemplate.elements.map((element) => element.elementId).sort();
@@ -146,7 +148,11 @@ export function attachmentCases() {
   ];
 }
 
-export function stableShellTemplate({ singular = false, segments = 12 } = {}) {
+export function stableShellTemplate({
+  singular = false,
+  segments = 12,
+  boundaryMode = 'ALL_FIXED',
+} = {}) {
   const radius = 10, axialOffset = 5;
   const nodes = [];
   for (let index = 0; index < segments; index += 1) {
@@ -170,12 +176,33 @@ export function stableShellTemplate({ singular = false, segments = 12 } = {}) {
     formulation: SHELL_FORMULATION,
     materials: [{ materialId: 'M1', elasticModulus: 200000, poissonRatio: 0.3, sourceReference: 'steel' }],
     nodes, elements,
-    constraints: singular ? [] : nodes.flatMap((node) => ['UX', 'UY', 'UZ', 'R1', 'R2'].map((dof) => ({ constraintId: `C-${node.nodeId}-${dof}`, nodeId: node.nodeId, dof, value: 0, sourceReference: 'caller-boundary' }))),
+    constraints: shellConstraints(nodes, singular, boundaryMode),
     qualificationProfile: shellProfile(),
     resultRequests: { stressSurfaces: ['BOTTOM', 'MIDSURFACE', 'TOP'], dktIntegrationRule: 'FIXED_THREE_POINT_DEGREE_TWO', retainElementMatrices: true },
     limitations: shellLimitations(),
   };
 }
+
+function shellConstraints(nodes, singular, boundaryMode) {
+  if (singular) return [];
+  const fixedNodes = boundaryMode === 'ALL_FIXED'
+    ? nodes
+    : boundaryMode === 'OUTER_RING_FIXED'
+      ? nodes.filter((node) => node.nodeId.startsWith('O'))
+      : null;
+  if (!fixedNodes) throw new TypeError(`Unsupported shell boundaryMode ${boundaryMode}.`);
+  const sourceReference = boundaryMode === 'OUTER_RING_FIXED'
+    ? 'engineering-sample-outer-ring-boundary'
+    : 'caller-boundary';
+  return fixedNodes.flatMap((node) => ['UX', 'UY', 'UZ', 'R1', 'R2'].map((dof) => ({
+    constraintId: `C-${node.nodeId}-${dof}`,
+    nodeId: node.nodeId,
+    dof,
+    value: 0,
+    sourceReference,
+  })));
+}
+
 function shellNode(nodeId, position) {
   const [x, y] = position; const director = [x / 10, y / 10, 0];
   return { nodeId, position, director, rotationBasis1: [0, 0, 1], rotationBasis2: [director[1], -director[0], 0], sourceReference: `mesh-${nodeId}` };

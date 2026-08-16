@@ -194,7 +194,7 @@ function shellProfile(stageId, globalTargetSize) {
   return canonicalProfile(PROFILE_KINDS.MESH, {
     schema: 'lafea-mesh-profile/v1',
     profileIdentity: `P2_8_${stageId.replace('.', '_')}_SHELL_${globalTargetSize}`,
-    sourceRevision: 'R7',
+    sourceRevision: 'R8',
     semanticHash: undefined,
     fields: {
       continuumElement: 'T3',
@@ -203,7 +203,7 @@ function shellProfile(stageId, globalTargetSize) {
       adjacentSizeRatioMax: 1.5,
       aspectRatioWarn: 3,
       aspectRatioBlock: 10,
-      scaledJacobianWarn: 0.5,
+      scaledJacobianWarn: 0.6,
       scaledJacobianBlock: 0.2,
       adaptiveLevels: 3,
     },

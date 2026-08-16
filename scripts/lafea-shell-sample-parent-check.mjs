@@ -124,7 +124,7 @@ assert.throws(
 );
 
 const weakProfile5 = shellProfile('LAFEA.5', {
-  profileSuffix: 'WEAKENED', fields: { aspectRatioWarn: 4 },
+  profileSuffix: 'WEAKENED', fields: { aspectRatioWarn: 6 },
 });
 const weakPlan5 = planLafea5SourceShellMeshAdoption({ parent: parent5, meshProfile: weakProfile5 });
 assert.throws(

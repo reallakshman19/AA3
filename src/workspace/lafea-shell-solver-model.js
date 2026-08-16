@@ -2,23 +2,20 @@
  * Governed LAFEA.4/.5 retained-shell-mesh -> solver-model compiler.
  *
  * This compiler is intentionally bounded. It only transfers mechanics that can
- * be proved from current source authority without inventing geometric sets:
+ * be proved from current source authority without inventing geometric sets.
  *
- * LAFEA.4
+ * LAFEA.4 authority:
  *  - one material and one uniform thickness over the source shell;
  *  - nodal director/tangent bases reconstructed from the retained midsurface;
- *  - prescribed DOFs only when each DOF is either absent everywhere or has one
- *    identical value at every source node (whole-surface prescription);
+ *  - global translations only when one identical value covers every source node;
+ *  - local R1/R2 prescriptions only when the whole-surface value is exactly zero;
  *  - no nodal-force remapping;
- *  - pressure only when the source case applies one identical pressure/sense to
- *    every source element (whole-surface pressure).
+ *  - pressure only when one identical pressure/sense covers every source element.
  *
- * LAFEA.5
+ * LAFEA.5 authority:
  *  - no remeshing and no mechanics interpolation;
- *  - the retained mesh must be exactly the caller-authored shellTemplate mesh;
- *  - the trunnion workflow remains the load-distribution and shell-solve
- *    authority. Execution later proves its generated shell model is bound to
- *    this retained mesh.
+ *  - retained mesh must exactly equal the caller-authored shellTemplate mesh;
+ *  - trunnion workflow remains load-distribution and shell-solve authority.
  */
 import {
   createCanonicalLocalShellModel,
@@ -28,6 +25,7 @@ import {
   canonicalShellTemplateSemanticHash,
   createCanonicalTrunnionFootprintModel,
   createCanonicalTrunnionFootprintSource,
+  validateCanonicalTrunnionFootprintModel,
 } from '../core/local-trunnion-footprint/index.js';
 import {
   lafeaAnalysisMeshContentHash,
@@ -49,12 +47,17 @@ export const LAFEA_SHELL_SOLVER_MODEL_BINDING_SCHEMA = 'lafea-shell-solver-model
 
 const SHELL_ELEMENT = 'CST_DKT_TRI3_THIN_SHELL_V1';
 const DOFS = Object.freeze(['UX', 'UY', 'UZ', 'R1', 'R2']);
+const LOCAL_ROTATION_DOFS = new Set(['R1', 'R2']);
 const STAGES = Object.freeze(['LAFEA.4', 'LAFEA.5']);
 
 export function compileLafeaShellSolverModel(options) {
   const stageId = requireStage(options?.stageId);
-  const source = sourceAuthorityDocument(requireRecord(options?.source, 'LAFEA_SHELL_SOLVER_SOURCE_REQUIRED'));
-  const sourceHash = requireHash(options?.sourceHash, 'LAFEA_SHELL_SOLVER_SOURCE_HASH_REQUIRED');
+  const source = sourceAuthorityDocument(requireRecord(
+    options?.source, 'LAFEA_SHELL_SOLVER_SOURCE_REQUIRED',
+  ));
+  const sourceHash = requireHash(
+    options?.sourceHash, 'LAFEA_SHELL_SOLVER_SOURCE_HASH_REQUIRED',
+  );
   const expectedSourceHash = canonicalLafeaSha256({
     schema: 'lafea-source-authority-payload/v1',
     stageId,
@@ -139,8 +142,14 @@ export function projectLafeaShellSolverModelBinding(stageValue) {
       !stage.retainedAnalysisMeshEvidenceV2 ? 'SHELL_SOLVER_RETAINED_MESH_ABSENT' : null,
     ]);
   }
-  const sourceHash = stage.sourceAuthority?.sourceHash ?? stage.lifecycle?.source?.sourceHash ?? null;
-  if (!sourceHash) return bindingResult(stage.stageId, 'ABSENT', false, ['SHELL_SOLVER_SOURCE_AUTHORITY_ABSENT']);
+  const sourceHash = stage.sourceAuthority?.sourceHash
+    ?? stage.lifecycle?.source?.sourceHash
+    ?? null;
+  if (!sourceHash) {
+    return bindingResult(stage.stageId, 'ABSENT', false, [
+      'SHELL_SOLVER_SOURCE_AUTHORITY_ABSENT',
+    ]);
+  }
   try {
     const compiled = compileLafeaShellSolverModel({
       stageId: stage.stageId,
@@ -165,7 +174,9 @@ export function projectLafeaShellSolverModelBinding(stageValue) {
     });
   } catch (error) {
     return bindingResult(stage.stageId, 'BLOCKED', false, [
-      typeof error?.code === 'string' ? error.code : 'LAFEA_SHELL_SOLVER_MODEL_COMPILATION_REJECTED',
+      typeof error?.code === 'string'
+        ? error.code
+        : 'LAFEA_SHELL_SOLVER_MODEL_COMPILATION_REJECTED',
     ], stage.retainedAnalysisMeshEvidenceV2?.meshHash ?? null);
   }
 }
@@ -178,9 +189,12 @@ function compileLafea4(source, parent, meshEvidence) {
   }
   const canonical = validateCanonicalLocalShellModel(createCanonicalLocalShellModel(source));
   const section = requireUniformSection(canonical);
-  const nodes = meshEvidence.mesh.nodes.map((row) => compileLafea4Node(row, parent, meshEvidence.meshHash));
+  const nodes = meshEvidence.mesh.nodes.map((row) =>
+    compileLafea4Node(row, parent, meshEvidence.meshHash));
   const elements = meshEvidence.mesh.elements.map((row) => {
-    if (row.elementType !== SHELL_ELEMENT) fail('LAFEA4_SHELL_SOLVER_ELEMENT_FAMILY_INVALID');
+    if (row.elementType !== SHELL_ELEMENT) {
+      fail('LAFEA4_SHELL_SOLVER_ELEMENT_FAMILY_INVALID');
+    }
     return {
       elementId: row.elementId,
       nodeIds: [...row.nodeIds],
@@ -189,8 +203,12 @@ function compileLafea4(source, parent, meshEvidence) {
       sourceReference: `LAFEA4-COMPILED-MESH:${meshEvidence.meshHash}:${row.elementId}`,
     };
   });
-  const constraints = compileWholeSurfaceConstraints(canonical, meshEvidence.mesh.nodes, meshEvidence.meshHash);
-  const loadCases = compileLafea4LoadCases(canonical, meshEvidence.mesh.elements, meshEvidence.meshHash);
+  const constraints = compileWholeSurfaceConstraints(
+    canonical, meshEvidence.mesh.nodes, meshEvidence.meshHash,
+  );
+  const loadCases = compileLafea4LoadCases(
+    canonical, meshEvidence.mesh.elements, meshEvidence.meshHash,
+  );
   const compiledSource = {
     schema: canonical.schema,
     modelIdentity: canonical.modelIdentity,
@@ -214,10 +232,13 @@ function compileLafea4(source, parent, meshEvidence) {
       'RETAINED_SHELL_MESH_UNIFORM_REGION_COMPILER_V1',
       'NO_GENERAL_NODAL_LOAD_TRANSFER',
       'NO_PARTIAL_BOUNDARY_CONSTRAINT_TRANSFER',
+      'NO_NONZERO_LOCAL_ROTATION_CONSTRAINT_TRANSFER',
       'NO_PARTIAL_SURFACE_PRESSURE_TRANSFER',
     ])].sort(),
   };
-  const canonicalShellModel = validateCanonicalLocalShellModel(createCanonicalLocalShellModel(compiledSource));
+  const canonicalShellModel = validateCanonicalLocalShellModel(
+    createCanonicalLocalShellModel(compiledSource),
+  );
   const meshBinding = proveKernelMeshBinding(meshEvidence.mesh, canonicalShellModel);
   const canonicalInputHash = canonicalLafeaSha256({
     schema: 'lafea4-shell-compiler-source-input-hash/v1',
@@ -234,7 +255,8 @@ function compileLafea4(source, parent, meshEvidence) {
       materialId: section.materialId,
       thickness: section.thickness,
       nodeFrameAuthority: parent.analysisGeometryHash,
-      constraintPolicy: 'WHOLE_SURFACE_IDENTICAL_VALUE_PER_DOF_ONLY',
+      translationConstraintPolicy: 'WHOLE_SURFACE_IDENTICAL_GLOBAL_VALUE_PER_DOF_ONLY',
+      localRotationConstraintPolicy: 'WHOLE_SURFACE_ZERO_ONLY',
       nodalLoadPolicy: 'REJECT_NONEMPTY',
       pressurePolicy: 'WHOLE_SURFACE_UNIFORM_PRESSURE_AND_SENSE_ONLY',
       meshBinding,
@@ -248,7 +270,9 @@ function compileLafea5(source, parent, meshEvidence) {
     fail('LAFEA5_SHELL_SOLVER_SOURCE_MESH_PARENT_REQUIRED');
   }
   const canonicalSource = createCanonicalTrunnionFootprintSource(source);
-  const canonicalWorkflowModel = createCanonicalTrunnionFootprintModel(canonicalSource);
+  const canonicalWorkflowModel = validateCanonicalTrunnionFootprintModel(
+    createCanonicalTrunnionFootprintModel(canonicalSource),
+  );
   const templateHash = canonicalShellTemplateSemanticHash(canonicalSource.shellTemplate);
   if (templateHash !== parent.shellTemplateSemanticHash) {
     fail('LAFEA5_SHELL_SOLVER_TEMPLATE_PARENT_STALE');
@@ -340,12 +364,16 @@ function compileWholeSurfaceConstraints(canonical, targetNodes, meshHash) {
     }
     const values = [...new Set(rows.map((row) => canonicalNumber(row.value)))];
     if (values.length !== 1) fail('LAFEA4_SHELL_SOLVER_CONSTRAINT_MAPPING_REQUIRED');
+    const value = values[0];
+    if (LOCAL_ROTATION_DOFS.has(dof) && value !== 0) {
+      fail('LAFEA4_SHELL_SOLVER_NONZERO_LOCAL_ROTATION_MAPPING_REQUIRED');
+    }
     for (const node of targetNodes) {
       output.push({
         constraintId: `LAFEA4-MESH-${node.nodeId}-${dof}`,
         nodeId: node.nodeId,
         dof,
-        value: values[0],
+        value,
         sourceReference: `LAFEA4-COMPILED-WHOLE-SURFACE-DOF:${meshHash}:${dof}`,
       });
     }
@@ -370,7 +398,8 @@ function compileLafea4LoadCases(canonical, targetElements, meshHash) {
 
 function compileWholeSurfacePressure(canonical, loadCase, targetElements, meshHash) {
   if (loadCase.pressureLoads.length !== canonical.elements.length
-    || new Set(loadCase.pressureLoads.map((row) => row.elementId)).size !== canonical.elements.length) {
+    || new Set(loadCase.pressureLoads.map((row) => row.elementId)).size
+      !== canonical.elements.length) {
     fail('LAFEA4_SHELL_SOLVER_PRESSURE_REGION_MAPPING_REQUIRED');
   }
   const sourceElementIds = new Set(canonical.elements.map((row) => row.elementId));
@@ -399,11 +428,14 @@ function proveKernelMeshBinding(retainedMesh, canonicalShellModel) {
   }
   for (const node of retainedMesh.nodes) {
     const kernel = nodeById.get(node.nodeId);
-    if (!kernel || canonicalLafeaSha256(kernel.position) !== canonicalLafeaSha256([node.x, node.y, node.z])) {
+    if (!kernel || canonicalLafeaSha256(kernel.position)
+      !== canonicalLafeaSha256([node.x, node.y, node.z])) {
       fail('LAFEA4_SHELL_SOLVER_KERNEL_NODE_BINDING_MISMATCH');
     }
   }
-  const retainedElementById = new Map(retainedMesh.elements.map((row) => [row.elementId, row]));
+  const retainedElementById = new Map(
+    retainedMesh.elements.map((row) => [row.elementId, row]),
+  );
   const elementBindings = canonicalShellModel.elements.map((kernel) => {
     const retained = retainedElementById.get(kernel.elementId);
     if (!retained
@@ -442,15 +474,31 @@ function bindingResult(stageId, state, usableForRun, reasons, meshHash = null) {
 }
 
 function vectorArray(value) {
-  if (Array.isArray(value) && value.length === 3 && value.every(Number.isFinite)) return [...value];
-  if (value && Number.isFinite(value.x) && Number.isFinite(value.y) && Number.isFinite(value.z)) {
+  if (Array.isArray(value) && value.length === 3 && value.every(Number.isFinite)) {
+    return [...value];
+  }
+  if (value && Number.isFinite(value.x)
+    && Number.isFinite(value.y) && Number.isFinite(value.z)) {
     return [value.x, value.y, value.z];
   }
   fail('LAFEA_SHELL_SOLVER_FRAME_VECTOR_INVALID');
 }
 function canonicalNumber(value) { return Object.is(value, -0) ? 0 : value; }
-function requireStage(value) { if (!STAGES.includes(value)) fail('LAFEA_SHELL_SOLVER_STAGE_INVALID'); return value; }
-function requireRecord(value, code) { if (!value || typeof value !== 'object' || Array.isArray(value)) fail(code); return value; }
-function requireHash(value, code) { if (typeof value !== 'string' || !/^sha256:[0-9a-f]{64}$/u.test(value)) fail(code); return value; }
+function requireStage(value) {
+  if (!STAGES.includes(value)) fail('LAFEA_SHELL_SOLVER_STAGE_INVALID');
+  return value;
+}
+function requireRecord(value, code) {
+  if (!value || typeof value !== 'object' || Array.isArray(value)) fail(code);
+  return value;
+}
+function requireHash(value, code) {
+  if (typeof value !== 'string' || !/^sha256:[0-9a-f]{64}$/u.test(value)) fail(code);
+  return value;
+}
 function fail(code) { const error = new TypeError(code); error.code = code; throw error; }
-function freeze(value) { if (!value || typeof value !== 'object' || Object.isFrozen(value)) return value; Object.values(value).forEach(freeze); return Object.freeze(value); }
+function freeze(value) {
+  if (!value || typeof value !== 'object' || Object.isFrozen(value)) return value;
+  Object.values(value).forEach(freeze);
+  return Object.freeze(value);
+}

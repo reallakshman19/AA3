@@ -318,7 +318,7 @@ function qualifyAndRunWorkbench(workbench, stageId, parent, profile, expectedMod
   assert.equal(stage.orchestration.sections.AUTHORIZATION.state, 'READY');
   assert.ok(stage.orchestration.sections.EXECUTION.allowedActions.includes('RUN_SOLVE'));
   assert.equal(
-    stageId === 'LAFEA.5' ? generated.plan.generationMode : 'AUTOMATIC',
+    stageId === 'LAFEA.5' ? generated.summary.generationMode : 'AUTOMATIC',
     expectedMode,
   );
   workbench.run();

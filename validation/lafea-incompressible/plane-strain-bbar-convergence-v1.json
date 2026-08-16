@@ -1,0 +1,43 @@
+{
+  "schema": "lafea-plane-strain-bbar-convergence-policy/v1",
+  "programmeId": "LAFEA3-PS-BBAR-001",
+  "definitionState": "FROZEN_BEFORE_PRODUCTION_OBSERVATION",
+  "productionOutputUsedToChooseDefinition": false,
+  "minimumUsefulLevels": 3,
+  "availableLevels": 4,
+  "refinementRatio": 2,
+  "gciSafetyFactor": 1.25,
+  "orderStabilityRelativeTolerance": 0.2,
+  "nearZeroAbsoluteByQuantityClass": {
+    "DISPLACEMENT_MM": 1e-10,
+    "STRESS_MPA": 1e-8,
+    "REACTION_N": 1e-8,
+    "MOMENT_N_MM": 1e-6,
+    "ENERGY_N_MM": 1e-10
+  },
+  "classificationVocabulary": [
+    "ASYMPTOTIC",
+    "MONOTONIC_CONVERGING",
+    "PRE_ASYMPTOTIC",
+    "OSCILLATORY",
+    "DIVERGENT",
+    "NEAR_ZERO_SCALE_LIMITED",
+    "NEAR_ZERO_FINE_DIFFERENCE",
+    "SINGULAR_EXCLUDED"
+  ],
+  "richardsonGciPolicy": "ONLY_WHEN_POSITIVE_MEANINGFUL_ORDER_AND_NON_OSCILLATORY_NON_DIVERGENT_SEQUENCE_SUPPORT_IT",
+  "acceptedForGciQualification": [
+    "ASYMPTOTIC",
+    "MONOTONIC_CONVERGING",
+    "NEAR_ZERO_FINE_DIFFERENCE"
+  ],
+  "fixedPhysicalQuantityIdentityRequired": true,
+  "sameProbeIdentityHashRequiredAcrossLevels": true,
+  "sameQuantityIdentityHashRequiredAcrossLevels": true,
+  "sameUnitsRequiredAcrossLevels": true,
+  "movingMaximumForbidden": true,
+  "displayInterpolationForbiddenAsAcceptanceAuthority": true,
+  "nodalAveragingForbiddenAsAcceptanceAuthority": true,
+  "singularPointwisePeaksExcluded": true,
+  "releaseAuthorityGranted": false
+}

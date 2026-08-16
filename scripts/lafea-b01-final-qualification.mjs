@@ -40,6 +40,7 @@ const commands = [
   command('prior-imposed-displacement-control', process.execPath, [path.join(ROOT, 'scripts/lafea.3-loads-imposed-displacement-check.mjs')]),
   command('prior-t6-control', process.execPath, [path.join(ROOT, 'scripts/lafea.3-t6-patch-check.mjs')]),
   command('prior-q8-control', process.execPath, [path.join(ROOT, 'scripts/lafea.3-q8-patch-check.mjs')]),
+  command('plane-strain-bbar-qualification', process.execPath, [path.join(ROOT, 'scripts/lafea-plane-strain-bbar-qualification-check.mjs')]),
   command('registered-base-54', process.execPath, [path.join(ROOT, 'scripts/lafea-b01-registered-route-check.mjs'), '--report-dir', baseDir]),
   command('metamorphic-270', process.execPath, [path.join(ROOT, 'scripts/lafea-b01-metamorphic-route-check.mjs'), '--report-dir', metamorphicDir]),
   command('fail-closed-16', process.execPath, [path.join(ROOT, 'scripts/lafea-b01-negative-governed-check.mjs'), '--report-dir', negativeDir]),
@@ -67,8 +68,12 @@ const custodyPaths = [
   'validation/lafea-benchmark-data/B01/governance/negative-cases.json',
   'validation/lafea-benchmark-data/B01/mesh-generator.py',
   'validation/lafea-benchmark-program/program.json',
+  'validation/lafea-incompressible/plane-strain-bbar-v1.json',
+  'validation/lafea-incompressible/plane-strain-bbar-convergence-v1.json',
+  'validation/lafea-incompressible/plane-strain-bbar-probe-mesh-policy-v1.json',
   'src/workspace/lafea-stage-registry.js',
   'src/workspace/lafea-stage-components.js',
+  'src/core/local-continuum/bbar-plane-strain.js',
   'src/core/local-continuum/element.js',
   'src/core/local-continuum/t6-element.js',
   'src/core/local-continuum/q8-element.js',
@@ -76,6 +81,11 @@ const custodyPaths = [
   'src/core/local-continuum/solver.js',
   'src/core/local-continuum/rigid-reference-conditioning.js',
   'src/core/shared-primitives/units.js',
+  'scripts/lafea-plane-strain-bbar-freeze-check.mjs',
+  'scripts/lafea-plane-strain-bbar-source-guard.mjs',
+  'scripts/lafea-plane-strain-bbar-kernel-check.mjs',
+  'scripts/lafea-plane-strain-bbar-lame-check.mjs',
+  'scripts/lafea-plane-strain-bbar-qualification-check.mjs',
   'scripts/lafea-b01-registered-route-check.mjs',
   'scripts/lafea-b01-metamorphic-route-check.mjs',
   'scripts/lafea-b01-negative-route-check.mjs',
@@ -103,6 +113,7 @@ const frozenBaselineSourceCustody = sourceRegistry.sources.map((source) => {
 
 const exactHeadMatchesExpectation = expectedHead === null || expectedHead === gitHead;
 const allCommandsPassed = commands.every((row) => row.exitCode === 0);
+const bbarQualified = commands.find((row) => row.id === 'plane-strain-bbar-qualification')?.exitCode === 0;
 const baseQualified = baseMaster?.status === 'PASS'
   && baseMaster.selectedRunCount === 54 && baseMaster.passCount === 54 && baseMaster.failCount === 0;
 const metamorphicQualified = metamorphicMaster?.status === 'PASS'
@@ -117,7 +128,7 @@ const cleanTreeAtEnd = isCleanTree();
 const receiptBase = {
   schema: 'lafea-b01-final-integrated-receipt/v1',
   issue: 1100,
-  program: 'B01',
+  program: 'B01_PLUS_BBAR_INTEGRATION',
   stageId: 'LAFEA.3',
   branchHead: gitHead,
   expectedBranchHead: expectedHead,
@@ -170,10 +181,23 @@ const receiptBase = {
   frozenNegativeDefinitionCustody: {
     sha256: fileCustody['validation/lafea-benchmark-data/B01/governance/negative-cases.json'].sha256,
   },
+  bbarCustody: {
+    qualificationDefinitionSha256: fileCustody['validation/lafea-incompressible/plane-strain-bbar-v1.json'].sha256,
+    convergenceDefinitionSha256: fileCustody['validation/lafea-incompressible/plane-strain-bbar-convergence-v1.json'].sha256,
+    probeMeshPolicySha256: fileCustody['validation/lafea-incompressible/plane-strain-bbar-probe-mesh-policy-v1.json'].sha256,
+    mechanicsBlobSha: fileCustody['src/core/local-continuum/bbar-plane-strain.js'].gitBlobSha,
+    expectedProductionSolveCount: 120,
+  },
   commands,
   qualification: {
     allCommandsPassed,
     routeQualified,
+    planeStrainBbar: {
+      status: bbarQualified ? 'PASS' : 'FAIL',
+      qualified: bbarQualified,
+      releaseAuthorityGranted: false,
+      temperatureAuthorityGranted: false,
+    },
     base: summary(baseMaster, 54, baseQualified, 'selectedRunCount'),
     metamorphic: summary(metamorphicMaster, 270, metamorphicQualified, 'selectedVariantRunCount'),
     failClosed: {
@@ -183,19 +207,21 @@ const receiptBase = {
   },
   limitations: [
     'B01_AFFINE_LINEAR_CONTINUUM_CODE_VERIFICATION_ONLY',
-    'NO_NONLINEAR_AUTHORITY_FROM_B01',
-    'NO_CONTACT_AUTHORITY_FROM_B01',
-    'NO_SHELL_OR_WELD_AUTHORITY_FROM_B01',
-    'NO_DESIGN_CODE_AUTHORITY_FROM_B01',
-    'NO_RELEASE_AUTHORITY_FROM_B01',
+    'PLANE_STRAIN_BBAR_MECHANICAL_AUTHORITY_REQUIRES_FROZEN_LAME_NU_DISTORTION_MATRIX',
+    'PLANE_STRAIN_BBAR_T3_AUTHORITY_NOT_GRANTED',
+    'PLANE_STRAIN_BBAR_TEMPERATURE_AUTHORITY_NOT_GRANTED',
+    'NO_NONLINEAR_AUTHORITY_FROM_B01_OR_BBAR',
+    'NO_CONTACT_AUTHORITY_FROM_B01_OR_BBAR',
+    'NO_SHELL_OR_WELD_AUTHORITY_FROM_B01_OR_BBAR',
+    'NO_DESIGN_CODE_AUTHORITY_FROM_B01_OR_BBAR',
+    'NO_RELEASE_AUTHORITY_FROM_B01_OR_BBAR',
     'T6_Q8_INTEGRATION_POINT_STRESS_AUTHORITATIVE; PROJECTED_NODAL_STRESS_DISPLAY_ONLY',
-    'PRODUCTION_GEOMETRY_TO_MESH_TO_CONVERGENCE_ORCHESTRATION_REMAINS_OUTSIDE_B01_SCOPE',
   ],
   releaseAuthorityGrantedByProgram: false,
   temperatureAuthorityGrantedByProgram: false,
 };
 const pass = cleanTreeAtStart && cleanTreeAtEnd && exactHeadMatchesExpectation
-  && baselineIsAncestor && allCommandsPassed && routeQualified
+  && baselineIsAncestor && allCommandsPassed && routeQualified && bbarQualified
   && baseQualified && metamorphicQualified && negativeQualified;
 const receipt = {
   ...receiptBase,
@@ -210,6 +236,7 @@ console.log(JSON.stringify({
   schema: receipt.schema,
   status: receipt.status,
   branchHead: receipt.branchHead,
+  planeStrainBbar: receipt.qualification.planeStrainBbar,
   base: receipt.qualification.base,
   metamorphic: receipt.qualification.metamorphic,
   failClosed: receipt.qualification.failClosed,

@@ -209,6 +209,7 @@ export function produceLafea5SourceShellMeshAdoption(input) {
   return freeze({
     schema: 'lafea5-source-shell-adoption-result/v1',
     stageId: 'LAFEA.5',
+    plan,
     planHash: plan.planHash,
     sourceShellParentHash: parent.semanticHash,
     sourceShellTemplateHash: parent.shellTemplateSemanticHash,

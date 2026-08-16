@@ -43,8 +43,20 @@ jobs:
           node --check src/workspace/lafea-results-view.js
           node --check src/workspace/lafea-discretization-panel.js
           node --check src/workspace/lafea-analysis-settings-view.js
+          node --check src/workspace/lafea-shell-solver-model.js
+          node --check src/workspace/lafea-shell-preparation-projection.js
+          node --check src/workspace/lafea-workbench-shell-execution-state.js
+          node --check src/workspace/lafea-workbench-shell-run-actions.js
+          node --check scripts/lafea-shell-compiled-execution-check.mjs
+          node --check scripts/lafea-shell-response-acceptance-check.mjs
           node tests/lafea-engineering-overview.test.mjs
           node scripts/lafea-ui-analysis-settings-check.mjs
+      - name: Qualify governed shell mesh compiler and execution custody
+        run: |
+          node scripts/lafea-shell-sample-parent-check.mjs
+          node scripts/lafea-shell-workbench-route-check.mjs
+          node scripts/lafea-shell-compiled-execution-check.mjs
+          node scripts/lafea-shell-response-acceptance-check.mjs
       - name: Prove standalone boundary failure is inherited unchanged
         shell: bash
         run: |

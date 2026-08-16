@@ -36,15 +36,35 @@ import {
   validateLafeaPeriodicShellMidsurfaceEvidence,
   validateLafeaPeriodicShellMidsurfaceGeometry,
 } from './lafea-shell-periodic-midsurface-contract.js';
+import {
+  LAFEA_SHELL_MULTIPATCH_MIDSURFACE_EVIDENCE_SCHEMA,
+  LAFEA_SHELL_MULTIPATCH_MIDSURFACE_GEOMETRY_SCHEMA,
+  multiPatchShellFrame,
+  multiPatchShellPoint3d,
+  validateLafeaMultiPatchShellMidsurfaceEvidence,
+  validateLafeaMultiPatchShellMidsurfaceGeometry,
+} from './lafea-shell-multipatch-midsurface-contract.js';
+import {
+  LAFEA5_SOURCE_SHELL_PARENT_SCHEMA,
+  validateLafea5SourceShellParent,
+} from './lafea-source-shell-mesh-adoption.js';
 
 export const LAFEA_SHELL_SURFACE_KINDS = Object.freeze({
   PLANAR: 'PLANAR',
+  PLANAR_MULTIPATCH: 'PLANAR_MULTIPATCH',
   CYLINDRICAL: 'CYLINDRICAL',
   CYLINDRICAL_HOLES: 'CYLINDRICAL_HOLES',
   CYLINDRICAL_PERIODIC: 'CYLINDRICAL_PERIODIC',
+  SOURCE_MESH: 'SOURCE_MESH',
 });
 
 export function validateLafeaAnyShellMidsurfaceEvidence(value) {
+  if (value?.schema === LAFEA5_SOURCE_SHELL_PARENT_SCHEMA) {
+    return validateLafea5SourceShellParent(value);
+  }
+  if (value?.schema === LAFEA_SHELL_MULTIPATCH_MIDSURFACE_EVIDENCE_SCHEMA) {
+    return validateLafeaMultiPatchShellMidsurfaceEvidence(value);
+  }
   if (value?.schema === LAFEA_SHELL_PERIODIC_MIDSURFACE_EVIDENCE_SCHEMA) {
     return validateLafeaPeriodicShellMidsurfaceEvidence(value);
   }
@@ -62,6 +82,14 @@ export function validateLafeaAnyShellMidsurfaceEvidence(value) {
 
 export function shellMidsurfaceKind(value) {
   const geometry = value?.geometry ?? value;
+  if (geometry?.schema === LAFEA5_SOURCE_SHELL_PARENT_SCHEMA) {
+    validateLafea5SourceShellParent(geometry);
+    return LAFEA_SHELL_SURFACE_KINDS.SOURCE_MESH;
+  }
+  if (geometry?.schema === LAFEA_SHELL_MULTIPATCH_MIDSURFACE_GEOMETRY_SCHEMA) {
+    validateLafeaMultiPatchShellMidsurfaceGeometry(geometry);
+    return LAFEA_SHELL_SURFACE_KINDS.PLANAR_MULTIPATCH;
+  }
   if (geometry?.schema === LAFEA_SHELL_PERIODIC_MIDSURFACE_GEOMETRY_SCHEMA) {
     validateLafeaPeriodicShellMidsurfaceGeometry(geometry);
     return LAFEA_SHELL_SURFACE_KINDS.CYLINDRICAL_PERIODIC;
@@ -83,6 +111,9 @@ export function shellMidsurfaceKind(value) {
 
 export function shellMidsurfacePoint3dAny(geometry, u, v) {
   const kind = shellMidsurfaceKind(geometry);
+  if (kind === LAFEA_SHELL_SURFACE_KINDS.SOURCE_MESH) {
+    fail('LAFEA5_SOURCE_SHELL_ADOPTION_HAS_NO_PARAMETRIC_MIDSURFACE');
+  }
   if (kind === LAFEA_SHELL_SURFACE_KINDS.CYLINDRICAL_PERIODIC) {
     return periodicCylindricalShellPoint3d(geometry, u, v);
   }
@@ -92,11 +123,17 @@ export function shellMidsurfacePoint3dAny(geometry, u, v) {
   if (kind === LAFEA_SHELL_SURFACE_KINDS.CYLINDRICAL) {
     return cylindricalShellPoint3d(geometry, u, v);
   }
+  if (kind === LAFEA_SHELL_SURFACE_KINDS.PLANAR_MULTIPATCH) {
+    return multiPatchShellPoint3d(geometry, u, v);
+  }
   return shellMidsurfacePoint3d(geometry, u, v);
 }
 
 export function shellMidsurfaceFrameAtUvAny(geometry, u, v) {
   const kind = shellMidsurfaceKind(geometry);
+  if (kind === LAFEA_SHELL_SURFACE_KINDS.SOURCE_MESH) {
+    fail('LAFEA5_SOURCE_SHELL_ADOPTION_HAS_NO_PARAMETRIC_MIDSURFACE');
+  }
   if (kind === LAFEA_SHELL_SURFACE_KINDS.CYLINDRICAL_PERIODIC) {
     return periodicCylindricalShellFrameAtUv(geometry, u, v);
   }
@@ -105,6 +142,9 @@ export function shellMidsurfaceFrameAtUvAny(geometry, u, v) {
   }
   if (kind === LAFEA_SHELL_SURFACE_KINDS.CYLINDRICAL) {
     return cylindricalShellFrameAtUv(geometry, u, v);
+  }
+  if (kind === LAFEA_SHELL_SURFACE_KINDS.PLANAR_MULTIPATCH) {
+    return multiPatchShellFrame(geometry);
   }
   const planar = validateLafeaShellMidsurfaceGeometry(geometry);
   const director = cross(planar.axisU, planar.axisV);
@@ -117,6 +157,9 @@ export function shellMidsurfaceFrameAtUvAny(geometry, u, v) {
 
 export function shellMidsurfaceFrameAtPoint3dAny(geometry, point) {
   const kind = shellMidsurfaceKind(geometry);
+  if (kind === LAFEA_SHELL_SURFACE_KINDS.SOURCE_MESH) {
+    fail('LAFEA5_SOURCE_SHELL_ADOPTION_HAS_NO_PARAMETRIC_MIDSURFACE');
+  }
   if (kind === LAFEA_SHELL_SURFACE_KINDS.CYLINDRICAL_PERIODIC) {
     return periodicCylindricalShellFrameAtPoint3d(geometry, physicalPoint(point));
   }
@@ -126,11 +169,14 @@ export function shellMidsurfaceFrameAtPoint3dAny(geometry, point) {
   if (kind === LAFEA_SHELL_SURFACE_KINDS.CYLINDRICAL) {
     return cylindricalShellFrameAtPoint3d(geometry, physicalPoint(point));
   }
+  if (kind === LAFEA_SHELL_SURFACE_KINDS.PLANAR_MULTIPATCH) {
+    const planar = validateLafeaMultiPatchShellMidsurfaceGeometry(geometry);
+    requirePointOnPlane(planar, point);
+    return multiPatchShellFrame(planar);
+  }
   const planar = validateLafeaShellMidsurfaceGeometry(geometry);
-  const offset = subtract(point, planar.origin);
+  requirePointOnPlane(planar, point);
   const normal = cross(planar.axisU, planar.axisV);
-  const normalResidual = Math.abs(dot(offset, normal));
-  if (normalResidual > 1e-9) fail('LAFEA_SHELL_PLANAR_POINT_NOT_ON_MIDSURFACE');
   return freeze({ director: normal, rotationBasis1: planar.axisU, rotationBasis2: planar.axisV });
 }
 
@@ -138,6 +184,9 @@ export function shellMidsurfaceParameterGeometry(value) {
   const evidence = value?.geometry ? validateLafeaAnyShellMidsurfaceEvidence(value) : null;
   const geometry = evidence?.geometry ?? value;
   const kind = shellMidsurfaceKind(geometry);
+  if (kind === LAFEA_SHELL_SURFACE_KINDS.SOURCE_MESH) {
+    fail('LAFEA5_SOURCE_SHELL_ADOPTION_HAS_NO_PARAMETRIC_MIDSURFACE');
+  }
   if (kind === LAFEA_SHELL_SURFACE_KINDS.CYLINDRICAL_PERIODIC) {
     return periodicCylindricalShellParameterGeometry(geometry);
   }
@@ -146,6 +195,9 @@ export function shellMidsurfaceParameterGeometry(value) {
   }
   if (kind === LAFEA_SHELL_SURFACE_KINDS.CYLINDRICAL) {
     return curvedShellParameterGeometry(geometry);
+  }
+  if (kind === LAFEA_SHELL_SURFACE_KINDS.PLANAR_MULTIPATCH) {
+    fail('LAFEA_SHELL_MULTIPATCH_REQUIRES_PATCHWISE_PARAMETER_MESHING');
   }
   const planar = validateLafeaShellMidsurfaceGeometry(geometry);
   return createLafeaAnalysisGeometry({
@@ -168,6 +220,12 @@ export function shellMidsurfaceParameterGeometry(value) {
   });
 }
 
+function requirePointOnPlane(planar, point) {
+  const offset = subtract(physicalPoint(point), planar.origin);
+  const normal = cross(planar.axisU, planar.axisV);
+  const normalResidual = Math.abs(dot(offset, normal));
+  if (normalResidual > 1e-9) fail('LAFEA_SHELL_PLANAR_POINT_NOT_ON_MIDSURFACE');
+}
 function physicalPoint(value) {
   if (!value || typeof value !== 'object'
     || !Number.isFinite(value.x) || !Number.isFinite(value.y) || !Number.isFinite(value.z)) {

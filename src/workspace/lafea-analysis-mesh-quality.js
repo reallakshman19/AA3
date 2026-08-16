@@ -9,6 +9,10 @@ import {
   qualifyScaledJacobian,
   worstStatus,
 } from '../core/lafea-meshing/index.js';
+import {
+  ORIENTATION_STATES,
+  diagnoseOrientation,
+} from '../core/local-shell/orientation-diagnostics.js';
 
 export const LAFEA_ANALYSIS_MESH_QUALITY_SCHEMA = 'lafea-analysis-mesh-quality/v1';
 
@@ -37,7 +41,8 @@ export function qualifyLafeaAnalysisMesh(stageId, mesh, meshProfile) {
   });
   const aspectValue = Math.max(...elementResults.map((row) => row.metrics[0].value));
   const jacobianValue = Math.min(...elementResults.map((row) => row.metrics[1].value));
-  const gateResults = Object.freeze([
+  const shellOrientationTopology = shellOrientationTopologyQualification(stageId, mesh);
+  const gateRows = [
     aggregateMetric('ASPECT_RATIO', aspectValue,
       classifyHigher(aspectValue, thresholds.aspectRatioWarn, thresholds.aspectRatioBlock),
       thresholds.aspectRatioWarn, thresholds.aspectRatioBlock),
@@ -45,19 +50,78 @@ export function qualifyLafeaAnalysisMesh(stageId, mesh, meshProfile) {
       jacobianValue <= 0 ? 'BLOCK' : classifyLower(
         jacobianValue, thresholds.scaledJacobianWarn, thresholds.scaledJacobianBlock,
       ), thresholds.scaledJacobianWarn, thresholds.scaledJacobianBlock),
-  ]);
+  ];
+  if (shellOrientationTopology) gateRows.push(shellOrientationTopology.gate);
+  const gateResults = Object.freeze(gateRows);
+  const blockingElementIds = new Set(
+    elementResults.filter((row) => row.worstStatus === 'BLOCK').map((row) => row.elementId),
+  );
+  for (const elementId of shellOrientationTopology?.blockingElementIds ?? []) {
+    blockingElementIds.add(elementId);
+  }
   return deepFreeze({
     schema: LAFEA_ANALYSIS_MESH_QUALITY_SCHEMA,
     meshProfileIdentity: meshProfile.profileIdentity,
     meshProfileHash: meshProfile.semanticHash,
     elementResults,
     gateResults,
+    shellOrientationTopology: shellOrientationTopology?.evidence ?? null,
     worstStatus: worstStatus(gateResults),
-    blockingElementIds: elementResults
-      .filter((row) => row.worstStatus === 'BLOCK').map((row) => row.elementId),
+    blockingElementIds: [...blockingElementIds].sort(),
     warningElementIds: elementResults
       .filter((row) => row.worstStatus === 'WARNING').map((row) => row.elementId),
     elementCount: elementResults.length,
+  });
+}
+
+function shellOrientationTopologyQualification(stageId, mesh) {
+  if (stageId === 'LAFEA.3') return null;
+  const diagnosis = diagnoseOrientation(mesh.elements);
+  const edgeUsers = new Map();
+  for (const element of mesh.elements) {
+    const ids = element.nodeIds.slice(0, 3);
+    for (const [a, b] of [[ids[0], ids[1]], [ids[1], ids[2]], [ids[2], ids[0]]]) {
+      const key = a < b ? `${a}\u0000${b}` : `${b}\u0000${a}`;
+      const row = edgeUsers.get(key) ?? [];
+      row.push(element.elementId);
+      edgeUsers.set(key, row);
+    }
+  }
+  const nonManifoldEdges = [...edgeUsers.entries()]
+    .filter(([, elementIds]) => elementIds.length > 2)
+    .map(([edgeKey, elementIds]) => Object.freeze({
+      nodeIds: Object.freeze(edgeKey.split('\u0000')),
+      elementIds: Object.freeze([...elementIds].sort()),
+    }));
+  const consistent = diagnosis.state === ORIENTATION_STATES.CONSISTENT
+    && nonManifoldEdges.length === 0;
+  const blockingElementIds = new Set(diagnosis.elementsRequiringFlip);
+  if (diagnosis.state === ORIENTATION_STATES.DISCONNECTED_PATCHES) {
+    mesh.elements.forEach((element) => blockingElementIds.add(element.elementId));
+  }
+  for (const edge of nonManifoldEdges) {
+    edge.elementIds.forEach((elementId) => blockingElementIds.add(elementId));
+  }
+  const status = consistent ? 'OK' : 'BLOCK';
+  return Object.freeze({
+    gate: Object.freeze({
+      metric: 'SHELL_ORIENTATION_TOPOLOGY',
+      value: consistent ? 1 : 0,
+      status,
+      warningThreshold: null,
+      blockingThreshold: 1,
+    }),
+    blockingElementIds: Object.freeze([...blockingElementIds].sort()),
+    evidence: Object.freeze({
+      formulaId: diagnosis.formulaId,
+      state: diagnosis.state,
+      patchCount: diagnosis.patchCount,
+      elementsRequiringFlip: Object.freeze([...diagnosis.elementsRequiringFlip]),
+      conflicts: diagnosis.conflicts,
+      nonManifoldEdgeCount: nonManifoldEdges.length,
+      nonManifoldEdges: Object.freeze(nonManifoldEdges),
+      qualification: consistent ? 'PASS' : 'BLOCK',
+    }),
   });
 }
 
@@ -102,6 +166,9 @@ function triangleScaledJacobian(stageId, nodes) {
     if (stageId === 'LAFEA.3') {
       return ((first.x * second.y) - (first.y * second.x)) / denominator;
     }
+    // Shell triangle shape uses the unsigned 3D area magnitude. Winding and
+    // topology are qualified independently above because signed shell normal
+    // custody cannot be inferred from a scalar shape metric.
     return norm3d(cross3d(first, second)) / denominator;
   }));
 }

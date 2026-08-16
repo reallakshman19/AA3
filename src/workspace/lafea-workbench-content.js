@@ -268,20 +268,37 @@ function renderNextActionBanner(root, stage, discretization, workflow, options, 
   }
 
   if (!discretization.evidence.present) {
-    banner.append(element(root, 'strong', null, 'Step 2: Mesh generation required'));
-    const btn = element(root, 'button', 'lafea-next-action-banner__button', 'Generate qualified mesh');
+    const sourceAdoption = discretization.generation.generationMode === 'SOURCE_MESH_ADOPTION';
+    const quickActionReady = discretization.generation.producerQualified
+      && (discretization.generation.available
+        || discretization.generation.unavailableReason === 'ANALYSIS_MESH_PROFILE_BINDING_REQUIRED');
+    banner.append(element(
+      root,
+      'strong',
+      null,
+      sourceAdoption ? 'Step 2: Source mesh adoption required' : 'Step 2: Mesh generation required',
+    ));
+    const btn = element(
+      root,
+      'button',
+      'lafea-next-action-banner__button',
+      sourceAdoption ? 'Adopt qualified source mesh' : 'Generate qualified mesh',
+    );
     btn.type = 'button';
     btn.style.padding = '8px 16px';
     btn.style.background = '#1976d2';
     btn.style.color = 'white';
     btn.style.border = 'none';
     btn.style.borderRadius = '4px';
-    btn.style.cursor = 'pointer';
+    btn.style.cursor = quickActionReady ? 'pointer' : 'not-allowed';
     btn.style.fontWeight = 'bold';
-    btn.disabled = !discretization.generation.producerQualified;
-    btn.title = btn.disabled
-      ? 'No qualified automatic mesh producer is available for this stage.'
-      : 'Bind the source-controlled qualified mesh profile and generate from it.';
+    btn.disabled = !quickActionReady;
+    btn.title = quickActionReady
+      ? sourceAdoption
+        ? 'Bind the source-controlled shell quality profile and retain the exact caller-authored source mesh without remeshing.'
+        : 'Bind the source-controlled qualified mesh profile and generate from the current governed parent.'
+      : discretization.generation.unavailableReason
+        ?? 'No qualified mesh producer is available for this stage.';
     btn.onclick = () => {
       const family = preferredQuickMeshFamily(discretization.generation.elementFamilies);
       if (!family) return;
@@ -346,14 +363,15 @@ function renderNextActionBanner(root, stage, discretization, workflow, options, 
 
 function quickMeshProfile(family) {
   const defaults = defaultProfileFields(PROFILE_KINDS.MESH);
+  const shellFamily = family === SHELL_ELEMENT_PLACEHOLDER;
   const profileEnvelope = {
     schema: 'lafea-mesh-profile/v1',
-    profileIdentity: `LAFEA3_QUICK_${family}_QUALIFIED_PROFILE_V2`,
+    profileIdentity: `LAFEA_QUICK_${family}_QUALIFIED_PROFILE_V3`,
     sourceRevision: QUICK_MESH_PROFILE_SOURCE_REVISION,
     fields: {
       ...defaults,
-      continuumElement: family,
-      shellElement: SHELL_ELEMENT_PLACEHOLDER,
+      continuumElement: shellFamily ? defaults.continuumElement : family,
+      shellElement: shellFamily ? family : SHELL_ELEMENT_PLACEHOLDER,
       globalTargetSize: QUICK_MESH_TARGET_LENGTH,
     },
   };

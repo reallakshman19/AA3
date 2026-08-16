@@ -7,6 +7,10 @@ import {
   LAFEA_MESH_PRODUCER_REF,
   lafeaMeshProducerElementFamilies,
 } from './lafea-mesh-producer-registry.js';
+import {
+  LAFEA5_SOURCE_SHELL_ADOPTION_PRODUCER_REF,
+  LAFEA5_SOURCE_SHELL_PARENT_SCHEMA,
+} from './lafea-source-shell-mesh-adoption.js';
 
 export const LAFEA_DISCRETIZATION_VIEW_MODEL_SCHEMA =
   'lafea-discretization-view-model/v1';
@@ -52,7 +56,9 @@ export function buildLafeaDiscretizationViewModel(stageValue) {
     generation,
     configuration: {
       declaredMode: profile.meshApplicable
-        ? (generation.available ? 'AUTOMATIC_MESH' : 'RETAIN_AUTHORIZED_MESH')
+        ? generation.generationMode === 'SOURCE_MESH_ADOPTION'
+          ? 'SOURCE_DISCRETIZATION'
+          : generation.available ? 'AUTOMATIC_MESH' : 'RETAIN_AUTHORIZED_MESH'
         : null,
       modes: modeOptions(
         profile.meshApplicable,
@@ -137,7 +143,8 @@ export function buildLafeaDiscretizationViewModel(stageValue) {
       canAuthorize: custody.usableForAuthorization === true,
       canRun: custody.usableForRun === true,
       warningReviewRequired: custody.state === 'CURRENT_WARNING',
-      automaticMeshEnabled: generation.available,
+      automaticMeshEnabled: generation.generationMode === 'AUTOMATIC_MESH'
+        && generation.available,
       manualRefinementEnabled,
       canPlanMesh: generation.available,
       canGenerateMesh: generation.available
@@ -211,17 +218,22 @@ function modeOptions(
       reason: 'ANALYSIS_MESH_NOT_APPLICABLE',
     }));
   }
+  const sourceAdoption = generation.generationMode === 'SOURCE_MESH_ADOPTION';
   return [
     { mode: 'RETAIN_AUTHORIZED_MESH', enabled: true, reason: null },
     {
       mode: 'SOURCE_DISCRETIZATION',
-      enabled: false,
-      reason: 'NO_STAGE_SOURCE_DISCRETIZATION_AUTHORITY',
+      enabled: sourceAdoption && generation.available,
+      reason: sourceAdoption
+        ? generation.available ? null : generation.unavailableReason
+        : 'NO_STAGE_SOURCE_DISCRETIZATION_AUTHORITY',
     },
     {
       mode: 'AUTOMATIC_MESH',
-      enabled: generation.available,
-      reason: generation.available ? null : generation.unavailableReason,
+      enabled: !sourceAdoption && generation.available,
+      reason: sourceAdoption
+        ? 'LAFEA5_CALLER_AUTHORED_SOURCE_MESH_IS_PRESERVED_NO_REMESHING'
+        : generation.available ? null : generation.unavailableReason,
     },
     {
       mode: 'MANUAL_REFINEMENT',
@@ -250,9 +262,9 @@ function refinementUnavailableReason(capabilities, retainedElementFamily) {
 }
 
 /**
- * What the Discretization surface needs to offer automatic meshing: whether a
- * producer is qualified for the stage, whether this stage's mesh-independent
- * parent is ready for it, and the last plan the producer returned.
+ * What the Discretization surface needs to offer automatic meshing or exact
+ * source-mesh adoption: whether a producer is qualified for the stage, whether
+ * the current mesh parent is ready, and the last plan the producer returned.
  */
 function buildGenerationModel(stage, capabilities) {
   const producerQualified = capabilities.automaticMeshProducerQualified === true;
@@ -262,6 +274,7 @@ function buildGenerationModel(stage, capabilities) {
   const geometryCurrent = stage.analysisGeometryProjection?.state === 'CURRENT_PASS'
     && stage.analysisDomainProjection?.state === 'CURRENT_PASS';
   const shellParent = stage.retainedShellMidsurfaceEvidence ?? null;
+  const sourceMeshAdoption = shellParent?.schema === LAFEA5_SOURCE_SHELL_PARENT_SCHEMA;
   const sourceHash = stage.sourceAuthority?.sourceHash ?? stage.lifecycle?.source?.sourceHash ?? null;
   const shellCurrent = shellMidsurface
     && shellParent?.qualification === 'PASS'
@@ -290,16 +303,23 @@ function buildGenerationModel(stage, capabilities) {
     producerQualified,
     available: unavailableReason === null,
     unavailableReason,
-    producerRef: producerQualified ? LAFEA_MESH_PRODUCER_REF : null,
-    governanceRef: producerQualified ? LAFEA_MESH_PRODUCER_GOVERNANCE_REF : null,
+    generationMode: sourceMeshAdoption ? 'SOURCE_MESH_ADOPTION' : 'AUTOMATIC_MESH',
+    producerRef: producerQualified
+      ? sourceMeshAdoption ? LAFEA5_SOURCE_SHELL_ADOPTION_PRODUCER_REF : LAFEA_MESH_PRODUCER_REF
+      : null,
+    governanceRef: producerQualified
+      ? sourceMeshAdoption
+        ? 'LAFEA.5 caller-authored host-shell footprint source-mesh identity preservation'
+        : LAFEA_MESH_PRODUCER_GOVERNANCE_REF
+      : null,
     elementFamilies: lafeaMeshProducerElementFamilies(stage.stageId),
     localRefinementElementFamilies: [...capabilities.localRefinementElementFamilies],
     meshProfileBound: Boolean(meshProfile),
     meshProfileIdentity: meshProfile?.profileIdentity ?? null,
-    targetElementLength: meshProfile?.fields.globalTargetSize ?? null,
+    targetElementLength: sourceMeshAdoption ? null : meshProfile?.fields.globalTargetSize ?? null,
     declaredElementFamily: declaredFamily(stage.stageId, meshProfile),
     lengthUnit: shellMidsurface
-      ? shellParent?.geometry?.lengthUnit ?? null
+      ? shellParent?.geometry?.lengthUnit ?? shellParent?.lengthUnit ?? null
       : stage.retainedAnalysisGeometryEvidence?.geometry?.lengthUnit ?? null,
     plan: stage.lastAnalysisMeshPlan ?? null,
   };

@@ -84,3 +84,27 @@ merge waiver.
 - **Resolution:** select the direct parent summary (for example,
   `:scope > summary`) and retain all existing issue-count and evidence-text
   assertions.
+
+## KI-1159-006 — Latest-main production bundle fails its size and boot gates
+
+- **Status:** OPEN / pre-merge product blocker
+- **Reconciliation basis:** PR head `b49b74f58cc85b4f657ee88461819ede3c83f73f`
+  merged locally with `origin/main` at
+  `4cb67be6f2ac42a8274db69a3c0ac9e66b74bbb0`; merge checkpoint
+  `ae2eed1918f762c2dabdb48b1ea58e9f6e68f934`.
+- **Bundle observation:** the unchanged checkpoint transforms 1,765 modules,
+  then fails the existing 1,048,576-byte production ceiling because
+  `main-4yhEgcdE.js` is 1,081,350 bytes.
+- **Boot observation:** Rollup reports the circular chunk
+  `lafea-workbench-governance -> core-application ->
+  lafea-workbench-governance`. A real Chromium load of the generated preview
+  returns HTTP 200 but renders an empty body, does not publish
+  `globalThis.AnalysisWorkspace`, and raises `ReferenceError: Cannot access
+  'lI' before initialization` from the LAFEA governance chunk.
+- **Protected invariant:** do not increase the bundle ceiling, ignore the
+  browser boot failure, or force stateful controllers/stores/views into manual
+  chunks. Experimental partitions were removed before this record was made.
+- **Resolution:** isolate the newly reconciled LAFEA dependency edge, remove
+  the governance/core chunk cycle without changing engineering authority, and
+  require both the unchanged bundle gate and a generated-production Chromium
+  boot to pass before merge consideration.

@@ -26,25 +26,23 @@ and density fallback policy without replacing exact master authority.
 
 ## Live ground truth
 
-- Worktree: `F:/CODE-6/Advanced_Analysis`
-- Active branch: `feat/master-data-persistence-and-load-calc-fixes`
-- Current implementation commit: `05c0379c9535ecf5ec84e43b27f40fea55a946d7`.
-- Current local `main`: `e553c0438402` (stale local reference; not mutated).
-- Current `origin/main`: `58de0540` after a live fetch on 2026-08-16.
-- Relative to current `origin/main`, this branch was 37 commits behind and two
-  commits ahead before the Load Calc implementation commit. The remote branch
-  was advanced by a non-forced push from `85c9b2ac` to `05c0379c`; prior PR
-  #1136 remains merged and is not reused as evidence of review.
+- Isolated worktree: `F:/CODE-6/Advanced_Analysis_pr1159_ci`.
+- Active local branch: `codex/pr1159-ci-fix`; push target:
+  `feat/master-data-persistence-and-load-calc-fixes`.
+- Current reconciliation parent:
+  `ae2eed1918f762c2dabdb48b1ea58e9f6e68f934`.
+- Current `origin/main`:
+  `4cb67be6f2ac42a8274db69a3c0ac9e66b74bbb0` after a live fetch on
+  2026-08-16.
+- Remote PR branch head before this documentation push:
+  `b49b74f58cc85b4f657ee88461819ede3c83f73f`.
 - Current delivery: draft PR #1159,
   `https://github.com/reallaksh19/Advanced_Analysis/pull/1159`, targeting `main`.
   GitHub currently reports the draft as `UNSTABLE`; base reconciliation and
   required checks remain pre-merge work.
-- Local Vite server on port 5173 is launched from this worktree.
-- PR #1157 is present on `origin/main`; this local branch predates its merge and
-  contained unsafe calculation shortcuts in the files touched by this mission.
 - Owner explicitly authorized proceeding without a backup.
-- Existing unrelated dirty files, including `agents/WIP-HP-01_workreport.md`,
-  were preserved.
+- The original dirty workspace was not mutated; reconciliation and evidence
+  were produced only in the isolated worktree.
 
 ## Decision and protected invariants
 
@@ -344,9 +342,10 @@ Protected invariants:
 ## Reconciliation and qualification checkpoint (2026-08-16)
 
 - Reconciled PR head `b49b74f58cc85b4f657ee88461819ede3c83f73f`
-  with `origin/main` at `58de05406baed8f83e49cf380d61ef5a3c5132e3`
-  in isolated worktree `F:/CODE-6/Advanced_Analysis_pr1159_ci`; merge checkpoint
-  is `26eb51a9`.
+  first with `origin/main` at `58de05406baed8f83e49cf380d61ef5a3c5132e3`,
+  then with latest `origin/main` at
+  `4cb67be6f2ac42a8274db69a3c0ac9e66b74bbb0`. The current merge checkpoint is
+  `ae2eed1918f762c2dabdb48b1ea58e9f6e68f934`.
 - Active overlap audit: PR #1108 overlaps
   `src/workspace/topology-edit-3d-issue-controller.js` but owns the separate 3D
   operation-UI retirement scope. Classification: `COORDINATION_REQUIRED`, not
@@ -359,11 +358,21 @@ Protected invariants:
 - Engineering Table Node contracts: `PASS`, 94/94.
 - Focused real-data/checker/default tests: `PASS`, 19/19.
 - Targeted ESLint and diff whitespace: `PASS`.
-- Production build and bundle gate: `PASS`; 1,755 modules transformed. Largest
-  chunk is `main-CHYOzBQ4.js` at 1,045,786 bytes against the unchanged
-  1,048,576-byte hard limit. The reconciliation moves only audited stateless
-  empirical and linear-piping authority modules across explicit graph
-  boundaries; no UI controller, store, runtime state, or limit was changed.
+- Production build after the first reconciliation: `PASS`; 1,755 modules
+  transformed and `main-CHYOzBQ4.js` was 1,045,786 bytes against the unchanged
+  1,048,576-byte hard limit.
+- Production build after latest-main reconciliation: `FAIL`; 1,765 modules
+  transformed and `main-4yhEgcdE.js` is 1,081,350 bytes against the same hard
+  limit. Rollup also reports
+  `lafea-workbench-governance -> core-application ->
+  lafea-workbench-governance`.
+- Generated-production Chromium boot after latest-main reconciliation:
+  `FAIL`; HTTP 200 is returned, but the page body is empty,
+  `globalThis.AnalysisWorkspace` is absent, and the LAFEA governance chunk
+  raises `ReferenceError: Cannot access 'lI' before initialization`. This is
+  recorded as `KI-1159-006`. Experimental chunk partitions were reverted; no
+  controller, store, view, limit, or engineering authority was changed to
+  force a green result.
 - Engineering Table browser journey on a prewarmed persistent local server:
   `FAIL`, 8/9 passed. Support host drag requested 520 mm but prepared
   500.436281198874 mm, exceeding the unchanged 10 mm oracle. Direct ray/segment
@@ -387,9 +396,12 @@ Protected invariants:
 
 ## EXACT_NEXT_ACTION
 
-Push this checkpoint to PR #1159 without merging. Then capture pointer event
-coordinates at the `TopologyEditSupportHostDragRuntime` boundary, correct the
-first wrong pointer-to-station mapping without changing the 10 mm oracle, and
-rerun all nine Engineering Table browser journeys. After Actions capacity is
-restored, rerun `browser-authority` and `engineering-table` on the exact remote
-head. Do not classify either hosted check as PASS until it actually executes.
+Push this known-issue checkpoint to PR #1159 without merging. First resolve
+`KI-1159-006` by removing the LAFEA governance/core production chunk cycle and
+rerun both the unchanged bundle gate and generated-production Chromium boot.
+Then capture pointer event coordinates at the
+`TopologyEditSupportHostDragRuntime` boundary, correct the first wrong
+pointer-to-station mapping without changing the 10 mm oracle, and rerun all
+nine Engineering Table browser journeys. After Actions capacity is restored,
+rerun `browser-authority` and `engineering-table` on the exact remote head. Do
+not classify either hosted check as PASS until it actually executes.

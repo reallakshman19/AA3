@@ -173,14 +173,6 @@ export function manualChunk(id) {
   if (source.endsWith('/src/workspace/lafea-workbench-controller-io.js')) {
     return 'lafea-workbench-io';
   }
-  // The retained-shell compiler is a pure, fail-closed transformation. It owns
-  // no store, controller, DOM resource, or mutable singleton, and is large
-  // enough to form a useful leaf boundary without raising the 1 MiB entry cap.
-  // Browser qualification below remains mandatory because chunk size does not
-  // prove ESM evaluation-order safety.
-  if (source.endsWith('/src/workspace/lafea-shell-solver-model.js')) {
-    return 'lafea-shell-compiler';
-  }
   if (source.endsWith('/src/workspace/topology-edit/topology-edit-inline-component-replacement.js')
     || source.endsWith('/src/workspace/topology-edit/topology-edit-junction-relation-command.js')
     || source.endsWith('/src/workspace/topology-edit/topology-edit-engineering-edit-effect.js')) {
@@ -231,10 +223,16 @@ export function manualChunk(id) {
     .some((modulePath) => source.endsWith(modulePath))) {
     return 'lafea-workbench-governance';
   }
-  // Preserve current-main's browser-proven cycle breaker. A small set of core
-  // LAFEA meshing probes import this pure hash helper from the workspace layer;
-  // routing it with core-application prevents a mutual core/governance chunk
-  // cycle and the associated ESM TDZ boot failure.
+  // A handful of /src/core/lafea-meshing/ probes import this pure hash helper
+  // straight from the workspace layer. Left unrouted, Rollup follows that
+  // exclusive-dependent rule and pulls it into 'lafea-workbench-governance',
+  // which then makes 'core-application' depend on 'lafea-workbench-governance'
+  // for it while 'lafea-workbench-governance' independently depends on
+  // 'core-application' for LAFEA3_QUALIFIED_MESH_QUALITY_POLICY. That mutual
+  // chunk cycle reproduces "Cannot access '<binding>' before initialization"
+  // on boot (verified with a real browser load). This module only imports
+  // from core/shared-primitives, so routing it alongside its own dependency
+  // breaks the cycle without touching any workspace/core layering.
   if (source.endsWith('/src/workspace/lafea-canonical-sha256.js')) {
     return 'core-application';
   }

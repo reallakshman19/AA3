@@ -124,7 +124,7 @@ test('production LAFEA.4 and LAFEA.5 Sample geometry drives the retained mesh', 
     await expect(retainedOverlay).toBeVisible();
     await expect(retainedOverlay.locator('[data-mesh-element-id]')).toHaveCount(retained.elements.length);
     await expect(workbench.locator('[data-role="lafea-viewport-mode-panel"]')).toContainText(
-      `Mesh${retained.elements.length} ELEMENTS`,
+      `${retained.elements.length} ELEMENTS`,
     );
 
     await viewport.scrollIntoViewIfNeeded();

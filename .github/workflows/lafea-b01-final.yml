@@ -12,6 +12,7 @@ on:
       - 'src/core/shared-primitives/**'
       - 'src/workspace/lafea-stage-*.js'
       - 'src/workspace/lafea-workbench-*.js'
+      - 'src/workspace/lafea-continuum-probe-convergence.js'
       - 'reports/qualification/B01/**'
       - '.github/workflows/lafea-b01-final.yml'
   pull_request:
@@ -25,6 +26,7 @@ on:
       - 'src/core/shared-primitives/**'
       - 'src/workspace/lafea-stage-*.js'
       - 'src/workspace/lafea-workbench-*.js'
+      - 'src/workspace/lafea-continuum-probe-convergence.js'
       - 'reports/qualification/B01/**'
       - '.github/workflows/lafea-b01-final.yml'
 permissions: {contents: read}

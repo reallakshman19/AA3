@@ -62,10 +62,10 @@ assert.equal(model.solver.engine, 'src/core/local-continuum');
 assert.equal(model.solver.recovery, 'Integration-point stress (authoritative)');
 assert.equal(model.execution.accepted, true);
 assert.equal(model.execution.metrics.find((row) => row.label === 'Max displacement').value, 0.5);
-assert.ok(model.execution.metrics.find((row) => row.label === 'Max von Mises').value > 90);
+assert.equal(model.execution.metrics.find((row) => row.label === 'Max von Mises').value, 90);
 assert.equal(model.execution.metrics.find((row) => row.label === 'Max |σx|').value, 100);
-assert.equal(model.execution.metrics.find((row) => row.label === 'Total strain energy').value, 12.5);
-assert.equal(model.qualification.baseRuns, '54 / 54 PASS');
+assert.equal(model.execution.metrics.find((row) => row.label === 'Max load-case elastic energy').value, 12.5);
+assert.equal(model.qualification.baseRuns, 'NOT EMBEDDED IN WORKBENCH STATE');
 assert.equal(model.qualification.releaseAuthority, false);
 
 console.log('LAFEA visible engineering overview projection passed.');

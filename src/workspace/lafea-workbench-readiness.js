@@ -5,14 +5,16 @@ const DOMAIN_FIRST_ROUTE = 'DOMAIN_FIRST_COMPILED_SOLVER_MODEL';
 const SHELL_SOLVER_BINDING_REQUIRED = 'SHELL_RETAINED_MESH_NOT_BOUND_TO_SOLVER_MODEL';
 
 export function projectLafeaWorkbenchReadiness(stageId, stage) {
-  const calculationState = stage.execution?.status === 'QUALIFIED'
-    ? 'CALCULATION_ACCEPTED_BY_STAGE_CONTRACT'
-    : stage.execution ? 'CALCULATION_NOT_ACCEPTED_BY_STAGE_CONTRACT' : 'CALCULATION_NOT_RUN';
   const lifecycle = stage.lifecycle;
   const binding = stage.lifecycleBinding;
   const domainFirst = stage.domainFirstProfileActive === true;
   const shellMidsurface = stage.shellMidsurfaceProfileActive === true;
   const governedMesh = domainFirst || shellMidsurface;
+  const calculationState = shellMidsurface && stage.execution
+    ? 'CALCULATION_NOT_ACCEPTED_BY_STAGE_CONTRACT'
+    : stage.execution?.status === 'QUALIFIED'
+      ? 'CALCULATION_ACCEPTED_BY_STAGE_CONTRACT'
+      : stage.execution ? 'CALCULATION_NOT_ACCEPTED_BY_STAGE_CONTRACT' : 'CALCULATION_NOT_RUN';
   const domainCurrent = domainFirst && stage.analysisDomainProjection?.state === 'CURRENT_PASS';
   const geometryCurrent = domainFirst && stage.analysisGeometryProjection?.state === 'CURRENT_PASS';
   const custody = stage.analysisMeshCustodyProjection;

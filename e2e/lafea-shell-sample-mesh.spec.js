@@ -60,9 +60,16 @@ test('production LAFEA.4 and LAFEA.5 Sample geometry drives the retained mesh', 
       });
     }
 
-    // This is the same control a user presses. It binds the visible profile and
-    // immediately invokes the stage producer/adoption path.
-    await workbench.locator('[data-role="lafea-profile-bind"]').click();
+    // Exercise the same prominent action shown to a user after Sample loads.
+    // LAFEA.4 generates from its exact cylindrical parent; LAFEA.5 adopts its
+    // exact caller-authored shellTemplate without remeshing.
+    const quickMesh = workbench.locator('.lafea-next-action-banner__button');
+    await expect(quickMesh).toBeEnabled();
+    await expect(quickMesh).toHaveText(
+      stageId === 'LAFEA.4' ? 'Generate qualified mesh' : 'Adopt qualified source mesh',
+    );
+    await quickMesh.click();
+
     await expect.poll(() => page.evaluate(
       (id) => globalThis.AnalysisWorkspace.getLafeaWorkbenchState()
         .stages[id].retainedAnalysisMeshEvidenceV2?.qualification ?? null,
@@ -113,6 +120,13 @@ test('production LAFEA.4 and LAFEA.5 Sample geometry drives the retained mesh', 
 
     const viewport = workbench.locator('[data-guided-target="viewport"]');
     await expect(viewport).toBeVisible();
+    const retainedOverlay = viewport.locator('[data-role="lafea-retained-mesh-overlay"]');
+    await expect(retainedOverlay).toBeVisible();
+    await expect(retainedOverlay.locator('[data-mesh-element-id]')).toHaveCount(retained.elements.length);
+    await expect(workbench.locator('[data-role="lafea-viewport-mode-panel"]')).toContainText(
+      `Mesh${retained.elements.length} ELEMENTS`,
+    );
+
     await viewport.scrollIntoViewIfNeeded();
     const screenshotPath = testInfo.outputPath(`${stageId.replace('.', '').toLowerCase()}-sample-mesh.png`);
     await viewport.screenshot({ path: screenshotPath });

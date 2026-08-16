@@ -129,7 +129,10 @@ function validateLafea4SampleDiscretization(documentValue, geometry, halfArc) {
       expectedNodeIds.push(nodeId);
       const uv = uvByNode.get(nodeId);
       if (!uv) fail('LAFEA4_SIMULATED_CYLINDER_SOURCE_TOPOLOGY_MISMATCH');
-      const expectedU = -halfArc + (2 * halfArc * station / LAFEA4_SAMPLE_CIRCUMFERENTIAL_SEGMENTS);
+      // The fixture angle increases from -30° to +30°, while this cylinder
+      // contract defines positive u along axisDirection × radialDirection,
+      // which is the opposite circumferential sense for this fixture basis.
+      const expectedU = halfArc - (2 * halfArc * station / LAFEA4_SAMPLE_CIRCUMFERENTIAL_SEGMENTS);
       const expectedV = axial * LAFEA4_SAMPLE_LENGTH_MM;
       if (Math.abs(uv.u - expectedU) > tolerance || Math.abs(uv.v - expectedV) > tolerance) {
         fail('LAFEA4_SIMULATED_CYLINDER_SOURCE_STATION_MISMATCH');

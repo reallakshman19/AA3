@@ -1,11 +1,34 @@
 #!/usr/bin/env node
 import assert from 'node:assert/strict';
 
+import { PROFILE_KINDS, canonicalProfile } from '../src/core/lafea-profile-contract/index.js';
 import { createLafeaMockDocument } from '../src/workspace/advanced-mock-data.js';
 import { createLafeaSimulatedShellMidsurfaceEvidence } from '../src/workspace/lafea-simulated-shell-midsurface-provider.js';
 import { cylindricalShellUvAtPoint3d } from '../src/workspace/lafea-shell-curved-midsurface-contract.js';
+import {
+  createLafea5SourceShellParent,
+  planLafea5SourceShellMeshAdoption,
+  produceLafea5SourceShellMeshAdoption,
+} from '../src/workspace/lafea-source-shell-mesh-adoption.js';
 
 const SOURCE_HASH = `sha256:${'c'.repeat(64)}`;
+const shellProfile = (stageId) => canonicalProfile(PROFILE_KINDS.MESH, {
+  schema: 'lafea-mesh-profile/v1',
+  profileIdentity: `SAMPLE_${stageId.replace('.', '_')}_SHELL_MESH`,
+  sourceRevision: 'SAMPLE-PARENT-CHECK-V1',
+  semanticHash: undefined,
+  fields: {
+    continuumElement: 'T3',
+    shellElement: 'CST_DKT_TRI3_THIN_SHELL_V1',
+    globalTargetSize: 15,
+    adjacentSizeRatioMax: 1.5,
+    aspectRatioWarn: 5,
+    aspectRatioBlock: 10,
+    scaledJacobianWarn: 0.6,
+    scaledJacobianBlock: 0.2,
+    adaptiveLevels: 3,
+  },
+});
 
 const lafea4 = createLafeaMockDocument('LAFEA.4');
 const parent4 = createLafeaSimulatedShellMidsurfaceEvidence('LAFEA.4', SOURCE_HASH, lafea4);
@@ -26,11 +49,49 @@ for (const node of lafea4.nodes) {
 }
 
 const lafea5 = createLafeaMockDocument('LAFEA.5');
-const parent5 = createLafeaSimulatedShellMidsurfaceEvidence('LAFEA.5', SOURCE_HASH, lafea5);
+assert.equal(
+  createLafeaSimulatedShellMidsurfaceEvidence('LAFEA.5', SOURCE_HASH, lafea5),
+  null,
+  'LAFEA.5 must not be replaced by an analytic cylinder that changes the source footprint band.',
+);
+const parent5 = createLafea5SourceShellParent({
+  sourceHash: SOURCE_HASH,
+  shellTemplate: lafea5.shellTemplate,
+});
+const profile5 = shellProfile('LAFEA.5');
+const plan5 = planLafea5SourceShellMeshAdoption({ parent: parent5, meshProfile: profile5 });
+const produced5 = produceLafea5SourceShellMeshAdoption({
+  parent: parent5,
+  meshProfile: profile5,
+  plan: plan5,
+});
 assert.equal(lafea5.workflowIdentity, 'TRUNNION-WORKFLOW-1');
 assert.equal(lafea5.shellTemplate.nodes.length, 24);
 assert.equal(lafea5.shellTemplate.elements.length, 24);
-assert.equal(parent5, null);
+assert.equal(parent5.schema, 'lafea5-source-shell-parent/v1');
+assert.equal(parent5.qualification, 'PASS');
+assert.equal(plan5.generationMode, 'SOURCE_MESH_ADOPTION');
+assert.equal(plan5.topologyMutation, false);
+assert.equal(plan5.coordinateMutation, false);
+assert.equal(produced5.evidence.qualification, 'PASS');
+assert.equal(produced5.evidence.quality.blockingElementIds.length, 0);
+assert.equal(produced5.evidence.mesh.nodes.length, 24);
+assert.equal(produced5.evidence.mesh.elements.length, 24);
+assert.deepEqual(
+  produced5.evidence.mesh.nodes,
+  lafea5.shellTemplate.nodes.map((row) => ({
+    nodeId: row.nodeId,
+    x: row.position[0], y: row.position[1], z: row.position[2],
+  })).sort((a, b) => a.nodeId.localeCompare(b.nodeId)),
+);
+assert.deepEqual(
+  produced5.evidence.mesh.elements,
+  lafea5.shellTemplate.elements.map((row) => ({
+    elementId: row.elementId,
+    elementType: 'CST_DKT_TRI3_THIN_SHELL_V1',
+    nodeIds: [...row.nodeIds],
+  })).sort((a, b) => a.elementId.localeCompare(b.elementId)),
+);
 
 console.log(JSON.stringify({
   schema: 'lafea-shell-sample-parent-check/v1',
@@ -43,13 +104,21 @@ console.log(JSON.stringify({
     radius: parent4.geometry.surface.radius,
     axialLength: 50,
     angularSpanDegrees: 60,
+    meshMode: 'AUTOMATIC_CYLINDRICAL_MIDSURFACE_TRIANGULATION',
     shellParentRegistered: true,
   },
   lafea5: {
     sampleGeometry: 'TRUNNION_FOOTPRINT_CALLER_AUTHORED_SHELL_TEMPLATE',
     sampleNodes: lafea5.shellTemplate.nodes.length,
     sampleElements: lafea5.shellTemplate.elements.length,
-    shellParentRegistered: false,
-    disposition: 'FOOTPRINT_BAND_SURFACE_OR_SOURCE_MESH_ADOPTION_NOT_YET_QUALIFIED',
+    meshMode: plan5.generationMode,
+    shellParentRegistered: true,
+    producerRef: produced5.evidence.authority.producerRef,
+    retainedNodes: produced5.evidence.mesh.nodes.length,
+    retainedElements: produced5.evidence.mesh.elements.length,
+    warningElements: produced5.evidence.quality.warningElementIds.length,
+    blockingElements: produced5.evidence.quality.blockingElementIds.length,
+    topologyMutation: false,
+    coordinateMutation: false,
   },
 }, null, 2));

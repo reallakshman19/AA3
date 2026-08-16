@@ -1,8 +1,8 @@
 import { expect, test } from '@playwright/test';
 
-const SHELL_RUN_BLOCK = 'SHELL_RETAINED_MESH_NOT_BOUND_TO_SOLVER_MODEL';
+const SHELL_ROUTE = 'SHELL_RETAINED_MESH_COMPILED_SOLVER_MODEL';
 
-test('production LAFEA.4 and LAFEA.5 Sample geometry drives the retained mesh', async ({ page }, testInfo) => {
+test('production LAFEA.4 and LAFEA.5 Sample retained mesh is the authoritative solve mesh', async ({ page }, testInfo) => {
   await page.setViewportSize({ width: 1440, height: 1000 });
   await page.addInitScript(() => {
     globalThis.__WORKSPACE_VIEWPORT_BACKEND__ = 'canvas2d';
@@ -62,9 +62,6 @@ test('production LAFEA.4 and LAFEA.5 Sample geometry drives the retained mesh', 
       });
     }
 
-    // Exercise the same prominent action shown to a user after Sample loads.
-    // LAFEA.4 generates from its exact cylindrical parent; LAFEA.5 adopts its
-    // exact caller-authored shellTemplate without remeshing.
     const quickMesh = workbench.locator('.lafea-next-action-banner__button');
     await expect(quickMesh).toBeEnabled();
     await expect(quickMesh).toHaveText(
@@ -85,8 +82,14 @@ test('production LAFEA.4 and LAFEA.5 Sample geometry drives the retained mesh', 
         custody: stage.analysisMeshCustodyProjection.state,
         usableForRun: stage.analysisMeshCustodyProjection.usableForRun,
         runBlockingReasons: stage.analysisMeshCustodyProjection.runBlockingReasons,
+        meshHash: evidence.meshHash,
+        solverModelState: stage.shellSolverModelProjection?.state ?? null,
+        solverModelHash: stage.shellSolverModelProjection?.solverModelHash ?? null,
+        solverModelBindingHash: stage.shellSolverModelProjection?.solverModelBindingHash ?? null,
+        solverMappingMode: stage.shellSolverModelProjection?.mappingMode ?? null,
         authorizationState: stage.orchestration.sections.AUTHORIZATION.state,
         authorizationReasons: stage.orchestration.sections.AUTHORIZATION.reasons,
+        executionActions: stage.orchestration.sections.EXECUTION.allowedActions,
         orientationQualification: evidence.quality.shellOrientationTopology?.qualification ?? null,
         producerRef: evidence.authority.producerRef,
         nodes: evidence.mesh.nodes,
@@ -110,13 +113,18 @@ test('production LAFEA.4 and LAFEA.5 Sample geometry drives the retained mesh', 
 
     expect(retained.custody).toBe('CURRENT_PASS');
     expect(retained.orientationQualification).toBe('PASS');
-    expect(retained.usableForRun).toBe(false);
-    expect(retained.runBlockingReasons).toContain(SHELL_RUN_BLOCK);
-    expect(retained.authorizationState).toBe('BLOCKED');
-    expect(retained.authorizationReasons).toContain(SHELL_RUN_BLOCK);
-    await expect(workbench.locator('[data-role="lafea-overview-run"]')).toBeDisabled();
+    expect(retained.solverModelState).toBe('CURRENT_PASS');
+    expect(retained.solverModelHash).toMatch(/^sha256:[0-9a-f]{64}$/);
+    expect(retained.solverModelBindingHash).toMatch(/^sha256:[0-9a-f]{64}$/);
+    expect(retained.usableForRun).toBe(true);
+    expect(retained.runBlockingReasons).toEqual([]);
+    expect(retained.authorizationState).toBe('READY');
+    expect(retained.authorizationReasons).toEqual([]);
+    expect(retained.executionActions).toContain('RUN_SOLVE');
+    await expect(workbench.locator('[data-role="lafea-overview-run"]')).toBeEnabled();
 
     if (stageId === 'LAFEA.4') {
+      expect(retained.solverMappingMode).toBe('PARAMETRIC_MIDSURFACE_UNIFORM_REGION_TRANSFER_V1');
       expect(retained.nodes.length).toBeGreaterThan(0);
       expect(retained.elements.length).toBeGreaterThan(0);
       for (const node of retained.nodes) {
@@ -125,6 +133,7 @@ test('production LAFEA.4 and LAFEA.5 Sample geometry drives the retained mesh', 
         expect(node.x).toBeLessThanOrEqual(50 + 1e-9);
       }
     } else {
+      expect(retained.solverMappingMode).toBe('LOSSLESS_TRUNNION_SOURCE_SHELL_BINDING_V1');
       expect(retained.producerRef).toBe('LAFEA5_CALLER_AUTHORED_SHELL_TEMPLATE_ADOPTION_V1');
       expect(retained.nodes).toEqual(retained.sourceNodes);
       expect(retained.elements).toEqual(retained.sourceElements);
@@ -140,6 +149,55 @@ test('production LAFEA.4 and LAFEA.5 Sample geometry drives the retained mesh', 
     await expect(workbench.locator('[data-role="lafea-viewport-mode-panel"]')).toContainText(
       `${retained.elements.length} ELEMENTS`,
     );
+
+    // The product-level proof is not merely that the retained mesh is visible:
+    // the same meshHash must be carried through compiler, execution and lifecycle.
+    await workbench.locator('[data-role="lafea-overview-run"]').click();
+    await expect.poll(() => page.evaluate(
+      (id) => globalThis.AnalysisWorkspace.getLafeaWorkbenchState()
+        .stages[id].execution?.status ?? null,
+      stageId,
+    )).toBe('QUALIFIED');
+
+    const executed = await page.evaluate((id) => {
+      const stage = globalThis.AnalysisWorkspace.getLafeaWorkbenchState().stages[id];
+      const execution = stage.execution;
+      return {
+        workbenchStatus: globalThis.AnalysisWorkspace.getLafeaWorkbenchState().status,
+        route: execution.route,
+        meshHash: execution.meshHash,
+        solverModelHash: execution.solverModelHash,
+        solverModelBindingHash: execution.solverModelBindingHash,
+        executionMeshBindingHash: execution.executionMeshBindingHash,
+        compiledExecutionHash: execution.compiledExecutionHash,
+        resultAccepted: execution.result?.qualification?.accepted === true,
+        calculationState: stage.lifecycleReadiness.calculationState,
+        resultReady: stage.lifecycleReadiness.resultReady,
+        lifecycleMeshHash: stage.lifecycle.artifacts.ANALYSIS_MESH?.artifactHash ?? null,
+        lifecycleExecutionHash: stage.lifecycle.artifacts.EXECUTION?.artifactHash ?? null,
+        lifecycleRecoveryState: stage.lifecycle.artifacts.RECOVERY?.status ?? null,
+        lifecycleRecoveryQualification: stage.lifecycle.artifacts.RECOVERY?.qualification ?? null,
+        orchestrationExecutionState: stage.orchestration.sections.EXECUTION.state,
+        orchestrationResultsState: stage.orchestration.sections.RESULTS.state,
+      };
+    }, stageId);
+
+    expect(executed.workbenchStatus).not.toBe('FAILED');
+    expect(executed.route).toBe(SHELL_ROUTE);
+    expect(executed.meshHash).toBe(retained.meshHash);
+    expect(executed.solverModelHash).toBe(retained.solverModelHash);
+    expect(executed.solverModelBindingHash).toBe(retained.solverModelBindingHash);
+    expect(executed.executionMeshBindingHash).toMatch(/^sha256:[0-9a-f]{64}$/);
+    expect(executed.compiledExecutionHash).toMatch(/^sha256:[0-9a-f]{64}$/);
+    expect(executed.resultAccepted).toBe(true);
+    expect(executed.lifecycleMeshHash).toBe(retained.meshHash);
+    expect(executed.lifecycleExecutionHash).toBe(executed.compiledExecutionHash);
+    expect(executed.lifecycleRecoveryState).toBe('CURRENT');
+    expect(executed.lifecycleRecoveryQualification).toBe('PASS');
+    expect(executed.calculationState).toBe('CALCULATION_ACCEPTED_BY_STAGE_CONTRACT');
+    expect(executed.resultReady).toBe(true);
+    expect(executed.orchestrationExecutionState).toBe('COMPLETE');
+    expect(executed.orchestrationResultsState).toBe('COMPLETE');
 
     await viewport.scrollIntoViewIfNeeded();
     const screenshotPath = testInfo.outputPath(`${stageId.replace('.', '').toLowerCase()}-sample-mesh.png`);

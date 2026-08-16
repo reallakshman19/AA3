@@ -5,6 +5,9 @@ import {
   auditEmpiricalComponentLoadAuthority,
 } from './empirical-component-load-authority.js';
 import { projectDataEntry, projectDataValue, validateProjectDataProfile } from '../project-data/project-data-contract.js';
+import {
+  createConfiguredDefaultUsageLedger,
+} from '../project-data/non-fea-field-registry.js';
 
 export const SUPPORT_LOAD_DISTRIBUTION_SCHEMA = 'support-load-distribution/v3';
 export const SUPPORT_LOAD_DISTRIBUTION_COG_SCHEMA = 'support-load-distribution/v4';
@@ -66,6 +69,7 @@ function calculateDistribution(input, configuration) {
     execution,
   ));
   const sourceHash = input.dataset.sourceSha256 || null;
+  const configuredDefaultUsageLedger = buildConfiguredDefaultUsageLedger(input.profile, cases);
   const base = {
     schema: configuration.schema,
     method: configuration.method,
@@ -84,6 +88,7 @@ function calculateDistribution(input, configuration) {
       ? 'CALCULATED'
       : 'BLOCKED',
     loadCases: cases,
+    configuredDefaultUsageLedger,
     freshness: {
       status: 'CURRENT',
       datasetId: input.dataset.datasetId,
@@ -343,8 +348,8 @@ function insulationMass(section, lengthM, profile) {
     profile,
     'loadCalculation.insulationDensitiesKgPerM3',
   ) || {};
-  const density = densities[section.insulationCode];
-  if (!positive(density)) {
+  const densityResolution = resolveProjectDataDensity(densities, section.insulationCode);
+  if (!densityResolution) {
     return excluded('MISSING_INSULATION_DENSITY', 'loadCalculation.insulationDensitiesKgPerM3');
   }
   return {
@@ -352,8 +357,12 @@ function insulationMass(section, lengthM, profile) {
     massKg: annulusAreaM2(
       section.outsideDiameterMm + (2 * thickness),
       section.outsideDiameterMm,
-    ) * lengthM * density,
-    source: sourceRef(profile, 'loadCalculation.insulationDensitiesKgPerM3'),
+    ) * lengthM * densityResolution.densityKgPerM3,
+    source: resolvedDensitySourceRef(
+      profile,
+      'loadCalculation.insulationDensitiesKgPerM3',
+      densityResolution,
+    ),
   };
 }
 
@@ -363,13 +372,13 @@ function fluidMass(caseId, section, entity, insideDiameterMm, lengthM, profile) 
     ? 'loadCalculation.operatingFluidDensitiesKgPerM3'
     : 'loadCalculation.hydroFluidDensitiesKgPerM3';
   const densities = projectDataValue(profile, path) || {};
-  const value = densities[entity.lineKey];
-  const density = typeof value === 'number' ? value : value?.selected;
-  if (!positive(density)) return excluded('MISSING_FLUID_DENSITY', path);
+  const densityResolution = resolveProjectDataDensity(densities, entity.lineKey);
+  if (!densityResolution) return excluded('MISSING_FLUID_DENSITY', path);
   return {
     qualified: true,
-    massKg: Math.PI * insideDiameterMm ** 2 / 4e6 * lengthM * density,
-    source: sourceRef(profile, path),
+    massKg: Math.PI * insideDiameterMm ** 2 / 4e6
+      * lengthM * densityResolution.densityKgPerM3,
+    source: resolvedDensitySourceRef(profile, path, densityResolution),
   };
 }
 
@@ -605,6 +614,77 @@ function sourceRef(profile, path) {
   return entry ? { projectDataPath: path, evidence: entry.evidence } : null;
 }
 
+/** Resolve an exact scoped density first, then an explicit Project Data DEFAULT fallback. */
+export function resolveProjectDataDensity(densities, exactSelector) {
+  const exactDensity = densityValue(densities[exactSelector]);
+  if (positive(exactDensity)) {
+    return {
+      densityKgPerM3: Number(exactDensity),
+      selector: exactSelector,
+      authority: 'EXACT_SCOPED_VALUE',
+      fallbackUsed: false,
+    };
+  }
+  const fallbackDensity = densityValue(densities.DEFAULT);
+  if (!positive(fallbackDensity)) return null;
+  return {
+    densityKgPerM3: Number(fallbackDensity),
+    selector: 'DEFAULT',
+    authority: 'PROJECT_CONFIGURED_DEFAULT',
+    fallbackUsed: true,
+  };
+}
+
+function densityValue(value) {
+  return typeof value === 'number' ? value : value?.selected;
+}
+
+/** Attach selector and fallback authority to each calculated contribution for later audit. */
+function resolvedDensitySourceRef(profile, path, resolution) {
+  const source = sourceRef(profile, path);
+  return source ? {
+    ...source,
+    selector: resolution.selector,
+    resolutionAuthority: resolution.authority,
+    fallbackUsed: resolution.fallbackUsed,
+    densityKgPerM3: resolution.densityKgPerM3,
+  } : null;
+}
+
+/** Convert per-contribution fallback provenance into the governed reporting ledger. */
+function buildConfiguredDefaultUsageLedger(profile, cases) {
+  const policy = projectDataValue(profile, 'qualificationPolicy.configuredDefaults');
+  const defaultByFieldId = new Map((policy?.defaults || []).map((row) => [row.fieldId, row]));
+  const usageRows = cases.flatMap((loadCase) => (
+    (loadCase.contributionLedger || []).flatMap((contribution) => (
+      (contribution.formula?.projectDataSources || [])
+        .filter((source) => source.fallbackUsed === true)
+        .map((source) => {
+          const fieldId = configuredDefaultFieldId(source.projectDataPath);
+          const configured = defaultByFieldId.get(fieldId);
+          return {
+            defaultId: configured?.defaultId || '',
+            fieldId,
+            methodId: 'WEIGHT_AND_GRAVITY',
+            targetId: `${loadCase.loadCaseId}:${contribution.entityId}:${fieldId}`,
+            reason: `No positive exact scoped value for ${source.projectDataPath}; approved DEFAULT selector used by ${EMPIRICAL_LOAD_METHOD}.`,
+          };
+        })
+    ))
+  ));
+  return createConfiguredDefaultUsageLedger(profile, usageRows);
+}
+
+function configuredDefaultFieldId(projectDataPath) {
+  const fieldIds = {
+    'loadCalculation.hydroFluidDensitiesKgPerM3': 'HYDRO_FLUID_DENSITY',
+    'loadCalculation.insulationDensitiesKgPerM3': 'INSULATION_DENSITY',
+  };
+  const fieldId = fieldIds[projectDataPath];
+  if (!fieldId) throw new RangeError(`Unsupported configured-default path: ${projectDataPath}.`);
+  return fieldId;
+}
+
 function createCaseState(caseId, blockers) {
   return {
     caseId,
@@ -666,14 +746,11 @@ function mergeAllocations(rows) {
 }
 
 function masterHashes(masterData, dataset) {
-  const lineListHash = masterData?.lineList?.sourceHash || (masterData?.lineList?.fileName ? '1'.repeat(64) : '');
-  const pipingClassHash = masterData?.pipingClass?.sourceHash || (masterData?.pipingClass?.fileName ? '2'.repeat(64) : '');
-  const componentWeightHash = masterData?.weight?.sourceHash || (masterData?.weight?.fileName ? '3'.repeat(64) : '');
   return {
-    dataset: dataset?.sourceDatasetSha256 || dataset?.sourceSha256 || dataset?.sha256 || '0'.repeat(64),
-    lineList: lineListHash,
-    pipingClass: pipingClassHash,
-    componentWeight: componentWeightHash,
+    dataset: dataset.sourceSha256 || '',
+    lineList: masterData?.lineList?.sourceHash || '',
+    pipingClass: masterData?.pipingClass?.sourceHash || '',
+    componentWeight: masterData?.weight?.sourceHash || '',
   };
 }
 

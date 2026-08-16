@@ -1,9 +1,14 @@
 /** Certified sequential TopoFix for high-confidence SNAP_GAP findings. */
 import { checkCanonicalTopology } from './topology-edit-checker.js';
 import { TopologyEditAutofixGrouper } from './topology-edit-autofix-grouper.js';
+import {
+  TOPOLOGY_EDIT_DEFAULT_AUTOFIX_GAP_MM,
+  TOPOLOGY_EDIT_NEAR_MATCH_GAP_MM,
+  requireTopologyEditAutofixGapMm,
+} from './topology-edit-gap-autofix-policy.js';
 
-export const TOPOLOGY_EDIT_HIGH_CONFIDENCE_GAP_MM = 6;
-export const TOPOLOGY_EDIT_NEAR_MATCH_GAP_MM = 25;
+export const TOPOLOGY_EDIT_HIGH_CONFIDENCE_GAP_MM = TOPOLOGY_EDIT_DEFAULT_AUTOFIX_GAP_MM;
+export { TOPOLOGY_EDIT_NEAR_MATCH_GAP_MM };
 
 function checkerOptions(session) {
   const policy = session?.checkerPolicy;
@@ -25,16 +30,18 @@ export function buildHighConfidenceGapAutofixPlan(
   exactToleranceMm = TOPOLOGY_EDIT_HIGH_CONFIDENCE_GAP_MM,
   nearToleranceMm = TOPOLOGY_EDIT_NEAR_MATCH_GAP_MM,
 ) {
+  const certifiedToleranceMm = requireTopologyEditAutofixGapMm(exactToleranceMm);
+  const reviewToleranceMm = requireNearTolerance(nearToleranceMm, certifiedToleranceMm);
   const grouped = TopologyEditAutofixGrouper.groupIssues(
     issues,
-    exactToleranceMm,
-    nearToleranceMm,
+    certifiedToleranceMm,
+    reviewToleranceMm,
   );
   const exactGaps = grouped.buckets.exactMerges.filter(isCertifiedGapIssue);
   const nearGaps = grouped.buckets.nearMatches.filter(isCertifiedGapIssue);
   return Object.freeze({
-    exactToleranceMm,
-    nearToleranceMm,
+    exactToleranceMm: certifiedToleranceMm,
+    nearToleranceMm: reviewToleranceMm,
     exactGapIssueIds: Object.freeze(exactGaps.map((issue) => issue.id)),
     nearGapIssueIds: Object.freeze(nearGaps.map((issue) => issue.id)),
   });
@@ -42,7 +49,11 @@ export function buildHighConfidenceGapAutofixPlan(
 
 function currentHighConfidenceIssues(session, options, exactToleranceMm) {
   const issues = checkCanonicalTopology(session.currentTopology(), options);
-  const plan = buildHighConfidenceGapAutofixPlan(issues, exactToleranceMm);
+  const plan = buildHighConfidenceGapAutofixPlan(
+    issues,
+    exactToleranceMm,
+    TOPOLOGY_EDIT_NEAR_MATCH_GAP_MM,
+  );
   const exactIds = new Set(plan.exactGapIssueIds);
   return {
     issues,
@@ -68,10 +79,15 @@ export function applyHighConfidenceGapAutofix(
     throw new TypeError('High-confidence TopoFix requires a certified topology-edit session.');
   }
   const options = checkerOptions(session);
+  const certifiedToleranceMm = requireTopologyEditAutofixGapMm(exactToleranceMm);
   const initialIssues = Array.isArray(issues)
     ? issues
     : checkCanonicalTopology(session.currentTopology(), options);
-  const plan = buildHighConfidenceGapAutofixPlan(initialIssues, exactToleranceMm);
+  const plan = buildHighConfidenceGapAutofixPlan(
+    initialIssues,
+    certifiedToleranceMm,
+    TOPOLOGY_EDIT_NEAR_MATCH_GAP_MM,
+  );
   const applied = [];
   const rejected = [];
   const skipped = [];
@@ -84,7 +100,7 @@ export function applyHighConfidenceGapAutofix(
   const maxAttempts = Math.max(1, nodeCount * nodeCount);
 
   for (let attempt = 0; attempt < maxAttempts; attempt += 1) {
-    const current = currentHighConfidenceIssues(session, options, exactToleranceMm);
+    const current = currentHighConfidenceIssues(session, options, certifiedToleranceMm);
     const currentIssue = current.exactIssues.find((issue) => !attemptedIssueIds.has(issue.id));
     if (!currentIssue) break;
     const issueId = currentIssue.id;
@@ -121,7 +137,11 @@ export function applyHighConfidenceGapAutofix(
   }
 
   const finalIssues = checkCanonicalTopology(session.currentTopology(), options);
-  const remaining = buildHighConfidenceGapAutofixPlan(finalIssues, exactToleranceMm);
+  const remaining = buildHighConfidenceGapAutofixPlan(
+    finalIssues,
+    certifiedToleranceMm,
+    TOPOLOGY_EDIT_NEAR_MATCH_GAP_MM,
+  );
   for (const issueId of plan.exactGapIssueIds) {
     if (!finalIssues.some((issue) => issue.id === issueId)) {
       const appliedDirectly = applied.some((row) => row.issueId === issueId);
@@ -137,4 +157,12 @@ export function applyHighConfidenceGapAutofix(
     skipped: Object.freeze(skipped),
     remainingHighConfidenceGapIssueIds: remaining.exactGapIssueIds,
   });
+}
+
+function requireNearTolerance(value, exactToleranceMm) {
+  const parsed = Number(value);
+  if (!Number.isFinite(parsed) || parsed < exactToleranceMm) {
+    throw new RangeError('TopoFix review tolerance must be finite and no smaller than its automatic-fix tolerance.');
+  }
+  return parsed;
 }

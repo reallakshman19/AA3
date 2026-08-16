@@ -1,8 +1,8 @@
 {
   "schema": "project-data-profile/v1",
   "projectId": "1885S",
-  "revision": 2,
-  "updatedAt": "2026-08-01T00:00:00.000Z",
+  "revision": 4,
+  "updatedAt": "2026-08-16T00:00:00.000Z",
   "sourcesAndUnits": {
     "lengthUnit": {
       "value": "mm",
@@ -73,20 +73,50 @@
     }
   },
   "loadCalculation": {
-    "gravityMPerS2": { "value": null, "evidence": null, "approved": false },
-    "loadFactor": { "value": null, "evidence": null, "approved": false },
+    "gravityMPerS2": { "value": 9.80665, "evidence": { "source": "ISO 80000-3 standard acceleration of free fall", "locator": "1885S support-load calculation basis; standard gravity g_n" }, "approved": true },
+    "loadFactor": { "value": 1, "evidence": { "source": "1885S empirical support-load calculation basis", "locator": "Unfactored EMPTY, OPE and HYD weight cases" }, "approved": true },
     "materialDensitiesKgPerM3": { "value": null, "evidence": null, "approved": false },
     "pipeSectionProperties": { "value": null, "evidence": null, "approved": false },
     "operatingFluidDensitiesKgPerM3": { "value": { "S8811951": { "selected": 67, "phase": "MIXED", "mixed": 67, "gas": 53.3, "liquid": 693 } }, "evidence": { "source": "Supplied line-list master", "sourceKey": "lineList", "sourceHash": "723518a16b1a744c9328539f1a25fe15ea246757930970603a89d3cea46e3f41", "locator": "LineList!316 Phase=M, Mixed=67 kg/m3" }, "approved": true },
-    "hydroFluidDensitiesKgPerM3": { "value": null, "evidence": null, "approved": false },
-    "insulationDensitiesKgPerM3": { "value": null, "evidence": null, "approved": false },
+    "hydroFluidDensitiesKgPerM3": { "value": { "DEFAULT": 1000 }, "evidence": { "source": "1885S owner-approved hydrotest fallback", "locator": "Water density fallback used only when an exact line value is unavailable" }, "approved": true },
+    "insulationDensitiesKgPerM3": { "value": { "DEFAULT": 210 }, "evidence": { "source": "1885S owner-approved insulation fallback", "locator": "Bulk insulation density fallback used only for positive insulation thickness without an exact code value" }, "approved": true },
     "componentWeightsKg": {
       "value": { "VLV3|DN150|CLASS900|REDUCED_BORE": 263, "WN_FLANGE|DN150|CLASS900": 59 },
       "evidence": { "source": "Topo Validator component-weight master", "sourceKey": "componentWeight", "sourceHash": "72e266002256e2ac0b0c0c9c722dde2bb65e93deec2075d209c7ab78d219cda2", "locator": "selected valve and flange catalog rows" },
       "approved": true
     },
-    "equilibriumTolerances": { "value": null, "evidence": null, "approved": false },
+    "equilibriumTolerances": { "value": { "forceN": 1e-8, "momentNmm": 1e-5 }, "evidence": { "source": "CHAINAGE_TRIBUTARY_SPAN_V2 numerical closure policy", "locator": "Support-load distribution force and moment residual acceptance" }, "approved": true },
     "activeLoadCases": { "value": ["EMPTY", "OPE", "HYD"], "evidence": { "source": "1885S implementation plan", "locator": "Empirical support loads" }, "approved": true }
+  },
+  "qualificationPolicy": {
+    "configuredDefaults": {
+      "value": {
+        "schema": "non-fea-configured-default-policy/v1",
+        "defaults": [
+          {
+            "defaultId": "1885S_HYDRO_WATER_DENSITY",
+            "fieldId": "HYDRO_FLUID_DENSITY",
+            "value": 1000,
+            "unit": "kg/m³",
+            "basis": "Owner-approved water density fallback when no exact hydro density exists for the line",
+            "allowedMethods": ["WEIGHT_AND_GRAVITY", "SUSTAINED_REACTIONS", "SUSTAINED_MEMBER_ACTIONS", "SUSTAINED_STRESS", "RESTRAINT_REACTIONS", "VERTICAL_CONTACT", "COMBINED_OPERATING_REACTION", "ENRICHED_STAGED_JSON_EXPORT"]
+          },
+          {
+            "defaultId": "1885S_INSULATION_BULK_DENSITY",
+            "fieldId": "INSULATION_DENSITY",
+            "value": 210,
+            "unit": "kg/m³",
+            "basis": "Owner-approved bulk insulation density fallback for positive thickness without an exact insulation-code value",
+            "allowedMethods": ["WEIGHT_AND_GRAVITY", "SUSTAINED_REACTIONS", "SUSTAINED_MEMBER_ACTIONS", "SUSTAINED_STRESS", "RESTRAINT_REACTIONS", "VERTICAL_CONTACT", "COMBINED_OPERATING_REACTION", "ENRICHED_STAGED_JSON_EXPORT"]
+          }
+        ]
+      },
+      "evidence": { "source": "1885S owner-approved density fallback policy", "locator": "Hydro 1000 kg/m³ and insulation 210 kg/m³; exact scoped evidence takes precedence" },
+      "approved": true
+    },
+    "qualificationProfiles": { "value": null, "evidence": null, "approved": false },
+    "nonlinearApplicabilityPolicy": { "value": null, "evidence": null, "approved": false },
+    "superpositionPolicy": { "value": null, "evidence": null, "approved": false }
   },
   "webglNavigation": {
     "supportMarkerSize": { "value": 70, "evidence": { "source": "Topo Validator canonical support marker", "sourceKey": "topoValidatorVisualModel", "sourceHash": "d48ffe688c5dc785e1b7ece6caf236c58180c7fbdb4437838b6d2e80f9bb390b", "locator": "topology-3d-visual-model.js support size 28 × approved support scale 2.5" }, "approved": true },

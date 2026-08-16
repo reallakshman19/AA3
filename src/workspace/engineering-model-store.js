@@ -11,6 +11,9 @@ import {
 } from './engineering-loads/authorized-empirical-load-execution.js';
 import { authorizedEmpiricalRuntimeStore } from './engineering-loads/authorized-empirical-runtime-store.js';
 import { empiricalLoadCalcScenarioStore } from './engineering-loads/empirical-load-calc-scenario-store.js';
+import {
+  topologyEditCheckSnapshotStore,
+} from './topology-edit/topology-edit-check-snapshot-store.js';
 
 /**
  * Holds canonical support sites and route partitions for the active dataset and
@@ -23,6 +26,7 @@ export class EngineeringModelStore {
 
   rebuild(dataset) {
     this.#dataset = dataset;
+    topologyEditCheckSnapshotStore.invalidate();
     if (!dataset) {
       this.#supportSiteModel = null;
       this.#routePartitionModel = null;
@@ -177,6 +181,20 @@ export class EngineeringModelStore {
     if (this.#routePartitionModel?.status && this.#routePartitionModel.status !== 'READY') {
       blockers.push(...(this.#routePartitionModel.blockers || [{ code: 'ROUTE_PARTITION_MODEL_NOT_READY' }]));
     }
+    const topologyCheck = topologyEditCheckSnapshotStore.getSnapshot(this.#dataset?.datasetId);
+    if (!topologyCheck) {
+      blockers.push({
+        code: 'TOPOLOGY_CHECK_REQUIRED',
+        message: 'A current canonical topology check is required.',
+      });
+    }
+    blockers.push(...(topologyCheck?.blockingFindings || []).map((finding) => ({
+      code: finding.kind,
+      message: finding.message,
+      topologyCheckSnapshotHash: topologyCheck.snapshotHash,
+      nodeIds: finding.nodeIds,
+      edgeIds: finding.edgeIds,
+    })));
     return freezeDeep(blockers.map((row) => ({ ...row })));
   }
 
@@ -266,6 +284,9 @@ export class EngineeringModelStore {
 
   getSupportSiteModel() { return this.#supportSiteModel; }
   getRoutePartitionModel() { return this.#routePartitionModel; }
+  getTopologyCheckSnapshot() {
+    return topologyEditCheckSnapshotStore.getSnapshot(this.#dataset?.datasetId);
+  }
   getDistribution() { return engineeringSupportLoadStore.getDistribution(); }
   getAuthorizedExecution() { return authorizedEmpiricalRuntimeStore.getExecution() || engineeringSupportLoadStore.getAuthorizedExecution(); }
   getEmpiricalAuthorizationState() { return authorizedEmpiricalRuntimeStore.getSnapshot(); }

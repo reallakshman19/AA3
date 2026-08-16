@@ -27,8 +27,36 @@
 .load-calc-dock--compact .empirical-load-calc__header > div:first-child,
 .load-calc-dock--compact .empirical-load-calc__facts,
 .load-calc-dock--compact .empirical-load-calc__actions,
+.load-calc-dock--compact .empirical-load-calc__advanced,
 .load-calc-dock--compact [data-load-calc-pane] {
   display: none !important;
+}
+
+.load-calc-dock--compact .empirical-load-calc__workflow {
+  display: flex;
+  flex: 1 1 auto;
+  gap: 3px;
+  overflow-x: auto;
+  padding: 0;
+  scrollbar-width: none;
+}
+
+.load-calc-dock--compact .empirical-load-calc__workflow-step {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  min-width: max-content;
+  min-height: 30px;
+  padding: 3px 7px;
+}
+
+.load-calc-dock--compact .empirical-load-calc__workflow-index {
+  width: 19px;
+  height: 19px;
+}
+
+.load-calc-dock--compact .empirical-load-calc__workflow-status {
+  display: none;
 }
 
 .load-calc-dock--compact .empirical-load-calc__tabs {
@@ -413,6 +441,31 @@
 
 .topology-edit-clean-shell__preview-actions:empty {
   display: none;
+}
+
+.topology-edit-3d-issue-groups {
+  display: grid;
+  gap: 5px;
+  margin-top: 7px;
+}
+
+.topology-edit-3d-issue-group {
+  border: 1px solid var(--workspace-border);
+  border-radius: 4px;
+  background: #07101e;
+}
+
+.topology-edit-3d-issue-group > summary {
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 6px;
+  cursor: pointer;
+}
+
+.topology-edit-3d-issue-group > ul {
+  margin: 0;
+  padding: 0 6px 6px 22px;
 }
 
 @media (max-width: 1050px) {

@@ -99,55 +99,90 @@ function viewMarkup(state) {
     <header class="non-fea-input-check__header">
       <div>
         <div class="non-fea-input-check__title-row">
-          <span class="panel-eyebrow">GOVERNED COMMON INPUT</span>
-          <span class="non-fea-input-check__scope">NON-FEA ONLY</span>
-          <span class="non-fea-input-check__phase">PHASE 1 · PREFLIGHT CONSOLIDATION</span>
-          <span class="non-fea-input-check__phase">STATUS PROJECTION V1</span>
+          <span class="panel-eyebrow">STEP 5</span>
+          <span class="non-fea-input-check__scope">READ-ONLY CHECK</span>
         </div>
-        <h2>Input Check</h2>
-        <p>One read-only status projection of current source custody, Project Data, Masters, enrichment, method readiness, qualification, seal and execution evidence.</p>
+        <h2>Validate Input</h2>
+        <p>Resolve the listed issues before calculation. This check does not invent or change engineering values.</p>
       </div>
-      <div class="non-fea-input-check__actions">
-        <button type="button" data-load-calc-tab="project-data">Edit Project Data</button>
-        <button type="button" data-load-calc-tab="masters">Review Masters</button>
-        <button type="button" data-load-calc-tab="enrichment">Review Enrichment</button>
-        <button type="button" data-load-calc-tab="method-basis">Review Method Basis</button>
-        <button type="button" data-load-calc-tab="seal-export">Seal & Export</button>
-        <button type="button" data-load-calc-tab="json-trace">Open JSON Trace</button>
-      </div>
+      ${nextActionMarkup(state)}
     </header>
 
-    <section class="non-fea-input-check__scope-note">
-      <strong>Boundary:</strong> this view does not edit engineering values, accept enrichment, evaluate methods, issue a seal, authorize an implementation, execute a calculation or process FEA results. It only renders current governed status and evidence.
+    <section class="non-fea-input-check__result" data-status="${state.blockers.length ? 'blocked' : 'ready'}">
+      <strong>${state.blockers.length ? `${state.blockers.length} issue${state.blockers.length === 1 ? '' : 's'} need attention` : 'Input validation passed'}</strong>
+      <span>${state.status.summary.readyGateCount}/8 governed checks ready</span>
     </section>
 
     <section class="non-fea-input-check__summary">
-      ${metric('Common package', state.overallState, statusClass(state.overallState))}
-      ${metric('Lifecycle', state.lifecycleState, statusClass(state.overallState))}
       ${metric('Dataset', state.status.source.datasetId || 'NOT_LOADED')}
-      ${metric('Ready gates', `${state.status.summary.readyGateCount}/8`, state.status.summary.blockedGateCount ? 'warning' : 'ready')}
-      ${metric('Checker-ready methods', state.status.summary.checkerReadyMethodCount, state.status.summary.checkerReadyMethodCount ? 'ready' : 'warning')}
+      ${metric('Project Data', state.gates.find((row) => row.gateId === 'C_PROJECT_BASIS')?.state || 'NOT_EVALUATED', statusClass(state.gates.find((row) => row.gateId === 'C_PROJECT_BASIS')?.state))}
+      ${metric('Masters', state.gates.find((row) => row.gateId === 'D_MASTER_AUTHORITY')?.state || 'NOT_EVALUATED', statusClass(state.gates.find((row) => row.gateId === 'D_MASTER_AUTHORITY')?.state))}
       ${metric('Blockers', state.blockers.length, state.blockers.length ? 'blocked' : 'ready')}
     </section>
 
-    <div class="non-fea-input-check__layout">
-      <main>
-        ${workflowMarkup(state.gates)}
-        ${auditMarkup(state.audits)}
-        ${sourceEvidenceMarkup(state.sourceRows)}
-        ${routeEvidenceMarkup(state.routeRows)}
-        ${methodMarkup(state.methodRows)}
-        ${blockerMarkup(state.blockers)}
-      </main>
-      <aside>
-        ${projectBasisMarkup(state)}
-        ${masterMarkup(state.masterRows)}
-        ${enrichmentAuthorityMarkup(state)}
-        ${commonInputAuthorityMarkup(state)}
-        ${historicalAuthorityMarkup(state)}
-      </aside>
-    </div>
+    ${state.blockers.length ? blockerSummaryMarkup(state.blockers) : '<p class="non-fea-ready-copy">All required checks currently pass. Continue to Run Calc.</p>'}
+
+    <details class="non-fea-input-check__advanced">
+      <summary>Advanced validation evidence</summary>
+      <div class="non-fea-input-check__advanced-intro">
+        <span>GOVERNED COMMON INPUT</span><span>NON-FEA ONLY</span><span>PHASE 1 · PREFLIGHT CONSOLIDATION</span><span>STATUS PROJECTION V1</span>
+        <p><strong>Boundary:</strong> this view does not edit engineering values, accept enrichment, evaluate methods, issue a seal, authorize an implementation, execute a calculation or process FEA results. It only renders current governed status and evidence.</p>
+      </div>
+      <div class="non-fea-input-check__layout">
+        <main>
+          ${workflowMarkup(state.gates)}
+          ${auditMarkup(state.audits)}
+          ${sourceEvidenceMarkup(state.sourceRows)}
+          ${routeEvidenceMarkup(state.routeRows)}
+          ${methodMarkup(state.methodRows)}
+          ${blockerMarkup(state.blockers)}
+        </main>
+        <aside>
+          ${projectBasisMarkup(state)}
+          ${masterMarkup(state.masterRows)}
+          ${enrichmentAuthorityMarkup(state)}
+          ${commonInputAuthorityMarkup(state)}
+          ${historicalAuthorityMarkup(state)}
+        </aside>
+      </div>
+    </details>
   </section>`;
+}
+
+function blockerSummaryMarkup(rows) {
+  const groups = [];
+  const byScope = new Map();
+  rows.forEach((row) => {
+    const key = row.scope || 'INPUT';
+    const existing = byScope.get(key);
+    if (existing) {
+      existing.count += 1;
+      return;
+    }
+    const group = { scope: key, count: 1, message: row.message || row.code || 'Input evidence is incomplete.' };
+    groups.push(group);
+    byScope.set(key, group);
+  });
+  return `<section class="non-fea-input-check__blocker-summary"><h3>What needs attention</h3>
+    <ul>${groups.slice(0, 6).map((group) => `<li><strong>${escapeHtml(group.scope)}</strong><span>${group.count} issue${group.count === 1 ? '' : 's'}</span><p>${escapeHtml(group.message)}</p></li>`).join('')}</ul>
+    <p>${groups.length > 6 ? `${groups.length - 6} more areas are listed in Advanced validation evidence.` : 'Open Advanced validation evidence for the complete audit trail.'}</p>
+  </section>`;
+}
+
+function nextActionMarkup(state) {
+  const blockedGate = state.gates.find((row) => row.state !== 'READY');
+  const actions = {
+    A_SOURCE_MODEL: ['data-load-calc-import', 'Import JSON'],
+    B_TOPOLOGY_POS: ['data-load-calc-tab="3d"', 'Fix Topology'],
+    C_PROJECT_BASIS: ['data-load-calc-tab="project-data"', 'Complete Project Data'],
+    D_MASTER_AUTHORITY: ['data-load-calc-tab="masters"', 'Import Masters'],
+    E_ENRICHMENT: ['data-load-calc-tab="enrichment"', 'Review Enrichment'],
+    F_METHOD_READINESS: ['data-load-calc-tab="method-basis"', 'Review Method Readiness'],
+    G_QUALIFICATION: ['data-load-calc-tab="method-basis"', 'Review Qualification'],
+    H_SEAL_EXPORT: ['data-load-calc-tab="seal-export"', 'Seal Validated Input'],
+  };
+  const [attribute, label] = actions[blockedGate?.gateId] || ['data-load-calc-tab="verify"', 'Continue to Run Calc'];
+  return `<div class="non-fea-input-check__actions"><button type="button" class="button button--primary" ${attribute}>${escapeHtml(label)}</button></div>`;
 }
 
 function workflowMarkup(gates) {
@@ -376,7 +411,9 @@ function styles() {
     .non-fea-input-check{display:flex;flex-direction:column;gap:14px;height:100%;overflow:auto;padding:16px;background:#07101e;color:#e2e8f0;box-sizing:border-box}
     .non-fea-input-check__header,.non-fea-panel>header{display:flex;justify-content:space-between;gap:16px;align-items:flex-start}.non-fea-input-check__header h2,.non-fea-panel h3{margin:2px 0;color:#e2e8f0}.non-fea-input-check__header h2{font-size:26px}.non-fea-input-check__header p,.non-fea-panel header p,.non-fea-muted{margin:5px 0;color:#94a3b8;line-height:1.45}
     .non-fea-input-check__title-row{display:flex;gap:10px;align-items:center;flex-wrap:wrap}.non-fea-input-check__scope,.non-fea-input-check__phase{padding:3px 8px;border:1px solid #0ea5e9;border-radius:999px;color:#7dd3fc;font-size:10px;font-weight:800;letter-spacing:.08em}.non-fea-input-check__phase{border-color:#6d28d9;color:#c4b5fd}.non-fea-input-check__actions{display:flex;gap:8px;flex-wrap:wrap;justify-content:flex-end}.non-fea-input-check button{border:1px solid #334155;border-radius:5px;background:#111c2f;color:#e2e8f0;padding:7px 10px;cursor:pointer}.non-fea-input-check button:hover{border-color:#38bdf8;color:#7dd3fc}
-    .non-fea-input-check__scope-note{padding:10px 12px;border:1px solid #164e63;border-radius:6px;background:#082f49;color:#bae6fd}.non-fea-input-check__summary{display:grid;grid-template-columns:repeat(6,minmax(110px,1fr));gap:8px}.non-fea-metric{padding:10px;border:1px solid #293548;border-radius:6px;background:#0d1728}.non-fea-metric span{display:block;color:#94a3b8;font-size:11px;text-transform:uppercase;letter-spacing:.06em}.non-fea-metric strong{display:block;margin-top:5px;font-size:16px;overflow-wrap:anywhere}.non-fea-metric--ready{border-color:#166534}.non-fea-metric--blocked{border-color:#991b1b}.non-fea-metric--warning{border-color:#92400e}
+    .non-fea-input-check__result{display:flex;justify-content:space-between;gap:12px;padding:12px 14px;border:1px solid #7f1d1d;border-radius:7px;background:rgba(127,29,29,.12)}.non-fea-input-check__result[data-status="ready"]{border-color:#166534;background:rgba(22,101,52,.12)}.non-fea-input-check__result strong{color:#f87171}.non-fea-input-check__result[data-status="ready"] strong{color:#4ade80}.non-fea-input-check__result span{color:#cbd5e1}.non-fea-input-check__summary{display:grid;grid-template-columns:repeat(4,minmax(110px,1fr));gap:8px}.non-fea-metric{padding:10px;border:1px solid #293548;border-radius:6px;background:#0d1728}.non-fea-metric span{display:block;color:#94a3b8;font-size:11px;text-transform:uppercase;letter-spacing:.06em}.non-fea-metric strong{display:block;margin-top:5px;font-size:16px;overflow-wrap:anywhere}.non-fea-metric--ready{border-color:#166534}.non-fea-metric--blocked{border-color:#991b1b}.non-fea-metric--warning{border-color:#92400e}
+    .non-fea-input-check__advanced{border:1px solid #293548;border-radius:7px;background:#091322}.non-fea-input-check__advanced>summary{padding:11px 13px;color:#7dd3fc;font-weight:800;cursor:pointer}.non-fea-input-check__advanced[open]>summary{border-bottom:1px solid #293548}.non-fea-input-check__advanced-intro{display:flex;flex-wrap:wrap;gap:7px;padding:12px 13px;color:#94a3b8}.non-fea-input-check__advanced-intro span{padding:3px 7px;border:1px solid #334155;border-radius:999px;font-size:9px;font-weight:800;letter-spacing:.06em}.non-fea-input-check__advanced-intro p{flex-basis:100%;margin:3px 0 0;padding:9px;border:1px solid #164e63;border-radius:6px;background:#082f49;color:#bae6fd}.non-fea-input-check__advanced .non-fea-input-check__layout{padding:0 12px 12px}
+    .non-fea-input-check__blocker-summary{padding:13px;border:1px solid #3f2730;border-radius:7px;background:#0b1424}.non-fea-input-check__blocker-summary h3{margin:0 0 10px;color:#f8fafc}.non-fea-input-check__blocker-summary ul{display:grid;grid-template-columns:1fr;gap:8px;margin:0;padding:0;list-style:none}.non-fea-input-check__blocker-summary li{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:4px 10px;padding:9px;border:1px solid #3f2730;border-radius:6px}.non-fea-input-check__blocker-summary li strong{min-width:0;overflow-wrap:anywhere;color:#f87171}.non-fea-input-check__blocker-summary li span{color:#cbd5e1;font-size:11px}.non-fea-input-check__blocker-summary li p{grid-column:1/-1;margin:0;color:#94a3b8;font-size:11px;line-height:1.35}.non-fea-input-check__blocker-summary>p{margin:10px 0 0;color:#94a3b8;font-size:11px}
     .non-fea-input-check__layout{display:grid;grid-template-columns:minmax(0,2fr) minmax(300px,1fr);gap:12px;align-items:start}.non-fea-input-check__layout main,.non-fea-input-check__layout aside{display:flex;flex-direction:column;gap:12px}.non-fea-panel{padding:13px;border:1px solid #293548;border-radius:7px;background:#0b1424;box-shadow:0 8px 24px rgba(0,0,0,.12)}.panel-eyebrow{display:block;color:#38bdf8;font-size:10px;font-weight:800;letter-spacing:.1em}.non-fea-panel code{display:block;color:#64748b;font-size:10px;margin-top:2px;overflow-wrap:anywhere}
     .non-fea-gates{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;margin-top:12px}.non-fea-gate{display:grid;grid-template-columns:30px 1fr;gap:9px;padding:10px;border:1px solid #334155;border-radius:6px;background:#0c1728}.non-fea-gate__index{display:flex;width:26px;height:26px;align-items:center;justify-content:center;border-radius:50%;background:#172033;color:#94a3b8;font-weight:800}.non-fea-gate__heading{display:flex;justify-content:space-between;gap:8px}.non-fea-gate p{margin:6px 0 0;color:#94a3b8;line-height:1.35;font-size:12px}.non-fea-gate--ready{border-color:#166534}.non-fea-gate--ready .non-fea-gate__heading span{color:#4ade80}.non-fea-gate--warning{border-color:#92400e}.non-fea-gate--warning .non-fea-gate__heading span{color:#fbbf24}.non-fea-gate--blocked,.non-fea-gate--stale{border-color:#7f1d1d}.non-fea-gate--blocked .non-fea-gate__heading span,.non-fea-gate--stale .non-fea-gate__heading span{color:#f87171}
     .non-fea-audits{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;margin-top:10px}.non-fea-audits article{padding:10px;border:1px solid #334155;border-radius:6px;background:#0c1728}.non-fea-audits article>span{display:block;margin-top:4px;font-weight:800}.non-fea-audits article p{margin:6px 0 0;color:#94a3b8;font-size:11px}.non-fea-audits [data-status="READY"]{border-color:#166534}.non-fea-audits [data-status="READY"]>span{color:#4ade80}.non-fea-audits [data-status="BLOCKED"]{border-color:#7f1d1d}.non-fea-audits [data-status="BLOCKED"]>span{color:#f87171}

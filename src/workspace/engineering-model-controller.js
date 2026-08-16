@@ -127,18 +127,7 @@ export class EngineeringModelController {
 
   calculate() {
     try {
-      let execution = null;
-      try {
-        execution = this.authorizedConsumerController.executeEmpirical();
-      } catch (authError) {
-        const masterData = this.authorizedConsumerController?.masterDataController?.getMasterData?.() || {};
-        const distribution = engineeringModelStore.calculate(masterData);
-        execution = {
-          schema: 'authorized-empirical-load-execution/v1',
-          executionId: 'EXEC-DIRECT-' + Date.now(),
-          distribution,
-        };
-      }
+      const execution = this.authorizedConsumerController.executeEmpirical();
       const distribution = execution.distribution;
       this.eventBus.publish(ENGINEERING_MODEL_EVENTS.CHANGED, { reason: 'calculated', distribution, execution });
       return execution;

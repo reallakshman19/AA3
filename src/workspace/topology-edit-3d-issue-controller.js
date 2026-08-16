@@ -14,6 +14,11 @@ import {
   applyHighConfidenceGapAutofix as applyCertifiedHighConfidenceGapAutofix,
 } from './topology-edit/topology-edit-high-confidence-autofix.js';
 import {
+  TOPOLOGY_EDIT_DEFAULT_AUTOFIX_GAP_MM,
+  TOPOLOGY_EDIT_NEAR_MATCH_GAP_MM,
+  requireTopologyEditAutofixGapMm,
+} from './topology-edit/topology-edit-gap-autofix-policy.js';
+import {
   buildTopologyEditIssueOverlay,
 } from './topology-edit/topology-edit-issue-overlay.js';
 import {
@@ -34,6 +39,7 @@ export class TopologyEdit3DViewController extends SearchController {
     this.issueOverlay = null;
     this.issueCallout = null;
     this.issueCalloutMount = null;
+    this.highConfidenceGapToleranceMm = TOPOLOGY_EDIT_DEFAULT_AUTOFIX_GAP_MM;
   }
 
   buildShell() {
@@ -125,37 +131,57 @@ export class TopologyEdit3DViewController extends SearchController {
       kind: row.code,
       message: row.message,
     }));
-    const total = this.issues.length + visualIssues.length;
-    if (!total) {
-      this.checkerElement.textContent = 'No topology or visual-evidence issues detected.';
+    const topologyFindingCount = this.issues.length;
+    if (!topologyFindingCount && !visualIssues.length) {
+      this.checkerElement.textContent = 'No topology findings or rendering evidence notes detected.';
       return;
     }
     const entries = new Map(
       this.issueOverlay.entries.map((entry) => [entry.issueId, entry]),
     );
-    const rows = this.issues.slice(0, 30).map((issue) => issueRow(
-      issue,
-      entries.get(issue.id),
+    const topologyGroups = grouped3dTopologyFindingMarkup(
+      this.issues,
+      entries,
       this.issueOverlay.overlayHash,
-    ));
-    const visualRows = visualIssues.slice(0, Math.max(0, 30 - rows.length))
-      .map((issue) => `<li>${escapeHtml(issue.kind)}: ${escapeHtml(issue.message)}</li>`);
-    const topoFixPlan = buildHighConfidenceGapAutofixPlan(this.issues);
+    );
+    const visualEvidence = grouped3dVisualEvidenceMarkup(visualIssues);
+    const topoFixPlan = buildHighConfidenceGapAutofixPlan(
+      this.issues,
+      this.highConfidenceGapToleranceMm,
+      TOPOLOGY_EDIT_NEAR_MATCH_GAP_MM,
+    );
     const topoFix = topoFixMarkup(topoFixPlan);
     this.checkerElement.innerHTML = `
-      <strong>${total} issue(s); ${this.issueOverlay.anchoredIssueCount} spatial marker(s); ${this.autofixSuggestions.length} source-backed fix(es)</strong>
+      <strong>${topologyFindingCount} topology finding(s); ${this.issueOverlay.anchoredIssueCount} spatial marker(s); ${this.autofixSuggestions.length} source-backed fix(es)</strong>
       ${topoFix}
-      <ul>${[...rows, ...visualRows].join('')}</ul>`;
+      ${topologyFindingCount ? '' : '<p>No canonical topology findings require action.</p>'}
+      <div class="topology-edit-3d-issue-groups">${topologyGroups}</div>
+      ${visualEvidence}`;
   }
 
-  applyHighConfidenceGapFixes() {
+  setHighConfidenceGapToleranceMm(value) {
+    this.highConfidenceGapToleranceMm = requireTopologyEditAutofixGapMm(value);
+    if (this.checkerElement && this.session) this.renderCheckerPanel();
+    return this.highConfidenceGapToleranceMm;
+  }
+
+  applyHighConfidenceGapFixes(exactToleranceMm) {
     if (!this.session || this.session.staleReason) {
       this.setStatus('TopoFix is unavailable while the topology edit session is stale.');
       return null;
     }
     try {
+      const certifiedToleranceMm = this.setHighConfidenceGapToleranceMm(
+        exactToleranceMm ?? this.highConfidenceGapToleranceMm,
+      );
       this.cancelAutofix(true);
-      const result = applyCertifiedHighConfidenceGapAutofix(this.session, this.issues);
+      const result = certifiedToleranceMm === TOPOLOGY_EDIT_DEFAULT_AUTOFIX_GAP_MM
+        ? applyCertifiedHighConfidenceGapAutofix(this.session, this.issues)
+        : applyCertifiedHighConfidenceGapAutofix(
+          this.session,
+          this.issues,
+          certifiedToleranceMm,
+        );
       this.selection = createTopologyEditSelection();
       this.refreshView(this.session.currentTopology());
       const rejected = result.rejected.length;
@@ -165,7 +191,7 @@ export class TopologyEdit3DViewController extends SearchController {
         `TopoFix accepted ${result.applied.length} high-confidence gap merge(s)`
         + `${rejected ? `; ${rejected} rejected by certification` : ''}`
         + `${skipped ? `; ${skipped} already resolved` : ''}`
-        + `${remaining ? `; ${remaining} <6 mm gap(s) remain` : '; no <6 mm gaps remain'}.`
+        + `${remaining ? `; ${remaining} <${certifiedToleranceMm} mm gap(s) remain` : `; no <${certifiedToleranceMm} mm gaps remain`}.`
       );
       return result;
     } catch (error) {
@@ -257,12 +283,15 @@ function topoFixMarkup(plan) {
   const exactCount = plan.exactGapIssueIds.length;
   const nearCount = plan.nearGapIssueIds.length;
   if (!exactCount && !nearCount) return '';
+  const actionLabel = plan.exactToleranceMm === TOPOLOGY_EDIT_DEFAULT_AUTOFIX_GAP_MM
+    ? `TopoFix — AutoFix &lt;6 mm gaps (${exactCount})`
+    : `TopoFix — AutoFix &lt;${escapeHtml(plan.exactToleranceMm)} mm gaps (${exactCount})`;
   const action = exactCount
-    ? `<button type="button" data-action="autofix-high-confidence-gaps">TopoFix — AutoFix &lt;6 mm gaps (${exactCount})</button>`
+    ? `<button type="button" data-action="autofix-high-confidence-gaps">${actionLabel}</button>`
     : '';
   return `<div class="topology-edit-topofix-summary" data-role="topology-edit-topofix-summary">
     ${action}
-    <span>${exactCount} high-confidence gap(s) &lt;6 mm; ${nearCount} gap(s) from 6–25 mm require individual review. AutoFix changes only the certified draft journal; Undo remains available.</span>
+    <span>${exactCount} high-confidence gap(s) &lt;${escapeHtml(plan.exactToleranceMm)} mm; ${nearCount} gap(s) from ${escapeHtml(plan.exactToleranceMm)}–${escapeHtml(plan.nearToleranceMm)} mm require individual review. AutoFix changes only the certified draft journal; Undo remains available.</span>
   </div>`;
 }
 
@@ -274,6 +303,51 @@ function issueRow(issue, entry, overlayHash) {
     ? ` <button type="button" data-autofix-suggestion="${escapeHtml(entry.suggestionHash)}">Preview ${escapeHtml(entry.commandType)}</button>`
     : '';
   return `<li data-issue-kind="${escapeHtml(issue.kind)}" data-issue-id="${escapeHtml(issue.id)}"><strong>${escapeHtml(issue.severity)}</strong> ${escapeHtml(issue.kind)}: ${escapeHtml(issue.message)}${show}${preview}</li>`;
+}
+
+/** Render canonical checker findings separately from non-blocking visual derivation evidence. */
+function grouped3dTopologyFindingMarkup(issues, entries, overlayHash) {
+  return group3dIssues(issues, (issue) => `${issue.severity} ${issue.kind}`)
+    .map((group) => issue3dGroupMarkup(
+      group,
+      (issue) => issueRow(issue, entries.get(issue.id), overlayHash),
+    ))
+    .join('');
+}
+
+/** Keep rendering provenance reviewable without presenting it as a topology defect. */
+function grouped3dVisualEvidenceMarkup(visualIssues) {
+  if (!visualIssues.length) return '';
+  const visualGroups = group3dIssues(visualIssues, (issue) => issue.kind)
+    .map((group) => issue3dGroupMarkup(
+      group,
+      (issue) => `<li>${escapeHtml(issue.kind)}: ${escapeHtml(issue.message)}</li>`,
+    ))
+    .join('');
+  return `<details class="topology-edit-3d-visual-evidence" data-role="topology-edit-visual-evidence">
+    <summary>Rendering evidence notes <span>${visualIssues.length}</span></summary>
+    <p>Informational geometry-derivation provenance. These notes do not block TopoFix or load calculation.</p>
+    <div class="topology-edit-3d-issue-groups">${visualGroups}</div>
+  </details>`;
+}
+
+function group3dIssues(issues, keyForIssue) {
+  const groups = issues.reduce((result, issue) => {
+    const key = keyForIssue(issue);
+    if (!result.has(key)) result.set(key, []);
+    result.get(key).push(issue);
+    return result;
+  }, new Map());
+  return [...groups.entries()]
+    .map(([key, rows]) => ({ key, rows }))
+    .sort((left, right) => left.key.localeCompare(right.key));
+}
+
+function issue3dGroupMarkup(group, rowMarkup) {
+  return `<details class="topology-edit-3d-issue-group">
+    <summary>${escapeHtml(group.key)} <span>${group.rows.length}</span></summary>
+    <ul>${group.rows.map(rowMarkup).join('')}</ul>
+  </details>`;
 }
 
 function pickStatus(pick, selection) {

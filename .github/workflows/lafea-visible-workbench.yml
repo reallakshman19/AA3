@@ -52,6 +52,7 @@ jobs:
           node --check src/workspace/lafea-continuum-mesh-v3-producer-bridge.js
           node --check scripts/lafea-continuum-mesh-v3-production-check.mjs
           node --check scripts/lafea-continuum-mesh-v3-workbench-state-check.mjs
+          node --check scripts/lafea-continuum-mesh-v3-authority-isolation-check.mjs
           node --check scripts/lafea-shell-compiled-execution-check.mjs
           node --check scripts/lafea-shell-response-acceptance-check.mjs
           node tests/lafea-engineering-overview.test.mjs
@@ -60,6 +61,7 @@ jobs:
         run: |
           node scripts/lafea-continuum-mesh-v3-production-check.mjs
           node scripts/lafea-continuum-mesh-v3-workbench-state-check.mjs
+          node scripts/lafea-continuum-mesh-v3-authority-isolation-check.mjs
       - name: Qualify governed shell mesh compiler and execution custody
         run: |
           node scripts/lafea-shell-sample-parent-check.mjs

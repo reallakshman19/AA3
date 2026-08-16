@@ -1,6 +1,7 @@
 /** Authoritative LAFEA.4/.5 workbench run from the governed retained shell mesh. */
 import { calculateLocalShell } from '../core/local-shell/index.js';
 import { calculateLocalTrunnionFootprint } from '../core/local-trunnion-footprint/index.js';
+import { lafeaAnalysisMeshContentHash } from './lafea-analysis-mesh-contract.js';
 import { createLafeaLifecycleProducerBatch } from './lafea-lifecycle-producers.js';
 import { canonicalLafeaSha256 } from './lafea-canonical-sha256.js';
 import { compileLafeaShellSolverModel } from './lafea-shell-solver-model.js';
@@ -161,7 +162,11 @@ function executeCompiledShell(stageId, compiled, meshEvidence) {
     fail('LAFEA5_SHELL_RUN_WORKFLOW_MODEL_MISMATCH');
   }
   const proof = accepted
-    ? proveLafea5ExecutedShellMesh(meshEvidence.mesh, result.generatedShellModel)
+    ? proveLafea5ExecutedShellMesh(
+      meshEvidence.mesh,
+      meshEvidence.meshHash,
+      result.generatedShellModel,
+    )
     : { proofHash: null };
   return freeze({
     result,
@@ -171,7 +176,10 @@ function executeCompiledShell(stageId, compiled, meshEvidence) {
   });
 }
 
-function proveLafea5ExecutedShellMesh(retainedMesh, generatedShellModel) {
+function proveLafea5ExecutedShellMesh(retainedMesh, retainedMeshHash, generatedShellModel) {
+  if (lafeaAnalysisMeshContentHash(retainedMesh) !== retainedMeshHash) {
+    fail('LAFEA5_SHELL_RUN_RETAINED_MESH_HASH_MISMATCH');
+  }
   if (!generatedShellModel || !Array.isArray(generatedShellModel.nodes)
     || !Array.isArray(generatedShellModel.elements)) {
     fail('LAFEA5_SHELL_RUN_GENERATED_SHELL_MODEL_MISSING');
@@ -203,19 +211,12 @@ function proveLafea5ExecutedShellMesh(retainedMesh, generatedShellModel) {
   return freeze({
     proofHash: canonicalLafeaSha256({
       schema: 'lafea5-shell-executed-mesh-proof/v1',
-      retainedMeshHash: meshEvidenceHash(retainedMesh),
+      retainedMeshHash,
       generatedShellModelHash: generatedShellModel.semanticHash,
       nodeCount: retainedMesh.nodes.length,
       elementCount: retainedMesh.elements.length,
       elementProof,
     }),
-  });
-}
-
-function meshEvidenceHash(mesh) {
-  return canonicalLafeaSha256({
-    schema: 'lafea-shell-execution-retained-mesh-proof-input/v1',
-    mesh,
   });
 }
 

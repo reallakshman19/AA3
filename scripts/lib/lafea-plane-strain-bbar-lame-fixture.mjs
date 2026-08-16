@@ -174,10 +174,14 @@ function createQuarterAnnulusMesh(definition, meshPolicy, { elementType, level, 
     benchmark.fixedPhysicalProbes.map((probe) => probe.thetaDegrees * Math.PI / 180),
   )].sort((x, y) => x - y);
   assert.deepEqual(radialProbeAnchors, meshPolicy.radialAxis.protectedProbeRadii);
-  assert.deepEqual(
-    angularProbeAnchors.map((value) => value * 180 / Math.PI),
-    meshPolicy.angularAxis.protectedProbeAnglesDegrees,
-  );
+  const angularProbeDegrees = angularProbeAnchors.map((value) => value * 180 / Math.PI);
+  assert.equal(angularProbeDegrees.length, meshPolicy.angularAxis.protectedProbeAnglesDegrees.length);
+  angularProbeDegrees.forEach((value, index) => close(
+    value,
+    meshPolicy.angularAxis.protectedProbeAnglesDegrees[index],
+    1e-12,
+    `Protected angular probe ${index + 1}`,
+  ));
   const radialPhase = meshPolicy.radialAxis.targetPhase;
   const angularPhase = meshPolicy.angularAxis.targetPhase;
   assert.ok(

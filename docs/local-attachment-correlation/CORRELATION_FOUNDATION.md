@@ -20,15 +20,31 @@ A future engineering method must provide exact method identity, edition, coeffic
 The engineering chain is:
 
 ```text
-LAFEA.1 exact foundation
-    -> LAFEA.2 retained screening result
-    -> correlation geometry evidence
+LAFEA.1 source
+    -> LAFEA.1 canonical model hash
+    -> LAFEA.1 accepted result-payload hash
+    -> LAFEA.2 validated source evidence
+    -> LAFEA.2 request hash
+    -> LAFEA.2 retained result hash
+    -> correlation geometry evidence hash
     -> correlation request
     -> coefficient interpolation
     -> component-wise local stress recovery
 ```
 
-The correlation request retains:
+Correlation geometry is created only from an exact validated LAFEA.2 request/result pair. The supplied LAFEA.2 request must reconstruct, its semantic hash must equal the retained LAFEA.2 result's `screeningRequestSemanticHash`, and the hash of its `sourceEvidence` must equal the result's `sourceEvidenceSemanticHash`.
+
+The geometry evidence retains:
+
+- LAFEA.2 source-evidence semantic hash;
+- exact LAFEA.1 canonical foundation-model semantic hash;
+- exact LAFEA.1 foundation result-payload semantic hash;
+- pipe outside diameter and assessed pipe thickness inherited from LAFEA.2 section evidence;
+- source references for pipe outside diameter and assessed pipe thickness;
+- separately supplied attachment diameter and its source reference;
+- its own semantic hash over all of the above.
+
+The correlation request then retains:
 
 - LAFEA.2 screening request semantic hash;
 - LAFEA.2 screening result payload semantic hash;
@@ -36,7 +52,7 @@ The correlation request retains:
 - exact `screeningCaseId`;
 - exact target-to-`evaluationLocationId` mapping.
 
-The geometry evidence itself is tied to the LAFEA.2 source-evidence hash and retains source references for pipe outside diameter, assessed pipe thickness and attachment diameter.
+This means a numerically identical but differently sourced attachment diameter, LAFEA.1 model, LAFEA.1 result, LAFEA.2 request, or LAFEA.2 result does not silently inherit the previous correlation lineage.
 
 ## 3. Dimensionless parameters
 
@@ -250,6 +266,8 @@ The retained scripts also require:
 - missing target pressure rejection;
 - coefficient-dataset hash tamper rejection;
 - geometry-evidence hash tamper rejection;
+- mismatched/forged LAFEA.2 request rejection before geometry adoption;
+- mismatch between LAFEA.2 request source evidence and retained LAFEA.2 result rejection;
 - missing LAFEA.2 point identity rejection;
 - current repository LAFEA.2 sample (`D/t = 100`) rejection against the synthetic `20 <= D/t <= 40` domain;
 - synthetic profile rejection by the engineering method registry.

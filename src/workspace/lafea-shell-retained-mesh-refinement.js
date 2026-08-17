@@ -12,17 +12,11 @@ import {
 import { canonicalLafeaSha256 } from './lafea-canonical-sha256.js';
 import { estimateLafeaMeshDofs } from './lafea-mesh-dof-policy.js';
 import {
-  LAFEA_RETAINED_MESH_REFINEMENT_COMMAND_SCHEMA,
-  createLafeaRetainedMeshRefinementCommand,
-} from './lafea-mesh-refinement-command.js';
-import {
-  lafeaCoreMeshProducerCapability,
-  lafeaCoreMeshProducerQualification,
-} from './lafea-mesh-producer-binding.js';
-import {
-  LAFEA_MESH_PRODUCER_REF,
-  lafeaMeshProducerLocalRefinementFamilies,
-} from './lafea-mesh-producer-registry.js';
+  LAFEA4_SHELL_REFINEMENT_CAPABILITY,
+  LAFEA4_SHELL_REFINEMENT_PRODUCER_REF,
+  LAFEA4_SHELL_REFINEMENT_QUALIFICATION,
+  validateLafea4ShellRefinementCommand,
+} from './lafea4-shell-refinement-authority.js';
 import {
   LAFEA_SHELL_SURFACE_KINDS,
   shellMidsurfaceKind,
@@ -72,18 +66,14 @@ export function planLafea4ShellRetainedMeshRefinement({
   const parentEvidence = validateLafeaAnalysisMeshEvidenceV2(parentValue);
   const midsurfaceEvidence = validateLafeaAnyShellMidsurfaceEvidence(midsurfaceValue);
   const meshProfile = canonicalLafeaAnalysisMeshProfile(profileValue);
-  const command = requireCommand(commandValue);
+  const command = validateLafea4ShellRefinementCommand(commandValue);
 
   requireLafea4Parents(stage, midsurfaceEvidence, parentEvidence, meshProfile);
-  if (command.stageId !== 'LAFEA.4') fail('LAFEA4_SHELL_REFINEMENT_COMMAND_STAGE_INVALID');
   if (command.parentMeshArtifactHash !== parentEvidence.artifactHash
     || command.parentMeshHash !== parentEvidence.meshHash) {
     fail('LAFEA4_SHELL_REFINEMENT_PARENT_MESH_STALE');
   }
   if (!command.executionAuthorized) fail('LAFEA4_SHELL_REFINEMENT_COMMAND_NOT_AUTHORIZED');
-  if (!lafeaMeshProducerLocalRefinementFamilies('LAFEA.4').includes(SHELL_TRI3)) {
-    fail('LAFEA4_SHELL_REFINEMENT_PRODUCER_SCOPE_NOT_QUALIFIED');
-  }
   if (meshProfile.fields.shellElement !== SHELL_TRI3
     || parentEvidence.mesh.elements.some((row) => row.elementType !== SHELL_TRI3)) {
     fail('LAFEA4_SHELL_REFINEMENT_PARENT_FAMILY_MISMATCH');
@@ -122,12 +112,11 @@ export function planLafea4ShellRetainedMeshRefinement({
     globalTargetElementLength * LAFEA4_SHELL_RETAINED_REFINEMENT_POLICY.influenceRadiusGlobalFactor,
     command.targetElementLength * 3,
   );
-  const capability = lafeaCoreMeshProducerCapability();
-  const qualification = lafeaCoreMeshProducerQualification();
-  if (!capability.supportsLocalRefinement
-    || !capability.generationModes.includes('REFINEMENT_REGENERATION')
-    || !qualification.localRefinementAuthorized
-    || !qualification.authorizedGenerationModes.includes('REFINEMENT_REGENERATION')) {
+  const capability = LAFEA4_SHELL_REFINEMENT_CAPABILITY;
+  const qualification = LAFEA4_SHELL_REFINEMENT_QUALIFICATION;
+  if (qualification.capabilityHash !== capability.capabilityHash
+    || qualification.authorizedStageId !== 'LAFEA.4'
+    || !qualification.authorizedSurfaceKinds.includes(surfaceKind)) {
     fail('LAFEA4_SHELL_REFINEMENT_PRODUCER_NOT_QUALIFIED');
   }
 
@@ -163,7 +152,7 @@ export function planLafea4ShellRetainedMeshRefinement({
     qualificationHash: qualification.qualificationHash,
     producerId: capability.producerId,
     producerRevision: capability.producerRevision,
-    producerRef: LAFEA_MESH_PRODUCER_REF,
+    producerRef: LAFEA4_SHELL_REFINEMENT_PRODUCER_REF,
     repeatabilityPolicy: capability.repeatabilityPolicy,
   };
   return freeze({
@@ -179,7 +168,7 @@ export function previewLafea4ShellRetainedMeshRefinement(input) {
   const parentEvidence = validateLafeaAnalysisMeshEvidenceV2(input.parentEvidence);
   const midsurfaceEvidence = validateLafeaAnyShellMidsurfaceEvidence(input.midsurfaceEvidence);
   const meshProfile = canonicalLafeaAnalysisMeshProfile(input.meshProfile);
-  const command = requireCommand(input.command);
+  const command = validateLafea4ShellRefinementCommand(input.command);
   const plan = planLafea4ShellRetainedMeshRefinement({
     stage: input.stage,
     midsurfaceEvidence,
@@ -188,7 +177,7 @@ export function previewLafea4ShellRetainedMeshRefinement(input) {
     command,
   });
   const generated = refineParentInUv(parentEvidence.mesh, midsurfaceEvidence.geometry, plan);
-  const capability = lafeaCoreMeshProducerCapability();
+  const capability = LAFEA4_SHELL_REFINEMENT_CAPABILITY;
   const estimatedDofs = estimateLafeaMeshDofs('LAFEA.4', generated.mesh.nodes.length);
   if (generated.mesh.nodes.length > capability.maximumNodes
     || generated.mesh.elements.length > capability.maximumElements
@@ -213,7 +202,7 @@ export function previewLafea4ShellRetainedMeshRefinement(input) {
       stageId: 'LAFEA.4',
       authorityRole: LAFEA_ANALYSIS_MESH_AUTHORITY_V2_ROLE,
       status: 'ACCEPTED_BY_STAGE_CONTRACT',
-      producerRef: LAFEA_MESH_PRODUCER_REF,
+      producerRef: plan.producerRef,
       sourceHash: plan.sourceHash,
       analysisDomainHash: plan.analysisDomainHash,
       analysisGeometryHash: plan.analysisGeometryHash,
@@ -439,7 +428,7 @@ function weldUvTriangulation(points, triangles, revision) {
     }));
   return freeze({
     schema: 'lafea4-shell-uv-refined-mesh/v1',
-    meshIdentity: `LAFEA_CORE_MESHER:${revision}:LAFEA4_LOCAL_REFINEMENT`,
+    meshIdentity: `${LAFEA4_SHELL_REFINEMENT_PRODUCER_REF}:${revision}:LOCAL_REFINEMENT`,
     nodes,
     elements,
   });
@@ -541,21 +530,6 @@ function requireLafea4Parents(stage, midsurfaceEvidence, parentEvidence, meshPro
   if (parentEvidence.analysisGeometryHash !== midsurfaceEvidence.analysisGeometryHash) {
     fail('LAFEA4_SHELL_REFINEMENT_GEOMETRY_STALE');
   }
-}
-
-function requireCommand(value) {
-  if (!value || value.schema !== LAFEA_RETAINED_MESH_REFINEMENT_COMMAND_SCHEMA) {
-    fail('LAFEA4_SHELL_REFINEMENT_COMMAND_REQUIRED');
-  }
-  const { semanticHash, status, executionAuthorized, rollbackPolicy, ...input } = value;
-  const rebuilt = createLafeaRetainedMeshRefinementCommand(input);
-  if (rebuilt.semanticHash !== semanticHash
-    || rebuilt.status !== status
-    || rebuilt.executionAuthorized !== executionAuthorized
-    || rebuilt.rollbackPolicy !== rollbackPolicy) {
-    fail('LAFEA4_SHELL_REFINEMENT_COMMAND_TAMPERED');
-  }
-  return rebuilt;
 }
 
 function sameStringArray(left, right) {

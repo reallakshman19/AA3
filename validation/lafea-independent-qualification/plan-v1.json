@@ -104,6 +104,20 @@
       "args": ["scripts/lafea3-sample-generate-mesh-enable-check.mjs"]
     },
     {
+      "id": "LAFEA3_SAMPLE_GENERATE_RETAIN",
+      "classification": "ENGINEERING",
+      "required": true,
+      "executable": "node",
+      "args": ["scripts/lafea3-sample-generate-retain-check.mjs"]
+    },
+    {
+      "id": "RETAINED_MESH_DISPLAY_TOPOLOGY",
+      "classification": "ENGINEERING",
+      "required": true,
+      "executable": "node",
+      "args": ["scripts/lafea-retained-mesh-display-topology-check.mjs"]
+    },
+    {
       "id": "MESHING_SUITE",
       "classification": "ENGINEERING",
       "required": true,

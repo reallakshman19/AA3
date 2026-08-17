@@ -33,8 +33,8 @@
     },
     {
       "id": "TECH13D_WORKBENCH_PRODUCT_INTEGRATION",
-      "status": "NOT_STARTED",
-      "purpose": "ENABLE_REFINE_CONTROL_ONLY_WHEN_CURRENT_PRODUCT_ELIGIBILITY_AND_QUALIFICATION_ALLOW_IT"
+      "status": "IMPLEMENTED_PENDING_EXECUTION",
+      "purpose": "EXPOSE_BOUNDED_PRODUCT_SCOPE_AND_QUANTITATIVE_POLICY_WITHOUT_ENABLING_REFINE_BEFORE_TECH13E"
     },
     {
       "id": "TECH13E_NUMERICAL_QUALIFICATION",
@@ -81,6 +81,22 @@
     "candidateGateMutatesCustody": false,
     "candidatePassAuthorizesRetentionBeforeTech13E": false
   },
+  "workbenchPolicy": {
+    "scopeEligibleIsNotProductQualified": true,
+    "eligibleCurvedParentReason": "LAFEA4_SHELL_PRODUCT_REFINEMENT_PENDING_TECH13E_QUALIFICATION",
+    "outOfScopeShellReasonPreserved": "SHELL_LOCAL_REFINEMENT_NOT_QUALIFIED",
+    "showsParentNodeCount": true,
+    "showsParentElementCount": true,
+    "showsParentArtifactHash": true,
+    "showsParentMeshHash": true,
+    "showsGlobalTargetElementLength": true,
+    "showsAdjacentSizeRatioMax": true,
+    "showsAspectRatioPolicy": true,
+    "showsScaledJacobianPolicy": true,
+    "showsMinimumAngleBlockDegrees": true,
+    "refineControlEnabledBeforeTech13E": false,
+    "globalMeshCapabilityRegistryChanged": false
+  },
   "publicationSequence": [
     "GENERATE_CANDIDATE_CHILD",
     "VALIDATE_V2_MESH_QUALITY",
@@ -103,10 +119,13 @@
     "tech13bProductRetentionAuthorized": false,
     "tech13cCandidateRetentionEligibleMayBeTrue": true,
     "tech13cProductRetentionAuthorized": false,
-    "tech13cUiBindingAuthorized": false,
+    "tech13dScopeEligibleMayBeTrue": true,
+    "tech13dCanRefineMesh": false,
+    "tech13dUiBindingAuthorized": false,
     "tech13aReleaseQualified": false,
     "tech13bReleaseQualified": false,
     "tech13cReleaseQualified": false,
+    "tech13dReleaseQualified": false,
     "productRefinementMayBeEnabledBeforeTech13eExactHeadPass": false
   }
 }

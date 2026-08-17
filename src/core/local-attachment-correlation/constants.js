@@ -2,6 +2,7 @@ export const CORRELATION_PROFILE_SCHEMA = 'local-attachment-correlation-profile/
 export const CORRELATION_REQUEST_SCHEMA = 'local-attachment-correlation-request/v1';
 export const CORRELATION_RESULT_SCHEMA = 'local-attachment-correlation-result/v1';
 export const CORRELATION_DATASET_HASH_SCHEMA = 'local-attachment-correlation-dataset-hash/v1';
+export const CORRELATION_GEOMETRY_SCHEMA = 'local-attachment-correlation-geometry/v1';
 
 export const INTERPOLATION_POLICIES = Object.freeze({
   BILINEAR_NO_EXTRAPOLATION: 'BILINEAR_NO_EXTRAPOLATION',

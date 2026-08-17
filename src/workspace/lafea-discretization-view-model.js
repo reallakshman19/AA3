@@ -1,5 +1,6 @@
 /** Pure presentation model for the governed Discretization step. */
 import { qualifiedMeshQualityPolicyForStage } from '../core/lafea-profile-contract/index.js';
+import { buildLafea4ThicknessCurvatureObservation } from './lafea-shell-thickness-curvature-observation.js';
 import { buildMeshQualityPanel } from './lafea-mesh-quality-panel.js';
 import { requireLafeaLifecycleProfileForStage } from './lafea-lifecycle-profiles.js';
 import { lafeaMeshCapabilities } from './lafea-mesh-capabilities.js';
@@ -305,6 +306,7 @@ function buildGenerationModel(stage, capabilities) {
     meshProfileBound: Boolean(meshProfile),
     meshProfileIdentity: meshProfile?.profileIdentity ?? null,
     qualifiedQualityPolicy: qualifiedMeshQualityPolicyForStage(stage.stageId),
+    thicknessCurvatureObservation: buildLafea4ThicknessCurvatureObservation(stage),
     targetElementLength: sourceMeshAdoption ? null : meshProfile?.fields.globalTargetSize ?? null,
     declaredElementFamily: declaredFamily(stage.stageId, meshProfile),
     lengthUnit: shellMidsurface

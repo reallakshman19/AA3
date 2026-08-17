@@ -1,100 +1,158 @@
-# WRC 537 Edition 4 — source-to-evaluator batch
+# WRC537 Edition 4 source-to-evaluator batch
 
-## Purpose
+## 1. Purpose
 
-This increment implements the complete software path from a source-qualified WRC Bulletin 537 Edition 4 extraction to numerical qualification evidence without assuming any WRC equation, coefficient, sign convention, interpolation rule, recovery location, or stress-combination rule that is not present in the authorized Edition 4 source.
+This document defines the complete **source-independent** software path from an authorized WRC Bulletin 537 Edition 4 technical source to a numerically qualified release candidate.
 
-The intended chain is:
+It does not provide WRC537 technical equations, coefficients, signs, limits or benchmark answers.
+
+The real engineering method remains BLOCKED until the authorized Edition 4 technical source is supplied and qualified.
+
+## 2. End-to-end authority chain
 
 ```text
 AUTHORIZED EDITION 4 SOURCE
         ↓
-source package READY
+exact SHA-256 source custody
         ↓
-immutable engineering dataset
+DOCUMENT + DATUM source ledger
+        ↓
+source-package READY
+        ↓
+immutable engineering dataset candidate
         ↓
 source-bound calculation plan
         ↓
-reviewed executable plan
+reviewed executable graph
         ↓
-deterministic evaluator
+deterministic execution trace
         ↓
-term-by-term execution trace
+term-complete numerical qualification
         ↓
-source/hand-calculation qualification suite
+exact retained source-benchmark release custody
         ↓
-replayed numerical qualification evidence
+exact numeric literal/coefficient custody
         ↓
-NUMERICALLY_QUALIFIED_AWAITING_APPROVAL_AND_TRUST
+numerical release candidate
         ↓
-separate approval / trusted registry activation
+STOP — independent approval/trust
 ```
 
-No step in this batch sets `engineeringUseAuthorized=true`.
-
-## 1. What is implemented
-
-### 1.1 Source readiness
-
-Existing Edition 4 intake remains the only source authority gate. The source package must be `READY_FOR_TECHNICAL_IMPLEMENTATION` before an engineering dataset can be produced.
-
-### 1.2 Engineering-dataset materialization
-
-The existing promotion gate retains:
-
-- exact source package;
-- source ledger;
-- coefficient rows;
-- authorized-document SHA-256;
-- readiness evidence;
-- semantic hashes.
-
-### 1.3 Calculation plan
-
-The source-bound calculation plan from PR #1210 remains the engineering interpretation layer. Every consumed technical statement requires a primary-source `DATUM` ledger row with an exact locator.
-
-The plan must represent every numerical source operation that affects a result as an equation or interpolation rule. If a `combinationRule` or `postProcessing` entry contains numerical behavior that has not been converted into an explicit equation, executable-plan compilation fails closed with:
+Every artifact through numerical release remains:
 
 ```text
-WRC537_ED4_EXECUTABLE_PLAN_UNCOMPILED_SOURCE_RULES
+engineeringUseAuthorized = false
 ```
 
-This prevents a descriptive sentence from silently becoming software mathematics.
+## 3. Source-package prerequisite
 
-### 1.4 Safe executable plan
-
-The executable plan is schema:
+The source package must reach:
 
 ```text
-wrc537-ed4-executable-plan/v1
+READY_FOR_TECHNICAL_IMPLEMENTATION
 ```
 
-It binds:
+before dataset promotion.
+
+READY requires exact Edition 4 source authority for:
 
 ```text
-datasetSemanticHash
-planSemanticHash
-variableMetadata
-equationImplementations
-interpolationImplementations
-executionOrder
-numericalPolicy
+geometry / physical applicability
+U / gamma / rho / lambda / delta
+all 12 load/moment conventions
+stress recovery and surfaces
+source stress measure
+interpolation / extrapolation
+coefficient/equation inventory and values
+source benchmark inputs and expected outputs
+LAFEA canonical mapping
 ```
 
-It is code-owned as non-authorized:
+Every consumed technical datum must be bound to the exact authorized source document SHA-256 and exact Edition 4 locator.
+
+## 4. Source benchmark input custody at READY
+
+A source benchmark retains its natural input structure in `input` plus a source-qualified `inputEvidence[]` inventory.
+
+Example:
 
 ```json
 {
-  "engineeringUseAuthorized": false,
-  "authorizationBasis": "SOURCE_BOUND_EXECUTABLE_PLAN_NOT_NUMERICALLY_QUALIFIED"
+  "input": {
+    "geometry": { "R": 100, "t": 10 },
+    "loads": { "P": 1000 }
+  },
+  "inputEvidence": [
+    {
+      "inputId": "GEOMETRY_R",
+      "benchmarkPath": ["geometry", "R"],
+      "units": "mm",
+      "sourceRef": "DATUM-WRC537-ED4-BENCHMARK-001",
+      "sourceLocator": "exact source locator"
+    }
+  ]
 }
 ```
 
-### 1.5 Operator set
+Before READY:
 
-There is no text evaluation and no `eval()`/`Function()` path.
+```text
+every finite numeric benchmark input leaf
+→ exactly one inputEvidence ID
+→ explicit source units
+→ exact DATUM source reference/locator
+→ exact authorized source digest
+```
 
-The permitted graph operators are intentionally finite:
+A bare numeric source input cannot qualify.
+
+## 5. Engineering dataset
+
+Only a READY source package may create:
+
+```text
+wrc537-ed4-engineering-dataset/v1
+```
+
+The dataset freezes:
+
+```text
+source package
+source ledger
+coefficient rows
+source document SHA-256
+source readiness evidence
+promotion metadata
+canonical semantic hashes
+```
+
+Source qualification is not numerical-method qualification.
+
+## 6. Calculation plan
+
+The source-bound calculation plan retains:
+
+```text
+source family
+coordinate system
+load reference
+variables
+equations
+interpolation rules
+recovery targets
+combination rules
+post-processing rules
+```
+
+Every plan item that carries technical meaning must reference an Edition 4 primary `DATUM` row with the exact source document digest and locator.
+
+Source expression text is evidence only; it is never executed directly.
+
+## 7. Safe executable graph
+
+No `eval()` or dynamic `Function()` path exists.
+
+Supported software primitives are:
 
 ```text
 VAR
@@ -113,131 +171,71 @@ POLYNOMIAL
 LINEAR_INTERPOLATE
 ```
 
-Adding another operator requires a code change and qualification; source text cannot create arbitrary executable JavaScript.
+The primitive set is software capability, not evidence that WRC537 uses a particular mathematical form.
 
-`POLYNOMIAL` is evaluated by Horner's method using retained numerical coefficients in the reviewed executable graph.
-
-`LINEAR_INTERPOLATE` is explicit. Extrapolation is rejected unless the compiled source rule itself carries `sourceAllowsExtrapolation=true`.
-
-The presence of this operator does **not** assert that WRC 537 Edition 4 uses linear interpolation. It merely supplies a reviewed primitive if the authorized source requires it.
-
-### 1.6 Dimensional audit
-
-Every executable equation/interpolation implementation requires:
+Every compiled equation/interpolation requires:
 
 ```text
-dimensionAudit.verified = true
+exact source plan binding
+sourceRef/sourceLocator
+explicit variable units
+dimension vectors
+verified dimension audit
+deterministic execution order
 ```
 
-and an audit basis.
+## 8. Interpolation/extrapolation custody
 
-Each variable has a software dimensional vector, for example:
+Executable interpolation cannot define its own engineering authority.
+
+Every `LINEAR_INTERPOLATE` node is recursively checked against source-package policy, including nodes nested inside equation graphs.
+
+Required:
 
 ```text
-force:   { F: 1 }
-area:    { L: 2 }
-stress:  { F: 1, L: -2 }
+source interpolation authorization == executable interpolation use
+source extrapolation authorization == executable sourceAllowsExtrapolation
 ```
 
-The graph is independently dimension-propagated.
+## 9. Execution safety
 
-Rules include:
-
-- ADD/SUB/MIN/MAX: dimensions must match;
-- MUL: exponent vectors add;
-- DIV: exponent vectors subtract;
-- SQRT: exponents divide by two;
-- POW: exponent must be a constant;
-- POLYNOMIAL: independent variable must be dimensionless;
-- LINEAR_INTERPOLATE: x/x0/x1 dimensions must match and y0/y1 dimensions must match.
-
-This is a software dimensional consistency check. It does not substitute for verifying the source equation itself against the bulletin.
-
-### 1.7 Units
-
-Runtime inputs must use the exact units declared in `variableMetadata`.
-
-There is no silent unit conversion in this evaluator. A mismatch fails with:
+Runtime execution rejects:
 
 ```text
-WRC537_ED4_EXECUTION_INPUT_UNITS_MISMATCH
+missing / extra / duplicate input variables
+wrong units
+unknown variables
+forward or unbound references
+unsupported operators
+non-finite values
+division by zero
+negative SQRT domain
+zero interpolation span
+unauthorized extrapolation
+missing recovery results
 ```
 
-The source-specific plan must therefore select and document one canonical unit system before qualification.
+There is no silent unit conversion.
 
-### 1.8 Numerical safety
+## 10. Term-complete qualification
 
-The executable plan declares:
-
-```text
-divisionZeroTolerance
-finiteOnly = true
-allowExtrapolationOnlyWhenSourceRuleAllows = true
-```
-
-Runtime rejects:
-
-- missing inputs;
-- extra inputs;
-- duplicate inputs;
-- unit mismatch;
-- unbound/forward graph references;
-- division by zero according to the declared threshold;
-- negative square-root argument;
-- interpolation zero span;
-- unauthorized extrapolation;
-- non-finite results.
-
-### 1.9 Execution trace
-
-Schema:
-
-```text
-wrc537-ed4-execution-trace/v1
-```
-
-Every executed step retains:
-
-```text
-sequence
-kind
-id
-outputVariableId
-value
-units
-sourceRef
-sourceLocator
-```
-
-Recovery results retain target, variable, value and units.
-
-The trace is deterministic and replay validated.
-
-It is qualification evidence only and is never an engineering result by itself.
-
-## 2. Numerical qualification
-
-### 2.1 Suite schema
+Qualification suite schema:
 
 ```text
 wrc537-ed4-numerical-qualification-suite/v1
 ```
 
-A suite is bound to one exact:
+Each case is bound to the exact dataset, calculation plan and executable plan.
+
+Every case must include an expected value for:
 
 ```text
-datasetSemanticHash
-planSemanticHash
-executablePlanSemanticHash
+every executable equation/interpolation step
++
+every declared recovery result
 ```
 
-### 2.2 Benchmark completeness
-
-Each qualification case must provide expected values for **every execution step** and **every recovery result**.
-
-A final-result-only benchmark is rejected.
-
-For each expected value retain:
+Expected values retain:
 
 ```text
 value
@@ -248,39 +246,130 @@ sourceRef
 sourceLocator
 ```
 
-Tolerance must be source/precision justified. The code does not insert a default percentage tolerance.
-
-### 2.3 Independent calculation
-
-Each release case requires:
+Every case also requires:
 
 ```text
 independentReproduction = true
 independentCalculationReference = non-empty
 ```
 
-For WRC release work this reference should identify the independently checked hand calculation or separately implemented reference calculation.
+No default percentage tolerance is inserted.
 
-### 2.4 Evidence
+Qualification PASS means the executable plan reproduced the retained expected values. It does **not** by itself prove that the case is one of the source benchmarks frozen in the dataset.
+
+## 11. Source-benchmark release custody
+
+A numerical release candidate requires full source-benchmark custody in addition to qualification PASS.
+
+Artifact:
+
+```text
+docs/wrc537/ed4/WRC537_ED4_BENCHMARK_BINDINGS.json
+```
+
+Every benchmark frozen in `dataset.sourcePackage.benchmarks` must be covered exactly once.
+
+Each binding maps:
+
+```text
+sourceBenchmarkCaseId
+↔ qualificationCaseId
+```
+
+and retains input/recovery mappings.
+
+### Input mapping
+
+Release input bindings use only source-qualified benchmark evidence IDs:
+
+```json
+{
+  "variableId": "P",
+  "benchmarkInputId": "LOAD_P"
+}
+```
+
+The release gate proves:
+
+```text
+request value == source benchmark value
+request units == source benchmark inputEvidence.units
+```
+
+It also requires the binding set to cover every qualification request variable and every source-qualified benchmark input evidence row exactly once.
+
+Because READY requires 100% numeric benchmark input-leaf evidence, the release chain proves:
+
+```text
+source numeric benchmark input
+→ source-qualified value/units/locator
+→ qualification runtime variable
+→ executable plan
+```
+
+### Recovery mapping
+
+Every source benchmark expected result maps exactly once to an expected qualification recovery result with exact equality of:
+
+```text
+value
+units
+absoluteTolerance
+toleranceBasis
+sourceRef
+sourceLocator
+```
+
+The qualification case must also retain the exact source benchmark datum/locator and exact independent calculation reference.
+
+See `SOURCE_BENCHMARK_RELEASE_CUSTODY.md` for the detailed contract.
+
+## 12. Numeric literal/coefficient custody
+
+Every numeric literal embedded in every executable graph is inventoried.
+
+Each literal must bind as exactly one of:
+
+```text
+DATASET_COEFFICIENT
+SOURCE_LITERAL
+```
+
+A dataset coefficient binding requires exact equality to the retained coefficient value and exact source reference/locator.
+
+Graph variable references must also equal the source plan's declared input-variable set exactly.
+
+## 13. Numerical release candidate
 
 Schema:
 
 ```text
-wrc537-ed4-numerical-qualification-evidence/v1
+wrc537-ed4-numerical-release-candidate/v1
 ```
 
-Evidence is produced by replaying all cases through the executable plan. PASS occurs only when every expected intermediate and recovery result is inside its retained absolute tolerance.
+Creation requires:
 
-Evidence is still code-owned as:
-
-```json
-{
-  "engineeringUseAuthorized": false,
-  "authorizationBasis": "NUMERICAL_QUALIFICATION_EVIDENCE_REQUIRES_SEPARATE_APPROVAL_AND_TRUST"
-}
+```text
+valid READY-derived dataset
+valid source-bound calculation plan
+valid executable plan
+replayed numerical qualification PASS
+exact graph input custody
+100% source benchmark coverage
+exact source-qualified benchmark value + unit bindings
+exact source benchmark recovery/tolerance/source bindings
+exact independent reproduction reference
+complete numeric literal/coefficient custody
 ```
 
-## 3. One-command pipeline
+Authority remains:
+
+```text
+engineeringUseAuthorized = false
+NUMERICALLY_QUALIFIED_CANDIDATE_AWAITING_INDEPENDENT_APPROVAL_AND_TRUST
+```
+
+## 14. One-command pipeline
 
 Run:
 
@@ -288,9 +377,7 @@ Run:
 node scripts/wrc537-ed4-source-to-evaluator-pipeline.mjs
 ```
 
-The command reports the first real blocking stage.
-
-Possible states are:
+Possible states:
 
 ```text
 SOURCE_PACKAGE_BLOCKED
@@ -298,30 +385,18 @@ SOURCE_BOUND_CALCULATION_PLAN_REQUIRED
 EXECUTABLE_PLAN_REQUIRED
 QUALIFICATION_SUITE_REQUIRED
 NUMERICAL_QUALIFICATION_FAILED
-NUMERICALLY_QUALIFIED_AWAITING_APPROVAL_AND_TRUST
+SOURCE_BENCHMARK_CUSTODY_REQUIRED
+NUMERIC_LITERAL_CUSTODY_REQUIRED
+NUMERICAL_RELEASE_CANDIDATE_AWAITING_APPROVAL_AND_TRUST
 ```
 
-`--write` permits deterministic materialization of artifacts that can be generated without new engineering interpretation:
+`--write` materializes only artifacts whose prerequisites already validate.
 
-```bash
-node scripts/wrc537-ed4-source-to-evaluator-pipeline.mjs --write
-```
+The pipeline never auto-interprets source prose into a calculation plan.
 
-When the source package is READY, the dataset may be materialized. Qualification evidence may be materialized after a plan, executable plan and suite exist.
+`--release` remains non-zero at the approval/trust boundary even after numerical release-candidate creation.
 
-The script **does not auto-generate the source calculation plan** from prose. That would replace engineering interpretation with an unreviewed parser and is intentionally prohibited.
-
-### Release mode
-
-```bash
-node scripts/wrc537-ed4-source-to-evaluator-pipeline.mjs --release
-```
-
-Release mode remains non-zero through every unresolved stage. Even a numerical PASS exits non-zero at the final state because separate approval/trust/registry activation remains required.
-
-## 4. Required real artifacts
-
-After the licensed Edition 4 extraction is complete, the real chain uses:
+## 15. Required real artifacts after source extraction
 
 ```text
 docs/wrc537/ed4/WRC537_ED4_SOURCE_PACKAGE.json
@@ -333,42 +408,46 @@ docs/wrc537/ed4/WRC537_ED4_CALCULATION_PLAN.json
 docs/wrc537/ed4/WRC537_ED4_EXECUTABLE_PLAN.json
 docs/wrc537/ed4/WRC537_ED4_QUALIFICATION_SUITE.json
 docs/wrc537/ed4/WRC537_ED4_QUALIFICATION_EVIDENCE.json
+docs/wrc537/ed4/WRC537_ED4_BENCHMARK_BINDINGS.json
+docs/wrc537/ed4/WRC537_ED4_LITERAL_BINDINGS.json
+docs/wrc537/ed4/WRC537_ED4_NUMERICAL_RELEASE_CANDIDATE.json
 ```
 
-The last five do not exist in the current real repository state because the technical source package is still blocked.
+These real generated artifacts remain absent while the source package is BLOCKED.
 
-## 5. Engineering conversion procedure once Edition 4 is supplied
+## 16. Engineering procedure once Edition 4 is supplied
 
-Do this as one controlled extraction/implementation batch:
+1. calculate SHA-256 of the exact authorized Edition 4 source artifact;
+2. establish DOCUMENT custody;
+3. extract every consumed technical statement into DATUM custody;
+4. complete geometry/applicability;
+5. complete all five parameter equations/domains;
+6. complete all twelve load conventions;
+7. complete stress quantities/recovery/surface rules;
+8. complete source interpolation/extrapolation policy;
+9. inventory/transcribe every Edition 4 coefficient/equation with source precision and locator;
+10. extract source benchmark inputs, source units and exact input locators;
+11. retain one `inputEvidence` row for every finite numeric benchmark input leaf;
+12. extract benchmark expected outputs with units/tolerances/locators;
+13. independently reproduce retained source benchmarks;
+14. qualify LAFEA mappings;
+15. make source package READY;
+16. materialize immutable dataset;
+17. construct/review calculation plan;
+18. compile source mathematics into safe graphs;
+19. dimension-check every graph;
+20. build term-complete qualification cases;
+21. debug failures at first divergent intermediate;
+22. replay qualification to PASS;
+23. bind every retained source benchmark exactly to qualification evidence;
+24. bind every executable numeric literal;
+25. create numerical release candidate;
+26. submit exact artifact hashes to independent approval/trust;
+27. activate registry/product/UI only after trusted approval.
 
-1. hash the exact authorized Edition 4 PDF/source artifact with SHA-256;
-2. reconcile the public identity metadata to the exact technical copy;
-3. fill geometry definitions and physical applicability from Edition 4 only;
-4. fill U, gamma, rho, lambda and delta equations/domains/inclusivity exactly as applicable;
-5. fill all force/moment coordinate definitions, positive signs and reference points;
-6. fill stress quantities, membrane/bending/shear definitions, surface recovery and locations;
-7. fill source interpolation/extrapolation behavior;
-8. inventory every Edition 4 numerical coefficient/equation row;
-9. transcribe values with displayed source precision and exact locator;
-10. retain target-edition source examples and independently reproduce them;
-11. qualify all LAFEA geometry/load/stress mappings;
-12. make the source package READY;
-13. materialize the immutable dataset;
-14. create datum-level ledger rows for every calculation-plan item;
-15. construct the calculation plan equation by equation;
-16. independently review the calculation plan against the authorized source;
-17. compile every equation/interpolation into the safe operator graph;
-18. independently dimension-check every compiled graph;
-19. create benchmark cases with expected intermediate values;
-20. run the numerical qualification suite;
-21. investigate any mismatch at the first divergent term, not at final stress only;
-22. freeze numerical qualification evidence only after replay PASS;
-23. submit the exact dataset/plan/executable/evidence hashes to the separate engineering approval/trust chain;
-24. only then expose WRC537 as an executable engineering method/UI option.
+## 17. Explicit non-assumptions
 
-## 6. Explicit non-assumptions
-
-This batch does not assert any of the following for WRC537 unless later supplied by the source-qualified plan:
+This batch does not assert any of the following unless established by the authorized source:
 
 ```text
 force basis = F/(D t)
@@ -380,26 +459,24 @@ von Mises combination
 Tresca combination
 inside/outside sign convention
 fixed recovery point names
-specific cylindrical/spherical parameter formula
-specific coefficient polynomial
+specific parameter formulas
+specific coefficient polynomials
 ```
 
-The evaluator provides mathematical primitives, not WRC method claims.
-
-## 7. Current real status
-
-Current expected state remains:
+## 18. Current real status
 
 ```text
-Edition 4 catalog identity        available
-Edition 4 primary technical data unavailable in repository
-source package                    BLOCKED
-engineering dataset               ABSENT
-calculation plan                  ABSENT
-executable plan                   ABSENT
-qualification suite               ABSENT
-qualification evidence            ABSENT
-engineering activation            BLOCKED
+Edition 4 catalog identity          available
+Edition 4 authorized technical data unavailable in repository
+source package                      BLOCKED
+engineering dataset                 ABSENT
+calculation plan                    ABSENT
+executable plan                     ABSENT
+qualification suite/evidence        ABSENT
+benchmark bindings                  ABSENT
+literal bindings                    ABSENT
+numerical release candidate         ABSENT
+engineering activation              BLOCKED
 ```
 
-That is the correct fail-closed state until the authorized Edition 4 technical content is supplied and qualified.
+This is the correct fail-closed state until the authorized Edition 4 technical content is supplied and qualified.

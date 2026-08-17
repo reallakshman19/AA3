@@ -121,6 +121,25 @@ test('production LAFEA.1 and LAFEA.2 are first-class analytical stages', async (
       await expect(source).toContainText('Load moment X');
       await expect(source).toContainText('Load moment Y');
       await expect(source).toContainText('Load moment Z');
+    } else {
+      const custody = analytical.locator('[data-role="lafea-screening-load-custody"]');
+      await expect(custody).toBeVisible();
+      await expect(custody).toContainText('Retained transformed resultants');
+      await expect(custody).toContainText('screeningCaseId + loadCaseId');
+      const factor = custody.locator(
+        '[data-role="lafea-screening-term-factor"][data-screening-case-id="CASE-B"][data-load-case-id="LC-A"]',
+      );
+      await expect(factor).toHaveValue('-0.5');
+      await factor.fill('0.25');
+      await custody.locator(
+        '[data-role="lafea-apply-screening-term-factor"][data-screening-case-id="CASE-B"][data-load-case-id="LC-A"]',
+      ).click();
+      await expect(workbench.locator('.lafea-workbench__status')).toHaveText('READY');
+      const editedFactor = await page.evaluate(() => globalThis.AnalysisWorkspace
+        .getLafeaWorkbenchState().stages['LAFEA.2'].document.screeningCases
+        .find((row) => row.screeningCaseId === 'CASE-B').mechanicalTerms
+        .find((row) => row.loadCaseId === 'LC-A').factor);
+      expect(editedFactor).toBe(0.25);
     }
 
     const stageBeforeRun = await page.evaluate(
@@ -145,6 +164,11 @@ test('production LAFEA.1 and LAFEA.2 are first-class analytical stages', async (
       await expect(highlights.locator('[data-role="lafea-transverse-load-warning"]')).toContainText(
         'LOCAL TRANSVERSE LOAD NOT RECOVERED',
       );
+      const caseB = await page.evaluate(() => globalThis.AnalysisWorkspace
+        .getLafeaWorkbenchState().stages['LAFEA.2'].execution.result.screeningCases
+        .find((row) => row.screeningCaseId === 'CASE-B'));
+      expect(caseB.combinedForceLocal).toEqual([-750, -25, 137.5]);
+      expect(caseB.combinedMomentLocal).toEqual([-2750, -5000, 27500]);
     }
     const stageAfterRun = await page.evaluate(
       (id) => globalThis.AnalysisWorkspace.getLafeaWorkbenchState().stages[id],

@@ -13,6 +13,11 @@ import path from 'node:path';
 import { MasterDataController, masterDataRecordKey } from '../src/workspace/master-data-controller.js';
 import { normalizeMaterialMap } from '../src/workspace/master-data-normalizers.js';
 import { MASTER_FIELDS } from '../src/calc-workspace/cii-standalone-port/ui-adapted/xml-cii-adapted-fields-config.js';
+import {
+  buildPreviewSearchIndex,
+  getPreviewSearchMetrics,
+  resetPreviewSearchMetrics,
+} from '../src/calc-workspace/cii-standalone-port/ui-adapted/xml-cii-adapted-import-preview-search.js';
 import { summarizeStandaloneImportMasters } from '../src/calc-workspace/cii-standalone-port/xml-cii-master-context.js';
 
 const ROOT = path.resolve('.');
@@ -226,6 +231,47 @@ function pass(id, description) {
   const clearEvent = published.find((row) => row.topic === 'MASTER_DATA_CLEARED');
   assert.equal(clearEvent?.payload?.revisions?.weight, afterClear);
   pass('F-010', 'clear and replacement imports preserve monotonic runtime currentness');
+}
+
+// F-011 — full preview-search materialization normalizes exactly one row source.
+// When canonical rows are present, raw rows are not redundantly normalized.
+{
+  const canonicalRows = Array.from({ length: 50 }, (_, index) => ({
+    type: `VALVE-${index}`,
+    weightKg: index,
+  }));
+  const rawRows = Array.from({ length: 10000 }, (_, index) => ({
+    TYPE: `RAW-${index}`,
+    DRY_WT: index,
+  }));
+  resetPreviewSearchMetrics();
+  const index = buildPreviewSearchIndex(
+    { key: 'weight', rows: canonicalRows },
+    {
+      supportConfigJson: '{}',
+      masterContext: { rawRows: { weight: rawRows } },
+    },
+  );
+  const metrics = getPreviewSearchMetrics();
+  assert.equal(index.length, 50);
+  assert.equal(metrics.rowBuilds, 1);
+  assert.equal(metrics.rowsNormalized, 50,
+    'F-011: rawRows must not also be normalized when canonical master.rows exist');
+  assert.equal(metrics.searchIndexBuilds, 1);
+  assert.equal(metrics.searchTextRows, 50);
+  pass('F-011', 'preview search normalizes one authoritative row source and builds search text once');
+}
+
+// F-012 — initial Preview render must not materialize the full searchable master.
+// The index is created only behind the first non-empty search and cached thereafter.
+{
+  assert.doesNotMatch(importMasters, /const allRows\s*=\s*buildPreviewSearchRows/u);
+  assert.match(importMasters, /let searchIndex = null/u);
+  assert.match(importMasters, /if \(!searchIndex\) searchIndex = buildPreviewSearchIndex\(master, state\)/u);
+  assert.match(importMasters, /if \(!q\) \{[\s\S]*?replacePreviewRows\(tbodyEl, columns, rows, masterKey, state\)/u);
+  assert.match(importMasters, /PREVIEW_SEARCH_DEBOUNCE_MS = 120/u);
+  assert.match(importMasters, /PREVIEW_SEARCH_RESULT_LIMIT = 150/u);
+  pass('F-012', 'full master preview search is lazy, cached per rendered master and debounced');
 }
 
 console.log('\nCONTAINMENT STATUS: PASS.');

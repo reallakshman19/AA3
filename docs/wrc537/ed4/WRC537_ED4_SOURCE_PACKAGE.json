@@ -39,7 +39,8 @@
       "attachmentFamilies": ["UNRESOLVED_ED4"],
       "intersectionOrientation": "UNRESOLVED_ED4",
       "loadReferenceConvention": "UNRESOLVED_ED4",
-      "exclusions": ["UNRESOLVED_ED4"]
+      "exclusions": ["UNRESOLVED_ED4"],
+      "sourceRef": "TO_BE_FILLED"
     }
   },
   "parameters": [

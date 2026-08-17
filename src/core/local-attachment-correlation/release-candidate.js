@@ -77,6 +77,10 @@ export function validateCorrelationReleaseCandidate(value) {
   }
   requiredString(value.candidateIdentity, 'releaseCandidate.candidateIdentity');
   requiredHash(value.semanticHash, 'releaseCandidate.semanticHash');
+  const { semanticHash: retainedHash, ...suppliedBase } = value;
+  if (retainedHash !== semanticHash(suppliedBase)) {
+    fail('CORRELATION_RELEASE_CANDIDATE_HASH_MISMATCH', 'releaseCandidate.semanticHash');
+  }
   const reconstructed = createCorrelationReleaseCandidate({
     candidateIdentity: value.candidateIdentity,
     datasetPackage: value.datasetPackage,
@@ -84,8 +88,8 @@ export function validateCorrelationReleaseCandidate(value) {
     qualificationEvidence: value.qualificationEvidence,
     qualificationRecord: value.qualificationRecord,
   });
-  if (reconstructed.semanticHash !== value.semanticHash) {
-    fail('CORRELATION_RELEASE_CANDIDATE_HASH_MISMATCH', 'releaseCandidate.semanticHash');
+  if (reconstructed.semanticHash !== retainedHash) {
+    fail('CORRELATION_RELEASE_CANDIDATE_BINDING_MISMATCH', 'releaseCandidate.binding');
   }
   return reconstructed;
 }

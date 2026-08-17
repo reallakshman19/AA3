@@ -337,28 +337,48 @@ function refinementControls(doc, model, handlers) {
     return host;
   }
 
-  if (model.refinement?.scopeEligible === true) {
+  const productScoped = model.refinement?.scopeEligible === true;
+  const productActive = productScoped
+    && model.refinement?.productQualified === true
+    && model.actions.canRefineMesh === true;
+  if (productScoped) {
     host.append(productRefinementFacts(doc, model.refinement, model.generation.lengthUnit));
+    if (!productActive) {
+      host.append(disclosure(
+        doc,
+        `Product refinement scope is recognized, but engineering activation is blocked: ${model.refinement.reason}.`,
+      ));
+      const pending = button(doc, 'Refine retained mesh', () => {});
+      pending.dataset.role = 'lafea-refinement-submit';
+      pending.disabled = true;
+      pending.title = 'A verified exact-head TECH-13 promotion record is required before this product control can be enabled.';
+      host.append(pending);
+      return host;
+    }
     host.append(disclosure(
       doc,
-      `Product refinement scope is recognized, but engineering activation is blocked: ${model.refinement.reason}.`,
+      'Verified product-refinement promotion is active. Every requested child still has to pass the runtime TECH-13 scope, mesh-quality, adjacency, parent-normal and exact-custody gates before retained custody changes.',
     ));
-    const pending = button(doc, 'Refine retained mesh', () => {});
-    pending.dataset.role = 'lafea-refinement-submit';
-    pending.disabled = true;
-    pending.title = 'TECH-13E exact-head numerical qualification is required before this product control can be enabled.';
-    host.append(pending);
-    return host;
   }
 
-  if (!model.generation.localRefinementElementFamilies.includes(family)) {
+  if (!productActive && !model.generation.localRefinementElementFamilies.includes(family)) {
     host.append(disclosure(doc, family === 'Q8'
       ? 'Q8 local refinement is not qualified; the UI will not silently convert the topology to triangles.'
       : `Local refinement is not qualified for retained element family ${family ?? 'UNKNOWN'}.`));
     return host;
   }
 
-  const targetType = selectControl(doc, 'Target type', 'lafea-refinement-target-type', ['ELEMENT', 'NODE'], 'ELEMENT');
+  const allowedTargetTypes = productActive
+    ? model.refinement.allowedTargetTypes
+    : ['ELEMENT', 'NODE'];
+  const targetType = selectControl(
+    doc,
+    'Target type',
+    'lafea-refinement-target-type',
+    allowedTargetTypes,
+    allowedTargetTypes[0] ?? 'ELEMENT',
+  );
+  if (productActive) targetType.input.disabled = true;
   const ids = textControl(doc, 'Target IDs', 'lafea-refinement-target-ids', '', 'E000034 or E000034, E000035');
   const target = numberControl(doc, 'Local target element length', 'lafea-refinement-target-length', '', 0);
   const unit = textControl(doc, 'Length unit', 'lafea-refinement-length-unit', model.generation.lengthUnit ?? '', 'Declared geometry length unit');
@@ -386,7 +406,9 @@ function refinementControls(doc, model, handlers) {
       targetIds,
       targetElementLength,
       lengthUnit,
-      reason: 'User-governed retained analysis-mesh local refinement',
+      reason: productActive
+        ? 'User-governed LAFEA.4 product local refinement under verified TECH-13 promotion'
+        : 'User-governed retained analysis-mesh local refinement',
     });
   });
   submit.dataset.role = 'lafea-refinement-submit';
@@ -415,7 +437,8 @@ function productRefinementFacts(doc, refinement, unit) {
     ['Parent-normal gate', refinement.requiredAcceptance.parentNormalPass ? 'REQUIRED' : 'NOT REQUIRED'],
     ['Boundary conformity', refinement.requiredAcceptance.boundaryConformity ? 'REQUIRED' : 'NOT REQUIRED'],
     ['Exact parent custody', refinement.requiredAcceptance.exactParentCustody ? 'REQUIRED' : 'NOT REQUIRED'],
-    ['Product qualification', refinement.productQualified ? 'QUALIFIED' : 'PENDING EXACT-HEAD TECH-13E'],
+    ['Product qualification', refinement.productQualified ? 'QUALIFIED FOR RUNTIME GATING' : 'PENDING VERIFIED EXACT-HEAD PROMOTION'],
+    ['Qualified production head', refinement.promotion?.qualifiedHead ?? 'NONE'],
   ];
   for (const [label, value] of rows) {
     facts.append(node(doc, 'dt', null, label), node(doc, 'dd', null, value ?? 'NONE'));

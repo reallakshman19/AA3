@@ -27,6 +27,10 @@ import {
   evaluateLafea4ShellProductRefinementAcceptance,
   requireLafea4ShellProductRefinementCandidatePass,
 } from './lafea4-shell-product-refinement-acceptance.js';
+import {
+  LAFEA4_SHELL_PRODUCT_REFINEMENT_PROMOTION_BLOCK_CODE,
+  requireLafea4ShellProductRefinementPromotionAuthorized,
+} from './lafea4-shell-product-refinement-promotion.js';
 
 export function createLafeaMeshGenerationActions(context) {
   const {
@@ -137,8 +141,96 @@ export function createLafeaMeshGenerationActions(context) {
         || parentEvidence.meshHash !== meshGeneration.selectEvidence(stageId)?.meshHash) {
         throw storeError('LAFEA4_SHELL_PRODUCT_REFINEMENT_PARENT_CHANGED_DURING_CANDIDATE_GATE');
       }
-      throw storeError(scope.diagnosticCode ?? LAFEA4_SHELL_PRODUCT_REFINEMENT_PENDING_CODE);
+
+      let promotion;
+      try {
+        promotion = requireLafea4ShellProductRefinementPromotionAuthorized(
+          context.productRefinementPromotionRecord,
+        );
+      } catch (error) {
+        throw storeError(
+          error?.diagnosticCode
+            ?? error?.code
+            ?? LAFEA4_SHELL_PRODUCT_REFINEMENT_PROMOTION_BLOCK_CODE,
+        );
+      }
+
+      const childEvidence = adapterResult.productEvidence;
+      const parentNormalCompanion = parentNormalCompanionForEvidence(stageId, childEvidence);
+      const parentNormalProductionGate = parentNormalProductionGateForCompanion(parentNormalCompanion);
+      requireProductionGateAllowsRetention(parentNormalProductionGate);
+
+      const retained = replaceLafea4ProductRefinementEvidence({
+        stageId,
+        parentEvidence,
+        midsurface,
+        childEvidence,
+      });
+      return freeze({
+        ...retained,
+        scope,
+        acceptance,
+        promotion,
+        parentNormalCompanion,
+        parentNormalProductionGate,
+        productRefinement: true,
+        productRetentionAuthorized: true,
+        uiBindingAuthorized: true,
+        releaseQualified: false,
+      });
     }, true);
+  }
+
+  /**
+   * Replace the retained LAFEA.4 mesh without publishing an intermediate
+   * state. All engineering gates have already passed before this function is
+   * entered. If any synchronous custody operation still rejects, restore the
+   * exact parent before the outer action publishes its diagnostic.
+   */
+  function replaceLafea4ProductRefinementEvidence({
+    stageId, parentEvidence, midsurface, childEvidence,
+  }) {
+    if (stageId !== 'LAFEA.4') throw storeError('LAFEA4_PRODUCT_REFINEMENT_STAGE_INVALID');
+    const current = meshGeneration.selectEvidence(stageId);
+    if (!current
+      || current.artifactHash !== parentEvidence.artifactHash
+      || current.meshHash !== parentEvidence.meshHash) {
+      throw storeError('LAFEA4_SHELL_PRODUCT_REFINEMENT_PARENT_CHANGED_BEFORE_RETENTION');
+    }
+    try {
+      meshGeneration.invalidate(stageId);
+      meshGeneration.registerShellMidsurface(midsurface, readStageState(stageId));
+      const recovered = meshGeneration.recoverEvidence(childEvidence, stageId);
+      const retained = meshGeneration.selectEvidence(stageId);
+      if (!retained
+        || retained.artifactHash !== childEvidence.artifactHash
+        || retained.meshHash !== childEvidence.meshHash) {
+        throw storeError('LAFEA4_SHELL_PRODUCT_REFINEMENT_CHILD_RETENTION_MISMATCH');
+      }
+      return freeze({
+        changed: recovered.changed,
+        parentEvidence,
+        evidence: retained,
+        meshProfile: recovered.meshProfile,
+      });
+    } catch (error) {
+      try {
+        meshGeneration.invalidate(stageId);
+        meshGeneration.registerShellMidsurface(midsurface, readStageState(stageId));
+        meshGeneration.recoverEvidence(parentEvidence, stageId);
+        const restored = meshGeneration.selectEvidence(stageId);
+        if (!restored
+          || restored.artifactHash !== parentEvidence.artifactHash
+          || restored.meshHash !== parentEvidence.meshHash) {
+          throw new Error('PARENT_RESTORE_MISMATCH');
+        }
+      } catch (rollbackError) {
+        const fatal = storeError('LAFEA4_SHELL_PRODUCT_REFINEMENT_ATOMIC_ROLLBACK_FAILED');
+        fatal.cause = rollbackError;
+        throw fatal;
+      }
+      throw error;
+    }
   }
 
   function recoverAnalysisMeshEvidenceV2(

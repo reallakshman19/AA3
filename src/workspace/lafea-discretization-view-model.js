@@ -13,6 +13,7 @@ import {
   LAFEA5_SOURCE_SHELL_ADOPTION_PRODUCER_REF,
   LAFEA5_SOURCE_SHELL_PARENT_SCHEMA,
 } from './lafea-source-shell-mesh-adoption.js';
+import { buildLafea4ShellProductRefinementUiPolicy } from './lafea4-shell-product-refinement-ui-policy.js';
 
 export const LAFEA_DISCRETIZATION_VIEW_MODEL_SCHEMA =
   'lafea-discretization-view-model/v1';
@@ -62,10 +63,14 @@ export function buildLafeaDiscretizationViewModel(stageValue) {
     })
     : null;
   const retainedElementFamily = retainedFamily(stage.stageId, evidence?.meshProfile ?? null);
-  const manualRefinementEnabled = capabilities.manualRefinementQualified === true
+  const productRefinement = buildLafea4ShellProductRefinementUiPolicy(stage);
+  const legacyManualRefinementEnabled = capabilities.manualRefinementQualified === true
     && evidence?.qualification === 'PASS'
     && ['CURRENT_PASS', 'CURRENT_WARNING'].includes(custody.state)
     && capabilities.localRefinementElementFamilies.includes(retainedElementFamily);
+  const manualRefinementEnabled = stage.stageId === 'LAFEA.4'
+    ? productRefinement.canRefine === true
+    : legacyManualRefinementEnabled;
 
   return freeze({
     schema: LAFEA_DISCRETIZATION_VIEW_MODEL_SCHEMA,
@@ -76,6 +81,7 @@ export function buildLafeaDiscretizationViewModel(stageValue) {
     stepStatus: stepStatus(custody.state),
     reasons,
     generation,
+    refinement: productRefinement,
     configuration: {
       declaredMode: declaredMode(profile.meshApplicable, generation),
       modes: modeOptions(
@@ -84,6 +90,7 @@ export function buildLafeaDiscretizationViewModel(stageValue) {
         generation,
         manualRefinementEnabled,
         retainedElementFamily,
+        productRefinement,
       ),
       meshProfileHash: stage.analysisMeshProfileHash ?? null,
       retainedProfileIdentity: custody.meshProfileIdentity,
@@ -198,7 +205,14 @@ function declaredMode(applicable, generation) {
     : 'RETAIN_AUTHORIZED_MESH';
 }
 
-function modeOptions(applicable, capabilities, generation, manualRefinementEnabled, retainedElementFamily) {
+function modeOptions(
+  applicable,
+  capabilities,
+  generation,
+  manualRefinementEnabled,
+  retainedElementFamily,
+  productRefinement,
+) {
   if (!applicable) {
     return LAFEA_DISCRETIZATION_MODES.map((mode) => ({
       mode,
@@ -229,12 +243,17 @@ function modeOptions(applicable, capabilities, generation, manualRefinementEnabl
       enabled: manualRefinementEnabled,
       reason: manualRefinementEnabled
         ? null
-        : refinementUnavailableReason(capabilities, retainedElementFamily),
+        : refinementUnavailableReason(
+          capabilities, retainedElementFamily, productRefinement,
+        ),
     },
   ];
 }
 
-function refinementUnavailableReason(capabilities, retainedElementFamily) {
+function refinementUnavailableReason(capabilities, retainedElementFamily, productRefinement) {
+  if (productRefinement?.applicable === true && retainedElementFamily === 'CST_DKT_TRI3_THIN_SHELL_V1') {
+    return productRefinement.reason;
+  }
   if (retainedElementFamily === 'CST_DKT_TRI3_THIN_SHELL_V1') {
     return 'SHELL_LOCAL_REFINEMENT_NOT_QUALIFIED';
   }

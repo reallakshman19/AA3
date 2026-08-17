@@ -10,6 +10,9 @@ const accepted = evaluateWrc537Ed4SourcePackage(ready);
 assert.equal(accepted.state, WRC537_ED4_PACKAGE_READY);
 assert.deepEqual(accepted.failedGateIds, []);
 
+assertBlocked('SOURCE_LEDGER_IDS_UNIQUE', (fixture) => {
+  fixture.sourceLedgerRows.push({ ...fixture.sourceLedgerRows[1] });
+});
 assertBlocked('PRIMARY_TECHNICAL_SOURCE', (fixture) => {
   fixture.sourcePackage.technicalSource.sourceRef = 'CATALOG-WRC537-ED4';
 });
@@ -19,8 +22,14 @@ assertBlocked('PRIMARY_TECHNICAL_SOURCE', (fixture) => {
 assertBlocked('PRIMARY_TECHNICAL_SOURCE', (fixture) => {
   fixture.sourceLedgerRows.find((row) => row.record_id === 'TECH-WRC537-ED4').edition = '3';
 });
+assertBlocked('PRIMARY_TECHNICAL_SOURCE', (fixture) => {
+  fixture.sourceLedgerRows.find((row) => row.record_id === 'TECH-WRC537-ED4').document_digest = 'b'.repeat(64);
+});
 assertBlocked('GEOMETRY_COMPLETE', (fixture) => {
   fixture.sourcePackage.geometry.definitions.find((row) => row.symbol === 'Rc').definition = 'UNRESOLVED_ED4';
+});
+assertBlocked('GEOMETRY_COMPLETE', (fixture) => {
+  fixture.sourcePackage.geometry.applicability.sourceRef = 'CATALOG-WRC537-ED4';
 });
 assertBlocked('PARAMETERS_COMPLETE', (fixture) => {
   fixture.sourcePackage.parameters.find((row) => row.parameterId === 'CYL_LAMBDA').minimumInclusive = null;
@@ -31,11 +40,17 @@ assertBlocked('LOAD_CONVENTIONS_COMPLETE', (fixture) => {
 assertBlocked('STRESS_RECOVERY_COMPLETE', (fixture) => {
   fixture.sourcePackage.stressRecovery.surfaceReconstruction.rule = 'UNRESOLVED';
 });
+assertBlocked('STRESS_RECOVERY_COMPLETE', (fixture) => {
+  fixture.sourcePackage.stressRecovery.stressIntensityOrEquivalent.dimensionallyVerified = false;
+});
 assertBlocked('INTERPOLATION_POLICY_COMPLETE', (fixture) => {
   fixture.sourcePackage.interpolation.interpolationAuthorized = null;
 });
 assertBlocked('COEFFICIENT_INVENTORY_DECLARED', (fixture) => {
   fixture.sourcePackage.coefficients.inventoryDeclared = false;
+});
+assertBlocked('COEFFICIENT_IDS_UNIQUE', (fixture) => {
+  fixture.coefficientRows.push({ ...fixture.coefficientRows[0] });
 });
 assertBlocked('COEFFICIENTS_COMPLETE', (fixture) => {
   fixture.coefficientRows[0].edition = '3rd Edition 2022';
@@ -57,15 +72,19 @@ console.log(JSON.stringify({
   check: 'wrc537-ed4-source-package-self-test',
   status: 'PASS',
   completeSyntheticAuthorityAccepted: true,
+  duplicateLedgerIdentityRejected: true,
   catalogMetadataCannotActAsTechnicalAuthority: true,
-  documentDigestRequired: true,
+  documentDigestRequiredAndLedgerBound: true,
   mixedEditionPrimarySourceRejected: true,
   unresolvedGeometryRejected: true,
+  applicabilityRequiresPrimarySourceCustody: true,
   unresolvedParameterBoundaryRejected: true,
   unresolvedLoadSignRejected: true,
   unresolvedStressReconstructionRejected: true,
+  stressMeasureDimensionalVerificationRequired: true,
   interpolationAuthorityRequired: true,
   coefficientInventoryDeclarationRequired: true,
+  duplicateCoefficientIdRejected: true,
   oldEditionCoefficientRejected: true,
   coefficientPrecisionRequired: true,
   unreproducedBenchmarkRejected: true,
@@ -82,6 +101,7 @@ function assertBlocked(gateId, mutate) {
 }
 
 function readyFixture() {
+  const digest = 'a'.repeat(64);
   const sourceLedgerRows = [
     {
       record_id: 'CATALOG-WRC537-ED4',
@@ -90,6 +110,7 @@ function readyFixture() {
       bulletin_number: '537',
       edition: '4',
       publication_date: '2026-02',
+      document_digest: '',
       locator: 'Official catalog entry',
       verification_status: 'CATALOG_IDENTITY_VERIFIED',
     },
@@ -100,6 +121,7 @@ function readyFixture() {
       bulletin_number: '537',
       edition: '4',
       publication_date: '2026-02',
+      document_digest: digest,
       locator: 'Authorized Edition 4 technical source',
       verification_status: 'PRIMARY_SOURCE_VERIFIED',
     },
@@ -161,7 +183,7 @@ function readyFixture() {
         edition: '4',
         publicationDate: '2026-02',
         sourceId: 'AUTHORIZED-WRC537-ED4',
-        documentDigest: 'a'.repeat(64),
+        documentDigest: digest,
         sourceRef,
         accessBasis: 'LICENSED_ENGINEERING_USE',
         custodyNote: 'Authorized source retained outside repository; extracted data source-located.',
@@ -184,6 +206,7 @@ function readyFixture() {
           intersectionOrientation: 'SOURCE_QUALIFIED_ORIENTATION',
           loadReferenceConvention: 'ATTACHMENT_SHELL_INTERFACE',
           exclusions: ['SOURCE_QUALIFIED_EXCLUSION'],
+          sourceRef,
         },
       },
       parameters: [

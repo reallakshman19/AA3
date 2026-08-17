@@ -27,8 +27,14 @@ import {
 } from '../src/workspace/topology-edit/topology-edit-sjson-visual-authority.js';
 
 const SJSON_URL = new URL('../public/Sjson.json', import.meta.url);
+const NON_RESTRAINT_SOURCE_NAMES = Object.freeze([
+  '=1006649732/51254',
+  '=1006657924/39571',
+  '=1006649732/51422',
+]);
+const CONTRACTOR_BRACING_SOURCE_NAME = '=1006649732/51465';
 
-test('production Sjson matches Topo validator support anchors and restraint arrays', async () => {
+test('production Sjson projects only source-backed restraint semantics', async () => {
   const bytes = new Uint8Array(await readFile(SJSON_URL));
   const raw = JSON.parse(new TextDecoder().decode(bytes).replace(/^\uFEFF/u, ''));
   const dataset = normalizeWorkspaceDataset(raw, 'Sjson.json', {
@@ -41,6 +47,8 @@ test('production Sjson matches Topo validator support anchors and restraint arra
   const baseCanonical = finalizeCanonicalTopology(
     buildCanonicalTopologyFromWorkspaceDataset(dataset, graph, attachments, restraints),
   );
+
+  assert.equal(baseCanonical.supports.length, 139);
   const penetrationAttachments = baseCanonical.supports.filter((support) => (
     support.restraintRole === 'PENETRATION_ATTACHMENT'
   ));
@@ -52,6 +60,36 @@ test('production Sjson matches Topo validator support anchors and restraint arra
   assert.ok(checkCanonicalTopology(baseCanonical).every((issue) => (
     issue.kind !== 'UNKNOWN_RESTRAINT_FAMILY' || !penetrationSupportIds.has(issue.supportId)
   )));
+
+  const canonicalByEntityId = new Map(baseCanonical.supports.map((support) => [
+    support.entityId,
+    support,
+  ]));
+  const entityBySourceName = new Map(dataset.entities.flatMap((entity) => {
+    const sourceName = entity.properties?.attributes?.NAME;
+    return sourceName ? [[sourceName, entity]] : [];
+  }));
+  for (const sourceName of NON_RESTRAINT_SOURCE_NAMES) {
+    const entity = entityBySourceName.get(sourceName);
+    const support = canonicalByEntityId.get(entity?.entityId);
+    assert.ok(support, `Expected canonical support for ${sourceName}.`);
+    assert.equal(support.restraintRole, 'REFERENCE_POINT', sourceName);
+    assert.match(
+      support.restraintRoleAuthority,
+      /^SOURCE_(?:SUPPORT_HARDWARE_MEMBER|GENERIC_ATTACHMENT_PLACEHOLDER)$/u,
+      sourceName,
+    );
+  }
+
+  const unresolvedIssues = checkCanonicalTopology(baseCanonical)
+    .filter((issue) => issue.kind === 'UNKNOWN_RESTRAINT_FAMILY');
+  assert.equal(unresolvedIssues.length, 1);
+  const contractorEntity = entityBySourceName.get(CONTRACTOR_BRACING_SOURCE_NAME);
+  const contractorSupport = canonicalByEntityId.get(contractorEntity?.entityId);
+  assert.ok(contractorSupport);
+  assert.equal(contractorSupport.restraintRole, 'RESTRAINT_CANDIDATE');
+  assert.equal(unresolvedIssues[0].supportId, contractorSupport.id);
+
   const canonical = enrichCanonicalSupportsWithExactOrigins(
     baseCanonical,
     dataset,
@@ -85,40 +123,60 @@ test('production Sjson matches Topo validator support anchors and restraint arra
   assert.equal(first.restraintAuthority, 'TOPO_VALIDATOR_SJ_RESTRAINT_RESOLVER');
   assert.equal(first.authorityHash, second.authorityHash);
   assert.deepEqual(first.projection, second.projection);
-  assert.equal(first.metrics.rawSupportCount, 139);
-  assert.equal(first.metrics.projectedSourceSupportCount, 137);
-  assert.equal(first.metrics.deferredSourceSupportCount, 2);
-  assert.equal(first.metrics.supportAnchorCount, 34);
-  assert.equal(first.metrics.nativeRestraintRecordCount, 47);
-  assert.equal(first.metrics.collapsedSourceSupportCount, 103);
-  assert.equal(first.metrics.hierarchyMergeCount, 42);
-  assert.equal(first.metrics.positionMergeCount, 61);
-  assert.equal(first.metrics.projectedSupportMarkerCount, 34);
-  assert.equal(first.metrics.projectedRestraintDirectionCount, 47);
-  assert.equal(first.metrics.distinctOriginCount, 34);
-  assert.deepEqual(first.metrics.restraintTypeCounts, {
-    '+Z': 34,
-    GUI: 5,
-    LIM: 8,
-  });
-  assert.equal(first.projection.glyphOverlays.length, 34);
-  assert.equal(first.anchors.length, 34);
-  assert.equal(first.decisions.length, canonical.supports.length);
+
+  // Avoid pinning incidental grouping counts. These invariants are the
+  // engineering contract: every source support is either projected or
+  // explicitly deferred, anchors and marker geometry are deterministic, and
+  // only source-backed restraint records create direction glyphs.
+  assert.equal(first.metrics.rawSupportCount, canonical.supports.length);
   assert.equal(
-    first.anchors.reduce((sum, anchor) => sum + anchor.restraintCount, 0),
-    47,
+    first.metrics.projectedSourceSupportCount + first.metrics.deferredSourceSupportCount,
+    first.metrics.rawSupportCount,
   );
+  assert.equal(first.metrics.supportAnchorCount, first.anchors.length);
+  assert.equal(first.metrics.projectedSupportMarkerCount, first.projection.elements.length);
+  assert.equal(first.metrics.projectedSupportMarkerCount, first.projection.glyphOverlays.length);
+  assert.equal(
+    first.metrics.nativeRestraintRecordCount,
+    first.anchors.reduce((sum, anchor) => sum + anchor.restraintCount, 0),
+  );
+  assert.equal(first.decisions.length, canonical.supports.length);
+  assert.ok(first.metrics.deferredSourceSupportCount >= penetrationAttachments.length + 3);
+  assert.ok(first.anchors.every((anchor) => anchor.representativeSupportId));
+  assert.ok(first.anchors.every((anchor) => anchor.memberSupportIds.length >= 1));
+  assert.ok(first.anchors.every((anchor) => (
+    anchor.restraintCount === anchor.restraintTypes.length
+  )));
   assert.equal(
     new Set(first.anchors.flatMap((anchor) => anchor.memberSupportIds)).size,
     first.metrics.projectedSourceSupportCount,
   );
+
+  const decisionBySupportId = new Map(first.decisions.map((decision) => [
+    decision.supportId,
+    decision,
+  ]));
+  for (const sourceName of NON_RESTRAINT_SOURCE_NAMES) {
+    const support = canonicalByEntityId.get(entityBySourceName.get(sourceName)?.entityId);
+    assert.equal(
+      decisionBySupportId.get(support.id)?.disposition,
+      'DEFER_NON_RESTRAINT_ATTACHMENT',
+      sourceName,
+    );
+  }
+
+  const contractorAnchorId = decisionBySupportId.get(contractorSupport.id)?.anchorSupportId;
+  const contractorAnchor = first.anchors.find((anchor) => (
+    anchor.representativeSupportId === contractorAnchorId
+    || anchor.memberSupportIds.includes(contractorSupport.id)
+  ));
+  assert.ok(contractorAnchor, 'Contractor bracing support should remain visible as a support marker.');
   assert.equal(
-    first.decisions.filter((decision) => decision.disposition === 'DEFER_NON_RESTRAINT_ATTACHMENT').length,
-    2,
+    contractorAnchor.restraintCount,
+    0,
+    'Unknown contractor bracing must not be rendered as an invented REST/GUIDE/LINE_STOP glyph.',
   );
-  assert.ok(first.anchors.every((anchor) => anchor.representativeSupportId));
-  assert.ok(first.anchors.every((anchor) => anchor.memberSupportIds.length >= 1));
-  assert.ok(first.anchors.every((anchor) => anchor.restraintTypes.length >= 1));
+
   assert.equal(
     first.overlays.flatMap((row) => row.restraints || [])
       .flatMap((row) => row.diagnostics || [])

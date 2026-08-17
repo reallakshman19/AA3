@@ -103,10 +103,10 @@ try {
 
   controller.handleProjectDataChanged({ profile: profile({ portMatchToleranceMm: 2.5 }) });
   assert.equal(rebuilds, 1, 'topology-policy Project Data change must rebuild support/route models once');
-  assert.equal(empiricalRefreshes, 2, 'topology-policy Project Data change must refresh empirical authority once');
+  assert.equal(empiricalRefreshes, 2, 'topology-policy Project Data change must refresh empirical authority once before topology recheck');
   assert.deepEqual(published.at(-1).payload, {
     reason: 'project-data-changed',
-    topologyCheckAffected: false,
+    topologyCheckAffected: true,
     topologyModelRebuilt: true,
   });
 
@@ -125,21 +125,24 @@ try {
   loadCalc.refreshTopologyCheck = async () => { topologyRefreshRequests += 1; };
 
   loadCalc.handleEngineeringChange('project-data-changed', null, false);
-  assert.equal(renders, 1, 'dependency-routed governing change must still refresh LoadCalc presentation');
-  assert.equal(topologyRefreshRequests, 0, 'explicitly unaffected project change must not request canonical topology refresh');
+  assert.equal(renders, 1, 'load-only Project Data change must still refresh LoadCalc presentation');
+  assert.equal(topologyRefreshRequests, 0, 'load-only Project Data change must not request canonical topology refresh');
 
   loadCalc.handleEngineeringChange('master-data-changed', null, false);
-  assert.equal(renders, 2, 'dependency-routed master change must still refresh LoadCalc presentation');
-  assert.equal(topologyRefreshRequests, 0, 'explicitly unaffected master change must not request canonical topology refresh');
+  assert.equal(renders, 2, 'Master Data change must still refresh LoadCalc presentation');
+  assert.equal(topologyRefreshRequests, 0, 'Master Data change must not request canonical topology refresh');
+
+  loadCalc.handleEngineeringChange('project-data-changed', null, true);
+  assert.equal(topologyRefreshRequests, 1, 'topology-policy Project Data rebuild must re-establish invalidated topology snapshot');
 
   loadCalc.handleEngineeringChange('project-data-changed');
-  assert.equal(topologyRefreshRequests, 1, 'legacy project-data publisher without dependency metadata must retain fail-safe topology refresh');
+  assert.equal(topologyRefreshRequests, 2, 'legacy Project Data publisher without dependency metadata must retain fail-safe topology refresh');
 
   console.log(JSON.stringify({
     status: 'PASS',
     masterData: { topologyRefreshRequests: 0, derivedModelRebuilds: 0, empiricalRefreshes: 1 },
     loadOnlyProjectData: { topologyRefreshRequests: 0, derivedModelRebuilds: 0, empiricalRefreshes: 1 },
-    topologyPolicyProjectData: { topologyRefreshRequests: 0, derivedModelRebuilds: 1, empiricalRefreshes: 1 },
+    topologyPolicyProjectData: { topologyRefreshRequests: 1, derivedModelRebuilds: 1, empiricalRefreshesBeforeRecheck: 1 },
     legacyPublisherFallback: { topologyRefreshRequests: 1 },
     topologyInputsUnchanged: true,
     numericalMethodChanged: false,

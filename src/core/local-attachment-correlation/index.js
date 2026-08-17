@@ -35,6 +35,7 @@ export { correlationDatasetHash, createCorrelationProfile } from './profile.js';
 export {
   CORRELATION_QUALIFICATION_RECORD_SCHEMA,
   createCorrelationQualificationRecord,
+  createCorrelationQualificationRecordFromEvidence,
   qualificationRecordMatchesProfile,
   validateCorrelationQualificationRecord,
 } from './qualification-record.js';

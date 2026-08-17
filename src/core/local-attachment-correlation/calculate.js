@@ -33,6 +33,7 @@ function acceptedResult(request, profile) {
   return freeze({
     schema: CORRELATION_RESULT_SCHEMA,
     requestIdentity: request.requestIdentity,
+    sourceCustody: request.sourceCustody,
     qualification: {
       state: QUALIFICATION_STATES.ACCEPTED,
       engineeringUseAuthorized: profile.authority.engineeringUseAuthorized,
@@ -105,9 +106,12 @@ function targetResult(target, contributions, pressureRows) {
 
 function canonicalRequest(input) {
   const value = structuredClone(input);
-  exactKeys(value, ['schema', 'requestIdentity', 'geometry', 'loads', 'pressureByTarget'], 'request');
+  exactKeys(value, [
+    'schema', 'requestIdentity', 'sourceCustody', 'geometry', 'loads', 'pressureByTarget',
+  ], 'request');
   if (value.schema !== CORRELATION_REQUEST_SCHEMA) fail('CORRELATION_REQUEST_SCHEMA_MISMATCH', 'schema');
   requiredString(value.requestIdentity, 'requestIdentity');
+  validateSourceCustody(value.sourceCustody);
   exactKeys(value.geometry, ['pipeOutsideDiameter', 'pipeThickness', 'attachmentDiameter'], 'geometry');
   positive(value.geometry.pipeOutsideDiameter, 'geometry.pipeOutsideDiameter');
   positive(value.geometry.pipeThickness, 'geometry.pipeThickness');
@@ -127,6 +131,40 @@ function canonicalRequest(input) {
     STRESS_COMPONENTS.forEach((key) => finite(row[key], `pressureByTarget[${index}].${key}`));
   });
   return freeze(value);
+}
+
+function validateSourceCustody(value) {
+  exactKeys(value, [
+    'authorityType', 'sourceStageId', 'sourceRequestHash', 'sourceResultHash',
+    'screeningCaseId', 'targetMappings',
+  ], 'sourceCustody');
+  if (!['SYNTHETIC_DIRECT', 'LAFEA2_RETAINED_RESULT'].includes(value.authorityType)) {
+    fail('CORRELATION_SOURCE_AUTHORITY_TYPE_UNSUPPORTED', 'sourceCustody.authorityType');
+  }
+  if (value.authorityType === 'SYNTHETIC_DIRECT') {
+    if (value.sourceStageId !== null || value.sourceRequestHash !== null
+      || value.sourceResultHash !== null || value.screeningCaseId !== null) {
+      fail('CORRELATION_SYNTHETIC_SOURCE_CUSTODY_INVALID', 'sourceCustody');
+    }
+  } else {
+    if (value.sourceStageId !== 'LAFEA.2') fail('CORRELATION_SOURCE_STAGE_MISMATCH', 'sourceCustody.sourceStageId');
+    requiredString(value.sourceRequestHash, 'sourceCustody.sourceRequestHash');
+    requiredString(value.sourceResultHash, 'sourceCustody.sourceResultHash');
+    requiredString(value.screeningCaseId, 'sourceCustody.screeningCaseId');
+  }
+  if (!Array.isArray(value.targetMappings)) fail('CORRELATION_TARGET_MAPPINGS_REQUIRED', 'sourceCustody.targetMappings');
+  const targetIds = new Set();
+  value.targetMappings.forEach((row, index) => {
+    exactKeys(row, ['targetId', 'evaluationLocationId'], `sourceCustody.targetMappings[${index}]`);
+    requiredString(row.targetId, `sourceCustody.targetMappings[${index}].targetId`);
+    if (targetIds.has(row.targetId)) fail('CORRELATION_TARGET_MAPPING_DUPLICATE', `sourceCustody.targetMappings[${index}].targetId`);
+    targetIds.add(row.targetId);
+    if (value.authorityType === 'LAFEA2_RETAINED_RESULT') {
+      requiredString(row.evaluationLocationId, `sourceCustody.targetMappings[${index}].evaluationLocationId`);
+    } else if (row.evaluationLocationId !== null) {
+      fail('CORRELATION_SYNTHETIC_TARGET_MAPPING_INVALID', `sourceCustody.targetMappings[${index}]`);
+    }
+  });
 }
 
 function dimensionlessParameters(geometry) {
@@ -167,6 +205,7 @@ function rejectedResult(requestInput, profileInput, error) {
   return freeze({
     schema: CORRELATION_RESULT_SCHEMA,
     requestIdentity: typeof requestInput?.requestIdentity === 'string' ? requestInput.requestIdentity : null,
+    sourceCustody: safeSourceCustody(requestInput),
     qualification: {
       state: outside ? QUALIFICATION_STATES.OUTSIDE_DOMAIN : QUALIFICATION_STATES.REJECTED_REQUEST,
       engineeringUseAuthorized: false,
@@ -188,6 +227,10 @@ function rejectedResult(requestInput, profileInput, error) {
   });
 }
 
+function safeSourceCustody(request) {
+  return request && typeof request === 'object' && request.sourceCustody
+    ? structuredClone(request.sourceCustody) : null;
+}
 function safeMethodEvidence(profile) {
   return profile && typeof profile === 'object' ? {
     methodIdentity: profile.methodIdentity ?? null,

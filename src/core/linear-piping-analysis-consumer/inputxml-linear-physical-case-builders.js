@@ -132,7 +132,7 @@ export function compareAscii(left, right) {
   return a < b ? -1 : a > b ? 1 : 0;
 }
 
-function sourceEvidence(value) {
+export function sourceEvidence(value) {
   return Object.freeze({
     sourceId: String(value.sourceId),
     sourceRevision: String(value.sourceRevision),

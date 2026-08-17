@@ -73,15 +73,18 @@ export class LfeaPipelineShellView {
     const sourceHost = doc.createElement('div');
     sourceHost.className = 'lfea-pipeline-shell__host';
     sourceHost.dataset.hostGroup = 'SOURCE';
+    const loadCaseHost = doc.createElement('div');
+    loadCaseHost.className = 'lfea-pipeline-shell__host';
+    loadCaseHost.dataset.hostGroup = 'LOAD_CASE';
     const resultsHost = doc.createElement('div');
     resultsHost.className = 'lfea-pipeline-shell__host';
     resultsHost.dataset.hostGroup = 'RESULTS';
-    content.append(sourceHost, resultsHost);
+    content.append(sourceHost, loadCaseHost, resultsHost);
 
     shell.append(toolbar, nav, content);
     this.rootElement.append(shell);
     this.elements = {
-      shell, toolbar, loadSample, nav, stepButtons, content, sourceHost, resultsHost,
+      shell, toolbar, loadSample, nav, stepButtons, content, sourceHost, loadCaseHost, resultsHost,
       authorityInput, authorityText, assembleButton, assembleStatus,
     };
     return this;
@@ -110,11 +113,16 @@ export class LfeaPipelineShellView {
     });
     const activeHostGroup = lfeaPipelineHostGroupFor(state.activeStepId);
     this.elements.sourceHost.hidden = activeHostGroup !== 'SOURCE';
+    this.elements.loadCaseHost.hidden = activeHostGroup !== 'LOAD_CASE';
     this.elements.resultsHost.hidden = activeHostGroup !== 'RESULTS';
   }
 
   getSourceHost() {
     return this.elements.sourceHost;
+  }
+
+  getLoadCaseHost() {
+    return this.elements.loadCaseHost;
   }
 
   getResultsHost() {

@@ -10,13 +10,13 @@
 export const LFEA_PIPELINE_STEPS = Object.freeze([
   Object.freeze({ stepId: 'INPUT', label: 'Input', hostGroup: 'SOURCE' }),
   Object.freeze({ stepId: 'ERROR_CHECK', label: 'Error check', hostGroup: 'SOURCE' }),
-  Object.freeze({ stepId: 'LOAD_CASE', label: 'Load case', hostGroup: 'RESULTS' }),
+  Object.freeze({ stepId: 'LOAD_CASE', label: 'Load case', hostGroup: 'LOAD_CASE' }),
   Object.freeze({ stepId: 'RUN', label: 'Run', hostGroup: 'RESULTS' }),
   Object.freeze({ stepId: 'OUTPUT', label: 'Output', hostGroup: 'RESULTS' }),
   Object.freeze({ stepId: 'EXPORT', label: 'Export', hostGroup: 'RESULTS' }),
 ]);
 
-const HOST_GROUPS = Object.freeze(['SOURCE', 'RESULTS']);
+const HOST_GROUPS = Object.freeze(['SOURCE', 'LOAD_CASE', 'RESULTS']);
 
 export function requireLfeaPipelineStep(stepId) {
   const step = LFEA_PIPELINE_STEPS.find((candidate) => candidate.stepId === stepId);

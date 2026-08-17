@@ -36,6 +36,8 @@ import { retireStandaloneInputXmlAnalyzerEntry } from './workspace/linear-piping
 import { mountLinearPipingInputXmlSourceWorkflow } from './workspace/linear-piping-inputxml-source-workflow.js';
 import { mountLfeaPipelineStagedJsonInputPanel } from './workspace/lfea-pipeline-stagedjson-input-panel.js';
 import { mountLfeaPipelineAccdbInputPanel } from './workspace/lfea-pipeline-accdb-input-panel.js';
+import { mountLfeaPipelineLoadCaseAuthoringPanel } from './workspace/lfea-pipeline-load-case-authoring-panel.js';
+import { mergeAuthoredInputXmlLinearPhysicalCase } from './core/linear-piping-analysis-consumer/inputxml-linear-authored-physical-cases.js';
 import { mountLinearPipingResultsWorkbench } from './workspace/linear-piping-results-workbench.js';
 import { mountLfeaPreflightUi } from './workspace/lfea-preflight-ui.js';
 import { mountEmpiricalV3SafetyWorkbench } from './workspace/empirical-v3-safety-workbench.js';
@@ -75,6 +77,12 @@ const lfeaStagedJsonInputPanel = mountLfeaPipelineStagedJsonInputPanel(lfeaPipel
 const lfeaAccdbInputPanel = mountLfeaPipelineAccdbInputPanel(lfeaPipelineShell.getSourceHost(), {
   documentRef: applicationRoot.ownerDocument,
 });
+const lfeaLoadCaseAuthoringPanel = mountLfeaPipelineLoadCaseAuthoringPanel(lfeaPipelineShell.getLoadCaseHost(), {
+  documentRef: applicationRoot.ownerDocument,
+  getNodeIds: () => linearPipingInputXmlSource.getPreFlight()
+    ?.preparation?.structuralPreparation?.conditionedTopology?.geometry?.nodes
+    ?.map((node) => node.id) ?? [],
+});
 // Both source and results panels historically mounted into the same
 // `linear-piping-consumer-root` container (they only ever appended sibling
 // sections, never split by concern). This shim routes the results panel
@@ -88,6 +96,9 @@ const globalSettingsPopover = mountLfeaGlobalSettingsPopover(
 );
 let lfeaAuthoritySupplement = null;
 lfeaPipelineShell.setAssemblyHandlers({
+  onStepActivated(stepId) {
+    if (stepId === 'LOAD_CASE') lfeaLoadCaseAuthoringPanel.refresh();
+  },
   async onAuthoritySupplementSelected(file) {
     if (!file) {
       lfeaAuthoritySupplement = null;
@@ -162,10 +173,31 @@ function assembleLfeaInputXmlRunRequest() {
   }
   const preFlight = linearPipingInputXmlSource.getPreFlight();
   const authorizedCaseIds = preFlight.preparation.authorizedCaseCandidates.map((row) => row.caseId);
-  if (authorizedCaseIds.length === 0) {
+  const applicationId = lfeaAuthoritySupplement.applicationId;
+
+  // Engineer-authored cases (from the Load-case authoring panel) are not
+  // part of authorizedCaseCandidates -- they were never in the sealed
+  // pre-flight's own preparation to begin with. Merge them into a fresh,
+  // re-sealed physical-case preparation now, on top of the unmodified
+  // W/WP/WT/WPT preparation, so buildInputXmlRunRequestCase can pick them
+  // up exactly like any other case, with zero special-casing.
+  const authoredCasePayload = lfeaLoadCaseAuthoringPanel.getAuthoredCasePayload();
+  let authoredPreparation = preFlight.preparation;
+  let authoredCaseId = null;
+  if (authoredCasePayload) {
+    const mergedPhysicalPreparation = mergeAuthoredInputXmlLinearPhysicalCase(
+      preFlight.preparation.physicalPreparation,
+      authoredCasePayload,
+    );
+    authoredPreparation = { ...preFlight.preparation, physicalPreparation: mergedPhysicalPreparation };
+    authoredCaseId = mergedPhysicalPreparation.physicalCases
+      .map((row) => row.caseId)
+      .find((caseId) => !authorizedCaseIds.includes(caseId));
+  }
+
+  if (authorizedCaseIds.length === 0 && !authoredCaseId) {
     throw new Error('No authorized physical cases are available from this pre-flight to assemble.');
   }
-  const applicationId = lfeaAuthoritySupplement.applicationId;
   const cases = authorizedCaseIds.map((caseId) => ({
     caseId,
     inputXmlAnalysisRequest: buildInputXmlRunRequestCase({
@@ -176,6 +208,18 @@ function assembleLfeaInputXmlRunRequest() {
       analysisRevision: 1,
     }),
   }));
+  if (authoredCaseId) {
+    cases.push({
+      caseId: authoredCaseId,
+      inputXmlAnalysisRequest: buildInputXmlRunRequestCase({
+        intake: preFlight.intake,
+        preparation: authoredPreparation,
+        caseId: authoredCaseId,
+        analysisIdentity: `${applicationId}-${authoredCaseId}`,
+        analysisRevision: 1,
+      }),
+    });
+  }
   return {
     schema: LINEAR_PIPING_WORKBENCH_RUN_REQUEST_SCHEMA,
     applicationId,
@@ -235,6 +279,7 @@ const workspace = Object.freeze({
   clearLinearPipingInputXmlSource() { linearPipingInputXmlSource.clear(); },
   getLfeaStagedJsonInputPanelState() { return lfeaStagedJsonInputPanel.getSnapshot(); },
   getLfeaAccdbInputPanelState() { return lfeaAccdbInputPanel.getSnapshot(); },
+  getLfeaLoadCaseAuthoringPanelState() { return lfeaLoadCaseAuthoringPanel.getSnapshot(); },
   importLinearPipingResultPackage(value) { return linearPipingResults.loadPackage(value); },
   checkLinearPipingRunRequest(value) { return linearPipingResults.checkRequest(value); },
   getLinearPipingPreRunCheck() { return linearPipingResults.getPreRunCheck(); },
@@ -282,7 +327,7 @@ const workspace = Object.freeze({
   },
   createEmpiricalV3AuditExportRecord() { return empiricalV3Safety.createAuditExport(); },
   getPreflightReviewModel() { return preflightUi.getProjection(); },
-  destroy() { preflightSubscriptions.forEach((unsubscribe) => unsubscribe()); empiricalV3SourceSubscriptions.forEach((unsubscribe) => unsubscribe()); clearEmpiricalV3GovernedPreparedExecution(); empiricalV3Safety.destroy(); preflightUi.destroy(); globalSettingsPopover.destroy(); linearPipingResults.destroy(); linearPipingInputXmlSource.destroy(); lfeaStagedJsonInputPanel.destroy(); lfeaAccdbInputPanel.destroy(); lfeaPipelineShell.destroy(); coreWorkspace.destroy(); },
+  destroy() { preflightSubscriptions.forEach((unsubscribe) => unsubscribe()); empiricalV3SourceSubscriptions.forEach((unsubscribe) => unsubscribe()); clearEmpiricalV3GovernedPreparedExecution(); empiricalV3Safety.destroy(); preflightUi.destroy(); globalSettingsPopover.destroy(); linearPipingResults.destroy(); linearPipingInputXmlSource.destroy(); lfeaStagedJsonInputPanel.destroy(); lfeaAccdbInputPanel.destroy(); lfeaLoadCaseAuthoringPanel.destroy(); lfeaPipelineShell.destroy(); coreWorkspace.destroy(); },
 });
 
 globalThis.AnalysisWorkspace = workspace;

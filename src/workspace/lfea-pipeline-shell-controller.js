@@ -26,7 +26,19 @@ export class LfeaPipelineShellController {
       onAuthoritySupplementSelected: (file) => this.assemblyHandlers?.onAuthoritySupplementSelected?.(file),
       onAssembleAndSendToRun: () => this.assemblyHandlers?.onAssembleAndSendToRun?.(),
     });
-    this.unsubscribe = this.session.subscribe((state) => this.view.render(state));
+    let previousActiveStepId = null;
+    this.unsubscribe = this.session.subscribe((state) => {
+      this.view.render(state);
+      // Fires on both a user's step-button click and a programmatic
+      // setActiveStep() (e.g. from the "Assemble & send to Run" flow) --
+      // panels with no subscription of their own to source-controller
+      // state (e.g. the Load-case authoring panel's node list) use this
+      // as their one reliable "become visible" refresh point.
+      if (state.activeStepId !== previousActiveStepId) {
+        previousActiveStepId = state.activeStepId;
+        this.assemblyHandlers?.onStepActivated?.(state.activeStepId);
+      }
+    });
     this.view.render(this.session.getState());
     return this;
   }
@@ -49,6 +61,10 @@ export class LfeaPipelineShellController {
 
   getResultsHost() {
     return this.view.getResultsHost();
+  }
+
+  getLoadCaseHost() {
+    return this.view.getLoadCaseHost();
   }
 
   setStepStatus(stepId, status) {

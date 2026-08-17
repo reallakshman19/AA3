@@ -63,6 +63,7 @@ console.log(JSON.stringify({
   analyticalOracle: {
     prescribedHoopStrain: oracle.prescribedHoopStrain,
     expectedHoopStressMpa: expectedStress,
+    thicknessMm: oracle.thicknessMm,
   },
   rows,
   releaseQualified: false,
@@ -74,6 +75,7 @@ function evaluate(level, oracleValue, expectedStressValue) {
     length: oracleValue.lengthMm,
     span: oracleValue.spanDegrees * Math.PI / 180,
   });
+  assert.ok(source.elements.every((element) => element.thickness === oracleValue.thicknessMm));
   const strain = oracleValue.prescribedHoopStrain;
   const radius = oracleValue.radiusMm;
   source.constraints = source.nodes.flatMap((node) => {
@@ -104,9 +106,14 @@ function evaluate(level, oracleValue, expectedStressValue) {
     absoluteStressError = Math.max(absoluteStressError, Math.abs(hoopStress - expectedStressValue));
   }
 
+  const halfFacetAngle = level.facetAngleDegrees * Math.PI / 360;
+  const sagitta = radius * (1 - Math.cos(halfFacetAngle));
+  const sagittaToThickness = sagitta / oracleValue.thicknessMm;
   return Object.freeze({
     segments: level.segments,
     facetAngleDegrees: level.facetAngleDegrees,
+    sagittaMm: sagitta,
+    sagittaToThickness,
     absoluteStrainError,
     relativeStrainError: absoluteStrainError / Math.abs(strain),
     absoluteStressErrorMpa: absoluteStressError,

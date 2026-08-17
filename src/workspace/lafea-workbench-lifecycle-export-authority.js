@@ -5,6 +5,8 @@ export const LAFEA_WORKBENCH_LIFECYCLE_EXPORT_AUTHORITY_SCHEMA =
 
 const CALCULATION_ACCEPTED = 'CALCULATION_ACCEPTED_BY_STAGE_CONTRACT';
 const RELEASE_QUALIFIED = 'RELEASE_QUALIFIED';
+const GOVERNED_RESULT_AUTHORITY_BASIS = 'GOVERNED_EXECUTION_AND_READINESS';
+const LEGACY_RESULT_AUTHORITY_BASIS = 'LEGACY_LIFECYCLE_READINESS';
 
 /**
  * Read-only interpretation of retained lifecycle evidence against the current
@@ -20,9 +22,14 @@ export function projectLafeaWorkbenchLifecycleExportAuthority(stageValue) {
   const releaseBinding = readiness.releaseBinding ?? null;
   const governedRoute = stage.domainFirstProfileActive === true
     || stage.shellMidsurfaceProfileActive === true;
-  const currentResultAccepted = execution?.status === 'QUALIFIED'
-    && readiness.calculationState === CALCULATION_ACCEPTED
-    && readiness.resultReady === true;
+  const resultAuthorityBasis = governedRoute
+    ? GOVERNED_RESULT_AUTHORITY_BASIS
+    : LEGACY_RESULT_AUTHORITY_BASIS;
+  const currentResultAccepted = governedRoute
+    ? execution?.status === 'QUALIFIED'
+      && readiness.calculationState === CALCULATION_ACCEPTED
+      && readiness.resultReady === true
+    : readiness.resultReady === true;
   const currentReleaseQualified = readiness.releaseState === RELEASE_QUALIFIED
     && releaseBinding?.releaseQualified === true;
 
@@ -30,6 +37,7 @@ export function projectLafeaWorkbenchLifecycleExportAuthority(stageValue) {
     schema: LAFEA_WORKBENCH_LIFECYCLE_EXPORT_AUTHORITY_SCHEMA,
     stageId: stage.stageId,
     governedRoute,
+    resultAuthorityBasis,
     retainedEvidence: {
       executionPresent: execution !== null,
       executionStatus: execution?.status ?? null,
@@ -65,6 +73,9 @@ export function validateLafeaWorkbenchLifecycleExportAuthority(value) {
   if (!value || value.schema !== LAFEA_WORKBENCH_LIFECYCLE_EXPORT_AUTHORITY_SCHEMA
     || typeof value.stageId !== 'string' || !value.stageId
     || typeof value.governedRoute !== 'boolean'
+    || value.resultAuthorityBasis !== (value.governedRoute
+      ? GOVERNED_RESULT_AUTHORITY_BASIS
+      : LEGACY_RESULT_AUTHORITY_BASIS)
     || typeof value.retainedEvidence?.executionPresent !== 'boolean'
     || typeof value.currentAuthority?.resultReady !== 'boolean'
     || typeof value.currentAuthority?.currentResultAccepted !== 'boolean'
@@ -79,8 +90,12 @@ export function validateLafeaWorkbenchLifecycleExportAuthority(value) {
     throw authorityError('LAFEA_LIFECYCLE_EXPORT_CURRENT_AUTHORITY_INVALID');
   }
   if (value.currentAuthority.currentResultAccepted === true
-    && (value.currentAuthority.resultReady !== true
-      || value.currentAuthority.calculationState !== CALCULATION_ACCEPTED)) {
+    && value.currentAuthority.resultReady !== true) {
+    throw authorityError('LAFEA_LIFECYCLE_EXPORT_RESULT_AUTHORITY_INCONSISTENT');
+  }
+  if (value.governedRoute === true
+    && value.currentAuthority.currentResultAccepted === true
+    && value.currentAuthority.calculationState !== CALCULATION_ACCEPTED) {
     throw authorityError('LAFEA_LIFECYCLE_EXPORT_RESULT_AUTHORITY_INCONSISTENT');
   }
   if (value.currentAuthority.currentReleaseQualified === true

@@ -83,8 +83,16 @@ export function validateLafea4ShellProductRefinementPromotionRecord(value) {
   return rebuilt;
 }
 
-export function evaluateLafea4ShellProductRefinementPromotion() {
-  if (LAFEA4_SHELL_PRODUCT_REFINEMENT_PROMOTION_RECORD === null) {
+/**
+ * Resolve production promotion authority. The optional record parameter is a
+ * qualification seam only: production callers omit it and therefore consume
+ * the code-owned null trust root. Tests may inject a structurally valid record
+ * to exercise the future-active branch without changing production authority.
+ */
+export function evaluateLafea4ShellProductRefinementPromotion(
+  record = LAFEA4_SHELL_PRODUCT_REFINEMENT_PROMOTION_RECORD,
+) {
+  if (record === null) {
     return freeze({
       schema: 'lafea4-shell-product-refinement-promotion-state/v1',
       stageId: 'LAFEA.4',
@@ -98,9 +106,7 @@ export function evaluateLafea4ShellProductRefinementPromotion() {
       diagnosticCode: LAFEA4_SHELL_PRODUCT_REFINEMENT_PROMOTION_PENDING_CODE,
     });
   }
-  const promotionRecord = validateLafea4ShellProductRefinementPromotionRecord(
-    LAFEA4_SHELL_PRODUCT_REFINEMENT_PROMOTION_RECORD,
-  );
+  const promotionRecord = validateLafea4ShellProductRefinementPromotionRecord(record);
   return freeze({
     schema: 'lafea4-shell-product-refinement-promotion-state/v1',
     stageId: 'LAFEA.4',
@@ -115,8 +121,10 @@ export function evaluateLafea4ShellProductRefinementPromotion() {
   });
 }
 
-export function requireLafea4ShellProductRefinementPromotionAuthorized() {
-  const state = evaluateLafea4ShellProductRefinementPromotion();
+export function requireLafea4ShellProductRefinementPromotionAuthorized(
+  record = LAFEA4_SHELL_PRODUCT_REFINEMENT_PROMOTION_RECORD,
+) {
+  const state = evaluateLafea4ShellProductRefinementPromotion(record);
   if (!state.active
     || state.productRetentionAuthorized !== true
     || state.uiBindingAuthorized !== true) {

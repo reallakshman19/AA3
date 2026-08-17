@@ -140,7 +140,14 @@ export function renderLafeaWorkbenchContent(root, state, stage, options) {
       options.onMeshFocusChange?.(elementId, true);
       focusLafeaRetainedMeshElement(preview, elementId);
     },
-    onAdvance: () => navigateTo(shell, 'numerical-verification'),
+    onAdvance: () => {
+      if (stage.stageId === 'LAFEA.3'
+        && stage.domainFirstProfileActive === true
+        && stage.preparationProjection?.state !== 'CURRENT_PASS') {
+        return options.handlers.onPrepareContinuum?.();
+      }
+      return navigateTo(shell, 'numerical-verification');
+    },
   });
   discretizationCard.body.append(discretizationHost);
 

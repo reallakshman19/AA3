@@ -4,6 +4,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
+import { canonicalLafeaSha256 } from '../src/workspace/lafea-canonical-sha256.js';
 import {
   LAFEA4_PARENT_NORMAL_REQUIRED_ENGINEERING_STEP_IDS,
 } from '../src/workspace/lafea4-parent-normal-activation-record.js';
@@ -14,9 +15,11 @@ import {
 import {
   LAFEA4_PARENT_NORMAL_PRODUCTION_GATE_BLOCK_CODE,
   LAFEA4_PARENT_NORMAL_PRODUCTION_GATE_INACTIVE_CODE,
+  LAFEA4_PARENT_NORMAL_PRODUCTION_GATE_SCHEMA,
   currentLafea4ParentNormalProductionAuthority,
   qualificationEvaluateLafea4ParentNormalProductionGateDecisionKernel,
   validateLafea4ParentNormalProductionAuthority,
+  validateLafea4ParentNormalProductionGate,
 } from '../src/workspace/lafea4-parent-normal-production-gate.js';
 
 const scriptDir = path.dirname(fileURLToPath(import.meta.url));
@@ -82,6 +85,45 @@ assert.throws(
   (error) => error?.code === 'LAFEA4_PARENT_NORMAL_PRODUCTION_GATE_DECISION_INPUT_INVALID',
 );
 
+// A caller must not be able to deserialize a perfectly self-hashed ACTIVE gate
+// while the repository trust root remains null. Authority currentness is an
+// independent requirement from artifact self-consistency.
+const fakeAuthorityHash = `sha256:${'1'.repeat(64)}`;
+const fakeActivationRecordHash = `sha256:${'2'.repeat(64)}`;
+const fakeCompanionHash = `sha256:${'3'.repeat(64)}`;
+const fakeExpectedHead = '4'.repeat(40);
+const fakeEvidenceDigest = '5'.repeat(64);
+const forgedCore = {
+  schema: LAFEA4_PARENT_NORMAL_PRODUCTION_GATE_SCHEMA,
+  stageId: 'LAFEA.4',
+  authorityHash: fakeAuthorityHash,
+  authorityStatus: 'ACTIVE_TRUSTED_TECH12D_RECORD',
+  activationRecordHash: fakeActivationRecordHash,
+  activationExpectedHead: fakeExpectedHead,
+  activationEvidenceDigest: fakeEvidenceDigest,
+  hardGateActivated: true,
+  companionHash: fakeCompanionHash,
+  candidateQualification: 'PASS',
+  gateDisposition: 'ALLOW',
+  retainedMeshAccepted: true,
+  solverExecutionAuthorized: true,
+  diagnosticCode: null,
+  productionBindingAuthorized: true,
+  releaseQualified: false,
+};
+const forgedActiveGate = {
+  ...forgedCore,
+  semanticHash: canonicalLafeaSha256({
+    schema: 'lafea4-parent-normal-production-gate-hash-input/v1',
+    gate: forgedCore,
+  }),
+};
+assert.throws(
+  () => validateLafea4ParentNormalProductionGate(forgedActiveGate),
+  (error) => error?.code
+    === 'LAFEA4_PARENT_NORMAL_PRODUCTION_GATE_AUTHORITY_STALE_OR_UNTRUSTED',
+);
+
 assert.equal(policy.stageId, 'LAFEA.4');
 assert.equal(policy.activationTrustRoot.currentRecord, null);
 assert.equal(policy.activationTrustRoot.currentHardGateActivated, false);
@@ -123,6 +165,7 @@ const gateSource = readText('src/workspace/lafea4-parent-normal-production-gate.
 assert.match(gateSource, /currentLafea4ParentNormalProductionAuthority\(\)/u);
 assert.match(gateSource, /const candidate = LAFEA4_PARENT_NORMAL_PRODUCTION_ACTIVATION_RECORD;/u);
 assert.match(gateSource, /evaluateLafea4ParentNormalProductionGate\(\{ companion \}\)/u);
+assert.match(gateSource, /LAFEA4_PARENT_NORMAL_PRODUCTION_GATE_AUTHORITY_STALE_OR_UNTRUSTED/u);
 assert.ok(!gateSource.includes('callerActivationRecord'));
 assert.ok(!gateSource.includes('callerAuthority'));
 
@@ -174,6 +217,7 @@ console.log(JSON.stringify({
   trustRootStatus: authority.status,
   hardGateActivated: authority.hardGateActivated,
   productionBindingAuthorized: authority.productionBindingAuthorized,
+  forgedActiveGateRejected: true,
   inactiveCandidatePass: inactivePass,
   inactiveCandidateBlock: inactiveBlock,
   qualifiedFutureActivePass: activePass,

@@ -41,7 +41,8 @@ assert.ok(blockedError.failedGateIds.includes('PRIMARY_TECHNICAL_SOURCE'));
 
 const duplicate = createReadyWrc537Ed4SourceFixture();
 duplicate.coefficientRows.push(structuredClone(duplicate.coefficientRows[0]));
-expectCreateError('WRC537_ED4_DATASET_ROWS_NOT_STRICTLY_SORTED_UNIQUE', duplicate);
+const duplicateError = expectCreateError('WRC537_ED4_SOURCE_PACKAGE_NOT_READY', duplicate);
+assert.ok(duplicateError.failedGateIds.includes('COEFFICIENT_IDS_UNIQUE'));
 
 expectValidationError('WRC537_ED4_ENGINEERING_DATASET_AUTHORITY_INVALID', (copy) => {
   copy.authority.engineeringUseAuthorized = true;
@@ -73,7 +74,7 @@ console.log(JSON.stringify({
   semanticHashesBound: true,
   inputOrderingCanonicalized: true,
   blockedSourcePackageRejected: true,
-  duplicateCoefficientIdRejected: true,
+  duplicateCoefficientIdRejectedUpstream: true,
   forgedEngineeringAuthorityRejected: true,
   sourcePackageTamperRejected: true,
   sourceLedgerTamperRejected: true,

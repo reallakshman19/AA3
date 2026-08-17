@@ -21,7 +21,14 @@
     "scaledJacobianWarning": 0.5,
     "scaledJacobianBlock": 0.2,
     "expectedTransitionLevelsMm": [3.75, 5.625, 8.4375, 12.65625, 15],
-    "expectedTransitionCount": 4
+    "expectedTransitionCount": 4,
+    "holeFrontConstruction": {
+      "policy": "DERIVED_FROM_LONGEST_EDGE_ADJACENCY_LIMIT",
+      "activationRatio": 1.5,
+      "layerGrowth": 1.2909944487358058,
+      "idealStripCharacteristicRatio": 1.5,
+      "legacyUngovernedGrowth": 1.6
+    }
   },
   "target": {
     "selection": "RETAINED_ELEMENT_NEAREST_FIXED_UV",

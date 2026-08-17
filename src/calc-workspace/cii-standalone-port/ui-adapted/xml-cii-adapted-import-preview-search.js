@@ -5,6 +5,8 @@ import { MASTER_FIELDS } from './xml-cii-adapted-fields-config.js';
 const previewSearchMetrics = {
   rowBuilds: 0,
   rowsNormalized: 0,
+  mappingResolutions: 0,
+  supportConfigParses: 0,
   searchIndexBuilds: 0,
   searchTextRows: 0,
 };
@@ -15,11 +17,16 @@ function text(value, fallback = '') {
 }
 
 function mappedFieldMap(masterKey, state) {
+  previewSearchMetrics.mappingResolutions += 1;
+  const configKey = MASTER_FIELDS[masterKey]?.configKey;
+  const contextMap = state.masterContext?.config?.[configKey]?.fieldMap;
+  if (contextMap && Object.keys(contextMap).length > 0) return contextMap;
+
   let config = {};
   try {
+    previewSearchMetrics.supportConfigParses += 1;
     config = JSON.parse(state.supportConfigJson || '{}');
   } catch {}
-  const configKey = MASTER_FIELDS[masterKey]?.configKey;
   return config[configKey]?.fieldMap || {};
 }
 
@@ -31,9 +38,8 @@ function readMappedValue(row, keys) {
   return '';
 }
 
-function normalizePreviewSearchRow(row, masterKey, state, index) {
+function normalizePreviewSearchRow(row, masterKey, fieldMap, index) {
   if (masterKey !== 'lineList') return row;
-  const fieldMap = mappedFieldMap(masterKey, state);
   const normalized = row?.lineNoKey || row?.lineNo || row?.lineKey || row?.lineSeqNo
     ? row : normalizeLineListRow(row, fieldMap, index);
   const raw = normalized?._raw || row;
@@ -58,13 +64,15 @@ function previewSourceRows(master, state) {
 /**
  * Builds the full searchable projection only when search is requested. Exactly
  * one authoritative row source is normalized: canonical master.rows when
- * available, otherwise rawRows. The previous implementation normalized both.
+ * available, otherwise rawRows. Mapping is resolved once per build and reused
+ * for every row; supportConfigJson is never parsed per row.
  */
 export function buildPreviewSearchRows(master, state) {
   const sourceRows = previewSourceRows(master, state);
+  const fieldMap = master.key === 'lineList' ? mappedFieldMap(master.key, state) : {};
   previewSearchMetrics.rowBuilds += 1;
   previewSearchMetrics.rowsNormalized += sourceRows.length;
-  return sourceRows.map((row, index) => normalizePreviewSearchRow(row, master.key, state, index));
+  return sourceRows.map((row, index) => normalizePreviewSearchRow(row, master.key, fieldMap, index));
 }
 
 /**
@@ -104,6 +112,8 @@ export function getPreviewSearchMetrics() {
 export function resetPreviewSearchMetrics() {
   previewSearchMetrics.rowBuilds = 0;
   previewSearchMetrics.rowsNormalized = 0;
+  previewSearchMetrics.mappingResolutions = 0;
+  previewSearchMetrics.supportConfigParses = 0;
   previewSearchMetrics.searchIndexBuilds = 0;
   previewSearchMetrics.searchTextRows = 0;
 }

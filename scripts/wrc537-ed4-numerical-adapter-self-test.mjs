@@ -17,6 +17,22 @@ import {
 import { createReadyWrc537Ed4SourceFixture } from './wrc537-ed4-ready-source-fixture.mjs';
 
 const source = createReadyWrc537Ed4SourceFixture();
+const datumSourceRef = 'TECH-WRC537-ED4-DATUM-FIXTURE';
+const datumLocator = 'Fixture p.1 Eq. F-1; not WRC technical data';
+source.sourceLedgerRows.push({
+  record_id: datumSourceRef,
+  record_scope: 'DATUM',
+  engineering_subject: 'NUMERICAL_ADAPTER_CONTRACT_FIXTURE',
+  authority_class: 'PRIMARY_LICENSED',
+  publisher: 'Welding Research Council, Inc.',
+  bulletin_number: '537',
+  edition: '4',
+  publication_date: '2026-02',
+  document_digest: 'a'.repeat(64),
+  locator: datumLocator,
+  verification_status: 'PRIMARY_SOURCE_VERIFIED',
+  notes: 'Synthetic contract fixture row only; not WRC engineering data.',
+});
 const dataset = createWrc537Ed4EngineeringDatasetCandidate({
   ...source,
   promotion: {
@@ -29,11 +45,12 @@ const dataset = createWrc537Ed4EngineeringDatasetCandidate({
 });
 assert.equal(dataset.schema, WRC537_ED4_ENGINEERING_DATASET_SCHEMA);
 
-const locator = 'Authorized Edition 4 technical source';
-const sourceRef = 'TECH-WRC537-ED4';
-const sourceDefinition = (definition) => ({ definition, sourceRef, sourceLocator: locator });
+const sourceDefinition = (definition) => ({
+  definition, sourceRef: datumSourceRef, sourceLocator: datumLocator,
+});
 const sourceVariable = (variableId, sourceSymbol, role, dimension, unitsPolicy) => ({
-  variableId, sourceSymbol, role, dimension, unitsPolicy, sourceRef, sourceLocator: locator,
+  variableId, sourceSymbol, role, dimension, unitsPolicy,
+  sourceRef: datumSourceRef, sourceLocator: datumLocator,
 });
 
 const planInput = {
@@ -54,8 +71,8 @@ const planInput = {
     outputVariableId: 'SIGMA',
     inputVariableIds: ['P', 'A'],
     sourceExpression: 'FIXTURE_ONLY: SIGMA = P / A',
-    sourceRef,
-    sourceLocator: locator,
+    sourceRef: datumSourceRef,
+    sourceLocator: datumLocator,
   }],
   interpolationRules: [],
   recoveryTargets: [{
@@ -63,8 +80,8 @@ const planInput = {
     resultVariableIds: ['SIGMA'],
     physicalLocation: 'FIXTURE LOCATION; NOT WRC',
     surface: 'OUTER',
-    sourceRef,
-    sourceLocator: locator,
+    sourceRef: datumSourceRef,
+    sourceLocator: datumLocator,
   }],
   combinationRules: [],
   postProcessing: [],
@@ -90,8 +107,8 @@ const evidenceInput = {
     outputVariableId: 'SIGMA',
     value: 10,
     units: 'MPa',
-    sourceRef,
-    sourceLocator: locator,
+    sourceRef: datumSourceRef,
+    sourceLocator: datumLocator,
   }],
   recoveryResults: [{
     targetId: 'FIXTURE-TARGET-OUTER',
@@ -112,6 +129,10 @@ expectError('WRC537_ED4_NUMERICAL_METHOD_NOT_QUALIFIED', () =>
 
 expectPlanError('WRC537_ED4_CALCULATION_PLAN_DATASET_MISMATCH', (copy) => {
   copy.datasetSemanticHash = 'fnv1a64:0000000000000000';
+});
+expectPlanError('WRC537_ED4_CALCULATION_PLAN_DATUM_SOURCE_REQUIRED', (copy) => {
+  copy.sourceFamily.sourceRef = 'TECH-WRC537-ED4';
+  copy.sourceFamily.sourceLocator = 'Authorized Edition 4 technical source';
 });
 expectPlanError('WRC537_ED4_CALCULATION_PLAN_SOURCE_NOT_PRIMARY_VERIFIED', (copy) => {
   copy.sourceFamily.sourceRef = 'CATALOG-WRC537-ED4';
@@ -147,7 +168,7 @@ console.log(JSON.stringify({
   status: 'PASS',
   fixtureIsNotWrcTechnicalData: true,
   sourcePlanBoundToDataset: true,
-  exactPrimarySourceLedgerBindingRequired: true,
+  datumLevelPrimarySourceLedgerBindingRequired: true,
   exactSourceLocatorRequired: true,
   qualificationTraceRetainsEveryEquationStep: true,
   recoveryResultSetBoundToPlan: true,

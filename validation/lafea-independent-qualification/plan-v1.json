@@ -125,6 +125,13 @@
       "args": ["scripts/lafea-tech12d-activation-record-check.mjs"]
     },
     {
+      "id": "TECH12E_DORMANT_PRODUCTION_GATE",
+      "classification": "ENGINEERING",
+      "required": true,
+      "executable": "node",
+      "args": ["scripts/lafea-tech12e-dormant-production-gate-check.mjs"]
+    },
+    {
       "id": "TECH7_GRADED_REFINEMENT_EXECUTOR",
       "classification": "ENGINEERING",
       "required": true,

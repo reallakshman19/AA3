@@ -14,6 +14,7 @@ export const LAFEA_WORKBENCH_ORCHESTRATION_ORDER = Object.freeze([
 export function buildLafeaWorkbenchOrchestrationProjection(stageValue) {
   const stage = requireStage(stageValue);
   const adapter = requireLafeaStageAnalysisAdapter(stage.stageId);
+  if (adapter.routeFamily === 'ANALYTICAL') return analyticalProjection(stage, adapter);
   const readiness = stage.lifecycleReadiness;
   const custody = stage.analysisMeshCustodyProjection;
   const preparation = stage.preparationProjection;
@@ -27,6 +28,56 @@ export function buildLafeaWorkbenchOrchestrationProjection(stageValue) {
     RESULTS: resultsSection(stage, readiness),
     RELEASE: releaseSection(readiness),
   };
+  return projection(stage, adapter, sections);
+}
+
+function analyticalProjection(stage, adapter) {
+  const readiness = stage.lifecycleReadiness;
+  const hasDocument = Boolean(stage.document);
+  const execution = stage.execution;
+  const qualifiedExecution = execution?.status === 'QUALIFIED';
+  const sourceCurrent = stage.lifecycleBinding?.status === 'CURRENT'
+    && stage.lifecycle?.source?.status === 'CURRENT';
+  const canonicalModel = stage.lifecycle?.artifacts?.CANONICAL_MODEL;
+  const modelCurrent = canonicalModel?.status === 'CURRENT'
+    && canonicalModel?.qualification === 'PASS';
+  const executionSupported = adapter.execution.qualifiedRouteRegistered === true;
+
+  const sections = {
+    SOURCE: !hasDocument
+      ? section('NOT_STARTED', ['SOURCE_DOCUMENT_ABSENT'], [], ['IMPORT_SOURCE'])
+      : sourceCurrent
+        ? section('COMPLETE', [], sourceRefs(stage), ['EDIT_SOURCE', 'VIEW_SOURCE'])
+        : section('READY', ['ANALYTICAL_SOURCE_AUTHORITY_ESTABLISHED_ON_CALCULATION'],
+          [ref('DOCUMENT', documentRef(stage))], ['EDIT_SOURCE', 'CALCULATE']),
+    MODEL: !hasDocument
+      ? section('NOT_STARTED', ['SOURCE_DOCUMENT_ABSENT'], [], [])
+      : modelCurrent
+        ? section('COMPLETE', [], [artifactRef(canonicalModel)], ['VIEW_MODEL'])
+        : section('READY', ['ANALYTICAL_CANONICAL_MODEL_BUILT_ON_CALCULATION'], [], ['CALCULATE']),
+    PREPARATION: section('COMPLETE', ['ANALYTICAL_PREPARATION_NOT_APPLICABLE'], [], ['VIEW']),
+    DISCRETIZATION: section('COMPLETE', ['ANALYSIS_MESH_NOT_APPLICABLE'], [], ['VIEW']),
+    AUTHORIZATION: hasDocument && executionSupported
+      ? section('READY', [], [], ['AUTHORIZE_CALCULATION'])
+      : section('BLOCKED', [
+        ...(hasDocument ? [] : ['SOURCE_DOCUMENT_ABSENT']),
+        ...(executionSupported ? [] : ['STAGE_ENGINE_NOT_IMPLEMENTED']),
+      ], [], []),
+    EXECUTION: !execution
+      ? section('NOT_STARTED', ['EXECUTION_NOT_RUN'], [],
+        hasDocument && executionSupported ? ['RUN_CALCULATION'] : [])
+      : qualifiedExecution
+        ? section('COMPLETE', [], [ref('EXECUTION', executionHash(execution))], ['VIEW'])
+        : section('BLOCKED', [`EXECUTION_${execution.status ?? 'UNKNOWN'}`], [], []),
+    RESULTS: qualifiedExecution
+      ? section('COMPLETE', [], resultRefs(stage.lifecycle), ['VIEW_RESULTS', 'EXPORT_RESULTS'])
+      : section('NOT_STARTED', ['EXECUTION_REQUIRED'], [], []),
+    RELEASE: releaseSection(readiness),
+  };
+  return projection(stage, adapter, sections);
+}
+
+function projection(stage, adapter, sections) {
   return freeze({
     schema: LAFEA_WORKBENCH_ORCHESTRATION_SCHEMA,
     stageId: stage.stageId,
@@ -49,13 +100,13 @@ function sourceSection(stage) {
 
 function modelSection(stage, readiness) {
   if (stage.domainFirstProfileActive) {
-    const projection = stage.analysisDomainProjection;
-    const refs = projection?.analysisDomainHash ? [ref('ANALYSIS_DOMAIN', projection.analysisDomainHash)] : [];
-    if (projection?.state === 'CURRENT_PASS' && readiness?.domainCurrent) {
+    const projectionValue = stage.analysisDomainProjection;
+    const refs = projectionValue?.analysisDomainHash ? [ref('ANALYSIS_DOMAIN', projectionValue.analysisDomainHash)] : [];
+    if (projectionValue?.state === 'CURRENT_PASS' && readiness?.domainCurrent) {
       return section('COMPLETE', [], refs, ['VIEW_MODEL']);
     }
-    const state = projection?.state === 'ABSENT' ? 'NOT_STARTED' : 'BLOCKED';
-    return section(state, projection?.reasons ?? ['ANALYSIS_DOMAIN_NOT_CURRENT'], refs, []);
+    const state = projectionValue?.state === 'ABSENT' ? 'NOT_STARTED' : 'BLOCKED';
+    return section(state, projectionValue?.reasons ?? ['ANALYSIS_DOMAIN_NOT_CURRENT'], refs, []);
   }
   if (stage.shellMidsurfaceProfileActive === true) {
     if (!stage.lifecycle) return section('NOT_STARTED', ['SOURCE_AUTHORITY_REQUIRED'], [], []);
@@ -78,7 +129,7 @@ function modelSection(stage, readiness) {
     record && record.status !== 'ABSENT' ? [artifactRef(record)] : [], []);
 }
 
-function preparationSection(stage, adapter, readiness, projection) {
+function preparationSection(stage, adapter, readiness, preparation) {
   if (!readiness?.preMeshModelCurrent) {
     return section('NOT_STARTED', [
       stage.domainFirstProfileActive
@@ -89,26 +140,26 @@ function preparationSection(stage, adapter, readiness, projection) {
     ], [], []);
   }
   if (!adapter.preparation.qualified) return section('BLOCKED', [adapter.preparation.reason], [], []);
-  if (!projection) return section('BLOCKED', ['LAFEA_PREPARATION_PROJECTION_ABSENT'], [], []);
-  const refs = preparationRefs(projection);
-  if (projection.state === 'CURRENT_PASS') return section('COMPLETE', [], refs, ['VIEW_PREPARATION']);
-  if (projection.state === 'CURRENT_WARNING' && projection.usableForAuthorization) {
-    return section('WARNING', projection.reasons, refs, ['VIEW_PREPARATION', 'VIEW_APPROVAL']);
+  if (!preparation) return section('BLOCKED', ['LAFEA_PREPARATION_PROJECTION_ABSENT'], [], []);
+  const refs = preparationRefs(preparation);
+  if (preparation.state === 'CURRENT_PASS') return section('COMPLETE', [], refs, ['VIEW_PREPARATION']);
+  if (preparation.state === 'CURRENT_WARNING' && preparation.usableForAuthorization) {
+    return section('WARNING', preparation.reasons, refs, ['VIEW_PREPARATION', 'VIEW_APPROVAL']);
   }
-  if (projection.state === 'ABSENT') {
+  if (preparation.state === 'ABSENT') {
     const actions = stage.domainFirstProfileActive
       ? ['RUN_PREFLIGHT']
       : stage.shellMidsurfaceProfileActive
         ? []
         : ['REGISTER_PREPARATION_EVIDENCE'];
-    return section('BLOCKED', projection.reasons, refs, actions);
+    return section('BLOCKED', preparation.reasons, refs, actions);
   }
   const actions = stage.domainFirstProfileActive
     ? ['RUN_PREFLIGHT']
-    : projection.evidenceHash
+    : preparation.evidenceHash
       ? ['VIEW_PREPARATION']
       : [];
-  return section('BLOCKED', projection.reasons, refs, actions);
+  return section('BLOCKED', preparation.reasons, refs, actions);
 }
 
 function discretizationSection(stage, adapter, custody) {
@@ -223,10 +274,10 @@ function governedExecutionReasons(readiness) {
     || reason.startsWith('LAFEA5_SHELL_')) ?? [];
   return reasons.length ? reasons : ['RESULT_EVIDENCE_NOT_CURRENT'];
 }
-function preparationRefs(projection) {
+function preparationRefs(preparation) {
   const refs = [];
-  if (projection?.evidenceHash) refs.push(ref('PREPARATION_EVIDENCE', projection.evidenceHash));
-  if (projection?.approvalHash) refs.push(ref('PREPARATION_APPROVAL', projection.approvalHash));
+  if (preparation?.evidenceHash) refs.push(ref('PREPARATION_EVIDENCE', preparation.evidenceHash));
+  if (preparation?.approvalHash) refs.push(ref('PREPARATION_APPROVAL', preparation.approvalHash));
   return refs;
 }
 function modelReasons(readiness, record) {

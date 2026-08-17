@@ -20,16 +20,11 @@ import {
   createLafeaRetainedMeshRefinementCommand,
 } from './lafea-mesh-refinement-command.js';
 import {
-  LAFEA4_SHELL_REFINEMENT_COMMAND_SCHEMA,
-  createLafea4ShellRefinementCommand,
-} from './lafea4-shell-refinement-authority.js';
-import {
   lafeaMeshGenerationConfiguration,
   planLafeaAnalysisMesh,
   produceLafeaAnalysisMeshEvidence,
 } from './lafea-mesh-producer-binding.js';
 import { produceLafeaRetainedMeshRefinement } from './lafea-retained-mesh-refinement.js';
-import { produceLafea4ShellRetainedMeshRefinement } from './lafea-shell-retained-mesh-refinement.js';
 import {
   planLafeaShellAnalysisMesh,
   produceLafeaShellAnalysisMesh,
@@ -66,6 +61,11 @@ export function createLafeaWorkbenchMeshGenerationState(stageIds) {
     });
   }
 
+  /**
+   * Bind the governed mesh profile. Its semantic hash is the binding the
+   * custody layer checks, so rebinding a different profile discards any mesh
+   * generated under the previous one rather than leaving a mismatched pair.
+   */
   function bindMeshProfile(value, stageId) {
     requireStage(stageId);
     const profile = canonicalLafeaAnalysisMeshProfile(value);
@@ -79,6 +79,11 @@ export function createLafeaWorkbenchMeshGenerationState(stageIds) {
     return freeze({ changed: true, meshProfile: profile });
   }
 
+  /**
+   * Bind mesh-independent shell evidence as the parent of any LAFEA.4/.5
+   * analysis mesh. A LAFEA.5 caller-authored source-shell parent is accepted by
+   * the same source-binding boundary but is losslessly adopted, never remeshed.
+   */
   function registerShellMidsurface(value, stage) {
     const stageId = stage?.stageId;
     requireStage(stageId);
@@ -99,6 +104,7 @@ export function createLafeaWorkbenchMeshGenerationState(stageIds) {
     return freeze({ changed: true, evidence: retained });
   }
 
+  /** Run the qualified stage producer and describe the result, custody untouched. */
   function planMesh(stage, overrides = {}) {
     const stageId = stage.stageId;
     if (shellMidsurfaces.get(stageId)) {
@@ -124,6 +130,7 @@ export function createLafeaWorkbenchMeshGenerationState(stageIds) {
     return freeze({ configuration, planned, summary: lastPlan.get(stageId) });
   }
 
+  /** Generate, validate, and only then retain as the stage's analysis mesh. */
   function generateMesh(stage, overrides = {}) {
     const stageId = stage.stageId;
     if (shellMidsurfaces.get(stageId)) {
@@ -155,64 +162,36 @@ export function createLafeaWorkbenchMeshGenerationState(stageIds) {
 
   /**
    * Refine the exact retained v2 parent. Parent artifact/mesh hashes are taken
-   * from custody here rather than trusted from UI input. LAFEA.4 shell parents
-   * route through the separate UV-space refinement authority; LAFEA.5 shell
-   * refinement remains fail-closed.
+   * from custody here rather than trusted from UI input. Shell local refinement
+   * is deliberately outside the first shell qualification and fails closed.
    */
   function refineMesh(stage, request = {}) {
     const stageId = stage.stageId;
     requireStage(stageId);
-    const shellParent = shellMidsurfaces.get(stageId);
-    if (shellParent && stageId !== 'LAFEA.4') {
-      fail('LAFEA_SHELL_LOCAL_REFINEMENT_NOT_QUALIFIED');
-    }
+    if (shellMidsurfaces.get(stageId)) fail('LAFEA_SHELL_LOCAL_REFINEMENT_NOT_QUALIFIED');
     const profile = profiles.get(stageId);
     if (!profile) fail('LAFEA_ANALYSIS_MESH_PROFILE_BINDING_REQUIRED');
     const parentEvidence = evidence.get(stageId);
     if (!parentEvidence) fail('LAFEA_RETAINED_MESH_REFINEMENT_PARENT_REQUIRED');
-
-    const command = shellParent
-      ? createLafea4ShellRefinementCommand({
-        schema: LAFEA4_SHELL_REFINEMENT_COMMAND_SCHEMA,
-        commandId: request.commandId ?? `LAFEA-${stageId}-SHELL-RETAINED-REFINEMENT`,
-        stageId,
-        parentMeshArtifactHash: parentEvidence.artifactHash,
-        parentMeshHash: parentEvidence.meshHash,
-        kind: request.kind ?? 'TARGET_LENGTH',
-        targetType: request.targetType,
-        targetIds: request.targetIds,
-        targetElementLength: request.targetElementLength,
-        lengthUnit: request.lengthUnit,
-        reason: request.reason ?? 'User-governed retained shell analysis-mesh refinement',
-      })
-      : createLafeaRetainedMeshRefinementCommand({
-        schema: LAFEA_RETAINED_MESH_REFINEMENT_COMMAND_SCHEMA,
-        commandId: request.commandId ?? `LAFEA-${stageId}-RETAINED-REFINEMENT`,
-        stageId,
-        parentMeshArtifactHash: parentEvidence.artifactHash,
-        parentMeshHash: parentEvidence.meshHash,
-        kind: request.kind ?? 'TARGET_LENGTH',
-        targetType: request.targetType,
-        targetIds: request.targetIds,
-        targetElementLength: request.targetElementLength,
-        lengthUnit: request.lengthUnit,
-        reason: request.reason ?? 'User-governed retained analysis-mesh refinement',
-      });
-
-    const produced = shellParent
-      ? produceLafea4ShellRetainedMeshRefinement({
-        stage,
-        midsurfaceEvidence: shellParent,
-        meshProfile: profile,
-        parentEvidence,
-        command,
-      })
-      : produceLafeaRetainedMeshRefinement({
-        stage,
-        meshProfile: profile,
-        parentEvidence,
-        command,
-      });
+    const command = createLafeaRetainedMeshRefinementCommand({
+      schema: LAFEA_RETAINED_MESH_REFINEMENT_COMMAND_SCHEMA,
+      commandId: request.commandId ?? `LAFEA-${stageId}-RETAINED-REFINEMENT`,
+      stageId,
+      parentMeshArtifactHash: parentEvidence.artifactHash,
+      parentMeshHash: parentEvidence.meshHash,
+      kind: request.kind ?? 'TARGET_LENGTH',
+      targetType: request.targetType,
+      targetIds: request.targetIds,
+      targetElementLength: request.targetElementLength,
+      lengthUnit: request.lengthUnit,
+      reason: request.reason ?? 'User-governed retained analysis-mesh refinement',
+    });
+    const produced = produceLafeaRetainedMeshRefinement({
+      stage,
+      meshProfile: profile,
+      parentEvidence,
+      command,
+    });
     const validated = validateLafeaAnalysisMeshEvidenceV2(produced.evidence);
     evidence.set(stageId, validated);
     lastPlan.set(stageId, summarizeRefinement(produced));
@@ -230,6 +209,12 @@ export function createLafeaWorkbenchMeshGenerationState(stageIds) {
     return validateLafeaAnalysisMeshEvidenceV2(value);
   }
 
+  /**
+   * Recover a portable v2 evidence artifact after its profile has been rebound
+   * by the orchestrator action. Parent currentness is deliberately not guessed
+   * here; the governed v2 custody projection classifies the retained evidence
+   * as CURRENT_PASS/CURRENT_BLOCK/STALE after publication.
+   */
   function recoverEvidence(value, stageId) {
     requireStage(stageId);
     const validated = validateEvidence(value);
@@ -257,6 +242,7 @@ export function createLafeaWorkbenchMeshGenerationState(stageIds) {
   function exportEvidence(stageId) { return selectEvidence(stageId); }
   function exportShellMidsurface(stageId) { return selectShellMidsurface(stageId); }
 
+  /** Any source/domain/geometry change invalidates descendants; shell parent is source-bound. */
   function invalidate(stageId) {
     requireStage(stageId);
     const changed = Boolean(
@@ -300,6 +286,7 @@ export function createLafeaWorkbenchMeshGenerationState(stageIds) {
   }
 }
 
+/** The plan facts the Discretization surface displays, without the mesh itself. */
 function summarize(planned) {
   return freeze({
     schema: 'lafea-analysis-mesh-plan-summary/v1',
@@ -354,15 +341,12 @@ function summarizeRefinement(produced) {
     stageId: produced.plan.stageId,
     generationMode: 'REFINEMENT_REGENERATION',
     elementFamily: produced.plan.elementFamily,
-    strategy: produced.plan.stageId === 'LAFEA.4'
-      ? 'SHELL_UV_RETAINED_LOCAL_REFINEMENT'
-      : 'RETAINED_LOCAL_REFINEMENT',
-    strategyReason: produced.plan.scope
-      ?? 'TARGETED_STEINER_INSERTION_WITH_CONSTRAINED_LAWSON_RESTORATION',
+    strategy: 'RETAINED_LOCAL_REFINEMENT',
+    strategyReason: 'TARGETED_STEINER_INSERTION_WITH_CONSTRAINED_LAWSON_RESTORATION',
     nodeCount: produced.evidence.mesh.nodes.length,
     elementCount: produced.evidence.mesh.elements.length,
     estimatedDofs: produced.estimatedDofs,
-    boundarySegmentCount: produced.childBoundaryEdgeCount ?? null,
+    boundarySegmentCount: null,
     characteristicLengthMin: null,
     characteristicLengthMedian: produced.plan.targetElementLength,
     characteristicLengthMax: produced.plan.globalTargetElementLength,

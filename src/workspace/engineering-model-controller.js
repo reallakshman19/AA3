@@ -51,8 +51,8 @@ export class EngineeringModelController {
     this.unsubscribers = [
       this.eventBus.subscribe(EVENT_TOPICS.WORKSPACE_SNAPSHOT_CHANGED, ({ snapshot }) => this.handleSnapshot(snapshot)),
       this.eventBus.subscribe(ENGINEERING_MODEL_EVENTS.CALCULATE_REQUESTED, () => this.calculate()),
-      this.eventBus.subscribe('MASTER_DATA_UPDATED', (event) => this.handleMasterDataChanged(event)),
-      this.eventBus.subscribe('MASTER_DATA_CLEARED', (event) => this.handleMasterDataChanged(event)),
+      this.eventBus.subscribe('MASTER_DATA_UPDATED', () => this.handleMasterDataChanged()),
+      this.eventBus.subscribe('MASTER_DATA_CLEARED', () => this.handleMasterDataChanged()),
       projectDataStore.subscribe((event) => this.handleProjectDataChanged(event)),
     ];
   }
@@ -132,21 +132,20 @@ export class EngineeringModelController {
     }
     this.authorizedConsumerController.refreshEmpirical();
     this.eventBus.publish(ENGINEERING_MODEL_EVENTS.CHANGED, {
-      reason: 'authorization-changed',
-      governingChange: 'project-data-changed',
+      reason: 'project-data-changed',
+      topologyCheckAffected: false,
       topologyModelRebuilt: Boolean(topologyModelChanged && dataset),
     });
   }
 
-  handleMasterDataChanged(event = null) {
+  handleMasterDataChanged() {
     const dataset = this.workspaceState.getSnapshot()?.dataset || null;
     engineeringModelStore.markEmpiricalStale('MASTER_DATA_CHANGED', dataset?.version || null);
     nonFeaCommonInputStore.markStale('MASTER_DATA_CHANGED', 'enrichmentSidecarSemanticHash', 'Master data changed after sealing.');
     this.authorizedConsumerController.refreshEmpirical();
     this.eventBus.publish(ENGINEERING_MODEL_EVENTS.CHANGED, {
-      reason: 'authorization-changed',
-      governingChange: 'master-data-changed',
-      masterKey: event?.masterKey || null,
+      reason: 'master-data-changed',
+      topologyCheckAffected: false,
     });
   }
 

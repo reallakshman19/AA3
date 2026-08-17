@@ -12,28 +12,36 @@ export async function prepareStandaloneImportMasters(options = {}) {
 }
 
 export function summarizeStandaloneImportMasters(masterContext) {
-  if (!masterContext) return STANDALONE_IMPORT_MASTER_DEFS.map(d => ({ ...d, rowCount: 0, previewRows: [], diagnostics: [] }));
+  if (!masterContext) return STANDALONE_IMPORT_MASTER_DEFS.map(d => ({ ...d, rowCount: 0, rows: [], previewRows: [], diagnostics: [] }));
 
   const raw = masterContext.rawRows || {};
+  const lineRows = masterContext.lineRows?.length ? masterContext.lineRows : raw.lineList || [];
+  const pipingClassRows = masterContext.pipingClassRows?.length ? masterContext.pipingClassRows : raw.pipingClass || [];
+  const weightRows = masterContext.weightMasterRows?.length ? masterContext.weightMasterRows : raw.weight || [];
+  const materialRows = masterContext.materialMapRows?.length ? masterContext.materialMapRows : raw.materialMap || [];
+
   return [
     {
       ...STANDALONE_IMPORT_MASTER_DEFS[0],
-      rowCount: masterContext.lineRows?.length || raw.lineList?.length || 0,
-      previewRows: (masterContext.lineRows?.length ? masterContext.lineRows : raw.lineList || []).slice(0, 50),
+      rowCount: lineRows.length,
+      rows: lineRows,
+      previewRows: lineRows.slice(0, 50),
       diagnostics: masterContext.diagnostics?.lineList || [],
       sourceMetadata: masterContext.sourceMetadata?.lineList || { source: 'not-loaded', sourceType: 'empty', status: 'pending' }
     },
     {
       ...STANDALONE_IMPORT_MASTER_DEFS[1],
-      rowCount: masterContext.pipingClassRows?.length || raw.pipingClass?.length || 0,
-      previewRows: (masterContext.pipingClassRows?.length ? masterContext.pipingClassRows : raw.pipingClass || []).slice(0, 50),
+      rowCount: pipingClassRows.length,
+      rows: pipingClassRows,
+      previewRows: pipingClassRows.slice(0, 50),
       diagnostics: masterContext.diagnostics?.pipingClass || [],
       sourceMetadata: masterContext.sourceMetadata?.pipingClass || { source: 'not-loaded', sourceType: 'empty', status: 'pending' }
     },
     {
       ...STANDALONE_IMPORT_MASTER_DEFS[2],
-      rowCount: masterContext.weightMasterRows?.length || raw.weight?.length || 0,
-      previewRows: (masterContext.weightMasterRows?.length ? masterContext.weightMasterRows : raw.weight || []).slice(0, 50),
+      rowCount: weightRows.length,
+      rows: weightRows,
+      previewRows: weightRows.slice(0, 50),
       diagnostics: masterContext.diagnostics?.weight || [],
       sourceMetadata: masterContext.sourceMetadata?.weight || { source: 'not-loaded', sourceType: 'empty', status: 'pending' }
     },
@@ -42,8 +50,9 @@ export function summarizeStandaloneImportMasters(masterContext) {
       key: 'materialMap',
       label: 'Material Map Master',
       description: 'PCF Material code to ASTM description cross-reference.',
-      rowCount: masterContext.materialMapRows?.length || raw.materialMap?.length || 0,
-      previewRows: (masterContext.materialMapRows?.length ? masterContext.materialMapRows : raw.materialMap || []).slice(0, 50),
+      rowCount: materialRows.length,
+      rows: materialRows,
+      previewRows: materialRows.slice(0, 50),
       diagnostics: masterContext.diagnostics?.materialMap || [],
       sourceMetadata: masterContext.sourceMetadata?.materialMap || { source: 'not-loaded', sourceType: 'empty', status: 'pending' }
     }

@@ -37,6 +37,9 @@ expectComponent(target.components.SIGMA_X, 35, 50, 0, 15, 100);
 expectComponent(target.components.SIGMA_THETA, 20, 9, 0, 30, 59);
 expectComponent(target.components.SIGMA_R, 0, 0, 0, 0, 0);
 expectComponent(target.components.TAU_XTHETA, 0, 0, 2, 0, 2);
+close(target.principalStresses[0], 100.09732992404598, 'maximum principal stress');
+close(target.principalStresses[1], 58.90267007595402, 'intermediate principal stress');
+close(target.principalStresses[2], 0, 'minimum principal stress');
 close(target.vonMises, 87.13782186857783, 'full hand-case von Mises');
 
 const isolated = {
@@ -90,6 +93,14 @@ const outsideDt = calculateLocalAttachmentCorrelation(syntheticCorrelationReques
 assert.equal(outsideDt.qualification.state, 'OUTSIDE_DOMAIN');
 assert.equal(outsideDt.diagnostics[0].code, 'OUTSIDE_CORRELATION_DOMAIN');
 
+const missingPressure = calculateLocalAttachmentCorrelation(syntheticCorrelationRequest({
+  requestIdentity: 'MISSING-PRESSURE-TARGET',
+  pressureByTarget: [],
+}), profile);
+assert.equal(missingPressure.qualification.state, 'REJECTED_REQUEST');
+assert.equal(missingPressure.diagnostics[0].code, 'CORRELATION_PRESSURE_TARGET_SET_MISMATCH');
+assert.equal(missingPressure.targetResults.length, 0);
+
 const tampered = structuredClone(profile);
 tampered.responses.find((row) => row.responseId === 'FX-SIGMA-X-MEMBRANE').coefficients[0][0] = 9;
 assert.throws(() => createCorrelationProfile(tampered),
@@ -118,9 +129,11 @@ console.log(JSON.stringify({
     sigmaTheta: target.components.SIGMA_THETA.totalSurface,
     sigmaR: target.components.SIGMA_R.totalSurface,
     tauXTheta: target.components.TAU_XTHETA.totalSurface,
+    principal: target.principalStresses,
     vonMises: target.vonMises,
   },
   outsideDomainRejected: true,
+  missingPressureTargetRejected: true,
   datasetTamperRejected: true,
   sixLoadIsolationQualified: true,
 }));

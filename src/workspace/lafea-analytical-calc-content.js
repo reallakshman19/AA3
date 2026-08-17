@@ -43,6 +43,8 @@ export function renderLafeaAnalyticalCalcContent(root, state, stage, options) {
     onApplyJson: options.handlers.onApplyJson,
   }));
 
+  const screeningCustody = foundation ? null : screeningLoadCustody(root, stage.document);
+
   const settings = card(root, 'Calculation contract and settings');
   settings.section.dataset.guidedTarget = 'profile';
   settings.body.append(renderLafeaAnalysisSettings(settings.body, stage, options.registryEntry));
@@ -59,7 +61,9 @@ export function renderLafeaAnalyticalCalcContent(root, state, stage, options) {
   const lineage = card(root, 'Analytical evidence and lineage');
   lineage.section.dataset.guidedTarget = 'lineage';
   lineage.body.append(renderLafeaLifecyclePanel(lineage.body, stageId, stage));
-  shell.append(route.section, source.section, settings.section, results.section, lineage.section);
+  shell.append(route.section, source.section);
+  if (screeningCustody) shell.append(screeningCustody);
+  shell.append(settings.section, results.section, lineage.section);
 
   if (options.benchmarkHost) {
     const benchmark = card(root, 'Analytical verification output');
@@ -69,4 +73,120 @@ export function renderLafeaAnalyticalCalcContent(root, state, stage, options) {
 
   return Object.freeze({ element: shell, viewport: null, viewportElement: null,
     viewportReused: false, workflow: null, discretization: null });
+}
+
+function screeningLoadCustody(root, documentValue) {
+  const custody = card(root, 'Inherited LAFEA.1 load custody');
+  custody.section.dataset.role = 'lafea-screening-load-custody';
+  custody.section.dataset.guidedTarget = 'screening-load-custody';
+  custody.body.append(element(
+    root,
+    'p',
+    'lafea-workbench__section-intro',
+    'LAFEA.2 does not invent attachment resultants. The screening cases below reference retained LAFEA.1 transformed load cases. Current term factors are shown read-only here; changing nested term factors remains blocked until an identity-based edit command is registered.',
+  ));
+  if (!documentValue || typeof documentValue !== 'object') {
+    custody.body.append(element(root, 'p', 'lafea-workbench-svg__empty',
+      'Load custody becomes available after a valid LAFEA.2 source document is loaded.'));
+    return custody.section;
+  }
+
+  const sourceResult = documentValue.sourceEvidence?.foundationResult;
+  const loadCases = Array.isArray(sourceResult?.transformedLoadCases)
+    ? sourceResult.transformedLoadCases
+    : [];
+  const screeningCases = Array.isArray(documentValue.screeningCases)
+    ? documentValue.screeningCases
+    : [];
+  const canonicalUnits = documentValue.sourceEvidence?.foundationModel?.units?.canonical ?? {};
+  const forceUnit = canonicalUnits.force ?? 'force';
+  const momentUnit = canonicalUnits.moment ?? 'moment';
+
+  custody.body.append(
+    resultantsTable(root, loadCases, forceUnit, momentUnit),
+    screeningTermsTable(root, screeningCases),
+  );
+  return custody.section;
+}
+
+function resultantsTable(root, loadCases, forceUnit, momentUnit) {
+  const wrapper = element(root, 'div', 'lafea-screening-custody__resultants');
+  wrapper.append(element(root, 'h4', null, 'Retained transformed resultants'));
+  if (!loadCases.length) {
+    wrapper.append(element(root, 'p', 'lafea-workbench-svg__empty',
+      'No retained LAFEA.1 transformed load cases are available.'));
+    return wrapper;
+  }
+  const table = element(root, 'table', 'lafea-result-table');
+  const head = element(root, 'tr');
+  ['Load case', `Fx (${forceUnit})`, `Fy (${forceUnit})`, `Fz (${forceUnit})`,
+    `Mx (${momentUnit})`, `My (${momentUnit})`, `Mz (${momentUnit})`]
+    .forEach((label) => {
+      const cell = element(root, 'th', null, label);
+      cell.scope = 'col';
+      head.append(cell);
+    });
+  table.append(head);
+  loadCases.forEach((loadCase) => {
+    const force = Array.isArray(loadCase?.transformedForceLocal)
+      ? loadCase.transformedForceLocal
+      : [];
+    const moment = Array.isArray(loadCase?.transformedMomentLocal)
+      ? loadCase.transformedMomentLocal
+      : [];
+    const row = element(root, 'tr');
+    const identity = element(root, 'th', null, String(loadCase?.identity ?? 'UNRESOLVED_LOAD_CASE'));
+    identity.scope = 'row';
+    row.append(identity);
+    [...force.slice(0, 3), ...moment.slice(0, 3)].forEach((value) => {
+      row.append(element(root, 'td', null, engineeringNumber(value)));
+    });
+    table.append(row);
+  });
+  wrapper.append(table);
+  return wrapper;
+}
+
+function screeningTermsTable(root, screeningCases) {
+  const wrapper = element(root, 'div', 'lafea-screening-custody__terms');
+  wrapper.append(element(root, 'h4', null, 'Screening-case mechanical terms'));
+  if (!screeningCases.length) {
+    wrapper.append(element(root, 'p', 'lafea-workbench-svg__empty',
+      'No screening cases are available.'));
+    return wrapper;
+  }
+  const table = element(root, 'table', 'lafea-result-table');
+  const head = element(root, 'tr');
+  ['Screening case', 'Mechanical terms', 'Pressure definition', 'Pressure factor']
+    .forEach((label) => {
+      const cell = element(root, 'th', null, label);
+      cell.scope = 'col';
+      head.append(cell);
+    });
+  table.append(head);
+  screeningCases.forEach((screeningCase) => {
+    const row = element(root, 'tr');
+    const identity = element(root, 'th', null,
+      String(screeningCase?.screeningCaseId ?? 'UNRESOLVED_SCREENING_CASE'));
+    identity.scope = 'row';
+    const terms = Array.isArray(screeningCase?.mechanicalTerms)
+      ? screeningCase.mechanicalTerms
+      : [];
+    row.append(
+      identity,
+      element(root, 'td', null, terms.length
+        ? terms.map((term) => `${term.loadCaseId} × ${engineeringNumber(term.factor)}`).join(' + ')
+        : 'No mechanical terms'),
+      element(root, 'td', null, String(screeningCase?.pressureDefinitionId ?? '—')),
+      element(root, 'td', null, engineeringNumber(screeningCase?.pressureFactor)),
+    );
+    table.append(row);
+  });
+  wrapper.append(table);
+  return wrapper;
+}
+
+function engineeringNumber(value) {
+  if (!Number.isFinite(value)) return '—';
+  return Number(value.toPrecision(8)).toString();
 }

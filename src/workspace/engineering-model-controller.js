@@ -133,7 +133,7 @@ export class EngineeringModelController {
     this.authorizedConsumerController.refreshEmpirical();
     this.eventBus.publish(ENGINEERING_MODEL_EVENTS.CHANGED, {
       reason: 'project-data-changed',
-      topologyCheckAffected: false,
+      topologyCheckAffected: Boolean(topologyModelChanged && dataset),
       topologyModelRebuilt: Boolean(topologyModelChanged && dataset),
     });
   }

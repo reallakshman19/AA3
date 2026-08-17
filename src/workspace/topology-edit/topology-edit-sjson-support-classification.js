@@ -94,8 +94,9 @@ function classifyFamilyToken(value, field) {
   if (!descriptionField && /\bANCHOR\b|\bFIXED\b|\bANCI\b/iu.test(token)) return 'ANCHOR';
   if (descriptionField && /\bANCHOR\b/iu.test(token) && !/\bDIRECTIONAL\b/iu.test(token)) return 'ANCHOR';
 
-  if (/\bPIPE\s*REST\b|\bREST\b|\bWEAR\s*PLATE\b|\bW\.?\s*PAD\b/iu.test(token)) return 'REST';
-  if ((field === 'CMPSUPTYPE' || field === 'MDSSUPPTYPE') && /^SH[- ]/iu.test(token)) return 'REST';
+  // Shoe/wear-plate text is hardware identity, not restraint capability.
+  // REST is accepted only when the source explicitly says REST/PIPE REST.
+  if (/\bPIPE\s*REST\b|\bREST\b/iu.test(token)) return 'REST';
   return null;
 }
 

@@ -18,6 +18,7 @@ export function evaluateWrc537SourceReadiness({ manifest, dataset, coefficientRo
   requireObject(manifest, 'manifest');
   requireObject(dataset, 'dataset');
   requireArray(coefficientRows, 'coefficientRows');
+  const targetEdition = manifest.targetEdition ?? null;
 
   const gates = [
     gate('TARGET_EDITION_SELECTED', targetEditionSelected(manifest),
@@ -40,8 +41,9 @@ export function evaluateWrc537SourceReadiness({ manifest, dataset, coefficientRo
       'Every coefficient row must retain a finite numerical value.'),
     gate('COEFFICIENT_PRECISION_COMPLETE', coefficientPrecisionComplete(coefficientRows),
       'Every numerical coefficient must retain published/source precision.'),
-    gate('COEFFICIENT_SOURCE_CUSTODY_COMPLETE', coefficientSourceCustodyComplete(coefficientRows),
-      'Every coefficient must retain a target-edition primary-source locator and verified status.'),
+    gate('COEFFICIENT_SOURCE_CUSTODY_COMPLETE',
+      coefficientSourceCustodyComplete(coefficientRows, targetEdition),
+      'Every coefficient must retain target-edition primary-source identity, locator, and verified status.'),
     gate('SIGN_TABLE_PRIMARY_VERIFIED', explicitTrue(manifest?.engineeringVerification?.signTablesPrimaryVerified),
       'Load/stress sign tables must be verified against the target-edition primary source.'),
     gate('INTERPOLATION_PRIMARY_VERIFIED', explicitTrue(manifest?.engineeringVerification?.interpolationPrimaryVerified),
@@ -62,7 +64,7 @@ export function evaluateWrc537SourceReadiness({ manifest, dataset, coefficientRo
   return deepFreeze({
     schema: WRC537_SOURCE_READINESS_SCHEMA,
     methodIdentity: 'WRC537',
-    targetEdition: clone(manifest.targetEdition ?? null),
+    targetEdition: clone(targetEdition),
     state: failedGateIds.length ? WRC537_BLOCKED_STATE : WRC537_READY_STATE,
     gates,
     failedGateIds,
@@ -70,23 +72,25 @@ export function evaluateWrc537SourceReadiness({ manifest, dataset, coefficientRo
       coefficientRows: coefficientRows.length,
       coefficientRowsWithFiniteValue: coefficientRows.filter(hasFiniteCoefficient).length,
       coefficientRowsWithPublishedPrecision: coefficientRows.filter(hasPublishedPrecision).length,
-      coefficientRowsPrimaryVerified: coefficientRows.filter(coefficientRowPrimaryVerified).length,
+      coefficientRowsPrimaryVerified: coefficientRows.filter((row) =>
+        coefficientRowPrimaryVerified(row, targetEdition)).length,
       requiredParameterCount: REQUIRED_PARAMETER_IDS.length,
       requiredLoadConventionCount: REQUIRED_LOAD_KEYS.length,
     },
   });
 }
 
-export function normalizeWrc537CoefficientRow(row) {
+export function normalizeWrc537CoefficientRow(row, targetEdition = null) {
   requireObject(row, 'coefficientRow');
   const finiteValue = hasFiniteCoefficient(row);
   const precision = hasPublishedPrecision(row);
-  const primaryVerified = coefficientRowPrimaryVerified(row);
+  const primaryVerified = coefficientRowPrimaryVerified(row, targetEdition);
   return deepFreeze({
     ...clone(row),
     normalizedValueState: finiteValue ? 'NUMERIC_VALUE_PRESENT' : 'STRUCTURE_ONLY_VALUE_UNRESOLVED',
     normalizedPrecisionState: precision ? 'SOURCE_PRECISION_PRESENT' : 'SOURCE_PRECISION_UNRESOLVED',
-    normalizedAuthorityState: primaryVerified ? 'PRIMARY_SOURCE_VERIFIED' : 'NOT_PRIMARY_SOURCE_VERIFIED',
+    normalizedAuthorityState: primaryVerified ? 'TARGET_EDITION_PRIMARY_SOURCE_VERIFIED'
+      : 'NOT_TARGET_EDITION_PRIMARY_SOURCE_VERIFIED',
     normalizedEngineeringState: finiteValue && precision && primaryVerified
       ? 'ENGINEERING_DATA_CANDIDATE'
       : 'RESEARCH_ONLY',
@@ -147,8 +151,8 @@ function coefficientValuesComplete(rows) {
 function coefficientPrecisionComplete(rows) {
   return rows.length > 0 && rows.every(hasPublishedPrecision);
 }
-function coefficientSourceCustodyComplete(rows) {
-  return rows.length > 0 && rows.every(coefficientRowPrimaryVerified);
+function coefficientSourceCustodyComplete(rows, targetEdition) {
+  return rows.length > 0 && rows.every((row) => coefficientRowPrimaryVerified(row, targetEdition));
 }
 function publishedBenchmarksAvailable(manifest) {
   const rows = manifest?.engineeringVerification?.publishedBenchmarks;
@@ -169,12 +173,24 @@ function hasFiniteCoefficient(row) {
 function hasPublishedPrecision(row) {
   return nonempty(row?.published_precision) && resolved(row.published_precision);
 }
-function coefficientRowPrimaryVerified(row) {
+function coefficientRowPrimaryVerified(row, targetEdition) {
   return row?.review_status === 'PRIMARY_SOURCE_VERIFIED'
-    && resolved(row?.source_page)
-    && resolved(row?.source_section)
-    && resolved(row?.source_figure)
-    && row?.extraction_confidence === 'PRIMARY_VERIFIED';
+    && row?.extraction_confidence === 'PRIMARY_VERIFIED'
+    && coefficientEditionMatchesTarget(row?.edition, targetEdition)
+    && sourceLocatorPresent(row);
+}
+function coefficientEditionMatchesTarget(rowEdition, targetEdition) {
+  if (!nonempty(rowEdition) || !nonempty(targetEdition?.edition)
+    || !/^\d{4}-\d{2}$/u.test(targetEdition?.publicationDate ?? '')) return false;
+  const edition = escapeRegex(targetEdition.edition.trim());
+  const year = targetEdition.publicationDate.slice(0, 4);
+  const editionPattern = new RegExp(`(?:^|\\D)${edition}(?:ST|ND|RD|TH)?(?:\\D|$)`, 'iu');
+  return editionPattern.test(rowEdition) && rowEdition.includes(year);
+}
+function sourceLocatorPresent(row) {
+  const exactLocator = [row?.source_equation, row?.source_table, row?.source_figure]
+    .some((value) => resolved(value));
+  return resolved(row?.source_page) && exactLocator;
 }
 function resolved(value) {
   if (typeof value !== 'string') return value !== null && value !== undefined;
@@ -184,6 +200,7 @@ function resolved(value) {
     && !normalized.includes('NOT AVAILABLE')
     && !normalized.includes('NOT VERIFIED');
 }
+function escapeRegex(value) { return value.replace(/[.*+?^${}()|[\]\\]/gu, '\\$&'); }
 function explicitTrue(value) { return value === true; }
 function nonempty(value) { return typeof value === 'string' && value.trim().length > 0; }
 function gate(gateId, pass, requirement) {

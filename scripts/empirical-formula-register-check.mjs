@@ -7,7 +7,11 @@ import {
   createEmpiricalFormulaRegister,
   requireEmpiricalFormulaRegister,
 } from '../src/workspace/engineering-loads/empirical-formula-register.js';
-import { calculateSupportLoadDistribution } from '../src/workspace/engineering-loads/support-load-distribution-v3.js';
+import {
+  calculateSupportLoadDistribution,
+  getSupportLoadPerformanceMetrics,
+  resetSupportLoadPerformanceMetrics,
+} from '../src/workspace/engineering-loads/support-load-distribution-v3.js';
 import {
   createEmptyProjectDataProfile,
   createEvidenceValue,
@@ -135,6 +139,7 @@ function checkProductionFixture(value) {
     supports: semanticHash(SUPPORT_SITE_MODEL),
     routes: semanticHash(ROUTE_PARTITION_MODEL),
   };
+  resetSupportLoadPerformanceMetrics();
   const distribution = calculateSupportLoadDistribution({
     dataset: DATASET,
     profile: PROFILE,
@@ -142,6 +147,18 @@ function checkProductionFixture(value) {
     routePartitionModel: ROUTE_PARTITION_MODEL,
     masterData: MASTER_DATA,
   });
+  const firstRunMetrics = getSupportLoadPerformanceMetrics();
+  assert.equal(firstRunMetrics.baseMassArtifactBuilds, 1);
+  assert.equal(firstRunMetrics.baseMassComputations, 2,
+    'one invariant mass evaluation is required for each unique physical entity');
+  assert.equal(firstRunMetrics.caseMassCompositions, 6,
+    'two physical entities across EMPTY/OPE/HYD require six case compositions');
+  assert.equal(firstRunMetrics.fluidMassComputations, 3,
+    'only the pipe requires case-dependent fluid composition in three cases');
+  assert.equal(firstRunMetrics.caseEvaluations, 3);
+  assert.equal(firstRunMetrics.routeCaseEvaluations, 3);
+  assert.equal(firstRunMetrics.supportProjectionBuilds, 1);
+
   const repeated = calculateSupportLoadDistribution({
     dataset: DATASET,
     profile: PROFILE,
@@ -149,7 +166,13 @@ function checkProductionFixture(value) {
     routePartitionModel: ROUTE_PARTITION_MODEL,
     masterData: MASTER_DATA,
   });
+  const repeatedMetrics = getSupportLoadPerformanceMetrics();
   assert.deepEqual(repeated, distribution);
+  assert.equal(repeatedMetrics.baseMassArtifactBuilds, 2,
+    'base mass is execution-local; no cross-execution authority cache is introduced');
+  assert.equal(repeatedMetrics.baseMassComputations, 4);
+  assert.equal(repeatedMetrics.caseMassCompositions, 12);
+  assert.equal(repeatedMetrics.fluidMassComputations, 6);
   assert.equal(distribution.status, 'CALCULATED');
   assert.equal(distribution.method, EMPIRICAL_FORMULA_METHOD);
   assert.deepEqual(distribution.loadCases.map((row) => row.loadCaseId), ['EMPTY', 'OPE', 'HYD']);

@@ -16,8 +16,9 @@ import { correlationApprovalAuthorityTrusted } from './trusted-authorities.js';
 
 export const CORRELATION_RELEASE_CANDIDATE_SCHEMA =
   'local-attachment-correlation-release-candidate/v1';
-
-export const CORRELATION_RELEASE_CANDIDATE_STATES = Object.freeze([
+export const CORRELATION_RELEASE_TRUST_PROJECTION_SCHEMA =
+  'local-attachment-correlation-release-trust-projection/v1';
+export const CORRELATION_RELEASE_TRUST_STATES = Object.freeze([
   'READY_FOR_ENGINEERING_REGISTRY',
   'UNTRUSTED_APPROVAL_AUTHORITY',
 ]);
@@ -46,13 +47,9 @@ export function createCorrelationReleaseCandidate(options) {
     fail('CORRELATION_RELEASE_PROFILE_NOT_ENGINEERING_CANDIDATE',
       'profile.authority.engineeringUseAuthorized');
   }
-  const approvalAuthorityTrusted = correlationApprovalAuthorityTrusted(record.approvalAuthorityId);
   const base = {
     schema: CORRELATION_RELEASE_CANDIDATE_SCHEMA,
     candidateIdentity: requiredString(options?.candidateIdentity, 'candidateIdentity'),
-    state: approvalAuthorityTrusted
-      ? 'READY_FOR_ENGINEERING_REGISTRY'
-      : 'UNTRUSTED_APPROVAL_AUTHORITY',
     datasetPackage,
     profile,
     qualificationEvidence: evidence,
@@ -66,27 +63,19 @@ export function createCorrelationReleaseCandidate(options) {
       qualificationRecordHash: record.semanticHash,
       methodDefinitionHash: methodDefinitionHash(profile),
     },
-    trust: {
-      approvalAuthorityId: record.approvalAuthorityId,
-      approvalReference: record.approvalReference,
-      approvalAuthorityTrusted,
-    },
   };
   return freeze({ ...base, semanticHash: semanticHash(base) });
 }
 
 export function validateCorrelationReleaseCandidate(value) {
   exactKeys(value, [
-    'schema', 'candidateIdentity', 'state', 'datasetPackage', 'profile',
-    'qualificationEvidence', 'qualificationRecord', 'binding', 'trust', 'semanticHash',
+    'schema', 'candidateIdentity', 'datasetPackage', 'profile',
+    'qualificationEvidence', 'qualificationRecord', 'binding', 'semanticHash',
   ], 'releaseCandidate');
   if (value.schema !== CORRELATION_RELEASE_CANDIDATE_SCHEMA) {
     fail('CORRELATION_RELEASE_CANDIDATE_SCHEMA_MISMATCH', 'releaseCandidate.schema');
   }
   requiredString(value.candidateIdentity, 'releaseCandidate.candidateIdentity');
-  if (!CORRELATION_RELEASE_CANDIDATE_STATES.includes(value.state)) {
-    fail('CORRELATION_RELEASE_CANDIDATE_STATE_INVALID', 'releaseCandidate.state');
-  }
   requiredHash(value.semanticHash, 'releaseCandidate.semanticHash');
   const reconstructed = createCorrelationReleaseCandidate({
     candidateIdentity: value.candidateIdentity,
@@ -95,19 +84,34 @@ export function validateCorrelationReleaseCandidate(value) {
     qualificationEvidence: value.qualificationEvidence,
     qualificationRecord: value.qualificationRecord,
   });
-  if (reconstructed.state !== value.state) {
-    fail('CORRELATION_RELEASE_CANDIDATE_STATE_MISMATCH', 'releaseCandidate.state');
-  }
   if (reconstructed.semanticHash !== value.semanticHash) {
     fail('CORRELATION_RELEASE_CANDIDATE_HASH_MISMATCH', 'releaseCandidate.semanticHash');
   }
   return reconstructed;
 }
 
+export function correlationReleaseCandidateTrustProjection(candidateInput) {
+  const candidate = validateCorrelationReleaseCandidate(candidateInput);
+  const record = candidate.qualificationRecord;
+  const approvalAuthorityTrusted = correlationApprovalAuthorityTrusted(record.approvalAuthorityId);
+  return freeze({
+    schema: CORRELATION_RELEASE_TRUST_PROJECTION_SCHEMA,
+    candidateIdentity: candidate.candidateIdentity,
+    candidateSemanticHash: candidate.semanticHash,
+    state: approvalAuthorityTrusted
+      ? 'READY_FOR_ENGINEERING_REGISTRY'
+      : 'UNTRUSTED_APPROVAL_AUTHORITY',
+    approvalAuthorityId: record.approvalAuthorityId,
+    approvalReference: record.approvalReference,
+    approvalAuthorityTrusted,
+  });
+}
+
 export function correlationReleaseCandidateRegistryInputs(candidateInput) {
   const candidate = validateCorrelationReleaseCandidate(candidateInput);
-  if (candidate.state !== 'READY_FOR_ENGINEERING_REGISTRY') {
-    fail('CORRELATION_RELEASE_CANDIDATE_NOT_TRUSTED', 'releaseCandidate.state');
+  const trust = correlationReleaseCandidateTrustProjection(candidate);
+  if (trust.state !== 'READY_FOR_ENGINEERING_REGISTRY') {
+    fail('CORRELATION_RELEASE_CANDIDATE_NOT_TRUSTED', 'releaseCandidate.trust');
   }
   return freeze({
     profiles: [candidate.profile],
@@ -152,13 +156,9 @@ function assertEvidenceReproducible(evidence, profile) {
 }
 
 function methodDefinitionHash(profile) {
-  const {
-    authority: _authority,
-    ...definition
-  } = profile;
+  const { authority: _authority, ...definition } = profile;
   return semanticHash(definition);
 }
-
 function requiredHash(value, path) {
   requiredString(value, path);
   if (!/^fnv1a64:[0-9a-f]{16}$/u.test(value)) fail('CORRELATION_HASH_FORMAT_INVALID', path);

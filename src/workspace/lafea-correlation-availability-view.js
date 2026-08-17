@@ -161,9 +161,9 @@ function geometryEditor(root, stage, declaration, projection, panelSection) {
   evidence.append(tableRow(root, 'Geometry evidence hash',
     projection.geometryEvidenceHash ?? 'NOT AVAILABLE'));
   evidence.append(tableRow(root, 'LAFEA.1 canonical model hash',
-    projection.geometryEvidence?.foundationModelSemanticHash ?? 'NOT AVAILABLE'));
+    projection.geometryEvidence?.foundationModelHash ?? 'NOT AVAILABLE'));
   evidence.append(tableRow(root, 'LAFEA.1 result payload hash',
-    projection.geometryEvidence?.foundationResultPayloadSemanticHash ?? 'NOT AVAILABLE'));
+    projection.geometryEvidence?.foundationResultHash ?? 'NOT AVAILABLE'));
   section.append(evidence);
   return section;
 }

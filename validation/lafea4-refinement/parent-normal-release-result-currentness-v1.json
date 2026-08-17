@@ -1,0 +1,40 @@
+{
+  "schema": "lafea4-parent-normal-release-result-currentness-definition/v1",
+  "qualificationId": "LAFEA4-PARENT-NORMAL-TECH12I-001",
+  "stageId": "LAFEA.4",
+  "scope": "RELEASE_AUTHORITY_REQUIRES_CURRENT_GOVERNED_RESULT",
+  "currentTrustRoot": "NULL",
+  "currentGovernedResult": {
+    "resultReady": true,
+    "qualifiedReleaseMayRemainCurrent": true
+  },
+  "futureTrustedGateRevokesResult": {
+    "resultReady": false,
+    "retainedReleaseRecordMayRemain": true,
+    "releaseBindingStatus": "STALE",
+    "releaseQualified": false,
+    "requiredReason": "RELEASE_GOVERNED_RESULT_NOT_CURRENT",
+    "newReleaseRegistrationAllowed": false
+  },
+  "nonGovernedCompatibility": {
+    "releaseBindingUnaffectedByThisRule": true
+  },
+  "authorityPolicy": {
+    "releaseRecordBytesMustNotBeMutated": true,
+    "workbenchBindingMayBeReclassified": true,
+    "registrationGuardRunsBeforeRecordNormalization": true,
+    "readinessReleaseStateMustFollowEffectiveBinding": true
+  },
+  "prohibitions": [
+    "NO_TRUST_ROOT_ACTIVATION_IN_TECH12I",
+    "NO_RELEASE_RECORD_REWRITE",
+    "NO_RELEASE_EVIDENCE_HASH_REWRITE",
+    "NO_PARENT_NORMAL_THRESHOLD_CHANGE",
+    "NO_EXISTING_15_DEGREE_PRODUCER_GUARD_CHANGE",
+    "NO_SHELL_FORMULATION_CHANGE",
+    "NO_STIFFNESS_EQUATION_CHANGE",
+    "NO_SOLVER_EQUATION_CHANGE"
+  ],
+  "productionBindingAuthorized": false,
+  "releaseQualified": false
+}

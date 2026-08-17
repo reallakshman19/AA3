@@ -11,7 +11,7 @@ merge authorization = NOT GRANTED
 engineering activation = BLOCKED
 ```
 
-Earlier draft PRs #1206, #1207, #1208 and #1210 remain unmerged historical slices. Their implementation content is cumulatively represented here; they are not separate merge prerequisites for this consolidated PR.
+Earlier draft PRs #1206, #1207, #1208 and #1210 remain unmerged historical slices. Their implementation content is cumulatively represented here; they are not separate merge prerequisites.
 
 ## 2. Engineering objective
 
@@ -36,7 +36,7 @@ deterministic execution trace
         ↓
 term-complete numerical qualification
         ↓
-exact retained source-benchmark reproduction custody
+exact source-qualified benchmark input/output custody
         ↓
 numeric literal / coefficient custody
         ↓
@@ -60,14 +60,14 @@ publication 2026-02
 Still unavailable in authorized technical-source custody:
 
 ```text
-exact licensed/authorized Edition 4 source artifact
+licensed/authorized Edition 4 source artifact
 complete geometry/applicability definitions
-U / gamma / rho / lambda / delta source equations and limits
+U / gamma / rho / lambda / delta equations and limits
 all 12 load/moment positive directions and reference points
-stress recovery definitions and source stress measure
+stress recovery and source stress measure
 interpolation/extrapolation rules
-Edition 4 coefficient inventory and values
-published/reference numerical benchmark values
+Edition 4 coefficient/equation inventory and values
+published/reference benchmark inputs/outputs
 real WRC-to-LAFEA canonical mapping
 ```
 
@@ -85,12 +85,11 @@ DATUM
 
 `DOCUMENT_IDENTITY` establishes catalog identity only.
 
-`DOCUMENT` establishes custody of the exact authorized Edition 4 technical artifact and its SHA-256.
+`DOCUMENT` establishes custody of the exact authorized Edition 4 source artifact and its SHA-256.
 
-Every consumed `DATUM` must retain:
+Every consumed `DATUM` requires:
 
 ```text
-record_id
 record_scope = DATUM
 engineering_subject
 authority_class = PRIMARY_LICENSED | PRIMARY_AUTHORIZED
@@ -105,27 +104,22 @@ verification_status = PRIMARY_SOURCE_VERIFIED
 
 ## 5. Source-package READY gate
 
-Before `READY_FOR_TECHNICAL_IMPLEMENTATION`, the package requires:
+Before `READY_FOR_TECHNICAL_IMPLEMENTATION`, the package requires complete source authority for:
 
 ```text
-exact Edition 4 identity
-primary technical DOCUMENT custody
-complete consumed DATUM custody
-geometry and physical applicability
-five dimensionless parameter definitions/domains
+geometry / applicability
+five dimensionless parameters
 all twelve load conventions
-stress components/recovery/surface reconstruction/source stress measure
-interpolation/extrapolation authority
-complete coefficient/equation inventory
-source precision and exact coefficient locators
-source benchmark evidence
-qualified LAFEA mappings
-zero unresolved implementation field
+stress components/recovery/surfaces/source stress measure
+interpolation/extrapolation
+coefficient inventory, values, precision and locators
+source benchmark inputs, units, input locators and expected outputs
+LAFEA mappings
 ```
 
-Parameter ranges require `minimum < maximum`. Duplicate parameter/load identities are rejected. Coefficient locators must exactly equal their datum ledger locator.
+Parameter ranges require `minimum < maximum`. Duplicate parameter/load identities are rejected. Coefficient source locator must equal the retained datum locator.
 
-Mandatory load identities are:
+Mandatory load identities:
 
 ```text
 spherical:P
@@ -142,11 +136,40 @@ cylindrical:Ml
 cylindrical:Mt
 ```
 
-## 6. Engineering dataset promotion
+## 6. Source benchmark input evidence at READY
 
-Only a READY package may produce `wrc537-ed4-engineering-dataset/v1`.
+A benchmark may preserve a natural nested input object, but **every finite numeric input leaf** requires one `inputEvidence[]` row.
 
-The dataset retains complete source package, source ledger, coefficients, source-document SHA-256, readiness evidence, promotion metadata, and canonical hashes.
+Example:
+
+```json
+{
+  "inputId": "GEOMETRY_R",
+  "benchmarkPath": ["geometry", "R"],
+  "units": "mm",
+  "sourceRef": "DATUM-WRC537-ED4-BENCHMARK-001",
+  "sourceLocator": "exact source locator"
+}
+```
+
+READY requires:
+
+```text
+unique inputId
+valid path to finite source input value
+explicit source units
+exact Edition 4 DATUM source reference
+source locator == DATUM locator
+datum digest == exact source-document SHA-256
+100% finite numeric input-leaf coverage
+no duplicate path custody
+```
+
+This prevents a bare numeric value such as `100` from being treated as sufficient benchmark evidence without proving whether it means `100 mm`, `100 in`, `100 N`, etc.
+
+## 7. Engineering dataset
+
+Only a READY package may create the immutable engineering dataset candidate. It freezes source package, source ledger, coefficients, source SHA-256, readiness evidence and semantic hashes.
 
 Authority remains:
 
@@ -155,85 +178,39 @@ engineeringUseAuthorized = false
 SOURCE_QUALIFIED_DATASET_NOT_METHOD_QUALIFIED
 ```
 
-## 7. Source-bound calculation plan
+## 8. Source-bound calculation plan
 
-The calculation plan is bound to one exact dataset hash and retains source-qualified definitions for:
+The calculation plan binds one exact dataset and retains source-qualified definitions for family, coordinate system, load reference, variables, equations, interpolation, recovery targets, combination rules and post-processing.
 
-```text
-source family
-coordinate system
-load reference
-variables
-equations
-interpolation rules
-recovery targets
-combination rules
-post-processing rules
-```
+Every numerical-plan source item must resolve to a primary Edition 4 DATUM with exact source digest and locator.
 
-Every numerical-plan source item must resolve to a primary Edition 4 `DATUM` row with the exact source digest and locator.
+## 9. Safe executable representation
 
-## 8. Executable mathematical representation
-
-There is no `eval()` or dynamic `Function()` path.
+No `eval()` or dynamic `Function()` path exists.
 
 Reviewed primitives:
 
 ```text
-VAR
-CONST
-ADD
-SUB
-MUL
-DIV
-NEG
-ABS
-SQRT
-POW
-MIN
-MAX
-POLYNOMIAL
-LINEAR_INTERPOLATE
+VAR CONST ADD SUB MUL DIV NEG ABS SQRT POW MIN MAX POLYNOMIAL LINEAR_INTERPOLATE
 ```
 
-These are software capabilities only, not claims about WRC537 mathematical form.
+These are software capabilities only, not WRC mathematical claims.
 
-The executable plan requires exact plan binding, variable metadata, dimensions/units, explicit dimension audit, source equation/rule identity, and deterministic execution order.
+Every executable equation/rule requires exact plan binding, source locator, units, dimensions, dimension audit and deterministic execution order.
 
-## 9. Numerical safety
+## 10. Numerical safety and interpolation custody
 
-The evaluator fails closed on:
+The evaluator fails closed on missing/extra/duplicate inputs, wrong units, unknown variables, forward references, unsupported operators, non-finite values, division by zero, SQRT domain errors, zero interpolation span, unauthorized interpolation/extrapolation and missing recovery values.
 
-```text
-missing/extra/duplicate inputs
-wrong units
-unknown variables
-forward/unbound references
-unsupported operators
-non-finite values
-division by zero
-negative square-root domain
-zero interpolation span
-source-unauthorized interpolation
-source/executable extrapolation-policy mismatch
-unavailable recovery values
-```
+Every `LINEAR_INTERPOLATE` node is recursively bound to source-package interpolation/extrapolation authority, including nested nodes.
 
-No silent unit conversion is performed.
+No silent unit conversion exists.
 
-## 10. Qualification evidence
+## 11. Qualification evidence
 
-Qualification remains term-complete.
+Qualification is term-complete.
 
-Every case requires expected values for:
-
-```text
-every executable equation/interpolation step
-+
-every declared recovery result
-```
-
-Each expected value retains:
+Every case requires expected values for every executable step and every declared recovery result. Expected values retain:
 
 ```text
 value
@@ -251,48 +228,47 @@ independentReproduction = true
 independentCalculationReference = non-empty
 ```
 
-Qualification PASS is deliberately **not sufficient** to create a numerical release candidate. Supplemental diagnostic/hand-calculation cases may be valid qualification evidence without being source benchmarks.
+Qualification PASS is deliberately **not sufficient** for numerical release. Supplemental diagnostic/hand-calculation cases may PASS without being source benchmarks.
 
-## 11. Source-benchmark release custody — P0 boundary
+## 12. Source-benchmark numerical-release custody
 
-A stack audit found that a self-consistent qualification suite could previously PASS without machine proof that it reproduced a benchmark retained in `dataset.sourcePackage.benchmarks`.
+A numerical release candidate requires `benchmarkBindings` covering **every retained source benchmark exactly once**.
 
-That bypass is closed at the numerical release boundary.
+Each benchmark binds to one qualification case with exact benchmark source datum/locator and exact independent calculation reference.
 
-A numerical release candidate now requires `benchmarkBindings` covering **every retained source benchmark exactly once**.
+### 12.1 Input bindings consume source-qualified evidence IDs
 
-Binding row:
+Release bindings do not supply source paths/units/locators. They only reference evidence already frozen into the dataset:
 
-```text
-sourceBenchmarkCaseId
-qualificationCaseId
-inputBindings[]
-recoveryBindings[]
+```json
+{
+  "variableId": "P",
+  "benchmarkInputId": "LOAD_P"
+}
 ```
 
-The bound qualification case must match the benchmark's source datum/locator, `independentReproduction=true`, and exact `independentCalculationReference`.
-
-### 11.1 Exact source benchmark input custody
-
-Each qualification request variable maps to a `benchmarkPath`, an ordered list of object keys and/or array indexes into the retained benchmark input object.
-
-Required:
+Release proves:
 
 ```text
-qualification request value
-==
-retained benchmark value at benchmarkPath
+qualification request value == retained benchmark input value
+qualification request units == retained inputEvidence.units
 ```
 
-The release gate recursively inventories **every finite numeric leaf** in the retained benchmark input object. Every numeric leaf must be mapped exactly once.
+The binding set must cover every qualification request variable and every retained benchmark input-evidence ID exactly once.
 
-Therefore a benchmark containing `{R, t, P}` cannot be released from a qualification request that proves only `P`, even if the final result coincidentally agrees.
+Because READY already proves 100% numeric benchmark input-leaf coverage, the end-to-end chain is:
 
-### 11.2 Exact source benchmark recovery custody
+```text
+source numeric input leaf
+→ source-qualified value + units + locator
+→ benchmarkInputId
+→ qualification runtime variable
+→ executable plan
+```
 
-Every benchmark expected result must map exactly once to a qualification expected recovery value.
+### 12.2 Recovery bindings
 
-The following must match exactly:
+Every retained source benchmark expected result maps exactly once to an expected qualification recovery result with exact equality of:
 
 ```text
 value
@@ -303,51 +279,42 @@ sourceRef
 sourceLocator
 ```
 
-A self-consistent calculation with a changed result or widened tolerance cannot be promoted as reproduction of the retained source benchmark.
+A self-consistent result with altered source output or tolerance cannot become source-benchmark reproduction evidence.
 
-Focused design note:
+Focused contract:
 
 `docs/wrc537/ed4/SOURCE_BENCHMARK_RELEASE_CUSTODY.md`
 
-## 12. Numeric literal and coefficient custody
+## 13. Numeric literal/coefficient custody
 
-Every executable numeric literal is inventoried deterministically.
+Every executable numeric literal is inventoried.
 
-Allowed binding classes:
+Allowed classes:
 
 ```text
 DATASET_COEFFICIENT
 SOURCE_LITERAL
 ```
 
-A dataset coefficient must exactly match the retained coefficient ID, value, source reference and source locator. Source-benchmark reproduction does not authorize unbound magic numbers.
+Dataset coefficient bindings require exact retained coefficient ID/value/source reference/source locator.
 
-The release gate also requires:
+Graph variable references must equal source-plan declared input-variable IDs exactly.
 
-```text
-graph VAR references
-==
-source plan inputVariableIds
-```
+## 14. Numerical release candidate
 
-for every equation/interpolation implementation.
-
-## 13. Numerical release candidate
-
-Creation now requires:
+Creation requires:
 
 ```text
-valid dataset
-valid source-bound calculation plan
-valid executable plan
-replayed qualification PASS
+READY-derived dataset
+source-bound calculation plan
+validated executable plan
+replayed numerical qualification PASS
 exact graph-input custody
 100% retained source-benchmark coverage
-exact benchmark request-input mapping
-100% numeric benchmark-input leaf coverage
-exact benchmark recovery/tolerance/source mapping
+exact source-qualified benchmark input value + unit mapping
+exact source benchmark recovery/tolerance/source mapping
 exact independent reproduction reference
-complete numeric literal/coefficient custody
+complete literal/coefficient custody
 ```
 
 Authority remains:
@@ -357,9 +324,7 @@ engineeringUseAuthorized = false
 NUMERICALLY_QUALIFIED_CANDIDATE_AWAITING_INDEPENDENT_APPROVAL_AND_TRUST
 ```
 
-## 14. Pipeline
-
-Primary command:
+## 15. Pipeline
 
 ```bash
 node scripts/wrc537-ed4-source-to-evaluator-pipeline.mjs
@@ -378,76 +343,71 @@ NUMERIC_LITERAL_CUSTODY_REQUIRED
 NUMERICAL_RELEASE_CANDIDATE_AWAITING_APPROVAL_AND_TRUST
 ```
 
-New release artifact:
+Release artifacts include:
 
 ```text
-docs/wrc537/ed4/WRC537_ED4_BENCHMARK_BINDINGS.json
+WRC537_ED4_BENCHMARK_BINDINGS.json
+WRC537_ED4_LITERAL_BINDINGS.json
+WRC537_ED4_NUMERICAL_RELEASE_CANDIDATE.json
 ```
 
-It must remain absent while the real source package is BLOCKED.
+These must remain absent while the real source package is BLOCKED.
 
-`--release` deliberately remains non-zero at the approval/trust boundary.
+## 16. Product/registry boundary
 
-## 15. Product/registry boundary
+The reviewed WRC method module set is limited to source readiness, source package, engineering dataset, numerical adapter, execution engine, qualification engine and numerical release candidate.
 
-The reviewed WRC method module set is limited to:
+The boundary guard requires WRC537 to remain absent from product/index/engineering-registry/engineering-assessment/trusted-authority activation paths.
 
-```text
-source-readiness.js
-ed4-source-package.js
-ed4-engineering-dataset.js
-ed4-numerical-adapter.js
-ed4-execution-engine.js
-ed4-qualification-engine.js
-ed4-numerical-release-candidate.js
-```
+No UI Run action is activated.
 
-The boundary guard separately requires WRC537 to remain absent from central product/index/engineering-registry/engineering-assessment/trusted-authority activation paths.
-
-No UI Run control is activated.
-
-## 16. Stack-level defects found and fixed
+## 17. Stack-level defects found and fixed
 
 ### A — READY could outrun datum provenance
 
-Fixed by requiring DATUM-level source custody before READY.
+Fixed by requiring DATUM-level custody before READY.
 
-### B — datum digest could differ from exact technical source digest
+### B — DATUM digest could differ from the exact technical source digest
 
-Fixed by requiring every consumed datum digest to equal `technicalSource.documentDigest`.
+Fixed by requiring every consumed DATUM digest to equal `technicalSource.documentDigest`.
 
 ### C — executable extrapolation could override source policy
 
-Fixed by recursively binding every `LINEAR_INTERPOLATE` primitive to source-package interpolation/extrapolation authority.
+Fixed by recursively binding interpolation/extrapolation primitives to source-package authority.
 
-### D — original source-only boundary guard contradicted later reviewed modules
+### D — legacy source-boundary guard contradicted later reviewed modules
 
-Fixed by permitting the exact reviewed source-independent module set while continuing to block product/registry/trust activation.
+Fixed by permitting only the exact reviewed module set while still forbidding activation paths.
 
 ### E — qualification PASS could bypass retained source benchmarks
+
+Fixed by requiring one-to-one retained source-benchmark bindings at numerical release.
+
+### F — retained benchmark numeric inputs could be partially omitted
+
+Fixed by requiring 100% finite numeric benchmark input-leaf source evidence before READY and full evidence-ID coverage at release.
+
+### G — benchmark numeric values had no source unit/locator custody
 
 Previous state:
 
 ```text
-arbitrary self-consistent case
-+ valid Edition 4 DATUM
-→ qualification PASS
-→ potentially numerical release candidate
+benchmark input value = 100
 ```
 
-Fixed by requiring one-to-one retained source benchmark bindings at numerical release.
+could be retained without machine proof of units/source locator.
 
-### F — retained benchmark numeric inputs could be partially omitted
+Effect:
 
-Previous state:
+A numerically identical but physically wrong input basis could theoretically be represented by the same floating-point value.
 
-A benchmark could retain several numeric geometry/load values while only a subset was mapped into the qualification request.
+Fix:
 
-Fixed by recursive 100% finite numeric-leaf input coverage.
+Every numeric source benchmark input now requires source-qualified `inputEvidence` containing units and exact DATUM locator before READY. Release runtime units must exactly equal those retained source units.
 
-## 17. Synthetic contract fixtures
+## 18. Synthetic contract fixtures
 
-Synthetic regressions use obvious software-only relations such as:
+Software-only fixtures include:
 
 ```text
 1000 N / 100 mm² = 10 MPa
@@ -456,111 +416,111 @@ Synthetic regressions use obvious software-only relations such as:
 
 They are not WRC537 technical data or engineering validation cases.
 
-The release-candidate fixture now encodes rejection of:
+Regressions encode rejection of incomplete benchmark input units/locators, missing numeric input-leaf evidence, missing benchmark release coverage, unknown benchmark input evidence IDs, self-consistent but wrong benchmark inputs/recoveries, mismatched independent calculation references, incorrect coefficient custody and forged authority.
 
-```text
-missing source benchmark coverage
-self-consistent but wrong benchmark input
-self-consistent but wrong benchmark recovery value
-mismatched independent calculation reference
-missing/incorrect coefficient literal binding
-forged engineering authority
-```
-
-## 18. Validation ledger
+## 19. Validation ledger
 
 | Check | Status | Evidence / limitation |
 |---|---|---|
 | Connector branch/PR state review | REVIEWED | PR remains draft/open/unmerged |
 | Source authority boundary review | REVIEWED | Real source remains BLOCKED |
-| Benchmark-custody static review | REVIEWED | Release gate binds benchmark/input/recovery/reference |
-| Pipeline state review | REVIEWED | `SOURCE_BENCHMARK_CUSTODY_REQUIRED` added |
-| Current-state artifact guard | ENCODED / NOT_RUN | Benchmark binding file required absent while blocked |
-| Release-candidate benchmark regression | ENCODED / NOT_RUN | Negative cases encoded |
-| Full Node regression suite | NOT_RUN | No executable repository checkout available in this agent context |
-| GitHub Actions/workflows | NOT_RUN | Explicitly excluded from this workstream |
+| Benchmark input unit/source-custody review | REVIEWED | READY now source-qualifies value/unit/locator |
+| Benchmark release-custody static review | REVIEWED | Release maps only retained inputEvidence IDs |
+| Pipeline state review | REVIEWED | source benchmark gate retained |
+| Source-package benchmark regressions | ENCODED / NOT_RUN | unit/locator/leaf coverage negative cases added |
+| Release-candidate benchmark regressions | ENCODED / NOT_RUN | source benchmark mapping negative cases added |
+| Full Node regression suite | NOT_RUN | no executable repository checkout available in this agent context |
+| GitHub Actions/workflows | NOT_RUN | explicitly excluded from this workstream |
 
-Selected constructed JavaScript revisions were syntax-checked before connector upload during this work, but that is **not** represented as execution of the repository regressions.
+Selected constructed JavaScript revisions were syntax-checked before connector upload during this work. That is not represented as execution of the repository regression suite.
 
 No unexecuted regression is claimed as PASS.
 
-## 19. Review/merge posture
+## 20. Review/merge posture
 
-PR #1211 is the canonical review target and remains a draft.
+PR #1211 is the canonical review target and remains draft/open/unmerged.
 
-No merge has been performed. Fresh explicit user authorization is required before merge.
+Fresh explicit user authorization is required before merge.
 
-## 20. Remaining P0 external dependency
+## 21. Remaining P0 external dependency
 
-The next source-dependent batch requires an authorized/licensed WRC Bulletin 537 Edition 4 technical source.
+The next real engineering input is an authorized/licensed WRC Bulletin 537 Edition 4 technical source.
 
 Once supplied:
 
 ```text
-exact SHA-256
+exact source SHA-256
 → DOCUMENT/DATUM extraction
+→ benchmark input value/unit/locator evidence
 → READY source package
 → immutable dataset
 → real calculation plan
 → actual source mathematical graph
-→ source benchmark + independent hand-calculation suite
-→ exact benchmark bindings
+→ term-complete source/hand benchmark qualification
+→ exact source benchmark bindings
+→ literal/coefficient bindings
 → numerical release candidate
 → independent approval/trust
-→ engineering registry/product integration
+→ registry/product integration
 ```
 
 ## Appendix A — takeover questions
 
 1. What exact Edition 4 source artifact SHA-256 is authoritative?
 2. What licensing/authorization basis permits implementation use?
-3. Are all consumed datum rows bound to that exact digest?
+3. Are all consumed DATUM rows bound to that exact digest?
 4. What are the exact source definitions of Rm, Rc, T, r0, rm, t, C1 and C2 where applicable?
-5. What shell and attachment thickness basis is required: nominal, corroded, effective, or another definition?
-6. What are the exact source equations for U, gamma, rho, lambda and delta?
+5. What thickness basis is required: nominal, corroded, effective, or another definition?
+6. What are the exact equations for U, gamma, rho, lambda and delta?
 7. What are each parameter's inclusive/exclusive numerical limits?
 8. Are any parameter domains shell-family or attachment-family dependent?
 9. What are the exact spherical positive directions for P, V1, V2, M1, M2 and Mt?
 10. What are the exact cylindrical positive directions for P, Vc, Vl, Mc, Ml and Mt?
 11. What is the source load/moment reference point?
 12. Is remote-load translation part of WRC537 or a separate LAFEA/piping policy?
-13. What source coordinate basis defines axial/circumferential/local directions?
+13. What coordinate basis defines source axial/circumferential/local directions?
 14. What host-shell/attachment/intersection topologies are supported?
-15. What topologies and proximity conditions are explicitly excluded?
+15. What topologies/proximity conditions are explicitly excluded?
 16. What recovery locations exist and how are they geometrically defined?
-17. What surfaces are reported at each recovery location?
+17. What surfaces are reported at each location?
 18. How are membrane and bending terms reconstructed at inner/outer surfaces?
 19. What shear components are source outputs and what signs apply?
-20. Does Edition 4 define stress intensity/equivalent stress, or is that downstream software post-processing?
-21. Has any retained stress-measure expression been independently dimension-checked?
+20. Does Edition 4 define stress intensity/equivalent stress, or is that LAFEA post-processing?
+21. Has every retained stress-measure expression been independently dimension-checked?
 22. What coefficient/equation families exist in Edition 4?
 23. Has every coefficient been extracted with displayed precision and exact locator?
 24. What interpolation algorithm is source-authorized for each family?
 25. Is extrapolation authorized, and under what exact conditions/ranges?
 26. Are interpolation/extrapolation rules family-specific?
 27. What published/reference numerical examples are retained from Edition 4?
-28. Does each retained source benchmark carry every numeric geometry/load input consumed by the method?
-29. Can every retained benchmark input numeric leaf be mapped to an explicit calculation-plan input variable?
-30. Are source benchmark input units explicit enough to prohibit silent conversion?
-31. What exact source output quantities are retained for each benchmark?
-32. Does every retained source output map to one calculation-plan recovery target/result variable?
-33. What absolute tolerance follows from the publication precision for each retained source output?
-34. Is every benchmark's independent calculation reference genuinely independent of the software evaluator?
-35. Can every benchmark intermediate be independently reconstructed even when not printed by the source?
-36. What is the first divergent intermediate when a source benchmark fails?
-37. Does the real LAFEA mapping preserve all source signs, axes, locations and surfaces without hidden transformation?
-38. Are pressure stresses separate from the WRC external-load result?
-39. Are principal/Tresca/von-Mises results source outputs or separate LAFEA post-processing?
-40. Does every executable graph reference exactly the variables declared by its source equation/rule?
-41. Is every executable numeric literal source-bound or dataset-coefficient-bound?
-42. Has every interpolation primitive been checked against source interpolation/extrapolation authority?
-43. Does the numerical release candidate cover 100% of retained source benchmarks exactly once?
-44. Can one qualification case accidentally be reused for two source benchmarks?
-45. Does every benchmark binding cover 100% of finite numeric benchmark input leaves?
-46. Does every benchmark binding cover 100% of retained source expected results?
-47. Do benchmark recovery bindings preserve exact source value, units, tolerance basis and locator?
-48. Does the bound qualification case retain the exact benchmark independent calculation reference?
-49. Has numerical qualification passed before any approval/trust request?
-50. Is the approval authority explicitly trusted by code rather than caller-supplied?
-51. Does product/UI activation remain impossible until source, numerical, benchmark, approval and trust gates all pass?
-52. Has any older-edition/secondary-source datum entered the Edition 4 release dataset?
+28. Does each benchmark retain every numeric geometry/load input consumed by the method?
+29. Does every finite numeric benchmark input leaf have exactly one inputEvidence ID?
+30. What source units apply to every retained benchmark input value?
+31. Is every benchmark input unit bound to an exact Edition 4 DATUM locator?
+32. Are benchmark inputs reported in units different from the canonical executable-plan units?
+33. If conversion is required, where is that conversion explicitly source/policy-qualified rather than silently applied?
+34. What exact source output quantities are retained for each benchmark?
+35. Does every source output map to one calculation-plan recovery target/result variable?
+36. What absolute tolerance follows from source displayed precision for each output?
+37. Is every benchmark independent calculation reference genuinely independent of the software evaluator?
+38. Can every benchmark intermediate be independently reconstructed when not printed by the source?
+39. What is the first divergent intermediate when a benchmark fails?
+40. Does the real LAFEA mapping preserve all source signs, axes, locations and surfaces?
+41. Are pressure stresses separate from the WRC external-load result?
+42. Are principal/Tresca/von-Mises results source outputs or separate LAFEA post-processing?
+43. Does every executable graph reference exactly the variables declared by its source equation/rule?
+44. Is every executable numeric literal source-bound or dataset-coefficient-bound?
+45. Has every interpolation primitive been checked against source interpolation/extrapolation authority?
+46. Does the numerical release candidate cover 100% of retained source benchmarks exactly once?
+47. Can one qualification case accidentally be reused for two source benchmarks?
+48. Does every release input binding reference a source-qualified benchmarkInputId rather than a caller-authored path/unit?
+49. Does every release binding cover every retained benchmark inputEvidence ID exactly once?
+50. Do runtime request units exactly equal retained source benchmark input units?
+51. Does every benchmark binding cover every source expected result exactly once?
+52. Do recovery bindings preserve exact value, units, tolerance basis and locator?
+53. Does the bound qualification case retain the exact benchmark independent calculation reference?
+54. Has numerical qualification passed before any approval/trust request?
+55. Is approval authority explicitly trusted by code rather than caller-supplied?
+56. Does product/UI activation remain impossible until source, numerical, benchmark, approval and trust gates all pass?
+57. Has any older-edition/secondary-source datum entered the Edition 4 release dataset?
+58. Can any source benchmark numeric input remain unitless or source-locator-free at READY?

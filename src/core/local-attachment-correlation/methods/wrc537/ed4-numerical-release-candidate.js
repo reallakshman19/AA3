@@ -236,6 +236,7 @@ function validateBenchmarkInputBindings(rows, benchmarkInput, requestInputValues
   });
 
   const bindingIds = [];
+  const boundPathKeys = [];
   const normalized = rows.map((row, index) => {
     const itemPath = `${path}[${index}]`;
     requireObject(row, itemPath);
@@ -248,12 +249,20 @@ function validateBenchmarkInputBindings(rows, benchmarkInput, requestInputValues
       fail('WRC537_ED4_NUMERICAL_RELEASE_BENCHMARK_INPUT_VALUE_MISMATCH', itemPath);
     }
     bindingIds.push(variableId);
+    boundPathKeys.push(JSON.stringify(row.benchmarkPath));
     return { variableId, benchmarkPath: clone(row.benchmarkPath) };
   });
   const expectedIds = [...requestById.keys()].sort();
+  const expectedPathKeys = benchmarkNumericLeafPaths(benchmarkInput)
+    .map((segments) => JSON.stringify(segments))
+    .sort();
   if (new Set(bindingIds).size !== bindingIds.length
     || bindingIds.slice().sort().join('|') !== expectedIds.join('|')) {
     fail('WRC537_ED4_NUMERICAL_RELEASE_BENCHMARK_INPUT_BINDING_SET_MISMATCH', path);
+  }
+  if (new Set(boundPathKeys).size !== boundPathKeys.length
+    || boundPathKeys.slice().sort().join('|') !== expectedPathKeys.join('|')) {
+    fail('WRC537_ED4_NUMERICAL_RELEASE_BENCHMARK_INPUT_PATH_COVERAGE_MISMATCH', path);
   }
   normalized.sort((a, b) => a.variableId.localeCompare(b.variableId));
   return freeze(normalized);
@@ -279,6 +288,21 @@ function benchmarkNumericPath(root, segments, path) {
     fail('WRC537_ED4_NUMERICAL_RELEASE_BENCHMARK_INPUT_VALUE_INVALID', path);
   }
   return value;
+}
+
+function benchmarkNumericLeafPaths(value, path = [], rows = []) {
+  if (Number.isFinite(value)) {
+    rows.push(path);
+    return rows;
+  }
+  if (!value || typeof value !== 'object') return rows;
+  if (Array.isArray(value)) {
+    value.forEach((child, index) => benchmarkNumericLeafPaths(child, [...path, index], rows));
+  } else {
+    Object.keys(value).sort().forEach((key) =>
+      benchmarkNumericLeafPaths(value[key], [...path, key], rows));
+  }
+  return rows;
 }
 
 function validateBenchmarkRecoveryBindings(rows, benchmarkResults, expectedRecovery, path) {

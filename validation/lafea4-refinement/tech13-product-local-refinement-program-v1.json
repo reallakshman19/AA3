@@ -40,6 +40,11 @@
       "id": "TECH13E_NUMERICAL_QUALIFICATION",
       "status": "IMPLEMENTED_PENDING_EXACT_HEAD_EXECUTION",
       "purpose": "EXACT_HEAD_SMOOTH_CYLINDER_AND_CURVED_HOLE_FIXED_PROBE_QUALIFICATION_AGAINST_GLOBAL_FINE_REFERENCE"
+    },
+    {
+      "id": "TECH13F_DORMANT_PROMOTION_AND_ATOMIC_RETENTION",
+      "status": "IMPLEMENTED_PENDING_EXACT_HEAD_EXECUTION",
+      "purpose": "QUALIFY_THE_ACTUAL_FUTURE_ACTIVE_RETENTION_AND_UI_PATH_BEHIND_A_CODE_OWNED_NULL_PROMOTION_TRUST_ROOT"
     }
   ],
   "fixedEngineeringPolicies": {
@@ -58,7 +63,10 @@
     "productCandidateMustRewrapExactKernelMesh": true,
     "productCandidateProducerIdentityMustDifferFromTech7": true,
     "sameMeshHashExpectedAcrossKernelAndProductCandidate": true,
-    "sameArtifactHashAllowedAcrossKernelAndProductCandidate": false
+    "sameArtifactHashAllowedAcrossKernelAndProductCandidate": false,
+    "productionPromotionTrustRootNullUntilVerifiedPass": true,
+    "syntheticPromotionRecordMayBeUsedOnlyAsQualificationSeam": true,
+    "syntheticPromotionRecordMayBecomeProductionAuthority": false
   },
   "acceptanceGate": {
     "requiredQualityMetrics": [
@@ -79,7 +87,7 @@
     "requiresExactMidsurfaceHash": true,
     "requiresExactMeshProfileHash": true,
     "candidateGateMutatesCustody": false,
-    "candidatePassAuthorizesRetentionBeforeTech13E": false
+    "candidatePassAuthorizesRetentionBeforeVerifiedPromotion": false
   },
   "workbenchPolicy": {
     "scopeEligibleIsNotProductQualified": true,
@@ -94,7 +102,10 @@
     "showsAspectRatioPolicy": true,
     "showsScaledJacobianPolicy": true,
     "showsMinimumAngleBlockDegrees": true,
-    "refineControlEnabledBeforeTech13E": false,
+    "refineControlEnabledWithNullPromotionTrustRoot": false,
+    "futureActiveTargetTypes": [
+      "ELEMENT"
+    ],
     "globalMeshCapabilityRegistryChanged": false
   },
   "publicationSequence": [
@@ -103,7 +114,10 @@
     "MEASURE_ADJACENT_SIZE_RATIO",
     "QUALIFY_PARENT_NORMAL",
     "VERIFY_PARENT_AND_PROFILE_CUSTODY",
-    "PASS_ALL_GATES_OR_ROLL_BACK",
+    "REQUIRE_VERIFIED_PROMOTION_RECORD",
+    "PREVALIDATE_CHILD_PARENT_NORMAL_AND_PRODUCTION_GATE",
+    "REPLACE_CHILD_WITHOUT_INTERMEDIATE_PUBLISH",
+    "ROLL_BACK_EXACT_PARENT_ON_ANY_RETENTION_ERROR",
     "PUBLISH_CHILD_ATOMICALLY"
   ],
   "tech13eAcceptance": {
@@ -120,6 +134,16 @@
     "bundleVerifier": "scripts/lafea-tech13-product-refinement-bundle-verifier.mjs",
     "exactHeadPassObserved": false
   },
+  "tech13fPromotion": {
+    "policy": "validation/lafea4-refinement/product-refinement-promotion-v1.json",
+    "promotionRecordGenerator": "scripts/lafea-tech13f-promotion-record-generator.mjs",
+    "dormantTrustRootRegression": "scripts/lafea-tech13f-dormant-promotion-gate-check.mjs",
+    "futureActiveAtomicRetentionRegression": "scripts/lafea-tech13f-dormant-product-refinement-activation-check.mjs",
+    "productionTrustRoot": "NULL",
+    "requiresCanonicalBundleVerifierPass": true,
+    "requiresQualifiedHeadMatch": true,
+    "releaseQualified": false
+  },
   "activationPolicy": {
     "tech13aExecutionAuthorized": false,
     "tech13bProductRetentionAuthorized": false,
@@ -130,13 +154,16 @@
     "tech13dUiBindingAuthorized": false,
     "tech13ePassMayAuthorizeSeparateFuturePromotionReview": true,
     "tech13eSourceAuthoringAloneAuthorizesPromotion": false,
-    "tech13eProductRetentionAuthorized": false,
-    "tech13eUiBindingAuthorized": false,
+    "tech13fProductionTrustRootNull": true,
+    "tech13fFutureActiveBranchMustPassExactHeadQualification": true,
+    "tech13fProductRetentionAuthorizedNow": false,
+    "tech13fUiBindingAuthorizedNow": false,
     "tech13aReleaseQualified": false,
     "tech13bReleaseQualified": false,
     "tech13cReleaseQualified": false,
     "tech13dReleaseQualified": false,
     "tech13eReleaseQualified": false,
-    "productRefinementMayBeEnabledBeforeTech13eExactHeadPass": false
+    "tech13fReleaseQualified": false,
+    "productRefinementMayBeEnabledBeforeVerifiedExactHeadPass": false
   }
 }

@@ -48,6 +48,13 @@
       "args": ["scripts/lafea-tech6-graded-transition-plan-check.mjs"]
     },
     {
+      "id": "TECH9_HOLE_FRONT_ADJACENCY_POLICY",
+      "classification": "ENGINEERING",
+      "required": true,
+      "executable": "node",
+      "args": ["scripts/lafea-tech9-hole-front-policy-check.mjs"]
+    },
+    {
       "id": "TECH7_GRADED_REFINEMENT_EXECUTOR",
       "classification": "ENGINEERING",
       "required": true,

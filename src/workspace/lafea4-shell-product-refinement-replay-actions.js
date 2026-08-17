@@ -18,22 +18,22 @@ export function createLafea4ShellProductRefinementReplayActions(context) {
   } = context;
   const retainedPackages = new Map();
 
-  function recordSuccessfulProductRefinement(result) {
-    if (!result?.productRefinement || result.productRetentionAuthorized !== true
-      || !result.retentionAuthority || !result.acceptance || !result.promotion) {
-      return null;
-    }
-    const replayPackage = createLafea4ShellProductRefinementReplayPackage({
-      retentionAuthority: result.retentionAuthority,
-      acceptance: result.acceptance,
-      promotion: result.promotion,
+  /** Build and validate the portable sidecar before child custody is changed. */
+  function prepareProductRefinementReplayPackage({ retentionAuthority, acceptance, promotion }) {
+    return createLafea4ShellProductRefinementReplayPackage({
+      retentionAuthority,
+      acceptance,
+      promotion,
     });
-    const evidence = meshGeneration.selectEvidence('LAFEA.4');
-    if (!evidence
-      || evidence.artifactHash !== replayPackage.retentionAuthority.evidence.artifactHash
-      || evidence.meshHash !== replayPackage.retentionAuthority.evidence.meshHash) {
-      throw storeError('LAFEA4_SHELL_PRODUCT_REFINEMENT_REPLAY_RETAINED_EVIDENCE_MISMATCH');
-    }
+  }
+
+  /**
+   * Called only after the already-prepared package's exact evidence has been
+   * atomically retained. Map insertion itself grants no authority; export
+   * remains conditional on exact retained artifact/mesh identity.
+   */
+  function retainPreparedProductRefinementReplayPackage(replayPackage) {
+    if (!replayPackage || replayPackage.stageId !== 'LAFEA.4') return null;
     retainedPackages.set('LAFEA.4', replayPackage);
     return replayPackage;
   }
@@ -155,7 +155,8 @@ export function createLafea4ShellProductRefinementReplayActions(context) {
   }
 
   return Object.freeze({
-    recordSuccessfulProductRefinement,
+    prepareProductRefinementReplayPackage,
+    retainPreparedProductRefinementReplayPackage,
     selectRetainedProductRefinementReplayPackage,
     exportRetainedProductRefinementReplayPackage,
     recoverProductRefinementReplayPackage,

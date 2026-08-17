@@ -1,5 +1,8 @@
 import { lafeaLifecycleReadiness } from './lafea-lifecycle.js';
-import { projectLafeaWorkbenchReleaseBinding } from './lafea-workbench-release-binding.js';
+import {
+  governLafeaWorkbenchReleaseBindingForResultCurrentness,
+  projectLafeaWorkbenchReleaseBinding,
+} from './lafea-workbench-release-binding.js';
 
 const DOMAIN_FIRST_ROUTE = 'DOMAIN_FIRST_COMPILED_SOLVER_MODEL';
 const SHELL_COMPILED_ROUTE = 'SHELL_RETAINED_MESH_COMPILED_SOLVER_MODEL';
@@ -18,46 +21,51 @@ export function projectLafeaWorkbenchReadiness(stageId, stage) {
   const domainMeshCurrent = domainFirst
     && custody?.state === 'CURRENT_PASS' && custody?.usableForRun === true;
   const shellMeshCurrent = shellMidsurface && custody?.state === 'CURRENT_PASS';
-  const releaseBinding = projectLafeaWorkbenchReleaseBinding(
+  const rawReleaseBinding = projectLafeaWorkbenchReleaseBinding(
     stage,
     stage.retainedTemplateReleaseRecord,
   );
-  const releaseState = releaseBinding.releaseQualified
-    ? 'RELEASE_QUALIFIED'
-    : 'RELEASE_NOT_QUALIFIED';
-  if (!lifecycle) return freeze({
-    schema: 'lafea-workbench-lifecycle-readiness/v2',
-    stageId,
-    lifecycleInitialized: false,
-    bindingStatus: binding.status,
-    calculationState: stage.execution ? 'CALCULATION_NOT_ACCEPTED_BY_STAGE_CONTRACT' : 'CALCULATION_NOT_RUN',
-    resultState: 'RESULT_NOT_READY',
-    codeState: 'CODE_NOT_READY',
-    releaseState,
-    releaseBinding,
-    releaseBlockingReasons: [...releaseBinding.reasons],
-    sourceCurrent: false,
-    modelCurrent: false,
-    preMeshModelCurrent: false,
-    domainFirstProfileActive: domainFirst,
-    shellMidsurfaceProfileActive: shellMidsurface,
-    domainCurrent: false,
-    geometryCurrent: false,
-    solverModelCurrent: false,
-    meshApplicable: governedMesh,
-    meshGenerated: Boolean(custody?.meshHash),
-    meshQualified: false,
-    resultReady: false,
-    assessmentApplicable: false,
-    assessmentReady: false,
-    convergenceApplicable: false,
-    convergenceReady: false,
-    codeAssessmentApplicable: false,
-    codeReady: false,
-    reportCurrent: false,
-    reportQualified: false,
-    blockingReasons: ['LIFECYCLE_NOT_INITIALIZED'],
-  });
+  if (!lifecycle) {
+    const releaseBinding = governLafeaWorkbenchReleaseBindingForResultCurrentness(
+      rawReleaseBinding, { governedMesh, resultReady: false },
+    );
+    const releaseState = releaseBinding.releaseQualified
+      ? 'RELEASE_QUALIFIED'
+      : 'RELEASE_NOT_QUALIFIED';
+    return freeze({
+      schema: 'lafea-workbench-lifecycle-readiness/v2',
+      stageId,
+      lifecycleInitialized: false,
+      bindingStatus: binding.status,
+      calculationState: stage.execution ? 'CALCULATION_NOT_ACCEPTED_BY_STAGE_CONTRACT' : 'CALCULATION_NOT_RUN',
+      resultState: 'RESULT_NOT_READY',
+      codeState: 'CODE_NOT_READY',
+      releaseState,
+      releaseBinding,
+      releaseBlockingReasons: [...releaseBinding.reasons],
+      sourceCurrent: false,
+      modelCurrent: false,
+      preMeshModelCurrent: false,
+      domainFirstProfileActive: domainFirst,
+      shellMidsurfaceProfileActive: shellMidsurface,
+      domainCurrent: false,
+      geometryCurrent: false,
+      solverModelCurrent: false,
+      meshApplicable: governedMesh,
+      meshGenerated: Boolean(custody?.meshHash),
+      meshQualified: false,
+      resultReady: false,
+      assessmentApplicable: false,
+      assessmentReady: false,
+      convergenceApplicable: false,
+      convergenceReady: false,
+      codeAssessmentApplicable: false,
+      codeReady: false,
+      reportCurrent: false,
+      reportQualified: false,
+      blockingReasons: ['LIFECYCLE_NOT_INITIALIZED'],
+    });
+  }
 
   const base = lafeaLifecycleReadiness(lifecycle);
   const current = binding.status === 'CURRENT';
@@ -107,6 +115,13 @@ export function projectLafeaWorkbenchReadiness(stageId, stage) {
     : stage.execution
       ? 'CALCULATION_NOT_ACCEPTED_BY_STAGE_CONTRACT'
       : 'CALCULATION_NOT_RUN';
+  const releaseBinding = governLafeaWorkbenchReleaseBindingForResultCurrentness(
+    rawReleaseBinding,
+    { governedMesh, resultReady },
+  );
+  const releaseState = releaseBinding.releaseQualified
+    ? 'RELEASE_QUALIFIED'
+    : 'RELEASE_NOT_QUALIFIED';
   const codeReady = !governedMesh && current && base.codeReady;
   const blockingReasons = current
     ? unique([...base.blockingReasons, ...domainExecutionReasons, ...shellExecutionReasons])

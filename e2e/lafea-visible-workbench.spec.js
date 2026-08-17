@@ -112,13 +112,45 @@ test('production LAFEA.1 and LAFEA.2 are first-class analytical stages', async (
 
     await workbench.locator('[data-role="lafea-mock"]').click();
     await expect(workbench.locator('.lafea-workbench__status')).toHaveText('READY');
-    await expect(analytical.locator('[data-guided-target="source"]')).toContainText('Governed stage-specific inputs');
-    const stage = await page.evaluate(
+    const source = analytical.locator('[data-guided-target="source"]');
+    await expect(source).toContainText('Governed stage-specific inputs');
+    if (stageId === 'LAFEA.1') {
+      await expect(source).toContainText('Load force X');
+      await expect(source).toContainText('Load force Y');
+      await expect(source).toContainText('Load force Z');
+      await expect(source).toContainText('Load moment X');
+      await expect(source).toContainText('Load moment Y');
+      await expect(source).toContainText('Load moment Z');
+    }
+
+    const stageBeforeRun = await page.evaluate(
       (id) => globalThis.AnalysisWorkspace.getLafeaWorkbenchState().stages[id],
       stageId,
     );
-    expect(stage.document).not.toBeNull();
-    expect(stage.execution).toBeNull();
+    expect(stageBeforeRun.document).not.toBeNull();
+    expect(stageBeforeRun.execution).toBeNull();
+
+    const run = workbench.locator('[data-role="lafea-run"]');
+    await expect(run).toBeEnabled();
+    await run.click();
+    const highlights = analytical.locator('[data-role="lafea-result-highlights"]');
+    await expect(highlights).toBeVisible();
+    await expect(highlights).toContainText('Engineering result summary');
+    if (stageId === 'LAFEA.1') {
+      await expect(highlights).toContainText('Max |transferred force|');
+      await expect(highlights).toContainText('Max |transferred moment|');
+      await expect(highlights).toContainText('Max |hoop pressure stress|');
+    } else {
+      await expect(highlights).toContainText('Governing nominal von Mises');
+      await expect(highlights.locator('[data-role="lafea-transverse-load-warning"]')).toContainText(
+        'LOCAL TRANSVERSE LOAD NOT RECOVERED',
+      );
+    }
+    const stageAfterRun = await page.evaluate(
+      (id) => globalThis.AnalysisWorkspace.getLafeaWorkbenchState().stages[id],
+      stageId,
+    );
+    expect(stageAfterRun.execution?.status).toBe('QUALIFIED');
   }
 
   const screenshotPath = testInfo.outputPath('lafea-analytical-stages.png');

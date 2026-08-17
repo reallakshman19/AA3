@@ -9,6 +9,9 @@ import {
   bindLafeaShellMeshCustodyToSolverModel,
 } from '../src/workspace/lafea-domain-first-mesh-custody.js';
 import {
+  LAFEA4_PARENT_NORMAL_REQUIRED_ENGINEERING_STEP_IDS,
+} from '../src/workspace/lafea4-parent-normal-activation-record.js';
+import {
   LAFEA4_PARENT_NORMAL_PRODUCTION_GATE_BLOCK_CODE,
 } from '../src/workspace/lafea4-parent-normal-production-gate.js';
 import {
@@ -20,6 +23,10 @@ const repoRoot = path.resolve(scriptDir, '..');
 const definition = readJson(
   'validation/lafea4-refinement/parent-normal-readiness-propagation-v1.json',
 );
+const activationDefinition = readJson(
+  'validation/lafea4-refinement/parent-normal-activation-record-v1.json',
+);
+const plan = readJson('validation/lafea-independent-qualification/plan-v1.json');
 
 assert.equal(definition.stageId, 'LAFEA.4');
 assert.equal(LAFEA4_PARENT_NORMAL_PRODUCTION_ACTIVATION_RECORD, null);
@@ -41,10 +48,7 @@ const baseCustody = Object.freeze({
   advancePolicy: 'ALLOW',
   authorizationPolicy: 'ALLOW',
   runPolicy: 'DENY',
-  blockingReasons: [],
   runBlockingReasons: ['SHELL_RETAINED_MESH_NOT_BOUND_TO_SOLVER_MODEL'],
-  parentNormalProductionGateBlocked: false,
-  parentNormalProductionGateDiagnostic: null,
   staleReasons: [],
   invalidReasons: [],
   absenceReasons: [],
@@ -60,9 +64,10 @@ const baseCustody = Object.freeze({
   solverModelHash: null,
   solverModelBindingHash: null,
 });
+const originalKeys = Object.keys(baseCustody).sort();
 
 // Current/inactive or future active PASS: normal solver binding remains the
-// established CURRENT_PASS shell custody path.
+// established CURRENT_PASS shell custody path and preserves projection shape.
 const normalBinding = Object.freeze({
   state: 'CURRENT_PASS',
   usableForRun: true,
@@ -72,13 +77,12 @@ const normalBinding = Object.freeze({
   solverModelBindingHash: solverBindingHash,
 });
 const allowed = bindLafeaShellMeshCustodyToSolverModel(baseCustody, normalBinding);
+assert.deepEqual(Object.keys(allowed).sort(), originalKeys);
 assert.equal(allowed.state, 'CURRENT_PASS');
 assert.equal(allowed.usableForAdvance, true);
 assert.equal(allowed.usableForAuthorization, true);
 assert.equal(allowed.usableForRun, true);
 assert.equal(allowed.runPolicy, 'ALLOW');
-assert.equal(allowed.parentNormalProductionGateBlocked, false);
-assert.equal(allowed.parentNormalProductionGateDiagnostic, null);
 assert.equal(allowed.meshHash, meshHash);
 assert.equal(allowed.meshProfileHash, profileHash);
 assert.equal(allowed.solverModelHash, solverModelHash);
@@ -94,18 +98,17 @@ const genericFailure = bindLafeaShellMeshCustodyToSolverModel(baseCustody, {
   solverModelHash: null,
   solverModelBindingHash: null,
 });
+assert.deepEqual(Object.keys(genericFailure).sort(), originalKeys);
 assert.equal(genericFailure.state, definition.genericSolverBindingFailure.custodyStateMustRemain);
 assert.equal(genericFailure.usableForAdvance, true);
 assert.equal(genericFailure.usableForAuthorization, true);
 assert.equal(genericFailure.usableForRun, definition.genericSolverBindingFailure.usableForRun);
-assert.equal(genericFailure.parentNormalProductionGateBlocked, false);
-assert.deepEqual(genericFailure.blockingReasons, []);
 assert.deepEqual(genericFailure.runBlockingReasons, [
   'LAFEA4_SHELL_SOLVER_THICKNESS_REGION_MAPPING_REQUIRED',
 ]);
 
-// Future trusted active parent-normal BLOCK: this is qualification of the pure
-// derived-state mapping only. It does not activate the production trust root.
+// Future trusted active parent-normal BLOCK: qualification of the pure derived
+// state mapping only. The product activation trust root remains null.
 const parentNormalBlocked = bindLafeaShellMeshCustodyToSolverModel(baseCustody, {
   state: 'BLOCKED',
   usableForRun: false,
@@ -114,6 +117,7 @@ const parentNormalBlocked = bindLafeaShellMeshCustodyToSolverModel(baseCustody, 
   solverModelHash: null,
   solverModelBindingHash: null,
 });
+assert.deepEqual(Object.keys(parentNormalBlocked).sort(), originalKeys);
 assert.equal(parentNormalBlocked.state, definition.futureTrustedActiveBlock.derivedCustodyState);
 assert.equal(parentNormalBlocked.usableForAdvance, definition.futureTrustedActiveBlock.usableForAdvance);
 assert.equal(
@@ -127,14 +131,6 @@ assert.equal(
   definition.futureTrustedActiveBlock.authorizationPolicy,
 );
 assert.equal(parentNormalBlocked.runPolicy, definition.futureTrustedActiveBlock.runPolicy);
-assert.equal(parentNormalBlocked.parentNormalProductionGateBlocked, true);
-assert.equal(
-  parentNormalBlocked.parentNormalProductionGateDiagnostic,
-  LAFEA4_PARENT_NORMAL_PRODUCTION_GATE_BLOCK_CODE,
-);
-assert.deepEqual(parentNormalBlocked.blockingReasons, [
-  LAFEA4_PARENT_NORMAL_PRODUCTION_GATE_BLOCK_CODE,
-]);
 assert.deepEqual(parentNormalBlocked.runBlockingReasons, [
   LAFEA4_PARENT_NORMAL_PRODUCTION_GATE_BLOCK_CODE,
 ]);
@@ -146,7 +142,7 @@ assert.equal(parentNormalBlocked.solverModelHash, null);
 assert.equal(parentNormalBlocked.solverModelBindingHash, null);
 
 // Source-level propagation audit. Readiness defines shell mesh qualification by
-// CURRENT_PASS custody, so the derived CURRENT_BLOCK maps meshQualified=false.
+// CURRENT_PASS custody, so derived CURRENT_BLOCK necessarily maps meshQualified=false.
 const readinessSource = readText('src/workspace/lafea-workbench-readiness.js');
 assert.match(
   readinessSource,
@@ -155,11 +151,14 @@ assert.match(
 assert.match(readinessSource, /custody\?\.runBlockingReasons/u);
 assert.match(readinessSource, /solverProjection\?\.reasons/u);
 
-// Orchestration must block the discretization, authorization and execution
-// progression whenever custody no longer reports CURRENT_PASS / usableForRun.
+// Orchestration must block discretization/authorization/execution progression
+// whenever custody is no longer CURRENT_PASS / authorized / runnable.
 const orchestrationSource = readText('src/workspace/lafea-workbench-orchestration-projection.js');
 assert.match(orchestrationSource, /if \(custody\.state === 'CURRENT_PASS'\)/u);
-assert.match(orchestrationSource, /if \(adapter\.discretization\.applicable && custody\?\.usableForAuthorization !== true\)/u);
+assert.match(
+  orchestrationSource,
+  /adapter\.discretization\.applicable && custody\?\.usableForAuthorization !== true/u,
+);
 assert.match(orchestrationSource, /custody\?\.runBlockingReasons/u);
 assert.match(orchestrationSource, /custody\?\.usableForRun === true/u);
 assert.match(orchestrationSource, /runnable \? \['RUN_SOLVE'\] : \[\]/u);
@@ -169,9 +168,28 @@ assert.match(custodySource, /LAFEA4_PARENT_NORMAL_PRODUCTION_GATE_BLOCK_CODE/u);
 assert.match(custodySource, /state: 'CURRENT_BLOCK'/u);
 assert.match(custodySource, /usableForAdvance: false/u);
 assert.match(custodySource, /usableForAuthorization: false/u);
-assert.match(custodySource, /parentNormalProductionGateBlocked: true/u);
+assert.ok(!custodySource.includes('parentNormalProductionGateBlocked'));
+assert.ok(!custodySource.includes('parentNormalProductionGateDiagnostic'));
+assert.ok(!custodySource.includes('blockingReasons:'));
 
-// TECH-12G must not activate authority or touch numerical mechanics.
+// TECH-12G is a mandatory promotion prerequisite, but it does not activate
+// production authority by itself.
+const requiredId = 'TECH12G_ACTIVE_GATE_READINESS_PROPAGATION';
+assert.ok(LAFEA4_PARENT_NORMAL_REQUIRED_ENGINEERING_STEP_IDS.includes(requiredId));
+assert.ok(activationDefinition.requiredEngineeringStepIds.includes(requiredId));
+assert.equal(activationDefinition.authorizationRequirements.tech12gReadinessPropagationMustPass, true);
+const planRows = plan.steps.filter((row) => row.id === requiredId);
+assert.equal(planRows.length, 1);
+assert.equal(planRows[0].classification, 'ENGINEERING');
+assert.equal(planRows[0].required, true);
+assert.deepEqual(
+  planRows[0].args,
+  ['scripts/lafea-tech12g-readiness-diagnostic-propagation-check.mjs'],
+);
+const planIds = plan.steps.map((row) => row.id);
+assert.ok(planIds.indexOf('TECH12F_TRUST_ROOT_PROMOTION_PROTOCOL') < planIds.indexOf(requiredId));
+assert.ok(planIds.indexOf(requiredId) < planIds.indexOf('TECH7_GRADED_REFINEMENT_EXECUTOR'));
+
 const activationSource = readText('src/workspace/lafea4-parent-normal-production-activation.js');
 assert.match(
   activationSource,
@@ -182,6 +200,7 @@ console.log(JSON.stringify({
   check: 'lafea-tech12g-readiness-diagnostic-propagation',
   status: 'PASS',
   currentTrustRoot: 'NULL',
+  custodySchemaShapePreserved: true,
   normalBinding: {
     custodyState: allowed.state,
     usableForRun: allowed.usableForRun,
@@ -197,7 +216,7 @@ console.log(JSON.stringify({
     usableForAdvance: parentNormalBlocked.usableForAdvance,
     usableForAuthorization: parentNormalBlocked.usableForAuthorization,
     usableForRun: parentNormalBlocked.usableForRun,
-    diagnostic: parentNormalBlocked.parentNormalProductionGateDiagnostic,
+    diagnostic: parentNormalBlocked.runBlockingReasons[0],
   },
   productionBindingAuthorized: false,
   releaseQualified: false,

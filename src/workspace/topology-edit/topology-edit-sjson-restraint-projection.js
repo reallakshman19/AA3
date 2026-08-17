@@ -87,6 +87,12 @@ function buildTopoValidatorSupportAnchors({ canonicalTopology, dataset, vertical
       `SJSON restraint projection crosswalk mismatch: ${rawSupportRecords.length} dataset supports versus ${canonicalTopology.supports.length} canonical supports.`,
     );
   }
+  // Capture per-source semantic disposition before any physical-site grouping.
+  // Grouping may combine restraint and non-restraint members at one position,
+  // but it must never rewrite the meaning of the individual source record.
+  const nonRestraintSupportIds = new Set(
+    rawSupportRecords.filter((record) => record.nonRestraint).map((record) => record.support.id),
+  );
 
   const hierarchy = groupSupportsHierarchy(records);
   const positioned = groupSupportsByPosition(hierarchy.records);
@@ -115,9 +121,6 @@ function buildTopoValidatorSupportAnchors({ canonicalTopology, dataset, vertical
     });
   }).sort((left, right) => compareCodeUnits(left.anchorKey, right.anchorKey));
 
-  const nonRestraintSupportIds = new Set(
-    rawSupportRecords.filter((record) => record.nonRestraint).map((record) => record.support.id),
-  );
   const decisions = canonicalTopology.supports.map((support) => {
     const supportId = stringValue(support.id);
     const anchorSupportId = supportIdToAnchor.get(supportId) || null;
@@ -142,7 +145,7 @@ function buildTopoValidatorSupportAnchors({ canonicalTopology, dataset, vertical
     rawSupportRecordCount: rawSupportRecords.length,
     projectedSourceSupportCount: rawSupportRecords.filter((record) => record.projectedSupport).length,
     deferredSourceSupportCount: rawSupportRecords.filter((record) => !record.projectedSupport).length,
-    nonRestraintSourceSupportCount: rawSupportRecords.filter((record) => record.nonRestraint).length,
+    nonRestraintSourceSupportCount: nonRestraintSupportIds.size,
     hierarchyMergeCount: hierarchy.mergeCount,
     positionMergeCount: positioned.mergeCount,
   });
@@ -247,7 +250,6 @@ function mergeRecord(root, record, mode) {
   root.restraints.push(...record.restraints);
   root.members.push(...record.members);
   root.projectedSupport = root.projectedSupport || record.projectedSupport;
-  root.nonRestraint = root.nonRestraint && record.nonRestraint;
   root.hierarchyMergeCount += record.hierarchyMergeCount + (mode === 'HIERARCHY' ? 1 : 0);
   root.positionMergeCount += record.positionMergeCount + (mode === 'POSITION' ? 1 : 0);
 }

@@ -1,5 +1,6 @@
 #!/usr/bin/env node
 import assert from 'node:assert/strict';
+import fs from 'node:fs';
 
 import { canonicalProfile, PROFILE_KINDS } from '../src/core/lafea-profile-contract/index.js';
 import { createLafeaMockDocument } from '../src/workspace/advanced-mock-data.js';
@@ -47,7 +48,6 @@ const profile = canonicalProfile(PROFILE_KINDS.MESH, {
   },
 });
 
-// Production path: real orchestrator, real null trust root, still dormant.
 assert.equal(LAFEA4_SHELL_PRODUCT_REFINEMENT_PROMOTION_RECORD, null);
 const workbench = createLafeaWorkbenchOrchestratorStore({
   initialStage: stageId,
@@ -90,8 +90,15 @@ assert.equal(activeUi.productRetentionAuthorized, true);
 assert.equal(activeUi.uiBindingAuthorized, true);
 assert.equal(activeUi.releaseQualified, false);
 
-// Qualification seam: exact future-active action using actual mesh state and
-// the synthetic promotion record, without modifying the production trust root.
+const generationPanelText = fs.readFileSync(
+  new URL('../src/workspace/lafea-discretization-generation-panel.js', import.meta.url),
+  'utf8',
+);
+assert.match(generationPanelText, /const productActive = productScoped/u);
+assert.match(generationPanelText, /productActive \? model\.refinement\.allowedTargetTypes/u);
+assert.match(generationPanelText, /if \(productActive\) targetType\.input\.disabled = true/u);
+assert.match(generationPanelText, /submit\.disabled = !model\.actions\.canRefineMesh/u);
+
 const successHarness = createActionHarness({ stage, parent, promotionRecord: syntheticPromotion });
 const activeResult = successHarness.actions.refineAnalysisMesh(request, stageId);
 assert.ok(activeResult);
@@ -105,8 +112,6 @@ assert.equal(successHarness.meshGeneration.selectEvidence(stageId)?.artifactHash
   activeResult.evidence.artifactHash);
 assert.equal(successHarness.diagnostic(), null);
 
-// Atomic rollback proof: force only child recovery to reject. The action must
-// publish failure only after the exact parent has been restored internally.
 const rollbackHarness = createActionHarness({
   stage,
   parent,
@@ -134,6 +139,7 @@ console.log(JSON.stringify({
     childArtifactHash: activeResult.evidence.artifactHash,
     childMeshHash: activeResult.evidence.meshHash,
     parentReplaced: activeResult.evidence.artifactHash !== parent.artifactHash,
+    rendererBoundToActiveProjection: true,
   },
   forcedFailureRollback: {
     parentArtifactHashRestored: rollbackHarness.meshGeneration.selectEvidence(stageId)?.artifactHash,

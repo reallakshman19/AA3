@@ -239,6 +239,8 @@ export function renderLoadCalcTopologyPane(
   const blockingFindings = topologyCheck?.blockingFindings || [];
   const reviewFindings = topologyCheck?.reviewFindings || [];
   const findings = topologyCheck?.findings || [];
+  const geometryFindings = findings.filter((finding) => !isSupportSemanticFinding(finding));
+  const semanticFindings = findings.filter(isSupportSemanticFinding);
   const topologyReady = supportSiteModel?.status === 'READY' && routePartitionModel?.status === 'READY';
   const requiresFix = !topologyReady || modelBlockers.length > 0 || blockingFindings.length > 0;
   const reviewRequired = !requiresFix
@@ -264,8 +266,9 @@ export function renderLoadCalcTopologyPane(
     <div class="load-calc-error-check__summary">
       ${diagnosticCard('Support locations', supportSiteModel?.status || 'NOT_AVAILABLE', supportSiteModel?.summary?.physicalLocationCount)}
       ${diagnosticCard('Routes', routePartitionModel?.status || 'NOT_AVAILABLE', routePartitionModel?.summary?.routeCount)}
-      ${diagnosticCard('Canonical findings', status, topologyCheck?.issueCount)}
-      ${diagnosticCard('Certified auto-fixes', exactFixCount ? 'REVIEW_REQUIRED' : 'READY', exactFixCount)}
+      ${diagnosticCard('Geometry findings', findingSetStatus(geometryFindings), geometryFindings.length)}
+      ${diagnosticCard('Support semantic reviews', findingSetStatus(semanticFindings), semanticFindings.length)}
+      ${diagnosticCard('Certified gap auto-fixes', exactFixCount ? 'REVIEW_REQUIRED' : 'READY', exactFixCount)}
       ${diagnosticCard('Skipped findings', topologyCheck?.skippedIssueCount ? 'REVIEW_REQUIRED' : 'READY', topologyCheck?.skippedIssueCount || 0)}
     </div>
     ${modelBlockerMarkup(modelBlockers)}
@@ -281,6 +284,13 @@ function diagnosticCard(label, status, value) {
       ? 'review'
       : 'blocked';
   return `<article data-status="${presentationStatus}"><span>${escapeHtml(label)}</span><strong>${escapeHtml(Number.isInteger(value) ? value : status)}</strong><small>${escapeHtml(status)}</small></article>`;
+}
+
+function findingSetStatus(findings) {
+  if (findings.some((finding) => finding.disposition === 'BLOCK' && finding.reviewDisposition !== 'SKIPPED')) {
+    return 'BLOCKED';
+  }
+  return findings.length ? 'REVIEW_REQUIRED' : 'READY';
 }
 
 function loadModelTopologyBlockers(supportSiteModel, routePartitionModel) {
@@ -305,8 +315,8 @@ function topologyAutofixPolicyMarkup(gapToleranceMm, exactFixCount, policyFeedba
   const autoFixTitle = exactFixCount > 0
     ? `Prepare ${exactFixCount} certified gap fix candidate(s) in 3D Edit.`
     : 'No certified source-backed endpoint gap is available at the active limit.';
-  return `<section class="load-calc-topology-policy" aria-label="Automatic topology fix policy">
-    <div><strong>Automatic gap fix</strong><span>Set the limit first, then prepare an eligible certified 3D draft.</span></div>
+  return `<section class="load-calc-topology-policy" aria-label="Automatic topology fix policy" data-topology-review-section="geometry-autofix">
+    <div><strong>Automatic gap fix</strong><span>Geometry only. Set the limit first, then prepare an eligible certified 3D draft.</span></div>
     <label>Fix gaps strictly below
       <input type="number" min="0.1" max="${TOPOLOGY_EDIT_MAXIMUM_AUTOFIX_GAP_MM}" step="0.1" value="${escapeHtml(gapToleranceMm)}" data-load-calc-topology-gap-mm aria-label="Automatic gap fix tolerance in millimetres">
       mm
@@ -315,22 +325,49 @@ function topologyAutofixPolicyMarkup(gapToleranceMm, exactFixCount, policyFeedba
     <button type="button" class="button button--primary" data-load-calc-topology-autofix
       ${exactFixCount > 0 ? '' : 'disabled'} title="${escapeHtml(autoFixTitle)}">Prepare auto-fix (${escapeHtml(exactFixCount)})</button>
     <output class="load-calc-topology-policy__status" data-load-calc-topology-policy-status aria-live="polite">${escapeHtml(policyFeedback || candidateMessage)}</output>
-    <small>Maximum setting: ${TOPOLOGY_EDIT_MAXIMUM_AUTOFIX_GAP_MM} mm. Gaps equal to the limit are excluded. Explicit Commit draft remains required.</small>
+    <small>Maximum setting: ${TOPOLOGY_EDIT_MAXIMUM_AUTOFIX_GAP_MM} mm. Gaps equal to the limit are excluded. Explicit Commit draft remains required. Support-semantic reviews are never made auto-fixable by changing this limit.</small>
   </section>`;
 }
 
 function topologyFindingsMarkup(findings, topologyCheck) {
   if (!findings.length) return '';
+  const geometryFindings = findings.filter((finding) => !isSupportSemanticFinding(finding));
+  const semanticFindings = findings.filter(isSupportSemanticFinding);
+  return `<div class="load-calc-topology-review-sections">
+    ${topologyFindingSectionMarkup({
+      title: 'Geometry & gap findings',
+      description: 'Geometric findings are reviewed here. Only certified source-backed positive SNAP_GAP findings below the active limit can enter AutoFix.',
+      findings: geometryFindings,
+      topologyCheck,
+      sectionId: 'geometry',
+    })}
+    ${topologyFindingSectionMarkup({
+      title: 'Support semantics — engineering review',
+      description: 'These are source/classification questions. Gap tolerance and AutoFix do not apply to this section; resolve them only from source or approved master evidence.',
+      findings: semanticFindings,
+      topologyCheck,
+      sectionId: 'support-semantics',
+    })}
+    <button type="button" class="button" data-load-calc-topology-review-download>Download review record</button>
+  </div>`;
+}
+
+function topologyFindingSectionMarkup({ title, description, findings, topologyCheck, sectionId }) {
+  if (!findings.length) return '';
   const exactFixIds = new Set(topologyCheck?.autoFix?.exactGapIssueIds || []);
   const groups = groupTopologyFindings(findings);
-  return `<section class="load-calc-error-check__group"><h3>Canonical topology findings</h3>
-    <p>${findings.length} findings grouped into ${groups.length} similar type(s). Expand a group to review exact source scope and dispositions.</p>
+  return `<section class="load-calc-error-check__group" data-topology-review-section="${escapeHtml(sectionId)}"><h3>${escapeHtml(title)}</h3>
+    <p>${escapeHtml(description)} ${findings.length} finding(s) grouped into ${groups.length} similar type(s).</p>
     <div class="load-calc-topology-groups">${groups.map((group) => topologyFindingGroupMarkup(
       group,
       exactFixIds,
     )).join('')}</div>
-    <button type="button" class="button" data-load-calc-topology-review-download>Download review record</button>
   </section>`;
+}
+
+function isSupportSemanticFinding(finding) {
+  return finding?.reviewCategory === 'SUPPORT_SEMANTICS'
+    || finding?.kind === 'UNKNOWN_RESTRAINT_FAMILY';
 }
 
 function groupTopologyFindings(findings) {
@@ -374,8 +411,11 @@ function topologyFindingRowMarkup(finding, exactFixAvailable) {
   const disposition = finding.reviewDisposition === 'SKIPPED'
     ? `SKIPPED · ${finding.skipReason} · receipt ${finding.skipReceiptId}`
     : `${finding.disposition} · ${fix}`;
+  const sourceEvidence = finding.sourceLabel
+    ? `<small class="load-calc-topology-source-label">Source evidence: ${escapeHtml(finding.sourceLabel)}</small>`
+    : '';
   return `<li data-topology-finding-id="${escapeHtml(finding.id)}">
-    <span><strong>${escapeHtml(scope)}</strong>${escapeHtml(finding.message)}<small>${escapeHtml(disposition)}</small></span>
+    <span><strong>${escapeHtml(scope)}</strong>${sourceEvidence}${escapeHtml(finding.message)}<small>${escapeHtml(disposition)}</small></span>
     ${topologyFindingActionMarkup(finding, exactFixAvailable)}
   </li>`;
 }
@@ -437,7 +477,7 @@ function topologyDispositionMarkup(status, topologyCheck) {
     const gapToleranceMm = topologyCheck?.autoFix?.exactToleranceMm
       || TOPOLOGY_EDIT_DEFAULT_AUTOFIX_GAP_MM;
     const findingDetail = kindSummary ? ` (${escapeHtml(kindSummary)})` : '';
-    return `<p class="load-calc-error-check__review">Review required: ${reviewCount} unresolved topology finding(s)${findingDetail}; ${topologyCheck?.skippedIssueCount || 0} recorded skip(s). Findings outside certified gap repair require source or approved-master evidence. TopoFix only prepares certified positive SNAP_GAP merges strictly below ${escapeHtml(gapToleranceMm)} mm and never joins separate routes by inference.</p>`;
+    return `<p class="load-calc-error-check__review">Review required: ${reviewCount} unresolved topology finding(s)${findingDetail}; ${topologyCheck?.skippedIssueCount || 0} recorded skip(s). Geometry findings remain governed by source-backed TopoFix policy. Support-semantic reviews require source or approved-master evidence and are never made repairable by changing the ${escapeHtml(gapToleranceMm)} mm gap limit. TopoFix only prepares certified positive SNAP_GAP merges strictly below that limit and never joins separate routes by inference.</p>`;
   }
   return '<p class="load-calc-error-check__passed">Topology check passed. Continue to the next step.</p>';
 }
@@ -537,7 +577,7 @@ function force(value, acceptedCurrent) {
 }
 function integer(value) { return Number.isInteger(value) ? String(value) : '—'; }
 function escapeHtml(value) {
-  return String(value ?? '').replace(/[&<>"]/g, (character) => ({
-    '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;',
+  return String(value ?? '').replace(/[&<>\"]/g, (character) => ({
+    '&': '&amp;', '<': '&lt;', '>': '&gt;', '\"': '&quot;',
   })[character]);
 }

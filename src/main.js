@@ -8,7 +8,10 @@ import './workspace/enrichment/first-cut-workbench.css';
 import './workspace/linear-piping-results-workbench.css';
 import './workspace/lfea-preflight-phase1.css';
 import './workspace/empirical-v3-safety-workbench.css';
+import './workspace/lfea-pipeline-shell.css';
 import { bootstrapAnalysisWorkspace } from './workspace/bootstrap.js';
+import { LfeaPipelineShellController } from './workspace/lfea-pipeline-shell-controller.js';
+import { mountLfeaGlobalSettingsPopover } from './workspace/lfea-global-settings-popover.js';
 import { WORKSPACE_ANALYSIS_TARGET_ID } from './workspace/analysis-context.js';
 import { authorizedEnrichmentConsumerController } from './workspace/enrichment/authorized-enrichment-runtime.js';
 import { createAuthorizedEnrichmentWorkspaceApi } from './workspace/enrichment/authorized-enrichment-workspace-api.js';
@@ -45,8 +48,25 @@ const authorizedEnrichmentApi = createAuthorizedEnrichmentWorkspaceApi({
   onEmpiricalChanged(execution) { EventBus.publish(ENGINEERING_MODEL_EVENTS.CHANGED, { reason: 'calculated', distribution: execution.distribution, execution }); },
   onEmpiricalFailed(error) { EventBus.publish(ENGINEERING_MODEL_EVENTS.FAILED, { message: error instanceof Error ? error.message : String(error), code: error?.code || 'EMPIRICAL_RUNTIME_EXECUTION_FAILED' }); },
 });
+const lfeaApplicationView = applicationRoot.querySelector('[data-application-view="LFEA"]');
+const linearPipingConsumerRoot = applicationRoot.querySelector('[data-role="linear-piping-consumer-root"]');
+const lfeaPipelineShellRoot = applicationRoot.ownerDocument.createElement('div');
+lfeaPipelineShellRoot.dataset.role = 'lfea-pipeline-shell-root';
+lfeaApplicationView.insertBefore(lfeaPipelineShellRoot, linearPipingConsumerRoot);
+const lfeaPipelineShell = new LfeaPipelineShellController(lfeaPipelineShellRoot).init();
+lfeaPipelineShell.getSourceHost().append(linearPipingConsumerRoot);
 const linearPipingInputXmlSource = mountLinearPipingInputXmlSourceWorkflow(applicationRoot, { documentRef: applicationRoot.ownerDocument });
-const linearPipingResults = mountLinearPipingResultsWorkbench(applicationRoot, { documentRef: applicationRoot.ownerDocument, urlApi: applicationRoot.ownerDocument.defaultView?.URL });
+// Both source and results panels historically mounted into the same
+// `linear-piping-consumer-root` container (they only ever appended sibling
+// sections, never split by concern). This shim routes the results panel
+// into the shell's own RESULTS host instead, without changing that 700+
+// line controller's mount-target resolution.
+const linearPipingResultsMountRoot = { querySelector: () => lfeaPipelineShell.getResultsHost() };
+const linearPipingResults = mountLinearPipingResultsWorkbench(linearPipingResultsMountRoot, { documentRef: applicationRoot.ownerDocument, urlApi: applicationRoot.ownerDocument.defaultView?.URL });
+const globalSettingsPopover = mountLfeaGlobalSettingsPopover(
+  applicationRoot.querySelector('.application-navigation-shell'),
+  { getProfile: () => coreWorkspace.getEngineeringSettingsProfile() },
+);
 let empiricalV3ObservedDatasetBasis = null;
 const empiricalV3Safety = mountEmpiricalV3SafetyWorkbench(applicationRoot, {
   documentRef: applicationRoot.ownerDocument,
@@ -142,7 +162,7 @@ const workspace = Object.freeze({
   },
   createEmpiricalV3AuditExportRecord() { return empiricalV3Safety.createAuditExport(); },
   getPreflightReviewModel() { return preflightUi.getProjection(); },
-  destroy() { preflightSubscriptions.forEach((unsubscribe) => unsubscribe()); empiricalV3SourceSubscriptions.forEach((unsubscribe) => unsubscribe()); clearEmpiricalV3GovernedPreparedExecution(); empiricalV3Safety.destroy(); preflightUi.destroy(); linearPipingResults.destroy(); linearPipingInputXmlSource.destroy(); coreWorkspace.destroy(); },
+  destroy() { preflightSubscriptions.forEach((unsubscribe) => unsubscribe()); empiricalV3SourceSubscriptions.forEach((unsubscribe) => unsubscribe()); clearEmpiricalV3GovernedPreparedExecution(); empiricalV3Safety.destroy(); preflightUi.destroy(); globalSettingsPopover.destroy(); linearPipingResults.destroy(); linearPipingInputXmlSource.destroy(); lfeaPipelineShell.destroy(); coreWorkspace.destroy(); },
 });
 
 globalThis.AnalysisWorkspace = workspace;

@@ -32,6 +32,14 @@ import { checkCanonicalTopology } from './topology-edit-checker.js';
 
 export { TOPOLOGY_EDIT_CHECK_SNAPSHOT_SCHEMA };
 
+const RESTRAINT_FAMILY_FIELDS = Object.freeze([
+  'SUPPORT_KIND',
+  'SUPPORT_MAPPER_KIND',
+  'SUPPORT_TYPE',
+  'MDSSUPPTYPE',
+  'CMPSUPTYPE',
+]);
+
 let cachedBasisKey = '';
 let cachedSnapshot = null;
 
@@ -164,17 +172,57 @@ export function invalidateTopologyCheckSnapshot() {
 
 function issueRecord(issue, dataset, canonicalTopology) {
   const sourceScope = issueSourceScope(issue, dataset, canonicalTopology);
+  const presentation = issuePresentation(issue, dataset, canonicalTopology);
   return {
     id: issue.id,
     kind: issue.kind,
     severity: issue.severity,
     disposition: issue.severity === 'HIGH' ? 'BLOCK' : 'REVIEW',
-    message: issue.message,
+    message: presentation.message,
+    reviewCategory: presentation.reviewCategory,
+    userAction: presentation.userAction,
+    sourceLabel: presentation.sourceLabel,
     nodeIds: [...(issue.nodeIds || [])],
     edgeIds: [...(issue.edgeIds || (issue.edgeId ? [issue.edgeId] : []))],
     suggestedAutofix: issue.suggestedAutofix,
     distanceMm: issue.distanceMm,
     sourceScope,
+  };
+}
+
+function issuePresentation(issue, dataset, canonicalTopology) {
+  if (issue.kind !== 'UNKNOWN_RESTRAINT_FAMILY') {
+    return {
+      message: issue.message,
+      reviewCategory: issue.kind === 'SNAP_GAP' ? 'GEOMETRY' : 'TOPOLOGY',
+      userAction: issue.kind === 'SNAP_GAP' ? 'REVIEW_CERTIFIED_GAP_FIX' : 'ENGINEERING_REVIEW',
+      sourceLabel: null,
+    };
+  }
+
+  const support = (canonicalTopology.supports || [])
+    .find((candidate) => candidate.id === issue.supportId);
+  const entity = (dataset.entities || [])
+    .find((candidate) => candidate.entityId === support?.entityId);
+  const attributes = entity?.properties?.attributes || {};
+  const sourceLabel = firstText([
+    attributes.SUPPORT_TAG,
+    attributes.CMPSTRESSN,
+    attributes.NAME,
+    entity?.name,
+    support?.entityId,
+  ]) || 'source support';
+  const evidence = RESTRAINT_FAMILY_FIELDS
+    .flatMap((field) => meaningfulText(attributes[field]) ? [`${field}=${stringValue(attributes[field])}`] : []);
+  const evidenceSummary = evidence.length
+    ? ` Source family evidence: ${evidence.join(', ')}.`
+    : ` Checked ${RESTRAINT_FAMILY_FIELDS.join(', ')}; none contains an approved family.`;
+  return {
+    message: `Support ${sourceLabel} needs a source-backed restraint family.${evidenceSummary} `
+      + 'Classify it from source or approved master data. This is a support-semantic review, not a geometric gap.',
+    reviewCategory: 'SUPPORT_SEMANTICS',
+    userAction: 'CLASSIFY_RESTRAINT_FAMILY',
+    sourceLabel,
   };
 }
 
@@ -258,6 +306,9 @@ function systemFinding(kind, message) {
     severity: 'HIGH',
     disposition: 'BLOCK',
     message,
+    reviewCategory: 'SYSTEM',
+    userAction: 'RESOLVE_SYSTEM_BLOCKER',
+    sourceLabel: null,
     nodeIds: [],
     edgeIds: [],
     suggestedAutofix: null,
@@ -293,6 +344,15 @@ function countBy(rows, key) {
 
 function uniqueSorted(values) {
   return [...new Set(values.map(stringValue).filter(Boolean))].sort((left, right) => left.localeCompare(right));
+}
+
+function meaningfulText(value) {
+  const text = stringValue(value);
+  return text && !['0', 'NONE', 'UNSET', 'FALSE', 'N/A', 'NA'].includes(text.toUpperCase());
+}
+
+function firstText(values) {
+  return values.map(stringValue).find(Boolean) || '';
 }
 
 function assertEvaluationInput(input) {

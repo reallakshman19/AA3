@@ -80,6 +80,7 @@ export function renderLafeaWorkbenchContent(root, state, stage, options) {
 
   const viewportCard = card(root, 'Engineering viewport');
   viewportCard.section.dataset.guidedTarget = 'viewport';
+  viewportCard.section.classList.add('lafea-cae-workspace__viewport-card');
   const reusedViewport = validReusableViewport(options.reusedViewport);
   const preview = reusedViewport?.element ?? element(root, 'div', 'lafea-workbench__svg');
   const retainedMeshEvidence = stage.domainFirstProfileActive === true
@@ -125,6 +126,7 @@ export function renderLafeaWorkbenchContent(root, state, stage, options) {
 
   const discretizationCard = card(root, 'Meshing and discretization');
   discretizationCard.section.dataset.guidedTarget = 'discretization';
+  discretizationCard.section.classList.add('lafea-cae-workspace__inspector-card');
   const discretizationHost = element(root, 'div');
   renderLafeaDiscretizationPanel(discretizationHost, discretization, {
     onImportEvidence: options.handlers.onImportMeshEvidence,
@@ -148,6 +150,7 @@ export function renderLafeaWorkbenchContent(root, state, stage, options) {
 
   const preflightCard = card(root, 'Solve readiness');
   preflightCard.section.dataset.guidedTarget = 'findings';
+  preflightCard.section.classList.add('lafea-cae-workspace__inspector-card');
   preflightCard.body.append(workflowSummary(root, workflow, [
     'MODEL_DIAGNOSTICS', 'AUTHORIZATION', 'RUN',
   ]));
@@ -176,19 +179,26 @@ export function renderLafeaWorkbenchContent(root, state, stage, options) {
   const ncCard = card(root, 'NC governance — evidence placeholders');
   ncCard.body.append(renderLafeaNcPlaceholderPanel(ncCard.body));
 
-  main.append(
-    nextActionBanner,
-    engineeringOverview,
+  const caeWorkspace = element(root, 'section', 'lafea-cae-workspace');
+  caeWorkspace.dataset.role = 'lafea-cae-workspace';
+  const viewportPane = element(root, 'div', 'lafea-cae-workspace__viewport');
+  const inspectorPane = element(root, 'aside', 'lafea-cae-workspace__inspector');
+  viewportPane.append(viewportCard.section);
+  inspectorPane.append(discretizationCard.section, preflightCard.section);
+  caeWorkspace.append(viewportPane, inspectorPane);
+
+  const context = element(root, 'section', 'lafea-cae-workspace__context');
+  context.dataset.role = 'lafea-cae-workspace-context';
+  context.append(
     sourceCard.section,
     profileCard.section,
-    viewportCard.section,
-    discretizationCard.section,
     numericalCard.section,
-    preflightCard.section,
     evidenceCard.section,
     lifecycleCard.section,
     ncCard.section,
   );
+
+  main.append(nextActionBanner, engineeringOverview, caeWorkspace, context);
 
   if (options.benchmarkHost) {
     const benchmarkCard = card(root, 'Verification output');
@@ -202,7 +212,7 @@ export function renderLafeaWorkbenchContent(root, state, stage, options) {
       ),
       options.benchmarkHost,
     );
-    main.append(benchmarkCard.section);
+    context.append(benchmarkCard.section);
   }
 
   return Object.freeze({

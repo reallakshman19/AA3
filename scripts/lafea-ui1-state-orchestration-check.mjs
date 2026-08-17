@@ -70,7 +70,7 @@ assert.match(generationPanel, /qualifiedQualityPolicy/u);
 assert.match(generationPanel, /LAFEA4_SHELL_MESH_QUALITY_POLICY_V1|stage-qualified/u);
 assert.doesNotMatch(
   generationPanel,
-  /handlers\.onBindMeshProfile\?\.\(profileEnvelope\);\s*handlers\.onGenerateMesh/usu,
+  /handlers\.onBindMeshProfile\?\.\(profileEnvelope\);\s*handlers\.onGenerateMesh/su,
   'Binding a profile must never auto-generate a mesh from the presentation layer.',
 );
 assert.doesNotMatch(workbenchContent, /QUICK_MESH_TARGET_LENGTH|quickMeshProfile|preferredQuickMeshFamily/u);

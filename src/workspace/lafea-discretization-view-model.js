@@ -251,7 +251,8 @@ function modeOptions(
 }
 
 function refinementUnavailableReason(capabilities, retainedElementFamily, productRefinement) {
-  if (productRefinement?.applicable === true && retainedElementFamily === 'CST_DKT_TRI3_THIN_SHELL_V1') {
+  if (productRefinement?.scopeEligible === true
+    && retainedElementFamily === 'CST_DKT_TRI3_THIN_SHELL_V1') {
     return productRefinement.reason;
   }
   if (retainedElementFamily === 'CST_DKT_TRI3_THIN_SHELL_V1') {

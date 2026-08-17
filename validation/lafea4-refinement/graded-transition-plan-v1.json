@@ -1,0 +1,53 @@
+{
+  "schema": "lafea4-graded-transition-qualification-definition/v1",
+  "qualificationId": "LAFEA4-GRADED-TRANSITION-PLAN-001",
+  "stageId": "LAFEA.4",
+  "scope": "QUALIFICATION_ONLY_UV_SIZE_FIELD_AND_BOUNDARY_SUBDIVISION_PLAN",
+  "globalTargetElementLengthMm": 15,
+  "adjacentSizeRatioMax": 1.5,
+  "minimumElementsPerTransitionBand": 2,
+  "cases": [
+    {
+      "caseId": "HALF_GLOBAL",
+      "localTargetElementLengthMm": 7.5,
+      "expectedTransitionLevelCount": 2,
+      "expectedLevelsMm": [7.5, 11.25, 15],
+      "expectedLevelRatios": [1.5, 1.3333333333333333],
+      "expectedBandWidthsMm": [15, 22.5],
+      "expectedInfluenceRadiusMm": 37.5
+    },
+    {
+      "caseId": "QUARTER_GLOBAL",
+      "localTargetElementLengthMm": 3.75,
+      "expectedTransitionLevelCount": 4,
+      "expectedLevelsMm": [3.75, 5.625, 8.4375, 12.65625, 15],
+      "expectedLevelRatios": [1.5, 1.5, 1.5, 1.1851851851851851],
+      "expectedBandWidthsMm": [7.5, 11.25, 16.875, 25.3125],
+      "expectedInfluenceRadiusMm": 60.9375,
+      "boundaryChecks": {
+        "nearEdgeLengthMm": 30,
+        "nearEdgeMidpointDistanceMm": 0,
+        "expectedNearSegmentCount": 8,
+        "expectedNearSegmentLengthMm": 3.75,
+        "farEdgeLengthMm": 30,
+        "farEdgeMidpointDistanceMm": 100,
+        "expectedFarSegmentCount": 2,
+        "expectedFarSegmentLengthMm": 15
+      }
+    }
+  ],
+  "acceptance": {
+    "maximumPlannedGrowthRatio": 1.5,
+    "boundarySegmentLengthMustNotExceedRequestedLocalSize": true,
+    "parentBoundaryIdentityMustBePreserved": true,
+    "deterministicSemanticHashRequired": true
+  },
+  "prohibitions": [
+    "NO_MESH_EXECUTION_AUTHORITY",
+    "NO_PRODUCTION_BINDING",
+    "NO_ASSUMPTION_THAT_PLANNED_RATIO_PROVES_FINAL_MESH_RATIO",
+    "FINAL_CHILD_MUST_STILL_PASS_MEASURED_ADJACENT_SIZE_GATE"
+  ],
+  "benchmarkQualified": false,
+  "releaseQualified": false
+}

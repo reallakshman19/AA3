@@ -62,3 +62,18 @@ export const LAFEA5_QUALIFIED_MESH_QUALITY_POLICY = Object.freeze({
   formulation: 'CST_DKT_TRI3_THIN_SHELL_V1',
   fields: LAFEA_SHELL_MESH_QUALITY_FIELDS,
 });
+
+const QUALIFIED_MESH_QUALITY_POLICY_BY_STAGE = Object.freeze({
+  'LAFEA.3': LAFEA3_QUALIFIED_MESH_QUALITY_POLICY,
+  'LAFEA.4': LAFEA4_QUALIFIED_MESH_QUALITY_POLICY,
+  'LAFEA.5': LAFEA5_QUALIFIED_MESH_QUALITY_POLICY,
+});
+
+/**
+ * Return the source-controlled mesh-quality authority for a mesh-bearing stage.
+ * Analytical/placeholder stages deliberately return null rather than inheriting
+ * a generic browser default.
+ */
+export function qualifiedMeshQualityPolicyForStage(stageId) {
+  return QUALIFIED_MESH_QUALITY_POLICY_BY_STAGE[stageId] ?? null;
+}

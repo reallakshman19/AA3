@@ -1,0 +1,41 @@
+{
+  "schema": "lafea4-curvature-qualification-definition/v1",
+  "qualificationId": "LAFEA4-CURVATURE-MEMBRANE-ANGLE-001",
+  "stageId": "LAFEA.4",
+  "formulation": "CST_DKT_TRI3_THIN_SHELL_V1",
+  "scope": "SMOOTH_CYLINDRICAL_MEMBRANE_GEOMETRIC_DISCRETIZATION_ONLY",
+  "oracle": {
+    "type": "ANALYTICAL_PRESCRIBED_HOOP_STRAIN",
+    "radiusMm": 100,
+    "spanDegrees": 60,
+    "lengthMm": 50,
+    "thicknessMm": 1.5,
+    "elasticModulusMpa": 200000,
+    "poissonRatio": 0.3,
+    "prescribedHoopStrain": 0.001,
+    "expectedHoopStressMpa": 219.78021978021977
+  },
+  "ladder": [
+    { "segments": 2, "facetAngleDegrees": 30 },
+    { "segments": 4, "facetAngleDegrees": 15 },
+    { "segments": 8, "facetAngleDegrees": 7.5 },
+    { "segments": 16, "facetAngleDegrees": 3.75 }
+  ],
+  "acceptance": {
+    "minimumErrorReductionPerHalving": 3.5,
+    "levels": [
+      { "facetAngleDegrees": 15, "maximumRelativeHoopStrainError": 0.01, "maximumRelativeHoopStressError": 0.01 },
+      { "facetAngleDegrees": 7.5, "maximumRelativeHoopStrainError": 0.0025, "maximumRelativeHoopStressError": 0.0025 },
+      { "facetAngleDegrees": 3.75, "maximumRelativeHoopStrainError": 0.000625, "maximumRelativeHoopStressError": 0.000625 }
+    ]
+  },
+  "prohibitions": [
+    "NO_LOCAL_ATTACHMENT_STRESS_AUTHORITY",
+    "NO_CURVED_BENDING_ACCURACY_CLAIM",
+    "NO_HOLE_OR_NOTCH_ACCURACY_CLAIM",
+    "NO_SAGITTA_TO_THICKNESS_RELEASE_THRESHOLD",
+    "NO_MOVING_MAXIMUM_ACCEPTANCE"
+  ],
+  "benchmarkQualified": false,
+  "releaseQualified": false
+}

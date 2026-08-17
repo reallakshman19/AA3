@@ -16,32 +16,52 @@ import {
 
 export const LAFEA_ANALYSIS_MESH_QUALITY_SCHEMA = 'lafea-analysis-mesh-quality/v1';
 
+const DEGREES_PER_RADIAN = 180 / Math.PI;
+const POLICY_COMPARE_EPSILON_FACTOR = 64;
+
 export function qualifyLafeaAnalysisMesh(stageId, mesh, meshProfile) {
   const nodeById = new Map(mesh.nodes.map((node) => [node.nodeId, node]));
   const thresholds = meshProfile.fields;
   const elementResults = mesh.elements.map((element) => {
     const physicalNodes = element.nodeIds.map((nodeId) => nodeById.get(nodeId));
+    if (physicalNodes.some((node) => !node)) {
+      throw meshContractError('LAFEA_ANALYSIS_MESH_ELEMENT_NODE_NOT_FOUND');
+    }
     if (stageId === 'LAFEA.3' && physicalNodes.some((node) => node.z !== 0)) {
       throw meshContractError('LAFEA_ANALYSIS_MESH_CONTINUUM_NODE_NOT_PLANAR');
     }
     const cornerCount = element.elementType === 'Q8' ? 4 : 3;
-    const aspectRatio = aspectRatioMetric(
-      physicalNodes.slice(0, cornerCount), thresholds,
-    );
+    const cornerNodes = physicalNodes.slice(0, cornerCount);
+    const aspectRatio = aspectRatioMetric(cornerNodes, thresholds);
     const scaledJacobian = scaledJacobianMetric(
       stageId, element.elementType, physicalNodes, thresholds,
     );
-    const metrics = Object.freeze([aspectRatio, scaledJacobian]);
+    const minimumAngle = cornerCount === 3
+      ? minimumAngleMetric(cornerNodes, thresholds)
+      : null;
+    const metrics = Object.freeze([
+      aspectRatio,
+      scaledJacobian,
+      ...(minimumAngle ? [minimumAngle] : []),
+    ]);
     return Object.freeze({
       elementId: element.elementId,
       elementType: element.elementType,
+      characteristicLength: characteristicLengthOf(cornerNodes),
       metrics,
       worstStatus: worstStatus(metrics),
     });
   });
-  const aspectValue = Math.max(...elementResults.map((row) => row.metrics[0].value));
-  const jacobianValue = Math.min(...elementResults.map((row) => row.metrics[1].value));
+
+  const aspectValue = maximumMetricValue(elementResults, 'ASPECT_RATIO');
+  const jacobianValue = minimumMetricValue(elementResults, 'SCALED_JACOBIAN');
+  const angleValue = optionalMinimumMetricValue(elementResults, 'MINIMUM_ANGLE_DEGREES');
+  const angleThresholds = derivedTriangleAngleThresholds(thresholds);
   const shellOrientationTopology = shellOrientationTopologyQualification(stageId, mesh);
+  const adjacentSizeRatio = stageId === 'LAFEA.4'
+    ? adjacentSizeRatioQualification(mesh, elementResults, thresholds.adjacentSizeRatioMax)
+    : null;
+
   const gateRows = [
     aggregateMetric('ASPECT_RATIO', aspectValue,
       classifyHigher(aspectValue, thresholds.aspectRatioWarn, thresholds.aspectRatioBlock),
@@ -51,26 +71,112 @@ export function qualifyLafeaAnalysisMesh(stageId, mesh, meshProfile) {
         jacobianValue, thresholds.scaledJacobianWarn, thresholds.scaledJacobianBlock,
       ), thresholds.scaledJacobianWarn, thresholds.scaledJacobianBlock),
   ];
+  if (angleValue !== null) {
+    gateRows.push(aggregateMetric(
+      'MINIMUM_ANGLE_DEGREES',
+      angleValue,
+      classifyLower(angleValue, angleThresholds.warning, angleThresholds.blocking),
+      angleThresholds.warning,
+      angleThresholds.blocking,
+    ));
+  }
+  if (adjacentSizeRatio) gateRows.push(adjacentSizeRatio.gate);
   if (shellOrientationTopology) gateRows.push(shellOrientationTopology.gate);
   const gateResults = Object.freeze(gateRows);
+
   const blockingElementIds = new Set(
     elementResults.filter((row) => row.worstStatus === 'BLOCK').map((row) => row.elementId),
   );
+  for (const elementId of adjacentSizeRatio?.blockingElementIds ?? []) {
+    blockingElementIds.add(elementId);
+  }
   for (const elementId of shellOrientationTopology?.blockingElementIds ?? []) {
     blockingElementIds.add(elementId);
   }
+
   return deepFreeze({
     schema: LAFEA_ANALYSIS_MESH_QUALITY_SCHEMA,
     meshProfileIdentity: meshProfile.profileIdentity,
     meshProfileHash: meshProfile.semanticHash,
     elementResults,
     gateResults,
+    adjacentSizeRatio: adjacentSizeRatio?.evidence ?? null,
     shellOrientationTopology: shellOrientationTopology?.evidence ?? null,
     worstStatus: worstStatus(gateResults),
     blockingElementIds: [...blockingElementIds].sort(),
     warningElementIds: elementResults
       .filter((row) => row.worstStatus === 'WARNING').map((row) => row.elementId),
     elementCount: elementResults.length,
+  });
+}
+
+function adjacentSizeRatioQualification(mesh, elementResults, maximumAllowed) {
+  if (!(Number.isFinite(maximumAllowed) && maximumAllowed > 1)) {
+    throw meshContractError('LAFEA_ANALYSIS_MESH_ADJACENT_SIZE_RATIO_POLICY_INVALID');
+  }
+  const characteristicLengthByElementId = new Map(
+    elementResults.map((row) => [row.elementId, row.characteristicLength]),
+  );
+  const edgeUsers = new Map();
+  for (const element of mesh.elements) {
+    const cornerCount = element.elementType === 'Q8' ? 4 : 3;
+    const ids = element.nodeIds.slice(0, cornerCount);
+    for (let index = 0; index < ids.length; index += 1) {
+      const a = ids[index];
+      const b = ids[(index + 1) % ids.length];
+      const key = a < b ? `${a}\u0000${b}` : `${b}\u0000${a}`;
+      const users = edgeUsers.get(key) ?? [];
+      users.push(element.elementId);
+      edgeUsers.set(key, users);
+    }
+  }
+
+  const adjacencies = [];
+  for (const [edgeKey, rawElementIds] of edgeUsers.entries()) {
+    const elementIds = [...new Set(rawElementIds)].sort();
+    if (elementIds.length < 2) continue;
+    const lengths = elementIds.map((elementId) => characteristicLengthByElementId.get(elementId));
+    const minimum = Math.min(...lengths);
+    const maximum = Math.max(...lengths);
+    if (!(minimum > 0)) throw meshContractError('LAFEA_ANALYSIS_MESH_DEGENERATE_CHARACTERISTIC_LENGTH');
+    const ratio = maximum / minimum;
+    const status = exceedsMaximum(ratio, maximumAllowed) ? 'BLOCK' : 'OK';
+    adjacencies.push(Object.freeze({
+      nodeIds: Object.freeze(edgeKey.split('\u0000')),
+      elementIds: Object.freeze(elementIds),
+      minimumCharacteristicLength: minimum,
+      maximumCharacteristicLength: maximum,
+      ratio,
+      status,
+    }));
+  }
+
+  adjacencies.sort((left, right) => (
+    right.ratio - left.ratio
+    || left.nodeIds.join('\u0000').localeCompare(right.nodeIds.join('\u0000'))
+  ));
+  const maximumObserved = adjacencies[0]?.ratio ?? 1;
+  const violating = adjacencies.filter((row) => row.status === 'BLOCK');
+  const blockingElementIds = [...new Set(violating.flatMap((row) => row.elementIds))].sort();
+  const status = violating.length ? 'BLOCK' : 'OK';
+
+  return Object.freeze({
+    gate: Object.freeze({
+      metric: 'ADJACENT_SIZE_RATIO',
+      value: maximumObserved,
+      status,
+      maximum: maximumAllowed,
+    }),
+    blockingElementIds: Object.freeze(blockingElementIds),
+    evidence: Object.freeze({
+      definition: 'MAX_LONGEST_CORNER_EDGE_RATIO_ACROSS_SHARED_CORNER_EDGE_V1',
+      maximumAllowed,
+      maximumObserved,
+      adjacentEdgeCount: adjacencies.length,
+      violatingAdjacencyCount: violating.length,
+      violatingAdjacencies: Object.freeze(violating),
+      qualification: status === 'OK' ? 'PASS' : 'BLOCK',
+    }),
   });
 }
 
@@ -126,9 +232,7 @@ function shellOrientationTopologyQualification(stageId, mesh) {
 }
 
 function aspectRatioMetric(cornerNodes, thresholds) {
-  const lengths = cornerNodes.map((node, index) => distance3d(
-    node, cornerNodes[(index + 1) % cornerNodes.length],
-  ));
+  const lengths = edgeLengths3d(cornerNodes);
   const shortest = Math.min(...lengths);
   if (!(shortest > 0)) throw meshContractError('LAFEA_ANALYSIS_MESH_DEGENERATE_EDGE');
   const value = Math.max(...lengths) / shortest;
@@ -137,6 +241,16 @@ function aspectRatioMetric(cornerNodes, thresholds) {
     value,
     status: classifyHigher(value, thresholds.aspectRatioWarn,
       thresholds.aspectRatioBlock),
+  });
+}
+
+function minimumAngleMetric(cornerNodes, thresholds) {
+  const value = minimumTriangleAngleDegrees(cornerNodes);
+  const derived = derivedTriangleAngleThresholds(thresholds);
+  return Object.freeze({
+    metric: 'MINIMUM_ANGLE_DEGREES',
+    value,
+    status: classifyLower(value, derived.warning, derived.blocking),
   });
 }
 
@@ -173,6 +287,56 @@ function triangleScaledJacobian(stageId, nodes) {
   }));
 }
 
+function minimumTriangleAngleDegrees(nodes) {
+  if (nodes.length !== 3) throw meshContractError('LAFEA_ANALYSIS_MESH_TRIANGLE_ANGLE_NODE_COUNT_INVALID');
+  const angles = nodes.map((origin, index) => {
+    const first = subtract3d(nodes[(index + 1) % 3], origin);
+    const second = subtract3d(nodes[(index + 2) % 3], origin);
+    const denominator = norm3d(first) * norm3d(second);
+    if (!(denominator > 0)) return 0;
+    const cosine = Math.max(-1, Math.min(1, dot3d(first, second) / denominator));
+    return Math.acos(cosine) * DEGREES_PER_RADIAN;
+  });
+  return Math.min(...angles);
+}
+
+function derivedTriangleAngleThresholds(thresholds) {
+  const warning = Math.asin(clampUnit(thresholds.scaledJacobianWarn)) * DEGREES_PER_RADIAN;
+  const blocking = Math.asin(clampUnit(thresholds.scaledJacobianBlock)) * DEGREES_PER_RADIAN;
+  return Object.freeze({ warning, blocking });
+}
+
+function characteristicLengthOf(cornerNodes) {
+  return Math.max(...edgeLengths3d(cornerNodes));
+}
+
+function edgeLengths3d(cornerNodes) {
+  return cornerNodes.map((node, index) => distance3d(
+    node, cornerNodes[(index + 1) % cornerNodes.length],
+  ));
+}
+
+function maximumMetricValue(elementResults, metric) {
+  return Math.max(...elementResults.map((row) => metricValue(row, metric)));
+}
+
+function minimumMetricValue(elementResults, metric) {
+  return Math.min(...elementResults.map((row) => metricValue(row, metric)));
+}
+
+function optionalMinimumMetricValue(elementResults, metric) {
+  const values = elementResults
+    .map((row) => row.metrics.find((candidate) => candidate.metric === metric)?.value)
+    .filter((value) => Number.isFinite(value));
+  return values.length ? Math.min(...values) : null;
+}
+
+function metricValue(row, metric) {
+  const value = row.metrics.find((candidate) => candidate.metric === metric)?.value;
+  if (!Number.isFinite(value)) throw meshContractError('LAFEA_ANALYSIS_MESH_REQUIRED_METRIC_MISSING');
+  return value;
+}
+
 function aggregateMetric(metric, value, status, warningThreshold, blockingThreshold) {
   return Object.freeze({ metric, value, status, warningThreshold, blockingThreshold });
 }
@@ -189,12 +353,26 @@ function classifyLower(value, warning, blocking) {
   return 'OK';
 }
 
+function exceedsMaximum(value, maximum) {
+  const tolerance = POLICY_COMPARE_EPSILON_FACTOR * Number.EPSILON * Math.max(1, Math.abs(maximum));
+  return value > maximum + tolerance;
+}
+
+function clampUnit(value) {
+  if (!Number.isFinite(value)) throw meshContractError('LAFEA_ANALYSIS_MESH_SCALED_JACOBIAN_POLICY_INVALID');
+  return Math.max(0, Math.min(1, value));
+}
+
 function distance3d(left, right) {
   return Math.hypot(right.x - left.x, right.y - left.y, right.z - left.z);
 }
 
 function subtract3d(left, right) {
   return { x: left.x - right.x, y: left.y - right.y, z: left.z - right.z };
+}
+
+function dot3d(left, right) {
+  return (left.x * right.x) + (left.y * right.y) + (left.z * right.z);
 }
 
 function cross3d(left, right) {

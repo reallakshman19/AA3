@@ -16,6 +16,10 @@ import {
   runWrc537Ed4NumericalQualification,
   validateWrc537Ed4NumericalQualificationSuite,
 } from '../src/core/local-attachment-correlation/methods/wrc537/ed4-qualification-engine.js';
+import {
+  createWrc537Ed4NumericalReleaseCandidate,
+  executableLiteralInventory,
+} from '../src/core/local-attachment-correlation/methods/wrc537/ed4-numerical-release-candidate.js';
 
 const root = process.cwd();
 const ed4 = path.join(root, 'docs', 'wrc537', 'ed4');
@@ -28,6 +32,8 @@ const paths = {
   executablePlan: path.join(ed4, 'WRC537_ED4_EXECUTABLE_PLAN.json'),
   qualificationSuite: path.join(ed4, 'WRC537_ED4_QUALIFICATION_SUITE.json'),
   qualificationEvidence: path.join(ed4, 'WRC537_ED4_QUALIFICATION_EVIDENCE.json'),
+  literalBindings: path.join(ed4, 'WRC537_ED4_LITERAL_BINDINGS.json'),
+  numericalReleaseCandidate: path.join(ed4, 'WRC537_ED4_NUMERICAL_RELEASE_CANDIDATE.json'),
 };
 const write = process.argv.includes('--write');
 const release = process.argv.includes('--release');
@@ -103,15 +109,45 @@ if (evidence.status !== WRC537_ED4_NUMERICAL_QUALIFICATION_PASS) {
   }, release ? 6 : 0);
 }
 
-finish('NUMERICALLY_QUALIFIED_AWAITING_APPROVAL_AND_TRUST', {
+const literalInventory = executableLiteralInventory(executablePlan);
+if (!fs.existsSync(paths.literalBindings)) {
+  finish('NUMERIC_LITERAL_CUSTODY_REQUIRED', {
+    literalCount: literalInventory.length,
+    literalInventory,
+    requiredPath: relative(paths.literalBindings),
+    instruction: 'Bind every executable numeric literal as DATASET_COEFFICIENT or SOURCE_LITERAL. No unbound magic numbers.',
+  }, release ? 7 : 0);
+}
+const literalBindingFile = readJson(paths.literalBindings);
+if (!literalBindingFile || !Array.isArray(literalBindingFile.literalBindings)) {
+  throw new Error('WRC537_ED4_LITERAL_BINDINGS_FILE_INVALID');
+}
+const releaseCandidate = createWrc537Ed4NumericalReleaseCandidate(
+  dataset,
+  calculationPlan,
+  executablePlan,
+  suite,
+  evidence,
+  {
+    schema: 'wrc537-ed4-numerical-release-candidate/v1',
+    candidateIdentity: literalBindingFile.candidateIdentity ?? 'WRC537-ED4-NUMERICAL-RELEASE-CANDIDATE',
+    candidateVersion: literalBindingFile.candidateVersion ?? '1',
+    literalBindings: literalBindingFile.literalBindings,
+  },
+);
+if (write) writeJson(paths.numericalReleaseCandidate, releaseCandidate);
+
+finish('NUMERICAL_RELEASE_CANDIDATE_AWAITING_APPROVAL_AND_TRUST', {
   datasetSemanticHash: dataset.datasetSemanticHash,
   planSemanticHash: calculationPlan.planSemanticHash,
   executablePlanSemanticHash: executablePlan.executablePlanSemanticHash,
   suiteSemanticHash: suite.suiteSemanticHash,
   evidenceSemanticHash: evidence.evidenceSemanticHash,
+  numericalReleaseCandidateSemanticHash: releaseCandidate.candidateSemanticHash,
+  literalCount: releaseCandidate.literalInventory.length,
   engineeringUseAuthorized: false,
-  nextGate: 'Independent approval authority + trusted engineering registry activation; not implemented or bypassed by this script.',
-}, release ? 7 : 0);
+  nextGate: 'Independent approval authority + trusted engineering registry activation; this pipeline cannot grant engineering authority.',
+}, release ? 8 : 0);
 
 function finish(state, detail, exitCode) {
   console.log(JSON.stringify({

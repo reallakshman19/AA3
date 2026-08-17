@@ -13,7 +13,7 @@ function section(source, start, end) {
   return source.slice(i, j);
 }
 
-const getHash = section(project, '  getSemanticHash() {', '  /**\n   * Runtime-only');
+const getHash = section(project, '  getSemanticHash() {', '  getRuntimeRevision() {');
 const publish = section(project, '  #publish(reason) {', '  #computeProfileSemanticHash(profile) {');
 const bindings = section(model, '  #currentEmpiricalBindings(masterData) {', '  #empiricalBindingBasisKey(masterSourceHashes) {');
 const basis = section(model, '  #empiricalBindingBasisKey(masterSourceHashes) {', '  #artifactSemanticHash(artifact) {');

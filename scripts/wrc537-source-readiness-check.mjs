@@ -18,7 +18,8 @@ assert.equal(dataset.schema, 'wrc537-source-extraction/v1');
 assert.ok(coefficientRows.length > 0, 'WRC537 coefficient inventory must not be empty.');
 
 const result = evaluateWrc537SourceReadiness({ manifest, dataset, coefficientRows });
-const normalizedRows = coefficientRows.map(normalizeWrc537CoefficientRow);
+const normalizedRows = coefficientRows.map((row) =>
+  normalizeWrc537CoefficientRow(row, manifest.targetEdition));
 const expectedBlocking = manifest.expectedBlockingGates ?? [];
 
 assert.equal(result.state, manifest.expectedCurrentState,
@@ -37,8 +38,8 @@ assert.ok(normalizedRows.every((row) =>
   row.normalizedEngineeringState !== 'ENGINEERING_DATA_CANDIDATE'
   || (row.normalizedValueState === 'NUMERIC_VALUE_PRESENT'
     && row.normalizedPrecisionState === 'SOURCE_PRECISION_PRESENT'
-    && row.normalizedAuthorityState === 'PRIMARY_SOURCE_VERIFIED')),
-'No coefficient may become an engineering-data candidate without value, precision, and primary verification.');
+    && row.normalizedAuthorityState === 'TARGET_EDITION_PRIMARY_SOURCE_VERIFIED')),
+'No coefficient may become an engineering-data candidate without target-edition value, precision, and primary verification.');
 
 const report = {
   check: releaseMode ? 'wrc537-source-release-readiness' : 'wrc537-source-readiness',

@@ -102,8 +102,8 @@ function classifySupportFamilyToken(value, authority) {
       && /\bANCHOR\b/iu.test(token)
       && !/\bDIRECTIONAL\b/iu.test(token)) return 'ANCHOR';
 
-  if (/\bPIPE\s*REST\b|\bREST\b|\bWEAR\s*PLATE\b|\bW\.?\s*PAD\b/iu.test(token)) return 'REST';
-  if (authority === 'LEGACY_SUPPORT_CODE' && /^SH[- ]/iu.test(token)) return 'REST';
+  // Shoe/wear-plate descriptions are hardware identity, not restraint state.
+  if (/\bPIPE\s*REST\b|\bREST\b/iu.test(token)) return 'REST';
   return null;
 }
 

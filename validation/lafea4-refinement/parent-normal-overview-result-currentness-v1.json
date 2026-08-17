@@ -1,0 +1,49 @@
+{
+  "schema": "lafea4-parent-normal-overview-result-currentness-definition/v1",
+  "qualificationId": "LAFEA4-PARENT-NORMAL-TECH12H-001",
+  "stageId": "LAFEA.4",
+  "scope": "HISTORICAL_EXECUTION_VERSUS_CURRENT_RESULT_AUTHORITY_AFTER_GATE_PROMOTION",
+  "currentTrustRoot": "NULL",
+  "governedCurrentResult": {
+    "executionStatus": "QUALIFIED",
+    "readinessCalculationState": "CALCULATION_ACCEPTED_BY_STAGE_CONTRACT",
+    "readinessResultReady": true,
+    "overviewStatus": "QUALIFIED",
+    "overviewAccepted": true
+  },
+  "futureTrustedGateBlocksPreviouslyExecutedMesh": {
+    "retainedExecutionStatusMayRemain": "QUALIFIED",
+    "retainedKernelResultMayRemain": true,
+    "historicalMetricsMayRemainVisible": true,
+    "readinessCalculationState": "CALCULATION_NOT_ACCEPTED_BY_STAGE_CONTRACT",
+    "readinessResultReady": false,
+    "overviewStatus": "QUALIFIED_NOT_CURRENT",
+    "overviewAccepted": false,
+    "underlyingV2MeshQualificationMayRemain": "PASS",
+    "derivedMeshCustodyState": "CURRENT_BLOCK"
+  },
+  "legacyCompatibility": {
+    "nonGovernedOverviewUsesHistoricalResultAcceptance": true,
+    "existingLafea3OverviewFixtureMustRemainAccepted": true
+  },
+  "authorityPolicy": {
+    "governedAcceptanceRequiresCurrentLifecycleReadiness": true,
+    "overviewMustNotEvaluateProductionGateDirectly": true,
+    "overviewMustNotImportActivationTrustRoot": true,
+    "retainedExecutionMustNotBeDeletedForPresentationCurrentness": true,
+    "retainedResultMustNotBeMutatedForPresentationCurrentness": true
+  },
+  "prohibitions": [
+    "NO_TRUST_ROOT_ACTIVATION_IN_TECH12H",
+    "NO_RESULT_EVIDENCE_DELETION",
+    "NO_RESULT_VALUE_REWRITE",
+    "NO_PARENT_NORMAL_THRESHOLD_CHANGE",
+    "NO_EXISTING_15_DEGREE_PRODUCER_GUARD_CHANGE",
+    "NO_SHELL_FORMULATION_CHANGE",
+    "NO_STIFFNESS_EQUATION_CHANGE",
+    "NO_SOLVER_EQUATION_CHANGE",
+    "NO_RELEASE_AUTHORITY_CHANGE"
+  ],
+  "productionBindingAuthorized": false,
+  "releaseQualified": false
+}

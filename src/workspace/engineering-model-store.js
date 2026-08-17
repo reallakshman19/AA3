@@ -15,6 +15,16 @@ import {
   topologyEditCheckSnapshotStore,
 } from './topology-edit/topology-edit-check-snapshot-store.js';
 
+function emptyPerformanceMetrics() {
+  return {
+    artifactSemanticHashComputations: 0,
+    artifactSemanticHashCacheHits: 0,
+    empiricalBindingBuilds: 0,
+    empiricalBindingCacheHits: 0,
+    empiricalBindingCacheBypasses: 0,
+  };
+}
+
 /**
  * Holds canonical support sites and route partitions for the active dataset and
  * decorates any support member with the same canonical calculation evidence.
@@ -23,18 +33,33 @@ export class EngineeringModelStore {
   #dataset = null;
   #supportSiteModel = null;
   #routePartitionModel = null;
+  #modelRuntimeRevision = 0;
+  #artifactHashes = null;
+  #artifactHashCache = new WeakMap();
+  #empiricalBindingCache = null;
+  #performanceMetrics = emptyPerformanceMetrics();
 
   rebuild(dataset) {
     this.#dataset = dataset;
+    this.#modelRuntimeRevision += 1;
+    this.#empiricalBindingCache = null;
     topologyEditCheckSnapshotStore.invalidate();
     if (!dataset) {
       this.#supportSiteModel = null;
       this.#routePartitionModel = null;
+      this.#artifactHashes = null;
       return;
     }
     const profile = projectDataStore.getProfile();
     this.#supportSiteModel = buildSupportSiteModel(dataset, profile);
     this.#routePartitionModel = buildRoutePartitionModel(dataset, profile);
+    this.#artifactHashes = freezeDeep({
+      sharedModelSemanticHash: dataset.sharedModel && typeof dataset.sharedModel === 'object'
+        ? this.#artifactSemanticHash(dataset.sharedModel)
+        : null,
+      supportSiteModelSemanticHash: this.#artifactSemanticHash(this.#supportSiteModel),
+      routePartitionModelSemanticHash: this.#artifactSemanticHash(this.#routePartitionModel),
+    });
   }
 
   /** @deprecated Ordinary production callers shall use executeConfiguredAuthorized(). */
@@ -65,9 +90,9 @@ export class EngineeringModelStore {
     });
   }
 
-  configureAuthorizedEmpiricalPackage(runtimePackage, masterData) {
+  configureAuthorizedEmpiricalPackage(runtimePackage, masterData, runtimeCurrentness = null) {
     this.#requireActiveModels();
-    const bindings = this.#currentEmpiricalBindings(masterData);
+    const bindings = this.#currentEmpiricalBindings(masterData, runtimeCurrentness);
     const configured = authorizedEmpiricalRuntimeStore.configure(runtimePackage, bindings);
     try {
       const blockers = this.#currentEmpiricalReadiness(masterData, runtimePackage);
@@ -82,14 +107,14 @@ export class EngineeringModelStore {
     }
   }
 
-  refreshAuthorizedEmpiricalPackage(masterData) {
+  refreshAuthorizedEmpiricalPackage(masterData, runtimeCurrentness = null) {
     if (!this.#dataset || !this.#supportSiteModel || !this.#routePartitionModel) {
       return authorizedEmpiricalRuntimeStore.refresh(null);
     }
     const runtimePackage = authorizedEmpiricalRuntimeStore.getPackage();
     if (!runtimePackage) {
       try {
-        this.#currentEmpiricalBindings(masterData);
+        this.#currentEmpiricalBindings(masterData, runtimeCurrentness);
         const mechanicalBlockers = this.#currentMechanicalReadiness();
         return mechanicalBlockers.length > 0
           ? authorizedEmpiricalRuntimeStore.markBlockedNotReady('EMPIRICAL_MODELS_NOT_READY', mechanicalBlockers)
@@ -102,7 +127,9 @@ export class EngineeringModelStore {
       }
     }
     try {
-      const refreshed = authorizedEmpiricalRuntimeStore.refresh(this.#currentEmpiricalBindings(masterData));
+      const refreshed = authorizedEmpiricalRuntimeStore.refresh(
+        this.#currentEmpiricalBindings(masterData, runtimeCurrentness),
+      );
       if (!refreshed.calculationEligible) return refreshed;
       const blockers = this.#currentEmpiricalReadiness(masterData, runtimePackage);
       return blockers.length > 0
@@ -121,9 +148,9 @@ export class EngineeringModelStore {
     return authorizedEmpiricalRuntimeStore.markStale(reason, [{ datasetVersion }]);
   }
 
-  executeConfiguredAuthorized(masterData) {
+  executeConfiguredAuthorized(masterData, runtimeCurrentness = null) {
     this.#requireActiveModels();
-    this.refreshAuthorizedEmpiricalPackage(masterData);
+    this.refreshAuthorizedEmpiricalPackage(masterData, runtimeCurrentness);
     const runtimePackage = authorizedEmpiricalRuntimeStore.requireCurrentPackage();
     const execution = engineeringSupportLoadStore.calculateAuthorized({
       schema: AUTHORIZED_EMPIRICAL_LOAD_EXECUTION_REQUEST_SCHEMA,
@@ -148,29 +175,76 @@ export class EngineeringModelStore {
       : authorizedEmpiricalRuntimeStore.refresh(null);
   }
 
-  #currentEmpiricalBindings(masterData) {
+  #currentEmpiricalBindings(masterData, runtimeCurrentness = null) {
     this.#requireActiveModels();
     const profile = projectDataStore.getProfile();
     const sourceDatasetHash = sha256(this.#dataset.sourceSha256, 'dataset.sourceSha256');
     if (!this.#dataset.sharedModel || typeof this.#dataset.sharedModel !== 'object') {
       fail('The active dataset has no materialized shared model.', 'EMPIRICAL_RUNTIME_SHARED_MODEL_MISSING');
     }
-    return freezeDeep({
+    if (!this.#artifactHashes?.sharedModelSemanticHash) {
+      fail('The active dataset shared-model semantic identity is unavailable.', 'EMPIRICAL_RUNTIME_SHARED_MODEL_HASH_MISSING');
+    }
+    const masterSourceHashes = freezeDeep({
+      dataset: sourceDatasetHash,
+      lineList: sha256(masterData?.lineList?.sourceHash, 'masterData.lineList.sourceHash'),
+      pipingClass: sha256(masterData?.pipingClass?.sourceHash, 'masterData.pipingClass.sourceHash'),
+      componentWeight: sha256(masterData?.weight?.sourceHash, 'masterData.weight.sourceHash'),
+    });
+    const basisKey = this.#empiricalBindingBasisKey(runtimeCurrentness, masterSourceHashes);
+    if (basisKey && this.#empiricalBindingCache?.basisKey === basisKey) {
+      this.#performanceMetrics.empiricalBindingCacheHits += 1;
+      return this.#empiricalBindingCache.bindings;
+    }
+
+    const bindings = freezeDeep({
       projectId: identity(profile?.projectId, 'projectData.projectId'),
       datasetId: identity(this.#dataset.datasetId, 'dataset.datasetId'),
       datasetVersion: nullableVersion(this.#dataset.version),
       sourceDatasetHash,
-      sharedModelSemanticHash: semanticHash(this.#dataset.sharedModel),
-      supportSiteModelSemanticHash: semanticHash(this.#supportSiteModel),
-      routePartitionModelSemanticHash: semanticHash(this.#routePartitionModel),
-      projectDataProfileSemanticHash: semanticHash(profile),
-      masterSourceHashes: {
-        dataset: sourceDatasetHash,
-        lineList: sha256(masterData?.lineList?.sourceHash, 'masterData.lineList.sourceHash'),
-        pipingClass: sha256(masterData?.pipingClass?.sourceHash, 'masterData.pipingClass.sourceHash'),
-        componentWeight: sha256(masterData?.weight?.sourceHash, 'masterData.weight.sourceHash'),
-      },
+      sharedModelSemanticHash: this.#artifactHashes.sharedModelSemanticHash,
+      supportSiteModelSemanticHash: this.#artifactHashes.supportSiteModelSemanticHash,
+      routePartitionModelSemanticHash: this.#artifactHashes.routePartitionModelSemanticHash,
+      projectDataProfileSemanticHash: projectDataStore.getSemanticHash(),
+      masterSourceHashes,
     });
+    this.#performanceMetrics.empiricalBindingBuilds += 1;
+    if (basisKey) {
+      this.#empiricalBindingCache = { basisKey, bindings };
+    } else {
+      this.#performanceMetrics.empiricalBindingCacheBypasses += 1;
+    }
+    return bindings;
+  }
+
+  #empiricalBindingBasisKey(runtimeCurrentness, masterSourceHashes) {
+    const masterRevisions = relevantMasterRevisions(runtimeCurrentness?.masterRevisions);
+    if (!masterRevisions) return null;
+    const projectRuntimeRevision = projectDataStore.getRuntimeRevision?.();
+    if (!nonnegativeInteger(projectRuntimeRevision)) return null;
+    return JSON.stringify([
+      this.#modelRuntimeRevision,
+      projectRuntimeRevision,
+      masterRevisions.lineList,
+      masterRevisions.pipingClass,
+      masterRevisions.weight,
+      masterSourceHashes.dataset,
+      masterSourceHashes.lineList,
+      masterSourceHashes.pipingClass,
+      masterSourceHashes.componentWeight,
+    ]);
+  }
+
+  #artifactSemanticHash(artifact) {
+    const cached = this.#artifactHashCache.get(artifact);
+    if (cached) {
+      this.#performanceMetrics.artifactSemanticHashCacheHits += 1;
+      return cached;
+    }
+    const hash = semanticHash(artifact);
+    this.#artifactHashCache.set(artifact, hash);
+    this.#performanceMetrics.artifactSemanticHashComputations += 1;
+    return hash;
   }
 
   #currentMechanicalReadiness() {
@@ -291,6 +365,16 @@ export class EngineeringModelStore {
   getAuthorizedExecution() { return authorizedEmpiricalRuntimeStore.getExecution() || engineeringSupportLoadStore.getAuthorizedExecution(); }
   getEmpiricalAuthorizationState() { return authorizedEmpiricalRuntimeStore.getSnapshot(); }
   getAuthorizedEmpiricalPackage() { return authorizedEmpiricalRuntimeStore.getPackage(); }
+  getPerformanceMetrics() {
+    return {
+      modelRuntimeRevision: this.#modelRuntimeRevision,
+      ...this.#performanceMetrics,
+      empiricalBindingCacheActive: Boolean(this.#empiricalBindingCache),
+    };
+  }
+  resetPerformanceMetrics() {
+    this.#performanceMetrics = emptyPerformanceMetrics();
+  }
   clear() {
     this.rebuild(null);
     engineeringSupportLoadStore.clear();
@@ -317,6 +401,20 @@ function nullableVersion(value) {
   if (Number.isInteger(value)) return value;
   if (typeof value === 'string' && value.length > 0 && value.trim() === value) return value;
   fail('dataset.version must be null, an integer, or a non-empty trimmed string.', 'EMPIRICAL_RUNTIME_VERSION_INVALID');
+}
+
+function relevantMasterRevisions(value) {
+  if (!value || typeof value !== 'object' || Array.isArray(value)) return null;
+  const result = {
+    lineList: value.lineList,
+    pipingClass: value.pipingClass,
+    weight: value.weight,
+  };
+  return Object.values(result).every(nonnegativeInteger) ? result : null;
+}
+
+function nonnegativeInteger(value) {
+  return Number.isInteger(value) && value >= 0;
 }
 
 function currentMasterHashes(masterData, dataset) {

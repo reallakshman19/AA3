@@ -55,6 +55,20 @@
       "args": ["scripts/lafea-tech9-hole-front-policy-check.mjs"]
     },
     {
+      "id": "TECH10_SHELL_GEOMETRIC_QUALITY_HAND_ORACLE",
+      "classification": "ENGINEERING",
+      "required": true,
+      "executable": "node",
+      "args": ["scripts/lafea-tech10-shell-geometric-quality-check.mjs"]
+    },
+    {
+      "id": "TECH10_SHELL_GEOMETRIC_QUALITY_SAMPLE",
+      "classification": "ENGINEERING",
+      "required": true,
+      "executable": "node",
+      "args": ["scripts/lafea-tech10-shell-geometric-quality-sample-check.mjs"]
+    },
+    {
       "id": "TECH7_GRADED_REFINEMENT_EXECUTOR",
       "classification": "ENGINEERING",
       "required": true,

@@ -1,7 +1,9 @@
 import { expect, test } from '@playwright/test';
 
-const LAFEA_STAGE_TABS_WITH_DEMO_SOURCE = ['LAFEA.3', 'LAFEA.4', 'LAFEA.5', 'LAFEA.6'];
-const ANALYTICAL_ROUTES = ['LAFEA.1', 'LAFEA.2'];
+const LAFEA_STAGE_TABS_WITH_DEMO_SOURCE = [
+  'LAFEA.1', 'LAFEA.2', 'LAFEA.3', 'LAFEA.4', 'LAFEA.5', 'LAFEA.6',
+];
+const ANALYTICAL_ROUTES = new Set(['LAFEA.1', 'LAFEA.2']);
 
 test.beforeEach(async ({ page }) => {
   await page.addInitScript(() => {
@@ -30,7 +32,17 @@ test('every Advanced tab loads deterministic [SIMULATED] input through its UI', 
 
   await page.locator('[data-application-nav="LAFEA"]').click();
   for (const stageId of LAFEA_STAGE_TABS_WITH_DEMO_SOURCE) {
-    await page.locator(`.lafea-workbench__stages [data-stage-id="${stageId}"]`).click();
+    const stageButton = page.locator(`.lafea-workbench__stages [data-stage-id="${stageId}"]`);
+    await stageButton.click();
+    if (ANALYTICAL_ROUTES.has(stageId)) {
+      await expect(stageButton).toHaveAttribute('data-method', 'ANALYTICAL');
+      await expect(page.locator('[data-role="lafea-analytical-calc"]')).toHaveAttribute(
+        'data-backing-stage-id',
+        stageId,
+      );
+      await expect(page.locator('[data-role="lafea-tba-stage"]')).toHaveCount(0);
+    }
+
     await page.locator('[data-role="lafea-mock"]').click();
     await expect(page.locator('.lafea-workbench__status')).toHaveText('READY');
     const stage = await page.evaluate((id) => AnalysisWorkspace.getLafeaWorkbenchState().stages[id], stageId);
@@ -65,30 +77,6 @@ test('every Advanced tab loads deterministic [SIMULATED] input through its UI', 
         lengthUnit: 'mm',
       });
     }
-  }
-
-  for (const stageId of ANALYTICAL_ROUTES) {
-    await page.locator(`.lafea-workbench__stages [data-stage-id="${stageId}"]`).click();
-    await expect(page.locator('[data-role="lafea-tba-stage"]')).toBeVisible();
-    await expect(page.locator('.lafea-workbench__status')).toHaveText('TBA');
-    await expect(page.locator('[data-role="lafea-mock"]')).toHaveCount(0);
-  }
-
-  await page.locator('[data-lafea-tab="ANALYTICAL_CALC"]').click();
-  for (const stageId of ANALYTICAL_ROUTES) {
-    await page.locator(`[data-analytical-route-id="${stageId}"]`).click();
-    await page.locator('[data-role="lafea-mock"]').click();
-    await expect(page.locator('.lafea-workbench__status')).toHaveText('READY');
-    await expect(page.locator('[data-role="lafea-analytical-calc"]')).toHaveAttribute(
-      'data-backing-stage-id',
-      stageId,
-    );
-    const analyticalStage = await page.evaluate(
-      (id) => AnalysisWorkspace.getLafeaWorkbenchState().stages[id],
-      stageId,
-    );
-    expect(analyticalStage.document).not.toBeNull();
-    expect(analyticalStage.execution).toBeNull();
   }
 
   await page.locator('[data-application-nav="LFEA"]').click();

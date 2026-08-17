@@ -52,6 +52,14 @@ export function generationSection(doc, model, handlers) {
   }
 
   section.append(boundConfiguration(doc, generation, sourceAdoption));
+  if (generation.thicknessCurvatureObservation) {
+    section.append(thicknessCurvatureObservation(
+      doc,
+      generation.thicknessCurvatureObservation,
+      generation.lengthUnit,
+    ));
+  }
+
   const controls = node(doc, 'div', 'lafea-discretization__generation-controls');
   const plan = button(
     doc,
@@ -232,6 +240,32 @@ function boundConfiguration(doc, generation, sourceAdoption) {
       : formatLength(generation.targetElementLength, generation.lengthUnit)),
   );
   return facts;
+}
+
+function thicknessCurvatureObservation(doc, observation, unit) {
+  const details = node(doc, 'details', 'lafea-discretization__technical-evidence');
+  details.dataset.role = 'lafea-thickness-curvature-observation';
+  details.append(node(doc, 'summary', null, 'Curvature / thickness observation'));
+  const facts = node(doc, 'dl', 'lafea-discretization__facts');
+  const thickness = observation.uniformThickness === null
+    ? `${formatNumber(observation.minimumThickness)}–${formatNumber(observation.maximumThickness)} ${unit ?? ''}`.trim()
+    : `${formatNumber(observation.uniformThickness)} ${unit ?? ''}`.trim();
+  const ratio = observation.curvatureSagittaToThicknessRatio === null
+    ? 'NOT AVAILABLE — thickness is nonuniform'
+    : formatNumber(observation.curvatureSagittaToThicknessRatio);
+  for (const [label, value] of [
+    ['Thickness basis', `${observation.thicknessClassification} · ${thickness}`],
+    ['Cylinder radius', formatLength(observation.radius, unit)],
+    ['Requested target', formatLength(observation.requestedTargetElementLength, unit)],
+    ['15° curvature target', formatLength(observation.curvatureTargetElementLength, unit)],
+    ['Effective curvature target', formatLength(observation.effectiveTargetElementLength, unit)],
+    ['Effective curvature angle', `${formatNumber(observation.effectiveCurvatureAngleDegrees)} deg`],
+    ['Curvature sagitta', formatLength(observation.curvatureSagitta, unit)],
+    ['Sagitta / thickness', ratio],
+    ['Qualification', 'NOT GATED — measured engineering evidence only'],
+  ]) facts.append(node(doc, 'dt', null, label), node(doc, 'dd', null, value));
+  details.append(facts);
+  return details;
 }
 
 function qualityBaseline(fields) {

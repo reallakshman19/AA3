@@ -42,6 +42,7 @@ function analyticalProjection(stage, adapter) {
   const modelCurrent = canonicalModel?.status === 'CURRENT'
     && canonicalModel?.qualification === 'PASS';
   const executionSupported = adapter.execution.qualifiedRouteRegistered === true;
+  const resultReady = readiness?.resultReady === true;
 
   const sections = {
     SOURCE: !hasDocument
@@ -69,9 +70,11 @@ function analyticalProjection(stage, adapter) {
       : qualifiedExecution
         ? section('COMPLETE', [], [ref('EXECUTION', executionHash(execution))], ['VIEW'])
         : section('BLOCKED', [`EXECUTION_${execution.status ?? 'UNKNOWN'}`], [], []),
-    RESULTS: qualifiedExecution
+    RESULTS: resultReady
       ? section('COMPLETE', [], resultRefs(stage.lifecycle), ['VIEW_RESULTS', 'EXPORT_RESULTS'])
-      : section('NOT_STARTED', ['EXECUTION_REQUIRED'], [], []),
+      : qualifiedExecution
+        ? section('BLOCKED', ['RESULT_EVIDENCE_NOT_CURRENT'], [], ['VIEW'])
+        : section('NOT_STARTED', ['EXECUTION_REQUIRED'], [], []),
     RELEASE: releaseSection(readiness),
   };
   return projection(stage, adapter, sections);

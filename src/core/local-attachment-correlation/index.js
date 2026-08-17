@@ -16,6 +16,10 @@ export {
 } from './constants.js';
 export { calculateLocalAttachmentCorrelation } from './calculate.js';
 export {
+  CORRELATION_ASSESSMENT_SCHEMA,
+  calculateEngineeringCorrelationFromLafea2,
+} from './engineering-assessment.js';
+export {
   createCorrelationGeometryEvidenceFromLafea2,
   validateCorrelationGeometryEvidence,
 } from './geometry-evidence.js';

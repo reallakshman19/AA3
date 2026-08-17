@@ -4,7 +4,8 @@ import { MASTER_FIELDS } from './xml-cii-adapted-fields-config.js';
 
 const previewSearchMetrics = {
   rowBuilds: 0,
-  rowsNormalized: 0,
+  sourceRowsVisited: 0,
+  lineRowsNormalized: 0,
   mappingResolutions: 0,
   supportConfigParses: 0,
   searchIndexBuilds: 0,
@@ -38,8 +39,17 @@ function readMappedValue(row, keys) {
   return '';
 }
 
-function normalizePreviewSearchRow(row, masterKey, fieldMap, index) {
-  if (masterKey !== 'lineList') return row;
+function lineSearchRowReady(row) {
+  return !!row
+    && (Object.hasOwn(row, 'lineNoKey') || Object.hasOwn(row, 'lineKey'))
+    && Object.hasOwn(row, 'operatingFluidDensity')
+    && Object.hasOwn(row, 'densitySource');
+}
+
+function normalizePreviewSearchRow(row, masterKey, resolveFieldMap, index) {
+  if (masterKey !== 'lineList' || lineSearchRowReady(row)) return row;
+  previewSearchMetrics.lineRowsNormalized += 1;
+  const fieldMap = resolveFieldMap();
   const normalized = row?.lineNoKey || row?.lineNo || row?.lineKey || row?.lineSeqNo
     ? row : normalizeLineListRow(row, fieldMap, index);
   const raw = normalized?._raw || row;
@@ -63,16 +73,26 @@ function previewSourceRows(master, state) {
 
 /**
  * Builds the full searchable projection only when search is requested. Exactly
- * one authoritative row source is normalized: canonical master.rows when
- * available, otherwise rawRows. Mapping is resolved once per build and reused
- * for every row; supportConfigJson is never parsed per row.
+ * one authoritative row source is visited: canonical master.rows when available,
+ * otherwise rawRows. Canonical normalized Line List rows are reused directly.
+ * If raw Line List rows require projection, mapping is resolved lazily once and
+ * reused for every row; supportConfigJson is never parsed per row.
  */
 export function buildPreviewSearchRows(master, state) {
   const sourceRows = previewSourceRows(master, state);
-  const fieldMap = master.key === 'lineList' ? mappedFieldMap(master.key, state) : {};
+  let fieldMap = null;
+  const resolveFieldMap = () => {
+    if (fieldMap === null) fieldMap = mappedFieldMap(master.key, state);
+    return fieldMap;
+  };
   previewSearchMetrics.rowBuilds += 1;
-  previewSearchMetrics.rowsNormalized += sourceRows.length;
-  return sourceRows.map((row, index) => normalizePreviewSearchRow(row, master.key, fieldMap, index));
+  previewSearchMetrics.sourceRowsVisited += sourceRows.length;
+  return sourceRows.map((row, index) => normalizePreviewSearchRow(
+    row,
+    master.key,
+    resolveFieldMap,
+    index,
+  ));
 }
 
 /**
@@ -111,7 +131,8 @@ export function getPreviewSearchMetrics() {
 
 export function resetPreviewSearchMetrics() {
   previewSearchMetrics.rowBuilds = 0;
-  previewSearchMetrics.rowsNormalized = 0;
+  previewSearchMetrics.sourceRowsVisited = 0;
+  previewSearchMetrics.lineRowsNormalized = 0;
   previewSearchMetrics.mappingResolutions = 0;
   previewSearchMetrics.supportConfigParses = 0;
   previewSearchMetrics.searchIndexBuilds = 0;

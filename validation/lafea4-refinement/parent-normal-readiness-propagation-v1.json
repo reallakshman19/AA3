@@ -21,6 +21,7 @@
     "advancePolicy": "DENY",
     "authorizationPolicy": "DENY",
     "runPolicy": "DENY",
+    "diagnosticCarrier": "runBlockingReasons",
     "meshQualified": false,
     "solverModelCurrent": false,
     "discretizationState": "BLOCKED",
@@ -33,6 +34,9 @@
     "usableForRun": false
   },
   "custodyEvidencePolicy": {
+    "schemaMustRemain": "lafea-domain-first-mesh-custody/v1",
+    "exactProjectionKeyShapeMustBePreserved": true,
+    "doNotAddParentNormalSpecificCustodyFields": true,
     "doNotRewriteV2MeshEvidence": true,
     "retainMeshHash": true,
     "retainMeshProfileHash": true,

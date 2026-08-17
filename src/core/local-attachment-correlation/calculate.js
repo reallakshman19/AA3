@@ -16,6 +16,7 @@ export function calculateLocalAttachmentCorrelation(requestInput, profileInput) 
   try {
     request = canonicalRequest(requestInput);
     profile = createCorrelationProfile(profileInput);
+    validateRequestAgainstProfile(request, profile);
     return acceptedResult(request, profile);
   } catch (error) {
     return rejectedResult(requestInput, profileInput, error);
@@ -87,7 +88,7 @@ function targetResult(target, contributions, pressureRows) {
     else fail('CORRELATION_STRESS_CLASS_UNSUPPORTED', `contributions.${row.responseId}.stressClass`);
   });
   const pressure = pressureRows.find((row) => row.targetId === target.targetId);
-  if (pressure) STRESS_COMPONENTS.forEach((component) => { components[component].pressure = pressure[component]; });
+  STRESS_COMPONENTS.forEach((component) => { components[component].pressure = pressure[component]; });
   const finalized = Object.fromEntries(Object.entries(components).map(([key, value]) => [
     key, freeze({
       ...value,
@@ -100,8 +101,21 @@ function targetResult(target, contributions, pressureRows) {
     surface: target.surface,
     description: target.description,
     components: finalized,
+    principalStresses: principalStresses(finalized),
     vonMises: vonMises(finalized),
   });
+}
+
+function validateRequestAgainstProfile(request, profile) {
+  const profileTargets = profile.targets.map((row) => row.targetId).sort(compare);
+  const mappedTargets = request.sourceCustody.targetMappings.map((row) => row.targetId).sort(compare);
+  const pressureTargets = request.pressureByTarget.map((row) => row.targetId).sort(compare);
+  if (JSON.stringify(mappedTargets) !== JSON.stringify(profileTargets)) {
+    fail('CORRELATION_TARGET_MAPPING_SET_MISMATCH', 'sourceCustody.targetMappings');
+  }
+  if (JSON.stringify(pressureTargets) !== JSON.stringify(profileTargets)) {
+    fail('CORRELATION_PRESSURE_TARGET_SET_MISMATCH', 'pressureByTarget');
+  }
 }
 
 function canonicalRequest(input) {
@@ -182,6 +196,16 @@ function normalizedLoadStress(load, basis, geometry) {
   fail('CORRELATION_LOAD_BASIS_UNSUPPORTED', 'loadBasis');
 }
 
+function principalStresses(components) {
+  const sx = components.SIGMA_X.totalSurface;
+  const st = components.SIGMA_THETA.totalSurface;
+  const sr = components.SIGMA_R.totalSurface;
+  const tau = components.TAU_XTHETA.totalSurface;
+  const average = (sx + st) / 2;
+  const radius = Math.sqrt(((sx - st) / 2) ** 2 + tau ** 2);
+  return [average + radius, average - radius, sr].sort((a, b) => b - a);
+}
+
 function vonMises(components) {
   const sx = components.SIGMA_X.totalSurface;
   const st = components.SIGMA_THETA.totalSurface;
@@ -252,5 +276,6 @@ function exactKeys(value, expected, path) {
 function finite(value, path) { if (!Number.isFinite(value)) fail('CORRELATION_NUMBER_NON_FINITE', path); }
 function positive(value, path) { finite(value, path); if (value <= 0) fail('CORRELATION_NUMBER_NOT_POSITIVE', path); }
 function requiredString(value, path) { if (typeof value !== 'string' || !value) fail('CORRELATION_STRING_REQUIRED', path); }
+function compare(a, b) { return a < b ? -1 : a > b ? 1 : 0; }
 function fail(code, path) { const error = new Error(code); error.code = code; error.path = path; throw error; }
 function freeze(value) { if (!value || typeof value !== 'object' || Object.isFrozen(value)) return value; Object.values(value).forEach(freeze); return Object.freeze(value); }

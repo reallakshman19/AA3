@@ -24,6 +24,8 @@ const ROOT = path.resolve('.');
 const read = (relativePath) => fs.readFileSync(path.join(ROOT, relativePath), 'utf8');
 const masterUi = read('src/workspace/master-data-ui.js');
 const importMasters = read('src/calc-workspace/cii-standalone-port/ui-adapted/xml-cii-adapted-import-masters.js');
+const previewSearchSource = read('src/calc-workspace/cii-standalone-port/ui-adapted/xml-cii-adapted-import-preview-search.js');
+const masterContextSource = read('src/calc-workspace/cii-standalone-port/xml-cii-master-context.js');
 const authorizedConsumer = read('src/workspace/enrichment/authorized-enrichment-consumer-controller.js');
 const engineeringController = read('src/workspace/engineering-model-controller.js');
 const jsonTrace = read('src/workspace/json-trace-ui.js');
@@ -233,8 +235,8 @@ function pass(id, description) {
   pass('F-010', 'clear and replacement imports preserve monotonic runtime currentness');
 }
 
-// F-011 — full preview-search materialization normalizes exactly one row source.
-// When canonical rows are present, raw rows are not redundantly normalized.
+// F-011 — full preview-search materialization visits exactly one row source.
+// When canonical rows are present, raw rows are not redundantly traversed.
 {
   const canonicalRows = Array.from({ length: 50 }, (_, index) => ({
     type: `VALVE-${index}`,
@@ -255,11 +257,13 @@ function pass(id, description) {
   const metrics = getPreviewSearchMetrics();
   assert.equal(index.length, 50);
   assert.equal(metrics.rowBuilds, 1);
-  assert.equal(metrics.rowsNormalized, 50,
-    'F-011: rawRows must not also be normalized when canonical master.rows exist');
+  assert.equal(metrics.sourceRowsVisited, 50,
+    'F-011: rawRows must not also be visited when canonical master.rows exist');
+  assert.equal(metrics.lineRowsNormalized, 0);
+  assert.equal(metrics.mappingResolutions, 0);
   assert.equal(metrics.searchIndexBuilds, 1);
   assert.equal(metrics.searchTextRows, 50);
-  pass('F-011', 'preview search normalizes one authoritative row source and builds search text once');
+  pass('F-011', 'preview search visits one authoritative row source and builds search text once');
 }
 
 // F-012 — initial Preview render must not materialize the full searchable master.
@@ -272,6 +276,42 @@ function pass(id, description) {
   assert.match(importMasters, /PREVIEW_SEARCH_DEBOUNCE_MS = 120/u);
   assert.match(importMasters, /PREVIEW_SEARCH_RESULT_LIMIT = 150/u);
   pass('F-012', 'full master preview search is lazy, cached per rendered master and debounced');
+}
+
+// F-013 — imported normalized Line List rows are reused for search. If a legacy
+// raw row requires projection, mapping/support config resolution is outside the
+// per-row normalizer and therefore can occur at most once per build.
+{
+  const normalizedLineRows = Array.from({ length: 200 }, (_, index) => ({
+    lineKey: `SYS-${index}`,
+    lineNoKey: `SYS-${index}`,
+    lineKey1: 'SYS',
+    lineSeqNo: String(index),
+    operatingFluidDensity: '',
+    densitySource: 'none',
+  }));
+  resetPreviewSearchMetrics();
+  const index = buildPreviewSearchIndex(
+    { key: 'lineList', rows: normalizedLineRows },
+    {
+      supportConfigJson: 'intentionally-not-json',
+      masterContext: { rawRows: { lineList: [] }, config: {} },
+    },
+  );
+  const metrics = getPreviewSearchMetrics();
+  assert.equal(index.length, 200);
+  assert.equal(metrics.sourceRowsVisited, 200);
+  assert.equal(metrics.lineRowsNormalized, 0,
+    'F-013: already-normalized Line List rows must not be normalized again');
+  assert.equal(metrics.mappingResolutions, 0,
+    'F-013: canonical rows must not need mapping resolution');
+  assert.equal(metrics.supportConfigParses, 0,
+    'F-013: canonical rows must not parse supportConfigJson');
+  assert.match(masterContextSource, /rows: lineRows/u);
+  assert.match(previewSearchSource, /let fieldMap = null/u);
+  assert.match(previewSearchSource, /if \(fieldMap === null\) fieldMap = mappedFieldMap\(master\.key, state\)/u);
+  assert.doesNotMatch(previewSearchSource, /function normalizePreviewSearchRow\(row, masterKey, state/u);
+  pass('F-013', 'Line List search reuses canonical rows and removes per-row config parsing');
 }
 
 console.log('\nCONTAINMENT STATUS: PASS.');

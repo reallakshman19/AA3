@@ -3,7 +3,7 @@ import {
   insertInteriorPoint,
   triangulateRefinedRegionAsIndexTriples,
 } from '../core/lafea-meshing/interior-refinement-t6.js';
-import { edgeKey, lawsonFlip } from '../core/lafea-meshing/constrained-delaunay-t6.js';
+import { lawsonFlip } from '../core/lafea-meshing/constrained-delaunay-t6.js';
 import { createLafeaAnalysisGeometry } from './lafea-analysis-geometry-contract.js';
 import { canonicalLafeaAnalysisMeshProfile } from './lafea-analysis-mesh-contract.js';
 import {
@@ -79,6 +79,16 @@ export function planLafea4GradedShellRefinement(input) {
     fail('LAFEA4_GRADED_REFINEMENT_TARGET_NOT_SMALLER_THAN_GLOBAL');
   }
 
+  const capability = LAFEA4_GRADED_REFINEMENT_CAPABILITY;
+  const qualification = LAFEA4_GRADED_REFINEMENT_QUALIFICATION;
+  if (capability.executionScope !== 'QUALIFICATION_HARNESS_ONLY'
+    || qualification.authorizedExecutionScope !== capability.executionScope
+    || qualification.capabilityHash !== capability.capabilityHash
+    || qualification.productionBindingAuthorized !== false
+    || qualification.releaseQualified !== false) {
+    fail('LAFEA4_GRADED_REFINEMENT_QUALIFICATION_AUTHORITY_INVALID');
+  }
+
   const targets = targetUvs(parent.mesh, midsurface.geometry, surfaceKind, command);
   const parameterGeometry = shellMidsurfaceParameterGeometry(midsurface);
   const boundaryEdges = geometryBoundaryEdges(parameterGeometry);
@@ -90,8 +100,6 @@ export function planLafea4GradedShellRefinement(input) {
     boundaryEdges,
   });
   const subdivided = subdivideParameterGeometry(parameterGeometry, transitionPlan);
-  const capability = LAFEA4_GRADED_REFINEMENT_CAPABILITY;
-  const qualification = LAFEA4_GRADED_REFINEMENT_QUALIFICATION;
   const core = {
     schema: LAFEA4_GRADED_REFINEMENT_PLAN_SCHEMA,
     stageId: 'LAFEA.4',

@@ -1,31 +1,17 @@
 import { semanticHash } from '../shared-primitives/canonical-json.js';
 import { calculateLocalAttachmentCorrelation } from './calculate.js';
+import {
+  CORRELATION_QUALIFICATION_OBSERVATION_TYPES,
+  evaluateCorrelationQualificationObservation,
+  validateCorrelationQualificationObservation,
+} from './qualification-observations.js';
 import { createCorrelationProfile } from './profile.js';
 
 export const CORRELATION_QUALIFICATION_SUITE_SCHEMA =
   'local-attachment-correlation-qualification-suite/v1';
 export const CORRELATION_QUALIFICATION_EVIDENCE_SCHEMA =
   'local-attachment-correlation-qualification-evidence/v1';
-
-export const CORRELATION_QUALIFICATION_OBSERVATION_TYPES = Object.freeze([
-  'QUALIFICATION_STATE',
-  'DIAGNOSTIC_CODE',
-  'GEOMETRY_PARAMETER',
-  'CONTRIBUTION',
-  'INTERPOLATION_AXIS',
-  'TARGET_COMPONENT',
-  'TARGET_PRINCIPAL',
-  'TARGET_VON_MISES',
-]);
-
-const NUMERIC_FIELDS = Object.freeze({
-  GEOMETRY_PARAMETER: new Set(['diameterRatio', 'diameterThicknessRatio']),
-  CONTRIBUTION: new Set(['sourceLoad', 'basisStress', 'coefficient', 'stressContribution']),
-  INTERPOLATION_AXIS: new Set(['lower', 'upper', 'weight']),
-  TARGET_COMPONENT: new Set([
-    'membrane', 'bending', 'shear', 'pressure', 'mechanicalSurface', 'totalSurface',
-  ]),
-});
+export { CORRELATION_QUALIFICATION_OBSERVATION_TYPES };
 
 export function createCorrelationQualificationSuite(options) {
   const profile = createCorrelationProfile(options?.profile);
@@ -60,8 +46,7 @@ export function validateCorrelationQualificationSuite(value) {
   requiredHash(value.profileSemanticHash, 'qualificationSuite.profileSemanticHash');
   const cases = validateCases(value.cases);
   const { semanticHash: retainedHash, ...base } = value;
-  const normalized = { ...base, cases };
-  if (retainedHash !== semanticHash(normalized)) {
+  if (retainedHash !== semanticHash({ ...base, cases })) {
     fail('CORRELATION_QUALIFICATION_SUITE_HASH_MISMATCH', 'qualificationSuite.semanticHash');
   }
   return freeze(structuredClone(value));
@@ -70,13 +55,14 @@ export function validateCorrelationQualificationSuite(value) {
 export function executeCorrelationQualificationSuite(suiteInput, profileInput) {
   const suite = validateCorrelationQualificationSuite(suiteInput);
   const profile = createCorrelationProfile(profileInput);
-  validateSuiteProfileBinding(suite, profile);
+  assertProfileBinding(suite, profile, 'qualificationSuite');
   const caseResults = suite.cases.map((caseRow) => executeCase(caseRow, profile));
   const status = caseResults.every((row) => row.status === 'PASS') ? 'PASS' : 'FAIL';
   const base = {
     schema: CORRELATION_QUALIFICATION_EVIDENCE_SCHEMA,
     suiteIdentity: suite.suiteIdentity,
     suiteSemanticHash: suite.semanticHash,
+    qualificationSuite: suite,
     methodIdentity: profile.methodIdentity,
     methodEdition: profile.methodEdition,
     coefficientDatasetId: profile.coefficientDatasetId,
@@ -90,27 +76,27 @@ export function executeCorrelationQualificationSuite(suiteInput, profileInput) {
 
 export function validateCorrelationQualificationEvidence(value) {
   exactKeys(value, [
-    'schema', 'suiteIdentity', 'suiteSemanticHash', 'methodIdentity', 'methodEdition',
-    'coefficientDatasetId', 'coefficientDatasetHash', 'profileSemanticHash',
-    'status', 'caseResults', 'semanticHash',
+    'schema', 'suiteIdentity', 'suiteSemanticHash', 'qualificationSuite',
+    'methodIdentity', 'methodEdition', 'coefficientDatasetId',
+    'coefficientDatasetHash', 'profileSemanticHash', 'status', 'caseResults',
+    'semanticHash',
   ], 'qualificationEvidence');
   if (value.schema !== CORRELATION_QUALIFICATION_EVIDENCE_SCHEMA) {
     fail('CORRELATION_QUALIFICATION_EVIDENCE_SCHEMA_MISMATCH', 'qualificationEvidence.schema');
   }
+  const suite = validateCorrelationQualificationSuite(value.qualificationSuite);
   requiredString(value.suiteIdentity, 'qualificationEvidence.suiteIdentity');
   requiredHash(value.suiteSemanticHash, 'qualificationEvidence.suiteSemanticHash');
-  requiredString(value.methodIdentity, 'qualificationEvidence.methodIdentity');
-  requiredString(value.methodEdition, 'qualificationEvidence.methodEdition');
-  requiredString(value.coefficientDatasetId, 'qualificationEvidence.coefficientDatasetId');
-  requiredHash(value.coefficientDatasetHash, 'qualificationEvidence.coefficientDatasetHash');
-  requiredHash(value.profileSemanticHash, 'qualificationEvidence.profileSemanticHash');
+  if (value.suiteIdentity !== suite.suiteIdentity || value.suiteSemanticHash !== suite.semanticHash) {
+    fail('CORRELATION_QUALIFICATION_EVIDENCE_SUITE_MISMATCH',
+      'qualificationEvidence.qualificationSuite');
+  }
+  assertBindingFields(value, suite, 'qualificationEvidence');
   if (!['PASS', 'FAIL'].includes(value.status)) {
     fail('CORRELATION_QUALIFICATION_EVIDENCE_STATUS_INVALID', 'qualificationEvidence.status');
   }
-  if (!Array.isArray(value.caseResults) || !value.caseResults.length) {
-    fail('CORRELATION_QUALIFICATION_EVIDENCE_CASES_REQUIRED', 'qualificationEvidence.caseResults');
-  }
-  const expectedStatus = value.caseResults.every((row) => row?.status === 'PASS') ? 'PASS' : 'FAIL';
+  validateCaseResults(value.caseResults);
+  const expectedStatus = value.caseResults.every((row) => row.status === 'PASS') ? 'PASS' : 'FAIL';
   if (value.status !== expectedStatus) {
     fail('CORRELATION_QUALIFICATION_EVIDENCE_STATUS_MISMATCH', 'qualificationEvidence.status');
   }
@@ -124,7 +110,7 @@ export function validateCorrelationQualificationEvidence(value) {
 function executeCase(caseRow, profile) {
   const result = calculateLocalAttachmentCorrelation(caseRow.request, profile);
   const observations = caseRow.observations.map((observation) =>
-    evaluateObservation(observation, result));
+    evaluateCorrelationQualificationObservation(observation, result));
   return freeze({
     caseId: caseRow.caseId,
     requestIdentity: caseRow.request.requestIdentity ?? null,
@@ -134,189 +120,91 @@ function executeCase(caseRow, profile) {
   });
 }
 
-function evaluateObservation(observation, result) {
-  let actual;
-  let pass;
-  try {
-    actual = observationValue(observation, result);
-    pass = compareObservation(observation, actual);
-  } catch (error) {
-    actual = null;
-    pass = false;
-  }
-  return freeze({
-    observationId: observation.observationId,
-    type: observation.type,
-    expected: observation.expected,
-    tolerance: observation.tolerance,
-    actual,
-    pass,
-  });
-}
-
-function observationValue(observation, result) {
-  switch (observation.type) {
-    case 'QUALIFICATION_STATE': return result.qualification?.state ?? null;
-    case 'DIAGNOSTIC_CODE': return result.diagnostics?.map((row) => row.code) ?? [];
-    case 'GEOMETRY_PARAMETER': return result.geometryParameters?.[observation.field] ?? null;
-    case 'CONTRIBUTION': return uniqueBy(result.contributions, 'responseId', observation.responseId,
-      'contributions')[observation.field];
-    case 'INTERPOLATION_AXIS': {
-      const row = uniqueBy(result.contributions, 'responseId', observation.responseId,
-        'contributions');
-      return row.interpolationEvidence?.[observation.axis]?.[observation.field] ?? null;
-    }
-    case 'TARGET_COMPONENT': {
-      const target = uniqueBy(result.targetResults, 'targetId', observation.targetId,
-        'targetResults');
-      return target.components?.[observation.stressComponent]?.[observation.field] ?? null;
-    }
-    case 'TARGET_PRINCIPAL': {
-      const target = uniqueBy(result.targetResults, 'targetId', observation.targetId,
-        'targetResults');
-      return target.principalStresses?.[observation.principalIndex] ?? null;
-    }
-    case 'TARGET_VON_MISES': return uniqueBy(
-      result.targetResults, 'targetId', observation.targetId, 'targetResults',
-    ).vonMises;
-    default: fail('CORRELATION_QUALIFICATION_OBSERVATION_TYPE_UNSUPPORTED', 'observation.type');
-  }
-}
-
-function compareObservation(observation, actual) {
-  if (observation.type === 'DIAGNOSTIC_CODE') {
-    return Array.isArray(actual) && actual.includes(observation.expected);
-  }
-  if (typeof observation.expected === 'number') {
-    return Number.isFinite(actual)
-      && Math.abs(actual - observation.expected) <= observation.tolerance;
-  }
-  return actual === observation.expected;
-}
-
 function validateCases(values) {
   if (!Array.isArray(values) || !values.length) {
     fail('CORRELATION_QUALIFICATION_CASES_REQUIRED', 'cases');
   }
-  const identities = new Set();
+  const caseIds = new Set();
   return values.map((caseRow, caseIndex) => {
     exactKeys(caseRow, ['caseId', 'request', 'observations'], `cases[${caseIndex}]`);
     const caseId = requiredString(caseRow.caseId, `cases[${caseIndex}].caseId`);
-    if (identities.has(caseId)) fail('CORRELATION_QUALIFICATION_CASE_DUPLICATE', `cases[${caseIndex}].caseId`);
-    identities.add(caseId);
+    if (caseIds.has(caseId)) fail('CORRELATION_QUALIFICATION_CASE_DUPLICATE',
+      `cases[${caseIndex}].caseId`);
+    caseIds.add(caseId);
     if (!caseRow.request || typeof caseRow.request !== 'object' || Array.isArray(caseRow.request)) {
       fail('CORRELATION_QUALIFICATION_REQUEST_REQUIRED', `cases[${caseIndex}].request`);
     }
     if (!Array.isArray(caseRow.observations) || !caseRow.observations.length) {
-      fail('CORRELATION_QUALIFICATION_OBSERVATIONS_REQUIRED', `cases[${caseIndex}].observations`);
+      fail('CORRELATION_QUALIFICATION_OBSERVATIONS_REQUIRED',
+        `cases[${caseIndex}].observations`);
     }
     const observationIds = new Set();
     const observations = caseRow.observations.map((row, observationIndex) => {
-      const validated = validateObservation(row,
+      const observation = validateCorrelationQualificationObservation(row,
         `cases[${caseIndex}].observations[${observationIndex}]`);
-      if (observationIds.has(validated.observationId)) {
+      if (observationIds.has(observation.observationId)) {
         fail('CORRELATION_QUALIFICATION_OBSERVATION_DUPLICATE',
           `cases[${caseIndex}].observations[${observationIndex}].observationId`);
       }
-      observationIds.add(validated.observationId);
-      return validated;
+      observationIds.add(observation.observationId);
+      return observation;
     });
     return freeze({ caseId, request: structuredClone(caseRow.request), observations });
   });
 }
 
-function validateObservation(value, path) {
-  if (!value || typeof value !== 'object' || Array.isArray(value)) {
-    fail('CORRELATION_QUALIFICATION_OBSERVATION_REQUIRED', path);
+function validateCaseResults(values) {
+  if (!Array.isArray(values) || !values.length) {
+    fail('CORRELATION_QUALIFICATION_EVIDENCE_CASES_REQUIRED',
+      'qualificationEvidence.caseResults');
   }
-  const type = value.type;
-  if (!CORRELATION_QUALIFICATION_OBSERVATION_TYPES.includes(type)) {
-    fail('CORRELATION_QUALIFICATION_OBSERVATION_TYPE_UNSUPPORTED', `${path}.type`);
-  }
-  const common = ['observationId', 'type', 'expected', 'tolerance'];
-  const extras = observationExtraKeys(type);
-  exactKeys(value, [...common, ...extras], path);
-  requiredString(value.observationId, `${path}.observationId`);
-  validateExpectedAndTolerance(value, path);
-  validateObservationSelector(value, path);
-  return freeze(structuredClone(value));
+  const ids = new Set();
+  values.forEach((row, index) => {
+    exactKeys(row, [
+      'caseId', 'requestIdentity', 'status', 'resultQualificationState', 'observations',
+    ], `qualificationEvidence.caseResults[${index}]`);
+    requiredString(row.caseId, `qualificationEvidence.caseResults[${index}].caseId`);
+    if (ids.has(row.caseId)) fail('CORRELATION_QUALIFICATION_EVIDENCE_CASE_DUPLICATE',
+      `qualificationEvidence.caseResults[${index}].caseId`);
+    ids.add(row.caseId);
+    if (!['PASS', 'FAIL'].includes(row.status)) fail(
+      'CORRELATION_QUALIFICATION_EVIDENCE_CASE_STATUS_INVALID',
+      `qualificationEvidence.caseResults[${index}].status`);
+    if (!Array.isArray(row.observations) || !row.observations.length) fail(
+      'CORRELATION_QUALIFICATION_EVIDENCE_OBSERVATIONS_REQUIRED',
+      `qualificationEvidence.caseResults[${index}].observations`);
+    const expected = row.observations.every((observation) => observation?.pass === true)
+      ? 'PASS' : 'FAIL';
+    if (row.status !== expected) fail('CORRELATION_QUALIFICATION_EVIDENCE_CASE_STATUS_MISMATCH',
+      `qualificationEvidence.caseResults[${index}].status`);
+  });
 }
 
-function observationExtraKeys(type) {
-  if (type === 'GEOMETRY_PARAMETER') return ['field'];
-  if (type === 'CONTRIBUTION') return ['responseId', 'field'];
-  if (type === 'INTERPOLATION_AXIS') return ['responseId', 'axis', 'field'];
-  if (type === 'TARGET_COMPONENT') return ['targetId', 'stressComponent', 'field'];
-  if (type === 'TARGET_PRINCIPAL') return ['targetId', 'principalIndex'];
-  if (type === 'TARGET_VON_MISES') return ['targetId'];
-  return [];
-}
-
-function validateExpectedAndTolerance(value, path) {
-  if (typeof value.expected === 'number') {
-    if (!Number.isFinite(value.expected)) fail('CORRELATION_QUALIFICATION_EXPECTED_NON_FINITE', `${path}.expected`);
-    if (!Number.isFinite(value.tolerance) || value.tolerance < 0) {
-      fail('CORRELATION_QUALIFICATION_TOLERANCE_INVALID', `${path}.tolerance`);
-    }
-    return;
-  }
-  if (typeof value.expected !== 'string' && typeof value.expected !== 'boolean') {
-    fail('CORRELATION_QUALIFICATION_EXPECTED_INVALID', `${path}.expected`);
-  }
-  if (value.tolerance !== null) fail('CORRELATION_QUALIFICATION_NON_NUMERIC_TOLERANCE', `${path}.tolerance`);
-}
-
-function validateObservationSelector(value, path) {
-  if (value.type === 'GEOMETRY_PARAMETER' && !NUMERIC_FIELDS.GEOMETRY_PARAMETER.has(value.field)) {
-    fail('CORRELATION_QUALIFICATION_GEOMETRY_FIELD_UNSUPPORTED', `${path}.field`);
-  }
-  if (value.type === 'CONTRIBUTION') {
-    requiredString(value.responseId, `${path}.responseId`);
-    if (!NUMERIC_FIELDS.CONTRIBUTION.has(value.field)) fail('CORRELATION_QUALIFICATION_CONTRIBUTION_FIELD_UNSUPPORTED', `${path}.field`);
-  }
-  if (value.type === 'INTERPOLATION_AXIS') {
-    requiredString(value.responseId, `${path}.responseId`);
-    if (!['x', 'y'].includes(value.axis)) fail('CORRELATION_QUALIFICATION_INTERPOLATION_AXIS_UNSUPPORTED', `${path}.axis`);
-    if (![...NUMERIC_FIELDS.INTERPOLATION_AXIS, 'exactKnot'].includes(value.field)) {
-      fail('CORRELATION_QUALIFICATION_INTERPOLATION_FIELD_UNSUPPORTED', `${path}.field`);
-    }
-  }
-  if (value.type === 'TARGET_COMPONENT') {
-    requiredString(value.targetId, `${path}.targetId`);
-    requiredString(value.stressComponent, `${path}.stressComponent`);
-    if (!NUMERIC_FIELDS.TARGET_COMPONENT.has(value.field)) fail('CORRELATION_QUALIFICATION_TARGET_COMPONENT_FIELD_UNSUPPORTED', `${path}.field`);
-  }
-  if (value.type === 'TARGET_PRINCIPAL') {
-    requiredString(value.targetId, `${path}.targetId`);
-    if (!Number.isInteger(value.principalIndex) || value.principalIndex < 0 || value.principalIndex > 2) {
-      fail('CORRELATION_QUALIFICATION_PRINCIPAL_INDEX_INVALID', `${path}.principalIndex`);
-    }
-  }
-  if (value.type === 'TARGET_VON_MISES') requiredString(value.targetId, `${path}.targetId`);
-}
-
-function validateSuiteProfileBinding(suite, profile) {
-  const checks = {
+function assertProfileBinding(value, profile, path) {
+  const expected = {
     methodIdentity: profile.methodIdentity,
     methodEdition: profile.methodEdition,
     coefficientDatasetId: profile.coefficientDatasetId,
     coefficientDatasetHash: profile.coefficientDatasetHash,
     profileSemanticHash: semanticHash(profile),
   };
-  for (const [key, expected] of Object.entries(checks)) {
-    if (suite[key] !== expected) fail('CORRELATION_QUALIFICATION_SUITE_PROFILE_MISMATCH', `qualificationSuite.${key}`);
+  for (const [key, expectedValue] of Object.entries(expected)) {
+    if (value[key] !== expectedValue) {
+      fail('CORRELATION_QUALIFICATION_SUITE_PROFILE_MISMATCH', `${path}.${key}`);
+    }
   }
 }
 
-function uniqueBy(rows, key, identity, path) {
-  if (!Array.isArray(rows)) fail('CORRELATION_QUALIFICATION_RESULT_COLLECTION_REQUIRED', path);
-  const matches = rows.filter((row) => row?.[key] === identity);
-  if (matches.length !== 1) fail(
-    matches.length ? 'CORRELATION_QUALIFICATION_RESULT_IDENTITY_COLLISION'
-      : 'CORRELATION_QUALIFICATION_RESULT_ENTITY_NOT_FOUND', path,
-  );
-  return matches[0];
+function assertBindingFields(value, suite, path) {
+  for (const key of [
+    'methodIdentity', 'methodEdition', 'coefficientDatasetId',
+    'coefficientDatasetHash', 'profileSemanticHash',
+  ]) {
+    if (value[key] !== suite[key]) fail('CORRELATION_QUALIFICATION_EVIDENCE_PROFILE_MISMATCH',
+      `${path}.${key}`);
+  }
 }
+
 function requiredHash(value, path) {
   requiredString(value, path);
   if (!/^fnv1a64:[0-9a-f]{16}$/u.test(value)) fail('CORRELATION_HASH_FORMAT_INVALID', path);

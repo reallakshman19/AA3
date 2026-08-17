@@ -79,6 +79,7 @@ export class LafeaWorkbenchController {
       onMock: (stageId) => this.loadMockData(stageId),
       onFile: (file) => this.loadFile(file),
       onRun: () => this.run(),
+      onPrepareContinuum: () => this.prepareContinuumForRun(),
       onExport: () => this.downloadDocument(),
       onUndo: () => this.undo(),
       onRedo: () => this.redo(),
@@ -249,6 +250,7 @@ export class LafeaWorkbenchController {
   planAnalysisMesh(o = {}, s = this.getState().activeStageId) { return this.store.planAnalysisMesh(o, s); }
   generateAnalysisMesh(o = {}, s = this.getState().activeStageId) { return this.store.generateAnalysisMesh(o, s); }
   refineAnalysisMesh(r = {}, s = this.getState().activeStageId) { return this.store.refineAnalysisMesh(r, s); }
+  prepareContinuumForRun(s = this.getState().activeStageId) { return this.store.prepareContinuumForRun(s); }
   selectRetainedAnalysisMeshEvidenceV2(s = this.getState().activeStageId) { return this.store.selectRetainedAnalysisMeshEvidenceV2(s); }
 
   buildAnalysisMeshCustodyProjection(stageId = this.getState().activeStageId) {

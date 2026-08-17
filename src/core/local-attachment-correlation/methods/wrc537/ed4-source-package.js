@@ -21,6 +21,8 @@ export function evaluateWrc537Ed4SourcePackage({ sourcePackage, sourceLedgerRows
   const gates = [
     gate('PACKAGE_SCHEMA', sourcePackage.schema === WRC537_ED4_SOURCE_PACKAGE_SCHEMA,
       'Package schema must be the Edition 4 intake contract.'),
+    gate('SOURCE_LEDGER_IDS_UNIQUE', sourceLedgerIdsUnique(sourceLedgerRows),
+      'Every source-ledger record ID must be non-empty and unique.'),
     gate('EDITION_IDENTITY', editionIdentityExact(sourcePackage),
       'Bulletin number, edition and publication date must exactly identify WRC 537 Edition 4 / 2026-02.'),
     gate('CATALOG_IDENTITY_SOURCE', catalogIdentityQualified(sourcePackage, ledgerById),
@@ -28,17 +30,19 @@ export function evaluateWrc537Ed4SourcePackage({ sourcePackage, sourceLedgerRows
     gate('PRIMARY_TECHNICAL_SOURCE', primaryTechnicalSourceQualified(sourcePackage, ledgerById),
       'A licensed or otherwise authorized Edition 4 technical source must be retained with digest and ledger custody.'),
     gate('GEOMETRY_COMPLETE', geometryComplete(sourcePackage, ledgerById),
-      'Every consumed geometry definition must be explicit and backed by Edition 4 primary technical source custody.'),
+      'Geometry and physical applicability must be explicit and backed by Edition 4 primary technical source custody.'),
     gate('PARAMETERS_COMPLETE', parametersComplete(sourcePackage, ledgerById),
       'All required dimensionless parameter equations, inputs, numerical domains and boundary inclusivity must be source-qualified.'),
     gate('LOAD_CONVENTIONS_COMPLETE', loadConventionsComplete(sourcePackage, ledgerById),
       'All supported force/moment symbols require exact physical direction, positive sign, reference point and primary source custody.'),
     gate('STRESS_RECOVERY_COMPLETE', stressRecoveryComplete(sourcePackage, ledgerById),
-      'Stress components, classes, surfaces, recovery locations and reconstruction conventions must be source-qualified.'),
+      'Stress components, classes, surfaces, recovery locations, reconstruction and source stress measure must be qualified.'),
     gate('INTERPOLATION_POLICY_COMPLETE', interpolationComplete(sourcePackage, ledgerById),
       'Interpolation/extrapolation behavior must be explicit and source-qualified.'),
     gate('COEFFICIENT_INVENTORY_DECLARED', sourcePackage?.coefficients?.inventoryDeclared === true,
       'The Edition 4 coefficient/equation inventory must be explicitly declared complete before numerical rows can qualify.'),
+    gate('COEFFICIENT_IDS_UNIQUE', coefficientIdsUnique(coefficientRows),
+      'Retained coefficient IDs must be unique within the Edition 4 package.'),
     gate('COEFFICIENTS_COMPLETE', coefficientsComplete(coefficientRows, ledgerById),
       'Every retained Edition 4 coefficient must contain a finite value, source precision and primary technical source locator.'),
     gate('BENCHMARKS_COMPLETE', benchmarksComplete(sourcePackage, ledgerById),
@@ -83,6 +87,11 @@ export function normalizeWrc537Ed4SourceDatum(datum, ledgerById) {
   });
 }
 
+function sourceLedgerIdsUnique(rows) {
+  if (rows.length === 0) return false;
+  const ids = rows.map((row) => row?.record_id);
+  return ids.every(resolved) && new Set(ids).size === ids.length;
+}
 function editionIdentityExact(pkg) {
   const id = pkg?.identity;
   return id?.bulletinNumber === TARGET_EDITION.bulletinNumber
@@ -96,7 +105,8 @@ function catalogIdentityQualified(pkg, ledger) {
     && row?.publisher === 'Welding Research Council, Inc.'
     && resolved(row?.locator)
     && row?.edition === TARGET_EDITION.edition
-    && row?.publication_date === TARGET_EDITION.publicationDate;
+    && row?.publication_date === TARGET_EDITION.publicationDate
+    && row?.verification_status === 'CATALOG_IDENTITY_VERIFIED';
 }
 function primaryTechnicalSourceQualified(pkg, ledger) {
   const src = pkg?.technicalSource;
@@ -109,15 +119,25 @@ function primaryTechnicalSourceQualified(pkg, ledger) {
     && isDigest(src?.documentDigest)
     && row?.record_id === src.sourceRef
     && isPrimaryTechnicalLedgerRow(row)
-    && row?.edition === TARGET_EDITION.edition
-    && row?.publication_date === TARGET_EDITION.publicationDate;
+    && row?.document_digest === src.documentDigest;
 }
 function geometryComplete(pkg, ledger) {
-  const rows = pkg?.geometry?.definitions;
-  return pkg?.geometry?.inventoryDeclared === true
+  const geometry = pkg?.geometry;
+  const rows = geometry?.definitions;
+  const applicability = geometry?.applicability;
+  return geometry?.inventoryDeclared === true
     && Array.isArray(rows) && rows.length > 0
     && rows.every((row) => resolved(row.symbol) && resolved(row.definition)
-      && primaryRef(row.sourceRef, ledger));
+      && primaryRef(row.sourceRef, ledger))
+    && Array.isArray(applicability?.hostShellFamilies) && applicability.hostShellFamilies.length > 0
+    && applicability.hostShellFamilies.every(resolved)
+    && Array.isArray(applicability?.attachmentFamilies) && applicability.attachmentFamilies.length > 0
+    && applicability.attachmentFamilies.every(resolved)
+    && resolved(applicability?.intersectionOrientation)
+    && resolved(applicability?.loadReferenceConvention)
+    && Array.isArray(applicability?.exclusions) && applicability.exclusions.length > 0
+    && applicability.exclusions.every(resolved)
+    && primaryRef(applicability?.sourceRef, ledger);
 }
 function parametersComplete(pkg, ledger) {
   const rows = pkg?.parameters;
@@ -151,7 +171,10 @@ function stressRecoveryComplete(pkg, ledger) {
     && stress.locations.every((row) => resolved(row.locationId) && resolved(row.surface)
       && resolved(row.physicalLocation) && primaryRef(row.sourceRef, ledger))
     && resolved(stress?.surfaceReconstruction?.rule)
-    && primaryRef(stress?.surfaceReconstruction?.sourceRef, ledger);
+    && primaryRef(stress?.surfaceReconstruction?.sourceRef, ledger)
+    && resolved(stress?.stressIntensityOrEquivalent?.definition)
+    && stress?.stressIntensityOrEquivalent?.dimensionallyVerified === true
+    && primaryRef(stress?.stressIntensityOrEquivalent?.sourceRef, ledger);
 }
 function interpolationComplete(pkg, ledger) {
   const row = pkg?.interpolation;
@@ -160,6 +183,10 @@ function interpolationComplete(pkg, ledger) {
     && resolved(row?.algorithm)
     && resolved(row?.boundaryBehavior)
     && primaryRef(row?.sourceRef, ledger);
+}
+function coefficientIdsUnique(rows) {
+  const ids = rows.map((row) => row?.coefficient_id);
+  return ids.every(resolved) && new Set(ids).size === ids.length;
 }
 function coefficientsComplete(rows, ledger) {
   return rows.length > 0 && rows.every((row) => coefficientQualified(row, ledger));
@@ -223,9 +250,11 @@ function primaryRef(sourceRef, ledger) {
 }
 function isPrimaryTechnicalLedgerRow(row) {
   return !!row && TECHNICAL_AUTHORITY_CLASSES.includes(row.authority_class)
+    && row.publisher === 'Welding Research Council, Inc.'
     && row.bulletin_number === '537'
     && row.edition === TARGET_EDITION.edition
     && row.publication_date === TARGET_EDITION.publicationDate
+    && isDigest(row.document_digest)
     && resolved(row.locator)
     && row.verification_status === 'PRIMARY_SOURCE_VERIFIED';
 }

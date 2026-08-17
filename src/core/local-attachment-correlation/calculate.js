@@ -136,20 +136,22 @@ function canonicalRequest(input) {
 function validateSourceCustody(value) {
   exactKeys(value, [
     'authorityType', 'sourceStageId', 'sourceRequestHash', 'sourceResultHash',
-    'screeningCaseId', 'targetMappings',
+    'geometryEvidenceHash', 'screeningCaseId', 'targetMappings',
   ], 'sourceCustody');
   if (!['SYNTHETIC_DIRECT', 'LAFEA2_RETAINED_RESULT'].includes(value.authorityType)) {
     fail('CORRELATION_SOURCE_AUTHORITY_TYPE_UNSUPPORTED', 'sourceCustody.authorityType');
   }
   if (value.authorityType === 'SYNTHETIC_DIRECT') {
     if (value.sourceStageId !== null || value.sourceRequestHash !== null
-      || value.sourceResultHash !== null || value.screeningCaseId !== null) {
+      || value.sourceResultHash !== null || value.geometryEvidenceHash !== null
+      || value.screeningCaseId !== null) {
       fail('CORRELATION_SYNTHETIC_SOURCE_CUSTODY_INVALID', 'sourceCustody');
     }
   } else {
     if (value.sourceStageId !== 'LAFEA.2') fail('CORRELATION_SOURCE_STAGE_MISMATCH', 'sourceCustody.sourceStageId');
     requiredString(value.sourceRequestHash, 'sourceCustody.sourceRequestHash');
     requiredString(value.sourceResultHash, 'sourceCustody.sourceResultHash');
+    requiredString(value.geometryEvidenceHash, 'sourceCustody.geometryEvidenceHash');
     requiredString(value.screeningCaseId, 'sourceCustody.screeningCaseId');
   }
   if (!Array.isArray(value.targetMappings)) fail('CORRELATION_TARGET_MAPPINGS_REQUIRED', 'sourceCustody.targetMappings');

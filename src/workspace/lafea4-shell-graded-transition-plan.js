@@ -11,18 +11,7 @@ export const LAFEA4_SHELL_GRADED_TRANSITION_POLICY = Object.freeze({
   releaseQualified: false,
 });
 
-/**
- * Build the deterministic size ladder and boundary-subdivision plan needed by
- * a later conforming LAFEA.4 shell-refinement executor.
- *
- * The ladder is purely mathematical: each size step is <= the already-bound
- * `adjacentSizeRatioMax`; the final step may be smaller than that ratio when
- * the global size is reached. Each non-global level receives at least two of
- * its own characteristic lengths of radial transition width. Boundary edges
- * are subdivided in UV, preserving their parent edge identity and exact
- * parametric line while allowing the later mesher to recover a conforming
- * constrained boundary.
- */
+/** Deterministic grading/boundary plan; this module does not execute a mesh. */
 export function buildLafea4ShellGradedTransitionPlan(value) {
   const globalSize = positive(value?.globalTargetElementLength, 'GLOBAL_TARGET');
   const localSize = positive(value?.localTargetElementLength, 'LOCAL_TARGET');
@@ -69,12 +58,12 @@ export function buildLafea4ShellGradedTransitionPlan(value) {
       u: (edge.start.u + edge.end.u) / 2,
       v: (edge.start.v + edge.end.v) / 2,
     };
-    const distanceToNearestTarget = nearestDistance(midpoint, targets);
+    // Use the closest point on the entire parent edge, not merely its midpoint.
+    // This is conservative for a long edge crossing more than one size band:
+    // the whole edge is split at the finest size required anywhere on it.
+    const distanceToNearestTarget = nearestTargetToSegmentDistance(edge, targets);
     const requestedSize = sizeAtDistance(distanceToNearestTarget, levels, bands);
-    const length = Math.hypot(
-      edge.end.u - edge.start.u,
-      edge.end.v - edge.start.v,
-    );
+    const length = Math.hypot(edge.end.u - edge.start.u, edge.end.v - edge.start.v);
     const segmentCount = Math.max(1, Math.ceil(length / requestedSize));
     const segmentLength = length / segmentCount;
     const splitFractions = Object.freeze(
@@ -128,8 +117,7 @@ export function buildLafea4ShellGradedTransitionPlan(value) {
   return freeze({
     ...core,
     semanticHash: canonicalLafeaSha256({
-      schema: 'lafea4-shell-graded-transition-plan-hash-input/v1',
-      plan: core,
+      schema: 'lafea4-shell-graded-transition-plan-hash-input/v1', plan: core,
     }),
   });
 }
@@ -138,48 +126,39 @@ export function lafea4ShellGradedSizeAt(plan, u, v) {
   if (!plan || plan.schema !== LAFEA4_SHELL_GRADED_TRANSITION_PLAN_SCHEMA) {
     fail('LAFEA4_GRADED_TRANSITION_PLAN_REQUIRED');
   }
-  const point = { u: finite(u, 'U'), v: finite(v, 'V') };
-  return sizeAtDistance(nearestDistance(point, plan.targets), plan.levels, plan.bands);
+  const query = { u: finite(u, 'U'), v: finite(v, 'V') };
+  return sizeAtDistance(nearestDistance(query, plan.targets), plan.levels, plan.bands);
 }
 
 function sizeLevels(local, global, growth) {
   const levels = [local];
   let current = local;
-  const maximumLevels = 128;
   while (current * growth < global - 64 * Number.EPSILON * Math.max(1, global)) {
     current *= growth;
     levels.push(current);
-    if (levels.length > maximumLevels) fail('LAFEA4_GRADED_TRANSITION_LEVEL_LIMIT');
+    if (levels.length > 128) fail('LAFEA4_GRADED_TRANSITION_LEVEL_LIMIT');
   }
   levels.push(global);
   return levels;
 }
-
 function sizeAtDistance(distance, levels, bands) {
   for (let index = 0; index < bands.length; index += 1) {
     if (distance <= bands[index].outerRadius + 64 * Number.EPSILON) return levels[index];
   }
   return levels.at(-1);
 }
-
 function canonicalTargets(value) {
   if (!Array.isArray(value) || value.length === 0 || value.length > 64) {
     fail('LAFEA4_GRADED_TRANSITION_TARGETS_INVALID');
   }
   const seen = new Set();
-  const rows = value.map((row) => {
+  return Object.freeze(value.map((row) => {
     const targetId = text(row?.targetId, 'TARGET_ID');
     if (seen.has(targetId)) fail('LAFEA4_GRADED_TRANSITION_TARGET_ID_DUPLICATE');
     seen.add(targetId);
-    return Object.freeze({
-      targetId,
-      u: finite(row.u, 'TARGET_U'),
-      v: finite(row.v, 'TARGET_V'),
-    });
-  }).sort((a, b) => a.targetId.localeCompare(b.targetId));
-  return Object.freeze(rows);
+    return Object.freeze({ targetId, u: finite(row.u, 'TARGET_U'), v: finite(row.v, 'TARGET_V') });
+  }).sort((a, b) => a.targetId.localeCompare(b.targetId)));
 }
-
 function canonicalBoundaryEdges(value) {
   if (!Array.isArray(value)) fail('LAFEA4_GRADED_TRANSITION_BOUNDARY_EDGES_INVALID');
   const seen = new Set();
@@ -200,18 +179,26 @@ function canonicalBoundaryEdges(value) {
     });
   }).sort((a, b) => a.parentBoundaryEdgeId.localeCompare(b.parentBoundaryEdgeId)));
 }
-
 function nearestDistance(pointValue, targets) {
-  return Math.min(...targets.map((target) => Math.hypot(
-    pointValue.u - target.u,
-    pointValue.v - target.v,
-  )));
+  return Math.min(...targets.map((target) => Math.hypot(pointValue.u - target.u, pointValue.v - target.v)));
+}
+function nearestTargetToSegmentDistance(edge, targets) {
+  return Math.min(...targets.map((target) => pointSegmentDistance(target, edge.start, edge.end)));
+}
+function pointSegmentDistance(pointValue, start, end) {
+  const du = end.u - start.u;
+  const dv = end.v - start.v;
+  const length2 = du * du + dv * dv;
+  if (!(length2 > 0)) return Math.hypot(pointValue.u - start.u, pointValue.v - start.v);
+  const t = Math.max(0, Math.min(1,
+    ((pointValue.u - start.u) * du + (pointValue.v - start.v) * dv) / length2));
+  return Math.hypot(
+    pointValue.u - (start.u + t * du),
+    pointValue.v - (start.v + t * dv),
+  );
 }
 function point(value, field) {
-  return Object.freeze({
-    u: finite(value?.u, `${field}_U`),
-    v: finite(value?.v, `${field}_V`),
-  });
+  return Object.freeze({ u: finite(value?.u, `${field}_U`), v: finite(value?.v, `${field}_V`) });
 }
 function positive(value, field) {
   const out = finite(value, field);

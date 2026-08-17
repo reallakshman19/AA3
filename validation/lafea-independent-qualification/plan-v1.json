@@ -111,6 +111,13 @@
       "args": ["scripts/lafea-tech12b-companion-atomicity-source-check.mjs"]
     },
     {
+      "id": "TECH12C_SOLVER_EXECUTION_COMPANION_BINDING",
+      "classification": "ENGINEERING",
+      "required": true,
+      "executable": "node",
+      "args": ["scripts/lafea-tech12c-solver-execution-companion-binding-check.mjs"]
+    },
+    {
       "id": "TECH7_GRADED_REFINEMENT_EXECUTOR",
       "classification": "ENGINEERING",
       "required": true,

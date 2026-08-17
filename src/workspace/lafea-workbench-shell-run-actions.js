@@ -42,7 +42,11 @@ export function createLafeaWorkbenchShellRunActions(context) {
       if (compiled.solverModelHash !== current.shellSolverModelProjection?.solverModelHash
         || compiled.solverModelBindingHash
           !== current.shellSolverModelProjection?.solverModelBindingHash
-        || compiled.parents.meshHash !== current.analysisMeshCustodyProjection?.meshHash) {
+        || compiled.parents.meshHash !== current.analysisMeshCustodyProjection?.meshHash
+        || compiled.parents.parentNormalCompanionHash
+          !== current.shellSolverModelProjection?.parentNormalCompanionHash
+        || compiled.parentNormalCustody.authorizationEffect
+          !== current.shellSolverModelProjection?.parentNormalAuthorizationEffect) {
         throw c.storeError('LAFEA_SHELL_RUN_SOLVER_MODEL_BINDING_STALE');
       }
 
@@ -62,6 +66,8 @@ export function createLafeaWorkbenchShellRunActions(context) {
         schema: 'lafea-shell-execution-mesh-binding/v1',
         stageId,
         retainedMeshHash: compiled.parents.meshHash,
+        parentNormalCompanionHash: compiled.parents.parentNormalCompanionHash,
+        parentNormalAuthorizationEffect: compiled.parentNormalCustody.authorizationEffect,
         solverModelHash: compiled.solverModelHash,
         solverModelBindingHash: compiled.solverModelBindingHash,
         executedKernelModelHash: outcome.executedKernelModelHash,
@@ -75,6 +81,8 @@ export function createLafeaWorkbenchShellRunActions(context) {
         analysisGeometryHash: compiled.parents.analysisGeometryHash,
         meshHash: compiled.parents.meshHash,
         meshProfileHash: compiled.parents.meshProfileHash,
+        parentNormalCompanionHash: compiled.parents.parentNormalCompanionHash,
+        parentNormalAuthorizationEffect: compiled.parentNormalCustody.authorizationEffect,
         solverModelHash: compiled.solverModelHash,
         executionMeshBindingHash,
         resultHash,
@@ -89,6 +97,10 @@ export function createLafeaWorkbenchShellRunActions(context) {
         analysisGeometryHash: compiled.parents.analysisGeometryHash,
         meshHash: compiled.parents.meshHash,
         meshProfileHash: compiled.parents.meshProfileHash,
+        parentNormalCompanionHash: compiled.parents.parentNormalCompanionHash,
+        parentNormalAuthorizationEffect: compiled.parentNormalCustody.authorizationEffect,
+        parentNormalCandidateQualification:
+          compiled.parentNormalCustody.companionCandidateQualification,
         solverModelHash: compiled.solverModelHash,
         solverModelBindingHash: compiled.solverModelBindingHash,
         executedKernelModelHash: outcome.executedKernelModelHash,
@@ -121,7 +133,11 @@ export function createLafeaWorkbenchShellRunActions(context) {
       }
       const after = c.readStageState(stageId);
       if (after.execution?.compiledExecutionHash !== compiledExecutionHash
-        || after.execution?.meshHash !== compiled.parents.meshHash) {
+        || after.execution?.meshHash !== compiled.parents.meshHash
+        || after.execution?.parentNormalCompanionHash
+          !== compiled.parents.parentNormalCompanionHash
+        || after.execution?.parentNormalAuthorizationEffect
+          !== compiled.parentNormalCustody.authorizationEffect) {
         throw c.storeError('LAFEA_SHELL_EXECUTION_PUBLICATION_DIVERGED');
       }
       c.clearOrchestratorDiagnostic();
@@ -149,6 +165,8 @@ function executeCompiledShell(stageId, compiled, meshEvidence) {
       executionMeshProofHash: canonicalLafeaSha256({
         schema: 'lafea4-shell-execution-mesh-proof/v1',
         retainedMeshHash: meshEvidence.meshHash,
+        parentNormalCompanionHash: compiled.parents.parentNormalCompanionHash,
+        parentNormalAuthorizationEffect: compiled.parentNormalCustody.authorizationEffect,
         compiledKernelModelHash: compiled.kernelModelHash,
         resultKernelModelHash: result?.canonicalModelSemanticHash ?? null,
         transferEvidence: compiled.transferEvidence,

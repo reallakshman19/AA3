@@ -1,0 +1,47 @@
+{
+  "schema": "lafea4-solver-execution-companion-binding-definition/v1",
+  "qualificationId": "LAFEA4-SOLVER-EXECUTION-COMPANION-BINDING-001",
+  "stageId": "LAFEA.4",
+  "scope": "TECH12B_COMPANION_TO_SOLVER_MODEL_AND_EXECUTION_MESH_CUSTODY",
+  "supportedSurfaceKinds": ["CYLINDRICAL", "CYLINDRICAL_HOLES"],
+  "authorizationEffect": "NONE_PENDING_QUALIFICATION",
+  "solverBindingRequirements": {
+    "solverParentsCarryExactCompanionHash": true,
+    "solverModelHashCoversCompanionCustody": true,
+    "solverModelBindingHashDirectlyCoversCompanionHash": true,
+    "solverProjectionExposesCompanionHash": true,
+    "solverProjectionExposesAuthorizationEffect": true
+  },
+  "executionBindingRequirements": {
+    "executionMeshProofHashDirectlyCoversCompanionHash": true,
+    "executionMeshBindingHashDirectlyCoversCompanionHash": true,
+    "compiledExecutionHashDirectlyCoversCompanionHash": true,
+    "retainedExecutionStateCarriesCompanionHash": true,
+    "publishedExecutionRechecksCompanionHash": true
+  },
+  "adversarialReversedMesh": {
+    "existingMeshQualification": "PASS",
+    "existingOrientationTopology": "PASS",
+    "companionCandidateQualification": "BLOCK",
+    "solverExecutionAuthorizedMustRemain": true,
+    "authorizationEffectMustRemain": "NONE_PENDING_QUALIFICATION",
+    "mustNotBeExecutedAsQualificationFixture": true
+  },
+  "nonApplicablePolicy": {
+    "lafea5CompanionHash": null,
+    "authorizationEffect": "NOT_APPLICABLE"
+  },
+  "hashSensitivity": {
+    "mutatingOnlyCompanionHashMustChangeSolverModelBindingHash": true,
+    "mutatingOnlyCompanionHashMustChangeExecutionMeshBindingHash": true
+  },
+  "prohibitions": [
+    "NO_PARENT_NORMAL_SOLVE_BLOCK_IN_TECH12C",
+    "NO_PARENT_NORMAL_RELEASE_AUTHORITY_IN_TECH12C",
+    "NO_CHANGE_TO_EXISTING_MESH_QUALITY_THRESHOLDS",
+    "NO_CHANGE_TO_EXISTING_CURVED_PRODUCER_DIRECTOR_GUARD",
+    "NO_EXECUTION_OF_REVERSED_MESH_AS_ACCEPTANCE_EVIDENCE"
+  ],
+  "productionBindingAuthorized": false,
+  "releaseQualified": false
+}

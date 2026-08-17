@@ -72,6 +72,7 @@ export function createLafea4ShellSolverCompanionCustody({
     companionWouldBlockIfActivated: companion.wouldBlockIfActivated,
     parentNormalProductionGateHash: productionGate.semanticHash,
     productionGateDecision: productionGate.gateDisposition,
+    productionGate,
     hardGateStatus: active
       ? 'ACTIVE_TRUSTED_TECH12D_RECORD'
       : LAFEA4_RETAINED_MESH_PARENT_NORMAL_HARD_GATE,
@@ -135,6 +136,15 @@ export function validateLafea4ShellSolverCompanionCustody(value) {
   if (value.productionGateDecision !== (active ? 'ALLOW' : 'NOT_ENFORCED')) {
     fail('LAFEA4_SHELL_SOLVER_COMPANION_GATE_DECISION_INVALID');
   }
+  const productionGate = validateLafea4ParentNormalProductionGate(value.productionGate);
+  if (productionGate.semanticHash !== value.parentNormalProductionGateHash
+    || productionGate.companionHash !== value.parentNormalCompanionHash
+    || productionGate.hardGateActivated !== active
+    || productionGate.gateDisposition !== value.productionGateDecision
+    || productionGate.solverExecutionAuthorized !== true
+    || productionGate.productionBindingAuthorized !== active) {
+    fail('LAFEA4_SHELL_SOLVER_COMPANION_GATE_BINDING_INVALID');
+  }
   const core = { ...value };
   delete core.semanticHash;
   const expected = canonicalLafeaSha256({
@@ -158,6 +168,7 @@ function notApplicable(stageId, surfaceKind = null) {
     companionWouldBlockIfActivated: false,
     parentNormalProductionGateHash: null,
     productionGateDecision: 'NOT_APPLICABLE',
+    productionGate: null,
     hardGateStatus: LAFEA4_RETAINED_MESH_PARENT_NORMAL_HARD_GATE,
     authorizationEffect: 'NOT_APPLICABLE',
     executionAuthorizationChanged: false,

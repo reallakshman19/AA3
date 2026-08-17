@@ -30,21 +30,23 @@ for (const token of [
 assert.match(projectHandler, /if \(topologyModelChanged && dataset\)/u);
 assert.match(projectHandler, /engineeringModelStore\.markEmpiricalStale\('PROJECT_DATA_CHANGED'/u);
 assert.match(projectHandler, /authorizedConsumerController\.refreshEmpirical\(\)/u);
-assert.match(projectHandler, /reason: 'authorization-changed'/u);
-assert.match(projectHandler, /governingChange: 'project-data-changed'/u);
-console.log('PASS D01 Project Data rebuild is dependency-directed while empirical authority always refreshes.');
+assert.match(projectHandler, /reason: 'project-data-changed'/u);
+assert.match(projectHandler, /topologyCheckAffected: false/u);
+console.log('PASS D01 Project Data rebuild is dependency-directed while empirical authority and legacy reason semantics remain current.');
 
 assert.doesNotMatch(masterHandler, /engineeringModelStore\.rebuild/u);
 assert.match(masterHandler, /engineeringModelStore\.markEmpiricalStale\('MASTER_DATA_CHANGED'/u);
 assert.match(masterHandler, /authorizedConsumerController\.refreshEmpirical\(\)/u);
-assert.match(masterHandler, /reason: 'authorization-changed'/u);
-assert.match(masterHandler, /governingChange: 'master-data-changed'/u);
-console.log('PASS D02 master changes cannot rebuild support/route models or publish a topology-refresh reason.');
+assert.match(masterHandler, /reason: 'master-data-changed'/u);
+assert.match(masterHandler, /topologyCheckAffected: false/u);
+console.log('PASS D02 master changes cannot rebuild support/route models and explicitly declare topology checker unaffected.');
 
-assert.match(loadChangeHandler, /if \(reason === 'project-data-changed' \|\| reason === 'master-data-changed'\)/u);
+assert.match(loadCalc, /\(\{ reason, distribution, topologyCheckAffected \}\) => this\.handleEngineeringChange\(reason, distribution, topologyCheckAffected\)/u);
+assert.match(loadChangeHandler, /handleEngineeringChange\(reason, distribution, topologyCheckAffected\)/u);
+assert.match(loadChangeHandler, /reason === 'project-data-changed' \|\| reason === 'master-data-changed'/u);
+assert.match(loadChangeHandler, /topologyCheckAffected !== false/u);
 assert.match(loadChangeHandler, /void this\.refreshTopologyCheck\(\)/u);
-assert.doesNotMatch(loadChangeHandler, /governingChange/u);
-console.log('PASS D03 existing LoadCalc refresh branch remains isolated from routed authorization changes.');
+console.log('PASS D03 LoadCalc suppresses topology work only on explicit dependency metadata; legacy events retain fail-safe refresh.');
 
 for (const token of [
   'datasetId:', 'datasetVersion:', 'sourceSha256:',
@@ -56,14 +58,14 @@ for (const forbidden of ['masterData', 'projectData', 'lineList', 'pipingClass',
 }
 console.log('PASS D04 canonical topology-check dependency basis is unchanged and master/project independent.');
 
-assert.match(v3Subscription, /\(\{ reason, governingChange \}\)/u);
-assert.match(v3Subscription, /const effectiveChange = governingChange \|\| reason;/u);
-assert.match(v3Subscription, /effectiveChange === 'project-data-changed'/u);
-assert.match(v3Subscription, /effectiveChange === 'master-data-changed'/u);
-console.log('PASS D05 Empirical V3 governing-change invalidation remains fail-closed.');
+assert.match(v3Subscription, /\(\{ reason \}\)/u);
+assert.match(v3Subscription, /reason === 'project-data-changed'/u);
+assert.match(v3Subscription, /reason === 'master-data-changed'/u);
+assert.doesNotMatch(v3Subscription, /governingChange|effectiveChange/u);
+console.log('PASS D05 Empirical V3 governing-change invalidation remains on its original event contract.');
 
-assert.doesNotMatch(engineering, /reason: 'project-data-changed'/u);
-assert.doesNotMatch(engineering, /reason: 'master-data-changed'/u);
-console.log('PASS D06 engineering controller no longer emits false topology-refresh reasons.');
+assert.doesNotMatch(main, /governingChange/u);
+assert.doesNotMatch(main, /effectiveChange = governingChange/u);
+console.log('PASS D06 src/main.js remains free of the optimization-specific dependency metadata.');
 
 console.log('DEPENDENCY INVALIDATION STRUCTURAL STATUS: PASS');

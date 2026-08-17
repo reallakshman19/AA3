@@ -23,7 +23,7 @@
     },
     {
       "id": "TECH13B_PRODUCT_REFINEMENT_ADAPTER",
-      "status": "NOT_STARTED",
+      "status": "IMPLEMENTED_PENDING_EXECUTION",
       "purpose": "REUSE_TECH7_NUMERICAL_KERNEL_WITH_SEPARATE_PRODUCT_PRODUCER_CAPABILITY_QUALIFICATION_AND_PLAN_IDENTITY"
     },
     {
@@ -52,6 +52,14 @@
     "automaticCurvedFacetDirectorGuardMayChange": false,
     "meshQualityThresholdRelaxationAllowed": false
   },
+  "authoritySeparation": {
+    "tech7ProductBindingAuthorized": false,
+    "tech7EvidenceMayBeRetainedAsProductEvidence": false,
+    "productCandidateMustRewrapExactKernelMesh": true,
+    "productCandidateProducerIdentityMustDifferFromTech7": true,
+    "sameMeshHashExpectedAcrossKernelAndProductCandidate": true,
+    "sameArtifactHashAllowedAcrossKernelAndProductCandidate": false
+  },
   "publicationSequence": [
     "GENERATE_CANDIDATE_CHILD",
     "VALIDATE_V2_MESH_QUALITY",
@@ -71,8 +79,10 @@
   },
   "activationPolicy": {
     "tech13aExecutionAuthorized": false,
-    "tech13aUiBindingAuthorized": false,
+    "tech13bProductRetentionAuthorized": false,
+    "tech13bUiBindingAuthorized": false,
     "tech13aReleaseQualified": false,
+    "tech13bReleaseQualified": false,
     "productRefinementMayBeEnabledBeforeTech13eExactHeadPass": false
   }
 }

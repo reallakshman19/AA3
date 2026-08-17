@@ -43,14 +43,14 @@ async function loadProductionSjsonCanonical() {
   });
   const graph = buildPipingPortTopologyGraph(dataset.sharedModel);
   const attachments = buildSupportAttachmentModel(dataset.sharedModel, graph);
-  const restraints = buildRestraintCapabilityModel(attachments);
+  const restraintModel = buildRestraintCapabilityModel(attachments);
   const canonical = finalizeCanonicalTopology(buildCanonicalTopologyFromWorkspaceDataset(
     dataset,
     graph,
     attachments,
-    restraints,
+    restraintModel,
   ));
-  return { dataset, canonical };
+  return { dataset, canonical, restraintModel };
 }
 
 function unknownDetails(dataset, canonical, issues) {
@@ -96,6 +96,9 @@ test('fallback support-family evidence is priority ordered and fail closed', () 
   );
   assert.equal(collect({ DTXR: 'Pipe Rest XRT01' }).values.supportTypes?.[0]?.value, 'REST');
   assert.equal(collect({ DTXR: 'PIPE SUPPORT TYPE-103' }).values.supportTypes, undefined);
+  assert.equal(collect({ DTXR: 'WEAR PLATE TYPE-421 PAD L 700mm' }).values.supportTypes, undefined);
+  assert.equal(collect({ CMPSUPTYPE: 'W.PAD THK 6mm' }).values.supportTypes, undefined);
+  assert.equal(collect({ MDSSUPPTYPE: 'SH-150' }).values.supportTypes, undefined);
   assert.equal(collect({ DTXR: 'Generic support attachment' }).values.supportTypes, undefined);
 });
 
@@ -175,7 +178,7 @@ test('SJSON non-restraint semantics outrank weak support-object signals', () => 
 });
 
 test('production Sjson removes false support-family findings but keeps contractor bracing fail closed', async () => {
-  const { dataset, canonical } = await loadProductionSjsonCanonical();
+  const { dataset, canonical, restraintModel } = await loadProductionSjsonCanonical();
 
   for (const sourceName of [
     '=1006649732/51254',
@@ -186,6 +189,19 @@ test('production Sjson removes false support-family findings but keeps contracto
     assert.ok(support, `Expected canonical source support ${sourceName}.`);
     assert.equal(support.restraintRole, 'REFERENCE_POINT', sourceName);
   }
+
+  const lineStopEntity = dataset.entities.find((entity) => (
+    entity.category === 'support'
+    && entity.properties?.attributes?.SUPPORT_TYPE === 'LINESTOP'
+  ));
+  assert.ok(lineStopEntity, 'Production Sjson must retain at least one LINESTOP source support.');
+  const lineStopRestraint = restraintModel.restraints.find((row) => (
+    row.supportKey === lineStopEntity.entityId
+  ));
+  assert.ok(lineStopRestraint);
+  assert.equal(lineStopRestraint.supportType, 'LINE_STOP');
+  assert.equal(lineStopRestraint.longitudinal.state, 'RESTRAINED');
+  assert.equal(lineStopRestraint.longitudinal.basis, 'TYPE');
 
   const unknown = checkCanonicalTopology(canonical)
     .filter((issue) => issue.kind === 'UNKNOWN_RESTRAINT_FAMILY');

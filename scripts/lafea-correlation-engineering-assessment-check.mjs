@@ -5,13 +5,15 @@ import {
   calculateEngineeringCorrelationFromLafea2,
 } from '../src/core/local-attachment-correlation/index.js';
 
-const screeningResult = calculateLocalAttachmentScreening(screeningRequestFixture());
+const screeningRequest = screeningRequestFixture();
+const screeningResult = calculateLocalAttachmentScreening(screeningRequest);
 assert.equal(screeningResult.qualification.state, 'ACCEPTED');
 
 const assessment = calculateEngineeringCorrelationFromLafea2({
   methodIdentity: 'UNREGISTERED-ENGINEERING-METHOD',
   methodEdition: '1',
   requestIdentity: 'ENGINEERING-ASSESSMENT-NEGATIVE-001',
+  screeningRequest,
   screeningResult,
   screeningCaseId: 'CASE-A',
   geometryIdentity: 'ATTACHMENT-GEOMETRY-001',
@@ -31,6 +33,7 @@ console.log(JSON.stringify({
   status: 'PASS',
   engineeringAssessmentStatus: assessment.status,
   registeredMethodRequiredBeforeGeometryOrCalculation: true,
+  exactScreeningRequestAvailableForAuthorizedPath: true,
   diagnostic: assessment.diagnostics[0],
   syntheticMethodExposedAsEngineeringMethod: false,
 }));

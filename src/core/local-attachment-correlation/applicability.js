@@ -35,12 +35,17 @@ export function validateCorrelationApplicabilityAcknowledgment(value, profileInp
       'applicabilityAcknowledgment.schema');
   }
   requiredHash(value.semanticHash, 'applicabilityAcknowledgment.semanticHash');
+  const { semanticHash: retainedHash, ...suppliedBase } = value;
+  if (retainedHash !== semanticHash(suppliedBase)) {
+    fail('CORRELATION_APPLICABILITY_ACKNOWLEDGMENT_HASH_MISMATCH',
+      'applicabilityAcknowledgment.semanticHash');
+  }
   const reconstructed = createCorrelationApplicabilityAcknowledgment(
     profileInput, value.applicabilityProfileId,
   );
-  if (reconstructed.semanticHash !== value.semanticHash) {
-    fail('CORRELATION_APPLICABILITY_ACKNOWLEDGMENT_HASH_MISMATCH',
-      'applicabilityAcknowledgment.semanticHash');
+  if (reconstructed.semanticHash !== retainedHash) {
+    fail('CORRELATION_APPLICABILITY_ACKNOWLEDGMENT_PROFILE_MISMATCH',
+      'applicabilityAcknowledgment');
   }
   return reconstructed;
 }

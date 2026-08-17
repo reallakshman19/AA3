@@ -9,6 +9,7 @@
     "radiusMm": 100,
     "spanDegrees": 60,
     "lengthMm": 50,
+    "thicknessMm": 1.5,
     "elasticModulusMpa": 200000,
     "poissonRatio": 0.3,
     "prescribedHoopStrain": 0.001,

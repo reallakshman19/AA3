@@ -107,11 +107,13 @@ function normalizeFoundation(input, mode = 'document') {
   });
 }
 
-function normalizeScreening(input) {
+function normalizeScreening(input, mode = 'document') {
   const { cleanInput, meshConfig } = prepareInput(input);
-  const source = typeof cleanInput.semanticHash === 'string'
-    ? editableScreening(validateLocalAttachmentScreeningRequest(cleanInput))
-    : editableScreening(cleanInput);
+  const source = mode === 'edit'
+    ? editableScreening(cleanInput)
+    : typeof cleanInput.semanticHash === 'string'
+      ? editableScreening(validateLocalAttachmentScreeningRequest(cleanInput))
+      : editableScreening(cleanInput);
   const retained = editableScreening(createLocalAttachmentScreeningRequest(source));
   return freezeClone({ ...retained, ...(meshConfig ? { meshConfig } : {}) });
 }
@@ -154,7 +156,7 @@ function normalizeTrunnion(input, mode = 'document') {
       canonicalShellTemplateSemanticHash(cleanInput.shellTemplate);
   }
   const retained = createCanonicalTrunnionFootprintSource(cleanInput);
-  createCanonicalTrunnionFootprintModel(retained);
+  createCanonicalLocalTrunnionFootprintModel(retained);
   return freezeClone({ ...retained, ...(meshConfig ? { meshConfig } : {}) });
 }
 
@@ -180,7 +182,7 @@ function canonicalShell(source) {
 }
 
 function canonicalTrunnion(source) {
-  return createCanonicalTrunnionFootprintSource(stripWorkbenchFields(source));
+  return createCanonicalLocalTrunnionFootprintSource(stripWorkbenchFields(source));
 }
 
 function prepareInput(input) {

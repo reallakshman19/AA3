@@ -66,6 +66,7 @@ export function syntheticCorrelationRequest(overrides = {}) {
       sourceStageId: null,
       sourceRequestHash: null,
       sourceResultHash: null,
+      geometryEvidenceHash: null,
       screeningCaseId: null,
       targetMappings: [{ targetId: 'CROWN_OUTER', evaluationLocationId: null }],
     },

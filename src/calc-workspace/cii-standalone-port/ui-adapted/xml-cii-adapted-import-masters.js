@@ -2,9 +2,12 @@ import { summarizeStandaloneImportMasters, STANDALONE_IMPORT_MASTER_DEFS } from 
 import { createElement } from './xml-cii-adapted-dom.js';
 import { MASTER_FIELDS } from './xml-cii-adapted-fields-config.js';
 import { getSavedMappingsForMaster, findSmartMatchingMapping } from './xml-cii-adapted-state.js';
-import { buildPreviewSearchRows, previewSearchText } from './xml-cii-adapted-import-preview-search.js';
+import { buildPreviewSearchIndex } from './xml-cii-adapted-import-preview-search.js';
 
-export { buildPreviewSearchRows, previewSearchText } from './xml-cii-adapted-import-preview-search.js';
+export { buildPreviewSearchRows, buildPreviewSearchIndex, previewSearchText } from './xml-cii-adapted-import-preview-search.js';
+
+const PREVIEW_SEARCH_DEBOUNCE_MS = 120;
+const PREVIEW_SEARCH_RESULT_LIMIT = 150;
 
 function text(value, fallback = '') {
   const out = String(value ?? '').trim();
@@ -118,10 +121,23 @@ function tableBody(columns, rows, masterKey, state) {
   return body;
 }
 
+function replacePreviewRows(tbodyEl, columns, rows, masterKey, state) {
+  tbodyEl.innerHTML = '';
+  const fieldMap = fieldMapFor(masterKey, state);
+  for (const item of rows) {
+    const tr = createElement('tr');
+    for (const col of columns) {
+      let val = item?.[col];
+      if (val === undefined && fieldMap[col]) val = item?.[fieldMap[col]];
+      tr.appendChild(createElement('td', text(val)));
+    }
+    tbodyEl.appendChild(tr);
+  }
+}
+
 function appendPreview(parent, master, state) {
   const masterKey = master.key;
   const rows = master.previewRows || [];
-  const allRows = buildPreviewSearchRows(master, state);
   const wrap = createElement('div', '', 'xml-cii-master-preview');
   wrap.appendChild(createElement('h4', 'Preview'));
   if (!rows.length) {
@@ -145,20 +161,35 @@ function appendPreview(parent, master, state) {
   scrollContainer.appendChild(tableEl);
   wrap.appendChild(scrollContainer);
 
+  // The visible 50-row preview is intentionally cheap. Full-master
+  // normalization/search-text generation is deferred until the first non-empty
+  // query, then cached for subsequent keystrokes in this master revision view.
+  let searchIndex = null;
+  let searchTimer = null;
+  const ensureSearchIndex = () => {
+    if (!searchIndex) searchIndex = buildPreviewSearchIndex(master, state);
+    return searchIndex;
+  };
+
   searchInput.addEventListener('input', () => {
+    if (searchTimer !== null) globalThis.clearTimeout(searchTimer);
     const q = searchInput.value.toLowerCase().trim();
-    const filtered = q ? allRows.filter((row) => previewSearchText(row).includes(q)) : allRows;
-    tbodyEl.innerHTML = '';
-    const fieldMap = fieldMapFor(masterKey, state);
-    for (const item of filtered.slice(0, 150)) {
-      const tr = createElement('tr');
-      for (const col of columns) {
-        let val = item?.[col];
-        if (val === undefined && fieldMap[col]) val = item?.[fieldMap[col]];
-        tr.appendChild(createElement('td', text(val)));
-      }
-      tbodyEl.appendChild(tr);
+    if (!q) {
+      replacePreviewRows(tbodyEl, columns, rows, masterKey, state);
+      searchTimer = null;
+      return;
     }
+
+    searchTimer = globalThis.setTimeout(() => {
+      const visibleRows = [];
+      for (const entry of ensureSearchIndex()) {
+        if (!entry.searchText.includes(q)) continue;
+        visibleRows.push(entry.row);
+        if (visibleRows.length >= PREVIEW_SEARCH_RESULT_LIMIT) break;
+      }
+      replacePreviewRows(tbodyEl, columns, visibleRows, masterKey, state);
+      searchTimer = null;
+    }, PREVIEW_SEARCH_DEBOUNCE_MS);
   });
 
   parent.appendChild(wrap);

@@ -28,6 +28,7 @@ export function createWrc537Ed4NumericalReleaseCandidate(
   if (evidence.status !== WRC537_ED4_NUMERICAL_QUALIFICATION_PASS) {
     fail('WRC537_ED4_NUMERICAL_RELEASE_QUALIFICATION_NOT_PASS', 'evidence.status');
   }
+  validateGraphInputCustody(calculationPlan, executablePlan);
   requireObject(input, 'releaseCandidateInput');
   exactKeys(input, ['schema', 'candidateIdentity', 'candidateVersion', 'literalBindings'], 'releaseCandidateInput');
   if (input.schema !== WRC537_ED4_NUMERICAL_RELEASE_CANDIDATE_SCHEMA) {
@@ -115,6 +116,36 @@ export function executableLiteralInventory(executablePlanInput) {
   });
   rows.sort((a, b) => a.literalKey.localeCompare(b.literalKey));
   return freeze(rows);
+}
+
+function validateGraphInputCustody(calculationPlan, executablePlan) {
+  const equationById = new Map(calculationPlan.equations.map((row) => [row.equationId, row]));
+  executablePlan.equationImplementations.forEach((implementation) => {
+    const sourceEquation = equationById.get(implementation.equationId);
+    const expected = sourceEquation.inputVariableIds.slice().sort();
+    const actual = [...graphVariableRefs(implementation.graph)].sort();
+    if (actual.join('|') !== expected.join('|')) {
+      fail('WRC537_ED4_NUMERICAL_RELEASE_EQUATION_INPUT_CUSTODY_MISMATCH', implementation.equationId);
+    }
+  });
+  const interpolationById = new Map(calculationPlan.interpolationRules.map((row) => [row.ruleId, row]));
+  executablePlan.interpolationImplementations.forEach((implementation) => {
+    const sourceRule = interpolationById.get(implementation.ruleId);
+    const expected = sourceRule.inputVariableIds.slice().sort();
+    const actual = [...graphVariableRefs(implementation.graph)].sort();
+    if (actual.join('|') !== expected.join('|')) {
+      fail('WRC537_ED4_NUMERICAL_RELEASE_INTERPOLATION_INPUT_CUSTODY_MISMATCH', implementation.ruleId);
+    }
+  });
+}
+
+function graphVariableRefs(node, refs = new Set()) {
+  if (node.op === 'VAR') refs.add(node.variableId);
+  if (node.arg) graphVariableRefs(node.arg, refs);
+  if (Array.isArray(node.args)) node.args.forEach((child) => graphVariableRefs(child, refs));
+  if (node.x) graphVariableRefs(node.x, refs);
+  ['x0', 'x1', 'y0', 'y1'].forEach((key) => { if (node[key]) graphVariableRefs(node[key], refs); });
+  return refs;
 }
 
 function collectGraphLiterals(node, path, sourceRef, sourceLocator, rows) {

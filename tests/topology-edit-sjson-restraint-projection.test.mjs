@@ -124,15 +124,16 @@ test('production Sjson projects only source-backed restraint semantics', async (
   assert.equal(first.authorityHash, second.authorityHash);
   assert.deepEqual(first.projection, second.projection);
 
-  // Avoid pinning incidental grouping counts. These invariants are the
-  // engineering contract: every source support is either projected or
-  // explicitly deferred, anchors and marker geometry are deterministic, and
-  // only source-backed restraint records create direction glyphs.
+  // Keep visual support-site projection distinct from mechanical restraint
+  // eligibility. Reference/hardware members may remain in a physical anchor
+  // while contributing no restraint coordinate.
   assert.equal(first.metrics.rawSupportCount, canonical.supports.length);
   assert.equal(
     first.metrics.projectedSourceSupportCount + first.metrics.deferredSourceSupportCount,
     first.metrics.rawSupportCount,
   );
+  assert.equal(first.metrics.deferredSourceSupportCount, penetrationAttachments.length);
+  assert.ok(first.metrics.nonRestraintSourceSupportCount >= penetrationAttachments.length + 3);
   assert.equal(first.metrics.supportAnchorCount, first.anchors.length);
   assert.equal(first.metrics.projectedSupportMarkerCount, first.projection.elements.length);
   assert.equal(first.metrics.projectedSupportMarkerCount, first.projection.glyphOverlays.length);
@@ -141,7 +142,6 @@ test('production Sjson projects only source-backed restraint semantics', async (
     first.anchors.reduce((sum, anchor) => sum + anchor.restraintCount, 0),
   );
   assert.equal(first.decisions.length, canonical.supports.length);
-  assert.ok(first.metrics.deferredSourceSupportCount >= penetrationAttachments.length + 3);
   assert.ok(first.anchors.every((anchor) => anchor.representativeSupportId));
   assert.ok(first.anchors.every((anchor) => anchor.memberSupportIds.length >= 1));
   assert.ok(first.anchors.every((anchor) => (

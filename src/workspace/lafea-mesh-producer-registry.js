@@ -25,9 +25,12 @@ export const LAFEA_MESH_PRODUCER_REF =
 
 /**
  * Automatic generation plus retained-mesh refinement regeneration. Local
- * refinement remains qualified only for LAFEA.3 T3/T6 parents. LAFEA.4 shell
- * UV refinement has a separate capability/qualification record so this core
- * producer contract is not silently broadened.
+ * refinement remains qualified only for LAFEA.3 T3/T6 parents. The automatic
+ * LAFEA.3 envelope additionally contains the frozen B02D probe-stable polar
+ * strategy for T3/T6/Q8; that strategy is selected only by its qualified
+ * source-controlled mesh-profile identity plus exact annular/frozen-level
+ * preconditions. The registered B02D intent retains its frozen empty
+ * refinementFeatureIds list.
  */
 export const LAFEA_MESH_PRODUCER_GENERATION_MODES = Object.freeze([
   'AUTOMATIC_MESH', 'REFINEMENT_REGENERATION',
@@ -35,6 +38,10 @@ export const LAFEA_MESH_PRODUCER_GENERATION_MODES = Object.freeze([
 export const LAFEA_MESH_PRODUCER_LOCAL_REFINEMENT_AUTHORIZED = true;
 export const LAFEA_MESH_PRODUCER_LOCAL_REFINEMENT_FAMILIES = Object.freeze(['T3', 'T6']);
 
+/**
+ * Ceilings the producer services and the qualification authorizes. A request
+ * above them is reported as a BLOCK resource disposition, never truncated.
+ */
 export const LAFEA_MESH_PRODUCER_MAXIMUM_NODES = 200_000;
 export const LAFEA_MESH_PRODUCER_MAXIMUM_ELEMENTS = 100_000;
 export const LAFEA_MESH_PRODUCER_MAXIMUM_ESTIMATED_DOFS = 400_000;

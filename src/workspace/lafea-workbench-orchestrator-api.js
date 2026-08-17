@@ -159,6 +159,10 @@ export function createLafeaWorkbenchOrchestratorApi(context) {
       c.exportRetainedAnalysisMeshParentNormalCompanion,
     validateRetainedAnalysisMeshParentNormalCompanion:
       c.validateRetainedAnalysisMeshParentNormalCompanion,
+    selectRetainedAnalysisMeshParentNormalProductionGate:
+      c.selectRetainedAnalysisMeshParentNormalProductionGate,
+    exportRetainedAnalysisMeshParentNormalProductionGate:
+      c.exportRetainedAnalysisMeshParentNormalProductionGate,
     selectAnalysisMeshPlan: (stageId = activeStageId()) =>
       c.meshGeneration.selectPlan(stageId),
     buildOrchestrationProjection: (stageId = activeStageId()) =>

@@ -13,6 +13,10 @@ import {
   requireCurrentLafea4RetainedMeshParentNormalCompanion,
   validateLafea4RetainedMeshParentNormalCompanion,
 } from './lafea4-shell-retained-mesh-parent-normal-companion.js';
+import {
+  evaluateLafea4ParentNormalProductionGate,
+  validateLafea4ParentNormalProductionGate,
+} from './lafea4-parent-normal-production-gate.js';
 
 export function createLafeaMeshGenerationActions(context) {
   const {
@@ -83,8 +87,12 @@ export function createLafeaMeshGenerationActions(context) {
       const result = meshGeneration.generateMesh(readStageState(stageId), overrides);
       try {
         const parentNormalCompanion = parentNormalCompanionForEvidence(stageId, result.evidence);
+        const parentNormalProductionGate = parentNormalProductionGateForCompanion(
+          parentNormalCompanion,
+        );
+        requireProductionGateAllowsRetention(parentNormalProductionGate);
         return parentNormalCompanion
-          ? freeze({ ...result, parentNormalCompanion })
+          ? freeze({ ...result, parentNormalCompanion, parentNormalProductionGate })
           : result;
       } catch (error) {
         rollbackCompanionCustody(stageId, currentMidsurface);
@@ -109,9 +117,9 @@ export function createLafeaMeshGenerationActions(context) {
    * the currently retained profile; identical recovery must not manufacture a
    * lifecycle change before conflict detection.
    *
-   * For TECH-11-qualified LAFEA.4 surfaces, the parent-normal companion is
-   * built before custody mutation. A stale/missing midsurface or incompatible
-   * companion therefore cannot be hidden by retaining the mesh first.
+   * For TECH-11-qualified LAFEA.4 surfaces, the parent-normal companion and
+   * TECH-12E production decision are built before custody mutation. A future
+   * active BLOCK therefore rejects recovery before the mesh can become current.
    */
   function recoverAnalysisMeshEvidenceV2(
     value,
@@ -127,6 +135,10 @@ export function createLafeaMeshGenerationActions(context) {
         throw storeError('LAFEA_ANALYSIS_MESH_V2_RECOVERY_STAGE_MISMATCH');
       }
       const prevalidatedCompanion = parentNormalCompanionForEvidence(stageId, validated);
+      const prevalidatedProductionGate = parentNormalProductionGateForCompanion(
+        prevalidatedCompanion,
+      );
+      requireProductionGateAllowsRetention(prevalidatedProductionGate);
       const currentProfile = meshGeneration.selectMeshProfile(stageId);
       const binding = currentProfile?.semanticHash === validated.meshProfileHash
         ? freeze({ changed: false, meshProfile: currentProfile })
@@ -134,11 +146,18 @@ export function createLafeaMeshGenerationActions(context) {
       if (getRetainedState().status === 'FAILED') return null;
       const result = meshGeneration.recoverEvidence(validated, stageId);
       let retainedCompanion;
+      let retainedProductionGate;
       try {
         retainedCompanion = parentNormalCompanionForEvidence(stageId, result.evidence);
+        retainedProductionGate = parentNormalProductionGateForCompanion(retainedCompanion);
+        requireProductionGateAllowsRetention(retainedProductionGate);
         if (prevalidatedCompanion && retainedCompanion
           && prevalidatedCompanion.semanticHash !== retainedCompanion.semanticHash) {
           throw storeError('LAFEA4_PARENT_NORMAL_COMPANION_RECOVERY_REPLAY_MISMATCH');
+        }
+        if (prevalidatedProductionGate && retainedProductionGate
+          && prevalidatedProductionGate.semanticHash !== retainedProductionGate.semanticHash) {
+          throw storeError('LAFEA4_PARENT_NORMAL_PRODUCTION_GATE_RECOVERY_REPLAY_MISMATCH');
         }
       } catch (error) {
         rollbackCompanionCustody(stageId, currentMidsurface);
@@ -150,6 +169,7 @@ export function createLafeaMeshGenerationActions(context) {
       return freeze({
         ...result,
         parentNormalCompanion: retainedCompanion,
+        parentNormalProductionGate: retainedProductionGate,
         profileChanged: binding.changed,
         stage: publish().stages[stageId],
       });
@@ -161,9 +181,8 @@ export function createLafeaMeshGenerationActions(context) {
   }
 
   /**
-   * Select/export the companion from the *currently retained* mesh and
-   * midsurface. No independently mutable companion cache exists, so stale
-   * copies cannot silently survive a mesh/profile/source change.
+   * Select/export companions and gate evidence from the *currently retained*
+   * mesh and midsurface. Neither artifact is independently mutable.
    */
   function selectRetainedAnalysisMeshParentNormalCompanion(
     stageId = getRetainedState().activeStageId,
@@ -195,6 +214,19 @@ export function createLafeaMeshGenerationActions(context) {
     });
   }
 
+  function selectRetainedAnalysisMeshParentNormalProductionGate(
+    stageId = getRetainedState().activeStageId,
+  ) {
+    const companion = selectRetainedAnalysisMeshParentNormalCompanion(stageId);
+    return parentNormalProductionGateForCompanion(companion);
+  }
+
+  function exportRetainedAnalysisMeshParentNormalProductionGate(
+    stageId = getRetainedState().activeStageId,
+  ) {
+    return selectRetainedAnalysisMeshParentNormalProductionGate(stageId);
+  }
+
   function parentNormalCompanionForEvidence(stageId, meshEvidence) {
     if (stageId !== 'LAFEA.4') return null;
     const midsurface = meshGeneration.selectShellMidsurface(stageId);
@@ -208,10 +240,22 @@ export function createLafeaMeshGenerationActions(context) {
     });
   }
 
+  function parentNormalProductionGateForCompanion(companion) {
+    if (!companion) return null;
+    return validateLafea4ParentNormalProductionGate(
+      evaluateLafea4ParentNormalProductionGate({ companion }),
+    );
+  }
+
+  function requireProductionGateAllowsRetention(gate) {
+    if (!gate || gate.retainedMeshAccepted === true) return;
+    throw storeError(gate.diagnosticCode ?? 'LAFEA4_PARENT_NORMAL_PRODUCTION_GATE_BLOCKED');
+  }
+
   /**
-   * A TECH-12B companion failure must never leave a newly generated/recovered
-   * mesh externally retainable without its required companion. Invalidation
-   * clears the child; the unchanged current midsurface parent is then restored.
+   * A parent-normal companion/gate failure must never leave a newly generated
+   * or recovered mesh externally retainable. Invalidation clears the child;
+   * the unchanged current midsurface parent is then restored.
    */
   function rollbackCompanionCustody(stageId, midsurface) {
     if (stageId !== 'LAFEA.4' || !midsurface) return;
@@ -267,6 +311,8 @@ export function createLafeaMeshGenerationActions(context) {
     selectRetainedAnalysisMeshParentNormalCompanion,
     exportRetainedAnalysisMeshParentNormalCompanion,
     validateRetainedAnalysisMeshParentNormalCompanion,
+    selectRetainedAnalysisMeshParentNormalProductionGate,
+    exportRetainedAnalysisMeshParentNormalProductionGate,
   });
 }
 

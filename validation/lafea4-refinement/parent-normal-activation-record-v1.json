@@ -18,6 +18,7 @@
     "TECH12B_COMPANION_ATOMICITY_SOURCE_WIRING",
     "TECH12C_SOLVER_EXECUTION_COMPANION_BINDING",
     "TECH12D_ACTIVATION_RECORD_POLICY",
+    "TECH12E_DORMANT_PRODUCTION_GATE",
     "TECH7_GRADED_REFINEMENT_EXECUTOR",
     "SHELL_SAMPLE_PARENT",
     "SHELL_WORKBENCH_ROUTE",
@@ -50,6 +51,7 @@
     "everyPlanRequiredStepCommandMustPass": true,
     "allRequiredEngineeringStepsMustBePresent": true,
     "allRequiredEngineeringStepsMustBePass": true,
+    "tech12eDormantProductionGateMustPass": true,
     "noRequiredStepMayBeNotRun": true,
     "noRequiredStepMayBeFail": true,
     "planMustDeclareEveryRequiredStep": true,
@@ -74,6 +76,7 @@
     "NO_AUTHORIZATION_WITH_BROWSER_SKIPPED",
     "NO_AUTHORIZATION_WITH_MISSING_REQUIRED_PLAN_COMMAND",
     "NO_AUTHORIZATION_WITH_MISSING_REQUIRED_ENGINEERING_STEP",
+    "NO_AUTHORIZATION_WITHOUT_TECH12E_DORMANT_GATE_PASS",
     "NO_DIRECT_PRODUCT_GATE_ACTIVATION_IN_TECH12D"
   ],
   "releaseQualified": false

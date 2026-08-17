@@ -19,13 +19,12 @@ const MINIMUM_ANGLE_BLOCK_DEGREES = Math.asin(0.2) * 180 / Math.PI;
 
 /**
  * Pure UI/product-readiness projection. Scope eligibility never grants
- * engineering authority by itself. Production callers omit promotionRecord and
- * therefore consume the code-owned trust root; qualification may inject a
- * structurally valid synthetic record to exercise the future-active branch.
+ * engineering authority by itself. Promotion authority is resolved only from
+ * the code-owned production trust root; caller-supplied records are not an input.
  */
-export function buildLafea4ShellProductRefinementUiPolicy(stageValue, promotionRecord) {
+export function buildLafea4ShellProductRefinementUiPolicy(stageValue) {
   const stage = requireStage(stageValue);
-  const promotion = evaluateLafea4ShellProductRefinementPromotion(promotionRecord);
+  const promotion = evaluateLafea4ShellProductRefinementPromotion();
   if (stage.stageId !== 'LAFEA.4') return notApplicable(stage, promotion);
 
   const parent = stage.retainedAnalysisMeshEvidenceV2 ?? null;

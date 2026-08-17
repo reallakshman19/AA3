@@ -28,6 +28,8 @@ const fixture = createReadyWrc537Ed4SourceFixture();
 const digest = fixture.sourcePackage.technicalSource.documentDigest;
 const datumRef = 'TECH-WRC537-ED4-RELEASE-FIXTURE-DATUM';
 const datumLocator = 'Fixture page 2 equation F-2';
+const sourceBenchmarkCaseId = 'WRC537-ED4-RELEASE-SOURCE-BENCHMARK';
+const independentReference = '(1000/100)*1.234 = 12.34 MPa';
 fixture.sourceLedgerRows.push({
   record_id: datumRef,
   authority_class: 'PRIMARY_LICENSED',
@@ -42,6 +44,24 @@ fixture.sourceLedgerRows.push({
   verification_status: 'PRIMARY_SOURCE_VERIFIED',
   notes: 'Synthetic software-contract fixture only; not WRC537 engineering data.',
 });
+fixture.sourcePackage.benchmarks = [{
+  caseId: sourceBenchmarkCaseId,
+  sourceRef: datumRef,
+  targetEditionPrimarySourceVerified: true,
+  independentlyReproduced: true,
+  independentCalculationReference: independentReference,
+  input: { P: 1000, A: 100 },
+  expectedResults: [{
+    quantity: 'SIGMA',
+    value: 12.34,
+    units: 'MPa',
+    absoluteTolerance: 1e-12,
+    toleranceBasis: 'SYNTHETIC FLOATING-POINT FIXTURE',
+    sourceRef: datumRef,
+    sourceLocator: datumLocator,
+  }],
+}];
+
 const dataset = createWrc537Ed4EngineeringDatasetCandidate({
   ...fixture,
   promotion: {
@@ -122,6 +142,7 @@ const request = {
   requestIdentity: 'RELEASE-FIXTURE-REQUEST',
   inputValues: [{ variableId: 'P', value: 1000, units: 'N' }, { variableId: 'A', value: 100, units: 'mm2' }],
 };
+const qualificationCaseId = 'RELEASE-FIXTURE-001';
 const suite = createWrc537Ed4NumericalQualificationSuite(dataset, plan, executable, {
   schema: WRC537_ED4_NUMERICAL_QUALIFICATION_SUITE_SCHEMA,
   suiteIdentity: 'WRC537-ED4-RELEASE-FIXTURE-SUITE',
@@ -130,11 +151,11 @@ const suite = createWrc537Ed4NumericalQualificationSuite(dataset, plan, executab
   planSemanticHash: plan.planSemanticHash,
   executablePlanSemanticHash: executable.executablePlanSemanticHash,
   cases: [{
-    caseId: 'RELEASE-FIXTURE-001',
+    caseId: qualificationCaseId,
     sourceRef: datumRef,
     sourceLocator: datumLocator,
     independentReproduction: true,
-    independentCalculationReference: '(1000/100)*1.234 = 12.34 MPa',
+    independentCalculationReference: independentReference,
     request,
     expectedSteps: [{
       kind: 'EQUATION', id: 'EQ-FIXTURE-P-OVER-A-K', value: 12.34, units: 'MPa',
@@ -153,10 +174,24 @@ assert.equal(evidence.status, 'PASS');
 
 const coefficient = dataset.coefficientRows.find((row) => row.coefficient_id === 'QUALIFIED_FIXTURE_COEFFICIENT_001');
 const literalKey = 'EQUATION:EQ-FIXTURE-P-OVER-A-K:graph.args[1].value';
+const benchmarkBindings = [{
+  sourceBenchmarkCaseId,
+  qualificationCaseId,
+  inputBindings: [
+    { variableId: 'P', benchmarkPath: ['P'] },
+    { variableId: 'A', benchmarkPath: ['A'] },
+  ],
+  recoveryBindings: [{
+    targetId: 'FIXTURE-RELEASE-POINT',
+    variableId: 'SIGMA',
+    benchmarkQuantity: 'SIGMA',
+  }],
+}];
 const candidateInput = {
   schema: WRC537_ED4_NUMERICAL_RELEASE_CANDIDATE_SCHEMA,
   candidateIdentity: 'WRC537-ED4-RELEASE-FIXTURE-CANDIDATE',
   candidateVersion: '1',
+  benchmarkBindings,
   literalBindings: [{
     literalKey,
     bindingType: 'DATASET_COEFFICIENT',
@@ -166,6 +201,7 @@ const candidateInput = {
   }],
 };
 const candidate = createWrc537Ed4NumericalReleaseCandidate(dataset, plan, executable, suite, evidence, candidateInput);
+assert.equal(candidate.benchmarkBindings.length, 1);
 assert.equal(candidate.literalInventory.length, 1);
 assert.equal(candidate.literalInventory[0].value, 1.234);
 assert.equal(candidate.authority.engineeringUseAuthorized, false);
@@ -179,20 +215,39 @@ expectError('WRC537_ED4_NUMERICAL_RELEASE_LITERAL_BINDING_SET_MISMATCH', () =>
   createWrc537Ed4NumericalReleaseCandidate(dataset, plan, executable, suite, evidence, {
     ...candidateInput, literalBindings: [],
   }));
-expectError('WRC537_ED4_NUMERICAL_RELEASE_COEFFICIENT_VALUE_MISMATCH', () => {
-  const changedExecutableInput = structuredClone(executable);
-  delete changedExecutableInput.authority;
-  delete changedExecutableInput.executablePlanSemanticHash;
-  changedExecutableInput.equationImplementations[0].graph.args[1].value = 1.2;
-  const changedExecutable = createWrc537Ed4ExecutablePlan(dataset, plan, changedExecutableInput);
-  const changedSuiteInput = structuredClone(suite);
-  delete changedSuiteInput.suiteSemanticHash;
-  changedSuiteInput.executablePlanSemanticHash = changedExecutable.executablePlanSemanticHash;
-  changedSuiteInput.cases[0].expectedSteps[0].value = 12;
-  changedSuiteInput.cases[0].expectedRecovery[0].value = 12;
-  const changedSuite = createWrc537Ed4NumericalQualificationSuite(dataset, plan, changedExecutable, changedSuiteInput);
-  const changedEvidence = runWrc537Ed4NumericalQualification(dataset, plan, changedExecutable, changedSuite);
-  createWrc537Ed4NumericalReleaseCandidate(dataset, plan, changedExecutable, changedSuite, changedEvidence, candidateInput);
+expectError('WRC537_ED4_NUMERICAL_RELEASE_BENCHMARK_COVERAGE_MISMATCH', () =>
+  createWrc537Ed4NumericalReleaseCandidate(dataset, plan, executable, suite, evidence, {
+    ...candidateInput, benchmarkBindings: [],
+  }));
+expectError('WRC537_ED4_NUMERICAL_RELEASE_BENCHMARK_INPUT_VALUE_MISMATCH', () => {
+  const badSuiteInput = structuredClone(suite);
+  delete badSuiteInput.suiteSemanticHash;
+  badSuiteInput.cases[0].request.inputValues.find((row) => row.variableId === 'P').value = 999;
+  const badSuite = createWrc537Ed4NumericalQualificationSuite(dataset, plan, executable, badSuiteInput);
+  const badEvidence = runWrc537Ed4NumericalQualification(dataset, plan, executable, badSuite);
+  createWrc537Ed4NumericalReleaseCandidate(dataset, plan, executable, badSuite, badEvidence, candidateInput);
+});
+expectError('WRC537_ED4_NUMERICAL_RELEASE_BENCHMARK_RECOVERY_VALUE_MISMATCH', () => {
+  const badSuiteInput = structuredClone(suite);
+  delete badSuiteInput.suiteSemanticHash;
+  badSuiteInput.cases[0].expectedRecovery[0].value = 12;
+  badSuiteInput.cases[0].expectedSteps[0].value = 12;
+  const badSuite = createWrc537Ed4NumericalQualificationSuite(dataset, plan, executable, badSuiteInput);
+  const badEvidence = runWrc537Ed4NumericalQualification(dataset, plan, executable, badSuite);
+  createWrc537Ed4NumericalReleaseCandidate(dataset, plan, executable, badSuite, badEvidence, candidateInput);
+});
+expectError('WRC537_ED4_NUMERICAL_RELEASE_BENCHMARK_CASE_CUSTODY_MISMATCH', () => {
+  const badSuiteInput = structuredClone(suite);
+  delete badSuiteInput.suiteSemanticHash;
+  badSuiteInput.cases[0].independentCalculationReference = 'SELF-CONSISTENT BUT NOT SOURCE BENCHMARK';
+  const badSuite = createWrc537Ed4NumericalQualificationSuite(dataset, plan, executable, badSuiteInput);
+  const badEvidence = runWrc537Ed4NumericalQualification(dataset, plan, executable, badSuite);
+  createWrc537Ed4NumericalReleaseCandidate(dataset, plan, executable, badSuite, badEvidence, candidateInput);
+});
+expectError('WRC537_ED4_NUMERICAL_RELEASE_COEFFICIENT_SOURCE_MISMATCH', () => {
+  const bad = structuredClone(candidateInput);
+  bad.literalBindings[0].sourceLocator = 'Wrong coefficient locator';
+  createWrc537Ed4NumericalReleaseCandidate(dataset, plan, executable, suite, evidence, bad);
 });
 expectError('WRC537_ED4_NUMERICAL_RELEASE_AUTHORITY_INVALID', () => {
   const forged = structuredClone(candidate);
@@ -206,8 +261,11 @@ console.log(JSON.stringify({
   fixtureOnly: true,
   retainedDatasetCoefficient: 1.234,
   fixtureExpectedMPa: 12.34,
+  sourceBenchmarkCoverageRequired: true,
+  sourceBenchmarkInputsBoundExactly: true,
+  sourceBenchmarkRecoveryBoundExactly: true,
+  sourceIndependentReferenceBoundExactly: true,
   coefficientLiteralBoundExactly: true,
-  alteredLiteralRejected: true,
   missingLiteralBindingRejected: true,
   engineeringActivationStillBlocked: true,
 }));

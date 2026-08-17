@@ -2,7 +2,11 @@ export const WRC537_ED4_SOURCE_PACKAGE_SCHEMA = 'wrc537-ed4-source-package/v1';
 export const WRC537_ED4_PACKAGE_READY = 'READY_FOR_TECHNICAL_IMPLEMENTATION';
 export const WRC537_ED4_PACKAGE_BLOCKED = 'BLOCKED';
 
-const TARGET_EDITION = Object.freeze({ bulletinNumber: 'WRC Bulletin 537', edition: '4', publicationDate: '2026-02' });
+const TARGET_EDITION = Object.freeze({
+  bulletinNumber: 'WRC Bulletin 537',
+  edition: '4',
+  publicationDate: '2026-02',
+});
 const REQUIRED_PARAMETER_IDS = Object.freeze([
   'SPHERE_U', 'SPHERE_GAMMA', 'SPHERE_RHO', 'CYL_LAMBDA', 'CYL_DELTA',
 ]);
@@ -17,7 +21,7 @@ export function evaluateWrc537Ed4SourcePackage({ sourcePackage, sourceLedgerRows
   requireArray(sourceLedgerRows, 'sourceLedgerRows');
   requireArray(coefficientRows, 'coefficientRows');
 
-  const ledgerById = new Map(sourceLedgerRows.map((row) => [row.record_id, row]));
+  const ledgerById = new Map(sourceLedgerRows.map((row) => [row?.record_id, row]));
   const gates = [
     gate('PACKAGE_SCHEMA', sourcePackage.schema === WRC537_ED4_SOURCE_PACKAGE_SCHEMA,
       'Package schema must be the Edition 4 intake contract.'),
@@ -26,29 +30,31 @@ export function evaluateWrc537Ed4SourcePackage({ sourcePackage, sourceLedgerRows
     gate('EDITION_IDENTITY', editionIdentityExact(sourcePackage),
       'Bulletin number, edition and publication date must exactly identify WRC 537 Edition 4 / 2026-02.'),
     gate('CATALOG_IDENTITY_SOURCE', catalogIdentityQualified(sourcePackage, ledgerById),
-      'Edition identity must be backed by official publisher/catalog metadata.'),
+      'Edition identity must be backed by a DOCUMENT_IDENTITY publisher/catalog row.'),
     gate('PRIMARY_TECHNICAL_SOURCE', primaryTechnicalSourceQualified(sourcePackage, ledgerById),
-      'A licensed or otherwise authorized Edition 4 technical source must be retained with digest and ledger custody.'),
+      'A licensed or otherwise authorized Edition 4 DOCUMENT row must retain exact source digest custody.'),
+    gate('DATUM_SOURCE_CUSTODY_COMPLETE', technicalDatumCustodyComplete(sourcePackage, coefficientRows, ledgerById),
+      'Every consumed technical statement must resolve to an Edition 4 primary-verified DATUM row with exact locator custody.'),
     gate('GEOMETRY_COMPLETE', geometryComplete(sourcePackage, ledgerById),
-      'Geometry and physical applicability must be explicit and backed by Edition 4 primary technical source custody.'),
+      'Geometry and physical applicability must be explicit and backed by datum-level Edition 4 source custody.'),
     gate('PARAMETERS_COMPLETE', parametersComplete(sourcePackage, ledgerById),
-      'All required dimensionless parameter equations, inputs, numerical domains and boundary inclusivity must be source-qualified.'),
+      'All required dimensionless parameter equations require unique IDs, non-degenerate domains, bound inclusivity and datum custody.'),
     gate('LOAD_CONVENTIONS_COMPLETE', loadConventionsComplete(sourcePackage, ledgerById),
-      'All supported force/moment symbols require exact physical direction, positive sign, reference point and primary source custody.'),
+      'All twelve supported force/moment conventions require unique identities, exact signs/reference points and datum custody.'),
     gate('STRESS_RECOVERY_COMPLETE', stressRecoveryComplete(sourcePackage, ledgerById),
-      'Stress components, classes, surfaces, recovery locations, reconstruction and source stress measure must be qualified.'),
+      'Stress components, classes, surfaces, recovery locations, reconstruction and source stress measure must be datum-qualified.'),
     gate('INTERPOLATION_POLICY_COMPLETE', interpolationComplete(sourcePackage, ledgerById),
-      'Interpolation/extrapolation behavior must be explicit and source-qualified.'),
+      'Interpolation/extrapolation behavior must be explicit and datum-qualified.'),
     gate('COEFFICIENT_INVENTORY_DECLARED', sourcePackage?.coefficients?.inventoryDeclared === true,
       'The Edition 4 coefficient/equation inventory must be explicitly declared complete before numerical rows can qualify.'),
     gate('COEFFICIENT_IDS_UNIQUE', coefficientIdsUnique(coefficientRows),
-      'Retained coefficient IDs must be unique within the Edition 4 package.'),
+      'Retained coefficient IDs must be non-empty and unique within the Edition 4 package.'),
     gate('COEFFICIENTS_COMPLETE', coefficientsComplete(coefficientRows, ledgerById),
-      'Every retained Edition 4 coefficient must contain a finite value, source precision and primary technical source locator.'),
+      'Every retained Edition 4 coefficient must contain a finite value, source precision and exact datum locator.'),
     gate('BENCHMARKS_COMPLETE', benchmarksComplete(sourcePackage, ledgerById),
-      'At least one target-edition benchmark must retain inputs, expected results, source custody and independent reproduction.'),
+      'Every retained target-edition benchmark must carry datum-level expected results, source-derived absolute tolerance and independent reproduction evidence.'),
     gate('LAFEA_MAPPING_COMPLETE', lafeaMappingComplete(sourcePackage),
-      'All consumed geometry, loads and stress outputs must have explicit canonical LAFEA mappings.'),
+      'Canonical LAFEA mappings must be qualified, unique, and cover every mandatory WRC load identity exactly once.'),
     gate('NO_UNRESOLVED_TECHNICAL_FIELDS', !containsUnresolvedTechnicalValue(sourcePackage),
       'No technical field consumed by implementation may remain null, TBD, UNRESOLVED, NOT_VERIFIED or equivalent.'),
   ];
@@ -62,7 +68,8 @@ export function evaluateWrc537Ed4SourcePackage({ sourcePackage, sourceLedgerRows
     failedGateIds,
     statistics: {
       sourceLedgerRows: sourceLedgerRows.length,
-      primaryTechnicalLedgerRows: sourceLedgerRows.filter(isPrimaryTechnicalLedgerRow).length,
+      primaryTechnicalDocumentRows: sourceLedgerRows.filter(isPrimaryTechnicalDocumentRow).length,
+      primaryDatumRows: sourceLedgerRows.filter(isPrimaryDatumLedgerRow).length,
       coefficientRows: coefficientRows.length,
       qualifiedCoefficientRows: coefficientRows.filter((row) => coefficientQualified(row, ledgerById)).length,
       requiredParameterCount: REQUIRED_PARAMETER_IDS.length,
@@ -75,9 +82,9 @@ export function evaluateWrc537Ed4SourcePackage({ sourcePackage, sourceLedgerRows
 export function normalizeWrc537Ed4SourceDatum(datum, ledgerById) {
   requireObject(datum, 'datum');
   const source = ledgerById instanceof Map ? ledgerById.get(datum.sourceRef) : null;
-  const authority = source && isPrimaryTechnicalLedgerRow(source)
-    ? 'ED4_PRIMARY_TECHNICAL'
-    : 'NON_TECHNICAL_OR_UNVERIFIED';
+  let authority = 'NON_TECHNICAL_OR_UNVERIFIED';
+  if (isPrimaryDatumLedgerRow(source)) authority = 'ED4_PRIMARY_DATUM';
+  else if (isPrimaryTechnicalDocumentRow(source)) authority = 'ED4_PRIMARY_TECHNICAL_DOCUMENT';
   return deepFreeze({
     ...clone(datum),
     normalizedAuthority: authority,
@@ -92,22 +99,26 @@ function sourceLedgerIdsUnique(rows) {
   const ids = rows.map((row) => row?.record_id);
   return ids.every(resolved) && new Set(ids).size === ids.length;
 }
+
 function editionIdentityExact(pkg) {
   const id = pkg?.identity;
   return id?.bulletinNumber === TARGET_EDITION.bulletinNumber
     && id?.edition === TARGET_EDITION.edition
     && id?.publicationDate === TARGET_EDITION.publicationDate;
 }
+
 function catalogIdentityQualified(pkg, ledger) {
-  const ref = pkg?.identity?.catalogSourceRef;
-  const row = ledger.get(ref);
-  return row?.authority_class === 'OFFICIAL_CATALOG_IDENTITY'
+  const row = ledger.get(pkg?.identity?.catalogSourceRef);
+  return row?.record_scope === 'DOCUMENT_IDENTITY'
+    && resolved(row?.engineering_subject)
+    && row?.authority_class === 'OFFICIAL_CATALOG_IDENTITY'
     && row?.publisher === 'Welding Research Council, Inc.'
     && resolved(row?.locator)
     && row?.edition === TARGET_EDITION.edition
     && row?.publication_date === TARGET_EDITION.publicationDate
     && row?.verification_status === 'CATALOG_IDENTITY_VERIFIED';
 }
+
 function primaryTechnicalSourceQualified(pkg, ledger) {
   const src = pkg?.technicalSource;
   const row = ledger.get(src?.sourceRef);
@@ -116,19 +127,42 @@ function primaryTechnicalSourceQualified(pkg, ledger) {
     && src?.edition === TARGET_EDITION.edition
     && src?.publicationDate === TARGET_EDITION.publicationDate
     && resolved(src?.sourceId)
+    && resolved(src?.accessBasis)
     && isDigest(src?.documentDigest)
     && row?.record_id === src.sourceRef
-    && isPrimaryTechnicalLedgerRow(row)
+    && isPrimaryTechnicalDocumentRow(row)
     && row?.document_digest === src.documentDigest;
 }
+
+function technicalDatumCustodyComplete(pkg, coefficientRows, ledger) {
+  const refs = [];
+  const push = (sourceRef) => refs.push(sourceRef);
+  (pkg?.geometry?.definitions ?? []).forEach((row) => push(row?.sourceRef));
+  push(pkg?.geometry?.applicability?.sourceRef);
+  (pkg?.parameters ?? []).forEach((row) => push(row?.sourceRef));
+  (pkg?.loads ?? []).forEach((row) => push(row?.sourceRef));
+  (pkg?.stressRecovery?.stressComponents ?? []).forEach((row) => push(row?.sourceRef));
+  (pkg?.stressRecovery?.locations ?? []).forEach((row) => push(row?.sourceRef));
+  push(pkg?.stressRecovery?.surfaceReconstruction?.sourceRef);
+  push(pkg?.stressRecovery?.stressIntensityOrEquivalent?.sourceRef);
+  push(pkg?.interpolation?.sourceRef);
+  (pkg?.benchmarks ?? []).forEach((row) => {
+    push(row?.sourceRef);
+    (row?.expectedResults ?? []).forEach((result) => push(result?.sourceRef));
+  });
+  coefficientRows.forEach((row) => push(row?.source_ref));
+  return refs.length > 0 && refs.every((sourceRef) => datumRef(sourceRef, ledger));
+}
+
 function geometryComplete(pkg, ledger) {
   const geometry = pkg?.geometry;
   const rows = geometry?.definitions;
   const applicability = geometry?.applicability;
+  const symbols = Array.isArray(rows) ? rows.map((row) => row?.symbol) : [];
   return geometry?.inventoryDeclared === true
     && Array.isArray(rows) && rows.length > 0
-    && rows.every((row) => resolved(row.symbol) && resolved(row.definition)
-      && primaryRef(row.sourceRef, ledger))
+    && symbols.every(resolved) && new Set(symbols).size === symbols.length
+    && rows.every((row) => resolved(row.definition) && datumRef(row.sourceRef, ledger))
     && Array.isArray(applicability?.hostShellFamilies) && applicability.hostShellFamilies.length > 0
     && applicability.hostShellFamilies.every(resolved)
     && Array.isArray(applicability?.attachmentFamilies) && applicability.attachmentFamilies.length > 0
@@ -137,93 +171,133 @@ function geometryComplete(pkg, ledger) {
     && resolved(applicability?.loadReferenceConvention)
     && Array.isArray(applicability?.exclusions) && applicability.exclusions.length > 0
     && applicability.exclusions.every(resolved)
-    && primaryRef(applicability?.sourceRef, ledger);
+    && datumRef(applicability?.sourceRef, ledger);
 }
+
 function parametersComplete(pkg, ledger) {
   const rows = pkg?.parameters;
   if (!Array.isArray(rows)) return false;
+  const ids = rows.map((row) => row?.parameterId);
+  if (!ids.every(resolved) || new Set(ids).size !== ids.length) return false;
   return REQUIRED_PARAMETER_IDS.every((parameterId) => {
     const row = rows.find((candidate) => candidate?.parameterId === parameterId);
     return row && resolved(row.sourceSymbol) && resolved(row.equation)
       && Array.isArray(row.inputs) && row.inputs.length > 0 && row.inputs.every(resolved)
-      && Number.isFinite(row.minimum) && Number.isFinite(row.maximum) && row.minimum <= row.maximum
+      && Number.isFinite(row.minimum) && Number.isFinite(row.maximum) && row.minimum < row.maximum
       && typeof row.minimumInclusive === 'boolean' && typeof row.maximumInclusive === 'boolean'
-      && primaryRef(row.sourceRef, ledger);
+      && datumRef(row.sourceRef, ledger);
   });
 }
+
 function loadConventionsComplete(pkg, ledger) {
   const rows = pkg?.loads;
   if (!Array.isArray(rows)) return false;
+  const keys = rows.map((row) => `${row?.family}:${row?.sourceSymbol}`);
+  if (new Set(keys).size !== keys.length) return false;
   return REQUIRED_LOAD_KEYS.every((key) => {
     const [family, symbol] = key.split(':');
     const row = rows.find((candidate) => candidate?.family === family && candidate?.sourceSymbol === symbol);
     return row && resolved(row.physicalDirection) && resolved(row.positiveDirection)
-      && resolved(row.referencePoint) && primaryRef(row.sourceRef, ledger);
+      && resolved(row.referencePoint) && datumRef(row.sourceRef, ledger);
   });
 }
+
 function stressRecoveryComplete(pkg, ledger) {
   const stress = pkg?.stressRecovery;
+  const componentIds = (stress?.stressComponents ?? []).map((row) => row?.sourceSymbol);
+  const locationIds = (stress?.locations ?? []).map((row) => row?.locationId);
   return stress?.inventoryDeclared === true
     && Array.isArray(stress?.stressComponents) && stress.stressComponents.length > 0
-    && stress.stressComponents.every((row) => resolved(row.sourceSymbol) && resolved(row.meaning)
-      && resolved(row.stressClass) && primaryRef(row.sourceRef, ledger))
+    && componentIds.every(resolved) && new Set(componentIds).size === componentIds.length
+    && stress.stressComponents.every((row) => resolved(row.meaning)
+      && resolved(row.stressClass) && datumRef(row.sourceRef, ledger))
     && Array.isArray(stress?.locations) && stress.locations.length > 0
-    && stress.locations.every((row) => resolved(row.locationId) && resolved(row.surface)
-      && resolved(row.physicalLocation) && primaryRef(row.sourceRef, ledger))
+    && locationIds.every(resolved) && new Set(locationIds).size === locationIds.length
+    && stress.locations.every((row) => resolved(row.surface)
+      && resolved(row.physicalLocation) && datumRef(row.sourceRef, ledger))
     && resolved(stress?.surfaceReconstruction?.rule)
-    && primaryRef(stress?.surfaceReconstruction?.sourceRef, ledger)
+    && datumRef(stress?.surfaceReconstruction?.sourceRef, ledger)
     && resolved(stress?.stressIntensityOrEquivalent?.definition)
     && stress?.stressIntensityOrEquivalent?.dimensionallyVerified === true
-    && primaryRef(stress?.stressIntensityOrEquivalent?.sourceRef, ledger);
+    && datumRef(stress?.stressIntensityOrEquivalent?.sourceRef, ledger);
 }
+
 function interpolationComplete(pkg, ledger) {
   const row = pkg?.interpolation;
   return typeof row?.interpolationAuthorized === 'boolean'
     && typeof row?.extrapolationAuthorized === 'boolean'
     && resolved(row?.algorithm)
     && resolved(row?.boundaryBehavior)
-    && primaryRef(row?.sourceRef, ledger);
+    && datumRef(row?.sourceRef, ledger);
 }
+
 function coefficientIdsUnique(rows) {
+  if (rows.length === 0) return true;
   const ids = rows.map((row) => row?.coefficient_id);
   return ids.every(resolved) && new Set(ids).size === ids.length;
 }
+
 function coefficientsComplete(rows, ledger) {
   return rows.length > 0 && rows.every((row) => coefficientQualified(row, ledger));
 }
+
 function coefficientQualified(row, ledger) {
+  const source = ledger.get(row?.source_ref);
   return row?.method_id === 'WRC537'
     && editionTextMatchesTarget(row?.edition)
     && finite(row?.coefficient_value)
     && resolved(row?.published_precision)
     && resolved(row?.coefficient_id)
-    && resolved(row?.source_ref)
-    && primaryRef(row.source_ref, ledger)
+    && datumRef(row?.source_ref, ledger)
     && resolved(row?.source_locator)
+    && source?.locator === row.source_locator
     && row?.review_status === 'PRIMARY_SOURCE_VERIFIED';
 }
+
 function benchmarksComplete(pkg, ledger) {
   const rows = pkg?.benchmarks;
-  return Array.isArray(rows) && rows.length > 0 && rows.every((row) =>
-    resolved(row.caseId)
-    && primaryRef(row.sourceRef, ledger)
+  if (!Array.isArray(rows) || rows.length === 0) return false;
+  const ids = rows.map((row) => row?.caseId);
+  if (!ids.every(resolved) || new Set(ids).size !== ids.length) return false;
+  return rows.every((row) =>
+    datumRef(row.sourceRef, ledger)
     && row.targetEditionPrimarySourceVerified === true
     && row.independentlyReproduced === true
-    && row.input && typeof row.input === 'object'
+    && resolved(row.independentCalculationReference)
+    && row.input && typeof row.input === 'object' && !Array.isArray(row.input)
     && Array.isArray(row.expectedResults) && row.expectedResults.length > 0
-    && row.expectedResults.every((result) => resolved(result.quantity) && Number.isFinite(result.value)
-      && resolved(result.units) && resolved(result.toleranceBasis)));
+    && row.expectedResults.every((result) => {
+      const source = ledger.get(result?.sourceRef);
+      return resolved(result.quantity)
+        && Number.isFinite(result.value)
+        && resolved(result.units)
+        && Number.isFinite(result.absoluteTolerance) && result.absoluteTolerance >= 0
+        && resolved(result.toleranceBasis)
+        && datumRef(result.sourceRef, ledger)
+        && resolved(result.sourceLocator)
+        && source?.locator === result.sourceLocator;
+    }));
 }
+
 function lafeaMappingComplete(pkg) {
   const map = pkg?.lafeaMapping;
-  return map?.qualified === true
-    && Array.isArray(map?.geometry) && map.geometry.length > 0 && map.geometry.every(mappingResolved)
-    && Array.isArray(map?.loads) && map.loads.length >= REQUIRED_LOAD_KEYS.length && map.loads.every(mappingResolved)
-    && Array.isArray(map?.stresses) && map.stresses.length > 0 && map.stresses.every(mappingResolved);
+  if (map?.qualified !== true) return false;
+  if (!mappingArrayResolvedUnique(map.geometry) || !mappingArrayResolvedUnique(map.loads)
+    || !mappingArrayResolvedUnique(map.stresses)) return false;
+  const loadQuantities = new Set(map.loads.map((row) => row.sourceQuantity));
+  return REQUIRED_LOAD_KEYS.every((key) => loadQuantities.has(key));
 }
+
+function mappingArrayResolvedUnique(rows) {
+  if (!Array.isArray(rows) || rows.length === 0 || !rows.every(mappingResolved)) return false;
+  const quantities = rows.map((row) => row.sourceQuantity);
+  return new Set(quantities).size === quantities.length;
+}
+
 function mappingResolved(row) {
   return resolved(row?.sourceQuantity) && resolved(row?.lafeaField) && resolved(row?.mappingType);
 }
+
 function containsUnresolvedTechnicalValue(pkg) {
   const technical = {
     technicalSource: pkg?.technicalSource,
@@ -238,6 +312,7 @@ function containsUnresolvedTechnicalValue(pkg) {
   };
   return deepHasUnresolved(technical);
 }
+
 function deepHasUnresolved(value) {
   if (value === null || value === undefined) return true;
   if (typeof value === 'string') return !resolved(value);
@@ -245,10 +320,24 @@ function deepHasUnresolved(value) {
   if (Array.isArray(value)) return value.length === 0 || value.some(deepHasUnresolved);
   return Object.values(value).some(deepHasUnresolved);
 }
-function primaryRef(sourceRef, ledger) {
-  return resolved(sourceRef) && isPrimaryTechnicalLedgerRow(ledger.get(sourceRef));
+
+function datumRef(sourceRef, ledger) {
+  return resolved(sourceRef) && isPrimaryDatumLedgerRow(ledger.get(sourceRef));
 }
-function isPrimaryTechnicalLedgerRow(row) {
+
+function isPrimaryTechnicalDocumentRow(row) {
+  return isPrimaryTechnicalBaseRow(row)
+    && row.record_scope === 'DOCUMENT'
+    && resolved(row.engineering_subject);
+}
+
+function isPrimaryDatumLedgerRow(row) {
+  return isPrimaryTechnicalBaseRow(row)
+    && row.record_scope === 'DATUM'
+    && resolved(row.engineering_subject);
+}
+
+function isPrimaryTechnicalBaseRow(row) {
   return !!row && TECHNICAL_AUTHORITY_CLASSES.includes(row.authority_class)
     && row.publisher === 'Welding Research Council, Inc.'
     && row.bulletin_number === '537'
@@ -258,19 +347,23 @@ function isPrimaryTechnicalLedgerRow(row) {
     && resolved(row.locator)
     && row.verification_status === 'PRIMARY_SOURCE_VERIFIED';
 }
+
 function editionTextMatchesTarget(value) {
   if (!resolved(value)) return false;
   const text = String(value).toLowerCase();
   return /(?:^|\D)4(?:th)?(?:\D|$)/u.test(text) && text.includes('2026');
 }
+
 function finite(value) {
   if (typeof value === 'number') return Number.isFinite(value);
   if (!resolved(value)) return false;
   return Number.isFinite(Number(value));
 }
+
 function isDigest(value) {
   return typeof value === 'string' && /^[a-f0-9]{64}$/u.test(value);
 }
+
 function resolved(value) {
   if (typeof value !== 'string') return value !== null && value !== undefined;
   const text = value.trim().toUpperCase();
@@ -282,16 +375,21 @@ function resolved(value) {
     && !text.includes('NOT_VERIFIED')
     && !text.includes('UNKNOWN');
 }
+
 function gate(gateId, pass, requirement) {
   return deepFreeze({ gateId, status: pass ? 'PASS' : 'FAIL', requirement });
 }
+
 function requireObject(value, path) {
   if (!value || typeof value !== 'object' || Array.isArray(value)) throw new TypeError(`${path} must be an object.`);
 }
+
 function requireArray(value, path) {
   if (!Array.isArray(value)) throw new TypeError(`${path} must be an array.`);
 }
+
 function clone(value) { return value === undefined ? undefined : structuredClone(value); }
+
 function deepFreeze(value) {
   if (!value || typeof value !== 'object' || Object.isFrozen(value)) return value;
   Object.values(value).forEach(deepFreeze);

@@ -1,9 +1,11 @@
 export function createReadyWrc537Ed4SourceFixture() {
   const digest = 'a'.repeat(64);
-  const sourceRef = 'TECH-WRC537-ED4';
+  const documentRef = 'TECH-WRC537-ED4';
   const sourceLedgerRows = [
     {
       record_id: 'CATALOG-WRC537-ED4',
+      record_scope: 'DOCUMENT_IDENTITY',
+      engineering_subject: 'METHOD_IDENTITY',
       authority_class: 'OFFICIAL_CATALOG_IDENTITY',
       publisher: 'Welding Research Council, Inc.',
       bulletin_number: '537',
@@ -15,7 +17,9 @@ export function createReadyWrc537Ed4SourceFixture() {
       notes: 'Fixture catalog identity only.',
     },
     {
-      record_id: sourceRef,
+      record_id: documentRef,
+      record_scope: 'DOCUMENT',
+      engineering_subject: 'AUTHORIZED_ED4_TECHNICAL_SOURCE',
       authority_class: 'PRIMARY_LICENSED',
       publisher: 'Welding Research Council, Inc.',
       bulletin_number: '537',
@@ -27,25 +31,63 @@ export function createReadyWrc537Ed4SourceFixture() {
       notes: 'Synthetic qualification fixture; not WRC technical data.',
     },
   ];
-  const parameter = (parameterId) => ({
-    parameterId,
-    sourceSymbol: `${parameterId}_SYMBOL`,
-    equation: `${parameterId}=SOURCE_EXPRESSION`,
-    inputs: ['A', 'B'],
-    minimum: 0.1,
-    maximum: 10,
-    minimumInclusive: true,
-    maximumInclusive: true,
-    sourceRef,
-  });
-  const load = (family, sourceSymbol) => ({
-    family,
-    sourceSymbol,
-    physicalDirection: `${family}-${sourceSymbol}-PHYSICAL-DIRECTION`,
-    positiveDirection: `${family}-${sourceSymbol}-POSITIVE-DIRECTION`,
-    referencePoint: 'ATTACHMENT_SHELL_INTERFACE',
-    sourceRef,
-  });
+
+  const datum = (recordId, engineeringSubject, locator) => {
+    sourceLedgerRows.push({
+      record_id: recordId,
+      record_scope: 'DATUM',
+      engineering_subject: engineeringSubject,
+      authority_class: 'PRIMARY_LICENSED',
+      publisher: 'Welding Research Council, Inc.',
+      bulletin_number: '537',
+      edition: '4',
+      publication_date: '2026-02',
+      document_digest: digest,
+      locator,
+      verification_status: 'PRIMARY_SOURCE_VERIFIED',
+      notes: 'Synthetic datum-level contract fixture only; not WRC engineering data.',
+    });
+    return { sourceRef: recordId, sourceLocator: locator };
+  };
+
+  const geometryDatum = datum('DATUM-WRC537-ED4-GEOMETRY', 'GEOMETRY_DEFINITIONS', 'Fixture p.10 Geometry definitions');
+  const applicabilityDatum = datum('DATUM-WRC537-ED4-APPLICABILITY', 'PHYSICAL_APPLICABILITY', 'Fixture p.11 Applicability');
+  const stressComponentDatum = datum('DATUM-WRC537-ED4-STRESS-COMPONENT', 'STRESS_COMPONENTS', 'Fixture p.20 Stress components');
+  const recoveryDatum = datum('DATUM-WRC537-ED4-RECOVERY', 'RECOVERY_LOCATIONS', 'Fixture p.21 Recovery locations');
+  const reconstructionDatum = datum('DATUM-WRC537-ED4-RECONSTRUCTION', 'SURFACE_RECONSTRUCTION', 'Fixture p.22 Surface reconstruction');
+  const stressMeasureDatum = datum('DATUM-WRC537-ED4-STRESS-MEASURE', 'STRESS_MEASURE', 'Fixture p.23 Stress measure');
+  const interpolationDatum = datum('DATUM-WRC537-ED4-INTERPOLATION', 'INTERPOLATION_POLICY', 'Fixture p.30 Interpolation');
+  const coefficientDatum = datum('DATUM-WRC537-ED4-COEFF-001', 'COEFFICIENT_QUALIFIED_FIXTURE_001', 'Fixture p.100 Table X row Y');
+  const benchmarkDatum = datum('DATUM-WRC537-ED4-BENCH-001', 'REFERENCE_BENCHMARK_001', 'Fixture p.150 Example 1');
+
+  const parameter = (parameterId) => {
+    const source = datum(`DATUM-WRC537-ED4-PARAM-${parameterId}`, `PARAMETER_${parameterId}`, `Fixture p.40 ${parameterId}`);
+    return {
+      parameterId,
+      sourceSymbol: `${parameterId}_SYMBOL`,
+      equation: `${parameterId}=SOURCE_EXPRESSION`,
+      inputs: ['A', 'B'],
+      minimum: 0.1,
+      maximum: 10,
+      minimumInclusive: true,
+      maximumInclusive: true,
+      sourceRef: source.sourceRef,
+    };
+  };
+
+  const load = (family, sourceSymbol) => {
+    const key = `${family}-${sourceSymbol}`;
+    const source = datum(`DATUM-WRC537-ED4-LOAD-${key}`, `LOAD_CONVENTION_${key}`, `Fixture p.50 ${family} ${sourceSymbol}`);
+    return {
+      family,
+      sourceSymbol,
+      physicalDirection: `${family}-${sourceSymbol}-PHYSICAL-DIRECTION`,
+      positiveDirection: `${family}-${sourceSymbol}-POSITIVE-DIRECTION`,
+      referencePoint: 'ATTACHMENT_SHELL_INTERFACE',
+      sourceRef: source.sourceRef,
+    };
+  };
+
   const mapping = (sourceQuantity, lafeaField) => ({
     sourceQuantity,
     lafeaField,
@@ -72,8 +114,8 @@ export function createReadyWrc537Ed4SourceFixture() {
       parameter_3_value: '3',
       coefficient_value: '1.234',
       published_precision: '3_DECIMAL_PLACES',
-      source_ref: sourceRef,
-      source_locator: 'Fixture p.100 Table X row Y',
+      source_ref: coefficientDatum.sourceRef,
+      source_locator: coefficientDatum.sourceLocator,
       extraction_method: 'DIRECT_TABLE',
       review_status: 'PRIMARY_SOURCE_VERIFIED',
     }],
@@ -97,7 +139,7 @@ export function createReadyWrc537Ed4SourceFixture() {
         publicationDate: '2026-02',
         sourceId: 'AUTHORIZED-WRC537-ED4-FIXTURE',
         documentDigest: digest,
-        sourceRef,
+        sourceRef: documentRef,
         accessBasis: 'LICENSED_ENGINEERING_USE_FIXTURE',
         custodyNote: 'Synthetic contract fixture only.',
       },
@@ -108,14 +150,14 @@ export function createReadyWrc537Ed4SourceFixture() {
           ['T', 'Fixture shell thickness'], ['r0', 'Fixture attachment radius'],
           ['rm', 'Fixture attachment mean radius'], ['t', 'Fixture attachment thickness'],
           ['C1', 'Fixture rectangular half dimension one'], ['C2', 'Fixture rectangular half dimension two'],
-        ].map(([symbol, definition]) => ({ symbol, definition, sourceRef })),
+        ].map(([symbol, definition]) => ({ symbol, definition, sourceRef: geometryDatum.sourceRef })),
         applicability: {
           hostShellFamilies: ['CYLINDRICAL_SHELL', 'SPHERICAL_SHELL'],
           attachmentFamilies: ['FIXTURE_ATTACHMENT'],
           intersectionOrientation: 'FIXTURE_SOURCE_QUALIFIED_ORIENTATION',
           loadReferenceConvention: 'ATTACHMENT_SHELL_INTERFACE',
           exclusions: ['FIXTURE_SOURCE_QUALIFIED_EXCLUSION'],
-          sourceRef,
+          sourceRef: applicabilityDatum.sourceRef,
         },
       },
       parameters: [
@@ -132,15 +174,19 @@ export function createReadyWrc537Ed4SourceFixture() {
         inventoryDeclared: true,
         stressComponents: [{
           sourceSymbol: 'SIGMA_SOURCE', meaning: 'Fixture qualified normal stress',
-          stressClass: 'MEMBRANE_BENDING', sourceRef,
+          stressClass: 'MEMBRANE_BENDING', sourceRef: stressComponentDatum.sourceRef,
         }],
         locations: [{
           locationId: 'POINT_A_OUTER', surface: 'OUTER',
-          physicalLocation: 'FIXTURE_SOURCE_QUALIFIED_LOCATION', sourceRef,
+          physicalLocation: 'FIXTURE_SOURCE_QUALIFIED_LOCATION', sourceRef: recoveryDatum.sourceRef,
         }],
-        surfaceReconstruction: { rule: 'FIXTURE_SOURCE_QUALIFIED_RECONSTRUCTION', sourceRef },
+        surfaceReconstruction: {
+          rule: 'FIXTURE_SOURCE_QUALIFIED_RECONSTRUCTION', sourceRef: reconstructionDatum.sourceRef,
+        },
         stressIntensityOrEquivalent: {
-          definition: 'FIXTURE_SOURCE_QUALIFIED_STRESS_MEASURE', sourceRef, dimensionallyVerified: true,
+          definition: 'FIXTURE_SOURCE_QUALIFIED_STRESS_MEASURE',
+          sourceRef: stressMeasureDatum.sourceRef,
+          dimensionallyVerified: true,
         },
       },
       interpolation: {
@@ -148,7 +194,7 @@ export function createReadyWrc537Ed4SourceFixture() {
         extrapolationAuthorized: false,
         algorithm: 'FIXTURE_SOURCE_QUALIFIED_INTERPOLATION',
         boundaryBehavior: 'FIXTURE_SOURCE_QUALIFIED_BOUNDARY_BEHAVIOR',
-        sourceRef,
+        sourceRef: interpolationDatum.sourceRef,
       },
       coefficients: {
         inventoryDeclared: true,
@@ -157,12 +203,19 @@ export function createReadyWrc537Ed4SourceFixture() {
       },
       benchmarks: [{
         caseId: 'WRC537-ED4-FIXTURE-001',
-        sourceRef,
+        sourceRef: benchmarkDatum.sourceRef,
         targetEditionPrimarySourceVerified: true,
         independentlyReproduced: true,
+        independentCalculationReference: 'FIXTURE_HAND_CALC_001',
         input: { geometry: { R: 100 }, loads: { P: 1000 } },
         expectedResults: [{
-          quantity: 'SIGMA_X', value: 12.34, units: 'MPa', toleranceBasis: 'SOURCE_PRECISION_FIXTURE',
+          quantity: 'SIGMA_X',
+          value: 12.34,
+          units: 'MPa',
+          absoluteTolerance: 0.005,
+          toleranceBasis: 'FIXTURE_SOURCE_DISPLAYED_TO_0.01_MPA',
+          sourceRef: benchmarkDatum.sourceRef,
+          sourceLocator: benchmarkDatum.sourceLocator,
         }],
       }],
       lafeaMapping: {

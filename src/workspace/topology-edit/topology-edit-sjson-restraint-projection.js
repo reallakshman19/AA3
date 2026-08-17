@@ -154,7 +154,9 @@ function sourceRecord(entity, support, sourceOrder, verticalAxis) {
   const supportPolicy = supportType ? classifySjsonSupportProjection(attributes) : null;
   const projectedSupport = Boolean(support && isProjectedSupport(entity, support, supportPolicy));
   const position = bestPosition(attributes) || finitePoint(support?.origin);
-  const restraint = supportType ? resolveTopoValidatorRestraint(attributes, verticalAxis) : null;
+  const restraint = supportType
+    ? resolveTopoValidatorRestraint(attributes, verticalAxis, supportPolicy)
+    : null;
   const member = support ? Object.freeze({ entity, support }) : null;
   return {
     sourceOrder,
@@ -310,12 +312,14 @@ function isProjectedSupport(entity, support, policy) {
   return managedAuthority && (Boolean(stringValue(support.hostEntityId)) || support.resolved === true);
 }
 
-function resolveTopoValidatorRestraint(attributes, verticalAxis) {
-  const kind = classifySupportKind(attributes);
+function resolveTopoValidatorRestraint(attributes, verticalAxis, policy) {
+  if (policy?.disposition === 'DEFER_SUPPORT' || !policy?.family) return null;
+  const kind = projectionKind(policy.family);
+  if (!kind) return null;
   const gap = numericAttribute(attributes, ['NODEGAP', 'CMPSUPGAP', 'GAP_MM']) ?? 0;
   const stiffness = numericAttribute(attributes, ['NODESTIFF', 'STIFFNESS']) ?? 0;
   const friction = numericAttribute(attributes, ['NODEFRICTION', 'FRICTION'])
-    ?? (kind === 'REST' ? DEFAULT_FRICTION : 0);
+    ?? (['REST', 'HANGER'].includes(kind) ? DEFAULT_FRICTION : 0);
   if (kind === 'ANCHOR') {
     return Object.freeze({ kind, type: 'ANC', direction: 'A', gap, friction: 0, stiffness: 0 });
   }
@@ -338,7 +342,7 @@ function resolveTopoValidatorRestraint(attributes, verticalAxis) {
   }
   const zUp = stringValue(verticalAxis).toUpperCase() === 'Z';
   return Object.freeze({
-    kind: 'REST',
+    kind,
     type: zUp ? '+Z' : '+Y',
     direction: zUp ? '+Z' : '+Y',
     gap,
@@ -347,22 +351,16 @@ function resolveTopoValidatorRestraint(attributes, verticalAxis) {
   });
 }
 
-function classifySupportKind(attributes) {
-  const raw = firstText(attributes, [
-    'SUPPORT_KIND',
-    'SUPPORT_MAPPER_KIND',
-    'SUPPORT_TYPE',
-    'CMPSUPTYPE',
-    'NODETYPE',
-    'MDSSUPPTYPE',
-  ]) || firstText(attributes, ['DTXR']);
-  const token = raw.toUpperCase();
-  if (!token) return 'REST';
-  if (/ANCHOR|FIXED|FIX|ANCI/u.test(token)) return 'ANCHOR';
-  if (/GUIDE|GT01/u.test(token)) return 'GUIDE';
-  if (/LINE\s*STOP|LINESTOP|ST06|LS[-_]/u.test(token)) return 'LINESTOP';
-  if (/SPRING|HANG|HANGER/u.test(token)) return 'SPRING';
-  return 'REST';
+function projectionKind(family) {
+  return ({
+    ANCHOR: 'ANCHOR',
+    GUIDE: 'GUIDE',
+    LINE_STOP: 'LINESTOP',
+    LIMIT: 'LINESTOP',
+    SPRING: 'SPRING',
+    REST: 'REST',
+    HANGER: 'HANGER',
+  })[stringValue(family).toUpperCase()] || null;
 }
 
 function restraintForViewport(restraint) {
@@ -382,6 +380,15 @@ function restraintForViewport(restraint) {
       direction: restraint.direction,
       gapMm: restraint.gap,
       stiffness: restraint.stiffness,
+    };
+  }
+  if (restraint.kind === 'HANGER') {
+    return {
+      kind: 'HANGER',
+      type: restraint.type,
+      direction: restraint.direction,
+      gapMm: restraint.gap,
+      friction: restraint.friction,
     };
   }
   return {
@@ -462,14 +469,6 @@ function positionKey(point) {
 function stableRestraintId(supportId, type, index) {
   const token = stringValue(type).replace(/[^A-Za-z0-9+_-]+/gu, '_') || `R${index + 1}`;
   return `restraint:${stringValue(supportId)}:${token}`;
-}
-
-function firstText(attributes, keys) {
-  for (const key of keys) {
-    const value = stringValue(attributes?.[key]);
-    if (value) return value;
-  }
-  return '';
 }
 
 function numericAttribute(attributes, keys) {

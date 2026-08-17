@@ -13,6 +13,7 @@ const TRACE_AUTHORITY = Object.freeze({
   authorizationBasis: 'QUALIFICATION_CALCULATION_EVIDENCE_NOT_ENGINEERING_RESULT',
 });
 const VARIABLE_ROLES = Object.freeze(['INPUT', 'DERIVED', 'COEFFICIENT', 'STRESS', 'RESULT', 'OTHER']);
+const PRIMARY_SOURCE_CLASSES = Object.freeze(['PRIMARY_LICENSED', 'PRIMARY_AUTHORIZED']);
 
 export function createWrc537Ed4CalculationPlan(datasetCandidateInput, input) {
   const datasetCandidate = validateWrc537Ed4EngineeringDatasetCandidate(datasetCandidateInput);
@@ -30,15 +31,18 @@ export function createWrc537Ed4CalculationPlan(datasetCandidateInput, input) {
   if (input.datasetSemanticHash !== datasetCandidate.datasetSemanticHash) {
     fail('WRC537_ED4_CALCULATION_PLAN_DATASET_MISMATCH', 'calculationPlanInput.datasetSemanticHash');
   }
-  requiredString(input.sourceFamily, 'calculationPlanInput.sourceFamily');
-  validateSourceDefinition(input.sourceCoordinateSystem, 'calculationPlanInput.sourceCoordinateSystem');
-  validateSourceDefinition(input.sourceLoadReference, 'calculationPlanInput.sourceLoadReference');
-  validateVariables(input.variables);
-  validateEquations(input.equations, input.variables);
-  validateInterpolationRules(input.interpolationRules, input.variables);
-  validateRecoveryTargets(input.recoveryTargets, input.variables);
-  validateSourceDefinitionArray(input.combinationRules, 'calculationPlanInput.combinationRules');
-  validateSourceDefinitionArray(input.postProcessing, 'calculationPlanInput.postProcessing');
+
+  const sourceLedgerById = new Map(datasetCandidate.sourceLedgerRows.map((row) => [row.record_id, row]));
+  const sourceDocumentDigest = datasetCandidate.sourceBinding.sourceDocumentDigest;
+  validateSourceDefinition(input.sourceFamily, 'calculationPlanInput.sourceFamily', sourceLedgerById, sourceDocumentDigest);
+  validateSourceDefinition(input.sourceCoordinateSystem, 'calculationPlanInput.sourceCoordinateSystem', sourceLedgerById, sourceDocumentDigest);
+  validateSourceDefinition(input.sourceLoadReference, 'calculationPlanInput.sourceLoadReference', sourceLedgerById, sourceDocumentDigest);
+  validateVariables(input.variables, sourceLedgerById, sourceDocumentDigest);
+  validateEquations(input.equations, input.variables, sourceLedgerById, sourceDocumentDigest);
+  validateInterpolationRules(input.interpolationRules, input.variables, sourceLedgerById, sourceDocumentDigest);
+  validateRecoveryTargets(input.recoveryTargets, input.variables, sourceLedgerById, sourceDocumentDigest);
+  validateSourceDefinitionArray(input.combinationRules, 'calculationPlanInput.combinationRules', sourceLedgerById, sourceDocumentDigest);
+  validateSourceDefinitionArray(input.postProcessing, 'calculationPlanInput.postProcessing', sourceLedgerById, sourceDocumentDigest);
 
   const base = {
     ...clone(input),
@@ -140,7 +144,7 @@ export function requireWrc537Ed4EngineeringExecution(datasetCandidateInput, plan
   fail('WRC537_ED4_NUMERICAL_METHOD_NOT_QUALIFIED', 'engineeringExecution');
 }
 
-function validateVariables(rows) {
+function validateVariables(rows, ledger, digest) {
   requireArray(rows, 'calculationPlanInput.variables');
   if (rows.length === 0) fail('WRC537_ED4_CALCULATION_PLAN_VARIABLES_REQUIRED', 'calculationPlanInput.variables');
   unique(rows, 'variableId', 'calculationPlanInput.variables');
@@ -152,11 +156,10 @@ function validateVariables(rows) {
     if (!VARIABLE_ROLES.includes(row.role)) fail('WRC537_ED4_VARIABLE_ROLE_UNSUPPORTED', `${path}.role`);
     requiredString(row.dimension, `${path}.dimension`);
     requiredString(row.unitsPolicy, `${path}.unitsPolicy`);
-    requiredString(row.sourceRef, `${path}.sourceRef`);
-    requiredString(row.sourceLocator, `${path}.sourceLocator`);
+    validateSourceBinding(row, path, ledger, digest);
   });
 }
-function validateEquations(rows, variables) {
+function validateEquations(rows, variables, ledger, digest) {
   requireArray(rows, 'calculationPlanInput.equations');
   if (rows.length === 0) fail('WRC537_ED4_CALCULATION_PLAN_EQUATIONS_REQUIRED', 'calculationPlanInput.equations');
   unique(rows, 'equationId', 'calculationPlanInput.equations');
@@ -172,12 +175,12 @@ function validateEquations(rows, variables) {
       if (!variableIds.has(id)) fail('WRC537_ED4_EQUATION_INPUT_VARIABLE_UNKNOWN', `${path}.inputVariableIds[${inputIndex}]`);
     });
     requiredString(row.sourceExpression, `${path}.sourceExpression`);
-    requiredString(row.sourceRef, `${path}.sourceRef`);
-    requiredString(row.sourceLocator, `${path}.sourceLocator`);
+    validateSourceBinding(row, path, ledger, digest);
   });
 }
-function validateInterpolationRules(rows, variables) {
+function validateInterpolationRules(rows, variables, ledger, digest) {
   requireArray(rows, 'calculationPlanInput.interpolationRules');
+  unique(rows, 'ruleId', 'calculationPlanInput.interpolationRules');
   const variableIds = new Set(variables.map((row) => row.variableId));
   rows.forEach((row, index) => {
     const path = `calculationPlanInput.interpolationRules[${index}]`;
@@ -188,11 +191,10 @@ function validateInterpolationRules(rows, variables) {
     if (!variableIds.has(row.outputVariableId)) fail('WRC537_ED4_INTERPOLATION_VARIABLE_UNKNOWN', `${path}.outputVariableId`);
     requiredString(row.algorithm, `${path}.algorithm`);
     requiredString(row.boundaryBehavior, `${path}.boundaryBehavior`);
-    requiredString(row.sourceRef, `${path}.sourceRef`);
-    requiredString(row.sourceLocator, `${path}.sourceLocator`);
+    validateSourceBinding(row, path, ledger, digest);
   });
 }
-function validateRecoveryTargets(rows, variables) {
+function validateRecoveryTargets(rows, variables, ledger, digest) {
   requireArray(rows, 'calculationPlanInput.recoveryTargets');
   if (rows.length === 0) fail('WRC537_ED4_RECOVERY_TARGETS_REQUIRED', 'calculationPlanInput.recoveryTargets');
   unique(rows, 'targetId', 'calculationPlanInput.recoveryTargets');
@@ -206,31 +208,49 @@ function validateRecoveryTargets(rows, variables) {
     row.resultVariableIds.forEach((id) => { if (!variableIds.has(id)) fail('WRC537_ED4_RECOVERY_VARIABLE_UNKNOWN', path); });
     requiredString(row.physicalLocation, `${path}.physicalLocation`);
     requiredString(row.surface, `${path}.surface`);
-    requiredString(row.sourceRef, `${path}.sourceRef`);
-    requiredString(row.sourceLocator, `${path}.sourceLocator`);
+    validateSourceBinding(row, path, ledger, digest);
   });
 }
-function validateSourceDefinition(value, path) {
+function validateSourceDefinition(value, path, ledger, digest) {
   requireObject(value, path);
   exactKeys(value, ['definition', 'sourceRef', 'sourceLocator'], path);
   requiredString(value.definition, `${path}.definition`);
-  requiredString(value.sourceRef, `${path}.sourceRef`);
-  requiredString(value.sourceLocator, `${path}.sourceLocator`);
+  validateSourceBinding(value, path, ledger, digest);
 }
-function validateSourceDefinitionArray(rows, path) {
+function validateSourceDefinitionArray(rows, path, ledger, digest) {
   requireArray(rows, path);
-  rows.forEach((row, index) => validateSourceDefinition(row, `${path}[${index}]`));
+  rows.forEach((row, index) => validateSourceDefinition(row, `${path}[${index}]`, ledger, digest));
+}
+function validateSourceBinding(value, path, ledger, digest) {
+  const sourceRef = requiredString(value.sourceRef, `${path}.sourceRef`);
+  const sourceLocator = requiredString(value.sourceLocator, `${path}.sourceLocator`);
+  const source = ledger.get(sourceRef);
+  if (!source) fail('WRC537_ED4_CALCULATION_PLAN_SOURCE_REF_UNKNOWN', `${path}.sourceRef`);
+  if (!PRIMARY_SOURCE_CLASSES.includes(source.authority_class)
+    || source.verification_status !== 'PRIMARY_SOURCE_VERIFIED') {
+    fail('WRC537_ED4_CALCULATION_PLAN_SOURCE_NOT_PRIMARY_VERIFIED', `${path}.sourceRef`);
+  }
+  if (source.document_digest !== digest) {
+    fail('WRC537_ED4_CALCULATION_PLAN_SOURCE_DOCUMENT_MISMATCH', `${path}.sourceRef`);
+  }
+  if (source.locator !== sourceLocator) {
+    fail('WRC537_ED4_CALCULATION_PLAN_SOURCE_LOCATOR_MISMATCH', `${path}.sourceLocator`);
+  }
 }
 function validateInputValues(rows, variables) {
   requireArray(rows, 'qualificationEvidence.inputValues');
-  const requiredInputs = variables.filter((row) => row.role === 'INPUT');
-  const byId = new Map(rows.map((row) => [row.variableId, row]));
-  if (byId.size !== rows.length) fail('WRC537_ED4_QUALIFICATION_INPUT_DUPLICATE', 'qualificationEvidence.inputValues');
-  requiredInputs.forEach((variable) => {
-    const row = byId.get(variable.variableId);
-    if (!row) fail('WRC537_ED4_QUALIFICATION_INPUT_MISSING', `qualificationEvidence.inputValues.${variable.variableId}`);
-    validateValueRow(row, `qualificationEvidence.inputValues.${variable.variableId}`);
+  const requiredInputs = variables.filter((row) => row.role === 'INPUT').map((row) => row.variableId).sort();
+  const actualInputs = rows.map((row, index) => {
+    const path = `qualificationEvidence.inputValues[${index}]`;
+    exactKeys(row, ['variableId', 'value', 'units'], path);
+    requiredString(row.variableId, `${path}.variableId`);
+    validateValueRow(row, path);
+    return row.variableId;
   });
+  if (new Set(actualInputs).size !== actualInputs.length
+    || actualInputs.slice().sort().join('|') !== requiredInputs.join('|')) {
+    fail('WRC537_ED4_QUALIFICATION_INPUT_SET_MISMATCH', 'qualificationEvidence.inputValues');
+  }
 }
 function validateEquationSteps(rows, equations) {
   requireArray(rows, 'qualificationEvidence.equationSteps');
@@ -250,16 +270,18 @@ function validateRecoveryResults(rows, targets) {
   requireArray(rows, 'qualificationEvidence.recoveryResults');
   const expected = [];
   targets.forEach((target) => target.resultVariableIds.forEach((variableId) => expected.push(`${target.targetId}:${variableId}`)));
-  const actual = rows.map((row) => `${row.targetId}:${row.variableId}`);
+  const actual = rows.map((row, index) => {
+    const path = `qualificationEvidence.recoveryResults[${index}]`;
+    exactKeys(row, ['targetId', 'variableId', 'value', 'units'], path);
+    requiredString(row.targetId, `${path}.targetId`);
+    requiredString(row.variableId, `${path}.variableId`);
+    validateValueRow(row, path);
+    return `${row.targetId}:${row.variableId}`;
+  });
   if (new Set(actual).size !== actual.length || actual.length !== expected.length
     || actual.slice().sort().join('|') !== expected.slice().sort().join('|')) {
     fail('WRC537_ED4_QUALIFICATION_RECOVERY_RESULT_SET_MISMATCH', 'qualificationEvidence.recoveryResults');
   }
-  rows.forEach((row, index) => {
-    const path = `qualificationEvidence.recoveryResults[${index}]`;
-    exactKeys(row, ['targetId', 'variableId', 'value', 'units'], path);
-    validateValueRow(row, path);
-  });
 }
 function validateValueRow(row, path) {
   if (!Number.isFinite(row.value)) fail('WRC537_ED4_QUALIFICATION_FINITE_VALUE_REQUIRED', `${path}.value`);

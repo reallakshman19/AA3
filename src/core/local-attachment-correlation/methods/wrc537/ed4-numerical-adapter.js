@@ -230,6 +230,10 @@ function validateSourceBinding(value, path, ledger, digest) {
     || source.verification_status !== 'PRIMARY_SOURCE_VERIFIED') {
     fail('WRC537_ED4_CALCULATION_PLAN_SOURCE_NOT_PRIMARY_VERIFIED', `${path}.sourceRef`);
   }
+  if (source.record_scope !== 'DATUM'
+    || typeof source.engineering_subject !== 'string' || !source.engineering_subject.trim()) {
+    fail('WRC537_ED4_CALCULATION_PLAN_DATUM_SOURCE_REQUIRED', `${path}.sourceRef`);
+  }
   if (source.document_digest !== digest) {
     fail('WRC537_ED4_CALCULATION_PLAN_SOURCE_DOCUMENT_MISMATCH', `${path}.sourceRef`);
   }

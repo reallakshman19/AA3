@@ -61,6 +61,14 @@ export function syntheticCorrelationRequest(overrides = {}) {
   const request = {
     schema: CORRELATION_REQUEST_SCHEMA,
     requestIdentity: 'SYNTHETIC-HAND-CALC-001',
+    sourceCustody: {
+      authorityType: 'SYNTHETIC_DIRECT',
+      sourceStageId: null,
+      sourceRequestHash: null,
+      sourceResultHash: null,
+      screeningCaseId: null,
+      targetMappings: [{ targetId: 'CROWN_OUTER', evaluationLocationId: null }],
+    },
     geometry: {
       pipeOutsideDiameter: 300,
       pipeThickness: 10,
@@ -100,6 +108,7 @@ function constantGrid(value) { return [[value, value], [value, value]]; }
 function mergeRequest(base, overrides) {
   const result = structuredClone(base);
   if (overrides.requestIdentity !== undefined) result.requestIdentity = overrides.requestIdentity;
+  if (overrides.sourceCustody !== undefined) result.sourceCustody = structuredClone(overrides.sourceCustody);
   if (overrides.geometry) Object.assign(result.geometry, overrides.geometry);
   if (overrides.loads) Object.assign(result.loads, overrides.loads);
   if (overrides.pressureByTarget !== undefined) result.pressureByTarget = structuredClone(overrides.pressureByTarget);

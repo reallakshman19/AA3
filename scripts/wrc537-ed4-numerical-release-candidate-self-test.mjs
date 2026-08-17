@@ -223,18 +223,30 @@ expectError('WRC537_ED4_NUMERICAL_RELEASE_BENCHMARK_INPUT_VALUE_MISMATCH', () =>
   const badSuiteInput = structuredClone(suite);
   delete badSuiteInput.suiteSemanticHash;
   badSuiteInput.cases[0].request.inputValues.find((row) => row.variableId === 'P').value = 999;
+  badSuiteInput.cases[0].expectedSteps[0].value = 12.32766;
+  badSuiteInput.cases[0].expectedRecovery[0].value = 12.32766;
   const badSuite = createWrc537Ed4NumericalQualificationSuite(dataset, plan, executable, badSuiteInput);
   const badEvidence = runWrc537Ed4NumericalQualification(dataset, plan, executable, badSuite);
+  assert.equal(badEvidence.status, 'PASS');
   createWrc537Ed4NumericalReleaseCandidate(dataset, plan, executable, badSuite, badEvidence, candidateInput);
 });
 expectError('WRC537_ED4_NUMERICAL_RELEASE_BENCHMARK_RECOVERY_VALUE_MISMATCH', () => {
-  const badSuiteInput = structuredClone(suite);
-  delete badSuiteInput.suiteSemanticHash;
-  badSuiteInput.cases[0].expectedRecovery[0].value = 12;
-  badSuiteInput.cases[0].expectedSteps[0].value = 12;
-  const badSuite = createWrc537Ed4NumericalQualificationSuite(dataset, plan, executable, badSuiteInput);
-  const badEvidence = runWrc537Ed4NumericalQualification(dataset, plan, executable, badSuite);
-  createWrc537Ed4NumericalReleaseCandidate(dataset, plan, executable, badSuite, badEvidence, candidateInput);
+  const changedExecutableInput = structuredClone(executable);
+  delete changedExecutableInput.authority;
+  delete changedExecutableInput.executablePlanSemanticHash;
+  changedExecutableInput.equationImplementations[0].graph.args[1].value = 1.2;
+  const changedExecutable = createWrc537Ed4ExecutablePlan(dataset, plan, changedExecutableInput);
+  const changedSuiteInput = structuredClone(suite);
+  delete changedSuiteInput.suiteSemanticHash;
+  changedSuiteInput.executablePlanSemanticHash = changedExecutable.executablePlanSemanticHash;
+  changedSuiteInput.cases[0].expectedSteps[0].value = 12;
+  changedSuiteInput.cases[0].expectedRecovery[0].value = 12;
+  const changedSuite = createWrc537Ed4NumericalQualificationSuite(dataset, plan, changedExecutable, changedSuiteInput);
+  const changedEvidence = runWrc537Ed4NumericalQualification(dataset, plan, changedExecutable, changedSuite);
+  assert.equal(changedEvidence.status, 'PASS');
+  createWrc537Ed4NumericalReleaseCandidate(
+    dataset, plan, changedExecutable, changedSuite, changedEvidence, candidateInput,
+  );
 });
 expectError('WRC537_ED4_NUMERICAL_RELEASE_BENCHMARK_CASE_CUSTODY_MISMATCH', () => {
   const badSuiteInput = structuredClone(suite);

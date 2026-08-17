@@ -15,5 +15,6 @@ export {
 } from './constants.js';
 export { calculateLocalAttachmentCorrelation } from './calculate.js';
 export { bilinearNoExtrapolation, bracket } from './interpolation.js';
+export { createCorrelationRequestFromLafea2 } from './lafea2-bridge.js';
 export { correlationDatasetHash, createCorrelationProfile } from './profile.js';
 export { syntheticCorrelationProfile, syntheticCorrelationRequest } from './synthetic-profile.js';

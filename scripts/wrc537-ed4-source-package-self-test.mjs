@@ -90,6 +90,18 @@ assertBlocked('BENCHMARKS_COMPLETE', (fixture) => {
   fixture.sourcePackage.benchmarks[0].independentCalculationReference = '';
 });
 assertBlocked('BENCHMARKS_COMPLETE', (fixture) => {
+  fixture.sourcePackage.benchmarks[0].inputEvidence[0].units = '';
+});
+assertBlocked('BENCHMARKS_COMPLETE', (fixture) => {
+  fixture.sourcePackage.benchmarks[0].inputEvidence[0].sourceLocator = 'Wrong benchmark input locator';
+});
+assertBlocked('BENCHMARKS_COMPLETE', (fixture) => {
+  fixture.sourcePackage.benchmarks[0].inputEvidence.pop();
+});
+assertBlocked('BENCHMARKS_COMPLETE', (fixture) => {
+  fixture.sourcePackage.benchmarks[0].inputEvidence[1].inputId = fixture.sourcePackage.benchmarks[0].inputEvidence[0].inputId;
+});
+assertBlocked('BENCHMARKS_COMPLETE', (fixture) => {
   fixture.sourcePackage.benchmarks[0].expectedResults[0].absoluteTolerance = null;
 });
 assertBlocked('BENCHMARKS_COMPLETE', (fixture) => {
@@ -115,6 +127,9 @@ console.log(JSON.stringify({
   nonDegenerateParameterDomainsRequired: true,
   duplicateParameterAndLoadIdentitiesRejected: true,
   coefficientLocatorMustEqualLedgerLocator: true,
+  benchmarkInputsRequireUnitsAndDatumLocator: true,
+  benchmarkNumericInputLeafCoverageRequired: true,
+  benchmarkInputEvidenceIdsUnique: true,
   benchmarkAbsoluteToleranceAndIndependentReferenceRequired: true,
   exactMandatoryLafeaLoadMappingCoverageRequired: true,
   unresolvedTechnicalFieldsRejected: true,

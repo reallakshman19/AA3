@@ -118,6 +118,13 @@
       "args": ["scripts/lafea-retained-mesh-display-topology-check.mjs"]
     },
     {
+      "id": "LAFEA3_VISIBLE_CONTINUUM_PREFLIGHT",
+      "classification": "ENGINEERING",
+      "required": true,
+      "executable": "node",
+      "args": ["scripts/lafea3-visible-continuum-preflight-check.mjs"]
+    },
+    {
       "id": "MESHING_SUITE",
       "classification": "ENGINEERING",
       "required": true,

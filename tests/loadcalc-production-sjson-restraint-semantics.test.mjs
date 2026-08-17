@@ -22,6 +22,7 @@ import {
 } from '../src/workspace/topology-edit/topology-edit-source-adapter-dispatch.js';
 
 const SJSON_URL = new URL('../public/Sjson.json', import.meta.url);
+const CONTRACTOR_BRACING_BRANCH = '/ASIM-1885-10"-S8810101-91261M7-HC-01/B3';
 
 function collect(attributes) {
   const roots = [['attributes', attributes]];
@@ -75,6 +76,13 @@ function unknownDetails(dataset, canonical, issues) {
       ].filter((key) => attributes[key] !== undefined).map((key) => [key, attributes[key]])),
     };
   });
+}
+
+function canonicalSupportBySourceName(dataset, canonical, sourceName) {
+  const entity = dataset.entities.find((candidate) => (
+    candidate.properties?.attributes?.NAME === sourceName
+  ));
+  return canonical.supports.find((support) => support.entityId === entity?.entityId) || null;
 }
 
 test('fallback support-family evidence is priority ordered and fail closed', () => {
@@ -141,6 +149,21 @@ test('SJSON non-restraint semantics outrank weak support-object signals', () => 
   assert.equal(placeholder.attachmentClassification, 'REFERENCE_POINT');
   assert.equal(placeholder.authority, 'SOURCE_GENERIC_ATTACHMENT_PLACEHOLDER');
 
+  const bracing = classifySjsonSupportProjection({
+    NAME: '=1006649732/51465',
+    SUPPORT_TAG: '=1006649732/51465',
+    CMPSUPREFN: '=1006649732/51465',
+    SUPPORT_TYPE: '',
+    CMPSUPTYPE: '',
+    SPRE: '/91261M7r01-AMF1/ATTA-20',
+    DTXR: '---',
+    ISONOTE: 'BRACING SUPPORT BY CONTRACTOR',
+    MTOC: 'OFF',
+    SPKBRK: 'false',
+  });
+  assert.equal(bracing.disposition, 'EMIT_SUPPORT_ATTACHMENT');
+  assert.equal(bracing.family, undefined);
+
   const unknown = classifySjsonSupportProjection({
     NAME: '/PS-UNKNOWN',
     CMPSTRESSN: 'PS-UNKNOWN',
@@ -151,17 +174,28 @@ test('SJSON non-restraint semantics outrank weak support-object signals', () => 
   assert.equal(unknown.family, undefined);
 });
 
-test('production Sjson has no false UNKNOWN_RESTRAINT_FAMILY findings', async () => {
+test('production Sjson removes false support-family findings but keeps contractor bracing fail closed', async () => {
   const { dataset, canonical } = await loadProductionSjsonCanonical();
+
+  for (const sourceName of [
+    '=1006649732/51254',
+    '=1006657924/39571',
+    '=1006649732/51422',
+  ]) {
+    const support = canonicalSupportBySourceName(dataset, canonical, sourceName);
+    assert.ok(support, `Expected canonical source support ${sourceName}.`);
+    assert.equal(support.restraintRole, 'REFERENCE_POINT', sourceName);
+  }
+
   const unknown = checkCanonicalTopology(canonical)
     .filter((issue) => issue.kind === 'UNKNOWN_RESTRAINT_FAMILY');
+  const details = unknownDetails(dataset, canonical, unknown);
   assert.equal(
     unknown.length,
-    0,
-    `Unexpected unresolved production restraint families:\n${JSON.stringify(
-      unknownDetails(dataset, canonical, unknown),
-      null,
-      2,
-    )}`,
+    1,
+    `Unexpected unresolved production restraint families:\n${JSON.stringify(details, null, 2)}`,
   );
+  assert.equal(details[0].branchId, CONTRACTOR_BRACING_BRANCH);
+  assert.equal(details[0].source.NAME, '=1006649732/51465');
+  assert.equal(details[0].source.ISONOTE, 'BRACING SUPPORT BY CONTRACTOR');
 });

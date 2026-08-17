@@ -27,7 +27,7 @@ const OUTPUT_KEYS = Object.freeze([
   'schema', 'stageId', 'authority', 'gateDisposition', 'qualification',
   'sourceHash', 'analysisDomainHash', 'analysisGeometryHash', 'meshArtifactHash',
   'meshHash', 'meshProfileHash', 'midsurfaceEvidenceHash', 'thicknessBasisHash',
-  'surfaceKind', 'elementCount', 'metrics', 'engineeringAuthority',
+  'surfaceKind', 'lengthUnit', 'elementCount', 'metrics', 'engineeringAuthority',
   'releaseQualified', 'semanticHash',
 ]);
 
@@ -157,6 +157,7 @@ export function createLafea4ShellGeometricQualityEvidence({
     midsurfaceEvidenceHash: midsurface.semanticHash,
     thicknessBasisHash: thickness?.semanticHash ?? null,
     surfaceKind,
+    lengthUnit: midsurface.geometry.lengthUnit,
     elementCount: facets.length,
     metrics,
     engineeringAuthority: false,
@@ -193,6 +194,7 @@ export function validateLafea4ShellGeometricQualityEvidence(value) {
     requireSha256(value.thicknessBasisHash, 'LAFEA4_SHELL_GEOMETRIC_QUALITY_THICKNESS_HASH_INVALID');
   }
   if (!SUPPORTED_SURFACES.has(value.surfaceKind)
+    || typeof value.lengthUnit !== 'string' || !value.lengthUnit.trim()
     || !Number.isSafeInteger(value.elementCount) || value.elementCount < 1) {
     fail('LAFEA4_SHELL_GEOMETRIC_QUALITY_CONTENT_INVALID');
   }

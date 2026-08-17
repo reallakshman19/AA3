@@ -31,6 +31,10 @@ const OUTPUT_KEYS = Object.freeze([
   'retainedMeshAcceptanceChanged', 'productionBindingAuthorized',
   'releaseQualified', 'semanticHash',
 ]);
+const SHADOW_PARENT_KEYS = Object.freeze([
+  'sourceHash', 'analysisDomainHash', 'analysisGeometryHash', 'meshArtifactHash',
+  'meshHash', 'meshProfileHash', 'midsurfaceEvidenceHash',
+]);
 
 /**
  * Build the mandatory TECH-12B companion for a retained LAFEA.4 mesh.
@@ -130,7 +134,8 @@ export function validateLafea4RetainedMeshParentNormalCompanion(value) {
   const shadowGate = validateLafea4ShellParentNormalShadowGate(value.shadowGate);
   if (shadowGate.semanticHash !== value.shadowGateHash
     || shadowGate.candidateQualification !== value.candidateQualification
-    || shadowGate.wouldBlockIfPromoted !== value.wouldBlockIfActivated) {
+    || shadowGate.wouldBlockIfPromoted !== value.wouldBlockIfActivated
+    || SHADOW_PARENT_KEYS.some((key) => shadowGate[key] !== value[key])) {
     fail('LAFEA4_PARENT_NORMAL_COMPANION_SHADOW_BINDING_INVALID');
   }
   const core = { ...value };

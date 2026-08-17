@@ -8,8 +8,11 @@ export const LAFEA4_SHELL_PRODUCT_REFINEMENT_PROMOTION_SCHEMA =
   'lafea4-shell-product-refinement-promotion-record/v1';
 export const LAFEA4_SHELL_PRODUCT_REFINEMENT_EXACT_HEAD_QUALIFICATION_ID =
   'LAFEA4-TECH13-PRODUCT-REFINEMENT-EXACT-HEAD-001';
+// Preserve the TECH-13A/C/D public diagnostic while the implementation behind
+// that dormant boundary becomes promotion-aware. Activation removes the reason;
+// no consumer has to migrate merely because the dormant gate is more precise.
 export const LAFEA4_SHELL_PRODUCT_REFINEMENT_PROMOTION_PENDING_CODE =
-  'LAFEA4_SHELL_PRODUCT_REFINEMENT_PENDING_VERIFIED_EXACT_HEAD_PROMOTION';
+  'LAFEA4_SHELL_PRODUCT_REFINEMENT_PENDING_TECH13E_QUALIFICATION';
 export const LAFEA4_SHELL_PRODUCT_REFINEMENT_PROMOTION_BLOCK_CODE =
   'LAFEA4_SHELL_PRODUCT_REFINEMENT_PROMOTION_NOT_AUTHORIZED';
 

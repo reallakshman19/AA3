@@ -38,7 +38,7 @@
     },
     {
       "id": "TECH13E_NUMERICAL_QUALIFICATION",
-      "status": "NOT_STARTED",
+      "status": "IMPLEMENTED_PENDING_EXACT_HEAD_EXECUTION",
       "purpose": "EXACT_HEAD_SMOOTH_CYLINDER_AND_CURVED_HOLE_FIXED_PROBE_QUALIFICATION_AGAINST_GLOBAL_FINE_REFERENCE"
     }
   ],
@@ -112,7 +112,13 @@
     "curvedHoleFarProbeDifferenceVsGloballyFinePercentMax": 1.0,
     "transitionZoneArtificialMaximumAllowed": false,
     "equilibriumRegressionAllowed": false,
-    "fixedPhysicalProbeLocationsRequired": true
+    "fixedPhysicalProbeLocationsRequired": true,
+    "movingMaximumAcceptanceAllowed": false,
+    "exactHeadPlan": "validation/lafea4-refinement/product-refinement-exact-head-plan-v1.json",
+    "numericalCheck": "scripts/lafea-tech13e-product-refinement-numerical-check.mjs",
+    "qualificationRunner": "scripts/lafea-tech13-product-refinement-qualification.mjs",
+    "bundleVerifier": "scripts/lafea-tech13-product-refinement-bundle-verifier.mjs",
+    "exactHeadPassObserved": false
   },
   "activationPolicy": {
     "tech13aExecutionAuthorized": false,
@@ -122,10 +128,15 @@
     "tech13dScopeEligibleMayBeTrue": true,
     "tech13dCanRefineMesh": false,
     "tech13dUiBindingAuthorized": false,
+    "tech13ePassMayAuthorizeSeparateFuturePromotionReview": true,
+    "tech13eSourceAuthoringAloneAuthorizesPromotion": false,
+    "tech13eProductRetentionAuthorized": false,
+    "tech13eUiBindingAuthorized": false,
     "tech13aReleaseQualified": false,
     "tech13bReleaseQualified": false,
     "tech13cReleaseQualified": false,
     "tech13dReleaseQualified": false,
+    "tech13eReleaseQualified": false,
     "productRefinementMayBeEnabledBeforeTech13eExactHeadPass": false
   }
 }

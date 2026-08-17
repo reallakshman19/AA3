@@ -67,6 +67,7 @@ export function createLafea4ShellProductRefinementReplayActions(context) {
       return null;
     }
     const currentMidsurface = meshGeneration.selectShellMidsurface(stageId);
+    let insertedByThisCall = false;
     try {
       const { replayPackage, promotion } =
         requireCurrentLafea4ShellProductRefinementReplayPackage(value);
@@ -100,6 +101,7 @@ export function createLafea4ShellProductRefinementReplayActions(context) {
       }
 
       const recovered = meshGeneration.recoverEvidence(finalEvidence, stageId);
+      insertedByThisCall = recovered.changed === true;
       const retained = meshGeneration.selectEvidence(stageId);
       if (!retained
         || retained.artifactHash !== finalEvidence.artifactHash
@@ -136,16 +138,14 @@ export function createLafea4ShellProductRefinementReplayActions(context) {
         stage: publish().stages[stageId],
       });
     } catch (error) {
-      const retained = meshGeneration.selectEvidence(stageId);
-      if (retained && (!value?.retentionAuthority?.evidence
-        || retained.artifactHash === value.retentionAuthority.evidence.artifactHash)) {
+      if (insertedByThisCall) {
         try {
           meshGeneration.invalidate(stageId);
           if (currentMidsurface) {
             meshGeneration.registerShellMidsurface(currentMidsurface, readStageState(stageId));
           }
         } catch {
-          // Publication below remains fail-closed even if cleanup cannot restore a parent.
+          // Publication below remains fail-closed even if cleanup cannot restore the parent surface.
         }
       }
       failOrchestrator(error, 'LAFEA4_SHELL_PRODUCT_REFINEMENT_REPLAY_REJECTED');

@@ -91,6 +91,13 @@ assert.equal(policy.inactiveDecision.candidatePass, 'NOT_ENFORCED');
 assert.equal(policy.inactiveDecision.candidateBlock, 'NOT_ENFORCED');
 assert.equal(policy.futureActiveDecision.candidatePass, 'ALLOW');
 assert.equal(policy.futureActiveDecision.candidateBlock, 'BLOCK');
+assert.equal(policy.shellRefinementBoundary.productionShellLocalRefinementQualified, false);
+assert.equal(
+  policy.shellRefinementBoundary.currentFailClosedCode,
+  'LAFEA_SHELL_LOCAL_REFINEMENT_NOT_QUALIFIED',
+);
+assert.equal(policy.shellRefinementBoundary.tech7GradedRefinementRemainsQualificationOnly, true);
+assert.equal(policy.shellRefinementBoundary.noProductionRefinementBypassExists, true);
 assert.equal(policy.currentProductEffect.hardGateActivated, false);
 assert.equal(policy.currentProductEffect.productionBindingAuthorized, false);
 assert.equal(policy.currentProductEffect.releaseQualified, false);
@@ -136,6 +143,14 @@ assert.ok(preGateIndex >= 0 && profileIndex > preGateIndex && recoverIndex > pro
 assert.match(recovery, /LAFEA4_PARENT_NORMAL_PRODUCTION_GATE_RECOVERY_REPLAY_MISMATCH/u);
 assert.match(meshActions, /rollbackCompanionCustody\(stageId, currentMidsurface\)/u);
 
+const meshState = readText('src/workspace/lafea-workbench-mesh-generation-state.js');
+const refine = sliceBetween(
+  meshState,
+  'function refineMesh(stage, request = {})',
+  'function validateEvidence(value)',
+);
+assert.match(refine, /if \(shellMidsurfaces\.get\(stageId\)\) fail\('LAFEA_SHELL_LOCAL_REFINEMENT_NOT_QUALIFIED'\);/u);
+
 const solverCustody = readText('src/workspace/lafea4-shell-solver-companion-custody.js');
 assert.match(solverCustody, /evaluateLafea4ParentNormalProductionGate/u);
 assert.match(solverCustody, /productionGate\.solverExecutionAuthorized !== true/u);
@@ -168,6 +183,7 @@ console.log(JSON.stringify({
     recoveryBeforeProfileMutation: true,
     recoveryReplay: true,
     solverCompilationRecheck: true,
+    productionShellRefinementRemainsFailClosed: true,
   },
   releaseQualified: false,
 }, null, 2));

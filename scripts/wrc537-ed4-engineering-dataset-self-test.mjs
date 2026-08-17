@@ -21,9 +21,11 @@ const candidate = createWrc537Ed4EngineeringDatasetCandidate({ ...ready, promoti
 assert.equal(candidate.schema, WRC537_ED4_ENGINEERING_DATASET_SCHEMA);
 assert.equal(candidate.authority.engineeringUseAuthorized, false);
 assert.equal(candidate.authority.authorizationBasis, 'SOURCE_QUALIFIED_DATASET_NOT_METHOD_QUALIFIED');
+assert.equal(candidate.sourceReadiness.state, 'READY_FOR_TECHNICAL_IMPLEMENTATION');
 assert.ok(candidate.datasetSemanticHash.startsWith('fnv1a64:'));
 assert.ok(Object.isFrozen(candidate));
 assert.ok(Object.isFrozen(candidate.sourcePackage));
+assert.ok(Object.isFrozen(candidate.sourceReadiness));
 assert.equal(validateWrc537Ed4EngineeringDatasetCandidate(candidate).datasetSemanticHash,
   candidate.datasetSemanticHash);
 assert.equal(engineeringDatasetCandidateCanActivateMethod(candidate), false);
@@ -56,6 +58,9 @@ expectValidationError('WRC537_ED4_SOURCE_LEDGER_HASH_MISMATCH', (copy) => {
 expectValidationError('WRC537_ED4_COEFFICIENT_ROWS_HASH_MISMATCH', (copy) => {
   copy.coefficientRows[0].coefficient_value = '1.235';
 });
+expectValidationError('WRC537_ED4_RETAINED_READINESS_HASH_MISMATCH', (copy) => {
+  copy.sourceReadiness.gates[0].status = 'FAIL';
+});
 expectValidationError('WRC537_ED4_DATASET_ROWS_NOT_STRICTLY_SORTED_UNIQUE', (copy) => {
   copy.sourceLedgerRows.reverse();
 });
@@ -71,6 +76,7 @@ console.log(JSON.stringify({
   status: 'PASS',
   readySourcePackagePromoted: true,
   fullSourceSnapshotRetained: true,
+  readinessEvidenceRetainedAndBound: true,
   semanticHashesBound: true,
   inputOrderingCanonicalized: true,
   blockedSourcePackageRejected: true,
@@ -79,6 +85,7 @@ console.log(JSON.stringify({
   sourcePackageTamperRejected: true,
   sourceLedgerTamperRejected: true,
   coefficientTamperRejected: true,
+  retainedReadinessTamperRejected: true,
   retainedRowReorderingRejected: true,
   datasetHashTamperRejected: true,
   candidateCannotActivateMethod: true,

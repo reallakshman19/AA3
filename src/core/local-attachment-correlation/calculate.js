@@ -2,7 +2,6 @@ import {
   BASE_LIMITATIONS,
   CORRELATION_REQUEST_SCHEMA,
   CORRELATION_RESULT_SCHEMA,
-  FORCE_COMPONENTS,
   LOAD_BASES,
   LOAD_COMPONENTS,
   QUALIFICATION_STATES,
@@ -77,20 +76,22 @@ function responseContribution(response, request, profile, parameters) {
 
 function targetResult(target, contributions, pressureRows) {
   const components = Object.fromEntries(STRESS_COMPONENTS.map((component) => [
-    component, { membrane: 0, bending: 0, pressure: 0 },
+    component, { membrane: 0, bending: 0, shear: 0, pressure: 0 },
   ]));
   contributions.filter((row) => row.targetId === target.targetId).forEach((row) => {
     const bucket = components[row.stressComponent];
     if (row.stressClass === 'MEMBRANE') bucket.membrane += row.stressContribution;
-    else bucket.bending += row.stressContribution;
+    else if (row.stressClass === 'BENDING') bucket.bending += row.stressContribution;
+    else if (row.stressClass === 'SHEAR') bucket.shear += row.stressContribution;
+    else fail('CORRELATION_STRESS_CLASS_UNSUPPORTED', `contributions.${row.responseId}.stressClass`);
   });
   const pressure = pressureRows.find((row) => row.targetId === target.targetId);
   if (pressure) STRESS_COMPONENTS.forEach((component) => { components[component].pressure = pressure[component]; });
   const finalized = Object.fromEntries(Object.entries(components).map(([key, value]) => [
     key, freeze({
       ...value,
-      mechanicalSurface: value.membrane + value.bending,
-      totalSurface: value.membrane + value.bending + value.pressure,
+      mechanicalSurface: value.membrane + value.bending + value.shear,
+      totalSurface: value.membrane + value.bending + value.shear + value.pressure,
     }),
   ]));
   return freeze({
@@ -111,7 +112,9 @@ function canonicalRequest(input) {
   positive(value.geometry.pipeOutsideDiameter, 'geometry.pipeOutsideDiameter');
   positive(value.geometry.pipeThickness, 'geometry.pipeThickness');
   positive(value.geometry.attachmentDiameter, 'geometry.attachmentDiameter');
-  if (value.pipeThickness * 2 >= value.pipeOutsideDiameter) fail('CORRELATION_WALL_GEOMETRY_INVALID', 'geometry.pipeThickness');
+  if (value.geometry.pipeThickness * 2 >= value.geometry.pipeOutsideDiameter) {
+    fail('CORRELATION_WALL_GEOMETRY_INVALID', 'geometry.pipeThickness');
+  }
   exactKeys(value.loads, LOAD_COMPONENTS, 'loads');
   LOAD_COMPONENTS.forEach((key) => finite(value.loads[key], `loads.${key}`));
   if (!Array.isArray(value.pressureByTarget)) fail('CORRELATION_PRESSURE_ROWS_REQUIRED', 'pressureByTarget');

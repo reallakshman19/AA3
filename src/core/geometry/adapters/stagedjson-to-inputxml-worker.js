@@ -85,11 +85,11 @@ function baseNameWithoutExtension(name) {
   return idx > 0 ? cleaned.slice(0, idx) : cleaned;
 }
 
-async function runConversion({ stagedJsonText, sourceName, options }) {
+async function runConversion({ stagedJsonText, sourceName, options, requestId }) {
   const pyodide = await getPyodide();
   await ensureScripts(pyodide);
 
-  const jobDir = `/work/${Date.now()}-${Math.random().toString(36).slice(2)}`;
+  const jobDir = `/work/${sanitizeFileName(requestId)}`;
   pyodide.FS.mkdirTree(jobDir);
 
   const inputFileName = sanitizeFileName(sourceName || 'staged.json');
@@ -143,7 +143,7 @@ globalThis.addEventListener('message', async (event) => {
   const request = event.data ?? {};
   if (request.type !== 'RUN' || typeof request.requestId !== 'string') return;
   try {
-    const result = await runConversion(request.input ?? {});
+    const result = await runConversion({ ...(request.input ?? {}), requestId: request.requestId });
     globalThis.postMessage({ type: 'COMPLETE', requestId: request.requestId, result });
   } catch (error) {
     globalThis.postMessage({

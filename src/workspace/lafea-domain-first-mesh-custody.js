@@ -1,6 +1,9 @@
 /** Pure custody classifier for governed v2 analysis-mesh evidence. */
 import { validateLafeaAnalysisMeshEvidenceV2 } from './lafea-analysis-mesh-evidence-v2.js';
 import { validateLafeaAnyShellMidsurfaceEvidence } from './lafea-shell-midsurface-dispatch.js';
+import {
+  LAFEA4_PARENT_NORMAL_PRODUCTION_GATE_BLOCK_CODE,
+} from './lafea4-parent-normal-production-gate.js';
 
 export const LAFEA_DOMAIN_FIRST_MESH_CUSTODY_SCHEMA = 'lafea-domain-first-mesh-custody/v1';
 export const LAFEA_SHELL_SOLVER_MESH_BINDING_REQUIRED =
@@ -17,7 +20,10 @@ export function buildLafeaDomainFirstMeshCustodyProjection(stage, retainedEviden
     usableForAuthorization: true,
     usableForRun: true,
     reasons: [],
+    blockingReasons: [],
     runBlockingReasons: [],
+    parentNormalProductionGateBlocked: false,
+    parentNormalProductionGateDiagnostic: null,
     meshHash: null,
     meshProfileHash: null,
     solverModelHash: null,
@@ -62,24 +68,45 @@ export function buildLafeaDomainFirstMeshCustodyProjection(stage, retainedEviden
 }
 
 /**
- * Promote only the Run permission of an already-current shell mesh. The mesh
- * qualification state remains independent from solver-model qualification.
+ * Promote only the Run permission of an already-current shell mesh after the
+ * non-executing solver compiler binds it. A trusted production parent-normal
+ * BLOCK is stronger: it promotes derived custody to CURRENT_BLOCK and denies
+ * advance/authorization/run without rewriting the underlying v2 mesh evidence.
  */
 export function bindLafeaShellMeshCustodyToSolverModel(custodyValue, bindingValue) {
   const custody = custodyValue;
   const binding = bindingValue;
   if (!custody || custody.state !== 'CURRENT_PASS' || !custody.meshHash) return custody;
+  const bindingReasons = binding?.reasons?.length
+    ? [...new Set(binding.reasons)]
+    : [LAFEA_SHELL_SOLVER_MESH_BINDING_REQUIRED];
+  if (bindingReasons.includes(LAFEA4_PARENT_NORMAL_PRODUCTION_GATE_BLOCK_CODE)) {
+    return freeze({
+      ...custody,
+      state: 'CURRENT_BLOCK',
+      usableForAdvance: false,
+      usableForAuthorization: false,
+      usableForRun: false,
+      canFocusFindings: false,
+      advancePolicy: 'DENY',
+      authorizationPolicy: 'DENY',
+      runPolicy: 'DENY',
+      blockingReasons: [LAFEA4_PARENT_NORMAL_PRODUCTION_GATE_BLOCK_CODE],
+      runBlockingReasons: [LAFEA4_PARENT_NORMAL_PRODUCTION_GATE_BLOCK_CODE],
+      parentNormalProductionGateBlocked: true,
+      parentNormalProductionGateDiagnostic: LAFEA4_PARENT_NORMAL_PRODUCTION_GATE_BLOCK_CODE,
+      solverModelHash: null,
+      solverModelBindingHash: null,
+    });
+  }
   if (!binding || binding.state !== 'CURRENT_PASS' || binding.usableForRun !== true
     || binding.meshHash !== custody.meshHash || !binding.solverModelHash
     || !binding.solverModelBindingHash) {
-    const reasons = binding?.reasons?.length
-      ? binding.reasons
-      : [LAFEA_SHELL_SOLVER_MESH_BINDING_REQUIRED];
     return freeze({
       ...custody,
       usableForRun: false,
       runPolicy: 'DENY',
-      runBlockingReasons: [...new Set(reasons)],
+      runBlockingReasons: bindingReasons,
       solverModelHash: null,
       solverModelBindingHash: null,
     });
@@ -89,6 +116,8 @@ export function bindLafeaShellMeshCustodyToSolverModel(custodyValue, bindingValu
     usableForRun: true,
     runPolicy: 'ALLOW',
     runBlockingReasons: [],
+    parentNormalProductionGateBlocked: false,
+    parentNormalProductionGateDiagnostic: null,
     solverModelHash: binding.solverModelHash,
     solverModelBindingHash: binding.solverModelBindingHash,
   });
@@ -137,11 +166,14 @@ function result(stageId, state, permissions, reasons, evidence = null, runBlocki
     usableForAuthorization: permissions.authorization,
     usableForRun: permissions.run,
     canView: Boolean(evidence),
-    canFocusFindings: state === 'CURRENT_BLOCK',
+    canFocusFindings: state === 'CURRENT_BLOCK' && Boolean(evidence?.quality?.blockingElementIds?.length),
     advancePolicy: permissions.advance ? 'ALLOW' : 'DENY',
     authorizationPolicy: permissions.authorization ? 'ALLOW' : 'DENY',
     runPolicy: permissions.run ? 'ALLOW' : 'DENY',
+    blockingReasons: state === 'CURRENT_BLOCK' ? freeze([...reasons]) : freeze([]),
     runBlockingReasons: freeze([...runBlockingReasons]),
+    parentNormalProductionGateBlocked: false,
+    parentNormalProductionGateDiagnostic: null,
     staleReasons: state === 'STALE' ? reasons : [],
     invalidReasons: state === 'INVALID' ? reasons : [],
     absenceReasons: state === 'ABSENT' ? reasons : [],

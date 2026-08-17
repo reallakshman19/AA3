@@ -22,4 +22,11 @@ export {
 export { bilinearNoExtrapolation, bracket } from './interpolation.js';
 export { createCorrelationRequestFromLafea2 } from './lafea2-bridge.js';
 export { correlationDatasetHash, createCorrelationProfile } from './profile.js';
+export {
+  CORRELATION_METHOD_REGISTRY_SCHEMA,
+  EMPTY_ENGINEERING_CORRELATION_REGISTRY,
+  createEngineeringCorrelationRegistry,
+  engineeringCorrelationMethods,
+  requireEngineeringCorrelationProfile,
+} from './registry.js';
 export { syntheticCorrelationProfile, syntheticCorrelationRequest } from './synthetic-profile.js';

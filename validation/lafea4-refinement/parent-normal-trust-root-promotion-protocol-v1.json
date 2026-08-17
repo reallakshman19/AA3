@@ -1,0 +1,64 @@
+{
+  "schema": "lafea4-parent-normal-trust-root-promotion-protocol-definition/v1",
+  "qualificationId": "LAFEA4-PARENT-NORMAL-TECH12F-001",
+  "stageId": "LAFEA.4",
+  "scope": "EVIDENCE_BACKED_TRUST_ROOT_ONLY_FUTURE_PROMOTION",
+  "currentState": {
+    "productionActivationRecord": null,
+    "hardGateActivated": false,
+    "productionBindingAuthorized": false,
+    "releaseQualified": false
+  },
+  "requiredInputsForFuturePromotion": {
+    "exactTech8EvidenceBundle": true,
+    "tech12dActivationRecord": true,
+    "tech12dStatus": "AUTHORIZED_FOR_FUTURE_PROMOTION",
+    "recordExpectedHeadMustEqualCheckoutHead": true,
+    "checkoutTrackedTreeMustBeCleanBeforeGeneration": true
+  },
+  "recordAuthenticity": {
+    "semanticHashAloneIsInsufficient": true,
+    "tech12dGeneratorMustReplayOriginalTech8Bundle": true,
+    "reconstructedRecordMustMatchSuppliedRecordExactly": true,
+    "wrongHeadMustFailClosed": true,
+    "notRunOrFailBundleMustFailClosed": true,
+    "syntheticRecordWithoutMatchingBundleMustFailClosed": true
+  },
+  "sourceGeneration": {
+    "renderer": "src/workspace/lafea4-parent-normal-promotion-source.js",
+    "generator": "scripts/lafea-tech12f-parent-normal-promotion-source.mjs",
+    "onlyAuthorizedProductionPath": "src/workspace/lafea4-parent-normal-production-activation.js",
+    "renderMustBeDeterministic": true,
+    "renderedRecordMustBeDeepFrozen": true,
+    "handEditingRecordForbidden": true,
+    "trustRootWriteRequiresExplicitFlag": true
+  },
+  "promotionDiff": {
+    "trackedChangedFileCount": 1,
+    "onlyTrackedChangedFile": "src/workspace/lafea4-parent-normal-production-activation.js",
+    "gitDiffCheckMustPass": true,
+    "writtenModuleMustReplayExactActivationRecordHash": true,
+    "writtenPolicyMustMatchQualifiedPolicy": true,
+    "generatorDoesNotCommit": true,
+    "generatorDoesNotPush": true,
+    "generatorDoesNotMerge": true
+  },
+  "qualification": {
+    "tech8StepId": "TECH12F_TRUST_ROOT_PROMOTION_PROTOCOL",
+    "requiredByTech12dActivationRecord": true,
+    "orderAfter": "TECH12E_DORMANT_PRODUCTION_GATE",
+    "orderBefore": "TECH7_GRADED_REFINEMENT_EXECUTOR"
+  },
+  "prohibitions": [
+    "NO_PROMOTION_FROM_ACTIVATION_RECORD_WITHOUT_ORIGINAL_TECH8_BUNDLE",
+    "NO_PROMOTION_FROM_SELF_HASHED_RECORD_ALONE",
+    "NO_RUNTIME_CALLER_ACTIVATION",
+    "NO_MULTIFILE_PRODUCTION_PROMOTION_DIFF",
+    "NO_AUTOMATIC_COMMIT_PUSH_OR_MERGE",
+    "NO_HARD_GATE_ACTIVATION_IN_TECH12F",
+    "NO_MESH_QUALITY_THRESHOLD_CHANGE",
+    "NO_SHELL_FORMULATION_CHANGE",
+    "NO_SOLVER_EQUATION_CHANGE"
+  ],
+  "releaseQualified": false
+}

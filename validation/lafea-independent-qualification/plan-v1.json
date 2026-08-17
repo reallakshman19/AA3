@@ -132,6 +132,13 @@
       "args": ["scripts/lafea-tech12e-dormant-production-gate-check.mjs"]
     },
     {
+      "id": "TECH12F_TRUST_ROOT_PROMOTION_PROTOCOL",
+      "classification": "ENGINEERING",
+      "required": true,
+      "executable": "node",
+      "args": ["scripts/lafea-tech12f-trust-root-promotion-protocol-check.mjs"]
+    },
+    {
       "id": "TECH7_GRADED_REFINEMENT_EXECUTOR",
       "classification": "ENGINEERING",
       "required": true,

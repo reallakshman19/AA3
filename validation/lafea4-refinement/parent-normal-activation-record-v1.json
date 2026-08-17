@@ -19,6 +19,7 @@
     "TECH12C_SOLVER_EXECUTION_COMPANION_BINDING",
     "TECH12D_ACTIVATION_RECORD_POLICY",
     "TECH12E_DORMANT_PRODUCTION_GATE",
+    "TECH12F_TRUST_ROOT_PROMOTION_PROTOCOL",
     "TECH7_GRADED_REFINEMENT_EXECUTOR",
     "SHELL_SAMPLE_PARENT",
     "SHELL_WORKBENCH_ROUTE",
@@ -52,6 +53,7 @@
     "allRequiredEngineeringStepsMustBePresent": true,
     "allRequiredEngineeringStepsMustBePass": true,
     "tech12eDormantProductionGateMustPass": true,
+    "tech12fTrustRootPromotionProtocolMustPass": true,
     "noRequiredStepMayBeNotRun": true,
     "noRequiredStepMayBeFail": true,
     "planMustDeclareEveryRequiredStep": true,
@@ -77,6 +79,7 @@
     "NO_AUTHORIZATION_WITH_MISSING_REQUIRED_PLAN_COMMAND",
     "NO_AUTHORIZATION_WITH_MISSING_REQUIRED_ENGINEERING_STEP",
     "NO_AUTHORIZATION_WITHOUT_TECH12E_DORMANT_GATE_PASS",
+    "NO_AUTHORIZATION_WITHOUT_TECH12F_PROMOTION_PROTOCOL_PASS",
     "NO_DIRECT_PRODUCT_GATE_ACTIVATION_IN_TECH12D"
   ],
   "releaseQualified": false

@@ -7,7 +7,9 @@
     "classification": "INFRASTRUCTURE",
     "required": true,
     "executable": "npm",
-    "args": ["ci"]
+    "args": [
+      "ci"
+    ]
   },
   "browserProvision": {
     "id": "BROWSER_PROVISION",
@@ -15,56 +17,368 @@
     "required": true,
     "browser": true,
     "executable": "npx",
-    "args": ["playwright", "install", "chromium"]
+    "args": [
+      "playwright",
+      "install",
+      "chromium"
+    ]
   },
-  "browserArtifactPaths": ["test-results", "playwright-report"],
+  "browserArtifactPaths": [
+    "test-results",
+    "playwright-report"
+  ],
   "steps": [
-    {"id":"TECH3_CURVATURE_ANALYTICAL","classification":"ENGINEERING","required":true,"executable":"node","args":["scripts/lafea-tech3-curvature-qualification-check.mjs"]},
-    {"id":"TECH4_CURVED_HOLE_CONVERGENCE","classification":"ENGINEERING","required":true,"executable":"node","args":["scripts/lafea-tech4-curved-hole-convergence-check.mjs"]},
-    {"id":"TECH5_EXACT_UV_LOCAL_REFINEMENT","classification":"ENGINEERING","required":true,"executable":"node","args":["scripts/lafea-tech5-shell-local-refinement-check.mjs"]},
-    {"id":"TECH6_GRADED_TRANSITION_PLAN","classification":"ENGINEERING","required":true,"executable":"node","args":["scripts/lafea-tech6-graded-transition-plan-check.mjs"]},
-    {"id":"TECH9_HOLE_FRONT_ADJACENCY_POLICY","classification":"ENGINEERING","required":true,"executable":"node","args":["scripts/lafea-tech9-hole-front-policy-check.mjs"]},
-    {"id":"TECH10_SHELL_GEOMETRIC_QUALITY_HAND_ORACLE","classification":"ENGINEERING","required":true,"executable":"node","args":["scripts/lafea-tech10-shell-geometric-quality-check.mjs"]},
-    {"id":"TECH10_SHELL_GEOMETRIC_QUALITY_SAMPLE","classification":"ENGINEERING","required":true,"executable":"node","args":["scripts/lafea-tech10-shell-geometric-quality-sample-check.mjs"]},
-    {"id":"TECH11_PARENT_NORMAL_STANDALONE_MATH","classification":"ENGINEERING","required":true,"executable":"node","args":["scripts/lafea-tech11-parent-normal-standalone-check.mjs"]},
-    {"id":"TECH11_PARENT_NORMAL_INVERSION_HAND_ORACLE","classification":"ENGINEERING","required":true,"executable":"node","args":["scripts/lafea-tech11-parent-normal-inversion-check.mjs"]},
-    {"id":"TECH11_PARENT_NORMAL_SAMPLE","classification":"ENGINEERING","required":true,"executable":"node","args":["scripts/lafea-tech11-parent-normal-sample-check.mjs"]},
-    {"id":"TECH12A_PARENT_NORMAL_SHADOW_BATCH","classification":"ENGINEERING","required":true,"executable":"node","args":["scripts/lafea-tech12-shadow-parent-normal-batch-check.mjs"]},
-    {"id":"TECH12B_RETAINED_PARENT_NORMAL_COMPANION","classification":"ENGINEERING","required":true,"executable":"node","args":["scripts/lafea-tech12b-retained-parent-normal-companion-check.mjs"]},
-    {"id":"TECH12B_COMPANION_ATOMICITY_SOURCE_WIRING","classification":"ENGINEERING","required":true,"executable":"node","args":["scripts/lafea-tech12b-companion-atomicity-source-check.mjs"]},
-    {"id":"TECH12C_SOLVER_EXECUTION_COMPANION_BINDING","classification":"ENGINEERING","required":true,"executable":"node","args":["scripts/lafea-tech12c-solver-execution-companion-binding-check.mjs"]},
-    {"id":"TECH12D_ACTIVATION_RECORD_POLICY","classification":"ENGINEERING","required":true,"executable":"node","args":["scripts/lafea-tech12d-activation-record-check.mjs"]},
-    {"id":"TECH12E_DORMANT_PRODUCTION_GATE","classification":"ENGINEERING","required":true,"executable":"node","args":["scripts/lafea-tech12e-dormant-production-gate-check.mjs"]},
-    {"id":"TECH12F_TRUST_ROOT_PROMOTION_PROTOCOL","classification":"ENGINEERING","required":true,"executable":"node","args":["scripts/lafea-tech12f-trust-root-promotion-protocol-check.mjs"]},
-    {"id":"TECH12G_ACTIVE_GATE_READINESS_PROPAGATION","classification":"ENGINEERING","required":true,"executable":"node","args":["scripts/lafea-tech12g-readiness-diagnostic-propagation-check.mjs"]},
-    {"id":"TECH12H_OVERVIEW_RESULT_CURRENTNESS","classification":"ENGINEERING","required":true,"executable":"node","args":["scripts/lafea-tech12h-overview-result-currentness-check.mjs"]},
-    {"id":"TECH7_GRADED_REFINEMENT_EXECUTOR","classification":"ENGINEERING","required":true,"executable":"node","args":["scripts/lafea-tech7-graded-refinement-executor-check.mjs"]},
-    {"id":"SHELL_SAMPLE_PARENT","classification":"ENGINEERING","required":true,"executable":"node","args":["scripts/lafea-shell-sample-parent-check.mjs"]},
-    {"id":"SHELL_WORKBENCH_ROUTE","classification":"ENGINEERING","required":true,"executable":"node","args":["scripts/lafea-shell-workbench-route-check.mjs"]},
-    {"id":"SHELL_COMPILED_EXECUTION","classification":"ENGINEERING","required":true,"executable":"node","args":["scripts/lafea-shell-compiled-execution-check.mjs"]},
-    {"id":"SHELL_RESPONSE_ACCEPTANCE","classification":"ENGINEERING","required":true,"executable":"node","args":["scripts/lafea-shell-response-acceptance-check.mjs"]},
-    {"id":"ENGINEERING_OVERVIEW_PROJECTION","classification":"ENGINEERING","required":true,"executable":"node","args":["tests/lafea-engineering-overview.test.mjs"]},
-    {"id":"UI_ANALYSIS_SETTINGS_CONTRACT","classification":"ENGINEERING","required":true,"executable":"node","args":["scripts/lafea-ui-analysis-settings-check.mjs"]},
-    {"id":"LAFEA3_SAMPLE_GENERATE_MESH","classification":"ENGINEERING","required":true,"executable":"node","args":["scripts/lafea3-sample-generate-mesh-enable-check.mjs"]},
-    {"id":"LAFEA3_SAMPLE_GENERATE_RETAIN","classification":"ENGINEERING","required":true,"executable":"node","args":["scripts/lafea3-sample-generate-retain-check.mjs"]},
-    {"id":"RETAINED_MESH_DISPLAY_TOPOLOGY","classification":"ENGINEERING","required":true,"executable":"node","args":["scripts/lafea-retained-mesh-display-topology-check.mjs"]},
-    {"id":"LAFEA3_VISIBLE_CONTINUUM_PREFLIGHT","classification":"ENGINEERING","required":true,"executable":"node","args":["scripts/lafea3-visible-continuum-preflight-check.mjs"]},
-    {"id":"LAFEA3_PREFLIGHT_REJECTION_RETRY","classification":"ENGINEERING","required":true,"executable":"node","args":["scripts/lafea3-preflight-rejection-retry-check.mjs"]},
-    {"id":"MESHING_SUITE","classification":"ENGINEERING","required":true,"executable":"npm","args":["run","check:lafea-meshing"]},
-    {"id":"LAFEA_CORE_SUITE","classification":"ENGINEERING","required":true,"executable":"npm","args":["run","check:lafea-core"]},
+    {
+      "id": "TECH3_CURVATURE_ANALYTICAL",
+      "classification": "ENGINEERING",
+      "required": true,
+      "executable": "node",
+      "args": [
+        "scripts/lafea-tech3-curvature-qualification-check.mjs"
+      ]
+    },
+    {
+      "id": "TECH4_CURVED_HOLE_CONVERGENCE",
+      "classification": "ENGINEERING",
+      "required": true,
+      "executable": "node",
+      "args": [
+        "scripts/lafea-tech4-curved-hole-convergence-check.mjs"
+      ]
+    },
+    {
+      "id": "TECH5_EXACT_UV_LOCAL_REFINEMENT",
+      "classification": "ENGINEERING",
+      "required": true,
+      "executable": "node",
+      "args": [
+        "scripts/lafea-tech5-shell-local-refinement-check.mjs"
+      ]
+    },
+    {
+      "id": "TECH6_GRADED_TRANSITION_PLAN",
+      "classification": "ENGINEERING",
+      "required": true,
+      "executable": "node",
+      "args": [
+        "scripts/lafea-tech6-graded-transition-plan-check.mjs"
+      ]
+    },
+    {
+      "id": "TECH9_HOLE_FRONT_ADJACENCY_POLICY",
+      "classification": "ENGINEERING",
+      "required": true,
+      "executable": "node",
+      "args": [
+        "scripts/lafea-tech9-hole-front-policy-check.mjs"
+      ]
+    },
+    {
+      "id": "TECH10_SHELL_GEOMETRIC_QUALITY_HAND_ORACLE",
+      "classification": "ENGINEERING",
+      "required": true,
+      "executable": "node",
+      "args": [
+        "scripts/lafea-tech10-shell-geometric-quality-check.mjs"
+      ]
+    },
+    {
+      "id": "TECH10_SHELL_GEOMETRIC_QUALITY_SAMPLE",
+      "classification": "ENGINEERING",
+      "required": true,
+      "executable": "node",
+      "args": [
+        "scripts/lafea-tech10-shell-geometric-quality-sample-check.mjs"
+      ]
+    },
+    {
+      "id": "TECH11_PARENT_NORMAL_STANDALONE_MATH",
+      "classification": "ENGINEERING",
+      "required": true,
+      "executable": "node",
+      "args": [
+        "scripts/lafea-tech11-parent-normal-standalone-check.mjs"
+      ]
+    },
+    {
+      "id": "TECH11_PARENT_NORMAL_INVERSION_HAND_ORACLE",
+      "classification": "ENGINEERING",
+      "required": true,
+      "executable": "node",
+      "args": [
+        "scripts/lafea-tech11-parent-normal-inversion-check.mjs"
+      ]
+    },
+    {
+      "id": "TECH11_PARENT_NORMAL_SAMPLE",
+      "classification": "ENGINEERING",
+      "required": true,
+      "executable": "node",
+      "args": [
+        "scripts/lafea-tech11-parent-normal-sample-check.mjs"
+      ]
+    },
+    {
+      "id": "TECH12A_PARENT_NORMAL_SHADOW_BATCH",
+      "classification": "ENGINEERING",
+      "required": true,
+      "executable": "node",
+      "args": [
+        "scripts/lafea-tech12-shadow-parent-normal-batch-check.mjs"
+      ]
+    },
+    {
+      "id": "TECH12B_RETAINED_PARENT_NORMAL_COMPANION",
+      "classification": "ENGINEERING",
+      "required": true,
+      "executable": "node",
+      "args": [
+        "scripts/lafea-tech12b-retained-parent-normal-companion-check.mjs"
+      ]
+    },
+    {
+      "id": "TECH12B_COMPANION_ATOMICITY_SOURCE_WIRING",
+      "classification": "ENGINEERING",
+      "required": true,
+      "executable": "node",
+      "args": [
+        "scripts/lafea-tech12b-companion-atomicity-source-check.mjs"
+      ]
+    },
+    {
+      "id": "TECH12C_SOLVER_EXECUTION_COMPANION_BINDING",
+      "classification": "ENGINEERING",
+      "required": true,
+      "executable": "node",
+      "args": [
+        "scripts/lafea-tech12c-solver-execution-companion-binding-check.mjs"
+      ]
+    },
+    {
+      "id": "TECH12D_ACTIVATION_RECORD_POLICY",
+      "classification": "ENGINEERING",
+      "required": true,
+      "executable": "node",
+      "args": [
+        "scripts/lafea-tech12d-activation-record-check.mjs"
+      ]
+    },
+    {
+      "id": "TECH12E_DORMANT_PRODUCTION_GATE",
+      "classification": "ENGINEERING",
+      "required": true,
+      "executable": "node",
+      "args": [
+        "scripts/lafea-tech12e-dormant-production-gate-check.mjs"
+      ]
+    },
+    {
+      "id": "TECH12F_TRUST_ROOT_PROMOTION_PROTOCOL",
+      "classification": "ENGINEERING",
+      "required": true,
+      "executable": "node",
+      "args": [
+        "scripts/lafea-tech12f-trust-root-promotion-protocol-check.mjs"
+      ]
+    },
+    {
+      "id": "TECH12G_ACTIVE_GATE_READINESS_PROPAGATION",
+      "classification": "ENGINEERING",
+      "required": true,
+      "executable": "node",
+      "args": [
+        "scripts/lafea-tech12g-readiness-diagnostic-propagation-check.mjs"
+      ]
+    },
+    {
+      "id": "TECH12H_OVERVIEW_RESULT_CURRENTNESS",
+      "classification": "ENGINEERING",
+      "required": true,
+      "executable": "node",
+      "args": [
+        "scripts/lafea-tech12h-overview-result-currentness-check.mjs"
+      ]
+    },
+    {
+      "id": "TECH7_GRADED_REFINEMENT_EXECUTOR",
+      "classification": "ENGINEERING",
+      "required": true,
+      "executable": "node",
+      "args": [
+        "scripts/lafea-tech7-graded-refinement-executor-check.mjs"
+      ]
+    },
+    {
+      "id": "SHELL_SAMPLE_PARENT",
+      "classification": "ENGINEERING",
+      "required": true,
+      "executable": "node",
+      "args": [
+        "scripts/lafea-shell-sample-parent-check.mjs"
+      ]
+    },
+    {
+      "id": "SHELL_WORKBENCH_ROUTE",
+      "classification": "ENGINEERING",
+      "required": true,
+      "executable": "node",
+      "args": [
+        "scripts/lafea-shell-workbench-route-check.mjs"
+      ]
+    },
+    {
+      "id": "SHELL_COMPILED_EXECUTION",
+      "classification": "ENGINEERING",
+      "required": true,
+      "executable": "node",
+      "args": [
+        "scripts/lafea-shell-compiled-execution-check.mjs"
+      ]
+    },
+    {
+      "id": "SHELL_RESPONSE_ACCEPTANCE",
+      "classification": "ENGINEERING",
+      "required": true,
+      "executable": "node",
+      "args": [
+        "scripts/lafea-shell-response-acceptance-check.mjs"
+      ]
+    },
+    {
+      "id": "ENGINEERING_OVERVIEW_PROJECTION",
+      "classification": "ENGINEERING",
+      "required": true,
+      "executable": "node",
+      "args": [
+        "tests/lafea-engineering-overview.test.mjs"
+      ]
+    },
+    {
+      "id": "UI_ANALYSIS_SETTINGS_CONTRACT",
+      "classification": "ENGINEERING",
+      "required": true,
+      "executable": "node",
+      "args": [
+        "scripts/lafea-ui-analysis-settings-check.mjs"
+      ]
+    },
+    {
+      "id": "LAFEA3_SAMPLE_GENERATE_MESH",
+      "classification": "ENGINEERING",
+      "required": true,
+      "executable": "node",
+      "args": [
+        "scripts/lafea3-sample-generate-mesh-enable-check.mjs"
+      ]
+    },
+    {
+      "id": "LAFEA3_SAMPLE_GENERATE_RETAIN",
+      "classification": "ENGINEERING",
+      "required": true,
+      "executable": "node",
+      "args": [
+        "scripts/lafea3-sample-generate-retain-check.mjs"
+      ]
+    },
+    {
+      "id": "RETAINED_MESH_DISPLAY_TOPOLOGY",
+      "classification": "ENGINEERING",
+      "required": true,
+      "executable": "node",
+      "args": [
+        "scripts/lafea-retained-mesh-display-topology-check.mjs"
+      ]
+    },
+    {
+      "id": "LAFEA3_VISIBLE_CONTINUUM_PREFLIGHT",
+      "classification": "ENGINEERING",
+      "required": true,
+      "executable": "node",
+      "args": [
+        "scripts/lafea3-visible-continuum-preflight-check.mjs"
+      ]
+    },
+    {
+      "id": "LAFEA3_PREFLIGHT_REJECTION_RETRY",
+      "classification": "ENGINEERING",
+      "required": true,
+      "executable": "node",
+      "args": [
+        "scripts/lafea3-preflight-rejection-retry-check.mjs"
+      ]
+    },
+    {
+      "id": "MESHING_SUITE",
+      "classification": "ENGINEERING",
+      "required": true,
+      "executable": "npm",
+      "args": [
+        "run",
+        "check:lafea-meshing"
+      ]
+    },
+    {
+      "id": "LAFEA_CORE_SUITE",
+      "classification": "ENGINEERING",
+      "required": true,
+      "executable": "npm",
+      "args": [
+        "run",
+        "check:lafea-core"
+      ]
+    },
     {
       "id": "STANDALONE_BOUNDARY_BASELINE",
       "kind": "BASELINE_COMPARATOR",
       "classification": "ENGINEERING",
       "required": true,
       "executable": "node",
-      "args": ["scripts/lafea-standalone-boundary-check.mjs"],
+      "args": [
+        "scripts/lafea-standalone-boundary-check.mjs"
+      ],
       "qualificationBase": "162c88ee4715bc46c3c768c1086e74e7165bd3fb",
       "inheritedErrorPrefix": "Error: FORBIDDEN_PRODUCT_OR_COMBINED_DEPENDENCY:"
     },
-    {"id":"STANDALONE_VITE_BUILD","classification":"ENGINEERING","required":true,"executable":"npx","args":["vite","build","--config","vite.lafea.config.js"]},
-    {"id":"STANDALONE_BUILD_ARTIFACT","classification":"ENGINEERING","required":true,"executable":"node","args":["scripts/lafea-standalone-build-artifact-check.mjs"]},
-    {"id":"PRODUCTION_BUILD","classification":"ENGINEERING","required":true,"executable":"npm","args":["run","build"]},
-    {"id":"VISIBLE_WORKBENCH_CHROMIUM","classification":"ENGINEERING","required":true,"browser":true,"executable":"node","args":["scripts/lafea-stage17-browser-run.mjs"]}
+    {
+      "id": "STANDALONE_VITE_BUILD",
+      "classification": "ENGINEERING",
+      "required": true,
+      "executable": "npx",
+      "args": [
+        "vite",
+        "build",
+        "--config",
+        "vite.lafea.config.js"
+      ]
+    },
+    {
+      "id": "STANDALONE_BUILD_ARTIFACT",
+      "classification": "ENGINEERING",
+      "required": true,
+      "executable": "node",
+      "args": [
+        "scripts/lafea-standalone-build-artifact-check.mjs"
+      ]
+    },
+    {
+      "id": "PRODUCTION_BUILD",
+      "classification": "ENGINEERING",
+      "required": true,
+      "executable": "npm",
+      "args": [
+        "run",
+        "build"
+      ]
+    },
+    {
+      "id": "VISIBLE_WORKBENCH_CHROMIUM",
+      "classification": "ENGINEERING",
+      "required": true,
+      "browser": true,
+      "executable": "node",
+      "args": [
+        "scripts/lafea-stage17-browser-run.mjs"
+      ]
+    }
   ]
 }

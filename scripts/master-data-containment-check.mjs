@@ -201,6 +201,33 @@ function pass(id, description) {
   pass('F-009', 'new persistence writes only the changed master while legacy aggregate data remains readable');
 }
 
+// F-010 — runtime revisions are monotonic within the process. Clear invalidates
+// every master and cannot reset a revision to a value that an old cache may hold.
+{
+  const published = [];
+  const controller = new MasterDataController({ publish: (topic, payload) => published.push({ topic, payload }) });
+  const importWeight = (name) => controller.commitMasterImport('weight', {
+    rawRows: [{ TYPE: 'VALVE', DRY_WT: 42 }],
+    fieldMap: { type: 'TYPE', weightKg: 'DRY_WT' },
+    normalizedRows: [{ type: 'VALVE', weightKg: 42 }],
+    diagnostics: [],
+    fileName: name,
+    sheetName: 'Weights',
+    sourceMetadata: { sourceHash: `sha256:${name}`, byteLength: 128 },
+  });
+  importWeight('first.csv');
+  const beforeClear = controller.getRevisionSnapshot().weight;
+  controller.clear();
+  const afterClear = controller.getRevisionSnapshot().weight;
+  importWeight('second.csv');
+  const afterReload = controller.getRevisionSnapshot().weight;
+  assert.ok(afterClear > beforeClear, 'F-010: clear must advance the weight revision');
+  assert.ok(afterReload > afterClear, 'F-010: replacement import must advance again');
+  const clearEvent = published.find((row) => row.topic === 'MASTER_DATA_CLEARED');
+  assert.equal(clearEvent?.payload?.revisions?.weight, afterClear);
+  pass('F-010', 'clear and replacement imports preserve monotonic runtime currentness');
+}
+
 console.log('\nCONTAINMENT STATUS: PASS.');
 console.log('Master Data changes remain authorization-invalidating inputs; JSON Trace remains evidence-only.');
 

@@ -159,6 +159,11 @@ export class LafeaWorkbenchController {
           if (mockEv) {
             this.store.registerAnalysisDomain(mockEv.domain);
             this.store.registerAnalysisGeometryEvidence(mockEv.geometryEvidence);
+            const meshProfileFactory = this.mockDocumentFactory?.meshProfileFactory;
+            if (typeof meshProfileFactory === 'function') {
+              const meshProfile = await meshProfileFactory(stageId);
+              if (meshProfile) this.store.bindAnalysisMeshProfile(meshProfile, stageId);
+            }
           }
         }
       } else if (stageId === 'LAFEA.4' && hash) {

@@ -1,0 +1,78 @@
+{
+  "schema": "lafea4-tech13-product-local-refinement-program/v1",
+  "programId": "LAFEA4-TECH13-PRODUCT-LOCAL-REFINEMENT-001",
+  "stageId": "LAFEA.4",
+  "purpose": "QUALIFY_BOUNDED_LOCAL_REFINEMENT_AS_A_PRODUCT_MESH_OPERATION_WITHOUT_RELAXING_EXISTING_ENGINEERING_POLICIES",
+  "scope": {
+    "surfaceKinds": [
+      "CYLINDRICAL",
+      "CYLINDRICAL_HOLES"
+    ],
+    "elementFamily": "CST_DKT_TRI3_THIN_SHELL_V1",
+    "targetTypesFirstScope": [
+      "ELEMENT"
+    ],
+    "requiresCurrentParent": true,
+    "requiresExactMidsurfaceParent": true
+  },
+  "increments": [
+    {
+      "id": "TECH13A_PRODUCT_REFINEMENT_CONTRACT",
+      "status": "IMPLEMENTED_PENDING_EXECUTION",
+      "purpose": "BOUND_PRODUCT_SCOPE_AND_REPLACE_BLANKET_REJECTION_WITH_EXPLICIT_PENDING_QUALIFICATION_DIAGNOSTIC"
+    },
+    {
+      "id": "TECH13B_PRODUCT_REFINEMENT_ADAPTER",
+      "status": "NOT_STARTED",
+      "purpose": "REUSE_TECH7_NUMERICAL_KERNEL_WITH_SEPARATE_PRODUCT_PRODUCER_CAPABILITY_QUALIFICATION_AND_PLAN_IDENTITY"
+    },
+    {
+      "id": "TECH13C_ATOMIC_PRODUCT_ACCEPTANCE_GATE",
+      "status": "NOT_STARTED",
+      "purpose": "QUALITY_ADJACENCY_PARENT_NORMAL_CUSTODY_AND_ATOMIC_ROLLBACK_BEFORE_RETAINING_CHILD"
+    },
+    {
+      "id": "TECH13D_WORKBENCH_PRODUCT_INTEGRATION",
+      "status": "NOT_STARTED",
+      "purpose": "ENABLE_REFINE_CONTROL_ONLY_WHEN_CURRENT_PRODUCT_ELIGIBILITY_AND_QUALIFICATION_ALLOW_IT"
+    },
+    {
+      "id": "TECH13E_NUMERICAL_QUALIFICATION",
+      "status": "NOT_STARTED",
+      "purpose": "EXACT_HEAD_SMOOTH_CYLINDER_AND_CURVED_HOLE_FIXED_PROBE_QUALIFICATION_AGAINST_GLOBAL_FINE_REFERENCE"
+    }
+  ],
+  "fixedEngineeringPolicies": {
+    "adjacentCharacteristicSizeRatioMax": 1.5,
+    "aspectRatioBlock": 10,
+    "scaledJacobianBlock": 0.2,
+    "minimumAngleBlockDegreesDerivedFromScaledJacobian": 11.536959032815489,
+    "parentNormalCriterion": "MIN_PARENT_DIRECTED_SURFACE_JACOBIAN_STRICTLY_POSITIVE_OVER_ELEMENT_U_INTERVAL_V1",
+    "parentNormalRoundoffPolicy": "FAIL_CLOSED_128_EPSILON_TIMES_FACET_JACOBIAN_MAGNITUDE_V1",
+    "automaticCurvedFacetDirectorGuardMayChange": false,
+    "meshQualityThresholdRelaxationAllowed": false
+  },
+  "publicationSequence": [
+    "GENERATE_CANDIDATE_CHILD",
+    "VALIDATE_V2_MESH_QUALITY",
+    "MEASURE_ADJACENT_SIZE_RATIO",
+    "QUALIFY_PARENT_NORMAL",
+    "VERIFY_PARENT_AND_PROFILE_CUSTODY",
+    "PASS_ALL_GATES_OR_ROLL_BACK",
+    "PUBLISH_CHILD_ATOMICALLY"
+  ],
+  "tech13eAcceptance": {
+    "smoothCylinderAnalyticalHoopStressMPa": 219.78021978021977,
+    "curvedHoleNearProbeDifferenceVsGloballyFinePercentMax": 2.0,
+    "curvedHoleFarProbeDifferenceVsGloballyFinePercentMax": 1.0,
+    "transitionZoneArtificialMaximumAllowed": false,
+    "equilibriumRegressionAllowed": false,
+    "fixedPhysicalProbeLocationsRequired": true
+  },
+  "activationPolicy": {
+    "tech13aExecutionAuthorized": false,
+    "tech13aUiBindingAuthorized": false,
+    "tech13aReleaseQualified": false,
+    "productRefinementMayBeEnabledBeforeTech13eExactHeadPass": false
+  }
+}

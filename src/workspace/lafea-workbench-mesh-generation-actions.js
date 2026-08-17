@@ -17,6 +17,10 @@ import {
   evaluateLafea4ParentNormalProductionGate,
   validateLafea4ParentNormalProductionGate,
 } from './lafea4-parent-normal-production-gate.js';
+import {
+  LAFEA4_SHELL_PRODUCT_REFINEMENT_PENDING_CODE,
+  evaluateLafea4ShellProductRefinementScope,
+} from './lafea4-shell-product-refinement-contract.js';
 
 export function createLafeaMeshGenerationActions(context) {
   const {
@@ -102,13 +106,32 @@ export function createLafeaMeshGenerationActions(context) {
   }
 
   /**
-   * Refine the exact retained v2 parent. The generation-state slice takes the
-   * parent artifact/mesh hashes from custody itself, so the caller supplies
-   * only target IDs and sizing intent and cannot retarget stale evidence.
+   * Refine the exact retained v2 parent. Continuum refinement continues through
+   * the existing producer. Shell refinement is classified at the product
+   * boundary first: TECH-13A recognizes only the bounded LAFEA.4 curved TRI3
+   * scope, but intentionally fails closed until TECH-13B/C/E authorize the
+   * integrated product path. This prevents the old blanket shell rejection from
+   * hiding whether a request is inside or outside the intended product scope.
    */
   function refineAnalysisMesh(request = {}, stageId = getRetainedState().activeStageId) {
-    return attempt(stageId, 'LAFEA_RETAINED_MESH_REFINEMENT_REJECTED',
-      () => meshGeneration.refineMesh(readStageState(stageId), request), true);
+    return attempt(stageId, 'LAFEA_RETAINED_MESH_REFINEMENT_REJECTED', () => {
+      const midsurface = meshGeneration.selectShellMidsurface(stageId);
+      if (!midsurface || stageId !== 'LAFEA.4') {
+        return meshGeneration.refineMesh(readStageState(stageId), request);
+      }
+      const parentEvidence = meshGeneration.selectEvidence(stageId);
+      if (!parentEvidence) throw storeError('LAFEA_RETAINED_MESH_REFINEMENT_PARENT_REQUIRED');
+      const meshProfile = meshGeneration.selectMeshProfile(stageId);
+      if (!meshProfile) throw storeError('LAFEA_ANALYSIS_MESH_PROFILE_BINDING_REQUIRED');
+      const scope = evaluateLafea4ShellProductRefinementScope({
+        stage: readStageState(stageId),
+        parentEvidence,
+        midsurfaceEvidence: midsurface,
+        meshProfile,
+        request,
+      });
+      throw storeError(scope.diagnosticCode ?? LAFEA4_SHELL_PRODUCT_REFINEMENT_PENDING_CODE);
+    }, true);
   }
 
   /**

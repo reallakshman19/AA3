@@ -4,6 +4,11 @@ import { renderDocumentTableEditor } from './lafea-document-table.js';
 import { renderLafeaAnalysisSettings } from './lafea-analysis-settings-view.js';
 import { renderLafeaEvidence } from './lafea-results-view.js';
 import { renderLafeaLifecyclePanel } from './lafea-lifecycle-panel.js';
+import { lafeaDocumentDigest } from './lafea-edit-command.js';
+import {
+  applyLafeaScreeningTermFactorCommand,
+  createLafeaScreeningTermFactorCommand,
+} from './lafea-screening-term-edit.js';
 
 const ROUTES = Object.freeze(['LAFEA.1', 'LAFEA.2']);
 
@@ -43,7 +48,11 @@ export function renderLafeaAnalyticalCalcContent(root, state, stage, options) {
     onApplyJson: options.handlers.onApplyJson,
   }));
 
-  const screeningCustody = foundation ? null : screeningLoadCustody(root, stage.document);
+  const screeningCustody = foundation ? null : screeningLoadCustody(
+    root,
+    stage.document,
+    options.handlers.onApplyJson,
+  );
 
   const settings = card(root, 'Calculation contract and settings');
   settings.section.dataset.guidedTarget = 'profile';
@@ -75,7 +84,7 @@ export function renderLafeaAnalyticalCalcContent(root, state, stage, options) {
     viewportReused: false, workflow: null, discretization: null });
 }
 
-function screeningLoadCustody(root, documentValue) {
+function screeningLoadCustody(root, documentValue, onApplyJson) {
   const custody = card(root, 'Inherited LAFEA.1 load custody');
   custody.section.dataset.role = 'lafea-screening-load-custody';
   custody.section.dataset.guidedTarget = 'screening-load-custody';
@@ -83,7 +92,7 @@ function screeningLoadCustody(root, documentValue) {
     root,
     'p',
     'lafea-workbench__section-intro',
-    'LAFEA.2 does not invent attachment resultants. The screening cases below reference retained LAFEA.1 transformed load cases. Current term factors are shown read-only here; changing nested term factors remains blocked until an identity-based edit command is registered.',
+    'LAFEA.2 does not invent attachment resultants. Each mechanical term references an exact retained LAFEA.1 loadCaseId. Term factors are editable only through the screeningCaseId + loadCaseId nested-identity command below; array position is never engineering authority.',
   ));
   if (!documentValue || typeof documentValue !== 'object') {
     custody.body.append(element(root, 'p', 'lafea-workbench-svg__empty',
@@ -104,7 +113,7 @@ function screeningLoadCustody(root, documentValue) {
 
   custody.body.append(
     resultantsTable(root, loadCases, forceUnit, momentUnit),
-    screeningTermsTable(root, screeningCases),
+    screeningTermsTable(root, documentValue, screeningCases, onApplyJson),
   );
   return custody.section;
 }
@@ -147,7 +156,7 @@ function resultantsTable(root, loadCases, forceUnit, momentUnit) {
   return wrapper;
 }
 
-function screeningTermsTable(root, screeningCases) {
+function screeningTermsTable(root, documentValue, screeningCases, onApplyJson) {
   const wrapper = element(root, 'div', 'lafea-screening-custody__terms');
   wrapper.append(element(root, 'h4', null, 'Screening-case mechanical terms'));
   if (!screeningCases.length) {
@@ -157,33 +166,103 @@ function screeningTermsTable(root, screeningCases) {
   }
   const table = element(root, 'table', 'lafea-result-table');
   const head = element(root, 'tr');
-  ['Screening case', 'Mechanical terms', 'Pressure definition', 'Pressure factor']
+  ['Screening case', 'Load case', 'Factor', 'Pressure definition', 'Pressure factor', 'Action']
     .forEach((label) => {
       const cell = element(root, 'th', null, label);
       cell.scope = 'col';
       head.append(cell);
     });
   table.append(head);
+
   screeningCases.forEach((screeningCase) => {
-    const row = element(root, 'tr');
-    const identity = element(root, 'th', null,
-      String(screeningCase?.screeningCaseId ?? 'UNRESOLVED_SCREENING_CASE'));
-    identity.scope = 'row';
+    const screeningCaseId = String(screeningCase?.screeningCaseId ?? '');
     const terms = Array.isArray(screeningCase?.mechanicalTerms)
       ? screeningCase.mechanicalTerms
       : [];
-    row.append(
-      identity,
-      element(root, 'td', null, terms.length
-        ? terms.map((term) => `${term.loadCaseId} × ${engineeringNumber(term.factor)}`).join(' + ')
-        : 'No mechanical terms'),
-      element(root, 'td', null, String(screeningCase?.pressureDefinitionId ?? '—')),
-      element(root, 'td', null, engineeringNumber(screeningCase?.pressureFactor)),
-    );
-    table.append(row);
+    if (!terms.length) {
+      const row = element(root, 'tr');
+      const identity = element(root, 'th', null, screeningCaseId || 'UNRESOLVED_SCREENING_CASE');
+      identity.scope = 'row';
+      row.append(
+        identity,
+        element(root, 'td', null, 'No mechanical terms'),
+        element(root, 'td', null, '—'),
+        element(root, 'td', null, String(screeningCase?.pressureDefinitionId ?? '—')),
+        element(root, 'td', null, engineeringNumber(screeningCase?.pressureFactor)),
+        element(root, 'td', null, '—'),
+      );
+      table.append(row);
+      return;
+    }
+
+    terms.forEach((term) => {
+      const loadCaseId = String(term?.loadCaseId ?? '');
+      const row = element(root, 'tr');
+      row.dataset.screeningCaseId = screeningCaseId;
+      row.dataset.loadCaseId = loadCaseId;
+      const identity = element(root, 'th', null, screeningCaseId || 'UNRESOLVED_SCREENING_CASE');
+      identity.scope = 'row';
+      const factorCell = element(root, 'td');
+      const factor = element(root, 'input');
+      factor.type = 'text';
+      factor.inputMode = 'decimal';
+      factor.autocomplete = 'off';
+      factor.value = engineeringNumber(term?.factor);
+      factor.dataset.role = 'lafea-screening-term-factor';
+      factor.dataset.screeningCaseId = screeningCaseId;
+      factor.dataset.loadCaseId = loadCaseId;
+      factor.setAttribute('aria-label', `Mechanical factor ${screeningCaseId} ${loadCaseId}`);
+      factorCell.append(factor);
+
+      const actionCell = element(root, 'td');
+      const apply = actionButton(root, 'Apply factor', () => {
+        factor.setCustomValidity('');
+        const command = createLafeaScreeningTermFactorCommand({
+          commandId: screeningTermCommandId(documentValue, screeningCaseId, loadCaseId),
+          expectedDocumentDigest: lafeaDocumentDigest(documentValue),
+          screeningCaseId,
+          loadCaseId,
+          rawText: factor.value,
+          origin: {
+            surface: 'LAFEA2_SCREENING_TERM_FORM',
+            sessionId: 'LAFEA_WORKBENCH_SESSION',
+            sequence: 0,
+          },
+        });
+        const editResult = applyLafeaScreeningTermFactorCommand(documentValue, command);
+        if (!['APPLIED', 'NO_CHANGE'].includes(editResult.status)) {
+          const diagnostic = editResult.diagnostics?.[0];
+          factor.setCustomValidity(diagnostic?.message ?? 'Mechanical-term factor edit was rejected.');
+          factor.reportValidity();
+          return;
+        }
+        if (editResult.status === 'APPLIED') {
+          onApplyJson(JSON.stringify(editResult.document));
+        }
+      });
+      apply.dataset.role = 'lafea-apply-screening-term-factor';
+      apply.dataset.screeningCaseId = screeningCaseId;
+      apply.dataset.loadCaseId = loadCaseId;
+      actionCell.append(apply);
+
+      row.append(
+        identity,
+        element(root, 'td', null, loadCaseId || 'UNRESOLVED_LOAD_CASE'),
+        factorCell,
+        element(root, 'td', null, String(screeningCase?.pressureDefinitionId ?? '—')),
+        element(root, 'td', null, engineeringNumber(screeningCase?.pressureFactor)),
+        actionCell,
+      );
+      table.append(row);
+    });
   });
   wrapper.append(table);
   return wrapper;
+}
+
+function screeningTermCommandId(documentValue, screeningCaseId, loadCaseId) {
+  const revision = lafeaDocumentDigest(documentValue).replace(/[^a-zA-Z0-9]/gu, '').slice(-12);
+  return `LAFEA2-TERM-${screeningCaseId}-${loadCaseId}-${revision}`;
 }
 
 function engineeringNumber(value) {

@@ -24,9 +24,9 @@
   "refinementRatio": 2,
   "gciSafetyFactor": 1.25,
   "probes": [
-    { "probeId": "NEAR_SIDE", "uMm": 30, "vMm": 60, "maximumFineGci": 0.05 },
-    { "probeId": "NEAR_TOP", "uMm": 0, "vMm": 85, "maximumFineGci": 0.05 },
-    { "probeId": "FAR_SIDE", "uMm": 60, "vMm": 60, "maximumFineGci": 0.03 }
+    { "probeId": "NEAR_SIDE", "uMm": 31.7, "vMm": 61.3, "maximumFineGci": 0.05 },
+    { "probeId": "NEAR_TOP", "uMm": 2.9, "vMm": 86.1, "maximumFineGci": 0.05 },
+    { "probeId": "FAR_SIDE", "uMm": 59.2, "vMm": 58.4, "maximumFineGci": 0.03 }
   ],
   "acceptance": {
     "minimumApparentOrder": 0.5,

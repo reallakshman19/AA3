@@ -4,6 +4,7 @@ import { renderDocumentTableEditor } from './lafea-document-table.js';
 import { renderLafeaAnalysisSettings } from './lafea-analysis-settings-view.js';
 import { renderLafeaEvidence } from './lafea-results-view.js';
 import { renderLafeaLifecyclePanel } from './lafea-lifecycle-panel.js';
+import { renderLafeaCorrelationAvailability } from './lafea-correlation-availability-view.js';
 import { lafeaDocumentDigest } from './lafea-edit-command.js';
 import {
   applyLafeaScreeningTermFactorCommand,
@@ -53,6 +54,9 @@ export function renderLafeaAnalyticalCalcContent(root, state, stage, options) {
     stage.document,
     options.handlers.onApplyJson,
   );
+  const correlationAvailability = foundation
+    ? null
+    : renderLafeaCorrelationAvailability(root, stage);
 
   const settings = card(root, 'Calculation contract and settings');
   settings.section.dataset.guidedTarget = 'profile';
@@ -72,6 +76,7 @@ export function renderLafeaAnalyticalCalcContent(root, state, stage, options) {
   lineage.body.append(renderLafeaLifecyclePanel(lineage.body, stageId, stage));
   shell.append(route.section, source.section);
   if (screeningCustody) shell.append(screeningCustody);
+  if (correlationAvailability) shell.append(correlationAvailability);
   shell.append(settings.section, results.section, lineage.section);
 
   if (options.benchmarkHost) {

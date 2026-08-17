@@ -33,7 +33,7 @@ Fill the package in this order:
    - identify the authorized Edition 4 copy;
    - record an internal source ID;
    - calculate SHA-256 of the exact source file;
-   - add a `PRIMARY_LICENSED` or `PRIMARY_AUTHORIZED` ledger row;
+   - add a `PRIMARY_LICENSED` or `PRIMARY_AUTHORIZED` ledger row carrying the **same SHA-256**;
    - record the license/authorization basis without committing restricted source bytes unless licensing permits repository storage.
 
 2. **Geometry and physical applicability**
@@ -41,7 +41,8 @@ Fill the package in this order:
    - distinguish mean/inside/outside radius and thickness definitions;
    - identify supported host-shell and attachment families;
    - record intersection/orientation requirements, load-reference convention and exclusions;
-   - every datum gets an exact source locator.
+   - bind the applicability block itself to a primary Edition 4 source reference;
+   - every consumed definition gets an exact source locator.
 
 3. **Dimensionless parameters**
    - populate `SPHERE_U`, `SPHERE_GAMMA`, `SPHERE_RHO`, `CYL_LAMBDA`, `CYL_DELTA` from Edition 4 only;
@@ -58,7 +59,8 @@ Fill the package in this order:
    - classify membrane, bending and shear terms exactly as supported by the source;
    - define inside/outside surface reconstruction;
    - enumerate recovery locations;
-   - independently dimension-check any principal-stress/stress-intensity equations before authority is granted.
+   - retain the source definition of stress intensity or equivalent stress measure;
+   - independently dimension-check that stress measure and set `dimensionallyVerified=true` only after the check is complete.
 
 6. **Interpolation and extrapolation**
    - state whether each is authorized by Edition 4;
@@ -68,7 +70,7 @@ Fill the package in this order:
 7. **Coefficient/equation inventory and numerical data**
    - first establish the complete Edition 4 family/row inventory;
    - then transcribe numeric values;
-   - each row must retain source precision, source-ledger reference, exact equation/table/figure locator, extraction method and `PRIMARY_SOURCE_VERIFIED` status;
+   - each row must retain a unique coefficient ID, source precision, source-ledger reference, exact equation/table/figure locator, extraction method and `PRIMARY_SOURCE_VERIFIED` status;
    - no secondary-source coefficient can qualify.
 
 8. **Published/reference benchmarks**
@@ -99,14 +101,18 @@ PRIMARY_AUTHORIZED
 
 and must contain:
 
-- publisher;
+- a unique `record_id`;
+- publisher `Welding Research Council, Inc.`;
 - bulletin number `537`;
 - edition `4`;
 - publication date `2026-02`;
+- SHA-256 `document_digest` of the exact authorized source copy;
 - locator precise enough to find the datum again;
 - verification status `PRIMARY_SOURCE_VERIFIED`.
 
-`OFFICIAL_CATALOG_IDENTITY` may be used only for document identity metadata.
+The ledger digest must equal `technicalSource.documentDigest` in the package. This prevents data extracted from one document revision/copy from being silently represented as another source artifact.
+
+`OFFICIAL_CATALOG_IDENTITY` may be used only for document identity metadata and does not require a technical-document digest.
 
 ## Coefficient row format
 
@@ -121,6 +127,7 @@ Minimum qualifying values include:
 ```text
 method_id = WRC537
 edition = a string explicitly identifying Edition 4 and 2026
+coefficient_id = unique within the package
 coefficient_value = finite number
 published_precision = exact retained source precision
 source_ref = Edition 4 primary-technical ledger record

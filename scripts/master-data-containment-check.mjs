@@ -10,7 +10,7 @@
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import path from 'node:path';
-import { MasterDataController } from '../src/workspace/master-data-controller.js';
+import { MasterDataController, masterDataRecordKey } from '../src/workspace/master-data-controller.js';
 import { normalizeMaterialMap } from '../src/workspace/master-data-normalizers.js';
 import { MASTER_FIELDS } from '../src/calc-workspace/cii-standalone-port/ui-adapted/xml-cii-adapted-fields-config.js';
 import { summarizeStandaloneImportMasters } from '../src/calc-workspace/cii-standalone-port/xml-cii-master-context.js';
@@ -45,12 +45,18 @@ function pass(id, description) {
   pass('F-001', 'all four upload controls and the wrapper handler share data-master-file');
 }
 
-// F-002 — Auto Map must persist the computed map into the controller rather
-// than calculate-and-discard it.
+// F-002 — Auto Map and dropdown edits are draft-only. The governed master state
+// changes only through an explicit validated mapping commit.
 {
   assert.match(masterUi, /const mapping = autoMapMasterColumns\(rawRows, masterKey\)/u);
-  assert.match(masterUi, /masterDataController\.setFieldMap\(masterKey, mapping\)/u);
-  pass('F-002', 'Auto Map writes the computed field map into governed master state');
+  assert.match(masterUi, /setDraftMapping\(masterKey, mapping\)/u);
+  assert.match(masterUi, /masterDataController\.commitMasterMapping\(masterKey/u);
+  const autoMapBlock = masterUi.match(/action === 'auto-map-master-fields'[\s\S]*?} else if \(action === 'save-master-mapping'\)/u)?.[0] || '';
+  assert.doesNotMatch(autoMapBlock, /masterDataController\.(?:setFieldMap|setNormalizedRows|commitMasterMapping)/u);
+  const dropdownBlock = masterUi.match(/const select = e\.target\.closest\('select\[data-master-field-map\]'\);[\s\S]*?const fileInput/u)?.[0] || '';
+  assert.match(dropdownBlock, /setDraftMapping\(masterKey, currentMap\)/u);
+  assert.doesNotMatch(dropdownBlock, /masterDataController\.(?:setFieldMap|setNormalizedRows|commitMasterMapping)/u);
+  pass('F-002', 'mapping edits remain draft-only until explicit validated Apply Mapping');
 }
 
 // F-003 — materialMap is the canonical master key; the legacy standalone
@@ -114,9 +120,8 @@ function pass(id, description) {
   pass('F-005', 'dead dataset masterDataConfig bypass is absent; governed consumer owns calculation use');
 }
 
-// F-006 — master edits publish through the event bus. EngineeringModelController
-// consumes those events to stale common/empirical authority and refresh the
-// authorized consumer; editing a master does not itself execute a calculation.
+// F-006 — legacy atomic setters still publish through the event bus. This keeps
+// existing callers compatible while the UI moves logical imports to one commit.
 {
   const published = [];
   const controller = new MasterDataController({ publish: (topic, payload) => published.push({ topic, payload }) });
@@ -150,6 +155,50 @@ function pass(id, description) {
   assert.match(jsonTrace, /values\.sourceEntityId && values\.jsonPointer \? 'TRACEABLE' : 'BLOCKED'/u);
   assert.doesNotMatch(jsonTrace, /Math\.random|randomUUID|exampleRows|sampleRows|syntheticRows/u);
   pass('F-007', 'JSON Trace projects source evidence and blocks records without source identity/pointer');
+}
+
+// F-008 — one logical import produces one runtime master revision, one
+// persistence request and one invalidation event. Provenance hash remains a
+// separate engineering identity field and is not used as the runtime revision.
+{
+  const published = [];
+  const controller = new MasterDataController({ publish: (topic, payload) => published.push({ topic, payload }) });
+  controller.resetPerformanceMetrics();
+  controller.commitMasterImport('weight', {
+    rawRows: [{ TYPE: 'VALVE', DRY_WT: 42 }],
+    fieldMap: { type: 'TYPE', weightKg: 'DRY_WT' },
+    normalizedRows: [{ type: 'VALVE', weightKg: 42 }],
+    diagnostics: [{ code: 'VALID', message: 'ok' }],
+    fileName: 'weights.csv',
+    sheetName: 'Weights',
+    sourceMetadata: { sourceHash: 'sha256:weights', byteLength: 128 },
+  });
+  const metrics = controller.getPerformanceMetrics();
+  assert.equal(metrics.mutationCommits, 1);
+  assert.equal(metrics.persistenceRequests, 1);
+  assert.equal(metrics.updateEventsPublished, 1);
+  assert.equal(metrics.masterRevisions.weight, 1);
+  assert.equal(metrics.masterRevisions.lineList, 0);
+  assert.equal(metrics.persistenceRequestsByMaster.weight, 1);
+  assert.deepEqual(
+    published.map((row) => [row.topic, row.payload.action, row.payload.masterRevision]),
+    [['MASTER_DATA_UPDATED', 'import_commit', 1]],
+  );
+  assert.equal(controller.getMasterData().weight.sourceHash, 'sha256:weights');
+  assert.equal(controller.getLegacyContext().sourceMetadata.weight.revision, 1);
+  pass('F-008', 'logical master import is one revision / persistence request / invalidation event');
+}
+
+// F-009 — large row persistence is isolated by master. The legacy aggregate key
+// remains read-compatible for migration, but new writes are addressed per master.
+{
+  assert.equal(masterDataRecordKey('lineList'), 'masterDataRowsV2:lineList');
+  assert.equal(masterDataRecordKey('weight'), 'masterDataRowsV2:weight');
+  assert.notEqual(masterDataRecordKey('lineList'), masterDataRecordKey('weight'));
+  assert.match(masterControllerSource, /writePersistedMasterRows\(masterKey, snapshot\)/u);
+  assert.match(masterControllerSource, /put\(value, masterDataRecordKey\(masterKey\)\)/u);
+  assert.match(masterControllerSource, /LEGACY_MASTER_DATA_ROWS_KEY = 'masterDataRowsV1'/u);
+  pass('F-009', 'new persistence writes only the changed master while legacy aggregate data remains readable');
 }
 
 console.log('\nCONTAINMENT STATUS: PASS.');

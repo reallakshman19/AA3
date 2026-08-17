@@ -360,12 +360,15 @@ export class MasterDataController {
 
   clear() {
     this._mutationRevision += 1;
-    this._masterRevisions = emptyRevisionMap();
+    for (const key of MASTER_KEYS) this._masterRevisions[key] += 1;
     this._performanceMetrics.mutationCommits += 1;
     this.masterData = MasterDataConfigV1.createDefault();
     this.persistMappingState();
     this.queuePersistedRows(() => deletePersistedMasterRows());
-    this.eventBus.publish('MASTER_DATA_CLEARED', {});
+    this.eventBus.publish('MASTER_DATA_CLEARED', {
+      mutationRevision: this._mutationRevision,
+      revisions: this.getRevisionSnapshot(),
+    });
   }
 
   /**

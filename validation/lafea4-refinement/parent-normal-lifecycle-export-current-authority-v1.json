@@ -8,11 +8,17 @@
   "authorityProjectionSchema": "lafea-workbench-lifecycle-export-current-authority/v1",
   "retainedLifecycleLedgerMutationAllowed": false,
   "exportGrantsEngineeringAuthority": false,
-  "currentResultAcceptanceRequires": [
+  "governedResultAuthorityBasis": "GOVERNED_EXECUTION_AND_READINESS",
+  "legacyResultAuthorityBasis": "LEGACY_LIFECYCLE_READINESS",
+  "governedCurrentResultAcceptanceRequires": [
     "execution.status == QUALIFIED",
     "readiness.calculationState == CALCULATION_ACCEPTED_BY_STAGE_CONTRACT",
     "readiness.resultReady == true"
   ],
+  "legacyCurrentResultAcceptanceRequires": [
+    "readiness.resultReady == true"
+  ],
+  "legacyCompatibilityRationale": "Non-governed LAFEA.3 may consume caller-authored qualified lifecycle result evidence without a local stage.execution object; TECH-12K must not revoke that existing evidence route.",
   "currentReleaseQualificationRequires": [
     "readiness.releaseState == RELEASE_QUALIFIED",
     "readiness.releaseBinding.releaseQualified == true"
@@ -33,9 +39,21 @@
     "expectedCurrentResultAccepted": false,
     "expectedBlockingReason": "LAFEA4_PARENT_NORMAL_PRODUCTION_GATE_BLOCKED"
   },
+  "mandatoryLegacyCompatibilityCase": {
+    "stage": "LAFEA.3",
+    "governedRoute": false,
+    "localExecutionPresent": false,
+    "retainedLifecycleExecutionArtifactStatus": "CURRENT",
+    "retainedLifecycleExecutionArtifactQualification": "PASS",
+    "liveCalculationState": "CALCULATION_NOT_RUN",
+    "liveResultReady": true,
+    "expectedCurrentResultAccepted": true,
+    "expectedResultAuthorityBasis": "LEGACY_LIFECYCLE_READINESS"
+  },
   "forbidden": [
     "rewriting retained lifecycle artifact history on authority revocation",
-    "treating lifecycle EXECUTION CURRENT/PASS as sufficient for current result authority",
+    "treating lifecycle EXECUTION CURRENT/PASS as sufficient for governed current result authority",
+    "revoking legacy non-governed lifecycle-result readiness solely because local stage.execution is absent",
     "treating a retained release record as sufficient for current release authority",
     "letting an export object itself grant engineering or release authority",
     "activating the parent-normal production trust root in TECH-12K",

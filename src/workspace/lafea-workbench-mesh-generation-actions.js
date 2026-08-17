@@ -21,6 +21,12 @@ import {
   LAFEA4_SHELL_PRODUCT_REFINEMENT_PENDING_CODE,
   evaluateLafea4ShellProductRefinementScope,
 } from './lafea4-shell-product-refinement-contract.js';
+import { previewLafea4ShellProductRefinement } from './lafea4-shell-product-refinement-adapter.js';
+import {
+  LAFEA4_SHELL_PRODUCT_REFINEMENT_ACCEPTANCE_BLOCK_CODE,
+  evaluateLafea4ShellProductRefinementAcceptance,
+  requireLafea4ShellProductRefinementCandidatePass,
+} from './lafea4-shell-product-refinement-acceptance.js';
 
 export function createLafeaMeshGenerationActions(context) {
   const {
@@ -29,19 +35,11 @@ export function createLafeaMeshGenerationActions(context) {
     clearDomainFirstExecution, storeError,
   } = context;
 
-  /**
-   * Bind the governed mesh profile and record the binding on the lifecycle,
-   * which is what invalidates any analysis mesh held under the old profile.
-   */
   function bindAnalysisMeshProfile(value, stageId = getRetainedState().activeStageId) {
     const result = meshGeneration.bindMeshProfile(value, stageId);
     if (!result.changed) return freeze({ ...result, stage: deriveStage(stageId) });
-
-    // Profile custody changed immediately. Current preflight/execution is stale
-    // even if the subsequent lifecycle event itself fails closed.
     continuumPreflight.clear(stageId);
     clearDomainFirstExecution(stageId);
-
     const event = createLafeaLifecycleEvent({
       eventId: `MESH_PROFILE_BIND/${result.meshProfile.semanticHash}`,
       stageId,
@@ -58,10 +56,6 @@ export function createLafeaMeshGenerationActions(context) {
     return freeze({ ...result, stage: publish().stages[stageId] });
   }
 
-  /**
-   * Bind the separately declared shell midsurface parent. This is intentionally
-   * not routed through the LAFEA.3 domain-first geometry state.
-   */
   function registerShellMidsurfaceEvidence(
     value,
     stageId = value?.stageId ?? getRetainedState().activeStageId,
@@ -77,7 +71,6 @@ export function createLafeaMeshGenerationActions(context) {
     }
   }
 
-  /** Preview only: runs the producer and reports the result, custody untouched. */
   function planAnalysisMesh(overrides = {}, stageId = getRetainedState().activeStageId) {
     return attempt(stageId, 'LAFEA_ANALYSIS_MESH_PLAN_REJECTED',
       () => meshGeneration.planMesh(readStageState(stageId), overrides), false);
@@ -91,9 +84,7 @@ export function createLafeaMeshGenerationActions(context) {
       const result = meshGeneration.generateMesh(readStageState(stageId), overrides);
       try {
         const parentNormalCompanion = parentNormalCompanionForEvidence(stageId, result.evidence);
-        const parentNormalProductionGate = parentNormalProductionGateForCompanion(
-          parentNormalCompanion,
-        );
+        const parentNormalProductionGate = parentNormalProductionGateForCompanion(parentNormalCompanion);
         requireProductionGateAllowsRetention(parentNormalProductionGate);
         return parentNormalCompanion
           ? freeze({ ...result, parentNormalCompanion, parentNormalProductionGate })
@@ -105,14 +96,6 @@ export function createLafeaMeshGenerationActions(context) {
     }, true);
   }
 
-  /**
-   * Refine the exact retained v2 parent. Continuum refinement continues through
-   * the existing producer. Shell refinement is classified at the product
-   * boundary first: TECH-13A recognizes only the bounded LAFEA.4 curved TRI3
-   * scope, but intentionally fails closed until TECH-13B/C/E authorize the
-   * integrated product path. This prevents the old blanket shell rejection from
-   * hiding whether a request is inside or outside the intended product scope.
-   */
   function refineAnalysisMesh(request = {}, stageId = getRetainedState().activeStageId) {
     return attempt(stageId, 'LAFEA_RETAINED_MESH_REFINEMENT_REJECTED', () => {
       const midsurface = meshGeneration.selectShellMidsurface(stageId);
@@ -123,27 +106,41 @@ export function createLafeaMeshGenerationActions(context) {
       if (!parentEvidence) throw storeError('LAFEA_RETAINED_MESH_REFINEMENT_PARENT_REQUIRED');
       const meshProfile = meshGeneration.selectMeshProfile(stageId);
       if (!meshProfile) throw storeError('LAFEA_ANALYSIS_MESH_PROFILE_BINDING_REQUIRED');
+      const stage = readStageState(stageId);
       const scope = evaluateLafea4ShellProductRefinementScope({
-        stage: readStageState(stageId),
+        stage,
         parentEvidence,
         midsurfaceEvidence: midsurface,
         meshProfile,
         request,
       });
+      const adapterResult = previewLafea4ShellProductRefinement({
+        stage,
+        parentEvidence,
+        midsurfaceEvidence: midsurface,
+        meshProfile,
+        request,
+      });
+      const acceptance = evaluateLafea4ShellProductRefinementAcceptance({
+        stage,
+        parentEvidence,
+        midsurfaceEvidence: midsurface,
+        meshProfile,
+        adapterResult,
+      });
+      try {
+        requireLafea4ShellProductRefinementCandidatePass(acceptance);
+      } catch (error) {
+        throw storeError(error?.code ?? LAFEA4_SHELL_PRODUCT_REFINEMENT_ACCEPTANCE_BLOCK_CODE);
+      }
+      if (scope.semanticHash !== acceptance.productScopeHash
+        || parentEvidence.meshHash !== meshGeneration.selectEvidence(stageId)?.meshHash) {
+        throw storeError('LAFEA4_SHELL_PRODUCT_REFINEMENT_PARENT_CHANGED_DURING_CANDIDATE_GATE');
+      }
       throw storeError(scope.diagnosticCode ?? LAFEA4_SHELL_PRODUCT_REFINEMENT_PENDING_CODE);
     }, true);
   }
 
-  /**
-   * Recover portable governed-v2 evidence through the same trust boundary as
-   * generation. Rebind only when the embedded semantic profile differs from
-   * the currently retained profile; identical recovery must not manufacture a
-   * lifecycle change before conflict detection.
-   *
-   * For TECH-11-qualified LAFEA.4 surfaces, the parent-normal companion and
-   * TECH-12E production decision are built before custody mutation. A future
-   * active BLOCK therefore rejects recovery before the mesh can become current.
-   */
   function recoverAnalysisMeshEvidenceV2(
     value,
     stageId = value?.stageId ?? getRetainedState().activeStageId,
@@ -158,9 +155,7 @@ export function createLafeaMeshGenerationActions(context) {
         throw storeError('LAFEA_ANALYSIS_MESH_V2_RECOVERY_STAGE_MISMATCH');
       }
       const prevalidatedCompanion = parentNormalCompanionForEvidence(stageId, validated);
-      const prevalidatedProductionGate = parentNormalProductionGateForCompanion(
-        prevalidatedCompanion,
-      );
+      const prevalidatedProductionGate = parentNormalProductionGateForCompanion(prevalidatedCompanion);
       requireProductionGateAllowsRetention(prevalidatedProductionGate);
       const currentProfile = meshGeneration.selectMeshProfile(stageId);
       const binding = currentProfile?.semanticHash === validated.meshProfileHash
@@ -203,10 +198,6 @@ export function createLafeaMeshGenerationActions(context) {
     }
   }
 
-  /**
-   * Select/export companions and gate evidence from the *currently retained*
-   * mesh and midsurface. Neither artifact is independently mutable.
-   */
   function selectRetainedAnalysisMeshParentNormalCompanion(
     stageId = getRetainedState().activeStageId,
   ) {
@@ -253,9 +244,7 @@ export function createLafeaMeshGenerationActions(context) {
   function parentNormalCompanionForEvidence(stageId, meshEvidence) {
     if (stageId !== 'LAFEA.4') return null;
     const midsurface = meshGeneration.selectShellMidsurface(stageId);
-    if (!midsurface) {
-      throw storeError('LAFEA4_PARENT_NORMAL_COMPANION_MIDSURFACE_REQUIRED');
-    }
+    if (!midsurface) throw storeError('LAFEA4_PARENT_NORMAL_COMPANION_MIDSURFACE_REQUIRED');
     if (!isLafea4ParentNormalCompanionSurfaceQualified(midsurface)) return null;
     return createLafea4RetainedMeshParentNormalCompanion({
       meshEvidence,
@@ -275,11 +264,6 @@ export function createLafeaMeshGenerationActions(context) {
     throw storeError(gate.diagnosticCode ?? 'LAFEA4_PARENT_NORMAL_PRODUCTION_GATE_BLOCKED');
   }
 
-  /**
-   * A parent-normal companion/gate failure must never leave a newly generated
-   * or recovered mesh externally retainable. Invalidation clears the child;
-   * the unchanged current midsurface parent is then restored.
-   */
   function rollbackCompanionCustody(stageId, midsurface) {
     if (stageId !== 'LAFEA.4' || !midsurface) return;
     meshGeneration.invalidate(stageId);
@@ -303,11 +287,6 @@ export function createLafeaMeshGenerationActions(context) {
     }
   }
 
-  /**
-   * Generation/refinement/recovery needs a governed mesh-independent geometry
-   * parent: domain-first continuum geometry for LAFEA.3, or a declared shell
-   * midsurface for LAFEA.4/.5.
-   */
   function requireGenerationAuthorized(stageId) {
     const stage = rawStage(stageId);
     if (stage.domainFirstProfileActive || stage.shellMidsurfaceProfileActive) return;

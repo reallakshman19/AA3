@@ -156,7 +156,7 @@ function normalizeTrunnion(input, mode = 'document') {
       canonicalShellTemplateSemanticHash(cleanInput.shellTemplate);
   }
   const retained = createCanonicalTrunnionFootprintSource(cleanInput);
-  createCanonicalLocalTrunnionFootprintModel(retained);
+  createCanonicalTrunnionFootprintModel(retained);
   return freezeClone({ ...retained, ...(meshConfig ? { meshConfig } : {}) });
 }
 
@@ -182,7 +182,7 @@ function canonicalShell(source) {
 }
 
 function canonicalTrunnion(source) {
-  return createCanonicalLocalTrunnionFootprintSource(stripWorkbenchFields(source));
+  return createCanonicalTrunnionFootprintSource(stripWorkbenchFields(source));
 }
 
 function prepareInput(input) {

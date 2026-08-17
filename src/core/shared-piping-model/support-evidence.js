@@ -91,7 +91,8 @@ function classifySupportFamilyToken(value, authority) {
   // Direction-specific families take precedence over generic support wording.
   if (/\bGUIDE\b|\bGT0?1\b/iu.test(token)) return 'GUIDE';
   if (/\bLINE\s*STOP\b|\bLINESTOP\b|\bST0?6\b|^LS[- ]/iu.test(token)) return 'LINE_STOP';
-  if (/\bSPRING\b|\bHANGER\b/iu.test(token)) return 'SPRING';
+  if (/\bSPRING\b/iu.test(token)) return 'SPRING';
+  if (/\bHANGER\b/iu.test(token)) return 'HANGER';
 
   // Only strong, explicit anchor wording is accepted. "Directional anchor"
   // descriptions may represent line-stop hardware and are therefore excluded.

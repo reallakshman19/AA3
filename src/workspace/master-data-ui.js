@@ -17,6 +17,10 @@ function normalizeMasterRows(masterKey, rawRows, mapping) {
   throw new RangeError(`Unsupported master type: ${masterKey}`);
 }
 
+function copyMapping(mapping) {
+  return { ...(mapping || {}) };
+}
+
 export function renderMasterDataUI(documentRef) {
   if (!documentRef) throw new TypeError('Master Data UI requires a document.');
   const container = documentRef.createElement('div');
@@ -29,28 +33,62 @@ export function renderMasterDataUI(documentRef) {
       supportConfigJson: '{}',
       activeMainTab: 'lineList',
       importMastersLoading: false,
-      importMastersWriteBackStatus: ''
+      importMastersWriteBackStatus: '',
+      masterDraftMappings: {},
+      masterDraftDirty: {},
+    }
+  };
+
+  const appliedMappingFor = (masterKey) => copyMapping(
+    masterDataController.getMasterData()[masterKey]?.fieldMap,
+  );
+
+  const draftMappingFor = (masterKey) => copyMapping(
+    stateRef.current.masterDraftMappings[masterKey] || appliedMappingFor(masterKey),
+  );
+
+  const setDraftMapping = (masterKey, mapping) => {
+    stateRef.current.masterDraftMappings[masterKey] = copyMapping(mapping);
+    stateRef.current.masterDraftDirty[masterKey] = true;
+  };
+
+  const clearDraftMapping = (masterKey) => {
+    delete stateRef.current.masterDraftMappings[masterKey];
+    delete stateRef.current.masterDraftDirty[masterKey];
+  };
+
+  const updateVisibleStatus = (message, masterKey = null) => {
+    stateRef.current.importMastersWriteBackStatus = message;
+    const status = container.querySelector('.xml-cii-master-actions .xml-cii-phase-help');
+    if (status) status.textContent = message;
+    if (masterKey) {
+      const draftStatus = container.querySelector(`[data-master-draft-status="${masterKey}"]`);
+      if (draftStatus) {
+        draftStatus.textContent = 'Draft mapping modified — not applied. Preview and calculations still use the last applied mapping.';
+        draftStatus.style.color = '#fbbf24';
+      }
     }
   };
 
   const render = () => {
     container.innerHTML = '';
-    
-    // Pass the legacy context representation to the UI
+
+    // Pass the authoritative legacy context to the adapted UI. Draft mapping is
+    // supplied separately so Preview/calculation never consumes unapplied edits.
     stateRef.current.masterContext = masterDataController.getLegacyContext();
     stateRef.current.supportConfigJson = JSON.stringify(stateRef.current.masterContext.config || {});
-    
+
     // Top Navigation Tabs Bar
     const header = documentRef.createElement('div');
     header.style.cssText = 'display:flex; gap:12px; align-items:center; background:#0f172a; padding:12px 20px; border-bottom:1px solid #1e293b; flex:none; flex-wrap:wrap;';
-    
+
     const tabs = [
       { id: 'lineList', label: 'Line List' },
       { id: 'pipingClass', label: 'Piping Classes' },
       { id: 'weight', label: 'Weights' },
       { id: 'materialMap', label: 'Material Map' }
     ];
-    
+
     tabs.forEach(tab => {
       const btn = documentRef.createElement('button');
       btn.textContent = tab.label;
@@ -92,17 +130,16 @@ export function renderMasterDataUI(documentRef) {
         render();
       } else if (action === 'clear-master-context') {
         masterDataController.clear();
+        stateRef.current.masterDraftMappings = {};
+        stateRef.current.masterDraftDirty = {};
         render();
       } else if (action === 'auto-map-master-fields') {
         const masterKey = target.dataset.masterKey;
         const rawRows = masterDataController.getMasterData()[masterKey]?.rawRows || [];
         if (rawRows.length) {
           const mapping = autoMapMasterColumns(rawRows, masterKey);
-          masterDataController.setFieldMap(masterKey, mapping);
-          
-          // Do NOT invoke strict validation (normalizeLineList) here. 
-          // Just update the mapping visually so the user can finish manual edits.
-          stateRef.current.importMastersWriteBackStatus = `Auto-mapped columns for ${masterKey}.`;
+          setDraftMapping(masterKey, mapping);
+          stateRef.current.importMastersWriteBackStatus = `Auto-mapped columns for ${masterKey}. Review the draft and select Apply Mapping.`;
           render();
         }
       } else if (action === 'save-master-mapping') {
@@ -112,27 +149,28 @@ export function renderMasterDataUI(documentRef) {
         selects.forEach(s => {
           if (s.value) mapping[s.dataset.masterFieldMap] = s.value;
         });
-        
+
         const rawRows = masterDataController.getMasterData()[masterKey]?.rawRows || [];
-        masterDataController.setFieldMap(masterKey, mapping);
-        
         const fileName = masterDataController.getMasterData()[masterKey]?.fileName;
         if (!fileName) {
-          stateRef.current.importMastersWriteBackStatus = `Cannot save ${masterKey} mapping before an authoritative file is loaded.`;
+          stateRef.current.importMastersWriteBackStatus = `Cannot apply ${masterKey} mapping before an authoritative file is loaded.`;
           render();
           return;
         }
-        saveMappingForFile(masterKey, fileName, mapping);
-        
+
         try {
-            const normalizedRows = normalizeMasterRows(masterKey, rawRows, mapping);
-            masterDataController.setNormalizedRows(masterKey, normalizedRows);
-            masterDataController.getMasterData()[masterKey].diagnostics = [{ code: 'VALID', message: 'Mapping validated and applied successfully.' }];
-            stateRef.current.importMastersWriteBackStatus = `Mapping saved as "${fileName}" and applied successfully for ${masterKey}.`;
+          const normalizedRows = normalizeMasterRows(masterKey, rawRows, mapping);
+          masterDataController.commitMasterMapping(masterKey, {
+            fieldMap: mapping,
+            normalizedRows,
+            diagnostics: [{ code: 'VALID', message: 'Mapping validated and applied successfully.' }],
+          });
+          saveMappingForFile(masterKey, fileName, mapping);
+          clearDraftMapping(masterKey);
+          stateRef.current.importMastersWriteBackStatus = `Mapping saved as "${fileName}" and applied successfully for ${masterKey}.`;
         } catch (err) {
-            masterDataController.getMasterData()[masterKey].diagnostics = [{ code: 'INVALID_MAPPING', message: err.message }];
-            masterDataController.setNormalizedRows(masterKey, []);
-            stateRef.current.importMastersWriteBackStatus = `Mapping validation failed for ${masterKey}: ${err.message}`;
+          setDraftMapping(masterKey, mapping);
+          stateRef.current.importMastersWriteBackStatus = `Mapping validation failed for ${masterKey}; the last applied mapping remains authoritative: ${err instanceof Error ? err.message : String(err)}`;
         }
         render();
       }
@@ -147,46 +185,27 @@ export function renderMasterDataUI(documentRef) {
           const savedMappings = getSavedMappingsForMaster(masterKey);
           const mapping = savedMappings[selectedMappingName];
           if (mapping) {
-            masterDataController.setFieldMap(masterKey, mapping);
-            const rawRows = masterDataController.getMasterData()[masterKey]?.rawRows || [];
-            if (rawRows.length) {
-              try {
-                const norm = normalizeMasterRows(masterKey, rawRows, mapping);
-                masterDataController.setNormalizedRows(masterKey, norm);
-              } catch (error) {
-                masterDataController.setNormalizedRows(masterKey, []);
-                stateRef.current.importMastersWriteBackStatus = `Saved mapping is invalid for ${masterKey}: ${error instanceof Error ? error.message : String(error)}`;
-                render();
-                return;
-              }
-            }
-            stateRef.current.importMastersWriteBackStatus = `Applied saved mapping "${selectedMappingName}" for ${masterKey}.`;
+            setDraftMapping(masterKey, mapping);
+            stateRef.current.importMastersWriteBackStatus = `Loaded saved mapping "${selectedMappingName}" as a draft for ${masterKey}. Select Apply Mapping to make it authoritative.`;
             render();
           }
         }
         return;
       }
+
       const select = e.target.closest('select[data-master-field-map]');
       if (select) {
         const masterKey = select.dataset.masterKey;
         const fieldName = select.dataset.masterFieldMap;
         const val = select.value;
-        const currentMap = { ...(masterDataController.getMasterData()[masterKey]?.fieldMap || {}) };
+        const currentMap = draftMappingFor(masterKey);
         if (val) currentMap[fieldName] = val;
         else delete currentMap[fieldName];
-        masterDataController.setFieldMap(masterKey, currentMap);
-        
-        const rawRows = masterDataController.getMasterData()[masterKey]?.rawRows || [];
-        if (rawRows.length) {
-          try {
-            const norm = normalizeMasterRows(masterKey, rawRows, currentMap);
-            masterDataController.setNormalizedRows(masterKey, norm);
-          } catch (error) {
-            masterDataController.setNormalizedRows(masterKey, []);
-            stateRef.current.importMastersWriteBackStatus = `Mapping is invalid for ${masterKey}: ${error instanceof Error ? error.message : String(error)}`;
-          }
-        }
-        render();
+        setDraftMapping(masterKey, currentMap);
+        updateVisibleStatus(
+          `Mapping modified for ${masterKey}; select Apply Mapping to validate and commit it.`,
+          masterKey,
+        );
         return;
       }
 
@@ -196,26 +215,34 @@ export function renderMasterDataUI(documentRef) {
         const masterKey = fileInput.dataset.masterFile;
         try {
           const { rawRows, sheetName, sourceMetadata } = await parseMasterFile(file, file.name, masterKey);
-          masterDataController.setRawRows(masterKey, rawRows, file.name, sheetName, sourceMetadata);
-          
-          // Apply the visible auto-mapping to every supported real master type.
-          const mapping = autoMapMasterColumns(rawRows, masterKey);
-          if (mapping && Object.keys(mapping).length > 0) {
-            masterDataController.setFieldMap(masterKey, mapping);
+          const mapping = autoMapMasterColumns(rawRows, masterKey) || {};
+          let normalizedRows = [];
+          let diagnostics = [];
+
+          if (Object.keys(mapping).length > 0) {
             try {
-              const normalizedRows = normalizeMasterRows(masterKey, rawRows, mapping);
-              masterDataController.setNormalizedRows(masterKey, normalizedRows);
-              masterDataController.getMasterData()[masterKey].diagnostics = [{ code: 'VALID', message: 'Auto-mapping validated and applied successfully.' }];
+              normalizedRows = normalizeMasterRows(masterKey, rawRows, mapping);
+              diagnostics = [{ code: 'VALID', message: 'Auto-mapping validated and applied successfully.' }];
               stateRef.current.importMastersWriteBackStatus = `Successfully uploaded, auto-mapped, and validated ${normalizedRows.length} rows for ${masterKey}.`;
             } catch (error) {
-              masterDataController.setNormalizedRows(masterKey, []);
-              masterDataController.getMasterData()[masterKey].diagnostics = [{ code: 'INVALID_MAPPING', message: error instanceof Error ? error.message : String(error) }];
+              diagnostics = [{ code: 'INVALID_MAPPING', message: error instanceof Error ? error.message : String(error) }];
               stateRef.current.importMastersWriteBackStatus = `Uploaded ${rawRows.length} rows, but mapping validation failed for ${masterKey}: ${error instanceof Error ? error.message : String(error)}`;
             }
           } else {
-            masterDataController.setNormalizedRows(masterKey, []);
+            diagnostics = [{ code: 'NO_AUTHORITATIVE_MAPPING', message: 'No authoritative field mapping was found.' }];
             stateRef.current.importMastersWriteBackStatus = `Uploaded ${rawRows.length} rows for ${masterKey}; no authoritative field mapping was found.`;
           }
+
+          masterDataController.commitMasterImport(masterKey, {
+            rawRows,
+            fieldMap: mapping,
+            normalizedRows,
+            diagnostics,
+            fileName: file.name,
+            sheetName,
+            sourceMetadata,
+          });
+          clearDraftMapping(masterKey);
           render();
         } catch (err) {
           stateRef.current.importMastersWriteBackStatus = `Failed to parse file: ${err.message}`;

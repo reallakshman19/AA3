@@ -101,11 +101,17 @@ close(point.pressureStress.sigmaThetaPressure, 30, 'LAFEA.2 inherited pressure s
 close(point.pressureStress.sigmaRPressure, 0, 'LAFEA.2 inherited pressure sigmaR');
 
 const geometryEvidence = createCorrelationGeometryEvidenceFromLafea2({
+  screeningRequest,
   screeningResult,
   geometryIdentity: 'SYNTHETIC-ATTACHMENT-D75',
   attachmentDiameter: 75,
   attachmentSourceReference: 'SYNTHETIC-HAND-CALC/ATTACHMENT-DIAMETER',
 });
+assert.equal(geometryEvidence.foundationModelHash, foundationModel.semanticHash);
+assert.equal(
+  geometryEvidence.foundationResultHash,
+  foundationResult.semanticHashes.resultPayloadSemanticHash,
+);
 const correlationRequest = createCorrelationRequestFromLafea2({
   requestIdentity: 'CORRELATION-SYNTHETIC-END-TO-END',
   screeningResult,
@@ -136,6 +142,9 @@ close(crown.components.SIGMA_X.totalSurface, 100, 'end-to-end sigmaX');
 close(crown.components.SIGMA_THETA.totalSurface, 59, 'end-to-end sigmaTheta');
 close(crown.components.SIGMA_R.totalSurface, 0, 'end-to-end sigmaR');
 close(crown.components.TAU_XTHETA.totalSurface, 2, 'end-to-end tauXTheta');
+close(crown.principalStresses[0], 100.09732992404598, 'end-to-end maximum principal stress');
+close(crown.principalStresses[1], 58.90267007595402, 'end-to-end intermediate principal stress');
+close(crown.principalStresses[2], 0, 'end-to-end minimum principal stress');
 close(crown.vonMises, 87.13782186857783, 'end-to-end von Mises');
 assert.equal(correlation.sourceCustody.sourceRequestHash,
   screeningResult.semanticHashes.screeningRequestSemanticHash);
@@ -149,6 +158,8 @@ console.log(JSON.stringify({
   pipe: { outsideDiameterMm: 300, thicknessMm: 10 },
   attachmentDiameterMm: 75,
   internalPressureMpa: pressure,
+  foundationModelHash: geometryEvidence.foundationModelHash,
+  foundationResultHash: geometryEvidence.foundationResultHash,
   dimensionless: correlation.geometryParameters,
   loads: correlationRequest.loads,
   pressureStressMpa: { sigmaX: 15, sigmaTheta: 30, sigmaR: 0 },
@@ -157,6 +168,7 @@ console.log(JSON.stringify({
     sigmaTheta: crown.components.SIGMA_THETA.totalSurface,
     sigmaR: crown.components.SIGMA_R.totalSurface,
     tauXTheta: crown.components.TAU_XTHETA.totalSurface,
+    principalStresses: crown.principalStresses,
     vonMises: crown.vonMises,
   },
   engineeringUseAuthorized: correlation.qualification.engineeringUseAuthorized,

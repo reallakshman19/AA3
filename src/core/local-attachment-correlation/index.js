@@ -16,6 +16,12 @@ export {
 } from './constants.js';
 export { calculateLocalAttachmentCorrelation } from './calculate.js';
 export {
+  CORRELATION_DATASET_PACKAGE_SCHEMA,
+  createCorrelationDatasetPackage,
+  unqualifiedCorrelationProfileFromDatasetPackage,
+  validateCorrelationDatasetPackage,
+} from './dataset-package.js';
+export {
   CORRELATION_ASSESSMENT_SCHEMA,
   calculateEngineeringCorrelationFromLafea2,
 } from './engineering-assessment.js';

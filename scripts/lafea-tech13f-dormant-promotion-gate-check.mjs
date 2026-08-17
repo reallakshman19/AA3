@@ -27,9 +27,13 @@ assert.equal(policy.activationRequiresVerifiedExactHeadBundle, true);
 assert.equal(policy.runtimeCandidateGateStillRequiredAfterPromotion, true);
 assert.equal(policy.runtimeParentNormalGateStillRequiredAfterPromotion, true);
 assert.equal(policy.runtimeMeshQualityThresholdsMayChangeOnPromotion, false);
+assert.equal(policy.productionAuthorityArgumentAccepted, false);
+assert.equal(policy.callerSuppliedPromotionRecordMayActivate, false);
 
-// Production truth is fail-closed.
+// Production truth is fail-closed and the resolver has no authority parameter.
 assert.equal(LAFEA4_SHELL_PRODUCT_REFINEMENT_PROMOTION_RECORD, null);
+assert.equal(evaluateLafea4ShellProductRefinementPromotion.length, 0);
+assert.equal(requireLafea4ShellProductRefinementPromotionAuthorized.length, 0);
 const dormant = evaluateLafea4ShellProductRefinementPromotion();
 assert.equal(dormant.active, false);
 assert.equal(dormant.productRetentionAuthorized, false);
@@ -41,9 +45,8 @@ assert.throws(
   (error) => error?.code === LAFEA4_SHELL_PRODUCT_REFINEMENT_PROMOTION_BLOCK_CODE,
 );
 
-// Qualification seam only: this record is deliberately synthetic and is not
-// source-controlled as production authority. It proves the future-active code
-// branch can be structurally exercised before any real PASS bundle exists.
+// A structurally valid record may be constructed/verified offline, but passing
+// it as an extra JavaScript argument must NOT activate the production resolver.
 const synthetic = createLafea4ShellProductRefinementPromotionRecord({
   schema: LAFEA4_SHELL_PRODUCT_REFINEMENT_PROMOTION_SCHEMA,
   stageId: 'LAFEA.4',
@@ -62,13 +65,14 @@ const synthetic = createLafea4ShellProductRefinementPromotionRecord({
   releaseQualified: false,
 });
 assert.deepEqual(validateLafea4ShellProductRefinementPromotionRecord(synthetic), synthetic);
-const active = evaluateLafea4ShellProductRefinementPromotion(synthetic);
-assert.equal(active.active, true);
-assert.equal(active.productRetentionAuthorized, true);
-assert.equal(active.uiBindingAuthorized, true);
-assert.equal(active.releaseQualified, false);
-assert.equal(active.qualifiedHead, 'a'.repeat(40));
-assert.equal(requireLafea4ShellProductRefinementPromotionAuthorized(synthetic).active, true);
+const injectionAttempt = evaluateLafea4ShellProductRefinementPromotion(synthetic);
+assert.equal(injectionAttempt.active, false);
+assert.equal(injectionAttempt.productRetentionAuthorized, false);
+assert.equal(injectionAttempt.uiBindingAuthorized, false);
+assert.throws(
+  () => requireLafea4ShellProductRefinementPromotionAuthorized(synthetic),
+  (error) => error?.code === LAFEA4_SHELL_PRODUCT_REFINEMENT_PROMOTION_BLOCK_CODE,
+);
 
 const tampered = structuredClone(synthetic);
 tampered.bundleEvidenceSha256 = '4'.repeat(64);
@@ -90,7 +94,7 @@ console.log(JSON.stringify({
   productionTrustRoot: 'NULL',
   productionProductRetentionAuthorized: dormant.productRetentionAuthorized,
   productionUiBindingAuthorized: dormant.uiBindingAuthorized,
-  syntheticFutureActiveBranchExercised: active.active,
+  callerSuppliedValidRecordIgnored: injectionAttempt.active === false,
   syntheticRecordIsProductionEvidence: false,
   releaseQualified: false,
 }, null, 2));

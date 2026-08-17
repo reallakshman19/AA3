@@ -1,6 +1,5 @@
 #!/usr/bin/env node
 import assert from 'node:assert/strict';
-import fs from 'node:fs';
 
 import { canonicalProfile, PROFILE_KINDS } from '../src/core/lafea-profile-contract/index.js';
 import { createLafeaMockDocument } from '../src/workspace/advanced-mock-data.js';
@@ -26,14 +25,14 @@ import { LAFEA4_SHELL_PRODUCT_REFINEMENT_PENDING_CODE } from '../src/workspace/l
 
 const stageId = 'LAFEA.4';
 const document = normalizeLafeaStageDocument(stageId, createLafeaMockDocument(stageId));
-const sourceAuthority = issueLafeaSourceAuthority(stageId, document, 'TECH13F-DORMANT-ACTIVATION');
+const sourceAuthority = issueLafeaSourceAuthority(stageId, document, 'TECH13G-NONSPOOFABLE');
 const midsurface = createLafeaSimulatedShellMidsurfaceEvidence(
   stageId, sourceAuthority.sourceHash, document,
 );
 const profile = canonicalProfile(PROFILE_KINDS.MESH, {
   schema: 'lafea-mesh-profile/v1',
-  profileIdentity: 'TECH13F_SAMPLE_CURVED_TRI3',
-  sourceRevision: 'TECH13F-V1',
+  profileIdentity: 'TECH13G_SAMPLE_CURVED_TRI3',
+  sourceRevision: 'TECH13G-V1',
   semanticHash: undefined,
   fields: {
     continuumElement: 'T3',
@@ -49,6 +48,7 @@ const profile = canonicalProfile(PROFILE_KINDS.MESH, {
 });
 
 assert.equal(LAFEA4_SHELL_PRODUCT_REFINEMENT_PROMOTION_RECORD, null);
+assert.equal(buildLafea4ShellProductRefinementUiPolicy.length, 1);
 const workbench = createLafeaWorkbenchOrchestratorStore({
   initialStage: stageId,
   initialDocument: document,
@@ -62,120 +62,70 @@ assert.ok(parent);
 const stage = workbench.getState().stages[stageId];
 const target = parent.mesh.elements[Math.floor(parent.mesh.elements.length / 2)];
 const request = {
-  commandId: 'TECH13F-SAMPLE-REFINE',
+  commandId: 'TECH13G-SAMPLE-REFINE',
   targetType: 'ELEMENT',
   targetIds: [target.elementId],
   targetElementLength: 7.5,
   lengthUnit: midsurface.geometry.lengthUnit,
-  reason: 'TECH13F dormant future-active product refinement fixture',
+  reason: 'TECH13G non-spoofable promotion authority fixture',
 };
+
 const dormantUi = buildLafea4ShellProductRefinementUiPolicy(stage);
 assert.equal(dormantUi.scopeEligible, true);
 assert.equal(dormantUi.productQualified, false);
 assert.equal(dormantUi.canRefine, false);
 assert.equal(dormantUi.reason, LAFEA4_SHELL_PRODUCT_REFINEMENT_PENDING_CODE);
+
+const synthetic = createSyntheticPromotion();
+// JavaScript permits extra arguments, but the one-argument UI projection must
+// ignore the supplied record and continue to resolve the code-owned null root.
+const spoofedUi = buildLafea4ShellProductRefinementUiPolicy(stage, synthetic);
+assert.equal(spoofedUi.productQualified, false);
+assert.equal(spoofedUi.canRefine, false);
+assert.equal(spoofedUi.promotion.active, false);
+
 const productionAttempt = workbench.refineAnalysisMesh(request, stageId);
 assert.equal(productionAttempt, null);
 assert.equal(workbench.getState().diagnostics?.[0]?.code,
   LAFEA4_SHELL_PRODUCT_REFINEMENT_PENDING_CODE);
 assert.equal(workbench.selectRetainedAnalysisMeshEvidenceV2(stageId)?.artifactHash, parent.artifactHash);
+assert.equal(workbench.selectRetainedAnalysisMeshEvidenceV2(stageId)?.meshHash, parent.meshHash);
 
-const syntheticPromotion = createSyntheticPromotion();
-const activeUi = buildLafea4ShellProductRefinementUiPolicy(stage, syntheticPromotion);
-assert.equal(activeUi.scopeEligible, true);
-assert.equal(activeUi.productQualified, true);
-assert.equal(activeUi.canRefine, true);
-assert.deepEqual(activeUi.allowedTargetTypes, ['ELEMENT']);
-assert.equal(activeUi.productRetentionAuthorized, true);
-assert.equal(activeUi.uiBindingAuthorized, true);
-assert.equal(activeUi.releaseQualified, false);
-
-const generationPanelText = fs.readFileSync(
-  new URL('../src/workspace/lafea-discretization-generation-panel.js', import.meta.url),
-  'utf8',
-);
-assert.match(generationPanelText, /const productActive = productScoped/u);
-assert.match(generationPanelText, /productActive \? model\.refinement\.allowedTargetTypes/u);
-assert.match(generationPanelText, /if \(productActive\) targetType\.input\.disabled = true/u);
-assert.match(generationPanelText, /submit\.disabled = !model\.actions\.canRefineMesh/u);
-
-const successHarness = createActionHarness({ stage, parent, promotionRecord: syntheticPromotion });
-const activeResult = successHarness.actions.refineAnalysisMesh(request, stageId);
-assert.ok(activeResult);
-assert.equal(activeResult.productRefinement, true);
-assert.equal(activeResult.productRetentionAuthorized, true);
-assert.equal(activeResult.uiBindingAuthorized, true);
-assert.equal(activeResult.releaseQualified, false);
-assert.notEqual(activeResult.evidence.artifactHash, parent.artifactHash);
-assert.notEqual(activeResult.evidence.meshHash, parent.meshHash);
-assert.equal(successHarness.meshGeneration.selectEvidence(stageId)?.artifactHash,
-  activeResult.evidence.artifactHash);
-assert.equal(successHarness.diagnostic(), null);
-
-const rollbackHarness = createActionHarness({
-  stage,
-  parent,
-  promotionRecord: syntheticPromotion,
-  failChildRecovery: true,
-});
-const failedResult = rollbackHarness.actions.refineAnalysisMesh(request, stageId);
-assert.equal(failedResult, null);
-assert.equal(rollbackHarness.meshGeneration.selectEvidence(stageId)?.artifactHash, parent.artifactHash);
-assert.equal(rollbackHarness.meshGeneration.selectEvidence(stageId)?.meshHash, parent.meshHash);
-assert.ok(rollbackHarness.diagnostic());
+// Attempt the former action-factory injection seam directly. The context field
+// may still physically exist in a caller object, but production authority must
+// ignore it and leave the exact parent in custody.
+const spoofHarness = createActionHarness({ stage, parent, promotionRecord: synthetic });
+const spoofResult = spoofHarness.actions.refineAnalysisMesh(request, stageId);
+assert.equal(spoofResult, null);
+assert.equal(spoofHarness.diagnostic(), LAFEA4_SHELL_PRODUCT_REFINEMENT_PENDING_CODE);
+assert.equal(spoofHarness.meshGeneration.selectEvidence(stageId)?.artifactHash, parent.artifactHash);
+assert.equal(spoofHarness.meshGeneration.selectEvidence(stageId)?.meshHash, parent.meshHash);
 
 console.log(JSON.stringify({
   check: 'lafea-tech13f-dormant-product-refinement-activation',
   status: 'PASS',
-  production: {
-    trustRoot: 'NULL',
-    canRefine: dormantUi.canRefine,
-    retainedParentArtifactHash: parent.artifactHash,
-    diagnostic: LAFEA4_SHELL_PRODUCT_REFINEMENT_PENDING_CODE,
-  },
-  syntheticFutureActive: {
-    canRefine: activeUi.canRefine,
-    targetTypes: activeUi.allowedTargetTypes,
-    childArtifactHash: activeResult.evidence.artifactHash,
-    childMeshHash: activeResult.evidence.meshHash,
-    parentReplaced: activeResult.evidence.artifactHash !== parent.artifactHash,
-    rendererBoundToActiveProjection: true,
-  },
-  forcedFailureRollback: {
-    parentArtifactHashRestored: rollbackHarness.meshGeneration.selectEvidence(stageId)?.artifactHash,
-    parentMeshHashRestored: rollbackHarness.meshGeneration.selectEvidence(stageId)?.meshHash,
-  },
-  syntheticRecordIsProductionEvidence: false,
+  productionTrustRoot: 'NULL',
+  uiArgumentInjectionIgnored: spoofedUi.canRefine === false,
+  actionContextInjectionIgnored: spoofResult === null,
+  retainedParentArtifactHash: parent.artifactHash,
+  retainedParentMeshHash: parent.meshHash,
+  diagnostic: LAFEA4_SHELL_PRODUCT_REFINEMENT_PENDING_CODE,
   releaseQualified: false,
 }, null, 2));
 
 workbench.destroy();
 
-function createActionHarness({ stage: sourceStage, parent: sourceParent, promotionRecord, failChildRecovery = false }) {
+function createActionHarness({ stage: sourceStage, parent: sourceParent, promotionRecord }) {
   const meshGeneration = createLafeaWorkbenchMeshGenerationState([stageId]);
   meshGeneration.bindMeshProfile(profile, stageId);
   meshGeneration.registerShellMidsurface(midsurface, sourceStage);
   meshGeneration.recoverEvidence(sourceParent, stageId);
-  const originalRecover = meshGeneration.recoverEvidence.bind(meshGeneration);
-  const wrappedMeshGeneration = failChildRecovery
-    ? Object.freeze({
-      ...meshGeneration,
-      recoverEvidence(value, id) {
-        if (value.artifactHash !== sourceParent.artifactHash) {
-          const error = new TypeError('TECH13F_FORCED_CHILD_RECOVERY_FAILURE');
-          error.code = 'TECH13F_FORCED_CHILD_RECOVERY_FAILURE';
-          throw error;
-        }
-        return originalRecover(value, id);
-      },
-    })
-    : meshGeneration;
   let diagnostic = null;
   const readStageState = () => ({
     ...sourceStage,
     retainedAnalysisMeshProfile: profile,
-    retainedShellMidsurfaceEvidence: wrappedMeshGeneration.selectShellMidsurface(stageId),
-    retainedAnalysisMeshEvidenceV2: wrappedMeshGeneration.selectEvidence(stageId),
+    retainedShellMidsurfaceEvidence: meshGeneration.selectShellMidsurface(stageId),
+    retainedAnalysisMeshEvidenceV2: meshGeneration.selectEvidence(stageId),
     shellMidsurfaceProfileActive: true,
   });
   const storeError = (code) => {
@@ -184,7 +134,7 @@ function createActionHarness({ stage: sourceStage, parent: sourceParent, promoti
     return error;
   };
   const actions = createLafeaMeshGenerationActions({
-    meshGeneration: wrappedMeshGeneration,
+    meshGeneration,
     mesh: {},
     continuumPreflight: { clear() {} },
     rawStage: readStageState,
@@ -194,18 +144,12 @@ function createActionHarness({ stage: sourceStage, parent: sourceParent, promoti
     invokeRetained() {},
     getRetainedState: () => ({ activeStageId: stageId, status: 'READY', stages: { [stageId]: {} } }),
     clearOrchestratorDiagnostic: () => { diagnostic = null; },
-    failOrchestrator: (error, fallback) => {
-      diagnostic = error?.code ?? fallback;
-    },
+    failOrchestrator: (error, fallback) => { diagnostic = error?.code ?? fallback; },
     clearDomainFirstExecution() {},
     storeError,
     productRefinementPromotionRecord: promotionRecord,
   });
-  return {
-    actions,
-    meshGeneration: wrappedMeshGeneration,
-    diagnostic: () => diagnostic,
-  };
+  return { actions, meshGeneration, diagnostic: () => diagnostic };
 }
 
 function createSyntheticPromotion() {

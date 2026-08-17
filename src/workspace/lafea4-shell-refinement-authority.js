@@ -31,6 +31,7 @@ const capabilityCore = Object.freeze({
   stageId: 'LAFEA.4',
   elementFamily: SHELL_TRI3,
   generationMode: 'REFINEMENT_REGENERATION',
+  executionScope: 'QUALIFICATION_HARNESS_ONLY',
   surfaceKinds: Object.freeze(['CYLINDRICAL', 'CYLINDRICAL_HOLES']),
   boundaryPolicy: 'PRESERVE_PARENT_BOUNDARY_EDGES_EXACTLY_V1',
   topologyPolicy: 'CONFORMING_TRI3_NO_HANGING_NODES_V1',
@@ -60,9 +61,11 @@ const qualificationCore = Object.freeze({
   authorizedElementFamily: SHELL_TRI3,
   authorizedSurfaceKinds: Object.freeze(['CYLINDRICAL', 'CYLINDRICAL_HOLES']),
   authorizedGenerationMode: 'REFINEMENT_REGENERATION',
+  authorizedExecutionScope: 'QUALIFICATION_HARNESS_ONLY',
   qualityAuthority: 'LAFEA4_STAGE_QUALIFIED_MESH_POLICY_PLUS_ADJACENT_SIZE_GATE',
   governanceRef: 'scripts/lafea-tech5-shell-local-refinement-check.mjs',
   invalidationPolicy: 'INVALIDATE_ON_REFINER_REVISION_OR_QUALITY_POLICY_CHANGE',
+  productionBindingAuthorized: false,
   releaseQualified: false,
 });
 
@@ -74,12 +77,7 @@ export const LAFEA4_SHELL_REFINEMENT_QUALIFICATION = freeze({
   }),
 });
 
-/**
- * Retained-parent shell refinement command. Parent artifact and mesh hashes
- * make selected node/element IDs stale-safe. This is separate from the
- * LAFEA.3 retained-mesh command because the surface/transition qualification
- * envelope is different.
- */
+/** Qualification-harness command; it cannot establish product binding. */
 export function createLafea4ShellRefinementCommand(value) {
   exact(value, COMMAND_KEYS);
   if (value.schema !== LAFEA4_SHELL_REFINEMENT_COMMAND_SCHEMA) {
@@ -108,11 +106,12 @@ export function createLafea4ShellRefinementCommand(value) {
   return freeze({
     ...command,
     semanticHash: canonicalLafeaSha256({
-      schema: 'lafea4-shell-refinement-command-hash-input/v1',
-      command,
+      schema: 'lafea4-shell-refinement-command-hash-input/v1', command,
     }),
-    status: 'READY',
+    status: 'QUALIFICATION_ONLY_READY',
+    executionScope: 'QUALIFICATION_HARNESS_ONLY',
     executionAuthorized: true,
+    productionBindingAuthorized: false,
     capabilityHash: LAFEA4_SHELL_REFINEMENT_CAPABILITY.capabilityHash,
     qualificationHash: LAFEA4_SHELL_REFINEMENT_QUALIFICATION.qualificationHash,
     rollbackPolicy: LAFEA4_SHELL_REFINEMENT_CAPABILITY.rollbackPolicy,
@@ -124,13 +123,15 @@ export function validateLafea4ShellRefinementCommand(value) {
     fail('LAFEA4_SHELL_REFINEMENT_COMMAND_REQUIRED');
   }
   const {
-    semanticHash, status, executionAuthorized, capabilityHash, qualificationHash,
-    rollbackPolicy, ...input
+    semanticHash, status, executionScope, executionAuthorized, productionBindingAuthorized,
+    capabilityHash, qualificationHash, rollbackPolicy, ...input
   } = value;
   const rebuilt = createLafea4ShellRefinementCommand(input);
   if (rebuilt.semanticHash !== semanticHash
     || rebuilt.status !== status
+    || rebuilt.executionScope !== executionScope
     || rebuilt.executionAuthorized !== executionAuthorized
+    || rebuilt.productionBindingAuthorized !== productionBindingAuthorized
     || rebuilt.capabilityHash !== capabilityHash
     || rebuilt.qualificationHash !== qualificationHash
     || rebuilt.rollbackPolicy !== rollbackPolicy) {

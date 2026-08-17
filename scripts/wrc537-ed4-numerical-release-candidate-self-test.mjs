@@ -51,6 +51,22 @@ fixture.sourcePackage.benchmarks = [{
   independentlyReproduced: true,
   independentCalculationReference: independentReference,
   input: { P: 1000, A: 100 },
+  inputEvidence: [
+    {
+      inputId: 'LOAD_P',
+      benchmarkPath: ['P'],
+      units: 'N',
+      sourceRef: datumRef,
+      sourceLocator: datumLocator,
+    },
+    {
+      inputId: 'AREA_A',
+      benchmarkPath: ['A'],
+      units: 'mm2',
+      sourceRef: datumRef,
+      sourceLocator: datumLocator,
+    },
+  ],
   expectedResults: [{
     quantity: 'SIGMA',
     value: 12.34,
@@ -178,8 +194,8 @@ const benchmarkBindings = [{
   sourceBenchmarkCaseId,
   qualificationCaseId,
   inputBindings: [
-    { variableId: 'P', benchmarkPath: ['P'] },
-    { variableId: 'A', benchmarkPath: ['A'] },
+    { variableId: 'P', benchmarkInputId: 'LOAD_P' },
+    { variableId: 'A', benchmarkInputId: 'AREA_A' },
   ],
   recoveryBindings: [{
     targetId: 'FIXTURE-RELEASE-POINT',
@@ -219,6 +235,11 @@ expectError('WRC537_ED4_NUMERICAL_RELEASE_BENCHMARK_COVERAGE_MISMATCH', () =>
   createWrc537Ed4NumericalReleaseCandidate(dataset, plan, executable, suite, evidence, {
     ...candidateInput, benchmarkBindings: [],
   }));
+expectError('WRC537_ED4_NUMERICAL_RELEASE_BENCHMARK_INPUT_EVIDENCE_UNKNOWN', () => {
+  const bad = structuredClone(candidateInput);
+  bad.benchmarkBindings[0].inputBindings[0].benchmarkInputId = 'UNKNOWN_INPUT_EVIDENCE';
+  createWrc537Ed4NumericalReleaseCandidate(dataset, plan, executable, suite, evidence, bad);
+});
 expectError('WRC537_ED4_NUMERICAL_RELEASE_BENCHMARK_INPUT_VALUE_MISMATCH', () => {
   const badSuiteInput = structuredClone(suite);
   delete badSuiteInput.suiteSemanticHash;
@@ -274,7 +295,8 @@ console.log(JSON.stringify({
   retainedDatasetCoefficient: 1.234,
   fixtureExpectedMPa: 12.34,
   sourceBenchmarkCoverageRequired: true,
-  sourceBenchmarkInputsBoundExactly: true,
+  sourceBenchmarkInputEvidenceRequired: true,
+  sourceBenchmarkInputsAndUnitsBoundExactly: true,
   sourceBenchmarkRecoveryBoundExactly: true,
   sourceIndependentReferenceBoundExactly: true,
   coefficientLiteralBoundExactly: true,

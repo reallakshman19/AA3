@@ -97,6 +97,13 @@
       "args": ["scripts/lafea-ui-analysis-settings-check.mjs"]
     },
     {
+      "id": "LAFEA3_SAMPLE_GENERATE_MESH",
+      "classification": "ENGINEERING",
+      "required": true,
+      "executable": "node",
+      "args": ["scripts/lafea3-sample-generate-mesh-enable-check.mjs"]
+    },
+    {
       "id": "MESHING_SUITE",
       "classification": "ENGINEERING",
       "required": true,

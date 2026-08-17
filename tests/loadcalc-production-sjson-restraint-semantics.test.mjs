@@ -65,11 +65,13 @@ function unknownDetails(dataset, canonical, issues) {
       restraintId: issue.restraintId,
       entityId: support?.entityId || null,
       name: entity?.name || null,
+      restraintRole: support?.restraintRole || null,
+      restraintRoleAuthority: support?.restraintRoleAuthority || null,
       supportType: support?.restraint?.supportType || null,
       source: Object.fromEntries([
         'SUPPORT_KIND', 'SUPPORT_MAPPER_KIND', 'SUPPORT_TYPE', 'CMPSUPTYPE',
-        'MDSSUPPTYPE', 'CMPSTRESSN', 'NODETYPE', 'DTXR', 'ISONOTE', 'NAME',
-        'SUPPORT_TAG', 'CMPSUPREFN',
+        'MDSSUPPTYPE', 'CMPSTRESSN', 'NODETYPE', 'NODESTIFF', 'DTXR', 'ISONOTE',
+        'NAME', 'SUPPORT_TAG', 'CMPSUPREFN', 'SPRE', 'MTOC', 'SPKBRK', 'FSTAT',
       ].filter((key) => attributes[key] !== undefined).map((key) => [key, attributes[key]])),
     };
   });
@@ -85,6 +87,7 @@ test('fallback support-family evidence is priority ordered and fail closed', () 
     'LINE_STOP',
   );
   assert.equal(collect({ DTXR: 'Pipe Rest XRT01' }).values.supportTypes?.[0]?.value, 'REST');
+  assert.equal(collect({ DTXR: 'PIPE SUPPORT TYPE-103' }).values.supportTypes, undefined);
   assert.equal(collect({ DTXR: 'Generic support attachment' }).values.supportTypes, undefined);
 });
 
@@ -106,6 +109,37 @@ test('SJSON non-restraint semantics outrank weak support-object signals', () => 
   });
   assert.equal(reference.disposition, 'DEFER_SUPPORT');
   assert.equal(reference.attachmentClassification, 'REFERENCE_POINT');
+
+  const hardware = classifySjsonSupportProjection({
+    NAME: '=1006657924/39571',
+    SUPPORT_TAG: '=1006657924/39571',
+    CMPSUPREFN: '=1006657924/39571',
+    CMPSUPTYPE: '',
+    SUPPORT_TYPE: '',
+    SPRE: '/MDF/FT17-10.6-PMP',
+    DTXR: 'PIPE SUPPORT TYPE-103',
+    MTOC: 'OFF',
+    SPKBRK: 'true',
+  });
+  assert.equal(hardware.disposition, 'DEFER_SUPPORT');
+  assert.equal(hardware.attachmentClassification, 'REFERENCE_POINT');
+  assert.equal(hardware.authority, 'SOURCE_SUPPORT_HARDWARE_MEMBER');
+
+  const placeholder = classifySjsonSupportProjection({
+    NAME: '=1006649732/51254',
+    SUPPORT_TAG: '=1006649732/51254',
+    CMPSUPREFN: '=1006649732/51254',
+    SUPPORT_TYPE: '',
+    CMPSUPTYPE: '',
+    SPRE: '/91261M7r01-AMF1/ATTA-150',
+    DTXR: '---',
+    MTOC: 'OFF',
+    SPKBRK: 'false',
+    FSTAT: 'IGN',
+  });
+  assert.equal(placeholder.disposition, 'DEFER_SUPPORT');
+  assert.equal(placeholder.attachmentClassification, 'REFERENCE_POINT');
+  assert.equal(placeholder.authority, 'SOURCE_GENERIC_ATTACHMENT_PLACEHOLDER');
 
   const unknown = classifySjsonSupportProjection({
     NAME: '/PS-UNKNOWN',

@@ -22,6 +22,7 @@ This metadata proves document identity only. It is **not** technical authority f
 - `WRC537_ED4_SOURCE_PACKAGE.json` — structured technical intake package.
 - `WRC537_ED4_SOURCE_LEDGER.csv` — provenance and exact source-locator ledger.
 - `WRC537_ED4_COEFFICIENTS.csv` — Edition 4 coefficient/equation numerical rows only.
+- `SOURCE_BENCHMARK_RELEASE_CUSTODY.md` — end-to-end source benchmark input/output release custody.
 
 The coefficient file intentionally starts header-only. Do not copy the mixed-edition inventory from PR #1203 into it merely to obtain row coverage.
 
@@ -33,7 +34,7 @@ Fill the package in this order:
    - identify the authorized Edition 4 copy;
    - record an internal source ID;
    - calculate SHA-256 of the exact source file;
-   - add a `PRIMARY_LICENSED` or `PRIMARY_AUTHORIZED` ledger row carrying the **same SHA-256**;
+   - add a `PRIMARY_LICENSED` or `PRIMARY_AUTHORIZED` `DOCUMENT` ledger row carrying the same SHA-256;
    - record the license/authorization basis without committing restricted source bytes unless licensing permits repository storage.
 
 2. **Geometry and physical applicability**
@@ -41,8 +42,7 @@ Fill the package in this order:
    - distinguish mean/inside/outside radius and thickness definitions;
    - identify supported host-shell and attachment families;
    - record intersection/orientation requirements, load-reference convention and exclusions;
-   - bind the applicability block itself to a primary Edition 4 source reference;
-   - every consumed definition gets an exact source locator.
+   - bind every consumed definition to an Edition 4 `DATUM` row with exact locator.
 
 3. **Dimensionless parameters**
    - populate `SPHERE_U`, `SPHERE_GAMMA`, `SPHERE_RHO`, `CYL_LAMBDA`, `CYL_DELTA` from Edition 4 only;
@@ -74,9 +74,12 @@ Fill the package in this order:
    - no secondary-source coefficient can qualify.
 
 8. **Published/reference benchmarks**
-   - retain at least one target-edition source case with exact inputs and expected intermediate/final results;
+   - retain each benchmark's natural source input structure in `input`;
+   - create one `inputEvidence[]` row for **every finite numeric input leaf**;
+   - every input evidence row requires a unique `inputId`, exact `benchmarkPath`, source units, Edition 4 DATUM reference and exact source locator;
+   - retain expected source outputs with units, source-derived absolute tolerance, tolerance basis and exact source locator;
    - independently reproduce every retained release benchmark;
-   - tolerance must be based on source precision/digitization uncertainty, not an arbitrary percentage.
+   - no arbitrary percentage tolerance is permitted.
 
 9. **LAFEA canonical mapping**
    - map source geometry, load and stress quantities to LAFEA only after source definitions are resolved;
@@ -87,7 +90,15 @@ Fill the package in this order:
 
 For each source item add a unique row to `WRC537_ED4_SOURCE_LEDGER.csv`.
 
-Technical authority rows must use:
+The ledger distinguishes:
+
+```text
+DOCUMENT_IDENTITY
+DOCUMENT
+DATUM
+```
+
+Technical authority rows use:
 
 ```text
 PRIMARY_LICENSED
@@ -101,18 +112,59 @@ PRIMARY_AUTHORIZED
 
 and must contain:
 
-- a unique `record_id`;
+- unique `record_id`;
+- non-empty `engineering_subject`;
 - publisher `Welding Research Council, Inc.`;
 - bulletin number `537`;
 - edition `4`;
 - publication date `2026-02`;
 - SHA-256 `document_digest` of the exact authorized source copy;
-- locator precise enough to find the datum again;
+- locator precise enough to find the document/datum again;
 - verification status `PRIMARY_SOURCE_VERIFIED`.
 
-The ledger digest must equal `technicalSource.documentDigest` in the package. This prevents data extracted from one document revision/copy from being silently represented as another source artifact.
+Every technical DATUM digest must equal `technicalSource.documentDigest` in the package. This prevents data extracted from one document revision/copy from being silently represented as another source artifact.
 
-`OFFICIAL_CATALOG_IDENTITY` may be used only for document identity metadata and does not require a technical-document digest.
+`OFFICIAL_CATALOG_IDENTITY` may be used only for document identity metadata and does not authorize technical content.
+
+## Benchmark input evidence format
+
+A benchmark may preserve nested source inputs:
+
+```json
+{
+  "input": {
+    "geometry": { "R": 100, "t": 10 },
+    "loads": { "P": 1000 }
+  }
+}
+```
+
+but every finite numeric leaf must have one source-qualified evidence row:
+
+```json
+{
+  "inputId": "GEOMETRY_R",
+  "benchmarkPath": ["geometry", "R"],
+  "units": "mm",
+  "sourceRef": "DATUM-WRC537-ED4-BENCHMARK-001",
+  "sourceLocator": "exact Edition 4 locator"
+}
+```
+
+READY requires:
+
+```text
+100% numeric input leaf coverage
+unique inputId values
+unique benchmarkPath coverage
+finite value at every path
+explicit units
+exact Edition 4 DATUM source reference
+sourceLocator == DATUM locator
+datum digest == technical source SHA-256
+```
+
+A bare numeric benchmark value without unit/source custody cannot qualify.
 
 ## Coefficient row format
 
@@ -130,8 +182,8 @@ edition = a string explicitly identifying Edition 4 and 2026
 coefficient_id = unique within the package
 coefficient_value = finite number
 published_precision = exact retained source precision
-source_ref = Edition 4 primary-technical ledger record
-source_locator = exact table/equation/figure location
+source_ref = Edition 4 primary DATUM ledger record
+source_locator = exact DATUM locator
 review_status = PRIMARY_SOURCE_VERIFIED
 ```
 
@@ -168,5 +220,6 @@ Do not:
 - infer Edition 4 cylindrical parameters from an earlier edition without verification;
 - infer force/moment signs from CAESAR/PV Elite or another secondary implementation;
 - use catalog prose as technical equation authority;
+- omit units/source locators from source benchmark inputs;
 - invent interpolation/extrapolation behavior;
-- activate a WRC537 calculation/profile/UI path before the package release gate is READY.
+- activate a WRC537 calculation/profile/UI path before the source, numerical, benchmark, approval and trust gates are complete.

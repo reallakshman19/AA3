@@ -21,6 +21,8 @@ for (const name of [
   'WRC537_ED4_EXECUTABLE_PLAN.json',
   'WRC537_ED4_QUALIFICATION_SUITE.json',
   'WRC537_ED4_QUALIFICATION_EVIDENCE.json',
+  'WRC537_ED4_LITERAL_BINDINGS.json',
+  'WRC537_ED4_NUMERICAL_RELEASE_CANDIDATE.json',
 ]) {
   assert.equal(fs.existsSync(path.join(ed4, name)), false, `${name} must remain absent while real Ed4 source package is blocked.`);
 }
@@ -28,6 +30,7 @@ for (const name of [
 for (const file of [
   'src/core/local-attachment-correlation/methods/wrc537/ed4-execution-engine.js',
   'src/core/local-attachment-correlation/methods/wrc537/ed4-qualification-engine.js',
+  'src/core/local-attachment-correlation/methods/wrc537/ed4-numerical-release-candidate.js',
 ]) {
   const source = fs.readFileSync(path.join(root, file), 'utf8');
   assert.equal(/\beval\s*\(/u.test(source), false, `${file} must not use eval().`);
@@ -36,6 +39,7 @@ for (const file of [
   assert.equal(source.includes('MOMENT_OVER_D2_T'), false, `${file} must not import the synthetic moment basis.`);
   assert.equal(source.includes('BILINEAR_NO_EXTRAPOLATION'), false, `${file} must not hard-code the synthetic interpolation policy.`);
   assert.equal(source.includes('calculateLocalAttachmentCorrelation('), false, `${file} must not delegate WRC537 to the generic synthetic calculator.`);
+  assert.equal(source.includes('engineeringUseAuthorized: true'), false, `${file} must not activate engineering authority.`);
 }
 
 console.log(JSON.stringify({
@@ -44,8 +48,11 @@ console.log(JSON.stringify({
   currentEngineeringState: 'BLOCKED_AS_DESIGNED',
   failedGateIds: readiness.failedGateIds,
   realEngineeringArtifactsAbsent: true,
+  literalBindingArtifactAbsent: true,
+  numericalReleaseCandidateAbsent: true,
   textEvaluationAbsent: true,
   syntheticCorrelationAssumptionsAbsent: true,
+  engineeringAuthorityActivationAbsent: true,
 }));
 
 function parseCsv(text) {

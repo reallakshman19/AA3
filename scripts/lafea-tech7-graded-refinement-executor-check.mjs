@@ -27,6 +27,7 @@ import {
   previewLafea4GradedShellRefinement,
   produceLafea4GradedShellRefinement,
 } from '../src/workspace/lafea4-shell-graded-refinement-executor.js';
+import { createLafea4ShellGeometricQualityEvidence } from '../src/workspace/lafea4-shell-geometric-quality-evidence.js';
 
 const definition = JSON.parse(fs.readFileSync(
   new URL('../validation/lafea4-refinement/graded-executor-curved-hole-v1.json', import.meta.url),
@@ -109,6 +110,10 @@ const input = {
 };
 const preview = previewLafea4GradedShellRefinement(input);
 const previewAdjacency = gate(preview.evidence, 'ADJACENT_SIZE_RATIO');
+const previewGeometric = createLafea4ShellGeometricQualityEvidence({
+  meshEvidence: preview.evidence,
+  midsurfaceEvidence: midsurface,
+});
 if (preview.evidence.qualification !== 'PASS'
   || previewAdjacency.value > definition.acceptance.maximumAdjacentSizeRatio + 64 * Number.EPSILON) {
   console.error(JSON.stringify({
@@ -122,6 +127,7 @@ if (preview.evidence.qualification !== 'PASS'
     violatingAdjacencies:
       preview.evidence.quality.adjacentSizeRatio?.violatingAdjacencies ?? [],
     blockingElementIds: preview.evidence.quality.blockingElementIds,
+    informationalGeometry: geometricSummary(previewGeometric),
   }, null, 2));
 }
 assert.equal(preview.evidence.qualification, 'PASS',
@@ -136,6 +142,14 @@ assert.ok(
 // preserving actionable qualification evidence when a candidate is blocked.
 const result = produceLafea4GradedShellRefinement(input);
 const replay = produceLafea4GradedShellRefinement(input);
+const geometric = createLafea4ShellGeometricQualityEvidence({
+  meshEvidence: result.evidence,
+  midsurfaceEvidence: midsurface,
+});
+const geometricReplay = createLafea4ShellGeometricQualityEvidence({
+  meshEvidence: replay.evidence,
+  midsurfaceEvidence: midsurface,
+});
 
 assert.equal(result.executionScope, 'QUALIFICATION_HARNESS_ONLY');
 assert.equal(result.productionBindingAuthorized, false);
@@ -163,6 +177,16 @@ assert.ok(
   result.maximumSurfaceRoundTripUvError <= definition.acceptance.maximumSurfaceRoundTripUvErrorMm,
   `UV round-trip error ${result.maximumSurfaceRoundTripUvError}`,
 );
+
+assert.equal(geometric.meshHash, result.evidence.meshHash);
+assert.equal(geometric.meshArtifactHash, result.evidence.artifactHash);
+assert.equal(geometric.midsurfaceEvidenceHash, midsurface.semanticHash);
+assert.equal(geometric.gateDisposition, 'NOT_GATED');
+assert.equal(geometric.qualification, 'NOT_GATED');
+assert.equal(geometric.engineeringAuthority, false);
+assert.equal(geometric.releaseQualified, false);
+assert.equal(geometric.metrics.hOverT.status, 'UNAVAILABLE_THICKNESS_BASIS_NOT_SUPPLIED');
+assert.equal(geometricReplay.semanticHash, geometric.semanticHash);
 
 const holeLineage = result.plan.boundaryLineage.filter((row) => row.role === 'HOLE');
 assert.equal(holeLineage.length, 4);
@@ -218,6 +242,7 @@ console.log(JSON.stringify({
     orientationTopology: topology.status,
     blockingElementCount: result.evidence.quality.blockingElementIds.length,
   },
+  informationalGeometry: geometricSummary(geometric),
   geometry: {
     maximumSurfaceRoundTripUvErrorMm: result.maximumSurfaceRoundTripUvError,
     maximumCylinderRadiusErrorMm: maximumRadiusError,
@@ -285,6 +310,21 @@ function gate(evidence, metric) {
   const row = evidence.quality.gateResults.find((candidate) => candidate.metric === metric);
   assert.ok(row, `missing mesh-quality gate ${metric}`);
   return row;
+}
+function geometricSummary(evidence) {
+  return {
+    schema: evidence.schema,
+    semanticHash: evidence.semanticHash,
+    gateDisposition: evidence.gateDisposition,
+    minimumSignedSurfaceJacobian: evidence.metrics.signedSurfaceJacobian.minimum,
+    negativeOrZeroSignedJacobianElements:
+      evidence.metrics.signedSurfaceJacobian.negativeOrZeroElementCount,
+    determinantRatio: evidence.metrics.facetDeterminantRatio.maximum,
+    maximumAngleDegrees: evidence.metrics.maximumAngleDegrees.maximum,
+    maximumShellNormalTransitionDegrees: evidence.metrics.shellNormalContinuityDegrees.maximum,
+    maximumChordMidpointDeviation: evidence.metrics.curvatureChordMidpointDeviation.maximum,
+    hOverTStatus: evidence.metrics.hOverT.status,
+  };
 }
 function arrayClose(actual, expected, tolerance = 1e-12) {
   assert.equal(actual.length, expected.length);

@@ -35,6 +35,12 @@
     "solverModelCompilationRechecksGate": true,
     "shellRunRecompilesSolverModelBeforeExecution": true
   },
+  "shellRefinementBoundary": {
+    "productionShellLocalRefinementQualified": false,
+    "currentFailClosedCode": "LAFEA_SHELL_LOCAL_REFINEMENT_NOT_QUALIFIED",
+    "tech7GradedRefinementRemainsQualificationOnly": true,
+    "noProductionRefinementBypassExists": true
+  },
   "qualificationRequirements": {
     "tech8StepId": "TECH12E_DORMANT_PRODUCTION_GATE",
     "tech12eMustBeRequiredByTech12dActivationRecord": true,
@@ -49,6 +55,7 @@
     "qualifiedHeadMustContainDormantTech12eMechanism": true,
     "promotionMustBeSeparatelyReviewed": true,
     "promotionMustPinExactActivationRecord": true,
+    "promotionDeltaMustBeTrustRootOnly": true,
     "noSyntheticActivationRecord": true,
     "noCallerRuntimeActivation": true,
     "noMeshQualityThresholdChange": true,

@@ -1,0 +1,41 @@
+{
+  "schema": "lafea4-parent-normal-shadow-gate-definition/v1",
+  "qualificationId": "LAFEA4-TECH12A-PARENT-NORMAL-SHADOW-Q1",
+  "stageId": "LAFEA.4",
+  "criterion": "MIN_PARENT_DIRECTED_SURFACE_JACOBIAN_STRICTLY_POSITIVE_OVER_ELEMENT_U_INTERVAL_V1",
+  "mode": "SHADOW_ONLY_NOT_PRODUCT_AUTHORITY",
+  "purpose": "Exercise the TECH-11 criterion at retained-mesh custody points before any production hard-gate promotion.",
+  "automaticProducerFinding": {
+    "status": "ALREADY_HAS_SEPARATE_DIRECTOR_ALIGNMENT_GUARD",
+    "description": "Automatic curved LAFEA.4 shell generation already checks facet normal alignment against analytic midsurface directors at element nodes using the existing 15 degree curved-facet qualification. TECH-12A therefore targets retained/caller-created/refined evidence paths rather than duplicating that producer guard."
+  },
+  "requiredShadowCases": [
+    "REAL_LAFEA4_SAMPLE_EXPECT_PASS",
+    "REAL_LAFEA4_SAMPLE_GLOBAL_REVERSE_EXPECT_BLOCK_WHILE_EXISTING_MESH_QUALITY_PASSES",
+    "TECH7_CURVED_HOLE_PREVIEW_CHILD_EXPECT_PARENT_NORMAL_PASS"
+  ],
+  "promotionPrerequisites": [
+    "TECH11_PARENT_NORMAL_STANDALONE_MATH_PASS",
+    "TECH11_PARENT_NORMAL_INVERSION_HAND_ORACLE_PASS",
+    "TECH11_PARENT_NORMAL_SAMPLE_PASS",
+    "TECH7_GRADED_REFINEMENT_EXECUTOR_PASS",
+    "LAFEA_MESHING_SUITE_PASS",
+    "LAFEA_CORE_SUITE_PASS",
+    "PRODUCTION_BUILD_PASS",
+    "VISIBLE_WORKBENCH_CHROMIUM_PASS"
+  ],
+  "shadowSemantics": {
+    "retainedMeshAcceptanceChanged": false,
+    "wouldBlockIfPromoted": "candidateQualification == BLOCK",
+    "productionBindingAuthorized": false,
+    "releaseQualified": false
+  },
+  "forbiddenUntilPromotion": [
+    "ADDING_PARENT_NORMAL_TO_RETAINED_MESH_WORST_STATUS",
+    "BLOCKING_SOLVE_FROM_SHADOW_RESULT",
+    "CLAIMING_RELEASE_QUALIFICATION",
+    "LOOSENING_EXISTING_15_DEGREE_CURVED_PRODUCER_GUARD"
+  ],
+  "productionBindingAuthorized": false,
+  "releaseQualified": false
+}

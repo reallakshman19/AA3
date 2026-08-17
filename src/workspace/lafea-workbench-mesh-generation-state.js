@@ -20,6 +20,10 @@ import {
   createLafeaRetainedMeshRefinementCommand,
 } from './lafea-mesh-refinement-command.js';
 import {
+  LAFEA4_SHELL_REFINEMENT_COMMAND_SCHEMA,
+  createLafea4ShellRefinementCommand,
+} from './lafea4-shell-refinement-authority.js';
+import {
   lafeaMeshGenerationConfiguration,
   planLafeaAnalysisMesh,
   produceLafeaAnalysisMeshEvidence,
@@ -152,7 +156,7 @@ export function createLafeaWorkbenchMeshGenerationState(stageIds) {
   /**
    * Refine the exact retained v2 parent. Parent artifact/mesh hashes are taken
    * from custody here rather than trusted from UI input. LAFEA.4 shell parents
-   * route through the separately qualified UV-space refiner; LAFEA.5 shell
+   * route through the separate UV-space refinement authority; LAFEA.5 shell
    * refinement remains fail-closed.
    */
   function refineMesh(stage, request = {}) {
@@ -166,19 +170,35 @@ export function createLafeaWorkbenchMeshGenerationState(stageIds) {
     if (!profile) fail('LAFEA_ANALYSIS_MESH_PROFILE_BINDING_REQUIRED');
     const parentEvidence = evidence.get(stageId);
     if (!parentEvidence) fail('LAFEA_RETAINED_MESH_REFINEMENT_PARENT_REQUIRED');
-    const command = createLafeaRetainedMeshRefinementCommand({
-      schema: LAFEA_RETAINED_MESH_REFINEMENT_COMMAND_SCHEMA,
-      commandId: request.commandId ?? `LAFEA-${stageId}-RETAINED-REFINEMENT`,
-      stageId,
-      parentMeshArtifactHash: parentEvidence.artifactHash,
-      parentMeshHash: parentEvidence.meshHash,
-      kind: request.kind ?? 'TARGET_LENGTH',
-      targetType: request.targetType,
-      targetIds: request.targetIds,
-      targetElementLength: request.targetElementLength,
-      lengthUnit: request.lengthUnit,
-      reason: request.reason ?? 'User-governed retained analysis-mesh refinement',
-    });
+
+    const command = shellParent
+      ? createLafea4ShellRefinementCommand({
+        schema: LAFEA4_SHELL_REFINEMENT_COMMAND_SCHEMA,
+        commandId: request.commandId ?? `LAFEA-${stageId}-SHELL-RETAINED-REFINEMENT`,
+        stageId,
+        parentMeshArtifactHash: parentEvidence.artifactHash,
+        parentMeshHash: parentEvidence.meshHash,
+        kind: request.kind ?? 'TARGET_LENGTH',
+        targetType: request.targetType,
+        targetIds: request.targetIds,
+        targetElementLength: request.targetElementLength,
+        lengthUnit: request.lengthUnit,
+        reason: request.reason ?? 'User-governed retained shell analysis-mesh refinement',
+      })
+      : createLafeaRetainedMeshRefinementCommand({
+        schema: LAFEA_RETAINED_MESH_REFINEMENT_COMMAND_SCHEMA,
+        commandId: request.commandId ?? `LAFEA-${stageId}-RETAINED-REFINEMENT`,
+        stageId,
+        parentMeshArtifactHash: parentEvidence.artifactHash,
+        parentMeshHash: parentEvidence.meshHash,
+        kind: request.kind ?? 'TARGET_LENGTH',
+        targetType: request.targetType,
+        targetIds: request.targetIds,
+        targetElementLength: request.targetElementLength,
+        lengthUnit: request.lengthUnit,
+        reason: request.reason ?? 'User-governed retained analysis-mesh refinement',
+      });
+
     const produced = shellParent
       ? produceLafea4ShellRetainedMeshRefinement({
         stage,

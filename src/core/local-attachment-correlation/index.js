@@ -50,8 +50,10 @@ export {
 } from './qualification-suite.js';
 export {
   CORRELATION_RELEASE_CANDIDATE_SCHEMA,
-  CORRELATION_RELEASE_CANDIDATE_STATES,
+  CORRELATION_RELEASE_TRUST_PROJECTION_SCHEMA,
+  CORRELATION_RELEASE_TRUST_STATES,
   correlationReleaseCandidateRegistryInputs,
+  correlationReleaseCandidateTrustProjection,
   createCorrelationReleaseCandidate,
   validateCorrelationReleaseCandidate,
 } from './release-candidate.js';

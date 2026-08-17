@@ -22,5 +22,7 @@ export class LafeaStandaloneController extends LafeaWorkbenchController {
   compareRunHistoryEntries(leftRunId, rightRunId) {
     return this.runEvidence.compare(leftRunId, rightRunId);
   }
-  createRunEvidenceDossier(runId) { return this.runEvidence.dossier(runId); }
+  createRunEvidenceDossier(runId) {
+    return this.runEvidence.dossier(runId, this.getState());
+  }
 }

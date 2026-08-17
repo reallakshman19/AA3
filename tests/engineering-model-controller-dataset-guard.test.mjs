@@ -99,7 +99,7 @@ test('same-reference snapshots retain distribution freshness checks', () => {
   } finally { state.restore(); }
 });
 
-test('project-data change without initialized dependency basis conservatively rebuilds and routes authorization change', () => {
+test('project-data change without initialized dependency basis conservatively rebuilds and marks topology check unaffected', () => {
   const dataset = { datasetId: 'dataset:1', version: 4 };
   const state = harness(dataset);
   try {
@@ -109,8 +109,8 @@ test('project-data change without initialized dependency basis conservatively re
     assert.deepEqual(state.calls.stale, [['PROJECT_DATA_CHANGED', 4]]);
     assert.equal(state.calls.refresh, 2);
     assert.deepEqual(state.calls.published, [[ENGINEERING_MODEL_EVENTS.CHANGED, {
-      reason: 'authorization-changed',
-      governingChange: 'project-data-changed',
+      reason: 'project-data-changed',
+      topologyCheckAffected: false,
       topologyModelRebuilt: true,
     }]]);
   } finally { state.restore(); }

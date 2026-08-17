@@ -11,13 +11,18 @@ import {
 /** In-memory authority for visible, source-backed Project Data. */
 export class ProjectDataStore {
   #profile = null;
+  #profileSemanticHash = null;
+  #runtimeRevision = 0;
+  #profileHashComputations = 0;
   #origin = null;
   #listeners = new Set();
 
   #ensureInit() {
     if (!this.#profile) {
       this.#profile = approvedProfile();
-      this.#origin = bundledOrigin(this.#profile);
+      this.#profileSemanticHash = this.#computeProfileSemanticHash(this.#profile);
+      this.#runtimeRevision += 1;
+      this.#origin = bundledOrigin(this.#profileSemanticHash);
     }
   }
 
@@ -33,7 +38,28 @@ export class ProjectDataStore {
 
   getSemanticHash() {
     this.#ensureInit();
-    return semanticHash(this.#profile);
+    return this.#profileSemanticHash;
+  }
+
+  /**
+   * Runtime-only monotonic currentness token. This never replaces the profile's
+   * engineering revision or semantic identity in evidence contracts.
+   */
+  getRuntimeRevision() {
+    this.#ensureInit();
+    return this.#runtimeRevision;
+  }
+
+  getPerformanceMetrics() {
+    this.#ensureInit();
+    return {
+      runtimeRevision: this.#runtimeRevision,
+      profileSemanticHashComputations: this.#profileHashComputations,
+    };
+  }
+
+  resetPerformanceMetrics() {
+    this.#profileHashComputations = 0;
   }
 
   importProfile(profile, sourceName) {
@@ -44,14 +70,22 @@ export class ProjectDataStore {
       throw new TypeError(`Project Data import failed: ${audit.errors.map((row) => row.message).join(' ')}`);
     }
     this.#profile = freezeDeep(clonePlain(upgraded));
-    this.#origin = freezeDeep({ kind: 'EXPLICIT_FILE_IMPORT', source: sourceName.trim(), profileSemanticHash: semanticHash(this.#profile) });
+    this.#profileSemanticHash = this.#computeProfileSemanticHash(this.#profile);
+    this.#runtimeRevision += 1;
+    this.#origin = freezeDeep({
+      kind: 'EXPLICIT_FILE_IMPORT',
+      source: sourceName.trim(),
+      profileSemanticHash: this.#profileSemanticHash,
+    });
     this.#publish('imported');
     return this.#profile;
   }
 
   restoreApprovedProfile() {
     this.#profile = approvedProfile();
-    this.#origin = bundledOrigin(this.#profile);
+    this.#profileSemanticHash = this.#computeProfileSemanticHash(this.#profile);
+    this.#runtimeRevision += 1;
+    this.#origin = bundledOrigin(this.#profileSemanticHash);
     this.#publish('approved-profile-restored');
     return this.#profile;
   }
@@ -59,13 +93,21 @@ export class ProjectDataStore {
   update(path, value, evidence, approved) {
     this.#ensureInit();
     this.#profile = replaceProjectDataValue(this.#profile, path, value, evidence, approved);
+    this.#profileSemanticHash = this.#computeProfileSemanticHash(this.#profile);
+    this.#runtimeRevision += 1;
     this.#publish('updated');
     return this.#profile;
   }
 
   clear() {
     this.#profile = createEmptyProjectDataProfile();
-    this.#origin = freezeDeep({ kind: 'EMPTY', source: 'User-cleared Project Data', profileSemanticHash: semanticHash(this.#profile) });
+    this.#profileSemanticHash = this.#computeProfileSemanticHash(this.#profile);
+    this.#runtimeRevision += 1;
+    this.#origin = freezeDeep({
+      kind: 'EMPTY',
+      source: 'User-cleared Project Data',
+      profileSemanticHash: this.#profileSemanticHash,
+    });
     this.#publish('cleared');
     return this.#profile;
   }
@@ -84,14 +126,18 @@ export class ProjectDataStore {
 
   #publish(reason) {
     this.#ensureInit();
-    const profileSemanticHash = semanticHash(this.#profile);
     const event = freezeDeep({
       reason,
       profile: this.#profile,
       revision: this.#profile.revision,
-      profileSemanticHash,
+      profileSemanticHash: this.#profileSemanticHash,
     });
     this.#listeners.forEach((listener) => listener(event));
+  }
+
+  #computeProfileSemanticHash(profile) {
+    this.#profileHashComputations += 1;
+    return semanticHash(profile);
   }
 }
 
@@ -106,10 +152,10 @@ function approvedProfile() {
   return profile;
 }
 
-function bundledOrigin(profile) {
+function bundledOrigin(profileSemanticHash) {
   return freezeDeep({
     kind: 'BUNDLED_APPROVED_PROJECT_ARTIFACT',
     source: 'project-data/1885s-project-data-profile.json',
-    profileSemanticHash: semanticHash(profile),
+    profileSemanticHash,
   });
 }

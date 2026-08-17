@@ -4,6 +4,9 @@ import {
 } from './lafea-shell-midsurface-dispatch.js';
 import { LAFEA_SHELL_ELEMENT } from './lafea-shell-mesh-producer.js';
 import { LAFEA4_SHELL_PRODUCT_REFINEMENT_PENDING_CODE } from './lafea4-shell-product-refinement-contract.js';
+import {
+  evaluateLafea4ShellProductRefinementPromotion,
+} from './lafea4-shell-product-refinement-promotion.js';
 
 export const LAFEA4_SHELL_PRODUCT_REFINEMENT_UI_POLICY_SCHEMA =
   'lafea4-shell-product-refinement-ui-policy/v1';
@@ -15,15 +18,15 @@ const ELIGIBLE_SURFACES = new Set([
 const MINIMUM_ANGLE_BLOCK_DEGREES = Math.asin(0.2) * 180 / Math.PI;
 
 /**
- * Pure UI/product-readiness projection. This does not grant engineering
- * authority. It tells the Discretization surface whether the currently
- * retained LAFEA.4 mesh is inside TECH-13's bounded product scope and, until
- * TECH-13E exists as exact-head PASS evidence, why the Refine control remains
- * disabled.
+ * Pure UI/product-readiness projection. Scope eligibility never grants
+ * engineering authority by itself. Production callers omit promotionRecord and
+ * therefore consume the code-owned trust root; qualification may inject a
+ * structurally valid synthetic record to exercise the future-active branch.
  */
-export function buildLafea4ShellProductRefinementUiPolicy(stageValue) {
+export function buildLafea4ShellProductRefinementUiPolicy(stageValue, promotionRecord) {
   const stage = requireStage(stageValue);
-  if (stage.stageId !== 'LAFEA.4') return notApplicable(stage);
+  const promotion = evaluateLafea4ShellProductRefinementPromotion(promotionRecord);
+  if (stage.stageId !== 'LAFEA.4') return notApplicable(stage, promotion);
 
   const parent = stage.retainedAnalysisMeshEvidenceV2 ?? null;
   const midsurface = stage.retainedShellMidsurfaceEvidence ?? null;
@@ -53,6 +56,10 @@ export function buildLafea4ShellProductRefinementUiPolicy(stageValue) {
   const scopeEligible = Boolean(
     currentSourceBinding && currentParent && exactMidsurface && exactProfile && surfaceSupported,
   );
+  const productQualified = scopeEligible
+    && promotion.active === true
+    && promotion.productRetentionAuthorized === true
+    && promotion.uiBindingAuthorized === true;
 
   const scopeReasons = [];
   if (!currentSourceBinding) scopeReasons.push('LAFEA4_REFINEMENT_SOURCE_BINDING_NOT_CURRENT');
@@ -69,11 +76,13 @@ export function buildLafea4ShellProductRefinementUiPolicy(stageValue) {
     stageId: 'LAFEA.4',
     applicable: true,
     scopeEligible,
-    productQualified: false,
-    canRefine: false,
-    reason: scopeEligible
-      ? LAFEA4_SHELL_PRODUCT_REFINEMENT_PENDING_CODE
-      : scopeReasons[0] ?? 'LAFEA4_SHELL_PRODUCT_REFINEMENT_NOT_IN_SCOPE',
+    productQualified,
+    canRefine: productQualified,
+    reason: productQualified
+      ? null
+      : scopeEligible
+        ? promotion.diagnosticCode ?? LAFEA4_SHELL_PRODUCT_REFINEMENT_PENDING_CODE
+        : scopeReasons[0] ?? 'LAFEA4_SHELL_PRODUCT_REFINEMENT_NOT_IN_SCOPE',
     scopeReasons,
     surfaceKind,
     elementFamily: profile?.fields?.shellElement ?? null,
@@ -106,13 +115,18 @@ export function buildLafea4ShellProductRefinementUiPolicy(stageValue) {
       exactParentCustody: true,
     },
     exactHeadQualificationRequired: true,
-    uiBindingAuthorized: false,
-    productRetentionAuthorized: false,
+    promotion: {
+      active: promotion.active,
+      qualifiedHead: promotion.qualifiedHead,
+      bundleEvidenceSha256: promotion.bundleEvidenceSha256,
+    },
+    uiBindingAuthorized: productQualified,
+    productRetentionAuthorized: productQualified,
     releaseQualified: false,
   });
 }
 
-function notApplicable(stage) {
+function notApplicable(stage, promotion) {
   return freeze({
     schema: LAFEA4_SHELL_PRODUCT_REFINEMENT_UI_POLICY_SCHEMA,
     stageId: stage.stageId,
@@ -130,6 +144,11 @@ function notApplicable(stage) {
     qualityPolicy: null,
     requiredAcceptance: null,
     exactHeadQualificationRequired: true,
+    promotion: {
+      active: promotion.active,
+      qualifiedHead: promotion.qualifiedHead,
+      bundleEvidenceSha256: promotion.bundleEvidenceSha256,
+    },
     uiBindingAuthorized: false,
     productRetentionAuthorized: false,
     releaseQualified: false,

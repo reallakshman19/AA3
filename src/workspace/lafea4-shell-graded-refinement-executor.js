@@ -232,6 +232,7 @@ function generateUvMesh(plan) {
     {
       targetSize: plan.globalTargetElementLength,
       chordErrorLimit: Math.max(1e-9, plan.globalTargetElementLength * 1e-6),
+      adjacentSizeRatioMax: plan.adjacentSizeRatioMax,
     },
   );
   const points = base.points.map((point) => ({ x: point.x, y: point.y }));

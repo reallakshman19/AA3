@@ -3,6 +3,7 @@ import assert from 'node:assert/strict';
 
 import { canonicalProfile, PROFILE_KINDS } from '../src/core/lafea-profile-contract/index.js';
 import { createLafeaMockDocument } from '../src/workspace/advanced-mock-data.js';
+import { generationSection } from '../src/workspace/lafea-discretization-generation-panel.js';
 import { buildLafeaDiscretizationViewModel } from '../src/workspace/lafea-discretization-view-model.js';
 import { issueLafeaSourceAuthority } from '../src/workspace/lafea-source-authority.js';
 import { createLafeaSimulatedShellMidsurfaceEvidence } from '../src/workspace/lafea-simulated-shell-midsurface-provider.js';
@@ -10,6 +11,7 @@ import { LAFEA_SHELL_ELEMENT } from '../src/workspace/lafea-shell-mesh-producer.
 import { normalizeLafeaStageDocument } from '../src/workspace/lafea-workbench-model.js';
 import { createLafeaWorkbenchOrchestratorStore } from '../src/workspace/lafea-workbench-orchestrator-store.js';
 import { LAFEA4_SHELL_PRODUCT_REFINEMENT_PENDING_CODE } from '../src/workspace/lafea4-shell-product-refinement-contract.js';
+import { FakeDocument } from './lafea-u4g-fixtures.mjs';
 
 const stageId = 'LAFEA.4';
 const document = normalizeLafeaStageDocument(stageId, createLafeaMockDocument(stageId));
@@ -78,6 +80,30 @@ const mode = vm.configuration.modes.find((row) => row.mode === 'MANUAL_REFINEMEN
 assert.equal(mode?.enabled, false);
 assert.equal(mode?.reason, LAFEA4_SHELL_PRODUCT_REFINEMENT_PENDING_CODE);
 
+// Verify the engineer can actually see the quantitative pending qualification
+// evidence. The visible submit remains present but disabled; there are no
+// editable refinement target controls before TECH-13E promotion.
+const fakeDocument = new FakeDocument();
+const rendered = generationSection(fakeDocument, vm, {});
+const refinement = rendered.querySelector('[data-role="lafea-retained-mesh-refinement"]');
+assert.ok(refinement);
+assert.equal(refinement.dataset.productScopeEligible, 'true');
+assert.equal(refinement.dataset.productQualified, 'false');
+const evidencePanel = refinement.querySelector('[data-role="lafea-product-refinement-qualification-evidence"]');
+assert.ok(evidencePanel);
+const visibleText = evidencePanel.textContent;
+for (const expected of [
+  'Product scope', 'Parent nodes / elements', 'Parent artifact hash', 'Parent mesh hash',
+  'Global target', 'Adjacent size ratio max', 'Aspect ratio warning / block',
+  'Scaled Jacobian warning / block', 'Minimum angle block', 'Parent-normal gate',
+  'PENDING EXACT-HEAD TECH-13E',
+]) assert.ok(visibleText.includes(expected), `missing visible TECH13D evidence: ${expected}`);
+const submit = refinement.querySelector('[data-role="lafea-refinement-submit"]');
+assert.ok(submit);
+assert.equal(submit.disabled, true);
+assert.equal(refinement.querySelector('[data-role="lafea-refinement-target-ids"]'), null);
+assert.equal(refinement.querySelector('[data-role="lafea-refinement-target-length"]'), null);
+
 // A stale parent must stop being scope-eligible without enabling the control.
 stage = {
   ...stage,
@@ -116,6 +142,9 @@ console.log(JSON.stringify({
   sizing: vm.refinement.sizing,
   qualityPolicy: vm.refinement.qualityPolicy,
   requiredAcceptance: vm.refinement.requiredAcceptance,
+  visibleQualificationEvidence: true,
+  visibleDisabledRefineControl: true,
+  editableTargetControlsExposedBeforeQualification: false,
   staleScopeEligible: stale.refinement.scopeEligible,
   lafea5ProductRefinementApplicable: lafea5.refinement.applicable,
   uiBindingAuthorized: vm.refinement.uiBindingAuthorized,

@@ -3,43 +3,65 @@ import fs from 'node:fs';
 import path from 'node:path';
 
 const ROOT = process.cwd();
-const METHOD_DIR = path.join(
-  ROOT, 'src/core/local-attachment-correlation/methods/wrc537',
-);
+const METHOD_DIR = path.join(ROOT, 'src/core/local-attachment-correlation/methods/wrc537');
+const ALLOWED_METHOD_FILES = Object.freeze([
+  'ed4-engineering-dataset.js',
+  'ed4-execution-engine.js',
+  'ed4-numerical-adapter.js',
+  'ed4-numerical-release-candidate.js',
+  'ed4-qualification-engine.js',
+  'ed4-source-package.js',
+  'source-readiness.js',
+]);
 
-assert.ok(fs.existsSync(METHOD_DIR), 'WRC537 source-readiness directory must exist.');
-const methodFiles = fs.readdirSync(METHOD_DIR).sort();
-assert.deepEqual(methodFiles, ['source-readiness.js'],
-  'WRC537 must remain source-readiness only until the release gate is satisfied.');
+assert.ok(fs.existsSync(METHOD_DIR), 'WRC537 controlled method directory must exist.');
+const methodFiles = fs.readdirSync(METHOD_DIR).filter((name) => name.endsWith('.js')).sort();
+assert.deepEqual(methodFiles, [...ALLOWED_METHOD_FILES],
+  'WRC537 method directory contains an unreviewed or missing capability module. Update this boundary only with explicit engineering review.');
 
-const methodSource = read('src/core/local-attachment-correlation/methods/wrc537/source-readiness.js');
-for (const forbidden of [
-  'calculateWrc537',
-  'WRC537_ENGINEERING_PROFILE',
-  'engineeringUseAuthorized: true',
-  'READY_FOR_ENGINEERING_REGISTRY',
-]) {
-  assert.equal(methodSource.includes(forbidden), false,
-    `WRC537 readiness core must not contain activation token ${forbidden}.`);
+for (const methodFile of methodFiles) {
+  const methodSource = read(`src/core/local-attachment-correlation/methods/wrc537/${methodFile}`);
+  for (const forbidden of [
+    'engineeringUseAuthorized: true',
+    'READY_FOR_ENGINEERING_REGISTRY',
+    'TRUSTED_CORRELATION_APPROVAL_AUTHORITIES.push',
+    'registerWrc537',
+    'WRC537_ENGINEERING_PROFILE',
+  ]) {
+    assert.equal(methodSource.includes(forbidden), false,
+      `${methodFile} must not contain engineering-activation token ${forbidden}.`);
+  }
 }
+
+const sourceReadiness = read('src/core/local-attachment-correlation/methods/wrc537/source-readiness.js');
+assert.equal(sourceReadiness.includes('calculateWrc537'), false,
+  'Source-readiness module must not become a numerical calculator.');
 
 const trustedAuthorities = read('src/core/local-attachment-correlation/trusted-authorities.js');
 assert.match(trustedAuthorities,
   /TRUSTED_CORRELATION_APPROVAL_AUTHORITIES\s*=\s*Object\.freeze\(\[\]\)/u,
-  'No WRC537 approval authority may be trusted by this source-intake PR.');
+  'No WRC537 approval authority may be trusted before independent approval/trust onboarding.');
 
-const productPath = path.join(ROOT, 'src/workspace/lafea-correlation-product.js');
-if (fs.existsSync(productPath)) {
-  const productSource = fs.readFileSync(productPath, 'utf8');
-  assert.equal(productSource.includes('WRC537'), false,
-    'WRC537 must not be registered in the product before source readiness passes.');
+for (const relativePath of [
+  'src/core/local-attachment-correlation/index.js',
+  'src/core/local-attachment-correlation/engineering-registry.js',
+  'src/core/local-attachment-correlation/engineering-assessment.js',
+  'src/workspace/lafea-correlation-product.js',
+]) {
+  const fullPath = path.join(ROOT, relativePath);
+  if (!fs.existsSync(fullPath)) continue;
+  const source = fs.readFileSync(fullPath, 'utf8');
+  assert.equal(source.toUpperCase().includes('WRC537'), false,
+    `${relativePath} must not register or activate WRC537 before the approval/trust gate.`);
 }
 
 console.log(JSON.stringify({
   check: 'wrc537-source-boundary',
   status: 'PASS',
-  wrc537NumericalImplementationPresent: false,
+  sourceIndependentNumericalInfrastructurePresent: true,
+  engineeringExecutionAuthorized: false,
   wrc537ProductRegistrationPresent: false,
+  wrc537EngineeringRegistryRegistrationPresent: false,
   trustedApprovalAuthoritiesAdded: false,
   allowedMethodFiles: methodFiles,
 }));

@@ -115,8 +115,8 @@ function buildTopoValidatorSupportAnchors({ canonicalTopology, dataset, vertical
     });
   }).sort((left, right) => compareCodeUnits(left.anchorKey, right.anchorKey));
 
-  const deferredSupportIds = new Set(
-    rawSupportRecords.filter((record) => !record.projectedSupport).map((record) => record.support.id),
+  const nonRestraintSupportIds = new Set(
+    rawSupportRecords.filter((record) => record.nonRestraint).map((record) => record.support.id),
   );
   const decisions = canonicalTopology.supports.map((support) => {
     const supportId = stringValue(support.id);
@@ -124,7 +124,7 @@ function buildTopoValidatorSupportAnchors({ canonicalTopology, dataset, vertical
     return Object.freeze({
       supportId,
       entityId: stringValue(support.entityId),
-      disposition: deferredSupportIds.has(supportId)
+      disposition: nonRestraintSupportIds.has(supportId)
         ? 'DEFER_NON_RESTRAINT_ATTACHMENT'
         : anchorSupportId === supportId
           ? 'ANCHOR_REPRESENTATIVE'
@@ -142,6 +142,7 @@ function buildTopoValidatorSupportAnchors({ canonicalTopology, dataset, vertical
     rawSupportRecordCount: rawSupportRecords.length,
     projectedSourceSupportCount: rawSupportRecords.filter((record) => record.projectedSupport).length,
     deferredSourceSupportCount: rawSupportRecords.filter((record) => !record.projectedSupport).length,
+    nonRestraintSourceSupportCount: rawSupportRecords.filter((record) => record.nonRestraint).length,
     hierarchyMergeCount: hierarchy.mergeCount,
     positionMergeCount: positioned.mergeCount,
   });
@@ -152,6 +153,7 @@ function sourceRecord(entity, support, sourceOrder, verticalAxis) {
   const componentType = normalizeComponentType(entity.entityType);
   const supportType = isSupportType(componentType);
   const supportPolicy = supportType ? classifySjsonSupportProjection(attributes) : null;
+  const nonRestraint = supportPolicy?.disposition === 'DEFER_SUPPORT';
   const projectedSupport = Boolean(support && isProjectedSupport(entity, support, supportPolicy));
   const position = bestPosition(attributes) || finitePoint(support?.origin);
   const restraint = supportType
@@ -167,6 +169,7 @@ function sourceRecord(entity, support, sourceOrder, verticalAxis) {
     name: stringValue(attributes.NAME || entity.name),
     position,
     projectedSupport,
+    nonRestraint,
     supportPolicy,
     restraints: restraint ? [restraint] : [],
     members: member ? [member] : [],
@@ -244,6 +247,7 @@ function mergeRecord(root, record, mode) {
   root.restraints.push(...record.restraints);
   root.members.push(...record.members);
   root.projectedSupport = root.projectedSupport || record.projectedSupport;
+  root.nonRestraint = root.nonRestraint && record.nonRestraint;
   root.hierarchyMergeCount += record.hierarchyMergeCount + (mode === 'HIERARCHY' ? 1 : 0);
   root.positionMergeCount += record.positionMergeCount + (mode === 'POSITION' ? 1 : 0);
 }
@@ -304,6 +308,11 @@ function compareMembers(left, right) {
 
 function isProjectedSupport(entity, support, policy) {
   if (policy?.disposition !== 'DEFER_SUPPORT') return true;
+  // Reference points and support-hardware members remain valid support-site
+  // geometry even though they contribute no restraint coordinate. Preserve
+  // them in the visual grouping. Penetration/opening attachments remain
+  // visually deferred unless a managed enrichment explicitly resolves them.
+  if (policy?.attachmentClassification !== 'PENETRATION_ATTACHMENT') return true;
   const enriched = entity.properties?.enrichedAttributes || {};
   const managedAuthority = stringValue(enriched.schema) === 'stagedjson-cii2019-enriched-attributes/v1'
     && stringValue(enriched.componentType).toUpperCase() === 'SUPPORT'
@@ -409,6 +418,7 @@ function buildMetrics(allSupports, grouped, overlays, projection) {
     rawSupportCount: allSupports.length,
     projectedSourceSupportCount: grouped.projectedSourceSupportCount,
     deferredSourceSupportCount: grouped.deferredSourceSupportCount,
+    nonRestraintSourceSupportCount: grouped.nonRestraintSourceSupportCount,
     supportAnchorCount: grouped.anchors.length,
     nativeRestraintRecordCount: restraintTypes.length,
     collapsedSourceSupportCount: grouped.projectedSourceSupportCount - grouped.anchors.length,

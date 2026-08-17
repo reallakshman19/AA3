@@ -49,6 +49,13 @@ export {
   validateCorrelationQualificationSuite,
 } from './qualification-suite.js';
 export {
+  CORRELATION_RELEASE_CANDIDATE_SCHEMA,
+  CORRELATION_RELEASE_CANDIDATE_STATES,
+  correlationReleaseCandidateRegistryInputs,
+  createCorrelationReleaseCandidate,
+  validateCorrelationReleaseCandidate,
+} from './release-candidate.js';
+export {
   CORRELATION_METHOD_REGISTRY_SCHEMA,
   EMPTY_ENGINEERING_CORRELATION_REGISTRY,
   createEngineeringCorrelationRegistry,

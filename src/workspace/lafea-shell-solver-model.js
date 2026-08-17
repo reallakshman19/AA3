@@ -39,10 +39,13 @@ import {
   validateLafeaAnyShellMidsurfaceEvidence,
 } from './lafea-shell-midsurface-dispatch.js';
 import { sourceAuthorityDocument } from './lafea-source-authority.js';
+import {
+  createLafea4ShellSolverCompanionCustody,
+} from './lafea4-shell-solver-companion-custody.js';
 
 export const LAFEA_SHELL_SOLVER_MODEL_SCHEMA = 'lafea-shell-solver-model/v1';
 export const LAFEA_SHELL_SOLVER_COMPILER_ID = 'LAFEA.4-5/RETAINED_SHELL_MESH_SOLVER_COMPILER';
-export const LAFEA_SHELL_SOLVER_COMPILER_REVISION = '1.0.0';
+export const LAFEA_SHELL_SOLVER_COMPILER_REVISION = '1.1.0';
 export const LAFEA_SHELL_SOLVER_MODEL_BINDING_SCHEMA = 'lafea-shell-solver-model-binding/v1';
 
 const SHELL_ELEMENT = 'CST_DKT_TRI3_THIN_SHELL_V1';
@@ -68,6 +71,11 @@ export function compileLafeaShellSolverModel(options) {
   const parent = validateLafeaAnyShellMidsurfaceEvidence(options?.midsurfaceEvidence);
   const meshEvidence = validateLafeaAnalysisMeshEvidenceV2(options?.meshEvidence);
   requireParentChain(stageId, sourceHash, parent, meshEvidence);
+  const parentNormalCustody = createLafea4ShellSolverCompanionCustody({
+    stageId,
+    meshEvidence,
+    midsurfaceEvidence: parent,
+  });
 
   const compiled = stageId === 'LAFEA.4'
     ? compileLafea4(source, parent, meshEvidence)
@@ -81,6 +89,7 @@ export function compileLafeaShellSolverModel(options) {
     meshArtifactHash: meshEvidence.artifactHash,
     meshHash: meshEvidence.meshHash,
     meshProfileHash: meshEvidence.meshProfileHash,
+    parentNormalCompanionHash: parentNormalCustody.parentNormalCompanionHash,
   });
   const base = freeze({
     schema: LAFEA_SHELL_SOLVER_MODEL_SCHEMA,
@@ -90,6 +99,7 @@ export function compileLafeaShellSolverModel(options) {
     status: 'COMPILED',
     mappingMode: compiled.mappingMode,
     parents,
+    parentNormalCustody,
     canonicalInputHash: compiled.canonicalInputHash,
     kernelModelHash: compiled.kernelModelHash,
     transferEvidence: compiled.transferEvidence,
@@ -105,6 +115,8 @@ export function compileLafeaShellSolverModel(options) {
     stageId,
     sourceHash,
     meshHash: meshEvidence.meshHash,
+    parentNormalCompanionHash: parentNormalCustody.parentNormalCompanionHash,
+    parentNormalAuthorizationEffect: parentNormalCustody.authorizationEffect,
     solverModelHash,
     kernelModelHash: compiled.kernelModelHash,
     mappingMode: compiled.mappingMode,
@@ -129,6 +141,9 @@ export function projectLafeaShellSolverModelBinding(stageValue) {
       usableForRun: true,
       reasons: [],
       meshHash: null,
+      parentNormalCompanionHash: null,
+      parentNormalAuthorizationEffect: 'NOT_APPLICABLE',
+      parentNormalCandidateQualification: null,
       solverModelHash: null,
       solverModelBindingHash: null,
       mappingMode: null,
@@ -165,6 +180,10 @@ export function projectLafeaShellSolverModelBinding(stageValue) {
       usableForRun: true,
       reasons: [],
       meshHash: compiled.parents.meshHash,
+      parentNormalCompanionHash: compiled.parents.parentNormalCompanionHash,
+      parentNormalAuthorizationEffect: compiled.parentNormalCustody.authorizationEffect,
+      parentNormalCandidateQualification:
+        compiled.parentNormalCustody.companionCandidateQualification,
       solverModelHash: compiled.solverModelHash,
       solverModelBindingHash: compiled.solverModelBindingHash,
       kernelModelHash: compiled.kernelModelHash,
@@ -466,6 +485,9 @@ function bindingResult(stageId, state, usableForRun, reasons, meshHash = null) {
     usableForRun,
     reasons: [...new Set(reasons.filter(Boolean))],
     meshHash,
+    parentNormalCompanionHash: null,
+    parentNormalAuthorizationEffect: null,
+    parentNormalCandidateQualification: null,
     solverModelHash: null,
     solverModelBindingHash: null,
     kernelModelHash: null,

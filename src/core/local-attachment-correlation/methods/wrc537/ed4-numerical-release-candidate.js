@@ -30,12 +30,15 @@ export function createWrc537Ed4NumericalReleaseCandidate(
   }
   validateGraphInputCustody(calculationPlan, executablePlan);
   requireObject(input, 'releaseCandidateInput');
-  exactKeys(input, ['schema', 'candidateIdentity', 'candidateVersion', 'literalBindings'], 'releaseCandidateInput');
+  exactKeys(input, [
+    'schema', 'candidateIdentity', 'candidateVersion', 'benchmarkBindings', 'literalBindings',
+  ], 'releaseCandidateInput');
   if (input.schema !== WRC537_ED4_NUMERICAL_RELEASE_CANDIDATE_SCHEMA) {
     fail('WRC537_ED4_NUMERICAL_RELEASE_SCHEMA_MISMATCH', 'releaseCandidateInput.schema');
   }
   requiredString(input.candidateIdentity, 'releaseCandidateInput.candidateIdentity');
   requiredString(input.candidateVersion, 'releaseCandidateInput.candidateVersion');
+  const benchmarkBindings = validateSourceBenchmarkBindings(input.benchmarkBindings, dataset, suite);
   const literalInventory = executableLiteralInventory(executablePlan);
   const literalBindings = validateLiteralBindings(input.literalBindings, literalInventory, dataset);
 
@@ -48,6 +51,7 @@ export function createWrc537Ed4NumericalReleaseCandidate(
     executablePlanSemanticHash: executablePlan.executablePlanSemanticHash,
     suiteSemanticHash: suite.suiteSemanticHash,
     evidenceSemanticHash: evidence.evidenceSemanticHash,
+    benchmarkBindings,
     literalInventory,
     literalBindings,
     authority: clone(AUTHORITY),
@@ -61,8 +65,8 @@ export function validateWrc537Ed4NumericalReleaseCandidate(
   requireObject(value, 'releaseCandidate');
   exactKeys(value, [
     'schema', 'candidateIdentity', 'candidateVersion', 'datasetSemanticHash', 'planSemanticHash',
-    'executablePlanSemanticHash', 'suiteSemanticHash', 'evidenceSemanticHash', 'literalInventory',
-    'literalBindings', 'authority', 'candidateSemanticHash',
+    'executablePlanSemanticHash', 'suiteSemanticHash', 'evidenceSemanticHash', 'benchmarkBindings',
+    'literalInventory', 'literalBindings', 'authority', 'candidateSemanticHash',
   ], 'releaseCandidate');
   exactKeys(value.authority, ['engineeringUseAuthorized', 'authorizationBasis'], 'releaseCandidate.authority');
   if (value.authority.engineeringUseAuthorized !== false || value.authority.authorizationBasis !== AUTHORITY.authorizationBasis) {
@@ -74,10 +78,12 @@ export function validateWrc537Ed4NumericalReleaseCandidate(
       schema: value.schema,
       candidateIdentity: value.candidateIdentity,
       candidateVersion: value.candidateVersion,
+      benchmarkBindings: value.benchmarkBindings,
       literalBindings: value.literalBindings,
     },
   );
-  if (semanticHash(value.literalInventory) !== semanticHash(recreated.literalInventory)
+  if (semanticHash(value.benchmarkBindings) !== semanticHash(recreated.benchmarkBindings)
+    || semanticHash(value.literalInventory) !== semanticHash(recreated.literalInventory)
     || recreated.candidateSemanticHash !== value.candidateSemanticHash) {
     fail('WRC537_ED4_NUMERICAL_RELEASE_REPLAY_MISMATCH', 'releaseCandidate.candidateSemanticHash');
   }
@@ -148,6 +154,186 @@ function graphVariableRefs(node, refs = new Set()) {
   return refs;
 }
 
+function validateSourceBenchmarkBindings(rows, dataset, suite) {
+  requireArray(rows, 'releaseCandidateInput.benchmarkBindings');
+  const benchmarks = dataset.sourcePackage?.benchmarks;
+  if (!Array.isArray(benchmarks) || !benchmarks.length) {
+    fail('WRC537_ED4_NUMERICAL_RELEASE_SOURCE_BENCHMARKS_REQUIRED', 'dataset.sourcePackage.benchmarks');
+  }
+  const benchmarkById = new Map(benchmarks.map((row) => [row.caseId, row]));
+  const caseById = new Map(suite.cases.map((row) => [row.caseId, row]));
+  const ledgerById = new Map(dataset.sourceLedgerRows.map((row) => [row.record_id, row]));
+
+  const benchmarkIds = rows.map((row, index) =>
+    requiredString(row.sourceBenchmarkCaseId, `releaseCandidateInput.benchmarkBindings[${index}].sourceBenchmarkCaseId`));
+  const expectedBenchmarkIds = benchmarks.map((row) => row.caseId).slice().sort();
+  if (new Set(benchmarkIds).size !== benchmarkIds.length
+    || benchmarkIds.slice().sort().join('|') !== expectedBenchmarkIds.join('|')) {
+    fail('WRC537_ED4_NUMERICAL_RELEASE_BENCHMARK_COVERAGE_MISMATCH', 'releaseCandidateInput.benchmarkBindings');
+  }
+
+  const qualificationCaseIds = new Set();
+  const normalized = rows.map((row, index) => {
+    const path = `releaseCandidateInput.benchmarkBindings[${index}]`;
+    requireObject(row, path);
+    exactKeys(row, [
+      'sourceBenchmarkCaseId', 'qualificationCaseId', 'inputBindings', 'recoveryBindings',
+    ], path);
+    const benchmark = benchmarkById.get(row.sourceBenchmarkCaseId);
+    const qualificationCaseId = requiredString(row.qualificationCaseId, `${path}.qualificationCaseId`);
+    if (qualificationCaseIds.has(qualificationCaseId)) {
+      fail('WRC537_ED4_NUMERICAL_RELEASE_QUALIFICATION_CASE_REUSED', `${path}.qualificationCaseId`);
+    }
+    qualificationCaseIds.add(qualificationCaseId);
+    const qualificationCase = caseById.get(qualificationCaseId);
+    if (!qualificationCase) {
+      fail('WRC537_ED4_NUMERICAL_RELEASE_QUALIFICATION_CASE_UNKNOWN', `${path}.qualificationCaseId`);
+    }
+
+    const benchmarkLocator = ledgerById.get(benchmark.sourceRef)?.locator;
+    if (qualificationCase.sourceRef !== benchmark.sourceRef
+      || qualificationCase.sourceLocator !== benchmarkLocator
+      || qualificationCase.independentReproduction !== true
+      || qualificationCase.independentCalculationReference !== benchmark.independentCalculationReference) {
+      fail('WRC537_ED4_NUMERICAL_RELEASE_BENCHMARK_CASE_CUSTODY_MISMATCH', path);
+    }
+
+    const inputBindings = validateBenchmarkInputBindings(
+      row.inputBindings, benchmark.input, qualificationCase.request.inputValues, `${path}.inputBindings`,
+    );
+    const recoveryBindings = validateBenchmarkRecoveryBindings(
+      row.recoveryBindings, benchmark.expectedResults, qualificationCase.expectedRecovery,
+      `${path}.recoveryBindings`,
+    );
+    return {
+      sourceBenchmarkCaseId: row.sourceBenchmarkCaseId,
+      qualificationCaseId,
+      inputBindings,
+      recoveryBindings,
+    };
+  });
+  normalized.sort((a, b) => a.sourceBenchmarkCaseId.localeCompare(b.sourceBenchmarkCaseId));
+  return freeze(normalized);
+}
+
+function validateBenchmarkInputBindings(rows, benchmarkInput, requestInputValues, path) {
+  requireArray(rows, path);
+  requireObject(benchmarkInput, `${path}.benchmarkInput`);
+  const requestById = new Map();
+  requestInputValues.forEach((row, index) => {
+    const requestPath = `${path}.requestInputValues[${index}]`;
+    requireObject(row, requestPath);
+    exactKeys(row, ['variableId', 'value', 'units'], requestPath);
+    const variableId = requiredString(row.variableId, `${requestPath}.variableId`);
+    if (requestById.has(variableId)) {
+      fail('WRC537_ED4_NUMERICAL_RELEASE_DUPLICATE_QUALIFICATION_INPUT', requestPath);
+    }
+    if (!Number.isFinite(row.value)) {
+      fail('WRC537_ED4_NUMERICAL_RELEASE_BENCHMARK_INPUT_VALUE_INVALID', `${requestPath}.value`);
+    }
+    requiredString(row.units, `${requestPath}.units`);
+    requestById.set(variableId, row);
+  });
+
+  const bindingIds = [];
+  const normalized = rows.map((row, index) => {
+    const itemPath = `${path}[${index}]`;
+    requireObject(row, itemPath);
+    exactKeys(row, ['variableId', 'benchmarkPath'], itemPath);
+    const variableId = requiredString(row.variableId, `${itemPath}.variableId`);
+    const request = requestById.get(variableId);
+    if (!request) fail('WRC537_ED4_NUMERICAL_RELEASE_BENCHMARK_INPUT_VARIABLE_UNKNOWN', itemPath);
+    const benchmarkValue = benchmarkNumericPath(benchmarkInput, row.benchmarkPath, `${itemPath}.benchmarkPath`);
+    if (request.value !== benchmarkValue) {
+      fail('WRC537_ED4_NUMERICAL_RELEASE_BENCHMARK_INPUT_VALUE_MISMATCH', itemPath);
+    }
+    bindingIds.push(variableId);
+    return { variableId, benchmarkPath: clone(row.benchmarkPath) };
+  });
+  const expectedIds = [...requestById.keys()].sort();
+  if (new Set(bindingIds).size !== bindingIds.length
+    || bindingIds.slice().sort().join('|') !== expectedIds.join('|')) {
+    fail('WRC537_ED4_NUMERICAL_RELEASE_BENCHMARK_INPUT_BINDING_SET_MISMATCH', path);
+  }
+  normalized.sort((a, b) => a.variableId.localeCompare(b.variableId));
+  return freeze(normalized);
+}
+
+function benchmarkNumericPath(root, segments, path) {
+  requireArray(segments, path);
+  if (!segments.length) fail('WRC537_ED4_NUMERICAL_RELEASE_BENCHMARK_PATH_REQUIRED', path);
+  let value = root;
+  segments.forEach((segment, index) => {
+    const segmentPath = `${path}[${index}]`;
+    const validString = typeof segment === 'string' && segment.trim().length > 0;
+    const validIndex = Number.isInteger(segment) && segment >= 0;
+    if (!validString && !validIndex) {
+      fail('WRC537_ED4_NUMERICAL_RELEASE_BENCHMARK_PATH_SEGMENT_INVALID', segmentPath);
+    }
+    if (value === null || value === undefined || typeof value !== 'object' || !(segment in value)) {
+      fail('WRC537_ED4_NUMERICAL_RELEASE_BENCHMARK_PATH_NOT_FOUND', segmentPath);
+    }
+    value = value[segment];
+  });
+  if (!Number.isFinite(value)) {
+    fail('WRC537_ED4_NUMERICAL_RELEASE_BENCHMARK_INPUT_VALUE_INVALID', path);
+  }
+  return value;
+}
+
+function validateBenchmarkRecoveryBindings(rows, benchmarkResults, expectedRecovery, path) {
+  requireArray(rows, path);
+  requireArray(benchmarkResults, `${path}.benchmarkResults`);
+  const recoveryByKey = new Map(expectedRecovery.map((row) => [`${row.targetId}:${row.variableId}`, row]));
+  const benchmarkByQuantity = new Map();
+  benchmarkResults.forEach((row, index) => {
+    const resultPath = `${path}.benchmarkResults[${index}]`;
+    const quantity = requiredString(row.quantity, `${resultPath}.quantity`);
+    if (benchmarkByQuantity.has(quantity)) {
+      fail('WRC537_ED4_NUMERICAL_RELEASE_BENCHMARK_RESULT_QUANTITY_DUPLICATE', resultPath);
+    }
+    benchmarkByQuantity.set(quantity, row);
+  });
+
+  const recoveryKeys = [];
+  const benchmarkQuantities = [];
+  const normalized = rows.map((row, index) => {
+    const itemPath = `${path}[${index}]`;
+    requireObject(row, itemPath);
+    exactKeys(row, ['targetId', 'variableId', 'benchmarkQuantity'], itemPath);
+    const targetId = requiredString(row.targetId, `${itemPath}.targetId`);
+    const variableId = requiredString(row.variableId, `${itemPath}.variableId`);
+    const benchmarkQuantity = requiredString(row.benchmarkQuantity, `${itemPath}.benchmarkQuantity`);
+    const recoveryKey = `${targetId}:${variableId}`;
+    const expected = recoveryByKey.get(recoveryKey);
+    if (!expected) fail('WRC537_ED4_NUMERICAL_RELEASE_BENCHMARK_RECOVERY_UNKNOWN', itemPath);
+    const benchmarkResult = benchmarkByQuantity.get(benchmarkQuantity);
+    if (!benchmarkResult) fail('WRC537_ED4_NUMERICAL_RELEASE_BENCHMARK_RESULT_UNKNOWN', itemPath);
+    if (expected.value !== benchmarkResult.value
+      || expected.units !== benchmarkResult.units
+      || expected.absoluteTolerance !== benchmarkResult.absoluteTolerance
+      || expected.toleranceBasis !== benchmarkResult.toleranceBasis
+      || expected.sourceRef !== benchmarkResult.sourceRef
+      || expected.sourceLocator !== benchmarkResult.sourceLocator) {
+      fail('WRC537_ED4_NUMERICAL_RELEASE_BENCHMARK_RECOVERY_VALUE_MISMATCH', itemPath);
+    }
+    recoveryKeys.push(recoveryKey);
+    benchmarkQuantities.push(benchmarkQuantity);
+    return { targetId, variableId, benchmarkQuantity };
+  });
+
+  const expectedRecoveryKeys = [...recoveryByKey.keys()].sort();
+  const expectedBenchmarkQuantities = [...benchmarkByQuantity.keys()].sort();
+  if (new Set(recoveryKeys).size !== recoveryKeys.length
+    || recoveryKeys.slice().sort().join('|') !== expectedRecoveryKeys.join('|')
+    || new Set(benchmarkQuantities).size !== benchmarkQuantities.length
+    || benchmarkQuantities.slice().sort().join('|') !== expectedBenchmarkQuantities.join('|')) {
+    fail('WRC537_ED4_NUMERICAL_RELEASE_BENCHMARK_RECOVERY_BINDING_SET_MISMATCH', path);
+  }
+  normalized.sort((a, b) => `${a.targetId}:${a.variableId}`.localeCompare(`${b.targetId}:${b.variableId}`));
+  return freeze(normalized);
+}
+
 function collectGraphLiterals(node, path, sourceRef, sourceLocator, rows) {
   if (node.op === 'CONST') rows.push({ literalKey: `${path}.value`, value: node.value, sourceRef, sourceLocator });
   if (node.op === 'POLYNOMIAL') {
@@ -190,7 +376,9 @@ function validateLiteralBindings(rows, inventory, dataset) {
         fail('WRC537_ED4_NUMERICAL_RELEASE_COEFFICIENT_SOURCE_MISMATCH', path);
       }
     } else {
-      if (row.coefficientId !== null) fail('WRC537_ED4_NUMERICAL_RELEASE_SOURCE_LITERAL_COEFFICIENT_MUST_BE_NULL', `${path}.coefficientId`);
+      if (row.coefficientId !== null) {
+        fail('WRC537_ED4_NUMERICAL_RELEASE_SOURCE_LITERAL_COEFFICIENT_MUST_BE_NULL', `${path}.coefficientId`);
+      }
       if (row.sourceRef !== literal.sourceRef || row.sourceLocator !== literal.sourceLocator) {
         fail('WRC537_ED4_NUMERICAL_RELEASE_SOURCE_LITERAL_BINDING_MISMATCH', path);
       }
@@ -203,11 +391,29 @@ function validateLiteralBindings(rows, inventory, dataset) {
 
 function exactKeys(value, expected, path) {
   requireObject(value, path);
-  if (JSON.stringify(Object.keys(value).sort()) !== JSON.stringify([...expected].sort())) fail('WRC537_ED4_EXACT_KEYS_MISMATCH', path);
+  if (JSON.stringify(Object.keys(value).sort()) !== JSON.stringify([...expected].sort())) {
+    fail('WRC537_ED4_EXACT_KEYS_MISMATCH', path);
+  }
 }
-function requiredString(value, path) { if (typeof value !== 'string' || !value.trim()) fail('WRC537_ED4_STRING_REQUIRED', path); return value; }
-function requireObject(value, path) { if (!value || typeof value !== 'object' || Array.isArray(value)) fail('WRC537_ED4_OBJECT_REQUIRED', path); }
-function requireArray(value, path) { if (!Array.isArray(value)) fail('WRC537_ED4_ARRAY_REQUIRED', path); }
+function requiredString(value, path) {
+  if (typeof value !== 'string' || !value.trim()) fail('WRC537_ED4_STRING_REQUIRED', path);
+  return value;
+}
+function requireObject(value, path) {
+  if (!value || typeof value !== 'object' || Array.isArray(value)) fail('WRC537_ED4_OBJECT_REQUIRED', path);
+}
+function requireArray(value, path) {
+  if (!Array.isArray(value)) fail('WRC537_ED4_ARRAY_REQUIRED', path);
+}
 function clone(value) { return structuredClone(value); }
-function freeze(value) { if (!value || typeof value !== 'object' || Object.isFrozen(value)) return value; Object.values(value).forEach(freeze); return Object.freeze(value); }
-function fail(code, path) { const error = new Error(code); error.code = code; error.path = path; throw error; }
+function freeze(value) {
+  if (!value || typeof value !== 'object' || Object.isFrozen(value)) return value;
+  Object.values(value).forEach(freeze);
+  return Object.freeze(value);
+}
+function fail(code, path) {
+  const error = new Error(code);
+  error.code = code;
+  error.path = path;
+  throw error;
+}

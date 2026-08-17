@@ -28,7 +28,7 @@
     },
     {
       "id": "TECH13C_ATOMIC_PRODUCT_ACCEPTANCE_GATE",
-      "status": "NOT_STARTED",
+      "status": "IMPLEMENTED_PENDING_EXECUTION",
       "purpose": "QUALITY_ADJACENCY_PARENT_NORMAL_CUSTODY_AND_ATOMIC_ROLLBACK_BEFORE_RETAINING_CHILD"
     },
     {
@@ -60,6 +60,27 @@
     "sameMeshHashExpectedAcrossKernelAndProductCandidate": true,
     "sameArtifactHashAllowedAcrossKernelAndProductCandidate": false
   },
+  "acceptanceGate": {
+    "requiredQualityMetrics": [
+      "ASPECT_RATIO",
+      "SCALED_JACOBIAN",
+      "MINIMUM_ANGLE_DEGREES",
+      "ADJACENT_SIZE_RATIO",
+      "SHELL_ORIENTATION_TOPOLOGY"
+    ],
+    "requiresV2MeshQualificationPass": true,
+    "requiresZeroBlockingElements": true,
+    "requiresBoundaryConformity": true,
+    "requiresParentNormalPass": true,
+    "requiresParentDirectedJacobianAboveRoundoffEnvelope": true,
+    "requiresCurrentSourceBinding": true,
+    "requiresExactParentArtifactHash": true,
+    "requiresExactParentMeshHash": true,
+    "requiresExactMidsurfaceHash": true,
+    "requiresExactMeshProfileHash": true,
+    "candidateGateMutatesCustody": false,
+    "candidatePassAuthorizesRetentionBeforeTech13E": false
+  },
   "publicationSequence": [
     "GENERATE_CANDIDATE_CHILD",
     "VALIDATE_V2_MESH_QUALITY",
@@ -80,9 +101,12 @@
   "activationPolicy": {
     "tech13aExecutionAuthorized": false,
     "tech13bProductRetentionAuthorized": false,
-    "tech13bUiBindingAuthorized": false,
+    "tech13cCandidateRetentionEligibleMayBeTrue": true,
+    "tech13cProductRetentionAuthorized": false,
+    "tech13cUiBindingAuthorized": false,
     "tech13aReleaseQualified": false,
     "tech13bReleaseQualified": false,
+    "tech13cReleaseQualified": false,
     "productRefinementMayBeEnabledBeforeTech13eExactHeadPass": false
   }
 }

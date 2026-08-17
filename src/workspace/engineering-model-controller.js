@@ -132,7 +132,8 @@ export class EngineeringModelController {
     }
     this.authorizedConsumerController.refreshEmpirical();
     this.eventBus.publish(ENGINEERING_MODEL_EVENTS.CHANGED, {
-      reason: 'project-data-changed',
+      reason: 'authorization-changed',
+      governingChange: 'project-data-changed',
       topologyModelRebuilt: Boolean(topologyModelChanged && dataset),
     });
   }
@@ -143,7 +144,8 @@ export class EngineeringModelController {
     nonFeaCommonInputStore.markStale('MASTER_DATA_CHANGED', 'enrichmentSidecarSemanticHash', 'Master data changed after sealing.');
     this.authorizedConsumerController.refreshEmpirical();
     this.eventBus.publish(ENGINEERING_MODEL_EVENTS.CHANGED, {
-      reason: 'master-data-changed',
+      reason: 'authorization-changed',
+      governingChange: 'master-data-changed',
       masterKey: event?.masterKey || null,
     });
   }

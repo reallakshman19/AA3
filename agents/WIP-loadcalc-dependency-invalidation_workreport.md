@@ -12,32 +12,46 @@ Remove false refresh/rebuild dependencies in LoadCalc without changing engineeri
 - LoadCalc previously called `refreshTopologyCheck()` for every Project Data and Master Data engineering notification.
 - The canonical topology-check basis contains dataset identity/version/SHA, topology graph hash, attachment-model hash, restraint-model hash, and gap-review tolerance. Master Data and Project Data are absent.
 - `EngineeringModelController` previously rebuilt support-site and route-partition models for every Project Data edit.
-- Those builders consume only support-site grouping tolerance, port-match tolerance, auto-carrier coincidence tolerance, and route-joining rules.
+- `buildSupportSiteModel()` consumes only `topology.supportSiteGroupingToleranceMm`.
+- `buildRoutePartitionModel()` consumes only `topology.portMatchToleranceMm`, `topology.autoCarrierCoincidenceToleranceMm`, and `topology.routeJoiningRules`.
+- Current `engineeringModelStore.rebuild()` unconditionally invalidates `topologyEditCheckSnapshotStore`; therefore a Project Data change that actually rebuilds derived models must still re-establish the topology snapshot.
 
 ## Implemented boundary
-- Project Data keeps the existing `reason: project-data-changed` contract and publishes `topologyCheckAffected: false` because Project Data is not part of the canonical topology-check basis.
-- Master Data keeps the existing `reason: master-data-changed` contract and publishes `topologyCheckAffected: false` for the same reason.
-- LoadCalc suppresses its heavy topology refresh only when that explicit metadata is `false`; a legacy publisher that omits the metadata retains the prior fail-safe refresh behavior.
-- Project Data always stales common/empirical authority and refreshes empirical authorization once.
-- Support/route models rebuild only when the four-value Project Data topology-model basis changes.
-- Master Data still stales common/empirical authority and refreshes empirical authorization once, but never rebuilds support/route models.
-- `src/main.js` and Empirical V3 invalidation stay on their original project/master reason-string contract and are byte-restored to current `main`.
+- Project Data keeps the existing `reason: project-data-changed` contract.
+- A runtime-only stable basis tracks the four values actually consumed by support/route builders.
+- Load/evidence/source-only Project Data changes skip support/route rebuild and publish `topologyCheckAffected: false`.
+- A Project Data change to any of the four derived-model inputs rebuilds once and publishes `topologyCheckAffected: true`, preserving the required topology refresh after the store invalidates its snapshot.
+- Master Data keeps the existing `reason: master-data-changed` contract, never rebuilds support/route models, and publishes `topologyCheckAffected: false`.
+- LoadCalc suppresses its heavy topology refresh only when the metadata is explicitly `false`; a legacy publisher that omits the metadata retains the prior fail-safe refresh behavior.
+- Project and Master Data always stale common/empirical authority and refresh empirical authorization.
+- `src/main.js` and Empirical V3 invalidation stay on their original project/master reason-string contract and are byte-identical to current `main`.
 - Dataset/topology/restraint/gap-review topology-check triggers are unchanged.
 
 ## Quantitative target
 ```text
-master-data change: false topology refresh request 1 -> 0; support/route rebuild remains 0
-load-only Project Data: support/route rebuild 1 -> 0; false topology refresh request 1 -> 0
-topology-policy Project Data: support/route rebuild remains 1; false topology refresh request 1 -> 0
-legacy project/master publisher without dependency metadata: topology refresh remains 1 (fail-safe compatibility)
+master-data change:
+  support/route rebuild            0 -> 0
+  false topology refresh request   1 -> 0
+
+load-only Project Data:
+  support/route rebuild            1 -> 0
+  false topology refresh request   1 -> 0
+
+topology-policy Project Data:
+  support/route rebuild            1 -> 1
+  topology refresh request         1 -> 1  (required by current rebuild invalidation side-effect)
+
+legacy project/master publisher without dependency metadata:
+  topology refresh request         1 -> 1  (fail-safe compatibility)
 ```
-The eliminated topology refresh also removes the topology-triggered authorized-package refresh that follows a successful canonical check. These are event-chain operation counts, not wall-clock claims.
+The eliminated topology refresh on Master/load-only changes also eliminates the topology-triggered `refreshAuthorizedEmpiricalPackage()` call that follows a successful canonical check. These are event-chain operation counts, not wall-clock claims.
 
 ## Protected invariants
 No topology checker basis, Project Data authority, topology tolerances, support/route formulas, master semantics, empirical methods, blocker/readiness rules, output schemas, evidence hashes, Empirical V3 invalidation contract, or workflow files change.
 
 ## Qualification
-- `scripts/loadcalc-dependency-invalidation-check.mjs` exercises actual controller seams with counters and includes a legacy-publisher fallback assertion.
-- `scripts/loadcalc-dependency-invalidation-structural-check.mjs` guards the four dependencies, explicit metadata path, unchanged topology basis, unchanged `src/main.js` invalidation contract, and legacy fallback.
-- `tests/engineering-model-controller-dataset-guard.test.mjs` records the preserved reason string plus new dependency metadata.
+- `tests/engineering-model-controller-dataset-guard.test.mjs` covers load-only 0 rebuild, topology-policy 1 rebuild + recheck metadata, Master 0 rebuild, and conservative uninitialized-basis behavior.
+- `tests/load-calc-dependency-invalidation.test.mjs` covers explicit false suppression, explicit true refresh, and legacy fallback.
+- `scripts/loadcalc-dependency-invalidation-check.mjs` exercises actual controller seams with operation counters and all-four-input basis sensitivity.
+- `scripts/loadcalc-dependency-invalidation-structural-check.mjs` guards the four dependencies, current store invalidation side-effect, explicit metadata path, unchanged topology basis, unchanged `src/main.js` invalidation contract, and legacy fallback.
 - Exact-head execution remains `NOT_RUN` while the local environment cannot resolve `github.com` and no automatic PR workflow is present. No NOT_RUN result is represented as PASS.

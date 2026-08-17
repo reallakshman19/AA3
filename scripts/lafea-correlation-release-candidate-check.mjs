@@ -1,6 +1,7 @@
 import assert from 'node:assert/strict';
 import {
   CORRELATION_RELEASE_CANDIDATE_SCHEMA,
+  CORRELATION_RELEASE_TRUST_PROJECTION_SCHEMA,
   createCorrelationDatasetPackage,
   createCorrelationQualificationRecord,
   createCorrelationQualificationRecordFromEvidence,
@@ -8,6 +9,7 @@ import {
   createCorrelationReleaseCandidate,
   createEngineeringCorrelationRegistry,
   correlationReleaseCandidateRegistryInputs,
+  correlationReleaseCandidateTrustProjection,
   executeCorrelationQualificationSuite,
   syntheticCorrelationProfile,
   syntheticCorrelationRequest,
@@ -82,8 +84,8 @@ const candidate = createCorrelationReleaseCandidate({
   qualificationRecord: record,
 });
 assert.equal(candidate.schema, CORRELATION_RELEASE_CANDIDATE_SCHEMA);
-assert.equal(candidate.state, 'UNTRUSTED_APPROVAL_AUTHORITY');
-assert.equal(candidate.trust.approvalAuthorityTrusted, false);
+assert.equal(Object.hasOwn(candidate, 'state'), false);
+assert.equal(Object.hasOwn(candidate, 'trust'), false);
 assert.equal(candidate.binding.datasetPackageHash, datasetPackage.packageSemanticHash);
 assert.equal(candidate.binding.coefficientDatasetHash, candidateProfile.coefficientDatasetHash);
 assert.equal(candidate.binding.qualificationEvidenceHash, evidence.semanticHash);
@@ -91,6 +93,14 @@ assert.equal(candidate.binding.qualificationRecordHash, record.semanticHash);
 assert.match(candidate.binding.methodDefinitionHash, /^fnv1a64:[0-9a-f]{16}$/u);
 assert.match(candidate.semanticHash, /^fnv1a64:[0-9a-f]{16}$/u);
 assert.deepEqual(validateCorrelationReleaseCandidate(candidate), candidate);
+
+const trust = correlationReleaseCandidateTrustProjection(candidate);
+assert.equal(trust.schema, CORRELATION_RELEASE_TRUST_PROJECTION_SCHEMA);
+assert.equal(trust.candidateIdentity, candidate.candidateIdentity);
+assert.equal(trust.candidateSemanticHash, candidate.semanticHash);
+assert.equal(trust.state, 'UNTRUSTED_APPROVAL_AUTHORITY');
+assert.equal(trust.approvalAuthorityTrusted, false);
+assert.equal(candidate.semanticHash, validateCorrelationReleaseCandidate(candidate).semanticHash);
 
 assert.throws(
   () => correlationReleaseCandidateRegistryInputs(candidate),
@@ -211,12 +221,13 @@ assert.throws(
 console.log(JSON.stringify({
   check: 'lafea-correlation-release-candidate',
   status: 'PASS',
-  candidateState: candidate.state,
   candidateHash: candidate.semanticHash,
+  trustProjectionState: trust.state,
   datasetPackageHash: candidate.binding.datasetPackageHash,
   methodDefinitionHash: candidate.binding.methodDefinitionHash,
   qualificationEvidenceHash: candidate.binding.qualificationEvidenceHash,
   qualificationRecordHash: candidate.binding.qualificationRecordHash,
+  immutableCandidateIndependentOfTrustProjection: true,
   datasetProfileDriftRejected: true,
   authorityEvidenceDriftRejected: true,
   arbitraryRecordEvidenceHashRejected: true,

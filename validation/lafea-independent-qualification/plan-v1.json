@@ -104,6 +104,13 @@
       "args": ["scripts/lafea-tech12b-retained-parent-normal-companion-check.mjs"]
     },
     {
+      "id": "TECH12B_COMPANION_ATOMICITY_SOURCE_WIRING",
+      "classification": "ENGINEERING",
+      "required": true,
+      "executable": "node",
+      "args": ["scripts/lafea-tech12b-companion-atomicity-source-check.mjs"]
+    },
+    {
       "id": "TECH7_GRADED_REFINEMENT_EXECUTOR",
       "classification": "ENGINEERING",
       "required": true,

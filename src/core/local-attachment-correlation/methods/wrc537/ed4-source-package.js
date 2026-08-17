@@ -53,7 +53,7 @@ export function evaluateWrc537Ed4SourcePackage({ sourcePackage, sourceLedgerRows
     gate('COEFFICIENTS_COMPLETE', coefficientsComplete(coefficientRows, ledgerById, sourceDigest),
       'Every retained Edition 4 coefficient must contain a finite value, source precision and exact datum locator from the authorized source digest.'),
     gate('BENCHMARKS_COMPLETE', benchmarksComplete(sourcePackage, ledgerById),
-      'Every retained target-edition benchmark must carry datum-level expected results, source-derived absolute tolerance and independent reproduction evidence.'),
+      'Every target-edition benchmark must source-bind all numeric input leaves with units/locators, retain source-qualified expected results and independent reproduction evidence.'),
     gate('LAFEA_MAPPING_COMPLETE', lafeaMappingComplete(sourcePackage),
       'Canonical LAFEA mappings must be qualified, unique, and cover every mandatory WRC load identity exactly once.'),
     gate('NO_UNRESOLVED_TECHNICAL_FIELDS', !containsUnresolvedTechnicalValue(sourcePackage),
@@ -152,6 +152,7 @@ function technicalDatumCustodyComplete(pkg, coefficientRows, ledger) {
   push(pkg?.interpolation?.sourceRef);
   (pkg?.benchmarks ?? []).forEach((row) => {
     push(row?.sourceRef);
+    (row?.inputEvidence ?? []).forEach((input) => push(input?.sourceRef));
     (row?.expectedResults ?? []).forEach((result) => push(result?.sourceRef));
   });
   coefficientRows.forEach((row) => push(row?.source_ref));
@@ -274,7 +275,7 @@ function benchmarksComplete(pkg, ledger) {
     && row.targetEditionPrimarySourceVerified === true
     && row.independentlyReproduced === true
     && resolved(row.independentCalculationReference)
-    && row.input && typeof row.input === 'object' && !Array.isArray(row.input)
+    && benchmarkInputEvidenceComplete(row, ledger, expectedDigest)
     && Array.isArray(row.expectedResults) && row.expectedResults.length > 0
     && row.expectedResults.every((result) => {
       const source = ledger.get(result?.sourceRef);
@@ -287,6 +288,65 @@ function benchmarksComplete(pkg, ledger) {
         && resolved(result.sourceLocator)
         && source?.locator === result.sourceLocator;
     }));
+}
+
+function benchmarkInputEvidenceComplete(benchmark, ledger, expectedDigest) {
+  const input = benchmark?.input;
+  const evidence = benchmark?.inputEvidence;
+  if (!input || typeof input !== 'object' || Array.isArray(input)
+    || !Array.isArray(evidence) || evidence.length === 0) return false;
+  const ids = evidence.map((row) => row?.inputId);
+  if (!ids.every(resolved) || new Set(ids).size !== ids.length) return false;
+
+  const expectedPaths = benchmarkNumericLeafPaths(input).map(pathKey).sort();
+  const actualPaths = [];
+  const valid = evidence.every((row) => {
+    const source = ledger.get(row?.sourceRef);
+    const pathValue = benchmarkNumericPath(input, row?.benchmarkPath);
+    if (!pathValue.found) return false;
+    actualPaths.push(pathKey(row.benchmarkPath));
+    return resolved(row.units)
+      && datumRef(row.sourceRef, ledger, expectedDigest)
+      && resolved(row.sourceLocator)
+      && source?.locator === row.sourceLocator;
+  });
+  return valid
+    && new Set(actualPaths).size === actualPaths.length
+    && actualPaths.sort().join('|') === expectedPaths.join('|');
+}
+
+function benchmarkNumericLeafPaths(value, path = [], rows = []) {
+  if (Number.isFinite(value)) {
+    rows.push(path);
+    return rows;
+  }
+  if (!value || typeof value !== 'object') return rows;
+  if (Array.isArray(value)) {
+    value.forEach((child, index) => benchmarkNumericLeafPaths(child, [...path, index], rows));
+  } else {
+    Object.keys(value).sort().forEach((key) =>
+      benchmarkNumericLeafPaths(value[key], [...path, key], rows));
+  }
+  return rows;
+}
+
+function benchmarkNumericPath(root, segments) {
+  if (!Array.isArray(segments) || segments.length === 0) return { found: false };
+  let value = root;
+  for (const segment of segments) {
+    const validString = typeof segment === 'string' && segment.trim().length > 0;
+    const validIndex = Number.isInteger(segment) && segment >= 0;
+    if (!validString && !validIndex) return { found: false };
+    if (value === null || value === undefined || typeof value !== 'object' || !(segment in value)) {
+      return { found: false };
+    }
+    value = value[segment];
+  }
+  return Number.isFinite(value) ? { found: true, value } : { found: false };
+}
+
+function pathKey(segments) {
+  return JSON.stringify(segments);
 }
 
 function lafeaMappingComplete(pkg) {

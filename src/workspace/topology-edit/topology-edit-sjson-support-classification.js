@@ -9,6 +9,7 @@ const FAMILY_FIELDS = Object.freeze([
   'CMPSUPTYPE',
 ]);
 const NON_RESTRAINT_ATTACHMENT_TEXT = /\b(FENCE|FLOOR|WALL|ROOF|SLAB)\b[\s\S]*\b(OPENING|PENETRATION|SLEEVE)\b|\b(OPENING|PENETRATION|SLEEVE)\b[\s\S]*\b(FENCE|FLOOR|WALL|ROOF|SLAB)\b/iu;
+const EXPLICIT_SUPPORT_INTENT_TEXT = /\b(SUPPORT|BRACE|BRACING|GUIDE|STOP|ANCHOR|REST|HANGER|SPRING)\b/iu;
 const REFERENCE_IDENTITY = /\/SREF$/iu;
 const OPAQUE_SOURCE_ID = /^=[^\s]+$/u;
 const GENERIC_SUPPORT_HARDWARE_TEXT = /^PIPE\s+SUPPORT\s+TYPE[- ]?\d+\b/iu;
@@ -86,7 +87,8 @@ function classifyFamilyToken(value, field) {
 
   if (/\bGUIDE\b|\bGT0?1\b/iu.test(token)) return 'GUIDE';
   if (/\bLINE\s*STOP\b|\bLINESTOP\b|\bST0?6\b|^LS[- ]/iu.test(token)) return 'LINE_STOP';
-  if (/\bSPRING\b|\bHANGER\b/iu.test(token)) return 'SPRING';
+  if (/\bSPRING\b/iu.test(token)) return 'SPRING';
+  if (/\bHANGER\b/iu.test(token)) return 'HANGER';
 
   const descriptionField = field === 'DTXR' || field === 'DESCRIPTION';
   if (!descriptionField && /\bANCHOR\b|\bFIXED\b|\bANCI\b/iu.test(token)) return 'ANCHOR';
@@ -124,6 +126,11 @@ function isOpaqueGenericAttachment(attributes) {
   }
   const specification = stringValue(attributes.SPRE);
   const description = stringValue(attributes.DTXR).trim();
+  const note = [attributes.ISONOTE, attributes.DESCRIPTION]
+    .map(stringValue).filter(Boolean).join(' | ');
+  // A source note such as "BRACING SUPPORT BY CONTRACTOR" is real support
+  // intent even when its family is unresolved; retain it for engineering review.
+  if (EXPLICIT_SUPPORT_INTENT_TEXT.test(note)) return false;
   const mtoOff = stringValue(attributes.MTOC).toUpperCase() === 'OFF';
   const ignored = stringValue(attributes.FSTAT).toUpperCase() === 'IGN';
   const nonSpoolBreak = stringValue(attributes.SPKBRK).toLowerCase() === 'false';

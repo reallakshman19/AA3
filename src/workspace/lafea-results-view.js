@@ -16,7 +16,7 @@ export function renderLafeaEvidence(root, stageId, documentValue, state, executi
   if (diagnostics.length) wrapper.append(diagnosticsView(root, diagnostics));
 
   if (!execution) {
-    wrapper.append(emptyResultState(root));
+    wrapper.append(emptyResultState(root, stageId));
     return wrapper;
   }
 
@@ -51,12 +51,15 @@ export function renderLafeaEvidence(root, stageId, documentValue, state, executi
   return wrapper;
 }
 
-function emptyResultState(root) {
+function emptyResultState(root, stageId) {
+  const analytical = stageId === 'LAFEA.1' || stageId === 'LAFEA.2';
   const section = create(root, 'section', 'lafea-result-empty');
   section.dataset.role = 'lafea-result-empty';
   section.append(
     create(root, 'strong', null, 'No analysis result yet'),
-    create(root, 'p', null, 'Complete the model, mesh and authorization gates, then run the registered analysis. Computed displacements, stresses, reactions and energy will appear here.'),
+    create(root, 'p', null, analytical
+      ? 'Complete the required analytical inputs and authorization, then calculate. Retained resultants and stresses will appear here; no FE mesh is required for this stage.'
+      : 'Complete the model, mesh and authorization gates, then run the registered analysis. Computed displacements, stresses, reactions and energy will appear here.'),
   );
   return section;
 }
@@ -71,7 +74,7 @@ function engineeringHighlightsView(root, model) {
   );
   heading.firstElementChild.append(
     create(root, 'h3', null, 'Engineering result summary'),
-    create(root, 'p', null, `${model.loadCaseCount} retained load case${model.loadCaseCount === 1 ? '' : 's'} · values below come directly from retained solver/recovery evidence.`),
+    create(root, 'p', null, `${model.loadCaseCount} retained case${model.loadCaseCount === 1 ? '' : 's'} · values below come directly from retained stage result evidence.`),
   );
   section.append(heading);
 
@@ -88,6 +91,11 @@ function engineeringHighlightsView(root, model) {
   });
   section.append(grid);
 
+  if (model.warningDisclosure) {
+    const warning = create(root, 'p', 'lafea-result-highlights__warning', model.warningDisclosure);
+    warning.dataset.role = 'lafea-transverse-load-warning';
+    section.append(warning);
+  }
   if (model.solverMethods.length) {
     section.append(create(
       root,
@@ -103,8 +111,121 @@ function engineeringHighlightsView(root, model) {
 }
 
 function buildEngineeringHighlights(stageId, result, unitsValue) {
-  if (stageId !== 'LAFEA.3' || !result || typeof result !== 'object') return null;
+  if (!result || typeof result !== 'object') return null;
   const units = unitsValue && typeof unitsValue === 'object' ? unitsValue : {};
+  if (stageId === 'LAFEA.1') return buildFoundationHighlights(result, units);
+  if (stageId === 'LAFEA.2') return buildScreeningHighlights(result, units);
+  if (stageId !== 'LAFEA.3') return null;
+  return buildContinuumHighlights(result, units);
+}
+
+function buildFoundationHighlights(result, units) {
+  const forceUnit = units.force ?? '';
+  const momentUnit = units.moment ?? '';
+  const stressUnit = units.stress ?? units.pressure ?? '';
+  const loadCases = array(result.transformedLoadCases);
+  const pressureCases = array(result.pressureStressResults);
+  let maxForce = null;
+  let maxMoment = null;
+  let maxHoop = null;
+  let maxRadial = null;
+  let maxAxialPressure = null;
+  const axes = ['Fx', 'Fy', 'Fz'];
+  const moments = ['Mx', 'My', 'Mz'];
+
+  for (const loadCase of loadCases) {
+    array(loadCase?.transformedForceLocal).forEach((value, index) => {
+      if (!Number.isFinite(value)) return;
+      maxForce = larger(maxForce, {
+        value: Math.abs(value),
+        location: `${loadCase.identity ?? 'load case'} · ${axes[index] ?? `F${index}`}`,
+      });
+    });
+    array(loadCase?.transformedMomentLocal).forEach((value, index) => {
+      if (!Number.isFinite(value)) return;
+      maxMoment = larger(maxMoment, {
+        value: Math.abs(value),
+        location: `${loadCase.identity ?? 'load case'} · ${moments[index] ?? `M${index}`}`,
+      });
+    });
+  }
+  for (const pressureCase of pressureCases) {
+    if (Number.isFinite(pressureCase?.axialPressureStress)) {
+      maxAxialPressure = larger(maxAxialPressure, {
+        value: Math.abs(pressureCase.axialPressureStress),
+        location: `${pressureCase.identity ?? 'pressure case'} · axial pressure stress`,
+      });
+    }
+    array(pressureCase?.requestedPoints).forEach((point, index) => {
+      if (Number.isFinite(point?.hoopStress)) {
+        maxHoop = larger(maxHoop, {
+          value: Math.abs(point.hoopStress),
+          location: `${pressureCase.identity ?? 'pressure case'} · point ${index + 1}`,
+        });
+      }
+      if (Number.isFinite(point?.radialStress)) {
+        maxRadial = larger(maxRadial, {
+          value: Math.abs(point.radialStress),
+          location: `${pressureCase.identity ?? 'pressure case'} · point ${index + 1}`,
+        });
+      }
+    });
+  }
+
+  const metrics = [];
+  pushMetric(metrics, 'max-transferred-force', 'Max |transferred force|', maxForce, forceUnit);
+  pushMetric(metrics, 'max-transferred-moment', 'Max |transferred moment|', maxMoment, momentUnit);
+  pushMetric(metrics, 'max-hoop-pressure-stress', 'Max |hoop pressure stress|', maxHoop, stressUnit);
+  pushMetric(metrics, 'max-radial-pressure-stress', 'Max |radial pressure stress|', maxRadial, stressUnit);
+  pushMetric(metrics, 'max-axial-pressure-stress', 'Max |axial pressure stress|', maxAxialPressure, stressUnit);
+  return {
+    loadCaseCount: loadCases.length,
+    metrics,
+    solverMethods: [],
+    warningDisclosure: null,
+    recoveryDisclosure: 'LAFEA.1 is an analytical load-transfer and elastic pressure baseline. It does not produce local attachment, shell-bending or weld stress.',
+  };
+}
+
+function buildScreeningHighlights(result, units) {
+  const stressUnit = units.stress ?? units.pressure ?? '';
+  const envelopes = array(result.envelopes);
+  const metrics = [];
+  const quantities = [
+    ['vonMisesMaximum', 'governing-von-mises', 'Governing nominal von Mises'],
+    ['sigmaXMaximum', 'max-sigma-x', 'Max axial stress σx'],
+    ['sigmaThetaMaximum', 'max-sigma-theta', 'Max circumferential stress σθ'],
+    ['tauXThetaMaximum', 'max-tau-x-theta', 'Max torsional shear τxθ'],
+    ['principalMaximum', 'max-principal', 'Maximum principal stress'],
+  ];
+  for (const [quantity, id, label] of quantities) {
+    const row = envelopes.find((candidate) => candidate?.quantity === quantity);
+    if (!row || !Number.isFinite(row.value)) continue;
+    metrics.push({
+      id,
+      label,
+      value: row.value,
+      unit: stressUnit,
+      location: `${row.screeningCaseId ?? 'case'} · ${row.evaluationLocationId ?? 'location'}`,
+    });
+  }
+  const transverse = array(result.screeningCases).filter((row) => {
+    const force = array(row?.combinedForceLocal);
+    return Math.abs(force[1] ?? 0) > 0 || Math.abs(force[2] ?? 0) > 0;
+  });
+  const caseIds = new Set(envelopes.map((row) => row?.screeningCaseId).filter(Boolean));
+  return {
+    loadCaseCount: caseIds.size,
+    metrics,
+    solverMethods: [],
+    warningDisclosure: transverse.length
+      ? `LOCAL TRANSVERSE LOAD NOT RECOVERED — ${transverse.map((row) => row.screeningCaseId).join(', ')} retains nonzero Fy/Fz, but LAFEA.2 does not recover transverse-shear or local attachment stress from those components. Escalate the local response to the applicable detailed LAFEA stage.`
+      : null,
+    recoveryDisclosure: 'LAFEA.2 values are nominal pipe-section screening stresses and same-point tensor invariants; they are not local attachment, weld or shell-discontinuity stresses.',
+  };
+}
+
+function buildContinuumHighlights(result, units) {
   const loadCases = Array.isArray(result.loadCaseResults) ? result.loadCaseResults : [];
   const lengthUnit = units.length ?? '';
   const stressUnit = units.stress ?? '';
@@ -198,6 +319,7 @@ function buildEngineeringHighlights(stageId, result, unitsValue) {
     loadCaseCount: loadCases.length,
     metrics,
     solverMethods: [...solverMethods].sort(),
+    warningDisclosure: null,
     recoveryDisclosure: 'T6/Q8 integration-point stress and retained von Mises are authoritative. Nodal projection/averaging remains display-only and is never substituted into these highlights.',
   };
 }

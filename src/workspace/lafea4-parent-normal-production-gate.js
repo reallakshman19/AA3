@@ -186,6 +186,18 @@ export function validateLafea4ParentNormalProductionGate(value) {
     || value.activationEvidenceDigest !== null) {
     fail('LAFEA4_PARENT_NORMAL_PRODUCTION_GATE_INACTIVE_AUTHORITY_INVALID');
   }
+  const currentAuthority = validateLafea4ParentNormalProductionAuthority(
+    currentLafea4ParentNormalProductionAuthority(),
+  );
+  if (value.authorityHash !== currentAuthority.semanticHash
+    || value.authorityStatus !== currentAuthority.status
+    || value.activationRecordHash !== currentAuthority.activationRecordHash
+    || value.activationExpectedHead !== currentAuthority.activationExpectedHead
+    || value.activationEvidenceDigest !== currentAuthority.activationEvidenceDigest
+    || value.hardGateActivated !== currentAuthority.hardGateActivated
+    || value.productionBindingAuthorized !== currentAuthority.productionBindingAuthorized) {
+    fail('LAFEA4_PARENT_NORMAL_PRODUCTION_GATE_AUTHORITY_STALE_OR_UNTRUSTED');
+  }
   requireSemanticHash(value.semanticHash);
   const core = { ...value };
   delete core.semanticHash;

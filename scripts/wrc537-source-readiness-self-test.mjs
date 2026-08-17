@@ -37,6 +37,9 @@ assertBlocked('COEFFICIENT_PRECISION_COMPLETE', (fixture) => {
 assertBlocked('COEFFICIENT_SOURCE_CUSTODY_COMPLETE', (fixture) => {
   fixture.coefficientRows[0].review_status = 'EXTRACTED';
 });
+assertBlocked('COEFFICIENT_SOURCE_CUSTODY_COMPLETE', (fixture) => {
+  fixture.coefficientRows[0].edition = '3rd Edition (March 2022)';
+});
 assertBlocked('STRESS_INTENSITY_MATH_PRIMARY_VERIFIED', (fixture) => {
   fixture.manifest.engineeringVerification.stressIntensityMathPrimaryVerified = false;
 });
@@ -44,7 +47,9 @@ assertBlocked('PUBLISHED_BENCHMARKS_REPRODUCED', (fixture) => {
   fixture.manifest.engineeringVerification.publishedBenchmarks[0].independentlyReproduced = false;
 });
 
+const targetEdition = { edition: '4', publicationDate: '2026-02' };
 const normalizedResearchRow = normalizeWrc537CoefficientRow({
+  edition: '1st ed. (Dec 2010) / reprint 2013',
   coefficient_value: 'UNRESOLVED',
   published_precision: 'UNRESOLVED',
   source_page: '51',
@@ -52,9 +57,10 @@ const normalizedResearchRow = normalizeWrc537CoefficientRow({
   source_figure: 'Fig SP-1',
   extraction_confidence: 'HIGH',
   review_status: 'EXTRACTED',
-});
+}, targetEdition);
 assert.equal(normalizedResearchRow.normalizedValueState, 'STRUCTURE_ONLY_VALUE_UNRESOLVED');
-assert.equal(normalizedResearchRow.normalizedAuthorityState, 'NOT_PRIMARY_SOURCE_VERIFIED');
+assert.equal(normalizedResearchRow.normalizedAuthorityState,
+  'NOT_TARGET_EDITION_PRIMARY_SOURCE_VERIFIED');
 assert.equal(normalizedResearchRow.normalizedEngineeringState, 'RESEARCH_ONLY');
 
 console.log(JSON.stringify({
@@ -69,6 +75,7 @@ console.log(JSON.stringify({
   missingCoefficientValueRejected: true,
   missingCoefficientPrecisionRejected: true,
   unverifiedCoefficientRejected: true,
+  wrongEditionCoefficientRejected: true,
   unverifiedStressMathRejected: true,
   unreproducedBenchmarkRejected: true,
   misleadingRawExtractedStatusNormalizedToResearchOnly: true,
@@ -135,11 +142,14 @@ function readyFixture() {
       ],
     },
     coefficientRows: [{
+      edition: '4th Edition (February 2026)',
       coefficient_value: '1.234',
       published_precision: '3_DECIMAL_PLACES',
       source_page: '101',
       source_section: 'TABLE-X',
-      source_figure: 'FIG-X',
+      source_equation: 'EQ-X',
+      source_table: 'TABLE-X',
+      source_figure: '',
       extraction_confidence: 'PRIMARY_VERIFIED',
       review_status: 'PRIMARY_SOURCE_VERIFIED',
     }],

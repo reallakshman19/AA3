@@ -7,6 +7,7 @@ import {
   lawsonFlip,
   triangulateRegionAsIndexTriples,
 } from './constrained-delaunay-t6.js';
+import { lafeaHoleFrontGradingPolicy } from './hole-front-grading-policy.js';
 
 /**
  * Deterministic constrained-Delaunay refinement for a planar LAFEA.3 region.
@@ -25,14 +26,13 @@ import {
  * their analytic source curve through `edgesByCornerPair`, so T6/Q8 upgrade can
  * place a circular-hole midside on the true arc rather than on its chord.
  */
-export const LAFEA_INTERIOR_REFINEMENT_REVISION = 'LAFEA.10.CDT-HOLES-TRI.V4';
+export const LAFEA_INTERIOR_REFINEMENT_REVISION = 'LAFEA.10.CDT-HOLES-TRI.V5';
 
 const EPS = 1e-12;
 const TRIANGULAR_ROW_HEIGHT_FACTOR = Math.sqrt(3) / 2;
 const BOUNDARY_CLEARANCE_FACTOR = 0.25;
 const POINT_CLEARANCE_FACTOR = 0.12;
 const HOLE_FRONT_LAYER_COUNT = 2;
-const HOLE_FRONT_GROWTH = 1.6;
 const HOLE_FRONT_TARGET_CLEARANCE_FACTOR = 0.18;
 const HOLE_FRONT_EDGE_CLEARANCE_FACTOR = 0.45;
 /** Fixed round count keeps smoothing deterministic; quality is monotone per round. */
@@ -41,7 +41,8 @@ const SMOOTHING_ROUNDS = 3;
 /**
  * @param {Readonly<object>} topology Canonical core topology.
  * @param {string} regionId Region identifier.
- * @param {{targetSize:number,chordErrorLimit:number,minimumSegmentsByCurveId?:Map<string,number>}} options
+ * @param {{targetSize:number,chordErrorLimit:number,minimumSegmentsByCurveId?:Map<string,number>,
+ *   adjacentSizeRatioMax?:number}} options
  */
 export function triangulateRefinedRegionAsIndexTriples(topology, regionId, options) {
   const region = topology.regions.find((candidate) => candidate.regionId === regionId);
@@ -49,6 +50,7 @@ export function triangulateRefinedRegionAsIndexTriples(topology, regionId, optio
   if (!(options?.targetSize > 0)) {
     throw new LafeaMeshingError('targetSize must be positive', 'INVALID_TARGET_SIZE');
   }
+  const holeFrontPolicy = lafeaHoleFrontGradingPolicy(options?.adjacentSizeRatioMax);
 
   const curveById = new Map(topology.curves.map((curve) => [curve.curveId, curve]));
   const vertexById = new Map(topology.vertices.map((vertex) => [vertex.vertexId, vertex]));
@@ -119,6 +121,7 @@ export function triangulateRefinedRegionAsIndexTriples(topology, regionId, optio
       boundaryRings,
       holePolygons,
       options.targetSize,
+      holeFrontPolicy,
     );
     restored = lawsonFlip(points, frontTriangles, constrainedEdgeKeys);
     verifyHoleBoundaryOwnership(restored, constrainedEdgeKeys, boundaryRings);
@@ -290,6 +293,7 @@ function insertHoleBoundaryFront(
   boundaryRings,
   holePolygons,
   targetSize,
+  gradingPolicy,
 ) {
   const outerRing = boundaryRings.find((ring) => ring.role === 'OUTER');
   const outerPolygon = outerRing.globalIndices.map((index) => points[index]);
@@ -306,10 +310,10 @@ function insertHoleBoundaryFront(
         const edgeLength = Math.hypot(dx, dy);
         if (!(edgeLength > 0)) continue;
         // The front is a grading mechanism, not a universal second lattice.
-        // Activate it only when the global interior spacing exceeds this local
-        // constrained edge by more than the declared front growth ratio.
-        if (!(targetSize / edgeLength > HOLE_FRONT_GROWTH + EPS)) continue;
-        const offset = holeFrontOffset(edgeLength, layer);
+        // When an adjacency policy is supplied, activation and layer growth are
+        // derived from that longest-edge policy instead of the legacy heuristic.
+        if (!(targetSize / edgeLength > gradingPolicy.activationRatio + EPS)) continue;
+        const offset = holeFrontOffset(edgeLength, layer, gradingPolicy.layerGrowth);
         const candidate = {
           x: (a.x + b.x) / 2 + (-dy / edgeLength) * offset,
           y: (a.y + b.y) / 2 + (dx / edgeLength) * offset,
@@ -318,7 +322,7 @@ function insertHoleBoundaryFront(
         if (holePolygons.some((polygon) => pointInPolygonStrict(candidate, polygon))) continue;
         const clearance = Math.min(
           targetSize * HOLE_FRONT_TARGET_CLEARANCE_FACTOR,
-          edgeLength * HOLE_FRONT_EDGE_CLEARANCE_FACTOR * (HOLE_FRONT_GROWTH ** layer),
+          edgeLength * HOLE_FRONT_EDGE_CLEARANCE_FACTOR * (gradingPolicy.layerGrowth ** layer),
         );
         if (!farEnoughByDistance(candidate, points, clearance)) continue;
         if (insertInteriorPoint(points, triangles, constrainedEdgeKeys, candidate)) insertedCount += 1;
@@ -328,11 +332,11 @@ function insertHoleBoundaryFront(
   return insertedCount;
 }
 
-function holeFrontOffset(edgeLength, layer) {
+function holeFrontOffset(edgeLength, layer, layerGrowth) {
   const baseHeight = edgeLength * TRIANGULAR_ROW_HEIGHT_FACTOR;
   let offset = 0;
   for (let index = 0; index <= layer; index += 1) {
-    offset += baseHeight * (HOLE_FRONT_GROWTH ** index);
+    offset += baseHeight * (layerGrowth ** index);
   }
   return offset;
 }

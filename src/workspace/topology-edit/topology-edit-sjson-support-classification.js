@@ -10,6 +10,9 @@ const FAMILY_FIELDS = Object.freeze([
 ]);
 const NON_RESTRAINT_ATTACHMENT_TEXT = /\b(FENCE|FLOOR|WALL|ROOF|SLAB)\b[\s\S]*\b(OPENING|PENETRATION|SLEEVE)\b|\b(OPENING|PENETRATION|SLEEVE)\b[\s\S]*\b(FENCE|FLOOR|WALL|ROOF|SLAB)\b/iu;
 const REFERENCE_IDENTITY = /\/SREF$/iu;
+const OPAQUE_SOURCE_ID = /^=[^\s]+$/u;
+const GENERIC_SUPPORT_HARDWARE_TEXT = /^PIPE\s+SUPPORT\s+TYPE[- ]?\d+\b/iu;
+const EMPTY_DESCRIPTION = /^-*$/u;
 
 /**
  * Classify SJSON ATTA records without inventing restraint capability.
@@ -33,11 +36,7 @@ export function classifySjsonSupportProjection(attributes = {}) {
   const identifiers = [attributes.NAME, attributes.SUPPORT_TAG, attributes.CMPSUPREFN]
     .map(stringValue).filter(Boolean);
   if (identifiers.some((value) => REFERENCE_IDENTITY.test(value))) {
-    return Object.freeze({
-      disposition: 'DEFER_SUPPORT',
-      authority: 'SOURCE_REFERENCE_IDENTITY',
-      attachmentClassification: 'REFERENCE_POINT',
-    });
+    return nonRestraint('SOURCE_REFERENCE_IDENTITY');
   }
 
   const description = [attributes.DTXR, attributes.ISONOTE, attributes.DESCRIPTION]
@@ -48,6 +47,13 @@ export function classifySjsonSupportProjection(attributes = {}) {
       authority: 'NON_RESTRAINT_ATTACHMENT_DESCRIPTION',
       attachmentClassification: 'PENETRATION_ATTACHMENT',
     });
+  }
+
+  if (isSourceSupportHardwareMember(attributes)) {
+    return nonRestraint('SOURCE_SUPPORT_HARDWARE_MEMBER');
+  }
+  if (isOpaqueGenericAttachment(attributes)) {
+    return nonRestraint('SOURCE_GENERIC_ATTACHMENT_PLACEHOLDER');
   }
 
   const signal = supportObjectSignal(attributes);
@@ -89,6 +95,55 @@ function classifyFamilyToken(value, field) {
   if (/\bPIPE\s*REST\b|\bREST\b|\bWEAR\s*PLATE\b|\bW\.?\s*PAD\b/iu.test(token)) return 'REST';
   if ((field === 'CMPSUPTYPE' || field === 'MDSSUPPTYPE') && /^SH[- ]/iu.test(token)) return 'REST';
   return null;
+}
+
+function isSourceSupportHardwareMember(attributes) {
+  const name = stringValue(attributes.NAME);
+  const tag = stringValue(attributes.SUPPORT_TAG);
+  const reference = stringValue(attributes.CMPSUPREFN);
+  const opaqueIdentity = [name, tag, reference].filter(Boolean);
+  if (opaqueIdentity.length < 2
+      || !opaqueIdentity.every((value) => value === opaqueIdentity[0])
+      || !OPAQUE_SOURCE_ID.test(opaqueIdentity[0])) return false;
+
+  const description = stringValue(attributes.DTXR);
+  const specification = stringValue(attributes.SPRE);
+  return GENERIC_SUPPORT_HARDWARE_TEXT.test(description)
+    && /^\/MDF\//iu.test(specification)
+    && !meaningful(attributes.CMPSUPTYPE)
+    && !meaningful(attributes.SUPPORT_TYPE);
+}
+
+function isOpaqueGenericAttachment(attributes) {
+  const name = stringValue(attributes.NAME);
+  const tag = stringValue(attributes.SUPPORT_TAG);
+  const reference = stringValue(attributes.CMPSUPREFN);
+  const ids = [name, tag, reference].filter(Boolean);
+  if (ids.length < 2 || !ids.every((value) => value === ids[0]) || !OPAQUE_SOURCE_ID.test(ids[0])) {
+    return false;
+  }
+  const specification = stringValue(attributes.SPRE);
+  const description = stringValue(attributes.DTXR).trim();
+  const mtoOff = stringValue(attributes.MTOC).toUpperCase() === 'OFF';
+  const ignored = stringValue(attributes.FSTAT).toUpperCase() === 'IGN';
+  const nonSpoolBreak = stringValue(attributes.SPKBRK).toLowerCase() === 'false';
+  const noNodeCapability = !(Number(attributes.NODETYPE) > 0)
+    && !(numericAttribute(attributes, ['NODESTIFF']) > 0);
+  return /\/ATTA(?:-|$)/iu.test(specification)
+    && mtoOff
+    && nonSpoolBreak
+    && (ignored || EMPTY_DESCRIPTION.test(description))
+    && noNodeCapability;
+}
+
+function nonRestraint(authority) {
+  return Object.freeze({
+    disposition: 'DEFER_SUPPORT',
+    authority,
+    // Canonical checker already treats reference points as non-restraint
+    // attachments. This role intentionally carries no restraint capability.
+    attachmentClassification: 'REFERENCE_POINT',
+  });
 }
 
 function supportObjectSignal(attributes) {

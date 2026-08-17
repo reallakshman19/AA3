@@ -1,4 +1,5 @@
 import { semanticHash } from '../shared-primitives/canonical-json.js';
+import { validateLocalAttachmentScreeningRequest } from '../local-attachment-screening/index.js';
 import { CORRELATION_GEOMETRY_SCHEMA } from './constants.js';
 
 export function createCorrelationGeometryEvidenceFromLafea2(options) {
@@ -7,9 +8,30 @@ export function createCorrelationGeometryEvidenceFromLafea2(options) {
   if (result.qualification?.state !== 'ACCEPTED') {
     fail('CORRELATION_LAFEA2_RESULT_NOT_ACCEPTED', 'screeningResult.qualification.state');
   }
+  const request = validateLocalAttachmentScreeningRequest(
+    structuredClone(options?.screeningRequest),
+  );
+  const resultRequestHash = requiredString(
+    result.semanticHashes?.screeningRequestSemanticHash,
+    'screeningResult.semanticHashes.screeningRequestSemanticHash',
+  );
+  if (request.semanticHash !== resultRequestHash) {
+    fail('CORRELATION_LAFEA2_REQUEST_RESULT_MISMATCH', 'screeningRequest.semanticHash');
+  }
   const sourceEvidenceHash = requiredString(
     result.semanticHashes?.sourceEvidenceSemanticHash,
     'screeningResult.semanticHashes.sourceEvidenceSemanticHash',
+  );
+  if (semanticHash(request.sourceEvidence) !== sourceEvidenceHash) {
+    fail('CORRELATION_LAFEA2_SOURCE_EVIDENCE_MISMATCH', 'screeningRequest.sourceEvidence');
+  }
+  const foundationModelHash = requiredString(
+    request.sourceEvidence?.foundationModel?.semanticHash,
+    'screeningRequest.sourceEvidence.foundationModel.semanticHash',
+  );
+  const foundationResultHash = requiredString(
+    request.sourceEvidence?.foundationResult?.semanticHashes?.resultPayloadSemanticHash,
+    'screeningRequest.sourceEvidence.foundationResult.semanticHashes.resultPayloadSemanticHash',
   );
   const section = result.sectionProperties;
   if (!section || typeof section !== 'object') fail('CORRELATION_LAFEA2_SECTION_REQUIRED', 'screeningResult.sectionProperties');
@@ -22,6 +44,8 @@ export function createCorrelationGeometryEvidenceFromLafea2(options) {
     geometryIdentity: requiredString(options?.geometryIdentity, 'geometryIdentity'),
     sourceStageId: 'LAFEA.2',
     sourceEvidenceHash,
+    foundationModelHash,
+    foundationResultHash,
     pipeOutsideDiameter,
     pipeThickness,
     attachmentDiameter: positive(options?.attachmentDiameter, 'attachmentDiameter'),
@@ -47,6 +71,7 @@ export function validateCorrelationGeometryEvidence(value) {
   }
   exactKeys(value, [
     'schema', 'geometryIdentity', 'sourceStageId', 'sourceEvidenceHash',
+    'foundationModelHash', 'foundationResultHash',
     'pipeOutsideDiameter', 'pipeThickness', 'attachmentDiameter',
     'sourceReferences', 'semanticHash',
   ], 'geometryEvidence');
@@ -56,6 +81,8 @@ export function validateCorrelationGeometryEvidence(value) {
   requiredString(value.geometryIdentity, 'geometryEvidence.geometryIdentity');
   if (value.sourceStageId !== 'LAFEA.2') fail('CORRELATION_GEOMETRY_SOURCE_STAGE_MISMATCH', 'geometryEvidence.sourceStageId');
   requiredString(value.sourceEvidenceHash, 'geometryEvidence.sourceEvidenceHash');
+  requiredString(value.foundationModelHash, 'geometryEvidence.foundationModelHash');
+  requiredString(value.foundationResultHash, 'geometryEvidence.foundationResultHash');
   positive(value.pipeOutsideDiameter, 'geometryEvidence.pipeOutsideDiameter');
   positive(value.pipeThickness, 'geometryEvidence.pipeThickness');
   positive(value.attachmentDiameter, 'geometryEvidence.attachmentDiameter');

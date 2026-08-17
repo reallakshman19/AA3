@@ -1,0 +1,48 @@
+{
+  "schema": "lafea4-curved-hole-convergence-definition/v1",
+  "qualificationId": "LAFEA4-CURVED-HOLE-FIXED-PROBE-001",
+  "stageId": "LAFEA.4",
+  "formulation": "CST_DKT_TRI3_THIN_SHELL_V1",
+  "scope": "CURVED_RECTANGULAR_HOLE_FIXED_PROBE_MEMBRANE_CONVERGENCE",
+  "geometry": {
+    "radiusMm": 100,
+    "outerUMinMm": -78.53981633974483,
+    "outerUMaxMm": 78.53981633974483,
+    "outerVMinMm": 0,
+    "outerVMaxMm": 120,
+    "hole": { "uMinMm": -20, "uMaxMm": 20, "vMinMm": 45, "vMaxMm": 75 },
+    "thicknessMm": 1.5
+  },
+  "material": { "elasticModulusMpa": 200000, "poissonRatio": 0.3 },
+  "loading": {
+    "type": "PRESCRIBED_AXIAL_EXTENSION_CLAMPED_END_RIMS",
+    "nominalAxialStrain": 0.001,
+    "bottomRimVmm": 0,
+    "topRimVmm": 120
+  },
+  "meshTargetsMm": [20, 10, 5],
+  "refinementRatio": 2,
+  "gciSafetyFactor": 1.25,
+  "probes": [
+    { "probeId": "NEAR_SIDE", "uMm": 30, "vMm": 60, "maximumFineGci": 0.05 },
+    { "probeId": "NEAR_TOP", "uMm": 0, "vMm": 85, "maximumFineGci": 0.05 },
+    { "probeId": "FAR_SIDE", "uMm": 60, "vMm": 60, "maximumFineGci": 0.03 }
+  ],
+  "acceptance": {
+    "minimumApparentOrder": 0.5,
+    "maximumApparentOrder": 4.5,
+    "requireMonotonicThreeLevelSequence": true,
+    "requireMeshQualityPassAtEveryLevel": true,
+    "requireForceEquilibriumAtEveryLevel": true,
+    "requireMomentEquilibriumAtEveryLevel": true,
+    "probeContainmentTolerance": 1e-9
+  },
+  "prohibitions": [
+    "NO_MOVING_MAXIMUM_ACCEPTANCE",
+    "NO_CORNER_SINGULARITY_ACCEPTANCE",
+    "NO_ANALYTICAL_STRESS_CONCENTRATION_CLAIM",
+    "NO_RELEASE_FROM_MESH_DENSITY_ALONE"
+  ],
+  "benchmarkQualified": false,
+  "releaseQualified": false
+}

@@ -29,8 +29,10 @@ export function createCorrelationQualificationRecord(options) {
 
 export function createCorrelationQualificationRecordFromEvidence(options) {
   const profile = createCorrelationProfile(options?.profile);
-  const suite = validateCorrelationQualificationSuite(options?.qualificationSuite);
   const evidence = validateCorrelationQualificationEvidence(options?.qualificationEvidence);
+  const suite = validateCorrelationQualificationSuite(
+    options?.qualificationSuite ?? evidence.qualificationSuite,
+  );
   if (evidence.status !== 'PASS') {
     fail('CORRELATION_QUALIFICATION_EVIDENCE_NOT_PASS', 'qualificationEvidence.status');
   }

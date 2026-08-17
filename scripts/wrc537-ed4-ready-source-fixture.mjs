@@ -208,6 +208,22 @@ export function createReadyWrc537Ed4SourceFixture() {
         independentlyReproduced: true,
         independentCalculationReference: 'FIXTURE_HAND_CALC_001',
         input: { geometry: { R: 100 }, loads: { P: 1000 } },
+        inputEvidence: [
+          {
+            inputId: 'GEOMETRY_R',
+            benchmarkPath: ['geometry', 'R'],
+            units: 'mm',
+            sourceRef: benchmarkDatum.sourceRef,
+            sourceLocator: benchmarkDatum.sourceLocator,
+          },
+          {
+            inputId: 'LOAD_P',
+            benchmarkPath: ['loads', 'P'],
+            units: 'N',
+            sourceRef: benchmarkDatum.sourceRef,
+            sourceLocator: benchmarkDatum.sourceLocator,
+          },
+        ],
         expectedResults: [{
           quantity: 'SIGMA_X',
           value: 12.34,

@@ -8,6 +8,7 @@
 - Criticality: `ENGINEERING_CRITICAL`
 - Merge authority: OWNER ONLY
 - PR state: DRAFT
+- Latest inspected mergeability: `true`
 
 ## Mission
 
@@ -140,8 +141,10 @@ Mitigation: PR #1229 remains lookup/index-only and does not alter method/version
 | Live-main grounding | PASS | GitHub metadata/source inspection | repository source |
 | Active PR overlap scan | PASS with UNKNOWN #1150 file detail | open PR search; #1150 file endpoint unavailable | GitHub metadata |
 | Production source reconstruction review | PASS | current-main file reread in bounded ranges before replacement | repository source |
+| PR mergeability | PASS | GitHub reports mergeable=true on latest inspection | GitHub merge calculation |
 | Structural index guard | NOT_RUN | `scripts/support-load-performance-index-check.mjs` authored | implementation-coupled structural check |
 | Existing empirical numerical/output equivalence | NOT_RUN | executable checkout unavailable | existing repository engineering regression |
+| Local checkout attempt | NOT_RUN / INFRASTRUCTURE_BLOCKED | `git ls-remote` failed: `Could not resolve host: github.com` | local execution environment |
 | Full repository gates | NOT_RUN | Actions/check execution unavailable in connector/session | repository gates |
 
 No NOT_RUN result is represented as PASS.
@@ -150,8 +153,7 @@ No NOT_RUN result is represented as PASS.
 
 - `RISK-1229-01`: possible authority overlap with open PR #1150.
 - `RISK-1229-02`: exact numerical/output equivalence has not executed.
-- `RISK-1229-03`: PR currently reports mergeable=false; determine whether this is GitHub mergeability computation latency or live-base drift/conflict before further promotion.
-- `RISK-1229-04`: module-level counters must remain outside engineering output and not become authority.
+- `RISK-1229-03`: module-level counters must remain outside engineering output and not become authority.
 
 ## Current highest risk
 
@@ -160,5 +162,5 @@ Exact-head numerical/output equivalence is NOT_RUN.
 ## EXACT_NEXT_ACTION
 
 ```text
-Inspect PR #1229 live diff/current base; reconcile any base drift; run structural guard plus existing empirical qualification on the exact PR head; compare output/evidence identity to baseline; only then consider the next mass-precompute optimization.
+Run the structural guard plus existing empirical qualification on the exact PR head when an executable checkout is available; compare output/evidence identity to baseline; recheck #1150 overlap; only then consider the next case-independent mass-precompute optimization.
 ```

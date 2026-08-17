@@ -3,6 +3,7 @@ import { canonicalLafeaSha256 } from './lafea-canonical-sha256.js';
 
 export const LAFEA_RUN_HISTORY_ENTRY_SCHEMA = 'lafea-run-history-entry/v1';
 export const LAFEA_RUN_HISTORY_SCHEMA = 'lafea-run-history/v1';
+export const LAFEA_RUN_CURRENT_AUTHORITY_SCHEMA = 'lafea-run-current-authority/v1';
 
 export function createLafeaRunHistory(options = {}) {
   const buildSha = optionalBuildSha(options.buildSha);
@@ -44,6 +45,12 @@ export function createLafeaRunHistory(options = {}) {
       verificationStatus: entry.evidence.verification.bindingStatus,
       releaseBindingStatus: entry.evidence.release.bindingStatus,
       releaseQualified: entry.evidence.release.releaseQualified,
+      currentResultAcceptedAtCapture:
+        entry.evidence.currentAuthority?.currentResultAccepted ?? null,
+      calculationStateAtCapture:
+        entry.evidence.currentAuthority?.calculationState ?? null,
+      resultReadyAtCapture:
+        entry.evidence.currentAuthority?.resultReady ?? null,
       semanticHash: entry.semanticHash,
     })));
   }
@@ -72,6 +79,52 @@ export function validateLafeaRunHistoryEntry(value) {
   return value;
 }
 
+/**
+ * Exact identity used by run-history/dossier custody. It deliberately mirrors
+ * the retained evidence identity ladder so live-currentness checks cannot be
+ * satisfied by merely retaining execution.status = QUALIFIED.
+ */
+export function lafeaRunExecutionIdentity(executionValue) {
+  const execution = executionValue && typeof executionValue === 'object'
+    ? executionValue : {};
+  return execution.compiledExecutionHash
+    ?? execution.executionHash
+    ?? execution.result?.semanticHash
+    ?? execution.result?.evidenceHash
+    ?? canonicalLafeaSha256(execution.result ?? execution);
+}
+
+/**
+ * Current engineering authority projection at one instant. This is evidence,
+ * not an authority source: governed routes delegate currentness to workbench
+ * readiness, while legacy/non-governed history preserves prior semantics.
+ */
+export function projectLafeaRunStageCurrentAuthority(stageValue) {
+  const stage = stageValue && typeof stageValue === 'object' ? stageValue : {};
+  const governedRoute = stage.domainFirstProfileActive === true
+    || stage.shellMidsurfaceProfileActive === true;
+  const executionQualified = stage.execution?.status === 'QUALIFIED';
+  const readiness = stage.lifecycleReadiness;
+  const calculationState = readiness?.calculationState ?? null;
+  const resultReady = readiness?.resultReady ?? null;
+  const currentResultAccepted = governedRoute
+    ? executionQualified
+      && calculationState === 'CALCULATION_ACCEPTED_BY_STAGE_CONTRACT'
+      && resultReady === true
+    : executionQualified;
+  return deepFreeze({
+    schema: LAFEA_RUN_CURRENT_AUTHORITY_SCHEMA,
+    stageId: stage.stageId ?? null,
+    governedRoute,
+    executionQualified,
+    calculationState,
+    resultReady,
+    releaseState: readiness?.releaseState ?? null,
+    currentResultAccepted,
+    blockingReasons: clone(readiness?.blockingReasons ?? []),
+  });
+}
+
 function runEvidenceSnapshot(stage, buildSha) {
   const meshEvidence = stage.retainedAnalysisMeshEvidenceV2 ?? stage.retainedAnalysisMeshEvidence ?? null;
   const units = stage.retainedAnalysisDomain?.units ?? stage.document?.units ?? null;
@@ -82,6 +135,7 @@ function runEvidenceSnapshot(stage, buildSha) {
   return deepFreeze({
     stageId: stage.stageId,
     build: { buildSha, candidateHeadSha: stage.releaseCandidateHeadSha ?? null },
+    currentAuthority: projectLafeaRunStageCurrentAuthority(stage),
     source: {
       sourceHash: stage.sourceAuthority?.sourceHash ?? stage.lifecycle?.source?.sourceHash ?? null,
       sourceAuthority: clone(stage.sourceAuthority),
@@ -113,7 +167,7 @@ function runEvidenceSnapshot(stage, buildSha) {
       route: execution.route ?? null,
       compiledExecutionHash: execution.compiledExecutionHash ?? null,
       solverModelHash: execution.solverModelHash ?? null,
-      resultHash: resultIdentity(execution),
+      resultHash: lafeaRunExecutionIdentity(execution),
       evidence: execution,
       quantities: resultQuantities(execution, units),
     },
@@ -156,14 +210,6 @@ function meshSummary(stage, evidence) {
     blockingElementCount: Array.isArray(quality.blockingElementIds) ? quality.blockingElementIds.length : 0,
     gateResults: clone(quality.gateResults ?? []),
   });
-}
-
-function resultIdentity(execution) {
-  return execution.compiledExecutionHash
-    ?? execution.executionHash
-    ?? execution.result?.semanticHash
-    ?? execution.result?.evidenceHash
-    ?? canonicalLafeaSha256(execution.result ?? execution);
 }
 
 function resultQuantities(execution, units) {

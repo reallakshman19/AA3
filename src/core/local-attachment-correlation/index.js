@@ -1,5 +1,6 @@
 export {
   BASE_LIMITATIONS,
+  CORRELATION_GEOMETRY_SCHEMA,
   CORRELATION_PROFILE_SCHEMA,
   CORRELATION_REQUEST_SCHEMA,
   CORRELATION_RESULT_SCHEMA,
@@ -14,6 +15,10 @@ export {
   SURFACES,
 } from './constants.js';
 export { calculateLocalAttachmentCorrelation } from './calculate.js';
+export {
+  createCorrelationGeometryEvidenceFromLafea2,
+  validateCorrelationGeometryEvidence,
+} from './geometry-evidence.js';
 export { bilinearNoExtrapolation, bracket } from './interpolation.js';
 export { createCorrelationRequestFromLafea2 } from './lafea2-bridge.js';
 export { correlationDatasetHash, createCorrelationProfile } from './profile.js';

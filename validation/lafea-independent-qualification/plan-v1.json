@@ -90,6 +90,13 @@
       "args": ["scripts/lafea-tech11-parent-normal-sample-check.mjs"]
     },
     {
+      "id": "TECH12A_PARENT_NORMAL_SHADOW_BATCH",
+      "classification": "ENGINEERING",
+      "required": true,
+      "executable": "node",
+      "args": ["scripts/lafea-tech12-shadow-parent-normal-batch-check.mjs"]
+    },
+    {
       "id": "TECH7_GRADED_REFINEMENT_EXECUTOR",
       "classification": "ENGINEERING",
       "required": true,

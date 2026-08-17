@@ -33,13 +33,14 @@ export function createWrc537Ed4EngineeringDatasetCandidate(input) {
   const sourceLedgerRows = sortedUniqueRows(input.sourceLedgerRows, 'record_id', 'sourceLedgerRows');
   const coefficientRows = sortedUniqueRows(input.coefficientRows, 'coefficient_id', 'coefficientRows');
   const promotion = clone(input.promotion);
+  const sourceReadiness = clone(readiness);
 
   const sourceBinding = {
     sourceDocumentDigest: sourcePackage.technicalSource.documentDigest,
     sourcePackageSemanticHash: semanticHash(sourcePackage),
     sourceLedgerSemanticHash: semanticHash(sourceLedgerRows),
     coefficientRowsSemanticHash: semanticHash(coefficientRows),
-    readinessSemanticHash: semanticHash(readiness),
+    readinessSemanticHash: semanticHash(sourceReadiness),
   };
 
   const base = {
@@ -53,6 +54,7 @@ export function createWrc537Ed4EngineeringDatasetCandidate(input) {
       authorizationBasis: AUTHORIZATION_BASIS,
     },
     sourceBinding,
+    sourceReadiness,
     sourcePackage,
     sourceLedgerRows,
     coefficientRows,
@@ -68,8 +70,8 @@ export function validateWrc537Ed4EngineeringDatasetCandidate(value) {
   requireObject(value, 'datasetCandidate');
   exactKeys(value, [
     'schema', 'methodIdentity', 'methodEdition', 'publicationDate', 'promotion',
-    'authority', 'sourceBinding', 'sourcePackage', 'sourceLedgerRows', 'coefficientRows',
-    'datasetSemanticHash',
+    'authority', 'sourceBinding', 'sourceReadiness', 'sourcePackage', 'sourceLedgerRows',
+    'coefficientRows', 'datasetSemanticHash',
   ], 'datasetCandidate');
   if (value.schema !== WRC537_ED4_ENGINEERING_DATASET_SCHEMA) {
     fail('WRC537_ED4_ENGINEERING_DATASET_SCHEMA_MISMATCH', 'datasetCandidate.schema');
@@ -87,6 +89,7 @@ export function validateWrc537Ed4EngineeringDatasetCandidate(value) {
     'sourceDocumentDigest', 'sourcePackageSemanticHash', 'sourceLedgerSemanticHash',
     'coefficientRowsSemanticHash', 'readinessSemanticHash',
   ], 'datasetCandidate.sourceBinding');
+  requireObject(value.sourceReadiness, 'datasetCandidate.sourceReadiness');
   assertSortedUnique(value.sourceLedgerRows, 'record_id', 'datasetCandidate.sourceLedgerRows');
   assertSortedUnique(value.coefficientRows, 'coefficient_id', 'datasetCandidate.coefficientRows');
 
@@ -105,11 +108,17 @@ export function validateWrc537Ed4EngineeringDatasetCandidate(value) {
   if (semanticHash(value.coefficientRows) !== value.sourceBinding.coefficientRowsSemanticHash) {
     fail('WRC537_ED4_COEFFICIENT_ROWS_HASH_MISMATCH', 'datasetCandidate.sourceBinding.coefficientRowsSemanticHash');
   }
+  if (semanticHash(value.sourceReadiness) !== value.sourceBinding.readinessSemanticHash) {
+    fail('WRC537_ED4_RETAINED_READINESS_HASH_MISMATCH', 'datasetCandidate.sourceBinding.readinessSemanticHash');
+  }
   if (value.sourceBinding.sourceDocumentDigest !== reconstructed.sourceBinding.sourceDocumentDigest) {
     fail('WRC537_ED4_SOURCE_DOCUMENT_DIGEST_MISMATCH', 'datasetCandidate.sourceBinding.sourceDocumentDigest');
   }
   if (value.sourceBinding.readinessSemanticHash !== reconstructed.sourceBinding.readinessSemanticHash) {
-    fail('WRC537_ED4_READINESS_HASH_MISMATCH', 'datasetCandidate.sourceBinding.readinessSemanticHash');
+    fail('WRC537_ED4_READINESS_REPLAY_MISMATCH', 'datasetCandidate.sourceBinding.readinessSemanticHash');
+  }
+  if (semanticHash(value.sourceReadiness) !== semanticHash(reconstructed.sourceReadiness)) {
+    fail('WRC537_ED4_RETAINED_READINESS_REPLAY_MISMATCH', 'datasetCandidate.sourceReadiness');
   }
   if (value.datasetSemanticHash !== reconstructed.datasetSemanticHash) {
     fail('WRC537_ED4_ENGINEERING_DATASET_HASH_MISMATCH', 'datasetCandidate.datasetSemanticHash');

@@ -209,6 +209,33 @@
       ]
     },
     {
+      "id": "TECH12J_RUN_HISTORY_CURRENT_AUTHORITY",
+      "classification": "ENGINEERING",
+      "required": true,
+      "executable": "node",
+      "args": [
+        "scripts/lafea-tech12j-run-history-current-authority-check.mjs"
+      ]
+    },
+    {
+      "id": "TECH12K_LIFECYCLE_EXPORT_CURRENT_AUTHORITY",
+      "classification": "ENGINEERING",
+      "required": true,
+      "executable": "node",
+      "args": [
+        "scripts/lafea-tech12k-lifecycle-export-current-authority-check.mjs"
+      ]
+    },
+    {
+      "id": "TECH12L_LIFECYCLE_EXPORT_CONSUMER_ENFORCEMENT",
+      "classification": "ENGINEERING",
+      "required": true,
+      "executable": "node",
+      "args": [
+        "scripts/lafea-tech12l-lifecycle-export-consumer-enforcement-check.mjs"
+      ]
+    },
+    {
       "id": "TECH7_GRADED_REFINEMENT_EXECUTOR",
       "classification": "ENGINEERING",
       "required": true,

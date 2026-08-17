@@ -328,12 +328,29 @@ function refinementControls(doc, model, handlers) {
   const host = node(doc, 'fieldset', 'lafea-discretization__refinement');
   host.dataset.role = 'lafea-retained-mesh-refinement';
   host.dataset.enabled = String(model.actions.canRefineMesh);
+  host.dataset.productScopeEligible = String(model.refinement?.scopeEligible === true);
+  host.dataset.productQualified = String(model.refinement?.productQualified === true);
   host.append(node(doc, 'legend', null, 'Local retained-mesh refinement'));
   const family = model.evidence.elementFamily;
   if (!model.evidence.present) {
     host.append(disclosure(doc, 'Retain a current analysis mesh before selecting local refinement targets.'));
     return host;
   }
+
+  if (model.refinement?.scopeEligible === true) {
+    host.append(productRefinementFacts(doc, model.refinement, model.generation.lengthUnit));
+    host.append(disclosure(
+      doc,
+      `Product refinement scope is recognized, but engineering activation is blocked: ${model.refinement.reason}.`,
+    ));
+    const pending = button(doc, 'Refine retained mesh', () => {});
+    pending.dataset.role = 'lafea-refinement-submit';
+    pending.disabled = true;
+    pending.title = 'TECH-13E exact-head numerical qualification is required before this product control can be enabled.';
+    host.append(pending);
+    return host;
+  }
+
   if (!model.generation.localRefinementElementFamilies.includes(family)) {
     host.append(disclosure(doc, family === 'Q8'
       ? 'Q8 local refinement is not qualified; the UI will not silently convert the topology to triangles.'
@@ -376,6 +393,35 @@ function refinementControls(doc, model, handlers) {
   submit.disabled = !model.actions.canRefineMesh;
   host.append(targetType.label, ids.label, target.label, unit.label, submit);
   return host;
+}
+
+function productRefinementFacts(doc, refinement, unit) {
+  const details = node(doc, 'details', 'lafea-discretization__technical-evidence');
+  details.dataset.role = 'lafea-product-refinement-qualification-evidence';
+  details.open = true;
+  details.append(node(doc, 'summary', null, 'Product local-refinement qualification evidence'));
+  const facts = node(doc, 'dl', 'lafea-discretization__facts');
+  const rows = [
+    ['Product scope', `${refinement.surfaceKind} · ${refinement.elementFamily}`],
+    ['Allowed targets', refinement.allowedTargetTypes.join(', ')],
+    ['Parent nodes / elements', `${refinement.currentParent.nodeCount} / ${refinement.currentParent.elementCount}`],
+    ['Parent artifact hash', refinement.currentParent.artifactHash],
+    ['Parent mesh hash', refinement.currentParent.meshHash],
+    ['Global target', formatLength(refinement.sizing.globalTargetElementLength, unit)],
+    ['Adjacent size ratio max', `≤ ${formatNumber(refinement.sizing.adjacentSizeRatioMax)}`],
+    ['Aspect ratio warning / block', `≤ ${formatNumber(refinement.qualityPolicy.aspectRatioWarn)} / ≤ ${formatNumber(refinement.qualityPolicy.aspectRatioBlock)}`],
+    ['Scaled Jacobian warning / block', `≥ ${formatNumber(refinement.qualityPolicy.scaledJacobianWarn)} / ≥ ${formatNumber(refinement.qualityPolicy.scaledJacobianBlock)}`],
+    ['Minimum angle block', `> ${formatNumber(refinement.qualityPolicy.minimumAngleBlockDegrees)} deg`],
+    ['Parent-normal gate', refinement.requiredAcceptance.parentNormalPass ? 'REQUIRED' : 'NOT REQUIRED'],
+    ['Boundary conformity', refinement.requiredAcceptance.boundaryConformity ? 'REQUIRED' : 'NOT REQUIRED'],
+    ['Exact parent custody', refinement.requiredAcceptance.exactParentCustody ? 'REQUIRED' : 'NOT REQUIRED'],
+    ['Product qualification', refinement.productQualified ? 'QUALIFIED' : 'PENDING EXACT-HEAD TECH-13E'],
+  ];
+  for (const [label, value] of rows) {
+    facts.append(node(doc, 'dt', null, label), node(doc, 'dd', null, value ?? 'NONE'));
+  }
+  details.append(facts);
+  return details;
 }
 
 function planSummary(doc, plan) {

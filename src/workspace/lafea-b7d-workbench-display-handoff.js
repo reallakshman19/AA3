@@ -5,6 +5,9 @@ import {
 import {
   evaluateLafeaRenderEvidenceIntake,
 } from './lafea-render-evidence-intake.js';
+import {
+  validateLafeaWorkbenchLifecycleExportAuthority,
+} from './lafea-workbench-lifecycle-export-authority.js';
 
 export const LAFEA_B7D_WORKBENCH_DISPLAY_HANDOFF_INTAKE_SCHEMA =
   'lafea-b7d-workbench-display-handoff-intake/v1';
@@ -248,7 +251,23 @@ function requireLifecycleExport(value, bridge) {
     || value.readiness?.codeReady !== false) {
     throw handoffError('LAFEA_NB_T6E_LIFECYCLE_NOT_CURRENT_RESULT_READY');
   }
+  requireV2CurrentAuthority(value);
   return value;
+}
+
+function requireV2CurrentAuthority(value) {
+  if (value.schema !== 'lafea-workbench-lifecycle-export/v2') return;
+  try {
+    validateLafeaWorkbenchLifecycleExportAuthority(value.currentAuthority);
+  } catch (cause) {
+    throw handoffError('LAFEA_NB_T6E_EXPORT_CURRENT_AUTHORITY_INVALID', {
+      cause: cause?.code ?? null,
+    });
+  }
+  if (value.currentAuthority?.currentAuthority?.currentResultAccepted !== true
+    || value.currentAuthority?.interpretation?.exportGrantsCurrentResultAuthority !== false) {
+    throw handoffError('LAFEA_NB_T6E_EXPORT_CURRENT_RESULT_NOT_ACCEPTED');
+  }
 }
 
 function requirePacketBinding(value, bridge) {

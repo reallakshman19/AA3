@@ -1,4 +1,5 @@
 import { CORRELATION_REQUEST_SCHEMA } from './constants.js';
+import { validateCorrelationGeometryEvidence } from './geometry-evidence.js';
 
 export function createCorrelationRequestFromLafea2(options) {
   const result = options?.screeningResult;
@@ -8,7 +9,7 @@ export function createCorrelationRequestFromLafea2(options) {
   }
   const requestIdentity = requiredString(options?.requestIdentity, 'requestIdentity');
   const screeningCaseId = requiredString(options?.screeningCaseId, 'screeningCaseId');
-  const attachmentDiameter = positive(options?.attachmentDiameter, 'attachmentDiameter');
+  const geometryEvidence = validateCorrelationGeometryEvidence(options?.geometryEvidence);
   const targetMappings = validateTargetMappings(options?.targetMappings);
   const hashes = result.semanticHashes;
   if (!hashes || typeof hashes !== 'object') fail('CORRELATION_LAFEA2_HASH_EVIDENCE_REQUIRED', 'screeningResult.semanticHashes');
@@ -16,14 +17,26 @@ export function createCorrelationRequestFromLafea2(options) {
     'screeningResult.semanticHashes.screeningRequestSemanticHash');
   const sourceResultHash = requiredString(hashes.screeningResultPayloadSemanticHash,
     'screeningResult.semanticHashes.screeningResultPayloadSemanticHash');
+  const sourceEvidenceHash = requiredString(hashes.sourceEvidenceSemanticHash,
+    'screeningResult.semanticHashes.sourceEvidenceSemanticHash');
+  if (geometryEvidence.sourceEvidenceHash !== sourceEvidenceHash) {
+    fail('CORRELATION_GEOMETRY_SOURCE_EVIDENCE_MISMATCH', 'geometryEvidence.sourceEvidenceHash');
+  }
 
   const screeningCase = uniqueRow(result.screeningCases, 'screeningCaseId', screeningCaseId,
     'screeningResult.screeningCases');
   const section = result.sectionProperties;
   if (!section || typeof section !== 'object') fail('CORRELATION_LAFEA2_SECTION_REQUIRED', 'screeningResult.sectionProperties');
-  const outerRadius = positive(section.outerRadius, 'screeningResult.sectionProperties.outerRadius');
+  const pipeOutsideDiameter = 2 * positive(section.outerRadius,
+    'screeningResult.sectionProperties.outerRadius');
   const pipeThickness = positive(section.assessmentPipeThickness,
     'screeningResult.sectionProperties.assessmentPipeThickness');
+  if (geometryEvidence.pipeOutsideDiameter !== pipeOutsideDiameter) {
+    fail('CORRELATION_GEOMETRY_PIPE_DIAMETER_MISMATCH', 'geometryEvidence.pipeOutsideDiameter');
+  }
+  if (geometryEvidence.pipeThickness !== pipeThickness) {
+    fail('CORRELATION_GEOMETRY_PIPE_THICKNESS_MISMATCH', 'geometryEvidence.pipeThickness');
+  }
 
   const force = vector3(screeningCase.combinedForceLocal,
     `screeningResult.screeningCases[screeningCaseId=${screeningCaseId}].combinedForceLocal`);
@@ -41,13 +54,14 @@ export function createCorrelationRequestFromLafea2(options) {
       sourceStageId: 'LAFEA.2',
       sourceRequestHash,
       sourceResultHash,
+      geometryEvidenceHash: geometryEvidence.semanticHash,
       screeningCaseId,
       targetMappings,
     },
     geometry: {
-      pipeOutsideDiameter: 2 * outerRadius,
-      pipeThickness,
-      attachmentDiameter,
+      pipeOutsideDiameter: geometryEvidence.pipeOutsideDiameter,
+      pipeThickness: geometryEvidence.pipeThickness,
+      attachmentDiameter: geometryEvidence.attachmentDiameter,
     },
     loads: {
       FX: force[0], FY: force[1], FZ: force[2],

@@ -10,6 +10,13 @@ export const ENGINEERING_MODEL_EVENTS = Object.freeze({
   FAILED: 'engineering-support-loads:failed',
 });
 
+const PROJECT_DATA_TOPOLOGY_MODEL_PATHS = Object.freeze([
+  'topology.supportSiteGroupingToleranceMm',
+  'topology.portMatchToleranceMm',
+  'topology.autoCarrierCoincidenceToleranceMm',
+  'topology.routeJoiningRules',
+]);
+
 /** Rebuilds derived contracts and runs loads only on an explicit request. */
 export class EngineeringModelController {
   constructor(eventBus, workspaceState, candidateController = authorizedEnrichmentConsumerController) {
@@ -35,16 +42,18 @@ export class EngineeringModelController {
     this.datasetId = '';
     this.datasetVersion = null;
     this.lastRebuiltDataset = null;
+    this.projectTopologyModelBasis = null;
   }
 
   init() {
     if (this.unsubscribers.length) return;
+    this.projectTopologyModelBasis = projectDataTopologyModelBasis(projectDataStore.getProfile());
     this.unsubscribers = [
       this.eventBus.subscribe(EVENT_TOPICS.WORKSPACE_SNAPSHOT_CHANGED, ({ snapshot }) => this.handleSnapshot(snapshot)),
       this.eventBus.subscribe(ENGINEERING_MODEL_EVENTS.CALCULATE_REQUESTED, () => this.calculate()),
-      this.eventBus.subscribe('MASTER_DATA_UPDATED', () => this.handleMasterDataChanged()),
-      this.eventBus.subscribe('MASTER_DATA_CLEARED', () => this.handleMasterDataChanged()),
-      projectDataStore.subscribe(() => this.handleProjectDataChanged()),
+      this.eventBus.subscribe('MASTER_DATA_UPDATED', (event) => this.handleMasterDataChanged(event)),
+      this.eventBus.subscribe('MASTER_DATA_CLEARED', (event) => this.handleMasterDataChanged(event)),
+      projectDataStore.subscribe((event) => this.handleProjectDataChanged(event)),
     ];
   }
 
@@ -103,26 +112,40 @@ export class EngineeringModelController {
     });
   }
 
-  handleProjectDataChanged() {
+  handleProjectDataChanged(event = null) {
     const dataset = this.workspaceState.getSnapshot()?.dataset || null;
+    const profile = event?.profile || projectDataStore.getProfile();
+    const nextTopologyModelBasis = projectDataTopologyModelBasis(profile);
+    const topologyModelChanged = this.projectTopologyModelBasis === null
+      || this.projectTopologyModelBasis !== nextTopologyModelBasis;
+    this.projectTopologyModelBasis = nextTopologyModelBasis;
+
     engineeringModelStore.markEmpiricalStale('PROJECT_DATA_CHANGED', dataset?.version || null);
     nonFeaCommonInputStore.markStale('PROJECT_DATA_CHANGED', 'projectDataProfileSemanticHash', 'Project Data changed after sealing.');
-    try {
-      engineeringModelStore.rebuild(dataset);
-    } catch (error) {
-      this.blockDerivedModels(error, dataset);
-      return;
+    if (topologyModelChanged && dataset) {
+      try {
+        engineeringModelStore.rebuild(dataset);
+      } catch (error) {
+        this.blockDerivedModels(error, dataset);
+        return;
+      }
     }
     this.authorizedConsumerController.refreshEmpirical();
-    this.eventBus.publish(ENGINEERING_MODEL_EVENTS.CHANGED, { reason: 'project-data-changed' });
+    this.eventBus.publish(ENGINEERING_MODEL_EVENTS.CHANGED, {
+      reason: 'project-data-changed',
+      topologyModelRebuilt: Boolean(topologyModelChanged && dataset),
+    });
   }
 
-  handleMasterDataChanged() {
+  handleMasterDataChanged(event = null) {
     const dataset = this.workspaceState.getSnapshot()?.dataset || null;
     engineeringModelStore.markEmpiricalStale('MASTER_DATA_CHANGED', dataset?.version || null);
     nonFeaCommonInputStore.markStale('MASTER_DATA_CHANGED', 'enrichmentSidecarSemanticHash', 'Master data changed after sealing.');
     this.authorizedConsumerController.refreshEmpirical();
-    this.eventBus.publish(ENGINEERING_MODEL_EVENTS.CHANGED, { reason: 'master-data-changed' });
+    this.eventBus.publish(ENGINEERING_MODEL_EVENTS.CHANGED, {
+      reason: 'master-data-changed',
+      masterKey: event?.masterKey || null,
+    });
   }
 
   calculate() {
@@ -144,6 +167,24 @@ export class EngineeringModelController {
     this.unsubscribers.forEach((unsubscribe) => unsubscribe());
     this.unsubscribers = [];
     this.lastRebuiltDataset = null;
+    this.projectTopologyModelBasis = null;
     engineeringModelStore.clear();
   }
+}
+
+/**
+ * Runtime-only dependency projection for the derived support-site/route models.
+ * It is not serialized, hashed into engineering evidence, or used as authority.
+ */
+export function projectDataTopologyModelBasis(profile) {
+  return JSON.stringify(PROJECT_DATA_TOPOLOGY_MODEL_PATHS.map((path) => {
+    const [groupKey, fieldKey] = path.split('.');
+    return stableRuntimeValue(profile?.[groupKey]?.[fieldKey]?.value ?? null);
+  }));
+}
+
+function stableRuntimeValue(value) {
+  if (Array.isArray(value)) return value.map(stableRuntimeValue);
+  if (!value || typeof value !== 'object') return value;
+  return Object.fromEntries(Object.keys(value).sort().map((key) => [key, stableRuntimeValue(value[key])]));
 }

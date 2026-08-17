@@ -6,7 +6,8 @@
   "activationRequiresVerifiedExactHeadBundle": true,
   "activationRequiresBundleClassificationPass": true,
   "activationRequiresIndependentBundleVerifierPass": true,
-  "activationRequiresQualifiedHeadToMatchReviewedProductionHead": true,
+  "activationRequiresPromotionPrBaseToEqualQualifiedHead": true,
+  "activationCommitMayDifferFromQualifiedHeadOnlyByTrustRootRecord": true,
   "activationRecordBindsProductCapabilityHash": true,
   "activationRecordBindsProductQualificationHash": true,
   "runtimeCandidateGateStillRequiredAfterPromotion": true,
@@ -19,6 +20,6 @@
   "productRetentionAuthorizedNow": false,
   "uiBindingAuthorizedNow": false,
   "refineControlEnabledNow": false,
-  "futurePromotionChangePolicy": "TRUST_ROOT_RECORD_ONLY_AFTER_VERIFIED_EXACT_HEAD_PASS",
+  "futurePromotionChangePolicy": "QUALIFIED_BASE_PLUS_TRUST_ROOT_RECORD_ONLY_ACTIVATION_DIFF",
   "qualificationSeamPolicy": "SYNTHETIC_VALID_RECORD_MAY_EXERCISE_FUTURE_ACTIVE_BRANCH_WITHOUT_CHANGING_PRODUCTION_NULL_TRUST_ROOT"
 }

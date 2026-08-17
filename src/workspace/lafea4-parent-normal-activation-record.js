@@ -110,7 +110,8 @@ export function createLafea4ParentNormalActivationRecord({
   if (manifest.browserRequested !== true) reasons.push('BROWSER_NOT_REQUESTED');
   if (manifest.browserProvisionSucceeded !== true) reasons.push('BROWSER_NOT_PROVISIONED');
 
-  const planIds = Array.isArray(plan.steps) ? plan.steps.map((row) => row?.id) : [];
+  const planSteps = Array.isArray(plan.steps) ? plan.steps : [];
+  const planIds = planSteps.map((row) => row?.id);
   const planIdSet = new Set(planIds);
   if (planIds.length !== planIdSet.size) reasons.push('PLAN_STEP_IDS_NOT_UNIQUE');
   const commandRecords = Array.isArray(commands.records) ? commands.records : [];
@@ -119,6 +120,43 @@ export function createLafea4ParentNormalActivationRecord({
     if (!row || typeof row.id !== 'string') continue;
     if (recordsById.has(row.id)) reasons.push(`COMMAND_STEP_DUPLICATE:${row.id}`);
     recordsById.set(row.id, row);
+  }
+
+  // TECH-8's generic verifier derives disposition from the records it sees.
+  // Promotion is stricter: every step declared required by the exact checked-in
+  // plan must have one matching command record and that record must PASS.
+  for (const step of planSteps.filter((row) => row?.required === true)) {
+    const row = recordsById.get(step.id);
+    if (!row) {
+      reasons.push(`PLAN_REQUIRED_STEP_RESULT_MISSING:${step.id}`);
+      continue;
+    }
+    if (row.required !== true || row.classification !== step.classification) {
+      reasons.push(`PLAN_REQUIRED_STEP_AUTHORITY_MISMATCH:${step.id}`);
+    }
+    if (row.disposition !== 'PASS') {
+      reasons.push(`PLAN_REQUIRED_STEP_NOT_PASS:${step.id}:${row.disposition}`);
+    }
+  }
+  for (const [kind, step] of [
+    ['DEPENDENCY_INSTALL', plan.dependencyInstall],
+    ['BROWSER_PROVISION', plan.browserProvision],
+  ]) {
+    if (!step || typeof step.id !== 'string') {
+      reasons.push(`${kind}_PLAN_RECORD_MISSING`);
+      continue;
+    }
+    const row = recordsById.get(step.id);
+    if (!row) {
+      reasons.push(`${kind}_COMMAND_RECORD_MISSING`);
+      continue;
+    }
+    if (row.required !== true || row.classification !== 'INFRASTRUCTURE') {
+      reasons.push(`${kind}_COMMAND_AUTHORITY_INVALID`);
+    }
+    if (row.disposition !== 'PASS') {
+      reasons.push(`${kind}_COMMAND_NOT_PASS:${row.disposition}`);
+    }
   }
 
   const requiredStepDisposition = {};

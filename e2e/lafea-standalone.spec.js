@@ -11,28 +11,28 @@ test('standalone LAFEA entry boots without combined, LFEA, demo, or generic benc
   await expect(workbench).toHaveCount(1);
   await expect(workbench.locator('.lafea-workbench__stages [data-stage-id]')).toHaveCount(6);
   await expect(workbench.locator('[data-lafea-tab="ANALYTICAL_CALC"]')).toHaveCount(1);
-  await expect(workbench.locator('.lafea-workbench__status')).toHaveText('TBA');
-  await expect(workbench.locator('[data-role="lafea-tba-stage"]')).toBeVisible();
-  await expect(workbench.locator('[data-role="lafea-tba-stage"]')).toContainText(
-    'no finite-element geometry, mesh, element controls, viewport, solver controls, contours, convergence, results, or simulated FE content',
-  );
+
+  const analytical = workbench.locator('[data-role="lafea-analytical-calc"]');
+  await expect(analytical).toBeVisible();
+  await expect(analytical).toHaveAttribute('data-backing-stage-id', 'LAFEA.1');
+  await expect(workbench.locator('h1')).toContainText('LAFEA.1');
+  await expect(workbench.locator('[data-role="lafea-tba-stage"]')).toHaveCount(0);
+  await expect(workbench.locator('[data-role="lafea-import"]')).toBeVisible();
+  await expect(workbench.locator('[data-role="lafea-run"]')).toBeVisible();
   await expect(workbench.locator('[data-role="lafea-mock"]')).toHaveCount(0);
   await expect(workbench.locator('[data-role="lafea-benchmark"]')).toHaveCount(0);
   await expect(workbench.locator('[data-role="lafea-benchmark-host"]')).toHaveCount(0);
 
   await workbench.locator('.lafea-workbench__stages [data-stage-id="LAFEA.2"]').click();
-  await expect(workbench.locator('[data-role="lafea-tba-stage"]')).toHaveAttribute('data-stage-id', 'LAFEA.2');
-  await expect(workbench.locator('.lafea-workbench__status')).toHaveText('TBA');
+  await expect(analytical).toHaveAttribute('data-backing-stage-id', 'LAFEA.2');
+  await expect(workbench.locator('h1')).toContainText('LAFEA.2');
   await expect(workbench.locator('[data-guided-target="viewport"]')).toHaveCount(0);
   await expect(workbench.locator('[data-guided-target="discretization"]')).toHaveCount(0);
 
   await workbench.locator('[data-lafea-tab="ANALYTICAL_CALC"]').click();
-  const analytical = workbench.locator('[data-role="lafea-analytical-calc"]');
   await expect(analytical).toBeVisible();
   await expect(analytical).toHaveAttribute('data-backing-stage-id', 'LAFEA.2');
   await expect(analytical.locator('[data-role="lafea-analytical-route-selector"] [data-analytical-route-id]')).toHaveCount(2);
-  await expect(workbench.locator('[data-guided-target="viewport"]')).toHaveCount(0);
-  await expect(workbench.locator('[data-guided-target="discretization"]')).toHaveCount(0);
 
   const authority = await page.evaluate(() => ({
     combinedWorkspacePublished: Object.hasOwn(globalThis, 'AnalysisWorkspace'),

@@ -90,8 +90,9 @@ export function lafeaTechnicalComponentRegistered(kind, componentId) {
   return typeof COMPONENTS[kind]?.[componentId] === 'function';
 }
 
-function normalizeFoundation(input) {
+function normalizeFoundation(input, mode = 'document') {
   const { cleanInput, meshConfig } = prepareInput(input);
+  if (mode === 'edit') removeStaleDerivedAssessmentThickness(cleanInput);
   const source = isRecord(cleanInput.sourceEvidence)
     ? {
       ...validateCanonicalLocalAttachmentFoundationModel(cleanInput).sourceEvidence,
@@ -106,11 +107,13 @@ function normalizeFoundation(input) {
   });
 }
 
-function normalizeScreening(input) {
+function normalizeScreening(input, mode = 'document') {
   const { cleanInput, meshConfig } = prepareInput(input);
-  const source = typeof cleanInput.semanticHash === 'string'
-    ? editableScreening(validateLocalAttachmentScreeningRequest(cleanInput))
-    : editableScreening(cleanInput);
+  const source = mode === 'edit'
+    ? editableScreening(cleanInput)
+    : typeof cleanInput.semanticHash === 'string'
+      ? editableScreening(validateLocalAttachmentScreeningRequest(cleanInput))
+      : editableScreening(cleanInput);
   const retained = editableScreening(createLocalAttachmentScreeningRequest(source));
   return freezeClone({ ...retained, ...(meshConfig ? { meshConfig } : {}) });
 }
@@ -192,6 +195,12 @@ function stripWorkbenchFields(input) {
   if (!isRecord(input)) return input;
   const { meshConfig, ...kernelSource } = input;
   return kernelSource;
+}
+
+function removeStaleDerivedAssessmentThickness(source) {
+  const thickness = source?.thicknessBasis;
+  if (!isRecord(thickness) || thickness.policy !== 'NOMINAL_MINUS_CORROSION') return;
+  delete thickness.assessmentPipeThickness;
 }
 
 function editableScreening(input) {
